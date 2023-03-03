@@ -5,7 +5,9 @@
 **Directories**
 - BIOINFORMATICS SPACE: Working directory in the cluster is `/scr1/users/roulet` 30TB limit (temporary space, belong to CHOP)-
 - SPACE TO SEE FILE (folder-like env): `/home/roulet/`
-- LOCAL COMPUTER FILE: `/home/roulet/tsclient/roule/` is my C: computer, with `Box` and `GoogleDrive` (to see Google Drive/Preferences/Settings/ Stream to folder)
+- LOCAL COMPUTER FILE:\
+**Box**:`/home/roulet/tsclient/roule/Box`\
+**Google drive**: `/home/roulet/tsclient/roule/GoogleDrive`
 
 **Run job**
 
