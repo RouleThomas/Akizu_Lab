@@ -2,12 +2,25 @@
 --> On Benchling
 
 # Infos
+**Usefull commands**
+
+- If a window is buggy, stuck; run: `killall -3 gnome-shell`
+
+**Cluster-files folder-like interace**
+
+No idea!
+
+To allow cp/paste between Vitrual machine and computer: 
+
+
 **Directories**
 - BIOINFORMATICS SPACE: Working directory in the cluster is `/scr1/users/roulet` 30TB limit (temporary space, belong to CHOP)-
 - SPACE TO SEE FILE (folder-like env): `/home/roulet/`
 - LOCAL COMPUTER FILE:\
 **Box**:`/home/roulet/tsclient/roule/Box`\
 **Google drive**: `/home/roulet/tsclient/roule/GoogleDrive`
+
+
 
 **Run job**
 
