@@ -23,9 +23,18 @@ Files are:
 
 
 # Import files from Google drive to the cluster
-#### 20230308 
-I cannot use a bash script to import files as if disconnection the transfer will fail. So cp the old-fashion way, let computer running o/n.
+#### 20230308, 20210309
+I cannot use a bash script to import files as if disconnection the transfer will fail. So cp the old-fashion way, let computer running o/n.\
+**ESC, NPC, 2 days-neurons**
 ```bash
-cp /home/roulet/tsclient/roule/Google\ Drive\ Streaming/Shared\ drives/akizulab/Primary\ Data/RNAseqs/EZH1\ RNAseq/carornaseq010521/usftp21.novogene.com/rawdata/* \
+cp /home/roulet/tsclient/roule/Google\ Drive\ Streaming/Shared\ drives/akizulab/Primary\ Data/RNAseqs/EZH1\ RNAseq/1\ and\ 2\ month\ neuron\ RNAseq\ Aug2022/01.RawData/* \
 /scr1/users/roulet/Akizu_Lab/001_EZH1_Project/001__RNAseq/input
 ``` 
+**1, 2 months-neurons**
+```bash
+cp -r /home/roulet/tsclient/roule/Google\ Drive\ Streaming/Shared\ drives/akizulab/Primary\ Data/RNAseqs/EZH1\ RNAseq/1\ and\ 2\ month\ neuron\ RNAseq\ Aug2022/01.RawData/ \
+/scr1/users/roulet/Akizu_Lab/001_EZH1_Project/001__RNAseq/input
+``` 
+# Rename/compress and fastqc
+#### 20210309
+

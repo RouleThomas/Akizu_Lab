@@ -24,7 +24,10 @@ To allow cp/paste between Vitrual machine and computer:
 
 **Run job**
 
-- Interactive `srun --mem=20g hostname`.
+- Interactive `srun --mem=20g --pty bash -l`.
+- Sbatch `sbatch job.sh`
+- List jobs: `squeue -u roulet` (`scancel [JOBID]` to cancel)
+
 
 If encounteer `bash __vte_prompt_command command not found` error message. Do the following:
 1. add this add the end of the ~/.bashrc file:
@@ -39,4 +42,3 @@ __vte_prompt_command() {
 }
 ```
 2. then `source ~/.bashrc`
-- Sbatch `sbatch job.sh`
