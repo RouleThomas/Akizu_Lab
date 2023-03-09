@@ -35,6 +35,23 @@ cp /home/roulet/tsclient/roule/Google\ Drive\ Streaming/Shared\ drives/akizulab/
 cp -r /home/roulet/tsclient/roule/Google\ Drive\ Streaming/Shared\ drives/akizulab/Primary\ Data/RNAseqs/EZH1\ RNAseq/1\ and\ 2\ month\ neuron\ RNAseq\ Aug2022/01.RawData/ \
 /scr1/users/roulet/Akizu_Lab/001_EZH1_Project/001__RNAseq/input
 ``` 
-# Rename/compress and fastqc
+# Rename and fastqc
 #### 20210309
+Made a custom bash script to rename each files (files are already compressed so I modified script `organize_raw.sh` to keep only renaming function). 
+```bash
+# Command example for 1 file:
+outdir="input"
 
+x="NPC_WT_R1_1"
+raw_f="P_WT_1_1.fq.gz"
+new_f="${outdir}/${x}.fq.gz"
+
+if [[ -f "$raw_f" && ! -f "$new_f" ]]; then
+	mv "$raw_f" "$new_f"
+elif [[ ! -f "$raw_f" && ! -f "$new_f" ]]; then
+	echo "ERROR: Cannot Find File: ${raw_f}"
+	exit
+fi
+# Command renaming all files run as follow:
+sbatch XXX
+```
