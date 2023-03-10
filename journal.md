@@ -7,9 +7,7 @@
 - If a window is buggy, stuck; run: `killall -3 gnome-shell`
 
 **Cluster-files folder-like interace**
-
-No idea!
-
+No idea! Dolphin I can see files but not transfer them...\
 To allow cp/paste between Vitrual machine and computer: 
 
 
@@ -18,14 +16,14 @@ To allow cp/paste between Vitrual machine and computer:
 - SPACE TO SEE FILE (folder-like env): `/home/roulet/`
 - LOCAL COMPUTER FILE:\
 **Box**:`/home/roulet/tsclient/roule/Box`\
-**Google drive**: `/home/roulet/tsclient/roule/GoogleDrive`
+**Google drive**: `/home/roulet/tsclient/roule/Google Drive Streaming`
 
 
 
 **Run job**
 
 - Interactive `srun --mem=20g --pty bash -l`.
-- Sbatch `sbatch job.sh`
+- Sbatch `sbatch job.sh` (edit script in VSC, then create it on the cluster with `touch script.sh` edit it with `nano script.sh` copy paste from VSC, and run it)
 - List jobs: `squeue -u roulet` (`scancel [JOBID]` to cancel)
 
 
