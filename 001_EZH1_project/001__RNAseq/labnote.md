@@ -10,20 +10,25 @@ Files download from [ENCODE](https://www.encodeproject.org/data-standards/refere
 cp /home/roulet/tsclient/roule/Google\ Drive\ Streaming/Shared\ drives/akizulab/Personal\ Folders/Thomas/meta/* \
 /scr1/users/roulet/Akizu_Lab/Master/meta`
 ```
-Files are:
+ENCODE genome files in `/scr1/users/roulet/Akizu_Lab/Master/meta`:
 - **GRCh38 fasta genome** = GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta
 - **GRCh38 gtf file** = ENCFF159KBI.gtf
 - **hg19 fasta genome** = male.hg19.fasta
 - **hg19 gtf file** = gencode.v19.annotation.gtf
 
-
-
-
-
+# pipeline used from previous analyses
+Infos from `Method_RNAseq, DEG, volcano, GSEA, heatmap.SZ.docx`:
+- Raw fastq cleaned with *fastp* (adaptor removed, >10% poly-N sequences removed, low quality removed)
+	- Q20, Q30, and GC content of the clean data were calculated.
+    - Downstream analyses on the clean data with high quality.
+ - Reads map on hg19 with *STAR* 
+ - Reads count on gene feature with *featureCounts*
+ - DEG with *DESEq2* (padj<0.05)
+ - GSEA performed and plotted with *ClusterProfiler*
 
 
 # Import files from Google drive to the cluster
-#### 20230308, 20210309
+#### 20230308, 20210309, 20210310
 I cannot use a bash script to import files as if disconnection the transfer will fail. So cp the old-fashion way, let computer running o/n.\
 **ESC, NPC, 2 days-neurons**
 ```bash
@@ -36,7 +41,7 @@ cp -r /home/roulet/tsclient/roule/Google\ Drive\ Streaming/Shared\ drives/akizul
 /scr1/users/roulet/Akizu_Lab/001_EZH1_Project/001__RNAseq/input
 ``` 
 # Rename and fastqc
-#### 20210309
+#### 20210309, 
 Made a custom bash script to rename each files (files are already compressed so I modified script `organize_raw.sh` to keep only renaming function). 
 ```bash
 # Command example for 1 file:
@@ -53,5 +58,5 @@ elif [[ ! -f "$raw_f" && ! -f "$new_f" ]]; then
 	exit
 fi
 # Command renaming all files run as follow:
-sbatch XXX
+sbatch rename_raw.sh
 ```
