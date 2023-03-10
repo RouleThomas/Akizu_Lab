@@ -892,3 +892,185 @@ elif [[ ! -f "$raw_f" && ! -f "$new_f" ]]; then
 	echo "ERROR: Cannot Find File: ${raw_f}"
 	exit
 fi
+
+x="8wN_KO_R2_1"
+raw_f="NR6_1.fq.gz"
+new_f="${outdir}/${x}.fq.gz"
+if [[ -f "$raw_f" && ! -f "$new_f" ]]; then
+	mv "$raw_f" "$new_f"
+elif [[ ! -f "$raw_f" && ! -f "$new_f" ]]; then
+	echo "ERROR: Cannot Find File: ${raw_f}"
+	exit
+fi
+
+x="8wN_KO_R2_2"
+raw_f="NR6_2.fq.gz"
+new_f="${outdir}/${x}.fq.gz"
+if [[ -f "$raw_f" && ! -f "$new_f" ]]; then
+	mv "$raw_f" "$new_f"
+elif [[ ! -f "$raw_f" && ! -f "$new_f" ]]; then
+	echo "ERROR: Cannot Find File: ${raw_f}"
+	exit
+fi
+
+x="8wN_KO_R3_1"
+raw_f="NR7_1.fq.gz"
+new_f="${outdir}/${x}.fq.gz"
+if [[ -f "$raw_f" && ! -f "$new_f" ]]; then
+	mv "$raw_f" "$new_f"
+elif [[ ! -f "$raw_f" && ! -f "$new_f" ]]; then
+	echo "ERROR: Cannot Find File: ${raw_f}"
+	exit
+fi
+
+x="8wN_KO_R3_2"
+raw_f="NR7_2.fq.gz"
+new_f="${outdir}/${x}.fq.gz"
+if [[ -f "$raw_f" && ! -f "$new_f" ]]; then
+	mv "$raw_f" "$new_f"
+elif [[ ! -f "$raw_f" && ! -f "$new_f" ]]; then
+	echo "ERROR: Cannot Find File: ${raw_f}"
+	exit
+fi
+
+x="8wN_KO_R4_1"
+raw_f="NR8_1.fq.gz"
+new_f="${outdir}/${x}.fq.gz"
+if [[ -f "$raw_f" && ! -f "$new_f" ]]; then
+	mv "$raw_f" "$new_f"
+elif [[ ! -f "$raw_f" && ! -f "$new_f" ]]; then
+	echo "ERROR: Cannot Find File: ${raw_f}"
+	exit
+fi
+
+x="8wN_KO_R4_2"
+raw_f="NR8_2.fq.gz"
+new_f="${outdir}/${x}.fq.gz"
+if [[ -f "$raw_f" && ! -f "$new_f" ]]; then
+	mv "$raw_f" "$new_f"
+elif [[ ! -f "$raw_f" && ! -f "$new_f" ]]; then
+	echo "ERROR: Cannot Find File: ${raw_f}"
+	exit
+fi
+
+x="8wN_HET_R1_1"
+raw_f="NR9_1.fq.gz"
+new_f="${outdir}/${x}.fq.gz"
+if [[ -f "$raw_f" && ! -f "$new_f" ]]; then
+	mv "$raw_f" "$new_f"
+elif [[ ! -f "$raw_f" && ! -f "$new_f" ]]; then
+	echo "ERROR: Cannot Find File: ${raw_f}"
+	exit
+fi
+
+x="8wN_HET_R1_2"
+raw_f="NR9_2.fq.gz"
+new_f="${outdir}/${x}.fq.gz"
+if [[ -f "$raw_f" && ! -f "$new_f" ]]; then
+	mv "$raw_f" "$new_f"
+elif [[ ! -f "$raw_f" && ! -f "$new_f" ]]; then
+	echo "ERROR: Cannot Find File: ${raw_f}"
+	exit
+fi
+
+x="8wN_HET_R2_1"
+raw_f="NR10_1.fq.gz"
+new_f="${outdir}/${x}.fq.gz"
+if [[ -f "$raw_f" && ! -f "$new_f" ]]; then
+	mv "$raw_f" "$new_f"
+elif [[ ! -f "$raw_f" && ! -f "$new_f" ]]; then
+	echo "ERROR: Cannot Find File: ${raw_f}"
+	exit
+fi
+
+x="8wN_HET_R2_2"
+raw_f="NR10_2.fq.gz"
+new_f="${outdir}/${x}.fq.gz"
+if [[ -f "$raw_f" && ! -f "$new_f" ]]; then
+	mv "$raw_f" "$new_f"
+elif [[ ! -f "$raw_f" && ! -f "$new_f" ]]; then
+	echo "ERROR: Cannot Find File: ${raw_f}"
+	exit
+fi
+
+
+x="8wN_HET_R3_1"
+raw_f="NR11_1.fq.gz"
+new_f="${outdir}/${x}.fq.gz"
+if [[ -f "$raw_f" && ! -f "$new_f" ]]; then
+	mv "$raw_f" "$new_f"
+elif [[ ! -f "$raw_f" && ! -f "$new_f" ]]; then
+	echo "ERROR: Cannot Find File: ${raw_f}"
+	exit
+fi
+
+x="8wN_HET_R3_2"
+raw_f="NR11_2.fq.gz"
+new_f="${outdir}/${x}.fq.gz"
+if [[ -f "$raw_f" && ! -f "$new_f" ]]; then
+	mv "$raw_f" "$new_f"
+elif [[ ! -f "$raw_f" && ! -f "$new_f" ]]; then
+	echo "ERROR: Cannot Find File: ${raw_f}"
+	exit
+fi
+
+
+x="8wN_HET_R4_1"
+raw_f="NR12_1.fq.gz"
+new_f="${outdir}/${x}.fq.gz"
+if [[ -f "$raw_f" && ! -f "$new_f" ]]; then
+	mv "$raw_f" "$new_f"
+elif [[ ! -f "$raw_f" && ! -f "$new_f" ]]; then
+	echo "ERROR: Cannot Find File: ${raw_f}"
+	exit
+fi
+
+x="8wN_HET_R4_2"
+raw_f="NR12_2.fq.gz"
+new_f="${outdir}/${x}.fq.gz"
+if [[ -f "$raw_f" && ! -f "$new_f" ]]; then
+	mv "$raw_f" "$new_f"
+elif [[ ! -f "$raw_f" && ! -f "$new_f" ]]; then
+	echo "ERROR: Cannot Find File: ${raw_f}"
+	exit
+fi
+
+x="8wN_iPSCpatient_R1_1"
+raw_f="NR13_1.fq.gz"
+new_f="${outdir}/${x}.fq.gz"
+if [[ -f "$raw_f" && ! -f "$new_f" ]]; then
+	mv "$raw_f" "$new_f"
+elif [[ ! -f "$raw_f" && ! -f "$new_f" ]]; then
+	echo "ERROR: Cannot Find File: ${raw_f}"
+	exit
+fi
+
+x="8wN_iPSCpatient_R1_2"
+raw_f="NR13_2.fq.gz"
+new_f="${outdir}/${x}.fq.gz"
+if [[ -f "$raw_f" && ! -f "$new_f" ]]; then
+	mv "$raw_f" "$new_f"
+elif [[ ! -f "$raw_f" && ! -f "$new_f" ]]; then
+	echo "ERROR: Cannot Find File: ${raw_f}"
+	exit
+fi
+
+x="8wN_iPSCpatient_R2_1"
+raw_f="NR14_1.fq.gz"
+new_f="${outdir}/${x}.fq.gz"
+if [[ -f "$raw_f" && ! -f "$new_f" ]]; then
+	mv "$raw_f" "$new_f"
+elif [[ ! -f "$raw_f" && ! -f "$new_f" ]]; then
+	echo "ERROR: Cannot Find File: ${raw_f}"
+	exit
+fi
+
+x="8wN_iPSCpatient_R2_2"
+raw_f="NR14_2.fq.gz"
+new_f="${outdir}/${x}.fq.gz"
+if [[ -f "$raw_f" && ! -f "$new_f" ]]; then
+	mv "$raw_f" "$new_f"
+elif [[ ! -f "$raw_f" && ! -f "$new_f" ]]; then
+	echo "ERROR: Cannot Find File: ${raw_f}"
+	exit
+fi
