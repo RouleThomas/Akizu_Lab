@@ -88,9 +88,9 @@ fastqc -o output/fastqc input/ESC_HET_R1_1.fq.gz
 # Run time-per-time (ESC, then 2dN, then PNC):
 sbatch fastqc_raw_ESC.sh # 10979372 complete
 sbatch fastqc_raw_2dN.sh # 10980363 complete
-sbatch fastqc_raw_NPC.sh # 10982864
-sbatch fastqc_raw_4wN.sh # 10983894
-sbatch fastqc_raw_4wN.sh # 10984036
+sbatch fastqc_raw_NPC.sh # 10982864 complete
+sbatch fastqc_raw_4wN.sh # 10983894 complete
+sbatch fastqc_raw_4wN.sh # 10984036 complete
 ```
 Copy report to google drive
 ```bash
@@ -115,13 +115,14 @@ fastp -i input/ESC_WT_R1_1.fq.gz -I input/ESC_WT_R1_2.fq.gz \
 	  -h output/fastp/ESC_WT_R1 -j output/fastp/ESC_WT_R1
 
 # Run time-per-time (ESC, then 2dN, then PNC):
-sbatch scripts/fastp_raw_ESC.sh # 10980247
-sbatch scripts/fastp_raw_NPC2dN.sh # 10984692
-sbatch scripts/fastp_raw_4wN8wN.sh # 10984925
+sbatch scripts/fastp_raw_ESC.sh # 10980247 complete (important infos)
+sbatch scripts/fastp_raw_NPC2dN.sh # 10984692 complete (important infos)
+sbatch scripts/fastp_raw_4wN8wN.sh # 10984925 complete (important infos)
+sbatch scripts/fastp_raw_8wN_miss.sh # 11033843
 ```
 Run fastqc on fastp-trimmed files
-```
-XXX
+```bash
+sbatch scripts/fastqc_fastp.sh # 11034677
 ```
 
 # Mapping with STAR
@@ -130,7 +131,7 @@ XXX
 ## Index the genome
 *NOTE: theorically optimal size for `--sjdbOverhang` is [max read length]-1, thus need create specific index for specific read size. But the effect is marginal according to the [creator](https://github.com/alexdobin/STAR/issues/931). So let's keep it default.*
 
-hg19 genome with 12CPU and 50G mem (time=XXX)
+hg19 genome with 12CPU and 50G mem (time=<1.5day)
 ```bash
 module load STAR/2.7.3a-GCC-9.3.0
 # command
@@ -141,19 +142,35 @@ STAR --runThreadN 12 \
 	--sjdbGTFfile /scr1/users/roulet/Akizu_Lab/Master/meta/gencode.v19.annotation.gtf 
 
 # Run in slurm
-sbatch STAR_index_hg19.sh # 10982789
+sbatch STAR_index_hg19.sh # 10982789 complete
 ```
 
 
 ### Untrimmed fastq
-XXX https://hbctraining.github.io/Intro-to-rnaseq-hpc-O2/lessons/03_alignment.html https://biocorecrg.github.io/RNAseq_course_2019/alnpractical.html XXX
+Keep standard parameter as adapted for mammalian genome. Some examples [here](https://hbctraining.github.io/Intro-to-rnaseq-hpc-O2/lessons/03_alignment.html) and [here](https://biocorecrg.github.io/RNAseq_course_2019/alnpractical.html).
+
 ```bash
 module load STAR/2.7.3a-GCC-9.3.0
 # example for 1 file:
+STAR --genomeDir ../../Master/meta/STAR_hg19/ \
+	--runThreadN 12 \
+	--readFilesCommand zcat \
+	--readFilesIn input/NPC_WT_R1_1.fq.gz input/NPC_WT_R1_2.fq.gz \
+	--outSAMtype BAM SortedByCoordinate \
+	--outFileNamePrefix output/STAR/NPC_WT_
 
 # Run time-per-time (ESC, then 2dN, then PNC):
-
+sbatch scripts/STAR_raw_NPC.sh # 11034673, slight test first, modify script if output ok
 ```
+
+XXX:
+Coverage file:
+FIND PARAMETER FOR HUMAN
+
+
+--outWigType wiggle --outWigStrand Unstranded
+Let's use bamCoverage from Deeptools suite within conda activate CondaGS to generate the bigwig files, that is better than using STAR as STAR cannot normalize based on TPM(=BPM) but RPM or raw reads...:
+bamCoverage --bam data/mapping/raw/${x}_Aligned.sortedByCoord.out.bam --outFileName data/mapping/raw/${x}_Aligned.sortedByCoord.out.bigwig --outFileFormat bigwig --normalizeUsing BPM --binSize 10  
 
 
 
