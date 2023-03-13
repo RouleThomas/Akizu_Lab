@@ -2,16 +2,19 @@
 --> On Benchling
 
 # Infos
-**Usefull commands**
+## Usefull commands
 
 - If a window is buggy, stuck; run: `killall -3 gnome-shell`
 
-**Cluster-files folder-like interace**
+## File transfer
+Only on the CHOP cluster or on a CHOP machine...
+
+## Cluster-files folder-like interace
 No idea! Dolphin I can see files but not transfer them...\
 To allow cp/paste between Vitrual machine and computer: 
 
 
-**Directories**
+## Directories
 - BIOINFORMATICS SPACE: Working directory in the cluster is `/scr1/users/roulet` 30TB limit (temporary space, belong to CHOP)-
 - SPACE TO SEE FILE (folder-like env): `/home/roulet/`
 - LOCAL COMPUTER FILE:\
@@ -20,7 +23,7 @@ To allow cp/paste between Vitrual machine and computer:
 
 
 
-**Run job**
+## Run job
 
 - Interactive `srun --mem=20g --pty bash -l`.
 - Sbatch `sbatch job.sh` (edit script in VSC, then create it on the cluster with `touch script.sh` edit it with `nano script.sh` copy paste from VSC, and run it)
