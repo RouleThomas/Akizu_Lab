@@ -132,7 +132,7 @@ sbatch scripts/fastp_raw_8wN_miss.sh # 11033843 complete (important infos)
 Run fastqc on fastp-trimmed files
 ```bash
 sbatch scripts/fastqc_fastp.sh # 11034677 (cancelled "due to time limit")
-sbatch scripts/fastqc_fastp_1.sh # 11060976
+sbatch scripts/fastqc_fastp_1.sh # 11060976 complete
 ```
 
 # Mapping with STAR
@@ -170,16 +170,19 @@ STAR --genomeDir ../../Master/meta/STAR_hg19/ \
 	--outSAMtype BAM SortedByCoordinate \
 	--outFileNamePrefix output/STAR/NPC_WT_
 
-# Run time-per-time (ESC, then 2dN, then PNC):
+# Run time-per-time:
 sbatch scripts/STAR_raw_NPC.sh # 11034673, slight test, output ok
-sbatch scripts/STAR_raw_NPC_1.sh # 11061777
-sbatch scripts/STAR_raw_ESC.sh # 11061825
-sbatch scripts/STAR_raw_2dN.sh # 11061828
-sbatch scripts/STAR_raw_4wN.sh # 11061917
-sbatch scripts/STAR_raw_8wN.sh # 11061920
+sbatch scripts/STAR_raw_NPC_1.sh # 11061777, 11065401
+sbatch scripts/STAR_raw_ESC.sh # 11061825, 11065404
+sbatch scripts/STAR_raw_2dN.sh # 11061828, 11065418
+sbatch scripts/STAR_raw_4wN.sh # 11061917, 11065420
+sbatch scripts/STAR_raw_8wN.sh # 11061920, 11065422
 ```
 Mapping indexation
-```
+```bash
+# example for 1 file:
+XXX
+# Run time-per-time:
 XXX
 ```
 ### Fastp-trimmed fastq
@@ -195,11 +198,11 @@ STAR --genomeDir ../../Master/meta/STAR_hg19/ \
 	--outFileNamePrefix output/STAR/fastp/NPC_WT_R1_
 
 # Run time-per-time:
-sbatch scripts/STAR_fastp_ESC.sh # 11062736
-sbatch scripts/STAR_fastp_NPC.sh # 11062742
-sbatch scripts/STAR_fastp_2dN.sh # 11062743
-sbatch scripts/STAR_fastp_4wN.sh # 11062744
-sbatch scripts/STAR_fastp_8wN.sh # 11062745
+sbatch scripts/STAR_fastp_ESC.sh # 11062736, 11065467
+sbatch scripts/STAR_fastp_NPC.sh # 11062742, 11065493
+sbatch scripts/STAR_fastp_2dN.sh # 11062743, 11065515
+sbatch scripts/STAR_fastp_4wN.sh # 11062744, 11065547
+sbatch scripts/STAR_fastp_8wN.sh # 11062745, 11065561
 ```
 Mapping indexation
 ```
