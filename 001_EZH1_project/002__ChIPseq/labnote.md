@@ -7,3 +7,8 @@ cp -r /home/roulet/tsclient/roule/Google\ Drive\ Streaming/Shared\ drives/akizul
 /scr1/users/roulet/Akizu_Lab/001_EZH1_Project/001__RNAseq/input
 ``` 
 
+# Concatenate fastq files
+Here, each sample sequenced from 2 Illumina lanes, need concatenate them into one.
+```bash
+cat L001_R1.fq.gz L002_R2.fq.gz > R1.fq.gz
+```

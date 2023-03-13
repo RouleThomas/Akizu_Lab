@@ -8,6 +8,7 @@
 
 ## File transfer
 Only on the CHOP cluster or on a CHOP machine...
+Just copy/paste with cp from cluster to local computer Google Drive!
 
 ## Cluster-files folder-like interace
 No idea! Dolphin I can see files but not transfer them...\

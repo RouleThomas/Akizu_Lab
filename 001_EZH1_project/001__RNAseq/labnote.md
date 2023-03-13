@@ -98,12 +98,6 @@ sbatch fastqc_raw_2dN.sh # 11062006
 sbatch fastqc_raw_NPC.sh # 11062007
 sbatch fastqc_raw_4wN.sh # 11062008
 sbatch fastqc_raw_8wN.sh # 11062009
-
-### XXX Double check date for the new fastqc-fastp is correct, 20230313 for all XXX
-```
-Copy report to google drive
-```bash
-XXX wait help
 ```
 
 # Quality control with FASTP (trim)
@@ -137,7 +131,7 @@ sbatch scripts/fastqc_fastp_1.sh # 11060976 complete
 
 # Mapping with STAR
 ##### 20230310, 20230313
-
+Data are unstranded.
 ## Index the genome
 *NOTE: theorically optimal size for `--sjdbOverhang` is [max read length]-1, thus need create specific index for specific read size. But the effect is marginal according to the [creator](https://github.com/alexdobin/STAR/issues/931). So let's keep it default.*
 
@@ -181,7 +175,9 @@ sbatch scripts/STAR_raw_8wN.sh # 11061920, 11065422
 Mapping indexation
 ```bash
 # example for 1 file:
-XXX
+module load sam-bcf-tools
+samtools index output/STAR/NPC_WT_Aligned.sortedByCoord.out.bam
+
 # Run time-per-time:
 XXX
 ```
@@ -221,10 +217,28 @@ nano ~/.bashrc # add: export PATH=$PATH:/scr1/users/roulet/Akizu_Lab/Master/soft
 # Restart terminal
 ```
 
-
-
-
+# Install Anaconda
+```bash
+module load Python/3.9.6*
+```
+Go to `Master/software` 
+```bash
+wget https://repo.anaconda.com/archive/Anaconda3-2022.10-Linux-x86_64.sh`
+bash Anaconda3-2022.10-Linux-x86_64.sh
+# Follow installation; accept all
+```
+Anaconda3 installed to `/home/roulet/anaconda3`; no need to module load it.
 # Generate coverage (wiggle) files
+Create a **conda environment for deeptools**
+```bash
+conda create -n deeptools -c bioconda deeptools
+conda activate deeptools
+```
+Generate coverage files (bigwig) from bam
+```bash
+XXX
+```
+
 
 XXX:
 Coverage file:
