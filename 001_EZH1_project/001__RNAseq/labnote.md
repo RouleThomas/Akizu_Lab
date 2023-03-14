@@ -130,7 +130,7 @@ sbatch scripts/fastqc_fastp_1.sh # 11060976 complete
 ```
 
 # Mapping with STAR
-##### 20230310, 20230313
+##### 20230310, 20230313, 20230314
 Data are unstranded.
 ## Index the genome
 *NOTE: theorically optimal size for `--sjdbOverhang` is [max read length]-1, thus need create specific index for specific read size. But the effect is marginal according to the [creator](https://github.com/alexdobin/STAR/issues/931). So let's keep it default.*
@@ -172,15 +172,6 @@ sbatch scripts/STAR_raw_2dN.sh # 11061828, 11065418
 sbatch scripts/STAR_raw_4wN.sh # 11061917, 11065420
 sbatch scripts/STAR_raw_8wN.sh # 11061920, 11065422
 ```
-Mapping indexation
-```bash
-# example for 1 file:
-module load sam-bcf-tools
-samtools index output/STAR/NPC_WT_Aligned.sortedByCoord.out.bam
-
-# Run time-per-time:
-XXX
-```
 ### Fastp-trimmed fastq
 Mapping
 ```bash
@@ -201,10 +192,35 @@ sbatch scripts/STAR_fastp_4wN.sh # 11062744, 11065547
 sbatch scripts/STAR_fastp_8wN.sh # 11062745, 11065561
 ```
 Mapping indexation
-```
-XXX
+```bash
+# example for 1 file:
+module load sam-bcf-tools
+samtools index output/STAR/NPC_WT_Aligned.sortedByCoord.out.bam
+
+# time per time (raw and fastp together):
+sbatch STAR_index_NPC.sh # 11075019
+sbatch STAR_index_ESC.sh # 11075041
+sbatch STAR_index_2dN.sh # 11075067
+sbatch STAR_index_4wN.sh # 11075079
+sbatch STAR_index_8wN.sh # 11075108
 ```
 *NOTE: next time do indexation after mapping; same script*
+
+--> Let's compil the number of uniquely mapped reads for all files (add it in the Google Drive `RNAseq_infos.xlsx` file)
+```bash
+# Print nb of uniq map reads for raw mapping
+for file in output/STAR/raw/*Log.final.out; do
+    uniquely_mapped_reads=$(grep "Uniquely mapped reads number" $file | awk '{print $NF}')
+    echo "$file: Number of uniquely mapped reads: $uniquely_mapped_reads"
+done > output/STAR/raw/uniq_map_reads_counts_raw.txt
+
+# Print nb of uniq map reads for fastp mapping
+for file in output/STAR/fastp/*Log.final.out; do
+    uniquely_mapped_reads=$(grep "Uniquely mapped reads number" $file | awk '{print $NF}')
+    echo "$file: Number of uniquely mapped reads: $uniquely_mapped_reads"
+done > output/STAR/fastp/uniq_map_reads_counts_fastp.txt
+```
+**More number of uniquely mapped reads for the fastp trimmed reads**, thus from now on, data analyses with the fastp-trimmed.
 # Install IGV for vizualization
 Go to [IGV](https://software.broadinstitute.org/software/igv/download) and copy link for Linux download.\
 Go to `Master/software`
@@ -229,14 +245,43 @@ bash Anaconda3-2022.10-Linux-x86_64.sh
 ```
 Anaconda3 installed to `/home/roulet/anaconda3`; no need to module load it.
 # Generate coverage (wiggle) files
-Create a **conda environment for deeptools**
+Create a **deeptools; conda environment**
 ```bash
 conda create -n deeptools -c bioconda deeptools
-conda activate deeptools
 ```
-Generate coverage files (bigwig) from bam
+Generate few files RPKM-normalized for comparison with novogene analyses:
+- 4wN_WT_R1 (H9)
+- 4wN_KO_R1 (8del)
+- 4wN_HET_R1 (het5)
 ```bash
-XXX
+conda activate deeptools
+# example for 1 file:
+bamCoverage --bam output/STAR/fastp/4wN_WT_R1_Aligned.sortedByCoord.out.bam \
+	--outFileName output/temp/4wN_WT_R1_Aligned.sortedByCoord.out.bigwig \
+	--outFileFormat bigwig \ 
+	--normalizeUsing RPKM \ 
+	--binSize 10
+# Run for all 3 files:
+sbatch RPKM_wig.sh # 11075632
+```
+Generate coverage files **TPM-normalized** (=BPM) for all samples (fastp-trimmmed reads)
+
+*NOTE: RPKM (per bin) = number of reads per bin / (number of mapped reads (in millions) * bin length (kb)). BPM (per bin) = number of reads per bin / sum of all reads per bin (in millions)*
+
+```bash
+conda activate deeptools
+# example for 1 file with correct BPM-TPM normalization:
+bamCoverage --bam output/STAR/fastp/${x}_Aligned.sortedByCoord.out.bam \
+	--outFileName output/bigwig/${x}_Aligned.sortedByCoord.out.bw \
+	--outFileFormat bigwig \
+	--normalizeUsing BPM \
+	--binSize 10   
+# run time-per-time:
+sbatch scripts/TPM_bw_NPC.sh # 11075894
+sbatch scripts/TPM_bw_ESC.sh # 11075901
+sbatch scripts/TPM_bw_2dN.sh # 11075962
+sbatch scripts/TPM_bw_4wN.sh # 11075965
+sbatch scripts/TPM_bw_8wN.sh # 11075967
 ```
 
 
