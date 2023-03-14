@@ -379,8 +379,11 @@ Then in R; see `/home/roulet/001_EZH1_project/001_EZH1_project.R`.
 Create a **deseq2; conda environment**
 ```bash
 conda create -n deseq2 -c bioconda bioconductor-deseq2
+conda create -n deseq2 -c "bioconda/label/broken" bioconductor-deseq2
 ```
-
+check here wtf: https://anaconda.org/bioconda/bioconductor-deseq2
+ re run and look error
+ 
 see help here: "port all count sample (WT Rep 1 and 3"
 https://github.com/RouleThomas/Wagner_Lab/blob/main/Tian_2022_RNAseq.md 
 
