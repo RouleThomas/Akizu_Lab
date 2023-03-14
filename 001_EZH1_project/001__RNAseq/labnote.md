@@ -284,15 +284,111 @@ sbatch scripts/TPM_bw_4wN.sh # 11075965
 sbatch scripts/TPM_bw_8wN.sh # 11075967
 ```
 
+# Count the reads on gene feature
+##### 20230314
+Create a **featurecounts; conda environment**
+```bash
+conda create -c bioconda -n featurecounts subread
+conda activate featurecounts
+```
 
-XXX:
-Coverage file:
-FIND PARAMETER FOR HUMAN
+Let's first do a comparison raw vs fastp to confirm we end up with more counts using fastp
+```bash
+# ESC_WT_R1 raw:
+featureCounts -p -C -O \
+	-P -B -d 30 -D 1000 \
+	-a /scr1/users/roulet/Akizu_Lab/Master/meta/gencode.v19.annotation.gtf \
+	-o output/featurecounts/ESC_WT_R1.txt output/STAR/raw/ESC_WT_R1_Aligned.sortedByCoord.out.bam
+## 53%
+# ESC_WT_R1 fastp:
+featureCounts -p -C -O \
+	-P -B -d 30 -D 1000 \
+	-a /scr1/users/roulet/Akizu_Lab/Master/meta/gencode.v19.annotation.gtf \
+	-o output/temp/ESC_WT_R1.txt output/STAR/fastp/ESC_WT_R1_Aligned.sortedByCoord.out.bam
+## 52%
+```
+--> fastp is again better.
+
+Many fragment are unassigned for Fragment_Lenght. Samples not enough sonicated maybe? Let's try some fine-tuning:
+
+```bash
+# Both ends mapped required but fragment short
+featureCounts -p -C -O \
+	-P -B -d 50 -D 600\
+	-a /scr1/users/roulet/Akizu_Lab/Master/meta/gencode.v19.annotation.gtf \
+	-o output/temp/ESC_WT_R1.txt output/STAR/fastp/ESC_WT_R1_Aligned.sortedByCoord.out.bam
+## 46.9%
+# Both ends mapped required but fragment long
+featureCounts -p -C -O \
+	-P -B -d 30 -D 2500 \
+	-a /scr1/users/roulet/Akizu_Lab/Master/meta/gencode.v19.annotation.gtf \
+	-o output/temp/ESC_WT_R1.txt output/STAR/fastp/ESC_WT_R1_Aligned.sortedByCoord.out.bam
+## 66.6%
+# Both ends mapped required but fragment even long
+featureCounts -p -C -O \
+	-P -B -d 30 -D 10000 \
+	-a /scr1/users/roulet/Akizu_Lab/Master/meta/gencode.v19.annotation.gtf \
+	-o output/temp/ESC_WT_R1.txt output/STAR/fastp/ESC_WT_R1_Aligned.sortedByCoord.out.bam
+## 81.4%
+# Both ends mapped not required 
+featureCounts -p -C -O \
+	-a /scr1/users/roulet/Akizu_Lab/Master/meta/gencode.v19.annotation.gtf \
+	o output/featurecounts/ESC_WT_R1.txt output/STAR/raw/ESC_WT_R1_Aligned.sortedByCoord.out.bam
+## 87.2%
+```
+--> Seems that the longer fragment length allowed the better it is. (expected as no sonication in RNAseq; even though library prep focus for 300bp fragment)
+- `-O` to count on meta feature (gene)
+- `-p` (paired-end) with `-C` (not count paired-reads on 2 diff. chr.)
+- NOT THIS: `-P -B -d 30 -D 1000` (set min and max paired reads to 30 to 1000bp)
+
+Count on gene features with parameter
+```bash
+# example for 1 file:
+featureCounts -p -C -O \
+	-a /scr1/users/roulet/Akizu_Lab/Master/meta/gencode.v19.annotation.gtf \
+	-o output/featurecounts/${x}.txt output/STAR/raw/${x}_Aligned.sortedByCoord.out.bam
+
+# time per time:
+sbatch scripts/featurecounts_ESC.sh # 11076424
+sbatch scripts/featurecounts_NPC.sh # 11076424
+sbatch scripts/featurecounts_2dN.sh # 11076427
+sbatch scripts/featurecounts_4wN.sh # 11076427
+sbatch scripts/featurecounts_8wN.sh # 11076430
+```
+# Quality control metrics
+Print number of succesfully assigned alignments for each sample (add to drive `RNAseq_infos.xlsx`)
+```bash
+for file in output/featurecounts/*.summary; do
+    assigned_reads=$(grep "Assigned" $file | awk '{print $NF}')
+    echo "$file: Assigned: $assigned_reads"
+done > output/featurecounts/assigned_reads_counts.txt
+```
+Print the total number of reads
+```bash
+for file in output/STAR/fastp/*.final.out; do
+    input_reads=$(grep "Number of input reads" $file | awk '{print $NF}')
+    echo "$file: Number of input reads: $input_reads"
+done > output/STAR/fastp/input_reads_counts.txt
+```
+Add these values to the `RNAseq_infos.xlsx`\
+Then in R; see `/home/roulet/001_EZH1_project/001_EZH1_project.R`.
+
+--> Overall >80% input reads as been assigned to (gene) features
+
+# Install Bioconductor
+Create a **deseq2; conda environment**
+```bash
+conda create -n deseq2 -c bioconda bioconductor-deseq2
+```
+
+see help here: "port all count sample (WT Rep 1 and 3"
+https://github.com/RouleThomas/Wagner_Lab/blob/main/Tian_2022_RNAseq.md 
 
 
---outWigType wiggle --outWigStrand Unstranded
-Let's use bamCoverage from Deeptools suite within conda activate CondaGS to generate the bigwig files, that is better than using STAR as STAR cannot normalize based on TPM(=BPM) but RPM or raw reads...:
-bamCoverage --bam data/mapping/raw/${x}_Aligned.sortedByCoord.out.bam --outFileName data/mapping/raw/${x}_Aligned.sortedByCoord.out.bigwig --outFileFormat bigwig --normalizeUsing BPM --binSize 10  
+
+
+
+
 
 
 

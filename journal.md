@@ -10,6 +10,15 @@
 Only on the CHOP cluster or on a CHOP machine...
 Just copy/paste with cp from cluster to local computer Google Drive!
 
+## RStudio with ressource
+- Go to https://respublica-web.research.chop.edu and interactive app --> Rstudio.
+- Here I have access to my `/home/roulet/`
+
+## IGV with ressource
+- Maybe try Mobaxterm with ssh and -X
+XXX ??
+
+
 ## Cluster-files folder-like interace
 No idea! Dolphin I can see files but not transfer them...\
 To allow cp/paste between Vitrual machine and computer: 
@@ -44,3 +53,4 @@ __vte_prompt_command() {
 }
 ```
 2. then `source ~/.bashrc`
+
