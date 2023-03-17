@@ -395,7 +395,7 @@ if (!require("BiocManager", quietly = TRUE))
 ```
 # PCA and clustering with deseq2
 ##### 20230315
-*NOTE: Tons of deseq2 ressource [here](http://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html).*
+*NOTE: Tons of deseq2 ressource [here](http://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html) and [here](https://f1000research.com/articles/4-1070/v2).*
 
 Open R/4.2.2 with ressource:
 ```bash
@@ -1349,8 +1349,8 @@ dev.off()
 ### 8wN KO vs WT
 Take ressource
 ```bash
-module load R/4.2.2
 srun --mem=50g --pty bash -l
+module load R/4.2.2
 R
 ```
 Go in R
@@ -1444,7 +1444,12 @@ text(x = max(res_df$baseMean, na.rm = TRUE) * 0.25, y = -1.75, labels = paste(n_
 
 dev.off()
 ```
---> XXX IT FAIL WITH WEIRD ERROR to repeat and solve later
+--> IT FAILED at the shrinkage normalization
+```bash
+ # res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm")
+ error in optimHess(par=init,fn+nbinomFn,gr=nbinomGr,x=x,y=y,:non-finite value supplied by optim
+ ```
+--> Re-run the pipeline with >=10 minimum reads works, then re-run it again with >=5 works... 
 ### 8wN HET vs WT
 Take ressource
 ```bash
@@ -1641,3 +1646,278 @@ text(x = max(res_df$baseMean, na.rm = TRUE) * 0.25, y = -1.75, labels = paste(n_
 
 dev.off()
 ```
+--> The 4wN samples are weird, few DE, bad clustering, there may have been a sample missanotation? Let's put aside 4wN from now on
+# Time-course with deseq2
+##### 20230317
+## ESC, NPC, 2dN, 8wN KO and HET vs WT
+Test whether there are genotype-specific differences over time (ESC, NPC, 2dN, 8wN); general trend of difference over time. 
+
+### Identification of the significant genes in Time-Course analyses across genotypes 
+Take ressource
+```bash
+module load R/4.2.2
+srun --mem=50g --pty bash -l
+R
+```
+Go in R
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+library("apeglm")
+library("factoextra")
+
+# import all except 4wN
+## collect all samples ID
+samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
+   "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3",
+   "2dN_HET_R1", "2dN_HET_R2", "2dN_HET_R3",
+   "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", "8wN_KO_R1",
+   "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4", "8wN_HET_R1", "8wN_HET_R2",
+   "8wN_HET_R3", "8wN_HET_R4",
+   "ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3",
+   "ESC_KO_R1", "ESC_KO_R2", "ESC_KO_R3",
+   "ESC_HET_R1", "ESC_HET_R2", "ESC_HET_R3",
+   "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+   "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3",
+   "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3")
+
+## Make a loop for importing all featurecounts data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/featurecounts/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    select(Geneid, starts_with("output/STAR/fastp/")) %>%
+    rename(!!sample := starts_with("output/STAR/fastp/"))
+}
+
+# Merge all dataframe into a single one
+counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(select(counts_all, -Geneid), pull(counts_all, Geneid)) 
+
+## Create colData file that describe all our samples
+### Not including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  select(-replicate) %>%
+  bind_cols(data.frame(samples))
+
+## transform df into matrix
+coldata = make_matrix(select(coldata_raw, -samples), pull(coldata_raw, samples))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet Time-Course 
+### desgin = full-model
+ddsTC <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                                colData = coldata,
+                                design = ~ genotype + time + genotype:time)
+
+### Define the reduced model (not including interaction term for comparison with full model)
+ddsTC <- DESeq(ddsTC, test="LRT", reduced = ~ genotype + time)
+resTC <- results(ddsTC)
+resTC$symbol <- mcols(ddsTC)$symbol
+head(resTC[order(resTC$padj),],4)
+
+## Save the time-course analyses
+## Export result as 'raw_4wN_iPSCWT_vs_4wN_iPSCpatient.txt'
+write.csv(resTC %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2/resTC.txt")
+### If need to import: res <- read_csv("output/deseq2/raw_ESC_HET_vs_ESC_WT.txt") #To import
+```
+*NOTE: Here we the full model is` ~ genotype + time + genotype:time` and the reduced model do not include the interaction term `genotype:time`. Then we compare by LRT the full vs reduced model to assess the interaction effect, thus identify genes that behave differentially between genotypes over the time-course.*
+
+**Gene expression profile** using normalized counts (deseq2); more adapted than TPM here as directly related to the deseq2-time-course analyses.
+```R
+# Normalized counts with deseq2 and tidy it
+normalized_counts <- as_tibble(counts(ddsTC, normalized = TRUE), rownames = "gene") %>%
+  gather(key = "sample", value = "norm_counts", -gene) %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep = "_")
+
+normalized_counts$time <-
+  factor(normalized_counts$time,
+         c("ESC", "NPC", "2dN", "8wN"))
+normalized_counts$genotype <-
+  factor(normalized_counts$genotype,
+         c("WT", "KO", "HET"))
+
+# Gather the 10 first significant deseq2-TC genes
+significant_deseq2TC_genes <- as_tibble(head(resTC[order(resTC$padj),],10), rownames = "gene") %>%
+  select(gene) %>%
+  left_join(normalized_counts)
+
+# Stat
+stat_significant_deseq2TC_genes <- significant_deseq2TC_genes %>%
+  select(-replicate) %>%
+  group_by(gene, time, genotype) %>% summarise(mean=mean(norm_counts), median= median(norm_counts), SD=sd(norm_counts), n=n(), SE=SD/sqrt(n)) 	
+
+
+
+pdf("output/deseq2/deseq2_TC_Top10genes.pdf", width=11, height=6)
+stat_significant_deseq2TC_genes %>%
+  ggplot(., aes(x = time, y = mean, group = genotype)) +
+  geom_line(aes(color=genotype), size=0.75) +
+  geom_errorbar(aes(ymin = mean-SE, ymax = mean+SE), width=.2) +
+  geom_point(aes(y = mean), size = .75, shape = 15) +
+  theme_bw() +
+  facet_wrap(~gene, nrow = 2, scale = "free")  +	
+  xlab(label = "deseq2 normalized counts") +
+  ggtitle("Top 10 Significant Genes in Time-Course Analysis Across Genotypes") +
+  scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green"))
+dev.off()
+```
+### Clustering of the significant genes in Time-Course analyses across genotypes 
+Prepare the data, use deseq2 norm counts vst or rlog transformed (test both)
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+library("apeglm")
+library("factoextra")
+
+# Import list of TC-DEGs
+resTC <- read_csv("output/deseq2/resTC.txt") 
+
+# Normalized counts with deseq2 and tidy it
+normalized_counts <- as_tibble(counts(ddsTC, normalized = TRUE), rownames = "gene") %>%
+  gather(key = "sample", value = "norm_counts", -gene) %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep = "_")
+
+normalized_counts$time <-
+  factor(normalized_counts$time,
+         c("ESC", "NPC", "2dN", "8wN"))
+normalized_counts$genotype <-
+  factor(normalized_counts$genotype,
+         c("WT", "KO", "HET"))
+
+# Clustering
+## transform the norm counts
+vst_counts <- vst(ddsTC)
+rlog_counts <- rlog(ddsTC) # take 5 min
+
+## Extract the transformed counts
+vst_counts_matrix <- assay(vst_counts)
+rlog_counts_matrix <- assay(rlog_counts)
+
+## Isolate the signifificant genes by gene id
+signif_TC_genes = as_tibble(resTC, rownames = "gene") %>%
+  filter(padj<= 0.05) %>%
+  select(gene) %>%
+  unique() 
+
+## Convert into vector 
+signif_TC_genes_vector <- signif_TC_genes$gene
+
+## Filter our matrix with the significant genes
+vst_counts_matrix_sig <- vst_counts_matrix[rownames(vst_counts_matrix) %in% signif_TC_genes_vector, ]
+nrow(vst_counts_matrix_sig) # double-check the nb of genes is same s in signif_TC_genes
+rlog_counts_matrix_sig <- rlog_counts_matrix[rownames(rlog_counts_matrix) %in% signif_TC_genes_vector, ]
+
+## Reorder columns
+ordered_columns <- c("ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3", "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3", "2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3", "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", "ESC_KO_R1", "ESC_KO_R2", "ESC_KO_R3", "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3", "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3", "8wN_KO_R1", "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4", "ESC_HET_R1", "ESC_HET_R2", "ESC_HET_R3", "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3", "2dN_HET_R1", "2dN_HET_R2", "2dN_HET_R3", "8wN_HET_R1", "8wN_HET_R2", "8wN_HET_R3", "8wN_HET_R4")
+
+vst_counts_matrix_sig_ordered <- vst_counts_matrix_sig[, ordered_columns]
+
+# Raw heatmap
+pdf("output/deseq2/raw_pheatmap_vst.pdf", width=8, height=10)
+pheatmap(vst_counts_matrix_sig_ordered, 
+         scale = "row", 
+         clustering_distance_rows = "euclidean", 
+         clustering_distance_cols = "euclidean", 
+         clustering_method = "complete", 
+         show_rownames = FALSE,
+         cluster_rows = FALSE,
+         cluster_cols = FALSE)
+dev.off()
+
+# Clustered heatmap with 10 clusters
+pdf("output/deseq2/clustered_pheatmap_vst.pdf", width=8, height=10)
+pheatmap(vst_counts_matrix_sig_ordered, 
+                    scale = "row", 
+                    clustering_distance_rows = "euclidean", 
+                    clustering_distance_cols = "euclidean", 
+                    clustering_method = "complete", 
+                    show_rownames = FALSE,
+                    cluster_rows = TRUE,
+                    cluster_cols = FALSE,
+                    cutree_rows = 10,
+                    annotation_colors = colorRampPalette(RColorBrewer::brewer.pal(n = 9, name = "Set1"))(10))
+
+dev.off()
+```
+*NOTE: Here for better vizualisation, stabilize the variance accross the multiple conditions, we transform our norm counts with  vst or rlog.*
+
+It seems that is not the best way to vizualize the data, instead let's use **line plots** and not heatmap.
+
+```R
+# Make a clean table with significant deseq2-TC genes
+vst_counts_tidy <- as_tibble(vst_counts_matrix_sig_ordered, rownames = "gene") %>%
+  gather(key = "sample", value = "vst_counts", -gene) %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep = "_")
+
+# Obtain gene cluster ID from the heatmap
+## Perform hierarchical clustering
+row_dist <- dist(vst_counts_matrix_sig_ordered, method = "euclidean")
+row_hclust <- hclust(row_dist, method = "complete")
+
+## Cut the tree into 10 clusters
+row_clusters <- cutree(row_hclust, k = 10)
+
+## Create a data frame with gene names and their corresponding clusters
+cluster_gene <- data.frame(gene = rownames(vst_counts_matrix_sig_ordered),
+                           cluster = row_clusters)
+
+## Compil both
+vst_counts_tidy <- vst_counts_tidy %>%
+  left_join(cluster_gene, by = "gene")
+
+vst_counts_tidy$time <-
+  factor(vst_counts_tidy$time,
+         c("ESC", "NPC", "2dN", "8wN"))
+vst_counts_tidy$genotype <-
+  factor(vst_counts_tidy$genotype,
+         c("WT", "KO", "HET"))
+
+# Plot vst_transform norm deseq2 count
+pdf("output/deseq2/line_vst_cl10.pdf", width=14, height=20)
+ggplot(vst_counts_tidy, aes(x = time, y = vst_counts, color = genotype, group = genotype)) +
+  geom_smooth(method = "loess", se = TRUE) +
+  facet_wrap(~cluster.x, scale = "free")
+dev.off()
+
+# Plot vst_transform norm deseq2 count scale between -1 and +1
+
+## Calculate the min and max vst_counts values
+min_vst_counts <- min(vst_counts_tidy$vst_counts)
+max_vst_counts <- max(vst_counts_tidy$vst_counts)
+
+## Normalize the vst_counts values between -1 and +1
+vst_counts_tidy <- vst_counts_tidy %>%
+  mutate(vst_counts_normalized = 2 * ((vst_counts - min_vst_counts) / (max_vst_counts - min_vst_counts)) - 1)
+
+pdf("output/deseq2/line_vst_cl10_scale.pdf", width=14, height=20)
+ggplot(vst_counts_tidy, aes(x = time, y = vst_counts_normalized, color = genotype, group = genotype)) +
+  geom_smooth(method = "loess", se = TRUE) +
+  facet_wrap(~cluster.x)
+dev.off()
+```
+XXX Chui al let's repeat this script my geom_line are weird and buggy. Also cannot access tsclient anymore.. !
+
+
+--> Differences are not clear, let's increase the q-value
+
