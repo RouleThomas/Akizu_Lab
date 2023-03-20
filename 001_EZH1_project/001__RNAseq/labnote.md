@@ -1916,7 +1916,7 @@ ggplot(vst_counts_tidy, aes(x = time, y = vst_counts_normalized, color = genotyp
   facet_wrap(~cluster.x)
 dev.off()
 ```
-XXX Chui al let's repeat this script my geom_line are weird and buggy. Also cannot access tsclient anymore.. !
+XXX Chui al let's repeat this script my geom_line are weird and buggy. 
 
 
 --> Differences are not clear, let's increase the q-value
