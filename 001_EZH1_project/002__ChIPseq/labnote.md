@@ -29,26 +29,27 @@ cp input/10-ESCs-EZH1-KO-2-INPUT_S8_L002_R1_001.fastq.gz input/backup/10-ESCs-EZ
 cp input/10-ESCs-EZH1-KO-2-INPUT_S8_L001_R2_001.fastq.gz input/backup/10-ESCs-EZH1-KO-2-INPUT_S8_L001_R2_001.fastq.gz
 cp input/10-ESCs-EZH1-KO-2-INPUT_S8_L002_R2_001.fastq.gz input/backup/10-ESCs-EZH1-KO-2-INPUT_S8_L002_R2_001.fastq.gz
 
-# concatenate lane XXX
+# concatenate lane 
 ## Read1 (lane1 lane2)
-cat input/10-ESCs-EZH1-KO-2-INPUT_S8_L001_R1_001.fastq.gz input/10-ESCs-EZH1-KO-2-INPUT_S8_L002_R1_001.fastq.gz > ESC_KO_input_R2_1.fq.gz
+cat input/10-ESCs-EZH1-KO-2-INPUT_S8_L001_R1_001.fastq.gz input/10-ESCs-EZH1-KO-2-INPUT_S8_L002_R1_001.fastq.gz > input/ESC_KO_input_R2_1.fq.gz
 ## Read2
-cat input/10-ESCs-EZH1-KO-2-INPUT_S8_L001_R2_001.fastq.gz input/10-ESCs-EZH1-KO-2-INPUT_S8_L002_R2_001.fastq.gz > ESC_KO_input_R2_2.fq.gz
+cat input/10-ESCs-EZH1-KO-2-INPUT_S8_L001_R2_001.fastq.gz input/10-ESCs-EZH1-KO-2-INPUT_S8_L002_R2_001.fastq.gz > input/ESC_KO_input_R2_2.fq.gz
 # fastqc
 ## Read1
-XXX fastqc input/ESC_KO_input_R2_1.fq.gz
-fastqc input/10-ESCs-EZH1-KO-2-INPUT_S8_L001_R1_001.fastq.gz
+fastqc -o output/fastqc input/ESC_KO_input_R2_1.fq.gz
+fastqc -o output/fastqc input/10-ESCs-EZH1-KO-2-INPUT_S8_L001_R1_001.fastq.gz
 ## Read2
-fastqc input/ESC_KO_input_R2_2.fq.gz
-fastqc input/10-ESCs-EZH1-KO-2-INPUT_S8_L001_R2_001.fastq.gz
+fastqc -o output/fastqc input/ESC_KO_input_R2_2.fq.gz
+fastqc -o output/fastqc input/10-ESCs-EZH1-KO-2-INPUT_S8_L001_R2_001.fastq.gz
 ```
---> The number of reads is similar in the 2 read; and reduced in one of the lane; so concatenation keep data integrity and combine all reads
+--> The number of reads is similar in the 2 (paired)-read; and reduced in one of the lane; so concatenation keep data integrity and combine all reads
 
 --> In case, backup has been performed from all files: **To be deleted after mapping (XXX)**
 
 
+## Concatenate the 2 lanes of all samples
 
-**Concatenate the 2 lanes of all samples**
+
 ```bash
 cat 10-ESCs-EZH1-KO-2-INPUT_S8_L001_R1_001.fastq 10-ESCs-EZH1-KO-2-INPUT_S8_L002_R1_001.fastq > ESC_KO_input_R2_1
 cat 10-ESCs-EZH1-KO-2-INPUT_S8_L001_R2_001.fastq 10-ESCs-EZH1-KO-2-INPUT_S8_L002_R2_001.fastq > ESC_KO_input_R2_2
