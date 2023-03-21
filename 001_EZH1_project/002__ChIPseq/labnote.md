@@ -42,14 +42,10 @@ fastqc -o output/fastqc input/10-ESCs-EZH1-KO-2-INPUT_S8_L001_R1_001.fastq.gz
 fastqc -o output/fastqc input/ESC_KO_input_R2_2.fq.gz
 fastqc -o output/fastqc input/10-ESCs-EZH1-KO-2-INPUT_S8_L001_R2_001.fastq.gz
 ```
---> The number of reads is similar in the 2 (paired)-read; and reduced in one of the lane; so concatenation keep data integrity and combine all reads
-
---> In case, backup has been performed from all files: **To be deleted after mapping (XXX)**
+--> The number of reads is similar in the 2 (paired)-read; and reduced/2 when looking at only 1 of the 2 lanes; so concatenation keep data integrity and combine all reads. Just in case, backup has been performed from all files: **To be deleted after mapping (XXX)**
 
 
 ## Concatenate the 2 lanes of all samples
-
-
 ```bash
 cat 10-ESCs-EZH1-KO-2-INPUT_S8_L001_R1_001.fastq 10-ESCs-EZH1-KO-2-INPUT_S8_L002_R1_001.fastq > ESC_KO_input_R2_1
 cat 10-ESCs-EZH1-KO-2-INPUT_S8_L001_R2_001.fastq 10-ESCs-EZH1-KO-2-INPUT_S8_L002_R2_001.fastq > ESC_KO_input_R2_2

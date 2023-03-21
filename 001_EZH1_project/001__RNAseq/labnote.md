@@ -2019,7 +2019,7 @@ row_dist <- dist(vst_counts_matrix_sig_ordered, method = "euclidean")
 row_hclust <- hclust(row_dist, method = "complete")
 
 ## Cut the tree into 10 clusters
-row_clusters <- cutree(row_hclust, k = 20)                   # !!! Here change tree nb accordingly !!!
+row_clusters <- cutree(row_hclust, k = 50)                   # !!! Here change tree nb accordingly !!!
 
 ## Create a data frame with gene names and their corresponding clusters
 cluster_gene <- data.frame(gene = rownames(vst_counts_matrix_sig_ordered),
@@ -2037,7 +2037,7 @@ vst_counts_tidy$genotype <-
          c("WT", "KO", "HET"))
 
 # Plot vst_transform norm deseq2 count
-pdf("output/deseq2/line_vst_p0.001_cl20.pdf", width=14, height=20)           # !!! Here change title accordingly !!!
+pdf("output/deseq2/line_vst_p0.001_cl50.pdf", width=14, height=20)           # !!! Here change title accordingly !!!
 ggplot(vst_counts_tidy, aes(x = time, y = vst_counts, color = genotype, group = genotype)) +
   geom_smooth(method = "loess", se = TRUE) +
   facet_wrap(~cluster, scale = "free")
@@ -2048,18 +2048,19 @@ dev.off()
 ## Calculate the min and max vst_counts values
 min_vst_counts <- min(vst_counts_tidy$vst_counts)
 max_vst_counts <- max(vst_counts_tidy$vst_counts)
-
 ## Normalize the vst_counts values between -1 and +1
 vst_counts_tidy <- vst_counts_tidy %>%
   mutate(vst_counts_normalized = 2 * ((vst_counts - min_vst_counts) / (max_vst_counts - min_vst_counts)) - 1)
-
-pdf("output/deseq2/line_vst_cl10_scale.pdf", width=14, height=20)
+pdf("output/deseq2/line_vst_p0.001_cl50_scale.pdf", width=14, height=20)  # !!! Here change title accordingly !!!
 ggplot(vst_counts_tidy, aes(x = time, y = vst_counts_normalized, color = genotype, group = genotype)) +
   geom_smooth(method = "loess", se = TRUE) +
-  facet_wrap(~cluster)
+  facet_wrap(~cluster)+
+  scale_y_continuous(limits = c(-1.5, 1.5))
 dev.off()
+## --> Scaling looks like shit, maybe too much samples and variability so that scaling get rid of a lot of information
 ```
 *NOTE: I only tried vst normalization but I could try rlog normalization too.*
 
---> Differences are not clear, let's increase the q-value
+--> Overall 25 clusters with a 0.001qval looks optimal (all cluster display with unique biologically relevant profile)
+
 
