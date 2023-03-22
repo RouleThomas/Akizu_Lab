@@ -62,93 +62,22 @@ sbatch scripts/concat_3.sh # 11256973
 
 # Trimming and Fastqc
 ```
-2dN_HET_H3K27me3_R1_1
-2dN_HET_H3K27me3_R1_2
-2dN_HET_H3K27me3_R2_1
-2dN_HET_H3K27me3_R2_2
-2dN_HET_input_R1_1
-2dN_HET_input_R1_2
-2dN_HET_input_R2_1
-2dN_HET_input_R2_2
-2dN_KO_H3K27me3_R1_1
-2dN_KO_H3K27me3_R1_2
-2dN_KO_H3K27me3_R2_1
-2dN_KO_H3K27me3_R2_2
-2dN_KO_input_R1_1
-2dN_KO_input_R1_2
-2dN_KO_input_R2_1
-2dN_KO_input_R2_2
-2dN_WT_H3K27me3_R1_1
-2dN_WT_H3K27me3_R1_2
-2dN_WT_H3K27me3_R2_1
-2dN_WT_H3K27me3_R2_2
-2dN_WT_input_R1_1
-2dN_WT_input_R1_2
-2dN_WT_input_R2_1
-2dN_WT_input_R2_2
-ESC_HET_H3K27me3_R1_1
-ESC_HET_H3K27me3_R1_2
-ESC_HET_H3K27me3_R2_1
-ESC_HET_H3K27me3_R2_2
-ESC_HET_input_R1_1
-ESC_HET_input_R1_2
-ESC_HET_input_R2_1
-ESC_HET_input_R2_2
-ESC_KO_H3K27me3_R1_1
-ESC_KO_H3K27me3_R1_2
-ESC_KO_H3K27me3_R2_1
-ESC_KO_H3K27me3_R2_2
-ESC_KO_input_R1_1
-ESC_KO_input_R1_2
-ESC_KO_input_R2_1
-ESC_KO_input_R2_2
-ESC_WT_H3K27me3_R1_1
-ESC_WT_H3K27me3_R1_2
-ESC_WT_H3K27me3_R2_1
-ESC_WT_H3K27me3_R2_2
-ESC_WT_H3K27me3_R3_1
-ESC_WT_H3K27me3_R3_2
-ESC_WT_input_R1_1
-ESC_WT_input_R1_2
-ESC_WT_input_R2_1
-ESC_WT_input_R2_2
-ESC_WT_input_R3_1
-ESC_WT_input_R3_2
-NPC_HET_H3K27me3_R1_1
-NPC_HET_H3K27me3_R1_2
-NPC_HET_H3K27me3_R2_1
-NPC_HET_H3K27me3_R2_2
-NPC_HET_input_R1_1
-NPC_HET_input_R1_2
-NPC_HET_input_R2_1
-NPC_HET_input_R2_2
-NPC_KO_H3K27me3_R1_1
-NPC_KO_H3K27me3_R1_2
-NPC_KO_H3K27me3_R2_1
-NPC_KO_H3K27me3_R2_2
-NPC_KO_input_R1_1
-NPC_KO_input_R1_2
-NPC_KO_input_R2_1
-NPC_KO_input_R2_2
-NPC_WT_H3K27me3_R1_1
-NPC_WT_H3K27me3_R1_2
-NPC_WT_H3K27me3_R2_1
-NPC_WT_H3K27me3_R2_2
-NPC_WT_input_R1_1
-NPC_WT_input_R1_2
-NPC_WT_input_R2_1
-NPC_WT_input_R2_2
+
+
+
 ```
 
 ## Fastqc on raw reads
 ```bash
 # example for 1 file:
-fastqc -o output/fastqc input/ESC_KO_input_R2_1.fq.gz
+fastqc -o output/fastqc input/2dN_HET_H3K27me3_R1_1.fq.gz
 
-# time per time:
-sbatch 
+# grouped:
+sbatch scripts/fastqc_1.sh # 11262560
+sbatch scripts/fastqc_2.sh # 11262458
+sbatch scripts/fastqc_3.sh # 11262515
 ```
---> Double check files 2dN_KO_input_R1 and 2dN_KO_input_R2 are not the same!
+--> Double check files 2dN_KO_input_R1 and 2dN_KO_input_R2 are not the same! XXX
 
 
 
@@ -156,13 +85,29 @@ sbatch
 
 ## Fastqc on fastp-trimmed-reads
 ### Trimming with Fastp
-XXX
+```bash
+# example for 1 file:
+fastp -i input/2dN_HET_H3K27me3_R1_1.fq.gz -I input/2dN_HET_H3K27me3_R1_2.fq.gz \
+      -o output/fastp/2dN_HET_H3K27me3_R1_1.fq.gz -O output/fastp/2dN_HET_H3K27me3_R1_2.fq.gz \
+	  -h output/fastp/2dN_HET_H3K27me3_R1 -j output/fastp/2dN_HET_H3K27me3_R1
+
+# grouped:
+sbatch fastp_ESC.sh # 11262881
+sbatch fastp_NPC.sh # 11262882
+sbatch fastp_2dN.sh # 11262874
+```
 
 ### Fastqc trimmed reads
-XXX
+Scripts adapted so that they can only start when there respective `fastp.sh` job is finish:
+```bash
+# grouped:
+sbatch --dependency=afterany:11262881 scripts/fastqc_fastp_ESC.sh # 11264158
+sbatch --dependency=afterany:11262882 scripts/fastqc_fastp_NPC.sh # 11264163
+sbatch --dependency=afterany:11262874 scripts/fastqc_fastp_2dN.sh # 11264174
+```
 
 
-
+--> Double check everythings looks good
 
 
 

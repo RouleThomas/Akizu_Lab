@@ -1925,6 +1925,7 @@ library("RColorBrewer")
 library("pheatmap")
 library("apeglm")
 library("factoextra")
+library("gridExtra")
 
 # Import files to generete the DESeq2Dataset
 ## samples ID
@@ -2080,38 +2081,38 @@ vst_counts_tidy$genotype <-
          c("WT", "KO", "HET"))
 
 # Plot vst_transform norm deseq2 count with 'loess' method
-pdf("output/deseq2/line_vst_p0.05_cl25.pdf", width=14, height=20)           # !!! Here change title accordingly !!!
+pdf("output/deseq2/line_vst_p0.05_cl20.pdf", width=14, height=20)           # !!! Here change title accordingly !!!
 ggplot(vst_counts_tidy, aes(x = time, y = vst_counts, color = genotype, group = genotype)) +
   geom_smooth(method = "loess", se = TRUE, span = 0.8) +
   facet_wrap(~cluster, scale = "free")
 dev.off()
 
 
-## Improve the style
-pdf("output/deseq2/line_vst_p0.05_cl25.pdf", width=14, height=20)           # !!! Here change title accordingly !!!
-ggplot(vst_counts_tidy, aes(x = time, y = vst_counts, color = genotype, group = genotype)) +
-  geom_jitter(position = position_jitter(width = 0.2, height = 0), alpha = 0.2, size = 1) +  # Add jittered points
-  geom_smooth(method = "loess", se = TRUE, span = 0.8) +
-  facet_wrap(~cluster, scale = "free")
 
+# Plot vst_transform norm deseq2 count with 'loess' method pretty
+
+
+## Calculate the number of genes per cluster
+genes_per_cluster <- vst_counts_tidy %>%
+  group_by(cluster) %>%
+  summarise(num_genes = n_distinct(gene))
+
+pdf("output/deseq2/line_vst_p0.05_cl25_pretty.pdf", width=20, height=14)
+ggplot(vst_counts_tidy, aes(x = time, y = vst_counts)) +
+  geom_smooth(aes(color = genotype, group = genotype), method = "loess", se = TRUE, span = 0.8) +
+  # Add mean value for each genotype at each time point
+  stat_summary(aes(color = genotype, group = genotype), fun = mean, geom = "point", shape = 18, size = 3, stroke = 1.5) +
+  # Add standard error bars around the mean points
+  stat_summary(aes(color = genotype, group = genotype), fun.data = mean_se, geom = "errorbar", width = 0.2, size = 1) +
+  # Add number of genes per cluster to the facet_wrap panels
+  geom_text(data = genes_per_cluster, aes(label = paste0("Genes: ", num_genes), x = Inf, y = Inf), hjust = 1, vjust = 1, size = 5) +
+  facet_wrap(~cluster, scale = "free", nrow = 3) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),        # Increase facet_wrap title panel text size
+    axis.title.x = element_text(size = 16)       # Increase x-axis legend text size
+  )
 dev.off()
-
-
-THIS MAY BE WEIRD, TO TRY :
-# Create the jitter plot
-jitter_plot <- ggplot(vst_counts_tidy, aes(x = time, y = vst_counts, color = genotype, group = genotype)) +
-  geom_jitter(position = position_jitter(width = 0.2, height = 0), alpha = 0.2, size = 1) +
-  facet_wrap(~cluster, scale = "free") +
-  theme(legend.position = "none")
-
-# Create the smooth plot
-smooth_plot <- ggplot(vst_counts_tidy, aes(x = time, y = vst_counts, color = genotype, group = genotype)) +
-  geom_smooth(method = "loess", se = TRUE, span = 0.8) +
-  facet_wrap(~cluster, scale = "free") +
-  theme(legend.position = "none")
-
-# Combine both plots
-combined_plot <- grid.arrange(jitter_plot, smooth_plot, ncol = 1, nrow = 2)
 
 
 
