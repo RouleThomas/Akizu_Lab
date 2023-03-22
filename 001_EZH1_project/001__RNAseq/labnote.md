@@ -1918,19 +1918,41 @@ dev.off()
 It seems that is not the best way to vizualize the data, I get trouble comparing the data; instead let's use **line plots** and not heatmap.
 
 ```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+library("apeglm")
+library("factoextra")
+
 # Import files to generete the DESeq2Dataset
-#######
-## Import counts_all and transform to matrx
-counts_all <- read_csv("output/deseq2/counts_all.txt") 
-## Transform merged_data into a matrix
-### Function to transform tibble into matrix
+## samples ID
+samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
+   "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3",
+   "2dN_HET_R1", "2dN_HET_R2", "2dN_HET_R3",
+   "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", "8wN_KO_R1",
+   "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4", "8wN_HET_R1", "8wN_HET_R2",
+   "8wN_HET_R3", "8wN_HET_R4",
+   "ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3",
+   "ESC_KO_R1", "ESC_KO_R2", "ESC_KO_R3",
+   "ESC_HET_R1", "ESC_HET_R2", "ESC_HET_R3",
+   "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+   "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3",
+   "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3")
+## Import counts_all and transform to matrix
+counts_all <- read_csv("output/deseq2/counts_all.txt") %>% 
+  select(-1)
+
+### Transform merged_data into a matrix
+#### Function to transform tibble into matrix
 make_matrix <- function(df,rownames = NULL){
   my_matrix <-  as.matrix(df)
   if(!is.null(rownames))
     rownames(my_matrix) = rownames
   my_matrix
 }
-### execute function
+#### execute function
 counts_all_matrix = make_matrix(select(counts_all, -Geneid), pull(counts_all, Geneid)) 
 
 ## Create colData file that describe all our samples
@@ -1958,10 +1980,7 @@ resTC <- results(ddsTC)
 
 
 # Normalize the counts
-#######
-
-
-# Normalized counts with deseq2 and tidy it
+## Normalized counts with deseq2 and tidy it
 normalized_counts <- as_tibble(counts(ddsTC, normalized = TRUE), rownames = "gene") %>%
   gather(key = "sample", value = "norm_counts", -gene) %>%
   separate(sample, into = c("time", "genotype", "replicate"), sep = "_")
@@ -1982,18 +2001,11 @@ rlog_counts <- rlog(ddsTC) # take 5 min
 vst_counts_matrix <- assay(vst_counts)
 rlog_counts_matrix <- assay(rlog_counts) # take ???
 
-## Isolate the signifificant genes by gene id
+## Isolate the significant genes by gene id
 signif_TC_genes = as_tibble(resTC, rownames = "gene") %>%
-  filter(padj<= 0.001) %>%               # !!! Here change qvalue accordingly !!!
+  filter(padj<= 0.05) %>%               # !!! Here change qvalue accordingly !!!
   select(gene) %>%
   unique() 
-
-# Define computationaly the optimal nb of cluster
-
-#XXX
-
-
-
 
 ## Convert into vector 
 signif_TC_genes_vector <- signif_TC_genes$gene
@@ -2008,6 +2020,37 @@ ordered_columns <- c("ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3", "NPC_WT_R1", "NPC_WT
 
 vst_counts_matrix_sig_ordered <- vst_counts_matrix_sig[, ordered_columns]
 
+
+
+# Define computationaly the optimal nb of cluster
+## Transpose the matrix
+vst_counts_matrix_sig_ordered_t <- t(vst_counts_matrix_sig_ordered)
+
+## ELBOW method
+## Determine the optimal number of clusters using the elbow method
+pdf("output/deseq2/Elbow_cluster_p0.05.pdf", width=14, height=20)       
+fviz_nbclust(vst_counts_matrix_sig_ordered_t, FUNcluster = hcut, method = "wss") +
+  geom_vline(xintercept = 50, linetype = 2, color = "red") +
+  labs(subtitle = "Elbow method")
+dev.off()
+
+optimal_clusters <- 5
+### 5 is too low!!!
+
+## silhouette method
+pdf("output/deseq2/Silhouette_cluster_p0.05.pdf", width=14, height=20)       
+fviz_nbclust(vst_counts_matrix_sig_ordered_t, FUNcluster = hcut, method = "silhouette") +
+  geom_vline(xintercept = 50, linetype = 2, color = "red") +
+  labs(subtitle = "Average Silhouette method")
+dev.off()
+
+## Set the optimal number of clusters (manually based on the elbow method plot)
+optimal_clusters <- 3
+### 3 is too low!!!
+
+
+
+
 # Make a clean table with significant deseq2-TC genes
 vst_counts_tidy <- as_tibble(vst_counts_matrix_sig_ordered, rownames = "gene") %>%
   gather(key = "sample", value = "vst_counts", -gene) %>%
@@ -2019,7 +2062,7 @@ row_dist <- dist(vst_counts_matrix_sig_ordered, method = "euclidean")
 row_hclust <- hclust(row_dist, method = "complete")
 
 ## Cut the tree into 10 clusters
-row_clusters <- cutree(row_hclust, k = 50)                   # !!! Here change tree nb accordingly !!!
+row_clusters <- cutree(row_hclust, k = 25)                   # !!! Here change tree nb accordingly !!!
 
 ## Create a data frame with gene names and their corresponding clusters
 cluster_gene <- data.frame(gene = rownames(vst_counts_matrix_sig_ordered),
@@ -2036,12 +2079,44 @@ vst_counts_tidy$genotype <-
   factor(vst_counts_tidy$genotype,
          c("WT", "KO", "HET"))
 
-# Plot vst_transform norm deseq2 count
-pdf("output/deseq2/line_vst_p0.001_cl50.pdf", width=14, height=20)           # !!! Here change title accordingly !!!
+# Plot vst_transform norm deseq2 count with 'loess' method
+pdf("output/deseq2/line_vst_p0.05_cl25.pdf", width=14, height=20)           # !!! Here change title accordingly !!!
 ggplot(vst_counts_tidy, aes(x = time, y = vst_counts, color = genotype, group = genotype)) +
-  geom_smooth(method = "loess", se = TRUE) +
+  geom_smooth(method = "loess", se = TRUE, span = 0.8) +
   facet_wrap(~cluster, scale = "free")
 dev.off()
+
+
+## Improve the style
+pdf("output/deseq2/line_vst_p0.05_cl25.pdf", width=14, height=20)           # !!! Here change title accordingly !!!
+ggplot(vst_counts_tidy, aes(x = time, y = vst_counts, color = genotype, group = genotype)) +
+  geom_jitter(position = position_jitter(width = 0.2, height = 0), alpha = 0.2, size = 1) +  # Add jittered points
+  geom_smooth(method = "loess", se = TRUE, span = 0.8) +
+  facet_wrap(~cluster, scale = "free")
+
+dev.off()
+
+
+THIS MAY BE WEIRD, TO TRY :
+# Create the jitter plot
+jitter_plot <- ggplot(vst_counts_tidy, aes(x = time, y = vst_counts, color = genotype, group = genotype)) +
+  geom_jitter(position = position_jitter(width = 0.2, height = 0), alpha = 0.2, size = 1) +
+  facet_wrap(~cluster, scale = "free") +
+  theme(legend.position = "none")
+
+# Create the smooth plot
+smooth_plot <- ggplot(vst_counts_tidy, aes(x = time, y = vst_counts, color = genotype, group = genotype)) +
+  geom_smooth(method = "loess", se = TRUE, span = 0.8) +
+  facet_wrap(~cluster, scale = "free") +
+  theme(legend.position = "none")
+
+# Combine both plots
+combined_plot <- grid.arrange(jitter_plot, smooth_plot, ncol = 1, nrow = 2)
+
+
+
+
+
 
 # Plot vst_transform norm deseq2 count scale between -1 and +1
 
@@ -2058,9 +2133,16 @@ ggplot(vst_counts_tidy, aes(x = time, y = vst_counts_normalized, color = genotyp
   scale_y_continuous(limits = c(-1.5, 1.5))
 dev.off()
 ## --> Scaling looks like shit, maybe too much samples and variability so that scaling get rid of a lot of information
+
+
+
 ```
 *NOTE: I only tried vst normalization but I could try rlog normalization too.*
 
+--> I tried computationaly defined (Elbow and Silhouette method) the optimal nb of cluster but propose 3 or 5 LOL
+
 --> Overall 25 clusters with a 0.001qval looks optimal (all cluster display with unique biologically relevant profile)
 
+--> I play with the span parameter. If reduce it less 'approximate' the trend. .8 look optimal. Even though I added boxplot so that we really see where are the data
 
+--> *loess* is a good method as not linear and do not require numeric x-axis (*gam* method required it, and the code is buggy)
