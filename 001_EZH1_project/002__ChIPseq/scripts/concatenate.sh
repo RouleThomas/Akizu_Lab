@@ -84,7 +84,7 @@ cat input/3-INPUT-ESCs-H9-WT-1_S37_L001_R1_001.fastq.gz input/3-INPUT-ESCs-H9-WT
 cat input/3-INPUT-ESCs-H9-WT-1_S37_L001_R2_001.fastq.gz input/3-INPUT-ESCs-H9-WT-1_S37_L002_R2_001.fastq.gz > input/ESC_WT_input_R1_2.fq.gz
 
 cat input/4-ESCs-EZH1-KO-2-H3k27me3_S3_L001_R1_001.fastq.gz input/4-ESCs-EZH1-KO-2-H3k27me3_S3_L002_R1_001.fastq.gz > input/ESC_KO_H3K27me3_R2_1.fq.gz
-cat input/4-ESCs-EZH1-KO-2-H3k27me3_S3_L001_R1_001.fastq.gz input/4-ESCs-EZH1-KO-2-H3k27me3_S3_L002_R1_001.fastq.gz > input/ESC_KO_H3K27me3_R2_2.fq.gz
+cat input/4-ESCs-EZH1-KO-2-H3k27me3_S3_L001_R2_001.fastq.gz input/4-ESCs-EZH1-KO-2-H3k27me3_S3_L002_R2_001.fastq.gz > input/ESC_KO_H3K27me3_R2_2.fq.gz
 
 cat input/4-H3K27me3-NPCs-Het2A-2_S14_L001_R1_001.fastq.gz input/4-H3K27me3-NPCs-Het2A-2_S14_L002_R1_001.fastq.gz > input/NPC_HET_H3K27me3_R2_1.fq.gz
 cat input/4-H3K27me3-NPCs-Het2A-2_S14_L001_R2_001.fastq.gz input/4-H3K27me3-NPCs-Het2A-2_S14_L002_R2_001.fastq.gz > input/NPC_HET_H3K27me3_R2_2.fq.gz

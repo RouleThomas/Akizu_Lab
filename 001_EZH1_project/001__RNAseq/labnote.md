@@ -1832,7 +1832,7 @@ dev.off()
 
 --> p0.001 looks good
 
-### Clustering of the significant genes in Time-Course analyses across genotypes using deseq2 norm-counts
+### Clustering of the significant genes in Time-Course analyses across genotypes using deseq2 vst norm-counts
 Prepare the data, use deseq2 norm counts vst or rlog transformed (test both)
 ```R
 # Load packages
@@ -2246,6 +2246,75 @@ all_clusters_data %>%
 dev.off()
 
 
+
+
+
+## tpm counts 
+### Load tpm
+tpm_all <- read_csv("output/tpm/tpm_all.txt") %>% 
+  select(-1) #To import
+
+
+## Transform tpm tibble into matrix
+tpm_all_matrix = make_matrix(select(tpm_all, -Geneid), pull(tpm_all, Geneid)) 
+
+tpm_all_raw_tidy <- as_tibble(tpm_all_matrix, rownames = "gene") %>%
+  gather(key = "sample", value = "tpm", -gene) %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep = "_")
+
+tpm_all_raw_tidy$time <-
+  factor(tpm_all_raw_tidy$time,
+         c("ESC", "NPC", "2dN", "8wN"))
+tpm_all_raw_tidy$genotype <-
+  factor(tpm_all_raw_tidy$genotype,
+         c("WT", "KO", "HET"))
+
+## Create a function to generate data for the top 2 significant genes for a given cluster
+get_top2_genes_data <- function(cluster_number) {
+  significant_deseq2TC_genes_cluster_all <- as_tibble(resTC, rownames = "gene") %>%
+    inner_join(cluster_gene) %>%
+    filter(cluster == cluster_number) %>%
+    arrange(padj) %>%
+    select(gene, padj, cluster) %>%
+    left_join(tpm_all_raw_tidy) # here tpm
+  
+  significant_deseq2TC_genes_cluster_genes <- significant_deseq2TC_genes_cluster_all %>%
+    select(gene) %>%
+    unique() %>%
+    slice_head(n = 2)
+  
+  significant_deseq2TC_genes_cluster_all_genes <- significant_deseq2TC_genes_cluster_all %>%
+    inner_join(significant_deseq2TC_genes_cluster_genes)
+  
+  stat_significant_deseq2TC_genes <- significant_deseq2TC_genes_cluster_all_genes %>%
+    select(-replicate) %>%
+    group_by(gene, time, genotype, cluster) %>% summarise(mean = mean(tpm), median = median(tpm), SD = sd(tpm), n = n(), SE = SD / sqrt(n))
+  
+  return(stat_significant_deseq2TC_genes)
+}
+
+# Generate data for all 25 clusters
+all_clusters_data <- map_dfr(1:25, get_top2_genes_data)
+
+# Plot top 2 significant genes for each of the 25 clusters
+pdf("output/deseq2/deseq2_TC_Top2genes_AllClusters_tpm.pdf", width = 30, height = 14)
+all_clusters_data %>%
+  ggplot(., aes(x = time, y = mean, group = genotype)) +
+  geom_line(aes(color = genotype), size = 0.75) +
+  geom_errorbar(aes(ymin = mean - SE, ymax = mean + SE), width = .2) +
+  geom_point(aes(y = mean), size = .75, shape = 15) +
+  theme_bw() +
+  facet_wrap(cluster ~ gene, nrow = 3, labeller = labeller(gene = function(x) paste("Cluster", unlist(all_clusters_data[1, "cluster"]), x)), scales = "free") +
+  xlab(label = "TPM") +
+  ggtitle("Top 2 significant genes in each cluster") +
+  scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green"))
+dev.off()
+
+
+
+
+
+
 # Plot vst_transform norm deseq2 count scale between -1 and +1
 
 ## Calculate the min and max vst_counts values
@@ -2261,9 +2330,6 @@ ggplot(vst_counts_tidy, aes(x = time, y = vst_counts_normalized, color = genotyp
   scale_y_continuous(limits = c(-1.5, 1.5))
 dev.off()
 ## --> Scaling looks like shit, maybe too much samples and variability so that scaling get rid of a lot of information
-
-
-
 ```
 *NOTE: I only tried vst normalization but I could try rlog normalization too.*
 
@@ -2281,7 +2347,134 @@ Lets; try to be closer to our data and work with **TPM for clustering, and vizua
 
 
 ### Clustering of the significant genes in Time-Course analyses across genotypes using TPM
-## Generate TPM-normalized counts
+#### Generate TPM-normalized counts
+
+Use custom R script `RPKM_TPM_featurecounts.R` as follow:
+```bash
+# Rscript scripts/RPKM_TPM_featurecounts.R INPUT OUTPUT_PREFIX
+sbatch featurecounts_TPM.sh # 11318014; 11318576 ok
+# mv all output to output/tpm or rpkm folder
+mv output/featurecounts/*tpm* output/tpm/
+mv output/featurecounts/*rpkm* output/rpkm/
+```
+
+#### Clustering with TPM
+```bash
+module load R/4.2.2
+```
+
+```R
+# Import TPM reads
+## collect all samples ID
+samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
+   "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3",
+   "2dN_HET_R1", "2dN_HET_R2", "2dN_HET_R3",
+   "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", "8wN_KO_R1",
+   "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4", "8wN_HET_R1", "8wN_HET_R2",
+   "8wN_HET_R3", "8wN_HET_R4",
+   "ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3",
+   "ESC_KO_R1", "ESC_KO_R2", "ESC_KO_R3",
+   "ESC_HET_R1", "ESC_HET_R2", "ESC_HET_R3",
+   "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+   "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3",
+   "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3")
+
+## Make a loop for importing all tpm data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/tpm/", sample, "_tpm.txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>%
+    select(Geneid, starts_with("output.STAR.fastp.")) %>%
+    rename(!!sample := starts_with("output.STAR.fastp."))
+}
+
+## Merge all dataframe into a single one
+tpm_all <- reduce(sample_data, full_join, by = "Geneid")
+write.csv(tpm_all, file="output/tpm/tpm_all.txt")
+### If need to import: tpm_all <- read_csv("output/tpm/tpm_all.txt") #To import
+
+
+## Transform tpm tibble into matrix
+tpm_all_matrix = make_matrix(select(tpm_all, -Geneid), pull(tpm_all, Geneid)) 
+
+tpm_all_raw_tidy <- as_tibble(tpm_all_matrix, rownames = "gene") %>%
+  gather(key = "sample", value = "tpm", -gene) %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep = "_")
+
+tpm_all_raw_tidy$time <-
+  factor(tpm_all_raw_tidy$time,
+         c("ESC", "NPC", "2dN", "8wN"))
+tpm_all_raw_tidy$genotype <-
+  factor(tpm_all_raw_tidy$genotype,
+         c("WT", "KO", "HET"))
+
+
+## Isolate the significant genes by gene id
+signif_TC_genes = as_tibble(resTC, rownames = "gene") %>%
+  filter(padj<= 0.05) %>%               # !!! Here change qvalue accordingly !!!
+  select(gene) %>%
+  unique() 
+
+## Convert into vector 
+signif_TC_genes_vector <- signif_TC_genes$gene
+
+## Filter our matrix with the significant genes
+tpm_all_matrix_sig <- tpm_all_matrix[rownames(tpm_all_matrix) %in% signif_TC_genes_vector, ]
+
+
+## Reorder columns
+ordered_columns <- c("ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3", "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3", "2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3", "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", "ESC_KO_R1", "ESC_KO_R2", "ESC_KO_R3", "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3", "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3", "8wN_KO_R1", "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4", "ESC_HET_R1", "ESC_HET_R2", "ESC_HET_R3", "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3", "2dN_HET_R1", "2dN_HET_R2", "2dN_HET_R3", "8wN_HET_R1", "8wN_HET_R2", "8wN_HET_R3", "8wN_HET_R4")
+
+tpm_all_matrix_sig_ordered <- tpm_all_matrix_sig[, ordered_columns]
+
+
+
+# Make a clean table with significant deseq2-TC genes
+tpm_all_tidy <- as_tibble(tpm_all_matrix_sig_ordered, rownames = "gene") %>%
+  gather(key = "sample", value = "tpm", -gene) %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep = "_")
+
+
+# Obtain gene cluster ID from the heatmap
+## Perform hierarchical clustering
+row_dist <- dist(tpm_all_matrix_sig_ordered, method = "euclidean")
+row_hclust <- hclust(row_dist, method = "complete")
+
+## Cut the tree into 10 clusters
+row_clusters <- cutree(row_hclust, k = 25)                   # !!! Here change tree nb accordingly !!!
+
+## Create a data frame with gene names and their corresponding clusters
+cluster_gene <- data.frame(gene = rownames(tpm_all_matrix_sig_ordered),
+                           cluster = row_clusters)
+
+## Compil both
+tpm_all_tidy <- tpm_all_tidy %>%
+  left_join(cluster_gene, by = "gene")
+
+tpm_all_tidy$time <-
+  factor(tpm_all_tidy$time,
+         c("ESC", "NPC", "2dN", "8wN"))
+tpm_all_tidy$genotype <-
+  factor(tpm_all_tidy$genotype,
+         c("WT", "KO", "HET"))
+
+# Plot tpm count with 'loess' method
+pdf("output/deseq2/line_tpm_p0.05_cl10.pdf", width=14, height=20)           # !!! Here change title accordingly !!!
+ggplot(tpm_all_tidy, aes(x = time, y = tpm, color = genotype, group = genotype)) +
+  geom_smooth(method = "loess", se = TRUE, span = 0.8) +
+  facet_wrap(~cluster, scale = "free")
+dev.off()
+```
+
+--> The tpm clustering poorly separate the pattern. Bad method here.
+
+--> From now on, the better is to do vst-norm for clustering and present tpm values gene-per-gene
+
+Let's try rlog normalization for clustering, to see if it better represent our data (show tpm for gene verification)
+
+### Clustering of the significant genes in Time-Course analyses across genotypes using deseq2 rlog norm-counts
 
 XXX
 
+maybe smooth less the data to avoid confusing the reader?
+Or 

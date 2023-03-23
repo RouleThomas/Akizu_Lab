@@ -90,9 +90,22 @@ cat input/24-INPUT-Neurons--DID2--EZH1-KO-2_S34_L001_R2_001.fastq.gz input/24-IN
 # fastqc
 fastqc -o output/fastqc input/2dN_KO_input_R2_2.fq.gz
 ```
---> Double check files 2dN_KO_input_R1 and 2dN_KO_input_R2 are not the same! 
+--> 2dN_KO_input_R1 and 2dN_KO_input_R2 are not the same, so we're good
+
+ESC_KO_H3K27me3_R2_2 and ESC_KO_H3K27me3_R2_1 are the exact same one according to fastqc... I did `grep -rn 'ESC_KO_H3K27me3_R2' scripts` and found the cat command was wrong for ESC_KO_H3K27me3_R2_2 file. Let's regenerate ESC_KO_H3K27me3_R2_2:
+```bash
+# Copy backup
+cp input/backup/4-ESCs-EZH1-KO-2-H3k27me3_S3_L001_R2_001.fastq.gz input/
+cp input/backup/4-ESCs-EZH1-KO-2-H3k27me3_S3_L002_R2_001.fastq.gz input/
+
+# Concatenate backup
+cat input/4-ESCs-EZH1-KO-2-H3k27me3_S3_L001_R2_001.fastq.gz input/4-ESCs-EZH1-KO-2-H3k27me3_S3_L002_R2_001.fastq.gz > input/ESC_KO_H3K27me3_R2_2.fq.gz
 
 
+# fastqc
+fastqc -o output/fastqc input/ESC_KO_H3K27me3_R2_2.fq.gz
+```
+--> All good now
 
 
 
@@ -109,7 +122,12 @@ sbatch fastp_ESC.sh # 11262881 ok
 sbatch fastp_NPC.sh # 11262882 ok 
 sbatch fastp_2dN.sh # 11262874, 2dN_KO_input_R2 fail
 ```
-
+Let's repeat fastp-triming for ESC_KO_H3K27me3_R2_2:
+```bash
+fastp -i input/ESC_KO_H3K27me3_R2_1.fq.gz -I input/ESC_KO_H3K27me3_R2_2.fq.gz \
+    -o output/fastp/ESC_KO_H3K27me3_R2_1.fq.gz -O output/fastp/ESC_KO_H3K27me3_R2_2.fq.gz \
+	-h output/fastp/ESC_KO_H3K27me3_R2 -j output/fastp/ESC_KO_H3K27me3_R2
+```
 
 
 ### Fastqc trimmed reads
@@ -131,9 +149,15 @@ sbatch scripts/fastqc_fastp_2dN.sh # 11313014
 ```bash
 sbatch fastp_fastqc_2dN_KO_input_R2.sh # 11312794
 ```
+Let's repeat fastqc for fastp-triming ESC_KO_H3K27me3_R2_2 XXX:
+```bash
+fastqc -o output/fastqc/fastp output/fastp/ESC_KO_H3K27me3_R2_2.fq.gz
+```
+
+
 --> All is XXX
 
-XXX
+
 
 
 
