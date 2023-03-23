@@ -63,7 +63,7 @@ cat input/23-INPUT-Neurons--DID2--EZH1-KO-1_S33_L001_R1_001.fastq.gz input/23-IN
 cat input/23-INPUT-Neurons--DID2--EZH1-KO-1_S33_L001_R2_001.fastq.gz input/23-INPUT-Neurons--DID2--EZH1-KO-1_S33_L002_R2_001.fastq.gz > input/2dN_KO_input_R1_2.fq.gz
 
 cat input/24-INPUT-Neurons--DID2--EZH1-KO-2_S34_L001_R1_001.fastq.gz input/24-INPUT-Neurons--DID2--EZH1-KO-2_S34_L002_R1_001.fastq.gz > input/2dN_KO_input_R2_1.fq.gz
-cat input/24-INPUT-Neurons--DID2--EZH1-KO-2_S34_L001_R2_001.fastq.gz input/24-INPUT-Neurons--DID2--EZH1-KO-2_S34_L002_R2_001.fastq.gz > input/2dN_KO_input_R2_1.fq.gz
+cat input/24-INPUT-Neurons--DID2--EZH1-KO-2_S34_L001_R2_001.fastq.gz input/24-INPUT-Neurons--DID2--EZH1-KO-2_S34_L002_R2_001.fastq.gz > input/2dN_KO_input_R2_2.fq.gz
 
 cat input/2-H3K27me3-ESCs-H9-WT-2_S36_L001_R1_001.fastq.gz input/2-H3K27me3-ESCs-H9-WT-2_S36_L002_R1_001.fastq.gz > input/ESC_WT_H3K27me3_R2_1.fq.gz
 cat input/2-H3K27me3-ESCs-H9-WT-2_S36_L001_R2_001.fastq.gz input/2-H3K27me3-ESCs-H9-WT-2_S36_L002_R2_001.fastq.gz > input/ESC_WT_H3K27me3_R2_2.fq.gz

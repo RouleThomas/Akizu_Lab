@@ -1832,7 +1832,7 @@ dev.off()
 
 --> p0.001 looks good
 
-### Clustering of the significant genes in Time-Course analyses across genotypes 
+### Clustering of the significant genes in Time-Course analyses across genotypes using deseq2 norm-counts
 Prepare the data, use deseq2 norm counts vst or rlog transformed (test both)
 ```R
 # Load packages
@@ -2116,7 +2116,134 @@ dev.off()
 
 
 
+# Display some genes expression profile cluster-per-cluster
 
+## Gather the 10 first significant deseq2-TC genes of specified cluster
+significant_deseq2TC_genes_cluster_all <- as_tibble(resTC, rownames = "gene") %>%
+  inner_join(cluster_gene) %>%
+  filter(cluster == 22) %>% # !!! change cluster nb !!!
+  arrange(padj) %>%
+  select(gene,padj) %>%
+  left_join(normalized_counts) 
+
+significant_deseq2TC_genes_cluster_genes <- significant_deseq2TC_genes_cluster_all %>%
+select(gene) %>%
+unique() %>%
+slice_head(n=4)
+  
+significant_deseq2TC_genes_cluster_all_genes <- significant_deseq2TC_genes_cluster_all %>%
+  inner_join(significant_deseq2TC_genes_cluster_genes)
+
+
+## Stat
+stat_significant_deseq2TC_genes <- significant_deseq2TC_genes_cluster_all_genes %>%
+  select(-replicate) %>%
+  group_by(gene, time, genotype) %>% summarise(mean=mean(norm_counts), median= median(norm_counts), SD=sd(norm_counts), n=n(), SE=SD/sqrt(n)) 	
+
+
+
+pdf("output/deseq2/deseq2_TC_Top4genes_cluster22.pdf", width=11, height=6)  # !!! change cluster nb !!!
+stat_significant_deseq2TC_genes %>%
+  ggplot(., aes(x = time, y = mean, group = genotype)) +
+  geom_line(aes(color=genotype), size=0.75) +
+  geom_errorbar(aes(ymin = mean-SE, ymax = mean+SE), width=.2) +
+  geom_point(aes(y = mean), size = .75, shape = 15) +
+  theme_bw() +
+  facet_wrap(~gene, nrow = 1, scale = "free")  +	
+  xlab(label = "deseq2 normalized counts") +
+  ggtitle("Top 4 significant genes in cluster22") +   # !!! change cluster nb !!!
+  scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green"))
+dev.off()
+
+
+
+# Display genes expression profile for all cluster
+## Non-vst norm counts
+## Create a function to generate data for the top 2 significant genes for a given cluster
+get_top2_genes_data <- function(cluster_number) {
+  significant_deseq2TC_genes_cluster_all <- as_tibble(resTC, rownames = "gene") %>%
+    inner_join(cluster_gene) %>%
+    filter(cluster == cluster_number) %>%
+    arrange(padj) %>%
+    select(gene, padj, cluster) %>%
+    left_join(normalized_counts)
+  
+  significant_deseq2TC_genes_cluster_genes <- significant_deseq2TC_genes_cluster_all %>%
+    select(gene) %>%
+    unique() %>%
+    slice_head(n = 2)
+  
+  significant_deseq2TC_genes_cluster_all_genes <- significant_deseq2TC_genes_cluster_all %>%
+    inner_join(significant_deseq2TC_genes_cluster_genes)
+  
+  stat_significant_deseq2TC_genes <- significant_deseq2TC_genes_cluster_all_genes %>%
+    select(-replicate) %>%
+    group_by(gene, time, genotype, cluster) %>% summarise(mean = mean(norm_counts), median = median(norm_counts), SD = sd(norm_counts), n = n(), SE = SD / sqrt(n))
+  
+  return(stat_significant_deseq2TC_genes)
+}
+
+# Generate data for all 25 clusters
+all_clusters_data <- map_dfr(1:25, get_top2_genes_data)
+
+# Plot top 2 significant genes for each of the 25 clusters
+pdf("output/deseq2/deseq2_TC_Top2genes_AllClusters.pdf", width = 30, height = 14)
+all_clusters_data %>%
+  ggplot(., aes(x = time, y = mean, group = genotype)) +
+  geom_line(aes(color = genotype), size = 0.75) +
+  geom_errorbar(aes(ymin = mean - SE, ymax = mean + SE), width = .2) +
+  geom_point(aes(y = mean), size = .75, shape = 15) +
+  theme_bw() +
+  facet_wrap(cluster ~ gene, nrow = 3, labeller = labeller(gene = function(x) paste("Cluster", unlist(all_clusters_data[1, "cluster"]), x)), scales = "free") +
+  xlab(label = "deseq2 normalized counts") +
+  ggtitle("Top 2 significant genes in each cluster") +
+  scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green"))
+dev.off()
+
+
+
+
+## vst norm counts
+## Create a function to generate data for the top 2 significant genes for a given cluster
+get_top2_genes_data <- function(cluster_number) {
+  significant_deseq2TC_genes_cluster_all <- as_tibble(resTC, rownames = "gene") %>%
+    inner_join(cluster_gene) %>%
+    filter(cluster == cluster_number) %>%
+    arrange(padj) %>%
+    select(gene, padj, cluster) %>%
+    left_join(vst_counts_tidy) # here vst counts
+  
+  significant_deseq2TC_genes_cluster_genes <- significant_deseq2TC_genes_cluster_all %>%
+    select(gene) %>%
+    unique() %>%
+    slice_head(n = 2)
+  
+  significant_deseq2TC_genes_cluster_all_genes <- significant_deseq2TC_genes_cluster_all %>%
+    inner_join(significant_deseq2TC_genes_cluster_genes)
+  
+  stat_significant_deseq2TC_genes <- significant_deseq2TC_genes_cluster_all_genes %>%
+    select(-replicate) %>%
+    group_by(gene, time, genotype, cluster) %>% summarise(mean = mean(vst_counts), median = median(vst_counts), SD = sd(vst_counts), n = n(), SE = SD / sqrt(n))
+  
+  return(stat_significant_deseq2TC_genes)
+}
+
+# Generate data for all 25 clusters
+all_clusters_data <- map_dfr(1:25, get_top2_genes_data)
+
+# Plot top 2 significant genes for each of the 25 clusters
+pdf("output/deseq2/deseq2_TC_Top2genes_AllClusters_vst_counts.pdf", width = 30, height = 14)
+all_clusters_data %>%
+  ggplot(., aes(x = time, y = mean, group = genotype)) +
+  geom_line(aes(color = genotype), size = 0.75) +
+  geom_errorbar(aes(ymin = mean - SE, ymax = mean + SE), width = .2) +
+  geom_point(aes(y = mean), size = .75, shape = 15) +
+  theme_bw() +
+  facet_wrap(cluster ~ gene, nrow = 3, labeller = labeller(gene = function(x) paste("Cluster", unlist(all_clusters_data[1, "cluster"]), x)), scales = "free") +
+  xlab(label = "vst-norm deseq2 normalized counts") +
+  ggtitle("Top 2 significant genes in each cluster") +
+  scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green"))
+dev.off()
 
 
 # Plot vst_transform norm deseq2 count scale between -1 and +1
@@ -2147,3 +2274,14 @@ dev.off()
 --> I play with the span parameter. If reduce it less 'approximate' the trend. .8 look optimal. Even though I added boxplot so that we really see where are the data
 
 --> *loess* is a good method as not linear and do not require numeric x-axis (*gam* method required it, and the code is buggy)
+
+--> Looking at individual genes, we sometime do not really have the pattern show in geom_smooth. 
+
+Lets; try to be closer to our data and work with **TPM for clustering, and vizualization**
+
+
+### Clustering of the significant genes in Time-Course analyses across genotypes using TPM
+## Generate TPM-normalized counts
+
+XXX
+

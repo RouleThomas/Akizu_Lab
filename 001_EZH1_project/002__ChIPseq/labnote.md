@@ -53,8 +53,8 @@ cat input/10-ESCs-EZH1-KO-2-INPUT_S8_L001_R2_001.fastq.gz input/10-ESCs-EZH1-KO-
 
 # time per time:
 sbatch scripts/concat_1.sh # 11256971; fail with sample17, repeat it manually
-sbatch scripts/concat_2.sh # 11256972
-sbatch scripts/concat_3.sh # 11256973
+sbatch scripts/concat_2.sh # 11256972 ok
+sbatch scripts/concat_3.sh # 11256973 ok
 ```
 --> `2dN_KO_input_R2_2.fq.gz` is missing... So I look for it `grep -rn '2dN_KO_input_R2' scripts/`, mistake corrected in concat_2, and re-run manually for both 2dN_KO_input_R1 and 2dN_KO_input_R2. Will double check all is good at the fastqc step
 
@@ -73,11 +73,24 @@ sbatch scripts/concat_3.sh # 11256973
 fastqc -o output/fastqc input/2dN_HET_H3K27me3_R1_1.fq.gz
 
 # grouped:
-sbatch scripts/fastqc_1.sh # 11262560
-sbatch scripts/fastqc_2.sh # 11262458
-sbatch scripts/fastqc_3.sh # 11262515
+sbatch scripts/fastqc_1.sh # 11262560 ok 
+sbatch scripts/fastqc_2.sh # 11262458 2dN_KO_input_R2_2 fastqc fail (file was empty)
+sbatch scripts/fastqc_3.sh # 11262515 ok
 ```
---> Double check files 2dN_KO_input_R1 and 2dN_KO_input_R2 are not the same! XXX
+
+--> Re-generate the 2dN_KO_input_R2:
+```bash
+# Copy backup
+cp input/backup/24-INPUT-Neurons--DID2--EZH1-KO-2_S34_L001_R2_001.fastq.gz input/
+cp input/backup/24-INPUT-Neurons--DID2--EZH1-KO-2_S34_L002_R2_001.fastq.gz input/
+
+# Concatenate backup
+cat input/24-INPUT-Neurons--DID2--EZH1-KO-2_S34_L001_R2_001.fastq.gz input/24-INPUT-Neurons--DID2--EZH1-KO-2_S34_L002_R2_001.fastq.gz > input/2dN_KO_input_R2_2.fq.gz
+
+# fastqc
+fastqc -o output/fastqc input/2dN_KO_input_R2_2.fq.gz
+```
+--> Double check files 2dN_KO_input_R1 and 2dN_KO_input_R2 are not the same! 
 
 
 
@@ -92,23 +105,35 @@ fastp -i input/2dN_HET_H3K27me3_R1_1.fq.gz -I input/2dN_HET_H3K27me3_R1_2.fq.gz 
 	  -h output/fastp/2dN_HET_H3K27me3_R1 -j output/fastp/2dN_HET_H3K27me3_R1
 
 # grouped:
-sbatch fastp_ESC.sh # 11262881
-sbatch fastp_NPC.sh # 11262882
-sbatch fastp_2dN.sh # 11262874
+sbatch fastp_ESC.sh # 11262881 ok
+sbatch fastp_NPC.sh # 11262882 ok 
+sbatch fastp_2dN.sh # 11262874, 2dN_KO_input_R2 fail
 ```
+
+
 
 ### Fastqc trimmed reads
 Scripts adapted so that they can only start when there respective `fastp.sh` job is finish:
 ```bash
 # grouped:
-sbatch --dependency=afterany:11262881 scripts/fastqc_fastp_ESC.sh # 11264158
-sbatch --dependency=afterany:11262882 scripts/fastqc_fastp_NPC.sh # 11264163
-sbatch --dependency=afterany:11262874 scripts/fastqc_fastp_2dN.sh # 11264174
+sbatch --dependency=afterany:11262881 scripts/fastqc_fastp_ESC.sh # 11264158 ok
+sbatch --dependency=afterany:11262882 scripts/fastqc_fastp_NPC.sh # 11264163 ok
+sbatch --dependency=afterany:11262874 scripts/fastqc_fastp_2dN.sh # 11264174, 2dN_KO_input_R2
+```
+--> Fail, I took raw fastq input for fastqc, not the fastp-trim reads, script corrected and re-launch:
+```bash
+sbatch scripts/fastqc_fastp_ESC.sh # 11313011
+sbatch scripts/fastqc_fastp_NPC.sh # 11313006
+sbatch scripts/fastqc_fastp_2dN.sh # 11313014
 ```
 
+--> Re-generate the 2dN_KO_input_R2 fastp and fastqc: 
+```bash
+sbatch fastp_fastqc_2dN_KO_input_R2.sh # 11312794
+```
+--> All is XXX
 
---> Double check everythings looks good
-
+XXX
 
 
 
