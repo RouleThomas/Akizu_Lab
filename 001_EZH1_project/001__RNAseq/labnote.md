@@ -2476,7 +2476,7 @@ Let's try rlog normalization for clustering, to see if it better represent our d
 ```bash
 module load R/4.2.2
 ```
-
+The below code is clean to generate clustering plot (qvalue and number of cluster can be adjusted), vizualize them and look at invividual gene expressin (rlog counts and tpm)
 ```R
 # Load packages
 library("DESeq2")
@@ -2590,7 +2590,7 @@ rlog_counts_tidy <- as_tibble(rlog_counts_matrix_sig_ordered, rownames = "gene")
 row_dist <- dist(rlog_counts_matrix_sig_ordered, method = "euclidean")
 row_hclust <- hclust(row_dist, method = "complete")
 
-## Cut the tree into 10 clusters
+## Cut the tree into k clusters
 row_clusters <- cutree(row_hclust, k = 25)                   # !!! Here change tree nb accordingly !!!
 
 ## Create a data frame with gene names and their corresponding clusters
@@ -2611,10 +2611,6 @@ rlog_counts_tidy$genotype <-
 
 
 # Plot rlog_transform norm deseq2 count with 'loess' method pretty
-
-XXX HERE play with the span and check tpm after
-
-
 ## Calculate the number of genes per cluster
 genes_per_cluster <- rlog_counts_tidy %>%
   group_by(cluster) %>%
@@ -2637,6 +2633,63 @@ ggplot(rlog_counts_tidy, aes(x = time, y = rlog_counts)) +
   )
 dev.off()
 
+# Plot rlog_transform norm deseq2 count with 'loess' method pretty with a light transparent color
+# Calculate the mean expression for each gene at each time point
+mean_rlog_counts_tidy <- rlog_counts_tidy %>%
+  group_by(gene, time, genotype, cluster) %>%
+  summarise(mean_rlog_counts = mean(rlog_counts)) %>%
+  ungroup()
+
+genes_per_cluster <- rlog_counts_tidy %>%
+  group_by(cluster) %>%
+  summarise(num_genes = n_distinct(gene))
+
+pdf("output/deseq2/line_rlog_p0.05_cl25_pretty_span08_genes_bg.pdf", width=20, height=14)
+ggplot(mean_rlog_counts_tidy, aes(x = time, y = mean_rlog_counts)) +
+  geom_line(aes(color = genotype, group = interaction(gene, genotype)), alpha = 0.1) +
+  geom_smooth(aes(color = genotype, group = genotype), method = "loess", se = TRUE, span = 0.8) +
+  stat_summary(aes(color = genotype, group = genotype), fun = mean, geom = "point", shape = 18, size = 3, stroke = 1.5) +
+  stat_summary(aes(color = genotype, group = genotype), fun.data = mean_se, geom = "errorbar", width = 0.2, size = 1) +
+  geom_text(data = genes_per_cluster, aes(label = paste0("Genes: ", num_genes), x = Inf, y = Inf), hjust = 1, vjust = 1, size = 5) +
+  facet_wrap(~cluster, scale = "free", nrow = 3) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),
+    axis.title.x = element_text(size = 16)
+  )
+dev.off()
+
+
+
+# Plot TPM count with 'loess' method pretty
+
+# Calculate the mean expression for each gene at each time point
+mean_tpm_all_raw_tidy <- tpm_all_raw_tidy %>%
+  inner_join(cluster_gene, by = "gene") %>%
+  group_by(gene, time, genotype, cluster) %>%
+  summarise(mean_tpm = mean(tpm)) %>%
+  ungroup()
+
+genes_per_cluster <- tpm_all_raw_tidy %>%
+  inner_join(cluster_gene, by = "gene") %>%
+  group_by(cluster) %>%
+  summarise(num_genes = n_distinct(gene))
+
+pdf("output/deseq2/line_rlog_p0.05_cl25_pretty_span08_genes_bg_tpm.pdf", width=20, height=14)
+ggplot(mean_tpm_all_raw_tidy, aes(x = time, y = mean_tpm)) +
+  geom_line(aes(color = genotype, group = interaction(gene, genotype)), alpha = 0.1) +
+  geom_smooth(aes(color = genotype, group = genotype), method = "loess", se = TRUE, span = 0.8) +
+  stat_summary(aes(color = genotype, group = genotype), fun = mean, geom = "point", shape = 18, size = 3, stroke = 1.5) +
+  stat_summary(aes(color = genotype, group = genotype), fun.data = mean_se, geom = "errorbar", width = 0.2, size = 1) +
+  geom_text(data = genes_per_cluster, aes(label = paste0("Genes: ", num_genes), x = Inf, y = Inf), hjust = 1, vjust = 1, size = 5) +
+  facet_wrap(~cluster, scale = "free", nrow = 3) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),
+    axis.title.x = element_text(size = 16)
+  )
+dev.off()
+
 
 
 # Display some genes expression profile cluster-per-cluster
@@ -2644,10 +2697,10 @@ dev.off()
 ## Gather the 10 first significant deseq2-TC genes of specified cluster
 significant_deseq2TC_genes_cluster_all <- as_tibble(resTC, rownames = "gene") %>%
   inner_join(cluster_gene) %>%
-  filter(cluster == 25) %>% # !!! change cluster nb !!!
+  filter(cluster == 4) %>% # !!! change cluster nb !!!
   arrange(padj) %>%
   select(gene,padj) %>%
-  left_join(normalized_counts) 
+  left_join(rlog_counts_tidy) 
 
 significant_deseq2TC_genes_cluster_genes <- significant_deseq2TC_genes_cluster_all %>%
 select(gene) %>%
@@ -2665,7 +2718,7 @@ stat_significant_deseq2TC_genes <- significant_deseq2TC_genes_cluster_all_genes 
 
 
 
-pdf("output/deseq2/deseq2_TC_Top4genes_cluster22_rlog.pdf", width=11, height=6)  # !!! change cluster nb !!!
+pdf("output/deseq2/deseq2_TC_Top4genes_cluster4_rlog.pdf", width=11, height=6)  # !!! change cluster nb !!!
 stat_significant_deseq2TC_genes %>%
   ggplot(., aes(x = time, y = mean, group = genotype)) +
   geom_line(aes(color=genotype), size=0.75) +
@@ -2674,7 +2727,7 @@ stat_significant_deseq2TC_genes %>%
   theme_bw() +
   facet_wrap(~gene, nrow = 1, scale = "free")  +	
   xlab(label = "deseq2 normalized counts") +
-  ggtitle("Top 4 significant genes in cluster22_rlog") +   # !!! change cluster nb !!!
+  ggtitle("Top 4 significant genes in cluster4_rlog") +   # !!! change cluster nb !!!
   scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green"))
 dev.off()
 
@@ -2725,14 +2778,70 @@ dev.off()
 
 
 
-TPM plot XXX
+
+
+## repersent tpm counts 
+### Load tpm
+tpm_all <- read_csv("output/tpm/tpm_all.txt") %>% 
+  select(-1) #To import
+
+
+## Transform tpm tibble into matrix
+tpm_all_matrix = make_matrix(select(tpm_all, -Geneid), pull(tpm_all, Geneid)) 
+
+tpm_all_raw_tidy <- as_tibble(tpm_all_matrix, rownames = "gene") %>%
+  gather(key = "sample", value = "tpm", -gene) %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep = "_")
 
 
 
+tpm_all_raw_tidy$time <-
+  factor(tpm_all_raw_tidy$time,
+         c("ESC", "NPC", "2dN", "8wN"))
+tpm_all_raw_tidy$genotype <-
+  factor(tpm_all_raw_tidy$genotype,
+         c("WT", "KO", "HET"))
 
+## Create a function to generate data for the top 2 significant genes for a given cluster
+get_top2_genes_data <- function(cluster_number) {
+  significant_deseq2TC_genes_cluster_all <- as_tibble(resTC, rownames = "gene") %>%
+    inner_join(cluster_gene) %>%
+    filter(cluster == cluster_number) %>%
+    arrange(padj) %>%
+    select(gene, padj, cluster) %>%
+    left_join(tpm_all_raw_tidy) # here tpm
+  
+  significant_deseq2TC_genes_cluster_genes <- significant_deseq2TC_genes_cluster_all %>%
+    select(gene) %>%
+    unique() %>%
+    slice_head(n = 2)
+  
+  significant_deseq2TC_genes_cluster_all_genes <- significant_deseq2TC_genes_cluster_all %>%
+    inner_join(significant_deseq2TC_genes_cluster_genes)
+  
+  stat_significant_deseq2TC_genes <- significant_deseq2TC_genes_cluster_all_genes %>%
+    select(-replicate) %>%
+    group_by(gene, time, genotype, cluster) %>% summarise(mean = mean(tpm), median = median(tpm), SD = sd(tpm), n = n(), SE = SD / sqrt(n))
+  
+  return(stat_significant_deseq2TC_genes)
+}
 
+# Generate data for all 25 clusters
+all_clusters_data <- map_dfr(1:25, get_top2_genes_data)
 
-
-
-
+# Plot top 2 significant genes for each of the 25 clusters
+pdf("output/deseq2/deseq2_TC_Top2genes_AllClusters_tpm_rlog.pdf", width = 30, height = 14)
+all_clusters_data %>%
+  ggplot(., aes(x = time, y = mean, group = genotype)) +
+  geom_line(aes(color = genotype), size = 0.75) +
+  geom_errorbar(aes(ymin = mean - SE, ymax = mean + SE), width = .2) +
+  geom_point(aes(y = mean), size = .75, shape = 15) +
+  theme_bw() +
+  facet_wrap(cluster ~ gene, nrow = 3, labeller = labeller(gene = function(x) paste("Cluster", unlist(all_clusters_data[1, "cluster"]), x)), scales = "free") +
+  xlab(label = "TPM") +
+  ggtitle("Top 2 significant genes in each cluster") +
+  scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green"))
+dev.off()
 ```
+
+

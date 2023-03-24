@@ -162,7 +162,7 @@ fastqc -o output/fastqc/fastp output/fastp/ESC_KO_H3K27me3_R2_1.fq.gz # ok
 
 
 
-# Mapping GRCh38 
+# Mapping GRCh38
 ## Install and setup pre-requisets
 **Download and install Bowtie2**
 Create a **Bowtie2; conda environment** 
@@ -179,93 +179,46 @@ cd /scr1/users/roulet/Akizu_Lab/Master/meta
 bowtie2-build GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta bowtie2_genome_dir/GRCh38
 
 # run into
-sbatch bowtie2_index.sh # 11351555
+sbatch bowtie2_index.sh # 11351555 ok (~3 hours)
 ```
-XXX
 
-**Picard** to mark dupplicates
+**Picard and samtools**
 ```bash
-git clone https://github.com/broadinstitute/picard.git
-cd picard/
-./gradlew shadowJar
-java -jar Software/picard/build/libs/picard.jar # Comand to use to launch Picard
+module load picard/2.26.10-Java-15
+module load sam-bcf-tools/1.6
 ```
 
+## Mapping
+### Test on 1 sample
+Let's map 2dN_HET_H3K27me3_R1, let's run command per command in interactive for light test of the script
+```bash
+bowtie2 --phred33 -q \
+	-x ../../Master/meta/bowtie2_genome_dir/GRCh38 \
+        -S output/bowtie2/2dN_HET_H3K27me3_R1.sam \
+        -1 output/fastp/2dN_HET_H3K27me3_R1_1.fq.gz  \
+        -2 output/fastp/2dN_HET_H3K27me3_R1_2.fq.gz | \ # here we stream the sam output directly to samtools to avoid creating the file
+samtools view -Sb - | \
+samtools sort -o output/bowtie2/2dN_HET_H3K27me3_R1.bam
+```
+--> It seems to work but it last forever so I am not sure, double check log files!
 
+### Mapping on all samples
+Bowtie2 parameters:
+Run all mapping (sam > sort sam and generate bam > removing of dupplicates with picard > bam indexation). Parameters (I keep the same as Shuo):
+- `--local` does not require that the entire read align from one end to the other (I was not using this)
+- `--no-mixed` Do NOT align read if the read pair do not align (I was not using this)
+- `--no-unal` To save space: Suppress SAM records for reads that failed to align. (I was not using this)
+- `--dovetail` To allow reads to align even if they overlap (I was not using this)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+Samtools parameters:
+- `-f 0x2` only includes properly paired reads (I was using `-F 772` to exclude unmapped reads, secondary alignments, and reads failing quality checks)
+- `-q 20` (I was using 30)
 
 ```bash
-#!/bin/bash
-#SBATCH --mail-user=roule@upenn.edu
-#SBATCH --mail-type=ALL
-#SBATCH --mem=20G
-#SBATCH --nodelist=node03
-
-
-nthreads=3
-PICARD_PATH="../GreenScreen/Software/picard/build/libs"
-GENOME_PATH="../GreenScreen/rice/GreenscreenProject/meta/genome/bowtie2_genome_dir/IRGSP"
-module load samtools/1.15
-module load bowtie2/2.4.5
-
-
-
-# create output directory
-mkdir -p mapped/chip
-
-input_list=("EMF2_Rep1" "EMF2_Rep2")
-
-
-for x in "${input_list[@]}"; do
-    # run bowtie2
-    bowtie2  --phred33 -q \
-	-x ${GENOME_PATH} \
-        -S mapped/chip/${x}.sam \
-        -1 fastq/trimmed/${x}_1.trimmed_paired.fastq.gz \
-        -2 fastq/trimmed/${x}_2.trimmed_paired.fastq.gz
-    # sort the reads
-    samtools sort -o mapped/chip/${x}.bam \
-        mapped/chip/${x}.sam
-    # index the bam file
-    samtools index mapped/chip/${x}.bam
-    # remove reads without MAPQ>=30
-    samtools view -@ ${nthreads} -F 772 -q 30 \
-        -b mapped/chip/${x}.bam \
-	chr01 chr02 chr03 chr04 chr05 chr06 chr07 chr08 chr09 chr10 chr11 chr12 | \
-        samtools sort -o mapped/chip/${x}.filter.bam
-    # index filtered reads
-    samtools index mapped/chip/${x}.filter.bam
-    # mark duplicates with picard
-    java -jar ${PICARD_PATH}/picard.jar MarkDuplicates \
-        -I mapped/chip/${x}.filter.bam \
-        -O mapped/chip/${x}.dupmark.bam \
-        -M mapped/chip/${x}.dup.qc \
-        -VALIDATION_STRINGENCY LENIENT \
-        -REMOVE_DUPLICATES false \
-	-ASSUME_SORTED true
-    # sort reads after marking the duplicates
-    samtools sort -o mapped/chip/${x}.dupmark.sorted.bam \
-        mapped/chip/${x}.dupmark.bam
-    # index the sorted reads
-    samtools index mapped/chip/${x}.dupmark.sorted.bam
-done
+sbatch bowtie2_map_ESC.sh # 11367976
+sbatch bowtie2_map_NPC.sh # 11367975
+sbatch bowtie2_map_2dN.sh # 11367985
 ```
-
-
-
 
 
 
