@@ -51,9 +51,16 @@ sbatch rename_raw.sh # 11452878 ok
 
 Script from [EpiCypher](https://www.epicypher.com/products/nucleosomes/snap-cutana-k-metstat-panel) with quality control check has been modified to work with zipped fastq files and adapted to my specific nomenclature; also now specified samples analyzed...
 ```bash
-sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript.sh # 11454380
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript.sh # 11454380, for 8wN_HET_IGG_R1 8wN_HET_H3K27me3_R1 8wN_HET_IGG_R2 8wN_HET_H3K27me3_R2 8wN_KO_IGG_R1 only; launch other job for the rest of the samples:
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_1.sh # 11459027
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_2.sh # 11459026
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_3.sh # 11459025
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_4.sh # 11459024
 ```
-Then use the xlsx file from [EpiCypher](https://www.epicypher.com/products/nucleosomes/snap-cutana-k-metstat-panel) to generate quality control plot.
+
+Then look at the xlsx file from [EpiCypher](https://www.epicypher.com/products/nucleosomes/snap-cutana-k-metstat-panel) to generate quality control plot. Use Rstudio in CHOP cluster for vizualization (file is `spikein_QC.xlsx` in Google Drive)
+
+--> Spike in control analyses show that XXX
 
 
 # Fastp trimming and fastqc
@@ -75,8 +82,15 @@ sbatch scripts/fastp_patient.sh # 11454699
 
 ## Fastqc on clean reads
 ```bash
-sbatch scripts/fastqc_fastp_WT.sh # 
-sbatch scripts/fastqc_fastp_HET.sh # 
-sbatch scripts/fastqc_fastp_KO.sh # 
-sbatch scripts/fastqc_fastp_patient.sh # 
+sbatch scripts/fastqc_fastp_WT.sh # 11456187
+sbatch scripts/fastqc_fastp_HET.sh # 11456189
+sbatch scripts/fastqc_fastp_KO.sh # 11456188
+sbatch scripts/fastqc_fastp_patient.sh # 11456186
 ```
+
+--> fastqc are XXX
+
+
+# Mapped clean reads
+
+XXX

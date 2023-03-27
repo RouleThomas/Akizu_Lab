@@ -1268,6 +1268,11 @@ library("apeglm")
 samples <- c("4wN_WT_R1", "4wN_WT_R2" ,"4wN_HET_R1", "4wN_HET_R2",
    "4wN_HET_R3" ,"4wN_HET_R4")
 
+## somthing weird with our samples, try different comparison
+samples <- c("4wN_WT_R1", "4wN_WT_R2" ,"4wN_HET_R1", "4wN_HET_R2")
+samples <- c("4wN_WT_R1", "4wN_WT_R2" ,"4wN_HET_R3" ,"4wN_HET_R4")
+samples <- c("4wN_HET_R1", "4wN_HET_R2" ,"4wN_HET_R3" ,"4wN_HET_R4")
+
 ## Make a loop for importing all featurecounts data and keep only ID and count column
 sample_data <- list()
 
@@ -1330,10 +1335,12 @@ res <- lfcShrink(dds, coef="genotype_HET_vs_WT", type="apeglm")
 
 ## Export result as 'raw_4wN_HET_vs_4wN_WT.txt'
 write.csv(res %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2/raw_4wN_HET_vs_4wN_WT.txt")
+
+write.csv(res %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2/raw_4wN_HET_R3R4_vs_4wN_WT.txt")
 ### If need to import: res <- read_csv("output/deseq2/raw_ESC_HET_vs_ESC_WT.txt") #To import
 
 ## Plot-MA
-pdf("output/deseq2/plotMA_res_4wN_HET_vs_4wN_WT.pdf", width=5, height=4)
+pdf("output/deseq2/plotMA_res_4wN_HET_R3R4_vs_4wN_WT.pdf", width=5, height=4)
 ### Identify DEGs and count them
 res_df <- res %>% as.data.frame() %>% select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE))
 n_upregulated <- sum(res_df$log2FoldChange > 0 & res_df$padj == TRUE, na.rm = TRUE)
@@ -1346,6 +1353,9 @@ text(x = max(res_df$baseMean, na.rm = TRUE) * 0.25, y = -1.75, labels = paste(n_
 dev.off()
 ```
 --> This comparison result in very few DEGs, in agreement with clustering that shows they are similar... I suspect mis-annotation and this sample is not WT but HET.
+
+--> Taking Replicate 3 and 4 for HET lead to a higher nb of DEGs. Let's check how similar are list of DEGs in 4wN vs 8wN with venn diagram in the [venn_webtool](https://www.biovenn.nl/index.php). Files for comparison is `Google Drive///output/deseq2/Table_for_comparison_4wN.xlsx`
+
 ### 8wN KO vs WT
 Take ressource
 ```bash
@@ -2464,6 +2474,34 @@ ggplot(tpm_all_tidy, aes(x = time, y = tpm, color = genotype, group = genotype))
   geom_smooth(method = "loess", se = TRUE, span = 0.8) +
   facet_wrap(~cluster, scale = "free")
 dev.off()
+
+# Plot tpm count with 'loess' method pretty
+# Calculate the mean expression for each gene at each time point
+mean_tpm_all_raw_tidy <- tpm_all_tidy %>%
+  group_by(gene, time, genotype, cluster) %>%
+  summarise(mean_tpm = mean(tpm)) %>%
+  ungroup()
+
+genes_per_cluster <- tpm_all_tidy %>%
+  group_by(cluster) %>%
+  summarise(num_genes = n_distinct(gene))
+
+pdf("output/deseq2/line_tpm_p0.05_cl25_pretty.pdf", width=20, height=14)
+ggplot(mean_tpm_all_raw_tidy, aes(x = time, y = mean_tpm)) +
+#  geom_line(aes(color = genotype, group = interaction(gene, genotype)), alpha = 0.1) +
+  geom_smooth(aes(color = genotype, group = genotype), method = "loess", se = TRUE, span = 0.8) +
+  stat_summary(aes(color = genotype, group = genotype), fun = mean, geom = "point", shape = 18, size = 3, stroke = 1.5) +
+  stat_summary(aes(color = genotype, group = genotype), fun.data = mean_se, geom = "errorbar", width = 0.2, size = 1) +
+  geom_text(data = genes_per_cluster, aes(label = paste0("Genes: ", num_genes), x = Inf, y = Inf), hjust = 1, vjust = 1, size = 5) +
+  facet_wrap(~cluster, scale = "free", nrow = 3) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),
+    axis.title.x = element_text(size = 16)
+  )
+dev.off()
+
+
 ```
 
 --> The tpm clustering poorly separate the pattern. Bad method here.
