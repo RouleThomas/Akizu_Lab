@@ -1,7 +1,8 @@
 #!/bin/bash
 #SBATCH --mail-user=roule@upenn.edu
 #SBATCH --mail-type=ALL
-#SBATCH --mem=50G
+#SBATCH --mem=75G
+#SBATCH --time=100:00:00
 
 nthreads=5
 

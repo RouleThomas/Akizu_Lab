@@ -2,6 +2,7 @@
 #SBATCH --mail-user=roule@upenn.edu
 #SBATCH --mail-type=ALL
 #SBATCH --mem=50G
+#SBATCH --time=100:00:00
 
 nthreads=5
 

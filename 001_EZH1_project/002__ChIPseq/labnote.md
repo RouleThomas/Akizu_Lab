@@ -153,7 +153,7 @@ sbatch scripts/fastqc_fastp_2dN.sh # 11313014 ok
 ```bash
 sbatch fastp_fastqc_2dN_KO_input_R2.sh # 11312794
 ```
-Let's repeat fastqc for fastp-triming ESC_KO_H3K27me3_R2_2 XXX:
+Let's repeat fastqc for fastp-triming ESC_KO_H3K27me3_R2_2:
 ```bash
 fastqc -o output/fastqc/fastp output/fastp/ESC_KO_H3K27me3_R2_2.fq.gz # ok
 fastqc -o output/fastqc/fastp output/fastp/ESC_KO_H3K27me3_R2_1.fq.gz # ok
@@ -215,9 +215,9 @@ Samtools parameters:
 - `-q 20` (I was using 30)
 
 ```bash
-sbatch bowtie2_map_ESC.sh # 11367976
-sbatch bowtie2_map_NPC.sh # 11367975
-sbatch bowtie2_map_2dN.sh # 11367985
+sbatch bowtie2_map_ESC.sh # 11452938
+sbatch bowtie2_map_NPC.sh # 11452939
+sbatch bowtie2_map_2dN.sh # 11452937
 ```
 
 
