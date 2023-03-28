@@ -58,9 +58,56 @@ sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_3.sh # 11459025
 sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_4.sh # 11459024
 ```
 
-Then look at the xlsx file from [EpiCypher](https://www.epicypher.com/products/nucleosomes/snap-cutana-k-metstat-panel) to generate quality control plot. Use Rstudio in CHOP cluster for vizualization (file is `spikein_QC.xlsx` in Google Drive)
+Then look at the xlsx file from [EpiCypher](https://www.epicypher.com/products/nucleosomes/snap-cutana-k-metstat-panel) to generate quality control plot. Use R cluster for vizualization (file is `spikein_QC.xlsx` in Google Drive), file in `output/spikein`.
+```R
+# package
+library(tidyverse)
+library(readxl)
+# import df
+spikein <- read_excel("output/spikein/SpikeIn_QC.xlsx")
 
---> Spike in control analyses show that XXX
+# data processing
+spikein_sum_Barcode_read <- spikein %>%
+	select(-Barcode) %>%
+  	group_by(sample_ID, Target, AB) %>% 
+	summarise(sum_read=sum(counts)) %>%
+	unique() 
+
+spikein_sum_Total_read <- spikein %>%
+	select(-Barcode, -Target) %>%
+  	group_by(sample_ID, AB) %>% 
+	summarise(total_read=sum(counts)) %>%
+	unique() 	
+
+spikein_all <- spikein_sum_Barcode_read %>%
+	left_join(spikein_sum_Total_read) %>%
+	mutate(target_norm = (sum_read/total_read)*100) %>%
+
+
+spikein_all_scale = spikein_all %>%
+  group_by(sample_ID) %>%
+  # Find the target_norm value when Target is H3K27me3 and AB is H3K27me3
+  mutate(scaling_factor = ifelse(Target == "H3K27me3" & AB == "H3K27me3", target_norm, NA)) %>%
+  # Fill the scaling_factor column with the appropriate value within each group
+  fill(scaling_factor, .direction = "downup") %>%
+  # Scale the target_norm values
+  mutate(scaled_target_norm = target_norm / scaling_factor * 100) %>%
+  # Remove the scaling_factor column
+  select(-scaling_factor) %>%
+  # Ungroup the data
+  ungroup()
+
+# Plot
+spikein_all_scale %>%
+  	ggplot(aes(x = Target, y = scaled_target_norm, fill = AB)) +
+  	geom_col(position = "dodge") +
+  	facet_wrap(~sample_ID) +
+  	geom_hline(yintercept = 20, color = "red", linetype = "longdash") +
+  	theme_bw() +
+  	theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+
+--> Spike in control analyses show that H3K27me3 is well enriched, all other Target and when using IGG showed less than 20% enrichment.
 
 
 # Fastp trimming and fastqc

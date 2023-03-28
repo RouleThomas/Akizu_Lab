@@ -202,7 +202,7 @@ samtools sort -o output/bowtie2/2dN_HET_H3K27me3_R1.bam
 ```
 --> It seems to work but it last forever so I am not sure, double check log files!
 
-### Mapping on all samples
+### Mapping on all samples with Shuo parameter
 Bowtie2 parameters:
 Run all mapping (sam > sort sam and generate bam > removing of dupplicates with picard > bam indexation). Parameters (I keep the same as Shuo):
 - `--local` does not require that the entire read align from one end to the other (I was not using this)
@@ -220,6 +220,18 @@ sbatch bowtie2_map_NPC.sh # 11452939
 sbatch bowtie2_map_2dN.sh # 11452937
 ```
 
+--> The sam files have been well generated but then it failed. Re-run script from samtools:
 
+--> Uniquely mapped reads is > 50% (which look ok according to data from [encode](https://academic.oup.com/bib/article/18/2/279/2453282))
+
+### Mapping on all samples with litterature parameter
+
+XXX
+
+
+## Samtools and read filtering with XXX parameter
+```bash
+XXX
+```
 
 
