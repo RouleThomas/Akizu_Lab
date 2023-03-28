@@ -202,6 +202,8 @@ samtools sort -o output/bowtie2/2dN_HET_H3K27me3_R1.bam
 ```
 --> It seems to work but it last forever so I am not sure, double check log files!
 
+--> Only sam file work, then it failed. 
+
 ### Mapping on all samples with Shuo parameter
 Bowtie2 parameters:
 Run all mapping (sam > sort sam and generate bam > removing of dupplicates with picard > bam indexation). Parameters (I keep the same as Shuo):
@@ -224,9 +226,22 @@ sbatch bowtie2_map_2dN.sh # 11452937 (~10hrs per sample!)
 
 --> Uniquely mapped reads is > 50% (which look ok according to data from [encode](https://academic.oup.com/bib/article/18/2/279/2453282))
 
-### Mapping on all samples with litterature parameter
+### Compare mapping efficacy using different parameters
 
-XXX
+The more uniquely mapped reads, the better. Let's compare with the `2dN_HET_H3K27me3_R1.sam` sample
+```bash
+sbatch scripts/bowtie2_2dN_HET_H3K27me3_R1_param1.sh # bowtie2 default parameter # 11472979
+sbatch scripts/bowtie2_2dN_HET_H3K27me3_R1_param2.sh # parameter fine-tuned from Shuo; less stringeant # 11472978
+```
+
+- Shuo parameter/**permissive-paired** `--phred33 -q --local --no-mixed --no-unal --dovetail`: (cannot have uniquely map paired reads)
+    - nb of uniquely mapped reads: 23071868 (51.18%)
+    - 154229070 (34.22%) >1 times
+    - 6580562 (14.6%) 0 times
+    - overall 89.18%
+- param1/**default** `--phred33 -q --no-unal`: (bowtie2 default) nb of uniquely mapped reads:
+- param2/**permissive-unpaired** `--phred33 -q --local --no-unal --dovetail `: (can have uniquely map paired reads) XXX 
+
 
 
 ## Samtools and read filtering with XXX parameter

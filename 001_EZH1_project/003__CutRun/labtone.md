@@ -135,9 +135,24 @@ sbatch scripts/fastqc_fastp_KO.sh # 11456188
 sbatch scripts/fastqc_fastp_patient.sh # 11456186
 ```
 
---> fastqc are XXX
+--> fastqc showed clean and trimmed data after fastp
 
 
 # Mapped clean reads
+Let's test 3 different mapping parameters (same as the 3 tested for the ChIP; default, permissive-paired, permissive-unpaired) on `8wN_HET_H3K27me3_R1_1.fq.gz`
 
-XXX
+```bash
+conda activate bowtie2
+
+sbatch scripts/bowtie2_8wN_HET_H3K27me3_R1_default.sh # 11473163
+sbatch scripts/bowtie2_8wN_HET_H3K27me3_R1_permissive_paired.sh # 11473165
+sbatch scripts/bowtie2_8wN_HET_H3K27me3_R1_permissive_unpaired.sh # 11473166
+```
+
+- **permissive-paired** `--phred33 -q --local --no-mixed --no-unal --dovetail`: 
+    - nb of uniquely mapped reads: 
+    - >1 times
+    - 0 times
+    - overall 
+- **default** `--phred33 -q --no-unal`: (bowtie2 default) nb of uniquely mapped reads:
+- **permissive-unpaired** `--phred33 -q --local --no-unal --dovetail `: (can have uniquely map paired reads)  

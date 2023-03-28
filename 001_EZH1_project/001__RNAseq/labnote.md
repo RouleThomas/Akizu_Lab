@@ -2883,3 +2883,252 @@ dev.off()
 ```
 
 
+## Check expression of genes involved in neuronal functionality
+
+Genes collected from this [preprint](https://www.biorxiv.org/content/10.1101/2022.06.02.490114v1.full).
+
+```R
+# Package
+library(tidyverse)
+library(rtracklayer)
+library(readxl)
+library(ggpubr)
+
+## Create table with gene ID and gene name
+### Read GTF file
+gtf_file <- "../../Master/meta/gencode.v19.annotation.gtf"
+gtf_data <- import(gtf_file)
+
+### Extract gene_id and gene_name
+gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
+gene_id <- elementMetadata(gene_data)$gene_id
+gene_name <- elementMetadata(gene_data)$gene_name
+
+### Combine gene_id and gene_name into a data frame
+gene_id_name <- data.frame(gene_id, gene_name) %>%
+  unique() %>%
+  as_tibble()
+  
+
+## import neuron-related genes 
+neurons_genes <- read_excel("output/temp/GeneList_Neural_Function.xlsx") %>%
+  inner_join(gene_id_name)
+
+
+## Plot the neuron-related genes over the time course
+### rlog counts
+
+
+neurons_genes_stat_rlog = rlog_counts_tidy %>%
+  dplyr::rename(gene_id = gene) %>%
+  inner_join(neurons_genes) %>%
+  group_by(gene_id, time, genotype, gene_name, `function`) %>%
+  summarise(mean = mean(rlog_counts), median = median(rlog_counts), SD = sd(rlog_counts), n = n(), SE = SD / sqrt(n))
+  
+neurons_genes_stat_rlog$time <-
+  factor(neurons_genes_stat_rlog$time,
+         c("ESC", "NPC", "2dN", "8wN"))
+
+
+  
+#### Plot per gene functions
+plot_nav_channels = neurons_genes_stat_rlog %>%
+  filter(`function` == "Nav Channels") %>%
+    ggplot(., aes(x = time, y = mean, group = genotype)) +
+    geom_line(aes(color = genotype), size = 0.75) +
+    geom_errorbar(aes(ymin = mean - SE, ymax = mean + SE), width = .2) +
+    geom_point(aes(y = mean), size = .75, shape = 15) +
+    theme_bw() +
+    facet_wrap(~gene_name, scales = "free", nrow = 1) +
+    ylab(label = "rlog_counts") +
+    ggtitle("Nav Channels") +
+    scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green"))
+plot_kv_channels = neurons_genes_stat_rlog %>%
+  filter(`function` == "Kv Channels") %>%
+    ggplot(., aes(x = time, y = mean, group = genotype)) +
+    geom_line(aes(color = genotype), size = 0.75) +
+    geom_errorbar(aes(ymin = mean - SE, ymax = mean + SE), width = .2) +
+    geom_point(aes(y = mean), size = .75, shape = 15) +
+    theme_bw() +
+    facet_wrap(~gene_name, scales = "free", nrow = 1) +
+    ylab(label = "rlog_counts") +
+    ggtitle("Kv Channels") +
+    scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green"))
+plot_cav_channels = neurons_genes_stat_rlog %>%
+  filter(`function` == "Cav Channels") %>%
+    ggplot(., aes(x = time, y = mean, group = genotype)) +
+    geom_line(aes(color = genotype), size = 0.75) +
+    geom_errorbar(aes(ymin = mean - SE, ymax = mean + SE), width = .2) +
+    geom_point(aes(y = mean), size = .75, shape = 15) +
+    theme_bw() +
+    facet_wrap(~gene_name, scales = "free", nrow = 1) +
+    ylab(label = "rlog_counts") +
+    ggtitle("Cav Channels") +
+    scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green"))
+plot_kcl_transporters = neurons_genes_stat_rlog %>%
+  filter(`function` == "K+/Cl- transporters") %>%
+    ggplot(., aes(x = time, y = mean, group = genotype)) +
+    geom_line(aes(color = genotype), size = 0.75) +
+    geom_errorbar(aes(ymin = mean - SE, ymax = mean + SE), width = .2) +
+    geom_point(aes(y = mean), size = .75, shape = 15) +
+    theme_bw() +
+    facet_wrap(~gene_name, scales = "free", nrow = 1) +
+    ylab(label = "rlog_counts") +
+    ggtitle("K+/Cl- transporters") +
+    scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green"))
+plot_nak_atpases = neurons_genes_stat_rlog %>%
+  filter(`function` == "Na+/K+ ATPases") %>%
+    ggplot(., aes(x = time, y = mean, group = genotype)) +
+    geom_line(aes(color = genotype), size = 0.75) +
+    geom_errorbar(aes(ymin = mean - SE, ymax = mean + SE), width = .2) +
+    geom_point(aes(y = mean), size = .75, shape = 15) +
+    theme_bw() +
+    facet_wrap(~gene_name, scales = "free", nrow = 1) +
+    ylab(label = "rlog_counts") +
+    ggtitle("Na+/K+ ATPases") +
+    scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green"))
+plot_camks_snares_pre_synaptic = neurons_genes_stat_rlog %>%
+  filter(`function` == "CaMKs SNAREs and pre-synaptic") %>%
+    ggplot(., aes(x = time, y = mean, group = genotype)) +
+    geom_line(aes(color = genotype), size = 0.75) +
+    geom_errorbar(aes(ymin = mean - SE, ymax = mean + SE), width = .2) +
+    geom_point(aes(y = mean), size = .75, shape = 15) +
+    theme_bw() +
+    facet_wrap(~gene_name, scales = "free", nrow = 2) +
+    ylab(label = "rlog_counts") +
+    ggtitle("CaMKs SNAREs and pre-synaptic") +
+    scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green"))
+plot_post_synaptic = neurons_genes_stat_rlog %>%
+  filter(`function` == "Post-synaptic") %>%
+    ggplot(., aes(x = time, y = mean, group = genotype)) +
+    geom_line(aes(color = genotype), size = 0.75) +
+    geom_errorbar(aes(ymin = mean - SE, ymax = mean + SE), width = .2) +
+    geom_point(aes(y = mean), size = .75, shape = 15) +
+    theme_bw() +
+    facet_wrap(~gene_name, scales = "free", nrow = 2) +
+    ylab(label = "rlog_counts") +
+    ggtitle("Post-synaptic") +
+    scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green"))
+plot_receptors_neurotransmitters = neurons_genes_stat_rlog %>%
+  filter(`function` == "Receptors for Neurotransmitters") %>%
+    ggplot(., aes(x = time, y = mean, group = genotype)) +
+    geom_line(aes(color = genotype), size = 0.75) +
+    geom_errorbar(aes(ymin = mean - SE, ymax = mean + SE), width = .2) +
+    geom_point(aes(y = mean), size = .75, shape = 15) +
+    theme_bw() +
+    facet_wrap(~gene_name, scales = "free", nrow = 2) +
+    ylab(label = "rlog_counts") +
+    ggtitle("Receptors for Neurotransmitters") +
+    scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green"))
+
+
+all_plots <- ggarrange(plot_nav_channels, plot_kv_channels, plot_cav_channels,
+                       plot_kcl_transporters, plot_nak_atpases, plot_camks_snares_pre_synaptic,
+                       plot_post_synaptic, plot_receptors_neurotransmitters,
+                       ncol = 1, nrow = 8)
+
+pdf("output/temp/neurons_genes.pdf", width = 11, height = 40)
+print(all_plots)
+dev.off()
+
+```
+Generate heatmap with vst counts:
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+library("apeglm")
+library("factoextra")
+library("gridExtra")
+
+# Import files to generete the DESeq2Dataset
+## samples ID
+samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
+   "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3",
+   "2dN_HET_R1", "2dN_HET_R2", "2dN_HET_R3",
+   "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", "8wN_KO_R1",
+   "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4", "8wN_HET_R1", "8wN_HET_R2",
+   "8wN_HET_R3", "8wN_HET_R4",
+   "ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3",
+   "ESC_KO_R1", "ESC_KO_R2", "ESC_KO_R3",
+   "ESC_HET_R1", "ESC_HET_R2", "ESC_HET_R3",
+   "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+   "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3",
+   "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3")
+
+samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
+   "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", 
+   "ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3",
+   "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3")
+## Import counts_all and transform to matrix
+counts_all <- read_csv("output/deseq2/counts_all.txt") %>% 
+  select(-1) %>%
+  select(Geneid, samples)
+
+### Transform merged_data into a matrix
+#### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+#### execute function
+counts_all_matrix = make_matrix(select(counts_all, -Geneid), pull(counts_all, Geneid)) 
+
+## Create colData file that describe all our samples
+### Not including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  select(-replicate) %>%
+  bind_cols(data.frame(samples))
+
+## transform df into matrix
+coldata = make_matrix(select(coldata_raw, -samples), pull(coldata_raw, samples))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet Time-Course 
+### desgin = full-model
+ddsTC <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                                colData = coldata,
+                                design = ~ genotype + time + genotype:time)
+
+### Define the reduced model (not including interaction term for comparison with full model)
+ddsTC <- DESeq(ddsTC, test="LRT", reduced = ~ genotype + time)
+
+### XXX --> Filter out the genes!!!
+
+
+#### Normalize the counts and keep the WT one only
+normalized_counts <- as_tibble(counts(ddsTC, normalized = TRUE), rownames = "gene") %>%
+  inner_join(gene_id_name) %>%
+  gather(key = "sample", value = "norm_counts", -gene) %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep = "_")
+
+normalized_counts$time <-
+  factor(normalized_counts$time,
+         c("ESC", "NPC", "2dN", "8wN"))
+
+
+# Clustering
+## transform the norm counts
+vst_counts <- vst(ddsTC)
+
+
+### vst
+sampleDists <- dist(t(assay(vst_counts)))
+sampleDistMatrix <- as.matrix(sampleDists)
+rownames(sampleDistMatrix) <- paste(rld$time, rld$genotype, rld$replicate, sep="-")
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+pdf("output/temp/heatmap_cluster_vst_neurons_genes.pdf", width=5, height=6)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows=sampleDists,
+         clustering_distance_cols=sampleDists,
+         col=colors)
+dev.off()
+```
