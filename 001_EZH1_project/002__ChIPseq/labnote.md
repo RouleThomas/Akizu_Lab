@@ -215,9 +215,9 @@ Samtools parameters:
 - `-q 20` (I was using 30)
 
 ```bash
-sbatch bowtie2_map_ESC.sh # 11452938
-sbatch bowtie2_map_NPC.sh # 11452939
-sbatch bowtie2_map_2dN.sh # 11452937
+sbatch bowtie2_map_ESC.sh # 11452938 (~10hrs per sample!)
+sbatch bowtie2_map_NPC.sh # 11452939 (~10hrs per sample!)
+sbatch bowtie2_map_2dN.sh # 11452937 (~10hrs per sample!)
 ```
 
 --> The sam files have been well generated but then it failed. Re-run script from samtools:
