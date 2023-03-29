@@ -230,8 +230,8 @@ sbatch bowtie2_map_2dN.sh # 11452937 (~10hrs per sample!)
 
 The more uniquely mapped reads, the better. Let's compare with the `2dN_HET_H3K27me3_R1.sam` sample
 ```bash
-sbatch scripts/bowtie2_2dN_HET_H3K27me3_R1_param1.sh # bowtie2 default parameter # 11472979
-sbatch scripts/bowtie2_2dN_HET_H3K27me3_R1_param2.sh # parameter fine-tuned from Shuo; less stringeant # 11472978
+sbatch scripts/bowtie2_2dN_HET_H3K27me3_R1_param1.sh # bowtie2 default parameter # 11472979 ok
+sbatch scripts/bowtie2_2dN_HET_H3K27me3_R1_param2.sh # parameter fine-tuned from Shuo; less stringeant # 11472978 ok
 ```
 
 - Shuo parameter/**permissive-paired** `--phred33 -q --local --no-mixed --no-unal --dovetail`: (cannot have uniquely map paired reads)
@@ -244,7 +244,7 @@ sbatch scripts/bowtie2_2dN_HET_H3K27me3_R1_param2.sh # parameter fine-tuned from
     - 5743226 (12.74%) >1 times
     - 6580562 (38.23%) 0 times
     - overall 92.66%
-- param2/**permissive-unpaired** `--phred33 -q --local --no-unal --dovetail `: (can have uniquely map paired reads) XXX 
+- param2/**permissive-unpaired** `--phred33 -q --local --no-unal --dovetail`: (can have uniquely map paired reads) XXX 
     - nb of uniquely mapped reads: 23071868 (51.18%)
     - 5743226 (34.22%) >1 times
     - 15429070 (12.74%) 0 times
@@ -260,6 +260,11 @@ sbatch scripts/bowtie2_2dN_HET_H3K27me3_R1_param2.sh # parameter fine-tuned from
 ```bash
 sbatch bowtie2_2dN_HET_H3K27me3_R1_endtoend.sh # 11496376
 ```
+- param2/**endtoend** `--phred33 -q --no-unal --no-mixed --dovetail`: XXX 
+    - nb of uniquely mapped reads: XXX
+    - >1 times XXX
+    - overall XXX
+
 
 Mapping for all samples re-run with **XXX** parameter:
 ```bash
@@ -270,8 +275,15 @@ XXX *NOTE: All previous mapping have been moved to `/output/tmp/` folder. Can be
 
 
 ## Samtools and read filtering with XXX parameter
+As I use `--no-mixed` the unpaired-mapped reads are already remove, so does not make sense to remove them again using -f 0x2 in samtools! Instead, let's use `-F 772` to exclude unmapped reads, secondary alignments (read that may map elsewhere), and reads failing quality checks.
+
 ```bash
-XXX
+# example for 1 file
+sbatch scripts/samtools_2dN_HET_H3K27me3_R1.sh # 11506999 ok
+
+# run job per time
+sbatch XXX # 
 ```
 
+--> The test example has worked well. Can be run for all samples once mapping is done.
 

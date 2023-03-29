@@ -3132,3 +3132,24 @@ pheatmap(sampleDistMatrix,
          col=colors)
 dev.off()
 ```
+
+# Functional analyses
+
+## Maturity state
+Here let's figure out the **maturity state of all our samples**, using 'maturity marker genes' from [EZH1 paper](https://www.medrxiv.org/content/10.1101/2022.08.09.22278430v1.full-text):
+
+**GSEA-related method from the paper**:
+- Perform DEGs from KO vs WT and HET vs WT (padj < 0.05) = *input gene list*
+- Extract ranked *cell-type-specific gene lists* from the literature (Uzquiano and Kedaigle et al.), containing the top 500 significantly enriched genes in aRG, CFuPN, and CPN scRNA clusters. These gene lists represent NSC, early-born neuron, and late-born neuron gene sets, respectively.
+- Perform GSEA using ClusterProfiler with the prepared input lists and the cell-type-specific gene sets.
+- Generate core enrichment lists based on the GSEA results.
+- Create heatmaps to visualize the expression patterns of the core enrichment lists using baseR.
+
+**Method to adapt for our purpose**:
+- Collect the *cell-type-specific gene lists* as input gene list = cluster of our tree (3 cluster)
+- Look at vst-counts for these genes for all time-course point and per genotype
+- Represent data with heatmap (3 clusters = marker genes and our sampling (ESC, NPC, 2dN,...) at the top); 1 heatmap per genotypes
+  - Do not pull replicate so that we can observed individual samples and maybe identify issue
+
+
+
