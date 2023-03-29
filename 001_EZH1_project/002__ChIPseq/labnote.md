@@ -236,11 +236,36 @@ sbatch scripts/bowtie2_2dN_HET_H3K27me3_R1_param2.sh # parameter fine-tuned from
 
 - Shuo parameter/**permissive-paired** `--phred33 -q --local --no-mixed --no-unal --dovetail`: (cannot have uniquely map paired reads)
     - nb of uniquely mapped reads: 23071868 (51.18%)
-    - 154229070 (34.22%) >1 times
+    - 154229070 (34.22%) >1 times  
     - 6580562 (14.6%) 0 times
     - overall 89.18%
 - param1/**default** `--phred33 -q --no-unal`: (bowtie2 default) nb of uniquely mapped reads:
+    - nb of uniquely mapped reads: 31938471 (70.85%)
+    - 5743226 (12.74%) >1 times
+    - 6580562 (38.23%) 0 times
+    - overall 92.66%
 - param2/**permissive-unpaired** `--phred33 -q --local --no-unal --dovetail `: (can have uniquely map paired reads) XXX 
+    - nb of uniquely mapped reads: 23071868 (51.18%)
+    - 5743226 (34.22%) >1 times
+    - 15429070 (12.74%) 0 times
+    - overall 93.43%
+
+
+--> Default is better! Better overall alignment rate, better concordant read alignment (with more uniquely mapped reads).
+
+--> Probably because end-to-end method is used and not --local, aligning the entire read, not cliped may help the alignment. And we allow mix alignment
+
+--> Let's try the following: `--phred33 -q --no-unal --no-mixed --dovetail` **endtoend**. Here it is more clean, we do not allow mix alignemnt and keep dovetail option possible.
+
+```bash
+sbatch bowtie2_2dN_HET_H3K27me3_R1_endtoend.sh # 11496376
+```
+
+Mapping for all samples re-run with **XXX** parameter:
+```bash
+XXX
+```
+XXX *NOTE: All previous mapping have been moved to `/output/tmp/` folder. Can be deleted.*
 
 
 

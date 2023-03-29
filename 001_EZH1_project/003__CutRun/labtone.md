@@ -150,9 +150,38 @@ sbatch scripts/bowtie2_8wN_HET_H3K27me3_R1_permissive_unpaired.sh # 11473166
 ```
 
 - **permissive-paired** `--phred33 -q --local --no-mixed --no-unal --dovetail`: 
-    - nb of uniquely mapped reads: 
-    - >1 times
-    - 0 times
-    - overall 
+    - nb of uniquely mapped reads: 3286178 (55.04%)
+    - >1 times: 2557545 (42.84%)
+    - overall 98.5% alignment rate
 - **default** `--phred33 -q --no-unal`: (bowtie2 default) nb of uniquely mapped reads:
+    - nb of uniquely mapped reads: 4694225 (78.62%)
+    - >1 times 1056952 (17.7%)
+    - overall 97.73% alignement rate
 - **permissive-unpaired** `--phred33 -q --local --no-unal --dovetail `: (can have uniquely map paired reads)  
+    - nb of uniquely mapped reads: 3286178 (55.04%)
+    - >1 times 2557545 (42.84%)
+    - overall 98.8% alignement rate
+
+--> Default better! Better concordant read alignment (with more uniquely mapped reads).
+
+--> As for ChIP; let's try the following: `--phred33 -q --no-unal --no-mixed --dovetail` **endtoend**.
+
+```bash
+sbatch bowtie2_2dN_HET_H3K27me3_R1_endtoend_cutrun.sh # 11496424
+```
+- **endtoend** `--phred33 -q --no-unal --no-mixed --dovetail`: 
+    - nb of uniquely mapped reads: 4697326 (78.66%)
+    - >1 times: 1059589 (17.75%)
+    - overall: 96.83%
+
+
+Mapping for all samples with **endtoend** parameter:
+
+```bash
+sbatch scripts/bowtie2_HET.sh # 11498654
+sbatch scripts/bowtie2_KO.sh # 11498655
+sbatch scripts/bowtie2_WT.sh # 11498658
+```
+
+
+
