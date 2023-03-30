@@ -261,12 +261,12 @@ sbatch scripts/bowtie2_2dN_HET_H3K27me3_R1_param2.sh # parameter fine-tuned from
 sbatch bowtie2_2dN_HET_H3K27me3_R1_endtoend.sh # 11496376
 ```
 - param2/**endtoend** `--phred33 -q --no-unal --no-mixed --dovetail`: XXX 
-    - nb of uniquely mapped reads: XXX
-    - >1 times XXX
-    - overall XXX
+    - nb of uniquely mapped reads: 31927165 (70.82%)
+    - >1 times 5761022 (12.78%)
+    - overall 85.28%
 
 
-Mapping for all samples re-run with **XXX** parameter:
+Mapping for all samples re-run with **endtoend** parameter:
 ```bash
 XXX
 ```
@@ -274,7 +274,7 @@ XXX *NOTE: All previous mapping have been moved to `/output/tmp/` folder. Can be
 
 
 
-## Samtools and read filtering with XXX parameter
+## Mapping and read filtering with endtoend parameter
 As I use `--no-mixed` the unpaired-mapped reads are already remove, so does not make sense to remove them again using -f 0x2 in samtools! Instead, let's use `-F 772` to exclude unmapped reads, secondary alignments (read that may map elsewhere), and reads failing quality checks.
 
 ```bash
@@ -282,7 +282,12 @@ As I use `--no-mixed` the unpaired-mapped reads are already remove, so does not 
 sbatch scripts/samtools_2dN_HET_H3K27me3_R1.sh # 11506999 ok
 
 # run job per time
-sbatch XXX # 
+sbatch scripts/bowtie2_samtools_2dN_1.sh # 11537670
+sbatch scripts/bowtie2_samtools_2dN_2.sh # 11537904
+sbatch scripts/bowtie2_samtools_ESC_1.sh # 11538307
+sbatch scripts/bowtie2_samtools_ESC_2.sh # 11538448
+sbatch scripts/bowtie2_samtools_NPC_1.sh # 11538814
+sbatch scripts/bowtie2_samtools_NPC_2.sh # 11538966
 ```
 
 --> The test example has worked well. Can be run for all samples once mapping is done.

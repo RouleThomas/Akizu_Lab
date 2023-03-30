@@ -178,10 +178,55 @@ sbatch bowtie2_2dN_HET_H3K27me3_R1_endtoend_cutrun.sh # 11496424
 Mapping for all samples with **endtoend** parameter:
 
 ```bash
-sbatch scripts/bowtie2_HET.sh # 11498654
-sbatch scripts/bowtie2_KO.sh # 11498655
-sbatch scripts/bowtie2_WT.sh # 11498658
+sbatch scripts/bowtie2_HET.sh # 11498654 ok
+sbatch scripts/bowtie2_KO.sh # 11498655 ok
+sbatch scripts/bowtie2_WT.sh # 11498658 ok
 ```
 
+
+
+## Quality control metrics
+Quality control plot (total read before trimming/ total read after trimming/ uniquely aligned reads)
+
+Collect nb of reads from the slurm bowtie2 jobs:
+```bash
+for file in slurm-11498654.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2/alignment_counts_11498654.txt
+
+for file in slurm-11498655.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2/alignment_counts_11498655.txt
+
+for file in slurm-11498658.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2/alignment_counts_11498658.txt
+```
+
+Add these values to `/home/roulet/001_EZH1_project/003__CutRun/mapping_QC.xlsx`\
+Then in R; see `/home/roulet/001_EZH1_project/001_EZH1_project.R`.
+
+--> Overall >75% input reads as been uniquely mapped to the genome
+
+
+
+
+# Samtools and read filtering
+
+
+```bash
+sbatch scripts/samtools_HET.sh # 11578283
+sbatch scripts/samtools_KO.sh # 11578284
+sbatch scripts/samtools_WT.sh # 11578286
+```
 
 

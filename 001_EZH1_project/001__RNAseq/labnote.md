@@ -29,7 +29,6 @@ Infos from `Method_RNAseq, DEG, volcano, GSEA, heatmap.SZ.docx`:
 
 
 # Import files from Google drive to the cluster
-##### 20230308, 20230309, 20230310
 I cannot use a bash script to import files as if disconnection the transfer will fail. So cp the old-fashion way, let computer running o/n.\
 **ESC, NPC, 2 days-neurons**
 ```bash
@@ -42,7 +41,6 @@ cp -r /home/roulet/tsclient/roule/Google\ Drive\ Streaming/Shared\ drives/akizul
 /scr1/users/roulet/Akizu_Lab/001_EZH1_Project/001__RNAseq/input
 ``` 
 # File renaiming
-##### 20230309, 20230310
 Made a custom bash script to rename each files (files are already compressed so I modified script `organize_raw.sh` to keep only renaming function). 
 ```bash
 # example for 1 file:
@@ -65,7 +63,6 @@ sbatch rename_raw_NPC.sh
 ```
 
 # Quality control with FASTQC on raw fastq
-##### 20230310
 FASTQC is not an available module. Let's download it:
 ```bash
 # Download in Master/Software/
@@ -101,7 +98,6 @@ sbatch fastqc_raw_8wN.sh # 11062009
 ```
 
 # Quality control with FASTP (trim)
-##### 20210310
 Install [fastp](https://github.com/OpenGene/fastp).
 ```bash
 # Download in Master/Software/
@@ -130,7 +126,6 @@ sbatch scripts/fastqc_fastp_1.sh # 11060976 complete
 ```
 
 # Mapping with STAR
-##### 20230310, 20230313, 20230314
 Data are unstranded.
 ## Index the genome
 *NOTE: theorically optimal size for `--sjdbOverhang` is [max read length]-1, thus need create specific index for specific read size. But the effect is marginal according to the [creator](https://github.com/alexdobin/STAR/issues/931). So let's keep it default.*
@@ -234,7 +229,6 @@ nano ~/.bashrc # add: export PATH=$PATH:/scr1/users/roulet/Akizu_Lab/Master/soft
 ```
 
 # Install Anaconda
-##### 20230313
 ```bash
 module load Python/3.9.6*
 ```
@@ -286,7 +280,6 @@ sbatch scripts/TPM_bw_8wN.sh # 11075967
 ```
 
 # Count the reads on gene feature
-##### 20230314
 Create a **featurecounts; conda environment**
 ```bash
 conda create -c bioconda -n featurecounts subread
@@ -359,7 +352,6 @@ sbatch scripts/featurecounts_4wN.sh # 11084176
 sbatch scripts/featurecounts_8wN.sh # 11084168
 ```
 # Quality control metrics
-##### 20230314
 Print number of succesfully assigned alignments for each sample (add to drive `RNAseq_infos.xlsx`)
 ```bash
 for file in output/featurecounts/*.summary; do
@@ -380,7 +372,6 @@ Then in R; see `/home/roulet/001_EZH1_project/001_EZH1_project.R`.
 --> Overall >80% input reads as been assigned to (gene) features
 
 # Install Bioconductor
-##### 20230315
 Create a **deseq2; conda environment**
 ```bash
 conda create -n deseq2 -c bioconda bioconductor-deseq2
@@ -394,7 +385,6 @@ if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 ```
 # PCA and clustering with deseq2
-##### 20230315
 *NOTE: Tons of deseq2 ressource [here](http://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html) and [here](https://f1000research.com/articles/4-1070/v2).*
 
 Open R/4.2.2 with ressource:
@@ -540,7 +530,6 @@ dev.off()
 --> Here **rld** show better clustering
 
 # DEGs with deseq2
-##### 20230315
 ## 'one-by-one' comparison
 Comparison WT vs mutant (KO or HET) for each time-points:
 - NPC KO vs WT
@@ -1658,7 +1647,6 @@ dev.off()
 ```
 --> The 4wN samples are weird, few DE, bad clustering, there may have been a sample missanotation? Let's put aside 4wN from now on
 # Time-course with deseq2
-##### 20230317
 ## ESC, NPC, 2dN, 8wN KO and HET vs WT
 Test whether there are genotype-specific differences over time (ESC, NPC, 2dN, 8wN); general trend of difference over time. 
 
@@ -3151,5 +3139,496 @@ Here let's figure out the **maturity state of all our samples**, using 'maturity
 - Represent data with heatmap (3 clusters = marker genes and our sampling (ESC, NPC, 2dN,...) at the top); 1 heatmap per genotypes
   - Do not pull replicate so that we can observed individual samples and maybe identify issue
 
+Do this in `/output/age` (transfer gene input lists)
+
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+library("apeglm")
+library("factoextra")
+library("gridExtra")
+library("readxl")
+library(rtracklayer)
+library(ggpubr)
+library(dendextend)
+
+
+# Create table with gene ID and gene name
+## Read GTF file
+gtf_file <- "../../Master/meta/gencode.v19.annotation.gtf"
+gtf_data <- import(gtf_file)
+
+## Extract gene_id and gene_name
+gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
+gene_id <- elementMetadata(gene_data)$gene_id
+gene_name <- elementMetadata(gene_data)$gene_name
+
+## Combine gene_id and gene_name into a data frame
+gene_id_name <- data.frame(gene_id, gene_name) %>%
+  unique() %>%
+  as_tibble()
+  
+# import input gene list and add gene name # !!!! CHOSE GENE LIST HERE !!!!!
+neurons_genes_maturation <- read_excel("output/age/GeneList_Neural_MaturationNeurons_FromGraciaDiazPreprint.xlsx") %>%
+  inner_join(gene_id_name) %>%
+  rename(Geneid = gene_id)
+
+neurons_genes_maturation <- read_excel("output/age/GeneList_Neural_Function_FromCiceripreprint.xlsx") %>%
+  inner_join(gene_id_name) %>%
+  rename(Geneid = gene_id)
+
+# First WT sample
+## samples ID
+samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
+   "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3",
+   "2dN_HET_R1", "2dN_HET_R2", "2dN_HET_R3",
+   "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", "8wN_KO_R1",
+   "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4", "8wN_HET_R1", "8wN_HET_R2",
+   "8wN_HET_R3", "8wN_HET_R4",
+   "ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3",
+   "ESC_KO_R1", "ESC_KO_R2", "ESC_KO_R3",
+   "ESC_HET_R1", "ESC_HET_R2", "ESC_HET_R3",
+   "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+   "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3",
+   "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3")
+
+samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
+   "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", 
+   "ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3",
+   "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3")
+
+## Import counts_all and join with the list of marker genes
+counts_all <- read_csv("output/deseq2/counts_all.txt") %>% 
+  select(-1) %>%
+  select(Geneid, samples) %>%
+  inner_join(neurons_genes_maturation) %>%
+  select(gene_name, everything(), -Geneid, -type) # put gene_name first column %>%
+
+
+### Transform merged_data into a matrix
+#### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+#### execute function
+counts_all_matrix = make_matrix(select(counts_all, -gene_name), pull(counts_all, gene_name)) 
+
+## Create colData file that describe all our samples
+### Not including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  select(-replicate, -genotype) %>%
+  bind_cols(data.frame(samples))
+
+### Including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_")%>%
+  select(-genotype) %>%
+  bind_cols(data.frame(samples))
+
+## transform df into matrix
+coldata = make_matrix(select(coldata_raw, -samples), pull(coldata_raw, samples))
+
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet Time-Course for WT only
+
+ddsWT <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                                colData = coldata,
+                                design = ~ time)
+
+
+# Run DESeq with default settings (Wald test)
+ddsWT <- DESeq(ddsWT)  # we do not use LRT model as for time course
+
+
+# vst normalization of our counts !!!! CHOSE NORMALIZATION HERE !!!!!
+ddsWT_vst <- vst(ddsWT)
+ddsWT_vst <- rlog(ddsWT) #
+
+# make into matrix
+ddsWT_vst_matrix = make_matrix(data.frame(assay(ddsWT_vst)))
+ddsWT_vst_df = data.frame(assay(ddsWT_vst))
+
+# Reorder
+col_order <- c("ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3", "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+  "X2dN_WT_R1", "X2dN_WT_R2", "X2dN_WT_R3", "X8wN_WT_R1", "X8wN_WT_R2", "X8wN_WT_R3", "X8wN_WT_R4")
+  
+ddsWT_vst_matrix_ordered <- ddsWT_vst_matrix[, col_order]
+
+
+# Raw heatmap !!!! CHOSE GENE LIST HERE !!!!!
+pdf("output/age/heatmap_GeneList_Neural_MaturationNeurons_WT_raw.pdf", width=5, height=6)
+pdf("output/age/heatmap_GeneList_Neural_Function_WT_raw.pdf", width=5, height=6) # 
+pheatmap(ddsWT_vst_matrix_ordered, cluster_rows=F, cluster_cols=F)
+dev.off()
+
+
+
+# Cluster heatmap
+## make the gene type matrix
+neurons_genes_maturation_df <- neurons_genes_maturation %>%
+  select(gene_name, type) %>%
+  as.data.frame()
+
+rownames(neurons_genes_maturation_df) <- neurons_genes_maturation_df$gene_name
+neurons_genes_maturation_df$gene_name <- NULL
+
+# Sort the rows of the heatmap based on gene types
+sorted_rows <- order(neurons_genes_maturation_df$type)
+sorted_ddsWT_vst_matrix <- ddsWT_vst_matrix[sorted_rows, ]
+sorted_neuron_genes_maturation_df <- neurons_genes_maturation_df[sorted_rows, ]
+
+# Create the annotation dataframe
+# annotation_df <- data.frame(type = sorted_neuron_genes_maturation_df$type) This shit was working at a time...
+annotation_df = data.frame(sorted_neuron_genes_maturation_df)
+
+
+
+# Reorder
+col_order <- c("ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3", "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+  "X2dN_WT_R1", "X2dN_WT_R2", "X2dN_WT_R3", "X8wN_WT_R1", "X8wN_WT_R2", "X8wN_WT_R3", "X8wN_WT_R4")
+  
+sorted_ddsWT_vst_matrix_ordered <- sorted_ddsWT_vst_matrix[, col_order]
+
+
+# Plot the sorted heatmap without dendrogram !!!! CHOSE GENE LIST HERE !!!!!
+pdf("output/age/heatmap_GeneList_Neural_MaturationNeurons_WT_cluster.pdf", width=5, height=6)
+pdf("output/age/heatmap_GeneList_Neural_Function_WT_cluster.pdf", width=5, height=6)
+pheatmap(sorted_ddsWT_vst_matrix_ordered, annotation_row = annotation_df, cluster_rows = FALSE, cluster_cols = FALSE)
+dev.off()
+
+
+# Lets display TPM
+# import input gene list and add gene name # !!!! CHOSE GENE LIST HERE !!!!!
+neurons_genes_maturation <- read_excel("output/age/GeneList_Neural_MaturationNeurons_FromGraciaDiazPreprint.xlsx") %>%
+  inner_join(gene_id_name) %>%
+  rename(Geneid = gene_id)
+
+neurons_genes_maturation <- read_excel("output/age/GeneList_Neural_Function_FromCiceripreprint.xlsx") %>%
+  inner_join(gene_id_name) %>%
+  rename(Geneid = gene_id)
+
+
+### Load tpm
+tpm_all <- read_csv("output/tpm/tpm_all.txt") %>% 
+  select(-1) %>%
+  inner_join(neurons_genes_maturation) %>%
+  select(gene_name, everything(), -Geneid, -type) %>%
+  select(gene_name, "ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3", "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+  "2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3", "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4")
+
+## Transform tpm tibble into matrix
+tpm_all_matrix = make_matrix(select(tpm_all, -gene_name), pull(tpm_all, gene_name)) 
+
+# Reorder
+col_order <- c("ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3", "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+  "2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3", "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", )
+
+  
+tpm_all_matrix_ordered <- tpm_all_matrix[, col_order]
+
+
+# Raw heatmap !!!! CHOSE GENE LIST HERE !!!!!
+pdf("output/age/heatmap_GeneList_Neural_MaturationNeurons_WT_raw_tpm.pdf", width=5, height=6)
+pdf("output/age/heatmap_GeneList_Neural_Function_WT_raw_tpm.pdf", width=5, height=6) # 
+pheatmap(tpm_all_matrix_ordered, cluster_rows=F, cluster_cols=F, color= colorRampPalette(c("red", "yellow", "green", "cyan", "blue"))(100))
+dev.off()
+
+
+
+# Cluster heatmap
+## make the gene type matrix
+neurons_genes_maturation_df <- neurons_genes_maturation %>%
+  select(gene_name, type) %>%
+  as.data.frame()
+
+rownames(neurons_genes_maturation_df) <- neurons_genes_maturation_df$gene_name
+neurons_genes_maturation_df$gene_name <- NULL
+
+# Sort the rows of the heatmap based on gene types
+sorted_rows <- order(neurons_genes_maturation_df$type)
+sorted_tpm_all_matrix <- tpm_all_matrix[sorted_rows, ]
+sorted_neuron_genes_maturation_df <- neurons_genes_maturation_df[sorted_rows, ]
+
+# Create the annotation dataframe
+# annotation_df <- data.frame(type = sorted_neuron_genes_maturation_df$type) This shit was working at a time...
+annotation_df = data.frame(sorted_neuron_genes_maturation_df)
+
+
+
+# Reorder
+col_order <- c("ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3", "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+  "2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3", "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4")
+  
+tpm_all_matrix_ordered <- tpm_all_matrix[, col_order]
+
+
+# Plot the sorted heatmap without dendrogram !!!! CHOSE GENE LIST HERE !!!!!
+pdf("output/age/heatmap_GeneList_Neural_MaturationNeurons_WT_cluster_tpm.pdf", width=5, height=6)
+pdf("output/age/heatmap_GeneList_Neural_Function_WT_cluster_tpm.pdf", width=5, height=6)
+pheatmap(tpm_all_matrix_ordered, annotation_row = annotation_df, cluster_rows = FALSE, cluster_cols = FALSE, color= colorRampPalette(c("red", "yellow", "green", "cyan", "blue"))(100))
+dev.off()
+```
+*NOTE: I used the wald model here to construct the DEseq2 table, not the LRT nested model as for the TimeCourse experiment as LRT is used to compare two nested models: the full model, which includes the interaction term (genotype:time), and the reduced model, which does not include the interaction term.*
+
+--> Using TPM is working pretty well, notably with the genes identified from Ciceri preprint. Now lets load all the tpm for all samples and see if we observe changes in transcript abundance for key marker maturity genes
+
+```R
+# Generate TPM for ALL samples
+## collect all samples ID
+samples <- c("ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3",
+                     "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+                     "2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
+                     "4wN_WT_R1", "4wN_WT_R2", "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4",
+                     "ESC_HET_R1", "ESC_HET_R2", "ESC_HET_R3",
+                     "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3",
+                     "2dN_HET_R1", "2dN_HET_R2", "2dN_HET_R3",
+                     "4wN_HET_R1", "4wN_HET_R2", "4wN_HET_R3", "4wN_HET_R4",
+                     "8wN_HET_R1", "8wN_HET_R2", "8wN_HET_R3", "8wN_HET_R4",
+                     "ESC_KO_R1", "ESC_KO_R2", "ESC_KO_R3",
+                     "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3",
+                     "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3",
+                     "4wN_KO_R1", "4wN_KO_R2", "8wN_KO_R1", "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4",
+                     "4wN_iPSCWT_R1", "4wN_iPSCWT_R2", "4wN_iPSCpatient_R1", "4wN_iPSCpatient_R2", "8wN_iPSCpatient_R1", "8wN_iPSCpatient_R2")
+
+## Make a loop for importing all tpm data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/tpm/", sample, "_tpm.txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>%
+    select(Geneid, starts_with("output.STAR.fastp.")) %>%
+    rename(!!sample := starts_with("output.STAR.fastp."))
+}
+
+## Merge all dataframe into a single one
+tpm_all_sample <- reduce(sample_data, full_join, by = "Geneid")
+write.csv(tpm_all_sample, file="output/tpm/tpm_all_sample.txt")
+### If need to import: tpm_all_sample <- read_csv("output/tpm/tpm_all_sample.txt") #To import
+
+
+# import input gene list and add gene name # !!!! CHOSE GENE LIST HERE !!!!!
+neurons_genes_maturation <- read_excel("output/age/GeneList_Neural_Function_FromCiceripreprint.xlsx") %>%
+  inner_join(gene_id_name) %>%
+  rename(Geneid = gene_id)
+
+
+tpm_all_sample_neurons = tpm_all_sample %>%
+  inner_join(neurons_genes_maturation) %>%
+  select(gene_name, everything(), -Geneid, -type)
+
+
+## Transform tpm tibble into matrix
+tpm_all_sample_neurons_matrix = make_matrix(select(tpm_all_sample_neurons, -gene_name), pull(tpm_all_sample_neurons, gene_name)) 
+
+
+
+# Raw heatmap !!!! CHOSE GENE LIST HERE !!!!!
+pdf("output/age/heatmap_GeneList_Neural_Function_WT_raw_tpm_all.pdf", width=10, height=8) # 
+pheatmap(tpm_all_sample_neurons_matrix, cluster_rows=F, cluster_cols=F, color= colorRampPalette(c("red", "yellow", "green", "cyan", "blue"))(100))
+dev.off()
+
+
+
+## Log2
+tpm_all_sample_neurons_matrix_log2 = log2(tpm_all_sample_neurons_matrix+1)
+
+
+
+# Raw heatmap 
+pdf("output/age/heatmap_GeneList_Neural_Function_WT_raw_log2tpm_all.pdf", width=10, height=8) # 
+pheatmap(tpm_all_sample_neurons_matrix_log2, cluster_rows=F, cluster_cols=F, color= colorRampPalette(c("blue", "white", "red"))(50))
+dev.off()
+
+
+
+# Represent with geom_smooth instead
+
+tpm_all_sample_neurons_tidy = as_tibble(tpm_all_sample_neurons_matrix, rownames = "gene_name") %>%
+  gather(key = "sample", value = "tpm", -gene_name) %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep = "_")
+
+
+
+tpm_all_sample_neurons_tidy$time <-
+  factor(tpm_all_sample_neurons_tidy$time,
+         c("ESC", "NPC", "2dN", "4wN", "8wN"))
+tpm_all_sample_neurons_tidy$genotype <-
+  factor(tpm_all_sample_neurons_tidy$genotype,
+         c("WT", "KO", "HET", "iPSCWT","iPSCpatient"))
+
+
+tpm_all_sample_neurons_tidy_stat = tpm_all_sample_neurons_tidy %>%
+  group_by(gene_name, time, genotype) %>%
+  summarise(mean_tpm = mean(tpm)) %>%
+  ungroup()
+
+
+pdf("output/age/line_GeneList_Neural_Function_WT_raw_tpm_all.pdf", width=20, height=14)
+ggplot(tpm_all_sample_neurons_tidy_stat, aes(x = time, y = mean_tpm)) +
+  geom_line(aes(color = genotype, group = interaction(gene_name, genotype)), alpha = 0.1) +
+  geom_smooth(aes(color = genotype, group = genotype), method = "loess", se = TRUE, span = 0.8) +
+  stat_summary(aes(color = genotype, group = genotype), fun = mean, geom = "point", shape = 18, size = 3, stroke = 1.5) +
+  stat_summary(aes(color = genotype, group = genotype), fun.data = mean_se, geom = "errorbar", width = 0.2, size = 1) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),
+    axis.title.x = element_text(size = 16)
+  )
+dev.off()
+
+pdf("output/age/line_GeneList_Neural_Function_WT_raw_tpm_all.pdf", width=20, height=14)
+ggplot(tpm_all_sample_neurons_tidy_stat, aes(x = time, y = mean_tpm)) +
+  geom_smooth(aes(color = genotype, group = genotype), method = "loess", se = TRUE, span = 0.8) +
+  stat_summary(aes(color = genotype, group = genotype), fun = mean, geom = "point", shape = 18, size = 3, stroke = 1.5) +
+  stat_summary(aes(color = genotype, group = genotype), fun.data = mean_se, geom = "errorbar", width = 0.2, size = 1) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),
+    axis.title.x = element_text(size = 16)
+  )
+dev.off()
+
+
+# LOG
+
+tpm_all_sample_neurons_tidy = as_tibble(tpm_all_sample_neurons_matrix, rownames = "gene_name") %>%
+  gather(key = "sample", value = "tpm", -gene_name) %>%
+  mutate(tpm = log2(tpm+1)) %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep = "_")
+
+
+
+tpm_all_sample_neurons_tidy$time <-
+  factor(tpm_all_sample_neurons_tidy$time,
+         c("ESC", "NPC", "2dN", "4wN", "8wN"))
+tpm_all_sample_neurons_tidy$genotype <-
+  factor(tpm_all_sample_neurons_tidy$genotype,
+         c("WT", "KO", "HET", "iPSCWT","iPSCpatient"))
+
+
+tpm_all_sample_neurons_tidy_stat = tpm_all_sample_neurons_tidy %>%
+  group_by(gene_name, time, genotype) %>%
+  summarise(mean_tpm = mean(tpm)) %>%
+  ungroup()
+
+
+pdf("output/age/line_GeneList_Neural_Function_WT_raw_log2tpm_all.pdf", width=20, height=14)
+ggplot(tpm_all_sample_neurons_tidy_stat, aes(x = time, y = mean_tpm)) +
+  geom_line(aes(color = genotype, group = interaction(gene_name, genotype)), alpha = 0.1) +
+  geom_smooth(aes(color = genotype, group = genotype), method = "loess", se = TRUE, span = 0.8) +
+  stat_summary(aes(color = genotype, group = genotype), fun = mean, geom = "point", shape = 18, size = 3, stroke = 1.5) +
+  stat_summary(aes(color = genotype, group = genotype), fun.data = mean_se, geom = "errorbar", width = 0.2, size = 1) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),
+    axis.title.x = element_text(size = 16)
+  )
+dev.off()
+
+pdf("output/age/line_GeneList_Neural_Function_WT_raw_log2tpm_all.pdf", width=20, height=14)
+ggplot(tpm_all_sample_neurons_tidy_stat, aes(x = time, y = mean_tpm)) +
+  geom_smooth(aes(color = genotype, group = genotype), method = "loess", se = TRUE, span = 0.8) +
+  stat_summary(aes(color = genotype, group = genotype), fun = mean, geom = "point", shape = 18, size = 3, stroke = 1.5) +
+  stat_summary(aes(color = genotype, group = genotype), fun.data = mean_se, geom = "errorbar", width = 0.2, size = 1) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),
+    axis.title.x = element_text(size = 16)
+  )
+dev.off()
+
+## Comparison WT vs HET replicates
+
+tpm_all_sample_neurons_tidy = as_tibble(tpm_all_sample_neurons_matrix, rownames = "gene_name") %>%
+  gather(key = "sample", value = "tpm", -gene_name) %>%
+  mutate(tpm = log2(tpm+1)) %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  filter(genotype %in% c("WT", "HET")) %>%
+  filter(!(genotype == "HET" & !(replicate %in% c("R1", "R2"))))   # !!!! Change HERE !!!! to keep replicate to show
+
+
+
+tpm_all_sample_neurons_tidy$time <-
+  factor(tpm_all_sample_neurons_tidy$time,
+         c("ESC", "NPC", "2dN", "4wN", "8wN"))
+tpm_all_sample_neurons_tidy$genotype <-
+  factor(tpm_all_sample_neurons_tidy$genotype,
+         c("WT", "KO", "HET", "iPSCWT","iPSCpatient"))
+
+
+tpm_all_sample_neurons_tidy_stat = tpm_all_sample_neurons_tidy %>%
+  group_by(gene_name, time, genotype) %>%
+  summarise(mean_tpm = mean(tpm)) %>%
+  ungroup()
+
+
+
+pdf("output/age/line_GeneList_Neural_Function_raw_log2tpm_HETR1R2.pdf", width=20, height=14) # !!!! Change HERE NAME !!!!
+ggplot(tpm_all_sample_neurons_tidy_stat, aes(x = time, y = mean_tpm)) + 
+  geom_smooth(aes(color = genotype, group = genotype), method = "loess", se = TRUE, span = 0.8) +
+  stat_summary(aes(color = genotype, group = genotype), fun = mean, geom = "point", shape = 18, size = 3, stroke = 1.5) +
+  stat_summary(aes(color = genotype, group = genotype), fun.data = mean_se, geom = "errorbar", width = 0.2, size = 1) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),
+    axis.title.x = element_text(size = 16)
+  )
+dev.off()
+
+
+
+
+## Comparison WT vs KO genotype
+
+tpm_all_sample_neurons_tidy = as_tibble(tpm_all_sample_neurons_matrix, rownames = "gene_name") %>%
+  gather(key = "sample", value = "tpm", -gene_name) %>%
+  mutate(tpm = log2(tpm+1)) %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  filter(genotype %in% c("WT", "KO")) 
+  
+
+tpm_all_sample_neurons_tidy$time <-
+  factor(tpm_all_sample_neurons_tidy$time,
+         c("ESC", "NPC", "2dN", "4wN", "8wN"))
+tpm_all_sample_neurons_tidy$genotype <-
+  factor(tpm_all_sample_neurons_tidy$genotype,
+         c("WT", "KO", "HET", "iPSCWT","iPSCpatient"))
+
+
+tpm_all_sample_neurons_tidy_stat = tpm_all_sample_neurons_tidy %>%
+  group_by(gene_name, time, genotype) %>%
+  summarise(mean_tpm = mean(tpm)) %>%
+  ungroup()
+
+
+
+pdf("output/age/line_GeneList_Neural_Function_raw_log2tpm_KO.pdf", width=20, height=14) # !!!! Change HERE NAME !!!!
+ggplot(tpm_all_sample_neurons_tidy_stat, aes(x = time, y = mean_tpm)) + 
+  geom_smooth(aes(color = genotype, group = genotype), method = "loess", se = TRUE, span = 0.8) +
+  stat_summary(aes(color = genotype, group = genotype), fun = mean, geom = "point", shape = 18, size = 3, stroke = 1.5) +
+  stat_summary(aes(color = genotype, group = genotype), fun.data = mean_se, geom = "errorbar", width = 0.2, size = 1) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),
+    axis.title.x = element_text(size = 16)
+  )
+dev.off()
+
+
+```
+
+
+--> It seems that replicate 1/2 have similar TPM as WT as 4wN, however the replicate 3/4 have lower TPM. That may explain the DEGs only observed for replicate 3/4
+
+--> We expected the KO to be less mature, and that is the case; however, the HET does not mature faster than WT, **at least when looking at these specific marker genes**
 
 
