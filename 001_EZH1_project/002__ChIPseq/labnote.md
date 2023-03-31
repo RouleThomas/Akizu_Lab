@@ -292,3 +292,4 @@ sbatch scripts/bowtie2_samtools_NPC_2.sh # 11538966
 
 --> The test example has worked well. Can be run for all samples once mapping is done.
 
+XXX Check mapping, maybe some has been cancel as too long...

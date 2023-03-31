@@ -65,6 +65,7 @@ library(tidyverse)
 library(readxl)
 # import df
 spikein <- read_excel("output/spikein/SpikeIn_QC.xlsx")
+spikein <- read_excel("output/spikein/SpikeIn_QC_update.xlsx") # slight mistake with missing values for 2 samples
 
 # data processing
 spikein_sum_Barcode_read <- spikein %>%
@@ -81,7 +82,7 @@ spikein_sum_Total_read <- spikein %>%
 
 spikein_all <- spikein_sum_Barcode_read %>%
 	left_join(spikein_sum_Total_read) %>%
-	mutate(target_norm = (sum_read/total_read)*100) %>%
+	mutate(target_norm = (sum_read/total_read)*100)
 
 
 spikein_all_scale = spikein_all %>%
@@ -98,6 +99,7 @@ spikein_all_scale = spikein_all %>%
   ungroup()
 
 # Plot
+pdf("output/spikein/QC_histone_spike_in.pdf", width = 10, height = 8)
 spikein_all_scale %>%
   	ggplot(aes(x = Target, y = scaled_target_norm, fill = AB)) +
   	geom_col(position = "dodge") +
@@ -105,6 +107,7 @@ spikein_all_scale %>%
   	geom_hline(yintercept = 20, color = "red", linetype = "longdash") +
   	theme_bw() +
   	theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+dev.off()
 ```
 
 --> Spike in control analyses show that H3K27me3 is well enriched, all other Target and when using IGG showed less than 20% enrichment.
@@ -218,15 +221,236 @@ Then in R; see `/home/roulet/001_EZH1_project/001_EZH1_project.R`.
 --> Overall >75% input reads as been uniquely mapped to the genome
 
 
+# Spike-in for normalization
+## Method1_Map with bowtie2 on histone spike in:
+- Generate FASTA file for H3K27me3 barcode sequences (manually)
+- Build bowtie2 index on it `bowtie2-build snap_cutana_h3k27me3.fasta snap_cutana_h3k27me3_index`
+- Map all samples to these barcode with more permissive parameter to allow align paired-end reads to small index `--phred33 -q --no-unal`
+- Count the number of aligned reads to the spike-in control sequences for each sample `samtools view -S -F 4 -c sample_h3k27me3_rep1_spikein.sam > sample_h3k27me3_rep1_spikein_count.txt`
+```ruby
+Sample 1 (Genotype A, Replicate 1): 10,000 aligned reads
+Sample 2 (Genotype A, Replicate 2): 12,000 aligned reads
+Sample 3 (Genotype B, Replicate 1): 8,000 aligned reads
+Sample 4 (Genotype B, Replicate 2): 14,000 aligned reads
+```
+- Then do for each sample: nb of spike-in aligned reads / (sum of all spike-in aligned reads for all samples) --> This is relative proportion of spike-in for each samples 
+```ruby
+Sample 1: 10,000 / (10,000 + 12,000 + 8,000 + 14,000) = 0.25
+Sample 2: 12,000 / (10,000 + 12,000 + 8,000 + 14,000) = 0.30
+Sample 3: 8,000 / (10,000 + 12,000 + 8,000 + 14,000) = 0.20 # here smallest scaling factor
+Sample 4: 14,000 / (10,000 + 12,000 + 8,000 + 14,000) = 0.35
+```
+- Divide each scaling factor with the smalest scaling factor among all our sample --> This are the scaling factor for each samples
+```ruby
+Sample 1: 0.25 / 0.20 = 1.25
+Sample 2: 0.30 / 0.20 = 1.50
+Sample 3: 0.20 / 0.20 = 1.00
+Sample 4: 0.35 / 0.20 = 1.75
+```
+--> ChIP-seq peak intensities, read counts, or other metrics of interest by dividing the original values by the corresponding scaling factor for each sample.
+- Apply the scaling correction after calling peaks --> normalize the resulting peak intensities using the scaling factors calculated from the spike-in controls
+
+```bash
+# Generate FASTA files with H3K27me3 barcodes
+nano meta/spike_in_H3K27me3.fa # cp paste sequences in fasta format
+
+# Index the histone sequences
+bowtie2-build meta/spike_in_H3K27me3.fa meta/spike_in_H3K27me3_index
+
+# Map and count all samples to the spike_in_H3K27me3_index
+sbatch scripts/bowtie2_spike_in_WT.sh # 11783734
+sbatch scripts/bowtie2_spike_in_HET.sh # 11783736
+sbatch scripts/bowtie2_spike_in_KO.sh # 11783735
+```
+--> This method did not work, possible because the fasta generated is too small, thus bowtie2 cannot align our samples. 
+
+## Method2_Used barcode count from the quality control
+
+- Count the occurrences of the barcodes for the H3K27me3 spike-in controls in from the raw, untrimmed input files. = aligned reads
+```ruby
+# H3K27me3 IP
+Sample 1 (Genotype A, Replicate 1): 10,000 aligned reads
+Sample 2 (Genotype A, Replicate 2): 12,000 aligned reads
+Sample 3 (Genotype B, Replicate 1): 8,000 aligned reads
+Sample 4 (Genotype B, Replicate 2): 14,000 aligned reads
+
+# IgG IP
+Sample 5 (Genotype A, Replicate 1): 6,000 aligned reads
+Sample 6 (Genotype A, Replicate 2): 7,000 aligned reads
+Sample 7 (Genotype B, Replicate 1): 5,000 aligned reads
+Sample 8 (Genotype B, Replicate 2): 9,000 aligned reads
+```
+- Calculate the proportion of reads corresponding to the H3K27me3 spike-in controls for each sample **per IP**
+```ruby
+# H3K27me3 IP
+Sample 1: 10,000 / (10,000 + 12,000 + 8,000 + 14,000) = 0.25
+Sample 2: 12,000 / (10,000 + 12,000 + 8,000 + 14,000) = 0.30
+Sample 3: 8,000 / (10,000 + 12,000 + 8,000 + 14,000) = 0.20 # here smallest scaling factor
+Sample 4: 14,000 / (10,000 + 12,000 + 8,000 + 14,000) = 0.35
+
+# IgG IP
+Sample 5: 6,000 / (6,000 + 7,000 + 5,000 + 9,000) = 0.24
+Sample 6: 7,000 / (6,000 + 7,000 + 5,000 + 9,000) = 0.28
+Sample 7: 5,000 / (6,000 + 7,000 + 5,000 + 9,000) = 0.20 # here smallest scaling factor
+Sample 8: 9,000 / (6,000 + 7,000 + 5,000 + 9,000) = 0.36
+```
+- Use these proportions to calculate the scaling factors for normalization.
+```ruby
+Sample 1: 0.25 / 0.20 = 1.25
+Sample 2: 0.30 / 0.20 = 1.50
+Sample 3: 0.20 / 0.20 = 1.00
+Sample 4: 0.35 / 0.20 = 1.75
+```
+
+--> Let's calculate scaling factor in R with the `output/spikein/SpikeIn_QC.xlsx` file:
+```R
+# package
+library(tidyverse)
+library(readxl)
+# import df
+spikein <- read_excel("output/spikein/SpikeIn_QC_update.xlsx") # slight mistake with missing values for 2 samples
+
+# Filter-in H3K27me3 counts for each samples
+spikein_H3K27me3 = spikein %>%
+    filter(Target == "H3K27me3") %>%
+    group_by(sample_ID, AB) %>%
+    summarise(aligned=sum(counts))
+
+# Total reads per IP
+spikein_H3K27me3_total = spikein_H3K27me3 %>%
+    ungroup() %>%
+    group_by(AB) %>%
+    mutate(total = sum(aligned)) %>%
+    ungroup() %>%
+    distinct(AB, .keep_all = TRUE) %>%
+    select(AB,total)
+
+# Read proportion
+spikein_H3K27me3_read_prop = spikein_H3K27me3 %>%
+    left_join(spikein_H3K27me3_total) %>%
+    mutate(read_prop = aligned / total)
+
+spikein_H3K27me3_read_prop_min = spikein_H3K27me3_read_prop %>%
+    group_by(AB) %>%
+    summarise(min_prop=min(read_prop))
+
+# Scaling factor
+spikein_H3K27me3_scaling_factor = spikein_H3K27me3_read_prop %>%
+    left_join(spikein_H3K27me3_read_prop_min) %>%
+    mutate(scaling_factor = read_prop/min_prop)
+
+
+write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_histone_H3K27me3_scaling_factor.txt", sep="\t", quote=FALSE, row.names=FALSE)
+```
+--> Histone spike-in scaling factor can be found here: `output/spikein/spikein_histone_H3K27me3_scaling_factor.txt`
+
+--> Probably better to use my trim fastp clean reads to calculate scaling factor
+
+## Method2_Used barcode count from fastp clean reads
+### Count the barcode on the clean reads
+
+```bash
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_1.sh # 11785968
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_2.sh # 11786001
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_3.sh # 11786009
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_4.sh # 11786010
+```
+
+### Count the barcode on the clean reads
+Calculate the scaling factor as with the raw reads:
+
+XXX Create new xlsx table !!! SpikeIn_QC_fastp.xlsx
+
+```R
+# package
+library(tidyverse)
+library(readxl)
+# import df
+spikein <- read_excel("output/spikein/SpikeIn_QC_fastp.xlsx") # 
+
+# Filter-in H3K27me3 counts for each samples
+spikein_H3K27me3 = spikein %>%
+    filter(Target == "H3K27me3") %>%
+    group_by(sample_ID, AB) %>%
+    summarise(aligned=sum(counts))
+
+# Total reads per IP
+spikein_H3K27me3_total = spikein_H3K27me3 %>%
+    ungroup() %>%
+    group_by(AB) %>%
+    mutate(total = sum(aligned)) %>%
+    ungroup() %>%
+    distinct(AB, .keep_all = TRUE) %>%
+    select(AB,total)
+
+# Read proportion
+spikein_H3K27me3_read_prop = spikein_H3K27me3 %>%
+    left_join(spikein_H3K27me3_total) %>%
+    mutate(read_prop = aligned / total)
+
+spikein_H3K27me3_read_prop_min = spikein_H3K27me3_read_prop %>%
+    group_by(AB) %>%
+    summarise(min_prop=min(read_prop))
+
+# Scaling factor
+spikein_H3K27me3_scaling_factor = spikein_H3K27me3_read_prop %>%
+    left_join(spikein_H3K27me3_read_prop_min) %>%
+    mutate(scaling_factor = read_prop/min_prop)
+
+
+write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_histone_H3K27me3_scaling_factor_fastp.txt", sep="\t", quote=FALSE, row.names=FALSE)
+
+
+```
+
+
+
+
+
+
+
+
+## Method4_Map with bowtie2 on Ecoli genome
+Here we used the alternative method:
+- Generate FASTA file for E. coli genome (K12 MG1655)
+- Build bowtie2 index on it `bowtie2-build genome.fasta genome_index`
+- Map all samples to these barcode with same parameter as I used `--phred33 -q --no-unal --no-mixed --dovetail` (Try more permissive parameter to allow align paired-end reads to small index if that fail `--phred33 -q --no-unal`)
+- Count the number of aligned reads to the spike-in control sequences for each sample `samtools view -S -F 4 -c sample_h3k27me3_rep1_spikein.sam > sample_h3k27me3_rep1_spikein_count.txt`
+- Do the math for scaling factor, same method as when using histone spike-in
+
+XXX
+
+```bash
+conda activate bowtie2
+
+# Prepare the E coli genome
+XXX
+
+bowtie2-build genome.fasta genome_index
+
+# Map and count all samples to the E Coli genome
+sbatch scripts/bowtie2_spike_Ecoli_WT.sh # 
+sbatch scripts/bowtie2_spike_Ecoli_HET.sh # 
+sbatch scripts/bowtie2_spike_Ecoli_KO.sh # 
+```
+
+--> Mapping show XXX. using XXX paremeter is good.
+
 
 
 # Samtools and read filtering
 
 
 ```bash
-sbatch scripts/samtools_HET.sh # 11578283
-sbatch scripts/samtools_KO.sh # 11578284
-sbatch scripts/samtools_WT.sh # 11578286
+sbatch scripts/samtools_HET.sh # 11578283 ok
+sbatch scripts/samtools_KO.sh # 11578284, weirdly looong
+sbatch scripts/samtools_WT.sh # 11578286 ok
 ```
+--> `scripts/samtools_KO.sh` stop running for unknown reason. Or maybe just super-long, it is stuck at the `8wN_KO_IGG_R2` sample. Let's run again the whole script, with more memory and threads, and without sample 8wN_KO_IGG_R1 just to make sure the script is working. **Output in `output/tmp`**
+```bash
+sbatch scripts/samtools_KO_2.sh # 
+```
+--> XXX
+
 
 
