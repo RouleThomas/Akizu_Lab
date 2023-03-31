@@ -350,16 +350,14 @@ write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_histon
 ### Count the barcode on the clean reads
 
 ```bash
-sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_1.sh # 11785968
-sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_2.sh # 11786001
-sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_3.sh # 11786009
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_1.sh # 11785968 ok
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_2.sh # 11786001 ok
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_3.sh # 11786009 ok
 sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_4.sh # 11786010
 ```
 
-### Count the barcode on the clean reads
-Calculate the scaling factor as with the raw reads:
-
-XXX Create new xlsx table !!! SpikeIn_QC_fastp.xlsx
+### Calculate scaling factor
+Calculate the scaling factor as with the raw reads from `output/spikein/SpikeIn_QC_fastp.xlsx`
 
 ```R
 # package
@@ -399,8 +397,6 @@ spikein_H3K27me3_scaling_factor = spikein_H3K27me3_read_prop %>%
 
 
 write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_histone_H3K27me3_scaling_factor_fastp.txt", sep="\t", quote=FALSE, row.names=FALSE)
-
-
 ```
 
 
@@ -412,31 +408,113 @@ write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_histon
 
 ## Method4_Map with bowtie2 on Ecoli genome
 Here we used the alternative method:
-- Generate FASTA file for E. coli genome (K12 MG1655)
+- Generate FASTA file for E. coli genome (K12,MG1655), download from [here](https://www.ncbi.nlm.nih.gov/nuccore/U00096.3)
 - Build bowtie2 index on it `bowtie2-build genome.fasta genome_index`
 - Map all samples to these barcode with same parameter as I used `--phred33 -q --no-unal --no-mixed --dovetail` (Try more permissive parameter to allow align paired-end reads to small index if that fail `--phred33 -q --no-unal`)
 - Count the number of aligned reads to the spike-in control sequences for each sample `samtools view -S -F 4 -c sample_h3k27me3_rep1_spikein.sam > sample_h3k27me3_rep1_spikein_count.txt`
 - Do the math for scaling factor, same method as when using histone spike-in
 
-XXX
 
 ```bash
 conda activate bowtie2
 
-# Prepare the E coli genome
-XXX
+# Index the E coli genome
+bowtie2-build meta/MG1655.fa meta/MG1655
 
-bowtie2-build genome.fasta genome_index
 
 # Map and count all samples to the E Coli genome
-sbatch scripts/bowtie2_spike_Ecoli_WT.sh # 
-sbatch scripts/bowtie2_spike_Ecoli_HET.sh # 
-sbatch scripts/bowtie2_spike_Ecoli_KO.sh # 
+sbatch scripts/bowtie2_spike_Ecoli_WT.sh # 11789096 ok
+sbatch scripts/bowtie2_spike_Ecoli_HET.sh # 11789101 ok
+sbatch scripts/bowtie2_spike_Ecoli_KO.sh # 11789095 ok
+sbatch scripts/bowtie2_spike_Ecoli_patient.sh # 11789602 XXX TO ADD
+```
+--> There is some uniq mapped reads, around less than 1%
+
+Collect all read counts from the `output/spikein/*MG1655_count.txt` files generated into `output/spikein/SpikeIn_MG1655.xlsx`. Then calculate scaling factor in R:
+
+```R
+# package
+library(tidyverse)
+library(readxl)
+library(ggpubr)
+
+# import df
+spikein <- read_excel("output/spikein/SpikeIn_MG1655.xlsx") 
+
+
+# Total reads per IP
+spikein_H3K27me3_total = spikein %>%
+    group_by(AB) %>%
+    mutate(total = sum(counts)) %>%
+    ungroup() %>%
+    distinct(AB, .keep_all = TRUE) %>%
+    select(AB,total)
+
+# Read proportion
+spikein_H3K27me3_read_prop = spikein %>%
+    left_join(spikein_H3K27me3_total) %>%
+    mutate(read_prop = counts / total)
+
+spikein_H3K27me3_read_prop_min = spikein_H3K27me3_read_prop %>%
+    group_by(AB) %>%
+    summarise(min_prop=min(read_prop))
+
+# Scaling factor
+spikein_H3K27me3_scaling_factor = spikein_H3K27me3_read_prop %>%
+    left_join(spikein_H3K27me3_read_prop_min) %>%
+    mutate(scaling_factor = read_prop/min_prop)
+
+
+write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_MG1655_scaling_factor.txt", sep="\t", quote=FALSE, row.names=FALSE)
 ```
 
---> Mapping show XXX. using XXX paremeter is good.
+Let's make a plot and compare the all 4 methods and their respective scaling_factor:
+```R
+# import all files and rename
+spikein_H3K27me3_scaling_factor_fastp_tidy = spikein_H3K27me3_scaling_factor_fastp %>%
+    select(sample_ID, AB, scaling_factor) %>%
+    add_column(method = "histone_fastp")
+
+spikein_H3K27me3_scaling_factor_raw_tidy = spikein_H3K27me3_scaling_factor_raw %>%
+    select(sample_ID, AB, scaling_factor) %>%
+    add_column(method = "histone_raw")
+
+spikein_H3K27me3_scaling_factor_MG1655_tidy = spikein_H3K27me3_scaling_factor_MG1655 %>%
+    select(sample_ID, AB, scaling_factor) %>%
+    add_column(method = "Ecoli")
+
+spikein_H3K27me3_scaling_factor_all = spikein_H3K27me3_scaling_factor_fastp_tidy %>%
+    bind_rows(spikein_H3K27me3_scaling_factor_raw_tidy, spikein_H3K27me3_scaling_factor_MG1655_tidy)
 
 
+# Plot
+pdf("output/spikein/scaling_factor_all_methods.pdf", width = 14, height = 8)
+pdf("output/spikein/scaling_factor_Ecolivshistone.pdf", width = 14, height = 8)
+spikein_H3K27me3_scaling_factor_all %>%
+    filter(method != "histone_raw") %>%
+        ggplot(aes(x = sample_ID, y = scaling_factor, fill = method)) +
+        geom_col(position = "dodge") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+dev.off()
+
+# Plot correlation
+pdf("output/spikein/scaling_factor_Ecolivshistone_corr.pdf", width = 6, height = 6)
+spikein_H3K27me3_scaling_factor_all %>%
+    filter(method != "histone_raw") %>%
+    select(sample_ID, method, scaling_factor) %>%
+    spread(key = method, value = scaling_factor) %>%
+        ggplot(.) +
+            geom_point(aes(x = Ecoli, y = histone_fastp)) +
+            geom_smooth(aes(x = Ecoli, y = histone_fastp), method = "lm", se = FALSE, linetype = "solid", color = "blue") +
+            theme_bw() +
+            xlab("Ecoli Scaling Factor") +
+            ylab("Histone_fastp Scaling Factor") +
+            stat_cor(aes(x = Ecoli, y = histone_fastp), label.x = Inf, label.y = Inf, hjust = 1, vjust = 1, size = 4)
+dev.off()
+```
+
+--> Both histone and E coli normalization provide the overall similar scaling factor.
 
 # Samtools and read filtering
 
@@ -448,9 +526,16 @@ sbatch scripts/samtools_WT.sh # 11578286 ok
 ```
 --> `scripts/samtools_KO.sh` stop running for unknown reason. Or maybe just super-long, it is stuck at the `8wN_KO_IGG_R2` sample. Let's run again the whole script, with more memory and threads, and without sample 8wN_KO_IGG_R1 just to make sure the script is working. **Output in `output/tmp`**
 ```bash
-sbatch scripts/samtools_KO_2.sh # 
+sbatch scripts/samtools_KO_2.sh # ok
 ```
---> XXX
+--> The long job has been cancel and samtools_KO_2.sh succesfully run.
+
+--> New files transfered to the `output/bowtie2`. All is complete
+
+
+
+
+
 
 
 
