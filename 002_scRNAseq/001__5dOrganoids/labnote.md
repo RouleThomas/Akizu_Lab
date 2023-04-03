@@ -31,20 +31,13 @@ module load SRA-Toolkit/2.10.5-centos_linux64
 # Use custom script to import, compress and perform fastqc 
 python ../../Master/scripts/Import_Compress_QC_V5.py -i SRR8734990 -t P -r 5dOrg
 ```
---> My script failed, need troubleshoot (I updated a new version V5 but need to be tested...)
+--> My script failed, need troubleshoot (I updated a new version V6 but need to be tested...). Maybe because that is a scRNAseq data...
 
-XXX I launch it in interactive and leave, let see!
-
-
-
-
-
-
-
-OR DO ::
+So let's do the old-fashion way:
 ```bash
-fasterq-dump SRR8734990
+fasterq-dump SRR8734990 -O input --temp output/tmp
 ```
+--> Important to specify the temporary files directory to avoid disk-space issue
 
 **fastqc**
 

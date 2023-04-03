@@ -184,6 +184,7 @@ Mapping for all samples with **endtoend** parameter:
 sbatch scripts/bowtie2_HET.sh # 11498654 ok
 sbatch scripts/bowtie2_KO.sh # 11498655 ok
 sbatch scripts/bowtie2_WT.sh # 11498658 ok
+sbatch scripts/bowtie2_patient.sh # 11826852 XXX
 ```
 
 
@@ -399,13 +400,6 @@ spikein_H3K27me3_scaling_factor = spikein_H3K27me3_read_prop %>%
 write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_histone_H3K27me3_scaling_factor_fastp.txt", sep="\t", quote=FALSE, row.names=FALSE)
 ```
 
-
-
-
-
-
-
-
 ## Method4_Map with bowtie2 on Ecoli genome
 Here we used the alternative method:
 - Generate FASTA file for E. coli genome (K12,MG1655), download from [here](https://www.ncbi.nlm.nih.gov/nuccore/U00096.3)
@@ -414,19 +408,17 @@ Here we used the alternative method:
 - Count the number of aligned reads to the spike-in control sequences for each sample `samtools view -S -F 4 -c sample_h3k27me3_rep1_spikein.sam > sample_h3k27me3_rep1_spikein_count.txt`
 - Do the math for scaling factor, same method as when using histone spike-in
 
-
 ```bash
 conda activate bowtie2
 
 # Index the E coli genome
 bowtie2-build meta/MG1655.fa meta/MG1655
 
-
 # Map and count all samples to the E Coli genome
 sbatch scripts/bowtie2_spike_Ecoli_WT.sh # 11789096 ok
 sbatch scripts/bowtie2_spike_Ecoli_HET.sh # 11789101 ok
 sbatch scripts/bowtie2_spike_Ecoli_KO.sh # 11789095 ok
-sbatch scripts/bowtie2_spike_Ecoli_patient.sh # 11789602 XXX TO ADD
+sbatch scripts/bowtie2_spike_Ecoli_patient.sh # 11789602 ok
 ```
 --> There is some uniq mapped reads, around less than 1%
 
@@ -523,6 +515,8 @@ dev.off()
 sbatch scripts/samtools_HET.sh # 11578283 ok
 sbatch scripts/samtools_KO.sh # 11578284, weirdly looong
 sbatch scripts/samtools_WT.sh # 11578286 ok
+
+sbatch scripts/samtools_patient.sh # XXX
 ```
 --> `scripts/samtools_KO.sh` stop running for unknown reason. Or maybe just super-long, it is stuck at the `8wN_KO_IGG_R2` sample. Let's run again the whole script, with more memory and threads, and without sample 8wN_KO_IGG_R1 just to make sure the script is working. **Output in `output/tmp`**
 ```bash
@@ -532,6 +526,109 @@ sbatch scripts/samtools_KO_2.sh # ok
 
 --> New files transfered to the `output/bowtie2`. All is complete
 
+# Generate wig coverage files
+Paramaters:
+- `--binSize 1` for good resolution
+- `--scaleFactor 0.5` to obtain the exact number of reads respective to the bam, otherwise it count two instead of 1
+- `--extendReads` Reads extented taking into account mean fragment size of all mated reads.
+
+```bash
+conda activate deeptools
+
+sbatch scripts/bamtobigwig_WT.sh # 11827228
+sbatch scripts/bamtobigwig_HET.sh # 11827232
+sbatch scripts/bamtobigwig_KO.sh # 11827233
+
+sbatch scripts/bamtobigwig_patient.sh  # XXX
+```
+
+
+# Peak calling
+
+## SEACR peak calling
+[Paper](https://doi.org/10.1186/s13072-019-0287-4) and [Github](https://github.com/FredHutch/SEACR)
+
+Install required packages and prepare meta files
+```bash
+# Install bedtools within bowtie2 conda env
+conda activate bowtie2
+conda install -c bioconda bedtools
+module load sam-bcf-tools/1.6
+
+# Create a Tab delimited chr size file
+samtools faidx ../../Master/meta/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta # index genome
+awk '{print $1 "\t" $2}' ../../Master/meta/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.fai > ../../Master/meta/GRCh38_chrom_sizes.tab # extract chr name and size
+```
+
+**Preparing input bedgraph files** (Convert paired-end BAM to fragment bedgraph file):
+```bash
+# Example with 1 file (smaller in size)
+bedtools bamtobed -bedpe -i output/bowtie2/8wN_WT_IGG_R2.dupmark.sorted.bam > output/bowtie2/8wN_WT_IGG_R2.dupmark.sorted.bed
+awk '$1==$4 && $6-$2 < 1000 {print $0}' output/bowtie2/8wN_WT_IGG_R2.dupmark.sorted.bed > output/bowtie2/8wN_WT_IGG_R2.dupmark.sorted.clean.bed # Filter out >1000bp fragment
+cut -f 1,2,6 output/bowtie2/8wN_WT_IGG_R2.dupmark.sorted.clean.bed | sort -k1,1 -k2,2n -k3,3n > output/bowtie2/8wN_WT_IGG_R2.dupmark.sorted.fragments.bed
+bedtools genomecov -bg -i output/bowtie2/8wN_WT_IGG_R2.dupmark.sorted.fragments.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab > output/bowtie2/8wN_WT_IGG_R2.dupmark.sorted.fragments.bedgraph
+
+# Run together
+sbatch scripts/bamtobedgraph_WT_1.sh # 11826612 ok
+sbatch scripts/bamtobedgraph_WT_2.sh # 11826613 ok
+sbatch scripts/bamtobedgraph_HET_1.sh # 11826580 ok
+sbatch scripts/bamtobedgraph_HET_2.sh # 11826581 ok
+sbatch scripts/bamtobedgraph_KO_1.sh # 11826578 ok
+sbatch scripts/bamtobedgraph_KO_2.sh # 11826579 ok
+
+sbatch scripts/bamtobedgraph_patient.sh # XXX
+```
+*NOTE: At bedtools bamtobed warning that some reads have no mate. But that is because I filtered reads based on MAPQ and removed unmapped reads, secondary alignments, and reads failing quality check using samtools view command, so I might have removed one read from a pair while retaining the other*
+
+**Run SCEA peak calling**:
+```bash
+# Example command
+bash SEACR_1.3.sh target.bedgraph IgG.bedgraph norm stringent output
+
+# Run together
+## Stringeant
+sbatch scripts/SEACR_WT.sh # 11826904
+sbatch scripts/SEACR_HET.sh # 11826911
+sbatch scripts/SEACR_KO.sh # 11826912
+
+sbatch scripts/SEACR_patient.sh # XXX
+
+## Run all samples with relax (this is pretty fast)
+sbatch scripts/SEACR_relax.sh # 11826920
+
+sbatch scripts/SEACR_relax_patient.sh # XXX
+
+
+```
+--> Very few peaks seems to have been called, so I did stringent and relax parameters
+
+Maybe the very few peaks are due to the warnings about non-pair mate... Let's try to remove them and see if I have the same number of peaks. Let's do the test on the *8wN_WT_R1* samples
+
+```bash
+# Sort by query names
+samtools sort -n -o output/bowtie2/8wN_WT_IGG_R1.dupmark.qname_sorted.bam \
+    output/bowtie2/8wN_WT_IGG_R1.dupmark.bam
+
+# Fix mate-pair information
+samtools fixmate -m output/bowtie2/8wN_WT_IGG_R1.dupmark.qname_sorted.bam output/bowtie2/8wN_WT_IGG_R1.dupmark.fixmate.bam
+
+# Sort reads after fixing mate-pair information
+samtools sort -o output/bowtie2/8wN_WT_IGG_R1.dupmark.fixmate.sorted.bam \
+    output/bowtie2/8wN_WT_IGG_R1.dupmark.fixmate.bam
+
+# Prepare input bedgraph
+bedtools bamtobed -bedpe -i output/bowtie2/8wN_WT_IGG_R1.dupmark.fixmate.sorted.bam > output/bowtie2/8wN_WT_IGG_R1.dupmark.fixmate.sorted.bed
+awk '$1==$4 && $6-$2 < 1000 {print $0}' output/bowtie2/8wN_WT_IGG_R1.dupmark.fixmate.sorted.bed > output/bowtie2/8wN_WT_IGG_R1.dupmark.fixmate.sorted.clean.bed # Filter out >1000bp fragment
+cut -f 1,2,6 output/bowtie2/8wN_WT_IGG_R1.dupmark.fixmate.sorted.clean.bed | sort -k1,1 -k2,2n -k3,3n > output/bowtie2/8wN_WT_IGG_R1.dupmark.fixmate.sorted.fragments.bed
+bedtools genomecov -bg -i output/bowtie2/8wN_WT_IGG_R1.dupmark.fixmate.sorted.fragments.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab > output/bowtie2/8wN_WT_IGG_R1.dupmark.fixmate.sorted.fragments.bedgraph
+
+```
+This does not change anything...
+
+--> Need to investigate the wig files to see how my files looks
+
+
+## MACS2 peak calling
 
 
 
