@@ -527,6 +527,7 @@ sbatch scripts/samtools_KO_2.sh # ok
 --> New files transfered to the `output/bowtie2`. All is complete
 
 # Generate wig coverage files
+## Raw bigwig
 Paramaters:
 - `--binSize 1` for good resolution
 - `--scaleFactor 0.5` to obtain the exact number of reads respective to the bam, otherwise it count two instead of 1
@@ -541,6 +542,33 @@ sbatch scripts/bamtobigwig_KO.sh # 11827233
 
 sbatch scripts/bamtobigwig_patient.sh  # XXX
 ```
+
+Let's generate bigwig taking into account scaling factor:
+## Scaled bigwig
+### E.coli-spike-in scaled-bigwig
+```bash
+conda activate deeptools
+
+sbatch scripts/bamtobigwig_MG1655_scaled_WT.sh # 11829982
+sbatch scripts/bamtobigwig_MG1655_scaled_HET.sh # 11829983
+sbatch scripts/bamtobigwig_MG1655_scaled_KO.sh # 11829984
+
+sbatch scripts/bamtobigwig_MG1655_scaled_patient.sh # XXX
+```
+
+
+### Histone-spike-in scaled-bigwig
+```bash
+conda activate deeptools
+
+sbatch scripts/bamtobigwig_histone_scaled_WT.sh # 11830480
+sbatch scripts/bamtobigwig_histone_scaled_HET.sh # 11830482
+sbatch scripts/bamtobigwig_histone_scaled_KO.sh # 11830481
+
+sbatch scripts/bamtobigwig_histone_scaled_patient.sh # XXX
+```
+
+
 
 
 # Peak calling
@@ -587,20 +615,20 @@ bash SEACR_1.3.sh target.bedgraph IgG.bedgraph norm stringent output
 
 # Run together
 ## Stringeant
-sbatch scripts/SEACR_WT.sh # 11826904
-sbatch scripts/SEACR_HET.sh # 11826911
-sbatch scripts/SEACR_KO.sh # 11826912
+sbatch scripts/SEACR_WT.sh # 11826904; overwrite by mistake, relaunch: 11833019
+sbatch scripts/SEACR_HET.sh # 11826911; overwrite by mistake, relaunch: 11833012
+sbatch scripts/SEACR_KO.sh # 11826912; overwrite by mistake, relaunch: 11833018
 
 sbatch scripts/SEACR_patient.sh # XXX
 
 ## Run all samples with relax (this is pretty fast)
-sbatch scripts/SEACR_relax.sh # 11826920
+sbatch scripts/SEACR_relax.sh # 11826920; overwrite by mistake, relaunch: 11833020
 
 sbatch scripts/SEACR_relax_patient.sh # XXX
-
-
 ```
 --> Very few peaks seems to have been called, so I did stringent and relax parameters
+
+--> Try also non-norm method XXX
 
 Maybe the very few peaks are due to the warnings about non-pair mate... Let's try to remove them and see if I have the same number of peaks. Let's do the test on the *8wN_WT_R1* samples
 
@@ -621,16 +649,53 @@ bedtools bamtobed -bedpe -i output/bowtie2/8wN_WT_IGG_R1.dupmark.fixmate.sorted.
 awk '$1==$4 && $6-$2 < 1000 {print $0}' output/bowtie2/8wN_WT_IGG_R1.dupmark.fixmate.sorted.bed > output/bowtie2/8wN_WT_IGG_R1.dupmark.fixmate.sorted.clean.bed # Filter out >1000bp fragment
 cut -f 1,2,6 output/bowtie2/8wN_WT_IGG_R1.dupmark.fixmate.sorted.clean.bed | sort -k1,1 -k2,2n -k3,3n > output/bowtie2/8wN_WT_IGG_R1.dupmark.fixmate.sorted.fragments.bed
 bedtools genomecov -bg -i output/bowtie2/8wN_WT_IGG_R1.dupmark.fixmate.sorted.fragments.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab > output/bowtie2/8wN_WT_IGG_R1.dupmark.fixmate.sorted.fragments.bedgraph
-
 ```
 This does not change anything...
 
 --> Need to investigate the wig files to see how my files looks
 
+Issue may be because I used the non-spike-in normalized files. So let's transform the bedgraph files and multiply by the scaling factor, and run SEACR with the `norm` parameter.
+
+```bash
+conda activate bowtie2
+
+# Scaled bedgraph
+sbatch scripts/scaled_bedgraph_MG1655.sh # 11831789 ok
+sbatch scripts/scaled_bedgraph_MG1655.sh # XXX Run patient sample only
+sbatch scripts/scaled_bedgraph_histone.sh # 11832207 ok
+sbatch scripts/scaled_bedgraph_histone.sh # XXX Run patient sample only
+
+
+# Run together SEACR
+## Stringeant
+sbatch scripts/SEACR_MG1655_scaled.sh # 11833139
+sbatch scripts/SEACR_histone_scaled.sh # 11833144
+
+sbatch scripts/SEACR_MG1655_scaled_patient.sh # XXX
+
+## Run all samples with relax (this is pretty fast)
+sbatch scripts/SEACR_MG1655_scaled_relax.sh # 11833148
+sbatch scripts/SEACR_histone_scaled_relax.sh # 11833149
+
+sbatch scripts/SEACR_MG1655_scaled_patient_relax.sh # XXX
+sbatch scripts/SEACR_histone_scaled_patient_relax.sh # XXX
+```
+
+
+
+
+
+
+
 
 ## MACS2 peak calling
+Used blacklist from [ENCODE](https://github.com/Boyle-Lab/Blacklist). 
 
+No need to downsamples samples here as I have my scaling factors.
 
+Need to specify scaling factor using the macs2 command, Let's use spyker.sh for this. [Documentation](https://spiker.readthedocs.io/en/latest/usage.html) and [paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8313745/).
+
+XXX
 
 
 

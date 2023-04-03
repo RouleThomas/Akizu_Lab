@@ -35,9 +35,21 @@ python ../../Master/scripts/Import_Compress_QC_V5.py -i SRR8734990 -t P -r 5dOrg
 
 So let's do the old-fashion way:
 ```bash
-fasterq-dump SRR8734990 -O input --temp output/tmp
+fasterq-dump SRR8734990
 ```
 --> Important to specify the temporary files directory to avoid disk-space issue
+FAIL
+
+lets try sbatch with the command inside...
+```bash
+sbatch scripts/download_SRR8734990.sh # 11829094
+```
+
+
+
+It crash so lets try with fastq-dump:
+
+fastq-dump SRR8734990
 
 **fastqc**
 

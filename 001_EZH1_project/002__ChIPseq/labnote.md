@@ -217,9 +217,9 @@ Samtools parameters:
 - `-q 20` (I was using 30)
 
 ```bash
-sbatch bowtie2_map_ESC.sh # 11452938 (~10hrs per sample!)
-sbatch bowtie2_map_NPC.sh # 11452939 (~10hrs per sample!)
-sbatch bowtie2_map_2dN.sh # 11452937 (~10hrs per sample!)
+sbatch bowtie2_map_ESC.sh # 11452938 (~10hrs per sample!) ok
+sbatch bowtie2_map_NPC.sh # 11452939 (~10hrs per sample!) ok
+sbatch bowtie2_map_2dN.sh # 11452937 (~10hrs per sample!) ok
 ```
 
 --> The sam files have been well generated but then it failed. Re-run script from samtools:
@@ -265,12 +265,7 @@ sbatch bowtie2_2dN_HET_H3K27me3_R1_endtoend.sh # 11496376
     - >1 times 5761022 (12.78%)
     - overall 85.28%
 
-
-Mapping for all samples re-run with **endtoend** parameter:
-```bash
-XXX
-```
-XXX *NOTE: All previous mapping have been moved to `/output/tmp/` folder. Can be deleted.*
+*NOTE: All previous mapping have been moved to `/output/tmp/` folder. Can be deleted.*
 
 
 
@@ -282,14 +277,19 @@ As I use `--no-mixed` the unpaired-mapped reads are already remove, so does not 
 sbatch scripts/samtools_2dN_HET_H3K27me3_R1.sh # 11506999 ok
 
 # run job per time
-sbatch scripts/bowtie2_samtools_2dN_1.sh # 11537670
-sbatch scripts/bowtie2_samtools_2dN_2.sh # 11537904
-sbatch scripts/bowtie2_samtools_ESC_1.sh # 11538307
-sbatch scripts/bowtie2_samtools_ESC_2.sh # 11538448
-sbatch scripts/bowtie2_samtools_NPC_1.sh # 11538814
-sbatch scripts/bowtie2_samtools_NPC_2.sh # 11538966
+sbatch scripts/bowtie2_samtools_2dN_1.sh # 11537670 ok
+sbatch scripts/bowtie2_samtools_2dN_2.sh # 11537904 ok
+sbatch scripts/bowtie2_samtools_ESC_1.sh # 11538307 cancel time limit; ESC_KO_input_R1
+sbatch scripts/bowtie2_samtools_ESC_2.sh # 11538448 cancel time limit; ESC_WT_input_R2, ESC_WT_input_R3
+sbatch scripts/bowtie2_samtools_NPC_1.sh # 11538814 ok
+sbatch scripts/bowtie2_samtools_NPC_2.sh # 11538966 ok
 ```
-
 --> The test example has worked well. Can be run for all samples once mapping is done.
 
-XXX Check mapping, maybe some has been cancel as too long...
+Some samples stop due to time limit, rerun them:
+```bash
+sbatch scripts/bowtie2_samtools_canceled.sh # 11828352
+```
+
+XXX
+
