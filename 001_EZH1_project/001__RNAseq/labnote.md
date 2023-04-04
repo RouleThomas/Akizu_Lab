@@ -2831,6 +2831,11 @@ row_clusters <- cutree(row_hclust, k = 25)                   # !!! Here change t
 cluster_gene <- data.frame(gene = rownames(rlog_counts_matrix_sig_ordered),
                            cluster = row_clusters)
 
+
+### Save dataframe
+write.csv(cluster_gene, file="output/deseq2/cluster_gene_rlog_25cl.txt")
+
+
 ## Compil both
 rlog_counts_tidy <- rlog_counts_tidy %>%
   left_join(cluster_gene, by = "gene")
@@ -3329,7 +3334,7 @@ pheatmap(sampleDistMatrix,
 dev.off()
 ```
 
-# Functional analyses
+# Check Maturation state of our samples
 
 ## Maturity state
 Here let's figure out the **maturity state of all our samples**, using 'maturity marker genes' from [EZH1 paper](https://www.medrxiv.org/content/10.1101/2022.08.09.22278430v1.full-text):
@@ -3341,35 +3346,263 @@ Here let's figure out the **maturity state of all our samples**, using 'maturity
 - Generate core enrichment lists based on the GSEA results.
 - Create heatmaps to visualize the expression patterns of the core enrichment lists using baseR.
 
-Generate input gene list manually from the one-by-one analyses --> Generate input gene list in Google Drive `output/deseq2/DEGs_gene_list.xlsx`
+Generate input gene list manually from the one-by-one analyses --> Generate input gene list in Google Drive `output/deseq2/DEGs_gene_list.xlsx` --> cp to `/output/age`
+
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+library("apeglm")
+library("factoextra")
+library("gridExtra")
+library("readxl")
+library(rtracklayer)
+library(ggpubr)
+library(dendextend)
+
+
+# Create table with gene ID and gene name
+## Read GTF file
+gtf_file <- "../../Master/meta/gencode.v19.annotation.gtf"
+gtf_data <- import(gtf_file)
+
+## Extract gene_id and gene_name
+gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
+gene_id <- elementMetadata(gene_data)$gene_id
+gene_name <- elementMetadata(gene_data)$gene_name
+
+## Combine gene_id and gene_name into a data frame
+gene_id_name <- data.frame(gene_id, gene_name) %>%
+  unique() %>%
+  as_tibble()
+  
+# import input gene list and marker genes
+neurons_genes_maturation <- read_excel("output/age/GeneList_Neural_MaturationNeurons_FromGraciaDiazPreprint.xlsx") %>%
+  inner_join(gene_id_name) %>%
+  rename(Geneid = gene_id)
+
+input_genes_neurons_genes_maturation <- read_excel("output/age/DEGs_gene_list.xlsx") %>%
+  inner_join(neurons_genes_maturation %>% filter(type == "aRG_up"))      ## HERE CHANGE (aRG_up, CFuPN_up, CPN_Up) !!!!!!!!!!!!!!!!!!!!
+
+# Some stat to see how many genes per category:
+
+input_genes_neurons_genes_maturation %>%
+  select(Geneid,type) %>%
+  unique() %>%
+  group_by(type) %>%
+  summarise(n=n())
+
+
+# Show TPM
+input_genes_neurons_genes_maturation
 
 
 
+### Load tpm
+tpm_all_input_genes_neurons_genes_maturation <- read_csv("output/tpm/tpm_all_sample.txt") %>% 
+  select(-1) %>%
+  inner_join(input_genes_neurons_genes_maturation) %>%
+  select(-Geneid, -DEGs,-time,-type,-comparison)
+
+                            
 
 
+## Transform tpm tibble into matrix
+tpm_all_input_genes_neurons_genes_maturation_matrix = make_matrix(select(tpm_all_input_genes_neurons_genes_maturation, -gene_name), pull(tpm_all_input_genes_neurons_genes_maturation, gene_name)) 
+
+# LOG2 !!!!!!! To change !!!!!!!!
+tpm_all_input_genes_neurons_genes_maturation_matrix = log2(tpm_all_input_genes_neurons_genes_maturation_matrix + 1) 
 
 
+# Reorder
+col_order <- c("ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3", "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3", "2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3", "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", "ESC_KO_R1", "ESC_KO_R2", "ESC_KO_R3", "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3", "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3", "8wN_KO_R1", "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4", "ESC_HET_R1", "ESC_HET_R2", "ESC_HET_R3", "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3", "2dN_HET_R1", "2dN_HET_R2", "2dN_HET_R3", "8wN_HET_R1", "8wN_HET_R2", "8wN_HET_R3", "8wN_HET_R4", "4wN_iPSCWT_R1", "4wN_iPSCWT_R2", "4wN_iPSCpatient_R1", "4wN_iPSCpatient_R2", "8wN_iPSCpatient_R1", "8wN_iPSCpatient_R2")
+
+  
+tpm_all_input_genes_neurons_genes_maturation_matrix_ordered <- tpm_all_input_genes_neurons_genes_maturation_matrix[, col_order]
 
 
+# Raw heatmap                    ## HERE CHANGE TITLE !!!!!!!!!!!!!!!!!!!!
+pdf("output/age/heatmap_GeneList_Neural_MaturationNeurons_aRG_up_DEGsOneByOne_raw_log2tpm.pdf", width=5, height=6)
+pheatmap(tpm_all_input_genes_neurons_genes_maturation_matrix_ordered, cluster_rows=F, cluster_cols=F, color= colorRampPalette(c("blue", "white", "red"))(50))
+dev.off()
+```
+
+--> It is a mess, too many genes are displayed, let's instead of selecting the one-by-one DEGs, selecte the TC-DEgs
 
 
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+library("apeglm")
+library("factoextra")
+library("gridExtra")
+library("readxl")
+library(rtracklayer)
+library(ggpubr)
+library(dendextend)
 
 
+# Create table with gene ID and gene name
+## Read GTF file
+gtf_file <- "../../Master/meta/gencode.v19.annotation.gtf"
+gtf_data <- import(gtf_file)
+
+## Extract gene_id and gene_name
+gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
+gene_id <- elementMetadata(gene_data)$gene_id
+gene_name <- elementMetadata(gene_data)$gene_name
+
+## Combine gene_id and gene_name into a data frame
+gene_id_name <- data.frame(gene_id, gene_name) %>%
+  unique() %>%
+  as_tibble()
+  
+# import input gene list and marker genes
+neurons_genes_maturation <- read_excel("output/age/GeneList_Neural_MaturationNeurons_FromGraciaDiazPreprint.xlsx") %>%
+  inner_join(gene_id_name) %>%
+  rename(Geneid = gene_id)
 
 
+input_TC_genes_neurons_genes_maturation <- read_csv("output/deseq2/resTC.txt") %>%
+  select(-"...1") %>%
+  filter(padj <= 0.05, log2FoldChange > 1 | log2FoldChange < -1 ) %>%
+  rename(Geneid = gene) %>%
+  inner_join(neurons_genes_maturation %>% filter(type == "aRG_up"))      ## HERE CHANGE (aRG_up, CFuPN_up, CPN_Up) !!!!!!!!!!!!!!!!!!!!
+
+# Some stat to see how many genes per category:
+
+input_TC_genes_neurons_genes_maturation %>%
+  select(Geneid,type) %>%
+  unique() %>%
+  group_by(type) %>%
+  summarise(n=n())
 
 
+# Show TPM
+
+### Load tpm
+tpm_all_input_genes_neurons_genes_maturation <- read_csv("output/tpm/tpm_all_sample.txt") %>% 
+  select(-1) %>%
+  inner_join(input_TC_genes_neurons_genes_maturation) %>%
+  select(-Geneid, -baseMean, -log2FoldChange, -lfcSE, -stat, -pvalue,-padj,-type)
+
+                            
 
 
+## Transform tpm tibble into matrix
+tpm_all_input_genes_neurons_genes_maturation_matrix = make_matrix(select(tpm_all_input_genes_neurons_genes_maturation, -gene_name), pull(tpm_all_input_genes_neurons_genes_maturation, gene_name)) 
+
+# LOG2 !!!!!!! To change !!!!!!!!
+tpm_all_input_genes_neurons_genes_maturation_matrix = log2(tpm_all_input_genes_neurons_genes_maturation_matrix + 1) 
 
 
+# Reorder
+col_order <- c("ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3", "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3", "2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3", "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", "ESC_KO_R1", "ESC_KO_R2", "ESC_KO_R3", "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3", "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3", "8wN_KO_R1", "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4", "ESC_HET_R1", "ESC_HET_R2", "ESC_HET_R3", "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3", "2dN_HET_R1", "2dN_HET_R2", "2dN_HET_R3", "8wN_HET_R1", "8wN_HET_R2", "8wN_HET_R3", "8wN_HET_R4", "4wN_iPSCWT_R1", "4wN_iPSCWT_R2", "4wN_iPSCpatient_R1", "4wN_iPSCpatient_R2", "8wN_iPSCpatient_R1", "8wN_iPSCpatient_R2")
+
+  
+tpm_all_input_genes_neurons_genes_maturation_matrix_ordered <- tpm_all_input_genes_neurons_genes_maturation_matrix[, col_order]
 
 
+# Raw heatmap                    ## HERE CHANGE TITLE !!!!!!!!!!!!!!!!!!!!
+pdf("output/age/heatmap_GeneList_Neural_MaturationNeurons_aRG_up_DEGsTC_raw_log2tpm_p0.05_log2FC1.pdf", width=5, height=6)
+pheatmap(tpm_all_input_genes_neurons_genes_maturation_matrix_ordered, cluster_rows=F, cluster_cols=F, color= colorRampPalette(c("blue", "white", "red"))(50))
+dev.off()
+```
+
+--> Unclear what is our goal here
+
+Here is alternative approach:
+- Collect DEGs WT vs HET Rep 3 and 4 at 4wN (up-regulated only)
+- Isolate from these genes the cell-type-specific gene lists (top 500 Up; aRG, CFuPN, and CPN)
+- Heatmap to look at their expression in the WT and HET at 4week neurons?
 
 
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+library("apeglm")
+library("factoextra")
+library("gridExtra")
+library("readxl")
+library(rtracklayer)
+library(ggpubr)
+library(dendextend)
 
 
+# Create table with gene ID and gene name
+## Read GTF file
+gtf_file <- "../../Master/meta/gencode.v19.annotation.gtf"
+gtf_data <- import(gtf_file)
 
+## Extract gene_id and gene_name
+gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
+gene_id <- elementMetadata(gene_data)$gene_id
+gene_name <- elementMetadata(gene_data)$gene_name
+
+## Combine gene_id and gene_name into a data frame
+gene_id_name <- data.frame(gene_id, gene_name) %>%
+  unique() %>%
+  as_tibble()
+  
+# import input gene list and marker genes
+neurons_genes_maturation <- read_excel("output/age/GeneList_Neural_MaturationNeurons_FromGraciaDiazPreprint.xlsx") %>%
+  inner_join(gene_id_name) %>%
+  rename(Geneid = gene_id)
+
+input_genes_neurons_genes_maturation <- read_excel("output/age/DEGs_gene_list.xlsx") %>%
+  inner_join(neurons_genes_maturation %>% filter(type == "CPN_Up"))   %>%   ## HERE CHANGE (aRG_up, CFuPN_up, CPN_Up) !!!!!!!!!!!!!!!!!!!!
+  filter(DEGs == "positive", time == "4wN", comparison == "HETr3r4vsWT")
+
+# Some stat to see how many genes per category:
+
+input_genes_neurons_genes_maturation %>%
+  select(Geneid,type) %>%
+  unique() %>%
+  group_by(type) %>%
+  summarise(n=n())
+
+
+# Show TPM
+input_genes_neurons_genes_maturation
+
+
+### Load tpm
+tpm_all_input_genes_neurons_genes_maturation <- read_csv("output/tpm/tpm_all_sample.txt") %>% 
+  select(-1) %>%
+  inner_join(input_genes_neurons_genes_maturation) %>%
+  select(gene_name, "4wN_WT_R1", "4wN_WT_R2", "4wN_HET_R1", "4wN_HET_R2", "4wN_HET_R3", "4wN_HET_R4")
+
+
+       
+## Transform tpm tibble into matrix
+tpm_all_input_genes_neurons_genes_maturation_matrix = make_matrix(select(tpm_all_input_genes_neurons_genes_maturation, -gene_name), pull(tpm_all_input_genes_neurons_genes_maturation, gene_name)) 
+
+# LOG2 !!!!!!! To change !!!!!!!!
+tpm_all_input_genes_neurons_genes_maturation_matrix = log2(tpm_all_input_genes_neurons_genes_maturation_matrix + 1) 
+
+
+# Reorder
+col_order <- c("4wN_WT_R1", "4wN_WT_R2", "4wN_HET_R1", "4wN_HET_R2", "4wN_HET_R3", "4wN_HET_R4")
+
+  
+tpm_all_input_genes_neurons_genes_maturation_matrix_ordered <- tpm_all_input_genes_neurons_genes_maturation_matrix[, col_order]
+
+
+# Raw heatmap                    ## HERE CHANGE TITLE !!!!!!!!!!!!!!!!!!!!
+pdf("output/age/heatmap_GeneList_Neural_MaturationNeurons_CPN_Up_DEGsHET_log2tpm.pdf", width=5, height=6)
+pheatmap(tpm_all_input_genes_neurons_genes_maturation_matrix_ordered, cluster_rows=F, cluster_cols=F, color= colorRampPalette(c("blue", "white", "red"))(50))
+dev.off()
+```
+
+--> HET R1 and R2 4wN shows same tpm as WT; however Rep3 and Rep4 HET are always higher. 
 
 
 ### Alternative method using genes from other preprint
@@ -3857,32 +4090,6 @@ dev.off()
 --> We expected the KO to be less mature, and that is the case; however, the HET does not mature faster than WT, **at least when looking at these specific marker genes**
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # Clean code to check TPM of individual genes
 ```R
 # Load packages
@@ -4002,3 +4209,85 @@ tpm_all_sample_tidy_gene_name_selected %>%
     scale_fill_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green", "iPSCWT" = "black", "iPSCpatient" = "orange"))
 dev.off()
 ```
+
+
+# Gene ontology
+We will use clusterProfile package. Tutorial [here](https://hbctraining.github.io/DGE_workshop_salmon/lessons/functional_analysis_2019.html).
+
+## Light test on 2 clusters 
+
+Let's do a test of the pipeline with genes from cluster4 amd cluster14 from the rlog counts. Our background list will be all genes tested for differential expression.
+
+```R
+# packages
+XXX
+library(clusterProfiler)
+library(pathview)
+library(DOSE)
+library(org.Hs.eg.db)
+library(enrichplot)
+
+## Read GTF file
+gtf_file <- "../../Master/meta/gencode.v19.annotation.gtf"
+gtf_data <- import(gtf_file)
+
+## Extract gene_id and gene_name
+gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
+gene_id <- elementMetadata(gene_data)$gene_id
+gene_name <- elementMetadata(gene_data)$gene_name
+
+## Combine gene_id and gene_name into a data frame
+gene_id_name <- data.frame(gene_id, gene_name) %>%
+  unique() %>%
+  as_tibble()
+
+
+# Import genes_cluster list and background list
+cluster_4 = read_csv("output/deseq2/cluster_gene_rlog_25cl.txt") %>%
+  filter(cluster == 4) %>%
+  rename(gene_id = gene) %>%
+  inner_join(gene_id_name) %>%
+  dplyr::select(gene_name) 
+
+
+background = read_csv("output/deseq2/raw_2dN_HET_vs_2dN_WT.txt") %>%
+  dplyr::select(gene) %>%
+  rename(gene_id = gene) %>%
+  inner_join(gene_id_name) %>%
+  dplyr::select(gene_name)
+
+
+# Run GO enrichment analysis 
+ego <- enrichGO(gene = as.character(cluster_4$gene_name), 
+                universe = as.character(background$gene_name),
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                qvalueCutoff = 0.05, 
+                readable = TRUE)
+
+## Save GO analyses
+GO_summary <- data.frame(ego)
+
+write.csv(GO_summary, "output/GO/cluster4_BP.csv")
+write.csv(GO_summary, "output/GO/cluster4_MF.csv")
+write.csv(GO_summary, "output/GO/cluster4_CC.csv")
+
+
+
+# Vizualization
+
+pdf("output/GO/dotplot_BP_cluster_4.pdf", width=8, height=11)
+dotplot(ego, showCategory=50)
+dev.off()
+
+pdf("output/GO/emapplot_BP_cluster_4.pdf", width=8, height=11)
+emapplot(pairwise_termsim(ego), showCategory = 50)
+dev.off()
+
+```
+
+--> The pipeline works GREAT !!
+
+

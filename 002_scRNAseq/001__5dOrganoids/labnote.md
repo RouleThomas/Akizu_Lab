@@ -50,7 +50,9 @@ Fail with:
 2023-04-04T16:02:05 fasterq-dump.2.10.5 fatal: SIGNAL - Segmentation fault 
 fasterq-dump (PID 1026649) quit with error code 1
 ```
-Try increase memory (200G instead of 50G) and use --split-files instead of -S
+Try increase memory (200G instead of 50G) and use --split-files instead of -S. 
+It seems that even though it is written paired end, I only have 1 file... !
+
 
 
 
