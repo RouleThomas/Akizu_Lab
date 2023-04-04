@@ -35,21 +35,25 @@ python ../../Master/scripts/Import_Compress_QC_V5.py -i SRR8734990 -t P -r 5dOrg
 
 So let's do the old-fashion way:
 ```bash
-fasterq-dump SRR8734990
+fasterq-dump SRR8734990 -S
 ```
---> Important to specify the temporary files directory to avoid disk-space issue
-FAIL
+--> It fail for disk-space issue
 
 lets try sbatch with the command inside...
 ```bash
-sbatch scripts/download_SRR8734990.sh # 11829094
+sbatch scripts/download_SRR8734990.sh # 11839151
 ```
+Fail with: 
+```
+2023-04-04T16:02:05 fasterq-dump.2.10.5 err: cmn_iter.c cmn_read_uint8_array( #160612353 ).VCursorCellDataDirect() -> RC(rcPS,rcCondition,rcWaiting,rcTimeout,rcExhausted) 
+2023-04-04T16:02:05 fasterq-dump.2.10.5 err: row #160612353 : READ.len(134) != QUALITY.len(0) (D) 
+2023-04-04T16:02:05 fasterq-dump.2.10.5 fatal: SIGNAL - Segmentation fault 
+fasterq-dump (PID 1026649) quit with error code 1
+```
+Try increase memory (200G instead of 50G) and use --split-files instead of -S
 
 
 
-It crash so lets try with fastq-dump:
-
-fastq-dump SRR8734990
 
 **fastqc**
 

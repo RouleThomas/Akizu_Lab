@@ -543,6 +543,8 @@ Comparison WT vs mutant (KO or HET) for each time-points:
 - 8wN KO vs WT
 - 8wN HET vs WT
 - 4wN iPSCpatient vs iPSCWT
+- 4wN WT vs 4wN iPSCpatient
+- 8wN WT vs 8wN iPSCpatient
 ### NPC KO vs WT
 Take ressource
 ```bash
@@ -1646,6 +1648,212 @@ text(x = max(res_df$baseMean, na.rm = TRUE) * 0.25, y = -1.75, labels = paste(n_
 dev.off()
 ```
 --> The 4wN samples are weird, few DE, bad clustering, there may have been a sample missanotation? Let's put aside 4wN from now on
+
+### 4wN WT vs 4wN iPSCpatient
+Take ressource
+```bash
+module load R/4.2.2
+srun --mem=50g --pty bash -l
+R
+```
+Go in R
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+library("apeglm")
+
+# import featurecounts output and keep only gene ID and counts
+## collect all samples ID
+samples <- c("4wN_WT_R1", "4wN_WT_R2", "4wN_iPSCpatient_R1",
+   "4wN_iPSCpatient_R2")
+
+## Make a loop for importing all featurecounts data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/featurecounts/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    select(Geneid, starts_with("output/STAR/fastp/")) %>%
+    rename(!!sample := starts_with("output/STAR/fastp/"))
+}
+
+# Merge all dataframe into a single one
+counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(select(counts_all, -Geneid), pull(counts_all, Geneid)) 
+
+## Create colData file that describe all our samples
+### Not including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  select(-replicate) %>%
+  bind_cols(data.frame(samples))
+### Including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  bind_cols(data.frame(samples))
+
+## transform df into matrix
+coldata = make_matrix(select(coldata_raw, -samples), pull(coldata_raw, samples))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design= ~ genotype)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 5
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+res <- lfcShrink(dds, coef="genotype_iPSCpatient_vs_WT", type="apeglm")
+
+## Export result as 'raw_NPC_HET_vs_NPC_WT.txt'
+write.csv(res %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2/raw_4wN_iPSCpatient_vs_4wN_WT.txt")
+### If need to import: res <- read_csv("output/deseq2/raw_NPC_HET_vs_NPC_WT.txt") #To import
+
+## Plot-MA
+pdf("output/deseq2/plotMA_res_4wN_iPSCpatient_vs_4wN_WT.pdf", width=5, height=4)
+### Identify DEGs and count them
+res_df <- res %>% as.data.frame() %>% select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE))
+n_upregulated <- sum(res_df$log2FoldChange > 0 & res_df$padj == TRUE, na.rm = TRUE)
+n_downregulated <- sum(res_df$log2FoldChange < 0 & res_df$padj == TRUE, na.rm = TRUE)
+### Plot and add DEGs counts
+plotMA(res_df, ylim=c(-2,2))
+text(x = max(res_df$baseMean, na.rm = TRUE) * 0.25, y = 1.75, labels = paste(n_upregulated), adj = c(0, 0.5), cex = 0.9)
+text(x = max(res_df$baseMean, na.rm = TRUE) * 0.25, y = -1.75, labels = paste(n_downregulated), adj = c(0, 0.5), cex = 0.9)
+
+dev.off()
+```
+
+### 8wN WT vs 8wN iPSCpatient
+Take ressource
+```bash
+module load R/4.2.2
+srun --mem=50g --pty bash -l
+R
+```
+Go in R
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+library("apeglm")
+
+# import featurecounts output and keep only gene ID and counts
+## collect all samples ID
+samples <- c("8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", "8wN_iPSCpatient_R1",
+   "8wN_iPSCpatient_R2")
+
+## Make a loop for importing all featurecounts data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/featurecounts/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    select(Geneid, starts_with("output/STAR/fastp/")) %>%
+    rename(!!sample := starts_with("output/STAR/fastp/"))
+}
+
+# Merge all dataframe into a single one
+counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(select(counts_all, -Geneid), pull(counts_all, Geneid)) 
+
+## Create colData file that describe all our samples
+### Not including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  select(-replicate) %>%
+  bind_cols(data.frame(samples))
+### Including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  bind_cols(data.frame(samples))
+
+## transform df into matrix
+coldata = make_matrix(select(coldata_raw, -samples), pull(coldata_raw, samples))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design= ~ genotype)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 5
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+res <- lfcShrink(dds, coef="genotype_iPSCpatient_vs_WT", type="apeglm")
+
+## Export result as 'raw_NPC_HET_vs_NPC_WT.txt'
+write.csv(res %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2/raw_8wN_iPSCpatient_vs_8wN_WT.txt")
+### If need to import: res <- read_csv("output/deseq2/raw_NPC_HET_vs_NPC_WT.txt") #To import
+
+## Plot-MA
+pdf("output/deseq2/plotMA_res_8wN_iPSCpatient_vs_8wN_WT.pdf", width=5, height=4)
+### Identify DEGs and count them
+res_df <- res %>% as.data.frame() %>% select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE))
+n_upregulated <- sum(res_df$log2FoldChange > 0 & res_df$padj == TRUE, na.rm = TRUE)
+n_downregulated <- sum(res_df$log2FoldChange < 0 & res_df$padj == TRUE, na.rm = TRUE)
+### Plot and add DEGs counts
+plotMA(res_df, ylim=c(-2,2))
+text(x = max(res_df$baseMean, na.rm = TRUE) * 0.25, y = 1.75, labels = paste(n_upregulated), adj = c(0, 0.5), cex = 0.9)
+text(x = max(res_df$baseMean, na.rm = TRUE) * 0.25, y = -1.75, labels = paste(n_downregulated), adj = c(0, 0.5), cex = 0.9)
+
+dev.off()
+```
+--> Compare WT vs iPSC patient within the xcell file in Google `output/deseq2/Table_for_comparison_iPSC.xlsx`
+
+
+
+
+
+
+
 # Time-course with deseq2
 ## ESC, NPC, 2dN, 8wN KO and HET vs WT
 Test whether there are genotype-specific differences over time (ESC, NPC, 2dN, 8wN); general trend of difference over time. 
@@ -3126,15 +3334,46 @@ dev.off()
 ## Maturity state
 Here let's figure out the **maturity state of all our samples**, using 'maturity marker genes' from [EZH1 paper](https://www.medrxiv.org/content/10.1101/2022.08.09.22278430v1.full-text):
 
-**GSEA-related method from the paper**:
+### GSEA-related method from the paper
 - Perform DEGs from KO vs WT and HET vs WT (padj < 0.05) = *input gene list*
 - Extract ranked *cell-type-specific gene lists* from the literature (Uzquiano and Kedaigle et al.), containing the top 500 significantly enriched genes in aRG, CFuPN, and CPN scRNA clusters. These gene lists represent NSC, early-born neuron, and late-born neuron gene sets, respectively.
 - Perform GSEA using ClusterProfiler with the prepared input lists and the cell-type-specific gene sets.
 - Generate core enrichment lists based on the GSEA results.
 - Create heatmaps to visualize the expression patterns of the core enrichment lists using baseR.
 
-**Method to adapt for our purpose**:
-- Collect the *cell-type-specific gene lists* as input gene list = cluster of our tree (3 cluster)
+Generate input gene list manually from the one-by-one analyses --> Generate input gene list in Google Drive `output/deseq2/DEGs_gene_list.xlsx`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Alternative method using genes from other preprint
+- Collect the 67 *cell-type-specific gene lists* as input gene list = cluster of our tree (3 cluster)
 - Look at vst-counts for these genes for all time-course point and per genotype
 - Represent data with heatmap (3 clusters = marker genes and our sampling (ESC, NPC, 2dN,...) at the top); 1 heatmap per genotypes
   - Do not pull replicate so that we can observed individual samples and maybe identify issue
@@ -3430,18 +3669,13 @@ tpm_all_sample_neurons = tpm_all_sample %>%
 tpm_all_sample_neurons_matrix = make_matrix(select(tpm_all_sample_neurons, -gene_name), pull(tpm_all_sample_neurons, gene_name)) 
 
 
-
 # Raw heatmap !!!! CHOSE GENE LIST HERE !!!!!
 pdf("output/age/heatmap_GeneList_Neural_Function_WT_raw_tpm_all.pdf", width=10, height=8) # 
 pheatmap(tpm_all_sample_neurons_matrix, cluster_rows=F, cluster_cols=F, color= colorRampPalette(c("red", "yellow", "green", "cyan", "blue"))(100))
 dev.off()
 
-
-
 ## Log2
 tpm_all_sample_neurons_matrix_log2 = log2(tpm_all_sample_neurons_matrix+1)
-
-
 
 # Raw heatmap 
 pdf("output/age/heatmap_GeneList_Neural_Function_WT_raw_log2tpm_all.pdf", width=10, height=8) # 
@@ -3449,13 +3683,10 @@ pheatmap(tpm_all_sample_neurons_matrix_log2, cluster_rows=F, cluster_cols=F, col
 dev.off()
 
 
-
 # Represent with geom_smooth instead
-
 tpm_all_sample_neurons_tidy = as_tibble(tpm_all_sample_neurons_matrix, rownames = "gene_name") %>%
   gather(key = "sample", value = "tpm", -gene_name) %>%
   separate(sample, into = c("time", "genotype", "replicate"), sep = "_")
-
 
 
 tpm_all_sample_neurons_tidy$time <-
@@ -3585,8 +3816,6 @@ ggplot(tpm_all_sample_neurons_tidy_stat, aes(x = time, y = mean_tpm)) +
 dev.off()
 
 
-
-
 ## Comparison WT vs KO genotype
 
 tpm_all_sample_neurons_tidy = as_tibble(tpm_all_sample_neurons_matrix, rownames = "gene_name") %>%
@@ -3622,13 +3851,154 @@ ggplot(tpm_all_sample_neurons_tidy_stat, aes(x = time, y = mean_tpm)) +
     axis.title.x = element_text(size = 16)
   )
 dev.off()
-
-
 ```
-
-
 --> It seems that replicate 1/2 have similar TPM as WT as 4wN, however the replicate 3/4 have lower TPM. That may explain the DEGs only observed for replicate 3/4
 
 --> We expected the KO to be less mature, and that is the case; however, the HET does not mature faster than WT, **at least when looking at these specific marker genes**
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Clean code to check TPM of individual genes
+```R
+# Load packages
+library("tidyverse")
+library("RColorBrewer")
+library(rtracklayer)
+library(ggpubr)
+
+# Import tpm df
+
+tpm_all_sample <- read_csv("output/tpm/tpm_all_sample.txt") %>%
+  select(-"...1")
+
+# Join with gene names for convenience
+## Read GTF file
+gtf_file <- "../../Master/meta/gencode.v19.annotation.gtf"
+gtf_data <- import(gtf_file)
+
+## Extract gene_id and gene_name
+gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
+gene_id <- elementMetadata(gene_data)$gene_id
+gene_name <- elementMetadata(gene_data)$gene_name
+
+## Combine gene_id and gene_name into a data frame
+gene_id_name <- data.frame(gene_id, gene_name) %>%
+  unique() %>%
+  as_tibble()
+
+
+# Tidy df
+tpm_all_sample_tidy = as_tibble(tpm_all_sample) %>%
+  gather(key = "sample", value = "tpm", -Geneid) %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep = "_")
+  
+
+tpm_all_sample_tidy$time <-
+  factor(tpm_all_sample_tidy$time,
+         c("ESC", "NPC", "2dN", "4wN", "8wN"))
+tpm_all_sample_tidy$genotype <-
+  factor(tpm_all_sample_tidy$genotype,
+         c("WT", "KO", "HET", "iPSCWT","iPSCpatient"))
+
+
+tpm_all_sample_tidy_gene_name = tpm_all_sample_tidy %>%
+  dplyr::rename(gene_id=Geneid) %>%
+  left_join(gene_id_name) %>%
+  unique()
+
+
+
+
+
+
+# Display plot per gene
+# Stat
+tpm_all_sample_tidy_gene_name_stat <- tpm_all_sample_tidy_gene_name %>%
+  select(-replicate) %>%
+  group_by(gene_id, gene_name, time, genotype) %>%
+  summarise(mean=mean(tpm), median= median(tpm), SD=sd(tpm), n=n(), SE=SD/sqrt(n)) 	
+
+
+
+pdf("output/deseq2/genes_EZH.pdf", width=8, height=5)
+tpm_all_sample_tidy_gene_name_stat %>%
+  filter(gene_name %in% c("EZH1", "EZH2")) %>%
+    ggplot(., aes(x = time, y = mean, group = genotype)) +
+    geom_line(aes(color=genotype), size=0.75) +
+    geom_errorbar(aes(ymin = mean-SE, ymax = mean+SE,color=genotype), width=.2) +
+    geom_point(aes(y = mean,color=genotype), size = .75, shape = 15) +
+    theme_bw() +
+    facet_wrap(~gene_name, nrow = 1, scale = "free")  +	
+    ylab(label = "tpm") +
+    ggtitle("") +
+    scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green", "iPSCWT" = "black", "iPSCpatient" = "orange"))
+dev.off()
+
+
+# Filtered some replicate
+
+tpm_all_sample_tidy_gene_name_selected = tpm_all_sample_tidy_gene_name %>%
+  filter(gene_name %in% c("EZH1", "EZH2")) %>%
+  mutate(keep = ifelse(genotype == "HET" & (replicate %in% c("R1", "R2")) & time == "4wN", TRUE, genotype != "HET")) %>%
+  filter(keep) %>%
+  filter(time == "4wN", genotype %in% c("WT","HET")) %>%
+  group_by(gene_name, genotype) %>%
+  summarise(mean=mean(tpm), median= median(tpm), SD=sd(tpm), n=n(), SE=SD/sqrt(n)) 	
+pdf("output/deseq2/genes_EZH_HET4wNRep12.pdf", width=4, height=3)
+tpm_all_sample_tidy_gene_name_selected %>%
+  ggplot(., aes(x = genotype, y = mean, fill = genotype)) +
+    geom_bar(stat = "identity", width = 0.5) +
+    geom_errorbar(aes(ymin = mean - SE, ymax = mean + SE), width = 0.2) +
+    ylab("tpm") +
+    facet_wrap(~gene_name, nrow = 1, scale = "free")  +	
+    ggtitle("4 week neurons; Het replicate 1 and 2") +
+    theme_bw()+
+    scale_fill_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green", "iPSCWT" = "black", "iPSCpatient" = "orange"))
+dev.off()
+
+
+
+tpm_all_sample_tidy_gene_name_selected = tpm_all_sample_tidy_gene_name %>%
+  filter(gene_name %in% c("EZH1", "EZH2")) %>%
+  mutate(keep = ifelse(genotype == "HET" & (replicate %in% c("R3", "R4")) & time == "4wN", TRUE, genotype != "HET")) %>%
+  filter(keep) %>%
+  filter(time == "4wN", genotype %in% c("WT","HET")) %>%
+  group_by(gene_name, genotype) %>%
+  summarise(mean=mean(tpm), median= median(tpm), SD=sd(tpm), n=n(), SE=SD/sqrt(n)) 	
+pdf("output/deseq2/genes_EZH_HET4wNRep34.pdf", width=4, height=3)
+tpm_all_sample_tidy_gene_name_selected %>%
+  ggplot(., aes(x = genotype, y = mean, fill = genotype)) +
+    geom_bar(stat = "identity", width = 0.5) +
+    geom_errorbar(aes(ymin = mean - SE, ymax = mean + SE), width = 0.2) +
+    ylab("tpm") +
+    facet_wrap(~gene_name, nrow = 1, scale = "free")  +	
+    ggtitle("4 week neurons; Het replicate 3 and 4") +
+    theme_bw()+
+    scale_fill_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green", "iPSCWT" = "black", "iPSCpatient" = "orange"))
+dev.off()
+```
