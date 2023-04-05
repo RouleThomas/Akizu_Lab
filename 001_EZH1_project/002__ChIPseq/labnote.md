@@ -288,8 +288,73 @@ sbatch scripts/bowtie2_samtools_NPC_2.sh # 11538966 ok
 
 Some samples stop due to time limit, rerun them:
 ```bash
-sbatch scripts/bowtie2_samtools_canceled.sh # 11828352
+sbatch scripts/bowtie2_samtools_canceled.sh # 11828352 ok
 ```
 
-XXX
+### Quality control metrics
+Quality control plot (total read before trimming/ total read after trimming/ uniquely aligned reads)
+
+Collect nb of reads from the slurm bowtie2 jobs:
+```bash
+for file in slurm-11537670.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2_endtoend/alignment_counts_11537670.txt
+
+for file in slurm-11537904.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2_endtoend/alignment_counts_11537904.txt
+
+for file in slurm-11538307.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2_endtoend/alignment_counts_11538307.txt
+
+for file in slurm-11538448.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2_endtoend/alignment_counts_11538448.txt
+
+for file in slurm-11538814.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2_endtoend/alignment_counts_11538814.txt
+
+for file in slurm-11538966.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2_endtoend/alignment_counts_11538966.txt
+
+for file in slurm-11828352.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2_endtoend/alignment_counts_11828352.txt
+```
+
+Add these values to `/home/roulet/001_EZH1_project/002__CutRun/mapping_QC.xlsx`\
+Then in R; see `/home/roulet/001_EZH1_project/001_EZH1_project.R`.
+
+--> Overall >80% input reads as been uniquely mapped to the genome
+
+
+
+# Peak calling
+
+## MACS2 peak calling
+
 

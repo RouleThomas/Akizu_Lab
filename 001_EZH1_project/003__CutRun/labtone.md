@@ -184,9 +184,8 @@ Mapping for all samples with **endtoend** parameter:
 sbatch scripts/bowtie2_HET.sh # 11498654 ok
 sbatch scripts/bowtie2_KO.sh # 11498655 ok
 sbatch scripts/bowtie2_WT.sh # 11498658 ok
-sbatch scripts/bowtie2_patient.sh # 11826852 XXX
+sbatch scripts/bowtie2_patient.sh # 11826852 ok
 ```
-
 
 
 ## Quality control metrics
@@ -516,7 +515,7 @@ sbatch scripts/samtools_HET.sh # 11578283 ok
 sbatch scripts/samtools_KO.sh # 11578284, weirdly looong
 sbatch scripts/samtools_WT.sh # 11578286 ok
 
-sbatch scripts/samtools_patient.sh # XXX
+sbatch scripts/samtools_patient.sh # 11850650
 ```
 --> `scripts/samtools_KO.sh` stop running for unknown reason. Or maybe just super-long, it is stuck at the `8wN_KO_IGG_R2` sample. Let's run again the whole script, with more memory and threads, and without sample 8wN_KO_IGG_R1 just to make sure the script is working. **Output in `output/tmp`**
 ```bash
@@ -668,21 +667,23 @@ sbatch scripts/scaled_bedgraph_histone.sh # XXX Run patient sample only
 
 # Run together SEACR
 ## Stringeant
-sbatch scripts/SEACR_MG1655_scaled.sh # 11833139
-sbatch scripts/SEACR_histone_scaled.sh # 11833144
+sbatch scripts/SEACR_MG1655_scaled.sh # 11833139 ok
+sbatch scripts/SEACR_histone_scaled.sh # 11833144 ok
 
 sbatch scripts/SEACR_MG1655_scaled_patient.sh # XXX
 
 ## Run all samples with relax (this is pretty fast)
-sbatch scripts/SEACR_MG1655_scaled_relax.sh # 11833148
-sbatch scripts/SEACR_histone_scaled_relax.sh # 11833149
+sbatch scripts/SEACR_MG1655_scaled_relax.sh # 11833148 ok
+sbatch scripts/SEACR_histone_scaled_relax.sh # 11833149 ok
 
 sbatch scripts/SEACR_MG1655_scaled_patient_relax.sh # XXX
 sbatch scripts/SEACR_histone_scaled_patient_relax.sh # XXX
 ```
 
 
+--> All looks good except 8wN_WT_IGG_R1,8wN_WT_IGG_R2,8wN_WT_IGG_R3,8wN_WT_IGG_R4; no scaled samples peaks data.
 
+add ok to check
 
 
 

@@ -3558,8 +3558,8 @@ neurons_genes_maturation <- read_excel("output/age/GeneList_Neural_MaturationNeu
   rename(Geneid = gene_id)
 
 input_genes_neurons_genes_maturation <- read_excel("output/age/DEGs_gene_list.xlsx") %>%
-  inner_join(neurons_genes_maturation %>% filter(type == "CPN_Up"))   %>%   ## HERE CHANGE (aRG_up, CFuPN_up, CPN_Up) !!!!!!!!!!!!!!!!!!!!
-  filter(DEGs == "positive", time == "4wN", comparison == "HETr3r4vsWT")
+  inner_join(neurons_genes_maturation %>% filter(type == "aRG_up"))   %>%   ## HERE CHANGE (aRG_up, CFuPN_up, CPN_Up) !!!!!!!!!!!!!!!!!!!!
+  filter(time == "4wN", comparison == "HETr3r4vsWT")
 
 # Some stat to see how many genes per category:
 
@@ -3580,7 +3580,12 @@ tpm_all_input_genes_neurons_genes_maturation <- read_csv("output/tpm/tpm_all_sam
   inner_join(input_genes_neurons_genes_maturation) %>%
   select(gene_name, "4wN_WT_R1", "4wN_WT_R2", "4wN_HET_R1", "4wN_HET_R2", "4wN_HET_R3", "4wN_HET_R4")
 
-
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
        
 ## Transform tpm tibble into matrix
 tpm_all_input_genes_neurons_genes_maturation_matrix = make_matrix(select(tpm_all_input_genes_neurons_genes_maturation, -gene_name), pull(tpm_all_input_genes_neurons_genes_maturation, gene_name)) 
@@ -3597,7 +3602,7 @@ tpm_all_input_genes_neurons_genes_maturation_matrix_ordered <- tpm_all_input_gen
 
 
 # Raw heatmap                    ## HERE CHANGE TITLE !!!!!!!!!!!!!!!!!!!!
-pdf("output/age/heatmap_GeneList_Neural_MaturationNeurons_CPN_Up_DEGsHET_log2tpm.pdf", width=5, height=6)
+pdf("output/age/heatmap_GeneList_Neural_MaturationNeurons_aRG_up_DEGsHET_log2tpm.pdf", width=5, height=6)
 pheatmap(tpm_all_input_genes_neurons_genes_maturation_matrix_ordered, cluster_rows=F, cluster_cols=F, color= colorRampPalette(c("blue", "white", "red"))(50))
 dev.off()
 ```
@@ -4290,4 +4295,4 @@ dev.off()
 
 --> The pipeline works GREAT !!
 
-
+Now let's re-analyze everything with the more up to date genome
