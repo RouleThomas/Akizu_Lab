@@ -605,7 +605,7 @@ sbatch scripts/bamtobedgraph_HET_2.sh # 11826581 ok
 sbatch scripts/bamtobedgraph_KO_1.sh # 11826578 ok
 sbatch scripts/bamtobedgraph_KO_2.sh # 11826579 ok
 
-sbatch scripts/bamtobedgraph_patient.sh # 11858464
+sbatch scripts/bamtobedgraph_patient.sh # 11858464 ok
 ```
 *NOTE: At bedtools bamtobed warning that some reads have no mate. But that is because I filtered reads based on MAPQ and removed unmapped reads, secondary alignments, and reads failing quality check using samtools view command, so I might have removed one read from a pair while retaining the other*
 
@@ -620,16 +620,14 @@ sbatch scripts/SEACR_WT.sh # 11826904; overwrite by mistake, relaunch: 11833019
 sbatch scripts/SEACR_HET.sh # 11826911; overwrite by mistake, relaunch: 11833012
 sbatch scripts/SEACR_KO.sh # 11826912; overwrite by mistake, relaunch: 11833018
 
-sbatch scripts/SEACR_patient.sh # XXX
+sbatch scripts/SEACR_patient.sh # 11886323 ok
 
 ## Run all samples with relax (this is pretty fast)
 sbatch scripts/SEACR_relax.sh # 11826920; overwrite by mistake, relaunch: 11833020
 
-sbatch scripts/SEACR_relax_patient.sh # XXX
+sbatch scripts/SEACR_relax_patient.sh # 11886498 ok
 ```
 --> Very few peaks seems to have been called, so I did stringent and relax parameters
-
---> Try also non-norm method XXX
 
 Maybe the very few peaks are due to the warnings about non-pair mate... Let's try to remove them and see if I have the same number of peaks. Let's do the test on the *8wN_WT_R1* samples
 
@@ -662,9 +660,9 @@ conda activate bowtie2
 
 # Scaled bedgraph
 sbatch scripts/scaled_bedgraph_MG1655.sh # 11831789 ok
-sbatch scripts/scaled_bedgraph_MG1655.sh # XXX Run patient sample only
+sbatch scripts/scaled_bedgraph_MG1655_patient.sh # 11887369 ok
 sbatch scripts/scaled_bedgraph_histone.sh # 11832207 ok
-sbatch scripts/scaled_bedgraph_histone.sh # XXX Run patient sample only
+sbatch scripts/scaled_bedgraph_histone_patient.sh # 11887755 ok
 
 
 # Run together SEACR
@@ -672,19 +670,18 @@ sbatch scripts/scaled_bedgraph_histone.sh # XXX Run patient sample only
 sbatch scripts/SEACR_MG1655_scaled.sh # 11833139 ok
 sbatch scripts/SEACR_histone_scaled.sh # 11833144 ok
 
-sbatch scripts/SEACR_MG1655_scaled_patient.sh # XXX
+sbatch scripts/SEACR_MG1655_scaled_patient.sh # 11888295 ok
+sbatch scripts/SEACR_histone_scaled_patient.sh # 11888924
 
 ## Run all samples with relax (this is pretty fast)
 sbatch scripts/SEACR_MG1655_scaled_relax.sh # 11833148 ok
 sbatch scripts/SEACR_histone_scaled_relax.sh # 11833149 ok
 
-sbatch scripts/SEACR_MG1655_scaled_patient_relax.sh # XXX
-sbatch scripts/SEACR_histone_scaled_patient_relax.sh # XXX
+sbatch scripts/SEACR_MG1655_scaled_patient_relax.sh # 11889120 ok
+sbatch scripts/SEACR_histone_scaled_patient_relax.sh # 11889642 ok
 ```
 
-
---> All looks good
-
+--> All looks good. But very few peaks... Cannot tweek the qvalue with SEACR also!
 
 
 
@@ -760,6 +757,7 @@ python3 -m pip install spiker-1.0.5.tar.gz
 Let's try installing the package manually within a conda env, and remove from setup.py the requirement.
 ```bash
 conda create --name spiker 
+conda activate spiker
 # Install the required dependencies using Conda (the one indicated in the setup.py from spiker Github)
 conda install -c bioconda macs2
 conda install -c bioconda scipy
@@ -773,10 +771,100 @@ cd spiker
 ## like this : install_requires=['macs2==2.2.7.1','pysam',
 # install spiker
 pip install .
+# run it
+python bin/spiker.py
 ```
-YO it WORK !!!!! But spiker1.0.3 installed, let' try move within the .tar.gz where that is version 5 and install it.
+Installation succesful, now try to run it. It failed, because it is not **using the python from my conda environment**. To correct this:
+```bash
+conda env list # To find path
+conda activate test # test env where I create conda create --name test python=3.11
+export PATH="/home/roulet/anaconda3/envs/test/bin:$PATH"
+python --version # It now show 3.11 
+```
+So now here is how to run spiker:
+```bash
+conda activate spiker
+export PATH="/home/roulet/anaconda3/envs/spiker/bin:$PATH"
+spiker/bin/split_bam.py --help
+```
+It work, let's clean the installation so that I can use spiker to run it:
+```bash
+# Set spiker/bin/spiker.py executable (display in green)
+chmod +x spiker/bin/spiker.py
+```
+It fail as spiker not installed, even though now pip install spiker work!! So here is the conclusion of this mess:
 
-STILL BUGY SO LETS DO IT ON THE TAR!!! USE THE conda env with everythings!!!!
+When creating a conda environment, make sure it use the python from the conda environment. Otherwise when you install python-dependent module, it will not work even though install... For that
+
+**To reinstall it cleanly, do as follow:**
+
+```bash
+conda create --name spiker 
+conda activate spiker
+export PATH="/home/roulet/anaconda3/envs/spiker/bin:$PATH"
+which python # To check the python from the environment is used
+# Install the required dependencies using Conda (the one indicated in the setup.py from spiker Github)
+conda install -c bioconda macs2
+conda install -c bioconda scipy
+conda install -c bioconda pysam
+conda install -c bioconda deeptools  
+conda install -c bioconda pyBigWig
+# install spiker
+pip install spiker
+# run spiker
+spiker.py --help
+```
+
+**Run spiker test**
+Run [spiker](https://spiker.readthedocs.io/en/latest/usage.html#input-and-output) in broad as H3K27me3 peak; indicate scaling factor. 
+
+Run as follow: `spiker.py --broad -t H3K27me3.sorted.bam -c IGG.sorted.bam --spikeIn --csf ControlScalingFactor --tsf treatmentScalingFactor -o H3K27ac`:
+```bash
+conda activate spiker
+# Example/test for 1 file
+spiker.py --broad -t output/bowtie2/8wN_HET_H3K27me3_R1.dupmark.sorted.bam -c output/bowtie2/8wN_HET_IGG_R1.dupmark.sorted.bam --spikeIn --csf 2.0094484954298 --tsf 2.07929383602633 -o output/spiker/8wN_HET_H3K27me3_R1_MG1655scaled
+```
+--> It failed at step 5.1 because the write_bedGraph function in the MACS2 package is trying to write a string to a file that expects bytes-like objects. Let's use Python 3.6 instead of Python 3.7 which is more lenient when it comes to mixing bytes and strings.
+
+**Re-install spiker**
+```bash
+conda env remove --name spiker 
+conda create --name spiker python=3.6
+conda activate spiker
+which python # To check the python from the environment is used
+export PATH="/home/roulet/anaconda3/envs/spiker/bin:$PATH"
+which python # To check the python from the environment is used
+conda install -c bioconda deeptoolsintervals pybigwig macs2
+pip install pybit
+conda install -c bioconda py2bit
+pip install spiker
+spiker.py --help
+```
+Still failed, so let's modify the macs2 source code within my spiker conda env.
+
+Go line 247 in `/home/roulet/anaconda3/envs/spiker/lib/python3.6/site-packages/MACS2/bdgopt_cmd.py` and
+
+copy paste to console and see what to change exactly...
+file isn in software GG drive
+
+**Run spiker another test**
+
+
+
+```bash
+# MG1655 scaling factor
+
+# histone scaling factor
+```
+
+
+```
+
+
+
+
+
+
 
 **Let's just create a macs2 environment**
 ```bash
