@@ -14,7 +14,6 @@ bamCoverage --bam output/bowtie2/8wN_iPSCpatient_H3K27me3_R1.dupmark.sorted.bam 
     --extendReads \
     --scaleFactor 2.26817010309278
 
-
 bamCoverage --bam output/bowtie2/8wN_iPSCpatient_H3K27me3_R2.dupmark.sorted.bam \
     --outFileName output/bigwig_histone/8wN_iPSCpatient_H3K27me3_R2.dupmark.sorted.bw \
     --outFileFormat bigwig \

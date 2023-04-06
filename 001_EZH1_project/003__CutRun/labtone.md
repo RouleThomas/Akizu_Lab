@@ -515,7 +515,7 @@ sbatch scripts/samtools_HET.sh # 11578283 ok
 sbatch scripts/samtools_KO.sh # 11578284, weirdly looong
 sbatch scripts/samtools_WT.sh # 11578286 ok
 
-sbatch scripts/samtools_patient.sh # 11850650
+sbatch scripts/samtools_patient.sh # 11850650 ok
 ```
 --> `scripts/samtools_KO.sh` stop running for unknown reason. Or maybe just super-long, it is stuck at the `8wN_KO_IGG_R2` sample. Let's run again the whole script, with more memory and threads, and without sample 8wN_KO_IGG_R1 just to make sure the script is working. **Output in `output/tmp`**
 ```bash
@@ -535,11 +535,11 @@ Paramaters:
 ```bash
 conda activate deeptools
 
-sbatch scripts/bamtobigwig_WT.sh # 11827228
-sbatch scripts/bamtobigwig_HET.sh # 11827232
-sbatch scripts/bamtobigwig_KO.sh # 11827233
+sbatch scripts/bamtobigwig_WT.sh # 11827228 ok
+sbatch scripts/bamtobigwig_HET.sh # 11827232 ok
+sbatch scripts/bamtobigwig_KO.sh # 11827233 ok
 
-sbatch scripts/bamtobigwig_patient.sh  # XXX
+sbatch scripts/bamtobigwig_patient.sh  # 11857843
 ```
 
 Let's generate bigwig taking into account scaling factor:
@@ -548,11 +548,11 @@ Let's generate bigwig taking into account scaling factor:
 ```bash
 conda activate deeptools
 
-sbatch scripts/bamtobigwig_MG1655_scaled_WT.sh # 11829982
-sbatch scripts/bamtobigwig_MG1655_scaled_HET.sh # 11829983
-sbatch scripts/bamtobigwig_MG1655_scaled_KO.sh # 11829984
+sbatch scripts/bamtobigwig_MG1655_scaled_WT.sh # 11829982 ok
+sbatch scripts/bamtobigwig_MG1655_scaled_HET.sh # 11829983 ok
+sbatch scripts/bamtobigwig_MG1655_scaled_KO.sh # 11829984 ok
 
-sbatch scripts/bamtobigwig_MG1655_scaled_patient.sh # XXX
+sbatch scripts/bamtobigwig_MG1655_scaled_patient.sh # 11858276
 ```
 
 
@@ -560,11 +560,11 @@ sbatch scripts/bamtobigwig_MG1655_scaled_patient.sh # XXX
 ```bash
 conda activate deeptools
 
-sbatch scripts/bamtobigwig_histone_scaled_WT.sh # 11830480
-sbatch scripts/bamtobigwig_histone_scaled_HET.sh # 11830482
-sbatch scripts/bamtobigwig_histone_scaled_KO.sh # 11830481
+sbatch scripts/bamtobigwig_histone_scaled_WT.sh # 11830480 ok
+sbatch scripts/bamtobigwig_histone_scaled_HET.sh # 11830482 ok
+sbatch scripts/bamtobigwig_histone_scaled_KO.sh # 11830481 ok
 
-sbatch scripts/bamtobigwig_histone_scaled_patient.sh # XXX
+sbatch scripts/bamtobigwig_histone_scaled_patient.sh # 11858339
 ```
 
 
@@ -596,6 +596,8 @@ cut -f 1,2,6 output/bowtie2/8wN_WT_IGG_R2.dupmark.sorted.clean.bed | sort -k1,1 
 bedtools genomecov -bg -i output/bowtie2/8wN_WT_IGG_R2.dupmark.sorted.fragments.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab > output/bowtie2/8wN_WT_IGG_R2.dupmark.sorted.fragments.bedgraph
 
 # Run together
+conda activate bowtie2
+
 sbatch scripts/bamtobedgraph_WT_1.sh # 11826612 ok
 sbatch scripts/bamtobedgraph_WT_2.sh # 11826613 ok
 sbatch scripts/bamtobedgraph_HET_1.sh # 11826580 ok
@@ -603,7 +605,7 @@ sbatch scripts/bamtobedgraph_HET_2.sh # 11826581 ok
 sbatch scripts/bamtobedgraph_KO_1.sh # 11826578 ok
 sbatch scripts/bamtobedgraph_KO_2.sh # 11826579 ok
 
-sbatch scripts/bamtobedgraph_patient.sh # XXX
+sbatch scripts/bamtobedgraph_patient.sh # 11858464
 ```
 *NOTE: At bedtools bamtobed warning that some reads have no mate. But that is because I filtered reads based on MAPQ and removed unmapped reads, secondary alignments, and reads failing quality check using samtools view command, so I might have removed one read from a pair while retaining the other*
 
@@ -681,24 +683,119 @@ sbatch scripts/SEACR_histone_scaled_patient_relax.sh # XXX
 ```
 
 
---> All looks good except 8wN_WT_IGG_R1,8wN_WT_IGG_R2,8wN_WT_IGG_R3,8wN_WT_IGG_R4; no scaled samples peaks data.
+--> All looks good
 
-add ok to check
+
+
+
+## SPIKER (MACS2) peak calling
+Used blacklist from [ENCODE](https://github.com/Boyle-Lab/Blacklist). 
+
+No need to downsamples samples here as I have my scaling factors.
+
+Need to specify scaling factor using the macs2 command, Let's use spiker.sh for this. [Documentation](https://spiker.readthedocs.io/en/latest/usage.html) and [paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8313745/).
+
+**Install spiker**
+```bash
+conda create -n spiker 
+
+conda activate spiker
+
+cd ../../Master/software
+pip3 install spiker
+```
+--> Failed at installing MACS2. So install MACS2 first, then, install spiker.
+```bash
+conda activate spiker
+conda install -c bioconda macs2 # succeed
+cd ../../Master/software
+pip3 install spiker
+```
+--> Failed because zlib development files are missing, so install them within same conda env:
+```bash 
+conda install -c anaconda zlib
+pip3 install spiker
+```
+--> Failed again because of failed macs2 and pysam dependencies, try install both together and retry:
+```bash
+conda install -c bioconda macs2 pysam # succeed
+conda install -c bioconda pybigwig # succeed
+pip3 install spiker
+```
+--> Failed again, looks like spiker try to install a more recent version of macs2, so let's try install it 1st
+```bash
+conda uninstall macs2
+conda install -c bioconda macs2=2.2.7.1
+pip3 install spiker
+```
+--> Cannot install it as my python version is too weak! Let's recreate an environment with python 3.11.2 which work with macs2 2.2.7.1:
+```bash
+conda env remove --name spiker
+conda create -n spiker python=3.11.2
+
+conda activate spiker
+conda install -c bioconda macs2 # =2.2.7.1
+```
+--> No fail even worst cannot install macs2... Re-try looking at the [setup.py](https://github.com/liguowang/spiker/blob/main/setup.py) file from the github account to make sure we respect all dependencies
+```bash
+conda create --name spiker python=3.8
+conda activate spiker
+conda install -c bioconda numpy scipy pysam deeptools macs2 pyBigWig cython=0.29
+pip3 install spiker
+```
+--> I also try installed with python3.11 and failed too. That tool is fuckin shit as hell to install; lets try downloading it from [here](https://pypi.org/project/spiker/#files) and mount it manually...
+```bash
+conda install -c anaconda zlib
+conda install -c bioconda pysam 
+python3 -m pip install spiker-1.0.5.tar.gz
+```
+--> Exact same fail. Let's try using a python envirnment
+```bash
+python3 -m venv spiker
+source spiker/bin/activate
+python3 -m pip install spiker-1.0.5.tar.gz
+```
+--> Fail again. Also tried within conda macs2 env + python spiker env... 
+
+Let's try installing the package manually within a conda env, and remove from setup.py the requirement.
+```bash
+conda create --name spiker 
+# Install the required dependencies using Conda (the one indicated in the setup.py from spiker Github)
+conda install -c bioconda macs2
+conda install -c bioconda scipy
+conda install -c bioconda pysam
+conda install -c bioconda deeptools  
+conda install -c bioconda pyBigWig
+# Clone the Spiker repository from GitHub
+git clone https://github.com/liguowang/spiker.git
+cd spiker
+# Modify the setup.py to avoid it to run the install_require line by adding a "#"
+## like this : install_requires=['macs2==2.2.7.1','pysam',
+# install spiker
+pip install .
+```
+YO it WORK !!!!! But spiker1.0.3 installed, let' try move within the .tar.gz where that is version 5 and install it.
+
+STILL BUGY SO LETS DO IT ON THE TAR!!! USE THE conda env with everythings!!!!
+
+**Let's just create a macs2 environment**
+```bash
+conda create --name macs2
+conda activate macs2
+conda install -c bioconda macs2
+```
 
 
 
 
 
 ## MACS2 peak calling
-Used blacklist from [ENCODE](https://github.com/Boyle-Lab/Blacklist). 
 
-No need to downsamples samples here as I have my scaling factors.
+We may test the MACS2 old fashion way if Spyker do not provide good result. Read this forum:
+https://github.com/macs3-project/MACS/issues/356 
 
-Need to specify scaling factor using the macs2 command, Let's use spyker.sh for this. [Documentation](https://spiker.readthedocs.io/en/latest/usage.html) and [paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8313745/).
+```bash
+conda activate spiker
 
 XXX
-
-
-
-
-
+```
