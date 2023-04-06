@@ -840,12 +840,20 @@ conda install -c bioconda py2bit
 pip install spiker
 spiker.py --help
 ```
-Still failed, so let's modify the macs2 source code within my spiker conda env.
+Still failed, so let's try a more recent version of macs2
+```bash
+conda uninstall macs2
+pip install MACS2
+spiker.py --help
+```
 
-Go line 247 in `/home/roulet/anaconda3/envs/spiker/lib/python3.6/site-packages/MACS2/bdgopt_cmd.py` and
 
-copy paste to console and see what to change exactly...
-file isn in software GG drive
+
+
+
+
+
+
 
 **Run spiker another test**
 
