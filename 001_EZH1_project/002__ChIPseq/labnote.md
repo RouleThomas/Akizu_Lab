@@ -161,7 +161,6 @@ fastqc -o output/fastqc/fastp output/fastp/ESC_KO_H3K27me3_R2_1.fq.gz # ok
 --> Same nb of files in fastqc/raw and fastqc/fastp; read trim so size not homogeneous.
 
 
-
 # Mapping GRCh38
 ## Install and setup pre-requisets
 **Download and install Bowtie2**
@@ -354,6 +353,14 @@ Then in R; see `/home/roulet/001_EZH1_project/001_EZH1_project.R`.
 
 
 # Peak calling
+## Read depth normalization
+Download jvarkit [here](https://github.com/lindenb/jvarkit). Transfer to `Master/software/` and `unzip JVARKIT.zip`; to use it, simply `java -jar jvarkit.jar`.
+
+Use our `downsampleBAM.sh`; simply adapt the path to JVARKIT and sample names
+```bash
+sbatch scripts/downsampleBAM.sh # 11934723
+```
+XXX
 
 ## MACS2 peak calling
 

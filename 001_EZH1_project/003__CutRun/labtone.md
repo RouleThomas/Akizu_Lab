@@ -843,38 +843,19 @@ spiker.py --help
 Still failed, so let's try a more recent version of macs2
 ```bash
 conda uninstall macs2
+pip3 install --upgrade pip
 pip install MACS2
 spiker.py --help
 ```
-
-
-
-
-
-
-
-
-
-**Run spiker another test**
-
-
-
+Fail again...
 ```bash
-# MG1655 scaling factor
-
-# histone scaling factor
+conda env remove --name spiker 
 ```
+JUST GO TO HELL SPIKER!
 
 
-```
-
-
-
-
-
-
-
-**Let's just create a macs2 environment**
+## MACS2 peak calling
+**Create a macs2 environment**
 ```bash
 conda create --name macs2
 conda activate macs2
@@ -882,16 +863,10 @@ conda install -c bioconda macs2
 ```
 
 
-
-
-
-## MACS2 peak calling
-
-We may test the MACS2 old fashion way if Spyker do not provide good result. Read this forum:
 https://github.com/macs3-project/MACS/issues/356 
 
 ```bash
-conda activate spiker
+conda activate macs2
 
 XXX
 ```
