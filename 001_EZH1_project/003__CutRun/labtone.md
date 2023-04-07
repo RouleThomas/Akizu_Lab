@@ -509,7 +509,6 @@ dev.off()
 
 # Samtools and read filtering
 
-
 ```bash
 sbatch scripts/samtools_HET.sh # 11578283 ok
 sbatch scripts/samtools_KO.sh # 11578284, weirdly looong
@@ -555,7 +554,6 @@ sbatch scripts/bamtobigwig_MG1655_scaled_KO.sh # 11829984 ok
 sbatch scripts/bamtobigwig_MG1655_scaled_patient.sh # 11858276
 ```
 
-
 ### Histone-spike-in scaled-bigwig
 ```bash
 conda activate deeptools
@@ -564,13 +562,12 @@ sbatch scripts/bamtobigwig_histone_scaled_WT.sh # 11830480 ok
 sbatch scripts/bamtobigwig_histone_scaled_HET.sh # 11830482 ok
 sbatch scripts/bamtobigwig_histone_scaled_KO.sh # 11830481 ok
 
-sbatch scripts/bamtobigwig_histone_scaled_patient.sh # 11858339
+sbatch scripts/bamtobigwig_histone_scaled_patient.sh # 11858339 ok
 ```
+--> The bigwig spike-in normalized are very heterogeneous between replicates; smthing is wrong...
 
 
-
-
-# Peak calling
+# Peak calling_Version1 with failed normalized data
 
 ## SEACR peak calling
 [Paper](https://doi.org/10.1186/s13072-019-0287-4) and [Github](https://github.com/FredHutch/SEACR)
@@ -854,6 +851,63 @@ conda env remove --name spiker
 JUST GO TO HELL SPIKER!
 
 
+
+# Troubleshoot spike-in normalization
+The previous normalization method used, seems shit. Bigwig are very heterogeneous between replicates, even more than the raw files. Let's try different approaches:
+- Calculate **Histone spike-in factor from Cutana** (then generate scaled bigwig and scaled bam)
+- **ChIPSeqSpike** (provide scaling factor and scaled bigwig; then need generate peaks)
+- **[DiffBind]**(https://bioconductor.org/packages/devel/bioc/vignettes/DiffBind/inst/doc/DiffBind.pdf) (provide scaling factor; then need generate bigwig and peaks)
+- **SpikChIP** (provide scaled peak; need generate scaled bigwig)
+
+
+## Histone spike-in factor from Cutana
+Calculate the scaling factor as with the raw reads from `output/spikein/SpikeIn_QC_fastp.xlsx`
+
+XXX Here we now group per XXX
+
+```R
+# package
+library(tidyverse)
+library(readxl)
+# import df
+spikein <- read_excel("output/spikein/SpikeIn_QC_fastp.xlsx") # 
+
+# Filter-in H3K27me3 counts for each samples
+spikein_H3K27me3 = spikein %>%
+    filter(Target == "H3K27me3") %>%
+    group_by(sample_ID, AB) %>%
+    summarise(aligned=sum(counts))
+
+# Total reads per IP
+spikein_H3K27me3_total = spikein_H3K27me3 %>%
+    ungroup() %>%
+    group_by(AB) %>%
+    mutate(total = sum(aligned)) %>%
+    ungroup() %>%
+    distinct(AB, .keep_all = TRUE) %>%
+    select(AB,total)
+
+# Read proportion
+spikein_H3K27me3_read_prop = spikein_H3K27me3 %>%
+    left_join(spikein_H3K27me3_total) %>%
+    mutate(read_prop = aligned / total)
+
+spikein_H3K27me3_read_prop_min = spikein_H3K27me3_read_prop %>%
+    group_by(AB) %>%
+    summarise(min_prop=min(read_prop))
+
+# Scaling factor
+spikein_H3K27me3_scaling_factor = spikein_H3K27me3_read_prop %>%
+    left_join(spikein_H3K27me3_read_prop_min) %>%
+    mutate(scaling_factor = read_prop/min_prop)
+
+
+write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_histone_H3K27me3_scaling_factor_fastp.txt", sep="\t", quote=FALSE, row.names=FALSE)
+```
+
+
+
+
 ## MACS2 peak calling
 **Create a macs2 environment**
 ```bash
@@ -863,10 +917,7 @@ conda install -c bioconda macs2
 ```
 
 
-https://github.com/macs3-project/MACS/issues/356 
-
 ```bash
 conda activate macs2
-
-XXX
 ```
+

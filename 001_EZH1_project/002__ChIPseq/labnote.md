@@ -350,10 +350,7 @@ Then in R; see `/home/roulet/001_EZH1_project/001_EZH1_project.R`.
 
 --> Overall >80% input reads as been uniquely mapped to the genome
 
-
-
-# Peak calling
-## Read depth normalization
+# Read depth normalization
 Download jvarkit [here](https://github.com/lindenb/jvarkit). Transfer to `Master/software/` and `unzip JVARKIT.zip`; to use it, simply `java -jar jvarkit.jar`.
 
 Use our `downsampleBAM.sh`; simply adapt the path to JVARKIT and sample names
@@ -362,6 +359,56 @@ sbatch scripts/downsampleBAM.sh # 11934723
 ```
 XXX
 
-## MACS2 peak calling
+# Coverage bigwig file
+## Raw coverage bigwig
+
+```bash
+conda activate deeptools
+
+sbatch scripts/bamtobigwig_ESC.sh # 11974332
+sbatch scripts/bamtobigwig_NPC.sh # 11974335
+sbatch scripts/bamtobigwig_2dN.sh # 11974336
+```
 
 
+## depth-norm/downsample coverage bigwig
+
+
+
+
+
+
+
+# Peak calling
+
+
+## MACS2 peak calling raw
+```bash
+conda activate macs2
+# example for 1 file
+macs2 callpeak -t output/bowtie2_endtoend/ESC_HET_H3K27me3_R1.dupmark.sorted.bam \
+    -c output/bowtie2_endtoend/ESC_HET_input_R1.dupmark.sorted.bam \
+    -f BAMPE --keep-dup auto \
+    --nomodel -g hs \
+    --outdir output/macs2 -n ESC_HET_H3K27me3_R1 --broad
+
+# run per time
+sbatch scripts/macs2_ESC.sh # 11979368
+sbatch scripts/macs2_NPC.sh # 11979372
+sbatch scripts/macs2_2dN.sh # 11979373
+```
+XXX
+Then keep only the significant peaks (re-run the script to test different qvalue cutoff) and remove peaks overlapping with blacklist regions.
+
+
+
+```bash
+sbatch scripts/macs2_peak_signif.sh # qval XXX # 
+```
+
+## MACS2 peak calling depth-norm/downsample
+
+
+
+
+--> Overall the XXX show more peaks
