@@ -860,50 +860,76 @@ The previous normalization method used, seems shit. Bigwig are very heterogeneou
 - **SpikChIP** (provide scaled peak; need generate scaled bigwig)
 
 
-## Histone spike-in factor from Cutana
+## Histone spike-in factor from Cutana - Scaling factor
 Calculate the scaling factor as with the raw reads from `output/spikein/SpikeIn_QC_fastp.xlsx`
 
-XXX Here we now group per XXX
+Here we now group per genotype and AB:
 
 ```R
 # package
 library(tidyverse)
 library(readxl)
+
 # import df
-spikein <- read_excel("output/spikein/SpikeIn_QC_fastp.xlsx") # 
+spikein <- read_excel("output/spikein/SpikeIn_QC_fastp.xlsx") %>%
+  mutate(genotype = str_extract(sample_ID, "HET|KO|WT|iPSCpatient")) %>% # Extract genotype from sample_ID
+  filter(Target == "H3K27me3")
 
-# Filter-in H3K27me3 counts for each samples
-spikein_H3K27me3 = spikein %>%
-    filter(Target == "H3K27me3") %>%
-    group_by(sample_ID, AB) %>%
-    summarise(aligned=sum(counts))
 
-# Total reads per IP
-spikein_H3K27me3_total = spikein_H3K27me3 %>%
-    ungroup() %>%
-    group_by(AB) %>%
-    mutate(total = sum(aligned)) %>%
-    ungroup() %>%
-    distinct(AB, .keep_all = TRUE) %>%
-    select(AB,total)
+# Total reads per IP and genotype
+spikein_H3K27me3_total = spikein %>%
+  group_by(AB, genotype) %>%
+  mutate(total = sum(counts)) %>%
+  ungroup() %>%
+  distinct(AB, genotype, .keep_all = TRUE) %>%
+  select(AB, genotype, total)
 
 # Read proportion
-spikein_H3K27me3_read_prop = spikein_H3K27me3 %>%
-    left_join(spikein_H3K27me3_total) %>%
-    mutate(read_prop = aligned / total)
+spikein_H3K27me3_read_prop = spikein %>%
+  group_by(sample_ID) %>%
+  mutate(counts = sum(counts)) %>%
+  select(sample_ID,AB,genotype,counts) %>%
+  unique() %>%
+  left_join(spikein_H3K27me3_total) %>%
+  mutate(read_prop = counts / total)
 
 spikein_H3K27me3_read_prop_min = spikein_H3K27me3_read_prop %>%
-    group_by(AB) %>%
-    summarise(min_prop=min(read_prop))
+  group_by(AB, genotype) %>%
+  summarise(min_prop=min(read_prop))
 
 # Scaling factor
 spikein_H3K27me3_scaling_factor = spikein_H3K27me3_read_prop %>%
-    left_join(spikein_H3K27me3_read_prop_min) %>%
-    mutate(scaling_factor = read_prop/min_prop)
+  left_join(spikein_H3K27me3_read_prop_min) %>%
+  mutate(scaling_factor = read_prop/min_prop)
 
+write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_histone_groupABgenotype_scaling_factor.txt", sep="\t", quote=FALSE, row.names=FALSE)
 
-write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_histone_H3K27me3_scaling_factor_fastp.txt", sep="\t", quote=FALSE, row.names=FALSE)
 ```
+
+--> The scaling factor looks better (range between 1-3); let's generate bigwig and vizualize
+
+### Histone spike-in factor from Cutana - Bigwig
+
+```bash
+sbatch scripts/bamtobigwig_histone_groupABgenotype_WT.sh # ok
+```
+--> Even though that is better that initially, the replicates are still very heterogeneous when loading on IGV.
+
+
+
+## ChIPSeqSpike
+
+XXX
+
+
+
+
+
+
+
+
+
+
 
 
 

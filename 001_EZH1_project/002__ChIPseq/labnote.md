@@ -355,9 +355,9 @@ Download jvarkit [here](https://github.com/lindenb/jvarkit). Transfer to `Master
 
 Use our `downsampleBAM.sh`; simply adapt the path to JVARKIT and sample names
 ```bash
-sbatch scripts/downsampleBAM.sh # 11934723
+sbatch scripts/downsampleBAM.sh # 11934723 ok
 ```
-XXX
+
 
 # Coverage bigwig file
 ## Raw coverage bigwig
@@ -365,18 +365,20 @@ XXX
 ```bash
 conda activate deeptools
 
-sbatch scripts/bamtobigwig_ESC.sh # 11974332
-sbatch scripts/bamtobigwig_NPC.sh # 11974335
-sbatch scripts/bamtobigwig_2dN.sh # 11974336
+sbatch scripts/bamtobigwig_ESC.sh # 11974332 ok
+sbatch scripts/bamtobigwig_NPC.sh # 11974335 ok
+sbatch scripts/bamtobigwig_2dN.sh # 11974336 ok
 ```
 
 
 ## depth-norm/downsample coverage bigwig
+```bash
+conda activate deeptools
 
-
-
-
-
+sbatch scripts/bamtobigwig_downsample_ESC.sh # 11980007 XXX
+sbatch scripts/bamtobigwig_downsample_NPC.sh # 11980008 XXX
+sbatch scripts/bamtobigwig_downsample_2dN.sh # 11980009 XXX
+```
 
 
 # Peak calling
@@ -393,22 +395,69 @@ macs2 callpeak -t output/bowtie2_endtoend/ESC_HET_H3K27me3_R1.dupmark.sorted.bam
     --outdir output/macs2 -n ESC_HET_H3K27me3_R1 --broad
 
 # run per time
-sbatch scripts/macs2_ESC.sh # 11979368
-sbatch scripts/macs2_NPC.sh # 11979372
-sbatch scripts/macs2_2dN.sh # 11979373
+sbatch scripts/macs2_ESC.sh # 11979368 ok
+sbatch scripts/macs2_NPC.sh # 11979372 ok
+sbatch scripts/macs2_2dN.sh # 11979373 ok
 ```
-XXX
-Then keep only the significant peaks (re-run the script to test different qvalue cutoff) and remove peaks overlapping with blacklist regions.
 
-
+Then keep only the significant peaks (re-run the script to test different qvalue cutoff) and remove peaks overlapping with blacklist regions. MACS2 column9 output is -log10(qvalue) format so if we want 0.05; 
+- q0.05: `q value = -log10(0.05) = 1.30103`
+- q0.01 = 2
+- q0.005 = 2.30103
+- q0.001 = 3
+- q0.0001 = 4
+- q0.00001 = 5
 
 ```bash
-sbatch scripts/macs2_peak_signif.sh # qval XXX # 
+conda activate bowtie2 # for bedtools
+
+sbatch scripts/macs2_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
 ```
 
+--> Overall the 0.005/0.001 qval is more accurate to call peak
+
 ## MACS2 peak calling depth-norm/downsample
+```bash
+conda activate macs2
+
+# run per time
+sbatch scripts/macs2_downsample_ESC.sh # 11980099 ok
+sbatch scripts/macs2_downsample_NPC.sh # 11980109 ok
+sbatch scripts/macs2_downsample_2dN.sh # 11980110 ok
+```
+
+```bash
+sbatch scripts/macs2_downsample_peak_signif.sh # qval XXX # 
+```
+
+XXX Once bigwig downsampling ready; launch IGV load them and play wtih qvalue cutoff and compare at same qval which method give the higher nb of peak and check how much they overlap
+
+--> Overall the XXX show more peaks at the same qvalue 
 
 
 
 
---> Overall the XXX show more peaks
+# PCA on Bigwig files
+
+Let's do PCA with [multiBigwigSummary](https://deeptools.readthedocs.io/en/develop/content/tools/multiBigwigSummary.html) and [PCAplot](https://deeptools.readthedocs.io/en/2.4.1/content/tools/plotPCA.html) from deeptools:
+
+- Use bin mode (score of the compile bigwig is calculated at a 10kb bins (default), on the entire genome)
+- Let's do it all samples together and per genotype for better vizualization
+
+XXX: We may test PCA on raw and downsample files for comparison
+
+XXX:
+
+```bash
+# All samples together
+multiBigwigSummary bins -b file1.bw file2.bw -o results.npz
+plotPCA -in results.npz \
+    --transpose \
+    --ntop 0 \
+    --labels file1 file2 \
+    -o results.png
+
+
+# Genotype per genotype
+
+```
