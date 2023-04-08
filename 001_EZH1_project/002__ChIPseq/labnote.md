@@ -375,14 +375,15 @@ sbatch scripts/bamtobigwig_2dN.sh # 11974336 ok
 ```bash
 conda activate deeptools
 
-sbatch scripts/bamtobigwig_downsample_ESC.sh # 11980007 XXX
-sbatch scripts/bamtobigwig_downsample_NPC.sh # 11980008 XXX
-sbatch scripts/bamtobigwig_downsample_2dN.sh # 11980009 XXX
+sbatch scripts/bamtobigwig_downsample_ESC.sh # 11980007 time limit ; 
+sbatch scripts/bamtobigwig_downsample_ESC_input_WT.sh # 12003264
+sbatch scripts/bamtobigwig_downsample_NPC.sh # 11980008 time limit ;
+sbatch scripts/bamtobigwig_downsample_NPC_input_WT.sh # 12003265
+sbatch scripts/bamtobigwig_downsample_2dN.sh # 11980009 ok
 ```
 
 
 # Peak calling
-
 
 ## MACS2 peak calling raw
 ```bash
@@ -444,13 +445,17 @@ Let's do PCA with [multiBigwigSummary](https://deeptools.readthedocs.io/en/devel
 - Use bin mode (score of the compile bigwig is calculated at a 10kb bins (default), on the entire genome)
 - Let's do it all samples together and per genotype for better vizualization
 
-XXX: We may test PCA on raw and downsample files for comparison
-
-XXX:
+## PCA on raw files
 
 ```bash
-# All samples together
-multiBigwigSummary bins -b file1.bw file2.bw -o results.npz
+conda activate deeptools
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_all_H3K27me3.sh # 12003437
+sbatch scripts/multiBigwigSummary_all.sh # 12003478
+# XXX Genotype per genotype
+
+# Plot
+
 plotPCA -in results.npz \
     --transpose \
     --ntop 0 \
@@ -458,6 +463,9 @@ plotPCA -in results.npz \
     -o results.png
 
 
-# Genotype per genotype
+
 
 ```
+
+
+## PCA on downsample files
