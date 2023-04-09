@@ -365,9 +365,10 @@ sbatch scripts/downsampleBAM.sh # 11934723 ok
 ```bash
 conda activate deeptools
 
-sbatch scripts/bamtobigwig_ESC.sh # 11974332 ok
-sbatch scripts/bamtobigwig_NPC.sh # 11974335 ok
+sbatch scripts/bamtobigwig_ESC.sh # 11974332  time limit ; Rerun on scripts/bamtobigwig_canceled.sh
+sbatch scripts/bamtobigwig_NPC.sh # 11974335 time limit ; Rerun on scripts/bamtobigwig_canceled.sh
 sbatch scripts/bamtobigwig_2dN.sh # 11974336 ok
+sbatch scripts/bamtobigwig_canceled.sh # 12019087
 ```
 
 
@@ -375,9 +376,9 @@ sbatch scripts/bamtobigwig_2dN.sh # 11974336 ok
 ```bash
 conda activate deeptools
 
-sbatch scripts/bamtobigwig_downsample_ESC.sh # 11980007 time limit ; 
+sbatch scripts/bamtobigwig_downsample_ESC.sh # 11980007 time limit ; 12003265 ok
 sbatch scripts/bamtobigwig_downsample_ESC_input_WT.sh # 12003264
-sbatch scripts/bamtobigwig_downsample_NPC.sh # 11980008 time limit ;
+sbatch scripts/bamtobigwig_downsample_NPC.sh # 11980008 time limit ; 12003264 ok
 sbatch scripts/bamtobigwig_downsample_NPC_input_WT.sh # 12003265
 sbatch scripts/bamtobigwig_downsample_2dN.sh # 11980009 ok
 ```
@@ -440,7 +441,7 @@ XXX Once bigwig downsampling ready; launch IGV load them and play wtih qvalue cu
 
 # PCA on Bigwig files
 
-Let's do PCA with [multiBigwigSummary](https://deeptools.readthedocs.io/en/develop/content/tools/multiBigwigSummary.html) and [PCAplot](https://deeptools.readthedocs.io/en/2.4.1/content/tools/plotPCA.html) from deeptools:
+Let's do PCA with [multiBigwigSummary](https://deeptools.readthedocs.io/en/develop/content/tools/multiBigwigSummary.html) and [PCAplot](https://deeptools.readthedocs.io/en/2.4.1/content/tools/plotPCA.html)/[plotCorrelation](https://deeptools.readthedocs.io/en/develop/content/tools/plotCorrelation.html) from deeptools:
 
 - Use bin mode (score of the compile bigwig is calculated at a 10kb bins (default), on the entire genome)
 - Let's do it all samples together and per genotype for better vizualization
@@ -450,9 +451,13 @@ Let's do PCA with [multiBigwigSummary](https://deeptools.readthedocs.io/en/devel
 ```bash
 conda activate deeptools
 # Generate compile bigwig (.npz) files
-sbatch scripts/multiBigwigSummary_all_H3K27me3.sh # 12003437
-sbatch scripts/multiBigwigSummary_all.sh # 12003478
-# XXX Genotype per genotype
+sbatch scripts/multiBigwigSummary_all_H3K27me3.sh # 12003437 ok
+sbatch scripts/multiBigwigSummary_all.sh # 12003478 FAIL because some input files missing (output/bigwig/ESC_WT_input_R1.dupmark.sorted.bw output/bigwig/ESC_WT_input_R2.dupmark.sorted.bw output/bigwig/ESC_WT_input_R3.dupmark.sorted.bw output/bigwig/NPC_WT_input_R2.dupmark.sorted.bw )
+# Genotype per genotype
+
+
+
+
 
 # Plot
 
@@ -469,3 +474,14 @@ plotPCA -in results.npz \
 
 
 ## PCA on downsample files
+
+
+```bash
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_all_H3K27me3_downsample.sh # 12019080
+sbatch scripts/multiBigwigSummary_all_downsample.sh # 12019081
+# XXX Genotype per genotype
+
+# Plot
+
+```
