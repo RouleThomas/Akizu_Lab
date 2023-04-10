@@ -368,7 +368,7 @@ conda activate deeptools
 sbatch scripts/bamtobigwig_ESC.sh # 11974332  time limit ; Rerun on scripts/bamtobigwig_canceled.sh
 sbatch scripts/bamtobigwig_NPC.sh # 11974335 time limit ; Rerun on scripts/bamtobigwig_canceled.sh
 sbatch scripts/bamtobigwig_2dN.sh # 11974336 ok
-sbatch scripts/bamtobigwig_canceled.sh # 12019087
+sbatch scripts/bamtobigwig_canceled.sh # 12019087 ok
 ```
 
 
@@ -412,7 +412,6 @@ Then keep only the significant peaks (re-run the script to test different qvalue
 
 ```bash
 conda activate bowtie2 # for bedtools
-
 sbatch scripts/macs2_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
 ```
 
@@ -429,7 +428,8 @@ sbatch scripts/macs2_downsample_2dN.sh # 11980110 ok
 ```
 
 ```bash
-sbatch scripts/macs2_downsample_peak_signif.sh # qval XXX # 
+conda activate bowtie2 # for bedtools
+sbatch scripts/macs2_downsample_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
 ```
 
 XXX Once bigwig downsampling ready; launch IGV load them and play wtih qvalue cutoff and compare at same qval which method give the higher nb of peak and check how much they overlap
@@ -452,11 +452,8 @@ Let's do PCA with [multiBigwigSummary](https://deeptools.readthedocs.io/en/devel
 conda activate deeptools
 # Generate compile bigwig (.npz) files
 sbatch scripts/multiBigwigSummary_all_H3K27me3.sh # 12003437 ok
-sbatch scripts/multiBigwigSummary_all.sh # 12003478 FAIL because some input files missing (output/bigwig/ESC_WT_input_R1.dupmark.sorted.bw output/bigwig/ESC_WT_input_R2.dupmark.sorted.bw output/bigwig/ESC_WT_input_R3.dupmark.sorted.bw output/bigwig/NPC_WT_input_R2.dupmark.sorted.bw )
+sbatch scripts/multiBigwigSummary_all.sh # 12003478 FAIL; some input files missing (ESC_WT_input_R1.dupmark.sorted.bw ESC_WT_input_R2.dupmark.sorted.bw ESC_WT_input_R3.dupmark.sorted.bw NPC_WT_input_R2.dupmark.sorted.bw) --> Re-generated and job re-launch 12024171 ok
 # Genotype per genotype
-
-
-
 
 
 # Plot
@@ -477,11 +474,40 @@ plotPCA -in results.npz \
 
 
 ```bash
+conda activate deeptools
 # Generate compile bigwig (.npz) files
-sbatch scripts/multiBigwigSummary_all_H3K27me3_downsample.sh # 12019080
-sbatch scripts/multiBigwigSummary_all_downsample.sh # 12019081
-# XXX Genotype per genotype
+sbatch scripts/multiBigwigSummary_all_H3K27me3_downsample.sh # 12019080 ok
+sbatch scripts/multiBigwigSummary_all_downsample.sh # 12019081 ok
+# Time per time (for genotype effect)
+XXX
+# Genotype per genotype (for time effect)
 
 # Plot
+## All genotypes all points
+plotPCA -in output/bigwig_downsample/multiBigwigSummary_all_downsample.npz \
+    --transpose \
+    --ntop 0 \
+    --labels 2dN_HET_input_R1 2dN_HET_input_R2 2dN_KO_input_R1 2dN_KO_input_R2 2dN_WT_input_R1 2dN_WT_input_R2 ESC_HET_input_R1 ESC_HET_input_R2 ESC_KO_input_R1 ESC_KO_input_R2 ESC_WT_input_R1 ESC_WT_input_R2 ESC_WT_input_R3 NPC_HET_input_R1 NPC_HET_input_R2 NPC_KO_input_R1 NPC_KO_input_R2 NPC_WT_input_R1 NPC_WT_input_R2 2dN_HET_H3K27me3_R1 2dN_HET_H3K27me3_R2 2dN_KO_H3K27me3_R1 2dN_KO_H3K27me3_R2 2dN_WT_H3K27me3_R1 2dN_WT_H3K27me3_R2 ESC_HET_H3K27me3_R1 ESC_HET_H3K27me3_R2 ESC_KO_H3K27me3_R1 ESC_KO_H3K27me3_R2 ESC_WT_H3K27me3_R1 ESC_WT_H3K27me3_R2 ESC_WT_H3K27me3_R3 NPC_HET_H3K27me3_R1 NPC_HET_H3K27me3_R2 NPC_KO_H3K27me3_R1 NPC_KO_H3K27me3_R2 NPC_WT_H3K27me3_R1 NPC_WT_H3K27me3_R2 \
+    -o output/bigwig_downsample/multiBigwigSummary_all_downsample_plotPCA.pdf
+plotCorrelation \
+    -in output/bigwig_downsample/multiBigwigSummary_all_downsample.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --whatToPlot heatmap --colorMap RdYlBu --plotNumbers \
+    -o output/bigwig_downsample/multiBigwigSummary_all_downsample_heatmap.pdf
+plotCorrelation \
+    -in output/bigwig_downsample/multibigwigSummary_all_H3K27me3_downsample.npz \
+    --corMethod pearson \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --whatToPlot heatmap --colorMap RdYlBu --plotNumbers \
+    -o output/bigwig_downsample/multiBigwigSummary_all_H3K27me3_downsample_heatmap.pdf
+## Time per time (for genotype effect)
+
+
+## Genotype per genotype (for time effect)
 
 ```
+
+NOTE: I tested Spearman and Pearson correlation. Pearson perform better (more accurate); I also remove outlier as Pearson are more sensitive; could come from blacklist regions.
