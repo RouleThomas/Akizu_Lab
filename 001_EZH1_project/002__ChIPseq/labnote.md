@@ -453,33 +453,141 @@ conda activate deeptools
 # Generate compile bigwig (.npz) files
 sbatch scripts/multiBigwigSummary_all_H3K27me3.sh # 12003437 ok
 sbatch scripts/multiBigwigSummary_all.sh # 12003478 FAIL; some input files missing (ESC_WT_input_R1.dupmark.sorted.bw ESC_WT_input_R2.dupmark.sorted.bw ESC_WT_input_R3.dupmark.sorted.bw NPC_WT_input_R2.dupmark.sorted.bw) --> Re-generated and job re-launch 12024171 ok
-# Genotype per genotype
+## Time per time (for genotype effect)
+sbatch scripts/multiBigwigSummary_ESC.sh # 12037427 ok
+sbatch scripts/multiBigwigSummary_NPC.sh # 12037490 ok
+sbatch scripts/multiBigwigSummary_2dN.sh # 12037421 ok
+
+sbatch scripts/multiBigwigSummary_ESC_noinput.sh # 12046629 ok
+sbatch scripts/multiBigwigSummary_NPC_noinput.sh # 12046630 ok
+sbatch scripts/multiBigwigSummary_2dN_noinput.sh # 12046584 ok
+
+## Genotype per genotype (for time effect)
+sbatch scripts/multiBigwigSummary_WT.sh # 12038201 ok
+sbatch scripts/multiBigwigSummary_HET.sh # 12038200 ok
+sbatch scripts/multiBigwigSummary_KO.sh # 12038199 ok
+
+sbatch scripts/multiBigwigSummary_WT_noinput.sh # 12046734 ok
+sbatch scripts/multiBigwigSummary_HET_noinput.sh # 12046735 ok
+sbatch scripts/multiBigwigSummary_KO_noinput.sh # 12046733 ok
 
 
 # Plot
-
-plotPCA -in results.npz \
+## All genotypes all points
+plotPCA -in output/bigwig/multiBigwigSummary_all.npz \
     --transpose \
     --ntop 0 \
-    --labels file1 file2 \
-    -o results.png
+    --labels 2dN_HET_input_R1 2dN_HET_input_R2 2dN_KO_input_R1 2dN_KO_input_R2 2dN_WT_input_R1 2dN_WT_input_R2 ESC_HET_input_R1 ESC_HET_input_R2 ESC_KO_input_R1 ESC_KO_input_R2 ESC_WT_input_R1 ESC_WT_input_R2 ESC_WT_input_R3 NPC_HET_input_R1 NPC_HET_input_R2 NPC_KO_input_R1 NPC_KO_input_R2 NPC_WT_input_R1 NPC_WT_input_R2 2dN_HET_H3K27me3_R1 2dN_HET_H3K27me3_R2 2dN_KO_H3K27me3_R1 2dN_KO_H3K27me3_R2 2dN_WT_H3K27me3_R1 2dN_WT_H3K27me3_R2 ESC_HET_H3K27me3_R1 ESC_HET_H3K27me3_R2 ESC_KO_H3K27me3_R1 ESC_KO_H3K27me3_R2 ESC_WT_H3K27me3_R1 ESC_WT_H3K27me3_R2 ESC_WT_H3K27me3_R3 NPC_HET_H3K27me3_R1 NPC_HET_H3K27me3_R2 NPC_KO_H3K27me3_R1 NPC_KO_H3K27me3_R2 NPC_WT_H3K27me3_R1 NPC_WT_H3K27me3_R2 \
+    -o output/bigwig/multiBigwigSummary_all_plotPCA.pdf
+plotPCA -in output/bigwig/multiBigwigSummary_all_H3K27me3.npz \
+    --transpose \
+    --ntop 0 \
+    --labels 2dN_HET_H3K27me3_R1 2dN_HET_H3K27me3_R2 2dN_KO_H3K27me3_R1 2dN_KO_H3K27me3_R2 2dN_WT_H3K27me3_R1 2dN_WT_H3K27me3_R2 ESC_HET_H3K27me3_R1 ESC_HET_H3K27me3_R2 ESC_KO_H3K27me3_R1 ESC_KO_H3K27me3_R2 ESC_WT_H3K27me3_R1 ESC_WT_H3K27me3_R2 ESC_WT_H3K27me3_R3 NPC_HET_H3K27me3_R1 NPC_HET_H3K27me3_R2 NPC_KO_H3K27me3_R1 NPC_KO_H3K27me3_R2 NPC_WT_H3K27me3_R1 NPC_WT_H3K27me3_R2 \
+    -o output/bigwig/multiBigwigSummary_all_H3K27me3_plotPCA.pdf
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_all.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --whatToPlot heatmap --colorMap RdYlBu --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_all_heatmap.pdf
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_all_H3K27me3.npz \
+    --corMethod pearson \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --whatToPlot heatmap --colorMap RdYlBu --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_all_H3K27me3_heatmap.pdf
 
+## Time per time (for genotype effect)
+plotPCA -in output/bigwig/multiBigwigSummary_ESC_noinput.npz \
+    --transpose \
+    --ntop 0 \
+    --labels ESC_HET_H3K27me3_R1 ESC_HET_H3K27me3_R2 ESC_KO_H3K27me3_R1 ESC_KO_H3K27me3_R2 ESC_WT_H3K27me3_R1 ESC_WT_H3K27me3_R2 ESC_WT_H3K27me3_R3 \
+    -o output/bigwig/multiBigwigSummary_ESC_noinput_plotPCA.pdf
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_ESC_noinput.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --whatToPlot heatmap --colorMap RdYlBu --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_ESC_noinput_heatmap.pdf
 
+plotPCA -in output/bigwig/multiBigwigSummary_NPC_noinput.npz \
+    --transpose \
+    --ntop 0 \
+    --labels NPC_HET_H3K27me3_R1 NPC_HET_H3K27me3_R2 NPC_KO_H3K27me3_R1 NPC_KO_H3K27me3_R2 NPC_WT_H3K27me3_R1 NPC_WT_H3K27me3_R2 \
+    -o output/bigwig/multiBigwigSummary_NPC_noinput_plotPCA.pdf
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_NPC_noinput.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --whatToPlot heatmap --colorMap RdYlBu --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_NPC_noinput_heatmap.pdf
 
+plotPCA -in output/bigwig/multiBigwigSummary_2dN_noinput.npz \
+    --transpose \
+    --ntop 0 \
+    --labels 2dN_HET_H3K27me3_R1 2dN_HET_H3K27me3_R2 2dN_KO_H3K27me3_R1 2dN_KO_H3K27me3_R2 2dN_WT_H3K27me3_R1 2dN_WT_H3K27me3_R2 \
+    -o output/bigwig/multiBigwigSummary_2dN_noinput_plotPCA.pdf
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_2dN_noinput.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --whatToPlot heatmap --colorMap RdYlBu --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_2dN_noinput_heatmap.pdf
+## Genotype per genotype (for time effect)
+plotPCA -in output/bigwig/multiBigwigSummary_WT_noinput.npz \
+    --transpose \
+    --ntop 0 \
+    --labels 2dN_WT_H3K27me3_R1 2dN_WT_H3K27me3_R2 ESC_WT_H3K27me3_R1 ESC_WT_H3K27me3_R2 ESC_WT_H3K27me3_R3 NPC_WT_H3K27me3_R1 NPC_WT_H3K27me3_R2 \
+    -o output/bigwig/multiBigwigSummary_WT_noinput_plotPCA.pdf
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_WT_noinput.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --whatToPlot heatmap --colorMap RdYlBu --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_WT_noinput_heatmap.pdf
 
+plotPCA -in output/bigwig/multiBigwigSummary_HET_noinput.npz \
+    --transpose \
+    --ntop 0 \
+    --labels 2dN_HET_H3K27me3_R1 2dN_HET_H3K27me3_R2 ESC_HET_H3K27me3_R1 ESC_HET_H3K27me3_R2 NPC_HET_H3K27me3_R1 NPC_HET_H3K27me3_R2 \
+    -o output/bigwig/multiBigwigSummary_HET_noinput_plotPCA.pdf
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_HET_noinput.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --whatToPlot heatmap --colorMap RdYlBu --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_HET_noinput_heatmap.pdf
+
+plotPCA -in output/bigwig/multiBigwigSummary_KO_noinput.npz \
+    --transpose \
+    --ntop 0 \
+    --labels 2dN_KO_H3K27me3_R1 2dN_KO_H3K27me3_R2 ESC_KO_H3K27me3_R1 ESC_KO_H3K27me3_R2 NPC_KO_H3K27me3_R1 NPC_KO_H3K27me3_R2 \
+    -o output/bigwig/multiBigwigSummary_KO_noinput_plotPCA.pdf
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_KO_noinput.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --whatToPlot heatmap --colorMap RdYlBu --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_KO_noinput_heatmap.pdf
 ```
 
 
 ## PCA on downsample files
-
-
 ```bash
 conda activate deeptools
 # Generate compile bigwig (.npz) files
 sbatch scripts/multiBigwigSummary_all_H3K27me3_downsample.sh # 12019080 ok
 sbatch scripts/multiBigwigSummary_all_downsample.sh # 12019081 ok
 # Time per time (for genotype effect)
-XXX
+
 # Genotype per genotype (for time effect)
 
 # Plot
@@ -505,9 +613,9 @@ plotCorrelation \
     -o output/bigwig_downsample/multiBigwigSummary_all_H3K27me3_downsample_heatmap.pdf
 ## Time per time (for genotype effect)
 
-
 ## Genotype per genotype (for time effect)
-
 ```
+*NOTE: I tested Spearman and Pearson correlation. Pearson perform better (more accurate); I also remove outlier as Pearson are more sensitive; could come from blacklist regions.*
 
-NOTE: I tested Spearman and Pearson correlation. Pearson perform better (more accurate); I also remove outlier as Pearson are more sensitive; could come from blacklist regions.
+--> Let's **use the non-downsample/raw** as it give more peaks; and the replicate looks more 'similar' on IGV. Moreover MACS2 already account for these differences while calling peak.
+

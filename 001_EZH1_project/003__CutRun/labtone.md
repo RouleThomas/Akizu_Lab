@@ -508,7 +508,7 @@ dev.off()
 --> Both histone and E coli normalization provide the overall similar scaling factor.
 
 # Samtools and read filtering
-
+## Reference/Endogeneous genome
 ```bash
 sbatch scripts/samtools_HET.sh # 11578283 ok
 sbatch scripts/samtools_KO.sh # 11578284, weirdly looong
@@ -523,6 +523,12 @@ sbatch scripts/samtools_KO_2.sh # ok
 --> The long job has been cancel and samtools_KO_2.sh succesfully run.
 
 --> New files transfered to the `output/bowtie2`. All is complete
+
+## Ecoli/Exogeneous genome
+```bash
+sbatch scripts/samtools_MG1655.sh # 12046911 ok
+```
+
 
 # Generate wig coverage files
 ## Raw bigwig
@@ -909,7 +915,6 @@ write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_histon
 --> The scaling factor looks better (range between 1-3); let's generate bigwig and vizualize
 
 ### Histone spike-in factor from Cutana - Bigwig
-
 ```bash
 sbatch scripts/bamtobigwig_histone_groupABgenotype_WT.sh # ok
 ```
@@ -917,18 +922,24 @@ sbatch scripts/bamtobigwig_histone_groupABgenotype_WT.sh # ok
 
 
 
-## ChIPSeqSpike
+### ChIPSeqSpike
+Need Bioconductor 3.10, doc [here](https://bioconductor.riken.jp/packages/3.10/bioc/html/ChIPSeqSpike.html)
+```bash
+srun --mem=50g --pty bash -l
+conda create --name ChIPSeqSpike r-base=3.6.0 
+conda activate ChIPSeqSpike
+```
+```R
+BiocManager::install(version = "3.10")
+# BiocManager::install("ChIPSeqSpike")
+library("ChIPSeqSpike")
+```
+Failed to install; and seems more adapted for ChIPseq as require input. So goodbye ChIPSeqSpike method.
+
+### DiffBind
+
 
 XXX
-
-
-
-
-
-
-
-
-
 
 
 
