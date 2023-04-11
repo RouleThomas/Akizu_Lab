@@ -858,6 +858,44 @@ JUST GO TO HELL SPIKER!
 
 
 
+# Peak calling on raw
+## MACS2
+**Create a macs2 environment**
+```bash
+conda create --name macs2
+conda activate macs2
+conda install -c bioconda macs2
+```
+The same parameter as for the ChIPseq are used; IGG as control instead of input.
+```bash
+conda activate macs2
+# genotype per genotype
+sbatch scripts/macs2_raw_WT.sh # 12075979 ok
+sbatch scripts/macs2_raw_HET.sh # 12075980 ok
+sbatch scripts/macs2_raw_KO.sh # 12075981 ok
+sbatch scripts/macs2_raw_patient.sh # 12075982 ok
+```
+Then keep only the significant peaks (re-run the script to test different qvalue cutoff) and remove peaks overlapping with blacklist regions. MACS2 column9 output is -log10(qvalue) format so if we want 0.05; 
+- q0.05: `q value = -log10(0.05) = 1.30103`
+- q0.01 = 2
+- q0.005 = 2.30103
+- q0.001 = 3
+- q0.0001 = 4
+- q0.00001 = 5
+
+```bash
+conda activate bowtie2 # for bedtools
+sbatch scripts/macs2_raw_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
+```
+
+--> Overall the 0.005 qval is more accurate to call peak
+
+## SEACR
+Already tested previously and show very few peaks...
+
+
+
+
 # Troubleshoot spike-in normalization
 The previous normalization method used, seems shit. Bigwig are very heterogeneous between replicates, even more than the raw files. Let's try different approaches:
 - Calculate **Histone spike-in factor from Cutana** (then generate scaled bigwig and scaled bam)
@@ -937,24 +975,36 @@ library("ChIPSeqSpike")
 Failed to install; and seems more adapted for ChIPseq as require input. So goodbye ChIPSeqSpike method.
 
 ### DiffBind
+#### DiffBind Installation
+Workshop [here](https://bioinformatics-core-shared-training.github.io/Quantitative-ChIPseq-Workshop/articles/Quantitative-ChIPseq-Workshop.html) and [manual](https://bioconductor.org/packages/devel/bioc/vignettes/DiffBind/inst/doc/DiffBind.pdf), [forum](https://support.bioconductor.org/p/9135565/) about spikein
 
-
-XXX
-
-
-
-
-
-## MACS2 peak calling
-**Create a macs2 environment**
 ```bash
-conda create --name macs2
-conda activate macs2
-conda install -c bioconda macs2
+conda create --name DiffBind r-base=4.2.0
+conda activate DiffBind 
+srun XXX
+```
+
+```R
+BiocManager::install("DiffBind") # many fail on dependencies so install the failed one separately then re-install DiffBind
+BiocManager::install(c("XML", "restfulr", "annotate", "stringr", "htmlwidgets", "rtracklayer", "geneplotter", "BSgenome", "systemPipeR", "DESeq2", "GreyListChIP"))
+
+# Generate the sample metadata
 ```
 
 
-```bash
-conda activate macs2
-```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

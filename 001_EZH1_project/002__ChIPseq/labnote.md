@@ -358,6 +358,20 @@ Use our `downsampleBAM.sh`; simply adapt the path to JVARKIT and sample names
 sbatch scripts/downsampleBAM.sh # 11934723 ok
 ```
 
+# ChIPseqSpikeInFree normalization
+## ChIPseqSpikeInFree installation
+See [github](https://github.com/stjude/ChIPseqSpikeInFree) and [paper](https://doi.org/10.1093/bioinformatics/btz720)
+
+Create specific conda env for the installation
+```bash
+conda create --name ChIPseqSpikeInFree r-base=3.6.1 # 3.6.1 as in the R sessioninfo from github
+conda activate ChIPseqSpikeInFree 
+```
+Follow Github-prerequisted for R packages installation.
+```R
+library(Rsamtools)
+```
+
 
 # Coverage bigwig file
 ## Raw coverage bigwig
