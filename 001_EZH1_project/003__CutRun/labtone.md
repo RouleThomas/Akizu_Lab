@@ -526,9 +526,9 @@ sbatch scripts/samtools_KO_2.sh # ok
 
 ## Ecoli/Exogeneous genome
 ```bash
-sbatch scripts/samtools_MG1655.sh # 12046911 ok
+sbatch scripts/samtools_MG1655.sh # 12046911; no I pick the histone spike in one; re-do with the correct MG1655 mapping
+sbatch scripts/samtools_MG1655_corr.sh # 12098888 ok
 ```
-
 
 # Generate wig coverage files
 ## Raw bigwig
@@ -545,7 +545,7 @@ sbatch scripts/bamtobigwig_HET.sh # 11827232 ok
 sbatch scripts/bamtobigwig_KO.sh # 11827233 ok
 
 sbatch scripts/bamtobigwig_patient.sh  # 11857843 ok
-sbatch scripts/bamtobigwig_missing.sh # 12091320 XXX
+sbatch scripts/bamtobigwig_missing.sh # 12091320 ok
 ```
 
 Let's generate bigwig taking into account scaling factor:
@@ -985,16 +985,25 @@ conda create --name DiffBind -c bioconda bioconductor-diffbind
 # FAIL
 srun --mem=50g --pty bash -l
 conda create --name DiffBind -c bioconda -c conda-forge bioconductor-diffbind libgcc-ng=9.3.0
-XXX onging XXX conda install -c conda-forge r-rlang=1.0.2 # Because upon R library(DiffBind) it require r-rlang=>1.0.2
-XXX try install within R after
-
+conda install -c bioconda r-rlang
 conda activate DiffBind
 ```
+*troubleshoot: Upon `library("DiffBind")` it mention it needs r-rlang=>1.0.2 so I `conda install -c conda-forge r-rlang=1.0.2`; but it fail, as rlang part of tidyverse; I install tidyverse; but fail similarly with rlang. So update rlang and its dependencies in R `install.packages("rlang", dependencies = TRUE)`; try update it with conda `conda update rlang`; --> `conda install -c bioconda r-rlang` worked!*
+
+
 
 ```R
+library("tidyverse")
 library("DiffBind") 
 
-# Generate the sample metadata
+# Generate the sample metadata (in ods/copy paste to a .csv file)
+meta_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample.txt", header = TRUE, sep = "\t"))
+
+# Batch effect investigation; heatmaps and PCA plots
+meta_count = dba.count(meta_dba) XXX RUN XXX
+# plot
+plot(meta_count)
+dba.plotPCA(meta_count,DBA_REPLICATE, label=DBA_TREATMENT)
 ```
 
 
@@ -1019,11 +1028,13 @@ Let's do PCA with [multiBigwigSummary](https://deeptools.readthedocs.io/en/devel
 ```bash
 conda activate deeptools
 # Generate compile bigwig (.npz) files
-sbatch --dependency=afterany:12092810 scripts/multiBigwigSummary_all.sh # 12092852
-sbatch --dependency=afterany:12092810 scripts/multiBigwigSummary_H3K27me3.sh # 12092853
+sbatch --dependency=afterany:12092810 scripts/multiBigwigSummary_all.sh # 12092852 ok
+sbatch --dependency=afterany:12092810 scripts/multiBigwigSummary_H3K27me3.sh # 12092853 ok
 
 
-XXX to modify:
+
+
+
 
 
 # Plot
@@ -1031,13 +1042,14 @@ XXX to modify:
 plotPCA -in output/bigwig/multiBigwigSummary_all.npz \
     --transpose \
     --ntop 0 \
-    --labels 2dN_HET_input_R1 2dN_HET_input_R2 2dN_KO_input_R1 2dN_KO_input_R2 2dN_WT_input_R1 2dN_WT_input_R2 ESC_HET_input_R1 ESC_HET_input_R2 ESC_KO_input_R1 ESC_KO_input_R2 ESC_WT_input_R1 ESC_WT_input_R2 ESC_WT_input_R3 NPC_HET_input_R1 NPC_HET_input_R2 NPC_KO_input_R1 NPC_KO_input_R2 NPC_WT_input_R1 NPC_WT_input_R2 2dN_HET_H3K27me3_R1 2dN_HET_H3K27me3_R2 2dN_KO_H3K27me3_R1 2dN_KO_H3K27me3_R2 2dN_WT_H3K27me3_R1 2dN_WT_H3K27me3_R2 ESC_HET_H3K27me3_R1 ESC_HET_H3K27me3_R2 ESC_KO_H3K27me3_R1 ESC_KO_H3K27me3_R2 ESC_WT_H3K27me3_R1 ESC_WT_H3K27me3_R2 ESC_WT_H3K27me3_R3 NPC_HET_H3K27me3_R1 NPC_HET_H3K27me3_R2 NPC_KO_H3K27me3_R1 NPC_KO_H3K27me3_R2 NPC_WT_H3K27me3_R1 NPC_WT_H3K27me3_R2 \
+    --labels 8wN_WT_IGG_R1 8wN_WT_IGG_R2 8wN_WT_IGG_R3 8wN_WT_IGG_R4 8wN_WT_H3K27me3_R1 8wN_WT_H3K27me3_R2 8wN_WT_H3K27me3_R3 8wN_WT_H3K27me3_R4 8wN_KO_IGG_R1 8wN_KO_IGG_R2 8wN_KO_IGG_R3 8wN_KO_IGG_R4 8wN_KO_H3K27me3_R1 8wN_KO_H3K27me3_R2 8wN_KO_H3K27me3_R3 8wN_KO_H3K27me3_R4 8wN_HET_IGG_R1 8wN_HET_IGG_R2 8wN_HET_IGG_R3 8wN_HET_IGG_R4 8wN_HET_H3K27me3_R1 8wN_HET_H3K27me3_R2 8wN_HET_H3K27me3_R3 8wN_HET_H3K27me3_R4 8wN_iPSCpatient_IGG_R1 8wN_iPSCpatient_IGG_R2 8wN_iPSCpatient_H3K27me3_R1 8wN_iPSCpatient_H3K27me3_R2.dupmark.sorted.bw \
     -o output/bigwig/multiBigwigSummary_all_plotPCA.pdf
-plotPCA -in output/bigwig/multiBigwigSummary_all_H3K27me3.npz \
+plotPCA -in output/bigwig/multiBigwigSummary_H3K27me3.npz \
     --transpose \
     --ntop 0 \
-    --labels 2dN_HET_H3K27me3_R1 2dN_HET_H3K27me3_R2 2dN_KO_H3K27me3_R1 2dN_KO_H3K27me3_R2 2dN_WT_H3K27me3_R1 2dN_WT_H3K27me3_R2 ESC_HET_H3K27me3_R1 ESC_HET_H3K27me3_R2 ESC_KO_H3K27me3_R1 ESC_KO_H3K27me3_R2 ESC_WT_H3K27me3_R1 ESC_WT_H3K27me3_R2 ESC_WT_H3K27me3_R3 NPC_HET_H3K27me3_R1 NPC_HET_H3K27me3_R2 NPC_KO_H3K27me3_R1 NPC_KO_H3K27me3_R2 NPC_WT_H3K27me3_R1 NPC_WT_H3K27me3_R2 \
-    -o output/bigwig/multiBigwigSummary_all_H3K27me3_plotPCA.pdf
+    --labels 8wN_WT_H3K27me3_R1 8wN_WT_H3K27me3_R2 8wN_WT_H3K27me3_R3 8wN_WT_H3K27me3_R4 8wN_KO_H3K27me3_R1 8wN_KO_H3K27me3_R2 8wN_KO_H3K27me3_R3 8wN_KO_H3K27me3_R4 8wN_HET_H3K27me3_R1 8wN_HET_H3K27me3_R2 8wN_HET_H3K27me3_R3 8wN_HET_H3K27me3_R4 8wN_iPSCpatient_H3K27me3_R1 8wN_iPSCpatient_H3K27me3_R2.dupmark.sorted.bw \
+    -o output/bigwig/multiBigwigSummary_H3K27me3_plotPCA.pdf
+
 plotCorrelation \
     -in output/bigwig/multiBigwigSummary_all.npz \
     --corMethod pearson --skipZeros \
@@ -1045,9 +1057,15 @@ plotCorrelation \
     --removeOutliers \
     --whatToPlot heatmap --colorMap RdYlBu --plotNumbers \
     -o output/bigwig/multiBigwigSummary_all_heatmap.pdf
-
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_H3K27me3.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --whatToPlot heatmap --colorMap RdYlBu --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_H3K27me3_heatmap.pdf
 ```
 
 ## PCA on normalized files
 
-Not needed.
+Not needed; better work on the peak

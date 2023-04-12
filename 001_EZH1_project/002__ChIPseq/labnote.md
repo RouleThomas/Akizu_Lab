@@ -378,9 +378,10 @@ conda create --name ChIPseqSpikeInFree -c conda-forge -c bioconda r-base=3.6.1 b
 conda activate ChIPseqSpikeInFree 
 conda install -c conda-forge r-usethis # Was needed to install devtools in R
 conda install -c conda-forge r-gert # Was needed to install devtools in R
-# FAIL: conda install -c conda-forge r-glue=1.6.1 # Was needed to install devtools in R
-XXX ongoing XXX conda install -c conda-forge r-devtools
+
 ```
+troubleshoot: I failed installing devtools in R; because of multiple missing packages, among them r-glue is problematic, need version =>1.6.1; I tried this `conda install -c conda-forge r-glue=1.6.1 # Was needed to install devtools in R` but fail and also try installing devtools though conda but failed `conda install -c conda-forge r-devtools` --> In R `install.packages("glue")` worked!
+
 Installation within R:
 ```R
 # Load dependencies
@@ -388,10 +389,11 @@ library("Rsamtools")
 library("GenomicAlignments")
 
 # Install ChIPseqSpikeInFree
-XXX install.packages("devtools")
+install.packages("glue")
+install.packages("devtools")
 library("devtools")
 install_github("stjude/ChIPseqSpikeInFree")
-packageVersion('ChIPseqSpikeInFree')
+packageVersion('ChIPseqSpikeInFree') # 1.2.4
 library("ChIPseqSpikeInFree")
 ```
 
@@ -401,11 +403,21 @@ Now run ChIPseqSpikeInFree: `conda activate ChIPseqSpikeInFree`:
 library("Rsamtools")
 library("GenomicAlignments")
 library("ChIPseqSpikeInFree")
+library("tidyverse")
+# Create sample_meta.txt; tab delimited format `output/ChIPseqSpikeInFree/sample_meta.txt
+metaFile <- "output/ChIPseqSpikeInFree/sample_meta.txt"
+bams <- c("output/bowtie2_endtoend/2dN_HET_H3K27me3_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/2dN_HET_H3K27me3_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/2dN_HET_input_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/2dN_HET_input_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/2dN_KO_H3K27me3_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/2dN_KO_H3K27me3_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/2dN_KO_input_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/2dN_KO_input_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/2dN_WT_H3K27me3_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/2dN_WT_H3K27me3_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/2dN_WT_input_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/2dN_WT_input_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_HET_H3K27me3_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_HET_H3K27me3_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_HET_input_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_HET_input_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_KO_H3K27me3_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_KO_H3K27me3_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_KO_input_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_KO_input_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_WT_H3K27me3_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_WT_H3K27me3_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_WT_H3K27me3_R3.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_WT_input_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_WT_input_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_WT_input_R3.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_HET_H3K27me3_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_HET_H3K27me3_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_HET_input_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_HET_input_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_KO_H3K27me3_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_KO_H3K27me3_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_KO_input_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_KO_input_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_WT_H3K27me3_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_WT_H3K27me3_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_WT_input_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_WT_input_R2.dupmark.sorted.bam")
 
-# 
+
+# Run ChIPSpikeInFree
+ChIPseqSpikeInFree(bamFiles = bams, chromFile = "hg38", metaFile = metaFile, prefix = "all_sample")
 ```
-
-
+Job get terminated; let's run it within a script
+```bash
+conda activate ChIPseqSpikeInFree
+sbatch scripts/ChIPseqSpikeInFree_all.sh # 12100044
+```
+XXX
 
 
 # Coverage bigwig file
@@ -665,4 +677,23 @@ plotCorrelation \
 *NOTE: I tested Spearman and Pearson correlation. Pearson perform better (more accurate); I also remove outlier as Pearson are more sensitive; could come from blacklist regions.*
 
 --> Let's **use the non-downsample/raw** as it give more peaks; and the replicate looks more 'similar' on IGV. Moreover MACS2 already account for these differences while calling peak.
+
+
+
+# ChIPseeker
+[Tutorial](http://bioconductor.org/packages/release/bioc/vignettes/ChIPseeker/inst/doc/ChIPseeker.html) and [documentation]()
+## ChIPseeker installation
+In conda base; Install within R 4.2.2 module
+```R
+BiocManager::Install("ChIPseeker")
+library("ChIPseeker")
+```
+
+## Run ChIPseeker
+
+
+
+
+
+
 
