@@ -371,6 +371,41 @@ Follow Github-prerequisted for R packages installation.
 ```R
 library(Rsamtools)
 ```
+It failed in R when using `BiocManager::install`, lets try:
+```bash
+srun --mem=50g --pty bash -l
+conda create --name ChIPseqSpikeInFree -c conda-forge -c bioconda r-base=3.6.1 bioconductor-rsamtools bioconductor-genomicranges bioconductor-genomicalignments
+conda activate ChIPseqSpikeInFree 
+conda install -c conda-forge r-usethis # Was needed to install devtools in R
+conda install -c conda-forge r-gert # Was needed to install devtools in R
+# FAIL: conda install -c conda-forge r-glue=1.6.1 # Was needed to install devtools in R
+XXX ongoing XXX conda install -c conda-forge r-devtools
+```
+Installation within R:
+```R
+# Load dependencies
+library("Rsamtools")
+library("GenomicAlignments")
+
+# Install ChIPseqSpikeInFree
+XXX install.packages("devtools")
+library("devtools")
+install_github("stjude/ChIPseqSpikeInFree")
+packageVersion('ChIPseqSpikeInFree')
+library("ChIPseqSpikeInFree")
+```
+
+Now run ChIPseqSpikeInFree: `conda activate ChIPseqSpikeInFree`:
+```R
+# Load packages
+library("Rsamtools")
+library("GenomicAlignments")
+library("ChIPseqSpikeInFree")
+
+# 
+```
+
+
 
 
 # Coverage bigwig file
@@ -446,9 +481,7 @@ conda activate bowtie2 # for bedtools
 sbatch scripts/macs2_downsample_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
 ```
 
-XXX Once bigwig downsampling ready; launch IGV load them and play wtih qvalue cutoff and compare at same qval which method give the higher nb of peak and check how much they overlap
-
---> Overall the XXX show more peaks at the same qvalue 
+--> Overall the non downsample method show more peaks at the same qvalue 
 
 
 

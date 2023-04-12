@@ -544,7 +544,8 @@ sbatch scripts/bamtobigwig_WT.sh # 11827228 ok
 sbatch scripts/bamtobigwig_HET.sh # 11827232 ok
 sbatch scripts/bamtobigwig_KO.sh # 11827233 ok
 
-sbatch scripts/bamtobigwig_patient.sh  # 11857843
+sbatch scripts/bamtobigwig_patient.sh  # 11857843 ok
+sbatch scripts/bamtobigwig_missing.sh # 12091320 XXX
 ```
 
 Let's generate bigwig taking into account scaling factor:
@@ -972,21 +973,26 @@ BiocManager::install(version = "3.10")
 # BiocManager::install("ChIPSeqSpike")
 library("ChIPSeqSpike")
 ```
-Failed to install; and seems more adapted for ChIPseq as require input. So goodbye ChIPSeqSpike method.
+Failed to install (also tried with [bioconda](https://anaconda.org/bioconda/bioconductor-chipseqspike)); and seems more adapted for ChIPseq as require input. So goodbye ChIPSeqSpike method.
+
 
 ### DiffBind
 #### DiffBind Installation
 Workshop [here](https://bioinformatics-core-shared-training.github.io/Quantitative-ChIPseq-Workshop/articles/Quantitative-ChIPseq-Workshop.html) and [manual](https://bioconductor.org/packages/devel/bioc/vignettes/DiffBind/inst/doc/DiffBind.pdf), [forum](https://support.bioconductor.org/p/9135565/) about spikein
 
 ```bash
-conda create --name DiffBind r-base=4.2.0
-conda activate DiffBind 
-srun XXX
+conda create --name DiffBind -c bioconda bioconductor-diffbind
+# FAIL
+srun --mem=50g --pty bash -l
+conda create --name DiffBind -c bioconda -c conda-forge bioconductor-diffbind libgcc-ng=9.3.0
+XXX onging XXX conda install -c conda-forge r-rlang=1.0.2 # Because upon R library(DiffBind) it require r-rlang=>1.0.2
+XXX try install within R after
+
+conda activate DiffBind
 ```
 
 ```R
-BiocManager::install("DiffBind") # many fail on dependencies so install the failed one separately then re-install DiffBind
-BiocManager::install(c("XML", "restfulr", "annotate", "stringr", "htmlwidgets", "rtracklayer", "geneplotter", "BSgenome", "systemPipeR", "DESeq2", "GreyListChIP"))
+library("DiffBind") 
 
 # Generate the sample metadata
 ```
@@ -1001,10 +1007,47 @@ BiocManager::install(c("XML", "restfulr", "annotate", "stringr", "htmlwidgets", 
 
 
 
+# PCA on Bigwig files
+
+Let's do PCA with [multiBigwigSummary](https://deeptools.readthedocs.io/en/develop/content/tools/multiBigwigSummary.html) and [PCAplot](https://deeptools.readthedocs.io/en/2.4.1/content/tools/plotPCA.html)/[plotCorrelation](https://deeptools.readthedocs.io/en/develop/content/tools/plotCorrelation.html) from deeptools:
+
+- Use bin mode (score of the compile bigwig is calculated at a 10kb bins (default), on the entire genome)
+- Let's do it all samples together and per genotype for better vizualization
+
+## PCA on raw files
+
+```bash
+conda activate deeptools
+# Generate compile bigwig (.npz) files
+sbatch --dependency=afterany:12092810 scripts/multiBigwigSummary_all.sh # 12092852
+sbatch --dependency=afterany:12092810 scripts/multiBigwigSummary_H3K27me3.sh # 12092853
 
 
+XXX to modify:
 
 
+# Plot
+## All genotypes all points
+plotPCA -in output/bigwig/multiBigwigSummary_all.npz \
+    --transpose \
+    --ntop 0 \
+    --labels 2dN_HET_input_R1 2dN_HET_input_R2 2dN_KO_input_R1 2dN_KO_input_R2 2dN_WT_input_R1 2dN_WT_input_R2 ESC_HET_input_R1 ESC_HET_input_R2 ESC_KO_input_R1 ESC_KO_input_R2 ESC_WT_input_R1 ESC_WT_input_R2 ESC_WT_input_R3 NPC_HET_input_R1 NPC_HET_input_R2 NPC_KO_input_R1 NPC_KO_input_R2 NPC_WT_input_R1 NPC_WT_input_R2 2dN_HET_H3K27me3_R1 2dN_HET_H3K27me3_R2 2dN_KO_H3K27me3_R1 2dN_KO_H3K27me3_R2 2dN_WT_H3K27me3_R1 2dN_WT_H3K27me3_R2 ESC_HET_H3K27me3_R1 ESC_HET_H3K27me3_R2 ESC_KO_H3K27me3_R1 ESC_KO_H3K27me3_R2 ESC_WT_H3K27me3_R1 ESC_WT_H3K27me3_R2 ESC_WT_H3K27me3_R3 NPC_HET_H3K27me3_R1 NPC_HET_H3K27me3_R2 NPC_KO_H3K27me3_R1 NPC_KO_H3K27me3_R2 NPC_WT_H3K27me3_R1 NPC_WT_H3K27me3_R2 \
+    -o output/bigwig/multiBigwigSummary_all_plotPCA.pdf
+plotPCA -in output/bigwig/multiBigwigSummary_all_H3K27me3.npz \
+    --transpose \
+    --ntop 0 \
+    --labels 2dN_HET_H3K27me3_R1 2dN_HET_H3K27me3_R2 2dN_KO_H3K27me3_R1 2dN_KO_H3K27me3_R2 2dN_WT_H3K27me3_R1 2dN_WT_H3K27me3_R2 ESC_HET_H3K27me3_R1 ESC_HET_H3K27me3_R2 ESC_KO_H3K27me3_R1 ESC_KO_H3K27me3_R2 ESC_WT_H3K27me3_R1 ESC_WT_H3K27me3_R2 ESC_WT_H3K27me3_R3 NPC_HET_H3K27me3_R1 NPC_HET_H3K27me3_R2 NPC_KO_H3K27me3_R1 NPC_KO_H3K27me3_R2 NPC_WT_H3K27me3_R1 NPC_WT_H3K27me3_R2 \
+    -o output/bigwig/multiBigwigSummary_all_H3K27me3_plotPCA.pdf
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_all.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --whatToPlot heatmap --colorMap RdYlBu --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_all_heatmap.pdf
 
+```
 
+## PCA on normalized files
 
+Not needed.
