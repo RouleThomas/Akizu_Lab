@@ -997,10 +997,10 @@ library("tidyverse")
 library("DiffBind") 
 
 # Generate the sample metadata (in ods/copy paste to a .csv file)
-meta_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample.txt", header = TRUE, sep = "\t"))
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample.txt", header = TRUE, sep = "\t"))
 
 # Batch effect investigation; heatmaps and PCA plots
-meta_count = dba.count(meta_dba) XXX RUN XXX
+sample_count = dba.count(sample_dba) XXX RUN XXX
 # plot
 plot(meta_count)
 dba.plotPCA(meta_count,DBA_REPLICATE, label=DBA_TREATMENT)
