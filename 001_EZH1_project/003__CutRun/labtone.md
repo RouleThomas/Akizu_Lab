@@ -953,11 +953,20 @@ write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_histon
 
 --> The scaling factor looks better (range between 1-3); let's generate bigwig and vizualize
 
+
 ### Histone spike-in factor from Cutana - Bigwig
 ```bash
 sbatch scripts/bamtobigwig_histone_groupABgenotype_WT.sh # ok
 ```
 --> Even though that is better that initially, the replicates are still very heterogeneous when loading on IGV.
+
+--> Now let's divide instead of multiplying per the scaling factor...
+```bash
+conda activate deeptools
+sbatch scripts/bamtobigwig_histone_groupABgenotype_WT_divide.sh # 12126291 ok
+```
+
+
 
 
 
@@ -1002,10 +1011,14 @@ sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample.txt", heade
 # Batch effect investigation; heatmaps and PCA plots
 sample_count = dba.count(sample_dba) XXX RUN XXX
 # plot
-plot(meta_count)
-dba.plotPCA(meta_count,DBA_REPLICATE, label=DBA_TREATMENT)
-```
+pdf("output/DiffBind/clustering.pdf", width=14, height=20)   
+plot(sample_count)
+dev.off()
 
+pdf("output/DiffBind/PCA.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+```
 
 
 

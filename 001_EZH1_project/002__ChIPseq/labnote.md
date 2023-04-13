@@ -415,9 +415,11 @@ ChIPseqSpikeInFree(bamFiles = bams, chromFile = "hg38", metaFile = metaFile, pre
 Job get terminated; let's run it within a script
 ```bash
 conda activate ChIPseqSpikeInFree
-sbatch scripts/ChIPseqSpikeInFree_all.sh # 12100044
+sbatch scripts/ChIPseqSpikeInFree_all.sh # 12100044 FAIL; 12125487
 ```
-XXX
+*FAIL: `Oooops: you need to change metadata file **\n") stop("Please check whether you IDs in metaFile match with colnames(bam filenames) in parsedMatrix.`; I modifiy the `output/ChIPseqSpikeInFree/sample_meta.txt` and include only file name for ID instead of full path.*
+
+Worked!
 
 
 # Coverage bigwig file
@@ -443,6 +445,43 @@ sbatch scripts/bamtobigwig_downsample_NPC.sh # 11980008 time limit ; 12003264 ok
 sbatch scripts/bamtobigwig_downsample_NPC_input_WT.sh # 12003265
 sbatch scripts/bamtobigwig_downsample_2dN.sh # 11980009 ok
 ```
+
+## input-normalize coverage bigwig
+bamCompare normalize per sequence depth and then perform calculation
+
+Light test with 1 file to see how it perform
+```bash
+conda activate deeptools
+bamCompare -b1 output/bowtie2_endtoend/ESC_WT_H3K27me3_R1.dupmark.sorted.bam -b2 output/bowtie2_endtoend/ESC_WT_input_R1.dupmark.sorted.bam -o output/bigwig_inputNorm/ESC_WT_R1_log2ratio.bw
+```
+XXX
+
+Run all samples
+
+
+
+## ChIPseqSpikeInFree coverage bigwig
+Follow recommendation from [github](https://github.com/stjude/ChIPseqSpikeInFree):
+
+XXX :
+
+
+libSize=`cat sample1.bed|wc -l`
+scale=15000000/($libSize*$SF)
+genomeCoverageBed -bg -scale $scale -i sample1.bed  -g mm9.chromSizes > sample1.bedGraph
+bedGraphToBigWig sample1.bedGraph mm9.chromSizes sample1.bw
+
+
+
+
+
+
+
+## input-normalize ChIPseqSpikeInFree coverage bigwig
+
+XXX
+
+Can apply ChIPseqSpikeInFree scaling factor and then normalize
 
 
 # Peak calling
