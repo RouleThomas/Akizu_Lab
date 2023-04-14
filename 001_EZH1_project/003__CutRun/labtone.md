@@ -973,9 +973,6 @@ sbatch scripts/bamtobigwig_histone_groupABgenotype_WT_libscaled.sh # 12130826 ok
 ```
 
 
-
-
-
 ### ChIPSeqSpike
 Need Bioconductor 3.10, doc [here](https://bioconductor.riken.jp/packages/3.10/bioc/html/ChIPSeqSpike.html)
 ```bash
@@ -1011,6 +1008,7 @@ conda activate DiffBind
 ```
 ```R
 library("DiffBind") 
+library("csaw") # For spikein norm
 
 # Generate the sample metadata (in ods/copy paste to a .csv file)
 sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample.txt", header = TRUE, sep = "\t"))
@@ -1059,50 +1057,40 @@ dba.show(sample_model, bContrast=T)
 
 ## Analyze the model
 ### Default setting
-sample_model <- dba.analyze(sample_model)
-dba.show(sample_model,bContrasts=TRUE) # HETvsKO = 88; HETvsWT=25; WTvsKO=132
+sample_model_analyze <- dba.analyze(sample_model, method=DBA_ALL_METHODS) # Here show DESEq2 and EDgeR method
+dba.show(sample_model,bContrasts=TRUE) # HETvsKO = 88 (125); HETvsWT=25 (58); WTvsKO=132 (151): DESeq2 (edgeR)
+
+#### Binding sites overlap with the 2 methods:
+pdf("output/DiffBind/DBA_ALL_METHODS_Venn_contrast1.pdf", width=14, height=20) 
+dba.plotVenn(sample_model,contrast=1,method=DBA_ALL_METHODS)
+dev.off()
+pdf("output/DiffBind/DBA_ALL_METHODS_Venn_contrast2.pdf", width=14, height=20) 
+dba.plotVenn(sample_model,contrast=2,method=DBA_ALL_METHODS)
+dev.off()
+pdf("output/DiffBind/DBA_ALL_METHODS_Venn_contrast3.pdf", width=14, height=20) 
+dba.plotVenn(sample_model,contrast=3,method=DBA_ALL_METHODS)
+dev.off()
+
+
+sample_model_analyze <- dba.analyze(sample_model, method=DBA_EDGER) # Let's pick the edgeR method
 
 ## Export the Diff Bind regions
 ### Convert to GR object
-sample_model_report_contrast1 <- dba.report(sample_model,contrast=1)
-sample_model_report_contrast2 <- dba.report(sample_model,contrast=2)
-sample_model_report_contrast3 <- dba.report(sample_model,contrast=3)
+sample_model_report_contrast1 <- dba.report(sample_model_analyze,method=DBA_EDGER,contrast=1)
+sample_model_report_contrast2 <- dba.report(sample_model_analyze,method=DBA_EDGER,contrast=2)
+sample_model_report_contrast3 <- dba.report(sample_model_analyze,method=DBA_EDGER,contrast=3)
 ### Convert to bed and export
+sample_model_report_contrast1_df <- data.frame(sample_model_report_contrast1)
+sample_model_report_contrast2_df <- data.frame(sample_model_report_contrast2)
+sample_model_report_contrast3_df <- data.frame(sample_model_report_contrast3)
 
-XXX THIS NEEDS TO BE MODIFY TO KEEP ALL COLUMS:
-# First, convert the gr object to a data.frame
-bed_df <- data.frame(gr)
+colnames(sample_model_report_contrast1_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_model_report_contrast2_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_model_report_contrast3_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
 
-# Make sure the data.frame has the correct column names
-colnames(bed_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
-
-# Save the data.frame as a bed file (tab-separated values)
-write.table(bed_df, file="output.bed", sep="\t", quote=FALSE, row.names=FALSE)
-
-
-
-sample_model_report_contrast1_bed = data.frame(seqnames=seqnames(sample_model_report_contrast1),
-  starts=start(sample_model_report_contrast1)-1,
-  ends=end(sample_model_report_contrast1),
-  names=c(rep(".", length(sample_model_report_contrast1))),
-  scores=c(rep(".", length(sample_model_report_contrast1))),
-  strands=strand(sample_model_report_contrast1))
-sample_model_report_contrast2_bed = data.frame(seqnames=seqnames(sample_model_report_contrast2),
-  starts=start(sample_model_report_contrast2)-1,
-  ends=end(sample_model_report_contrast2),
-  names=c(rep(".", length(sample_model_report_contrast2))),
-  scores=c(rep(".", length(sample_model_report_contrast2))),
-  strands=strand(sample_model_report_contrast2))
-sample_model_report_contrast3_bed = data.frame(seqnames=seqnames(sample_model_report_contrast3),
-  starts=start(sample_model_report_contrast3)-1,
-  ends=end(sample_model_report_contrast3),
-  names=c(rep(".", length(sample_model_report_contrast3))),
-  scores=c(rep(".", length(sample_model_report_contrast3))),
-  strands=strand(sample_model_report_contrast3))
-
-write.table(sample_model_report_contrast1_bed, file="output/DiffBind/sample_model_report_contrast1_bed.bed", quote=F, sep="\t", row.names=F, col.names=F)
-write.table(sample_model_report_contrast2_bed, file="output/DiffBind/sample_model_report_contrast2_bed.bed", quote=F, sep="\t", row.names=F, col.names=F)
-write.table(sample_model_report_contrast3_bed, file="output/DiffBind/sample_model_report_contrast3_bed.bed", quote=F, sep="\t", row.names=F, col.names=F)
+write.table(sample_model_report_contrast1_df, file="output/DiffBind/sample_model_report_contrast1_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_model_report_contrast2_df, file="output/DiffBind/sample_model_report_contrast2_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_model_report_contrast3_df, file="output/DiffBind/sample_model_report_contrast3_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
 
 
 # Examining results
@@ -1110,27 +1098,39 @@ write.table(sample_model_report_contrast3_bed, file="output/DiffBind/sample_mode
 pdf("output/DiffBind/plotMA_greylist_contrast1.pdf", width=14, height=20) 
 pdf("output/DiffBind/plotMA_greylist_contrast2.pdf", width=14, height=20) 
 pdf("output/DiffBind/plotMA_greylist_contrast3.pdf", width=14, height=20) 
-dba.plotMA(sample_model,contrast=1)
+dba.plotMA(sample_model_analyze,method=DBA_EDGER,contrast=3)
 dev.off()
 
 
 ## volcano plot with diff sites
 pdf("output/DiffBind/volcano_greylist_contrast1.pdf", width=14, height=20) 
+dba.plotVolcano(sample_model_analyze,method=DBA_EDGER, contrast=1)
+dev.off()
 pdf("output/DiffBind/volcano_greylist_contrast2.pdf", width=14, height=20) 
+dba.plotVolcano(sample_model_analyze, method=DBA_EDGER,contrast=2)
+dev.off()
 pdf("output/DiffBind/volcano_greylist_contrast3.pdf", width=14, height=20) 
-dba.plotVolcano(sample_model, contrast=1)
+dba.plotVolcano(sample_model_analyze, method=DBA_EDGER,contrast=3)
 dev.off()
 ## PCA/heatmat only on the diff sites
 pdf("output/DiffBind/clustering_greylist_contrast1.pdf", width=14, height=20) 
+plot(sample_model_analyze, method=DBA_EDGER, contrast=1)
+dev.off()
 pdf("output/DiffBind/clustering_greylist_contrast2.pdf", width=14, height=20) 
+plot(sample_model_analyze, method=DBA_EDGER, contrast=2)
+dev.off()
 pdf("output/DiffBind/clustering_greylist_contrast3.pdf", width=14, height=20) 
-plot(sample_model, contrast=1)
+plot(sample_model_analyze, method=DBA_EDGER, contrast=3)
 dev.off()
 
 pdf("output/DiffBind/PCA_greylist_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_model_analyze, method=DBA_EDGER,contrast=1, label=DBA_TREATMENT)
+dev.off()
 pdf("output/DiffBind/PCA_greylist_contrast2.pdf", width=14, height=20) 
+dba.plotPCA(sample_model_analyze, method=DBA_EDGER,contrast=2, label=DBA_TREATMENT)
+dev.off()
 pdf("output/DiffBind/PCA_greylist_contrast3.pdf", width=14, height=20) 
-dba.plotPCA(sample_model, contrast=3, label=DBA_TREATMENT)
+dba.plotPCA(sample_model_analyze, method=DBA_EDGER,contrast=3, label=DBA_TREATMENT)
 dev.off()
 
 
@@ -1138,22 +1138,43 @@ dev.off()
 hmap <- colorRampPalette(c("red", "black", "green"))(n = 13)
 
 pdf("output/DiffBind/clustering_reads_greylist_contrast1.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_model_analyze, method=DBA_EDGER,contrast=1, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
 pdf("output/DiffBind/clustering_reads_greylist_contrast2.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_model_analyze, method=DBA_EDGER,contrast=2, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
 pdf("output/DiffBind/clustering_reads_greylist_contrast3.pdf", width=14, height=20) 
-dba.plotHeatmap(sample_model, contrast=3, correlations=FALSE,
+dba.plotHeatmap(sample_model_analyze, method=DBA_EDGER,contrast=3, correlations=FALSE,
                               scale="row", colScheme = hmap)
 dev.off()
 
 
 
-# Now normalize with the spikein
-sample_dba_greylist_spikein <- dba.normalize(sample_count_greylist, spikein = TRUE)
+# Now normalize with the spikein histone : THE CODE BELOW FAILED; let's try another approach...
+## Collect the greylist counts and apply SF
+SF <- c(
+  `8wN_HET_H3K27me3_R1` = 1/1.50803188228081,
+  `8wN_HET_H3K27me3_R2` = 1/1.79362354383814,
+  `8wN_HET_H3K27me3_R3` = 1/1,
+  `8wN_HET_H3K27me3_R4` = 1/2.71894543225015,
+  `8wN_iPSCpatient_H3K27me3_R1` = 1/1.5370709981661,
+  `8wN_KO_H3K27me3_R1` = 1/1.30657216494845,
+  `8wN_KO_H3K27me3_R2` = 1/1,
+  `8wN_KO_H3K27me3_R3` = 1/3.80953608247423,
+  `8wN_KO_H3K27me3_R4` = 1/1.12899484536082,
+  `8wN_WT_H3K27me3_R1` = 1/1,
+  `8wN_WT_H3K27me3_R2` = 1/1.73020349058761,
+  `8wN_WT_H3K27me3_R3` = 1/1.21332215532353,
+  `8wN_WT_H3K27me3_R4` = 1/1.82966237329472
+)
 
-# Now check how clustering look
-sample_count_greylist_spikein = dba.count(sample_dba_greylist_spikein)
-## This take time, here is checkpoint command to save/load:
-save(sample_count_greylist_spikein, file = "output/DiffBind/sample_count_greylist_spikein.RData")
-load("output/DiffBind/sample_count_greylist_spikein.RData")
+
+
+sample_count_greylist_spikein <- dba.normalize(sample_count_greylist, normalize = SF)
+
+
 
 
 # plot
@@ -1166,14 +1187,121 @@ dba.plotPCA(sample_count_greylist_spikein,DBA_REPLICATE, label=DBA_TREATMENT)
 dev.off()
 
 
+# Modeling and testing without spike in
+## Define different contrast
+sample_model_spikein <- dba.contrast(sample_count_greylist_spikein)
+sample_model_spikein # Check the factor are correct (for us Treatment = genotype)
+dba.show(sample_model_spikein, bContrast=T)
+
+## Analyze the model
+### Default setting
+sample_model_spikein_analyze <- dba.analyze(sample_model_spikein, method=DBA_ALL_METHODS) # Here show DESEq2 and EDgeR method
+dba.show(sample_model_spikein_analyze,bContrasts=TRUE) # HETvsKO = 2 (125); HETvsWT=0 (58); WTvsKO=0 (151): DESeq2 (edgeR)
 
 
+sample_model_spikein_analyze <- dba.analyze(sample_model_spikein, method=DBA_EDGER) # Let's pick the edgeR method
+
+## Export the Diff Bind regions
+### Convert to GR object
+sample_model_spikein_report_contrast1 <- dba.report(sample_model_spikein_analyze,method=DBA_EDGER,contrast=1)
+sample_model_spikein_report_contrast2 <- dba.report(sample_model_spikein_analyze,method=DBA_EDGER,contrast=2)
+sample_model_spikein_report_contrast3 <- dba.report(sample_model_spikein_analyze,method=DBA_EDGER,contrast=3)
+### Convert to bed and export
+sample_model_spikein_report_contrast1_df <- data.frame(sample_model_spikein_report_contrast1)
+sample_model_spikein_report_contrast2_df <- data.frame(sample_model_spikein_report_contrast2)
+sample_model_spikein_report_contrast3_df <- data.frame(sample_model_spikein_report_contrast3)
+
+colnames(sample_model_spikein_report_contrast1_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_model_spikein_report_contrast2_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_model_spikein_report_contrast3_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+
+write.table(sample_model_spikein_report_contrast1_df, file="output/DiffBind/sample_model_spikein_report_contrast1_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_model_spikein_report_contrast2_df, file="output/DiffBind/sample_model_spikein_report_contrast2_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_model_spikein_report_contrast3_df, file="output/DiffBind/sample_model_spikein_report_contrast3_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+
+
+# Examining results
+## MA plot with diff sites
+pdf("output/DiffBind/plotMA_greylist_spikein_contrast1.pdf", width=14, height=20) 
+dba.plotMA(sample_model_spikein_analyze,method=DBA_EDGER,contrast=1)
+dev.off()
+pdf("output/DiffBind/plotMA_greylist_spikein_contrast2.pdf", width=14, height=20) 
+dba.plotMA(sample_model_spikein_analyze,method=DBA_EDGER,contrast=2)
+dev.off()
+pdf("output/DiffBind/plotMA_greylist_spikein_contrast3.pdf", width=14, height=20) 
+dba.plotMA(sample_model_spikein_analyze,method=DBA_EDGER,contrast=3)
+dev.off()
+
+
+## volcano plot with diff sites
+pdf("output/DiffBind/volcano_greylist_spikein_contrast1.pdf", width=14, height=20) 
+dba.plotVolcano(sample_model_spikein_analyze,method=DBA_EDGER, contrast=1)
+dev.off()
+pdf("output/DiffBind/volcano_greylist_spikein_contrast2.pdf", width=14, height=20) 
+dba.plotVolcano(sample_model_spikein_analyze, method=DBA_EDGER,contrast=2)
+dev.off()
+pdf("output/DiffBind/volcano_greylist_spikein_contrast3.pdf", width=14, height=20) 
+dba.plotVolcano(sample_model_spikein_analyze, method=DBA_EDGER,contrast=3)
+dev.off()
+## PCA/heatmat only on the diff sites
+pdf("output/DiffBind/clustering_greylist_spikein_contrast1.pdf", width=14, height=20) 
+plot(sample_model_spikein_analyze, method=DBA_EDGER, contrast=1)
+dev.off()
+pdf("output/DiffBind/clustering_greylist_spikein_contrast2.pdf", width=14, height=20) 
+plot(sample_model_spikein_analyze, method=DBA_EDGER, contrast=2)
+dev.off()
+pdf("output/DiffBind/clustering_greylist_spikein_contrast3.pdf", width=14, height=20) 
+plot(sample_model_spikein_analyze, method=DBA_EDGER, contrast=3)
+dev.off()
+
+pdf("output/DiffBind/PCA_greylist_spikein_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_model_spikein_analyze, method=DBA_EDGER,contrast=1, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_greylist_spikein_contrast2.pdf", width=14, height=20) 
+dba.plotPCA(sample_model_spikein_analyze, method=DBA_EDGER,contrast=2, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_greylist_spikein_contrast3.pdf", width=14, height=20) 
+dba.plotPCA(sample_model_spikein_analyze, method=DBA_EDGER,contrast=3, label=DBA_TREATMENT)
+dev.off()
+
+
+## Read concentration heatmap
+hmap <- colorRampPalette(c("red", "black", "green"))(n = 13)
+
+pdf("output/DiffBind/clustering_reads_greylist_spikein_contrast1.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_model_spikein_analyze, method=DBA_EDGER,contrast=1, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_greylist_spikein_contrast2.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_model_spikein_analyze, method=DBA_EDGER,contrast=2, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_greylist_spikein_contrast3.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_model_spikein_analyze, method=DBA_EDGER,contrast=3, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
 ```
 *NOTE: iPSC patient Rep2 has been removed*
 *NOTE: default treshold for diffbind is FDR 0.05*
 *NOTE: as iPSC has only 1 replicate I need to do it separately by hand. See doc here for [dba.contrast](https://www.rdocumentation.org/packages/DiffBind/versions/2.0.2/topics/dba.contrast)*
+*NOTE: For the spike in, the samtools-clean bam did not work; seems there is no reads, so I use the raw bam file; but it does not work too*
+
+The DiffBind norm is painfull, let's do another try below:
+
+The E.coli have been re-processed; let's try again.
+
+XXX Re-process the E coli mapping and re-try with the bam files from Ecoli
+
+```R
+
+```
 
 
+XXX Re-try with the scaling factor from Cutana
+
+```R
+
+```
 
 
 
