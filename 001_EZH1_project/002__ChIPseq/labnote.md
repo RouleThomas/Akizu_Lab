@@ -454,22 +454,49 @@ Light test with 1 file to see how it perform
 conda activate deeptools
 bamCompare -b1 output/bowtie2_endtoend/ESC_WT_H3K27me3_R1.dupmark.sorted.bam -b2 output/bowtie2_endtoend/ESC_WT_input_R1.dupmark.sorted.bam -o output/bigwig_inputNorm/ESC_WT_R1_log2ratio.bw
 ```
-XXX
+Works great! ratio and not log2ratio is better (= ratio of read counts per bin in the IP sample relative to the input sample). So run all samples:
 
-Run all samples
+```bash
+conda activate deeptools
+sbatch scripts/bamtobigwig_inputNorm_ESC.sh # 12130664
+sbatch scripts/bamtobigwig_inputNorm_NPC.sh # 12130663
+sbatch scripts/bamtobigwig_inputNorm_2dN.sh # 12130662
+```
 
 
 
 ## ChIPseqSpikeInFree coverage bigwig
 Follow recommendation from [github](https://github.com/stjude/ChIPseqSpikeInFree):
-
-XXX :
-
-
+```bash
 libSize=`cat sample1.bed|wc -l`
 scale=15000000/($libSize*$SF)
 genomeCoverageBed -bg -scale $scale -i sample1.bed  -g mm9.chromSizes > sample1.bedGraph
 bedGraphToBigWig sample1.bedGraph mm9.chromSizes sample1.bw
+```
+We can adapt this to work with bam and bamCoverage to make it more straightforward:
+```bash
+conda activate deeptools
+
+# Command example:
+libSize=`samtools view -c -F 260 sample1.bam`
+SF=<your_scaling_factor>
+scale=$(echo "15000000/($libSize*$SF)" | bc -l)
+bamCoverage --bam output/bowtie2/8wN_WT_H3K27me3_R1.dupmark.sorted.bam \
+    --outFileName output/bigwig_histone/8wN_WT_H3K27me3_R1.dupmark.sorted.bw \
+    --outFileFormat bigwig \
+    --binSize 10 \
+    --numberOfProcessors 7 \
+    --extendReads \
+    --scaleFactor $scale
+
+# All sample together
+sbatch scripts/bamtobigwig_ChIPseqSpikeInFree.sh # 12130769
+```
+*NOTE: 15000000 is a reference to normalize the read counts in the ChIP-seq data. It represents a target library size to which the actual library size will be scaled. Could have choose any number, but 15m is commonly used*
+
+
+XXX
+
 
 
 
