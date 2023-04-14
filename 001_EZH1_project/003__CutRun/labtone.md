@@ -969,10 +969,11 @@ sbatch scripts/bamtobigwig_histone_groupABgenotype_WT_divide.sh # 12126291 ok
 --> Also test normalization with the library size too as in ChIPseqSpikeInFree
 ```bash
 conda activate deeptools
-sbatch scripts/bamtobigwig_histone_groupABgenotype_WT_libscaled.sh # 12130826
+sbatch scripts/bamtobigwig_histone_groupABgenotype_WT_libscaled.sh # 12130826 ok
 ```
 
-XXX Check bigwig on IGV
+
+
 
 
 ### ChIPSeqSpike
@@ -1057,10 +1058,52 @@ sample_model # Check the factor are correct (for us Treatment = genotype)
 dba.show(sample_model, bContrast=T)
 
 ## Analyze the model
+### Default setting
 sample_model <- dba.analyze(sample_model)
 dba.show(sample_model,bContrasts=TRUE) # HETvsKO = 88; HETvsWT=25; WTvsKO=132
 
-XXX Very few Dbind; try change qvalue 
+## Export the Diff Bind regions
+### Convert to GR object
+sample_model_report_contrast1 <- dba.report(sample_model,contrast=1)
+sample_model_report_contrast2 <- dba.report(sample_model,contrast=2)
+sample_model_report_contrast3 <- dba.report(sample_model,contrast=3)
+### Convert to bed and export
+
+XXX THIS NEEDS TO BE MODIFY TO KEEP ALL COLUMS:
+# First, convert the gr object to a data.frame
+bed_df <- data.frame(gr)
+
+# Make sure the data.frame has the correct column names
+colnames(bed_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+
+# Save the data.frame as a bed file (tab-separated values)
+write.table(bed_df, file="output.bed", sep="\t", quote=FALSE, row.names=FALSE)
+
+
+
+sample_model_report_contrast1_bed = data.frame(seqnames=seqnames(sample_model_report_contrast1),
+  starts=start(sample_model_report_contrast1)-1,
+  ends=end(sample_model_report_contrast1),
+  names=c(rep(".", length(sample_model_report_contrast1))),
+  scores=c(rep(".", length(sample_model_report_contrast1))),
+  strands=strand(sample_model_report_contrast1))
+sample_model_report_contrast2_bed = data.frame(seqnames=seqnames(sample_model_report_contrast2),
+  starts=start(sample_model_report_contrast2)-1,
+  ends=end(sample_model_report_contrast2),
+  names=c(rep(".", length(sample_model_report_contrast2))),
+  scores=c(rep(".", length(sample_model_report_contrast2))),
+  strands=strand(sample_model_report_contrast2))
+sample_model_report_contrast3_bed = data.frame(seqnames=seqnames(sample_model_report_contrast3),
+  starts=start(sample_model_report_contrast3)-1,
+  ends=end(sample_model_report_contrast3),
+  names=c(rep(".", length(sample_model_report_contrast3))),
+  scores=c(rep(".", length(sample_model_report_contrast3))),
+  strands=strand(sample_model_report_contrast3))
+
+write.table(sample_model_report_contrast1_bed, file="output/DiffBind/sample_model_report_contrast1_bed.bed", quote=F, sep="\t", row.names=F, col.names=F)
+write.table(sample_model_report_contrast2_bed, file="output/DiffBind/sample_model_report_contrast2_bed.bed", quote=F, sep="\t", row.names=F, col.names=F)
+write.table(sample_model_report_contrast3_bed, file="output/DiffBind/sample_model_report_contrast3_bed.bed", quote=F, sep="\t", row.names=F, col.names=F)
+
 
 # Examining results
 ## MA plot with diff sites
@@ -1069,7 +1112,6 @@ pdf("output/DiffBind/plotMA_greylist_contrast2.pdf", width=14, height=20)
 pdf("output/DiffBind/plotMA_greylist_contrast3.pdf", width=14, height=20) 
 dba.plotMA(sample_model,contrast=1)
 dev.off()
-
 
 
 ## volcano plot with diff sites
@@ -1136,7 +1178,6 @@ dev.off()
 
 
 # PCA on Bigwig files
-
 Let's do PCA with [multiBigwigSummary](https://deeptools.readthedocs.io/en/develop/content/tools/multiBigwigSummary.html) and [PCAplot](https://deeptools.readthedocs.io/en/2.4.1/content/tools/plotPCA.html)/[plotCorrelation](https://deeptools.readthedocs.io/en/develop/content/tools/plotCorrelation.html) from deeptools:
 
 - Use bin mode (score of the compile bigwig is calculated at a 10kb bins (default), on the entire genome)
@@ -1149,12 +1190,6 @@ conda activate deeptools
 # Generate compile bigwig (.npz) files
 sbatch --dependency=afterany:12092810 scripts/multiBigwigSummary_all.sh # 12092852 ok
 sbatch --dependency=afterany:12092810 scripts/multiBigwigSummary_H3K27me3.sh # 12092853 ok
-
-
-
-
-
-
 
 # Plot
 ## All genotypes all points
@@ -1186,5 +1221,42 @@ plotCorrelation \
 ```
 
 ## PCA on normalized files
+### Histone
+The code below has not been run; I think useless to do it as it will not show any differences with the raw one...
+```bash
+conda activate deeptools
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_histone_all.sh # 
+sbatch scripts/multiBigwigSummary_histone_H3K27me3.sh # 
 
-Not needed; better work on the peak
+# Plot
+## All genotypes all points
+plotPCA -in output/bigwig/multiBigwigSummary_histone_all.npz \
+    --transpose \
+    --ntop 0 \
+    --labels 8wN_WT_IGG_R1 8wN_WT_IGG_R2 8wN_WT_IGG_R3 8wN_WT_IGG_R4 8wN_WT_H3K27me3_R1 8wN_WT_H3K27me3_R2 8wN_WT_H3K27me3_R3 8wN_WT_H3K27me3_R4 8wN_KO_IGG_R1 8wN_KO_IGG_R2 8wN_KO_IGG_R3 8wN_KO_IGG_R4 8wN_KO_H3K27me3_R1 8wN_KO_H3K27me3_R2 8wN_KO_H3K27me3_R3 8wN_KO_H3K27me3_R4 8wN_HET_IGG_R1 8wN_HET_IGG_R2 8wN_HET_IGG_R3 8wN_HET_IGG_R4 8wN_HET_H3K27me3_R1 8wN_HET_H3K27me3_R2 8wN_HET_H3K27me3_R3 8wN_HET_H3K27me3_R4 8wN_iPSCpatient_IGG_R1 8wN_iPSCpatient_IGG_R2 8wN_iPSCpatient_H3K27me3_R1 8wN_iPSCpatient_H3K27me3_R2.dupmark.sorted.bw \
+    -o output/bigwig/multiBigwigSummary_histone_all_plotPCA.pdf
+plotPCA -in output/bigwig/multiBigwigSummary_histone_H3K27me3.npz \
+    --transpose \
+    --ntop 0 \
+    --labels 8wN_WT_H3K27me3_R1 8wN_WT_H3K27me3_R2 8wN_WT_H3K27me3_R3 8wN_WT_H3K27me3_R4 8wN_KO_H3K27me3_R1 8wN_KO_H3K27me3_R2 8wN_KO_H3K27me3_R3 8wN_KO_H3K27me3_R4 8wN_HET_H3K27me3_R1 8wN_HET_H3K27me3_R2 8wN_HET_H3K27me3_R3 8wN_HET_H3K27me3_R4 8wN_iPSCpatient_H3K27me3_R1 8wN_iPSCpatient_H3K27me3_R2.dupmark.sorted.bw \
+    -o output/bigwig/multiBigwigSummary_histone_H3K27me3_plotPCA.pdf
+
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_all.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --whatToPlot heatmap --colorMap RdYlBu --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_histone_all_heatmap.pdf
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_H3K27me3.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --whatToPlot heatmap --colorMap RdYlBu --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_histone_H3K27me3_heatmap.pdf
+```
+### Histone lib depth
+
+

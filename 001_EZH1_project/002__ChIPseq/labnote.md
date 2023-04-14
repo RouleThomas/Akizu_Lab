@@ -458,9 +458,9 @@ Works great! ratio and not log2ratio is better (= ratio of read counts per bin i
 
 ```bash
 conda activate deeptools
-sbatch scripts/bamtobigwig_inputNorm_ESC.sh # 12130664
-sbatch scripts/bamtobigwig_inputNorm_NPC.sh # 12130663
-sbatch scripts/bamtobigwig_inputNorm_2dN.sh # 12130662
+sbatch scripts/bamtobigwig_inputNorm_ESC.sh # 12141577
+sbatch scripts/bamtobigwig_inputNorm_NPC.sh # 12141576
+sbatch scripts/bamtobigwig_inputNorm_2dN.sh # 12141578
 ```
 
 
@@ -490,7 +490,7 @@ bamCoverage --bam output/bowtie2/8wN_WT_H3K27me3_R1.dupmark.sorted.bam \
     --scaleFactor $scale
 
 # All sample together
-sbatch scripts/bamtobigwig_ChIPseqSpikeInFree.sh # 12130769
+sbatch scripts/bamtobigwig_ChIPseqSpikeInFree.sh # 12141584
 ```
 *NOTE: 15000000 is a reference to normalize the read counts in the ChIP-seq data. It represents a target library size to which the actual library size will be scaled. Could have choose any number, but 15m is commonly used*
 

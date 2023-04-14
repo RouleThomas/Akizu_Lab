@@ -21,6 +21,7 @@ for ((i=0; i<${#samples_and_controls[@]}; i+=2)); do
   
     bamCompare -b1 output/bowtie2_endtoend/${sample}.dupmark.sorted.bam \
         -b2 output/bowtie2_endtoend/${control}.dupmark.sorted.bam \
+        --operation ratio \
         -o output/bigwig_inputNorm/${sample}_ratio.bw
 done
 
