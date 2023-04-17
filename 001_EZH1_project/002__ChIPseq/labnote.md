@@ -491,13 +491,13 @@ bamCoverage --bam output/bowtie2/8wN_WT_H3K27me3_R1.dupmark.sorted.bam \
 
 # All sample together
 sbatch scripts/bamtobigwig_ChIPseqSpikeInFree.sh # 12141584; cancel time limit (only 2dN/ESC have been processed...)
-sbatch scripts/bamtobigwig_ChIPseqSpikeInFree_canceled.sh # 12146384
+sbatch scripts/bamtobigwig_ChIPseqSpikeInFree_canceled.sh # 12146384 ok
 
 ```
 *NOTE: 15000000 is a reference to normalize the read counts in the ChIP-seq data. It represents a target library size to which the actual library size will be scaled. Could have choose any number, but 15m is commonly used*
 
 
-XXX
+
 
 
 
@@ -746,6 +746,75 @@ plotCorrelation \
 
 --> Let's **use the non-downsample/raw** as it give more peaks; and the replicate looks more 'similar' on IGV. Moreover MACS2 already account for these differences while calling peak.
 
+
+
+
+# DiffBind
+
+```bash
+srun --mem=100g --pty bash -l
+conda activate DiffBind
+```
+```R
+library("DiffBind") 
+library("csaw") # For spikein norm
+
+# Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample.txt", header = TRUE, sep = "\t"))
+
+# Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count.RData")
+load("output/DiffBind/sample_count.RData")
+
+# plot
+pdf("output/DiffBind/clustering_sample.pdf", width=14, height=20)  
+plot(sample_count)
+dev.off()
+
+pdf("output/DiffBind/PCA_sample.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+# Blacklist is already applied, so let's generate GreyList (IGG)
+## Greylist generation
+sample_dba_greylist = dba.blacklist(sample_dba, blacklist=FALSE, greylist=TRUE)
+
+# Now check how clustering look
+sample_count_greylist = dba.count(sample_dba_greylist)
+## This take time, here is checkpoint command to save/load:
+save(sample_count_greylist, file = "output/DiffBind/sample_count_greylist.RData")
+load("output/DiffBind/sample_count_greylist.RData")
+
+
+# plot
+pdf("output/DiffBind/clustering_greylist.pdf", width=14, height=20)
+plot(sample_count_greylist)
+dev.off()
+
+pdf("output/DiffBind/PCA_greylist.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_greylist,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
 
 
 # ChIPseeker

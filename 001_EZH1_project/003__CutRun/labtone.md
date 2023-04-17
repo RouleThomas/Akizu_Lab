@@ -1286,13 +1286,111 @@ dev.off()
 *NOTE: as iPSC has only 1 replicate I need to do it separately by hand. See doc here for [dba.contrast](https://www.rdocumentation.org/packages/DiffBind/versions/2.0.2/topics/dba.contrast)*
 *NOTE: For the spike in, the samtools-clean bam did not work; seems there is no reads, so I use the raw bam file; but it does not work too*
 
-The DiffBind norm is painfull, let's do another try below:
+**The step order to follow with DiffBind is:**
+1. Count
+2. Apply BlackList / GreyList
+3. Count (with BlackList / GreyList applied)
+4. Normalize (DiffBind-method or Spike in)
+5. Identification of diff. bound regions
 
-The E.coli have been re-processed; let's try again.
 
-XXX Re-process the E coli mapping and re-try with the bam files from Ecoli
+Let's Test **different normalization method (non spike in); using the bed 'TRUE peaks':**
 
 ```R
+library("DiffBind") 
+library("csaw") # For spikein norm
+
+# Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample.txt", header = TRUE, sep = "\t"))
+
+# Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count.RData")
+load("output/DiffBind/sample_count.RData")
+
+# plot
+pdf("output/DiffBind/clustering_sample.pdf", width=14, height=20)  
+plot(sample_count)
+dev.off()
+
+pdf("output/DiffBind/PCA_sample.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+# Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_dba, blacklist=FALSE, greylist=TRUE) # Here we apply blacklist and greylist
+
+# Now check how clustering look
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+## This take time, here is checkpoint command to save/load:
+save(sample_count_blackgreylist, file = "output/DiffBind/sample_count_blackgreylist.RData")
+load("output/DiffBind/sample_count_blackgreylist.RData")
+
+
+# plot
+pdf("output/DiffBind/clustering_blackgreylist.pdf", width=14, height=20)
+plot(sample_count_blackgreylist)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+
+# Normalization 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Modeling and testing without spike in
+## Define different contrast
+sample_model <- dba.contrast(sample_count_greylist)
+sample_model # Check the factor are correct (for us Treatment = genotype)
+dba.show(sample_model, bContrast=T)
+
+## Analyze the model
+### Default setting
+sample_model_analyze <- dba.analyze(sample_model, method=DBA_ALL_METHODS) # Here show DESEq2 and EDgeR method
+dba.show(sample_model,bContrasts=TRUE) # HETvsKO = 88 (125); HETvsWT=25 (58); WTvsKO=132 (151): DESeq2 (edgeR)
+
+
+```
+
+--> XXX It give more peaks and they looks real XXX
+
+
+
+Let's try with Spike in normalization here (using the bed files 'TRUE peaks')
+
+
+```R
+library("DiffBind") 
+library("csaw") # For spikein norm
+
+
+# Load sample count Blacklist/Greylist applied
+load("output/DiffBind/sample_count_blackgreylist.RData")
+
+# Normalize XXX
+
 
 ```
 
