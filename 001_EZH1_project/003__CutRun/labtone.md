@@ -1389,7 +1389,13 @@ library("csaw") # For spikein norm
 # Load sample count Blacklist/Greylist applied
 load("output/DiffBind/sample_count_blackgreylist.RData")
 
-# Normalize XXX
+# Normalize 
+
+
+
+
+
+
 
 
 ```
