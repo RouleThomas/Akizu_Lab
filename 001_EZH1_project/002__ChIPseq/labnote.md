@@ -763,10 +763,23 @@ library("csaw") # For spikein norm
 sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample.txt", header = TRUE, sep = "\t"))
 
 # Batch effect investigation; heatmaps and PCA plots
-sample_count = dba.count(sample_dba)
-## This take time, here is checkpoint command to save/load:
-save(sample_count, file = "output/DiffBind/sample_count.RData")
-load("output/DiffBind/sample_count.RData")
+sample_count = dba.count(sample_dba, bParallel=TRUE) # bParallel=TRUE is to count using multiple processors
+
+```
+The job is terminated, probably because there is too many samples! 
+Let's try to run it in a Rscript with shit tons of memory (500G)
+
+
+```bash
+conda activate DiffBind
+sbatch scripts/DiffBind_ChIP.sh # 122003317 XXX
+```
+
+XXX IF FAIL split the data and combine
+
+```R
+LOAD
+
 
 # plot
 pdf("output/DiffBind/clustering_sample.pdf", width=14, height=20)  

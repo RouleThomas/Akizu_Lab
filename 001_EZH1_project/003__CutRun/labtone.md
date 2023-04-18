@@ -895,8 +895,6 @@ sbatch scripts/macs2_raw_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run in inter
 Already tested previously and show very few peaks...
 
 
-
-
 # Troubleshoot spike-in normalization
 The previous normalization method used, seems shit. Bigwig are very heterogeneous between replicates, even more than the raw files. Let's try different approaches:
 - Calculate **Histone spike-in factor from Cutana** (then generate scaled bigwig and scaled bam)
@@ -971,6 +969,69 @@ sbatch scripts/bamtobigwig_histone_groupABgenotype_WT_divide.sh # 12126291 ok
 conda activate deeptools
 sbatch scripts/bamtobigwig_histone_groupABgenotype_WT_libscaled.sh # 12130826 ok
 ```
+
+
+## Ecoli spike-in factor from Cutana - Scaling factor
+
+Here we now group per genotype and AB:
+
+```R
+# package
+library(tidyverse)
+library(readxl)
+
+# import df
+spikein <- read_excel("output/spikein/SpikeIn_MG1655.xlsx") %>%
+  mutate(genotype = str_extract(sample_ID, "HET|KO|WT|iPSCpatient"))
+
+
+# Total reads per IP and genotype
+spikein_H3K27me3_total = spikein %>%
+  group_by(AB, genotype) %>%
+  mutate(total = sum(counts)) %>%
+  ungroup() %>%
+  distinct(AB, genotype, .keep_all = TRUE) %>%
+  select(AB, genotype, total)
+
+# Read proportion
+spikein_H3K27me3_read_prop = spikein %>%
+  group_by(sample_ID) %>%
+  mutate(counts = sum(counts)) %>%
+  select(sample_ID,AB,genotype,counts) %>%
+  unique() %>%
+  left_join(spikein_H3K27me3_total) %>%
+  mutate(read_prop = counts / total)
+
+spikein_H3K27me3_read_prop_min = spikein_H3K27me3_read_prop %>%
+  group_by(AB, genotype) %>%
+  summarise(min_prop=min(read_prop))
+
+# Scaling factor
+spikein_H3K27me3_scaling_factor = spikein_H3K27me3_read_prop %>%
+  left_join(spikein_H3K27me3_read_prop_min) %>%
+  mutate(scaling_factor = read_prop/min_prop)
+
+write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_MG1655_groupABgenotype_scaling_factor.txt", sep="\t", quote=FALSE, row.names=FALSE)
+
+```
+
+--> The scaling factor looks ok
+
+
+
+
+## Ecoli spike-in factor from Cutana - Bigwig
+
+Do normalization taking into account library size:
+
+```bash
+conda activate deeptools
+sbatch scripts/bamtobigwig_MG1655_groupABgenotype_libscaled.sh # 12202882 XXX
+```
+
+
+
+
 
 
 ### ChIPSeqSpike
@@ -1290,12 +1351,13 @@ dev.off()
 1. Count
 2. Apply BlackList / GreyList
 3. Count (with BlackList / GreyList applied)
-4. Normalize (DiffBind-method or Spike in)
+4. Normalize (Spike in + TMM or RLE)
 5. Identification of diff. bound regions
 
 
 Let's Test **different normalization method (non spike in); using the bed 'TRUE peaks':**
 
+Here is the generation of the Blacklist/Greylist count matrix:
 ```R
 library("DiffBind") 
 library("csaw") # For spikein norm
@@ -1337,49 +1399,9 @@ pdf("output/DiffBind/PCA_blackgreylist.pdf", width=14, height=20)
 dba.plotPCA(sample_count_blackgreylist,DBA_REPLICATE, label=DBA_TREATMENT)
 dev.off()
 
-
-# Normalization 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Modeling and testing without spike in
-## Define different contrast
-sample_model <- dba.contrast(sample_count_greylist)
-sample_model # Check the factor are correct (for us Treatment = genotype)
-dba.show(sample_model, bContrast=T)
-
-## Analyze the model
-### Default setting
-sample_model_analyze <- dba.analyze(sample_model, method=DBA_ALL_METHODS) # Here show DESEq2 and EDgeR method
-dba.show(sample_model,bContrasts=TRUE) # HETvsKO = 88 (125); HETvsWT=25 (58); WTvsKO=132 (151): DESeq2 (edgeR)
-
-
 ```
 
---> XXX It give more peaks and they looks real XXX
-
-
-
-Let's try with Spike in normalization here (using the bed files 'TRUE peaks')
-
+Now the spike-in normalization and test of TMM and lib depth (default) norm:
 
 ```R
 library("DiffBind") 
@@ -1390,22 +1412,272 @@ library("csaw") # For spikein norm
 load("output/DiffBind/sample_count_blackgreylist.RData")
 
 # Normalize 
+sample_count_blackgreylist_spikein = dba.normalize(sample_count_blackgreylist, spikein=TRUE)
+
+# plot
+pdf("output/DiffBind/clustering_blackgreylist_spikein.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_spikein)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_spikein.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_spikein,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+# Set up contrast for comparison (all will be compare to the WT)
+sample_count_blackgreylist_spikein_contrast = dba.contrast(sample_count_blackgreylist_spikein, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_blackgreylist_spikein_contrast_analyze = dba.analyze(sample_count_blackgreylist_spikein_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
+
+# NO SPIKE IN FOR COMPARISON ##########
+### Default lib-norm
+sample_count_blackgreylist_contrast = dba.contrast(sample_count_blackgreylist, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_blackgreylist_contrast_analyze = dba.analyze(sample_count_blackgreylist_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
+
+### TMM
+sample_count_blackgreylist_TMM = dba.normalize(sample_count_blackgreylist, normalize=DBA_NORM_TMM)
+
+sample_count_blackgreylist_TMM_contrast = dba.contrast(sample_count_blackgreylist_TMM, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_blackgreylist_TMM_contrast_analyze = dba.analyze(sample_count_blackgreylist_TMM_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
+
+################################
+
+
+#### Binding sites overlap with the 2 methods:
+pdf("output/DiffBind/DBA_ALL_METHODS_Venn_blackgreylist_spikein_contrast1.pdf", width=14, height=20) 
+dba.plotVenn(sample_count_blackgreylist_spikein_contrast_analyze,contrast=1,method=DBA_ALL_METHODS)
+dev.off()
+pdf("output/DiffBind/DBA_ALL_METHODS_Venn_blackgreylist_spikein_contrast2.pdf", width=14, height=20) 
+dba.plotVenn(sample_count_blackgreylist_spikein_contrast_analyze,contrast=2,method=DBA_ALL_METHODS)
+dev.off()
+pdf("output/DiffBind/DBA_ALL_METHODS_Venn_blackgreylist_spikein_contrast3.pdf", width=14, height=20) 
+dba.plotVenn(sample_count_blackgreylist_spikein_contrast_analyze,contrast=3,method=DBA_ALL_METHODS)
+dev.off()
+
+
+sample_count_blackgreylist_spikein_contrast_DESEQ2 <- dba.analyze(sample_count_blackgreylist_spikein_contrast, method=DBA_DESEQ2) # Let's pick the edgeR method
+
+## Export the Diff Bind regions
+### Convert to GR object
+sample_model_blackgreylist_spikein_report_contrast1 <- dba.report(sample_count_blackgreylist_spikein_contrast_DESEQ2,method=DBA_DESEQ2,contrast=1)
+sample_model_blackgreylist_spikein_report_contrast2 <- dba.report(sample_count_blackgreylist_spikein_contrast_DESEQ2,method=DBA_DESEQ2,contrast=2)
+sample_model_blackgreylist_spikein_report_contrast3 <- dba.report(sample_count_blackgreylist_spikein_contrast_DESEQ2,method=DBA_DESEQ2,contrast=3)
+### Convert to bed and export
+sample_model_blackgreylist_spikein_report_contrast1_df <- data.frame(sample_model_blackgreylist_spikein_report_contrast1)
+sample_model_blackgreylist_spikein_report_contrast2_df <- data.frame(sample_model_blackgreylist_spikein_report_contrast2)
+sample_model_blackgreylist_spikein_report_contrast3_df <- data.frame(sample_model_blackgreylist_spikein_report_contrast3)
+
+colnames(sample_model_blackgreylist_spikein_report_contrast1_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_model_blackgreylist_spikein_report_contrast2_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_model_blackgreylist_spikein_report_contrast3_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+
+write.table(sample_model_blackgreylist_spikein_report_contrast1_df, file="output/DiffBind/sample_model_blackgreylist_spikein_report_contrast1_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_model_blackgreylist_spikein_report_contrast2_df, file="output/DiffBind/sample_model_blackgreylist_spikein_report_contrast2_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_model_blackgreylist_spikein_report_contrast3_df, file="output/DiffBind/sample_model_blackgreylist_spikein_report_contrast3_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+
+
+# Examining results
+## MA plot with diff sites
+pdf("output/DiffBind/plotMA_blackgreylist_spikein_contrast1.pdf", width=14, height=20) 
+dba.plotMA(sample_count_blackgreylist_spikein_contrast_DESEQ2,method=DBA_DESEQ2,contrast=1)
+dev.off()
+pdf("output/DiffBind/plotMA_blackgreylist_spikein_contrast2.pdf", width=14, height=20) 
+dba.plotMA(sample_count_blackgreylist_spikein_contrast_DESEQ2,method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/plotMA_blackgreylist_spikein_contrast3.pdf", width=14, height=20) 
+dba.plotMA(sample_count_blackgreylist_spikein_contrast_DESEQ2,method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+
+## volcano plot with diff sites
+pdf("output/DiffBind/volcano_blackgreylist_spikein_contrast1.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_blackgreylist_spikein_contrast_DESEQ2,method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/volcano_blackgreylist_spikein_contrast2.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_blackgreylist_spikein_contrast_DESEQ2, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/volcano_blackgreylist_spikein_contrast3.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_blackgreylist_spikein_contrast_DESEQ2, method=DBA_DESEQ2,contrast=3)
+dev.off()
+## PCA/heatmat only on the diff sites
+pdf("output/DiffBind/clustering_blackgreylist_spikein_contrast1.pdf", width=14, height=20) 
+plot(sample_count_blackgreylist_spikein_contrast_DESEQ2, method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/clustering_blackgreylist_spikein_contrast2.pdf", width=14, height=20) 
+plot(sample_count_blackgreylist_spikein_contrast_DESEQ2, method=DBA_DESEQ2, contrast=2)
+dev.off()
+pdf("output/DiffBind/clustering_blackgreylist_spikein_contrast3.pdf", width=14, height=20) 
+plot(sample_count_blackgreylist_spikein_contrast_DESEQ2, method=DBA_DESEQ2, contrast=3)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_spikein_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_spikein_contrast_DESEQ2, method=DBA_DESEQ2,contrast=1, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_blackgreylist_spikein_contrast2.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_spikein_contrast_DESEQ2, method=DBA_DESEQ2,contrast=2, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_blackgreylist_spikein_contrast3.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_spikein_contrast_DESEQ2, method=DBA_DESEQ2,contrast=3, label=DBA_TREATMENT)
+dev.off()
+
+
+## Read concentration heatmap
+hmap <- colorRampPalette(c("red", "black", "green"))(n = 13)
+
+pdf("output/DiffBind/clustering_reads_blackgreylist_spikein_contrast1.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_blackgreylist_spikein_contrast_DESEQ2, method=DBA_DESEQ2,contrast=1, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_blackgreylist_spikein_contrast2.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_blackgreylist_spikein_contrast_DESEQ2, method=DBA_DESEQ2,contrast=2, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_blackgreylist_spikein_contrast3.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_blackgreylist_spikein_contrast_DESEQ2, method=DBA_DESEQ2,contrast=3, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+
+
+## Read distribution within diff bound sites
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_blackgreylist_spikein_contrast1.pdf", width=14, height=20) 
+dba.plotBox(sample_count_blackgreylist_spikein_contrast_DESEQ2, method=DBA_DESEQ2,contrast=1)
+dev.off()
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_blackgreylist_spikein_contrast2.pdf", width=14, height=20) 
+dba.plotBox(sample_count_blackgreylist_spikein_contrast_DESEQ2, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_blackgreylist_spikein_contrast3.pdf", width=14, height=20) 
+dba.plotBox(sample_count_blackgreylist_spikein_contrast_DESEQ2, method=DBA_DESEQ2,contrast=3)
+dev.off()
 
 
 
+# Test different normalization method
+## RLE normalization
+sample_count_blackgreylist_spikein_RLE = dba.normalize(sample_count_blackgreylist, spikein=TRUE, normalize=DBA_NORM_RLE)
+
+# plot
+pdf("output/DiffBind/clustering_blackgreylist_spikein_RLE.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_spikein_RLE)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_spikein_RLE.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_spikein_RLE,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+# Set up contrast for comparison (all will be compare to the WT)
+sample_count_blackgreylist_spikein_RLE_contrast = dba.contrast(sample_count_blackgreylist_spikein_RLE, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_blackgreylist_spikein_RLE_contrast_analyze = dba.analyze(sample_count_blackgreylist_spikein_RLE_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
 
 
 
+## TMM normalization
+sample_count_blackgreylist_spikein_TMM = dba.normalize(sample_count_blackgreylist, spikein=TRUE, normalize=DBA_NORM_TMM)
 
+# plot
+pdf("output/DiffBind/clustering_blackgreylist_spikein_TMM.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_spikein_TMM)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_spikein_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_spikein_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+# Set up contrast for comparison (all will be compare to the WT)
+sample_count_blackgreylist_spikein_TMM_contrast = dba.contrast(sample_count_blackgreylist_spikein_TMM, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_blackgreylist_spikein_TMM_contrast_analyze = dba.analyze(sample_count_blackgreylist_spikein_TMM_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
+
+# Generate plots
+
+
+sample_count_blackgreylist_spikein_TMM_contrast_DESEQ2 <- dba.analyze(sample_count_blackgreylist_spikein_TMM_contrast, method=DBA_DESEQ2) # Let's pick the edgeR method
+
+## Export the Diff Bind regions
+### Convert to GR object
+sample_model_blackgreylist_spikein_report_contrast1 <- dba.report(sample_count_blackgreylist_spikein_TMM_contrast_DESEQ2,method=DBA_DESEQ2,contrast=1)
+sample_model_blackgreylist_spikein_report_contrast2 <- dba.report(sample_count_blackgreylist_spikein_TMM_contrast_DESEQ2,method=DBA_DESEQ2,contrast=2)
+sample_model_blackgreylist_spikein_report_contrast3 <- dba.report(sample_count_blackgreylist_spikein_TMM_contrast_DESEQ2,method=DBA_DESEQ2,contrast=3)
+### Convert to bed and export
+sample_model_blackgreylist_spikein_report_contrast1_df <- data.frame(sample_model_blackgreylist_spikein_report_contrast1)
+sample_model_blackgreylist_spikein_report_contrast2_df <- data.frame(sample_model_blackgreylist_spikein_report_contrast2)
+sample_model_blackgreylist_spikein_report_contrast3_df <- data.frame(sample_model_blackgreylist_spikein_report_contrast3)
+
+colnames(sample_model_blackgreylist_spikein_report_contrast1_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_model_blackgreylist_spikein_report_contrast2_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_model_blackgreylist_spikein_report_contrast3_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+
+write.table(sample_model_blackgreylist_spikein_report_contrast1_df, file="output/DiffBind/sample_model_blackgreylist_spikein_TMM_report_contrast1_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_model_blackgreylist_spikein_report_contrast2_df, file="output/DiffBind/sample_model_blackgreylist_spikein_TMM_report_contrast2_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_model_blackgreylist_spikein_report_contrast3_df, file="output/DiffBind/sample_model_blackgreylist_spikein_TMM_report_contrast3_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+
+
+# Examining results
+## MA plot with diff sites
+pdf("output/DiffBind/plotMA_blackgreylist_spikein_TMM_contrast1.pdf", width=14, height=20) 
+dba.plotMA(sample_count_blackgreylist_spikein_TMM_contrast_DESEQ2,method=DBA_DESEQ2,contrast=1)
+dev.off()
+pdf("output/DiffBind/plotMA_blackgreylist_spikein_TMM_contrast2.pdf", width=14, height=20) 
+dba.plotMA(sample_count_blackgreylist_spikein_TMM_contrast_DESEQ2,method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/plotMA_blackgreylist_spikein_TMM_contrast3.pdf", width=14, height=20) 
+dba.plotMA(sample_count_blackgreylist_spikein_TMM_contrast_DESEQ2,method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+
+## volcano plot with diff sites
+pdf("output/DiffBind/volcano_blackgreylist_spikein_TMM_contrast1.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_blackgreylist_spikein_TMM_contrast_DESEQ2,method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/volcano_blackgreylist_spikein_TMM_contrast2.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_blackgreylist_spikein_TMM_contrast_DESEQ2, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/volcano_blackgreylist_spikein_TMM_contrast3.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_blackgreylist_spikein_TMM_contrast_DESEQ2, method=DBA_DESEQ2,contrast=3)
+dev.off()
+## PCA/heatmat only on the diff sites
+pdf("output/DiffBind/clustering_blackgreylist_spikein_TMM_contrast1.pdf", width=14, height=20) 
+plot(sample_count_blackgreylist_spikein_TMM_contrast_DESEQ2, method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/clustering_blackgreylist_spikein_TMM_contrast2.pdf", width=14, height=20) 
+plot(sample_count_blackgreylist_spikein_TMM_contrast_DESEQ2, method=DBA_DESEQ2, contrast=2)
+dev.off()
+pdf("output/DiffBind/clustering_blackgreylist_spikein_TMM_contrast3.pdf", width=14, height=20) 
+plot(sample_count_blackgreylist_spikein_TMM_contrast_DESEQ2, method=DBA_DESEQ2, contrast=3)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_spikein_TMM_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_spikein_TMM_contrast_DESEQ2, method=DBA_DESEQ2,contrast=1, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_blackgreylist_spikein_TMM_contrast2.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_spikein_TMM_contrast_DESEQ2, method=DBA_DESEQ2,contrast=2, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_blackgreylist_spikein_TMM_contrast3.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_spikein_TMM_contrast_DESEQ2, method=DBA_DESEQ2,contrast=3, label=DBA_TREATMENT)
+dev.off()
+
+
+## Read concentration heatmap
+hmap <- colorRampPalette(c("red", "black", "green"))(n = 13)
+
+pdf("output/DiffBind/clustering_reads_blackgreylist_spikein_TMM_contrast1.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_blackgreylist_spikein_TMM_contrast_DESEQ2, method=DBA_DESEQ2,contrast=1, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_blackgreylist_spikein_TMM_contrast2.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_blackgreylist_spikein_TMM_contrast_DESEQ2, method=DBA_DESEQ2,contrast=2, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_blackgreylist_spikein_TMM_contrast3.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_blackgreylist_spikein_TMM_contrast_DESEQ2, method=DBA_DESEQ2,contrast=3, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
 
 ```
+--> Spike-in normalization help a lot for the identification of diff bound regions
 
-
-XXX Re-try with the scaling factor from Cutana
-
-```R
-
-```
+--> Spike-in/Default(lib size)/DEseq2 and Spike-in/TMM/DEseq2 perform both great. Let's see how ChIPseq perform and use the same norm method for CutRun and ChIPseq
 
 
 
@@ -1490,5 +1762,23 @@ plotCorrelation \
     -o output/bigwig/multiBigwigSummary_histone_H3K27me3_heatmap.pdf
 ```
 ### Histone lib depth
+
+XXX
+
+
+# ChIPseeker for binding profiles
+
+to run it, use conda base and R 4.2.2 module 
+```bash
+conda deactivate
+module load R/4.2.2
+```
+
+```R
+library("ChIPseeker")
+
+XXX
+
+```
 
 
