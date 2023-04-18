@@ -772,13 +772,13 @@ Let's try to run it in a Rscript with shit tons of memory (500G)
 
 ```bash
 conda activate DiffBind
-sbatch scripts/DiffBind_ChIP.sh # 122003317 XXX
+sbatch scripts/DiffBind_ChIP.sh # 122003317 ok
 ```
-
-XXX IF FAIL split the data and combine
+It work!
 
 ```R
-LOAD
+# Load the raw counts
+load("output/DiffBind/sample_count.RData")
 
 
 # plot
@@ -787,33 +787,93 @@ plot(sample_count)
 dev.off()
 
 pdf("output/DiffBind/PCA_sample.pdf", width=14, height=20) 
-dba.plotPCA(sample_count,DBA_REPLICATE, label=DBA_TREATMENT)
+dba.plotPCA(sample_count,DBA_CONDITION, label=c(DBA_TREATMENT))
 dev.off()
 
 # Blacklist is already applied, so let's generate GreyList (IGG)
 ## Greylist generation
-sample_dba_greylist = dba.blacklist(sample_dba, blacklist=FALSE, greylist=TRUE)
+sample_dba_greylist = dba.blacklist(sample_count, blacklist=FALSE, greylist=TRUE)
+
+XXX
 
 # Now check how clustering look
-sample_count_greylist = dba.count(sample_dba_greylist)
+sample_count_blackgreylist = dba.count(sample_dba_greylist)
 ## This take time, here is checkpoint command to save/load:
-save(sample_count_greylist, file = "output/DiffBind/sample_count_greylist.RData")
-load("output/DiffBind/sample_count_greylist.RData")
+save(sample_count_blackgreylist, file = "output/DiffBind/sample_count_blackgreylist.RData")
+load("output/DiffBind/sample_count_blackgreylist.RData")
 
 
 # plot
 pdf("output/DiffBind/clustering_greylist.pdf", width=14, height=20)
-plot(sample_count_greylist)
+plot(sample_count_blackgreylist)
 dev.off()
 
 pdf("output/DiffBind/PCA_greylist.pdf", width=14, height=20) 
-dba.plotPCA(sample_count_greylist,DBA_REPLICATE, label=DBA_TREATMENT)
+dba.plotPCA(sample_count_blackgreylist,DBA_REPLICATE, label=DBA_TREATMENT)
 dev.off()
 
 
 
+# Test different normalization and pick the one that identify most diff. bound sites
+## default lib-depth normalization
+sample_count_blackgreylist= dba.normalize(sample_count_blackgreylist)
 
 
+# plot
+pdf("output/DiffBind/clustering_blackgreylist_spikein_RLE.pdf", width=14, height=20)
+plot(sample_count_blackgreylist)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_spikein_RLE.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+# Set up contrast for comparison (all will be compare to the WT)
+sample_count_blackgreylist_contrast = dba.contrast(sample_count_blackgreylist, reorderMeta = list(Treatment="WT", Condition ="ESC"), design="~Treatment + Condition")
+
+sample_count_blackgreylist_contrast_analyze = dba.analyze(sample_count_blackgreylist_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
+
+
+
+
+
+
+
+## RLE normalization
+sample_count_blackgreylist_spikein_RLE = dba.normalize(sample_count_blackgreylist, spikein=TRUE, normalize=DBA_NORM_RLE)
+
+# plot
+pdf("output/DiffBind/clustering_blackgreylist_spikein_RLE.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_spikein_RLE)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_spikein_RLE.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_spikein_RLE,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+# Set up contrast for comparison (all will be compare to the WT)
+sample_count_blackgreylist_spikein_RLE_contrast = dba.contrast(sample_count_blackgreylist_spikein_RLE, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_blackgreylist_spikein_RLE_contrast_analyze = dba.analyze(sample_count_blackgreylist_spikein_RLE_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
+
+
+
+## TMM normalization
+sample_count_blackgreylist_spikein_TMM = dba.normalize(sample_count_blackgreylist, spikein=TRUE, normalize=DBA_NORM_TMM)
+
+# plot
+pdf("output/DiffBind/clustering_blackgreylist_spikein_TMM.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_spikein_TMM)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_spikein_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_spikein_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+# Set up contrast for comparison (all will be compare to the WT)
+sample_count_blackgreylist_spikein_TMM_contrast = dba.contrast(sample_count_blackgreylist_spikein_TMM, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_blackgreylist_spikein_TMM_contrast_analyze = dba.analyze(sample_count_blackgreylist_spikein_TMM_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
 
 
 

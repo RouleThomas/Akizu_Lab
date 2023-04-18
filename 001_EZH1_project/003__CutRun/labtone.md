@@ -1026,10 +1026,10 @@ Do normalization taking into account library size:
 
 ```bash
 conda activate deeptools
-sbatch scripts/bamtobigwig_MG1655_groupABgenotype_libscaled.sh # 12202882 XXX
+sbatch scripts/bamtobigwig_MG1655_groupABgenotype_libscaled.sh # 12202882 ok
 ```
 
-
+--> looks not good; let's try the ChIPSeqSpike to obtain scaled bigwig directly
 
 
 
@@ -1042,11 +1042,19 @@ conda create --name ChIPSeqSpike r-base=3.6.0
 conda activate ChIPSeqSpike
 ```
 ```R
-BiocManager::install(version = "3.10")
-# BiocManager::install("ChIPSeqSpike")
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("ChIPSeqSpike")
 library("ChIPSeqSpike")
 ```
 Failed to install (also tried with [bioconda](https://anaconda.org/bioconda/bioconductor-chipseqspike)); and seems more adapted for ChIPseq as require input. So goodbye ChIPSeqSpike method.
+
+XXX
+
+
+
+
 
 
 ### DiffBind
