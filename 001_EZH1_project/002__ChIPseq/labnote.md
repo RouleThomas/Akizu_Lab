@@ -500,12 +500,6 @@ sbatch scripts/bamtobigwig_ChIPseqSpikeInFree_canceled.sh # 12146384 ok
 
 
 
-
-
-
-
-
-
 ## input-normalize ChIPseqSpikeInFree coverage bigwig
 
 XXX
@@ -562,7 +556,6 @@ sbatch scripts/macs2_downsample_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run i
 ```
 
 --> Overall the non downsample method show more peaks at the same qvalue 
-
 
 
 
@@ -774,7 +767,7 @@ Let's try to run it in a Rscript with shit tons of memory (500G)
 conda activate DiffBind
 sbatch scripts/DiffBind_ChIP.sh # 122003317 ok
 ```
-It work!
+It worked!
 
 ```R
 # Load the raw counts
@@ -792,102 +785,144 @@ dev.off()
 
 # Blacklist is already applied, so let's generate GreyList (IGG)
 ## Greylist generation
-sample_dba_greylist = dba.blacklist(sample_count, blacklist=FALSE, greylist=TRUE)
+sample_dba_greylist = dba.blacklist(sample_count, blacklist=FALSE, greylist=TRUE, cores=1)
+```
+*NOTE: I added cores=1 to avoid a weird error: `sample_dba_greylist = dba.blacklist(sample_count, blacklist=FALSE, greylist=TRUE) Genome detected: Hsapiens.UCSC.hg38 Counting control reads for greylist... Error in value[[3L]](cond) :    GreyListChIP error: Error in result[[njob]] <- value: attempt to select less than one element in OneIndex In addition: Warning message: In parallel::mccollect(wait = FALSE, timeout = 1) :   1 parallel job did not deliver a result > sample_dba_greylist Error: object 'sample_dba_greylist' not found`*
 
-XXX
+The greylist has been killed again... Let's run it within a script:
+
+```bash
+conda activate DiffBind
+sbatch scripts/DiffBind_ChIP_greylist.sh # 12270854 ok
+```
+
+It worked!
+
+
+```R
+# Load the greylist filtered counts
+load("output/DiffBind/sample_dba_greylist.RData")
 
 # Now check how clustering look
 sample_count_blackgreylist = dba.count(sample_dba_greylist)
-## This take time, here is checkpoint command to save/load:
-save(sample_count_blackgreylist, file = "output/DiffBind/sample_count_blackgreylist.RData")
-load("output/DiffBind/sample_count_blackgreylist.RData")
 
 
 # plot
-pdf("output/DiffBind/clustering_greylist.pdf", width=14, height=20)
+pdf("output/DiffBind/clustering_blackgreylist.pdf", width=14, height=20)
 plot(sample_count_blackgreylist)
 dev.off()
 
-pdf("output/DiffBind/PCA_greylist.pdf", width=14, height=20) 
-dba.plotPCA(sample_count_blackgreylist,DBA_REPLICATE, label=DBA_TREATMENT)
+pdf("output/DiffBind/PCA_blackgreylist.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist,DBA_CONDITION, label=c(DBA_TREATMENT))
 dev.off()
 
 
 
 # Test different normalization and pick the one that identify most diff. bound sites
 ## default lib-depth normalization
-sample_count_blackgreylist= dba.normalize(sample_count_blackgreylist)
-
+sample_count_blackgreylist_lib = dba.normalize(sample_count_blackgreylist)
 
 # plot
-pdf("output/DiffBind/clustering_blackgreylist_spikein_RLE.pdf", width=14, height=20)
-plot(sample_count_blackgreylist)
+pdf("output/DiffBind/clustering_blackgreylist_lib.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_lib)
 dev.off()
 
-pdf("output/DiffBind/PCA_blackgreylist_spikein_RLE.pdf", width=14, height=20) 
-dba.plotPCA(sample_count_blackgreylist,DBA_REPLICATE, label=DBA_TREATMENT)
+pdf("output/DiffBind/PCA_blackgreylist_lib.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_lib,DBA_CONDITION, label=c(DBA_TREATMENT))
 dev.off()
 
+
+##  RLE-depth normalization
+sample_count_blackgreylist_RLE = dba.normalize(sample_count_blackgreylist, normalize=DBA_NORM_RLE)
+
+# plot
+pdf("output/DiffBind/clustering_blackgreylist_RLE.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_RLE)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_RLE.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_RLE,DBA_CONDITION, label=c(DBA_TREATMENT))
+dev.off()
+
+
+##  TMM-depth normalization
+sample_count_blackgreylist_TMM = dba.normalize(sample_count_blackgreylist, normalize=DBA_NORM_TMM)
+
+# plot
+pdf("output/DiffBind/clustering_blackgreylist_TMM.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_TMM)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_TMM,DBA_CONDITION, label=c(DBA_TREATMENT))
+dev.off()
+
+
+##  TMM-depth normalization; library PEARKREADS
+sample_count_blackgreylist_TMM_PEAKREADS = dba.normalize(sample_count_blackgreylist, normalize=DBA_NORM_TMM, library=DBA_LIBSIZE_PEAKREADS)
+
+# plot
+pdf("output/DiffBind/clustering_blackgreylist_TMM_PEAKREADS.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_TMM_PEAKREADS)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_TMM_PEAKREADS.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_TMM_PEAKREADS,DBA_CONDITION, label=c(DBA_TREATMENT))
+dev.off()
+
+##  TMM-depth normalization; library PEARKREADS
+sample_count_blackgreylist_TMM_FULL = dba.normalize(sample_count_blackgreylist, normalize=DBA_NORM_TMM, library=DBA_LIBSIZE_FULL)
+
+# plot
+pdf("output/DiffBind/clustering_blackgreylist_TMM_FULL.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_TMM_FULL)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_TMM_FULL.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_TMM_FULL,DBA_CONDITION, label=c(DBA_TREATMENT))
+dev.off()
+
+
+# Let's pick TMM for the next (as also work for Cut Run) and the Greylist one:
+### Greylist matrix contrast
+sample_count_blackgreylist
 # Set up contrast for comparison (all will be compare to the WT)
-sample_count_blackgreylist_contrast = dba.contrast(sample_count_blackgreylist, reorderMeta = list(Treatment="WT", Condition ="ESC"), design="~Treatment + Condition")
+sample_count_blackgreylist_contrast = dba.contrast(sample_count_blackgreylist, reorderMeta = list(Treatment="WT", Condition ="ESC"), categories=c(DBA_TREATMENT,DBA_CONDITION))
 
 sample_count_blackgreylist_contrast_analyze = dba.analyze(sample_count_blackgreylist_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
 
 
-
-
-
-
-
-## RLE normalization
-sample_count_blackgreylist_spikein_RLE = dba.normalize(sample_count_blackgreylist, spikein=TRUE, normalize=DBA_NORM_RLE)
-
-# plot
-pdf("output/DiffBind/clustering_blackgreylist_spikein_RLE.pdf", width=14, height=20)
-plot(sample_count_blackgreylist_spikein_RLE)
-dev.off()
-
-pdf("output/DiffBind/PCA_blackgreylist_spikein_RLE.pdf", width=14, height=20) 
-dba.plotPCA(sample_count_blackgreylist_spikein_RLE,DBA_REPLICATE, label=DBA_TREATMENT)
-dev.off()
-
+### TMM matrix contrast
+sample_count_blackgreylist_TMM
 # Set up contrast for comparison (all will be compare to the WT)
-sample_count_blackgreylist_spikein_RLE_contrast = dba.contrast(sample_count_blackgreylist_spikein_RLE, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+sample_count_blackgreylist_TMM_contrast = dba.contrast(sample_count_blackgreylist_TMM, reorderMeta = list(Treatment="WT", Condition ="ESC"), categories=c(DBA_TREATMENT,DBA_CONDITION))
 
-sample_count_blackgreylist_spikein_RLE_contrast_analyze = dba.analyze(sample_count_blackgreylist_spikein_RLE_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
+sample_count_blackgreylist_TMM_contrast_analyze = dba.analyze(sample_count_blackgreylist_TMM_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
 
-
-
-## TMM normalization
-sample_count_blackgreylist_spikein_TMM = dba.normalize(sample_count_blackgreylist, spikein=TRUE, normalize=DBA_NORM_TMM)
-
-# plot
-pdf("output/DiffBind/clustering_blackgreylist_spikein_TMM.pdf", width=14, height=20)
-plot(sample_count_blackgreylist_spikein_TMM)
-dev.off()
-
-pdf("output/DiffBind/PCA_blackgreylist_spikein_TMM.pdf", width=14, height=20) 
-dba.plotPCA(sample_count_blackgreylist_spikein_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
-dev.off()
-
+### --> Pick TMM DESEQ2
 # Set up contrast for comparison (all will be compare to the WT)
-sample_count_blackgreylist_spikein_TMM_contrast = dba.contrast(sample_count_blackgreylist_spikein_TMM, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+sample_count_blackgreylist_TMM_contrast = dba.contrast(sample_count_blackgreylist_TMM, reorderMeta = list(Treatment="WT", Condition ="ESC"), categories=c(DBA_TREATMENT,DBA_CONDITION), minMembers=2)
 
-sample_count_blackgreylist_spikein_TMM_contrast_analyze = dba.analyze(sample_count_blackgreylist_spikein_TMM_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
+sample_count_blackgreylist_TMM_contrast_analyze = dba.analyze(sample_count_blackgreylist_TMM_contrast, method=DBA_DESEQ2, bParallel = TRUE)
 
+dba.contrast(sample_count_blackgreylist_TMM, minMembers=2)
 
-
-
-
-
-
-
-
-
-
-
+XXX Try to troubleshoot how do 1 per 1 comparison XXX
 
 ```
+*NOTE: I tested playing with the library parameter for normalization (Full,DBA_LIBSIZE_PEAKREADS,etc) ant it do not change anythings*
+
+--> RLE and TMM normalization perform well (Lib depth poorly separate our data)
+
+The multi-factor analyses is not clear, let's generate count matrix at each time point, and from this identify the diff bound sites (*For ESC; replicate 3 has not been taken*)
+
+```bash
+XXX Rscript job 
+```
+
+
+
+
 
 
 # ChIPseeker

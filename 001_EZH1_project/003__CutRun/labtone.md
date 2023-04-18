@@ -1035,10 +1035,14 @@ sbatch scripts/bamtobigwig_MG1655_groupABgenotype_libscaled.sh # 12202882 ok
 
 
 ### ChIPSeqSpike
+#### ChIPSeqSpike Installation
 Need Bioconductor 3.10, doc [here](https://bioconductor.riken.jp/packages/3.10/bioc/html/ChIPSeqSpike.html)
 ```bash
 srun --mem=50g --pty bash -l
 conda create --name ChIPSeqSpike r-base=3.6.0 
+conda install -c anaconda libxml2
+conda install r-xml
+conda install -c r r-lattice
 conda activate ChIPSeqSpike
 ```
 ```R
@@ -1048,13 +1052,92 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install("ChIPSeqSpike")
 library("ChIPSeqSpike")
 ```
-Failed to install (also tried with [bioconda](https://anaconda.org/bioconda/bioconductor-chipseqspike)); and seems more adapted for ChIPseq as require input. So goodbye ChIPSeqSpike method.
+*NOTE: Many failed upon `BiocManager::install("ChIPSeqSpike")` in R; thus installed several R package through conda*
+
+#### ChIPSeqSpike Run
+Documentation can be found [here](https://rdrr.io/bioc/ChIPSeqSpike/f/inst/doc/ChIPSeqSpike.pdf)
+```bash
+srun --mem=50g --pty bash -l
+conda activate ChIPSeqSpike
+```
+Generate sample metadata file (tab sep; created in .ods and copy paste to .txt) in `output/ChIPSeqSpike/` 
+
+File renaiming
+```bash
+cd output/ChIPSeqSpike
+for file in *.dupmark.sorted.bam; do
+  new_filename="${file/.dupmark.sorted.bam/.bam}"
+  mv "$file" "$new_filename"
+done
+
+for file in *.dupmark.sorted.bw; do
+  new_filename="${file/.dupmark.sorted.bw/.bw}"
+  mv "$file" "$new_filename"
+done
+```
+*NOTE: ChIPSeqSpike required only one point per extension and that all files are in the same folder. To make it simple and avoid changing the name of my original files, dependent on other tool; I cp all bam/bigwig to `output/ChIPSeqSpike` and rename files*
+
+Verification that all bam files contained aligned reads:
+```bash
+cd output/ChIPSeqSpike
+current_folder=$(basename "$PWD")
+output_file="aligned_read_counts.txt"
+
+for file in *.bam; do
+  echo -n "${current_folder}/${file}: " >> "$output_file"
+  samtools view -c -F 4 "$file" >> "$output_file"
+done
+
+```
+
+```R
+# Provide path to files
+info_file_path <- "output/ChIPSeqSpike/meta_sample.txt"
+bam_path <- "output/ChIPSeqSpike"
+bigwig_path<- "output/ChIPSeqSpike"
+
+# Create the ChIPSeqSpikeDatasetList
+csds <- spikeDataset(info_file_path, bam_path, bigwig_path)
+is(csds_test) # Should say "ChIPSeqSpikeDatasetList"
+
+# Estimate scaling factor
+csds_scale = estimateScalingFactors(csds, paired = TRUE)
+## Save as R object
+save(csds_scale, file = "output/ChIPSeqSpike/csds_scale.RData")
+
+
+spikeSummary(csds_scale)
+getRatio(csds_scale) # Give inf values... weird
+
+
+# RPM scaling
+csds_rpm <- scaling(csds)
+
+# Input/IGG substraction
+csds_input <- inputSubtraction(csds_rpm)
+
+!!! IT FAIL HERE!!!
+
+# Reverse rpm for exogenous scaling factor normalization
+csds_reverse <- scaling(csds_input, reverse = TRUE)
+
+# Application of the scaling factor
+csds_exo <- scaling(csds_reverse, type = "exo")
+
+```
+
+--> The `csds_input <- inputSubtraction(csds_rpm)` has not been performed; need re-generate bigwig using same bin size between input/IGG. Let's re-generate the bigwig using another normalization (RPGC) and broader bin size (50 and not 1)
+
+```bash
+conda activate deeptools
+sbatch scripts/bamtobigwig_ChIPSeqSpike.sh # 12287902 XXX
+```
+
+
+
+Re run ChIPSeqSpike:
 
 XXX
-
-
-
-
 
 
 ### DiffBind
