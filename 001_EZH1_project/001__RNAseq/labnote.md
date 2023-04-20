@@ -4554,12 +4554,36 @@ Input files are still our fastp-clean-trimmed data
 
 ## Mapping with STAR
 ### Index the genome
-hg19 genome with 12CPU and 50G mem (time=<1.5day). So let's go for: 12CPU and 250G mem (XXX)
-
+hg19 genome with 12CPU and 50G mem (time=<1.5day). So let's go for: 12CPU and 250G mem (time=<3hrs)
 
 ```bash
-sbatch scripts/STAR_index_hg38.sh # 12323950 XXX
+sbatch scripts/STAR_index_hg38.sh # 12323950 ok
 ```
 
+### Mapp the reads to features (fastp-clean)
+Mapping and indexation:
+```bash
+sbatch scripts/STAR_mapping_hg38_1.sh # 12325921 XXX
+sbatch scripts/STAR_mapping_hg38_2.sh # 12325922 XXX
+```
+XXX
 
 
+
+XXX modify script below:
+
+
+--> Let's compil the number of uniquely mapped reads for all files (add it in the Google Drive `RNAseq_infos.xlsx` file)
+```bash
+# Print nb of uniq map reads for raw mapping
+for file in output/STAR/raw/*Log.final.out; do
+    uniquely_mapped_reads=$(grep "Uniquely mapped reads number" $file | awk '{print $NF}')
+    echo "$file: Number of uniquely mapped reads: $uniquely_mapped_reads"
+done > output/STAR/raw/uniq_map_reads_counts_raw.txt
+
+# Print nb of uniq map reads for fastp mapping
+for file in output/STAR/fastp/*Log.final.out; do
+    uniquely_mapped_reads=$(grep "Uniquely mapped reads number" $file | awk '{print $NF}')
+    echo "$file: Number of uniquely mapped reads: $uniquely_mapped_reads"
+done > output/STAR/fastp/uniq_map_reads_counts_fastp.txt
+```
