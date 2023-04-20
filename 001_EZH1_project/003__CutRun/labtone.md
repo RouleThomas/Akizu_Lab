@@ -213,6 +213,13 @@ for file in slurm-11498658.out; do
     aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
     echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
 done > output/bowtie2/alignment_counts_11498658.txt
+
+for file in slurm-11826852.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2/alignment_counts_11826852.txt
 ```
 
 Add these values to `/home/roulet/001_EZH1_project/003__CutRun/mapping_QC.xlsx`\
@@ -901,6 +908,7 @@ The previous normalization method used, seems shit. Bigwig are very heterogeneou
 - **ChIPSeqSpike** (provide scaling factor and scaled bigwig; then need generate peaks)
 - **[DiffBind]**(https://bioconductor.org/packages/devel/bioc/vignettes/DiffBind/inst/doc/DiffBind.pdf) (provide scaling factor; then need generate bigwig and peaks)
 - **SpikChIP** (provide scaled peak; need generate scaled bigwig)
+- **Histone-EpiCypher guidelines**
 
 
 ## Histone spike-in factor from Cutana - Scaling factor
@@ -1784,6 +1792,27 @@ dev.off()
 --> Spike-in normalization help a lot for the identification of diff bound regions
 
 --> Spike-in/Default(lib size)/DEseq2 and Spike-in/TMM/DEseq2 perform both great. Let's see how ChIPseq perform and use the same norm method for CutRun and ChIPseq
+
+--> It appear that the E.coli/MG1655 spike in is very low (less than 1%), thus not appropriate for normalization
+
+
+Let's troubleshoot Histone-EpiCypher guidelines for spike in normalization
+
+## Histone-EpiCypher guidelines for scaling normalization
+
+Here is the guidelines from the [website](https://www.epicypher.com/content/documents/SNAP-CUTANA_K-MetStat_user_guide.pdf) *For spike-in normalization, a scale factor was calculated for each sample by dividing the percent of total reads aligned to human genome by the percent of total reads aligned to the spike-in barcodes (Scale Factor = % Human Reads / % Spike-in Reads) and applying this factor to adjust the total sequencing reads of each respective sample*.
+
+- In `spikein/spikein_histone_groupABgenotype_scaling_factor.txt` or `spikein/spikein_histone_H3K27me3_scaling_factor_fastp.txt` use align_reads or total = nb of reads aligned to spike in
+- In `/home/roulet/001_EZH1_project/003__CutRun/mapping_QC.xlsx` = nb of reads aligned to human genome and total number
+
+Let's make an excell file to collect all the counts in `output/Epicypher/read_counts_human_histone.xlsx`
+
+Now let's apply the scaling factor in Bam to bigwig and output to `output/bigwig_Epicypher`
+
+```bash
+sbatch scripts/bamtobigwig_Epicypher.sh # 12336358 XXX
+sbatch scripts/bamtobigwig_Epicypher_unique.sh # 12336357 XXX
+```
 
 
 

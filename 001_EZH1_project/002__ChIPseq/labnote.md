@@ -52,7 +52,7 @@ fastqc -o output/fastqc input/10-ESCs-EZH1-KO-2-INPUT_S8_L001_R1_001.fastq.gz
 fastqc -o output/fastqc input/ESC_KO_input_R2_2.fq.gz
 fastqc -o output/fastqc input/10-ESCs-EZH1-KO-2-INPUT_S8_L001_R2_001.fastq.gz
 ```
---> The number of reads is similar in the 2 (paired)-read; and reduced/2 when looking at only 1 of the 2 lanes; so concatenation keep data integrity and combine all reads. Just in case, backup has been performed from all files: **To be deleted after mapping (XXX)**
+--> The number of reads is similar in the 2 (paired)-read; and reduced/2 when looking at only 1 of the 2 lanes; so concatenation keep data integrity and combine all reads. Just in case, backup has been performed from all files: **To be deleted after mapping**
 
 
 ## Concatenate the 2 lanes of all samples
@@ -243,7 +243,7 @@ sbatch scripts/bowtie2_2dN_HET_H3K27me3_R1_param2.sh # parameter fine-tuned from
     - 5743226 (12.74%) >1 times
     - 6580562 (38.23%) 0 times
     - overall 92.66%
-- param2/**permissive-unpaired** `--phred33 -q --local --no-unal --dovetail`: (can have uniquely map paired reads) XXX 
+- param2/**permissive-unpaired** `--phred33 -q --local --no-unal --dovetail`: (can have uniquely map paired reads)  
     - nb of uniquely mapped reads: 23071868 (51.18%)
     - 5743226 (34.22%) >1 times
     - 15429070 (12.74%) 0 times
@@ -257,9 +257,9 @@ sbatch scripts/bowtie2_2dN_HET_H3K27me3_R1_param2.sh # parameter fine-tuned from
 --> Let's try the following: `--phred33 -q --no-unal --no-mixed --dovetail` **endtoend**. Here it is more clean, we do not allow mix alignemnt and keep dovetail option possible.
 
 ```bash
-sbatch bowtie2_2dN_HET_H3K27me3_R1_endtoend.sh # 11496376
+sbatch bowtie2_2dN_HET_H3K27me3_R1_endtoend.sh # 11496376 ok
 ```
-- param2/**endtoend** `--phred33 -q --no-unal --no-mixed --dovetail`: XXX 
+- param2/**endtoend** `--phred33 -q --no-unal --no-mixed --dovetail`:  
     - nb of uniquely mapped reads: 31927165 (70.82%)
     - >1 times 5761022 (12.78%)
     - overall 85.28%
@@ -421,6 +421,15 @@ sbatch scripts/ChIPseqSpikeInFree_all.sh # 12100044 FAIL; 12125487
 
 Worked!
 
+Let's re-run without the input and ESC_WT_H3K27me3_R3 that failed, so that reference is re-calculated maybe:
+
+```bash
+conda activate ChIPseqSpikeInFree
+sbatch scripts/ChIPseqSpikeInFree_H3K27me3.sh # 12332255 XXX
+```
+
+--> The SF are XXX
+
 ## ChIPseqSpikeInFree - Bigwig generation
 
 Now let's produce **bigwig files as recommended by the [paper](https://github.com/stjude/ChIPseqSpikeInFree):**
@@ -434,13 +443,19 @@ scale=15000000/($libSize*$SF)
 genomeCoverageBed -bg -scale $scale -i sample1.bed  -g mm9.chromSizes > sample1.bedGraph
 bedGraphToBigWig sample1.bedGraph mm9.chromSizes sample1.bw
 ```
+*NOTE: bedGraphToBigWig has been installed through conda in the **bowtie2 env***
 ```bash
 conda activate bowtie2
 # Convert bam to bedfiles
-sbatch scripts/bamToBed_1.sh # 12330666 XXX
-sbatch scripts/bamToBed_2.sh # 12330667 XXX
+sbatch scripts/bamToBed_1.sh # 12330666 ok
+sbatch scripts/bamToBed_2.sh # 12330667 ok
 
-XXX To do next:
+# Scale the bedfiles with the scaling factor
+sbatch scripts/BedScaledToBigwig_1.sh
+sbatch scripts/BedScaledToBigwig_2.sh
+
+
+
 
 libSize=$(cat sample1.bed | wc -l)
 scale=$(echo "15000000/($libSize*$SF)" | bc -l)
