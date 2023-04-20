@@ -421,6 +421,56 @@ sbatch scripts/ChIPseqSpikeInFree_all.sh # 12100044 FAIL; 12125487
 
 Worked!
 
+## ChIPseqSpikeInFree - Bigwig generation
+
+Now let's produce **bigwig files as recommended by the [paper](https://github.com/stjude/ChIPseqSpikeInFree):**
+1. Convert bam to bedfiles
+2. Scaled the bedfile
+3. Generate bigwig
+**Original code:**
+```bash
+libSize=`cat sample1.bed|wc -l`
+scale=15000000/($libSize*$SF)
+genomeCoverageBed -bg -scale $scale -i sample1.bed  -g mm9.chromSizes > sample1.bedGraph
+bedGraphToBigWig sample1.bedGraph mm9.chromSizes sample1.bw
+```
+```bash
+conda activate bowtie2
+# Convert bam to bedfiles
+sbatch scripts/bamToBed_1.sh # 12330666 XXX
+sbatch scripts/bamToBed_2.sh # 12330667 XXX
+
+XXX To do next:
+
+libSize=$(cat sample1.bed | wc -l)
+scale=$(echo "15000000/($libSize*$SF)" | bc -l)
+
+genomeCoverageBed -bg -scale $scale -i sample1.bed -g mm9.chromSizes > sample1.bedGraph
+bedGraphToBigWig sample1.bedGraph mm9.chromSizes sample1.bw
+
+
+```
+
+## ChIPseqSpikeInFree - Bam file scaling
+This method is not from the paper, here we scaled the bam file with the scaling factor; and then we can use DiffBind without applying scaling factor.
+
+
+XXX Do this only if the deseq2/edgeR recommended-method failed... XXX
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Coverage bigwig file
 ## Raw coverage bigwig
