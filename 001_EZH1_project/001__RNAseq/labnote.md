@@ -420,6 +420,20 @@ samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
    "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3",
    "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3")
 
+samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
+   "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3",
+   "2dN_HET_R1", "2dN_HET_R2", "2dN_HET_R3",
+   "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", "8wN_KO_R1",
+   "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4", "8wN_HET_R1", "8wN_HET_R2",
+   "8wN_HET_R3", "8wN_HET_R4",
+   "ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3",
+   "ESC_KO_R1", "ESC_KO_R2", "ESC_KO_R3",
+   "ESC_HET_R1", "ESC_HET_R2", "ESC_HET_R3",
+   "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+   "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3",
+   "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3")
+
+
 ## Make a loop for importing all featurecounts data and keep only ID and count column
 sample_data <- list()
 
@@ -479,6 +493,7 @@ rownames(sampleDistMatrix) <- paste(vsd$time, vsd$genotype, vsd$replicate, sep="
 colnames(sampleDistMatrix) <- NULL
 colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
 pdf("output/deseq2/heatmap_cluster_vsd.pdf", width=5, height=6)
+pdf("output/deseq2/heatmap_cluster_vsd_no4wN.pdf", width=5, height=6)
 pheatmap(sampleDistMatrix,
          clustering_distance_rows=sampleDists,
          clustering_distance_cols=sampleDists,
@@ -492,6 +507,7 @@ rownames(sampleDistMatrix) <- paste(rld$time, rld$genotype, rld$replicate, sep="
 colnames(sampleDistMatrix) <- NULL
 colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
 pdf("output/deseq2/heatmap_cluster_rld.pdf", width=5, height=6)
+pdf("output/deseq2/heatmap_cluster_rld_no4wN.pdf", width=5, height=6)
 pheatmap(sampleDistMatrix,
          clustering_distance_rows=sampleDists,
          clustering_distance_cols=sampleDists,
@@ -501,6 +517,7 @@ dev.off()
 ## PCA
 ### vsd 
 pdf("output/deseq2/PCA_vsd.pdf", width=10, height=10)
+pdf("output/deseq2/PCA_vsd_no4wN.pdf", width=10, height=10)
 pcaData <- plotPCA(vsd, intgroup=c("time", "genotype"), returnData=TRUE)
 percentVar <- round(100 * attr(pcaData, "percentVar"))
 ggplot(pcaData, aes(PC1, PC2, color=time, shape=genotype)) +
@@ -513,6 +530,7 @@ dev.off()
 
 ### rld 
 pdf("output/deseq2/PCA_rld.pdf", width=10, height=10)
+pdf("output/deseq2/PCA_rld_no4wN.pdf", width=10, height=10)
 pcaData <- plotPCA(rld, intgroup=c("time", "genotype"), returnData=TRUE)
 percentVar <- round(100 * attr(pcaData, "percentVar"))
 ggplot(pcaData, aes(PC1, PC2, color=time, shape=genotype)) +
@@ -4225,12 +4243,12 @@ Let's do a test of the pipeline with genes from cluster4 amd cluster14 from the 
 
 ```R
 # packages
-XXX
 library(clusterProfiler)
 library(pathview)
 library(DOSE)
 library(org.Hs.eg.db)
 library(enrichplot)
+library(rtracklayer)
 
 ## Read GTF file
 gtf_file <- "../../Master/meta/gencode.v19.annotation.gtf"
@@ -4291,8 +4309,257 @@ pdf("output/GO/emapplot_BP_cluster_4.pdf", width=8, height=11)
 emapplot(pairwise_termsim(ego), showCategory = 50)
 dev.off()
 
+
+
+# Vizualization of some additonal clusters (2/4/5/8/9/14/18/21):
+## Cluster 2
+# Import genes_cluster list and background list
+cluster = read_csv("output/deseq2/cluster_gene_rlog_25cl.txt") %>%
+  filter(cluster == 2) %>%
+  rename(gene_id = gene) %>%
+  inner_join(gene_id_name) %>%
+  dplyr::select(gene_name) 
+
+
+background = read_csv("output/deseq2/raw_2dN_HET_vs_2dN_WT.txt") %>%
+  dplyr::select(gene) %>%
+  rename(gene_id = gene) %>%
+  inner_join(gene_id_name) %>%
+  dplyr::select(gene_name)
+
+
+# Run GO enrichment analysis 
+ego <- enrichGO(gene = as.character(cluster$gene_name), 
+                universe = as.character(background$gene_name),
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                qvalueCutoff = 0.05, 
+                readable = TRUE)
+
+# Vizualization
+pdf("output/GO/dotplot_BP_cluster_2.pdf", width=8, height=11)
+dotplot(ego, showCategory=50)
+dev.off()
+
+pdf("output/GO/emapplot_BP_cluster_2.pdf", width=8, height=11)
+emapplot(pairwise_termsim(ego), showCategory = 50)
+dev.off()
+
+
+## Cluster 8
+# Import genes_cluster list and background list
+cluster = read_csv("output/deseq2/cluster_gene_rlog_25cl.txt") %>%
+  filter(cluster == 8) %>%
+  rename(gene_id = gene) %>%
+  inner_join(gene_id_name) %>%
+  dplyr::select(gene_name) 
+
+
+background = read_csv("output/deseq2/raw_2dN_HET_vs_2dN_WT.txt") %>%
+  dplyr::select(gene) %>%
+  rename(gene_id = gene) %>%
+  inner_join(gene_id_name) %>%
+  dplyr::select(gene_name)
+
+
+# Run GO enrichment analysis 
+ego <- enrichGO(gene = as.character(cluster$gene_name), 
+                universe = as.character(background$gene_name),
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                qvalueCutoff = 0.05, 
+                readable = TRUE)
+
+# Vizualization
+pdf("output/GO/dotplot_BP_cluster_8.pdf", width=8, height=11)
+dotplot(ego, showCategory=50)
+dev.off()
+
+pdf("output/GO/emapplot_BP_cluster_8.pdf", width=8, height=11)
+emapplot(pairwise_termsim(ego), showCategory = 50)
+dev.off()
+
+
+
+
+
+
+
+## Cluster 14
+# Import genes_cluster list and background list
+cluster = read_csv("output/deseq2/cluster_gene_rlog_25cl.txt") %>%
+  filter(cluster == 14) %>%
+  rename(gene_id = gene) %>%
+  inner_join(gene_id_name) %>%
+  dplyr::select(gene_name) 
+
+
+background = read_csv("output/deseq2/raw_2dN_HET_vs_2dN_WT.txt") %>%
+  dplyr::select(gene) %>%
+  rename(gene_id = gene) %>%
+  inner_join(gene_id_name) %>%
+  dplyr::select(gene_name)
+
+
+# Run GO enrichment analysis 
+ego <- enrichGO(gene = as.character(cluster$gene_name), 
+                universe = as.character(background$gene_name),
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                qvalueCutoff = 0.05, 
+                readable = TRUE)
+
+# Vizualization
+pdf("output/GO/dotplot_BP_cluster_14.pdf", width=8, height=11)
+dotplot(ego, showCategory=50)
+dev.off()
+
+pdf("output/GO/emapplot_BP_cluster_14.pdf", width=8, height=11)
+emapplot(pairwise_termsim(ego), showCategory = 50)
+dev.off()
+
+
+
+## Cluster 16
+# Import genes_cluster list and background list
+cluster = read_csv("output/deseq2/cluster_gene_rlog_25cl.txt") %>%
+  filter(cluster == 16) %>%
+  rename(gene_id = gene) %>%
+  inner_join(gene_id_name) %>%
+  dplyr::select(gene_name) 
+
+
+background = read_csv("output/deseq2/raw_2dN_HET_vs_2dN_WT.txt") %>%
+  dplyr::select(gene) %>%
+  rename(gene_id = gene) %>%
+  inner_join(gene_id_name) %>%
+  dplyr::select(gene_name)
+
+
+# Run GO enrichment analysis 
+ego <- enrichGO(gene = as.character(cluster$gene_name), 
+                universe = as.character(background$gene_name),
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                qvalueCutoff = 0.05, 
+                readable = TRUE)
+
+# Vizualization
+pdf("output/GO/dotplot_BP_cluster_16.pdf", width=8, height=11)
+dotplot(ego, showCategory=50)
+dev.off()
+
+pdf("output/GO/emapplot_BP_cluster_16.pdf", width=8, height=11)
+emapplot(pairwise_termsim(ego), showCategory = 50)
+dev.off()
+
+
+
+
+
+## Cluster 18
+# Import genes_cluster list and background list
+cluster = read_csv("output/deseq2/cluster_gene_rlog_25cl.txt") %>%
+  filter(cluster == 18) %>%
+  rename(gene_id = gene) %>%
+  inner_join(gene_id_name) %>%
+  dplyr::select(gene_name) 
+
+
+background = read_csv("output/deseq2/raw_2dN_HET_vs_2dN_WT.txt") %>%
+  dplyr::select(gene) %>%
+  rename(gene_id = gene) %>%
+  inner_join(gene_id_name) %>%
+  dplyr::select(gene_name)
+
+
+# Run GO enrichment analysis 
+ego <- enrichGO(gene = as.character(cluster$gene_name), 
+                universe = as.character(background$gene_name),
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                qvalueCutoff = 0.05, 
+                readable = TRUE)
+
+# Vizualization
+pdf("output/GO/dotplot_BP_cluster_18.pdf", width=8, height=11)
+dotplot(ego, showCategory=50)
+dev.off()
+
+pdf("output/GO/emapplot_BP_cluster_18.pdf", width=8, height=11)
+emapplot(pairwise_termsim(ego), showCategory = 50)
+dev.off()
+
+
+
+
+## Cluster 21
+# Import genes_cluster list and background list
+cluster = read_csv("output/deseq2/cluster_gene_rlog_25cl.txt") %>%
+  filter(cluster == 21) %>%
+  rename(gene_id = gene) %>%
+  inner_join(gene_id_name) %>%
+  dplyr::select(gene_name) 
+
+
+background = read_csv("output/deseq2/raw_2dN_HET_vs_2dN_WT.txt") %>%
+  dplyr::select(gene) %>%
+  rename(gene_id = gene) %>%
+  inner_join(gene_id_name) %>%
+  dplyr::select(gene_name)
+
+
+# Run GO enrichment analysis 
+ego <- enrichGO(gene = as.character(cluster$gene_name), 
+                universe = as.character(background$gene_name),
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                qvalueCutoff = 0.05, 
+                readable = TRUE)
+
+# Vizualization
+pdf("output/GO/dotplot_BP_cluster_21.pdf", width=8, height=20)
+dotplot(ego, showCategory=50)
+dev.off()
+
+pdf("output/GO/emapplot_BP_cluster_21.pdf", width=15, height=20)
+emapplot(pairwise_termsim(ego), showCategory = 50)
+dev.off()
+
+
+
+
 ```
 
 --> The pipeline works GREAT !!
 
 Now let's re-analyze everything with the more up to date genome
+
+
+# Re-analyzes using the GRCh38/hg38 genome
+
+Input files are still our fastp-clean-trimmed data
+
+## Mapping with STAR
+### Index the genome
+hg19 genome with 12CPU and 50G mem (time=<1.5day). So let's go for: 12CPU and 250G mem (XXX)
+
+
+```bash
+sbatch scripts/STAR_index_hg38.sh # 12323950 XXX
+```
+
+
+
