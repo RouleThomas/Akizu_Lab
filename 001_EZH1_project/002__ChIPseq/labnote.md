@@ -350,6 +350,21 @@ Then in R; see `/home/roulet/001_EZH1_project/001_EZH1_project.R`.
 
 --> Overall >80% input reads as been uniquely mapped to the genome
 
+
+## Mapping and read filtering with endtoend parameter and higher samtools stringency (high quality mapping)
+
+For ChIPSeqSpikeInFree to work best, we need very high quality reads; let's upgrade the MAPQ treshold from 20 to 30.
+
+
+```bash
+sbatch scripts/samtools_highquality_1.sh # 12345522 XXX
+sbatch scripts/samtools_highquality_2.sh # 12345523 XXX
+```
+
+XXX
+
+
+
 # Read depth normalization
 Download jvarkit [here](https://github.com/lindenb/jvarkit). Transfer to `Master/software/` and `unzip JVARKIT.zip`; to use it, simply `java -jar jvarkit.jar`.
 
@@ -425,10 +440,10 @@ Let's re-run without the input and ESC_WT_H3K27me3_R3 that failed, so that refer
 
 ```bash
 conda activate ChIPseqSpikeInFree
-sbatch scripts/ChIPseqSpikeInFree_H3K27me3.sh # 12332255 XXX
+sbatch scripts/ChIPseqSpikeInFree_H3K27me3.sh # 12332255 ok
 ```
 
---> The SF are XXX
+--> The SF are different
 
 ## ChIPseqSpikeInFree - Bigwig generation
 
@@ -443,41 +458,39 @@ scale=15000000/($libSize*$SF)
 genomeCoverageBed -bg -scale $scale -i sample1.bed  -g mm9.chromSizes > sample1.bedGraph
 bedGraphToBigWig sample1.bedGraph mm9.chromSizes sample1.bw
 ```
-*NOTE: bedGraphToBigWig has been installed through conda in the **bowtie2 env***
+*NOTE: Let's create a new environment to scale bed and generate bigwig with the ChIPseqSpikeInFree method:*
 ```bash
-conda activate bowtie2
+conda create -n BedToBigwig
+conda install -c bioconda bedtools
+conda install -c bioconda ucsc-bedgraphtobigwig
+conda install -n ucsc openssl=1.0 # needed for bedgraphtobigwig to work
+```
+
+```bash
+conda activate BedToBigwig
 # Convert bam to bedfiles
 sbatch scripts/bamToBed_1.sh # 12330666 ok
 sbatch scripts/bamToBed_2.sh # 12330667 ok
 
-# Scale the bedfiles with the scaling factor
-sbatch scripts/BedScaledToBigwig_1.sh
-sbatch scripts/BedScaledToBigwig_2.sh
+# Apply scaling factor and transform to bigwig
+sbatch scripts/BedScaledToBigwig_1.sh # 12342448; bedgraph ok bigwig transformation failed
+sbatch scripts/BedScaledToBigwig_2.sh # 12342447; bedgraph ok bigwig transformation failed
 
-
-
-
-libSize=$(cat sample1.bed | wc -l)
-scale=$(echo "15000000/($libSize*$SF)" | bc -l)
-
-genomeCoverageBed -bg -scale $scale -i sample1.bed -g mm9.chromSizes > sample1.bedGraph
-bedGraphToBigWig sample1.bedGraph mm9.chromSizes sample1.bw
-
-
+# Sort the bedgraph and transform to bigwig
+sbatch --dependency=afterany:12342448 scripts/SortBedToBigwig_1.sh # 12342750 ok
+sbatch scripts/SortBedToBigwig_2.sh # 12342718 ok
 ```
+*NOTE: I forget to sort the bedgraph before generate bigwig; to do next time*
 
-## ChIPseqSpikeInFree - Bam file scaling
-This method is not from the paper, here we scaled the bam file with the scaling factor; and then we can use DiffBind without applying scaling factor.
-
-
-XXX Do this only if the deseq2/edgeR recommended-method failed... XXX
+--> The bigwig looks OK, except for ESC_WT_R2 that have a very different profiles.
 
 
 
 
+### ChIPseqSpikeInFree - High quality reads 
 
 
-
+XXX
 
 
 

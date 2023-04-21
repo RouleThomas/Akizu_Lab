@@ -6,18 +6,12 @@
 
 
 samples_and_scaling_factors=(
-  "2dN_HET_H3K27me3_R1"	2
-  "2dN_HET_H3K27me3_R2"	1.79
-  "2dN_KO_H3K27me3_R1"	1.49
-  "2dN_KO_H3K27me3_R2"	1
-  "2dN_WT_H3K27me3_R1"	1.23
-  "2dN_WT_H3K27me3_R2"	1.62
-  "NPC_HET_H3K27me3_R1"	1.09
-  "NPC_HET_H3K27me3_R2"	1.42
-  "NPC_KO_H3K27me3_R1"	1.5
-  "NPC_KO_H3K27me3_R2"	2.76
-  "NPC_WT_H3K27me3_R1"	1.49
-  "NPC_WT_H3K27me3_R2"	1.46
+  "ESC_HET_H3K27me3_R1"	8.91
+  "ESC_HET_H3K27me3_R2"	21.08
+  "ESC_KO_H3K27me3_R1"	8.54
+  "ESC_KO_H3K27me3_R2"	13.67
+  "ESC_WT_H3K27me3_R1"	1.74
+  "ESC_WT_H3K27me3_R2"	4.1
 )
 
 for ((i=0; i<${#samples_and_scaling_factors[@]}; i+=2)); do

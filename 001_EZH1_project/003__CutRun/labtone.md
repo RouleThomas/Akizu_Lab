@@ -970,6 +970,8 @@ sbatch scripts/bamtobigwig_histone_groupABgenotype_WT.sh # ok
 ```bash
 conda activate deeptools
 sbatch scripts/bamtobigwig_histone_groupABgenotype_WT_divide.sh # 12126291 ok
+sbatch scripts/bamtobigwig_histone_groupABgenotype_allothers_divide_1.sh # 12343896
+sbatch scripts/bamtobigwig_histone_groupABgenotype_allothers_divide_2.sh # 12343897
 ```
 
 --> Also test normalization with the library size too as in ChIPseqSpikeInFree
@@ -977,6 +979,9 @@ sbatch scripts/bamtobigwig_histone_groupABgenotype_WT_divide.sh # 12126291 ok
 conda activate deeptools
 sbatch scripts/bamtobigwig_histone_groupABgenotype_WT_libscaled.sh # 12130826 ok
 ```
+
+This is now MUCH BETTER!!! Both library-norm or not are almost the same. 
+
 
 
 ## Ecoli spike-in factor from Cutana - Scaling factor
@@ -1024,7 +1029,6 @@ write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_MG1655
 ```
 
 --> The scaling factor looks ok
-
 
 
 
@@ -1798,6 +1802,328 @@ dev.off()
 
 Let's troubleshoot Histone-EpiCypher guidelines for spike in normalization
 
+
+### DiffBind - Standard method with histone spike-in normalization
+
+Let's use the scaling factor I calculated previously from `spikein/spikein_histone_groupABgenotype_scaling_factor.txt`. Apply them in DiffBind and check on IGV that the scaling factor has been correctly applied (in the good way! Maybe test the value and its reciprocal)
+
+
+Let's try generate a DBA object applying scaling factor as discussed [here](https://support.bioconductor.org/p/9147040/). Here I use **1/SF** as I want to downscale my samples.
+
+
+
+
+```bash
+srun --mem=100g --pty bash -l
+conda activate DiffBind
+```
+```R
+library("DiffBind") 
+library("csaw") # For spikein norm
+
+# Load the Blacklist/Greylist counts
+load("output/DiffBind/sample_count.RData") # That is the raw (not greylist) one
+load("output/DiffBind/sample_count_blackgreylist.RData")
+
+# Apply scaling factor normalization (DiffBound n = edger 135/53/152 - deseq2 0/0/2)
+sample_count_blackgreylist_histone_norm = dba.normalize(sample_count_blackgreylist, normalize = c(0.663115954,0.557530594,1,0.367789654,0.650588035,0.765361475,1,0.262499154,0.885743637,1,0.577966699,0.824183417,0.546548923))
+
+# plot
+pdf("output/DiffBind/clustering_blackgreylist_histone_norm.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_histone_norm)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_histone_norm.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_histone_norm,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+
+sample_count_blackgreylist_histone_norm_contrast = dba.contrast(sample_count_blackgreylist_histone_norm, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_blackgreylist_histone_norm_contrast_analyze = dba.analyze(sample_count_blackgreylist_histone_norm_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
+
+
+
+
+# Apply scaling factor normalization and lib size (DiffBound n = edger 135/53/152 - deseq2 88/26/124, backougrn TRUE deseq2= 88/26/124)
+sample_count_blackgreylist_histone_norm = dba.normalize(sample_count_blackgreylist, normalize = c(0.663115954,0.557530594,1,0.367789654,0.650588035,0.765361475,1,0.262499154,0.885743637,1,0.577966699,0.824183417,0.546548923))
+
+sample_count_blackgreylist_histone_norm_lib = dba.normalize(sample_count_blackgreylist_histone_norm, background = TRUE)
+
+
+pdf("output/DiffBind/clustering_blackgreylist_histone_norm_lib.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_histone_norm_lib)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_histone_norm_lib.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_histone_norm_lib,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_blackgreylist_histone_norm_lib_contrast = dba.contrast(sample_count_blackgreylist_histone_norm_lib, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_blackgreylist_histone_norm_lib_contrast_analyze = dba.analyze(sample_count_blackgreylist_histone_norm_lib_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
+
+
+
+
+# Apply scaling factor normalization and RLE (DiffBound n = edger 135/53/152 - deseq2 92/11/62; background TRUE deseq2 = 75/26/105)
+sample_count_blackgreylist_histone_norm = dba.normalize(sample_count_blackgreylist, normalize = c(0.663115954,0.557530594,1,0.367789654,0.650588035,0.765361475,1,0.262499154,0.885743637,1,0.577966699,0.824183417,0.546548923))
+
+sample_count_blackgreylist_histone_norm_RLE = dba.normalize(sample_count_blackgreylist_histone_norm, normalize = DBA_NORM_RLE, background = TRUE)
+
+
+pdf("output/DiffBind/clustering_blackgreylist_histone_norm_RLE.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_histone_norm_RLE)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_histone_norm_RLE.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_histone_norm_RLE,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_blackgreylist_histone_norm_RLE_contrast = dba.contrast(sample_count_blackgreylist_histone_norm_RLE, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_blackgreylist_histone_norm_RLE_contrast_analyze = dba.analyze(sample_count_blackgreylist_histone_norm_RLE_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
+
+
+
+
+
+# Apply scaling factor normalization and TMM (DiffBound n = edger 135/53/152 - deseq2 115/14/77; backougrn TRUE deseq2= 80/30/110)
+sample_count_blackgreylist_histone_norm = dba.normalize(sample_count_blackgreylist, normalize = c(0.663115954,0.557530594,1,0.367789654,0.650588035,0.765361475,1,0.262499154,0.885743637,1,0.577966699,0.824183417,0.546548923))
+
+sample_count_blackgreylist_histone_norm_TMM = dba.normalize(sample_count_blackgreylist_histone_norm, normalize = DBA_NORM_TMM, background =TRUE)
+
+
+pdf("output/DiffBind/clustering_blackgreylist_histone_norm_TMM.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_histone_norm_TMM)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_histone_norm_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_histone_norm_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_blackgreylist_histone_norm_TMM_contrast = dba.contrast(sample_count_blackgreylist_histone_norm_TMM, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_blackgreylist_histone_norm_TMM_contrast_analyze = dba.analyze(sample_count_blackgreylist_histone_norm_TMM_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
+
+
+
+# I pick here the spike in normalization solely with EDGER
+
+sample_count_blackgreylist_histone_norm = dba.normalize(sample_count_blackgreylist, normalize = c(0.663115954,0.557530594,1,0.367789654,0.650588035,0.765361475,1,0.262499154,0.885743637,1,0.577966699,0.824183417,0.546548923))
+
+
+sample_count_blackgreylist_histone_norm_contrast = dba.contrast(sample_count_blackgreylist_histone_norm, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_blackgreylist_histone_norm_contrast_EDGER <- dba.analyze(sample_count_blackgreylist_histone_norm_contrast, method=DBA_EDGER) # Let's pick the edgeR method
+
+
+
+## Export the Diff Bind regions
+### Convert to GR object
+sample_model_blackgreylist_histone_norm_report_contrast1 <- dba.report(sample_count_blackgreylist_histone_norm_contrast_EDGER,method=DBA_EDGER,contrast=1)
+sample_model_blackgreylist_histone_norm_report_contrast2 <- dba.report(sample_count_blackgreylist_histone_norm_contrast_EDGER,method=DBA_EDGER,contrast=2)
+sample_model_blackgreylist_histone_norm_report_contrast3 <- dba.report(sample_count_blackgreylist_histone_norm_contrast_EDGER,method=DBA_EDGER,contrast=3)
+### Convert to bed and exportsample_model__blackgreylist_histone_norm_report_contrast1
+sample_model_blackgreylist_histone_norm_report_contrast1_df <- data.frame(sample_model_blackgreylist_histone_norm_report_contrast1)
+sample_model_blackgreylist_histone_norm_report_contrast2_df <- data.frame(sample_model_blackgreylist_histone_norm_report_contrast2)
+sample_model_blackgreylist_histone_norm_report_contrast3_df <- data.frame(sample_model_blackgreylist_histone_norm_report_contrast3)
+
+colnames(sample_model_blackgreylist_histone_norm_report_contrast1_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_model_blackgreylist_histone_norm_report_contrast2_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_model_blackgreylist_histone_norm_report_contrast3_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+
+write.table(sample_model_blackgreylist_histone_norm_report_contrast1_df, file="output/DiffBind/sample_model_blackgreylist_histone_norm_report_contrast1_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_model_blackgreylist_histone_norm_report_contrast2_df, file="output/DiffBind/sample_model_blackgreylist_histone_norm_report_contrast2_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_model_blackgreylist_histone_norm_report_contrast3_df, file="output/DiffBind/sample_model_blackgreylist_histone_norm_report_contrast3_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+
+
+
+
+
+
+# Examining results
+## MA plot with diff sites
+pdf("output/DiffBind/plotMA_blackgreylist_histone_norm_contrast1.pdf", width=14, height=20) 
+dba.plotMA(sample_count_blackgreylist_histone_norm_contrast_EDGER,method=DBA_EDGER,contrast=1)
+dev.off()
+pdf("output/DiffBind/plotMA_blackgreylist_histone_norm_contrast2.pdf", width=14, height=20) 
+dba.plotMA(sample_count_blackgreylist_histone_norm_contrast_EDGER,method=DBA_EDGER,contrast=2)
+dev.off()
+pdf("output/DiffBind/plotMA_blackgreylist_histone_norm_contrast3.pdf", width=14, height=20) 
+dba.plotMA(sample_count_blackgreylist_histone_norm_contrast_EDGER,method=DBA_EDGER,contrast=3)
+dev.off()
+
+
+## volcano plot with diff sites
+pdf("output/DiffBind/volcano_blackgreylist_histone_norm_contrast1.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_blackgreylist_histone_norm_contrast_EDGER,method=DBA_EDGER, contrast=1)
+dev.off()
+pdf("output/DiffBind/volcano_blackgreylist_histone_norm_contrast2.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_blackgreylist_histone_norm_contrast_EDGER, method=DBA_EDGER,contrast=2)
+dev.off()
+pdf("output/DiffBind/volcano_blackgreylist_histone_norm_contrast3.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_blackgreylist_histone_norm_contrast_EDGER, method=DBA_EDGER,contrast=3)
+dev.off()
+## PCA/heatmat only on the diff sites
+pdf("output/DiffBind/clustering_blackgreylist_histone_norm_contrast1.pdf", width=14, height=20) 
+plot(sample_count_blackgreylist_histone_norm_contrast_EDGER, method=DBA_EDGER, contrast=1)
+dev.off()
+pdf("output/DiffBind/clustering_blackgreylist_histone_norm_contrast2.pdf", width=14, height=20) 
+plot(sample_count_blackgreylist_histone_norm_contrast_EDGER, method=DBA_EDGER, contrast=2)
+dev.off()
+pdf("output/DiffBind/clustering_blackgreylist_histone_norm_contrast3.pdf", width=14, height=20) 
+plot(sample_count_blackgreylist_histone_norm_contrast_EDGER, method=DBA_EDGER, contrast=3)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_histone_norm_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_histone_norm_contrast_EDGER, method=DBA_EDGER,contrast=1, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_blackgreylist_histone_norm_contrast2.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_histone_norm_contrast_EDGER, method=DBA_EDGER,contrast=2, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_blackgreylist_histone_norm_contrast3.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_histone_norm_contrast_EDGER, method=DBA_EDGER,contrast=3, label=DBA_TREATMENT)
+dev.off()
+
+
+## Read concentration heatmap
+hmap <- colorRampPalette(c("red", "black", "green"))(n = 13)
+
+pdf("output/DiffBind/clustering_reads_blackgreylist_histone_norm_contrast1.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_blackgreylist_histone_norm_contrast_EDGER, method=DBA_EDGER,contrast=1, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_blackgreylist_histone_norm_contrast2.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_blackgreylist_histone_norm_contrast_EDGER, method=DBA_EDGER,contrast=2, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_blackgreylist_histone_norm_contrast3.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_blackgreylist_histone_norm_contrast_EDGER, method=DBA_EDGER,contrast=3, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+
+
+## Read distribution within diff bound sites
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_blackgreylist_histone_norm_contrast1.pdf", width=14, height=20) 
+dba.plotBox(sample_count_blackgreylist_histone_norm_contrast_EDGER, method=DBA_EDGER,contrast=1)
+dev.off()
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_blackgreylist_histone_norm_contrast2.pdf", width=14, height=20) 
+dba.plotBox(sample_count_blackgreylist_histone_norm_contrast_EDGER, method=DBA_EDGER,contrast=2)
+dev.off()
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_blackgreylist_histone_norm_contrast3.pdf", width=14, height=20) 
+dba.plotBox(sample_count_blackgreylist_histone_norm_contrast_EDGER, method=DBA_EDGER,contrast=3)
+dev.off()
+
+
+
+# Lets do plots for spike-in lib scaled
+
+sample_count_blackgreylist_histone_norm = dba.normalize(sample_count_blackgreylist, normalize = c(0.663115954,0.557530594,1,0.367789654,0.650588035,0.765361475,1,0.262499154,0.885743637,1,0.577966699,0.824183417,0.546548923))
+
+sample_count_blackgreylist_histone_norm_lib = dba.normalize(sample_count_blackgreylist_histone_norm)
+
+sample_count_blackgreylist_histone_norm_lib_contrast = dba.contrast(sample_count_blackgreylist_histone_norm_lib, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+
+
+sample_count_blackgreylist_histone_norm_contrast_DESEQ2 <- dba.analyze(sample_count_blackgreylist_histone_norm_lib_contrast, method=DBA_DESEQ2) # Let's pick 
+
+
+# Examining results
+## MA plot with diff sites
+pdf("output/DiffBind/plotMA_blackgreylist_histone_norm_lib_contrast1.pdf", width=14, height=20) 
+dba.plotMA(sample_count_blackgreylist_histone_norm_contrast_DESEQ2,method=DBA_DESEQ2,contrast=1)
+dev.off()
+pdf("output/DiffBind/plotMA_blackgreylist_histone_norm_lib_contrast2.pdf", width=14, height=20) 
+dba.plotMA(sample_count_blackgreylist_histone_norm_contrast_DESEQ2,method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/plotMA_blackgreylist_histone_norm_lib_contrast3.pdf", width=14, height=20) 
+dba.plotMA(sample_count_blackgreylist_histone_norm_contrast_DESEQ2,method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+
+## volcano plot with diff sites
+pdf("output/DiffBind/volcano_blackgreylist_histone_norm_lib_contrast1.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_blackgreylist_histone_norm_contrast_DESEQ2,method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/volcano_blackgreylist_histone_norm_lib_contrast2.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_blackgreylist_histone_norm_contrast_DESEQ2, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/volcano_blackgreylist_histone_norm_lib_contrast3.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_blackgreylist_histone_norm_contrast_DESEQ2, method=DBA_DESEQ2,contrast=3)
+dev.off()
+## PCA/heatmat only on the diff sites
+pdf("output/DiffBind/clustering_blackgreylist_histone_norm_lib_contrast1.pdf", width=14, height=20) 
+plot(sample_count_blackgreylist_histone_norm_contrast_DESEQ2, method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/clustering_blackgreylist_histone_norm_lib_contrast2.pdf", width=14, height=20) 
+plot(sample_count_blackgreylist_histone_norm_contrast_DESEQ2, method=DBA_DESEQ2, contrast=2)
+dev.off()
+pdf("output/DiffBind/clustering_blackgreylist_histone_norm_lib_contrast3.pdf", width=14, height=20) 
+plot(sample_count_blackgreylist_histone_norm_contrast_DESEQ2, method=DBA_DESEQ2, contrast=3)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_histone_norm_lib_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_histone_norm_contrast_DESEQ2, method=DBA_DESEQ2,contrast=1, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_blackgreylist_histone_norm_lib_contrast2.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_histone_norm_contrast_DESEQ2, method=DBA_DESEQ2,contrast=2, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_blackgreylist_histone_norm_lib_contrast3.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_histone_norm_contrast_DESEQ2, method=DBA_DESEQ2,contrast=3, label=DBA_TREATMENT)
+dev.off()
+
+
+## Read concentration heatmap
+hmap <- colorRampPalette(c("red", "black", "green"))(n = 13)
+
+pdf("output/DiffBind/clustering_reads_blackgreylist_histone_norm_lib_contrast1.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_blackgreylist_histone_norm_contrast_DESEQ2, method=DBA_DESEQ2,contrast=1, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_blackgreylist_histone_norm_lib_contrast2.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_blackgreylist_histone_norm_contrast_DESEQ2, method=DBA_DESEQ2,contrast=2, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_blackgreylist_histone_norm_lib_contrast3.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_blackgreylist_histone_norm_contrast_DESEQ2, method=DBA_DESEQ2,contrast=3, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+
+
+## Read distribution within diff bound sites
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_blackgreylist_histone_norm_lib_contrast1.pdf", width=14, height=20) 
+dba.plotBox(sample_count_blackgreylist_histone_norm_contrast_DESEQ2, method=DBA_DESEQ2,contrast=1)
+dev.off()
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_blackgreylist_histone_norm_lib_contrast2.pdf", width=14, height=20) 
+dba.plotBox(sample_count_blackgreylist_histone_norm_contrast_DESEQ2, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_blackgreylist_histone_norm_lib_contrast3.pdf", width=14, height=20) 
+dba.plotBox(sample_count_blackgreylist_histone_norm_contrast_DESEQ2, method=DBA_DESEQ2,contrast=3)
+dev.off()
+```
+*NOTE: I played with the **library** parameter for normalization (`library = DBA_LIBSIZE_BACKGROUND, DBA_LIBSIZE_PEAKREADS`), but it does not change anythings. I also play with **background**: `background = TRUE`*
+
+--> Whatever the method used, very few diff bound sites identified...
+
+--> Also using spike-in norm but not library scaled, the result do not follow biological expectation (KO less H3K27me3 as compare to HET); here both are less than WT, but HET even less than KO. Same pattern occur when using the spike-in-lib scaled (or TMM or RLE) one.
+
+Let's try to normalized my files without genotype grouping, in the end, it's weird to do this as it does not allow me to compare genotype!
+
+
+XXX
+
+
+
+
+
+
+
+
+
+
+
 ## Histone-EpiCypher guidelines for scaling normalization
 
 Here is the guidelines from the [website](https://www.epicypher.com/content/documents/SNAP-CUTANA_K-MetStat_user_guide.pdf) *For spike-in normalization, a scale factor was calculated for each sample by dividing the percent of total reads aligned to human genome by the percent of total reads aligned to the spike-in barcodes (Scale Factor = % Human Reads / % Spike-in Reads) and applying this factor to adjust the total sequencing reads of each respective sample*.
@@ -1810,9 +2136,14 @@ Let's make an excell file to collect all the counts in `output/Epicypher/read_co
 Now let's apply the scaling factor in Bam to bigwig and output to `output/bigwig_Epicypher`
 
 ```bash
-sbatch scripts/bamtobigwig_Epicypher.sh # 12336358 XXX
-sbatch scripts/bamtobigwig_Epicypher_unique.sh # 12336357 XXX
+sbatch scripts/bamtobigwig_Epicypher.sh # 12336358; output was same re-run 12341847 ok
+sbatch scripts/bamtobigwig_Epicypher_unique.sh # 12336357; output was same re-run 12341850 ok
 ```
+
+--> It seems too exagerated, like when there is low histone; signal is super enriched.
+
+
+
 
 
 
@@ -1896,7 +2227,10 @@ plotCorrelation \
     --whatToPlot heatmap --colorMap RdYlBu --plotNumbers \
     -o output/bigwig/multiBigwigSummary_histone_H3K27me3_heatmap.pdf
 ```
+
+
 ### Histone lib depth
+
 
 XXX
 

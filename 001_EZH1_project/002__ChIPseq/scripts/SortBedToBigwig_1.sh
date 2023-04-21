@@ -28,11 +28,10 @@ for ((i=0; i<${#samples_and_scaling_factors[@]}; i+=2)); do
 libSize=$(cat output/bigwig_ChIPseqSpikeInFree_BamToBedToBigwig/${sample}.bed | wc -l)
 scale=$(echo "15000000/($libSize*$SF)" | bc -l)
 
-    genomeCoverageBed -bg -scale $scale -i output/bigwig_ChIPseqSpikeInFree_BamToBedToBigwig/${sample}.bed \
-    -g ../../Master/meta/GRCh38_chrom_sizes.tab > \
-    output/bigwig_ChIPseqSpikeInFree_BamToBedToBigwig/${sample}.bedGraph
+    bedtools sort -i output/bigwig_ChIPseqSpikeInFree_BamToBedToBigwig/${sample}.bedGraph > \
+    output/bigwig_ChIPseqSpikeInFree_BamToBedToBigwig/${sample}.sorted.bedGraph
 
-    bedGraphToBigWig output/bigwig_ChIPseqSpikeInFree_BamToBedToBigwig/${sample}.bedGraph ../../Master/meta/GRCh38_chrom_sizes.tab output/bigwig_ChIPseqSpikeInFree_BamToBedToBigwig/${sample}.bw
+    bedGraphToBigWig output/bigwig_ChIPseqSpikeInFree_BamToBedToBigwig/${sample}.sorted.bedGraph ../../Master/meta/GRCh38_chrom_sizes.tab output/bigwig_ChIPseqSpikeInFree_BamToBedToBigwig/${sample}.bw
 
 done
 

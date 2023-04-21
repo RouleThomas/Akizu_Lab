@@ -42,7 +42,7 @@ for ((i=0; i<${#samples_and_scaling_factors[@]}; i+=2)); do
 
 
   bamCoverage --bam output/bowtie2/${sample}.dupmark.sorted.bam \
-      --outFileName output/bigwig_Epicypher/${sample}.dupmark.sorted.bw \
+      --outFileName output/bigwig_Epicypher/${sample}.unique.dupmark.sorted.bw \
       --outFileFormat bigwig \
       --binSize 50 \
       --numberOfProcessors 7 \
