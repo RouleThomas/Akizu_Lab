@@ -4596,19 +4596,19 @@ sbatch scripts/featurecounts_hg38_1.sh # 12342500
 # Quality control metrics
 Print number of succesfully assigned alignments for each sample (add to drive `RNAseq_infos.xlsx`)
 ```bash
-for file in output/featurecounts/*.summary; do
+for file in output/featurecounts_hg38/*.summary; do
     assigned_reads=$(grep "Assigned" $file | awk '{print $NF}')
     echo "$file: Assigned: $assigned_reads"
-done > output/featurecounts/assigned_reads_counts.tsv
+done > output/featurecounts_hg38/assigned_reads_counts.tsv
 ```
 Print the total number of reads
 ```bash
-for file in output/STAR/fastp/*.final.out; do
+for file in output/STAR_hg38/*.final.out; do
     input_reads=$(grep "Number of input reads" $file | awk '{print $NF}')
     echo "$file: Number of input reads: $input_reads"
-done > output/STAR/fastp/input_reads_counts.txt
+done > output/STAR_hg38/input_reads_counts.txt
 ```
 Add these values to the `RNAseq_infos.xlsx`\
 Then in R; see `/home/roulet/001_EZH1_project/001_EZH1_project.R`.
 
-
+XXX 

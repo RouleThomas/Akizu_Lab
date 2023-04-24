@@ -585,10 +585,10 @@ What is wrong is that I should have use the reciprocal (1/n) and not n as scalin
 
 ```bash
 conda activate deeptools
-sbatch scripts/bamtobigwig_histone_scaled_WT_reciprocal.sh # 12370048 XXX
-sbatch scripts/bamtobigwig_histone_scaled_HET_reciprocal.sh # 12370046
-sbatch scripts/bamtobigwig_histone_scaled_KO_reciprocal.sh # 12370044
-sbatch scripts/bamtobigwig_histone_scaled_patient_reciprocal.sh # 12370043
+sbatch scripts/bamtobigwig_histone_scaled_WT_reciprocal.sh # 12370048 ok
+sbatch scripts/bamtobigwig_histone_scaled_HET_reciprocal.sh # 12370046 ok
+sbatch scripts/bamtobigwig_histone_scaled_KO_reciprocal.sh # 12370044 ok
+sbatch scripts/bamtobigwig_histone_scaled_patient_reciprocal.sh # 12370043 ok
 ```
 
 
@@ -2199,14 +2199,195 @@ sample_count_blackgreylist_RLE_contrast_analyze = dba.analyze(sample_count_black
 
 **Using our scaling factor, let's estimate the 'new' library size** and provide it to `dba.normalize(library = c(1000, 12000))` = Like that our library size will be change taking into account our scaling factor! **Then we can normalize with library-size, RLE or TMM**... (issue discussed [here](https://support.bioconductor.org/p/9147040/))
 
-
-
-
-
 ### Adjust library size with histone scaling factor and apply normalization
 Total number of reads is our library size (used samtools flagstat to double check) :
 
-XXX ADJUST library size and redo dba.normalize using library = 'spike-in adujsted library size' and normalize lib,RLE,TMM
+`samtools flagstat output/bowtie2/*.dupmark.sorted.bam` used to obtain library size (first value=library size)
+
+Calcul made in `/home/*R*/003_CutRun/Mapping_QC.xlsx`. Histone-norm-library-size = library-size * SF. Using the non-reciprocal scaling factor, we increase the library-size; the more histone enriched, the more library size is increased, thus the more signal will decrease.
+
+Now let's use these new histone-scaled library size and normalize with library-size,TMM or RLE:
+
+```R
+library("DiffBind") 
+library("csaw") # For spikein norm
+
+# Load the Blacklist/Greylist counts
+load("output/DiffBind/sample_count.RData") # That is the raw (not greylist) one
+load("output/DiffBind/sample_count_blackgreylist.RData")
+
+# LIB SIZE
+sample_count_blackgreylist_LibHistoneScaled_LIB = dba.normalize(sample_count_blackgreylist, library = c(16435849, 17032874, 9125844, 34105171, 24753801, 11502923, 10536410, 123012358, 9366195, 20293409, 29302285, 19824265, 28374047), normalize = DBA_NORM_LIB) # Default
+
+pdf("output/DiffBind/clustering_blackgreylist_LibHistoneScaled_LIB.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_LibHistoneScaled_LIB)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_LibHistoneScaled_LIB.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_LIB,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_blackgreylist_LibHistoneScaled_LIB_contrast = dba.contrast(sample_count_blackgreylist_LibHistoneScaled_LIB, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_blackgreylist_LibHistoneScaled_LIB_contrast_analyze = dba.analyze(sample_count_blackgreylist_LibHistoneScaled_LIB_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
+
+
+# RLE (DESEq2: 138, 19, 115)
+sample_count_blackgreylist_LibHistoneScaled_RLE = dba.normalize(sample_count_blackgreylist, library = c(16435849, 17032874, 9125844, 34105171, 24753801, 11502923, 10536410, 123012358, 9366195, 20293409, 29302285, 19824265, 28374047), normalize = DBA_NORM_RLE) # Default
+
+pdf("output/DiffBind/clustering_blackgreylist_LibHistoneScaled_RLE.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_LibHistoneScaled_RLE)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_LibHistoneScaled_RLE.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_RLE,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_blackgreylist_LibHistoneScaled_RLE_contrast = dba.contrast(sample_count_blackgreylist_LibHistoneScaled_RLE, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_blackgreylist_LibHistoneScaled_RLE_contrast_analyze = dba.analyze(sample_count_blackgreylist_LibHistoneScaled_RLE_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
+
+
+# TMM (139/19/117, best one)
+
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(16435849, 17032874, 9125844, 34105171, 24753801, 11502923, 10536410, 123012358, 9366195, 20293409, 29302285, 19824265, 28374047), normalize = DBA_NORM_TMM) # Default
+
+pdf("output/DiffBind/clustering_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_LibHistoneScaled_TMM)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast = dba.contrast(sample_count_blackgreylist_LibHistoneScaled_TMM, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze = dba.analyze(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
+
+
+
+
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze = dba.analyze(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast, method=DBA_DESEQ2, bParallel = TRUE)
+
+
+
+# Examining results
+## MA plot with diff sites
+pdf("output/DiffBind/plotMA_blackgreylist_LibHistoneScaled_TMM_contrast1.pdf", width=14, height=20) 
+dba.plotMA(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+dev.off()
+pdf("output/DiffBind/plotMA_blackgreylist_LibHistoneScaled_TMM_contrast2.pdf", width=14, height=20) 
+dba.plotMA(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/plotMA_blackgreylist_LibHistoneScaled_TMM_contrast3.pdf", width=14, height=20) 
+dba.plotMA(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+
+## volcano plot with diff sites
+pdf("output/DiffBind/volcano_blackgreylist_LibHistoneScaled_TMM_contrast1.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze,method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/volcano_blackgreylist_LibHistoneScaled_TMM_contrast2.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/volcano_blackgreylist_LibHistoneScaled_TMM_contrast3.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+## PCA/heatmat only on the diff sites
+pdf("output/DiffBind/clustering_blackgreylist_LibHistoneScaled_TMM_contrast1.pdf", width=14, height=20) 
+plot(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/clustering_blackgreylist_LibHistoneScaled_TMM_contrast2.pdf", width=14, height=20) 
+plot(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2, contrast=2)
+dev.off()
+pdf("output/DiffBind/clustering_blackgreylist_LibHistoneScaled_TMM_contrast3.pdf", width=14, height=20) 
+plot(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2, contrast=3)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_LibHistoneScaled_TMM_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=1, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_blackgreylist_LibHistoneScaled_TMM_contrast2.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=2, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_blackgreylist_LibHistoneScaled_TMM_contrast3.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=3, label=DBA_TREATMENT)
+dev.off()
+
+
+## Read concentration heatmap
+hmap <- colorRampPalette(c("red", "black", "green"))(n = 13)
+
+pdf("output/DiffBind/clustering_reads_blackgreylist_LibHistoneScaled_TMM_contrast1.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=1, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_blackgreylist_LibHistoneScaled_TMM_contrast2.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=2, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_blackgreylist_LibHistoneScaled_TMM_contrast3.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=3, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+
+
+## Read distribution within diff bound sites
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_blackgreylist_LibHistoneScaled_TMM_contrast1.pdf", width=14, height=20) 
+dba.plotBox(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=1)
+dev.off()
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_blackgreylist_LibHistoneScaled_TMM_contrast2.pdf", width=14, height=20) 
+dba.plotBox(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_blackgreylist_LibHistoneScaled_TMM_contrast3.pdf", width=14, height=20) 
+dba.plotBox(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+
+
+## Export the Diff Bind regions
+### Convert to GR object
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast1 <- dba.report(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast2 <- dba.report(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast3 <- dba.report(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+### Convert to bed and exportsample_model__blackgreylist_histone_norm_report_contrast1
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast1_df <- data.frame(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast1)
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast2_df <- data.frame(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast2)
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast3_df <- data.frame(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast3)
+
+colnames(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast1_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast2_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast3_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+
+write.table(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast1_df, file="output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_contrast1_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast2_df, file="output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_contrast2_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast3_df, file="output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_contrast3_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+
+
+
+# test normalize with scaling library size only
+
+
+sample_count_blackgreylist_LibHistoneScaledOnly = dba.normalize(sample_count_blackgreylist, library = c(16435849, 17032874, 9125844, 34105171, 24753801, 11502923, 10536410, 123012358, 9366195, 20293409, 29302285, 19824265, 28374047)) # Default
+
+pdf("output/DiffBind/clustering_blackgreylist_LibHistoneScaledOnly.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_LibHistoneScaledOnly)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_LibHistoneScaledOnly.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaledOnly,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+
+```
+
+--> Here the library are scaled taking into account histone spike in! It gave good clustering and OK results (few diff bound sites but I think these are correct)
+
+--> TMM was overall the best normalization method (RLE perform well too): good clustering of samples and maximum nb of diff. sites
+
+
+
 
 
 

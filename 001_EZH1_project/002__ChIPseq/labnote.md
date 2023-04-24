@@ -490,7 +490,10 @@ sbatch scripts/SortBedToBigwig_2.sh # 12342718 ok
 ### ChIPseqSpikeInFree - High quality reads 
 
 
-XXX
+```bash
+conda activate ChIPseqSpikeInFree
+sbatch scripts/ChIPseqSpikeInFree_highquality.sh # 12373851 XXX
+```
 
 
 
