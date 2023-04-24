@@ -581,6 +581,19 @@ sbatch scripts/bamtobigwig_histone_scaled_patient.sh # 11858339 ok
 --> The bigwig spike-in normalized are very heterogeneous between replicates; smthing is wrong...
 
 
+What is wrong is that I should have use the reciprocal (1/n) and not n as scaling factor... Let' correct and save into output/bigwig_histone_NotGenotypeGroup (This is the true bigwig good to use, better than the *groupABgenotype* one)
+
+```bash
+conda activate deeptools
+sbatch scripts/bamtobigwig_histone_scaled_WT_reciprocal.sh # 12370048 XXX
+sbatch scripts/bamtobigwig_histone_scaled_HET_reciprocal.sh # 12370046
+sbatch scripts/bamtobigwig_histone_scaled_KO_reciprocal.sh # 12370044
+sbatch scripts/bamtobigwig_histone_scaled_patient_reciprocal.sh # 12370043
+```
+
+
+
+
 # Peak calling_Version1 with failed normalized data
 
 ## SEACR peak calling
@@ -2112,15 +2125,88 @@ dev.off()
 Let's try to normalized my files without genotype grouping, in the end, it's weird to do this as it does not allow me to compare genotype!
 
 
-XXX
+```R
+library("DiffBind") 
+library("csaw") # For spikein norm
+
+# Load the Blacklist/Greylist counts
+load("output/DiffBind/sample_count.RData") # That is the raw (not greylist) one
+load("output/DiffBind/sample_count_blackgreylist.RData")
+
+# Apply scaling factor normalization (DiffBound n = edger 135/53/152 - deseq2 0/0/2)
+sample_count_blackgreylist_histone_norm = dba.normalize(sample_count_blackgreylist, normalize = c(0.6309969100666774, 0.5305257400697344, 0.9515634580012263, 0.3499751950570516, 0.4408840406795075, 0.7653614754906817, 1, 0.2624991543197346, 0.8857436365711714, 0.5914183370169948, 0.3418201039555981, 0.4874371859296476, 0.3232390552755446))
+
+
+# plot
+pdf("output/DiffBind/clustering_blackgreylist_histone_norm_NOTgenotypegrouped.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_histone_norm)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_histone_norm_NOTgenotypegrouped.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_histone_norm,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+
+sample_count_blackgreylist_histone_norm_contrast = dba.contrast(sample_count_blackgreylist_histone_norm, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_blackgreylist_histone_norm_contrast_analyze = dba.analyze(sample_count_blackgreylist_histone_norm_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
+
+
+# Not lib size scaled lead to only 1 deg in deseq2... so let's normalize
+
+sample_count_blackgreylist_histone_norm_lib = dba.normalize(sample_count_blackgreylist_histone_norm, normalize = DBA_NORM_RLE)
+
+
+pdf("output/DiffBind/clustering_blackgreylist_histone_norm_RLE_NOTgenotypegrouped.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_histone_norm_lib)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_histone_norm_RLE_NOTgenotypegrouped.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_histone_norm_lib,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_blackgreylist_histone_norm_lib_contrast = dba.contrast(sample_count_blackgreylist_histone_norm_lib, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_blackgreylist_histone_norm_lib_contrast_analyze = dba.analyze(sample_count_blackgreylist_histone_norm_lib_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
+
+
+# Check whether not applying the histone normalization lead to same result:
+
+sample_count_blackgreylist_RLE = dba.normalize(sample_count_blackgreylist, normalize = DBA_NORM_RLE, library = DBA_LIBSIZE_FULL)
+
+normalize = c(0.6309969100666774, 0.5305257400697344, 0.9515634580012263, 0.3499751950570516, 0.4408840406795075, 0.7653614754906817, 1, 0.2624991543197346, 0.8857436365711714, 0.5914183370169948, 0.3418201039555981, 0.4874371859296476, 0.3232390552755446)
+
+
+
+pdf("output/DiffBind/clustering_blackgreylist_RLE.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_RLE)
+dev.off()
+
+pdf("output/DiffBind/PCA_blackgreylist_RLE.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_RLE,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+
+
+sample_count_blackgreylist_RLE_contrast = dba.contrast(sample_count_blackgreylist_RLE, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_blackgreylist_RLE_contrast_analyze = dba.analyze(sample_count_blackgreylist_RLE, method=DBA_ALL_METHODS, bParallel = TRUE)
+
+```
+--> When normalizing with spike-in using `normalize = `, I cannot re-normalize the data with another normalize, it erase the normalization... 
+
+--> Need to find a way to apply normalization SF AND then normalize per library-size
+
+**Using our scaling factor, let's estimate the 'new' library size** and provide it to `dba.normalize(library = c(1000, 12000))` = Like that our library size will be change taking into account our scaling factor! **Then we can normalize with library-size, RLE or TMM**... (issue discussed [here](https://support.bioconductor.org/p/9147040/))
 
 
 
 
 
+### Adjust library size with histone scaling factor and apply normalization
+Total number of reads is our library size (used samtools flagstat to double check) :
 
-
-
+XXX ADJUST library size and redo dba.normalize using library = 'spike-in adujsted library size' and normalize lib,RLE,TMM
 
 
 
