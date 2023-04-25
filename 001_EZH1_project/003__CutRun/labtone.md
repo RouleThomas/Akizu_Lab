@@ -2516,8 +2516,9 @@ sbatch scripts/ChIPseqSpikeInFree.sh # 12379092
 
 
 # ChIPseeker for binding profiles
+[Tutorial](http://bioconductor.org/packages/release/bioc/vignettes/ChIPseeker/inst/doc/ChIPseeker.html) and [documentation]()
 
-to run it, use conda base and R 4.2.2 module 
+For **ChIPseeker**, use **conda base and R 4.2.2 module**
 ```bash
 conda deactivate
 module load R/4.2.2
