@@ -4611,4 +4611,31 @@ done > output/STAR_hg38/input_reads_counts.txt
 Add these values to the `RNAseq_infos.xlsx`\
 Then in R; see `/home/roulet/001_EZH1_project/001_EZH1_project.R`.
 
-XXX 
+
+
+# Generate Bigwig coverage files
+
+Let's generate **TPM coverage**:
+
+```bash
+conda activate deeptools
+# run time-per-time:
+sbatch scripts/TPM_bw_hg38_1.sh # 12377715 
+sbatch scripts/TPM_bw_hg38_2.sh # 12377716
+```
+
+XXX
+
+# Calculate TPM and RPKM
+
+Use custom R script `RPKM_TPM_featurecounts.R` as follow:
+```bash
+# Rscript scripts/RPKM_TPM_featurecounts.R INPUT OUTPUT_PREFIX
+sbatch scripts/featurecounts_TPM_hg38.sh # 12377786 ok
+# mv all output to output/tpm or rpkm folder
+mv output/featurecounts_hg38/*tpm* output/tpm_hg38/
+mv output/featurecounts_hg38/*rpkm* output/rpkm_hg38/
+```
+
+All good. 
+

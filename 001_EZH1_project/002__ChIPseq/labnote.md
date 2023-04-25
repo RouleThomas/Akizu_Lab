@@ -357,11 +357,13 @@ For ChIPSeqSpikeInFree to work best, we need very high quality reads; let's upgr
 
 
 ```bash
-sbatch scripts/samtools_highquality_1.sh # 12345522 XXX
-sbatch scripts/samtools_highquality_2.sh # 12345523 XXX
+sbatch scripts/samtools_highquality_1.sh # 12345522 ok
+sbatch scripts/samtools_highquality_2.sh # 12345523 ok
 ```
 
-XXX
+This work but I should also have filter the dupplicates. I did it later in the part **ChIPseqSpikeInFree - High quality reads or uniq mapp**
+
+
 
 
 
@@ -487,16 +489,25 @@ sbatch scripts/SortBedToBigwig_2.sh # 12342718 ok
 
 
 
-### ChIPseqSpikeInFree - High quality reads 
+### ChIPseqSpikeInFree - High quality reads or uniq mapp
 
 
 ```bash
 conda activate ChIPseqSpikeInFree
-sbatch scripts/ChIPseqSpikeInFree_highquality.sh # 12373851 XXX
+sbatch scripts/ChIPseqSpikeInFree_highquality.sh # 12373851 ok
 ```
 
+--> We still have the same SF tendancy. Let's now try to keep MAPQ>20 but keep only uniquely mapped reads:
 
+Remove dupplicates and re-run ChIPseqSpikeInFree
+```bash
+sbatch scripts/samtools_unique_1.sh # 12378180
+sbatch scripts/samtools_unique_2.sh # 12378181
 
+sbatch scripts/ChIPseqSpikeInFree_unique.sh # 
+```
+
+XXX 
 
 
 

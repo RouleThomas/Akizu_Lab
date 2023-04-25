@@ -2502,6 +2502,19 @@ plotCorrelation \
 XXX
 
 
+
+# ChIPseqSpikeInFree on CutRun
+
+Let's see what is the prediction from ChIPseqSpikeInFree on our data
+
+```bash
+conda activate ChIPseqSpikeInFree
+sbatch scripts/ChIPseqSpikeInFree.sh # 12379092
+```
+
+
+
+
 # ChIPseeker for binding profiles
 
 to run it, use conda base and R 4.2.2 module 
