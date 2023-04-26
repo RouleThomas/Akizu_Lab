@@ -2512,6 +2512,7 @@ conda activate ChIPseqSpikeInFree
 sbatch scripts/ChIPseqSpikeInFree.sh # 12379092
 ```
 
+It does not work super well ("ok" correlated: r=0.4, p0.1). Possibly because CutRun is too clean, very few low proportion reads as compare to ChIPseq so may fail...
 
 
 

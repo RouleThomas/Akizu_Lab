@@ -504,13 +504,21 @@ Remove dupplicates and re-run ChIPseqSpikeInFree
 sbatch scripts/samtools_unique_1.sh # 12378180 ok
 sbatch scripts/samtools_unique_2.sh # 12378181 ok
 
-sbatch scripts/ChIPseqSpikeInFree_unique.sh #  12385784
+sbatch scripts/ChIPseqSpikeInFree_unique.sh #  12385784 ok
 ```
 
-XXX 
+--> It is much better!! So for using **ChIPseqSpikeInFree, better to use uniquely aligned reads only (remove dupplicates with PICARD)**
 
+Generate the bigwig using these scaling factor; but generate bigwig from the `*.dupmark.sorted.bam` and NOT the `*.unique.dupmark.sorted.bam` (take as input our bam converted to bedgraph in `output/bigwig_ChIPseqSpikeInFree_BamToBedToBigwig` and output new bigwig in `output/bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF`)
 
+```bash
+conda activate BedToBigwig
+# Apply scaling factor and transform to bigwig
+sbatch scripts/BedScaledToBigwig_uniqueSF_1.sh # 12390183 ok
+sbatch scripts/BedScaledToBigwig_uniqueSF_2.sh # 12390184 ok
+```
 
+--> The bigwig looks great! We observed increase signal from ESC to 2dN that we cannot observe when using the raw bigwig! Also we see decrease H3K27me3 signal in ESC vs mutants
 
 
 
@@ -999,7 +1007,6 @@ sample_count_blackgreylist_TMM_contrast_analyze = dba.analyze(sample_count_black
 
 dba.contrast(sample_count_blackgreylist_TMM, minMembers=2)
 
-XXX Try to troubleshoot how do 1 per 1 comparison XXX
 
 ```
 *NOTE: I tested playing with the library parameter for normalization (Full,DBA_LIBSIZE_PEAKREADS,etc) ant it do not change anythings*
@@ -1008,13 +1015,69 @@ XXX Try to troubleshoot how do 1 per 1 comparison XXX
 
 The multi-factor analyses is not clear, let's generate count matrix at each time point, and from this identify the diff bound sites (*For ESC; replicate 3 has not been taken*)
 
+
+
+Let's apply the ChIPseqSpikeInFree scaling factor to normalize data (normalize library size, then normalize per seq. depth; as for the CutRun). ChIPseqSpikeInFree-norm-library-size = library-size * SF. `samtools flagstat output/bowtie2_endtoend/*.dupmark.sorted.bam` used to obtain library size (first value=library size):
+- sample / library size * SF = scaled library size
+- 2dN_HET_H3K27me3_R1 / 70887858 1.97 = 
+- 2dN_HET_H3K27me3_R2 / 67346082 1.75 = 
+- 2dN_KO_H3K27me3_R1 / 58363794 1.46 = 
+- 2dN_KO_H3K27me3_R2 / 71964648 1
+- 2dN_WT_H3K27me3_R1 / 71682964 1.29 = 
+- 2dN_WT_H3K27me3_R2 / 60792560 1.69 =
+- ESC_HET_H3K27me3_R1 / 85933694 10.51 = 
+- ESC_HET_H3K27me3_R2 / 66583922 23.35 = 
+- ESC_KO_H3K27me3_R1 / 86014942 10.06 = 
+- ESC_KO_H3K27me3_R2 / 57643920 15.78 =
+- ESC_WT_H3K27me3_R1 / 90968406 7 = 
+- ESC_WT_H3K27me3_R2 / 79650052 4.31=
+- NPC_HET_H3K27me3_R1 / 40423510 1.13 = 
+- NPC_HET_H3K27me3_R2 / 82710030 1.43 = 
+- NPC_KO_H3K27me3_R1 / 67904376 1.55 = 
+- NPC_KO_H3K27me3_R2 / 84619268 2.64 =
+- NPC_WT_H3K27me3_R1 / 77698696 1.45 = 
+- NPC_WT_H3K27me3_R2 / 72126718 1.51 =
+
+*NOTE: I run samtools flagstat manually and copy/paste, I run a sbatch job to keep track also as:*
+ ```bash
+ sbatch scripts/libsize_dupmark.sh # 12397755 ok --> Check slurm to double check my copy paste is correct: XXX
+ ```
+	
+Let's generate different meta_sample files:
+- meta_sample_all = All samples (except ESC WT R3)
+- meta_sample_ESC = All ESC samples (WT, HET, KO)
+- meta_sample_NPC
+- meta_sample_2dN
+- meta_sample_WT
+- meta_sample_HET
+- meta_sample_KO
+
+Generate/save **count matrix for each class**:
 ```bash
-XXX Rscript job 
+conda activate DiffBind
+
+sbatch scripts/DiffBind_all.sh # 12398837 XXX
+sbatch scripts/DiffBind_ESC.sh # 12398844
+sbatch scripts/DiffBind_NPC.sh # 12398846
+sbatch scripts/DiffBind_2dN.sh # 12398848
+sbatch scripts/DiffBind_WT.sh # 12398852
+sbatch scripts/DiffBind_HET.sh # 12398854
+sbatch scripts/DiffBind_KO.sh # 12398856
 ```
 
+Apply/save **GreyList count matrix for each class**:
 
 
 
+XXX Modify code below then; load greylist raw apply normalization generate plot...:
+
+
+```R
+# Load the greylist filtered counts
+
+
+
+```
 
 
 # ChIPseeker
