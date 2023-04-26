@@ -501,10 +501,10 @@ sbatch scripts/ChIPseqSpikeInFree_highquality.sh # 12373851 ok
 
 Remove dupplicates and re-run ChIPseqSpikeInFree
 ```bash
-sbatch scripts/samtools_unique_1.sh # 12378180
-sbatch scripts/samtools_unique_2.sh # 12378181
+sbatch scripts/samtools_unique_1.sh # 12378180 ok
+sbatch scripts/samtools_unique_2.sh # 12378181 ok
 
-sbatch scripts/ChIPseqSpikeInFree_unique.sh # 
+sbatch scripts/ChIPseqSpikeInFree_unique.sh #  12385784
 ```
 
 XXX 
