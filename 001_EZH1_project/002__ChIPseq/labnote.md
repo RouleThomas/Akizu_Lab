@@ -1056,24 +1056,31 @@ Generate/save **count matrix for each class**:
 ```bash
 conda activate DiffBind
 
-sbatch scripts/DiffBind_all.sh # 12398837 XXX
-sbatch scripts/DiffBind_ESC.sh # 12398844
-sbatch scripts/DiffBind_NPC.sh # 12398846
-sbatch scripts/DiffBind_2dN.sh # 12398848
-sbatch scripts/DiffBind_WT.sh # 12398852
-sbatch scripts/DiffBind_HET.sh # 12398854
-sbatch scripts/DiffBind_KO.sh # 12398856
+sbatch scripts/DiffBind_all.sh # 12398837 ok
+sbatch scripts/DiffBind_ESC.sh # 12398844 ok
+sbatch scripts/DiffBind_NPC.sh # 12398846 ok
+sbatch scripts/DiffBind_2dN.sh # 12398848 ok
+sbatch scripts/DiffBind_WT.sh # 12398852 ok
+sbatch scripts/DiffBind_HET.sh # 12398854 ok
+sbatch scripts/DiffBind_KO.sh # 12398856 ok
 ```
 
 Apply/save **GreyList count matrix for each class**:
+```bash
+conda activate DiffBind
 
+sbatch scripts/DiffBind_greylist.sh # 12436659 XXX
+```
 
-
-XXX Modify code below then; load greylist raw apply normalization generate plot...:
+Now let's make plot (greylist and ChIPseqSpikeIndFree corrected) and diff analyses:
 
 
 ```R
 # Load the greylist filtered counts
+
+
+
+# Normalization ChIPseqSpikeInFree
 
 
 
