@@ -2519,6 +2519,47 @@ It does not work super well ("ok" correlated: r=0.4, p0.1). Possibly because Cut
 # ChIPseeker for binding profiles
 [Tutorial](http://bioconductor.org/packages/release/bioc/vignettes/ChIPseeker/inst/doc/ChIPseeker.html) and [documentation]()
 
+
+## Pool the peak into 1 file
+Let's use IDR to pool our replicates and identify 'high-confidence' peak (used in the ENCODE pipeline)
+
+[Tutorial](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/07_handling-replicates-idr.html) and [github](https://github.com/nboley/idr) for IDR.
+
+**Installation:**
+```bash
+conda create -n idr -c bioconda idr # command can be launch from anywhere (directory and node)
+conda activate idr
+```
+**Generate peak files:**
+qvalue 2.3 (0.005) was optimal for CutRun:
+
+```bash
+conda activate idr
+
+idr --samples output/macs2/broad_blacklist_qval2.30103/8wN_WT_H3K27me3_R1_peaks.broadPeak \
+    output/macs2/broad_blacklist_qval2.30103/8wN_WT_H3K27me3_R2_peaks.broadPeak \
+    output/macs2/broad_blacklist_qval2.30103/8wN_WT_H3K27me3_R3_peaks.broadPeak \
+    output/macs2/broad_blacklist_qval2.30103/8wN_WT_H3K27me3_R4_peaks.broadPeak \
+    --input-file-type broadPeak \
+    --output-file output/idr/8wN_WT_H3K27me3_idr \
+    --plot \
+    --log-output-file output/idr/8wN_WT_H3K27me3_idr.log
+```
+
+IDR can only handle 2 replicates... We can either do 2 per 2 comparison and keep merge (see [here](https://github.com/nboley/idr/issues/35)). Or use another method...:
+
+
+Re-run MACS2 but in pool to have 1 file per condition (keep blacklist and qval2.30103 (0.005) filtering):
+```bash
+sbatch scripts/macs2_pool.sh # XXX
+
+```
+
+--> The file looks XXX
+
+## Run ChIPseeker
+
+
 For **ChIPseeker**, use **conda base and R 4.2.2 module**
 ```bash
 conda deactivate
@@ -2528,7 +2569,11 @@ module load R/4.2.2
 ```R
 library("ChIPseeker")
 
-XXX
+# Import peaks
+peaks_WT =  read.table('output/macs2/broad_blacklist_qval2.3/') %>% rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9, peak=V10) # Import and rename columns
+
+# Tidy peaks
+peaks.gr = makeGRangesFromDataFrame(peaks_EMF2,keep.extra.columns=TRUE)
 
 ```
 

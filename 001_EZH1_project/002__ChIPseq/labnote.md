@@ -1019,24 +1019,24 @@ The multi-factor analyses is not clear, let's generate count matrix at each time
 
 Let's apply the ChIPseqSpikeInFree scaling factor to normalize data (normalize library size, then normalize per seq. depth; as for the CutRun). ChIPseqSpikeInFree-norm-library-size = library-size * SF. `samtools flagstat output/bowtie2_endtoend/*.dupmark.sorted.bam` used to obtain library size (first value=library size):
 - sample / library size * SF = scaled library size
-- 2dN_HET_H3K27me3_R1 / 70887858 1.97 = 
-- 2dN_HET_H3K27me3_R2 / 67346082 1.75 = 
-- 2dN_KO_H3K27me3_R1 / 58363794 1.46 = 
-- 2dN_KO_H3K27me3_R2 / 71964648 1
-- 2dN_WT_H3K27me3_R1 / 71682964 1.29 = 
-- 2dN_WT_H3K27me3_R2 / 60792560 1.69 =
-- ESC_HET_H3K27me3_R1 / 85933694 10.51 = 
-- ESC_HET_H3K27me3_R2 / 66583922 23.35 = 
-- ESC_KO_H3K27me3_R1 / 86014942 10.06 = 
-- ESC_KO_H3K27me3_R2 / 57643920 15.78 =
-- ESC_WT_H3K27me3_R1 / 90968406 7 = 
-- ESC_WT_H3K27me3_R2 / 79650052 4.31=
-- NPC_HET_H3K27me3_R1 / 40423510 1.13 = 
-- NPC_HET_H3K27me3_R2 / 82710030 1.43 = 
-- NPC_KO_H3K27me3_R1 / 67904376 1.55 = 
-- NPC_KO_H3K27me3_R2 / 84619268 2.64 =
-- NPC_WT_H3K27me3_R1 / 77698696 1.45 = 
-- NPC_WT_H3K27me3_R2 / 72126718 1.51 =
+- 2dN_HET_H3K27me3_R1 / 70887858 1.97 = 139649080
+- 2dN_HET_H3K27me3_R2 / 67346082 1.75 = 117855644
+- 2dN_KO_H3K27me3_R1 / 58363794 1.46 = 85211139
+- 2dN_KO_H3K27me3_R2 / 71964648 1 = 71964648
+- 2dN_WT_H3K27me3_R1 / 71682964 1.29 = 92471024
+- 2dN_WT_H3K27me3_R2 / 60792560 1.69 = 102739426
+- ESC_HET_H3K27me3_R1 / 85933694 10.51 = 903163124
+- ESC_HET_H3K27me3_R2 / 66583922 23.35 = 1554734579
+- ESC_KO_H3K27me3_R1 / 86014942 10.06 = 865310316
+- ESC_KO_H3K27me3_R2 / 57643920 15.78 = 909621058
+- ESC_WT_H3K27me3_R1 / 90968406 7 = 636778842
+- ESC_WT_H3K27me3_R2 / 79650052 4.31 = 343291724
+- NPC_HET_H3K27me3_R1 / 40423510 1.13 = 45678566
+- NPC_HET_H3K27me3_R2 / 82710030 1.43 = 118275343
+- NPC_KO_H3K27me3_R1 / 67904376 1.55 = 105251783
+- NPC_KO_H3K27me3_R2 / 84619268 2.64 = 223394867
+- NPC_WT_H3K27me3_R1 / 77698696 1.45 = 112663109
+- NPC_WT_H3K27me3_R2 / 72126718 1.51 = 108911344
 
 *NOTE: I run samtools flagstat manually and copy/paste, I run a sbatch job to keep track also as:*
  ```bash
@@ -1069,22 +1069,1259 @@ Apply/save **GreyList count matrix for each class**:
 ```bash
 conda activate DiffBind
 
-sbatch scripts/DiffBind_greylist.sh # 12436659 XXX
+sbatch scripts/DiffBind_greylist.sh # 12436659 ok
 ```
+*NOTE: For all analyses less than 12 peaks have been removed with the greylist filtering*
 
-Now let's make plot (greylist and ChIPseqSpikeIndFree corrected) and diff analyses:
+Now let's make plot (greylist and ChIPseqSpikeInFree (CSIF) corrected) and diff analyses for:
+- **genotype effect** per time-point:
+    - ESC: WT vs KO, WT vs HET,…
+    - NPC: WT vs KO, WT vs HET,…
+    - 2dN: WT vs KO, WT vs HET,…
+- **time course effect** per genotype:
+    - WT: ESC vs NPC, ESC, 2dN,…
+    - HET: ESC vs NPC, ESC, 2dN,…
+    - KO: ESC vs NPC, ESC, 2dN,…
+- **genotype effect over the time course**
+
 
 
 ```R
-# Load the greylist filtered counts
+library("DiffBind")
+
+# Genotype effect ~ ESC state
+## Load the greylist
+load("output/DiffBind/sample_count_ESC_greylist.RData")
+
+sample_count_ESC_greylist
+
+## plot greylist
+pdf("output/DiffBind/clustering_ESC_greylist.pdf", width=14, height=20)
+plot(sample_count_ESC_greylist)
+dev.off()
+
+pdf("output/DiffBind/PCA_ESC_greylist.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_ESC_greylist,DBA_REPLICATE, label=c(DBA_TREATMENT))
+dev.off()
+
+## Lib-size ChIPseqSpikeInFree norm (HETvsKO/HETvsWT/KOvsWT; edgeR: 35/399/362; DESEQ2: 45/4956/4480; non-lib norm= 2/2/2 and 39/440/417)
+
+sample_count_ESC_greylist_LibCSIFScaled_LIB = dba.normalize(sample_count_ESC_greylist, library = c(903163124, 1554734579, 865310316, 909621058, 636778842, 343291724), normalize = DBA_NORM_LIB) # Default
+
+
+pdf("output/DiffBind/clustering_ESC_greylist_LibCSIFScaled_LIB.pdf", width=14, height=20)
+plot(sample_count_ESC_greylist_LibCSIFScaled_LIB)
+dev.off()
+
+pdf("output/DiffBind/PCA_ESC_greylist_LibCSIFScaled_LIB.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_ESC_greylist_LibCSIFScaled_LIB,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast = dba.contrast(sample_count_ESC_greylist_LibCSIFScaled_LIB, minMembers=2, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze = dba.analyze(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast, method=DBA_ALL_METHODS, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+## TMM ChIPseqSpikeInFree norm (HETvsKO/HETvsWT/KOvsWT; edgeR: 35/399/362 ; DESEQ2: 82/737/787)
+
+sample_count_ESC_greylist_LibCSIFScaled_TMM = dba.normalize(sample_count_ESC_greylist, library = c(903163124, 1554734579, 865310316, 909621058, 636778842, 343291724), normalize = DBA_NORM_TMM) # Default
+
+
+pdf("output/DiffBind/clustering_ESC_greylist_LibCSIFScaled_TMM.pdf", width=14, height=20)
+plot(sample_count_ESC_greylist_LibCSIFScaled_TMM)
+dev.off()
+
+pdf("output/DiffBind/PCA_ESC_greylist_LibCSIFScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_ESC_greylist_LibCSIFScaled_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_ESC_greylist_LibCSIFScaled_TMM_contrast = dba.contrast(sample_count_ESC_greylist_LibCSIFScaled_TMM, minMembers=2, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_ESC_greylist_LibCSIFScaled_TMM_contrast_analyze = dba.analyze(sample_count_ESC_greylist_LibCSIFScaled_TMM_contrast, method=DBA_ALL_METHODS, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+## RLE ChIPseqSpikeInFree norm (HETvsKO/HETvsWT/KOvsWT; edgeR: 35/399/362 ; DESEQ2: 84/719/770)
+
+sample_count_ESC_greylist_LibCSIFScaled_RLE = dba.normalize(sample_count_ESC_greylist, library = c(903163124, 1554734579, 865310316, 909621058, 636778842, 343291724), normalize = DBA_NORM_RLE) # Default
+
+
+pdf("output/DiffBind/clustering_ESC_greylist_LibCSIFScaled_RLE.pdf", width=14, height=20)
+plot(sample_count_ESC_greylist_LibCSIFScaled_RLE)
+dev.off()
+
+pdf("output/DiffBind/PCA_ESC_greylist_LibCSIFScaled_RLE.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_ESC_greylist_LibCSIFScaled_RLE,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_ESC_greylist_LibCSIFScaled_RLE_contrast = dba.contrast(sample_count_ESC_greylist_LibCSIFScaled_RLE, minMembers=2, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_ESC_greylist_LibCSIFScaled_RLE_contrast_analyze = dba.analyze(sample_count_ESC_greylist_LibCSIFScaled_RLE_contrast, method=DBA_ALL_METHODS, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+### Diff analyses with LIB/DESEQ2:
+
+
+sample_count_ESC_greylist_LibCSIFScaled_LIB = dba.normalize(sample_count_ESC_greylist, library = c(903163124, 1554734579, 865310316, 909621058, 636778842, 343291724), normalize = DBA_NORM_LIB) # Default
+
+sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast = dba.contrast(sample_count_ESC_greylist_LibCSIFScaled_LIB, minMembers=2, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze = dba.analyze(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast, method=DBA_DESEQ2, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
 
 
 
-# Normalization ChIPseqSpikeInFree
+# Examining results
+## MA plot with diff sites
+pdf("output/DiffBind/plotMA_ESC_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotMA(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+dev.off()
+pdf("output/DiffBind/plotMA_ESC_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotMA(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/plotMA_ESC_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotMA(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+
+## volcano plot with diff sites
+pdf("output/DiffBind/volcano_ESC_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/volcano_ESC_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/volcano_ESC_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+## PCA/heatmat only on the diff sites
+pdf("output/DiffBind/clustering_ESC_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+plot(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/clustering_ESC_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+plot(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2, contrast=2)
+dev.off()
+pdf("output/DiffBind/clustering_ESC_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+plot(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2, contrast=3)
+dev.off()
+
+pdf("output/DiffBind/PCA_ESC_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=1, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_ESC_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_ESC_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3, label=DBA_TREATMENT)
+dev.off()
+
+
+## Read concentration heatmap
+hmap <- colorRampPalette(c("red", "black", "green"))(n = 13)
+
+pdf("output/DiffBind/clustering_reads_ESC_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=1, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_ESC_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_ESC_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+
+
+## Read distribution within diff bound sites
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_ESC_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotBox(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=1)
+dev.off()
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_ESC_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotBox(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_ESC_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotBox(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+
+
+## Export the Diff Bind regions
+### Convert to GR object
+sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast1 <- dba.report(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast2 <- dba.report(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast3 <- dba.report(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+### Convert to bed and exportsample_model__blackgreylist_histone_norm_report_contrast1
+sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast1_df <- data.frame(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast1)
+sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast2_df <- data.frame(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast2)
+sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast3_df <- data.frame(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast3)
+
+colnames(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast1_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast2_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast3_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+
+write.table(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast1_df, file="output/DiffBind/sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast1_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast2_df, file="output/DiffBind/sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast2_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast3_df, file="output/DiffBind/sample_count_ESC_greylist_LibCSIFScaled_LIB_contrast3_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+
+
+
+
+# Genotype effect ~ NPC state
+## Load the greylist
+load("output/DiffBind/sample_count_NPC_greylist.RData")
+
+sample_count_NPC_greylist
+
+## plot greylist
+pdf("output/DiffBind/clustering_NPC_greylist.pdf", width=14, height=20)
+plot(sample_count_NPC_greylist)
+dev.off()
+
+pdf("output/DiffBind/PCA_NPC_greylist.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_NPC_greylist,DBA_REPLICATE, label=c(DBA_TREATMENT))
+dev.off()
+
+## Lib-size ChIPseqSpikeInFree norm (HETvsKO/HETvsWT/KOvsWT; edgeR: 25/9/75; DESEQ2: 20/18/109; non-lib norm= 25/9/75 and 46/19/94)
+
+sample_count_NPC_greylist_LibCSIFScaled_LIB = dba.normalize(sample_count_NPC_greylist, library = c(45678566, 118275343, 105251783, 223394867, 112663109, 108911344), normalize = DBA_NORM_LIB) # Default
+
+
+pdf("output/DiffBind/clustering_NPC_greylist_LibCSIFScaled_LIB.pdf", width=14, height=20)
+plot(sample_count_NPC_greylist_LibCSIFScaled_LIB)
+dev.off()
+
+pdf("output/DiffBind/PCA_NPC_greylist_LibCSIFScaled_LIB.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_NPC_greylist_LibCSIFScaled_LIB,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast = dba.contrast(sample_count_NPC_greylist_LibCSIFScaled_LIB, minMembers=2, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze = dba.analyze(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast, method=DBA_ALL_METHODS, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+## TMM ChIPseqSpikeInFree norm (HETvsKO/HETvsWT/KOvsWT; edgeR: 25/9/75; DESEQ2: 27/31/148)
+
+sample_count_NPC_greylist_LibCSIFScaled_TMM = dba.normalize(sample_count_NPC_greylist, library = c(45678566, 118275343, 105251783, 223394867, 112663109, 108911344), normalize = DBA_NORM_TMM) # Default
+
+
+pdf("output/DiffBind/clustering_NPC_greylist_LibCSIFScaled_TMM.pdf", width=14, height=20)
+plot(sample_count_NPC_greylist_LibCSIFScaled_TMM)
+dev.off()
+
+pdf("output/DiffBind/PCA_NPC_greylist_LibCSIFScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_NPC_greylist_LibCSIFScaled_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_NPC_greylist_LibCSIFScaled_TMM_contrast = dba.contrast(sample_count_NPC_greylist_LibCSIFScaled_TMM, minMembers=2, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_NPC_greylist_LibCSIFScaled_TMM_contrast_analyze = dba.analyze(sample_count_NPC_greylist_LibCSIFScaled_TMM_contrast, method=DBA_ALL_METHODS, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+
+## RLE ChIPseqSpikeInFree norm (HETvsKO/HETvsWT/KOvsWT; edgeR: 25/9/75; DESEQ2: 25/31/149)
+
+sample_count_NPC_greylist_LibCSIFScaled_RLE = dba.normalize(sample_count_NPC_greylist, library = c(45678566, 118275343, 105251783, 223394867, 112663109, 108911344), normalize = DBA_NORM_RLE) # Default
+
+
+pdf("output/DiffBind/clustering_NPC_greylist_LibCSIFScaled_RLE.pdf", width=14, height=20)
+plot(sample_count_NPC_greylist_LibCSIFScaled_RLE)
+dev.off()
+
+pdf("output/DiffBind/PCA_NPC_greylist_LibCSIFScaled_RLE.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_NPC_greylist_LibCSIFScaled_RLE,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_NPC_greylist_LibCSIFScaled_RLE_contrast = dba.contrast(sample_count_NPC_greylist_LibCSIFScaled_RLE, minMembers=2, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_NPC_greylist_LibCSIFScaled_RLE_contrast_analyze = dba.analyze(sample_count_NPC_greylist_LibCSIFScaled_RLE_contrast, method=DBA_ALL_METHODS, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+
+### Diff analyses with LIB/DESEQ2:
+
+
+sample_count_NPC_greylist_LibCSIFScaled_LIB = dba.normalize(sample_count_NPC_greylist, library = c(45678566, 118275343, 105251783, 223394867, 112663109, 108911344), normalize = DBA_NORM_LIB) # Default
+
+sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast = dba.contrast(sample_count_NPC_greylist_LibCSIFScaled_LIB, minMembers=2, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze = dba.analyze(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast, method=DBA_DESEQ2, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+
+# Examining results
+## MA plot with diff sites
+pdf("output/DiffBind/plotMA_NPC_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotMA(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+dev.off()
+pdf("output/DiffBind/plotMA_NPC_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotMA(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/plotMA_NPC_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotMA(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+
+## volcano plot with diff sites
+pdf("output/DiffBind/volcano_NPC_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/volcano_NPC_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/volcano_NPC_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+## PCA/heatmat only on the diff sites
+pdf("output/DiffBind/clustering_NPC_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+plot(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/clustering_NPC_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+plot(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2, contrast=2)
+dev.off()
+pdf("output/DiffBind/clustering_NPC_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+plot(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2, contrast=3)
+dev.off()
+
+pdf("output/DiffBind/PCA_NPC_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=1, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_NPC_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_NPC_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3, label=DBA_TREATMENT)
+dev.off()
+
+
+## Read concentration heatmap
+hmap <- colorRampPalette(c("red", "black", "green"))(n = 13)
+
+pdf("output/DiffBind/clustering_reads_NPC_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=1, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_NPC_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_NPC_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+
+
+## Read distribution within diff bound sites
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_NPC_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotBox(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=1)
+dev.off()
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_NPC_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotBox(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_NPC_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotBox(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+
+
+## Export the Diff Bind regions
+### Convert to GR object
+sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast1 <- dba.report(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast2 <- dba.report(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast3 <- dba.report(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+### Convert to bed and exportsample_model__blackgreylist_histone_norm_report_contrast1
+sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast1_df <- data.frame(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast1)
+sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast2_df <- data.frame(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast2)
+sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast3_df <- data.frame(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast3)
+
+colnames(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast1_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast2_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast3_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+
+write.table(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast1_df, file="output/DiffBind/sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast1_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast2_df, file="output/DiffBind/sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast2_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast3_df, file="output/DiffBind/sample_count_NPC_greylist_LibCSIFScaled_LIB_contrast3_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+
+
+
+# Genotype effect ~ 2dN state
+## Load the greylist
+load("output/DiffBind/sample_count_2dN_greylist.RData")
+
+sample_count_2dN_greylist
+
+## plot greylist
+pdf("output/DiffBind/clustering_2dN_greylist.pdf", width=14, height=20)
+plot(sample_count_2dN_greylist)
+dev.off()
+
+pdf("output/DiffBind/PCA_2dN_greylist.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_2dN_greylist,DBA_REPLICATE, label=c(DBA_TREATMENT))
+dev.off()
+
+## Lib-size ChIPseqSpikeInFree norm (HETvsKO/HETvsWT/KOvsWT; edgeR: 15/20/1; DESEQ2: 2/14/15; non-lib norm= 25/9/75 and 117/106/0)
+
+sample_count_2dN_greylist_LibCSIFScaled_LIB = dba.normalize(sample_count_2dN_greylist, library = c(139649080,117855644,85211139,71964648,92471024,102739426), normalize = DBA_NORM_LIB) # Default
+
+
+pdf("output/DiffBind/clustering_2dN_greylist_LibCSIFScaled_LIB.pdf", width=14, height=20)
+plot(sample_count_2dN_greylist_LibCSIFScaled_LIB)
+dev.off()
+
+pdf("output/DiffBind/PCA_2dN_greylist_LibCSIFScaled_LIB.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_2dN_greylist_LibCSIFScaled_LIB,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast = dba.contrast(sample_count_2dN_greylist_LibCSIFScaled_LIB, minMembers=2, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze = dba.analyze(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast, method=DBA_ALL_METHODS, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+
+## TMM ChIPseqSpikeInFree norm (HETvsKO/HETvsWT/KOvsWT; DESEQ2: 14/65/2)
+
+sample_count_2dN_greylist_LibCSIFScaled_TMM = dba.normalize(sample_count_2dN_greylist, library = c(139649080,117855644,85211139,71964648,92471024,102739426), normalize = DBA_NORM_TMM) # Default
+
+
+pdf("output/DiffBind/clustering_2dN_greylist_LibCSIFScaled_TMM.pdf", width=14, height=20)
+plot(sample_count_2dN_greylist_LibCSIFScaled_TMM)
+dev.off()
+
+pdf("output/DiffBind/PCA_2dN_greylist_LibCSIFScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_2dN_greylist_LibCSIFScaled_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_2dN_greylist_LibCSIFScaled_TMM_contrast = dba.contrast(sample_count_2dN_greylist_LibCSIFScaled_TMM, minMembers=2, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_2dN_greylist_LibCSIFScaled_TMM_contrast_analyze = dba.analyze(sample_count_2dN_greylist_LibCSIFScaled_TMM_contrast, method=DBA_ALL_METHODS, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+
+## RLE ChIPseqSpikeInFree norm (HETvsKO/HETvsWT/KOvsWT; DESEQ2: 11/56/1)
+
+sample_count_2dN_greylist_LibCSIFScaled_RLE = dba.normalize(sample_count_2dN_greylist, library = c(139649080,117855644,85211139,71964648,92471024,102739426), normalize = DBA_NORM_RLE) # Default
+
+
+pdf("output/DiffBind/clustering_2dN_greylist_LibCSIFScaled_RLE.pdf", width=14, height=20)
+plot(sample_count_2dN_greylist_LibCSIFScaled_RLE)
+dev.off()
+
+pdf("output/DiffBind/PCA_2dN_greylist_LibCSIFScaled_RLE.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_2dN_greylist_LibCSIFScaled_RLE,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_2dN_greylist_LibCSIFScaled_RLE_contrast = dba.contrast(sample_count_2dN_greylist_LibCSIFScaled_RLE, minMembers=2, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_2dN_greylist_LibCSIFScaled_RLE_contrast_analyze = dba.analyze(sample_count_2dN_greylist_LibCSIFScaled_RLE_contrast, method=DBA_ALL_METHODS, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+
+### Diff analyses with LIB/DESEQ2:
+
+
+sample_count_2dN_greylist_LibCSIFScaled_LIB = dba.normalize(sample_count_2dN_greylist, library = c(139649080,117855644,85211139,71964648,92471024,102739426), normalize = DBA_NORM_LIB) # Default
+
+sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast = dba.contrast(sample_count_2dN_greylist_LibCSIFScaled_LIB, minMembers=2, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze = dba.analyze(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast, method=DBA_DESEQ2, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+
+# Examining results
+## MA plot with diff sites
+pdf("output/DiffBind/plotMA_2dN_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotMA(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+dev.off()
+pdf("output/DiffBind/plotMA_2dN_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotMA(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/plotMA_2dN_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotMA(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+
+## volcano plot with diff sites
+pdf("output/DiffBind/volcano_2dN_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/volcano_2dN_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/volcano_2dN_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+## PCA/heatmat only on the diff sites
+pdf("output/DiffBind/clustering_2dN_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+plot(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/clustering_2dN_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+plot(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2, contrast=2)
+dev.off()
+pdf("output/DiffBind/clustering_2dN_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+plot(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2, contrast=3)
+dev.off()
+
+pdf("output/DiffBind/PCA_2dN_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=1, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_2dN_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_2dN_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3, label=DBA_TREATMENT)
+dev.off()
+
+
+## Read concentration heatmap
+hmap <- colorRampPalette(c("red", "black", "green"))(n = 13)
+
+pdf("output/DiffBind/clustering_reads_2dN_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=1, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_2dN_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_2dN_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+
+
+## Read distribution within diff bound sites
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_2dN_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotBox(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=1)
+dev.off()
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_2dN_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotBox(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_2dN_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotBox(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+
+
+## Export the Diff Bind regions
+### Convert to GR object
+sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast1 <- dba.report(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast2 <- dba.report(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast3 <- dba.report(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+### Convert to bed and exportsample_model__blackgreylist_histone_norm_report_contrast1
+sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast1_df <- data.frame(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast1)
+sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast2_df <- data.frame(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast2)
+sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast3_df <- data.frame(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast3)
+
+colnames(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast1_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast2_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast3_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+
+write.table(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast1_df, file="output/DiffBind/sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast1_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast2_df, file="output/DiffBind/sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast2_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast3_df, file="output/DiffBind/sample_count_2dN_greylist_LibCSIFScaled_LIB_contrast3_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+```
+
+**genotype effect** per time-point:
+    - ESC: WT vs KO, WT vs HET,… --> LIB/DESEQ2 norm perform best (DESEQ2/LIB n = 45/4956/4480)
+    - NPC: WT vs KO, WT vs HET,… --> Very few diff sites! (TMM perform best, but no drastic diff. with the other methods...; so for uniformity I used LIB norm that perform very well for ESC) (DESEQ2/LIB n = 20/18/109)
+    - 2dN: WT vs KO, WT vs HET,… --> Non CSIF give more diff sites, but 0 for KOvsWT, weird, let's keep CSIF-norm LIB-DESEQ2 (DESEQ2/LIB n = 2/14/5)
+
+--> Only differences between genotypes at ESC (do not follow biological expectation; ie. KO and HET decrease H3K27me3 vs WT)
+
+--> At NPC and 2dN very few diff bound sites; in agreement with the CutRun at 8wN
+
+Now lets look **Time effect per genotype:**
+
+```R
+
+# Time effect ~ WT genotype
+## Load the greylist
+load("output/DiffBind/sample_count_WT_greylist.RData")
+
+sample_count_WT_greylist
+
+## plot greylist
+pdf("output/DiffBind/clustering_WT_greylist.pdf", width=14, height=20)
+plot(sample_count_WT_greylist)
+dev.off()
+
+pdf("output/DiffBind/PCA_WT_greylist.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_WT_greylist,DBA_REPLICATE, label=c(DBA_CONDITION))
+dev.off()
+
+## Lib-size ChIPseqSpikeInFree norm (2dNvsESC/2dNvsNPC/NPCvsESC; edgeR: 1888/2/1690; DESEQ2: 10016/0/10030; non-lib norm= 1717/0/1594)
+
+sample_count_WT_greylist_LibCSIFScaled_LIB = dba.normalize(sample_count_WT_greylist, library = c(92471024,102739426,636778842,343291724,112663109,108911344), normalize = DBA_NORM_LIB) # Default
+
+
+pdf("output/DiffBind/clustering_WT_greylist_LibCSIFScaled_LIB.pdf", width=14, height=20)
+plot(sample_count_WT_greylist_LibCSIFScaled_LIB)
+dev.off()
+
+pdf("output/DiffBind/PCA_WT_greylist_LibCSIFScaled_LIB.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_WT_greylist_LibCSIFScaled_LIB,DBA_REPLICATE, label=DBA_CONDITION)
+dev.off()
+
+sample_count_WT_greylist_LibCSIFScaled_LIB_contrast = dba.contrast(sample_count_WT_greylist_LibCSIFScaled_LIB, minMembers=2, categories = DBA_CONDITION, reorderMeta = list(Condition="ESC"))
+
+sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze = dba.analyze(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast, method=DBA_ALL_METHODS, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+
+
+## TMM ChIPseqSpikeInFree norm (2dNvsESC/2dNvsNPC/NPCvsESC; edgeR: 25/9/75; DESEQ2: 1702/1/1549)
+
+sample_count_WT_greylist_LibCSIFScaled_TMM = dba.normalize(sample_count_WT_greylist, library = c(92471024,102739426,636778842,343291724,112663109,108911344), normalize = DBA_NORM_TMM) # Default
+
+
+pdf("output/DiffBind/clustering_WT_greylist_LibCSIFScaled_TMM.pdf", width=14, height=20)
+plot(sample_count_WT_greylist_LibCSIFScaled_TMM)
+dev.off()
+
+pdf("output/DiffBind/PCA_WT_greylist_LibCSIFScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_WT_greylist_LibCSIFScaled_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_WT_greylist_LibCSIFScaled_TMM_contrast = dba.contrast(sample_count_WT_greylist_LibCSIFScaled_TMM, minMembers=2, categories = DBA_CONDITION, reorderMeta = list(Condition="ESC"))
+
+sample_count_WT_greylist_LibCSIFScaled_TMM_contrast_analyze = dba.analyze(sample_count_WT_greylist_LibCSIFScaled_TMM_contrast, method=DBA_ALL_METHODS, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+
+## RLE ChIPseqSpikeInFree norm (2dNvsESC/2dNvsNPC/NPCvsESC; DESEQ2: 1688/1/1532)
+
+sample_count_WT_greylist_LibCSIFScaled_RLE = dba.normalize(sample_count_WT_greylist, library = c(92471024,102739426,636778842,343291724,112663109,108911344), normalize = DBA_NORM_RLE) # Default
+
+
+pdf("output/DiffBind/clustering_WT_greylist_LibCSIFScaled_RLE.pdf", width=14, height=20)
+plot(sample_count_WT_greylist_LibCSIFScaled_RLE)
+dev.off()
+
+pdf("output/DiffBind/PCA_WT_greylist_LibCSIFScaled_RLE.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_WT_greylist_LibCSIFScaled_RLE,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_WT_greylist_LibCSIFScaled_RLE_contrast = dba.contrast(sample_count_WT_greylist_LibCSIFScaled_RLE, minMembers=2, categories = DBA_CONDITION, reorderMeta = list(Condition="ESC"))
+
+sample_count_WT_greylist_LibCSIFScaled_RLE_contrast_analyze = dba.analyze(sample_count_WT_greylist_LibCSIFScaled_RLE_contrast, method=DBA_ALL_METHODS, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+
+### Diff analyses with LIB/DESEQ2:
+
+
+sample_count_WT_greylist_LibCSIFScaled_LIB = dba.normalize(sample_count_WT_greylist, library = c(92471024,102739426,636778842,343291724,112663109,108911344), normalize = DBA_NORM_LIB) # Default
+
+sample_count_WT_greylist_LibCSIFScaled_LIB_contrast = dba.contrast(sample_count_WT_greylist_LibCSIFScaled_LIB, minMembers=2, categories = DBA_CONDITION, reorderMeta = list(Condition="ESC"))
+
+sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze = dba.analyze(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast, method=DBA_DESEQ2, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+
+# Examining results
+## MA plot with diff sites
+pdf("output/DiffBind/plotMA_WT_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotMA(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+dev.off()
+pdf("output/DiffBind/plotMA_WT_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotMA(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/plotMA_WT_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotMA(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+
+## volcano plot with diff sites
+pdf("output/DiffBind/volcano_WT_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/volcano_WT_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/volcano_WT_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+## PCA/heatmat only on the diff sites
+pdf("output/DiffBind/clustering_WT_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+plot(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/clustering_WT_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+plot(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2, contrast=2)
+dev.off()
+pdf("output/DiffBind/clustering_WT_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+plot(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2, contrast=3)
+dev.off()
+
+pdf("output/DiffBind/PCA_WT_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=1, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_WT_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_WT_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3, label=DBA_TREATMENT)
+dev.off()
+
+
+## Read concentration heatmap
+hmap <- colorRampPalette(c("red", "black", "green"))(n = 13)
+
+pdf("output/DiffBind/clustering_reads_WT_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=1, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_WT_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_WT_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+
+
+## Read distribution within diff bound sites
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_WT_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotBox(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=1)
+dev.off()
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_WT_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotBox(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_WT_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotBox(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+
+
+## Export the Diff Bind regions
+### Convert to GR object
+sample_count_WT_greylist_LibCSIFScaled_LIB_contrast1 <- dba.report(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+sample_count_WT_greylist_LibCSIFScaled_LIB_contrast2 <- dba.report(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+sample_count_WT_greylist_LibCSIFScaled_LIB_contrast3 <- dba.report(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+### Convert to bed and exportsample_model__blackgreylist_histone_norm_report_contrast1
+sample_count_WT_greylist_LibCSIFScaled_LIB_contrast1_df <- data.frame(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast1)
+sample_count_WT_greylist_LibCSIFScaled_LIB_contrast2_df <- data.frame(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast2)
+sample_count_WT_greylist_LibCSIFScaled_LIB_contrast3_df <- data.frame(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast3)
+
+colnames(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast1_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast2_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast3_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+
+write.table(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast1_df, file="output/DiffBind/sample_count_WT_greylist_LibCSIFScaled_LIB_contrast1_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast2_df, file="output/DiffBind/sample_count_WT_greylist_LibCSIFScaled_LIB_contrast2_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast3_df, file="output/DiffBind/sample_count_WT_greylist_LibCSIFScaled_LIB_contrast3_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+
+
+
+
+
+##### some non-norm plots:
+
+### Diff analyses with LIB/DESEQ2:
+
+
+sample_count_WT_greylist_LibCSIFScaled_LIB = dba.normalize(sample_count_WT_greylist, normalize = DBA_NORM_LIB) # Default
+
+sample_count_WT_greylist_LibCSIFScaled_LIB_contrast = dba.contrast(sample_count_WT_greylist_LibCSIFScaled_LIB, minMembers=2, categories = DBA_CONDITION, reorderMeta = list(Condition="ESC"))
+
+sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze = dba.analyze(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast, method=DBA_DESEQ2, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+
+# Examining results
+## volcano plot with diff sites
+pdf("output/DiffBind/volcano_WT_greylist_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2, contrast=1)
+dev.off()
+
+
+
+## Read concentration heatmap
+hmap <- colorRampPalette(c("red", "black", "green"))(n = 13)
+
+pdf("output/DiffBind/clustering_reads_WT_greylist_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=1, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+
+
+## Read distribution within diff bound sites
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_WT_greylist_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotBox(sample_count_WT_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=1)
+dev.off()
+
+
+
+# Time effect ~ HET genotype
+## Load the greylist
+load("output/DiffBind/sample_count_HET_greylist.RData")
+
+sample_count_HET_greylist
+
+## plot greylist
+pdf("output/DiffBind/clustering_HET_greylist.pdf", width=14, height=20)
+plot(sample_count_HET_greylist)
+dev.off()
+
+pdf("output/DiffBind/PCA_HET_greylist.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_HET_greylist,DBA_REPLICATE, label=c(DBA_CONDITION))
+dev.off()
+
+## Lib-size ChIPseqSpikeInFree norm (2dNvsESC/2dNvsNPC/NPCvsESC; edgeR: 2711/3/2948; DESEQ2: 6354/2/6474; non-lib norm= 2875/3/3015)
+
+sample_count_HET_greylist_LibCSIFScaled_LIB = dba.normalize(sample_count_HET_greylist, library = c(139649080,117855644,903163124,1554734579,45678566,118275343), normalize = DBA_NORM_LIB) # Default
+
+
+pdf("output/DiffBind/clustering_HET_greylist_LibCSIFScaled_LIB.pdf", width=14, height=20)
+plot(sample_count_HET_greylist_LibCSIFScaled_LIB)
+dev.off()
+
+pdf("output/DiffBind/PCA_HET_greylist_LibCSIFScaled_LIB.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_HET_greylist_LibCSIFScaled_LIB,DBA_REPLICATE, label=DBA_CONDITION)
+dev.off()
+
+
+sample_count_HET_greylist_LibCSIFScaled_LIB_contrast = dba.contrast(sample_count_HET_greylist_LibCSIFScaled_LIB, minMembers=2, categories = DBA_CONDITION, reorderMeta = list(Condition="ESC"))
+
+sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze = dba.analyze(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast, method=DBA_ALL_METHODS, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+
+
+## TMM ChIPseqSpikeInFree norm (2dNvsESC/2dNvsNPC/NPCvsESC; DESEQ2: 3846/16/3716)
+
+sample_count_HET_greylist_LibCSIFScaled_TMM = dba.normalize(sample_count_HET_greylist, library = c(139649080,117855644,903163124,1554734579,45678566,118275343), normalize = DBA_NORM_TMM) # Default
+
+
+pdf("output/DiffBind/clustering_HET_greylist_LibCSIFScaled_TMM.pdf", width=14, height=20)
+plot(sample_count_HET_greylist_LibCSIFScaled_TMM)
+dev.off()
+
+pdf("output/DiffBind/PCA_HET_greylist_LibCSIFScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_HET_greylist_LibCSIFScaled_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_HET_greylist_LibCSIFScaled_TMM_contrast = dba.contrast(sample_count_HET_greylist_LibCSIFScaled_TMM, minMembers=2, categories = DBA_CONDITION, reorderMeta = list(Condition="ESC"))
+
+sample_count_HET_greylist_LibCSIFScaled_TMM_contrast_analyze = dba.analyze(sample_count_HET_greylist_LibCSIFScaled_TMM_contrast, method=DBA_ALL_METHODS, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+
+## RLE ChIPseqSpikeInFree norm (2dNvsESC/2dNvsNPC/NPCvsESC; DESEQ2: 3848/27/3720)
+
+sample_count_HET_greylist_LibCSIFScaled_RLE = dba.normalize(sample_count_HET_greylist, library = c(139649080,117855644,903163124,1554734579,45678566,118275343), normalize = DBA_NORM_RLE) # Default
+
+
+pdf("output/DiffBind/clustering_HET_greylist_LibCSIFScaled_RLE.pdf", width=14, height=20)
+plot(sample_count_HET_greylist_LibCSIFScaled_RLE)
+dev.off()
+
+pdf("output/DiffBind/PCA_HET_greylist_LibCSIFScaled_RLE.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_HET_greylist_LibCSIFScaled_RLE,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_HET_greylist_LibCSIFScaled_RLE_contrast = dba.contrast(sample_count_HET_greylist_LibCSIFScaled_RLE, minMembers=2, categories = DBA_CONDITION, reorderMeta = list(Condition="ESC"))
+
+sample_count_HET_greylist_LibCSIFScaled_RLE_contrast_analyze = dba.analyze(sample_count_HET_greylist_LibCSIFScaled_RLE_contrast, method=DBA_ALL_METHODS, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+
+### Diff analyses with LIB/DESEQ2:
+
+
+sample_count_HET_greylist_LibCSIFScaled_LIB = dba.normalize(sample_count_HET_greylist, library = c(139649080,117855644,903163124,1554734579,45678566,118275343), normalize = DBA_NORM_LIB) # Default
+
+sample_count_HET_greylist_LibCSIFScaled_LIB_contrast = dba.contrast(sample_count_HET_greylist_LibCSIFScaled_LIB, minMembers=2, categories = DBA_CONDITION, reorderMeta = list(Condition="ESC"))
+
+sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze = dba.analyze(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast, method=DBA_DESEQ2, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+
+# Examining results
+## MA plot with diff sites
+pdf("output/DiffBind/plotMA_HET_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotMA(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+dev.off()
+pdf("output/DiffBind/plotMA_HET_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotMA(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/plotMA_HET_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotMA(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+
+## volcano plot with diff sites
+pdf("output/DiffBind/volcano_HET_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/volcano_HET_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/volcano_HET_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+## PCA/heatmat only on the diff sites
+pdf("output/DiffBind/clustering_HET_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+plot(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/clustering_HET_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+plot(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2, contrast=2)
+dev.off()
+pdf("output/DiffBind/clustering_HET_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+plot(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2, contrast=3)
+dev.off()
+
+pdf("output/DiffBind/PCA_HET_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=1, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_HET_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_HET_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3, label=DBA_TREATMENT)
+dev.off()
+
+
+## Read concentration heatmap
+hmap <- colorRampPalette(c("red", "black", "green"))(n = 13)
+
+pdf("output/DiffBind/clustering_reads_HET_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=1, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_HET_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_HET_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+
+
+## Read distribution within diff bound sites
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_HET_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotBox(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=1)
+dev.off()
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_HET_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotBox(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_HET_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotBox(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+
+
+## Export the Diff Bind regions
+### Convert to GR object
+sample_count_HET_greylist_LibCSIFScaled_LIB_contrast1 <- dba.report(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+sample_count_HET_greylist_LibCSIFScaled_LIB_contrast2 <- dba.report(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+sample_count_HET_greylist_LibCSIFScaled_LIB_contrast3 <- dba.report(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+### Convert to bed and exportsample_model__blackgreylist_histone_norm_report_contrast1
+sample_count_HET_greylist_LibCSIFScaled_LIB_contrast1_df <- data.frame(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast1)
+sample_count_HET_greylist_LibCSIFScaled_LIB_contrast2_df <- data.frame(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast2)
+sample_count_HET_greylist_LibCSIFScaled_LIB_contrast3_df <- data.frame(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast3)
+
+colnames(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast1_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast2_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast3_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+
+write.table(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast1_df, file="output/DiffBind/sample_count_HET_greylist_LibCSIFScaled_LIB_contrast1_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast2_df, file="output/DiffBind/sample_count_HET_greylist_LibCSIFScaled_LIB_contrast2_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_HET_greylist_LibCSIFScaled_LIB_contrast3_df, file="output/DiffBind/sample_count_HET_greylist_LibCSIFScaled_LIB_contrast3_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+
+
+
+
+
+# Time effect ~ KO genotype
+## Load the greylist
+load("output/DiffBind/sample_count_KO_greylist.RData")
+
+sample_count_KO_greylist
+
+## plot greylist
+pdf("output/DiffBind/clustering_KO_greylist.pdf", width=14, height=20)
+plot(sample_count_KO_greylist)
+dev.off()
+
+pdf("output/DiffBind/PCA_KO_greylist.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_KO_greylist,DBA_REPLICATE, label=c(DBA_CONDITION))
+dev.off()
+
+## Lib-size ChIPseqSpikeInFree norm (2dNvsESC/2dNvsNPC/NPCvsESC; edgeR: 2457/3/2139; DESEQ2: 5916/5/5586; non-lib norm= 2581/0/2304)
+
+sample_count_KO_greylist_LibCSIFScaled_LIB = dba.normalize(sample_count_KO_greylist, library = c(85211139,71964648,865310316,909621058,105251783,223394867), normalize = DBA_NORM_LIB) # Default
+
+
+pdf("output/DiffBind/clustering_KO_greylist_LibCSIFScaled_LIB.pdf", width=14, height=20)
+plot(sample_count_KO_greylist_LibCSIFScaled_LIB)
+dev.off()
+
+pdf("output/DiffBind/PCA_KO_greylist_LibCSIFScaled_LIB.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_KO_greylist_LibCSIFScaled_LIB,DBA_REPLICATE, label=DBA_CONDITION)
+dev.off()
+
+sample_count_KO_greylist_LibCSIFScaled_LIB_contrast = dba.contrast(sample_count_KO_greylist_LibCSIFScaled_LIB, minMembers=2, categories = DBA_CONDITION, reorderMeta = list(Condition="ESC"))
+
+sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze = dba.analyze(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast, method=DBA_ALL_METHODS, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+
+
+## TMM ChIPseqSpikeInFree norm (2dNvsESC/2dNvsNPC/NPCvsESC; DESEQ2: 3231/23/3063 )
+
+sample_count_KO_greylist_LibCSIFScaled_TMM = dba.normalize(sample_count_KO_greylist, library = c(85211139,71964648,865310316,909621058,105251783,223394867), normalize = DBA_NORM_TMM) # Default
+
+
+pdf("output/DiffBind/clustering_KO_greylist_LibCSIFScaled_TMM.pdf", width=14, height=20)
+plot(sample_count_KO_greylist_LibCSIFScaled_TMM)
+dev.off()
+
+pdf("output/DiffBind/PCA_KO_greylist_LibCSIFScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_KO_greylist_LibCSIFScaled_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_KO_greylist_LibCSIFScaled_TMM_contrast = dba.contrast(sample_count_KO_greylist_LibCSIFScaled_TMM, minMembers=2, categories = DBA_CONDITION, reorderMeta = list(Condition="ESC"))
+
+sample_count_KO_greylist_LibCSIFScaled_TMM_contrast_analyze = dba.analyze(sample_count_KO_greylist_LibCSIFScaled_TMM_contrast, method=DBA_ALL_METHODS, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+
+## RLE ChIPseqSpikeInFree norm (2dNvsESC/2dNvsNPC/NPCvsESC; DESEQ2: 3229/18/3035)
+
+sample_count_KO_greylist_LibCSIFScaled_RLE = dba.normalize(sample_count_KO_greylist, library = c(85211139,71964648,865310316,909621058,105251783,223394867), normalize = DBA_NORM_RLE) # Default
+
+
+pdf("output/DiffBind/clustering_KO_greylist_LibCSIFScaled_RLE.pdf", width=14, height=20)
+plot(sample_count_KO_greylist_LibCSIFScaled_RLE)
+dev.off()
+
+pdf("output/DiffBind/PCA_KO_greylist_LibCSIFScaled_RLE.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_KO_greylist_LibCSIFScaled_RLE,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_KO_greylist_LibCSIFScaled_RLE_contrast = dba.contrast(sample_count_KO_greylist_LibCSIFScaled_RLE, minMembers=2, categories = DBA_CONDITION, reorderMeta = list(Condition="ESC"))
+
+sample_count_KO_greylist_LibCSIFScaled_RLE_contrast_analyze = dba.analyze(sample_count_KO_greylist_LibCSIFScaled_RLE_contrast, method=DBA_ALL_METHODS, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+
+### Diff analyses with LIB/DESEQ2:
+
+
+sample_count_KO_greylist_LibCSIFScaled_LIB = dba.normalize(sample_count_KO_greylist, library = c(85211139,71964648,865310316,909621058,105251783,223394867), normalize = DBA_NORM_LIB) # Default
+
+sample_count_KO_greylist_LibCSIFScaled_LIB_contrast = dba.contrast(sample_count_KO_greylist_LibCSIFScaled_LIB, minMembers=2, categories = DBA_CONDITION, reorderMeta = list(Condition="ESC"))
+
+sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze = dba.analyze(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast, method=DBA_DESEQ2, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+
+# Examining results
+## MA plot with diff sites
+pdf("output/DiffBind/plotMA_KO_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotMA(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+dev.off()
+pdf("output/DiffBind/plotMA_KO_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotMA(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/plotMA_KO_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotMA(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+
+## volcano plot with diff sites
+pdf("output/DiffBind/volcano_KO_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/volcano_KO_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/volcano_KO_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+## PCA/heatmat only on the diff sites
+pdf("output/DiffBind/clustering_KO_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+plot(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/clustering_KO_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+plot(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2, contrast=2)
+dev.off()
+pdf("output/DiffBind/clustering_KO_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+plot(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2, contrast=3)
+dev.off()
+
+pdf("output/DiffBind/PCA_KO_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=1, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_KO_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_KO_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3, label=DBA_TREATMENT)
+dev.off()
+
+
+## Read concentration heatmap
+hmap <- colorRampPalette(c("red", "black", "green"))(n = 13)
+
+pdf("output/DiffBind/clustering_reads_KO_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=1, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_KO_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_KO_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+
+
+## Read distribution within diff bound sites
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_KO_greylist_LibCSIFScaled_LIB_contrast1.pdf", width=14, height=20) 
+dba.plotBox(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=1)
+dev.off()
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_KO_greylist_LibCSIFScaled_LIB_contrast2.pdf", width=14, height=20) 
+dba.plotBox(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_KO_greylist_LibCSIFScaled_LIB_contrast3.pdf", width=14, height=20) 
+dba.plotBox(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+
+
+## Export the Diff Bind regions
+### Convert to GR object
+sample_count_KO_greylist_LibCSIFScaled_LIB_contrast1 <- dba.report(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+sample_count_KO_greylist_LibCSIFScaled_LIB_contrast2 <- dba.report(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+sample_count_KO_greylist_LibCSIFScaled_LIB_contrast3 <- dba.report(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+### Convert to bed and exportsample_model__blackgreylist_histone_norm_report_contrast1
+sample_count_KO_greylist_LibCSIFScaled_LIB_contrast1_df <- data.frame(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast1)
+sample_count_KO_greylist_LibCSIFScaled_LIB_contrast2_df <- data.frame(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast2)
+sample_count_KO_greylist_LibCSIFScaled_LIB_contrast3_df <- data.frame(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast3)
+
+colnames(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast1_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_KO", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast2_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_KO", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast3_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_KO", "Conc_KO", "Fold", "p.value", "FDR")
+
+write.table(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast1_df, file="output/DiffBind/sample_count_KO_greylist_LibCSIFScaled_LIB_contrast1_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast2_df, file="output/DiffBind/sample_count_KO_greylist_LibCSIFScaled_LIB_contrast2_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_KO_greylist_LibCSIFScaled_LIB_contrast3_df, file="output/DiffBind/sample_count_KO_greylist_LibCSIFScaled_LIB_contrast3_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+```
+
+**time course effect** per genotype:
+    - WT: ESC vs NPC, ESC, 2dN,… --> (far less diff bound when using non-norm); LIB work far better; 2times more diff bound sites (DESEQ2/LIB n = 10016/0/10030; 2dNvsESC/2dNvsNPC/NPCvsESC)
+    - HET: ESC vs NPC, ESC, 2dN,… --> (far less diff bound when using non-norm); LIB work far better; 2times more diff bound sites (DESEQ2/LIB n = 6354/2/6474; 2dNvsESC/2dNvsNPC/NPCvsESC)
+    - KO: ESC vs NPC, ESC, 2dN,… --> (far less diff bound when using non-norm); LIB work far better; 2times more diff bound sites (DESEQ2/LIB n = 5916/5/5586)
+
+
+--> Overall for all genotype almost no difference for NPC and 2dN but a lot for ESC vs NPC/2dN. Most of the sites are increased in H3K27me3 upon differentation (in agreement with the biology); a bit more mark for WT
+
+
+**genotype effect over the time course**
+Let's try to use the 'block' parameter (see [here](https://support.bioconductor.org/p/61354/)) to identify diff bound sites between genotypes over the time-course
+```R
+## Load the greylist
+load("output/DiffBind/sample_count_all_greylist.RData")
+
+sample_count_all_greylist
+
+## plot greylist
+pdf("output/DiffBind/clustering_all_greylist.pdf", width=14, height=20)
+plot(sample_count_all_greylist)
+dev.off()
+
+pdf("output/DiffBind/PCA_all_greylist.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_all_greylist,DBA_TREATMENT, label=c(DBA_CONDITION))
+dev.off()
+
+
+
+## Lib-size ChIPseqSpikeInFree norm (
+
+sample_count_all_greylist_LibCSIFScaled_LIB = dba.normalize(sample_count_all_greylist, library = c(139649080,117855644,85211139,71964648,92471024,102739426,903163124,1554734579,865310316,909621058,636778842,343291724,45678566,118275343,105251783,223394867,112663109,108911344), normalize = DBA_NORM_LIB) # Default
+
+
+pdf("output/DiffBind/clustering_all_greylist_LibCSIFScaled_LIB.pdf", width=14, height=20)
+plot(sample_count_all_greylist_LibCSIFScaled_LIB)
+dev.off()
+
+pdf("output/DiffBind/PCA_all_greylist_LibCSIFScaled_LIB.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_all_greylist_LibCSIFScaled_LIB,DBA_TREATMENT, label=DBA_CONDITION)
+dev.off()
+
+
+## TMM ChIPseqSpikeInFree norm 
+
+sample_count_all_greylist_LibCSIFScaled_TMM = dba.normalize(sample_count_all_greylist, library = c(139649080,117855644,85211139,71964648,92471024,102739426,903163124,1554734579,865310316,909621058,636778842,343291724,45678566,118275343,105251783,223394867,112663109,108911344), normalize = DBA_NORM_TMM) # Default
+
+
+pdf("output/DiffBind/clustering_all_greylist_LibCSIFScaled_TMM.pdf", width=14, height=20)
+plot(sample_count_all_greylist_LibCSIFScaled_TMM)
+dev.off()
+
+pdf("output/DiffBind/PCA_all_greylist_LibCSIFScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_all_greylist_LibCSIFScaled_TMM,DBA_TREATMENT, label=DBA_CONDITION)
+dev.off()
+
+
+## RLE ChIPseqSpikeInFree norm 
+
+sample_count_all_greylist_LibCSIFScaled_RLE = dba.normalize(sample_count_all_greylist, library = c(139649080,117855644,85211139,71964648,92471024,102739426,903163124,1554734579,865310316,909621058,636778842,343291724,45678566,118275343,105251783,223394867,112663109,108911344), normalize = DBA_NORM_RLE) # Default
+
+
+pdf("output/DiffBind/clustering_all_greylist_LibCSIFScaled_RLE.pdf", width=14, height=20)
+plot(sample_count_all_greylist_LibCSIFScaled_RLE)
+dev.off()
+
+pdf("output/DiffBind/PCA_all_greylist_LibCSIFScaled_RLE.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_all_greylist_LibCSIFScaled_RLE,DBA_TREATMENT, label=DBA_CONDITION)
+dev.off()
+
+
+# Time-course analyses
+
+
+sample_count_all_greylist_LibCSIFScaled_LIB = dba.normalize(sample_count_all_greylist, library = c(139649080,117855644,85211139,71964648,92471024,102739426,903163124,1554734579,865310316,909621058,636778842,343291724,45678566,118275343,105251783,223394867,112663109,108911344), normalize = DBA_NORM_LIB) # Default
+
+
+sample_count_all_greylist_LibCSIFScaled_LIB_contrast = dba.contrast(sample_count_all_greylist_LibCSIFScaled_LIB, minMembers=2, , design = "~Condition + Treatment", reorderMeta = list(Condition="ESC",Treatment="WT"))
+
+sample_count_all_greylist_LibCSIFScaled_LIB_contrast_analyze = dba.analyze(sample_count_all_greylist_LibCSIFScaled_LIB_contrast, method=DBA_ALL_METHODS, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+## Retrive the diff-sites for the genotypes differences (contrast 5 and 6 = HETvsWT and KOvsWT)
+
+## Export the Diff Bind regions
+### Convert to GR object
+sample_count_all_greylist_LibCSIFScaled_LIB_contrast5 <- dba.report(sample_count_all_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=5)
+sample_count_all_greylist_LibCSIFScaled_LIB_contrast6 <- dba.report(sample_count_all_greylist_LibCSIFScaled_LIB_contrast_analyze,method=DBA_DESEQ2,contrast=6)
+
+### Convert to bed and exportsample_model__blackgreylist_histone_norm_report_contrast1
+sample_count_all_greylist_LibCSIFScaled_LIB_contrast5_df <- data.frame(sample_count_all_greylist_LibCSIFScaled_LIB_contrast5)
+sample_count_all_greylist_LibCSIFScaled_LIB_contrast6_df <- data.frame(sample_count_all_greylist_LibCSIFScaled_LIB_contrast6)
+
+
+colnames(sample_count_all_greylist_LibCSIFScaled_LIB_contrast5_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_KO", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_all_greylist_LibCSIFScaled_LIB_contrast6_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_KO", "Conc_KO", "Fold", "p.value", "FDR")
+
+
+write.table(sample_count_all_greylist_LibCSIFScaled_LIB_contrast5_df, file="output/DiffBind/sample_count_all_greylist_LibCSIFScaled_LIB_contrast5_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_all_greylist_LibCSIFScaled_LIB_contrast6_df, file="output/DiffBind/sample_count_all_greylist_LibCSIFScaled_LIB_contrast6_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+
+
 
 
 
 ```
+
+--> Clustering is not amazing, ESC WT clearly separated; then ESC mutants then the other samples.
+
+--> 2dNvsESC/2dNvsNPC/ESCvsNPC/HETvsKO/HETvsWT/KOvsWT : n DESEQ2/LIB = 35256/0/35210/0/99/862
+
+--> On IGV the diff look real
+
+To go further, we will need to use the deseq2 time-course pipeline I used for RNAseq: XXX
 
 
 # ChIPseeker
