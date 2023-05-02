@@ -520,6 +520,20 @@ sbatch scripts/BedScaledToBigwig_uniqueSF_2.sh # 12390184 ok
 
 --> The bigwig looks great! We observed increase signal from ESC to 2dN that we cannot observe when using the raw bigwig! Also we see decrease H3K27me3 signal in ESC vs mutants
 
+Let's merge the bigwig into 1 file with wiggletools (will do average of bigwig signal and not sum, many options see [github](https://github.com/Ensembl/WiggleTools)):
+
+**Installation wiggletools:**
+```bash
+conda activate BedToBigwig
+conda install -c bioconda wiggletools
+```
+**Run wiggletools:**
+```bash
+conda activate BedToBigwig
+sbatch scripts/bigwigmerge_uniqueSF.sh # 12450081 XXX
+sbatch scripts/bigwigmerge_uniqueSF_input.sh # FUCK THE INPUT, we do not care about them as not ChIPseqSpikeInFree norm...
+```
+*NOTE: bigwig are merge into 1 bedgraph which is then converted into 1 bigwig (wiggletools cannot output bigwig directly so need to pass by bedgraph or wiggle in between)*
 
 
 # Coverage bigwig file

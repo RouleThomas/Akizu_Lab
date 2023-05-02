@@ -581,7 +581,7 @@ sbatch scripts/bamtobigwig_histone_scaled_patient.sh # 11858339 ok
 --> The bigwig spike-in normalized are very heterogeneous between replicates; smthing is wrong...
 
 
-What is wrong is that I should have use the reciprocal (1/n) and not n as scaling factor... Let' correct and save into output/bigwig_histone_NotGenotypeGroup (This is the true bigwig good to use, better than the *groupABgenotype* one)
+What is wrong is that I should have use the reciprocal (1/n) and not n as scaling factor... Let' correct and save into `output/bigwig_histone_NotGenotypeGroup` (This is the true bigwig good to use, better than the *groupABgenotype* one)
 
 ```bash
 conda activate deeptools
@@ -591,6 +591,23 @@ sbatch scripts/bamtobigwig_histone_scaled_KO_reciprocal.sh # 12370044 ok
 sbatch scripts/bamtobigwig_histone_scaled_patient_reciprocal.sh # 12370043 ok
 ```
 
+But that is not perfect yet as library size is not the same for all samples, for accurate comparison, we need the same final library size after spike in correction
+
+```bash
+conda activate BedToBigwig
+sbatch scripts/bamtobigwig_histone_scaled_lib.sh # 12447710 ok
+```
+
+Save in `output/bigwig_histone_NotGenotypeGroup_lib`, the correct scaling factor to use are the `output/spikein/spikein_histone_groupABgenotype_scaling_factor.txt`.
+
+Let's merge the bigwig into 1 file with wiggletools (will do average of bigwig signal and not sum, many options see [github](https://github.com/Ensembl/WiggleTools)):
+
+**Run wiggletools:**
+```bash
+conda activate BedToBigwig
+sbatch scripts/bigwigmerge_histone_NotGenotypeGroup_lib.sh # 12450108 XXX
+```
+*NOTE: bigwig are merge into 1 bedgraph which is then converted into 1 bigwig (wiggletools cannot output bigwig directly so need to pass by bedgraph or wiggle in between)*
 
 
 
@@ -2551,9 +2568,10 @@ IDR can only handle 2 replicates... We can either do 2 per 2 comparison and keep
 
 Re-run MACS2 but in pool to have 1 file per condition (keep blacklist and qval2.30103 (0.005) filtering):
 ```bash
-sbatch scripts/macs2_pool.sh # XXX
+sbatch scripts/macs2_pool.sh # 12447366 XXX
 
 ```
+*NOTE: for patient, I only take Rep1 as Rep2 failed, no enrichment*
 
 --> The file looks XXX
 
