@@ -2568,15 +2568,23 @@ IDR can only handle 2 replicates... We can either do 2 per 2 comparison and keep
 
 Re-run MACS2 but in pool to have 1 file per condition (keep blacklist and qval2.30103 (0.005) filtering):
 ```bash
-sbatch scripts/macs2_pool.sh # 12447366 XXX
-
+sbatch scripts/macs2_pool.sh # 12447366 ok
 ```
 *NOTE: for patient, I only take Rep1 as Rep2 failed, no enrichment*
 
---> The file looks XXX
+Now let's filter out blacklist and qvalue:
+```bash
+sbatch scripts/macs2_pool_peak_signif.sh # ok
+
+```
+*NOTE: I relaunch the script and changed the qvalue; 2.30103 (q0.005) is good as observed looking at individual replicates*
+
+
+
+
 
 ## Run ChIPseeker
-
+ChIPseeker docu [here for plotAvgProf and heatmap around TSS](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/chipseeker_visualization.html) and [here more information](https://bioconductor.statistik.tu-dortmund.de/packages/3.7/bioc/vignettes/ChIPseeker/inst/doc/ChIPseeker.html)
 
 For **ChIPseeker**, use **conda base and R 4.2.2 module**
 ```bash
@@ -2586,13 +2594,138 @@ module load R/4.2.2
 
 ```R
 library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
 
 # Import peaks
-peaks_WT =  read.table('output/macs2/broad_blacklist_qval2.3/') %>% rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9, peak=V10) # Import and rename columns
+peaks_WT =  read.table('output/macs2/broad_blacklist_qval2.30103/8wN_WT_H3K27me3_pool_peaks.broadPeak') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9) 
+peaks_KO =  read.table('output/macs2/broad_blacklist_qval2.30103/8wN_KO_H3K27me3_pool_peaks.broadPeak') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9) 
+peaks_HET =  read.table('output/macs2/broad_blacklist_qval2.30103/8wN_HET_H3K27me3_pool_peaks.broadPeak') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9) 
+peaks_patient =  read.table('output/macs2/broad_blacklist_qval2.30103/8wN_iPSCpatient_H3K27me3_pool_peaks.broadPeak') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9) 
+
+
+
+
 
 # Tidy peaks
-peaks.gr = makeGRangesFromDataFrame(peaks_EMF2,keep.extra.columns=TRUE)
+WT_gr = makeGRangesFromDataFrame(peaks_WT,keep.extra.columns=TRUE)
+KO_gr = makeGRangesFromDataFrame(peaks_KO,keep.extra.columns=TRUE)
+HET_gr = makeGRangesFromDataFrame(peaks_HET,keep.extra.columns=TRUE)
+patient_gr = makeGRangesFromDataFrame(peaks_patient,keep.extra.columns=TRUE)
+
+gr_list <- list(WT=WT_gr, KO=KO_gr, HET=HET_gr, patient=patient_gr)
+
+# Isolate TSS regions
+promoter <- getPromoters(TxDb=txdb, upstream=10000, downstream=10000) # region around TSS
+
+# Calculate the tag matrix
+tagMatrixList <- lapply(gr_list, getTagMatrix, windows=promoter)
+
+
+# Vizualization
+## Profile plots around TSS
+### Profile
+pdf("output/ChIPseeker/profile_TSS_10kb.pdf", width=14, height=20)
+plotAvgProf(tagMatrixList, xlim=c(-10000, 10000), conf=0.95,resample=200, facet="row") # last 10-15min
+dev.off()
+### Heatmap
+pdf("output/ChIPseeker/heatmap_TSS_10kb.pdf", width=14, height=20)
+tagHeatmap(tagMatrixList, xlim=c(-10000, 10000), color=NULL)
+dev.off()
+
+## Profile plots around gene body
+### Profile
+pdf("output/ChIPseeker/profile_gene_body.pdf", width=14, height=20)
+plotPeakProf2(peak = gr_list, upstream = rel(0.2), downstream = rel(0.2),    # last 10-15min
+             conf = 0.95, by = "gene", type = "body", nbin = 100,
+             TxDb = txdb, ignore_strand = F) # nbin = filter out peak smaller than 100
+dev.off()
+
+
+## Genomic Annotation ONE BY ONE
+peakAnno_WT <- annotatePeak(WT_gr, tssRegion=c(-3000, 3000),
+                         TxDb=txdb, annoDb="org.Hs.eg.db")
+peakAnno_KO <- annotatePeak(KO_gr, tssRegion=c(-3000, 3000),
+                         TxDb=txdb, annoDb="org.Hs.eg.db")
+peakAnno_HET <- annotatePeak(HET_gr, tssRegion=c(-3000, 3000),
+                         TxDb=txdb, annoDb="org.Hs.eg.db")
+peakAnno_patient <- annotatePeak(patient_gr, tssRegion=c(-3000, 3000),
+                         TxDb=txdb, annoDb="org.Hs.eg.db")
+### Pie
+pdf("output/ChIPseeker/annotation_pie_WT.pdf", width=14, height=20)
+plotAnnoPie(peakAnno_WT)
+dev.off()
+pdf("output/ChIPseeker/annotation_pie_KO.pdf", width=14, height=20)
+plotAnnoPie(peakAnno_KO)
+dev.off()
+pdf("output/ChIPseeker/annotation_pie_HET.pdf", width=14, height=20)
+plotAnnoPie(peakAnno_HET)
+dev.off()
+pdf("output/ChIPseeker/annotation_pie_patient.pdf", width=14, height=20)
+plotAnnoPie(peakAnno_patient)
+dev.off()
+
+### Barplot
+pdf("output/ChIPseeker/annotation_barplot_WT.pdf", width=14, height=5)
+plotAnnoBar(peakAnno_WT)
+dev.off()
+pdf("output/ChIPseeker/annotation_barplot_KO.pdf", width=14, height=5)
+plotAnnoBar(peakAnno_KO)
+dev.off()
+pdf("output/ChIPseeker/annotation_barplot_HET.pdf", width=14, height=5)
+plotAnnoBar(peakAnno_HET)
+dev.off()
+pdf("output/ChIPseeker/annotation_barplot_patient.pdf", width=14, height=5)
+plotAnnoBar(peakAnno_patient)
+dev.off()
+
+### Vennpie
+pdf("output/ChIPseeker/annotation_vennpie_WT.pdf", width=14, height=20)
+vennpie(peakAnno_WT)
+dev.off()
+pdf("output/ChIPseeker/annotation_vennpie_KO.pdf", width=14, height=20)
+vennpie(peakAnno_KO)
+dev.off()
+pdf("output/ChIPseeker/annotation_vennpie_HET.pdf", width=14, height=20)
+vennpie(peakAnno_HET)
+dev.off()
+pdf("output/ChIPseeker/annotation_vennpie_patient.pdf", width=14, height=20)
+vennpie(peakAnno_patient)
+dev.off()
+
+### Upsetplot # Need upset plot package, not dramatic weird looking...
+pdf("output/ChIPseeker/annotation_upsetplot_WT.pdf", width=14, height=20)
+upsetplot(peakAnno_WT, vennpie=TRUE)
+dev.off()
+
+
+## Peak distance to TSS
+pdf("output/ChIPseeker/DistToTSS_WT.pdf", width=14, height=20)
+plotDistToTSS(peakAnno_WT,
+              title="Distribution of H3K27me3\nrelative to TSS")
+dev.off()
+pdf("output/ChIPseeker/DistToTSS_KO.pdf", width=14, height=20)
+plotDistToTSS(peakAnno_KO,
+              title="Distribution of H3K27me3\nrelative to TSS")
+dev.off()
+pdf("output/ChIPseeker/DistToTSS_HET.pdf", width=14, height=20)
+plotDistToTSS(peakAnno_HET,
+              title="Distribution of H3K27me3\nrelative to TSS")
+dev.off()
+pdf("output/ChIPseeker/DistToTSS_patient.pdf", width=14, height=20)
+plotDistToTSS(peakAnno_patient,
+              title="Distribution of H3K27me3\nrelative to TSS")
+dev.off()
+
+
+## Genomic Annotation ALL TOGETHER
+
+XXX see : https://bioconductor.statistik.tu-dortmund.de/packages/3.7/bioc/vignettes/ChIPseeker/inst/doc/ChIPseeker.html
+
+
 
 ```
-
+*NOTE: the `resample` in `plotAvgProf()` is how many time you bootstrap; nb need to be a divisor of the total nb of datapoint (eg. 100/200 for 20k datapoints (=-1000/1000) is ok, but 500 is not)*
 
