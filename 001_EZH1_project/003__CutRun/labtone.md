@@ -605,7 +605,7 @@ Let's merge the bigwig into 1 file with wiggletools (will do average of bigwig s
 **Run wiggletools:**
 ```bash
 conda activate BedToBigwig
-sbatch scripts/bigwigmerge_histone_NotGenotypeGroup_lib.sh # 12450108 XXX
+sbatch scripts/bigwigmerge_histone_NotGenotypeGroup_lib.sh # 12450108 ok
 ```
 *NOTE: bigwig are merge into 1 bedgraph which is then converted into 1 bigwig (wiggletools cannot output bigwig directly so need to pass by bedgraph or wiggle in between)*
 

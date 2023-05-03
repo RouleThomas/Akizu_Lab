@@ -4113,7 +4113,7 @@ dev.off()
 --> We expected the KO to be less mature, and that is the case; however, the HET does not mature faster than WT, **at least when looking at these specific marker genes**
 
 
-# Clean code to check TPM of individual genes
+# Clean code to check TPM of individual genes (gene expression)
 ```R
 # Load packages
 library("tidyverse")
@@ -4188,6 +4188,29 @@ tpm_all_sample_tidy_gene_name_stat %>%
     ggtitle("") +
     scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green", "iPSCWT" = "black", "iPSCpatient" = "orange"))
 dev.off()
+
+
+
+tpm_all_sample_tidy_gene_name_stat <- tpm_all_sample_tidy_gene_name %>%
+  filter(gene_name %in% c("NEUROG1", "NEUROG2")) %>%
+  select(-replicate) %>%
+  group_by(gene_id, gene_name, time, genotype) %>%
+  summarise(mean=mean(tpm), median= median(tpm), SD=sd(tpm), n=n(), SE=SD/sqrt(n)) 	
+pdf("output/deseq2/genes_NEUROG.pdf", width=8, height=5)
+tpm_all_sample_tidy_gene_name_stat %>%
+  filter(gene_name %in% c("NEUROG1", "NEUROG2"),
+         genotype %in% c("WT", "KO", "HET")) %>%
+    ggplot(., aes(x = time, y = mean, group = genotype)) +
+    geom_line(aes(color=genotype), size=0.75) +
+    geom_errorbar(aes(ymin = mean-SE, ymax = mean+SE,color=genotype), width=.2) +
+    geom_point(aes(y = mean,color=genotype), size = .75, shape = 15) +
+    theme_bw() +
+    facet_wrap(~gene_name, nrow = 1, scale = "free")  +	
+    ylab(label = "tpm") +
+    ggtitle("") +
+    scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green", "iPSCWT" = "black", "iPSCpatient" = "orange"))
+dev.off()
+
 
 
 # Filtered some replicate
@@ -4620,11 +4643,22 @@ Let's generate **TPM coverage**:
 ```bash
 conda activate deeptools
 # run time-per-time:
-sbatch scripts/TPM_bw_hg38_1.sh # 12377715 
-sbatch scripts/TPM_bw_hg38_2.sh # 12377716
+sbatch scripts/TPM_bw_hg38_1.sh # 12377715 ok
+sbatch scripts/TPM_bw_hg38_2.sh # 12377716 ok
 ```
 
-XXX
+
+Let's merge the bigwig into 1 file with wiggletools (will do average of bigwig signal and not sum, many options see [github](https://github.com/Ensembl/WiggleTools)):
+
+
+**Run wiggletools:**
+```bash
+conda activate BedToBigwig
+sbatch scripts/bigwigmerge_TPM.sh # 12452262 ok 
+```
+*NOTE: bigwig are merge into 1 bedgraph which is then converted into 1 bigwig (wiggletools cannot output bigwig directly so need to pass by bedgraph or wiggle in between)*
+
+
 
 # Calculate TPM and RPKM
 

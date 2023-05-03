@@ -530,7 +530,7 @@ conda install -c bioconda wiggletools
 **Run wiggletools:**
 ```bash
 conda activate BedToBigwig
-sbatch scripts/bigwigmerge_uniqueSF.sh # 12450081 XXX
+sbatch scripts/bigwigmerge_uniqueSF.sh # 12450081 ok
 sbatch scripts/bigwigmerge_uniqueSF_input.sh # FUCK THE INPUT, we do not care about them as not ChIPseqSpikeInFree norm...
 ```
 *NOTE: bigwig are merge into 1 bedgraph which is then converted into 1 bigwig (wiggletools cannot output bigwig directly so need to pass by bedgraph or wiggle in between)*
