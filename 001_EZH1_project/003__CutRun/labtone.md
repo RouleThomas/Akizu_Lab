@@ -2584,7 +2584,7 @@ sbatch scripts/macs2_pool_peak_signif.sh # ok
 
 
 ## Run ChIPseeker
-ChIPseeker docu [here for plotAvgProf and heatmap around TSS](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/chipseeker_visualization.html) and [here more information](https://bioconductor.statistik.tu-dortmund.de/packages/3.7/bioc/vignettes/ChIPseeker/inst/doc/ChIPseeker.html)
+ChIPseeker docu [here for plotAvgProf and heatmap around TSS](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/chipseeker_visualization.html) and [here more information plot and functional analyses](https://bioconductor.statistik.tu-dortmund.de/packages/3.7/bioc/vignettes/ChIPseeker/inst/doc/ChIPseeker.html) and [here for peak assignment](https://hbctraining.github.io/In-depth-NGS-Data-Analysis-Course/sessionV/lessons/12_annotation_functional_analysis.html)
 
 For **ChIPseeker**, use **conda base and R 4.2.2 module**
 ```bash
@@ -2598,15 +2598,15 @@ library("tidyverse")
 library("TxDb.Hsapiens.UCSC.hg38.knownGene")
 txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
 library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+
 
 # Import peaks
 peaks_WT =  read.table('output/macs2/broad_blacklist_qval2.30103/8wN_WT_H3K27me3_pool_peaks.broadPeak') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9) 
 peaks_KO =  read.table('output/macs2/broad_blacklist_qval2.30103/8wN_KO_H3K27me3_pool_peaks.broadPeak') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9) 
 peaks_HET =  read.table('output/macs2/broad_blacklist_qval2.30103/8wN_HET_H3K27me3_pool_peaks.broadPeak') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9) 
 peaks_patient =  read.table('output/macs2/broad_blacklist_qval2.30103/8wN_iPSCpatient_H3K27me3_pool_peaks.broadPeak') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9) 
-
-
-
 
 
 # Tidy peaks
@@ -2626,14 +2626,28 @@ tagMatrixList <- lapply(gr_list, getTagMatrix, windows=promoter)
 
 # Vizualization
 ## Profile plots around TSS
-### Profile
+### Profile multiple plot
 pdf("output/ChIPseeker/profile_TSS_10kb.pdf", width=14, height=20)
 plotAvgProf(tagMatrixList, xlim=c(-10000, 10000), conf=0.95,resample=200, facet="row") # last 10-15min
+dev.off()
+### Profile one plot
+pdf("output/ChIPseeker/profile_oneplot_TSS_10kb.pdf", width=14, height=14)
+plotAvgProf(tagMatrixList, xlim=c(-10000, 10000))
+dev.off()
+
+promoter <- getPromoters(TxDb=txdb, upstream=50000, downstream=50000) # region around TSS
+tagMatrixList <- lapply(gr_list, getTagMatrix, windows=promoter)
+pdf("output/ChIPseeker/profile_oneplot_TSS_50kb.pdf", width=14, height=14)
+plotAvgProf(tagMatrixList, xlim=c(-50000, 50000))
 dev.off()
 ### Heatmap
 pdf("output/ChIPseeker/heatmap_TSS_10kb.pdf", width=14, height=20)
 tagHeatmap(tagMatrixList, xlim=c(-10000, 10000), color=NULL)
 dev.off()
+pdf("output/ChIPseeker/heatmap_TSS_50kb.pdf", width=14, height=20) # last 30min + failed with 150g memory; work with 400g 
+tagHeatmap(tagMatrixList, xlim=c(-50000, 50000), color=NULL)
+dev.off()
+
 
 ## Profile plots around gene body
 ### Profile
@@ -2643,6 +2657,21 @@ plotPeakProf2(peak = gr_list, upstream = rel(0.2), downstream = rel(0.2),    # l
              TxDb = txdb, ignore_strand = F) # nbin = filter out peak smaller than 100
 dev.off()
 
+## Genomic Annotation ALL TOGETHER
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE)
+
+### Barplot
+pdf("output/ChIPseeker/annotation_barplot.pdf", width=14, height=5)
+plotAnnoBar(peakAnnoList)
+dev.off()
+### Barplot
+plotDistToTSS()
+
+## Peak distance to TSS
+pdf("output/ChIPseeker/DistToTSS.pdf", width=14, height=5)
+plotDistToTSS(peakAnnoList)
+dev.off()
 
 ## Genomic Annotation ONE BY ONE
 peakAnno_WT <- annotatePeak(WT_gr, tssRegion=c(-3000, 3000),
@@ -2720,12 +2749,109 @@ plotDistToTSS(peakAnno_patient,
 dev.off()
 
 
-## Genomic Annotation ALL TOGETHER
+# Functional profiles
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Fine-tune here gene peak assignemnt
 
-XXX see : https://bioconductor.statistik.tu-dortmund.de/packages/3.7/bioc/vignettes/ChIPseeker/inst/doc/ChIPseeker.html
+genes = lapply(peakAnnoList, function(i) as.data.frame(i)$geneId)
+names(genes) = sub("_", "\n", names(genes))
+
+## KEGG
+compKEGG <- compareCluster(geneCluster   = genes,
+                         fun           = "enrichKEGG",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
+
+pdf("output/ChIPseeker/functional_KEGG.pdf", width=7, height=15)
+dotplot(compKEGG, showCategory = 15, title = "KEGG Pathway Enrichment Analysis")
+dev.off()
+
+## GO
+compGO <- compareCluster(geneCluster   = genes,
+                         fun           = "enrichGO",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH",
+                         OrgDb         = "org.Hs.eg.db",
+                         ont           = "BP") # "BP" (Biological Process), "CC" (Cellular Component), or "MF" (Molecular Function)
+pdf("output/ChIPseeker/functional_GO_BP.pdf", width=7, height=15)
+dotplot(compGO, showCategory = 15, title = "GO_Biological Process Enrichment Analysis")
+dev.off()
+compGO <- compareCluster(geneCluster   = genes,
+                         fun           = "enrichGO",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH",
+                         OrgDb         = "org.Hs.eg.db",
+                         ont           = "CC") # "BP" (Biological Process), "8" (Cellular Component), or "MF" (Molecular Function)
+pdf("output/ChIPseeker/functional_GO_CC.pdf", width=7, height=15)
+dotplot(compGO, showCategory = 15, title = "GO_Cellular Component Enrichment Analysis")
+dev.off()
+compGO <- compareCluster(geneCluster   = genes,
+                         fun           = "enrichGO",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH",
+                         OrgDb         = "org.Hs.eg.db",
+                         ont           = "MF") # "BP" (Biological Process), "8" (Cellular Component), or "MF" (Molecular Function)
+pdf("output/ChIPseeker/functional_GO_MF.pdf", width=7, height=15)
+dotplot(compGO, showCategory = 15, title = "GO_Molecular Function Enrichment Analysis")
+dev.off()
 
 
+## Disease
+compDO <- compareCluster(geneCluster   = genes,
+                         fun           = "enrichDO",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
+pdf("output/ChIPseeker/functional_DO.pdf", width=7, height=15)
+dotplot(compDO, showCategory = 15, title = "Disease Ontology Enrichment Analysis")
+dev.off()
 
+## ReactomePA
+compReactome <- compareCluster(geneCluster   = genes,
+                               fun           = "enrichPathway",
+                               pvalueCutoff  = 0.05,
+                               pAdjustMethod = "BH",
+                               organism      = "human")
+pdf("output/ChIPseeker/functional_Reactome.pdf", width=7, height=15)
+dotplot(compReactome, showCategory = 15, title = "Reactome Pathway Enrichment Analysis")
+dev.off()
+
+# Overlap assigned genes btwn my gr_list
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Fine-tune here gene peak assignemnt
+
+genes= lapply(peakAnnoList, function(i) unique(as.data.frame(i)$geneId))
+
+pdf("output/ChIPseeker/overlap_genes.pdf", width=7, height=7)
+vennplot(genes)
+dev.off()
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## Get annotation data frame
+WT_annot <- as.data.frame(peakAnnoList[["WT"]]@anno)
+KO_annot <- as.data.frame(peakAnnoList[["KO"]]@anno)
+HET_annot <- as.data.frame(peakAnnoList[["HET"]]@anno)
+patient_annot <- as.data.frame(peakAnnoList[["patient"]]@anno)
+
+## Convert entrez gene IDs to gene symbols
+WT_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = WT_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+KO_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = KO_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+HET_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = HET_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+patient_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = patient_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+
+## Save output table
+write.table(WT_annot, file="output/ChIPseeker/annotation_WT.txt", sep="\t", quote=F, row.names=F)
+write.table(KO_annot, file="output/ChIPseeker/annotation_KO.txt", sep="\t", quote=F, row.names=F)
+write.table(HET_annot, file="output/ChIPseeker/annotation_HET.txt", sep="\t", quote=F, row.names=F)
+write.table(patient_annot, file="output/ChIPseeker/annotation_patient.txt", sep="\t", quote=F, row.names=F)
 ```
-*NOTE: the `resample` in `plotAvgProf()` is how many time you bootstrap; nb need to be a divisor of the total nb of datapoint (eg. 100/200 for 20k datapoints (=-1000/1000) is ok, but 500 is not)*
+*NOTE: the `resample` in `plotAvgProf()` is how many time you bootstrap; nb need to be a divisor of the total nb of datapoint (eg. 100/200 for 20k datapoints (=-1000/1000) is ok, but 500 is not)* \
+*NOTE: the gene peak assignment use the nearest TSS method, then other order of priority, all genes are assigned except if they do not fall into Promoter, 5’ UTR, 3’ UTR, Exon, Intron, Downstream. In such case peak assign as 'intergenic'*
+
+
+# deepTools ChIPseq vizualization
+
+Let's try to use deepTools to explore the data: tutorial [here](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/10_data_visualization.html) and here.
+
 
