@@ -54,3 +54,51 @@ __vte_prompt_command() {
 ```
 2. then `source ~/.bashrc`
 
+
+# Transfer to new cluster RES-RHEL-RH9HPC and conda env:
+## conda environment:
+
+### deseq2
+R/4.3.0 with deseq2 notably + following libraries:
+library("DESeq2")
+library("tidyverse") XXX
+library("RColorBrewer")
+library("pheatmap")
+library("apeglm")
+library("factoextra")
+library("gridExtra")
+library("rtracklayer")
+library("readxl")
+library("ggpubr")
+library("dendextend")
+library("clusterProfiler")
+library("pathview")
+library("DOSE")
+library("org.Hs.eg.db")
+library("enrichplot")
+
+
+### ChIPseqSpikeInFree
+R/3.6.1 with ChIPseqSpikeInFree notably + following libraries:
+library("Rsamtools")
+library("GenomicAlignments")
+library("ChIPseqSpikeInFree")
+
+
+### DiffBind
+R/4.1.0 DiffBind notably + following libraries:
+
+library("DiffBind") 
+library("csaw") 
+
+
+### featurecounts
+
+featurecounts
+
+### BedToBigwig
+
+bedtools, genomeCoverageBed, bedGraphToBigWig, wiggletools 
+
+
+

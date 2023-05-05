@@ -185,6 +185,7 @@ sbatch bowtie2_index.sh # 11351555 ok (~3 hours)
 ```bash
 module load picard/2.26.10-Java-15
 module load sam-bcf-tools/1.6
+module load SAMtools/1.16.1* # New cluster
 ```
 
 ## Mapping
@@ -420,7 +421,7 @@ Now run ChIPseqSpikeInFree: `conda activate ChIPseqSpikeInFree`:
 library("Rsamtools")
 library("GenomicAlignments")
 library("ChIPseqSpikeInFree")
-library("tidyverse")
+
 # Create sample_meta.txt; tab delimited format `output/ChIPseqSpikeInFree/sample_meta.txt
 metaFile <- "output/ChIPseqSpikeInFree/sample_meta.txt"
 bams <- c("output/bowtie2_endtoend/2dN_HET_H3K27me3_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/2dN_HET_H3K27me3_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/2dN_HET_input_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/2dN_HET_input_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/2dN_KO_H3K27me3_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/2dN_KO_H3K27me3_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/2dN_KO_input_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/2dN_KO_input_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/2dN_WT_H3K27me3_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/2dN_WT_H3K27me3_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/2dN_WT_input_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/2dN_WT_input_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_HET_H3K27me3_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_HET_H3K27me3_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_HET_input_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_HET_input_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_KO_H3K27me3_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_KO_H3K27me3_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_KO_input_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_KO_input_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_WT_H3K27me3_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_WT_H3K27me3_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_WT_H3K27me3_R3.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_WT_input_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_WT_input_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/ESC_WT_input_R3.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_HET_H3K27me3_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_HET_H3K27me3_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_HET_input_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_HET_input_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_KO_H3K27me3_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_KO_H3K27me3_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_KO_input_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_KO_input_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_WT_H3K27me3_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_WT_H3K27me3_R2.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_WT_input_R1.dupmark.sorted.bam", "output/bowtie2_endtoend/NPC_WT_input_R2.dupmark.sorted.bam")
@@ -2346,6 +2347,13 @@ In conda base; Install within R 4.2.2 module
 BiocManager::Install("ChIPseeker")
 library("ChIPseeker")
 ```
+
+**Re-install on the new cluster RES-RHEL-RH9HPC:**
+try running it with previous conda
+try in the deseq2 conda env first XXX
+
+If fail, 
+
 
 ## Run ChIPseeker
 

@@ -622,6 +622,7 @@ Install required packages and prepare meta files
 conda activate bowtie2
 conda install -c bioconda bedtools
 module load sam-bcf-tools/1.6
+module load SAMtools/1.16.1* # New cluster
 
 # Create a Tab delimited chr size file
 samtools faidx ../../Master/meta/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta # index genome
@@ -2850,8 +2851,41 @@ write.table(patient_annot, file="output/ChIPseeker/annotation_patient.txt", sep=
 *NOTE: the gene peak assignment use the nearest TSS method, then other order of priority, all genes are assigned except if they do not fall into Promoter, 5’ UTR, 3’ UTR, Exon, Intron, Downstream. In such case peak assign as 'intergenic'*
 
 
-# deepTools ChIPseq vizualization
+# deepTools CutRun vizualization
 
-Let's try to use deepTools to explore the data: tutorial [here](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/10_data_visualization.html) and here.
+Let's try to use deepTools to explore the data: tutorial [here](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/10_data_visualization.html) and [here](https://deeptools.readthedocs.io/en/develop/content/tools/computeMatrix.html#reference-point).
 
 
+DeepTools can used bed or bigwig to estimate signal (heatmap or profile) around a point of interest (eg. TSS). Let's use our **median-histone-scaled bigwig**! Generate a matrix for WT,KO,HET and WT,KO,HET,patient for 10 and 50kb around the TSS.
+
+
+```bash
+conda activate deeptools
+
+# example for 1 file 10kb up down TSS:
+computeMatrix reference-point --referencePoint TSS \
+-b 10000 -a 10000 \
+-R [GTF] \
+-S [all bigwig] \
+--skipZeros \
+--blackListFileName [BED] \
+-o ~/chipseq/results/visualization/matrixNanog_TSS_chr12.gz \
+-p 6 \
+--outFileSortedRegions ~/chipseq/results/visualization/regions_TSS_chr12.bed
+
+# Run the different matrix using 200g mem each
+## 10kb
+sbatch scripts/matrix_TSS_10kb_all.sh # include the patient # 15041 XXX
+sbatch scripts/matrix_TSS_10kb.sh # 15042 XXX
+
+## 50kb
+sbatch scripts/matrix_TSS_50kb_all.sh # 15043 XXX
+sbatch scripts/matrix_TSS_50kb.sh # 15044 XXX
+
+## 10kb replicates
+sbatch scripts/matrix_WT_Rep_10kb.sh # 15045 XXX
+sbatch scripts/matrix_KO_Rep_10kb.sh # 15046 XXX
+sbatch scripts/matrix_HET_Rep_10kb.sh # 15047 XXX
+```
+
+XXX

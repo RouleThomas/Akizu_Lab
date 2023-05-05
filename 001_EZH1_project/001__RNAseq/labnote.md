@@ -77,6 +77,21 @@ cp ~/.bashrc ~/.bashrc.backup
 nano ~/.bashrc # add: export PATH=$PATH:/scr1/users/roulet/Akizu_Lab/Master/software/FastQC
 # Restart terminal
 ```
+
+Re-installation new cluster, failed with `FindBin is missing`; need to install it with Perl
+```bash
+module load Perl/5.34.1-GCCcore-11.3.0
+# Install a Perl module
+cpanm FindBin
+
+
+find /home/roulet/perl5/ -name \*FindBin\*
+
+
+
+```
+*NOTE: if error is link to perl and software missing use the same method to install Perl-dependent modules*
+
 Run fastqc
 ```bash
 # example for 1 file:
@@ -133,6 +148,7 @@ Data are unstranded.
 hg19 genome with 12CPU and 50G mem (time=<1.5day)
 ```bash
 module load STAR/2.7.3a-GCC-9.3.0
+module load STAR/2.7.10b # New cluster
 # command
 STAR --runThreadN 12 \
 	--runMode genomeGenerate \
@@ -151,6 +167,7 @@ Keep standard parameter as adapted for mammalian genome. Some examples [here](ht
 Mapping
 ```bash
 module load STAR/2.7.3a-GCC-9.3.0
+module load STAR/2.7.10b # New cluster
 # example for 1 file:
 STAR --genomeDir ../../Master/meta/STAR_hg19/ \
 	--runThreadN 12 \
@@ -171,6 +188,7 @@ sbatch scripts/STAR_raw_8wN.sh # 11061920, 11065422
 Mapping
 ```bash
 module load STAR/2.7.3a-GCC-9.3.0
+module load STAR/2.7.10b # New cluster
 # example for 1 file:
 STAR --genomeDir ../../Master/meta/STAR_hg19/ \
 	--runThreadN 12 \
@@ -384,6 +402,23 @@ All these commands failed. So create environment with R/4.2.2 and install it wit
 if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 ```
+
+**Re-install on the new cluster RES-RHEL-RH9HPC:**
+Create a **deseq2; conda environment**
+```bash
+conda create -n deseq2 -c conda-forge r-base=4.2.2
+```
+Go in R and install deseq2:
+```R
+install.packages("tidyverse")
+
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("DESeq2")
+```
+
+
 # PCA and clustering with deseq2
 *NOTE: Tons of deseq2 ressource [here](http://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html) and [here](https://f1000research.com/articles/4-1070/v2).*
 
