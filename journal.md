@@ -59,34 +59,34 @@ __vte_prompt_command() {
 ## conda environment:
 
 ### deseq2
-R/4.3.0 with deseq2 notably + following libraries:
+R/4.3.0 with **deseq2** and **ChIPseeker** notably + following libraries:
 library("DESeq2")
-library("tidyverse") XXX
+library("tidyverse") 
 library("RColorBrewer")
-library("pheatmap")
-library("apeglm")
-library("factoextra")
+library("pheatmap") 
+library("apeglm") 
+library("factoextra") 
 library("gridExtra")
-library("rtracklayer")
-library("readxl")
+library("rtracklayer") 
+library("readxl") 
 library("ggpubr")
-library("dendextend")
-library("clusterProfiler")
-library("pathview")
+library("dendextend") 
+library("clusterProfiler") 
+library("pathview") 
 library("DOSE")
-library("org.Hs.eg.db")
+library("org.Hs.eg.db") 
 library("enrichplot")
-
+library("ChIPseeker")
 
 ### ChIPseqSpikeInFree
-R/3.6.1 with ChIPseqSpikeInFree notably + following libraries:
+R/3.6.1 with **ChIPseqSpikeInFree** notably + following libraries:
 library("Rsamtools")
 library("GenomicAlignments")
 library("ChIPseqSpikeInFree")
 
 
 ### DiffBind
-R/4.1.0 DiffBind notably + following libraries:
+R/4.1.0 **DiffBind** notably + following libraries:
 
 library("DiffBind") 
 library("csaw") 
@@ -94,11 +94,11 @@ library("csaw")
 
 ### featurecounts
 
-featurecounts
+**featurecounts**
 
 ### BedToBigwig
 
-bedtools, genomeCoverageBed, bedGraphToBigWig, wiggletools 
+**bedtools**, **genomeCoverageBed**, **bedGraphToBigWig**, **wiggletools** 
 
 
 

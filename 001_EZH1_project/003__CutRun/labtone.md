@@ -2873,7 +2873,7 @@ computeMatrix reference-point --referencePoint TSS \
 -p 6 \
 --outFileSortedRegions ~/chipseq/results/visualization/regions_TSS_chr12.bed
 
-# Run the different matrix using 200g mem each
+# Run the different matrix using 200g mem each (last < XXX hrs)
 ## 10kb
 sbatch scripts/matrix_TSS_10kb_all.sh # include the patient # 15041 XXX
 sbatch scripts/matrix_TSS_10kb.sh # 15042 XXX

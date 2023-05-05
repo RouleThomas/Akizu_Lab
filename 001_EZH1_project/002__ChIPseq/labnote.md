@@ -2323,11 +2323,6 @@ colnames(sample_count_all_greylist_LibCSIFScaled_LIB_contrast6_df) <- c("seqname
 
 write.table(sample_count_all_greylist_LibCSIFScaled_LIB_contrast5_df, file="output/DiffBind/sample_count_all_greylist_LibCSIFScaled_LIB_contrast5_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
 write.table(sample_count_all_greylist_LibCSIFScaled_LIB_contrast6_df, file="output/DiffBind/sample_count_all_greylist_LibCSIFScaled_LIB_contrast6_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
-
-
-
-
-
 ```
 
 --> Clustering is not amazing, ESC WT clearly separated; then ESC mutants then the other samples.
@@ -2360,6 +2355,44 @@ If fail,
 
 
 
+
+## Pool the peak into 1 file
+We could use IDR to pool our replicates and identify 'high-confidence' peak (used in the ENCODE pipeline)
+
+[Tutorial](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/07_handling-replicates-idr.html) and [github](https://github.com/nboley/idr) for IDR.
+
+**Generate peak files:**
+qvalue 2.3 (0.005) was optimal for CutRun:
+
+```bash
+conda activate idr
+
+idr --samples output/macs2/broad_blacklist_qval2.30103/8wN_WT_H3K27me3_R1_peaks.broadPeak \
+    output/macs2/broad_blacklist_qval2.30103/8wN_WT_H3K27me3_R2_peaks.broadPeak \
+    output/macs2/broad_blacklist_qval2.30103/8wN_WT_H3K27me3_R3_peaks.broadPeak \
+    output/macs2/broad_blacklist_qval2.30103/8wN_WT_H3K27me3_R4_peaks.broadPeak \
+    --input-file-type broadPeak \
+    --output-file output/idr/8wN_WT_H3K27me3_idr \
+    --plot \
+    --log-output-file output/idr/8wN_WT_H3K27me3_idr.log
+```
+But for homogeneity as I cannot use IDR for CutRun as more than 4 replicates let's use instead macs2 directly.
+
+
+Re-run MACS2 but in pool to have 1 file per condition (keep blacklist and qval2.30103 (0.005) filtering):
+```bash
+sbatch scripts/macs2_pool.sh # 15059 XXX
+```
+*NOTE: for ESC WT I took Rep1 and Rep2 only (as Rep3 is another WT clone)*
+
+XXX
+
+
+Now let's filter out blacklist and qvalue:
+```bash
+sbatch scripts/macs2_pool_peak_signif.sh # 
+```
+*NOTE: I relaunch the script and changed the qvalue; 2.30103 (q0.005) is good as observed looking at individual replicates*
 
 
 

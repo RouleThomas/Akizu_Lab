@@ -407,6 +407,10 @@ if (!require("BiocManager", quietly = TRUE))
 Create a **deseq2; conda environment**
 ```bash
 conda create -n deseq2 -c conda-forge r-base=4.2.2
+conda install -c conda-forge r-ragg # needed as install.package(tidyverse) failed with this dependency
+conda install -c conda-forge r-xml
+annotate
+geneplotter
 ```
 Go in R and install deseq2:
 ```R
@@ -416,8 +420,15 @@ if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
 BiocManager::install("DESeq2")
+install.packges("pheatmap")
+BiocManager::install("apeglm")
+install.packges("factoextra")
+BiocManager::install("rtracklayer")
+BiocManager::install("clusterProfiler")
+BiocManager::install("pathview")
+BiocManager::install("org.Hs.eg.db")
 ```
-
+Works all good! I even added ChIPseeker in it!
 
 # PCA and clustering with deseq2
 *NOTE: Tons of deseq2 ressource [here](http://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html) and [here](https://f1000research.com/articles/4-1070/v2).*
@@ -2952,6 +2963,21 @@ ggplot(mean_rlog_counts_tidy, aes(x = time, y = mean_rlog_counts)) +
 dev.off()
 
 
+pdf("output/deseq2/line_rlog_p0.05_cl25_pretty_span08_genes_WT-KO.pdf", width=20, height=14)
+mean_rlog_counts_tidy %>%
+  filter(genotype %in% c("WT","KO")) %>%
+ggplot(., aes(x = time, y = mean_rlog_counts)) +
+  geom_smooth(aes(color = genotype, group = genotype), method = "loess", se = TRUE, span = 0.8) +
+  stat_summary(aes(color = genotype, group = genotype), fun = mean, geom = "point", shape = 18, size = 3, stroke = 1.5) +
+  stat_summary(aes(color = genotype, group = genotype), fun.data = mean_se, geom = "errorbar", width = 0.2, size = 1) +
+  geom_text(data = genes_per_cluster, aes(label = paste0("Genes: ", num_genes), x = Inf, y = Inf), hjust = 1, vjust = 1, size = 5) +
+  facet_wrap(~cluster, scale = "free", nrow = 3) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),
+    axis.title.x = element_text(size = 16)
+  )
+dev.off()
 
 # Plot TPM count with 'loess' method pretty
 
@@ -4248,6 +4274,29 @@ dev.off()
 
 
 
+tpm_all_sample_tidy_gene_name_stat <- tpm_all_sample_tidy_gene_name %>%
+  filter(gene_name %in% c("NEUROG2")) %>%
+  select(-replicate) %>%
+  group_by(gene_id, gene_name, time, genotype) %>%
+  summarise(mean=mean(tpm), median= median(tpm), SD=sd(tpm), n=n(), SE=SD/sqrt(n)) 	
+pdf("output/deseq2/gene_NEUROG2_WT-KO.pdf", width=8, height=5)
+tpm_all_sample_tidy_gene_name_stat %>%
+  filter(gene_name %in% c("NEUROG2"),
+         genotype %in% c("WT", "KO")) %>%
+    ggplot(., aes(x = time, y = mean, group = genotype)) +
+    geom_line(aes(color=genotype), size=0.75) +
+    geom_errorbar(aes(ymin = mean-SE, ymax = mean+SE,color=genotype), width=.2) +
+    geom_point(aes(y = mean,color=genotype), size = .75, shape = 15) +
+    theme_bw() +
+    facet_wrap(~gene_name, nrow = 1, scale = "free")  +	
+    ylab(label = "tpm") +
+    ggtitle("") +
+    scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green", "iPSCWT" = "black", "iPSCpatient" = "orange"))
+dev.off()
+
+
+
+
 # Filtered some replicate
 
 tpm_all_sample_tidy_gene_name_selected = tpm_all_sample_tidy_gene_name %>%
@@ -4369,7 +4418,7 @@ dev.off()
 
 
 
-# Vizualization of some additonal clusters (2/4/5/8/9/14/18/21):
+# Vizualization of some additonal clusters (2/4/5/8/9/14/18/21/22):
 ## Cluster 2
 # Import genes_cluster list and background list
 cluster = read_csv("output/deseq2/cluster_gene_rlog_25cl.txt") %>%
@@ -4597,8 +4646,43 @@ emapplot(pairwise_termsim(ego), showCategory = 50)
 dev.off()
 
 
+## Cluster 22
+# Import genes_cluster list and background list
+cluster = read_csv("output/deseq2/cluster_gene_rlog_25cl.txt") %>%
+  filter(cluster == 22) %>%
+  rename(gene_id = gene) %>%
+  inner_join(gene_id_name) %>%
+  dplyr::select(gene_name) 
 
 
+background = read_csv("output/deseq2/raw_2dN_HET_vs_2dN_WT.txt") %>%
+  dplyr::select(gene) %>%
+  rename(gene_id = gene) %>%
+  inner_join(gene_id_name) %>%
+  dplyr::select(gene_name)
+
+
+# Run GO enrichment analysis 
+ego <- enrichGO(gene = as.character(cluster$gene_name), 
+                universe = as.character(background$gene_name),
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                qvalueCutoff = 0.05, 
+                readable = TRUE)
+
+# Vizualization
+pdf("output/GO/dotplot_BP_cluster_22.pdf", width=8, height=20)
+dotplot(ego, showCategory=50)
+dev.off()
+pdf("output/GO/dotplot_BP_cluster_22_short.pdf", width=8, height=10)
+dotplot(ego, showCategory=25)
+dev.off()
+
+pdf("output/GO/emapplot_BP_cluster_22.pdf", width=15, height=15)
+emapplot(pairwise_termsim(ego), showCategory = 50)
+dev.off()
 ```
 
 --> The pipeline works GREAT !!
@@ -6035,7 +6119,7 @@ Changes according to previous analyses with hg19:
 Open R/4.2.2 with ressource:
 ```bash
 module load R/4.2.2
-srun --mem=50g --pty bash -l
+srun --mem=200g --pty bash -l
 R
 ```
 In R; Import all counts and combine into one matrix, deseq2 dataframe (dds)
@@ -6081,6 +6165,19 @@ samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
    "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
    "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3",
    "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3")
+
+# Only WT and KO
+samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
+   "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3",
+   "4wN_WT_R1", "4wN_WT_R2", "4wN_KO_R1",
+   "4wN_KO_R2",
+   "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", "8wN_KO_R1",
+   "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4",
+   "ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3",
+   "ESC_KO_R1", "ESC_KO_R2", "ESC_KO_R3",
+   "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+   "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3")
+
 
 
 ## Make a loop for importing all featurecounts data and keep only ID and count column
@@ -6160,6 +6257,12 @@ pheatmap(sampleDistMatrix,
          clustering_distance_cols=sampleDists,
          col=colors)
 dev.off()
+pdf("output/deseq2_hg38/heatmap_cluster_rld_WT-KO.pdf", width=5, height=6)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows=sampleDists,
+         clustering_distance_cols=sampleDists,
+         col=colors)
+dev.off()
 
 ## PCA
 ### vsd 
@@ -6176,6 +6279,17 @@ dev.off()
 
 ### rld 
 pdf("output/deseq2_hg38/PCA_rld.pdf", width=10, height=10)
+pcaData <- plotPCA(rld, intgroup=c("time", "genotype"), returnData=TRUE)
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(PC1, PC2, color=time, shape=genotype)) +
+  geom_point(size=3) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  coord_fixed() +
+  theme_bw()
+dev.off()
+
+pdf("output/deseq2_hg38/PCA_rld_WT-KO.pdf", width=10, height=10)
 pcaData <- plotPCA(rld, intgroup=c("time", "genotype"), returnData=TRUE)
 percentVar <- round(100 * attr(pcaData, "percentVar"))
 ggplot(pcaData, aes(PC1, PC2, color=time, shape=genotype)) +
