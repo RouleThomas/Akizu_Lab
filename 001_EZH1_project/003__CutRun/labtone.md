@@ -600,7 +600,7 @@ sbatch scripts/bamtobigwig_histone_scaled_lib.sh # 12447710 ok
 
 Save in `output/bigwig_histone_NotGenotypeGroup_lib`, the correct scaling factor to use are the `output/spikein/spikein_histone_groupABgenotype_scaling_factor.txt`.
 
-Let's merge the bigwig into 1 file with wiggletools (will do average of bigwig signal and not sum, many options see [github](https://github.com/Ensembl/WiggleTools)):
+Let's merge the bigwig into 1 file with wiggletools as median value (will do average of bigwig signal and not sum, many options see [github](https://github.com/Ensembl/WiggleTools)):
 
 **Run wiggletools:**
 ```bash
@@ -608,6 +608,23 @@ conda activate BedToBigwig
 sbatch scripts/bigwigmerge_histone_NotGenotypeGroup_lib.sh # 12450108 ok
 ```
 *NOTE: bigwig are merge into 1 bedgraph which is then converted into 1 bigwig (wiggletools cannot output bigwig directly so need to pass by bedgraph or wiggle in between)*
+
+
+**IgG over H3K27me3 ratio + median**
+
+Let's generate H3K27me3/IgG scaled histone-spike-in norm bigwig to be used with deepTools.
+
+ratio and not log2ratio is better (= ratio of read counts per bin in the IP sample relative to the input sample). So run all samples; comand [here](https://deeptools.readthedocs.io/en/develop/content/tools/bigwigCompare.html):
+
+```bash
+conda activate deeptools
+sbatch scripts/bigwig_histone_NotGenotypeGroup_lib_ratio.sh # 16250
+
+conda activate BedToBigwig
+sbatch --dependency=afterany:16250 scripts/bigwigmerge_histone_NotGenotypeGroup_lib_ratio.sh # 16255
+```
+Files in `output/bigwig_histone_NotGenotypeGroup_lib_IggNorm` and looks XXX
+
 
 
 
@@ -2952,10 +2969,12 @@ Let's do it again and re-generate profile and heatmap without Nas and zero and s
 
 
 ```bash
+conda activate deeptools
+
 # Replicates
-sbatch scripts/matrix_TSS_10kb_WT_missingDataAsZero.sh # 15495
-sbatch --dependency=afterany:15495 scripts/matrix_TSS_10kb_WT_missingDataAsZero_profile.sh # 15499
-sbatch --dependency=afterany:15495 scripts/matrix_TSS_10kb_WT_missingDataAsZero_heatmap.sh # 15500
+sbatch scripts/matrix_TSS_10kb_WT_missingDataAsZero.sh # 16258
+sbatch --dependency=afterany:16258 scripts/matrix_TSS_10kb_WT_missingDataAsZero_profile.sh # 16258
+sbatch --dependency=afterany:16258 scripts/matrix_TSS_10kb_WT_missingDataAsZero_heatmap.sh # 16260
 
 ## Run/prepare the following if WT looks good:
 
@@ -2987,11 +3006,6 @@ sbatch --dependency=afterany:15543 scripts/matrix_TSS_10kb_missingDataAsZero_hea
 
 
 
-
-
-
-
-
 **Profile Gene body:**
 
 
@@ -3001,6 +3015,43 @@ Matrix:
 
 
 Vizualization:
+
+
+
+
+**With the ratio IgG/H3K27me3 bigwig**
+
+
+Files in `output/bigwig_histone_NotGenotypeGroup_lib_IggNorm`
+
+
+```bash
+# Replicates
+sbatch --dependency=afterany:16250 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm.sh # 16261
+sbatch --dependency=afterany:16261 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_profile.sh # 16262 
+sbatch --dependency=afterany:16261 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_heatmap.sh # 16263 
+
+## Run/prepare the following if WT looks good:
+
+XXX
+
+sbatch scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm.sh # 
+sbatch --dependency=afterany:XXX scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_profile.sh # 
+sbatch --dependency=afterany:XXX scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_heatmap.sh #
+
+sbatch scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm.sh # 
+sbatch --dependency=afterany:XXX scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_profile.sh # 
+sbatch --dependency=afterany:XXX scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_heatmap.sh #
+
+XXX
+
+# Genotype
+sbatch --dependency=afterany:16255 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm.sh # 16264
+sbatch --dependency=afterany:16264 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_profile.sh # 16265
+sbatch --dependency=afterany:16264 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_heatmap.sh # 16266 
+sbatch --dependency=afterany:16264 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_profile_cluster4.sh # 16268
+```
+
 
 
 
