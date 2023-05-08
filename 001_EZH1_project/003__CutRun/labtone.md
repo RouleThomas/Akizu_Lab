@@ -2859,6 +2859,9 @@ Let's try to use deepTools to explore the data: tutorial [here](https://hbctrain
 DeepTools can used bed or bigwig to estimate signal (heatmap or profile) around a point of interest (eg. TSS). Let's use our **median-histone-scaled bigwig**! Generate a matrix for WT,KO,HET and WT,KO,HET,patient for 10 and 50kb around the TSS.
 
 
+**Profile around the TSS:**
+Matrix:
+
 ```bash
 conda activate deeptools
 
@@ -2873,19 +2876,132 @@ computeMatrix reference-point --referencePoint TSS \
 -p 6 \
 --outFileSortedRegions ~/chipseq/results/visualization/regions_TSS_chr12.bed
 
-# Run the different matrix using 200g mem each (last < XXX hrs)
+# Run the different matrix using 200g mem each (last < 48 hrs)
 ## 10kb
-sbatch scripts/matrix_TSS_10kb_all.sh # include the patient # 15041 XXX
-sbatch scripts/matrix_TSS_10kb.sh # 15042 XXX
+sbatch scripts/matrix_TSS_10kb_all.sh # include the patient # 15041 ok
+sbatch scripts/matrix_TSS_10kb.sh # 15042 ok
 
 ## 50kb
-sbatch scripts/matrix_TSS_50kb_all.sh # 15043 XXX
-sbatch scripts/matrix_TSS_50kb.sh # 15044 XXX
+sbatch scripts/matrix_TSS_50kb_all.sh # 15043 ; FAILED
+sbatch scripts/matrix_TSS_50kb.sh # 15044 ; FAILED
 
 ## 10kb replicates
-sbatch scripts/matrix_WT_Rep_10kb.sh # 15045 XXX
-sbatch scripts/matrix_KO_Rep_10kb.sh # 15046 XXX
-sbatch scripts/matrix_HET_Rep_10kb.sh # 15047 XXX
+sbatch scripts/matrix_WT_Rep_10kb.sh # 15045 ok
+sbatch scripts/matrix_KO_Rep_10kb.sh # 15046 ok
+sbatch scripts/matrix_HET_Rep_10kb.sh # 15047 ok
+```
+*NOTE: The succesfull one, show a lot of genes with 'Skipping GENE due to being absent in the compute matrix. Discussion on the issue [here](https://github.com/deeptools/deepTools/issues/447), seems to be caused by dupplicates*
+
+
+
+Data vizualization:
+
+```bash
+# Check the replicates
+## profile; last long so run sbatch script
+### example for 1 file;
+plotProfile -m output/deeptools/matrix_WT_Rep_10kb.gz \
+-out output/deeptools/matrix_WT_Rep_10kb.png \
+--perGroup \
+--plotTitle "" --samplesLabel "Rep1" "Rep2" "Rep3" "Rep4" \
+--refPointLabel "TSS" \
+-T "WT read density" \
+-z ""
+### Run 
+sbatch scripts/matrix_WT_Rep_10kb_profile.sh # interactive
+sbatch scripts/matrix_HET_Rep_10kb_profile.sh # 15465
+sbatch scripts/matrix_KO_Rep_10kb_profile.sh # 15466
+
+## heatmap; last long so run sbatch script
+### example for 1 file;
+plotHeatmap -m output/deeptools/matrix_WT_Rep_10kb.gz \  
+-out output/deeptools/matrix_WT_Rep_10kb_heatmap.png \
+--colorMap RdBu \
+--whatToShow 'heatmap and colorbar' \
+--zMin -2 --zMax 2  
+### Run 
+sbatch scripts/matrix_WT_Rep_10kb_heatmap.sh # 15467
+sbatch scripts/matrix_HET_Rep_10kb_heatmap.sh # 15468
+sbatch scripts/matrix_KO_Rep_10kb_heatmap.sh # 15469
+
+# Check the genotypes
+## profile; last long so run sbatch script
+sbatch scripts/matrix_TSS_10kb_all_profile.sh # 15525
+sbatch scripts/matrix_TSS_10kb_profile.sh # 15527
+
+## profile with clustering
+plotProfile -m output/deeptools/matrix_TSS_10kb.gz \
+    -out output/deeptools/matrix_TSS_10kb_profile_cluster4.png \
+    --kmeans 4 \
+    --numPlotsPerRow 4 \
+    --colors black blue red \
+    --samplesLabel "WT" "HET" "KO" \
+    --refPointLabel "TSS" \
+    -T "H3K27me3 read density" \
+    -z ""
+### Run 
+
+
+
 ```
 
+
+The heatmaps are completely black, because I should have set `--missingDataAsZero` in `computeMatrix`. In addition the clustering rise an error message related to Nan values and then failed (probably related). 
+
+Let's do it again and re-generate profile and heatmap without Nas and zero and see whether that something changed:
+
+
+```bash
+# Replicates
+sbatch scripts/matrix_TSS_10kb_WT_missingDataAsZero.sh # 15495
+sbatch --dependency=afterany:15495 scripts/matrix_TSS_10kb_WT_missingDataAsZero_profile.sh # 15499
+sbatch --dependency=afterany:15495 scripts/matrix_TSS_10kb_WT_missingDataAsZero_heatmap.sh # 15500
+
+## Run/prepare the following if WT looks good:
+
 XXX
+
+sbatch scripts/matrix_TSS_10kb_HET_missingDataAsZero.sh # 
+sbatch --dependency=afterany:15495 scripts/matrix_TSS_10kb_HET_missingDataAsZero_profile.sh # 
+sbatch --dependency=afterany:15495 scripts/matrix_TSS_10kb_HET_missingDataAsZero_heatmap.sh #
+
+sbatch scripts/matrix_TSS_10kb_KO_missingDataAsZero.sh # 
+sbatch --dependency=afterany:15495 scripts/matrix_TSS_10kb_KO_missingDataAsZero_profile.sh # 
+sbatch --dependency=afterany:15495 scripts/matrix_TSS_10kb_KO_missingDataAsZero_heatmap.sh #
+
+XXX
+
+# Genotype
+sbatch scripts/matrix_TSS_10kb_missingDataAsZero.sh # 15543
+sbatch --dependency=afterany:15543 scripts/matrix_TSS_10kb_missingDataAsZero_profile.sh # 15551
+sbatch --dependency=afterany:15543 scripts/matrix_TSS_10kb_missingDataAsZero_heatmap.sh # 15552
+sbatch --dependency=afterany:15543 scripts/matrix_TSS_10kb_missingDataAsZero_heatmap_cluster4.sh # 15553
+
+```
+
+--> Profile are XXX similar/different XXX
+
+--> Heatmap is XXX working/still failing XXX
+
+--> So let's XXX
+
+
+
+
+
+
+
+
+**Profile Gene body:**
+
+
+Matrix:
+
+
+
+
+Vizualization:
+
+
+
+

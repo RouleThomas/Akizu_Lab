@@ -2344,19 +2344,16 @@ library("ChIPseeker")
 ```
 
 **Re-install on the new cluster RES-RHEL-RH9HPC:**
-try running it with previous conda
-try in the deseq2 conda env first XXX
-
-If fail, 
+Installed together with deseq2; use **deseq2 conda env for ChIPseeker now**
 
 
 ## Run ChIPseeker
 
+XXX
 
 
 
-
-## Pool the peak into 1 file
+# Pool the peak into 1 file
 We could use IDR to pool our replicates and identify 'high-confidence' peak (used in the ENCODE pipeline)
 
 [Tutorial](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/07_handling-replicates-idr.html) and [github](https://github.com/nboley/idr) for IDR.
@@ -2381,18 +2378,88 @@ But for homogeneity as I cannot use IDR for CutRun as more than 4 replicates let
 
 Re-run MACS2 but in pool to have 1 file per condition (keep blacklist and qval2.30103 (0.005) filtering):
 ```bash
-sbatch scripts/macs2_pool.sh # 15059 XXX
+sbatch scripts/macs2_pool.sh # 15059 ok
 ```
 *NOTE: for ESC WT I took Rep1 and Rep2 only (as Rep3 is another WT clone)*
-
-XXX
 
 
 Now let's filter out blacklist and qvalue:
 ```bash
-sbatch scripts/macs2_pool_peak_signif.sh # 
+sbatch scripts/macs2_pool_peak_signif.sh # ok
 ```
 *NOTE: I relaunch the script and changed the qvalue; 2.30103 (q0.005) is good as observed looking at individual replicates*
 
 
 
+## Explore with DeepTools
+
+
+
+# deepTools CutRun vizualization
+
+Let's try to use deepTools to explore the data: tutorial [here](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/10_data_visualization.html) and [here](https://deeptools.readthedocs.io/en/develop/content/tools/computeMatrix.html#reference-point).
+
+
+DeepTools can used bed or bigwig to estimate signal (heatmap or profile) around a point of interest (eg. TSS). Let's use our **median-ChIPseqSpikeInFree_lib bigwig**! Generate a matrix for WT,KO,HET and WT,KO,HET,patient for 10 and 50kb around the TSS.
+
+
+
+```bash
+conda activate deeptools
+
+# example for 1 file 10kb up down TSS:
+computeMatrix reference-point --referencePoint TSS \
+-b 10000 -a 10000 \
+-R [GTF] \
+-S [all bigwig] \
+--skipZeros \
+--blackListFileName [BED] \
+-o ~/chipseq/results/visualization/matrixNanog_TSS_chr12.gz \
+-p 6 \
+--outFileSortedRegions ~/chipseq/results/visualization/regions_TSS_chr12.bed
+
+# Run the different matrix using 200g mem each (last < 48 hrs)
+## Genotype effect
+### 10kb
+sbatch scripts/matrix_TSS_10kb_ESC.sh # 
+sbatch scripts/matrix_TSS_10kb_NPC.sh # 
+sbatch scripts/matrix_TSS_10kb_2dN.sh # 
+
+### 50kb
+sbatch scripts/matrix_TSS_50kb_ESC.sh # 
+sbatch scripts/matrix_TSS_50kb_NPC.sh # 
+sbatch scripts/matrix_TSS_50kb_2dN.sh # 
+
+## Time effect
+### 10kb
+sbatch scripts/matrix_TSS_10kb_WT.sh # 
+sbatch scripts/matrix_TSS_10kb_KO.sh # 
+sbatch scripts/matrix_TSS_10kb_HET.sh # 
+
+### 50kb
+sbatch scripts/matrix_TSS_50kb_WT.sh # 
+sbatch scripts/matrix_TSS_50kb_KO.sh # 
+sbatch scripts/matrix_TSS_50kb_HET.sh # 
+
+
+## All
+### 10kb
+XXX
+
+### 50kb
+XXX
+
+## Replicates
+### 10kb
+sbatch scripts/matrix_TSS_10kb_ESC_WT.sh
+sbatch scripts/matrix_TSS_10kb_ESC_KO.sh
+sbatch scripts/matrix_TSS_10kb_ESC_HET.sh
+sbatch scripts/matrix_TSS_10kb_NPC_WT.sh
+sbatch scripts/matrix_TSS_10kb_NPC_KO.sh
+sbatch scripts/matrix_TSS_10kb_NPC_HET.sh
+sbatch scripts/matrix_TSS_10kb_2dN_WT.sh
+sbatch scripts/matrix_TSS_10kb_2dN_KO.sh
+sbatch scripts/matrix_TSS_10kb_2dN_HET.sh
+```
+
+XXX
