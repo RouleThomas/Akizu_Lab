@@ -618,12 +618,42 @@ ratio and not log2ratio is better (= ratio of read counts per bin in the IP samp
 
 ```bash
 conda activate deeptools
-sbatch scripts/bigwig_histone_NotGenotypeGroup_lib_ratio.sh # 16250
+sbatch scripts/bigwig_histone_NotGenotypeGroup_lib_ratio.sh # 16250 ok
 
 conda activate BedToBigwig
-sbatch --dependency=afterany:16250 scripts/bigwigmerge_histone_NotGenotypeGroup_lib_ratio.sh # 16255
+sbatch --dependency=afterany:16250 scripts/bigwigmerge_histone_NotGenotypeGroup_lib_ratio.sh # 16255 ok
 ```
-Files in `output/bigwig_histone_NotGenotypeGroup_lib_IggNorm` and looks XXX
+Files in `output/bigwig_histone_NotGenotypeGroup_lib_IggNorm` and looks good
+
+
+**IgG over H3K27me3 log2ratio + median**
+
+
+```bash
+conda activate deeptools
+sbatch scripts/bigwig_histone_NotGenotypeGroup_lib_log2ratio.sh # 19359
+
+conda activate BedToBigwig
+sbatch --dependency=afterany:19359 scripts/bigwigmerge_histone_NotGenotypeGroup_lib_log2ratio.sh # 19364 
+```
+Files in `output/bigwig_histone_NotGenotypeGroup_lib_IggNorm_log2ratio` and looks XXX
+
+
+**IgG over H3K27me3 subtract + median**
+
+
+```bash
+conda activate deeptools
+sbatch scripts/bigwig_histone_NotGenotypeGroup_lib_subtract.sh # 19380
+
+conda activate BedToBigwig
+sbatch --dependency=afterany:19380 scripts/bigwigmerge_histone_NotGenotypeGroup_lib_subtract.sh # 19382
+```
+Files in `output/bigwig_histone_NotGenotypeGroup_lib_IggNorm_subtract` and looks XXX
+
+
+
+
 
 
 
@@ -3007,6 +3037,7 @@ sbatch --dependency=afterany:18533 scripts/matrix_gene_5kb_missingDataAsZero_hea
 Files in `output/bigwig_histone_NotGenotypeGroup_lib_IggNorm`
 
 ```bash
+conda activate deeptools
 # Replicates
 sbatch --dependency=afterany:16250 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm.sh # 16261 ok
 sbatch --dependency=afterany:16261 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_profile.sh # 16262 ok 
@@ -3050,17 +3081,85 @@ XXX gene body XXX
 
 **With the log2ratio IgG/H3K27me3 bigwig**
 Files in `output/bigwig_histone_NotGenotypeGroup_lib_IggNorm_log2ratio`
+
+
+```bash
+conda activate deeptools
+# Replicates
+sbatch --dependency=afterany:19364 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_log2ratio.sh # 19392
+sbatch --dependency=afterany:19392 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_log2ratio_profile.sh # 19393
+sbatch --dependency=afterany:19392 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_log2ratio_heatmap.sh # 19394
+
+sbatch --dependency=afterany:19364 scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_log2ratio.sh # 19395
+sbatch --dependency=afterany:19395 scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_log2ratio_profile.sh # 19399
+sbatch --dependency=afterany:19395 scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_log2ratio_heatmap.sh # 19400
+
+sbatch --dependency=afterany:19364 scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_log2ratio.sh # 19404
+sbatch --dependency=afterany:19404 scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_log2ratio_profile.sh # 19406
+sbatch --dependency=afterany:19404 scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_log2ratio_heatmap.sh # 19407
+
+
+# Genotype TSS (10kb)
+sbatch --dependency=afterany:19364 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_log2ratio.sh # 19422
+sbatch --dependency=afterany:19422 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_log2ratio_profile.sh # 19425
+sbatch --dependency=afterany:19422 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_log2ratio_heatmap.sh # 19427
+
+
+
+
+# Genotype gene body (-5 / +5 kb - TSS / TES)
+sbatch --dependency=afterany:19364 scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_log2ratio.sh # 19439
+sbatch --dependency=afterany:19439 scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_log2ratio_profile.sh # 19442
+sbatch --dependency=afterany:19439 scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_log2ratio_heatmap.sh # 19444
+```
+*NOTE: Final files for median are called `*_ratio_median.bw`; even the log2ratio and subtract; but they are good, in respectie correct folders*
+
+
 XXX
-
-
-
 
 **With the subtract IgG/H3K27me3 bigwig**
 Files in `output/bigwig_histone_NotGenotypeGroup_lib_IggNorm_subtract`
-XXX
+
+```bash
+conda activate deeptools
+# Replicates
+sbatch --dependency=afterany:19382 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_subtract.sh # 19460
+
+XXX NEED RUN BELOW:
+sbatch --dependency=afterany:19392 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_subtract_profile.sh # 
+sbatch --dependency=afterany:19392 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_subtract_heatmap.sh # 
+
+sbatch --dependency=afterany:19382 scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_subtract.sh # 19463
+
+XXX NEED RUN BELOW:
+sbatch --dependency=afterany:19395 scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_subtract_profile.sh # 
+sbatch --dependency=afterany:19395 scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_subtract_heatmap.sh # 
+
+sbatch --dependency=afterany:19382 scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_subtract.sh # 19465
+
+XXX NEED RUN BELOW:
+sbatch --dependency=afterany:19404 scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_subtract_profile.sh # 
+sbatch --dependency=afterany:19404 scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_subtract_heatmap.sh # 
+
+
+# Genotype TSS (10kb)
+sbatch --dependency=afterany:19382 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_subtract.sh # 19468
+
+XXX NEED RUN BELOW:
+sbatch --dependency=afterany:19422 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_subtract_profile.sh # 
+sbatch --dependency=afterany:19422 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_subtract_heatmap.sh # 
 
 
 
+
+# Genotype gene body (-5 / +5 kb - TSS / TES)
+sbatch --dependency=afterany:19382 scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_subtract.sh # 19471
+
+XXX NEED RUN BELOW:
+sbatch --dependency=afterany:19439 scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_subtract_profile.sh # 
+sbatch --dependency=afterany:19439 scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_subtract_heatmap.sh # 
+```
+*NOTE: Final files for median are called `*_ratio_median.bw`; even the log2ratio and subtract; but they are good, in respectie correct folders*
 
 
 
