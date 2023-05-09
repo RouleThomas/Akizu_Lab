@@ -2957,11 +2957,7 @@ plotProfile -m output/deeptools/matrix_TSS_10kb.gz \
     -T "H3K27me3 read density" \
     -z ""
 ### Run 
-
-
-
 ```
-
 
 The heatmaps are completely black, because I should have set `--missingDataAsZero` in `computeMatrix`. In addition the clustering rise an error message related to Nan values and then failed (probably related). 
 
@@ -2972,85 +2968,100 @@ Let's do it again and re-generate profile and heatmap without Nas and zero and s
 conda activate deeptools
 
 # Replicates
-sbatch scripts/matrix_TSS_10kb_WT_missingDataAsZero.sh # 16258
-sbatch --dependency=afterany:16258 scripts/matrix_TSS_10kb_WT_missingDataAsZero_profile.sh # 16258
-sbatch --dependency=afterany:16258 scripts/matrix_TSS_10kb_WT_missingDataAsZero_heatmap.sh # 16260
+sbatch scripts/matrix_TSS_10kb_WT_missingDataAsZero.sh # 16258 ok
+sbatch --dependency=afterany:16258 scripts/matrix_TSS_10kb_WT_missingDataAsZero_profile.sh # 16259 ok
+sbatch --dependency=afterany:16258 scripts/matrix_TSS_10kb_WT_missingDataAsZero_heatmap.sh # 16260 ok
 
-## Run/prepare the following if WT looks good:
+sbatch scripts/matrix_TSS_10kb_HET_missingDataAsZero.sh # 17627
+sbatch --dependency=afterany:17627 scripts/matrix_TSS_10kb_HET_missingDataAsZero_profile.sh # 17628
+sbatch --dependency=afterany:17627 scripts/matrix_TSS_10kb_HET_missingDataAsZero_heatmap.sh # 17630
 
-XXX
+sbatch scripts/matrix_TSS_10kb_KO_missingDataAsZero.sh # 17631
+sbatch --dependency=afterany:17631 scripts/matrix_TSS_10kb_KO_missingDataAsZero_profile.sh # 17632
+sbatch --dependency=afterany:17631 scripts/matrix_TSS_10kb_KO_missingDataAsZero_heatmap.sh # 17633
 
-sbatch scripts/matrix_TSS_10kb_HET_missingDataAsZero.sh # 
-sbatch --dependency=afterany:15495 scripts/matrix_TSS_10kb_HET_missingDataAsZero_profile.sh # 
-sbatch --dependency=afterany:15495 scripts/matrix_TSS_10kb_HET_missingDataAsZero_heatmap.sh #
+# Genotype TSS (10kb)
+sbatch scripts/matrix_TSS_10kb_missingDataAsZero.sh # 15543 ok
+sbatch --dependency=afterany:15543 scripts/matrix_TSS_10kb_missingDataAsZero_profile.sh # 15551 ok
+sbatch --dependency=afterany:15543 scripts/matrix_TSS_10kb_missingDataAsZero_heatmap.sh # 15552 ok
+sbatch --dependency=afterany:15543 scripts/matrix_TSS_10kb_missingDataAsZero_heatmap_cluster4.sh # 15553 FAIL
 
-sbatch scripts/matrix_TSS_10kb_KO_missingDataAsZero.sh # 
-sbatch --dependency=afterany:15495 scripts/matrix_TSS_10kb_KO_missingDataAsZero_profile.sh # 
-sbatch --dependency=afterany:15495 scripts/matrix_TSS_10kb_KO_missingDataAsZero_heatmap.sh #
 
-XXX
-
-# Genotype
-sbatch scripts/matrix_TSS_10kb_missingDataAsZero.sh # 15543
-sbatch --dependency=afterany:15543 scripts/matrix_TSS_10kb_missingDataAsZero_profile.sh # 15551
-sbatch --dependency=afterany:15543 scripts/matrix_TSS_10kb_missingDataAsZero_heatmap.sh # 15552
-sbatch --dependency=afterany:15543 scripts/matrix_TSS_10kb_missingDataAsZero_heatmap_cluster4.sh # 15553
-
+# Genotype gene body (-5 / +5 kb - TSS / TES)
+sbatch scripts/matrix_gene_5kb_missingDataAsZero.sh # 18533
+sbatch --dependency=afterany:18533 scripts/matrix_gene_5kb_missingDataAsZero_profile.sh # 18534
+sbatch --dependency=afterany:18533 scripts/matrix_gene_5kb_missingDataAsZero_heatmap.sh # 18535
 ```
+*NOTE: still the message Skipping GENE due to being absent in the replicate/genotype compute matrix*
 
---> Profile are XXX similar/different XXX
+--> Profile are different 
 
---> Heatmap is XXX working/still failing XXX
+--> Heatmap is working 
 
---> So let's XXX
+--> So let's use these parameters instead (`--missingDataAsZero --skipZeros`)
 
-
-
-**Profile Gene body:**
-
-
-Matrix:
-
-
-
-
-Vizualization:
-
-
+--> The heatmap color should be fine-tune (maybe do a -2 / 2 limit as in the tutorial)
 
 
 **With the ratio IgG/H3K27me3 bigwig**
-
-
 Files in `output/bigwig_histone_NotGenotypeGroup_lib_IggNorm`
-
 
 ```bash
 # Replicates
-sbatch --dependency=afterany:16250 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm.sh # 16261
-sbatch --dependency=afterany:16261 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_profile.sh # 16262 
-sbatch --dependency=afterany:16261 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_heatmap.sh # 16263 
+sbatch --dependency=afterany:16250 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm.sh # 16261 ok
+sbatch --dependency=afterany:16261 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_profile.sh # 16262 ok 
+sbatch --dependency=afterany:16261 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_heatmap.sh # 16263 ok
 
-## Run/prepare the following if WT looks good:
+sbatch scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm.sh # 17635
+sbatch --dependency=afterany:17635 scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_profile.sh # 17638
+sbatch --dependency=afterany:17635 scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_heatmap.sh # 17639
 
-XXX
+sbatch scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm.sh # 17636
+sbatch --dependency=afterany:17636 scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_profile.sh # 17640
+sbatch --dependency=afterany:17636 scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_heatmap.sh # 17641
 
-sbatch scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm.sh # 
-sbatch --dependency=afterany:XXX scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_profile.sh # 
-sbatch --dependency=afterany:XXX scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_heatmap.sh #
 
-sbatch scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm.sh # 
-sbatch --dependency=afterany:XXX scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_profile.sh # 
-sbatch --dependency=afterany:XXX scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_heatmap.sh #
+# Genotype TSS (10kb)
+sbatch --dependency=afterany:16255 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm.sh # 16264 ok
+sbatch --dependency=afterany:16264 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_profile.sh # 16265 ok
+sbatch --dependency=afterany:16264 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_heatmap.sh # 16266 ok
+sbatch --dependency=afterany:16264 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_profile_cluster4.sh # 16268 FAIL
 
-XXX
 
-# Genotype
-sbatch --dependency=afterany:16255 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm.sh # 16264
-sbatch --dependency=afterany:16264 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_profile.sh # 16265
-sbatch --dependency=afterany:16264 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_heatmap.sh # 16266 
-sbatch --dependency=afterany:16264 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_profile_cluster4.sh # 16268
+
+# Genotype gene body (-5 / +5 kb - TSS / TES)
+sbatch scripts/matrix_gene_5kb_missingDataAsZero_IggNorm.sh # 18738
+sbatch --dependency=afterany:18738 scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_profile.sh # 18739
+sbatch --dependency=afterany:18738 scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_heatmap.sh # 18740
 ```
+*NOTE: still the message Skipping GENE due to being absent in the replicate/genotype compute matrix*
+
+--> The heatmap color should be fine-tune (maybe do a -2 / 2 limit as in the tutorial)
+
+--> Also maybe better to use GTF with gene only instead of all transcripts here! (`awk '$3 == "gene"' input.gtf > genes.gtf`)
+
+XXX replicates HET KO to check XXX
+
+XXX gene body XXX
+
+
+
+
+
+**With the log2ratio IgG/H3K27me3 bigwig**
+Files in `output/bigwig_histone_NotGenotypeGroup_lib_IggNorm_log2ratio`
+XXX
+
+
+
+
+**With the subtract IgG/H3K27me3 bigwig**
+Files in `output/bigwig_histone_NotGenotypeGroup_lib_IggNorm_subtract`
+XXX
+
+
+
+
 
 
 
