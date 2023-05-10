@@ -591,7 +591,63 @@ sbatch scripts/bamtobigwig_histone_scaled_KO_reciprocal.sh # 12370044 ok
 sbatch scripts/bamtobigwig_histone_scaled_patient_reciprocal.sh # 12370043 ok
 ```
 
-But that is not perfect yet as library size is not the same for all samples, for accurate comparison, we need the same final library size after spike in correction
+But that is not perfect yet as library size is not the same for all samples, for accurate comparison, we need the same final library size after spike in correction. 
+
+**Not correct!! In the end, these versions (`output/bigwig_histone_NotGenotypeGroup`) are perfect!** Let's generate **median and Igg-norm** bigwig tracks:
+
+
+```bash
+conda activate BedToBigwig
+sbatch scripts/bigwigmerge_histone_NotGenotypeGroup.sh # 19853 ok
+```
+
+**igg ratio + median**
+
+```bash
+conda activate deeptools
+sbatch scripts/bigwig_histone_NotGenotypeGroup_ratio.sh # 19854
+
+conda activate BedToBigwig
+sbatch --dependency=afterany:19854 scripts/bigwigmerge_histone_NotGenotypeGroup_ratio.sh # 19856
+```
+
+Files looks XXX
+
+
+
+
+**igg log2ratio + median**
+```bash
+conda activate deeptools
+sbatch scripts/bigwig_histone_NotGenotypeGroup_log2ratio.sh # 19857
+
+conda activate BedToBigwig
+sbatch --dependency=afterany:19857 scripts/bigwigmerge_histone_NotGenotypeGroup_log2ratio.sh # 19858
+```
+
+Files looks XXX
+
+
+
+**igg substract + median**
+```bash
+conda activate deeptools
+sbatch scripts/bigwig_histone_NotGenotypeGroup_subtract.sh # 19859
+
+conda activate BedToBigwig
+sbatch --dependency=afterany:19859 scripts/bigwigmerge_histone_NotGenotypeGroup_subtract.sh # 19860
+```
+
+
+Files looks XXX
+
+
+
+
+
+
+
+## Below is generation of the failed library depth scaled after histone scaling bigwig (igg_norm...)
 
 ```bash
 conda activate BedToBigwig
@@ -609,6 +665,7 @@ sbatch scripts/bigwigmerge_histone_NotGenotypeGroup_lib.sh # 12450108 ok
 ```
 *NOTE: bigwig are merge into 1 bedgraph which is then converted into 1 bigwig (wiggletools cannot output bigwig directly so need to pass by bedgraph or wiggle in between)*
 
+--> No in the end the `output/bigwig_histone_NotGenotypeGroup` is better!
 
 **IgG over H3K27me3 ratio + median**
 
@@ -631,12 +688,12 @@ Files in `output/bigwig_histone_NotGenotypeGroup_lib_IggNorm` and looks good
 
 ```bash
 conda activate deeptools
-sbatch scripts/bigwig_histone_NotGenotypeGroup_lib_log2ratio.sh # 19359
+sbatch scripts/bigwig_histone_NotGenotypeGroup_lib_log2ratio.sh # 19359 ok
 
 conda activate BedToBigwig
-sbatch --dependency=afterany:19359 scripts/bigwigmerge_histone_NotGenotypeGroup_lib_log2ratio.sh # 19364 
+sbatch --dependency=afterany:19359 scripts/bigwigmerge_histone_NotGenotypeGroup_lib_log2ratio.sh # 19364 ok
 ```
-Files in `output/bigwig_histone_NotGenotypeGroup_lib_IggNorm_log2ratio` and looks XXX
+Files in `output/bigwig_histone_NotGenotypeGroup_lib_IggNorm_log2ratio` and looks ok
 
 
 **IgG over H3K27me3 subtract + median**
@@ -644,12 +701,12 @@ Files in `output/bigwig_histone_NotGenotypeGroup_lib_IggNorm_log2ratio` and look
 
 ```bash
 conda activate deeptools
-sbatch scripts/bigwig_histone_NotGenotypeGroup_lib_subtract.sh # 19380
+sbatch scripts/bigwig_histone_NotGenotypeGroup_lib_subtract.sh # 19380 ok
 
 conda activate BedToBigwig
-sbatch --dependency=afterany:19380 scripts/bigwigmerge_histone_NotGenotypeGroup_lib_subtract.sh # 19382
+sbatch --dependency=afterany:19380 scripts/bigwigmerge_histone_NotGenotypeGroup_lib_subtract.sh # 19382 ok
 ```
-Files in `output/bigwig_histone_NotGenotypeGroup_lib_IggNorm_subtract` and looks XXX
+Files in `output/bigwig_histone_NotGenotypeGroup_lib_IggNorm_subtract` and looks ok
 
 
 
@@ -1235,7 +1292,7 @@ csds_exo <- scaling(csds_reverse, type = "exo")
 
 ```bash
 conda activate deeptools
-sbatch scripts/bamtobigwig_ChIPSeqSpike.sh # 12287902 XXX
+sbatch scripts/bamtobigwig_ChIPSeqSpike.sh # 12287902 ok
 ```
 
 
@@ -2898,7 +2955,7 @@ write.table(patient_annot, file="output/ChIPseeker/annotation_patient.txt", sep=
 *NOTE: the gene peak assignment use the nearest TSS method, then other order of priority, all genes are assigned except if they do not fall into Promoter, 5’ UTR, 3’ UTR, Exon, Intron, Downstream. In such case peak assign as 'intergenic'*
 
 
-# deepTools CutRun vizualization
+# deepTools CutRun vizualization with not the good bigwig
 
 Let's try to use deepTools to explore the data: tutorial [here](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/10_data_visualization.html) and [here](https://deeptools.readthedocs.io/en/develop/content/tools/computeMatrix.html#reference-point).
 
@@ -3071,9 +3128,7 @@ sbatch --dependency=afterany:18738 scripts/matrix_gene_5kb_missingDataAsZero_Igg
 
 --> Also maybe better to use GTF with gene only instead of all transcripts here! (`awk '$3 == "gene"' input.gtf > genes.gtf`)
 
-XXX replicates HET KO to check XXX
-
-XXX gene body XXX
+--> Replicate 3 KO is weird
 
 
 
@@ -3086,36 +3141,39 @@ Files in `output/bigwig_histone_NotGenotypeGroup_lib_IggNorm_log2ratio`
 ```bash
 conda activate deeptools
 # Replicates
-sbatch --dependency=afterany:19364 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_log2ratio.sh # 19392
-sbatch --dependency=afterany:19392 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_log2ratio_profile.sh # 19393
-sbatch --dependency=afterany:19392 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_log2ratio_heatmap.sh # 19394
+sbatch --dependency=afterany:19364 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_log2ratio.sh # 19392 FAIL; 19826
+sbatch --dependency=afterany:19826 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_log2ratio_profile.sh # 19393 FAIL; 19827
+sbatch --dependency=afterany:19826 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_log2ratio_heatmap.sh # 19394 FAIL; fuck heatmap need finetuning
 
-sbatch --dependency=afterany:19364 scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_log2ratio.sh # 19395
-sbatch --dependency=afterany:19395 scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_log2ratio_profile.sh # 19399
-sbatch --dependency=afterany:19395 scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_log2ratio_heatmap.sh # 19400
+sbatch --dependency=afterany:19364 scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_log2ratio.sh # 19395 FAIL; 19828
+sbatch --dependency=afterany:19828 scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_log2ratio_profile.sh # 19399 FAIL; 19829
+sbatch --dependency=afterany:19828 scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_log2ratio_heatmap.sh # 19400 FAIL; fuck heatmap need finetuning 
 
-sbatch --dependency=afterany:19364 scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_log2ratio.sh # 19404
-sbatch --dependency=afterany:19404 scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_log2ratio_profile.sh # 19406
-sbatch --dependency=afterany:19404 scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_log2ratio_heatmap.sh # 19407
+sbatch --dependency=afterany:19364 scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_log2ratio.sh # 19404 FAIL; 19830
+sbatch --dependency=afterany:19830 scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_log2ratio_profile.sh # 19406 FAIL; 19831
+sbatch --dependency=afterany:19404 scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_log2ratio_heatmap.sh # 19407 FAIL; fuck heatmap need finetuning 
 
 
 # Genotype TSS (10kb)
-sbatch --dependency=afterany:19364 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_log2ratio.sh # 19422
-sbatch --dependency=afterany:19422 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_log2ratio_profile.sh # 19425
-sbatch --dependency=afterany:19422 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_log2ratio_heatmap.sh # 19427
+sbatch --dependency=afterany:19364 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_log2ratio.sh # 19422 ok
+sbatch --dependency=afterany:19422 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_log2ratio_profile.sh # 19425 ok
+sbatch --dependency=afterany:19422 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_log2ratio_heatmap.sh # 19427 ok
 
 
 
 
 # Genotype gene body (-5 / +5 kb - TSS / TES)
-sbatch --dependency=afterany:19364 scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_log2ratio.sh # 19439
-sbatch --dependency=afterany:19439 scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_log2ratio_profile.sh # 19442
-sbatch --dependency=afterany:19439 scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_log2ratio_heatmap.sh # 19444
+sbatch --dependency=afterany:19364 scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_log2ratio.sh # 19439 ok
+sbatch --dependency=afterany:19439 scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_log2ratio_profile.sh # 19442 ok
+sbatch --dependency=afterany:19439 scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_log2ratio_heatmap.sh # 19444 ok
 ```
 *NOTE: Final files for median are called `*_ratio_median.bw`; even the log2ratio and subtract; but they are good, in respectie correct folders*
 
+--> FAIL at matrix because path to bigwig files was not good; corrected and relaunched.
 
-XXX
+
+
+
 
 **With the subtract IgG/H3K27me3 bigwig**
 Files in `output/bigwig_histone_NotGenotypeGroup_lib_IggNorm_subtract`
@@ -3123,46 +3181,82 @@ Files in `output/bigwig_histone_NotGenotypeGroup_lib_IggNorm_subtract`
 ```bash
 conda activate deeptools
 # Replicates
-sbatch --dependency=afterany:19382 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_subtract.sh # 19460
+sbatch --dependency=afterany:19382 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_subtract.sh # 19460 FAIL; 19832
+sbatch --dependency=afterany:19832 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_subtract_profile.sh # 19833
 
-XXX NEED RUN BELOW:
-sbatch --dependency=afterany:19392 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_subtract_profile.sh # 
-sbatch --dependency=afterany:19392 scripts/matrix_TSS_10kb_WT_missingDataAsZero_IggNorm_subtract_heatmap.sh # 
 
-sbatch --dependency=afterany:19382 scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_subtract.sh # 19463
 
-XXX NEED RUN BELOW:
-sbatch --dependency=afterany:19395 scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_subtract_profile.sh # 
-sbatch --dependency=afterany:19395 scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_subtract_heatmap.sh # 
 
-sbatch --dependency=afterany:19382 scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_subtract.sh # 19465
+sbatch --dependency=afterany:19382 scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_subtract.sh # 19463 FAIL; 19834
+sbatch --dependency=afterany:19834 scripts/matrix_TSS_10kb_HET_missingDataAsZero_IggNorm_subtract_profile.sh # 19835
 
-XXX NEED RUN BELOW:
-sbatch --dependency=afterany:19404 scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_subtract_profile.sh # 
-sbatch --dependency=afterany:19404 scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_subtract_heatmap.sh # 
+
+sbatch --dependency=afterany:19382 scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_subtract.sh # 19465 FAIL; 19836
+sbatch --dependency=afterany:19836 scripts/matrix_TSS_10kb_KO_missingDataAsZero_IggNorm_subtract_profile.sh # 19837
+
 
 
 # Genotype TSS (10kb)
-sbatch --dependency=afterany:19382 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_subtract.sh # 19468
-
-XXX NEED RUN BELOW:
-sbatch --dependency=afterany:19422 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_subtract_profile.sh # 
-sbatch --dependency=afterany:19422 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_subtract_heatmap.sh # 
+sbatch --dependency=afterany:19382 scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_subtract.sh # 19468 ok
+sbatch scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_subtract_profile.sh # 19838
 
 
 
 
 # Genotype gene body (-5 / +5 kb - TSS / TES)
-sbatch --dependency=afterany:19382 scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_subtract.sh # 19471
-
-XXX NEED RUN BELOW:
-sbatch --dependency=afterany:19439 scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_subtract_profile.sh # 
-sbatch --dependency=afterany:19439 scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_subtract_heatmap.sh # 
+sbatch --dependency=afterany:19382 scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_subtract.sh # 19471 ok
+sbatch scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_subtract_profile.sh # 19839
 ```
 *NOTE: Final files for median are called `*_ratio_median.bw`; even the log2ratio and subtract; but they are good, in respectie correct folders*
 
 
+The correct bigwig to take are the `output/bigwig_histone_NotGenotypeGroup` and NOT the `output/bigwig_histone_NotGenotypeGroup_lib`... --> Let's repeat using the correct ones... 
+
+
+# deepTools CutRun vizualization with the correct bigwig
+`output/bigwig_histone_NotGenotypeGroup` and NOT the `output/bigwig_histone_NotGenotypeGroup_lib`
+
+Let's do 5kb around TSS and 1kb around gene body; should look better.
+
+## Non-igg normalized
+
+
+
+```bash
+conda activate deeptools
+# Replicates
+sbatch scripts/matrix_TSS_5kb_WT_corr.sh # 19847
+sbatch --dependency=afterany:19847 scripts/matrix_TSS_5kb_WT_corr_profile.sh # 19848
+
+sbatch scripts/matrix_TSS_5kb_HET_corr.sh # 19849
+sbatch --dependency=afterany:19849 scripts/matrix_TSS_5kb_HET_corr_profile.sh # 19850
+
+sbatch scripts/matrix_TSS_5kb_KO_corr.sh # 19851
+sbatch --dependency=afterany:19851 scripts/matrix_TSS_5kb_KO_corr_profile.sh # 19852
+
+
+# Genotype TSS (10kb) 
+
+XXXMEDIANbigwigXXX :
+
+sbatch --dependency=afterany:XXXMEDIANbigwigXXX scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_subtract.sh #
+sbatch scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_subtract_profile.sh # 
+
+
+# Genotype gene body (-1 / +1 kb - TSS / TES)
+sbatch --dependency=afterany:XXXMEDIANbigwigXXX scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_subtract.sh # 
+sbatch scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_subtract_profile.sh # 
+```
 
 
 
 
+
+
+## igg ratio
+
+
+## igg log2ratio
+
+
+## igg subtract 
