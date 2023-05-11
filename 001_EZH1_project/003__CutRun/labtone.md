@@ -3242,12 +3242,31 @@ sbatch --dependency=afterany:19869 scripts/matrix_gene_1kb_corr_profile.sh # 198
 
 Looks good, but KO has more reads do not know why...
 
+Let's filter out the very low reads (>2 looks appropriate looking at IGV; `--minThreshold 2` added to computeMatrix); 
 
+```bash
+conda activate deeptools
+# Replicates (WT only 1st; do HET and KO if needed)
+sbatch scripts/matrix_TSS_5kb_WT_corr_min2.sh # 33029
+sbatch --dependency=afterany:33029 scripts/matrix_TSS_5kb_WT_corr_min2_profile.sh # 33042
+sbatch --dependency=afterany:33029 scripts/matrix_TSS_5kb_WT_corr_min2_profileNoPerGroup.sh # 35297
+
+
+# Genotype TSS (10kb) 
+sbatch scripts/matrix_TSS_5kb_corr_min2.sh # 33058
+sbatch --dependency=afterany:33058 scripts/matrix_TSS_5kb_corr_min2_profile.sh # 33063
+sbatch --dependency=afterany:33058 scripts/matrix_TSS_5kb_corr_min2_profileNoPerGroup.sh # 35306
+
+
+# Genotype gene body (-1 / +1 kb - TSS / TES)
+sbatch scripts/matrix_gene_1kb_corr_min2.sh # 33067
+sbatch --dependency=afterany:33067 scripts/matrix_gene_1kb_corr_min2_profile.sh # 33072
+```
+
+XXX (per group?; min2?) XXX
 
 
 ## igg ratio
-
-
 
 ```bash
 conda activate deeptools
@@ -3275,20 +3294,87 @@ sbatch --dependency=afterany:19946 scripts/matrix_gene_1kb_corr_IggNorm_profile.
 Looks good, but KO is kind of weird; Rep2 this time (drop down before TSS)
 
 
+Let's filter out the very low reads (>2 looks appropriate looking at IGV; `--minThreshold 2` added to computeMatrix); 
 
+```bash
+conda activate deeptools
+# Replicates (WT only 1st; do HET and KO if needed)
+sbatch scripts/matrix_TSS_5kb_WT_corr_IggNorm_min2.sh # 33110
+sbatch --dependency=afterany:33110 scripts/matrix_TSS_5kb_WT_corr_IggNorm_min2_profile.sh # 33116
+sbatch --dependency=afterany:33110 scripts/matrix_TSS_5kb_WT_corr_IggNorm_min2_profileNoPerGroup.sh # 35139
 
+# Genotype TSS (10kb) 
+sbatch scripts/matrix_TSS_5kb_corr_IggNorm_min2.sh # 33130
+sbatch --dependency=afterany:33130 scripts/matrix_TSS_5kb_corr_IggNorm_min2_profile.sh # 33131
+sbatch --dependency=afterany:33130 scripts/matrix_TSS_5kb_corr_IggNorm_min2_profileNoPerGroup.sh # 35203
+
+# Genotype gene body (-1 / +1 kb - TSS / TES)
+sbatch scripts/matrix_gene_1kb_corr_IggNorm_min2.sh # 33132
+sbatch --dependency=afterany:33132 scripts/matrix_gene_1kb_corr_IggNorm_min2_profile.sh # 33145
+```
+
+Removing the `--perGroup` is XXX
 
 
 ## igg log2ratio
 
-
-XXX
-31427 for median
-XXX
+log2ratio is weird looking (liek even the bigwig), fuck that one; would be great if drastic strong differences but that is not the case.
 
 ## igg subtract 
 
 
+```bash
+conda activate deeptools
+# Replicates
+sbatch scripts/matrix_TSS_5kb_WT_corr_IggNorm_subtract.sh # 32940
+sbatch --dependency=afterany:32940 scripts/matrix_TSS_5kb_WT_corr_IggNorm_subtract_profile.sh # 32946
+
+sbatch scripts/matrix_TSS_5kb_HET_corr_IggNorm_subtract.sh # 32960
+sbatch --dependency=afterany:32960 scripts/matrix_TSS_5kb_HET_corr_IggNorm_subtract_profile.sh # 32961
+
+sbatch scripts/matrix_TSS_5kb_KO_corr_IggNorm_subtract.sh # 32964
+sbatch --dependency=afterany:32964 scripts/matrix_TSS_5kb_KO_corr_IggNorm_subtract_profile.sh # 32967
+
+
+# Genotype TSS (10kb) 
+sbatch scripts/matrix_TSS_5kb_corr_IggNorm_subtract.sh # 32971
+sbatch --dependency=afterany:32971 scripts/matrix_TSS_5kb_corr_IggNorm_subtract_profile.sh # 32981
+
+
+# Genotype gene body (-1 / +1 kb - TSS / TES)
+sbatch scripts/matrix_gene_1kb_corr_IggNorm_subtract.sh # 32996
+sbatch --dependency=afterany:32996 scripts/matrix_gene_1kb_corr_IggNorm_subtract_profile.sh # 33000
+```
+
+
+
+Looks XXX, but KO is kind of weird; Rep2 this time (drop down before TSS) XXX
+
+
+Let's filter out the very low reads (>2 looks appropriate looking at IGV; `--minThreshold 2` added to computeMatrix); 
+
+```bash
+conda activate deeptools
+# Replicates (WT only 1st; do HET and KO if needed)
+sbatch scripts/matrix_TSS_5kb_WT_corr_IggNorm_subtract_min2.sh # 33839
+sbatch --dependency=afterany:33839 scripts/matrix_TSS_5kb_WT_corr_IggNorm_subtract_min2_profile.sh # 33841
+sbatch --dependency=afterany:33839 scripts/matrix_TSS_5kb_WT_corr_IggNorm_subtract_min2_profileNoPerGroup.sh # 35256
+
+# Genotype TSS (10kb) 
+sbatch scripts/matrix_TSS_5kb_corr_IggNorm_subtract_min2.sh # 33847
+sbatch --dependency=afterany:33847 scripts/matrix_TSS_5kb_corr_IggNorm_subtract_min2_profile.sh # 33850
+sbatch --dependency=afterany:33847 scripts/matrix_TSS_5kb_corr_IggNorm_subtract_min2_profileNoPerGroup.sh # 35296
+
+
+# Genotype gene body (-1 / +1 kb - TSS / TES)
+sbatch scripts/matrix_gene_1kb_corr_IggNorm_subtract_min2.sh # 33852
+sbatch --dependency=afterany:33852 scripts/matrix_gene_1kb_corr_IggNorm_subtract_min2_profile.sh # 33854
+```
+
 
 XXX
+
+
+
+--> Overall the best parameter seems to be XXX
 
