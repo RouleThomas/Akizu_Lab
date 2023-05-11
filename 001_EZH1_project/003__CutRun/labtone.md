@@ -605,13 +605,13 @@ sbatch scripts/bigwigmerge_histone_NotGenotypeGroup.sh # 19853 ok
 
 ```bash
 conda activate deeptools
-sbatch scripts/bigwig_histone_NotGenotypeGroup_ratio.sh # 19854
+sbatch scripts/bigwig_histone_NotGenotypeGroup_ratio.sh # 19854 ok
 
 conda activate BedToBigwig
-sbatch --dependency=afterany:19854 scripts/bigwigmerge_histone_NotGenotypeGroup_ratio.sh # 19856
+sbatch --dependency=afterany:19854 scripts/bigwigmerge_histone_NotGenotypeGroup_ratio.sh # 19856 ok
 ```
 
-Files looks XXX
+Files looks good
 
 
 
@@ -619,10 +619,10 @@ Files looks XXX
 **igg log2ratio + median**
 ```bash
 conda activate deeptools
-sbatch scripts/bigwig_histone_NotGenotypeGroup_log2ratio.sh # 19857 FAIL; 19865
+sbatch scripts/bigwig_histone_NotGenotypeGroup_log2ratio.sh # 19857 FAIL; 19865 ok
 
 conda activate BedToBigwig
-sbatch --dependency=afterany:19865 scripts/bigwigmerge_histone_NotGenotypeGroup_log2ratio.sh # 19858 FAIL; 19866
+sbatch --dependency=afterany:19865 scripts/bigwigmerge_histone_NotGenotypeGroup_log2ratio.sh # 19858 FAIL; 19866 FAIL; 31427 XXX
 ```
 
 Files looks XXX
@@ -632,18 +632,13 @@ Files looks XXX
 **igg substract + median**
 ```bash
 conda activate deeptools
-sbatch scripts/bigwig_histone_NotGenotypeGroup_subtract.sh # 19859
+sbatch scripts/bigwig_histone_NotGenotypeGroup_subtract.sh # 19859 ok
 
 conda activate BedToBigwig
-sbatch --dependency=afterany:19859 scripts/bigwigmerge_histone_NotGenotypeGroup_subtract.sh # 19860
+sbatch --dependency=afterany:19859 scripts/bigwigmerge_histone_NotGenotypeGroup_subtract.sh # 19860 ok
 ```
 
-
-Files looks XXX
-
-
-
-
+Files looks great (overall better representation to assess the difference! Notably NEUROG2 region)
 
 
 
@@ -3225,27 +3220,27 @@ Let's do 5kb around TSS and 1kb around gene body; should look better.
 ```bash
 conda activate deeptools
 # Replicates
-sbatch scripts/matrix_TSS_5kb_WT_corr.sh # 19847
-sbatch --dependency=afterany:19847 scripts/matrix_TSS_5kb_WT_corr_profile.sh # 19848
+sbatch scripts/matrix_TSS_5kb_WT_corr.sh # 19847 ok
+sbatch --dependency=afterany:19847 scripts/matrix_TSS_5kb_WT_corr_profile.sh # 19848 ok
 
-sbatch scripts/matrix_TSS_5kb_HET_corr.sh # 19849
-sbatch --dependency=afterany:19849 scripts/matrix_TSS_5kb_HET_corr_profile.sh # 19850
+sbatch scripts/matrix_TSS_5kb_HET_corr.sh # 19849 ok
+sbatch --dependency=afterany:19849 scripts/matrix_TSS_5kb_HET_corr_profile.sh # 19850 ok
 
-sbatch scripts/matrix_TSS_5kb_KO_corr.sh # 19851
-sbatch --dependency=afterany:19851 scripts/matrix_TSS_5kb_KO_corr_profile.sh # 19852
+sbatch scripts/matrix_TSS_5kb_KO_corr.sh # 19851 ok
+sbatch --dependency=afterany:19851 scripts/matrix_TSS_5kb_KO_corr_profile.sh # 19852 ok
 
 
 # Genotype TSS (10kb) 
-sbatch scripts/matrix_TSS_5kb_corr.sh # 19867
-sbatch --dependency=afterany:19867 scripts/matrix_TSS_5kb_corr_profile.sh # 19868
+sbatch scripts/matrix_TSS_5kb_corr.sh # 19867 ok
+sbatch --dependency=afterany:19867 scripts/matrix_TSS_5kb_corr_profile.sh # 19868 ok
 
 
 # Genotype gene body (-1 / +1 kb - TSS / TES)
-sbatch scripts/matrix_gene_1kb_corr.sh # 19869
-sbatch --dependency=afterany:19869 scripts/matrix_gene_1kb_corr_profile.sh # 19870
+sbatch scripts/matrix_gene_1kb_corr.sh # 19869 ok
+sbatch --dependency=afterany:19869 scripts/matrix_gene_1kb_corr_profile.sh # 19870 ok
 ```
 
-XXX
+Looks good, but KO has more reads do not know why...
 
 
 
@@ -3257,27 +3252,28 @@ XXX
 ```bash
 conda activate deeptools
 # Replicates
-sbatch --dependency=afterany:19856 scripts/matrix_TSS_5kb_WT_corr_IggNorm.sh # 19892
-sbatch --dependency=afterany:19892 scripts/matrix_TSS_5kb_WT_corr_IggNorm_profile.sh # 19893
+sbatch --dependency=afterany:19856 scripts/matrix_TSS_5kb_WT_corr_IggNorm.sh # 19892 ok
+sbatch --dependency=afterany:19892 scripts/matrix_TSS_5kb_WT_corr_IggNorm_profile.sh # 19893 ok
 
-sbatch --dependency=afterany:19856 scripts/matrix_TSS_5kb_HET_corr_IggNorm.sh # 19894
-sbatch --dependency=afterany:19894 scripts/matrix_TSS_5kb_HET_corr_IggNorm_profile.sh # 19895
+sbatch --dependency=afterany:19856 scripts/matrix_TSS_5kb_HET_corr_IggNorm.sh # 19894 ok
+sbatch --dependency=afterany:19894 scripts/matrix_TSS_5kb_HET_corr_IggNorm_profile.sh # 19895 ok
 
-sbatch --dependency=afterany:19856 scripts/matrix_TSS_5kb_KO_corr_IggNorm.sh # 19897
-sbatch --dependency=afterany:19897 scripts/matrix_TSS_5kb_KO_corr_IggNorm_profile.sh # 19899
+sbatch --dependency=afterany:19856 scripts/matrix_TSS_5kb_KO_corr_IggNorm.sh # 19897 ok
+sbatch --dependency=afterany:19897 scripts/matrix_TSS_5kb_KO_corr_IggNorm_profile.sh # 19899 ok
 
 
 # Genotype TSS (10kb) 
-sbatch --dependency=afterany:19856 scripts/matrix_TSS_5kb_corr_IggNorm.sh # 19922
-sbatch --dependency=afterany:19922 scripts/matrix_TSS_5kb_corr_IggNorm_profile.sh # 19944
+sbatch --dependency=afterany:19856 scripts/matrix_TSS_5kb_corr_IggNorm.sh # 19922 ok
+sbatch --dependency=afterany:19922 scripts/matrix_TSS_5kb_corr_IggNorm_profile.sh # 19944 ok
 
 
 # Genotype gene body (-1 / +1 kb - TSS / TES)
-sbatch --dependency=afterany:19856 scripts/matrix_gene_1kb_corr_IggNorm.sh # 19946
-sbatch --dependency=afterany:19946 scripts/matrix_gene_1kb_corr_IggNorm_profile.sh # 19947
+sbatch --dependency=afterany:19856 scripts/matrix_gene_1kb_corr_IggNorm.sh # 19946 ok
+sbatch --dependency=afterany:19946 scripts/matrix_gene_1kb_corr_IggNorm_profile.sh # 19947 ok
 ```
 
-XXX
+Looks good, but KO is kind of weird; Rep2 this time (drop down before TSS)
+
 
 
 
@@ -3287,7 +3283,8 @@ XXX
 
 
 XXX
-
+31427 for median
+XXX
 
 ## igg subtract 
 
