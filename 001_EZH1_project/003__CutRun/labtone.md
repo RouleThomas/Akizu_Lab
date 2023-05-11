@@ -619,10 +619,10 @@ Files looks XXX
 **igg log2ratio + median**
 ```bash
 conda activate deeptools
-sbatch scripts/bigwig_histone_NotGenotypeGroup_log2ratio.sh # 19857
+sbatch scripts/bigwig_histone_NotGenotypeGroup_log2ratio.sh # 19857 FAIL; 19865
 
 conda activate BedToBigwig
-sbatch --dependency=afterany:19857 scripts/bigwigmerge_histone_NotGenotypeGroup_log2ratio.sh # 19858
+sbatch --dependency=afterany:19865 scripts/bigwigmerge_histone_NotGenotypeGroup_log2ratio.sh # 19858 FAIL; 19866
 ```
 
 Files looks XXX
@@ -3236,19 +3236,16 @@ sbatch --dependency=afterany:19851 scripts/matrix_TSS_5kb_KO_corr_profile.sh # 1
 
 
 # Genotype TSS (10kb) 
-
-XXXMEDIANbigwigXXX :
-
-sbatch --dependency=afterany:XXXMEDIANbigwigXXX scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_subtract.sh #
-sbatch scripts/matrix_TSS_10kb_missingDataAsZero_IggNorm_subtract_profile.sh # 
+sbatch scripts/matrix_TSS_5kb_corr.sh # 19867
+sbatch --dependency=afterany:19867 scripts/matrix_TSS_5kb_corr_profile.sh # 19868
 
 
 # Genotype gene body (-1 / +1 kb - TSS / TES)
-sbatch --dependency=afterany:XXXMEDIANbigwigXXX scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_subtract.sh # 
-sbatch scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_subtract_profile.sh # 
+sbatch scripts/matrix_gene_1kb_corr.sh # 19869
+sbatch --dependency=afterany:19869 scripts/matrix_gene_1kb_corr_profile.sh # 19870
 ```
 
-
+XXX
 
 
 
@@ -3256,7 +3253,45 @@ sbatch scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_subtract_profile.sh #
 ## igg ratio
 
 
+
+```bash
+conda activate deeptools
+# Replicates
+sbatch --dependency=afterany:19856 scripts/matrix_TSS_5kb_WT_corr_IggNorm.sh # 19892
+sbatch --dependency=afterany:19892 scripts/matrix_TSS_5kb_WT_corr_IggNorm_profile.sh # 19893
+
+sbatch --dependency=afterany:19856 scripts/matrix_TSS_5kb_HET_corr_IggNorm.sh # 19894
+sbatch --dependency=afterany:19894 scripts/matrix_TSS_5kb_HET_corr_IggNorm_profile.sh # 19895
+
+sbatch --dependency=afterany:19856 scripts/matrix_TSS_5kb_KO_corr_IggNorm.sh # 19897
+sbatch --dependency=afterany:19897 scripts/matrix_TSS_5kb_KO_corr_IggNorm_profile.sh # 19899
+
+
+# Genotype TSS (10kb) 
+sbatch --dependency=afterany:19856 scripts/matrix_TSS_5kb_corr_IggNorm.sh # 19922
+sbatch --dependency=afterany:19922 scripts/matrix_TSS_5kb_corr_IggNorm_profile.sh # 19944
+
+
+# Genotype gene body (-1 / +1 kb - TSS / TES)
+sbatch --dependency=afterany:19856 scripts/matrix_gene_1kb_corr_IggNorm.sh # 19946
+sbatch --dependency=afterany:19946 scripts/matrix_gene_1kb_corr_IggNorm_profile.sh # 19947
+```
+
+XXX
+
+
+
+
+
 ## igg log2ratio
 
 
+XXX
+
+
 ## igg subtract 
+
+
+
+XXX
+

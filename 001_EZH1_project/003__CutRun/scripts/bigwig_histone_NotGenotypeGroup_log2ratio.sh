@@ -30,7 +30,7 @@ for ((i=0; i<${#samples_and_controls[@]}; i+=2)); do
   
     bigwigCompare -b1 output/bigwig_histone_NotGenotypeGroup/${sample}.dupmark.sorted.bw \
         -b2 output/bigwig_histone_NotGenotypeGroup/${control}.dupmark.sorted.bw \
-        --operation log2ratio \
+        --operation log2 \
         -o output/bigwig_histone_NotGenotypeGroup_IggNorm_log2ratio/${sample}_log2ratio.bw
 done
 
