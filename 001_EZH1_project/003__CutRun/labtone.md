@@ -598,6 +598,46 @@ sbatch scripts/bamtobigwig_histone_scaled_patient.sh # 11858339 ok
 ```
 --> The bigwig spike-in normalized are very heterogeneous between replicates; smthing is wrong...
 
+--> In the end, maybe they are not as heterogeneous when we correct with their respective IGG; they should be the good one as in such case KO show overall decrease of H3K27me3 which is expected!!; So let's make median and igg correction
+
+```bash
+conda activate BedToBigwig
+sbatch scripts/bigwigmerge_histone_scaled.sh # 43449 ok
+```
+
+Now normalize with igg ratio and subtract:
+
+**igg ratio + median**
+
+```bash
+conda activate deeptools
+sbatch scripts/bigwig_histone_scaled_ratio.sh # 43476
+
+conda activate BedToBigwig
+sbatch --dependency=afterany:43476 scripts/bigwigmerge_histone_scaled_ratio.sh # 43492
+```
+
+Files looks XXX
+
+
+**igg subtract + median**
+
+```bash
+conda activate deeptools
+sbatch scripts/bigwig_histone_scaled_subtract.sh # 43501
+
+conda activate BedToBigwig
+sbatch --dependency=afterany:43501 scripts/bigwigmerge_histone_scaled_subtract.sh # 43508
+```
+
+Files looks XXX
+
+
+
+
+
+
+*NOTE: see note below; this below may be fail:*
 
 What is wrong is that I should have use the reciprocal (1/n) and not n as scaling factor... Let' correct and save into `output/bigwig_histone_NotGenotypeGroup` (This is the true bigwig good to use, better than the *groupABgenotype* one)
 
@@ -1309,10 +1349,6 @@ sbatch scripts/bamtobigwig_ChIPSeqSpike.sh # 12287902 ok
 ```
 
 
-
-Re run ChIPSeqSpike:
-
-XXX
 
 
 ### DiffBind
@@ -2334,6 +2370,7 @@ sample_count_blackgreylist_RLE_contrast_analyze = dba.analyze(sample_count_black
 
 **Using our scaling factor, let's estimate the 'new' library size** and provide it to `dba.normalize(library = c(1000, 12000))` = Like that our library size will be change taking into account our scaling factor! **Then we can normalize with library-size, RLE or TMM**... (issue discussed [here](https://support.bioconductor.org/p/9147040/))
 
+
 ### Adjust library size with histone scaling factor and apply normalization
 Total number of reads is our library size (used samtools flagstat to double check) :
 
@@ -2513,13 +2550,267 @@ dev.off()
 pdf("output/DiffBind/PCA_blackgreylist_LibHistoneScaledOnly.pdf", width=14, height=20) 
 dba.plotPCA(sample_count_blackgreylist_LibHistoneScaledOnly,DBA_REPLICATE, label=DBA_TREATMENT)
 dev.off()
-
-
 ```
 
 --> Here the library are scaled taking into account histone spike in! It gave good clustering and OK results (few diff bound sites but I think these are correct)
 
 --> TMM was overall the best normalization method (RLE perform well too): good clustering of samples and maximum nb of diff. sites
+
+--> The diff. bound sites are very small, and also it seems there is very few detected but looking by eyes on the bigwig there should be more diff bound sites; notably, there should be more decrease in KO (it is clear we see it (on the `bigwig_histone` which in the end is the correct bigwig file to use (and not `bigwig_histone_NotGenotypeGroup`)))
+
+So let's try to use the macs2 raw output to see whether we detect more differences; I removed patient as only 1 replicate cannot be used by DiffBind...
+
+1st **re-generate count matrix:**
+```bash
+srun --mem=500g --pty bash -l
+conda activate DiffBind
+```
+
+
+```R
+library("DiffBind") 
+
+# Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw.txt", header = TRUE, sep = "\t"))
+
+# Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+
+
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw.RData")
+load("output/DiffBind/sample_count_macs2raw.RData")
+
+# plot
+pdf("output/DiffBind/clustering_sample_macs2raw.pdf", width=14, height=20)  
+plot(sample_count)
+dev.off()
+
+pdf("output/DiffBind/PCA_sample_macs2raw.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+# Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+
+# Now check how clustering look
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+## This take time, here is checkpoint command to save/load:
+save(sample_count_blackgreylist, file = "output/DiffBind/sample_count_macs2raw_blackgreylist.RData")
+load("output/DiffBind/sample_count_blackgreylist.RData")
+
+
+# plot
+pdf("output/DiffBind/clustering_macs2raw_blackgreylist.pdf", width=14, height=20)
+plot(sample_count_blackgreylist)
+dev.off()
+
+pdf("output/DiffBind/PCA_macs2raw_blackgreylist.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+
+
+
+# LIB SIZE (edgeR: 237/41/146; deseq2 10/1/16)
+sample_count_blackgreylist_LibHistoneScaled_LIB = dba.normalize(sample_count_blackgreylist, library = c(16435849, 17032874, 9125844, 34105171, 11502923, 10536410, 123012358, 9366195, 20293409, 29302285, 19824265, 28374047), normalize = DBA_NORM_LIB) # Default
+
+pdf("output/DiffBind/clustering_macs2raw_blackgreylist_LibHistoneScaled_LIB.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_LibHistoneScaled_LIB)
+dev.off()
+
+pdf("output/DiffBind/PCA_macs2raw_blackgreylist_LibHistoneScaled_LIB.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_LIB,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_blackgreylist_LibHistoneScaled_LIB_contrast = dba.contrast(sample_count_blackgreylist_LibHistoneScaled_LIB, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_blackgreylist_LibHistoneScaled_LIB_contrast_analyze = dba.analyze(sample_count_blackgreylist_LibHistoneScaled_LIB_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
+
+
+# RLE (edgeR: 237/41/146; deseq2 154/13/148)
+sample_count_blackgreylist_LibHistoneScaled_RLE = dba.normalize(sample_count_blackgreylist, library = c(16435849, 17032874, 9125844, 34105171, 11502923, 10536410, 123012358, 9366195, 20293409, 29302285, 19824265, 28374047), normalize = DBA_NORM_RLE)  # RLE
+
+pdf("output/DiffBind/clustering_macs2raw_blackgreylist_LibHistoneScaled_RLE.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_LibHistoneScaled_RLE)
+dev.off()
+
+pdf("output/DiffBind/PCA_macs2raw_blackgreylist_LibHistoneScaled_RLE.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_RLE,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_blackgreylist_LibHistoneScaled_RLE_contrast = dba.contrast(sample_count_blackgreylist_LibHistoneScaled_RLE, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_blackgreylist_LibHistoneScaled_RLE_contrast_analyze = dba.analyze(sample_count_blackgreylist_LibHistoneScaled_RLE_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
+
+
+# TMM (edgeR: 237/41/146; deseq2 139/19/147)
+
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(16435849, 17032874, 9125844, 34105171, 11502923, 10536410, 123012358, 9366195, 20293409, 29302285, 19824265, 28374047), normalize = DBA_NORM_TMM) # TMM
+
+pdf("output/DiffBind/clustering_macs2raw_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_LibHistoneScaled_TMM)
+dev.off()
+
+pdf("output/DiffBind/PCA_macs2raw_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast = dba.contrast(sample_count_blackgreylist_LibHistoneScaled_TMM, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze = dba.analyze(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)
+
+
+# TMM and RLE perform best; let's pick TMM
+```
+Still very few diff bound sites are detected; so let's tweak the qvalue! Discussion [here](https://www.biostars.org/p/444784/).
+
+
+```R
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze$config$bUsePval <- TRUE
+
+dba.report(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze)
+
+
+## Export the Diff Bind regions
+### Convert to GR object
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast1 <- dba.report(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast2 <- dba.report(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast3 <- dba.report(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+### Convert to bed and exportsample_model__blackgreylist_histone_norm_report_contrast1
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast1_df <- data.frame(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast1)
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast2_df <- data.frame(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast2)
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast3_df <- data.frame(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast3)
+
+colnames(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast1_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast2_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast3_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+
+write.table(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast1_df, file="output/DiffBind/sample_count_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast1_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast2_df, file="output/DiffBind/sample_count_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast2_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast3_df, file="output/DiffBind/sample_count_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast3_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+
+
+
+
+
+# Examining results
+## MA plot with diff sites
+pdf("output/DiffBind/plotMA_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast1.pdf", width=14, height=20) 
+dba.plotMA(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+dev.off()
+pdf("output/DiffBind/plotMA_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast2.pdf", width=14, height=20) 
+dba.plotMA(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/plotMA_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast3.pdf", width=14, height=20) 
+dba.plotMA(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+
+## volcano plot with diff sites
+pdf("output/DiffBind/volcano_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast1.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze,method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/volcano_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast2.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/volcano_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast3.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+## PCA/heatmat only on the diff sites
+pdf("output/DiffBind/clustering_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast1.pdf", width=14, height=20) 
+plot(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/clustering_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast2.pdf", width=14, height=20) 
+plot(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2, contrast=2)
+dev.off()
+pdf("output/DiffBind/clustering_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast3.pdf", width=14, height=20) 
+plot(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2, contrast=3)
+dev.off()
+
+pdf("output/DiffBind/PCA_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=1, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast2.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=2, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast3.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=3, label=DBA_TREATMENT)
+dev.off()
+
+
+## Read concentration heatmap
+hmap <- colorRampPalette(c("red", "black", "green"))(n = 13)
+
+pdf("output/DiffBind/clustering_reads_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast1.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=1, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast2.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=2, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+pdf("output/DiffBind/clustering_reads_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast3.pdf", width=14, height=20) 
+dba.plotHeatmap(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=3, correlations=FALSE,
+                              scale="row", colScheme = hmap)
+dev.off()
+
+
+## Read distribution within diff bound sites
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast1.pdf", width=14, height=20) 
+dba.plotBox(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=1)
+dev.off()
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast2.pdf", width=14, height=20) 
+dba.plotBox(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/BoxPlotBindAffinity_reads_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast3.pdf", width=14, height=20) 
+dba.plotBox(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+```
+
+--> with these parameters; neurog2 is significant (even FDR is significant... Weird). This looks great!!
+
+--> Still issue is that the peak are small, it may be good to merge them in like a 1-5kb distance
+
+
+## Fine-tune diff bound peak calling (qvalue and peak merge)
+Now that we have plenty of diff bound regions, we need to make sure what is detected is biologically signifcant. For that; we will verify that the pvalue 0.05 treshold is OK and increase it if necessary; then we will merge the peak in a 1-5kb distance.
+
+
+
+XXX
+
+
+
+
+
+# Test sliding window method for differential binding
+
+Many different tools:
+- csaw modified [paper](https://f1000research.com/articles/4-1080) : looks shit as cannot deal with library size and all in R, looks painfull, and not famous...
+- csaw original (look famous); [paper](https://academic.oup.com/nar/article/44/5/e45/2464481); not clear whether we can adjust lib size
+- DiffChIPL [paper](https://academic.oup.com/bioinformatics/article/38/17/4062/6637512); method that claim to be the best (recent 2022); I think we can adjust lib size but not clear
+- THOR [paper](https://academic.oup.com/nar/article/44/20/e153/2607977)
+- ODIN [paper](https://academic.oup.com/bioinformatics/article/30/24/3467/2422257?login=false)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
