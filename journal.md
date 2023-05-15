@@ -77,6 +77,10 @@ library("DOSE")
 library("org.Hs.eg.db") 
 library("enrichplot")
 library("ChIPseeker")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+library("meshes")
+library("ReactomePA")
+library("VennDiagram")
 
 ### ChIPseqSpikeInFree
 R/3.6.1 with **ChIPseqSpikeInFree** notably + following libraries:

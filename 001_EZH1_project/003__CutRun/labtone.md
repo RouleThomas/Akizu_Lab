@@ -559,16 +559,8 @@ Generate median tracks:
 ```bash
 conda activate BedToBigwig
 
-sbatch scripts/bigwigmerge.sh # 39314 XXX
+sbatch scripts/bigwigmerge.sh # 39314 ok
 ```
-
-
-
-
-
-
-
-
 
 
 
@@ -611,29 +603,26 @@ Now normalize with igg ratio and subtract:
 
 ```bash
 conda activate deeptools
-sbatch scripts/bigwig_histone_scaled_ratio.sh # 43476
+sbatch scripts/bigwig_histone_scaled_ratio.sh # 43476 ok
 
 conda activate BedToBigwig
-sbatch --dependency=afterany:43476 scripts/bigwigmerge_histone_scaled_ratio.sh # 43492
+sbatch --dependency=afterany:43476 scripts/bigwigmerge_histone_scaled_ratio.sh # 43492 ok
 ```
 
-Files looks XXX
+Files looks good
 
 
 **igg subtract + median**
 
 ```bash
 conda activate deeptools
-sbatch scripts/bigwig_histone_scaled_subtract.sh # 43501
+sbatch scripts/bigwig_histone_scaled_subtract.sh # 43501 ok
 
 conda activate BedToBigwig
-sbatch --dependency=afterany:43501 scripts/bigwigmerge_histone_scaled_subtract.sh # 43508
+sbatch --dependency=afterany:43501 scripts/bigwigmerge_histone_scaled_subtract.sh # 43508 ok
 ```
 
-Files looks XXX
-
-
-
+Files looks good; subtract look seems more clean
 
 
 
@@ -2777,8 +2766,7 @@ dev.off()
 Now that we have plenty of diff bound regions, we need to make sure what is detected is biologically signifcant. For that; we will verify that the pvalue 0.05 treshold is OK and increase it if necessary; then we will merge the peak in a 1-5kb distance.
 
 
-
-XXX
+--> The peak looks biologically relevant, even the one with small pvalue! Instead of merging the peaks, let's assign peak to genes with ChIPseeker and see whether diff bind sites follow gene expression changes
 
 
 
@@ -2921,11 +2909,6 @@ plotCorrelation \
     -o output/bigwig/multiBigwigSummary_histone_H3K27me3_heatmap.pdf
 ```
 
-
-### Histone lib depth
-
-
-XXX
 
 
 
@@ -3249,6 +3232,14 @@ KO_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = KO_annot$geneId, column = "SY
 HET_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = HET_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
 patient_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = patient_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
 
+WT_annot$gene <- mapIds(org.Hs.eg.db, keys = WT_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+KO_annot$gene <- mapIds(org.Hs.eg.db, keys = KO_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+HET_annot$gene <- mapIds(org.Hs.eg.db, keys = HET_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+patient_annot$gene <- mapIds(org.Hs.eg.db, keys = patient_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+
+
 ## Save output table
 write.table(WT_annot, file="output/ChIPseeker/annotation_WT.txt", sep="\t", quote=F, row.names=F)
 write.table(KO_annot, file="output/ChIPseeker/annotation_KO.txt", sep="\t", quote=F, row.names=F)
@@ -3257,6 +3248,468 @@ write.table(patient_annot, file="output/ChIPseeker/annotation_patient.txt", sep=
 ```
 *NOTE: the `resample` in `plotAvgProf()` is how many time you bootstrap; nb need to be a divisor of the total nb of datapoint (eg. 100/200 for 20k datapoints (=-1000/1000) is ok, but 500 is not)* \
 *NOTE: the gene peak assignment use the nearest TSS method, then other order of priority, all genes are assigned except if they do not fall into Promoter, 5’ UTR, 3’ UTR, Exon, Intron, Downstream. In such case peak assign as 'intergenic'*
+
+
+Let's assign the **differentially bound peak to genes**:
+```bash
+srun --mem=300g --pty bash -l
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+
+
+# Import peaks
+peaks_contrast1 = read.table('output/DiffBind/sample_count_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast1_df.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V5, V6=V6, V7=V7, V8=V8, FC=V9, pvalue=V10, FDR=V11) 
+peaks_contrast2 = read.table('output/DiffBind/sample_count_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast2_df.bed')  %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V5, V6=V6, V7=V7, V8=V8, FC=V9, pvalue=V10, FDR=V11) 
+peaks_contrast3 = read.table('output/DiffBind/sample_count_macs2raw_blackgreylist_LibHistoneScaled_TMM_contrast3_df.bed')  %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V5, V6=V6, V7=V7, V8=V8, FC=V9, pvalue=V10, FDR=V11)  
+
+
+# Tidy peaks
+peaks_contrast1_gr = makeGRangesFromDataFrame(peaks_contrast1,keep.extra.columns=TRUE)
+peaks_contrast2_gr = makeGRangesFromDataFrame(peaks_contrast2,keep.extra.columns=TRUE)
+peaks_contrast3_gr = makeGRangesFromDataFrame(peaks_contrast3,keep.extra.columns=TRUE)
+
+gr_list <- list(HETvsKO=peaks_contrast1_gr, HETvsWT=peaks_contrast2_gr, KOvsWT=peaks_contrast3_gr)
+
+
+
+# Functional profiles
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # 
+
+genes = lapply(peakAnnoList, function(i) as.data.frame(i)$geneId)
+names(genes) = sub("_", "\n", names(genes))
+
+## KEGG
+compKEGG <- compareCluster(geneCluster   = genes,
+                         fun           = "enrichKEGG",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
+
+pdf("output/ChIPseeker/functional_KEGG_DiffBind05.pdf", width=7, height=15)
+dotplot(compKEGG, showCategory = 15, title = "KEGG Pathway Enrichment Analysis")
+dev.off()
+
+## GO
+compGO <- compareCluster(geneCluster   = genes,
+                         fun           = "enrichGO",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH",
+                         OrgDb         = "org.Hs.eg.db",
+                         ont           = "BP") # "BP" (Biological Process), "CC" (Cellular Component), or "MF" (Molecular Function)
+pdf("output/ChIPseeker/functional_GO_BP_DiffBind05.pdf", width=7, height=15)
+dotplot(compGO, showCategory = 15, title = "GO_Biological Process Enrichment Analysis")
+dev.off()
+compGO <- compareCluster(geneCluster   = genes,
+                         fun           = "enrichGO",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH",
+                         OrgDb         = "org.Hs.eg.db",
+                         ont           = "CC") # "BP" (Biological Process), "8" (Cellular Component), or "MF" (Molecular Function)
+pdf("output/ChIPseeker/functional_GO_CC_DiffBind05.pdf", width=7, height=15)
+dotplot(compGO, showCategory = 15, title = "GO_Cellular Component Enrichment Analysis")
+dev.off()
+compGO <- compareCluster(geneCluster   = genes,
+                         fun           = "enrichGO",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH",
+                         OrgDb         = "org.Hs.eg.db",
+                         ont           = "MF") # "BP" (Biological Process), "8" (Cellular Component), or "MF" (Molecular Function)
+pdf("output/ChIPseeker/functional_GO_MF_DiffBind05.pdf", width=7, height=15)
+dotplot(compGO, showCategory = 15, title = "GO_Molecular Function Enrichment Analysis")
+dev.off()
+
+
+## Disease
+compDO <- compareCluster(geneCluster   = genes,
+                         fun           = "enrichDO",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
+pdf("output/ChIPseeker/functional_DO_DiffBind05.pdf", width=7, height=15)
+dotplot(compDO, showCategory = 15, title = "Disease Ontology Enrichment Analysis")
+dev.off()
+
+## ReactomePA
+compReactome <- compareCluster(geneCluster   = genes,
+                               fun           = "enrichPathway",
+                               pvalueCutoff  = 0.05,
+                               pAdjustMethod = "BH",
+                               organism      = "human")
+pdf("output/ChIPseeker/functional_Reactome_DiffBind05.pdf", width=7, height=15)
+dotplot(compReactome, showCategory = 15, title = "Reactome Pathway Enrichment Analysis")
+dev.off()
+
+# Overlap assigned genes btwn my gr_list
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Fine-tune here gene peak assignemnt
+
+genes= lapply(peakAnnoList, function(i) unique(as.data.frame(i)$geneId))
+
+pdf("output/ChIPseeker/overlap_genes_DiffBind05.pdf", width=7, height=7)
+vennplot(genes)
+dev.off()
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## Get annotation data frame
+HETvsKO_annot <- as.data.frame(peakAnnoList[["HETvsKO"]]@anno)
+HETvsWT_annot <- as.data.frame(peakAnnoList[["HETvsWT"]]@anno)
+KOvsWT_annot <- as.data.frame(peakAnnoList[["KOvsWT"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+HETvsKO_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = HETvsKO_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+HETvsWT_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = HETvsWT_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+KOvsWT_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = KOvsWT_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+
+HETvsKO_annot$gene <- mapIds(org.Hs.eg.db, keys = HETvsKO_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+HETvsWT_annot$gene <- mapIds(org.Hs.eg.db, keys = HETvsWT_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+KOvsWT_annot$gene <- mapIds(org.Hs.eg.db, keys = KOvsWT_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+## Save output table
+write.table(HETvsKO_annot, file="output/ChIPseeker/annotation_HETvsKO.txt", sep="\t", quote=F, row.names=F)
+write.table(HETvsWT_annot, file="output/ChIPseeker/annotation_HETvsWT.txt", sep="\t", quote=F, row.names=F)
+write.table(KOvsWT_annot, file="output/ChIPseeker/annotation_KOvsWT.txt", sep="\t", quote=F, row.names=F)
+```
+
+Now let's compare RNAseq and CutRun:
+- Filter HETvsWT and KOvsWT diff bound genes into **gain and loss H3K27me3**
+- **Keep only signal in Promoter, gene body and TES** (ie. filter out peak assigned to intergenic)
+- **Merge with deseq2** log2FC data (tpm will not work as too variable; or log2tpm maybe?)
+- Plot in x FC and y baseMean=deseq2-norm counts (+ color qvalue) with facet_wrap~gain or lost (ie. volcano plot gain/lost)
+
+```R
+# Filter Gain/Loss sites
+HETvsWT_annot_gain = tibble(HETvsWT_annot) %>%
+    filter(FC > 0, annotation != "Distal Intergenic") %>%
+    dplyr::select(-c(V6,V7,V8,strand,name)) %>%
+    add_column(H3K27me3 = "gain")
+HETvsWT_annot_lost = tibble(HETvsWT_annot) %>%
+    filter(FC < 0, annotation != "Distal Intergenic") %>%
+    dplyr::select(-c(V6,V7,V8,strand,name)) %>%
+    add_column(H3K27me3 = "lost")
+HETvsWT_annot_gain_lost = HETvsWT_annot_gain %>% 
+    bind_rows(HETvsWT_annot_lost) %>%
+    dplyr::select(seqnames,start,end,FC,pvalue,FDR,annotation,distanceToTSS,gene,geneSymbol,H3K27me3)
+
+KOvsWT_annot_gain = tibble(KOvsWT_annot) %>%
+    filter(FC > 0, annotation != "Distal Intergenic") %>%
+    dplyr::select(-c(V6,V7,V8,strand,name)) %>%
+    add_column(H3K27me3 = "gain")
+KOvsWT_annot_lost = tibble(KOvsWT_annot) %>%
+    filter(FC < 0, annotation != "Distal Intergenic") %>%
+    dplyr::select(-c(V6,V7,V8,strand,name))  %>%
+    add_column(H3K27me3 = "lost")
+KOvsWT_annot_gain_lost = KOvsWT_annot_gain %>% 
+    bind_rows(KOvsWT_annot_lost) %>%
+    dplyr::select(seqnames,start,end,FC,pvalue,FDR,annotation,distanceToTSS,gene,geneSymbol,H3K27me3)
+
+# Import RNAseq deseq2 output
+HET_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_8wN_HET_vs_8wN_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj)
+KO_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_8wN_KO_vs_8wN_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj)
+
+# Merge files
+HETvsWT_annot_gain_lost_RNA = HETvsWT_annot_gain_lost %>% 
+    left_join(HET_vs_WT) %>%
+    dplyr::select(gene, H3K27me3,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
+    unique()
+
+
+KOvsWT_annot_gain_lost_RNA = KOvsWT_annot_gain_lost %>% 
+    left_join(KO_vs_WT) %>%
+    dplyr::select(gene, H3K27me3,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
+    unique()
+
+
+# Volcano plot
+count_data <- HETvsWT_annot_gain_lost_RNA %>%
+    group_by(H3K27me3, significance) %>%
+    summarise(up = sum(log2FoldChange > 0),
+              down = sum(log2FoldChange < 0),
+              total = n()) %>%
+    ungroup() %>%
+    group_by(H3K27me3) %>%
+    mutate(total_panel = sum(total)) %>%
+    ungroup()
+
+pdf("output/ChIPseeker/DiffBind05_HETvsWT_expression.pdf", width=7, height=4)
+HETvsWT_annot_gain_lost_RNA %>%
+    ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
+        geom_point(alpha = 0.8, size = 0.5) +
+        scale_color_manual(values = c("grey", "red")) +
+        labs(title = "HET vs WT",
+             subtitle = "Expression level of diff. bound H3K27me3 genes",
+             x = "Log2 Fold Change",
+             y = "Base Mean",
+             color = "Significant (padj <= 0.05)") +
+        facet_wrap(~H3K27me3) +
+        theme_bw() +
+        geom_text(data = count_data %>% filter(significance), 
+                  aes(x = Inf, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
+                  hjust = 1.1, vjust = 1.1, size = 3, color = "black") +
+        geom_text(data = count_data %>% distinct(H3K27me3, .keep_all = TRUE),
+                  aes(x = Inf, y = -Inf, label = paste("Total:", total_panel, "genes")),
+                  hjust = 1.1, vjust = -0.1, size = 3, color = "black")
+dev.off()
+
+count_data <- KOvsWT_annot_gain_lost_RNA %>%
+    group_by(H3K27me3, significance) %>%
+    summarise(up = sum(log2FoldChange > 0),
+              down = sum(log2FoldChange < 0),
+              total = n()) %>%
+    ungroup() %>%
+    group_by(H3K27me3) %>%
+    mutate(total_panel = sum(total)) %>%
+    ungroup()
+
+pdf("output/ChIPseeker/DiffBind05_KOvsWT_expression.pdf", width=7, height=4)
+KOvsWT_annot_gain_lost_RNA %>%
+    ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
+        geom_point(alpha = 0.8, size = 0.5) +
+        scale_color_manual(values = c("grey", "red")) +
+        labs(title = "KO vs WT",
+             subtitle = "Expression level of diff. bound H3K27me3 genes",
+             x = "Log2 Fold Change",
+             y = "Base Mean",
+             color = "Significant (padj <= 0.05)") +
+        facet_wrap(~H3K27me3) +
+        theme_bw() +
+        geom_text(data = count_data %>% filter(significance), 
+                  aes(x = Inf, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
+                  hjust = 1.1, vjust = 1.1, size = 3, color = "black") +
+        geom_text(data = count_data %>% distinct(H3K27me3, .keep_all = TRUE),
+                  aes(x = Inf, y = -Inf, label = paste("Total:", total_panel, "genes")),
+                  hjust = 1.1, vjust = -0.1, size = 3, color = "black")
+dev.off()
+
+# Venn diagram to see whether gain H3K27me3 in HET are the same one in KO?
+## GAIN
+# Extract the unique gene lists as vectors
+HET_gene_list <- unique(HETvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "gain") %>%
+                          pull(gene))
+
+KO_gene_list <- unique(KOvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "gain") %>%
+                          pull(gene))
+
+
+venn.plot <- venn.diagram(
+  list(HET = HET_gene_list, KO = KO_gene_list),
+  filename = NULL,
+  fill = c("blue", "red"),
+  alpha = 0.5,
+  category.names = c("HET Gain", "KO Gain"),
+  cex = 2
+)
+
+# Plot the Venn diagram
+pdf("output/ChIPseeker/Venn_DiffBind05_Gain_Het_KO.pdf", width=5, height=4)
+grid.draw(venn.plot)
+dev.off()
+
+## LOST
+# Extract the unique gene lists as vectors
+HET_gene_list <- unique(HETvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "lost") %>%
+                          pull(gene))
+
+KO_gene_list <- unique(KOvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "lost") %>%
+                          pull(gene))
+
+
+venn.plot <- venn.diagram(
+  list(HET = HET_gene_list, KO = KO_gene_list),
+  filename = NULL,
+  fill = c("blue", "red"),
+  alpha = 0.5,
+  category.names = c("HET Lost", "KO Lost"),
+  cex = 2
+)
+
+# Plot the Venn diagram
+pdf("output/ChIPseeker/Venn_DiffBind05_Lost_Het_KO.pdf", width=5, height=4)
+grid.draw(venn.plot)
+dev.off()
+
+
+## BOTH
+# Extract the unique gene lists as vectors
+HET_lost_gene_list <- unique(HETvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "lost") %>%
+                          pull(gene))
+
+KO_lost_gene_list <- unique(KOvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "lost") %>%
+                          pull(gene))
+
+HET_gain_gene_list <- unique(HETvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "gain") %>%
+                          pull(gene))
+
+KO_gain_gene_list <- unique(KOvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "gain") %>%
+                          pull(gene))
+
+
+venn.plot <- venn.diagram(
+  list(HET_lost = HET_lost_gene_list, KO_lost = KO_lost_gene_list,
+       HET_gain = HET_gain_gene_list, KO_gain = KO_gain_gene_list),
+  filename = NULL,
+  fill = c("blue", "red", "blue", "red"),
+  alpha = 0.5,
+  cex = 2
+)
+
+# Plot the Venn diagram
+pdf("output/ChIPseeker/Venn_DiffBind05_LostGain_Het_KO.pdf", width=5, height=4)
+grid.draw(venn.plot)
+dev.off()
+
+
+# Functional analyses
+## Create a list of vector:
+gene_list <- list(HET_lost = HET_lost_gene_list,
+                  KO_lost = KO_lost_gene_list,
+                  HET_gain = HET_gain_gene_list,
+                  KO_gain = KO_gain_gene_list)
+
+## Convert ENSEMBL geneID to Entrez gene ID:
+convert_ensembl_to_entrez <- function(gene_list) {
+  result <- select(org.Hs.eg.db, keys = gene_list, keytype = "ENSEMBL", columns = "ENTREZID")
+  return(result$ENTREZID)
+}
+
+converted_gene_list <- lapply(gene_list, convert_ensembl_to_entrez)
+names(converted_gene_list) <- names(gene_list)
+
+ 
+
+ 
+## KEGG
+
+compKEGG <- compareCluster(geneCluster   = converted_gene_list,
+                         fun           = "enrichKEGG",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
+
+pdf("output/ChIPseeker/functional_KEGG_DiffBind05_HET_KO.pdf", width=7, height=7)
+dotplot(compKEGG, showCategory = 15, title = "KEGG Pathway Enrichment Analysis")
+dev.off()
+
+
+## GO
+compGO <- compareCluster(geneCluster   = converted_gene_list,
+                         fun           = "enrichGO",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH",
+                         OrgDb         = "org.Hs.eg.db",
+                         ont           = "BP") # "BP" (Biological Process), "CC" (Cellular Component), or "MF" (Molecular Function)
+pdf("output/ChIPseeker/functional_GO_BP_DiffBind05_HET_KO.pdf", width=7, height=15)
+dotplot(compGO, showCategory = 15, title = "GO_Biological Process Enrichment Analysis")
+dev.off()
+
+compGO <- compareCluster(geneCluster   = converted_gene_list,
+                         fun           = "enrichGO",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH",
+                         OrgDb         = "org.Hs.eg.db",
+                         ont           = "CC") # "BP" (Biological Process), "8" (Cellular Component), or "MF" (Molecular Function)
+pdf("output/ChIPseeker/functional_GO_CC_DiffBind05_HET_KO.pdf", width=7, height=10)
+dotplot(compGO, showCategory = 15, title = "GO_Cellular Component Enrichment Analysis")
+dev.off()
+
+compGO <- compareCluster(geneCluster   = converted_gene_list,
+                         fun           = "enrichGO",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH",
+                         OrgDb         = "org.Hs.eg.db",
+                         ont           = "MF") # "BP" (Biological Process), "8" (Cellular Component), or "MF" (Molecular Function)
+pdf("output/ChIPseeker/functional_GO_MF_DiffBind05_HET_KO.pdf", width=7, height=10)
+dotplot(compGO, showCategory = 15, title = "GO_Molecular Function Enrichment Analysis")
+dev.off()
+
+
+## Disease
+compDO <- compareCluster(geneCluster   = converted_gene_list,
+                         fun           = "enrichDO",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
+pdf("output/ChIPseeker/functional_DO_DiffBind05_HET_KO.pdf", width=7, height=5)
+dotplot(compDO, showCategory = 15, title = "Disease Ontology Enrichment Analysis")
+dev.off()
+
+## ReactomePA
+compReactome <- compareCluster(geneCluster   = converted_gene_list,
+                               fun           = "enrichPathway",
+                               pvalueCutoff  = 0.05,
+                               pAdjustMethod = "BH",
+                               organism      = "human")
+pdf("output/ChIPseeker/functional_Reactome_DiffBind05_HET_KO.pdf", width=7, height=10)
+dotplot(compReactome, showCategory = 15, title = "Reactome Pathway Enrichment Analysis")
+dev.off()
+
+
+# Output the gene list
+## Convert ENSEMBL geneID to SYMBOL gene ID:
+convert_ensembl_to_entrez <- function(gene_list) {
+  result <- select(org.Hs.eg.db, keys = gene_list, keytype = "ENSEMBL", columns = "SYMBOL")
+  return(result$SYMBOL)
+}
+
+converted_gene_list <- lapply(gene_list, convert_ensembl_to_entrez)
+names(converted_gene_list) <- names(gene_list)
+
+## Function to create a tibble with two columns: gene ID and type
+create_gene_tibble <- function(gene_vector, list_name) {
+  tibble(gene = gene_vector, type = list_name)
+}
+
+## Create a list of tibbles for each gene list
+tibble_list <- mapply(create_gene_tibble, converted_gene_list, names(converted_gene_list), SIMPLIFY = FALSE)
+
+## Combine the tibbles into a single tibble
+resulting_tibble <- bind_rows(tibble_list)
+
+## SAVE
+write.table(resulting_tibble, file = "output/ChIPseeker/gene_list_DiffBind05_HET_KO.txt", row.names = FALSE, col.names = TRUE, sep = "\t", quote = FALSE)
+```
+
+--> Gain/Lost in HET and KO; 590/432 genes and 765/749 (Promoter, gene body and TES);
+
+removing gene dupplicates we got: \
+--> Gain/Lost in HET and KO; 462/352 genes and 576/581 (Promoter, gene body and TES);
+
+--> Gain/Lost in H3K27me3 correlates with reduced/increased expression for HET and KO.
+
+--> Few genes are shared like gain in HET and KO; we got specificity of the mutation regarding changing of H3K27me3!
+
+--> NEUROG2 is in HET Lost...
 
 
 # deepTools CutRun vizualization with not the good bigwig
@@ -3517,7 +3970,7 @@ sbatch scripts/matrix_gene_5kb_missingDataAsZero_IggNorm_subtract_profile.sh # 1
 The correct bigwig to take are the `output/bigwig_histone_NotGenotypeGroup` and NOT the `output/bigwig_histone_NotGenotypeGroup_lib`... --> Let's repeat using the correct ones... 
 
 
-# deepTools CutRun vizualization with the correct bigwig
+# deepTools CutRun vizualization with the bigwig_histone_NotGenotypeGroup (not bigwig_histone_NotGenotypeGroup_lib)
 `output/bigwig_histone_NotGenotypeGroup` and NOT the `output/bigwig_histone_NotGenotypeGroup_lib`
 
 Let's do 5kb around TSS and 1kb around gene body; should look better.
@@ -3572,7 +4025,7 @@ sbatch scripts/matrix_gene_1kb_corr_min2.sh # 33067 ok
 sbatch --dependency=afterany:33067 scripts/matrix_gene_1kb_corr_min2_profile.sh # 33072 ok
 ```
 
---> min2 is faaar too high; this is not value of 2 like in IGV; that is the read counts... Looking at the plots >0.2 should be better : XXX RUN IT XXX
+--> min2 is faaar too high; this is not value of 2 like in IGV; that is the read counts... Looking at the plots >0.2 should be better.
 
 
 
@@ -3627,7 +4080,7 @@ sbatch --dependency=afterany:33132 scripts/matrix_gene_1kb_corr_IggNorm_min2_pro
 
 Removing the `--perGroup` is unknown still as the min2 parameter is failed... 
 
-Lets rerun with min 0.5 instead: XXXRUNXXX
+Lets rerun with min 0.5 instead. No let's use other bigwig
 
 
 ## igg log2ratio
@@ -3688,14 +4141,102 @@ sbatch --dependency=afterany:33852 scripts/matrix_gene_1kb_corr_IggNorm_subtract
 
 The filtering is far too high, I even have many negative value...
 
+--> In the end, these bigwigs are not the good one lol!!!
+
+# deepTools CutRun vizualization with the bigwig_histone
+
+
+## raw bigwig_histone
+
+```bash
+conda activate deeptools
+# Replicates
+sbatch scripts/matrix_TSS_5kb_WT_histone.sh # 47836
+sbatch --dependency=afterany:47836 scripts/matrix_TSS_5kb_WT_histone_profile.sh # 47837
+sbatch --dependency=afterany:47836 scripts/matrix_TSS_5kb_WT_histone_profile_noPerGroup.sh # 47838
+sbatch scripts/matrix_TSS_5kb_WT_histone_ZeroKept.sh # 47840
+sbatch --dependency=afterany:47840 scripts/matrix_TSS_5kb_WT_histone_profile_ZeroKept.sh # 47841
+
+sbatch scripts/matrix_TSS_5kb_HET_histone.sh # 47842
+sbatch --dependency=afterany:47842 scripts/matrix_TSS_5kb_HET_histone_profile.sh # 47843
+
+sbatch scripts/matrix_TSS_5kb_KO_histone.sh # 47844
+sbatch --dependency=afterany:47844 scripts/matrix_TSS_5kb_KO_histone_profile.sh # 47845
+
+# Genotype TSS (5kb) 
+sbatch scripts/matrix_TSS_5kb_histone.sh # 47846
+sbatch --dependency=afterany:47846 scripts/matrix_TSS_5kb_histone_profile.sh # 47847
+
+# Genotype gene body (-1 / +1 kb - TSS / TES)
+sbatch scripts/matrix_gene_1kb_histone.sh # 47848
+sbatch --dependency=afterany:47848 scripts/matrix_gene_1kb_histone_profile.sh # 47849
+```
+
+--> Keepin the zero with removing `--skipZeros` is XXX
+
+--> Removing the `--perGroup` in profile is XXX
+
+Parameters XXX is the best; so repeated for the other genotypes...
 
 
 
 
+## log igg
+
+```bash
+conda activate deeptools
+# Replicates
+sbatch scripts/matrix_TSS_5kb_WT_histone_ratio.sh # 47851
+sbatch --dependency=afterany:47851 scripts/matrix_TSS_5kb_WT_histone_ratio_profile.sh # 47852
+sbatch --dependency=afterany:47851 scripts/matrix_TSS_5kb_WT_histone_ratio_profile_noPerGroup.sh # 47853
+sbatch scripts/matrix_TSS_5kb_WT_histone_ratio_ZeroKept.sh # 47854
+sbatch --dependency=afterany:47854 scripts/matrix_TSS_5kb_WT_histone_ratio_ZeroKept_profile.sh # 47856
+
+sbatch scripts/matrix_TSS_5kb_HET_histone_ratio.sh # 47857
+sbatch --dependency=afterany:47857 scripts/matrix_TSS_5kb_HET_histone_ratio_profile.sh # 47858
+
+sbatch scripts/matrix_TSS_5kb_KO_histone_ratio.sh # 47859
+sbatch --dependency=afterany:47859 scripts/matrix_TSS_5kb_KO_histone_ratio_profile.sh # 47860
+
+# Genotype TSS (5kb) 
+sbatch scripts/matrix_TSS_5kb_histone_ratio.sh # 47861
+sbatch --dependency=afterany:47861 scripts/matrix_TSS_5kb_histone_ratio_profile.sh # 47877
+
+# Genotype gene body (-1 / +1 kb - TSS / TES)
+sbatch scripts/matrix_gene_1kb_histone_ratio.sh # 47879
+sbatch --dependency=afterany:47879 scripts/matrix_gene_1kb_histone_ratio_profile.sh # 47883
+```
+
+XXX
 
 
+## subtract igg
 
+```bash
+conda activate deeptools
+# Replicates
+sbatch scripts/matrix_TSS_5kb_WT_histone_subtract.sh # 47889
+sbatch --dependency=afterany:47889 scripts/matrix_TSS_5kb_WT_histone_subtract_profile.sh # 47890
+sbatch --dependency=afterany:47889 scripts/matrix_TSS_5kb_WT_histone_subtract_profile_noPerGroup.sh # 47892
+sbatch scripts/matrix_TSS_5kb_WT_histone_subtract_ZeroKept.sh # 47893
+sbatch --dependency=afterany:47893 scripts/matrix_TSS_5kb_WT_histone_subtract_ZeroKept_profile.sh # 47894
 
+sbatch scripts/matrix_TSS_5kb_HET_histone_subtract.sh # 47895
+sbatch --dependency=afterany:47895 scripts/matrix_TSS_5kb_HET_histone_subtract_profile.sh # 47896
+
+sbatch scripts/matrix_TSS_5kb_KO_histone_subtract.sh # 47897
+sbatch --dependency=afterany:47897 scripts/matrix_TSS_5kb_KO_histone_subtract_profile.sh # 47898
+
+# Genotype TSS (5kb) 
+sbatch scripts/matrix_TSS_5kb_histone_subtract.sh # 47899
+sbatch --dependency=afterany:47899 scripts/matrix_TSS_5kb_histone_subtract_profile.sh # 47900
+
+# Genotype gene body (-1 / +1 kb - TSS / TES)
+sbatch scripts/matrix_gene_1kb_histone_subtract.sh # 47901
+sbatch --dependency=afterany:47901 scripts/matrix_gene_1kb_histone_subtract_profile.sh # 47902
+```
+
+XXX
 
 
 
