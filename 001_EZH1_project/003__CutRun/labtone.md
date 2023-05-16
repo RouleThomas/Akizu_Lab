@@ -633,7 +633,7 @@ To mimick DiffBind let's do `--scaleFactor SF + RPGC normalization`. There is di
 ```bash
 conda activate deeptools
 
-sbatch scripts/bamtobigwig_histone_scaled_RPGC_WT.sh # 48330 ok
+sbatch scripts/bamtobigwig_histone_scaled_RPGC_WT.sh # 48330; re-run as overwrite 48706
 sbatch scripts/bamtobigwig_histone_scaled_RPGC_HET.sh # 48332 ok
 sbatch scripts/bamtobigwig_histone_scaled_RPGC_KO.sh # 48335 ok
 
@@ -641,12 +641,13 @@ sbatch scripts/bamtobigwig_histone_scaled_RPGC_patient.sh # 48336 ok
 ```
 --> The replicates are very heterogeneous... Maybe will be corrected with the igg normalization but weird...
 
-In `output/tmp`; let's try RPGC norm without applying `--scaleFactor`; to make sure scaleFactor is applying! `sbatch scripts/bamtobigwig_histone_scaled_RPGC_WT_test.sh # 48403`--> XXX
+In `output/tmp`; let's try RPGC norm without applying `--scaleFactor`; to make sure scaleFactor is applying! `sbatch scripts/bamtobigwig_histone_scaled_RPGC_WT_test.sh # 48403`--> That's good, files are different (surprinsgly, much better in term of replicate homogeneity when applying RPGC solely lol). 
 
 
 ```bash
 conda activate BedToBigwig
-sbatch --dependency=afterany:48330:48332:48335:48336 scripts/bigwigmerge_histone_scaled_RPGC.sh # 48337
+sbatch --dependency=afterany:48330:48332:48335:48336 scripts/bigwigmerge_histone_scaled_RPGC.sh # 48337 ok; re-run for WT as overwrite:
+sbatch --dependency=afterany:48706 scripts/bigwigmerge_histone_scaled_RPGC_WT.sh # 48708
 ```
 
 --> XXX
@@ -678,19 +679,26 @@ I collected the different SF proposed by DiffBind, let's apply them on our files
 ```bash
 conda activate deeptools
 
-sbatch scripts/bamtobigwig_DiffBind_TMM_WT.sh # 48408
-sbatch scripts/bamtobigwig_DiffBind_TMM_HET.sh # 48409
-sbatch scripts/bamtobigwig_DiffBind_TMM_KO.sh # 48410
+sbatch scripts/bamtobigwig_DiffBind_TMM_WT.sh # 48408 ok
+sbatch scripts/bamtobigwig_DiffBind_TMM_HET.sh # 48409 ok
+sbatch scripts/bamtobigwig_DiffBind_TMM_KO.sh # 48410 ok
 
 # just for KO run non-reciprocal to see how it perform:
-sbatch scripts/bamtobigwig_DiffBind_TMM_KO_NonReciprocal.sh # 48412
+sbatch scripts/bamtobigwig_DiffBind_TMM_KO_NonReciprocal.sh # 48412 ok
+
+# median
+conda activate BedToBigwig
+sbatch --dependency=afterany:48408:48409:48410 scripts/bigwigmerge_DiffBind_TMM.sh # 48710
+
 ```
 *NOTE: I used the same scaling factor for IP and IGG (not sure IGG should be used; maybe the SF already account for IGG)...*
 
 
---> The reciprocal was XXXNOTXXX the good one to use
+--> The reciprocal are NOT good to use; so `output/bigwig_DiffBind_TMM` is good
 
---> replicates are XXXGOODSHITXXX
+--> replicates looks good!!!
+
+--> The IGG looks XXX lets FUCK/DO the ratio/subtract XXX
 
 
 
@@ -4272,7 +4280,7 @@ sbatch scripts/matrix_gene_1kb_histone.sh # 47848 ok
 sbatch --dependency=afterany:47848 scripts/matrix_gene_1kb_histone_profile.sh # 47849 ok
 ```
 
---> Keepin the zero with removing `--skipZeros` do not change a lot
+--> Keepin the zero with removing `--skipZeros` do not change a shit.
 
 --> Removing the `--perGroup` in profile is making facet_wrap per sample!
 
@@ -4338,5 +4346,36 @@ sbatch --dependency=afterany:47901 scripts/matrix_gene_1kb_histone_subtract_prof
 --> KO and HET go down at TSS lol WTF!
 
 
+
+# deepTools CutRun vizualization with the bigwig_DiffBind_TMM
+
+
+## bigwig_DiffBind_TMM
+
+```bash
+conda activate deeptools
+# Replicates
+sbatch --dependency=afterany:48710 scripts/matrix_TSS_5kb_WT_DiffBind_TMM.sh # 48724
+sbatch --dependency=afterany:48724 scripts/matrix_TSS_5kb_WT_DiffBind_TMM_profile.sh # 48725
+
+sbatch --dependency=afterany:48710 scripts/matrix_TSS_5kb_HET_DiffBind_TMM.sh # 48726
+sbatch --dependency=afterany:48726 scripts/matrix_TSS_5kb_HET_DiffBind_TMM_profile.sh # 48728
+
+sbatch --dependency=afterany:48710 scripts/matrix_TSS_5kb_KO_DiffBind_TMM.sh # 48729
+sbatch --dependency=afterany:48729 scripts/matrix_TSS_5kb_KO_DiffBind_TMM_profile.sh # 48730
+
+# Genotype TSS (5kb) 
+sbatch --dependency=afterany:48710 scripts/matrix_TSS_5kb_DiffBind_TMM.sh # 48731
+sbatch --dependency=afterany:48731 scripts/matrix_TSS_5kb_DiffBind_TMM_profile.sh # 48732
+
+# Genotype gene body (-1 / +1 kb - TSS / TES)
+sbatch --dependency=afterany:48710 scripts/matrix_gene_1kb_DiffBind_TMM.sh # 48733
+sbatch --dependency=afterany:48733 scripts/matrix_gene_1kb_DiffBind_TMM_profile.sh # 48734
+```
+
+
+--> The replicates are XXX
+
+--> The genotype comparis is XXX
 
 
