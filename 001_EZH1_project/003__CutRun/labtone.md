@@ -625,6 +625,80 @@ sbatch --dependency=afterany:43501 scripts/bigwigmerge_histone_scaled_subtract.s
 Files looks good; subtract look seems more clean
 
 
+### Histone-spike-in scaled-bigwig with RPGC
+
+To mimick DiffBind let's do `--scaleFactor SF + RPGC normalization`. There is different norm method we can try (RPKM, CPM, BPM, RPGC, None); RPGC is 1x coverage (I saw many papers with it...)
+
+
+```bash
+conda activate deeptools
+
+sbatch scripts/bamtobigwig_histone_scaled_RPGC_WT.sh # 48330 ok
+sbatch scripts/bamtobigwig_histone_scaled_RPGC_HET.sh # 48332 ok
+sbatch scripts/bamtobigwig_histone_scaled_RPGC_KO.sh # 48335 ok
+
+sbatch scripts/bamtobigwig_histone_scaled_RPGC_patient.sh # 48336 ok
+```
+--> The replicates are very heterogeneous... Maybe will be corrected with the igg normalization but weird...
+
+In `output/tmp`; let's try RPGC norm without applying `--scaleFactor`; to make sure scaleFactor is applying! `sbatch scripts/bamtobigwig_histone_scaled_RPGC_WT_test.sh # 48403`--> XXX
+
+
+```bash
+conda activate BedToBigwig
+sbatch --dependency=afterany:48330:48332:48335:48336 scripts/bigwigmerge_histone_scaled_RPGC.sh # 48337
+```
+
+--> XXX
+
+
+### Histone-spike-in and TMM-norm scaled-bigwig OR DiffBind-ScaleFactor
+
+Here interesting discussion about [this](https://www.biostars.org/p/473442/)
+
+To **account for both library size and spike-in** we can use the same **scaling factor** as we used with **DiffBind** (In DiffBind we corrected library size for spike-in and then apply TMM/LIB/RLE normalization for seq depth). 
+
+I collected the different SF proposed by DiffBind, let's apply them on our files and see how they look (this should take into account the Igg!!!)
+
+- LIB scaling factor:
+ [1] 0.5996449 0.6214268 0.3329470 1.2442918 0.4196722 0.3844100 4.4879784
+ [8] 0.3417159 0.7403840 1.0690635 0.7232678 1.0351977
+- TMM scaling factor
+ [1] 0.5753224 0.6668493 0.5153769 0.6837952 0.6657534 0.6721562 2.2223161
+ [8] 0.5310329 0.7080880 0.8430827 0.7479317 0.7100108
+- RLE scaling factor
+ [1] 0.5839702 0.6672963 0.5075065 0.7000390 0.6664778 0.6647032 2.2382431
+ [8] 0.5285152 0.7044995 0.8323578 0.7468121 0.7124129
+
+--> HET; KO; WT; Rep 1 to 4
+
+--> Reciprocal is to be used when converting bam to bigwig!
+
+
+```bash
+conda activate deeptools
+
+sbatch scripts/bamtobigwig_DiffBind_TMM_WT.sh # 48408
+sbatch scripts/bamtobigwig_DiffBind_TMM_HET.sh # 48409
+sbatch scripts/bamtobigwig_DiffBind_TMM_KO.sh # 48410
+
+# just for KO run non-reciprocal to see how it perform:
+sbatch scripts/bamtobigwig_DiffBind_TMM_KO_NonReciprocal.sh # 48412
+```
+*NOTE: I used the same scaling factor for IP and IGG (not sure IGG should be used; maybe the SF already account for IGG)...*
+
+
+--> The reciprocal was XXXNOTXXX the good one to use
+
+--> replicates are XXXGOODSHITXXX
+
+
+
+
+
+
+
+
 
 *NOTE: see note below; this below may be fail:*
 
@@ -2586,7 +2660,7 @@ sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=
 sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
 ## This take time, here is checkpoint command to save/load:
 save(sample_count_blackgreylist, file = "output/DiffBind/sample_count_macs2raw_blackgreylist.RData")
-load("output/DiffBind/sample_count_blackgreylist.RData")
+load("output/DiffBind/sample_count_macs2raw_blackgreylist.RData")
 
 
 # plot
@@ -2604,6 +2678,15 @@ dev.off()
 # LIB SIZE (edgeR: 237/41/146; deseq2 10/1/16)
 sample_count_blackgreylist_LibHistoneScaled_LIB = dba.normalize(sample_count_blackgreylist, library = c(16435849, 17032874, 9125844, 34105171, 11502923, 10536410, 123012358, 9366195, 20293409, 29302285, 19824265, 28374047), normalize = DBA_NORM_LIB) # Default
 
+## Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibHistoneScaled_LIB_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_LIB, bRetrieve=TRUE)
+
+
+console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_LIB_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_LIB_SF.txt")
+##
+
+
 pdf("output/DiffBind/clustering_macs2raw_blackgreylist_LibHistoneScaled_LIB.pdf", width=14, height=20)
 plot(sample_count_blackgreylist_LibHistoneScaled_LIB)
 dev.off()
@@ -2619,6 +2702,15 @@ sample_count_blackgreylist_LibHistoneScaled_LIB_contrast_analyze = dba.analyze(s
 
 # RLE (edgeR: 237/41/146; deseq2 154/13/148)
 sample_count_blackgreylist_LibHistoneScaled_RLE = dba.normalize(sample_count_blackgreylist, library = c(16435849, 17032874, 9125844, 34105171, 11502923, 10536410, 123012358, 9366195, 20293409, 29302285, 19824265, 28374047), normalize = DBA_NORM_RLE)  # RLE
+
+## Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibHistoneScaled_RLE_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_RLE, bRetrieve=TRUE)
+
+
+console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_RLE_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_RLE_SF.txt")
+##
+
 
 pdf("output/DiffBind/clustering_macs2raw_blackgreylist_LibHistoneScaled_RLE.pdf", width=14, height=20)
 plot(sample_count_blackgreylist_LibHistoneScaled_RLE)
@@ -2636,6 +2728,14 @@ sample_count_blackgreylist_LibHistoneScaled_RLE_contrast_analyze = dba.analyze(s
 # TMM (edgeR: 237/41/146; deseq2 139/19/147)
 
 sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(16435849, 17032874, 9125844, 34105171, 11502923, 10536410, 123012358, 9366195, 20293409, 29302285, 19824265, 28374047), normalize = DBA_NORM_TMM) # TMM
+
+## Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+
+
+console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_SF.txt")
+##
 
 pdf("output/DiffBind/clustering_macs2raw_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20)
 plot(sample_count_blackgreylist_LibHistoneScaled_TMM)
@@ -4151,33 +4251,32 @@ The filtering is far too high, I even have many negative value...
 ```bash
 conda activate deeptools
 # Replicates
-sbatch scripts/matrix_TSS_5kb_WT_histone.sh # 47836
-sbatch --dependency=afterany:47836 scripts/matrix_TSS_5kb_WT_histone_profile.sh # 47837
-sbatch --dependency=afterany:47836 scripts/matrix_TSS_5kb_WT_histone_profile_noPerGroup.sh # 47838
-sbatch scripts/matrix_TSS_5kb_WT_histone_ZeroKept.sh # 47840
-sbatch --dependency=afterany:47840 scripts/matrix_TSS_5kb_WT_histone_profile_ZeroKept.sh # 47841
+sbatch scripts/matrix_TSS_5kb_WT_histone.sh # 47836 ok
+sbatch --dependency=afterany:47836 scripts/matrix_TSS_5kb_WT_histone_profile.sh # 47837 ok
+sbatch --dependency=afterany:47836 scripts/matrix_TSS_5kb_WT_histone_profile_noPerGroup.sh # 47838 ok
+sbatch scripts/matrix_TSS_5kb_WT_histone_ZeroKept.sh # 47840 ok
+sbatch --dependency=afterany:47840 scripts/matrix_TSS_5kb_WT_histone_profile_ZeroKept.sh # 47841 ok
 
-sbatch scripts/matrix_TSS_5kb_HET_histone.sh # 47842
-sbatch --dependency=afterany:47842 scripts/matrix_TSS_5kb_HET_histone_profile.sh # 47843
+sbatch scripts/matrix_TSS_5kb_HET_histone.sh # 47842 ok
+sbatch --dependency=afterany:47842 scripts/matrix_TSS_5kb_HET_histone_profile.sh # 47843 ok
 
-sbatch scripts/matrix_TSS_5kb_KO_histone.sh # 47844
-sbatch --dependency=afterany:47844 scripts/matrix_TSS_5kb_KO_histone_profile.sh # 47845
+sbatch scripts/matrix_TSS_5kb_KO_histone.sh # 47844 ok
+sbatch --dependency=afterany:47844 scripts/matrix_TSS_5kb_KO_histone_profile.sh # 47845 ok
 
 # Genotype TSS (5kb) 
-sbatch scripts/matrix_TSS_5kb_histone.sh # 47846
-sbatch --dependency=afterany:47846 scripts/matrix_TSS_5kb_histone_profile.sh # 47847
+sbatch scripts/matrix_TSS_5kb_histone.sh # 47846 ok
+sbatch --dependency=afterany:47846 scripts/matrix_TSS_5kb_histone_profile.sh # 47847 ok
 
 # Genotype gene body (-1 / +1 kb - TSS / TES)
-sbatch scripts/matrix_gene_1kb_histone.sh # 47848
-sbatch --dependency=afterany:47848 scripts/matrix_gene_1kb_histone_profile.sh # 47849
+sbatch scripts/matrix_gene_1kb_histone.sh # 47848 ok
+sbatch --dependency=afterany:47848 scripts/matrix_gene_1kb_histone_profile.sh # 47849 ok
 ```
 
---> Keepin the zero with removing `--skipZeros` is XXX
+--> Keepin the zero with removing `--skipZeros` do not change a lot
 
---> Removing the `--perGroup` in profile is XXX
+--> Removing the `--perGroup` in profile is making facet_wrap per sample!
 
-Parameters XXX is the best; so repeated for the other genotypes...
-
+Still unclear why replicate are different...
 
 
 
@@ -4186,28 +4285,28 @@ Parameters XXX is the best; so repeated for the other genotypes...
 ```bash
 conda activate deeptools
 # Replicates
-sbatch scripts/matrix_TSS_5kb_WT_histone_ratio.sh # 47851
-sbatch --dependency=afterany:47851 scripts/matrix_TSS_5kb_WT_histone_ratio_profile.sh # 47852
-sbatch --dependency=afterany:47851 scripts/matrix_TSS_5kb_WT_histone_ratio_profile_noPerGroup.sh # 47853
-sbatch scripts/matrix_TSS_5kb_WT_histone_ratio_ZeroKept.sh # 47854
-sbatch --dependency=afterany:47854 scripts/matrix_TSS_5kb_WT_histone_ratio_ZeroKept_profile.sh # 47856
+sbatch scripts/matrix_TSS_5kb_WT_histone_ratio.sh # 47851 ok
+sbatch --dependency=afterany:47851 scripts/matrix_TSS_5kb_WT_histone_ratio_profile.sh # 47852 ok
+sbatch --dependency=afterany:47851 scripts/matrix_TSS_5kb_WT_histone_ratio_profile_noPerGroup.sh # 47853 ok
+sbatch scripts/matrix_TSS_5kb_WT_histone_ratio_ZeroKept.sh # 47854 ok
+sbatch --dependency=afterany:47854 scripts/matrix_TSS_5kb_WT_histone_ratio_ZeroKept_profile.sh # 47856 ok
 
-sbatch scripts/matrix_TSS_5kb_HET_histone_ratio.sh # 47857
-sbatch --dependency=afterany:47857 scripts/matrix_TSS_5kb_HET_histone_ratio_profile.sh # 47858
+sbatch scripts/matrix_TSS_5kb_HET_histone_ratio.sh # 47857 ok
+sbatch --dependency=afterany:47857 scripts/matrix_TSS_5kb_HET_histone_ratio_profile.sh # 47858 ok
 
-sbatch scripts/matrix_TSS_5kb_KO_histone_ratio.sh # 47859
-sbatch --dependency=afterany:47859 scripts/matrix_TSS_5kb_KO_histone_ratio_profile.sh # 47860
+sbatch scripts/matrix_TSS_5kb_KO_histone_ratio.sh # 47859 ok
+sbatch --dependency=afterany:47859 scripts/matrix_TSS_5kb_KO_histone_ratio_profile.sh # 47860 ok
 
 # Genotype TSS (5kb) 
-sbatch scripts/matrix_TSS_5kb_histone_ratio.sh # 47861
-sbatch --dependency=afterany:47861 scripts/matrix_TSS_5kb_histone_ratio_profile.sh # 47877
+sbatch scripts/matrix_TSS_5kb_histone_ratio.sh # 47861 ok
+sbatch --dependency=afterany:47861 scripts/matrix_TSS_5kb_histone_ratio_profile.sh # 47877 ok
 
 # Genotype gene body (-1 / +1 kb - TSS / TES)
-sbatch scripts/matrix_gene_1kb_histone_ratio.sh # 47879
-sbatch --dependency=afterany:47879 scripts/matrix_gene_1kb_histone_ratio_profile.sh # 47883
+sbatch scripts/matrix_gene_1kb_histone_ratio.sh # 47879 ok
+sbatch --dependency=afterany:47879 scripts/matrix_gene_1kb_histone_ratio_profile.sh # 47883 ok
 ```
 
-XXX
+
 
 
 ## subtract igg
@@ -4215,28 +4314,28 @@ XXX
 ```bash
 conda activate deeptools
 # Replicates
-sbatch scripts/matrix_TSS_5kb_WT_histone_subtract.sh # 47889
-sbatch --dependency=afterany:47889 scripts/matrix_TSS_5kb_WT_histone_subtract_profile.sh # 47890
-sbatch --dependency=afterany:47889 scripts/matrix_TSS_5kb_WT_histone_subtract_profile_noPerGroup.sh # 47892
-sbatch scripts/matrix_TSS_5kb_WT_histone_subtract_ZeroKept.sh # 47893
-sbatch --dependency=afterany:47893 scripts/matrix_TSS_5kb_WT_histone_subtract_ZeroKept_profile.sh # 47894
+sbatch scripts/matrix_TSS_5kb_WT_histone_subtract.sh # 47889 ok
+sbatch --dependency=afterany:47889 scripts/matrix_TSS_5kb_WT_histone_subtract_profile.sh # 47890 ok
+sbatch --dependency=afterany:47889 scripts/matrix_TSS_5kb_WT_histone_subtract_profile_noPerGroup.sh # 47892 ok
+sbatch scripts/matrix_TSS_5kb_WT_histone_subtract_ZeroKept.sh # 47893 ok
+sbatch --dependency=afterany:47893 scripts/matrix_TSS_5kb_WT_histone_subtract_ZeroKept_profile.sh # 47894 ok
 
-sbatch scripts/matrix_TSS_5kb_HET_histone_subtract.sh # 47895
-sbatch --dependency=afterany:47895 scripts/matrix_TSS_5kb_HET_histone_subtract_profile.sh # 47896
+sbatch scripts/matrix_TSS_5kb_HET_histone_subtract.sh # 47895 ok
+sbatch --dependency=afterany:47895 scripts/matrix_TSS_5kb_HET_histone_subtract_profile.sh # 47896 ok
 
-sbatch scripts/matrix_TSS_5kb_KO_histone_subtract.sh # 47897
-sbatch --dependency=afterany:47897 scripts/matrix_TSS_5kb_KO_histone_subtract_profile.sh # 47898
+sbatch scripts/matrix_TSS_5kb_KO_histone_subtract.sh # 47897 ok
+sbatch --dependency=afterany:47897 scripts/matrix_TSS_5kb_KO_histone_subtract_profile.sh # 47898 ok
 
 # Genotype TSS (5kb) 
-sbatch scripts/matrix_TSS_5kb_histone_subtract.sh # 47899
-sbatch --dependency=afterany:47899 scripts/matrix_TSS_5kb_histone_subtract_profile.sh # 47900
+sbatch scripts/matrix_TSS_5kb_histone_subtract.sh # 47899 ok
+sbatch --dependency=afterany:47899 scripts/matrix_TSS_5kb_histone_subtract_profile.sh # 47900 ok
 
 # Genotype gene body (-1 / +1 kb - TSS / TES)
-sbatch scripts/matrix_gene_1kb_histone_subtract.sh # 47901
-sbatch --dependency=afterany:47901 scripts/matrix_gene_1kb_histone_subtract_profile.sh # 47902
+sbatch scripts/matrix_gene_1kb_histone_subtract.sh # 47901 ok
+sbatch --dependency=afterany:47901 scripts/matrix_gene_1kb_histone_subtract_profile.sh # 47902 ok
 ```
 
-XXX
+--> KO and HET go down at TSS lol WTF!
 
 
 
