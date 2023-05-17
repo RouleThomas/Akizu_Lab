@@ -4446,7 +4446,8 @@ sbatch --dependency=afterany:47901 scripts/matrix_gene_1kb_histone_subtract_prof
 
 ```bash
 conda activate deeptools
-# Replicates
+# All genes
+## Replicates
 sbatch --dependency=afterany:48710 scripts/matrix_TSS_5kb_WT_DiffBind_TMM.sh # 48724 ok
 sbatch --dependency=afterany:48724 scripts/matrix_TSS_5kb_WT_DiffBind_TMM_profile.sh # 48725 ok
 
@@ -4456,14 +4457,15 @@ sbatch --dependency=afterany:48726 scripts/matrix_TSS_5kb_HET_DiffBind_TMM_profi
 sbatch --dependency=afterany:48710 scripts/matrix_TSS_5kb_KO_DiffBind_TMM.sh # 48729 ok
 sbatch --dependency=afterany:48729 scripts/matrix_TSS_5kb_KO_DiffBind_TMM_profile.sh # 48730 ok
 
-# Genotype TSS (5kb) 
+## Genotype TSS (5kb) 
 sbatch --dependency=afterany:48710 scripts/matrix_TSS_5kb_DiffBind_TMM.sh # 48731 ok
 sbatch --dependency=afterany:48731 scripts/matrix_TSS_5kb_DiffBind_TMM_profile.sh # 48732 ok
 
-# Genotype gene body (-1 / +1 kb - TSS / TES)
+## Genotype gene body (-1 / +1 kb - TSS / TES)
 sbatch --dependency=afterany:48710 scripts/matrix_gene_1kb_DiffBind_TMM.sh # 48733 ok
 sbatch --dependency=afterany:48733 scripts/matrix_gene_1kb_DiffBind_TMM_profile.sh # 48734 ok
 
+## clustering
 sbatch scripts/matrix_gene_1kb_DiffBind_TMM_profile_kmeans.sh # 49710; 49731 ok
 sbatch scripts/matrix_gene_1kb_DiffBind_TMM_heatmap_kmeans.sh # 49734 ok
 sbatch scripts/matrix_gene_1kb_DiffBind_TMM_profile_hclust4.sh # 49707  TOO LONG; fuck it ok
@@ -4475,6 +4477,115 @@ sbatch scripts/matrix_gene_1kb_DiffBind_TMM_profile_hclust4.sh # 49707  TOO LONG
 --> The genotype comparison do not show striking difference (almost nothing)
 
 --> hclust method take forever, fuck it, let;s use kmeans
+
+
+Now let's display only the DEGs, or diff. bound genes or both (show 6 clusters):
+
+Need generate gtf files that contain (keep gtf in `output/deseq2_hg38`):
+**only the DEGs**:
+```R
+library(tidyverse)
+library(rtracklayer)
+library(GenomicRanges)
+
+# Collect all DEGs (both in WT vs KO and WT vs HET and HET vs KO) as a gene list
+## Import deseq2 output and filter qvalue 0.05
+HETvsWT = as_tibble(read_csv('output/deseq2_hg38/raw_8wN_HET_vs_8wN_WT.txt')) %>%
+    filter(padj <= 0.05) %>%
+    dplyr::select(-"...1") %>%
+    add_column(contrast = "HETvsWT")
+KOvsWT = as_tibble(read_csv('output/deseq2_hg38/raw_8wN_KO_vs_8wN_WT.txt')) %>%
+    filter(padj <= 0.05) %>%
+    dplyr::select(-"...1") %>%
+    add_column(contrast = "KOvsWT")
+KOvsHET = as_tibble(read_csv('output/deseq2_hg38/raw_8wN_KO_vs_8wN_HET.txt')) %>%
+    filter(padj <= 0.05) %>%
+    dplyr::select(-"...1") %>%
+    add_column(contrast = "KOvsHET")
+
+DEGs = HETvsWT %>%
+    bind_rows(KOvsWT, KOvsHET)
+
+## Import the GTF file
+gtf <- import('../../Master/meta/ENCFF159KBI.gtf')
+
+## Filter in the GTF file with only the DEGs
+gtf_DEGs <- gtf %>% 
+  as_tibble() %>% 
+  filter(gene_id %in% DEGs$gene)
+
+## Save the new GTF
+export(gtf_DEGs, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN.gtf")
+```
+
+**Only the diffbound sites DiffBind05**:
+```R
+library(tidyverse)
+library(rtracklayer)
+library(GenomicRanges)
+# Collect all diff. bound sites (HET and KO changes vs the WT) as a gene list
+HET_KO = read_tsv('../003__CutRun/output/ChIPseeker/gene_list_DiffBind05_HET_KO.txt')
+
+## Import the GTF file
+gtf <- import('../../Master/meta/ENCFF159KBI.gtf')
+
+## Filter in the GTF file with only the DEGs
+gtf_HET_KO <- gtf %>% 
+  as_tibble() %>% 
+  filter(gene_name %in% HET_KO$gene)
+
+## Save the new GTF
+export(gtf_HET_KO, con = "output/deseq2_hg38/ENCFF159KBI_DiffBind05_8wN.gtf")
+```
+
+**only the DEGs that are also DiffBound05**:
+Let's fusion our two gtfs and keep the genes that overlap:
+
+```R
+# import gtf
+gtf_HET_KO = import("output/deseq2_hg38/ENCFF159KBI_DiffBind05_8wN.gtf")
+gtf_DEGs = import("output/deseq2_hg38/ENCFF159KBI_DEGs_8wN.gtf")
+
+# Find overlap genes
+overlapping_genes <- findOverlaps(gtf_DEGs, gtf_HET_KO)
+
+# Extract overlapping genes and combine them
+gtf_DEGs_overlapping <- gtf_DEGs[queryHits(overlapping_genes)]
+gtf_HET_KO_overlapping <- gtf_HET_KO[subjectHits(overlapping_genes)]
+combined_gtf <- c(gtf_DEGs_overlapping, gtf_HET_KO_overlapping)
+
+# Export gtf
+export(combined_gtf, con = "output/deseq2_hg38/ENCFF159KBI_DiffBind05_DEGs_8wN.gtf")
+```
+
+There is dupplicated rows in the GTF; need to clean them XXX
+
+--> Check on IGV that it's all good : XXX
+
+
+
+
+NOW generate clustering matrix with that stuff XXX :
+
+
+```bash
+# DEGs
+## clustering
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DEGs.sh #
+
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_heatmap_kmeans.sh
+
+
+# Diff bound genes
+## clustering
+
+
+
+# DEGs and diff bound genes
+## clustering
+```
+
+
 
 
 
