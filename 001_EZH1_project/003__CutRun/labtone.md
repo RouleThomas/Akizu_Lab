@@ -646,11 +646,11 @@ In `output/tmp`; let's try RPGC norm without applying `--scaleFactor`; to make s
 
 ```bash
 conda activate BedToBigwig
-sbatch --dependency=afterany:48330:48332:48335:48336 scripts/bigwigmerge_histone_scaled_RPGC.sh # 48337 ok; re-run for WT as overwrite:
-sbatch --dependency=afterany:48706 scripts/bigwigmerge_histone_scaled_RPGC_WT.sh # 48708
+sbatch --dependency=afterany:48330:48332:48335:48336 scripts/bigwigmerge_histone_scaled_RPGC.sh # 48337 ok; re-run for WT as overwrite: ok
+sbatch --dependency=afterany:48706 scripts/bigwigmerge_histone_scaled_RPGC_WT.sh # 48708 ok
 ```
 
---> XXX
+--> Replicates are very heterogeneous; but the RPGC and normalization with scaleFactor are both taken into acount.
 
 
 ### Histone-spike-in and TMM-norm scaled-bigwig OR DiffBind-ScaleFactor
@@ -688,8 +688,7 @@ sbatch scripts/bamtobigwig_DiffBind_TMM_KO_NonReciprocal.sh # 48412 ok
 
 # median
 conda activate BedToBigwig
-sbatch --dependency=afterany:48408:48409:48410 scripts/bigwigmerge_DiffBind_TMM.sh # 48710
-
+sbatch --dependency=afterany:48408:48409:48410 scripts/bigwigmerge_DiffBind_TMM.sh # 48710 ok
 ```
 *NOTE: I used the same scaling factor for IP and IGG (not sure IGG should be used; maybe the SF already account for IGG)...*
 
@@ -698,8 +697,34 @@ sbatch --dependency=afterany:48408:48409:48410 scripts/bigwigmerge_DiffBind_TMM.
 
 --> replicates looks good!!!
 
---> The IGG looks XXX lets FUCK/DO the ratio/subtract XXX
+--> The IGG looks good too; let's do the igg ratio/subtract
 
+
+
+**igg ratio + median**
+
+```bash
+conda activate deeptools
+sbatch scripts/bigwig_DiffBind_TMM_ratio.sh # 49452
+
+conda activate BedToBigwig
+sbatch --dependency=afterany:49452 scripts/bigwigmerge_DiffBind_TMM_ratio.sh # 49458
+```
+
+Files looks XXX
+
+
+**igg subtract + median**
+
+```bash
+conda activate deeptools
+sbatch scripts/bigwig_DiffBind_TMM_subtract.sh # 49459
+
+conda activate BedToBigwig
+sbatch --dependency=afterany:49459 scripts/bigwigmerge_DiffBind_TMM_subtract.sh # 49460
+```
+
+Files looks XXX; XXX look seems more clean
 
 
 
@@ -3819,6 +3844,73 @@ removing gene dupplicates we got: \
 
 --> NEUROG2 is in HET Lost...
 
+## DiffBind pvalue05 adjustment
+
+
+Let's use our pvalue0.05-filtered files where diff. bound sites have been assigned to genes. However, re-do plots of expression and function; using adjusted qvalue 0.05 FDR.
+ 
+
+
+```bash
+srun --mem=500g --pty bash -l
+conda activate deseq2
+```
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+
+# Import Diff. bind sites pvalue 0.05
+HETvsKO_annot <- read_tsv("output/ChIPseeker/annotation_HETvsKO.txt") %>%
+    dplyr::select(-c(strand, name, V6, V7, V8))
+HETvsWT_annot <- read_tsv("output/ChIPseeker/annotation_HETvsWT.txt") %>%
+    dplyr::select(-c(strand, name, V6, V7, V8))
+KOvsWT_annot <- read_tsv("output/ChIPseeker/annotation_KOvsWT.txt") %>%
+    dplyr::select(-c(strand, name, V6, V7, V8))
+
+
+# Adjust the qvalue with FDR 0.05 and keep only these one
+HETvsKO_annot_FDR05 = HETvsKO_annot %>%
+    mutate(FDR05 = p.adjust(pvalue, method = "bonferroni")) %>% # change here fdr or bonferroni
+    filter(FDR05 <= 0.05) # change qvalue treshold
+HETvsWT_annot_FDR05 = HETvsWT_annot %>%
+    mutate(FDR05 = p.adjust(pvalue, method = "bonferroni")) %>%
+    filter(FDR05 <= 0.05)
+cannot_FDR05 = KOvsWT_annot %>%
+    mutate(FDR05 = p.adjust(pvalue, method = "bonferroni")) %>%
+    filter(FDR05 <= 0.05)
+
+```
+
+--> Adjusting the pvalue with FDR do NOT change anything, all the pvalue less than 0.05 remains less than 0.05 once FDR adjusted
+
+However; here is the nb of diff detected when playing with the qvalue and test:
+- HETvsKO / HETvsWT / KOvsWT
+- pvalue 0.05: 2,200 / 1,641 / 2,263
+- FDR 0.05: 2,200 / 1,641 / 2,263
+- FDR 0.01: 234 / 17 / 221
+- BH 0.05: 44 / 11 / 37
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # deepTools CutRun vizualization with not the good bigwig
 
@@ -4355,27 +4447,86 @@ sbatch --dependency=afterany:47901 scripts/matrix_gene_1kb_histone_subtract_prof
 ```bash
 conda activate deeptools
 # Replicates
-sbatch --dependency=afterany:48710 scripts/matrix_TSS_5kb_WT_DiffBind_TMM.sh # 48724
-sbatch --dependency=afterany:48724 scripts/matrix_TSS_5kb_WT_DiffBind_TMM_profile.sh # 48725
+sbatch --dependency=afterany:48710 scripts/matrix_TSS_5kb_WT_DiffBind_TMM.sh # 48724 ok
+sbatch --dependency=afterany:48724 scripts/matrix_TSS_5kb_WT_DiffBind_TMM_profile.sh # 48725 ok
 
-sbatch --dependency=afterany:48710 scripts/matrix_TSS_5kb_HET_DiffBind_TMM.sh # 48726
-sbatch --dependency=afterany:48726 scripts/matrix_TSS_5kb_HET_DiffBind_TMM_profile.sh # 48728
+sbatch --dependency=afterany:48710 scripts/matrix_TSS_5kb_HET_DiffBind_TMM.sh # 48726 ok
+sbatch --dependency=afterany:48726 scripts/matrix_TSS_5kb_HET_DiffBind_TMM_profile.sh # 48728 ok
 
-sbatch --dependency=afterany:48710 scripts/matrix_TSS_5kb_KO_DiffBind_TMM.sh # 48729
-sbatch --dependency=afterany:48729 scripts/matrix_TSS_5kb_KO_DiffBind_TMM_profile.sh # 48730
+sbatch --dependency=afterany:48710 scripts/matrix_TSS_5kb_KO_DiffBind_TMM.sh # 48729 ok
+sbatch --dependency=afterany:48729 scripts/matrix_TSS_5kb_KO_DiffBind_TMM_profile.sh # 48730 ok
 
 # Genotype TSS (5kb) 
-sbatch --dependency=afterany:48710 scripts/matrix_TSS_5kb_DiffBind_TMM.sh # 48731
-sbatch --dependency=afterany:48731 scripts/matrix_TSS_5kb_DiffBind_TMM_profile.sh # 48732
+sbatch --dependency=afterany:48710 scripts/matrix_TSS_5kb_DiffBind_TMM.sh # 48731 ok
+sbatch --dependency=afterany:48731 scripts/matrix_TSS_5kb_DiffBind_TMM_profile.sh # 48732 ok
 
 # Genotype gene body (-1 / +1 kb - TSS / TES)
-sbatch --dependency=afterany:48710 scripts/matrix_gene_1kb_DiffBind_TMM.sh # 48733
-sbatch --dependency=afterany:48733 scripts/matrix_gene_1kb_DiffBind_TMM_profile.sh # 48734
+sbatch --dependency=afterany:48710 scripts/matrix_gene_1kb_DiffBind_TMM.sh # 48733 ok
+sbatch --dependency=afterany:48733 scripts/matrix_gene_1kb_DiffBind_TMM_profile.sh # 48734 ok
+
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_profile_kmeans.sh # 49710; 49731 ok
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_heatmap_kmeans.sh # 49734 ok
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_profile_hclust4.sh # 49707  TOO LONG; fuck it ok
+```
+*NOTE: for the clustering to work the `--plotTitle` and other `title stuff` arguments need to be removed*
+
+--> The replicates are much more better!!! Very comparable!
+
+--> The genotype comparison do not show striking difference (almost nothing)
+
+--> hclust method take forever, fuck it, let;s use kmeans
+
+
+
+
+## bigwig_DiffBind_TMM_ratio
+
+
+```bash
+conda activate deeptools
+# Replicates
+sbatch --dependency=afterany:49458 scripts/matrix_TSS_5kb_WT_DiffBind_TMM_ratio.sh # 49467
+sbatch --dependency=afterany:49467 scripts/matrix_TSS_5kb_WT_DiffBind_TMM_ratio_profile.sh # 49468
+
+sbatch --dependency=afterany:49458 scripts/matrix_TSS_5kb_HET_DiffBind_TMM_ratio.sh # 49469
+sbatch --dependency=afterany:49469 scripts/matrix_TSS_5kb_HET_DiffBind_TMM_ratio_profile.sh # 49470
+
+sbatch --dependency=afterany:49458 scripts/matrix_TSS_5kb_KO_DiffBind_TMM_ratio.sh # 49471
+sbatch --dependency=afterany:49471 scripts/matrix_TSS_5kb_KO_DiffBind_TMM_ratio_profile.sh # 49472
+
+# Genotype TSS (5kb) 
+sbatch --dependency=afterany:49458 scripts/matrix_TSS_5kb_DiffBind_TMM_ratio.sh # 49473
+sbatch --dependency=afterany:49473 scripts/matrix_TSS_5kb_DiffBind_TMM_ratio_profile.sh # 49475
+
+# Genotype gene body (-1 / +1 kb - TSS / TES)
+sbatch --dependency=afterany:49458 scripts/matrix_gene_1kb_DiffBind_TMM_ratio.sh # 49477
+sbatch --dependency=afterany:49477 scripts/matrix_gene_1kb_DiffBind_TMM_ratio_profile.sh # 49478
 ```
 
+XXX
 
---> The replicates are XXX
-
---> The genotype comparis is XXX
+## bigwig_DiffBind_TMM_subtract
 
 
+```bash
+conda activate deeptools
+# Replicates
+sbatch --dependency=afterany:49460 scripts/matrix_TSS_5kb_WT_DiffBind_TMM_subtract.sh # 49479
+sbatch --dependency=afterany:49479 scripts/matrix_TSS_5kb_WT_DiffBind_TMM_subtract_profile.sh # 49480
+
+sbatch --dependency=afterany:49460 scripts/matrix_TSS_5kb_HET_DiffBind_TMM_subtract.sh # 49482
+sbatch --dependency=afterany:49482 scripts/matrix_TSS_5kb_HET_DiffBind_TMM_subtract_profile.sh # 49483
+
+sbatch --dependency=afterany:49460 scripts/matrix_TSS_5kb_KO_DiffBind_TMM_subtract.sh # 49485
+sbatch --dependency=afterany:49485 scripts/matrix_TSS_5kb_KO_DiffBind_TMM_subtract_profile.sh # 49486
+
+# Genotype TSS (5kb) 
+sbatch --dependency=afterany:49460 scripts/matrix_TSS_5kb_DiffBind_TMM_subtract.sh # 49487
+sbatch --dependency=afterany:49487 scripts/matrix_TSS_5kb_DiffBind_TMM_subtract_profile.sh # 49488
+
+# Genotype gene body (-1 / +1 kb - TSS / TES)
+sbatch --dependency=afterany:49460 scripts/matrix_gene_1kb_DiffBind_TMM_subtract.sh # 49489
+sbatch --dependency=afterany:49489 scripts/matrix_gene_1kb_DiffBind_TMM_subtract_profile.sh # 49490
+```
+
+XXX
