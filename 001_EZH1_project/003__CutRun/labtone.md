@@ -4558,9 +4558,14 @@ combined_gtf <- c(gtf_DEGs_overlapping, gtf_HET_KO_overlapping)
 export(combined_gtf, con = "output/deseq2_hg38/ENCFF159KBI_DiffBind05_DEGs_8wN.gtf")
 ```
 
-There is dupplicated rows in the GTF; need to clean them XXX
+There is dupplicated rows in the GTF; need to clean them:
+```bash
+sort -V -k1,1 -k4,4n output/deseq2_hg38/ENCFF159KBI_DiffBind05_DEGs_8wN.gtf | uniq > output/deseq2_hg38/ENCFF159KBI_DiffBind05_DEGs_8wN_unique.gtf
+sort -V -k1,1 -k4,4n output/deseq2_hg38/ENCFF159KBI_DEGs_8wN.gtf | uniq > output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_unique.gtf
+sort -V -k1,1 -k4,4n output/deseq2_hg38/ENCFF159KBI_DiffBind05_8wN.gtf | uniq > output/deseq2_hg38/ENCFF159KBI_DiffBind05_8wN_unique.gtf
+```
 
---> Check on IGV that it's all good : XXX
+--> Check on IGV that it's all good (no dupplicated rows in the file and well filtering): xxcheck well filtering; file are LOADING to IGV RNxx
 
 
 
