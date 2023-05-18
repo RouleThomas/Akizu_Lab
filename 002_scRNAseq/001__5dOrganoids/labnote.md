@@ -53,11 +53,15 @@ fasterq-dump (PID 1026649) quit with error code 1
 Try increase memory (200G instead of 50G) and use --split-files instead of -S. 
 It seems that even though it is written paired end, I only have 1 file... !
 
+--> Tried with  `--include-technical -S` and it works!!!! I have 3 files!!!
 
 
 
 
 **fastqc**
+
+
+
 
 
 XXX
@@ -70,4 +74,48 @@ XXX
 
 
 
+
+# Big workshop
+Great tutorial with plenty of ressources and courses and wrkshop [here](https://hbctraining.github.io/scRNA-seq/).
+
+
+XXX : https://hbctraining.github.io/scRNA-seq/lessons/02_SC_generation_of_count_matrix.html
+
+## Install prerequired packages
+
+Many fail upon installation, notably tidyverse in R, even though I follow what I did for deseq2 lol... So let's, copy our deseq2 environment that works great and have plenty of R stuff already installed and working
+
+```bash
+conda create --name scRNAseq --clone deseq2
+conda activate scRNAseq
+```
+
+In R, install addititonal packages packages one by one:
+```R
+# package
+install.packages("devtools")
+install.packages("Seurat")
+
+# bioconductor package
+BiocManager::install("SingleCellExperiment")
+BiocManager::install("ensembldb")
+
+# load them
+library("tidyverse")
+library("Matrix")
+library("RCurl")
+library("scales")
+library("cowplot")
+library("devtools")
+library("Seurat")
+library("AnnotationHub")
+library("SingleCellExperiment")
+library("ensembldb")
+```
+
+--> The conda env is working smoothly! All packages can be loaded!
+
+## Getting started
+
+XXX
 

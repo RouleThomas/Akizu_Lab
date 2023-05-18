@@ -3042,6 +3042,19 @@ plotCorrelation \
 ```
 
 
+Let's do **plotCorrelation clustering** with our **bigwig_histone** scaled and **bigwig_DiffBind_TMM** scaled files (H3K27me3 only and no patient):
+
+```bash
+conda activate deeptools
+
+# Generate compile bigwig (.npz) files and plots
+sbatch scripts/multiBigwigSummary_bigwig_histone.sh # 61437 ok
+sbatch scripts/multiBigwigSummary_bigwig_DiffBind_TMM.sh # 65646 ok
+```
+
+--> both files are exactly the same...
+
+
 
 
 # ChIPseqSpikeInFree on CutRun
