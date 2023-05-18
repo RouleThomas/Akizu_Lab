@@ -711,8 +711,9 @@ conda activate BedToBigwig
 sbatch --dependency=afterany:49452 scripts/bigwigmerge_DiffBind_TMM_ratio.sh # 49458
 ```
 
-Files looks XXX
+--> replicates looks good!!!
 
+--> Not great for NEUROG2
 
 **igg subtract + median**
 
@@ -724,11 +725,9 @@ conda activate BedToBigwig
 sbatch --dependency=afterany:49459 scripts/bigwigmerge_DiffBind_TMM_subtract.sh # 49460
 ```
 
-Files looks XXX; XXX look seems more clean
+--> replicates looks good!!!
 
-
-
-
+--> Great for NEUROG2; still unsure whether IgG is already applied...
 
 
 
@@ -4469,6 +4468,15 @@ sbatch --dependency=afterany:48733 scripts/matrix_gene_1kb_DiffBind_TMM_profile.
 sbatch scripts/matrix_gene_1kb_DiffBind_TMM_profile_kmeans.sh # 49710; 49731 ok
 sbatch scripts/matrix_gene_1kb_DiffBind_TMM_heatmap_kmeans.sh # 49734 ok
 sbatch scripts/matrix_gene_1kb_DiffBind_TMM_profile_hclust4.sh # 49707  TOO LONG; fuck it ok
+
+### Compute how many genes per cluster
+
+grep -c "cluster_1" output/deeptools/matrix_gene_1kb_DiffBind_TMM_heatmap_kmeans6.txt # n=1,755
+grep -c "cluster_2" output/deeptools/matrix_gene_1kb_DiffBind_TMM_heatmap_kmeans6.txt # n=2,999
+grep -c "cluster_3" output/deeptools/matrix_gene_1kb_DiffBind_TMM_heatmap_kmeans6.txt # n=9,201
+grep -c "cluster_4" output/deeptools/matrix_gene_1kb_DiffBind_TMM_heatmap_kmeans6.txt # n=32,626
+grep -c "cluster_5" output/deeptools/matrix_gene_1kb_DiffBind_TMM_heatmap_kmeans6.txt # n=50,003
+grep -c "cluster_6" output/deeptools/matrix_gene_1kb_DiffBind_TMM_heatmap_kmeans6.txt # n=104,009
 ```
 *NOTE: for the clustering to work the `--plotTitle` and other `title stuff` arguments need to be removed*
 
@@ -4565,7 +4573,7 @@ sort -V -k1,1 -k4,4n output/deseq2_hg38/ENCFF159KBI_DEGs_8wN.gtf | uniq > output
 sort -V -k1,1 -k4,4n output/deseq2_hg38/ENCFF159KBI_DiffBind05_8wN.gtf | uniq > output/deseq2_hg38/ENCFF159KBI_DiffBind05_8wN_unique.gtf
 ```
 
---> Check on IGV that it's all good (no dupplicated rows in the file and well filtering): xxcheck well filtering; file are LOADING to IGV RNxx
+--> Files looks all good (no more dupplicated rows and only includes DEGs/DiffBind genes)
 
 
 
@@ -4601,25 +4609,25 @@ sbatch scripts/matrix_gene_1kb_DiffBind_TMM_heatmap_kmeans.sh
 ```bash
 conda activate deeptools
 # Replicates
-sbatch --dependency=afterany:49458 scripts/matrix_TSS_5kb_WT_DiffBind_TMM_ratio.sh # 49467
-sbatch --dependency=afterany:49467 scripts/matrix_TSS_5kb_WT_DiffBind_TMM_ratio_profile.sh # 49468
+sbatch --dependency=afterany:49458 scripts/matrix_TSS_5kb_WT_DiffBind_TMM_ratio.sh # 49467 ok
+sbatch --dependency=afterany:49467 scripts/matrix_TSS_5kb_WT_DiffBind_TMM_ratio_profile.sh # 49468 ok
 
-sbatch --dependency=afterany:49458 scripts/matrix_TSS_5kb_HET_DiffBind_TMM_ratio.sh # 49469
-sbatch --dependency=afterany:49469 scripts/matrix_TSS_5kb_HET_DiffBind_TMM_ratio_profile.sh # 49470
+sbatch --dependency=afterany:49458 scripts/matrix_TSS_5kb_HET_DiffBind_TMM_ratio.sh # 49469 ok
+sbatch --dependency=afterany:49469 scripts/matrix_TSS_5kb_HET_DiffBind_TMM_ratio_profile.sh # 49470 ok
 
-sbatch --dependency=afterany:49458 scripts/matrix_TSS_5kb_KO_DiffBind_TMM_ratio.sh # 49471
-sbatch --dependency=afterany:49471 scripts/matrix_TSS_5kb_KO_DiffBind_TMM_ratio_profile.sh # 49472
+sbatch --dependency=afterany:49458 scripts/matrix_TSS_5kb_KO_DiffBind_TMM_ratio.sh # 49471 ok
+sbatch --dependency=afterany:49471 scripts/matrix_TSS_5kb_KO_DiffBind_TMM_ratio_profile.sh # 49472 ok
 
 # Genotype TSS (5kb) 
-sbatch --dependency=afterany:49458 scripts/matrix_TSS_5kb_DiffBind_TMM_ratio.sh # 49473
-sbatch --dependency=afterany:49473 scripts/matrix_TSS_5kb_DiffBind_TMM_ratio_profile.sh # 49475
+sbatch --dependency=afterany:49458 scripts/matrix_TSS_5kb_DiffBind_TMM_ratio.sh # 49473 ok
+sbatch --dependency=afterany:49473 scripts/matrix_TSS_5kb_DiffBind_TMM_ratio_profile.sh # 49475 ok
 
 # Genotype gene body (-1 / +1 kb - TSS / TES)
-sbatch --dependency=afterany:49458 scripts/matrix_gene_1kb_DiffBind_TMM_ratio.sh # 49477
-sbatch --dependency=afterany:49477 scripts/matrix_gene_1kb_DiffBind_TMM_ratio_profile.sh # 49478
+sbatch --dependency=afterany:49458 scripts/matrix_gene_1kb_DiffBind_TMM_ratio.sh # 49477 ok
+sbatch --dependency=afterany:49477 scripts/matrix_gene_1kb_DiffBind_TMM_ratio_profile.sh # 49478 ok
 ```
 
-XXX
+--> Replicate are quite OK but let's forget it as the NEUROG2 region looks shit
 
 ## bigwig_DiffBind_TMM_subtract
 
@@ -4627,22 +4635,31 @@ XXX
 ```bash
 conda activate deeptools
 # Replicates
-sbatch --dependency=afterany:49460 scripts/matrix_TSS_5kb_WT_DiffBind_TMM_subtract.sh # 49479
-sbatch --dependency=afterany:49479 scripts/matrix_TSS_5kb_WT_DiffBind_TMM_subtract_profile.sh # 49480
+sbatch --dependency=afterany:49460 scripts/matrix_TSS_5kb_WT_DiffBind_TMM_subtract.sh # 49479 ok
+sbatch --dependency=afterany:49479 scripts/matrix_TSS_5kb_WT_DiffBind_TMM_subtract_profile.sh # 49480 ok
 
-sbatch --dependency=afterany:49460 scripts/matrix_TSS_5kb_HET_DiffBind_TMM_subtract.sh # 49482
-sbatch --dependency=afterany:49482 scripts/matrix_TSS_5kb_HET_DiffBind_TMM_subtract_profile.sh # 49483
+sbatch --dependency=afterany:49460 scripts/matrix_TSS_5kb_HET_DiffBind_TMM_subtract.sh # 49482 ok
+sbatch --dependency=afterany:49482 scripts/matrix_TSS_5kb_HET_DiffBind_TMM_subtract_profile.sh # 49483 ok
 
-sbatch --dependency=afterany:49460 scripts/matrix_TSS_5kb_KO_DiffBind_TMM_subtract.sh # 49485
-sbatch --dependency=afterany:49485 scripts/matrix_TSS_5kb_KO_DiffBind_TMM_subtract_profile.sh # 49486
+sbatch --dependency=afterany:49460 scripts/matrix_TSS_5kb_KO_DiffBind_TMM_subtract.sh # 49485 ok
+sbatch --dependency=afterany:49485 scripts/matrix_TSS_5kb_KO_DiffBind_TMM_subtract_profile.sh # 49486 ok
 
 # Genotype TSS (5kb) 
-sbatch --dependency=afterany:49460 scripts/matrix_TSS_5kb_DiffBind_TMM_subtract.sh # 49487
-sbatch --dependency=afterany:49487 scripts/matrix_TSS_5kb_DiffBind_TMM_subtract_profile.sh # 49488
+sbatch --dependency=afterany:49460 scripts/matrix_TSS_5kb_DiffBind_TMM_subtract.sh # 49487 ok
+sbatch --dependency=afterany:49487 scripts/matrix_TSS_5kb_DiffBind_TMM_subtract_profile.sh # 49488 ok
 
 # Genotype gene body (-1 / +1 kb - TSS / TES)
-sbatch --dependency=afterany:49460 scripts/matrix_gene_1kb_DiffBind_TMM_subtract.sh # 49489
-sbatch --dependency=afterany:49489 scripts/matrix_gene_1kb_DiffBind_TMM_subtract_profile.sh # 49490
+sbatch --dependency=afterany:49460 scripts/matrix_gene_1kb_DiffBind_TMM_subtract.sh # 49489 ok
+sbatch --dependency=afterany:49489 scripts/matrix_gene_1kb_DiffBind_TMM_subtract_profile.sh # 49490 ok
 ```
 
-XXX
+--> Very bad! Some values are negative!!!
+
+--> Seems that IgG is already taken into account; or I failed the IgG scaling factor to be used in the bigwig
+
+--> DiffBind_TMM non IgG corr seems the best to use
+
+
+
+
+
