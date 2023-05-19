@@ -4578,39 +4578,51 @@ combined_gtf <- c(gtf_DEGs_overlapping, gtf_HET_KO_overlapping)
 # Export gtf
 export(combined_gtf, con = "output/deseq2_hg38/ENCFF159KBI_DiffBind05_DEGs_8wN.gtf")
 ```
-*NOTE: dupplicated rows in the `output/deseq2_hg38/ENCFF159KBI_DiffBind05_DEGs_8wN.gtf` but deepTools do NOT take them into account*
+*NOTE: dupplicated rows in the `output/deseq2_hg38/ENCFF159KBI_DiffBind05_DEGs_8wN.gtf`; deepTools seems to bug with that*
+
+Let's use instead bedtools intersect:
+
+```bash
+conda activate BedToBigwig
+
+bedtools intersect -wa -u -a ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DiffBind05_8wN.gtf -b ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_8wN.gtf > ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DiffBind05_DEGs_8wN_bedtools.gtf
+```
+*NOTE: -u to display unique hit between a and b*
+
 
 --> Files looks all good (no more dupplicated rows and only includes DEGs/DiffBind genes)
 
 
 
 Generate clustering matrix with the DEGs or/and DiffBound05 :
-
-XXX
-RE DO CLUSTERING PLOT but: change color of the heatmap to blue white red and do also without clustering!
-XXX
-
 ```bash
+conda activate deeptools
 # DEGs
 ## clustering
 sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DEGs.sh # 157192
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DEGs_profile.sh # 158363
 sbatch --dependency=afterany:157192 scripts/matrix_gene_1kb_DiffBind_TMM_DEGs_heatmap_kmeans.sh # 157287
 
 
 # Diff bound genes
 ## clustering
 sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05.sh # 157193
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05_profile.sh # 158064
 sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05_heatmap_kmeans.sh # 157296 
 
 # DEGs and diff bound genes
 ## clustering
-sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05_DEGs.sh # 157279
-sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05_DEGs_heatmap_kmeans.sh # 157298
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05_DEGs.sh # 158062
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05_DEGs_profile.sh # 158065
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05_DEGs_heatmap_kmeans.sh # xxx
 
 ```
 - *NOTE: dupplicated rows in the `output/deseq2_hg38/ENCFF159KBI_DiffBind05_DEGs_8wN.gtf` but deepTools do NOT take them into account* 
 - *NOTE: To display different nb of clusters; kmeans clustering number has been changed manually using `nano`*
+- **NOTE: If color shit can play with --colorNumber and --colorList (like to chose which color and when changing it)**
 
+
+XXX NOW COLLECT THE NB OF TRANSCRIPTS PER CLUSTER XXX
 
 
 
