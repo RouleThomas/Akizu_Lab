@@ -4578,40 +4578,38 @@ combined_gtf <- c(gtf_DEGs_overlapping, gtf_HET_KO_overlapping)
 # Export gtf
 export(combined_gtf, con = "output/deseq2_hg38/ENCFF159KBI_DiffBind05_DEGs_8wN.gtf")
 ```
-
-There is dupplicated rows in the GTF; need to clean them:
-```bash
-sort -V -k1,1 -k4,4n output/deseq2_hg38/ENCFF159KBI_DiffBind05_DEGs_8wN.gtf | uniq > output/deseq2_hg38/ENCFF159KBI_DiffBind05_DEGs_8wN_unique.gtf
-sort -V -k1,1 -k4,4n output/deseq2_hg38/ENCFF159KBI_DEGs_8wN.gtf | uniq > output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_unique.gtf
-sort -V -k1,1 -k4,4n output/deseq2_hg38/ENCFF159KBI_DiffBind05_8wN.gtf | uniq > output/deseq2_hg38/ENCFF159KBI_DiffBind05_8wN_unique.gtf
-```
+*NOTE: dupplicated rows in the `output/deseq2_hg38/ENCFF159KBI_DiffBind05_DEGs_8wN.gtf` but deepTools do NOT take them into account*
 
 --> Files looks all good (no more dupplicated rows and only includes DEGs/DiffBind genes)
 
 
 
+Generate clustering matrix with the DEGs or/and DiffBound05 :
 
-NOW generate clustering matrix with that stuff XXX :
-
+XXX
+RE DO CLUSTERING PLOT but: change color of the heatmap to blue white red and do also without clustering!
+XXX
 
 ```bash
 # DEGs
 ## clustering
-sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DEGs.sh #
-
-sbatch scripts/matrix_gene_1kb_DiffBind_TMM_heatmap_kmeans.sh
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DEGs.sh # 157192
+sbatch --dependency=afterany:157192 scripts/matrix_gene_1kb_DiffBind_TMM_DEGs_heatmap_kmeans.sh # 157287
 
 
 # Diff bound genes
 ## clustering
-
-
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05.sh # 157193
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05_heatmap_kmeans.sh # 157296 
 
 # DEGs and diff bound genes
 ## clustering
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05_DEGs.sh # 157279
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05_DEGs_heatmap_kmeans.sh # 157298
+
 ```
-
-
+- *NOTE: dupplicated rows in the `output/deseq2_hg38/ENCFF159KBI_DiffBind05_DEGs_8wN.gtf` but deepTools do NOT take them into account* 
+- *NOTE: To display different nb of clusters; kmeans clustering number has been changed manually using `nano`*
 
 
 
