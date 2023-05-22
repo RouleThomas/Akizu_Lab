@@ -4721,13 +4721,23 @@ Mean value is increased, but still median profile is around 5-6 which is very lo
 ```bash
 conda activate deeptools
 # all genotypes
-sbatch scripts/matrix_gene_1kb_DiffBind_TMM_peaks_min5.sh # 122660
-sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_peaks_min5.sh # 122661
+## min 5
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_peaks_min5.sh # 122660 ok
+sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_peaks_min5.sh # 122661 fail; not enough value
+
+## min 1
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_peaks_min1.sh # 164081 XXX
+
+## keep value of 0
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_peaks_keepZero.sh # 164102 XXX
+
 ```
 
-XXX
+--> Seems that the filtering is now too strong; indeed we remove all value smaller than 5; but when there is a peak; the side around TSS/TES is smaller than 5 so also removed...
 
+--> Using 1 is XXX
 
+--> Using not filtering-out 0 (keepZero) is XXX
 
 
 
