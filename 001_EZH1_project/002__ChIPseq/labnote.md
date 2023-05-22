@@ -2340,15 +2340,73 @@ Let's use the **exact same analysis method as CutRun** for convenience (macs2 ra
 Generate the raw count matrix:
 
 
-XXX my sample_meta are ready for WT KO HET; now lets generate the .R script files; do directly greylist and save .Rdata as baackup XXX
+```bash
+conda activate DiffBind
+
+sbatch scripts/DiffBind_WT_macs2raw.sh # 163174
+sbatch scripts/DiffBind_HET_macs2raw.sh # 163176
+sbatch scripts/DiffBind_KO_macs2raw.sh # 163177
+```
+
+XXX
+
+Then let's make plots PCA; clustering; for each genotype:
+
+**WT genotype:**
+```R
+# Load raw counts
+
+XXX PCa clustering
 
 
+# Load greylist/blacklist counts
+
+XXX PCa clustering
+
+# Normalization lib size ChIPseqSpikeInFree
+XXX PCa clustering
+
+# Diff bound sites TMM pvalue 0.05
+
+XXX
+```
 
 
+## DiffBind macs2 raw_Genotype effect
+
+Generate the raw count matrix:
 
 
+```bash
+conda activate DiffBind
+
+sbatch scripts/DiffBind_ESC_macs2raw.sh # 163181
+sbatch scripts/DiffBind_NPC_macs2raw.sh # 163182
+sbatch scripts/DiffBind_2dN_macs2raw.sh # 163183
+```
+
+XXX
+
+Then let's make plots PCA; clustering; for each genotype:
+
+**WT genotype:**
+```R
+# Load raw counts
+
+XXX PCa clustering
 
 
+# Load greylist/blacklist counts
+
+XXX PCa clustering
+
+# Normalization lib size ChIPseqSpikeInFree
+XXX PCa clustering
+
+# Diff bound sites TMM pvalue 0.05
+
+XXX
+```
 
 
 

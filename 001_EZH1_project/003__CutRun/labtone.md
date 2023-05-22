@@ -4710,13 +4710,26 @@ Generate **clustering matrix with the peak-containing genes**:
 ```bash
 conda activate deeptools
 # all genotypes
-sbatch scripts/matrix_gene_1kb_DiffBind_TMM_peaks.sh # 159551
-sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_peaks.sh # 159550
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_peaks.sh # 159551 ok
+sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_peaks.sh # 159550 ok
 ```
 *NOTE: each command contain plotProfile and plotHeatmap with 6 clusters*
 
+Mean value is increased, but still median profile is around 5-6 which is very low/small peaks. Let's filter for peak > 5 value (looks real)
+
+
+```bash
+conda activate deeptools
+# all genotypes
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_peaks_min5.sh # 122660
+sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_peaks_min5.sh # 122661
+```
 
 XXX
+
+
+
+
 
 ## bigwig_DiffBind_TMM_ratio
 
