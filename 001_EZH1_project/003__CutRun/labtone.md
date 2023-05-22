@@ -3908,8 +3908,7 @@ However; here is the nb of diff detected when playing with the qvalue and test:
 - BH 0.05: 44 / 11 / 37
 
 
-
-
+Important note about the size of the peak called 400bp per default [here](https://support.bioconductor.org/p/9150459/). For the author, identifying Diff. bound sites in small region is more powerfull for statistic, and likely to identify real different region; as less background (indeed the more you increase >400bp the more you can have background signal...)
 
 
 
@@ -4594,37 +4593,130 @@ bedtools intersect -wa -u -a ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DiffB
 
 
 
-Generate clustering matrix with the DEGs or/and DiffBound05 :
+Generate **clustering matrix with the DEGs or/and DiffBound05**:
+
 ```bash
 conda activate deeptools
 # DEGs
 ## clustering
-sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DEGs.sh # 157192
-sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DEGs_profile.sh # 158363
-sbatch --dependency=afterany:157192 scripts/matrix_gene_1kb_DiffBind_TMM_DEGs_heatmap_kmeans.sh # 157287
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DEGs.sh # 157192 ok
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DEGs_profile.sh # 158363 ok
+sbatch --dependency=afterany:157192 scripts/matrix_gene_1kb_DiffBind_TMM_DEGs_heatmap_kmeans.sh # 157287 ok
 
 
 # Diff bound genes
 ## clustering
-sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05.sh # 157193
-sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05_profile.sh # 158064
-sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05_heatmap_kmeans.sh # 157296 
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05.sh # 157193 ok
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05_profile.sh # 158064 ok
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05_heatmap_kmeans.sh # 157296  ok
 
 # DEGs and diff bound genes
 ## clustering
-sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05_DEGs.sh # 158062
-sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05_DEGs_profile.sh # 158065
-sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05_DEGs_heatmap_kmeans.sh # xxx
-
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05_DEGs.sh # 158062 ok
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05_DEGs_profile.sh # 158065 ok
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05_DEGs_heatmap_kmeans.sh #  ok
 ```
 - *NOTE: dupplicated rows in the `output/deseq2_hg38/ENCFF159KBI_DiffBind05_DEGs_8wN.gtf` but deepTools do NOT take them into account* 
 - *NOTE: To display different nb of clusters; kmeans clustering number has been changed manually using `nano`*
 - **NOTE: If color shit can play with --colorNumber and --colorList (like to chose which color and when changing it)**
 
+**Understand deepTools profiling**:
 
-XXX NOW COLLECT THE NB OF TRANSCRIPTS PER CLUSTER XXX
+Plot NEUROG2 and other genes to understand how deepTools work:
 
 
+
+```bash
+conda activate deeptools
+# Generate the NEUROG2 gtf file
+grep "NEUROG2" meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_NEUROG2.gtf
+
+# Generate matrix/plot
+## NEUROG2 TSS
+computeMatrix reference-point --referencePoint TSS \
+    -b 5000 -a 5000 \
+    -R meta/ENCFF159KBI_NEUROG2.gtf \
+    -S output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.bw output/bigwig_DiffBind_TMM/8wN_HET_H3K27me3_median.bw output/bigwig_DiffBind_TMM/8wN_KO_H3K27me3_median.bw \
+    --skipZeros \
+    --missingDataAsZero \
+    --blackListFileName ../../Master/meta/hg38-blacklist.v2.bed \
+    -o output/deeptools/matrix_TSS_5kb_DiffBind_TMM_NEUROG2.gz \
+    -p 6 \
+    --outFileSortedRegions output/deeptools/matrix_TSS_5kb_DiffBind_TMM_NEUROG2.bed
+plotProfile -m output/deeptools/matrix_TSS_5kb_DiffBind_TMM_NEUROG2.gz \
+    -out output/deeptools/matrix_TSS_5kb_DiffBind_TMM_NEUROG2_profile.png \
+    --perGroup \
+    --colors black blue red \
+    --plotTitle "" --samplesLabel "WT" "HET" "KO" \
+    --refPointLabel "TSS" \
+    -T "H3K27me3 read density" \
+    -z ""
+
+
+## NEUROG2 gene body
+computeMatrix scale-regions \
+    -b 1000 -a 1000 \
+    -R meta/ENCFF159KBI_NEUROG2.gtf \
+    -S output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.bw output/bigwig_DiffBind_TMM/8wN_HET_H3K27me3_median.bw output/bigwig_DiffBind_TMM/8wN_KO_H3K27me3_median.bw \
+    --skipZeros \
+    --missingDataAsZero \
+    --blackListFileName ../../Master/meta/hg38-blacklist.v2.bed \
+    -o output/deeptools/matrix_gene_1kb_DiffBind_TMM_NEUROG2.gz \
+    -p max/2 \
+    --outFileSortedRegions output/deeptools/matrix_gene_1kb_DiffBind_TMM_NEUROG2.bed
+plotProfile -m output/deeptools/matrix_gene_1kb_DiffBind_TMM_NEUROG2.gz \
+    -out output/deeptools/matrix_gene_1kb_DiffBind_TMM_NEUROG2_profile.png \
+    --perGroup \
+    --colors black blue red \
+    --plotTitle "" --samplesLabel "WT" "HET" "KO" \
+    --refPointLabel "TSS" \
+    -T "H3K27me3 read density" \
+    -z ""
+```
+--> deepTools uses the exact value from the bigwig; it really plot the bigwig, literaly!
+
+--> So I realize NEUROG2 as value of around 40, but plot I generated for all genes as value of 2 so lot of transcripts that do not contain peaks are plotted!
+
+Let's **filter out transcripts that do not contain any peaks**; whatever their genotypes.
+
+
+```bash
+# For each genotype collect geneSymbol (gene name) list
+## Print 20th column in each rows; sort; remov dupplicates
+awk -F'\t' '(NR==1 || FNR>1) {print $20}' output/ChIPseeker/annotation_WT.txt | sort | uniq > output/ChIPseeker/annotation_WT_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $20}' output/ChIPseeker/annotation_HET.txt | sort | uniq > output/ChIPseeker/annotation_HET_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $20}' output/ChIPseeker/annotation_KO.txt | sort | uniq > output/ChIPseeker/annotation_KO_geneSymbol.txt
+
+## Concatenate all gene into 1 file
+cat output/ChIPseeker/annotation_WT_geneSymbol.txt output/ChIPseeker/annotation_HET_geneSymbol.txt output/ChIPseeker/annotation_KO_geneSymbol.txt | sort | uniq > output/ChIPseeker/annotation_geneSymbol.txt
+```
+*NOTE: awk process file line per line; `-F'\t'` = tab-separated; `(NR==1 || FNR>1)` tell that header line and all lines after are processed; `{print $20}` will only print the 20th column=gene name `sort` sort output because `uniq` only remove adjacent dupplicated rows*
+
+
+Now generate a **new gtf file that contains these genes**:
+
+```bash
+# Modify the .txt file that list all genes so that it match gtf structure
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_geneSymbol.txt > output/ChIPseeker/annotation_as_gtf_geneSymbol.txt
+# Filter the gtf
+grep -Ff output/ChIPseeker/annotation_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_peak.gtf
+```
+- *NOTE: `sed` here add `gene name "` before and `"` after*
+- *NOTE: `-Ff` tel grep to read the pattern in each row of the file*
+
+
+Generate **clustering matrix with the peak-containing genes**:
+
+```bash
+conda activate deeptools
+# all genotypes
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_peaks.sh # 159551
+sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_peaks.sh # 159550
+```
+*NOTE: each command contain plotProfile and plotHeatmap with 6 clusters*
+
+
+XXX
 
 ## bigwig_DiffBind_TMM_ratio
 

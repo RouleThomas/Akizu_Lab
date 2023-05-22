@@ -1055,7 +1055,7 @@ Let's apply the ChIPseqSpikeInFree scaling factor to normalize data (normalize l
 
 *NOTE: I run samtools flagstat manually and copy/paste, I run a sbatch job to keep track also as:*
  ```bash
- sbatch scripts/libsize_dupmark.sh # 12397755 ok --> Check slurm to double check my copy paste is correct: XXX
+ sbatch scripts/libsize_dupmark.sh # 12397755 ok 
  ```
 	
 Let's generate different meta_sample files:
@@ -2331,7 +2331,46 @@ write.table(sample_count_all_greylist_LibCSIFScaled_LIB_contrast6_df, file="outp
 
 --> On IGV the diff look real
 
-To go further, we will need to use the deseq2 time-course pipeline I used for RNAseq: XXX
+# DiffBind using macs2 raw files (As for CutRun)
+
+Let's use the **exact same analysis method as CutRun** for convenience (macs2 raw file as input, ChIpseqSpikeInFree library scaling, TMM normalization, pvalue for Diff sites)
+
+## DiffBind macs2 raw_Time effect
+
+Generate the raw count matrix:
+
+
+XXX my sample_meta are ready for WT KO HET; now lets generate the .R script files; do directly greylist and save .Rdata as baackup XXX
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # ChIPseeker
@@ -2394,15 +2433,12 @@ sbatch scripts/macs2_pool_peak_signif.sh # ok
 ## Explore with DeepTools
 
 
-
-# deepTools CutRun vizualization
-
 Let's try to use deepTools to explore the data: tutorial [here](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/10_data_visualization.html) and [here](https://deeptools.readthedocs.io/en/develop/content/tools/computeMatrix.html#reference-point).
 
 
 DeepTools can used bed or bigwig to estimate signal (heatmap or profile) around a point of interest (eg. TSS). Let's use our **median-ChIPseqSpikeInFree_lib bigwig**! Generate a matrix for WT,KO,HET and WT,KO,HET,patient for 10 and 50kb around the TSS.
 
-
+XXX
 
 ```bash
 conda activate deeptools
