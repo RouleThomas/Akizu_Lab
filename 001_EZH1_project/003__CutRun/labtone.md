@@ -3908,7 +3908,7 @@ However; here is the nb of diff detected when playing with the qvalue and test:
 - BH 0.05: 44 / 11 / 37
 
 
-Important note about the size of the peak called 400bp per default [here](https://support.bioconductor.org/p/9150459/). For the author, identifying Diff. bound sites in small region is more powerfull for statistic, and likely to identify real different region; as less background (indeed the more you increase >400bp the more you can have background signal...)
+Important note about the size of the peak called 400bp per default [here](https://support.bioconductor.org/p/9150459/). For the author, identifying Diff. bound sites in small region is more powerfull for statistic, and likely to identify real different region; as less background (indeed the more you increase >400bp the more you can have background signal...); regions are surrounded around peak summit; then I can enlarge them manually.
 
 
 
@@ -4733,11 +4733,75 @@ sbatch scripts/matrix_gene_1kb_DiffBind_TMM_peaks_keepZero.sh # 164102 XXX
 
 ```
 
---> Seems that the filtering is now too strong; indeed we remove all value smaller than 5; but when there is a peak; the side around TSS/TES is smaller than 5 so also removed...
+--> Seems that the filtering is now too strong; indeed we remove all value smaller than 5 and even 1; but when there is a peak; the side around TSS/TES is smaller than 5 so also removed...
 
---> Using 1 is XXX
+--> Using not filtering-out 0 (keepZero) is almost same as removing them
 
---> Using not filtering-out 0 (keepZero) is XXX
+Generate **clustering matrix with the peak (>5 score)-containing genes**:
+
+For each genotype; use scaled bigwig (Bigwig_DiffBind_TMM) with pool MACS2 peaks and do the following:
+- Convert scaled bigwig to bedGraph --> Not needed; already got bedGraph! `output/bigwig_DiffBind_TMM/`
+- With `bedtools map` compute the maximum score found in each peak regions (use significant peaks: `output/macs2/broad_blacklist_qval2.30103/8wN_WT_H3K27me3_pool_peaks.broadPeak`)
+- Filter the bed to keep only the peak that have a max value of 5
+
+*NOTE: install `bigWigToBedGraph` with `conda install -c bioconda ucsc-bigwigtobedgraph` in BedToBigwig conda env.*
+
+```bash
+conda activate BedToBigwig
+
+# Collect bedGraph
+output/bigwig_DiffBind_TMM/8wN_HET_H3K27me3_median.sorted.bedGraph 
+output/bigwig_DiffBind_TMM/8wN_KO_H3K27me3_median.sorted.bedGraph 
+output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.sorted.bedGraph
+# Collect bed peaks
+output/macs2/broad_blacklist_qval2.30103/8wN_HET_H3K27me3_pool_peaks.broadPeak
+output/macs2/broad_blacklist_qval2.30103/8wN_KO_H3K27me3_pool_peaks.broadPeak
+output/macs2/broad_blacklist_qval2.30103/8wN_WT_H3K27me3_pool_peaks.broadPeak
+
+# Compute maximum score with bedtools map (last columns = max value)
+bedtools map -a output/macs2/broad_blacklist_qval2.30103/8wN_HET_H3K27me3_pool_peaks.broadPeak -b output/bigwig_DiffBind_TMM/8wN_HET_H3K27me3_median.sorted.bedGraph -c 4 -o max > output/bigwig_DiffBind_TMM/8wN_HET_H3K27me3_median.sorted_maxScorePoolpeaks.bed
+bedtools map -a output/macs2/broad_blacklist_qval2.30103/8wN_KO_H3K27me3_pool_peaks.broadPeak -b output/bigwig_DiffBind_TMM/8wN_KO_H3K27me3_median.sorted.bedGraph -c 4 -o max > output/bigwig_DiffBind_TMM/8wN_KO_H3K27me3_median.sorted_maxScorePoolpeaks.bed
+bedtools map -a output/macs2/broad_blacklist_qval2.30103/8wN_WT_H3K27me3_pool_peaks.broadPeak -b output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.sorted.bedGraph -c 4 -o max > output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.sorted_maxScorePoolpeaks.bed
+
+# Filter-out peaks with max score below 1/2/5/10/20
+## HET
+awk '$10 >= 1' output/bigwig_DiffBind_TMM/8wN_HET_H3K27me3_median.sorted_maxScorePoolpeaks.bed > output/bigwig_DiffBind_TMM/8wN_HET_H3K27me3_median.sorted_maxScorePoolpeaks_min1.bed
+## KO
+awk '$10 >= 1' output/bigwig_DiffBind_TMM/8wN_KO_H3K27me3_median.sorted_maxScorePoolpeaks.bed > output/bigwig_DiffBind_TMM/8wN_KO_H3K27me3_median.sorted_maxScorePoolpeaks_min1.bed
+awk '$10 >= 2' output/bigwig_DiffBind_TMM/8wN_KO_H3K27me3_median.sorted_maxScorePoolpeaks.bed > output/bigwig_DiffBind_TMM/8wN_KO_H3K27me3_median.sorted_maxScorePoolpeaks_min2.bed
+awk '$10 >= 5' output/bigwig_DiffBind_TMM/8wN_KO_H3K27me3_median.sorted_maxScorePoolpeaks.bed > output/bigwig_DiffBind_TMM/8wN_KO_H3K27me3_median.sorted_maxScorePoolpeaks_min5.bed
+awk '$10 >= 10' output/bigwig_DiffBind_TMM/8wN_KO_H3K27me3_median.sorted_maxScorePoolpeaks.bed > output/bigwig_DiffBind_TMM/8wN_KO_H3K27me3_median.sorted_maxScorePoolpeaks_min10.bed
+awk '$10 >= 20' output/bigwig_DiffBind_TMM/8wN_KO_H3K27me3_median.sorted_maxScorePoolpeaks.bed > output/bigwig_DiffBind_TMM/8wN_KO_H3K27me3_median.sorted_maxScorePoolpeaks_min20.bed
+## WT
+awk '$10 >= 1' output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.sorted_maxScorePoolpeaks.bed > output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.sorted_maxScorePoolpeaks_min1.bed
+awk '$10 >= 2' output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.sorted_maxScorePoolpeaks.bed > output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.sorted_maxScorePoolpeaks_min2.bed
+awk '$10 >= 5' output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.sorted_maxScorePoolpeaks.bed > output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.sorted_maxScorePoolpeaks_min5.bed
+awk '$10 >= 10' output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.sorted_maxScorePoolpeaks.bed > output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.sorted_maxScorePoolpeaks_min10.bed
+awk '$10 >= 20' output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.sorted_maxScorePoolpeaks.bed > output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.sorted_maxScorePoolpeaks_min20.bed
+
+# Filter-in the peak with score >1/2/5/10/20 in the ChIPseeker annotation files
+
+XXX
+
+
+
+
+```
+*NOTE: `-c` = the column from the bedGraph to use for the operation; -o = max; collect maximum score*
+
+--> The last
+
+
+
+
+
+
+
+XXX Maybe take bigwig; overlap with macs2 pool peak bed; count how many reads within the bigwig in each bed peak regions? 
+
+To keep only the peak that correspond to bigwig >5 read count. Let's use bedtools on bigwig; and count and keep the one that has a signal >5; wherever!
+
+XXX
 
 
 
