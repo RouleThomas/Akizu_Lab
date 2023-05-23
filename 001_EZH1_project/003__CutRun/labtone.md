@@ -4726,13 +4726,12 @@ sbatch scripts/matrix_gene_1kb_DiffBind_TMM_peaks_min5.sh # 122660 ok
 sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_peaks_min5.sh # 122661 fail; not enough value
 
 ## min 1
-sbatch scripts/matrix_gene_1kb_DiffBind_TMM_peaks_min1.sh # 164081 XXX
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_peaks_min1.sh # 164081 ok
 
 ## keep value of 0
-sbatch scripts/matrix_gene_1kb_DiffBind_TMM_peaks_keepZero.sh # 164102 XXX
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_peaks_keepZero.sh # 164102 ok
 
 ```
-
 --> Seems that the filtering is now too strong; indeed we remove all value smaller than 5 and even 1; but when there is a peak; the side around TSS/TES is smaller than 5 so also removed...
 
 --> Using not filtering-out 0 (keepZero) is almost same as removing them
@@ -4780,28 +4779,128 @@ awk '$10 >= 10' output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.sorted_maxScor
 awk '$10 >= 20' output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.sorted_maxScorePoolpeaks.bed > output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.sorted_maxScorePoolpeaks_min20.bed
 
 # Filter-in the peak with score >1/2/5/10/20 in the ChIPseeker annotation files
+## HET
+bedtools intersect -wa -a output/ChIPseeker/annotation_HET.bed -b output/bigwig_DiffBind_TMM/8wN_HET_H3K27me3_median.sorted_maxScorePoolpeaks_min1.bed > output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min1.bed
+bedtools intersect -wa -a output/ChIPseeker/annotation_HET.bed -b output/bigwig_DiffBind_TMM/8wN_HET_H3K27me3_median.sorted_maxScorePoolpeaks_min2.bed > output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min2.bed
+bedtools intersect -wa -a output/ChIPseeker/annotation_HET.bed -b output/bigwig_DiffBind_TMM/8wN_HET_H3K27me3_median.sorted_maxScorePoolpeaks_min5.bed > output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min5.bed
+bedtools intersect -wa -a output/ChIPseeker/annotation_HET.bed -b output/bigwig_DiffBind_TMM/8wN_HET_H3K27me3_median.sorted_maxScorePoolpeaks_min10.bed > output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min10.bed
+bedtools intersect -wa -a output/ChIPseeker/annotation_HET.bed -b output/bigwig_DiffBind_TMM/8wN_HET_H3K27me3_median.sorted_maxScorePoolpeaks_min20.bed > output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min20.bed
+## KO
+bedtools intersect -wa -a output/ChIPseeker/annotation_KO.bed -b output/bigwig_DiffBind_TMM/8wN_KO_H3K27me3_median.sorted_maxScorePoolpeaks_min1.bed > output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min1.bed
+bedtools intersect -wa -a output/ChIPseeker/annotation_KO.bed -b output/bigwig_DiffBind_TMM/8wN_KO_H3K27me3_median.sorted_maxScorePoolpeaks_min2.bed > output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min2.bed
+bedtools intersect -wa -a output/ChIPseeker/annotation_KO.bed -b output/bigwig_DiffBind_TMM/8wN_KO_H3K27me3_median.sorted_maxScorePoolpeaks_min5.bed > output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min5.bed
+bedtools intersect -wa -a output/ChIPseeker/annotation_KO.bed -b output/bigwig_DiffBind_TMM/8wN_KO_H3K27me3_median.sorted_maxScorePoolpeaks_min10.bed > output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min10.bed
+bedtools intersect -wa -a output/ChIPseeker/annotation_KO.bed -b output/bigwig_DiffBind_TMM/8wN_KO_H3K27me3_median.sorted_maxScorePoolpeaks_min20.bed > output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min20.bed
+## WT
+bedtools intersect -wa -a output/ChIPseeker/annotation_WT.bed -b output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.sorted_maxScorePoolpeaks_min1.bed > output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min1.bed
+bedtools intersect -wa -a output/ChIPseeker/annotation_WT.bed -b output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.sorted_maxScorePoolpeaks_min2.bed > output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min2.bed
+bedtools intersect -wa -a output/ChIPseeker/annotation_WT.bed -b output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.sorted_maxScorePoolpeaks_min5.bed > output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min5.bed
+bedtools intersect -wa -a output/ChIPseeker/annotation_WT.bed -b output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.sorted_maxScorePoolpeaks_min10.bed > output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min10.bed
+bedtools intersect -wa -a output/ChIPseeker/annotation_WT.bed -b output/bigwig_DiffBind_TMM/8wN_WT_H3K27me3_median.sorted_maxScorePoolpeaks_min20.bed > output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min20.bed
 
-XXX
+# Filter out all rows that contain "Intergenic"
+## HET
+grep -v "Intergenic" output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min1.bed > output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min1_noIntergenic.bed
+grep -v "Intergenic" output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min2.bed > output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min2_noIntergenic.bed
+grep -v "Intergenic" output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min5.bed > output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min5_noIntergenic.bed
+grep -v "Intergenic" output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min10.bed > output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min10_noIntergenic.bed
+grep -v "Intergenic" output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min20.bed > output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min20_noIntergenic.bed
+## KO
+grep -v "Intergenic" output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min1.bed > output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min1_noIntergenic.bed
+grep -v "Intergenic" output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min2.bed > output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min2_noIntergenic.bed
+grep -v "Intergenic" output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min5.bed > output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min5_noIntergenic.bed
+grep -v "Intergenic" output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min10.bed > output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min10_noIntergenic.bed
+grep -v "Intergenic" output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min20.bed > output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min20_noIntergenic.bed
+## WT
+grep -v "Intergenic" output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min1.bed > output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min1_noIntergenic.bed
+grep -v "Intergenic" output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min2.bed > output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min2_noIntergenic.bed
+grep -v "Intergenic" output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min5.bed > output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min5_noIntergenic.bed
+grep -v "Intergenic" output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min10.bed > output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min10_noIntergenic.bed
+grep -v "Intergenic" output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min20.bed > output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min20_noIntergenic.bed
+
+# For each genotype collect geneSymbol (gene name) list
+## Print 20th column in each rows; sort; remov dupplicates
+### HET
+awk -F'\t' '(NR==1 || FNR>1) {print $20}' output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min1_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min1_noIntergenic_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $20}' output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min2_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min2_noIntergenic_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $20}' output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min5_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min5_noIntergenic_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $20}' output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min10_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min10_noIntergenic_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $20}' output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min20_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min20_noIntergenic_geneSymbol.txt
+### KO
+awk -F'\t' '(NR==1 || FNR>1) {print $20}' output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min1_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min1_noIntergenic_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $20}' output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min2_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min2_noIntergenic_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $20}' output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min5_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min5_noIntergenic_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $20}' output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min10_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min10_noIntergenic_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $20}' output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min20_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min20_noIntergenic_geneSymbol.txt
 
 
 
+### WT
+awk -F'\t' '(NR==1 || FNR>1) {print $20}' output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min1_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min1_noIntergenic_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $20}' output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min2_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min2_noIntergenic_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $20}' output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min5_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min5_noIntergenic_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $20}' output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min10_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min10_noIntergenic_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $20}' output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min20_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min20_noIntergenic_geneSymbol.txt
+
+## Concatenate all gene into 1 file
+### min1
+cat output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min1_noIntergenic_geneSymbol.txt output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min1_noIntergenic_geneSymbol.txt output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min1_noIntergenic_geneSymbol.txt | sort | uniq > output/ChIPseeker/annotation_maxScorePoolpeaks_min1_noIntergenic_geneSymbol.txt
+### min2
+cat output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min2_noIntergenic_geneSymbol.txt output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min2_noIntergenic_geneSymbol.txt output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min2_noIntergenic_geneSymbol.txt | sort | uniq > output/ChIPseeker/annotation_maxScorePoolpeaks_min2_noIntergenic_geneSymbol.txt
+
+### min5
+cat output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min5_noIntergenic_geneSymbol.txt output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min5_noIntergenic_geneSymbol.txt output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min5_noIntergenic_geneSymbol.txt | sort | uniq > output/ChIPseeker/annotation_maxScorePoolpeaks_min5_noIntergenic_geneSymbol.txt
+
+### min10
+cat output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min10_noIntergenic_geneSymbol.txt output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min10_noIntergenic_geneSymbol.txt output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min10_noIntergenic_geneSymbol.txt | sort | uniq > output/ChIPseeker/annotation_maxScorePoolpeaks_min10_noIntergenic_geneSymbol.txt
+
+### min20
+cat output/ChIPseeker/annotation_HET_maxScorePoolpeaks_min20_noIntergenic_geneSymbol.txt output/ChIPseeker/annotation_KO_maxScorePoolpeaks_min20_noIntergenic_geneSymbol.txt output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min20_noIntergenic_geneSymbol.txt | sort | uniq > output/ChIPseeker/annotation_maxScorePoolpeaks_min20_noIntergenic_geneSymbol.txt
+
+# Modify the .txt file that list all genes so that it match gtf structure
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_maxScorePoolpeaks_min1_noIntergenic_geneSymbol.txt > output/ChIPseeker/annotation_maxScorePoolpeaks_min1_noIntergenic_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_maxScorePoolpeaks_min2_noIntergenic_geneSymbol.txt > output/ChIPseeker/annotation_maxScorePoolpeaks_min2_noIntergenic_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_maxScorePoolpeaks_min5_noIntergenic_geneSymbol.txt > output/ChIPseeker/annotation_maxScorePoolpeaks_min5_noIntergenic_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_maxScorePoolpeaks_min10_noIntergenic_geneSymbol.txt > output/ChIPseeker/annotation_maxScorePoolpeaks_min10_noIntergenic_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_maxScorePoolpeaks_min20_noIntergenic_geneSymbol.txt > output/ChIPseeker/annotation_maxScorePoolpeaks_min20_noIntergenic_as_gtf_geneSymbol.txt
+
+# Filter the gtf
+grep -Ff output/ChIPseeker/annotation_maxScorePoolpeaks_min1_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_maxScorePoolpeaks_min1_noIntergenic.gtf
+grep -Ff output/ChIPseeker/annotation_maxScorePoolpeaks_min2_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_maxScorePoolpeaks_min2_noIntergenic.gtf
+grep -Ff output/ChIPseeker/annotation_maxScorePoolpeaks_min5_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_maxScorePoolpeaks_min5_noIntergenic.gtf
+grep -Ff output/ChIPseeker/annotation_maxScorePoolpeaks_min10_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_maxScorePoolpeaks_min10_noIntergenic.gtf
+grep -Ff output/ChIPseeker/annotation_maxScorePoolpeaks_min20_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_maxScorePoolpeaks_min20_noIntergenic.gtf
+```
+- *NOTE: `bedtools map -c` = the column from the bedGraph to use for the operation; -o = max; collect maximum score*
+- *NOTE: `grep -v "something" input > output` --> Remove all rows containing "something"*
+- *NOTE: I generated the `output/ChIPseeker/annotation_*.bed` by changing `.txt` to `.bed` and removing the 1st row*
+- *NOTE: using `wc -l [FILE]` ; I checked the nb of rows in each file, the more I filter, the less the transcripts count; so looks good*
+
+Let's now generate the matrix and deepTools plots:
+
+```bash
+conda activate deeptools
+# all genotypes
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_maxScorePoolpeaks_min1_noIntergenic.sh # 222843 ok
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_maxScorePoolpeaks_min2_noIntergenic.sh # 222847 ok
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_maxScorePoolpeaks_min5_noIntergenic.sh # 222851 ok
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_maxScorePoolpeaks_min10_noIntergenic.sh # 222854 ok
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_maxScorePoolpeaks_min20_noIntergenic.sh # 222855 ok
+
+sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_maxScorePoolpeaks_min1_noIntergenic.sh # 222861 ok
+sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_maxScorePoolpeaks_min2_noIntergenic.sh # 222865 ok
+sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_maxScorePoolpeaks_min5_noIntergenic.sh # 222869 ok
+sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_maxScorePoolpeaks_min10_noIntergenic.sh # 222870 ok
+sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_maxScorePoolpeaks_min20_noIntergenic.sh # 222874 ok
 
 ```
-*NOTE: `-c` = the column from the bedGraph to use for the operation; -o = max; collect maximum score*
+*NOTE: each command contain plotProfile and plotHeatmap with 6 clusters*
 
---> The last
-
-
-
+--> min20 peak TSS is around 9-10 (got KO decrease upstream TSS; HET increase downstrem TSS)
+--> min2/5/10 peak TSS is around 7 (got KO decrease upstream TSS; HET increase downstrem TSS; more marked than min20)
 
 
 
-
-XXX Maybe take bigwig; overlap with macs2 pool peak bed; count how many reads within the bigwig in each bed peak regions? 
-
-To keep only the peak that correspond to bigwig >5 read count. Let's use bedtools on bigwig; and count and keep the one that has a signal >5; wherever!
-
-XXX
 
 
 
