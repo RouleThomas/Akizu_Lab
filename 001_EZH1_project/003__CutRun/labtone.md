@@ -4618,7 +4618,7 @@ sbatch scripts/matrix_gene_1kb_DiffBind_TMM_DiffBind05_DEGs_heatmap_kmeans.sh # 
 ```
 - *NOTE: dupplicated rows in the `output/deseq2_hg38/ENCFF159KBI_DiffBind05_DEGs_8wN.gtf` but deepTools do NOT take them into account* 
 - *NOTE: To display different nb of clusters; kmeans clustering number has been changed manually using `nano`*
-- **NOTE: If color shit can play with --colorNumber and --colorList (like to chose which color and when changing it)**
+- *NOTE: If color shit can play with --colorNumber and --colorList (like to chose which color and when changing it)*
 
 **Understand deepTools profiling**:
 
@@ -4892,12 +4892,34 @@ sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_maxScorePoolpeaks_min2_noIntergenic.s
 sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_maxScorePoolpeaks_min5_noIntergenic.sh # 222869 ok
 sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_maxScorePoolpeaks_min10_noIntergenic.sh # 222870 ok
 sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_maxScorePoolpeaks_min20_noIntergenic.sh # 222874 ok
-
 ```
 *NOTE: each command contain plotProfile and plotHeatmap with 6 clusters*
 
 --> min20 peak TSS is around 9-10 (got KO decrease upstream TSS; HET increase downstrem TSS)
 --> min2/5/10 peak TSS is around 7 (got KO decrease upstream TSS; HET increase downstrem TSS; more marked than min20)
+--> min1 is around 6-7 (best to choose as keep as much genes)
+
+nb of unique genes in each category: *20= 3,894; 10= 7,624; 1= 8,625* `awk '$3 ~ /gene/' file.txt | wc -l`
+
+Matrix and deeptools for **DEGs and diffbind and non-intergenic at least 1 genotype peaks**:
+
+
+```bash
+# Generate gtf DEGs diffbind peak no intergenic
+conda activate BedToBigwig
+
+bedtools intersect -wa -u -a ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DiffBind05_DEGs_8wN_bedtools.gtf -b meta/ENCFF159KBI_maxScorePoolpeaks_min1_noIntergenic.gtf > meta/ENCFF159KBI_maxScorePoolpeaks_min1_noIntergenic_DiffBind05_DEGs_8wN_bedtools.gtf
+
+# deepTools plot
+conda activate deeptools
+
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_maxScorePoolpeaks_min1_noIntergenic_DiffBind05_DEGs.sh # 255664
+sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_maxScorePoolpeaks_min1_noIntergenic_DiffBind05_DEGs.sh # 255776
+```
+*NOTE: -u to display unique hit between a and b*
+
+
+
 
 
 

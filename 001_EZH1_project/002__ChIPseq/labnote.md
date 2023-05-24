@@ -2343,71 +2343,486 @@ Generate the raw count matrix:
 ```bash
 conda activate DiffBind
 
-sbatch scripts/DiffBind_WT_macs2raw.sh # 163174
-sbatch scripts/DiffBind_HET_macs2raw.sh # 163176
-sbatch scripts/DiffBind_KO_macs2raw.sh # 163177
+sbatch scripts/DiffBind_WT_macs2raw.sh # 163174 ok
+sbatch scripts/DiffBind_HET_macs2raw.sh # 163176 ok
+sbatch scripts/DiffBind_KO_macs2raw.sh # 163177 ok
 ```
 
-XXX
+Then let's make plots PCA; clustering; collect diff sites; **with pvalue 0.05**:
 
-Then let's make plots PCA; clustering; for each genotype:
-
-**WT genotype:**
 ```R
-# Load raw counts
+# Genotype WT
+## Load count matrix
+load("output/DiffBind/sample_count_WT_macs2raw_greylist.Rdata")
+# plots
+pdf("output/DiffBind/clustering_WT_macs2raw_greylist.pdf", width=14, height=20)  
+plot(sample_count_WT_blackgreylist)
+dev.off()
 
-XXX PCa clustering
+pdf("output/DiffBind/PCA_WT_macs2raw_greylist.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_WT_blackgreylist,DBA_CONDITION, label=c(DBA_TREATMENT))
+dev.off()
 
 
-# Load greylist/blacklist counts
+# lib size scaling
+sample_count_WT_blackgreylist_LibCSIFScaled_TMM = dba.normalize(sample_count_WT_blackgreylist, library = c(92471024,102739426,636778842,343291724,112663109,108911344), normalize = DBA_NORM_TMM)
 
-XXX PCa clustering
 
-# Normalization lib size ChIPseqSpikeInFree
-XXX PCa clustering
+# plots
+pdf("output/DiffBind/clustering_WT_blackgreylist_LibCSIFScaled_TMM.pdf", width=14, height=20)
+plot(sample_count_WT_blackgreylist_LibCSIFScaled_TMM)
+dev.off()
 
-# Diff bound sites TMM pvalue 0.05
+pdf("output/DiffBind/PCA_WT_blackgreylist_LibCSIFScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_WT_blackgreylist_LibCSIFScaled_TMM,DBA_CONDITION, label=DBA_TREATMENT)
+dev.off()
 
-XXX
+# Diff. bounds
+
+sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast = dba.contrast(sample_count_WT_blackgreylist_LibCSIFScaled_TMM, minMembers=2, categories = DBA_CONDITION, reorderMeta = list(Condition="ESC"))
+
+sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast_analyze = dba.analyze(sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast, method=DBA_DESEQ2, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast_analyze$config$bUsePval <- TRUE
+
+dba.report(sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast_analyze)
+
+
+## volcano plot with diff sites
+pdf("output/DiffBind/volcano_WT_blackgreylist_LibCSIFScaled_TMM_contrast1.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/volcano_WT_blackgreylist_LibCSIFScaled_TMM_contrast2.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/volcano_WT_blackgreylist_LibCSIFScaled_TMM_contrast3.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+# Print nb of diff sites
+dba.report(sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, contrast=1, bGain=TRUE,bLoss=TRUE) 
+dba.report(sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, contrast=2, bGain=TRUE,bLoss=TRUE)
+dba.report(sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, contrast=3, bGain=TRUE,bLoss=TRUE)
+
+
+## Export the Diff Bind regions
+### Convert to GR object
+sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast1 <- dba.report(sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast2 <- dba.report(sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast3 <- dba.report(sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+### Convert to bed and exportsample_model__blackgreylist_histone_norm_report_contrast1
+sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast1_df <- data.frame(sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast1)
+sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast2_df <- data.frame(sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast2)
+sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast3_df <- data.frame(sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast3)
+
+colnames(sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast1_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast2_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast3_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+
+write.table(sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast1_df, file="output/DiffBind/sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast1_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast2_df, file="output/DiffBind/sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast2_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast3_df, file="output/DiffBind/sample_count_WT_blackgreylist_LibCSIFScaled_TMM_contrast3_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+
+
+# Genotype HET
+## Load count matrix
+load("output/DiffBind/sample_count_HET_macs2raw_greylist.Rdata")
+# plots
+pdf("output/DiffBind/clustering_HET_macs2raw_greylist.pdf", width=14, height=20)  
+plot(sample_count_HET_blackgreylist)
+dev.off()
+
+pdf("output/DiffBind/PCA_HET_macs2raw_greylist.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_HET_blackgreylist,DBA_CONDITION, label=c(DBA_TREATMENT))
+dev.off()
+
+
+# lib size scaling
+sample_count_HET_blackgreylist_LibCSIFScaled_TMM = dba.normalize(sample_count_HET_blackgreylist, library = c(139649080,117855644,903163124,1554734579,45678566,118275343), normalize = DBA_NORM_TMM)
+
+
+# plots
+pdf("output/DiffBind/clustering_HET_blackgreylist_LibCSIFScaled_TMM.pdf", width=14, height=20)
+plot(sample_count_HET_blackgreylist_LibCSIFScaled_TMM)
+dev.off()
+
+pdf("output/DiffBind/PCA_HET_blackgreylist_LibCSIFScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_HET_blackgreylist_LibCSIFScaled_TMM,DBA_CONDITION, label=DBA_TREATMENT)
+dev.off()
+
+# Diff. bounds
+
+sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast = dba.contrast(sample_count_HET_blackgreylist_LibCSIFScaled_TMM, minMembers=2, categories = DBA_CONDITION, reorderMeta = list(Condition="ESC"))
+
+sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast_analyze = dba.analyze(sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast, method=DBA_DESEQ2, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast_analyze$config$bUsePval <- TRUE
+
+dba.report(sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast_analyze)
+
+
+## volcano plot with diff sites
+pdf("output/DiffBind/volcano_HET_blackgreylist_LibCSIFScaled_TMM_contrast1.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/volcano_HET_blackgreylist_LibCSIFScaled_TMM_contrast2.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/volcano_HET_blackgreylist_LibCSIFScaled_TMM_contrast3.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+# Print nb of diff sites
+dba.report(sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, contrast=1, bGain=TRUE,bLoss=TRUE) 
+dba.report(sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, contrast=2, bGain=TRUE,bLoss=TRUE)
+dba.report(sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, contrast=3, bGain=TRUE,bLoss=TRUE)
+
+
+## Export the Diff Bind regions
+### Convert to GR object
+sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast1 <- dba.report(sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast2 <- dba.report(sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast3 <- dba.report(sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+### Convert to bed and exportsample_model__blackgreylist_histone_norm_report_contrast1
+sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast1_df <- data.frame(sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast1)
+sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast2_df <- data.frame(sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast2)
+sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast3_df <- data.frame(sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast3)
+
+colnames(sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast1_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast2_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast3_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+
+write.table(sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast1_df, file="output/DiffBind/sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast1_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast2_df, file="output/DiffBind/sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast2_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast3_df, file="output/DiffBind/sample_count_HET_blackgreylist_LibCSIFScaled_TMM_contrast3_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+
+
+# Genotype KO
+## Load count matrix
+load("output/DiffBind/sample_count_KO_macs2raw_greylist.Rdata")
+# plots
+pdf("output/DiffBind/clustering_KO_macs2raw_greylist.pdf", width=14, height=20)  
+plot(sample_count_KO_blackgreylist)
+dev.off()
+
+pdf("output/DiffBind/PCA_KO_macs2raw_greylist.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_KO_blackgreylist,DBA_CONDITION, label=c(DBA_TREATMENT))
+dev.off()
+
+
+# lib size scaling
+sample_count_KO_blackgreylist_LibCSIFScaled_TMM = dba.normalize(sample_count_KO_blackgreylist, library = c(85211139,71964648,865310316,909621058,105251783,223394867), normalize = DBA_NORM_TMM)
+
+
+# plots
+pdf("output/DiffBind/clustering_KO_blackgreylist_LibCSIFScaled_TMM.pdf", width=14, height=20)
+plot(sample_count_KO_blackgreylist_LibCSIFScaled_TMM)
+dev.off()
+
+pdf("output/DiffBind/PCA_KO_blackgreylist_LibCSIFScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_KO_blackgreylist_LibCSIFScaled_TMM,DBA_CONDITION, label=DBA_TREATMENT)
+dev.off()
+
+# Diff. bounds
+
+sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast = dba.contrast(sample_count_KO_blackgreylist_LibCSIFScaled_TMM, minMembers=2, categories = DBA_CONDITION, reorderMeta = list(Condition="ESC"))
+
+sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast_analyze = dba.analyze(sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast, method=DBA_DESEQ2, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast_analyze$config$bUsePval <- TRUE
+
+dba.report(sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast_analyze)
+
+
+## volcano plot with diff sites
+pdf("output/DiffBind/volcano_KO_blackgreylist_LibCSIFScaled_TMM_contrast1.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/volcano_KO_blackgreylist_LibCSIFScaled_TMM_contrast2.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/volcano_KO_blackgreylist_LibCSIFScaled_TMM_contrast3.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+# Print nb of diff sites
+dba.report(sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, contrast=1, bGain=TRUE,bLoss=TRUE) 
+dba.report(sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, contrast=2, bGain=TRUE,bLoss=TRUE)
+dba.report(sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, contrast=3, bGain=TRUE,bLoss=TRUE)
+
+
+## Export the Diff Bind regions
+### Convert to GR object
+sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast1 <- dba.report(sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast2 <- dba.report(sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast3 <- dba.report(sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+### Convert to bed and exportsample_model__blackgreylist_histone_norm_report_contrast1
+sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast1_df <- data.frame(sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast1)
+sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast2_df <- data.frame(sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast2)
+sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast3_df <- data.frame(sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast3)
+
+colnames(sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast1_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_KO", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast2_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_KO", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast3_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_KO", "Conc_KO", "Fold", "p.value", "FDR")
+
+write.table(sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast1_df, file="output/DiffBind/sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast1_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast2_df, file="output/DiffBind/sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast2_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast3_df, file="output/DiffBind/sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast3_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
 ```
+
+--> The mutants are more clean (clustering), thus showing more diff. bound sites over the time-course
 
 
 ## DiffBind macs2 raw_Genotype effect
 
 Generate the raw count matrix:
 
-
 ```bash
 conda activate DiffBind
 
-sbatch scripts/DiffBind_ESC_macs2raw.sh # 163181
-sbatch scripts/DiffBind_NPC_macs2raw.sh # 163182
-sbatch scripts/DiffBind_2dN_macs2raw.sh # 163183
+sbatch scripts/DiffBind_ESC_macs2raw.sh # 163181 ok
+sbatch scripts/DiffBind_NPC_macs2raw.sh # 163182 ok
+sbatch scripts/DiffBind_2dN_macs2raw.sh # 163183 ok
 ```
 
-XXX
-
-Then let's make plots PCA; clustering; for each genotype:
-
-**WT genotype:**
 ```R
-# Load raw counts
+# Time ESC
+## Load count matrix
+load("output/DiffBind/sample_count_ESC_macs2raw_greylist.Rdata")
+# plots
+pdf("output/DiffBind/clustering_ESC_macs2raw_greylist.pdf", width=14, height=20)  
+plot(sample_count_ESC_blackgreylist)
+dev.off()
 
-XXX PCa clustering
+pdf("output/DiffBind/PCA_ESC_macs2raw_greylist.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_ESC_blackgreylist,DBA_CONDITION, label=c(DBA_TREATMENT))
+dev.off()
 
 
-# Load greylist/blacklist counts
+# lib size scaling
+sample_count_ESC_blackgreylist_LibCSIFScaled_TMM = dba.normalize(sample_count_ESC_blackgreylist, library = c(903163124, 1554734579, 865310316, 909621058, 636778842, 343291724), normalize = DBA_NORM_TMM)
 
-XXX PCa clustering
 
-# Normalization lib size ChIPseqSpikeInFree
-XXX PCa clustering
+# plots
+pdf("output/DiffBind/clustering_ESC_blackgreylist_LibCSIFScaled_TMM.pdf", width=14, height=20)
+plot(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM)
+dev.off()
 
-# Diff bound sites TMM pvalue 0.05
+pdf("output/DiffBind/PCA_ESC_blackgreylist_LibCSIFScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM,DBA_TREATMENT, label=DBA_CONDITION)
+dev.off()
 
-XXX
+# Diff. bounds
+
+sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast = dba.contrast(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM, minMembers=2, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze = dba.analyze(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast, method=DBA_DESEQ2, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze$config$bUsePval <- TRUE
+
+dba.report(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze)
+
+
+## volcano plot with diff sites
+pdf("output/DiffBind/volcano_ESC_blackgreylist_LibCSIFScaled_TMM_contrast1.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/volcano_ESC_blackgreylist_LibCSIFScaled_TMM_contrast2.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/volcano_ESC_blackgreylist_LibCSIFScaled_TMM_contrast3.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+# Print nb of diff sites
+dba.report(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, contrast=1, bGain=TRUE,bLoss=TRUE) 
+dba.report(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, contrast=2, bGain=TRUE,bLoss=TRUE)
+dba.report(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, contrast=3, bGain=TRUE,bLoss=TRUE)
+
+
+## Export the Diff Bind regions
+### Convert to GR object
+sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast1 <- dba.report(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast2 <- dba.report(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast3 <- dba.report(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+### Convert to bed and exportsample_model__blackgreylist_histone_norm_report_contrast1
+sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast1_df <- data.frame(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast1)
+sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast2_df <- data.frame(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast2)
+sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast3_df <- data.frame(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast3)
+
+colnames(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast1_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast2_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast3_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+
+write.table(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast1_df, file="output/DiffBind/sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast1_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast2_df, file="output/DiffBind/sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast2_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast3_df, file="output/DiffBind/sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast3_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+
+
+# Time NPC
+## Load count matrix
+load("output/DiffBind/sample_count_NPC_macs2raw_greylist.Rdata")
+# plots
+pdf("output/DiffBind/clustering_NPC_macs2raw_greylist.pdf", width=14, height=20)  
+plot(sample_count_NPC_blackgreylist)
+dev.off()
+
+pdf("output/DiffBind/PCA_NPC_macs2raw_greylist.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_NPC_blackgreylist,DBA_CONDITION, label=c(DBA_TREATMENT))
+dev.off()
+
+
+# lib size scaling
+sample_count_NPC_blackgreylist_LibCSIFScaled_TMM = dba.normalize(sample_count_NPC_blackgreylist, library = c(45678566, 118275343, 105251783, 223394867, 112663109, 108911344), normalize = DBA_NORM_TMM)
+
+
+# plots
+pdf("output/DiffBind/clustering_NPC_blackgreylist_LibCSIFScaled_TMM.pdf", width=14, height=20)
+plot(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM)
+dev.off()
+
+pdf("output/DiffBind/PCA_NPC_blackgreylist_LibCSIFScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM,DBA_TREATMENT, label=DBA_TREATMENT)
+dev.off()
+
+# Diff. bounds
+
+sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast = dba.contrast(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM, minMembers=2, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze = dba.analyze(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast, method=DBA_DESEQ2, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze$config$bUsePval <- TRUE
+
+dba.report(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze)
+
+
+## volcano plot with diff sites
+pdf("output/DiffBind/volcano_NPC_blackgreylist_LibCSIFScaled_TMM_contrast1.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/volcano_NPC_blackgreylist_LibCSIFScaled_TMM_contrast2.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/volcano_NPC_blackgreylist_LibCSIFScaled_TMM_contrast3.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+# Print nb of diff sites
+dba.report(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, contrast=1, bGain=TRUE,bLoss=TRUE) 
+dba.report(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, contrast=2, bGain=TRUE,bLoss=TRUE)
+dba.report(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, contrast=3, bGain=TRUE,bLoss=TRUE)
+
+
+## Export the Diff Bind regions
+### Convert to GR object
+sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast1 <- dba.report(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast2 <- dba.report(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast3 <- dba.report(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+### Convert to bed and exportsample_model__blackgreylist_histone_norm_report_contrast1
+sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast1_df <- data.frame(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast1)
+sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast2_df <- data.frame(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast2)
+sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast3_df <- data.frame(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast3)
+
+colnames(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast1_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_NPC", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast2_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_NPC", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast3_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_NPC", "Conc_KO", "Fold", "p.value", "FDR")
+
+write.table(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast1_df, file="output/DiffBind/sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast1_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast2_df, file="output/DiffBind/sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast2_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast3_df, file="output/DiffBind/sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast3_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+
+
+# Time 2dN
+## Load count matrix
+load("output/DiffBind/sample_count_2dN_macs2raw_greylist.Rdata")
+# plots
+pdf("output/DiffBind/clustering_2dN_macs2raw_greylist.pdf", width=14, height=20)  
+plot(sample_count_2dN_blackgreylist)
+dev.off()
+
+pdf("output/DiffBind/PCA_2dN_macs2raw_greylist.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_2dN_blackgreylist,DBA_CONDITION, label=c(DBA_TREATMENT))
+dev.off()
+
+
+# lib size scaling
+sample_count_2dN_blackgreylist_LibCSIFScaled_TMM = dba.normalize(sample_count_2dN_blackgreylist, library = c(139649080,117855644,85211139,71964648,92471024,102739426), normalize = DBA_NORM_TMM)
+
+
+# plots
+pdf("output/DiffBind/clustering_2dN_blackgreylist_LibCSIFScaled_TMM.pdf", width=14, height=20)
+plot(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM)
+dev.off()
+
+pdf("output/DiffBind/PCA_2dN_blackgreylist_LibCSIFScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM,DBA_TREATMENT, label=DBA_TREATMENT)
+dev.off()
+
+# Diff. bounds
+
+sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast = dba.contrast(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM, minMembers=2, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast_analyze = dba.analyze(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast, method=DBA_DESEQ2, bParallel = TRUE, bBlacklist=FALSE, bGreylist=FALSE)
+
+
+sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast_analyze$config$bUsePval <- TRUE
+
+dba.report(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast_analyze)
+
+
+## volcano plot with diff sites
+pdf("output/DiffBind/volcano_2dN_blackgreylist_LibCSIFScaled_TMM_contrast1.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/volcano_2dN_blackgreylist_LibCSIFScaled_TMM_contrast2.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/volcano_2dN_blackgreylist_LibCSIFScaled_TMM_contrast3.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+# Print nb of diff sites
+dba.report(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, contrast=1, bGain=TRUE,bLoss=TRUE) 
+dba.report(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, contrast=2, bGain=TRUE,bLoss=TRUE)
+dba.report(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast_analyze, contrast=3, bGain=TRUE,bLoss=TRUE)
+
+
+## Export the Diff Bind regions
+### Convert to GR object
+sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast1 <- dba.report(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast2 <- dba.report(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast3 <- dba.report(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+### Convert to bed and exportsample_model__blackgreylist_histone_norm_report_contrast1
+sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast1_df <- data.frame(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast1)
+sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast2_df <- data.frame(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast2)
+sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast3_df <- data.frame(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast3)
+
+colnames(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast1_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_2dN", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast2_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_2dN", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast3_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_2dN", "Conc_KO", "Fold", "p.value", "FDR")
+
+write.table(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast1_df, file="output/DiffBind/sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast1_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast2_df, file="output/DiffBind/sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast2_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast3_df, file="output/DiffBind/sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast3_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
 ```
 
+--> NPC/2dN show a very bad clustering between genotypes; also high pvalue show lot of false-positive looking at some random on IGV (the low pvalue looks good otherwise)
+
+XXX --> May try to put NPC and 2dN together and treat as 4 biol replicates?
+
+
+Let's make a **quality check on NPC/2dN sample**; notably the clustering using macs2 pre-filtered peak is much better; let's check if also more diff. bound sites. If true --> Use MACS2 pre-filtered peaks for all analyses... Including for Cut Run....
+
+Repeat analysis for NPC/2dN sample using pre-filtered macs2 peak and pvalue 0.05; compare the nb of Diff. bound sites identified and whether looks true or not.
+
+
+
+XXX
 
 
 
@@ -2415,15 +2830,7 @@ XXX
 
 
 
-
-
-
-
-
-
-
-
-
+--> Better to use the XXXmacs2raw/macs2-pre-filtered peaksXXX
 
 
 
