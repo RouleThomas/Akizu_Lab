@@ -2891,7 +2891,24 @@ dev.off()
 
 --> with these parameters; neurog2 is significant (even FDR is significant... Weird). This looks great!!
 
---> Still issue is that the peak are small, it may be good to merge them in like a 1-5kb distance
+--> Still issue is that the peak are small (small because it increase statistical power; longer the more background with mess the DEGs; the author even recommend keep 400bp lenght for broad mark as H3K27me3), it may be good to merge them in like a 1-5kb distance
+
+Let's re-do this analysis but with the **MACS2 pre-filtered (qval 0.005; not the macs2raw) peaks and pvalue 0.05 DiffBind**:
+
+XXX
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ## Fine-tune diff bound peak calling (qvalue and peak merge)
@@ -2900,7 +2917,7 @@ Now that we have plenty of diff bound regions, we need to make sure what is dete
 
 --> The peak looks biologically relevant, even the one with small pvalue! Instead of merging the peaks, let's assign peak to genes with ChIPseeker and see whether diff bind sites follow gene expression changes
 
-
+XXX --> Using pre-filtered macs2 peak (qval 0.005) is XXX
 
 
 
