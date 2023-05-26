@@ -3292,9 +3292,9 @@ venn.plot <- venn.diagram(
 pdf("output/ChIPseeker/Venn_DiffBind05_qval005_LostGain_Het_KO.pdf", width=5, height=4)
 grid.draw(venn.plot)
 dev.off()
-
 ```
 
+--> Using **macs2raw (qval0.05) is better**; more genes expression changes identifies; that goes in agreement with H3K27me3 changes
 
 
 
@@ -3308,7 +3308,6 @@ Now that we have plenty of diff bound regions, we need to make sure what is dete
 
 --> The peak looks biologically relevant, even the one with small pvalue! Instead of merging the peaks, let's assign peak to genes with ChIPseeker and see whether diff bind sites follow gene expression changes
 
-XXX --> Using pre-filtered macs2 peak (qval 0.005) is XXX
 
 
 
