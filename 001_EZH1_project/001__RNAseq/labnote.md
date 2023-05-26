@@ -5093,11 +5093,11 @@ resultsNames(dds) # Here print value into coef below
 res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm")
 
 ## Export result as 'raw_ESC_KO_vs_NPC_WT.txt'
-write.csv(res %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2_hg38/raw_ESC_KO_vs_NPC_WT.txt")
+write.csv(res %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2_hg38/raw_ESC_KO_vs_ESC_WT.txt")
 ### If need to import: res <- read_csv("output/deseq2/raw_ESC_KO_vs_NPC_WT.txt") #To import
 
 ## Plot-MA
-pdf("output/deseq2_hg38/plotMA_res_ESC_KO_vs_NPC_WT.pdf", width=5, height=4)
+pdf("output/deseq2_hg38/plotMA_res_ESC_KO_vs_ESC_WT.pdf", width=5, height=4)
 ### Identify DEGs and count them
 res_df <- res %>% as.data.frame() %>% select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE))
 n_upregulated <- sum(res_df$log2FoldChange > 0 & res_df$padj == TRUE, na.rm = TRUE)

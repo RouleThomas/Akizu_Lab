@@ -3015,9 +3015,9 @@ dba.report(sample_count_2dN_greylist_LibCSIFScaled_TMM_contrast_analyze, contras
 
 ## Export the Diff Bind regions
 ### Convert to GR object
-sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast1 <- dba.report(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=1)
-sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast2 <- dba.report(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=2)
-sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast3 <- dba.report(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast1 <- dba.report(sample_count_2dN_greylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast2 <- dba.report(sample_count_2dN_greylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast3 <- dba.report(sample_count_2dN_greylist_LibCSIFScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=3)
 ### Convert to bed and exportsample_model__blackgreylist_histone_norm_report_contrast1
 sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast1_df <- data.frame(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast1)
 sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast2_df <- data.frame(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast2)
@@ -3027,9 +3027,9 @@ colnames(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast1_df) <- c("se
 colnames(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast2_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_2dN", "Conc_KO", "Fold", "p.value", "FDR")
 colnames(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast3_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_2dN", "Conc_KO", "Fold", "p.value", "FDR")
 
-write.table(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast1_df, file="output/DiffBind/sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast1_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
-write.table(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast2_df, file="output/DiffBind/sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast2_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
-write.table(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast3_df, file="output/DiffBind/sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast3_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast1_df, file="output/DiffBind/sample_count_2dN_greylist_LibCSIFScaled_TMM_contrast1_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast2_df, file="output/DiffBind/sample_count_2dN_greylist_LibCSIFScaled_TMM_contrast2_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast3_df, file="output/DiffBind/sample_count_2dN_greylist_LibCSIFScaled_TMM_contrast3_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
 ```
 
 
@@ -3327,7 +3327,7 @@ peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
 
 genes= lapply(peakAnnoList, function(i) unique(as.data.frame(i)$geneId))
 
-pdf("output/ChIPseeker/overlap_genes_DiffBind05_qval005.pdf", width=7, height=7)
+pdf("output/ChIPseeker/overlap_genes_DiffBind05_qval005_ESC.pdf", width=7, height=7)
 vennplot(genes)
 dev.off()
 
@@ -3351,14 +3351,14 @@ KOvsWT_annot$gene <- mapIds(org.Hs.eg.db, keys = KOvsWT_annot$geneId, column = "
 
 
 ## Save output table
-write.table(HETvsKO_annot, file="output/ChIPseeker/annotation_HETvsKO_qval005.txt", sep="\t", quote=F, row.names=F)
-write.table(HETvsWT_annot, file="output/ChIPseeker/annotation_HETvsWT_qval005.txt", sep="\t", quote=F, row.names=F)
-write.table(KOvsWT_annot, file="output/ChIPseeker/annotation_KOvsWT_qval005.txt", sep="\t", quote=F, row.names=F)
+write.table(HETvsKO_annot, file="output/ChIPseeker/annotation_HETvsKO_qval005_ESC.txt", sep="\t", quote=F, row.names=F)
+write.table(HETvsWT_annot, file="output/ChIPseeker/annotation_HETvsWT_qval005_ESC.txt", sep="\t", quote=F, row.names=F)
+write.table(KOvsWT_annot, file="output/ChIPseeker/annotation_KOvsWT_qval005_ESC.txt", sep="\t", quote=F, row.names=F)
 
 
 # load annotation tables
-HETvsWT_annot <- read.table("output/ChIPseeker/annotation_HETvsWT_qval005.txt", sep="\t", header=TRUE)
-KOvsWT_annot <- read.table("output/ChIPseeker/annotation_KOvsWT_qval005.txt", sep="\t", header=TRUE)
+HETvsWT_annot <- read.table("output/ChIPseeker/annotation_HETvsWT_qval005_ESC.txt", sep="\t", header=TRUE)
+KOvsWT_annot <- read.table("output/ChIPseeker/annotation_KOvsWT_qval005_ESC.txt", sep="\t", header=TRUE)
 
 # Filter Gain/Loss sites
 HETvsWT_annot_gain = tibble(HETvsWT_annot) %>%
@@ -3389,8 +3389,6 @@ KOvsWT_annot_gain_lost = KOvsWT_annot_gain %>%
 HET_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_ESC_HET_vs_ESC_WT.txt')) %>%
     separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
     dplyr::select(gene, baseMean,log2FoldChange,padj)
-
-XXX SOME SHIT NEEDS CORRECTION raw_ESC_KO_vs_ESC_WT double check one-one analyses !!! 
 
 KO_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_ESC_KO_vs_ESC_WT.txt')) %>%
     separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
@@ -3430,7 +3428,7 @@ count_data <- HETvsWT_annot_gain_lost_RNA %>%
     mutate(total_panel = sum(total)) %>%
     ungroup()
 
-pdf("output/ChIPseeker/DiffBind05_qval005_HETvsWT_expression.pdf", width=7, height=4)
+pdf("output/ChIPseeker/DiffBind05_qval005_ESC_HETvsWT_expression.pdf", width=7, height=4)
 HETvsWT_annot_gain_lost_RNA %>%
     ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
         geom_point(alpha = 0.8, size = 0.5) +
@@ -3460,7 +3458,7 @@ count_data <- KOvsWT_annot_gain_lost_RNA %>%
     mutate(total_panel = sum(total)) %>%
     ungroup()
 
-pdf("output/ChIPseeker/DiffBind05_qval005_KOvsWT_expression.pdf", width=7, height=4)
+pdf("output/ChIPseeker/DiffBind05_qval005_ESC_KOvsWT_expression.pdf", width=7, height=4)
 KOvsWT_annot_gain_lost_RNA %>%
     ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
         geom_point(alpha = 0.8, size = 0.5) +
@@ -3479,6 +3477,368 @@ KOvsWT_annot_gain_lost_RNA %>%
                   aes(x = Inf, y = -Inf, label = paste("Total:", total_panel, "genes")),
                   hjust = 1.1, vjust = -0.1, size = 3, color = "black")
 dev.off()
+
+
+
+
+
+
+# NPC
+
+
+
+# Import peaks
+peaks_contrast1 = read.table('output/DiffBind/sample_count_NPC_greylist_LibCSIFScaled_TMM_contrast1_df.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V5, V6=V6, V7=V7, V8=V8, FC=V9, pvalue=V10, FDR=V11) 
+peaks_contrast2 = read.table('output/DiffBind/sample_count_NPC_greylist_LibCSIFScaled_TMM_contrast2_df.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V5, V6=V6, V7=V7, V8=V8, FC=V9, pvalue=V10, FDR=V11) 
+peaks_contrast3 = read.table('output/DiffBind/sample_count_NPC_greylist_LibCSIFScaled_TMM_contrast3_df.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V5, V6=V6, V7=V7, V8=V8, FC=V9, pvalue=V10, FDR=V11) 
+
+
+# Tidy peaks
+peaks_contrast1_gr = makeGRangesFromDataFrame(peaks_contrast1,keep.extra.columns=TRUE)
+peaks_contrast2_gr = makeGRangesFromDataFrame(peaks_contrast2,keep.extra.columns=TRUE)
+peaks_contrast3_gr = makeGRangesFromDataFrame(peaks_contrast3,keep.extra.columns=TRUE)
+
+gr_list <- list(HETvsKO=peaks_contrast1_gr, HETvsWT=peaks_contrast2_gr, KOvsWT=peaks_contrast3_gr)
+
+
+# Overlap assigned genes btwn my gr_list
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Fine-tune here gene peak assignemnt
+
+genes= lapply(peakAnnoList, function(i) unique(as.data.frame(i)$geneId))
+
+pdf("output/ChIPseeker/overlap_genes_DiffBind05_qval005_NPC.pdf", width=7, height=7)
+vennplot(genes)
+dev.off()
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## Get annotation data frame
+HETvsKO_annot <- as.data.frame(peakAnnoList[["HETvsKO"]]@anno)
+HETvsWT_annot <- as.data.frame(peakAnnoList[["HETvsWT"]]@anno)
+KOvsWT_annot <- as.data.frame(peakAnnoList[["KOvsWT"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+HETvsKO_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = HETvsKO_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+HETvsWT_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = HETvsWT_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+KOvsWT_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = KOvsWT_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+
+HETvsKO_annot$gene <- mapIds(org.Hs.eg.db, keys = HETvsKO_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+HETvsWT_annot$gene <- mapIds(org.Hs.eg.db, keys = HETvsWT_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+KOvsWT_annot$gene <- mapIds(org.Hs.eg.db, keys = KOvsWT_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+## Save output table
+write.table(HETvsKO_annot, file="output/ChIPseeker/annotation_HETvsKO_qval005_NPC.txt", sep="\t", quote=F, row.names=F)
+write.table(HETvsWT_annot, file="output/ChIPseeker/annotation_HETvsWT_qval005_NPC.txt", sep="\t", quote=F, row.names=F)
+write.table(KOvsWT_annot, file="output/ChIPseeker/annotation_KOvsWT_qval005_NPC.txt", sep="\t", quote=F, row.names=F)
+
+
+# load annotation tables
+HETvsWT_annot <- read.table("output/ChIPseeker/annotation_HETvsWT_qval005_NPC.txt", sep="\t", header=TRUE)
+KOvsWT_annot <- read.table("output/ChIPseeker/annotation_KOvsWT_qval005_NPC.txt", sep="\t", header=TRUE)
+
+# Filter Gain/Loss sites
+HETvsWT_annot_gain = tibble(HETvsWT_annot) %>%
+    filter(FC > 0, annotation != "Distal Intergenic") %>%
+    dplyr::select(-c(V6,V7,V8,strand,name)) %>%
+    add_column(H3K27me3 = "gain")
+HETvsWT_annot_lost = tibble(HETvsWT_annot) %>%
+    filter(FC < 0, annotation != "Distal Intergenic") %>%
+    dplyr::select(-c(V6,V7,V8,strand,name)) %>%
+    add_column(H3K27me3 = "lost")
+HETvsWT_annot_gain_lost = HETvsWT_annot_gain %>% 
+    bind_rows(HETvsWT_annot_lost) %>%
+    dplyr::select(seqnames,start,end,FC,pvalue,FDR,annotation,distanceToTSS,gene,geneSymbol,H3K27me3)
+
+KOvsWT_annot_gain = tibble(KOvsWT_annot) %>%
+    filter(FC > 0, annotation != "Distal Intergenic") %>%
+    dplyr::select(-c(V6,V7,V8,strand,name)) %>%
+    add_column(H3K27me3 = "gain")
+KOvsWT_annot_lost = tibble(KOvsWT_annot) %>%
+    filter(FC < 0, annotation != "Distal Intergenic") %>%
+    dplyr::select(-c(V6,V7,V8,strand,name))  %>%
+    add_column(H3K27me3 = "lost")
+KOvsWT_annot_gain_lost = KOvsWT_annot_gain %>% 
+    bind_rows(KOvsWT_annot_lost) %>%
+    dplyr::select(seqnames,start,end,FC,pvalue,FDR,annotation,distanceToTSS,gene,geneSymbol,H3K27me3)
+
+# Import RNAseq deseq2 output
+HET_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_NPC_HET_vs_NPC_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj)
+
+KO_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_NPC_KO_vs_NPC_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj)
+
+# Merge files
+HETvsWT_annot_gain_lost_RNA = HETvsWT_annot_gain_lost %>% 
+    left_join(HET_vs_WT) %>%
+    dplyr::select(gene, H3K27me3,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
+    unique()
+
+
+KOvsWT_annot_gain_lost_RNA = KOvsWT_annot_gain_lost %>% 
+    left_join(KO_vs_WT) %>%
+    dplyr::select(gene, H3K27me3,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
+    unique()
+
+
+# Volcano plot
+count_data <- HETvsWT_annot_gain_lost_RNA %>%
+    group_by(H3K27me3, significance) %>%
+    summarise(up = sum(log2FoldChange > 0),
+              down = sum(log2FoldChange < 0),
+              total = n()) %>%
+    ungroup() %>%
+    group_by(H3K27me3) %>%
+    mutate(total_panel = sum(total)) %>%
+    ungroup()
+
+pdf("output/ChIPseeker/DiffBind05_qval005_NPC_HETvsWT_expression.pdf", width=7, height=4)
+HETvsWT_annot_gain_lost_RNA %>%
+    ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
+        geom_point(alpha = 0.8, size = 0.5) +
+        scale_color_manual(values = c("grey", "red")) +
+        labs(title = "HET vs WT",
+             subtitle = "Expression level of diff. bound H3K27me3 genes",
+             x = "Log2 Fold Change",
+             y = "Base Mean",
+             color = "Significant (padj <= 0.05)") +
+        facet_wrap(~H3K27me3) +
+        theme_bw() +
+        geom_text(data = count_data %>% filter(significance), 
+                  aes(x = Inf, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
+                  hjust = 1.1, vjust = 1.1, size = 3, color = "black") +
+        geom_text(data = count_data %>% distinct(H3K27me3, .keep_all = TRUE),
+                  aes(x = Inf, y = -Inf, label = paste("Total:", total_panel, "genes")),
+                  hjust = 1.1, vjust = -0.1, size = 3, color = "black")
+dev.off()
+
+count_data <- KOvsWT_annot_gain_lost_RNA %>%
+    group_by(H3K27me3, significance) %>%
+    summarise(up = sum(log2FoldChange > 0),
+              down = sum(log2FoldChange < 0),
+              total = n()) %>%
+    ungroup() %>%
+    group_by(H3K27me3) %>%
+    mutate(total_panel = sum(total)) %>%
+    ungroup()
+
+pdf("output/ChIPseeker/DiffBind05_qval005_NPC_KOvsWT_expression.pdf", width=7, height=4)
+KOvsWT_annot_gain_lost_RNA %>%
+    ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
+        geom_point(alpha = 0.8, size = 0.5) +
+        scale_color_manual(values = c("grey", "red")) +
+        labs(title = "KO vs WT",
+             subtitle = "Expression level of diff. bound H3K27me3 genes",
+             x = "Log2 Fold Change",
+             y = "Base Mean",
+             color = "Significant (padj <= 0.05)") +
+        facet_wrap(~H3K27me3) +
+        theme_bw() +
+        geom_text(data = count_data %>% filter(significance), 
+                  aes(x = Inf, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
+                  hjust = 1.1, vjust = 1.1, size = 3, color = "black") +
+        geom_text(data = count_data %>% distinct(H3K27me3, .keep_all = TRUE),
+                  aes(x = Inf, y = -Inf, label = paste("Total:", total_panel, "genes")),
+                  hjust = 1.1, vjust = -0.1, size = 3, color = "black")
+dev.off()
+
+
+
+
+
+
+# 2dN XXX
+
+
+
+# Import peaks
+peaks_contrast1 = read.table('output/DiffBind/sample_count_2dN_greylist_LibCSIFScaled_TMM_contrast1_df.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V5, V6=V6, V7=V7, V8=V8, FC=V9, pvalue=V10, FDR=V11) 
+peaks_contrast2 = read.table('output/DiffBind/sample_count_2dN_greylist_LibCSIFScaled_TMM_contrast2_df.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V5, V6=V6, V7=V7, V8=V8, FC=V9, pvalue=V10, FDR=V11) 
+peaks_contrast3 = read.table('output/DiffBind/sample_count_2dN_greylist_LibCSIFScaled_TMM_contrast3_df.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V5, V6=V6, V7=V7, V8=V8, FC=V9, pvalue=V10, FDR=V11) 
+
+
+# Tidy peaks
+peaks_contrast1_gr = makeGRangesFromDataFrame(peaks_contrast1,keep.extra.columns=TRUE)
+peaks_contrast2_gr = makeGRangesFromDataFrame(peaks_contrast2,keep.extra.columns=TRUE)
+peaks_contrast3_gr = makeGRangesFromDataFrame(peaks_contrast3,keep.extra.columns=TRUE)
+
+gr_list <- list(HETvsKO=peaks_contrast1_gr, HETvsWT=peaks_contrast2_gr, KOvsWT=peaks_contrast3_gr)
+
+
+# Overlap assigned genes btwn my gr_list
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Fine-tune here gene peak assignemnt
+
+genes= lapply(peakAnnoList, function(i) unique(as.data.frame(i)$geneId))
+
+pdf("output/ChIPseeker/overlap_genes_DiffBind05_qval005_2dN.pdf", width=7, height=7)
+vennplot(genes)
+dev.off()
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## Get annotation data frame
+HETvsKO_annot <- as.data.frame(peakAnnoList[["HETvsKO"]]@anno)
+HETvsWT_annot <- as.data.frame(peakAnnoList[["HETvsWT"]]@anno)
+KOvsWT_annot <- as.data.frame(peakAnnoList[["KOvsWT"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+HETvsKO_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = HETvsKO_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+HETvsWT_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = HETvsWT_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+KOvsWT_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = KOvsWT_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+
+HETvsKO_annot$gene <- mapIds(org.Hs.eg.db, keys = HETvsKO_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+HETvsWT_annot$gene <- mapIds(org.Hs.eg.db, keys = HETvsWT_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+KOvsWT_annot$gene <- mapIds(org.Hs.eg.db, keys = KOvsWT_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+## Save output table
+write.table(HETvsKO_annot, file="output/ChIPseeker/annotation_HETvsKO_qval005_2dN.txt", sep="\t", quote=F, row.names=F)
+write.table(HETvsWT_annot, file="output/ChIPseeker/annotation_HETvsWT_qval005_2dN.txt", sep="\t", quote=F, row.names=F)
+write.table(KOvsWT_annot, file="output/ChIPseeker/annotation_KOvsWT_qval005_2dN.txt", sep="\t", quote=F, row.names=F)
+
+
+# load annotation tables
+HETvsWT_annot <- read.table("output/ChIPseeker/annotation_HETvsWT_qval005_2dN.txt", sep="\t", header=TRUE)
+KOvsWT_annot <- read.table("output/ChIPseeker/annotation_KOvsWT_qval005_2dN.txt", sep="\t", header=TRUE)
+
+# Filter Gain/Loss sites
+HETvsWT_annot_gain = tibble(HETvsWT_annot) %>%
+    filter(FC > 0, annotation != "Distal Intergenic") %>%
+    dplyr::select(-c(V6,V7,V8,strand,name)) %>%
+    add_column(H3K27me3 = "gain")
+HETvsWT_annot_lost = tibble(HETvsWT_annot) %>%
+    filter(FC < 0, annotation != "Distal Intergenic") %>%
+    dplyr::select(-c(V6,V7,V8,strand,name)) %>%
+    add_column(H3K27me3 = "lost")
+HETvsWT_annot_gain_lost = HETvsWT_annot_gain %>% 
+    bind_rows(HETvsWT_annot_lost) %>%
+    dplyr::select(seqnames,start,end,FC,pvalue,FDR,annotation,distanceToTSS,gene,geneSymbol,H3K27me3)
+
+KOvsWT_annot_gain = tibble(KOvsWT_annot) %>%
+    filter(FC > 0, annotation != "Distal Intergenic") %>%
+    dplyr::select(-c(V6,V7,V8,strand,name)) %>%
+    add_column(H3K27me3 = "gain")
+KOvsWT_annot_lost = tibble(KOvsWT_annot) %>%
+    filter(FC < 0, annotation != "Distal Intergenic") %>%
+    dplyr::select(-c(V6,V7,V8,strand,name))  %>%
+    add_column(H3K27me3 = "lost")
+KOvsWT_annot_gain_lost = KOvsWT_annot_gain %>% 
+    bind_rows(KOvsWT_annot_lost) %>%
+    dplyr::select(seqnames,start,end,FC,pvalue,FDR,annotation,distanceToTSS,gene,geneSymbol,H3K27me3)
+
+# Import RNAseq deseq2 output
+HET_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_2dN_HET_vs_2dN_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj)
+
+KO_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_2dN_KO_vs_2dN_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj)
+
+# Merge files
+HETvsWT_annot_gain_lost_RNA = HETvsWT_annot_gain_lost %>% 
+    left_join(HET_vs_WT) %>%
+    dplyr::select(gene, H3K27me3,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
+    unique()
+
+
+KOvsWT_annot_gain_lost_RNA = KOvsWT_annot_gain_lost %>% 
+    left_join(KO_vs_WT) %>%
+    dplyr::select(gene, H3K27me3,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
+    unique()
+
+
+# Volcano plot
+count_data <- HETvsWT_annot_gain_lost_RNA %>%
+    group_by(H3K27me3, significance) %>%
+    summarise(up = sum(log2FoldChange > 0),
+              down = sum(log2FoldChange < 0),
+              total = n()) %>%
+    ungroup() %>%
+    group_by(H3K27me3) %>%
+    mutate(total_panel = sum(total)) %>%
+    ungroup()
+
+pdf("output/ChIPseeker/DiffBind05_qval005_2dN_HETvsWT_expression.pdf", width=7, height=4)
+HETvsWT_annot_gain_lost_RNA %>%
+    ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
+        geom_point(alpha = 0.8, size = 0.5) +
+        scale_color_manual(values = c("grey", "red")) +
+        labs(title = "HET vs WT",
+             subtitle = "Expression level of diff. bound H3K27me3 genes",
+             x = "Log2 Fold Change",
+             y = "Base Mean",
+             color = "Significant (padj <= 0.05)") +
+        facet_wrap(~H3K27me3) +
+        theme_bw() +
+        geom_text(data = count_data %>% filter(significance), 
+                  aes(x = Inf, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
+                  hjust = 1.1, vjust = 1.1, size = 3, color = "black") +
+        geom_text(data = count_data %>% distinct(H3K27me3, .keep_all = TRUE),
+                  aes(x = Inf, y = -Inf, label = paste("Total:", total_panel, "genes")),
+                  hjust = 1.1, vjust = -0.1, size = 3, color = "black")
+dev.off()
+
+count_data <- KOvsWT_annot_gain_lost_RNA %>%
+    group_by(H3K27me3, significance) %>%
+    summarise(up = sum(log2FoldChange > 0),
+              down = sum(log2FoldChange < 0),
+              total = n()) %>%
+    ungroup() %>%
+    group_by(H3K27me3) %>%
+    mutate(total_panel = sum(total)) %>%
+    ungroup()
+
+pdf("output/ChIPseeker/DiffBind05_qval005_2dN_KOvsWT_expression.pdf", width=7, height=4)
+KOvsWT_annot_gain_lost_RNA %>%
+    ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
+        geom_point(alpha = 0.8, size = 0.5) +
+        scale_color_manual(values = c("grey", "red")) +
+        labs(title = "KO vs WT",
+             subtitle = "Expression level of diff. bound H3K27me3 genes",
+             x = "Log2 Fold Change",
+             y = "Base Mean",
+             color = "Significant (padj <= 0.05)") +
+        facet_wrap(~H3K27me3) +
+        theme_bw() +
+        geom_text(data = count_data %>% filter(significance), 
+                  aes(x = Inf, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
+                  hjust = 1.1, vjust = 1.1, size = 3, color = "black") +
+        geom_text(data = count_data %>% distinct(H3K27me3, .keep_all = TRUE),
+                  aes(x = Inf, y = -Inf, label = paste("Total:", total_panel, "genes")),
+                  hjust = 1.1, vjust = -0.1, size = 3, color = "black")
+dev.off()
+
+
 
 ```
 
