@@ -2893,16 +2893,407 @@ dev.off()
 
 --> Still issue is that the peak are small (small because it increase statistical power; longer the more background with mess the DEGs; the author even recommend keep 400bp lenght for broad mark as H3K27me3), it may be good to merge them in like a 1-5kb distance
 
-Let's re-do this analysis but with the **MACS2 pre-filtered (qval 0.005; not the macs2raw) peaks and pvalue 0.05 DiffBind**:
-
-XXX
+Let's re-do this analysis but with the **MACS2 pre-filtered (qval 0.005; not the macs2raw) peaks and pvalue 0.05 DiffBind** (re-do a matrix; without the iPSC patient samples); meta is `meta_sample_q005.txt`:
 
 
 
+```R
+library("DiffBind") 
+
+
+# Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_q005.txt", header = TRUE, sep = "\t"))
+
+# Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
 
 
 
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_q005.RData")
+load("output/DiffBind/sample_count_q005.RData")
 
+# plot
+pdf("output/DiffBind/clustering_sample_q005.pdf", width=14, height=20)  
+plot(sample_count)
+dev.off()
+
+pdf("output/DiffBind/PCA_sample_q005.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+
+# Greylist generation
+sample_dba_greylist = dba.blacklist(sample_count, blacklist=FALSE, greylist=TRUE) # Here we apply greylist only
+
+# Now check how clustering look
+sample_count_greylist = dba.count(sample_dba_greylist)
+## This take time, here is checkpoint command to save/load:
+save(sample_count_greylist, file = "output/DiffBind/sample_count_q005_greylist.RData")
+load("output/DiffBind/sample_count_q005_greylist.RData")
+
+
+# plot
+pdf("output/DiffBind/clustering_q005_greylist.pdf", width=14, height=20)
+plot(sample_count_greylist)
+dev.off()
+
+pdf("output/DiffBind/PCA_q005_greylist.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_greylist,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+
+
+# TMM norm
+sample_count_greylist_LibHistoneScaled_TMM = dba.normalize(sample_count_greylist, library = c(16435849, 17032874, 9125844, 34105171, 11502923, 10536410, 123012358, 9366195, 20293409, 29302285, 19824265, 28374047), normalize = DBA_NORM_TMM)
+
+pdf("output/DiffBind/clustering_greylist_LibHistoneScaled_TMM.pdf", width=14, height=20)
+plot(sample_count_greylist_LibHistoneScaled_TMM)
+dev.off()
+
+pdf("output/DiffBind/PCA_greylist_LibHistoneScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_greylist_LibHistoneScaled_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+sample_count_greylist_LibHistoneScaled_TMM_contrast = dba.contrast(sample_count_greylist_LibHistoneScaled_TMM, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
+
+sample_count_greylist_LibHistoneScaled_TMM_contrast_analyze = dba.analyze(sample_count_greylist_LibHistoneScaled_TMM_contrast, method=DBA_DESEQ2, bParallel = TRUE)
+
+
+
+sample_count_greylist_LibHistoneScaled_TMM_contrast_analyze$config$bUsePval <- TRUE
+
+dba.report(sample_count_greylist_LibHistoneScaled_TMM_contrast_analyze)
+
+# Examining results
+
+
+## volcano plot with diff sites
+pdf("output/DiffBind/volcano_greylist_LibHistoneScaled_TMM_contrast1.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_greylist_LibHistoneScaled_TMM_contrast_analyze,method=DBA_DESEQ2, contrast=1)
+dev.off()
+pdf("output/DiffBind/volcano_greylist_LibHistoneScaled_TMM_contrast2.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_greylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=2)
+dev.off()
+pdf("output/DiffBind/volcano_greylist_LibHistoneScaled_TMM_contrast3.pdf", width=14, height=20) 
+dba.plotVolcano(sample_count_greylist_LibHistoneScaled_TMM_contrast_analyze, method=DBA_DESEQ2,contrast=3)
+dev.off()
+
+
+## Export the Diff Bind regions
+### Convert to GR object
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast1 <- dba.report(sample_count_greylist_LibHistoneScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=1)
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast2 <- dba.report(sample_count_greylist_LibHistoneScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=2)
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast3 <- dba.report(sample_count_greylist_LibHistoneScaled_TMM_contrast_analyze,method=DBA_DESEQ2,contrast=3)
+### Convert to bed and exportsample_model__blackgreylist_histone_norm_report_contrast1
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast1_df <- data.frame(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast1)
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast2_df <- data.frame(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast2)
+sample_count_blackgreylist_LibHistoneScaled_TMM_contrast3_df <- data.frame(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast3)
+
+colnames(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast1_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast2_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+colnames(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast3_df) <- c("seqnames", "start", "end", "width", "strand", "Conc", "Conc_HET", "Conc_KO", "Fold", "p.value", "FDR")
+
+write.table(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast1_df, file="output/DiffBind/sample_count_greylist_LibHistoneScaled_TMM_contrast1_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast2_df, file="output/DiffBind/sample_count_greylist_LibHistoneScaled_TMM_contrast2_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast3_df, file="output/DiffBind/sample_count_greylist_LibHistoneScaled_TMM_contrast3_df.bed", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+
+
+
+# Collect SF:
+
+
+sample_count_greylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_greylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_greylist_LibHistoneScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_greylist_LibHistoneScaled_TMM_SF.txt")
+```
+- **NOTE: The pre-filtered MACS2 analysis (qvalue 0.005) are labeled `*greylist*` or `*q005_greylist*`; the non-pre-filtered are label `*macs2raw*blacklistgreylist*` or `*blacklistgreylist*`**
+
+
+--> The DiffBind scaling factor SF are Different than the macs2raw method!!!
+
+--> Using qvalue 0.005 result in ~3-time less diff. bound sites identified ()
+
+
+
+Now let's compare RNAseq (expression) and CutRun for macs2 qval 0.005:
+- Filter HETvsWT and KOvsWT diff bound genes into **gain and loss H3K27me3**
+- **Keep only signal in Promoter, gene body and TES** (ie. filter out peak assigned to intergenic)
+- **Merge with deseq2** log2FC data (tpm will not work as too variable; or log2tpm maybe?)
+- Plot in x FC and y baseMean=deseq2-norm counts (+ color qvalue) with facet_wrap~gain or lost (ie. volcano plot gain/lost)
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library(VennDiagram)
+
+
+# Import peaks
+peaks_contrast1 = read.table('output/DiffBind/sample_count_greylist_LibHistoneScaled_TMM_contrast1_df.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V5, V6=V6, V7=V7, V8=V8, FC=V9, pvalue=V10, FDR=V11) 
+peaks_contrast2 = read.table('output/DiffBind/sample_count_greylist_LibHistoneScaled_TMM_contrast2_df.bed')  %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V5, V6=V6, V7=V7, V8=V8, FC=V9, pvalue=V10, FDR=V11) 
+peaks_contrast3 = read.table('output/DiffBind/sample_count_greylist_LibHistoneScaled_TMM_contrast3_df.bed')  %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V5, V6=V6, V7=V7, V8=V8, FC=V9, pvalue=V10, FDR=V11)  
+
+
+# Tidy peaks
+peaks_contrast1_gr = makeGRangesFromDataFrame(peaks_contrast1,keep.extra.columns=TRUE)
+peaks_contrast2_gr = makeGRangesFromDataFrame(peaks_contrast2,keep.extra.columns=TRUE)
+peaks_contrast3_gr = makeGRangesFromDataFrame(peaks_contrast3,keep.extra.columns=TRUE)
+
+gr_list <- list(HETvsKO=peaks_contrast1_gr, HETvsWT=peaks_contrast2_gr, KOvsWT=peaks_contrast3_gr)
+
+
+# Overlap assigned genes btwn my gr_list
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Fine-tune here gene peak assignemnt
+
+genes= lapply(peakAnnoList, function(i) unique(as.data.frame(i)$geneId))
+
+pdf("output/ChIPseeker/overlap_genes_DiffBind05_qval005.pdf", width=7, height=7)
+vennplot(genes)
+dev.off()
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## Get annotation data frame
+HETvsKO_annot <- as.data.frame(peakAnnoList[["HETvsKO"]]@anno)
+HETvsWT_annot <- as.data.frame(peakAnnoList[["HETvsWT"]]@anno)
+KOvsWT_annot <- as.data.frame(peakAnnoList[["KOvsWT"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+HETvsKO_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = HETvsKO_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+HETvsWT_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = HETvsWT_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+KOvsWT_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = KOvsWT_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+
+HETvsKO_annot$gene <- mapIds(org.Hs.eg.db, keys = HETvsKO_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+HETvsWT_annot$gene <- mapIds(org.Hs.eg.db, keys = HETvsWT_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+KOvsWT_annot$gene <- mapIds(org.Hs.eg.db, keys = KOvsWT_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+## Save output table
+write.table(HETvsKO_annot, file="output/ChIPseeker/annotation_HETvsKO_qval005.txt", sep="\t", quote=F, row.names=F)
+write.table(HETvsWT_annot, file="output/ChIPseeker/annotation_HETvsWT_qval005.txt", sep="\t", quote=F, row.names=F)
+write.table(KOvsWT_annot, file="output/ChIPseeker/annotation_KOvsWT_qval005.txt", sep="\t", quote=F, row.names=F)
+
+
+# load annotation tables
+HETvsWT_annot <- read.table("output/ChIPseeker/annotation_HETvsWT_qval005.txt", sep="\t", header=TRUE)
+KOvsWT_annot <- read.table("output/ChIPseeker/annotation_KOvsWT_qval005.txt", sep="\t", header=TRUE)
+
+# Filter Gain/Loss sites
+HETvsWT_annot_gain = tibble(HETvsWT_annot) %>%
+    filter(FC > 0, annotation != "Distal Intergenic") %>%
+    dplyr::select(-c(V6,V7,V8,strand,name)) %>%
+    add_column(H3K27me3 = "gain")
+HETvsWT_annot_lost = tibble(HETvsWT_annot) %>%
+    filter(FC < 0, annotation != "Distal Intergenic") %>%
+    dplyr::select(-c(V6,V7,V8,strand,name)) %>%
+    add_column(H3K27me3 = "lost")
+HETvsWT_annot_gain_lost = HETvsWT_annot_gain %>% 
+    bind_rows(HETvsWT_annot_lost) %>%
+    dplyr::select(seqnames,start,end,FC,pvalue,FDR,annotation,distanceToTSS,gene,geneSymbol,H3K27me3)
+
+KOvsWT_annot_gain = tibble(KOvsWT_annot) %>%
+    filter(FC > 0, annotation != "Distal Intergenic") %>%
+    dplyr::select(-c(V6,V7,V8,strand,name)) %>%
+    add_column(H3K27me3 = "gain")
+KOvsWT_annot_lost = tibble(KOvsWT_annot) %>%
+    filter(FC < 0, annotation != "Distal Intergenic") %>%
+    dplyr::select(-c(V6,V7,V8,strand,name))  %>%
+    add_column(H3K27me3 = "lost")
+KOvsWT_annot_gain_lost = KOvsWT_annot_gain %>% 
+    bind_rows(KOvsWT_annot_lost) %>%
+    dplyr::select(seqnames,start,end,FC,pvalue,FDR,annotation,distanceToTSS,gene,geneSymbol,H3K27me3)
+
+# Import RNAseq deseq2 output
+HET_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_8wN_HET_vs_8wN_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj)
+KO_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_8wN_KO_vs_8wN_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj)
+
+# Merge files
+HETvsWT_annot_gain_lost_RNA = HETvsWT_annot_gain_lost %>% 
+    left_join(HET_vs_WT) %>%
+    dplyr::select(gene, H3K27me3,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
+    unique()
+
+
+KOvsWT_annot_gain_lost_RNA = KOvsWT_annot_gain_lost %>% 
+    left_join(KO_vs_WT) %>%
+    dplyr::select(gene, H3K27me3,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
+    unique()
+
+
+# Volcano plot
+count_data <- HETvsWT_annot_gain_lost_RNA %>%
+    group_by(H3K27me3, significance) %>%
+    summarise(up = sum(log2FoldChange > 0),
+              down = sum(log2FoldChange < 0),
+              total = n()) %>%
+    ungroup() %>%
+    group_by(H3K27me3) %>%
+    mutate(total_panel = sum(total)) %>%
+    ungroup()
+
+pdf("output/ChIPseeker/DiffBind05_qval005_HETvsWT_expression.pdf", width=7, height=4)
+HETvsWT_annot_gain_lost_RNA %>%
+    ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
+        geom_point(alpha = 0.8, size = 0.5) +
+        scale_color_manual(values = c("grey", "red")) +
+        labs(title = "HET vs WT",
+             subtitle = "Expression level of diff. bound H3K27me3 genes",
+             x = "Log2 Fold Change",
+             y = "Base Mean",
+             color = "Significant (padj <= 0.05)") +
+        facet_wrap(~H3K27me3) +
+        theme_bw() +
+        geom_text(data = count_data %>% filter(significance), 
+                  aes(x = Inf, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
+                  hjust = 1.1, vjust = 1.1, size = 3, color = "black") +
+        geom_text(data = count_data %>% distinct(H3K27me3, .keep_all = TRUE),
+                  aes(x = Inf, y = -Inf, label = paste("Total:", total_panel, "genes")),
+                  hjust = 1.1, vjust = -0.1, size = 3, color = "black")
+dev.off()
+
+count_data <- KOvsWT_annot_gain_lost_RNA %>%
+    group_by(H3K27me3, significance) %>%
+    summarise(up = sum(log2FoldChange > 0),
+              down = sum(log2FoldChange < 0),
+              total = n()) %>%
+    ungroup() %>%
+    group_by(H3K27me3) %>%
+    mutate(total_panel = sum(total)) %>%
+    ungroup()
+
+pdf("output/ChIPseeker/DiffBind05_qval005_KOvsWT_expression.pdf", width=7, height=4)
+KOvsWT_annot_gain_lost_RNA %>%
+    ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
+        geom_point(alpha = 0.8, size = 0.5) +
+        scale_color_manual(values = c("grey", "red")) +
+        labs(title = "KO vs WT",
+             subtitle = "Expression level of diff. bound H3K27me3 genes",
+             x = "Log2 Fold Change",
+             y = "Base Mean",
+             color = "Significant (padj <= 0.05)") +
+        facet_wrap(~H3K27me3) +
+        theme_bw() +
+        geom_text(data = count_data %>% filter(significance), 
+                  aes(x = Inf, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
+                  hjust = 1.1, vjust = 1.1, size = 3, color = "black") +
+        geom_text(data = count_data %>% distinct(H3K27me3, .keep_all = TRUE),
+                  aes(x = Inf, y = -Inf, label = paste("Total:", total_panel, "genes")),
+                  hjust = 1.1, vjust = -0.1, size = 3, color = "black")
+dev.off()
+
+# Venn diagram to see whether gain H3K27me3 in HET are the same one in KO?
+## GAIN
+# Extract the unique gene lists as vectors
+HET_gene_list <- unique(HETvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "gain") %>%
+                          pull(gene))
+
+KO_gene_list <- unique(KOvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "gain") %>%
+                          pull(gene))
+
+
+venn.plot <- venn.diagram(
+  list(HET = HET_gene_list, KO = KO_gene_list),
+  filename = NULL,
+  fill = c("blue", "red"),
+  alpha = 0.5,
+  category.names = c("HET Gain", "KO Gain"),
+  cex = 2
+)
+
+# Plot the Venn diagram
+pdf("output/ChIPseeker/Venn_DiffBind05_qval005_Gain_Het_KO.pdf", width=5, height=4)
+grid.draw(venn.plot)
+dev.off()
+
+## LOST
+# Extract the unique gene lists as vectors
+HET_gene_list <- unique(HETvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "lost") %>%
+                          pull(gene))
+
+KO_gene_list <- unique(KOvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "lost") %>%
+                          pull(gene))
+
+
+venn.plot <- venn.diagram(
+  list(HET = HET_gene_list, KO = KO_gene_list),
+  filename = NULL,
+  fill = c("blue", "red"),
+  alpha = 0.5,
+  category.names = c("HET Lost", "KO Lost"),
+  cex = 2
+)
+
+# Plot the Venn diagram
+pdf("output/ChIPseeker/Venn_DiffBind05_qval005_Lost_Het_KO.pdf", width=5, height=4)
+grid.draw(venn.plot)
+dev.off()
+
+
+## BOTH
+# Extract the unique gene lists as vectors
+HET_lost_gene_list <- unique(HETvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "lost") %>%
+                          pull(gene))
+
+KO_lost_gene_list <- unique(KOvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "lost") %>%
+                          pull(gene))
+
+HET_gain_gene_list <- unique(HETvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "gain") %>%
+                          pull(gene))
+
+KO_gain_gene_list <- unique(KOvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "gain") %>%
+                          pull(gene))
+
+
+venn.plot <- venn.diagram(
+  list(HET_lost = HET_lost_gene_list, KO_lost = KO_lost_gene_list,
+       HET_gain = HET_gain_gene_list, KO_gain = KO_gain_gene_list),
+  filename = NULL,
+  fill = c("blue", "red", "blue", "red"),
+  alpha = 0.5,
+  cex = 2
+)
+
+# Plot the Venn diagram
+pdf("output/ChIPseeker/Venn_DiffBind05_qval005_LostGain_Het_KO.pdf", width=5, height=4)
+grid.draw(venn.plot)
+dev.off()
+
+```
 
 
 
@@ -3544,7 +3935,7 @@ write.table(HETvsWT_annot, file="output/ChIPseeker/annotation_HETvsWT.txt", sep=
 write.table(KOvsWT_annot, file="output/ChIPseeker/annotation_KOvsWT.txt", sep="\t", quote=F, row.names=F)
 ```
 
-Now let's compare RNAseq and CutRun:
+Now let's compare RNAseq and CutRun for MACS2raw qval 0.05:
 - Filter HETvsWT and KOvsWT diff bound genes into **gain and loss H3K27me3**
 - **Keep only signal in Promoter, gene body and TES** (ie. filter out peak assigned to intergenic)
 - **Merge with deseq2** log2FC data (tpm will not work as too variable; or log2tpm maybe?)
