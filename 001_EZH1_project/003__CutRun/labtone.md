@@ -5326,6 +5326,99 @@ sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_maxScorePoolpeaks_min1_noIntergenic_D
 *NOTE: -u to display unique hit between a and b*
 
 
+Matrix and deeptools for **Non-intergenic peak in WT (whether or not found in HET/KO)**:
+
+
+```bash
+conda activate deeptools
+# File with genes from WT with min score of 1; no intergenic
+output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min1_noIntergenic_geneSymbol.txt 
+
+# Modify the .txt file that list all genes so that it match gtf structure
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min1_noIntergenic_geneSymbol.txt > output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min1_noIntergenic_as_gtf_geneSymbol.txt
+
+# Filter the gtf
+grep -Ff output/ChIPseeker/annotation_WT_maxScorePoolpeaks_min1_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_WT_maxScorePoolpeaks_min1_noIntergenic.gtf
+
+# deepTools plot
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_WT_maxScorePoolpeaks_min1_noIntergenic.sh # 589600 
+sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_WT_maxScorePoolpeaks_min1_noIntergenic.sh # 589874
+```
+
+--> XXX
+
+
+Matrix and deeptools for genes where **H3K27me3 goes up in HET and H3K27me3 goes down in KO**
+
+```bash
+conda activate BedToBigwig
+# File where the diffbound sites has been assigned to genes
+output/ChIPseeker/annotation_HETvsWT.txt
+output/ChIPseeker/annotation_KOvsWT.txt
+
+# Filter the peaks
+## Filter HET Diff bound sites that goes Up (contrast2 positif=Up in HET)
+awk '$10 > 0' output/ChIPseeker/annotation_HETvsWT.txt > output/ChIPseeker/annotation_HETvsWT_UpHET.txt
+## Filter HET Diff bound sites that goes Down (contrast2 negatif= Down in HET)
+awk '$10 < 0' output/ChIPseeker/annotation_HETvsWT.txt > output/ChIPseeker/annotation_HETvsWT_DownHET.txt
+
+## Filter KO Diff bound sites that goes Up (contrast2 positif=Up in KO)
+awk '$10 > 0' output/ChIPseeker/annotation_KOvsWT.txt > output/ChIPseeker/annotation_KOvsWT_UpKO.txt
+## Filter KO Diff bound sites that goes Down (contrast2 negatif= Down in KO)
+awk '$10 < 0' output/ChIPseeker/annotation_KOvsWT.txt > output/ChIPseeker/annotation_KOvsWT_DownKO.txt
+
+# filter out the intergenic and convert to bed (remove header manually)
+grep -v "Intergenic" output/ChIPseeker/annotation_HETvsWT_UpHET.txt > output/ChIPseeker/annotation_HETvsWT_UpHET_noIntergenic.bed
+grep -v "Intergenic" output/ChIPseeker/annotation_HETvsWT_DownHET.txt > output/ChIPseeker/annotation_HETvsWT_DownHET_noIntergenic.bed
+grep -v "Intergenic" output/ChIPseeker/annotation_KOvsWT_UpKO.txt > output/ChIPseeker/annotation_KOvsWT_UpKO_noIntergenic.bed
+grep -v "Intergenic" output/ChIPseeker/annotation_KOvsWT_DownKO.txt > output/ChIPseeker/annotation_KOvsWT_DownKO_noIntergenic.bed
+
+
+# Collect gene ID
+awk -F'\t' '(NR==1 || FNR>1) {print $22}' output/ChIPseeker/annotation_HETvsWT_UpHET_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_HETvsWT_UpHET_noIntergenic_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $22}' output/ChIPseeker/annotation_HETvsWT_DownHET_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_HETvsWT_DownHET_noIntergenic_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $22}' output/ChIPseeker/annotation_KOvsWT_UpKO_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_KOvsWT_UpKO_noIntergenic_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $22}' output/ChIPseeker/annotation_KOvsWT_DownKO_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_KOvsWT_DownKO_noIntergenic_geneSymbol.txt
+
+# Modify the .txt file that list all genes so that it match gtf structure
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_HETvsWT_UpHET_noIntergenic_geneSymbol.txt > output/ChIPseeker/annotation_HETvsWT_UpHET_noIntergenic_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_HETvsWT_DownHET_noIntergenic_geneSymbol.txt > output/ChIPseeker/annotation_HETvsWT_DownHET_noIntergenic_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_KOvsWT_UpKO_noIntergenic_geneSymbol.txt > output/ChIPseeker/annotation_KOvsWT_UpKO_noIntergenic_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_KOvsWT_DownKO_noIntergenic_geneSymbol.txt > output/ChIPseeker/annotation_KOvsWT_DownKO_noIntergenic_as_gtf_geneSymbol.txt
+
+# Filter the gtf
+grep -Ff output/ChIPseeker/annotation_HETvsWT_UpHET_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_HETvsWT_UpHET_noIntergenic.gtf
+grep -Ff output/ChIPseeker/annotation_HETvsWT_DownHET_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_HETvsWT_DownHET_noIntergenic.gtf
+grep -Ff output/ChIPseeker/annotation_KOvsWT_UpKO_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_KOvsWT_UpKO_noIntergenic.gtf
+grep -Ff output/ChIPseeker/annotation_KOvsWT_DownKO_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_KOvsWT_DownKO_noIntergenic.gtf
+
+# Combine GTF
+## Up HET and Down in KO
+bedtools intersect -wa -u -a meta/ENCFF159KBI_HETvsWT_UpHET_noIntergenic.gtf -b meta/ENCFF159KBI_KOvsWT_DownKO_noIntergenic.gtf > meta/ENCFF159KBI_UpHET_DownKO_noIntergenic.gtf
+## Down in HET and up in KO
+bedtools intersect -wa -u -a meta/ENCFF159KBI_HETvsWT_DownHET_noIntergenic.gtf -b meta/ENCFF159KBI_KOvsWT_UpKO_noIntergenic.gtf > meta/ENCFF159KBI_DownHET_UpKO_noIntergenic.gtf
+## Down HET and Down KO
+bedtools intersect -wa -u -a meta/ENCFF159KBI_HETvsWT_DownHET_noIntergenic.gtf -b meta/ENCFF159KBI_KOvsWT_DownKO_noIntergenic.gtf > meta/ENCFF159KBI_DownHET_DownKO_noIntergenic.gtf
+## Up HET and Up KO
+bedtools intersect -wa -u -a meta/ENCFF159KBI_HETvsWT_UpHET_noIntergenic.gtf -b meta/ENCFF159KBI_KOvsWT_UpKO_noIntergenic.gtf > meta/ENCFF159KBI_UpHET_UpKO_noIntergenic.gtf
+
+
+# deepTools plot
+conda activate deeptools
+## Up HET and Down in KO
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_UpHET_DownKO_noIntergenic.sh # 591041
+sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_UpHET_DownKO_noIntergenic.sh # 591040
+
+
+```
+
+--> XXX
+
+
+
+
+
+
 
 
 
