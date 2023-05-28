@@ -5414,7 +5414,83 @@ sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_UpHET_DownKO_noIntergenic.sh # 591040
 
 --> XXX
 
+Matrix and deeptools for genes where **H3K27me3 goes up in HET AND expression goes down; and H3K27me3 goes down in KO AND expression goes Up**
 
+Filter the gene Up/Down in each mutant in R and generate GTF:
+
+XXX CHUI AL XXX
+
+```R
+# library
+library("rtracklayer")
+library("tidyverse")
+
+## Import deseq2 output and filter qvalue 0.05
+HETvsWT = as_tibble(read_csv('output/deseq2_hg38/raw_8wN_HET_vs_8wN_WT.txt')) %>%
+    filter(padj <= 0.05) %>%
+    dplyr::select(-"...1") %>%
+    add_column(contrast = "HETvsWT")
+KOvsWT = as_tibble(read_csv('output/deseq2_hg38/raw_8wN_KO_vs_8wN_WT.txt')) %>%
+    filter(padj <= 0.05) %>%
+    dplyr::select(-"...1") %>%
+    add_column(contrast = "KOvsWT")
+
+## Filter Up/Down
+HET_Down = HETvsWT %>% 
+    filter(log2FC < 0) !!!!!1 DOUBLE CHECK !!!!!1
+HET_Up = HETvsWT %>% 
+    filter(log2FC > 0) 
+KO_Down = KOvsWT %>% 
+    filter(log2FC < 0) 
+KO_Up = KOvsWT %>% 
+    filter(log2FC > 0) 
+
+
+## Import the GTF file
+gtf <- import('../../Master/meta/ENCFF159KBI.gtf')
+
+## Filter in the GTF file with only the DEGs
+gtf_DEGs_HET_Down <- gtf %>% 
+  as_tibble() %>% 
+  filter(gene_id %in% HET_Down$gene)
+gtf_DEGs_HET_Up <- gtf %>% 
+  as_tibble() %>% 
+  filter(gene_id %in% HET_Up$gene)
+gtf_DEGs_KO_Down <- gtf %>% 
+  as_tibble() %>% 
+  filter(gene_id %in% KO_Down$gene)
+gtf_DEGs_KO_Up <- gtf %>% 
+  as_tibble() %>% 
+  filter(gene_id %in% KO_Up$gene)
+
+## Save the new GTF
+export(gtf_DEGs_HET_Down, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_HET_Down.gtf")
+export(gtf_DEGs_HET_Up, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_HET_Up.gtf")
+export(gtf_DEGs_KO_Down, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Down.gtf")
+export(gtf_DEGs_KO_Up, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Up.gtf")
+```
+
+Then, `bedools intersect` the DEGs GTF with the DiffBind GTF and generate the deepTools plots:
+
+```bash
+
+XXX
+
+## Up HET and Down in KO
+bedtools intersect -wa -u -a meta/ENCFF159KBI_UpHET_DownKO_noIntergenic.gtf -b output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_HET_Down.gtf output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Up.gtf > meta/ENCFF159KBI_UpHET_DownKO_noIntergenic_DEGs_HET_Down_KO_Up.gtf
+
+# deepTools plot
+conda activate deeptools
+## Up HET and Down in KO
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_UpHET_DownKO_noIntergenic_DEGs_HET_Down_KO_Up.sh # 
+sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_UpHET_DownKO_noIntergenic_DEGs_HET_Down_KO_Up.sh # 
+
+
+```
+NOTE: XXX
+
+
+XXX Double check that bedtools intersect -wa -u -a with multiple -b files work ; check on IGV
 
 
 
