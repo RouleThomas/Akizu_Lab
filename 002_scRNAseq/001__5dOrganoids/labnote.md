@@ -18,7 +18,7 @@ RNA velocity estimation: performed with default parameters
 
 # Some helpful tutorial 
 - [Here](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger) ressource for the **10X Chromium Cell Ranger** 
-- 
+- Data for tutorial is [here](https://www.ncbi.nlm.nih.gov/sra/?term=SRR8734990)
 
 
 
@@ -53,21 +53,43 @@ fasterq-dump (PID 1026649) quit with error code 1
 Try increase memory (200G instead of 50G) and use --split-files instead of -S. 
 It seems that even though it is written paired end, I only have 1 file... !
 
---> Tried with  `--include-technical -S` and it works!!!! I have 3 files!!!
+**--> Tried with  `--include-technical -S` and it works!!!! I have 3 files!!!**
 
 
+# Cell Ranger pipeline (for 10x)
+## install cell ranger
+
+https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/tutorial_in
+
+XXX it fail, retry
+
+```bash
+cd /scr1/users/roulet/Akizu_Lab/Master/software
+
+curl -o cellranger-6.1.2.tar.gz "https://cf.10xgenomics.com/releases/cell-exp/cellranger-6.1.2.tar.gz?Expires=1641366506&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9jZi4xMHhnZW5vbWljcy5jb20vcmVsZWFzZXMvY2VsbC1leHAvY2VsbHJhbmdlci02LjEuMi50YXIuZ3oiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE2NDEzNjY1MDZ9fX1dfQ__&Signature=kaV8~ZabHhyDykUhbN~F78PDQfNZ64IamgsGc1nOSghFKPr0fbZ3WJk-2eWYh7IEt-KupenYP89W1zHi4lrxF~ZBbuP4NTaKEAa-G6ILJoX-VdyFnktkXFYDHgzEJ8ABq-NM6RWn20WD3a9BITNHTIWPtxjM-NaXAuR5uc5PuAEgjSDaQ2QBAQr~1q4aSM-~vJt~ia5e8acTz9RlM24EluLqfO59VCtAorP-5iJRwvLw9DjfrTlDtWfy3M2LSXp5OGmVJH1WUQReLK~0iZX2e8~vrHlAYpuxMa0Lgil6oHQ5s6vc~Dod3Aqpjb9sM~wuVo80zi4EqJ5nq0LU8SNbiQ__&Key-Pair-Id=APKAI7S6A5RYOXBWRPDA"
+
+tar -zxvf cellranger-6.1.2.tar.gz
+```
 
 
-**fastqc**
-
-
-
-
-
-XXX
-
-# Cell Ranger pipeline 
 ## Generate sc feature counts for a single library
+[Cell Ranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger) and [cell ranger count](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/count)
+
+
+generate single cell feature counts for a single library:
+
+xxx
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -117,5 +139,25 @@ library("ensembldb")
 
 ## Getting started
 
-XXX
+Protocol for 3’ end sequencing --> droplet-based methods (eg. inDrops, 10X Genomics, and Drop-seq)
 
+### Generating the count matrix from the raw sequencing data
+[Tuto](https://hbctraining.github.io/scRNA-seq/lessons/02_SC_generation_of_count_matrix.html) 
+
+*NOTE: sometime files are in BCL; to transform into fastq use: `bcl2fastq`* 
+
+
+If using 10X Genomics library preparation method, then the [Cell Ranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger) pipeline would be used for all of the above steps:
+- Formatting reads and filtering noisy cellular barcodes
+- Demultiplexing the samples
+- Mapping/pseudo-mapping to transcriptome
+- Collapsing UMIs and quantification of reads
+
+Otherwise, done with `umis` (if 1 sample sequenced) or `zUMIs` (if several samples sequenced)
+
+### Auqlity control step
+https://hbctraining.github.io/scRNA-seq/lessons/03_SC_quality_control-setup.html
+
+
+
+XXX
