@@ -61,14 +61,26 @@ It seems that even though it is written paired end, I only have 1 file... !
 
 https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/tutorial_in
 
-XXX it fail, retry
 
 ```bash
 cd /scr1/users/roulet/Akizu_Lab/Master/software
 
-curl -o cellranger-6.1.2.tar.gz "https://cf.10xgenomics.com/releases/cell-exp/cellranger-6.1.2.tar.gz?Expires=1641366506&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9jZi4xMHhnZW5vbWljcy5jb20vcmVsZWFzZXMvY2VsbC1leHAvY2VsbHJhbmdlci02LjEuMi50YXIuZ3oiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE2NDEzNjY1MDZ9fX1dfQ__&Signature=kaV8~ZabHhyDykUhbN~F78PDQfNZ64IamgsGc1nOSghFKPr0fbZ3WJk-2eWYh7IEt-KupenYP89W1zHi4lrxF~ZBbuP4NTaKEAa-G6ILJoX-VdyFnktkXFYDHgzEJ8ABq-NM6RWn20WD3a9BITNHTIWPtxjM-NaXAuR5uc5PuAEgjSDaQ2QBAQr~1q4aSM-~vJt~ia5e8acTz9RlM24EluLqfO59VCtAorP-5iJRwvLw9DjfrTlDtWfy3M2LSXp5OGmVJH1WUQReLK~0iZX2e8~vrHlAYpuxMa0Lgil6oHQ5s6vc~Dod3Aqpjb9sM~wuVo80zi4EqJ5nq0LU8SNbiQ__&Key-Pair-Id=APKAI7S6A5RYOXBWRPDA"
+curl -o cellranger-7.1.0.tar.gz "https://cf.10xgenomics.com/releases/cell-exp/cellranger-7.1.0.tar.gz?Expires=1685510849&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9jZi4xMHhnZW5vbWljcy5jb20vcmVsZWFzZXMvY2VsbC1leHAvY2VsbHJhbmdlci03LjEuMC50YXIuZ3oiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE2ODU1MTA4NDl9fX1dfQ__&Signature=gZ2~OED0f8HmpQ29tBzD9Lqqnl4OXcCuSNFV1mpYorVsqGNadHRY-tZ-BYFpXIF93H~jxwphUdEVtrmXUmgYpgjFspGrVhqMb8z6tiidEPCFWcOcTlLKN6qhnsAT6MqeTdznLXkiXsTP5888o7XLCPxOdGO31eSlqmLUhNFUPbFddsziDfgDuSm3WNt57aA7BHQu129PCBnEpb5r9OMRKyKrry2Uh~E5lyllqKNoHV1MXa8sZll0U9Du1uspJ3Vda19LGVycwObiGsIOxdtlS2gyhUXi-9IZJO3TlkOZqwLq7n-3afpNoseCdYSEBU2f0C3VwfuO6OPWArK7cvCq1g__&Key-Pair-Id=APKAI7S6A5RYOXBWRPDA"
 
-tar -zxvf cellranger-6.1.2.tar.gz
+tar -zxvf cellranger-7.1.0.tar.gz
+
+# add cellranger to our PATH
+nano ~/.bashrc # add: export PATH=$PATH:/scr1/users/roulet/Akizu_Lab/Master/software/cellranger-7.1.0
+# Restart terminal
+which cellranger
+```
+## Download 10x human reference genome
+From [here](https://support.10xgenomics.com/single-cell-gene-expression/software/downloads/latest)
+```bash
+cd meta
+curl -O meta/https://cf.10xgenomics.com/supp/cell-exp/refdata-gex-GRCh38-2020-A.tar.gz
+
+tar -zxvf refdata-gex-GRCh38-2020-A.tar.gz
 ```
 
 
@@ -78,7 +90,24 @@ tar -zxvf cellranger-6.1.2.tar.gz
 
 generate single cell feature counts for a single library:
 
-xxx
+```bash
+# fasq have to be .fastq.gz; so lets zip them
+gzip input/SRR8734990_*
+
+# ex of command
+cellranger count --id=count \
+                   --transcriptome=meta/refdata-gex-GRCh38-2020-A \
+                   --fastqs=input/ \
+                   --sample=SRR8734990
+
+# run into sbatch
+sbatch scripts/cellranger_count.sh
+
+
+```
+
+XXX run as test then 
+
 
 
 

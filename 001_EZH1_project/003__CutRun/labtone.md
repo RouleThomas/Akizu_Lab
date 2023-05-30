@@ -5345,7 +5345,8 @@ sbatch scripts/matrix_gene_1kb_DiffBind_TMM_WT_maxScorePoolpeaks_min1_noIntergen
 sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_WT_maxScorePoolpeaks_min1_noIntergenic.sh # 589874
 ```
 
---> XXX
+--> KO less spread around TSS; HET more signal within gene body
+
 
 
 Matrix and deeptools for genes where **H3K27me3 goes up in HET and H3K27me3 goes down in KO**
@@ -5408,17 +5409,19 @@ conda activate deeptools
 ## Up HET and Down in KO
 sbatch scripts/matrix_gene_1kb_DiffBind_TMM_UpHET_DownKO_noIntergenic.sh # 591041
 sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_UpHET_DownKO_noIntergenic.sh # 591040
-
-
 ```
 
---> XXX
+--> KO less spread around TSS; HET more signal within gene body; but less genes/transcripts so plot more variable...
+
 
 Matrix and deeptools for genes where **H3K27me3 goes up in HET AND expression goes down; and H3K27me3 goes down in KO AND expression goes Up**
 
 Filter the gene Up/Down in each mutant in R and generate GTF:
+```bash
+conda activate deseq2
+cd /scr1/users/roulet/Akizu_Lab/001_EZH1_Project/001__RNAseq
+```
 
-XXX CHUI AL XXX
 
 ```R
 # library
@@ -5437,13 +5440,13 @@ KOvsWT = as_tibble(read_csv('output/deseq2_hg38/raw_8wN_KO_vs_8wN_WT.txt')) %>%
 
 ## Filter Up/Down
 HET_Down = HETvsWT %>% 
-    filter(log2FC < 0) !!!!!1 DOUBLE CHECK !!!!!1
+    filter(log2FoldChange < 0) 
 HET_Up = HETvsWT %>% 
-    filter(log2FC > 0) 
+    filter(log2FoldChange > 0) 
 KO_Down = KOvsWT %>% 
-    filter(log2FC < 0) 
+    filter(log2FoldChange < 0) 
 KO_Up = KOvsWT %>% 
-    filter(log2FC > 0) 
+    filter(log2FoldChange > 0) 
 
 
 ## Import the GTF file
@@ -5470,32 +5473,92 @@ export(gtf_DEGs_KO_Down, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Down.
 export(gtf_DEGs_KO_Up, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Up.gtf")
 ```
 
-Then, `bedools intersect` the DEGs GTF with the DiffBind GTF and generate the deepTools plots:
+Then, `bedools intersect` the **DEGs GTF (HET down and KO up)** and generate the deepTools plots:
 
 ```bash
+conda activate BedToBigwig
 
-XXX
+## Up HET and Down in KO DEGs only
+cat ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_HET_Down.gtf ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Up.gtf > meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_unsort.gtf
+sort meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_unsort.gtf | uniq > meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_unsort_unique.gtf
+bedtools sort -i meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_unsort_unique.gtf > meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_sort.gtf
+```
+*NOTE: `bedtools intersect -wa -u` write `a` if overlap with `b`; only once*
 
-## Up HET and Down in KO
-bedtools intersect -wa -u -a meta/ENCFF159KBI_UpHET_DownKO_noIntergenic.gtf -b output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_HET_Down.gtf output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Up.gtf > meta/ENCFF159KBI_UpHET_DownKO_noIntergenic_DEGs_HET_Down_KO_Up.gtf
+--> `meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_sort.gtf` is file with DEGs Down HET and Up KO but still contain intergenic peak gene
+
+--> The gtf files looks good in term of expression changes (checked on IGV)
+
+Now let's generate **gtf file that contains non-intergenic peaks; in at least 1 genotype**:
+
+```bash
+# collect all annotated genes for each genotype
+cat output/ChIPseeker/annotation_WT.txt output/ChIPseeker/annotation_HET.txt output/ChIPseeker/annotation_KO.txt | sort | uniq > output/ChIPseeker/annotation.txt
+
+# Filter out Intergenic
+grep -v "Intergenic" output/ChIPseeker/annotation.txt > output/ChIPseeker/annotation_noIntergenic.txt
+
+
+# Collect geneSymbol (gene name) list
+## Print 20th column in each rows; sort; remov dupplicates
+awk -F'\t' '(NR==1 || FNR>1) {print $20}' output/ChIPseeker/annotation_noIntergenic.txt | sort | uniq > output/ChIPseeker/annotation_noIntergenic_geneSymbol.txt
+
+# Modify the .txt file that list all genes so that it match gtf structure
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_noIntergenic_geneSymbol.txt > output/ChIPseeker/annotation_noIntergenic_as_gtf_geneSymbol.txt
+# Filter the gtf
+grep -Ff output/ChIPseeker/annotation_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_peak_noIntergenic.gtf
+```
+- *NOTE: awk process file line per line; `-F'\t'` = tab-separated; `(NR==1 || FNR>1)` tell that header line and all lines after are processed; `{print $20}` will only print the 20th column=gene name `sort` sort output because `uniq` only remove adjacent dupplicated rows*
+- *NOTE: `sed` here add `gene name "` before and `"` after*
+- *NOTE: `-Ff` tel grep to read the pattern in each row of the file*
+
+
+Let's combine the **Up/down DEGs genes with the peak non intergenic GTF** and deepTools:
+
+
+```bash
+## Combine DEGs and peak non intergenic
+bedtools intersect -wa -u -a meta/ENCFF159KBI_peak_noIntergenic.gtf -b meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_sort.gtf > meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_sort.gtf
+
+# deepTools plot
+conda activate deeptools
+## DEGs down HET and up in KO and peak non intergenic
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_HET_Down_KO_Up.sh # 681175
+sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_noIntergenic_DEGs_HET_Down_KO_Up.sh # 681177
+```
+
+--> looks cool; seems enough genes and we clearly see up HET and down KO
+
+
+Then, `bedools intersect` the **DEGs GTF with the DiffBind GTF** and generate the deepTools plots:
+
+```bash
+conda activate BedToBigwig
+## DEG down HET and up in KO and diffbind up HET and down in KO
+bedtools intersect -wa -u -a meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_sort.gtf -b meta/ENCFF159KBI_UpHET_DownKO_noIntergenic.gtf > meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.gtf
 
 # deepTools plot
 conda activate deeptools
 ## Up HET and Down in KO
-sbatch scripts/matrix_gene_1kb_DiffBind_TMM_UpHET_DownKO_noIntergenic_DEGs_HET_Down_KO_Up.sh # 
-sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_UpHET_DownKO_noIntergenic_DEGs_HET_Down_KO_Up.sh # 
-
-
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.sh # 681256
+sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.sh # 681257
 ```
-NOTE: XXX
+
+--> looks cool; maybe not enough genes and we clearly see up HET and down KO
 
 
-XXX Double check that bedtools intersect -wa -u -a with multiple -b files work ; check on IGV
-
-
-
-
-
+Let's **count the nb of unique genes in various our gtf**:
+```bash
+awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_sort.gtf | tr -d ' ' | tr -d '\"' | sort | uniq | wc -l
+awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.gtf | tr -d ' ' | tr -d '\"' | sort | uniq | wc -l
+awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta/ENCFF159KBI_UpHET_DownKO_noIntergenic.gtf | tr -d ' ' | tr -d '\"' | sort | uniq | wc -l
+awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta/ENCFF159KBI_WT_maxScorePoolpeaks_min1_noIntergenic.gtf | tr -d ' ' | tr -d '\"' | sort | uniq | wc -l
+```
+nb of unique genes:
+- meta/ENCFF159KBI_WT_maxScorePoolpeaks_min1_noIntergenic.gtf: 4,665 (peak in WT)
+- meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_sort.gtf: 2,100 (DEGs)
+- meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.gtf: 28 (DEGs + Diff. bound)
+- meta/ENCFF159KBI_UpHET_DownKO_noIntergenic.gtf: 55 (Diff. bound)
 
 
 

@@ -4251,6 +4251,45 @@ tpm_all_sample_tidy_gene_name_stat %>%
 dev.off()
 
 
+tpm_all_sample_tidy_gene_name_stat <- tpm_all_sample_tidy_gene_name %>%
+  filter(gene_name %in% c("JARID2", "ASTN2")) %>%
+  select(-replicate) %>%
+  group_by(gene_id, gene_name, time, genotype) %>%
+  summarise(mean=mean(tpm), median= median(tpm), SD=sd(tpm), n=n(), SE=SD/sqrt(n)) 	
+pdf("output/deseq2/genes_JARID2_ASTN2.pdf", width=8, height=5)
+tpm_all_sample_tidy_gene_name_stat %>%
+  filter(gene_name %in% c("JARID2", "ASTN2"),
+         genotype %in% c("WT")) %>%
+    ggplot(., aes(x = time, y = mean, group = genotype)) +
+    geom_line(aes(color=genotype), size=0.75) +
+    geom_errorbar(aes(ymin = mean-SE, ymax = mean+SE,color=genotype), width=.2) +
+    geom_point(aes(y = mean,color=genotype), size = .75, shape = 15) +
+    theme_bw() +
+    facet_wrap(~gene_name, nrow = 1, scale = "free")  +	
+    ylab(label = "tpm") +
+    ggtitle("") +
+    scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green", "iPSCWT" = "black", "iPSCpatient" = "orange"))
+dev.off()
+
+
+pdf("output/deseq2/genes_JARID2_ASTN2_allgenotypes.pdf", width=8, height=5)
+tpm_all_sample_tidy_gene_name_stat %>%
+  filter(gene_name %in% c("JARID2", "ASTN2"),
+         genotype %in% c("WT", "KO", "HET")) %>%
+    ggplot(., aes(x = time, y = mean, group = genotype)) +
+    geom_line(aes(color=genotype), size=0.75) +
+    geom_errorbar(aes(ymin = mean-SE, ymax = mean+SE,color=genotype), width=.2) +
+    geom_point(aes(y = mean,color=genotype), size = .75, shape = 15) +
+    theme_bw() +
+    facet_wrap(~gene_name, nrow = 1, scale = "free")  +	
+    ylab(label = "tpm") +
+    ggtitle("") +
+    scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green", "iPSCWT" = "black", "iPSCpatient" = "orange"))
+dev.off()
+
+
+
+
 
 tpm_all_sample_tidy_gene_name_stat <- tpm_all_sample_tidy_gene_name %>%
   filter(gene_name %in% c("NEUROG1", "NEUROG2")) %>%
