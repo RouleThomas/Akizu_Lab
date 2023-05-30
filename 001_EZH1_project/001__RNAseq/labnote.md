@@ -2102,6 +2102,8 @@ dev.off()
 
 --> p0.001 looks good
 
+
+
 ### Clustering of the significant genes in Time-Course analyses across genotypes using deseq2 vst norm-counts
 Prepare the data, use deseq2 norm counts vst or rlog transformed (test both)
 ```R
@@ -2769,6 +2771,404 @@ dev.off()
 --> From now on, the better is to do vst-norm for clustering and present tpm values gene-per-gene
 
 Let's try rlog normalization for clustering, to see if it better represent our data (show tpm for gene verification)
+
+
+
+### Clustering of the significant genes in Time-Course analyses across genotypes using deseq2 rlog norm-counts
+```bash
+module load R/4.2.2
+```
+The below code is clean to generate clustering plot (qvalue and number of cluster can be adjusted), vizualize them and look at invividual gene expressin (rlog counts and tpm)
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+library("apeglm")
+library("factoextra")
+library("gridExtra")
+
+# Import files to generete the DESeq2Dataset
+## samples ID
+samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
+   "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3",
+   "2dN_HET_R1", "2dN_HET_R2", "2dN_HET_R3",
+   "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", "8wN_KO_R1",
+   "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4", "8wN_HET_R1", "8wN_HET_R2",
+   "8wN_HET_R3", "8wN_HET_R4",
+   "ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3",
+   "ESC_KO_R1", "ESC_KO_R2", "ESC_KO_R3",
+   "ESC_HET_R1", "ESC_HET_R2", "ESC_HET_R3",
+   "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+   "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3",
+   "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3")
+## Import counts_all and transform to matrix
+counts_all <- read_csv("output/deseq2/counts_all.txt") %>% 
+  select(-1)
+
+### Transform merged_data into a matrix
+#### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+#### execute function
+counts_all_matrix = make_matrix(select(counts_all, -Geneid), pull(counts_all, Geneid)) 
+
+## Create colData file that describe all our samples
+### Not including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  select(-replicate) %>%
+  bind_cols(data.frame(samples))
+
+## transform df into matrix
+coldata = make_matrix(select(coldata_raw, -samples), pull(coldata_raw, samples))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet Time-Course 
+### desgin = full-model
+ddsTC <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                                colData = coldata,
+                                design = ~ genotype + time + genotype:time)
+
+### Define the reduced model (not including interaction term for comparison with full model)
+ddsTC <- DESeq(ddsTC, test="LRT", reduced = ~ genotype + time)
+resTC <- results(ddsTC)
+
+
+# Normalize the counts
+## Normalized counts with deseq2 and tidy it
+normalized_counts <- as_tibble(counts(ddsTC, normalized = TRUE), rownames = "gene") %>%
+  gather(key = "sample", value = "norm_counts", -gene) %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep = "_")
+
+normalized_counts$time <-
+  factor(normalized_counts$time,
+         c("ESC", "NPC", "2dN", "8wN"))
+normalized_counts$genotype <-
+  factor(normalized_counts$genotype,
+         c("WT", "KO", "HET"))
+
+# Clustering
+
+rlog_counts <- rlog(ddsTC) # take 5 min
+
+## Extract the transformed counts
+rlog_counts_matrix <- assay(rlog_counts) 
+
+## Isolate the significant genes by gene id
+signif_TC_genes = as_tibble(resTC, rownames = "gene") %>%
+  filter(padj<= 0.05) %>%               # !!! Here change qvalue accordingly !!!
+  select(gene) %>%
+  unique() 
+
+## Convert into vector 
+signif_TC_genes_vector <- signif_TC_genes$gene
+
+## Filter our matrix with the significant genes
+rlog_counts_matrix_sig <- rlog_counts_matrix[rownames(rlog_counts_matrix) %in% signif_TC_genes_vector, ]
+ # double-check the nb of genes is same s in signif_TC_genes
+nrow(rlog_counts_matrix_sig)
+
+## Reorder columns
+ordered_columns <- c("ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3", "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3", "2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3", "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", "ESC_KO_R1", "ESC_KO_R2", "ESC_KO_R3", "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3", "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3", "8wN_KO_R1", "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4", "ESC_HET_R1", "ESC_HET_R2", "ESC_HET_R3", "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3", "2dN_HET_R1", "2dN_HET_R2", "2dN_HET_R3", "8wN_HET_R1", "8wN_HET_R2", "8wN_HET_R3", "8wN_HET_R4")
+
+rlog_counts_matrix_sig_ordered <- rlog_counts_matrix_sig[, ordered_columns]
+
+
+# Make a clean table with significant deseq2-TC genes
+rlog_counts_tidy <- as_tibble(rlog_counts_matrix_sig_ordered, rownames = "gene") %>%
+  gather(key = "sample", value = "rlog_counts", -gene) %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep = "_")
+
+# Obtain gene cluster ID from the heatmap
+## Perform hierarchical clustering
+row_dist <- dist(rlog_counts_matrix_sig_ordered, method = "euclidean")
+row_hclust <- hclust(row_dist, method = "complete")
+
+## Cut the tree into k clusters
+row_clusters <- cutree(row_hclust, k = 25)                   # !!! Here change tree nb accordingly !!!
+
+## Create a data frame with gene names and their corresponding clusters
+cluster_gene <- data.frame(gene = rownames(rlog_counts_matrix_sig_ordered),
+                           cluster = row_clusters)
+
+
+### Save dataframe
+write.csv(cluster_gene, file="output/deseq2/cluster_gene_rlog_25cl.txt")
+
+
+## Compil both
+rlog_counts_tidy <- rlog_counts_tidy %>%
+  left_join(cluster_gene, by = "gene")
+
+rlog_counts_tidy$time <-
+  factor(rlog_counts_tidy$time,
+         c("ESC", "NPC", "2dN", "8wN"))
+rlog_counts_tidy$genotype <-
+  factor(rlog_counts_tidy$genotype,
+         c("WT", "KO", "HET"))
+
+
+
+# Plot rlog_transform norm deseq2 count with 'loess' method pretty
+## Calculate the number of genes per cluster
+genes_per_cluster <- rlog_counts_tidy %>%
+  group_by(cluster) %>%
+  summarise(num_genes = n_distinct(gene))
+
+pdf("output/deseq2/line_rlog_p0.05_cl25_pretty_span07.pdf", width=20, height=14)      # !!! Here change title accordingly !!!
+ggplot(rlog_counts_tidy, aes(x = time, y = rlog_counts)) +
+  geom_smooth(aes(color = genotype, group = genotype), method = "loess", se = TRUE, span = 0.7) +
+  # Add mean value for each genotype at each time point
+  stat_summary(aes(color = genotype, group = genotype), fun = mean, geom = "point", shape = 18, size = 3, stroke = 1.5) +
+  # Add standard error bars around the mean points
+  stat_summary(aes(color = genotype, group = genotype), fun.data = mean_se, geom = "errorbar", width = 0.2, size = 1) +
+  # Add number of genes per cluster to the facet_wrap panels
+  geom_text(data = genes_per_cluster, aes(label = paste0("Genes: ", num_genes), x = Inf, y = Inf), hjust = 1, vjust = 1, size = 5) +
+  facet_wrap(~cluster, scale = "free", nrow = 3) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),        # Increase facet_wrap title panel text size
+    axis.title.x = element_text(size = 16)       # Increase x-axis legend text size
+  )
+dev.off()
+
+# Plot rlog_transform norm deseq2 count with 'loess' method pretty with a light transparent color
+# Calculate the mean expression for each gene at each time point
+mean_rlog_counts_tidy <- rlog_counts_tidy %>%
+  group_by(gene, time, genotype, cluster) %>%
+  summarise(mean_rlog_counts = mean(rlog_counts)) %>%
+  ungroup()
+
+genes_per_cluster <- rlog_counts_tidy %>%
+  group_by(cluster) %>%
+  summarise(num_genes = n_distinct(gene))
+
+pdf("output/deseq2/line_rlog_p0.05_cl25_pretty_span08_genes_bg.pdf", width=20, height=14)
+ggplot(mean_rlog_counts_tidy, aes(x = time, y = mean_rlog_counts)) +
+  geom_line(aes(color = genotype, group = interaction(gene, genotype)), alpha = 0.1) +
+  geom_smooth(aes(color = genotype, group = genotype), method = "loess", se = TRUE, span = 0.8) +
+  stat_summary(aes(color = genotype, group = genotype), fun = mean, geom = "point", shape = 18, size = 3, stroke = 1.5) +
+  stat_summary(aes(color = genotype, group = genotype), fun.data = mean_se, geom = "errorbar", width = 0.2, size = 1) +
+  geom_text(data = genes_per_cluster, aes(label = paste0("Genes: ", num_genes), x = Inf, y = Inf), hjust = 1, vjust = 1, size = 5) +
+  facet_wrap(~cluster, scale = "free", nrow = 3) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),
+    axis.title.x = element_text(size = 16)
+  )
+dev.off()
+
+
+pdf("output/deseq2/line_rlog_p0.05_cl25_pretty_span08_genes_WT-KO.pdf", width=20, height=14)
+mean_rlog_counts_tidy %>%
+  filter(genotype %in% c("WT","KO")) %>%
+ggplot(., aes(x = time, y = mean_rlog_counts)) +
+  geom_smooth(aes(color = genotype, group = genotype), method = "loess", se = TRUE, span = 0.8) +
+  stat_summary(aes(color = genotype, group = genotype), fun = mean, geom = "point", shape = 18, size = 3, stroke = 1.5) +
+  stat_summary(aes(color = genotype, group = genotype), fun.data = mean_se, geom = "errorbar", width = 0.2, size = 1) +
+  geom_text(data = genes_per_cluster, aes(label = paste0("Genes: ", num_genes), x = Inf, y = Inf), hjust = 1, vjust = 1, size = 5) +
+  facet_wrap(~cluster, scale = "free", nrow = 3) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),
+    axis.title.x = element_text(size = 16)
+  )
+dev.off()
+
+# Plot TPM count with 'loess' method pretty
+
+# Calculate the mean expression for each gene at each time point
+mean_tpm_all_raw_tidy <- tpm_all_raw_tidy %>%
+  inner_join(cluster_gene, by = "gene") %>%
+  group_by(gene, time, genotype, cluster) %>%
+  summarise(mean_tpm = mean(tpm)) %>%
+  ungroup()
+
+genes_per_cluster <- tpm_all_raw_tidy %>%
+  inner_join(cluster_gene, by = "gene") %>%
+  group_by(cluster) %>%
+  summarise(num_genes = n_distinct(gene))
+
+pdf("output/deseq2/line_rlog_p0.05_cl25_pretty_span08_genes_bg_tpm.pdf", width=20, height=14)
+ggplot(mean_tpm_all_raw_tidy, aes(x = time, y = mean_tpm)) +
+  geom_line(aes(color = genotype, group = interaction(gene, genotype)), alpha = 0.1) +
+  geom_smooth(aes(color = genotype, group = genotype), method = "loess", se = TRUE, span = 0.8) +
+  stat_summary(aes(color = genotype, group = genotype), fun = mean, geom = "point", shape = 18, size = 3, stroke = 1.5) +
+  stat_summary(aes(color = genotype, group = genotype), fun.data = mean_se, geom = "errorbar", width = 0.2, size = 1) +
+  geom_text(data = genes_per_cluster, aes(label = paste0("Genes: ", num_genes), x = Inf, y = Inf), hjust = 1, vjust = 1, size = 5) +
+  facet_wrap(~cluster, scale = "free", nrow = 3) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),
+    axis.title.x = element_text(size = 16)
+  )
+dev.off()
+
+
+
+# Display some genes expression profile cluster-per-cluster
+
+## Gather the 10 first significant deseq2-TC genes of specified cluster
+significant_deseq2TC_genes_cluster_all <- as_tibble(resTC, rownames = "gene") %>%
+  inner_join(cluster_gene) %>%
+  filter(cluster == 4) %>% # !!! change cluster nb !!!
+  arrange(padj) %>%
+  select(gene,padj) %>%
+  left_join(rlog_counts_tidy) 
+
+significant_deseq2TC_genes_cluster_genes <- significant_deseq2TC_genes_cluster_all %>%
+select(gene) %>%
+unique() %>%
+slice_head(n=4)
+  
+significant_deseq2TC_genes_cluster_all_genes <- significant_deseq2TC_genes_cluster_all %>%
+  inner_join(significant_deseq2TC_genes_cluster_genes)
+
+
+## Stat
+stat_significant_deseq2TC_genes <- significant_deseq2TC_genes_cluster_all_genes %>%
+  select(-replicate) %>%
+  group_by(gene, time, genotype) %>% summarise(mean=mean(rlog_counts), median= median(rlog_counts), SD=sd(rlog_counts), n=n(), SE=SD/sqrt(n)) 	
+
+
+
+pdf("output/deseq2/deseq2_TC_Top4genes_cluster4_rlog.pdf", width=11, height=6)  # !!! change cluster nb !!!
+stat_significant_deseq2TC_genes %>%
+  ggplot(., aes(x = time, y = mean, group = genotype)) +
+  geom_line(aes(color=genotype), size=0.75) +
+  geom_errorbar(aes(ymin = mean-SE, ymax = mean+SE), width=.2) +
+  geom_point(aes(y = mean), size = .75, shape = 15) +
+  theme_bw() +
+  facet_wrap(~gene, nrow = 1, scale = "free")  +	
+  xlab(label = "deseq2 normalized counts") +
+  ggtitle("Top 4 significant genes in cluster4_rlog") +   # !!! change cluster nb !!!
+  scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green"))
+dev.off()
+
+
+
+# Display genes expression profile for all cluster
+## rlog norm counts
+## Create a function to generate data for the top 2 significant genes for a given cluster
+get_top2_genes_data <- function(cluster_number) {
+  significant_deseq2TC_genes_cluster_all <- as_tibble(resTC, rownames = "gene") %>%
+    inner_join(cluster_gene) %>%
+    filter(cluster == cluster_number) %>%
+    arrange(padj) %>%
+    select(gene, padj, cluster) %>%
+    left_join(rlog_counts_tidy)
+  
+  significant_deseq2TC_genes_cluster_genes <- significant_deseq2TC_genes_cluster_all %>%
+    select(gene) %>%
+    unique() %>%
+    slice_head(n = 2)
+  
+  significant_deseq2TC_genes_cluster_all_genes <- significant_deseq2TC_genes_cluster_all %>%
+    inner_join(significant_deseq2TC_genes_cluster_genes)
+  
+  stat_significant_deseq2TC_genes <- significant_deseq2TC_genes_cluster_all_genes %>%
+    select(-replicate) %>%
+    group_by(gene, time, genotype, cluster) %>% summarise(mean = mean(rlog_counts), median = median(rlog_counts), SD = sd(rlog_counts), n = n(), SE = SD / sqrt(n))
+  
+  return(stat_significant_deseq2TC_genes)
+}
+
+# Generate data for all 25 clusters
+all_clusters_data <- map_dfr(1:25, get_top2_genes_data)
+
+# Plot top 2 significant genes for each of the 25 clusters
+pdf("output/deseq2/deseq2_TC_Top2genes_AllClusters_rlog.pdf", width = 30, height = 14)
+all_clusters_data %>%
+  ggplot(., aes(x = time, y = mean, group = genotype)) +
+  geom_line(aes(color = genotype), size = 0.75) +
+  geom_errorbar(aes(ymin = mean - SE, ymax = mean + SE), width = .2) +
+  geom_point(aes(y = mean), size = .75, shape = 15) +
+  theme_bw() +
+  facet_wrap(cluster ~ gene, nrow = 3, labeller = labeller(gene = function(x) paste("Cluster", unlist(all_clusters_data[1, "cluster"]), x)), scales = "free") +
+  xlab(label = "rlog counts") +
+  ggtitle("Top 2 significant genes in each cluster") +
+  scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green"))
+dev.off()
+
+
+
+
+
+## repersent tpm counts 
+### Load tpm
+tpm_all <- read_csv("output/tpm/tpm_all.txt") %>% 
+  select(-1) #To import
+
+
+## Transform tpm tibble into matrix
+tpm_all_matrix = make_matrix(select(tpm_all, -Geneid), pull(tpm_all, Geneid)) 
+
+tpm_all_raw_tidy <- as_tibble(tpm_all_matrix, rownames = "gene") %>%
+  gather(key = "sample", value = "tpm", -gene) %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep = "_")
+
+
+
+tpm_all_raw_tidy$time <-
+  factor(tpm_all_raw_tidy$time,
+         c("ESC", "NPC", "2dN", "8wN"))
+tpm_all_raw_tidy$genotype <-
+  factor(tpm_all_raw_tidy$genotype,
+         c("WT", "KO", "HET"))
+
+## Create a function to generate data for the top 2 significant genes for a given cluster
+get_top2_genes_data <- function(cluster_number) {
+  significant_deseq2TC_genes_cluster_all <- as_tibble(resTC, rownames = "gene") %>%
+    inner_join(cluster_gene) %>%
+    filter(cluster == cluster_number) %>%
+    arrange(padj) %>%
+    select(gene, padj, cluster) %>%
+    left_join(tpm_all_raw_tidy) # here tpm
+  
+  significant_deseq2TC_genes_cluster_genes <- significant_deseq2TC_genes_cluster_all %>%
+    select(gene) %>%
+    unique() %>%
+    slice_head(n = 2)
+  
+  significant_deseq2TC_genes_cluster_all_genes <- significant_deseq2TC_genes_cluster_all %>%
+    inner_join(significant_deseq2TC_genes_cluster_genes)
+  
+  stat_significant_deseq2TC_genes <- significant_deseq2TC_genes_cluster_all_genes %>%
+    select(-replicate) %>%
+    group_by(gene, time, genotype, cluster) %>% summarise(mean = mean(tpm), median = median(tpm), SD = sd(tpm), n = n(), SE = SD / sqrt(n))
+  
+  return(stat_significant_deseq2TC_genes)
+}
+
+# Generate data for all 25 clusters
+all_clusters_data <- map_dfr(1:25, get_top2_genes_data)
+
+# Plot top 2 significant genes for each of the 25 clusters
+pdf("output/deseq2/deseq2_TC_Top2genes_AllClusters_tpm_rlog.pdf", width = 30, height = 14)
+all_clusters_data %>%
+  ggplot(., aes(x = time, y = mean, group = genotype)) +
+  geom_line(aes(color = genotype), size = 0.75) +
+  geom_errorbar(aes(ymin = mean - SE, ymax = mean + SE), width = .2) +
+  geom_point(aes(y = mean), size = .75, shape = 15) +
+  theme_bw() +
+  facet_wrap(cluster ~ gene, nrow = 3, labeller = labeller(gene = function(x) paste("Cluster", unlist(all_clusters_data[1, "cluster"]), x)), scales = "free") +
+  xlab(label = "TPM") +
+  ggtitle("Top 2 significant genes in each cluster") +
+  scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green"))
+dev.off()
+```
+
+
+
+
 
 ### Clustering of the significant genes in Time-Course analyses across genotypes using deseq2 rlog norm-counts
 ```bash
@@ -6444,5 +6844,314 @@ dev.off()
 ```
 
 --> Clustering rld is slightly better (2dN vs NPC better clustered)
+
+
+## time-course analyses with deseq2 hg38
+
+Changes according to previous analyses with hg19:
+- iPSCWT all removed (even though initially only iPSCWT was weird)
+- 4wN HET Rep3 and4 only (maturation state)
+
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+
+# import featurecounts output and keep only gene ID and counts
+# Filtered 4wN HET R1 R2 and iPSCWT and iPSCpatient
+samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
+   "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3",
+   "2dN_HET_R1", "2dN_HET_R2", "2dN_HET_R3",
+   "4wN_WT_R1", "4wN_WT_R2", "4wN_KO_R1",
+   "4wN_KO_R2",
+   "4wN_HET_R3", "4wN_HET_R4",
+   "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", "8wN_KO_R1",
+   "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4", "8wN_HET_R1", "8wN_HET_R2",
+   "8wN_HET_R3", "8wN_HET_R4",
+   "ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3",
+   "ESC_KO_R1", "ESC_KO_R2", "ESC_KO_R3",
+   "ESC_HET_R1", "ESC_HET_R2", "ESC_HET_R3",
+   "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+   "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3",
+   "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3")
+
+### Additional filtering if needed
+#### Only WT and KO
+samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
+   "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3",
+   "4wN_WT_R1", "4wN_WT_R2", "4wN_KO_R1",
+   "4wN_KO_R2",
+   "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", "8wN_KO_R1",
+   "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4",
+   "ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3",
+   "ESC_KO_R1", "ESC_KO_R2", "ESC_KO_R3",
+   "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+   "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3")
+
+#### collect all samples ID
+samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
+   "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3",
+   "2dN_HET_R1", "2dN_HET_R2", "2dN_HET_R3",
+   "4wN_WT_R1", "4wN_WT_R2", "4wN_KO_R1",
+   "4wN_KO_R2", "4wN_HET_R1", "4wN_HET_R2",
+   "4wN_HET_R3", "4wN_HET_R4", "4wN_iPSCWT_R1",
+   "4wN_iPSCWT_R2", "4wN_iPSCpatient_R1", "4wN_iPSCpatient_R2",
+   "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", "8wN_KO_R1",
+   "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4", "8wN_HET_R1", "8wN_HET_R2",
+   "8wN_HET_R3", "8wN_HET_R4", "8wN_iPSCpatient_R1", "8wN_iPSCpatient_R2",
+   "ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3",
+   "ESC_KO_R1", "ESC_KO_R2", "ESC_KO_R3",
+   "ESC_HET_R1", "ESC_HET_R2", "ESC_HET_R3",
+   "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+   "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3",
+   "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3")
+
+
+
+## Make a loop for importing all featurecounts data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/featurecounts_hg38/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    select(Geneid, starts_with("output/STAR_hg38/")) %>%
+    rename(!!sample := starts_with("output/STAR_hg38/"))
+}
+
+# Merge all dataframe into a single one
+counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(select(counts_all, -Geneid), pull(counts_all, Geneid)) 
+
+## Create colData file that describe all our samples
+### Not including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  select(-replicate) %>%
+  bind_cols(data.frame(samples))
+### Including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  bind_cols(data.frame(samples))
+
+## transform df into matrix
+coldata = make_matrix(select(coldata_raw, -samples), pull(coldata_raw, samples))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet Time-Course 
+### desgin = full-model
+ddsTC <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                                colData = coldata,
+                                design = ~ genotype + time + genotype:time)
+
+
+### Define the reduced model (not including interaction term for comparison with full model)
+ddsTC <- DESeq(ddsTC, test="LRT", reduced = ~ genotype + time)
+resTC <- results(ddsTC)
+write.csv(resTC %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2_hg38/resTC.txt")
+
+
+# Data normalization
+vst_counts <- vst(ddsTC, blind=FALSE)
+save(vst_counts, file = "output/deseq2_hg38/ddsTC_vsd_filter.RData")
+
+rlog_counts <- rlog(ddsTC, blind=FALSE) # last 5min
+save(rlog_counts, file = "output/deseq2_hg38/ddsTC_rld_filter.RData")
+
+
+## Extract the transformed counts
+vst_counts_matrix <- assay(vst_counts)
+rlog_counts_matrix <- assay(rlog_counts) # take ???
+
+## Isolate the significant genes by gene id
+signif_TC_genes = as_tibble(resTC, rownames = "gene") %>%
+  filter(padj<= 0.05) %>%               # !!! Here change qvalue accordingly !!!
+  select(gene) %>%
+  unique() 
+
+## Convert into vector 
+signif_TC_genes_vector <- signif_TC_genes$gene
+
+# VST counts
+
+## Filter our matrix with the significant genes
+vst_counts_matrix_sig <- vst_counts_matrix[rownames(vst_counts_matrix) %in% signif_TC_genes_vector, ]
+nrow(vst_counts_matrix_sig) # double-check the nb of genes is same s in signif_TC_genes
+
+# Obtain gene cluster ID from the heatmap
+## Perform hierarchical clustering
+row_dist <- dist(vst_counts_matrix_sig, method = "euclidean")
+row_hclust <- hclust(row_dist, method = "complete")
+
+## Cut the tree into k clusters
+row_clusters <- cutree(row_hclust, k = 25)                   # !!! Here change tree nb accordingly !!!
+
+## Create a data frame with gene names and their corresponding clusters
+cluster_gene <- data.frame(gene = rownames(vst_counts_matrix_sig),
+                           cluster = row_clusters)
+
+
+### Save dataframe
+write.csv(cluster_gene, file="output/deseq2_hg38/cluster_gene_vst_25cl.txt")
+
+# Make a clean table with significant deseq2-TC genes
+vst_counts_tidy <- as_tibble(vst_counts_matrix_sig, rownames = "gene") %>%
+  gather(key = "sample", value = "vst_counts", -gene) %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep = "_")
+
+## Compil both
+vst_counts_tidy <- vst_counts_tidy %>%
+  left_join(cluster_gene, by = "gene")
+
+vst_counts_tidy$time <-
+  factor(vst_counts_tidy$time,
+         c("ESC", "NPC", "2dN", "4wN", "8wN"))
+vst_counts_tidy$genotype <-
+  factor(vst_counts_tidy$genotype,
+         c("WT", "KO", "HET"))
+
+## Calculate the number of genes per cluster
+genes_per_cluster <- vst_counts_tidy %>%
+  group_by(cluster) %>%
+  summarise(num_genes = n_distinct(gene))
+
+pdf("output/deseq2_hg38/line_vst_p0.05_cl25_pretty.pdf", width=20, height=14)
+ggplot(vst_counts_tidy, aes(x = time, y = vst_counts)) +
+  geom_smooth(aes(color = genotype, group = genotype), method = "loess", se = TRUE, span = 0.8) +
+  # Add mean value for each genotype at each time point
+  stat_summary(aes(color = genotype, group = genotype), fun = mean, geom = "point", shape = 18, size = 3, stroke = 1.5) +
+  # Add standard error bars around the mean points
+  stat_summary(aes(color = genotype, group = genotype), fun.data = mean_se, geom = "errorbar", width = 0.2, size = 1) +
+  # Add number of genes per cluster to the facet_wrap panels
+  geom_text(data = genes_per_cluster, aes(label = paste0("Genes: ", num_genes), x = Inf, y = Inf), hjust = 1, vjust = 1, size = 5) +
+  facet_wrap(~cluster, scale = "free", nrow = 3) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),        # Increase facet_wrap title panel text size
+    axis.title.x = element_text(size = 16)       # Increase x-axis legend text size
+  )
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+XXX 
+
+# RLOG counts
+
+## Filter our matrix with the significant genes
+rlog_counts_matrix_sig <- rlog_counts_matrix[rownames(rlog_counts_matrix) %in% signif_TC_genes_vector, ]
+nrow(rlog_counts_matrix_sig) # double-check the nb of genes is same s in signif_TC_genes
+
+# Obtain gene cluster ID from the heatmap
+## Perform hierarchical clustering
+row_dist <- dist(rlog_counts_matrix_sig, method = "euclidean")
+row_hclust <- hclust(row_dist, method = "complete")
+
+## Cut the tree into k clusters
+row_clusters <- cutree(row_hclust, k = 25)                   # !!! Here change tree nb accordingly !!!
+
+## Create a data frame with gene names and their corresponding clusters
+cluster_gene <- data.frame(gene = rownames(rlog_counts_matrix_sig),
+                           cluster = row_clusters)
+
+
+### Save dataframe
+write.csv(cluster_gene, file="output/deseq2_hg38/cluster_gene_rlog_25cl.txt")
+
+# Make a clean table with significant deseq2-TC genes
+rlog_counts_tidy <- as_tibble(rlog_counts_matrix_sig, rownames = "gene") %>%
+  gather(key = "sample", value = "rlog_counts", -gene) %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep = "_")
+
+## Compil both
+rlog_counts_tidy <- rlog_counts_tidy %>%
+  left_join(cluster_gene, by = "gene")
+
+rlog_counts_tidy$time <-
+  factor(rlog_counts_tidy$time,
+         c("ESC", "NPC", "2dN", "4wN", "8wN"))
+rlog_counts_tidy$genotype <-
+  factor(rlog_counts_tidy$genotype,
+         c("WT", "KO", "HET"))
+
+## Calculate the number of genes per cluster
+genes_per_cluster <- rlog_counts_tidy %>%
+  group_by(cluster) %>%
+  summarise(num_genes = n_distinct(gene))
+
+pdf("output/deseq2_hg38/line_rlog_p0.05_cl25_pretty.pdf", width=20, height=14)
+ggplot(rlog_counts_tidy, aes(x = time, y = rlog_counts)) +
+  geom_smooth(aes(color = genotype, group = genotype), method = "loess", se = TRUE, span = 0.8) +
+  # Add mean value for each genotype at each time point
+  stat_summary(aes(color = genotype, group = genotype), fun = mean, geom = "point", shape = 18, size = 3, stroke = 1.5) +
+  # Add standard error bars around the mean points
+  stat_summary(aes(color = genotype, group = genotype), fun.data = mean_se, geom = "errorbar", width = 0.2, size = 1) +
+  # Add number of genes per cluster to the facet_wrap panels
+  geom_text(data = genes_per_cluster, aes(label = paste0("Genes: ", num_genes), x = Inf, y = Inf), hjust = 1, vjust = 1, size = 5) +
+  facet_wrap(~cluster, scale = "free", nrow = 3) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),        # Increase facet_wrap title panel text size
+    axis.title.x = element_text(size = 16)       # Increase x-axis legend text size
+  )
+dev.off()
+
+
+
+
+
+# Plot rlog_transform norm deseq2 count with 'loess' method pretty with a light transparent color
+pdf("output/deseq2_hg38/line_rlog_p0.05_cl25_pretty_span08_genes_bg.pdf", width=20, height=14)
+ggplot(mean_rlog_counts_tidy, aes(x = time, y = mean_rlog_counts)) +
+  geom_line(aes(color = genotype, group = interaction(gene, genotype)), alpha = 0.1) +
+  geom_smooth(aes(color = genotype, group = genotype), method = "loess", se = TRUE, span = 0.8) +
+  stat_summary(aes(color = genotype, group = genotype), fun = mean, geom = "point", shape = 18, size = 3, stroke = 1.5) +
+  stat_summary(aes(color = genotype, group = genotype), fun.data = mean_se, geom = "errorbar", width = 0.2, size = 1) +
+  geom_text(data = genes_per_cluster, aes(label = paste0("Genes: ", num_genes), x = Inf, y = Inf), hjust = 1, vjust = 1, size = 5) +
+  facet_wrap(~cluster, scale = "free", nrow = 3) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),
+    axis.title.x = element_text(size = 16)
+  )
+dev.off()
+
+```
+- *NOTE: count are saved under `output/deseq2_hg38/`: `vsd_filter.RData` and `rld_filter.RData` --> filter because HET 4wN R1/R2 and iPSCpatient removed*
+- ***NOTE: I used now `blind=FALSE` for vsd/rld normalization !! Better for downstream analyses!!***
+
+
+--> vst/rlog 25 clusters is very bad, lot of clusters with very few genes 
+
+--> Let's prioritize rlog, since it perform better for unbiased (blind=TRUE) clustering
+
+
+XXX play with the nb of clusters to have something that looks good! XXX
+
+
+
+
 
 
