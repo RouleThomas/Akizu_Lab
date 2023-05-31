@@ -5,10 +5,6 @@
 
 
 
-fasterq-dump SRR8734990 -S
-
-
-
 fasterq-dump SRR9169172 --include-technical -S
 
 

@@ -55,6 +55,13 @@ It seems that even though it is written paired end, I only have 1 file... !
 
 **--> Tried with  `--include-technical -S` and it works!!!! I have 3 files!!!**
 
+- SRR8734990_S1_L001_R1_001.fastq file contains the Cell Barcode and UMI. In 10x Genomics 3' single-cell RNA-seq protocols, the Read 1 (R1) is typically used for this purpose, and its length is 26bp, which matches the length of sequences in your file.
+
+- SRR8734990_S1_L001_R2_001.fastq file is the Read 2 (R2), which is typically used for gene expression information in 10x Genomics protocols. The length of sequences in this file is 100bp, which is a common read length for R2 in these protocols.
+
+- SRR8734990_S1_L001_I1_001.fastq file likely contains the index reads (I1), which are typically used to distinguish different samples in a multiplexed sequencing run. The length of sequences in this file is 8bp, which is a common length for index reads.
+
+
 
 # Cell Ranger pipeline (for 10x)
 ## install cell ranger
@@ -92,7 +99,12 @@ generate single cell feature counts for a single library:
 
 ```bash
 # fasq have to be .fastq.gz; so lets zip them
-gzip input/SRR8734990_*
+gzip input/SRR8734990_* # it took >2hrs
+
+# rename so that they respect naming convention
+mv input/SRR8734990_1.fastq.gz input/SRR8734990_S1_L001_R1_001.fastq.gz
+mv input/SRR8734990_2.fastq.gz input/SRR8734990_S1_L001_R2_001.fastq.gz
+mv input/SRR8734990_3.fastq.gz input/SRR8734990_S1_L001_I1_001.fastq.gz
 
 # ex of command
 cellranger count --id=count \
@@ -101,12 +113,51 @@ cellranger count --id=count \
                    --sample=SRR8734990
 
 # run into sbatch
-sbatch scripts/cellranger_count.sh
+sbatch scripts/cellranger_count.sh # 890789
 
 
 ```
+- *NOTE: it is important to rename our files to respect cell ranger nomenclature*
 
-XXX run as test then 
+--> XXX
+
+
+
+
+
+
+
+## Then play with our data  (clustering, gene expr)
+[cellranger reanalyze](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/reanalyze)
+
+cellranger reanalyze takes feature-barcode matrices produced by cellranger count, cellranger multi, or cellranger aggr and reruns the dimensionality reduction, clustering, and gene expression algorithms using tunable parameter settings.
+
+
+Use .cloupe file and load it in lpupe [browser](https://support.10xgenomics.com/single-cell-gene-expression/software/visualization/latest/what-is-loupe-cell-browser)
+
+
+
+## Seurat for clustering
+
+[Tutorial](https://satijalab.org/seurat/articles/get_started.html)
+
+[Official seurat website](https://satijalab.org/seurat/); [here tuto mouse brain 10X Genomics](https://satijalab.org/seurat/articles/seurat5_sketch_analysis.html)
+
+
+XXX Cellrang to seurat objecct : https://satijalab.org/seurat/reference/read10x
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -5560,7 +5560,102 @@ nb of unique genes:
 - meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.gtf: 28 (DEGs + Diff. bound)
 - meta/ENCFF159KBI_UpHET_DownKO_noIntergenic.gtf: 55 (Diff. bound)
 
+### Functional analyses for the expected gene list
 
+Let's see what are the genes where H3K27me3 goes Up in HET and Down in KO; in agreement with expression changes
+
+```bash
+conda activate deseq2
+```
+
+```R
+# library
+library("rtracklayer")
+library("tidyverse")
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+library("org.Hs.eg.db")
+library("DOSE")
+library("pathview")
+library("enrichplot")
+
+
+# Collect the gene list from the gtf
+## Import the GTF file
+gtf <- import("meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.gtf")
+## Extract gene names and convert to Entrez ID
+gene_symbols <- unique(elementMetadata(gtf)$gene_name) # = elementMetadata(gtf)$gene_name %>% unique() 
+
+genes <- mapIds(org.Hs.eg.db, 
+                   keys = gene_symbols, 
+                   column = "ENTREZID", 
+                   keytype = "SYMBOL", 
+                   multiVals = "first")
+
+
+
+# Functional profiles
+## KEGG
+enrichKEGG <- enrichKEGG(gene   = genes,
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
+
+pdf("output/ChIPseeker/functional_KEGG_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.pdf", width=7, height=5)
+dotplot(enrichKEGG, showCategory = 13, title = "KEGG Pathway Enrichment Analysis")
+dev.off()
+
+pdf("output/ChIPseeker/emapplot_functional_KEGG_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.pdf", width=10, height=8)
+emapplot(pairwise_termsim(enrichKEGG), showCategory = 13)
+dev.off()
+
+## GO
+enrichGO <- enrichGO(gene   = genes,
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH",
+                         OrgDb         = "org.Hs.eg.db",
+                         ont           = "BP") # "BP" (Biological Process), "CC" (Cellular Component), or "MF" (Molecular Function)
+pdf("output/ChIPseeker/functional_GO_BP_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.pdf", width=7, height=15)
+dotplot(enrichGO, showCategory = 1, title = "GO_Biological Process Enrichment Analysis")
+dev.off()
+### NO ENRICHMENT
+
+
+enrichGO <- enrichGO(gene   = genes,
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH",
+                         OrgDb         = "org.Hs.eg.db",
+                         ont           = "CC") # "BP" (Biological Process), "8" (Cellular Component), or "MF" (Molecular Function)
+pdf("output/ChIPseeker/functional_GO_CC_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.pdf", width=7, height=15)
+dotplot(enrichGO, showCategory = 1, title = "GO_Cellular Component Enrichment Analysis")
+dev.off()
+### 1 enrichment for Potassium Channel Complex
+
+enrichGO <- enrichGO(gene   = genes,
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH",
+                         OrgDb         = "org.Hs.eg.db",
+                         ont           = "MF") # "BP" (Biological Process), "8" (Cellular Component), or "MF" (Molecular Function)
+pdf("output/ChIPseeker/functional_GO_MF_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.pdf", width=7, height=15)
+dotplot(enrichGO, showCategory = 15, title = "GO_Molecular Function Enrichment Analysis")
+dev.off()
+### NO ENRICHMENT
+
+## Disease
+enrichDO <- enrichDO(gene   = genes,
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
+pdf("output/ChIPseeker/functional_DO_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.pdf", width=7, height=15)
+dotplot(enrichDO, showCategory = 15, title = "Disease Ontology Enrichment Analysis")
+dev.off()
+### NO ENRICHMENT
+
+
+
+```
+
+--> Not interesting in term of GO... Some hits for KEGG; and GO Cellular Component Potassium Channel Complex (GRIK2, DPP6, KCNQ1)
 
 
 

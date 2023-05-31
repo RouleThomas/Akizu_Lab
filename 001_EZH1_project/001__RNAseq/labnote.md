@@ -4574,7 +4574,142 @@ dev.off()
 --> We expected the KO to be less mature, and that is the case; however, the HET does not mature faster than WT, **at least when looking at these specific marker genes**
 
 
-# Clean code to check TPM of individual genes (gene expression)
+# Clean code to check log2TPM value for heatmap (gene expression)_hg19
+
+*NOTE: Carefull if looking at mutants need filtering! (iPSC suck and 4wN HET R1 and R2 sucks)*
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+library("apeglm")
+library("factoextra")
+library("gridExtra")
+library("readxl")
+library(rtracklayer)
+library(ggpubr)
+library(dendextend)
+
+
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+
+# Import tpm df
+
+tpm_all_sample <- read_csv("output/tpm/tpm_all_sample.txt") %>%
+  select(-"...1")
+
+# Join with gene names for convenience
+## Read GTF file
+gtf_file <- "../../Master/meta/gencode.v19.annotation.gtf"
+gtf_data <- import(gtf_file)
+
+## Extract gene_id and gene_name
+gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
+gene_id <- elementMetadata(gene_data)$gene_id
+gene_name <- elementMetadata(gene_data)$gene_name
+
+## Combine gene_id and gene_name into a data frame
+gene_id_name <- data.frame(gene_id, gene_name) %>%
+  unique() %>%
+  as_tibble()
+
+
+# Tidy df
+tpm_all_sample_tidy = as_tibble(tpm_all_sample) %>%
+  gather(key = "sample", value = "tpm", -Geneid) %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep = "_")
+  
+
+tpm_all_sample_tidy$time <-
+  factor(tpm_all_sample_tidy$time,
+         c("ESC", "NPC", "2dN", "4wN", "8wN"))
+tpm_all_sample_tidy$genotype <-
+  factor(tpm_all_sample_tidy$genotype,
+         c("WT", "KO", "HET", "iPSCWT","iPSCpatient"))
+
+
+tpm_all_sample_tidy_gene_name = tpm_all_sample_tidy %>%
+  dplyr::rename(gene_id=Geneid) %>%
+  left_join(gene_id_name) %>%
+  unique()
+
+# stat and tidy data for matrix
+
+## PRC2subunits
+tpm_all_sample_tidy_gene_name_stat = tpm_all_sample_tidy_gene_name %>%
+  filter(gene_name %in% c("EZH2", "EZH1", "EED", "SUZ12", "RBBP7", "RBBP4", "AEBP2", "JARID2", "PHF1", "MTF2", "PHF19"),
+         genotype == "WT") %>%  
+  select(-replicate, -genotype, -gene_id) %>%
+  group_by(gene_name, time) %>%
+  summarise(mean=mean(tpm)) %>% 
+  pivot_wider(names_from = time, values_from = mean) %>%
+  ungroup()
+## Transform tpm tibble into matrix
+tpm_all_sample_tidy_gene_name_stat_matrix = make_matrix(select(tpm_all_sample_tidy_gene_name_stat, -gene_name), pull(tpm_all_sample_tidy_gene_name_stat, gene_name)) 
+
+tpm_all_sample_tidy_gene_name_stat_matrix_log2 = log2(tpm_all_sample_tidy_gene_name_stat_matrix+1)
+# Raw heatmap 
+pdf("output/deseq2/heatmap_PRC2subunits_log2tpm.pdf", width=5, height=6) # 
+pheatmap(tpm_all_sample_tidy_gene_name_stat_matrix_log2, cluster_rows=F, cluster_cols=F, color= colorRampPalette(c("blue", "white", "red"))(50))
+dev.off()
+
+
+## Genes involved in chromatin remodeling and transcription regulation causative for Neurodevelopmental disorders NDD (Gabriele et al 2018)
+tpm_all_sample_tidy_gene_name_stat = tpm_all_sample_tidy_gene_name %>%
+  filter(gene_name %in% c("ADNP", "ARID1A", "ARID1B", "ARX", "ATRX", "AUTS2", "BAZ1B", "BCOR", "BRD1", "BRD2", "BRD3", "BRWD3", "CDKL5", "CECR2", "CHD2", "CHD7", "CHD8", "CREBBP", "CTCF", "DNMT1", "DNMT3A", "DNMT3B", "EBF3", "EED", "EHMT1", "EP300", "EZH2", "KAT2A", "GTF2I", "GTF2IRD1", "HDAC8", "PHC1", "KDM5C", "KANSL1", "KDM5C", "KDM6A", "KMT2A", "KMT2C", "KMT2D", "SETD1A", "MBD5", "MECP2", "MED12", "NBEA", "NSD1", "WHSC1", "PHF21A", "PHF6", "PHF8", "POLR1C", "POLR1D", "RNASEH2C", "RPS6KA3", "RPS6KA6", "SATB2", "SETD2", "SMARCA2", "SMARCA4", "SMARCB1", "SMARCE1", "SOX11", "SOX3", "TAF1", "YY1", "ZBTB20", "ZNF41", "ZNF674", "ZNF711", "ZNF81"),
+         genotype == "WT") %>%  
+  select(-replicate, -genotype, -gene_id) %>%
+  group_by(gene_name, time) %>%
+  summarise(mean=mean(tpm)) %>% 
+  pivot_wider(names_from = time, values_from = mean) %>%
+  ungroup()
+## Transform tpm tibble into matrix
+tpm_all_sample_tidy_gene_name_stat_matrix = make_matrix(select(tpm_all_sample_tidy_gene_name_stat, -gene_name), pull(tpm_all_sample_tidy_gene_name_stat, gene_name)) 
+
+tpm_all_sample_tidy_gene_name_stat_matrix_log2 = log2(tpm_all_sample_tidy_gene_name_stat_matrix+1)
+# Raw heatmap 
+pdf("output/deseq2/heatmap_CR_NDD_log2tpm.pdf", width=3, height=8) # 
+pheatmap(tpm_all_sample_tidy_gene_name_stat_matrix_log2, cluster_rows=F, cluster_cols=F, color= colorRampPalette(c("blue", "white", "red"))(50))
+dev.off()
+
+
+# As line: FAIL NEED TROUBLSHOOT IF NEEDED
+tpm_all_sample_tidy_gene_name_stat_matrix_log2_tidy = as_tibble(tpm_all_sample_tidy_gene_name_stat_matrix_log2, rownames = "gene_name") %>%
+  gather(key = "time", value = "log2tpm", -gene_name)
+
+tpm_all_sample_tidy_gene_name_stat_matrix_log2_tidy$time <-
+  factor(tpm_all_sample_tidy_gene_name_stat_matrix_log2_tidy$time,
+         c("ESC", "NPC", "2dN", "4wN", "8wN"))
+
+
+pdf("output/age/line_CR_NDD_log2tpm_all.pdf", width=20, height=14)
+ggplot(tpm_all_sample_tidy_gene_name_stat_matrix_log2_tidy, aes(x = time, y = log2tpm)) +
+  geom_line(aes(color = gene_name), alpha = 0.1) +
+  geom_smooth(aes(color = gene_name, group = gene_name), method = "loess", se = TRUE, span = 0.8) +
+  stat_summary(aes(color = gene_name, group = gene_name), fun = mean, geom = "point", shape = 18, size = 3, stroke = 1.5) +
+  stat_summary(aes(color = gene_name, group = gene_name), fun.data = mean_se, geom = "errorbar", width = 0.2, size = 1) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),
+    axis.title.x = element_text(size = 16)
+  )
+dev.off()
+
+
+
+
+
+```
+
+
+# Clean code to check TPM of individual genes (gene expression)_hg19
 ```R
 # Load packages
 library("tidyverse")
@@ -4686,6 +4821,31 @@ tpm_all_sample_tidy_gene_name_stat %>%
     ggtitle("") +
     scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green", "iPSCWT" = "black", "iPSCpatient" = "orange"))
 dev.off()
+
+
+
+
+tpm_all_sample_tidy_gene_name_stat <- tpm_all_sample_tidy_gene_name %>%
+  filter(gene_name %in% c("EZH2", "EZH1", "EED", "SUZ12", "RBBP7", "RBBP4", "AEBP2", "JARID2", "PHF1", "MTF2", "PHF19")) %>%
+  select(-replicate) %>%
+  group_by(gene_id, gene_name, time, genotype) %>%
+  summarise(mean=mean(tpm), median= median(tpm), SD=sd(tpm), n=n(), SE=SD/sqrt(n)) 	
+pdf("output/deseq2/genes_PRC2subunits.pdf", width=15, height=10)
+tpm_all_sample_tidy_gene_name_stat %>%
+  filter(gene_name %in% c("EZH2", "EZH1", "EED", "SUZ12", "RBBP7", "RBBP4", "AEBP2", "JARID2", "PHF1", "MTF2", "PHF19"),
+         genotype %in% c("WT")) %>%
+    ggplot(., aes(x = time, y = mean, group = genotype)) +
+    geom_line(aes(color=genotype), size=0.75) +
+    geom_errorbar(aes(ymin = mean-SE, ymax = mean+SE,color=genotype), width=.2) +
+    geom_point(aes(y = mean,color=genotype), size = .75, shape = 15) +
+    theme_bw() +
+    facet_wrap(~gene_name, nrow = 2, scale = "free")  +	
+    ylab(label = "tpm") +
+    ggtitle("PRC2 subunits") +
+    scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green", "iPSCWT" = "black", "iPSCpatient" = "orange"))
+dev.off()
+
+
 
 
 
