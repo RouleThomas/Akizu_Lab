@@ -7122,7 +7122,7 @@ ddsTC <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
 ddsTC <- DESeq(ddsTC, test="LRT", reduced = ~ genotype + time)
 resTC <- results(ddsTC)
 write.csv(resTC %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2_hg38/resTC.txt")
-
+# resTC <- read.csv("output/deseq2_hg38/resTC.txt", row.names = 1)
 
 # Data normalization
 vst_counts <- vst(ddsTC, blind=FALSE)
@@ -7130,6 +7130,7 @@ save(vst_counts, file = "output/deseq2_hg38/ddsTC_vsd_filter.RData")
 
 rlog_counts <- rlog(ddsTC, blind=FALSE) # last 5min
 save(rlog_counts, file = "output/deseq2_hg38/ddsTC_rld_filter.RData")
+load("output/deseq2_hg38/ddsTC_rld_filter.RData")
 
 
 ## Extract the transformed counts
@@ -7157,7 +7158,7 @@ row_dist <- dist(vst_counts_matrix_sig, method = "euclidean")
 row_hclust <- hclust(row_dist, method = "complete")
 
 ## Cut the tree into k clusters
-row_clusters <- cutree(row_hclust, k = 25)                   # !!! Here change tree nb accordingly !!!
+row_clusters <- cutree(row_hclust, k = 20)                   # !!! Here change tree nb accordingly !!!
 
 ## Create a data frame with gene names and their corresponding clusters
 cluster_gene <- data.frame(gene = rownames(vst_counts_matrix_sig),
@@ -7165,7 +7166,7 @@ cluster_gene <- data.frame(gene = rownames(vst_counts_matrix_sig),
 
 
 ### Save dataframe
-write.csv(cluster_gene, file="output/deseq2_hg38/cluster_gene_vst_25cl.txt")
+write.csv(cluster_gene, file="output/deseq2_hg38/cluster_gene_vst_20cl.txt")
 
 # Make a clean table with significant deseq2-TC genes
 vst_counts_tidy <- as_tibble(vst_counts_matrix_sig, rownames = "gene") %>%
@@ -7206,18 +7207,6 @@ ggplot(vst_counts_tidy, aes(x = time, y = vst_counts)) +
 dev.off()
 
 
-
-
-
-
-
-
-
-
-
-
-XXX 
-
 # RLOG counts
 
 ## Filter our matrix with the significant genes
@@ -7230,16 +7219,12 @@ row_dist <- dist(rlog_counts_matrix_sig, method = "euclidean")
 row_hclust <- hclust(row_dist, method = "complete")
 
 ## Cut the tree into k clusters
-row_clusters <- cutree(row_hclust, k = 25)                   # !!! Here change tree nb accordingly !!!
-
+row_clusters <- cutree(row_hclust, k = 30)                   # !!! Here change tree nb accordingly !!!
 ## Create a data frame with gene names and their corresponding clusters
 cluster_gene <- data.frame(gene = rownames(rlog_counts_matrix_sig),
                            cluster = row_clusters)
-
-
 ### Save dataframe
-write.csv(cluster_gene, file="output/deseq2_hg38/cluster_gene_rlog_25cl.txt")
-
+write.csv(cluster_gene, file="output/deseq2_hg38/cluster_gene_rlog_30cl.txt") # !!! Here change tree nb accordingly !!
 # Make a clean table with significant deseq2-TC genes
 rlog_counts_tidy <- as_tibble(rlog_counts_matrix_sig, rownames = "gene") %>%
   gather(key = "sample", value = "rlog_counts", -gene) %>%
@@ -7261,16 +7246,14 @@ genes_per_cluster <- rlog_counts_tidy %>%
   group_by(cluster) %>%
   summarise(num_genes = n_distinct(gene))
 
-pdf("output/deseq2_hg38/line_rlog_p0.05_cl25_pretty.pdf", width=20, height=14)
-ggplot(rlog_counts_tidy, aes(x = time, y = rlog_counts)) +
-  geom_smooth(aes(color = genotype, group = genotype), method = "loess", se = TRUE, span = 0.8) +
-  # Add mean value for each genotype at each time point
-  stat_summary(aes(color = genotype, group = genotype), fun = mean, geom = "point", shape = 18, size = 3, stroke = 1.5) +
-  # Add standard error bars around the mean points
-  stat_summary(aes(color = genotype, group = genotype), fun.data = mean_se, geom = "errorbar", width = 0.2, size = 1) +
-  # Add number of genes per cluster to the facet_wrap panels
-  geom_text(data = genes_per_cluster, aes(label = paste0("Genes: ", num_genes), x = Inf, y = Inf), hjust = 1, vjust = 1, size = 5) +
+pdf("output/deseq2_hg38/line_rlog_p0.05_cl30_pretty_noSmooth.pdf", width=20, height=14)   # !!! Here change tree nb accordingly !!
+ggplot(rlog_counts_tidy, aes(x = time, y = rlog_counts, color = genotype, group = genotype)) +
+  geom_line(stat = "summary", fun = mean) +
+  geom_errorbar(stat = "summary", fun.data = mean_se, width = 0.2, size = 1) +
+  geom_point(stat = "summary", fun = mean, shape = 18, size = 3, stroke = 1.5) +
+  geom_text(data = genes_per_cluster, aes(label = paste0("Genes: ", num_genes), x = Inf, y = Inf), hjust = 1, vjust = 1, size = 5, inherit.aes = FALSE) +
   facet_wrap(~cluster, scale = "free", nrow = 3) +
+  scale_color_manual(values=c("WT" = "black", "HET" = "blue", "KO" = "red")) +
   theme_bw() +
   theme(
     strip.text = element_text(size = 16),        # Increase facet_wrap title panel text size
@@ -7307,11 +7290,9 @@ dev.off()
 
 --> Let's prioritize rlog, since it perform better for unbiased (blind=TRUE) clustering
 
+--> Using noSmooth is MUCH better!!!
 
-XXX play with the nb of clusters to have something that looks good! XXX
-
-
-
+--> The more cluster the better, as we are inform about all possible profiles, we can then focus on some clusters
 
 
 

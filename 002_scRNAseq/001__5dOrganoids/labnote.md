@@ -1,3 +1,6 @@
+Data from [Faustino Martins et al 2020; Self-Organizing 3D Human Trunk Neuromuscular Organoids](https://www.sciencedirect.com/science/article/pii/S1934590919305259)
+
+
 # Pipeline from the paper
 - Library prep: Chromium Single Cell Gene Expression system, Single Cell 3' Reagent v2/v3 kits (10X Genomics)
 - Sequencing: Illumina HiSeq 4000 for library sequencing
@@ -119,11 +122,7 @@ sbatch scripts/cellranger_count.sh # 890789 # ok
 ```
 - *NOTE: it is important to rename our files to respect cell ranger nomenclature*
 
---> XXX
-
-
-
-
+--> run succesfully!
 
 
 
@@ -136,45 +135,248 @@ cellranger reanalyze takes feature-barcode matrices produced by cellranger count
 Use .cloupe file and load it in lpupe [browser](https://support.10xgenomics.com/single-cell-gene-expression/software/visualization/latest/what-is-loupe-cell-browser)
 
 
+--> .cloupe is usefull for quick first look; but boring to change parameters...
+
+Let's use Seurat comonly used after processing instead
+
 
 ## Seurat for clustering
 
 [Tutorial](https://satijalab.org/seurat/articles/get_started.html)
 
-[Official seurat website](https://satijalab.org/seurat/); [here tuto mouse brain 10X Genomics](https://satijalab.org/seurat/articles/seurat5_sketch_analysis.html)
+### Setup the Seurat object
+
+```bash
+conda activate scRNAseq`
+```
 
 
-XXX Cellrang to seurat objecct : https://satijalab.org/seurat/reference/read10x
+```R
+library(dplyr)
+library(Seurat)
+library(patchwork)
+
+# Load the 10x dataset
+orga5d.data <- Read10X(data.dir = "count/outs/filtered_feature_bc_matrix")
+# Initialize the Seurat object with the raw (non-normalized data).
+orga5d <- CreateSeuratObject(counts = orga5d.data, project = "pbmc3k", min.cells = 3, min.features = 200) # PAPER used  5 / 500
+orga5d
+
+# Check percent reads mapped to Mitchondrial M genome
+orga5d[["percent.mt"]] <- PercentageFeatureSet(orga5d, pattern = "^MT-")
+
+# Vizualize QC metrics
+pdf("output/seurat/QC_VlnPlot.pdf", width=10, height=6)
+VlnPlot(orga5d, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+dev.off()
+
+plot1 <- FeatureScatter(orga5d, feature1 = "nCount_RNA", feature2 = "percent.mt")
+plot2 <- FeatureScatter(orga5d, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+pdf("output/seurat/QC_FeatureScatter.pdf", width=10, height=4)
+plot1 + plot2
+dev.off()
+
+# Set additional treshold after vizualization
+orga5d_sub <- subset(orga5d, subset = nFeature_RNA > 200 & nFeature_RNA < 15000 & percent.mt < 20)
+
+# Normalization
+orga5d_sub_nom <- NormalizeData(orga5d_sub, normalization.method = "LogNormalize", scale.factor = 10000)
+```
+- *NOTE: Read10X data.dir is the `filtered_feature_bc_matrix` folder in `counts/outs`*
+- *NOTE: `CreateSeuratObject` we can filter the min nb of cells and features*
+- *NOTE: 10% mitochondrial genome per cell is pretty standard (>20% not great); even though in Seurat tutorial remove cell that have >5%!!*
+- *NOTE: `LogNormalize` that normalizes the feature expression measurements for each cell by the total expression, multiplies this by a scale factor (10,000 by default), and log-transforms the result.*
+
+filter cells that have: 
+- unique feature counts over 2,500 or less than 200
+- >5% mitochondrial counts
+
+
+### Identification of highly variable features (feature selection)
+
+
+calculate a subset of features that exhibit high cell-to-cell variation in the dataset (i.e, they are highly expressed in some cells, and lowly expressed in others). 
+
+
+```R
+# select the top 2000 variable genes with vst method
+orga5d_sub_nom_variable <- FindVariableFeatures(orga5d_sub_nom, selection.method = "vst", nfeatures = 2000)
+
+# Identify the 10 most highly variable genes
+top10 <- head(VariableFeatures(orga5d_sub_nom_variable), 10)
+
+# plot variable features with and without labels
+plot1 <- VariableFeaturePlot(orga5d_sub_nom_variable)
+plot2 <- LabelPoints(plot = plot1, points = top10, repel = TRUE)
+pdf("output/seurat/VariableFeaturePlot.pdf", width=10, height=4)
+plot1 + plot2
+dev.off()
+```
+
+### Scaling the data
+
+Apply a **linear transformation (‘scaling’)** that is a standard pre-processing step prior to dimensional reduction techniques like PCA:
+- Shifts the expression of each gene, so that the **mean expression across cells is 0**
+- Scales the expression of each gene, so that the **variance across cells is 1** (gives equal weight in downstream analyses, so that highly-expressed genes do not dominate)
+
+
+```R
+all.genes <- rownames(orga5d_sub_nom_variable)
+orga5d_sub_nom_variable_allScaled <- ScaleData(orga5d_sub_nom_variable, features = all.genes) 
+```
+*NOTE: scaling is here perform on ALL features not the 2000 first; thks to the `features = all.genes`*
+
+
+### Perform linear dimensional reduction (PCA for QC)
+
+The idea here is to understand what explain heterogeneity in our data; so we need to pick, select relevant PC (like PC1 or 2...). # methods:
+- by eye
+- JackStraw
+- Elbow
+
+#### By eye
+
+PCA on the scaled data. By default, **only the previously determined variable features are used as input**, but can be defined using features argument if you wish to choose a different subset.
+
+
+```R
+# Calculate the PCA
+orga5d_sub_nom_variable_allScaled_PCA <- RunPCA(orga5d_sub_nom_variable_allScaled, features = VariableFeatures(object = orga5d_sub_nom_variable_allScaled))
+
+# Vizualize the 1st 15 PC
+pdf("output/seurat/DimHeatmap.pdf", width=10, height=20)
+DimHeatmap(orga5d_sub_nom_variable_allScaled_PCA, dims = 1:20, cells = 500, balanced = TRUE)
+dev.off()
+
+```
+*NOTE: `DimHeatmap()` allows for easy exploration of the primary sources of heterogeneity in a dataset, and can be useful when trying to decide which PCs to include for further downstream analyses. Both cells and features are ordered according to their PCA scores. Setting cells to a number plots the ‘extreme’ cells on both ends of the spectrum, which dramatically speeds plotting for large datasets.* 
+
+--> After 17 it is weird
+
+#### JackStraw and Elbow
+
+With this method, generate the plot, and identify the drop-off pvalue = this is the treshold for relevant PC
+
+```R
+# Compute JackStraw score
+orga5d_sub_nom_variable_allScaled_PCA_Jack <- JackStraw(orga5d_sub_nom_variable_allScaled_PCA, num.replicate = 100)
+orga5d_sub_nom_variable_allScaled_PCA_JackScore <- ScoreJackStraw(orga5d_sub_nom_variable_allScaled_PCA_Jack, dims = 1:20)
+
+# Generate plot
+pdf("output/seurat/JackStraw.pdf", width=10, height=10)
+JackStrawPlot(orga5d_sub_nom_variable_allScaled_PCA_JackScore, dims = 1:20)
+dev.off()
+
+pdf("output/seurat/Elbow.pdf", width=10, height=10)
+ElbowPlot(orga5d_sub_nom_variable_allScaled_PCA_JackScore)
+dev.off()
+```
+
+
+--> JAckstraw dimensionality is 15-16; Elbow 16-18
+
+--> all together let's pick 17 as treshold
 
 
 
 
 
+### Cluster the cells
+
+partitioning the cellular distance matrix into clusters based on the dimensionality of the dataset (for us; 17)
+
+```R
+orga5d_sub_nom_variable_allScaled_PCA_JackScore_17 <- FindNeighbors(orga5d_sub_nom_variable_allScaled_PCA_JackScore, dims = 1:17)
+orga5d_sub_nom_variable_allScaled_PCA_JackScore_17_cluster <- FindClusters(orga5d_sub_nom_variable_allScaled_PCA_JackScore_17, resolution = 0.2)
+```
+
+
+*NOTE: For `FindClusters(pbmc, resolution = 0.5)`; parameter between 0.4-1.2 typically returns good results for single-cell datasets of around 3K cells. Optimal resolution often increases for larger datasets. The clusters can be found using the Idents() function.*
+
+
+**--> It gave 12 clusters with resolution 0.5 and with 0.2; 6 clusters**
 
 
 
+### Run non-linear dimensional reduction (UMAP/tSNE)
 
 
+non-linear dimensional reduction techniques, such as tSNE and UMAP, to visualize and explore these datasets. --> to learn the underlying manifold of the data in order to place similar cells together in low-dimensional space. Cells within the graph-based clusters determined above should co-localize on these dimension reduction plots. 
+
+As **input to the UMAP and tSNE, we suggest using the same PCs as input to the clustering analysis.**
 
 
+```R
+orga5d_sub_nom_variable_allScaled_PCA_JackScore_17_cluster_UMAP <- RunUMAP(orga5d_sub_nom_variable_allScaled_PCA_JackScore_17_cluster, dims = 1:17)
+
+pdf("output/seurat/UMAP.pdf", width=10, height=10)
+DimPlot(orga5d_sub_nom_variable_allScaled_PCA_JackScore_17_cluster_UMAP, reduction = "umap", label = TRUE)
+dev.off()
+
+# save
+saveRDS(orga5d_sub_nom_variable_allScaled_PCA_JackScore_17_cluster_UMAP, file = "output/seurat/orga5d_sub_nom_variable_allScaled_PCA_JackScore_17_cluster_UMAP.rds")
+```
+
+--> 6 clusters looks good
+
+### Finding differentially expressed features (cluster biomarkers)
 
 
+find markers that define clusters via differential expression
 
+```R
+# find all markers of cluster 1
+cluster1.markers <- FindMarkers(orga5d_sub_nom_variable_allScaled_PCA_JackScore_17_cluster_UMAP, ident.1 = 2, min.pct = 0.25)
+head(cluster1.markers, n = 5)
 
+# find all markers distinguishing cluster 2 from clusters 1 and 3
+cluster2.markers <- FindMarkers(orga5d_sub_nom_variable_allScaled_PCA_JackScore_17_cluster_UMAP, ident.1 = 2, ident.2 = c(1, 3), min.pct = 0.25)
+head(cluster2.markers, n = 5)
 
+# find markers for every cluster compared to all remaining cells, report only the positive ones
+orga5d_sub_nom_variable_allScaled_PCA_JackScore_17_cluster_UMAP.markers <- FindAllMarkers(orga5d_sub_nom_variable_allScaled_PCA_JackScore_17_cluster_UMAP, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+orga5d_sub_nom_variable_allScaled_PCA_JackScore_17_cluster_UMAP.markers %>%
+    group_by(cluster) %>%
+    slice_max(n = 2, order_by = avg_log2FC)
 
+# Tools for vizualization
+## Violin
+pdf("output/seurat/VlnPlot_TopMarker.pdf", width=10, height=10)
+VlnPlot(orga5d_sub_nom_variable_allScaled_PCA_JackScore_17_cluster_UMAP, features = c("CDH6", "NEFM", "HIST1H4C", "CNTN5", "PLCG2", "CRABP1"))
+dev.off()
 
+## Umap expr
+pdf("output/seurat/FeaturePlot_TopMarker.pdf", width=10, height=10)
+FeaturePlot(orga5d_sub_nom_variable_allScaled_PCA_JackScore_17_cluster_UMAP, features = c("CDH6", "NEFM", "HIST1H4C", "CNTN5", "PLCG2", "CRABP1"))
+dev.off()
 
+pdf("output/seurat/FeaturePlot_PaperMarker.pdf", width=10, height=20)
+FeaturePlot(orga5d_sub_nom_variable_allScaled_PCA_JackScore_17_cluster_UMAP, features = c("FOXC1", "SIX1", "TWIST1", "SOX9", "PAX6", "CDH6", "NEUROG2", "ELAVL4"), ncol = 2)
+dev.off()
 
+## heatmap top 20 markers expr
+top20 = orga5d_sub_nom_variable_allScaled_PCA_JackScore_17_cluster_UMAP.markers %>%
+    group_by(cluster) %>%
+    top_n(n = 20, wt = avg_log2FC) 
 
+pdf("output/seurat/DoHeatmap_TopMarker.pdf", width=10, height=10)
+DoHeatmap(orga5d_sub_nom_variable_allScaled_PCA_JackScore_17_cluster_UMAP, features = top20$gene) + NoLegend()
+dev.off()
 
+# Rename cluster in agreement
+new.cluster.ids <- c("Neuroectodermal progenitors_0", "Mesodermal progenitors_1", "Mesodermal progenitors_2", "Mesodermal progenitors_3", "Mesodermal progenitors_4", "Neurons")
+names(new.cluster.ids) <- levels(orga5d_sub_nom_variable_allScaled_PCA_JackScore_17_cluster_UMAP)
+orga5d_sub_nom_variable_allScaled_PCA_JackScore_17_cluster_UMAP_rename <- RenameIdents(orga5d_sub_nom_variable_allScaled_PCA_JackScore_17_cluster_UMAP, new.cluster.ids)
 
+pdf("output/seurat/UMAP_label.pdf", width=10, height=10)
+DimPlot(orga5d_sub_nom_variable_allScaled_PCA_JackScore_17_cluster_UMAP_rename, reduction = "umap", label = TRUE, pt.size = 0.7, label.size = 6) + NoLegend()
+dev.off()
 
+```
 
-
-
-
-
+- *NOTE: `min.pct` requires a feature to be detected at a minimum percentage in either of the two groups of cells, and the thresh.test argument requires a feature to be differentially expressed (on average) by some amount between the two groups.*
+- *NOTE: we can set `min.pct` and `thresh.test` to 0 to maybe hgave more DEGs but potentially false positive!*
+- *NOTE: **Alternative statistical test** can be used ! see [here](https://satijalab.org/seurat/articles/de_vignette.html)*
 
 
 # Big workshop
