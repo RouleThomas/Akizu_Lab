@@ -113,7 +113,7 @@ cellranger count --id=count \
                    --sample=SRR8734990
 
 # run into sbatch
-sbatch scripts/cellranger_count.sh # 890789
+sbatch scripts/cellranger_count.sh # 890789 # ok
 
 
 ```
