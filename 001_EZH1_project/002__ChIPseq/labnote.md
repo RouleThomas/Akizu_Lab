@@ -2813,7 +2813,6 @@ write.table(sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast3_df, file=
 
 --> NPC/2dN show a very bad clustering between genotypes; also high pvalue show lot of false-positive looking at some random on IGV (the low pvalue looks good otherwise)
 
-XXX --> May try to put NPC and 2dN together and treat as 4 biol replicates?
 
 
 Let's make a **quality check on NPC/2dN sample**; notably the clustering using macs2 pre-filtered peak is much better; let's check if also more diff. bound sites. If true --> Use MACS2 pre-filtered peaks for all analyses... Including for Cut Run....
@@ -3246,8 +3245,6 @@ write.table(sample_count_KO_blackgreylist_LibCSIFScaled_TMM_contrast3_df, file="
 
 
 
-
-
 # Collect all scaling factor genotype/time effect:
 
 sample_count_WT_greylist_LibCSIFScaled_TMM_SF = dba.normalize(sample_count_WT_greylist_LibCSIFScaled_TMM, bRetrieve=TRUE)
@@ -3479,14 +3476,7 @@ KOvsWT_annot_gain_lost_RNA %>%
 dev.off()
 
 
-
-
-
-
 # NPC
-
-
-
 # Import peaks
 peaks_contrast1 = read.table('output/DiffBind/sample_count_NPC_greylist_LibCSIFScaled_TMM_contrast1_df.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V5, V6=V6, V7=V7, V8=V8, FC=V9, pvalue=V10, FDR=V11) 
 peaks_contrast2 = read.table('output/DiffBind/sample_count_NPC_greylist_LibCSIFScaled_TMM_contrast2_df.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V5, V6=V6, V7=V7, V8=V8, FC=V9, pvalue=V10, FDR=V11) 
@@ -3659,13 +3649,7 @@ KOvsWT_annot_gain_lost_RNA %>%
 dev.off()
 
 
-
-
-
-
 # 2dN 
-
-
 # Import peaks
 peaks_contrast1 = read.table('output/DiffBind/sample_count_2dN_greylist_LibCSIFScaled_TMM_contrast1_df.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V5, V6=V6, V7=V7, V8=V8, FC=V9, pvalue=V10, FDR=V11) 
 peaks_contrast2 = read.table('output/DiffBind/sample_count_2dN_greylist_LibCSIFScaled_TMM_contrast2_df.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V5, V6=V6, V7=V7, V8=V8, FC=V9, pvalue=V10, FDR=V11) 
@@ -3838,8 +3822,6 @@ KOvsWT_annot_gain_lost_RNA %>%
 dev.off()
 ```
 
-
-
 Now let's compare RNAseq (expression) and CutRun for macs2raw (qval 0.05):
 - Filter HETvsWT and KOvsWT diff bound genes into **gain and loss H3K27me3** at **each time-point**
 - **Keep only signal in Promoter, gene body and TES** (ie. filter out peak assigned to intergenic)
@@ -3865,9 +3847,6 @@ library(VennDiagram)
 
 
 # ESC
-
-
-
 # Import peaks
 peaks_contrast1 = read.table('output/DiffBind/sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast1_df.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V5, V6=V6, V7=V7, V8=V8, FC=V9, pvalue=V10, FDR=V11) 
 peaks_contrast2 = read.table('output/DiffBind/sample_count_ESC_blackgreylist_LibCSIFScaled_TMM_contrast2_df.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V5, V6=V6, V7=V7, V8=V8, FC=V9, pvalue=V10, FDR=V11) 
@@ -4041,13 +4020,7 @@ dev.off()
 
 
 
-
-
-
 # NPC
-
-
-
 # Import peaks
 peaks_contrast1 = read.table('output/DiffBind/sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast1_df.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V5, V6=V6, V7=V7, V8=V8, FC=V9, pvalue=V10, FDR=V11) 
 peaks_contrast2 = read.table('output/DiffBind/sample_count_NPC_blackgreylist_LibCSIFScaled_TMM_contrast2_df.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V5, V6=V6, V7=V7, V8=V8, FC=V9, pvalue=V10, FDR=V11) 
@@ -4220,13 +4193,7 @@ KOvsWT_annot_gain_lost_RNA %>%
 dev.off()
 
 
-
-
-
-
 # 2dN 
-
-
 # Import peaks
 peaks_contrast1 = read.table('output/DiffBind/sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast1_df.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V5, V6=V6, V7=V7, V8=V8, FC=V9, pvalue=V10, FDR=V11) 
 peaks_contrast2 = read.table('output/DiffBind/sample_count_2dN_blackgreylist_LibCSIFScaled_TMM_contrast2_df.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V5, V6=V6, V7=V7, V8=V8, FC=V9, pvalue=V10, FDR=V11) 
@@ -4406,6 +4373,97 @@ dev.off()
 --> To identify diff. bound sites and associated genes; let's use the macs2raw qval 0.05 and focus on the gene where expression is changed in agreement
 
 --> to show clustering let's use the qval 0.005 pre-filtered
+
+### DiffBind_Collect scaling factor (SF) to generate clean DiffBind TMM bigwig
+
+Collect all samples; 2 replicates per samples (not include the 3 ESC WT Rep). 
+
+--> Greylist filtered counts (using qval 0.005) has already been generated as `save(sample_count_all_greylist, file = "output/DiffBind/sample_count_all_greylist.RData")`; so let's import it; normalized with library size/TMM; do PCA/clustering and collect SF
+
+```bash
+srun --mem=500g --pty bash -l
+conda activate DiffBind
+```
+
+```R
+# Load package
+library("DiffBind")
+
+# Load greylist count
+load("output/DiffBind/sample_count_all_greylist.RData")
+
+# Apply library-size correction and TMM normalization
+sample_count_all_greylist_LibCSIFScaled_TMM = dba.normalize(sample_count_all_greylist, library = c(139649080, 117855644, 85211139, 71964648, 92471024, 102739426, 903163124, 1554734579, 865310316, 909621058, 636778842, 343291724, 45678566, 118275343, 105251783, 223394867, 112663109, 108911344), normalize = DBA_NORM_TMM) # TMM norm
+
+
+# Plot PCA / clustering
+pdf("output/DiffBind/clustering_all_greylist_LibCSIFScaled_TMM.pdf", width=14, height=20)
+plot(sample_count_all_greylist_LibCSIFScaled_TMM)
+dev.off()
+
+pdf("output/DiffBind/PCA_all_greylist_LibCSIFScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_all_greylist_LibCSIFScaled_TMM,DBA_CONDITION, label=DBA_TREATMENT)
+dev.off()
+
+
+# Collect scaling factor
+sample_count_all_greylist_LibCSIFScaled_TMM_SF = dba.normalize(sample_count_all_greylist_LibCSIFScaled_TMM, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_all_greylist_LibCSIFScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_all_greylist_LibCSIFScaled_TMM_SF.txt")
+```
+
+
+--> The clustering is OK, not amazing; at least ESC clustered together, WT clsutered together then HET/KO/NPC/2dN a bit mixed; LIB/RLE/TMM perform similarly; so stay with TMM
+
+- sample / library size * SF = scaled library size --> DiffBind_TMM_SF ; reciprocal
+- 2dN_HET_H3K27me3_R1 / 70887858 1.97 = 139649080 --> 0.6596462 ; 1.515964164
+- 2dN_HET_H3K27me3_R2 / 67346082 1.75 = 117855644 --> 0.6285088 ; 1.591067619
+- 2dN_KO_H3K27me3_R1 / 58363794 1.46 = 85211139 --> 0.5460104 ; 1.831466946
+- 2dN_KO_H3K27me3_R2 / 71964648 1 = 71964648 --> 0.5574423 ; 1.793907639
+- 2dN_WT_H3K27me3_R1 / 71682964 1.29 = 92471024 --> 0.6458845 ; 1.548264434
+- 2dN_WT_H3K27me3_R2 / 60792560 1.69 = 102739426 --> 0.5910808 ; 1.691816077
+- ESC_HET_H3K27me3_R1 / 85933694 10.51 = 903163124 --> 0.4633394 ; 2.158245122
+- ESC_HET_H3K27me3_R2 / 66583922 23.35 = 1554734579 --> 0.3576010 ; 2.796412762
+- ESC_KO_H3K27me3_R1 / 86014942 10.06 = 865310316 --> 0.4468665 ; 2.237804803
+- ESC_KO_H3K27me3_R2 / 57643920 15.78 = 909621058 --> 0.3132557 ; 3.1922803
+- ESC_WT_H3K27me3_R1 / 90968406 7 = 636778842 --> 0.7957969 ; 1.25660203
+- ESC_WT_H3K27me3_R2 / 79650052 4.31 = 343291724 --> 0.7333544 ; 1.363597191
+- NPC_HET_H3K27me3_R1 / 40423510 1.13 = 45678566 --> 0.3083840 ; 3.242710387
+- NPC_HET_H3K27me3_R2 / 82710030 1.43 = 118275343 --> 0.7630974 ; 1.310448705
+- NPC_KO_H3K27me3_R1 / 67904376 1.55 = 105251783 --> 0.5464982 ; 1.829832193
+- NPC_KO_H3K27me3_R2 / 84619268 2.64 = 223394867 --> 0.7914168 ; 1.2635567
+- NPC_WT_H3K27me3_R1 / 77698696 1.45 = 112663109 --> 0.7014795 ; 1.425558409
+- NPC_WT_H3K27me3_R2 / 72126718 1.51 = 108911344 --> 0.6423245 ; 1.556845489
+
+
+
+
+
+
+Generate **Bigwig DiffBind TMM scaled** (LibCSIFScaled_TMM):
+
+Use reciprocal of SF !!
+
+```bash
+conda activate deeptools
+
+sbatch scripts/bamtobigwig_DiffBind_TMM_ESC.sh # 894655
+sbatch scripts/bamtobigwig_DiffBind_TMM_NPC.sh # 894656
+sbatch scripts/bamtobigwig_DiffBind_TMM_2dN.sh # 894657
+sbatch scripts/bamtobigwig_DiffBind_TMM_input.sh # 894659
+
+# median
+conda activate BedToBigwig
+sbatch --dependency=afterany:894655:894656:894657:894659 scripts/bigwigmerge_DiffBind_TMM.sh # 894697
+```
+- *NOTE: I also generated input DiffBind_LibCSIFScaled_TMM corrected*
+
+--> The replicates looks XXX
+
+--> XXX We still see the decrease of H3K27me3 in ESC versus diff samples
+
+
+
 
 
 
