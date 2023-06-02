@@ -4531,66 +4531,33 @@ sbatch scripts/macs2_pool_peak_signif.sh # ok
 Let's try to use deepTools to explore the data: tutorial [here](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/10_data_visualization.html) and [here](https://deeptools.readthedocs.io/en/develop/content/tools/computeMatrix.html#reference-point).
 
 
-DeepTools can used bed or bigwig to estimate signal (heatmap or profile) around a point of interest (eg. TSS). Let's use our **median-ChIPseqSpikeInFree_lib bigwig**! Generate a matrix for WT,KO,HET and WT,KO,HET,patient for 10 and 50kb around the TSS.
 
-XXX
+Let's compare deepTools for `bigwig_DiffBind_TMM` versus `bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF` (check replicates)
+
 
 ```bash
 conda activate deeptools
-
-# example for 1 file 10kb up down TSS:
-computeMatrix reference-point --referencePoint TSS \
--b 10000 -a 10000 \
--R [GTF] \
--S [all bigwig] \
---skipZeros \
---blackListFileName [BED] \
--o ~/chipseq/results/visualization/matrixNanog_TSS_chr12.gz \
--p 6 \
---outFileSortedRegions ~/chipseq/results/visualization/regions_TSS_chr12.bed
-
-# Run the different matrix using 200g mem each (last < 48 hrs)
-## Genotype effect
-### 10kb
-sbatch scripts/matrix_TSS_10kb_ESC.sh # 
-sbatch scripts/matrix_TSS_10kb_NPC.sh # 
-sbatch scripts/matrix_TSS_10kb_2dN.sh # 
-
-### 50kb
-sbatch scripts/matrix_TSS_50kb_ESC.sh # 
-sbatch scripts/matrix_TSS_50kb_NPC.sh # 
-sbatch scripts/matrix_TSS_50kb_2dN.sh # 
-
-## Time effect
-### 10kb
-sbatch scripts/matrix_TSS_10kb_WT.sh # 
-sbatch scripts/matrix_TSS_10kb_KO.sh # 
-sbatch scripts/matrix_TSS_10kb_HET.sh # 
-
-### 50kb
-sbatch scripts/matrix_TSS_50kb_WT.sh # 
-sbatch scripts/matrix_TSS_50kb_KO.sh # 
-sbatch scripts/matrix_TSS_50kb_HET.sh # 
+# deepTools plot
+## bigwig_DiffBind_TMM
+sbatch --dependency=afterany:894697 scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ESC_noIntergenic_Rep.sh # 894880
+sbatch --dependency=afterany:894697 scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_NPC_noIntergenic_Rep.sh # 894900
+sbatch --dependency=afterany:894697 scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_2dN_noIntergenic_Rep.sh # 894901
 
 
-## All
-### 10kb
-XXX
-
-### 50kb
-XXX
-
-## Replicates
-### 10kb
-sbatch scripts/matrix_TSS_10kb_ESC_WT.sh
-sbatch scripts/matrix_TSS_10kb_ESC_KO.sh
-sbatch scripts/matrix_TSS_10kb_ESC_HET.sh
-sbatch scripts/matrix_TSS_10kb_NPC_WT.sh
-sbatch scripts/matrix_TSS_10kb_NPC_KO.sh
-sbatch scripts/matrix_TSS_10kb_NPC_HET.sh
-sbatch scripts/matrix_TSS_10kb_2dN_WT.sh
-sbatch scripts/matrix_TSS_10kb_2dN_KO.sh
-sbatch scripts/matrix_TSS_10kb_2dN_HET.sh
+## bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF
+sbatch scripts/matrix_gene_1kb_bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF_ESC_noIntergenic_Rep.sh # 894902
+sbatch scripts/matrix_gene_1kb_bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF_NPC_noIntergenic_Rep.sh # 894904
+sbatch scripts/matrix_gene_1kb_bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF_2dN_noIntergenic_Rep.sh # 894905
 ```
+*NOTE: for comparison here I used the `ENCFF159KBI_peak_noIntergenic.gtf` (peak in at least 1 genotype non intergenic)*
 
-XXX
+--> `bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF` is ok for replicates (not perfect but overall seems ok); except 
+NPC KO very bad. Also I feel ESC WT is VERY different as compare to ESC KO and HET; the difference is HUGE with WT much more H3K27me3 (maybe true but that's strong)
+
+
+--> `bigwig_DiffBind_TMM` is  XXX
+
+--> XXX is better; overall replicate better cluster together
+
+
+
