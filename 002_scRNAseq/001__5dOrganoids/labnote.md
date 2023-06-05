@@ -626,14 +626,25 @@ Preliminary steps, starting with the `filtered_feature_bc_matrix` from Cellrange
 First step is to apply [soupX](https://github.com/constantAmateur/SoupX) for ambiant RNA contamination:
 
 
+```R
+# install.packages('SoupX')
+library("SoupX")
 
-xxx
+# Decontaminate one channel of 10X data mapped with cellranger
+sc = load10X('count/outs')
 
+# Assess % of conta
+pdf("output/soupX/autoEstCont_5dOrga.pdf", width=10, height=10)
+sc = autoEstCont(sc)
+dev.off()
 
+# Generate the corrected matrix
+out = adjustCounts(sc)
 
-
-
-XXX repeat scrublet taking the output of soupX
+# Save the matrix
+save(out, file = "output/soupX/out.RData")
+```
+**NOTE: to make it work provide the path to the all 10x analyses! Not the filtered**
 
 
 
@@ -651,57 +662,332 @@ python3 scrublet.py [input_path] [output_path]
 python3 scripts/scrublet_doublets.py count/outs/filtered_feature_bc_matrix output/scrublet
 ```
 --> The script will output if each cell is a doublet or not!!!
+**NOTE: do not name any file `scrublet.smthg` or it will fail!**
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Then pursue the analyses! Now with our corrected matrix:
 
 
 ```R
-library(dplyr)
-library(Seurat)
-library(patchwork)
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
 
-# Load the 10x dataset
-orga5d.data <- Read10X(data.dir = "count/outs/filtered_feature_bc_matrix")
-# Initialize the Seurat object with the raw (non-normalized data).
-orga5d <- CreateSeuratObject(counts = orga5d.data, project = "orga5d") # 
+
+# Load the soupX corrected counts
+load("output/soupX/out.RData")
+
+orga5d <- CreateSeuratObject(counts = out, project = "orga5d") # 
 
 # QUALITY CONTROL add mitochondrial and Ribosomal conta
 orga5d[["percent.mt"]] <- PercentageFeatureSet(orga5d, pattern = "^MT-")
 orga5d[["percent.rb"]] <- PercentageFeatureSet(orga5d, pattern = "^RP[SL]")
 
+# ADD doublet information (scrublet)
+doublets <- read.table("output/doublets/scrublet.tsv",header = F,row.names = 1)
+colnames(doublets) <- c("Doublet_score","Is_doublet")
+orga5d <- AddMetaData(orga5d,doublets)
+orga5d$Doublet_score <- as.numeric(orga5d$Doublet_score) # make score as numeric
+head(orga5d[[]])
+
+# Quality check
+pdf("output/seurat_sanger/VlnPlot_QC_5dOrga.pdf", width=10, height=6)
+VlnPlot(orga5d, features = c("nFeature_RNA","nCount_RNA","percent.mt","percent.rb"),ncol = 4,pt.size = 0.1) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+
+pdf("output/seurat_sanger/FeatureScatter_QC_RNAcount_mt_5dOrga.pdf", width=5, height=5)
+FeatureScatter(orga5d, feature1 = "nCount_RNA", feature2 = "percent.mt")
+dev.off()
+pdf("output/seurat_sanger/FeatureScatter_QC_RNAcount_RNAfeature_5dOrga.pdf", width=5, height=5)
+FeatureScatter(orga5d, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+dev.off()
+pdf("output/seurat_sanger/FeatureScatter_QC_RNAcount_rb_5dOrga.pdf", width=5, height=5)
+FeatureScatter(orga5d, feature1 = "nCount_RNA", feature2 = "percent.rb")
+dev.off()
+pdf("output/seurat_sanger/FeatureScatter_QC_rb_mt_5dOrga.pdf", width=5, height=5)
+FeatureScatter(orga5d, feature1 = "percent.rb", feature2 = "percent.mt")
+dev.off()
+pdf("output/seurat_sanger/FeatureScatter_QC_RNAfeature_doublet_5dOrga.pdf", width=5, height=5)
+FeatureScatter(orga5d, feature1 = "nFeature_RNA", feature2 = "Doublet_score")
+dev.off()
+
+# After seeing the plot; add QC information in our seurat object
+orga5d[['QC']] <- ifelse(orga5d@meta.data$Is_doublet == 'True','Doublet','Pass')
+orga5d[['QC']] <- ifelse(orga5d@meta.data$nFeature_RNA < 500 & orga5d@meta.data$QC == 'Pass','Low_nFeature',orga5d@meta.data$QC)
+orga5d[['QC']] <- ifelse(orga5d@meta.data$nFeature_RNA < 500 & orga5d@meta.data$QC != 'Pass' & orga5d@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',orga5d@meta.data$QC,sep = ','),orga5d@meta.data$QC)
+orga5d[['QC']] <- ifelse(orga5d@meta.data$percent.mt > 15 & orga5d@meta.data$QC == 'Pass','High_MT',orga5d@meta.data$QC)
+orga5d[['QC']] <- ifelse(orga5d@meta.data$nFeature_RNA < 500 & orga5d@meta.data$QC != 'Pass' & orga5d@meta.data$QC != 'High_MT',paste('High_MT',orga5d@meta.data$QC,sep = ','),orga5d@meta.data$QC)
+table(orga5d[['QC']])
+
+# Quality check after QC filtering
+pdf("output/seurat_sanger/VlnPlot_QCPass_5dOrga.pdf", width=10, height=6)
+VlnPlot(subset(orga5d, subset = QC == 'Pass'), 
+        features = c("nFeature_RNA", "nCount_RNA", "percent.mt","percent.rb"), ncol = 4, pt.size = 0.1) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+
+# normalize data
+orga5d <- NormalizeData(orga5d, normalization.method = "LogNormalize", scale.factor = 10000)
+
+# Discover the 2000 first more variable genes
+orga5d <- FindVariableFeatures(orga5d, selection.method = "vst", nfeatures = 2000)
+
+top10 <- head(VariableFeatures(orga5d), 10)
+top10 
+
+## plot the 10 first variable
+pdf("output/seurat_sanger/VariableFeaturePlot_top10_5dOrga.pdf", width=10, height=10)
+plot1 <- VariableFeaturePlot(orga5d)
+LabelPoints(plot = plot1, points = top10, repel = TRUE, xnudge = 0, ynudge = 0)
+dev.off()
+
+# scale data to Z score (value centered around 0 and +/- 1)
+all.genes <- rownames(orga5d)
+orga5d <- ScaleData(orga5d, features = all.genes)
+
+# PCA
+orga5d <- RunPCA(orga5d, features = VariableFeatures(object = orga5d))
+
+# investigate to find optimal nb of dimension
+
+## Vizualize the 1st 20 PC
+pdf("output/seurat_sanger/DimHeatmap.pdf", width=10, height=20)
+DimHeatmap(orga5d, dims = 1:20, cells = 500, balanced = TRUE)
+dev.off()
+
+## Compute JackStraw score
+orga5d_Jack <- JackStraw(orga5d, num.replicate = 100)
+orga5d_JackScore <- ScoreJackStraw(orga5d_Jack, dims = 1:20)
+
+## Generate plot
+pdf("output/seurat_sanger/JackStraw.pdf", width=10, height=10)
+JackStrawPlot(orga5d_JackScore, dims = 1:20)
+dev.off()
+
+pdf("output/seurat_sanger/Elbow.pdf", width=10, height=10)
+ElbowPlot(orga5d)
+dev.off()
+
+# clustering
+orga5d <- FindNeighbors(orga5d, dims = 1:7)
+orga5d <- FindClusters(orga5d, resolution = 0.2)
+
+orga5d <- RunUMAP(orga5d, dims = 1:7, verbose = F)
+table(orga5d@meta.data$seurat_clusters) # to check cluster size
+
+pdf("output/seurat_sanger/Umap.pdf", width=10, height=10)
+DimPlot(orga5d,label.size = 4,repel = T,label = T)
+dev.off()
+
+# Check minor cell population to make sure clustering is good
+pdf("output/seurat_sanger/FeaturePlot_Papercluster4.pdf", width=10, height=5)
+FeaturePlot(orga5d, features = c("NEUROG2", "ELAVL4"))
+dev.off()
+
+# Check parameter to see if one clsuter to do technical stuff
+pdf("output/seurat_sanger/FeaturePlot_Doublet_score.pdf", width=10, height=5)
+FeaturePlot(orga5d, features = "Doublet_score") & theme(plot.title = element_text(size=10))
+dev.off()
+pdf("output/seurat_sanger/FeaturePlot_mt.pdf", width=10, height=5)
+FeaturePlot(orga5d, features = "percent.mt") & theme(plot.title = element_text(size=10))
+dev.off()
+pdf("output/seurat_sanger/FeaturePlot_RNAfeature.pdf", width=10, height=5)
+FeaturePlot(orga5d, features = "nFeature_RNA") & theme(plot.title = element_text(size=10))
+dev.off()
+
+# Remove cells that did not path QC
+orga5d_QCPass <- subset(orga5d, subset = QC == 'Pass')
+
+pdf("output/seurat_sanger/Umap_QCPass.pdf", width=10, height=10)
+DimPlot(orga5d_QCPass,label.size = 4,repel = T,label = T)
+dev.off()
+
+# Check cell cycles
+s.genes <- cc.genes.updated.2019$s.genes
+g2m.genes <- cc.genes.updated.2019$g2m.genes
+
+orga5d_QCPass <- CellCycleScoring(orga5d_QCPass, s.features = s.genes, g2m.features = g2m.genes)
+table(orga5d_QCPass[[]]$Phase)
+
+# Let's see if cluster define by technical difference (even after QC filtering)
+
+## percent mt
+pdf("output/seurat_sanger/FeaturePlot_QCPass_mt.pdf", width=10, height=10)
+FeaturePlot(orga5d_QCPass,features = "percent.mt",label.size = 4,repel = T,label = T) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+pdf("output/seurat_sanger/VlnPlot_QCPass_mt.pdf", width=10, height=10)
+VlnPlot(orga5d_QCPass,features = "percent.mt") & theme(plot.title = element_text(size=10))
+dev.off()
+## percent rb
+pdf("output/seurat_sanger/FeaturePlot_QCPass_rb.pdf", width=10, height=10)
+FeaturePlot(orga5d_QCPass,features = "percent.rb",label.size = 4,repel = T,label = T) & theme(plot.title = element_text(size=10))
+dev.off()
+pdf("output/seurat_sanger/VlnPlot_QCPass_rb.pdf", width=10, height=10)
+VlnPlot(orga5d_QCPass,features = "percent.rb") & theme(plot.title = element_text(size=10))
+dev.off()
+## RNA
+pdf("output/seurat_sanger/VlnPlot_QCPass_RNA.pdf", width=10, height=10)
+VlnPlot(orga5d_QCPass,features = c("nCount_RNA","nFeature_RNA")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+## cell cycle
+pdf("output/seurat_sanger/FeaturePlot_QCPass_cellCycle.pdf", width=10, height=10)
+FeaturePlot(orga5d_QCPass,features = c("S.Score","G2M.Score"),label.size = 4,repel = T,label = T) & 
+  theme(plot.title = element_text(size=10))
+dev.off()  
+pdf("output/seurat_sanger/VlnPlot_QCPass_cellCycle.pdf", width=10, height=10)
+VlnPlot(orga5d_QCPass,features = c("S.Score","G2M.Score")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+
+# SCTransform normalization and clustering
+orga5d_QCPass <- SCTransform(orga5d_QCPass, method = "glmGamPoi", ncells = 6941,     # HERE PASTE NB OF CELLS AFTER QC!!! NB OF CEL IN THE orga5d_QCPass
+                    vars.to.regress = c("percent.mt","S.Score","G2M.Score"), verbose = F)
+orga5d_QCPass
+
+# SCTransform PCA 
+orga5d_QCPass <- RunPCA(orga5d_QCPass, verbose = F)
+orga5d_QCPass <- RunUMAP(orga5d_QCPass, dims = 1:30, verbose = F)
+orga5d_QCPass <- FindNeighbors(orga5d_QCPass, k.param = 15, dims = 1:30, verbose = F) # k.param can be changed
+orga5d_QCPass <- FindClusters(orga5d_QCPass, verbose = F, resolution = 0.2, algorithm = 4) # algorithm can be changed
+table(orga5d_QCPass[[]]$seurat_clusters)
+
+## Plot
+pdf("output/seurat_sanger/Umap_QCPass_SCT.pdf", width=10, height=10)
+DimPlot(orga5d_QCPass, label = T)
+dev.off()
+
+## Check marker genes
+pdf("output/seurat_sanger/FeaturePlot_Papercluster1_SCT.pdf", width=10, height=5)
+FeaturePlot(orga5d_QCPass, features = c("FOXC1", "SIX1"))
+dev.off()
+pdf("output/seurat_sanger/FeaturePlot_Papercluster2_SCT.pdf", width=10, height=5)
+FeaturePlot(orga5d_QCPass, features = c("TWIST1", "SOX9"))
+dev.off()
+pdf("output/seurat_sanger/FeaturePlot_Papercluster3_SCT.pdf", width=10, height=5)
+FeaturePlot(orga5d_QCPass, features = c("PAX6", "CDH6"))
+dev.off()
+pdf("output/seurat_sanger/FeaturePlot_Papercluster4_SCT.pdf", width=10, height=5)
+FeaturePlot(orga5d_QCPass, features = c("NEUROG2", "ELAVL4"))
+dev.off()
+
+# Save the seurat
+save(orga5d_QCPass, file = "output/seurat_sanger/orga5d_QCPass.RData")
+load("output/seurat_sanger/orga5d_QCPass.RData")
+
+# Differential expression and marker selection
+## set back  active assay to “RNA” and re-do norm and scaling (as we filter out many cells)
+DefaultAssay(orga5d_QCPass) <- "RNA"
+orga5d_QCPass <- NormalizeData(orga5d_QCPass)
+orga5d_QCPass <- FindVariableFeatures(orga5d_QCPass, selection.method = "vst", nfeatures = 2000)
+all.genes <- rownames(orga5d_QCPass)
+orga5d_QCPass <- ScaleData(orga5d_QCPass, features = all.genes)
+
+## DEGs
+all.markers <- FindAllMarkers(orga5d_QCPass, only.pos = T, min.pct = 0.25, logfc.threshold = 0.25)
+
+## check markers
+dim(all.markers)
+table(all.markers$cluster)
+top5_markers <- as.data.frame(all.markers %>% group_by(cluster) %>% top_n(n = 5, wt = avg_log2FC))
+top5_markers
+
+# Cell type annotation using SingleR
+## Get reference datasets
+monaco.ref <- celldex::MonacoImmuneData()
+hpca.ref <- celldex::HumanPrimaryCellAtlasData()
+dice.ref <- celldex::DatabaseImmuneCellExpressionData()
+
+## Convert Seurat object into SCE
+sce <- as.SingleCellExperiment(DietSeurat(orga5d_QCPass))
+sce
+
+## Analyse
+monaco.main <- SingleR(test = sce,assay.type.test = 1,ref = monaco.ref,labels = monaco.ref$label.main)
+monaco.fine <- SingleR(test = sce,assay.type.test = 1,ref = monaco.ref,labels = monaco.ref$label.fine)
+hpca.main <- SingleR(test = sce,assay.type.test = 1,ref = hpca.ref,labels = hpca.ref$label.main)
+hpca.fine <- SingleR(test = sce,assay.type.test = 1,ref = hpca.ref,labels = hpca.ref$label.fine)
+dice.main <- SingleR(test = sce,assay.type.test = 1,ref = dice.ref,labels = dice.ref$label.main)
+dice.fine <- SingleR(test = sce,assay.type.test = 1,ref = dice.ref,labels = dice.ref$label.fine)
+
+## cgheck results
+table(monaco.main$pruned.labels)
+table(hpca.main$pruned.labels)
+table(dice.main$pruned.labels)
+table(monaco.fine$pruned.labels)
+table(hpca.fine$pruned.labels)
+table(dice.fine$pruned.labels)
+
+# Add annotation to seurat object
+orga5d_QCPass@meta.data$monaco.main <- monaco.main$pruned.labels
+orga5d_QCPass@meta.data$monaco.fine <- monaco.fine$pruned.labels
+orga5d_QCPass@meta.data$hpca.main   <- hpca.main$pruned.labels
+orga5d_QCPass@meta.data$dice.main   <- dice.main$pruned.labels
+orga5d_QCPass@meta.data$hpca.fine   <- hpca.fine$pruned.labels
+orga5d_QCPass@meta.data$dice.fine   <- dice.fine$pruned.labels
+
+# cluster with name
+pdf("output/seurat_sanger/UMAP_SCT_annotated_hpca.main.pdf", width=10, height=10)
+orga5d_QCPass <- SetIdent(orga5d_QCPass, value = "hpca.main")
+DimPlot(orga5d_QCPass, label = T , repel = T, label.size = 3)
+dev.off()
+
+pdf("output/seurat_sanger/UMAP_SCT_annotated_hpca.fine.pdf", width=10, height=10)
+orga5d_QCPass <- SetIdent(orga5d_QCPass, value = "hpca.fine")
+DimPlot(orga5d_QCPass, label = T , repel = T, label.size = 3)
+dev.off()
+
+# manual annotation
+# Rename cluster in agreement
+new.cluster.ids <- c("Mesodermal progenitors", "Neuroectodermal progenitors", "Mesodermal progenitors- Sclerotome", "Unkowkn_1", "Unkowkn_2", "Neurons")
+names(new.cluster.ids) <- levels(orga5d_QCPass)
+orga5d_QCPass <- RenameIdents(orga5d_QCPass, new.cluster.ids)
+
+pdf("output/seurat_sanger/UMAP_label_manual.pdf", width=10, height=10)
+DimPlot(orga5d_QCPass, reduction = "umap", label = TRUE, pt.size = 0.7, label.size = 6) + NoLegend()
+dev.off()
+```
+- **NOTE: the treshold for QC can be fine-tune depending on our data (this was value from tutorial look likes it fits well with our data)**
+- **NOTE: Conventional normalization is to scale it to 10,000 (as if all cells have 10k UMIs overall), and log2-transform the obtained values**
+- **NOTE: Additional steps here is the SCTransform normalization and clustering; improve signal noise/ratio:  Single SCTransform command replaces NormalizeData, ScaleData, and FindVariableFeatures --> Take as input the QCpass!!!**
+- **NOTE: when using SCTransform we can often use more PC !**
+- **NOTE: If need arises, we can separate some clusters manualy. There are also clustering methods geared towards indentification of rare cell populations. Let’s try using fewer neighbors in the KNN graph, combined with Leiden algorithm (now default in scanpy) and slightly increased resolution: `srat <- FindNeighbors(srat, dims = 1:30, k.param = 15, verbose = F)` and  `srat <- FindClusters(srat, verbose = F, algorithm = 4, resolution = 0.9)`**
+- **NOTE: at FindClusters can test different alorithm! see [here](https://satijalab.org/seurat/reference/findclusters); to use algorithm 4 I installed it with ` conda install -c conda-forge leidenalg` and `conda install -c anaconda numpy` and `conda install -c anaconda pandas`**
+- **NOTE: Reccommended to do the differential expression on the RNA assay, and not the SCTransform**
+- **NOTE: singleR automatically assign cell types, infor [here](http://bioconductor.org/books/release/SingleRBook/)** 
+
+--> The finer cell types annotations are you after, the harder they are to get reliably. Good to compare the different databases** 
 
 
+To make sure R is using the correct Python version; do:
+```bash
+which python
+```
+Check which python is using; and also if I install stuff, where it will be installed. Then force R to use the correct version
 
+```R
+library(reticulate)
+use_python('~/anaconda3/envs/scRNAseq/bin/python')
 ```
 
+--> Elbow drop at 7/12; Jack at 13 --> let's pick 7
 
+--> I tested different resolution parameter until I can individualize the neurons cluster; seems 7 dim and 0.2 res is good (6 clusters including neurons)
 
+--> checking technical difference after QC filtering shows that cluster 3 may be composed of dead unhealthy cells
 
+--> If we observe crazy changes of cell cycle score or MT, we could correct this with SCTransform. Not done here as not the case
 
+--> For cleaner code, name `srat` the object and not `orga5d_QCPass`
 
-
-
-
+--> The automatic annotation fail in my case, not super informative; but could be , more info [here](https://bioconductor.org/books/3.12/SingleRBook/)!!
 
 
 # 50 days organoids analysis
