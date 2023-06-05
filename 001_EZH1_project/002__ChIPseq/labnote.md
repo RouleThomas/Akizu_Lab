@@ -4458,9 +4458,9 @@ sbatch --dependency=afterany:894655:894656:894657:894659 scripts/bigwigmerge_Dif
 ```
 - *NOTE: I also generated input DiffBind_LibCSIFScaled_TMM corrected*
 
---> The replicates looks XXX
+--> The replicates looks OK
 
---> XXX We still see the decrease of H3K27me3 in ESC versus diff samples
+--> We do NOT see the increase of H3K27me3 in ESC versus diff samples; something is wrong! (maybe we cannot apply both ChIPseqSpikeInFree and TMM; I tested TMM only next)
 
 
 
@@ -4539,15 +4539,15 @@ Let's compare deepTools for `bigwig_DiffBind_TMM` versus `bigwig_ChIPseqSpikeInF
 conda activate deeptools
 # deepTools plot
 ## bigwig_DiffBind_TMM
-sbatch --dependency=afterany:894697 scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ESC_noIntergenic_Rep.sh # 894880
-sbatch --dependency=afterany:894697 scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_NPC_noIntergenic_Rep.sh # 894900
-sbatch --dependency=afterany:894697 scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_2dN_noIntergenic_Rep.sh # 894901
+sbatch --dependency=afterany:894697 scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ESC_noIntergenic_Rep.sh # 894880 ok
+sbatch --dependency=afterany:894697 scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_NPC_noIntergenic_Rep.sh # 894900 ok
+sbatch --dependency=afterany:894697 scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_2dN_noIntergenic_Rep.sh # 894901 ok
 
 
 ## bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF
-sbatch scripts/matrix_gene_1kb_bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF_ESC_noIntergenic_Rep.sh # 894902
-sbatch scripts/matrix_gene_1kb_bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF_NPC_noIntergenic_Rep.sh # 894904
-sbatch scripts/matrix_gene_1kb_bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF_2dN_noIntergenic_Rep.sh # 894905
+sbatch scripts/matrix_gene_1kb_bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF_ESC_noIntergenic_Rep.sh # 894902 ok
+sbatch scripts/matrix_gene_1kb_bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF_NPC_noIntergenic_Rep.sh # 894904 ok
+sbatch scripts/matrix_gene_1kb_bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF_2dN_noIntergenic_Rep.sh # 894905 ok
 ```
 *NOTE: for comparison here I used the `ENCFF159KBI_peak_noIntergenic.gtf` (peak in at least 1 genotype non intergenic)*
 
@@ -4555,9 +4555,103 @@ sbatch scripts/matrix_gene_1kb_bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_unique
 NPC KO very bad. Also I feel ESC WT is VERY different as compare to ESC KO and HET; the difference is HUGE with WT much more H3K27me3 (maybe true but that's strong)
 
 
---> `bigwig_DiffBind_TMM` is  XXX
+--> `bigwig_DiffBind_TMM` is overall better for replicates clustering; at all time-point. However; the conclusion differ for ESC:
+- `bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF` = WT is MORE H3K27me3 / KO-HET
+- `bigwig_DiffBind_TMM` = WT is LESS H3K27me3 / KO-HET
 
---> XXX is better; overall replicate better cluster together
+
+--> `bigwig_DiffBind_TMM` show that ESC samples are MORE H3K27me3 than NPC and 2dN. That is not true, so something wrong with the `bigwig_DiffBind_TMM` method...
+
+
+Maybe we cannot do both ChIPseqInFree and DiffBind TMM correction; may result in a weird double correction... Let's try using DiffBind TMM without scaling the library and see if the SF we obtain increase H3K27me3 upon differentiation
+
+
+```bash
+srun --mem=500g --pty bash -l
+conda activate DiffBind
+```
+
+```R
+# Load package
+library("DiffBind")
+
+# Load greylist count
+load("output/DiffBind/sample_count_all_greylist.RData")
+
+# Apply ONLY TMM normalization
+sample_count_all_greylist_LibCSIFScaled_TMM = dba.normalize(sample_count_all_greylist, normalize = DBA_NORM_TMM) # TMM norm
+
+
+# Plot PCA / clustering
+pdf("output/DiffBind/clustering_all_greylist_TMM.pdf", width=14, height=20)
+plot(sample_count_all_greylist_LibCSIFScaled_TMM)
+dev.off()
+
+pdf("output/DiffBind/PCA_all_greylist_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_all_greylist_LibCSIFScaled_TMM,DBA_CONDITION, label=DBA_TREATMENT)
+dev.off()
+
+
+# Collect scaling factor
+sample_count_all_greylist_LibCSIFScaled_TMM_SF = dba.normalize(sample_count_all_greylist_LibCSIFScaled_TMM, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_all_greylist_LibCSIFScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_all_greylist_TMM_SF.txt")
+```
+
+
+- sample / library size * SF = scaled library size --> DiffBind_TMM_SF ; reciprocal | DiffBind_TMM_ONLY_SF ; reciprocal
+- 2dN_HET_H3K27me3_R1 / 70887858 1.97 = 139649080 --> 0.6596462 ; 1.515964164 | 1.1452498 ; 0.8731719490367953
+- 2dN_HET_H3K27me3_R2 / 67346082 1.75 = 117855644 --> 0.6285088 ; 1.591067619 | 1.0914982 ; 0.9161719185611117
+- 2dN_KO_H3K27me3_R1 / 58363794 1.46 = 85211139 --> 0.5460104 ; 1.831466946 | 0.9471807 ; 1.055764755341827
+- 2dN_KO_H3K27me3_R2 / 71964648 1 = 71964648 --> 0.5574423 ; 1.793907639 | 0.9744307 ; 1.026240244688514
+- 2dN_WT_H3K27me3_R1 / 71682964 1.29 = 92471024 --> 0.6458845 ; 1.548264434 | 1.1265964 ; 0.887629323154237
+- 2dN_WT_H3K27me3_R2 / 60792560 1.69 = 102739426 --> 0.5910808 ; 1.691816077 | 1.0306665 ; 0.9702459524977284
+- ESC_HET_H3K27me3_R1 / 85933694 10.51 = 903163124 --> 0.4633394 ; 2.158245122 | 0.8051032 ; 1.24207679214292
+- ESC_HET_H3K27me3_R2 / 66583922 23.35 = 1554734579 --> 0.3576010 ; 2.796412762 |  0.6234852 ; 1.603887309594518
+- ESC_KO_H3K27me3_R1 / 86014942 10.06 = 865310316 --> 0.4468665 ; 2.237804803 | 0.7811012; 1.280243840362811
+- ESC_KO_H3K27me3_R2 / 57643920 15.78 = 909621058 --> 0.3132557 ; 3.1922803 | 0.5454599 ; 1.833315336287782
+- ESC_WT_H3K27me3_R1 / 90968406 7 = 636778842 --> 0.7957969 ; 1.25660203 |  1.3835209 ; 0.7227935624246804
+- ESC_WT_H3K27me3_R2 / 79650052 4.31 = 343291724 --> 0.7333544 ; 1.363597191 | 1.2753760 ; 0.7840824980241121
+- NPC_HET_H3K27me3_R1 / 40423510 1.13 = 45678566 --> 0.3083840 ; 3.242710387 |  0.5362265 ; 1.864883589304147
+- NPC_HET_H3K27me3_R2 / 82710030 1.43 = 118275343 --> 0.7630974 ; 1.310448705 |  1.3247137 ; 0.754880092204074
+- NPC_KO_H3K27me3_R1 / 67904376 1.55 = 105251783 --> 0.5464982 ; 1.829832193 |  0.9526521 ; 1.04970114483556
+- NPC_KO_H3K27me3_R2 / 84619268 2.64 = 223394867 --> 0.7914168 ; 1.2635567 |  1.3738308 ; 0.7278916734142225
+- NPC_WT_H3K27me3_R1 / 77698696 1.45 = 112663109 --> 0.7014795 ; 1.425558409 |  1.2176666 ; 0.8212428590880295
+- NPC_WT_H3K27me3_R2 / 72126718 1.51 = 108911344 --> 0.6423245 ; 1.556845489 | 1.1169502 ; 0.8952950632893033
+
+--> Median value for DiffBind_TMM_ONLY_SF; ESC: 1.26116031625287, NPC: 0.858268961188666, 2dN: 0.9462061048648195. Which is good as it will decrease signal in ESC
+
+
+Now generate **bigwig DiffBind_TMM_ONLY (non ChIPseqSpikeInFree + TMM) and deepTools plots**:
+
+*NOTE: Use reciprocal of SF (from the SF given by DiffBind)!!*
+
+```bash
+conda activate deeptools
+
+sbatch scripts/bamtobigwig_DiffBind_TMM_ONLY_ESC.sh # 1011491
+sbatch scripts/bamtobigwig_DiffBind_TMM_ONLY_NPC.sh # 1011508
+sbatch scripts/bamtobigwig_DiffBind_TMM_ONLY_2dN.sh # 1011514
+sbatch scripts/bamtobigwig_DiffBind_TMM_ONLY_input.sh # 1011585
+
+# median
+conda activate BedToBigwig
+sbatch --dependency=afterany:1011491:1011508:1011514:1011585 scripts/bigwigmerge_DiffBind_TMM_ONLY.sh # 1011632
+
+conda activate deeptools
+# deepTools plot
+## bigwig_DiffBind_TMM
+sbatch --dependency=afterany:1011632 scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ONLY_ESC_noIntergenic_Rep.sh # 1011757
+sbatch --dependency=afterany:1011632 scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ONLY_NPC_noIntergenic_Rep.sh # 1011830
+sbatch --dependency=afterany:1011632 scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ONLY_2dN_noIntergenic_Rep.sh # 1011903
+```
+*NOTE: I also generated input DiffBind_LibCSIFScaled_TMM corrected*
+
+--> The replicates looks XXX
+
+--> XXX We do NOT see the increase of H3K27me3 in ESC versus diff samples
+
+
 
 
 

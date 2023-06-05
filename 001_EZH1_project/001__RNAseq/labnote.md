@@ -4847,6 +4847,25 @@ dev.off()
 
 
 
+tpm_all_sample_tidy_gene_name_stat <- tpm_all_sample_tidy_gene_name %>%
+  filter(gene_name %in% c("EZH2", "EZH1", "EED", "SUZ12", "RBBP7", "RBBP4", "AEBP2", "JARID2", "PHF1", "MTF2", "PHF19")) %>%
+  select(-replicate) %>%
+  group_by(gene_id, gene_name, time, genotype) %>%
+  summarise(mean=mean(tpm), median= median(tpm), SD=sd(tpm), n=n(), SE=SD/sqrt(n)) 	
+pdf("output/deseq2/genes_PRC2subunits_allGenotypes.pdf", width=15, height=10)
+tpm_all_sample_tidy_gene_name_stat %>%
+  filter(gene_name %in% c("EZH2", "EZH1", "EED", "SUZ12", "RBBP7", "RBBP4", "AEBP2", "JARID2", "PHF1", "MTF2", "PHF19"),
+         genotype %in% c("WT", "KO", "HET")) %>%
+    ggplot(., aes(x = time, y = mean, group = genotype)) +
+    geom_line(aes(color=genotype), size=0.75) +
+    geom_errorbar(aes(ymin = mean-SE, ymax = mean+SE,color=genotype), width=.2) +
+    geom_point(aes(y = mean,color=genotype), size = .75, shape = 15) +
+    theme_bw() +
+    facet_wrap(~gene_name, nrow = 2, scale = "free")  +	
+    ylab(label = "tpm") +
+    ggtitle("PRC2 subunits") +
+    scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green", "iPSCWT" = "black", "iPSCpatient" = "orange"))
+dev.off()
 
 
 
