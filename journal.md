@@ -87,6 +87,7 @@ R/3.6.1 with **ChIPseqSpikeInFree** notably + following libraries:
 library("Rsamtools")
 library("GenomicAlignments")
 library("ChIPseqSpikeInFree")
+library("devtools")
 
 
 ### DiffBind

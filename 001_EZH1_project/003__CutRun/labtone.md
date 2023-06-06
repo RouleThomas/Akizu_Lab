@@ -3311,7 +3311,7 @@ Now that we have plenty of diff bound regions, we need to make sure what is dete
 
 
 
-# Test sliding window method for differential binding
+# Test other method for differential binding
 
 Many different tools:
 - csaw modified [paper](https://f1000research.com/articles/4-1080) : looks shit as cannot deal with library size and all in R, looks painfull, and not famous...
@@ -3321,24 +3321,65 @@ Many different tools:
 - ODIN [paper](https://academic.oup.com/bioinformatics/article/30/24/3467/2422257?login=false)
 
 
+## DiffChIPL
+
+[paper](https://academic.oup.com/bioinformatics/article/38/17/4062/6637512) and [github](https://github.com/yancychy/DiffChIPL). Not a sliding window method, but claim working better than MACS2, and we can set library size!
 
 
+### DiffChIPL-Installation
+Create `DiffChIPL conda env`
+
+```bash
+conda create -n DiffChIPL -c conda-forge r-base=4.0.0
+conda activate DiffChIPL
+conda install -c conda-forge r-pkgdown # needed for devtools installation
+conda install -c conda-forge r-devtools
+```
+
+```R
+install.packages("usethis")
+library("devtools")
+install_github("yancychy/DiffChIPL")
+```
 
 
+Many fails... Dependencies fail...--> let's try copy `deseq2` conda env where many stuff installed: 
+
+```bash
+conda create --name DiffChIPL --clone deseq2
+conda activate DiffChIPL
+# was needed for install_github("yancychy/DiffChIPL") to work:
+conda install -c bioconda bioconductor-limma 
+conda install -c bioconda bioconductor-edger
+conda install -c bioconda bioconductor-bamsignals
+```
+
+```R
+install.packages("devtools")
+library("devtools")
+
+BiocManager::install("SGSeq")
+install_github("OnofriAndreaPG/aomisc")
+install_github("yancychy/DiffChIPL")
+
+library("DiffChIPL")
+```
+*NOTE: these dependencies where problematic; so I installed them through conda or bioconductor or devtools_github: limma, edgeR, bamsignals, SGSeq, aomisc*
+
+--> It works!!!
+
+# DiffChIPL_Go 
+
+XXX
 
 
+```bash
+conda activate DiffChIPL
+```
 
-
-
-
-
-
-
-
-
-
-
-
+```R
+library("DiffChIPL")
+```
 
 
 

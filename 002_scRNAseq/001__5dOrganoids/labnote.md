@@ -1116,7 +1116,7 @@ gzip input_50dOrga/SRR*
 
 # start counting
 conda activate scRNAseq
-sbatch scripts/cellranger_count_50dOrga.sh # 1063833
+sbatch scripts/cellranger_count_50dOrga.sh # 
 ```
 
 
