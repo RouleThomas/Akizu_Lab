@@ -1085,17 +1085,41 @@ use_python('~/anaconda3/envs/scRNAseq/bin/python')
 
 
 # 50 days organoids analysis
+Here are the 2 files:
+- SRR8734991 organoids 1-3 
+- SRR10914868	organoids 4
 
-SRR8734991 organoids 1-3 
-SRR10914868	organoids 4
-
+## Download
 ```bash
 sbatch scripts/download_SRR8734991.sh # 894908
 sbatch scripts/download_SRR10914868.sh # 894909
 ```
 
+## Count matrix with cellranger 10x
 
-XXX
+There is 2 files but cellrange can handle it, different indexes has been used. Let's generate the count matrix with 10x:
+(sequencing machine generated several outputs, which is pretty common in high-throughput sequencing methods like the Illumina platforms)
+
+
+```bash
+# Rename files to respect cell ranger nomenclature
+mv input_50dOrga/SRR8734991_1.fastq input_50dOrga/SRR8734991_S1_L001_R1_001.fastq
+mv input_50dOrga/SRR8734991_2.fastq input_50dOrga/SRR8734991_S1_L001_R2_001.fastq
+mv input_50dOrga/SRR8734991_3.fastq input_50dOrga/SRR8734991_S1_L001_I1_001.fastq
+
+mv input_50dOrga/SRR10914868_1.fastq input_50dOrga/SRR10914868_S1_L001_R1_001.fastq
+mv input_50dOrga/SRR10914868_2.fastq input_50dOrga/SRR10914868_S1_L001_R2_001.fastq
+mv input_50dOrga/SRR10914868_3.fastq input_50dOrga/SRR10914868_S1_L001_I1_001.fastq
+
+# Compress them
+gzip input_50dOrga/SRR*
+
+# start counting
+conda activate scRNAseq
+sbatch scripts/cellranger_count_50dOrga.sh # 1063833
+```
+
+
 
 
 
