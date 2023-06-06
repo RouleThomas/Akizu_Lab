@@ -665,7 +665,9 @@ python3 scripts/scrublet_doublets.py count/outs/filtered_feature_bc_matrix outpu
 **NOTE: do not name any file `scrublet.smthg` or it will fail!**
 
 
-Then pursue the analyses! Now with our corrected matrix:
+Then pursue the analyses! Now with our corrected matrix: 
+https://www.singlecellcourse.org/single-cell-rna-seq-analysis-using-seurat.html
+
 
 
 ```R
@@ -892,12 +894,19 @@ orga5d_QCPass <- ScaleData(orga5d_QCPass, features = all.genes)
 
 ## DEGs
 all.markers <- FindAllMarkers(orga5d_QCPass, only.pos = T, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all.markers, file = "output/seurat_sanger/all_markers.tsv", sep = "\t", quote = F, row.names = T)
+
 
 ## check markers
 dim(all.markers)
 table(all.markers$cluster)
 top5_markers <- as.data.frame(all.markers %>% group_by(cluster) %>% top_n(n = 5, wt = avg_log2FC))
 top5_markers
+
+
+write.table( as.data.frame(all.markers %>% group_by(cluster) %>% top_n(n = 20, wt = avg_log2FC)), file = "output/seurat_sanger/top20_markers.tsv", sep = "\t", quote = F, row.names = T)
+
+
 
 # Cell type annotation using SingleR
 ## Get reference datasets
@@ -917,7 +926,7 @@ hpca.fine <- SingleR(test = sce,assay.type.test = 1,ref = hpca.ref,labels = hpca
 dice.main <- SingleR(test = sce,assay.type.test = 1,ref = dice.ref,labels = dice.ref$label.main)
 dice.fine <- SingleR(test = sce,assay.type.test = 1,ref = dice.ref,labels = dice.ref$label.fine)
 
-## cgheck results
+## check results
 table(monaco.main$pruned.labels)
 table(hpca.main$pruned.labels)
 table(dice.main$pruned.labels)
@@ -926,11 +935,13 @@ table(hpca.fine$pruned.labels)
 table(dice.fine$pruned.labels)
 
 # Add annotation to seurat object
+orga5d_QCPass@meta.data$hpca.main   <- hpca.main$pruned.labels
+orga5d_QCPass@meta.data$hpca.fine   <- hpca.fine$pruned.labels
+
 orga5d_QCPass@meta.data$monaco.main <- monaco.main$pruned.labels
 orga5d_QCPass@meta.data$monaco.fine <- monaco.fine$pruned.labels
-orga5d_QCPass@meta.data$hpca.main   <- hpca.main$pruned.labels
+
 orga5d_QCPass@meta.data$dice.main   <- dice.main$pruned.labels
-orga5d_QCPass@meta.data$hpca.fine   <- hpca.fine$pruned.labels
 orga5d_QCPass@meta.data$dice.fine   <- dice.fine$pruned.labels
 
 # cluster with name
@@ -944,15 +955,93 @@ orga5d_QCPass <- SetIdent(orga5d_QCPass, value = "hpca.fine")
 DimPlot(orga5d_QCPass, label = T , repel = T, label.size = 3)
 dev.off()
 
+pdf("output/seurat_sanger/UMAP_SCT_annotated_monaco.main.pdf", width=10, height=10)
+orga5d_QCPass <- SetIdent(orga5d_QCPass, value = "monaco.main")
+DimPlot(orga5d_QCPass, label = T , repel = T, label.size = 3)
+dev.off()
+
+pdf("output/seurat_sanger/UMAP_SCT_annotated_monaco.fine.pdf", width=10, height=10)
+orga5d_QCPass <- SetIdent(orga5d_QCPass, value = "monaco.fine")
+DimPlot(orga5d_QCPass, label = T , repel = T, label.size = 3)
+dev.off()
+
+pdf("output/seurat_sanger/UMAP_SCT_annotated_dice.main.pdf", width=10, height=10)
+orga5d_QCPass <- SetIdent(orga5d_QCPass, value = "dice.main")
+DimPlot(orga5d_QCPass, label = T , repel = T, label.size = 3)
+dev.off()
+
+pdf("output/seurat_sanger/UMAP_SCT_annotated_dice.fine.pdf", width=10, height=10)
+orga5d_QCPass <- SetIdent(orga5d_QCPass, value = "dice.fine")
+DimPlot(orga5d_QCPass, label = T , repel = T, label.size = 3)
+dev.off()
 # manual annotation
 # Rename cluster in agreement
+## Re run this to re-generate SCTransform
+
+orga5d_QCPass <- SCTransform(orga5d_QCPass, method = "glmGamPoi", ncells = 6941,     # HERE PASTE NB OF CELLS AFTER QC!!! NB OF CEL IN THE orga5d_QCPass
+                    vars.to.regress = c("percent.mt","S.Score","G2M.Score"), verbose = F)
+orga5d_QCPass
+
+# SCTransform PCA 
+orga5d_QCPass <- RunPCA(orga5d_QCPass, verbose = F)
+orga5d_QCPass <- RunUMAP(orga5d_QCPass, dims = 1:30, verbose = F)
+orga5d_QCPass <- FindNeighbors(orga5d_QCPass, k.param = 15, dims = 1:30, verbose = F) # k.param can be changed
+orga5d_QCPass <- FindClusters(orga5d_QCPass, verbose = F, resolution = 0.2, algorithm = 4) # algorithm can be changed
+table(orga5d_QCPass[[]]$seurat_clusters)
+
+
 new.cluster.ids <- c("Mesodermal progenitors", "Neuroectodermal progenitors", "Mesodermal progenitors- Sclerotome", "Unkowkn_1", "Unkowkn_2", "Neurons")
 names(new.cluster.ids) <- levels(orga5d_QCPass)
 orga5d_QCPass <- RenameIdents(orga5d_QCPass, new.cluster.ids)
 
-pdf("output/seurat_sanger/UMAP_label_manual.pdf", width=10, height=10)
+pdf("output/seurat_sanger/UMAP_label_manual_fromSCTransform.pdf", width=10, height=10)
 DimPlot(orga5d_QCPass, reduction = "umap", label = TRUE, pt.size = 0.7, label.size = 6) + NoLegend()
 dev.off()
+##
+
+
+# Find what the cluster 4 and 5 could be
+
+## percent mt
+pdf("output/seurat_sanger/FeaturePlot_QCPass_mt_SCT.pdf", width=10, height=10)
+FeaturePlot(orga5d_QCPass,features = "percent.mt",label.size = 4,repel = T,label = T) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+pdf("output/seurat_sanger/VlnPlot_QCPass_mt_SCT.pdf", width=10, height=10)
+VlnPlot(orga5d_QCPass,features = "percent.mt") & theme(plot.title = element_text(size=10))
+dev.off()
+## percent rb
+pdf("output/seurat_sanger/FeaturePlot_QCPass_rb_SCT.pdf", width=10, height=10)
+FeaturePlot(orga5d_QCPass,features = "percent.rb",label.size = 4,repel = T,label = T) & theme(plot.title = element_text(size=10))
+dev.off()
+pdf("output/seurat_sanger/VlnPlot_QCPass_rb_SCT.pdf", width=10, height=10)
+VlnPlot(orga5d_QCPass,features = "percent.rb") & theme(plot.title = element_text(size=10))
+dev.off()
+## RNA
+pdf("output/seurat_sanger/VlnPlot_QCPass_RNA_SCT.pdf", width=10, height=10)
+VlnPlot(orga5d_QCPass,features = c("nCount_RNA","nFeature_RNA")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+## cell cycle
+pdf("output/seurat_sanger/FeaturePlot_QCPass_cellCycle_SCT.pdf", width=10, height=10)
+FeaturePlot(orga5d_QCPass,features = c("S.Score","G2M.Score"),label.size = 4,repel = T,label = T) & 
+  theme(plot.title = element_text(size=10))
+dev.off()  
+pdf("output/seurat_sanger/VlnPlot_QCPass_cellCycle_SCT.pdf", width=10, height=10)
+VlnPlot(orga5d_QCPass,features = c("S.Score","G2M.Score")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+
+# Some genes proposed by ChatGPT
+pdf("output/seurat_sanger/FeaturePlot_SCT_ChatGPT.pdf", width=20, height=20)
+FeaturePlot(orga5d_QCPass, features = c("NES", "PAX6", "PAX7", "MYOD1", "NEUROD1", "MAP2", "SYN1", "MKI67", "PCNA", "BIRC5", "CD3D", "CD19", "PTPRC"))
+dev.off()
+
+# Save the seurat if need do more plots
+save(orga5d_QCPass, file = "output/seurat_sanger/orga5d_QCPass_final.RData")
+load("output/seurat_sanger/orga5d_QCPass_final.RData")
+
+
 ```
 - **NOTE: the treshold for QC can be fine-tune depending on our data (this was value from tutorial look likes it fits well with our data)**
 - **NOTE: Conventional normalization is to scale it to 10,000 (as if all cells have 10k UMIs overall), and log2-transform the obtained values**
@@ -962,6 +1051,8 @@ dev.off()
 - **NOTE: at FindClusters can test different alorithm! see [here](https://satijalab.org/seurat/reference/findclusters); to use algorithm 4 I installed it with ` conda install -c conda-forge leidenalg` and `conda install -c anaconda numpy` and `conda install -c anaconda pandas`**
 - **NOTE: Reccommended to do the differential expression on the RNA assay, and not the SCTransform**
 - **NOTE: singleR automatically assign cell types, infor [here](http://bioconductor.org/books/release/SingleRBook/)** 
+- NOTE: at the end; looking at genes it does NOT change something if we look at the seurat (orga5d_QCPass) generated from RNA or VSCTransform
+
 
 --> The finer cell types annotations are you after, the harder they are to get reliably. Good to compare the different databases** 
 
@@ -988,6 +1079,9 @@ use_python('~/anaconda3/envs/scRNAseq/bin/python')
 --> For cleaner code, name `srat` the object and not `orga5d_QCPass`
 
 --> The automatic annotation fail in my case, not super informative; but could be , more info [here](https://bioconductor.org/books/3.12/SingleRBook/)!!
+
+--> Hard to decipher what are cluster 4 and 5 ! No clear pattern when looking at QC metrics... 
+
 
 
 # 50 days organoids analysis
