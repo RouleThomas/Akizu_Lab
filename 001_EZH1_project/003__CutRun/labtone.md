@@ -3940,7 +3940,23 @@ Now let's compare RNAseq and CutRun for MACS2raw qval 0.05:
 - **Merge with deseq2** log2FC data (tpm will not work as too variable; or log2tpm maybe?)
 - Plot in x FC and y baseMean=deseq2-norm counts (+ color qvalue) with facet_wrap~gain or lost (ie. volcano plot gain/lost)
 
+Plot functional analysis for the genes that gain HET and decreased in expression (NaiaraPlot)
+
 ```R
+# lib
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+
+# load CutRun gainLoss table
+HETvsKO_annot <- read.table("output/ChIPseeker/annotation_HETvsKO.txt", sep="\t", header=TRUE)
+HETvsWT_annot <- read.table("output/ChIPseeker/annotation_HETvsWT.txt", sep="\t", header=TRUE)
+KOvsWT_annot <- read.table("output/ChIPseeker/annotation_KOvsWT.txt", sep="\t", header=TRUE)
+
 # Filter Gain/Loss sites
 HETvsWT_annot_gain = tibble(HETvsWT_annot) %>%
     filter(FC > 0, annotation != "Distal Intergenic") %>%
@@ -4145,6 +4161,86 @@ dev.off()
 
 
 # Functional analyses
+## For the WT vs HET only (NaiaraPlot)
+
+HETvsWT_annot_gain_RNA = HETvsWT_annot_gain_lost_RNA %>%
+    filter(H3K27me3 == "gain", 
+           log2FoldChange < 0,
+           significance == "TRUE") 
+
+HETvsWT_annot_gain_RNA = HETvsWT_annot_gain_lost_RNA %>%
+    filter(H3K27me3 == "gain", 
+           log2FoldChange < 0)
+
+## Read GTF file
+gtf_file <- "../../Master/meta/ENCFF159KBI.gtf"
+gtf_data <- import(gtf_file)
+
+## Extract gene_id and gene_name
+gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
+gene_id <- elementMetadata(gene_data)$gene_id
+gene_name <- elementMetadata(gene_data)$gene_name
+
+## Combine gene_id and gene_name into a data frame
+gene_id_name <- data.frame(gene_id, gene_name) %>%
+  unique() %>%
+  as_tibble() %>%
+  separate(gene_id, into = c("gene_id", "trash"), sep = "\\.", remove = TRUE) %>%
+  dplyr::select(-trash)
+
+## Import genes_cluster list and background list
+HETvsWT_annot_gain_RNA_gene = HETvsWT_annot_gain_RNA %>%
+  dplyr::select(gene) %>%
+  rename(gene_id = gene) %>%
+  left_join(gene_id_name) %>%
+  dplyr::select(gene_name) 
+
+
+
+background = read_csv("../001__RNAseq/output/deseq2_hg38/raw_2dN_HET_vs_2dN_WT.txt") %>%
+  dplyr::select(gene) %>%
+  rename(gene_id = gene) %>%
+  inner_join(gene_id_name) %>%
+  dplyr::select(gene_name)
+
+
+## Run GO enrichment analysis 
+ego <- enrichGO(gene = as.character(HETvsWT_annot_gain_RNA_gene$gene_name), 
+                universe = as.character(background$gene_name),
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   # can do FDR
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+
+ego <- enrichGO(gene   = as.character(HETvsWT_annot_gain_RNA_gene$gene_name),
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH",
+                         keyType = "SYMBOL",
+                         OrgDb         = "org.Hs.eg.db",
+                         ont           = "BP")
+
+## Save GO analyses
+GO_summary <- data.frame(ego)
+
+write.csv(GO_summary, "output/GO_hg38/cluster4_BP.csv")
+write.csv(GO_summary, "output/GO_hg38/cluster4_MF.csv")
+write.csv(GO_summary, "output/GO_hg38/cluster4_CC.csv")
+
+
+
+## Vizualization
+
+pdf("output/ChIPseeker/functional_GO_dotplot_BP_HETvsWT_annot_gain_RNA.pdf", width=7, height=5)
+dotplot(ego, showCategory=50)
+dev.off()
+pdf("output/ChIPseeker/functional_GO_emmaplot_BP_HETvsWT_annot_gain_RNA.pdf", width=8, height=10)
+emapplot(pairwise_termsim(ego), showCategory = 50)
+dev.off()
+
+
+
 ## Create a list of vector:
 gene_list <- list(HET_lost = HET_lost_gene_list,
                   KO_lost = KO_lost_gene_list,
@@ -4161,7 +4257,6 @@ converted_gene_list <- lapply(gene_list, convert_ensembl_to_entrez)
 names(converted_gene_list) <- names(gene_list)
 
  
-
  
 ## KEGG
 
@@ -4262,6 +4357,11 @@ removing gene dupplicates we got: \
 --> Few genes are shared like gain in HET and KO; we got specificity of the mutation regarding changing of H3K27me3!
 
 --> NEUROG2 is in HET Lost...
+
+--> NaiaraPlot, HET vs WT; no GO hit for the 77 genes that gain H3K27me3 and decrease in expr; However I found hits when I do not use **`universe`, `background` list of genes!**
+
+
+**IMPORTANT NOTE: When doing GO, do NOT set a universe (background list of genes) it perform better!**
 
 ## DiffBind pvalue05 adjustment
 

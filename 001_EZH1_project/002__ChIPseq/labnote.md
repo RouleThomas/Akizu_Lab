@@ -4394,24 +4394,44 @@ load("output/DiffBind/sample_count_all_greylist.RData")
 
 # Apply library-size correction and TMM normalization
 sample_count_all_greylist_LibCSIFScaled_TMM = dba.normalize(sample_count_all_greylist, library = c(139649080, 117855644, 85211139, 71964648, 92471024, 102739426, 903163124, 1554734579, 865310316, 909621058, 636778842, 343291724, 45678566, 118275343, 105251783, 223394867, 112663109, 108911344), normalize = DBA_NORM_TMM) # TMM norm
-
+sample_count_all_greylist_LibCSIFScaled_LIB = dba.normalize(sample_count_all_greylist, library = c(139649080, 117855644, 85211139, 71964648, 92471024, 102739426, 903163124, 1554734579, 865310316, 909621058, 636778842, 343291724, 45678566, 118275343, 105251783, 223394867, 112663109, 108911344), normalize = DBA_NORM_LIB)
+sample_count_all_greylist_LibCSIFScaled_RLE = dba.normalize(sample_count_all_greylist, library = c(139649080, 117855644, 85211139, 71964648, 92471024, 102739426, 903163124, 1554734579, 865310316, 909621058, 636778842, 343291724, 45678566, 118275343, 105251783, 223394867, 112663109, 108911344), normalize = DBA_NORM_RLE)
 
 # Plot PCA / clustering
 pdf("output/DiffBind/clustering_all_greylist_LibCSIFScaled_TMM.pdf", width=14, height=20)
 plot(sample_count_all_greylist_LibCSIFScaled_TMM)
 dev.off()
+pdf("output/DiffBind/clustering_all_greylist_LibCSIFScaled_LIB.pdf", width=14, height=20)
+plot(sample_count_all_greylist_LibCSIFScaled_LIB)
+dev.off()
+pdf("output/DiffBind/clustering_all_greylist_LibCSIFScaled_RLE.pdf", width=14, height=20)
+plot(sample_count_all_greylist_LibCSIFScaled_RLE)
+dev.off()
 
 pdf("output/DiffBind/PCA_all_greylist_LibCSIFScaled_TMM.pdf", width=14, height=20) 
 dba.plotPCA(sample_count_all_greylist_LibCSIFScaled_TMM,DBA_CONDITION, label=DBA_TREATMENT)
 dev.off()
-
+pdf("output/DiffBind/PCA_all_greylist_LibCSIFScaled_LIB.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_all_greylist_LibCSIFScaled_LIB,DBA_CONDITION, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_all_greylist_LibCSIFScaled_RLE.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_all_greylist_LibCSIFScaled_RLE,DBA_CONDITION, label=DBA_TREATMENT)
+dev.off()
 
 # Collect scaling factor
 sample_count_all_greylist_LibCSIFScaled_TMM_SF = dba.normalize(sample_count_all_greylist_LibCSIFScaled_TMM, bRetrieve=TRUE)
 console_output <- capture.output(print(sample_count_all_greylist_LibCSIFScaled_TMM_SF))
 writeLines(console_output, "output/DiffBind/sample_count_all_greylist_LibCSIFScaled_TMM_SF.txt")
-```
 
+sample_count_all_greylist_LibCSIFScaled_LIB_SF = dba.normalize(sample_count_all_greylist_LibCSIFScaled_LIB, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_all_greylist_LibCSIFScaled_LIB_SF))
+writeLines(console_output, "output/DiffBind/sample_count_all_greylist_LibCSIFScaled_LIB_SF.txt")
+
+sample_count_all_greylist_LibCSIFScaled_RLE_SF = dba.normalize(sample_count_all_greylist_LibCSIFScaled_RLE, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_all_greylist_LibCSIFScaled_RLE_SF))
+writeLines(console_output, "output/DiffBind/sample_count_all_greylist_LibCSIFScaled_RLE_SF.txt")
+```
+--> TMM and RLE SF are comparable. LIB is very different
 
 --> The clustering is OK, not amazing; at least ESC clustered together, WT clsutered together then HET/KO/NPC/2dN a bit mixed; LIB/RLE/TMM perform similarly; so stay with TMM
 
@@ -4599,25 +4619,25 @@ writeLines(console_output, "output/DiffBind/sample_count_all_greylist_TMM_SF.txt
 ```
 
 
-- sample / library size * SF = scaled library size --> DiffBind_TMM_SF ; reciprocal | DiffBind_TMM_ONLY_SF ; reciprocal
-- 2dN_HET_H3K27me3_R1 / 70887858 1.97 = 139649080 --> 0.6596462 ; 1.515964164 | 1.1452498 ; 0.8731719490367953
-- 2dN_HET_H3K27me3_R2 / 67346082 1.75 = 117855644 --> 0.6285088 ; 1.591067619 | 1.0914982 ; 0.9161719185611117
-- 2dN_KO_H3K27me3_R1 / 58363794 1.46 = 85211139 --> 0.5460104 ; 1.831466946 | 0.9471807 ; 1.055764755341827
-- 2dN_KO_H3K27me3_R2 / 71964648 1 = 71964648 --> 0.5574423 ; 1.793907639 | 0.9744307 ; 1.026240244688514
-- 2dN_WT_H3K27me3_R1 / 71682964 1.29 = 92471024 --> 0.6458845 ; 1.548264434 | 1.1265964 ; 0.887629323154237
-- 2dN_WT_H3K27me3_R2 / 60792560 1.69 = 102739426 --> 0.5910808 ; 1.691816077 | 1.0306665 ; 0.9702459524977284
-- ESC_HET_H3K27me3_R1 / 85933694 10.51 = 903163124 --> 0.4633394 ; 2.158245122 | 0.8051032 ; 1.24207679214292
-- ESC_HET_H3K27me3_R2 / 66583922 23.35 = 1554734579 --> 0.3576010 ; 2.796412762 |  0.6234852 ; 1.603887309594518
-- ESC_KO_H3K27me3_R1 / 86014942 10.06 = 865310316 --> 0.4468665 ; 2.237804803 | 0.7811012; 1.280243840362811
-- ESC_KO_H3K27me3_R2 / 57643920 15.78 = 909621058 --> 0.3132557 ; 3.1922803 | 0.5454599 ; 1.833315336287782
-- ESC_WT_H3K27me3_R1 / 90968406 7 = 636778842 --> 0.7957969 ; 1.25660203 |  1.3835209 ; 0.7227935624246804
-- ESC_WT_H3K27me3_R2 / 79650052 4.31 = 343291724 --> 0.7333544 ; 1.363597191 | 1.2753760 ; 0.7840824980241121
-- NPC_HET_H3K27me3_R1 / 40423510 1.13 = 45678566 --> 0.3083840 ; 3.242710387 |  0.5362265 ; 1.864883589304147
-- NPC_HET_H3K27me3_R2 / 82710030 1.43 = 118275343 --> 0.7630974 ; 1.310448705 |  1.3247137 ; 0.754880092204074
-- NPC_KO_H3K27me3_R1 / 67904376 1.55 = 105251783 --> 0.5464982 ; 1.829832193 |  0.9526521 ; 1.04970114483556
-- NPC_KO_H3K27me3_R2 / 84619268 2.64 = 223394867 --> 0.7914168 ; 1.2635567 |  1.3738308 ; 0.7278916734142225
-- NPC_WT_H3K27me3_R1 / 77698696 1.45 = 112663109 --> 0.7014795 ; 1.425558409 |  1.2176666 ; 0.8212428590880295
-- NPC_WT_H3K27me3_R2 / 72126718 1.51 = 108911344 --> 0.6423245 ; 1.556845489 | 1.1169502 ; 0.8952950632893033
+- sample / library size * SF = scaled library size --> DiffBind_TMM_SF ; reciprocal | DiffBind_TMM_ONLY_SF ; reciprocal \ CSsIF_DiffBind_LIB-rec
+- 2dN_HET_H3K27me3_R1 / 70887858 1.97 = 139649080 --> 0.6596462 ; 1.515964164 | 1.1452498 ; 0.8731719490367953 \ 0.3845337-2.600552305298599
+- 2dN_HET_H3K27me3_R2 / 67346082 1.75 = 117855644 --> 0.6285088 ; 1.591067619 | 1.0914982 ; 0.9161719185611117 \ 0.3245239-3.081437145307326
+- 2dN_KO_H3K27me3_R1 / 58363794 1.46 = 85211139 --> 0.5460104 ; 1.831466946 | 0.9471807 ; 1.055764755341827 \ 0.2346349-4.261940572353047
+- 2dN_KO_H3K27me3_R2 / 71964648 1 = 71964648 --> 0.5574423 ; 1.793907639 | 0.9744307 ; 1.026240244688514 \ 0.1981598-5.046432222882744
+- 2dN_WT_H3K27me3_R1 / 71682964 1.29 = 92471024 --> 0.6458845 ; 1.548264434 | 1.1265964 ; 0.887629323154237 \ 0.2546255-3.927336421528873
+- 2dN_WT_H3K27me3_R2 / 60792560 1.69 = 102739426 --> 0.5910808 ; 1.691816077 | 1.0306665 ; 0.9702459524977284 \ 0.2829003-3.5348142083978
+- ESC_HET_H3K27me3_R1 / 85933694 10.51 = 903163124 --> 0.4633394 ; 2.158245122 | 0.8051032 ; 1.24207679214292 \ 2.4869239-0.4021031765386951
+- ESC_HET_H3K27me3_R2 / 66583922 23.35 = 1554734579 --> 0.3576010 ; 2.796412762 |  0.6234852 ; 1.603887309594518 \ 4.2810723-0.2335863377032899
+- ESC_KO_H3K27me3_R1 / 86014942 10.06 = 865310316 --> 0.4468665 ; 2.237804803 | 0.7811012; 1.280243840362811 \ 2.3826935-0.4196930910333201
+- ESC_KO_H3K27me3_R2 / 57643920 15.78 = 909621058 --> 0.3132557 ; 3.1922803 | 0.5454599 ; 1.833315336287782 \ 2.5047063-0.3992484068890632
+- ESC_WT_H3K27me3_R1 / 90968406 7 = 636778842 --> 0.7957969 ; 1.25660203 |  1.3835209 ; 0.7227935624246804 \ 1.7534159-0.5703153484578302
+- ESC_WT_H3K27me3_R2 / 79650052 4.31 = 343291724 --> 0.7333544 ; 1.363597191 | 1.2753760 ; 0.7840824980241121 \ 0.9452782-1.057889624451299
+- NPC_HET_H3K27me3_R1 / 40423510 1.13 = 45678566 --> 0.3083840 ; 3.242710387 |  0.5362265 ; 1.864883589304147 \ 0.1257792-7.950440136365949
+- NPC_HET_H3K27me3_R2 / 82710030 1.43 = 118275343 --> 0.7630974 ; 1.310448705 |  1.3247137 ; 0.754880092204074 \ 0.3256796-3.070502420170008
+- NPC_KO_H3K27me3_R1 / 67904376 1.55 = 105251783 --> 0.5464982 ; 1.829832193 |  0.9526521 ; 1.04970114483556 \ 0.2898183-3.450437739783858
+- NPC_KO_H3K27me3_R2 / 84619268 2.64 = 223394867 --> 0.7914168 ; 1.2635567 |  1.3738308 ; 0.7278916734142225 \ 0.6151337-1.625662843703735
+- NPC_WT_H3K27me3_R1 / 77698696 1.45 = 112663109 --> 0.7014795 ; 1.425558409 |  1.2176666 ; 0.8212428590880295 \ 0.3102259-3.223457486947415
+- NPC_WT_H3K27me3_R2 / 72126718 1.51 = 108911344 --> 0.6423245 ; 1.556845489 | 1.1169502 ; 0.8952950632893033 \ 0.2998951-3.334499296587373
 
 --> Median value for DiffBind_TMM_ONLY_SF; ESC: 1.26116031625287, NPC: 0.858268961188666, 2dN: 0.9462061048648195. Which is good as it will decrease signal in ESC
 
@@ -4629,29 +4649,50 @@ Now generate **bigwig DiffBind_TMM_ONLY (non ChIPseqSpikeInFree + TMM) and deepT
 ```bash
 conda activate deeptools
 
-sbatch scripts/bamtobigwig_DiffBind_TMM_ONLY_ESC.sh # 1011491
-sbatch scripts/bamtobigwig_DiffBind_TMM_ONLY_NPC.sh # 1011508
-sbatch scripts/bamtobigwig_DiffBind_TMM_ONLY_2dN.sh # 1011514
-sbatch scripts/bamtobigwig_DiffBind_TMM_ONLY_input.sh # 1011585
+sbatch scripts/bamtobigwig_DiffBind_TMM_ONLY_ESC.sh # 1011491 ok
+sbatch scripts/bamtobigwig_DiffBind_TMM_ONLY_NPC.sh # 1011508 ok
+sbatch scripts/bamtobigwig_DiffBind_TMM_ONLY_2dN.sh # 1011514 ok
+sbatch scripts/bamtobigwig_DiffBind_TMM_ONLY_input.sh # 1011585 ok
 
 # median
 conda activate BedToBigwig
-sbatch --dependency=afterany:1011491:1011508:1011514:1011585 scripts/bigwigmerge_DiffBind_TMM_ONLY.sh # 1011632
+sbatch --dependency=afterany:1011491:1011508:1011514:1011585 scripts/bigwigmerge_DiffBind_TMM_ONLY.sh # 1011632 ok
 
 conda activate deeptools
 # deepTools plot
 ## bigwig_DiffBind_TMM
-sbatch --dependency=afterany:1011632 scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ONLY_ESC_noIntergenic_Rep.sh # 1011757
-sbatch --dependency=afterany:1011632 scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ONLY_NPC_noIntergenic_Rep.sh # 1011830
-sbatch --dependency=afterany:1011632 scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ONLY_2dN_noIntergenic_Rep.sh # 1011903
+sbatch --dependency=afterany:1011632 scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ONLY_ESC_noIntergenic_Rep.sh # 1011757 ok
+sbatch --dependency=afterany:1011632 scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ONLY_NPC_noIntergenic_Rep.sh # 1011830 ok
+sbatch --dependency=afterany:1011632 scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ONLY_2dN_noIntergenic_Rep.sh # 1011903 ok
 ```
 *NOTE: I also generated input DiffBind_LibCSIFScaled_TMM corrected*
 
---> The replicates looks XXX
+--> The replicates looks good
 
---> XXX We do NOT see the increase of H3K27me3 in ESC versus diff samples
+--> We do NOT see the increase of H3K27me3 in ESC versus diff samples...
+
+The **ChIPseqSpikeInFree+DiffBind_LIB normalization** seems to provide correct SF; let's try it out:
 
 
+```bash
+conda activate deeptools
 
+sbatch scripts/bamtobigwig_DiffBind_LIB_ESC.sh # 1063646
+sbatch scripts/bamtobigwig_DiffBind_LIB_NPC.sh # 1063648
+sbatch scripts/bamtobigwig_DiffBind_LIB_2dN.sh # 1063662
+sbatch scripts/bamtobigwig_DiffBind_LIB_input.sh # 1063684
+
+# median
+conda activate BedToBigwig
+sbatch --dependency=afterany:1063646:1063648:1063662:1063684 scripts/bigwigmerge_DiffBind_LIB.sh # 1063692
+
+conda activate deeptools
+# deepTools plot
+## bigwig_DiffBind_TMM
+sbatch --dependency=afterany:1063692 scripts/matrix_gene_1kb_bigwig_DiffBind_LIB_ESC_noIntergenic_Rep.sh # 1063693
+sbatch --dependency=afterany:1063692 scripts/matrix_gene_1kb_bigwig_DiffBind_LIB_NPC_noIntergenic_Rep.sh # 1063694
+sbatch --dependency=afterany:1063692 scripts/matrix_gene_1kb_bigwig_DiffBind_LIB_2dN_noIntergenic_Rep.sh # 1063696
+```
+*NOTE: I also generated input DiffBind_LibCSIFScaled_LIB corrected*
 
 

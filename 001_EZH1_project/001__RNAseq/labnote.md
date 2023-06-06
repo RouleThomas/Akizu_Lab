@@ -7057,6 +7057,19 @@ samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
    "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3")
 
 ### Additional filtering if needed
+#### Only WT and HET
+samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
+   "2dN_HET_R1", "2dN_HET_R2", "2dN_HET_R3",
+   "4wN_WT_R1", "4wN_WT_R2", 
+   "4wN_HET_R3", "4wN_HET_R4",
+   "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", "8wN_HET_R1", "8wN_HET_R2",
+   "8wN_HET_R3", "8wN_HET_R4",
+   "ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3",
+   "ESC_HET_R1", "ESC_HET_R2", "ESC_HET_R3",
+   "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+   "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3")
+
+
 #### Only WT and KO
 samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
    "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3",
@@ -7154,7 +7167,7 @@ load("output/deseq2_hg38/ddsTC_rld_filter.RData")
 
 ## Extract the transformed counts
 vst_counts_matrix <- assay(vst_counts)
-rlog_counts_matrix <- assay(rlog_counts) # take ???
+rlog_counts_matrix <- assay(rlog_counts) 
 
 ## Isolate the significant genes by gene id
 signif_TC_genes = as_tibble(resTC, rownames = "gene") %>%
@@ -7238,12 +7251,14 @@ row_dist <- dist(rlog_counts_matrix_sig, method = "euclidean")
 row_hclust <- hclust(row_dist, method = "complete")
 
 ## Cut the tree into k clusters
-row_clusters <- cutree(row_hclust, k = 30)                   # !!! Here change tree nb accordingly !!!
+row_clusters <- cutree(row_hclust, k = 8)                   # !!! Here change tree nb accordingly !!!
 ## Create a data frame with gene names and their corresponding clusters
 cluster_gene <- data.frame(gene = rownames(rlog_counts_matrix_sig),
                            cluster = row_clusters)
 ### Save dataframe
 write.csv(cluster_gene, file="output/deseq2_hg38/cluster_gene_rlog_30cl.txt") # !!! Here change tree nb accordingly !!
+write.csv(cluster_gene, file="output/deseq2_hg38/cluster_gene_rlog_8cl_WTvsHET.txt")
+
 # Make a clean table with significant deseq2-TC genes
 rlog_counts_tidy <- as_tibble(rlog_counts_matrix_sig, rownames = "gene") %>%
   gather(key = "sample", value = "rlog_counts", -gene) %>%
@@ -7283,6 +7298,28 @@ dev.off()
 
 
 
+# WT vs HET (NaiaraPlot)
+pdf("output/deseq2_hg38/line_rlog_p0.05_cl8_pretty_noSmooth_WTvsHET.pdf", width=20, height=10)   # !!! Here change tree nb accordingly !!
+ggplot(rlog_counts_tidy, aes(x = time, y = rlog_counts, color = genotype, group = genotype)) +
+  geom_line(stat = "summary", fun = mean) +
+  geom_errorbar(stat = "summary", fun.data = mean_se, width = 0.2, size = 1) +
+  geom_point(stat = "summary", fun = mean, shape = 18, size = 3, stroke = 1.5) +
+  geom_text(data = genes_per_cluster, aes(label = paste0("Genes: ", num_genes), x = Inf, y = Inf), hjust = 1, vjust = 1, size = 5, inherit.aes = FALSE) +
+  facet_wrap(~cluster, scale = "free", nrow = 2) +
+  scale_color_manual(values=c("WT" = "black", "HET" = "blue", "KO" = "red")) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),        # Increase facet_wrap title panel text size
+    axis.title.x = element_text(size = 16),       # Increase x-axis legend text size
+    axis.title.y = element_text(size = 16),
+    axis.text.x = element_text(size = 14),       # Increase x-axis legend text size
+    axis.text.y = element_text(size = 14),
+    legend.text = element_text(size = 16),
+    legend.title = element_text(size = 16) 
+  )
+dev.off()
+
+
 
 # Plot rlog_transform norm deseq2 count with 'loess' method pretty with a light transparent color
 pdf("output/deseq2_hg38/line_rlog_p0.05_cl25_pretty_span08_genes_bg.pdf", width=20, height=14)
@@ -7312,6 +7349,111 @@ dev.off()
 --> Using noSmooth is MUCH better!!!
 
 --> The more cluster the better, as we are inform about all possible profiles, we can then focus on some clusters
+
+
+
+# Gene ontology_hg38
+We will use clusterProfile package. Tutorial [here](https://hbctraining.github.io/DGE_workshop_salmon/lessons/functional_analysis_2019.html).
+
+Let's do a test of the pipeline with genes from cluster4 amd cluster14 from the rlog counts. Our background list will be all genes tested for differential expression.
+
+**IMPORTANT NOTE: When doing GO, do NOT set a universe (background list of genes) it perform better!**
+
+```R
+# packages
+library(clusterProfiler)
+library(pathview)
+library(DOSE)
+library(org.Hs.eg.db)
+library(enrichplot)
+library(rtracklayer)
+
+## Read GTF file
+gtf_file <- "../../Master/meta/ENCFF159KBI.gtf"
+gtf_data <- import(gtf_file)
+
+## Extract gene_id and gene_name
+gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
+gene_id <- elementMetadata(gene_data)$gene_id
+gene_name <- elementMetadata(gene_data)$gene_name
+
+## Combine gene_id and gene_name into a data frame
+gene_id_name <- data.frame(gene_id, gene_name) %>%
+  unique() %>%
+  as_tibble()
+
+
+
+# WT vs HET (NairaPlot)
+## Import genes_cluster list and background list
+cluster_7 = read_csv("output/deseq2_hg38/cluster_gene_rlog_8cl_WTvsHET.txt") %>%
+  filter(cluster == 7) %>%
+  rename(gene_id = gene) %>%
+  inner_join(gene_id_name) %>%
+  dplyr::select(gene_name) 
+
+
+background = read_csv("output/deseq2_hg38/raw_2dN_HET_vs_2dN_WT.txt") %>%
+  dplyr::select(gene) %>%
+  rename(gene_id = gene) %>%
+  inner_join(gene_id_name) %>%
+  dplyr::select(gene_name)
+
+
+## Run GO enrichment analysis 
+ego <- enrichGO(gene = as.character(cluster_8$gene_name), 
+                universe = as.character(background$gene_name),
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                qvalueCutoff = 0.05, 
+                readable = TRUE)
+
+### more relaxed parameter
+ego <- enrichGO(gene = as.character(cluster_8$gene_name), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+###
+
+## Save GO analyses
+GO_summary <- data.frame(ego)
+
+write.csv(GO_summary, "output/GO_hg38/cluster4_BP.csv")
+write.csv(GO_summary, "output/GO_hg38/cluster4_MF.csv")
+write.csv(GO_summary, "output/GO_hg38/cluster4_CC.csv")
+
+
+
+## Vizualization
+
+pdf("output/GO_hg38/dotplot_BP_cluster_7.pdf", width=7, height=22)
+dotplot(ego, showCategory=50)
+dev.off()
+pdf("output/GO_hg38/emapplot_BP_cluster_7.pdf", width=12, height=14)
+emapplot(pairwise_termsim(ego), showCategory = 50)
+dev.off()
+
+
+pdf("output/GO_hg38/dotplot_BP_cluster_8_small.pdf", width=7, height=8)
+dotplot(ego, showCategory=20)
+dev.off()
+pdf("output/GO_hg38/emapplot_BP_cluster_8_small.pdf", width=8, height=9)
+emapplot(pairwise_termsim(ego), showCategory = 20)
+dev.off()
+
+
+
+# Other comparionsv
+
+
+```
+
+
 
 
 
