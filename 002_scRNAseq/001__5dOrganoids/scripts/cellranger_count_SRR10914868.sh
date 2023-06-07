@@ -4,9 +4,8 @@
 
 
 
-cellranger count --id=count_50dOrga \
+cellranger count --id=count_SRR10914868 \
                    --transcriptome=meta/refdata-gex-GRCh38-2020-A \
                    --fastqs=input_50dOrga/ \
-                   --sample=SRR8734991, SRR10914868
-
+                   --sample=SRR10914868
                    

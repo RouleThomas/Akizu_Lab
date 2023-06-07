@@ -4506,7 +4506,6 @@ Installed together with deseq2; use **deseq2 conda env for ChIPseeker now**
 XXX
 
 
-
 # Pool the peak into 1 file
 We could use IDR to pool our replicates and identify 'high-confidence' peak (used in the ENCODE pipeline)
 
@@ -4677,22 +4676,49 @@ The **ChIPseqSpikeInFree+DiffBind_LIB normalization** seems to provide correct S
 ```bash
 conda activate deeptools
 
-sbatch scripts/bamtobigwig_DiffBind_LIB_ESC.sh # 1063646
-sbatch scripts/bamtobigwig_DiffBind_LIB_NPC.sh # 1063648
-sbatch scripts/bamtobigwig_DiffBind_LIB_2dN.sh # 1063662
-sbatch scripts/bamtobigwig_DiffBind_LIB_input.sh # 1063684
+sbatch scripts/bamtobigwig_DiffBind_LIB_ESC.sh # 1063646 ok
+sbatch scripts/bamtobigwig_DiffBind_LIB_NPC.sh # 1063648 ok
+sbatch scripts/bamtobigwig_DiffBind_LIB_2dN.sh # 1063662 ok
+sbatch scripts/bamtobigwig_DiffBind_LIB_input.sh # 1063684 ok
 
 # median
 conda activate BedToBigwig
-sbatch --dependency=afterany:1063646:1063648:1063662:1063684 scripts/bigwigmerge_DiffBind_LIB.sh # 1063692
+sbatch --dependency=afterany:1063646:1063648:1063662:1063684 scripts/bigwigmerge_DiffBind_LIB.sh # 1063692 ok
 
 conda activate deeptools
 # deepTools plot
 ## bigwig_DiffBind_TMM
-sbatch --dependency=afterany:1063692 scripts/matrix_gene_1kb_bigwig_DiffBind_LIB_ESC_noIntergenic_Rep.sh # 1063693
-sbatch --dependency=afterany:1063692 scripts/matrix_gene_1kb_bigwig_DiffBind_LIB_NPC_noIntergenic_Rep.sh # 1063694
-sbatch --dependency=afterany:1063692 scripts/matrix_gene_1kb_bigwig_DiffBind_LIB_2dN_noIntergenic_Rep.sh # 1063696
+sbatch --dependency=afterany:1063692 scripts/matrix_gene_1kb_bigwig_DiffBind_LIB_ESC_noIntergenic_Rep.sh # 1063693 ok
+sbatch --dependency=afterany:1063692 scripts/matrix_gene_1kb_bigwig_DiffBind_LIB_NPC_noIntergenic_Rep.sh # 1063694 ok
+sbatch --dependency=afterany:1063692 scripts/matrix_gene_1kb_bigwig_DiffBind_LIB_2dN_noIntergenic_Rep.sh # 1063696 ok
 ```
 *NOTE: I also generated input DiffBind_LibCSIFScaled_LIB corrected*
+
+
+--> The replicates are not amazing, looks as in the ChIPseqSpikeInFree bigwigs
+
+--> We do see the increase of H3K27me3 in ESC versus diff samples, which is good
+
+--> At ESC, mutants are very low in H3K27me3 vs WT
+
+## QC ChIPSeq and RNAseq
+
+Let's do QC for the ESC state, let' compare RNAseq and ChIPseq profile at ESC; the genes up-regulated should show decrease of H3K27me3, the genes down-regulated should show increase of H3K27me3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

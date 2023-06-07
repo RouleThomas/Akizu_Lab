@@ -1097,8 +1097,7 @@ sbatch scripts/download_SRR10914868.sh # 894909
 
 ## Count matrix with cellranger 10x
 
-There is 2 files but cellrange can handle it, different indexes has been used. Let's generate the count matrix with 10x:
-(sequencing machine generated several outputs, which is pretty common in high-throughput sequencing methods like the Illumina platforms)
+There is 2 files but cellrange can handle it, different indexes has been used. Let's generate the count matrix with 10x for each run with `cellranger count` and then use `cellranger aggregate` to put them together in a single file.
 
 
 ```bash
@@ -1116,10 +1115,15 @@ gzip input_50dOrga/SRR*
 
 # start counting
 conda activate scRNAseq
-sbatch scripts/cellranger_count_50dOrga.sh # 
+sbatch scripts/cellranger_count_SRR8734991.sh # 1068668
+sbatch scripts/cellranger_count_SRR10914868.sh # 1068672
+
+# aggregate into a single output
+sbatch scripts/cellranger_aggr_50dOrga.sh # XXX
 ```
+*NOTE: multiple different SRR can be in the same folder; --sample will specify which SRR to take*
 
-
+--> csv file generated as described [here](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/aggregate) for `cellranger aggr`
 
 
 
