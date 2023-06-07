@@ -4703,9 +4703,18 @@ sbatch --dependency=afterany:1063692 scripts/matrix_gene_1kb_bigwig_DiffBind_LIB
 
 ## QC ChIPSeq and RNAseq
 
-Let's do QC for the ESC state, let' compare RNAseq and ChIPseq profile at ESC; the genes up-regulated should show decrease of H3K27me3, the genes down-regulated should show increase of H3K27me3
+Let's do **QC for the ESC state**, let' compare RNAseq and ChIPseq profile at ESC; the genes up-regulated should show decrease of H3K27me3, the genes down-regulated should show increase of H3K27me3:
 
+- Generate single gtf files that contains only:
+    - up-regulated genes in HET at ESC
+    - up-regulated genes in KO at ESC
+    - down-regulated genes in HET at ESC
+    - down-regulated genes in KO at ESC
+- Generate gtf file that only contains gene assign with H3K27me3 in WT (and another file for in at least 1 genotype)
+- Put together gtf expression and gtf peak assign in WT (or any other genotype)
+- deepTool profile on these gtf files using `Bigwig_LibCSIFScaled_LIB`
 
+XXX
 
 
 
