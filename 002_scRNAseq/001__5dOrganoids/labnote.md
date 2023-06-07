@@ -1116,7 +1116,7 @@ gzip input_50dOrga/SRR*
 # start counting
 conda activate scRNAseq
 sbatch scripts/cellranger_count_SRR8734991.sh # 1068668
-sbatch scripts/cellranger_count_SRR10914868.sh # 1068672
+sbatch scripts/cellranger_count_SRR10914868.sh # 1068672 FAIL because file name mixed-up btwn read/index; 1069732
 
 # aggregate into a single output
 sbatch scripts/cellranger_aggr_50dOrga.sh # XXX
