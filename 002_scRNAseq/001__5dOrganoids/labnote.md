@@ -1115,13 +1115,15 @@ gzip input_50dOrga/SRR*
 
 # start counting
 conda activate scRNAseq
-sbatch scripts/cellranger_count_SRR8734991.sh # 1068668
-sbatch scripts/cellranger_count_SRR10914868.sh # 1068672 FAIL because file name mixed-up btwn read/index; 1069732
+sbatch scripts/cellranger_count_SRR8734991.sh # 1068668 ok
+sbatch scripts/cellranger_count_SRR10914868.sh # 1068672 FAIL because file name mixed-up btwn read/index; 1069732 ok
 
 # aggregate into a single output
-sbatch scripts/cellranger_aggr_50dOrga.sh # XXX
+sbatch scripts/cellranger_aggr_50dOrga.sh # 1072429 ok (last ~ 1hr)
 ```
-*NOTE: multiple different SRR can be in the same folder; --sample will specify which SRR to take*
+- *NOTE: multiple different SRR can be in the same folder; --sample will specify which SRR to take*
+- *NOTE: `cellranger aggr` cat aggregate different samples (control, treated); or from different technologies (5, 5-3) and include batch effect*
+
 
 --> csv file generated as described [here](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/aggregate) for `cellranger aggr`
 

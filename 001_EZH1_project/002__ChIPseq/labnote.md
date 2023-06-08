@@ -4714,10 +4714,69 @@ Let's do **QC for the ESC state**, let' compare RNAseq and ChIPseq profile at ES
 - Put together gtf expression and gtf peak assign in WT (or any other genotype)
 - deepTool profile on these gtf files using `Bigwig_LibCSIFScaled_LIB`
 
-XXX
 
 
+### single gtf files for expression at ESC,NPC,2dN and 4wN
 
+Filter the gene Up/Down in each mutant in R and generate GTF:
+```bash
+conda activate deseq2
+cd /scr1/users/roulet/Akizu_Lab/001_EZH1_Project/001__RNAseq
+```
+
+
+```R
+# library
+library("rtracklayer")
+library("tidyverse")
+
+## Import deseq2 output and filter qvalue 0.05
+HETvsWT = as_tibble(read_csv('output/deseq2_hg38/raw_8wN_HET_vs_8wN_WT.txt')) %>%
+    filter(padj <= 0.05) %>%
+    dplyr::select(-"...1") %>%
+    add_column(contrast = "HETvsWT")
+KOvsWT = as_tibble(read_csv('output/deseq2_hg38/raw_8wN_KO_vs_8wN_WT.txt')) %>%
+    filter(padj <= 0.05) %>%
+    dplyr::select(-"...1") %>%
+    add_column(contrast = "KOvsWT")
+
+## Filter Up/Down
+HET_Down = HETvsWT %>% 
+    filter(log2FoldChange < 0) 
+HET_Up = HETvsWT %>% 
+    filter(log2FoldChange > 0) 
+KO_Down = KOvsWT %>% 
+    filter(log2FoldChange < 0) 
+KO_Up = KOvsWT %>% 
+    filter(log2FoldChange > 0) 
+
+
+## Import the GTF file
+gtf <- import('../../Master/meta/ENCFF159KBI.gtf')
+
+## Filter in the GTF file with only the DEGs
+gtf_DEGs_HET_Down <- gtf %>% 
+  as_tibble() %>% 
+  filter(gene_id %in% HET_Down$gene)
+gtf_DEGs_HET_Up <- gtf %>% 
+  as_tibble() %>% 
+  filter(gene_id %in% HET_Up$gene)
+gtf_DEGs_KO_Down <- gtf %>% 
+  as_tibble() %>% 
+  filter(gene_id %in% KO_Down$gene)
+gtf_DEGs_KO_Up <- gtf %>% 
+  as_tibble() %>% 
+  filter(gene_id %in% KO_Up$gene)
+
+## Save the new GTF
+export(gtf_DEGs_HET_Down, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_HET_Down.gtf")
+export(gtf_DEGs_HET_Up, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_HET_Up.gtf")
+export(gtf_DEGs_KO_Down, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Down.gtf")
+export(gtf_DEGs_KO_Up, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Up.gtf")
+```
+
+
+deepTools profile for these DEGs only (**if result weird; let's filter out the genes that contain peak in at least 1 genotype or in WT only at ESC**)
 
 
 
