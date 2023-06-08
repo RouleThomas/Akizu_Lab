@@ -4687,7 +4687,7 @@ sbatch --dependency=afterany:1063646:1063648:1063662:1063684 scripts/bigwigmerge
 
 conda activate deeptools
 # deepTools plot
-## bigwig_DiffBind_TMM
+## bigwig_DiffBind_LIB
 sbatch --dependency=afterany:1063692 scripts/matrix_gene_1kb_bigwig_DiffBind_LIB_ESC_noIntergenic_Rep.sh # 1063693 ok
 sbatch --dependency=afterany:1063692 scripts/matrix_gene_1kb_bigwig_DiffBind_LIB_NPC_noIntergenic_Rep.sh # 1063694 ok
 sbatch --dependency=afterany:1063692 scripts/matrix_gene_1kb_bigwig_DiffBind_LIB_2dN_noIntergenic_Rep.sh # 1063696 ok
@@ -4730,12 +4730,13 @@ cd /scr1/users/roulet/Akizu_Lab/001_EZH1_Project/001__RNAseq
 library("rtracklayer")
 library("tidyverse")
 
+# ESC time DEGs mutants 
 ## Import deseq2 output and filter qvalue 0.05
-HETvsWT = as_tibble(read_csv('output/deseq2_hg38/raw_8wN_HET_vs_8wN_WT.txt')) %>%
+HETvsWT = as_tibble(read_csv('output/deseq2_hg38/raw_ESC_HET_vs_ESC_WT.txt')) %>%
     filter(padj <= 0.05) %>%
     dplyr::select(-"...1") %>%
     add_column(contrast = "HETvsWT")
-KOvsWT = as_tibble(read_csv('output/deseq2_hg38/raw_8wN_KO_vs_8wN_WT.txt')) %>%
+KOvsWT = as_tibble(read_csv('output/deseq2_hg38/raw_ESC_KO_vs_ESC_WT.txt')) %>%
     filter(padj <= 0.05) %>%
     dplyr::select(-"...1") %>%
     add_column(contrast = "KOvsWT")
@@ -4769,20 +4770,174 @@ gtf_DEGs_KO_Up <- gtf %>%
   filter(gene_id %in% KO_Up$gene)
 
 ## Save the new GTF
-export(gtf_DEGs_HET_Down, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_HET_Down.gtf")
-export(gtf_DEGs_HET_Up, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_HET_Up.gtf")
-export(gtf_DEGs_KO_Down, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Down.gtf")
-export(gtf_DEGs_KO_Up, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Up.gtf")
+export(gtf_DEGs_HET_Down, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_ESC_HET_Down.gtf")
+export(gtf_DEGs_HET_Up, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_ESC_HET_Up.gtf")
+export(gtf_DEGs_KO_Down, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_ESC_KO_Down.gtf")
+export(gtf_DEGs_KO_Up, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_ESC_KO_Up.gtf")
+
+ 
+# NPC time DEGs mutants 
+## Import deseq2 output and filter qvalue 0.05
+HETvsWT = as_tibble(read_csv('output/deseq2_hg38/raw_NPC_HET_vs_NPC_WT.txt')) %>%
+    filter(padj <= 0.05) %>%
+    dplyr::select(-"...1") %>%
+    add_column(contrast = "HETvsWT")
+KOvsWT = as_tibble(read_csv('output/deseq2_hg38/raw_NPC_KO_vs_NPC_WT.txt')) %>%
+    filter(padj <= 0.05) %>%
+    dplyr::select(-"...1") %>%
+    add_column(contrast = "KOvsWT")
+
+## Filter Up/Down
+HET_Down = HETvsWT %>% 
+    filter(log2FoldChange < 0) 
+HET_Up = HETvsWT %>% 
+    filter(log2FoldChange > 0) 
+KO_Down = KOvsWT %>% 
+    filter(log2FoldChange < 0) 
+KO_Up = KOvsWT %>% 
+    filter(log2FoldChange > 0) 
+
+
+## Import the GTF file
+gtf <- import('../../Master/meta/ENCFF159KBI.gtf')
+
+## Filter in the GTF file with only the DEGs
+gtf_DEGs_HET_Down <- gtf %>% 
+  as_tibble() %>% 
+  filter(gene_id %in% HET_Down$gene)
+gtf_DEGs_HET_Up <- gtf %>% 
+  as_tibble() %>% 
+  filter(gene_id %in% HET_Up$gene)
+gtf_DEGs_KO_Down <- gtf %>% 
+  as_tibble() %>% 
+  filter(gene_id %in% KO_Down$gene)
+gtf_DEGs_KO_Up <- gtf %>% 
+  as_tibble() %>% 
+  filter(gene_id %in% KO_Up$gene)
+
+## Save the new GTF
+export(gtf_DEGs_HET_Down, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_NPC_HET_Down.gtf")
+export(gtf_DEGs_HET_Up, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_NPC_HET_Up.gtf")
+export(gtf_DEGs_KO_Down, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_NPC_KO_Down.gtf")
+export(gtf_DEGs_KO_Up, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_NPC_KO_Up.gtf")
+
+
+# 2dN time DEGs mutants 
+## Import deseq2 output and filter qvalue 0.05
+HETvsWT = as_tibble(read_csv('output/deseq2_hg38/raw_2dN_HET_vs_2dN_WT.txt')) %>%
+    filter(padj <= 0.05) %>%
+    dplyr::select(-"...1") %>%
+    add_column(contrast = "HETvsWT")
+KOvsWT = as_tibble(read_csv('output/deseq2_hg38/raw_2dN_KO_vs_2dN_WT.txt')) %>%
+    filter(padj <= 0.05) %>%
+    dplyr::select(-"...1") %>%
+    add_column(contrast = "KOvsWT")
+
+## Filter Up/Down
+HET_Down = HETvsWT %>% 
+    filter(log2FoldChange < 0) 
+HET_Up = HETvsWT %>% 
+    filter(log2FoldChange > 0) 
+KO_Down = KOvsWT %>% 
+    filter(log2FoldChange < 0) 
+KO_Up = KOvsWT %>% 
+    filter(log2FoldChange > 0) 
+
+
+## Import the GTF file
+gtf <- import('../../Master/meta/ENCFF159KBI.gtf')
+
+## Filter in the GTF file with only the DEGs
+gtf_DEGs_HET_Down <- gtf %>% 
+  as_tibble() %>% 
+  filter(gene_id %in% HET_Down$gene)
+gtf_DEGs_HET_Up <- gtf %>% 
+  as_tibble() %>% 
+  filter(gene_id %in% HET_Up$gene)
+gtf_DEGs_KO_Down <- gtf %>% 
+  as_tibble() %>% 
+  filter(gene_id %in% KO_Down$gene)
+gtf_DEGs_KO_Up <- gtf %>% 
+  as_tibble() %>% 
+  filter(gene_id %in% KO_Up$gene)
+
+## Save the new GTF
+export(gtf_DEGs_HET_Down, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_2dN_HET_Down.gtf")
+export(gtf_DEGs_HET_Up, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_2dN_HET_Up.gtf")
+export(gtf_DEGs_KO_Down, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_2dN_KO_Down.gtf")
+export(gtf_DEGs_KO_Up, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_2dN_KO_Up.gtf")
+
+
+# 4wN time DEGs mutants 
+## Import deseq2 output and filter qvalue 0.05
+HETvsWT = as_tibble(read_csv('output/deseq2_hg38/raw_4wN_HET_vs_4wN_WT.txt')) %>%
+    filter(padj <= 0.05) %>%
+    dplyr::select(-"...1") %>%
+    add_column(contrast = "HETvsWT")
+KOvsWT = as_tibble(read_csv('output/deseq2_hg38/raw_4wN_KO_vs_4wN_WT.txt')) %>%
+    filter(padj <= 0.05) %>%
+    dplyr::select(-"...1") %>%
+    add_column(contrast = "KOvsWT")
+
+## Filter Up/Down
+HET_Down = HETvsWT %>% 
+    filter(log2FoldChange < 0) 
+HET_Up = HETvsWT %>% 
+    filter(log2FoldChange > 0) 
+KO_Down = KOvsWT %>% 
+    filter(log2FoldChange < 0) 
+KO_Up = KOvsWT %>% 
+    filter(log2FoldChange > 0) 
+
+
+## Import the GTF file
+gtf <- import('../../Master/meta/ENCFF159KBI.gtf')
+
+## Filter in the GTF file with only the DEGs
+gtf_DEGs_HET_Down <- gtf %>% 
+  as_tibble() %>% 
+  filter(gene_id %in% HET_Down$gene)
+gtf_DEGs_HET_Up <- gtf %>% 
+  as_tibble() %>% 
+  filter(gene_id %in% HET_Up$gene)
+gtf_DEGs_KO_Down <- gtf %>% 
+  as_tibble() %>% 
+  filter(gene_id %in% KO_Down$gene)
+gtf_DEGs_KO_Up <- gtf %>% 
+  as_tibble() %>% 
+  filter(gene_id %in% KO_Up$gene)
+
+## Save the new GTF
+export(gtf_DEGs_HET_Down, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_4wN_HET_Down.gtf")
+export(gtf_DEGs_HET_Up, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_4wN_HET_Up.gtf")
+export(gtf_DEGs_KO_Down, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_4wN_KO_Down.gtf")
+export(gtf_DEGs_KO_Up, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_4wN_KO_Up.gtf")
 ```
 
 
 deepTools profile for these DEGs only (**if result weird; let's filter out the genes that contain peak in at least 1 genotype or in WT only at ESC**)
 
 
+```bash
+# deepTools plot
+conda activate deeptools
+## ESC DEGs
+## bigwig_DiffBind_LIB keeping replicates
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_LIB_DEGs_ESC_HET_Down_Rep.sh # 1072657
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_LIB_DEGs_ESC_HET_up_Rep.sh # 1072658
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_LIB_DEGs_ESC_KO_Down_Rep.sh # 1072664
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_LIB_DEGs_ESC_KO_up_Rep.sh # 1072666 FAIl gtf; 
+```
 
+--> Looking at HET or KO samples only, we indeed see a changes in aggrement with gene expression (eg. more express in HET show less H3K27me3 signal)
 
+--> When looking WT vs mutant we still have the WT MUCH higher than the mutants... Something is wrong.
 
+--> Western blot do not show any drastic differences at ESC WT vs mutants so its unlikely to have STRONG differences...
 
+XXX Maybe we should look at the ratio with input?
+
+XXX Let's filter-out to keep only genes enriched in WT tu rule-out this possibility
 
 
 

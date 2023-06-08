@@ -651,7 +651,9 @@ save(out, file = "output/soupX/out.RData")
 Second step is to detect doublet using [scrublet](https://github.com/swolock/scrublet)
 ```bash
 # isntallation
+
 conda activate scRNAseq
+conda install -c anaconda scipy 
 
 pip install scrublet
 ```
@@ -1126,6 +1128,101 @@ sbatch scripts/cellranger_aggr_50dOrga.sh # 1072429 ok (last ~ 1hr)
 
 
 --> csv file generated as described [here](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/aggregate) for `cellranger aggr`
+
+I need to repeat `cellranger count` and `cellranger aggr` but using cellranger 6.0 so that the raw feature is also output and that I could use soupX:
+
+Link for [older cellranger version](https://kb.10xgenomics.com/hc/en-us/articles/360039703232-How-can-I-download-older-versions-of-Cell-Ranger-Loupe-Browser-or-other-10x-software-)
+
+*NOTE: for better code organization 50d analysis will be generated in a new subfolder `002_scRNAseq/002__50dOrga`*
+
+
+```bash
+# cellranger 6.0.2 installation
+cd /scr1/users/roulet/Akizu_Lab/Master/software
+
+curl -o cellranger-6.0.2.tar.gz "https://cf.10xgenomics.com/releases/cell-exp/cellranger-6.0.2.tar.gz?Expires=1686297314&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9jZi4xMHhnZW5vbWljcy5jb20vcmVsZWFzZXMvY2VsbC1leHAvY2VsbHJhbmdlci02LjAuMi50YXIuZ3oiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE2ODYyOTczMTR9fX1dfQ__&Signature=a37~Iw7SviB1XgZR1M6FRPD~fvC8Mqv3XjtnvP5VqHoGaOS9h-EQHAg1UV788n9Zsstd0xWY~KDbpIXV77UujaKBYx4lIFZtnqoz~YVtBEyKAFOcbraB-IIuucQRd3wefARuW1p7Wgyoy2dmJsAnGqFMPFGGG2CQiKll-7mixVlVlti-i8Lrdo1s5baxf0gFCQ1epx76f0EbT2MlWclo0Isfyzd~c~7oB8beazuEsj~tcxTnPCziK17cTtfATWtgQhIdgHt-nf3-WjvZ6EAJc7mEsA~JenMPFp2hVGNWNNLtVyHGDkgHQorZ87awBIlPLfXhPJAC29FAKiS3BFOR0w__&Key-Pair-Id=APKAI7S6A5RYOXBWRPDA"
+
+tar -zxvf cellranger-6.0.2.tar.gz
+
+# run cellranger count using cellranger 6.0.2
+cd /scr1/users/roulet/Akizu_Lab/002_scRNAseq/002__50dOrganoids
+
+sbatch scripts/cellranger_count_SRR8734991.sh # 1073211
+sbatch scripts/cellranger_count_SRR10914868.sh # 1073212
+
+# aggregate into a single output
+sbatch scripts/cellranger_aggr_50dOrga.sh # XXX
+```
+
+
+--> files are agregated and raw and filtered files are output
+
+
+
+## RNA preprocessing (doublet and soupX)
+
+Preliminary steps, starting with the **aggregated** `filtered_feature_bc_matrix` from Cellranger 10x:
+- doublet detection using `scrublet`
+- ambient RNA correction using `soupX`
+
+
+
+First step is to detect doublet using [scrublet](https://github.com/swolock/scrublet). Run this in `base` conda env
+
+```bash
+srun --mem=500g --pty bash -l
+
+python3 scrublet.py [input_path] [output_path]
+
+python3 scripts/scrublet_doublets.py count_50dOrga/outs/count/filtered_feature_bc_matrix output/doublets/scrublet_50dOrga.tsv
+```
+--> Successfully assigned doublet
+**NOTE: do not name any file `scrublet.smthg` or it will fail!**
+
+Then `conda activate scRNAseq` and go into R and filtered out **RNA contamination and start with SEURAT**:
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+
+# Decontaminate one channel of 10X data mapped with cellranger
+tod = Seurat::Read10X('soup_x_msg11/raw_feature_bc_matrix')
+toc = Seurat::Read10X('soup_x_msg11/filtered_feature_bc_matrix')
+sc = SoupChannel(tod,toc)
+
+sc = load10X('count_50dOrga/outs')
+
+# Assess % of conta
+pdf("output/soupX/autoEstCont_50dOrga.pdf", width=10, height=10)
+sc = autoEstCont(sc)
+dev.off()
+
+# Generate the corrected matrix
+out = adjustCounts(sc)
+
+# Save the matrix
+save(out, file = "output/soupX/out_50dOrga.RData")
+
+# SEURAT
+
+XXX
+```
+**NOTE: to make it work provide the path to the all 10x analyses! Not the filtered**
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
