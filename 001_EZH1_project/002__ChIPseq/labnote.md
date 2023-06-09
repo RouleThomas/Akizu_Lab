@@ -4927,20 +4927,29 @@ sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_LIB_DEGs_ESC_HET_Down_Rep.sh # 10
 sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_LIB_DEGs_ESC_HET_up_Rep.sh # 1072658
 sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_LIB_DEGs_ESC_KO_Down_Rep.sh # 1072664
 sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_LIB_DEGs_ESC_KO_up_Rep.sh # 1072666 FAIl gtf; 
-```
 
+## bigwig_DiffBind_TMM keeping replicates
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_DEGs_ESC_HET_Down_Rep.sh # 1074398
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_DEGs_ESC_HET_up_Rep.sh # 1074399
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_DEGs_ESC_KO_Down_Rep.sh # 1074400
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_DEGs_ESC_KO_up_Rep.sh # 1074402
+```
+**bigwig_DiffBind_LIB:**
 --> Looking at HET or KO samples only, we indeed see a changes in aggrement with gene expression (eg. more express in HET show less H3K27me3 signal)
 
 --> When looking WT vs mutant we still have the WT MUCH higher than the mutants... Something is wrong.
 
 --> Western blot do not show any drastic differences at ESC WT vs mutants so its unlikely to have STRONG differences...
 
+
 XXX Maybe we should look at the ratio with input?
 
 XXX Let's filter-out to keep only genes enriched in WT tu rule-out this possibility
 
 
+**bigwig_DiffBind_TMM:**
 
+--> XXX
 
 
 
