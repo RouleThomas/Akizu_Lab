@@ -7367,6 +7367,7 @@ library(DOSE)
 library(org.Hs.eg.db)
 library(enrichplot)
 library(rtracklayer)
+library(tidyverse)
 
 ## Read GTF file
 gtf_file <- "../../Master/meta/ENCFF159KBI.gtf"
@@ -7401,6 +7402,7 @@ background = read_csv("output/deseq2_hg38/raw_2dN_HET_vs_2dN_WT.txt") %>%
 
 
 ## Run GO enrichment analysis 
+### with contrast
 ego <- enrichGO(gene = as.character(cluster_8$gene_name), 
                 universe = as.character(background$gene_name),
                 keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
@@ -7411,7 +7413,7 @@ ego <- enrichGO(gene = as.character(cluster_8$gene_name),
                 readable = TRUE)
 
 ### more relaxed parameter
-ego <- enrichGO(gene = as.character(cluster_8$gene_name), 
+ego <- enrichGO(gene = as.character(cluster_7$gene_name), 
                 keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
                 OrgDb = org.Hs.eg.db, 
                 ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
@@ -7439,19 +7441,86 @@ emapplot(pairwise_termsim(ego), showCategory = 50)
 dev.off()
 
 
-pdf("output/GO_hg38/dotplot_BP_cluster_8_small.pdf", width=7, height=8)
-dotplot(ego, showCategory=20)
+pdf("output/GO_hg38/dotplot_BP_cluster_7_small15.pdf", width=5, height=8)
+dotplot(ego, showCategory=15)
 dev.off()
-pdf("output/GO_hg38/emapplot_BP_cluster_8_small.pdf", width=8, height=9)
+pdf("output/GO_hg38/emapplot_BP_cluster_7_small.pdf", width=8, height=9)
 emapplot(pairwise_termsim(ego), showCategory = 20)
+dev.off()
+
+
+
+## Cluster 3/4/6/7/8 together (NaiaraPlot)
+cluster_3 = read_csv("output/deseq2_hg38/cluster_gene_rlog_8cl_WTvsHET.txt") %>%
+  filter(cluster == 3) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+
+cluster_4 = read_csv("output/deseq2_hg38/cluster_gene_rlog_8cl_WTvsHET.txt") %>%
+  filter(cluster == 4)  %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+  
+cluster_6 = read_csv("output/deseq2_hg38/cluster_gene_rlog_8cl_WTvsHET.txt") %>%
+  filter(cluster == 6)  %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+  
+cluster_7 = read_csv("output/deseq2_hg38/cluster_gene_rlog_8cl_WTvsHET.txt") %>%
+  filter(cluster == 7)  %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+  
+cluster_8 = read_csv("output/deseq2_hg38/cluster_gene_rlog_8cl_WTvsHET.txt") %>%
+  filter(cluster == 8)  %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+  
+
+# Extract the 'entrez_id' column as a vector
+cluster_3_vector <- pull(cluster_3, entrez_id)
+cluster_4_vector <- pull(cluster_4, entrez_id)
+cluster_6_vector <- pull(cluster_6, entrez_id)
+cluster_7_vector <- pull(cluster_7, entrez_id)
+cluster_8_vector <- pull(cluster_8, entrez_id)
+
+# Combine the vectors into a list
+entrez_list <- list(cluster_3 = cluster_3_vector, 
+                    cluster_4 = cluster_4_vector, 
+                    cluster_6 = cluster_6_vector, 
+                    cluster_7 = cluster_7_vector, 
+                    cluster_8 = cluster_8_vector)
+
+
+
+
+## GO
+compGO <- compareCluster(geneCluster   = entrez_list,
+                         fun           = "enrichGO",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH",
+                         OrgDb         = "org.Hs.eg.db",
+                         ont           = "BP") # "BP" (Biological Process), "CC" (Cellular Component), or "MF" (Molecular Function)
+pdf("output/GO_hg38/dotplot_BP_cluster34678.pdf", width=15, height=15)
+dotplot(compGO, showCategory = 15, title = "GO_Biological Process Enrichment Analysis")
 dev.off()
 
 
 
 # Other comparionsv
 
-
 ```
+
 
 
 
