@@ -1147,12 +1147,14 @@ tar -zxvf cellranger-6.0.2.tar.gz
 # run cellranger count using cellranger 6.0.2
 cd /scr1/users/roulet/Akizu_Lab/002_scRNAseq/002__50dOrganoids
 
-sbatch scripts/cellranger_count_SRR8734991.sh # 1073211
-sbatch scripts/cellranger_count_SRR10914868.sh # 1073212
+sbatch scripts/cellranger_count_SRR8734991.sh # 1073211 ok
+sbatch scripts/cellranger_count_SRR10914868.sh # 1073212 ok
 
 # aggregate into a single output
-sbatch scripts/cellranger_aggr_50dOrga.sh # XXX
+sbatch scripts/cellranger602_aggr_50dOrga.sh # 1073668
 ```
+
+XXX
 
 
 --> files are agregated and raw and filtered files are output

@@ -4,7 +4,7 @@
 
 
 
-/scr1/users/roulet/Akizu_Lab/Master/software/cellranger-6.0.2/cellranger aggr --id=count_50dOrga_602 \
+/scr1/users/roulet/Akizu_Lab/Master/software/cellranger-6.0.2/cellranger aggr --id=count \
                 --csv=meta/aggr.csv
                 
                 
