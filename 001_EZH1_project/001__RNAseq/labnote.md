@@ -7387,8 +7387,8 @@ gene_id_name <- data.frame(gene_id, gene_name) %>%
 
 # WT vs HET (NairaPlot)
 ## Import genes_cluster list and background list
-cluster_7 = read_csv("output/deseq2_hg38/cluster_gene_rlog_8cl_WTvsHET.txt") %>%
-  filter(cluster == 7) %>%
+cluster_6 = read_csv("output/deseq2_hg38/cluster_gene_rlog_8cl_WTvsHET.txt") %>%
+  filter(cluster == 6) %>%
   rename(gene_id = gene) %>%
   inner_join(gene_id_name) %>%
   dplyr::select(gene_name) 
@@ -7403,7 +7403,7 @@ background = read_csv("output/deseq2_hg38/raw_2dN_HET_vs_2dN_WT.txt") %>%
 
 ## Run GO enrichment analysis 
 ### with contrast
-ego <- enrichGO(gene = as.character(cluster_8$gene_name), 
+ego <- enrichGO(gene = as.character(cluster_6$gene_name), 
                 universe = as.character(background$gene_name),
                 keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
                 OrgDb = org.Hs.eg.db, 
@@ -7413,7 +7413,7 @@ ego <- enrichGO(gene = as.character(cluster_8$gene_name),
                 readable = TRUE)
 
 ### more relaxed parameter
-ego <- enrichGO(gene = as.character(cluster_7$gene_name), 
+ego <- enrichGO(gene = as.character(cluster_6$gene_name), 
                 keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
                 OrgDb = org.Hs.eg.db, 
                 ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
@@ -7433,18 +7433,18 @@ write.csv(GO_summary, "output/GO_hg38/cluster4_CC.csv")
 
 ## Vizualization
 
-pdf("output/GO_hg38/dotplot_BP_cluster_7.pdf", width=7, height=22)
+pdf("output/GO_hg38/dotplot_BP_cluster_6.pdf", width=7, height=22)
 dotplot(ego, showCategory=50)
 dev.off()
-pdf("output/GO_hg38/emapplot_BP_cluster_7.pdf", width=12, height=14)
+pdf("output/GO_hg38/emapplot_BP_cluster_6.pdf", width=12, height=14)
 emapplot(pairwise_termsim(ego), showCategory = 50)
 dev.off()
 
 
-pdf("output/GO_hg38/dotplot_BP_cluster_7_small15.pdf", width=5, height=8)
+pdf("output/GO_hg38/dotplot_BP_cluster_6_small15.pdf", width=5, height=8)
 dotplot(ego, showCategory=15)
 dev.off()
-pdf("output/GO_hg38/emapplot_BP_cluster_7_small.pdf", width=8, height=9)
+pdf("output/GO_hg38/emapplot_BP_cluster_6_small.pdf", width=8, height=9)
 emapplot(pairwise_termsim(ego), showCategory = 20)
 dev.off()
 

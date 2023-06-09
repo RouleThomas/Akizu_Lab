@@ -1151,14 +1151,13 @@ sbatch scripts/cellranger_count_SRR8734991.sh # 1073211 ok
 sbatch scripts/cellranger_count_SRR10914868.sh # 1073212 ok
 
 # aggregate into a single output
-sbatch scripts/cellranger602_aggr_50dOrga.sh # 1073668
+sbatch scripts/cellranger602_aggr_50dOrga.sh # 1073668 FAIL; 1073678
 ```
 
-XXX
+- **NOTE: `cellranger aggr `Fail at the CLOUPE_PREPROCESS. I do not care about cloupe so re-run without generating cloupe and other stuff by adding `--nosecondary`**. HOWEVER, to make soupX work pre-analysis clustering is needed.... So let's try do it XXX
 
 
 --> files are agregated and raw and filtered files are output
-
 
 
 ## RNA preprocessing (doublet and soupX)
@@ -1176,8 +1175,10 @@ srun --mem=500g --pty bash -l
 
 python3 scrublet.py [input_path] [output_path]
 
-python3 scripts/scrublet_doublets.py count_50dOrga/outs/count/filtered_feature_bc_matrix output/doublets/scrublet_50dOrga.tsv
+python3 scripts/scrublet_doublets.py count/outs/count/filtered_feature_bc_matrix output/doublets/scrublet_50dOrga.tsv
 ```
+
+
 --> Successfully assigned doublet
 **NOTE: do not name any file `scrublet.smthg` or it will fail!**
 
@@ -1188,11 +1189,9 @@ Then `conda activate scRNAseq` and go into R and filtered out **RNA contaminatio
 library("SoupX")
 
 # Decontaminate one channel of 10X data mapped with cellranger
-tod = Seurat::Read10X('soup_x_msg11/raw_feature_bc_matrix')
-toc = Seurat::Read10X('soup_x_msg11/filtered_feature_bc_matrix')
-sc = SoupChannel(tod,toc)
+sc = load10X('count/outs/count') 
 
-sc = load10X('count_50dOrga/outs')
+
 
 # Assess % of conta
 pdf("output/soupX/autoEstCont_50dOrga.pdf", width=10, height=10)
@@ -1209,7 +1208,7 @@ save(out, file = "output/soupX/out_50dOrga.RData")
 
 XXX
 ```
-**NOTE: to make it work provide the path to the all 10x analyses! Not the filtered**
+**NOTE: to make it work provide the path to the all 10x analyses! Not the filtered; even weirder path when coming from aggr**
 
 
 

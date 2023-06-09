@@ -3994,9 +3994,9 @@ library("meshes")
 library("ReactomePA")
 
 # load CutRun gainLoss table
-HETvsKO_annot <- read.table("output/ChIPseeker/annotation_HETvsKO.txt", sep="\t", header=TRUE)
-HETvsWT_annot <- read.table("output/ChIPseeker/annotation_HETvsWT.txt", sep="\t", header=TRUE)
-KOvsWT_annot <- read.table("output/ChIPseeker/annotation_KOvsWT.txt", sep="\t", header=TRUE)
+HETvsKO_annot <- read.table("../003__CutRun/output/ChIPseeker/annotation_HETvsKO.txt", sep="\t", header=TRUE)
+HETvsWT_annot <- read.table("../003__CutRun/output/ChIPseeker/annotation_HETvsWT.txt", sep="\t", header=TRUE)
+KOvsWT_annot <- read.table("../003__CutRun/output/ChIPseeker/annotation_KOvsWT.txt", sep="\t", header=TRUE)
 
 # Filter Gain/Loss sites
 HETvsWT_annot_gain = tibble(HETvsWT_annot) %>%
