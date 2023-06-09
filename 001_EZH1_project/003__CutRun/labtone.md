@@ -3370,7 +3370,9 @@ library("DiffChIPL")
 
 # DiffChIPL_Go 
 
-XXX
+XXX 
+
+Create the csv file as indicated in [github](https://github.com/yancychy/DiffChIPL/blob/main/example/simHist/sim_hist_1.csv) into `output/DiffChIPL`
 
 
 ```bash
