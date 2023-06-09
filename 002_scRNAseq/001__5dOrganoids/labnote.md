@@ -852,6 +852,10 @@ VlnPlot(orga5d_QCPass,features = c("S.Score","G2M.Score")) &
 dev.off()
 
 # SCTransform normalization and clustering
+XXX double chekc nb correct !!!! XXX
+dim(orga5d_QCPass)[2]
+
+
 orga5d_QCPass <- SCTransform(orga5d_QCPass, method = "glmGamPoi", ncells = 6941,     # HERE PASTE NB OF CELLS AFTER QC!!! NB OF CEL IN THE orga5d_QCPass
                     vars.to.regress = c("percent.mt","S.Score","G2M.Score"), verbose = F)
 orga5d_QCPass
@@ -1150,11 +1154,16 @@ cd /scr1/users/roulet/Akizu_Lab/002_scRNAseq/002__50dOrganoids
 sbatch scripts/cellranger_count_SRR8734991.sh # 1073211 ok
 sbatch scripts/cellranger_count_SRR10914868.sh # 1073212 ok
 
+# Correct the csv file related to version earlier than 7.0 error
+echo $'' >> meta/aggr.csv
+tr -cd '\11\12\40-\176' < meta/aggr.csv > meta/aggr_corr.csv
+od -c meta/aggr_corr.csv # should now NOT display 357,273,277 for first values
+
 # aggregate into a single output
-sbatch scripts/cellranger602_aggr_50dOrga.sh # 1073668 FAIL; 1073678
+sbatch scripts/cellranger602_aggr_50dOrga.sh # 1073668 FAIL; 1073678 run without analysis (`--nosecondary`) but needed...; 1074091
 ```
 
-- **NOTE: `cellranger aggr `Fail at the CLOUPE_PREPROCESS. I do not care about cloupe so re-run without generating cloupe and other stuff by adding `--nosecondary`**. HOWEVER, to make soupX work pre-analysis clustering is needed.... So let's try do it XXX
+- **NOTE: `cellranger aggr `Fail at the CLOUPE_PREPROCESS. And that is needed to make soupX work. Error discussed [here](https://kb.10xgenomics.com/hc/en-us/articles/4410606954253-Loupe-file-not-found-when-you-execute-aggr-count-multi-due-to-a-CSV-formatting-issue)**
 
 
 --> files are agregated and raw and filtered files are output
@@ -1187,11 +1196,18 @@ Then `conda activate scRNAseq` and go into R and filtered out **RNA contaminatio
 ```R
 # install.packages('SoupX')
 library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
 
 # Decontaminate one channel of 10X data mapped with cellranger
 sc = load10X('count/outs/count') 
-
-
 
 # Assess % of conta
 pdf("output/soupX/autoEstCont_50dOrga.pdf", width=10, height=10)
@@ -1205,13 +1221,368 @@ out = adjustCounts(sc)
 save(out, file = "output/soupX/out_50dOrga.RData")
 
 # SEURAT
+srat <- CreateSeuratObject(counts = out, project = "orga50d") # 
 
-XXX
+# QUALITY CONTROL add mitochondrial and Ribosomal conta
+srat[["percent.mt"]] <- PercentageFeatureSet(srat, pattern = "^MT-")
+srat[["percent.rb"]] <- PercentageFeatureSet(srat, pattern = "^RP[SL]")
+
+# ADD doublet information (scrublet)
+doublets <- read.table("output/doublets/scrublet_50dOrga.tsv",header = F,row.names = 1)
+colnames(doublets) <- c("Doublet_score","Is_doublet")
+srat <- AddMetaData(srat,doublets)
+srat$Doublet_score <- as.numeric(srat$Doublet_score) # make score as numeric
+head(srat[[]])
+
+# Quality check
+pdf("output/seurat/VlnPlot_QC_50dOrga.pdf", width=10, height=6)
+VlnPlot(srat, features = c("nFeature_RNA","nCount_RNA","percent.mt","percent.rb"),ncol = 4,pt.size = 0.1) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+
+pdf("output/seurat/FeatureScatter_QC_RNAcount_mt_50dOrga.pdf", width=5, height=5)
+FeatureScatter(srat, feature1 = "nCount_RNA", feature2 = "percent.mt")
+dev.off()
+pdf("output/seurat/FeatureScatter_QC_RNAcount_RNAfeature_50dOrga.pdf", width=5, height=5)
+FeatureScatter(srat, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+dev.off()
+pdf("output/seurat/FeatureScatter_QC_RNAcount_rb_50dOrga.pdf", width=5, height=5)
+FeatureScatter(srat, feature1 = "nCount_RNA", feature2 = "percent.rb")
+dev.off()
+pdf("output/seurat/FeatureScatter_QC_rb_mt_50dOrga.pdf", width=5, height=5)
+FeatureScatter(srat, feature1 = "percent.rb", feature2 = "percent.mt")
+dev.off()
+pdf("output/seurat/FeatureScatter_QC_RNAfeature_doublet_50dOrga.pdf", width=5, height=5)
+FeatureScatter(srat, feature1 = "nFeature_RNA", feature2 = "Doublet_score")
+dev.off()
+
+# After seeing the plot; add QC information in our seurat object
+srat[['QC']] <- ifelse(srat@meta.data$Is_doublet == 'True','Doublet','Pass')
+srat[['QC']] <- ifelse(srat@meta.data$nFeature_RNA < 500 & srat@meta.data$QC == 'Pass','Low_nFeature',srat@meta.data$QC)
+srat[['QC']] <- ifelse(srat@meta.data$nFeature_RNA < 500 & srat@meta.data$QC != 'Pass' & srat@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat@meta.data$QC,sep = ','),srat@meta.data$QC)
+srat[['QC']] <- ifelse(srat@meta.data$percent.mt > 20 & srat@meta.data$QC == 'Pass','High_MT',srat@meta.data$QC)
+srat[['QC']] <- ifelse(srat@meta.data$nFeature_RNA < 500 & srat@meta.data$QC != 'Pass' & srat@meta.data$QC != 'High_MT',paste('High_MT',srat@meta.data$QC,sep = ','),srat@meta.data$QC)
+table(srat[['QC']])
+
+# Quality check after QC filtering
+pdf("output/seurat/VlnPlot_QCPass_50dOrga.pdf", width=10, height=6)
+VlnPlot(subset(srat, subset = QC == 'Pass'), 
+        features = c("nFeature_RNA", "nCount_RNA", "percent.mt","percent.rb"), ncol = 4, pt.size = 0.1) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+
+# normalize data
+srat <- NormalizeData(srat, normalization.method = "LogNormalize", scale.factor = 10000)
+
+# Discover the 2000 first more variable genes
+srat <- FindVariableFeatures(srat, selection.method = "vst", nfeatures = 2000)
+
+top10 <- head(VariableFeatures(srat), 10)
+top10 
+
+## plot the 10 first variable
+pdf("output/seurat/VariableFeaturePlot_top10_50dOrga.pdf", width=10, height=10)
+plot1 <- VariableFeaturePlot(srat)
+LabelPoints(plot = plot1, points = top10, repel = TRUE, xnudge = 0, ynudge = 0)
+dev.off()
+
+# scale data to Z score (value centered around 0 and +/- 1)
+all.genes <- rownames(srat)
+srat <- ScaleData(srat, features = all.genes)
+
+# PCA
+srat <- RunPCA(srat, features = VariableFeatures(object = srat))
+
+# investigate to find optimal nb of dimension
+
+## Vizualize the 1st 20 PC
+pdf("output/seurat/DimHeatmap.pdf", width=10, height=20)
+DimHeatmap(srat, dims = 1:20, cells = 500, balanced = TRUE)
+dev.off()
+
+## Compute JackStraw score
+srat <- JackStraw(srat, num.replicate = 100)
+srat <- ScoreJackStraw(srat, dims = 1:20)
+
+## Generate plot
+pdf("output/seurat/JackStraw.pdf", width=10, height=10)
+JackStrawPlot(srat, dims = 1:20)  # 20
+dev.off()
+
+pdf("output/seurat/Elbow.pdf", width=10, height=10)
+ElbowPlot(srat) # 8 
+dev.off()
+
+# clustering
+srat <- FindNeighbors(srat, dims = 1:10)
+srat <- FindClusters(srat, resolution = 0.1)
+
+srat <- RunUMAP(srat, dims = 1:10, verbose = F)
+table(srat@meta.data$seurat_clusters) # to check cluster size
+
+pdf("output/seurat/Umap.pdf", width=10, height=10)
+DimPlot(srat,label.size = 4,repel = T,label = T)
+dev.off()
+
+# Check minor cell population to make sure clustering is good
+pdf("output/seurat/FeaturePlot_Papercluster4.pdf", width=10, height=5)
+FeaturePlot(srat, features = c("XXX"))
+dev.off()
+
+# Check parameter to see if one clsuter to do technical stuff
+pdf("output/seurat/FeaturePlot_Doublet_score.pdf", width=10, height=10)
+FeaturePlot(srat, features = "Doublet_score") & theme(plot.title = element_text(size=10))
+dev.off()
+pdf("output/seurat/FeaturePlot_mt.pdf", width=10, height=10)
+FeaturePlot(srat, features = "percent.mt") & theme(plot.title = element_text(size=10))
+dev.off()
+pdf("output/seurat/FeaturePlot_RNAfeature.pdf", width=10, height=10)
+FeaturePlot(srat, features = "nFeature_RNA") & theme(plot.title = element_text(size=10))
+dev.off()
+
+# Remove cells that did not path QC
+srat <- subset(srat, subset = QC == 'Pass')
+
+pdf("output/seurat/Umap_QCPass.pdf", width=10, height=10)
+DimPlot(srat,label.size = 4,repel = T,label = T)
+dev.off()
+
+# Check cell cycles
+s.genes <- cc.genes.updated.2019$s.genes
+g2m.genes <- cc.genes.updated.2019$g2m.genes
+
+srat <- CellCycleScoring(srat, s.features = s.genes, g2m.features = g2m.genes)
+table(srat[[]]$Phase)
+
+# Let's see if cluster define by technical difference (even after QC filtering)
+
+## percent mt
+pdf("output/seurat/FeaturePlot_QCPass_mt.pdf", width=10, height=10)
+FeaturePlot(srat,features = "percent.mt",label.size = 4,repel = T,label = T) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+pdf("output/seurat/VlnPlot_QCPass_mt.pdf", width=10, height=10)
+VlnPlot(srat,features = "percent.mt") & theme(plot.title = element_text(size=10))
+dev.off()
+## percent rb
+pdf("output/seurat/FeaturePlot_QCPass_rb.pdf", width=10, height=10)
+FeaturePlot(srat,features = "percent.rb",label.size = 4,repel = T,label = T) & theme(plot.title = element_text(size=10))
+dev.off()
+pdf("output/seurat/VlnPlot_QCPass_rb.pdf", width=10, height=10)
+VlnPlot(srat,features = "percent.rb") & theme(plot.title = element_text(size=10))
+dev.off()
+## RNA
+pdf("output/seurat/VlnPlot_QCPass_RNA.pdf", width=10, height=10)
+VlnPlot(srat,features = c("nCount_RNA","nFeature_RNA")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+## cell cycle
+pdf("output/seurat/FeaturePlot_QCPass_cellCycle.pdf", width=10, height=10)
+FeaturePlot(srat,features = c("S.Score","G2M.Score"),label.size = 4,repel = T,label = T) & 
+  theme(plot.title = element_text(size=10))
+dev.off()  
+pdf("output/seurat/VlnPlot_QCPass_cellCycle.pdf", width=10, height=10)
+VlnPlot(srat,features = c("S.Score","G2M.Score")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+
+# SCTransform normalization and clustering
+dim(srat)[2] # to know nb of cells
+srat <- SCTransform(srat, method = "glmGamPoi", ncells = 20862,     # HERE PASTE NB OF CELLS AFTER QC!!! NB OF CEL IN THE srat
+                    vars.to.regress = c("percent.mt","S.Score","G2M.Score"), verbose = F) 
+
+
+
+# SCTransform PCA 
+srat <- RunPCA(srat, verbose = F)
+srat <- RunUMAP(srat, dims = 1:30, verbose = F)
+srat <- FindNeighbors(srat, k.param = 15, dims = 1:30, verbose = F) # k.param can be changed: A larger value will create more connections between cells and may result in less distinct clustering
+srat <- FindClusters(srat, verbose = F, resolution = 0.1, algorithm = 4) # algorithm can be changed
+table(srat[[]]$seurat_clusters)
+
+
+## Plot
+pdf("output/seurat/Umap_QCPass_SCT.pdf", width=10, height=10)
+DimPlot(srat, label = T)
+dev.off()
+
+## Check marker genes
+pdf("output/seurat/FeaturePlot_Papercluster_muscle_myogenicProgenitors_SCT.pdf", width=10, height=10)
+FeaturePlot(srat, features = c("PAX7", "PITX2", "MSC","MKI67","MYF5","SYTL2"))
+dev.off()
+pdf("output/seurat/FeaturePlot_Papercluster_muscle_myocytes_SCT.pdf", width=10, height=10)
+FeaturePlot(srat, features = c("MYMX", "SGCA", "MYOD1", "MYOG", "CDH15", "CHRNB1"))
+dev.off()
+pdf("output/seurat/FeaturePlot_Papercluster_muscle_skeletalMuscleFibers_SCT.pdf", width=10, height=10)
+FeaturePlot(srat, features = c("CHRND", "TTN", "MYBPH", "ACTA1", "ACTN2", "UNC45B"))
+dev.off()
+pdf("output/seurat/FeaturePlot_Papercluster_neural_meuralProgenitors_SCT.pdf", width=10, height=10)
+FeaturePlot(srat, features = c("PAX6", "HES5", "HOPX", "FABP7"))
+dev.off()
+pdf("output/seurat/FeaturePlot_Papercluster_neural_immatureNeurons_SCT.pdf", width=10, height=10)
+FeaturePlot(srat, features = c("HES6", "DLL3", "ASCL1"))
+dev.off()
+pdf("output/seurat/FeaturePlot_Papercluster_neural_matureSpinalCordNeurons_SCT.pdf", width=10, height=10)
+FeaturePlot(srat, features = c("NHLH1", "ELAVL4", "ELAVL3", "STMN2", "NSG2"))
+dev.off()
+pdf("output/seurat/FeaturePlot_Papercluster_neural_neuralCrestDerivatives_SCT.pdf", width=10, height=10)
+FeaturePlot(srat, features = c("TWIST1", "COL5A1", "SERPINF1", "PDGFRA", "PDGFRB"))
+dev.off()
+pdf("output/seurat/FeaturePlot_Papercluster_neural_neural_gliaCells_SCT.pdf", width=10, height=10)
+FeaturePlot(srat, features = c("GFAP", "DKK1", "EFNB3", "SCG2"))
+dev.off()
+
+
+
+
+# Save the seurat
+save(srat, file = "output/seurat/srat.RData")
+
+
+# Differential expression and marker selection
+## set back  active assay to “RNA” and re-do norm and scaling (as we filter out many cells)
+DefaultAssay(srat) <- "RNA"
+srat <- NormalizeData(srat)
+srat <- FindVariableFeatures(srat, selection.method = "vst", nfeatures = 2000)
+all.genes <- rownames(srat)
+srat <- ScaleData(srat, features = all.genes)
+
+## DEGs
+all.markers <- FindAllMarkers(srat, only.pos = T, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all.markers, file = "output/seurat/all_markers.tsv", sep = "\t", quote = F, row.names = T)
+
+
+## check markers
+dim(all.markers)
+table(all.markers$cluster)
+top5_markers <- as.data.frame(all.markers %>% group_by(cluster) %>% top_n(n = 5, wt = avg_log2FC))
+top5_markers
+
+
+write.table(as.data.frame(all.markers %>% group_by(cluster) %>% top_n(n = 20, wt = avg_log2FC)), file = "output/seurat/top20_markers.tsv", sep = "\t", quote = F, row.names = T)
+
+
+
+# Cell type annotation using SingleR
+## Get reference datasets
+monaco.ref <- celldex::MonacoImmuneData()
+hpca.ref <- celldex::HumanPrimaryCellAtlasData()
+dice.ref <- celldex::DatabaseImmuneCellExpressionData()
+
+## Convert Seurat object into SCE
+sce <- as.SingleCellExperiment(DietSeurat(orga5d_QCPass))
+sce
+
+## Analyse
+monaco.main <- SingleR(test = sce,assay.type.test = 1,ref = monaco.ref,labels = monaco.ref$label.main)
+monaco.fine <- SingleR(test = sce,assay.type.test = 1,ref = monaco.ref,labels = monaco.ref$label.fine)
+hpca.main <- SingleR(test = sce,assay.type.test = 1,ref = hpca.ref,labels = hpca.ref$label.main)
+hpca.fine <- SingleR(test = sce,assay.type.test = 1,ref = hpca.ref,labels = hpca.ref$label.fine)
+dice.main <- SingleR(test = sce,assay.type.test = 1,ref = dice.ref,labels = dice.ref$label.main)
+dice.fine <- SingleR(test = sce,assay.type.test = 1,ref = dice.ref,labels = dice.ref$label.fine)
+
+## check results
+table(monaco.main$pruned.labels)
+table(hpca.main$pruned.labels)
+table(dice.main$pruned.labels)
+table(monaco.fine$pruned.labels)
+table(hpca.fine$pruned.labels)
+table(dice.fine$pruned.labels)
+
+# Add annotation to seurat object
+orga5d_QCPass@meta.data$hpca.main   <- hpca.main$pruned.labels
+orga5d_QCPass@meta.data$hpca.fine   <- hpca.fine$pruned.labels
+
+orga5d_QCPass@meta.data$monaco.main <- monaco.main$pruned.labels
+orga5d_QCPass@meta.data$monaco.fine <- monaco.fine$pruned.labels
+
+orga5d_QCPass@meta.data$dice.main   <- dice.main$pruned.labels
+orga5d_QCPass@meta.data$dice.fine   <- dice.fine$pruned.labels
+
+# cluster with name
+pdf("output/seurat_sanger/UMAP_SCT_annotated_hpca.main.pdf", width=10, height=10)
+orga5d_QCPass <- SetIdent(orga5d_QCPass, value = "hpca.main")
+DimPlot(orga5d_QCPass, label = T , repel = T, label.size = 3)
+dev.off()
+
+pdf("output/seurat_sanger/UMAP_SCT_annotated_hpca.fine.pdf", width=10, height=10)
+orga5d_QCPass <- SetIdent(orga5d_QCPass, value = "hpca.fine")
+DimPlot(orga5d_QCPass, label = T , repel = T, label.size = 3)
+dev.off()
+
+pdf("output/seurat_sanger/UMAP_SCT_annotated_monaco.main.pdf", width=10, height=10)
+orga5d_QCPass <- SetIdent(orga5d_QCPass, value = "monaco.main")
+DimPlot(orga5d_QCPass, label = T , repel = T, label.size = 3)
+dev.off()
+
+pdf("output/seurat_sanger/UMAP_SCT_annotated_monaco.fine.pdf", width=10, height=10)
+orga5d_QCPass <- SetIdent(orga5d_QCPass, value = "monaco.fine")
+DimPlot(orga5d_QCPass, label = T , repel = T, label.size = 3)
+dev.off()
+
+pdf("output/seurat_sanger/UMAP_SCT_annotated_dice.main.pdf", width=10, height=10)
+orga5d_QCPass <- SetIdent(orga5d_QCPass, value = "dice.main")
+DimPlot(orga5d_QCPass, label = T , repel = T, label.size = 3)
+dev.off()
+
+pdf("output/seurat_sanger/UMAP_SCT_annotated_dice.fine.pdf", width=10, height=10)
+orga5d_QCPass <- SetIdent(orga5d_QCPass, value = "dice.fine")
+DimPlot(orga5d_QCPass, label = T , repel = T, label.size = 3)
+dev.off()
+
+
+# manual annotation
+# Rename cluster in agreement
+## Re run this to re-generate SCTransform
+
+srat <- SCTransform(srat, method = "glmGamPoi", ncells = 20862,     # HERE PASTE NB OF CELLS AFTER QC!!! NB OF CEL IN THE srat
+                    vars.to.regress = c("percent.mt","S.Score","G2M.Score"), verbose = F) 
+
+# SCTransform PCA 
+srat <- RunPCA(srat, verbose = F)
+srat <- RunUMAP(srat, dims = 1:30, verbose = F)
+srat <- FindNeighbors(srat, k.param = 15, dims = 1:30, verbose = F) # k.param can be changed: A larger value will create more connections between cells and may result in less distinct clustering
+srat <- FindClusters(srat, verbose = F, resolution = 0.1, algorithm = 4) # algorithm can be changed
+table(srat[[]]$seurat_clusters)
+
+
+
+
+new.cluster.ids <- c("Neural_NeuralCrestDerivatives_1", "Neural_ImmatureNeurons_MatureSpinalCords", "Neural_NeuralCrestDerivatives_2", "Neural_GliaCells", "Muscle_MyogenicProgenitors", "Muscle_Myocytes", "Unknown_1", "Neural_NeuralProgenitors", "Muscle_SkeletalMuscleFibers", "Unknown_2")
+names(new.cluster.ids) <- levels(srat)
+srat <- RenameIdents(srat, new.cluster.ids)
+
+pdf("output/seurat/UMAP_label_manual_fromSCTransform.pdf", width=10, height=10)
+DimPlot(srat, reduction = "umap", label = TRUE, pt.size = 0.7, label.size = 6) + NoLegend()
+dev.off()
+##
 ```
-**NOTE: to make it work provide the path to the all 10x analyses! Not the filtered; even weirder path when coming from aggr**
+- **NOTE: to make it work provide the path to the all 10x analyses! Not the filtered; even weirder path when coming from aggr**
+- **NOTE: Here as cellranger aggr failed to generate clustering (loupe, etc...), I have to generate a quick clustering for soupX to work... solution [here](https://github.com/constantAmateur/SoupX/issues/46)**
 
+--> Here for QC pass I filtered %mt at 20 (not 15 as before) as more enriched in mt...
 
+--> For SCTransform function I set `vars.to.regress` to the cell cycle to lower their impact as it does not seems to correlate to drive clustering (all cluster are simialry enriched in cells G2SM)
 
+--> need to fine tune these aprameters below: increase k.para. will  will create more connections between cells and may result in less distinct clustering. increase dim will includes more variance but also more noise, and resolutioon change cluster nb too
+```bash
+srat <- FindNeighbors(srat, k.param = 15, dims = 1:30, verbose = F) # k.param can be changed: A larger value will create more connections between cells and may result in less distinct clustering
+srat <- FindClusters(srat, verbose = F, resolution = 0.2, algorithm = 4)
+```
+
+Here is the clustering for now on:
+Cluster1 = Neural_NeuralCrestDerivatives_1
+Cluster2= Neural_ImmatureNeurons_MatureSpinalCords
+Clsuter3= Neural_NeuralCrestDerivatives_2
+Cluster4 = Neural_GliaCells
+Cluster5= Muscle_MyogenicProgenitors
+Cluster6= Muscle_Myocytes
+Cluster7= Unknown_1
+Cluster8 = Neural_NeuralProgenitors
+Cluster9 = Muscle_SkeletalMuscleFibers
+Cluster10= Unknown_2
+
+The cluster 2 I was not able to separate immatre from mature without creating many clusters... I did not troubleshoot as much; different algorithm could have been tested notably...
 
 
 

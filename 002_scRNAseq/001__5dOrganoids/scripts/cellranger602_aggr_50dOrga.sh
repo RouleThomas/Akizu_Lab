@@ -5,7 +5,6 @@
 
 
 /scr1/users/roulet/Akizu_Lab/Master/software/cellranger-6.0.2/cellranger aggr --id=count \
-                --csv=meta/aggr.csv \
-                --nosecondary
+                --csv=meta/aggr_corr.csv
                 
                 
