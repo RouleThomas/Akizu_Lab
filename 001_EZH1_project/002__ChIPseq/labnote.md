@@ -5280,6 +5280,19 @@ sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_25cl_genesFromCl18_ESC_NPC_2d
 
 --> Otherwise; NPC to 2dN is logical as expected for each cluster. 
 
+--> Still, overall profile is weird, look very noisy. Need to find a way to clean our data!
 
 
+Try to use the **uniquely mapped reads only** (reads I used to generate the ChIpseqSpikeInFree scaling factor)
 
+- Collect DiffBind_TMM scaling factor but generated with the bam unique aligned reads only (not all MAPQ20 per default)
+- Apply DiffBind TMM scaling factor on the unique aligned read files and generate bigwig files
+- Check their profile with deepTools
+
+
+```bash
+conda activate DiffBind
+
+XXX
+
+```
