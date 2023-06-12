@@ -4949,7 +4949,256 @@ XXX Let's filter-out to keep only genes enriched in WT tu rule-out this possibil
 
 **bigwig_DiffBind_TMM:**
 
+--> Seems to be working: when more express in mutant (DEGs Up), H3K27me3 is higher in WT; When less express in mutants (DEGs Less) H3K27me3 is comparable WT-mutants
+
+--> Mutants profile a bit heterogeneous and weird upstream TSS
+
+Let's filter out and keep only the genes that contain H3K27me3 peak in WT or at least 1 genotype
+
+
+### ChIPseeker - Assign peak to genes each time-point
+
+Let's:
+- assign peak to genes at each time-point
+- generate gtf file with these coordinates genes (WT only, and all genotypes)
+- Overlap gtf peak assign with gtf DEGs
+- Profile deepTools H3K27me3
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library(VennDiagram)
+
+# ESC
+# Define a list of file paths
+files <- c('output/macs2/broad_blacklist_qval2.30103/ESC_WT_H3K27me3_pool_peaks.broadPeak', 
+           'output/macs2/broad_blacklist_qval2.30103/ESC_HET_H3K27me3_pool_peaks.broadPeak', 
+           'output/macs2/broad_blacklist_qval2.30103/ESC_KO_H3K27me3_pool_peaks.broadPeak')
+
+names <- c("WT", "HET", "KO")
+
+# Function to read, process and save annotation
+process_file <- function(file, name){
+  
+  # Read file
+  peaks <- read.table(file) %>% 
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+  
+  # Make GRanges object
+  peaks_gr = makeGRangesFromDataFrame(peaks,keep.extra.columns=TRUE)
+  
+  # Annotate peaks
+  peaks_annot = annotatePeak(peaks_gr, TxDb=txdb, tssRegion=c(-3000, 3000), verbose=FALSE)
+  
+  # Get annotation data frame
+  annot_df <- as.data.frame(peaks_annot@anno)
+  
+  # Convert entrez gene IDs to gene symbols
+  annot_df$geneSymbol <- mapIds(org.Hs.eg.db, keys = annot_df$geneId, column = "SYMBOL", keytype = "ENTREZID")
+  annot_df$gene <- mapIds(org.Hs.eg.db, keys = annot_df$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+  
+  # Save output table
+  write.table(annot_df, file=paste0("output/ChIPseeker/annotation_ESC_", name, ".txt"), sep="\t", quote=F, row.names=F)
+}
+
+# Apply the function to all files
+mapply(process_file, file = files, name = names)
+
+
+# NPC
+# Define a list of file paths
+files <- c('output/macs2/broad_blacklist_qval2.30103/NPC_WT_H3K27me3_pool_peaks.broadPeak', 
+           'output/macs2/broad_blacklist_qval2.30103/NPC_HET_H3K27me3_pool_peaks.broadPeak', 
+           'output/macs2/broad_blacklist_qval2.30103/NPC_KO_H3K27me3_pool_peaks.broadPeak')
+
+names <- c("WT", "HET", "KO")
+
+# Function to read, process and save annotation
+process_file <- function(file, name){
+  
+  # Read file
+  peaks <- read.table(file) %>% 
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+  
+  # Make GRanges object
+  peaks_gr = makeGRangesFromDataFrame(peaks,keep.extra.columns=TRUE)
+  
+  # Annotate peaks
+  peaks_annot = annotatePeak(peaks_gr, TxDb=txdb, tssRegion=c(-3000, 3000), verbose=FALSE)
+  
+  # Get annotation data frame
+  annot_df <- as.data.frame(peaks_annot@anno)
+  
+  # Convert entrez gene IDs to gene symbols
+  annot_df$geneSymbol <- mapIds(org.Hs.eg.db, keys = annot_df$geneId, column = "SYMBOL", keytype = "ENTREZID")
+  annot_df$gene <- mapIds(org.Hs.eg.db, keys = annot_df$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+  
+  # Save output table
+  write.table(annot_df, file=paste0("output/ChIPseeker/annotation_NPC_", name, ".txt"), sep="\t", quote=F, row.names=F)
+}
+
+# Apply the function to all files
+mapply(process_file, file = files, name = names)
+
+
+
+# 2dN
+# Define a list of file paths
+files <- c('output/macs2/broad_blacklist_qval2.30103/2dN_WT_H3K27me3_pool_peaks.broadPeak', 
+           'output/macs2/broad_blacklist_qval2.30103/2dN_HET_H3K27me3_pool_peaks.broadPeak', 
+           'output/macs2/broad_blacklist_qval2.30103/2dN_KO_H3K27me3_pool_peaks.broadPeak')
+
+names <- c("WT", "HET", "KO")
+
+# Function to read, process and save annotation
+process_file <- function(file, name){
+  
+  # Read file
+  peaks <- read.table(file) %>% 
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+  
+  # Make GRanges object
+  peaks_gr = makeGRangesFromDataFrame(peaks,keep.extra.columns=TRUE)
+  
+  # Annotate peaks
+  peaks_annot = annotatePeak(peaks_gr, TxDb=txdb, tssRegion=c(-3000, 3000), verbose=FALSE)
+  
+  # Get annotation data frame
+  annot_df <- as.data.frame(peaks_annot@anno)
+  
+  # Convert entrez gene IDs to gene symbols
+  annot_df$geneSymbol <- mapIds(org.Hs.eg.db, keys = annot_df$geneId, column = "SYMBOL", keytype = "ENTREZID")
+  annot_df$gene <- mapIds(org.Hs.eg.db, keys = annot_df$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+  
+  # Save output table
+  write.table(annot_df, file=paste0("output/ChIPseeker/annotation_2dN_", name, ".txt"), sep="\t", quote=F, row.names=F)
+}
+
+# Apply the function to all files
+mapply(process_file, file = files, name = names)
+```
+--> I used a function to assign peak to genes and save
+
+**Filter-out intergenic-peak, convert assnotation file to gtfs**
+
+
+
+```bash
+conda activate BedToBigwig
+# File where the diffbound sites has been assigned to genes
+output/ChIPseeker/annotation_ESC_WT.txt
+output/ChIPseeker/annotation_ESC_HET.txt
+output/ChIPseeker/annotation_ESC_KO.txt
+output/ChIPseeker/annotation_NPC_WT.txt
+output/ChIPseeker/annotation_NPC_HET.txt
+output/ChIPseeker/annotation_NPC_KO.txt
+output/ChIPseeker/annotation_2dN_WT.txt
+output/ChIPseeker/annotation_2dN_HET.txt
+output/ChIPseeker/annotation_2dN_KO.txt
+
+# Define array of sample names
+samples=("ESC_WT" "ESC_HET" "ESC_KO" "NPC_WT" "NPC_HET" "NPC_KO" "2dN_WT" "2dN_HET" "2dN_KO")
+
+# Iterate over each sample
+for sample in ${samples[@]}
+do
+    # Filter out intergenic regions
+    grep -v "Intergenic" output/ChIPseeker/annotation_${sample}.txt > output/ChIPseeker/annotation_${sample}_noIntergenic.bed
+
+    # Collect gene ID
+    awk -F'\t' '(NR==1 || FNR>1) {print $21}' output/ChIPseeker/annotation_${sample}_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_${sample}_noIntergenic_geneSymbol.txt
+
+    # Modify the txt file
+    sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_${sample}_noIntergenic_geneSymbol.txt > output/ChIPseeker/annotation_${sample}_noIntergenic_as_gtf_geneSymbol.txt
+
+    # Filter the gtf
+    grep -Ff output/ChIPseeker/annotation_${sample}_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_${sample}_noIntergenic.gtf
+done
+
+# Combine GTF for at least in 1 genotype for each time-point
+## ESC
+### Combine the three gtfs and output only gene names
+cat meta/ENCFF159KBI_ESC_WT_noIntergenic.gtf meta/ENCFF159KBI_ESC_HET_noIntergenic.gtf meta/ENCFF159KBI_ESC_KO_noIntergenic.gtf | sort | uniq | cut -f9 | sed -n 's/.*gene_name "\([^"]*\)".*/\1/p' | sort | uniq > meta/ENCFF159KBI_ESC_WT_HET_KO_noIntergenic_geneSymbol.txt
+### filter-in the gtf the gene names
+###  Modify the txt file
+sed 's/^/gene_name "/; s/$/"/' meta/ENCFF159KBI_ESC_WT_HET_KO_noIntergenic_geneSymbol.txt > meta/ENCFF159KBI_ESC_WT_HET_KO_noIntergenic_as_gtf_geneSymbol.txt
+###  Filter the gtf
+grep -Ff meta/ENCFF159KBI_ESC_WT_HET_KO_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_ESC_WT_HET_KO_noIntergenic.gtf
+## NPC
+### Combine the three gtfs and output only gene names
+cat meta/ENCFF159KBI_NPC_WT_noIntergenic.gtf meta/ENCFF159KBI_NPC_HET_noIntergenic.gtf meta/ENCFF159KBI_NPC_KO_noIntergenic.gtf | sort | uniq | cut -f9 | sed -n 's/.*gene_name "\([^"]*\)".*/\1/p' | sort | uniq > meta/ENCFF159KBI_NPC_WT_HET_KO_noIntergenic_geneSymbol.txt
+### filter-in the gtf the gene names
+###  Modify the txt file
+sed 's/^/gene_name "/; s/$/"/' meta/ENCFF159KBI_NPC_WT_HET_KO_noIntergenic_geneSymbol.txt > meta/ENCFF159KBI_NPC_WT_HET_KO_noIntergenic_as_gtf_geneSymbol.txt
+###  Filter the gtf
+grep -Ff meta/ENCFF159KBI_NPC_WT_HET_KO_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_NPC_WT_HET_KO_noIntergenic.gtf
+## 2dN
+### Combine the three gtfs and output only gene names
+cat meta/ENCFF159KBI_2dN_WT_noIntergenic.gtf meta/ENCFF159KBI_2dN_HET_noIntergenic.gtf meta/ENCFF159KBI_2dN_KO_noIntergenic.gtf | sort | uniq | cut -f9 | sed -n 's/.*gene_name "\([^"]*\)".*/\1/p' | sort | uniq > meta/ENCFF159KBI_2dN_WT_HET_KO_noIntergenic_geneSymbol.txt
+### filter-in the gtf the gene names
+###  Modify the txt file
+sed 's/^/gene_name "/; s/$/"/' meta/ENCFF159KBI_2dN_WT_HET_KO_noIntergenic_geneSymbol.txt > meta/ENCFF159KBI_2dN_WT_HET_KO_noIntergenic_as_gtf_geneSymbol.txt
+###  Filter the gtf
+grep -Ff meta/ENCFF159KBI_2dN_WT_HET_KO_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_2dN_WT_HET_KO_noIntergenic.gtf
+
+
+
+
+
+# Combine GTF for at least in 1 genotype at any time-point
+### Combine the three gtfs and output only gene names
+cat meta/ENCFF159KBI_ESC_WT_noIntergenic.gtf meta/ENCFF159KBI_ESC_HET_noIntergenic.gtf meta/ENCFF159KBI_ESC_KO_noIntergenic.gtf meta/ENCFF159KBI_NPC_WT_noIntergenic.gtf meta/ENCFF159KBI_NPC_HET_noIntergenic.gtf meta/ENCFF159KBI_NPC_KO_noIntergenic.gtf meta/ENCFF159KBI_2dN_WT_noIntergenic.gtf meta/ENCFF159KBI_2dN_HET_noIntergenic.gtf meta/ENCFF159KBI_2dN_KO_noIntergenic.gtf | sort | uniq | cut -f9 | sed -n 's/.*gene_name "\([^"]*\)".*/\1/p' | sort | uniq > meta/ENCFF159KBI_ESC_NPC_2dN_WT_HET_KO_noIntergenic_geneSymbol.txt
+### filter-in the gtf the gene names
+###  Modify the txt file
+sed 's/^/gene_name "/; s/$/"/' meta/ENCFF159KBI_ESC_NPC_2dN_WT_HET_KO_noIntergenic_geneSymbol.txt > meta/ENCFF159KBI_ESC_NPC_2dN_WT_HET_KO_noIntergenic_as_gtf_geneSymbol.txt
+###  Filter the gtf
+grep -Ff meta/ENCFF159KBI_ESC_NPC_2dN_WT_HET_KO_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_ESC_NPC_2dN_WT_HET_KO_noIntergenic.gtf
+
+
+# Combine GTF for in WT for each time-point
+XXX
+
+
+# Combine GTF for in WT at any time-point
+XXX
+
+
+# Combine DEGs with gene-peak assign
+## 
+
+
+```
+
+
+
+Generate deepTools plots (**DEGs with gene peak assigned**):
+
+
+```bash
+# deepTools plot
+conda activate deeptools
+## Up HET and Down in KO
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_UpHET_DownKO_noIntergenic.sh # xxx
+sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_UpHET_DownKO_noIntergenic.sh # xxx
+
+```
+
 --> XXX
+
+
+
 
 
 
