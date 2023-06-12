@@ -5176,9 +5176,22 @@ XXX
 
 
 # Combine DEGs with gene-peak assign
-## 
-
-
+## per time-point
+### ESC_ Up/down express and gene-peak assigned (at least 1 genotype)
+bedtools intersect -wa -u -a ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_ESC_HET_Down.gtf -b meta/ENCFF159KBI_ESC_WT_HET_KO_noIntergenic.gtf > meta/ENCFF159KBI_ESC_WT_HET_KO_noIntergenic_DEGs_ESC_HET_Down.gtf
+bedtools intersect -wa -u -a ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_ESC_HET_Up.gtf -b meta/ENCFF159KBI_ESC_WT_HET_KO_noIntergenic.gtf > meta/ENCFF159KBI_ESC_WT_HET_KO_noIntergenic_DEGs_ESC_HET_Up.gtf
+bedtools intersect -wa -u -a ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_ESC_KO_Down.gtf -b meta/ENCFF159KBI_ESC_WT_HET_KO_noIntergenic.gtf > meta/ENCFF159KBI_ESC_WT_HET_KO_noIntergenic_DEGs_ESC_KO_Down.gtf
+bedtools intersect -wa -u -a ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_ESC_KO_Up.gtf -b meta/ENCFF159KBI_ESC_WT_HET_KO_noIntergenic.gtf > meta/ENCFF159KBI_ESC_WT_HET_KO_noIntergenic_DEGs_ESC_KO_Up.gtf
+### NPC_ Up/down express and gene-peak assigned (at least 1 genotype)
+bedtools intersect -wa -u -a ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_NPC_HET_Down.gtf -b meta/ENCFF159KBI_NPC_WT_HET_KO_noIntergenic.gtf > meta/ENCFF159KBI_NPC_WT_HET_KO_noIntergenic_DEGs_NPC_HET_Down.gtf
+bedtools intersect -wa -u -a ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_NPC_HET_Up.gtf -b meta/ENCFF159KBI_NPC_WT_HET_KO_noIntergenic.gtf > meta/ENCFF159KBI_NPC_WT_HET_KO_noIntergenic_DEGs_NPC_HET_Up.gtf
+bedtools intersect -wa -u -a ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_NPC_KO_Down.gtf -b meta/ENCFF159KBI_NPC_WT_HET_KO_noIntergenic.gtf > meta/ENCFF159KBI_NPC_WT_HET_KO_noIntergenic_DEGs_NPC_KO_Down.gtf
+bedtools intersect -wa -u -a ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_NPC_KO_Up.gtf -b meta/ENCFF159KBI_NPC_WT_HET_KO_noIntergenic.gtf > meta/ENCFF159KBI_NPC_WT_HET_KO_noIntergenic_DEGs_NPC_KO_Up.gtf
+### 2dN_ Up/down express and gene-peak assigned (at least 1 genotype)
+bedtools intersect -wa -u -a ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_2dN_HET_Down.gtf -b meta/ENCFF159KBI_2dN_WT_HET_KO_noIntergenic.gtf > meta/ENCFF159KBI_2dN_WT_HET_KO_noIntergenic_DEGs_2dN_HET_Down.gtf
+bedtools intersect -wa -u -a ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_2dN_HET_Up.gtf -b meta/ENCFF159KBI_2dN_WT_HET_KO_noIntergenic.gtf > meta/ENCFF159KBI_2dN_WT_HET_KO_noIntergenic_DEGs_2dN_HET_Up.gtf
+bedtools intersect -wa -u -a ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_2dN_KO_Down.gtf -b meta/ENCFF159KBI_2dN_WT_HET_KO_noIntergenic.gtf > meta/ENCFF159KBI_2dN_WT_HET_KO_noIntergenic_DEGs_2dN_KO_Down.gtf
+bedtools intersect -wa -u -a ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_2dN_KO_Up.gtf -b meta/ENCFF159KBI_2dN_WT_HET_KO_noIntergenic.gtf > meta/ENCFF159KBI_2dN_WT_HET_KO_noIntergenic_DEGs_2dN_KO_Up.gtf
 ```
 
 
@@ -5189,17 +5202,35 @@ Generate deepTools plots (**DEGs with gene peak assigned**):
 ```bash
 # deepTools plot
 conda activate deeptools
-## Up HET and Down in KO
-sbatch scripts/matrix_gene_1kb_DiffBind_TMM_UpHET_DownKO_noIntergenic.sh # xxx
-sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_UpHET_DownKO_noIntergenic.sh # xxx
-
+## ESC
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ESC_WT_HET_KO_noIntergenic_DEGs_ESC_HET_Down.sh # 1076547
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ESC_WT_HET_KO_noIntergenic_DEGs_ESC_HET_Up.sh # 1076548
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ESC_WT_HET_KO_noIntergenic_DEGs_ESC_KO_Down.sh # 1076549
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ESC_WT_HET_KO_noIntergenic_DEGs_ESC_KO_Up.sh # 1076550
+## NPC
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_NPC_WT_HET_KO_noIntergenic_DEGs_NPC_HET_Down.sh # 1076554
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_NPC_WT_HET_KO_noIntergenic_DEGs_NPC_HET_Up.sh # 1076556
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_NPC_WT_HET_KO_noIntergenic_DEGs_NPC_KO_Down.sh # 1076557
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_NPC_WT_HET_KO_noIntergenic_DEGs_NPC_KO_Up.sh # 1076558
+## 2dN
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_2dN_WT_HET_KO_noIntergenic_DEGs_2dN_HET_Down.sh # 1076559
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_2dN_WT_HET_KO_noIntergenic_DEGs_2dN_HET_Up.sh # 1076560
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_2dN_WT_HET_KO_noIntergenic_DEGs_2dN_KO_Down.sh # 1076561
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_2dN_WT_HET_KO_noIntergenic_DEGs_2dN_KO_Up.sh # 1076562
 ```
 
 --> XXX
 
 
+### Generate deepTools plot for time-course clustered genes
 
+As quality control let's check clsuter 13 and 18:
 
+- Collect gene list from each cluster
+- Combine with the gtf (genes assigned to a peak at any time point in any genotypes: `meta/ENCFF159KBI_ESC_NPC_2dN_WT_HET_KO_noIntergenic.gtf`)
+- deepTools plot
+
+XXX
 
 
 
