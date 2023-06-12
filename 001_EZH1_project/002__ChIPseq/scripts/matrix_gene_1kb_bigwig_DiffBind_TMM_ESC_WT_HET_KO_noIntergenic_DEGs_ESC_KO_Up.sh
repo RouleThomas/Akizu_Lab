@@ -7,7 +7,7 @@
 
 computeMatrix scale-regions \
     -b 1000 -a 1000 \
-    -R meta/ENCFF159KBI_ESC_WT_HET_KO_noIntergenic_DEGs_ESC_KO_Down.gtf \
+    -R meta/ENCFF159KBI_ESC_WT_HET_KO_noIntergenic_DEGs_ESC_KO_Up.gtf \
     -S output/bigwig_DiffBind_TMM/ESC_WT_H3K27me3_median.bw output/bigwig_DiffBind_TMM/ESC_HET_H3K27me3_median.bw output/bigwig_DiffBind_TMM/ESC_KO_H3K27me3_median.bw \
     --skipZeros \
     --missingDataAsZero \

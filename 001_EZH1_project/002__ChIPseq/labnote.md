@@ -5203,34 +5203,83 @@ Generate deepTools plots (**DEGs with gene peak assigned**):
 # deepTools plot
 conda activate deeptools
 ## ESC
-sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ESC_WT_HET_KO_noIntergenic_DEGs_ESC_HET_Down.sh # 1076547
-sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ESC_WT_HET_KO_noIntergenic_DEGs_ESC_HET_Up.sh # 1076548
-sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ESC_WT_HET_KO_noIntergenic_DEGs_ESC_KO_Down.sh # 1076549
-sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ESC_WT_HET_KO_noIntergenic_DEGs_ESC_KO_Up.sh # 1076550
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ESC_WT_HET_KO_noIntergenic_DEGs_ESC_HET_Down.sh # 1076547 ok
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ESC_WT_HET_KO_noIntergenic_DEGs_ESC_HET_Up.sh # 1076548 ok
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ESC_WT_HET_KO_noIntergenic_DEGs_ESC_KO_Down.sh # 1076549 ok
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_ESC_WT_HET_KO_noIntergenic_DEGs_ESC_KO_Up.sh # 1076550 FAIL; 1076584 ok
 ## NPC
-sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_NPC_WT_HET_KO_noIntergenic_DEGs_NPC_HET_Down.sh # 1076554
-sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_NPC_WT_HET_KO_noIntergenic_DEGs_NPC_HET_Up.sh # 1076556
-sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_NPC_WT_HET_KO_noIntergenic_DEGs_NPC_KO_Down.sh # 1076557
-sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_NPC_WT_HET_KO_noIntergenic_DEGs_NPC_KO_Up.sh # 1076558
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_NPC_WT_HET_KO_noIntergenic_DEGs_NPC_HET_Down.sh # 1076554 ok
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_NPC_WT_HET_KO_noIntergenic_DEGs_NPC_HET_Up.sh # 1076556 ok
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_NPC_WT_HET_KO_noIntergenic_DEGs_NPC_KO_Down.sh # 1076557 ok
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_NPC_WT_HET_KO_noIntergenic_DEGs_NPC_KO_Up.sh # 1076558 ok
 ## 2dN
-sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_2dN_WT_HET_KO_noIntergenic_DEGs_2dN_HET_Down.sh # 1076559
-sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_2dN_WT_HET_KO_noIntergenic_DEGs_2dN_HET_Up.sh # 1076560
-sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_2dN_WT_HET_KO_noIntergenic_DEGs_2dN_KO_Down.sh # 1076561
-sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_2dN_WT_HET_KO_noIntergenic_DEGs_2dN_KO_Up.sh # 1076562
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_2dN_WT_HET_KO_noIntergenic_DEGs_2dN_HET_Down.sh # 1076559 ok
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_2dN_WT_HET_KO_noIntergenic_DEGs_2dN_HET_Up.sh # 1076560 ok
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_2dN_WT_HET_KO_noIntergenic_DEGs_2dN_KO_Down.sh # 1076561 ok
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_2dN_WT_HET_KO_noIntergenic_DEGs_2dN_KO_Up.sh # 1076562 ok
 ```
 
---> XXX
+--> ESC; DEGs Down looks good, we see higher H3K27me3 signal in mutants. DEGs Up is not super clear; WT vs mutants show very different profile
+
+--> NPC; HET is always higher than WT (even when genes are downregulated...). KO is working great (KO DEGs Up show less H3K27me3 and DEGs Down show more H3K27me3)
+
+--> 2dN; HET is always higher than WT (even when genes are downregulated...). KO is working great (KO DEGs Up show less H3K27me3 and DEGs Down show more H3K27me3)
+
+--> Overall seems to be working pretty great; as expected. 
+
+XXX could try to look at TSS only instead of gene body to avoid the very different H3K27me3 distribution profile WT vs mutants at ESC
+
+
+
 
 
 ### Generate deepTools plot for time-course clustered genes
 
-As quality control let's check clsuter 13 and 18:
+As quality control let's check cluster 13 and 18:
 
 - Collect gene list from each cluster
 - Combine with the gtf (genes assigned to a peak at any time point in any genotypes: `meta/ENCFF159KBI_ESC_NPC_2dN_WT_HET_KO_noIntergenic.gtf`)
 - deepTools plot
 
-XXX
+
+```bash
+conda activate BedToBigwig
+# Generate list of gene in ENSG format from teh gene cluster file
+## Extract gene from cluster 13 and 18 as a list of genes
+awk -F, '$3==13 {gsub(/"/, "", $1); print $1}' ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_25cl.txt > ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_25cl_genesFromCl13.txt
+awk -F, '$3==18 {gsub(/"/, "", $1); print $1}' ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_25cl.txt > ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_25cl_genesFromCl18.txt
+
+## Generate the gtf
+### filter-in the gtf the gene names
+###  Modify the txt file
+sed 's/^/gene_id "/; s/$/"/' ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_25cl_genesFromCl13.txt > meta/cluster_gene_rlog_25cl_genesFromCl13_as_gtf_geneId.txt
+sed 's/^/gene_id "/; s/$/"/' ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_25cl_genesFromCl18.txt > meta/cluster_gene_rlog_25cl_genesFromCl18_as_gtf_geneId.txt
+###  Filter the gtf
+grep -Ff meta/cluster_gene_rlog_25cl_genesFromCl13_as_gtf_geneId.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_cluster_gene_rlog_25cl_genesFromCl13.gtf
+grep -Ff meta/cluster_gene_rlog_25cl_genesFromCl18_as_gtf_geneId.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_cluster_gene_rlog_25cl_genesFromCl18.gtf
+### Only keep the genes that have a H3K27me3 peak in at least 1 gentoype in at least 1 time-point
+bedtools intersect -wa -u -a meta/ENCFF159KBI_cluster_gene_rlog_25cl_genesFromCl13.gtf -b meta/ENCFF159KBI_ESC_NPC_2dN_WT_HET_KO_noIntergenic.gtf > meta/ENCFF159KBI_cluster_gene_rlog_25cl_genesFromCl13_ESC_NPC_2dN_WT_HET_KO_noIntergenic.gtf
+bedtools intersect -wa -u -a meta/ENCFF159KBI_cluster_gene_rlog_25cl_genesFromCl18.gtf -b meta/ENCFF159KBI_ESC_NPC_2dN_WT_HET_KO_noIntergenic.gtf > meta/ENCFF159KBI_cluster_gene_rlog_25cl_genesFromCl18_ESC_NPC_2dN_WT_HET_KO_noIntergenic.gtf
+
+
+# deepTools plot
+conda activate deeptools
+## Per genotype over the time course
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_25cl_genesFromCl13_ESC_NPC_2dN_WT_HET_KO_noIntergenic_WT.sh # 1076713
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_25cl_genesFromCl13_ESC_NPC_2dN_WT_HET_KO_noIntergenic_HET.sh # 1076714
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_25cl_genesFromCl13_ESC_NPC_2dN_WT_HET_KO_noIntergenic_KO.sh # 1076715
+
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_25cl_genesFromCl18_ESC_NPC_2dN_WT_HET_KO_noIntergenic_WT.sh # 1076717
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_25cl_genesFromCl18_ESC_NPC_2dN_WT_HET_KO_noIntergenic_HET.sh # 1076718
+sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_25cl_genesFromCl18_ESC_NPC_2dN_WT_HET_KO_noIntergenic_KO.sh # 1076719
+
+
+```
+
+--> The ESC is weird again; always higher in H3K27me3; even for cluster 13 where expression decrease..
+
+--> Otherwise; NPC to 2dN is logical as expected for each cluster. 
+
 
 
 
