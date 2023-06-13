@@ -4117,6 +4117,7 @@ KOvsWT_annot_gain_lost_RNA %>%
                   hjust = 1.1, vjust = -0.1, size = 3, color = "black")
 dev.off()
 
+
 # Venn diagram to see whether gain H3K27me3 in HET are the same one in KO?
 ## GAIN
 # Extract the unique gene lists as vectors
