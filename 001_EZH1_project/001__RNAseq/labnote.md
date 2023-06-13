@@ -5410,6 +5410,45 @@ mv output/featurecounts_hg38/*rpkm* output/rpkm_hg38/
 
 All good. 
 
+If needed to display gene with TPM:
+
+```R
+# Plot with TPM instead of baseMean (Naiara plot)
+## import tpm
+#### Generate TPM for ALL samples
+#### collect all samples ID
+samples <- c("ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3",
+                     "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+                     "2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
+                     "4wN_WT_R1", "4wN_WT_R2", "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4",
+                     "ESC_HET_R1", "ESC_HET_R2", "ESC_HET_R3",
+                     "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3",
+                     "2dN_HET_R1", "2dN_HET_R2", "2dN_HET_R3",
+                     "4wN_HET_R1", "4wN_HET_R2", "4wN_HET_R3", "4wN_HET_R4",
+                     "8wN_HET_R1", "8wN_HET_R2", "8wN_HET_R3", "8wN_HET_R4",
+                     "ESC_KO_R1", "ESC_KO_R2", "ESC_KO_R3",
+                     "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3",
+                     "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3",
+                     "4wN_KO_R1", "4wN_KO_R2", "8wN_KO_R1", "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4",
+                     "4wN_iPSCWT_R1", "4wN_iPSCWT_R2", "4wN_iPSCpatient_R1", "4wN_iPSCpatient_R2", "8wN_iPSCpatient_R1", "8wN_iPSCpatient_R2")
+
+## Make a loop for importing all tpm data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("../001__RNAseq/output/tpm_hg38/", sample, "_tpm.txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>%
+    select(Geneid, starts_with("output.STAR_hg38.")) %>%
+    rename(!!sample := starts_with("output.STAR_hg38."))
+}
+
+## Merge all dataframe into a single one
+tpm_all_sample <- purrr::reduce(sample_data, full_join, by = "Geneid")
+write.csv(tpm_all_sample, file="../001__RNAseq/output/tpm_hg38/tpm_all_sample.txt")
+### If need to import: tpm_all_sample <- read_csv("../001__RNAseq/output/tpm_hg38/tpm_all_sample.txt") #To import
+
+
+XXX look for gene of interest XXX
+```
 
 
 ## DEGs with deseq2

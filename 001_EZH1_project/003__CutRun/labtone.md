@@ -4087,6 +4087,29 @@ HETvsWT_annot_gain_lost_RNA %>%
                   hjust = 1.1, vjust = -0.1, size = 3, color = "black")
 dev.off()
 
+
+pdf("output/ChIPseeker/DiffBind05_HETvsWT_expression_qvalue.pdf", width=7, height=4)
+HETvsWT_annot_gain_lost_RNA %>%
+    ggplot(aes(x = log2FoldChange, y = -log10(padj), color = significance)) +
+        geom_point(alpha = 0.8, size = 0.5) +
+        scale_color_manual(values = c("grey", "red")) +
+        labs(title = "HET vs WT",
+             subtitle = "Expression level of diff. bound H3K27me3 genes",
+             x = "Log2 Fold Change",
+             y = "-log10(q-value)",
+             color = "Significant (padj <= 0.05)") +
+        facet_wrap(~H3K27me3) +
+        theme_bw() +
+        geom_text(data = count_data %>% filter(significance), 
+                  aes(x = Inf, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
+                  hjust = 1.1, vjust = 1.1, size = 3, color = "black") +
+        geom_text(data = count_data %>% distinct(H3K27me3, .keep_all = TRUE),
+                  aes(x = Inf, y = -Inf, label = paste("Total:", total_panel, "genes")),
+                  hjust = 1.1, vjust = -0.1, size = 3, color = "black")
+dev.off()
+
+
+
 count_data <- KOvsWT_annot_gain_lost_RNA %>%
     group_by(H3K27me3, significance) %>%
     summarise(up = sum(log2FoldChange > 0),
@@ -4116,7 +4139,6 @@ KOvsWT_annot_gain_lost_RNA %>%
                   aes(x = Inf, y = -Inf, label = paste("Total:", total_panel, "genes")),
                   hjust = 1.1, vjust = -0.1, size = 3, color = "black")
 dev.off()
-
 
 # Venn diagram to see whether gain H3K27me3 in HET are the same one in KO?
 ## GAIN
