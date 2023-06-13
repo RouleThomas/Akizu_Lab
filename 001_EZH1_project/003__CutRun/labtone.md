@@ -3387,21 +3387,111 @@ library("DiffChIPL")
 
 # DiffChIPL_Go 
 
-XXX 
-
-Create the csv file as indicated in [github](https://github.com/yancychy/DiffChIPL/blob/main/example/simHist/sim_hist_1.csv) into `output/DiffChIPL`
+Create the csv file as indicated in [github](https://github.com/yancychy/DiffChIPL/blob/main/example/simHist/sim_hist_1.csv) into `output/DiffChIPL/meta_sample_macs2raw.txt`; *DiffBind meta as been used!*
 
 
 ```bash
 conda activate DiffChIPL
+# convert tab sep file into csv
+sed 's/\t/,/g' output/DiffChIPL/meta_sample_macs2raw.txt > output/DiffChIPL/meta_sample_macs2raw.csv
+sed 's/\t/,/g' output/DiffChIPL/meta_sample_q005.txt > output/DiffChIPL/meta_sample_q005.csv
 ```
+*NOTE: `spikein` column has been renmoved from the meta file*
 
 ```R
 library("DiffChIPL")
+library("statmod")
+
+# meta file
+flib="output/DiffChIPL/meta_sample_macs2raw.csv" # fail, cannot handle macs2 raw file
+flib="output/DiffChIPL/meta_sample_q005.csv"
+
+
+
+# WT vs HET 
+flib="output/DiffChIPL/meta_sample_q005_WTvsHET.csv"
+## Get read count from files
+countL = getReadCount(inputF=flib)
+
+save(countL, file = "output/DiffChIPL/countL_q005_WTvsHET.RData")
+
+## Design matrix and normalization
+# Define the variables
+str1 = "8wN-H3K27me3-WT.vs.HET-Ridge"
+group = c(1, 1, 1, 1, 0, 0, 0, 0)
+ctrName = "WT"
+treatName = "HET"
+groupName = c(rep(treatName, 4), rep(ctrName, 4)) 
+
+# Build the design matrix
+design0 <- cbind(rep(1, 8), c(rep(1, 4), rep(0, 4)))
+colnames(design0) <- c(ctrName, treatName)
+
+# Display the design matrix
+design0
+
+# Update the count data (replace negative value with 0)
+peakAll = cbind(as.character(countL$peakPos@seqnames), countL$peakPos@ranges@start,
+                countL$peakPos@ranges@start+countL$peakPos@ranges@width-1)
+rawid = paste0(countL$peakAll[,1],"_" ,peakAll[,2])
+countAll = countL$countAll
+rownames(countAll) = rawid
+
+
+for(i in 1:ncol(countAll)){
+  id = which(countAll[,i] < 1)
+  countAll[id,i] = 0
+}
+
+
+# Normalize the count data
+## cpmD = cpmNorm(countAll, libsize = fd$lsIP)
+cpmD = cpmNorm(countAll, libsize = c(20293409, 29302285, 19824265, 28374047,16435849, 17032874, 9125844, 34105171)) # using spike-in corrected library-size; HET, KO, WT: c(16435849, 17032874, 9125844, 34105171, 24753801, 11502923, 10536410, 123012358, 9366195, 20293409, 29302285, 19824265, 28374047)
+
+cpmD = cpmNorm(countAll) # using spike-in corrected library-size; HET, KO, WT: c(16435849, 17032874, 9125844, 34105171, 24753801, 11502923, 10536410, 123012358, 9366195, 20293409, 29302285, 19824265, 28374047)
+
+
+## differential analysis with DiffChIPL
+pdf(file="output/DiffChIPL/resA.pdf")
+resA = DiffChIPL(cpmD, design0, group0 = group)
+dev.off()
+fitRlimm3 = resA$fitDiffL
+rtRlimm3 = resA$resDE
+
+## Check the differential results
+id_Rlimma_CPM = rownames(rtRlimm3[which(rtRlimm3$adj.P.Val < 0.05),])
+ 
+rtRlimm3 = rtRlimm3[rownames(cpmD),]
+aveE = rtRlimm3$AveExpr
+logFC = rtRlimm3$logFC
+padj = rtRlimm3$adj.P.Val
+
+pdf(file="output/DiffChIPL/plotMAVoc2_WTvsHET.pdf")
+plotMAVoc2(mean=aveE, logfc=logFC, adj.P.Val=padj, FC=1, padj=0.05, MA=TRUE,
+          title=paste0("Rlimma-CPM \n", str1,"(padj<0.05)\n", 
+                       length(id_Rlimma_CPM), " of ", nrow(rtRlimm3) ))
+dev.off()
+
+pdf(file="output/DiffChIPL/plotMAVoc2_WTvsHET_defaultLib.pdf")
+plotMAVoc2(mean=aveE, logfc=logFC, adj.P.Val=padj, FC=1, padj=0.05, MA=TRUE,
+          title=paste0("Rlimma-CPM \n", str1,"(padj<0.05)\n", 
+                       length(id_Rlimma_CPM), " of ", nrow(rtRlimm3) ))
+dev.off()
+
+
+rtRlimm3_tibble = as_tibble(rtRlimm3)
+
+
+
+# WT vs KO
+
 ```
 
+- **NOTE: DiffChIPL by default remove dupplicates!!** So if perform better, maybe because it use file without duplicates? only unqiuely aligned reads?
 
+--> Default parameter result in 20 differentially bound sites using scaled library size and 226 using default library-scaling 
 
+--> There was multiple error and bug in this tool, shit as hell, do not recommend...
 
 
 ## Histone-EpiCypher guidelines for scaling normalization
