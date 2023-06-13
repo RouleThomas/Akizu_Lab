@@ -5168,11 +5168,12 @@ grep -Ff meta/ENCFF159KBI_ESC_NPC_2dN_WT_HET_KO_noIntergenic_as_gtf_geneSymbol.t
 
 
 # Combine GTF for in WT for each time-point
-XXX
+
+YYY
 
 
 # Combine GTF for in WT at any time-point
-XXX
+YYY
 
 
 # Combine DEGs with gene-peak assign
@@ -5227,7 +5228,7 @@ sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_2dN_WT_HET_KO_noIntergenic_DE
 
 --> Overall seems to be working pretty great; as expected. 
 
-XXX could try to look at TSS only instead of gene body to avoid the very different H3K27me3 distribution profile WT vs mutants at ESC
+YYY could try to look at TSS only instead of gene body to avoid the very different H3K27me3 distribution profile WT vs mutants at ESC
 
 
 
@@ -5283,12 +5284,38 @@ sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_25cl_genesFromCl18_ESC_NPC_2d
 --> Still, overall profile is weird, look very noisy. Need to find a way to clean our data!
 
 
-Try to use the **uniquely mapped reads only** (reads I used to generate the ChIpseqSpikeInFree scaling factor)
-
+# Use the uniquely mapped reads only (reads I used to generate the ChIpseqSpikeInFree scaling factor) for downstream analysis
+- Generate macs2 analysis from uniquely mapped reads bam file
 - Collect DiffBind_TMM scaling factor but generated with the bam unique aligned reads only (not all MAPQ20 per default)
 - Apply DiffBind TMM scaling factor on the unique aligned read files and generate bigwig files
 - Check their profile with deepTools
 
+
+## MACS2 peak calling
+
+in `output/macs2_unique`
+
+```bash
+conda activate macs2
+
+# call peak per replicate
+sbatch scripts/macs2_ESC_unique.sh # 1077363
+sbatch scripts/macs2_NPC_unique.sh # 1077364
+sbatch scripts/macs2_2dN_unique.sh # 1077365
+XXX WHEN FINISH XXX sbatch  scripts/macs2_peak_signif_unique.sh # Re-run for different qval
+# call peak per sample
+sbatch scripts/macs2_pool_unique_unique.sh # 1077367
+XXX WHEN FINISH XXX sbatch scripts/macs2_peak_signif_unique.sh # Re-run for different qval
+```
+
+--> All good, seems XXX more/less XXX peak identified
+
+
+
+
+## DiffBind_TMM
+
+Generate new meta file in `output/DiffBind/meta_sample_unique.txt`
 
 ```bash
 conda activate DiffBind

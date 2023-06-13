@@ -3314,11 +3314,28 @@ Now that we have plenty of diff bound regions, we need to make sure what is dete
 # Test other method for differential binding
 
 Many different tools:
+- use uniquely aligned reads only instead of MAPQ20 per default
 - csaw modified [paper](https://f1000research.com/articles/4-1080) : looks shit as cannot deal with library size and all in R, looks painfull, and not famous...
 - csaw original (look famous); [paper](https://academic.oup.com/nar/article/44/5/e45/2464481); not clear whether we can adjust lib size
 - DiffChIPL [paper](https://academic.oup.com/bioinformatics/article/38/17/4062/6637512); method that claim to be the best (recent 2022); I think we can adjust lib size but not clear
 - THOR [paper](https://academic.oup.com/nar/article/44/20/e153/2607977)
 - ODIN [paper](https://academic.oup.com/bioinformatics/article/30/24/3467/2422257?login=false)
+
+
+## use uniquely aligned reads only (instead of MAPQ20 per default)
+
+- Re-generate alignment
+- call peak with MACS2
+- Proceed with DiffBind and compare the nb of diff bound sites identified (compare with )
+
+YYY Not priority, test this ONLY if the ChIP show better results when using uniquely aligned reads...
+
+
+
+
+
+
+
 
 
 ## DiffChIPL
