@@ -5299,27 +5299,36 @@ in `output/macs2_unique`
 conda activate macs2
 
 # call peak per replicate
-sbatch scripts/macs2_ESC_unique.sh # 1077363
-sbatch scripts/macs2_NPC_unique.sh # 1077364
-sbatch scripts/macs2_2dN_unique.sh # 1077365
-XXX WHEN FINISH XXX sbatch  scripts/macs2_peak_signif_unique.sh # Re-run for different qval
+sbatch scripts/macs2_ESC_unique.sh # 1077363 ok
+sbatch scripts/macs2_NPC_unique.sh # 1077364 ok
+sbatch scripts/macs2_2dN_unique.sh # 1077365 ok
+## stat
+conda activate BedToBigwig
+sbatch scripts/macs2_peak_signif_unique.sh # Re-run for different qval
+
 # call peak per sample
-sbatch scripts/macs2_pool_unique_unique.sh # 1077367
-XXX WHEN FINISH XXX sbatch scripts/macs2_peak_signif_unique.sh # Re-run for different qval
+sbatch scripts/macs2_pool_unique_unique.sh # 1077367 ok
+## stat
+sbatch scripts/macs2_pool_peak_signif_unique.sh # Re-run for different qval
 ```
 
---> All good, seems XXX more/less XXX peak identified
-
+--> All good, many LESS peaks identified...
 
 
 
 ## DiffBind_TMM
 
-Generate new meta file in `output/DiffBind/meta_sample_unique.txt`
+Generate new meta file in `output/DiffBind/meta_sample_all_macs2raw_unique.txt`
 
 ```bash
 conda activate DiffBind
+# scripts for counting/greylist/blacklist
+sbatch scripts/DiffBind_all_macs2raw_unique.sh # 1123762
 
-XXX
+# Load counting files
 
+XXX PCA clsutering XXX
 ```
+
+
+
