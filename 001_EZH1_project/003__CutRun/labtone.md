@@ -3333,11 +3333,6 @@ YYY Not priority, test this ONLY if the ChIP show better results when using uniq
 
 
 
-
-
-
-
-
 ## DiffChIPL
 
 [paper](https://academic.oup.com/bioinformatics/article/38/17/4062/6637512) and [github](https://github.com/yancychy/DiffChIPL). Not a sliding window method, but claim working better than MACS2, and we can set library size!
@@ -3492,6 +3487,98 @@ rtRlimm3_tibble = as_tibble(rtRlimm3)
 --> Default parameter result in 20 differentially bound sites using scaled library size and 226 using default library-scaling 
 
 --> There was multiple error and bug in this tool, shit as hell, do not recommend...
+
+
+
+## THOR for diff. bound sites
+
+THOR looks cool, used bam as input and we can provide scaling factor! in our case (spikein SF !!). Moreover we can use housekeeping genes for normalization! Looks great with many parameters that can be tweak. Here is the [paper](https://academic.oup.com/nar/article/44/20/e153/2607977) and some [tutorial](https://reg-gen.readthedocs.io/en/latest/thor/introduction.html) and [more](https://reg-gen.readthedocs.io/en/latest/thor/tool_usage.html).
+
+
+### THOR installation
+
+Install [RGT](https://reg-gen.readthedocs.io/en/latest/rgt/installation.html) in base env:
+
+```bash
+conda create --name RGT python # Always add python!!! Otherwise could use pyton from base!
+conda activate RGT
+pip install cython numpy scipy # will install within RGT conda env
+pip install RGT --no-binary RGT
+rgt-THOR --version
+```
+--> Installation succesfful within `conda activate RGT`
+
+### THOR diff. bound sites analysis
+
+- THOR worked with one-by-one comparison, so let's start with *WT vs HET* then *WT vs KO*.
+- We can provide SF for the bam... Which one to take...?? Maybe the histoneSpikeIn-DiffBind-TMM one as it is well normalized? Otherwise the histoneSpikeIn-NON-DiffBind-TMM normalized was weird (weird clustering)
+**--> That way we use DiffBind to perform TMM and Spike in correction (and some data vizualization) and uses THOR for identification of diff. bound sites**
+
+Here is histone-DiffBind-TMM SF for each bam (from which we scaled our bam to generate `output/bigwig_DiffBind_TMM`):
+- output/bowtie2/8wN_WT_H3K27me3_R1.dupmark.sorted.bam  1.412253844 
+- output/bowtie2/8wN_WT_H3K27me3_R2.dupmark.sorted.bam  1.186123259
+- output/bowtie2/8wN_WT_H3K27me3_R3.dupmark.sorted.bam  1.337020479 
+- output/bowtie2/8wN_WT_H3K27me3_R4.dupmark.sorted.bam  1.40842928 
+- output/bowtie2/8wN_KO_H3K27me3_R1.dupmark.sorted.bam  1.502057669
+- output/bowtie2/8wN_KO_H3K27me3_R2.dupmark.sorted.bam  1.487749425
+- output/bowtie2/8wN_KO_H3K27me3_R3.dupmark.sorted.bam  0.449980991 
+- output/bowtie2/8wN_KO_H3K27me3_R4.dupmark.sorted.bam  1.883122496 
+- output/bowtie2/8wN_HET_H3K27me3_R1.dupmark.sorted.bam  1.738155858
+- output/bowtie2/8wN_HET_H3K27me3_R2.dupmark.sorted.bam  1.499589188
+- output/bowtie2/8wN_HET_H3K27me3_R3.dupmark.sorted.bam  1.940327554
+- output/bowtie2/8wN_HET_H3K27me3_R4.dupmark.sorted.bam  1.462426177 
+
+**Create the CONFIG file** with nano `output/THOR/WTvsHET.config`:
+```bash
+#rep1
+output/bowtie2/8wN_WT_H3K27me3_R1.dupmark.sorted.bam
+output/bowtie2/8wN_WT_H3K27me3_R2.dupmark.sorted.bam
+output/bowtie2/8wN_WT_H3K27me3_R3.dupmark.sorted.bam
+output/bowtie2/8wN_WT_H3K27me3_R4.dupmark.sorted.bam
+#rep2
+output/bowtie2/8wN_HET_H3K27me3_R1.dupmark.sorted.bam
+output/bowtie2/8wN_HET_H3K27me3_R2.dupmark.sorted.bam
+output/bowtie2/8wN_HET_H3K27me3_R3.dupmark.sorted.bam
+output/bowtie2/8wN_HET_H3K27me3_R4.dupmark.sorted.bam
+#genome
+../../Master/meta/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta
+#chrom_sizes
+../../Master/meta/GRCh38_chrom_sizes.tab
+#inputs1
+output/bowtie2/8wN_WT_IGG_R1.dupmark.sorted.bam
+output/bowtie2/8wN_WT_IGG_R2.dupmark.sorted.bam
+output/bowtie2/8wN_WT_IGG_R3.dupmark.sorted.bam
+output/bowtie2/8wN_WT_IGG_R4.dupmark.sorted.bam
+#inputs2
+output/bowtie2/8wN_HET_IGG_R1.dupmark.sorted.bam
+output/bowtie2/8wN_HET_IGG_R2.dupmark.sorted.bam
+output/bowtie2/8wN_HET_IGG_R3.dupmark.sorted.bam
+output/bowtie2/8wN_HET_IGG_R4.dupmark.sorted.bam
+```
+*NOTE: inputs are optional, it may worth trying without input too*
+
+**Run THOR**
+```bash
+rgt-THOR --name WTvsHET --merge --output-dir output/THOR_WTvsHET --report --deadzones ../../Master/meta/hg38-blacklist.v2.bed --pvalue 0.1 --scaling-factors 1.412253844,1.186123259,1.337020479,1.40842928,1.738155858,1.499589188,1.940327554,1.462426177 output/THOR/WTvsHET.config
+
+# seems to work so run within a slurm job with 200g mem
+conda activate RGT
+sbatch scripts/THOR_WTvsHET.sh # 1141742
+sbatch scripts/THOR_WTvsHET_unique.sh # 1141743
+```
+- *NOTE: Options:  `-merge` option recommended for histone data. `–report` for HTML report, not super important; just to see how it look; `–deadzones` is blacklist; `-pvalue` 0.1 is default (can play with it);*
+- *NOTE: do NOT put any "_" in the `--name` !! Or bug*
+- *NOTE: unique is remove dupplicated reads with `--rmdup` option*
+
+--> XXX
+
+
+YYY Try fine-tune the parameters:
+- tweak pvalue
+
+
+
+
 
 
 ## Histone-EpiCypher guidelines for scaling normalization
