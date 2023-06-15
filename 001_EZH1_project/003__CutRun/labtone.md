@@ -3542,6 +3542,23 @@ Here is histone-DiffBind-TMM SF for each bam (from which we scaled our bam to ge
 - output/bowtie2/8wN_HET_H3K27me3_R3.dupmark.sorted.bam  1.940327554
 - output/bowtie2/8wN_HET_H3K27me3_R4.dupmark.sorted.bam  1.462426177 
 
+
+Here is histone-scaled reciprocal **NON-**DiffBind-TMM SF for each bam (from which we scaled our bam to generate `output/bigwig_histone_NotGenotypeGroup`); correct file to use, I double check for NEUROG2; and NOT `bigwig_histone`:
+- output/bowtie2/8wN_WT_H3K27me3_R1.dupmark.sorted.bam  0.5914183370169948
+- output/bowtie2/8wN_WT_H3K27me3_R2.dupmark.sorted.bam  0.3418201039555981
+- output/bowtie2/8wN_WT_H3K27me3_R3.dupmark.sorted.bam  0.4874371859296476
+- output/bowtie2/8wN_WT_H3K27me3_R4.dupmark.sorted.bam  0.3232390552755446
+- output/bowtie2/8wN_KO_H3K27me3_R1.dupmark.sorted.bam  0.7653614754906817
+- output/bowtie2/8wN_KO_H3K27me3_R2.dupmark.sorted.bam  1
+- output/bowtie2/8wN_KO_H3K27me3_R3.dupmark.sorted.bam  0.2624991543197346
+- output/bowtie2/8wN_KO_H3K27me3_R4.dupmark.sorted.bam  0.8857436365711714
+- output/bowtie2/8wN_HET_H3K27me3_R1.dupmark.sorted.bam  0.6309969100666774
+- output/bowtie2/8wN_HET_H3K27me3_R2.dupmark.sorted.bam  0.5305257400697344
+- output/bowtie2/8wN_HET_H3K27me3_R3.dupmark.sorted.bam  0.9515634580012263
+- output/bowtie2/8wN_HET_H3K27me3_R4.dupmark.sorted.bam  0.3499751950570516
+
+
+
 **Create the CONFIG file** with nano `output/THOR/WTvsHET.config`:
 ```bash
 #rep1
@@ -3623,10 +3640,8 @@ sbatch scripts/THOR_WTvsKO.sh # 1254977
 sbatch scripts/THOR_WTvsHETpval0.05.sh # 1254985
 sbatch scripts/THOR_WTvsHETpval0.01.sh # 1254987
 
-# Light test when using non-DiffBind TMM normalized scaling factors:
-XXX
-
-
+# Light test when using non-DiffBind TMM normalized scaling factors (bigwig_histone/ or bigwig_histone_):
+sbatch scripts/THOR_WTvsHET_bigwig_histone_NotGenotypeGroupSF.sh # XXX
 ```
 - *NOTE: Options:  `-merge` option recommended for histone data. `–report` for HTML report, not super important; just to see how it look; `–deadzones` is blacklist; `-pvalue` 0.1 is default (can play with it);*
 - *NOTE: do NOT put any "_" in the `--name` !! Or bug*
@@ -3638,7 +3653,7 @@ XXX
 
 --> pvalue XXX is XXX
 
---> using non-DiffBind TMM normalized scaling factors is XXX
+--> using `output/bigwig_histone_NotGenotypeGroup` SF = non-DiffBind TMM normalized scaling factors is XXX (in agreement with the deepTools profile showing lot of disparities between replicates when using these normalization factors)
 
 Let's re-run with the correct conda environment so that it can output the bigwig files (**output will now be within the` output/THOR` folder**)
 
