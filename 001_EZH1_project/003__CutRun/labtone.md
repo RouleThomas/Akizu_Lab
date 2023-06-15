@@ -3505,8 +3505,22 @@ conda activate RGT
 pip install cython numpy scipy # will install within RGT conda env
 pip install RGT --no-binary RGT
 rgt-THOR --version
+
+# error while running 1st time bigWigMerge cannot find libpng12.so.0
+
+# Create a symbolic link to the missing libpng12.so.0; that direct toward ours libpng installed through conda
+## First locate where the symbolic link should be created
+ldd ~/anaconda3/envs/RGT/bin/bigWigMerge # this is to check if bigWigMerge found dependent libraries
+## Second check which libpng should I use; is and where on my system
+locate libpng16.so # to find where it is in my system
+## Now create symbolic link that will use my libpng16; put the link where the software is looking for
+ln -s /usr/lib64/libpng16.so ~/anaconda3/envs/RGT/lib/libpng12.so.0
+export LD_LIBRARY_PATH=~/anaconda3/envs/RGT/lib:$LD_LIBRARY_PATH
+ldd ~/anaconda3/envs/RGT/bin/bigWigMerge # now ldd found the libpng12.so.0 library !!!
+bigWigMerge
 ```
 --> Installation succesfful within `conda activate RGT`
+
 
 ### THOR diff. bound sites analysis
 
@@ -3557,20 +3571,81 @@ output/bowtie2/8wN_HET_IGG_R4.dupmark.sorted.bam
 ```
 *NOTE: inputs are optional, it may worth trying without input too*
 
-**Run THOR**
+`output/THOR/WTvsKO.config`:
 ```bash
+#rep1
+output/bowtie2/8wN_WT_H3K27me3_R1.dupmark.sorted.bam
+output/bowtie2/8wN_WT_H3K27me3_R2.dupmark.sorted.bam
+output/bowtie2/8wN_WT_H3K27me3_R3.dupmark.sorted.bam
+output/bowtie2/8wN_WT_H3K27me3_R4.dupmark.sorted.bam
+#rep2
+output/bowtie2/8wN_KO_H3K27me3_R1.dupmark.sorted.bam
+output/bowtie2/8wN_KO_H3K27me3_R2.dupmark.sorted.bam
+output/bowtie2/8wN_KO_H3K27me3_R3.dupmark.sorted.bam
+output/bowtie2/8wN_KO_H3K27me3_R4.dupmark.sorted.bam
+#genome
+../../Master/meta/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta
+#chrom_sizes
+../../Master/meta/GRCh38_chrom_sizes.tab
+#inputs1
+output/bowtie2/8wN_WT_IGG_R1.dupmark.sorted.bam
+output/bowtie2/8wN_WT_IGG_R2.dupmark.sorted.bam
+output/bowtie2/8wN_WT_IGG_R3.dupmark.sorted.bam
+output/bowtie2/8wN_WT_IGG_R4.dupmark.sorted.bam
+#inputs2
+output/bowtie2/8wN_KO_IGG_R1.dupmark.sorted.bam
+output/bowtie2/8wN_KO_IGG_R2.dupmark.sorted.bam
+output/bowtie2/8wN_KO_IGG_R3.dupmark.sorted.bam
+output/bowtie2/8wN_KO_IGG_R4.dupmark.sorted.bam
+```
+
+
+
+**Run THOR**
+
+*THOR is very buggy to make it work I need to temporaly change where to look for libraries lol.. So cannot use nano anymore for example...*
+
+```bash
+# Needed step to change where THOR look for libraries
+conda activate RGT
+export LD_LIBRARY_PATH=~/anaconda3/envs/RGT/lib:$LD_LIBRARY_PATH
+bigWigMerge
+
 rgt-THOR --name WTvsHET --merge --output-dir output/THOR_WTvsHET --report --deadzones ../../Master/meta/hg38-blacklist.v2.bed --pvalue 0.1 --scaling-factors 1.412253844,1.186123259,1.337020479,1.40842928,1.738155858,1.499589188,1.940327554,1.462426177 output/THOR/WTvsHET.config
 
 # seems to work so run within a slurm job with 200g mem
 conda activate RGT
-sbatch scripts/THOR_WTvsHET.sh # 1141742
-sbatch scripts/THOR_WTvsHET_unique.sh # 1141743
+sbatch scripts/THOR_WTvsHET.sh # 1141742 bigwig FAIL; output path changed to output/THOR: 1254973
+sbatch scripts/THOR_WTvsHET_unique.sh # 1141743 bigwig FAIL
+sbatch scripts/THOR_WTvsKO.sh # 1254977
+
+# Light test pvalue on WTvsHET
+sbatch scripts/THOR_WTvsHETpval0.05.sh # 1254985
+sbatch scripts/THOR_WTvsHETpval0.01.sh # 1254987
+
+# Light test when using non-DiffBind TMM normalized scaling factors:
+XXX
+
+
 ```
 - *NOTE: Options:  `-merge` option recommended for histone data. `–report` for HTML report, not super important; just to see how it look; `–deadzones` is blacklist; `-pvalue` 0.1 is default (can play with it);*
 - *NOTE: do NOT put any "_" in the `--name` !! Or bug*
 - *NOTE: unique is remove dupplicated reads with `--rmdup` option*
 
---> XXX
+--> much LESS peaks are identified using uniquely aligned reads (`--rmdup` option)
+
+--> Overall a LOT of diff peaks are identified, and looking at the IGV with `bigwig_DiffBind_TMM` it looks good !!! There may even be too many (114,886 diff peaks!!); so **we could filter qvalue**
+
+--> pvalue XXX is XXX
+
+--> using non-DiffBind TMM normalized scaling factors is XXX
+
+Let's re-run with the correct conda environment so that it can output the bigwig files (**output will now be within the` output/THOR` folder**)
+
+XXX
+
+
+
 
 
 YYY Try fine-tune the parameters:
