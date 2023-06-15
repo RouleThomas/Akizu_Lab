@@ -3632,39 +3632,49 @@ rgt-THOR --name WTvsHET --merge --output-dir output/THOR_WTvsHET --report --dead
 
 # seems to work so run within a slurm job with 200g mem
 conda activate RGT
-sbatch scripts/THOR_WTvsHET.sh # 1141742 bigwig FAIL; output path changed to output/THOR: 1254973
+sbatch scripts/THOR_WTvsHET.sh # 1141742 bigwig FAIL; output path changed to output/THOR: 1254973 ok
 sbatch scripts/THOR_WTvsHET_unique.sh # 1141743 bigwig FAIL
-sbatch scripts/THOR_WTvsKO.sh # 1254977
+sbatch scripts/THOR_WTvsKO.sh # 1254977 ok
 
 # Light test pvalue on WTvsHET
-sbatch scripts/THOR_WTvsHETpval0.05.sh # 1254985
-sbatch scripts/THOR_WTvsHETpval0.01.sh # 1254987
+sbatch scripts/THOR_WTvsHETpval0.05.sh # 1254985 ok
+sbatch scripts/THOR_WTvsHETpval0.01.sh # 1254987 ok
+sbatch scripts/THOR_WTvsHETpval0.005.sh # 1256847
+sbatch scripts/THOR_WTvsHETpval0.001.sh # 1256848
+sbatch scripts/THOR_WTvsHETpval0.0005.sh # 1256849
+sbatch scripts/THOR_WTvsHETpval0.0001.sh # 1256850
 
 # Light test when using non-DiffBind TMM normalized scaling factors (bigwig_histone/ or bigwig_histone_):
-sbatch scripts/THOR_WTvsHET_bigwig_histone_NotGenotypeGroupSF.sh # XXX
+sbatch scripts/THOR_WTvsHET_bigwig_histone_NotGenotypeGroupSF.sh # 1256830
+
+# Light test for binsize and step with default pvalue 0.1
+sbatch scripts/THOR_WTvsHETbinsize250.sh # 1256945
+sbatch scripts/THOR_WTvsHETbinsize500.sh # 1256946
+sbatch scripts/THOR_WTvsHETbinsize1000.sh # 1256947
+sbatch scripts/THOR_WTvsHETbinsize1500.sh # 1256948
+
+# Optimal pvalue and binsize/step
 ```
-- *NOTE: Options:  `-merge` option recommended for histone data. `–report` for HTML report, not super important; just to see how it look; `–deadzones` is blacklist; `-pvalue` 0.1 is default (can play with it);*
+- *NOTE: Options:  `-merge` option recommended for histone data. `–report` for HTML report (useless!), not super important; just to see how it look; `–deadzones` is blacklist; `-pvalue` 0.1 is default (can play with it);*
 - *NOTE: do NOT put any "_" in the `--name` !! Or bug*
 - *NOTE: unique is remove dupplicated reads with `--rmdup` option*
+- *NOTE: got Ressource-related warnings at the end; after bigWigs processing; that is OK!*
+- *NOTE: Let's re-run with the correct conda environment so that it can output the bigwig files (**output will now be within the` output/THOR` folder**)*
+- *NOTE: I keep `binsize = 2*step` in the parameters; not sure optimal... But the default follow this.*
 
 --> much LESS peaks are identified using uniquely aligned reads (`--rmdup` option)
 
 --> Overall a LOT of diff peaks are identified, and looking at the IGV with `bigwig_DiffBind_TMM` it looks good !!! There may even be too many (114,886 diff peaks!!); so **we could filter qvalue**
 
---> pvalue XXX is XXX
+--> pvalue from 0.1 to 0.01 do not change a lot; then XXX. pvalue of XXX is optimal
 
 --> using `output/bigwig_histone_NotGenotypeGroup` SF = non-DiffBind TMM normalized scaling factors is XXX (in agreement with the deepTools profile showing lot of disparities between replicates when using these normalization factors)
 
-Let's re-run with the correct conda environment so that it can output the bigwig files (**output will now be within the` output/THOR` folder**)
+--> The bigwig files generated looks good (**when using DiffBind_TMM SF**); replicate are comparable
 
-XXX
-
-
+--> playing with binsize and step (default is 100, 50) is XXX
 
 
-
-YYY Try fine-tune the parameters:
-- tweak pvalue
 
 
 
