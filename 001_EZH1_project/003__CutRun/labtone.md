@@ -3654,6 +3654,10 @@ sbatch scripts/THOR_WTvsHETbinsize1000.sh # 1256947
 sbatch scripts/THOR_WTvsHETbinsize1500.sh # 1256948
 
 # Optimal pvalue and binsize/step
+XXX
+
+
+
 ```
 - *NOTE: Options:  `-merge` option recommended for histone data. `–report` for HTML report (useless!), not super important; just to see how it look; `–deadzones` is blacklist; `-pvalue` 0.1 is default (can play with it);*
 - *NOTE: do NOT put any "_" in the `--name` !! Or bug*
