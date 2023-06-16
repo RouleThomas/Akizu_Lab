@@ -3639,10 +3639,15 @@ sbatch scripts/THOR_WTvsKO.sh # 1254977 ok
 # Light test pvalue on WTvsHET
 sbatch scripts/THOR_WTvsHETpval0.05.sh # 1254985 ok
 sbatch scripts/THOR_WTvsHETpval0.01.sh # 1254987 ok
-sbatch scripts/THOR_WTvsHETpval0.005.sh # 1256847
-sbatch scripts/THOR_WTvsHETpval0.001.sh # 1256848
-sbatch scripts/THOR_WTvsHETpval0.0005.sh # 1256849
-sbatch scripts/THOR_WTvsHETpval0.0001.sh # 1256850
+sbatch scripts/THOR_WTvsHETpval0.005.sh # 1256847 ok
+sbatch scripts/THOR_WTvsHETpval0.001.sh # 1256848 ok
+sbatch scripts/THOR_WTvsHETpval0.0005.sh # 1256849 ok
+sbatch scripts/THOR_WTvsHETpval0.0001.sh # 1256850 ok
+sbatch scripts/THOR_WTvsHETpval0.00001.sh # 1307914
+sbatch scripts/THOR_WTvsHETpval0.000001.sh # 1307915
+sbatch scripts/THOR_WTvsHETpval0.0000001.sh # 1307916
+sbatch scripts/THOR_WTvsHETpval0.00000001.sh # 1307917
+
 
 # Light test when using non-DiffBind TMM normalized scaling factors (bigwig_histone/ or bigwig_histone_):
 sbatch scripts/THOR_WTvsHET_bigwig_histone_NotGenotypeGroupSF.sh # 1256830
@@ -3653,11 +3658,9 @@ sbatch scripts/THOR_WTvsHETbinsize500.sh # 1256946
 sbatch scripts/THOR_WTvsHETbinsize1000.sh # 1256947
 sbatch scripts/THOR_WTvsHETbinsize1500.sh # 1256948
 
-# Optimal pvalue and binsize/step
-XXX
 
-
-
+# Light test with poisson distribution (`--poisson`)
+sbatch scripts/THOR_WTvsHETpval0.0001_poisson.sh  # 1307944
 ```
 - *NOTE: Options:  `-merge` option recommended for histone data. `–report` for HTML report (useless!), not super important; just to see how it look; `–deadzones` is blacklist; `-pvalue` 0.1 is default (can play with it);*
 - *NOTE: do NOT put any "_" in the `--name` !! Or bug*
@@ -3670,16 +3673,47 @@ XXX
 
 --> Overall a LOT of diff peaks are identified, and looking at the IGV with `bigwig_DiffBind_TMM` it looks good !!! There may even be too many (114,886 diff peaks!!); so **we could filter qvalue**
 
---> pvalue from 0.1 to 0.01 do not change a lot; then XXX. pvalue of XXX is optimal
+--> pvalue from 0.1 to 0.0001 do not change a lot; then XXX. pvalue of XXX is optimal. In the end; **I could have just filter the qvalue in the bed output file**... (qvalue is in MACS2-like format)
+----> 
 
---> using `output/bigwig_histone_NotGenotypeGroup` SF = non-DiffBind TMM normalized scaling factors is XXX (in agreement with the deepTools profile showing lot of disparities between replicates when using these normalization factors)
+--> increasing `--binsize` and `--step` more than default value result in MANY more false positive peaks; size overall not super longer in addition! --> **NOT GOOD; keep default**
+
+--> using `output/bigwig_histone_NotGenotypeGroup` SF = non-DiffBind TMM normalized scaling factors show A LOT LESS diff bound regions (4.2Mo vs 900ko at same default qvalue) (in agreement with the deepTools profile showing lot of disparities between replicates when using these normalization factors) --> **NOT GOOD**
 
 --> The bigwig files generated looks good (**when using DiffBind_TMM SF**); replicate are comparable
 
 --> playing with binsize and step (default is 100, 50) is XXX
 
+Let's instead of using different pvalue to call for peak, put the raw bed output in R and filter p-value here + generate FC (found [here](http://ginolhac.github.io/chip-seq/peak/)):
 
+XXXX
 
+```R
+# load the file using the tidyverse
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+diffpeaks <- read_tsv("TC1-I-A-D0vsD3-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+# split the last field into three
+diffpeaks %>%
+  separate(X11, into = c("count1", "count2", "third"), sep = ";", convert = TRUE) %>%
+  mutate(FC = count2 / count1) -> thor_splitted
+# plot the histogram of the fold-change computed above, count second condition / count 1st condition
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1))
+
+# create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(log2(FC) > 0.5) %>%
+  select(X1, X2, X3) %>%
+  mutate(X1 = paste0("chr", X1)) %>%
+  write_tsv("THOR_logFC0.5.bed", col_names = FALSE)
+
+```
 
 
 
@@ -5988,7 +6022,10 @@ bedtools intersect -wa -u -a meta/ENCFF159KBI_peak_noIntergenic.gtf -b meta/ENCF
 conda activate deeptools
 ## DEGs down HET and up in KO and peak non intergenic
 sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_HET_Down_KO_Up.sh # 681175
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_HET_Down_KO_Up.sh # 
+
 sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_noIntergenic_DEGs_HET_Down_KO_Up.sh # 681177
+
 ```
 
 --> looks cool; seems enough genes and we clearly see up HET and down KO
