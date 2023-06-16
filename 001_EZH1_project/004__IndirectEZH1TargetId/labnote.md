@@ -22,9 +22,14 @@ Let's:
 - Filter genes bound with H3K27me3 but NOT with EZH2 = putative EZH1 target 
 
 
-Here is GEO for [H3K27me3](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE123199) and [EZH2](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE95944). There are many files available, let's pick the following and transfor to `input/` folder:
-- H3K27me3:
-- EZH2: 
+Here is GEO for [H3K27me3](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE123199) and [EZH2](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE95944). There are many files available, let's pick the following and transfer to `input/` folder.
+
+
+Look at the various bigwig/bed on IGV and decide which bed to use.
+
+--> The optimal files to use seems to be:
+- H3K27me3: XXX
+- EZH2: XXX
 
 
 

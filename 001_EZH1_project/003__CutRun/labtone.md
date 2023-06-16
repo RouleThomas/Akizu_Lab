@@ -3697,9 +3697,9 @@ sbatch --dependency=afterany:1308031 scripts/bigwigmerge_THOR_WTvsKO_poisson.sh 
 
 --> playing with binsize and step (default is 100, 50) is XXX
 
-Let's instead of using different pvalue to call for peak, put the raw bed output in R and filter p-value here + generate FC (found [here](http://ginolhac.github.io/chip-seq/peak/)):
+Let's instead of using different pvalue to call for peak, put the raw bed output in R and filter p-value here + generate FC (found [here](http://ginolhac.github.io/chip-seq/peak/)) within `conda activate deseq2`:
 
-XXXX
+
 
 ```R
 # load the file using the tidyverse
@@ -3707,26 +3707,54 @@ library(readr)
 library(dplyr)
 library(ggplot2)
 library(tidyr)
-diffpeaks <- read_tsv("TC1-I-A-D0vsD3-diffpeaks.bed",
+
+# WTvsHET
+diffpeaks <- read_tsv("output/THOR/THOR_WTvsHET/WTvsHET-diffpeaks.bed",
                       col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
-# split the last field into three
-diffpeaks %>%
-  separate(X11, into = c("count1", "count2", "third"), sep = ";", convert = TRUE) %>%
-  mutate(FC = count2 / count1) -> thor_splitted
-# plot the histogram of the fold-change computed above, count second condition / count 1st condition
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_HET", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2","count_WT_3","count_WT_4"), sep = ":", convert = TRUE) %>%
+  separate(count_HET, into = c("count_HET_1","count_HET_2","count_HET_3","count_HET_4"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_HET_1+count_HET_2+count_HET_3+count_HET_4) / (count_WT_1+count_WT_2+count_WT_3+count_WT_4))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_WTvsHET/log2FC.pdf", width=14, height=14)
 thor_splitted %>%
   ggplot(aes(x = log2(FC))) +
   geom_histogram() +
-  scale_x_continuous(breaks = seq(-5, 3, 1))
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("8wN_WT vs HET") +
+  theme_bw()
+dev.off()
 
-# create a bed file, append chr to chromosome names and write down the file
+pdf("output/THOR/THOR_WTvsHET/log2FC_qval20.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 20) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("8wN_WT vs HET_qval20") +
+  theme_bw()
+dev.off()
+
+## create a bed file, append chr to chromosome names and write down the file
 thor_splitted %>%
   filter(log2(FC) > 0.5) %>%
-  select(X1, X2, X3) %>%
-  mutate(X1 = paste0("chr", X1)) %>%
-  write_tsv("THOR_logFC0.5.bed", col_names = FALSE)
+  write_tsv("output/THOR/THOR_WTvsHET/THOR_logFC0.5.bed", col_names = FALSE)
+thor_splitted %>%
+  filter(qval > 30) %>%
+  write_tsv("output/THOR/THOR_WTvsHET/THOR_qval30.bed", col_names = FALSE)
 
+
+# WTvsKO
+XXX
 ```
+- *NOTE: FC negative = less in mutant; positive = more in mutant*
+
+--> **qval15 seems optimal**; maybe too many false-positive but overall looks real!!! Do not miss any difference!! Or 20 is good too...
+
+--> Overall HET show increase H3K27me3 ! KO shows XXX
 
 
 **Check on IGV how it look with different qvalue; FC treshold**
