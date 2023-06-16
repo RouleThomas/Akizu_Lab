@@ -6128,6 +6128,33 @@ nb of unique genes:
 - meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.gtf: 28 (DEGs + Diff. bound)
 - meta/ENCFF159KBI_UpHET_DownKO_noIntergenic.gtf: 55 (Diff. bound)
 
+## deepTools on THOR-bigwig files
+
+Let's do it on the DEGs (opposite behavior between mutants)
+
+```bash
+
+conda activate deeptools
+## expression Down in HET and Up in KO; including the 2 WT
+sbatch --dependency=afterany:1308095:1308097 scripts/matrix_gene_1kb_THOR_WTvsHET_noIntergenic_DEGs_HET_Down_KO_Up_WT_comparison.sh # 1308318
+
+## expression Down in HET and Up in KO; with WT from WTvsHET 
+sbatch --dependency=afterany:1308095:1308097 scripts/matrix_gene_1kb_THOR_WTvsHET_noIntergenic_DEGs_HET_Down_KO_Up.sh # 1308269
+sbatch --dependency=afterany:1308095:1308097 scripts/matrix_gene_1kb_THOR_WTvsHETpoisson_noIntergenic_DEGs_HET_Down_KO_Up.sh # 1308319
+
+
+## expression Up in HET and Down in KO; with WT from WTvsHET 
+sbatch --dependency=afterany:1308095:1308097 scripts/matrix_gene_1kb_THOR_WTvsHET_noIntergenic_DEGs_HET_Up_KO_Down.sh # 1308283
+sbatch --dependency=afterany:1308095:1308097 scripts/matrix_gene_1kb_THOR_WTvsHETpoisson_noIntergenic_DEGs_HET_Up_KO_Down.sh # 1308354
+```
+
+--> Quality check for WT shows that the bigwig track for WT generated from WTvsHET or WTvsKO are XXX identical XXX
+
+--> Poisson looks XXX
+
+
+
+
 ### Functional analyses for the expected gene list
 
 Let's see what are the genes where H3K27me3 goes Up in HET and Down in KO; in agreement with expression changes
