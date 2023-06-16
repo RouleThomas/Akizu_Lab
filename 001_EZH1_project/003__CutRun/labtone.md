@@ -3643,24 +3643,35 @@ sbatch scripts/THOR_WTvsHETpval0.005.sh # 1256847 ok
 sbatch scripts/THOR_WTvsHETpval0.001.sh # 1256848 ok
 sbatch scripts/THOR_WTvsHETpval0.0005.sh # 1256849 ok
 sbatch scripts/THOR_WTvsHETpval0.0001.sh # 1256850 ok
-sbatch scripts/THOR_WTvsHETpval0.00001.sh # 1307914
-sbatch scripts/THOR_WTvsHETpval0.000001.sh # 1307915
-sbatch scripts/THOR_WTvsHETpval0.0000001.sh # 1307916
-sbatch scripts/THOR_WTvsHETpval0.00000001.sh # 1307917
+sbatch scripts/THOR_WTvsHETpval0.00001.sh # 1307914 ok
+sbatch scripts/THOR_WTvsHETpval0.000001.sh # 1307915 ok
+sbatch scripts/THOR_WTvsHETpval0.0000001.sh # 1307916 ok
+sbatch scripts/THOR_WTvsHETpval0.00000001.sh # 1307917 ok
 
 
 # Light test when using non-DiffBind TMM normalized scaling factors (bigwig_histone/ or bigwig_histone_):
 sbatch scripts/THOR_WTvsHET_bigwig_histone_NotGenotypeGroupSF.sh # 1256830
 
 # Light test for binsize and step with default pvalue 0.1
-sbatch scripts/THOR_WTvsHETbinsize250.sh # 1256945
-sbatch scripts/THOR_WTvsHETbinsize500.sh # 1256946
-sbatch scripts/THOR_WTvsHETbinsize1000.sh # 1256947
-sbatch scripts/THOR_WTvsHETbinsize1500.sh # 1256948
+sbatch scripts/THOR_WTvsHETbinsize250.sh # 1256945 ok
+sbatch scripts/THOR_WTvsHETbinsize500.sh # 1256946 ok
+sbatch scripts/THOR_WTvsHETbinsize1000.sh # 1256947 ok
+sbatch scripts/THOR_WTvsHETbinsize1500.sh # 1256948 ok
 
 
 # Light test with poisson distribution (`--poisson`)
-sbatch scripts/THOR_WTvsHETpval0.0001_poisson.sh  # 1307944
+sbatch scripts/THOR_WTvsHETpval0.0001_poisson.sh  # 1307944 ok
+
+# Poisson distribution default parameter
+sbatch scripts/THOR_WTvsHET_poisson.sh # 1308030
+sbatch scripts/THOR_WTvsKO_poisson.sh # 1308031
+
+# Generate median bigwig files for default and poisson
+conda activate BedToBigwig
+sbatch scripts/bigwigmerge_THOR_WTvsHET.sh # 1308094
+sbatch --dependency=afterany:1308030 scripts/bigwigmerge_THOR_WTvsHET_poisson.sh # 1308095
+sbatch scripts/bigwigmerge_THOR_WTvsKO.sh # 1308096
+sbatch --dependency=afterany:1308031 scripts/bigwigmerge_THOR_WTvsKO_poisson.sh # 1308097
 ```
 - *NOTE: Options:  `-merge` option recommended for histone data. `–report` for HTML report (useless!), not super important; just to see how it look; `–deadzones` is blacklist; `-pvalue` 0.1 is default (can play with it);*
 - *NOTE: do NOT put any "_" in the `--name` !! Or bug*
@@ -3668,6 +3679,8 @@ sbatch scripts/THOR_WTvsHETpval0.0001_poisson.sh  # 1307944
 - *NOTE: got Ressource-related warnings at the end; after bigWigs processing; that is OK!*
 - *NOTE: Let's re-run with the correct conda environment so that it can output the bigwig files (**output will now be within the` output/THOR` folder**)*
 - *NOTE: I keep `binsize = 2*step` in the parameters; not sure optimal... But the default follow this.*
+- *NOTE: the bigwig files are ALWAYS the same whatever the qvalue treshold used*
+- *NOTE: bigwig files WT are very similar; nearly identical, when WT from WTvsHET than WTvsKO*
 
 --> much LESS peaks are identified using uniquely aligned reads (`--rmdup` option)
 
@@ -3716,7 +3729,11 @@ thor_splitted %>%
 ```
 
 
+**Check on IGV how it look with different qvalue; FC treshold**
 
+--> Optimal qvalue and FC treshold seems to be XXX
+
+--> Poisson seems to perform XXX
 
 
 ## Histone-EpiCypher guidelines for scaling normalization
@@ -5928,11 +5945,11 @@ library("tidyverse")
 
 ## Import deseq2 output and filter qvalue 0.05
 HETvsWT = as_tibble(read_csv('output/deseq2_hg38/raw_8wN_HET_vs_8wN_WT.txt')) %>%
-    filter(padj <= 0.05) %>%
+    filter(padj <= 0.001) %>%  # HERE CHANGE qvalue if NEEDED
     dplyr::select(-"...1") %>%
     add_column(contrast = "HETvsWT")
 KOvsWT = as_tibble(read_csv('output/deseq2_hg38/raw_8wN_KO_vs_8wN_WT.txt')) %>%
-    filter(padj <= 0.05) %>%
+    filter(padj <= 0.001) %>% # HERE CHANGE qvalue if NEEDED
     dplyr::select(-"...1") %>%
     add_column(contrast = "KOvsWT")
 
@@ -5969,6 +5986,12 @@ export(gtf_DEGs_HET_Down, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_HET_Dow
 export(gtf_DEGs_HET_Up, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_HET_Up.gtf")
 export(gtf_DEGs_KO_Down, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Down.gtf")
 export(gtf_DEGs_KO_Up, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Up.gtf")
+
+# For other qvalue:
+export(gtf_DEGs_HET_Down, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_HET_Down_qval001.gtf")
+export(gtf_DEGs_HET_Up, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_HET_Up_qval001.gtf")
+export(gtf_DEGs_KO_Down, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Down_qval001.gtf")
+export(gtf_DEGs_KO_Up, con = "output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Up_qval001.gtf")
 ```
 
 Then, `bedools intersect` the **DEGs GTF (HET down and KO up)** and generate the deepTools plots:
@@ -5976,10 +5999,33 @@ Then, `bedools intersect` the **DEGs GTF (HET down and KO up)** and generate the
 ```bash
 conda activate BedToBigwig
 
-## Up HET and Down in KO DEGs only
+## expression Down HET and Up in KO DEGs only
 cat ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_HET_Down.gtf ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Up.gtf > meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_unsort.gtf
 sort meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_unsort.gtf | uniq > meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_unsort_unique.gtf
 bedtools sort -i meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_unsort_unique.gtf > meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_sort.gtf
+### qval 0.01
+cat ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_HET_Down_qval01.gtf ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Up_qval01.gtf > meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_qval01_unsort.gtf
+sort meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_qval01_unsort.gtf | uniq > meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_qval01_unsort_unique.gtf
+bedtools sort -i meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_qval01_unsort_unique.gtf > meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_qval01_sort.gtf
+### qval 0.001
+cat ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_HET_Down_qval001.gtf ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Up_qval001.gtf > meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_qval001_unsort.gtf
+sort meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_qval001_unsort.gtf | uniq > meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_qval001_unsort_unique.gtf
+bedtools sort -i meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_qval001_unsort_unique.gtf > meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_qval001_sort.gtf
+
+
+## expression Up HET and Down in KO DEGs only
+cat ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_HET_Up.gtf ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Down.gtf > meta/ENCFF159KBI_DEGs_HET_Up_KO_Down_unsort.gtf
+sort meta/ENCFF159KBI_DEGs_HET_Up_KO_Down_unsort.gtf | uniq > meta/ENCFF159KBI_DEGs_HET_Up_KO_Down_unsort_unique.gtf
+bedtools sort -i meta/ENCFF159KBI_DEGs_HET_Up_KO_Down_unsort_unique.gtf > meta/ENCFF159KBI_DEGs_HET_Up_KO_Down_sort.gtf
+### qval 0.01
+cat ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_HET_Up_qval01.gtf ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Down_qval01.gtf > meta/ENCFF159KBI_DEGs_HET_Up_KO_Down_qval01_unsort.gtf
+sort meta/ENCFF159KBI_DEGs_HET_Up_KO_Down_qval01_unsort.gtf | uniq > meta/ENCFF159KBI_DEGs_HET_Up_KO_Down_qval01_unsort_unique.gtf
+bedtools sort -i meta/ENCFF159KBI_DEGs_HET_Up_KO_Down_qval01_unsort_unique.gtf > meta/ENCFF159KBI_DEGs_HET_Up_KO_Down_qval01_sort.gtf
+### qval 0.001
+cat ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_HET_Up_qval001.gtf ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Down_qval001.gtf > meta/ENCFF159KBI_DEGs_HET_Up_KO_Down_qval001_unsort.gtf
+sort meta/ENCFF159KBI_DEGs_HET_Up_KO_Down_qval001_unsort.gtf | uniq > meta/ENCFF159KBI_DEGs_HET_Up_KO_Down_qval001_unsort_unique.gtf
+bedtools sort -i meta/ENCFF159KBI_DEGs_HET_Up_KO_Down_qval001_unsort_unique.gtf > meta/ENCFF159KBI_DEGs_HET_Up_KO_Down_qval001_sort.gtf
+
 ```
 *NOTE: `bedtools intersect -wa -u` write `a` if overlap with `b`; only once*
 
@@ -6018,11 +6064,22 @@ Let's combine the **Up/down DEGs genes with the peak non intergenic GTF** and de
 ## Combine DEGs and peak non intergenic
 bedtools intersect -wa -u -a meta/ENCFF159KBI_peak_noIntergenic.gtf -b meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_sort.gtf > meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_sort.gtf
 
+bedtools intersect -wa -u -a meta/ENCFF159KBI_peak_noIntergenic.gtf -b meta/ENCFF159KBI_DEGs_HET_Up_KO_Down_sort.gtf > meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Up_KO_Down_sort.gtf
+
+bedtools intersect -wa -u -a meta/ENCFF159KBI_peak_noIntergenic.gtf -b meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_qval01_sort.gtf > meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_qval01_sort.gtf
+
+bedtools intersect -wa -u -a meta/ENCFF159KBI_peak_noIntergenic.gtf -b meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_qval001_sort.gtf > meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_qval001_sort.gtf
+
+bedtools intersect -wa -u -a meta/ENCFF159KBI_peak_noIntergenic.gtf -b meta/ENCFF159KBI_DEGs_HET_Up_KO_Down_qval01_sort.gtf > meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Up_KO_Down_qval01_sort.gtf
+
+bedtools intersect -wa -u -a meta/ENCFF159KBI_peak_noIntergenic.gtf -b meta/ENCFF159KBI_DEGs_HET_Up_KO_Down_qval001_sort.gtf > meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Up_KO_Down_qval001_sort.gtf
+
+
 # deepTools plot
 conda activate deeptools
 ## DEGs down HET and up in KO and peak non intergenic
 sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_HET_Down_KO_Up.sh # 681175
-sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_HET_Down_KO_Up.sh # 
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_HET_Up_KO_Down.sh # 1308054
 
 sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_noIntergenic_DEGs_HET_Down_KO_Up.sh # 681177
 
@@ -6054,10 +6111,20 @@ awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta
 awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.gtf | tr -d ' ' | tr -d '\"' | sort | uniq | wc -l
 awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta/ENCFF159KBI_UpHET_DownKO_noIntergenic.gtf | tr -d ' ' | tr -d '\"' | sort | uniq | wc -l
 awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta/ENCFF159KBI_WT_maxScorePoolpeaks_min1_noIntergenic.gtf | tr -d ' ' | tr -d '\"' | sort | uniq | wc -l
+awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Up_KO_Down_sort.gtf | tr -d ' ' | tr -d '\"' | sort | uniq | wc -l
+
+awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_qval01_sort.gtf | tr -d ' ' | tr -d '\"' | sort | uniq | wc -l
+awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_qval001_sort.gtf | tr -d ' ' | tr -d '\"' | sort | uniq | wc -l
+awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Up_KO_Down_qval001_sort.gtf | tr -d ' ' | tr -d '\"' | sort | uniq | wc -l
 ```
 nb of unique genes:
 - meta/ENCFF159KBI_WT_maxScorePoolpeaks_min1_noIntergenic.gtf: 4,665 (peak in WT)
 - meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_sort.gtf: 2,100 (DEGs)
+- meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_qval01_sort.gtf: 1,517 (DEGs)
+- meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_qval001_sort.gtf: 1,009 (DEGs)
+- meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Up_KO_Down_sort.gtf: 1,818 (DEGs)
+- meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Up_KO_Down_qval01_sort.gtf: 1,393 (DEGs)
+- meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Up_KO_Down_qval001_sort.gtf: 1,047 (DEGs)
 - meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.gtf: 28 (DEGs + Diff. bound)
 - meta/ENCFF159KBI_UpHET_DownKO_noIntergenic.gtf: 55 (Diff. bound)
 
