@@ -3796,14 +3796,14 @@ thor_splitted %>%
 ```
 - *NOTE: FC negative = less in mutant; positive = more in mutant*
 
---> **qval15 seems optimal**; maybe too many false-positive but overall looks real!!! Do not miss any difference!! Or 20 is good too...
+--> **qval10-15 seems optimal**; maybe too many false-positive but overall looks real!!! Do not miss any difference!! Or 20 is good too...
 
 --> Overall HET show increase H3K27me3 ! KO also but less strongly; more up/down comparable
 
 
 **Check on IGV how it look with different qvalue; FC treshold**
 
---> Optimal qvalue= 15; and NO FC treshold for now.
+--> Optimal qvalue=10-15; and NO FC treshold for now.
 
 ### Assign THOR-diff peaks to genes and check expression
 
@@ -3901,8 +3901,6 @@ WTvsKO_annot$gene <- mapIds(org.Hs.eg.db, keys = WTvsKO_annot$geneId, column = "
 ## Save output table
 write.table(WTvsHET_annot, file="output/ChIPseeker/annotation_WTvsHET_qval20.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 write.table(WTvsKO_annot, file="output/ChIPseeker/annotation_WTvsKO_qval20.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-
-
 # load annotation tables
 # WTvsHET_qval5_annot <- read.table("output/ChIPseeker/annotation_WTvsHET_qval5.txt", sep="\t", header=TRUE)
 
@@ -4127,10 +4125,7 @@ WTvsKO_annot_gain_lost_RNA %>%
 dev.off()
 
 
-
-
-
-
+# !!! CODE BELOW from cp/paste need to be adapteded!!! :
 
 # Venn diagram to see whether gain H3K27me3 in HET are the same one in KO?
 ## GAIN
@@ -4222,11 +4217,134 @@ dev.off()
 
 --> I also produced 'unique' file that **filter-out genes assigned with a peak both up and down** in mutants. This does not decrease the potential false-positive signal (gain H3K27me3 and increase in exp...); and it does NOT remove many genes. **Not necessary; as very few**
 
+Generate **GTF of the THOR-diff. bound genes**:
+- Gain in HET/KO
+- Lost in HET/KO
+- Gain in HET and Lost in KO and opposite
+
+
+```bash
+conda activate BedToBigwig
+# File where the diffbound sites has been assigned to genes
+output/ChIPseeker/annotation_WTvsHET_qval10.txt
+output/ChIPseeker/annotation_WTvsHET_qval15.txt
+output/ChIPseeker/annotation_WTvsKO_qval10.txt
+output/ChIPseeker/annotation_WTvsKO_qval15.txt
+
+# Filter the peaks
+## Filter HET Diff bound sites that goes Up (Gain H3K27me3 in HET)
+awk '$7 > 1' output/ChIPseeker/annotation_WTvsHET_qval10.txt > output/ChIPseeker/annotation_WTvsHET_qval10_UpHET.txt
+awk '$7 > 1' output/ChIPseeker/annotation_WTvsHET_qval15.txt > output/ChIPseeker/annotation_WTvsHET_qval15_UpHET.txt
+## Filter HET Diff bound sites that goes Down (Lost H3K27me3 in HET)
+awk '$7 < 1' output/ChIPseeker/annotation_WTvsHET_qval10.txt > output/ChIPseeker/annotation_WTvsHET_qval10_DownHET.txt
+awk '$7 < 1' output/ChIPseeker/annotation_WTvsHET_qval15.txt > output/ChIPseeker/annotation_WTvsHET_qval15_DownHET.txt
+
+## Filter KO Diff bound sites that goes Up (Gain H3K27me3 in KO)
+awk '$7 > 1' output/ChIPseeker/annotation_WTvsKO_qval10.txt > output/ChIPseeker/annotation_WTvsKO_qval10_UpKO.txt
+awk '$7 > 1' output/ChIPseeker/annotation_WTvsKO_qval15.txt > output/ChIPseeker/annotation_WTvsKO_qval15_UpKO.txt
+## Filter KO Diff bound sites that goes Down (Lost H3K27me3 in KO)
+awk '$7 < 1' output/ChIPseeker/annotation_WTvsKO_qval10.txt > output/ChIPseeker/annotation_WTvsKO_qval10_DownKO.txt
+awk '$7 < 1' output/ChIPseeker/annotation_WTvsKO_qval15.txt > output/ChIPseeker/annotation_WTvsKO_qval15_DownKO.txt
+
+# filter out the intergenic and convert to bed (remove header manually)
+grep -v "Intergenic" output/ChIPseeker/annotation_WTvsHET_qval10_UpHET.txt > output/ChIPseeker/annotation_WTvsHET_qval10_UpHET_noIntergenic.bed
+grep -v "Intergenic" output/ChIPseeker/annotation_WTvsHET_qval15_UpHET.txt > output/ChIPseeker/annotation_WTvsHET_qval15_UpHET_noIntergenic.bed
+grep -v "Intergenic" output/ChIPseeker/annotation_WTvsHET_qval10_DownHET.txt > output/ChIPseeker/annotation_WTvsHET_qval10_DownHET_noIntergenic.bed
+grep -v "Intergenic" output/ChIPseeker/annotation_WTvsHET_qval15_DownHET.txt > output/ChIPseeker/annotation_WTvsHET_qval15_DownHET_noIntergenic.bed
+grep -v "Intergenic" output/ChIPseeker/annotation_WTvsKO_qval10_UpKO.txt > output/ChIPseeker/annotation_WTvsKO_qval10_UpKO_noIntergenic.bed
+grep -v "Intergenic" output/ChIPseeker/annotation_WTvsKO_qval15_UpKO.txt > output/ChIPseeker/annotation_WTvsKO_qval15_UpKO_noIntergenic.bed
+grep -v "Intergenic" output/ChIPseeker/annotation_WTvsKO_qval10_DownKO.txt > output/ChIPseeker/annotation_WTvsKO_qval10_DownKO_noIntergenic.bed
+grep -v "Intergenic" output/ChIPseeker/annotation_WTvsKO_qval15_DownKO.txt > output/ChIPseeker/annotation_WTvsKO_qval15_DownKO_noIntergenic.bed
+# Collect gene ID
+awk -F'\t' '(NR==1 || FNR>1) {print $25}' output/ChIPseeker/annotation_WTvsHET_qval10_UpHET_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_WTvsHET_qval10_UpHET_noIntergenic_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $25}' output/ChIPseeker/annotation_WTvsHET_qval15_UpHET_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_WTvsHET_qval15_UpHET_noIntergenic_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $25}' output/ChIPseeker/annotation_WTvsHET_qval10_DownHET_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_WTvsHET_qval10_DownHET_noIntergenic_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $25}' output/ChIPseeker/annotation_WTvsHET_qval15_DownHET_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_WTvsHET_qval15_DownHET_noIntergenic_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $25}' output/ChIPseeker/annotation_WTvsKO_qval10_UpKO_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_WTvsKO_qval10_UpKO_noIntergenic_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $25}' output/ChIPseeker/annotation_WTvsKO_qval15_UpKO_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_WTvsKO_qval15_UpKO_noIntergenic_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $25}' output/ChIPseeker/annotation_WTvsKO_qval10_DownKO_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_WTvsKO_qval10_DownKO_noIntergenic_geneSymbol.txt
+awk -F'\t' '(NR==1 || FNR>1) {print $25}' output/ChIPseeker/annotation_WTvsKO_qval15_DownKO_noIntergenic.bed | sort | uniq > output/ChIPseeker/annotation_WTvsKO_qval15_DownKO_noIntergenic_geneSymbol.txt
+
+# Modify the .txt file that list all genes so that it match gtf structure
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_WTvsHET_qval10_UpHET_noIntergenic_geneSymbol.txt > output/ChIPseeker/annotation_WTvsHET_qval10_UpHET_noIntergenic_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_WTvsHET_qval15_UpHET_noIntergenic_geneSymbol.txt > output/ChIPseeker/annotation_WTvsHET_qval15_UpHET_noIntergenic_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_WTvsHET_qval10_DownHET_noIntergenic_geneSymbol.txt > output/ChIPseeker/annotation_WTvsHET_qval10_DownHET_noIntergenic_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_WTvsHET_qval15_DownHET_noIntergenic_geneSymbol.txt > output/ChIPseeker/annotation_WTvsHET_qval15_DownHET_noIntergenic_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_WTvsKO_qval10_UpKO_noIntergenic_geneSymbol.txt > output/ChIPseeker/annotation_WTvsKO_qval10_UpKO_noIntergenic_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_WTvsKO_qval15_UpKO_noIntergenic_geneSymbol.txt > output/ChIPseeker/annotation_WTvsKO_qval15_UpKO_noIntergenic_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_WTvsKO_qval10_DownKO_noIntergenic_geneSymbol.txt > output/ChIPseeker/annotation_WTvsKO_qval10_DownKO_noIntergenic_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_WTvsKO_qval15_DownKO_noIntergenic_geneSymbol.txt > output/ChIPseeker/annotation_WTvsKO_qval15_DownKO_noIntergenic_as_gtf_geneSymbol.txt
+
+# Filter the gtf
+grep -Ff output/ChIPseeker/annotation_WTvsHET_qval10_UpHET_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_WTvsHET_THOR_qval10_UpHET_noIntergenic.gtf
+grep -Ff output/ChIPseeker/annotation_WTvsHET_qval15_UpHET_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_WTvsHET_THOR_qval15_UpHET_noIntergenic.gtf
+grep -Ff output/ChIPseeker/annotation_WTvsHET_qval10_DownHET_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_WTvsHET_THOR_qval10_DownHET_noIntergenic.gtf
+grep -Ff output/ChIPseeker/annotation_WTvsHET_qval15_DownHET_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_WTvsHET_THOR_qval15_DownHET_noIntergenic.gtf
+grep -Ff output/ChIPseeker/annotation_WTvsKO_qval10_UpKO_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_WTvsKO_THOR_qval10_UpKO_noIntergenic.gtf
+grep -Ff output/ChIPseeker/annotation_WTvsKO_qval15_UpKO_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_WTvsKO_THOR_qval15_UpKO_noIntergenic.gtf
+grep -Ff output/ChIPseeker/annotation_WTvsKO_qval10_DownKO_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_WTvsKO_THOR_qval10_DownKO_noIntergenic.gtf
+grep -Ff output/ChIPseeker/annotation_WTvsKO_qval15_DownKO_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_WTvsKO_THOR_qval15_DownKO_noIntergenic.gtf
+
+# Combine GTF
+## Up HET AND Down in KO
+bedtools intersect -wa -a meta/ENCFF159KBI_WTvsHET_THOR_qval10_UpHET_noIntergenic.gtf -b meta/ENCFF159KBI_WTvsKO_THOR_qval10_DownKO_noIntergenic.gtf > meta/ENCFF159KBI_THOR_qval10_UpHET_DownKO_noIntergenic.gtf
+bedtools intersect -wa -a meta/ENCFF159KBI_WTvsHET_THOR_qval15_UpHET_noIntergenic.gtf -b meta/ENCFF159KBI_WTvsKO_THOR_qval15_DownKO_noIntergenic.gtf > meta/ENCFF159KBI_THOR_qval15_UpHET_DownKO_noIntergenic.gtf
+## Down in HET AND up in KO
+bedtools intersect -wa -a meta/ENCFF159KBI_WTvsHET_THOR_qval10_DownHET_noIntergenic.gtf -b meta/ENCFF159KBI_WTvsKO_THOR_qval10_UpKO_noIntergenic.gtf > meta/ENCFF159KBI_THOR_qval10_DownHET_UpKO_noIntergenic.gtf
+bedtools intersect -wa -a meta/ENCFF159KBI_WTvsHET_THOR_qval15_DownHET_noIntergenic.gtf -b meta/ENCFF159KBI_WTvsKO_THOR_qval15_UpKO_noIntergenic.gtf > meta/ENCFF159KBI_THOR_qval15_DownHET_UpKO_noIntergenic.gtf
+### Sort and remove dupplicates
+sort meta/ENCFF159KBI_THOR_qval10_UpHET_DownKO_noIntergenic.gtf | uniq > meta/ENCFF159KBI_THOR_qval10_UpHET_DownKO_noIntergenic_sort.gtf
+sort meta/ENCFF159KBI_THOR_qval15_UpHET_DownKO_noIntergenic.gtf | uniq > meta/ENCFF159KBI_THOR_qval15_UpHET_DownKO_noIntergenic_sort.gtf
+sort meta/ENCFF159KBI_THOR_qval10_DownHET_UpKO_noIntergenic.gtf | uniq > meta/ENCFF159KBI_THOR_qval10_DownHET_UpKO_noIntergenic_sort.gtf
+sort meta/ENCFF159KBI_THOR_qval15_DownHET_UpKO_noIntergenic.gtf | uniq > meta/ENCFF159KBI_THOR_qval15_DownHET_UpKO_noIntergenic_sort.gtf
+
+# deepTools plot
+conda activate deeptools
+## plots DEG genotpye per genotype
+### diff. bounds Up in HET (script named "unique" by mistake)
+sbatch scripts/matrix_gene_1kb_THOR_qval10_UpHET_noIntergenic_unique.sh # 1342631
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_THOR_qval10_UpHET_noIntergenic_unique.sh # 1342632
+sbatch scripts/matrix_gene_1kb_THOR_qval15_UpHET_noIntergenic_unique.sh # 1342633
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_THOR_qval15_UpHET_noIntergenic_unique.sh # 1342635
+### diff. bounds Down in HET
+sbatch scripts/matrix_gene_1kb_THOR_qval10_DownHET_noIntergenic_unique.sh # 1342891
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_THOR_qval10_DownHET_noIntergenic_unique.sh # 1344015
+sbatch scripts/matrix_gene_1kb_THOR_qval15_DownHET_noIntergenic_unique.sh # 1344016
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_THOR_qval15_DownHET_noIntergenic_unique.sh # 1345763
+### diff. bounds Up in KO
+sbatch scripts/matrix_gene_1kb_THOR_qval10_UpKO_noIntergenic_unique.sh # 1346704
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_THOR_qval10_UpKO_noIntergenic_unique.sh # 1347655
+sbatch scripts/matrix_gene_1kb_THOR_qval15_UpKO_noIntergenic_unique.sh # 1348480
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_THOR_qval15_UpKO_noIntergenic_unique.sh # 1348496
+### diff. bounds Down in KO
+sbatch scripts/matrix_gene_1kb_THOR_qval10_DownKO_noIntergenic_unique.sh # 1348497
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_THOR_qval10_DownKO_noIntergenic_unique.sh # 1348504
+sbatch scripts/matrix_gene_1kb_THOR_qval15_DownKO_noIntergenic_unique.sh # 1348505
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_THOR_qval15_DownKO_noIntergenic_unique.sh # 1348509
+
+
+## plots DEGs both genotype
+### diff. bounds Up HET Down KO
+sbatch scripts/matrix_gene_1kb_THOR_qval10_UpHET_DownKO_noIntergenic_unique.sh # 1342619
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_THOR_qval10_UpHET_DownKO_noIntergenic_unique.sh # 1342620
+sbatch scripts/matrix_gene_1kb_THOR_qval15_UpHET_DownKO_noIntergenic_unique.sh # 1342621
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_THOR_qval15_UpHET_DownKO_noIntergenic_unique.sh # 1342622
+### diff. bounds Down HET Up KO 
+sbatch scripts/matrix_gene_1kb_THOR_qval10_DownHET_UpKO_noIntergenic_unique.sh # 1342623
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_THOR_qval10_DownHET_UpKO_noIntergenic_unique.sh # 1342624
+sbatch scripts/matrix_gene_1kb_THOR_qval15_DownHET_UpKO_noIntergenic_unique.sh # 1342626
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_THOR_qval15_DownHET_UpKO_noIntergenic_unique.sh # 1342627
+
+
+```
+- **NOTE: `unique` is added here because it concerns regions that gain in HET AND Lost in KO and opposite; not AND/OR as previous mistake**
+- NOTE: I also did Bigwig using bigwig_DiffBind_TMM instead of THOR_bigwig *`DiffBind_TMM_THOR_qval10`=bigwig from DiffBind_TMM but in peak identify with THOR qval10*, to compare.
 
 
 
+--> XXX diffbind TMM vs THOR XXX
 
-
+--> XXX Looks good ?
 
 
 
@@ -6493,7 +6611,7 @@ Then, `bedools intersect` the **DEGs GTF (HET down and KO up)** and generate the
 ```bash
 conda activate BedToBigwig
 
-## expression Down HET and Up in KO DEGs only
+## expression Down HET and/OR Up in KO DEGs only
 cat ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_HET_Down.gtf ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Up.gtf > meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_unsort.gtf
 sort meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_unsort.gtf | uniq > meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_unsort_unique.gtf
 bedtools sort -i meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_unsort_unique.gtf > meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_sort.gtf
@@ -6555,7 +6673,9 @@ Let's combine the **Up/down DEGs genes with the peak non intergenic GTF** and de
 
 
 ```bash
+conda activate BedToBigwig
 ## Combine DEGs and peak non intergenic
+### AND/OR DEGs mutants
 bedtools intersect -wa -u -a meta/ENCFF159KBI_peak_noIntergenic.gtf -b meta/ENCFF159KBI_DEGs_HET_Down_KO_Up_sort.gtf > meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_sort.gtf
 
 bedtools intersect -wa -u -a meta/ENCFF159KBI_peak_noIntergenic.gtf -b meta/ENCFF159KBI_DEGs_HET_Up_KO_Down_sort.gtf > meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Up_KO_Down_sort.gtf
@@ -6568,6 +6688,13 @@ bedtools intersect -wa -u -a meta/ENCFF159KBI_peak_noIntergenic.gtf -b meta/ENCF
 
 bedtools intersect -wa -u -a meta/ENCFF159KBI_peak_noIntergenic.gtf -b meta/ENCFF159KBI_DEGs_HET_Up_KO_Down_qval001_sort.gtf > meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Up_KO_Down_qval001_sort.gtf
 
+
+
+### one-per-one DEGs
+bedtools intersect -wa -u -a meta/ENCFF159KBI_peak_noIntergenic.gtf -b ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_HET_Down.gtf > meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down.gtf
+bedtools intersect -wa -u -a meta/ENCFF159KBI_peak_noIntergenic.gtf -b ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_HET_Up.gtf > meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up.gtf
+bedtools intersect -wa -u -a meta/ENCFF159KBI_peak_noIntergenic.gtf -b ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Down.gtf > meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_KO_Down.gtf
+bedtools intersect -wa -u -a meta/ENCFF159KBI_peak_noIntergenic.gtf -b ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_8wN_KO_Up.gtf > meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_KO_Up.gtf
 
 # deepTools plot
 conda activate deeptools
@@ -6610,8 +6737,9 @@ awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta
 awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_qval01_sort.gtf | tr -d ' ' | tr -d '\"' | sort | uniq | wc -l
 awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_qval001_sort.gtf | tr -d ' ' | tr -d '\"' | sort | uniq | wc -l
 awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Up_KO_Down_qval001_sort.gtf | tr -d ' ' | tr -d '\"' | sort | uniq | wc -l
+awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique.gtf | tr -d ' ' | tr -d '\"' | sort | uniq | wc -l
 ```
-nb of unique genes:
+**FAIL as contain AND/OR for DEGs**: nb of unique genes:
 - meta/ENCFF159KBI_WT_maxScorePoolpeaks_min1_noIntergenic.gtf: 4,665 (peak in WT)
 - meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_sort.gtf: 2,100 (DEGs)
 - meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_qval01_sort.gtf: 1,517 (DEGs)
@@ -6622,6 +6750,11 @@ nb of unique genes:
 - meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.gtf: 28 (DEGs + Diff. bound)
 - meta/ENCFF159KBI_UpHET_DownKO_noIntergenic.gtf: 55 (Diff. bound)
 
+Corrected files **AND**: nb of unique genes:
+- meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique.gtf: 274 (DEGs)
+- meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique.gtf: 359 (DEGs)
+
+
 ## deepTools on THOR-bigwig files
 
 Let's do it on the DEGs (opposite behavior between mutants)
@@ -6629,24 +6762,64 @@ Let's do it on the DEGs (opposite behavior between mutants)
 ```bash
 
 conda activate deeptools
-## expression Down in HET and Up in KO; including the 2 WT
-sbatch --dependency=afterany:1308095:1308097 scripts/matrix_gene_1kb_THOR_WTvsHET_noIntergenic_DEGs_HET_Down_KO_Up_WT_comparison.sh # 1308318
+# expression Down in HET AND/OR Up in KO; including the 2 WT
+sbatch --dependency=afterany:1308095:1308097 scripts/matrix_gene_1kb_THOR_WTvsHET_noIntergenic_DEGs_HET_Down_KO_Up_WT_comparison.sh # 1308318 ok
 
-## expression Down in HET and Up in KO; with WT from WTvsHET 
-sbatch --dependency=afterany:1308095:1308097 scripts/matrix_gene_1kb_THOR_WTvsHET_noIntergenic_DEGs_HET_Down_KO_Up.sh # 1308269
-sbatch --dependency=afterany:1308095:1308097 scripts/matrix_gene_1kb_THOR_WTvsHETpoisson_noIntergenic_DEGs_HET_Down_KO_Up.sh # 1308319
+# expression Down in HET AND/OR Up in KO; with WT from WTvsHET 
+sbatch --dependency=afterany:1308095:1308097 scripts/matrix_gene_1kb_THOR_WTvsHET_noIntergenic_DEGs_HET_Down_KO_Up.sh # 1308269 ok
+sbatch --dependency=afterany:1308095:1308097 scripts/matrix_gene_1kb_THOR_WTvsHETpoisson_noIntergenic_DEGs_HET_Down_KO_Up.sh # 1308319 ok
 
 
-## expression Up in HET and Down in KO; with WT from WTvsHET 
-sbatch --dependency=afterany:1308095:1308097 scripts/matrix_gene_1kb_THOR_WTvsHET_noIntergenic_DEGs_HET_Up_KO_Down.sh # 1308283
-sbatch --dependency=afterany:1308095:1308097 scripts/matrix_gene_1kb_THOR_WTvsHETpoisson_noIntergenic_DEGs_HET_Up_KO_Down.sh # 1308354
+# expression Up in HET AND/OR Down in KO; with WT from WTvsHET 
+sbatch --dependency=afterany:1308095:1308097 scripts/matrix_gene_1kb_THOR_WTvsHET_noIntergenic_DEGs_HET_Up_KO_Down.sh # 1308283 ok
+sbatch --dependency=afterany:1308095:1308097 scripts/matrix_gene_1kb_THOR_WTvsHETpoisson_noIntergenic_DEGs_HET_Up_KO_Down.sh # 1308354 ok
+
+
+# Filter genes UP AND Down mutants and with a peak in at least 1 genotype
+conda activate BedToBigwig
+## expression Down in HET AND Up in KO; with WT from WTvsHET 
+bedtools intersect -wa -a meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down.gtf -b meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_KO_Up.gtf > meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique.gtf
+### Sort and remove dupplicates
+sort meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique.gtf | uniq > meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique_sort.gtf
+## expression Up in HET AND Down in KO; with WT from WTvsHET 
+bedtools intersect -wa -a meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up.gtf -b meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_KO_Down.gtf > meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique.gtf
+### Sort and remove dupplicates
+sort meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique.gtf | uniq > meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique_sort.gtf
+
+### deepTools plot
+conda activate deeptools
+sbatch scripts/matrix_gene_1kb_THOR_WTvsHET_noIntergenic_DEGs_HET_Down_KO_Up_unique.sh # interactive ok
+sbatch scripts/matrix_gene_1kb_THOR_WTvsHET_noIntergenic_DEGs_HET_Up_KO_Down_unique.sh # 1340213 FAIL bc dupplicated rows; 1340311 ok
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_HET_Up_KO_Down_unique.sh # 1340210 FAIL; 1340312 ok
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_HET_Down_KO_Up_unique.sh # 1340227 FAIL; 1340316 ok
+
+
+# Expression genotype-per-genotype comparison THOR-bigwig
+sbatch scripts/matrix_gene_1kb_THOR_WTvsHET_noIntergenic_DEGs_HET_Down.sh # 1332181 ok
+sbatch scripts/matrix_gene_1kb_THOR_WTvsHET_noIntergenic_DEGs_HET_Up.sh # 1332719 ok
+sbatch scripts/matrix_gene_1kb_THOR_WTvsHET_noIntergenic_DEGs_KO_Down.sh # 1334134 ok
+sbatch scripts/matrix_gene_1kb_THOR_WTvsHET_noIntergenic_DEGs_KO_Up.sh # 1334135 ok
+
+# Expression genotype-per-genotype comparison DiffBidnTMM05-bigwig
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_HET_Down.sh # 1334142 ok
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_HET_Up.sh # 1334143 ok
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_KO_Down.sh # 1334144 ok
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_KO_Up.sh # 1334826 ok
+
 ```
 
 --> Quality check for WT shows that the bigwig track for WT generated from WTvsHET or WTvsKO are identical
 
 --> Poisson do not change anythings... Let's NOT use Poisson as do not provide any diff. bound peaks.
 
---> DEGs plots is as expected; HET is overall much more H3K27me3 than WT! Even for genes that are downregulated H3K27me3 is still higher than WT (was similar when usingf bigwig_TMM)
+--> DEGs plots is as expected; HET is overall much more H3K27me3 than WT! Even for genes that are downregulated H3K27me3 is still higher than WT (was similar when usingf bigwig_TMM). So I did genotype-per-genotype comparison because maybe AND/OR-related issue (see important NOTE below)
+----> With genotype-per-genotype comparison is as expected; both normalization method perform great.
+
+**IMPORTANT NOTE: The `meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_sort.gtf` and `meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Up_KO_Down_sort.gtf` are instead AND/OR in HET KO; so that is not 2k genes that are down in HET and up in KO!!! But "AND/OR" !!!** --> Corrected file generated up in the bash console and output with a `unique`: `meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique.gtf` and `meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique.gtf`
+
+--> DEGs opposite behavior looks great ! Both normalization perform well. Maybe THOR-scaled a bit more striking
+
+
 
 
 ### Functional analyses for the expected gene list
