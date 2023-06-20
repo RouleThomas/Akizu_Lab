@@ -1181,9 +1181,14 @@ sbatch scripts/macs2_raw_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run in inter
 
 --> Overall the 0.005 qval is more accurate to call peak
 
+
+
+
+
+
+
 ## SEACR
 Already tested previously and show very few peaks...
-
 
 # Troubleshoot spike-in normalization
 The previous normalization method used, seems shit. Bigwig are very heterogeneous between replicates, even more than the raw files. Let's try different approaches:
@@ -1237,7 +1242,6 @@ spikein_H3K27me3_scaling_factor = spikein_H3K27me3_read_prop %>%
   mutate(scaling_factor = read_prop/min_prop)
 
 write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_histone_groupABgenotype_scaling_factor.txt", sep="\t", quote=FALSE, row.names=FALSE)
-
 ```
 
 --> The scaling factor looks better (range between 1-3); let's generate bigwig and vizualize
@@ -3300,17 +3304,6 @@ dev.off()
 
 
 
-
-
-## Fine-tune diff bound peak calling (qvalue and peak merge)
-Now that we have plenty of diff bound regions, we need to make sure what is detected is biologically signifcant. For that; we will verify that the pvalue 0.05 treshold is OK and increase it if necessary; then we will merge the peak in a 1-5kb distance.
-
-
---> The peak looks biologically relevant, even the one with small pvalue! Instead of merging the peaks, let's assign peak to genes with ChIPseeker and see whether diff bind sites follow gene expression changes
-
-
-
-
 # Test other method for differential binding
 
 Many different tools:
@@ -3663,15 +3656,15 @@ sbatch scripts/THOR_WTvsHETbinsize1500.sh # 1256948 ok
 sbatch scripts/THOR_WTvsHETpval0.0001_poisson.sh  # 1307944 ok
 
 # Poisson distribution default parameter
-sbatch scripts/THOR_WTvsHET_poisson.sh # 1308030
-sbatch scripts/THOR_WTvsKO_poisson.sh # 1308031
+sbatch scripts/THOR_WTvsHET_poisson.sh # 1308030 ok
+sbatch scripts/THOR_WTvsKO_poisson.sh # 1308031 ok
 
 # Generate median bigwig files for default and poisson
 conda activate BedToBigwig
-sbatch scripts/bigwigmerge_THOR_WTvsHET.sh # 1308094
-sbatch --dependency=afterany:1308030 scripts/bigwigmerge_THOR_WTvsHET_poisson.sh # 1308095
-sbatch scripts/bigwigmerge_THOR_WTvsKO.sh # 1308096
-sbatch --dependency=afterany:1308031 scripts/bigwigmerge_THOR_WTvsKO_poisson.sh # 1308097
+sbatch scripts/bigwigmerge_THOR_WTvsHET.sh # 1308094 ok
+sbatch --dependency=afterany:1308030 scripts/bigwigmerge_THOR_WTvsHET_poisson.sh # 1308095 ok
+sbatch scripts/bigwigmerge_THOR_WTvsKO.sh # 1308096 ok
+sbatch --dependency=afterany:1308031 scripts/bigwigmerge_THOR_WTvsKO_poisson.sh # 1308097 ok
 ```
 - *NOTE: Options:  `-merge` option recommended for histone data. `–report` for HTML report (useless!), not super important; just to see how it look; `–deadzones` is blacklist; `-pvalue` 0.1 is default (can play with it);*
 - *NOTE: do NOT put any "_" in the `--name` !! Or bug*
@@ -3686,8 +3679,7 @@ sbatch --dependency=afterany:1308031 scripts/bigwigmerge_THOR_WTvsKO_poisson.sh 
 
 --> Overall a LOT of diff peaks are identified, and looking at the IGV with `bigwig_DiffBind_TMM` it looks good !!! There may even be too many (114,886 diff peaks!!); so **we could filter qvalue**
 
---> pvalue from 0.1 to 0.0001 do not change a lot; then XXX. pvalue of XXX is optimal. In the end; **I could have just filter the qvalue in the bed output file**... (qvalue is in MACS2-like format)
-----> 
+--> pvalue from 0.1 to 0.0001 do not change a lot. In the end; **I could have just filter the qvalue in the bed output file**... (qvalue is in MACS2-like format)
 
 --> increasing `--binsize` and `--step` more than default value result in MANY more false positive peaks; size overall not super longer in addition! --> **NOT GOOD; keep default**
 
@@ -3695,7 +3687,11 @@ sbatch --dependency=afterany:1308031 scripts/bigwigmerge_THOR_WTvsKO_poisson.sh 
 
 --> The bigwig files generated looks good (**when using DiffBind_TMM SF**); replicate are comparable
 
---> playing with binsize and step (default is 100, 50) is XXX
+--> playing with binsize and step (default is 100, 50) is not good, sometime result in even smaller peak; let's keep default!
+
+--> Poisson produces very comparable bigwig, however do not generate any diff. peaks; only uncorrected diff peaks... Even though, no error...
+
+
 
 Let's instead of using different pvalue to call for peak, put the raw bed output in R and filter p-value here + generate FC (found [here](http://ginolhac.github.io/chip-seq/peak/)) within `conda activate deseq2`:
 
@@ -3745,23 +3741,493 @@ thor_splitted %>%
 thor_splitted %>%
   filter(qval > 30) %>%
   write_tsv("output/THOR/THOR_WTvsHET/THOR_qval30.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 30) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
 
 
 # WTvsKO
-XXX
+diffpeaks <- read_tsv("output/THOR/THOR_WTvsKO/WTvsKO-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2","count_WT_3","count_WT_4"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2","count_KO_3","count_KO_4"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2+count_KO_3+count_KO_4) / (count_WT_1+count_WT_2+count_WT_3+count_WT_4))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_WTvsKO/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("8wN_WT vs KO") +
+  theme_bw()
+dev.off()
+
+pdf("output/THOR/THOR_WTvsKO/log2FC_qval30.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 30) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("8wN_WT vs KO_qval30") +
+  theme_bw()
+dev.off()
+
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(log2(FC) > 0.5) %>%
+  write_tsv("output/THOR/THOR_WTvsKO/THOR_logFC0.5.bed", col_names = FALSE)
+thor_splitted %>%
+  filter(qval > 5) %>%
+  write_tsv("output/THOR/THOR_WTvsKO/THOR_qval5.bed", col_names = FALSE)
+
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 15) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
 ```
 - *NOTE: FC negative = less in mutant; positive = more in mutant*
 
 --> **qval15 seems optimal**; maybe too many false-positive but overall looks real!!! Do not miss any difference!! Or 20 is good too...
 
---> Overall HET show increase H3K27me3 ! KO shows XXX
+--> Overall HET show increase H3K27me3 ! KO also but less strongly; more up/down comparable
 
 
 **Check on IGV how it look with different qvalue; FC treshold**
 
---> Optimal qvalue and FC treshold seems to be XXX
+--> Optimal qvalue= 15; and NO FC treshold for now.
 
---> Poisson seems to perform XXX
+### Assign THOR-diff peaks to genes and check expression
+
+
+Now let's compare RNAseq (expression) and CutRun for THOR qval 15 among others:
+- Filter HETvsWT and KOvsWT diff bound genes into **gain and loss H3K27me3**
+- **Keep only signal in Promoter, gene body and TES** (ie. filter out peak assigned to intergenic)
+- **Merge with deseq2** log2FC data (tpm will not work as too variable; or log2tpm maybe?)
+- Plot in x FC and y baseMean=deseq2-norm counts (+ color qvalue) with facet_wrap~gain or lost (ie. volcano plot gain/lost)
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library(VennDiagram)
+
+
+# Import diff. peaks
+## qval5
+WTvsKO = read.table('output/THOR/THOR_WTvsKO/THOR_qval5.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
+WTvsHET = read.table('output/THOR/THOR_WTvsHET/THOR_qval5.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
+## qval10
+WTvsKO = read.table('output/THOR/THOR_WTvsKO/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
+WTvsHET = read.table('output/THOR/THOR_WTvsHET/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
+## qval15
+WTvsKO = read.table('output/THOR/THOR_WTvsKO/THOR_qval15.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
+WTvsHET = read.table('output/THOR/THOR_WTvsHET/THOR_qval15.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
+## qval20
+WTvsKO = read.table('output/THOR/THOR_WTvsKO/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
+WTvsHET = read.table('output/THOR/THOR_WTvsHET/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
+
+
+# Tidy peaks #-->> Re-Run from here with different qvalue!!
+WTvsKO_gr = makeGRangesFromDataFrame(WTvsKO,keep.extra.columns=TRUE)
+WTvsHET_gr = makeGRangesFromDataFrame(WTvsHET,keep.extra.columns=TRUE)
+
+
+
+gr_list <- list(WTvsKO=WTvsKO_gr, WTvsHET=WTvsHET_gr)
+
+
+# Overlap assigned genes btwn my gr_list
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Fine-tune here gene peak assignemnt
+
+genes= lapply(peakAnnoList, function(i) unique(as.data.frame(i)$geneId))
+
+pdf("output/ChIPseeker/overlap_genes_THOR_qval20.pdf", width=7, height=7)  # CHANGE TITLE
+vennplot(genes)
+dev.off()
+
+## Remove the distal intergenic
+# Filter out peaks with 'Distal Intergenic' annotation
+peakAnnoList_noIntergenic <- lapply(peakAnnoList, function(x) {
+  x <- as.data.frame(x) # convert GRanges to dataframe
+  x <- x[x$annotation != "Distal Intergenic", ] # remove rows with 'Distal Intergenic'
+  return(x)
+})
+
+genes = lapply(peakAnnoList_noIntergenic, function(i) unique(i$geneId))
+
+pdf("output/ChIPseeker/overlap_genes_THOR_qval20_noIntergenic.pdf", width=7, height=7) # CHANGE TITLE
+vennplot(genes)
+dev.off()
+
+
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## Get annotation data frame
+WTvsHET_annot <- as.data.frame(peakAnnoList[["WTvsHET"]]@anno)
+WTvsKO_annot <- as.data.frame(peakAnnoList[["WTvsKO"]]@anno)
+
+
+
+## Convert entrez gene IDs to gene symbols
+WTvsHET_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = WTvsHET_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+WTvsKO_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = WTvsKO_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+
+
+WTvsHET_annot$gene <- mapIds(org.Hs.eg.db, keys = WTvsHET_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+WTvsKO_annot$gene <- mapIds(org.Hs.eg.db, keys = WTvsKO_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+## Save output table
+write.table(WTvsHET_annot, file="output/ChIPseeker/annotation_WTvsHET_qval20.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(WTvsKO_annot, file="output/ChIPseeker/annotation_WTvsKO_qval20.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
+
+# load annotation tables
+# WTvsHET_qval5_annot <- read.table("output/ChIPseeker/annotation_WTvsHET_qval5.txt", sep="\t", header=TRUE)
+
+
+# Filter Gain/Loss sites
+WTvsHET_annot_gain = tibble(WTvsHET_annot) %>%
+    filter(FC > 1, annotation != "Distal Intergenic") %>%
+    add_column(H3K27me3 = "gain")
+WTvsHET_annot_lost = tibble(WTvsHET_annot) %>%
+    filter(FC < 1, annotation != "Distal Intergenic") %>%
+    add_column(H3K27me3 = "lost")
+WTvsHET_annot_gain_lost = WTvsHET_annot_gain %>% 
+    bind_rows(WTvsHET_annot_lost) 
+    
+
+WTvsKO_annot_gain = tibble(WTvsKO_annot) %>%
+    filter(FC > 1, annotation != "Distal Intergenic") %>%
+    add_column(H3K27me3 = "gain")
+WTvsKO_annot_lost = tibble(WTvsKO_annot) %>%
+    filter(FC < 1, annotation != "Distal Intergenic") %>%
+    add_column(H3K27me3 = "lost")
+WTvsKO_annot_gain_lost = WTvsKO_annot_gain %>% 
+    bind_rows(WTvsKO_annot_lost)
+
+# Import RNAseq deseq2 output
+HET_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_8wN_HET_vs_8wN_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj)
+KO_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_8wN_KO_vs_8wN_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj)
+
+# Merge files
+WTvsHET_annot_gain_lost_RNA = WTvsHET_annot_gain_lost %>% 
+    left_join(HET_vs_WT) %>%
+    dplyr::select(gene, H3K27me3,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
+    unique()
+
+
+WTvsKO_annot_gain_lost_RNA = WTvsKO_annot_gain_lost %>% 
+    left_join(KO_vs_WT) %>%
+    dplyr::select(gene, H3K27me3,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
+    unique()
+
+
+# Volcano plot
+count_data <- WTvsHET_annot_gain_lost_RNA %>%
+    group_by(H3K27me3, significance) %>%
+    summarise(up = sum(log2FoldChange > 0),
+              down = sum(log2FoldChange < 0),
+              total = n()) %>%
+    ungroup() %>%
+    group_by(H3K27me3) %>%
+    mutate(total_panel = sum(total)) %>%
+    ungroup()
+
+pdf("output/ChIPseeker/THOR_qval20_HETvsWT_expression.pdf", width=7, height=4)  # CHANGE TITLE
+WTvsHET_annot_gain_lost_RNA %>%
+    ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
+        geom_point(alpha = 0.8, size = 0.5) +
+        scale_color_manual(values = c("grey", "red")) +
+        labs(title = "HET vs WT",
+             subtitle = "Expression level of diff. bound H3K27me3 genes",
+             x = "Log2 Fold Change",
+             y = "Base Mean",
+             color = "Significant (padj <= 0.05)") +
+        facet_wrap(~H3K27me3) +
+        theme_bw() +
+        geom_text(data = count_data %>% filter(significance), 
+                  aes(x = Inf, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
+                  hjust = 1.1, vjust = 1.1, size = 3, color = "black") +
+        geom_text(data = count_data %>% distinct(H3K27me3, .keep_all = TRUE),
+                  aes(x = Inf, y = -Inf, label = paste("Total:", total_panel, "genes")),
+                  hjust = 1.1, vjust = -0.1, size = 3, color = "black")
+dev.off()
+
+count_data <- WTvsKO_annot_gain_lost_RNA %>%
+    group_by(H3K27me3, significance) %>%
+    summarise(up = sum(log2FoldChange > 0),
+              down = sum(log2FoldChange < 0),
+              total = n()) %>%
+    ungroup() %>%
+    group_by(H3K27me3) %>%
+    mutate(total_panel = sum(total)) %>%
+    ungroup()
+
+pdf("output/ChIPseeker/THOR_qval20_KOvsWT_expression.pdf", width=7, height=4)
+WTvsKO_annot_gain_lost_RNA %>%
+    ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
+        geom_point(alpha = 0.8, size = 0.5) +
+        scale_color_manual(values = c("grey", "red")) +
+        labs(title = "KO vs WT",
+             subtitle = "Expression level of diff. bound H3K27me3 genes",
+             x = "Log2 Fold Change",
+             y = "Base Mean",
+             color = "Significant (padj <= 0.05)") +
+        facet_wrap(~H3K27me3) +
+        theme_bw() +
+        geom_text(data = count_data %>% filter(significance), 
+                  aes(x = Inf, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
+                  hjust = 1.1, vjust = 1.1, size = 3, color = "black") +
+        geom_text(data = count_data %>% distinct(H3K27me3, .keep_all = TRUE),
+                  aes(x = Inf, y = -Inf, label = paste("Total:", total_panel, "genes")),
+                  hjust = 1.1, vjust = -0.1, size = 3, color = "black")
+dev.off()
+
+
+
+# Remove the genes that both gained and lost H3K27me3
+## Identify genes that are present in both gain and lost categories
+common_genes_HET <- intersect(WTvsHET_annot_gain$gene, WTvsHET_annot_lost$gene)
+common_genes_KO <- intersect(WTvsKO_annot_gain$gene, WTvsKO_annot_lost$gene)
+
+## Remove these genes from your gain and lost data frames
+WTvsHET_annot_gain <- WTvsHET_annot_gain %>% filter(!(gene %in% common_genes_HET))
+WTvsHET_annot_lost <- WTvsHET_annot_lost %>% filter(!(gene %in% common_genes_HET))
+
+WTvsKO_annot_gain <- WTvsKO_annot_gain %>% filter(!(gene %in% common_genes_KO))
+WTvsKO_annot_lost <- WTvsKO_annot_lost %>% filter(!(gene %in% common_genes_KO))
+
+## Now bind the rows
+WTvsHET_annot_gain_lost = WTvsHET_annot_gain %>% bind_rows(WTvsHET_annot_lost)
+WTvsKO_annot_gain_lost = WTvsKO_annot_gain %>% bind_rows(WTvsKO_annot_lost)
+
+
+# Merge files with RNA
+WTvsHET_annot_gain_lost_RNA = WTvsHET_annot_gain_lost %>% 
+    left_join(HET_vs_WT) %>%
+    dplyr::select(gene, H3K27me3,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
+    unique()
+
+
+WTvsKO_annot_gain_lost_RNA = WTvsKO_annot_gain_lost %>% 
+    left_join(KO_vs_WT) %>%
+    dplyr::select(gene, H3K27me3,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
+    unique()
+
+
+
+
+
+
+# Volcano plot
+count_data <- WTvsHET_annot_gain_lost_RNA %>%
+    group_by(H3K27me3, significance) %>%
+    summarise(up = sum(log2FoldChange > 0),
+              down = sum(log2FoldChange < 0),
+              total = n()) %>%
+    ungroup() %>%
+    group_by(H3K27me3) %>%
+    mutate(total_panel = sum(total)) %>%
+    ungroup()
+
+pdf("output/ChIPseeker/THOR_qval5_HETvsWTunique_expression.pdf", width=7, height=4)  # CHANGE TITLE
+WTvsHET_annot_gain_lost_RNA %>%
+    ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
+        geom_point(alpha = 0.8, size = 0.5) +
+        scale_color_manual(values = c("grey", "red")) +
+        labs(title = "HET vs WT",
+             subtitle = "Expression level of diff. bound H3K27me3 genes",
+             x = "Log2 Fold Change",
+             y = "Base Mean",
+             color = "Significant (padj <= 0.05)") +
+        facet_wrap(~H3K27me3) +
+        theme_bw() +
+        geom_text(data = count_data %>% filter(significance), 
+                  aes(x = Inf, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
+                  hjust = 1.1, vjust = 1.1, size = 3, color = "black") +
+        geom_text(data = count_data %>% distinct(H3K27me3, .keep_all = TRUE),
+                  aes(x = Inf, y = -Inf, label = paste("Total:", total_panel, "genes")),
+                  hjust = 1.1, vjust = -0.1, size = 3, color = "black")
+dev.off()
+
+count_data <- WTvsKO_annot_gain_lost_RNA %>%
+    group_by(H3K27me3, significance) %>%
+    summarise(up = sum(log2FoldChange > 0),
+              down = sum(log2FoldChange < 0),
+              total = n()) %>%
+    ungroup() %>%
+    group_by(H3K27me3) %>%
+    mutate(total_panel = sum(total)) %>%
+    ungroup()
+
+pdf("output/ChIPseeker/THOR_qval5_KOvsWTunique_expression.pdf", width=7, height=4)
+WTvsKO_annot_gain_lost_RNA %>%
+    ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
+        geom_point(alpha = 0.8, size = 0.5) +
+        scale_color_manual(values = c("grey", "red")) +
+        labs(title = "KO vs WT",
+             subtitle = "Expression level of diff. bound H3K27me3 genes",
+             x = "Log2 Fold Change",
+             y = "Base Mean",
+             color = "Significant (padj <= 0.05)") +
+        facet_wrap(~H3K27me3) +
+        theme_bw() +
+        geom_text(data = count_data %>% filter(significance), 
+                  aes(x = Inf, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
+                  hjust = 1.1, vjust = 1.1, size = 3, color = "black") +
+        geom_text(data = count_data %>% distinct(H3K27me3, .keep_all = TRUE),
+                  aes(x = Inf, y = -Inf, label = paste("Total:", total_panel, "genes")),
+                  hjust = 1.1, vjust = -0.1, size = 3, color = "black")
+dev.off()
+
+
+
+
+
+
+
+# Venn diagram to see whether gain H3K27me3 in HET are the same one in KO?
+## GAIN
+# Extract the unique gene lists as vectors
+HET_gene_list <- unique(HETvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "gain") %>%
+                          pull(gene))
+
+KO_gene_list <- unique(KOvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "gain") %>%
+                          pull(gene))
+
+
+venn.plot <- venn.diagram(
+  list(HET = HET_gene_list, KO = KO_gene_list),
+  filename = NULL,
+  fill = c("blue", "red"),
+  alpha = 0.5,
+  category.names = c("HET Gain", "KO Gain"),
+  cex = 2
+)
+
+# Plot the Venn diagram
+pdf("output/ChIPseeker/Venn_DiffBind05_qval005_Gain_Het_KO.pdf", width=5, height=4)
+grid.draw(venn.plot)
+dev.off()
+
+## LOST
+# Extract the unique gene lists as vectors
+HET_gene_list <- unique(HETvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "lost") %>%
+                          pull(gene))
+
+KO_gene_list <- unique(KOvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "lost") %>%
+                          pull(gene))
+
+
+venn.plot <- venn.diagram(
+  list(HET = HET_gene_list, KO = KO_gene_list),
+  filename = NULL,
+  fill = c("blue", "red"),
+  alpha = 0.5,
+  category.names = c("HET Lost", "KO Lost"),
+  cex = 2
+)
+
+# Plot the Venn diagram
+pdf("output/ChIPseeker/Venn_DiffBind05_qval005_Lost_Het_KO.pdf", width=5, height=4)
+grid.draw(venn.plot)
+dev.off()
+
+
+## BOTH
+# Extract the unique gene lists as vectors
+HET_lost_gene_list <- unique(HETvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "lost") %>%
+                          pull(gene))
+
+KO_lost_gene_list <- unique(KOvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "lost") %>%
+                          pull(gene))
+
+HET_gain_gene_list <- unique(HETvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "gain") %>%
+                          pull(gene))
+
+KO_gain_gene_list <- unique(KOvsWT_annot_gain_lost_RNA %>%
+                          filter(H3K27me3 == "gain") %>%
+                          pull(gene))
+
+
+venn.plot <- venn.diagram(
+  list(HET_lost = HET_lost_gene_list, KO_lost = KO_lost_gene_list,
+       HET_gain = HET_gain_gene_list, KO_gain = KO_gain_gene_list),
+  filename = NULL,
+  fill = c("blue", "red", "blue", "red"),
+  alpha = 0.5,
+  cex = 2
+)
+
+# Plot the Venn diagram
+pdf("output/ChIPseeker/Venn_DiffBind05_qval005_LostGain_Het_KO.pdf", width=5, height=4)
+grid.draw(venn.plot)
+dev.off()
+```
+
+--> Expression is as expected and many more genes identified that using DiffBind05_TMM
+
+--> I also produced 'unique' file that **filter-out genes assigned with a peak both up and down** in mutants. This does not decrease the potential false-positive signal (gain H3K27me3 and increase in exp...); and it does NOT remove many genes. **Not necessary; as very few**
+
+
+
+
+
+
+
 
 
 ## Histone-EpiCypher guidelines for scaling normalization
@@ -6176,11 +6642,11 @@ sbatch --dependency=afterany:1308095:1308097 scripts/matrix_gene_1kb_THOR_WTvsHE
 sbatch --dependency=afterany:1308095:1308097 scripts/matrix_gene_1kb_THOR_WTvsHETpoisson_noIntergenic_DEGs_HET_Up_KO_Down.sh # 1308354
 ```
 
---> Quality check for WT shows that the bigwig track for WT generated from WTvsHET or WTvsKO are XXX identical XXX
+--> Quality check for WT shows that the bigwig track for WT generated from WTvsHET or WTvsKO are identical
 
---> Poisson looks XXX
+--> Poisson do not change anythings... Let's NOT use Poisson as do not provide any diff. bound peaks.
 
-
+--> DEGs plots is as expected; HET is overall much more H3K27me3 than WT! Even for genes that are downregulated H3K27me3 is still higher than WT (was similar when usingf bigwig_TMM)
 
 
 ### Functional analyses for the expected gene list
