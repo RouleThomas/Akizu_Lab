@@ -4340,12 +4340,11 @@ sbatch scripts/matrix_gene_1kb_DiffBind_TMM_THOR_qval15_DownHET_UpKO_noIntergeni
 - **NOTE: `unique` is added here because it concerns regions that gain in HET AND Lost in KO and opposite; not AND/OR as previous mistake**
 - NOTE: I also did Bigwig using bigwig_DiffBind_TMM instead of THOR_bigwig *`DiffBind_TMM_THOR_qval10`=bigwig from DiffBind_TMM but in peak identify with THOR qval10*, to compare.
 
+--> For DEGs unique (up and down in both bgenotype) in agreement with gene expression!!
+----> THOR-scaled perform better; more striking differences.
 
 
---> XXX diffbind TMM vs THOR XXX
-
---> XXX Looks good ?
-
+--> **DEGs** and **diff. bound sites** genotpye per genotype and both genotype is following expectation!!
 
 
 ## Histone-EpiCypher guidelines for scaling normalization
