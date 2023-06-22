@@ -6698,15 +6698,13 @@ bedtools intersect -wa -u -a meta/ENCFF159KBI_peak_noIntergenic.gtf -b ../001__R
 # deepTools plot
 conda activate deeptools
 ## DEGs down HET and up in KO and peak non intergenic
-sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_HET_Down_KO_Up.sh # 681175
-sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_HET_Up_KO_Down.sh # 1308054
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_HET_Down_KO_Up.sh # 681175 ok
+sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_HET_Up_KO_Down.sh # 1308054 ok
 
-sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_noIntergenic_DEGs_HET_Down_KO_Up.sh # 681177
-
+sbatch scripts/matrix_TSS_5kb_DiffBind_TMM_noIntergenic_DEGs_HET_Down_KO_Up.sh # 681177 ok
 ```
 
 --> looks cool; seems enough genes and we clearly see up HET and down KO
-
 
 Then, `bedools intersect` the **DEGs GTF with the DiffBind GTF** and generate the deepTools plots:
 
@@ -6737,6 +6735,8 @@ awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta
 awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_qval001_sort.gtf | tr -d ' ' | tr -d '\"' | sort | uniq | wc -l
 awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Up_KO_Down_qval001_sort.gtf | tr -d ' ' | tr -d '\"' | sort | uniq | wc -l
 awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique.gtf | tr -d ' ' | tr -d '\"' | sort | uniq | wc -l
+awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique_THOR_qval10_DownHET_UpKO_sort_bedsort.gtf | tr -d ' ' | tr -d '\"' | sort | uniq | wc -l
+
 ```
 **FAIL as contain AND/OR for DEGs**: nb of unique genes:
 - meta/ENCFF159KBI_WT_maxScorePoolpeaks_min1_noIntergenic.gtf: 4,665 (peak in WT)
@@ -6752,6 +6752,25 @@ awk -F'\t' '{split($9,a,";"); for(i in a) if(a[i] ~ /gene_id/) print a[i]}' meta
 Corrected files **AND**: nb of unique genes:
 - meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique.gtf: 274 (DEGs)
 - meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique.gtf: 359 (DEGs)
+- meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down.gtf: 1,463 (DEGs)
+- meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up.gtf: 1,094 (DEGs)
+- meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_KO_Down.gtf: 1,075 (DEGs)
+- meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_KO_Up.gtf: 902 (DEGs)
+- meta/ENCFF159KBI_WTvsHET_THOR_qval10_DownHET_noIntergenic.gtf: 1,388 (diff. bound)
+- meta/ENCFF159KBI_WTvsKO_THOR_qval10_DownKO_noIntergenic.gtf: 1,979 (diff. bound)
+- meta/ENCFF159KBI_WTvsHET_THOR_qval10_UpHET_noIntergenic.gtf: 2,502 (diff. bound)
+- meta/ENCFF159KBI_WTvsKO_THOR_qval10_UpKO_noIntergenic.gtf: 2,846 (diff. bound) 
+- meta/ENCFF159KBI_WTvsHET_THOR_qval15_DownHET_noIntergenic.gtf: 802  (diff. bound)
+- meta/ENCFF159KBI_WTvsKO_THOR_qval15_DownKO_noIntergenic.gtf: 1,392 (diff. bound)
+- meta/ENCFF159KBI_WTvsHET_THOR_qval15_UpHET_noIntergenic.gtf: 1,609 (diff. bound)
+- meta/ENCFF159KBI_WTvsKO_THOR_qval15_UpKO_noIntergenic.gtf: 1,737 (diff. bound) 
+- meta/ENCFF159KBI_THOR_qval10_DownHET_UpKO_noIntergenic_sort.gtf: 540 (diff. bound) 
+- meta/ENCFF159KBI_THOR_qval10_UpHET_DownKO_noIntergenic_sort.gtf: 834 (diff. bound)
+- meta/ENCFF159KBI_THOR_qval15_DownHET_UpKO_noIntergenic_sort.gtf: 222 (diff. bound)
+- meta/ENCFF159KBI_THOR_qval15_UpHET_DownKO_noIntergenic_sort.gtf: 391 (diff. bound)
+- meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique_THOR_qval10_UpHET_DownKO_sort.gtf: 66 (DEGs + diff. bound)
+- meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique_THOR_qval10_DownHET_UpKO_sort.gtf: 52 (DEGs + diff. bound)
+
 
 
 ## deepTools on THOR-bigwig files
@@ -6785,6 +6804,21 @@ bedtools intersect -wa -a meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up.gtf
 ### Sort and remove dupplicates
 sort meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique.gtf | uniq > meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique_sort.gtf
 
+
+# Filter DEGs AND Diff. bound
+bedtools intersect -wa -a meta/ENCFF159KBI_THOR_qval10_UpHET_DownKO_noIntergenic_sort.gtf -b meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique.gtf > meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique_THOR_qval10_UpHET_DownKO.gtf
+bedtools intersect -wa -a meta/ENCFF159KBI_THOR_qval10_DownHET_UpKO_noIntergenic_sort.gtf -b meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique.gtf > meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique_THOR_qval10_DownHET_UpKO.gtf
+## Sort and remove dupplicates
+sort meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique_THOR_qval10_UpHET_DownKO.gtf | uniq > meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique_THOR_qval10_UpHET_DownKO_sort.gtf
+sort meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique_THOR_qval10_DownHET_UpKO.gtf | uniq > meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique_THOR_qval10_DownHET_UpKO_sort.gtf
+bedtools sort -i meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique_THOR_qval10_DownHET_UpKO_sort.gtf > meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique_THOR_qval10_DownHET_UpKO_sort_bedsort.gtf
+### deepTools plot
+conda activate deeptools
+sbatch scripts/matrix_gene_1kb_THOR_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique_THOR_qval10_UpHET_DownKO.sh # 1363290
+sbatch scripts/matrix_gene_1kb_THOR_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique_THOR_qval10_DownHET_UpKO.sh # 1363292
+
+
+
 ### deepTools plot
 conda activate deeptools
 sbatch scripts/matrix_gene_1kb_THOR_WTvsHET_noIntergenic_DEGs_HET_Down_KO_Up_unique.sh # interactive ok
@@ -6804,8 +6838,9 @@ sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_HET_Down.sh # 1334
 sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_HET_Up.sh # 1334143 ok
 sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_KO_Down.sh # 1334144 ok
 sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_KO_Up.sh # 1334826 ok
-
 ```
+*NOTE: I had to bedtools sort the `meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique_THOR_qval10_DownHET_UpKO_sort.gtf` to avoid `IndexError: list index out of range` error*
+
 
 --> Quality check for WT shows that the bigwig track for WT generated from WTvsHET or WTvsKO are identical
 
@@ -6818,12 +6853,14 @@ sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_KO_Up.sh # 1334826
 
 --> DEGs opposite behavior looks great ! Both normalization perform well. Maybe THOR-scaled a bit more striking
 
+Overall, THOR-bigwig looks cleaner (more smooth) and show pattern more in agreement with expression and diff. bound sites
+
 
 
 
 ### Functional analyses for the expected gene list
 
-Let's see what are the genes where H3K27me3 goes Up in HET and Down in KO; in agreement with expression changes
+Let's see what are the genes where H3K27me3 goes Up in HET and/or Down in KO; in agreement with expression changes
 
 ```bash
 conda activate deseq2
@@ -6845,7 +6882,13 @@ library("enrichplot")
 
 # Collect the gene list from the gtf
 ## Import the GTF file
+### DiffBind05 
 gtf <- import("meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.gtf")
+### THOR qval10
+gtf <- import("meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.gtf")
+gtf <- import("meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.gtf")
+gtf <- import("meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.gtf")
+
 ## Extract gene names and convert to Entrez ID
 gene_symbols <- unique(elementMetadata(gtf)$gene_name) # = elementMetadata(gtf)$gene_name %>% unique() 
 
@@ -6916,7 +6959,11 @@ dev.off()
 
 ```
 
---> Not interesting in term of GO... Some hits for KEGG; and GO Cellular Component Potassium Channel Complex (GRIK2, DPP6, KCNQ1)
+--> DiffBind05 diff bound peaks and DEGs (`meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.gtf`) Not interesting in term of GO... Some hits for KEGG; and GO Cellular Component Potassium Channel Complex (GRIK2, DPP6, KCNQ1)
+
+--> THOR qval10 diff bound peaks and DEGs (`meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique_THOR_qval10_UpHET_DownKO_sort.gtf`) XXX
+
+--> DEGs solely (`meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique.gtf` and `meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique.gtf`) XXX
 
 
 
