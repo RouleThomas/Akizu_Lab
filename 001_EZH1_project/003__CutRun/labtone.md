@@ -6884,10 +6884,14 @@ library("enrichplot")
 ## Import the GTF file
 ### DiffBind05 
 gtf <- import("meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.gtf")
-### THOR qval10
-gtf <- import("meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.gtf")
-gtf <- import("meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.gtf")
-gtf <- import("meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.gtf")
+### THOR qval 10
+gtf <- import("meta/ENCFF159KBI_THOR_qval10_UpHET_DownKO_noIntergenic_sort.gtf") # THOR Gain HET Lost KO
+gtf <- import("meta/ENCFF159KBI_THOR_qval10_DownHET_UpKO_noIntergenic_sort.gtf") # THOR Lost HET Gain KO
+### DEGs genotype "AND" only
+gtf <- import("meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique.gtf") # DEGs HET down KO up
+gtf <- import("meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique.gtf") # DEGs HET up KO Down
+gtf <- import("meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique_THOR_qval10_UpHET_DownKO_sort.gtf") # diffbound and DEGs HET down KO up
+gtf <- import("meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique_THOR_qval10_DownHET_UpKO_sort.gtf") # diffbound and DEGs HET up KO Down
 
 ## Extract gene names and convert to Entrez ID
 gene_symbols <- unique(elementMetadata(gtf)$gene_name) # = elementMetadata(gtf)$gene_name %>% unique() 
@@ -6907,12 +6911,21 @@ enrichKEGG <- enrichKEGG(gene   = genes,
                          pAdjustMethod = "BH")
 
 pdf("output/ChIPseeker/functional_KEGG_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.pdf", width=7, height=5)
-dotplot(enrichKEGG, showCategory = 13, title = "KEGG Pathway Enrichment Analysis")
+pdf("output/ChIPseeker/functional_KEGG_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique.pdf", width=7, height=5)
+pdf("output/ChIPseeker/functional_KEGG_THOR_qval10_UpHET_DownKO_noIntergenic.pdf", width=7, height=5)
+pdf("output/ChIPseeker/functional_KEGG_THOR_qval10_DownHET_UpKO_noIntergenic.pdf", width=7, height=6)
+dotplot(enrichKEGG, showCategory = 15, title = "KEGG Pathway Enrichment Analysis")
 dev.off()
 
 pdf("output/ChIPseeker/emapplot_functional_KEGG_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.pdf", width=10, height=8)
 emapplot(pairwise_termsim(enrichKEGG), showCategory = 13)
 dev.off()
+### NO ENRICHMENT DEGs HET down KO up
+# 1 hit = PI3K-Akt signaling pathway DEGs HET up KO Down
+### NO ENRICHMENT THOR diffbound and DEGs HET down KO up
+### NO ENRICHMENT THOR diffbound and DEGs HET up KO Down
+### THOR Gain HET Lost KO found
+### THOR Lost HET Gain KO found
 
 ## GO
 enrichGO <- enrichGO(gene   = genes,
@@ -6921,9 +6934,20 @@ enrichGO <- enrichGO(gene   = genes,
                          OrgDb         = "org.Hs.eg.db",
                          ont           = "BP") # "BP" (Biological Process), "CC" (Cellular Component), or "MF" (Molecular Function)
 pdf("output/ChIPseeker/functional_GO_BP_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.pdf", width=7, height=15)
-dotplot(enrichGO, showCategory = 1, title = "GO_Biological Process Enrichment Analysis")
+pdf("output/ChIPseeker/functional_GO_BP_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique.pdf", width=7, height=7)
+pdf("output/ChIPseeker/functional_GO_BP_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique_THOR_qval10_UpHET_DownKO.pdf", width=7, height=7)
+pdf("output/ChIPseeker/functional_GO_BP_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique_THOR_qval10_DownHET_UpKO.pdf", width=7, height=7)
+pdf("output/ChIPseeker/functional_GO_BP_THOR_qval10_UpHET_DownKO_noIntergenic.pdf", width=7, height=6)
+pdf("output/ChIPseeker/functional_GO_BP_THOR_qval10_DownHET_UpKO_noIntergenic.pdf", width=7, height=6)
+dotplot(enrichGO, showCategory = 15, title = "GO_Biological Process Enrichment Analysis")
 dev.off()
-### NO ENRICHMENT
+### NO ENRICHMENT DiffBind05
+### NO ENRICHMENT DEGs HET down KO up
+### DEGs HET up KO Down found
+### THOR diffbound and DEGs HET down KO up found
+### THOR diffbound and DEGs HET up KO up down
+### THOR Gain HET Lost KO found
+### THOR Lost HET Gain KO found
 
 
 enrichGO <- enrichGO(gene   = genes,
@@ -6932,9 +6956,21 @@ enrichGO <- enrichGO(gene   = genes,
                          OrgDb         = "org.Hs.eg.db",
                          ont           = "CC") # "BP" (Biological Process), "8" (Cellular Component), or "MF" (Molecular Function)
 pdf("output/ChIPseeker/functional_GO_CC_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.pdf", width=7, height=15)
-dotplot(enrichGO, showCategory = 1, title = "GO_Cellular Component Enrichment Analysis")
+pdf("output/ChIPseeker/functional_GO_CC_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique.pdf", width=6, height=5)
+pdf("output/ChIPseeker/functional_GO_CC_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique.pdf", width=6, height=5)
+pdf("output/ChIPseeker/functional_GO_CC_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique_THOR_qval10_DownHET_UpKO.pdf", width=6, height=3)
+pdf("output/ChIPseeker/functional_GO_CC_THOR_qval10_UpHET_DownKO_noIntergenic.pdf", width=7, height=6)
+pdf("output/ChIPseeker/functional_GO_CC_THOR_qval10_DownHET_UpKO_noIntergenic.pdf", width=7, height=6)
+dotplot(enrichGO, showCategory = 15, title = "GO_Cellular Component Enrichment Analysis")
 dev.off()
 ### 1 enrichment for Potassium Channel Complex
+### DEGs HET down KO up found
+### DEGs HET up KO Down found
+### THOR diffbound and DEGs HET down KO up found 1 enrichment: transport vesicle
+### THOR diffbound and DEGs HET up KO up down found 3, among which glutamatergic signal
+### THOR Gain HET Lost KO found
+### THOR Lost HET Gain KO found
+
 
 enrichGO <- enrichGO(gene   = genes,
                          pvalueCutoff  = 0.05,
@@ -6942,29 +6978,48 @@ enrichGO <- enrichGO(gene   = genes,
                          OrgDb         = "org.Hs.eg.db",
                          ont           = "MF") # "BP" (Biological Process), "8" (Cellular Component), or "MF" (Molecular Function)
 pdf("output/ChIPseeker/functional_GO_MF_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.pdf", width=7, height=15)
+pdf("output/ChIPseeker/functional_GO_MF_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique.pdf", width=6, height=5)
+pdf("output/ChIPseeker/functional_GO_MF_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique.pdf", width=6, height=5)
+pdf("output/ChIPseeker/functional_GO_MF_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique_THOR_qval10_UpHET_DownKO.pdf", width=7, height=7)
+pdf("output/ChIPseeker/functional_GO_MF_THOR_qval10_UpHET_DownKO_noIntergenic.pdf", width=7, height=7)
+pdf("output/ChIPseeker/functional_GO_MF_THOR_qval10_DownHET_UpKO_noIntergenic.pdf", width=7, height=7)
 dotplot(enrichGO, showCategory = 15, title = "GO_Molecular Function Enrichment Analysis")
 dev.off()
-### NO ENRICHMENT
+### NO ENRICHMENT DiffBind05
+### DEGs HET down KO up found
+### DEGs HET up KO Down found
+### THOR diffbound and DEGs HET down KO up found
+### NO ENRICHMENT THOR diffbound and DEGs HET up KO up down
+### THOR Gain HET Lost KO found
+### THOR Lost HET Gain KO found
+
 
 ## Disease
 enrichDO <- enrichDO(gene   = genes,
                          pvalueCutoff  = 0.05,
                          pAdjustMethod = "BH")
 pdf("output/ChIPseeker/functional_DO_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.pdf", width=7, height=15)
+pdf("output/ChIPseeker/functional_DO_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique.pdf", width=6, height=5)
+pdf("output/ChIPseeker/functional_DO_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique_THOR_qval10_UpHET_DownKO.pdf", width=7, height=7)
+pdf("output/ChIPseeker/functional_DO_THOR_qval10_UpHET_DownKO_noIntergenic.pdf", width=7, height=7)
 dotplot(enrichDO, showCategory = 15, title = "Disease Ontology Enrichment Analysis")
 dev.off()
 ### NO ENRICHMENT
-
-
-
+### NO ENRICHMENT DEGs HET down KO up
+### DEGs HET up KO Down found (cancer stuff, osef)
+### some stuff sleep disorder and brain infarction
+### THOR Gain HET Lost KO found (mood disroder)
 ```
 
 --> DiffBind05 diff bound peaks and DEGs (`meta/ENCFF159KBI_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffBind_UpHET_DownKO.gtf`) Not interesting in term of GO... Some hits for KEGG; and GO Cellular Component Potassium Channel Complex (GRIK2, DPP6, KCNQ1)
 
---> THOR qval10 diff bound peaks and DEGs (`meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique_THOR_qval10_UpHET_DownKO_sort.gtf`) XXX
+--> THOR qval10 diff bound peaks
 
---> DEGs solely (`meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique.gtf` and `meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique.gtf`) XXX
 
+--> THOR qval10 diff bound peaks and DEGs (`meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique_THOR_qval10_UpHET_DownKO_sort.gtf`); not many directly related to neurons... Much more for the opposite!
+
+
+--> DEGs solely (`meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique.gtf` and `meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique.gtf`) not so much few interesting relateod to neurons activity but not in GO_BP or KEGG; only HO_MF/CC and neurons activity/development, respectively
 
 
 
