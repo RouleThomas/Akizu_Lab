@@ -369,7 +369,68 @@ ggplot(proportions, aes(x = Category, y = Proportion, fill = EZH_Category)) +
   theme_bw()
 dev.off()
 
+# Correct the code to also display EZH1-stringeant
+# Import all gene categories
+LostHET = read_csv("output/proportion/annotation_WTvsHET_qval10_DownHET_noIntergenic_geneSymbol.txt", col_names = c("LostHet"))
+GainHET = read_csv("output/proportion/annotation_WTvsHET_qval10_UpHET_noIntergenic_geneSymbol.txt", col_names = c("GainHET"))
+LostKO = read_csv("output/proportion/annotation_WTvsKO_qval10_DownKO_noIntergenic_geneSymbol.txt", col_names = c("LostKO"))
+GainKO = read_csv("output/proportion/annotation_WTvsKO_qval10_UpKO_noIntergenic_geneSymbol.txt", col_names = c("GainKO"))
 
+EZH2_Target = read_csv("output/ChIPseeker/annotation_EZH2_noIntergenic_geneSymbol.txt", col_names = c("EZH2_Target"))
+EZH1_Target = read_csv("output/proportion/H3K27me3_NotEZH2_ENCODE_geneSymbol.txt", col_names = c("EZH1_rawTarget"))
+EZH1_stringeantTarget = read_csv("output/proportion/H3K27me3_NotEZH2_ENCODE_neurons_brain_related_GO_geneSymbol.txt", col_names = c("EZH1_stringeantTarget"))
+
+# Remove EZH1_stringeantTarget genes from EZH1_Target
+EZH1_Target <- EZH1_Target[!(EZH1_Target$EZH1_rawTarget %in% EZH1_stringeantTarget$EZH1_stringeantTarget), ]
+
+# Create a data frame for each gene category and annotate the category
+LostHET <- LostHET %>% rename(Gene = LostHet) %>% mutate(Category = "LostHET")
+GainHET <- GainHET %>% rename(Gene = GainHET) %>% mutate(Category = "GainHET")
+LostKO <- LostKO %>% rename(Gene = LostKO) %>% mutate(Category = "LostKO")
+GainKO <- GainKO %>% rename(Gene = GainKO) %>% mutate(Category = "GainKO")
+
+
+# Combine all gene categories into one data frame
+all_genes <- bind_rows(LostHET, GainHET, LostKO, GainKO)
+
+# Annotate each gene with the EZH category it falls into
+all_genes <- all_genes %>%
+  mutate(
+    EZH_Category = case_when(
+      .$Gene %in% EZH2_Target$EZH2_Target ~ "EZH2_Target",
+      .$Gene %in% EZH1_Target$EZH1_rawTarget ~ "EZH1_Target",
+      .$Gene %in% EZH1_stringeantTarget$EZH1_stringeantTarget ~ "EZH1_stringeantTarget",
+      TRUE ~ "Unknown"
+    )
+  )
+
+# Compute proportions
+proportions <- all_genes %>%
+  group_by(Category, EZH_Category) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  group_by(Category) %>%
+  mutate(Proportion = n / sum(n)) %>%
+  ungroup()
+
+proportions$Category <- factor(proportions$Category, 
+                                   levels = c("LostHET", "GainHET", "LostKO", "GainKO"))
+
+
+
+# Plot the proportions
+pdf("output/proportion/H3K27me3_EZH_Category_all.pdf", width=7, height=6)
+ggplot(proportions, aes(x = Category, y = Proportion, fill = EZH_Category)) +
+  geom_bar(stat = "identity", position = "fill") +
+  geom_text(aes(label = scales::percent(Proportion)), 
+            position = position_fill(vjust = 0.5),
+            size = 5) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(y = "Proportion", x = "Category", fill = "EZH Category") +
+  theme_bw()
+dev.off()
 ```
-*NOTE: It fail to show EZH1_stringeantTarget as it falls within EZH1_Target*
+*NOTE: It fail to show EZH1_stringeantTarget as it falls within EZH1_Target; so I corrected the script afterward to remove the EZH1_stringeant that are within EZH1_Target*
+
+
+
 

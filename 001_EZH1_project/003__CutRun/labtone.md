@@ -3906,6 +3906,7 @@ write.table(WTvsKO_annot, file="output/ChIPseeker/annotation_WTvsKO_qval20.txt",
 
 
 # Filter Gain/Loss sites
+## Remove Distal Intergenic   ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
 WTvsHET_annot_gain = tibble(WTvsHET_annot) %>%
     filter(FC > 1, annotation != "Distal Intergenic") %>%
     add_column(H3K27me3 = "gain")
@@ -3915,7 +3916,6 @@ WTvsHET_annot_lost = tibble(WTvsHET_annot) %>%
 WTvsHET_annot_gain_lost = WTvsHET_annot_gain %>% 
     bind_rows(WTvsHET_annot_lost) 
     
-
 WTvsKO_annot_gain = tibble(WTvsKO_annot) %>%
     filter(FC > 1, annotation != "Distal Intergenic") %>%
     add_column(H3K27me3 = "gain")
@@ -3925,13 +3925,43 @@ WTvsKO_annot_lost = tibble(WTvsKO_annot) %>%
 WTvsKO_annot_gain_lost = WTvsKO_annot_gain %>% 
     bind_rows(WTvsKO_annot_lost)
 
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+WTvsHET_annot_gain = tibble(WTvsHET_annot) %>%
+    filter(FC > 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(H3K27me3 = "gain")
+WTvsHET_annot_lost = tibble(WTvsHET_annot) %>%
+    filter(FC < 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(H3K27me3 = "lost")
+WTvsHET_annot_gain_lost = WTvsHET_annot_gain %>% 
+    bind_rows(WTvsHET_annot_lost) 
+    
+WTvsKO_annot_gain = tibble(WTvsKO_annot) %>%
+    filter(FC > 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(H3K27me3 = "gain")
+WTvsKO_annot_lost = tibble(WTvsKO_annot) %>%
+    filter(FC < 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(H3K27me3 = "lost")
+WTvsKO_annot_gain_lost = WTvsKO_annot_gain %>% 
+    bind_rows(WTvsKO_annot_lost)
+
+
 # Import RNAseq deseq2 output
+## Raw FC ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
 HET_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_8wN_HET_vs_8wN_WT.txt')) %>%
     separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
     dplyr::select(gene, baseMean,log2FoldChange,padj)
 KO_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_8wN_KO_vs_8wN_WT.txt')) %>%
     separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
     dplyr::select(gene, baseMean,log2FoldChange,padj)
+## Fitlered FC ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+HET_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_8wN_HET_vs_8wN_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj) %>%
+    filter(log2FoldChange >= 0.5 | log2FoldChange <= -0.5)
+KO_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_8wN_KO_vs_8wN_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj) %>%
+    filter(log2FoldChange >= 0.5 | log2FoldChange <= -0.5)
 
 # Merge files
 WTvsHET_annot_gain_lost_RNA = WTvsHET_annot_gain_lost %>% 
@@ -3968,6 +3998,10 @@ count_data <- WTvsHET_annot_gain_lost_RNA %>%
     ungroup()
 
 pdf("output/ChIPseeker/THOR_qval20_HETvsWT_expression.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval15_HETvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval15_HETvsWT_expression_promoterAnd5.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval15_HETvsWT_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE
+
 WTvsHET_annot_gain_lost_RNA %>%
     ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
         geom_point(alpha = 0.8, size = 0.5) +
@@ -3997,7 +4031,11 @@ count_data <- WTvsKO_annot_gain_lost_RNA %>%
     mutate(total_panel = sum(total)) %>%
     ungroup()
 
-pdf("output/ChIPseeker/THOR_qval20_KOvsWT_expression.pdf", width=7, height=4)
+pdf("output/ChIPseeker/THOR_qval20_KOvsWT_expression.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval15_KOvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval15_KOvsWT_expression_promoterAnd5.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval15_KOvsWT_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE
+
 WTvsKO_annot_gain_lost_RNA %>%
     ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
         geom_point(alpha = 0.8, size = 0.5) +
@@ -4215,7 +4253,18 @@ dev.off()
 
 --> Expression is as expected and many more genes identified that using DiffBind05_TMM
 
---> I also produced 'unique' file that **filter-out genes assigned with a peak both up and down** in mutants. This does not decrease the potential false-positive signal (gain H3K27me3 and increase in exp...); and it does NOT remove many genes. **Not necessary; as very few**
+Need to find way to decrease the false-positive signals (ie. genes that are up-regulated and GAIN H3K27me3):
+- I also produced 'unique' file that **filter-out genes assigned with a peak both up and down** in mutants. This does not decrease the potential false-positive signal (gain H3K27me3 and increase in exp...); and it does NOT remove many genes. **Not necessary; as very few**
+- Try to add FC value treshold 0.25 / 0.5 / 1 to see if we reduce false-positive signal --> It works, notably 0.5 as treshold should be optimal (remove some false-positive without removing too many true target); but still we loose true target... (*0.25 do not change anything*)
+- Try keeping ONLY peaks in promoter or 5` of genes is working, it works as efficiently as FC 0.25 treshold
+- combining peaks in promoter or 5` of genes and FC 0.5 is working great
+- testing with qval15 is nopt working well, as well combining this with FC expression fitlering, we lose a lot
+- Filtering the FC of diff peak is working XXXX
+
+
+
+--> For now, **filtering on FC 0.5 and keeping ONLY peaks in promoter or 5` of genes seems to be the best option** (Lets TEST with FC diff peak filtering lastly)
+
 
 Generate **GTF of the THOR-diff. bound genes**:
 - Gain in HET/KO
