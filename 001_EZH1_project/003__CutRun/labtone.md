@@ -4027,6 +4027,12 @@ pdf("output/ChIPseeker/THOR_qval15_FC15_HETvsWT_expression_promoterAnd5_FC05.pdf
 pdf("output/ChIPseeker/THOR_qval15_keepAll_HETvsWT_expression.pdf", width=7, height=4)  # CHANGE TITLE
 pdf("output/ChIPseeker/THOR_qval15_keepAll_HETvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
 pdf("output/ChIPseeker/THOR_qval15_FC15_keepAll_HETvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval10_FC15_HETvsWT_expression.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval10_FC15_HETvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval10_FC15_HETvsWT_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval10_keepAll_HETvsWT_expression.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval10_keepAll_HETvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval10_keepAll_FC15_HETvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
 
 
 WTvsHET_annot_gain_lost_RNA %>%
@@ -4069,6 +4075,12 @@ pdf("output/ChIPseeker/THOR_qval15_FC15_KOvsWT_expression_promoterAnd5_FC05.pdf"
 pdf("output/ChIPseeker/THOR_qval15_keepAll_KOvsWT_expression.pdf", width=7, height=4)  # CHANGE TITLE
 pdf("output/ChIPseeker/THOR_qval15_keepAll_KOvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
 pdf("output/ChIPseeker/THOR_qval15_FC15_keepAll_KOvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval10_FC15_KOvsWT_expression.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval10_FC15_KOvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval10_FC15_KOvsWT_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval10_keepAll_KOvsWT_expression.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval10_keepAll_KOvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval10_keepAll_FC15_KOvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
 
 
 WTvsKO_annot_gain_lost_RNA %>%
@@ -4149,6 +4161,9 @@ count_data <- WTvsHET_annot_gain_lost_RNA %>%
 
 pdf("output/ChIPseeker/THOR_qval5_HETvsWTunique_expression.pdf", width=7, height=4)  # CHANGE TITLE
 pdf("output/ChIPseeker/THOR_qval15_HETvsWTunique_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval10_HETvsWTunique_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE
+
+
 
 WTvsHET_annot_gain_lost_RNA %>%
     ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
@@ -4181,6 +4196,8 @@ count_data <- WTvsKO_annot_gain_lost_RNA %>%
 
 pdf("output/ChIPseeker/THOR_qval5_KOvsWTunique_expression.pdf", width=7, height=4) # CHANGE TITLE
 pdf("output/ChIPseeker/THOR_qval5_KOvsWTunique_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval10_KOvsWTunique_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE
+
 
 WTvsKO_annot_gain_lost_RNA %>%
     ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
