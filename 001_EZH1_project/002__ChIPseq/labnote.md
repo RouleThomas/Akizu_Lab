@@ -5289,7 +5289,7 @@ sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_25cl_genesFromCl18_ESC_NPC_2d
 - Collect DiffBind_TMM scaling factor but generated with the bam unique aligned reads only (not all MAPQ20 per default)
 - Apply DiffBind TMM scaling factor on the unique aligned read files and generate bigwig files
 - Check their profile with deepTools
-
+- Try using THOR with these scaling factors if looks good
 
 ## MACS2 peak calling
 
@@ -5316,19 +5316,140 @@ sbatch scripts/macs2_pool_peak_signif_unique.sh # Re-run for different qval
 
 
 
-## DiffBind_TMM
+## DiffBind_TMM (uniquely mapped reads)
 
 Generate new meta file in `output/DiffBind/meta_sample_all_macs2raw_unique.txt`
 
 ```bash
 conda activate DiffBind
 # scripts for counting/greylist/blacklist
-sbatch scripts/DiffBind_all_macs2raw_unique.sh # 1123762
-
-# Load counting files
-
-XXX PCA clsutering XXX
+sbatch scripts/DiffBind_all_macs2raw_unique.sh # 1123762 ok
 ```
+
+Let's apply the ChIPseqSpikeInFree scaling factor to normalize data (normalize library size, then normalize per seq. depth; as for the CutRun). **THIS TIME WE NORMALIZE THE UNIQUELY ALIGNED DATA**. ChIPseqSpikeInFree-norm-library-size = library-size * SF. `samtools flagstat output/bowtie2_endtoend/*unique.dupmark.sorted.bam` used to obtain library size (first value=library size):
+- sample / library_size_UNIQUE * SF = scaled library size
+- 2dN_HET_H3K27me3_R1 / 40818892 1.97 = 80413217
+- 2dN_HET_H3K27me3_R2 / 38757156 1.75 = 67825023
+- 2dN_KO_H3K27me3_R1 / 36478530 1.46 = 53258654
+- 2dN_KO_H3K27me3_R2 / 46363646 1 = 46363646
+- 2dN_WT_H3K27me3_R1 / 43088276 1.29 = 55583876
+- 2dN_WT_H3K27me3_R2 / 43478292 1.69 = 73478313
+- ESC_HET_H3K27me3_R1 / 44064716 10.51 = 463120165
+- ESC_HET_H3K27me3_R2 / 29954726 23.35 = 699442852
+- ESC_KO_H3K27me3_R1 / 27538348 10.06 = 277035781
+- ESC_KO_H3K27me3_R2 / 23084678 15.78 = 364276219
+- ESC_WT_H3K27me3_R1 / 57347074 7 = 401429518
+- ESC_WT_H3K27me3_R2 / 58089688 4.31 = 250366555
+- NPC_HET_H3K27me3_R1 / 28967884 1.13 = 32733709
+- NPC_HET_H3K27me3_R2 / 53067608 1.43 = 75886679
+- NPC_KO_H3K27me3_R1 / 42573738 1.55 = 65989294
+- NPC_KO_H3K27me3_R2 / 48730202 2.64 = 128647733
+- NPC_WT_H3K27me3_R1 / 52824596 1.45 = 76595664
+- NPC_WT_H3K27me3_R2 / 51005778 1.51 = 77018725
+
+
+
+```R
+library("DiffBind") 
+# Load counting files
+load("output/DiffBind/count_all_macs2raw_unique_blackgreylist.RData")
+
+
+# plot
+pdf("output/DiffBind/clustering_all_macs2raw_unique_blackgreylist.pdf", width=14, height=20)
+plot(sample_count_blackgreylist)
+dev.off()
+
+pdf("output/DiffBind/PCA_all_macs2raw_unique_blackgreylist.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+# Apply TMM normalization 
+ 
+# TMM norm
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(80413217, 67825023,53258654, 46363646,55583876,73478313, 463120165, 699442852,277035781, 364276219, 401429518, 250366555, 32733709, 75886679, 65989294, 128647733, 76595664, 77018725), normalize = DBA_NORM_TMM)
+
+pdf("output/DiffBind/clustering_all_macs2raw_unique_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_LibHistoneScaled_TMM)
+dev.off()
+
+pdf("output/DiffBind/PCA_all_macs2raw_unique_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+
+## Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+
+
+console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_all_macs2raw_unique_blackgreylist_LibHistoneScaled_TMM_SF.txt")
+```
+--> The PCA/clustering is OK; genotype well clustered for ESC, then 2dN and NPC are mixed; WT tends to be together then the other genotypes are mixed...
+
+
+Here is the SF and updated table for **uniquely aligned reads**:
+
+- sample / library_size_UNIQUE * SF = scaled library size
+- 2dN_HET_H3K27me3_R1 / 40818892 1.97 = 80413217
+- 2dN_HET_H3K27me3_R2 / 38757156 1.75 = 67825023
+- 2dN_KO_H3K27me3_R1 / 36478530 1.46 = 53258654
+- 2dN_KO_H3K27me3_R2 / 46363646 1 = 46363646
+- 2dN_WT_H3K27me3_R1 / 43088276 1.29 = 55583876
+- 2dN_WT_H3K27me3_R2 / 43478292 1.69 = 73478313
+- ESC_HET_H3K27me3_R1 / 44064716 10.51 = 463120165
+- ESC_HET_H3K27me3_R2 / 29954726 23.35 = 699442852
+- ESC_KO_H3K27me3_R1 / 27538348 10.06 = 277035781
+- ESC_KO_H3K27me3_R2 / 23084678 15.78 = 364276219
+- ESC_WT_H3K27me3_R1 / 57347074 7 = 401429518
+- ESC_WT_H3K27me3_R2 / 58089688 4.31 = 250366555
+- NPC_HET_H3K27me3_R1 / 28967884 1.13 = 32733709
+- NPC_HET_H3K27me3_R2 / 53067608 1.43 = 75886679
+- NPC_KO_H3K27me3_R1 / 42573738 1.55 = 65989294
+- NPC_KO_H3K27me3_R2 / 48730202 2.64 = 128647733
+- NPC_WT_H3K27me3_R1 / 52824596 1.45 = 76595664
+- NPC_WT_H3K27me3_R2 / 51005778 1.51 = 77018725
+
+```
+$norm.factors
+ [1] 0.7527256 0.7213495 0.6986599 0.7226374 0.7803635 0.9313169 0.4348701
+ [8] 0.2897601 0.2699819 0.2244825 0.9900251 1.1046768 0.4501949 1.0141581
+[15] 0.6830601 0.9034272 0.9716131 0.9549168
+```
+
+### Bigwig_ ChIPseqInFree-DiffBind-TMM-uniqueReads
+
+Apply these ChIPseqInFree-DiffBind-TMM-uniqueReads new SF and check whether deepTools plot are weird or not...
+
+--> In `output/bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_UniqueBamUniqueSF`
+
+```bash
+
+output
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
