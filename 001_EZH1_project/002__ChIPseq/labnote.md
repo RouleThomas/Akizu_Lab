@@ -4568,7 +4568,7 @@ sbatch scripts/matrix_gene_1kb_bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_unique
 sbatch scripts/matrix_gene_1kb_bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF_NPC_noIntergenic_Rep.sh # 894904 ok
 sbatch scripts/matrix_gene_1kb_bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF_2dN_noIntergenic_Rep.sh # 894905 ok
 ```
-*NOTE: for comparison here I used the `ENCFF159KBI_peak_noIntergenic.gtf` (peak in at least 1 genotype non intergenic)*
+*NOTE: for comparison here I used the `ENCFF159KBI_peak_noIntergenic.gtf` (peak in at least 1 genotype non intergenic; **from CutRun**)*
 
 --> `bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF` is ok for replicates (not perfect but overall seems ok); except 
 NPC KO very bad. Also I feel ESC WT is VERY different as compare to ESC KO and HET; the difference is HUGE with WT much more H3K27me3 (maybe true but that's strong)
@@ -5390,25 +5390,25 @@ writeLines(console_output, "output/DiffBind/sample_count_all_macs2raw_unique_bla
 
 Here is the SF and updated table for **uniquely aligned reads**:
 
-- sample / library_size_UNIQUE * SF = scaled library size
-- 2dN_HET_H3K27me3_R1 / 40818892 1.97 = 80413217
-- 2dN_HET_H3K27me3_R2 / 38757156 1.75 = 67825023
-- 2dN_KO_H3K27me3_R1 / 36478530 1.46 = 53258654
-- 2dN_KO_H3K27me3_R2 / 46363646 1 = 46363646
-- 2dN_WT_H3K27me3_R1 / 43088276 1.29 = 55583876
-- 2dN_WT_H3K27me3_R2 / 43478292 1.69 = 73478313
-- ESC_HET_H3K27me3_R1 / 44064716 10.51 = 463120165
-- ESC_HET_H3K27me3_R2 / 29954726 23.35 = 699442852
-- ESC_KO_H3K27me3_R1 / 27538348 10.06 = 277035781
-- ESC_KO_H3K27me3_R2 / 23084678 15.78 = 364276219
-- ESC_WT_H3K27me3_R1 / 57347074 7 = 401429518
-- ESC_WT_H3K27me3_R2 / 58089688 4.31 = 250366555
-- NPC_HET_H3K27me3_R1 / 28967884 1.13 = 32733709
-- NPC_HET_H3K27me3_R2 / 53067608 1.43 = 75886679
-- NPC_KO_H3K27me3_R1 / 42573738 1.55 = 65989294
-- NPC_KO_H3K27me3_R2 / 48730202 2.64 = 128647733
-- NPC_WT_H3K27me3_R1 / 52824596 1.45 = 76595664
-- NPC_WT_H3K27me3_R2 / 51005778 1.51 = 77018725
+- sample / library_size_UNIQUE * SF = scaled library size = DiffBind_TMM_SF / Reciprocal_DiffBind_TMM_SF
+- 2dN_HET_H3K27me3_R1 / 40818892 1.97 = 80413217 = 0.7527256 / 1.328505368
+- 2dN_HET_H3K27me3_R2 / 38757156 1.75 = 67825023 = 0.7213495 / 1.386290557
+- 2dN_KO_H3K27me3_R1 / 36478530 1.46 = 53258654 = 0.6986599 / 1.431311572
+- 2dN_KO_H3K27me3_R2 / 46363646 1 = 46363646 = 0.7226374 / 1.38381988
+- 2dN_WT_H3K27me3_R1 / 43088276 1.29 = 55583876 = 0.7803635 / 1.281454092
+- 2dN_WT_H3K27me3_R2 / 43478292 1.69 = 73478313 = 0.9313169 / 1.073748366
+- ESC_HET_H3K27me3_R1 / 44064716 10.51 = 463120165 = 0.4348701 / 2.299537264
+- ESC_HET_H3K27me3_R2 / 29954726 23.35 = 699442852 = 0.2897601 / 3.45113078
+- ESC_KO_H3K27me3_R1 / 27538348 10.06 = 277035781 = 0.2699819 / 3.703952006
+- ESC_KO_H3K27me3_R2 / 23084678 15.78 = 364276219 = 0.2244825 / 4.454690232
+- ESC_WT_H3K27me3_R1 / 57347074 7 = 401429518 = 0.9900251 / 1.010075401
+- ESC_WT_H3K27me3_R2 / 58089688 4.31 = 250366555 = 1.1046768 / 0.905242149
+- NPC_HET_H3K27me3_R1 / 28967884 1.13 = 32733709 = 0.4501949 / 2.22126017
+- NPC_HET_H3K27me3_R2 / 53067608 1.43 = 75886679 = 1.0141581 / 0.986039553
+- NPC_KO_H3K27me3_R1 / 42573738 1.55 = 65989294 = 0.6830601 / 1.46400002
+- NPC_KO_H3K27me3_R2 / 48730202 2.64 = 128647733 = 0.9034272 / 1.106896051
+- NPC_WT_H3K27me3_R1 / 52824596 1.45 = 76595664 = 0.9716131 / 1.029216259
+- NPC_WT_H3K27me3_R2 / 51005778 1.51 = 77018725 = 0.9549168 / 1.047211652
 
 ```
 $norm.factors
@@ -5419,15 +5419,41 @@ $norm.factors
 
 ### Bigwig_ ChIPseqInFree-DiffBind-TMM-uniqueReads
 
-Apply these ChIPseqInFree-DiffBind-TMM-uniqueReads new SF and check whether deepTools plot are weird or not...
+Apply these ChIPseqInFree-DiffBind-TMM-uniqueReads new SF and check whether deepTools plot are weird or not (**apply the reciprocal**)...
 
---> In `output/bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_UniqueBamUniqueSF`
+In `output/bigwig_UniqueBamUniqueSF_DiffBind_TMM`
 
 ```bash
+conda activate deeptools
+sbatch scripts/bamtobigwig_UniqueBamUniqueSF_DiffBind_TMM # 1652289
 
-output
+# deepTools plot
+## For ESC only, all genotypes
+### Less express in HET
+sbatch --dependency=afterany:1652289 scripts/matrix_gene_1kb_bigwig_UniqueBamUniqueSF_DiffBind_TMM_DEGs_ESC_HET_Down_Rep.sh # 1652290
+### More express in HET
+sbatch --dependency=afterany:1652289 scripts/matrix_gene_1kb_bigwig_UniqueBamUniqueSF_DiffBind_TMM_DEGs_ESC_HET_Up_Rep.sh # 1652314
+
+
+## per genotype over time-course; all genes
+sbatch --dependency=afterany:1652289 scripts/matrix_gene_1kb_bigwig_UniqueBamUniqueSF_DiffBind_TMM_WT_Rep.sh # 1652366
+sbatch --dependency=afterany:1652289 scripts/matrix_gene_1kb_bigwig_UniqueBamUniqueSF_DiffBind_TMM_HET_Rep.sh # 1652367
+sbatch --dependency=afterany:1652289 scripts/matrix_gene_1kb_bigwig_UniqueBamUniqueSF_DiffBind_TMM_KO_Rep.sh # 1652370
+
+
+
+
 ```
+*NOTE: for comparison here I used the `ENCFF159KBI_peak_noIntergenic.gtf` (peak in at least 1 genotype non intergenic; **from CutRun**)*
 
+
+--> XXX The replicates looks XXX on IGV; broadly we XXX incerase/decrease signal ESC XXX. 
+
+
+--> XXX At ESC XXX
+
+
+--> XXX There is increase H3K27me3 from ESC to NPC/2dN for XXX
 
 
 
