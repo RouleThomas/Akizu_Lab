@@ -4942,9 +4942,9 @@ sbatch scripts/matrix_gene_1kb_bigwig_DiffBind_TMM_DEGs_ESC_KO_up_Rep.sh # 10744
 --> Western blot do not show any drastic differences at ESC WT vs mutants so its unlikely to have STRONG differences...
 
 
-XXX Maybe we should look at the ratio with input?
+YYY Maybe we should look at the ratio with input?
 
-XXX Let's filter-out to keep only genes enriched in WT tu rule-out this possibility
+YYY Let's filter-out to keep only genes enriched in WT tu rule-out this possibility
 
 
 **bigwig_DiffBind_TMM:**
@@ -5448,16 +5448,13 @@ sbatch --dependency=afterany:1654848:1654849:1654850 scripts/matrix_gene_1kb_big
 ```
 *NOTE: for comparison here I used the `ENCFF159KBI_peak_noIntergenic.gtf` (peak in at least 1 genotype non intergenic; **from CutRun**)*
 
+--> Mutants profile (HET/KO) looks like SHIT; same weird profile, WT is good
 
---> XXX The replicates looks XXX on IGV; broadly we XXX incerase/decrease signal ESC XXX. 
+--> At ESC DEGs HET; almost no changes of H3K27me3 WT vs HET (ie. WT always more H3K27me3). It's SHIT!!!
 
+--> We observe decrease H3K27me3 from ESC to NPC/2dN for all 3 genotypes. BAD!!
 
---> XXX At ESC XXX
-
-
---> XXX There is increase H3K27me3 from ESC to NPC/2dN for XXX
-
-
+Seems that using the **`bigwig_UniqueBamUniqueSF_DiffBind_TMM` do NOT improve the analysis** (HET and KO profile are weird for all time-points + we do NOT observe increase H3K27me3 upon diff.)
 
 # THOR diff. bound sites
 Let's try to use **THOR with TMM-scaled scaling factor**, calculated from uniquely aligned reads bam with DiffBind_TMM; or from non-uniquely aligned reads bam with DiffBind_TMM. Both **scaling factor are initially from ChIPseqSpikeInFree** and re-scaled the library before applying the TMM nornmalization.
@@ -5504,7 +5501,28 @@ DiffBind_TMM SF from **uniquely aligned bam** (used to generate `output/bamtobig
 - NPC_WT_H3K27me3_R1 = 1.029216259
 - NPC_WT_H3K27me3_R2 = 1.047211652
 
-YYY Could also try usique SF from `bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF`; they are NOT TMM-normalized though...
+**ChIPseqSpikeInFree SF_RAW** so not pass-by DiffBind, no TMM-normalized (used to generate `output/bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF`)
+- 2dN_HET_H3K27me3_R1 = 1.97
+- 2dN_HET_H3K27me3_R2 = 1.75
+- 2dN_KO_H3K27me3_R1 = 1.46
+- 2dN_KO_H3K27me3_R2 = 1
+- 2dN_WT_H3K27me3_R1 = 1.29
+- 2dN_WT_H3K27me3_R2 = 1.69
+- ESC_HET_H3K27me3_R1 = 10.51
+- ESC_HET_H3K27me3_R2 = 23.35
+- ESC_KO_H3K27me3_R1 = 10.06
+- ESC_KO_H3K27me3_R2 = 15.78
+- ESC_WT_H3K27me3_R1 = 7
+- ESC_WT_H3K27me3_R2 = 4.31
+- NPC_HET_H3K27me3_R1 = 1.13
+- NPC_HET_H3K27me3_R2 = 1.43
+- NPC_KO_H3K27me3_R1 = 1.55
+- NPC_KO_H3K27me3_R2 = 2.64
+- NPC_WT_H3K27me3_R1 = 1.45
+- NPC_WT_H3K27me3_R2 = 1.51
+
+
+
 
 **Create the CONFIG file** with nano; *(I put them in meta in VSC/Github but are in output/THOR in HPC)*:
 - `output/THOR/ESC_WTvsHET_UniqueBamDiffBindTMM.config` # Light test
@@ -5517,6 +5535,10 @@ YYY Could also try usique SF from `bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_un
 - `output/THOR/2dN_WTvsKO.config`
 - `output/THOR/WT_ESCvsNPC_UniqueBamDiffBindTMM.config` # Light test
 - `output/THOR/WT_ESCvsNPC_DiffBindTMM.config` # Light test
+
+- `output/THOR/WT_ESCvsNPC_UniqueBamChIPseqSpikeInFree.config`; not created as = `output/THOR/WT_ESCvsNPC_UniqueBamDiffBindTMM.config` # Light test
+- `output/THOR/WT_ESCvsNPC_ChIPseqSpikeInFree.config` ; not created as = `output/THOR/WT_ESCvsNPC_DiffBindTMM.config` # Light test
+
 - `output/THOR/WT_ESCvs2dN_UniqueBamDiffBindTMM.config` # Light test
 - `output/THOR/WT_ESCvs2dN_DiffBindTMM.config` # Light test
 - `output/THOR/HET_ESCvsNPC.config` 
@@ -5529,7 +5551,10 @@ YYY Could also try usique SF from `bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_un
 
 
 
-## THOR with DiffBindTMM scaling factor from uniquely aligned bam
+## THOR with different SF (DiffBindTMM from uniquely/NON-uniquely aligned bam AND ChIPseqSpikeInFree ony)
+- try with DiffBind_TMM where ChIPseqSpikeInFree was applied on library size
+- try with ChIPseqSpikeInFree SF; from `bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF`; they are NOT TMM-normalized though... But as discussed earlier maybe we cannot use both ChIPseqSpikeInFree and TMM normalization...
+
 
 
 *THOR is very buggy to make it work I need to temporaly change where to look for libraries lol.. So cannot use nano anymore for example...*
@@ -5543,21 +5568,165 @@ bigWigMerge # for testing
 # run 200g mem
 conda activate RGT
 ## Genotype comparison at ESC
-sbatch scripts/THOR_ESC_WTvsHET_UniqueBamDiffBindTMM.sh # 1655774
-sbatch scripts/THOR_ESC_WTvsHET_DiffBindTMM.sh # 1655779
-sbatch scripts/THOR_ESC_WTvsKO_UniqueBamDiffBindTMM.sh # 1655812
-sbatch scripts/THOR_ESC_WTvsKO_DiffBindTMM.sh # 1655834
+sbatch scripts/THOR_ESC_WTvsHET_UniqueBamDiffBindTMM.sh # 1655774 ok
+sbatch scripts/THOR_ESC_WTvsHET_DiffBindTMM.sh # 1655779 ok
+sbatch scripts/THOR_ESC_WTvsKO_UniqueBamDiffBindTMM.sh # 1655812 ok
+sbatch scripts/THOR_ESC_WTvsKO_DiffBindTMM.sh # 1655834 ok
+## Genotype comparison at ESC ChIPseqSpikeInFree
+sbatch scripts/THOR_ESC_WTvsHET_UniqueBamChIPseqSpikeInFree_Corr.sh # 1661296
+sbatch scripts/THOR_ESC_WTvsHET_ChIPseqSpikeInFree_Corr.sh # 1661299
+sbatch scripts/THOR_ESC_WTvsKO_UniqueBamChIPseqSpikeInFree_Corr.sh # 1661300
+sbatch scripts/THOR_ESC_WTvsKO_ChIPseqSpikeInFree_Corr.sh # 1661301
 ## Time-effect for WT
-sbatch scripts/THOR_WT_ESCvsNPC_UniqueBamDiffBindTMM.sh # 1655862
-sbatch scripts/THOR_WT_ESCvsNPC_DiffBindTMM.sh # 1655868
+sbatch scripts/THOR_WT_ESCvsNPC_UniqueBamDiffBindTMM.sh # 1655862 ok
+sbatch scripts/THOR_WT_ESCvsNPC_DiffBindTMM.sh # 1655868 ok
 sbatch scripts/THOR_WT_ESCvs2dN_UniqueBamDiffBindTMM.sh # 1655880
 sbatch scripts/THOR_WT_ESCvs2dN_DiffBindTMM.sh # 1655883
+## Time-effect for WT ChIPseqSpikeInFree
+sbatch scripts/THOR_WT_ESCvsNPC_UniqueBamChIPseqSpikeInFree.sh # 1656686 ok
+sbatch scripts/THOR_WT_ESCvsNPC_ChIPseqSpikeInFree.sh # 1656714 ok
+sbatch scripts/THOR_WT_ESCvsNPC_UniqueBamChIPseqSpikeInFree_Corr.sh # 1661293
+sbatch scripts/THOR_WT_ESCvsNPC_ChIPseqSpikeInFree_Corr.sh # 1661294
 ```
 
+Go in R to explore the data real quick within `conda activate deseq2`:
+
+```R
+# load the file using the tidyverse
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+
+# WT_ESCvsNPC_UniqueBamDiffBindTMM
+diffpeaks <- read_tsv("output/THOR/THOR_WT_ESCvsNPC_UniqueBamDiffBindTMM/WTESCvsNPCUniqueBamDiffBindTMM-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_ESC", "count_NPC", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_ESC, into = c("count_ESC_1","count_ESC_2"), sep = ":", convert = TRUE) %>%
+  separate(count_NPC, into = c("count_NPC_1","count_NPC_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_NPC_1+count_NPC_2) / (count_ESC_1+count_ESC_2))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_WT_ESCvsNPC_UniqueBamDiffBindTMM/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("WT_ESC vs NPC") +
+  theme_bw()
+dev.off()
+
+
+# WT_ESCvsNPC_DiffBindTMM
+diffpeaks <- read_tsv("output/THOR/THOR_WT_ESCvsNPC_DiffBindTMM/WTESCvsNPCDiffBindTMM-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_ESC", "count_NPC", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_ESC, into = c("count_ESC_1","count_ESC_2"), sep = ":", convert = TRUE) %>%
+  separate(count_NPC, into = c("count_NPC_1","count_NPC_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_NPC_1+count_NPC_2) / (count_ESC_1+count_ESC_2))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_WT_ESCvsNPC_DiffBindTMM/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("WT_ESC vs NPC") +
+  theme_bw()
+dev.off()
+
+
+# WT_ESCvsNPC_ChIPseqSpikeInFree
+diffpeaks <- read_tsv("output/THOR/THOR_WT_ESCvsNPC_ChIPseqSpikeInFree/WTESCvsNPCChIPseqSpikeInFree-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_ESC", "count_NPC", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_ESC, into = c("count_ESC_1","count_ESC_2"), sep = ":", convert = TRUE) %>%
+  separate(count_NPC, into = c("count_NPC_1","count_NPC_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_NPC_1+count_NPC_2) / (count_ESC_1+count_ESC_2))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_WT_ESCvsNPC_ChIPseqSpikeInFree/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("WT_ESC vs NPC") +
+  theme_bw()
+dev.off()
+
+# WT_ESCvsNPC_UniqueBamChIPseqSpikeInFree
+diffpeaks <- read_tsv("output/THOR/THOR_WT_ESCvsNPC_UniqueBamChIPseqSpikeInFree/WTESCvsNPCUniqueBamChIPseqSpikeInFree-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_ESC", "count_NPC", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_ESC, into = c("count_ESC_1","count_ESC_2"), sep = ":", convert = TRUE) %>%
+  separate(count_NPC, into = c("count_NPC_1","count_NPC_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_NPC_1+count_NPC_2) / (count_ESC_1+count_ESC_2))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_WT_ESCvsNPC_UniqueBamChIPseqSpikeInFree/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("WT_ESC vs NPC") +
+  theme_bw()
+dev.off()
+```
+
+--> `THOR_WT_ESCvsNPC_UniqueBamDiffBindTMM` and `THOR_WT_ESCvsNPC_DiffBindTMM` = bad; much more Decrease H3K27me3 upon differentation...
+----> Genotype comparison I do not even look as differentiation control increase H3K27me3 fail...
+
+--> `THOR_WT_ESCvsNPC_UniqueBamChIPseqSpikeInFree` and `THOR_WT_ESCvsNPC_ChIPseqSpikeInFree` = bad; show only decrease H3K27me3 upon differentiation... THIS IS WEIRD... As scaling factor used should show increase!! 
+----> Mistake is that I directly put the output SF value from ChIPseqSpikeInFree, but should have normalize it for library-size before; with:   `1 / (15000000/($libSize*$SF))`
+
+Let's collect the correct SF from ChIPseqSpikeInFree:
+
+**ChIPseqSpikeInFree SF_CORRECT** so not pass-by DiffBind, no TMM-normalized but manually LIB-size normalized (used to generate `output/bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF`)
+- sample / libSize_UNIQUE @ libSize_NotUnique | SF(From Unique ChIPseqSpikeInFree) | 1/(15000000/($libSize*$SF))_UniqueLibsize ? 1/(15000000/($libSize*$SF))_NotUniqueLibsize
+- 2dN_HET_H3K27me3_R1 / 40818892 @ 70887858 | 1.97 | 5.360881149 ? 9.309938684
+- 2dN_HET_H3K27me3_R2 / 38757156 @ 67346082 | 1.75 | 4.5216682	? 7.8570429
+- 2dN_KO_H3K27me3_R1 / 36478530 @ 58363794 | 1.46 | 3.55057692 ? 5.680742616
+- 2dN_KO_H3K27me3_R2 / 46363646 @ 71964648 | 1 | 3.090909733 ? 4.7976432
+- 2dN_WT_H3K27me3_R1 / 43088276 @ 71682964 | 1.29 | 3.705591736 ? 6.164734904
+- 2dN_WT_H3K27me3_R2 / 43478292 @ 60792560 | 1.69 | 4.898554232 ? 6.849295093
+- ESC_HET_H3K27me3_R1 / 44064716 @ 85933694 | 10.51 | 30.87467768 ? 60.21087493
+- ESC_HET_H3K27me3_R2 / 29954726 @ 66583922 | 23.35 | 46.62952347 ? 103.6489719
+- ESC_KO_H3K27me3_R1 / 27538348 @ 86014942 | 10.06 | 18.46905206 ? 57.68735443
+- ESC_KO_H3K27me3_R2 / 23084678 @ 57643920 | 15.78 | 24.28508126 ?	60.64140384
+- ESC_WT_H3K27me3_R1 / 57347074 @ 90968406 | 7 | 26.76196787 ? 42.4519228
+- ESC_WT_H3K27me3_R2 / 58089688 @ 79650052 | 4.31 | 16.69110369 ? 22.88611494
+- NPC_HET_H3K27me3_R1 / 28967884 @ 40423510 | 1.13 | 2.182247261 ?	3.045237753
+- NPC_HET_H3K27me3_R2 / 53067608 @ 82710030 | 1.43 | 5.059111963 ? 7.88502286
+- NPC_KO_H3K27me3_R1 / 42573738 @ 67904376 | 1.55 | 4.39928626 ? 7.01678552 
+- NPC_KO_H3K27me3_R2 / 48730202 @ 84619268 | 2.64 | 8.576515552 ? 14.89299117
+- NPC_WT_H3K27me3_R1 / 52824596 @ 77698696 | 1.45 | 5.106377613 ? 7.510873947
+- NPC_WT_H3K27me3_R2 / 51005778 @ 72126718 | 1.51 | 5.134581652 ? 7.260756279
+
+
+***NOTE: ChIPseqSpikeInFree bigwig files have NOT been generated using BamCoverage, but with  `genomeCoverageBed -bg -scale $scale ` where the `$scale` is a multiplying factor; thus I did: `1/15000000/($libSize*$SF)` --> Otherwise the non-reciprocal SF return will increase signal for ESC...*** --> File for calculation in GoogleDrive under `002__ChIPseq/ChIPseqSpikeInFactor_ScalingFactor.xlsx` and new THOR-related files as `*_Corr`
+
+--> XXXX Using LIB-normalize ChIPseqSpikeInFree scaling factors is XXXX
+
+--> XXXX LIB-normalize ChIPseqSpikeInFree scaling factors for genotype at ESC XXX
+
+
+## THOR with ChIPseqSpikeInFree SF
+
+*See light test files above at `Create the CONFIG file`*
 
 
 
-## THOR with DiffBindTMM scaling factor from NON-uniquely aligned bam
+
+
+
 
 
 
