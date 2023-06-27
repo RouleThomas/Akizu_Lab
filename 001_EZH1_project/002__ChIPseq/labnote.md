@@ -5425,20 +5425,22 @@ In `output/bigwig_UniqueBamUniqueSF_DiffBind_TMM`
 
 ```bash
 conda activate deeptools
-sbatch scripts/bamtobigwig_UniqueBamUniqueSF_DiffBind_TMM # 1652289
-
+sbatch scripts/bamtobigwig_UniqueBamUniqueSF_DiffBind_TMM.sh # 1652289 cancel time limit; 
+sbatch scripts/bamtobigwig_UniqueBamUniqueSF_DiffBind_TMM_1.sh # 1654848
+sbatch scripts/bamtobigwig_UniqueBamUniqueSF_DiffBind_TMM_2.sh # 1654849
+sbatch scripts/bamtobigwig_UniqueBamUniqueSF_DiffBind_TMM_3.sh # 1654850
 # deepTools plot
 ## For ESC only, all genotypes
 ### Less express in HET
-sbatch --dependency=afterany:1652289 scripts/matrix_gene_1kb_bigwig_UniqueBamUniqueSF_DiffBind_TMM_DEGs_ESC_HET_Down_Rep.sh # 1652290
+sbatch --dependency=afterany:1654848:1654849:1654850 scripts/matrix_gene_1kb_bigwig_UniqueBamUniqueSF_DiffBind_TMM_DEGs_ESC_HET_Down_Rep.sh # 1652290 FAIL time limit with 1652289; 1654864
 ### More express in HET
-sbatch --dependency=afterany:1652289 scripts/matrix_gene_1kb_bigwig_UniqueBamUniqueSF_DiffBind_TMM_DEGs_ESC_HET_Up_Rep.sh # 1652314
+sbatch --dependency=afterany:1654848:1654849:1654850 scripts/matrix_gene_1kb_bigwig_UniqueBamUniqueSF_DiffBind_TMM_DEGs_ESC_HET_Up_Rep.sh # 1652314; 1654920
 
 
 ## per genotype over time-course; all genes
-sbatch --dependency=afterany:1652289 scripts/matrix_gene_1kb_bigwig_UniqueBamUniqueSF_DiffBind_TMM_WT_Rep.sh # 1652366
-sbatch --dependency=afterany:1652289 scripts/matrix_gene_1kb_bigwig_UniqueBamUniqueSF_DiffBind_TMM_HET_Rep.sh # 1652367
-sbatch --dependency=afterany:1652289 scripts/matrix_gene_1kb_bigwig_UniqueBamUniqueSF_DiffBind_TMM_KO_Rep.sh # 1652370
+sbatch --dependency=afterany:1654848:1654849:1654850 scripts/matrix_gene_1kb_bigwig_UniqueBamUniqueSF_DiffBind_TMM_WT_Rep.sh # 1652366; 1654922
+sbatch --dependency=afterany:1654848:1654849:1654850 scripts/matrix_gene_1kb_bigwig_UniqueBamUniqueSF_DiffBind_TMM_HET_Rep.sh # 1652367; 1654927
+sbatch --dependency=afterany:1654848:1654849:1654850 scripts/matrix_gene_1kb_bigwig_UniqueBamUniqueSF_DiffBind_TMM_KO_Rep.sh # 1652370; 1654934
 
 
 
@@ -5456,6 +5458,106 @@ sbatch --dependency=afterany:1652289 scripts/matrix_gene_1kb_bigwig_UniqueBamUni
 --> XXX There is increase H3K27me3 from ESC to NPC/2dN for XXX
 
 
+
+# THOR diff. bound sites
+Let's try to use **THOR with TMM-scaled scaling factor**, calculated from uniquely aligned reads bam with DiffBind_TMM; or from non-uniquely aligned reads bam with DiffBind_TMM. Both **scaling factor are initially from ChIPseqSpikeInFree** and re-scaled the library before applying the TMM nornmalization.
+
+*NOTE: In THOR; use scaling factor value used to convert Bam to Bigwig (reciprocal value of DiffBind output)*
+
+DiffBind_TMM SF from **NON-uniquely aligned bam** (used to generate `output/bigwig_DiffBind_TMM`)
+- 2dN_HET_H3K27me3_R1 = 1.515964164
+- 2dN_HET_H3K27me3_R2 = 1.591067619
+- 2dN_KO_H3K27me3_R1 = 1.831466946
+- 2dN_KO_H3K27me3_R2 = 1.793907639
+- 2dN_WT_H3K27me3_R1 = 1.548264434
+- 2dN_WT_H3K27me3_R2 = 1.691816077
+- ESC_HET_H3K27me3_R1 = 2.158245122
+- ESC_HET_H3K27me3_R2 = 2.796412762
+- ESC_KO_H3K27me3_R1 = 2.237804803
+- ESC_KO_H3K27me3_R2 = 3.1922803
+- ESC_WT_H3K27me3_R1 = 1.25660203
+- ESC_WT_H3K27me3_R2 = 1.363597191
+- NPC_HET_H3K27me3_R1 = 3.242710387
+- NPC_HET_H3K27me3_R2 = 1.310448705
+- NPC_KO_H3K27me3_R1 = 1.829832193
+- NPC_KO_H3K27me3_R2 = 1.2635567
+- NPC_WT_H3K27me3_R1 = 1.425558409
+- NPC_WT_H3K27me3_R2 = 1.556845489
+
+DiffBind_TMM SF from **uniquely aligned bam** (used to generate `output/bamtobigwig_UniqueBamUniqueSF_DiffBind_TMM`)
+- 2dN_HET_H3K27me3_R1 = 1.328505368
+- 2dN_HET_H3K27me3_R2 = 1.386290557
+- 2dN_KO_H3K27me3_R1 = 1.431311572
+- 2dN_KO_H3K27me3_R2 = 1.38381988
+- 2dN_WT_H3K27me3_R1 = 1.281454092
+- 2dN_WT_H3K27me3_R2 = 1.073748366
+- ESC_HET_H3K27me3_R1 = 2.299537264
+- ESC_HET_H3K27me3_R2 = 3.45113078
+- ESC_KO_H3K27me3_R1 = 3.703952006
+- ESC_KO_H3K27me3_R2 = 4.454690232
+- ESC_WT_H3K27me3_R1 = 1.010075401
+- ESC_WT_H3K27me3_R2 = 0.905242149
+- NPC_HET_H3K27me3_R1 = 2.22126017
+- NPC_HET_H3K27me3_R2 = 0.986039553
+- NPC_KO_H3K27me3_R1 = 1.46400002
+- NPC_KO_H3K27me3_R2 = 1.106896051
+- NPC_WT_H3K27me3_R1 = 1.029216259
+- NPC_WT_H3K27me3_R2 = 1.047211652
+
+YYY Could also try usique SF from `bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF`; they are NOT TMM-normalized though...
+
+**Create the CONFIG file** with nano; *(I put them in meta in VSC/Github but are in output/THOR in HPC)*:
+- `output/THOR/ESC_WTvsHET_UniqueBamDiffBindTMM.config` # Light test
+- `output/THOR/ESC_WTvsHET_DiffBindTMM.config` # Light test
+- `output/THOR/ESC_WTvsKO_UniqueBamDiffBindTMM.config` # Light test
+- `output/THOR/ESC_WTvsKO_DiffBindTMM.config` # Light test
+- `output/THOR/NPC_WTvsHET.config`
+- `output/THOR/NPC_WTvsKO.config`
+- `output/THOR/2dN_WTvsHET.config`
+- `output/THOR/2dN_WTvsKO.config`
+- `output/THOR/WT_ESCvsNPC_UniqueBamDiffBindTMM.config` # Light test
+- `output/THOR/WT_ESCvsNPC_DiffBindTMM.config` # Light test
+- `output/THOR/WT_ESCvs2dN_UniqueBamDiffBindTMM.config` # Light test
+- `output/THOR/WT_ESCvs2dN_DiffBindTMM.config` # Light test
+- `output/THOR/HET_ESCvsNPC.config` 
+- `output/THOR/HET_ESCvs2dN.config`
+- `output/THOR/KO_ESCvsNPC.config`
+- `output/THOR/KO_ESCvs2dN.config`
+
+--> Do the *# Light test* first and check wehter it is good; test both SF and corresponding bam files for each *# Light test* sample
+
+
+
+
+## THOR with DiffBindTMM scaling factor from uniquely aligned bam
+
+
+*THOR is very buggy to make it work I need to temporaly change where to look for libraries lol.. So cannot use nano anymore for example...*
+
+```bash
+# Needed step to change where THOR look for libraries
+conda activate RGT
+export LD_LIBRARY_PATH=~/anaconda3/envs/RGT/lib:$LD_LIBRARY_PATH
+bigWigMerge # for testing
+
+# run 200g mem
+conda activate RGT
+## Genotype comparison at ESC
+sbatch scripts/THOR_ESC_WTvsHET_UniqueBamDiffBindTMM.sh # 1655774
+sbatch scripts/THOR_ESC_WTvsHET_DiffBindTMM.sh # 1655779
+sbatch scripts/THOR_ESC_WTvsKO_UniqueBamDiffBindTMM.sh # 1655812
+sbatch scripts/THOR_ESC_WTvsKO_DiffBindTMM.sh # 1655834
+## Time-effect for WT
+sbatch scripts/THOR_WT_ESCvsNPC_UniqueBamDiffBindTMM.sh # 1655862
+sbatch scripts/THOR_WT_ESCvsNPC_DiffBindTMM.sh # 1655868
+sbatch scripts/THOR_WT_ESCvs2dN_UniqueBamDiffBindTMM.sh # 1655880
+sbatch scripts/THOR_WT_ESCvs2dN_DiffBindTMM.sh # 1655883
+```
+
+
+
+
+## THOR with DiffBindTMM scaling factor from NON-uniquely aligned bam
 
 
 
