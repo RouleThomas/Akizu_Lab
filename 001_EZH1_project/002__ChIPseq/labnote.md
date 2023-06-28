@@ -5594,9 +5594,19 @@ sbatch scripts/THOR_WT_ESCvsNPC_UniqueBamChIPseqSpikeInFree_Corr.sh # 1661293 ok
 sbatch scripts/THOR_WT_ESCvsNPC_ChIPseqSpikeInFree_Corr.sh # 1661294 ok
 ## Time-effect for WT, Default TMM-normalization (NO SF)
 sbatch scripts/THOR_WT_ESCvsNPC_UniqueBamTMM.sh # 1673882 ok
-sbatch scripts/THOR_WT_ESCvsNPC_TMM.sh # 1673885
+sbatch scripts/THOR_WT_ESCvsNPC_TMM.sh # 1673885 ok
 ## Time-effect for WT, Default TMM-normalization (NO SF) with rmdup
-sbatch scripts/THOR_WT_ESCvsNPC_rmdup_TMM.sh # 1674683
+sbatch scripts/THOR_WT_ESCvsNPC_rmdup_TMM.sh # 1674683 ok
+
+### Optimal parameters have been found; now here are the missing samples:
+#### Time-effect for KO and HET, Default TMM-normalization (NO SF)
+sbatch scripts/THOR_HET_ESCvsNPC_UniqueBamTMM.sh # 1681090
+sbatch scripts/THOR_KO_ESCvsNPC_UniqueBamTMM.sh # 1681115
+#### Genotype comparison at NPC and 2dN, Default TMM-normalization (NO SF)
+sbatch scripts/THOR_NPC_WTvsHET_UniqueBamTMM.sh # 1681129
+sbatch scripts/THOR_NPC_WTvsKO_UniqueBamTMM.sh # 1681138
+sbatch scripts/THOR_2dN_WTvsHET_UniqueBamTMM.sh # 1681142
+sbatch scripts/THOR_2dN_WTvsKO_UniqueBamTMM.sh # 1681198
 ```
 
 Go in R to explore the data real quick within `conda activate deseq2`:
@@ -5803,6 +5813,10 @@ dev.off()
 thor_splitted %>%
   filter(qval > 20) %>%
   write_tsv("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval20.bed", col_names = FALSE)
+thor_splitted %>%
+  filter(qval > 30) %>%
+  write_tsv("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval30.bed", col_names = FALSE)
+
 ## how many minus / plus
 thor_splitted %>%
   filter(qval > 10) %>%
@@ -5848,19 +5862,328 @@ Let's collect the correct SF from ChIPseqSpikeInFree:
 
 --> qval 10-15 for WT_ESCvsNPC is good for both uniqueBam and not uniqueBam. However uniqueBam shows more H3K27me3 in ESC and non-uniqueBam show more H3K27me3 in NPC...
 
---> uniqueBam (using pre-filtered bam files that only contain uniquely mapepd reads) versus using `--rmdup` argument in THOR is XXX
+--> uniqueBam (using pre-filtered bam files that only contain uniquely mapepd reads) versus using `--rmdup` argument in THOR is better; as it work LOL... `--rmdup` fail and did not give any diff bound peaks
+
+
+
+### Assign THOR-diff peaks to genes and check expression
+
+XXXXX LETS GO HERE AND CHECK keepDup and non spike in
+
+Now let's compare RNAseq (expression) and CutRun for THOR qval 15 among others:
+- Filter HETvsWT and KOvsWT diff bound genes into **gain and loss H3K27me3**
+- **Keep only signal in Promoter, gene body and TES** (ie. filter out peak assigned to intergenic)
+- **Merge with deseq2** log2FC data (tpm will not work as too variable; or log2tpm maybe?)
+- Plot in x FC and y baseMean=deseq2-norm counts (+ color qvalue) with facet_wrap~gain or lost (ie. volcano plot gain/lost)
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library(VennDiagram)
+
+
+# Import diff. peaks
+## qval10_WT_ESCvsNPC_TMM
+ESCvsNPC = read.table('output/THOR/THOR_WT_ESCvsNPC_TMM/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_ESC_1= V11, count_ESC_2=V12, count_NPC_1=V13, count_NPC_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_ESC_1,count_ESC_2,count_NPC_1,count_NPC_2)
+## qval10_WT_ESCvsNPC_UniqueBamTMM
+ESCvsNPC = read.table('output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_ESC_1= V11, count_ESC_2=V12, count_NPC_1=V13, count_NPC_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_ESC_1,count_ESC_2,count_NPC_1,count_NPC_2)
+## qval15_WT_ESCvsNPC_UniqueBamTMM
+ESCvsNPC = read.table('output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval15.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_ESC_1= V11, count_ESC_2=V12, count_NPC_1=V13, count_NPC_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_ESC_1,count_ESC_2,count_NPC_1,count_NPC_2)
+## qval20_WT_ESCvsNPC_UniqueBamTMM
+ESCvsNPC = read.table('output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_ESC_1= V11, count_ESC_2=V12, count_NPC_1=V13, count_NPC_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_ESC_1,count_ESC_2,count_NPC_1,count_NPC_2)
+## qval25_WT_ESCvsNPC_UniqueBamTMM
+ESCvsNPC = read.table('output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval25.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_ESC_1= V11, count_ESC_2=V12, count_NPC_1=V13, count_NPC_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_ESC_1,count_ESC_2,count_NPC_1,count_NPC_2)
+## qval30_WT_ESCvsNPC_UniqueBamTMM
+ESCvsNPC = read.table('output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval30.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_ESC_1= V11, count_ESC_2=V12, count_NPC_1=V13, count_NPC_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_ESC_1,count_ESC_2,count_NPC_1,count_NPC_2)
+## qval20_WT_ESCvsNPC_TMM
+ESCvsNPC = read.table('output/THOR/THOR_WT_ESCvsNPC_TMM/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_ESC_1= V11, count_ESC_2=V12, count_NPC_1=V13, count_NPC_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_ESC_1,count_ESC_2,count_NPC_1,count_NPC_2)
+
+
+
+## qval25_HET_ESCvsNPC_UniqueBamTMM
+XXX
+## qval30_HET_ESCvsNPC_UniqueBamTMM
+XXX
+
+## qval25_KO_ESCvsNPC_UniqueBamTMM
+XXX
+## qval30_KO_ESCvsNPC_UniqueBamTMM
+XXX
+
+# Tidy peaks #-->> Re-Run from here with different qvalue!!
+ESCvsNPC_gr = makeGRangesFromDataFrame(ESCvsNPC,keep.extra.columns=TRUE)
+
+## ADD HERE THE 3 GENOTYPES !!!
+
+
+gr_list <- list(ESCvsNPC=ESCvsNPC_gr)
+
+
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## Get annotation data frame
+ESCvsNPC_annot <- as.data.frame(peakAnnoList[["ESCvsNPC"]]@anno)
+
+
+
+
+## Convert entrez gene IDs to gene symbols
+ESCvsNPC_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = ESCvsNPC_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+
+ESCvsNPC_annot$gene <- mapIds(org.Hs.eg.db, keys = ESCvsNPC_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+## Save output table
+write.table(ESCvsNPC_annot, file="output/ChIPseeker/annotation_WT_ESCvsNPC_qval30_UniqueBamTMM.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
+
+# load annotation tables
+# WTvsHET_qval5_annot <- read.table("output/ChIPseeker/annotation_WTvsHET_qval5.txt", sep="\t", header=TRUE)
+
+
+# Filter Gain/Loss sites
+## KEEP Distal Intergenic (keep ALL)   ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+WTvsHET_annot_gain = tibble(WTvsHET_annot) %>%
+    filter(FC > 1.5) %>%
+    add_column(H3K27me3 = "gain")
+WTvsHET_annot_lost = tibble(WTvsHET_annot) %>%
+    filter(FC < (1/1.5)) %>%
+    add_column(H3K27me3 = "lost")
+WTvsHET_annot_gain_lost = WTvsHET_annot_gain %>% 
+    bind_rows(WTvsHET_annot_lost) 
+    
+
+
+## Remove Distal Intergenic   ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+ESCvsNPC_annot_gain = tibble(ESCvsNPC_annot) %>%
+    filter(FC > 1, annotation != "Distal Intergenic") %>%
+    add_column(H3K27me3 = "gain")
+ESCvsNPC_annot_lost = tibble(ESCvsNPC_annot) %>%
+    filter(FC < (1/1), annotation != "Distal Intergenic") %>%
+    add_column(H3K27me3 = "lost")
+ESCvsNPC_annot_gain_lost = ESCvsNPC_annot_gain %>% 
+    bind_rows(ESCvsNPC_annot_lost) 
+    
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+ESCvsNPC_annot_gain = tibble(ESCvsNPC_annot) %>%
+    filter(FC > 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(H3K27me3 = "gain")
+ESCvsNPC_annot_lost = tibble(ESCvsNPC_annot) %>%
+    filter(FC < (1/1), annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(H3K27me3 = "lost")
+ESCvsNPC_annot_gain_lost = ESCvsNPC_annot_gain %>% 
+    bind_rows(ESCvsNPC_annot_lost) 
+
+
+# Import RNAseq deseq2 output
+## Raw FC ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+WT_NPC_vs_ESC = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_WT_ESC_vs_WT_NPC.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj)
+
+## Fitlered FC ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+WT_NPC_vs_ESC = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_WT_ESC_vs_WT_NPC.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj) %>%
+    filter(log2FoldChange >= 0.5 | log2FoldChange <= -0.5)
+
+
+# Merge files
+ESCvsNPC_annot_gain_lost_RNA = ESCvsNPC_annot_gain_lost %>% 
+    left_join(WT_NPC_vs_ESC) %>%
+    dplyr::select(gene, H3K27me3,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
+    unique()
+
+
+# Volcano plot
+count_data <- ESCvsNPC_annot_gain_lost_RNA %>%
+    group_by(H3K27me3, significance) %>%
+    summarise(up = sum(log2FoldChange > 0),
+              down = sum(log2FoldChange < 0),
+              total = n()) %>%
+    ungroup() %>%
+    group_by(H3K27me3) %>%
+    mutate(total_panel = sum(total)) %>%
+    ungroup()
+
+pdf("output/ChIPseeker/THOR_qval10_WT_NPCvsESC_TMM_expression.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval10_WT_NPCvsESC_UniqueBamTMM_expression.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval10_WT_NPCvsESC_UniqueBamTMM_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval10_WT_NPCvsESC_UniqueBamTMM_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval10_FC15_WT_NPCvsESC_UniqueBamTMM_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval10_FC2_WT_NPCvsESC_UniqueBamTMM_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval10_WT_NPCvsESC_UniqueBamTMM_expression_promoterAnd5_FC1.pdf", width=7, height=4)  # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval10_FC4_WT_NPCvsESC_UniqueBamTMM_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval10_WT_NPCvsESC_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval20_WT_NPCvsESC_UniqueBamTMM_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval20_WT_NPCvsESC_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE 
+
+pdf("output/ChIPseeker/THOR_qval15_WT_NPCvsESC_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval25_WT_NPCvsESC_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval30_WT_NPCvsESC_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE 
+
+ESCvsNPC_annot_gain_lost_RNA %>%
+    ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
+        geom_point(alpha = 0.8, size = 0.5) +
+        scale_color_manual(values = c("grey", "red")) +
+        labs(title = "NPC vs ESC",
+             subtitle = "Expression level of diff. bound H3K27me3 genes",
+             x = "Log2 Fold Change",
+             y = "Base Mean",
+             color = "Significant (padj <= 0.05)") +
+        facet_wrap(~H3K27me3) +
+        theme_bw() +
+        geom_text(data = count_data %>% filter(significance), 
+                  aes(x = Inf, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
+                  hjust = 1.1, vjust = 1.1, size = 3, color = "black") +
+        geom_text(data = count_data %>% distinct(H3K27me3, .keep_all = TRUE),
+                  aes(x = Inf, y = -Inf, label = paste("Total:", total_panel, "genes")),
+                  hjust = 1.1, vjust = -0.1, size = 3, color = "black")
+dev.off()
+
+
+
+# Remove the genes that both gained and lost H3K27me3
+## Identify genes that are present in both gain and lost categories
+common_genes_HET <- intersect(WTvsHET_annot_gain$gene, WTvsHET_annot_lost$gene)
+common_genes_KO <- intersect(WTvsKO_annot_gain$gene, WTvsKO_annot_lost$gene)
+
+## Remove these genes from your gain and lost data frames
+WTvsHET_annot_gain <- WTvsHET_annot_gain %>% filter(!(gene %in% common_genes_HET))
+WTvsHET_annot_lost <- WTvsHET_annot_lost %>% filter(!(gene %in% common_genes_HET))
+
+WTvsKO_annot_gain <- WTvsKO_annot_gain %>% filter(!(gene %in% common_genes_KO))
+WTvsKO_annot_lost <- WTvsKO_annot_lost %>% filter(!(gene %in% common_genes_KO))
+
+## Now bind the rows
+WTvsHET_annot_gain_lost = WTvsHET_annot_gain %>% bind_rows(WTvsHET_annot_lost)
+WTvsKO_annot_gain_lost = WTvsKO_annot_gain %>% bind_rows(WTvsKO_annot_lost)
+
+
+# Merge files with RNA
+WTvsHET_annot_gain_lost_RNA = WTvsHET_annot_gain_lost %>% 
+    left_join(HET_vs_WT) %>%
+    dplyr::select(gene, H3K27me3,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
+    unique()
+
+
+WTvsKO_annot_gain_lost_RNA = WTvsKO_annot_gain_lost %>% 
+    left_join(KO_vs_WT) %>%
+    dplyr::select(gene, H3K27me3,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
+    unique()
 
 
 
 
 
 
+# Volcano plot
+count_data <- WTvsHET_annot_gain_lost_RNA %>%
+    group_by(H3K27me3, significance) %>%
+    summarise(up = sum(log2FoldChange > 0),
+              down = sum(log2FoldChange < 0),
+              total = n()) %>%
+    ungroup() %>%
+    group_by(H3K27me3) %>%
+    mutate(total_panel = sum(total)) %>%
+    ungroup()
+
+pdf("output/ChIPseeker/THOR_qval5_HETvsWTunique_expression.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval15_HETvsWTunique_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval10_HETvsWTunique_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE
 
 
 
+WTvsHET_annot_gain_lost_RNA %>%
+    ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
+        geom_point(alpha = 0.8, size = 0.5) +
+        scale_color_manual(values = c("grey", "red")) +
+        labs(title = "HET vs WT",
+             subtitle = "Expression level of diff. bound H3K27me3 genes",
+             x = "Log2 Fold Change",
+             y = "Base Mean",
+             color = "Significant (padj <= 0.05)") +
+        facet_wrap(~H3K27me3) +
+        theme_bw() +
+        geom_text(data = count_data %>% filter(significance), 
+                  aes(x = Inf, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
+                  hjust = 1.1, vjust = 1.1, size = 3, color = "black") +
+        geom_text(data = count_data %>% distinct(H3K27me3, .keep_all = TRUE),
+                  aes(x = Inf, y = -Inf, label = paste("Total:", total_panel, "genes")),
+                  hjust = 1.1, vjust = -0.1, size = 3, color = "black")
+dev.off()
+
+count_data <- WTvsKO_annot_gain_lost_RNA %>%
+    group_by(H3K27me3, significance) %>%
+    summarise(up = sum(log2FoldChange > 0),
+              down = sum(log2FoldChange < 0),
+              total = n()) %>%
+    ungroup() %>%
+    group_by(H3K27me3) %>%
+    mutate(total_panel = sum(total)) %>%
+    ungroup()
+
+pdf("output/ChIPseeker/THOR_qval5_KOvsWTunique_expression.pdf", width=7, height=4) # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval5_KOvsWTunique_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval10_KOvsWTunique_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE
+
+
+WTvsKO_annot_gain_lost_RNA %>%
+    ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
+        geom_point(alpha = 0.8, size = 0.5) +
+        scale_color_manual(values = c("grey", "red")) +
+        labs(title = "KO vs WT",
+             subtitle = "Expression level of diff. bound H3K27me3 genes",
+             x = "Log2 Fold Change",
+             y = "Base Mean",
+             color = "Significant (padj <= 0.05)") +
+        facet_wrap(~H3K27me3) +
+        theme_bw() +
+        geom_text(data = count_data %>% filter(significance), 
+                  aes(x = Inf, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
+                  hjust = 1.1, vjust = 1.1, size = 3, color = "black") +
+        geom_text(data = count_data %>% distinct(H3K27me3, .keep_all = TRUE),
+                  aes(x = Inf, y = -Inf, label = paste("Total:", total_panel, "genes")),
+                  hjust = 1.1, vjust = -0.1, size = 3, color = "black")
+dev.off()
+
+```
 
 
 
+--> Here for **RNaseq log2FC positive = more express in NPC**; log2FC negative = LESS express in NPC vs ESC. For ChIPseq **gain = H3K27me3 GAIN/incerase in NPC**
+
+--> Uniquely aligned reads is MUCH better! 
+
+--> Optimal parameter limited nb of false positive is: **uniquely aligned reads (uniqueBam), THOR qvalue25/30, expression log2FC 0.5, peak in promoter and 5' region**
 
 
 

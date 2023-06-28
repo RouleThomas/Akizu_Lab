@@ -3315,13 +3315,28 @@ Many different tools:
 - ODIN [paper](https://academic.oup.com/bioinformatics/article/30/24/3467/2422257?login=false)
 
 
-## use uniquely aligned reads only (instead of MAPQ20 per default)
+## use uniquely aligned reads only (instead of MAPQ20 per default) with THOR
 
 - Re-generate alignment
 - call peak with MACS2
 - Proceed with DiffBind and compare the nb of diff bound sites identified (compare with )
 
-YYY Not priority, test this ONLY if the ChIP show better results when using uniquely aligned reads...
+--> test this ONLY if the ChIP show better results when using uniquely aligned reads...
+----> That is the case, ChIP perform better with uniquely aligned reads...
+
+Let's generate here uniquely aligned reads as for the ChIP, and then use again THOR to identify diff. bound sites and compared if better results, more in agreement with expression.: **test THOR with new SF, previous SF, no-SF**
+
+
+```bash
+sbatch scripts/samtools_unique_1.sh # 1681363
+sbatch scripts/samtools_unique_2.sh # 1681364
+```
+
+
+--> XXX
+
+Re-calculate new scaling factors, based on these new BAM file...
+
 
 
 
@@ -3699,20 +3714,20 @@ sbatch --dependency=afterany:1308031 scripts/bigwigmerge_THOR_WTvsKO_poisson.sh 
 
 ```bash
 # With Scaling Factor
-sbatch scripts/THOR_WTvsHET_rmdup.sh # 1674321
-sbatch scripts/THOR_WTvsHET_Keepdup.sh # 1674336
-sbatch scripts/THOR_WTvsKO_rmdup.sh # 1674364
-sbatch scripts/THOR_WTvsKO_Keepdup.sh # 1674413
+sbatch scripts/THOR_WTvsHET_rmdup.sh # 1674321 ok
+sbatch scripts/THOR_WTvsHET_Keepdup.sh # 1674336 ok
+sbatch scripts/THOR_WTvsKO_rmdup.sh # 1674364 ok
+sbatch scripts/THOR_WTvsKO_Keepdup.sh # 1674413 ok
 # Without Scaling Factor, Default TMM normalization
-sbatch scripts/THOR_WTvsHET_rmdup_TMM.sh # 1674427
-sbatch scripts/THOR_WTvsHET_Keepdup_TMM.sh # 1674435
-sbatch scripts/THOR_WTvsKO_rmdup_TMM.sh # 1674438
-sbatch scripts/THOR_WTvsKO_Keepdup_TMM.sh # 1674441
+sbatch scripts/THOR_WTvsHET_rmdup_TMM.sh # 1674427 ok
+sbatch scripts/THOR_WTvsHET_Keepdup_TMM.sh # 1674435 ok
+sbatch scripts/THOR_WTvsKO_rmdup_TMM.sh # 1674438 ok
+sbatch scripts/THOR_WTvsKO_Keepdup_TMM.sh # 1674441 ok
 ```
 
---> XXX
+--> `--rmdup` option FAILED and result in no diff. bound sites...
 
-
+Weird, `output/THOR/THOR_WTvsHET` and `output/THOR_WTvsHET_Keepdup` do NOT have the same results!!! Even though they should be the same, only differences is that I indicate `--pvalue 0.1` in THOR_WTvsHET but that theorically is the Default value...  `output/THOR_WTvsHET_Keepdup` Show much more diff. peaks so should be better to use...!!!
 
 
 
@@ -3816,12 +3831,98 @@ thor_splitted %>%
   group_by(X6) %>%
   summarise(n = n())
 
+
+
+# WTvsHET_Keepdup
+diffpeaks <- read_tsv("output/THOR/THOR_WTvsHET_Keepdup/WTvsHETKeepdup-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_HET", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2","count_WT_3","count_WT_4"), sep = ":", convert = TRUE) %>%
+  separate(count_HET, into = c("count_HET_1","count_HET_2","count_HET_3","count_HET_4"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_HET_1+count_HET_2+count_HET_3+count_HET_4) / (count_WT_1+count_WT_2+count_WT_3+count_WT_4))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_WTvsHET_Keepdup/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("8wN_WT vs KO") +
+  theme_bw()
+dev.off()
+
+pdf("output/THOR/THOR_WTvsHET_Keepdup/log2FC_qval10.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 10) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("8wN_WT vs HET_qval10") +
+  theme_bw()
+dev.off()
+
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 20) %>%
+  write_tsv("output/THOR/THOR_WTvsHET_Keepdup/THOR_qval20.bed", col_names = FALSE)
+
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 10) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+  
+# WTvsKO_Keepdup
+diffpeaks <- read_tsv("output/THOR/THOR_WTvsKO_Keepdup/WTvsKOKeepdup-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2","count_WT_3","count_WT_4"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2","count_KO_3","count_KO_4"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2+count_KO_3+count_KO_4) / (count_WT_1+count_WT_2+count_WT_3+count_WT_4))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_WTvsKO_Keepdup/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("8wN_WT vs KO") +
+  theme_bw()
+dev.off()
+
+pdf("output/THOR/THOR_WTvsKO_Keepdup/log2FC_qval15.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 15) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("8wN_WT vs KO_qval15") +
+  theme_bw()
+dev.off()
+
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 5) %>%
+  write_tsv("output/THOR/THOR_WTvsKO_Keepdup/THOR_qval5.bed", col_names = FALSE)
+
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 10) %>%
+  group_by(X6) %>%
+  summarise(n = n())
 ```
 - *NOTE: FC negative = less in mutant; positive = more in mutant*
 
 --> **qval10-15 seems optimal**; maybe too many false-positive but overall looks real!!! Do not miss any difference!! Or 20 is good too...
 
 --> Overall HET show increase H3K27me3 ! KO also but less strongly; more up/down comparable
+
+--> **`THOR_WTvsKO_Keepdup_TMM` = no SF normalization VS `THOR_WTvsKO_Keepdup` = SF applied** --> `THOR_WTvsKO_Keepdup` more diff.boud sites. Accordingly no diff. bound sites found in `THOR_WTvsHET_Keepdup_TMM` !! But many for `THOR_WTvsKHET_Keepdup`: **Better to apply spike-in SF (from DiffBind_TMM)**
 
 
 **Check on IGV how it look with different qvalue; FC treshold**
@@ -3830,6 +3931,7 @@ thor_splitted %>%
 
 ### Assign THOR-diff peaks to genes and check expression
 
+XXXXX LETS GO HERE AND CHECK keepDup and non spike in
 
 Now let's compare RNAseq (expression) and CutRun for THOR qval 15 among others:
 - Filter HETvsWT and KOvsWT diff bound genes into **gain and loss H3K27me3**
@@ -4338,7 +4440,10 @@ Need to find way to decrease the false-positive signals (ie. genes that are up-r
 - Try keeping ONLY peaks in promoter or 5` of genes is working, it works as efficiently as FC 0.25 treshold
 - combining peaks in promoter or 5` of genes and FC 0.5 is working great
 - testing with qval15 is nopt working well, as well combining this with FC expression fitlering, we lose a lot
-- Filtering the FC of diff peak is working XXXX
+- Filtering the FC of diff peak is working not so great
+- using keepDup parameter = without indicating `--pvalue 0.1`, just default is XXXX
+- Not using SF, only TMM-Default is XXXX
+
 
 
 
