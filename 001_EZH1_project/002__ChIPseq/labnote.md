@@ -5593,10 +5593,10 @@ sbatch scripts/THOR_WT_ESCvsNPC_ChIPseqSpikeInFree.sh # 1656714 ok
 sbatch scripts/THOR_WT_ESCvsNPC_UniqueBamChIPseqSpikeInFree_Corr.sh # 1661293 ok
 sbatch scripts/THOR_WT_ESCvsNPC_ChIPseqSpikeInFree_Corr.sh # 1661294 ok
 ## Time-effect for WT, Default TMM-normalization (NO SF)
-sbatch scripts/THOR_WT_ESCvsNPC_UniqueBamTMM.sh # 1673882
+sbatch scripts/THOR_WT_ESCvsNPC_UniqueBamTMM.sh # 1673882 ok
 sbatch scripts/THOR_WT_ESCvsNPC_TMM.sh # 1673885
-
-
+## Time-effect for WT, Default TMM-normalization (NO SF) with rmdup
+sbatch scripts/THOR_WT_ESCvsNPC_rmdup_TMM.sh # 1674683
 ```
 
 Go in R to explore the data real quick within `conda activate deseq2`:
@@ -5730,6 +5730,84 @@ thor_splitted %>%
   ggtitle("WT_ESC vs NPC") +
   theme_bw()
 dev.off()
+
+
+
+# WT_ESCvsNPC_TMM (Defult TMM norm)
+diffpeaks <- read_tsv("output/THOR/THOR_WT_ESCvsNPC_TMM/WTESCvsNPCTMM-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_ESC", "count_NPC", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_ESC, into = c("count_ESC_1","count_ESC_2"), sep = ":", convert = TRUE) %>%
+  separate(count_NPC, into = c("count_NPC_1","count_NPC_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_NPC_1+count_NPC_2) / (count_ESC_1+count_ESC_2))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_WT_ESCvsNPC_TMM/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("WT_ESC vs NPC") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_WT_ESCvsNPC_TMM/log2FC_qval10.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 15) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("WT_ESC vs NPC") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 20) %>%
+  write_tsv("output/THOR/THOR_WT_ESCvsNPC_TMM/THOR_qval20.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 10) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+# WT_ESCvsNPC_UniqueBamTMM (Defult TMM norm)
+diffpeaks <- read_tsv("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/WTESCvsNPCUniqueBamTMM-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_ESC", "count_NPC", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_ESC, into = c("count_ESC_1","count_ESC_2"), sep = ":", convert = TRUE) %>%
+  separate(count_NPC, into = c("count_NPC_1","count_NPC_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_NPC_1+count_NPC_2) / (count_ESC_1+count_ESC_2))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("WT_ESC vs NPC") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/log2FC_qval15.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 15) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("WT_ESC vs NPC") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 20) %>%
+  write_tsv("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval20.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 10) %>%
+  group_by(X6) %>%
+  summarise(n = n())
 ```
 
 --> `THOR_WT_ESCvsNPC_UniqueBamDiffBindTMM` and `THOR_WT_ESCvsNPC_DiffBindTMM` = bad; much more Decrease H3K27me3 upon differentation...
@@ -5766,12 +5844,11 @@ Let's collect the correct SF from ChIPseqSpikeInFree:
 
 --> Using LIB-normalize ChIPseqSpikeInFree scaling factors is similarly weird, we still have only less H3K27me3 in NPC than ESC...
 
+--> Using TMM-Default we got comparable number of Gain/Lost from ESC to NPC in WT
 
+--> qval 10-15 for WT_ESCvsNPC is good for both uniqueBam and not uniqueBam. However uniqueBam shows more H3K27me3 in ESC and non-uniqueBam show more H3K27me3 in NPC...
 
-
-## THOR without scaling factor; just TMM default
-
-
+--> uniqueBam (using pre-filtered bam files that only contain uniquely mapepd reads) versus using `--rmdup` argument in THOR is XXX
 
 
 
