@@ -5572,6 +5572,11 @@ sbatch scripts/THOR_ESC_WTvsHET_UniqueBamDiffBindTMM.sh # 1655774 ok
 sbatch scripts/THOR_ESC_WTvsHET_DiffBindTMM.sh # 1655779 ok
 sbatch scripts/THOR_ESC_WTvsKO_UniqueBamDiffBindTMM.sh # 1655812 ok
 sbatch scripts/THOR_ESC_WTvsKO_DiffBindTMM.sh # 1655834 ok
+## Genotype comparison at ESC, Default TMM-normalization (NO SF)
+sbatch scripts/THOR_ESC_WTvsHET_UniqueBamTMM.sh # 1673898
+sbatch scripts/THOR_ESC_WTvsHET_TMM.sh # 1673902
+sbatch scripts/THOR_ESC_WTvsKO_UniqueBamTMM.sh # 1673903
+sbatch scripts/THOR_ESC_WTvsKO_TMM.sh # 1673934
 ## Genotype comparison at ESC ChIPseqSpikeInFree
 sbatch scripts/THOR_ESC_WTvsHET_UniqueBamChIPseqSpikeInFree_Corr.sh # 1661296
 sbatch scripts/THOR_ESC_WTvsHET_ChIPseqSpikeInFree_Corr.sh # 1661299
@@ -5585,8 +5590,13 @@ sbatch scripts/THOR_WT_ESCvs2dN_DiffBindTMM.sh # 1655883
 ## Time-effect for WT ChIPseqSpikeInFree
 sbatch scripts/THOR_WT_ESCvsNPC_UniqueBamChIPseqSpikeInFree.sh # 1656686 ok
 sbatch scripts/THOR_WT_ESCvsNPC_ChIPseqSpikeInFree.sh # 1656714 ok
-sbatch scripts/THOR_WT_ESCvsNPC_UniqueBamChIPseqSpikeInFree_Corr.sh # 1661293
-sbatch scripts/THOR_WT_ESCvsNPC_ChIPseqSpikeInFree_Corr.sh # 1661294
+sbatch scripts/THOR_WT_ESCvsNPC_UniqueBamChIPseqSpikeInFree_Corr.sh # 1661293 ok
+sbatch scripts/THOR_WT_ESCvsNPC_ChIPseqSpikeInFree_Corr.sh # 1661294 ok
+## Time-effect for WT, Default TMM-normalization (NO SF)
+sbatch scripts/THOR_WT_ESCvsNPC_UniqueBamTMM.sh # 1673882
+sbatch scripts/THOR_WT_ESCvsNPC_TMM.sh # 1673885
+
+
 ```
 
 Go in R to explore the data real quick within `conda activate deseq2`:
@@ -5679,6 +5689,47 @@ thor_splitted %>%
   ggtitle("WT_ESC vs NPC") +
   theme_bw()
 dev.off()
+
+
+# WT_ESCvsNPC_ChIPseqSpikeInFree_Corr
+diffpeaks <- read_tsv("output/THOR/THOR_WT_ESCvsNPC_ChIPseqSpikeInFree_Corr/WTESCvsNPCChIPseqSpikeInFreeCorr-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_ESC", "count_NPC", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_ESC, into = c("count_ESC_1","count_ESC_2"), sep = ":", convert = TRUE) %>%
+  separate(count_NPC, into = c("count_NPC_1","count_NPC_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_NPC_1+count_NPC_2) / (count_ESC_1+count_ESC_2))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_WT_ESCvsNPC_ChIPseqSpikeInFree_Corr/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("WT_ESC vs NPC") +
+  theme_bw()
+dev.off()
+
+# WT_ESCvsNPC_UniqueBamChIPseqSpikeInFree_Corr
+diffpeaks <- read_tsv("output/THOR/THOR_WT_ESCvsNPC_UniqueBamChIPseqSpikeInFree_Corr/WTESCvsNPCUniqueBamChIPseqSpikeInFreeCorr-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_ESC", "count_NPC", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_ESC, into = c("count_ESC_1","count_ESC_2"), sep = ":", convert = TRUE) %>%
+  separate(count_NPC, into = c("count_NPC_1","count_NPC_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_NPC_1+count_NPC_2) / (count_ESC_1+count_ESC_2))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_WT_ESCvsNPC_UniqueBamChIPseqSpikeInFree_Corr/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("WT_ESC vs NPC") +
+  theme_bw()
+dev.off()
 ```
 
 --> `THOR_WT_ESCvsNPC_UniqueBamDiffBindTMM` and `THOR_WT_ESCvsNPC_DiffBindTMM` = bad; much more Decrease H3K27me3 upon differentation...
@@ -5713,14 +5764,18 @@ Let's collect the correct SF from ChIPseqSpikeInFree:
 
 ***NOTE: ChIPseqSpikeInFree bigwig files have NOT been generated using BamCoverage, but with  `genomeCoverageBed -bg -scale $scale ` where the `$scale` is a multiplying factor; thus I did: `1/15000000/($libSize*$SF)` --> Otherwise the non-reciprocal SF return will increase signal for ESC...*** --> File for calculation in GoogleDrive under `002__ChIPseq/ChIPseqSpikeInFactor_ScalingFactor.xlsx` and new THOR-related files as `*_Corr`
 
---> XXXX Using LIB-normalize ChIPseqSpikeInFree scaling factors is XXXX
-
---> XXXX LIB-normalize ChIPseqSpikeInFree scaling factors for genotype at ESC XXX
+--> Using LIB-normalize ChIPseqSpikeInFree scaling factors is similarly weird, we still have only less H3K27me3 in NPC than ESC...
 
 
-## THOR with ChIPseqSpikeInFree SF
 
-*See light test files above at `Create the CONFIG file`*
+
+## THOR without scaling factor; just TMM default
+
+
+
+
+
+
 
 
 

@@ -3692,6 +3692,29 @@ sbatch --dependency=afterany:1308031 scripts/bigwigmerge_THOR_WTvsKO_poisson.sh 
 --> Poisson produces very comparable bigwig, however do not generate any diff. peaks; only uncorrected diff peaks... Even though, no error...
 
 
+--> Using Default-TMM normalization (No SF) is XXX
+
+
+**IMPORTANT NOTE**: Noticed that `output/THOR_WTvsHET` and `output/THOR/THOR_WTvsHET` do not have the same number of diff. bound peaks; which is weird... I m gonna repeat the analysis and compare raw vs uniquely aligned bam read files (as I did this initially to compare whether using only uniquely aligned reads perform better)
+
+```bash
+# With Scaling Factor
+sbatch scripts/THOR_WTvsHET_rmdup.sh # 1674321
+sbatch scripts/THOR_WTvsHET_Keepdup.sh # 1674336
+sbatch scripts/THOR_WTvsKO_rmdup.sh # 1674364
+sbatch scripts/THOR_WTvsKO_Keepdup.sh # 1674413
+# Without Scaling Factor, Default TMM normalization
+sbatch scripts/THOR_WTvsHET_rmdup_TMM.sh # 1674427
+sbatch scripts/THOR_WTvsHET_Keepdup_TMM.sh # 1674435
+sbatch scripts/THOR_WTvsKO_rmdup_TMM.sh # 1674438
+sbatch scripts/THOR_WTvsKO_Keepdup_TMM.sh # 1674441
+```
+
+--> XXX
+
+
+
+
 
 Let's instead of using different pvalue to call for peak, put the raw bed output in R and filter p-value here + generate FC (found [here](http://ginolhac.github.io/chip-seq/peak/)) within `conda activate deseq2`:
 
