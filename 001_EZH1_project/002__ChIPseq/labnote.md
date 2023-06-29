@@ -5602,6 +5602,9 @@ sbatch scripts/THOR_WT_ESCvsNPC_rmdup_TMM.sh # 1674683 ok
 #### Time-effect for KO and HET, Default TMM-normalization (NO SF)
 sbatch scripts/THOR_HET_ESCvsNPC_UniqueBamTMM.sh # 1681090 ok
 sbatch scripts/THOR_KO_ESCvsNPC_UniqueBamTMM.sh # 1681115 ok
+sbatch scripts/THOR_WT_NPCvs2dN_UniqueBamTMM.sh # 1700276
+sbatch scripts/THOR_HET_NPCvs2dN_UniqueBamTMM.sh # 1700332
+sbatch scripts/THOR_KO_NPCvs2dN_UniqueBamTMM.sh # 1700357
 #### Genotype comparison at NPC and 2dN, Default TMM-normalization (NO SF)
 sbatch scripts/THOR_NPC_WTvsHET_UniqueBamTMM.sh # 1681129 ok
 sbatch scripts/THOR_NPC_WTvsKO_UniqueBamTMM.sh # 1681138 ok
@@ -5824,7 +5827,6 @@ thor_splitted %>%
   summarise(n = n())
 
 
-XXXX srun --mem=150g --pty bash -l / conda activate deseq2
 
 # HET_ESCvsNPC_UniqueBamTMM (Defult TMM norm)
 diffpeaks <- read_tsv("output/THOR/THOR_HET_ESCvsNPC_UniqueBamTMM/HETESCvsNPCUniqueBamTMM-diffpeaks.bed",
@@ -5842,25 +5844,23 @@ thor_splitted %>%
   ggplot(aes(x = log2(FC))) +
   geom_histogram() +
   scale_x_continuous(breaks = seq(-5, 3, 1)) +
-  ggtitle("WT_ESC vs NPC") +
+  ggtitle("HET_ESC vs NPC") +
   theme_bw()
 dev.off()
-pdf("output/THOR/THOR_HET_ESCvsNPC_UniqueBamTMM/log2FC_qval15.pdf", width=14, height=14)
+pdf("output/THOR/THOR_HET_ESCvsNPC_UniqueBamTMM/log2FC_qval30.pdf", width=14, height=14)
 thor_splitted %>%
-  filter(qval > 15) %>%
+  filter(qval > 30) %>%
   ggplot(aes(x = log2(FC))) +
   geom_histogram() +
   scale_x_continuous(breaks = seq(-5, 3, 1)) +
-  ggtitle("WT_ESC vs NPC") +
+  ggtitle("HET_ESC vs NPC") +
   theme_bw()
 dev.off()
 ## create a bed file, append chr to chromosome names and write down the file
 thor_splitted %>%
-  filter(qval > 20) %>%
-  write_tsv("output/THOR/THOR_HET_ESCvsNPC_UniqueBamTMM/THOR_qval20.bed", col_names = FALSE)
-thor_splitted %>%
   filter(qval > 30) %>%
   write_tsv("output/THOR/THOR_HET_ESCvsNPC_UniqueBamTMM/THOR_qval30.bed", col_names = FALSE)
+
 
 ## how many minus / plus
 thor_splitted %>%
@@ -5871,7 +5871,7 @@ thor_splitted %>%
 
 
 # KO_ESCvsNPC_UniqueBamTMM (Defult TMM norm)
-diffpeaks <- read_tsv("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/WTESCvsNPCUniqueBamTMM-diffpeaks.bed",
+diffpeaks <- read_tsv("output/THOR/THOR_KO_ESCvsNPC_UniqueBamTMM/KOESCvsNPCUniqueBamTMM-diffpeaks.bed",
                       col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
 ## split the last field and calculate FC
 thor_splitted = diffpeaks %>%
@@ -5881,59 +5881,136 @@ thor_splitted = diffpeaks %>%
   mutate(FC = (count_NPC_1+count_NPC_2) / (count_ESC_1+count_ESC_2))
   
 ## plot the histogram of the fold-change computed above, count second condition / count 1st condition
-pdf("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/log2FC.pdf", width=14, height=14)
+pdf("output/THOR/THOR_KO_ESCvsNPC_UniqueBamTMM/log2FC.pdf", width=14, height=14)
 thor_splitted %>%
   ggplot(aes(x = log2(FC))) +
   geom_histogram() +
   scale_x_continuous(breaks = seq(-5, 3, 1)) +
-  ggtitle("WT_ESC vs NPC") +
+  ggtitle("KO_ESC vs NPC") +
   theme_bw()
 dev.off()
-pdf("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/log2FC_qval15.pdf", width=14, height=14)
+pdf("output/THOR/THOR_KO_ESCvsNPC_UniqueBamTMM/log2FC_qval30.pdf", width=14, height=14)
 thor_splitted %>%
-  filter(qval > 15) %>%
+  filter(qval > 30) %>%
   ggplot(aes(x = log2(FC))) +
   geom_histogram() +
   scale_x_continuous(breaks = seq(-5, 3, 1)) +
-  ggtitle("WT_ESC vs NPC") +
+  ggtitle("KO_ESC vs NPC") +
   theme_bw()
 dev.off()
 ## create a bed file, append chr to chromosome names and write down the file
 thor_splitted %>%
-  filter(qval > 20) %>%
-  write_tsv("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval20.bed", col_names = FALSE)
-thor_splitted %>%
   filter(qval > 30) %>%
-  write_tsv("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval30.bed", col_names = FALSE)
+  write_tsv("output/THOR/THOR_KO_ESCvsNPC_UniqueBamTMM/THOR_qval30.bed", col_names = FALSE)
+  
 
 ## how many minus / plus
 thor_splitted %>%
   filter(qval > 10) %>%
   group_by(X6) %>%
   summarise(n = n())
+
+
+
+# ESC_WTvsHET_UniqueBamTMM (Defult TMM norm)
+diffpeaks <- read_tsv("output/THOR/THOR_ESC_WTvsHET_UniqueBamTMM/ESCWTvsHETUniqueBamTMM-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_HET", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2"), sep = ":", convert = TRUE) %>%
+  separate(count_HET, into = c("count_HET_1","count_HET_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_HET_1+count_HET_2) / (count_WT_1+count_WT_2))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_ESC_WTvsHET_UniqueBamTMM/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("ESC_WT vs HET") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_ESC_WTvsHET_UniqueBamTMM/log2FC_qval25.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 25) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("ESC_WT vs HET") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 5) %>%
+  write_tsv("output/THOR/THOR_ESC_WTvsHET_UniqueBamTMM/THOR_qval5.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 10) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+# ESC_WTvsKO_UniqueBamTMM (Defult TMM norm)
+diffpeaks <- read_tsv("output/THOR/THOR_ESC_WTvsKO_UniqueBamTMM/ESCWTvsKOUniqueBamTMM-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2) / (count_WT_1+count_WT_2))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_ESC_WTvsKO_UniqueBamTMM/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("ESC_WT vs KO") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_ESC_WTvsKO_UniqueBamTMM/log2FC_qval25.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 25) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("ESC_WT vs KO") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 5) %>%
+  write_tsv("output/THOR/THOR_ESC_WTvsKO_UniqueBamTMM/THOR_qval5.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 10) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
 
 # NPC_WTvsHET_UniqueBamTMM (Defult TMM norm)
-diffpeaks <- read_tsv("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/WTESCvsNPCUniqueBamTMM-diffpeaks.bed",
+diffpeaks <- read_tsv("output/THOR/THOR_NPC_WTvsHET_UniqueBamTMM/NPCWTvsHETUniqueBamTMM-diffpeaks.bed",
                       col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
 ## split the last field and calculate FC
 thor_splitted = diffpeaks %>%
-  separate(X11, into = c("count_ESC", "count_NPC", "qval"), sep = ";", convert = TRUE) %>%
-  separate(count_ESC, into = c("count_ESC_1","count_ESC_2"), sep = ":", convert = TRUE) %>%
-  separate(count_NPC, into = c("count_NPC_1","count_NPC_2"), sep = ":", convert = TRUE) %>%
-  mutate(FC = (count_NPC_1+count_NPC_2) / (count_ESC_1+count_ESC_2))
-  
+  separate(X11, into = c("count_WT", "count_HET", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2"), sep = ":", convert = TRUE) %>%
+  separate(count_HET, into = c("count_HET_1","count_HET_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_HET_1+count_HET_2) / (count_WT_1+count_WT_2))
 ## plot the histogram of the fold-change computed above, count second condition / count 1st condition
-pdf("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/log2FC.pdf", width=14, height=14)
+pdf("output/THOR/THOR_NPC_WTvsHET_UniqueBamTMM/log2FC.pdf", width=14, height=14)
 thor_splitted %>%
   ggplot(aes(x = log2(FC))) +
   geom_histogram() +
   scale_x_continuous(breaks = seq(-5, 3, 1)) +
-  ggtitle("WT_ESC vs NPC") +
+  ggtitle("NPC_WT vs HET") +
   theme_bw()
 dev.off()
-pdf("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/log2FC_qval15.pdf", width=14, height=14)
+pdf("output/THOR/THOR_NPC_WTvsHET_UniqueBamTMM/log2FC_qval25.pdf", width=14, height=14)
 thor_splitted %>%
-  filter(qval > 15) %>%
+  filter(qval > 25) %>%
   ggplot(aes(x = log2(FC))) +
   geom_histogram() +
   scale_x_continuous(breaks = seq(-5, 3, 1)) +
@@ -5942,144 +6019,139 @@ thor_splitted %>%
 dev.off()
 ## create a bed file, append chr to chromosome names and write down the file
 thor_splitted %>%
-  filter(qval > 20) %>%
-  write_tsv("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval20.bed", col_names = FALSE)
-thor_splitted %>%
-  filter(qval > 30) %>%
-  write_tsv("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval30.bed", col_names = FALSE)
-
-## how many minus / plus
+  filter(qval > 5) %>%
+  write_tsv("output/THOR/THOR_NPC_WTvsHET_UniqueBamTMM/THOR_qval5.bed", col_names = FALSE)
+  ## how many minus / plus
 thor_splitted %>%
   filter(qval > 10) %>%
   group_by(X6) %>%
   summarise(n = n())
+
+
 
 # NPC_WTvsKO_UniqueBamTMM (Defult TMM norm)
-diffpeaks <- read_tsv("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/WTESCvsNPCUniqueBamTMM-diffpeaks.bed",
+diffpeaks <- read_tsv("output/THOR/THOR_NPC_WTvsKO_UniqueBamTMM/NPCWTvsKOUniqueBamTMM-diffpeaks.bed",
                       col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
 ## split the last field and calculate FC
 thor_splitted = diffpeaks %>%
-  separate(X11, into = c("count_ESC", "count_NPC", "qval"), sep = ";", convert = TRUE) %>%
-  separate(count_ESC, into = c("count_ESC_1","count_ESC_2"), sep = ":", convert = TRUE) %>%
-  separate(count_NPC, into = c("count_NPC_1","count_NPC_2"), sep = ":", convert = TRUE) %>%
-  mutate(FC = (count_NPC_1+count_NPC_2) / (count_ESC_1+count_ESC_2))
-  
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2) / (count_WT_1+count_WT_2))
 ## plot the histogram of the fold-change computed above, count second condition / count 1st condition
-pdf("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/log2FC.pdf", width=14, height=14)
+pdf("output/THOR/THOR_NPC_WTvsKO_UniqueBamTMM/log2FC.pdf", width=14, height=14)
 thor_splitted %>%
   ggplot(aes(x = log2(FC))) +
   geom_histogram() +
   scale_x_continuous(breaks = seq(-5, 3, 1)) +
-  ggtitle("WT_ESC vs NPC") +
+  ggtitle("NPC_WT vs KO") +
   theme_bw()
 dev.off()
-pdf("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/log2FC_qval15.pdf", width=14, height=14)
+pdf("output/THOR/THOR_NPC_WTvsKO_UniqueBamTMM/log2FC_qval25.pdf", width=14, height=14)
 thor_splitted %>%
-  filter(qval > 15) %>%
+  filter(qval > 25) %>%
   ggplot(aes(x = log2(FC))) +
   geom_histogram() +
   scale_x_continuous(breaks = seq(-5, 3, 1)) +
-  ggtitle("WT_ESC vs NPC") +
+  ggtitle("NPC_WT vs KO") +
   theme_bw()
 dev.off()
 ## create a bed file, append chr to chromosome names and write down the file
 thor_splitted %>%
-  filter(qval > 20) %>%
-  write_tsv("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval20.bed", col_names = FALSE)
-thor_splitted %>%
-  filter(qval > 30) %>%
-  write_tsv("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval30.bed", col_names = FALSE)
-
+  filter(qval > 5) %>%
+  write_tsv("output/THOR/THOR_NPC_WTvsKO_UniqueBamTMM/THOR_qval5.bed", col_names = FALSE)
 ## how many minus / plus
 thor_splitted %>%
   filter(qval > 10) %>%
   group_by(X6) %>%
   summarise(n = n())
+
 
 
 # 2dN_WTvsHET_UniqueBamTMM (Defult TMM norm)
-diffpeaks <- read_tsv("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/WTESCvsNPCUniqueBamTMM-diffpeaks.bed",
+diffpeaks <- read_tsv("output/THOR/THOR_2dN_WTvsHET_UniqueBamTMM/2dNWTvsHETUniqueBamTMM-diffpeaks.bed",
                       col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
 ## split the last field and calculate FC
 thor_splitted = diffpeaks %>%
-  separate(X11, into = c("count_ESC", "count_NPC", "qval"), sep = ";", convert = TRUE) %>%
-  separate(count_ESC, into = c("count_ESC_1","count_ESC_2"), sep = ":", convert = TRUE) %>%
-  separate(count_NPC, into = c("count_NPC_1","count_NPC_2"), sep = ":", convert = TRUE) %>%
-  mutate(FC = (count_NPC_1+count_NPC_2) / (count_ESC_1+count_ESC_2))
+  separate(X11, into = c("count_WT", "count_HET", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2"), sep = ":", convert = TRUE) %>%
+  separate(count_HET, into = c("count_HET_1","count_HET_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_HET_1+count_HET_2) / (count_WT_1+count_WT_2))
   
 ## plot the histogram of the fold-change computed above, count second condition / count 1st condition
-pdf("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/log2FC.pdf", width=14, height=14)
+pdf("output/THOR/THOR_2dN_WTvsHET_UniqueBamTMM/log2FC.pdf", width=14, height=14)
 thor_splitted %>%
   ggplot(aes(x = log2(FC))) +
   geom_histogram() +
   scale_x_continuous(breaks = seq(-5, 3, 1)) +
-  ggtitle("WT_ESC vs NPC") +
+  ggtitle("2dN_WT vs HET") +
   theme_bw()
 dev.off()
-pdf("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/log2FC_qval15.pdf", width=14, height=14)
+pdf("output/THOR/THOR_2dN_WTvsHET_UniqueBamTMM/log2FC_qval25.pdf", width=14, height=14)
 thor_splitted %>%
-  filter(qval > 15) %>%
+  filter(qval > 25) %>%
   ggplot(aes(x = log2(FC))) +
   geom_histogram() +
   scale_x_continuous(breaks = seq(-5, 3, 1)) +
-  ggtitle("WT_ESC vs NPC") +
+  ggtitle("2dN_WT vs HET") +
   theme_bw()
 dev.off()
 ## create a bed file, append chr to chromosome names and write down the file
 thor_splitted %>%
-  filter(qval > 20) %>%
-  write_tsv("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval20.bed", col_names = FALSE)
-thor_splitted %>%
-  filter(qval > 30) %>%
-  write_tsv("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval30.bed", col_names = FALSE)
-
+  filter(qval > 5) %>%
+  write_tsv("output/THOR/THOR_2dN_WTvsHET_UniqueBamTMM/THOR_qval5.bed", col_names = FALSE)
 ## how many minus / plus
 thor_splitted %>%
   filter(qval > 10) %>%
   group_by(X6) %>%
   summarise(n = n())
+
+
 
 # 2dN_WTvsKO_UniqueBamTMM (Defult TMM norm)
-diffpeaks <- read_tsv("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/WTESCvsNPCUniqueBamTMM-diffpeaks.bed",
+diffpeaks <- read_tsv("output/THOR/THOR_2dN_WTvsKO_UniqueBamTMM/2dNWTvsKOUniqueBamTMM-diffpeaks.bed",
                       col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
 ## split the last field and calculate FC
 thor_splitted = diffpeaks %>%
-  separate(X11, into = c("count_ESC", "count_NPC", "qval"), sep = ";", convert = TRUE) %>%
-  separate(count_ESC, into = c("count_ESC_1","count_ESC_2"), sep = ":", convert = TRUE) %>%
-  separate(count_NPC, into = c("count_NPC_1","count_NPC_2"), sep = ":", convert = TRUE) %>%
-  mutate(FC = (count_NPC_1+count_NPC_2) / (count_ESC_1+count_ESC_2))
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2) / (count_WT_1+count_WT_2))
   
 ## plot the histogram of the fold-change computed above, count second condition / count 1st condition
-pdf("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/log2FC.pdf", width=14, height=14)
+pdf("output/THOR/THOR_2dN_WTvsKO_UniqueBamTMM/log2FC.pdf", width=14, height=14)
 thor_splitted %>%
   ggplot(aes(x = log2(FC))) +
   geom_histogram() +
   scale_x_continuous(breaks = seq(-5, 3, 1)) +
-  ggtitle("WT_ESC vs NPC") +
+  ggtitle("2dN_WT vs KO") +
   theme_bw()
 dev.off()
-pdf("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/log2FC_qval15.pdf", width=14, height=14)
+pdf("output/THOR/THOR_2dN_WTvsKO_UniqueBamTMM/log2FC_qval25.pdf", width=14, height=14)
 thor_splitted %>%
-  filter(qval > 15) %>%
+  filter(qval > 25) %>%
   ggplot(aes(x = log2(FC))) +
   geom_histogram() +
   scale_x_continuous(breaks = seq(-5, 3, 1)) +
-  ggtitle("WT_ESC vs NPC") +
+  ggtitle("2dN_WT vs KO") +
   theme_bw()
 dev.off()
 ## create a bed file, append chr to chromosome names and write down the file
 thor_splitted %>%
-  filter(qval > 20) %>%
-  write_tsv("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval20.bed", col_names = FALSE)
-thor_splitted %>%
-  filter(qval > 30) %>%
-  write_tsv("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval30.bed", col_names = FALSE)
-
+  filter(qval > 5) %>%
+  write_tsv("output/THOR/THOR_2dN_WTvsKO_UniqueBamTMM/THOR_qval5.bed", col_names = FALSE)
 ## how many minus / plus
 thor_splitted %>%
   filter(qval > 10) %>%
   group_by(X6) %>%
   summarise(n = n())
+
+# WT_NPCvs2dN_UniqueBamTMM (Defult TMM norm)
+XXX
+# HET_NPCvs2dN_UniqueBamTMM
+XXX
+# KO_NPCvs2dN_UniqueBamTMM
+XXX
 ```
 
 --> `THOR_WT_ESCvsNPC_UniqueBamDiffBindTMM` and `THOR_WT_ESCvsNPC_DiffBindTMM` = bad; much more Decrease H3K27me3 upon differentation...
@@ -6087,6 +6159,14 @@ thor_splitted %>%
 
 --> `THOR_WT_ESCvsNPC_UniqueBamChIPseqSpikeInFree` and `THOR_WT_ESCvsNPC_ChIPseqSpikeInFree` = bad; show only decrease H3K27me3 upon differentiation... THIS IS WEIRD... As scaling factor used should show increase!! 
 ----> Mistake is that I directly put the output SF value from ChIPseqSpikeInFree, but should have normalize it for library-size before; with:   `1 / (15000000/($libSize*$SF))`
+
+--> Analysis with **UniqueBamTMM** (no SF applied):
+----> **time**-effect; WT similar amount gain/lost from ESC to NPC; however for HET and KO, most are lost H3K27me3 upon diff
+----> **genotype**-effect; at ESC/NPC/2dN HET and KO lead to overall decrease of H3K27me3 (this was NOT observed with the CutRun data...)
+------> WT vs KO at 2dN failed; almost no diff. sites
+
+
+
 
 Let's collect the correct SF from ChIPseqSpikeInFree:
 
@@ -6126,8 +6206,6 @@ Let's collect the correct SF from ChIPseqSpikeInFree:
 
 ### Assign THOR-diff peaks to genes and check expression
 
-XXXXX LETS GO HERE AND CHECK keepDup and non spike in
-
 Now let's compare RNAseq (expression) and CutRun for THOR qval 15 among others:
 - Filter HETvsWT and KOvsWT diff bound genes into **gain and loss H3K27me3**
 - **Keep only signal in Promoter, gene body and TES** (ie. filter out peak assigned to intergenic)
@@ -6151,6 +6229,7 @@ library(VennDiagram)
 
 
 # Import diff. peaks
+## TIME-EFFECT
 ## qval10_WT_ESCvsNPC_TMM
 ESCvsNPC = read.table('output/THOR/THOR_WT_ESCvsNPC_TMM/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_ESC_1= V11, count_ESC_2=V12, count_NPC_1=V13, count_NPC_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_ESC_1,count_ESC_2,count_NPC_1,count_NPC_2)
 ## qval10_WT_ESCvsNPC_UniqueBamTMM
@@ -6166,24 +6245,38 @@ ESCvsNPC = read.table('output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval30.bed
 ## qval20_WT_ESCvsNPC_TMM
 ESCvsNPC = read.table('output/THOR/THOR_WT_ESCvsNPC_TMM/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_ESC_1= V11, count_ESC_2=V12, count_NPC_1=V13, count_NPC_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_ESC_1,count_ESC_2,count_NPC_1,count_NPC_2)
 
-
-
+## qval10_HET_ESCvsNPC_UniqueBamTMM
+ESCvsNPC = read.table('output/THOR/THOR_HET_ESCvsNPC_UniqueBamTMM/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_ESC_1= V11, count_ESC_2=V12, count_NPC_1=V13, count_NPC_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_ESC_1,count_ESC_2,count_NPC_1,count_NPC_2)
 ## qval25_HET_ESCvsNPC_UniqueBamTMM
-XXX
-## qval30_HET_ESCvsNPC_UniqueBamTMM
-XXX
-
+ESCvsNPC = read.table('output/THOR/THOR_HET_ESCvsNPC_UniqueBamTMM/THOR_qval25.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_ESC_1= V11, count_ESC_2=V12, count_NPC_1=V13, count_NPC_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_ESC_1,count_ESC_2,count_NPC_1,count_NPC_2)
+## qval10_KO_ESCvsNPC_UniqueBamTMM
+ESCvsNPC = read.table('output/THOR/THOR_KO_ESCvsNPC_UniqueBamTMM/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_ESC_1= V11, count_ESC_2=V12, count_NPC_1=V13, count_NPC_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_ESC_1,count_ESC_2,count_NPC_1,count_NPC_2)
 ## qval25_KO_ESCvsNPC_UniqueBamTMM
-XXX
-## qval30_KO_ESCvsNPC_UniqueBamTMM
-XXX
+ESCvsNPC = read.table('output/THOR/THOR_KO_ESCvsNPC_UniqueBamTMM/THOR_qval25.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_ESC_1= V11, count_ESC_2=V12, count_NPC_1=V13, count_NPC_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_ESC_1,count_ESC_2,count_NPC_1,count_NPC_2)
+
+
+## GENOTYPE-EFFECT : !!! TO MAKE IT SIMPLE, I KEPT the 'ESCvsNPC' title !!!!
+## qval5_ESC_WTvsHET_UniqueBamTMM
+ESCvsNPC = read.table('output/THOR/THOR_ESC_WTvsHET_UniqueBamTMM/THOR_qval5.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
+## qval10_ESC_WTvsHET_UniqueBamTMM
+ESCvsNPC = read.table('output/THOR/THOR_ESC_WTvsHET_UniqueBamTMM/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
+## qval5_ESC_WTvsKO_UniqueBamTMM
+ESCvsNPC = read.table('output/THOR/THOR_ESC_WTvsKO_UniqueBamTMM/THOR_qval5.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
+## qval10_ESC_WTvsKO_UniqueBamTMM
+ESCvsNPC = read.table('output/THOR/THOR_ESC_WTvsKO_UniqueBamTMM/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
+## qval5_NPC_WTvsHET_UniqueBamTMM
+ESCvsNPC = read.table('output/THOR/THOR_NPC_WTvsHET_UniqueBamTMM/THOR_qval5.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
+## qval10_NPC_WTvsHET_UniqueBamTMM
+ESCvsNPC = read.table('output/THOR/THOR_NPC_WTvsHET_UniqueBamTMM/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
+## qval10_NPC_WTvsKO_UniqueBamTMM
+ESCvsNPC = read.table('output/THOR/THOR_NPC_WTvsKO_UniqueBamTMM/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
+## qval10_2dN_WTvsHET_UniqueBamTMM
+ESCvsNPC = read.table('output/THOR/THOR_2dN_WTvsHET_UniqueBamTMM/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
+
+
 
 # Tidy peaks #-->> Re-Run from here with different qvalue!!
 ESCvsNPC_gr = makeGRangesFromDataFrame(ESCvsNPC,keep.extra.columns=TRUE)
-
-## ADD HERE THE 3 GENOTYPES !!!
-
-
 gr_list <- list(ESCvsNPC=ESCvsNPC_gr)
 
 
@@ -6196,7 +6289,6 @@ ESCvsNPC_annot <- as.data.frame(peakAnnoList[["ESCvsNPC"]]@anno)
 
 
 
-
 ## Convert entrez gene IDs to gene symbols
 ESCvsNPC_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = ESCvsNPC_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
 
@@ -6204,13 +6296,16 @@ ESCvsNPC_annot$gene <- mapIds(org.Hs.eg.db, keys = ESCvsNPC_annot$geneId, column
 
 
 ## Save output table
-write.table(ESCvsNPC_annot, file="output/ChIPseeker/annotation_WT_ESCvsNPC_qval30_UniqueBamTMM.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-
-
-# load annotation tables
-# WTvsHET_qval5_annot <- read.table("output/ChIPseeker/annotation_WTvsHET_qval5.txt", sep="\t", header=TRUE)
-
-
+### TIME-EFFECT
+write.table(ESCvsNPC_annot, file="output/ChIPseeker/annotation_WT_ESCvsNPC_qval10_UniqueBamTMM.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(ESCvsNPC_annot, file="output/ChIPseeker/annotation_HET_ESCvsNPC_qval25_UniqueBamTMM.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(ESCvsNPC_annot, file="output/ChIPseeker/annotation_KO_ESCvsNPC_qval25_UniqueBamTMM.txt", sep="\t", quote=F, row.names=F) 
+### GENOTYPE-EFFECT
+write.table(ESCvsNPC_annot, file="output/ChIPseeker/annotation_ESC_WTvsHET_qval5_UniqueBamTMM.txt", sep="\t", quote=F, row.names=F) 
+write.table(ESCvsNPC_annot, file="output/ChIPseeker/annotation_ESC_WTvsKO_qval10_UniqueBamTMM.txt", sep="\t", quote=F, row.names=F) 
+write.table(ESCvsNPC_annot, file="output/ChIPseeker/annotation_NPC_WTvsHET_qval10_UniqueBamTMM.txt", sep="\t", quote=F, row.names=F) 
+write.table(ESCvsNPC_annot, file="output/ChIPseeker/annotation_NPC_WTvsKO_qval10_UniqueBamTMM.txt", sep="\t", quote=F, row.names=F) 
+write.table(ESCvsNPC_annot, file="output/ChIPseeker/annotation_2dN_WTvsHET_qval10_UniqueBamTMM.txt", sep="\t", quote=F, row.names=F) 
 # Filter Gain/Loss sites
 ## KEEP Distal Intergenic (keep ALL)   ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
 WTvsHET_annot_gain = tibble(WTvsHET_annot) %>%
@@ -6253,15 +6348,43 @@ WT_NPC_vs_ESC = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_WT_ESC_vs
     dplyr::select(gene, baseMean,log2FoldChange,padj)
 
 ## Fitlered FC ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
-WT_NPC_vs_ESC = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_WT_ESC_vs_WT_NPC.txt')) %>%
+#### TIME-EFFECT
+RNA_expression = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_WT_ESC_vs_WT_NPC.txt')) %>%
     separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
     dplyr::select(gene, baseMean,log2FoldChange,padj) %>%
     filter(log2FoldChange >= 0.5 | log2FoldChange <= -0.5)
-
-
+RNA_expression = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_HET_ESC_vs_HET_NPC.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj) %>%
+    filter(log2FoldChange >= 0.5 | log2FoldChange <= -0.5)
+RNA_expression = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_KO_ESC_vs_KO_NPC.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj) %>%
+    filter(log2FoldChange >= 0.5 | log2FoldChange <= -0.5)
+#### GENOTYPE-EFFECT
+RNA_expression = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_ESC_HET_vs_ESC_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj) %>%
+    filter(log2FoldChange >= 0.5 | log2FoldChange <= -0.5)    
+RNA_expression = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_ESC_KO_vs_ESC_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj) %>%
+    filter(log2FoldChange >= 0.5 | log2FoldChange <= -0.5)
+RNA_expression = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_NPC_HET_vs_NPC_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj) %>%
+    filter(log2FoldChange >= 0.5 | log2FoldChange <= -0.5)
+RNA_expression = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_NPC_KO_vs_NPC_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj) %>%
+    filter(log2FoldChange >= 0.5 | log2FoldChange <= -0.5)
+RNA_expression = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_2dN_HET_vs_2dN_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj) %>%
+    filter(log2FoldChange >= 0.5 | log2FoldChange <= -0.5)
 # Merge files
 ESCvsNPC_annot_gain_lost_RNA = ESCvsNPC_annot_gain_lost %>% 
-    left_join(WT_NPC_vs_ESC) %>%
+    left_join(RNA_expression) %>%
     dplyr::select(gene, H3K27me3,baseMean,log2FoldChange,padj) %>%
     filter(gene != "NA") %>%
     mutate(baseMean = replace_na(baseMean, 0),
@@ -6282,6 +6405,8 @@ count_data <- ESCvsNPC_annot_gain_lost_RNA %>%
     mutate(total_panel = sum(total)) %>%
     ungroup()
 
+
+## TIME-EFFECT
 pdf("output/ChIPseeker/THOR_qval10_WT_NPCvsESC_TMM_expression.pdf", width=7, height=4)  # CHANGE TITLE
 pdf("output/ChIPseeker/THOR_qval10_WT_NPCvsESC_UniqueBamTMM_expression.pdf", width=7, height=4)  # CHANGE TITLE
 pdf("output/ChIPseeker/THOR_qval10_WT_NPCvsESC_UniqueBamTMM_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
@@ -6297,6 +6422,17 @@ pdf("output/ChIPseeker/THOR_qval20_WT_NPCvsESC_TMM_expression_promoterAnd5_FC05.
 pdf("output/ChIPseeker/THOR_qval15_WT_NPCvsESC_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE 
 pdf("output/ChIPseeker/THOR_qval25_WT_NPCvsESC_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE 
 pdf("output/ChIPseeker/THOR_qval30_WT_NPCvsESC_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE 
+
+pdf("output/ChIPseeker/THOR_qval25_HET_NPCvsESC_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval25_KO_NPCvsESC_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE 
+
+
+## GENOTYPE-EFFECT
+pdf("output/ChIPseeker/THOR_qval5_ESC_WTvsHET_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval10_ESC_WTvsKO_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval10_NPC_WTvsHET_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval10_NPC_WTvsKO_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval10_2dN_WTvsHET_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE 
 
 ESCvsNPC_annot_gain_lost_RNA %>%
     ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
@@ -6435,16 +6571,19 @@ dev.off()
 
 ```
 
-
-
+**Elucidate what is the best paramter to use:**
 --> Here for **RNaseq log2FC positive = more express in NPC**; log2FC negative = LESS express in NPC vs ESC. For ChIPseq **gain = H3K27me3 GAIN/incerase in NPC**
 
 --> Uniquely aligned reads is MUCH better! 
 
 --> Optimal parameter limited nb of false positive is: **uniquely aligned reads (uniqueBam), THOR qvalue25/30, expression log2FC 0.5, peak in promoter and 5' region**
 
+**One-by-one comparison; Genotype and Time -effect**
+--> Time-Effect, ESC to NPC; HET and KO; most sites lose H3K27me3!; very few gain! (in agreement with gene expresion...)
+----> Thus, not clear how the genes are downregulated upon ESC to NPC in mutants... Seems NOT by H3K27me3, as compare to the WT where that is indeed the case!!!
 
 
+--> Genotype-effect; probably MANY intergenic region affected; with LOST of H3K27me3 for HET and KO! Because, when filtering and keeping only the peak within the genes; we got comparable gain/lost genes affected
 
 
 
