@@ -5803,9 +5803,9 @@ thor_splitted %>%
   ggtitle("WT_ESC vs NPC") +
   theme_bw()
 dev.off()
-pdf("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/log2FC_qval15.pdf", width=14, height=14)
+pdf("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/log2FC_qval25.pdf", width=14, height=14)
 thor_splitted %>%
-  filter(qval > 15) %>%
+  filter(qval > 25) %>%
   ggplot(aes(x = log2(FC))) +
   geom_histogram() +
   scale_x_continuous(breaks = seq(-5, 3, 1)) +
@@ -5822,7 +5822,7 @@ thor_splitted %>%
 
 ## how many minus / plus
 thor_splitted %>%
-  filter(qval > 10) %>%
+  filter(qval > 25) %>%
   group_by(X6) %>%
   summarise(n = n())
 
@@ -5864,7 +5864,7 @@ thor_splitted %>%
 
 ## how many minus / plus
 thor_splitted %>%
-  filter(qval > 10) %>%
+  filter(qval > 25) %>%
   group_by(X6) %>%
   summarise(n = n())
 
@@ -5945,7 +5945,7 @@ thor_splitted %>%
   write_tsv("output/THOR/THOR_ESC_WTvsHET_UniqueBamTMM/THOR_qval5.bed", col_names = FALSE)
 ## how many minus / plus
 thor_splitted %>%
-  filter(qval > 10) %>%
+  filter(qval > 25) %>%
   group_by(X6) %>%
   summarise(n = n())
 
@@ -5984,7 +5984,7 @@ thor_splitted %>%
   write_tsv("output/THOR/THOR_ESC_WTvsKO_UniqueBamTMM/THOR_qval5.bed", col_names = FALSE)
 ## how many minus / plus
 thor_splitted %>%
-  filter(qval > 10) %>%
+  filter(qval > 25) %>%
   group_by(X6) %>%
   summarise(n = n())
 
@@ -6023,7 +6023,7 @@ thor_splitted %>%
   write_tsv("output/THOR/THOR_NPC_WTvsHET_UniqueBamTMM/THOR_qval5.bed", col_names = FALSE)
   ## how many minus / plus
 thor_splitted %>%
-  filter(qval > 10) %>%
+  filter(qval > 25) %>%
   group_by(X6) %>%
   summarise(n = n())
 
@@ -6062,7 +6062,7 @@ thor_splitted %>%
   write_tsv("output/THOR/THOR_NPC_WTvsKO_UniqueBamTMM/THOR_qval5.bed", col_names = FALSE)
 ## how many minus / plus
 thor_splitted %>%
-  filter(qval > 10) %>%
+  filter(qval > 25) %>%
   group_by(X6) %>%
   summarise(n = n())
 
@@ -6410,18 +6410,18 @@ ESCvsNPC = read.table('output/THOR/THOR_HET_NPCvs2dN_UniqueBamTMM/THOR_qval25.be
 ## GENOTYPE-EFFECT : !!! TO MAKE IT SIMPLE, I KEPT the 'ESCvsNPC' title !!!!
 ## qval5_ESC_WTvsHET_UniqueBamTMM
 ESCvsNPC = read.table('output/THOR/THOR_ESC_WTvsHET_UniqueBamTMM/THOR_qval5.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
-## qval10_ESC_WTvsHET_UniqueBamTMM
-ESCvsNPC = read.table('output/THOR/THOR_ESC_WTvsHET_UniqueBamTMM/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
-## qval5_ESC_WTvsKO_UniqueBamTMM
-ESCvsNPC = read.table('output/THOR/THOR_ESC_WTvsKO_UniqueBamTMM/THOR_qval5.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
+## qval25_ESC_WTvsHET_UniqueBamTMM
+ESCvsNPC = read.table('output/THOR/THOR_ESC_WTvsHET_UniqueBamTMM/THOR_qval25.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
+## qval25_ESC_WTvsKO_UniqueBamTMM
+ESCvsNPC = read.table('output/THOR/THOR_ESC_WTvsKO_UniqueBamTMM/THOR_qval25.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
 ## qval10_ESC_WTvsKO_UniqueBamTMM
 ESCvsNPC = read.table('output/THOR/THOR_ESC_WTvsKO_UniqueBamTMM/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
 ## qval5_NPC_WTvsHET_UniqueBamTMM
 ESCvsNPC = read.table('output/THOR/THOR_NPC_WTvsHET_UniqueBamTMM/THOR_qval5.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
-## qval10_NPC_WTvsHET_UniqueBamTMM
-ESCvsNPC = read.table('output/THOR/THOR_NPC_WTvsHET_UniqueBamTMM/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
-## qval10_NPC_WTvsKO_UniqueBamTMM
-ESCvsNPC = read.table('output/THOR/THOR_NPC_WTvsKO_UniqueBamTMM/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
+## qval25_NPC_WTvsHET_UniqueBamTMM
+ESCvsNPC = read.table('output/THOR/THOR_NPC_WTvsHET_UniqueBamTMM/THOR_qval25.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
+## qval25_NPC_WTvsKO_UniqueBamTMM
+ESCvsNPC = read.table('output/THOR/THOR_NPC_WTvsKO_UniqueBamTMM/THOR_qval25.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
 ## qval10_2dN_WTvsHET_UniqueBamTMM
 ESCvsNPC = read.table('output/THOR/THOR_2dN_WTvsHET_UniqueBamTMM/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
 
@@ -6455,10 +6455,10 @@ write.table(ESCvsNPC_annot, file="output/ChIPseeker/annotation_KO_ESCvsNPC_qval2
 write.table(ESCvsNPC_annot, file="output/ChIPseeker/annotation_WT_NPCvs2dN_qval25_UniqueBamTMM.txt", sep="\t", quote=F, row.names=F) 
 write.table(ESCvsNPC_annot, file="output/ChIPseeker/annotation_HET_NPCvs2dN_qval25_UniqueBamTMM.txt", sep="\t", quote=F, row.names=F) 
 ### GENOTYPE-EFFECT
-write.table(ESCvsNPC_annot, file="output/ChIPseeker/annotation_ESC_WTvsHET_qval5_UniqueBamTMM.txt", sep="\t", quote=F, row.names=F) 
-write.table(ESCvsNPC_annot, file="output/ChIPseeker/annotation_ESC_WTvsKO_qval10_UniqueBamTMM.txt", sep="\t", quote=F, row.names=F) 
-write.table(ESCvsNPC_annot, file="output/ChIPseeker/annotation_NPC_WTvsHET_qval10_UniqueBamTMM.txt", sep="\t", quote=F, row.names=F) 
-write.table(ESCvsNPC_annot, file="output/ChIPseeker/annotation_NPC_WTvsKO_qval10_UniqueBamTMM.txt", sep="\t", quote=F, row.names=F) 
+write.table(ESCvsNPC_annot, file="output/ChIPseeker/annotation_ESC_WTvsHET_qval25_UniqueBamTMM.txt", sep="\t", quote=F, row.names=F) 
+write.table(ESCvsNPC_annot, file="output/ChIPseeker/annotation_ESC_WTvsKO_qval25_UniqueBamTMM.txt", sep="\t", quote=F, row.names=F) 
+write.table(ESCvsNPC_annot, file="output/ChIPseeker/annotation_NPC_WTvsHET_qval25_UniqueBamTMM.txt", sep="\t", quote=F, row.names=F) 
+write.table(ESCvsNPC_annot, file="output/ChIPseeker/annotation_NPC_WTvsKO_qval25_UniqueBamTMM.txt", sep="\t", quote=F, row.names=F) 
 write.table(ESCvsNPC_annot, file="output/ChIPseeker/annotation_2dN_WTvsHET_qval10_UniqueBamTMM.txt", sep="\t", quote=F, row.names=F) 
 # Filter Gain/Loss sites
 ## KEEP Distal Intergenic (keep ALL)   ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
@@ -6594,10 +6594,10 @@ pdf("output/ChIPseeker/THOR_qval25_HET_2dNvsNPC_TMM_expression_promoterAnd5_FC05
 
 
 ## GENOTYPE-EFFECT
-pdf("output/ChIPseeker/THOR_qval5_ESC_WTvsHET_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE 
-pdf("output/ChIPseeker/THOR_qval10_ESC_WTvsKO_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE 
-pdf("output/ChIPseeker/THOR_qval10_NPC_WTvsHET_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE 
-pdf("output/ChIPseeker/THOR_qval10_NPC_WTvsKO_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval25_ESC_WTvsHET_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval25_ESC_WTvsKO_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval25_NPC_WTvsHET_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval25_NPC_WTvsKO_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE 
 pdf("output/ChIPseeker/THOR_qval10_2dN_WTvsHET_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE 
 
 ESCvsNPC_annot_gain_lost_RNA %>%
