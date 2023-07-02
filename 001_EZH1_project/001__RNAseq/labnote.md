@@ -4823,6 +4823,23 @@ tpm_all_sample_tidy_gene_name_stat %>%
 dev.off()
 
 
+pdf("output/deseq2/genes_HET_H3K27me3atESC_allgenotypes.pdf", width=10, height=6)
+tpm_all_sample_tidy_gene_name_stat %>%
+  filter(gene_name %in% c("WNT10B","SKOR2","ROR2","IRX3","ISL2","PITX2","PTPRM","ATOH1","BMP4","LYN",     "NTF3","IRX6","ATP8B1","EMX1","LHX8","OTP","NRN1"),
+         genotype %in% c("WT", "KO", "HET"),
+         time %in% c("ESC","NPC")) %>%
+    ggplot(., aes(x = time, y = mean, group = genotype)) +
+    geom_line(aes(color=genotype), size=0.75) +
+    geom_errorbar(aes(ymin = mean-SE, ymax = mean+SE,color=genotype), width=.2) +
+    geom_point(aes(y = mean,color=genotype), size = .75, shape = 15) +
+    theme_bw() +
+    facet_wrap(~gene_name, nrow = 3, scale = "free")  +	
+    ylab(label = "tpm") +
+    ggtitle("") +
+    scale_color_manual(values = c("WT" = "grey", "KO" = "red", "HET" = "green", "iPSCWT" = "black", "iPSCpatient" = "orange"))
+dev.off()
+
+
 
 
 tpm_all_sample_tidy_gene_name_stat <- tpm_all_sample_tidy_gene_name %>%

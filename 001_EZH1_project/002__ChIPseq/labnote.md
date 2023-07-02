@@ -6752,9 +6752,37 @@ dev.off()
 --> Genotype-effect; probably MANY intergenic region affected; with LOST of H3K27me3 for HET and KO! Because, when filtering and keeping only the peak within the genes; we got comparable gain/lost genes affected
 
 
+**Hypothesis**: HET mature faster than WT. To check this, check whether:
+- Genes that gained H3K27me3 upon ESC to NPC are more closely related for WT / HET then WT / KO
+- Genes that gained H3K27me3 in HET at ESC are the one that gained H3K27em3 in WT from ESC to NPC
+- Export gene list
+```bash
+# Files
+output/ChIPseeker/annotation_WT_ESCvsNPC_qval25_UniqueBamTMM.txt
+output/ChIPseeker/annotation_HET_ESCvsNPC_qval25_UniqueBamTMM.txt
+output/ChIPseeker/annotation_KO_ESCvsNPC_qval25_UniqueBamTMM.txt
 
+# Filter the gene that gain / lost H3K27me3 (signal in promoter or 5' only)
+## Gain in WT
+awk -F'\t' '($7 > 1) && ($12=="Promoter (<=1kb)" || $12=="Promoter (1-2kb)" || $12=="Promoter (2-3kb)" || $12=="5'\'' UTR")' output/ChIPseeker/annotation_WT_ESCvsNPC_qval25_UniqueBamTMM.txt | cut -d $'\t' -f 21 | sort | uniq > output/ChIPseeker/annotation_WT_ESCvsNPC_qval25_UniqueBamTMM_geneSymbol_Gain.txt
+## Lose in WT
+awk -F'\t' '($7 < 1) && ($12=="Promoter (<=1kb)" || $12=="Promoter (1-2kb)" || $12=="Promoter (2-3kb)" || $12=="5'\'' UTR")' output/ChIPseeker/annotation_WT_ESCvsNPC_qval25_UniqueBamTMM.txt | cut -d $'\t' -f 21 | sort | uniq > output/ChIPseeker/annotation_WT_ESCvsNPC_qval25_UniqueBamTMM_geneSymbol_Lost.txt
+## Gain in HET
+awk -F'\t' '($7 > 1) && ($12=="Promoter (<=1kb)" || $12=="Promoter (1-2kb)" || $12=="Promoter (2-3kb)" || $12=="5'\'' UTR")' output/ChIPseeker/annotation_HET_ESCvsNPC_qval25_UniqueBamTMM.txt | cut -d $'\t' -f 21 | sort | uniq > output/ChIPseeker/annotation_HET_ESCvsNPC_qval25_UniqueBamTMM_geneSymbol_Gain.txt
+## Lose in HET
+awk -F'\t' '($7 < 1) && ($12=="Promoter (<=1kb)" || $12=="Promoter (1-2kb)" || $12=="Promoter (2-3kb)" || $12=="5'\'' UTR")' output/ChIPseeker/annotation_HET_ESCvsNPC_qval25_UniqueBamTMM.txt | cut -d $'\t' -f 21 | sort | uniq > output/ChIPseeker/annotation_HET_ESCvsNPC_qval25_UniqueBamTMM_geneSymbol_Lost.txt
+## Gain in KO
+awk -F'\t' '($7 > 1) && ($12=="Promoter (<=1kb)" || $12=="Promoter (1-2kb)" || $12=="Promoter (2-3kb)" || $12=="5'\'' UTR")' output/ChIPseeker/annotation_KO_ESCvsNPC_qval25_UniqueBamTMM.txt | cut -d $'\t' -f 21 | sort | uniq > output/ChIPseeker/annotation_KO_ESCvsNPC_qval25_UniqueBamTMM_geneSymbol_Gain.txt
+## Lose in KO
+awk -F'\t' '($7 < 1) && ($12=="Promoter (<=1kb)" || $12=="Promoter (1-2kb)" || $12=="Promoter (2-3kb)" || $12=="5'\'' UTR")' output/ChIPseeker/annotation_KO_ESCvsNPC_qval25_UniqueBamTMM.txt | cut -d $'\t' -f 21 | sort | uniq > output/ChIPseeker/annotation_KO_ESCvsNPC_qval25_UniqueBamTMM_geneSymbol_Lost.txt
+## Gain in HET (at ESC; WT vs HET)
+awk -F'\t' '($7 > 1) && ($12=="Promoter (<=1kb)" || $12=="Promoter (1-2kb)" || $12=="Promoter (2-3kb)" || $12=="5'\'' UTR")' output/ChIPseeker/annotation_ESC_WTvsHET_qval25_UniqueBamTMM.txt | cut -d $'\t' -f 21 | sort | uniq > output/ChIPseeker/annotation_ESC_WTvsHET_qval25_UniqueBamTMM_geneSymbol_Gain.txt
+## Gain in KO (at ESC; WT vs KO)
+awk -F'\t' '($7 > 1) && ($12=="Promoter (<=1kb)" || $12=="Promoter (1-2kb)" || $12=="Promoter (2-3kb)" || $12=="5'\'' UTR")' output/ChIPseeker/annotation_ESC_WTvsKO_qval25_UniqueBamTMM.txt | cut -d $'\t' -f 21 | sort | uniq > output/ChIPseeker/annotation_ESC_WTvsKO_qval25_UniqueBamTMM_geneSymbol_Gain.txt
+```
+- Venn diagram on [webtool](https://www.biovenn.nl/index.php)
 
-
+--> Hard to conclude anything. More overlap with HET, but expected as more genes that LOST H3K27me3 in HET than KO...
 
 
 
