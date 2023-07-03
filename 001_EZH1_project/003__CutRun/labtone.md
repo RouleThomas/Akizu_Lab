@@ -3335,7 +3335,9 @@ sbatch scripts/samtools_unique_2.sh # 1681364
 
 --> XXX
 
-Re-calculate new scaling factors, based on these new BAM file...
+Re-calculate new scaling factors, based on these new BAM file...:
+
+XXXX
 
 
 
