@@ -6894,7 +6894,7 @@ mapIds(org.Hs.eg.db, keys=ids, column="SYMBOL", keytype="ENTREZID")
 
 
 # CHECK EXPRESSION
-## import RNAseq
+## import RNAseq TIME-EFFECT
 ###  RNAseq ESC to NPC __ WT
 WT_expr = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_WT_ESC_vs_WT_NPC.txt')) %>%
     separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
@@ -6933,6 +6933,68 @@ expr_geneSymbol = expr %>%
     filter(!is.na(gene_symbol))
 
 
+## import RNAseq GENOTYPE-EFFECT
+###  RNAseq WT vs HET __ ESC
+ESC_expr = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_ESC_HET_vs_ESC_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene,log2FoldChange,padj) %>%
+    add_column(time_expr = "ESC")  %>%
+    mutate(log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05)
+###  RNAseq WT vs HET __ NPC
+NPC_expr = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_NPC_HET_vs_NPC_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene,log2FoldChange,padj) %>%
+    add_column(time_expr = "NPC")  %>%
+    mutate(log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05)
+###  RNAseq WT vs HET __ 2dN
+X2dN_expr = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_2dN_HET_vs_2dN_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene,log2FoldChange,padj) %>%
+    add_column(time_expr = "2dN")  %>%
+    mutate(log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05)
+###  RNAseq WT vs HET __ 4wN
+X4wN_expr = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_4wN_HET_R3R4_vs_4wN_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene,log2FoldChange,padj) %>%
+    add_column(time_expr = "4wN")  %>%
+    mutate(log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05)
+###  RNAseq WT vs HET __ 8wN
+X8wN_expr = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_8wN_HET_vs_8wN_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene,log2FoldChange,padj) %>%
+    add_column(time_expr = "8wN")  %>%
+    mutate(log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05)
+### Combine
+expr = ESC_expr %>%
+    bind_rows(NPC_expr) %>%
+    bind_rows(X2dN_expr)%>%
+    bind_rows(X4wN_expr)%>%
+    bind_rows(X8wN_expr)
+
+### Covnert gene id to gene symbol
+expr$gene_symbol <- mapIds(org.Hs.eg.db,
+                         keys = expr$gene,
+                         column = "SYMBOL",
+                         keytype = "ENSEMBL",
+                         multiVals = "first")
+expr_geneSymbol = expr %>% 
+    filter(!is.na(gene_symbol))
+
+
+
+
+
+
 # import TPM
 tpm_all_sample <- read_csv("../001__RNAseq/output/tpm_hg38/tpm_all_sample.txt") %>%
   dplyr::select(-"...1")
@@ -6940,12 +7002,10 @@ tpm_all_sample <- read_csv("../001__RNAseq/output/tpm_hg38/tpm_all_sample.txt") 
 ## Read GTF file
 gtf_file <- "../../Master/meta/gencode.v19.annotation.gtf"
 gtf_data <- import(gtf_file)
-
 ## Extract gene_id and gene_name
 gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
 gene_id <- elementMetadata(gene_data)$gene_id
 gene_name <- elementMetadata(gene_data)$gene_name
-
 ## Combine gene_id and gene_name into a data frame
 gene_id_name <- data.frame(gene_id, gene_name) %>%
   unique() %>%
@@ -6975,8 +7035,13 @@ tpm_all_sample_tidy_gene_name_stat <- tpm_all_sample_tidy_gene_name %>%
 
 
 ## import gene list
+### control
+gene_symbols_HET <- as_tibble(read.table("output/ChIPseeker/annotation_HET_ESCvsNPC_qval25_UniqueBamTMM_geneSymbol_Lost.txt", header = FALSE, stringsAsFactors = FALSE)) %>% 
+    rename(gene_symbol = V1)
+
+### genotype-specific LOST
 gene_symbols_HET <- as_tibble(read.table("output/ChIPseeker/ESCvsNPC_HETspecific_Lost.txt", header = FALSE, stringsAsFactors = FALSE)) %>% 
-    rename(gene_name = V1)
+    rename(gene_symbol = V1)
 gene_symbols_KO <- as_tibble(read.table("output/ChIPseeker/ESCvsNPC_KOspecific_Lost.txt", header = FALSE, stringsAsFactors = FALSE)) %>% 
     rename(gene_name = V1)
 gene_symbols_GOneuronsBrain <- as_tibble(read.table("../004__IndirectEZH1TargetId/meta/neurons_brain_related_GO_geneList_geneSymbol.txt", header = FALSE, stringsAsFactors = FALSE)) %>% 
@@ -6985,14 +7050,23 @@ gene_symbols_GOneuronsBrain <- as_tibble(read.table("../004__IndirectEZH1TargetI
 
 # plot
 ## with logFC
-pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression.pdf", width=5, height=6)
+pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression.pdf", width=4, height=5)
 expr_geneSymbol %>% 
     inner_join(gene_symbols_HET) %>%
-    filter(significance == TRUE,
-    log2FoldChange > 0) %>%
-    ggplot(., aes(genotype_expr,log2FoldChange)) +
+      ggplot(., aes(genotype_expr,log2FoldChange))+
+        geom_boxplot() +
+        geom_jitter(aes(color = significance), alpha = 0.8, size = 0.5,width=0.1) +
+        scale_color_manual(values = c("grey", "red")) 
+dev.off()
+
+pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression_genotypeComp.pdf", width=5, height=6)
+expr_geneSymbol %>% 
+    inner_join(gene_symbols_HET) %>%
+    filter(significance == TRUE) %>%
+    ggplot(., aes(time_expr,log2FoldChange)) +
     geom_boxplot()
 dev.off()
+
 
 ## with TPM
 pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression_TPM.pdf", width=5, height=6)
@@ -7215,3 +7289,4 @@ dev.off()
 
 --> Filtering for only the genes induced in the WT, also showed HET/KO less induced / WT!
 
+--> Checking instead DEGs between genotypes at each time-point is XXX
