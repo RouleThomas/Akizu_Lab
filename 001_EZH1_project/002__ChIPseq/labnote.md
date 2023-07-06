@@ -6785,14 +6785,433 @@ awk -F'\t' '($7 > 1) && ($12=="Promoter (<=1kb)" || $12=="Promoter (1-2kb)" || $
 --> Hard to conclude anything. More overlap with HET, but expected as more genes that LOST H3K27me3 in HET than KO...
 
 
+Let's do **functional analysies on the genes that specifically LOST H3K27me3** in WT; and in HET; and in KO. Check their expression next:
+
+```bash
+conda activate deseq2
+```
+
+```R
+# library
+library("rtracklayer")
+library("tidyverse")
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+library("org.Hs.eg.db")
+library("DOSE")
+library("pathview")
+library("enrichplot")
+
+
+# Import the gene list
+gene_symbols <- readLines("output/ChIPseeker/ESCvsNPC_WTspecific_Lost.txt") # readLines transform line into vector
+gene_symbols <- readLines("output/ChIPseeker/ESCvsNPC_HETspecific_Lost.txt") 
+gene_symbols <- readLines("output/ChIPseeker/ESCvsNPC_KOspecific_Lost.txt") 
+
+genes <- mapIds(org.Hs.eg.db, 
+                   keys = gene_symbols, 
+                   column = "ENTREZID", 
+                   keytype = "SYMBOL", 
+                   multiVals = "first")
+
+
+
+# Functional profiles
+## KEGG
+enrichKEGG <- enrichKEGG(gene   = genes,
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
+
+pdf("output/ChIPseeker/functional_KEGG_ESCvsNPC_HETspecific_Lost.pdf", width=7, height=5)
+emapplot(pairwise_termsim(enrichKEGG), showCategory = 5)
+dev.off()
+### NO ENRICHMENT ESCvsNPC_WTspecific_Lost
+### NO ENRICHMENT ESCvsNPC_KOspecific_Lost 
+### ENRICHMENT for HET; enuron activity
+
+
+## GO
+enrichGO <- enrichGO(gene   = genes,
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH",
+                         OrgDb         = "org.Hs.eg.db",
+                         ont           = "BP") # "BP" (Biological Process), "CC" (Cellular Component), or "MF" (Molecular Function)
+
+pdf("output/ChIPseeker/functional_GO_BP_ESCvsNPC_HETspecific_Lost_15.pdf", width=7, height=6)
+pdf("output/ChIPseeker/functional_GO_BP_ESCvsNPC_KOspecific_Lost.pdf", width=7, height=4)
+dotplot(enrichGO, showCategory = 9, title = "GO_Biological Process Enrichment Analysis")
+dev.off()
+### NO ENRICHMENT  ESCvsNPC_WTspecific_Lost
+###  ENRICHMENT  ESCvsNPC_HETspecific_Lost >50
+###  ENRICHMENT  ESCvsNPC_KOspecific_Lost 9
+
+
+
+enrichGO <- enrichGO(gene   = genes,
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH",
+                         OrgDb         = "org.Hs.eg.db",
+                         ont           = "CC") # "BP" (Biological Process), "8" (Cellular Component), or "MF" (Molecular Function)
+
+pdf("output/ChIPseeker/functional_GO_CC_ESCvsNPC_HETspecific_Lost_15.pdf", width=7, height=6)
+pdf("output/ChIPseeker/functional_GO_CC_ESCvsNPC_KOspecific_Lost.pdf", width=7, height=2)
+dotplot(enrichGO, showCategory = 1, title = "GO_Cellular Component Enrichment Analysis")
+dev.off()
+### ENRICHMENT  ESCvsNPC_HETspecific_Lost
+
+
+enrichGO <- enrichGO(gene   = genes,
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH",
+                         OrgDb         = "org.Hs.eg.db",
+                         ont           = "MF") # "BP" (Biological Process), "8" (Cellular Component), or "MF" (Molecular Function)
+
+pdf("output/ChIPseeker/functional_GO_MF_ESCvsNPC_HETspecific_Lost_15.pdf", width=7, height=7)
+pdf("output/ChIPseeker/functional_GO_MF_ESCvsNPC_KOspecific_Lost_15.pdf", width=7, height=3)
+dotplot(enrichGO, showCategory = 2, title = "GO_Molecular Function Enrichment Analysis")
+dev.off()
+### ENRICHMENT  ESCvsNPC_HETspecific_Lost
+
+
+## Disease
+enrichDO <- enrichDO(gene   = genes,
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
+                         
+pdf("output/ChIPseeker/functional_DO_ESCvsNPC_KOspecific_Lost_15.pdf", width=7, height=7)
+dotplot(enrichDO, showCategory = 15, title = "Disease Ontology Enrichment Analysis")
+dev.off()
+### ESCvsNPC_HETspecific_Lost withdrawal disorder
+### ESCvsNPC_KOspecific_Lost many! 30
+
+
+# To retrieve entrezID to gene name:
+ids <- c("1812", "3778", "4986", "84152", "5733")
+mapIds(org.Hs.eg.db, keys=ids, column="SYMBOL", keytype="ENTREZID")
+
+
+
+# CHECK EXPRESSION
+## import RNAseq
+###  RNAseq ESC to NPC __ WT
+WT_expr = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_WT_ESC_vs_WT_NPC.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene,log2FoldChange,padj) %>%
+    add_column(genotype_expr = "WT")  %>%
+    mutate(log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05)
+###  RNAseq ESC to NPC __ HET
+HET_expr = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_HET_ESC_vs_HET_NPC.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene,log2FoldChange,padj)%>%
+    add_column(genotype_expr = "HET")  %>%
+    mutate(log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05)
+###  RNAseq ESC to NPC __ KO
+KO_expr = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_KO_ESC_vs_KO_NPC.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene,log2FoldChange,padj)%>%
+    add_column(genotype_expr = "KO") %>%
+    mutate(log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05)
+### Combine
+expr = WT_expr %>%
+    bind_rows(HET_expr) %>%
+    bind_rows(KO_expr)
+### Covnert gene id to gene symbol
+expr$gene_symbol <- mapIds(org.Hs.eg.db,
+                         keys = expr$gene,
+                         column = "SYMBOL",
+                         keytype = "ENSEMBL",
+                         multiVals = "first")
+expr_geneSymbol = expr %>% 
+    filter(!is.na(gene_symbol))
+
+
+# import TPM
+tpm_all_sample <- read_csv("../001__RNAseq/output/tpm_hg38/tpm_all_sample.txt") %>%
+  dplyr::select(-"...1")
+## Join with gene names for convenience
+## Read GTF file
+gtf_file <- "../../Master/meta/gencode.v19.annotation.gtf"
+gtf_data <- import(gtf_file)
+
+## Extract gene_id and gene_name
+gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
+gene_id <- elementMetadata(gene_data)$gene_id
+gene_name <- elementMetadata(gene_data)$gene_name
+
+## Combine gene_id and gene_name into a data frame
+gene_id_name <- data.frame(gene_id, gene_name) %>%
+  unique() %>%
+  as_tibble()
+## Tidy df
+tpm_all_sample_tidy = as_tibble(tpm_all_sample) %>%
+  gather(key = "sample", value = "tpm", -Geneid) %>%
+  mutate(tpm = log2(tpm+1)) %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep = "_")
+tpm_all_sample_tidy$time <-
+  factor(tpm_all_sample_tidy$time,
+         c("ESC", "NPC", "2dN", "4wN", "8wN"))
+tpm_all_sample_tidy$genotype <-
+  factor(tpm_all_sample_tidy$genotype,
+         c("WT", "KO", "HET", "iPSCWT","iPSCpatient"))
+tpm_all_sample_tidy_gene_name = tpm_all_sample_tidy %>%
+  dplyr::rename(gene_id=Geneid) %>%
+  left_join(gene_id_name) %>%
+  unique()
+## Stat
+tpm_all_sample_tidy_gene_name_stat <- tpm_all_sample_tidy_gene_name %>%
+  dplyr::select(-replicate) %>%
+  group_by(gene_id, gene_name, time, genotype) %>%
+  summarise(mean=mean(tpm), median= median(tpm), SD=sd(tpm), n=n(), SE=SD/sqrt(n)) 	
 
 
 
 
+## import gene list
+gene_symbols_HET <- as_tibble(read.table("output/ChIPseeker/ESCvsNPC_HETspecific_Lost.txt", header = FALSE, stringsAsFactors = FALSE)) %>% 
+    rename(gene_name = V1)
+gene_symbols_KO <- as_tibble(read.table("output/ChIPseeker/ESCvsNPC_KOspecific_Lost.txt", header = FALSE, stringsAsFactors = FALSE)) %>% 
+    rename(gene_name = V1)
+gene_symbols_GOneuronsBrain <- as_tibble(read.table("../004__IndirectEZH1TargetId/meta/neurons_brain_related_GO_geneList_geneSymbol.txt", header = FALSE, stringsAsFactors = FALSE)) %>% 
+    rename(gene_name = V1)
+
+
+# plot
+## with logFC
+pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression.pdf", width=5, height=6)
+expr_geneSymbol %>% 
+    inner_join(gene_symbols_HET) %>%
+    filter(significance == TRUE,
+    log2FoldChange > 0) %>%
+    ggplot(., aes(genotype_expr,log2FoldChange)) +
+    geom_boxplot()
+dev.off()
+
+## with TPM
+pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression_TPM.pdf", width=5, height=6)
+tpm_all_sample_tidy_gene_name_stat %>% 
+    inner_join(gene_symbols_HET) %>%
+    filter(genotype %in% c("WT","HET","KO")) %>%
+    ggplot(., aes(genotype,log2(mean))) +
+    geom_boxplot(aes(fill=time))
+dev.off()
+
+pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_GOneuronsBrain_expression_TPM.pdf", width=5, height=6)
+tpm_all_sample_tidy_gene_name_stat %>% 
+    inner_join(gene_symbols_HET) %>%
+    inner_join(gene_symbols_GOneuronsBrain) %>%
+    filter(genotype %in% c("WT","HET","KO")) %>%
+    ggplot(., aes(genotype,log2(mean))) +
+    geom_boxplot(aes(fill=time))
+dev.off()
 
 
 
+```
+
+--> With log2FC we do not see that the site that specifically LOST H3K27me3 in HET are more express... Thus let's try with TPM
+----> same, does not show that the genes that lose H3K27me3 from ESC to NPC in HET are more express in HET vs WT or KO !!
+
+--> Focus only on the one related to neurons activity; when joining with genes with GO neurons/brain (broadly, from the 004 project; `004__IndirectEZH1TargetId/meta/neurons_brain_related_GO_geneList_geneSymbol.txt`), it now works: in WT expression decrease; it increase in HET from ESC to NPC! 
+----> It concern only 6 genes... Let's instead collect the genes with **GO related to neurons activity (identified from the analysis) and that showed decrease of H3K27me3 in HET**
+
+
+Let's try to output the **gene expression level for each of the Gene Ontology categories**!
+
+```R
+
+# library
+library("rtracklayer")
+library("tidyverse")
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+library("org.Hs.eg.db")
+library("DOSE")
+library("pathview")
+library("enrichplot")
+
+# Import the gene list
+gene_symbols <- readLines("output/ChIPseeker/ESCvsNPC_HETspecific_Lost.txt") 
+gene_symbols <- readLines("output/ChIPseeker/ESCvsNPC_KOspecific_Lost.txt") 
+
+genes <- mapIds(org.Hs.eg.db, 
+                   keys = gene_symbols, 
+                   column = "ENTREZID", 
+                   keytype = "SYMBOL", 
+                   multiVals = "first")
+## GO
+enrichGO <- enrichGO(gene   = genes,
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH",
+                         OrgDb         = "org.Hs.eg.db",
+                         ont           = "BP") # "BP" (Biological Process), "CC" (Cellular Component), or "MF" (Molecular Function)
+enrichGO <- enrichGO(gene   = genes,
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH",
+                         OrgDb         = "org.Hs.eg.db",
+                         ont           = "MF") # "BP" (Biological Process), "CC" (Cellular Component), or "MF" (Molecular Function)
+## Collect the gene list for each GO
+go_genes <- enrichGO@result$geneID
+go_genes <- go_genes[1:15] # focus on the 15 first element
+
+
+## Convert to gene symbols
+### extract the first 15 GO terms and corresponding genes
+go_terms_genes <- head(enrichGO@result[, c("Description", "geneID")], 15) # can change to ID top have GO:00123 format
+### split the gene IDs
+go_terms_genes$geneID <- strsplit(go_terms_genes$geneID, "/")
+### for each GO term, convert the gene IDs to symbols
+go_terms_symbols <- lapply(go_terms_genes$geneID, function(genes) {
+  mapIds(org.Hs.eg.db, keys = genes, column = "SYMBOL", keytype = "ENTREZID", multiVals = "first")
+})
+### add the symbols to the dataframe
+go_terms_genes$gene_symbol <- go_terms_symbols
+### Tidy the data
+tidy_go_terms_genes <- as_tibble(go_terms_genes) %>%
+  unnest(cols = c(geneID, gene_symbol))
+
+# plot
+## with logFC all cotegories together
+expr_geneSymbol$genotype_expr <-
+  factor(expr_geneSymbol$genotype_expr,
+         c("WT", "HET", "KO"))
+         
+pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression_GO_BP_15.pdf", width=3, height=4)
+tidy_go_terms_genes %>% 
+    dplyr::select(gene_symbol) %>%
+    unique() %>%
+    left_join(expr_geneSymbol) %>%
+      ggplot(., aes(x = genotype_expr,y = log2FoldChange))  +
+        geom_boxplot() +
+        geom_jitter(aes(color = significance), alpha = 0.8, size = 0.5, width = 0.1) +
+        scale_color_manual(values = c("grey", "red")) +
+        theme_bw()
+dev.off()
+
+
+## with logFC keeping separate each GO category
+pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression_GO_BP_15.pdf", width=10, height=15)
+pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression_GO_CC_15.pdf", width=10, height=15)
+pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression_GO_MF_15.pdf", width=10, height=15)
+
+expr_geneSymbol %>% 
+    inner_join(tidy_go_terms_genes) %>%
+    dplyr::select(gene_symbol,log2FoldChange,padj,genotype_expr,Description,significance) %>%
+    unique() %>%
+      ggplot(., aes(x = genotype_expr,y = log2FoldChange))  +
+        geom_boxplot() +
+        geom_jitter(aes(color = significance), alpha = 0.8, size = 0.5) +
+        scale_color_manual(values = c("grey", "red")) +
+        facet_wrap(~Description)
+dev.off()
+### Only keep the genes that are induced in WT 
+
+pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression_WTinduced_GO_BP_15.pdf", width=10, height=15)
+
+expr_geneSymbol %>% 
+    inner_join(tidy_go_terms_genes) %>% 
+    group_by(gene_symbol) %>% 
+    filter(any(genotype_expr == "WT" & log2FoldChange > 0)) %>%
+    dplyr::select(gene_symbol,log2FoldChange,padj,genotype_expr,Description,significance) %>%
+    unique() %>%
+      ggplot(., aes(x = genotype_expr,y = log2FoldChange))  +
+        geom_boxplot() +
+        geom_jitter(aes(color = significance), alpha = 0.8, size = 0.5) +
+        scale_color_manual(values = c("grey", "red")) +
+        facet_wrap(~Description)
+dev.off()
+
+# plot with TPM
+
+
+pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression_TPM_GO_BP_15.pdf", width=25, height=26)
+tpm_all_sample_tidy_gene_name_stat %>% 
+    inner_join(tidy_go_terms_genes %>% dplyr::rename("gene_name"="gene_symbol")) %>%
+    filter(genotype %in% c("WT","HET"), 
+           time %in% c("ESC","NPC")) %>%
+    ungroup() %>% unique() %>%
+      ggplot(., aes(time,mean)) +
+        geom_boxplot(aes(fill=genotype))+
+        facet_wrap(~Description)
+dev.off()
+
+
+# over the entire time-course log_tpm
+
+pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression_TPM_timecourse_GO_BP_15.pdf", width=25, height=26)
+tpm_all_sample_tidy_gene_name_stat %>% 
+    inner_join(tidy_go_terms_genes %>% dplyr::rename("gene_name"="gene_symbol")) %>%
+    filter(genotype %in% c("WT","HET","KO"), 
+           time %in% c("ESC","NPC","2dN", "8wN")) %>%
+ggplot(., aes(x = time, y = mean, color = genotype, group = genotype)) +
+  geom_line(stat = "summary", fun = mean) +
+  geom_errorbar(stat = "summary", fun.data = mean_se, width = 0.2, size = 1) +
+  geom_point(stat = "summary", fun = mean, shape = 18, size = 3, stroke = 1.5) +
+  facet_wrap(~Description, scale = "free", nrow = 3) +
+  scale_color_manual(values=c("WT" = "black", "HET" = "blue", "KO" = "red")) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),        # Increase facet_wrap title panel text size
+    axis.title.x = element_text(size = 16)       # Increase x-axis legend text size
+  )
+dev.off()
+
+# over the entire time-course with rlog counts
+## log rlog counts
+load("../001__RNAseq/output/deseq2_hg38/ddsTC_rld_filter.RData")
+rlog_counts
+rlog_counts_matrix <- assay(rlog_counts) 
+## Make a clean table
+rlog_counts_tidy <- as_tibble(rlog_counts_matrix, rownames = "gene_id") %>%
+  gather(key = "sample", value = "rlog_counts", -gene_id) %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  left_join(gene_id_name)
+
+## Compil with GO list
+rlog_counts_tidy_GO <- rlog_counts_tidy %>%
+  inner_join(tidy_go_terms_genes %>% dplyr::rename("gene_name"="gene_symbol") , by = "gene_name")
+
+
+rlog_counts_tidy_GO$time <-
+  factor(rlog_counts_tidy_GO$time,
+         c("ESC", "NPC", "2dN", "4wN", "8wN"))
+rlog_counts_tidy_GO$genotype <-
+  factor(rlog_counts_tidy_GO$genotype,
+         c("WT", "KO", "HET"))
 
 
 
+pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression_rlog_timecourse_GO_BP_15.pdf", width=25, height=26)
+pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression_rlog_timecourse_GO_CC_15.pdf", width=25, height=26)
+pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression_rlog_timecourse_GO_MF_15.pdf", width=25, height=26)
+ggplot(rlog_counts_tidy_GO, aes(x = time, y = rlog_counts, color = genotype, group = genotype)) +
+  geom_line(stat = "summary", fun = mean) +
+  geom_errorbar(stat = "summary", fun.data = mean_se, width = 0.2, size = 1) +
+  geom_point(stat = "summary", fun = mean, shape = 18, size = 3, stroke = 1.5) +
+  facet_wrap(~Description, scale = "free", nrow = 3) +
+  scale_color_manual(values=c("WT" = "black", "HET" = "blue", "KO" = "red")) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),        # Increase facet_wrap title panel text size
+    axis.title.x = element_text(size = 16)       # Increase x-axis legend text size
+  )
+dev.off()
+
+
+```
+
+--> Code is great to explore expression of the genes that are out from GO hits!
+
+--> With log2FC we do NOT see higher log2FC in HET versus WT... Same using TPM...
+
+--> Filtering for only the genes induced in the WT, also showed HET/KO less induced / WT!
 
