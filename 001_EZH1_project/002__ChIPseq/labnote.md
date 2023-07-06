@@ -6902,7 +6902,7 @@ WT_expr = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_WT_ESC_vs_WT_NP
     add_column(genotype_expr = "WT")  %>%
     mutate(log2FoldChange = replace_na(log2FoldChange, 0),
            padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
-           significance = padj <= 0.05)
+           significance = padj <= 0.05 ) #  & (abs(log2FoldChange) > 0.5)
 ###  RNAseq ESC to NPC __ HET
 HET_expr = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_HET_ESC_vs_HET_NPC.txt')) %>%
     separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
@@ -6910,7 +6910,7 @@ HET_expr = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_HET_ESC_vs_HET
     add_column(genotype_expr = "HET")  %>%
     mutate(log2FoldChange = replace_na(log2FoldChange, 0),
            padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
-           significance = padj <= 0.05)
+           significance = padj <= 0.05  )
 ###  RNAseq ESC to NPC __ KO
 KO_expr = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_KO_ESC_vs_KO_NPC.txt')) %>%
     separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
@@ -6918,7 +6918,40 @@ KO_expr = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_KO_ESC_vs_KO_NP
     add_column(genotype_expr = "KO") %>%
     mutate(log2FoldChange = replace_na(log2FoldChange, 0),
            padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
-           significance = padj <= 0.05)
+           significance = padj <= 0.05   )
+## ADD the missing genes in each comparison:
+#### Necessay so that each of the RNAseq comp contains ALL the genes
+gtf_file <- "../../Master/meta/gencode.v19.annotation.gtf"
+gtf_data <- import(gtf_file)
+#### Extract gene_id and gene_name
+gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
+gene_id <- elementMetadata(gene_data)$gene_id
+gene_name <- elementMetadata(gene_data)$gene_name
+#### Combine gene_id and gene_name into a data frame
+gene_id_name <- data.frame(gene_id, gene_name) %>%
+  unique() %>%
+  as_tibble()
+all_genes <- gene_id_name %>% 
+  separate(gene_id, into = c("gene", "version"), sep = "\\.") %>%
+  dplyr::select(gene)
+WT_expr <- all_genes %>%
+  left_join(WT_expr, by = "gene") %>%
+  mutate(log2FoldChange = replace_na(log2FoldChange, 0),
+         padj = replace_na(padj, 1),
+         genotype_expr = "WT",
+         significance = padj <= 0.05)
+HET_expr <- all_genes %>%
+  left_join(HET_expr, by = "gene") %>%
+  mutate(log2FoldChange = replace_na(log2FoldChange, 0),
+         padj = replace_na(padj, 1),
+         genotype_expr = "HET",
+         significance = padj <= 0.05)
+KO_expr <- all_genes %>%
+  left_join(KO_expr, by = "gene") %>%
+  mutate(log2FoldChange = replace_na(log2FoldChange, 0),
+         padj = replace_na(padj, 1),
+         genotype_expr = "KO",
+         significance = padj <= 0.05)
 ### Combine
 expr = WT_expr %>%
     bind_rows(HET_expr) %>%
@@ -6974,13 +7007,57 @@ X8wN_expr = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_8wN_HET_vs_8w
     mutate(log2FoldChange = replace_na(log2FoldChange, 0),
            padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
            significance = padj <= 0.05)
+## ADD the missing genes in each comparison:
+#### Necessay so that each of the RNAseq comp contains ALL the genes
+gtf_file <- "../../Master/meta/gencode.v19.annotation.gtf"
+gtf_data <- import(gtf_file)
+#### Extract gene_id and gene_name
+gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
+gene_id <- elementMetadata(gene_data)$gene_id
+gene_name <- elementMetadata(gene_data)$gene_name
+#### Combine gene_id and gene_name into a data frame
+gene_id_name <- data.frame(gene_id, gene_name) %>%
+  unique() %>%
+  as_tibble()
+all_genes <- gene_id_name %>% 
+  separate(gene_id, into = c("gene", "version"), sep = "\\.") %>%
+  dplyr::select(gene)
+ESC_expr <- all_genes %>%
+  left_join(ESC_expr, by = "gene") %>%
+  mutate(log2FoldChange = replace_na(log2FoldChange, 0),
+         padj = replace_na(padj, 1),
+         time_expr = "ESC",
+         significance = padj <= 0.05)
+NPC_expr <- all_genes %>%
+  left_join(NPC_expr, by = "gene") %>%
+  mutate(log2FoldChange = replace_na(log2FoldChange, 0),
+         padj = replace_na(padj, 1),
+         time_expr = "NPC",
+         significance = padj <= 0.05)
+X2dN_expr <- all_genes %>%
+  left_join(X2dN_expr, by = "gene") %>%
+  mutate(log2FoldChange = replace_na(log2FoldChange, 0),
+         padj = replace_na(padj, 1),
+         time_expr = "2dN",
+         significance = padj <= 0.05)
+X4wN_expr <- all_genes %>%
+  left_join(X4wN_expr, by = "gene") %>%
+  mutate(log2FoldChange = replace_na(log2FoldChange, 0),
+         padj = replace_na(padj, 1),
+         time_expr = "4wN",
+         significance = padj <= 0.05)
+X8wN_expr <- all_genes %>%
+  left_join(X8wN_expr, by = "gene") %>%
+  mutate(log2FoldChange = replace_na(log2FoldChange, 0),
+         padj = replace_na(padj, 1),
+         time_expr = "8wN",
+         significance = padj <= 0.05)
 ### Combine
 expr = ESC_expr %>%
     bind_rows(NPC_expr) %>%
     bind_rows(X2dN_expr)%>%
     bind_rows(X4wN_expr)%>%
     bind_rows(X8wN_expr)
-
 ### Covnert gene id to gene symbol
 expr$gene_symbol <- mapIds(org.Hs.eg.db,
                          keys = expr$gene,
@@ -7044,27 +7121,105 @@ gene_symbols_HET <- as_tibble(read.table("output/ChIPseeker/ESCvsNPC_HETspecific
     rename(gene_symbol = V1)
 gene_symbols_KO <- as_tibble(read.table("output/ChIPseeker/ESCvsNPC_KOspecific_Lost.txt", header = FALSE, stringsAsFactors = FALSE)) %>% 
     rename(gene_name = V1)
+gene_symbols_HETandKO <- as_tibble(read.table("output/ChIPseeker/ESCvsNPC_HETandKOspecific_Lost.txt", header = FALSE, stringsAsFactors = FALSE)) %>% 
+    rename(gene_symbol = V1)
+
+gene_symbols_HET_HETandKO <- gene_symbols_HET %>%
+  bind_rows(gene_symbols_HETandKO) %>%
+  unique()
+
 gene_symbols_GOneuronsBrain <- as_tibble(read.table("../004__IndirectEZH1TargetId/meta/neurons_brain_related_GO_geneList_geneSymbol.txt", header = FALSE, stringsAsFactors = FALSE)) %>% 
     rename(gene_name = V1)
 
 
 # plot
-## with logFC
+## with logFC time comp
+expr_geneSymbol$genotype_expr <-
+  factor(expr_geneSymbol$genotype_expr,
+         c("WT", "HET", "KO"))
+         
+count_data <- expr_geneSymbol %>%
+  inner_join(gene_symbols_HET_HETandKO) %>%   # CHANGE HERE !!!!!!!!!
+  group_by(genotype_expr, significance) %>%
+  summarise(up = sum(log2FoldChange > 0),
+            down = sum(log2FoldChange < 0),
+            total = n()) %>%
+  ungroup() %>%
+  group_by(genotype_expr) %>%
+  mutate(total_panel = sum(total)) %>%
+  ungroup()
+
+significant_data <- expr_geneSymbol %>%
+  inner_join(gene_symbols_HET_HETandKO) %>%
+  mutate(change_group = ifelse(log2FoldChange > 0, "Greater than 0", 
+                               ifelse(log2FoldChange < 0, "Less than 0", "Equal to 0"))) %>%
+  filter(significance)
+
+all_data <- expr_geneSymbol %>%
+  inner_join(gene_symbols_HET_HETandKO) %>%
+  mutate(change_group = ifelse(log2FoldChange > 0, "Greater than 0", 
+                               ifelse(log2FoldChange < 0, "Less than 0", "Equal to 0")))
+
 pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression.pdf", width=4, height=5)
-expr_geneSymbol %>% 
-    inner_join(gene_symbols_HET) %>%
-      ggplot(., aes(genotype_expr,log2FoldChange))+
-        geom_boxplot() +
-        geom_jitter(aes(color = significance), alpha = 0.8, size = 0.5,width=0.1) +
-        scale_color_manual(values = c("grey", "red")) 
+pdf("output/ChIPseeker/ESCvsNPC_HETandKOspecific_Lost_expression.pdf", width=4, height=5)
+pdf("output/ChIPseeker/ESCvsNPC_HET_HETandKOspecific_Lost_expression.pdf", width=6, height=4)
+
+ggplot() +
+  geom_boxplot(data = significant_data, aes(genotype_expr, log2FoldChange, fill = change_group)) +
+  geom_jitter(data = all_data, aes(genotype_expr, log2FoldChange, color = significance), alpha = 0.8, size = 0.5, width = 0.1) +
+  scale_fill_manual(values = c("darkred", "darkred")) + 
+  scale_color_manual(values = c("grey", "red")) +
+  geom_text(data = count_data %>% filter(significance),
+            aes(x = genotype_expr, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
+            hjust = 0.5, vjust = 1.1, size = 3, color = "black", check_overlap = TRUE) +
+  geom_text(data = count_data %>% distinct(genotype_expr, .keep_all = TRUE),
+            aes(x = genotype_expr, y = -Inf, label = paste("Total:", total_panel, "genes")),
+            hjust = 0.5, vjust = -0.1, size = 3, color = "black", check_overlap = TRUE) +
+  theme_bw()
 dev.off()
 
-pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression_genotypeComp.pdf", width=5, height=6)
-expr_geneSymbol %>% 
-    inner_join(gene_symbols_HET) %>%
-    filter(significance == TRUE) %>%
-    ggplot(., aes(time_expr,log2FoldChange)) +
-    geom_boxplot()
+
+
+## with logFC genotype comp
+expr_geneSymbol$time_expr <-
+  factor(expr_geneSymbol$time_expr,
+         c("ESC", "NPC", "2dN","4wN","8wN"))
+         
+count_data <- expr_geneSymbol %>%
+  inner_join(gene_symbols_HET_HETandKO) %>%   # CHANGE HERE !!!!!!!!!
+  group_by(time_expr, significance) %>%
+  summarise(up = sum(log2FoldChange > 0),
+            down = sum(log2FoldChange < 0),
+            total = n()) %>%
+  ungroup() %>%
+  group_by(time_expr) %>%
+  mutate(total_panel = sum(total)) %>%
+  ungroup()
+
+significant_data <- expr_geneSymbol %>%
+  inner_join(gene_symbols_HET_HETandKO) %>%
+  mutate(change_group = ifelse(log2FoldChange > 0, "Greater than 0", 
+                               ifelse(log2FoldChange < 0, "Less than 0", "Equal to 0"))) %>%
+  filter(significance)
+
+all_data <- expr_geneSymbol %>%
+  inner_join(gene_symbols_HET_HETandKO) %>%
+  mutate(change_group = ifelse(log2FoldChange > 0, "Greater than 0", 
+                               ifelse(log2FoldChange < 0, "Less than 0", "Equal to 0")))
+
+pdf("output/ChIPseeker/ESCvsNPC_HET_HETandKOspecific_Lost_expression_genotypeComp.pdf", width=7, height=4)
+ggplot() +
+  geom_boxplot(data = significant_data, aes(time_expr, log2FoldChange, fill = change_group)) +
+  geom_jitter(data = all_data, aes(time_expr, log2FoldChange, color = significance), alpha = 0.8, size = 0.5, width = 0.1) +
+  scale_fill_manual(values = c("darkred", "darkred")) + 
+  scale_color_manual(values = c("grey", "red")) +
+  geom_text(data = count_data %>% filter(significance),
+            aes(x = time_expr, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
+            hjust = 0.5, vjust = 1.1, size = 3, color = "black", check_overlap = TRUE) +
+  geom_text(data = count_data %>% distinct(time_expr, .keep_all = TRUE),
+            aes(x = time_expr, y = -Inf, label = paste("Total:", total_panel, "genes")),
+            hjust = 0.5, vjust = -0.1, size = 3, color = "black", check_overlap = TRUE) +
+  theme_bw()
 dev.off()
 
 
@@ -7089,6 +7244,8 @@ dev.off()
 
 
 ```
+***NOTE: keep in mind that with gene name conversion, I lose genes! For example I am not able to retrieve the 904 genes Lost in HET and HETandKO; only 800 of them***
+
 
 --> With log2FC we do not see that the site that specifically LOST H3K27me3 in HET are more express... Thus let's try with TPM
 ----> same, does not show that the genes that lose H3K27me3 from ESC to NPC in HET are more express in HET vs WT or KO !!
@@ -7289,4 +7446,4 @@ dev.off()
 
 --> Filtering for only the genes induced in the WT, also showed HET/KO less induced / WT!
 
---> Checking instead DEGs between genotypes at each time-point is XXX
+--> Checking instead DEGs between genotypes at each time-point is even weirder; genes are mostly downregulated in HETl; at each time-point...
