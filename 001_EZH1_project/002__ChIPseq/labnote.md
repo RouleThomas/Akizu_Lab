@@ -5554,8 +5554,8 @@ DiffBind_TMM SF from **uniquely aligned bam** (used to generate `output/bamtobig
 ## THOR with different SF (DiffBindTMM from uniquely/NON-uniquely aligned bam AND ChIPseqSpikeInFree ony)
 - try with DiffBind_TMM where ChIPseqSpikeInFree was applied on library size
 - try with ChIPseqSpikeInFree SF; from `bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF`; they are NOT TMM-normalized though... But as discussed earlier maybe we cannot use both ChIPseqSpikeInFree and TMM normalization...
-
-
+- try without scaling factor (TMM default normalziation)
+- try with housekeeping genes normalization
 
 *THOR is very buggy to make it work I need to temporaly change where to look for libraries lol.. So cannot use nano anymore for example...*
 
@@ -5598,7 +5598,7 @@ sbatch scripts/THOR_WT_ESCvsNPC_TMM.sh # 1673885 ok
 ## Time-effect for WT, Default TMM-normalization (NO SF) with rmdup
 sbatch scripts/THOR_WT_ESCvsNPC_rmdup_TMM.sh # 1674683 ok
 
-### Optimal parameters have been found; now here are the missing samples:
+### Optimal parameters have been found with TMM-norm; now here are the missing samples:
 #### Time-effect for KO and HET, Default TMM-normalization (NO SF)
 sbatch scripts/THOR_HET_ESCvsNPC_UniqueBamTMM.sh # 1681090 ok
 sbatch scripts/THOR_KO_ESCvsNPC_UniqueBamTMM.sh # 1681115 ok
@@ -5610,6 +5610,37 @@ sbatch scripts/THOR_NPC_WTvsHET_UniqueBamTMM.sh # 1681129 ok
 sbatch scripts/THOR_NPC_WTvsKO_UniqueBamTMM.sh # 1681138 ok
 sbatch scripts/THOR_2dN_WTvsHET_UniqueBamTMM.sh # 1681142 ok
 sbatch scripts/THOR_2dN_WTvsKO_UniqueBamTMM.sh # 1681198 ok
+
+## housekeeping genes-norm
+#### time-effect
+sbatch scripts/THOR_WT_ESCvsNPC_housekeep.sh # 1915845
+sbatch scripts/THOR_WT_ESCvsNPC_uniqueBAMhousekeep.sh # 1915944
+sbatch scripts/THOR_HET_ESCvsNPC_housekeep.sh # 1916367
+sbatch scripts/THOR_HET_ESCvsNPC_uniqueBAMhousekeep.sh # 1916383
+sbatch scripts/THOR_KO_ESCvsNPC_housekeep.sh # 1916443
+sbatch scripts/THOR_KO_ESCvsNPC_uniqueBAMhousekeep.sh # 1916509
+
+sbatch scripts/THOR_WT_NPCvs2dN_housekeep.sh # 1916999
+sbatch scripts/THOR_WT_NPCvs2dN_uniqueBAMhousekeep.sh # 1917008
+sbatch scripts/THOR_HET_NPCvs2dN_housekeep.sh # 1917186
+sbatch scripts/THOR_HET_NPCvs2dN_uniqueBAMhousekeep.sh # 1917268
+sbatch scripts/THOR_KO_NPCvs2dN_housekeep.sh # 1917343
+sbatch scripts/THOR_KO_NPCvs2dN_uniqueBAMhousekeep.sh # 1917401
+#### genotype-effect
+sbatch scripts/THOR_ESC_WTvsHET_housekeep.sh # 1916031
+sbatch scripts/THOR_ESC_WTvsHET_uniqueBAMhousekeep.sh # 1916074
+sbatch scripts/THOR_ESC_WTvsKO_housekeep.sh # 1917516
+sbatch scripts/THOR_ESC_WTvsKO_uniqueBAMhousekeep.sh # 1917547
+
+sbatch scripts/THOR_NPC_WTvsHET_housekeep.sh # 1917668
+sbatch scripts/THOR_NPC_WTvsHET_uniqueBAMhousekeep.sh # 1917721
+sbatch scripts/THOR_NPC_WTvsKO_housekeep.sh # 1917810
+sbatch scripts/THOR_NPC_WTvsKO_uniqueBAMhousekeep.sh # 1917820
+
+sbatch scripts/THOR_2dN_WTvsHET_housekeep.sh #  XXX
+sbatch scripts/THOR_2dN_WTvsHET_uniqueBAMhousekeep.sh # XXX
+sbatch scripts/THOR_2dN_WTvsKO_housekeep.sh # XXX
+sbatch scripts/THOR_2dN_WTvsKO_uniqueBAMhousekeep.sh # XXX
 ```
 
 Go in R to explore the data real quick within `conda activate deseq2`:
@@ -6311,7 +6342,7 @@ thor_splitted %>%
 ----> **genotype**-effect; at ESC/NPC/2dN HET and KO lead to overall decrease of H3K27me3 (this was NOT observed with the CutRun data...)
 ------> WT vs KO at 2dN failed; almost no diff. sites
 
-
+--> Housekeeping genes is XXX
 
 
 Let's collect the correct SF from ChIPseqSpikeInFree:
@@ -7462,6 +7493,7 @@ The ChIPseq normalization using TMM with uniqueBAM does not work great (poorly i
 - *NOTE: Check on IGV on the CutRun data that these genes are similarly enriched (or not) in H3K27me3 in WT/HET/KO: OK*
 
 
+--> This has been run within the previous part `## THOR with different SF (DiffBindTMM from uniquely/NON-uniquely aligned bam AND ChIPseqSpikeInFree ony)`; as `*housekeep*`
 
 
 
