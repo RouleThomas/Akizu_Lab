@@ -7447,3 +7447,36 @@ dev.off()
 --> Filtering for only the genes induced in the WT, also showed HET/KO less induced / WT!
 
 --> Checking instead DEGs between genotypes at each time-point is even weirder; genes are mostly downregulated in HETl; at each time-point...
+
+
+The ChIPseq normalization using TMM with uniqueBAM does not work great (poorly in agreement with gene expression changes). Let's try using housekeeping genes for normalization with and without uniqueBAM
+
+
+#### THOR with housekeeping genes normalization
+
+**Housekeeping gene list (bed) download** from [here](https://reg-gen.readthedocs.io/en/latest/thor/tool_usage.html): "We use regions 500 bps upstream of all housekeeping genes described by Eisenberg and Levanon (43) (C1orf43, CHMP2A, EMC7, GPI, PSMB2, PSMB4, RAB7A, REEP5, SNRPD3, VCP, VPS29) as control regions for the human genome" from the [paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5175345/).
+
+--> In the file I download that is hg19 bed version; so I need re-generate bed file for hg38; moreover the genes are: EMC7, GPI, PSMB2, PSMB4, RAB7A, REEP5, SNRPD3, VCP, VPS29. 
+
+- *NOTE: Check the 500bp upstream from TSS is taken (check on IGV with hg19): OK; not exactly, but I converted the bed from hg19 to hg38 with this [webtool](https://genome.ucsc.edu/cgi-bin/hgLiftOver).*
+- *NOTE: Check on IGV on the CutRun data that these genes are similarly enriched (or not) in H3K27me3 in WT/HET/KO: OK*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
