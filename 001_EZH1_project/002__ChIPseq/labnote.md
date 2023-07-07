@@ -5637,10 +5637,10 @@ sbatch scripts/THOR_NPC_WTvsHET_uniqueBAMhousekeep.sh # 1917721
 sbatch scripts/THOR_NPC_WTvsKO_housekeep.sh # 1917810
 sbatch scripts/THOR_NPC_WTvsKO_uniqueBAMhousekeep.sh # 1917820
 
-sbatch scripts/THOR_2dN_WTvsHET_housekeep.sh #  XXX
-sbatch scripts/THOR_2dN_WTvsHET_uniqueBAMhousekeep.sh # XXX
-sbatch scripts/THOR_2dN_WTvsKO_housekeep.sh # XXX
-sbatch scripts/THOR_2dN_WTvsKO_uniqueBAMhousekeep.sh # XXX
+sbatch scripts/THOR_2dN_WTvsHET_housekeep.sh #  1918597
+sbatch scripts/THOR_2dN_WTvsHET_uniqueBAMhousekeep.sh # 1918605
+sbatch scripts/THOR_2dN_WTvsKO_housekeep.sh # 1918654
+sbatch scripts/THOR_2dN_WTvsKO_uniqueBAMhousekeep.sh # 1918827
 ```
 
 Go in R to explore the data real quick within `conda activate deseq2`:
