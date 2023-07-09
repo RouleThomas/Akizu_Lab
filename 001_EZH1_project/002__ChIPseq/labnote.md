@@ -5613,24 +5613,24 @@ sbatch scripts/THOR_2dN_WTvsKO_UniqueBamTMM.sh # 1681198 ok
 
 ## housekeeping genes-norm
 #### time-effect
-sbatch scripts/THOR_WT_ESCvsNPC_housekeep.sh # 1915845
-sbatch scripts/THOR_WT_ESCvsNPC_uniqueBAMhousekeep.sh # 1915944
-sbatch scripts/THOR_HET_ESCvsNPC_housekeep.sh # 1916367
-sbatch scripts/THOR_HET_ESCvsNPC_uniqueBAMhousekeep.sh # 1916383
-sbatch scripts/THOR_KO_ESCvsNPC_housekeep.sh # 1916443
-sbatch scripts/THOR_KO_ESCvsNPC_uniqueBAMhousekeep.sh # 1916509
+sbatch scripts/THOR_WT_ESCvsNPC_housekeep.sh # 1915845 ok
+sbatch scripts/THOR_WT_ESCvsNPC_uniqueBAMhousekeep.sh # 1915944 ok
+sbatch scripts/THOR_HET_ESCvsNPC_housekeep.sh # 1916367 ok
+sbatch scripts/THOR_HET_ESCvsNPC_uniqueBAMhousekeep.sh # 1916383 ok
+sbatch scripts/THOR_KO_ESCvsNPC_housekeep.sh # 1916443 ok
+sbatch scripts/THOR_KO_ESCvsNPC_uniqueBAMhousekeep.sh # 1916509 ok
 
-sbatch scripts/THOR_WT_NPCvs2dN_housekeep.sh # 1916999
-sbatch scripts/THOR_WT_NPCvs2dN_uniqueBAMhousekeep.sh # 1917008
-sbatch scripts/THOR_HET_NPCvs2dN_housekeep.sh # 1917186
-sbatch scripts/THOR_HET_NPCvs2dN_uniqueBAMhousekeep.sh # 1917268
-sbatch scripts/THOR_KO_NPCvs2dN_housekeep.sh # 1917343
-sbatch scripts/THOR_KO_NPCvs2dN_uniqueBAMhousekeep.sh # 1917401
+sbatch scripts/THOR_WT_NPCvs2dN_housekeep.sh # 1916999 ok
+sbatch scripts/THOR_WT_NPCvs2dN_uniqueBAMhousekeep.sh # 1917008 ok
+sbatch scripts/THOR_HET_NPCvs2dN_housekeep.sh # 1917186 ok
+sbatch scripts/THOR_HET_NPCvs2dN_uniqueBAMhousekeep.sh # 1917268 ok
+sbatch scripts/THOR_KO_NPCvs2dN_housekeep.sh # 1917343 ok
+sbatch scripts/THOR_KO_NPCvs2dN_uniqueBAMhousekeep.sh # 1917401 ok
 #### genotype-effect
-sbatch scripts/THOR_ESC_WTvsHET_housekeep.sh # 1916031
-sbatch scripts/THOR_ESC_WTvsHET_uniqueBAMhousekeep.sh # 1916074
+sbatch scripts/THOR_ESC_WTvsHET_housekeep.sh # 1916031 ok
+sbatch scripts/THOR_ESC_WTvsHET_uniqueBAMhousekeep.sh # 1916074 ok
 sbatch scripts/THOR_ESC_WTvsKO_housekeep.sh # 1917516
-sbatch scripts/THOR_ESC_WTvsKO_uniqueBAMhousekeep.sh # 1917547
+sbatch scripts/THOR_ESC_WTvsKO_uniqueBAMhousekeep.sh # 2020601
 
 sbatch scripts/THOR_NPC_WTvsHET_housekeep.sh # 1917668
 sbatch scripts/THOR_NPC_WTvsHET_uniqueBAMhousekeep.sh # 1917721
@@ -6406,6 +6406,44 @@ thor_splitted %>%
   summarise(n = n())
 
 
+# HET_ESCvsNPC_housekeep
+diffpeaks <- read_tsv("output/THOR/THOR_HET_ESCvsNPC_housekeep/HETESCvsNPChousekeep-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_ESC", "count_NPC", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_ESC, into = c("count_ESC_1","count_ESC_2"), sep = ":", convert = TRUE) %>%
+  separate(count_NPC, into = c("count_NPC_1","count_NPC_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_NPC_1+count_NPC_2) / (count_ESC_1+count_ESC_2))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_HET_ESCvsNPC_housekeep/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("WT_ESC vs NPC") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_HET_ESCvsNPC_housekeep/log2FC_qval50.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 50) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("HET_ESC vs NPC") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 100) %>%
+  write_tsv("output/THOR/THOR_HET_ESCvsNPC_housekeep/THOR_qval100.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 50) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
 # HET_ESCvsNPC_uniqueBAMhousekeep
 diffpeaks <- read_tsv("output/THOR/THOR_HET_ESCvsNPC_UniqueBamhousekeep/HETESCvsNPCUniqueBamhousekeep-diffpeaks.bed",
                       col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
@@ -6442,6 +6480,317 @@ thor_splitted %>%
   filter(qval > 50) %>%
   group_by(X6) %>%
   summarise(n = n())
+
+
+# KO_ESCvsNPC_uniqueBAMhousekeep
+diffpeaks <- read_tsv("output/THOR/THOR_KO_ESCvsNPC_UniqueBamhousekeep/KOESCvsNPCUniqueBamhousekeep-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_ESC", "count_NPC", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_ESC, into = c("count_ESC_1","count_ESC_2"), sep = ":", convert = TRUE) %>%
+  separate(count_NPC, into = c("count_NPC_1","count_NPC_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_NPC_1+count_NPC_2) / (count_ESC_1+count_ESC_2))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_KO_ESCvsNPC_UniqueBamhousekeep/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("KO_ESC vs NPC") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_KO_ESCvsNPC_UniqueBamhousekeep/log2FC_qval50.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 50) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("KO_ESC vs NPC") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 60) %>%
+  write_tsv("output/THOR/THOR_KO_ESCvsNPC_UniqueBamhousekeep/THOR_qval60.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 50) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+# WT_NPCvs2dN_uniqueBAMhousekeep
+diffpeaks <- read_tsv("output/THOR/THOR_WT_NPCvs2dN_UniqueBamhousekeep/WTNPCvs2dNUniqueBamhousekeep-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_NPC", "count_2dN", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_NPC, into = c("count_NPC_1","count_NPC_2"), sep = ":", convert = TRUE) %>%
+  separate(count_2dN, into = c("count_2dN_1","count_2dN_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_2dN_1+count_2dN_2) / (count_NPC_1+count_NPC_2))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_WT_NPCvs2dN_UniqueBamhousekeep/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("WT_ESC vs NPC") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_WT_NPCvs2dN_UniqueBamhousekeep/log2FC_qval60.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 60) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("WT_ESC vs NPC") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 60) %>%
+  write_tsv("output/THOR/THOR_WT_NPCvs2dN_UniqueBamhousekeep/THOR_qval60.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 50) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+# ESC_WTvsHET_uniqueBAMhousekeep
+diffpeaks <- read_tsv("output/THOR/THOR_ESC_WTvsHET_uniqueBAMhousekeep/ESCWTvsHETuniqueBAMhousekeep-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_HET", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2"), sep = ":", convert = TRUE) %>%
+  separate(count_HET, into = c("count_HET_1","count_HET_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_HET_1+count_HET_2) / (count_WT_1+count_WT_2))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_ESC_WTvsHET_uniqueBAMhousekeep/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("ESC_WT vs HET") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_ESC_WTvsHET_uniqueBAMhousekeep/log2FC_qval60.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 60) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("WT_ESC vs NPC") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 40) %>%
+  write_tsv("output/THOR/THOR_ESC_WTvsHET_uniqueBAMhousekeep/THOR_qval40.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 50) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+# ESC_WTvsKO_uniqueBAMhousekeep
+diffpeaks <- read_tsv("output/THOR/THOR_ESC_WTvsKO_UniqueBamhousekeep/ESCWTvsKOUniqueBamhousekeep-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_HET", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2"), sep = ":", convert = TRUE) %>%
+  separate(count_HET, into = c("count_HET_1","count_HET_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_HET_1+count_HET_2) / (count_WT_1+count_WT_2))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_ESC_WTvsHET_uniqueBAMhousekeep/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("ESC_WT vs HET") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_ESC_WTvsHET_uniqueBAMhousekeep/log2FC_qval60.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 60) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("WT_ESC vs NPC") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 40) %>%
+  write_tsv("output/THOR/THOR_ESC_WTvsHET_uniqueBAMhousekeep/THOR_qval40.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 50) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+# NPC_WTvsHET_uniqueBAMhousekeep
+diffpeaks <- read_tsv("output/THOR/THOR_NPC_WTvsHET_UniqueBamhousekeep/NPCWTvsHETUniqueBamhousekeep-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_HET", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2"), sep = ":", convert = TRUE) %>%
+  separate(count_HET, into = c("count_HET_1","count_HET_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_HET_1+count_HET_2) / (count_WT_1+count_WT_2))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_NPC_WTvsHET_UniqueBamhousekeep/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("NPC_WT vs HET") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_NPC_WTvsHET_UniqueBamhousekeep/log2FC_qval50.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 50) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("NPC_WT vs HET") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 25) %>%
+  write_tsv("output/THOR/THOR_NPC_WTvsHET_UniqueBamhousekeep/THOR_qval25.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 50) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
+# NPC_WTvsKO_uniqueBAMhousekeep
+diffpeaks <- read_tsv("output/THOR/THOR_NPC_WTvsKO_UniqueBamhousekeep/NPCWTvsKOUniqueBamhousekeep-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2) / (count_WT_1+count_WT_2))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_NPC_WTvsKO_UniqueBamhousekeep/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("NPC_WT vs KO") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_NPC_WTvsKO_UniqueBamhousekeep/log2FC_qval50.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 50) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("NPC_WT vs HET") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 50) %>%
+  write_tsv("output/THOR/THOR_NPC_WTvsKO_UniqueBamhousekeep/THOR_qval50.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 50) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
+
+# 2dN_WTvsHET_uniqueBAMhousekeep
+diffpeaks <- read_tsv("output/THOR/THOR_2dN_WTvsHET_UniqueBamhousekeep/2dNWTvsHETUniqueBamhousekeep-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_HET", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2"), sep = ":", convert = TRUE) %>%
+  separate(count_HET, into = c("count_HET_1","count_HET_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_HET_1+count_HET_2) / (count_WT_1+count_WT_2))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_2dN_WTvsHET_UniqueBamhousekeep/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("2dN_WT vs HET") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_2dN_WTvsHET_UniqueBamhousekeep/log2FC_qval50.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 50) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("2dN_WT vs HET") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 50) %>%
+  write_tsv("output/THOR/THOR_2dN_WTvsHET_UniqueBamhousekeep/THOR_qval50.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 50) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
+
+# 2dN_WTvsKO_uniqueBAMhousekeep
+diffpeaks <- read_tsv("output/THOR/THOR_2dN_WTvsKO_UniqueBamhousekeep/2dNWTvsKOUniqueBamhousekeep-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2) / (count_WT_1+count_WT_2))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_2dN_WTvsKO_UniqueBamhousekeep/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("2dN_WT vs KO") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_2dN_WTvsKO_UniqueBamhousekeep/log2FC_qval25.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 25) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("2dN_WT vs KO") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 50) %>%
+  write_tsv("output/THOR/THOR_2dN_WTvsKO_UniqueBamhousekeep/THOR_qval50.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 50) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
 ```
 
 --> `THOR_WT_ESCvsNPC_UniqueBamDiffBindTMM` and `THOR_WT_ESCvsNPC_DiffBindTMM` = bad; much more Decrease H3K27me3 upon differentation...
@@ -6455,10 +6804,20 @@ thor_splitted %>%
 ----> **genotype**-effect; at ESC/NPC/2dN HET and KO lead to overall decrease of H3K27me3 (this was NOT observed with the CutRun data...)
 ------> WT vs KO at 2dN failed; almost no diff. sites
 
---> **Housekeeping gene-norm**:
+**Housekeeping gene-norm**:
+
 --> More diff bound sites identified with non-uniqueBAM; BUT **replicates are MORE clean with uniqueBAM**
+
+--> The 2 replicates of **HET ESC are very heterogeneous** (uniqueBam and non-UniqueBam): Something needs to be corected; check the housekeeping genes for this sampple : XXX
+
+--> The 2 replicates of **KO ESC and NPC are a bit heterogeneous**
+
+--> The 2 replicates of **WT 2dN are a bit heterogeneous**
+
 ----> shows decrease H3K27me3 from ESC to NPC at NEUROG2.
+
 ----> Much more diff. bound sites when using the non-uniqueBAM one!
+
 ----> Let's pick optimal qvalue for WT and apply fotr the rest:
 - time-effect: qval 50 (good for unique and non-uniqueBAM)
 - genotype-effect: qval XXX
@@ -6547,6 +6906,9 @@ ESCvsNPC = read.table('output/THOR/THOR_WT_ESCvsNPC_housekeep/THOR_qval40.bed') 
 ESCvsNPC = read.table('output/THOR/THOR_WT_ESCvsNPC_uniqueBAMhousekeep/THOR_qval60.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_ESC_1= V11, count_ESC_2=V12, count_NPC_1=V13, count_NPC_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_ESC_1,count_ESC_2,count_NPC_1,count_NPC_2)
 ## qval50_HET_ESCvsNPC_uniqueBAMhousekeep
 ESCvsNPC = read.table('output/THOR/THOR_HET_ESCvsNPC_UniqueBamhousekeep/THOR_qval50.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_ESC_1= V11, count_ESC_2=V12, count_NPC_1=V13, count_NPC_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_ESC_1,count_ESC_2,count_NPC_1,count_NPC_2)
+## qval50_KO_ESCvsNPC_uniqueBAMhousekeep
+ESCvsNPC = read.table('output/THOR/THOR_KO_ESCvsNPC_UniqueBamhousekeep/THOR_qval50.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_ESC_1= V11, count_ESC_2=V12, count_NPC_1=V13, count_NPC_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_ESC_1,count_ESC_2,count_NPC_1,count_NPC_2)
+
 
 
 ## qval10_HET_ESCvsNPC_UniqueBamTMM
@@ -6563,6 +6925,8 @@ ESCvsNPC = read.table('output/THOR/THOR_KO_ESCvsNPC_UniqueBamTMM/THOR_qval25.bed
 ESCvsNPC = read.table('output/THOR/THOR_WT_NPCvs2dN_UniqueBamTMM/THOR_qval25.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_ESC_1= V11, count_ESC_2=V12, count_NPC_1=V13, count_NPC_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_ESC_1,count_ESC_2,count_NPC_1,count_NPC_2)
 ## qval25_HET_NPCvs2dN_UniqueBamTMM
 ESCvsNPC = read.table('output/THOR/THOR_HET_NPCvs2dN_UniqueBamTMM/THOR_qval25.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_ESC_1= V11, count_ESC_2=V12, count_NPC_1=V13, count_NPC_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_ESC_1,count_ESC_2,count_NPC_1,count_NPC_2)
+
+
 
 
 ## GENOTYPE-EFFECT : !!! TO MAKE IT SIMPLE, I KEPT the 'ESCvsNPC' title !!!!
@@ -6582,7 +6946,14 @@ ESCvsNPC = read.table('output/THOR/THOR_NPC_WTvsHET_UniqueBamTMM/THOR_qval25.bed
 ESCvsNPC = read.table('output/THOR/THOR_NPC_WTvsKO_UniqueBamTMM/THOR_qval25.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
 ## qval25_2dN_WTvsHET_UniqueBamTMM
 ESCvsNPC = read.table('output/THOR/THOR_2dN_WTvsHET_UniqueBamTMM/THOR_qval25.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
-
+## qval50_NPC_WTvsHET_UniqueBamhousekeep
+ESCvsNPC = read.table('output/THOR/THOR_NPC_WTvsHET_UniqueBamhousekeep/THOR_qval50.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
+## qval50_NPC_WTvsKO_UniqueBamhousekeep
+ESCvsNPC = read.table('output/THOR/THOR_NPC_WTvsKO_UniqueBamhousekeep/THOR_qval50.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
+## qval50_2dN_WTvsHET_UniqueBamhousekeep
+ESCvsNPC = read.table('output/THOR/THOR_2dN_WTvsHET_UniqueBamhousekeep/THOR_qval50.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
+## qval50_2dN_WTvsKO_UniqueBamhousekeep
+ESCvsNPC = read.table('output/THOR/THOR_2dN_WTvsKO_UniqueBamhousekeep/THOR_qval50.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V15, FC=V16, count_WT_1= V11, count_WT_2=V12, count_HET_1=V13, count_HET_2=V14) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_HET_1,count_HET_2)
 
 
 # Tidy peaks #-->> Re-Run from here with different qvalue!!
@@ -6667,6 +7038,10 @@ RNA_expression = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_WT_ESC_v
 RNA_expression = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_HET_ESC_vs_HET_NPC.txt')) %>%
     separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
     dplyr::select(gene, baseMean,log2FoldChange,padj)
+
+RNA_expression = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_KO_ESC_vs_KO_NPC.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj)
 ## Fitlered FC ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
 #### TIME-EFFECT
 RNA_expression = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_WT_ESC_vs_WT_NPC.txt')) %>%
@@ -6710,7 +7085,10 @@ RNA_expression = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_2dN_HET_
     separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
     dplyr::select(gene, baseMean,log2FoldChange,padj) %>%
     filter(log2FoldChange >= 0.5 | log2FoldChange <= -0.5)
-
+RNA_expression = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_2dN_KO_vs_2dN_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj) %>%
+    filter(log2FoldChange >= 0.5 | log2FoldChange <= -0.5)
 
 
 # Merge files
@@ -6760,7 +7138,7 @@ pdf("output/ChIPseeker/THOR_qval25_HET_2dNvsNPC_TMM_expression_promoterAnd5_FC05
 pdf("output/ChIPseeker/THOR_qval40_WT_ESCvsNPC_uniqueBAMhousekeep_expression.pdf", width=7, height=4) # CHANGE TITLE 
 pdf("output/ChIPseeker/THOR_qval60_WT_ESCvsNPC_uniqueBAMhousekeep_expression_promoterAnd5.pdf", width=7, height=4) # CHANGE TITLE 
 pdf("output/ChIPseeker/THOR_qval50_HET_ESCvsNPC_uniqueBAMhousekeep_expression_promoterAnd5.pdf", width=7, height=4) # CHANGE TITLE 
-
+pdf("output/ChIPseeker/THOR_qval50_KO_ESCvsNPC_uniqueBAMhousekeep_expression_promoterAnd5.pdf", width=7, height=4) # CHANGE TITLE 
 
 ## GENOTYPE-EFFECT
 pdf("output/ChIPseeker/THOR_qval25_ESC_WTvsHET_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE 
@@ -6768,6 +7146,12 @@ pdf("output/ChIPseeker/THOR_qval25_ESC_WTvsKO_TMM_expression_promoterAnd5_FC05.p
 pdf("output/ChIPseeker/THOR_qval25_NPC_WTvsHET_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE 
 pdf("output/ChIPseeker/THOR_qval25_NPC_WTvsKO_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE 
 pdf("output/ChIPseeker/THOR_qval25_2dN_WTvsHET_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval50_NPC_WTvsHET_housekeep_expression_promoterAnd5.pdf", width=7, height=4) # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval50_NPC_WTvsKO_housekeep_expression_promoterAnd5.pdf", width=7, height=4) # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval50_2dN_WTvsHET_housekeep_expression_promoterAnd5.pdf", width=7, height=4) # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval50_2dN_WTvsKO_housekeep_expression_promoterAnd5.pdf", width=7, height=4) # CHANGE TITLE 
+
+
 
 ESCvsNPC_annot_gain_lost_RNA %>%
     ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
