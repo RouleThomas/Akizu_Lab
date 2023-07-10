@@ -8099,6 +8099,43 @@ dev.off()
 ####
 
 
+# Both genotypes scatter plot
+
+all_data_corr <- all_data %>%
+    filter(significance == TRUE, Description == "forebrain development") %>%
+    dplyr::select(gene_symbol, genotype_expr, log2FoldChange) %>%
+    spread(key = genotype_expr, value = log2FoldChange) %>%
+    replace_na(list(WT = 0, HET = 0, KO = 0)) %>%  
+    mutate(diff_HET = abs(WT - HET),
+           diff_KO = abs(WT - KO))
+
+pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_forebrainDev_corr_WT_HET_KO.pdf", width=18, height=10)
+all_data_corr_long <- all_data_corr %>%
+    gather(key = "Comparison", value = "log2FC", HET, KO)
+
+ggplot(all_data_corr_long, aes(x = WT, y = log2FC)) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +
+    geom_vline(xintercept = 0, linetype = "dashed", color = "grey50") +
+    geom_point(aes(shape = ifelse(Comparison == "HET", diff_HET, diff_KO) > 2, 
+                   size = ifelse(Comparison == "HET", diff_HET, diff_KO) > 2, 
+                   color = ifelse(Comparison == "HET", diff_HET, diff_KO) > 2)) +
+    geom_text(data = all_data_corr_long %>% filter(ifelse(Comparison == "HET", diff_HET, diff_KO) > 2), 
+              aes(label = gene_symbol), hjust = -0.3, vjust = -0.3, check_overlap = TRUE) +
+    geom_smooth(method = "lm", se = FALSE, color = "blue", linetype = "dotted") +
+    scale_shape_manual(values = c(16, 17)) +
+    scale_size_manual(values = c(3, 5)) +
+    scale_color_manual(values = c("black", "red")) +
+    facet_wrap(~Comparison, scales = "free") +
+    labs(x = "Log2 Fold Change (WT)", 
+         y = "Log2 Fold Change (HET/KO)", 
+         title = "Correlation between Log2 Fold Changes for WT and HET/KO Genotypes",
+         shape = "Difference > 2",
+         size = "Difference > 2",
+         color = "Difference > 2") +
+    theme_bw() +
+    theme(legend.position = "bottom")
+dev.off()
+
 
 
 
