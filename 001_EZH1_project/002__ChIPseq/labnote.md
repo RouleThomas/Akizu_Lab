@@ -8139,6 +8139,11 @@ dev.off()
 
 
 
+# ChatGPT heatmap method with library("ComplexHeatmap") library("circlize")
+## --> See Python Code
+
+
+
 ### Only keep the genes that are induced in WT 
 
 pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression_WTinduced_GO_BP_15.pdf", width=10, height=15)
@@ -8245,6 +8250,92 @@ dev.off()
 
 
 The ChIPseq normalization using TMM with uniqueBAM does not work great (poorly in agreement with gene expression changes). Let's try using housekeeping genes for normalization with and without uniqueBAM
+
+
+
+### Heatmaps in Python
+Let's not use the weird staticical comparison; instead; re-do GO analysis for each of Gain and Lost in WT. Then check directly what are the interesed GO to look at. And do the scatter plot representation and associated heatmaps of only the differential.
+
+ChatGPT Python code for **heatmaps representation**, this is CLEAR and CONCISE. Let's isolate the genes and make a clean table as the one I saved for the other GO comparison:
+
+```bash
+conda activate XXX
+python3
+```
+
+Enter python interpreter:
+```python
+
+import pandas as pd
+from matplotlib.patches import Rectangle
+import seaborn as sns
+
+# Load the data
+data = pd.read_csv("/mnt/data/all_data_corr_output.console", sep="\t", comment="#")
+data.head()
+
+# Define a threshold
+threshold = 2
+# Filter genes that have an absolute difference greater than the threshold in either HET or KO
+filtered_data = data[(data['diff_HET'].abs() > threshold) | (data['diff_KO'].abs() > threshold)]
+
+# Select the data for the heatmap
+heatmap_data = filtered_data[['gene_symbol', 'WT', 'HET', 'KO']].set_index('gene_symbol')
+# Categorize the genes based on the new criteria
+heatmap_data['category'] = 'More in HET'
+heatmap_data.loc[heatmap_data['KO'] > heatmap_data['HET'], 'category'] = 'More in KO'
+heatmap_data.loc[(heatmap_data['WT'] > heatmap_data['HET']) & (heatmap_data['WT'] > heatmap_data['KO']), 'category'] = 'Less in HET'
+heatmap_data.loc[(heatmap_data['WT'] > heatmap_data['KO']) & (heatmap_data['WT'] > heatmap_data['HET']), 'category'] = 'Less in KO'
+
+# Sort the genes in each category based on the WT strength
+heatmap_data.sort_values(by=['category', 'WT'], ascending=[True, False], inplace=True)
+
+# Identify the genes in each category that behave oppositely in the other mutant
+opposite_genes = {
+    'More in HET': heatmap_data[(heatmap_data['category'] == 'More in HET') & (heatmap_data['KO'] < heatmap_data['WT'])].index,
+    'More in KO': heatmap_data[(heatmap_data['category'] == 'More in KO') & (heatmap_data['HET'] < heatmap_data['WT'])].index,
+    'Less in KO': heatmap_data[(heatmap_data['category'] == 'Less in KO') & (heatmap_data['HET'] > heatmap_data['WT'])].index
+}
+
+
+# Create a figure
+fig, axs = plt.subplots(len(data_categories), figsize=(10, len(data_categories)*5))
+
+# Generate a separate heatmap for each category
+for i, category_data in enumerate(data_categories):
+    # Create a heatmap
+    sns.heatmap(category_data, cmap='coolwarm', center=0, annot=False, ax=axs[i])
+    
+    # Highlight the genes that behave oppositely in the other mutant
+    for gene in category_data.index:
+        if gene in opposite_genes[categories[i]]:
+            axs[i].add_patch(Rectangle((0, category_data.index.get_loc(gene)), 3, 1, fill=False, edgecolor='green', lw=3))
+
+    axs[i].set_title(f'{categories[i]} Genes (n = {len(category_data)})')
+    axs[i].set_xlabel('Genotype')
+    axs[i].set_ylabel('Gene')
+
+# Adjust the layout
+plt.tight_layout()
+plt.show()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #### THOR with housekeeping genes normalization
