@@ -7338,7 +7338,7 @@ awk -F'\t' '($7 > 1) && ($12=="Promoter (<=1kb)" || $12=="Promoter (1-2kb)" || $
 --> Hard to conclude anything. More overlap with HET, but expected as more genes that LOST H3K27me3 in HET than KO...
 
 
-Let's do **functional analysies on the genes that specifically LOST H3K27me3** in WT; and in HET; and in KO. Check their expression next:
+Let's do **functional analysies on the genes that specifically (or not) LOST H3K27me3** in WT; and in HET; and in KO. Check their expression next:
 
 ```bash
 conda activate deseq2
@@ -7359,9 +7359,13 @@ library("enrichplot")
 
 
 # Import the gene list
+## Speciifc LOST
 gene_symbols <- readLines("output/ChIPseeker/ESCvsNPC_WTspecific_Lost.txt") # readLines transform line into vector
 gene_symbols <- readLines("output/ChIPseeker/ESCvsNPC_HETspecific_Lost.txt") 
 gene_symbols <- readLines("output/ChIPseeker/ESCvsNPC_KOspecific_Lost.txt") 
+## WT changes TMM norm
+gene_symbols <- readLines("output/ChIPseeker/annotation_WT_ESCvsNPC_qval25_UniqueBamTMM_geneSymbol_Gain.txt") 
+gene_symbols <- readLines("output/ChIPseeker/annotation_WT_ESCvsNPC_qval25_UniqueBamTMM_geneSymbol_Lost.txt") 
 
 genes <- mapIds(org.Hs.eg.db, 
                    keys = gene_symbols, 
@@ -7378,7 +7382,10 @@ enrichKEGG <- enrichKEGG(gene   = genes,
                          pAdjustMethod = "BH")
 
 pdf("output/ChIPseeker/functional_KEGG_ESCvsNPC_HETspecific_Lost.pdf", width=7, height=5)
-emapplot(pairwise_termsim(enrichKEGG), showCategory = 5)
+pdf("output/ChIPseeker/functional_KEGG_ESCvsNPC_WT_Gain.pdf", width=7, height=6)
+pdf("output/ChIPseeker/functional_KEGG_ESCvsNPC_WT_Lost.pdf", width=7, height=6)
+
+dotplot(pairwise_termsim(enrichKEGG), showCategory = 15)
 dev.off()
 ### NO ENRICHMENT ESCvsNPC_WTspecific_Lost
 ### NO ENRICHMENT ESCvsNPC_KOspecific_Lost 
@@ -7394,25 +7401,32 @@ enrichGO <- enrichGO(gene   = genes,
 
 pdf("output/ChIPseeker/functional_GO_BP_ESCvsNPC_HETspecific_Lost_15.pdf", width=7, height=6)
 pdf("output/ChIPseeker/functional_GO_BP_ESCvsNPC_KOspecific_Lost.pdf", width=7, height=4)
-dotplot(enrichGO, showCategory = 9, title = "GO_Biological Process Enrichment Analysis")
+pdf("output/ChIPseeker/functional_GO_BP_ESCvsNPC_WT_Gain_15.pdf", width=7, height=6)
+pdf("output/ChIPseeker/functional_GO_BP_ESCvsNPC_WT_Lost_15.pdf", width=7, height=6)
+dotplot(enrichGO, showCategory = 15, title = "GO_Biological Process Enrichment Analysis")
 dev.off()
 ### NO ENRICHMENT  ESCvsNPC_WTspecific_Lost
 ###  ENRICHMENT  ESCvsNPC_HETspecific_Lost >50
 ###  ENRICHMENT  ESCvsNPC_KOspecific_Lost 9
-
+### ENRICHMENT ESCvsNPC_WT gain 322 hits
+### ENRICHMENT ESCvsNPC_WT lost 1060 hits
 
 
 enrichGO <- enrichGO(gene   = genes,
                          pvalueCutoff  = 0.05,
                          pAdjustMethod = "BH",
                          OrgDb         = "org.Hs.eg.db",
-                         ont           = "CC") # "BP" (Biological Process), "8" (Cellular Component), or "MF" (Molecular Function)
+                         ont           = "CC") # "BP" (Biological Process), "CC" (Cellular Component), or "MF" (Molecular Function)
 
 pdf("output/ChIPseeker/functional_GO_CC_ESCvsNPC_HETspecific_Lost_15.pdf", width=7, height=6)
 pdf("output/ChIPseeker/functional_GO_CC_ESCvsNPC_KOspecific_Lost.pdf", width=7, height=2)
-dotplot(enrichGO, showCategory = 1, title = "GO_Cellular Component Enrichment Analysis")
+pdf("output/ChIPseeker/functional_GO_CC_ESCvsNPC_WT_Gain_15.pdf", width=7, height=6)
+pdf("output/ChIPseeker/functional_GO_CC_ESCvsNPC_WT_Lost_15.pdf", width=7, height=6)
+dotplot(enrichGO, showCategory = 15, title = "GO_Cellular Component Enrichment Analysis")
 dev.off()
 ### ENRICHMENT  ESCvsNPC_HETspecific_Lost
+### ENRICHMENT ESCvsNPC_WT 52 hits
+### ENRICHMENT ESCvsNPC_WT 63 hits
 
 
 enrichGO <- enrichGO(gene   = genes,
@@ -7423,9 +7437,13 @@ enrichGO <- enrichGO(gene   = genes,
 
 pdf("output/ChIPseeker/functional_GO_MF_ESCvsNPC_HETspecific_Lost_15.pdf", width=7, height=7)
 pdf("output/ChIPseeker/functional_GO_MF_ESCvsNPC_KOspecific_Lost_15.pdf", width=7, height=3)
-dotplot(enrichGO, showCategory = 2, title = "GO_Molecular Function Enrichment Analysis")
+pdf("output/ChIPseeker/functional_GO_MF_ESCvsNPC_WT_Gain_15.pdf", width=7, height=6)
+pdf("output/ChIPseeker/functional_GO_MF_ESCvsNPC_WT_Lost_15.pdf", width=7, height=6)
+dotplot(enrichGO, showCategory = 15, title = "GO_Molecular Function Enrichment Analysis")
 dev.off()
 ### ENRICHMENT  ESCvsNPC_HETspecific_Lost
+### ENRICHMENT ESCvsNPC_WT lost 32 hits
+### ENRICHMENT ESCvsNPC_WT gain 49 hits
 
 
 ## Disease
@@ -7665,6 +7683,14 @@ tpm_all_sample_tidy_gene_name_stat <- tpm_all_sample_tidy_gene_name %>%
 
 
 ## import gene list
+### WT ESC to NPC TMM-norm GAIN
+gene_symbols_WT <- as_tibble(read.table("output/ChIPseeker/annotation_WT_ESCvsNPC_qval25_UniqueBamTMM_geneSymbol_Gain.txt", header = FALSE, stringsAsFactors = FALSE)) %>% 
+    rename(gene_symbol = V1)
+### WT ESC to NPC TMM-norm LOST
+gene_symbols_WT <- as_tibble(read.table("output/ChIPseeker/annotation_WT_ESCvsNPC_qval25_UniqueBamTMM_geneSymbol_Lost.txt", header = FALSE, stringsAsFactors = FALSE)) %>% 
+    rename(gene_symbol = V1)
+
+
 ### control
 gene_symbols_HET <- as_tibble(read.table("output/ChIPseeker/annotation_HET_ESCvsNPC_qval25_UniqueBamTMM_geneSymbol_Lost.txt", header = FALSE, stringsAsFactors = FALSE)) %>% 
     rename(gene_symbol = V1)
@@ -7692,7 +7718,7 @@ expr_geneSymbol$genotype_expr <-
          c("WT", "HET", "KO"))
          
 count_data <- expr_geneSymbol %>%
-  inner_join(gene_symbols_HET_HETandKO) %>%   # CHANGE HERE !!!!!!!!!
+  inner_join(gene_symbols_WT) %>%                # CHANGE HERE !!!!!!!!!
   group_by(genotype_expr, significance) %>%
   summarise(up = sum(log2FoldChange > 0),
             down = sum(log2FoldChange < 0),
@@ -7703,19 +7729,21 @@ count_data <- expr_geneSymbol %>%
   ungroup()
 
 significant_data <- expr_geneSymbol %>%
-  inner_join(gene_symbols_HET_HETandKO) %>%
+  inner_join(gene_symbols_WT) %>%                  # CHANGE HERE !!!!!!!!!
   mutate(change_group = ifelse(log2FoldChange > 0, "Greater than 0", 
                                ifelse(log2FoldChange < 0, "Less than 0", "Equal to 0"))) %>%
   filter(significance)
 
 all_data <- expr_geneSymbol %>%
-  inner_join(gene_symbols_HET_HETandKO) %>%
+  inner_join(gene_symbols_WT) %>%                # CHANGE HERE !!!!!!!!!
   mutate(change_group = ifelse(log2FoldChange > 0, "Greater than 0", 
                                ifelse(log2FoldChange < 0, "Less than 0", "Equal to 0")))
 
 pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression.pdf", width=4, height=5)
 pdf("output/ChIPseeker/ESCvsNPC_HETandKOspecific_Lost_expression.pdf", width=4, height=5)
 pdf("output/ChIPseeker/ESCvsNPC_HET_HETandKOspecific_Lost_expression.pdf", width=6, height=4)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Gain_expression.pdf", width=6, height=4)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression.pdf", width=6, height=4)
 
 ggplot() +
   geom_boxplot(data = significant_data, aes(genotype_expr, log2FoldChange, fill = change_group)) +
@@ -7826,18 +7854,34 @@ library("enrichplot")
 # Import the gene list
 gene_symbols <- readLines("output/ChIPseeker/ESCvsNPC_HETspecific_Lost.txt") 
 gene_symbols <- readLines("output/ChIPseeker/ESCvsNPC_KOspecific_Lost.txt") 
+## WT changes TMM norm
+gene_symbols <- readLines("output/ChIPseeker/annotation_WT_ESCvsNPC_qval25_UniqueBamTMM_geneSymbol_Gain.txt") 
+gene_symbols <- readLines("output/ChIPseeker/annotation_WT_ESCvsNPC_qval25_UniqueBamTMM_geneSymbol_Lost.txt") 
+
+
 
 genes <- mapIds(org.Hs.eg.db, 
                    keys = gene_symbols, 
                    column = "ENTREZID", 
                    keytype = "SYMBOL", 
                    multiVals = "first")
+
+
+## KEGG
+enrichGO <- enrichKEGG(gene   = genes,
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
 ## GO
 enrichGO <- enrichGO(gene   = genes,
                          pvalueCutoff  = 0.05,
                          pAdjustMethod = "BH",
                          OrgDb         = "org.Hs.eg.db",
                          ont           = "BP") # "BP" (Biological Process), "CC" (Cellular Component), or "MF" (Molecular Function)
+enrichGO <- enrichGO(gene   = genes,
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH",
+                         OrgDb         = "org.Hs.eg.db",
+                         ont           = "CC") 
 enrichGO <- enrichGO(gene   = genes,
                          pvalueCutoff  = 0.05,
                          pAdjustMethod = "BH",
@@ -7870,6 +7914,8 @@ expr_geneSymbol$genotype_expr <-
          c("WT", "HET", "KO"))
          
 pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression_GO_BP_15.pdf", width=3, height=4)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Gain_expression_GO_BP_15.pdf", width=3, height=4)
+
 tidy_go_terms_genes %>% 
     dplyr::select(gene_symbol) %>%
     unique() %>%
@@ -7883,20 +7929,179 @@ dev.off()
 
 
 ## with logFC keeping separate each GO category
+expr_geneSymbol$genotype_expr <-
+  factor(expr_geneSymbol$genotype_expr,
+         c("WT", "HET", "KO"))
+         
+count_data <- expr_geneSymbol %>%
+  inner_join(tidy_go_terms_genes) %>%                # CHANGE HERE !!!!!!!!!
+  group_by(genotype_expr, significance, Description) %>%
+  summarise(up = sum(log2FoldChange > 0),
+            down = sum(log2FoldChange < 0),
+            total = n()) %>%
+  ungroup() %>%
+  group_by(genotype_expr) %>%
+  mutate(total_panel = sum(total)) %>%
+  ungroup()
+
+significant_data <- expr_geneSymbol %>%
+  inner_join(tidy_go_terms_genes) %>%                  # CHANGE HERE !!!!!!!!!
+  mutate(change_group = ifelse(log2FoldChange > 0, "Greater than 0", 
+                               ifelse(log2FoldChange < 0, "Less than 0", "Equal to 0"))) %>%
+  filter(significance)
+
+all_data <- expr_geneSymbol %>%
+  inner_join(tidy_go_terms_genes) %>%                # CHANGE HERE !!!!!!!!!
+  mutate(change_group = ifelse(log2FoldChange > 0, "Greater than 0", 
+                               ifelse(log2FoldChange < 0, "Less than 0", "Equal to 0")))
+
+
 pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression_GO_BP_15.pdf", width=10, height=15)
 pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression_GO_CC_15.pdf", width=10, height=15)
 pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression_GO_MF_15.pdf", width=10, height=15)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Gain_expression_GO_BP_15.pdf", width=20, height=15)
 
-expr_geneSymbol %>% 
-    inner_join(tidy_go_terms_genes) %>%
-    dplyr::select(gene_symbol,log2FoldChange,padj,genotype_expr,Description,significance) %>%
-    unique() %>%
-      ggplot(., aes(x = genotype_expr,y = log2FoldChange))  +
-        geom_boxplot() +
-        geom_jitter(aes(color = significance), alpha = 0.8, size = 0.5) +
-        scale_color_manual(values = c("grey", "red")) +
-        facet_wrap(~Description)
+
+ggplot() +
+  geom_boxplot(data = significant_data, aes(genotype_expr, log2FoldChange, fill = change_group)) +
+  geom_jitter(data = all_data, aes(genotype_expr, log2FoldChange, color = significance), alpha = 0.8, size = 0.5, width = 0.1) +
+  scale_fill_manual(values = c("darkred", "darkred")) + 
+  scale_color_manual(values = c("grey", "red")) +
+  geom_text(data = count_data %>% filter(significance),
+            aes(x = genotype_expr, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
+            hjust = 0.5, vjust = 1.1, size = 4, color = "black", check_overlap = TRUE) +
+  geom_text(data = count_data %>% distinct(genotype_expr, .keep_all = TRUE),
+            aes(x = genotype_expr, y = -Inf, label = paste("Total:", total_panel, "genes")),
+            hjust = 0.5, vjust = -0.1, size = 4, color = "black", check_overlap = TRUE) +
+  facet_wrap(~Description, nrow = 3) +
+  theme_bw() +
+  theme(strip.text = element_text(size = 14))
 dev.off()
+
+
+
+
+### Try to add signficiant test
+pvalues_df <- lapply(split(significant_data, significant_data$Description), function(data) {
+  # Filter the data for 'Less than 0' change group
+  data_het <- data[data$change_group == "Greater than 0" & data$genotype_expr %in% c("WT", "HET"), ] ## CHANGE IF NEEDED
+  data_ko <- data[data$change_group == "Greater than 0" & data$genotype_expr %in% c("WT", "KO"), ] ## CHANGE IF NEEDED
+  
+  # Perform t.test if there are two levels, else set pvalue as NA
+  pvalue_het <- if (length(unique(data_het$genotype_expr)) == 2) 
+                    t.test(data_het$log2FoldChange ~ data_het$genotype_expr)$p.value
+                else NA
+  pvalue_ko <- if (length(unique(data_ko$genotype_expr)) == 2) 
+                    t.test(data_ko$log2FoldChange ~ data_ko$genotype_expr)$p.value
+                else NA
+  
+  df <- data.frame(
+    comparison = c("WT_HET", "WT_KO"),
+    pvalue = c(pvalue_het, pvalue_ko),
+    Description = unique(data$Description)
+  )
+  return(df)
+})
+
+pvalues_df <- do.call(rbind, pvalues_df)  # combine the list into a single data frame
+
+
+
+pdf("output/ChIPseeker/ESCvsNPC_WT_Gain_expression_GO_BP_15.pdf", width=20, height=15)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Gain_expression_GO_CC_15.pdf", width=20, height=15)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Gain_expression_GO_MF_15.pdf", width=20, height=15)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Gain_expression_KEGG_15.pdf", width=20, height=15)
+
+pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_GO_BP_15.pdf", width=20, height=15)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_GO_CC_15.pdf", width=20, height=15)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_GO_MF_15.pdf", width=20, height=15)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_KEGG_15.pdf", width=20, height=15)
+
+
+
+ggplot() +
+  geom_boxplot(data = significant_data, aes(genotype_expr, log2FoldChange, fill = change_group)) +
+  geom_jitter(data = all_data, aes(genotype_expr, log2FoldChange, color = significance), alpha = 0.8, size = 0.5, width = 0.1) +
+  scale_fill_manual(values = c("darkred", "darkred")) + 
+  scale_color_manual(values = c("grey", "red")) +
+  geom_text(data = count_data %>% filter(significance),
+            aes(x = genotype_expr, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
+            hjust = 0.5, vjust = 1.1, size = 4, color = "black", check_overlap = TRUE) +
+  geom_text(data = count_data %>% distinct(genotype_expr, .keep_all = TRUE),
+            aes(x = genotype_expr, y = -Inf, label = paste("Total:", total_panel, "genes")),
+            hjust = 0.5, vjust = -0.1, size = 4, color = "black", check_overlap = TRUE) +
+  geom_text(data = pvalues_df[pvalues_df$comparison == "WT_HET",], aes(x = 1, y = -9, 
+            label = paste("P value (", comparison, "): ", round(pvalue, 3), sep = "")), 
+            size = 3.5, hjust = 0, color = "black") +
+  geom_text(data = pvalues_df[pvalues_df$comparison == "WT_KO",], aes(x = 1, y = -10, 
+            label = paste("P value (", comparison, "): ", round(pvalue, 3), sep = "")), 
+            size = 3.5, hjust = 0, color = "black") +
+  facet_wrap(~Description, nrow = 3) +
+  theme_bw() +
+  theme(strip.text = element_text(size = 14))
+dev.off()
+
+
+
+
+### Scatter plot to check correlation
+###  check out which genes and try isolate the outlier; different between genotypes
+all_data %>% filter(significance == TRUE, Description == "forebrain development") %>% dplyr::select(gene_symbol) %>% unique()
+
+all_data_corr = all_data %>%
+    filter(significance == TRUE, Description == "forebrain development") %>%
+    dplyr::select(gene_symbol, genotype_expr, log2FoldChange) %>% 
+    spread(key = genotype_expr, value = log2FoldChange) %>%
+    replace_na(list(WT = 0, HET = 0, KO = 0)) %>%  # replace NA in columns 'WT', 'HET', 'KO' with 0
+    mutate(diff = abs(WT - KO)) # !!! CHANGE GNOTPYE
+
+
+pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_forebrainDev_corr_WT_KO.pdf", width=20, height=15) # !!! CHANGE GNOTPYE
+ggplot(all_data_corr, aes(x = WT, y = KO)) +    # !!! CHANGE GNOTPYE
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +  # horizontal line at 0
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey50") +  # vertical line at 0
+  geom_point(aes(shape = diff > 1, size = diff > 1, color = diff > 1)) + # change shape and size based on diff > 1
+  scale_shape_manual(values = c(16, 17)) + # specify shapes
+  scale_size_manual(values = c(3, 5)) +  # specify sizes
+  geom_text(data = subset(all_data_corr, diff > 1), aes(label = gene_symbol), hjust = -0.3, vjust = -0.3, check_overlap = TRUE) +
+  geom_smooth(method = "lm", se = FALSE, color = "blue", linetype = "dotted") + # add linear regression line
+  scale_color_manual(values = c("black", "red")) +
+  labs(x = "Log2 Fold Change (WT)", 
+       y = "Log2 Fold Change (KO)",            # !!! CHANGE GNOTPYE
+       title = "Correlation between Log2 Fold Changes for WT and HET Genotypes",
+       shape = "Difference > 1",
+       size = "Difference > 1",
+       color = "Difference > 1") +
+  theme_bw() +
+  theme(legend.position = "bottom")  # place legend at bottom
+dev.off()
+
+pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_forebrainDev_corr_WT_HET_2.pdf", width=20, height=15)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_forebrainDev_corr_WT_KO_2.pdf", width=20, height=15) # !!! CHANGE GNOTPYE
+ggplot(all_data_corr, aes(x = WT, y = KO)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +  # horizontal line at 0
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey50") +  # vertical line at 0
+  geom_point(aes(shape = diff > 2, size = diff > 2, color = diff > 2)) + # change shape and size based on diff > 1
+  scale_shape_manual(values = c(16, 17)) + # specify shapes
+  scale_size_manual(values = c(3, 5)) +  # specify sizes
+  geom_text(data = subset(all_data_corr, diff > 2), aes(label = gene_symbol), hjust = -0.3, vjust = -0.3, check_overlap = TRUE) +
+  geom_smooth(method = "lm", se = FALSE, color = "blue", linetype = "dotted") + # add linear regression line
+  scale_color_manual(values = c("black", "red")) +
+  labs(x = "Log2 Fold Change (WT)", 
+       y = "Log2 Fold Change (KO)", 
+       title = "Correlation between Log2 Fold Changes for WT and KO Genotypes",
+       shape = "Difference > 2",
+       size = "Difference > 2",
+       color = "Difference > 2") +
+  theme_bw() +
+  theme(legend.position = "bottom")  # place legend at bottom
+dev.off()
+####
+
+
+
+
+
 ### Only keep the genes that are induced in WT 
 
 pdf("output/ChIPseeker/ESCvsNPC_HETspecific_Lost_expression_WTinduced_GO_BP_15.pdf", width=10, height=15)
@@ -8017,7 +8222,7 @@ The ChIPseq normalization using TMM with uniqueBAM does not work great (poorly i
 
 --> This has been run within the previous part `## THOR with different SF (DiffBindTMM from uniquely/NON-uniquely aligned bam AND ChIPseqSpikeInFree ony)`; as `*housekeep*`
 
-
+In the end, **only the time-effect WT ESC to NPC looks good**, replicates are clean and changes is in agreement with gene expression. Same as when using the TMM-method...
 
 
 
