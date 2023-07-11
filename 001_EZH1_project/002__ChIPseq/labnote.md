@@ -8049,7 +8049,7 @@ dev.off()
 all_data %>% filter(significance == TRUE, Description == "forebrain development") %>% dplyr::select(gene_symbol) %>% unique()
 
 all_data_corr = all_data %>%
-    filter(significance == TRUE, Description == "forebrain development") %>%
+    filter(significance == TRUE, Description == "forebrain development") %>%  # !!! CHANGE HERE
     dplyr::select(gene_symbol, genotype_expr, log2FoldChange) %>% 
     spread(key = genotype_expr, value = log2FoldChange) %>%
     replace_na(list(WT = 0, HET = 0, KO = 0)) %>%  # replace NA in columns 'WT', 'HET', 'KO' with 0
@@ -8102,17 +8102,25 @@ dev.off()
 # Both genotypes scatter plot
 
 all_data_corr <- all_data %>%
-    filter(significance == TRUE, Description == "forebrain development") %>%
+    filter(significance == TRUE, Description %in% c("axon development") ) %>%   # !!! CHANGE HERE
     dplyr::select(gene_symbol, genotype_expr, log2FoldChange) %>%
+    unique() %>%
     spread(key = genotype_expr, value = log2FoldChange) %>%
     replace_na(list(WT = 0, HET = 0, KO = 0)) %>%  
     mutate(diff_HET = abs(WT - HET),
            diff_KO = abs(WT - KO))
+## paste list of GO: forebrain development, modulation of chemical synaptic transmission, regulation of trans-synaptic signaling, amine transport, monoamine transport, regulation of amine transport, catecholamine transport, dopamine transport, axon development, axonogenesis
+
 
 pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_forebrainDev_corr_WT_HET_KO.pdf", width=18, height=10)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_modulationOfChemicalSynapticTransmission_corr_WT_HET_KO.pdf", width=18, height=10)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_regulationOfTranssynapticSignaling_corr_WT_HET_KO.pdf", width=18, height=10)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_amine_corr_WT_HET_KO.pdf", width=18, height=10)
 all_data_corr_long <- all_data_corr %>%
     gather(key = "Comparison", value = "log2FC", HET, KO)
-
+pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_catecholamineDopamineTransport_corr_WT_HET_KO.pdf", width=18, height=10)
+all_data_corr_long <- all_data_corr %>%
+    gather(key = "Comparison", value = "log2FC", HET, KO)
 ggplot(all_data_corr_long, aes(x = WT, y = log2FC)) +
     geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +
     geom_vline(xintercept = 0, linetype = "dashed", color = "grey50") +
@@ -8137,11 +8145,12 @@ ggplot(all_data_corr_long, aes(x = WT, y = log2FC)) +
 dev.off()
 
 
-
-
 # ChatGPT heatmap method with library("ComplexHeatmap") library("circlize")
 ## --> See Python Code
-write.table(all_data_corr, file = "your_directory/your_file_name.txt", sep = "\t", row.names = FALSE)
+write.table(all_data_corr, file = "output/ChIPseeker/all_data_corr_ESCvsNPC_WT_Lost_expression_modulationOfChemicalSynapticTransmission_corr_WT_HET_KO.txt", sep = "\t", row.names = FALSE)
+write.table(all_data_corr, file = "output/ChIPseeker/all_data_corr_ESCvsNPC_WT_Lost_expression_amine_corr_WT_HET_KO.txt", sep = "\t", row.names = FALSE)
+write.table(all_data_corr, file = "output/ChIPseeker/all_data_corr_ESCvsNPC_WT_Lost_expression_catecholamineDopamineTransport_corr_WT_HET_KO.txt", sep = "\t", row.names = FALSE)
+
 
 
 
@@ -8383,43 +8392,25 @@ filtered_data = data[(data['diff_HET'].abs() > threshold) | (data['diff_KO'].abs
 
 heatmap_data = filtered_data[['gene_symbol', 'WT', 'HET', 'KO']].set_index('gene_symbol')
 
-# Define the categories based on the values in the 'WT', 'HET', and 'KO' columns
-heatmap_data['category'] = 'More in HET'
-heatmap_data.loc[heatmap_data['KO'] > heatmap_data['HET'], 'category'] = 'More in KO'
-heatmap_data.loc[(heatmap_data['WT'] > heatmap_data['HET']) & (heatmap_data['WT'] > heatmap_data['KO']), 'category'] = 'Less in HET'
-heatmap_data.loc[(heatmap_data['WT'] > heatmap_data['KO']) & (heatmap_data['WT'] > heatmap_data['HET']), 'category'] = 'Less in KO'
+# Define genes with opposite behavior
+opposite_genes = heatmap_data[
+    ((heatmap_data['WT'] > 0) & (heatmap_data['KO'] < 0)) |
+    ((heatmap_data['WT'] > 0) & (heatmap_data['HET'] < 0)) |
+    ((heatmap_data['WT'] < 0) & (heatmap_data['KO'] > 0)) |
+    ((heatmap_data['WT'] < 0) & (heatmap_data['HET'] > 0))
+].index.tolist()
 
-# Sort the data
-heatmap_data.sort_values(by=['category', 'WT'], ascending=[True, False], inplace=True)
-
-# Define genes of interest
-opposite_genes = {
-    'More in HET': heatmap_data[(heatmap_data['category'] == 'More in HET') & (heatmap_data['KO'] < heatmap_data['WT'])].index,
-    'More in KO': heatmap_data[(heatmap_data['category'] == 'More in KO') & (heatmap_data['HET'] < heatmap_data['WT'])].index,
-    'Less in KO': heatmap_data[(heatmap_data['category'] == 'Less in KO') & (heatmap_data['HET'] > heatmap_data['WT'])].index
-}
-
-categories = heatmap_data['category'].unique()
+# Sort the data based on 'WT' column
+heatmap_data.sort_values(by='WT', ascending=False, inplace=True)
 
 # Plot the heatmap
-fig, ax = plt.subplots(figsize=(5, 12))  # Adjust the width of the figure here
+fig, ax = plt.subplots(figsize=(4, 12))  # Adjust the width of the figure here
 
 sns.heatmap(heatmap_data[['WT', 'HET', 'KO']], cmap='coolwarm', center=0, annot=False, ax=ax, cbar_kws={'orientation': 'horizontal', 'pad': 0.03})
 
-# Highlight genes of interest
-for gene in heatmap_data.index:
-    for category, genes in opposite_genes.items():
-        if gene in genes:
-            ax.add_patch(Rectangle((0, heatmap_data.index.get_loc(gene)), 3, 1, fill=False, edgecolor='green', lw=3))
-
-# Separator lines for categories and category labels
-for i, category in enumerate(categories[:-1]):
-    separator = len(heatmap_data[heatmap_data['category'] == category])
-    ax.axhline(separator, color='white', linewidth=2)
-    ax.text(3.5, separator - len(heatmap_data[heatmap_data['category'] == category]) / 2, f'{category} (n={len(heatmap_data[heatmap_data["category"] == category])})', va='center')
-
-# Category label for the last category
-ax.text(3.5, len(heatmap_data) - len(heatmap_data[heatmap_data['category'] == categories[-1]]) / 2, f'{categories[-1]} (n={len(heatmap_data[heatmap_data["category"] == categories[-1]])})', va='center')
+# Highlight genes with opposite behavior
+for gene in opposite_genes:
+    ax.add_patch(Rectangle((0, heatmap_data.index.get_loc(gene)), 3, 1, fill=False, edgecolor='green', lw=3))
 
 ax.set_title('Gene Expression Across Genotypes', loc='center', pad=20, fontsize=16)
 ax.set_xlabel('Genotype', fontsize=14)
@@ -8431,14 +8422,13 @@ plt.tight_layout()
 # Save the figure as PDF
 plt.savefig("output/ChIPseeker/heatmap_Lost_ForebrainDev.pdf")
 
-
 ```
 
 
 
 
 
-### Clean code to do heatmaps from genes H3K27me3-dynamics ESC to NPC in WT with GO related to neurons/brain
+### Clean code to do scatter plots and heatmaps from genes H3K27me3-dynamics ESC to NPC in WT with GO related to neurons/brain
 
 
 - Perform GO analysis in WT gain/lost H3K27me3 from ESC to NPC
