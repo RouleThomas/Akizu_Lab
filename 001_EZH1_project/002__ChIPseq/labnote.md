@@ -8141,6 +8141,7 @@ dev.off()
 
 # ChatGPT heatmap method with library("ComplexHeatmap") library("circlize")
 ## --> See Python Code
+write.table(all_data_corr, file = "your_directory/your_file_name.txt", sep = "\t", row.names = FALSE)
 
 
 
@@ -8259,70 +8260,193 @@ Let's not use the weird staticical comparison; instead; re-do GO analysis for ea
 ChatGPT Python code for **heatmaps representation**, this is CLEAR and CONCISE. Let's isolate the genes and make a clean table as the one I saved for the other GO comparison:
 
 ```bash
-conda activate XXX
+conda activate deseq2
+# conda install seaborn
 python3
 ```
 
 Enter python interpreter:
-```python
 
+**Version WT-ordered only:**
+
+```python
 import pandas as pd
 from matplotlib.patches import Rectangle
 import seaborn as sns
+import matplotlib.pyplot as plt
 
 # Load the data
-data = pd.read_csv("/mnt/data/all_data_corr_output.console", sep="\t", comment="#")
-data.head()
+data = pd.read_csv("output/ChIPseeker/all_data_corr_output.console", sep="\t", comment="#")
 
 # Define a threshold
 threshold = 2
-# Filter genes that have an absolute difference greater than the threshold in either HET or KO
 filtered_data = data[(data['diff_HET'].abs() > threshold) | (data['diff_KO'].abs() > threshold)]
 
-# Select the data for the heatmap
 heatmap_data = filtered_data[['gene_symbol', 'WT', 'HET', 'KO']].set_index('gene_symbol')
-# Categorize the genes based on the new criteria
+
+heatmap_data.sort_values(by='WT', ascending=False, inplace=True)
+
+opposite_genes_HET = heatmap_data[(heatmap_data['KO'] < heatmap_data['WT'])].index
+opposite_genes_KO = heatmap_data[(heatmap_data['HET'] < heatmap_data['WT'])].index
+
+fig, axs = plt.subplots(figsize=(10, 10))
+
+sns.heatmap(heatmap_data[['WT', 'HET', 'KO']], cmap='coolwarm', center=0, annot=False, ax=axs)
+
+for gene in heatmap_data.index:
+    if gene in opposite_genes_HET:
+        axs.add_patch(Rectangle((1, heatmap_data.index.get_loc(gene)), 1, 1, fill=False, edgecolor='green', lw=3))
+
+    if gene in opposite_genes_KO:
+        axs.add_patch(Rectangle((2, heatmap_data.index.get_loc(gene)), 1, 1, fill=False, edgecolor='green', lw=3))
+
+axs.set_title(f'Heatmap')
+axs.set_xlabel('Genotype')
+axs.set_ylabel('Gene')
+
+plt.tight_layout()
+
+# Save the figure as PDF
+plt.savefig("output/ChIPseeker/heatmap_Lost_ForebrainDev.pdf")
+```
+
+
+**Version splitting per categories:**
+```python
+import pandas as pd
+from matplotlib.patches import Rectangle
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Load the data
+data = pd.read_csv("output/ChIPseeker/all_data_corr_output.console", sep="\t", comment="#")
+data.head() 
+
+# Define a threshold
+threshold = 2
+filtered_data = data[(data['diff_HET'].abs() > threshold) | (data['diff_KO'].abs() > threshold)]
+
+heatmap_data = filtered_data[['gene_symbol', 'WT', 'HET', 'KO']].set_index('gene_symbol')
+
 heatmap_data['category'] = 'More in HET'
 heatmap_data.loc[heatmap_data['KO'] > heatmap_data['HET'], 'category'] = 'More in KO'
 heatmap_data.loc[(heatmap_data['WT'] > heatmap_data['HET']) & (heatmap_data['WT'] > heatmap_data['KO']), 'category'] = 'Less in HET'
 heatmap_data.loc[(heatmap_data['WT'] > heatmap_data['KO']) & (heatmap_data['WT'] > heatmap_data['HET']), 'category'] = 'Less in KO'
 
-# Sort the genes in each category based on the WT strength
 heatmap_data.sort_values(by=['category', 'WT'], ascending=[True, False], inplace=True)
 
-# Identify the genes in each category that behave oppositely in the other mutant
 opposite_genes = {
     'More in HET': heatmap_data[(heatmap_data['category'] == 'More in HET') & (heatmap_data['KO'] < heatmap_data['WT'])].index,
     'More in KO': heatmap_data[(heatmap_data['category'] == 'More in KO') & (heatmap_data['HET'] < heatmap_data['WT'])].index,
     'Less in KO': heatmap_data[(heatmap_data['category'] == 'Less in KO') & (heatmap_data['HET'] > heatmap_data['WT'])].index
 }
 
+categories = ['More in HET', 'More in KO', 'Less in HET', 'Less in KO']
+fig, axs = plt.subplots(len(categories), figsize=(10, len(categories)*5))
 
-# Create a figure
-fig, axs = plt.subplots(len(data_categories), figsize=(10, len(data_categories)*5))
 
-# Generate a separate heatmap for each category
-for i, category_data in enumerate(data_categories):
-    # Create a heatmap
-    sns.heatmap(category_data, cmap='coolwarm', center=0, annot=False, ax=axs[i])
+for i, category in enumerate(categories):
+    category_data = heatmap_data[heatmap_data['category'] == category]
     
-    # Highlight the genes that behave oppositely in the other mutant
-    for gene in category_data.index:
-        if gene in opposite_genes[categories[i]]:
-            axs[i].add_patch(Rectangle((0, category_data.index.get_loc(gene)), 3, 1, fill=False, edgecolor='green', lw=3))
+    if not category_data.empty:  # Check if the DataFrame is not empty
+        sns.heatmap(category_data[['WT', 'HET', 'KO']], cmap='coolwarm', center=0, annot=False, ax=axs[i])
+        
+        for gene in category_data.index:
+            if gene in opposite_genes[category]:
+                axs[i].add_patch(Rectangle((0, category_data.index.get_loc(gene)), 3, 1, fill=False, edgecolor='green', lw=3))
+        
+        axs[i].set_title(f'{category} Genes (n = {len(category_data)})')
+        axs[i].set_xlabel('Genotype')
+        axs[i].set_ylabel('Gene')
 
-    axs[i].set_title(f'{categories[i]} Genes (n = {len(category_data)})')
-    axs[i].set_xlabel('Genotype')
-    axs[i].set_ylabel('Gene')
-
-# Adjust the layout
 plt.tight_layout()
-plt.show()
+
+# Save the figure as PDF
+plt.savefig("output/ChIPseeker/heatmap_Lost_ForebrainDev.pdf")
+```
+
+
+
+**Version splitting per categories; clean/beautifull:**
+```python
+import pandas as pd
+from matplotlib.patches import Rectangle
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Load the data
+data = pd.read_csv("output/ChIPseeker/all_data_corr_output.console", sep="\t", comment="#")
+
+# Define a threshold
+threshold = 2
+filtered_data = data[(data['diff_HET'].abs() > threshold) | (data['diff_KO'].abs() > threshold)]
+
+heatmap_data = filtered_data[['gene_symbol', 'WT', 'HET', 'KO']].set_index('gene_symbol')
+
+# Define the categories based on the values in the 'WT', 'HET', and 'KO' columns
+heatmap_data['category'] = 'More in HET'
+heatmap_data.loc[heatmap_data['KO'] > heatmap_data['HET'], 'category'] = 'More in KO'
+heatmap_data.loc[(heatmap_data['WT'] > heatmap_data['HET']) & (heatmap_data['WT'] > heatmap_data['KO']), 'category'] = 'Less in HET'
+heatmap_data.loc[(heatmap_data['WT'] > heatmap_data['KO']) & (heatmap_data['WT'] > heatmap_data['HET']), 'category'] = 'Less in KO'
+
+# Sort the data
+heatmap_data.sort_values(by=['category', 'WT'], ascending=[True, False], inplace=True)
+
+# Define genes of interest
+opposite_genes = {
+    'More in HET': heatmap_data[(heatmap_data['category'] == 'More in HET') & (heatmap_data['KO'] < heatmap_data['WT'])].index,
+    'More in KO': heatmap_data[(heatmap_data['category'] == 'More in KO') & (heatmap_data['HET'] < heatmap_data['WT'])].index,
+    'Less in KO': heatmap_data[(heatmap_data['category'] == 'Less in KO') & (heatmap_data['HET'] > heatmap_data['WT'])].index
+}
+
+categories = heatmap_data['category'].unique()
+
+# Plot the heatmap
+fig, ax = plt.subplots(figsize=(5, 12))  # Adjust the width of the figure here
+
+sns.heatmap(heatmap_data[['WT', 'HET', 'KO']], cmap='coolwarm', center=0, annot=False, ax=ax, cbar_kws={'orientation': 'horizontal', 'pad': 0.03})
+
+# Highlight genes of interest
+for gene in heatmap_data.index:
+    for category, genes in opposite_genes.items():
+        if gene in genes:
+            ax.add_patch(Rectangle((0, heatmap_data.index.get_loc(gene)), 3, 1, fill=False, edgecolor='green', lw=3))
+
+# Separator lines for categories and category labels
+for i, category in enumerate(categories[:-1]):
+    separator = len(heatmap_data[heatmap_data['category'] == category])
+    ax.axhline(separator, color='white', linewidth=2)
+    ax.text(3.5, separator - len(heatmap_data[heatmap_data['category'] == category]) / 2, f'{category} (n={len(heatmap_data[heatmap_data["category"] == category])})', va='center')
+
+# Category label for the last category
+ax.text(3.5, len(heatmap_data) - len(heatmap_data[heatmap_data['category'] == categories[-1]]) / 2, f'{categories[-1]} (n={len(heatmap_data[heatmap_data["category"] == categories[-1]])})', va='center')
+
+ax.set_title('Gene Expression Across Genotypes', loc='center', pad=20, fontsize=16)
+ax.set_xlabel('Genotype', fontsize=14)
+ax.set_ylabel('Gene', fontsize=14)
+ax.yaxis.set_tick_params(rotation=0, labelsize=10)  # Rotate the gene names for better visibility
+
+plt.tight_layout()
+
+# Save the figure as PDF
+plt.savefig("output/ChIPseeker/heatmap_Lost_ForebrainDev.pdf")
+
+
 ```
 
 
 
 
+
+### Clean code to do heatmaps from genes H3K27me3-dynamics ESC to NPC in WT with GO related to neurons/brain
+
+
+- Perform GO analysis in WT gain/lost H3K27me3 from ESC to NPC
+- Classify GO categories into higher order GO family (put together closely related categories) 
+- Generate scatterplot graphs to show genes with a log2FC diff. 2 between genotypes (genes that behave differentially)
+- Generate heatmaps for these genes and highlight the one with opposite behavior between genotypes
+- Try to explain phenotype with key genes
+- Propose a list of genes to validate by ChIPqPCR in mutants
 
 
 
