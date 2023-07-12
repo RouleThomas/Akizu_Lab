@@ -8102,23 +8102,28 @@ dev.off()
 # Both genotypes scatter plot
 
 all_data_corr <- all_data %>%
-    filter(significance == TRUE, Description %in% c("axon development") ) %>%   # !!! CHANGE HERE
+    filter(significance == TRUE, Description %in% c("axon development", "axonogenesis") ) %>%   # !!! CHANGE HERE
     dplyr::select(gene_symbol, genotype_expr, log2FoldChange) %>%
     unique() %>%
     spread(key = genotype_expr, value = log2FoldChange) %>%
     replace_na(list(WT = 0, HET = 0, KO = 0)) %>%  
     mutate(diff_HET = abs(WT - HET),
            diff_KO = abs(WT - KO))
-## paste list of GO: forebrain development, modulation of chemical synaptic transmission, regulation of trans-synaptic signaling, amine transport, monoamine transport, regulation of amine transport, catecholamine transport, dopamine transport, axon development, axonogenesis
+## paste list of GO: forebrain development, modulation of chemical synaptic transmission, regulation of trans-synaptic signaling, amine transport, monoamine transport, regulation of amine transport, catecholamine transport, dopamine transport, axon development, axonogenesis, regulation of nervous system development, regulation of neurogenesis, neuron projection guidance, axon guidance, central nervous system neuron differentiation
 
 
 pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_forebrainDev_corr_WT_HET_KO.pdf", width=18, height=10)
-pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_modulationOfChemicalSynapticTransmission_corr_WT_HET_KO.pdf", width=18, height=10)
-pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_regulationOfTranssynapticSignaling_corr_WT_HET_KO.pdf", width=18, height=10)
-pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_amine_corr_WT_HET_KO.pdf", width=18, height=10)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Gain_expression_modulationOfChemicalSynapticTransmission_corr_WT_HET_KO.pdf", width=18, height=10)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Gain_expression_regulationOfTranssynapticSignaling_corr_WT_HET_KO.pdf", width=18, height=10)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Gain_expression_amine_corr_WT_HET_KO.pdf", width=18, height=10)
 all_data_corr_long <- all_data_corr %>%
     gather(key = "Comparison", value = "log2FC", HET, KO)
-pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_catecholamineDopamineTransport_corr_WT_HET_KO.pdf", width=18, height=10)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Gain_expression_catecholamineDopamineTransport_corr_WT_HET_KO.pdf", width=18, height=10)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_axon_corr_WT_HET_KO.pdf", width=18, height=10)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_regulationNeuronDev_corr_WT_HET_KO.pdf", width=18, height=10)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_neuronGuidance_corr_WT_HET_KO.pdf", width=18, height=10)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_CNSneuronDifferentiation_corr_WT_HET_KO.pdf", width=18, height=10)
+
 all_data_corr_long <- all_data_corr %>%
     gather(key = "Comparison", value = "log2FC", HET, KO)
 ggplot(all_data_corr_long, aes(x = WT, y = log2FC)) +
@@ -8147,11 +8152,14 @@ dev.off()
 
 # ChatGPT heatmap method with library("ComplexHeatmap") library("circlize")
 ## --> See Python Code
-write.table(all_data_corr, file = "output/ChIPseeker/all_data_corr_ESCvsNPC_WT_Lost_expression_modulationOfChemicalSynapticTransmission_corr_WT_HET_KO.txt", sep = "\t", row.names = FALSE)
-write.table(all_data_corr, file = "output/ChIPseeker/all_data_corr_ESCvsNPC_WT_Lost_expression_amine_corr_WT_HET_KO.txt", sep = "\t", row.names = FALSE)
-write.table(all_data_corr, file = "output/ChIPseeker/all_data_corr_ESCvsNPC_WT_Lost_expression_catecholamineDopamineTransport_corr_WT_HET_KO.txt", sep = "\t", row.names = FALSE)
-
-
+write.table(all_data_corr, file = "output/ChIPseeker/all_data_corr_ESCvsNPC_WT_Gain_expression_modulationOfChemicalSynapticTransmission_corr_WT_HET_KO.txt", sep = "\t", row.names = FALSE)
+write.table(all_data_corr, file = "output/ChIPseeker/all_data_corr_ESCvsNPC_WT_Gain_expression_amine_corr_WT_HET_KO.txt", sep = "\t", row.names = FALSE)
+write.table(all_data_corr, file = "output/ChIPseeker/all_data_corr_ESCvsNPC_WT_Gain_expression_catecholamineDopamineTransport_corr_WT_HET_KO.txt", sep = "\t", row.names = FALSE)
+write.table(all_data_corr, file = "output/ChIPseeker/all_data_corr_ESCvsNPC_WT_Lost_expression_CNSneuronDifferentiation_corr_WT_HET_KO.txt", sep = "\t", row.names = FALSE)
+write.table(all_data_corr, file = "output/ChIPseeker/all_data_corr_ESCvsNPC_WT_Lost_expression_neuronGuidance_corr_WT_HET_KO.txt", sep = "\t", row.names = FALSE)
+write.table(all_data_corr, file = "output/ChIPseeker/all_data_corr_ESCvsNPC_WT_Lost_expression_regulationNeuronDev_corr_WT_HET_KO.txt", sep = "\t", row.names = FALSE)
+write.table(all_data_corr, file = "output/ChIPseeker/all_data_corr_ESCvsNPC_WT_Lost_expression_regulationNeuronDev_corr_WT_HET_KO.txt", sep = "\t", row.names = FALSE)
+write.table(all_data_corr, file = "output/ChIPseeker/all_data_corr_ESCvsNPC_WT_Lost_expression_axon_corr_WT_HET_KO.txt", sep = "\t", row.names = FALSE)
 
 
 ### Only keep the genes that are induced in WT 
@@ -8377,6 +8385,14 @@ plt.savefig("output/ChIPseeker/heatmap_Lost_ForebrainDev.pdf")
 
 
 **Version splitting per categories; clean/beautifull:**
+
+Data; Gain/Lost GO_related significant genes:
+- output/ChIPseeker/all_data_corr_ESCvsNPC_WT_Gain_expression_modulationOfChemicalSynapticTransmission_corr_WT_HET_KO.txt
+- output/ChIPseeker/all_data_corr_ESCvsNPC_WT_Gain_expression_amine_corr_WT_HET_KO.txt
+- output/ChIPseeker/all_data_corr_ESCvsNPC_WT_Lost_expression_axon_corr_WT_HET_KO.txt
+- output/ChIPseeker/all_data_corr_ESCvsNPC_WT_Lost_expression_regulationNeuronDev_corr_WT_HET_KO.txt
+- output/ChIPseeker/all_data_corr_ESCvsNPC_WT_Lost_expression_neuronGuidance_corr_WT_HET_KO.txt
+- output/ChIPseeker/all_data_corr_ESCvsNPC_WT_Lost_expression_CNSneuronDifferentiation_corr_WT_HET_KO.txt
 ```python
 import pandas as pd
 from matplotlib.patches import Rectangle
@@ -8384,7 +8400,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # Load the data
-data = pd.read_csv("output/ChIPseeker/all_data_corr_output.console", sep="\t", comment="#")
+data = pd.read_csv("output/ChIPseeker/all_data_corr_ESCvsNPC_WT_Lost_expression_CNSneuronDifferentiation_corr_WT_HET_KO.txt", sep="\t", comment="#")   # CHANGE HERE !!!!!!!!!!
+
 
 # Define a threshold
 threshold = 2
@@ -8420,7 +8437,7 @@ ax.yaxis.set_tick_params(rotation=0, labelsize=10)  # Rotate the gene names for 
 plt.tight_layout()
 
 # Save the figure as PDF
-plt.savefig("output/ChIPseeker/heatmap_Lost_ForebrainDev.pdf")
+plt.savefig("output/ChIPseeker/heatmap_Lost_CNSneuronDifferentiation.pdf")  # CHANGE HERE !!!!!!!!!!
 
 ```
 
