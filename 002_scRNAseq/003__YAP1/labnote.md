@@ -23,16 +23,16 @@ Let's process the data individually as if each sample were individual, unrelated
 
 ## Counting with cellranger count
 
+```bash 
+conda activate scRNAseq
+which cellranger
 
-
-
-
-
-
-
-
-
-
+# Run counting sample per sample
+sbatch scripts/cellranger_count_humangastruloid_UNTREATED72hr.sh # 2367676
+sbatch scripts/cellranger_count_humangastruloid_DASATINIB72hr.sh # 2367686
+sbatch scripts/cellranger_count_embryo_control.sh # 2368763
+sbatch scripts/cellranger_count_embryo_cYAPKO.sh # 2368769
+```
 
 
 
