@@ -28,88 +28,36 @@ conda activate scRNAseq
 which cellranger
 
 # Run counting sample per sample
-sbatch scripts/cellranger_count_humangastruloid_UNTREATED72hr.sh # 2367676
-sbatch scripts/cellranger_count_humangastruloid_DASATINIB72hr.sh # 2367686
-sbatch scripts/cellranger_count_embryo_control.sh # 2368763
-sbatch scripts/cellranger_count_embryo_cYAPKO.sh # 2368769
+sbatch scripts/cellranger_count_humangastruloid_UNTREATED72hr.sh # 2367676 ok (~12hrs with 500g)
+sbatch scripts/cellranger_count_humangastruloid_DASATINIB72hr.sh # 2367686 ok (~12hrs with 500g)
+sbatch scripts/cellranger_count_embryo_control.sh # 2368763 (~24hrs with 300g)
+sbatch scripts/cellranger_count_embryo_cYAPKO.sh # 2368769 (~24hrs with 300g)
 ```
+--> Run succesfullly
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## Generate sc feature counts for a single library
-[Cell Ranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger) and [cell ranger count](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/count)
-
-
-generate single cell feature counts for a single library:
-
-```bash
-# fasq have to be .fastq.gz; so lets zip them
-gzip input/SRR8734990_* # it took >2hrs
-
-# rename so that they respect naming convention
-mv input/SRR8734990_1.fastq.gz input/SRR8734990_S1_L001_R1_001.fastq.gz
-mv input/SRR8734990_2.fastq.gz input/SRR8734990_S1_L001_R2_001.fastq.gz
-mv input/SRR8734990_3.fastq.gz input/SRR8734990_S1_L001_I1_001.fastq.gz
-
-# ex of command
-cellranger count --id=count \
-                   --transcriptome=meta/refdata-gex-GRCh38-2020-A \
-                   --fastqs=input/ \
-                   --sample=SRR8734990
-
-# run into sbatch
-sbatch scripts/cellranger_count.sh # 890789 # ok
-
-
-```
-- *NOTE: it is important to rename our files to respect cell ranger nomenclature*
-
---> run succesfully!
-
-
-
-
-
-
-
-## RNA preprocessing (doublet and soupX)
-
-Preliminary steps, starting with the **aggregated** `filtered_feature_bc_matrix` from Cellranger 10x:
-- doublet detection using `scrublet`
-- ambient RNA correction using `soupX`
-
-
-
-First step is to detect doublet using [scrublet](https://github.com/swolock/scrublet). Run this in `base` conda env
+## RNA contamination and doublet detection
+- doublet detection using [scrublet](https://github.com/swolock/scrublet) **on the filtered matrix**
+- ambient RNA correction using `soupX` in R before generating the Seurat object
 
 ```bash
 srun --mem=500g --pty bash -l
-
+conda deactivate # base environment needed
 python3 scrublet.py [input_path] [output_path]
-
-python3 scripts/scrublet_doublets.py count/outs/count/filtered_feature_bc_matrix output/doublets/scrublet_50dOrga.tsv
+# Run doublet detection/scrublet sample per sample
+python3 scripts/scrublet_doublets.py humangastruloid_UNTREATED72hr/outs/filtered_feature_bc_matrix output/doublets/humangastruloid_UNTREATED72hr.tsv
+python3 scripts/scrublet_doublets.py humangastruloid_DASATINIB72hr/outs/filtered_feature_bc_matrix output/doublets/humangastruloid_DASATINIB72hr.tsv
 ```
-
-
+Doublet detection score:
+- humangastruloid_UNTREATED72hr: 0% doublet
+- humangastruloid_DASATINIB72hr: 34.2% doublet
+- XXX
 --> Successfully assigned doublet
-**NOTE: do not name any file `scrublet.smthg` or it will fail!**
 
-Then `conda activate scRNAseq` and go into R and filtered out **RNA contamination and start with SEURAT**:
+# humangastruloid analysis in Seurat
+
+Then `conda activate scRNAseq` and go into R and filtered out **RNA contamination and start with SEURAT**.
+
+We will apply SCT transform V2 for normalization; as [here](https://satijalab.org/seurat/articles/sctransform_v2_vignette.html)
 
 ```R
 # install.packages('SoupX')
@@ -124,70 +72,305 @@ library("glmGamPoi")
 library("celldex")
 library("SingleR")
 
-# Decontaminate one channel of 10X data mapped with cellranger
-sc = load10X('count/outs/count') 
 
-# Assess % of conta
-pdf("output/soupX/autoEstCont_50dOrga.pdf", width=10, height=10)
+# soupX decontamination
+## Decontaminate one channel of 10X data mapped with cellranger
+sc = load10X('humangastruloid_UNTREATED72hr/outs') 
+sc = load10X('humangastruloid_DASATINIB72hr/outs') 
+
+## Assess % of conta
+pdf("output/soupX/autoEstCont_humangastruloid_UNTREATED72hr.pdf", width=10, height=10)
+pdf("output/soupX/autoEstCont_humangastruloid_DASATINIB72hr.pdf", width=10, height=10)
 sc = autoEstCont(sc)
 dev.off()
-
-# Generate the corrected matrix
+## Generate the corrected matrix
 out = adjustCounts(sc)
+## Save the matrix
+save(out, file = "output/soupX/out_humangastruloid_UNTREATED72hr.RData")
+save(out, file = "output/soupX/out_humangastruloid_DASATINIB72hr.RData")
+## Load the matrix
+load("output/soupX/out_humangastruloid_UNTREATED72hr.RData")
+load("output/soupX/out_humangastruloid_DASATINIB72hr.RData")
 
-# Save the matrix
-save(out, file = "output/soupX/out_50dOrga.RData")
 
-# SEURAT
-srat <- CreateSeuratObject(counts = out, project = "orga50d") # 
+# Create SEURAT object
+srat_UNTREATED72hr <- CreateSeuratObject(counts = out, project = "UNTREATED72hr") # 36,601 features across 6,080 samples
+srat_DASATINIB72hr <- CreateSeuratObject(counts = out, project = "DASATINIB72hr") # 36,601 features across 9,938 samples
 
-# QUALITY CONTROL add mitochondrial and Ribosomal conta
-srat[["percent.mt"]] <- PercentageFeatureSet(srat, pattern = "^MT-")
-srat[["percent.rb"]] <- PercentageFeatureSet(srat, pattern = "^RP[SL]")
+# QUALITY CONTROL
+## add mitochondrial and Ribosomal conta 
+srat_UNTREATED72hr[["percent.mt"]] <- PercentageFeatureSet(srat_UNTREATED72hr, pattern = "^MT-")
+srat_UNTREATED72hr[["percent.rb"]] <- PercentageFeatureSet(srat_UNTREATED72hr, pattern = "^RP[SL]")
 
-# ADD doublet information (scrublet)
-doublets <- read.table("output/doublets/scrublet_50dOrga.tsv",header = F,row.names = 1)
+srat_DASATINIB72hr[["percent.mt"]] <- PercentageFeatureSet(srat_DASATINIB72hr, pattern = "^MT-")
+srat_DASATINIB72hr[["percent.rb"]] <- PercentageFeatureSet(srat_DASATINIB72hr, pattern = "^RP[SL]")
+
+## add doublet information (scrublet)
+doublets <- read.table("output/doublets/humangastruloid_UNTREATED72hr.tsv",header = F,row.names = 1)
 colnames(doublets) <- c("Doublet_score","Is_doublet")
-srat <- AddMetaData(srat,doublets)
-srat$Doublet_score <- as.numeric(srat$Doublet_score) # make score as numeric
-head(srat[[]])
+srat_UNTREATED72hr <- AddMetaData(srat_UNTREATED72hr,doublets)
+srat_UNTREATED72hr$Doublet_score <- as.numeric(srat_UNTREATED72hr$Doublet_score) # make score as numeric
+head(srat_UNTREATED72hr[[]])
 
-# Quality check
-pdf("output/seurat/VlnPlot_QC_50dOrga.pdf", width=10, height=6)
-VlnPlot(srat, features = c("nFeature_RNA","nCount_RNA","percent.mt","percent.rb"),ncol = 4,pt.size = 0.1) & 
+doublets <- read.table("output/doublets/humangastruloid_DASATINIB72hr.tsv",header = F,row.names = 1)
+colnames(doublets) <- c("Doublet_score","Is_doublet")
+srat_DASATINIB72hr <- AddMetaData(srat_DASATINIB72hr,doublets)
+srat_DASATINIB72hr$Doublet_score <- as.numeric(srat_DASATINIB72hr$Doublet_score) # make score as numeric
+head(srat_DASATINIB72hr[[]])
+
+## Plot
+pdf("output/seurat/VlnPlot_QC_UNTREATED72hr.pdf", width=10, height=6)
+pdf("output/seurat/VlnPlot_QC_DASATINIB72hr.pdf", width=10, height=6)
+VlnPlot(srat_DASATINIB72hr, features = c("nFeature_RNA","nCount_RNA","percent.mt","percent.rb"),ncol = 4,pt.size = 0.1) & 
   theme(plot.title = element_text(size=10))
 dev.off()
 
-pdf("output/seurat/FeatureScatter_QC_RNAcount_mt_50dOrga.pdf", width=5, height=5)
-FeatureScatter(srat, feature1 = "nCount_RNA", feature2 = "percent.mt")
+pdf("output/seurat/FeatureScatter_QC_RNAcount_mt_UNTREATED72hr.pdf", width=5, height=5)
+pdf("output/seurat/FeatureScatter_QC_RNAcount_mt_DASATINIB72hr.pdf", width=5, height=5)
+FeatureScatter(srat_DASATINIB72hr, feature1 = "nCount_RNA", feature2 = "percent.mt")
 dev.off()
-pdf("output/seurat/FeatureScatter_QC_RNAcount_RNAfeature_50dOrga.pdf", width=5, height=5)
-FeatureScatter(srat, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+pdf("output/seurat/FeatureScatter_QC_RNAcount_RNAfeature_UNTREATED72hr.pdf", width=5, height=5)
+pdf("output/seurat/FeatureScatter_QC_RNAcount_RNAfeature_DASATINIB72hr.pdf", width=5, height=5)
+FeatureScatter(srat_DASATINIB72hr, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 dev.off()
-pdf("output/seurat/FeatureScatter_QC_RNAcount_rb_50dOrga.pdf", width=5, height=5)
-FeatureScatter(srat, feature1 = "nCount_RNA", feature2 = "percent.rb")
+pdf("output/seurat/FeatureScatter_QC_rb_mt_UNTREATED72hr.pdf", width=5, height=5)
+pdf("output/seurat/FeatureScatter_QC_rb_mt_DASATINIB72hr.pdf", width=5, height=5)
+FeatureScatter(srat_DASATINIB72hr, feature1 = "percent.rb", feature2 = "percent.mt")
 dev.off()
-pdf("output/seurat/FeatureScatter_QC_rb_mt_50dOrga.pdf", width=5, height=5)
-FeatureScatter(srat, feature1 = "percent.rb", feature2 = "percent.mt")
+pdf("output/seurat/FeatureScatter_QC_mt_doublet_UNTREATED72hr.pdf", width=5, height=5)
+pdf("output/seurat/FeatureScatter_QC_mt_doublet_DASATINIB72hr.pdf", width=5, height=5)
+FeatureScatter(srat_DASATINIB72hr, feature1 = "percent.mt", feature2 = "Doublet_score")
 dev.off()
-pdf("output/seurat/FeatureScatter_QC_RNAfeature_doublet_50dOrga.pdf", width=5, height=5)
-FeatureScatter(srat, feature1 = "nFeature_RNA", feature2 = "Doublet_score")
+pdf("output/seurat/FeatureScatter_QC_RNAfeature_doublet_UNTREATED72hr.pdf", width=5, height=5)
+pdf("output/seurat/FeatureScatter_QC_RNAfeature_doublet_DASATINIB72hr.pdf", width=5, height=5)
+FeatureScatter(srat_DASATINIB72hr, feature1 = "nFeature_RNA", feature2 = "Doublet_score")
 dev.off()
-
 # After seeing the plot; add QC information in our seurat object
-srat[['QC']] <- ifelse(srat@meta.data$Is_doublet == 'True','Doublet','Pass')
-srat[['QC']] <- ifelse(srat@meta.data$nFeature_RNA < 500 & srat@meta.data$QC == 'Pass','Low_nFeature',srat@meta.data$QC)
-srat[['QC']] <- ifelse(srat@meta.data$nFeature_RNA < 500 & srat@meta.data$QC != 'Pass' & srat@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat@meta.data$QC,sep = ','),srat@meta.data$QC)
-srat[['QC']] <- ifelse(srat@meta.data$percent.mt > 20 & srat@meta.data$QC == 'Pass','High_MT',srat@meta.data$QC)
-srat[['QC']] <- ifelse(srat@meta.data$nFeature_RNA < 500 & srat@meta.data$QC != 'Pass' & srat@meta.data$QC != 'High_MT',paste('High_MT',srat@meta.data$QC,sep = ','),srat@meta.data$QC)
-table(srat[['QC']])
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$Is_doublet == 'True','Doublet','Pass')
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 500 & srat_UNTREATED72hr@meta.data$QC == 'Pass','Low_nFeature',srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 500 & srat_UNTREATED72hr@meta.data$QC != 'Pass' & srat_UNTREATED72hr@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_UNTREATED72hr@meta.data$QC,sep = ','),srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$percent.mt > 15 & srat_UNTREATED72hr@meta.data$QC == 'Pass','High_MT',srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 500 & srat_UNTREATED72hr@meta.data$QC != 'Pass' & srat_UNTREATED72hr@meta.data$QC != 'High_MT',paste('High_MT',srat_UNTREATED72hr@meta.data$QC,sep = ','),srat_UNTREATED72hr@meta.data$QC)
+table(srat_UNTREATED72hr[['QC']])
 
+srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$Is_doublet == 'True','Doublet','Pass')
+srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$nFeature_RNA < 500 & srat_DASATINIB72hr@meta.data$QC == 'Pass','Low_nFeature',srat_DASATINIB72hr@meta.data$QC)
+srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$nFeature_RNA < 500 & srat_DASATINIB72hr@meta.data$QC != 'Pass' & srat_DASATINIB72hr@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_DASATINIB72hr@meta.data$QC,sep = ','),srat_DASATINIB72hr@meta.data$QC)
+srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$percent.mt > 15 & srat_DASATINIB72hr@meta.data$QC == 'Pass','High_MT',srat_DASATINIB72hr@meta.data$QC)
+srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$nFeature_RNA < 500 & srat_DASATINIB72hr@meta.data$QC != 'Pass' & srat_DASATINIB72hr@meta.data$QC != 'High_MT',paste('High_MT',srat_DASATINIB72hr@meta.data$QC,sep = ','),srat_DASATINIB72hr@meta.data$QC)
+table(srat_DASATINIB72hr[['QC']])
 # Quality check after QC filtering
-pdf("output/seurat/VlnPlot_QCPass_50dOrga.pdf", width=10, height=6)
-VlnPlot(subset(srat, subset = QC == 'Pass'), 
+pdf("output/seurat/VlnPlot_QCPass_UNTREATED72hr.pdf", width=10, height=6)
+pdf("output/seurat/VlnPlot_QCPass_DASATINIB72hr.pdf", width=10, height=6)
+VlnPlot(subset(srat_DASATINIB72hr, subset = QC == 'Pass'), 
         features = c("nFeature_RNA", "nCount_RNA", "percent.mt","percent.rb"), ncol = 4, pt.size = 0.1) & 
   theme(plot.title = element_text(size=10))
 dev.off()
+
+
+# SCT transform V2
+## subset my seurat object to only analyze the cells that pass the QC
+srat_UNTREATED72hr <- subset(srat_UNTREATED72hr, subset = QC == 'Pass')
+srat_DASATINIB72hr <- subset(srat_DASATINIB72hr, subset = QC == 'Pass')
+srat_UNTREATED72hr$condition <- "UNTREATED72hr"
+srat_DASATINIB72hr$condition <- "DASATINIB72hr"
+
+
+# Test different normalization method until we found one that cluster well endoderm, mesoderm and ectoderm in control
+
+## normalize and run dimensionality reduction on control dataset with SCTransform V2
+### Default parameter
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, vst.flavor = "v2", verbose = FALSE) %>%
+    RunPCA(npcs = 30, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:30, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", dims = 1:30, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.3, verbose = FALSE)
+### Fine-tune parameters (from v1)
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, vst.flavor = "v2", method = "glmGamPoi", ncells = 5487,     # HERE PASTE NB OF CELLS AFTER QC!!! NB OF CEL IN THE srat
+                    vars.to.regress = c("percent.mt","S.Score","G2M.Score"), verbose = F) %>%
+    RunPCA(npcs = 30, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:30, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 15, dims = 1:30, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.3, verbose = FALSE, algorithm = 4)
+### Fine-tune parameters (from v1) without regression
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, vst.flavor = "v2", method = "glmGamPoi", ncells = 5487, verbose = F) %>%
+    RunPCA(npcs = 30, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:30, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 15, dims = 1:30, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.3, verbose = FALSE, algorithm = 4)
+
+XXX PURSUE XXX
+
+
+pdf("output/seurat/UMAP_SCT_UNTREATED72hr.pdf", width=10, height=6)
+DimPlot(srat_UNTREATED72hr, label = T, repel = T) + ggtitle("UNTREATED72hr_Unsupervised clustering")
+dev.off()
+
+## Check some marker genes 
+### Marker gene list
+ectoderm <- c("PAX6", "OTX2", "NES", "TFAP2A", "DLK1", "LHX2", "RAX", "HES5", "SOX1", "NES", "SOX2", "SOX9", "BRN2","IRX2", "SOX21")
+mesoderm <- c("NCAM1", "HAND1", "PDGFRA", "CDX2", "APLNR", "MIXL1", "CXCR4", "ETV3", "TBX6", "LHX1", "KDR", "ID2","APLINR", "T", "MESP1", "HAS2", "SNAJ1", "SNAJ2", "NODAL", "TDGF1", "GDF3", "PAX2", "DLL1", "MEOX1", "MEIS2", "Vg1")
+endoderm <- c("KIT", "PRDM1", "GSC", "TTR", "SOX17", "GSC", "CER1", "IRX1", "EOMES", "SHH", "FOXA2", "Cdx1", "GATA4", "Cdx4", "GATA6", "HHEX", "LEFTY1", "AFP", "SOX17")
+
+DefaultAssay(srat_UNTREATED72hr) <- "SCT"
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_endoderm.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = endoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_mesoderm.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_ectoderm.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+# --> NOT AMAZING with Default; DIM 10,30,50 AND RES 0.3 0.5 TESTED
+# --> Tested with parameters used in the non v2 VST transformation and perform far best!
+
+
+
+
+
+
+
+
+
+
+
+
+XXX TO RE RUN XXX :
+# Old-school method XXX TO RE RUN XXX
+## normalize data
+srat_UNTREATED72hr <- NormalizeData(srat_UNTREATED72hr, normalization.method = "LogNormalize", scale.factor = 10000)
+## Discover the 2000 first more variable genes
+srat_UNTREATED72hr <- FindVariableFeatures(srat_UNTREATED72hr, selection.method = "vst", nfeatures = 2000)
+## scale data to Z score (value centered around 0 and +/- 1)
+all.genes <- rownames(srat_UNTREATED72hr)
+srat_UNTREATED72hr <- ScaleData(srat_UNTREATED72hr, features = all.genes)
+## PCA
+srat_UNTREATED72hr <- RunPCA(srat_UNTREATED72hr, features = VariableFeatures(object = srat_UNTREATED72hr))
+## investigate to find optimal nb of dimension
+### Vizualize the 1st 20 PC
+pdf("output/seurat/DimHeatmap_oldSchool.pdf", width=10, height=20)
+DimHeatmap(srat_UNTREATED72hr, dims = 1:20, cells = 500, balanced = TRUE)
+dev.off()
+
+### Compute JackStraw score
+srat_UNTREATED72hr <- JackStraw(srat_UNTREATED72hr, num.replicate = 100)
+srat_UNTREATED72hr <- ScoreJackStraw(srat_UNTREATED72hr, dims = 1:20)
+
+## Generate plot
+pdf("output/seurat/JackStraw.pdf", width=10, height=10)
+JackStrawPlot(srat, dims = 1:20)  # 20
+dev.off()
+
+pdf("output/seurat/Elbow.pdf", width=10, height=10)
+ElbowPlot(srat) # 8 
+dev.off()
+
+# clustering
+srat <- FindNeighbors(srat, dims = 1:10)
+srat <- FindClusters(srat, resolution = 0.1)
+
+srat <- RunUMAP(srat, dims = 1:10, verbose = F)
+table(srat@meta.data$seurat_clusters) # to check cluster size
+
+pdf("output/seurat/Umap.pdf", width=10, height=10)
+DimPlot(srat,label.size = 4,repel = T,label = T)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## integrate the two datasets using pearson residuals
+srat_DASATINIB72hr <- SCTransform(srat_DASATINIB72hr, vst.flavor = "v2", verbose = FALSE) %>%
+    RunPCA(npcs = 30, verbose = FALSE)
+srat.list <- list(srat_UNTREATED72hr = srat_UNTREATED72hr, srat_DASATINIB72hr = srat_DASATINIB72hr)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+
+humangastruloid.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+humangastruloid.combined.sct <- IntegrateData(anchorset = humangastruloid.anchors, normalization.method = "SCT")
+
+
+
+# Perform integrated analysis
+humangastruloid.combined.sct <- RunPCA(humangastruloid.combined.sct, verbose = FALSE)
+humangastruloid.combined.sct <- RunUMAP(humangastruloid.combined.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
+humangastruloid.combined.sct <- FindNeighbors(humangastruloid.combined.sct, reduction = "pca", dims = 1:30)
+humangastruloid.combined.sct <- FindClusters(humangastruloid.combined.sct, resolution = 0.3)
+
+
+
+pdf("output/seurat/UMAP_raw_UNTREATED72hr_DASATINIB72hr.pdf", width=10, height=6)
+DimPlot(humangastruloid.combined.sct, reduction = "umap", split.by = "condition")
+dev.off()
+
+
+
+### BACKUP ### TOO LONG , fuck it
+# Save workspace to .RData file
+save.image("output/seurat/R_session_humangastruloid.RData")
+# Load workspace from .RData file
+load("output/seurat/R_session_humangastruloid.RData")
+### BACKUP ###
+
+
+
+
+# differential expressed genes across conditions
+
+
+XXX
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # normalize data
 srat <- NormalizeData(srat, normalization.method = "LogNormalize", scale.factor = 10000)
@@ -303,6 +486,8 @@ pdf("output/seurat/VlnPlot_QCPass_cellCycle.pdf", width=10, height=10)
 VlnPlot(srat,features = c("S.Score","G2M.Score")) & 
   theme(plot.title = element_text(size=10))
 dev.off()
+
+
 
 # SCTransform normalization and clustering
 dim(srat)[2] # to know nb of cells
