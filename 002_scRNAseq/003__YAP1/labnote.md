@@ -322,6 +322,22 @@ dev.off()
 
 
 
+### other marker from this paper (Minn2020): https://elifesciences.org/articles/59445
+ectoderm <- c("SOX2", "NES", "VIM", "ID3")
+epiblast <- c("NANOG", "POU5F1", "DPPA4", "NODAL", "GDF3", "TDGF1")
+mesoderm <- c("T", "MIXL1", "EOMES", "KDR", "DLL3", "LHX1", "APLNR", "TBX6", "MESP1", "HAS2", "PDGFRA")
+endoderm <- c("SOX17", "PRDM1", "FOXA2", "GATA6")
+PGC <- c("CXCR4", "NANOS3", "TFAP2C")
+TE <- c("CDX2", "GATA3", "KRT7", "GATA2")
+amnion <- c("TBX3", "TFAP2A", "HAND1", "WNT6")
+
+
+
+
+
+
+
+
 
 # --> Tested with parameters used in the non v2 VST transformation and perform far best!
 
