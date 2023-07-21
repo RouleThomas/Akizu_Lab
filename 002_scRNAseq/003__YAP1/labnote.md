@@ -265,7 +265,7 @@ srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncel
     FindClusters(resolution = 0.1, verbose = FALSE, algorithm = 4)
 
 ### Fine-tune parameters (from v1) with percent mt regression and not vst.flavor v2 with UMAP parameter
-srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncells = 5847, vars.to.regress = c("percent.mt","S.Score","G2M.Score"), verbose = F, variable.features.n = 3000) %>%
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncells = 5738, vars.to.regress = c("percent.mt","S.Score","G2M.Score"), verbose = F, variable.features.n = 3000) %>%
     RunPCA(npcs = 20, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
     RunUMAP(reduction = "pca", dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
     FindNeighbors(reduction = "pca", k.param = 30, dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
@@ -292,7 +292,37 @@ dev.off()
 pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_ectoderm.pdf", width=20, height=20)
 FeaturePlot(srat_UNTREATED72hr, features = ectoderm, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-# --> NOT AMAZING with Default; DIM 10,30,50 AND RES 0.3 0.5 TESTED
+
+### sub-mesoderm marker from ChatGPT
+
+pursue this !!! XXX
+
+
+paraxial_mesoderm <- c("TBX6", "PAX3", "MESP2")
+intermediate_mesoderm <- c("LHX1", "PAX2", "WT1")
+lateral_plate_mesoderm <- c("MEOX1", "NKX2.5", "TBX5")
+chordamesoderm <- c("BRACHYURY", "FOXA2", "SHH")
+hemangioblasts <- c("KDR", "TAL1", "LMO2")
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_paraxial_mesoderm.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = paraxial_mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_intermediate_mesoderm.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = intermediate_mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_lateral_plate_mesoderm.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = lateral_plate_mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_chordamesoderm.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = chordamesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_hemangioblasts.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = hemangioblasts, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+
+
+
 # --> Tested with parameters used in the non v2 VST transformation and perform far best!
 
 
