@@ -145,10 +145,10 @@ FeatureScatter(srat_DASATINIB72hr, feature1 = "nFeature_RNA", feature2 = "Double
 dev.off()
 # After seeing the plot; add QC information in our seurat object
 srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$Is_doublet == 'True','Doublet','Pass')
-srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 500 & srat_UNTREATED72hr@meta.data$QC == 'Pass','Low_nFeature',srat_UNTREATED72hr@meta.data$QC)
-srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 500 & srat_UNTREATED72hr@meta.data$QC != 'Pass' & srat_UNTREATED72hr@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_UNTREATED72hr@meta.data$QC,sep = ','),srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 1000 & srat_UNTREATED72hr@meta.data$QC == 'Pass','Low_nFeature',srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 1000 & srat_UNTREATED72hr@meta.data$QC != 'Pass' & srat_UNTREATED72hr@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_UNTREATED72hr@meta.data$QC,sep = ','),srat_UNTREATED72hr@meta.data$QC)
 srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$percent.mt > 15 & srat_UNTREATED72hr@meta.data$QC == 'Pass','High_MT',srat_UNTREATED72hr@meta.data$QC)
-srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 500 & srat_UNTREATED72hr@meta.data$QC != 'Pass' & srat_UNTREATED72hr@meta.data$QC != 'High_MT',paste('High_MT',srat_UNTREATED72hr@meta.data$QC,sep = ','),srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 1000 & srat_UNTREATED72hr@meta.data$QC != 'Pass' & srat_UNTREATED72hr@meta.data$QC != 'High_MT',paste('High_MT',srat_UNTREATED72hr@meta.data$QC,sep = ','),srat_UNTREATED72hr@meta.data$QC)
 table(srat_UNTREATED72hr[['QC']])
 
 ## OPTIONAL FILTERING OF LOW RIBO CONTENT CELL
@@ -156,6 +156,22 @@ srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$percent.rb < 5
 srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$percent.rb < 5 & srat_UNTREATED72hr@meta.data$QC != 'Pass' & srat_UNTREATED72hr@meta.data$QC != 'Low_ribo', paste('Low_ribo', srat_UNTREATED72hr@meta.data$QC, sep = ','), srat_UNTREATED72hr@meta.data$QC)
 table(srat_UNTREATED72hr[['QC']])
 ##
+
+
+## V2 QC with low RNA count filter out
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$Is_doublet == 'True', 'Doublet', 'Pass')
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 1000 & srat_UNTREATED72hr@meta.data$QC == 'Pass', 'Low_nFeature', srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$percent.mt > 15 & srat_UNTREATED72hr@meta.data$QC == 'Pass', 'High_MT', srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nCount_RNA < 5000 & srat_UNTREATED72hr@meta.data$QC == 'Pass', 'Low_nCount', srat_UNTREATED72hr@meta.data$QC)
+
+# Check other QC tags if current QC is not Pass
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 1000 & srat_UNTREATED72hr@meta.data$QC != 'Pass', paste(srat_UNTREATED72hr@meta.data$QC, 'Low_nFeature', sep = ','), srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$percent.mt > 15 & srat_UNTREATED72hr@meta.data$QC != 'Pass', paste(srat_UNTREATED72hr@meta.data$QC, 'High_MT', sep = ','), srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nCount_RNA < 5000 & srat_UNTREATED72hr@meta.data$QC != 'Pass', paste(srat_UNTREATED72hr@meta.data$QC, 'Low_nCount', sep = ','), srat_UNTREATED72hr@meta.data$QC)
+
+table(srat_UNTREATED72hr[['QC']])
+##
+
 
 
 srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$Is_doublet == 'True','Doublet','Pass')
@@ -258,11 +274,17 @@ srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncel
     FindNeighbors(reduction = "pca", k.param = 40, dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
     FindClusters(resolution = 0.3, verbose = FALSE, algorithm = 4)
 ### Fine-tune parameters (from v1) with percent mt regression and not vst.flavor v2 with UMAP parameter
-srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncells = 5847, vars.to.regress = c("percent.mt","S.Score","G2M.Score","percent.rb"), verbose = F, variable.features.n = 3000) %>%
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncells = 5847, vars.to.regress = c("percent.mt","S.Score","G2M.Score","percent.rb", "nFeature_RNA"), verbose = F, variable.features.n = 3000) %>%
     RunPCA(npcs = 20, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
     RunUMAP(reduction = "pca", dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
-    FindNeighbors(reduction = "pca", k.param = 10, dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
-    FindClusters(resolution = 0.1, verbose = FALSE, algorithm = 4)
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.3, verbose = FALSE, algorithm = 4)
+### Fine-tune parameters (from v1) with percent mt regression and not vst.flavor v2 with UMAP parameter
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncells = 5847, verbose = F, variable.features.n = 3000) %>%
+    RunPCA(npcs = 20, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.3, verbose = FALSE, algorithm = 4)
 
 ### Fine-tune parameters (from v1) with percent mt regression and not vst.flavor v2 with UMAP parameter
 srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncells = 5738, vars.to.regress = c("percent.mt","S.Score","G2M.Score"), verbose = F, variable.features.n = 3000) %>%
@@ -331,6 +353,33 @@ PGC <- c("CXCR4", "NANOS3", "TFAP2C")
 TE <- c("CDX2", "GATA3", "KRT7", "GATA2")
 amnion <- c("TBX3", "TFAP2A", "HAND1", "WNT6")
 
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_ectoderm_Minn2020.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_epiblast_Minn2020.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = epiblast, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_mesoderm_Minn2020.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_endoderm_Minn2020.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = endoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_PGC_Minn2020.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = PGC, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_TE_Minn2020.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = TE, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_amnion_Minn2020.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = amnion, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
 
 
 
