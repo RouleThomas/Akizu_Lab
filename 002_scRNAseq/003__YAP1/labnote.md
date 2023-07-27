@@ -327,15 +327,26 @@ pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_ectoderm.pdf", width=20, height
 FeaturePlot(srat_UNTREATED72hr, features = ectoderm, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
 
+
+
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_NODAL.pdf", width=5, height=10)
+FeaturePlot(srat_UNTREATED72hr, features = "NODAL", max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
 # All in dotplot
 ecto_meso_endo <- c("PAX6", "OTX2", "NES", "TFAP2A", "DLK1", "LHX2", "RAX", "HES5", "SOX1", "SOX2", "SOX9", "POU3F2","IRX2", "SOX21","NCAM1", "HAND1", "PDGFRA", "CDX2", "APLNR", "MIXL1", "CXCR4", "ETV3", "TBX6", "LHX1", "KDR", "ID2","APLINR", "T", "MESP1", "HAS2", "SNAJ1", "SNAJ2", "NODAL", "TDGF1", "GDF3", "PAX2", "DLL1", "MEOX1", "MEIS2", "Vg1","KIT", "PRDM1", "TTR", "SOX17", "GSC", "CER1", "IRX1", "EOMES", "SHH", "FOXA2", "Cdx1", "GATA4", "Cdx4", "GATA6", "HHEX", "LEFTY1", "AFP")
 
 levels(srat_UNTREATED72hr) <- c("Ectoderm", "Mesoderm_1","Mesoderm_2","Mesoderm_3","Endoderm")# reorder clusters
 levels(srat_UNTREATED72hr) <- c("Endoderm", "Mesoderm_3", "Mesoderm_2","Mesoderm_1","Ectoderm")
-pdf("output/seurat/DotPlot_SCT_UNTREATED72hr_ectoderm.pdf", width=20, height=3)
+pdf("output/seurat/DotPlot_SCT_UNTREATED72hr.pdf", width=20, height=3)
 DotPlot(srat_UNTREATED72hr, features = ecto_meso_endo, cols = c("grey", "red")) + RotatedAxis()
 dev.off()
 
+
+# All in heatmap
+pdf("output/seurat/DoHeatmap_SCT_UNTREATED72hr.pdf", width=20, height=3)
+DoHeatmap(srat_UNTREATED72hr, assay = "SCT", slot = "scale.data", features = ecto_meso_endo) + NoLegend()
+dev.off()
 
 ## QC plot
 pdf("output/seurat/VlnPlot_SCT_UNTREATED72hr_count_feature.pdf", width=10, height=7)
@@ -463,8 +474,12 @@ dev.off()
 
 # Rename cluster
 new.cluster.ids <- c("Mesoderm_1", "Mesoderm_2", "Mesoderm_3", "Mesoderm_4","Endoderm", "Ectoderm","Mesoderm_5")
+new.cluster.ids <- c("Endoderm", "Mesoderm_5", "Mesoderm_4", "Mesoderm_3","Mesoderm_2", "Mesoderm_1","Ectoderm")
 names(new.cluster.ids) <- levels(humangastruloid.combined.sct)
 humangastruloid.combined.sct <- RenameIdents(humangastruloid.combined.sct, new.cluster.ids)
+
+humangastruloid.combined.sct$cluster.annot <- Idents(humangastruloid.combined.sct) # create a new slot in my seurat object
+
 
 pdf("output/seurat/UMAP_UNTREATED72hr_DASATINIB72hr_label.pdf", width=10, height=6)
 DimPlot(humangastruloid.combined.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 5)
@@ -545,6 +560,16 @@ pdf("output/seurat/DotPlot_SCT_UNTREATED72hr_DASATINIB72hr.pdf", width=20, heigh
 DotPlot(humangastruloid.combined.sct, features = ecto_meso_endo, cols = c("blue","red"), split.by = 'condition') + RotatedAxis()
 dev.off()
 
+pdf("output/seurat/DotPlot_SCT_UNTREATED72hr_DASATINIB72hr_ident.pdf", width=14, height=3)
+DotPlot(humangastruloid.combined.sct, assay = "SCT", features = ecto_meso_endo, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
+
+# All in heatmap
+pdf("output/seurat/DoHeatmap_SCT_UNTREATED72hr_DASATINIB72hr.pdf", width=10, height=5)
+DoHeatmap(humangastruloid.combined.sct, assay = "integrated", slot = "scale.data", features = ecto_meso_endo, group.by = "ident", group.bar = TRUE)
+dev.off()
+
+
 pluripotency <- c("NANOG", "POU5F1", "DNMT3B", "CDH1", "SOX2") # from this https://www.sciencedirect.com/science/article/pii/S2213671121006512#fig1
 
 pdf("output/seurat/DotPlot_SCT_UNTREATED72hr_DASATINIB72hr_pluripotency.pdf", width=10, height=5)
@@ -575,6 +600,12 @@ pdf("output/seurat/DotPlot_SCT_UNTREATED72hr_DASATINIB72hr_YAP1_NODAL.pdf", widt
 DotPlot(humangastruloid.combined.sct, features = c("SHH", "DMRT1", "CITED2", 'DACT2', "TGIF2", "ACVR1B", 'SMAD3', 'DAND5', 'SMAD2','CER1', 'NODAL', 'FOXH1', 'DACT1', 'TDGF1', 'TDGF1P3', 'ACVR1C', 'CFC1', 'CFC1B'), cols = c("blue","red"), split.by = 'condition') + RotatedAxis()
 dev.off()
 
+
+pdf("output/seurat/DoHeatmap_SCT_UNTREATED72hr_DASATINIB72hr_YAP1_NODAL.pdf", width=10, height=5)
+DoHeatmap(humangastruloid.combined.sct, assay = "integrated", slot = "scale.data", features = c("SHH", "DMRT1", "CITED2", 'DACT2', "TGIF2", "ACVR1B", 'SMAD3', 'DAND5', 'SMAD2','CER1', 'NODAL', 'FOXH1', 'DACT1', 'TDGF1', 'TDGF1P3', 'ACVR1C', 'CFC1', 'CFC1B'), group.by = "condition", group.bar = TRUE)
+dev.off()
+
+
 pdf("output/seurat/RidgePlot_SCT_UNTREATED72hr_DASATINIB72hr_YAP1_NODAL.pdf", width=10, height=25)
 RidgePlot(humangastruloid.combined.sct, features = c('CITED2','TGIF2', 'ACVR1B', 'SMAD3', 'SMAD2','FOXH1', 'DACT1', 'CFC1'), cols = c("red","blue"), group.by = 'condition', ncol =1) + RotatedAxis()
 dev.off()
@@ -601,9 +632,67 @@ dev.off()
 ###
 
 # differential expressed genes across conditions
+## what genes change in different conditions for cells of the same type
+
+humangastruloid.combined.sct$celltype.stim <- paste(humangastruloid.combined.sct$cluster.annot, humangastruloid.combined.sct$condition,
+    sep = "-")
+Idents(humangastruloid.combined.sct) <- "celltype.stim"
+
+# use SCT corrected count for DEGs
+humangastruloid.combined.sct <- PrepSCTFindMarkers(humangastruloid.combined.sct)
+## DEGs for each cell type: "Endoderm", "Mesoderm_5","Mesoderm_4","Mesoderm_3", "Mesoderm_2","Mesoderm_1","Ectoderm"
+Endoderm.DASATINIB.response <- FindMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Endoderm-DASATINIB72hr", ident.2 = "Endoderm-UNTREATED72hr",
+    verbose = FALSE)
+head(Endoderm.DASATINIB.response, n = 15)
+write.table(Endoderm.DASATINIB.response, file = "output/seurat/Endoderm-DASATINIB_response.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+Mesoderm_1.DASATINIB.response <- FindMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Mesoderm_1-DASATINIB72hr", ident.2 = "Mesoderm_1-UNTREATED72hr",
+    verbose = FALSE)
+head(Mesoderm_1.DASATINIB.response, n = 15)
+write.table(Mesoderm_1.DASATINIB.response, file = "output/seurat/Mesoderm_1-DASATINIB_response.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+Mesoderm_2.DASATINIB.response <- FindMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Mesoderm_2-DASATINIB72hr", ident.2 = "Mesoderm_2-UNTREATED72hr",
+    verbose = FALSE)
+head(Mesoderm_2.DASATINIB.response, n = 15)
+write.table(Mesoderm_2.DASATINIB.response, file = "output/seurat/Mesoderm_2-DASATINIB_response.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+Mesoderm_3.DASATINIB.response <- FindMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Mesoderm_3-DASATINIB72hr", ident.2 = "Mesoderm_3-UNTREATED72hr",
+    verbose = FALSE)
+head(Mesoderm_3.DASATINIB.response, n = 15)
+write.table(Mesoderm_3.DASATINIB.response, file = "output/seurat/Mesoderm_3-DASATINIB_response.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+Mesoderm_4.DASATINIB.response <- FindMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Mesoderm_4-DASATINIB72hr", ident.2 = "Mesoderm_4-UNTREATED72hr",
+    verbose = FALSE)
+head(Mesoderm_4.DASATINIB.response, n = 15)
+write.table(Mesoderm_4.DASATINIB.response, file = "output/seurat/Mesoderm_4-DASATINIB_response.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+Mesoderm_5.DASATINIB.response <- FindMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Mesoderm_5-DASATINIB72hr", ident.2 = "Mesoderm_5-UNTREATED72hr",
+    verbose = FALSE)
+head(Mesoderm_5.DASATINIB.response, n = 15)
+write.table(Mesoderm_5.DASATINIB.response, file = "output/seurat/Mesoderm_5-DASATINIB_response.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+Ectoderm.DASATINIB.response <- FindMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Ectoderm-DASATINIB72hr", ident.2 = "Ectoderm-UNTREATED72hr",
+    verbose = FALSE)
+head(Ectoderm.DASATINIB.response, n = 15)
+write.table(Ectoderm.DASATINIB.response, file = "output/seurat/Ectoderm-DASATINIB_response.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 
-XXX
+# PLOT norm for DEGs count
+humangastruloid.combined.sct$condition <- factor(humangastruloid.combined.sct$condition, levels = c("UNTREATED72hr", "DASATINIB72hr")) # Reorder untreated 1st
+
+Idents(humangastruloid.combined.sct) <- "cluster.annot"
+DefaultAssay(humangastruloid.combined.sct) <- "SCT"
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_norm_YAP1_NODAL.pdf", width=7, height=50)
+FeaturePlot(humangastruloid.combined.sct, features = c("SHH", "DMRT1", "CITED2", 'DACT2', "TGIF2", "ACVR1B", 'SMAD3', 'DAND5', 'SMAD2','CER1', 'NODAL', 'FOXH1', 'DACT1', 'TDGF1', 'TDGF1P3', 'ACVR1C', 'CFC1', 'CFC1B'), split.by = "condition", max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_norm_hippoYAP.pdf", width=7, height=25)
+FeaturePlot(humangastruloid.combined.sct, features = c("TEAD1", "TEAD4", "CCN2", "CCN1","AREG","MYC","GLI2","VIM","AXL","BIRC5"), split.by = "condition", max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/DoHeatmap_SCT_UNTREATED72hr_DASATINIB72hr_norm_YAP1_NODAL.pdf", width=10, height=5)
+DoHeatmap(humangastruloid.combined.sct, features = c("SHH", "DMRT1", "CITED2", 'DACT2', "TGIF2", "ACVR1B", 'SMAD3', 'DAND5', 'SMAD2','CER1', 'NODAL', 'FOXH1', 'DACT1', 'TDGF1', 'TDGF1P3', 'ACVR1C', 'CFC1', 'CFC1B'), group.by = "condition", group.bar = TRUE)
+dev.off()
 
 
 
@@ -616,6 +705,10 @@ XXX
 
 
 
+
+
+
+# Past troubleshoot for control data to check which normalization method was the best (in the end SCT V1 is the best)
 # Let's try now the non SCTransform method
 
 ## LogNormalize ##
