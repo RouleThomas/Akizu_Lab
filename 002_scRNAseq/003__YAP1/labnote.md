@@ -51,11 +51,14 @@ python3 scrublet.py [input_path] [output_path]
 # Run doublet detection/scrublet sample per sample
 python3 scripts/scrublet_doublets.py humangastruloid_UNTREATED72hr/outs/filtered_feature_bc_matrix output/doublets/humangastruloid_UNTREATED72hr.tsv
 python3 scripts/scrublet_doublets.py humangastruloid_DASATINIB72hr/outs/filtered_feature_bc_matrix output/doublets/humangastruloid_DASATINIB72hr.tsv
+python3 scripts/scrublet_doublets.py embryo_control_e775_mice/outs/filtered_feature_bc_matrix output/doublets/embryo_control.tsv
+python3 scripts/scrublet_doublets.py embryo_cYAPKO_e775_mice/outs/filtered_feature_bc_matrix output/doublets/embryo_cYAPKO.tsv
 ```
 Doublet detection score:
 - humangastruloid_UNTREATED72hr: 0% doublet
 - humangastruloid_DASATINIB72hr: 34.2% doublet
-- XXX
+- embryo_control: 0.1% doublet
+- embryo_cYAPKO: 3.6%
 --> Successfully assigned doublet
 
 # humangastruloid analysis in Seurat
@@ -370,6 +373,13 @@ FeaturePlot(srat_UNTREATED72hr,features = c("S.Score","G2M.Score"),label.size = 
 dev.off()  
 
 
+
+
+
+
+
+
+
 # Aditional list of genes for troubleshooting:
 ### sub-mesoderm marker from ChatGPT
 
@@ -447,6 +457,32 @@ dev.off()
 
 
 
+## Display the top 10 marker genes of each cluster; unbiased
+### Find all markers 
+all_markers <- FindAllMarkers(srat_UNTREATED72hr, assay = "SCT", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all_markers, file = "output/seurat/srat_UNTREATED72hr_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+##
+top10 <- all_markers %>% 
+  mutate(cluster = factor(cluster, levels = c("Ectoderm", "Mesoderm_1", "Mesoderm_2", "Mesoderm_3", "Endoderm"))) %>% 
+  group_by(cluster) %>% 
+  top_n(n = 10, wt = avg_log2FC) %>% 
+  ungroup() %>% 
+  arrange(match(cluster, c("Ectoderm", "Mesoderm_1", "Mesoderm_2", "Mesoderm_3", "Endoderm")))
+# View the top 10 markers for each cluster
+print(top10)
+write.table(top10, file = "output/seurat/srat_UNTREATED72hr_top10_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+# Visualize the top 10 markers for each cluster
+marker_genes <- unique(top10$gene)
+levels(srat_UNTREATED72hr) <- c("Endoderm", "Mesoderm_3", "Mesoderm_2","Mesoderm_1","Ectoderm")
+pdf("output/seurat/DotPlot_SCT_UNTREATED72hr_top10.pdf", width=20, height=3)
+DotPlot(srat_UNTREATED72hr, features = marker_genes, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
+
+
+
+
+
+
 
 ## integrate the two datasets using pearson residuals
 srat_DASATINIB72hr <- SCTransform(srat_DASATINIB72hr, verbose = FALSE) %>%  # ,vst.flavor = "v2" 
@@ -467,14 +503,17 @@ humangastruloid.combined.sct <- RunUMAP(humangastruloid.combined.sct, reduction 
 humangastruloid.combined.sct <- FindNeighbors(humangastruloid.combined.sct, reduction = "pca", k.param = 50, dims = 1:40)
 humangastruloid.combined.sct <- FindClusters(humangastruloid.combined.sct, resolution = 0.25, verbose = FALSE, algorithm = 4)
 
+humangastruloid.combined.sct$condition <- factor(humangastruloid.combined.sct$condition, levels = c("UNTREATED72hr", "DASATINIB72hr")) # Reorder untreated 1st
+
 pdf("output/seurat/UMAP_UNTREATED72hr_DASATINIB72hr.pdf", width=10, height=6)
-DimPlot(humangastruloid.combined.sct, reduction = "umap", split.by = "condition")
+DimPlot(humangastruloid.combined.sct, reduction = "umap", split.by = "condition", label=TRUE)
 dev.off()
+
 
 
 # Rename cluster
 new.cluster.ids <- c("Mesoderm_1", "Mesoderm_2", "Mesoderm_3", "Mesoderm_4","Endoderm", "Ectoderm","Mesoderm_5")
-new.cluster.ids <- c("Endoderm", "Mesoderm_5", "Mesoderm_4", "Mesoderm_3","Mesoderm_2", "Mesoderm_1","Ectoderm")
+# new.cluster.ids <- c("Endoderm", "Mesoderm_5", "Mesoderm_4", "Mesoderm_3","Mesoderm_2", "Mesoderm_1","Ectoderm")
 names(new.cluster.ids) <- levels(humangastruloid.combined.sct)
 humangastruloid.combined.sct <- RenameIdents(humangastruloid.combined.sct, new.cluster.ids)
 
@@ -678,7 +717,7 @@ write.table(Ectoderm.DASATINIB.response, file = "output/seurat/Ectoderm-DASATINI
 
 
 # PLOT norm for DEGs count
-humangastruloid.combined.sct$condition <- factor(humangastruloid.combined.sct$condition, levels = c("UNTREATED72hr", "DASATINIB72hr")) # Reorder untreated 1st
+## humangastruloid.combined.sct$condition <- factor(humangastruloid.combined.sct$condition, levels = c("UNTREATED72hr", "DASATINIB72hr")) # Reorder untreated 1st
 
 Idents(humangastruloid.combined.sct) <- "cluster.annot"
 DefaultAssay(humangastruloid.combined.sct) <- "SCT"
@@ -698,11 +737,62 @@ dev.off()
 
 
 
+## Display the top 10 marker genes of each cluster; this version display 10 to 20 genes; either the top10 are shared between condition
+### Find all markers 
+all_markers <- FindAllMarkers(humangastruloid.combined.sct, assay = "SCT", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all_markers, file = "output/seurat/srat_UNTREATED72hr_DASATINIB72hr_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+##
+top10 <- all_markers %>% 
+  mutate(cluster = factor(cluster, levels = c("Ectoderm-UNTREATED72hr","Ectoderm-DASATINIB72hr", "Mesoderm_1-UNTREATED72hr", "Mesoderm_1-DASATINIB72hr", "Mesoderm_2-UNTREATED72hr", "Mesoderm_2-DASATINIB72hr", "Mesoderm_3-UNTREATED72hr", "Mesoderm_3-DASATINIB72hr", "Mesoderm_4-UNTREATED72hr", "Mesoderm_4-DASATINIB72hr", "Mesoderm_5-UNTREATED72hr", "Mesoderm_5-DASATINIB72hr", "Endoderm-UNTREATED72hr", "Endoderm-DASATINIB72hr" ))) %>% 
+  group_by(cluster) %>% 
+  top_n(n = 10, wt = avg_log2FC) %>% 
+  ungroup() %>% 
+  arrange(match(cluster, c("Ectoderm-UNTREATED72hr","Ectoderm-DASATINIB72hr", "Mesoderm_1-UNTREATED72hr", "Mesoderm_1-DASATINIB72hr", "Mesoderm_2-UNTREATED72hr", "Mesoderm_2-DASATINIB72hr", "Mesoderm_3-UNTREATED72hr", "Mesoderm_3-DASATINIB72hr", "Mesoderm_4-UNTREATED72hr", "Mesoderm_4-DASATINIB72hr", "Mesoderm_5-UNTREATED72hr", "Mesoderm_5-DASATINIB72hr", "Endoderm-UNTREATED72hr", "Endoderm-DASATINIB72hr")))
+# View the top 10 markers for each cluster
+print(top10)
+write.table(top10, file = "output/seurat/srat_UNTREATED72hr_DASATINIB72hr_top10_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+# Visualize the top 10 markers for each cluster
+marker_genes <- unique(top10$gene)
+levels(humangastruloid.combined.sct) <- c("Endoderm-DASATINIB72hr", "Endoderm-UNTREATED72hr", "Mesoderm_5-DASATINIB72hr", "Mesoderm_5-UNTREATED72hr", "Mesoderm_4-DASATINIB72hr", "Mesoderm_4-UNTREATED72hr", "Mesoderm_3-DASATINIB72hr", "Mesoderm_3-UNTREATED72hr", "Mesoderm_2-DASATINIB72hr", "Mesoderm_2-UNTREATED72hr", "Mesoderm_1-DASATINIB72hr", "Mesoderm_1-UNTREATED72hr", "Ectoderm-DASATINIB72hr", "Ectoderm-UNTREATED72hr")
+pdf("output/seurat/DotPlot_SCT_UNTREATED72hr_DASATINIB72hr_top10.pdf", width=26, height=5)
+DotPlot(humangastruloid.combined.sct, features = marker_genes, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
 
 
+# Display the top 10 CONSERVED marker genes of each cluster
+## DEGs cluster versus all other
+Ectoderm.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Ectoderm", grouping.var = "condition", verbose = FALSE) %>% mutate(cluster = "Ectoderm")
+Mesoderm_1.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Mesoderm_1", grouping.var = "condition", verbose = FALSE) %>% mutate(cluster = "Mesoderm_1")
+Mesoderm_2.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Mesoderm_2", grouping.var = "condition", verbose = FALSE) %>% mutate(cluster = "Mesoderm_2")
+Mesoderm_3.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Mesoderm_3", grouping.var = "condition", verbose = FALSE) %>% mutate(cluster = "Mesoderm_3")
+Mesoderm_4.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Mesoderm_4", grouping.var = "condition", verbose = FALSE) %>% mutate(cluster = "Mesoderm_4")
+Mesoderm_5.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Mesoderm_5", grouping.var = "condition", verbose = FALSE) %>% mutate(cluster = "Mesoderm_5")
+Endoderm.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Endoderm", grouping.var = "condition", verbose = FALSE) %>% mutate(cluster = "Endoderm")
+## Combine all conserved markers into one data frame
+all_conserved <- bind_rows(Ectoderm.conserved, Mesoderm_1.conserved, Mesoderm_2.conserved, Mesoderm_3.conserved, Mesoderm_4.conserved, Mesoderm_5.conserved, Endoderm.conserved)
+
+all_conserved$gene <- rownames(all_conserved)
+## Write all conserved markers to a file
+write.table(all_conserved, file = "output/seurat/srat_all_conserved_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+## Find the top 10 conserved markers for each cluster
+top10_conserved <- all_conserved %>%
+  mutate(cluster = factor(cluster, levels = c("Ectoderm", "Mesoderm_1", "Mesoderm_2", "Mesoderm_3", "Mesoderm_4", "Mesoderm_5", "Endoderm"))) %>% 
+  separate(gene, into = c("gene", "suffix"), sep = "\\.\\.\\.", remove = TRUE, extra = "drop", fill = "right") %>% 
+  group_by(cluster) %>% 
+  arrange((max_pval)) %>% 
+  slice_head(n = 10) %>% 
+  ungroup() %>% 
+  arrange(match(cluster, c("Ectoderm", "Mesoderm_1", "Mesoderm_2", "Mesoderm_3", "Mesoderm_4", "Mesoderm_5", "Endoderm")))
 
 
-
+## Write the top 10 conserved markers for each cluster to a file
+write.table(top10_conserved, file = "output/seurat/srat_top10_conserved_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+## Visualize the top 10 conserved markers for each cluster
+marker_genes_conserved <- unique(top10_conserved$gene)
+levels(humangastruloid.combined.sct) <- c("Endoderm", "Mesoderm_5", "Mesoderm_4", "Mesoderm_3", "Mesoderm_2", "Mesoderm_1", "Ectoderm")
+pdf("output/seurat/DotPlot_SCT_top10_conserved.pdf", width=26, height=4)
+DotPlot(humangastruloid.combined.sct, features = marker_genes_conserved, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
 
 
 
@@ -934,6 +1024,349 @@ pdf("output/seurat/FeaturePlot_LogNormalize_UNTREATED72hr_ectoderm.pdf", width=2
 FeaturePlot(srat_UNTREATED72hr, features = ectoderm, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
 
+```
+
+
+### Troubleshooting for **metap** package installation (required for `FindConservedMarkers()`)
+```R
+# Install metap package
+install.packages('metap')
+fail with dependencies for 'qqconf' and 'mutoss'
+install.packages('qqconf') # FAIL AGAIN
+```
+--> Need to install through conda the fft3 C libraries
+
+```bash
+conda install -c eumetsat fftw3
+export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/home/roulet/anaconda3/envs/scRNAseq/lib/pkgconfig/ # help conda to find the fftw3
+conda install -c bioconda r-mutoss
+```
+--> Now metap can be loaded; but is messed up all the other package because of Matrix1.4.0 is load and need >1.5; so I remove Matrix with `conda uninstall r-matrix=1.4.1` and re-install lot of R packages in the following order: `install.packages('Matrix')` and `install.packages('MASS')` and `install.packages('codetools')` and `install.packages('survival')` and `BiocManager::install("BiocGenerics")` and `BiocManager::install("Biobase")` and `install.packages('mvtnorm')` and `BiocManager::install("multtest")` and `install.packages('mutoss')`
+
+--> **NOTE: the export may need to be re-run at each session I want to use metap**
+
+
+
+#### Main conclusion for human gastruloid
+- the optimal parameter seems to be SCT Transform version1 (not vst.flavor V2) with 40 dim and 0.25 resolutions. The
+- More cells belong to mesoderm; identification of 5 sub-clusters of mesoderm
+- Endoderm is the more clearly sperated cluster
+- Dasatanib treatment efficacy is not clear; target genes from Hippo-YAP and NODAL are not or very lowly affected
+
+
+
+# Embryo analysis in Seurat
+
+Then `conda activate scRNAseq` and go into R and filtered out **RNA contamination and start with SEURAT**.
+
+We will apply SCT transform V2 for normalization; as [here](https://satijalab.org/seurat/articles/sctransform_v2_vignette.html)
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+
+
+# soupX decontamination
+## Decontaminate one channel of 10X data mapped with cellranger
+sc = load10X('embryo_control_e775_mice/outs') 
+sc = load10X('embryo_cYAPKO_e775_mice/outs') 
+
+## Assess % of conta
+pdf("output/soupX/autoEstCont_embryo_control_e775_mice.pdf", width=10, height=10)
+pdf("output/soupX/autoEstCont_embryo_cYAPKO_e775_mice.pdf", width=10, height=10)
+sc = autoEstCont(sc)
+dev.off()
+## Generate the corrected matrix
+out = adjustCounts(sc)
+## Save the matrix
+save(out, file = "output/soupX/out_embryo_control_e775_mice.RData")
+save(out, file = "output/soupX/out_embryo_cYAPKO_e775_mice.RData")
+## Load the matrix and Create SEURAT object
+load("output/soupX/out_embryo_control_e775_mice.RData")
+srat_WT <- CreateSeuratObject(counts = out, project = "WT") # 32,285 features across 5,568 samples
+
+load("output/soupX/out_embryo_cYAPKO_e775_mice.RData")
+srat_cYAPKO <- CreateSeuratObject(counts = out, project = "cYAPKO") # 32,285 features across 4,504 samples
+
+# QUALITY CONTROL
+## add mitochondrial and Ribosomal conta 
+srat_WT[["percent.mt"]] <- PercentageFeatureSet(srat_WT, pattern = "^MT-")
+srat_WT[["percent.rb"]] <- PercentageFeatureSet(srat_WT, pattern = "^RP[SL]")
+
+srat_cYAPKO[["percent.mt"]] <- PercentageFeatureSet(srat_cYAPKO, pattern = "^MT-")
+srat_cYAPKO[["percent.rb"]] <- PercentageFeatureSet(srat_cYAPKO, pattern = "^RP[SL]")
+
+## add doublet information (scrublet)
+doublets <- read.table("output/doublets/embryo_control.tsv",header = F,row.names = 1)
+colnames(doublets) <- c("Doublet_score","Is_doublet")
+srat_WT <- AddMetaData(srat_WT,doublets)
+srat_WT$Doublet_score <- as.numeric(srat_WT$Doublet_score) # make score as numeric
+head(srat_WT[[]])
+
+doublets <- read.table("output/doublets/embryo_cYAPKO.tsv",header = F,row.names = 1)
+colnames(doublets) <- c("Doublet_score","Is_doublet")
+srat_cYAPKO <- AddMetaData(srat_cYAPKO,doublets)
+srat_cYAPKO$Doublet_score <- as.numeric(srat_cYAPKO$Doublet_score) # make score as numeric
+head(srat_cYAPKO[[]])
+
+
+
+## Plot
+pdf("output/seurat/VlnPlot_QC_UNTREATED72hr.pdf", width=10, height=6)
+pdf("output/seurat/VlnPlot_QC_DASATINIB72hr.pdf", width=10, height=6)
+VlnPlot(srat_DASATINIB72hr, features = c("nFeature_RNA","nCount_RNA","percent.mt","percent.rb"),ncol = 4,pt.size = 0.1) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+
+pdf("output/seurat/FeatureScatter_QC_RNAcount_mt_UNTREATED72hr.pdf", width=5, height=5)
+pdf("output/seurat/FeatureScatter_QC_RNAcount_mt_DASATINIB72hr.pdf", width=5, height=5)
+FeatureScatter(srat_DASATINIB72hr, feature1 = "nCount_RNA", feature2 = "percent.mt")
+dev.off()
+pdf("output/seurat/FeatureScatter_QC_RNAcount_RNAfeature_UNTREATED72hr.pdf", width=5, height=5)
+pdf("output/seurat/FeatureScatter_QC_RNAcount_RNAfeature_DASATINIB72hr.pdf", width=5, height=5)
+FeatureScatter(srat_DASATINIB72hr, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+dev.off()
+pdf("output/seurat/FeatureScatter_QC_rb_mt_UNTREATED72hr.pdf", width=5, height=5)
+pdf("output/seurat/FeatureScatter_QC_rb_mt_DASATINIB72hr.pdf", width=5, height=5)
+FeatureScatter(srat_DASATINIB72hr, feature1 = "percent.rb", feature2 = "percent.mt")
+dev.off()
+pdf("output/seurat/FeatureScatter_QC_mt_doublet_UNTREATED72hr.pdf", width=5, height=5)
+pdf("output/seurat/FeatureScatter_QC_mt_doublet_DASATINIB72hr.pdf", width=5, height=5)
+FeatureScatter(srat_DASATINIB72hr, feature1 = "percent.mt", feature2 = "Doublet_score")
+dev.off()
+pdf("output/seurat/FeatureScatter_QC_RNAfeature_doublet_UNTREATED72hr.pdf", width=5, height=5)
+pdf("output/seurat/FeatureScatter_QC_RNAfeature_doublet_DASATINIB72hr.pdf", width=5, height=5)
+FeatureScatter(srat_DASATINIB72hr, feature1 = "nFeature_RNA", feature2 = "Doublet_score")
+dev.off()
+## After seeing the plot; add QC information in our seurat object
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$Is_doublet == 'True','Doublet','Pass')
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 500 & srat_UNTREATED72hr@meta.data$QC == 'Pass','Low_nFeature',srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 500 & srat_UNTREATED72hr@meta.data$QC != 'Pass' & srat_UNTREATED72hr@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_UNTREATED72hr@meta.data$QC,sep = ','),srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$percent.mt > 15 & srat_UNTREATED72hr@meta.data$QC == 'Pass','High_MT',srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 500 & srat_UNTREATED72hr@meta.data$QC != 'Pass' & srat_UNTREATED72hr@meta.data$QC != 'High_MT',paste('High_MT',srat_UNTREATED72hr@meta.data$QC,sep = ','),srat_UNTREATED72hr@meta.data$QC)
+table(srat_UNTREATED72hr[['QC']])
+## 
+
+
+
+## OPTIONAL FILTERING OF LOW RIBO CONTENT CELL
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$percent.rb < 5 & srat_UNTREATED72hr@meta.data$QC == 'Pass', 'Low_ribo', srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$percent.rb < 5 & srat_UNTREATED72hr@meta.data$QC != 'Pass' & srat_UNTREATED72hr@meta.data$QC != 'Low_ribo', paste('Low_ribo', srat_UNTREATED72hr@meta.data$QC, sep = ','), srat_UNTREATED72hr@meta.data$QC)
+table(srat_UNTREATED72hr[['QC']])
+##
+## V2 QC with low RNA count filter out
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$Is_doublet == 'True', 'Doublet', 'Pass')
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 1000 & srat_UNTREATED72hr@meta.data$QC == 'Pass', 'Low_nFeature', srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$percent.mt > 15 & srat_UNTREATED72hr@meta.data$QC == 'Pass', 'High_MT', srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nCount_RNA < 5000 & srat_UNTREATED72hr@meta.data$QC == 'Pass', 'Low_nCount', srat_UNTREATED72hr@meta.data$QC)
+# Check other QC tags if current QC is not Pass
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 1000 & srat_UNTREATED72hr@meta.data$QC != 'Pass', paste(srat_UNTREATED72hr@meta.data$QC, 'Low_nFeature', sep = ','), srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$percent.mt > 15 & srat_UNTREATED72hr@meta.data$QC != 'Pass', paste(srat_UNTREATED72hr@meta.data$QC, 'High_MT', sep = ','), srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nCount_RNA < 5000 & srat_UNTREATED72hr@meta.data$QC != 'Pass', paste(srat_UNTREATED72hr@meta.data$QC, 'Low_nCount', sep = ','), srat_UNTREATED72hr@meta.data$QC)
+
+table(srat_UNTREATED72hr[['QC']])
+##
+
+
+
+srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$Is_doublet == 'True','Doublet','Pass')
+srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$nFeature_RNA < 500 & srat_DASATINIB72hr@meta.data$QC == 'Pass','Low_nFeature',srat_DASATINIB72hr@meta.data$QC)
+srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$nFeature_RNA < 500 & srat_DASATINIB72hr@meta.data$QC != 'Pass' & srat_DASATINIB72hr@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_DASATINIB72hr@meta.data$QC,sep = ','),srat_DASATINIB72hr@meta.data$QC)
+srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$percent.mt > 15 & srat_DASATINIB72hr@meta.data$QC == 'Pass','High_MT',srat_DASATINIB72hr@meta.data$QC)
+srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$nFeature_RNA < 500 & srat_DASATINIB72hr@meta.data$QC != 'Pass' & srat_DASATINIB72hr@meta.data$QC != 'High_MT',paste('High_MT',srat_DASATINIB72hr@meta.data$QC,sep = ','),srat_DASATINIB72hr@meta.data$QC)
+table(srat_DASATINIB72hr[['QC']])
+# Quality check after QC filtering
+pdf("output/seurat/VlnPlot_QCPass_UNTREATED72hr.pdf", width=10, height=6)
+pdf("output/seurat/VlnPlot_QCPass_DASATINIB72hr.pdf", width=10, height=6)
+VlnPlot(subset(srat_UNTREATED72hr, subset = QC == 'Pass'), 
+        features = c("nFeature_RNA", "nCount_RNA", "percent.mt","percent.rb"), ncol = 4, pt.size = 0.1) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+
+
+
+## subset my seurat object to only analyze the cells that pass the QC
+srat_UNTREATED72hr <- subset(srat_UNTREATED72hr, subset = QC == 'Pass')
+srat_DASATINIB72hr <- subset(srat_DASATINIB72hr, subset = QC == 'Pass')
+srat_UNTREATED72hr$condition <- "UNTREATED72hr"
+srat_DASATINIB72hr$condition <- "DASATINIB72hr"
+
+s.genes <- cc.genes.updated.2019$s.genes
+g2m.genes <- cc.genes.updated.2019$g2m.genes
+
+srat_UNTREATED72hr <- CellCycleScoring(srat_UNTREATED72hr, s.features = s.genes, g2m.features = g2m.genes)
+table(srat_UNTREATED72hr[[]]$Phase)
+
+
+# Test different normalization method until we found one that cluster well endoderm, mesoderm and ectoderm in control
+
+## normalize and run dimensionality reduction on control dataset with SCTransform V2
+### Default parameter
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, vst.flavor = "v2", verbose = FALSE) %>%
+    RunPCA(npcs = 30, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:30, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", dims = 1:30, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.3, verbose = FALSE)
+### Fine-tune parameters (from v1)
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, vst.flavor = "v2", method = "glmGamPoi", ncells = 5487,     # HERE PASTE NB OF CELLS AFTER QC!!! NB OF CEL IN THE srat
+                    vars.to.regress = c("percent.mt","S.Score","G2M.Score"), verbose = F) %>%
+    RunPCA(npcs = 30, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:30, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 15, dims = 1:30, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.3, verbose = FALSE, algorithm = 4)
+### Fine-tune parameters (from v1) without regression
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, vst.flavor = "v2", method = "glmGamPoi", ncells = 5487, verbose = F) %>%
+    RunPCA(npcs = 30, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:30, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 15, dims = 1:30, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.3, verbose = FALSE, algorithm = 4)
+### Fine-tune parameters (from v1) with percent mt regression only
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, vst.flavor = "v2", method = "glmGamPoi", ncells = 5487, vars.to.regress = c("percent.mt"), verbose = F) %>%
+    RunPCA(npcs = 50, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:50, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 15, dims = 1:50, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.7, verbose = FALSE, algorithm = 4)
+### Fine-tune parameters (from v1) with percent mt regression and not vst.flavor v2
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncells = 5487, vars.to.regress = c("percent.mt","S.Score","G2M.Score"), verbose = F) %>%
+    RunPCA(npcs = 20, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 15, dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.7, verbose = FALSE, algorithm = 4)
+### Fine-tune parameters (from v1) with percent mt regression
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncells = 5487, vars.to.regress = c("percent.mt","S.Score","G2M.Score"), verbose = F) %>%
+    RunPCA(npcs = 25, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:25, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:25, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.2, verbose = FALSE, algorithm = 4)
+### Fine-tune parameters (from v1) with percent mt regression and not vst.flavor v2 with n features chagnes
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncells = 5487, vars.to.regress = c("percent.mt","S.Score","G2M.Score"), verbose = F, variable.features.n = 3000) %>%
+    RunPCA(npcs = 15, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:15, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:15, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.3, verbose = FALSE, algorithm = 4)
+### Fine-tune parameters (from v1) with percent mt regression and not vst.flavor v2 with UMAP parameter
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncells = 5487, vars.to.regress = c("percent.mt","S.Score","G2M.Score"), verbose = F, variable.features.n = 3000) %>%
+    RunPCA(npcs = 15, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:15, n.neighbors = 50, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:15, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.3, verbose = FALSE, algorithm = 4)
+### Fine-tune parameters (from v1) with percent mt regression and not vst.flavor v2 with UMAP parameter
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncells = 5487, vars.to.regress = c("percent.mt","S.Score","G2M.Score"), verbose = F, variable.features.n = 3000) %>%
+    RunPCA(npcs = 15, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:15, spread = 2, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:15, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.3, verbose = FALSE, algorithm = 4)
+### Fine-tune parameters (from v1) with percent mt regression and not vst.flavor v2 with UMAP parameter
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncells = 5487, vars.to.regress = c("percent.mt","S.Score","G2M.Score"), verbose = F, variable.features.n = 3000) %>%
+    RunPCA(npcs = 15, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:15, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 50, dims = 1:15, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.3, verbose = FALSE, algorithm = 4)
+### Fine-tune parameters (from v1) with percent mt regression and not vst.flavor v2 with UMAP parameter
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncells = 5487, vars.to.regress = c("percent.mt"), verbose = F, variable.features.n = 3000) %>%
+    RunPCA(npcs = 20, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 40, dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.3, verbose = FALSE, algorithm = 4)
+### Fine-tune parameters (from v1) with percent mt regression and not vst.flavor v2 with UMAP parameter
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncells = 5847, vars.to.regress = c("percent.mt","percent.rb"), verbose = F, variable.features.n = 3000) %>%
+    RunPCA(npcs = 20, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.3, verbose = FALSE, algorithm = 4)
+### Fine-tune parameters (from v1) with percent mt regression and not vst.flavor v2 with UMAP parameter
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncells = 5847, verbose = F, variable.features.n = 3000) %>%
+    RunPCA(npcs = 20, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.3, verbose = FALSE, algorithm = 4)
+### Fine-tune parameters (from v1) with percent mt regression and not vst.flavor v2 with UMAP parameter
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, vst.flavor = "v2", method = "glmGamPoi", ncells = 5738, vars.to.regress = c("percent.mt","percent.rb","S.Score","G2M.Score"), verbose = F, variable.features.n = 3000) %>%
+    RunPCA(npcs = 20, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.2, verbose = FALSE, algorithm = 4)
+
+### Optimal parameter right now:
+set.seed(42)
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncells = 5847, vars.to.regress = c("percent.mt","percent.rb","S.Score","G2M.Score"), verbose = F, variable.features.n = 3000) %>%
+    RunPCA(npcs = 20, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 50, dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.25, verbose = FALSE, algorithm = 4)
+
+
+pdf("output/seurat/UMAP_SCT_UNTREATED72hr.pdf", width=10, height=6)
+DimPlot(srat_UNTREATED72hr, label = T, repel = T) + ggtitle("UNTREATED72hr_Unsupervised clustering")
+dev.off()
+table(srat_UNTREATED72hr@meta.data$seurat_clusters)
+## Check some marker genes 
+### Marker gene list
+ectoderm <- c("PAX6", "OTX2", "NES", "TFAP2A", "DLK1", "LHX2", "RAX", "HES5", "SOX1", "SOX2", "SOX9", "POU3F2","IRX2", "SOX21")
+mesoderm <- c("NCAM1", "HAND1", "PDGFRA", "CDX2", "APLNR", "MIXL1", "CXCR4", "ETV3", "TBX6", "LHX1", "KDR", "ID2","APLINR", "T", "MESP1", "HAS2", "SNAJ1", "SNAJ2", "NODAL", "TDGF1", "GDF3", "PAX2", "DLL1", "MEOX1", "MEIS2", "Vg1")
+endoderm <- c("KIT", "PRDM1", "TTR", "SOX17", "GSC", "CER1", "IRX1", "EOMES", "SHH", "FOXA2", "Cdx1", "GATA4", "Cdx4", "GATA6", "HHEX", "LEFTY1", "AFP")
+
+DefaultAssay(srat_UNTREATED72hr) <- "SCT"
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_endoderm.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = endoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_mesoderm.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_ectoderm.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+
+
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_NODAL.pdf", width=5, height=10)
+FeaturePlot(srat_UNTREATED72hr, features = "NODAL", max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+# All in dotplot
+ecto_meso_endo <- c("PAX6", "OTX2", "NES", "TFAP2A", "DLK1", "LHX2", "RAX", "HES5", "SOX1", "SOX2", "SOX9", "POU3F2","IRX2", "SOX21","NCAM1", "HAND1", "PDGFRA", "CDX2", "APLNR", "MIXL1", "CXCR4", "ETV3", "TBX6", "LHX1", "KDR", "ID2","APLINR", "T", "MESP1", "HAS2", "SNAJ1", "SNAJ2", "NODAL", "TDGF1", "GDF3", "PAX2", "DLL1", "MEOX1", "MEIS2", "Vg1","KIT", "PRDM1", "TTR", "SOX17", "GSC", "CER1", "IRX1", "EOMES", "SHH", "FOXA2", "Cdx1", "GATA4", "Cdx4", "GATA6", "HHEX", "LEFTY1", "AFP")
+
+levels(srat_UNTREATED72hr) <- c("Ectoderm", "Mesoderm_1","Mesoderm_2","Mesoderm_3","Endoderm")# reorder clusters
+levels(srat_UNTREATED72hr) <- c("Endoderm", "Mesoderm_3", "Mesoderm_2","Mesoderm_1","Ectoderm")
+pdf("output/seurat/DotPlot_SCT_UNTREATED72hr.pdf", width=20, height=3)
+DotPlot(srat_UNTREATED72hr, features = ecto_meso_endo, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
+
+
+# All in heatmap
+pdf("output/seurat/DoHeatmap_SCT_UNTREATED72hr.pdf", width=20, height=3)
+DoHeatmap(srat_UNTREATED72hr, assay = "SCT", slot = "scale.data", features = ecto_meso_endo) + NoLegend()
+dev.off()
+
+## QC plot
+pdf("output/seurat/VlnPlot_SCT_UNTREATED72hr_count_feature.pdf", width=10, height=7)
+VlnPlot(srat_UNTREATED72hr,features = c("nCount_RNA","nFeature_RNA")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+## percent mt and rb
+pdf("output/seurat/VlnPlot_SCT_UNTREATED72hr_mt.pdf", width=10, height=7)
+VlnPlot(srat_UNTREATED72hr,features = c("percent.mt", "percent.rb")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+## RNA
+pdf("output/seurat/VlnPlot_SCT_UNTREATED72hr_count_feature.pdf", width=10, height=10)
+VlnPlot(srat_UNTREATED72hr,features = c("nCount_RNA","nFeature_RNA")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+## cell cycle
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_cellCycle.pdf", width=10, height=10)
+FeaturePlot(srat_UNTREATED72hr,features = c("S.Score","G2M.Score"),label.size = 4,repel = T,label = T) & 
+  theme(plot.title = element_text(size=10))
+dev.off()  
 
 
 
@@ -943,6 +1376,103 @@ dev.off()
 
 
 
+# Aditional list of genes for troubleshooting:
+### sub-mesoderm marker from ChatGPT
+
+paraxial_mesoderm <- c("TBX6", "PAX3", "MESP2")
+intermediate_mesoderm <- c("LHX1", "PAX2", "WT1")
+lateral_plate_mesoderm <- c("MEOX1", "NKX2.5", "TBX5")
+chordamesoderm <- c("BRACHYURY", "FOXA2", "SHH")
+hemangioblasts <- c("KDR", "TAL1", "LMO2")
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_paraxial_mesoderm.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = paraxial_mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_intermediate_mesoderm.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = intermediate_mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_lateral_plate_mesoderm.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = lateral_plate_mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_chordamesoderm.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = chordamesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_hemangioblasts.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = hemangioblasts, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+### other marker from this paper (Minn2020): https://elifesciences.org/articles/59445
+ectoderm <- c("SOX2", "NES", "VIM", "ID3")
+epiblast <- c("NANOG", "POU5F1", "DPPA4", "NODAL", "GDF3", "TDGF1")
+mesoderm <- c("T", "MIXL1", "EOMES", "KDR", "DLL3", "LHX1", "APLNR", "TBX6", "MESP1", "HAS2", "PDGFRA")
+endoderm <- c("SOX17", "PRDM1", "FOXA2", "GATA6")
+PGC <- c("CXCR4", "NANOS3", "TFAP2C")
+TE <- c("CDX2", "GATA3", "KRT7", "GATA2")
+amnion <- c("TBX3", "TFAP2A", "HAND1", "WNT6")
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_ectoderm_Minn2020.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_epiblast_Minn2020.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = epiblast, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_mesoderm_Minn2020.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_endoderm_Minn2020.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = endoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_PGC_Minn2020.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = PGC, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_TE_Minn2020.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = TE, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_amnion_Minn2020.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = amnion, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+
+
+# Rename cluster
+
+
+new.cluster.ids <- c("Mesoderm_1", "Mesoderm_2", "Endoderm", "Ectoderm", "Mesoderm_3")
+names(new.cluster.ids) <- levels(srat_UNTREATED72hr)
+srat_UNTREATED72hr <- RenameIdents(srat_UNTREATED72hr, new.cluster.ids)
+
+pdf("output/seurat/UMAP_SCT_UNTREATED72hr.pdf", width=10, height=6)
+DimPlot(srat_UNTREATED72hr, label = T, repel = T, pt.size = 0.7, label.size = 6) + ggtitle("UNTREATED72hr_Unsupervised clustering")
+dev.off()
+
+
+
+## Display the top 10 marker genes of each cluster; unbiased
+### Find all markers 
+all_markers <- FindAllMarkers(srat_UNTREATED72hr, assay = "SCT", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all_markers, file = "output/seurat/srat_UNTREATED72hr_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+##
+top10 <- all_markers %>% 
+  mutate(cluster = factor(cluster, levels = c("Ectoderm", "Mesoderm_1", "Mesoderm_2", "Mesoderm_3", "Endoderm"))) %>% 
+  group_by(cluster) %>% 
+  top_n(n = 10, wt = avg_log2FC) %>% 
+  ungroup() %>% 
+  arrange(match(cluster, c("Ectoderm", "Mesoderm_1", "Mesoderm_2", "Mesoderm_3", "Endoderm")))
+# View the top 10 markers for each cluster
+print(top10)
+write.table(top10, file = "output/seurat/srat_UNTREATED72hr_top10_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+# Visualize the top 10 markers for each cluster
+marker_genes <- unique(top10$gene)
+levels(srat_UNTREATED72hr) <- c("Endoderm", "Mesoderm_3", "Mesoderm_2","Mesoderm_1","Ectoderm")
+pdf("output/seurat/DotPlot_SCT_UNTREATED72hr_top10.pdf", width=20, height=3)
+DotPlot(srat_UNTREATED72hr, features = marker_genes, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
 
 
 
@@ -950,13 +1480,321 @@ dev.off()
 
 
 
+## integrate the two datasets using pearson residuals
+srat_DASATINIB72hr <- SCTransform(srat_DASATINIB72hr, verbose = FALSE) %>%  # ,vst.flavor = "v2" 
+    RunPCA(npcs = 40, verbose = FALSE)
+srat.list <- list(srat_UNTREATED72hr = srat_UNTREATED72hr, srat_DASATINIB72hr = srat_DASATINIB72hr)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
 
+humangastruloid.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+humangastruloid.combined.sct <- IntegrateData(anchorset = humangastruloid.anchors, normalization.method = "SCT")
+
+
+
+# Perform integrated analysis
+humangastruloid.combined.sct <- RunPCA(humangastruloid.combined.sct, verbose = FALSE, npcs = 40)
+humangastruloid.combined.sct <- RunUMAP(humangastruloid.combined.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
+humangastruloid.combined.sct <- FindNeighbors(humangastruloid.combined.sct, reduction = "pca", k.param = 50, dims = 1:40)
+humangastruloid.combined.sct <- FindClusters(humangastruloid.combined.sct, resolution = 0.25, verbose = FALSE, algorithm = 4)
+
+humangastruloid.combined.sct$condition <- factor(humangastruloid.combined.sct$condition, levels = c("UNTREATED72hr", "DASATINIB72hr")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_UNTREATED72hr_DASATINIB72hr.pdf", width=10, height=6)
+DimPlot(humangastruloid.combined.sct, reduction = "umap", split.by = "condition", label=TRUE)
+dev.off()
+
+
+
+# Rename cluster
+new.cluster.ids <- c("Mesoderm_1", "Mesoderm_2", "Mesoderm_3", "Mesoderm_4","Endoderm", "Ectoderm","Mesoderm_5")
+# new.cluster.ids <- c("Endoderm", "Mesoderm_5", "Mesoderm_4", "Mesoderm_3","Mesoderm_2", "Mesoderm_1","Ectoderm")
+names(new.cluster.ids) <- levels(humangastruloid.combined.sct)
+humangastruloid.combined.sct <- RenameIdents(humangastruloid.combined.sct, new.cluster.ids)
+
+humangastruloid.combined.sct$cluster.annot <- Idents(humangastruloid.combined.sct) # create a new slot in my seurat object
+
+
+pdf("output/seurat/UMAP_UNTREATED72hr_DASATINIB72hr_label.pdf", width=10, height=6)
+DimPlot(humangastruloid.combined.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 5)
+dev.off()
+
+#overlapping condition
+pdf("output/seurat/UMAP_UNTREATED72hr_DASATINIB72hr_label_overlap.pdf", width=6, height=5)
+DimPlot(humangastruloid.combined.sct, reduction = "umap", group.by = "condition", pt.size = 0.000001, cols = c("red","blue"))
+dev.off()
+
+# count nb of cells in each cluster
+untreated_clusters <- table(Idents(humangastruloid.combined.sct)[humangastruloid.combined.sct$condition == "UNTREATED72hr"])
+print(untreated_clusters)
+dasatinib_clusters <- table(Idents(humangastruloid.combined.sct)[humangastruloid.combined.sct$condition == "DASATINIB72hr"])
+print(dasatinib_clusters)
+
+# statisctics to assess if distribution of cells among the clusters is significantly different between the two conditions
+## Get the counts of cells in each cluster for each condition
+untreated_clusters <- table(Idents(humangastruloid.combined.sct)[humangastruloid.combined.sct$condition == "UNTREATED72hr"])
+dasatinib_clusters <- table(Idents(humangastruloid.combined.sct)[humangastruloid.combined.sct$condition == "DASATINIB72hr"])
+## Combine the counts into a matrix
+cluster_counts <- rbind(untreated_clusters, dasatinib_clusters)
+rownames(cluster_counts) <- c("UNTREATED72hr", "DASATINIB72hr")
+## Perform the chi-square test
+chisq_test_result <- chisq.test(cluster_counts)
+## Print the result for overall difference
+print(chisq_test_result)
+
+# Statiscitcs for in-cluster difference (which cluster has significant different nb of cells):
+total_untreated <- sum(untreated_clusters)
+total_dasatinib <- sum(dasatinib_clusters)
+
+## Initialize a vector to store p-values
+p_values <- numeric(length(untreated_clusters))
+## Loop over each cluster and perform a chi-square test
+for (i in seq_along(untreated_clusters)) {
+  # Build contingency table for the i-th cluster
+  contingency_table <- matrix(c(untreated_clusters[i], total_untreated - untreated_clusters[i], 
+                                dasatinib_clusters[i], total_dasatinib - dasatinib_clusters[i]), 
+                              nrow = 2)
+  # Perform chi-square test
+  chi_square_result <- chisq.test(contingency_table)
+  # Store the p-value
+  p_values[i] <- chi_square_result$p.value
+}
+## Perform Bonferroni correction
+adjusted_p_values <- p.adjust(p_values, method = "bonferroni")
+## Print adjusted p-values
+names(adjusted_p_values) <- names(untreated_clusters)
+print(adjusted_p_values)
+
+
+## Check some marker genes 
+### Marker gene list
+ectoderm <- c("PAX6", "OTX2", "NES", "TFAP2A", "DLK1", "LHX2", "RAX", "HES5", "SOX1", "NES", "SOX2", "SOX9", "BRN2","IRX2", "SOX21")
+mesoderm <- c("NCAM1", "HAND1", "PDGFRA", "CDX2", "APLNR", "MIXL1", "CXCR4", "ETV3", "TBX6", "LHX1", "KDR", "ID2","APLINR", "T", "MESP1", "HAS2", "SNAJ1", "SNAJ2", "NODAL", "TDGF1", "GDF3", "PAX2", "DLL1", "MEOX1", "MEIS2", "Vg1")
+endoderm <- c("KIT", "PRDM1", "GSC", "TTR", "SOX17", "GSC", "CER1", "IRX1", "EOMES", "SHH", "FOXA2", "Cdx1", "GATA4", "Cdx4", "GATA6", "HHEX", "LEFTY1", "AFP", "SOX17")
+
+DefaultAssay(humangastruloid.combined.sct) <- "SCT"
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_endoderm.pdf", width=10, height=80)
+FeaturePlot(humangastruloid.combined.sct, features = endoderm, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_mesoderm.pdf", width=10, height=80)
+FeaturePlot(humangastruloid.combined.sct, features = mesoderm, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_ectoderm.pdf", width=10, height=80)
+FeaturePlot(humangastruloid.combined.sct, features = ectoderm, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+
+# All in dotplot
+ecto_meso_endo <- c("PAX6", "OTX2", "NES", "TFAP2A", "DLK1", "LHX2", "RAX", "HES5", "SOX1", "SOX2", "SOX9", "POU3F2","IRX2", "SOX21","NCAM1", "HAND1", "PDGFRA", "CDX2", "APLNR", "MIXL1", "CXCR4", "ETV3", "TBX6", "LHX1", "KDR", "ID2","APLINR", "T", "MESP1", "HAS2", "SNAJ1", "SNAJ2", "NODAL", "TDGF1", "GDF3", "PAX2", "DLL1", "MEOX1", "MEIS2", "Vg1","KIT", "PRDM1", "TTR", "SOX17", "GSC", "CER1", "IRX1", "EOMES", "SHH", "FOXA2", "Cdx1", "GATA4", "Cdx4", "GATA6", "HHEX", "LEFTY1", "AFP")
+
+levels(humangastruloid.combined.sct) <- c("Ectoderm", "Mesoderm_1","Mesoderm_2","Mesoderm_3","Endoderm")# reorder clusters
+levels(humangastruloid.combined.sct) <- c("Endoderm", "Mesoderm_5","Mesoderm_4","Mesoderm_3", "Mesoderm_2","Mesoderm_1","Ectoderm")
+pdf("output/seurat/DotPlot_SCT_UNTREATED72hr_DASATINIB72hr.pdf", width=20, height=5)
+DotPlot(humangastruloid.combined.sct, features = ecto_meso_endo, cols = c("blue","red"), split.by = 'condition') + RotatedAxis()
+dev.off()
+
+pdf("output/seurat/DotPlot_SCT_UNTREATED72hr_DASATINIB72hr_ident.pdf", width=14, height=3)
+DotPlot(humangastruloid.combined.sct, assay = "SCT", features = ecto_meso_endo, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
+
+# All in heatmap
+pdf("output/seurat/DoHeatmap_SCT_UNTREATED72hr_DASATINIB72hr.pdf", width=10, height=5)
+DoHeatmap(humangastruloid.combined.sct, assay = "integrated", slot = "scale.data", features = ecto_meso_endo, group.by = "ident", group.bar = TRUE)
+dev.off()
+
+
+pluripotency <- c("NANOG", "POU5F1", "DNMT3B", "CDH1", "SOX2") # from this https://www.sciencedirect.com/science/article/pii/S2213671121006512#fig1
+
+pdf("output/seurat/DotPlot_SCT_UNTREATED72hr_DASATINIB72hr_pluripotency.pdf", width=10, height=5)
+DotPlot(humangastruloid.combined.sct, features = pluripotency, cols = c("blue","red"), split.by = 'condition') + RotatedAxis()
+dev.off()
+
+
+### Check YAP1 bulk-regulated genes:
+YAP1_NODAL <- c("CER1", "TDGF1", "FOXH1", "NODAL", "DACT1", "TDGF1P3", "CFC1", "ACVR1C", "CITED2", "DACT2", "ACVR1B", "DMRT1", "CFC1B", "DAND5", "TGIF2", "SMAD3") 
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_YAP1_NODAL.pdf", width=10, height=80)
+FeaturePlot(humangastruloid.combined.sct, features = YAP1_NODAL, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+pdf("output/seurat/DotPlot_SCT_UNTREATED72hr_DASATINIB72hr_YAP1_NODAL.pdf", width=10, height=5)
+DotPlot(humangastruloid.combined.sct, features = YAP1_NODAL, cols = c("blue","red"), split.by = 'condition') + RotatedAxis()
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_YAP1_CTGF.pdf", width=10, height=5)
+FeaturePlot(humangastruloid.combined.sct, features = "CCN2", max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+#### From ppt
+
+
+pdf("output/seurat/DotPlot_SCT_UNTREATED72hr_DASATINIB72hr_YAP1_NODAL.pdf", width=10, height=5)
+DotPlot(humangastruloid.combined.sct, features = c("SHH", "DMRT1", "CITED2", 'DACT2', "TGIF2", "ACVR1B", 'SMAD3', 'DAND5', 'SMAD2','CER1', 'NODAL', 'FOXH1', 'DACT1', 'TDGF1', 'TDGF1P3', 'ACVR1C', 'CFC1', 'CFC1B'), cols = c("blue","red"), split.by = 'condition') + RotatedAxis()
+dev.off()
+
+
+pdf("output/seurat/DoHeatmap_SCT_UNTREATED72hr_DASATINIB72hr_YAP1_NODAL.pdf", width=10, height=5)
+DoHeatmap(humangastruloid.combined.sct, assay = "integrated", slot = "scale.data", features = c("SHH", "DMRT1", "CITED2", 'DACT2', "TGIF2", "ACVR1B", 'SMAD3', 'DAND5', 'SMAD2','CER1', 'NODAL', 'FOXH1', 'DACT1', 'TDGF1', 'TDGF1P3', 'ACVR1C', 'CFC1', 'CFC1B'), group.by = "condition", group.bar = TRUE)
+dev.off()
+
+
+pdf("output/seurat/RidgePlot_SCT_UNTREATED72hr_DASATINIB72hr_YAP1_NODAL.pdf", width=10, height=25)
+RidgePlot(humangastruloid.combined.sct, features = c('CITED2','TGIF2', 'ACVR1B', 'SMAD3', 'SMAD2','FOXH1', 'DACT1', 'CFC1'), cols = c("red","blue"), group.by = 'condition', ncol =1) + RotatedAxis()
+dev.off()
+
+## From Estaras 2017  10.1101/gad.307512.117 
+### I filter at least 100 count for WT or YAP and pick the most qvalue then FC
+
+pdf("output/seurat/DotPlot_SCT_UNTREATED72hr_DASATINIB72hr_Top10RepressInduced.pdf", width=10, height=5)
+RidgePlot(humangastruloid.combined.sct, features = c("LINC00458", "AMOTL2", "RAB17", "TAGLN", "TPM1", "ACTA1", "MYL9", "ARHGAP23", "CHCHD2", "YAP1", "TXNIP", "DDIT4", "CHST8", "NODAL", "GRM4", "IGFBP2", "PLBD1", "B2M", "CLIP2", "ERVH48-1"), cols = c("blue","red"), split.by = "condition") + RotatedAxis()
+dev.off()
+
+
+
+
+
+
+"PAX8-AS1","EBF2"
+
+### other representation to troubleshoot:
+humangastruloid.combined.sct.UNTREATED72hr = humangastruloid.combined.sct$condition == "UNTREATED72hr"
+pdf("output/seurat/RidgePlot_SCT_UNTREATED72hr_YAP1_NODAL.pdf", width=50, height=100)
+RidgePlot(humangastruloid.combined.sct.UNTREATED72hr, ncol = 1, features = YAP1_NODAL)
+dev.off()
+###
+
+# differential expressed genes across conditions
+## what genes change in different conditions for cells of the same type
+
+humangastruloid.combined.sct$celltype.stim <- paste(humangastruloid.combined.sct$cluster.annot, humangastruloid.combined.sct$condition,
+    sep = "-")
+Idents(humangastruloid.combined.sct) <- "celltype.stim"
+
+# use SCT corrected count for DEGs
+humangastruloid.combined.sct <- PrepSCTFindMarkers(humangastruloid.combined.sct)
+## DEGs for each cell type: "Endoderm", "Mesoderm_5","Mesoderm_4","Mesoderm_3", "Mesoderm_2","Mesoderm_1","Ectoderm"
+Endoderm.DASATINIB.response <- FindMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Endoderm-DASATINIB72hr", ident.2 = "Endoderm-UNTREATED72hr",
+    verbose = FALSE)
+head(Endoderm.DASATINIB.response, n = 15)
+write.table(Endoderm.DASATINIB.response, file = "output/seurat/Endoderm-DASATINIB_response.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+Mesoderm_1.DASATINIB.response <- FindMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Mesoderm_1-DASATINIB72hr", ident.2 = "Mesoderm_1-UNTREATED72hr",
+    verbose = FALSE)
+head(Mesoderm_1.DASATINIB.response, n = 15)
+write.table(Mesoderm_1.DASATINIB.response, file = "output/seurat/Mesoderm_1-DASATINIB_response.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+Mesoderm_2.DASATINIB.response <- FindMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Mesoderm_2-DASATINIB72hr", ident.2 = "Mesoderm_2-UNTREATED72hr",
+    verbose = FALSE)
+head(Mesoderm_2.DASATINIB.response, n = 15)
+write.table(Mesoderm_2.DASATINIB.response, file = "output/seurat/Mesoderm_2-DASATINIB_response.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+Mesoderm_3.DASATINIB.response <- FindMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Mesoderm_3-DASATINIB72hr", ident.2 = "Mesoderm_3-UNTREATED72hr",
+    verbose = FALSE)
+head(Mesoderm_3.DASATINIB.response, n = 15)
+write.table(Mesoderm_3.DASATINIB.response, file = "output/seurat/Mesoderm_3-DASATINIB_response.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+Mesoderm_4.DASATINIB.response <- FindMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Mesoderm_4-DASATINIB72hr", ident.2 = "Mesoderm_4-UNTREATED72hr",
+    verbose = FALSE)
+head(Mesoderm_4.DASATINIB.response, n = 15)
+write.table(Mesoderm_4.DASATINIB.response, file = "output/seurat/Mesoderm_4-DASATINIB_response.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+Mesoderm_5.DASATINIB.response <- FindMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Mesoderm_5-DASATINIB72hr", ident.2 = "Mesoderm_5-UNTREATED72hr",
+    verbose = FALSE)
+head(Mesoderm_5.DASATINIB.response, n = 15)
+write.table(Mesoderm_5.DASATINIB.response, file = "output/seurat/Mesoderm_5-DASATINIB_response.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+Ectoderm.DASATINIB.response <- FindMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Ectoderm-DASATINIB72hr", ident.2 = "Ectoderm-UNTREATED72hr",
+    verbose = FALSE)
+head(Ectoderm.DASATINIB.response, n = 15)
+write.table(Ectoderm.DASATINIB.response, file = "output/seurat/Ectoderm-DASATINIB_response.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+# PLOT norm for DEGs count
+## humangastruloid.combined.sct$condition <- factor(humangastruloid.combined.sct$condition, levels = c("UNTREATED72hr", "DASATINIB72hr")) # Reorder untreated 1st
+
+Idents(humangastruloid.combined.sct) <- "cluster.annot"
+DefaultAssay(humangastruloid.combined.sct) <- "SCT"
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_norm_YAP1_NODAL.pdf", width=7, height=50)
+FeaturePlot(humangastruloid.combined.sct, features = c("SHH", "DMRT1", "CITED2", 'DACT2', "TGIF2", "ACVR1B", 'SMAD3', 'DAND5', 'SMAD2','CER1', 'NODAL', 'FOXH1', 'DACT1', 'TDGF1', 'TDGF1P3', 'ACVR1C', 'CFC1', 'CFC1B'), split.by = "condition", max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_norm_hippoYAP.pdf", width=7, height=25)
+FeaturePlot(humangastruloid.combined.sct, features = c("TEAD1", "TEAD4", "CCN2", "CCN1","AREG","MYC","GLI2","VIM","AXL","BIRC5"), split.by = "condition", max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/DoHeatmap_SCT_UNTREATED72hr_DASATINIB72hr_norm_YAP1_NODAL.pdf", width=10, height=5)
+DoHeatmap(humangastruloid.combined.sct, features = c("SHH", "DMRT1", "CITED2", 'DACT2', "TGIF2", "ACVR1B", 'SMAD3', 'DAND5', 'SMAD2','CER1', 'NODAL', 'FOXH1', 'DACT1', 'TDGF1', 'TDGF1P3', 'ACVR1C', 'CFC1', 'CFC1B'), group.by = "condition", group.bar = TRUE)
+dev.off()
+
+
+
+
+
+## Display the top 10 marker genes of each cluster; this version display 10 to 20 genes; either the top10 are shared between condition
+### Find all markers 
+all_markers <- FindAllMarkers(humangastruloid.combined.sct, assay = "SCT", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all_markers, file = "output/seurat/srat_UNTREATED72hr_DASATINIB72hr_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+##
+top10 <- all_markers %>% 
+  mutate(cluster = factor(cluster, levels = c("Ectoderm-UNTREATED72hr","Ectoderm-DASATINIB72hr", "Mesoderm_1-UNTREATED72hr", "Mesoderm_1-DASATINIB72hr", "Mesoderm_2-UNTREATED72hr", "Mesoderm_2-DASATINIB72hr", "Mesoderm_3-UNTREATED72hr", "Mesoderm_3-DASATINIB72hr", "Mesoderm_4-UNTREATED72hr", "Mesoderm_4-DASATINIB72hr", "Mesoderm_5-UNTREATED72hr", "Mesoderm_5-DASATINIB72hr", "Endoderm-UNTREATED72hr", "Endoderm-DASATINIB72hr" ))) %>% 
+  group_by(cluster) %>% 
+  top_n(n = 10, wt = avg_log2FC) %>% 
+  ungroup() %>% 
+  arrange(match(cluster, c("Ectoderm-UNTREATED72hr","Ectoderm-DASATINIB72hr", "Mesoderm_1-UNTREATED72hr", "Mesoderm_1-DASATINIB72hr", "Mesoderm_2-UNTREATED72hr", "Mesoderm_2-DASATINIB72hr", "Mesoderm_3-UNTREATED72hr", "Mesoderm_3-DASATINIB72hr", "Mesoderm_4-UNTREATED72hr", "Mesoderm_4-DASATINIB72hr", "Mesoderm_5-UNTREATED72hr", "Mesoderm_5-DASATINIB72hr", "Endoderm-UNTREATED72hr", "Endoderm-DASATINIB72hr")))
+# View the top 10 markers for each cluster
+print(top10)
+write.table(top10, file = "output/seurat/srat_UNTREATED72hr_DASATINIB72hr_top10_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+# Visualize the top 10 markers for each cluster
+marker_genes <- unique(top10$gene)
+levels(humangastruloid.combined.sct) <- c("Endoderm-DASATINIB72hr", "Endoderm-UNTREATED72hr", "Mesoderm_5-DASATINIB72hr", "Mesoderm_5-UNTREATED72hr", "Mesoderm_4-DASATINIB72hr", "Mesoderm_4-UNTREATED72hr", "Mesoderm_3-DASATINIB72hr", "Mesoderm_3-UNTREATED72hr", "Mesoderm_2-DASATINIB72hr", "Mesoderm_2-UNTREATED72hr", "Mesoderm_1-DASATINIB72hr", "Mesoderm_1-UNTREATED72hr", "Ectoderm-DASATINIB72hr", "Ectoderm-UNTREATED72hr")
+pdf("output/seurat/DotPlot_SCT_UNTREATED72hr_DASATINIB72hr_top10.pdf", width=26, height=5)
+DotPlot(humangastruloid.combined.sct, features = marker_genes, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
+
+
+# Display the top 10 CONSERVED marker genes of each cluster
+## DEGs cluster versus all other
+Ectoderm.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Ectoderm", grouping.var = "condition", verbose = FALSE) %>% mutate(cluster = "Ectoderm")
+Mesoderm_1.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Mesoderm_1", grouping.var = "condition", verbose = FALSE) %>% mutate(cluster = "Mesoderm_1")
+Mesoderm_2.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Mesoderm_2", grouping.var = "condition", verbose = FALSE) %>% mutate(cluster = "Mesoderm_2")
+Mesoderm_3.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Mesoderm_3", grouping.var = "condition", verbose = FALSE) %>% mutate(cluster = "Mesoderm_3")
+Mesoderm_4.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Mesoderm_4", grouping.var = "condition", verbose = FALSE) %>% mutate(cluster = "Mesoderm_4")
+Mesoderm_5.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Mesoderm_5", grouping.var = "condition", verbose = FALSE) %>% mutate(cluster = "Mesoderm_5")
+Endoderm.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "SCT", ident.1 = "Endoderm", grouping.var = "condition", verbose = FALSE) %>% mutate(cluster = "Endoderm")
+## Combine all conserved markers into one data frame
+all_conserved <- bind_rows(Ectoderm.conserved, Mesoderm_1.conserved, Mesoderm_2.conserved, Mesoderm_3.conserved, Mesoderm_4.conserved, Mesoderm_5.conserved, Endoderm.conserved)
+
+all_conserved$gene <- rownames(all_conserved)
+## Write all conserved markers to a file
+write.table(all_conserved, file = "output/seurat/srat_all_conserved_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+## Find the top 10 conserved markers for each cluster
+top10_conserved <- all_conserved %>%
+  mutate(cluster = factor(cluster, levels = c("Ectoderm", "Mesoderm_1", "Mesoderm_2", "Mesoderm_3", "Mesoderm_4", "Mesoderm_5", "Endoderm"))) %>% 
+  separate(gene, into = c("gene", "suffix"), sep = "\\.\\.\\.", remove = TRUE, extra = "drop", fill = "right") %>% 
+  group_by(cluster) %>% 
+  arrange((max_pval)) %>% 
+  slice_head(n = 10) %>% 
+  ungroup() %>% 
+  arrange(match(cluster, c("Ectoderm", "Mesoderm_1", "Mesoderm_2", "Mesoderm_3", "Mesoderm_4", "Mesoderm_5", "Endoderm")))
+
+
+## Write the top 10 conserved markers for each cluster to a file
+write.table(top10_conserved, file = "output/seurat/srat_top10_conserved_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+## Visualize the top 10 conserved markers for each cluster
+marker_genes_conserved <- unique(top10_conserved$gene)
+levels(humangastruloid.combined.sct) <- c("Endoderm", "Mesoderm_5", "Mesoderm_4", "Mesoderm_3", "Mesoderm_2", "Mesoderm_1", "Ectoderm")
+pdf("output/seurat/DotPlot_SCT_top10_conserved.pdf", width=26, height=4)
+DotPlot(humangastruloid.combined.sct, features = marker_genes_conserved, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
 
 
 ```
 
 
 
-For human gastruloid, the optimal parameter seems to be with the following:
 
-XXX check from ppt XXX
+
+
