@@ -310,6 +310,8 @@ srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncel
 
 
 pdf("output/seurat/UMAP_SCT_UNTREATED72hr.pdf", width=10, height=6)
+pdf("output/seurat/UMAP_SCT_UNTREATED72hr_raw.pdf", width=10, height=6)
+
 DimPlot(srat_UNTREATED72hr, label = T, repel = T) + ggtitle("UNTREATED72hr_Unsupervised clustering")
 dev.off()
 table(srat_UNTREATED72hr@meta.data$seurat_clusters)
@@ -331,6 +333,16 @@ FeaturePlot(srat_UNTREATED72hr, features = ectoderm, max.cutoff = 3, cols = c("g
 dev.off()
 
 
+DefaultAssay(srat_UNTREATED72hr) <- "SCT"
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_endoderm_raw.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = endoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_mesoderm_raw.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_ectoderm_raw.pdf", width=20, height=20)
+FeaturePlot(srat_UNTREATED72hr, features = ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
 
 
 pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_NODAL.pdf", width=5, height=10)
@@ -446,11 +458,13 @@ dev.off()
 
 # Rename cluster
 
+# RAW: new.cluster.ids <- c("Mesoderm_1", "Mesoderm_2", "Mesoderm_3", "Endoderm", "Ectoderm", "Mesoderm_4")
 
 new.cluster.ids <- c("Mesoderm_1", "Mesoderm_2", "Endoderm", "Ectoderm", "Mesoderm_3")
 names(new.cluster.ids) <- levels(srat_UNTREATED72hr)
 srat_UNTREATED72hr <- RenameIdents(srat_UNTREATED72hr, new.cluster.ids)
 
+pdf("output/seurat/UMAP_SCT_UNTREATED72hr_raw.pdf", width=10, height=6)
 pdf("output/seurat/UMAP_SCT_UNTREATED72hr.pdf", width=10, height=6)
 DimPlot(srat_UNTREATED72hr, label = T, repel = T, pt.size = 0.7, label.size = 6) + ggtitle("UNTREATED72hr_Unsupervised clustering")
 dev.off()
@@ -502,10 +516,13 @@ humangastruloid.combined.sct <- RunPCA(humangastruloid.combined.sct, verbose = F
 humangastruloid.combined.sct <- RunUMAP(humangastruloid.combined.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
 humangastruloid.combined.sct <- FindNeighbors(humangastruloid.combined.sct, reduction = "pca", k.param = 50, dims = 1:40)
 humangastruloid.combined.sct <- FindClusters(humangastruloid.combined.sct, resolution = 0.25, verbose = FALSE, algorithm = 4)
+#RAW: humangastruloid.combined.sct <- FindClusters(humangastruloid.combined.sct, resolution = 0.3, verbose = FALSE, algorithm = 4)
 
 humangastruloid.combined.sct$condition <- factor(humangastruloid.combined.sct$condition, levels = c("UNTREATED72hr", "DASATINIB72hr")) # Reorder untreated 1st
 
 pdf("output/seurat/UMAP_UNTREATED72hr_DASATINIB72hr.pdf", width=10, height=6)
+pdf("output/seurat/UMAP_UNTREATED72hr_DASATINIB72hr_raw.pdf", width=10, height=6)
+
 DimPlot(humangastruloid.combined.sct, reduction = "umap", split.by = "condition", label=TRUE)
 dev.off()
 
@@ -513,7 +530,7 @@ dev.off()
 
 # Rename cluster
 new.cluster.ids <- c("Mesoderm_1", "Mesoderm_2", "Mesoderm_3", "Mesoderm_4","Endoderm", "Ectoderm","Mesoderm_5")
-# new.cluster.ids <- c("Endoderm", "Mesoderm_5", "Mesoderm_4", "Mesoderm_3","Mesoderm_2", "Mesoderm_1","Ectoderm")
+# RAW: new.cluster.ids <- c("Mesoderm_1","Mesoderm_2", "Mesoderm_3","Mesoderm_4", "Endoderm", "Ectoderm", "Mesoderm_5", "Mesoderm_6", "Mesoderm_7")
 names(new.cluster.ids) <- levels(humangastruloid.combined.sct)
 humangastruloid.combined.sct <- RenameIdents(humangastruloid.combined.sct, new.cluster.ids)
 
@@ -521,6 +538,8 @@ humangastruloid.combined.sct$cluster.annot <- Idents(humangastruloid.combined.sc
 
 
 pdf("output/seurat/UMAP_UNTREATED72hr_DASATINIB72hr_label.pdf", width=10, height=6)
+pdf("output/seurat/UMAP_UNTREATED72hr_DASATINIB72hr_label_raw.pdf", width=10, height=6)
+
 DimPlot(humangastruloid.combined.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 5)
 dev.off()
 
@@ -588,6 +607,16 @@ pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_ectoderm.pdf", wi
 FeaturePlot(humangastruloid.combined.sct, features = ectoderm, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
+DefaultAssay(humangastruloid.combined.sct) <- "SCT"
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_endoderm_raw.pdf", width=10, height=80)
+FeaturePlot(humangastruloid.combined.sct, features = endoderm, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_mesoderm_raw.pdf", width=10, height=80)
+FeaturePlot(humangastruloid.combined.sct, features = mesoderm, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_ectoderm_raw.pdf", width=10, height=80)
+FeaturePlot(humangastruloid.combined.sct, features = ectoderm, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
 
 
 # All in dotplot
@@ -620,6 +649,8 @@ dev.off()
 YAP1_NODAL <- c("CER1", "TDGF1", "FOXH1", "NODAL", "DACT1", "TDGF1P3", "CFC1", "ACVR1C", "CITED2", "DACT2", "ACVR1B", "DMRT1", "CFC1B", "DAND5", "TGIF2", "SMAD3") 
 
 pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_YAP1_NODAL.pdf", width=10, height=80)
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_YAP1_NODAL_raw.pdf", width=10, height=80)
+
 FeaturePlot(humangastruloid.combined.sct, features = YAP1_NODAL, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
@@ -726,6 +757,8 @@ FeaturePlot(humangastruloid.combined.sct, features = c("SHH", "DMRT1", "CITED2",
 dev.off()
 
 pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_norm_hippoYAP.pdf", width=7, height=25)
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_norm_hippoYAP_raw.pdf", width=7, height=25)
+
 FeaturePlot(humangastruloid.combined.sct, features = c("TEAD1", "TEAD4", "CCN2", "CCN1","AREG","MYC","GLI2","VIM","AXL","BIRC5"), split.by = "condition", max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
 
@@ -1099,11 +1132,11 @@ srat_cYAPKO <- CreateSeuratObject(counts = out, project = "cYAPKO") # 32,285 fea
 
 # QUALITY CONTROL
 ## add mitochondrial and Ribosomal conta 
-srat_WT[["percent.mt"]] <- PercentageFeatureSet(srat_WT, pattern = "^MT-")
-srat_WT[["percent.rb"]] <- PercentageFeatureSet(srat_WT, pattern = "^RP[SL]")
+srat_WT[["percent.mt"]] <- PercentageFeatureSet(srat_WT, pattern = "^mt-")
+srat_WT[["percent.rb"]] <- PercentageFeatureSet(srat_WT, pattern = "^Rp[sl]")
 
-srat_cYAPKO[["percent.mt"]] <- PercentageFeatureSet(srat_cYAPKO, pattern = "^MT-")
-srat_cYAPKO[["percent.rb"]] <- PercentageFeatureSet(srat_cYAPKO, pattern = "^RP[SL]")
+srat_cYAPKO[["percent.mt"]] <- PercentageFeatureSet(srat_cYAPKO, pattern = "^mt-")
+srat_cYAPKO[["percent.rb"]] <- PercentageFeatureSet(srat_cYAPKO, pattern = "^Rp[sl]")
 
 ## add doublet information (scrublet)
 doublets <- read.table("output/doublets/embryo_control.tsv",header = F,row.names = 1)
@@ -1121,9 +1154,9 @@ head(srat_cYAPKO[[]])
 
 
 ## Plot
-pdf("output/seurat/VlnPlot_QC_UNTREATED72hr.pdf", width=10, height=6)
-pdf("output/seurat/VlnPlot_QC_DASATINIB72hr.pdf", width=10, height=6)
-VlnPlot(srat_DASATINIB72hr, features = c("nFeature_RNA","nCount_RNA","percent.mt","percent.rb"),ncol = 4,pt.size = 0.1) & 
+pdf("output/seurat/VlnPlot_QC_embryo_control.pdf", width=10, height=6)
+pdf("output/seurat/VlnPlot_QC_embryo_cYAPKO.pdf", width=10, height=6)
+VlnPlot(srat_cYAPKO, features = c("nFeature_RNA","nCount_RNA","percent.mt","percent.rb"),ncol = 4,pt.size = 0.1) & 
   theme(plot.title = element_text(size=10))
 dev.off()
 
