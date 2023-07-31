@@ -7837,6 +7837,12 @@ dev.off()
 
 Let's try to output the **gene expression level for each of the Gene Ontology categories**!
 
+--> It seems that only the WT ChIPseq data from ESC to NPC make sense! In agreement with gene expression changes. 
+----> Let's check genes that are diff. H3K27me3 regulated in WT and with GO neurons/brain; identify the one in the mutants that are express differentially
+------> We would hypothesizie these genes are diff. H3K27me3 and validate this through ChIPqPCR. 
+
+*NOTE: 1st part below suck, then check the part `# Scatter plot to check correlation`*
+
 ```R
 
 # library
@@ -8260,14 +8266,39 @@ dev.off()
 
 --> Code is great to explore expression of the genes that are out from GO hits!
 
+**Conclusion for ChIPseq with HET and KO:**
+
 --> With log2FC we do NOT see higher log2FC in HET versus WT... Same using TPM...
 
 --> Filtering for only the genes induced in the WT, also showed HET/KO less induced / WT!
 
---> Checking instead DEGs between genotypes at each time-point is even weirder; genes are mostly downregulated in HETl; at each time-point...
+--> Checking instead DEGs between genotypes at each time-point is even weirder; genes are mostly downregulated in HET; at each time-point...
+
+--> Let's only focus on the WT ChIPseq ESC and NPC that make sens
+
+The ChIPseq normalization using TMM with uniqueBAM does not work great (poorly in agreement with gene expression changes). Let's try using housekeeping genes for normalization with and without uniqueBAM. **Well, in the end; it worked great for WT only. And using housekeeping lead to similar results**
 
 
-The ChIPseq normalization using TMM with uniqueBAM does not work great (poorly in agreement with gene expression changes). Let's try using housekeeping genes for normalization with and without uniqueBAM
+
+Dig in the code previously and output gene list and find these that may be worst investigating:
+- Need to be in agreement with our HET/KO phenotype (could be more activtiy for HET; or more H3K27me3; or maturation faster. And the opposite for KO; more developmental related and slow/delay in maturation).
+- for that purpose; let's create an excell table with all the genes with GO neuron/brain and check on IGV if changes of expression and H3K27me3 looks real; then dig in that short list. File is `output/ChIPseeker/candidate_ChIPqPCR.xlsx` in Google Drive. Let's use files where I generated Python_heatmaps (output of console) to investigate the gene candidates (`output/ChIPseeker/all_data_corr_ESCvsNPC_WT*`)
+
+--> The IGV is pretty clean and expected when we check diff in H3K27me3 or expression; not sure that is the good strategy.. Let's instead directly find interesting gene!
+
+--> ChatGPT has been used to dig into the gene list; to find HET candidates (61 unique genes in total `output/ChIPseeker/het_genotype_genes_with_categories.xlsx`):
+
+- **Potential Gain of H3K27me3 in HET (H3K27me3 Lost)**:
+WT log2FC is 0, and HET log2FC is negative (indicating that despite being lost in WT, the mark may be gained in HET as expression decreased). Genes that may have gained the H3K27me3 mark in HET despite being lost in WT.
+- **Potential Less Loss or Maintenance of H3K27me3 in HET (H3K27me3 Lost)**:
+HET log2FC is less than WT log2FC (indicating the reduction in expression is less important in HET, suggesting potential maintenance of the H3K27me3 mark). Genes that may have maintained or lost less of the H3K27me3 mark in HET.
+- **More Gain of H3K27me3 in HET (H3K27me3 Gain)**:
+HET log2FC is more strongly downregulated than WT log2FC (indicating more gain of the H3K27me3 mark in HET). Genes that have more gain of the H3K27me3 mark in HET.
+- **Unique Downregulation in HET (H3K27me3 Gain)**:
+WT log2FC is 0, and HET log2FC is negative (indicating genes that are uniquely more downregulated in HET, possibly due to gain of the H3K27me3 mark). Genes that are uniquely more downregulated in HET, possibly due to gain of the H3K27me3 mark.
+
+--> Dig in the gene list and write Fucntion Column checking online the genes
+
 
 
 
@@ -8456,6 +8487,9 @@ plt.savefig("output/ChIPseeker/heatmap_Lost_CNSneuronDifferentiation.pdf")  # CH
 - Propose a list of genes to validate by ChIPqPCR in mutants
 
 
+XXX COPY PASTE FROM THE TOP XXX
+
+
 
 
 
@@ -8482,6 +8516,138 @@ plt.savefig("output/ChIPseeker/heatmap_Lost_CNSneuronDifferentiation.pdf")  # CH
 --> This has been run within the previous part `## THOR with different SF (DiffBindTMM from uniquely/NON-uniquely aligned bam AND ChIPseqSpikeInFree ony)`; as `*housekeep*`
 
 In the end, **only the time-effect WT ESC to NPC looks good**, replicates are clean and changes is in agreement with gene expression. Same as when using the TMM-method...
+
+
+
+
+
+
+### Peak strenght and length (peak characteristic comparison) in WT ESC vs NPC
+
+Let's compare the peak from ESC to NPC in WT (uniqueBAM_TMM normalzied with THOR works great):
+
+1. Check the raw MACS2 peak:
+- Use MACS2 pool peak to obtain bed file coordinate for either ESC or NPC peak
+- Then use the THOR normalized bigwig to generate the deepTools heatmap
+
+
+2. Check list of differential peak from THOR (UniqueBamTMM). For the heatmap plot cluster per gain/lost (just k = 2)
+- Assign peak to genes and check
+- And simply check peak coordinates
+
+
+
+
+#### raw MACS2 peak for peak strenght/length comparison in WT ESC vs NPC
+
+Need to decipher whether we used macs2 or macs2_unique (from uniquely aligned read BAM file); to answer this question; let's load our macs2 tracks to IGV and pick the one that fit well with the THOR bigwig files (`THOR_WT_ESCvsNPC_UniqueBamTMM`).
+
+--> Let's pick unique qval 2.3 for MACS2; more in agreement with the bigwig (the other, non unique MACS2, seems to contain more false-positive peaks)
+
+```bash
+# 1. Raw MACS2 method
+## Files location
+002__ChIPseq/output/macs2_unique/broad_blacklist_qval2.30103/*pool*.broadPeak ## MACS2 unique
+002__ChIPseq/output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/*bw ## THOR uniqueBAM
+
+## Generate median bigwig files for THOR
+conda activate BedToBigwig
+sbatch scripts/bigwigmerge_THOR_WT_ESCvsNPC_UniqueBamTMM.sh # 3479177 ok
+
+## deepTools plot
+conda activate deeptools
+sbatch scripts/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_ESC_peak.sh # 3486731 ok
+sbatch scripts/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_NPC_peak.sh # 3486732 ok
+
+# 2. List of differential peak from THOR method
+## Files location
+002__ChIPseq/output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/*bw
+002__ChIPseq/output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval25.bed
+
+### Generate gain and lost bed files (filter the 16th FC column (eg. >1 more in NPC))
+awk -F'\t' '$16 > 1' output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval25.bed > output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval25_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval25.bed > output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval25_negative.bed
+
+
+## deepTools plot
+conda activate deeptools
+sbatch scripts/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_THOR_qval25.sh # 3489952 ok
+sbatch --dependency=afterany:3489952 scripts/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_THOR_qval25_kmean2.sh # 3496104 ok
+sbatch --dependency=afterany:3489952 scripts/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_THOR_qval25_kmean5.sh # 3496105 ok
+
+sbatch scripts/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_THOR_qval25_positive.sh # 3497014 ok
+sbatch scripts/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_THOR_qval25_negative.sh # 3497040 ok
+
+
+```
+*NOTE: `matrix_peak_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_ESC_peak.sh` this version contain genomic coordinates of ESC peak (MACS2 qval2.3 blacklist)*
+
+
+
+--> 1. raw MACS2 peak method is showing that most peak that exist in ESC disapear/decrease, in NPC; similarly peak that exist in NPC where not present; or less, in ESC.
+----> kmean is not informative as it cluster based on peak profile; but not if different between my bigiwg (eg. cluster all the peak that are enriched upstream the center for example)
+
+--> 2. list of differential peak from THOR method is overall showing a decrease of H3K27me3; clearly visible when taking them all.
+----> Separating the gain and lost; we indeed see XXX
+
+
+Let's now check **peak location to feature using ChIPseeker**; check the following:
+- ESC and NPC all peak (use MACS2 unique)
+- The one that gain (use THOR qval25 positive)
+- The one that lost (use THOR qval25 negative)
+
+
+```bash
+conda activate deseq2
+module load R/4.2.2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+
+
+# Import peaks
+peaks_ESC_macs2 =  read.table('output/macs2_unique/broad_blacklist_qval2.30103/ESC_WT_H3K27me3_pool_peaks.broadPeak') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9) 
+peaks_NPC_macs2 =  read.table('output/macs2_unique/broad_blacklist_qval2.30103/NPC_WT_H3K27me3_pool_peaks.broadPeak') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9) 
+peaks_lost =  read.table('output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval25_negative.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, qvalue=V15, FC=V16) 
+peaks_gain =  read.table('output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval25_positive.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, qvalue=V15, FC=V16) 
+# Tidy peaks
+ESC_gr = makeGRangesFromDataFrame(peaks_ESC_macs2,keep.extra.columns=TRUE)
+NPC_gr = makeGRangesFromDataFrame(peaks_NPC_macs2,keep.extra.columns=TRUE)
+Lost_gr = makeGRangesFromDataFrame(peaks_lost,keep.extra.columns=TRUE)
+Gain_gr = makeGRangesFromDataFrame(peaks_gain,keep.extra.columns=TRUE)
+
+gr_list <- list(ESC=ESC_gr, NPC=NPC_gr, Lost=Lost_gr, Gain=Gain_gr)
+
+
+## Genomic Annotation ALL TOGETHER
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE)
+
+### Barplot
+pdf("output/ChIPseeker/annotation_barplot_WT.pdf", width=14, height=5)
+plotAnnoBar(peakAnnoList)
+dev.off()
+```
+
+--> At ESC; much more genes than intergenic regions are H3K27me3-enriched; as compare to NPC.
+----> In agreement; most of the regions that lose H3K27me3 are gene regions (= become activated from ESC to NPC)
+
+
+
+
+
+
+
+
+
+
 
 
 
