@@ -1658,8 +1658,23 @@ humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid.co
 
 ```
 
-much better!
+I now use the same number of dimensions for SCTransform and data integration steps (UMAP, neighbor, cluster...) for Untreated and Dasatinib + used RNA assay for all DEGs analysis (eg. FindMarker) 
 
+--> For vizualization both SCT count and RNA (normalize and scaled) lead to similar results. I used and show SCT count per default
+
+--> Clustering is optimal, 4 Mesoderm sub-clusters (could be identify more carefully looking at our unbiased marker genes; notably Mesoderm_2) and ectoderm and mesoderm
+----> Similarly, Ectoderm was hard to individualize but optimization of nb of dimensions, k.param and resolution worked
+----> Endoderm, very easy to individualize
+
+--> Downsampling and bootstraps have been used to identify the overall changes in cell type distribution
+----> Revealed Decrease Endoderm; and Increase Mesoderm_3_4 with the treatment
+
+--> Could test the Seurat integration v5 that allow user to compare different integration method in a one line code; see here XXX
+
+**To do next:**
+- identify the Mesoderm sub-types (check unbiased marker gene list + Conchi meeting)
+- Test different integration method (if Conchi not fully satisfied)
+- Provide clean gene list to Conchi (see what she want after meeting 20230801)
 
 
 
