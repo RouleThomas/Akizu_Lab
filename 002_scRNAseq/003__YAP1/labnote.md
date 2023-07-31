@@ -1201,10 +1201,10 @@ set.seed(42)
 # Run SCTransform
 ## Version OK with 2000 treshold RNA
 srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncells = 5713, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
-    RunPCA(npcs = 40, verbose = FALSE)
+    RunPCA(npcs = 25, verbose = FALSE)
 
 srat_DASATINIB72hr <- SCTransform(srat_DASATINIB72hr, method = "glmGamPoi", ncells = 7148, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
-    RunPCA(npcs = 40, verbose = FALSE)
+    RunPCA(npcs = 25, verbose = FALSE)
 
 
 # Data integration (check active assay is 'SCT')
@@ -1219,14 +1219,14 @@ humangastruloid.combined.sct <- IntegrateData(anchorset = humangastruloid.anchor
 
 
 # Perform integrated analysis (check active assay is 'integrated')
-XXX RE FINE A BIT BUT ALMOST PERFECT !!! tested 0.6 not good; play with k.param!! XXX
+## XXX RE FINE A BIT BUT ALMOST PERFECT !!! tested 0.6 not good; play with k.param!! was 40 dim at sctransform XXX
 
 DefaultAssay(humangastruloid.combined.sct) <- "integrated"
 
-humangastruloid.combined.sct <- RunPCA(humangastruloid.combined.sct, verbose = FALSE, npcs = 30)
-humangastruloid.combined.sct <- RunUMAP(humangastruloid.combined.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
-humangastruloid.combined.sct <- FindNeighbors(humangastruloid.combined.sct, reduction = "pca", k.param = 30, dims = 1:30)
-humangastruloid.combined.sct <- FindClusters(humangastruloid.combined.sct, resolution = 0.5, verbose = FALSE, algorithm = 4)
+humangastruloid.combined.sct <- RunPCA(humangastruloid.combined.sct, verbose = FALSE, npcs = 25)
+humangastruloid.combined.sct <- RunUMAP(humangastruloid.combined.sct, reduction = "pca", dims = 1:25, verbose = FALSE)
+humangastruloid.combined.sct <- FindNeighbors(humangastruloid.combined.sct, reduction = "pca", k.param = 15, dims = 1:25)
+humangastruloid.combined.sct <- FindClusters(humangastruloid.combined.sct, resolution = 0.2, verbose = FALSE, algorithm = 4)
 #RAW: humangastruloid.combined.sct <- FindClusters(humangastruloid.combined.sct, resolution = 0.3, verbose = FALSE, algorithm = 4)
 
 humangastruloid.combined.sct$condition <- factor(humangastruloid.combined.sct$condition, levels = c("UNTREATED72hr", "DASATINIB72hr")) # Reorder untreated 1st
@@ -1255,8 +1255,25 @@ FeaturePlot(humangastruloid.combined.sct, features = ectoderm, max.cutoff = 3, c
 dev.off()
 
 
+DefaultAssay(humangastruloid.combined.sct) <- "RNA" # For vizualization either use SCT or norm RNA
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_endoderm_V2_RNA.pdf", width=10, height=80)
+FeaturePlot(humangastruloid.combined.sct, features = endoderm, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_mesoderm_V2_RNA.pdf", width=10, height=80)
+FeaturePlot(humangastruloid.combined.sct, features = mesoderm, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_ectoderm_V2_RNA.pdf", width=10, height=80)
+FeaturePlot(humangastruloid.combined.sct, features = ectoderm, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
 
 
+## Unbiased markers:
+DefaultAssay(humangastruloid.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
+
+unbiased = c('GABRB3', 'WNT8A', 'LIX1', 'PLAT', 'POLQ', 'CDC20', 'APOA2')
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_unbiased_V2.pdf", width=10, height=40)
+FeaturePlot(humangastruloid.combined.sct, features = unbiased, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
 
 ## QC plot
 ## percent mt and rb
@@ -1270,15 +1287,15 @@ VlnPlot(humangastruloid.combined.sct,features = c("nCount_RNA","nFeature_RNA"), 
   theme(plot.title = element_text(size=10))
 dev.off()
 ## cell cycle
-pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_cellCycle_V2.pdf", width=10, height=10)
-FeaturePlot(humangastruloid.combined.sct,features = c("S.Score","G2M.Score"),label.size = 4,repel = T,label = T, split.by = "condition") & 
+pdf("output/seurat/VlnPlot_SCT_UNTREATED72hr_DASATINIB72hr_cellCycle_V2.pdf", width=10, height=10)
+VlnPlot(humangastruloid.combined.sct,features = c("S.Score","G2M.Score"), split.by = "condition") & 
   theme(plot.title = element_text(size=10))
 dev.off()  
 
 
 
 # Rename cluster
-new.cluster.ids <- c("Mesoderm_1", "Mesoderm_2", "Mesoderm_3", "Mesoderm_4", "Mesoderm_5", "Endoderm", "Ectoderm")
+new.cluster.ids <- c("Mesoderm_1", "Mesoderm_2", "Mesoderm_3", "Endoderm","Ectoderm","Mesoderm_4")
 names(new.cluster.ids) <- levels(humangastruloid.combined.sct)
 humangastruloid.combined.sct <- RenameIdents(humangastruloid.combined.sct, new.cluster.ids)
 
@@ -1296,18 +1313,25 @@ DimPlot(humangastruloid.combined.sct, reduction = "umap", group.by = "condition"
 dev.off()
 
 
-
 # All in dotplot
+DefaultAssay(humangastruloid.combined.sct) <- "SCT"
+
 ecto_meso_endo <- c("PAX6", "OTX2", "NES", "TFAP2A", "DLK1", "LHX2", "RAX", "HES5", "SOX1", "SOX2", "SOX9", "POU3F2","IRX2", "SOX21","NCAM1", "HAND1", "PDGFRA", "CDX2", "APLNR", "MIXL1", "CXCR4", "ETV3", "TBX6", "LHX1", "KDR", "ID2","APLINR", "T", "MESP1", "HAS2", "SNAJ1", "SNAJ2", "NODAL", "TDGF1", "GDF3", "PAX2", "DLL1", "MEOX1", "MEIS2", "Vg1","KIT", "PRDM1", "TTR", "SOX17", "GSC", "CER1", "IRX1", "EOMES", "SHH", "FOXA2", "Cdx1", "GATA4", "Cdx4", "GATA6", "HHEX", "LEFTY1", "AFP")
 
-levels(humangastruloid.combined.sct) <- c("Ectoderm", "Mesoderm_1","Mesoderm_2","Mesoderm_3","Endoderm")# reorder clusters
-levels(humangastruloid.combined.sct) <- c("Endoderm", "Mesoderm_5","Mesoderm_4","Mesoderm_3", "Mesoderm_2","Mesoderm_1","Ectoderm")
+levels(humangastruloid.combined.sct) <- c("Endoderm", "Mesoderm_4","Mesoderm_3", "Mesoderm_2","Mesoderm_1","Ectoderm")
 pdf("output/seurat/DotPlot_SCT_UNTREATED72hr_DASATINIB72hr_ident_V2.pdf", width=14, height=3)
 DotPlot(humangastruloid.combined.sct, assay = "SCT", features = ecto_meso_endo, cols = c("grey", "red")) + RotatedAxis()
 dev.off()
 
 
+ecto_meso_endo_subset <- c("NES", "TFAP2A", "SOX2", "SOX9", "IRX2", "NCAM1", "HAND1", "PDGFRA", "CDX2", "APLNR",  "LHX1", "KDR", "ID2","APLINR", "T", "MESP1", "HAS2", "SNAJ1", "SNAJ2", "MEIS2", "Vg1","KIT", "PRDM1", "TTR", "SOX17", "IRX1", "FOXA2", "Cdx1", "GATA4", "GATA6", "HHEX")
 
+ecto_meso_endo_subset <- c("NES", "TFAP2A", "SOX2", "SOX9", "IRX2", "NCAM1", "HAND1", "PDGFRA", "CDX2", "APLNR",  "LHX1", "KDR", "ID2","APLINR", "T", "MESP1", "HAS2", "SNAJ1", "SNAJ2", "MEIS2", "Vg1","KIT", "PRDM1", "TTR", "SOX17", "IRX1", "FOXA2", "Cdx1", "GATA4", "GATA6", "HHEX")
+
+levels(humangastruloid.combined.sct) <- c("Endoderm", "Mesoderm_4","Mesoderm_3", "Mesoderm_2","Mesoderm_1","Ectoderm")
+pdf("output/seurat/DotPlot_SCT_UNTREATED72hr_DASATINIB72hr_ident_subset_V2.pdf", width=14, height=3)
+DotPlot(humangastruloid.combined.sct, assay = "SCT", features = ecto_meso_endo_subset, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
 
 
 # count nb of cells in each cluster
@@ -1352,31 +1376,151 @@ names(adjusted_p_values) <- names(untreated_clusters)
 print(adjusted_p_values)
 
 
-## Check some marker genes 
-### Marker gene list
-ectoderm <- c("PAX6", "OTX2", "NES", "TFAP2A", "DLK1", "LHX2", "RAX", "HES5", "SOX1", "NES", "SOX2", "SOX9", "BRN2","IRX2", "SOX21")
-mesoderm <- c("NCAM1", "HAND1", "PDGFRA", "CDX2", "APLNR", "MIXL1", "CXCR4", "ETV3", "TBX6", "LHX1", "KDR", "ID2","APLINR", "T", "MESP1", "HAS2", "SNAJ1", "SNAJ2", "NODAL", "TDGF1", "GDF3", "PAX2", "DLL1", "MEOX1", "MEIS2", "Vg1")
-endoderm <- c("KIT", "PRDM1", "GSC", "TTR", "SOX17", "GSC", "CER1", "IRX1", "EOMES", "SHH", "FOXA2", "Cdx1", "GATA4", "Cdx4", "GATA6", "HHEX", "LEFTY1", "AFP", "SOX17")
-# All in dotplot
-ecto_meso_endo <- c("PAX6", "OTX2", "NES", "TFAP2A", "DLK1", "LHX2", "RAX", "HES5", "SOX1", "SOX2", "SOX9", "POU3F2","IRX2", "SOX21","NCAM1", "HAND1", "PDGFRA", "CDX2", "APLNR", "MIXL1", "CXCR4", "ETV3", "TBX6", "LHX1", "KDR", "ID2","APLINR", "T", "MESP1", "HAS2", "SNAJ1", "SNAJ2", "NODAL", "TDGF1", "GDF3", "PAX2", "DLL1", "MEOX1", "MEIS2", "Vg1","KIT", "PRDM1", "TTR", "SOX17", "GSC", "CER1", "IRX1", "EOMES", "SHH", "FOXA2", "Cdx1", "GATA4", "Cdx4", "GATA6", "HHEX", "LEFTY1", "AFP")
+## Downsampling with bootstrap to compare the nb of cell per cell types_V1
+# --> Version works great! But not beautiful
+### Identify the unique clusters
+unique_clusters <- unique(Idents(humangastruloid.combined.sct))
 
+### Create empty matrices to store cell counts
+untreated_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters))
+dasatinib_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters))
+colnames(untreated_clusters_counts) <- unique_clusters
+colnames(dasatinib_clusters_counts) <- unique_clusters
 
-levels(humangastruloid.combined.sct) <- c("Endoderm", "Mesoderm_5","Mesoderm_4","Mesoderm_3", "Mesoderm_2","Mesoderm_1","Ectoderm")
+### Loop through 100 iterations
+for (i in 1:10) {
+  # Downsampling
+  humangastruloid.combined.sct_DASATINIB72hr_downsample <- sample(humangastruloid.combined.sct_DASATINIB72hr, 5713)
+  humangastruloid.combined.sct_integrated_downsample <- humangastruloid.combined.sct[,c(humangastruloid.combined.sct_UNTREATED72hr, humangastruloid.combined.sct_DASATINIB72hr_downsample)]
 
-pdf("output/seurat/DotPlot_SCT_UNTREATED72hr_DASATINIB72hr_ident_V2.pdf", width=14, height=3)
-DotPlot(humangastruloid.combined.sct, assay = "SCT", features = ecto_meso_endo, cols = c("grey", "red")) + RotatedAxis()
+  # Count nb of cells in each cluster
+  untreated_clusters <- table(Idents(humangastruloid.combined.sct_integrated_downsample)[humangastruloid.combined.sct_integrated_downsample$condition == "UNTREATED72hr"])
+  dasatinib_clusters <- table(Idents(humangastruloid.combined.sct_integrated_downsample)[humangastruloid.combined.sct_integrated_downsample$condition == "DASATINIB72hr"])
+
+  # Align the counts with the unique clusters
+  untreated_clusters_counts[i, names(untreated_clusters)] <- as.numeric(untreated_clusters)
+  dasatinib_clusters_counts[i, names(dasatinib_clusters)] <- as.numeric(dasatinib_clusters)
+}
+### Calculate mean counts
+mean_untreated_clusters <- colMeans(untreated_clusters_counts)
+mean_dasatinib_clusters <- colMeans(dasatinib_clusters_counts)
+### Combine the counts into a matrix
+cluster_counts <- rbind(mean_untreated_clusters, mean_dasatinib_clusters)
+rownames(cluster_counts) <- c("UNTREATED72hr", "DASATINIB72hr")
+#### You can then proceed with your chi-square tests and other statistics as before
+#### To visualize the mean number of cells per cell type
+pdf("output/seurat/Cluster_cell_counts_BootstrapDownsampling10_V2.pdf", width=10, height=6)
+barplot(as.matrix(cluster_counts), beside=TRUE, legend.text=rownames(cluster_counts))
 dev.off()
 
-# All in heatmap
-pdf("output/seurat/DoHeatmap_SCT_UNTREATED72hr_DASATINIB72hr_V2.pdf", width=10, height=5)
-DoHeatmap(humangastruloid.combined.sct, assay = "SCT", slot = "scale.data", features = ecto_meso_endo, group.by = "ident", group.bar = TRUE)
+
+### V2
+
+library(tidyverse)
+
+### Identify the unique clusters
+unique_clusters <- unique(Idents(humangastruloid.combined.sct))
+
+### Create empty matrices to store cell counts
+untreated_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters))
+dasatinib_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters))
+colnames(untreated_clusters_counts) <- unique_clusters
+colnames(dasatinib_clusters_counts) <- unique_clusters
+
+### Loop through 100 iterations
+for (i in 1:100) { # Change this to 100 for the final run
+  # Downsampling
+  humangastruloid.combined.sct_DASATINIB72hr_downsample <- sample(humangastruloid.combined.sct_DASATINIB72hr, 5713)
+  humangastruloid.combined.sct_integrated_downsample <- humangastruloid.combined.sct[,c(humangastruloid.combined.sct_UNTREATED72hr, humangastruloid.combined.sct_DASATINIB72hr_downsample)]
+
+  # Count nb of cells in each cluster
+  untreated_clusters <- table(Idents(humangastruloid.combined.sct_integrated_downsample)[humangastruloid.combined.sct_integrated_downsample$condition == "UNTREATED72hr"])
+  dasatinib_clusters <- table(Idents(humangastruloid.combined.sct_integrated_downsample)[humangastruloid.combined.sct_integrated_downsample$condition == "DASATINIB72hr"])
+
+  # Align the counts with the unique clusters
+  untreated_clusters_counts[i, names(untreated_clusters)] <- as.numeric(untreated_clusters)
+  dasatinib_clusters_counts[i, names(dasatinib_clusters)] <- as.numeric(dasatinib_clusters)
+}
+
+### Calculate mean and standard error
+mean_untreated_clusters <- colMeans(untreated_clusters_counts)
+mean_dasatinib_clusters <- colMeans(dasatinib_clusters_counts)
+std_error_dasatinib_clusters <- apply(dasatinib_clusters_counts, 2, sd) / sqrt(100)
+
+# Chi-squared test
+p_values <- numeric(length(unique_clusters))
+
+for (i in 1:length(unique_clusters)) {
+  # Create a matrix to store the counts for the chi-squared test
+  contingency_table <- matrix(0, nrow=2, ncol=2)
+  colnames(contingency_table) <- c("Untreated", "Dasatinib")
+  rownames(contingency_table) <- c("Cluster", "NotCluster")
+  
+  for (j in 1:100) { # Number of bootstrap iterations
+    contingency_table[1,1] <- untreated_clusters_counts[j,i]
+    contingency_table[1,2] <- dasatinib_clusters_counts[j,i]
+    contingency_table[2,1] <- sum(untreated_clusters_counts[j,-i])
+    contingency_table[2,2] <- sum(dasatinib_clusters_counts[j,-i])
+    
+    # Perform the chi-squared test on the contingency table
+    chi_test <- chisq.test(contingency_table)
+    
+    # Store the p-value
+    p_values[i] <- p_values[i] + chi_test$p.value
+  }
+  
+  # Average the p-values across all bootstrap iterations
+  p_values[i] <- p_values[i] / 100
+}
+
+# Adjust the p-values
+adjusted_p_values <- p.adjust(p_values, method = "bonferroni")
+
+# Create a tidy data frame for plotting
+plot_data <- data.frame(
+  cluster = names(mean_untreated_clusters),
+  untreated = mean_untreated_clusters,
+  dasatinib = mean_dasatinib_clusters,
+  std_error_dasatinib = std_error_dasatinib_clusters,
+  p_value = adjusted_p_values
+) %>%
+  gather(key = "condition", value = "value", -cluster, -std_error_dasatinib, -p_value) %>%
+  mutate(
+    condition = if_else(condition == "untreated", "UNTREATED72hr", "DASATINIB72hr"),
+    significance = ifelse(p_value < 0.0001, "***",
+                       ifelse(p_value < 0.001, "**",
+                              ifelse(p_value < 0.01, "*", "")))
+  )
+
+plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED72hr", "DASATINIB72hr")) # Reorder untreated 1st
+
+# Plotting using ggplot2
+pdf("output/seurat/Cluster_cell_counts_BootstrapDownsampling10_clean_V2.pdf", width=6, height=4)
+ggplot(plot_data, aes(x = cluster, y = value, fill = condition)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(
+    data = filter(plot_data, condition == "DASATINIB72hr"),
+    aes(label = significance, y = value + std_error_dasatinib),
+    vjust = -0.8,
+    position = position_dodge(0.9), size = 8
+  ) +
+  scale_fill_manual(values = c("UNTREATED72hr" = "blue", "DASATINIB72hr" = "red")) +
+  labs(x = "Cluster", y = "Number of Cells") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 dev.off()
+
+
+
+
 
 
 
 
 
 ### Check YAP1 NODAL bulk-regulated genes:
+DefaultAssay(humangastruloid.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
+
 YAP1_NODAL <- c("SHH", "DMRT1", "CITED2", 'DACT2', "TGIF2", "ACVR1B", 'SMAD3', 'DAND5', 'SMAD2','CER1', 'NODAL', 'FOXH1', 'DACT1', 'TDGF1', 'TDGF1P3', 'ACVR1C', 'CFC1', 'CFC1B') 
 
 pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_YAP1_NODAL_V2.pdf", width=10, height=80)
@@ -1385,8 +1529,9 @@ dev.off()
 
 
 ### Check YAP1 hippo bulk-regulated genes:
+DefaultAssay(humangastruloid.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
 
-pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_norm_hippoYAP.pdf", width=7, height=25)
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_YAP1_hippo_V2.pdf", width=7, height=25)
 
 FeaturePlot(humangastruloid.combined.sct, features = c("TEAD1", "TEAD4", "CCN2", "CCN1","AREG","MYC","GLI2","VIM","AXL","BIRC5"), split.by = "condition", max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
@@ -1408,7 +1553,7 @@ humangastruloid.combined.sct$celltype.stim <- paste(humangastruloid.combined.sct
     sep = "-")
 Idents(humangastruloid.combined.sct) <- "celltype.stim"
 
-# use SCT corrected count for DEGs
+# use RNA corrected count for DEGs
 ## humangastruloid.combined.sct <- PrepSCTFindMarkers(humangastruloid.combined.sct)
 
 ## DEGs for each cell type: "Endoderm", "Mesoderm_5","Mesoderm_4","Mesoderm_3", "Mesoderm_2","Mesoderm_1","Ectoderm"
@@ -1436,11 +1581,6 @@ Mesoderm_4.DASATINIB.response <- FindMarkers(humangastruloid.combined.sct, assay
     verbose = FALSE)
 head(Mesoderm_4.DASATINIB.response, n = 15)
 write.table(Mesoderm_4.DASATINIB.response, file = "output/seurat/Mesoderm_4-DASATINIB_response_V2.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-
-Mesoderm_5.DASATINIB.response <- FindMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Mesoderm_5-DASATINIB72hr", ident.2 = "Mesoderm_5-UNTREATED72hr",
-    verbose = FALSE)
-head(Mesoderm_5.DASATINIB.response, n = 15)
-write.table(Mesoderm_5.DASATINIB.response, file = "output/seurat/Mesoderm_5-DASATINIB_response_V2.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 Ectoderm.DASATINIB.response <- FindMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Ectoderm-DASATINIB72hr", ident.2 = "Ectoderm-UNTREATED72hr",
     verbose = FALSE)
@@ -1478,35 +1618,34 @@ dev.off()
 Idents(humangastruloid.combined.sct) <- "cluster.annot"
 
 ## DEGs cluster versus all other
-Ectoderm.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Ectoderm", grouping.var = "condition", verbose = FALSE) %>% mutate(cluster = "Ectoderm")
-Mesoderm_1.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Mesoderm_1", grouping.var = "condition", verbose = FALSE) %>% mutate(cluster = "Mesoderm_1")
-Mesoderm_2.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Mesoderm_2", grouping.var = "condition", verbose = FALSE) %>% mutate(cluster = "Mesoderm_2")
-Mesoderm_3.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Mesoderm_3", grouping.var = "condition", verbose = FALSE) %>% mutate(cluster = "Mesoderm_3")
-Mesoderm_4.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Mesoderm_4", grouping.var = "condition", verbose = FALSE) %>% mutate(cluster = "Mesoderm_4")
-Mesoderm_5.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Mesoderm_5", grouping.var = "condition", verbose = FALSE) %>% mutate(cluster = "Mesoderm_5")
-Endoderm.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Endoderm", grouping.var = "condition", verbose = FALSE) %>% mutate(cluster = "Endoderm")
+Ectoderm.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Ectoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Ectoderm")
+Mesoderm_1.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Mesoderm_1", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Mesoderm_1")
+Mesoderm_2.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Mesoderm_2", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Mesoderm_2")
+Mesoderm_3.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Mesoderm_3", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Mesoderm_3")
+Mesoderm_4.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Mesoderm_4", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Mesoderm_4")
+Endoderm.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Endoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Endoderm")
 ## Combine all conserved markers into one data frame
-all_conserved <- bind_rows(Ectoderm.conserved, Mesoderm_1.conserved, Mesoderm_2.conserved, Mesoderm_3.conserved, Mesoderm_4.conserved, Mesoderm_5.conserved, Endoderm.conserved)
+all_conserved <- bind_rows(Ectoderm.conserved, Mesoderm_1.conserved, Mesoderm_2.conserved, Mesoderm_3.conserved, Mesoderm_4.conserved, Endoderm.conserved)
 
 all_conserved$gene <- rownames(all_conserved)
 ## Write all conserved markers to a file
 write.table(all_conserved, file = "output/seurat/srat_all_conserved_markers_V2.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 ## Find the top 10 conserved markers for each cluster
 top10_conserved <- all_conserved %>%
-  mutate(cluster = factor(cluster, levels = c("Ectoderm", "Mesoderm_1", "Mesoderm_2", "Mesoderm_3", "Mesoderm_4", "Mesoderm_5", "Endoderm"))) %>% 
+  mutate(cluster = factor(cluster, levels = c("Ectoderm", "Mesoderm_1", "Mesoderm_2", "Mesoderm_3", "Mesoderm_4", "Endoderm"))) %>% 
   separate(gene, into = c("gene", "suffix"), sep = "\\.\\.\\.", remove = TRUE, extra = "drop", fill = "right") %>% 
   group_by(cluster) %>% 
   arrange((max_pval)) %>% 
   slice_head(n = 10) %>% 
   ungroup() %>% 
-  arrange(match(cluster, c("Ectoderm", "Mesoderm_1", "Mesoderm_2", "Mesoderm_3", "Mesoderm_4", "Mesoderm_5", "Endoderm")))
+  arrange(match(cluster, c("Ectoderm", "Mesoderm_1", "Mesoderm_2", "Mesoderm_3", "Mesoderm_4", "Endoderm")))
 
 
 ## Write the top 10 conserved markers for each cluster to a file
 write.table(top10_conserved, file = "output/seurat/srat_top10_conserved_markers_V2.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 ## Visualize the top 10 conserved markers for each cluster
 marker_genes_conserved <- unique(top10_conserved$gene)
-levels(humangastruloid.combined.sct) <- c("Endoderm", "Mesoderm_5", "Mesoderm_4", "Mesoderm_3", "Mesoderm_2", "Mesoderm_1", "Ectoderm")
+levels(humangastruloid.combined.sct) <- c("Endoderm", "Mesoderm_4", "Mesoderm_3", "Mesoderm_2", "Mesoderm_1", "Ectoderm")
 pdf("output/seurat/DotPlot_SCT_top10_conserved_V2.pdf", width=26, height=4)
 DotPlot(humangastruloid.combined.sct, features = marker_genes_conserved, cols = c("grey", "red")) + RotatedAxis()
 dev.off()
