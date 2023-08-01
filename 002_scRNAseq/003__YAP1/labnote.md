@@ -1521,17 +1521,24 @@ dev.off()
 ### Check YAP1 NODAL bulk-regulated genes:
 DefaultAssay(humangastruloid.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
 
-YAP1_NODAL <- c("SHH", "DMRT1", "CITED2", 'DACT2', "TGIF2", "ACVR1B", 'SMAD3', 'DAND5', 'SMAD2','CER1', 'NODAL', 'FOXH1', 'DACT1', 'TDGF1', 'TDGF1P3', 'ACVR1C', 'CFC1', 'CFC1B') 
+YAP1_NODAL <- c("SHH", "DMRT1", "CITED2", 'DACT2', "TGIF2", "ACVR1B", 'SMAD3', 'DAND5', 'SMAD2','CER1', 'NODAL', 'FOXH1', 'DACT1', 'TDGF1', 'TDGF3', 'ACVR1C', 'CFC1', 'CFC1B', 'WNT3A' , 'YAP1') 
 
-pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_YAP1_NODAL_V2.pdf", width=10, height=80)
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_YAP1_NODAL_V2.pdf", width=10, height=100)
 FeaturePlot(humangastruloid.combined.sct, features = YAP1_NODAL, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
 dev.off()
+
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_YAP1_test.pdf", width=10, height=60)
+FeaturePlot(humangastruloid.combined.sct, features = c("MYL4", "S100A10", "S100A11", "SDK1", "NPC2", "KRT19", "MT-CO1"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
 
 
 ### Check YAP1 hippo bulk-regulated genes:
 DefaultAssay(humangastruloid.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
 
-pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_YAP1_hippo_V2.pdf", width=7, height=25)
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_YAP1_hippo_V2.pdf", width=10, height=50)
 
 FeaturePlot(humangastruloid.combined.sct, features = c("TEAD1", "TEAD4", "CCN2", "CCN1","AREG","MYC","GLI2","VIM","AXL","BIRC5"), split.by = "condition", max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
@@ -1675,6 +1682,10 @@ I now use the same number of dimensions for SCTransform and data integration ste
 - identify the Mesoderm sub-types (check unbiased marker gene list + Conchi meeting)
 - Test different integration method (if Conchi not fully satisfied)
 - Provide clean gene list to Conchi (see what she want after meeting 20230801)
+
+
+--> Share to Conchi the Conserved Marker list (`srat_all_conserved_markers_V2.xlsx`). To avoid confusion, I did some filtering: For each cell type; I only keep log2FC positive (= correspond to gene more highly express in this cell types) and I told her to filter per pvalue which is the max_pvalue. Like this, she will only see the highly express genes in each cluster
+
 
 
 
