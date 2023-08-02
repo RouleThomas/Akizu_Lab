@@ -1275,6 +1275,7 @@ pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_unbiased_V2.pdf",
 FeaturePlot(humangastruloid.combined.sct, features = unbiased, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
+
 ## QC plot
 ## percent mt and rb
 pdf("output/seurat/VlnPlot_SCT_UNTREATED72hr_DASATINIB72hr_mt_rb_V2.pdf", width=10, height=7)
@@ -1542,6 +1543,57 @@ pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_YAP1_hippo_V2.pdf
 
 FeaturePlot(humangastruloid.combined.sct, features = c("TEAD1", "TEAD4", "CCN2", "CCN1","AREG","MYC","GLI2","VIM","AXL","BIRC5"), split.by = "condition", max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
+
+
+
+### Check ANXA family from bulk-regulated genes (from after 0801 meeting)
+
+
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_ANXA_V2.pdf", width=10, height=35)
+FeaturePlot(humangastruloid.combined.sct, features = c("ANXA1","AMOTL2","CCN1","CCN2","TAGLN","ANXA3","CHCHD2"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+### Check top 10 downredulated genes in YAP1KO bulk-regulated genes (table shared after 0801 meeting):
+## intitial list top 1-10: c('ZNF558','LINC02693','NXPH2','C6orf141','ZNF736','GCNT4','HHLA1','GABRA1','TEK','ZNF502')
+## top10-20: c('LHX8','SCG2','SLFN12','LHFPL6','TNNT2','LINC00458','TXNRD2','CXCL14','AMOTL2','TMC1')
+## top20-30: c('RGS5','MYLPF','VEPH1','MYL7','SLFN13','UPK3B','COL12A1','RIPOR2','IRX2','NR4A2')
+
+## only the 10 top detected in our assay: c('LINC02693','NXPH2','TEK','LHX8','LHFPL6','TNNT2','LINC00458','RGS5','VEPH1','MYL7')
+
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_top10downBulk_V2.pdf", width=10, height=45)
+FeaturePlot(humangastruloid.combined.sct, features = c('LINC02693','NXPH2','TEK','LHX8','LHFPL6','TNNT2','LINC00458','RGS5','VEPH1','MYL7'), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+
+
+### Check top 10 upredulated genes in YAP1KO bulk-regulated genes (table shared after 0801 meeting):
+## intitial list top 1-10: c('LOC100134868','EIF1AY','DPYS','ZNF662','FAM228A','PAX8-AS1','RFPL2','LOXHD1','RBM46','EBF2')
+
+## list top 10-20: c('ZNF572','ZNF385D-AS1','SCNN1B','C22orf42','LINC00654','SLC6A20','BMP3','SHISA3','EDNRB','STPG3-AS1')
+## list top 20-30: c('STPG3','CTSF','POU3F4','ZXDA','MIR924HG','CCL28','ZNF726','NEURL1','CD1D','ISLR2')
+## list top 30-40: c('VMO1','SKOR2','MAEL','CMTM5','FOXC1','PRAM1','GAD2','MADCAM1','HHEX','NPNT')
+## list top 40-50: c('SPI1','OLIG1','LRRC37A11P','TDRD12','KCNJ2','LTB','SLC9A3','ZNF541','PLA2G2A','GSTM5')
+## list top 50-60: c('LOC100131347','CR1L','HCG4B','PRR15L','NDUFA4L2','EPHB3','NKAPL','DUSP15','UTF1','RELN')
+## list top 60-70: c('C1QL2','ARHGEF15','PLXDC1','SP5','FLRT1','GUCA1A','GPT','ADAMTSL1','CRLF1','TFF3')
+## list top 70-80: c('MGARP','LGR5','BDKRB2','IL23A','FAAH','NTNG2','SLC7A4','TRIM4','TXNIP','TMIGD2')
+
+
+
+## only the 10 top detected in our assay: c('PAX8-AS1','EBF2','EDNRB','MIR924HG','HHEX','NPNT','EPHB3',RELN,SP5,LGR5)
+
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_top10upBulk_V2.pdf", width=10, height=45)
+FeaturePlot(humangastruloid.combined.sct, features = c('PAX8-AS1','EBF2','EDNRB','MIR924HG','HHEX','NPNT','EPHB3','RELN','SP5','LGR5'), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+
+
+
 
 
 # differential expressed genes across conditions
