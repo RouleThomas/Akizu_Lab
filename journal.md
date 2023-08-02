@@ -81,6 +81,9 @@ library("TxDb.Hsapiens.UCSC.hg38.knownGene")
 library("meshes")
 library("ReactomePA")
 library("VennDiagram")
+library("ggrepel")
+
+
 
 ### ChIPseqSpikeInFree
 R/3.6.1 with **ChIPseqSpikeInFree** notably + following libraries:

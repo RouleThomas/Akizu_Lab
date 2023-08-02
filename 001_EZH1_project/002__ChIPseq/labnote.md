@@ -7856,6 +7856,7 @@ library("org.Hs.eg.db")
 library("DOSE")
 library("pathview")
 library("enrichplot")
+library("ggrepel")
 
 # Import the gene list
 gene_symbols <- readLines("output/ChIPseeker/ESCvsNPC_HETspecific_Lost.txt") 
@@ -7934,7 +7935,7 @@ tidy_go_terms_genes %>%
 dev.off()
 
 
-## with logFC keeping separate each GO category
+## with logFC keeping separated each GO category
 expr_geneSymbol$genotype_expr <-
   factor(expr_geneSymbol$genotype_expr,
          c("WT", "HET", "KO"))
@@ -8106,9 +8107,18 @@ dev.off()
 
 
 # Both genotypes scatter plot
-
+## FOR LOST
 all_data_corr <- all_data %>%
-    filter(significance == TRUE, Description %in% c("axon development", "axonogenesis") ) %>%   # !!! CHANGE HERE
+    filter(significance == TRUE, Description %in% c( "axon development", "axonogenesis", "regulation of nervous system development", "regulation of neurogenesis", "neuron projection guidance", "axon guidance", "central nervous system neuron differentiation") ) %>%   # !!! CHANGE HERE
+    dplyr::select(gene_symbol, genotype_expr, log2FoldChange) %>%
+    unique() %>%
+    spread(key = genotype_expr, value = log2FoldChange) %>%
+    replace_na(list(WT = 0, HET = 0, KO = 0)) %>%  
+    mutate(diff_HET = abs(WT - HET),
+           diff_KO = abs(WT - KO))
+## FOR GAIN
+all_data_corr <- all_data %>%
+    filter(significance == TRUE, Description %in% c( "regulation of trans-synaptic signaling", "amine transport", "monoamine transport", "regulation of amine transport", "catecholamine transport", "dopamine transport") ) %>%   # !!! CHANGE HERE
     dplyr::select(gene_symbol, genotype_expr, log2FoldChange) %>%
     unique() %>%
     spread(key = genotype_expr, value = log2FoldChange) %>%
@@ -8154,6 +8164,217 @@ ggplot(all_data_corr_long, aes(x = WT, y = log2FC)) +
     theme_bw() +
     theme(legend.position = "bottom")
 dev.off()
+
+
+## All GO together with colored dot. --> each gene assigned only to one GO category (preferring the category that has more genes)
+go_counts <- all_data %>%
+    filter(Description %in% c("axon development", "axonogenesis", "regulation of nervous system development", "regulation of neurogenesis", "neuron projection guidance", "axon guidance", "central nervous system neuron differentiation")) %>%
+    group_by(Description) %>%
+    summarise(count = n()) %>%
+    arrange(desc(count))
+go_counts <- all_data %>%
+    filter(Description %in% c("regulation of trans-synaptic signaling", "amine transport", "monoamine transport", "regulation of amine transport", "catecholamine transport", "dopamine transport")) %>%
+    group_by(Description) %>%
+    summarise(count = n()) %>%
+    arrange(desc(count))
+# Join back to original data and filter to keep only the most common GO category for each gene
+all_data_single_go <- all_data %>%
+    inner_join(go_counts, by = "Description") %>%
+    group_by(gene_symbol) %>%
+    filter(count == max(count)) %>%
+    ungroup() %>%
+    dplyr::select(-count)
+
+all_data_corr <- all_data_single_go %>%
+    filter(significance == TRUE) %>%
+    dplyr::select(gene_symbol, genotype_expr, log2FoldChange, Description) %>%
+    unique() %>%
+    spread(key = genotype_expr, value = log2FoldChange) %>%
+    replace_na(list(WT = 0, HET = 0, KO = 0)) %>%
+    mutate(diff_HET = abs(WT - HET),
+           diff_KO = abs(WT - KO))
+
+all_data_corr_long <- all_data_corr %>%
+    gather(key = "Comparison", value = "log2FC", HET, KO)
+
+pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_all_corr_WT_HET_KO.pdf", width=18, height=10)
+ggplot(all_data_corr_long, aes(x = WT, y = log2FC)) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +
+    geom_vline(xintercept = 0, linetype = "dashed", color = "grey50") +
+    geom_point(aes(shape = ifelse(Comparison == "HET", diff_HET, diff_KO) > 1, 
+                   size = ifelse(Comparison == "HET", diff_HET, diff_KO) > 1, 
+                   color = Description)) + # Using Description for color
+    geom_text(data = all_data_corr_long %>% filter(ifelse(Comparison == "HET", diff_HET, diff_KO) > 1), 
+              aes(label = gene_symbol), hjust = -0.3, vjust = -0.3, check_overlap = FALSE) +
+    geom_smooth(method = "lm", se = FALSE, color = "blue", linetype = "dotted") +
+    scale_shape_manual(values = c(16, 17)) +
+    scale_size_manual(values = c(3, 5)) +
+    # You may need to define specific colors for your GO categories here
+    facet_wrap(~Comparison, scales = "free") +
+    labs(x = "Log2 Fold Change (WT)", 
+         y = "Log2 Fold Change (HET/KO)", 
+         title = "Correlation between Log2 Fold Changes for WT and HET/KO Genotypes",
+         shape = "Difference > 1",
+         size = "Difference > 1",
+         color = "GO Category") +
+    theme_bw() +
+    theme(legend.position = "bottom")
+dev.off()
+
+
+
+pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_all_corr_WT_HET_KO.pdf", width=18, height=10)
+ggplot(all_data_corr_long, aes(x = WT, y = log2FC)) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +
+    geom_vline(xintercept = 0, linetype = "dashed", color = "grey50") +
+    geom_point(aes(shape = ifelse(Comparison == "HET", diff_HET, diff_KO) > 2, 
+                   size = ifelse(Comparison == "HET", diff_HET, diff_KO) > 2, 
+                   color = Description)) + # Using Description for color
+    geom_text_repel(data = all_data_corr_long %>% filter(ifelse(Comparison == "HET", diff_HET, diff_KO) > 2), 
+                    aes(label = gene_symbol), nudge_x = 0.5, nudge_y = 0.5, max.overlaps = 10) +
+    geom_smooth(method = "lm", se = FALSE, color = "blue", linetype = "dotted") +
+    scale_shape_manual(values = c(16, 17)) +
+    scale_size_manual(values = c(3, 5)) +
+    # You may need to define specific colors for your GO categories here
+    facet_wrap(~Comparison, scales = "free") +
+    labs(x = "Log2 Fold Change (WT)", 
+         y = "Log2 Fold Change (HET/KO)", 
+         title = "Correlation between Log2 Fold Changes for WT and HET/KO Genotypes",
+         shape = "Difference > 2",
+         size = "Difference > 2",
+         color = "GO Category") +
+    theme_bw() +
+    theme(legend.position = "bottom")
+dev.off()
+
+
+
+## All GO together with colored dot. --> each gene assigned only to one GO category (preferring the category that has more genes) + ONLY display genes that have a differential behavior exclusively in one of the genotypes (HET or KO), but not both
+
+
+genotype_specific_genes <- all_data_corr %>%
+  filter((diff_HET > 2 & diff_KO <= 2) | 
+         (diff_KO > 2 & diff_HET <= 2) | 
+         (diff_HET > 2 & diff_KO > 2 & sign(WT - HET) != sign(WT - KO))) %>%
+  dplyr::select(gene_symbol)
+
+# Filter data to keep only genotype-specific genes
+all_data_corr_long_specific <- all_data_corr_long %>%
+  filter(gene_symbol %in% genotype_specific_genes$gene_symbol)
+
+# Create the plot
+pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_all_corr_WT_HET_KO_Specific.pdf", width=18, height=10)
+ggplot(all_data_corr_long_specific, aes(x = WT, y = log2FC)) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +
+    geom_vline(xintercept = 0, linetype = "dashed", color = "grey50") +
+    geom_point(aes(shape = ifelse(Comparison == "HET", diff_HET, diff_KO) > 2, 
+                   size = ifelse(Comparison == "HET", diff_HET, diff_KO) > 2, 
+                   color = Description)) +
+    geom_text_repel(data = all_data_corr_long_specific %>% filter(ifelse(Comparison == "HET", diff_HET, diff_KO) > 2), 
+                    aes(label = gene_symbol), nudge_x = 0.5, nudge_y = 0.5, max.overlaps = 10) +
+    geom_smooth(method = "lm", se = FALSE, color = "blue", linetype = "dotted") +
+    scale_shape_manual(values = c(16, 17)) +
+    scale_size_manual(values = c(3, 5)) +
+    facet_wrap(~Comparison, scales = "free") +
+    labs(x = "Log2 Fold Change (WT)", 
+         y = "Log2 Fold Change (HET/KO)", 
+         title = "Genotype-Specific Differential Genes: Correlation between Log2 Fold Changes for WT and HET/KO Genotypes",
+         shape = "Difference > 2",
+         size = "Difference > 2",
+         color = "GO Category") +
+    theme_bw() +
+    theme(legend.position = "bottom")
+dev.off()
+
+## All GO together with colored dot. --> each gene assigned only to one GO category (preferring the category that has more genes) + ONLY display genes that have a differential behavior exclusively in one of the genotypes (HET or KO), but not both Colored in red
+### Identify genotype-specific genes
+genotype_specific_genes <- all_data_corr %>%
+  filter((diff_HET > 2 & diff_KO <= 2) | 
+         (diff_KO > 2 & diff_HET <= 2) | 
+         (diff_HET > 2 & diff_KO > 2 & sign(WT - HET) != sign(WT - KO))) %>%
+  dplyr::select(gene_symbol)
+
+# Filter the genes to label
+label_data <- all_data_corr_long %>%
+    filter(ifelse(Comparison == "HET", diff_HET, diff_KO) > 2)
+
+
+# Assign the colors
+label_data$text_color <- ifelse(label_data$gene_symbol %in% genotype_specific_genes$gene_symbol, "red", "black")
+
+
+
+### Add a column to specify text color for specific genes
+all_data_corr_long <- all_data_corr_long %>%
+  mutate(text_color = if_else(gene_symbol %in% genotype_specific_genes$gene_symbol, "red", "black"))
+
+
+
+
+### Create the plot
+pdf("output/ChIPseeker/ESCvsNPC_WT_Lost_expression_all_corr_WT_HET_KO_SpecificInRed.pdf", width=18, height=10)
+
+ggplot(all_data_corr_long, aes(x = WT, y = log2FC)) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +
+    geom_vline(xintercept = 0, linetype = "dashed", color = "grey50") +
+    geom_point(aes(shape = ifelse(Comparison == "HET", diff_HET, diff_KO) > 2, 
+                   size = ifelse(Comparison == "HET", diff_HET, diff_KO) > 2, 
+                   color = Description)) +
+    # Use label_data with color mapping
+    geom_text_repel(data = label_data, 
+                    aes(label = gene_symbol), 
+                    color = label_data$text_color,
+                    nudge_x = 0.5, nudge_y = 0.5, max.overlaps = 10) +
+    # Define specific colors for your GO categories if needed
+    scale_color_manual(values = c("axon development" = "orange", "central nervous system neuron differentiation" = "green", "neuron projection guidance" = "blue", "regulation of nervous system development" = "purple")) +
+    geom_smooth(method = "lm", se = FALSE, color = "blue", linetype = "dotted") +
+    scale_shape_manual(values = c(16, 17)) +
+    scale_size_manual(values = c(3, 5)) +
+    facet_wrap(~Comparison, scales = "free") +
+    labs(x = "Log2 Fold Change (WT)", 
+         y = "Log2 Fold Change (HET/KO)", 
+         title = "Correlation between Log2 Fold Changes for WT and HET/KO Genotypes",
+         shape = "Difference > 2",
+         size = "Difference > 2",
+         color = "GO Category") +
+    theme_bw() +
+    theme(legend.position = "bottom")
+dev.off()
+
+
+pdf("output/ChIPseeker/ESCvsNPC_WT_Gain_expression_all_corr_WT_HET_KO_SpecificInRed.pdf", width=18, height=10)
+pdf("output/ChIPseeker/ESCvsNPC_WT_Gain_expression_all_corr_WT_HET_KO_SpecificInRed_1.pdf", width=18, height=10)
+
+ggplot(all_data_corr_long, aes(x = WT, y = log2FC)) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +
+    geom_vline(xintercept = 0, linetype = "dashed", color = "grey50") +
+    geom_point(aes(shape = ifelse(Comparison == "HET", diff_HET, diff_KO) > 1, 
+                   size = ifelse(Comparison == "HET", diff_HET, diff_KO) > 1, 
+                   color = Description)) +
+    # Use label_data with color mapping
+    geom_text_repel(data = label_data, 
+                    aes(label = gene_symbol), 
+                    color = label_data$text_color,
+                    nudge_x = 0.5, nudge_y = 0.5, max.overlaps = 10) +
+    # Define specific colors for your GO categories if needed
+    scale_color_manual(values = c("regulation of trans-synaptic signaling" = "yellow", "amine transport" = "brown", "monoamine transport" = "red")) +
+    geom_smooth(method = "lm", se = FALSE, color = "blue", linetype = "dotted") +
+    scale_shape_manual(values = c(16, 17)) +
+    scale_size_manual(values = c(3, 5)) +
+    facet_wrap(~Comparison, scales = "free") +
+    labs(x = "Log2 Fold Change (WT)", 
+         y = "Log2 Fold Change (HET/KO)", 
+         title = "Correlation between Log2 Fold Changes for WT and HET/KO Genotypes",
+         shape = "Difference > 1",
+         size = "Difference > 1",
+         color = "GO Category") +
+    theme_bw() +
+    theme(legend.position = "bottom")
+dev.off()
+
+
+
+
 
 
 # ChatGPT heatmap method with library("ComplexHeatmap") library("circlize")
@@ -8297,7 +8518,9 @@ HET log2FC is more strongly downregulated than WT log2FC (indicating more gain o
 - **Unique Downregulation in HET (H3K27me3 Gain)**:
 WT log2FC is 0, and HET log2FC is negative (indicating genes that are uniquely more downregulated in HET, possibly due to gain of the H3K27me3 mark). Genes that are uniquely more downregulated in HET, possibly due to gain of the H3K27me3 mark.
 
---> Dig in the gene list and write Fucntion Column checking online the genes
+--> Dig in the gene list and write description for each genes.
+
+--> I did not found many HET genes related to activity. Or if so; they are LESS expressed in HET; so hard to conlude that HET neurons have higher neuronal activity...
 
 
 
