@@ -1814,46 +1814,46 @@ VlnPlot(srat_cYAPKO, features = c("nFeature_RNA","nCount_RNA","percent.mt","perc
   theme(plot.title = element_text(size=10))
 dev.off()
 
-pdf("output/seurat/FeatureScatter_QC_RNAcount_mt_UNTREATED72hr.pdf", width=5, height=5)
-pdf("output/seurat/FeatureScatter_QC_RNAcount_mt_DASATINIB72hr.pdf", width=5, height=5)
-FeatureScatter(srat_DASATINIB72hr, feature1 = "nCount_RNA", feature2 = "percent.mt")
+pdf("output/seurat/FeatureScatter_QC_RNAcount_mt_cYAPKO.pdf", width=5, height=5)
+pdf("output/seurat/FeatureScatter_QC_RNAcount_mt_control.pdf", width=5, height=5)
+FeatureScatter(srat_WT, feature1 = "nCount_RNA", feature2 = "percent.mt")
 dev.off()
-pdf("output/seurat/FeatureScatter_QC_RNAcount_RNAfeature_UNTREATED72hr.pdf", width=5, height=5)
-pdf("output/seurat/FeatureScatter_QC_RNAcount_RNAfeature_DASATINIB72hr.pdf", width=5, height=5)
-FeatureScatter(srat_DASATINIB72hr, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+pdf("output/seurat/FeatureScatter_QC_RNAcount_RNAfeature_cYAPKO.pdf", width=5, height=5)
+pdf("output/seurat/FeatureScatter_QC_RNAcount_RNAfeature_control.pdf", width=5, height=5)
+FeatureScatter(srat_WT, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 dev.off()
-pdf("output/seurat/FeatureScatter_QC_rb_mt_UNTREATED72hr.pdf", width=5, height=5)
-pdf("output/seurat/FeatureScatter_QC_rb_mt_DASATINIB72hr.pdf", width=5, height=5)
-FeatureScatter(srat_DASATINIB72hr, feature1 = "percent.rb", feature2 = "percent.mt")
+pdf("output/seurat/FeatureScatter_QC_rb_mt_cYAPKO.pdf", width=5, height=5)
+pdf("output/seurat/FeatureScatter_QC_rb_mt_control.pdf", width=5, height=5)
+FeatureScatter(srat_WT, feature1 = "percent.rb", feature2 = "percent.mt")
 dev.off()
-pdf("output/seurat/FeatureScatter_QC_mt_doublet_UNTREATED72hr.pdf", width=5, height=5)
-pdf("output/seurat/FeatureScatter_QC_mt_doublet_DASATINIB72hr.pdf", width=5, height=5)
-FeatureScatter(srat_DASATINIB72hr, feature1 = "percent.mt", feature2 = "Doublet_score")
+pdf("output/seurat/FeatureScatter_QC_mt_doublet_cYAPKO.pdf", width=5, height=5)
+pdf("output/seurat/FeatureScatter_QC_mt_doublet_control.pdf", width=5, height=5)
+FeatureScatter(srat_WT, feature1 = "percent.mt", feature2 = "Doublet_score")
 dev.off()
-pdf("output/seurat/FeatureScatter_QC_RNAfeature_doublet_UNTREATED72hr.pdf", width=5, height=5)
-pdf("output/seurat/FeatureScatter_QC_RNAfeature_doublet_DASATINIB72hr.pdf", width=5, height=5)
-FeatureScatter(srat_DASATINIB72hr, feature1 = "nFeature_RNA", feature2 = "Doublet_score")
+pdf("output/seurat/FeatureScatter_QC_RNAfeature_doublet_cYAPKO.pdf", width=5, height=5)
+pdf("output/seurat/FeatureScatter_QC_RNAfeature_doublet_control.pdf", width=5, height=5)
+FeatureScatter(srat_WT, feature1 = "nFeature_RNA", feature2 = "Doublet_score")
 dev.off()
 
 
 
 ## After seeing the plot; add QC information in our seurat object
-srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$Is_doublet == 'True','Doublet','Pass')
-srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 2000 & srat_UNTREATED72hr@meta.data$QC == 'Pass','Low_nFeature',srat_UNTREATED72hr@meta.data$QC)
-srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 2000 & srat_UNTREATED72hr@meta.data$QC != 'Pass' & srat_UNTREATED72hr@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_UNTREATED72hr@meta.data$QC,sep = ','),srat_UNTREATED72hr@meta.data$QC)
-srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$percent.mt > 15 & srat_UNTREATED72hr@meta.data$QC == 'Pass','High_MT',srat_UNTREATED72hr@meta.data$QC)
-srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 2000 & srat_UNTREATED72hr@meta.data$QC != 'Pass' & srat_UNTREATED72hr@meta.data$QC != 'High_MT',paste('High_MT',srat_UNTREATED72hr@meta.data$QC,sep = ','),srat_UNTREATED72hr@meta.data$QC)
-table(srat_UNTREATED72hr[['QC']])
+srat_WT[['QC']] <- ifelse(srat_WT@meta.data$Is_doublet == 'True','Doublet','Pass')
+srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 1000 & srat_WT@meta.data$QC == 'Pass','Low_nFeature',srat_WT@meta.data$QC)
+srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 1000 & srat_WT@meta.data$QC != 'Pass' & srat_WT@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_WT@meta.data$QC,sep = ','),srat_WT@meta.data$QC)
+srat_WT[['QC']] <- ifelse(srat_WT@meta.data$percent.mt > 25 & srat_WT@meta.data$QC == 'Pass','High_MT',srat_WT@meta.data$QC)
+srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 1000 & srat_WT@meta.data$QC != 'Pass' & srat_WT@meta.data$QC != 'High_MT',paste('High_MT',srat_WT@meta.data$QC,sep = ','),srat_WT@meta.data$QC)
+table(srat_WT[['QC']])
 ## 
 
 
 
-srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$Is_doublet == 'True','Doublet','Pass')
-srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$nFeature_RNA < 2000 & srat_DASATINIB72hr@meta.data$QC == 'Pass','Low_nFeature',srat_DASATINIB72hr@meta.data$QC)
-srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$nFeature_RNA < 2000 & srat_DASATINIB72hr@meta.data$QC != 'Pass' & srat_DASATINIB72hr@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_DASATINIB72hr@meta.data$QC,sep = ','),srat_DASATINIB72hr@meta.data$QC)
-srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$percent.mt > 15 & srat_DASATINIB72hr@meta.data$QC == 'Pass','High_MT',srat_DASATINIB72hr@meta.data$QC)
-srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$nFeature_RNA < 2000 & srat_DASATINIB72hr@meta.data$QC != 'Pass' & srat_DASATINIB72hr@meta.data$QC != 'High_MT',paste('High_MT',srat_DASATINIB72hr@meta.data$QC,sep = ','),srat_DASATINIB72hr@meta.data$QC)
-table(srat_DASATINIB72hr[['QC']])
+srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$Is_doublet == 'True','Doublet','Pass')
+srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 1000 & srat_cYAPKO@meta.data$QC == 'Pass','Low_nFeature',srat_cYAPKO@meta.data$QC)
+srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 1000 & srat_cYAPKO@meta.data$QC != 'Pass' & srat_cYAPKO@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_cYAPKO@meta.data$QC,sep = ','),srat_cYAPKO@meta.data$QC)
+srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$percent.mt > 25 & srat_cYAPKO@meta.data$QC == 'Pass','High_MT',srat_cYAPKO@meta.data$QC)
+srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 1000 & srat_cYAPKO@meta.data$QC != 'Pass' & srat_cYAPKO@meta.data$QC != 'High_MT',paste('High_MT',srat_cYAPKO@meta.data$QC,sep = ','),srat_cYAPKO@meta.data$QC)
+table(srat_cYAPKO[['QC']])
 
 
 
@@ -1861,99 +1861,118 @@ table(srat_DASATINIB72hr[['QC']])
 
 
 ## subset my seurat object to only analyze the cells that pass the QC
-srat_UNTREATED72hr <- subset(srat_UNTREATED72hr, subset = QC == 'Pass')
-srat_DASATINIB72hr <- subset(srat_DASATINIB72hr, subset = QC == 'Pass')
-srat_UNTREATED72hr$condition <- "UNTREATED72hr"
-srat_DASATINIB72hr$condition <- "DASATINIB72hr"
+srat_WT <- subset(srat_WT, subset = QC == 'Pass')
+srat_cYAPKO <- subset(srat_cYAPKO, subset = QC == 'Pass')
+srat_WT$condition <- "WT"
+srat_cYAPKO$condition <- "cYAPKO"
+
+XXXXXXXX DOUBLE CHECK HERE MAY NEED TO USE OTHER GENE LIST AS MICE !!! XXX
 
 s.genes <- cc.genes.updated.2019$s.genes
 g2m.genes <- cc.genes.updated.2019$g2m.genes
 
 
 ## NORMALIZE AND SCALE DATA BEFORE RUNNING CELLCYCLESORTING
-srat_UNTREATED72hr <- NormalizeData(srat_UNTREATED72hr, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
-all.genes <- rownames(srat_UNTREATED72hr)
-srat_UNTREATED72hr <- ScaleData(srat_UNTREATED72hr, features = all.genes) # zero-centres and scales it
+srat_WT <- NormalizeData(srat_WT, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(srat_WT)
+srat_WT <- ScaleData(srat_WT, features = all.genes) # zero-centres and scales it
 
-srat_DASATINIB72hr <- NormalizeData(srat_DASATINIB72hr, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
-all.genes <- rownames(srat_DASATINIB72hr)
-srat_DASATINIB72hr <- ScaleData(srat_DASATINIB72hr, features = all.genes) # zero-centres and scales it
+srat_cYAPKO <- NormalizeData(srat_cYAPKO, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(srat_cYAPKO)
+srat_cYAPKO <- ScaleData(srat_cYAPKO, features = all.genes) # zero-centres and scales it
 
 ### CELLCYCLESORTING
-srat_UNTREATED72hr <- CellCycleScoring(srat_UNTREATED72hr, s.features = s.genes, g2m.features = g2m.genes)
-table(srat_UNTREATED72hr[[]]$Phase)
-srat_DASATINIB72hr <- CellCycleScoring(srat_DASATINIB72hr, s.features = s.genes, g2m.features = g2m.genes)
-table(srat_DASATINIB72hr[[]]$Phase)
+srat_WT <- CellCycleScoring(srat_WT, s.features = s.genes, g2m.features = g2m.genes)
+table(srat_WT[[]]$Phase)
+srat_cYAPKO <- CellCycleScoring(srat_cYAPKO, s.features = s.genes, g2m.features = g2m.genes)
+table(srat_cYAPKO[[]]$Phase)
 
 set.seed(42)
 
 # Run SCTransform
 ## Version OK with 2000 treshold RNA
-srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncells = 5713, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4948, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
     RunPCA(npcs = 25, verbose = FALSE)
 
-srat_DASATINIB72hr <- SCTransform(srat_DASATINIB72hr, method = "glmGamPoi", ncells = 7148, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
+srat_cYAPKO <- SCTransform(srat_cYAPKO, method = "glmGamPoi", ncells = 3731, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
     RunPCA(npcs = 25, verbose = FALSE)
+
+
+# Run on srat_WT condition only and find optimal parameters; expend this to both then??
+
+XXX Will make calcul faster if work on srat_WT solely first for troubleshooting dimensions XXX
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # Data integration (check active assay is 'SCT')
-srat.list <- list(srat_UNTREATED72hr = srat_UNTREATED72hr, srat_DASATINIB72hr = srat_DASATINIB72hr)
+srat.list <- list(srat_WT = srat_WT, srat_cYAPKO = srat_cYAPKO)
 features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
 srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
 
-humangastruloid.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+embryo.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
     anchor.features = features)
-humangastruloid.combined.sct <- IntegrateData(anchorset = humangastruloid.anchors, normalization.method = "SCT")
+embryo.combined.sct <- IntegrateData(anchorset = embryo.anchors, normalization.method = "SCT")
 
 
 
 # Perform integrated analysis (check active assay is 'integrated')
 ## XXX RE FINE A BIT BUT ALMOST PERFECT !!! tested 0.6 not good; play with k.param!! was 40 dim at sctransform XXX
 
-DefaultAssay(humangastruloid.combined.sct) <- "integrated"
+DefaultAssay(embryo.combined.sct) <- "integrated"
 
-humangastruloid.combined.sct <- RunPCA(humangastruloid.combined.sct, verbose = FALSE, npcs = 25)
-humangastruloid.combined.sct <- RunUMAP(humangastruloid.combined.sct, reduction = "pca", dims = 1:25, verbose = FALSE)
-humangastruloid.combined.sct <- FindNeighbors(humangastruloid.combined.sct, reduction = "pca", k.param = 15, dims = 1:25)
-humangastruloid.combined.sct <- FindClusters(humangastruloid.combined.sct, resolution = 0.2, verbose = FALSE, algorithm = 4)
-#RAW: humangastruloid.combined.sct <- FindClusters(humangastruloid.combined.sct, resolution = 0.3, verbose = FALSE, algorithm = 4)
+embryo.combined.sct <- RunPCA(embryo.combined.sct, verbose = FALSE, npcs = 25)
+embryo.combined.sct <- RunUMAP(embryo.combined.sct, reduction = "pca", dims = 1:25, verbose = FALSE)
+embryo.combined.sct <- FindNeighbors(embryo.combined.sct, reduction = "pca", k.param = 15, dims = 1:25)
+embryo.combined.sct <- FindClusters(embryo.combined.sct, resolution = 0.2, verbose = FALSE, algorithm = 4)
+#RAW: embryo.combined.sct <- FindClusters(embryo.combined.sct, resolution = 0.3, verbose = FALSE, algorithm = 4)
 
-humangastruloid.combined.sct$condition <- factor(humangastruloid.combined.sct$condition, levels = c("UNTREATED72hr", "DASATINIB72hr")) # Reorder untreated 1st
+embryo.combined.sct$condition <- factor(embryo.combined.sct$condition, levels = c("WT", "cYAPKO")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_UNTREATED72hr_DASATINIB72hr_V2.pdf", width=10, height=6)
-DimPlot(humangastruloid.combined.sct, reduction = "umap", split.by = "condition", label=TRUE)
+pdf("output/seurat/UMAP_control_cYAPKO.pdf", width=10, height=6)
+DimPlot(embryo.combined.sct, reduction = "umap", split.by = "condition", label=TRUE)
 dev.off()
 
 
 
 ## Check some marker genes 
 ### Marker gene list
-ectoderm <- c("PAX6", "OTX2", "NES", "TFAP2A", "DLK1", "LHX2", "RAX", "HES5", "SOX1", "NES", "SOX2", "SOX9", "BRN2","IRX2", "SOX21")
-mesoderm <- c("NCAM1", "HAND1", "PDGFRA", "CDX2", "APLNR", "MIXL1", "CXCR4", "ETV3", "TBX6", "LHX1", "KDR", "ID2","APLINR", "T", "MESP1", "HAS2", "SNAJ1", "SNAJ2", "NODAL", "TDGF1", "GDF3", "PAX2", "DLL1", "MEOX1", "MEIS2", "Vg1")
-endoderm <- c("KIT", "PRDM1", "GSC", "TTR", "SOX17", "GSC", "CER1", "IRX1", "EOMES", "SHH", "FOXA2", "Cdx1", "GATA4", "Cdx4", "GATA6", "HHEX", "LEFTY1", "AFP", "SOX17")
-
-DefaultAssay(humangastruloid.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
-pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_endoderm_V2.pdf", width=10, height=80)
-FeaturePlot(humangastruloid.combined.sct, features = endoderm, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_mesoderm_V2.pdf", width=10, height=80)
-FeaturePlot(humangastruloid.combined.sct, features = mesoderm, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_ectoderm_V2.pdf", width=10, height=80)
-FeaturePlot(humangastruloid.combined.sct, features = ectoderm, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
-dev.off()
+epiblast = c("Nanog", "Pou5f1", "DPPA")
+endoderm = c("Gata2", "Gata1", "Hesx1", "Gata6", "Eomes", "Foxa2", "Sox17", "Prdm1", "Crcr4", "Foxa1", "Stat3", "Hnf4a", "Tfcp21", "Foxm1", "Foxa2", "Foxa3")
+ectoderm = c("Rarb", "Sox9", "Sox1", "Sirt6", "Runx2", "Foxg1", "Sox2", "Nes", "VIM", "ID3", "Sox3", "Brn1", "4-Oct", "Oct11")
+mesoderm = c("Lef1", "Cdx2", "Hoxa1", "Mixl1", "Sp5", "T", "Hmgb3", "Gata5", "Hmga2", "Smad1", "Tal1", "Foxf1", "Gata2", "NODAL", "KDR", "DLL1", "LXH1", "APLNR", "TBX6", "MESP1", "HAS2", "PDGFRA", "Hand1", "Left1", "Gata6")
 
 
-DefaultAssay(humangastruloid.combined.sct) <- "RNA" # For vizualization either use SCT or norm RNA
-pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_endoderm_V2_RNA.pdf", width=10, height=80)
-FeaturePlot(humangastruloid.combined.sct, features = endoderm, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+
+
+
+
+
+DefaultAssay(embryo.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_epiblast.pdf", width=10, height=30)
+FeaturePlot(embryo.combined.sct, features = epiblast, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_mesoderm_V2_RNA.pdf", width=10, height=80)
-FeaturePlot(humangastruloid.combined.sct, features = mesoderm, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_endoderm.pdf", width=10, height=80)
+FeaturePlot(embryo.combined.sct, features = endoderm, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_ectoderm_V2_RNA.pdf", width=10, height=80)
-FeaturePlot(humangastruloid.combined.sct, features = ectoderm, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_mesoderm.pdf", width=10, height=80)
+FeaturePlot(embryo.combined.sct, features = mesoderm, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
 dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_ectoderm.pdf", width=10, height=80)
+FeaturePlot(embryo.combined.sct, features = ectoderm, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
 
 
 ## Unbiased markers:
