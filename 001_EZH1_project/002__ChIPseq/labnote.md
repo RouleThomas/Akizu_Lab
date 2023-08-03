@@ -8811,7 +8811,13 @@ sbatch scripts/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_THOR_qval25
 ----> kmean is not informative as it cluster based on peak profile; but not if different between my bigiwg (eg. cluster all the peak that are enriched upstream the center for example)
 
 --> 2. list of differential peak from THOR method is overall showing a decrease of H3K27me3; clearly visible when taking them all.
-----> Separating the gain and lost; we indeed see XXX
+----> Separating the gain and lost; we indeed see more clearly the Lost or Gain; the Gain are much less clear.
+
+Median size (calculated with `awk '{print $3 - $2}' your_file.bed | sort -n | awk '{a[NR] = $0} END {if (NR%2==1) print a[(NR+1)/2]; else print (a[NR/2] + a[NR/2+1])/2}`):
+- Lost 1,500bp
+- Gain 950bp
+- ESC 1,159bp
+- NPC 573bp
 
 
 Let's now check **peak location to feature using ChIPseeker**; check the following:
