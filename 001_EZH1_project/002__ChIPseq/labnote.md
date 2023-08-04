@@ -8784,7 +8784,21 @@ sbatch scripts/bigwigmerge_THOR_WT_ESCvsNPC_UniqueBamTMM.sh # 3479177 ok
 conda activate deeptools
 sbatch scripts/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_ESC_peak.sh # 3486731 ok
 sbatch scripts/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_NPC_peak.sh # 3486732 ok
-sbatch scripts/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_ESC_NPC_peak.sh # 3609625
+sbatch scripts/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_ESC_NPC_peak.sh # 3609625 ok
+
+#### Filter out cluster 1 / 2 and 3 / 4 and plot heatmaps
+awk '$13 == "cluster_1" || $13 == "cluster_2"' output/deeptools/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_ESC_NPC_peak_heatmap_cluster4.bed > output/deeptools/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_ESC_NPC_peak_heatmap_cluster4_1_2.bed
+bedtools sort -i output/deeptools/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_ESC_NPC_peak_heatmap_cluster4_1_2.bed > output/deeptools/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_ESC_NPC_peak_heatmap_cluster4_1_2_sort.bed
+
+
+awk '$13 == "cluster_3" || $13 == "cluster_4"' output/deeptools/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_ESC_NPC_peak_heatmap_cluster4.bed > output/deeptools/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_ESC_NPC_peak_heatmap_cluster4_3_4.bed
+bedtools sort -i output/deeptools/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_ESC_NPC_peak_heatmap_cluster4_3_4.bed > output/deeptools/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_ESC_NPC_peak_heatmap_cluster4_3_4_sort.bed
+
+sbatch scripts/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_ESC_NPC_cluster_1_2_peak.sh # 3614310 ok
+sbatch scripts/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_ESC_NPC_cluster_3_4_peak.sh # 3614314
+sbatch scripts/matrix_peak_5kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_ESC_NPC_cluster_3_4_peak.sh # 3614380 ok
+sbatch scripts/matrix_peak_10kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_ESC_NPC_cluster_3_4_peak.sh # 3614369
+
 
 # 2. List of differential peak from THOR method
 ## Files location
@@ -8813,15 +8827,18 @@ sbatch scripts/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_THOR_qval25
 
 --> 1. raw MACS2 peak method is showing that most peak that exist in ESC disapear/decrease, in NPC; similarly peak that exist in NPC where not present; or less, in ESC.
 ----> kmean is not informative as it cluster based on peak profile; but not if different between my bigiwg (eg. cluster all the peak that are enriched upstream the center for example)
+----> interestingly, large peak (2kb) decrease; while smaller peak (500bp) increase from ESC to NPC! (kmeans analysis showed it); And smaller peaks are much more abundant than larger peaks.
 
 --> 2. list of differential peak from THOR method is overall showing a decrease of H3K27me3; clearly visible when taking them all.
 ----> Separating the gain and lost; we indeed see more clearly the Lost or Gain; the Gain are much less clear.
 
-Median size (calculated with `awk '{print $3 - $2}' your_file.bed | sort -n | awk '{a[NR] = $0} END {if (NR%2==1) print a[(NR+1)/2]; else print (a[NR/2] + a[NR/2+1])/2}`):
+Median size (calculated with `awk '{print $3 - $2}' your_file.bed | sort -n | awk '{a[NR] = $0} END {if (NR%2==1) print a[(NR+1)/2]; else print (a[NR/2] + a[NR/2+1])/2}'`):
 - Lost 1,500bp
 - Gain 950bp
 - ESC 1,159bp
 - NPC 573bp
+
+
 
 
 Let's now check **peak location to feature using ChIPseeker**; check the following:
@@ -8832,7 +8849,6 @@ Let's now check **peak location to feature using ChIPseeker**; check the followi
 
 ```bash
 conda activate deseq2
-module load R/4.2.2
 ```
 
 ```R
@@ -8850,13 +8866,21 @@ peaks_ESC_macs2 =  read.table('output/macs2_unique/broad_blacklist_qval2.30103/E
 peaks_NPC_macs2 =  read.table('output/macs2_unique/broad_blacklist_qval2.30103/NPC_WT_H3K27me3_pool_peaks.broadPeak') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9) 
 peaks_lost =  read.table('output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval25_negative.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, qvalue=V15, FC=V16) 
 peaks_gain =  read.table('output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/THOR_qval25_positive.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, qvalue=V15, FC=V16) 
+
+peaks_cl1_2 =  read.table('output/deeptools/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_ESC_NPC_peak_heatmap_cluster4_1_2_sort.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, cluster=V13) 
+peaks_cl3_4 =  read.table('output/deeptools/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_ESC_NPC_peak_heatmap_cluster4_3_4_sort.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, cluster=V13) 
+
+
 # Tidy peaks
 ESC_gr = makeGRangesFromDataFrame(peaks_ESC_macs2,keep.extra.columns=TRUE)
 NPC_gr = makeGRangesFromDataFrame(peaks_NPC_macs2,keep.extra.columns=TRUE)
 Lost_gr = makeGRangesFromDataFrame(peaks_lost,keep.extra.columns=TRUE)
-Gain_gr = makeGRangesFromDataFrame(peaks_gain,keep.extra.columns=TRUE)
+peaks_cl1_2_gr = makeGRangesFromDataFrame(peaks_cl1_2,keep.extra.columns=TRUE)
+peaks_cl3_4_gr = makeGRangesFromDataFrame(peaks_cl3_4,keep.extra.columns=TRUE)
+
 
 gr_list <- list(ESC=ESC_gr, NPC=NPC_gr, Lost=Lost_gr, Gain=Gain_gr)
+gr_list <- list(cl_1_2=peaks_cl1_2_gr, cl_3_4=peaks_cl3_4_gr)
 
 
 ## Genomic Annotation ALL TOGETHER
@@ -8865,7 +8889,18 @@ peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
 
 ### Barplot
 pdf("output/ChIPseeker/annotation_barplot_WT.pdf", width=14, height=5)
+pdf("output/ChIPseeker/annotation_barplot_cl1_2_3_4.pdf", width=14, height=5)
 plotAnnoBar(peakAnnoList)
+dev.off()
+
+# Run GO analysis
+compGO <- compareCluster(geneCluster = genes, 
+                         fun = "enrichGO",
+                         organism = "human",
+                         pvalueCutoff  = 0.05, 
+                         pAdjustMethod = "BH")
+pdf("output/ChIPseeker/annotation_barplot_cl1_2_3_4.pdf", width=14, height=5)
+dotplot(compGO, showCategory = 20, title = "GO Enrichment Analysis")
 dev.off()
 ```
 

@@ -1889,19 +1889,38 @@ table(srat_cYAPKO[[]]$Phase)
 
 set.seed(42)
 
+
+
+
+
 # Run SCTransform
 ## Version OK with 2000 treshold RNA
-srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4612, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
-    RunPCA(npcs = 10, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
-    RunUMAP(reduction = "pca", dims = 1:10, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
-    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:10, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4812, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 50, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:50, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:50, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
     FindClusters(resolution = 0.25, verbose = FALSE, algorithm = 4)
 ## perform OK; better than with 50 or 25 dim
 
-srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4612, verbose = TRUE, variable.features.n = 3000) %>% 
-    RunPCA(npcs = 10, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
-    RunUMAP(reduction = "pca", dims = 1:10, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
-    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:10, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+
+
+
+## investigate to find optimal nb of dimension
+### Vizualize the 1st 20 PC --> around 20 is good or 12
+pdf("output/seurat/DimHeatmap_SCTV1_control.pdf", width=10, height=40)
+DimHeatmap(srat_WT, dims = 1:30, cells = 500, balanced = TRUE)
+dev.off()
+pdf("output/seurat/Elbow_SCTV1_control.pdf", width=10, height=10)
+ElbowPlot(srat_WT) # 13, 15 
+dev.off()
+## so between 12-20 ( around 12-13 perfect)
+
+
+
+srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4812, verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 12, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:12, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:12, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
     FindClusters(resolution = 0.25, verbose = FALSE, algorithm = 4)
 ## looks worst without regtression
 srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4612, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000, vst.flavor = "v2") %>% 
@@ -1928,13 +1947,29 @@ srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4612, vars.to.reg
     FindNeighbors(reduction = "pca", k.param = 30, dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
     FindClusters(resolution = 0.2, verbose = FALSE, algorithm = 4)
 ## seems perform good. 
-srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4612, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 2000) %>% 
+srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4612, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","nCount_RNA","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 2000) %>% 
     RunPCA(npcs = 15, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
     RunUMAP(reduction = "pca", dims = 1:15, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
     FindNeighbors(reduction = "pca", k.param = 30, dims = 1:15, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
     FindClusters(resolution = 0.2, verbose = FALSE, algorithm = 4)
 ## seems perform good.
 
+
+
+## This is the best for now 0804
+srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4812, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("percent.mt","percent.rb","S.Score","G2M.Score","S.Score","G2M.Score")) %>% 
+    RunPCA(npcs = 15, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:15, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:15, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.25, verbose = FALSE, algorithm = 4)
+##
+
+
+srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4812, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("percent.mt","percent.rb","S.Score","G2M.Score","S.Score","G2M.Score")) %>% 
+    RunPCA(npcs = 15, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:15, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:15, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.25, verbose = FALSE, algorithm = 4)
 
 # Run on srat_WT condition only and find optimal parameters; expend this to both then??
 
@@ -1986,6 +2021,104 @@ pdf("output/seurat/VlnPlot_SCT_control_cellCycle.pdf", width=10, height=10)
 VlnPlot(srat_WT,features = c("S.Score","G2M.Score")) & 
   theme(plot.title = element_text(size=10))
 dev.off()  
+
+
+
+XXX test here othermethod XXX
+
+## LogNormalize ##
+srat_WT <- NormalizeData(srat_WT, normalization.method = "LogNormalize", scale.factor = 10000)
+## Discover the 2000 first more variable genes
+srat_WT <- FindVariableFeatures(srat_WT, selection.method = "vst", nfeatures = 2000)
+## scale data to Z score (value centered around 0 and +/- 1)
+all.genes <- rownames(srat_WT)
+srat_WT <- ScaleData(srat_WT, features = all.genes,vars.to.regress = c("percent.mt","percent.rb","S.Score","G2M.Score","S.Score","G2M.Score"))
+## PCA
+srat_WT <- RunPCA(srat_WT, features = VariableFeatures(object = srat_WT))
+
+
+# clustering
+srat_WT <- FindNeighbors(srat_WT, dims = 1:15, k.param = 30)
+srat_WT <- FindClusters(srat_WT, resolution = 0.2)
+srat_WT <- RunUMAP(srat_WT, dims = 1:15, verbose = F)
+table(srat_WT@meta.data$seurat_clusters) # to check cluster size
+
+pdf("output/seurat/UMAP_LogNormalize_control.pdf", width=10, height=10)
+DimPlot(srat_WT,label.size = 4,repel = T,label = T)
+dev.off()
+
+
+
+## Check some marker genes 
+### Marker gene list
+epiblast = c("Nanog", "Pou5f1", "Dppa3") # watch out DPPA => Dppa3
+endoderm = c("Gata2", "Gata1", "Hesx1", "Gata6", "Eomes", "Foxa2", "Sox17", "Prdm1", "Cxcr4", "Foxa1", "Stat3", "Hnf4a", "Tfcp2l1", "Foxm1", "Foxa2", "Foxa3") # watch out Crcr4 => Cxcr4; Tfcp21 => Tfcp2l1 
+ectoderm = c("Rarb", "Sox9", "Sox1", "Sirt6", "Runx2", "Foxg1", "Sox2", "Nes", "Vim", "Id3", "Sox3", "Pou3f3", "Pou5f1", "Pou2f1") # Brn-1 => Pou3f3; 4-Oct =>  Pou5f1; Oct11 =>  Pou2f1
+mesoderm = c("Lef1", "Cdx2", "Hoxa1", "Mixl1", "Sp5", "T", "Hmgb3", "Gata5", "Hmga2", "Smad1", "Tal1", "Foxf1", "Gata2", "Nodal", "Kdr", "Dll1", "Lhx1", "Aplnr", "Tbx6", "Mesp1", "Has2", "Pdgfra", "Hand1", "Lef1", "Gata6") # Left1 => Lef1 
+
+
+
+DefaultAssay(srat_WT) <- "RNA" # For vizualization either use SCT or norm RNA
+pdf("output/seurat/FeaturePlot_LogNormalize_control_epiblast.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = epiblast, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_LogNormalize_control_endoderm.pdf", width=40, height=50)
+FeaturePlot(srat_WT, features = endoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_LogNormalize_control_mesoderm.pdf", width=40, height=50)
+FeaturePlot(srat_WT, features = mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_LogNormalize_control_ectoderm.pdf", width=40, height=50)
+FeaturePlot(srat_WT, features = ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+
+
+## QC plot
+## percent mt and rb
+pdf("output/seurat/VlnPlot_SCT_control_mt_rb.pdf", width=10, height=7)
+VlnPlot(srat_WT,features = c("percent.mt", "percent.rb")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+## RNA
+pdf("output/seurat/VlnPlot_SCT_control_count_feature.pdf", width=10, height=10)
+VlnPlot(srat_WT,features = c("nCount_RNA","nFeature_RNA")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+## cell cycle
+pdf("output/seurat/VlnPlot_SCT_control_cellCycle.pdf", width=10, height=10)
+VlnPlot(srat_WT,features = c("S.Score","G2M.Score")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
