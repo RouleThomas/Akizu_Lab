@@ -8772,6 +8772,9 @@ Need to decipher whether we used macs2 or macs2_unique (from uniquely aligned re
 ## Files location
 002__ChIPseq/output/macs2_unique/broad_blacklist_qval2.30103/*pool*.broadPeak ## MACS2 unique
 002__ChIPseq/output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/*bw ## THOR uniqueBAM
+### concatenate ESC and NPC raw peaks
+cat output/macs2_unique/broad_blacklist_qval2.30103/ESC_WT_H3K27me3_pool_peaks.broadPeak output/macs2_unique/broad_blacklist_qval2.30103/NPC_WT_H3K27me3_pool_peaks.broadPeak > output/macs2_unique/broad_blacklist_qval2.30103/ESC_NPC_WT_H3K27me3_pool_peaks.broadPeak
+bedtools sort -i output/macs2_unique/broad_blacklist_qval2.30103/ESC_NPC_WT_H3K27me3_pool_peaks.broadPeak > output/macs2_unique/broad_blacklist_qval2.30103/ESC_NPC_WT_H3K27me3_pool_peaks_sort.broadPeak
 
 ## Generate median bigwig files for THOR
 conda activate BedToBigwig
@@ -8781,6 +8784,7 @@ sbatch scripts/bigwigmerge_THOR_WT_ESCvsNPC_UniqueBamTMM.sh # 3479177 ok
 conda activate deeptools
 sbatch scripts/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_ESC_peak.sh # 3486731 ok
 sbatch scripts/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_NPC_peak.sh # 3486732 ok
+sbatch scripts/matrix_peak_25kb_bigwig_THOR_WT_ESCvsNPC_UniqueBamTMM_ESC_NPC_peak.sh # 3609625
 
 # 2. List of differential peak from THOR method
 ## Files location
