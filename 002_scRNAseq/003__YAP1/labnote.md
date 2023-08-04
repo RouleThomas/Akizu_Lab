@@ -1288,12 +1288,19 @@ VlnPlot(humangastruloid.combined.sct,features = c("nCount_RNA","nFeature_RNA"), 
   theme(plot.title = element_text(size=10))
 dev.off()
 ## cell cycle
-pdf("output/seurat/VlnPlot_SCT_UNTREATED72hr_DASATINIB72hr_cellCycle_V2.pdf", width=10, height=10)
+pdf("output/seurat/VlnPlot_SCT_UNTREATED72hr_DASATINIB72hr_cellCycle_V2.pdf", width=15, height=7)
 VlnPlot(humangastruloid.combined.sct,features = c("S.Score","G2M.Score"), split.by = "condition") & 
   theme(plot.title = element_text(size=10))
 dev.off()  
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_cellCycle_V2.pdf", width=10, height=10)
+FeaturePlot(humangastruloid.combined.sct,features = c("S.Score","G2M.Score"), split.by = "condition") & 
+  theme(plot.title = element_text(size=10))
+dev.off()  
 
-
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_Phase_V2.pdf", width=10, height=10)
+DimPlot(humangastruloid.combined.sct, group.by= "Phase") & 
+  theme(plot.title = element_text(size=10))
+dev.off()  
 
 # Rename cluster
 new.cluster.ids <- c("Mesoderm_1", "Mesoderm_2", "Mesoderm_3", "Endoderm","Ectoderm","Mesoderm_4")

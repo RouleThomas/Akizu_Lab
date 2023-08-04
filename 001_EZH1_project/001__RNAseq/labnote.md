@@ -7731,6 +7731,14 @@ samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
    "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
    "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3")
 
+#### Only ESC and NPC
+samples <- c("ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3",
+   "ESC_KO_R1", "ESC_KO_R2", "ESC_KO_R3",
+   "ESC_HET_R1", "ESC_HET_R2", "ESC_HET_R3",
+   "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+   "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3",
+   "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3")
+
 #### collect all samples ID
 samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
    "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3",
@@ -7803,6 +7811,7 @@ ddsTC <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
 ddsTC <- DESeq(ddsTC, test="LRT", reduced = ~ genotype + time)
 resTC <- results(ddsTC)
 write.csv(resTC %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2_hg38/resTC.txt")
+write.csv(resTC %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2_hg38/resTC_ESC_NPC.txt")
 # resTC <- read.csv("output/deseq2_hg38/resTC.txt", row.names = 1)
 
 # Data normalization
@@ -7811,6 +7820,7 @@ save(vst_counts, file = "output/deseq2_hg38/ddsTC_vsd_filter.RData")
 
 rlog_counts <- rlog(ddsTC, blind=FALSE) # last 5min
 save(rlog_counts, file = "output/deseq2_hg38/ddsTC_rld_filter.RData")
+save(rlog_counts, file = "output/deseq2_hg38/ddsTC_rld_filter_ESC_NPC.RData")
 load("output/deseq2_hg38/ddsTC_rld_filter.RData")
 
 
@@ -7900,13 +7910,14 @@ row_dist <- dist(rlog_counts_matrix_sig, method = "euclidean")
 row_hclust <- hclust(row_dist, method = "complete")
 
 ## Cut the tree into k clusters
-row_clusters <- cutree(row_hclust, k = 8)                   # !!! Here change tree nb accordingly !!!
+row_clusters <- cutree(row_hclust, k = 15)                   # !!! Here change tree nb accordingly !!!
 ## Create a data frame with gene names and their corresponding clusters
 cluster_gene <- data.frame(gene = rownames(rlog_counts_matrix_sig),
                            cluster = row_clusters)
 ### Save dataframe
-write.csv(cluster_gene, file="output/deseq2_hg38/cluster_gene_rlog_30cl.txt") # !!! Here change tree nb accordingly !!
-write.csv(cluster_gene, file="output/deseq2_hg38/cluster_gene_rlog_8cl_WTvsHET.txt")
+# write.csv(cluster_gene, file="output/deseq2_hg38/cluster_gene_rlog_30cl.txt") # !!! Here change tree nb accordingly !!
+# write.csv(cluster_gene, file="output/deseq2_hg38/cluster_gene_rlog_8cl_WTvsHET.txt")
+# write.csv(cluster_gene, file="output/deseq2_hg38/cluster_gene_rlog_15cl_ESC_NPC.txt")
 
 # Make a clean table with significant deseq2-TC genes
 rlog_counts_tidy <- as_tibble(rlog_counts_matrix_sig, rownames = "gene") %>%
@@ -7930,6 +7941,7 @@ genes_per_cluster <- rlog_counts_tidy %>%
   summarise(num_genes = n_distinct(gene))
 
 pdf("output/deseq2_hg38/line_rlog_p0.05_cl30_pretty_noSmooth.pdf", width=20, height=14)   # !!! Here change tree nb accordingly !!
+pdf("output/deseq2_hg38/line_rlog_p0.05_cl15_pretty_noSmooth_ESC_NPC.pdf", width=20, height=14)   # !!! Here change tree nb accordingly !!
 ggplot(rlog_counts_tidy, aes(x = time, y = rlog_counts, color = genotype, group = genotype)) +
   geom_line(stat = "summary", fun = mean) +
   geom_errorbar(stat = "summary", fun.data = mean_se, width = 0.2, size = 1) +
@@ -8031,6 +8043,144 @@ gene_name <- elementMetadata(gene_data)$gene_name
 gene_id_name <- data.frame(gene_id, gene_name) %>%
   unique() %>%
   as_tibble()
+
+# ESC vs NPC
+## Import genes_cluster list 
+
+cluster_1 = read_csv("output/deseq2_hg38/cluster_gene_rlog_12cl_ESC_NPC.txt") %>%
+  filter(cluster == 1) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+
+cluster_2 = read_csv("output/deseq2_hg38/cluster_gene_rlog_12cl_ESC_NPC.txt") %>%
+  filter(cluster == 2) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+
+cluster_3 = read_csv("output/deseq2_hg38/cluster_gene_rlog_12cl_ESC_NPC.txt") %>%
+  filter(cluster == 3) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+
+cluster_4 = read_csv("output/deseq2_hg38/cluster_gene_rlog_12cl_ESC_NPC.txt") %>%
+  filter(cluster == 4) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+
+cluster_5 = read_csv("output/deseq2_hg38/cluster_gene_rlog_12cl_ESC_NPC.txt") %>%
+  filter(cluster == 5) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+cluster_6 = read_csv("output/deseq2_hg38/cluster_gene_rlog_12cl_ESC_NPC.txt") %>%
+  filter(cluster == 6) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit() 
+cluster_7 = read_csv("output/deseq2_hg38/cluster_gene_rlog_12cl_ESC_NPC.txt") %>%
+  filter(cluster == 7) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+cluster_8 = read_csv("output/deseq2_hg38/cluster_gene_rlog_12cl_ESC_NPC.txt") %>%
+  filter(cluster == 8) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+cluster_9 = read_csv("output/deseq2_hg38/cluster_gene_rlog_12cl_ESC_NPC.txt") %>%
+  filter(cluster == 9) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+cluster_10 = read_csv("output/deseq2_hg38/cluster_gene_rlog_12cl_ESC_NPC.txt") %>%
+  filter(cluster == 10) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+cluster_11 = read_csv("output/deseq2_hg38/cluster_gene_rlog_12cl_ESC_NPC.txt") %>%
+  filter(cluster == 11) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+cluster_12 = read_csv("output/deseq2_hg38/cluster_gene_rlog_12cl_ESC_NPC.txt") %>%
+  filter(cluster == 12) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+
+  
+
+# Extract the 'entrez_id' column as a vector
+cluster_1_vector <- pull(cluster_1, entrez_id)
+cluster_2_vector <- pull(cluster_2, entrez_id)
+cluster_3_vector <- pull(cluster_3, entrez_id)
+cluster_4_vector <- pull(cluster_4, entrez_id)
+cluster_5_vector <- pull(cluster_5, entrez_id)
+cluster_6_vector <- pull(cluster_6, entrez_id)
+cluster_7_vector <- pull(cluster_7, entrez_id)
+cluster_8_vector <- pull(cluster_8, entrez_id)
+cluster_9_vector <- pull(cluster_9, entrez_id)
+cluster_10_vector <- pull(cluster_10, entrez_id)
+cluster_11_vector <- pull(cluster_11, entrez_id)
+cluster_12_vector <- pull(cluster_12, entrez_id)
+# Combine the vectors into a list
+# Combine the vectors into a list
+entrez_list <- list(
+  cluster_1 = cluster_1_vector,
+  cluster_2 = cluster_2_vector,
+  cluster_3 = cluster_3_vector,
+  cluster_4 = cluster_4_vector,
+  cluster_5 = cluster_5_vector,
+  cluster_6 = cluster_6_vector,
+  cluster_7 = cluster_7_vector,
+  cluster_8 = cluster_8_vector,
+  cluster_9 = cluster_9_vector,
+  cluster_10 = cluster_10_vector,
+  cluster_11 = cluster_11_vector,
+  cluster_12 = cluster_12_vector
+)
+
+
+
+
+
+## GO
+compGO <- compareCluster(geneCluster   = entrez_list,
+                         fun           = "enrichGO",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH",
+                         OrgDb         = "org.Hs.eg.db",
+                         ont           = "BP") # "BP" (Biological Process), "CC" (Cellular Component), or "MF" (Molecular Function)
+pdf("output/GO_hg38/dotplot_BP_cluster_ESC_NPC.pdf", width=15, height=50)
+dotplot(compGO, showCategory = 15, title = "GO_Biological Process Enrichment Analysis")
+dev.off()
+
+## KEGG
+compKEGG <- compareCluster(geneCluster   = entrez_list,
+                         fun           = "enrichKEGG",
+                         organism = "human",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH") # "BP" (Biological Process), "CC" (Cellular Component), or "MF" (Molecular Function)
+pdf("output/GO_hg38/dotplot_KEGG_cluster_ESC_NPC.pdf", width=12, height=18)
+dotplot(compKEGG, showCategory = 15, title = "KEGG pathway Enrichment Analysis")
+dev.off()
+
 
 
 
