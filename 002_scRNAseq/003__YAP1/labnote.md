@@ -1760,7 +1760,7 @@ library("sctransform")
 library("glmGamPoi")
 library("celldex")
 library("SingleR")
-
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
 
 # soupX decontamination
 ## Decontaminate one channel of 10X data mapped with cellranger
@@ -1839,20 +1839,20 @@ dev.off()
 
 ## After seeing the plot; add QC information in our seurat object
 srat_WT[['QC']] <- ifelse(srat_WT@meta.data$Is_doublet == 'True','Doublet','Pass')
-srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 1000 & srat_WT@meta.data$QC == 'Pass','Low_nFeature',srat_WT@meta.data$QC)
-srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 1000 & srat_WT@meta.data$QC != 'Pass' & srat_WT@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_WT@meta.data$QC,sep = ','),srat_WT@meta.data$QC)
+srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 2000 & srat_WT@meta.data$QC == 'Pass','Low_nFeature',srat_WT@meta.data$QC)
+srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 2000 & srat_WT@meta.data$QC != 'Pass' & srat_WT@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_WT@meta.data$QC,sep = ','),srat_WT@meta.data$QC)
 srat_WT[['QC']] <- ifelse(srat_WT@meta.data$percent.mt > 25 & srat_WT@meta.data$QC == 'Pass','High_MT',srat_WT@meta.data$QC)
-srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 1000 & srat_WT@meta.data$QC != 'Pass' & srat_WT@meta.data$QC != 'High_MT',paste('High_MT',srat_WT@meta.data$QC,sep = ','),srat_WT@meta.data$QC)
+srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 2000 & srat_WT@meta.data$QC != 'Pass' & srat_WT@meta.data$QC != 'High_MT',paste('High_MT',srat_WT@meta.data$QC,sep = ','),srat_WT@meta.data$QC)
 table(srat_WT[['QC']])
 ## 
 
 
 
 srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$Is_doublet == 'True','Doublet','Pass')
-srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 1000 & srat_cYAPKO@meta.data$QC == 'Pass','Low_nFeature',srat_cYAPKO@meta.data$QC)
-srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 1000 & srat_cYAPKO@meta.data$QC != 'Pass' & srat_cYAPKO@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_cYAPKO@meta.data$QC,sep = ','),srat_cYAPKO@meta.data$QC)
+srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 2000 & srat_cYAPKO@meta.data$QC == 'Pass','Low_nFeature',srat_cYAPKO@meta.data$QC)
+srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 2000 & srat_cYAPKO@meta.data$QC != 'Pass' & srat_cYAPKO@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_cYAPKO@meta.data$QC,sep = ','),srat_cYAPKO@meta.data$QC)
 srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$percent.mt > 25 & srat_cYAPKO@meta.data$QC == 'Pass','High_MT',srat_cYAPKO@meta.data$QC)
-srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 1000 & srat_cYAPKO@meta.data$QC != 'Pass' & srat_cYAPKO@meta.data$QC != 'High_MT',paste('High_MT',srat_cYAPKO@meta.data$QC,sep = ','),srat_cYAPKO@meta.data$QC)
+srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 2000 & srat_cYAPKO@meta.data$QC != 'Pass' & srat_cYAPKO@meta.data$QC != 'High_MT',paste('High_MT',srat_cYAPKO@meta.data$QC,sep = ','),srat_cYAPKO@meta.data$QC)
 table(srat_cYAPKO[['QC']])
 
 
@@ -1866,10 +1866,10 @@ srat_cYAPKO <- subset(srat_cYAPKO, subset = QC == 'Pass')
 srat_WT$condition <- "WT"
 srat_cYAPKO$condition <- "cYAPKO"
 
-XXXXXXXX DOUBLE CHECK HERE MAY NEED TO USE OTHER GENE LIST AS MICE !!! XXX
 
-s.genes <- cc.genes.updated.2019$s.genes
-g2m.genes <- cc.genes.updated.2019$g2m.genes
+
+mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
 
 
 ## NORMALIZE AND SCALE DATA BEFORE RUNNING CELLCYCLESORTING
@@ -1882,38 +1882,130 @@ all.genes <- rownames(srat_cYAPKO)
 srat_cYAPKO <- ScaleData(srat_cYAPKO, features = all.genes) # zero-centres and scales it
 
 ### CELLCYCLESORTING
-srat_WT <- CellCycleScoring(srat_WT, s.features = s.genes, g2m.features = g2m.genes)
+srat_WT <- CellCycleScoring(srat_WT, s.features = mmus_s, g2m.features = mmus_g2m)
 table(srat_WT[[]]$Phase)
-srat_cYAPKO <- CellCycleScoring(srat_cYAPKO, s.features = s.genes, g2m.features = g2m.genes)
+srat_cYAPKO <- CellCycleScoring(srat_cYAPKO, s.features = mmus_s, g2m.features = mmus_g2m)
 table(srat_cYAPKO[[]]$Phase)
 
 set.seed(42)
 
 # Run SCTransform
 ## Version OK with 2000 treshold RNA
+srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4612, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 10, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:10, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:10, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.25, verbose = FALSE, algorithm = 4)
+## perform OK; better than with 50 or 25 dim
+
+srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4612, verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 10, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:10, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:10, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.25, verbose = FALSE, algorithm = 4)
+## looks worst without regtression
+srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4612, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000, vst.flavor = "v2") %>% 
+    RunPCA(npcs = 10, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:10, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:10, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.25, verbose = FALSE, algorithm = 4)
+## looks better with vst.flavor = v2
+srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4612, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000, vst.flavor = "v2") %>% 
+    RunPCA(npcs = 50, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:50, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:50, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.2, verbose = FALSE, algorithm = 4)
+## seems perform OK. As the other
+srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4612, vars.to.regress = c("nCount_RNA","percent.mt","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000, vst.flavor = "v2") %>% 
+    RunPCA(npcs = 50, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:50, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:50, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.2, verbose = FALSE, algorithm = 4)
+## seems perform OK. 
+srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4612, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000, vst.flavor = "v2") %>% 
+    RunPCA(npcs = 20, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:20, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.2, verbose = FALSE, algorithm = 4)
+## seems perform good. 
+srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4612, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 2000) %>% 
+    RunPCA(npcs = 15, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:15, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:15, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.2, verbose = FALSE, algorithm = 4)
+## seems perform good.
+
+
+# Run on srat_WT condition only and find optimal parameters; expend this to both then??
+
+
+pdf("output/seurat/UMAP_control.pdf", width=10, height=6)
+DimPlot(srat_WT, reduction = "umap", label=TRUE)
+dev.off()
+
+
+
+## Check some marker genes 
+### Marker gene list
+epiblast = c("Nanog", "Pou5f1", "Dppa3") # watch out DPPA => Dppa3
+endoderm = c("Gata2", "Gata1", "Hesx1", "Gata6", "Eomes", "Foxa2", "Sox17", "Prdm1", "Cxcr4", "Foxa1", "Stat3", "Hnf4a", "Tfcp2l1", "Foxm1", "Foxa2", "Foxa3") # watch out Crcr4 => Cxcr4; Tfcp21 => Tfcp2l1 
+ectoderm = c("Rarb", "Sox9", "Sox1", "Sirt6", "Runx2", "Foxg1", "Sox2", "Nes", "Vim", "Id3", "Sox3", "Pou3f3", "Pou5f1", "Pou2f1") # Brn-1 => Pou3f3; 4-Oct =>  Pou5f1; Oct11 =>  Pou2f1
+mesoderm = c("Lef1", "Cdx2", "Hoxa1", "Mixl1", "Sp5", "T", "Hmgb3", "Gata5", "Hmga2", "Smad1", "Tal1", "Foxf1", "Gata2", "Nodal", "Kdr", "Dll1", "Lhx1", "Aplnr", "Tbx6", "Mesp1", "Has2", "Pdgfra", "Hand1", "Lef1", "Gata6") # Left1 => Lef1 
+
+
+
+DefaultAssay(srat_WT) <- "SCT" # For vizualization either use SCT or norm RNA
+pdf("output/seurat/FeaturePlot_SCT_control_epiblast.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = epiblast, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_endoderm.pdf", width=40, height=50)
+FeaturePlot(srat_WT, features = endoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_mesoderm.pdf", width=40, height=50)
+FeaturePlot(srat_WT, features = mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_ectoderm.pdf", width=40, height=50)
+FeaturePlot(srat_WT, features = ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+
+
+## QC plot
+## percent mt and rb
+pdf("output/seurat/VlnPlot_SCT_control_mt_rb.pdf", width=10, height=7)
+VlnPlot(srat_WT,features = c("percent.mt", "percent.rb")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+## RNA
+pdf("output/seurat/VlnPlot_SCT_control_count_feature.pdf", width=10, height=10)
+VlnPlot(srat_WT,features = c("nCount_RNA","nFeature_RNA")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+## cell cycle
+pdf("output/seurat/VlnPlot_SCT_control_cellCycle.pdf", width=10, height=10)
+VlnPlot(srat_WT,features = c("S.Score","G2M.Score")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()  
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Run SCTransform now with integration
+## Version OK with 2000 treshold RNA
 srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4948, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
     RunPCA(npcs = 25, verbose = FALSE)
 
 srat_cYAPKO <- SCTransform(srat_cYAPKO, method = "glmGamPoi", ncells = 3731, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
     RunPCA(npcs = 25, verbose = FALSE)
-
-
-# Run on srat_WT condition only and find optimal parameters; expend this to both then??
-
-XXX Will make calcul faster if work on srat_WT solely first for troubleshooting dimensions XXX
-
-
-
-
-
-
-
-
-f
-
-
-
-
 
 
 # Data integration (check active assay is 'SCT')
