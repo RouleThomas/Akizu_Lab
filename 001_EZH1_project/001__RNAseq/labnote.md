@@ -8327,6 +8327,133 @@ gene_id_name <- data.frame(gene_id, gene_name) %>%
   unique() %>%
   as_tibble()
 
+
+# ESC_NPC Timecourse WT vs HET and WT vs KO (associated with H3K27me3-dynamics WT genes)
+## Files
+output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering.txt
+output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_KO_H3K27me3postClustering.txt
+
+### WT HET
+cluster_1 = read_csv("output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering.txt") %>%
+  filter(cluster == 1) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+cluster_2 = read_csv("output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering.txt") %>%
+  filter(cluster == 2) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+cluster_3 = read_csv("output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering.txt") %>%
+  filter(cluster == 3) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+cluster_4 = read_csv("output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering.txt") %>%
+  filter(cluster == 4) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+cluster_5 = read_csv("output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering.txt") %>%
+  filter(cluster == 5) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+
+
+ego <- enrichGO(gene = as.character(cluster_1$entrez_id), 
+                keyType = "ENTREZID",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+                
+pdf("output/GO_hg38/dotplot_BP_WT_HET_H3K27me3postClustering_cluster_1.pdf", width=7, height=7)
+pdf("output/GO_hg38/dotplot_BP_WT_HET_H3K27me3postClustering_cluster_2.pdf", width=7, height=7)
+pdf("output/GO_hg38/dotplot_BP_WT_HET_H3K27me3postClustering_cluster_2.pdf", width=7, height=7)
+pdf("output/GO_hg38/dotplot_BP_WT_HET_H3K27me3postClustering_cluster_3.pdf", width=7, height=7)
+pdf("output/GO_hg38/dotplot_BP_WT_HET_H3K27me3postClustering_cluster_4.pdf", width=7, height=7)
+pdf("output/GO_hg38/dotplot_BP_WT_HET_H3K27me3postClustering_cluster_5.pdf", width=7, height=7)
+dotplot(ego, showCategory=20)
+dev.off()
+
+
+enrichKEGG <- enrichKEGG(gene   = as.character(cluster_4$entrez_id),
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
+
+pdf("output/GO_hg38/dotplot_KEGG_WT_HET_H3K27me3postClustering_cluster_1.pdf", width=7, height=5)
+dotplot(enrichKEGG, showCategory=20)
+dev.off()
+
+
+### WT KO
+
+
+cluster_1 = read_csv("output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_KO_H3K27me3postClustering.txt") %>%
+  filter(cluster == 1) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+cluster_2 = read_csv("output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_KO_H3K27me3postClustering.txt") %>%
+  filter(cluster == 2) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+cluster_3 = read_csv("output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_KO_H3K27me3postClustering.txt") %>%
+  filter(cluster == 3) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+cluster_4 = read_csv("output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_KO_H3K27me3postClustering.txt") %>%
+  filter(cluster == 4) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+cluster_5 = read_csv("output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_KO_H3K27me3postClustering.txt") %>%
+  filter(cluster == 5) %>%
+  mutate(gene = sub("\\..*", "", gene), # Remove version number
+  entrez_id = mapIds(org.Hs.eg.db, keys = gene, column = "ENTREZID", keytype = "ENSEMBL", multiVals = "first")) %>%
+  dplyr::select(entrez_id) %>%
+  na.omit()
+
+
+ego <- enrichGO(gene = as.character(cluster_5$entrez_id), 
+                keyType = "ENTREZID",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+                
+pdf("output/GO_hg38/dotplot_BP_WT_KO_H3K27me3postClustering_cluster_1.pdf", width=7, height=7)
+pdf("output/GO_hg38/dotplot_BP_WT_KO_H3K27me3postClustering_cluster_2.pdf", width=7, height=7)
+pdf("output/GO_hg38/dotplot_BP_WT_KO_H3K27me3postClustering_cluster_3.pdf", width=7, height=7)
+pdf("output/GO_hg38/dotplot_BP_WT_KO_H3K27me3postClustering_cluster_4.pdf", width=7, height=7)
+pdf("output/GO_hg38/dotplot_BP_WT_KO_H3K27me3postClustering_cluster_5.pdf", width=7, height=7)
+dotplot(ego, showCategory=20)
+dev.off()
+
+
+enrichKEGG <- enrichKEGG(gene   = as.character(cluster_4$entrez_id),
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
+
+pdf("output/GO_hg38/dotplot_KEGG_WT_HET_H3K27me3postClustering_cluster_1.pdf", width=7, height=5)
+dotplot(enrichKEGG, showCategory=20)
+dev.off()
+
+
 # ESC vs NPC
 ## Import genes_cluster list 
 

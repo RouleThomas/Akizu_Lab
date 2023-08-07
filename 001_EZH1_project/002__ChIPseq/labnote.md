@@ -8841,7 +8841,7 @@ Median size (calculated with `awk '{print $3 - $2}' your_file.bed | sort -n | aw
 
 
 
-Let's now check **peak location to feature using ChIPseeker**; check the following:
+Let's now check **peak location to feature using ChIPseeker + GO of associated genes**; check the following:
 - ESC and NPC all peak (use MACS2 unique)
 - The one that gain (use THOR qval25 positive)
 - The one that lost (use THOR qval25 negative)
@@ -8893,22 +8893,55 @@ pdf("output/ChIPseeker/annotation_barplot_cl1_2_3_4.pdf", width=14, height=5)
 plotAnnoBar(peakAnnoList)
 dev.off()
 
-# Run GO analysis
-### One by one
+
+## Get annotation data frame
+cl_1_2_annot <- as.data.frame(peakAnnoList[["cl_1_2"]]@anno)
+cl_3_4_annot <- as.data.frame(peakAnnoList[["cl_3_4"]]@anno)
+
+## Convert entrez gene IDs to gene symbols
+cl_1_2_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = cl_1_2_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+cl_3_4_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = cl_3_4_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+
+cl_1_2_annot$gene <- mapIds(org.Hs.eg.db, keys = cl_1_2_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+cl_3_4_annot$gene <- mapIds(org.Hs.eg.db, keys = cl_3_4_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
 
 
-XXX
+## Save output table
+write.table(cl_1_2_annot, file="output/ChIPseeker/annotation_deepTools_cl_1_2.txt", sep="\t", quote=F, row.names=F)
+write.table(cl_3_4_annot, file="output/ChIPseeker/annotation_deepTools_cl_3_4.txt", sep="\t", quote=F, row.names=F)
+
+# GO-associated genes
+cl_1_2_annot_gene = cl_1_2_annot %>%
+  filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+cl_3_4_annot_gene = cl_3_4_annot %>%
+  filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
 
 
-### This below failed
-compGO <- compareCluster(geneCluster = genes, 
-                         fun = "enrichGO",
-                         OrgDb = org.Hs.eg.db,
-                         pvalueCutoff  = 0.05, 
-                         pAdjustMethod = "BH")
-pdf("output/GO_hg38/dotplot_BP_deeptools_cl1_2_3_4.pdf", width=14, height=5)
-dotplot(compGO, showCategory = 20, title = "GO Enrichment Analysis")
+
+ego <- enrichGO(gene = as.character(cl_3_4_annot_gene$geneSymbol), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "MF",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+
+pdf("output/ChIPseeker/dotplot_MF_deepTools_cl_1_2.pdf", width=7, height=7)
+pdf("output/ChIPseeker/dotplot_MF_deepTools_cl_3_4.pdf", width=7, height=7)
+dotplot(ego, showCategory=20)
 dev.off()
+
+enrichKEGG <- enrichKEGG(gene   = as.character(cl_3_4_annot_gene$geneId),
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
+
+pdf("output/ChIPseeker/dotplot_KEGG_deepTools_cl_1_2.pdf", width=7, height=5)
+pdf("output/ChIPseeker/dotplot_KEGG_deepTools_cl_3_4.pdf", width=7, height=7)
+dotplot(enrichKEGG, showCategory=20)
+dev.off()
+
+
+
 ```
 
 --> At ESC; much more genes than intergenic regions are H3K27me3-enriched; as compare to NPC.
