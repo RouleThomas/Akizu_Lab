@@ -1562,6 +1562,53 @@ FeaturePlot(humangastruloid.combined.sct, features = c("ANXA1","AMOTL2","CCN1","
 dev.off()
 
 
+### Check Gata6 and CDX2 (from after 0801 meeting)
+
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_GATA6_CDX2_V2.pdf", width=10, height=10)
+FeaturePlot(humangastruloid.combined.sct, features = c("GATA6","CDX2"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+pdf("output/seurat/VlnPlot_SCT_UNTREATED72hr_DASATINIB72hr_GATA6_CDX2_V2.pdf", width=10, height=7)
+VlnPlot(humangastruloid.combined.sct, features = c("GATA6","CDX2"), split.by = "condition") & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+
+##### overlay both genes
+humangastruloid.untreated <- subset(humangastruloid.combined.sct, subset = condition == "UNTREATED72hr")
+
+# Define a color scale for each gene
+transparent_red <- scales::alpha("red", 0.5)
+transparent_blue <- scales::alpha("blue", 0.5)
+# Generate plots without displaying
+p1 <- FeaturePlot(humangastruloid.untreated , features = "GATA6", max.cutoff = 3, cols = c("low" = "transparent", "high" = transparent_red), pt.size = 1.5, raster = FALSE)
+p2 <- FeaturePlot(humangastruloid.untreated , features = "CDX2", max.cutoff = 3, cols = c("low" = "transparent", "high" = transparent_blue), pt.size = 1.5, raster = FALSE)
+combined_plot <- CombinePlots(plots = list(p1, p2))
+
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_GATA6_CDX2_overlay_V2.pdf", width=10, height=5)
+print(combined_plot)
+dev.off()
+
+
+humangastruloid.dasatinib <- subset(humangastruloid.combined.sct, subset = condition == "DASATINIB72hr")
+
+# Define a color scale for each gene
+transparent_red <- scales::alpha("red", 0.5)
+transparent_blue <- scales::alpha("blue", 0.5)
+# Generate plots without displaying
+p1 <- FeaturePlot(humangastruloid.dasatinib , features = "GATA6", max.cutoff = 3, cols = c("low" = "transparent", "high" = transparent_red), pt.size = 1.5, raster = FALSE)
+p2 <- FeaturePlot(humangastruloid.dasatinib , features = "CDX2", max.cutoff = 3, cols = c("low" = "transparent", "high" = transparent_blue), pt.size = 1.5, raster = FALSE)
+combined_plot <- CombinePlots(plots = list(p1, p2))
+
+
+pdf("output/seurat/FeaturePlot_SCT_DASATINIB72hr_GATA6_CDX2_overlay_V2.pdf", width=10, height=5)
+print(combined_plot)
+dev.off()
+
+
+
+
 ### Check top 10 downredulated genes in YAP1KO bulk-regulated genes (table shared after 0801 meeting):
 ## intitial list top 1-10: c('ZNF558','LINC02693','NXPH2','C6orf141','ZNF736','GCNT4','HHLA1','GABRA1','TEK','ZNF502')
 ## top10-20: c('LHX8','SCG2','SLFN12','LHFPL6','TNNT2','LINC00458','TXNRD2','CXCL14','AMOTL2','TMC1')
