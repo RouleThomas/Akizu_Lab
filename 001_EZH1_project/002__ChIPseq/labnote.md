@@ -8894,6 +8894,13 @@ plotAnnoBar(peakAnnoList)
 dev.off()
 
 # Run GO analysis
+### One by one
+
+
+XXX
+
+
+### This below failed
 compGO <- compareCluster(geneCluster = genes, 
                          fun = "enrichGO",
                          OrgDb = org.Hs.eg.db,
