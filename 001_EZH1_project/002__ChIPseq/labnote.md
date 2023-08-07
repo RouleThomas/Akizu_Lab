@@ -8859,7 +8859,7 @@ txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
 library("clusterProfiler")
 library("meshes")
 library("ReactomePA")
-
+library("org.Hs.eg.db")
 
 # Import peaks
 peaks_ESC_macs2 =  read.table('output/macs2_unique/broad_blacklist_qval2.30103/ESC_WT_H3K27me3_pool_peaks.broadPeak') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9) 
@@ -8896,10 +8896,10 @@ dev.off()
 # Run GO analysis
 compGO <- compareCluster(geneCluster = genes, 
                          fun = "enrichGO",
-                         organism = "human",
+                         OrgDb = org.Hs.eg.db,
                          pvalueCutoff  = 0.05, 
                          pAdjustMethod = "BH")
-pdf("output/ChIPseeker/annotation_barplot_cl1_2_3_4.pdf", width=14, height=5)
+pdf("output/GO_hg38/dotplot_BP_deeptools_cl1_2_3_4.pdf", width=14, height=5)
 dotplot(compGO, showCategory = 20, title = "GO Enrichment Analysis")
 dev.off()
 ```
