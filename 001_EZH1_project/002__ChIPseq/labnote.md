@@ -8847,6 +8847,7 @@ Let's now check **peak location to feature using ChIPseeker + GO of associated g
 - The one that lost (use THOR qval25 negative)
 
 
+
 ```bash
 conda activate deseq2
 ```
@@ -8948,9 +8949,16 @@ dev.off()
 ----> In agreement; most of the regions that lose H3K27me3 are gene regions (= become activated from ESC to NPC)
 
 
+Let's count the number of genes assigned for cl1_2 and cl3_4 with `awk -F'\t' '($column_number ~ /Promoter \(<=1kb\)|Promoter \(1-2kb\)|Promoter \(2-3kb\)|5\' UTR/){print $gene_symbol_column_number}' input.txt | sort | uniq | wc -l`
 
+```bash
+# Files
+output/ChIPseeker/annotation_deepTools_cl_1_2.txt
+output/ChIPseeker/annotation_deepTools_cl_3_4.txt
 
-
+awk -F'\t' '($16 ~ /Promoter \(<=1kb\)|Promoter \(1-2kb\)|Promoter \(2-3kb\)|5'\'' UTR/){print $25}' output/ChIPseeker/annotation_deepTools_cl_1_2.txt | sort | uniq | wc -l # 1,438
+awk -F'\t' '($16 ~ /Promoter \(<=1kb\)|Promoter \(1-2kb\)|Promoter \(2-3kb\)|5'\'' UTR/){print $25}' output/ChIPseeker/annotation_deepTools_cl_3_4.txt | sort | uniq | wc -l # 3,649
+```
 
 
 
