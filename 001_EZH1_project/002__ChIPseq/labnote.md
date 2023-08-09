@@ -5605,11 +5605,20 @@ sbatch scripts/THOR_KO_ESCvsNPC_UniqueBamTMM.sh # 1681115 ok
 sbatch scripts/THOR_WT_NPCvs2dN_UniqueBamTMM.sh # 1700276 ok
 sbatch scripts/THOR_HET_NPCvs2dN_UniqueBamTMM.sh # 1700332 ok
 sbatch scripts/THOR_KO_NPCvs2dN_UniqueBamTMM.sh # 1700357 ok
+#### Time-effect for KO and HET, UniqueBamDiffBindTMM norm
+sbatch scripts/THOR_HET_ESCvsNPC_UniqueBamDiffBindTMM.sh # 3833376
+sbatch scripts/THOR_KO_ESCvsNPC_UniqueBamDiffBindTMM.sh # 3833447
+
 #### Genotype comparison at NPC and 2dN, Default TMM-normalization (NO SF)
 sbatch scripts/THOR_NPC_WTvsHET_UniqueBamTMM.sh # 1681129 ok
 sbatch scripts/THOR_NPC_WTvsKO_UniqueBamTMM.sh # 1681138 ok
 sbatch scripts/THOR_2dN_WTvsHET_UniqueBamTMM.sh # 1681142 ok
 sbatch scripts/THOR_2dN_WTvsKO_UniqueBamTMM.sh # 1681198 ok
+
+
+
+
+
 
 ## housekeeping genes-norm
 #### time-effect
@@ -5671,7 +5680,15 @@ thor_splitted %>%
   ggtitle("WT_ESC vs NPC") +
   theme_bw()
 dev.off()
-
+pdf("output/THOR/THOR_WT_ESCvsNPC_UniqueBamDiffBindTMM/log2FC_qval10.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 10) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("WT_ESC vs NPC") +
+  theme_bw()
+dev.off()
 
 # WT_ESCvsNPC_DiffBindTMM
 diffpeaks <- read_tsv("output/THOR/THOR_WT_ESCvsNPC_DiffBindTMM/WTESCvsNPCDiffBindTMM-diffpeaks.bed",
@@ -5834,9 +5851,9 @@ thor_splitted %>%
   ggtitle("WT_ESC vs NPC") +
   theme_bw()
 dev.off()
-pdf("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/log2FC_qval25.pdf", width=14, height=14)
+pdf("output/THOR/THOR_WT_ESCvsNPC_UniqueBamTMM/log2FC_qval20.pdf", width=14, height=14)
 thor_splitted %>%
-  filter(qval > 25) %>%
+  filter(qval > 20) %>%
   ggplot(aes(x = log2(FC))) +
   geom_histogram() +
   scale_x_continuous(breaks = seq(-5, 3, 1)) +
@@ -7028,6 +7045,15 @@ ESCvsNPC_annot_lost = tibble(ESCvsNPC_annot) %>%
 ESCvsNPC_annot_gain_lost = ESCvsNPC_annot_gain %>% 
     bind_rows(ESCvsNPC_annot_lost) 
 
+ESCvsNPC_annot_gain = tibble(ESCvsNPC_annot) %>%
+    filter(FC > 8, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(H3K27me3 = "gain")
+ESCvsNPC_annot_lost = tibble(ESCvsNPC_annot) %>%
+    filter(FC < (1/8), annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(H3K27me3 = "lost")
+ESCvsNPC_annot_gain_lost = ESCvsNPC_annot_gain %>% 
+    bind_rows(ESCvsNPC_annot_lost) 
+
 
 # Import RNAseq deseq2 output
 ## Raw FC ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
@@ -7044,6 +7070,11 @@ RNA_expression = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_KO_ESC_v
     dplyr::select(gene, baseMean,log2FoldChange,padj)
 ## Fitlered FC ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
 #### TIME-EFFECT
+RNA_expression = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_WT_ESC_vs_WT_NPC.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj) %>%
+    filter(log2FoldChange >= 1 | log2FoldChange <= -1)
+
 RNA_expression = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_WT_ESC_vs_WT_NPC.txt')) %>%
     separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
     dplyr::select(gene, baseMean,log2FoldChange,padj) %>%
@@ -7102,6 +7133,15 @@ ESCvsNPC_annot_gain_lost_RNA = ESCvsNPC_annot_gain_lost %>%
            significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
     unique()
 
+ESCvsNPC_annot_gain_lost_RNA = ESCvsNPC_annot_gain_lost %>% 
+    left_join(RNA_expression) %>%
+    dplyr::select(gene, H3K27me3,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.001) %>%  # add signif TRUE if 0.05
+    unique()
 # Volcano plot
 count_data <- ESCvsNPC_annot_gain_lost_RNA %>%
     group_by(H3K27me3, significance) %>%
@@ -7129,6 +7169,7 @@ pdf("output/ChIPseeker/THOR_qval20_WT_NPCvsESC_TMM_expression_promoterAnd5_FC05.
 
 pdf("output/ChIPseeker/THOR_qval15_WT_NPCvsESC_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE 
 pdf("output/ChIPseeker/THOR_qval25_WT_NPCvsESC_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE 
+
 pdf("output/ChIPseeker/THOR_qval30_WT_NPCvsESC_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE 
 
 pdf("output/ChIPseeker/THOR_qval25_HET_NPCvsESC_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE 
@@ -7139,6 +7180,23 @@ pdf("output/ChIPseeker/THOR_qval40_WT_ESCvsNPC_uniqueBAMhousekeep_expression.pdf
 pdf("output/ChIPseeker/THOR_qval60_WT_ESCvsNPC_uniqueBAMhousekeep_expression_promoterAnd5.pdf", width=7, height=4) # CHANGE TITLE 
 pdf("output/ChIPseeker/THOR_qval50_HET_ESCvsNPC_uniqueBAMhousekeep_expression_promoterAnd5.pdf", width=7, height=4) # CHANGE TITLE 
 pdf("output/ChIPseeker/THOR_qval50_KO_ESCvsNPC_uniqueBAMhousekeep_expression_promoterAnd5.pdf", width=7, height=4) # CHANGE TITLE 
+
+
+pdf("output/ChIPseeker/THOR_qval20_WT_NPCvsESC_UniqueBamTMM_expression_promoterAnd5.pdf", width=7, height=4)  # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval25_WT_NPCvsESC_UniqueBamTMM_expression_promoterAnd5.pdf", width=7, height=4)  # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval15_WT_NPCvsESC_UniqueBamTMM_expression_promoterAnd5.pdf", width=7, height=4)  # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval15_FC2_WT_NPCvsESC_UniqueBamTMM_expression_promoterAnd5.pdf", width=7, height=4)  # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval15_FC4_WT_NPCvsESC_UniqueBamTMM_expression_promoterAnd5.pdf", width=7, height=4)  # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval15_FC8_WT_NPCvsESC_UniqueBamTMM_expression_promoterAnd5.pdf", width=7, height=4)  # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval15_WT_NPCvsESC_UniqueBamTMM_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval15_WT_NPCvsESC_UniqueBamTMM_expression_promoterAnd5_FC1.pdf", width=7, height=4)  # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval15_WT_NPCvsESC_UniqueBamTMM_expression_promoterAnd5_qval0.01.pdf", width=7, height=4)  # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval15_WT_NPCvsESC_UniqueBamTMM_expression_promoterAnd5_qval0.001.pdf", width=7, height=4)  # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval15_WT_NPCvsESC_UniqueBamTMM_expression_promoterAnd5_qval0.0001.pdf", width=7, height=4)  # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval15_WT_NPCvsESC_UniqueBamTMM_expression_promoterAnd5_qval0.00001.pdf", width=7, height=4)  # CHANGE TITLE 
+pdf("output/ChIPseeker/THOR_qval15_WT_NPCvsESC_UniqueBamTMM_expression_promoterAnd5_FC1_qval0.001.pdf", width=7, height=4)  # CHANGE TITLE 
+
+
 
 ## GENOTYPE-EFFECT
 pdf("output/ChIPseeker/THOR_qval25_ESC_WTvsHET_TMM_expression_promoterAnd5_FC05.pdf", width=7, height=4) # CHANGE TITLE 
@@ -8972,6 +9030,7 @@ The idea here is check whether one of our bigiwg normalization is in agreement w
   - bigwig_UniqueBamUniqueSF_DiffBind_TMM (WT in agreement with THOR-diff peaks)
 
 ***NOTE: Would be great to troubleshoot the THOR-bigwig that uses ChIPseqSpikeInFree scaling factor...***
+--> Related to the NOTE; all file THOR with ChIPseqSPikeInFree are very bad (usually all peaks are LOST from ESC to NPC). One file; the one with DiffBindTMM norm looks OK (`UniqueBamDiffBindTMM`); let's see how it looks
 
 ##### HET
 
@@ -9006,10 +9065,12 @@ conda activate deeptools
 sbatch scripts/matrix_gene_2kb_bigwig_DiffBind_TMM_HETcluster1.sh # 3822300
 sbatch scripts/matrix_gene_2kb_bigwig_DiffBind_TMM_HETcluster3.sh # 3822310
 sbatch scripts/matrix_gene_2kb_bigwig_DiffBind_TMM_HETcluster4.sh # 3822320
+sbatch scripts/matrix_gene_2kb_bigwig_DiffBind_TMM_HETcluster5.sh # 3827747
 
 sbatch scripts/matrix_gene_2kb_bigwig_UniqueBamUniqueSF_DiffBind_TMM_HETcluster1.sh # 3822671
 sbatch scripts/matrix_gene_2kb_bigwig_UniqueBamUniqueSF_DiffBind_TMM_HETcluster3.sh # 3822902
 sbatch scripts/matrix_gene_2kb_bigwig_UniqueBamUniqueSF_DiffBind_TMM_HETcluster4.sh # 3822913
+sbatch scripts/matrix_gene_2kb_bigwig_UniqueBamUniqueSF_DiffBind_TMM_HETcluster5.sh # 3827755
 
 sbatch scripts/matrix_gene_2kb_bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF_HETcluster1.sh # 3822991
 sbatch scripts/matrix_gene_2kb_bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF_HETcluster3.sh # 3822999
@@ -9018,20 +9079,27 @@ sbatch scripts/matrix_gene_2kb_bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_unique
 sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamTMM_HETcluster1.sh # 3823034
 sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamTMM_HETcluster3.sh # 3823037
 sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamTMM_HETcluster4.sh # 3823048
+sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamTMM_HETcluster5.sh # 3827801
 
+sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamDiffBindTMM_HETcluster1.sh # interactive
+sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamDiffBindTMM_HETcluster2.sh #  interactive
+sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamDiffBindTMM_HETcluster3.sh # interactive
+sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamDiffBindTMM_HETcluster4.sh # interactive
 
 
 ```
 --> Conclusion:
-  - bigwig from THOR; works for cluster 3 only, not with cluster1 and 4. 
+  - bigwig from THOR; works for cluster 3 only, not with cluster1 and 4. But only one that works for cluster5
   - bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF (WT in agreement with THOR-diff peaks); do not work (huge increase of H3K27me3 at NPC for all; mess up everythings)
-  - bigwig_DiffBind_TMM (WT in agreement with THOR-diff peaks); work with cluster1/3, not with cluster4. Show much more H3K27me3 at ESC in HET
-  - bigwig_UniqueBamUniqueSF_DiffBind_TMM (WT in agreement with THOR-diff peaks) work with cluster1/3, not with cluster4. Show much more H3K27me3 at ESC in HET
+  - bigwig_DiffBind_TMM (WT in agreement with THOR-diff peaks); work with cluster1/3, not with cluster4. Show much more H3K27me3 at ESC in HET. Do not work for cluster5
+  - bigwig_UniqueBamUniqueSF_DiffBind_TMM (WT in agreement with THOR-diff peaks) work with cluster1/3, not with cluster4. Show much more H3K27me3 at ESC in HET. Do not work for cluster5
 
 ----> bigwig_DiffBind_TMM and bigwig_UniqueBamUniqueSF_DiffBind_TMM; perform the best, the more in agreement with gene expression. However; profile HET at ESC looks a bit weird; it s like super H3K27me3 as compare to WT... Like everywhere!
 ------> If we are able to show that there is overall MORE H3K27me3 in HET at ESC, by WB?; we re good!
 
+----> After more consideration; THOR is the only option in agreement with cluster5; overall it seems to perform better...
 
+--> For the WT `THOR_ESCvsNPC_UniqueBamDiffBindTMM` seems to work pretty well. Let's see how it goes with the HET! We could use THOR TMM-method to find diff. peaks; and then use THOR normalize with ChIPseqSpikeInFree-TMM normalize scaling factors to generate the bigwig for all files.
 
 
 
