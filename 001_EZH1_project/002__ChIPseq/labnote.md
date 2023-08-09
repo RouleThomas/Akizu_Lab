@@ -9081,13 +9081,13 @@ sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamTMM_HETcluster3.sh 
 sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamTMM_HETcluster4.sh # 3823048
 sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamTMM_HETcluster5.sh # 3827801
 
-sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamDiffBindTMM_HETcluster1.sh # interactive
-sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamDiffBindTMM_HETcluster2.sh #  interactive
-sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamDiffBindTMM_HETcluster3.sh # interactive
-sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamDiffBindTMM_HETcluster4.sh # interactive
-
-
+sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamDiffBindTMM_HETcluster1.sh # 3845499
+sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamDiffBindTMM_HETcluster2.sh # 3845501
+sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamDiffBindTMM_HETcluster3.sh # 3845503
+sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamDiffBindTMM_HETcluster4.sh # 3845504
+sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamDiffBindTMM_HETcluster5.sh
 ```
+
 --> Conclusion:
   - bigwig from THOR; works for cluster 3 only, not with cluster1 and 4. But only one that works for cluster5
   - bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF (WT in agreement with THOR-diff peaks); do not work (huge increase of H3K27me3 at NPC for all; mess up everythings)
@@ -9100,6 +9100,10 @@ sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamDiffBindTMM_HETclus
 ----> After more consideration; THOR is the only option in agreement with cluster5; overall it seems to perform better...
 
 --> For the WT `THOR_ESCvsNPC_UniqueBamDiffBindTMM` seems to work pretty well. Let's see how it goes with the HET! We could use THOR TMM-method to find diff. peaks; and then use THOR normalize with ChIPseqSpikeInFree-TMM normalize scaling factors to generate the bigwig for all files.
+----> Seems to work well for HET as well; even though look overall VERY more H3K27me3 at ESC; not sure that is relevant; but lets say yes lol...
+
+
+
 
 
 
