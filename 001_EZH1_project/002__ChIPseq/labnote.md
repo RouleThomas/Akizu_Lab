@@ -8940,9 +8940,6 @@ pdf("output/ChIPseeker/dotplot_KEGG_deepTools_cl_1_2.pdf", width=7, height=5)
 pdf("output/ChIPseeker/dotplot_KEGG_deepTools_cl_3_4.pdf", width=7, height=7)
 dotplot(enrichKEGG, showCategory=20)
 dev.off()
-
-
-
 ```
 
 --> At ESC; much more genes than intergenic regions are H3K27me3-enriched; as compare to NPC.
@@ -8959,6 +8956,92 @@ output/ChIPseeker/annotation_deepTools_cl_3_4.txt
 awk -F'\t' '($16 ~ /Promoter \(<=1kb\)|Promoter \(1-2kb\)|Promoter \(2-3kb\)|5'\'' UTR/){print $25}' output/ChIPseeker/annotation_deepTools_cl_1_2.txt | sort | uniq | wc -l # 1,438
 awk -F'\t' '($16 ~ /Promoter \(<=1kb\)|Promoter \(1-2kb\)|Promoter \(2-3kb\)|5'\'' UTR/){print $25}' output/ChIPseeker/annotation_deepTools_cl_3_4.txt | sort | uniq | wc -l # 3,649
 ```
+
+
+#### Generate deepTools-heatmap of H3K27me3 in WT/HET/KO at ESC/NPC for (H3K27me3-WT + TC-regulated) clustered genes
+
+The idea here is check whether one of our bigiwg normalization is in agreement with the clustered genes (H3K27me3-regulated in WT + TC-significant between genotypes):
+- Convert list of clustered genes to gtf
+- Generate deepTools heatmaps using various bigwig:
+  - bigwig from THOR
+  - bigwig_ChIPseqSpikeInFree (WT in agreement with THOR-diff peaks)
+  - bigwig_ChIPseqSpikeInFree_BamToBedToBigwig (WT in agreement with THOR-diff peaks)
+  - bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF (WT in agreement with THOR-diff peaks)
+  - bigwig_DiffBind_TMM (WT in agreement with THOR-diff peaks)
+  - bigwig_DiffBind_LIB ( *NO very bad* )
+  - bigwig_UniqueBamUniqueSF_DiffBind_TMM (WT in agreement with THOR-diff peaks)
+
+***NOTE: Would be great to troubleshoot the THOR-bigwig that uses ChIPseqSpikeInFree scaling factor...***
+
+##### HET
+
+Generate **GTF from Bed (convert bed to gtf)**:
+
+```bash
+conda activate BedToBigwig
+# File with clustered genes
+../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering.txt
+## Filter the different clusters (from 1 to 5)
+awk -F, '$3 == 1 {gsub("\"", ""); print $1}' ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering.txt > ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering_cluster1.txt
+awk -F, '$3 == 2 {gsub("\"", ""); print $1}' ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering.txt > ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering_cluster2.txt
+awk -F, '$3 == 3 {gsub("\"", ""); print $1}' ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering.txt > ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering_cluster3.txt
+awk -F, '$3 == 4 {gsub("\"", ""); print $1}' ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering.txt > ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering_cluster4.txt
+awk -F, '$3 == 5 {gsub("\"", ""); print $1}' ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering.txt > ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering_cluster5.txt
+
+
+## Filter the gtf to keep only gene from cluster (order preserved; so no need sort; unique)
+grep -F -f ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering_cluster1.txt meta/ENCFF159KBI.gtf > ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering_cluster1.gtf
+grep -F -f ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering_cluster2.txt meta/ENCFF159KBI.gtf > ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering_cluster2.gtf
+grep -F -f ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering_cluster3.txt meta/ENCFF159KBI.gtf > ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering_cluster3.gtf
+grep -F -f ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering_cluster4.txt meta/ENCFF159KBI.gtf > ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering_cluster4.gtf
+grep -F -f ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering_cluster5.txt meta/ENCFF159KBI.gtf > ../001__RNAseq/output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET_H3K27me3postClustering_cluster5.gtf
+```
+
+Now generate deepTools plot:
+
+```bash
+
+## deepTools plot
+conda activate deeptools
+sbatch scripts/matrix_gene_2kb_bigwig_DiffBind_TMM_HETcluster1.sh # 3822300
+sbatch scripts/matrix_gene_2kb_bigwig_DiffBind_TMM_HETcluster3.sh # 3822310
+sbatch scripts/matrix_gene_2kb_bigwig_DiffBind_TMM_HETcluster4.sh # 3822320
+
+sbatch scripts/matrix_gene_2kb_bigwig_UniqueBamUniqueSF_DiffBind_TMM_HETcluster1.sh # 3822671
+sbatch scripts/matrix_gene_2kb_bigwig_UniqueBamUniqueSF_DiffBind_TMM_HETcluster3.sh # 3822902
+sbatch scripts/matrix_gene_2kb_bigwig_UniqueBamUniqueSF_DiffBind_TMM_HETcluster4.sh # 3822913
+
+sbatch scripts/matrix_gene_2kb_bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF_HETcluster1.sh # 3822991
+sbatch scripts/matrix_gene_2kb_bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF_HETcluster3.sh # 3822999
+sbatch scripts/matrix_gene_2kb_bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF_HETcluster4.sh # 3823013
+
+sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamTMM_HETcluster1.sh # 3823034
+sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamTMM_HETcluster3.sh # 3823037
+sbatch scripts/matrix_gene_2kb_bigwig_THOR_ESCvsNPC_UniqueBamTMM_HETcluster4.sh # 3823048
+
+
+
+```
+--> Conclusion:
+  - bigwig from THOR; works for cluster 3 only, not with cluster1 and 4. 
+  - bigwig_ChIPseqSpikeInFree_BamToBedToBigwig_uniqueSF (WT in agreement with THOR-diff peaks); do not work (huge increase of H3K27me3 at NPC for all; mess up everythings)
+  - bigwig_DiffBind_TMM (WT in agreement with THOR-diff peaks); work with cluster1/3, not with cluster4. Show much more H3K27me3 at ESC in HET
+  - bigwig_UniqueBamUniqueSF_DiffBind_TMM (WT in agreement with THOR-diff peaks) work with cluster1/3, not with cluster4. Show much more H3K27me3 at ESC in HET
+
+----> bigwig_DiffBind_TMM and bigwig_UniqueBamUniqueSF_DiffBind_TMM; perform the best, the more in agreement with gene expression. However; profile HET at ESC looks a bit weird; it s like super H3K27me3 as compare to WT... Like everywhere!
+------> If we are able to show that there is overall MORE H3K27me3 in HET at ESC, by WB?; we re good!
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
