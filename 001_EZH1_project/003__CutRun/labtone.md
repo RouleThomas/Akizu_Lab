@@ -3319,25 +3319,50 @@ Many different tools:
 
 - Re-generate alignment
 - call peak with MACS2
-- Proceed with DiffBind and compare the nb of diff bound sites identified (compare with )
+- Proceed with DiffBind; collect SF
+- Proceed with THOR using DiffBind_TMM SF and compare the nb of diff bound sites identified (compare with )
 
 --> test this ONLY if the ChIP show better results when using uniquely aligned reads...
 ----> That is the case, ChIP perform better with uniquely aligned reads...
 
 Let's generate here uniquely aligned reads as for the ChIP, and then use again THOR to identify diff. bound sites and compared if better results, more in agreement with expression.: **test THOR with new SF, previous SF, no-SF**
 
-
+Generate **alignemnt**
 ```bash
-sbatch scripts/samtools_unique_1.sh # 1681363
-sbatch scripts/samtools_unique_2.sh # 1681364
+sbatch scripts/samtools_unique_1.sh # 1681363 ok
+sbatch scripts/samtools_unique_2.sh # 1681364 ok
 ```
 
+Now let's use **MACS2** to call for peaks in these files in `output/macs2_unique`:
+
+```bash
+conda activate macs2
+# replicates per replicate
+sbatch scripts/macs2_unique.sh # 3869681
+
+# replicates pooled together
+sbatch scripts/macs2_unique_pool.sh # 3869693
+```
 
 --> XXX
 
 Re-calculate new scaling factors, based on these new BAM file...:
 
 XXXX
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

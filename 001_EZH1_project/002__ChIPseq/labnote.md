@@ -5521,6 +5521,46 @@ DiffBind_TMM SF from **uniquely aligned bam** (used to generate `output/bamtobig
 - NPC_WT_H3K27me3_R1 = 1.45
 - NPC_WT_H3K27me3_R2 = 1.51
 
+**ChIPseqSpikeInFree SF_RAW** But Reciprocal!
+- 2dN_HET_H3K27me3_R1 = 1.97 = 0.5076142131979695
+- 2dN_HET_H3K27me3_R2 = 1.75 = 0.5714285714285714
+- 2dN_KO_H3K27me3_R1 = 1.46 = 0.6849315068493151
+- 2dN_KO_H3K27me3_R2 = 1 = 1
+- 2dN_WT_H3K27me3_R1 = 1.29 = 0.7751937984496124
+- 2dN_WT_H3K27me3_R2 = 1.69 = 0.5917159763313609
+- ESC_HET_H3K27me3_R1 = 10.51 = 0.0951474785918173
+- ESC_HET_H3K27me3_R2 = 23.35 = 0.0428265524625268
+- ESC_KO_H3K27me3_R1 = 10.06 = 0.099403578528827
+- ESC_KO_H3K27me3_R2 = 15.78 = 0.0633713561470215
+- ESC_WT_H3K27me3_R1 = 7 = 0.1428571428571429
+- ESC_WT_H3K27me3_R2 = 4.31 = 0.2320185614849188
+- NPC_HET_H3K27me3_R1 = 1.13 = 0.8849557522123894
+- NPC_HET_H3K27me3_R2 = 1.43 = 0.6993006993006993
+- NPC_KO_H3K27me3_R1 = 1.55 = 0.6451612903225806
+- NPC_KO_H3K27me3_R2 = 2.64 = 0.3787878787878788
+- NPC_WT_H3K27me3_R1 = 1.45 = 0.6896551724137931
+- NPC_WT_H3K27me3_R2 = 1.51 = 0.6622516556291391
+
+**ChIPseqSpikeInFree SF_FromUniqueBAM** But Reciprocal!
+- 2dN_HET_H3K27me3_R1  5.360881149 = 0.186536499
+- 2dN_HET_H3K27me3_R2  4.5216682	= 0.221157315345
+- 2dN_KO_H3K27me3_R1  3.55057692 = 0.28164437
+- 2dN_KO_H3K27me3_R2  3.090909733 = 0.323529345
+- 2dN_WT_H3K27me3_R1  3.705591736 = 0.269862433
+- 2dN_WT_H3K27me3_R2  4.898554232 = 0.204141866
+- ESC_HET_H3K27me3_R1  30.87467768 = 0.032389002
+- ESC_HET_H3K27me3_R2  46.62952347 = 0.021445641
+- ESC_KO_H3K27me3_R1  18.46905206 = 0.054144631
+- ESC_KO_H3K27me3_R2  24.28508126 = 0.041177544
+- ESC_WT_H3K27me3_R1  26.76196787 = 0.03736646
+- ESC_WT_H3K27me3_R2  16.69110369 = 0.059912156
+- NPC_HET_H3K27me3_R1  2.182247261 = 0.458243215
+- NPC_HET_H3K27me3_R2  5.059111963 = 0.197663149
+- NPC_KO_H3K27me3_R1  4.39928626 = 0.2273096
+- NPC_KO_H3K27me3_R2  8.576515552 = 0.116597468
+- NPC_WT_H3K27me3_R1  5.106377613 = 0.195833539
+- NPC_WT_H3K27me3_R2  5.134581652 = 0.194757834
+
 
 
 
@@ -5608,6 +5648,14 @@ sbatch scripts/THOR_KO_NPCvs2dN_UniqueBamTMM.sh # 1700357 ok
 #### Time-effect for KO and HET, UniqueBamDiffBindTMM norm
 sbatch scripts/THOR_HET_ESCvsNPC_UniqueBamDiffBindTMM.sh # 3833376
 sbatch scripts/THOR_KO_ESCvsNPC_UniqueBamDiffBindTMM.sh # 3833447
+### Time-effect for WT, HET and KO; UniqueBam with reciprocal ChIPseqSpikeInFree (From uniqueBAM) SF
+sbatch scripts/THOR_WT_ESCvsNPC_UniqueBamChIPseqSpikeInFree_Reciprocal.sh # 3868853
+sbatch scripts/THOR_HET_ESCvsNPC_UniqueBamChIPseqSpikeInFree_Reciprocal.sh # 3868879 FAIL; 3869149 FAIL
+sbatch scripts/THOR_KO_ESCvsNPC_UniqueBamChIPseqSpikeInFree_Reciprocal.sh #  WAIT IF WT GOOD
+
+
+
+
 
 #### Genotype comparison at NPC and 2dN, Default TMM-normalization (NO SF)
 sbatch scripts/THOR_NPC_WTvsHET_UniqueBamTMM.sh # 1681129 ok
@@ -5641,15 +5689,15 @@ sbatch scripts/THOR_ESC_WTvsHET_uniqueBAMhousekeep.sh # 1916074 ok
 sbatch scripts/THOR_ESC_WTvsKO_housekeep.sh # 1917516
 sbatch scripts/THOR_ESC_WTvsKO_uniqueBAMhousekeep.sh # 2020601
 
-sbatch scripts/THOR_NPC_WTvsHET_housekeep.sh # 1917668
-sbatch scripts/THOR_NPC_WTvsHET_uniqueBAMhousekeep.sh # 1917721
-sbatch scripts/THOR_NPC_WTvsKO_housekeep.sh # 1917810
-sbatch scripts/THOR_NPC_WTvsKO_uniqueBAMhousekeep.sh # 1917820
+sbatch scripts/THOR_NPC_WTvsHET_housekeep.sh # 1917668 ok 
+sbatch scripts/THOR_NPC_WTvsHET_uniqueBAMhousekeep.sh # 1917721 ok 
+sbatch scripts/THOR_NPC_WTvsKO_housekeep.sh # 1917810 ok 
+sbatch scripts/THOR_NPC_WTvsKO_uniqueBAMhousekeep.sh # 1917820 ok 
 
-sbatch scripts/THOR_2dN_WTvsHET_housekeep.sh #  1918597
-sbatch scripts/THOR_2dN_WTvsHET_uniqueBAMhousekeep.sh # 1918605
-sbatch scripts/THOR_2dN_WTvsKO_housekeep.sh # 1918654
-sbatch scripts/THOR_2dN_WTvsKO_uniqueBAMhousekeep.sh # 1918827
+sbatch scripts/THOR_2dN_WTvsHET_housekeep.sh #  1918597 ok 
+sbatch scripts/THOR_2dN_WTvsHET_uniqueBAMhousekeep.sh # 1918605 ok 
+sbatch scripts/THOR_2dN_WTvsKO_housekeep.sh # 1918654 ok 
+sbatch scripts/THOR_2dN_WTvsKO_uniqueBAMhousekeep.sh # 1918827 ok 
 ```
 
 Go in R to explore the data real quick within `conda activate deseq2`:
