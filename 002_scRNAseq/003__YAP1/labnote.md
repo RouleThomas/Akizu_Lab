@@ -1611,6 +1611,57 @@ dev.off()
 
 
 
+### Check EZH2 and JMJD3/KDM6B (from after 0801 meeting)
+DefaultAssay(humangastruloid.combined.sct) <- "SCT"
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_EZH2_KDM6B_V2.pdf", width=10, height=10)
+FeaturePlot(humangastruloid.combined.sct, features = c("KDM6B","EZH2"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+##### overlay both genes
+DefaultAssay(humangastruloid.combined.sct) <- "SCT"
+humangastruloid.untreated <- subset(humangastruloid.combined.sct, subset = condition == "UNTREATED72hr")
+
+# Define a color scale for each gene
+transparent_red <- scales::alpha("red", 0.15)
+transparent_blue <- scales::alpha("blue", 0.15)
+# Generate plots without displaying
+p1 <- FeaturePlot(humangastruloid.untreated , features = "KDM6B", max.cutoff = 3, cols = c("low" = "transparent", "high" = transparent_red), pt.size = 1.5, raster = FALSE)
+p2 <- FeaturePlot(humangastruloid.untreated , features = "EZH2", max.cutoff = 3, cols = c("low" = "transparent", "high" = transparent_blue), pt.size = 1.5, raster = FALSE)
+combined_plot <- CombinePlots(plots = list(p1, p2))
+
+
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_EZH2_KDM6B_overlay_V2.pdf", width=10, height=5)
+print(combined_plot)
+dev.off()
+
+
+humangastruloid.dasatinib <- subset(humangastruloid.combined.sct, subset = condition == "DASATINIB72hr")
+
+# Define a color scale for each gene
+transparent_red <- scales::alpha("red", 0.15)
+transparent_blue <- scales::alpha("blue", 0.15)
+# Generate plots without displaying
+p1 <- FeaturePlot(humangastruloid.dasatinib , features = "KDM6B", max.cutoff = 3, cols = c("low" = "transparent", "high" = transparent_red), pt.size = 1.5, raster = FALSE)
+p2 <- FeaturePlot(humangastruloid.dasatinib , features = "EZH2", max.cutoff = 3, cols = c("low" = "transparent", "high" = transparent_blue), pt.size = 1.5, raster = FALSE)
+combined_plot <- CombinePlots(plots = list(p1, p2))
+
+
+pdf("output/seurat/FeaturePlot_SCT_DASATINIB72hr_EZH2_KDM6B_overlay_V2.pdf", width=10, height=5)
+print(combined_plot)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
 ### Check top 10 downredulated genes in YAP1KO bulk-regulated genes (table shared after 0801 meeting):
 ## intitial list top 1-10: c('ZNF558','LINC02693','NXPH2','C6orf141','ZNF736','GCNT4','HHLA1','GABRA1','TEK','ZNF502')
 ## top10-20: c('LHX8','SCG2','SLFN12','LHFPL6','TNNT2','LINC00458','TXNRD2','CXCL14','AMOTL2','TMC1')
