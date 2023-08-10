@@ -3318,6 +3318,7 @@ Many different tools:
 ## use uniquely aligned reads only (instead of MAPQ20 per default) with THOR
 
 - Re-generate alignment
+- Collect library size
 - call peak with MACS2
 - Proceed with DiffBind; collect SF
 - Proceed with THOR using DiffBind_TMM SF and compare the nb of diff bound sites identified (compare with )
@@ -3333,30 +3334,139 @@ sbatch scripts/samtools_unique_1.sh # 1681363 ok
 sbatch scripts/samtools_unique_2.sh # 1681364 ok
 ```
 
+Collect **library size and calculate scaled library** (calcul made in `GoogleDrive/*/Mapping_QC.xlsx`):
+```bash
+module load SAM*
+# 1st value = library size
+samtools flagstat output/bowtie2/8wN_WT_H3K27me3_R1.unique.dupmark.sorted.bam 
+```
+- sample = library size * SF : scaled library size
+
+- 8wN_HET_H3K27me3_R1 = 8882542: 14076998
+- 8wN_HET_H3K27me3_R2 = 7773764: 14652944
+- 8wN_HET_H3K27me3_R3 = 7561476: 7946371
+- 8wN_HET_H3K27me3_R4 = 10354090: 29585211
+- 8wN_KO_H3K27me3_R1 = 7629278: 9968202
+- 8wN_KO_H3K27me3_R2 = 9114240: 9114240
+- 8wN_KO_H3K27me3_R3 = 28070206: 106934463
+- 8wN_KO_H3K27me3_R4 = 7244006: 8178445
+- 8wN_WT_H3K27me3_R1 = 10570358 : 17872895
+- 8wN_WT_H3K27me3_R2 = 8735172: 25554881
+- 8wN_WT_H3K27me3_R3 = 8547032: 17534633
+- 8wN_WT_H3K27me3_R4 = 7978488: 24682933
+
+
+
 Now let's use **MACS2** to call for peaks in these files in `output/macs2_unique`:
 
 ```bash
 conda activate macs2
 # replicates per replicate
-sbatch scripts/macs2_unique.sh # 3869681
+sbatch scripts/macs2_unique.sh # 3869681 ok
 
 # replicates pooled together
-sbatch scripts/macs2_unique_pool.sh # 3869693
+sbatch scripts/macs2_unique_pool.sh # 3869693 ok (fail at the end as no iPSC patient; that's OK)
 ```
 
---> XXX
+--> Peaks have been called succesfully. Files are a bit bigger than in `output/macs2`; so maybe a bit more peaks!
 
 Re-calculate new scaling factors, based on these new BAM file...:
 
-XXXX
+Now, let's use **DiffBind to calculate TMM-normalized** scaling factors:
+
+```bash
+srun --mem=500g --pty bash -l
+conda activate DiffBind
+```
+```R
+library("DiffBind") 
+
+# Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique.txt", header = TRUE, sep = "\t"))
+
+# Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+
+
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique.RData")
+load("output/DiffBind/sample_count_macs2raw_unique.RData")
+
+# plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique.pdf", width=14, height=20)  
+plot(sample_count)
+dev.off()
+
+pdf("output/DiffBind/PCA_sample_macs2raw_unique.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+# Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+
+# TMM 
+
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(14076998,14652944,7946371,29585211,9968202,9114240,106934463,8178445,17872895,25554881,17534633,24682933), normalize = DBA_NORM_TMM) 
+
+## Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+
+
+console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF.txt")
+##
+
+pdf("output/DiffBind/clustering_macs2raw_blackgreylist_LibHistoneScaled_TMM_unique.pdf", width=14, height=20)
+plot(sample_count_blackgreylist_LibHistoneScaled_TMM)
+dev.off()
+
+pdf("output/DiffBind/PCA_macs2raw_blackgreylist_LibHistoneScaled_TMM_unique.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+```
+
+Now that we have the DiffBind_TMM_unique SF; lets do **THOR** (*apply DiffBind SF as Reciprocal in THOR !!!*):
+```bash
+$norm.factors
+ [1] 0.5717119 0.6628326 0.5048626 0.6968421 0.6691629 0.6648259 2.1804712
+ [8] 0.5257514 0.7277828 0.8362284 0.7655657 0.7127188
+```
+
+- sample = library size * SF : scaled library size / DiffBind_TMM_SF \ Reciprocal DiffBind_TMM_SF (UNIQUE BAM here)
+
+- 8wN_HET_H3K27me3_R1 = 8882542: 14076998 / 0.5717119 \ 1.749132736
+- 8wN_HET_H3K27me3_R2 = 7773764: 14652944 / 0.6628326 \ 1.50867655
+- 8wN_HET_H3K27me3_R3 = 7561476: 7946371 / 0.5048626 \ 1.980736937
+- 8wN_HET_H3K27me3_R4 = 10354090: 29585211 / 0.6968421 \ 1.435045328
+- 8wN_KO_H3K27me3_R1 = 7629278: 9968202 / 0.6691629 \ 1.494404427
+- 8wN_KO_H3K27me3_R2 = 9114240: 9114240 / 0.6648259 \ 1.504153193
+- 8wN_KO_H3K27me3_R3 = 28070206: 106934463 / 2.1804712 \ 0.458616468
+- 8wN_KO_H3K27me3_R4 = 7244006: 8178445 / 0.5257514 \ 1.902039633
+- 8wN_WT_H3K27me3_R1 = 10570358 : 17872895 / 0.7277828 \ 1.37403632
+- 8wN_WT_H3K27me3_R2 = 8735172: 25554881 / 0.8362284 \ 1.195845537
+- 8wN_WT_H3K27me3_R3 = 8547032: 17534633 / 0.7655657 \ 1.30622362
+- 8wN_WT_H3K27me3_R4 = 7978488: 24682933 / 0.7127188 \ 1.403077904
+
+**IMPORTANT NOTE: From previous analysis; seems better to use parameters as in `output/THOR_WTvsHET_Keepdup`; identify much more peaks than without the `Keepdup`; in the end, that is default lol, and as here I used unique bam that is useless to use `--rmdup`**
+
+```bash
+# Needed step to change where THOR look for libraries
+conda activate RGT
+export LD_LIBRARY_PATH=~/anaconda3/envs/RGT/lib:$LD_LIBRARY_PATH
+bigWigMerge # for testing
+
+
+# Run comparison with and without --rmdup; default!!:
+sbatch scripts/THOR_WTvsHET_unique_Keepdup.sh # 3873622
+sbatch scripts/THOR_WTvsKO_unique_Keepdup.sh # 3873691
 
 
 
 
 
-
-
-
+```
 
 
 
@@ -5065,7 +5175,7 @@ write.table(patient_annot, file="output/ChIPseeker/annotation_patient.txt", sep=
 *NOTE: the gene peak assignment use the nearest TSS method, then other order of priority, all genes are assigned except if they do not fall into Promoter, 5’ UTR, 3’ UTR, Exon, Intron, Downstream. In such case peak assign as 'intergenic'*
 
 
-Let's assign the **differentially bound peak to genes**:
+Let's assign the **differentially bound peak to genes (DiffBind)**:
 ```bash
 srun --mem=300g --pty bash -l
 conda activate deseq2

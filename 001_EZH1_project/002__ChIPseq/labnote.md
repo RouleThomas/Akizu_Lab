@@ -5650,7 +5650,7 @@ sbatch scripts/THOR_HET_ESCvsNPC_UniqueBamDiffBindTMM.sh # 3833376
 sbatch scripts/THOR_KO_ESCvsNPC_UniqueBamDiffBindTMM.sh # 3833447
 ### Time-effect for WT, HET and KO; UniqueBam with reciprocal ChIPseqSpikeInFree (From uniqueBAM) SF
 sbatch scripts/THOR_WT_ESCvsNPC_UniqueBamChIPseqSpikeInFree_Reciprocal.sh # 3868853
-sbatch scripts/THOR_HET_ESCvsNPC_UniqueBamChIPseqSpikeInFree_Reciprocal.sh # 3868879 FAIL; 3869149 FAIL
+sbatch scripts/THOR_HET_ESCvsNPC_UniqueBamChIPseqSpikeInFree_Reciprocal.sh # 3868879 FAIL; 3869149 FAIL; 3870062
 sbatch scripts/THOR_KO_ESCvsNPC_UniqueBamChIPseqSpikeInFree_Reciprocal.sh #  WAIT IF WT GOOD
 
 
