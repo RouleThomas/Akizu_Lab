@@ -2781,6 +2781,10 @@ pdf("output/DiffBind/PCA_macs2raw_blackgreylist_LibHistoneScaled_TMM.pdf", width
 dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
 dev.off()
 
+pdf("output/DiffBind/PCA_macs2raw_blackgreylist_LibHistoneScaled_TMM_pretty.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM,DBA_TREATMENT, vColors = c("blue", "red", "black"), dotSize = 3)
+dev.off()
+
 sample_count_blackgreylist_LibHistoneScaled_TMM_contrast = dba.contrast(sample_count_blackgreylist_LibHistoneScaled_TMM, categories = DBA_TREATMENT, reorderMeta = list(Treatment="WT"))
 
 sample_count_blackgreylist_LibHistoneScaled_TMM_contrast_analyze = dba.analyze(sample_count_blackgreylist_LibHistoneScaled_TMM_contrast, method=DBA_ALL_METHODS, bParallel = TRUE)

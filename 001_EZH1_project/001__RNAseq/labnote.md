@@ -7706,6 +7706,14 @@ samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
    "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3")
 
 ### Additional filtering if needed
+#### Only WT and HET at 4 and 8 weeks
+samples <- c("4wN_WT_R1", "4wN_WT_R2",
+   "4wN_HET_R3", "4wN_HET_R4",
+   "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4",
+   "8wN_HET_R1", "8wN_HET_R2",
+   "8wN_HET_R3", "8wN_HET_R4")
+
+
 #### Only WT and HET
 samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
    "2dN_HET_R1", "2dN_HET_R2", "2dN_HET_R3",
@@ -7828,6 +7836,7 @@ write.csv(resTC %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble
 write.csv(resTC %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2_hg38/resTC_ESC_NPC.txt")
 write.csv(resTC %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2_hg38/resTC_ESC_NPC_WT_HET.txt")
 write.csv(resTC %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2_hg38/resTC_ESC_NPC_WT_KO.txt")
+write.csv(resTC %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2_hg38/resTC_4wN_8wN_WT_HET.txt")
 # resTC <- read.csv("output/deseq2_hg38/resTC.txt", row.names = 1)
 
 # Data normalization
@@ -7965,6 +7974,8 @@ pdf("output/deseq2_hg38/line_rlog_p0.05_cl30_pretty_noSmooth.pdf", width=20, hei
 pdf("output/deseq2_hg38/line_rlog_p0.05_cl15_pretty_noSmooth_ESC_NPC.pdf", width=20, height=14)   # !!! Here change tree nb accordingly !!
 pdf("output/deseq2_hg38/line_rlog_p0.05_cl15_pretty_noSmooth_ESC_NPC_WT_HET.pdf", width=20, height=5)   # !!! Here change tree nb accordingly !!
 pdf("output/deseq2_hg38/line_rlog_p0.05_cl5_pretty_noSmooth_ESC_NPC_WT_KO.pdf", width=20, height=5)   # !!! Here change tree nb accordingly !!
+pdf("output/deseq2_hg38/line_rlog_p0.05_cl5_pretty_noSmooth_4wN_8wN_WT_HET.pdf", width=20, height=5)   # !!! Here change tree nb accordingly !!
+
 ggplot(rlog_counts_tidy, aes(x = time, y = rlog_counts, color = genotype, group = genotype)) +
   geom_line(stat = "summary", fun = mean) +
   geom_errorbar(stat = "summary", fun.data = mean_se, width = 0.2, size = 1) +
@@ -7978,6 +7989,8 @@ ggplot(rlog_counts_tidy, aes(x = time, y = rlog_counts, color = genotype, group 
     axis.title.x = element_text(size = 16)       # Increase x-axis legend text size
   )
 dev.off()
+
+
 
 
 ## Put together with the H3K27me3-dynamic gene (from ChIPseq ESC vs NPC in WT)__HET
@@ -8152,6 +8165,89 @@ ggplot(rlog_counts_tidy, aes(x = time, y = rlog_counts, color = genotype, group 
   )
 dev.off()
 
+
+
+
+
+
+
+### Repeat clustering on the CutRun diff bound genes__HET (../003__CutRun/output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15.txt)
+#### Filter the H3K27me3-bound within our signif TC list signif_TC_genes_vector
+rlog_counts_matrix_gene = rlog_counts_matrix # remove the version of the gene in the rlog matrix
+rownames(rlog_counts_matrix_gene) <- gsub("\\..*", "", rownames(rlog_counts_matrix))
+
+## Filter the significant TC and H3K27me3 genes AND THAT GAIN H3K27me3 in HET
+H3K27me3_genes <- as_tibble(read.table("../003__CutRun/output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15.txt", header = TRUE, stringsAsFactors = FALSE,sep="\t")) %>%
+  filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"),
+         FC > 1) %>%
+  dplyr::select(gene) %>%
+  drop_na() %>%
+  unique()
+
+signif_TC_H3K27me3 = signif_TC_genes %>%
+  separate(gene, into = c("gene", "version"), sep = "\\.", remove = TRUE) %>%
+  dplyr::select(-version) %>%
+  inner_join(H3K27me3_genes)
+
+signif_TC_H3K27me3_vector <- signif_TC_H3K27me3$gene
+
+
+
+## Filter our matrix with the significant genes
+rlog_counts_matrix_gene_sig <- rlog_counts_matrix_gene[rownames(rlog_counts_matrix_gene) %in% signif_TC_H3K27me3_vector, ]
+nrow(rlog_counts_matrix_gene_sig) # double-check the nb of genes is same s in signif_TC_genes
+
+# Obtain gene cluster ID from the heatmap
+## Perform hierarchical clustering
+row_dist <- dist(rlog_counts_matrix_gene_sig, method = "euclidean")
+row_hclust <- hclust(row_dist, method = "complete")
+
+## Cut the tree into k clusters
+row_clusters <- cutree(row_hclust, k = 4)                   # !!! Here change tree nb accordingly !!!
+## Create a data frame with gene names and their corresponding clusters
+cluster_gene <- data.frame(gene = rownames(rlog_counts_matrix_gene_sig),
+                           cluster = row_clusters)
+### Save dataframe
+# write.csv(cluster_gene, file="output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_KO_H3K27me3postClustering.txt")
+# write.csv(cluster_gene, file="output/deseq2_hg38/cluster_gene_rlog_4cl_4wN_8wN_WT_HET_H3K27me3postClustering.txt")
+
+# Make a clean table with significant deseq2-TC genes
+rlog_counts_tidy <- as_tibble(rlog_counts_matrix_gene_sig, rownames = "gene") %>%
+  gather(key = "sample", value = "rlog_counts", -gene) %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep = "_")
+
+## Compil both
+rlog_counts_tidy <- rlog_counts_tidy %>%
+  left_join(cluster_gene, by = "gene")
+
+rlog_counts_tidy$time <-
+  factor(rlog_counts_tidy$time,
+         c("ESC", "NPC", "2dN", "4wN", "8wN"))
+rlog_counts_tidy$genotype <-
+  factor(rlog_counts_tidy$genotype,
+         c("WT", "KO", "HET"))
+
+## Calculate the number of genes per cluster
+genes_per_cluster <- rlog_counts_tidy %>%
+  group_by(cluster) %>%
+  summarise(num_genes = n_distinct(gene))
+
+
+pdf("output/deseq2_hg38/line_rlog_p0.05_cl15_pretty_noSmooth_ESC_NPC_WT_KO_H3K27me3postClustering.pdf", width=20, height=5)   # !!! Here change tree nb accordingly !!
+pdf("output/deseq2_hg38/line_rlog_p0.05_cl4_pretty_noSmooth_4wN_8wN_WT_HET_H3K27me3postClustering.pdf", width=20, height=5)   # !!! Here change tree nb accordingly !!
+ggplot(rlog_counts_tidy, aes(x = time, y = rlog_counts, color = genotype, group = genotype)) +
+  geom_line(stat = "summary", fun = mean) +
+  geom_errorbar(stat = "summary", fun.data = mean_se, width = 0.2, size = 1) +
+  geom_point(stat = "summary", fun = mean, shape = 18, size = 3, stroke = 1.5) +
+  geom_text(data = genes_per_cluster, aes(label = paste0("Genes: ", num_genes), x = Inf, y = Inf), hjust = 1, vjust = 1, size = 5, inherit.aes = FALSE) +
+  facet_wrap(~cluster, scale = "free", nrow = 1) +
+  scale_color_manual(values=c("WT" = "black", "HET" = "blue", "KO" = "red")) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 16),        # Increase facet_wrap title panel text size
+    axis.title.x = element_text(size = 16)       # Increase x-axis legend text size
+  )
+dev.off()
 
 
 
