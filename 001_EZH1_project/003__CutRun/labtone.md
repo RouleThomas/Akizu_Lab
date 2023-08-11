@@ -4207,12 +4207,31 @@ WTvsHET = read.table('output/THOR/THOR_WTvsHET/THOR_qval5.bed') %>% dplyr::renam
 ## qval10
 WTvsKO = read.table('output/THOR/THOR_WTvsKO/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
 WTvsHET = read.table('output/THOR/THOR_WTvsHET/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
+
+WTvsHET = read.table('output/THOR/THOR_WTvsHET_unique_Keepdup/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
+WTvsKO = read.table('output/THOR/THOR_WTvsKO_unique_Keepdup/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
+
 ## qval15
 WTvsKO = read.table('output/THOR/THOR_WTvsKO/THOR_qval15.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
 WTvsHET = read.table('output/THOR/THOR_WTvsHET/THOR_qval15.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
+
+WTvsHET = read.table('output/THOR/THOR_WTvsHET_Keepdup/THOR_qval15.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
+WTvsKO = read.table('output/THOR/THOR_WTvsKO_Keepdup/THOR_qval15.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
+
+WTvsHET = read.table('output/THOR/THOR_WTvsHET_unique_Keepdup/THOR_qval15.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
+WTvsKO = read.table('output/THOR/THOR_WTvsKO_unique_Keepdup/THOR_qval15.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
 ## qval20
 WTvsKO = read.table('output/THOR/THOR_WTvsKO/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
 WTvsHET = read.table('output/THOR/THOR_WTvsHET/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
+
+WTvsHET = read.table('output/THOR/THOR_WTvsHET_Keepdup/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
+WTvsKO = read.table('output/THOR/THOR_WTvsKO_Keepdup/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
+
+WTvsHET = read.table('output/THOR/THOR_WTvsHET_unique_Keepdup/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
+WTvsKO = read.table('output/THOR/THOR_WTvsKO_unique_Keepdup/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
+## qval25
+WTvsHET = read.table('output/THOR/THOR_WTvsHET_Keepdup/THOR_qval25.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
+WTvsKO = read.table('output/THOR/THOR_WTvsKO_Keepdup/THOR_qval25.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
 
 
 # Tidy peaks #-->> Re-Run from here with different qvalue!!
@@ -4269,8 +4288,8 @@ WTvsKO_annot$gene <- mapIds(org.Hs.eg.db, keys = WTvsKO_annot$geneId, column = "
 
 
 ## Save output table
-write.table(WTvsHET_annot, file="output/ChIPseeker/annotation_WTvsHET_qval20.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(WTvsKO_annot, file="output/ChIPseeker/annotation_WTvsKO_qval20.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(WTvsHET_annot, file="output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(WTvsKO_annot, file="output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 # load annotation tables
 # WTvsHET_qval5_annot <- read.table("output/ChIPseeker/annotation_WTvsHET_qval5.txt", sep="\t", header=TRUE)
 
@@ -4313,6 +4332,8 @@ WTvsKO_annot_lost = tibble(WTvsKO_annot) %>%
     add_column(H3K27me3 = "lost")
 WTvsKO_annot_gain_lost = WTvsKO_annot_gain %>% 
     bind_rows(WTvsKO_annot_lost)
+
+
 
 ## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
 WTvsHET_annot_gain = tibble(WTvsHET_annot) %>%
@@ -4404,15 +4425,17 @@ pdf("output/ChIPseeker/THOR_qval10_keepAll_HETvsWT_expression.pdf", width=7, hei
 pdf("output/ChIPseeker/THOR_qval10_keepAll_HETvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
 pdf("output/ChIPseeker/THOR_qval10_keepAll_FC15_HETvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
 
+pdf("output/ChIPseeker/THOR_qval25_HETvsWT_Keepdup_expression_promoterAnd5.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval15_HETvsWT_unique_Keepdup_expression_promoterAnd5.pdf", width=7, height=4)  # CHANGE TITLE
 
 WTvsHET_annot_gain_lost_RNA %>%
-    ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
+    ggplot(aes(x = log2FoldChange, y = -log10(padj), color = significance)) +
         geom_point(alpha = 0.8, size = 0.5) +
         scale_color_manual(values = c("grey", "red")) +
         labs(title = "HET vs WT",
              subtitle = "Expression level of diff. bound H3K27me3 genes",
              x = "Log2 Fold Change",
-             y = "Base Mean",
+             y = "-log10(q-value)",
              color = "Significant (padj <= 0.05)") +
         facet_wrap(~H3K27me3) +
         theme_bw() +
@@ -4452,15 +4475,17 @@ pdf("output/ChIPseeker/THOR_qval10_keepAll_KOvsWT_expression.pdf", width=7, heig
 pdf("output/ChIPseeker/THOR_qval10_keepAll_KOvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
 pdf("output/ChIPseeker/THOR_qval10_keepAll_FC15_KOvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
 
+pdf("output/ChIPseeker/THOR_qval25_KOvsWT_Keepdup_expression_promoterAnd5.pdf", width=7, height=4)  # CHANGE TITLE
+pdf("output/ChIPseeker/THOR_qval15_KOvsWT_unique_Keepdup_expression_promoterAnd5.pdf", width=7, height=4)  # CHANGE TITLE
 
 WTvsKO_annot_gain_lost_RNA %>%
-    ggplot(aes(x = log2FoldChange, y = baseMean, color = significance)) +
+    ggplot(aes(x = log2FoldChange, y = -log10(padj), color = significance)) +
         geom_point(alpha = 0.8, size = 0.5) +
         scale_color_manual(values = c("grey", "red")) +
         labs(title = "KO vs WT",
              subtitle = "Expression level of diff. bound H3K27me3 genes",
              x = "Log2 Fold Change",
-             y = "Base Mean",
+             y = "-log10(q-value)",
              color = "Significant (padj <= 0.05)") +
         facet_wrap(~H3K27me3) +
         theme_bw() +
