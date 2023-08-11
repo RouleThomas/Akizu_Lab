@@ -3459,21 +3459,18 @@ bigWigMerge # for testing
 
 
 # Run comparison with and without --rmdup; default!!:
-sbatch scripts/THOR_WTvsHET_unique_Keepdup.sh # 3873622
-sbatch scripts/THOR_WTvsKO_unique_Keepdup.sh # 3873691
-
-
-
-
-
+sbatch scripts/THOR_WTvsHET_unique_Keepdup.sh # 3873622 ok
+sbatch scripts/THOR_WTvsKO_unique_Keepdup.sh # 3873691 ok
 ```
 
-XXXXX
+--> Replicates are very clean!
+
+--> For NEUROG2, we clearly see decrease of H3K27me3 for the KO; the increase H3K27me3 in HET is not so clear.
+----> I compare the different bigiwg we have generated so far within NEUROG2 region (`THOR_WTvsHET_unique_Keepdup, THOR_WTvsHET_Keepdup, bigwig_DiffBind_TMM_subtract, bigwig_histone_NotGenotypeGroup_IggNorm_subtract, bigwig_histone_NotGenotypeGroup_IggNorm, bigwig_DiffBind_TMM`), it seem that the `WTvsHET_unique_Keepdup`, is the BEST so far. very very slight increase and more spreading very very shy for HET; at least that is the version that showed it the most...
 
 
 
-
-
+XXXX
 
 
 
