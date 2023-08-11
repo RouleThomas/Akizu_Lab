@@ -3434,20 +3434,20 @@ $norm.factors
  [8] 0.5257514 0.7277828 0.8362284 0.7655657 0.7127188
 ```
 
-- sample = library size * SF : scaled library size / DiffBind_TMM_SF \ Reciprocal DiffBind_TMM_SF (UNIQUE BAM here)
+- sample = library size * SF : scaled library size / DiffBind_TMM_SF \ Reciprocal DiffBind_TMM_SF (UNIQUE BAM here) / Reciprocal not genotype group
 
-- 8wN_HET_H3K27me3_R1 = 8882542: 14076998 / 0.5717119 \ 1.749132736
-- 8wN_HET_H3K27me3_R2 = 7773764: 14652944 / 0.6628326 \ 1.50867655
-- 8wN_HET_H3K27me3_R3 = 7561476: 7946371 / 0.5048626 \ 1.980736937
-- 8wN_HET_H3K27me3_R4 = 10354090: 29585211 / 0.6968421 \ 1.435045328
-- 8wN_KO_H3K27me3_R1 = 7629278: 9968202 / 0.6691629 \ 1.494404427
-- 8wN_KO_H3K27me3_R2 = 9114240: 9114240 / 0.6648259 \ 1.504153193
-- 8wN_KO_H3K27me3_R3 = 28070206: 106934463 / 2.1804712 \ 0.458616468
-- 8wN_KO_H3K27me3_R4 = 7244006: 8178445 / 0.5257514 \ 1.902039633
-- 8wN_WT_H3K27me3_R1 = 10570358 : 17872895 / 0.7277828 \ 1.37403632
-- 8wN_WT_H3K27me3_R2 = 8735172: 25554881 / 0.8362284 \ 1.195845537
-- 8wN_WT_H3K27me3_R3 = 8547032: 17534633 / 0.7655657 \ 1.30622362
-- 8wN_WT_H3K27me3_R4 = 7978488: 24682933 / 0.7127188 \ 1.403077904
+- 8wN_HET_H3K27me3_R1 = 8882542: 14076998 / 0.5717119 \ 1.749132736 | 0.63099691
+- 8wN_HET_H3K27me3_R2 = 7773764: 14652944 / 0.6628326 \ 1.50867655 | 0.53052574
+- 8wN_HET_H3K27me3_R3 = 7561476: 7946371 / 0.5048626 \ 1.980736937 | 0.951563458
+- 8wN_HET_H3K27me3_R4 = 10354090: 29585211 / 0.6968421 \ 1.435045328 | 0.349975195
+- 8wN_KO_H3K27me3_R1 = 7629278: 9968202 / 0.6691629 \ 1.494404427 | 0.765361475
+- 8wN_KO_H3K27me3_R2 = 9114240: 9114240 / 0.6648259 \ 1.504153193 | 1
+- 8wN_KO_H3K27me3_R3 = 28070206: 106934463 / 2.1804712 \ 0.458616468 | 0.262499154
+- 8wN_KO_H3K27me3_R4 = 7244006: 8178445 / 0.5257514 \ 1.902039633 | 0.885743637
+- 8wN_WT_H3K27me3_R1 = 10570358 : 17872895 / 0.7277828 \ 1.37403632 | 0.591418337
+- 8wN_WT_H3K27me3_R2 = 8735172: 25554881 / 0.8362284 \ 1.195845537 | 0.341820104
+- 8wN_WT_H3K27me3_R3 = 8547032: 17534633 / 0.7655657 \ 1.30622362 | 0.487437186
+- 8wN_WT_H3K27me3_R4 = 7978488: 24682933 / 0.7127188 \ 1.403077904 | 0.323239055
 
 **IMPORTANT NOTE: From previous analysis; seems better to use parameters as in `output/THOR_WTvsHET_Keepdup`; identify much more peaks than without the `Keepdup`; in the end, that is default lol, and as here I used unique bam that is useless to use `--rmdup`**
 
@@ -3461,6 +3461,10 @@ bigWigMerge # for testing
 # Run comparison with and without --rmdup; default!!:
 sbatch scripts/THOR_WTvsHET_unique_Keepdup.sh # 3873622 ok
 sbatch scripts/THOR_WTvsKO_unique_Keepdup.sh # 3873691 ok
+sbatch scripts/THOR_WTvsHET_SFnotGenotypeGroup.sh # 3879338
+sbatch scripts/THOR_WTvsHET_unique_SFnotGenotypeGroup.sh # 3879218
+sbatch scripts/THOR_WTvsKO_SFnotGenotypeGroup.sh # 3879340
+sbatch scripts/THOR_WTvsKO_unique_SFnotGenotypeGroup.sh # 3879221
 ```
 
 --> Replicates are very clean!
@@ -3469,6 +3473,7 @@ sbatch scripts/THOR_WTvsKO_unique_Keepdup.sh # 3873691 ok
 ----> I compare the different bigiwg we have generated so far within NEUROG2 region (`THOR_WTvsHET_unique_Keepdup, THOR_WTvsHET_Keepdup, bigwig_DiffBind_TMM_subtract, bigwig_histone_NotGenotypeGroup_IggNorm_subtract, bigwig_histone_NotGenotypeGroup_IggNorm, bigwig_DiffBind_TMM`), it seem that the `WTvsHET_unique_Keepdup`, is the BEST so far. very very slight increase and more spreading very very shy for HET; at least that is the version that showed it the most...
 
 
+--> Without passing by DiffBind_TMM, directly applying SF to THOR looks XXX
 
 XXXX
 
