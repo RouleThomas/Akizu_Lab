@@ -3461,10 +3461,10 @@ bigWigMerge # for testing
 # Run comparison with and without --rmdup; default!!:
 sbatch scripts/THOR_WTvsHET_unique_Keepdup.sh # 3873622 ok
 sbatch scripts/THOR_WTvsKO_unique_Keepdup.sh # 3873691 ok
-sbatch scripts/THOR_WTvsHET_SFnotGenotypeGroup.sh # 3879338
-sbatch scripts/THOR_WTvsHET_unique_SFnotGenotypeGroup.sh # 3879218
-sbatch scripts/THOR_WTvsKO_SFnotGenotypeGroup.sh # 3879340
-sbatch scripts/THOR_WTvsKO_unique_SFnotGenotypeGroup.sh # 3879221
+sbatch scripts/THOR_WTvsHET_SFnotGenotypeGroup.sh # 3879338 ok
+sbatch scripts/THOR_WTvsHET_unique_SFnotGenotypeGroup.sh # 3879218 ok
+sbatch scripts/THOR_WTvsKO_SFnotGenotypeGroup.sh # 3879340 ok
+sbatch scripts/THOR_WTvsKO_unique_SFnotGenotypeGroup.sh # 3879221 ok
 ```
 
 --> Replicates are very clean!
@@ -3472,10 +3472,25 @@ sbatch scripts/THOR_WTvsKO_unique_SFnotGenotypeGroup.sh # 3879221
 --> For NEUROG2, we clearly see decrease of H3K27me3 for the KO; the increase H3K27me3 in HET is not so clear.
 ----> I compare the different bigiwg we have generated so far within NEUROG2 region (`THOR_WTvsHET_unique_Keepdup, THOR_WTvsHET_Keepdup, bigwig_DiffBind_TMM_subtract, bigwig_histone_NotGenotypeGroup_IggNorm_subtract, bigwig_histone_NotGenotypeGroup_IggNorm, bigwig_DiffBind_TMM`), it seem that the `WTvsHET_unique_Keepdup`, is the BEST so far. very very slight increase and more spreading very very shy for HET; at least that is the version that showed it the most...
 
+--> Without passing by DiffBind_TMM, directly applying SF to THOR do not produce any significant differences... Probably because not TMM scaled, the software fail. Too bad! Because the bigwig looks great... So let's use this versino: `unique_Keepdup` or `Keepdup` (both uses DiffBind_TMM SF)
 
---> Without passing by DiffBind_TMM, directly applying SF to THOR looks XXX
 
-XXXX
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3992,9 +4007,9 @@ thor_splitted %>%
   theme_bw()
 dev.off()
 
-pdf("output/THOR/THOR_WTvsHET_Keepdup/log2FC_qval10.pdf", width=14, height=14)
+pdf("output/THOR/THOR_WTvsHET_Keepdup/log2FC_qval25.pdf", width=14, height=14)
 thor_splitted %>%
-  filter(qval > 10) %>%
+  filter(qval > 25) %>%
   ggplot(aes(x = log2(FC))) +
   geom_histogram() +
   scale_x_continuous(breaks = seq(-5, 3, 1)) +
@@ -4004,8 +4019,8 @@ dev.off()
 
 ## create a bed file, append chr to chromosome names and write down the file
 thor_splitted %>%
-  filter(qval > 20) %>%
-  write_tsv("output/THOR/THOR_WTvsHET_Keepdup/THOR_qval20.bed", col_names = FALSE)
+  filter(qval > 25) %>%
+  write_tsv("output/THOR/THOR_WTvsHET_Keepdup/THOR_qval25.bed", col_names = FALSE)
 
 ## how many minus / plus
 thor_splitted %>%
@@ -4034,9 +4049,9 @@ thor_splitted %>%
   theme_bw()
 dev.off()
 
-pdf("output/THOR/THOR_WTvsKO_Keepdup/log2FC_qval15.pdf", width=14, height=14)
+pdf("output/THOR/THOR_WTvsKO_Keepdup/log2FC_qval20.pdf", width=14, height=14)
 thor_splitted %>%
-  filter(qval > 15) %>%
+  filter(qval > 20) %>%
   ggplot(aes(x = log2(FC))) +
   geom_histogram() +
   scale_x_continuous(breaks = seq(-5, 3, 1)) +
@@ -4046,14 +4061,102 @@ dev.off()
 
 ## create a bed file, append chr to chromosome names and write down the file
 thor_splitted %>%
-  filter(qval > 5) %>%
-  write_tsv("output/THOR/THOR_WTvsKO_Keepdup/THOR_qval5.bed", col_names = FALSE)
+  filter(qval > 25) %>%
+  write_tsv("output/THOR/THOR_WTvsKO_Keepdup/THOR_qval25.bed", col_names = FALSE)
 
 ## how many minus / plus
 thor_splitted %>%
   filter(qval > 10) %>%
   group_by(X6) %>%
   summarise(n = n())
+
+
+
+# WTvsHET_unique_Keepdup
+diffpeaks <- read_tsv("output/THOR/THOR_WTvsHET_unique_Keepdup/WTvsHETuniqueKeepdup-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_HET", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2","count_WT_3","count_WT_4"), sep = ":", convert = TRUE) %>%
+  separate(count_HET, into = c("count_HET_1","count_HET_2","count_HET_3","count_HET_4"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_HET_1+count_HET_2+count_HET_3+count_HET_4) / (count_WT_1+count_WT_2+count_WT_3+count_WT_4))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_WTvsHET_unique_Keepdup/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("8wN_WT vs HET") +
+  theme_bw()
+dev.off()
+
+pdf("output/THOR/THOR_WTvsHET_unique_Keepdup/log2FC_qval25.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 25) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("8wN_WT vs HET_qval20") +
+  theme_bw()
+dev.off()
+
+## create a bed file, append chr to chromosome names and write down the file
+
+thor_splitted %>%
+  filter(qval > 25) %>%
+  write_tsv("output/THOR/THOR_WTvsHET_unique_Keepdup/THOR_qval25.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 30) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
+
+# WTvsKO_unique_Keepdup
+diffpeaks <- read_tsv("output/THOR/THOR_WTvsKO_unique_Keepdup/WTvsKOuniqueKeepdup-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2","count_WT_3","count_WT_4"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2","count_KO_3","count_KO_4"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2+count_KO_3+count_KO_4) / (count_WT_1+count_WT_2+count_WT_3+count_WT_4))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_WTvsKO_unique_Keepdup/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("8wN_WT vs KO") +
+  theme_bw()
+dev.off()
+
+pdf("output/THOR/THOR_WTvsKO_unique_Keepdup/log2FC_qval25.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 25) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("8wN_WT vs KO") +
+  theme_bw()
+dev.off()
+
+## create a bed file, append chr to chromosome names and write down the file
+
+thor_splitted %>%
+  filter(qval > 25) %>%
+  write_tsv("output/THOR/THOR_WTvsKO_unique_Keepdup/THOR_qval25.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 30) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
 ```
 - *NOTE: FC negative = less in mutant; positive = more in mutant*
 
@@ -4063,14 +4166,17 @@ thor_splitted %>%
 
 --> **`THOR_WTvsKO_Keepdup_TMM` = no SF normalization VS `THOR_WTvsKO_Keepdup` = SF applied** --> `THOR_WTvsKO_Keepdup` more diff.boud sites. Accordingly no diff. bound sites found in `THOR_WTvsHET_Keepdup_TMM` !! But many for `THOR_WTvsKHET_Keepdup`: **Better to apply spike-in SF (from DiffBind_TMM)**
 
+--> Keepdup vs unique_Keepdup: Both works well, notably at high qvalue like 25; we observed increase in HET and decrease in KO!!!
+
+
 
 **Check on IGV how it look with different qvalue; FC treshold**
 
 --> Optimal qvalue=10-15; and NO FC treshold for now.
 
-### Assign THOR-diff peaks to genes and check expression
 
-XXXXX LETS GO HERE AND CHECK keepDup and non spike in
+
+### Assign THOR-diff peaks to genes and check expression
 
 Now let's compare RNAseq (expression) and CutRun for THOR qval 15 among others:
 - Filter HETvsWT and KOvsWT diff bound genes into **gain and loss H3K27me3**
