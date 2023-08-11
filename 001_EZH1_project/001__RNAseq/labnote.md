@@ -479,6 +479,11 @@ samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
    "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3",
    "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3")
 
+samples <- c("8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", "8wN_KO_R1",
+   "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4", "8wN_HET_R1", "8wN_HET_R2",
+   "8wN_HET_R3", "8wN_HET_R4")
+
+
 
 ## Make a loop for importing all featurecounts data and keep only ID and count column
 sample_data <- list()
@@ -522,6 +527,11 @@ coldata = make_matrix(select(coldata_raw, -samples), pull(coldata_raw, samples))
 all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
 
 ## Construct the DESeqDataSet
+### Genotype only
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design= ~ genotype )
+
 dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
                               colData = coldata,
                               design= ~ genotype + time)
@@ -577,6 +587,7 @@ dev.off()
 ### rld 
 pdf("output/deseq2/PCA_rld.pdf", width=10, height=10)
 pdf("output/deseq2/PCA_rld_no4wN.pdf", width=10, height=10)
+pdf("output/deseq2/PCA_rld_8wN.pdf", width=10, height=10)
 pcaData <- plotPCA(rld, intgroup=c("time", "genotype"), returnData=TRUE)
 percentVar <- round(100 * attr(pcaData, "percentVar"))
 ggplot(pcaData, aes(PC1, PC2, color=time, shape=genotype)) +
@@ -7548,7 +7559,10 @@ samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
    "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
    "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3")
 
-
+# Only 8wN
+samples <- c("8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", "8wN_KO_R1",
+   "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4", "8wN_HET_R1", "8wN_HET_R2",
+   "8wN_HET_R3", "8wN_HET_R4")
 
 ## Make a loop for importing all featurecounts data and keep only ID and count column
 sample_data <- list()
@@ -7592,6 +7606,11 @@ coldata = make_matrix(select(coldata_raw, -samples), pull(coldata_raw, samples))
 all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
 
 ## Construct the DESeqDataSet
+### Genotype only
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design= ~ genotype )
+#### Time and genotype
 dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
                               colData = coldata,
                               design= ~ genotype + time)
@@ -7668,6 +7687,18 @@ ggplot(pcaData, aes(PC1, PC2, color=time, shape=genotype)) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
   coord_fixed() +
   theme_bw()
+dev.off()
+
+pdf("output/deseq2_hg38/PCA_rld_8wN.pdf", width=10, height=10)
+pcaData <- plotPCA(rld, intgroup=c("time", "genotype"), returnData=TRUE)
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(PC1, PC2, color=genotype)) +
+  geom_point(size=3) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  coord_fixed() +
+  scale_color_manual(values=c("blue", "red", "black")) +
+  theme(panel.background = element_rect(fill = "white", colour = "black"))
 dev.off()
 ```
 
