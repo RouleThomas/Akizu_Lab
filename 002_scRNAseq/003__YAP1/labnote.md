@@ -2086,14 +2086,12 @@ DimPlot(srat_WT, reduction = "umap", label=TRUE)
 dev.off()
 
 
-
 ## Check some marker genes 
-### Marker gene list
+### Marker gene list from Conchi
 epiblast = c("Nanog", "Pou5f1", "Dppa3") # watch out DPPA => Dppa3
 endoderm = c("Gata2", "Gata1", "Hesx1", "Gata6", "Eomes", "Foxa2", "Sox17", "Prdm1", "Cxcr4", "Foxa1", "Stat3", "Hnf4a", "Tfcp2l1", "Foxm1", "Foxa2", "Foxa3") # watch out Crcr4 => Cxcr4; Tfcp21 => Tfcp2l1 
 ectoderm = c("Rarb", "Sox9", "Sox1", "Sirt6", "Runx2", "Foxg1", "Sox2", "Nes", "Vim", "Id3", "Sox3", "Pou3f3", "Pou5f1", "Pou2f1") # Brn-1 => Pou3f3; 4-Oct =>  Pou5f1; Oct11 =>  Pou2f1
 mesoderm = c("Lef1", "Cdx2", "Hoxa1", "Mixl1", "Sp5", "T", "Hmgb3", "Gata5", "Hmga2", "Smad1", "Tal1", "Foxf1", "Gata2", "Nodal", "Kdr", "Dll1", "Lhx1", "Aplnr", "Tbx6", "Mesp1", "Has2", "Pdgfra", "Hand1", "Lef1", "Gata6") # Left1 => Lef1 
-
 
 
 DefaultAssay(srat_WT) <- "SCT" # For vizualization either use SCT or norm RNA
@@ -2109,6 +2107,69 @@ dev.off()
 pdf("output/seurat/FeaturePlot_SCT_control_ectoderm.pdf", width=40, height=50)
 FeaturePlot(srat_WT, features = ectoderm, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
+
+### Marker gene list from Paper (https://omi-top.shinyapps.io/rna3/)
+Epithelial_cells = c("Agr2", "Cldn10", "Cldn7", "Cyr61", "Epcam", "Krt15", "Krt18", "Krt5", "Krt8", "Ly6a", "Spint", "Spint2", "Sftpc", "Spp1")
+Ectoderm = c("Cdh1", "Crabp2", "Dnmt3b", "Eno1", "Epcam", "Foxa2", "Hmga1", "Krt18", "Ldha", "Malat1", "Meg3", "Phlda2", "Pim2", "Pou5f1", "Trap1a", "Utf1")
+Endoderm= c("Apoa1", "Car4", "Foxa2", "Phgdh", "Rbp4", "Rrm2", "Ttr")
+Mesoderm= c("Cer1", "Lefty2", "Lin28a", "Mesp1", "Msgn1", "Phlda2")
+Muscle= c("Actc1", "Atp2a1", "Cdh15", "Chrna1", "Msc")
+Neuron_related = c("Bcam", "Cited1", "Col9a1", "Crabp2", "Eya1", "Mest", "Pax2", "Pclaf", "Rtn1", "Top2a", "Tubb3", "Uncx")
+Immune_and_Blood_cells = c("Afp", "Alox12", "Alas2", "Arhgdib", "Asf1b", "C1qc", "C1qb", "Cpa3", "Coro1a", "Cd200r3", "Col1a1", "Dcn", "Emcn", "F12", "Fam214b", "Hba-a1", "Hba-a2", "Hba-bt", "Hba-x", "Hbb-y", "Hbb-bt", "Hp", "Ikzf3", "Il13", "Igll1", "Kif18a", "Krt18", "Ms4a6c", "Mfap2", "Nrep", "Phospho1", "Pdcd1", "Pou5f1", "Plac8", "Plvap", "Rad51ap1", "Rbp4", "Rac2", "Rpl18", "Srgn", "Slfn14", "Steap3", "Tnnt2", "Tmsb4x", "Tubb3", "Tyrobp", "Tnn2", "Unc93b1") 
+Endothelial_cells = c("Adgrg6", "Ccl21a", "Cd34", "Cdh5", "Col1a1", "Cxcl1", "Cryab", "Egfl7", "Fabp4", "Gja4", "Icam2", "Plvap", "Ramp2", "Rrm2", "Rspo3", "Snca", "Sparc", "Upk3b")
+
+
+
+DefaultAssay(srat_WT) <- "SCT" # For vizualization either use SCT or norm RNA
+pdf("output/seurat/FeaturePlot_SCT_control_Epithelial_cells.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Epithelial_cells, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_Ectoderm.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_Endoderm.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Endoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_Muscle.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Muscle, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_Neuron_related.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Neuron_related, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_Immune_and_Blood_cells.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Immune_and_Blood_cells, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_Endothelial_cells.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Endothelial_cells, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+
+
+
+
+# Automatic cell-type annotation
+
+https://biostatistics.mdanderson.org/shinyapps/EasyCellType/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
