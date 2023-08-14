@@ -4161,6 +4161,108 @@ thor_splitted %>%
   group_by(X6) %>%
   summarise(n = n())
 
+
+
+# Plot to strenghten More Gain in HET than in KO (with unique_Keepdup)
+
+diffpeaks_HET <- read_tsv("output/THOR/THOR_WTvsHET_unique_Keepdup/WTvsHETuniqueKeepdup-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+thor_splitted_HET = diffpeaks_HET %>%
+  separate(X11, into = c("count_WT", "count_HET", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2","count_WT_3","count_WT_4"), sep = ":", convert = TRUE) %>%
+  separate(count_HET, into = c("count_HET_1","count_HET_2","count_HET_3","count_HET_4"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_HET_1+count_HET_2+count_HET_3+count_HET_4) / (count_WT_1+count_WT_2+count_WT_3+count_WT_4)) 
+summary_HET <- thor_splitted_HET %>%
+  mutate(peak = ifelse(FC > 1, "Gain", "Lost")) %>%
+  filter(qval > 15) %>%
+  group_by(peak) %>%
+  summarize(Count = n()) %>%
+  mutate(genotype = "HET")
+
+
+diffpeaks_KO <- read_tsv("output/THOR/THOR_WTvsKO_unique_Keepdup/WTvsKOuniqueKeepdup-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+thor_splitted_KO = diffpeaks_KO %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2","count_WT_3","count_WT_4"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2","count_KO_3","count_KO_4"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2+count_KO_3+count_KO_4) / (count_WT_1+count_WT_2+count_WT_3+count_WT_4))
+summary_KO <- thor_splitted_KO %>%
+  mutate(peak = ifelse(FC > 1, "Gain", "Lost")) %>%
+  filter(qval > 15) %>%
+  group_by(peak) %>%
+  summarize(Count = n()) %>%
+  mutate(genotype = "KO")
+  
+  
+# without stats
+pdf("output/THOR/THOR_WTvsHET_unique_Keepdup/HETvsKO_peak_counts_qval15.pdf", width=5, height=5)
+bind_rows(summary_HET, summary_KO) %>%
+  ggplot(aes(x = genotype, y = Count, fill = peak)) + 
+  geom_bar(stat = "identity", position = "fill") +  # position = "fill" makes bars represent proportions
+  geom_text(aes(label = Count), vjust = -0.5, position = position_fill(vjust = 0.5)) + # vjust adjusts vertical position of the label
+  scale_y_continuous(labels = scales::percent_format(scale = 100)) + 
+  theme_bw() +
+  labs(y = "Proportion")
+dev.off()
+
+
+# with stats
+contingency_table <- matrix(
+  c(
+    summary_HET$Count[summary_HET$peak == "Gain"],
+    summary_HET$Count[summary_HET$peak == "Lost"],
+    summary_KO$Count[summary_KO$peak == "Gain"],
+    summary_KO$Count[summary_KO$peak == "Lost"]
+  ),
+  nrow = 2
+)
+rownames(contingency_table) <- c("HET", "KO")
+colnames(contingency_table) <- c("Gain", "Lost")
+
+# Conduct chi-squared test
+chisq_test <- chisq.test(contingency_table)
+p_val <- chisq_test$p.value
+
+
+
+
+
+
+
+
+diffpeaks_HET <- read_tsv("output/THOR/THOR_WTvsHET_unique_Keepdup/WTvsHETuniqueKeepdup-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+thor_splitted_HET = diffpeaks_HET %>%
+  separate(X11, into = c("count_WT", "count_HET", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2","count_WT_3","count_WT_4"), sep = ":", convert = TRUE) %>%
+  separate(count_HET, into = c("count_HET_1","count_HET_2","count_HET_3","count_HET_4"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_HET_1+count_HET_2+count_HET_3+count_HET_4) / (count_WT_1+count_WT_2+count_WT_3+count_WT_4)) %>%
+  dplyr::select(X4, FC, qval) %>%
+  add_column(genotype ="HET")
+
+diffpeaks_KO <- read_tsv("output/THOR/THOR_WTvsKO_unique_Keepdup/WTvsKOuniqueKeepdup-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+thor_splitted_KO = diffpeaks_KO %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2","count_WT_3","count_WT_4"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2","count_KO_3","count_KO_4"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2+count_KO_3+count_KO_4) / (count_WT_1+count_WT_2+count_WT_3+count_WT_4))  %>%
+  dplyr::select(X4, FC, qval) %>%
+  add_column(genotype ="KO")
+
+
+pdf("output/THOR/THOR_WTvsHET_unique_Keepdup/HETvsKO_peak_FC_qval15.pdf", width=5, height=5)
+bind_rows(thor_splitted_HET, thor_splitted_KO) %>%
+  filter(qval > 15) %>%
+    ggplot(aes(x = genotype, y = log2(FC) )) + 
+    geom_boxplot() +
+    theme_bw()
+dev.off()
+
+
+  
+
 ```
 - *NOTE: FC negative = less in mutant; positive = more in mutant*
 
@@ -4221,9 +4323,12 @@ WTvsHET = read.table('output/THOR/THOR_WTvsHET/THOR_qval15.bed') %>% dplyr::rena
 
 WTvsHET = read.table('output/THOR/THOR_WTvsHET_Keepdup/THOR_qval15.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
 WTvsKO = read.table('output/THOR/THOR_WTvsKO_Keepdup/THOR_qval15.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
-
+### GOOD TO USE:
 WTvsHET = read.table('output/THOR/THOR_WTvsHET_unique_Keepdup/THOR_qval15.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
 WTvsKO = read.table('output/THOR/THOR_WTvsKO_unique_Keepdup/THOR_qval15.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
+###
+
+
 ## qval20
 WTvsKO = read.table('output/THOR/THOR_WTvsKO/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
 WTvsHET = read.table('output/THOR/THOR_WTvsHET/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
@@ -4389,6 +4494,7 @@ WTvsHET_annot_gain_lost_RNA = WTvsHET_annot_gain_lost %>%
     unique()
 
 
+
 WTvsKO_annot_gain_lost_RNA = WTvsKO_annot_gain_lost %>% 
     left_join(KO_vs_WT) %>%
     dplyr::select(gene, H3K27me3,baseMean,log2FoldChange,padj) %>%
@@ -4398,6 +4504,74 @@ WTvsKO_annot_gain_lost_RNA = WTvsKO_annot_gain_lost %>%
            padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
            significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
     unique()
+
+
+
+# output gene list
+## Gain in HET and Downregulated
+THOR_qval15_HET_Gain_DEG_Down = WTvsHET_annot_gain_lost_RNA %>%
+    filter(H3K27me3 == "gain",
+           log2FoldChange <0,
+           significance == "TRUE") %>%
+    dplyr::select(gene) %>% unique()
+write.table(THOR_qval15_HET_Gain_DEG_Down, "output/ChIPseeker/THOR_qval15_HET_Gain_DEG_Down.txt", sep="\t", row.names=FALSE, col.names=FALSE, quote=FALSE)
+## Gain in HET and Upregulated
+THOR_qval15_HET_Gain_DEG_Up = WTvsHET_annot_gain_lost_RNA %>%
+    filter(H3K27me3 == "gain",
+           log2FoldChange >0,
+           significance == "TRUE") %>%
+    dplyr::select(gene) %>% unique()
+write.table(THOR_qval15_HET_Gain_DEG_Up, "output/ChIPseeker/THOR_qval15_HET_Gain_DEG_Up.txt", sep="\t", row.names=FALSE, col.names=FALSE, quote=FALSE)
+## Lost in HET and Downregulated
+THOR_qval15_HET_Lost_DEG_Down = WTvsHET_annot_gain_lost_RNA %>%
+    filter(H3K27me3 == "lost",
+           log2FoldChange <0,
+           significance == "TRUE") %>%
+    dplyr::select(gene) %>% unique()
+write.table(THOR_qval15_HET_Lost_DEG_Down, "output/ChIPseeker/THOR_qval15_HET_Lost_DEG_Down.txt", sep="\t", row.names=FALSE, col.names=FALSE, quote=FALSE)
+## Lost in HET and Upregulated
+THOR_qval15_HET_Lost_DEG_Up = WTvsHET_annot_gain_lost_RNA %>%
+    filter(H3K27me3 == "lost",
+           log2FoldChange >0,
+           significance == "TRUE") %>%
+    dplyr::select(gene) %>% unique()
+write.table(THOR_qval15_HET_Lost_DEG_Up, "output/ChIPseeker/THOR_qval15_HET_Lost_DEG_Up.txt", sep="\t", row.names=FALSE, col.names=FALSE, quote=FALSE)
+
+
+## Gain in KO and Downregulated
+THOR_qval15_KO_Gain_DEG_Down = WTvsKO_annot_gain_lost_RNA %>%
+    filter(H3K27me3 == "gain",
+           log2FoldChange <0,
+           significance == "TRUE") %>%
+    dplyr::select(gene) %>% unique()
+write.table(THOR_qval15_KO_Gain_DEG_Down, "output/ChIPseeker/THOR_qval15_KO_Gain_DEG_Down.txt", sep="\t", row.names=FALSE, col.names=FALSE, quote=FALSE)
+## Gain in KO and Upregulated
+THOR_qval15_KO_Gain_DEG_Up = WTvsKO_annot_gain_lost_RNA %>%
+    filter(H3K27me3 == "gain",
+           log2FoldChange >0,
+           significance == "TRUE") %>%
+    dplyr::select(gene) %>% unique()
+write.table(THOR_qval15_KO_Gain_DEG_Up, "output/ChIPseeker/THOR_qval15_KO_Gain_DEG_Up.txt", sep="\t", row.names=FALSE, col.names=FALSE, quote=FALSE)
+## Lost in KO and Downregulated
+THOR_qval15_KO_Lost_DEG_Down = WTvsKO_annot_gain_lost_RNA %>%
+    filter(H3K27me3 == "lost",
+           log2FoldChange <0,
+           significance == "TRUE") %>%
+    dplyr::select(gene) %>% unique()
+write.table(THOR_qval15_KO_Lost_DEG_Down, "output/ChIPseeker/THOR_qval15_KO_Lost_DEG_Down.txt", sep="\t", row.names=FALSE, col.names=FALSE, quote=FALSE)
+## Lost in KO and Upregulated
+THOR_qval15_KO_Lost_DEG_Up = WTvsKO_annot_gain_lost_RNA %>%
+    filter(H3K27me3 == "lost",
+           log2FoldChange >0,
+           significance == "TRUE") %>%
+    dplyr::select(gene) %>% unique()
+write.table(THOR_qval15_KO_Lost_DEG_Up, "output/ChIPseeker/THOR_qval15_KO_Lost_DEG_Up.txt", sep="\t", row.names=FALSE, col.names=FALSE, quote=FALSE)
+
+
+
+
+
+
 
 
 # Volcano plot
@@ -4716,19 +4890,20 @@ Need to find way to decrease the false-positive signals (ie. genes that are up-r
 - testing with qval15 is nopt working well, as well combining this with FC expression fitlering, we lose a lot
 - Filtering the FC of diff peak is working not so great
 - using keepDup parameter = without indicating `--pvalue 0.1`, just default is XXXX
-- Not using SF, only TMM-Default is XXXX
-
+- Not using SF, only TMM-Default is less good; few diff. H3K27me3 identified
 
 
 
 --> For now, **filtering on FC 0.5 and keeping ONLY peaks in promoter or 5` of genes seems to be the best option** (Lets TEST with FC diff peak filtering lastly)
-
+----> **Now (202308), using THOR qval15 unique keepDup is far better.**
 
 Generate **GTF of the THOR-diff. bound genes**:
 - Gain in HET/KO
 - Lost in HET/KO
 - Gain in HET and Lost in KO and opposite
 
+At the end;
+- Gain/Lost Up/Down DEGs in each genotype (`THOR_qval15 analysis unique keepDup`)
 
 ```bash
 conda activate BedToBigwig
@@ -4841,6 +5016,44 @@ sbatch scripts/matrix_gene_1kb_THOR_qval10_DownHET_UpKO_noIntergenic_unique.sh #
 sbatch scripts/matrix_gene_1kb_DiffBind_TMM_THOR_qval10_DownHET_UpKO_noIntergenic_unique.sh # 1342624
 sbatch scripts/matrix_gene_1kb_THOR_qval15_DownHET_UpKO_noIntergenic_unique.sh # 1342626
 sbatch scripts/matrix_gene_1kb_DiffBind_TMM_THOR_qval15_DownHET_UpKO_noIntergenic_unique.sh # 1342627
+
+
+
+
+
+# Gain/Lost Up/Down DEGs in each genotype
+## Gene lists
+output/ChIPseeker/THOR_qval15_HET_Gain_DEG_Up.txt
+output/ChIPseeker/THOR_qval15_HET_Gain_DEG_Down.txt
+output/ChIPseeker/THOR_qval15_HET_Lost_DEG_Up.txt
+output/ChIPseeker/THOR_qval15_HET_Lost_DEG_Down.txt
+output/ChIPseeker/THOR_qval15_KO_Gain_DEG_Up.txt
+output/ChIPseeker/THOR_qval15_KO_Gain_DEG_Down.txt
+output/ChIPseeker/THOR_qval15_KO_Lost_DEG_Up.txt
+output/ChIPseeker/THOR_qval15_KO_Lost_DEG_Down.txt
+
+## Filter-in the gtf
+grep -f output/ChIPseeker/THOR_qval15_HET_Gain_DEG_Up.txt meta/ENCFF159KBI.gtf > output/ChIPseeker/THOR_qval15_HET_Gain_DEG_Up.gtf
+grep -f output/ChIPseeker/THOR_qval15_HET_Gain_DEG_Down.txt meta/ENCFF159KBI.gtf > output/ChIPseeker/THOR_qval15_HET_Gain_DEG_Down.gtf
+grep -f output/ChIPseeker/THOR_qval15_HET_Lost_DEG_Up.txt meta/ENCFF159KBI.gtf > output/ChIPseeker/THOR_qval15_HET_Lost_DEG_Up.gtf
+grep -f output/ChIPseeker/THOR_qval15_HET_Lost_DEG_Down.txt meta/ENCFF159KBI.gtf > output/ChIPseeker/THOR_qval15_HET_Lost_DEG_Down.gtf
+grep -f output/ChIPseeker/THOR_qval15_KO_Gain_DEG_Up.txt meta/ENCFF159KBI.gtf > output/ChIPseeker/THOR_qval15_KO_Gain_DEG_Up.gtf
+grep -f output/ChIPseeker/THOR_qval15_KO_Gain_DEG_Down.txt meta/ENCFF159KBI.gtf > output/ChIPseeker/THOR_qval15_KO_Gain_DEG_Down.gtf
+grep -f output/ChIPseeker/THOR_qval15_KO_Lost_DEG_Up.txt meta/ENCFF159KBI.gtf > output/ChIPseeker/THOR_qval15_KO_Lost_DEG_Up.gtf
+grep -f output/ChIPseeker/THOR_qval15_KO_Lost_DEG_Down.txt meta/ENCFF159KBI.gtf > output/ChIPseeker/THOR_qval15_KO_Lost_DEG_Down.gtf
+
+## Generate median bigwig tracks
+conda activate BedToBigwig
+sbatch scripts/bigwigmerge_THOR_WTvsHET_unique_Keepdup.sh # 4089494 ok
+sbatch scripts/bigwigmerge_THOR_WTvsKO_unique_Keepdup.sh # 4089501 ok
+
+
+# deepTools plot
+conda activate deeptools
+sbatch scripts/matrix_TSS_1kb_THOR_qval15_HET_Gain_DEG_Up.sh # 4089606
+## Not amazing; do instead, gene 1kb up/down:
+sbatch scripts/matrix_gene_1kb_THOR_qval15_HET_KO_Gain_Lost_DEG_Up_Down.sh # interactive; all codes
+
 
 
 ```
@@ -7367,7 +7580,9 @@ Overall, THOR-bigwig looks cleaner (more smooth) and show pattern more in agreem
 
 ### Functional analyses for the expected gene list
 
-Let's see what are the genes where H3K27me3 goes Up in HET and/or Down in KO; in agreement with expression changes
+Let's see what are the genes where H3K27me3 goes Up in HET and/or Down in KO; in agreement with expression changes.
+
+*NOTE: Nice doc about GO and pathway analysis [here](http://yulab-smu.top/biomedical-knowledge-mining-book/enrichment-overview.html)*
 
 ```bash
 conda activate deseq2
@@ -7399,15 +7614,23 @@ gtf <- import("meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique
 gtf <- import("meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique.gtf") # DEGs HET up KO Down
 gtf <- import("meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique_THOR_qval10_UpHET_DownKO_sort.gtf") # diffbound and DEGs HET down KO up
 gtf <- import("meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique_THOR_qval10_DownHET_UpKO_sort.gtf") # diffbound and DEGs HET up KO Down
-
-## Extract gene names and convert to Entrez ID
+#### Extract gene names and convert to Entrez ID
 gene_symbols <- unique(elementMetadata(gtf)$gene_name) # = elementMetadata(gtf)$gene_name %>% unique() 
+
+
+
+## Import file as ENSG000 ID
+gene_symbols <- readLines("output/ChIPseeker/THOR_qval15_HET_Gain_DEG_Down.txt") 
+gene_symbols <- readLines("output/ChIPseeker/THOR_qval15_KO_Lost_DEG_Up.txt") 
+gene_symbols <- readLines("output/ChIPseeker/THOR_qval15_KO_Lost_DEG_Down.txt") 
+gene_symbols <- c(readLines("output/ChIPseeker/THOR_qval15_KO_Lost_DEG_Up.txt"), readLines("output/ChIPseeker/THOR_qval15_KO_Lost_DEG_Down.txt") ) %>% unique()
 
 genes <- mapIds(org.Hs.eg.db, 
                    keys = gene_symbols, 
                    column = "ENTREZID", 
-                   keytype = "SYMBOL", 
+                   keytype = "ENSEMBL", 
                    multiVals = "first")
+
 
 
 
@@ -7421,6 +7644,11 @@ pdf("output/ChIPseeker/functional_KEGG_peak_noIntergenic_DEGs_HET_Down_KO_Up_Dif
 pdf("output/ChIPseeker/functional_KEGG_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique.pdf", width=7, height=5)
 pdf("output/ChIPseeker/functional_KEGG_THOR_qval10_UpHET_DownKO_noIntergenic.pdf", width=7, height=5)
 pdf("output/ChIPseeker/functional_KEGG_THOR_qval10_DownHET_UpKO_noIntergenic.pdf", width=7, height=6)
+pdf("output/ChIPseeker/functional_KEGG_THOR_qval15_HET_Gain_DEG_Down.pdf", width=7, height=6)
+pdf("output/ChIPseeker/functional_KEGG_THOR_qval15_KO_Lost_DEG_Up.pdf", width=7, height=6)
+pdf("output/ChIPseeker/functional_KEGG_THOR_qval15_KO_Lost_DEG_Down.pdf", width=7, height=6)
+pdf("output/ChIPseeker/functional_KEGG_THOR_qval15_KO_Lost_DEG.pdf", width=7, height=6)
+
 dotplot(enrichKEGG, showCategory = 15, title = "KEGG Pathway Enrichment Analysis")
 dev.off()
 
@@ -7433,6 +7661,41 @@ dev.off()
 ### NO ENRICHMENT THOR diffbound and DEGs HET up KO Down
 ### THOR Gain HET Lost KO found
 ### THOR Lost HET Gain KO found
+
+
+## Pathway (REactomePA)
+enrichPathway <- enrichPathway(gene   = genes,
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
+
+pdf("output/ChIPseeker/functional_Reactome_THOR_qval15_HET_Gain_DEG_Down.pdf", width=7, height=6)
+pdf("output/ChIPseeker/functional_Reactome_THOR_qval15_KO_Lost_DEG_Up.pdf", width=7, height=6)
+pdf("output/ChIPseeker/functional_Reactome_THOR_qval15_KO_Lost_DEG_Down.pdf", width=7, height=6)
+pdf("output/ChIPseeker/functional_Reactome_THOR_qval15_KO_Lost_DEG.pdf", width=7, height=6)
+
+dotplot(enrichPathway, showCategory = 15, title = "Reactome Pathway Enrichment Analysis")
+dev.off()
+
+
+
+## WikiPathway
+enrichWP <- enrichWP(gene   = genes,
+                organism = "Homo sapiens")
+                
+pdf("output/ChIPseeker/functional_WikiPathway_THOR_qval15_KO_Lost_DEG.pdf", width=7, height=6)
+pdf("output/ChIPseeker/functional_WikiPathway_THOR_qval15_HET_Gain_DEG_Down.pdf", width=7, height=6)
+
+dotplot(enrichWP, showCategory = 15, title = "Wiki Pathway Enrichment Analysis")
+dev.off()
+
+
+
+
+
+
+
+
+
 
 ## GO
 enrichGO <- enrichGO(gene   = genes,
@@ -7509,6 +7772,7 @@ pdf("output/ChIPseeker/functional_DO_peak_noIntergenic_DEGs_HET_Down_KO_Up_DiffB
 pdf("output/ChIPseeker/functional_DO_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique.pdf", width=6, height=5)
 pdf("output/ChIPseeker/functional_DO_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique_THOR_qval10_UpHET_DownKO.pdf", width=7, height=7)
 pdf("output/ChIPseeker/functional_DO_THOR_qval10_UpHET_DownKO_noIntergenic.pdf", width=7, height=7)
+pdf("output/ChIPseeker/functional_DO_THOR_qval15_HET_Gain_DEG_Down.pdf", width=7, height=7)
 dotplot(enrichDO, showCategory = 15, title = "Disease Ontology Enrichment Analysis")
 dev.off()
 ### NO ENRICHMENT
