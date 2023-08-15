@@ -5050,7 +5050,11 @@ sbatch scripts/bigwigmerge_THOR_WTvsKO_unique_Keepdup.sh # 4089501 ok
 
 # deepTools plot
 conda activate deeptools
-sbatch scripts/matrix_TSS_1kb_THOR_qval15_HET_Gain_DEG_Up.sh # 4089606
+sbatch scripts/matrix_TSS_1kb_THOR_qval15_HET_Gain_DEG_Up.sh # 4089606 ok
+sbatch scripts/matrix_TSS_1kb_THOR_allGenes.sh # 4159000
+sbatch scripts/matrix_TSS_2kb_THOR_allGenes.sh # 4159013
+sbatch scripts/matrix_TSS_5kb_THOR_allGenes.sh # 4159030
+sbatch scripts/matrix_TSS_10kb_THOR_allGenes.sh # 4159040
 ## Not amazing; do instead, gene 1kb up/down:
 sbatch scripts/matrix_gene_1kb_THOR_qval15_HET_KO_Gain_Lost_DEG_Up_Down.sh # interactive; all codes
 
