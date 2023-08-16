@@ -9015,87 +9015,6 @@ output/deseq2_hg38/upregulated_8wN_KO_vs_8wN_WT.txt
 output/deseq2_hg38/downregulated_8wN_HET_vs_8wN_WT.txt
 output/deseq2_hg38/upregulated_8wN_HET_vs_8wN_WT.txt
 
-
-
-# 10 first for the up; then for the down (better, as in the paper)
-
-# Define the databases to query
-dbs <- c("KEGG_2016")
-# For downregulated genes
-gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
-list_down <- unique(as.character(gene_names_down$V1))
-edown <- enrichr(list_down, dbs)
-head(edown$KEGG_2016)
-# For upregulated genes
-gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
-list_up <- unique(as.character(gene_names_up$V1))
-eup <- enrichr(list_up, dbs)
-head(eup$KEGG_2016)
-# Process results
-up <- eup$KEGG_2016
-down <- edown$KEGG_2016
-up$type <- "up"
-down$type <- "down"
-# Get top 10 enriched terms and sort by Combined.Score
-up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 10)
-down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 10)
-# Convert adjusted p-values and differentiate direction for up and down
-up$logAdjP <- -log10(up$Adjusted.P.value)
-down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
-# Combine the two dataframes
-gos <- rbind(down, up)
-gos <- gos %>% arrange(logAdjP)
-# Identify pathways that have both 'up' and 'down' 
-combined_pathways <- gos %>%
-  group_by(Term) %>%
-  filter(n() > 1) %>%
-  pull(Term) %>%
-  unique()
-
-# Separate data into 'up', 'combined' and 'down'
-up_pathways <- setdiff(gos %>% filter(type == "up") %>%
-  arrange(-logAdjP) %>%
-  pull(Term), combined_pathways)
-
-down_pathways <- setdiff(gos %>% filter(type == "down") %>%
-  arrange(logAdjP) %>%  # note the order here is ascending to get the higher values (more negative) first
-  pull(Term), combined_pathways)
-
-# Create a new ordering based on the criteria
-new_order <- c(up_pathways, combined_pathways, down_pathways)
-
-# Reorder 'Term' in 'gos' based on the new ordering
-gos$Term <- factor(gos$Term, levels = new_order)
-
-# Filter out rows where absolute logAdjP 1.3 = 0.05
-gos <- gos %>% filter(abs(logAdjP) > 1.3)
-
-# Plotting with enhanced aesthetics
-pdf("output/GO_hg38/enrichR_8wN_KO_vs_8wN_WT.pdf", width=20, height=4)
-ggplot(gos, aes(x=Term, y=logAdjP, label=round(logAdjP, 2))) + 
-  geom_bar(stat='identity', aes(fill=type), width=.5) +
-  scale_fill_manual(name="Expression", 
-                    labels = c("Down regulated", "Up regulated"), 
-                    values = c("down"="Sky Blue", "up"="Orange")) + 
-  labs(title= "Diverging bars of -log10 Adjusted P-value for KEGG pathways") + 
-  coord_flip() + 
-  theme(text = element_text(size = 12),
-        axis.text.y = element_text(size = 14),
-        title = element_text(size = 16, face = "bold"),
-        legend.text = element_text(size = 12),
-        legend.title = element_text(size = 14)) +
-  ylab("") + # Remove the y-axis label for cleaner look 
-  theme_bw()
-dev.off()
-
-
-## option 2
-XXX order to update just make a dfactor
-# Load necessary libraries
-library(enrichR)
-library(ggplot2)
-library(dplyr)
-
 # Define databases for enrichment
 dbs <- c("KEGG_2016")
 
@@ -9115,31 +9034,40 @@ down <- edown$KEGG_2016
 up$type <- "up"
 down$type <- "down"
 
-# Processing and filtering
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 10)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 10)
+
+# Convert adjusted p-values and differentiate direction for up and down
 up$logAdjP <- -log10(up$Adjusted.P.value)
 down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
 gos <- rbind(down, up)
-gos <- gos[abs(gos$logAdjP) > 1.3, ]
+gos <- gos %>% arrange(logAdjP)
 
-# Custom order for the terms
-gos <- gos %>% arrange(type, -abs(logAdjP))
-gos$Term <- factor(gos$Term, levels = unique(gos$Term))
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- gsub("Homo sapiens hsa[0-9]*", "", gos$Term)
+gos$Term <- factor(gos$Term, levels = new_order)
 
-# Plotting
-pdf("output/GO_hg38/enrichR_8wN_KO_vs_8wN_WT.pdf", width=15, height=15)
-ggplot(gos) + 
-  # Upregulated bars and labels
-  geom_bar(data = subset(gos, type == "up"), aes(x=Term, y=logAdjP, fill=type), stat='identity', width=.5)  +
-  geom_text(data = subset(gos, type == "up"), aes(x=Term, y= -0.5, label=Term), hjust = 1) +
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+# Plotting with enhanced aesthetics
+pdf("output/GO_hg38/enrichR_8wN_KO_vs_8wN_WT.pdf", width=12, height=5)
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
   
-  # Downregulated bars and labels
-  geom_bar(data = subset(gos, type == "down"), aes(x=Term, y=logAdjP, fill=type), stat='identity', width=.5)  +
-  geom_text(data = subset(gos, type == "down"), aes(x=Term, y= 0.5, label=Term), hjust = 0) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7) +
   
   geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  
   scale_fill_manual(name="Expression", 
                     labels = c("Down regulated", "Up regulated"), 
-                    values = c("down"="#00ba38", "up"="#f8766d")) + 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
   labs(title= "Diverging bars of -log10 Adjusted P-value for KEGG pathways") + 
   coord_flip() + 
   theme_minimal() +
@@ -9149,11 +9077,9 @@ ggplot(gos) +
     panel.border = element_blank(),
     axis.ticks = element_blank(),
     axis.text.y = element_blank(),
-    axis.text.x = element_text(size = 12)
+    axis.text.x = element_text(size = 15)
   )
 dev.off()
-
-
 ```
 
 
