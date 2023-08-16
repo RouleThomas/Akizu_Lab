@@ -5438,9 +5438,12 @@ mv output/featurecounts_hg38/*rpkm* output/rpkm_hg38/
 
 All good. 
 
-If needed to display gene with TPM:
+If needed to **display gene with TPM**:
 
 ```R
+# library
+library("biomaRt")
+
 # Plot with TPM instead of baseMean (Naiara plot)
 ## import tpm
 #### Generate TPM for ALL samples
@@ -5473,6 +5476,126 @@ for (sample in samples) {
 tpm_all_sample <- purrr::reduce(sample_data, full_join, by = "Geneid")
 write.csv(tpm_all_sample, file="../001__RNAseq/output/tpm_hg38/tpm_all_sample.txt")
 ### If need to import: tpm_all_sample <- read_csv("../001__RNAseq/output/tpm_hg38/tpm_all_sample.txt") #To import
+
+
+
+
+# Display some genes in TPM: 
+# ---> The code below is not perfect; issue at the geneSymbol conversin; to troubleshoot later; but it work
+#### Generate TPM for ALL samples
+#### collect all samples ID
+samples <- c("8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4",
+                     "8wN_HET_R1", "8wN_HET_R2", "8wN_HET_R3", "8wN_HET_R4","8wN_KO_R1", "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4")
+
+## Make a loop for importing all tpm data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("../001__RNAseq/output/tpm_hg38/", sample, "_tpm.txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>%
+    select(Geneid, starts_with("output.STAR_hg38.")) %>%
+    rename(!!sample := starts_with("output.STAR_hg38."))
+}
+
+## Merge all dataframe into a single one
+tpm_all_sample <- purrr::reduce(sample_data, full_join, by = "Geneid")
+write.csv(tpm_all_sample, file="../001__RNAseq/output/tpm_hg38/tpm_all_sample.txt")
+### If need to import: tpm_all_sample <- read_csv("../001__RNAseq/output/tpm_hg38/tpm_all_sample.txt") #To import
+
+# plot some genes
+tpm_all_sample_tidy <- tpm_all_sample %>%
+  gather(key = 'variable', value = 'tpm', -Geneid) %>%
+  separate(variable, into = c('time', 'genotype', 'replicate'), sep = "_") %>%
+  rename(gene = Geneid)
+
+tpm_all_sample_tidy$gene <- gsub("\\..*", "", tpm_all_sample_tidy$gene)
+
+## convert gene Ensembl to symbol 
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+
+# Convert Ensembl gene IDs to gene symbols
+genesymbols <- getBM(attributes = c("ensembl_gene_id", "external_gene_name"),
+                     filters = "ensembl_gene_id",
+                     values = tpm_all_sample_tidy$gene,
+                     mart = ensembl)
+
+# Merge gene symbols to your dataframe
+tpm_all_sample_tidy <- left_join(tpm_all_sample_tidy, genesymbols, 
+                                 by = c("gene" = "ensembl_gene_id"))
+
+# autism-related genes 
+c("SOX2", "GLI2", "EZH2", "PTN") # opposite behavior and well known
+ c("SHANK3", "FMR1", "MECP2", "TSC1", "TSC2", "NLGN3", "NLGN4", "AUTS2", "CHD8", "SYNGAP1", "PTEN", "CNTNAP2", "ADNP", "FOXP1") # well known
+
+plot_data <- tpm_all_sample_tidy %>%
+  unique() %>%
+  filter(external_gene_name %in% c("SHANK3", "FMR1", "MECP2", "TSC1", "TSC2", "NLGN3", "NLGN4", "AUTS2", "CHD8", "SYNGAP1", "PTEN", "CNTNAP2", "ADNP", "FOXP1")) %>%
+  group_by(gene, genotype,external_gene_name) %>%
+  summarise(mean_log2tpm = mean(log2(tpm + 1)),
+            se_log2tpm = sd(log2(tpm + 1)) / sqrt(n())) %>%
+  ungroup()
+
+plot_data$genotype <-
+  factor(plot_data$genotype,
+         c("WT", "HET","KO"))
+
+        
+# Plot
+pdf("output/tpm_hg38/autism_genes_opposite_Disease_Gene_and_Drug_Signatures_from_GEO.pdf", width=5, height=4)
+pdf("output/tpm_hg38/autism_genes_opposite_Disease_Gene_and_Drug_Signatures_from_GEO_wellKnown.pdf", width=8, height=4)
+ggplot(plot_data, aes(x = external_gene_name, y = mean_log2tpm, fill = genotype)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  geom_errorbar(
+    aes(ymin = mean_log2tpm - se_log2tpm, ymax = mean_log2tpm + se_log2tpm),
+    width = 0.25,
+    position = position_dodge(width = 0.9)
+  ) +
+  scale_fill_manual(values = c("WT" = "black", "HET" = "blue", "KO" = "red")) +
+  theme_bw() +
+  ylab("log2(TPM + 1)") +
+  xlab("Gene")
+dev.off()
+
+# Here is updated code to test; that may add staitsict:
+# Remove gene versions (e.g., ".5" from "ENSG000.5")
+tpm_all_sample_tidy$gene <- gsub("\\..*", "", tpm_all_sample_tidy$gene)
+
+# Create a Mart object for Ensembl
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+
+# Convert Ensembl gene IDs to gene symbols
+genesymbols <- getBM(attributes = c("ensembl_gene_id", "external_gene_name"),
+                     filters = "ensembl_gene_id",
+                     values = unique(tpm_all_sample_tidy$gene),
+                     mart = ensembl)
+
+# Merge gene symbols to your dataframe
+tpm_all_sample_tidy <- left_join(tpm_all_sample_tidy, genesymbols, 
+                                 by = c("gene" = "ensembl_gene_id"))
+
+# Rename columns if needed
+tpm_all_sample_tidy <- tpm_all_sample_tidy %>%
+  rename(geneSymbol = external_gene_name) %>%
+  # Remove potential duplicates
+  distinct()
+
+# Filtering the data for the genes of interest
+genes_of_interest <- c("ENSG001", "ENSG002")  # Replace with your actual gene IDs
+filtered_data <- tpm_all_sample_tidy %>% 
+  filter(gene %in% genes_of_interest)
+
+# Plotting
+p <- ggplot(filtered_data, aes(x = geneSymbol, y = log2(tpm + 1), fill = genotype)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  theme_minimal() +
+  labs(y = "log2(TPM + 1)", title = "Gene expression levels") +
+  scale_fill_manual(values = c("WT" = "black", "HET" = "blue", "KO" = "red"))
+
+# Adding statistics using ggpubr
+p_stat <- stat_compare_means(aes(group = genotype), label = "p.signif", 
+                             comparisons = list(c("WT", "HET"), c("WT", "KO")), 
+                             method = "t.test")
+
+p + p_stat
 ```
 
 
@@ -6460,6 +6583,45 @@ downregulated <- res[res$log2FoldChange < -0.5 & res$pvalue < 10e-6, ]
 write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_8wN_KO_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_8wN_KO_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
+
+# Post GO analysis; volcano plot with highlighted genes
+## KEGG2016__KO
+
+# Set up gene symbols and their colors
+highlight_genes <- c("EPHB6", "EPHA5", "SEMA5B", "EPHA4", "SEMA4A", "NTN4", "CXCR4", "UNC5D", "SEMA3F", "NFATC4", "RND1", "CXCL12", "SLIT1", "PLXNB2", "PLXNB1", "SRGAP2", "EPHB1", "SRGAP1", "EPHB4", "NGEF", "EPHA3")
+highlight_genes <- c("PDGFRB", "MAGI1", "CSF1", "ANGPT1", "LPAR2", "PIK3R3", "ARAP3", "FGF1", "GRIN2B", "ACTB", "EGFR", "RAP1GAP", "ACTG1", "ADORA2A", "PDGFD", "P2RY1", "PLCE1", "PRKD1", "DRD2", "FGFR3", "FGF12", "FGFR2", "PFN2", "RAPGEF4")
+
+highlight_genes <- c("NOTCH2", "LFNG", "NOTCH3", "NOTCH1", "JAG1", "MFNG", "DLL1", "HES5")
+# Create custom key-value pairs for gene highlighting
+keyvals <- ifelse(res$GeneSymbol %in% highlight_genes, 'midnight blue', 'gray88')
+names(keyvals)[keyvals == 'midnight blue'] <- 'Highlighted Genes'
+names(keyvals)[keyvals == 'gray88'] <- 'Others'
+
+pdf("output/deseq2_hg38/plotVolcano_res_8wN_KO_vs_8wN_WT_AxonGuidance.pdf", width=10, height=8)    
+pdf("output/deseq2_hg38/plotVolcano_res_8wN_KO_vs_8wN_WT_Rap1Signaling.pdf", width=10, height=8)    
+pdf("output/deseq2_hg38/plotVolcano_res_8wN_KO_vs_8wN_WT_NotchSignaling.pdf", width=10, height=8)    
+
+EnhancedVolcano(res,
+    lab = res$GeneSymbol,
+    x = 'log2FoldChange',
+    y = 'pvalue',
+    selectLab = res$GeneSymbol[which(names(keyvals) == 'Highlighted Genes')],
+    pCutoff = 10e-6,
+    FCcutoff = 0.5,   
+    pointSize = 1.5,
+    labSize = 4.5,
+    shape = 20,
+    colCustom = keyvals,
+    drawConnectors = TRUE,
+    widthConnectors = 0.5,
+    colConnectors = 'black',
+    max.overlaps = 100,
+    arrowheads = FALSE) +theme_bw() +xlim(-2.5,0)+ylim(0,20)
+dev.off()
+
+
+
+
 ```
 
 
@@ -6626,6 +6788,38 @@ downregulated <- res[res$log2FoldChange < -0.5 & res$pvalue < 10e-6, ]
 write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_8wN_HET_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_8wN_HET_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
+## KEGG2016__HET
+# Set up gene symbols and their colors
+highlight_genes <- c("ITGB1", "CSF1", "ITGB5", "ITGB4", "LPAR1", "TNC", "BRCA1", "LAMC1", "FGF1", "FGF2", "THBS1", "EGFR", "THBS4", "GNG10", "CCND2", "BCL2L11", "CCND1", "GNG5", "EIF4EBP1", "TNR", "MCL1", "IFNAR2", "PDGFRA", "ANGPT1", "HGF", "RPS6", "GNG12", "EFNA1", "KITLG", "COL1A2", "CDK6", "CCNE2", "COL4A2", "COL4A1", "DDIT4", "CDK2", "ITGA7", "ITGA6", "FGFR3")
+highlight_genes <- c("GABRB3", "VIPR1", "GABRB1", "NPFFR1", "GIPR", "CHRM5", "OPRL1", "ADRB1", "ADRA1A", "HTR6", "GRM4", "GRM6", "P2RY1", "KISS1R", "DRD1", "DRD2", "GABRD", "S1PR4", "GABRA2", "GABRA1", "P2RY11", "NPY5R", "GPR35", "GABRA5", "GRID1", "GABRA4", "HTR1D", "NPY1R", "HTR1B", "SSTR1", "ADRA2C", "HTR5A", "SSTR3", "GABRG2", "GRIN1", "P2RX5", "GRIN3A", "MC1R", "ADORA2A", "GLRB", "F2RL1")
+highlight_genes <- c("GABRB3", "GABRA2", "GABRA1", "GABRB1", "GABRA5", "GABRA4", "CACNA1B", "ADCY8", "GABRG2", "ADCY5", "GNG3", "CACNA1S", "SLC38A2", "GABRD")
+highlight_genes <- c("YAP1", "CRB1", "WWC1", "FGF1", "NKD1", "GLI2", "SOX2", "CCND2", "CCND1", "CDH1", "TEAD1", "TEAD2", "TEAD3", "FZD1", "WWTR1", "SMAD1", "TGFB2", "FZD7", "WNT5A", "FZD6", "BMP7", "TGFBR2", "MOB1A", "FRMD6", "APC", "ID2", "BIRC5", "CTNNB1", "BMPR1B", "BIRC2")
+# Create custom key-value pairs for gene highlighting # 'midnight blue'  OR 'darkorange3'
+keyvals <- ifelse(res$GeneSymbol %in% highlight_genes, 'darkorange3', 'gray88')
+names(keyvals)[keyvals == 'darkorange3'] <- 'Highlighted Genes'
+names(keyvals)[keyvals == 'gray88'] <- 'Others'
+
+pdf("output/deseq2_hg38/plotVolcano_res_8wN_HET_vs_8wN_WT_PI3Kpathway.pdf", width=10, height=8)    
+pdf("output/deseq2_hg38/plotVolcano_res_8wN_HET_vs_8wN_WT_neuroactiveLigand.pdf", width=10, height=8)  
+pdf("output/deseq2_hg38/plotVolcano_res_8wN_HET_vs_8wN_WT_GABAergicSynapse.pdf", width=10, height=8) 
+pdf("output/deseq2_hg38/plotVolcano_res_8wN_HET_vs_8wN_WT_Hippopathway.pdf", width=10, height=8)         
+EnhancedVolcano(res,
+    lab = res$GeneSymbol,
+    x = 'log2FoldChange',
+    y = 'pvalue',
+    selectLab = res$GeneSymbol[which(names(keyvals) == 'Highlighted Genes')],
+    pCutoff = 10e-6,
+    FCcutoff = 0.5,   
+    pointSize = 1.5,
+    labSize = 4.5,
+    shape = 20,
+    colCustom = keyvals,
+    drawConnectors = TRUE,
+    widthConnectors = 0.5,
+    colConnectors = 'black',
+    max.overlaps = 100,
+    arrowheads = FALSE) +theme_bw() +xlim(0,3)+ylim(0,55)
+dev.off()
 ```
 
 
@@ -8995,17 +9189,17 @@ dev.off()
 
 Let's follow this nice [blog](http://yulab-smu.top/biomedical-knowledge-mining-book/enrichment-overview.html) and this [discussion](https://www.biostars.org/p/343196/) for opposite barplot.
 
-need install.packages("enrichR")
+--> There are plenty of different databases to explore; see [here](https://maayanlab.cloud/Enrichr/#libraries)
 
 ```R
 # packages
-library(clusterProfiler)
-library(pathview)
-library(DOSE)
-library(org.Hs.eg.db)
-library(enrichplot)
-library(rtracklayer)
-library(tidyverse)
+library("clusterProfiler")
+library("pathview")
+library("DOSE")
+library("org.Hs.eg.db")
+library("enrichplot")
+library("rtracklayer")
+library("tidyverse")
 library("enrichR")
 
 ## Files
@@ -9023,15 +9217,17 @@ library(ggplot2)
 library(dplyr)
 
 # Define databases for enrichment
-dbs <- c("KEGG_2016")
+dbs <- c("KEGG_2016") # NEED TO TRY KEGG2021 !!!
 
 # Read and preprocess data for downregulated genes
 gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 
 # Read and preprocess data for upregulated genes
 gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -9053,9 +9249,6 @@ down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
 gos <- rbind(down, up)
 gos <- gos %>% arrange(logAdjP)
 
-
-
-
 # Filter out rows where absolute logAdjP 1.3 = 0.05
 gos <- gos %>% filter(abs(logAdjP) > 1.3)
 gos$Term <- gsub("Homo sapiens hsa[0-9]*", "", gos$Term)
@@ -9067,12 +9260,13 @@ new_order <- c(down_pathways, up_pathways)
 gos$Term <- factor(gos$Term, levels = new_order)
 
 # Plotting with enhanced aesthetics
-pdf("output/GO_hg38/enrichR_8wN_KO_vs_8wN_WT.pdf", width=12, height=5)
+pdf("output/GO_hg38/enrichR_KEGG_8wN_KO_vs_8wN_WT.pdf", width=12, height=5)
+pdf("output/GO_hg38/enrichR_KEGG_8wN_HET_vs_8wN_WT.pdf", width=12, height=6)
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
   
   # Adjusted label position based on the type of gene (up/down) and increased separation
-  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7) +
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
   
   geom_hline(yintercept = 0, linetype="solid", color = "black") +
   
@@ -9091,6 +9285,621 @@ ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) +
     axis.text.x = element_text(size = 15)
   )
 dev.off()
+## save output
+write.table(gos, "output/GO_hg38/enrichR_KEGG_8wN_KO_vs_8wN_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO_hg38/enrichR_KEGG_8wN_HET_vs_8wN_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("GO_Biological_Process_2018")
+
+# Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+
+# Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$GO_Biological_Process_2018
+down <- edown$GO_Biological_Process_2018
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 10)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 10)
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+pdf("output/GO_hg38/enrichR_GO_BP_8wN_KO_vs_8wN_WT.pdf", width=12, height=7)
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for GO BP pathways") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+
+
+
+
+# Define databases for enrichment
+dbs <- c("GO_Biological_Process_2018")
+
+# Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+
+# Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$GO_Biological_Process_2018
+down <- edown$GO_Biological_Process_2018
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 10)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 10)
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+pdf("output/GO_hg38/enrichR_GO_BP_8wN_KO_vs_8wN_WT.pdf", width=12, height=7)
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for GO BP pathways") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+
+
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("RNA-Seq_Disease_Gene_and_Drug_Signatures_from_GEO")
+
+# Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+
+# Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$'RNA-Seq_Disease_Gene_and_Drug_Signatures_from_GEO'
+down <- edown$'RNA-Seq_Disease_Gene_and_Drug_Signatures_from_GEO'
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 10)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 10)
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("GSE[0-9]+$", "", gos$Term)
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+pdf("output/GO_hg38/enrichR_Disease_Gene_and_Drug_Signatures_from_GEO_8wN_KO_vs_8wN_WT.pdf", width=14, height=7)
+pdf("output/GO_hg38/enrichR_Disease_Gene_and_Drug_Signatures_from_GEO_8wN_HET_vs_8wN_WT.pdf", width=14, height=7)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for GO BP pathways") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+## save output
+write.table(gos, "output/GO_hg38/enrichR_Disease_Gene_and_Drug_Signatures_from_GEO_8wN_KO_vs_8wN_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO_hg38/enrichR_Disease_Gene_and_Drug_Signatures_from_GEO_8wN_HET_vs_8wN_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("Jensen_DISEASES")
+
+# Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+
+# Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$Jensen_DISEASES
+down <- edown$Jensen_DISEASES
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 10)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 10)
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+pdf("output/GO_hg38/enrichR_Jensen_DISEASES_8wN_KO_vs_8wN_WT.pdf", width=10, height=7)
+pdf("output/GO_hg38/enrichR_Jensen_DISEASES_8wN_HET_vs_8wN_WT.pdf", width=14, height=7)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for GO BP pathways") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+## save output
+write.table(gos, "output/GO_hg38/enrichR_Jensen_DISEASES_8wN_KO_vs_8wN_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO_hg38/enrichR_Jensen_DISEASES_8wN_HET_vs_8wN_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("OMIM_Disease")
+
+# Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+
+# Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$OMIM_Disease
+down <- edown$OMIM_Disease
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 10)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 10)
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+pdf("output/GO_hg38/enrichR_Jensen_DISEASES_8wN_KO_vs_8wN_WT.pdf", width=10, height=7)
+pdf("output/GO_hg38/enrichR_Jensen_DISEASES_8wN_HET_vs_8wN_WT.pdf", width=14, height=7)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for GO BP pathways") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+## save output
+write.table(gos, "output/GO_hg38/enrichR_Jensen_DISEASES_8wN_KO_vs_8wN_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO_hg38/enrichR_Jensen_DISEASES_8wN_HET_vs_8wN_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("MAGMA_Drugs_and_Diseases")
+
+# Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+
+# Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$MAGMA_Drugs_and_Diseases
+down <- edown$MAGMA_Drugs_and_Diseases
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 10)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 10)
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+pdf("output/GO_hg38/enrichR_MAGMA_Drugs_and_Diseases_8wN_KO_vs_8wN_WT.pdf", width=8, height=4)
+pdf("output/GO_hg38/enrichR_MAGMA_Drugs_and_Diseases_8wN_HET_vs_8wN_WT.pdf", width=14, height=7)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for GO BP pathways") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+## save output
+write.table(gos, "output/GO_hg38/enrichR_MAGMA_Drugs_and_Diseases_8wN_KO_vs_8wN_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO_hg38/enrichR_MAGMA_Drugs_and_Diseases_8wN_HET_vs_8wN_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("Rare_Diseases_AutoRIF_Gene_Lists")
+
+# Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+
+# Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$Rare_Diseases_AutoRIF_Gene_Lists
+down <- edown$Rare_Diseases_AutoRIF_Gene_Lists
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 10)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 10)
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+pdf("output/GO_hg38/enrichR_Rare_Diseases_AutoRIF_Gene_Lists_8wN_KO_vs_8wN_WT.pdf", width=8, height=4)
+pdf("output/GO_hg38/enrichR_Rare_Diseases_AutoRIF_Gene_Lists_8wN_HET_vs_8wN_WT.pdf", width=14, height=7)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for GO BP pathways") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+## save output
+write.table(gos, "output/GO_hg38/enrichR_Rare_Diseases_AutoRIF_Gene_Lists_8wN_KO_vs_8wN_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO_hg38/enrichR_MAGMA_Drugs_and_Diseases_8wN_HET_vs_8wN_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("UK_Biobank_GWAS_v1")
+
+# Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+
+# Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$UK_Biobank_GWAS_v1
+down <- edown$UK_Biobank_GWAS_v1
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 10)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 10)
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+pdf("output/GO_hg38/enrichR_Rare_Diseases_AutoRIF_Gene_Lists_8wN_KO_vs_8wN_WT.pdf", width=8, height=4)
+pdf("output/GO_hg38/enrichR_Rare_Diseases_AutoRIF_Gene_Lists_8wN_HET_vs_8wN_WT.pdf", width=14, height=7)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for GO BP pathways") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+## save output
+write.table(gos, "output/GO_hg38/enrichR_Rare_Diseases_AutoRIF_Gene_Lists_8wN_KO_vs_8wN_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO_hg38/enrichR_MAGMA_Drugs_and_Diseases_8wN_HET_vs_8wN_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
 ```
 
 

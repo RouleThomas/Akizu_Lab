@@ -4,32 +4,20 @@
 
 
 computeMatrix reference-point --referencePoint TSS \
-    -b 10000 -a 10000 \
-    -R ../../Master/meta/ENCFF159KBI.gtf \
+    -b 5000 -a 5000 \
+    -R meta/ENCFF159KBI_THOR_WTvsHETKO_unique_Keepdup_qval15_Promoter_5.gtf \
     -S output/THOR/THOR_WTvsHET_unique_Keepdup/WTvsHETuniqueKeepdup-s1_median.bw output/THOR/THOR_WTvsHET_unique_Keepdup/WTvsHETuniqueKeepdup-s2_median.bw output/THOR/THOR_WTvsKO_unique_Keepdup/WTvsKOuniqueKeepdup-s2_median.bw \
     --skipZeros \
     --missingDataAsZero \
     --blackListFileName ../../Master/meta/hg38-blacklist.v2.bed \
-    -o output/deeptools/matrix_TSS2_10kp_THOR_allGenes.gz \
+    -o output/deeptools/matrix_TSS_5kp_THORq15Gene.gz \
     -p 6
 
 
 
-plotHeatmap -m output/deeptools/matrix_TSS2_10kp_THOR_allGenes.gz \
-    -out output/deeptools/matrix_TSS2_10kp_THOR_allGenes_heatmap2.png \
+plotHeatmap -m output/deeptools/matrix_TSS_5kp_THORq15Gene.gz \
+    -out output/deeptools/matrix_TSS_5kp_THORq15Gene_heatmap.png \
     --samplesLabel "WT" "HET" "KO" \
     --colorMap Greys \
     --whatToShow 'heatmap and colorbar' \
     --heatmapHeight 15
-
-
-
-plotProfile -m output/deeptools/matrix_TSS2_10kp_THOR_allGenes.gz \
-    -out output/deeptools/matrix_TSS2_10kp_THOR_allGenes_profile.pdf \
-    --samplesLabel "WT" "HET" "KO" \
-    --perGroup \
-    --colors black blue red \
-    --refPointLabel "TSS" \
-    -T "H3K27me3 read density" \
-    -z ""
-

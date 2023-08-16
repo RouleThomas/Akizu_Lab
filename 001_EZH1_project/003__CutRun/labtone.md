@@ -5057,38 +5057,77 @@ sbatch scripts/matrix_TSS_5kb_THOR_allGenes.sh # 4159030 ok # TSS and TES
 sbatch scripts/matrix_TSS_10kb_THOR_allGenes.sh # 4159040 xxx # TSS and TES
 sbatch scripts/matrix_TSS2_500bp_THOR_allGenes.sh # 4166961 ok # TSS only
 sbatch scripts/matrix_TSS2_1kb_THOR_allGenes.sh # 4166982 ok # TSS only
-sbatch scripts/matrix_TSS2_2kb_THOR_allGenes.sh # 4167006 xxx
-sbatch scripts/matrix_TSS2_5kb_THOR_allGenes.sh # 4169091 xxx
-sbatch scripts/matrix_TSS2_10kb_THOR_allGenes.sh # 4170903 xxx
+sbatch scripts/matrix_TSS2_2kb_THOR_allGenes.sh # 4167006 ok
+sbatch scripts/matrix_TSS2_5kb_THOR_allGenes.sh # 4169091 ok
+sbatch scripts/matrix_TSS2_10kb_THOR_allGenes.sh # 4170903 ok
 ## heatmap with peak in WT as bed file
 sbatch scripts/matrix_TSS_500bp_THOR_WTpeaks.sh # 4167376 ok
 sbatch scripts/matrix_TSS_1kb_THOR_WTpeaks.sh # 4167420 ok
 sbatch scripts/matrix_TSS_2kb_THOR_WTpeaks.sh  # 4167424 ok
 sbatch scripts/matrix_TSS_5kb_THOR_WTpeaks.sh # 4167434 ok (show decrease in HET!)
-sbatch scripts/matrix_TSS_10kb_THOR_WTpeaks.sh # 4170907 xxx
+sbatch scripts/matrix_TSS_10kb_THOR_WTpeaks.sh # 4170907 ok
 # heatmap with all WT genes with peaks (within promoter or 5' only)
 sbatch scripts/matrix_TSS_500bp_THOR_WTpeaksGene.sh # 4169907 ok
 sbatch scripts/matrix_TSS_1kb_THOR_WTpeaksGene.sh # 4169914 ok
 sbatch scripts/matrix_TSS_2kb_THOR_WTpeaksGene.sh # 4169919 ok (too small)
-sbatch scripts/matrix_TSS_5kb_THOR_WTpeaksGene.sh # 4169948 xxx
-sbatch scripts/matrix_TSS_10kb_THOR_WTpeaksGene.sh # 4170913 xxx
+sbatch scripts/matrix_TSS_5kb_THOR_WTpeaksGene.sh # 4169948 ok
+sbatch scripts/matrix_TSS_10kb_THOR_WTpeaksGene.sh # 4170913 ok
+# heatmap with all differential genes with peaks (within promoter or 5' only)
+sbatch scripts/matrix_TSS_5kb_THOR_THORq15Gene.sh # 4223777 ok
+sbatch scripts/matrix_TSS_10kb_THOR_THORq15Gene.sh #  4223826 ok
+# heatmap with all differential peaks (anywhere)
+sbatch scripts/matrix_TSS_5kb_THOR_THORq15peaks.sh # 4228547 ok
+sbatch scripts/matrix_TSS_10kb_THOR_THORq15peaks.sh #  4228548 ok
+
+
+# heatmap with differential peaks in HET only (anywhere)
+sbatch scripts/matrix_TSS_5kb_THOR_THORq15HETpeaks.sh # 4236424 ok LOOK GOOD INCREASE
+sbatch scripts/matrix_TSS_10kb_THOR_THORq15HETpeaks.sh # 4236439 fail 4236478 ok
+# heatmap with differential peaks in KO only (anywhere)
+sbatch scripts/matrix_TSS_10kb_THOR_THORq15KOpeaks.sh # 4247828
+
+# heatmap with differential H3K27me3 genes (within promoter or 5' only)
+sbatch scripts/matrix_TSS_5kb_THOR_THORq15HETpeaksGene.sh # 4236562 ok
+sbatch scripts/matrix_TSS_10kb_THOR_THORq15HETpeaksGene.sh # 4236571
+
 
 ## Not amazing; do instead, gene 1kb up/down:
 sbatch scripts/matrix_gene_1kb_THOR_qval15_HET_KO_Gain_Lost_DEG_Up_Down.sh # interactive; all codes
 ```
 
-Here is steps to **generate GTF file of gene that contains peak in WT promoter**:
+Here is steps to **generate GTF file of gene that contains peak in WT promoter or all diff bound genes**:
 ```bash
-# Filter to keep only WT genes annotated with a H3K27me3 within its promoter or 5'UTR (annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+# PEAK IN PROMOTER WT
+## Filter to keep only WT genes annotated with a H3K27me3 within its promoter or 5'UTR (annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
 output/macs2/broad_blacklist_qval2.30103/8wN_WT_H3K27me3_pool_peaks.broadPeak
 awk -F'\t' '$11 == "Promoter (<=1kb)" || $11 == "Promoter (1-2kb)" || $11 == "Promoter (2-3kb)" || $11 == "5'\'' UTR"' output/ChIPseeker/annotation_WT.txt > output/ChIPseeker/annotation_WT_Promoter_5.txt
-# Filter only peak in promoter abd 5' and Isolate geneSymbol
+## Filter only peak in promoter abd 5' and Isolate geneSymbol
 awk -F'\t' '$11 == "Promoter (<=1kb)" || $11 == "Promoter (1-2kb)" || $11 == "Promoter (2-3kb)" || $11 == "5'\'' UTR"' output/ChIPseeker/annotation_WT.txt | awk -F'\t' '{print $20}' | sort | uniq > output/ChIPseeker/annotation_WT_Promoter_5_geneSymbol.txt
-# Filter in the gtf
-## Modify the .txt file that list all genes so that it match gtf structure
+## Filter in the gtf
+### Modify the .txt file that list all genes so that it match gtf structure
 sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_WT_Promoter_5_geneSymbol.txt > output/ChIPseeker/annotation_WT_Promoter_5_as_gtf_geneSymbol.txt
-## Filter the gtf
+### Filter the gtf
 grep -Ff output/ChIPseeker/annotation_WT_Promoter_5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_WTpeaks_Promoter_5.gtf
+
+# ALL GENES WITH A DIFF PEAK (from THOR*_unique_keepDup qval15)
+## Filter to keep only genes annotated with a H3K27me3 within its promoter or 5'UTR (annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15.txt
+output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15.txt
+## Filter only peak in promoter abd 5' and Isolate geneSymbol
+awk -F'\t' '$16 == "Promoter (<=1kb)" || $16 == "Promoter (1-2kb)" || $16 == "Promoter (2-3kb)" || $16 == "5'\'' UTR"' output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15.txt | awk -F'\t' '{print $25}' | sort | uniq > output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15_Promoter_5_geneSymbol.txt
+awk -F'\t' '$16 == "Promoter (<=1kb)" || $16 == "Promoter (1-2kb)" || $16 == "Promoter (2-3kb)" || $16 == "5'\'' UTR"' output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15.txt | awk -F'\t' '{print $25}' | sort | uniq > output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15_Promoter_5_geneSymbol.txt
+## Filter in the gtf
+### Modify the .txt file that list all genes so that it match gtf structure
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15_Promoter_5_geneSymbol.txt > output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15_Promoter_5_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15_Promoter_5_geneSymbol.txt > output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15_Promoter_5_as_gtf_geneSymbol.txt
+cat output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15_Promoter_5_as_gtf_geneSymbol.txt output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15_Promoter_5_as_gtf_geneSymbol.txt | sort | uniq > output/ChIPseeker/annotation_WTvsHETKO_unique_Keepdup_qval15_Promoter_5_as_gtf_geneSymbol.txt
+### Filter the gtf
+grep -Ff output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15_Promoter_5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_THOR_WTvsHET_unique_Keepdup_qval15_Promoter_5.gtf
+grep -Ff output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15_Promoter_5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_THOR_WTvsKO_unique_Keepdup_qval15_Promoter_5.gtf
+grep -Ff output/ChIPseeker/annotation_WTvsHETKO_unique_Keepdup_qval15_Promoter_5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_THOR_WTvsHETKO_unique_Keepdup_qval15_Promoter_5.gtf
+
+# ALL PEAKS DIFF
+cat output/THOR/THOR_WTvsHET_unique_Keepdup/THOR_qval15.bed output/THOR/THOR_WTvsKO_unique_Keepdup/THOR_qval15.bed > output/THOR/THOR_WTvsHET_unique_Keepdup/THOR_HETKO_qval15.bed
 ```
 
 - **NOTE: `unique` is added here because it concerns regions that gain in HET AND Lost in KO and opposite; not AND/OR as previous mistake**
@@ -5096,6 +5135,9 @@ grep -Ff output/ChIPseeker/annotation_WT_Promoter_5_as_gtf_geneSymbol.txt meta/E
 
 --> For DEGs unique (up and down in both bgenotype) in agreement with gene expression!!
 ----> THOR-scaled perform better; more striking differences.
+
+--> All plots are mostly similar somwhat; they show overall comparable enrichment of H3K27me3, no drastic huge changes. Maybe the TSS2 (all genes at 5-10kb show slight increase for HET)
+----> We see increase only when using the THORvsHET_qval15 files; not when we use both diff peaks in HET and KO. 
 
 
 --> **DEGs** and **diff. bound sites** genotpye per genotype and both genotype is following expectation!!

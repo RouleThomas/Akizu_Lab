@@ -15,11 +15,21 @@ computeMatrix reference-point --referencePoint center \
     -p 6
 
 
-
 plotHeatmap -m output/deeptools/matrix_TSS_10kb_THOR_WTpeaks.gz \
     -out output/deeptools/matrix_TSS_10kb_THOR_WTpeaks_heatmap.png \
     --samplesLabel "WT" "HET" "KO" \
-    --colorList white,grey,black \
+    --colorMap Greys \
     --whatToShow 'heatmap and colorbar' \
     --heatmapHeight 15 \
     --refPointLabel 0
+
+
+plotProfile -m output/deeptools/matrix_TSS_10kb_THOR_WTpeaks.gz \
+    -out output/deeptools/matrix_TSS_10kb_THOR_WTpeaks_profile.pdf \
+    --samplesLabel "WT" "HET" "KO" \
+    --perGroup \
+    --colors black blue red \
+    --refPointLabel "0" \
+    -T "H3K27me3 read density" \
+    -z ""
+
