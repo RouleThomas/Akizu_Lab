@@ -9015,6 +9015,13 @@ output/deseq2_hg38/upregulated_8wN_KO_vs_8wN_WT.txt
 output/deseq2_hg38/downregulated_8wN_HET_vs_8wN_WT.txt
 output/deseq2_hg38/upregulated_8wN_HET_vs_8wN_WT.txt
 
+
+
+# Load necessary libraries
+library(enrichR)
+library(ggplot2)
+library(dplyr)
+
 # Define databases for enrichment
 dbs <- c("KEGG_2016")
 
@@ -9046,15 +9053,19 @@ down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
 gos <- rbind(down, up)
 gos <- gos %>% arrange(logAdjP)
 
+
+
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("Homo sapiens hsa[0-9]*", "", gos$Term)
+
 # Create the order based on the approach given
 up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
 down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
 new_order <- c(down_pathways, up_pathways)
-gos$Term <- gsub("Homo sapiens hsa[0-9]*", "", gos$Term)
 gos$Term <- factor(gos$Term, levels = new_order)
 
-# Filter out rows where absolute logAdjP 1.3 = 0.05
-gos <- gos %>% filter(abs(logAdjP) > 1.3)
 # Plotting with enhanced aesthetics
 pdf("output/GO_hg38/enrichR_8wN_KO_vs_8wN_WT.pdf", width=12, height=5)
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
