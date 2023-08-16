@@ -5473,14 +5473,13 @@ for (sample in samples) {
 tpm_all_sample <- purrr::reduce(sample_data, full_join, by = "Geneid")
 write.csv(tpm_all_sample, file="../001__RNAseq/output/tpm_hg38/tpm_all_sample.txt")
 ### If need to import: tpm_all_sample <- read_csv("../001__RNAseq/output/tpm_hg38/tpm_all_sample.txt") #To import
-
-
-XXX look for gene of interest XXX
 ```
 
 
 ## DEGs with deseq2
 
+**IMPORTANT NOTE: Here it is advisable to REMOVE all genes from chromosome X and Y BEFORE doing the DEGs analysis (X chromosome re-activation occurs in some samples, notably these with more cell passage; in our case, the HET and KO)**
+--> It is good to do this on the count matrix see [here](https://support.bioconductor.org/p/119932/)
 ### 'one-by-one' comparison
 Comparison WT vs mutant (KO or HET) for each time-points:
 - NPC KO vs WT
@@ -6314,6 +6313,10 @@ library("tidyverse")
 library("RColorBrewer")
 library("pheatmap")
 library("apeglm")
+library("EnhancedVolcano")
+library("org.Hs.eg.db")
+library("AnnotationDbi")
+library("biomaRt")
 
 # import featurecounts output and keep only gene ID and counts
 ## collect all samples ID
@@ -6325,12 +6328,23 @@ sample_data <- list()
 
 for (sample in samples) {
   sample_data[[sample]] <- read_delim(paste0("output/featurecounts_hg38/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
-    select(Geneid, starts_with("output/STAR_hg38/")) %>%
+    dplyr::select(Geneid, starts_with("output/STAR_hg38/")) %>%
     rename(!!sample := starts_with("output/STAR_hg38/"))
 }
 
 # Merge all dataframe into a single one
 counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+# Remove X and Y chromosome genes
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
+                   filters = "chromosome_name",
+                   values = c("X", "Y"),
+                   mart = ensembl)
+counts_all$stripped_geneid <- sub("\\..*", "", counts_all$Geneid)
+counts_all_filtered <- counts_all %>%
+  filter(!stripped_geneid %in% genes_X_Y$ensembl_gene_id)
+counts_all_filtered$stripped_geneid <- NULL
 
 # Pre-requisetes for the DESeqDataSet
 ## Transform merged_data into a matrix
@@ -6342,13 +6356,13 @@ make_matrix <- function(df,rownames = NULL){
   my_matrix
 }
 ### execute function
-counts_all_matrix = make_matrix(select(counts_all, -Geneid), pull(counts_all, Geneid)) 
+counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pull(counts_all_filtered, Geneid)) 
 
 ## Create colData file that describe all our samples
 ### Not including replicate
 coldata_raw <- data.frame(samples) %>%
   separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
-  select(-replicate) %>%
+  dplyr::select(-replicate) %>%
   bind_cols(data.frame(samples))
 ### Including replicate
 coldata_raw <- data.frame(samples) %>%
@@ -6356,7 +6370,7 @@ coldata_raw <- data.frame(samples) %>%
   bind_cols(data.frame(samples))
 
 ## transform df into matrix
-coldata = make_matrix(select(coldata_raw, -samples), pull(coldata_raw, samples))
+coldata = make_matrix(dplyr::select(coldata_raw, -samples), pull(coldata_raw, samples))
 
 ## Check that row name of both matrix (counts and description) are the same
 all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
@@ -6381,7 +6395,8 @@ resultsNames(dds) # Here print value into coef below
 res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm")
 
 ## Export result as 'raw_8wN_KO_vs_8wN_WT.txt'
-write.csv(res %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2_hg38/raw_8wN_KO_vs_8wN_WT.txt")
+# write.csv(res %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2_hg38/raw_8wN_KO_vs_8wN_WT.txt")
+# write.csv(res %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2_hg38/filtered_8wN_KO_vs_8wN_WT.txt") --> FILTERED IS HERE WITHOUT X AND Y GENES
 ### If need to import: res <- read_csv("output/deseq2/raw_ESC_HET_vs_ESC_WT.txt") #To import
 
 ## Plot-MA
@@ -6395,7 +6410,56 @@ plotMA(res_df, ylim=c(-2,2))
 text(x = max(res_df$baseMean, na.rm = TRUE) * 0.25, y = 1.75, labels = paste(n_upregulated), adj = c(0, 0.5), cex = 0.9)
 text(x = max(res_df$baseMean, na.rm = TRUE) * 0.25, y = -1.75, labels = paste(n_downregulated), adj = c(0, 0.5), cex = 0.9)
 
+
+## Plot-volcano
+### GeneSymbol ID
+gene_ids <- rownames(res)
+stripped_gene_ids <- sub("\\..*", "", gene_ids)
+gene_symbols <- mapIds(org.Hs.eg.db, keys = stripped_gene_ids,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+res$GeneSymbol <- gene_symbols
+
+keyvals <- ifelse(
+  res$log2FoldChange < -0.5 & res$pvalue < 10e-6, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.5 & res$pvalue < 10e-6, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; FC < -0.5)'
+
+pdf("output/deseq2_hg38/plotVolcano_res_8wN_KO_vs_8wN_WT.pdf", width=7, height=6)    
+EnhancedVolcano(res,
+  lab = res$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'pvalue',
+  title = 'WT vs LOF',
+  pCutoff = 10e-6,
+  FCcutoff = 0.5,
+  pointSize = 1.0,
+  labSize = 4.5,
+  colCustom = keyvals,
+  colAlpha = 1)  + 
+  theme_bw() 
 dev.off()
+
+upregulated_genes <- sum(res$log2FoldChange > 0.5 & res$pvalue < 10e-6)
+downregulated_genes <- sum(res$log2FoldChange < -0.5 & res$pvalue < 10e-6)
+
+
+# Save as gene list for GO analysis:
+### Complete table with GeneSymbol
+write.table(res, file = "output/deseq2_hg38/filtered_8wN_KO_vs_8wN_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res[res$log2FoldChange > 0.5 & res$pvalue < 10e-6, ]
+#### Filter for down-regulated genes
+downregulated <- res[res$log2FoldChange < -0.5 & res$pvalue < 10e-6, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_8wN_KO_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_8wN_KO_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
 ```
 
 
@@ -6414,6 +6478,10 @@ library("tidyverse")
 library("RColorBrewer")
 library("pheatmap")
 library("apeglm")
+library("EnhancedVolcano")
+library("org.Hs.eg.db")
+library("AnnotationDbi")
+library("biomaRt")
 
 # import featurecounts output and keep only gene ID and counts
 ## collect all samples ID
@@ -6425,12 +6493,23 @@ sample_data <- list()
 
 for (sample in samples) {
   sample_data[[sample]] <- read_delim(paste0("output/featurecounts_hg38/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
-    select(Geneid, starts_with("output/STAR_hg38/")) %>%
+    dplyr::select(Geneid, starts_with("output/STAR_hg38/")) %>%
     rename(!!sample := starts_with("output/STAR_hg38/"))
 }
 
 # Merge all dataframe into a single one
 counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+# Remove X and Y chromosome genes
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
+                   filters = "chromosome_name",
+                   values = c("X", "Y"),
+                   mart = ensembl)
+counts_all$stripped_geneid <- sub("\\..*", "", counts_all$Geneid)
+counts_all_filtered <- counts_all %>%
+  filter(!stripped_geneid %in% genes_X_Y$ensembl_gene_id)
+counts_all_filtered$stripped_geneid <- NULL
 
 # Pre-requisetes for the DESeqDataSet
 ## Transform merged_data into a matrix
@@ -6442,13 +6521,13 @@ make_matrix <- function(df,rownames = NULL){
   my_matrix
 }
 ### execute function
-counts_all_matrix = make_matrix(select(counts_all, -Geneid), pull(counts_all, Geneid)) 
+counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pull(counts_all_filtered, Geneid)) 
 
 ## Create colData file that describe all our samples
 ### Not including replicate
 coldata_raw <- data.frame(samples) %>%
   separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
-  select(-replicate) %>%
+  dplyr::select(-replicate) %>%
   bind_cols(data.frame(samples))
 ### Including replicate
 coldata_raw <- data.frame(samples) %>%
@@ -6456,7 +6535,7 @@ coldata_raw <- data.frame(samples) %>%
   bind_cols(data.frame(samples))
 
 ## transform df into matrix
-coldata = make_matrix(select(coldata_raw, -samples), pull(coldata_raw, samples))
+coldata = make_matrix(dplyr::select(coldata_raw, -samples), pull(coldata_raw, samples))
 
 ## Check that row name of both matrix (counts and description) are the same
 all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
@@ -6481,8 +6560,8 @@ resultsNames(dds) # Here print value into coef below
 res <- lfcShrink(dds, coef="genotype_HET_vs_WT", type="apeglm")
 
 ## Export result as 'raw_8wN_HET_vs_8wN_WT.txt'
-write.csv(res %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2_hg38/raw_8wN_HET_vs_8wN_WT.txt")
-### If need to import: res <- read_csv("output/deseq2/raw_ESC_HET_vs_ESC_WT.txt") #To import
+# write.csv(res %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2_hg38/raw_8wN_HET_vs_8wN_WT.txt")
+
 
 ## Plot-MA
 pdf("output/deseq2_hg38/plotMA_res_8wN_HET_vs_8wN_WT.pdf", width=5, height=4)
@@ -6496,6 +6575,57 @@ text(x = max(res_df$baseMean, na.rm = TRUE) * 0.25, y = 1.75, labels = paste(n_u
 text(x = max(res_df$baseMean, na.rm = TRUE) * 0.25, y = -1.75, labels = paste(n_downregulated), adj = c(0, 0.5), cex = 0.9)
 
 dev.off()
+
+
+
+## Plot-volcano
+### GeneSymbol ID
+gene_ids <- rownames(res)
+stripped_gene_ids <- sub("\\..*", "", gene_ids)
+gene_symbols <- mapIds(org.Hs.eg.db, keys = stripped_gene_ids,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+res$GeneSymbol <- gene_symbols
+
+keyvals <- ifelse(
+  res$log2FoldChange < -0.5 & res$pvalue < 10e-6, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.5 & res$pvalue < 10e-6, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; FC < -0.5)'
+
+pdf("output/deseq2_hg38/plotVolcano_res_8wN_HET_vs_8wN_WT.pdf", width=7, height=6)    
+EnhancedVolcano(res,
+  lab = res$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'pvalue',
+  title = 'WT vs LOF',
+  pCutoff = 10e-6,
+  FCcutoff = 0.5,
+  pointSize = 1.0,
+  labSize = 4.5,
+  colCustom = keyvals,
+  colAlpha = 1)  + 
+  theme_bw() 
+dev.off()
+
+upregulated_genes <- sum(res$log2FoldChange > 0.5 & res$pvalue < 10e-6)
+downregulated_genes <- sum(res$log2FoldChange < -0.5 & res$pvalue < 10e-6)
+
+# Save as gene list for GO analysis:
+### Complete table with GeneSymbol
+write.table(res, file = "output/deseq2_hg38/filtered_8wN_HET_vs_8wN_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res[res$log2FoldChange > 0.5 & res$pvalue < 10e-6, ]
+#### Filter for down-regulated genes
+downregulated <- res[res$log2FoldChange < -0.5 & res$pvalue < 10e-6, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_8wN_HET_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_8wN_HET_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
 ```
 
 
@@ -8860,5 +8990,170 @@ dev.off()
 
 
 
+
+# Gene ontology_hg38__ cleaner representation for GO up and down
+
+Let's follow this nice [blog](http://yulab-smu.top/biomedical-knowledge-mining-book/enrichment-overview.html) and this [discussion](https://www.biostars.org/p/343196/) for opposite barplot.
+
+need install.packages("enrichR")
+
+```R
+# packages
+library(clusterProfiler)
+library(pathview)
+library(DOSE)
+library(org.Hs.eg.db)
+library(enrichplot)
+library(rtracklayer)
+library(tidyverse)
+library("enrichR")
+
+## Files
+### GeneSymbol list of signif up/down genes in each genotypes
+output/deseq2_hg38/downregulated_8wN_KO_vs_8wN_WT.txt
+output/deseq2_hg38/upregulated_8wN_KO_vs_8wN_WT.txt
+output/deseq2_hg38/downregulated_8wN_HET_vs_8wN_WT.txt
+output/deseq2_hg38/upregulated_8wN_HET_vs_8wN_WT.txt
+
+
+
+# 10 first for the up; then for the down (better, as in the paper)
+
+# Define the databases to query
+dbs <- c("KEGG_2016")
+# For downregulated genes
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+head(edown$KEGG_2016)
+# For upregulated genes
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+head(eup$KEGG_2016)
+# Process results
+up <- eup$KEGG_2016
+down <- edown$KEGG_2016
+up$type <- "up"
+down$type <- "down"
+# Get top 10 enriched terms and sort by Combined.Score
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 10)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 10)
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+# Identify pathways that have both 'up' and 'down' 
+combined_pathways <- gos %>%
+  group_by(Term) %>%
+  filter(n() > 1) %>%
+  pull(Term) %>%
+  unique()
+
+# Separate data into 'up', 'combined' and 'down'
+up_pathways <- setdiff(gos %>% filter(type == "up") %>%
+  arrange(-logAdjP) %>%
+  pull(Term), combined_pathways)
+
+down_pathways <- setdiff(gos %>% filter(type == "down") %>%
+  arrange(logAdjP) %>%  # note the order here is ascending to get the higher values (more negative) first
+  pull(Term), combined_pathways)
+
+# Create a new ordering based on the criteria
+new_order <- c(up_pathways, combined_pathways, down_pathways)
+
+# Reorder 'Term' in 'gos' based on the new ordering
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+
+# Plotting with enhanced aesthetics
+pdf("output/GO_hg38/enrichR_8wN_KO_vs_8wN_WT.pdf", width=20, height=4)
+ggplot(gos, aes(x=Term, y=logAdjP, label=round(logAdjP, 2))) + 
+  geom_bar(stat='identity', aes(fill=type), width=.5) +
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for KEGG pathways") + 
+  coord_flip() + 
+  theme(text = element_text(size = 12),
+        axis.text.y = element_text(size = 14),
+        title = element_text(size = 16, face = "bold"),
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 14)) +
+  ylab("") + # Remove the y-axis label for cleaner look 
+  theme_bw()
+dev.off()
+
+
+## option 2
+XXX order to update just make a dfactor
+# Load necessary libraries
+library(enrichR)
+library(ggplot2)
+library(dplyr)
+
+# Define databases for enrichment
+dbs <- c("KEGG_2016")
+
+# Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+
+# Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$KEGG_2016
+down <- edown$KEGG_2016
+up$type <- "up"
+down$type <- "down"
+
+# Processing and filtering
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+gos <- rbind(down, up)
+gos <- gos[abs(gos$logAdjP) > 1.3, ]
+
+# Custom order for the terms
+gos <- gos %>% arrange(type, -abs(logAdjP))
+gos$Term <- factor(gos$Term, levels = unique(gos$Term))
+
+# Plotting
+pdf("output/GO_hg38/enrichR_8wN_KO_vs_8wN_WT.pdf", width=15, height=15)
+ggplot(gos) + 
+  # Upregulated bars and labels
+  geom_bar(data = subset(gos, type == "up"), aes(x=Term, y=logAdjP, fill=type), stat='identity', width=.5)  +
+  geom_text(data = subset(gos, type == "up"), aes(x=Term, y= -0.5, label=Term), hjust = 1) +
+  
+  # Downregulated bars and labels
+  geom_bar(data = subset(gos, type == "down"), aes(x=Term, y=logAdjP, fill=type), stat='identity', width=.5)  +
+  geom_text(data = subset(gos, type == "down"), aes(x=Term, y= 0.5, label=Term), hjust = 0) +
+  
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="#00ba38", "up"="#f8766d")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for KEGG pathways") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 12)
+  )
+dev.off()
+
+
+```
 
 

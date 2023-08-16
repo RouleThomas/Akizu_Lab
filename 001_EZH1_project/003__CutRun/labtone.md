@@ -5051,16 +5051,46 @@ sbatch scripts/bigwigmerge_THOR_WTvsKO_unique_Keepdup.sh # 4089501 ok
 # deepTools plot
 conda activate deeptools
 sbatch scripts/matrix_TSS_1kb_THOR_qval15_HET_Gain_DEG_Up.sh # 4089606 ok
-sbatch scripts/matrix_TSS_1kb_THOR_allGenes.sh # 4159000
-sbatch scripts/matrix_TSS_2kb_THOR_allGenes.sh # 4159013
-sbatch scripts/matrix_TSS_5kb_THOR_allGenes.sh # 4159030
-sbatch scripts/matrix_TSS_10kb_THOR_allGenes.sh # 4159040
+sbatch scripts/matrix_TSS_1kb_THOR_allGenes.sh # 4159000 ok # TSS and TES
+sbatch scripts/matrix_TSS_2kb_THOR_allGenes.sh # 4159013 ok # TSS and TES
+sbatch scripts/matrix_TSS_5kb_THOR_allGenes.sh # 4159030 ok # TSS and TES
+sbatch scripts/matrix_TSS_10kb_THOR_allGenes.sh # 4159040 xxx # TSS and TES
+sbatch scripts/matrix_TSS2_500bp_THOR_allGenes.sh # 4166961 ok # TSS only
+sbatch scripts/matrix_TSS2_1kb_THOR_allGenes.sh # 4166982 ok # TSS only
+sbatch scripts/matrix_TSS2_2kb_THOR_allGenes.sh # 4167006 xxx
+sbatch scripts/matrix_TSS2_5kb_THOR_allGenes.sh # 4169091 xxx
+sbatch scripts/matrix_TSS2_10kb_THOR_allGenes.sh # 4170903 xxx
+## heatmap with peak in WT as bed file
+sbatch scripts/matrix_TSS_500bp_THOR_WTpeaks.sh # 4167376 ok
+sbatch scripts/matrix_TSS_1kb_THOR_WTpeaks.sh # 4167420 ok
+sbatch scripts/matrix_TSS_2kb_THOR_WTpeaks.sh  # 4167424 ok
+sbatch scripts/matrix_TSS_5kb_THOR_WTpeaks.sh # 4167434 ok (show decrease in HET!)
+sbatch scripts/matrix_TSS_10kb_THOR_WTpeaks.sh # 4170907 xxx
+# heatmap with all WT genes with peaks (within promoter or 5' only)
+sbatch scripts/matrix_TSS_500bp_THOR_WTpeaksGene.sh # 4169907 ok
+sbatch scripts/matrix_TSS_1kb_THOR_WTpeaksGene.sh # 4169914 ok
+sbatch scripts/matrix_TSS_2kb_THOR_WTpeaksGene.sh # 4169919 ok (too small)
+sbatch scripts/matrix_TSS_5kb_THOR_WTpeaksGene.sh # 4169948 xxx
+sbatch scripts/matrix_TSS_10kb_THOR_WTpeaksGene.sh # 4170913 xxx
+
 ## Not amazing; do instead, gene 1kb up/down:
 sbatch scripts/matrix_gene_1kb_THOR_qval15_HET_KO_Gain_Lost_DEG_Up_Down.sh # interactive; all codes
-
-
-
 ```
+
+Here is steps to **generate GTF file of gene that contains peak in WT promoter**:
+```bash
+# Filter to keep only WT genes annotated with a H3K27me3 within its promoter or 5'UTR (annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+output/macs2/broad_blacklist_qval2.30103/8wN_WT_H3K27me3_pool_peaks.broadPeak
+awk -F'\t' '$11 == "Promoter (<=1kb)" || $11 == "Promoter (1-2kb)" || $11 == "Promoter (2-3kb)" || $11 == "5'\'' UTR"' output/ChIPseeker/annotation_WT.txt > output/ChIPseeker/annotation_WT_Promoter_5.txt
+# Filter only peak in promoter abd 5' and Isolate geneSymbol
+awk -F'\t' '$11 == "Promoter (<=1kb)" || $11 == "Promoter (1-2kb)" || $11 == "Promoter (2-3kb)" || $11 == "5'\'' UTR"' output/ChIPseeker/annotation_WT.txt | awk -F'\t' '{print $20}' | sort | uniq > output/ChIPseeker/annotation_WT_Promoter_5_geneSymbol.txt
+# Filter in the gtf
+## Modify the .txt file that list all genes so that it match gtf structure
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_WT_Promoter_5_geneSymbol.txt > output/ChIPseeker/annotation_WT_Promoter_5_as_gtf_geneSymbol.txt
+## Filter the gtf
+grep -Ff output/ChIPseeker/annotation_WT_Promoter_5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_WTpeaks_Promoter_5.gtf
+```
+
 - **NOTE: `unique` is added here because it concerns regions that gain in HET AND Lost in KO and opposite; not AND/OR as previous mistake**
 - NOTE: I also did Bigwig using bigwig_DiffBind_TMM instead of THOR_bigwig *`DiffBind_TMM_THOR_qval10`=bigwig from DiffBind_TMM but in peak identify with THOR qval10*, to compare.
 

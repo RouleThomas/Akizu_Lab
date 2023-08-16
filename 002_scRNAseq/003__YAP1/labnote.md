@@ -2301,7 +2301,6 @@ dev.off()
 
 
 # Run SCTransform now with integration
-## Version OK with 2000 treshold RNA
 srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4948, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
     RunPCA(npcs = 25, verbose = FALSE)
 
@@ -2366,7 +2365,9 @@ pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_ectoderm.pdf", width=10, heigh
 FeaturePlot(embryo.combined.sct, features = ectoderm, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
-
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_YAP1.pdf", width=10, height=5)
+FeaturePlot(embryo.combined.sct, features = "Yap1", max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
 
 ## Unbiased markers:
 DefaultAssay(humangastruloid.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
