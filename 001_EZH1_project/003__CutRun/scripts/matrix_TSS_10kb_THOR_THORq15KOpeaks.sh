@@ -22,6 +22,14 @@ plotHeatmap -m output/deeptools/matrix_TSS_10kp_THORq15KOpeaks.gz \
     --whatToShow 'heatmap and colorbar' \
     --heatmapHeight 15
 
+plotHeatmap -m output/deeptools/matrix_TSS_10kp_THORq15KOpeaks.gz \
+    -out output/deeptools/matrix_TSS_10kp_THORq15KOpeaks_heatmap_kmean2.png \
+    --samplesLabel "WT" "HET" "KO" \
+    --kmeans 2 \
+    --colorMap Greys \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 15
+
 
 plotProfile -m output/deeptools/matrix_TSS_10kp_THORq15KOpeaks.gz \
     -out output/deeptools/matrix_TSS_10kp_THORq15KOpeaks_profile.pdf \

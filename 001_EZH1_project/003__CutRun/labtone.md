@@ -5083,8 +5083,18 @@ sbatch scripts/matrix_TSS_10kb_THOR_THORq15peaks.sh #  4228548 ok
 # heatmap with differential peaks in HET only (anywhere)
 sbatch scripts/matrix_TSS_5kb_THOR_THORq15HETpeaks.sh # 4236424 ok LOOK GOOD INCREASE
 sbatch scripts/matrix_TSS_10kb_THOR_THORq15HETpeaks.sh # 4236439 fail 4236478 ok
+## HET positive/negative only
+sbatch scripts/matrix_TSS_10kb_THOR_THORq15HETpeaks_positive.sh # 4254805
+sbatch scripts/matrix_TSS_10kb_THOR_THORq15HETpeaks_negative.sh # 4254813
+
+
+
 # heatmap with differential peaks in KO only (anywhere)
 sbatch scripts/matrix_TSS_10kb_THOR_THORq15KOpeaks.sh # 4247828
+## KO positive/negative only
+sbatch scripts/matrix_TSS_10kb_THOR_THORq15KOpeaks_positive.sh # 4254956
+sbatch scripts/matrix_TSS_10kb_THOR_THORq15KOpeaks_negative.sh #  4254961
+
 
 # heatmap with differential H3K27me3 genes (within promoter or 5' only)
 sbatch scripts/matrix_TSS_5kb_THOR_THORq15HETpeaksGene.sh # 4236562 ok
@@ -5128,6 +5138,13 @@ grep -Ff output/ChIPseeker/annotation_WTvsHETKO_unique_Keepdup_qval15_Promoter_5
 
 # ALL PEAKS DIFF
 cat output/THOR/THOR_WTvsHET_unique_Keepdup/THOR_qval15.bed output/THOR/THOR_WTvsKO_unique_Keepdup/THOR_qval15.bed > output/THOR/THOR_WTvsHET_unique_Keepdup/THOR_HETKO_qval15.bed
+
+# positive negative peaks
+awk -F'\t' '$20 > 1' output/THOR/THOR_WTvsHET_unique_Keepdup/THOR_qval15.bed > output/THOR/THOR_WTvsHET_unique_Keepdup/THOR_qval15_positive.bed
+awk -F'\t' '$20 < 1' output/THOR/THOR_WTvsHET_unique_Keepdup/THOR_qval15.bed > output/THOR/THOR_WTvsHET_unique_Keepdup/THOR_qval15_negative.bed
+awk -F'\t' '$20 > 1' output/THOR/THOR_WTvsKO_unique_Keepdup/THOR_qval15.bed > output/THOR/THOR_WTvsKO_unique_Keepdup/THOR_qval15_positive.bed
+awk -F'\t' '$20 < 1' output/THOR/THOR_WTvsKO_unique_Keepdup/THOR_qval15.bed > output/THOR/THOR_WTvsKO_unique_Keepdup/THOR_qval15_negative.bed
+
 ```
 
 - **NOTE: `unique` is added here because it concerns regions that gain in HET AND Lost in KO and opposite; not AND/OR as previous mistake**
