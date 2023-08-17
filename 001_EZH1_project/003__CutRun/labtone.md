@@ -4511,7 +4511,7 @@ WTvsKO_annot_gain_lost_RNA = WTvsKO_annot_gain_lost %>%
 ## Gain in HET and Downregulated
 THOR_qval15_HET_Gain_DEG_Down = WTvsHET_annot_gain_lost_RNA %>%
     filter(H3K27me3 == "gain",
-           log2FoldChange <0,
+           log2FoldChange < 0,
            significance == "TRUE") %>%
     dplyr::select(gene) %>% unique()
 write.table(THOR_qval15_HET_Gain_DEG_Down, "output/ChIPseeker/THOR_qval15_HET_Gain_DEG_Down.txt", sep="\t", row.names=FALSE, col.names=FALSE, quote=FALSE)
@@ -4525,7 +4525,7 @@ write.table(THOR_qval15_HET_Gain_DEG_Up, "output/ChIPseeker/THOR_qval15_HET_Gain
 ## Lost in HET and Downregulated
 THOR_qval15_HET_Lost_DEG_Down = WTvsHET_annot_gain_lost_RNA %>%
     filter(H3K27me3 == "lost",
-           log2FoldChange <0,
+           log2FoldChange < 0,
            significance == "TRUE") %>%
     dplyr::select(gene) %>% unique()
 write.table(THOR_qval15_HET_Lost_DEG_Down, "output/ChIPseeker/THOR_qval15_HET_Lost_DEG_Down.txt", sep="\t", row.names=FALSE, col.names=FALSE, quote=FALSE)
@@ -5086,7 +5086,7 @@ sbatch scripts/matrix_TSS_10kb_THOR_THORq15HETpeaks.sh # 4236439 fail 4236478 ok
 ## HET positive/negative only
 sbatch scripts/matrix_TSS_10kb_THOR_THORq15HETpeaks_positive.sh # 4254805
 sbatch scripts/matrix_TSS_10kb_THOR_THORq15HETpeaks_negative.sh # 4254813
-
+sbatch scripts/matrix_TSS_10kb_THOR_THORq15HETpeaks_positive_negative.sh # 4267051  on same plot ET HET
 
 
 # heatmap with differential peaks in KO only (anywhere)
@@ -5094,7 +5094,7 @@ sbatch scripts/matrix_TSS_10kb_THOR_THORq15KOpeaks.sh # 4247828
 ## KO positive/negative only
 sbatch scripts/matrix_TSS_10kb_THOR_THORq15KOpeaks_positive.sh # 4254956
 sbatch scripts/matrix_TSS_10kb_THOR_THORq15KOpeaks_negative.sh #  4254961
-
+sbatch scripts/matrix_TSS_10kb_THOR_THORq15KOpeaks_positive_negative.sh # 4267071 on same plot WT KO
 
 # heatmap with differential H3K27me3 genes (within promoter or 5' only)
 sbatch scripts/matrix_TSS_5kb_THOR_THORq15HETpeaksGene.sh # 4236562 ok
@@ -5347,6 +5347,9 @@ sbatch scripts/macs2_pool_peak_signif.sh # ok
 ChIPseeker docu [here for plotAvgProf and heatmap around TSS](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/chipseeker_visualization.html) and [here more information plot and functional analyses](https://bioconductor.statistik.tu-dortmund.de/packages/3.7/bioc/vignettes/ChIPseeker/inst/doc/ChIPseeker.html) and [here for peak assignment](https://hbctraining.github.io/In-depth-NGS-Data-Analysis-Course/sessionV/lessons/12_annotation_functional_analysis.html)
 
 For **ChIPseeker**, use **conda base and R 4.2.2 module**
+
+--> Here vizualization of raw `macs2` and `THORq15_unique_keepdup` peaks:
+
 ```bash
 conda deactivate
 module load R/4.2.2
@@ -5363,19 +5366,32 @@ library("ReactomePA")
 
 
 # Import peaks
+## Raw macs2
 peaks_WT =  read.table('output/macs2/broad_blacklist_qval2.30103/8wN_WT_H3K27me3_pool_peaks.broadPeak') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9) 
 peaks_KO =  read.table('output/macs2/broad_blacklist_qval2.30103/8wN_KO_H3K27me3_pool_peaks.broadPeak') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9) 
 peaks_HET =  read.table('output/macs2/broad_blacklist_qval2.30103/8wN_HET_H3K27me3_pool_peaks.broadPeak') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9) 
 peaks_patient =  read.table('output/macs2/broad_blacklist_qval2.30103/8wN_iPSCpatient_H3K27me3_pool_peaks.broadPeak') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9) 
-
+## THOR q15 unique keepdup
+Gain_HET =  read.table('output/THOR/THOR_WTvsHET_unique_Keepdup/THOR_qval15_positive.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+Lost_HET =  read.table('output/THOR/THOR_WTvsHET_unique_Keepdup/THOR_qval15_negative.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+Gain_KO =  read.table('output/THOR/THOR_WTvsKO_unique_Keepdup/THOR_qval15_positive.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+Lost_KO =  read.table('output/THOR/THOR_WTvsKO_unique_Keepdup/THOR_qval15_negative.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
 
 # Tidy peaks
+## raw macs2
 WT_gr = makeGRangesFromDataFrame(peaks_WT,keep.extra.columns=TRUE)
 KO_gr = makeGRangesFromDataFrame(peaks_KO,keep.extra.columns=TRUE)
 HET_gr = makeGRangesFromDataFrame(peaks_HET,keep.extra.columns=TRUE)
 patient_gr = makeGRangesFromDataFrame(peaks_patient,keep.extra.columns=TRUE)
 
 gr_list <- list(WT=WT_gr, KO=KO_gr, HET=HET_gr, patient=patient_gr)
+## THOR q15 unique keepdup
+Gain_HET_gr = makeGRangesFromDataFrame(Gain_HET,keep.extra.columns=TRUE)
+Lost_HET_gr = makeGRangesFromDataFrame(Lost_HET,keep.extra.columns=TRUE)
+Gain_KO_gr = makeGRangesFromDataFrame(Gain_KO,keep.extra.columns=TRUE)
+Lost_KO_gr = makeGRangesFromDataFrame(Lost_KO,keep.extra.columns=TRUE)
+
+gr_list <- list(Gain_HET=Gain_HET_gr, Lost_HET=Lost_HET_gr, Gain_KO=Gain_KO_gr, Lost_KO=Lost_KO_gr)
 
 # Isolate TSS regions
 promoter <- getPromoters(TxDb=txdb, upstream=10000, downstream=10000) # region around TSS
@@ -5423,6 +5439,7 @@ peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
 
 ### Barplot
 pdf("output/ChIPseeker/annotation_barplot.pdf", width=14, height=5)
+pdf("output/ChIPseeker/annotation_barplot_THORq15_unique_keepdup.pdf", width=14, height=5)
 plotAnnoBar(peakAnnoList)
 dev.off()
 ### Barplot

@@ -9201,35 +9201,72 @@ library("enrichplot")
 library("rtracklayer")
 library("tidyverse")
 library("enrichR")
+library("biomaRt")
 
 ## Files
+
+# Define databases for enrichment
+dbs <- c("KEGG_2016") # NEED TO TRY KEGG2023 !!!
+
+
 ### GeneSymbol list of signif up/down genes in each genotypes
 output/deseq2_hg38/downregulated_8wN_KO_vs_8wN_WT.txt
 output/deseq2_hg38/upregulated_8wN_KO_vs_8wN_WT.txt
 output/deseq2_hg38/downregulated_8wN_HET_vs_8wN_WT.txt
 output/deseq2_hg38/upregulated_8wN_HET_vs_8wN_WT.txt
 
+# IF starting with EnesbmlID
+### Ensembl ID; list of signif up/down with H3K27me3 changes in each genotypes
+output/ChIPseeker/THOR_qval15_HET_Gain_DEG_Up.txt
+output/ChIPseeker/THOR_qval15_HET_Gain_DEG_Down.txt
+output/ChIPseeker/THOR_qval15_HET_Lost_DEG_Up.txt
+output/ChIPseeker/THOR_qval15_HET_Lost_DEG_Down.txt
+output/ChIPseeker/THOR_qval15_KO_Gain_DEG_Up.txt
+output/ChIPseeker/THOR_qval15_KO_Gain_DEG_Down.txt
+output/ChIPseeker/THOR_qval15_KO_Lost_DEG_Up.txt
+output/ChIPseeker/THOR_qval15_KO_Lost_DEG_Down.txt
+#### Convert to GeneSymbol
+ensembl = useMart("ensembl", dataset="hsapiens_gene_ensembl")
+
+gene_down = read.table("../003__CutRun/output/ChIPseeker/THOR_qval15_HET_Gain_DEG_Down.txt", header = FALSE, stringsAsFactors = FALSE) 
+gene_down = read.table("../003__CutRun/output/ChIPseeker/THOR_qval15_KO_Gain_DEG_Down.txt", header = FALSE, stringsAsFactors = FALSE)
+gene_names_down <- getBM(attributes = c("ensembl_gene_id", "external_gene_name"), 
+                        filters = "ensembl_gene_id", 
+                        values = gene_down$V1, 
+                        mart = ensembl) %>%
+                   dplyr::select(external_gene_name)
+list_down <- unique(as.character(gene_names_down$external_gene_name))
+edown <- enrichr(list_down, dbs)
 
 
-# Load necessary libraries
-library(enrichR)
-library(ggplot2)
-library(dplyr)
+gene_up = read.table("../003__CutRun/output/ChIPseeker/THOR_qval15_HET_Lost_DEG_Up.txt", header = FALSE, stringsAsFactors = FALSE)
+gene_up = read.table("../003__CutRun/output/ChIPseeker/THOR_qval15_KO_Lost_DEG_Up.txt", header = FALSE, stringsAsFactors = FALSE)
 
-# Define databases for enrichment
-dbs <- c("KEGG_2016") # NEED TO TRY KEGG2021 !!!
+gene_names_up <- getBM(attributes = c("ensembl_gene_id", "external_gene_name"), 
+                        filters = "ensembl_gene_id", 
+                        values = gene_up$V1, 
+                        mart = ensembl)%>%
+                   dplyr::select(external_gene_name)
+list_up <- unique(as.character(gene_names_up$external_gene_name))
+eup <- enrichr(list_up, dbs)
 
-# Read and preprocess data for downregulated genes
+
+
+# IF starting with geneSymbol
+## Read and preprocess data for downregulated genes
 gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
 gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 
-# Read and preprocess data for upregulated genes
+## Read and preprocess data for upregulated genes
 gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
 gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
+
+
+
 
 # Extracting KEGG data and assigning types
 up <- eup$KEGG_2016
@@ -9262,6 +9299,9 @@ gos$Term <- factor(gos$Term, levels = new_order)
 # Plotting with enhanced aesthetics
 pdf("output/GO_hg38/enrichR_KEGG_8wN_KO_vs_8wN_WT.pdf", width=12, height=5)
 pdf("output/GO_hg38/enrichR_KEGG_8wN_HET_vs_8wN_WT.pdf", width=12, height=6)
+pdf("output/GO_hg38/enrichR_KEGG_8wN_HET_vs_8wN_WT__H3K27me3_DEG.pdf", width=12, height=6)
+pdf("output/GO_hg38/enrichR_KEGG_8wN_KO_vs_8wN_WT__H3K27me3_DEG.pdf", width=12, height=6) # qvalue at 1.1!
+
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
   
@@ -9288,6 +9328,8 @@ dev.off()
 ## save output
 write.table(gos, "output/GO_hg38/enrichR_KEGG_8wN_KO_vs_8wN_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
 write.table(gos, "output/GO_hg38/enrichR_KEGG_8wN_HET_vs_8wN_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO_hg38/enrichR_KEGG_8wN_HET_vs_8wN_WT__H3K27me3_DEG.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO_hg38/enrichR_KEGG_8wN_KO_vs_8wN_WT__H3K27me3_DEG.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 
