@@ -2349,7 +2349,7 @@ DefaultAssay(embryo.combined.sct) <- "integrated"
 
 embryo.combined.sct <- RunPCA(embryo.combined.sct, verbose = FALSE, npcs = 19)
 embryo.combined.sct <- RunUMAP(embryo.combined.sct, reduction = "pca", dims = 1:19, verbose = FALSE)
-embryo.combined.sct <- FindNeighbors(embryo.combined.sct, reduction = "pca", k.param = 10, dims = 1:19)
+embryo.combined.sct <- FindNeighbors(embryo.combined.sct, reduction = "pca", k.param = 15, dims = 1:19)
 embryo.combined.sct <- FindClusters(embryo.combined.sct, resolution = 0.35, verbose = FALSE, algorithm = 4)
 
 embryo.combined.sct$condition <- factor(embryo.combined.sct$condition, levels = c("WT", "cYAPKO")) # Reorder untreated 1st
