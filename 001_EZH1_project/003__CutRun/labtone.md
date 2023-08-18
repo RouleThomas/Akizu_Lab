@@ -5103,6 +5103,14 @@ sbatch scripts/matrix_TSS_10kb_THOR_THORq15HETpeaksGene.sh # 4236571
 
 ## Not amazing; do instead, gene 1kb up/down:
 sbatch scripts/matrix_gene_1kb_THOR_qval15_HET_KO_Gain_Lost_DEG_Up_Down.sh # interactive; all codes
+
+
+# heatmap RNAseq and CutRun
+sbatch scripts/matrix_gene_XXXX
+
+
+
+
 ```
 
 Here is steps to **generate GTF file of gene that contains peak in WT promoter or all diff bound genes**:

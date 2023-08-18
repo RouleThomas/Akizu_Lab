@@ -1945,6 +1945,7 @@ dev.off()
 
 
 ## After seeing the plot; add QC information in our seurat object
+## V1 QC; optimal with vst V1; dim 19 k param 70 es 0.9
 srat_WT[['QC']] <- ifelse(srat_WT@meta.data$Is_doublet == 'True','Doublet','Pass')
 srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 2000 & srat_WT@meta.data$QC == 'Pass','Low_nFeature',srat_WT@meta.data$QC)
 srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 2000 & srat_WT@meta.data$QC != 'Pass' & srat_WT@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_WT@meta.data$QC,sep = ','),srat_WT@meta.data$QC)
@@ -1952,17 +1953,12 @@ srat_WT[['QC']] <- ifelse(srat_WT@meta.data$percent.mt > 25 & srat_WT@meta.data$
 srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 2000 & srat_WT@meta.data$QC != 'Pass' & srat_WT@meta.data$QC != 'High_MT',paste('High_MT',srat_WT@meta.data$QC,sep = ','),srat_WT@meta.data$QC)
 table(srat_WT[['QC']])
 ## 
-
-
-
 srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$Is_doublet == 'True','Doublet','Pass')
 srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 2000 & srat_cYAPKO@meta.data$QC == 'Pass','Low_nFeature',srat_cYAPKO@meta.data$QC)
 srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 2000 & srat_cYAPKO@meta.data$QC != 'Pass' & srat_cYAPKO@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_cYAPKO@meta.data$QC,sep = ','),srat_cYAPKO@meta.data$QC)
 srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$percent.mt > 25 & srat_cYAPKO@meta.data$QC == 'Pass','High_MT',srat_cYAPKO@meta.data$QC)
 srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 2000 & srat_cYAPKO@meta.data$QC != 'Pass' & srat_cYAPKO@meta.data$QC != 'High_MT',paste('High_MT',srat_cYAPKO@meta.data$QC,sep = ','),srat_cYAPKO@meta.data$QC)
 table(srat_cYAPKO[['QC']])
-
-
 
 
 
@@ -2063,20 +2059,20 @@ srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4612, vars.to.reg
 
 
 
-## This is the best for now 0804
-srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4812, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("percent.mt","percent.rb","S.Score","G2M.Score","S.Score","G2M.Score")) %>% 
-    RunPCA(npcs = 15, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
-    RunUMAP(reduction = "pca", dims = 1:15, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
-    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:15, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
-    FindClusters(resolution = 0.25, verbose = FALSE, algorithm = 4)
+## This is the best for now 
+srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4812, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("percent.mt","percent.rb","S.Score","G2M.Score")) %>% 
+    RunPCA(npcs = 19, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:19, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:19, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.5, verbose = FALSE, algorithm = 4)
 ##
 
 
-srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4812, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("percent.mt","percent.rb","S.Score","G2M.Score","S.Score","G2M.Score")) %>% 
-    RunPCA(npcs = 25, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
-    RunUMAP(reduction = "pca", dims = 1:25, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
-    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:25, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
-    FindClusters(resolution = 0.3, verbose = FALSE, algorithm = 4)
+srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4812, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score")) %>% 
+    RunPCA(npcs = 30, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:30, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:30, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.5, verbose = FALSE, algorithm = 4)
 
 # Run on srat_WT condition only and find optimal parameters; expend this to both then??
 
@@ -2222,22 +2218,6 @@ https://biostatistics.mdanderson.org/shinyapps/EasyCellType/
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ## QC plot
 ## percent mt and rb
 pdf("output/seurat/VlnPlot_SCT_control_mt_rb.pdf", width=10, height=7)
@@ -2255,9 +2235,6 @@ VlnPlot(srat_WT,features = c("S.Score","G2M.Score")) &
   theme(plot.title = element_text(size=10))
 dev.off()  
 
-
-
-XXX test here othermethod XXX
 
 ## LogNormalize ##
 srat_WT <- NormalizeData(srat_WT, normalization.method = "LogNormalize", scale.factor = 10000)
@@ -2330,48 +2307,17 @@ dev.off()
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # Run SCTransform now with integration
-srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4948, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
-    RunPCA(npcs = 25, verbose = FALSE)
+srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4812, vars.to.regress = c("percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000, vst.flavor = "v2") %>% 
+    RunPCA(npcs = 19, verbose = FALSE)
+srat_cYAPKO <- SCTransform(srat_cYAPKO, method = "glmGamPoi", ncells = 3621, vars.to.regress = c("percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000, vst.flavor = "v2") %>%
+    RunPCA(npcs = 19, verbose = FALSE)
 
-srat_cYAPKO <- SCTransform(srat_cYAPKO, method = "glmGamPoi", ncells = 3731, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
-    RunPCA(npcs = 25, verbose = FALSE)
 
+srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4812, vars.to.regress = c("percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 19, verbose = FALSE)
+srat_cYAPKO <- SCTransform(srat_cYAPKO, method = "glmGamPoi", ncells = 3621, vars.to.regress = c("percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
+    RunPCA(npcs = 19, verbose = FALSE)
 
 # Data integration (check active assay is 'SCT')
 srat.list <- list(srat_WT = srat_WT, srat_cYAPKO = srat_cYAPKO)
@@ -2385,15 +2331,26 @@ embryo.combined.sct <- IntegrateData(anchorset = embryo.anchors, normalization.m
 
 
 # Perform integrated analysis (check active assay is 'integrated')
-## XXX RE FINE A BIT BUT ALMOST PERFECT !!! tested 0.6 not good; play with k.param!! was 40 dim at sctransform XXX
+# BEST FOR NOW
 
 DefaultAssay(embryo.combined.sct) <- "integrated"
 
-embryo.combined.sct <- RunPCA(embryo.combined.sct, verbose = FALSE, npcs = 25)
-embryo.combined.sct <- RunUMAP(embryo.combined.sct, reduction = "pca", dims = 1:25, verbose = FALSE)
-embryo.combined.sct <- FindNeighbors(embryo.combined.sct, reduction = "pca", k.param = 15, dims = 1:25)
-embryo.combined.sct <- FindClusters(embryo.combined.sct, resolution = 0.2, verbose = FALSE, algorithm = 4)
-#RAW: embryo.combined.sct <- FindClusters(embryo.combined.sct, resolution = 0.3, verbose = FALSE, algorithm = 4)
+embryo.combined.sct <- RunPCA(embryo.combined.sct, verbose = FALSE, npcs = 19)
+embryo.combined.sct <- RunUMAP(embryo.combined.sct, reduction = "pca", dims = 1:19, verbose = FALSE)
+embryo.combined.sct <- FindNeighbors(embryo.combined.sct, reduction = "pca", k.param = 70, dims = 1:19)
+embryo.combined.sct <- FindClusters(embryo.combined.sct, resolution = 0.9, verbose = FALSE, algorithm = 4)
+
+embryo.combined.sct$condition <- factor(embryo.combined.sct$condition, levels = c("WT", "cYAPKO")) # Reorder untreated 1st
+#
+
+XXXXXX almost there continue playing !!! with low k apram to identify the germ cells and play with resolution
+
+DefaultAssay(embryo.combined.sct) <- "integrated"
+
+embryo.combined.sct <- RunPCA(embryo.combined.sct, verbose = FALSE, npcs = 19)
+embryo.combined.sct <- RunUMAP(embryo.combined.sct, reduction = "pca", dims = 1:19, verbose = FALSE)
+embryo.combined.sct <- FindNeighbors(embryo.combined.sct, reduction = "pca", k.param = 10, dims = 1:19)
+embryo.combined.sct <- FindClusters(embryo.combined.sct, resolution = 0.35, verbose = FALSE, algorithm = 4)
 
 embryo.combined.sct$condition <- factor(embryo.combined.sct$condition, levels = c("WT", "cYAPKO")) # Reorder untreated 1st
 
@@ -2411,11 +2368,6 @@ ectoderm = c("Rarb", "Sox9", "Sox1", "Sirt6", "Runx2", "Foxg1", "Sox2", "Nes", "
 mesoderm = c("Lef1", "Cdx2", "Hoxa1", "Mixl1", "Sp5", "T", "Hmgb3", "Gata5", "Hmga2", "Smad1", "Tal1", "Foxf1", "Gata2", "NODAL", "KDR", "DLL1", "LXH1", "APLNR", "TBX6", "MESP1", "HAS2", "PDGFRA", "Hand1", "Left1", "Gata6")
 
 
-
-
-
-
-
 DefaultAssay(embryo.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
 pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_epiblast.pdf", width=10, height=30)
 FeaturePlot(embryo.combined.sct, features = epiblast, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
@@ -2430,9 +2382,129 @@ pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_ectoderm.pdf", width=10, heigh
 FeaturePlot(embryo.combined.sct, features = ectoderm, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
+### Updated marker gene list from Alex # 19 dim res 0.5 \ 19 dim  res 0.4 $ 19 dim res 0.7 kparam 70 * 19 dim res 0.9 kparam 70
+Epiblast_PrimStreak = c("Hesx1","Otx2","Pax2","Otx2os1") # 1 \  1 $ 1
+ExE_Ectoderm = c("Tex19.1","Elf5","Wnt7b","Dnmt3l") # 3 \ 4 $ 3 
+Nascent_Mesoderm = c("Col9a1","Mesp1","Osr1") # 2 \ 3 $ 8 
+Somitic_Mesoderm = c("Meox1","Aldh1a2","Synm","Pcdh8") # 4 \ 2 $ 2
+Caudal_Mesoderm = c("Wnt3a","Nkx1-2","Apln","Rxrg") # 5 \ 5 $ 5
+Haematodenothelial_progenitors = c("Hoxa9","Hoxa10","Tbx4","Pitx1") # 2 \ 3 $ 4 
+Paraxial_Mesoderm = c("Ebf2","Ptgfr","Ebf3","Col23a1") # 7 \ 7 $ 6 
+Mesenchyme = c("Tdo2","Adamts2","Colec11","Snai2") # 8 \ 8 $ 9 
+Blood_Progenitor_1 = c("Sox18","Esam","Rhoj","Flt4") # 11  \  $ 11
+Caudal_Neurectoderm = c("Olig3","Hes3","Lrrc7","Cntfr") # 6  \   $ 5 
+Pharyngeal_Mesoderm = c("Nkx2-5","Tbx5","Mef2c","Myocd") # 5  \   $ 7
+Blood_Progenitor_2 = c("Gypa","Gata1","Cited4","Gfi1b") # 9  \  $  10
+Intermediate_Mesoderm = c("Bik","Arg1","Meox1","Ism1") # 4 \  2  $  2
+Surface_Ectoderm = c("Tfap2a","Npnt","Wnt4","Id4") # 12  \  $  12
+Mixed_Mesoderm = c("Tbx6","Dll1","Hes7","Fgf17") # 4 and 10 \  2  $  2
+Notocord = c("Shh","Noto","Vtn","Fgg") #  13 \   $  13 ( wierd separated)
+Gut = c("Pga5","Hs3cst1","Wfdc1","Islr2") # 14  \   $  14
+Primordial_Germ_Cells = c("Dppa3","Sprr2a3","Irf1","Ifitm3") # between 12 and 13
+
+## would put intermediate and somatic Mesoderm and Mixed together
+### NEED TRY RES 0.45 so that we habe mesoderm together but separate the  Haematodenothelial_progenitors and Nascent_Mesoderm
+
+DefaultAssay(embryo.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Epiblast_PrimStreak.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Epiblast_PrimStreak, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_ExE_Ectoderm.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = ExE_Ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Nascent_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Nascent_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Somitic_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Somitic_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Caudal_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Caudal_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Haematodenothelial_progenitors.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Haematodenothelial_progenitors, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Paraxial_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Paraxial_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Mesenchyme.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Mesenchyme, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Blood_Progenitor_1.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Blood_Progenitor_1, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Caudal_Neurectoderm.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Caudal_Neurectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Pharyngeal_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Pharyngeal_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Blood_Progenitor_2.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Blood_Progenitor_2, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Intermediate_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Intermediate_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Surface_Ectoderm.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Surface_Ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Mixed_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Mixed_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Notocord.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Notocord, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Gut.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Gut, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Primordial_Germ_Cells.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Primordial_Germ_Cells, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+
+
 pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_YAP1.pdf", width=10, height=5)
 FeaturePlot(embryo.combined.sct, features = "Yap1", max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
 dev.off()
+
+
+
+
+## QC plot
+## percent mt and rb
+pdf("output/seurat/VlnPlot_SCT_control_cYAPKO_mt_rb.pdf", width=15, height=7)
+VlnPlot(embryo.combined.sct,features = c("percent.mt", "percent.rb"), split.by = "condition") & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+## RNA
+pdf("output/seurat/VlnPlot_SCT_control_cYAPKO_count_feature.pdf", width=15, height=10)
+VlnPlot(embryo.combined.sct,features = c("nCount_RNA","nFeature_RNA"), split.by = "condition") & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+## cell cycle
+pdf("output/seurat/VlnPlot_SCT_control_cYAPKO_cellCycle.pdf", width=15, height=10)
+VlnPlot(embryo.combined.sct,features = c("S.Score","G2M.Score"), split.by = "condition") & 
+  theme(plot.title = element_text(size=10))
+dev.off()  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Unbiased markers:
 DefaultAssay(humangastruloid.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
