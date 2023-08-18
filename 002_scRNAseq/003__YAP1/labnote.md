@@ -2073,10 +2073,10 @@ srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4812, verbose = T
 
 
 srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4812, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("percent.mt","percent.rb","S.Score","G2M.Score","S.Score","G2M.Score")) %>% 
-    RunPCA(npcs = 15, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
-    RunUMAP(reduction = "pca", dims = 1:15, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
-    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:15, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
-    FindClusters(resolution = 0.25, verbose = FALSE, algorithm = 4)
+    RunPCA(npcs = 25, verbose = FALSE) %>%  # CHANGE HERE NB OF DIM
+    RunUMAP(reduction = "pca", dims = 1:25, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindNeighbors(reduction = "pca", k.param = 30, dims = 1:25, verbose = FALSE) %>% # CHANGE HERE NB OF DIM
+    FindClusters(resolution = 0.3, verbose = FALSE, algorithm = 4)
 
 # Run on srat_WT condition only and find optimal parameters; expend this to both then??
 
@@ -2092,21 +2092,86 @@ epiblast = c("Nanog", "Pou5f1", "Dppa3") # watch out DPPA => Dppa3
 endoderm = c("Gata2", "Gata1", "Hesx1", "Gata6", "Eomes", "Foxa2", "Sox17", "Prdm1", "Cxcr4", "Foxa1", "Stat3", "Hnf4a", "Tfcp2l1", "Foxm1", "Foxa2", "Foxa3") # watch out Crcr4 => Cxcr4; Tfcp21 => Tfcp2l1 
 ectoderm = c("Rarb", "Sox9", "Sox1", "Sirt6", "Runx2", "Foxg1", "Sox2", "Nes", "Vim", "Id3", "Sox3", "Pou3f3", "Pou5f1", "Pou2f1") # Brn-1 => Pou3f3; 4-Oct =>  Pou5f1; Oct11 =>  Pou2f1
 mesoderm = c("Lef1", "Cdx2", "Hoxa1", "Mixl1", "Sp5", "T", "Hmgb3", "Gata5", "Hmga2", "Smad1", "Tal1", "Foxf1", "Gata2", "Nodal", "Kdr", "Dll1", "Lhx1", "Aplnr", "Tbx6", "Mesp1", "Has2", "Pdgfra", "Hand1", "Lef1", "Gata6") # Left1 => Lef1 
+### Updated marker gene list from Alex
+Epiblast_PrimStreak = c("Hesx1","Otx2","Pax2","Otx2os1") # OK
+ExE_Ectoderm = c("Tex19.1","Elf5","Wnt7b","Dnmt3l") # OK
+Nascent_Mesoderm = c("Col9a1","Mesp1","Osr1") # OK
+Somitic_Mesoderm = c("Meox1","Aldh1a2","Synm","Pcdh8") # OK
+Caudal_Mesoderm = c("Wnt3a","Nkx1-2","Apln","Rxrg") # OK
+Haematodenothelial_progenitors = c("Hoxa9","Hoxa10","Tbx4","Pitx1") # OK
+Paraxial_Mesoderm = c("Ebf2","Ptgfr","Ebf3","Col23a1") # OK
+Mesenchyme = c("Tdo2","Adamts2","Colec11","Snai2") # OK
+Blood_Progenitor_1 = c("Sox18","Esam","Rhoj","Flt4") # OK
+Caudal_Neurectoderm = c("Olig3","Hes3","Lrrc7","Cntfr") # OK
+Pharyngeal_Mesoderm = c("Nkx2-5","Tbx5","Mef2c","Myocd") # OK
+Blood_Progenitor_2 = c("Gypa","Gata1","Cited4","Gfi1b") # OK
+Intermediate_Mesoderm = c("Bik","Arg1","Meox1","Ism1") # OK (very similar to Somitic_Mesoderm)
+Surface_Ectoderm = c("Tfap2a","Npnt","Wnt4","Id4") # OK 
+Mixed_Mesoderm = c("Tbx6","Dll1","Hes7","Fgf17") # OK  (very similar to Somitic_Mesoderm and Intermediate_Mesoderm)
+Notocord = c("Shh","Noto","Vtn","Fgg") # OK 
+Gut = c("Pga5","Hs3cst1","Wfdc1","Islr2") # OK (very few cells)
+Primordial_Germ_Cells = c("Dppa3","Sprr2a3","Irf1","Ifitm3") # OK could be better
+
+## Watch out to Mixed_Mesoderm, Somitic_Mesoderm, Intermediate_Mesoderm; hardest to separate
 
 
 DefaultAssay(srat_WT) <- "SCT" # For vizualization either use SCT or norm RNA
-pdf("output/seurat/FeaturePlot_SCT_control_epiblast.pdf", width=10, height=10)
-FeaturePlot(srat_WT, features = epiblast, max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_control_Epiblast_PrimStreak.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Epiblast_PrimStreak, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_endoderm.pdf", width=40, height=50)
-FeaturePlot(srat_WT, features = endoderm, max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_control_ExE_Ectoderm.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = ExE_Ectoderm, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_mesoderm.pdf", width=40, height=50)
-FeaturePlot(srat_WT, features = mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_control_Nascent_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Nascent_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_ectoderm.pdf", width=40, height=50)
-FeaturePlot(srat_WT, features = ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_control_Somitic_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Somitic_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_Caudal_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Caudal_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_Haematodenothelial_progenitors.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Haematodenothelial_progenitors, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_Paraxial_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Paraxial_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_Mesenchyme.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Mesenchyme, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_Blood_Progenitor_1.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Blood_Progenitor_1, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_Caudal_Neurectoderm.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Caudal_Neurectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_Pharyngeal_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Pharyngeal_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_Blood_Progenitor_2.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Blood_Progenitor_2, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_Intermediate_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Intermediate_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_Surface_Ectoderm.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Surface_Ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_Mixed_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Mixed_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_Notocord.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Notocord, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_Gut.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Gut, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_Primordial_Germ_Cells.pdf", width=10, height=10)
+FeaturePlot(srat_WT, features = Primordial_Germ_Cells, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+
 
 ### Marker gene list from Paper (https://omi-top.shinyapps.io/rna3/)
 Epithelial_cells = c("Agr2", "Cldn10", "Cldn7", "Cyr61", "Epcam", "Krt15", "Krt18", "Krt5", "Krt8", "Ly6a", "Spint", "Spint2", "Sftpc", "Spp1")
