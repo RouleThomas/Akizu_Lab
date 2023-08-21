@@ -2308,12 +2308,13 @@ dev.off()
 
 
 # Run SCTransform now with integration
+## SCT V2
 srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4812, vars.to.regress = c("percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000, vst.flavor = "v2") %>% 
     RunPCA(npcs = 19, verbose = FALSE)
 srat_cYAPKO <- SCTransform(srat_cYAPKO, method = "glmGamPoi", ncells = 3621, vars.to.regress = c("percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000, vst.flavor = "v2") %>%
     RunPCA(npcs = 19, verbose = FALSE)
 
-
+## SCT V1 (better)
 srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4812, vars.to.regress = c("percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
     RunPCA(npcs = 19, verbose = FALSE)
 srat_cYAPKO <- SCTransform(srat_cYAPKO, method = "glmGamPoi", ncells = 3621, vars.to.regress = c("percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
@@ -2332,25 +2333,27 @@ embryo.combined.sct <- IntegrateData(anchorset = embryo.anchors, normalization.m
 
 # Perform integrated analysis (check active assay is 'integrated')
 # BEST FOR NOW
-
+## individualize germ cells; but fail at separating XXX
 DefaultAssay(embryo.combined.sct) <- "integrated"
 
 embryo.combined.sct <- RunPCA(embryo.combined.sct, verbose = FALSE, npcs = 19)
 embryo.combined.sct <- RunUMAP(embryo.combined.sct, reduction = "pca", dims = 1:19, verbose = FALSE)
-embryo.combined.sct <- FindNeighbors(embryo.combined.sct, reduction = "pca", k.param = 70, dims = 1:19)
-embryo.combined.sct <- FindClusters(embryo.combined.sct, resolution = 0.9, verbose = FALSE, algorithm = 4)
+embryo.combined.sct <- FindNeighbors(embryo.combined.sct, reduction = "pca", k.param = 20, dims = 1:19)
+embryo.combined.sct <- FindClusters(embryo.combined.sct, resolution = 0.4, verbose = FALSE, algorithm = 4)
 
 embryo.combined.sct$condition <- factor(embryo.combined.sct$condition, levels = c("WT", "cYAPKO")) # Reorder untreated 1st
+
+
+
 #
 
-XXXXXX almost there continue playing !!! with low k apram to identify the germ cells and play with resolution
 
 DefaultAssay(embryo.combined.sct) <- "integrated"
 
 embryo.combined.sct <- RunPCA(embryo.combined.sct, verbose = FALSE, npcs = 19)
 embryo.combined.sct <- RunUMAP(embryo.combined.sct, reduction = "pca", dims = 1:19, verbose = FALSE)
-embryo.combined.sct <- FindNeighbors(embryo.combined.sct, reduction = "pca", k.param = 15, dims = 1:19)
-embryo.combined.sct <- FindClusters(embryo.combined.sct, resolution = 0.35, verbose = FALSE, algorithm = 4)
+embryo.combined.sct <- FindNeighbors(embryo.combined.sct, reduction = "pca", k.param = 20, dims = 1:19)
+embryo.combined.sct <- FindClusters(embryo.combined.sct, resolution = 0.42, verbose = FALSE, algorithm = 4)
 
 embryo.combined.sct$condition <- factor(embryo.combined.sct$condition, levels = c("WT", "cYAPKO")) # Reorder untreated 1st
 
