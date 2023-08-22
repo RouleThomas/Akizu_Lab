@@ -3231,30 +3231,53 @@ saveRDS(embryo.combined.sct, file = "output/seurat/embryo.combined.sct.rds")
 embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
 
 
+# Check some genes
+DefaultAssay(embryo.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
 
-XXXX
+## PRC2-related genes
 
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_PRC2.pdf", width=10, height=22)
+FeaturePlot(embryo.combined.sct, features = c("Ezh2", "Kdm6b", "Gata6", "Cdx2","T"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
 
-
-### Check YAP1 NODAL bulk-regulated genes:
-DefaultAssay(humangastruloid.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
-
-YAP1_NODAL <- c("SHH", "DMRT1", "CITED2", 'DACT2', "TGIF2", "ACVR1B", 'SMAD3', 'DAND5', 'SMAD2','CER1', 'NODAL', 'FOXH1', 'DACT1', 'TDGF1', 'TDGF1P3', 'ACVR1C', 'CFC1', 'CFC1B') 
-
-pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_YAP1_NODAL_V2.pdf", width=10, height=80)
-FeaturePlot(humangastruloid.combined.sct, features = YAP1_NODAL, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+## Hand1
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_HAND1.pdf", width=10, height=5)
+FeaturePlot(embryo.combined.sct, features = c("Hand1"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
 
 ### Check YAP1 hippo bulk-regulated genes:
 DefaultAssay(humangastruloid.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
 
-pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_YAP1_hippo_V2.pdf", width=7, height=25)
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_YAP1_hippo.pdf", width=7, height=30)
 
-FeaturePlot(humangastruloid.combined.sct, features = c("TEAD1", "TEAD4", "CCN2", "CCN1","AREG","MYC","GLI2","VIM","AXL","BIRC5"), split.by = "condition", max.cutoff = 3, cols = c("grey", "red"))
+# CTGF, CRY61, AREG, MYC, GLI2, VIM, AXL and BIRC5
+
+FeaturePlot(embryo.combined.sct, features = c("Tead1", "Tead4", "Ccn2", "Ccn1","Areg","Myc","Gli2","Vim","Axl","Birc5"), split.by = "condition", max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
 
 
 
+### Check YAP1 NODAL bulk-regulated genes:
 
+YAP1_NODAL <- c("Shh", "Dmrt1", "Cited2", 'Dact2', "Tgif2", "Acvr1b", 'Smad3', 'Dand5', 'Smad2','Cer1', 'Nodal', 'Foxh1', 'Dact1', 'Tdgf1', 'Cripto3', 'Acvr1c', 'Cfc1', 'Cfc1b') 
+
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_YAP1_NODAL.pdf", width=10, height=80)
+FeaturePlot(embryo.combined.sct, features = YAP1_NODAL, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+### Check ANXA NODAL bulk-regulated genes:
+
+
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_ANXA.pdf", width=10, height=35)
+FeaturePlot(embryo.combined.sct, features = c("Anxa1","Amotl2","Ccn1","Ccn2","Tagln","Anxa3","Chchd2"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+## cell cycle
+
+
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_cellCycle.pdf", width=10, height=5)
+FeaturePlot(embryo.combined.sct,features = c("S.Score","G2M.Score"),label.size = 4,repel = T,label = T) & 
+  theme(plot.title = element_text(size=10))
+dev.off()  
 ```
