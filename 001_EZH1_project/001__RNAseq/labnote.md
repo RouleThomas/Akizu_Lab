@@ -5525,14 +5525,17 @@ tpm_all_sample_tidy <- left_join(tpm_all_sample_tidy, genesymbols,
 # autism-related genes 
 c("SOX2", "GLI2", "EZH2", "PTN") # opposite behavior and well known
  c("SHANK3", "FMR1", "MECP2", "TSC1", "TSC2", "NLGN3", "NLGN4", "AUTS2", "CHD8", "SYNGAP1", "PTEN", "CNTNAP2", "ADNP", "FOXP1") # well known
+c("NR2F2", "RELN", "GAD1", "GAD2", "GRIN2A", "GRIN2B", "NRD2A", "NRD2B", "RXRG") # labmeeting genes
+
 
 plot_data <- tpm_all_sample_tidy %>%
   unique() %>%
-  filter(external_gene_name %in% c("SHANK3", "FMR1", "MECP2", "TSC1", "TSC2", "NLGN3", "NLGN4", "AUTS2", "CHD8", "SYNGAP1", "PTEN", "CNTNAP2", "ADNP", "FOXP1")) %>%
+  filter(external_gene_name %in% c("NR2F2", "RELN", "GAD1", "GAD2", "GRIN2A", "GRIN2B", "NRD2A", "NRD2B", "RXRG")) %>%
   group_by(gene, genotype,external_gene_name) %>%
   summarise(mean_log2tpm = mean(log2(tpm + 1)),
             se_log2tpm = sd(log2(tpm + 1)) / sqrt(n())) %>%
   ungroup()
+
 
 plot_data$genotype <-
   factor(plot_data$genotype,
@@ -5542,6 +5545,8 @@ plot_data$genotype <-
 # Plot
 pdf("output/tpm_hg38/autism_genes_opposite_Disease_Gene_and_Drug_Signatures_from_GEO.pdf", width=5, height=4)
 pdf("output/tpm_hg38/autism_genes_opposite_Disease_Gene_and_Drug_Signatures_from_GEO_wellKnown.pdf", width=8, height=4)
+pdf("output/tpm_hg38/Labmeeting_20230822_genes.pdf", width=6, height=4)
+
 ggplot(plot_data, aes(x = external_gene_name, y = mean_log2tpm, fill = genotype)) +
   geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
   geom_errorbar(
