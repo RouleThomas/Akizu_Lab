@@ -3234,6 +3234,17 @@ embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
 # Check some genes
 DefaultAssay(embryo.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
 
+## Loupe Browser increase in KO
+
+
+
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_increaseInLoupe.pdf", width=10, height=22)
+FeaturePlot(embryo.combined.sct, features = c("Tal1", "Gata2", "Cited1", "Sox18"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+
+
 ## PRC2-related genes
 
 pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_PRC2.pdf", width=10, height=22)
