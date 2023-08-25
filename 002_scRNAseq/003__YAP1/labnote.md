@@ -3291,4 +3291,70 @@ pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_cellCycle.pdf", width=10, heig
 FeaturePlot(embryo.combined.sct,features = c("S.Score","G2M.Score"),label.size = 4,repel = T,label = T) & 
   theme(plot.title = element_text(size=10))
 dev.off()  
+
+
+
+# Check marker genes
+DefaultAssay(embryo.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
+
+
+pdf("output/seurat/FeaturePlot_SCT_control_test.pdf", width=10, height=30)
+FeaturePlot(embryo.combined.sct, features = c("Eef1a1", "Rps29", "Tuba1b", "Tmsb10"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()  
+
+
+pdf("output/seurat/FeaturePlot_SCT_control_test.pdf", width=10, height=30)
+FeaturePlot(embryo.combined.sct, features = c("Hmgn2", "Rps29", "Hsp90aa1", "Tmsb10"), max.cutoff = 10, cols = c("grey", "red"), split.by = "condition")
+dev.off()  
+
+# test EasyCellType
+# BiocManager::install("EasyCellType")
+library("EasyCellType")
+
+# test singleR 
+
+# Cell type annotation using SingleR
+## Get reference datasets
+hpca.ref <- celldex::HumanPrimaryCellAtlasData()
+
+
+## Convert Seurat object into SCE
+sce <- as.SingleCellExperiment(DietSeurat(embryo.combined.sct))
+sce
+
+## Analyse
+hpca.main <- SingleR(test = sce,assay.type.test = 1,ref = hpca.ref,labels = hpca.ref$label.main)
+hpca.fine <- SingleR(test = sce,assay.type.test = 1,ref = hpca.ref,labels = hpca.ref$label.fine)
+
+
+## check results
+
+table(hpca.main$pruned.labels)
+
+
+table(hpca.fine$pruned.labels)
+
+
+# Add annotation to seurat object
+embryo.combined.sct@meta.data$hpca.main   <- hpca.main$pruned.labels
+embryo.combined.sct@meta.data$hpca.fine   <- hpca.fine$pruned.labels
+
+# cluster with name
+pdf("output/seurat/UMAP_SCT_control_cYAPKO_hpca.main.pdf", width=15, height=10)
+embryo.combined.sct <- SetIdent(embryo.combined.sct, value = "hpca.main")
+DimPlot(embryo.combined.sct, label = T , repel = T, label.size = 3)
+dev.off()
+
+pdf("output/seurat/UMAP_SCT_control_cYAPKO_hpca.fine.pdf", width=35, height=30)
+embryo.combined.sct <- SetIdent(embryo.combined.sct, value = "hpca.fine")
+DimPlot(embryo.combined.sct, label = T , repel = T, label.size = 3)
+dev.off()
+
 ```
+
+--> For automatic cell type annotation; the [EasyCellType] [shiny app](https://biostatistics.mdanderson.org/shinyapps/EasyCellType/) has been tested. NO DOCUMENTATION AT ALL TO USE IN R !!!!!!
+----> Run using log2fc of WT from `srat_all_conserved_markers_embryo.txt` with *embryo* as tissue and default parameter
+
+
+
+--> Share to Conchi the Conserved Marker list (`srat_all_conserved_markers_embryo.txt`). To avoid confusion, I did some filtering: For each cell type; I only keep log2FC positive (= correspond to gene more highly express in this cell types) and I told her to filter per pvalue which is the max_pvalue. Like this, she will only see the highly express genes in each cluster
