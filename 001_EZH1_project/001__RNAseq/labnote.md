@@ -6441,13 +6441,15 @@ Go in R
 # Load packages
 library("DESeq2")
 library("tidyverse")
+library("EnhancedVolcano")
+library("apeglm")
+library("org.Hs.eg.db")
+library("biomaRt")
+
 library("RColorBrewer")
 library("pheatmap")
-library("apeglm")
-library("EnhancedVolcano")
-library("org.Hs.eg.db")
 library("AnnotationDbi")
-library("biomaRt")
+
 
 # import featurecounts output and keep only gene ID and counts
 ## collect all samples ID
@@ -6550,9 +6552,13 @@ gene_symbols <- mapIds(org.Hs.eg.db, keys = stripped_gene_ids,
                        column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
 res$GeneSymbol <- gene_symbols
 
+
+## FILTER on pvalue NOT GOOD!!!
+
+
 keyvals <- ifelse(
-  res$log2FoldChange < -0.5 & res$pvalue < 10e-6, 'Sky Blue',
-    ifelse(res$log2FoldChange > 0.5 & res$pvalue < 10e-6, 'Orange',
+  res$log2FoldChange < -0.5 & res$padj < 10e-6, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.5 & res$padj < 10e-6, 'Orange',
       'grey'))
 
 keyvals[is.na(keyvals)] <- 'black'
@@ -6630,6 +6636,61 @@ EnhancedVolcano(res,
     max.overlaps = 100,
     arrowheads = FALSE) +theme_bw() # +xlim(-2.5,0)+ylim(0,20)
 dev.off()
+
+
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.5 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.5 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+
+
+pdf("output/deseq2_hg38/plotVolcano_res_q05_8wN_KO_vs_8wN_WT.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = res$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, 2wN',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 1.0,
+  labSize = 4.5,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+upregulated_genes <- sum(res$log2FoldChange > 0.5 & res$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res$log2FoldChange < -0.5 & res$padj < 5e-2, na.rm = TRUE)
+
+
+# Save as gene list for GO analysis:
+### Complete table with GeneSymbol
+write.table(res, file = "output/deseq2_hg38/filtered_q05_8wN_KO_vs_8wN_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res[res$log2FoldChange > 0.5 & res$padj < 5e-2, ]
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 0.5 & res$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05_8wN_KO_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05_8wN_KO_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
 
 
 
@@ -6837,6 +6898,64 @@ EnhancedVolcano(res,
     max.overlaps = 100,
     arrowheads = FALSE) +theme_bw() # +xlim(0,3)+ylim(0,55)
 dev.off()
+
+
+
+
+
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.5 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.5 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+
+
+pdf("output/deseq2_hg38/plotVolcano_res_q05_8wN_HET_vs_8wN_WT.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = res$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'HET vs WT, 2wN',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 1.0,
+  labSize = 4.5,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+upregulated_genes <- sum(res$log2FoldChange > 0.5 & res$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res$log2FoldChange < -0.5 & res$padj < 5e-2, na.rm = TRUE)
+
+
+# Save as gene list for GO analysis:
+### Complete table with GeneSymbol
+write.table(res, file = "output/deseq2_hg38/filtered_q05_8wN_HET_vs_8wN_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res[res$log2FoldChange > 0.5 & res$padj < 5e-2, ]
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 0.5 & res$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05_8wN_HET_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05_8wN_HET_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
 ```
 
 
@@ -9232,6 +9351,8 @@ output/deseq2_hg38/upregulated_8wN_KO_vs_8wN_WT.txt
 output/deseq2_hg38/downregulated_8wN_HET_vs_8wN_WT.txt
 output/deseq2_hg38/upregulated_8wN_HET_vs_8wN_WT.txt
 
+
+
 # IF starting with EnesbmlID
 ### Ensembl ID; list of signif up/down with H3K27me3 changes in each genotypes
 output/ChIPseeker/THOR_qval15_HET_Gain_DEG_Up.txt
@@ -9356,6 +9477,13 @@ write.table(gos, "output/GO_hg38/enrichR_KEGG_8wN_KO_vs_8wN_WT__H3K27me3_DEG.txt
 # Define databases for enrichment
 dbs <- c("KEGG_2021_Human") # 
 
+### Gene list symbol for qval 0.05 and FC 0.5
+output/deseq2_hg38/downregulated_q05_8wN_KO_vs_8wN_WT.txt
+output/deseq2_hg38/upregulated_q05_8wN_KO_vs_8wN_WT.txt
+output/deseq2_hg38/downregulated_q05_8wN_HET_vs_8wN_WT.txt
+output/deseq2_hg38/upregulated_q05_8wN_HET_vs_8wN_WT.txt
+
+
 
 ### GeneSymbol list of signif up/down genes in each genotypes
 output/deseq2_hg38/downregulated_8wN_KO_vs_8wN_WT.txt
@@ -9401,15 +9529,20 @@ eup <- enrichr(list_up, dbs)
 
 
 # IF starting with geneSymbol
+
+output/deseq2_hg38/downregulated_q05_8wN_KO_vs_8wN_WT.txt
+output/deseq2_hg38/upregulated_q05_8wN_KO_vs_8wN_WT.txt
+output/deseq2_hg38/downregulated_q05_8wN_HET_vs_8wN_WT.txt
+output/deseq2_hg38/upregulated_q05_8wN_HET_vs_8wN_WT.txt
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
-gene_names_down <- read.csv("output/deseq2_hg38/downregulated_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_q05_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_q05_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
-gene_names_up <- read.csv("output/deseq2_hg38/upregulated_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_q05_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_q05_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -9423,8 +9556,8 @@ up$type <- "up"
 down$type <- "down"
 
 # Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
-up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 10)
-down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 20)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 20)
 
 # Convert adjusted p-values and differentiate direction for up and down
 up$logAdjP <- -log10(up$Adjusted.P.value)
@@ -9436,7 +9569,6 @@ gos <- gos %>% arrange(logAdjP)
 
 # Filter out rows where absolute logAdjP 1.3 = 0.05
 gos <- gos %>% filter(abs(logAdjP) > 1.3)
-gos$Term <- gsub("Homo sapiens hsa[0-9]*", "", gos$Term)
 
 # Create the order based on the approach given
 up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
@@ -9445,8 +9577,8 @@ new_order <- c(down_pathways, up_pathways)
 gos$Term <- factor(gos$Term, levels = new_order)
 
 # Plotting with enhanced aesthetics
-pdf("output/GO_hg38/enrichR_KEGG_2021_8wN_KO_vs_8wN_WT.pdf", width=12, height=5)
-pdf("output/GO_hg38/enrichR_KEGG_2021_8wN_HET_vs_8wN_WT.pdf", width=12, height=6)
+pdf("output/GO_hg38/enrichR_KEGG_2021_8wN_KO_vs_8wN_WT_q05.pdf", width=12, height=5)
+pdf("output/GO_hg38/enrichR_KEGG_2021_8wN_HET_vs_8wN_WT_q05.pdf", width=12, height=8)
 pdf("output/GO_hg38/enrichR_KEGG_2021_8wN_HET_vs_8wN_WT__H3K27me3_DEG.pdf", width=12, height=6)
 pdf("output/GO_hg38/enrichR_KEGG_2021_8wN_KO_vs_8wN_WT__H3K27me3_DEG.pdf", width=12, height=6) # qvalue at 1.1!
 
@@ -9474,8 +9606,8 @@ ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) +
   )
 dev.off()
 ## save output
-write.table(gos, "output/GO_hg38/enrichR_KEGG_2021_8wN_KO_vs_8wN_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
-write.table(gos, "output/GO_hg38/enrichR_KEGG_2021_8wN_HET_vs_8wN_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO_hg38/enrichR_KEGG_2021_8wN_KO_vs_8wN_WT_q05.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO_hg38/enrichR_KEGG_2021_8wN_HET_vs_8wN_WT_q05.txt", sep="\t", row.names=FALSE, quote=FALSE)
 write.table(gos, "output/GO_hg38/enrichR_KEGG_2021_8wN_HET_vs_8wN_WT__H3K27me3_DEG.txt", sep="\t", row.names=FALSE, quote=FALSE)
 write.table(gos, "output/GO_hg38/enrichR_KEGG_2021_8wN_KO_vs_8wN_WT__H3K27me3_DEG.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
