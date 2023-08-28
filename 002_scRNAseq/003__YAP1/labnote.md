@@ -1825,6 +1825,82 @@ saveRDS(humangastruloid.combined.sct, file = "output/seurat/humangastruloid.comb
 humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid.combined.sct_V2.rds")
 
 
+
+
+
+
+
+# test EasyCellType
+# BiocManager::install("EasyCellType")
+library("EasyCellType")
+library("org.Hs.eg.db")
+library("AnnotationDbi")
+
+## load marker
+all_markers <- read.delim("output/seurat/srat_UNTREATED72hr_DASATINIB72hr_all_markers_V2.txt", header = TRUE, row.names = 1)
+### Filter either WT or cYAPKO
+all_markers <- all_markers[grepl("UNTREATED72hr$", all_markers$cluster), ]
+all_markers <- all_markers[grepl("cYAPKO$", all_markers$cluster), ]
+
+## Convert geneSymbol to EntrezID
+all_markers$entrezid <- mapIds(org.Hs.eg.db,
+                           keys=all_markers$gene, #Column containing Ensembl gene ids
+                           column="ENTREZID",
+                           keytype="SYMBOL",
+                           multiVals="first")
+all_markers <- na.omit(all_markers)
+
+## Sort the datafram (data frame containing Entrez IDs, clusters and expression scores)
+
+all_markers_sort <- data.frame(gene=all_markers$entrezid, cluster=all_markers$cluster, 
+                      score=all_markers$avg_log2FC) %>% 
+  group_by(cluster) %>% 
+  mutate(rank = rank(score),  ties.method = "random") %>% 
+  arrange(desc(rank)) 
+input.d <- as.data.frame(all_markers_sort[, 1:3])
+
+## Run the enrihcment analysis
+annot.GSEA <- easyct(input.d, db="cellmarker", # cellmarker or Panglaodb or Clustermole
+                    species="Human", #  Human or Mouse
+                    tissue=c("Embryo", "Ee"), p_cut=0.3,   # many other tissue available
+                    test="GSEA")    # GSEA or Fisher?
+
+annot.GSEA <- easyct(input.d, db="cellmarker", # cellmarker or Panglaodb or Clustermole
+                    species="Human", #  Human or Mouse
+                    tissue=c("Embryo", "Embryoid body", "Embryonic brain", "Embryonic stem cell", "Embryonic prefrontal cortex"), p_cut=0.3,   # many other tissue available
+                    test="GSEA")    # GSEA or Fisher?
+
+annot.GSEA <- easyct(input.d, db="cellmarker", # cellmarker or Panglaodb or Clustermole
+                    species="Human", #  Human or Mouse
+                    p_cut=0.3,   # many other tissue available
+                    test="GSEA")  
+
+## plots
+pdf("output/seurat/EasyCellType_dotplot_UNTREATED72hr_V2.pdf", width=10, height=5)
+pdf("output/seurat/EasyCellType_dotplot_UNTREATED72hr_allEmbryoTissue_V2.pdf", width=5, height=5)
+pdf("output/seurat/EasyCellType_dotplot_UNTREATED72hr_noTissue_V2.pdf", width=5, height=5)
+
+plot_dot(test="GSEA", annot.GSEA) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+dev.off()
+
+
+annot.GSEA <- easyct(input.d, db="cellmarker", # cellmarker or Panglaodb or Clustermole
+                    species="Mouse", #  Human or Mouse
+                    tissue=c("Embryo"),   # many other tissue available
+                    test="fisher")    # GSEA or fisher
+
+pdf("output/seurat/EasyCellType_dotplot_SCT_control_fisher.pdf", width=6, height=8)
+plot_dot(test="fisher", annot.GSEA) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+dev.off()
+
+
+
+pdf("output/seurat/EasyCellType_barplot_SCT_control_cYAPKO.pdf", width=10, height=5)
+plot_bar(test="GSEA", annot.GSEA)
+dev.off()
+
 ```
 
 I now use the same number of dimensions for SCTransform and data integration steps (UMAP, neighbor, cluster...) for Untreated and Dasatinib + used RNA assay for all DEGs analysis (eg. FindMarker) 
@@ -2999,6 +3075,7 @@ for (cell_type in cell_types) {
 ### Find all markers 
 all_markers <- FindAllMarkers(embryo.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
 write.table(all_markers, file = "output/seurat/srat_WT_cYAPKO_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+# all_markers <- read.delim("output/seurat/srat_WT_cYAPKO_all_markers.txt", header = TRUE, row.names = 1)
 ##
 top10 <- all_markers %>% 
   mutate(cluster = factor(cluster, levels = c(
@@ -3234,6 +3311,13 @@ embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
 # Check some genes
 DefaultAssay(embryo.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
 
+
+## change cutoff res for highly express genes
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Birc5_Chchd2.pdf", width=10, height=15)
+FeaturePlot(embryo.combined.sct, features = c("Birc5","Chchd2"), min.cutoff = 1, max.cutoff = 100, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
 ## Loupe Browser increase in KO
 
 
@@ -3310,6 +3394,72 @@ dev.off()
 # test EasyCellType
 # BiocManager::install("EasyCellType")
 library("EasyCellType")
+library("org.Mm.eg.db")
+library("AnnotationDbi")
+
+## load marker
+all_markers <- read.delim("output/seurat/srat_WT_cYAPKO_all_markers.txt", header = TRUE, row.names = 1)
+### Filter either WT or cYAPKO
+all_markers <- all_markers[grepl("WT$", all_markers$cluster), ]
+all_markers <- all_markers[grepl("cYAPKO$", all_markers$cluster), ]
+
+## Convert geneSymbol to EntrezID
+all_markers$entrezid <- mapIds(org.Mm.eg.db,
+                           keys=all_markers$gene, #Column containing Ensembl gene ids
+                           column="ENTREZID",
+                           keytype="SYMBOL",
+                           multiVals="first")
+all_markers <- na.omit(all_markers)
+
+## Sort the datafram (data frame containing Entrez IDs, clusters and expression scores)
+
+all_markers_sort <- data.frame(gene=all_markers$entrezid, cluster=all_markers$cluster, 
+                      score=all_markers$avg_log2FC) %>% 
+  group_by(cluster) %>% 
+  mutate(rank = rank(score),  ties.method = "random") %>% 
+  arrange(desc(rank)) 
+input.d <- as.data.frame(all_markers_sort[, 1:3])
+
+## Run the enrihcment analysis
+annot.GSEA <- easyct(input.d, db="cellmarker", # cellmarker or Panglaodb or Clustermole
+                    species="Mouse", #  Human or Mouse
+                    tissue=c("Embryo"), p_cut=0.3,   # many other tissue available
+                    test="GSEA")    # GSEA or Fisher?
+
+
+annot.GSEA <- easyct(input.d, db="cellmarker", # cellmarker or Panglaodb or Clustermole
+                    species="Mouse", #  Human or Mouse
+                    tissue=c("Embryo", "Embryoid body", "Embryonic stem cell", "Embryonic heart"), p_cut=0.3,   # many other tissue available
+                    test="GSEA")    # GSEA or Fisher?
+
+
+## plots
+pdf("output/seurat/EasyCellType_dotplot_SCT_cYAPKO.pdf", width=10, height=5)
+pdf("output/seurat/EasyCellType_dotplot_SCT_control.pdf", width=6, height=5)
+pdf("output/seurat/EasyCellType_dotplot_SCT_control_noTissue.pdf", width=6, height=8)
+pdf("output/seurat/EasyCellType_dotplot_SCT_control_clustermole.pdf", width=6, height=8)
+pdf("output/seurat/EasyCellType_dotplot_SCT_control_allEmbryoTissue.pdf", width=6, height=5)
+plot_dot(test="GSEA", annot.GSEA) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+dev.off()
+
+
+annot.GSEA <- easyct(input.d, db="cellmarker", # cellmarker or Panglaodb or Clustermole
+                    species="Mouse", #  Human or Mouse
+                    tissue=c("Embryo"),   # many other tissue available
+                    test="fisher")    # GSEA or fisher
+
+pdf("output/seurat/EasyCellType_dotplot_SCT_control_fisher.pdf", width=6, height=8)
+plot_dot(test="fisher", annot.GSEA) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+dev.off()
+
+
+
+pdf("output/seurat/EasyCellType_barplot_SCT_control_cYAPKO.pdf", width=10, height=5)
+plot_bar(test="GSEA", annot.GSEA)
+dev.off()
+
 
 # test singleR 
 
@@ -3352,8 +3502,8 @@ dev.off()
 
 ```
 
---> For automatic cell type annotation; the [EasyCellType] [shiny app](https://biostatistics.mdanderson.org/shinyapps/EasyCellType/) has been tested. NO DOCUMENTATION AT ALL TO USE IN R !!!!!!
-----> Run using log2fc of WT from `srat_all_conserved_markers_embryo.txt` with *embryo* as tissue and default parameter
+--> For automatic cell type annotation; the [EasyCellType] [shiny app](https://biostatistics.mdanderson.org/shinyapps/EasyCellType/) has been tested. 
+----> Works great! Can play with the pval cutoff; between 0.3-0.5 is ok
 
 
 
