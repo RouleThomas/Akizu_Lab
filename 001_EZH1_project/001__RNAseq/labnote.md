@@ -12757,3 +12757,6 @@ write.table(rpkm_all_sample_tidy_median_BrainDeconvShiny, file = "output/rpkm_hg
 --> Export file to Local and convert to csv (to avoid `Not a matrix error`, re-order the columns WT, then HET, then KO)
 ----> CA last ~5min to run!
 
+*NOTE: [This](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-021-02290-6) paper recommend to use TPM as normalized per library size! [This](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-023-03016-6) paper mention other normalization method worth to be tested (logNormlaize, CPM, lognormnalize,...)*
+
+
