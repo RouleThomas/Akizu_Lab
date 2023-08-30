@@ -3500,6 +3500,70 @@ embryo.combined.sct <- SetIdent(embryo.combined.sct, value = "hpca.fine")
 DimPlot(embryo.combined.sct, label = T , repel = T, label.size = 3)
 dev.off()
 
+
+
+
+
+
+
+
+
+
+# Functional analysis GO pathway
+embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
+
+library("ReactomeGSA")
+library("ggrepel")
+library("RColorBrewer")
+
+DefaultAssay(embryo.combined.sct) <- "RNA" # For 
+
+# separate condition from my seurat object
+## Subset Seurat object based on condition
+embryo.combined.sct.WT <- subset(embryo.combined.sct, subset = condition == "WT")
+embryo.combined.sct.cYAPKO <- subset(embryo.combined.sct, subset = condition == "cYAPKO")
+
+gsva_result <- analyse_sc_clusters(embryo.combined.sct.cYAPKO, verbose = TRUE)
+pathway_expression <- pathways(gsva_result)
+## maximum difference in expression for every pathway
+### find the maximum differently expressed pathway
+max_difference <- do.call(rbind, apply(pathway_expression, 1, function(row) {
+    values <- as.numeric(row[2:length(row)])
+    return(data.frame(name = row[1], min = min(values), max = max(values)))
+}))
+
+max_difference$diff <- max_difference$max - max_difference$min
+### sort based on the difference
+max_difference <- max_difference[order(max_difference$diff, decreasing = T), ]
+
+## Plot
+### Expression for a single pathway
+plot_gsva_pathway(gsva_result, pathway_id = rownames(max_difference)[1])
+### Heatmap pathway
+
+
+pdf("output/seurat/ReactomeGSA_heatmap_control.pdf", width=15, height=10)
+pdf("output/seurat/ReactomeGSA_heatmap_cYAPKO.pdf", width=15, height=10)
+plot_gsva_heatmap(gsva_result, max_pathways = 20, margins = c(12,40), truncate_names = FALSE, col = colorRampPalette(c("blue", "white", "red"))(100)) # ,   scale = "row"
+dev.off()
+
+### Pathway-level PCA
+pdf("output/seurat/ReactomeGSA_PCA_control.pdf", width=15, height=10)
+pdf("output/seurat/ReactomeGSA_PCA_cYAPKO.pdf", width=15, height=10)
+plot_gsva_pca(gsva_result) +
+  geom_text_repel(aes(label = sample), 
+                   box.padding = 0.35, 
+                   point.padding = 0.5, 
+                   segment.color = 'grey50')
+dev.off()
+
+
+## Compare WT and cYAPKO
+gsva_result_WT <- analyse_sc_clusters(embryo.combined.sct.WT, verbose = TRUE)
+gsva_result_cYAPKO <- analyse_sc_clusters(embryo.combined.sct.cYAPKO, verbose = TRUE)
+
+XXX
+
 ```
 
 --> For automatic cell type annotation; the [EasyCellType] [shiny app](https://biostatistics.mdanderson.org/shinyapps/EasyCellType/) has been tested. 
