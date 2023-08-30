@@ -1232,6 +1232,7 @@ humangastruloid.combined.sct <- FindClusters(humangastruloid.combined.sct, resol
 humangastruloid.combined.sct$condition <- factor(humangastruloid.combined.sct$condition, levels = c("UNTREATED72hr", "DASATINIB72hr")) # Reorder untreated 1st
 
 pdf("output/seurat/UMAP_UNTREATED72hr_DASATINIB72hr_V2.pdf", width=10, height=6)
+pdf("output/seurat/UMAP_UNTREATED72hr_DASATINIB72hr_V2_test.pdf", width=10, height=6)
 DimPlot(humangastruloid.combined.sct, reduction = "umap", split.by = "condition", label=TRUE)
 dev.off()
 
@@ -1840,7 +1841,6 @@ library("AnnotationDbi")
 all_markers <- read.delim("output/seurat/srat_UNTREATED72hr_DASATINIB72hr_all_markers_V2.txt", header = TRUE, row.names = 1)
 ### Filter either WT or cYAPKO
 all_markers <- all_markers[grepl("UNTREATED72hr$", all_markers$cluster), ]
-all_markers <- all_markers[grepl("cYAPKO$", all_markers$cluster), ]
 
 ## Convert geneSymbol to EntrezID
 all_markers$entrezid <- mapIds(org.Hs.eg.db,
@@ -1900,6 +1900,61 @@ dev.off()
 pdf("output/seurat/EasyCellType_barplot_SCT_control_cYAPKO.pdf", width=10, height=5)
 plot_bar(test="GSEA", annot.GSEA)
 dev.off()
+
+
+
+
+
+
+
+# Functional analysis GO pathway
+humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid.combined.sct_V2.rds")
+
+library("ReactomeGSA")
+library("ggrepel")
+library("RColorBrewer")
+
+DefaultAssay(humangastruloid.combined.sct) <- "RNA" # For 
+
+# separate condition from my seurat object
+## Subset Seurat object based on condition
+humangastruloid.combined.sct.WT <- subset(humangastruloid.combined.sct, subset = condition == "WT")
+humangastruloid.combined.sct.cYAPKO <- subset(humangastruloid.combined.sct, subset = condition == "cYAPKO")
+
+gsva_result <- analyse_sc_clusters(humangastruloid.combined.sct.cYAPKO, verbose = TRUE)
+
+gsva_result <- analyse_sc_clusters(humangastruloid.combined.sct, verbose = TRUE)
+pathway_expression <- pathways(gsva_result)
+## maximum difference in expression for every pathway
+### find the maximum differently expressed pathway
+max_difference <- do.call(rbind, apply(pathway_expression, 1, function(row) {
+    values <- as.numeric(row[2:length(row)])
+    return(data.frame(name = row[1], min = min(values), max = max(values)))
+}))
+
+max_difference$diff <- max_difference$max - max_difference$min
+### sort based on the difference
+max_difference <- max_difference[order(max_difference$diff, decreasing = T), ]
+
+## Plot
+### Expression for a single pathway
+plot_gsva_pathway(gsva_result, pathway_id = rownames(max_difference)[1])
+### Heatmap pathway
+pdf("output/seurat/ReactomeGSA_heatmap_UNTREATED72hr_DASATINIB72hr.pdf", width=15, height=10)
+plot_gsva_heatmap(gsva_result, max_pathways = 25, margins = c(12,40), truncate_names = FALSE, col = colorRampPalette(c("blue", "white", "red"))(100)) # ,   scale = "row"
+dev.off()
+
+### Pathway-level PCA
+pdf("output/seurat/ReactomeGSA_PCA_UNTREATED72hr_DASATINIB72hr.pdf", width=15, height=10)
+plot_gsva_pca(gsva_result) +
+  geom_text_repel(aes(label = sample), 
+                   box.padding = 0.35, 
+                   point.padding = 0.5, 
+                   segment.color = 'grey50')
+dev.off()
+
+
+
 
 ```
 
@@ -3524,6 +3579,8 @@ embryo.combined.sct.WT <- subset(embryo.combined.sct, subset = condition == "WT"
 embryo.combined.sct.cYAPKO <- subset(embryo.combined.sct, subset = condition == "cYAPKO")
 
 gsva_result <- analyse_sc_clusters(embryo.combined.sct.cYAPKO, verbose = TRUE)
+
+gsva_result <- analyse_sc_clusters(embryo.combined.sct, verbose = TRUE)
 pathway_expression <- pathways(gsva_result)
 ## maximum difference in expression for every pathway
 ### find the maximum differently expressed pathway
@@ -3544,12 +3601,14 @@ plot_gsva_pathway(gsva_result, pathway_id = rownames(max_difference)[1])
 
 pdf("output/seurat/ReactomeGSA_heatmap_control.pdf", width=15, height=10)
 pdf("output/seurat/ReactomeGSA_heatmap_cYAPKO.pdf", width=15, height=10)
+pdf("output/seurat/ReactomeGSA_heatmap_control_cYAPKO.pdf", width=15, height=10)
 plot_gsva_heatmap(gsva_result, max_pathways = 20, margins = c(12,40), truncate_names = FALSE, col = colorRampPalette(c("blue", "white", "red"))(100)) # ,   scale = "row"
 dev.off()
 
 ### Pathway-level PCA
 pdf("output/seurat/ReactomeGSA_PCA_control.pdf", width=15, height=10)
 pdf("output/seurat/ReactomeGSA_PCA_cYAPKO.pdf", width=15, height=10)
+pdf("output/seurat/ReactomeGSA_PCA_control_cYAPKO.pdf", width=15, height=10)
 plot_gsva_pca(gsva_result) +
   geom_text_repel(aes(label = sample), 
                    box.padding = 0.35, 
