@@ -13063,6 +13063,19 @@ tpm_all_sample_tidy_median_BrainDeconvShiny = tpm_all_sample_tidy_median %>%
   spread(key = genotype, value = median)
 
 write.table(tpm_all_sample_tidy_median_BrainDeconvShiny, file = "output/tpm_hg38/tpm_all_sample_tidy_median_BrainDeconvShiny.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+
+## Save sample per sample
+tpm_all_sample_tidy_8wN_KO_BrainDeconvShiny = tpm_all_sample_tidy %>%
+  filter(time == "8wN", genotype == "KO") %>%
+  dplyr::select(gene,replicate,tpm) %>%
+  group_by(gene, replicate) %>%
+  summarise(tpm = mean(tpm, na.rm = TRUE)) %>%  # some gene id are dupplicated as we remove version id; need do mean...
+  spread(key = replicate, value = tpm)
+
+write.table(tpm_all_sample_tidy_8wN_KO_BrainDeconvShiny, file = "output/tpm_hg38/tpm_all_sample_tidy_8wN_KO_BrainDeconvShiny.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+
 ```
 
 
@@ -13077,6 +13090,20 @@ samples <- c("8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4",
                      "8wN_KO_R1", "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4")
 
 
+samples <- c("ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3",
+                     "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+                     "2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
+                     "4wN_WT_R1", "4wN_WT_R2", "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4",
+                     "ESC_HET_R1", "ESC_HET_R2", "ESC_HET_R3",
+                     "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3",
+                     "2dN_HET_R1", "2dN_HET_R2", "2dN_HET_R3",
+                     "4wN_HET_R1", "4wN_HET_R2", "4wN_HET_R3", "4wN_HET_R4",
+                     "8wN_HET_R1", "8wN_HET_R2", "8wN_HET_R3", "8wN_HET_R4",
+                     "ESC_KO_R1", "ESC_KO_R2", "ESC_KO_R3",
+                     "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3",
+                     "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3",
+                     "4wN_KO_R1", "4wN_KO_R2", "8wN_KO_R1", "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4",
+                     "4wN_iPSCWT_R1", "4wN_iPSCWT_R2", "4wN_iPSCpatient_R1", "4wN_iPSCpatient_R2", "8wN_iPSCpatient_R1", "8wN_iPSCpatient_R2")
 
 ## Make a loop for importing all tpm data and keep only ID and count column
 sample_data <- list()
@@ -13087,8 +13114,13 @@ for (sample in samples) {
     rename(!!sample := starts_with("output.STAR_hg38."))
 }
 
+
 ## Merge all dataframe into a single one
 rpkm_all_sample <- purrr::reduce(sample_data, full_join, by = "Geneid")
+## rpkm_all_sample$Geneid <- gsub("\\..*", "", rpkm_all_sample$Geneid) # remove Ensembl gene id version
+## write.csv(rpkm_all_sample %>% unique(), file="output/rpkm_hg38/rpkm_all_sample.txt")
+
+
 
 rpkm_all_sample_tidy <- rpkm_all_sample %>%
   gather(key = 'variable', value = 'rpkm', -Geneid) %>%
@@ -13110,6 +13142,16 @@ rpkm_all_sample_tidy_median_BrainDeconvShiny = rpkm_all_sample_tidy_median %>%
   spread(key = genotype, value = median)
 
 write.table(rpkm_all_sample_tidy_median_BrainDeconvShiny, file = "output/rpkm_hg38/rpkm_all_sample_tidy_median_BrainDeconvShiny.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+## Save sample per sample
+rpkm_all_sample_tidy_8wN_KO_BrainDeconvShiny = rpkm_all_sample_tidy %>%
+  filter(time == "8wN", genotype == "KO") %>%
+  dplyr::select(gene,replicate,rpkm) %>%
+  group_by(gene, replicate) %>%
+  summarise(rpkm = mean(rpkm, na.rm = TRUE)) %>%  # some gene id are dupplicated as we remove version id; need do mean...
+  spread(key = replicate, value = rpkm)
+
+write.table(rpkm_all_sample_tidy_8wN_KO_BrainDeconvShiny, file = "output/rpkm_hg38/rpkm_all_sample_tidy_8wN_KO_BrainDeconvShiny.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 ```
 
 
@@ -13117,5 +13159,130 @@ write.table(rpkm_all_sample_tidy_median_BrainDeconvShiny, file = "output/rpkm_hg
 ----> CA last ~5min to run!
 
 *NOTE: [This](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-021-02290-6) paper recommend to use TPM as normalized per library size! [This](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-023-03016-6) paper mention other normalization method worth to be tested (logNormlaize, CPM, lognormnalize,...)*
+
+
+--> I tested genotype per genotype but the r goodness of  fit remains the same...
+
+--> tpm sometime perform better! Quite random; but for now db MM seems to be the best
+
+
+
+# GSEA
+
+Objective here is to do GSEA to assess cell type population changes (notably the changes of Astrocyte and neuronal population, as it change with the EZH1 mutations according to deconvolution analysis)
+
+- Let's follow this [tutorial](https://alexslemonade.github.io/refinebio-examples/03-rnaseq/pathway-analysis_rnaseq_02_gsea.html).
+- Look here interesting cell type markers [here](https://www.gsea-msigdb.org/gsea/msigdb/human/)
+  - DESCARTES_FETAL: https://www.gsea-msigdb.org/gsea/msigdb/human/geneset/DESCARTES_MAIN_FETAL_ENS_NEURONS.html 
+  - FAN_EMBRYONIC_CTX https://www.gsea-msigdb.org/gsea/msigdb/human/geneset/FAN_EMBRYONIC_CTX_BIG_GROUPS_EXCITATORY_NEURON.html 
+  - ZHONG_PFC : https://www.gsea-msigdb.org/gsea/msigdb/human/geneset/ZHONG_PFC_C1_DLX5_POS_INTERNEURON.html 
+
+Use `conda activate deseq2` and R:
+
+
+
+```R
+# Packages
+library("tidyverse")
+library("clusterProfiler")
+library("msigdbr") # BiocManager::install("msigdbr")
+library("org.Mm.eg.db")
+
+
+# import DEGs
+## filtered_8wN_KO_vs_8wN_WT
+## filtered_8wN_HET_vs_8wN_WT
+
+KO <- read.table("output/deseq2_hg38/filtered_8wN_KO_vs_8wN_WT.txt", header = TRUE, sep = "\t", row.names = 1) %>%
+  rownames_to_column(var = "gene") %>%
+  as_tibble() 
+KO_geneSymbol = KO %>%
+  filter(!is.na(GeneSymbol)) # filter to keep only the geneSymbol gene
+
+HET <- read.table("output/deseq2_hg38/filtered_8wN_HET_vs_8wN_WT.txt", header = TRUE, sep = "\t", row.names = 1) %>%
+  rownames_to_column(var = "gene") %>%
+  as_tibble()
+HET_geneSymbol = HET %>%
+  filter(!is.na(GeneSymbol)) # filter to keep only the geneSymbol gene
+
+
+# import msigdbr cell marker db 
+hs_hallmark_sets <- msigdbr(
+  species = "Homo sapiens", # Replace with species name relevant to your data
+  category = "C8"   # From C8 cell marker category
+)
+
+
+# Order our DEG
+## Let's create a named vector ranked based on the log2 fold change values
+lfc_vector <- HET_geneSymbol$log2FoldChange
+names(lfc_vector) <- HET_geneSymbol$GeneSymbol
+## We need to sort the log2 fold change values in descending order here
+lfc_vector <- sort(lfc_vector, decreasing = TRUE)
+### Set the seed so our results are reproducible:
+set.seed(42)
+
+
+# run GSEA
+gsea_results <- GSEA(
+  geneList = lfc_vector, # Ordered ranked gene list
+  minGSSize = 25, # Minimum gene set size
+  maxGSSize = 500, # Maximum gene set set
+  pvalueCutoff = 0.05, # p-value cutoff
+  eps = 0, # Boundary for calculating the p value
+  seed = TRUE, # Set seed to make results reproducible
+  pAdjustMethod = "BH", # Benjamini-Hochberg correction
+  TERM2GENE = dplyr::select(
+    hs_hallmark_sets,
+    gs_name,
+    gene_symbol
+  )
+)
+
+gsea_result_df <- data.frame(gsea_results@result)
+
+## From this file I look for significance in 'Astrocyte' and it return:
+## For KO
+DESCARTES_MAIN_FETAL_ASTROCYTES
+DESCARTES_FETAL_CEREBELLUM_ASTROCYTES
+DESCARTES_FETAL_CEREBRUM_ASTROCYTES
+ZHONG_PFC_MAJOR_TYPES_ASTROCYTES
+ZHONG_PFC_C3_ASTROCYTE
+FAN_EMBRYONIC_CTX_ASTROCYTE_1
+FAN_EMBRYONIC_CTX_ASTROCYTE_2
+## For HET
+ZHONG_PFC_MAJOR_TYPES_ASTROCYTES
+FAN_EMBRYONIC_CTX_ASTROCYTE_2
+FAN_EMBRYONIC_CTX_ASTROCYTE_1
+ZHONG_PFC_C1_ASTROCYTE
+ZHONG_PFC_C3_ASTROCYTE
+DESCARTES_FETAL_CEREBELLUM_ASTROCYTES
+DESCARTES_FETAL_CEREBRUM_ASTROCYTES
+DESCARTES_FETAL_EYE_ASTROCYTES
+
+
+# plots
+DESCARTES_MAIN_FETAL_ASTROCYTES
+pdf("output/gsea/FAN_EMBRYONIC_CTX_ASTROCYTE_2_8wN_WTvsKO.pdf", width=14, height=8)
+
+pdf("output/gsea/DESCARTES_FETAL_EYE_ASTROCYTES_8wN_WTvsHET.pdf", width=14, height=8)
+enrichplot::gseaplot(
+  gsea_results,
+  geneSetID = "DESCARTES_FETAL_EYE_ASTROCYTES",
+  title = "DESCARTES_FETAL_EYE_ASTROCYTES",
+  color.line = "#0d76ff"
+)
+dev.off()
+
+# Save output
+readr::write_tsv(
+  gsea_result_df,
+  file.path("output/gsea/gsea_results_8wN_WTvsHET.tsv"
+  )
+)
+
+
+```
+
 
 
