@@ -1869,6 +1869,12 @@ annot.GSEA <- easyct(input.d, db="cellmarker", # cellmarker or Panglaodb or Clus
                     species="Human", #  Human or Mouse
                     tissue=c("Embryo", "Embryoid body", "Embryonic brain", "Embryonic stem cell", "Embryonic prefrontal cortex"), p_cut=0.3,   # many other tissue available
                     test="GSEA")    # GSEA or Fisher?
+### save output
+annot.GSEA_df <- data.frame(annot.GSEA$Mesoderm_4)
+
+write.table(annot.GSEA_df, "output/seurat/EasyCellType_GSEA_Mesoderm_4_UNTREATED72hr_allEmbryoTissue_V2.txt", sep="\t", row.names=FALSE, quote=FALSE)
+###
+
 
 annot.GSEA <- easyct(input.d, db="cellmarker", # cellmarker or Panglaodb or Clustermole
                     species="Human", #  Human or Mouse
@@ -3206,6 +3212,14 @@ DotPlot(embryo.combined.sct, features = marker_genes, cols = c("grey", "red")) +
 dev.off()
 
 
+## display gene list in dotplot for both WT and cYPAKO
+## !! may need to re-run FindAllMarkers and levels !!
+gene_list= c("Tal1", "Gata1", "Vamp5", "Sox18", "Kdr")
+
+pdf("output/seurat/DotPlot_SCT_WT_cYAPKO_geneList20230831.pdf", width=8, height=10)
+DotPlot(embryo.combined.sct, features = gene_list, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
+
 # Display the top 10 CONSERVED marker genes of each cluster
 Idents(embryo.combined.sct) <- "cluster.annot"
 
@@ -3593,9 +3607,25 @@ max_difference$diff <- max_difference$max - max_difference$min
 ### sort based on the difference
 max_difference <- max_difference[order(max_difference$diff, decreasing = T), ]
 
+
+## Save outputs
+write.table(pathway_expression, "output/seurat/pathway_expression_control_cYAPKO.txt", sep="\t", row.names=TRUE, quote=FALSE)
+write.table(max_difference, "output/seurat/max_difference_pathway_expression_control_cYAPKO.txt", sep="\t", row.names=TRUE, quote=FALSE)
+
+
+
 ## Plot
 ### Expression for a single pathway
 plot_gsva_pathway(gsva_result, pathway_id = rownames(max_difference)[1])
+
+pdf("output/seurat/ReactomeGSA_SignalingRA_control_cYAPKO.pdf", width=15, height=10)
+plot_gsva_pathway(gsva_result, pathway_id = "R-HSA-5362517")
+dev.off()
+
+
+pdf("output/seurat/ReactomeGSA_AlanineMet_control_cYAPKO.pdf", width=15, height=10)
+plot_gsva_pathway(gsva_result, pathway_id = "R-HSA-8964540")
+dev.off()
 ### Heatmap pathway
 
 
@@ -3604,6 +3634,48 @@ pdf("output/seurat/ReactomeGSA_heatmap_cYAPKO.pdf", width=15, height=10)
 pdf("output/seurat/ReactomeGSA_heatmap_control_cYAPKO.pdf", width=15, height=10)
 plot_gsva_heatmap(gsva_result, max_pathways = 20, margins = c(12,40), truncate_names = FALSE, col = colorRampPalette(c("blue", "white", "red"))(100)) # ,   scale = "row"
 dev.off()
+
+pdf("output/seurat/ReactomeGSA_DevelopmentalBiology_heatmap_control_cYAPKO.pdf", width=15, height=10)
+plot_gsva_heatmap(gsva_result, pathway_ids = c("R-HSA-9754189", "R-HSA-9758919", "R-HSA-9758920", "R-HSA-9761174", "R-HSA-9793380", "R-HSA-9796292", "R-HSA-9823730", "R-HSA-9733709", "R-HSA-525793", "R-HSA-9675108", "R-HSA-168256", "R-HSA-109582", "R-HSA-983231", "R-HSA-397014", "R-HSA-112316", "R-HSA-556833", "R-HSA-71387", "R-HSA-8963743", "R-HSA-453274", "R-HSA-453279", "R-HSA-6805567", "R-HSA-1181150", "R-HSA-5576891","R-HSA-8964540", "R-HSA-432030", "R-HSA-192456", "R-HSA-1433617", "R-HSA-916853", "R-HSA-380612", "R-HSA-5662702", "R-HSA-622323", "R-HSA-390651" ), margins = c(12,40), truncate_names = FALSE, col = colorRampPalette(c("blue", "white", "red"))(100),   scale = "row") # 
+dev.off()
+
+
+R-HSA-9754189.4 Germ layer formation at gastrulation
+R-HSA-9758919.3 Epithelial-Mesenchymal Transition (EMT) during gastrulation
+R-HSA-9758920.3 Formation of lateral plate mesoderm
+R-HSA-9761174.1 Formation of intermediate mesoderm
+R-HSA-9793380.3 Formation of paraxial mesoderm
+R-HSA-9796292.3 Formation of axial mesoderm
+R-HSA-9823730.2 Formation of definitive endoderm
+R-HSA-9733709.1 Cardiogenesis
+R-HSA-525793.3 Myogenesis
+R-HSA-9675108.3 Nervous system development
+R-HSA-168256  Immune System
+R-HSA-109582 Hemostasis
+R-HSA-983231 Factors involved in megakaryocyte development and platelet production
+R-HSA-397014 Muscle contraction
+R-HSA-112316 Neuronal System
+R-HSA-556833 Metabolism of lipids
+R-HSA-71387 Metabolism of carbohydrates
+R-HSA-8963743 Digestion and absorption
+R-HSA-453274 Mitotic G2-G2/M phases (proliferative)
+R-HSA-453279 Mitotic G1 phase and G1/S transition
+R-HSA-6805567 Keratinization
+R-HSA-1181150 Signaling by NODAL
+R-HSA-5576891 Cardiac conduction
+	
+
+
+R-HSA-8964540	Alanine metabolism
+R-HSA-9758920	Formation of lateral plate mesoderm
+R-HSA-432030	Transport of glycerol from adipocytes to the liver by Aquaporins
+R-HSA-192456	Digestion of dietary lipid
+R-HSA-1433617	Regulation of signaling by NODAL
+R-HSA-916853	Degradation of GABA
+R-HSA-380612	Metabolism of serotonin
+R-HSA-5662702	Melanin biosynthesis
+R-HSA-622323	Presynaptic nicotinic acetylcholine receptors
+R-HSA-390651	Dopamine receptors
 
 ### Pathway-level PCA
 pdf("output/seurat/ReactomeGSA_PCA_control.pdf", width=15, height=10)
