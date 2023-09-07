@@ -36,6 +36,7 @@ To allow cp/paste between Vitrual machine and computer:
 ## Run job
 
 - Interactive `srun --mem=20g --pty bash -l`.
+- Interactive with multiple cores: `srun --mem=500g --cpus-per-task=10 --pty bash -l` (`nproc` to check nb of cores; **always leave some like ask for 8 here)**
 - Sbatch `sbatch job.sh` (edit script in VSC, then create it on the cluster with `touch script.sh` edit it with `nano script.sh` copy paste from VSC, and run it)
 - List jobs: `squeue -u roulet` (`scancel [JOBID]` to cancel)
 

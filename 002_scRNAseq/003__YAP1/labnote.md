@@ -3689,11 +3689,444 @@ plot_gsva_pca(gsva_result) +
 dev.off()
 
 
-## Compare WT and cYAPKO
-gsva_result_WT <- analyse_sc_clusters(embryo.combined.sct.WT, verbose = TRUE)
-gsva_result_cYAPKO <- analyse_sc_clusters(embryo.combined.sct.cYAPKO, verbose = TRUE)
+## Compare WT and cYAPKO using SCPA
+### installation (in scRNAseqV1)
+# devtools::install_version("crossmatch", version = "1.3.1", repos = "http://cran.us.r-project.org")
+# devtools::install_version("multicross", version = "2.1.0", repos = "http://cran.us.r-project.org")
+# devtools::install_github("jackbibby1/SCPA")
+# --> Last fail so installed dependencies
+# BiocManager::install(c("clustermole", "ComplexHeatmap", "singscore"))
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") 
+library("SCPA")
+library("circlize")
+library("magrittr")
+library("msigdb")
+library("msigdbr")
+library("ComplexHeatmap")
+embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
 
-XXX
+DefaultAssay(embryo.combined.sct) <- "RNA" # Recommended 
+
+
+# Isolate WT and cYAPKO
+## These do not work as for human
+pathways <- "output/Pathway/h_k_r_go_pid_reg_wik.csv" ## combination of canonical pathways, gene ontology pathways, and regulatory pathways from MSigDB
+pathways <- "output/Pathway/combined_metabolic_pathways.csv" ## 
+
+## These for mice dl from msigdb
+#### if single file
+pathways <- get_paths("output/Pathway/REACTOME_SIGNALING_BY_RETINOIC_ACID.v2023.1.Mm.gmt")
+names(pathways) <- sapply(pathways, function(x) x$Pathway[1])
+pathways$REACTOME_SIGNALING_BY_RETINOIC_ACID
+#### if multiple files
+pathways <- msigdbr("Mus musculus", "C2") %>%
+format_pathways()
+names(pathways) <- sapply(pathways, function(x) x$Pathway[1]) # just to name the list, so easier to visualise
+pathways$REACTOME_SIGNALING_BY_RETINOIC_ACID$Genes
+
+# Compare pathway activity between condition within  
+cell_types <- unique(embryo.combined.sct$cluster.annot)
+embryo.combined.sct_split <- SplitObject(embryo.combined.sct, split.by = "condition")
+
+# SCPA comparison
+## keep all columns
+scpa_out_all <- list()
+for (i in cell_types) {
+  
+  WT <- seurat_extract(embryo.combined.sct_split$WT, 
+                            meta1 = "cluster.annot", value_meta1 = i)
+  
+  cYAPKO <- seurat_extract(embryo.combined.sct_split$cYAPKO, 
+                          meta1 = "cluster.annot", value_meta1 = i)
+  
+  print(paste("comparing", i))
+  scpa_out[[i]] <- compare_pathways(list(WT, cYAPKO), pathways, parallel = TRUE, cores = 8) %>%
+    set_colnames(c("Pathway", paste(i, "qval", sep = "_")))
+# For faster analysis with parallel processing, use 'parallel = TRUE' and 'cores = x' arguments
+}
+## keep only PAthway and qval column (Best for heatmap qval representation)
+scpa_out <- list()
+for (i in cell_types) {
+  
+  WT <- seurat_extract(embryo.combined.sct_split$WT, 
+                            meta1 = "cluster.annot", value_meta1 = i)
+  
+  cYAPKO <- seurat_extract(embryo.combined.sct_split$cYAPKO, 
+                          meta1 = "cluster.annot", value_meta1 = i)
+  
+  print(paste("comparing", i))
+  scpa_out[[i]] <- compare_pathways(list(WT, cYAPKO), pathways, parallel = TRUE, cores = 8) %>%
+    select(Pathway, qval) %>%
+    set_colnames(c("Pathway", paste(i, "qval", sep = "_")))
+# For faster analysis with parallel processing, use 'parallel = TRUE' and 'cores = x' arguments
+}
+saveRDS(scpa_out, file = "output/Pathway/scpa_out_eachCellTypes.rds")
+
+console_output <- capture.output(print(scpa_out))
+writeLines(console_output, "output/Pathway/scpa_out_console.txt")
+
+## Save output as R object
+# saveRDS(scpa_out, file = "output/Pathway/scpa_out_eachCellTypes.rds")
+#scpa_out_loaded <- readRDS("output/Pathway/scpa_out_eachCellTypes.rds")
+
+# plot output
+## Filter pathways with a qval of > 2 in any comparison
+scpa_out_filter <- scpa_out %>% 
+  purrr::reduce(full_join, by = "Pathway") %>% 
+  set_colnames(gsub(colnames(.), pattern = " ", replacement = "_")) %>%
+  select(c("Pathway", grep("_qval", colnames(.)))) %>%
+  filter_all(any_vars(. > 2)) %>%
+  column_to_rownames("Pathway")
+## pathway to highlight
+highlight_paths <- c("REACTOME_SIGNALING_BY_RETINOIC_ACID")
+highlight_paths <- c("REACTOME_SIGNALING_BY_RETINOIC_ACID","KEGG_RETINOL_METABOLISM","PID_RETINOIC_ACID_PATHWAY","WP_4HYDROXYTAMOXIFEN_DEXAMETHASONE_AND_RETINOIC_ACIDS_REGULATION_OF_P27_EXPRESSION")
+
+position <- which(rownames(scpa_out_filter) %in% highlight_paths)
+row_an <- rowAnnotation(Genes = anno_mark(at = which(rownames(scpa_out_filter) %in% highlight_paths),
+                                          labels = rownames(scpa_out_filter)[position],
+                                          labels_gp = gpar(fontsize = 7),
+                                          link_width = unit(2.5, "mm"),
+                                          padding = unit(1, "mm"),
+                                          link_gp = gpar(lwd = 0.5)))
+col_hm <- colorRamp2(colors = c("blue", "white", "red"), breaks = c(0, 3, 6))
+
+pdf("output/Pathway/SCPA_embryo_msigdb_C2_cl5.pdf", width=10, height=30)
+pdf("output/Pathway/SCPA_embryo_retino_msigdb_C2_cl5.pdf", width=10, height=30)
+Heatmap(scpa_out_filter,
+        col = col_hm,
+        name = "Qval",
+        show_row_names = F,
+        right_annotation = row_an,
+        column_names_gp = gpar(fontsize = 8),
+        border = T,
+        column_km = 5,
+        row_km = 5)
+dev.off()
+
+# Heatmap representation
+scpa_out_tibble <- scpa_out_filter %>% 
+  rownames_to_column(var = "Pathway") %>%
+  as_tibble() %>%
+  pivot_longer(cols = -Pathway, 
+               names_to = "cluster", 
+               values_to = "qval")
+
+
+scpa_out_tibble_REACTOME_SIGNALING_BY_RETINOIC_ACID = scpa_out_tibble %>%
+  filter(Pathway == "REACTOME_SIGNALING_BY_RETINOIC_ACID")
+scpa_out_tibble_REACTOME_SIGNALING_BY_RETINOIC_ACID = scpa_out_tibble %>%
+  filter(Pathway %in% c("REACTOME_SIGNALING_BY_RETINOIC_ACID","KEGG_RETINOL_METABOLISM","PID_RETINOIC_ACID_PATHWAY","WP_4HYDROXYTAMOXIFEN_DEXAMETHASONE_AND_RETINOIC_ACIDS_REGULATION_OF_P27_EXPRESSION"))
+
+scpa_out_all_tibble_REACTOME_SIGNALING_BY_RETINOIC_ACID = scpa_out_all %>% 
+  purrr::reduce(full_join, by = "Pathway") %>% 
+  set_colnames(gsub(colnames(.), pattern = " ", replacement = "_")) %>%
+  select(c("Pathway", grep("_qval", colnames(.)))) %>%
+  filter_all(any_vars(. > 2)) %>%
+  column_to_rownames("Pathway") %>% 
+  rownames_to_column(var = "Pathway") %>%
+  as_tibble() %>%
+  pivot_longer(cols = -Pathway, 
+               names_to = "cluster", 
+               values_to = "qval") %>%
+  filter(Pathway == "REACTOME_SIGNALING_BY_RETINOIC_ACID")
+# --> Negative FC = MORE ACTIVE in cYAPKO
+
+pdf("output/Pathway/heatmap_embryo_msigdb_REACTOME_SIGNALING_BY_RETINOIC_ACID.pdf", width=5, height=5)
+pdf("output/Pathway/heatmap_embryo_msigdb_retino.pdf", width=10, height=10)
+ggplot(scpa_out_tibble_REACTOME_SIGNALING_BY_RETINOIC_ACID, aes(x=cluster, y=Pathway, fill=qval)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 8, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=1.4, name="qval") + # 1.4 = qval 0.05
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+# Cell-type/Cluster specific comparison; on the signficiant
+## c("Epiblast_PrimStreak", "Paraxial_Mesoderm", "Somitic_Mesoderm")
+WT <- seurat_extract(embryo.combined.sct,
+                          meta1 = "condition", value_meta1 = "WT",
+                          meta2 = "cluster.annot", value_meta2 = "Epiblast_PrimStreak")
+cYAPKO <- seurat_extract(embryo.combined.sct,
+                            meta1 = "condition", value_meta1 = "cYAPKO",
+                            meta2 = "cluster.annot", value_meta2 = "Epiblast_PrimStreak")
+
+
+WT_cYAPKO <- compare_pathways(samples = list(WT, cYAPKO),   # list(population1,population2) FC = population 2 - population 1
+                             pathways = pathways,           # so FC >1 = less active in cYAPKO
+                             parallel = TRUE, cores = 8)
+
+
+WT_cYAPKO_filter <- WT_cYAPKO %>%
+  mutate(color = case_when(FC > 5 & adjPval < 0.01 ~ '#6dbf88',
+                           FC < 5 & FC > -5 & adjPval < 0.01 ~ '#84b0f0',
+                           FC < -5 & adjPval < 0.01 ~ 'mediumseagreen',
+                           FC < 5 & FC > -5 & adjPval > 0.01 ~ 'black'))
+# plot single apthway
+ra_path <- WT_cYAPKO_filter %>% 
+  filter(grepl(pattern = "REACTOME_SIGNALING_BY_RETINOIC_ACID", ignore.case = T, x = Pathway))
+
+
+pdf("output/Pathway/plot_embryo_msigdb_REACTOME_SIGNALING_BY_RETINOIC_ACID_Epiblast_PrimStreak.pdf", width=5, height=5)
+pdf("output/Pathway/plot_embryo_msigdb_REACTOME_SIGNALING_BY_RETINOIC_ACID_Paraxial_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plot_embryo_msigdb_REACTOME_SIGNALING_BY_RETINOIC_ACID_Somitic_Mesoderm.pdf", width=5, height=5)
+ggplot(WT_cYAPKO_filter, aes(-FC, qval)) +
+  geom_vline(xintercept = c(-5, 5), linetype = "dashed", col = 'black', lwd = 0.3) +
+  geom_point(cex = 2.6, shape = 21, fill = WT_cYAPKO_filter$color, stroke = 0.3) +
+  geom_point(data = ra_path, shape = 21, cex = 2.8, fill = "orangered2", color = "black", stroke = 0.3) +
+  xlim(-20, 80) +
+  ylim(0, 11) +
+  xlab("Enrichment") +
+  ylab("Qval") +
+  theme(panel.background = element_blank(),
+        panel.border = element_rect(fill = NA),
+        aspect.ratio = 1)
+dev.off()
+
+
+pdf("output/Pathway/plotrank_embryo_msigdb_REACTOME_SIGNALING_BY_RETINOIC_ACID_Epiblast_PrimStreak.pdf", width=5, height=5)
+pdf("output/Pathway/plotrank_embryo_msigdb_REACTOME_SIGNALING_BY_RETINOIC_ACID_Paraxial_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plotrank_embryo_msigdb_REACTOME_SIGNALING_BY_RETINOIC_ACID_Somitic_Mesoderm.pdf", width=5, height=5)
+
+plot_rank(WT_cYAPKO_filter, "REACTOME_SIGNALING_BY_RETINOIC_ACID",
+                highlight_point_size = 3.5, highlight_point_color = "orangered2", label_pathway = FALSE)
+dev.off()
+# plot multiple apthway
+ra_path <- WT_cYAPKO_filter %>% 
+  filter(Pathway %in% c("REACTOME_SIGNALING_BY_RETINOIC_ACID","KEGG_RETINOL_METABOLISM","PID_RETINOIC_ACID_PATHWAY","WP_4HYDROXYTAMOXIFEN_DEXAMETHASONE_AND_RETINOIC_ACIDS_REGULATION_OF_P27_EXPRESSION"))
+
+pdf("output/Pathway/plotrank_embryo_msigdb_retino_Epiblast_PrimStreak.pdf", width=5, height=5)
+pdf("output/Pathway/plotrank_embryo_msigdb_retino_Paraxial_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plotrank_embryo_msigdb_retino_Somitic_Mesoderm.pdf", width=5, height=5)
+plot_rank(WT_cYAPKO_filter, c("REACTOME_SIGNALING_BY_RETINOIC_ACID","KEGG_RETINOL_METABOLISM","PID_RETINOIC_ACID_PATHWAY","WP_4HYDROXYTAMOXIFEN_DEXAMETHASONE_AND_RETINOIC_ACIDS_REGULATION_OF_P27_EXPRESSION"),
+                highlight_point_size = 3.5, highlight_point_color = "orangered2", label_pathway = TRUE)
+dev.off()
+
+pdf("output/Pathway/plot_embryo_msigdb_retino_Epiblast_PrimStreak.pdf", width=5, height=5)
+pdf("output/Pathway/plot_embryo_msigdb_retino_Paraxial_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plot_embryo_msigdb_retino_Somitic_Mesoderm.pdf", width=5, height=5)
+ggplot(WT_cYAPKO_filter, aes(-FC, qval)) +
+  geom_vline(xintercept = c(-5, 5), linetype = "dashed", col = 'black', lwd = 0.3) +
+  geom_point(cex = 2.6, shape = 21, fill = WT_cYAPKO_filter$color, stroke = 0.3) +
+  geom_point(data = ra_path, shape = 21, cex = 2.8, fill = "orangered2", color = "black", stroke = 0.3) +
+  xlim(-20, 80) +
+  ylim(0, 11) +
+  xlab("Enrichment") +
+  ylab("Qval") +
+  theme(panel.background = element_blank(),
+        panel.border = element_rect(fill = NA),
+        aspect.ratio = 1)
+dev.off()
+
+
+
+
+
+
+
+
+# V2 clean code for all within all cell type comparison
+## Load DB
+pathways <- msigdbr("Mus musculus", "C2") %>%
+format_pathways()
+names(pathways) <- sapply(pathways, function(x) x$Pathway[1]) # just to name the list, so easier to visualise
+pathways$REACTOME_SIGNALING_BY_RETINOIC_ACID$Genes
+
+# Compare pathway activity between condition within  
+cell_types <- unique(embryo.combined.sct$cluster.annot)
+embryo.combined.sct_split <- SplitObject(embryo.combined.sct, split.by = "condition")
+
+# SCPA comparison
+## keep all columns 
+scpa_out_all <- list()
+for (i in cell_types) {
+  
+  WT <- seurat_extract(embryo.combined.sct_split$WT, 
+                            meta1 = "cluster.annot", value_meta1 = i)
+  
+  cYAPKO <- seurat_extract(embryo.combined.sct_split$cYAPKO, 
+                          meta1 = "cluster.annot", value_meta1 = i)
+  
+  print(paste("comparing", i))
+  scpa_out[[i]] <- compare_pathways(list(WT, cYAPKO), pathways, parallel = TRUE, cores = 8) %>%
+    set_colnames(c("Pathway", paste(i, "qval", sep = "_")))
+# For faster analysis with parallel processing, use 'parallel = TRUE' and 'cores = x' arguments
+}
+scpa_out_all = scpa_out
+
+
+console_output <- capture.output(print(scpa_out_all))
+writeLines(console_output, "output/Pathway/scpa_out_all_console.txt")
+
+
+XXX below code need troubleshoot XXX
+
+
+## Rename the columns
+# Bind list of data frames column-wise
+scpa_out_df <- do.call(cbind, scpa_out_all)
+
+
+
+library(tidyr)
+library(dplyr)
+
+# Add `.Pathway` to columns without a `.` in their name
+names(scpa_out_df)[!grepl("\\.", names(scpa_out_df))] <- paste0(names(scpa_out_df)[!grepl("\\.", names(scpa_out_df))], ".Pathway")
+
+# Melt the dataframe
+scpa_out_long <- scpa_out_df %>%
+  pivot_longer(
+    cols = -ends_with("Pathway"),
+    names_to = "name",
+    values_to = "Value"
+  )
+
+# Separate the column names into cluster and metric
+scpa_out_long <- scpa_out_long %>%
+  separate(name, c("Cluster", "Metric"), sep = "\\.")
+
+# Assign pathway names
+scpa_out_long$Pathway[scpa_out_long$Metric == "Pathway"] <- scpa_out_long$Value[scpa_out_long$Metric == "Pathway"]
+
+# Filter out rows where Metric is "Pathway"
+scpa_out_long <- scpa_out_long %>% filter(Metric != "Pathway")
+
+
+
+
+
+
+
+
+
+
+names(scpa_out_df) <- gsub(" ", "_", names(scpa_out_df)) # replace spaces with underscores in column names
+
+# Rename the columns
+rename_columns <- function(df) {
+  cluster_names <- unique(gsub("\\..*", "", names(df)))
+  
+  for(cluster in cluster_names) {
+    base_name <- gsub("\\..*", "", cluster)
+    position <- which(grepl(base_name, names(df)))
+    if(length(position) > 1){
+      names(df)[position[1]] <- paste(base_name, "Pathway", sep = ".")
+      names(df)[position[2]] <- paste(base_name, "qval", sep = ".")
+      names(df)[position[3]] <- paste(base_name, "pval", sep = ".")
+      names(df)[position[4]] <- paste(base_name, "adjpval", sep = ".")
+      names(df)[position[5]] <- paste(base_name, "FC", sep = ".")
+    }
+  }
+  return(df)
+}
+scpa_out_df <- rename_columns(scpa_out_df)
+
+scpa_out_long <- scpa_out_df %>%
+  pivot_longer(cols = -matches("Pathway"),
+               names_to = c(".value", "cluster"), 
+               names_pattern = "(.*)\\.(.*)")
+
+
+
+
+
+
+## Save output as R object
+# saveRDS(scpa_out_all, file = "output/Pathway/scpa_out_all_eachCellTypes.rds")
+# scpa_out_loaded <- readRDS("output/Pathway/scpa_out_all_eachCellTypes.rds")
+
+## Filter pathways with a qval of > 1.4 in any comparison
+scpa_out_all_tidy = scpa_out_all %>% 
+  as_tibble()
+
+
+scpa_out_all_filter <- scpa_out_all %>% 
+  purrr::reduce(full_join, by = "Pathway") %>% 
+  set_colnames(gsub(colnames(.), pattern = " ", replacement = "_")) %>%
+  select(c("Pathway", grep("_qval", colnames(.)))) %>%
+  filter_all(any_vars(. > 1.4)) %>%
+  column_to_rownames("Pathway")
+
+# Heatmap representation
+scpa_out_tibble <- scpa_out_all_filter %>% 
+  rownames_to_column(var = "Pathway") %>%
+  as_tibble() %>%
+  pivot_longer(cols = -Pathway, 
+               names_to = "cluster", 
+               values_to = "qval")
+
+
+scpa_out_tibble_REACTOME_SIGNALING_BY_RETINOIC_ACID = scpa_out_tibble %>%
+  filter(Pathway == "REACTOME_SIGNALING_BY_RETINOIC_ACID")
+
+scpa_out_all_tibble_REACTOME_SIGNALING_BY_RETINOIC_ACID = scpa_out_all %>% 
+  purrr::reduce(full_join, by = "Pathway") %>% 
+  set_colnames(gsub(colnames(.), pattern = " ", replacement = "_")) %>%
+  select(c("Pathway", grep("_qval", colnames(.)))) %>%
+  filter_all(any_vars(. > 2)) %>%
+  column_to_rownames("Pathway") %>% 
+  rownames_to_column(var = "Pathway") %>%
+  as_tibble() %>%
+  pivot_longer(cols = -Pathway, 
+               names_to = "cluster", 
+               values_to = "qval") %>%
+  filter(Pathway == "REACTOME_SIGNALING_BY_RETINOIC_ACID")
+# --> Negative FC = MORE ACTIVE in cYAPKO
+
+
+
+pdf("output/Pathway/heatmap_embryo_msigdb_REACTOME_SIGNALING_BY_RETINOIC_ACID.pdf", width=5, height=5)
+ggplot(scpa_out_tibble_REACTOME_SIGNALING_BY_RETINOIC_ACID, aes(x=cluster, y=Pathway, fill=qval)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=1.4, name="qval") + # 1.4 = qval 0.05
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
 
 ```
 
@@ -3703,3 +4136,19 @@ XXX
 
 
 --> Share to Conchi the Conserved Marker list (`srat_all_conserved_markers_embryo.txt`). To avoid confusion, I did some filtering: For each cell type; I only keep log2FC positive (= correspond to gene more highly express in this cell types) and I told her to filter per pvalue which is the max_pvalue. Like this, she will only see the highly express genes in each cluster
+----> Conchi provided an updated list (check Dropbox)
+
+--> Fucntional analysis
+----> ReactomeGSEA to help cell type annotation (not for WT cYAPKO)
+----> [SCPA](https://jackbibby1.github.io/SCPA/) for comparison
+------> Gene list from Retinoic Acid downloaded from [this](https://www.gsea-msigdb.org/gsea/msigdb/human/geneset/REACTOME_SIGNALING_BY_RETINOIC_ACID.html); and then converted into mice ortholog [online](https://biit.cs.ut.ee/gprofiler/orth); file `Pathway/gProfiler_hsapiens_mmusculus_9-6-2023_3-52-54.csv`
+------> Alternative method: [this]https://jackbibby1.github.io/SCPA/articles/seurat_comparison.html and [this](https://jackbibby1.github.io/SCPA/articles/comparing_two_populations.html). Here I compare all the cell population together but compare my condition
+------> [This](https://jackbibby1.github.io/SCPA/articles/disease_comparison.html) is the tutorial to follow; disease comparison
+------> following this discussion for mice:
+- download gmt file for [Retinoic Acid](https://www.gsea-msigdb.org/gsea/msigdb/mouse/geneset/REACTOME_SIGNALING_BY_RETINOIC_ACID.html)
+
+
+
+- *NOTE: it last forever, so I used parralell core processing `srun --mem=500g --cpus-per-task=10 --pty bash -l`*
+- *NOTE: I work on `conda activate scRNAseqV1`*
+- *NOTE: Pretty cool paper that uses pathway enrichment to guide clustering! https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9985338/*
