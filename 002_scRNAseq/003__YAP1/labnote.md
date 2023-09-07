@@ -3862,14 +3862,15 @@ ggplot(scpa_out_tibble_REACTOME_SIGNALING_BY_RETINOIC_ACID, aes(x=cluster, y=Pat
   coord_fixed()  # Force aspect ratio of the plot to be 1:1
 dev.off()
 
-# Cell-type/Cluster specific comparison; on the signficiant
-## c("Epiblast_PrimStreak", "Paraxial_Mesoderm", "Somitic_Mesoderm")
+
+# Per Cell-type/Cluster comparison; on the signficiant
+## c("Epiblast_PrimStreak", "Paraxial_Mesoderm", "Somitic_Mesoderm","Caudal_Mesoderm", "Nascent_Mesoderm", "Pharyngeal_Mesoderm", Mesenchyme")
 WT <- seurat_extract(embryo.combined.sct,
                           meta1 = "condition", value_meta1 = "WT",
-                          meta2 = "cluster.annot", value_meta2 = "Epiblast_PrimStreak")
+                          meta2 = "cluster.annot", value_meta2 = "Mesenchyme")
 cYAPKO <- seurat_extract(embryo.combined.sct,
                             meta1 = "condition", value_meta1 = "cYAPKO",
-                            meta2 = "cluster.annot", value_meta2 = "Epiblast_PrimStreak")
+                            meta2 = "cluster.annot", value_meta2 = "Mesenchyme")
 
 
 WT_cYAPKO <- compare_pathways(samples = list(WT, cYAPKO),   # list(population1,population2) FC = population 2 - population 1
@@ -3885,11 +3886,19 @@ WT_cYAPKO_filter <- WT_cYAPKO %>%
 # plot single apthway
 ra_path <- WT_cYAPKO_filter %>% 
   filter(grepl(pattern = "REACTOME_SIGNALING_BY_RETINOIC_ACID", ignore.case = T, x = Pathway))
-
+ra_path <- WT_cYAPKO_filter %>% 
+  filter(grepl(pattern = "PID_RETINOIC_ACID_PATHWAY", ignore.case = T, x = Pathway))
+ra_path <- WT_cYAPKO_filter %>% 
+  filter(grepl(pattern = "REACTOME_SRP_DEPENDENT_COTRANSLATIONAL_PROTEIN_TARGETING_TO_MEMBRANE", ignore.case = T, x = Pathway))
 
 pdf("output/Pathway/plot_embryo_msigdb_REACTOME_SIGNALING_BY_RETINOIC_ACID_Epiblast_PrimStreak.pdf", width=5, height=5)
 pdf("output/Pathway/plot_embryo_msigdb_REACTOME_SIGNALING_BY_RETINOIC_ACID_Paraxial_Mesoderm.pdf", width=5, height=5)
 pdf("output/Pathway/plot_embryo_msigdb_REACTOME_SIGNALING_BY_RETINOIC_ACID_Somitic_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plot_embryo_msigdb_PID_RETINOIC_ACID_PATHWAY_Caudal_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plot_embryo_msigdb_PID_RETINOIC_ACID_PATHWAY_Nascent_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plot_embryo_msigdb_PID_RETINOIC_ACID_PATHWAY_Pharyngeal_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plot_embryo_msigdb_REACTOME_SRP_DEPENDENT_COTRANSLATIONAL_PROTEIN_TARGETING_TO_MEMBRANE_Mesenchyme.pdf", width=5, height=5)
+
 ggplot(WT_cYAPKO_filter, aes(-FC, qval)) +
   geom_vline(xintercept = c(-5, 5), linetype = "dashed", col = 'black', lwd = 0.3) +
   geom_point(cex = 2.6, shape = 21, fill = WT_cYAPKO_filter$color, stroke = 0.3) +
@@ -3907,8 +3916,12 @@ dev.off()
 pdf("output/Pathway/plotrank_embryo_msigdb_REACTOME_SIGNALING_BY_RETINOIC_ACID_Epiblast_PrimStreak.pdf", width=5, height=5)
 pdf("output/Pathway/plotrank_embryo_msigdb_REACTOME_SIGNALING_BY_RETINOIC_ACID_Paraxial_Mesoderm.pdf", width=5, height=5)
 pdf("output/Pathway/plotrank_embryo_msigdb_REACTOME_SIGNALING_BY_RETINOIC_ACID_Somitic_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plotrank_embryo_msigdb_PID_RETINOIC_ACID_PATHWAY_Caudal_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plotrank_embryo_msigdb_PID_RETINOIC_ACID_PATHWAY_Nascent_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plotrank_embryo_msigdb_PID_RETINOIC_ACID_PATHWAY_Pharyngeal_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plotrank_embryo_msigdb_REACTOME_SRP_DEPENDENT_COTRANSLATIONAL_PROTEIN_TARGETING_TO_MEMBRANE_Mesenchyme.pdf", width=5, height=5)
 
-plot_rank(WT_cYAPKO_filter, "REACTOME_SIGNALING_BY_RETINOIC_ACID",
+plot_rank(WT_cYAPKO_filter, "REACTOME_SRP_DEPENDENT_COTRANSLATIONAL_PROTEIN_TARGETING_TO_MEMBRANE",
                 highlight_point_size = 3.5, highlight_point_color = "orangered2", label_pathway = FALSE)
 dev.off()
 # plot multiple apthway
@@ -3918,6 +3931,10 @@ ra_path <- WT_cYAPKO_filter %>%
 pdf("output/Pathway/plotrank_embryo_msigdb_retino_Epiblast_PrimStreak.pdf", width=5, height=5)
 pdf("output/Pathway/plotrank_embryo_msigdb_retino_Paraxial_Mesoderm.pdf", width=5, height=5)
 pdf("output/Pathway/plotrank_embryo_msigdb_retino_Somitic_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plotrank_embryo_msigdb_retino_Caudal_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plotrank_embryo_msigdb_retino_Nascent_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plotrank_embryo_msigdb_retino_Pharyngeal_Mesoderm.pdf", width=5, height=5)
+
 plot_rank(WT_cYAPKO_filter, c("REACTOME_SIGNALING_BY_RETINOIC_ACID","KEGG_RETINOL_METABOLISM","PID_RETINOIC_ACID_PATHWAY","WP_4HYDROXYTAMOXIFEN_DEXAMETHASONE_AND_RETINOIC_ACIDS_REGULATION_OF_P27_EXPRESSION"),
                 highlight_point_size = 3.5, highlight_point_color = "orangered2", label_pathway = TRUE)
 dev.off()
@@ -3925,6 +3942,10 @@ dev.off()
 pdf("output/Pathway/plot_embryo_msigdb_retino_Epiblast_PrimStreak.pdf", width=5, height=5)
 pdf("output/Pathway/plot_embryo_msigdb_retino_Paraxial_Mesoderm.pdf", width=5, height=5)
 pdf("output/Pathway/plot_embryo_msigdb_retino_Somitic_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plot_embryo_msigdb_retino_Caudal_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plot_embryo_msigdb_retino_Nascent_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plot_embryo_msigdb_retino_Pharyngeal_Mesoderm.pdf", width=5, height=5)
+
 ggplot(WT_cYAPKO_filter, aes(-FC, qval)) +
   geom_vline(xintercept = c(-5, 5), linetype = "dashed", col = 'black', lwd = 0.3) +
   geom_point(cex = 2.6, shape = 21, fill = WT_cYAPKO_filter$color, stroke = 0.3) +
@@ -3940,7 +3961,115 @@ dev.off()
 
 
 
+# Code to save output for each cell type comparison
+clusters = c(
+"Primordial_Germ_Cells",
+  "Unknow_2",
+  "Unknow_1",
+  "Gut",
+  "Notocord",
+  "Surface_Ectoderm",
+  "Blood_Progenitor_2",
+  "Blood_Progenitor_1",
+  "Mixed_Mesoderm",
+  "Mesenchyme",
+  "Haematodenothelial_progenitors",
+  "Nascent_Mesoderm",
+  "Pharyngeal_Mesoderm",
+  "Paraxial_Mesoderm",
+  "Caudal_Mesoderm",
+  "Somitic_Mesoderm",
+  "ExE_Ectoderm",
+  "Epiblast_PrimStreak"
+)
+### Loop through each value
+for (cluster in clusters) {
+  #### Extract data for WT and cYAPKO based on current value
+  WT <- seurat_extract(embryo.combined.sct,
+                       meta1 = "condition", value_meta1 = "WT",
+                       meta2 = "cluster.annot", value_meta2 = cluster)
 
+  cYAPKO <- seurat_extract(embryo.combined.sct,
+                           meta1 = "condition", value_meta1 = "cYAPKO",
+                           meta2 = "cluster.annot", value_meta2 = cluster)
+
+  ##### Compare pathways
+  WT_cYAPKO <- compare_pathways(samples = list(WT, cYAPKO),
+                                pathways = pathways,
+                                parallel = TRUE, cores = 8)
+
+  ##### Write to file using the current value in the filename
+  output_filename <- paste0("output/Pathway/SCPA_", cluster, ".txt")
+  write.table(WT_cYAPKO, file = output_filename, sep = "\t", quote = FALSE, row.names = FALSE)
+}
+
+# Display non enriched but qvalue significant pathways
+## heatmap
+### extract Pathway gene name
+pathways$REACTOME_SIGNALING_BY_RETINOIC_ACID$Genes
+pathways$REACTOME_SRP_DEPENDENT_COTRANSLATIONAL_PROTEIN_TARGETING_TO_MEMBRANE$Genes
+
+
+genes_of_interest <- pathways$REACTOME_SIGNALING_BY_RETINOIC_ACID$Genes
+### extract WT and cYAPKO gene expression values from RNA assay
+WT_expression <- embryo.combined.sct@assays$RNA@data[genes_of_interest, colnames(embryo.combined.sct)[embryo.combined.sct$condition == "WT" & embryo.combined.sct$cluster.annot == "Paraxial_Mesoderm"]]
+cYAPKO_expression <- embryo.combined.sct@assays$RNA@data[genes_of_interest, colnames(embryo.combined.sct)[embryo.combined.sct$condition == "cYAPKO" & embryo.combined.sct$cluster.annot == "Paraxial_Mesoderm"]]
+
+### mean expression values for each gene
+WT_mean <- rowMeans(WT_expression)
+cYAPKO_mean <- rowMeans(cYAPKO_expression)
+data_for_plot <- data.frame(
+  Gene = genes_of_interest,
+  WT = WT_mean,
+  cYAPKO = cYAPKO_mean
+) %>% 
+pivot_longer(cols = c(WT, cYAPKO), names_to = "Condition", values_to = "Expression")
+
+## ORder from low to high express
+### Reordering the genes based on their mean expression in WT in ascending order
+ordered_genes <- names(sort(WT_mean))
+### Extracting unique gene names from the ordered list
+unique_ordered_genes <- unique(ordered_genes)
+### Filter out rows from data_for_plot that don't have their genes in unique_ordered_genes
+data_for_plot <- data_for_plot[data_for_plot$Gene %in% unique_ordered_genes, ]
+### Set the factor levels for 'Gene' according to the unique ordered list
+data_for_plot$Gene <- factor(data_for_plot$Gene, levels = unique_ordered_genes)
+
+
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_RETINOIC_ACID_Paraxial_Mesoderm.pdf", width=10, height=3)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SRP_DEPENDENT_COTRANSLATIONAL_PROTEIN_TARGETING_TO_MEMBRANE_Mesenchyme.pdf", width=20, height=3)
+
+ggplot(data_for_plot, aes(x=Gene, y=Condition, fill=Expression)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 8, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_viridis(direction = 1, option = "viridis", name="Expression") +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+## alternative representation
+data_for_plot_2 <- data.frame(Cluster = rep(c("WT", "cYAPKO"), each=100),
+                        Expression = rnorm(200))
+
+pdf("output/Pathway/test.pdf", width=5, height=3)
+
+ggplot(data_for_plot_2, aes(x=Expression, color=Cluster)) +
+  stat_ecdf(geom = "step") +
+  theme_minimal() +
+  labs(title="CDF Plot", x="Gene Expression", y="Cumulative Proportion")
+dev.off()
 
 
 
