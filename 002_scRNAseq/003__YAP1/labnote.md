@@ -3713,6 +3713,8 @@ library("magrittr")
 library("msigdb")
 library("msigdbr")
 library("ComplexHeatmap")
+library("ggrepel")
+library("ggpubr")
 embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
 
 DefaultAssay(embryo.combined.sct) <- "RNA" # Recommended 
@@ -3867,10 +3869,10 @@ dev.off()
 ## c("Epiblast_PrimStreak", "Paraxial_Mesoderm", "Somitic_Mesoderm","Caudal_Mesoderm", "Nascent_Mesoderm", "Pharyngeal_Mesoderm", Mesenchyme")
 WT <- seurat_extract(embryo.combined.sct,
                           meta1 = "condition", value_meta1 = "WT",
-                          meta2 = "cluster.annot", value_meta2 = "Mesenchyme")
+                          meta2 = "cluster.annot", value_meta2 = "Paraxial_Mesoderm")
 cYAPKO <- seurat_extract(embryo.combined.sct,
                             meta1 = "condition", value_meta1 = "cYAPKO",
-                            meta2 = "cluster.annot", value_meta2 = "Mesenchyme")
+                            meta2 = "cluster.annot", value_meta2 = "Paraxial_Mesoderm")
 
 
 WT_cYAPKO <- compare_pathways(samples = list(WT, cYAPKO),   # list(population1,population2) FC = population 2 - population 1
@@ -4008,9 +4010,10 @@ for (cluster in clusters) {
 ### extract Pathway gene name
 pathways$REACTOME_SIGNALING_BY_RETINOIC_ACID$Genes
 pathways$REACTOME_SRP_DEPENDENT_COTRANSLATIONAL_PROTEIN_TARGETING_TO_MEMBRANE$Genes
+pathways$REACTOME_SIGNALING_BY_WNT$Genes
 
 
-genes_of_interest <- pathways$REACTOME_SIGNALING_BY_RETINOIC_ACID$Genes
+genes_of_interest <- pathways$REACTOME_SIGNALING_BY_WNT$Genes
 ### extract WT and cYAPKO gene expression values from RNA assay
 WT_expression <- embryo.combined.sct@assays$RNA@data[genes_of_interest, colnames(embryo.combined.sct)[embryo.combined.sct$condition == "WT" & embryo.combined.sct$cluster.annot == "Paraxial_Mesoderm"]]
 cYAPKO_expression <- embryo.combined.sct@assays$RNA@data[genes_of_interest, colnames(embryo.combined.sct)[embryo.combined.sct$condition == "cYAPKO" & embryo.combined.sct$cluster.annot == "Paraxial_Mesoderm"]]
@@ -4059,178 +4062,256 @@ ggplot(data_for_plot, aes(x=Gene, y=Condition, fill=Expression)) +
 dev.off()
 
 
-## alternative representation
-data_for_plot_2 <- data.frame(Cluster = rep(c("WT", "cYAPKO"), each=100),
-                        Expression = rnorm(200))
+## CDF plot representation
+### Additional filtering removing the gene not express in both genotypes
+WT_expression <- embryo.combined.sct@assays$RNA@data[genes_of_interest, colnames(embryo.combined.sct)[embryo.combined.sct$condition == "WT" & embryo.combined.sct$cluster.annot == "Mesenchyme"]]
+cYAPKO_expression <- embryo.combined.sct@assays$RNA@data[genes_of_interest, colnames(embryo.combined.sct)[embryo.combined.sct$condition == "cYAPKO" & embryo.combined.sct$cluster.annot == "Mesenchyme"]]
 
-pdf("output/Pathway/test.pdf", width=5, height=3)
 
-ggplot(data_for_plot_2, aes(x=Expression, color=Cluster)) +
+### Identify and remove the genes not expressing in WT and cYAPKO; NOT MANDATORY !!!
+WT_tibble <- WT_expression %>%
+  as.data.frame() %>%
+  rownames_to_column("Gene") %>%
+  mutate(Sum = rowSums(select(., -Gene)),
+         Expressed_WT = ifelse(Sum > 0, "yes", "no"))
+
+cYAPKO_tibble <- cYAPKO_expression %>%
+  as.data.frame() %>%
+  rownames_to_column("Gene") %>%
+  mutate(Sum = rowSums(select(., -Gene)),
+         Expressed_cYAPKO = ifelse(Sum > 0, "yes", "no"))
+# Combine the tibbles
+combined_tibble <- WT_tibble %>%
+  select(Gene, Expressed_WT) %>%
+  left_join(cYAPKO_tibble %>% select(Gene, Expressed_cYAPKO), by = "Gene") %>%
+  replace_na(list(Expressed_WT = "no", Expressed_cYAPKO = "no")) %>%
+  mutate(Expressed = ifelse(Expressed_WT == "yes" | Expressed_cYAPKO == "yes", "yes", "no"))
+genes_to_keep_tibble <- combined_tibble %>% filter(Expressed == "yes")
+# Extract the list of genes to keep
+genes_to_keep <- genes_to_keep_tibble$Gene
+
+WT_expression_filtered <- WT_expression[genes_to_keep, ]
+cYAPKO_expression_filtered <- cYAPKO_expression[genes_to_keep, ]
+
+#### Pick either keep zero or not
+WT_values <- as.vector(WT_expression)
+cYAPKO_values <- as.vector(cYAPKO_expression)
+
+WT_values <- as.vector(WT_expression_filtered)
+cYAPKO_values <- as.vector(cYAPKO_expression_filtered)
+####
+
+
+data_for_cdf <- data.frame(
+  Expression = c(WT_values, cYAPKO_values),
+  Condition = c(rep("WT", length(WT_values)), rep("cYAPKO", length(cYAPKO_values)))
+)
+
+# Filtering the data
+# data_for_cdf <- data_for_cdf %>% filter(Expression > 0)
+# Conduct the KS test
+ks_result <- ks.test(data_for_cdf$Expression[data_for_cdf$Condition == "WT"],
+                    data_for_cdf$Expression[data_for_cdf$Condition == "cYAPKO"])
+# Extract p-value and statistic from KS test
+p_value <- ks_result$p.value
+statistic <- ks_result$statistic
+# Plotting
+pdf("output/Pathway/cdf_REACTOME_SIGNALING_BY_RETINOIC_ACID_Paraxial_Mesoderm.pdf", width=3, height=3)
+pdf("output/Pathway/cdf_REACTOME_SRP_DEPENDENT_COTRANSLATIONAL_PROTEIN_TARGETING_TO_MEMBRANE_Mesenchyme.pdf", width=3, height=3)
+ggplot(data_for_cdf, aes(x=Expression, color=Condition)) +
   stat_ecdf(geom = "step") +
-  theme_minimal() +
-  labs(title="CDF Plot", x="Gene Expression", y="Cumulative Proportion")
+  theme_bw() +
+  labs(x="norm counts", y="Cumulative Proportion") +
+  theme(legend.position = "bottom") +
+  annotate("text", x = max(data_for_cdf$Expression) * 0.5, y = 0.2, 
+           label = paste0("D = ", round(statistic, 5), "\np-value = ", format(p_value, digits=3, scientific=TRUE)), hjust = 0)
 dev.off()
 
 
 
 
-# V2 clean code for all within all cell type comparison
-## Load DB
-pathways <- msigdbr("Mus musculus", "C2") %>%
-format_pathways()
-names(pathways) <- sapply(pathways, function(x) x$Pathway[1]) # just to name the list, so easier to visualise
-pathways$REACTOME_SIGNALING_BY_RETINOIC_ACID$Genes
-
-# Compare pathway activity between condition within  
-cell_types <- unique(embryo.combined.sct$cluster.annot)
-embryo.combined.sct_split <- SplitObject(embryo.combined.sct, split.by = "condition")
-
-# SCPA comparison
-## keep all columns 
-scpa_out_all <- list()
-for (i in cell_types) {
-  
-  WT <- seurat_extract(embryo.combined.sct_split$WT, 
-                            meta1 = "cluster.annot", value_meta1 = i)
-  
-  cYAPKO <- seurat_extract(embryo.combined.sct_split$cYAPKO, 
-                          meta1 = "cluster.annot", value_meta1 = i)
-  
-  print(paste("comparing", i))
-  scpa_out[[i]] <- compare_pathways(list(WT, cYAPKO), pathways, parallel = TRUE, cores = 8) %>%
-    set_colnames(c("Pathway", paste(i, "qval", sep = "_")))
-# For faster analysis with parallel processing, use 'parallel = TRUE' and 'cores = x' arguments
-}
-scpa_out_all = scpa_out
-
-
-console_output <- capture.output(print(scpa_out_all))
-writeLines(console_output, "output/Pathway/scpa_out_all_console.txt")
-
-
-XXX below code need troubleshoot XXX
-
-
-## Rename the columns
-# Bind list of data frames column-wise
-scpa_out_df <- do.call(cbind, scpa_out_all)
-
-
-
-library(tidyr)
-library(dplyr)
-
-# Add `.Pathway` to columns without a `.` in their name
-names(scpa_out_df)[!grepl("\\.", names(scpa_out_df))] <- paste0(names(scpa_out_df)[!grepl("\\.", names(scpa_out_df))], ".Pathway")
-
-# Melt the dataframe
-scpa_out_long <- scpa_out_df %>%
-  pivot_longer(
-    cols = -ends_with("Pathway"),
-    names_to = "name",
-    values_to = "Value"
-  )
-
-# Separate the column names into cluster and metric
-scpa_out_long <- scpa_out_long %>%
-  separate(name, c("Cluster", "Metric"), sep = "\\.")
-
-# Assign pathway names
-scpa_out_long$Pathway[scpa_out_long$Metric == "Pathway"] <- scpa_out_long$Value[scpa_out_long$Metric == "Pathway"]
-
-# Filter out rows where Metric is "Pathway"
-scpa_out_long <- scpa_out_long %>% filter(Metric != "Pathway")
-
-
-
-
-
-
-
-
-
-
-names(scpa_out_df) <- gsub(" ", "_", names(scpa_out_df)) # replace spaces with underscores in column names
-
-# Rename the columns
-rename_columns <- function(df) {
-  cluster_names <- unique(gsub("\\..*", "", names(df)))
-  
-  for(cluster in cluster_names) {
-    base_name <- gsub("\\..*", "", cluster)
-    position <- which(grepl(base_name, names(df)))
-    if(length(position) > 1){
-      names(df)[position[1]] <- paste(base_name, "Pathway", sep = ".")
-      names(df)[position[2]] <- paste(base_name, "qval", sep = ".")
-      names(df)[position[3]] <- paste(base_name, "pval", sep = ".")
-      names(df)[position[4]] <- paste(base_name, "adjpval", sep = ".")
-      names(df)[position[5]] <- paste(base_name, "FC", sep = ".")
-    }
-  }
+# BALOW CLEAN CODE; dotplot>enrichplot>heatmap>violinplot
+# DOT PLOT pepresetnation
+## load all the comparison for each cell type (FC qval information)
+clusters = c(
+"Primordial_Germ_Cells",
+  "Unknow_2",
+  "Unknow_1",
+  "Gut",
+  "Notocord",
+  "Surface_Ectoderm",
+  "Blood_Progenitor_2",
+  "Blood_Progenitor_1",
+  "Mixed_Mesoderm",
+  "Mesenchyme",
+  "Haematodenothelial_progenitors",
+  "Nascent_Mesoderm",
+  "Pharyngeal_Mesoderm",
+  "Paraxial_Mesoderm",
+  "Caudal_Mesoderm",
+  "Somitic_Mesoderm",
+  "ExE_Ectoderm",
+  "Epiblast_PrimStreak"
+)
+## One by one
+SCPA_Primordial_Germ_Cells <- read.delim("output/Pathway/SCPA_Primordial_Germ_Cells.txt", header = TRUE) %>%
+  add_column(cluster = "Primordial_Germ_Cells")
+Unknow_2 <- read.delim("output/Pathway/SCPA_Unknow_2.txt", header = TRUE) %>%
+  add_column(cluster = "Unknow_2")
+## import with a function
+### A function to read and add the cluster column
+read_and_add_cluster <- function(cluster) {
+  path <- paste0("output/Pathway/SCPA_", cluster, ".txt")
+  df <- read.delim(path, header = TRUE) %>%
+    add_column(cluster = cluster)
   return(df)
 }
-scpa_out_df <- rename_columns(scpa_out_df)
+### Use lapply to apply the function on each cluster and bind all data frames together
+all_data <- bind_rows(lapply(clusters, read_and_add_cluster))
+# --> import the gene pathways (used table from Conchi `Pathwyas of interest*.xlsx`)
+pathways = c(
+"BIOCARTA_WNT_PATHWAY",
+"KEGG_WNT_SIGNALING_PATHWAY",
+"WP_WNT_SIGNALING",
+"WP_WNT_SIGNALING_PATHWAY",
+"WP_WNT_SIGNALING_PATHWAY_AND_PLURIPOTENCY",
+"PID_WNT_CANONICAL_PATHWAY",
+"PID_WNT_NONCANONICAL_PATHWAY",
+"PID_WNT_SIGNALING_PATHWAY",
+"WILLERT_WNT_SIGNALING",
+"WNT_SIGNALING",
+"REACTOME_SIGNALING_BY_WNT",
+"REACTOME_WNT5A_DEPENDENT_INTERNALIZATION_OF_FZD4",
+"REACTOME_BETA_CATENIN_INDEPENDENT_WNT_SIGNALING",
+"REACTOME_WNT_LIGAND_BIOGENESIS_AND_TRAFFICKING",
+"REACTOME_NEGATIVE_REGULATION_OF_TCF_DEPENDENT_SIGNALING_BY_WNT_LIGAND_ANTAGONISTS",
+"REACTOME_DEACTIVATION_OF_THE_BETA_CATENIN_TRANSACTIVATING_COMPLEX",
+"REACTOME_FORMATION_OF_THE_BETA_CATENIN_TCF_TRANSACTIVATING_COMPLEX",
+"REACTOME_DEGRADATION_OF_BETA_CATENIN_BY_THE_DESTRUCTION_COMPLEX",
+"REACTOME_DEGRADATION_OF_AXIN",
+"REACTOME_BETA_CATENIN_PHOSPHORYLATION_CASCADE",
+"REACTOME_TCF_DEPENDENT_SIGNALING_IN_RESPONSE_TO_WNT",
+"REACTOME_NEGATIVE_REGULATION_OF_TCF_DEPENDENT_SIGNALING_BY_WNT_LIGAND_ANTAGONISTS",
+"REACTOME_WNT5A_DEPENDENT_INTERNALIZATION_OF_FZD4"
+)
+pathways = c(
+"WP_TGFBETA_RECEPTOR_SIGNALING",
+"WP_TGFBETA_SIGNALING_PATHWAY",
+"KEGG_TGF_BETA_SIGNALING_PATHWAY",
+"BIOCARTA_TGFB_PATHWAY",
+"KARAKAS_TGFB1_SIGNALING",
+"PID_TGFBR_PATHWAY",
+"REACTOME_SIGNALING_BY_NODAL",
+"REACTOME_DOWNREGULATION_OF_SMAD2_3_SMAD4_TRANSCRIPTIONAL_ACTIVITY",
+"REACTOME_TRANSCRIPTIONAL_ACTIVITY_OF_SMAD2_SMAD3_SMAD4_HETEROTRIMER",
+"REACTOME_SMAD2_SMAD3_SMAD4_HETEROTRIMER_REGULATES_TRANSCRIPTION",
+"REACTOME_TGF_BETA_RECEPTOR_SIGNALING_ACTIVATES_SMADS",
+"REACTOME_SIGNALING_BY_ACTIVIN",
+"REACTOME_DOWNREGULATION_OF_TGF_BETA_RECEPTOR_SIGNALING",
+"REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS",
+"REACTOME_SIGNALING_BY_TGF_BETA_RECEPTOR_COMPLEX",
+"REACTOME_TGF_BETA_RECEPTOR_SIGNALING_ACTIVATES_SMADS",
+"WP_CANONICAL_AND_NONCANONICAL_TGFB_SIGNALING"
+)
 
-scpa_out_long <- scpa_out_df %>%
-  pivot_longer(cols = -matches("Pathway"),
-               names_to = c(".value", "cluster"), 
-               names_pattern = "(.*)\\.(.*)")
+all_data_pathways = as_tibble(all_data) %>% 
+  filter(Pathway %in% pathways)
+
+# tidy the df
+all_data_pathways_tidy <- all_data_pathways %>%
+  filter(qval >= 1.4) 
+
+# Dot plot
+pdf("output/Pathway/dotplot_WNT_signaling.pdf", width=12, height=6)
+ggplot(all_data_pathways_tidy, aes(x = cluster, y = Pathway)) + 
+  geom_point(aes(size = qval, color = -FC), pch=16, alpha=0.7) +   
+  scale_size_continuous(range = c(1, 8), guide = "legend") +  # Adjust the range for size if needed
+  scale_color_gradient2(low = "blue", mid = "grey", high = "red", midpoint = 0, guide = "colourbar") +
+  theme_bw() +
+  labs(size = "q-value", color = "Fold Change") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
 
 
+# ENRCIHMENT PLOT
+
+all_data_pathways_tidy_pa <- all_data_pathways_tidy %>% 
+  filter(Pathway %in% c("KEGG_WNT_SIGNALING_PATHWAY","REACTOME_SIGNALING_BY_WNT","WP_WNT_SIGNALING"),
+         cluster == "Paraxial_Mesoderm") %>%
+  mutate(color = case_when(FC > 5 & adjPval < 0.01 ~ '#6dbf88',
+                           FC < 5 & FC > -5 & adjPval < 0.01 ~ '#84b0f0',
+                           FC < -5 & adjPval < 0.01 ~ 'mediumseagreen',
+                           FC < 5 & FC > -5 & adjPval > 0.01 ~ 'black'))
 
 
+all_data_all_pa = as_tibble(all_data) %>% 
+  filter(cluster == "Paraxial_Mesoderm") %>%
+  mutate(color = case_when(FC > 5 & adjPval < 0.01 ~ '#6dbf88',
+                           FC < 5 & FC > -5 & adjPval < 0.01 ~ '#84b0f0',
+                           FC < -5 & adjPval < 0.01 ~ 'mediumseagreen',
+                           FC < 5 & FC > -5 & adjPval > 0.01 ~ 'black'))
 
 
-## Save output as R object
-# saveRDS(scpa_out_all, file = "output/Pathway/scpa_out_all_eachCellTypes.rds")
-# scpa_out_loaded <- readRDS("output/Pathway/scpa_out_all_eachCellTypes.rds")
-
-## Filter pathways with a qval of > 1.4 in any comparison
-scpa_out_all_tidy = scpa_out_all %>% 
-  as_tibble()
-
-
-scpa_out_all_filter <- scpa_out_all %>% 
-  purrr::reduce(full_join, by = "Pathway") %>% 
-  set_colnames(gsub(colnames(.), pattern = " ", replacement = "_")) %>%
-  select(c("Pathway", grep("_qval", colnames(.)))) %>%
-  filter_all(any_vars(. > 1.4)) %>%
-  column_to_rownames("Pathway")
-
-# Heatmap representation
-scpa_out_tibble <- scpa_out_all_filter %>% 
-  rownames_to_column(var = "Pathway") %>%
-  as_tibble() %>%
-  pivot_longer(cols = -Pathway, 
-               names_to = "cluster", 
-               values_to = "qval")
+pdf("output/Pathway/plot_embryo_WNT_signaling_Paraxial_Mesoderm.pdf", width=5, height=5)
+ggplot(all_data_all_pa, aes(-FC, qval)) +
+  geom_vline(xintercept = c(-5, 5), linetype = "dashed", col = 'black', lwd = 0.3) +
+  geom_point(cex = 2.6, shape = 21, fill = all_data_all_pa$color, stroke = 0.3) +
+  geom_point(data = all_data_pathways_tidy_pa, aes(x = -FC, y = qval), shape = 21, cex = 2.8, fill = "orangered2", color = "black", stroke = 0.3) +
+  geom_label_repel(data = all_data_pathways_tidy_pa, aes(label = Pathway, x = -FC, y = qval), box.padding = 0.5, point.padding = 0.5, segment.color = 'grey50') +
+  xlim(-20, 80) +
+  ylim(0, 11) +
+  xlab("Enrichment") +
+  ylab("Qval") +
+  theme(panel.background = element_blank(),
+        panel.border = element_rect(fill = NA),
+        aspect.ratio = 1)
+dev.off()
 
 
-scpa_out_tibble_REACTOME_SIGNALING_BY_RETINOIC_ACID = scpa_out_tibble %>%
-  filter(Pathway == "REACTOME_SIGNALING_BY_RETINOIC_ACID")
+# heatmap
+pathways_heatmap <- msigdbr("Mus musculus", "C2") %>%
+format_pathways()
+names(pathways_heatmap) <- sapply(pathways_heatmap, function(x) x$Pathway[1]) # just to name the list, so easier to visualise
 
-scpa_out_all_tibble_REACTOME_SIGNALING_BY_RETINOIC_ACID = scpa_out_all %>% 
-  purrr::reduce(full_join, by = "Pathway") %>% 
-  set_colnames(gsub(colnames(.), pattern = " ", replacement = "_")) %>%
-  select(c("Pathway", grep("_qval", colnames(.)))) %>%
-  filter_all(any_vars(. > 2)) %>%
-  column_to_rownames("Pathway") %>% 
-  rownames_to_column(var = "Pathway") %>%
-  as_tibble() %>%
-  pivot_longer(cols = -Pathway, 
-               names_to = "cluster", 
-               values_to = "qval") %>%
-  filter(Pathway == "REACTOME_SIGNALING_BY_RETINOIC_ACID")
-# --> Negative FC = MORE ACTIVE in cYAPKO
+##pick pathway to representL
+pathways_heatmap$REACTOME_SIGNALING_BY_WNT$Genes
+genes_of_interest <- pathways_heatmap$REACTOME_SIGNALING_BY_WNT$Genes
+##
 
+genes_of_interest <- genes_of_interest[genes_of_interest %in% rownames(embryo.combined.sct@assays$RNA@data)]
 
+### extract WT and cYAPKO gene expression values from RNA assay
+WT_expression <- embryo.combined.sct@assays$RNA@data[genes_of_interest, colnames(embryo.combined.sct)[embryo.combined.sct$condition == "WT" & embryo.combined.sct$cluster.annot == "Paraxial_Mesoderm"]]
+cYAPKO_expression <- embryo.combined.sct@assays$RNA@data[genes_of_interest, colnames(embryo.combined.sct)[embryo.combined.sct$condition == "cYAPKO" & embryo.combined.sct$cluster.annot == "Paraxial_Mesoderm"]]
 
-pdf("output/Pathway/heatmap_embryo_msigdb_REACTOME_SIGNALING_BY_RETINOIC_ACID.pdf", width=5, height=5)
-ggplot(scpa_out_tibble_REACTOME_SIGNALING_BY_RETINOIC_ACID, aes(x=cluster, y=Pathway, fill=qval)) + 
+### mean expression values for each gene
+WT_mean <- rowMeans(WT_expression)
+cYAPKO_mean <- rowMeans(cYAPKO_expression)
+data_for_plot <- data.frame(
+  Gene = genes_of_interest,
+  WT = WT_mean,
+  cYAPKO = cYAPKO_mean
+) %>% 
+pivot_longer(cols = c(WT, cYAPKO), names_to = "Condition", values_to = "Expression")
+
+## ORder from low to high express
+### Reordering the genes based on their mean expression in WT in ascending order
+ordered_genes <- names(sort(WT_mean))
+### Extracting unique gene names from the ordered list
+unique_ordered_genes <- unique(ordered_genes)
+### Filter out rows from data_for_plot that don't have their genes in unique_ordered_genes
+data_for_plot <- data_for_plot[data_for_plot$Gene %in% unique_ordered_genes, ]
+### Set the factor levels for 'Gene' according to the unique ordered list
+data_for_plot$Gene <- factor(data_for_plot$Gene, levels = unique_ordered_genes)
+
+# if few genes:
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_WNT_Paraxial_Mesoderm.pdf", width=10, height=3)
+
+ggplot(data_for_plot, aes(x=Gene, y=Condition, fill=Expression)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
   theme(
-    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 8, vjust = 0.5),
     axis.text.y = element_text(size = 8),
     axis.title.x = element_blank(),
     axis.title.y = element_blank(),
@@ -4241,20 +4322,59 @@ ggplot(scpa_out_tibble_REACTOME_SIGNALING_BY_RETINOIC_ACID, aes(x=cluster, y=Pat
     axis.line = element_blank(),
     legend.position = "bottom"
   ) +
-  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=1.4, name="qval") + # 1.4 = qval 0.05
+  scale_fill_viridis(direction = 1, option = "viridis", name="Expression") +
   coord_fixed()  # Force aspect ratio of the plot to be 1:1
 dev.off()
 
+# if many genesL
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_WNT_Paraxial_Mesoderm.pdf", width=3, height=2)
+ggplot(data_for_plot, aes(x=Gene, y=Condition, fill=Expression)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 8, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_viridis(direction = 1, option = "viridis", name="Expression") 
+dev.off()
 
+# VIOLIN if enrichment
+data_for_plot$Condition <-
+  factor(data_for_plot$Condition,
+         c("WT", "cYAPKO"))
 
+test_result <- wilcox.test(Expression ~ Condition, data = data_for_plot)
+# Extract p-value
+p_val <- test_result$p.value
 
-
-
-
-
-
-
-
+pdf("output/Pathway/violin_embryo_RNAexpression_REACTOME_SIGNALING_BY_WNT_Paraxial_Mesoderm.pdf", width=3, height=2)
+ggplot(data_for_plot, aes(x=Condition, y=Expression, fill=Condition)) +
+  geom_violin(scale="width", trim=FALSE) +
+  geom_boxplot(width=0.1, fill="white") +
+  labs(y="Expression") +
+  theme(
+    axis.text.x = element_text(size = 8),
+    axis.text.y = element_text(size = 8),
+    axis.title.y = element_text(size = 10),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black"),
+    legend.position = "none"
+  ) +
+  scale_fill_manual(values = c("WT" = "blue", "cYAPKO" = "red"))+
+  theme_bw() +
+  geom_signif(comparisons = list(c("WT", "cYAPKO")), y_position = max(data_for_plot$Expression) + 0.5, test = "wilcox.test", map_signif_level = TRUE)
+dev.off()
 
 
 ```
