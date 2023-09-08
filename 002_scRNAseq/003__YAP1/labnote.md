@@ -4377,11 +4377,65 @@ ggplot(data_for_plot, aes(x=Condition, y=Expression, fill=Condition)) +
 dev.off()
 
 
+# GSEA plot
+library("fgsea")
+## Re-calculate DEGs keeping ALL genes
+embryo.combined.sct$celltype.stim <- paste(embryo.combined.sct$cluster.annot, embryo.combined.sct$condition,
+    sep = "-")
+Idents(embryo.combined.sct) <- "celltype.stim"
+
+Paraxial_Mesoderm <- FindMarkers(embryo.combined.sct, ident.1 = "Paraxial_Mesoderm-cYAPKO", ident.2 = "Paraxial_Mesoderm-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+
+### save output
+write.table(Paraxial_Mesoderm, file = "output/seurat/Paraxial_Mesoderm-cYAPKO_response_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+###
+
+## load list of genes to test
+pathways <- msigdbr("Mus musculus", "C2") 
+fgsea_sets <- pathways %>% split(x = .$gene_symbol, f = .$gs_name)
+
+## Rank genes based on FC
+genes <- Paraxial_Mesoderm %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+  rownames_to_column(var = "gene") %>%
+  arrange(desc(avg_log2FC)) %>% 
+  dplyr::select(gene, avg_log2FC)
+
+ranks <- deframe(genes)
+head(ranks)
+## Run GSEA
+
+fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 1000)
+fgseaResTidy <- fgseaRes %>%
+  as_tibble() %>%
+  arrange(desc(NES))
+fgseaResTidy %>% 
+  dplyr::select(-leadingEdge, -ES, -nMoreExtreme) %>% 
+  arrange(padj) %>% 
+  head()
+
+## plot GSEA
+pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_WNT_Paraxial_Mesoderm.pdf", width=5, height=3)
+plotEnrichment(fgsea_sets[["REACTOME_SIGNALING_BY_WNT"]],
+               ranks) + labs(title="REACTOME_SIGNALING_BY_WNT-Paraxial_Mesoderm") +
+               theme_bw()
+dev.off()
+
+
+
 ```
 
 --> For automatic cell type annotation; the [EasyCellType] [shiny app](https://biostatistics.mdanderson.org/shinyapps/EasyCellType/) has been tested. 
 ----> Works great! Can play with the pval cutoff; between 0.3-0.5 is ok
 
+--> For **GSEA**; seems only use log2FC ranking is ok (some people recomend "p-value multiplied with the sign of log-fold change for the ranking" but obverall majority recomend only log2FC see [here](https://nbisweden.github.io/workshop-scRNAseq/labs/compiled/seurat/seurat_05_dge.html#Gene_Set_Enrichment_Analysis_(GSEA))).
+----> I followed [this](https://crazyhottommy.github.io/scRNA-seq-workshop-Fall-2019/scRNAseq_workshop_3.html) and [this](https://nbisweden.github.io/workshop-scRNAseq/labs/compiled/seurat/seurat_05_dge.html#Gene_Set_Enrichment_Analysis_(GSEA)), tutorials for data vizualization and prep, respectively
+----> We need to re-calculate DEGs FC because previous method do NOT give information for all the genes (it is to avoid multi-testing correction); recommended parameter found [here](https://github.com/satijalab/seurat/issues/532)
 
 
 --> Share to Conchi the Conserved Marker list (`srat_all_conserved_markers_embryo.txt`). To avoid confusion, I did some filtering: For each cell type; I only keep log2FC positive (= correspond to gene more highly express in this cell types) and I told her to filter per pvalue which is the max_pvalue. Like this, she will only see the highly express genes in each cluster
