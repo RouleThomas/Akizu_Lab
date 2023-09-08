@@ -4213,6 +4213,34 @@ pathways = c(
 "REACTOME_TGF_BETA_RECEPTOR_SIGNALING_ACTIVATES_SMADS",
 "WP_CANONICAL_AND_NONCANONICAL_TGFB_SIGNALING"
 )
+pathways = c(
+"WP_TGFBETA_RECEPTOR_SIGNALING",
+"WP_TGFBETA_SIGNALING_PATHWAY",
+"KEGG_TGF_BETA_SIGNALING_PATHWAY",
+"BIOCARTA_TGFB_PATHWAY",
+"KARAKAS_TGFB1_SIGNALING",
+"PID_TGFBR_PATHWAY",
+"WP_CANONICAL_AND_NONCANONICAL_TGFB_SIGNALING",
+"REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS",
+"REACTOME_SIGNALING_BY_TGF_BETA_RECEPTOR_COMPLEX",
+"REACTOME_TGF_BETA_RECEPTOR_SIGNALING_ACTIVATES_SMADS",
+"REACTOME_TRANSCRIPTIONAL_ACTIVITY_OF_SMAD2_SMAD3_SMAD4_HETEROTRIMER",
+"REACTOME_SMAD2_SMAD3_SMAD4_HETEROTRIMER_REGULATES_TRANSCRIPTION",
+"REACTOME_DOWNREGULATION_OF_SMAD2_3_SMAD4_TRANSCRIPTIONAL_ACTIVITY",
+"REACTOME_DOWNREGULATION_OF_TGF_BETA_RECEPTOR_SIGNALING",
+"REACTOME_SIGNALING_BY_NODAL",
+"REACTOME_SIGNALING_BY_ACTIVIN"
+)
+pathways = c(
+"REACTOME_SIGNALING_BY_HIPPO",
+"REACTOME_YAP1_AND_WWTR1_TAZ_STIMULATED_GENE_EXPRESSION",
+"WP_HIPPO_SIGNALING_REGULATION_PATHWAYS",
+"WP_MECHANOREGULATION_AND_PATHOLOGY_OF_YAPTAZ_VIA_HIPPO_AND_NONHIPPO_MECHANISMS",
+"WP_HIPPOYAP_SIGNALING_PATHWAY",
+"REACTOME_YAP1_AND_WWTR1_TAZ_STIMULATED_GENE_EXPRESSION",
+"WP_MECHANOREGULATION_AND_PATHOLOGY_OF_YAPTAZ_VIA_HIPPO_AND_NONHIPPO_MECHANISMS"
+)
+
 
 all_data_pathways = as_tibble(all_data) %>% 
   filter(Pathway %in% pathways)
@@ -4223,6 +4251,8 @@ all_data_pathways_tidy <- all_data_pathways %>%
 
 # Dot plot
 pdf("output/Pathway/dotplot_WNT_signaling.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_NODAL_TGFB_signaling.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_HIPPO_signaling.pdf", width=12, height=3)
 ggplot(all_data_pathways_tidy, aes(x = cluster, y = Pathway)) + 
   geom_point(aes(size = qval, color = -FC), pch=16, alpha=0.7) +   
   scale_size_continuous(range = c(1, 8), guide = "legend") +  # Adjust the range for size if needed
@@ -4236,8 +4266,8 @@ dev.off()
 # ENRCIHMENT PLOT
 
 all_data_pathways_tidy_pa <- all_data_pathways_tidy %>% 
-  filter(Pathway %in% c("KEGG_WNT_SIGNALING_PATHWAY","REACTOME_SIGNALING_BY_WNT","WP_WNT_SIGNALING"),
-         cluster == "Paraxial_Mesoderm") %>%
+  filter(Pathway %in% c("REACTOME_SIGNALING_BY_NODAL"),
+         cluster == "Pharyngeal_Mesoderm") %>%
   mutate(color = case_when(FC > 5 & adjPval < 0.01 ~ '#6dbf88',
                            FC < 5 & FC > -5 & adjPval < 0.01 ~ '#84b0f0',
                            FC < -5 & adjPval < 0.01 ~ 'mediumseagreen',
@@ -4245,7 +4275,7 @@ all_data_pathways_tidy_pa <- all_data_pathways_tidy %>%
 
 
 all_data_all_pa = as_tibble(all_data) %>% 
-  filter(cluster == "Paraxial_Mesoderm") %>%
+  filter(cluster == "Pharyngeal_Mesoderm") %>%
   mutate(color = case_when(FC > 5 & adjPval < 0.01 ~ '#6dbf88',
                            FC < 5 & FC > -5 & adjPval < 0.01 ~ '#84b0f0',
                            FC < -5 & adjPval < 0.01 ~ 'mediumseagreen',
@@ -4253,18 +4283,24 @@ all_data_all_pa = as_tibble(all_data) %>%
 
 
 pdf("output/Pathway/plot_embryo_WNT_signaling_Paraxial_Mesoderm.pdf", width=5, height=5)
-ggplot(all_data_all_pa, aes(-FC, qval)) +
-  geom_vline(xintercept = c(-5, 5), linetype = "dashed", col = 'black', lwd = 0.3) +
-  geom_point(cex = 2.6, shape = 21, fill = all_data_all_pa$color, stroke = 0.3) +
-  geom_point(data = all_data_pathways_tidy_pa, aes(x = -FC, y = qval), shape = 21, cex = 2.8, fill = "orangered2", color = "black", stroke = 0.3) +
+pdf("output/Pathway/plot_embryo_TGFB_signaling_Nascent_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plot_embryo_REACTOME_SIGNALING_BY_NODAL_Pharyngeal_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plot_embryo_REACTOME_SIGNALING_BY_HIPPO_Mesenchyme.pdf", width=5, height=5)
+ggplot(all_data_all_pa, aes(x = -FC, y = qval, fill = -FC)) +
+  geom_point(aes(color = -FC), cex = 2, shape = 21, stroke = 0.3) +  # Color based on -FC
+  geom_point(data = all_data_pathways_tidy_pa, aes(x = -FC, y = qval), shape = 21, cex = 2.8, fill = "forestgreen", color = "black", stroke = 0.3) +
   geom_label_repel(data = all_data_pathways_tidy_pa, aes(label = Pathway, x = -FC, y = qval), box.padding = 0.5, point.padding = 0.5, segment.color = 'grey50') +
-  xlim(-20, 80) +
-  ylim(0, 11) +
+  xlim(-25, 25) +
+  ylim(0, 7.5) +
   xlab("Enrichment") +
-  ylab("Qval") +
+  ylab("qval") +
+  scale_color_gradient2(low = "blue", mid = "grey", high = "red", midpoint = 0, guide = "colourbar") +
+  scale_fill_gradient2(low = "blue", mid = "grey", high = "red", midpoint = 0, guide = "colourbar") +
   theme(panel.background = element_blank(),
         panel.border = element_rect(fill = NA),
-        aspect.ratio = 1)
+        aspect.ratio = 1) +
+  geom_vline(xintercept = 0, linetype = "solid", col = 'black', lwd = 0.3) +
+  geom_hline(yintercept = 1.4, linetype = "dashed", col = 'black', lwd = 0.3)
 dev.off()
 
 
@@ -4274,15 +4310,15 @@ format_pathways()
 names(pathways_heatmap) <- sapply(pathways_heatmap, function(x) x$Pathway[1]) # just to name the list, so easier to visualise
 
 ##pick pathway to representL
-pathways_heatmap$REACTOME_SIGNALING_BY_WNT$Genes
-genes_of_interest <- pathways_heatmap$REACTOME_SIGNALING_BY_WNT$Genes
+pathways_heatmap$REACTOME_SIGNALING_BY_HIPPO$Genes
+genes_of_interest <- pathways_heatmap$REACTOME_SIGNALING_BY_HIPPO$Genes
 ##
 
 genes_of_interest <- genes_of_interest[genes_of_interest %in% rownames(embryo.combined.sct@assays$RNA@data)]
 
 ### extract WT and cYAPKO gene expression values from RNA assay
-WT_expression <- embryo.combined.sct@assays$RNA@data[genes_of_interest, colnames(embryo.combined.sct)[embryo.combined.sct$condition == "WT" & embryo.combined.sct$cluster.annot == "Paraxial_Mesoderm"]]
-cYAPKO_expression <- embryo.combined.sct@assays$RNA@data[genes_of_interest, colnames(embryo.combined.sct)[embryo.combined.sct$condition == "cYAPKO" & embryo.combined.sct$cluster.annot == "Paraxial_Mesoderm"]]
+WT_expression <- embryo.combined.sct@assays$RNA@data[genes_of_interest, colnames(embryo.combined.sct)[embryo.combined.sct$condition == "WT" & embryo.combined.sct$cluster.annot == "Mesenchyme"]]
+cYAPKO_expression <- embryo.combined.sct@assays$RNA@data[genes_of_interest, colnames(embryo.combined.sct)[embryo.combined.sct$condition == "cYAPKO" & embryo.combined.sct$cluster.annot == "Mesenchyme"]]
 
 ### mean expression values for each gene
 WT_mean <- rowMeans(WT_expression)
@@ -4306,7 +4342,10 @@ data_for_plot$Gene <- factor(data_for_plot$Gene, levels = unique_ordered_genes)
 
 # if few genes:
 pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_WNT_Paraxial_Mesoderm.pdf", width=10, height=3)
-
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS_Nascent_Mesoderm.pdf", width=10, height=3)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_NODAL_Pharyngeal_Mesoderm.pdf", width=6, height=3)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_HIPPO_Mesenchyme.pdf", width=6, height=3)
+library("viridis")
 ggplot(data_for_plot, aes(x=Gene, y=Condition, fill=Expression)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -4328,6 +4367,7 @@ dev.off()
 
 # if many genesL
 pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_WNT_Paraxial_Mesoderm.pdf", width=3, height=2)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS_Nascent_Mesoderm.pdf", width=3, height=2)
 ggplot(data_for_plot, aes(x=Gene, y=Condition, fill=Expression)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -4356,6 +4396,10 @@ test_result <- wilcox.test(Expression ~ Condition, data = data_for_plot)
 p_val <- test_result$p.value
 
 pdf("output/Pathway/violin_embryo_RNAexpression_REACTOME_SIGNALING_BY_WNT_Paraxial_Mesoderm.pdf", width=3, height=2)
+pdf("output/Pathway/violin_embryo_RNAexpression_REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS_Nascent_Mesoderm.pdf", width=3, height=2)
+pdf("output/Pathway/violin_embryo_RNAexpression_REACTOME_SIGNALING_BY_NODAL_Pharyngeal_Mesoderm.pdf", width=3, height=2)
+pdf("output/Pathway/violin_embryo_RNAexpression_REACTOME_SIGNALING_BY_HIPPO_Mesenchyme.pdf", width=3, height=2)
+
 ggplot(data_for_plot, aes(x=Condition, y=Expression, fill=Condition)) +
   geom_violin(scale="width", trim=FALSE) +
   geom_boxplot(width=0.1, fill="white") +
@@ -4391,9 +4435,32 @@ Paraxial_Mesoderm <- FindMarkers(embryo.combined.sct, ident.1 = "Paraxial_Mesode
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA") 
-
+Nascent_Mesoderm <- FindMarkers(embryo.combined.sct, ident.1 = "Nascent_Mesoderm-cYAPKO", ident.2 = "Nascent_Mesoderm-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+Pharyngeal_Mesoderm <- FindMarkers(embryo.combined.sct, ident.1 = "Pharyngeal_Mesoderm-cYAPKO", ident.2 = "Pharyngeal_Mesoderm-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+Mesenchyme <- FindMarkers(embryo.combined.sct, ident.1 = "Mesenchyme-cYAPKO", ident.2 = "Mesenchyme-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")    
 ### save output
 write.table(Paraxial_Mesoderm, file = "output/seurat/Paraxial_Mesoderm-cYAPKO_response_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Nascent_Mesoderm, file = "output/seurat/Nascent_Mesoderm-cYAPKO_response_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Pharyngeal_Mesoderm, file = "output/seurat/Pharyngeal_Mesoderm-cYAPKO_response_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Mesenchyme, file = "output/seurat/Mesenchyme-cYAPKO_response_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 ###
 
 ## load list of genes to test
@@ -4401,7 +4468,7 @@ pathways <- msigdbr("Mus musculus", "C2")
 fgsea_sets <- pathways %>% split(x = .$gene_symbol, f = .$gs_name)
 
 ## Rank genes based on FC
-genes <- Paraxial_Mesoderm %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+genes <- Mesenchyme %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
   rownames_to_column(var = "gene") %>%
   arrange(desc(avg_log2FC)) %>% 
   dplyr::select(gene, avg_log2FC)
@@ -4421,8 +4488,12 @@ fgseaResTidy %>%
 
 ## plot GSEA
 pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_WNT_Paraxial_Mesoderm.pdf", width=5, height=3)
-plotEnrichment(fgsea_sets[["REACTOME_SIGNALING_BY_WNT"]],
-               ranks) + labs(title="REACTOME_SIGNALING_BY_WNT-Paraxial_Mesoderm") +
+pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS_Nascent_Mesoderm.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_NODAL_Pharyngeal_Mesoderm.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_HIPPO_Mesenchyme.pdf", width=5, height=3)
+
+plotEnrichment(fgsea_sets[["REACTOME_SIGNALING_BY_HIPPO"]],
+               ranks) + labs(title="REACTOME_SIGNALING_BY_HIPPO-Pharyngeal_Mesoderm") +
                theme_bw()
 dev.off()
 
