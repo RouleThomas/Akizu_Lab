@@ -4240,8 +4240,118 @@ pathways = c(
 "REACTOME_YAP1_AND_WWTR1_TAZ_STIMULATED_GENE_EXPRESSION",
 "WP_MECHANOREGULATION_AND_PATHOLOGY_OF_YAPTAZ_VIA_HIPPO_AND_NONHIPPO_MECHANISMS"
 )
-
-
+pathways = c(
+"REACTOME_SIGNALING_BY_RETINOIC_ACID",
+"REACTOME_THE_CANONICAL_RETINOID_CYCLE_IN_RODS_TWILIGHT_VISION",
+"KEGG_RETINOL_METABOLISM",
+"PID_RETINOIC_ACID_PATHWAY",
+"WP_4HYDROXYTAMOXIFEN_DEXAMETHASONE_AND_RETINOIC_ACIDS_REGULATION_OF_P27_EXPRESSION"
+)
+pathways = c(
+"REACTOME_SIGNALING_BY_NOTCH",
+"REACTOME_SIGNALING_BY_NOTCH1",
+"REACTOME_SIGNALING_BY_NOTCH2",
+"REACTOME_SIGNALING_BY_NOTCH3",
+"REACTOME_SIGNALING_BY_NOTCH4",
+"REACTOME_NOTCH_HLH_TRANSCRIPTION_PATHWAY" ,
+"REACTOME_PRE_NOTCH_PROCESSING_IN_GOLGI",
+"REACTOME_PRE_NOTCH_EXPRESSION_AND_PROCESSING",
+"REACTOME_NOTCH2_ACTIVATION_AND_TRANSMISSION_OF_SIGNAL_TO_THE_NUCLEUS",
+"REACTOME_NOTCH3_ACTIVATION_AND_TRANSMISSION_OF_SIGNAL_TO_THE_NUCLEUS",
+"REACTOME_ACTIVATED_NOTCH1_TRANSMITS_SIGNAL_TO_THE_NUCLEUS",
+"REACTOME_NOTCH3_INTRACELLULAR_DOMAIN_REGULATES_TRANSCRIPTION",
+"REACTOME_NOTCH4_INTRACELLULAR_DOMAIN_REGULATES_TRANSCRIPTION",
+"KEGG_NOTCH_SIGNALING_PATHWAY" ,
+"PID_NOTCH_PATHWAY" ,
+"WP_NOTCH_SIGNALING" ,
+"WP_NOTCH_SIGNALING_PATHWAY" ,
+"WP_CANONICAL_AND_NONCANONICAL_NOTCH_SIGNALING"
+)
+pathways = c(
+"REACTOME_SIGNALING_BY_BMP",
+"WP_BMP_SIGNALING_IN_EYELID_DEVELOPMENT",
+"PID_BMP_PATHWAY"
+)
+pathways = c(
+"REACTOME_HDMS_DEMETHYLATE_HISTONES",
+"REACTOME_PRC2_METHYLATES_HISTONES_AND_DNA",
+"REACTOME_HDACS_DEACETYLATE_HISTONES",
+"REACTOME_RMTS_METHYLATE_HISTONE_ARGININES",
+"REACTOME_HATS_ACETYLATE_HISTONES",
+"REACTOME_PKMTS_METHYLATE_HISTONE_LYSINES",
+"WP_INTERACTOME_OF_POLYCOMB_REPRESSIVE_COMPLEX_2_PRC2",
+"BIOCARTA_HDAC_PATHWAY"
+)
+pathways = c(
+"WP_ENDODERM_DIFFERENTIATION",
+"WP_MESODERMAL_COMMITMENT_PATHWAY",
+"WP_ECTODERM_DIFFERENTIATION"
+)
+pathways = c(
+"REACTOME_NOREPINEPHRINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+"REACTOME_DOPAMINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+"REACTOME_SEROTONIN_NEUROTRANSMITTER_RELEASE_CYCLE",
+"REACTOME_ACETYLCHOLINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+"REACTOME_GLUTAMATE_NEUROTRANSMITTER_RELEASE_CYCLE",
+"REACTOME_NEUROTRANSMITTER_RELEASE_CYCLE",
+"WP_COMPLEMENT_SYSTEM_IN_NEURONAL_DEVELOPMENT_AND_PLASTICITY",
+"REACTOME_MECP2_REGULATES_NEURONAL_RECEPTORS_AND_CHANNELS",
+"REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS",
+"WP_MAJOR_RECEPTORS_TARGETED_BY_EPINEPHRINE_AND_NOREPINEPHRINE",
+"REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION",
+"REACTOME_NEUREXINS_AND_NEUROLIGINS",
+"REACTOME_ASSEMBLY_AND_CELL_SURFACE_PRESENTATION_OF_NMDA_RECEPTORS",
+"REACTOME_NEGATIVE_REGULATION_OF_NMDA_RECEPTOR_MEDIATED_NEURONAL_TRANSMISSION",
+"REACTOME_ACTIVATION_OF_NMDA_RECEPTORS_AND_POSTSYNAPTIC_EVENTS",
+"KEGG_NEUROTROPHIN_SIGNALING_PATHWAY",
+"REACTOME_FOXO_MEDIATED_TRANSCRIPTION_OF_OXIDATIVE_STRESS_METABOLIC_AND_NEURONAL_GENES"
+)
+pathways = c(
+"REACTOME_BLOOD_GROUP_SYSTEMS_BIOSYNTHESIS",
+"REACTOME_HEME_SIGNALING",
+"REACTOME_SCAVENGING_OF_HEME_FROM_PLASMA",
+"REACTOME_RESPONSE_OF_EIF2AK1_HRI_TO_HEME_DEFICIENCY",
+"KEGG_VEGF_SIGNALING_PATHWAY",
+"REACTOME_SIGNALING_BY_VEGF",
+"REACTOME_VEGFR2_MEDIATED_VASCULAR_PERMEABILITY",
+"REACTOME_VEGFR2_MEDIATED_CELL_PROLIFERATION",
+"BIOCARTA_VEGF_PATHWAY",
+"WP_VEGFAVEGFR2_SIGNALING_PATHWAY",
+"PID_VEGFR1_PATHWAY",
+"PID_VEGFR1_2_PATHWAY"
+)
+pathways = c(
+"REACTOME_SIGNALING_BY_FGFR",
+"REACTOME_SIGNALING_BY_FGFR1",
+"REACTOME_FGFR1_LIGAND_BINDING_AND_ACTIVATION",
+"REACTOME_DOWNSTREAM_SIGNALING_OF_ACTIVATED_FGFR1",
+"REACTOME_SHC_MEDIATED_CASCADE_FGFR1",
+"REACTOME_FRS_MEDIATED_FGFR1_SIGNALING",
+"REACTOME_PI_3K_CASCADE_FGFR1",
+"REACTOME_NEGATIVE_REGULATION_OF_FGFR1_SIGNALING",
+"REACTOME_SIGNALING_BY_FGFR2",
+"REACTOME_FGFR2_LIGAND_BINDING_AND_ACTIVATION",
+"REACTOME_DOWNSTREAM_SIGNALING_OF_ACTIVATED_FGFR2",
+"REACTOME_SHC_MEDIATED_CASCADE_FGFR2",
+"REACTOME_FRS_MEDIATED_FGFR2_SIGNALING",
+"REACTOME_PI_3K_CASCADE_FGFR2",
+"REACTOME_PHOSPHOLIPASE_C_MEDIATED_CASCADE_FGFR2",
+"REACTOME_NEGATIVE_REGULATION_OF_FGFR2_SIGNALING",
+"REACTOME_FGFR2_ALTERNATIVE_SPLICING",
+"REACTOME_SIGNALING_BY_FGFR3",
+"REACTOME_DOWNSTREAM_SIGNALING_OF_ACTIVATED_FGFR3",
+"REACTOME_SHC_MEDIATED_CASCADE_FGFR3",
+"REACTOME_FRS_MEDIATED_FGFR3_SIGNALING",
+"REACTOME_PI_3K_CASCADE_FGFR3",
+"REACTOME_NEGATIVE_REGULATION_OF_FGFR3_SIGNALING",
+"REACTOME_SIGNALING_BY_FGFR4",
+"REACTOME_DOWNSTREAM_SIGNALING_OF_ACTIVATED_FGFR4",
+"REACTOME_SHC_MEDIATED_CASCADE_FGFR4",
+"REACTOME_FRS_MEDIATED_FGFR4_SIGNALING",
+"REACTOME_PI_3K_CASCADE_FGFR4",
+"REACTOME_PHOSPHOLIPASE_C_MEDIATED_CASCADE_FGFR4",
+"REACTOME_NEGATIVE_REGULATION_OF_FGFR4_SIGNALING"
+)
 all_data_pathways = as_tibble(all_data) %>% 
   filter(Pathway %in% pathways)
 
@@ -4253,6 +4363,15 @@ all_data_pathways_tidy <- all_data_pathways %>%
 pdf("output/Pathway/dotplot_WNT_signaling.pdf", width=12, height=6)
 pdf("output/Pathway/dotplot_NODAL_TGFB_signaling.pdf", width=12, height=6)
 pdf("output/Pathway/dotplot_HIPPO_signaling.pdf", width=12, height=3)
+pdf("output/Pathway/dotplot_RA_signaling.pdf", width=12, height=2)
+pdf("output/Pathway/dotplot_Notch_signaling.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_BMP_signaling.pdf", width=8, height=2)
+pdf("output/Pathway/dotplot_Epigenetics.pdf", width=10, height=3)
+pdf("output/Pathway/dotplot_EndoMesoEcto.pdf", width=10, height=3)
+pdf("output/Pathway/dotplot_Neuro.pdf", width=12, height=4)
+pdf("output/Pathway/dotplot_Blood.pdf", width=12, height=4)
+pdf("output/Pathway/dotplot_FGF.pdf", width=10, height=6)
+
 ggplot(all_data_pathways_tidy, aes(x = cluster, y = Pathway)) + 
   geom_point(aes(size = qval, color = -FC), pch=16, alpha=0.7) +   
   scale_size_continuous(range = c(1, 8), guide = "legend") +  # Adjust the range for size if needed
@@ -4266,8 +4385,8 @@ dev.off()
 # ENRCIHMENT PLOT
 
 all_data_pathways_tidy_pa <- all_data_pathways_tidy %>% 
-  filter(Pathway %in% c("REACTOME_SIGNALING_BY_NODAL"),
-         cluster == "Pharyngeal_Mesoderm") %>%
+  filter(Pathway %in% c("REACTOME_SIGNALING_BY_FGFR"),
+         cluster == "Blood_Progenitor_1") %>%
   mutate(color = case_when(FC > 5 & adjPval < 0.01 ~ '#6dbf88',
                            FC < 5 & FC > -5 & adjPval < 0.01 ~ '#84b0f0',
                            FC < -5 & adjPval < 0.01 ~ 'mediumseagreen',
@@ -4275,7 +4394,7 @@ all_data_pathways_tidy_pa <- all_data_pathways_tidy %>%
 
 
 all_data_all_pa = as_tibble(all_data) %>% 
-  filter(cluster == "Pharyngeal_Mesoderm") %>%
+  filter(cluster == "Blood_Progenitor_1") %>%
   mutate(color = case_when(FC > 5 & adjPval < 0.01 ~ '#6dbf88',
                            FC < 5 & FC > -5 & adjPval < 0.01 ~ '#84b0f0',
                            FC < -5 & adjPval < 0.01 ~ 'mediumseagreen',
@@ -4286,10 +4405,20 @@ pdf("output/Pathway/plot_embryo_WNT_signaling_Paraxial_Mesoderm.pdf", width=5, h
 pdf("output/Pathway/plot_embryo_TGFB_signaling_Nascent_Mesoderm.pdf", width=5, height=5)
 pdf("output/Pathway/plot_embryo_REACTOME_SIGNALING_BY_NODAL_Pharyngeal_Mesoderm.pdf", width=5, height=5)
 pdf("output/Pathway/plot_embryo_REACTOME_SIGNALING_BY_HIPPO_Mesenchyme.pdf", width=5, height=5)
+pdf("output/Pathway/plot_embryo_PID_RETINOIC_ACID_PATHWAY_Pharyngeal_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plot_embryo_REACTOME_SIGNALING_BY_NOTCH_Paraxial_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plot_embryo_WP_BMP_SIGNALING_IN_EYELID_DEVELOPMENT_Paraxial_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plot_embryo_REACTOME_HATS_ACETYLATE_HISTONES_Pharyngeal_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plot_embryo_WP_MESODERMAL_COMMITMENT_PATHWAY_Mixed_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plot_embryo_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION_Nascent_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plot_embryo_WP_VEGFAVEGFR2_SIGNALING_PATHWAY_Nascent_Mesoderm.pdf", width=5, height=5)
+pdf("output/Pathway/plot_embryo_REACTOME_SIGNALING_BY_FGFR_Blood_Progenitor_1.pdf", width=5, height=5)
+
+
 ggplot(all_data_all_pa, aes(x = -FC, y = qval, fill = -FC)) +
   geom_point(aes(color = -FC), cex = 2, shape = 21, stroke = 0.3) +  # Color based on -FC
   geom_point(data = all_data_pathways_tidy_pa, aes(x = -FC, y = qval), shape = 21, cex = 2.8, fill = "forestgreen", color = "black", stroke = 0.3) +
-  geom_label_repel(data = all_data_pathways_tidy_pa, aes(label = Pathway, x = -FC, y = qval), box.padding = 0.5, point.padding = 0.5, segment.color = 'grey50') +
+ # geom_label_repel(data = all_data_pathways_tidy_pa, aes(label = Pathway, x = -FC, y = qval), box.padding = 0.5, point.padding = 0.5, segment.color = 'grey50') +
   xlim(-25, 25) +
   ylim(0, 7.5) +
   xlab("Enrichment") +
@@ -4310,15 +4439,15 @@ format_pathways()
 names(pathways_heatmap) <- sapply(pathways_heatmap, function(x) x$Pathway[1]) # just to name the list, so easier to visualise
 
 ##pick pathway to representL
-pathways_heatmap$REACTOME_SIGNALING_BY_HIPPO$Genes
-genes_of_interest <- pathways_heatmap$REACTOME_SIGNALING_BY_HIPPO$Genes
+pathways_heatmap$REACTOME_SIGNALING_BY_FGFR$Genes
+genes_of_interest <- pathways_heatmap$REACTOME_SIGNALING_BY_FGFR$Genes
 ##
 
 genes_of_interest <- genes_of_interest[genes_of_interest %in% rownames(embryo.combined.sct@assays$RNA@data)]
 
 ### extract WT and cYAPKO gene expression values from RNA assay
-WT_expression <- embryo.combined.sct@assays$RNA@data[genes_of_interest, colnames(embryo.combined.sct)[embryo.combined.sct$condition == "WT" & embryo.combined.sct$cluster.annot == "Mesenchyme"]]
-cYAPKO_expression <- embryo.combined.sct@assays$RNA@data[genes_of_interest, colnames(embryo.combined.sct)[embryo.combined.sct$condition == "cYAPKO" & embryo.combined.sct$cluster.annot == "Mesenchyme"]]
+WT_expression <- embryo.combined.sct@assays$RNA@data[genes_of_interest, colnames(embryo.combined.sct)[embryo.combined.sct$condition == "WT" & embryo.combined.sct$cluster.annot == "Blood_Progenitor_1"]]
+cYAPKO_expression <- embryo.combined.sct@assays$RNA@data[genes_of_interest, colnames(embryo.combined.sct)[embryo.combined.sct$condition == "cYAPKO" & embryo.combined.sct$cluster.annot == "Blood_Progenitor_1"]]
 
 ### mean expression values for each gene
 WT_mean <- rowMeans(WT_expression)
@@ -4345,6 +4474,12 @@ pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_WNT_Parax
 pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS_Nascent_Mesoderm.pdf", width=10, height=3)
 pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_NODAL_Pharyngeal_Mesoderm.pdf", width=6, height=3)
 pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_HIPPO_Mesenchyme.pdf", width=6, height=3)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_PID_RETINOIC_ACID_PATHWAY_Pharyngeal_Mesoderm.pdf", width=6, height=3)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_WP_BMP_SIGNALING_IN_EYELID_DEVELOPMENT_Paraxial_Mesoderm.pdf", width=6, height=3)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_HATS_ACETYLATE_HISTONES_Pharyngeal_Mesoderm.pdf", width=6, height=3)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_WP_MESODERMAL_COMMITMENT_PATHWAY_Mixed_Mesoderm.pdf", width=6, height=3)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_FGFR_Blood_Progenitor_1.pdf", width=6, height=3)
+
 library("viridis")
 ggplot(data_for_plot, aes(x=Gene, y=Condition, fill=Expression)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
@@ -4368,6 +4503,13 @@ dev.off()
 # if many genesL
 pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_WNT_Paraxial_Mesoderm.pdf", width=3, height=2)
 pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS_Nascent_Mesoderm.pdf", width=3, height=2)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_NOTCH_Paraxial_Mesoderm.pdf", width=3, height=2)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_HATS_ACETYLATE_HISTONES_Pharyngeal_Mesoderm.pdf", width=3, height=2)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_WP_MESODERMAL_COMMITMENT_PATHWAY_Mixed_Mesoderm.pdf", width=3, height=2)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION_Nascent_Mesoderm.pdf", width=3, height=2)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_WP_VEGFAVEGFR2_SIGNALING_PATHWAY_Nascent_Mesoderm.pdf", width=5, height=2)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_FGFR_Blood_Progenitor_1.pdf", width=3, height=2)
+
 ggplot(data_for_plot, aes(x=Gene, y=Condition, fill=Expression)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -4399,6 +4541,14 @@ pdf("output/Pathway/violin_embryo_RNAexpression_REACTOME_SIGNALING_BY_WNT_Paraxi
 pdf("output/Pathway/violin_embryo_RNAexpression_REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS_Nascent_Mesoderm.pdf", width=3, height=2)
 pdf("output/Pathway/violin_embryo_RNAexpression_REACTOME_SIGNALING_BY_NODAL_Pharyngeal_Mesoderm.pdf", width=3, height=2)
 pdf("output/Pathway/violin_embryo_RNAexpression_REACTOME_SIGNALING_BY_HIPPO_Mesenchyme.pdf", width=3, height=2)
+pdf("output/Pathway/violin_embryo_RNAexpression_PID_RETINOIC_ACID_PATHWAY_Pharyngeal_Mesoderm.pdf", width=3, height=2)
+pdf("output/Pathway/violin_embryo_RNAexpression_REACTOME_SIGNALING_BY_NOTCH_Paraxial_Mesoderm.pdf", width=3, height=2)
+pdf("output/Pathway/violin_embryo_RNAexpression_WP_BMP_SIGNALING_IN_EYELID_DEVELOPMENT_Paraxial_Mesoderm.pdf", width=3, height=2)
+pdf("output/Pathway/violin_embryo_RNAexpression_REACTOME_HATS_ACETYLATE_HISTONES_Pharyngeal_Mesoderm.pdf", width=3, height=2)
+pdf("output/Pathway/violin_embryo_RNAexpression_WP_MESODERMAL_COMMITMENT_PATHWAY_Mixed_Mesoderm.pdf", width=3, height=2)
+pdf("output/Pathway/violin_embryo_RNAexpression_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION_Nascent_Mesoderm.pdf", width=3, height=2)
+pdf("output/Pathway/violin_embryo_RNAexpression_WP_VEGFAVEGFR2_SIGNALING_PATHWAY_Nascent_Mesoderm.pdf", width=3, height=2)
+pdf("output/Pathway/violin_embryo_RNAexpression_REACTOME_SIGNALING_BY_FGFR_Blood_Progenitor_1.pdf", width=3, height=2)
 
 ggplot(data_for_plot, aes(x=Condition, y=Expression, fill=Condition)) +
   geom_violin(scale="width", trim=FALSE) +
@@ -4456,11 +4606,34 @@ Mesenchyme <- FindMarkers(embryo.combined.sct, ident.1 = "Mesenchyme-cYAPKO", id
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")    
+Mixed_Mesoderm <- FindMarkers(embryo.combined.sct, ident.1 = "Mixed_Mesoderm-cYAPKO", ident.2 = "Mixed_Mesoderm-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")    
+Blood_Progenitor_1 <- FindMarkers(embryo.combined.sct, ident.1 = "Blood_Progenitor_1-cYAPKO", ident.2 = "Blood_Progenitor_1-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
 ### save output
 write.table(Paraxial_Mesoderm, file = "output/seurat/Paraxial_Mesoderm-cYAPKO_response_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+Paraxial_Mesoderm <- read.delim("output/seurat/Paraxial_Mesoderm-cYAPKO_response_allGenes.txt", header = TRUE, row.names = 1)
+
 write.table(Nascent_Mesoderm, file = "output/seurat/Nascent_Mesoderm-cYAPKO_response_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+Nascent_Mesoderm <- read.delim("output/seurat/Nascent_Mesoderm-cYAPKO_response_allGenes.txt", header = TRUE, row.names = 1)
+
 write.table(Pharyngeal_Mesoderm, file = "output/seurat/Pharyngeal_Mesoderm-cYAPKO_response_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+Pharyngeal_Mesoderm <- read.delim("output/seurat/Pharyngeal_Mesoderm-cYAPKO_response_allGenes.txt", header = TRUE, row.names = 1)
 write.table(Mesenchyme, file = "output/seurat/Mesenchyme-cYAPKO_response_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+Mesenchyme <- read.delim("output/seurat/Mesenchyme-cYAPKO_response_allGenes.txt", header = TRUE, row.names = 1)
+
+write.table(Mixed_Mesoderm, file = "output/seurat/Mixed_Mesoderm-cYAPKO_response_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Blood_Progenitor_1, file = "output/seurat/Blood_Progenitor_1-cYAPKO_response_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 ###
 
 ## load list of genes to test
@@ -4468,7 +4641,7 @@ pathways <- msigdbr("Mus musculus", "C2")
 fgsea_sets <- pathways %>% split(x = .$gene_symbol, f = .$gs_name)
 
 ## Rank genes based on FC
-genes <- Mesenchyme %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+genes <- Blood_Progenitor_1 %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
   rownames_to_column(var = "gene") %>%
   arrange(desc(avg_log2FC)) %>% 
   dplyr::select(gene, avg_log2FC)
@@ -4491,9 +4664,17 @@ pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_WNT_Paraxial_Mesoderm.pdf", width
 pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS_Nascent_Mesoderm.pdf", width=5, height=3)
 pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_NODAL_Pharyngeal_Mesoderm.pdf", width=5, height=3)
 pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_HIPPO_Mesenchyme.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_PID_RETINOIC_ACID_PATHWAY_Pharyngeal_Mesoderm.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_NOTCH_Paraxial_Mesoderm.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_WP_BMP_SIGNALING_IN_EYELID_DEVELOPMENT_Paraxial_Mesoderm.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_REACTOME_HATS_ACETYLATE_HISTONES_Pharyngeal_Mesoderm.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_WP_MESODERMAL_COMMITMENT_PATHWAY_Mixed_Mesoderm.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION_Nascent_Mesoderm.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_WP_VEGFAVEGFR2_SIGNALING_PATHWAY_Nascent_Mesoderm.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_FGFR_Blood_Progenitor_1.pdf", width=5, height=3)
 
-plotEnrichment(fgsea_sets[["REACTOME_SIGNALING_BY_HIPPO"]],
-               ranks) + labs(title="REACTOME_SIGNALING_BY_HIPPO-Pharyngeal_Mesoderm") +
+plotEnrichment(fgsea_sets[["REACTOME_SIGNALING_BY_FGFR"]],
+               ranks) + labs(title="REACTOME_SIGNALING_BY_FGFR-Blood_Progenitor_1") +
                theme_bw()
 dev.off()
 
