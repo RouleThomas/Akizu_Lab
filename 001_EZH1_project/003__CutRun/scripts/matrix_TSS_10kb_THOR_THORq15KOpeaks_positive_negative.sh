@@ -39,3 +39,18 @@ plotProfile -m output/deeptools/matrix_TSS_10kp_THORq15KOpeaks_positive_negative
     -T "H3K27me3 read density" \
     -z ""
 
+# 202309 Naiara tasks
+plotHeatmap -m output/deeptools/matrix_TSS_10kp_THORq15KOpeaks_positive_negative.gz \
+    -out output/deeptools/matrix_TSS_10kp_THORq15KOpeaks_positive_negative_heatmap2_color.pdf \
+    --samplesLabel "WT" "KO" \
+    --colorMap bwr \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 15
+
+plotHeatmap -m output/deeptools/matrix_TSS_10kp_THORq15KOpeaks_positive_negative.gz \
+    -out output/deeptools/matrix_TSS_10kp_THORq15KOpeaks_positive_negative_heatmap2_colorSmall.pdf \
+    --samplesLabel "WT" "KO" \
+    --colorMap bwr \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2

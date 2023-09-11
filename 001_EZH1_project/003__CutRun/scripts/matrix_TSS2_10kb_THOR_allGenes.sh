@@ -33,3 +33,20 @@ plotProfile -m output/deeptools/matrix_TSS2_10kp_THOR_allGenes.gz \
     -T "H3K27me3 read density" \
     -z ""
 
+
+# 202309 Naiara tasks
+plotHeatmap -m output/deeptools/matrix_TSS2_10kp_THOR_allGenes.gz \
+    -out output/deeptools/matrix_TSS2_10kp_THOR_allGenes_heatmap2_color.pdf \
+    --samplesLabel "WT" "HET" "KO" \
+    --colorMap bwr \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 15 \
+    --heatmapWidth 2
+
+plotHeatmap -m output/deeptools/matrix_TSS2_10kp_THOR_allGenes.gz \
+    -out output/deeptools/matrix_TSS2_10kp_THOR_allGenes_heatmap2_colorSmall.pdf \
+    --samplesLabel "WT" "HET" "KO" \
+    --colorMap bwr \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2
