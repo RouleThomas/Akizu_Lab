@@ -3779,7 +3779,7 @@ writeLines(console_output, "output/Pathway/scpa_out_console.txt")
 
 ## Save output as R object
 # saveRDS(scpa_out, file = "output/Pathway/scpa_out_eachCellTypes.rds")
-#scpa_out_loaded <- readRDS("output/Pathway/scpa_out_eachCellTypes.rds")
+# scpa_out_all <- readRDS("output/Pathway/scpa_out_all_eachCellTypes.rds")
 
 # plot output
 ## Filter pathways with a qval of > 2 in any comparison
