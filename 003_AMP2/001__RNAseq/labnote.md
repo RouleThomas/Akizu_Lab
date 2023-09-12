@@ -1766,12 +1766,12 @@ output/deseq2/upregulated_res05_HP_KO_vs_HP_Het.txt
 
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/deseq2/downregulated_res05_HP_KO_vs_HP_Het.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2/downregulated_res05_CB_KO_vs_CB_Het.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/deseq2/upregulated_res05_HP_KO_vs_HP_Het.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2/upregulated_res05_CB_KO_vs_CB_Het.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -1798,6 +1798,7 @@ gos <- gos %>% arrange(logAdjP)
 
 # Filter out rows where absolute logAdjP 1.3 = 0.05
 gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
 
 # Create the order based on the approach given
 up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
@@ -1805,27 +1806,17 @@ down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Te
 new_order <- c(down_pathways, up_pathways)
 gos$Term <- factor(gos$Term, levels = new_order)
 
-## FAIL as dupplicates:
-up_pathways_suffixed <- paste0(up_pathways, "_up")
-down_pathways_suffixed <- paste0(down_pathways, "_down")
-new_order <- c(down_pathways_suffixed, up_pathways_suffixed)
-gos$Term <- ifelse(gos$type == "up", paste0(gos$Term, "_up"), paste0(gos$Term, "_down"))
-gos$Term <- factor(gos$Term, levels = new_order)
-
 
 # Plotting with enhanced aesthetics
 pdf("output/GO/enrichR_GO_Biological_Process_2023_CB_KO_vs_CB_Het.pdf", width=15, height=8)
-pdf("output/GO/enrichR_GO_Biological_Process_2023_CT_KO_vs_CT_Het.pdf", width=12, height=6)
+pdf("output/GO/enrichR_GO_Biological_Process_2023_CT_KO_vs_CT_Het.pdf", width=16, height=6)
 pdf("output/GO/enrichR_GO_Biological_Process_2023_HP_KO_vs_HP_Het.pdf", width=15, height=6)
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
-  geom_bar(stat='identity', width=.7) +
-  
+  geom_bar(stat='identity', width=.8) +
   # Adjusted label position based on the type of gene (up/down) and increased separation
-  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
-  
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 10, color = "gray28") +
   geom_hline(yintercept = 0, linetype="solid", color = "black") +
-  
   scale_fill_manual(name="Expression", 
                     labels = c("Down regulated", "Up regulated"), 
                     values = c("down"="Sky Blue", "up"="Orange")) + 
@@ -1838,7 +1829,7 @@ ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) +
     panel.border = element_blank(),
     axis.ticks = element_blank(),
     axis.text.y = element_blank(),
-    axis.text.x = element_text(size = 15)
+    axis.text.x = element_text(size = 20)
   )
 dev.off()
 
@@ -2092,7 +2083,179 @@ sbatch --dependency=afterany:4635227:4635235:4635238 scripts/bigwigmerge_TPM.sh 
 
 
 
+# GSEA
 
+
+Let's do GSEA analysis with the gene set lists from Naiara; include:
+- B_cells
+- DAM_microglia
+- Granulocytes_1
+- Granulocytes_2
+- Immature_B_cells
+- Microglia_1
+- Microglia_2
+- Microglia_3
+- Monocyte
+- Perivascular_MF
+- T_NK_cells
+
+
+
+```R
+# Packages
+library("tidyverse")
+library("clusterProfiler")
+library("msigdbr") # BiocManager::install("msigdbr")
+library("org.Mm.eg.db")
+library("enrichplot") # for gseaplot2()
+library("pheatmap")
+
+# 
+
+
+# import DEGs
+HP = read.table("output/deseq2/filtered_HP_KO_vs_HP_Het_res05.txt", header = TRUE, sep = "\t") %>%
+  as_tibble() 
+HP_geneSymbol = HP %>%
+  filter(!is.na(GeneSymbol)) # filter to keep only the geneSymbol gene
+CB = read.table("output/deseq2/filtered_CB_KO_vs_CB_Het_res05.txt", header = TRUE, sep = "\t") %>%
+  as_tibble() 
+CB_geneSymbol = CB %>%
+  filter(!is.na(GeneSymbol)) # filter to keep only the geneSymbol gene
+CT = read.table("output/deseq2/filtered_CT_KO_vs_CT_Het_res05.txt", header = TRUE, sep = "\t") %>%
+  as_tibble() 
+CT_geneSymbol = CT %>%
+  filter(!is.na(GeneSymbol)) # filter to keep only the geneSymbol gene
+# import gene signature marker lists
+## example for 1
+B_cells = read.table("output/gsea/B_cells.txt", header = FALSE, sep = "\t") %>%
+  as_tibble() %>%
+  dplyr::rename("gene" = "V1") %>%
+  add_column(cellName = "B_cells")
+## as a function
+read_cell_file <- function(cell_name) {
+  filepath <- paste0("output/gsea/", cell_name, ".txt")
+  df <- read.table(filepath, header = FALSE, sep = "\t") %>%
+    as_tibble() %>%
+    dplyr::rename("gene" = "V1") %>%
+    add_column(cellName = cell_name)
+  
+  return(df)
+} 
+cell_names <- c("B_cells", "DAM_microglia", "Granulocytes_1", "Granulocytes_2", "Immature_B_cells", "Microglia_1", "Microglia_2", "Microglia_3", "Monocyte", "Perivascular_MF", "T_NK_cells")
+all_data <- lapply(cell_names, read_cell_file) %>%
+  bind_rows()
+
+
+# Order our DEG
+## Let's create a named vector ranked based on the log2 fold change values
+lfc_vector <- CT_geneSymbol$log2FoldChange  ### CHAGNE HERE DATA!!!!!!!
+names(lfc_vector) <- CT_geneSymbol$GeneSymbol ### CHAGNE HERE DATA!!!!!!!
+## We need to sort the log2 fold change values in descending order here
+lfc_vector <- sort(lfc_vector, decreasing = TRUE)
+### Set the seed so our results are reproducible:
+set.seed(42)
+
+
+# run GSEA
+## without pvalue
+gsea_results <- GSEA(
+  geneList = lfc_vector,
+  minGSSize = 1,
+  maxGSSize = 5000,
+  pvalueCutoff = 1,
+  eps = 0,
+  seed = TRUE,
+  pAdjustMethod = "BH",
+  TERM2GENE = all_data %>% dplyr::select(cellName,gene), # Need to be in that order...
+)
+
+
+
+gsea_result_df <- data.frame(gsea_results@result)
+# Save output
+readr::write_tsv(
+  gsea_result_df,
+  file.path("output/gsea/gsea_results_CT_complete.tsv"
+  )
+)
+
+# plots
+c("B_cells", "DAM_microglia", "Granulocytes_1", "Granulocytes_2", "Immature_B_cells", "Microglia_1", "Microglia_2", "Microglia_3", "Monocyte", "Perivascular_MF", "T_NK_cells")
+
+
+pdf("output/gsea/CT_T_NK_cells.pdf", width=10, height=8)
+
+enrichplot::gseaplot(
+  gsea_results,
+  geneSetID = "T_NK_cells",
+  title = "T_NK_cells",
+  color.line = "#0d76ff"
+)
+dev.off()
+
+
+
+### Set up the heatmap
+c("B_cells", "Immature_B_cells","T_NK_cells") # Immune Cells Lymphoid 
+c("Microglia_1", "Microglia_2", "Microglia_3", "DAM_microglia") # Microglia
+c("Granulocytes_1", "Granulocytes_2" , "Monocyte", "Perivascular_MF") # Immune Cells Myeloid 
+
+gsea_result_df_CT <- gsea_result_df
+gsea_result_df_CB <- gsea_result_df
+gsea_result_df_HP <- gsea_result_df
+
+
+desired_ids <- c(
+"B_cells", "Immature_B_cells","T_NK_cells","Microglia_1", "Microglia_2", "Microglia_3", "DAM_microglia","Granulocytes_1", "Granulocytes_2" , "Monocyte", "Perivascular_MF"
+)
+
+gsea_result_df_CT_filt = as_tibble(gsea_result_df_CT) %>%
+  dplyr::select(ID, enrichmentScore, qvalue) %>% # change btween pvalue, qvalue,p.adjust
+  add_column(tissue = "CT")
+gsea_result_df_CB_filt = as_tibble(gsea_result_df_CB) %>%
+  dplyr::select(ID, enrichmentScore, qvalue) %>%
+  add_column(tissue = "CB")
+gsea_result_df_HP_filt = as_tibble(gsea_result_df_HP) %>%
+  dplyr::select(ID, enrichmentScore, qvalue) %>%
+  add_column(tissue = "HP")
+
+gsea_result_df_tidy = gsea_result_df_CT_filt %>%
+  bind_rows(gsea_result_df_CB_filt) %>%
+  bind_rows(gsea_result_df_HP_filt)
+# Filter the data for desired IDs
+
+filtered_data <- gsea_result_df_tidy %>%
+  filter(ID %in% desired_ids)
+
+filtered_data$ID = factor(filtered_data$ID, c("B_cells", "Immature_B_cells","T_NK_cells","Microglia_1", "Microglia_2", "Microglia_3", "DAM_microglia","Granulocytes_1", "Granulocytes_2" , "Monocyte", "Perivascular_MF"
+))
+
+pdf("output/gsea/heatmap_gsea_qvalue.pdf", width=3, height=3)
+ggplot(filtered_data, aes(x=ID, y=tissue, fill=enrichmentScore)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", enrichmentScore)), 
+            color = ifelse(filtered_data$qvalue <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+```
 
 
 
