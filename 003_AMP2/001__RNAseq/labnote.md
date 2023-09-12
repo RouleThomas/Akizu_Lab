@@ -773,7 +773,11 @@ write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_HP_KO_
 
 ## Alternative method to increase the nb of DEGs (without lfc shrinkage)
 
+--> Labeled as *res05*
 
+--> Generate NaiaraPlot for Volcano plot with label genes from the **Excell file (`Genes for volcano plot labels.xlsx`)**:
+`c("Mndal", "Lilrb4a", "Gfap", "Ly86", "Cd68", "Ptprc", "Trem2", "Mef2a", "Hexb", "Pros1", "Cst7", "C1qb", "Cd14", "Csf1", "C4b", "Fcer1g", "Lyz2", "Tmem119", "Selplg", "Vsir", "P2ry12")`
+AND with **GO:2000427 (positive regulation of apoptotic cell clearance: )**: `c("Abca7", "C2", "C3", "Ccl2", "Cd300lf", "Trem2")`
 
 ###  Het vs KO in CB
 
@@ -882,6 +886,7 @@ res05 %>%
               sep = "\t", 
               quote = FALSE, 
               row.names = FALSE)
+res05 = read.table("output/deseq2/filtered_CB_KO_vs_CB_Het_res05.txt", header = TRUE, sep = "\t")
 ######
 
 
@@ -912,6 +917,56 @@ EnhancedVolcano(res05,
   theme_bw() 
 dev.off()
 
+## NaiaraPlot
+### Select genes only if significant
+significant_genes <- res05[res05$padj < 5e-2, ]
+selected_significant_genes <- intersect(significant_genes$GeneSymbol, c("Mndal", "Lilrb4a", "Gfap", "Ly86", "Cd68", "Ptprc", "Trem2", "Mef2a", "Hexb", "Pros1", "Cst7", "C1qb", "Cd14", "Csf1", "C4b", "Fcer1g", "Lyz2", "Tmem119", "Selplg", "Vsir", "P2ry12", "Abca7", "C2", "C3", "Ccl2", "Cd300lf", "Trem2"))
+
+pdf("output/deseq2/plotVolcano_res05_CB_KO_vs_CB_Het_GenesLabeled.pdf", width=7, height=6)  
+EnhancedVolcano(res05,
+  lab = res05$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = selected_significant_genes,
+  title = 'Het vs KO, CB',
+  pCutoff = 5e-2,         # I can use this pCutoff !!
+  FCcutoff = 0,
+  pointSize = 1.0,
+  labSize = 5,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = 'black',
+  arrowheads = FALSE,
+  max.overlaps = 100)  + 
+  theme_bw() +
+  theme(axis.text.x=element_text(size=15),
+        axis.text.y=element_text(size=15),
+        axis.title=element_text(size=15))
+dev.off()
+
+pdf("output/deseq2/plotVolcano_res05_CB_KO_vs_CB_Het_GenesLabeled_v2.pdf", width=7, height=6)  
+EnhancedVolcano(res05,
+  lab = res05$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = selected_significant_genes,
+  title = 'Het vs KO, CB',
+  pCutoff = 5e-2,         # I can use this pCutoff !!
+  FCcutoff = 0,
+  pointSize = 1.0,
+  labSize = 3.5,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = 'black',
+  arrowheads = FALSE,
+  max.overlaps = 100)  + 
+  theme_bw() +
+  theme(axis.text.x=element_text(size=15),
+        axis.text.y=element_text(size=15),
+        axis.title=element_text(size=15))
+dev.off()
 
 
 
@@ -1048,6 +1103,7 @@ res05 %>%
               sep = "\t", 
               quote = FALSE, 
               row.names = FALSE)
+res05 = read.table("output/deseq2/filtered_CT_KO_vs_CT_Het_res05.txt", header = TRUE, sep = "\t")
 ######
 
 
@@ -1079,8 +1135,55 @@ EnhancedVolcano(res05,
   theme_bw() 
 dev.off()
 
+## NaiaraPlot
+### Select genes only if significant
+significant_genes <- res05[res05$padj < 5e-2, ]
+selected_significant_genes <- intersect(significant_genes$GeneSymbol, c("Mndal", "Lilrb4a", "Gfap", "Ly86", "Cd68", "Ptprc", "Trem2", "Mef2a", "Hexb", "Pros1", "Cst7", "C1qb", "Cd14", "Csf1", "C4b", "Fcer1g", "Lyz2", "Tmem119", "Selplg", "Vsir", "P2ry12", "Abca7", "C2", "C3", "Ccl2", "Cd300lf", "Trem2"))
 
-
+pdf("output/deseq2/plotVolcano_res05_CT_KO_vs_CT_Het_GenesLabeled.pdf", width=7, height=6)  
+EnhancedVolcano(res05,
+  lab = res05$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = selected_significant_genes,
+  title = 'Het vs KO, CT',
+  pCutoff = 5e-2,         # I can use this pCutoff !!
+  FCcutoff = 0,
+  pointSize = 1.0,
+  labSize = 5,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = 'black',
+  arrowheads = FALSE,
+  max.overlaps = 100)  + 
+  theme_bw() +
+  theme(axis.text.x=element_text(size=15),
+        axis.text.y=element_text(size=15),
+        axis.title=element_text(size=15))
+dev.off()
+pdf("output/deseq2/plotVolcano_res05_CT_KO_vs_CT_Het_GenesLabeled_v2.pdf", width=7, height=6)  
+EnhancedVolcano(res05,
+  lab = res05$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = selected_significant_genes,
+  title = 'Het vs KO, CT',
+  pCutoff = 5e-2,         # I can use this pCutoff !!
+  FCcutoff = 0,
+  pointSize = 1.0,
+  labSize = 3.5,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = 'black',
+  arrowheads = FALSE,
+  max.overlaps = 100)  + 
+  theme_bw() +
+  theme(axis.text.x=element_text(size=15),
+        axis.text.y=element_text(size=15),
+        axis.title=element_text(size=15))
+dev.off()
 
 upregulated_genes <- sum(res05$log2FoldChange > 0.1 & res05$padj < 5e-2, na.rm = TRUE)
 downregulated_genes <- sum(res05$log2FoldChange < -0.1 & res05$padj < 5e-2, na.rm = TRUE)
@@ -1216,6 +1319,7 @@ res05 %>%
               sep = "\t", 
               quote = FALSE, 
               row.names = FALSE)
+res05 = read.table("output/deseq2/filtered_HP_KO_vs_HP_Het_res05.txt", header = TRUE, sep = "\t")
 ######
 
 
@@ -1247,7 +1351,55 @@ EnhancedVolcano(res05,
   theme_bw() 
 dev.off()
 
+## NaiaraPlot
+### Select genes only if significant
+significant_genes <- res05[res05$padj < 5e-2, ]
+selected_significant_genes <- intersect(significant_genes$GeneSymbol, c("Mndal", "Lilrb4a", "Gfap", "Ly86", "Cd68", "Ptprc", "Trem2", "Mef2a", "Hexb", "Pros1", "Cst7", "C1qb", "Cd14", "Csf1", "C4b", "Fcer1g", "Lyz2", "Tmem119", "Selplg", "Vsir", "P2ry12", "Abca7", "C2", "C3", "Ccl2", "Cd300lf", "Trem2"))
 
+pdf("output/deseq2/plotVolcano_res05_HP_KO_vs_HP_Het_GenesLabeled.pdf", width=7, height=6)  
+EnhancedVolcano(res05,
+  lab = res05$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = selected_significant_genes,
+  title = 'Het vs KO, HP',
+  pCutoff = 5e-2,         # I can use this pCutoff !!
+  FCcutoff = 0,
+  pointSize = 1.0,
+  labSize = 5,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = 'black',
+  arrowheads = FALSE,
+  max.overlaps = 100)  + 
+  theme_bw() +
+  theme(axis.text.x=element_text(size=15),
+        axis.text.y=element_text(size=15),
+        axis.title=element_text(size=15))
+dev.off()
+pdf("output/deseq2/plotVolcano_res05_HP_KO_vs_HP_Het_GenesLabeled_v2.pdf", width=7, height=6)  
+EnhancedVolcano(res05,
+  lab = res05$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = selected_significant_genes,
+  title = 'Het vs KO, HP',
+  pCutoff = 5e-2,         # I can use this pCutoff !!
+  FCcutoff = 0,
+  pointSize = 1.0,
+  labSize = 3.5,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = 'black',
+  arrowheads = FALSE,
+  max.overlaps = 100)  + 
+  theme_bw() +
+  theme(axis.text.x=element_text(size=15),
+        axis.text.y=element_text(size=15),
+        axis.title=element_text(size=15))
+dev.off()
 
 
 upregulated_genes <- sum(res05$log2FoldChange > 0.1 & res05$padj < 5e-2, na.rm = TRUE)
