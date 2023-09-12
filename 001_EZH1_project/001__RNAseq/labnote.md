@@ -13900,10 +13900,9 @@ DESCARTES_FETAL_INTESTINE_VASCULAR_ENDOTHELIAL_CELLS
 DESCARTES_MAIN_FETAL_LYMPHATIC_ENDOTHELIAL_CELLS
 
 
-
 ```
 
 --> I think useless to use the qvalue cutoff in the GSEA function; otherwise it will NOT return rows for non-significant pathway
 
-
+--> `filtered*` for the DEGs means without X and Y chromosomes
 
