@@ -4680,6 +4680,291 @@ dev.off()
 
 
 
+
+
+
+# Test different Pathway collections and generate enrichment plot for each cell types (C8, C5, H)
+## import Pathways
+pathways <- msigdbr("Mus musculus", "H") %>%
+format_pathways()
+names(pathways) <- sapply(pathways, function(x) x$Pathway[1]) # just to name the list, so easier to visualise
+
+# Code to save output for each cell type comparison
+clusters = c(
+"Primordial_Germ_Cells",
+  "Unknow_2",
+  "Unknow_1",
+  "Gut",
+  "Notocord",
+  "Surface_Ectoderm",
+  "Blood_Progenitor_2",
+  "Blood_Progenitor_1",
+  "Mixed_Mesoderm",
+  "Mesenchyme",
+  "Haematodenothelial_progenitors",
+  "Nascent_Mesoderm",
+  "Pharyngeal_Mesoderm",
+  "Paraxial_Mesoderm",
+  "Caudal_Mesoderm",
+  "Somitic_Mesoderm",
+  "ExE_Ectoderm",
+  "Epiblast_PrimStreak"
+)
+### Loop through each value
+for (cluster in clusters) {
+  #### Extract data for WT and cYAPKO based on current value
+  WT <- seurat_extract(embryo.combined.sct,
+                       meta1 = "condition", value_meta1 = "WT",
+                       meta2 = "cluster.annot", value_meta2 = cluster)
+
+  cYAPKO <- seurat_extract(embryo.combined.sct,
+                           meta1 = "condition", value_meta1 = "cYAPKO",
+                           meta2 = "cluster.annot", value_meta2 = cluster)
+
+  ##### Compare pathways
+  WT_cYAPKO <- compare_pathways(samples = list(WT, cYAPKO),
+                                pathways = pathways,
+                                parallel = TRUE, cores = 8)
+
+  ##### Write to file using the current value in the filename
+  output_filename <- paste0("output/Pathway/SCPA_H_", cluster, ".txt")       # CHANGE HERE PATHWAYS !!!!!!
+  write.table(WT_cYAPKO, file = output_filename, sep = "\t", quote = FALSE, row.names = FALSE)
+}
+
+### Plot to count how many pos/neg FC
+SCPA_H <- list()
+for (cluster in clusters) {
+  # Create the filename based on the cluster name
+  input_filename <- paste0("output/Pathway/SCPA_H_", cluster, ".txt")
+  
+  # Import the data
+  current_data <- read.delim(input_filename, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+  
+  # Store the data in the list with the cluster name as the list name
+  SCPA_H[[cluster]] <- current_data
+}
+SCPA_C5 <- list()
+for (cluster in clusters) {
+  # Create the filename based on the cluster name
+  input_filename <- paste0("output/Pathway/SCPA_C5_", cluster, ".txt")
+  
+  # Import the data
+  current_data <- read.delim(input_filename, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+  
+  # Store the data in the list with the cluster name as the list name
+  SCPA_C5[[cluster]] <- current_data
+}
+SCPA_C2 <- list()
+for (cluster in clusters) {
+  # Create the filename based on the cluster name
+  input_filename <- paste0("output/Pathway/SCPA_", cluster, ".txt")
+  
+  # Import the data
+  current_data <- read.delim(input_filename, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+  
+  # Store the data in the list with the cluster name as the list name
+  SCPA_C2[[cluster]] <- current_data
+}
+
+
+### Tidy the data; convert list into tibble
+
+tidy_C2 <- map2_df(SCPA_C2, names(SCPA_C2), ~ {
+    data_frame <- .x
+    data_frame$cluster <- .y
+    return(data_frame)
+  }) %>%
+  add_column(db = "C2")
+tidy_C5 <- map2_df(SCPA_C5, names(SCPA_C5), ~ {
+    data_frame <- .x
+    data_frame$cluster <- .y
+    return(data_frame)
+  }) %>%
+  add_column(db = "C5")
+tidy_H <- map2_df(SCPA_H, names(SCPA_H), ~ {
+    data_frame <- .x
+    data_frame$cluster <- .y
+    return(data_frame)
+  }) %>%
+  add_column(db = "H")
+
+tidy_all = tidy_C2 %>%
+  bind_rows(tidy_C5) %>%
+  bind_rows(tidy_H) %>% 
+  as_tibble() %>%
+  mutate(FC_direction = ifelse(FC < 0, "positive", "negative"))
+
+# Plot
+pdf("output/Pathway/Count_Pathway_FC_direction.pdf", width=10, height=3)
+tidy_all %>%
+  filter(qval > 1.4) %>%
+  group_by(cluster, db, FC_direction) %>%
+  summarise(n=n()) %>%
+  ggplot(aes(x = FC_direction, y = n, fill = cluster)) +  # Moved fill inside aes
+  geom_bar(stat = "identity", position = "dodge") +  # Add dodging
+  facet_wrap(~db, scale = "free") +  # Facet by db
+  labs(title = "Distribution of FC_direction per cluster",
+       y = "Count", x = "FC Direction") +
+  theme_bw()
+dev.off()
+
+
+
+tidy_all = tidy_C2 %>%
+  bind_rows(tidy_C5) %>%
+  bind_rows(tidy_H) %>% 
+  as_tibble() %>%
+  mutate(FC_direction = case_when(
+    FC < -4 ~ "positive",
+    FC > 4 ~ "negative",
+    TRUE ~ "neutral"  # for values between -1 and 1
+  ))
+
+
+# Plot
+pdf("output/Pathway/Count_Pathway_FC_direction_4treshold.pdf", width=10, height=3)
+tidy_all %>%
+  filter(qval > 1.4) %>%
+  group_by(cluster, db, FC_direction) %>%
+  summarise(n=n()) %>%
+  ggplot(aes(x = FC_direction, y = n, fill = cluster)) +  # Moved fill inside aes
+  geom_bar(stat = "identity", position = "dodge") +  # Add dodging
+  facet_wrap(~db, scale = "free") +  # Facet by db
+  labs(title = "Distribution of FC_direction per cluster",
+       y = "Count", x = "FC Direction") +
+  theme_bw()
+dev.off()
+
+
+# separate if more cells in WT or KO
+max_cells_df <- data.frame (cluster  = c("Primordial_Germ_Cells","Unknow_2","Unknow_1", "Gut", "Notocord","Surface_Ectoderm", "Blood_Progenitor_2", "Blood_Progenitor_1","Mixed_Mesoderm","Mesenchyme","Haematodenothelial_progenitors","Nascent_Mesoderm","Pharyngeal_Mesoderm","Paraxial_Mesoderm","Caudal_Mesoderm","Somitic_Mesoderm","ExE_Ectoderm","Epiblast_PrimStreak"),
+                  max_cells = c("WT", "cYAPKO","WT", "cYAPKO", "WT","WT","cYAPKO", "WT", "WT","WT","WT","WT","WT","WT","WT","WT", "cYAPKO","WT")
+                  )
+
+tidy_all = tidy_C2 %>%
+  bind_rows(tidy_C5) %>%
+  bind_rows(tidy_H) %>% 
+  as_tibble() %>%
+  mutate(FC_direction = ifelse(FC < 0, "positive", "negative"))
+                 
+# Plot
+pdf("output/Pathway/Count_Pathway_FC_direction_maxCells.pdf", width=10, height=10)
+tidy_all %>%
+  filter(qval > 1.4) %>%
+  group_by(cluster, db, FC_direction) %>%
+  summarise(n=n()) %>% 
+    left_join(max_cells_df) %>%
+  ggplot(aes(x = FC_direction, y = n, fill = cluster)) +  # Moved fill inside aes
+  geom_bar(stat = "identity", position = "dodge") +  # Add dodging
+  facet_grid(max_cells~db, scale = "free") +  # Facet by db
+  labs(title = "Distribution of FC_direction per cluster",
+       y = "Count", x = "FC Direction") +
+  theme_bw()
+dev.off()
+
+
+# SAME PLOT WITH SCT NORM, lets just do C2
+DefaultAssay(embryo.combined.sct) <- "SCT"
+
+
+# Test different Pathway collections and generate enrichment plot for each cell types (C8, C5, H)
+## import Pathways
+pathways <- msigdbr("Mus musculus", "C2") %>%
+format_pathways()
+names(pathways) <- sapply(pathways, function(x) x$Pathway[1]) # just to name the list, so easier to visualise
+
+# Code to save output for each cell type comparison
+clusters = c(
+"Primordial_Germ_Cells",
+  "Unknow_2",
+  "Unknow_1",
+  "Gut",
+  "Notocord",
+  "Surface_Ectoderm",
+  "Blood_Progenitor_2",
+  "Blood_Progenitor_1",
+  "Mixed_Mesoderm",
+  "Mesenchyme",
+  "Haematodenothelial_progenitors",
+  "Nascent_Mesoderm",
+  "Pharyngeal_Mesoderm",
+  "Paraxial_Mesoderm",
+  "Caudal_Mesoderm",
+  "Somitic_Mesoderm",
+  "ExE_Ectoderm",
+  "Epiblast_PrimStreak"
+)
+
+
+### Loop through each value
+for (cluster in clusters) {
+  #### Extract data for WT and cYAPKO based on current value
+  WT <- seurat_extract(embryo.combined.sct,
+                       meta1 = "condition", value_meta1 = "WT",
+                       meta2 = "cluster.annot", value_meta2 = cluster)
+
+  cYAPKO <- seurat_extract(embryo.combined.sct,
+                           meta1 = "condition", value_meta1 = "cYAPKO",
+                           meta2 = "cluster.annot", value_meta2 = cluster)
+
+  ##### Compare pathways
+  WT_cYAPKO <- compare_pathways(samples = list(WT, cYAPKO),
+                                pathways = pathways,
+                                parallel = TRUE, cores = 8)
+
+  ##### Write to file using the current value in the filename
+  output_filename <- paste0("output/Pathway/SCT_SCPA_C2_", cluster, ".txt")       # CHANGE HERE PATHWAYS !!!!!!
+  write.table(WT_cYAPKO, file = output_filename, sep = "\t", quote = FALSE, row.names = FALSE)
+}
+
+### Plot to count how many pos/neg FC
+SCT_SCPA_C2 <- list()
+for (cluster in clusters) {
+  # Create the filename based on the cluster name
+  input_filename <- paste0("output/Pathway/SCT_SCPA_C2_", cluster, ".txt")
+  
+  # Import the data
+  current_data <- read.delim(input_filename, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+  
+  # Store the data in the list with the cluster name as the list name
+  SCT_SCPA_C2[[cluster]] <- current_data
+}
+
+
+
+### Tidy the data; convert list into tibble
+
+tidy_SCT_C2 <- map2_df(SCT_SCPA_C2, names(SCT_SCPA_C2), ~ {
+    data_frame <- .x
+    data_frame$cluster <- .y
+    return(data_frame)
+  }) %>%
+  add_column(db = "C2") %>% 
+  as_tibble() %>%
+  mutate(FC_direction = case_when(
+    FC < -0 ~ "positive",
+    FC > 0 ~ "negative",
+    TRUE ~ "neutral"  # for values between -1 and 1
+  ))
+
+# Plot
+pdf("output/Pathway/Count_Pathway_FC_direction_SCT_C2.pdf", width=6, height=3)
+tidy_SCT_C2 %>%
+  filter(qval > 1.4) %>%
+  group_by(cluster, db, FC_direction) %>%
+  summarise(n=n()) %>%
+  ggplot(aes(x = FC_direction, y = n, fill = cluster)) +  # Moved fill inside aes
+  geom_bar(stat = "identity", position = "dodge") +  # Add dodging
+  facet_wrap(~db, scale = "free") +  # Facet by db
+  labs(title = "Distribution of FC_direction per cluster",
+       y = "Count", x = "FC Direction") +
+  theme_bw()
+dev.off()
+
+
+
+
+
 ```
 
 --> For automatic cell type annotation; the [EasyCellType] [shiny app](https://biostatistics.mdanderson.org/shinyapps/EasyCellType/) has been tested. 
@@ -4702,7 +4987,10 @@ dev.off()
 ------> following this discussion for mice:
 - download gmt file for [Retinoic Acid](https://www.gsea-msigdb.org/gsea/msigdb/mouse/geneset/REACTOME_SIGNALING_BY_RETINOIC_ACID.html)
 
-
+--> Seems that most pathways are ACTIVATED! Weird, might be a biase? That is occuring in each cell type. To verify:
+(from [this](https://jackbibby1.github.io/SCPA/reference/compare_seurat.html):*The FC output is generated from a running sum of mean changes in gene expression from all genes of the pathway. It's calculated from average pathway expression in population1 - population2, so a negative FC means the pathway is higher in population2.*)
+----> Test other pathway db
+----> Test using SCT normalization
 
 - *NOTE: it last forever, so I used parralell core processing `srun --mem=500g --cpus-per-task=10 --pty bash -l`*
 - *NOTE: I work on `conda activate scRNAseqV1`*
