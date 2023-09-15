@@ -4214,24 +4214,6 @@ pathways = c(
 "WP_CANONICAL_AND_NONCANONICAL_TGFB_SIGNALING"
 )
 pathways = c(
-"WP_TGFBETA_RECEPTOR_SIGNALING",
-"WP_TGFBETA_SIGNALING_PATHWAY",
-"KEGG_TGF_BETA_SIGNALING_PATHWAY",
-"BIOCARTA_TGFB_PATHWAY",
-"KARAKAS_TGFB1_SIGNALING",
-"PID_TGFBR_PATHWAY",
-"WP_CANONICAL_AND_NONCANONICAL_TGFB_SIGNALING",
-"REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS",
-"REACTOME_SIGNALING_BY_TGF_BETA_RECEPTOR_COMPLEX",
-"REACTOME_TGF_BETA_RECEPTOR_SIGNALING_ACTIVATES_SMADS",
-"REACTOME_TRANSCRIPTIONAL_ACTIVITY_OF_SMAD2_SMAD3_SMAD4_HETEROTRIMER",
-"REACTOME_SMAD2_SMAD3_SMAD4_HETEROTRIMER_REGULATES_TRANSCRIPTION",
-"REACTOME_DOWNREGULATION_OF_SMAD2_3_SMAD4_TRANSCRIPTIONAL_ACTIVITY",
-"REACTOME_DOWNREGULATION_OF_TGF_BETA_RECEPTOR_SIGNALING",
-"REACTOME_SIGNALING_BY_NODAL",
-"REACTOME_SIGNALING_BY_ACTIVIN"
-)
-pathways = c(
 "REACTOME_SIGNALING_BY_HIPPO",
 "REACTOME_YAP1_AND_WWTR1_TAZ_STIMULATED_GENE_EXPRESSION",
 "WP_HIPPO_SIGNALING_REGULATION_PATHWAYS",
@@ -4380,6 +4362,46 @@ ggplot(all_data_pathways_tidy, aes(x = cluster, y = Pathway)) +
   labs(size = "q-value", color = "Fold Change") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 dev.off()
+
+
+# REFINE COLOR
+custom_color <- function(fc_value){
+  ifelse(fc_value >= 5, "strong_blue", 
+         ifelse(fc_value > 2, "light_blue",
+                ifelse(fc_value <= -5, "strong_red", 
+                       ifelse(fc_value < -2, "light_red", "grey"))))
+}
+
+# Add a column for this custom color
+all_data_pathways_tidy <- all_data_pathways_tidy %>%
+  mutate(custom_col = sapply(FC, custom_color))
+
+pdf("output/Pathway/dotplot_WNT_signaling_FCtresh.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_NODAL_TGFB_signaling_FCtresh.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_HIPPO_signaling_FCtresh.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_RA_signaling_FCtresh.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_Notch_signaling_FCtresh.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_BMP_signaling_FCtresh.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_Epigenetics_FCtresh.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_EndoMesoEcto_FCtresh.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_Neuro_FCtresh.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_Blood_FCtresh.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_FGF_FCtresh.pdf", width=12, height=6)
+
+
+ggplot(all_data_pathways_tidy, aes(x = cluster, y = Pathway)) + 
+  geom_point(aes(size = qval, color = custom_col), pch=16, alpha=0.7) +   
+  scale_size_continuous(range = c(1, 8)) +
+  scale_color_manual(values = c("strong_blue" = "dodgerblue4",
+                                "light_blue" = "lightblue2",
+                                "grey" = "grey",
+                                "light_red" = "indianred1",
+                                "strong_red" = "red3")) +
+  theme_bw() +
+  labs(size = "q-value", color = "Fold Change") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
 
 
 # ENRCIHMENT PLOT
@@ -4962,9 +4984,163 @@ tidy_SCT_C2 %>%
 dev.off()
 
 
+# inverse pop1 and pop2:
+
+#### Extract data for WT and cYAPKO based on current value
+WT <- seurat_extract(embryo.combined.sct,
+                      meta1 = "condition", value_meta1 = "WT",
+                      meta2 = "cluster.annot", value_meta2 = "Blood_Progenitor_1")
+
+cYAPKO <- seurat_extract(embryo.combined.sct,
+                          meta1 = "condition", value_meta1 = "cYAPKO",
+                          meta2 = "cluster.annot", value_meta2 = "Blood_Progenitor_1")
+
+##### Compare pathways
+cYAPKO_WT <- compare_pathways(samples = list(cYAPKO, WT),    # initially WT, cYPAKO
+                              pathways = pathways,
+                              parallel = TRUE, cores = 8)
+
+write.table(cYAPKO_WT, file = "output/Pathway/SCPA_Blood_Progenitor_1_cYAPKO_WT", sep = "\t", quote = FALSE, row.names = FALSE)
 
 
 
+cYAPKO_WT_filter <- cYAPKO_WT %>%
+  mutate(color = case_when(FC > 5 & adjPval < 0.01 ~ '#6dbf88',
+                           FC < 5 & FC > -5 & adjPval < 0.01 ~ '#84b0f0',
+                           FC < -5 & adjPval < 0.01 ~ 'mediumseagreen',
+                           FC < 5 & FC > -5 & adjPval > 0.01 ~ 'black'))
+
+pdf("output/Pathway/plot_embryo_msigdb_Blood_Progenitor_1_cYAPKO_WT.pdf", width=5, height=5)
+ggplot(cYAPKO_WT_filter, aes(-FC, qval)) +
+  geom_vline(xintercept = c(-5, 5), linetype = "dashed", col = 'black', lwd = 0.3) +
+  geom_point(cex = 2.6, shape = 21, fill = cYAPKO_WT_filter$color, stroke = 0.3) +
+  xlim(-20, 80) +
+  ylim(0, 11) +
+  xlab("Enrichment") +
+  ylab("Qval") +
+  theme(panel.background = element_blank(),
+        panel.border = element_rect(fill = NA),
+        aspect.ratio = 1)
+dev.off()
+
+
+
+# change downsample on Blood_Progenitor_2 to 30 cells
+
+#### Extract data for WT and cYAPKO based on current value
+WT <- seurat_extract(embryo.combined.sct,
+                      meta1 = "condition", value_meta1 = "WT",
+                      meta2 = "cluster.annot", value_meta2 = "Blood_Progenitor_2")
+
+cYAPKO <- seurat_extract(embryo.combined.sct,
+                          meta1 = "condition", value_meta1 = "cYAPKO",
+                          meta2 = "cluster.annot", value_meta2 = "Blood_Progenitor_2")
+
+##### Compare pathways
+WT_cYAPKO <- compare_pathways(samples = list(WT, cYAPKO),    # initially WT, cYPAKO
+                              pathways = pathways,
+                              downsample = 30,
+                              parallel = TRUE, cores = 8)
+
+write.table(WT_cYAPKO, file = "output/Pathway/SCPA_Blood_Progenitor_2_downsample30", sep = "\t", quote = FALSE, row.names = FALSE)
+
+
+
+WT_cYAPKO_filter <- WT_cYAPKO %>%
+  mutate(color = case_when(FC > 5 & adjPval < 0.01 ~ '#6dbf88',
+                           FC < 5 & FC > -5 & adjPval < 0.01 ~ '#84b0f0',
+                           FC < -5 & adjPval < 0.01 ~ 'mediumseagreen',
+                           FC < 5 & FC > -5 & adjPval > 0.01 ~ 'black'))
+
+pdf("output/Pathway/plot_embryo_msigdb_Blood_Progenitor_2_downsample30.pdf", width=5, height=5)
+ggplot(WT_cYAPKO_filter, aes(-FC, qval)) +
+  geom_vline(xintercept = c(-5, 5), linetype = "dashed", col = 'black', lwd = 0.3) +
+  geom_point(cex = 2.6, shape = 21, fill = WT_cYAPKO_filter$color, stroke = 0.3) +
+  xlim(-20, 80) +
+  ylim(0, 11) +
+  xlab("Enrichment") +
+  ylab("Qval") +
+  theme(panel.background = element_blank(),
+        panel.border = element_rect(fill = NA),
+        aspect.ratio = 1)
+dev.off()
+
+
+# Rank and color FC with treshold 5
+### import all C2 comparisons
+
+SCPA_C2 <- list()
+for (cluster in clusters) {
+  # Create the filename based on the cluster name
+  input_filename <- paste0("output/Pathway/SCPA_", cluster, ".txt")
+  
+  # Import the data
+  current_data <- read.delim(input_filename, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+  
+  # Store the data in the list with the cluster name as the list name
+  SCPA_C2[[cluster]] <- current_data
+}
+
+### convert list into tibble
+tidy_SCT_C2 <- map2_df(SCPA_C2, names(SCPA_C2), ~ {
+    data_frame <- .x
+    data_frame$cluster <- .y
+    return(data_frame)
+  }) %>%
+  as_tibble() %>%
+  mutate(FC_direction = case_when(
+    FC < -2.5 ~ "positive",
+    FC > 2.5 ~ "negative",
+    TRUE ~ "neutral"  # for values between -1 and 1
+  ))
+
+tidy_SCT_C2_Blood_Progenitor_1 = 
+  tidy_SCT_C2 %>%
+  filter(cluster == "Epiblast_PrimStreak", qval > 1.4) %>%
+  arrange(qval) %>%
+  mutate(rank = (row_number() - 1) / (n() - 1) * 100)
+
+### plot rank
+
+
+#### color scale
+pdf("output/Pathway/plot_rank-Epiblast_PrimStreak.pdf", width=5, height=5)
+tidy_SCT_C2_Blood_Progenitor_1 %>%
+  ggplot(., aes(x = qval, y = rank)) +
+  geom_jitter(aes(color = -FC, alpha = FC_direction), size=0.1, width = 0.2, height = 2) +
+  scale_color_gradient2(low = "blue", mid = "grey", high = "red", midpoint = 0, guide = "colourbar") +
+  scale_alpha_manual(values = c("positive" = 1, "negative" = 1, "neutral" = 0.5)) +
+  labs(x = "Qval", y = "Pathway rank", size = "q-value", color = "Fold Change") +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  geom_hline(yintercept =95)
+dev.off()
+
+
+
+#### color
+color_palette <- c(
+  "positive" = "red",
+  "negative" = "blue",
+  "neutral"  = "grey50"
+)
+alpha_values <- c(
+  "positive" = 1,
+  "negative" = 1,
+  "neutral"  = 0.5
+)
+
+pdf("output/Pathway/plot_rank_Blood_Progenitor_1.pdf", width=5, height=5)
+tidy_SCT_C2_Blood_Progenitor_1 %>%
+  ggplot(., aes(qval, rank)) +
+  geom_jitter(aes(color = FC_direction, alpha = FC_direction), size = 0.1,width = 0.2, height = 2) +
+  scale_color_manual(values = color_palette) + 
+  scale_alpha_manual(values = alpha_values) +
+  labs(x = "Qval", y = "Pathway rank") +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  geom_hline(yintercept =95)
+dev.off()
 ```
 
 --> For automatic cell type annotation; the [EasyCellType] [shiny app](https://biostatistics.mdanderson.org/shinyapps/EasyCellType/) has been tested. 
@@ -4995,3 +5171,27 @@ dev.off()
 - *NOTE: it last forever, so I used parralell core processing `srun --mem=500g --cpus-per-task=10 --pty bash -l`*
 - *NOTE: I work on `conda activate scRNAseqV1`*
 - *NOTE: Pretty cool paper that uses pathway enrichment to guide clustering! https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9985338/*
+
+
+Comand to print how many DEGs in each cell type:
+```bash
+awk -F'\t' '$6 < 0.05' output/seurat/Primordial_Germ_Cells-cYAPKO_response.txt | wc -l # 11
+awk -F'\t' '$6 < 0.05' output/seurat/Unknow_2-cYAPKO_response.txt | wc -l # 1
+awk -F'\t' '$6 < 0.05' output/seurat/Unknow_1-cYAPKO_response.txt | wc -l # 49
+awk -F'\t' '$6 < 0.05' output/seurat/Gut-cYAPKO_response.txt | wc -l # 5
+awk -F'\t' '$6 < 0.05' output/seurat/Notocord-cYAPKO_response.txt | wc -l # 116
+awk -F'\t' '$6 < 0.05' output/seurat/Surface_Ectoderm-cYAPKO_response.txt | wc -l # 293
+awk -F'\t' '$6 < 0.05' output/seurat/Blood_Progenitor_2-cYAPKO_response.txt | wc -l # 129
+awk -F'\t' '$6 < 0.05' output/seurat/Blood_Progenitor_1-cYAPKO_response.txt | wc -l # 516
+awk -F'\t' '$6 < 0.05' output/seurat/Mixed_Mesoderm-cYAPKO_response.txt | wc -l # 410
+awk -F'\t' '$6 < 0.05' output/seurat/Mesenchyme-cYAPKO_response.txt | wc -l # 895
+awk -F'\t' '$6 < 0.05' output/seurat/Haematodenothelial_progenitors-cYAPKO_response.txt | wc -l # 547
+awk -F'\t' '$6 < 0.05' output/seurat/Nascent_Mesoderm-cYAPKO_response.txt | wc -l # 527
+awk -F'\t' '$6 < 0.05' output/seurat/Pharyngeal_Mesoderm-cYAPKO_response.txt | wc -l # 621
+awk -F'\t' '$6 < 0.05' output/seurat/Paraxial_Mesoderm-cYAPKO_response.txt | wc -l # 585
+awk -F'\t' '$6 < 0.05' output/seurat/Caudal_Mesoderm-cYAPKO_response.txt | wc -l # 434
+awk -F'\t' '$6 < 0.05' output/seurat/Somitic_Mesoderm-cYAPKO_response.txt | wc -l # 515
+awk -F'\t' '$6 < 0.05' output/seurat/ExE_Ectoderm-cYAPKO_response.txt | wc -l # 429
+awk -F'\t' '$6 < 0.05' output/seurat/Epiblast_PrimStreak-cYAPKO_response.txt | wc -l # 465
+```
+
