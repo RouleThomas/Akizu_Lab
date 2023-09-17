@@ -2028,41 +2028,22 @@ for (cluster in clusters) {
   write.table(UNTREATED72hr_DASATINIB72hr, file = output_filename, sep = "\t", quote = FALSE, row.names = FALSE)
 }
 
-XXX
-
 
 # BALOW CLEAN CODE; dotplot>enrichplot>heatmap>violinplot
 # DOT PLOT pepresetnation
 ## load all the comparison for each cell type (FC qval information)
 clusters = c(
-"Primordial_Germ_Cells",
-  "Unknow_2",
-  "Unknow_1",
-  "Gut",
-  "Notocord",
-  "Surface_Ectoderm",
-  "Blood_Progenitor_2",
-  "Blood_Progenitor_1",
-  "Mixed_Mesoderm",
-  "Mesenchyme",
-  "Haematodenothelial_progenitors",
-  "Nascent_Mesoderm",
-  "Pharyngeal_Mesoderm",
-  "Paraxial_Mesoderm",
-  "Caudal_Mesoderm",
-  "Somitic_Mesoderm",
-  "ExE_Ectoderm",
-  "Epiblast_PrimStreak"
+"Mesoderm_1",
+"Mesoderm_2",
+"Mesoderm_3",
+"Endoderm",
+"Ectoderm",
+"Mesoderm_4"
 )
-## One by one
-SCPA_Primordial_Germ_Cells <- read.delim("output/Pathway/SCPA_Primordial_Germ_Cells.txt", header = TRUE) %>%
-  add_column(cluster = "Primordial_Germ_Cells")
-Unknow_2 <- read.delim("output/Pathway/SCPA_Unknow_2.txt", header = TRUE) %>%
-  add_column(cluster = "Unknow_2")
 ## import with a function
 ### A function to read and add the cluster column
 read_and_add_cluster <- function(cluster) {
-  path <- paste0("output/Pathway/SCPA_", cluster, ".txt")
+  path <- paste0("output/Pathway/SCPA_humangastruloid_", cluster, ".txt")
   df <- read.delim(path, header = TRUE) %>%
     add_column(cluster = cluster)
   return(df)
@@ -2243,17 +2224,17 @@ all_data_pathways_tidy <- all_data_pathways %>%
   filter(qval >= 1.4) 
 
 # Dot plot
-pdf("output/Pathway/dotplot_WNT_signaling.pdf", width=12, height=6)
-pdf("output/Pathway/dotplot_NODAL_TGFB_signaling.pdf", width=12, height=6)
-pdf("output/Pathway/dotplot_HIPPO_signaling.pdf", width=12, height=3)
-pdf("output/Pathway/dotplot_RA_signaling.pdf", width=12, height=2)
-pdf("output/Pathway/dotplot_Notch_signaling.pdf", width=12, height=6)
-pdf("output/Pathway/dotplot_BMP_signaling.pdf", width=8, height=2)
-pdf("output/Pathway/dotplot_Epigenetics.pdf", width=10, height=3)
-pdf("output/Pathway/dotplot_EndoMesoEcto.pdf", width=10, height=3)
-pdf("output/Pathway/dotplot_Neuro.pdf", width=12, height=4)
-pdf("output/Pathway/dotplot_Blood.pdf", width=12, height=4)
-pdf("output/Pathway/dotplot_FGF.pdf", width=10, height=6)
+pdf("output/Pathway/dotplot_WNT_signaling_humangastruloid.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_NODAL_TGFB_signaling_humangastruloid.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_HIPPO_signaling_humangastruloid.pdf", width=12, height=3)
+pdf("output/Pathway/dotplot_RA_signaling_humangastruloid.pdf", width=12, height=2)
+pdf("output/Pathway/dotplot_Notch_signaling_humangastruloid.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_BMP_signaling_humangastruloid.pdf", width=8, height=2)
+pdf("output/Pathway/dotplot_Epigenetics_humangastruloid.pdf", width=10, height=3)
+pdf("output/Pathway/dotplot_EndoMesoEcto_humangastruloid.pdf", width=10, height=3)
+pdf("output/Pathway/dotplot_Neuro_humangastruloid.pdf", width=12, height=4)
+pdf("output/Pathway/dotplot_Blood_humangastruloid.pdf", width=12, height=4)
+pdf("output/Pathway/dotplot_FGF_humangastruloid.pdf", width=10, height=6)
 
 ggplot(all_data_pathways_tidy, aes(x = cluster, y = Pathway)) + 
   geom_point(aes(size = qval, color = -FC), pch=16, alpha=0.7) +   
@@ -2277,17 +2258,17 @@ custom_color <- function(fc_value){
 all_data_pathways_tidy <- all_data_pathways_tidy %>%
   mutate(custom_col = sapply(FC, custom_color))
 
-pdf("output/Pathway/dotplot_WNT_signaling_FCtresh.pdf", width=12, height=6)
-pdf("output/Pathway/dotplot_NODAL_TGFB_signaling_FCtresh.pdf", width=12, height=6)
-pdf("output/Pathway/dotplot_HIPPO_signaling_FCtresh.pdf", width=12, height=6)
-pdf("output/Pathway/dotplot_RA_signaling_FCtresh.pdf", width=12, height=6)
-pdf("output/Pathway/dotplot_Notch_signaling_FCtresh.pdf", width=12, height=6)
-pdf("output/Pathway/dotplot_BMP_signaling_FCtresh.pdf", width=12, height=6)
-pdf("output/Pathway/dotplot_Epigenetics_FCtresh.pdf", width=12, height=6)
-pdf("output/Pathway/dotplot_EndoMesoEcto_FCtresh.pdf", width=12, height=6)
-pdf("output/Pathway/dotplot_Neuro_FCtresh.pdf", width=12, height=6)
-pdf("output/Pathway/dotplot_Blood_FCtresh.pdf", width=12, height=6)
-pdf("output/Pathway/dotplot_FGF_FCtresh.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_WNT_signaling_FCtresh_humangastruloid.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_NODAL_TGFB_signaling_FCtresh_humangastruloid.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_HIPPO_signaling_FCtresh_humangastruloid.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_RA_signaling_FCtresh_humangastruloid.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_Notch_signaling_FCtresh_humangastruloid.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_BMP_signaling_FCtresh_humangastruloid.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_Epigenetics_FCtresh_humangastruloid.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_EndoMesoEcto_FCtresh_humangastruloid.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_Neuro_FCtresh_humangastruloid.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_Blood_FCtresh_humangastruloid.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_FGF_FCtresh_humangastruloid.pdf", width=12, height=6)
 
 
 ggplot(all_data_pathways_tidy, aes(x = cluster, y = Pathway)) + 
@@ -2305,86 +2286,36 @@ dev.off()
 
 
 
-# ENRCIHMENT PLOT
-
-all_data_pathways_tidy_pa <- all_data_pathways_tidy %>% 
-  filter(Pathway %in% c("REACTOME_SIGNALING_BY_FGFR"),
-         cluster == "Blood_Progenitor_1") %>%
-  mutate(color = case_when(FC > 5 & adjPval < 0.01 ~ '#6dbf88',
-                           FC < 5 & FC > -5 & adjPval < 0.01 ~ '#84b0f0',
-                           FC < -5 & adjPval < 0.01 ~ 'mediumseagreen',
-                           FC < 5 & FC > -5 & adjPval > 0.01 ~ 'black'))
-
-
-all_data_all_pa = as_tibble(all_data) %>% 
-  filter(cluster == "Blood_Progenitor_1") %>%
-  mutate(color = case_when(FC > 5 & adjPval < 0.01 ~ '#6dbf88',
-                           FC < 5 & FC > -5 & adjPval < 0.01 ~ '#84b0f0',
-                           FC < -5 & adjPval < 0.01 ~ 'mediumseagreen',
-                           FC < 5 & FC > -5 & adjPval > 0.01 ~ 'black'))
-
-
-pdf("output/Pathway/plot_embryo_WNT_signaling_Paraxial_Mesoderm.pdf", width=5, height=5)
-pdf("output/Pathway/plot_embryo_TGFB_signaling_Nascent_Mesoderm.pdf", width=5, height=5)
-pdf("output/Pathway/plot_embryo_REACTOME_SIGNALING_BY_NODAL_Pharyngeal_Mesoderm.pdf", width=5, height=5)
-pdf("output/Pathway/plot_embryo_REACTOME_SIGNALING_BY_HIPPO_Mesenchyme.pdf", width=5, height=5)
-pdf("output/Pathway/plot_embryo_PID_RETINOIC_ACID_PATHWAY_Pharyngeal_Mesoderm.pdf", width=5, height=5)
-pdf("output/Pathway/plot_embryo_REACTOME_SIGNALING_BY_NOTCH_Paraxial_Mesoderm.pdf", width=5, height=5)
-pdf("output/Pathway/plot_embryo_WP_BMP_SIGNALING_IN_EYELID_DEVELOPMENT_Paraxial_Mesoderm.pdf", width=5, height=5)
-pdf("output/Pathway/plot_embryo_REACTOME_HATS_ACETYLATE_HISTONES_Pharyngeal_Mesoderm.pdf", width=5, height=5)
-pdf("output/Pathway/plot_embryo_WP_MESODERMAL_COMMITMENT_PATHWAY_Mixed_Mesoderm.pdf", width=5, height=5)
-pdf("output/Pathway/plot_embryo_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION_Nascent_Mesoderm.pdf", width=5, height=5)
-pdf("output/Pathway/plot_embryo_WP_VEGFAVEGFR2_SIGNALING_PATHWAY_Nascent_Mesoderm.pdf", width=5, height=5)
-pdf("output/Pathway/plot_embryo_REACTOME_SIGNALING_BY_FGFR_Blood_Progenitor_1.pdf", width=5, height=5)
-
-
-ggplot(all_data_all_pa, aes(x = -FC, y = qval, fill = -FC)) +
-  geom_point(aes(color = -FC), cex = 2, shape = 21, stroke = 0.3) +  # Color based on -FC
-  geom_point(data = all_data_pathways_tidy_pa, aes(x = -FC, y = qval), shape = 21, cex = 2.8, fill = "forestgreen", color = "black", stroke = 0.3) +
- # geom_label_repel(data = all_data_pathways_tidy_pa, aes(label = Pathway, x = -FC, y = qval), box.padding = 0.5, point.padding = 0.5, segment.color = 'grey50') +
-  xlim(-25, 25) +
-  ylim(0, 7.5) +
-  xlab("Enrichment") +
-  ylab("qval") +
-  scale_color_gradient2(low = "blue", mid = "grey", high = "red", midpoint = 0, guide = "colourbar") +
-  scale_fill_gradient2(low = "blue", mid = "grey", high = "red", midpoint = 0, guide = "colourbar") +
-  theme(panel.background = element_blank(),
-        panel.border = element_rect(fill = NA),
-        aspect.ratio = 1) +
-  geom_vline(xintercept = 0, linetype = "solid", col = 'black', lwd = 0.3) +
-  geom_hline(yintercept = 1.4, linetype = "dashed", col = 'black', lwd = 0.3)
-dev.off()
-
 
 # heatmap
-pathways_heatmap <- msigdbr("Mus musculus", "C2") %>%
+pathways_heatmap <- msigdbr("Homo sapiens", "C2") %>%
 format_pathways()
 names(pathways_heatmap) <- sapply(pathways_heatmap, function(x) x$Pathway[1]) # just to name the list, so easier to visualise
 
 ##pick pathway to representL
-pathways_heatmap$REACTOME_SIGNALING_BY_FGFR$Genes
-genes_of_interest <- pathways_heatmap$REACTOME_SIGNALING_BY_FGFR$Genes
+pathways_heatmap$REACTOME_SIGNALING_BY_WNT$Genes
+genes_of_interest <- pathways_heatmap$REACTOME_SIGNALING_BY_WNT$Genes
 ##
 
-genes_of_interest <- genes_of_interest[genes_of_interest %in% rownames(embryo.combined.sct@assays$RNA@data)]
+genes_of_interest <- genes_of_interest[genes_of_interest %in% rownames(humangastruloid.combined.sct@assays$RNA@data)]
 
-### extract WT and cYAPKO gene expression values from RNA assay
-WT_expression <- embryo.combined.sct@assays$RNA@data[genes_of_interest, colnames(embryo.combined.sct)[embryo.combined.sct$condition == "WT" & embryo.combined.sct$cluster.annot == "Blood_Progenitor_1"]]
-cYAPKO_expression <- embryo.combined.sct@assays$RNA@data[genes_of_interest, colnames(embryo.combined.sct)[embryo.combined.sct$condition == "cYAPKO" & embryo.combined.sct$cluster.annot == "Blood_Progenitor_1"]]
+### extract UNTREATED72hr and DASATINIB72hr gene expression values from RNA assay
+UNTREATED72hr_expression <- humangastruloid.combined.sct@assays$RNA@data[genes_of_interest, colnames(humangastruloid.combined.sct)[humangastruloid.combined.sct$condition == "UNTREATED72hr" & humangastruloid.combined.sct$cluster.annot == "Mesoderm_2"]]
+DASATINIB72hr_expression <- humangastruloid.combined.sct@assays$RNA@data[genes_of_interest, colnames(humangastruloid.combined.sct)[humangastruloid.combined.sct$condition == "DASATINIB72hr" & humangastruloid.combined.sct$cluster.annot == "Mesoderm_2"]]
 
 ### mean expression values for each gene
-WT_mean <- rowMeans(WT_expression)
-cYAPKO_mean <- rowMeans(cYAPKO_expression)
+UNTREATED72hr_mean <- rowMeans(UNTREATED72hr_expression)
+DASATINIB72hr_mean <- rowMeans(DASATINIB72hr_expression)
 data_for_plot <- data.frame(
   Gene = genes_of_interest,
-  WT = WT_mean,
-  cYAPKO = cYAPKO_mean
+  UNTREATED72hr = UNTREATED72hr_mean,
+  DASATINIB72hr = DASATINIB72hr_mean
 ) %>% 
-pivot_longer(cols = c(WT, cYAPKO), names_to = "Condition", values_to = "Expression")
+pivot_longer(cols = c(UNTREATED72hr, DASATINIB72hr), names_to = "Condition", values_to = "Expression")
 
 ## ORder from low to high express
 ### Reordering the genes based on their mean expression in WT in ascending order
-ordered_genes <- names(sort(WT_mean))
+ordered_genes <- names(sort(UNTREATED72hr_mean))
 ### Extracting unique gene names from the ordered list
 unique_ordered_genes <- unique(ordered_genes)
 ### Filter out rows from data_for_plot that don't have their genes in unique_ordered_genes
@@ -2393,7 +2324,8 @@ data_for_plot <- data_for_plot[data_for_plot$Gene %in% unique_ordered_genes, ]
 data_for_plot$Gene <- factor(data_for_plot$Gene, levels = unique_ordered_genes)
 
 # if few genes:
-pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_WNT_Paraxial_Mesoderm.pdf", width=10, height=3)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_WNT_Mesoderm_2_humangastruloid.pdf", width=10, height=3)
+
 pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS_Nascent_Mesoderm.pdf", width=10, height=3)
 pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_NODAL_Pharyngeal_Mesoderm.pdf", width=6, height=3)
 pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_HIPPO_Mesenchyme.pdf", width=6, height=3)
@@ -2424,7 +2356,7 @@ ggplot(data_for_plot, aes(x=Gene, y=Condition, fill=Expression)) +
 dev.off()
 
 # if many genesL
-pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_WNT_Paraxial_Mesoderm.pdf", width=3, height=2)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_WNT_Mesoderm_2_humangastruloid.pdf", width=3, height=2)
 pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS_Nascent_Mesoderm.pdf", width=3, height=2)
 pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_NOTCH_Paraxial_Mesoderm.pdf", width=3, height=2)
 pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_HATS_ACETYLATE_HISTONES_Pharyngeal_Mesoderm.pdf", width=3, height=2)
@@ -2454,14 +2386,14 @@ dev.off()
 
 
 
-# GSEA plot
+# GSEA plot 
 library("fgsea")
 ## Re-calculate DEGs keeping ALL genes
-embryo.combined.sct$celltype.stim <- paste(embryo.combined.sct$cluster.annot, embryo.combined.sct$condition,
+humangastruloid.combined.sct$celltype.stim <- paste(humangastruloid.combined.sct$cluster.annot, humangastruloid.combined.sct$condition,
     sep = "-")
-Idents(embryo.combined.sct) <- "celltype.stim"
+Idents(humangastruloid.combined.sct) <- "celltype.stim"
 
-Paraxial_Mesoderm <- FindMarkers(embryo.combined.sct, ident.1 = "Paraxial_Mesoderm-cYAPKO", ident.2 = "Paraxial_Mesoderm-WT",
+Mesoderm_2 <- FindMarkers(humangastruloid.combined.sct, ident.1 = "Mesoderm_2-DASATINIB72hr", ident.2 = "Mesoderm_2-UNTREATED72hr",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
@@ -2470,18 +2402,18 @@ Paraxial_Mesoderm <- FindMarkers(embryo.combined.sct, ident.1 = "Paraxial_Mesode
     assay = "RNA") 
 
 ### save output
-write.table(Paraxial_Mesoderm, file = "output/seurat/Paraxial_Mesoderm-cYAPKO_response_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-Paraxial_Mesoderm <- read.delim("output/seurat/Paraxial_Mesoderm-cYAPKO_response_allGenes.txt", header = TRUE, row.names = 1)
+write.table(Mesoderm_2, file = "output/seurat/Mesoderm_2-DASATINIB72hr_response_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+Mesoderm_2 <- read.delim("output/seurat/Mesoderm_2-DASATINIB72hr_response_allGenes.txt", header = TRUE, row.names = 1)
 
 
 ###
 
 ## load list of genes to test
-pathways <- msigdbr("Mus musculus", "C2") 
+pathways <- msigdbr("Homo sapiens", "C2") 
 fgsea_sets <- pathways %>% split(x = .$gene_symbol, f = .$gs_name)
 
 ## Rank genes based on FC
-genes <- Blood_Progenitor_1 %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+genes <- Mesoderm_2 %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
   rownames_to_column(var = "gene") %>%
   arrange(desc(avg_log2FC)) %>% 
   dplyr::select(gene, avg_log2FC)
@@ -2500,7 +2432,7 @@ fgseaResTidy %>%
   head()
 
 ## plot GSEA
-pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_WNT_Paraxial_Mesoderm.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_WNT_Mesoderm_2_humangastruloid.pdf", width=5, height=3)
 pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS_Nascent_Mesoderm.pdf", width=5, height=3)
 pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_NODAL_Pharyngeal_Mesoderm.pdf", width=5, height=3)
 pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_HIPPO_Mesenchyme.pdf", width=5, height=3)
@@ -2514,8 +2446,8 @@ pdf("output/Pathway/GSEA_WP_VEGFAVEGFR2_SIGNALING_PATHWAY_Nascent_Mesoderm.pdf",
 pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_FGFR_Blood_Progenitor_1.pdf", width=5, height=3)
 
 
-plotEnrichment(fgsea_sets[["REACTOME_SIGNALING_BY_FGFR"]],
-               ranks) + labs(title="REACTOME_SIGNALING_BY_FGFR-Blood_Progenitor_1") +
+plotEnrichment(fgsea_sets[["REACTOME_SIGNALING_BY_WNT"]],
+               ranks) + labs(title="REACTOME_SIGNALING_BY_WNT-Mesoderm_2") +
                theme_bw()
 dev.off()
 
