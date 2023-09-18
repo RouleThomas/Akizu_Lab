@@ -2260,14 +2260,14 @@ all_data_pathways_tidy <- all_data_pathways_tidy %>%
 
 pdf("output/Pathway/dotplot_WNT_signaling_FCtresh_humangastruloid.pdf", width=12, height=6)
 pdf("output/Pathway/dotplot_NODAL_TGFB_signaling_FCtresh_humangastruloid.pdf", width=12, height=6)
-pdf("output/Pathway/dotplot_HIPPO_signaling_FCtresh_humangastruloid.pdf", width=12, height=6)
-pdf("output/Pathway/dotplot_RA_signaling_FCtresh_humangastruloid.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_HIPPO_signaling_FCtresh_humangastruloid.pdf", width=12, height=3)
+pdf("output/Pathway/dotplot_RA_signaling_FCtresh_humangastruloid.pdf", width=12, height=2)
 pdf("output/Pathway/dotplot_Notch_signaling_FCtresh_humangastruloid.pdf", width=12, height=6)
-pdf("output/Pathway/dotplot_BMP_signaling_FCtresh_humangastruloid.pdf", width=12, height=6)
-pdf("output/Pathway/dotplot_Epigenetics_FCtresh_humangastruloid.pdf", width=12, height=6)
-pdf("output/Pathway/dotplot_EndoMesoEcto_FCtresh_humangastruloid.pdf", width=12, height=6)
-pdf("output/Pathway/dotplot_Neuro_FCtresh_humangastruloid.pdf", width=12, height=6)
-pdf("output/Pathway/dotplot_Blood_FCtresh_humangastruloid.pdf", width=12, height=6)
+pdf("output/Pathway/dotplot_BMP_signaling_FCtresh_humangastruloid.pdf", width=12, height=2)
+pdf("output/Pathway/dotplot_Epigenetics_FCtresh_humangastruloid.pdf", width=12, height=3)
+pdf("output/Pathway/dotplot_EndoMesoEcto_FCtresh_humangastruloid.pdf", width=12, height=2)
+pdf("output/Pathway/dotplot_Neuro_FCtresh_humangastruloid.pdf", width=12, height=4)
+pdf("output/Pathway/dotplot_Blood_FCtresh_humangastruloid.pdf", width=12, height=4)
 pdf("output/Pathway/dotplot_FGF_FCtresh_humangastruloid.pdf", width=12, height=6)
 
 
@@ -2292,16 +2292,16 @@ pathways_heatmap <- msigdbr("Homo sapiens", "C2") %>%
 format_pathways()
 names(pathways_heatmap) <- sapply(pathways_heatmap, function(x) x$Pathway[1]) # just to name the list, so easier to visualise
 
-##pick pathway to representL
-pathways_heatmap$REACTOME_SIGNALING_BY_WNT$Genes
-genes_of_interest <- pathways_heatmap$REACTOME_SIGNALING_BY_WNT$Genes
+##pick pathway to represent
+pathways_heatmap$REACTOME_SIGNALING_BY_FGFR$Genes
+genes_of_interest <- pathways_heatmap$REACTOME_SIGNALING_BY_FGFR$Genes
 ##
 
 genes_of_interest <- genes_of_interest[genes_of_interest %in% rownames(humangastruloid.combined.sct@assays$RNA@data)]
 
 ### extract UNTREATED72hr and DASATINIB72hr gene expression values from RNA assay
-UNTREATED72hr_expression <- humangastruloid.combined.sct@assays$RNA@data[genes_of_interest, colnames(humangastruloid.combined.sct)[humangastruloid.combined.sct$condition == "UNTREATED72hr" & humangastruloid.combined.sct$cluster.annot == "Mesoderm_2"]]
-DASATINIB72hr_expression <- humangastruloid.combined.sct@assays$RNA@data[genes_of_interest, colnames(humangastruloid.combined.sct)[humangastruloid.combined.sct$condition == "DASATINIB72hr" & humangastruloid.combined.sct$cluster.annot == "Mesoderm_2"]]
+UNTREATED72hr_expression <- humangastruloid.combined.sct@assays$RNA@data[genes_of_interest, colnames(humangastruloid.combined.sct)[humangastruloid.combined.sct$condition == "UNTREATED72hr" & humangastruloid.combined.sct$cluster.annot == "Endoderm"]]
+DASATINIB72hr_expression <- humangastruloid.combined.sct@assays$RNA@data[genes_of_interest, colnames(humangastruloid.combined.sct)[humangastruloid.combined.sct$condition == "DASATINIB72hr" & humangastruloid.combined.sct$cluster.annot == "Endoderm"]]
 
 ### mean expression values for each gene
 UNTREATED72hr_mean <- rowMeans(UNTREATED72hr_expression)
@@ -2326,12 +2326,12 @@ data_for_plot$Gene <- factor(data_for_plot$Gene, levels = unique_ordered_genes)
 # if few genes:
 pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_WNT_Mesoderm_2_humangastruloid.pdf", width=10, height=3)
 
-pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS_Nascent_Mesoderm.pdf", width=10, height=3)
-pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_NODAL_Pharyngeal_Mesoderm.pdf", width=6, height=3)
-pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_HIPPO_Mesenchyme.pdf", width=6, height=3)
-pdf("output/Pathway/heatmap_embryo_RNAexpression_PID_RETINOIC_ACID_PATHWAY_Pharyngeal_Mesoderm.pdf", width=6, height=3)
-pdf("output/Pathway/heatmap_embryo_RNAexpression_WP_BMP_SIGNALING_IN_EYELID_DEVELOPMENT_Paraxial_Mesoderm.pdf", width=6, height=3)
-pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_HATS_ACETYLATE_HISTONES_Pharyngeal_Mesoderm.pdf", width=6, height=3)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS_Mesoderm_1_humangastruloid.pdf", width=10, height=3)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_NODAL_Mesoderm_3_humangastruloid.pdf", width=6, height=3)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_WP_HIPPO_SIGNALING_REGULATION_PATHWAYS_Endoderm_humangastruloid.pdf", width=6, height=3)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_RETINOIC_ACID_Mesoderm_3_humangastruloid.pdf", width=6, height=3)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_PID_BMP_PATHWAY_Endoderm_humangastruloid.pdf", width=6, height=3)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_BIOCARTA_HDAC_PATHWAY_Mesoderm_2_humangastruloid.pdf", width=6, height=3)
 pdf("output/Pathway/heatmap_embryo_RNAexpression_WP_MESODERMAL_COMMITMENT_PATHWAY_Mixed_Mesoderm.pdf", width=6, height=3)
 pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_FGFR_Blood_Progenitor_1.pdf", width=6, height=3)
 
@@ -2357,14 +2357,17 @@ dev.off()
 
 # if many genesL
 pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_WNT_Mesoderm_2_humangastruloid.pdf", width=3, height=2)
-pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS_Nascent_Mesoderm.pdf", width=3, height=2)
-pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_NOTCH_Paraxial_Mesoderm.pdf", width=3, height=2)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS_Mesoderm_1_humangastruloid.pdf", width=3, height=2)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_WP_HIPPO_SIGNALING_REGULATION_PATHWAYS_Endoderm_humangastruloid.pdf", width=3, height=2)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_NOTCH_Endoderm_humangastruloid.pdf", width=3, height=2)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_NOTCH_Mesoderm_2_humangastruloid.pdf", width=3, height=2)
 pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_HATS_ACETYLATE_HISTONES_Pharyngeal_Mesoderm.pdf", width=3, height=2)
-pdf("output/Pathway/heatmap_embryo_RNAexpression_WP_MESODERMAL_COMMITMENT_PATHWAY_Mixed_Mesoderm.pdf", width=3, height=2)
-pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION_Nascent_Mesoderm.pdf", width=3, height=2)
-pdf("output/Pathway/heatmap_embryo_RNAexpression_WP_VEGFAVEGFR2_SIGNALING_PATHWAY_Nascent_Mesoderm.pdf", width=5, height=2)
-pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_FGFR_Blood_Progenitor_1.pdf", width=3, height=2)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_WP_ENDODERM_DIFFERENTIATION_Mesoderm_2_humangastruloid.pdf", width=3, height=2)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION_Mesoderm_2_humangastruloid.pdf", width=3, height=2)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_WP_VEGFAVEGFR2_SIGNALING_PATHWAY_Mesoderm_2_humangastruloid.pdf", width=5, height=2)
+pdf("output/Pathway/heatmap_embryo_RNAexpression_REACTOME_SIGNALING_BY_FGFR_Endoderm_humangastruloid.pdf", width=3, height=2)
 
+library("viridis")
 ggplot(data_for_plot, aes(x=Gene, y=Condition, fill=Expression)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -2393,7 +2396,7 @@ humangastruloid.combined.sct$celltype.stim <- paste(humangastruloid.combined.sct
     sep = "-")
 Idents(humangastruloid.combined.sct) <- "celltype.stim"
 
-Mesoderm_2 <- FindMarkers(humangastruloid.combined.sct, ident.1 = "Mesoderm_2-DASATINIB72hr", ident.2 = "Mesoderm_2-UNTREATED72hr",
+Mesoderm_3 <- FindMarkers(humangastruloid.combined.sct, ident.1 = "Mesoderm_3-DASATINIB72hr", ident.2 = "Mesoderm_3-UNTREATED72hr",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
@@ -2402,8 +2405,14 @@ Mesoderm_2 <- FindMarkers(humangastruloid.combined.sct, ident.1 = "Mesoderm_2-DA
     assay = "RNA") 
 
 ### save output
-write.table(Mesoderm_2, file = "output/seurat/Mesoderm_2-DASATINIB72hr_response_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Mesoderm_3, file = "output/seurat/Mesoderm_3-DASATINIB72hr_response_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+
+Endoderm <- read.delim("output/seurat/Endoderm-DASATINIB72hr_response_allGenes.txt", header = TRUE, row.names = 1)
 Mesoderm_2 <- read.delim("output/seurat/Mesoderm_2-DASATINIB72hr_response_allGenes.txt", header = TRUE, row.names = 1)
+Mesoderm_1 <- read.delim("output/seurat/Mesoderm_1-DASATINIB72hr_response_allGenes.txt", header = TRUE, row.names = 1)
+Mesoderm_3 <- read.delim("output/seurat/Mesoderm_3-DASATINIB72hr_response_allGenes.txt", header = TRUE, row.names = 1)
 
 
 ###
@@ -2413,7 +2422,7 @@ pathways <- msigdbr("Homo sapiens", "C2")
 fgsea_sets <- pathways %>% split(x = .$gene_symbol, f = .$gs_name)
 
 ## Rank genes based on FC
-genes <- Mesoderm_2 %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+genes <- Endoderm %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
   rownames_to_column(var = "gene") %>%
   arrange(desc(avg_log2FC)) %>% 
   dplyr::select(gene, avg_log2FC)
@@ -2433,21 +2442,23 @@ fgseaResTidy %>%
 
 ## plot GSEA
 pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_WNT_Mesoderm_2_humangastruloid.pdf", width=5, height=3)
-pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS_Nascent_Mesoderm.pdf", width=5, height=3)
-pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_NODAL_Pharyngeal_Mesoderm.pdf", width=5, height=3)
-pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_HIPPO_Mesenchyme.pdf", width=5, height=3)
-pdf("output/Pathway/GSEA_PID_RETINOIC_ACID_PATHWAY_Pharyngeal_Mesoderm.pdf", width=5, height=3)
-pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_NOTCH_Paraxial_Mesoderm.pdf", width=5, height=3)
-pdf("output/Pathway/GSEA_WP_BMP_SIGNALING_IN_EYELID_DEVELOPMENT_Paraxial_Mesoderm.pdf", width=5, height=3)
-pdf("output/Pathway/GSEA_REACTOME_HATS_ACETYLATE_HISTONES_Pharyngeal_Mesoderm.pdf", width=5, height=3)
-pdf("output/Pathway/GSEA_WP_MESODERMAL_COMMITMENT_PATHWAY_Mixed_Mesoderm.pdf", width=5, height=3)
-pdf("output/Pathway/GSEA_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION_Nascent_Mesoderm.pdf", width=5, height=3)
-pdf("output/Pathway/GSEA_WP_VEGFAVEGFR2_SIGNALING_PATHWAY_Nascent_Mesoderm.pdf", width=5, height=3)
-pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_FGFR_Blood_Progenitor_1.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_KEGG_WNT_SIGNALING_PATHWAY_Endoderm_humangastruloid.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS_Mesoderm_1_humangastruloid.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_NODAL_Mesoderm_3_humangastruloid.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_WP_HIPPO_SIGNALING_REGULATION_PATHWAYS_Endoderm_humangastruloid.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_RETINOIC_ACID_Mesoderm_3_humangastruloid.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_NOTCH_Endoderm_humangastruloid.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_NOTCH_Mesoderm_2_humangastruloid.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_PID_BMP_PATHWAY_Endoderm_humangastruloid.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_BIOCARTA_HDAC_PATHWAY_Mesoderm_2_humangastruloid.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_WP_ENDODERM_DIFFERENTIATION_Mesoderm_2_humangastruloid.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION_Mesoderm_2_humangastruloid.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_WP_VEGFAVEGFR2_SIGNALING_PATHWAY_Mesoderm_2_humangastruloid.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_FGFR_Endoderm_humangastruloid.pdf", width=5, height=3)
 
 
-plotEnrichment(fgsea_sets[["REACTOME_SIGNALING_BY_WNT"]],
-               ranks) + labs(title="REACTOME_SIGNALING_BY_WNT-Mesoderm_2") +
+plotEnrichment(fgsea_sets[["REACTOME_SIGNALING_BY_FGFR"]],
+               ranks) + labs(title="REACTOME_SIGNALING_BY_FGFR-Endoderm") +
                theme_bw()
 dev.off()
 

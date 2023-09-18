@@ -13458,8 +13458,15 @@ Let's generate rpkm too in case...
 samples <- c("8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4",
                      "8wN_HET_R1", "8wN_HET_R2", "8wN_HET_R3", "8wN_HET_R4",
                      "8wN_KO_R1", "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4")
-
-
+samples <- c("4wN_WT_R1", "4wN_WT_R2",
+            "4wN_HET_R3", "4wN_HET_R4",
+            "4wN_KO_R1", "4wN_KO_R2")
+samples <- c("NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+            "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3",
+            "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3")
+samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
+            "2dN_HET_R1", "2dN_HET_R2", "2dN_HET_R3",
+            "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3")
 samples <- c("ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3",
                      "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
                      "2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
@@ -13503,25 +13510,22 @@ rpkm_all_sample_tidy$gene <- gsub("\\..*", "", rpkm_all_sample_tidy$gene) # remo
 rpkm_all_sample_tidy_median = rpkm_all_sample_tidy %>%
   group_by(gene, genotype) %>%
   summarise(median = median(rpkm))
-
 ## save
 write.table(rpkm_all_sample_tidy_median, file = "output/rpkm_hg38/rpkm_all_sample_tidy_median.txt", sep = "\t", quote = FALSE, row.names = FALSE)
-
 ## pivot table for BrainDeconvShiny
 rpkm_all_sample_tidy_median_BrainDeconvShiny = rpkm_all_sample_tidy_median %>%
   spread(key = genotype, value = median)
-
 write.table(rpkm_all_sample_tidy_median_BrainDeconvShiny, file = "output/rpkm_hg38/rpkm_all_sample_tidy_median_BrainDeconvShiny.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
 
 ## Save sample per sample
 rpkm_all_sample_tidy_8wN_KO_BrainDeconvShiny = rpkm_all_sample_tidy %>%
-  filter(time == "8wN", genotype == "KO") %>%
+  filter(time == "2dN", genotype == "KO") %>%
   dplyr::select(gene,replicate,rpkm) %>%
   group_by(gene, replicate) %>%
   summarise(rpkm = mean(rpkm, na.rm = TRUE)) %>%  # some gene id are dupplicated as we remove version id; need do mean...
   spread(key = replicate, value = rpkm)
-
-write.table(rpkm_all_sample_tidy_8wN_KO_BrainDeconvShiny, file = "output/rpkm_hg38/rpkm_all_sample_tidy_8wN_KO_BrainDeconvShiny.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(rpkm_all_sample_tidy_8wN_KO_BrainDeconvShiny, file = "output/rpkm_hg38/rpkm_all_sample_tidy_2dN_KO_BrainDeconvShiny.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 ```
 
 
