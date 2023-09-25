@@ -2189,7 +2189,41 @@ ggplot(plot_data, aes(x = external_gene_name, y = mean_log2tpm, fill = genotype)
 dev.off()
 
 
-# ADD STAT
+# ADD STAT with ggpubr
+XXXX
+
+
+library("ggpubr")
+my_comparisons <- list( c("Het", "KO") )
+
+# Plot
+pdf("output/tpm/tpm__Cd68_Tlr2_Trem2_stat.pdf", width=8, height=4)
+ggplot(plot_data, aes(x = external_gene_name, y = mean_log2tpm, fill = genotype)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  geom_errorbar(
+    aes(ymin = mean_log2tpm - se_log2tpm, ymax = mean_log2tpm + se_log2tpm),
+    width = 0.25,
+    position = position_dodge(width = 0.9)
+  ) +
+  theme_bw() +
+  ylab("log2(TPM + 1)") +
+  xlab("Gene") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~tissue) +
+  # Add the statistical comparisons
+  stat_compare_means(comparisons = my_comparisons, 
+                     method = "t.test", 
+                     label.y = 5,       # Adjust this to position the p-value labels correctly
+                     aes(group = genotype))
+dev.off()
+
+
+
+
+
+
+
+
 
 ```
 
