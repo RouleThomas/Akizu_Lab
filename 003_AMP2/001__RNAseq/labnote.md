@@ -2083,6 +2083,123 @@ sbatch --dependency=afterany:4635227:4635235:4635238 scripts/bigwigmerge_TPM.sh 
 
 
 
+# TPM gene expression
+Code to check expression level of some genes (TPM)
+
+## Calculate TPM and RPKM
+
+Use custom R script `RPKM_TPM_featurecounts.R` as follow:
+```bash
+conda activate deseq2
+# Rscript scripts/RPKM_TPM_featurecounts.R INPUT OUTPUT_PREFIX
+sbatch scripts/featurecounts_TPM.sh # 5376123
+# mv all output to output/tpm or rpkm folder
+mv output/featurecounts/*tpm* output/tpm/
+mv output/featurecounts/*rpkm* output/rpkm_hg38/
+```
+
+All good. 
+
+If needed to **display gene with TPM**:
+
+```R
+# library
+library("biomaRt")
+library("tidyverse")
+# Plot with TPM instead of baseMean (Naiara plot)
+## import tpm
+#### Generate TPM for ALL samples
+#### collect all samples ID
+samples <- c("HP14_Het", "HP42_Het", "HP43_Het", "HP20_KO", "HP38_KO", "HP41_KO",
+   "CT14_Het", "CT42_Het", "CT43_Het", "CT20_KO", "CT38_KO", "CT41_KO",
+   "CB14_Het", "CB42_Het", "CB43_Het", "CB20_KO", "CB38_KO", "CB41_KO")
+
+## Make a loop for importing all tpm data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("../001__RNAseq/output/tpm/", sample, "_tpm.txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>%
+    select(Geneid, starts_with("output.STAR.")) %>%
+    rename(!!sample := starts_with("output.STAR."))
+}
+
+## Merge all dataframe into a single one
+tpm_all_sample <- purrr::reduce(sample_data, full_join, by = "Geneid")
+write.csv(tpm_all_sample, file="../001__RNAseq/output/tpm/tpm_all_sample.txt")
+### If need to import: tpm_all_sample <- read_csv("../001__RNAseq/output/tpm/tpm_all_sample.txt") #To import
+
+XXXX
+
+# plot some genes
+tpm_all_sample_tidy <- tpm_all_sample %>%
+  gather(key = 'variable', value = 'tpm', -Geneid) %>%
+  mutate(tissue = substr(variable, 1, 2),             # separate the 1st two character
+         variable = substr(variable, 3, nchar(variable))) %>% # separate the 1st two character
+  separate(variable, into = c("replicate", "genotype"), sep = "_") %>%
+  rename(gene = Geneid)
+
+
+tpm_all_sample_tidy$gene <- gsub("\\..*", "", tpm_all_sample_tidy$gene)
+
+## convert gene Ensembl to symbol 
+ensembl <- useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+
+# Convert Ensembl gene IDs to gene symbols
+genesymbols <- getBM(attributes = c("ensembl_gene_id", "external_gene_name"),
+                     filters = "ensembl_gene_id",
+                     values = tpm_all_sample_tidy$gene,
+                     mart = ensembl)
+
+# Merge gene symbols to your dataframe
+tpm_all_sample_tidy <- left_join(tpm_all_sample_tidy, genesymbols, 
+                                 by = c("gene" = "ensembl_gene_id"))
+
+# genes 
+c("Cd68", "Tlr2", "Trem2") # 
+
+
+plot_data <- tpm_all_sample_tidy %>%
+  unique() %>%
+  filter(external_gene_name %in% c("Cd68", "Tlr2", "Trem2")) %>%
+  group_by(gene, genotype, tissue,external_gene_name) %>%
+  summarise(mean_log2tpm = mean(log2(tpm + 1)),
+            se_log2tpm = sd(log2(tpm + 1)) / sqrt(n())) %>%
+  ungroup()
+
+
+plot_data$tissue <-
+  factor(plot_data$tissue,
+         c("HP", "CT","CB"))
+
+        
+# Plot
+pdf("output/tpm/tpm__Cd68_Tlr2_Trem2.pdf", width=8, height=4)
+ggplot(plot_data, aes(x = external_gene_name, y = mean_log2tpm, fill = genotype)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  geom_errorbar(
+    aes(ymin = mean_log2tpm - se_log2tpm, ymax = mean_log2tpm + se_log2tpm),
+    width = 0.25,
+    position = position_dodge(width = 0.9)
+  ) +
+  theme_bw() +
+  ylab("log2(TPM + 1)") +
+  xlab("Gene") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~tissue)
+dev.off()
+
+
+# ADD STAT
+
+```
+
+
+
+
+
+
+
+
 # GSEA
 
 
