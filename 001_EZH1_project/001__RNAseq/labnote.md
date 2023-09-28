@@ -6600,7 +6600,6 @@ write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_8
 
 # Post GO analysis; volcano plot with highlighted genes
 ## KEGG2016__KO
-
 # Set up gene symbols and their colors
 highlight_genes <- c("EPHB6", "EPHA5", "SEMA5B", "EPHA4", "SEMA4A", "NTN4", "CXCR4", "UNC5D", "SEMA3F", "NFATC4", "RND1", "CXCL12", "SLIT1", "PLXNB2", "PLXNB1", "SRGAP2", "EPHB1", "SRGAP1", "EPHB4", "NGEF", "EPHA3")
 highlight_genes <- c("PDGFRB", "MAGI1", "CSF1", "ANGPT1", "LPAR2", "PIK3R3", "ARAP3", "FGF1", "GRIN2B", "ACTB", "EGFR", "RAP1GAP", "ACTG1", "ADORA2A", "PDGFD", "P2RY1", "PLCE1", "PRKD1", "DRD2", "FGFR3", "FGF12", "FGFR2", "PFN2", "RAPGEF4")
@@ -6835,6 +6834,169 @@ downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2Fol
 #### Save
 write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q01FC1_8wN_KO_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q01FC1_8wN_KO_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+# Plot CutRun RNAseq integration (PosterMidatlantic)
+## import gene list
+### GAIN
+THOR_qval15_KO_Gain_DEG_Down = read.table("../003__CutRun/output/ChIPseeker/THOR_qval15_KO_Gain_DEG_Down.txt", 
+                                           header = FALSE, 
+                                           col.names = "gene") %>%
+                               as_tibble()
+THOR_qval15_KO_Gain_DEG_Up = read.table("../003__CutRun/output/ChIPseeker/THOR_qval15_KO_Gain_DEG_Up.txt", 
+                                           header = FALSE, 
+                                           col.names = "gene") %>%
+                               as_tibble()
+
+THOR_qval15_KO_Gain = THOR_qval15_KO_Gain_DEG_Down %>%
+  bind_rows(THOR_qval15_KO_Gain_DEG_Up)
+#### Convert tibble into character vector for GeneSymbol conversion
+THOR_qval15_KO_Gain_char_vector <- as.character(THOR_qval15_KO_Gain$gene)
+
+THOR_qval15_KO_Gain_gene_symbols <- mapIds(org.Hs.eg.db, keys = THOR_qval15_KO_Gain_char_vector,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+
+THOR_qval15_KO_Gain$GeneSymbol <- THOR_qval15_KO_Gain_gene_symbols
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene")
+
+res_Gain = THOR_qval15_KO_Gain %>% 
+  left_join(res_tibble)
+
+### LOST
+THOR_qval15_KO_Lost_DEG_Down = read.table("../003__CutRun/output/ChIPseeker/THOR_qval15_KO_Lost_DEG_Down.txt", 
+                                           header = FALSE, 
+                                           col.names = "gene") %>%
+                               as_tibble()
+THOR_qval15_KO_Lost_DEG_Up = read.table("../003__CutRun/output/ChIPseeker/THOR_qval15_KO_Lost_DEG_Up.txt", 
+                                           header = FALSE, 
+                                           col.names = "gene") %>%
+                               as_tibble()                               
+
+
+THOR_qval15_KO_Lost = THOR_qval15_KO_Lost_DEG_Down %>%
+  bind_rows(THOR_qval15_KO_Lost_DEG_Up)
+#### Convert tibble into character vector for GeneSymbol conversion
+THOR_qval15_KO_Lost_char_vector <- as.character(THOR_qval15_KO_Lost$gene)
+
+THOR_qval15_KO_Lost_gene_symbols <- mapIds(org.Hs.eg.db, keys = THOR_qval15_KO_Lost_char_vector,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+
+THOR_qval15_KO_Lost$GeneSymbol <- THOR_qval15_KO_Lost_gene_symbols
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene")
+
+res_Lost = THOR_qval15_KO_Lost %>% 
+  left_join(res_tibble)
+
+## PLOT
+### GAIN
+highlight_genes <- c("GRIN1", "ADCY1", "GRM8", "GRIK3", "ADCY5") # Glutamatergic genes
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, 'Sky Blue',
+    ifelse(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+pdf("output/deseq2_hg38/plotVolcano_res_Gain_8wN_KO_vs_8wN_WT_glutamatergicSynapse.pdf", width=8, height=8)  
+EnhancedVolcano(res_Gain,
+  lab = res_Gain$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, 2wN',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 1.5,
+  labSize = 4.5,
+  shape = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+upregulated_genes <- sum(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+
+upregulated <- res_Gain[res_Gain$log2FoldChange > 1 & res_Gain$padj < 5e-2, ]
+upregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange > 1 & res_Gain$padj < 1e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res_Gain[res_Gain$log2FoldChange < -1 & res_Gain$padj < 5e-2, ]
+downregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange < -1 & res_Gain$padj < 1e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05FC05_8wN_KO_vs_8wN_WT_Gain_H3K27me3_poster.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05FC05_8wN_KO_vs_8wN_WT_Gain_H3K27me3_poster.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+### LOST
+highlight_genes <- c("") # NA
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, 'Sky Blue',
+    ifelse(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+pdf("output/deseq2_hg38/plotVolcano_res_Lost_8wN_KO_vs_8wN_WT_glutamatergicSynapse.pdf", width=8, height=8)  
+EnhancedVolcano(res_Lost,
+  lab = res_Lost$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, 2wN',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 1.5,
+  labSize = 4.5,
+  shape = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+upregulated_genes <- sum(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+
+upregulated <- res_Lost[res_Lost$log2FoldChange > 1 & res_Lost$padj < 5e-2, ]
+upregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange > 1 & res_Lost$padj < 1e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res_Lost[res_Lost$log2FoldChange < -1 & res_Lost$padj < 5e-2, ]
+downregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange < -1 & res_Lost$padj < 1e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05FC05_8wN_KO_vs_8wN_WT_Lost_H3K27me3_poster.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05FC05_8wN_KO_vs_8wN_WT_Lost_H3K27me3_poster.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
 
 ```
@@ -7205,6 +7367,170 @@ downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2Fol
 #### Save
 write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q01FC1_8wN_HET_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q01FC1_8wN_HET_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+# Plot CutRun RNAseq integration (PosterMidatlantic)
+## import gene list
+### GAIN
+THOR_qval15_HET_Gain_DEG_Down = read.table("../003__CutRun/output/ChIPseeker/THOR_qval15_HET_Gain_DEG_Down.txt", 
+                                           header = FALSE, 
+                                           col.names = "gene") %>%
+                               as_tibble()
+THOR_qval15_HET_Gain_DEG_Up = read.table("../003__CutRun/output/ChIPseeker/THOR_qval15_HET_Gain_DEG_Up.txt", 
+                                           header = FALSE, 
+                                           col.names = "gene") %>%
+                               as_tibble()
+
+THOR_qval15_HET_Gain = THOR_qval15_HET_Gain_DEG_Down %>%
+  bind_rows(THOR_qval15_HET_Gain_DEG_Up)
+#### Convert tibble into character vector for GeneSymbol conversion
+THOR_qval15_HET_Gain_char_vector <- as.character(THOR_qval15_HET_Gain$gene)
+
+THOR_qval15_HET_Gain_gene_symbols <- mapIds(org.Hs.eg.db, keys = THOR_qval15_HET_Gain_char_vector,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+
+THOR_qval15_HET_Gain$GeneSymbol <- THOR_qval15_HET_Gain_gene_symbols
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene")
+
+res_Gain = THOR_qval15_HET_Gain %>% 
+  left_join(res_tibble)
+
+### LOST
+THOR_qval15_HET_Lost_DEG_Down = read.table("../003__CutRun/output/ChIPseeker/THOR_qval15_HET_Lost_DEG_Down.txt", 
+                                           header = FALSE, 
+                                           col.names = "gene") %>%
+                               as_tibble()
+THOR_qval15_HET_Lost_DEG_Up = read.table("../003__CutRun/output/ChIPseeker/THOR_qval15_HET_Lost_DEG_Up.txt", 
+                                           header = FALSE, 
+                                           col.names = "gene") %>%
+                               as_tibble()                               
+
+
+THOR_qval15_HET_Lost = THOR_qval15_HET_Lost_DEG_Down %>%
+  bind_rows(THOR_qval15_HET_Lost_DEG_Up)
+#### Convert tibble into character vector for GeneSymbol conversion
+THOR_qval15_HET_Lost_char_vector <- as.character(THOR_qval15_HET_Lost$gene)
+
+THOR_qval15_HET_Lost_gene_symbols <- mapIds(org.Hs.eg.db, keys = THOR_qval15_HET_Lost_char_vector,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+
+THOR_qval15_HET_Lost$GeneSymbol <- THOR_qval15_HET_Lost_gene_symbols
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene")
+
+res_Lost = THOR_qval15_HET_Lost %>% 
+  left_join(res_tibble)
+
+## PLOT
+### GAIN
+highlight_genes <- c("GRIN1", "SHANK1", "GRM4", "PRKCB", "PLCB2", "GRM1") # Glutamatergic genes
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, 'Sky Blue',
+    ifelse(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+pdf("output/deseq2_hg38/plotVolcano_res_Gain_8wN_HET_vs_8wN_WT_glutamatergicSynapse.pdf", width=8, height=8)  
+EnhancedVolcano(res_Gain,
+  lab = res_Gain$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'HET vs WT, 2wN',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 1.5,
+  labSize = 4.5,
+  shape = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+upregulated_genes <- sum(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+
+upregulated <- res_Gain[res_Gain$log2FoldChange > 1 & res_Gain$padj < 5e-2, ]
+upregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange > 1 & res_Gain$padj < 1e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res_Gain[res_Gain$log2FoldChange < -1 & res_Gain$padj < 5e-2, ]
+downregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange < -1 & res_Gain$padj < 1e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05FC05_8wN_HET_vs_8wN_WT_Gain_H3K27me3_poster.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05FC05_8wN_HET_vs_8wN_WT_Gain_H3K27me3_poster.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+### LOST
+highlight_genes <- c("") # NA
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, 'Sky Blue',
+    ifelse(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+pdf("output/deseq2_hg38/plotVolcano_res_Lost_8wN_HET_vs_8wN_WT_glutamatergicSynapse.pdf", width=8, height=8)  
+EnhancedVolcano(res_Lost,
+  lab = res_Lost$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, 2wN',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 1.5,
+  labSize = 4.5,
+  shape = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+upregulated_genes <- sum(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+
+upregulated <- res_Lost[res_Lost$log2FoldChange > 1 & res_Lost$padj < 5e-2, ]
+upregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange > 1 & res_Lost$padj < 1e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res_Lost[res_Lost$log2FoldChange < -1 & res_Lost$padj < 5e-2, ]
+downregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange < -1 & res_Lost$padj < 1e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05FC05_8wN_HET_vs_8wN_WT_Lost_H3K27me3_poster.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05FC05_8wN_HET_vs_8wN_WT_Lost_H3K27me3_poster.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 ```
 
 
