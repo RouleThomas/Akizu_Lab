@@ -2125,10 +2125,8 @@ for (sample in samples) {
 
 ## Merge all dataframe into a single one
 tpm_all_sample <- purrr::reduce(sample_data, full_join, by = "Geneid")
-write.csv(tpm_all_sample, file="../001__RNAseq/output/tpm/tpm_all_sample.txt")
-### If need to import: tpm_all_sample <- read_csv("../001__RNAseq/output/tpm/tpm_all_sample.txt") #To import
-
-XXXX
+# write.csv(tpm_all_sample, file="../001__RNAseq/output/tpm/tpm_all_sample.txt")
+### If need to import: tpm_all_sample <- read_csv("../001__RNAseq/output/tpm/tpm_all_sample.txt") %>% dplyr::select(-("...1"))#To import
 
 # plot some genes
 tpm_all_sample_tidy <- tpm_all_sample %>%
@@ -2190,36 +2188,42 @@ dev.off()
 
 
 # ADD STAT with ggpubr
-XXXX
-
 
 library("ggpubr")
 my_comparisons <- list( c("Het", "KO") )
 
-# Plot
-pdf("output/tpm/tpm__Cd68_Tlr2_Trem2_stat.pdf", width=8, height=4)
-ggplot(plot_data, aes(x = external_gene_name, y = mean_log2tpm, fill = genotype)) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
-  geom_errorbar(
-    aes(ymin = mean_log2tpm - se_log2tpm, ymax = mean_log2tpm + se_log2tpm),
-    width = 0.25,
-    position = position_dodge(width = 0.9)
-  ) +
-  theme_bw() +
-  ylab("log2(TPM + 1)") +
-  xlab("Gene") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  facet_wrap(~tissue) +
-  # Add the statistical comparisons
-  stat_compare_means(comparisons = my_comparisons, 
-                     method = "t.test", 
-                     label.y = 5,       # Adjust this to position the p-value labels correctly
-                     aes(group = genotype))
+c("Cd68", "Tlr2", "Trem2")
+
+tpm_all_sample_tidy$tissue <-
+  factor(tpm_all_sample_tidy$tissue,
+         c("HP", "CT","CB"))
+
+
+## Plot
+pdf("output/tpm/tpm_Cd68_stat.pdf", width=8, height=4)
+pdf("output/tpm/tpm_Tlr2_stat.pdf", width=8, height=4)
+pdf("output/tpm/tpm_Trem2_stat.pdf", width=8, height=4)
+
+tpm_all_sample_tidy %>%
+  filter(external_gene_name %in% c("Trem2") ) %>% 
+  unique() %>%
+  mutate(TPM = log2(tpm + 1) ) %>%
+    ggboxplot(., x = "genotype", y = "TPM",
+                 fill = "genotype",
+                 palette = c("grey","red3")) +
+      # Add the statistical comparisons
+      stat_compare_means(comparisons = my_comparisons, 
+                        method = "t.test", 
+                        aes(group = genotype)) +
+      theme_bw() +
+      facet_wrap(~tissue) +
+      ylab("log2(TPM + 1)")
 dev.off()
 
 
 
-
++ stat_compare_means(comparisons = my_comparisons)+ # Add pairwise comparisons p-value
+  stat_compare_means(label.y = 50)    
 
 
 
@@ -2412,15 +2416,131 @@ dev.off()
 
 
 
+# Brain deconvolution
+
+Let's try the [BrainDeconvShinny](https://voineagulab.shinyapps.io/BrainDeconvShiny/)
+
+```R
+#### collect all samples ID
+samples <- c("HP14_Het", "HP42_Het", "HP43_Het", "HP20_KO", "HP38_KO", "HP41_KO",
+   "CT14_Het", "CT42_Het", "CT43_Het", "CT20_KO", "CT38_KO", "CT41_KO",
+   "CB14_Het", "CB42_Het", "CB43_Het", "CB20_KO", "CB38_KO", "CB41_KO")
+
+
+
+## Make a loop for importing all rpkm data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("../001__RNAseq/output/rpkm/", sample, "_rpkm.txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>%
+    select(Geneid, starts_with("output.STAR.")) %>%
+    rename(!!sample := starts_with("output.STAR."))
+}
+
+## Merge all dataframe into a single one
+rpkm_all_sample <- purrr::reduce(sample_data, full_join, by = "Geneid")
+
+rpkm_all_sample_tidy <- rpkm_all_sample %>%
+  gather(key = 'variable', value = 'rpkm', -Geneid) %>%
+  mutate(tissue = substr(variable, 1, 2),             # separate the 1st two character
+         variable = substr(variable, 3, nchar(variable))) %>% # separate the 1st two character
+  separate(variable, into = c("replicate", "genotype"), sep = "_") %>%
+  rename(gene = Geneid)
+
+rpkm_all_sample_tidy$gene <- gsub("\\..*", "", rpkm_all_sample_tidy$gene) # remove Ensembl gene id version
+
+
+
+## Save sample per sample
+rpkm_all_sample_tidy_HP_Het_BrainDeconvShiny = rpkm_all_sample_tidy %>%
+  filter(tissue == "HP", genotype == "KO") %>%
+  dplyr::select(gene,replicate,rpkm) %>%
+  group_by(gene, replicate) %>%
+  summarise(rpkm = mean(rpkm, na.rm = TRUE)) %>%  # some gene id are dupplicated as we remove version id; need do mean...
+  spread(key = replicate, value = rpkm)
+
+write.table(rpkm_all_sample_tidy_HP_Het_BrainDeconvShiny, file = "output/rpkm/rpkm_all_sample_tidy_HP_KO_BrainDeconvShiny.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+```
+
+
+
+# Venn diagram detected gene in each tissue
+
+Let's identify specifically/uniquely expressed genes in each tissue; in Het 1st:
+- Import tpm table
+- add a detected column (> 0.5 or 1 = yes)
+- Export the detected gene list for each tissue
+- Venn diagram [online](https://bioinformatics.psb.ugent.be/webtools/Venn/)
 
 
 
 
 
+```R
+#### collect all samples ID
+samples <- c("HP14_Het", "HP42_Het", "HP43_Het", "HP20_KO", "HP38_KO", "HP41_KO",
+   "CT14_Het", "CT42_Het", "CT43_Het", "CT20_KO", "CT38_KO", "CT41_KO",
+   "CB14_Het", "CB42_Het", "CB43_Het", "CB20_KO", "CB38_KO", "CB41_KO")
 
 
 
+## Make a loop for importing all tpm data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("../001__RNAseq/output/tpm/", sample, "_tpm.txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>%
+    select(Geneid, starts_with("output.STAR.")) %>%
+    rename(!!sample := starts_with("output.STAR."))
+}
+
+## Merge all dataframe into a single one
+tpm_all_sample <- purrr::reduce(sample_data, full_join, by = "Geneid")
+
+tpm_all_sample_tidy <- tpm_all_sample %>%
+  gather(key = 'variable', value = 'tpm', -Geneid) %>%
+  mutate(tissue = substr(variable, 1, 2),             # separate the 1st two character
+         variable = substr(variable, 3, nchar(variable))) %>% # separate the 1st two character
+  separate(variable, into = c("replicate", "genotype"), sep = "_") %>%
+  rename(gene = Geneid)
+
+tpm_all_sample_tidy$gene <- gsub("\\..*", "", tpm_all_sample_tidy$gene) # remove Ensembl gene id version
+
+## Calculate median for each sample
+tpm_all_sample_tidy_median = tpm_all_sample_tidy %>%
+  group_by(gene, genotype, tissue) %>%
+  summarise(median = median(tpm))  
+
+tpm_all_sample_tidy_median_detected = tpm_all_sample_tidy_median %>%
+  mutate(detected = ifelse(median > 0.5, "yes", "no"))
 
 
+## Save detected gene list
+
+write.table(tpm_all_sample_tidy_median_detected %>% filter(genotype == "Het", tissue == "HP", detected == "yes") %>% ungroup() %>% dplyr::select(gene) %>% unique(), file = "output/tpm/detected05_HP_Het.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(tpm_all_sample_tidy_median_detected %>% filter(genotype == "Het", tissue == "CB", detected == "yes") %>% ungroup() %>% dplyr::select(gene) %>% unique(), file = "output/tpm/detected05_CB_Het.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(tpm_all_sample_tidy_median_detected %>% filter(genotype == "Het", tissue == "CT", detected == "yes") %>% ungroup() %>% dplyr::select(gene) %>% unique(), file = "output/tpm/detected05_CT_Het.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+write.table(tpm_all_sample_tidy_median_detected %>% filter(genotype == "Het", tissue == "HP", detected == "yes") %>% ungroup() %>% dplyr::select(gene) %>% unique(), file = "output/tpm/detected1_HP_Het.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(tpm_all_sample_tidy_median_detected %>% filter(genotype == "Het", tissue == "CB", detected == "yes") %>% ungroup() %>% dplyr::select(gene) %>% unique(), file = "output/tpm/detected1_CB_Het.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(tpm_all_sample_tidy_median_detected %>% filter(genotype == "Het", tissue == "CT", detected == "yes") %>% ungroup() %>% dplyr::select(gene) %>% unique(), file = "output/tpm/detected1_CT_Het.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+write.table(tpm_all_sample_tidy_median_detected %>% filter(genotype == "Het", tissue == "HP", detected == "yes") %>% ungroup() %>% dplyr::select(gene) %>% unique(), file = "output/tpm/detected5_HP_Het.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(tpm_all_sample_tidy_median_detected %>% filter(genotype == "Het", tissue == "CB", detected == "yes") %>% ungroup() %>% dplyr::select(gene) %>% unique(), file = "output/tpm/detected5_CB_Het.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(tpm_all_sample_tidy_median_detected %>% filter(genotype == "Het", tissue == "CT", detected == "yes") %>% ungroup() %>% dplyr::select(gene) %>% unique(), file = "output/tpm/detected5_CT_Het.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+
+write.table(tpm_all_sample_tidy_median_detected %>% filter(genotype == "KO", tissue == "HP", detected == "yes") %>% ungroup() %>% dplyr::select(gene) %>% unique(), file = "output/tpm/detected05_HP_KO.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(tpm_all_sample_tidy_median_detected %>% filter(genotype == "KO", tissue == "CB", detected == "yes") %>% ungroup() %>% dplyr::select(gene) %>% unique(), file = "output/tpm/detected05_CB_KO.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(tpm_all_sample_tidy_median_detected %>% filter(genotype == "KO", tissue == "CT", detected == "yes") %>% ungroup() %>% dplyr::select(gene) %>% unique(), file = "output/tpm/detected05_CT_KO.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+write.table(tpm_all_sample_tidy_median_detected %>% filter(genotype == "KO", tissue == "HP", detected == "yes") %>% ungroup() %>% dplyr::select(gene) %>% unique(), file = "output/tpm/detected1_HP_KO.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(tpm_all_sample_tidy_median_detected %>% filter(genotype == "KO", tissue == "CB", detected == "yes") %>% ungroup() %>% dplyr::select(gene) %>% unique(), file = "output/tpm/detected1_CB_KO.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(tpm_all_sample_tidy_median_detected %>% filter(genotype == "KO", tissue == "CT", detected == "yes") %>% ungroup() %>% dplyr::select(gene) %>% unique(), file = "output/tpm/detected1_CT_KO.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+write.table(tpm_all_sample_tidy_median_detected %>% filter(genotype == "KO", tissue == "HP", detected == "yes") %>% ungroup() %>% dplyr::select(gene) %>% unique(), file = "output/tpm/detected5_HP_KO.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(tpm_all_sample_tidy_median_detected %>% filter(genotype == "KO", tissue == "CB", detected == "yes") %>% ungroup() %>% dplyr::select(gene) %>% unique(), file = "output/tpm/detected5_CB_KO.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(tpm_all_sample_tidy_median_detected %>% filter(genotype == "KO", tissue == "CT", detected == "yes") %>% ungroup() %>% dplyr::select(gene) %>% unique(), file = "output/tpm/detected5_CT_KO.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+```
 
 
