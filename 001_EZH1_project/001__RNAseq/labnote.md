@@ -6666,6 +6666,24 @@ EnhancedVolcano(res,
   theme(legend.position = "none")
 dev.off()
 
+pdf("output/deseq2_hg38/plotVolcano_res_q05_8wN_KO_vs_8wN_WT_prettyV1.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = "",
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, 2wN',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
 upregulated_genes <- sum(res$log2FoldChange > 0.5 & res$padj < 5e-2, na.rm = TRUE)
 downregulated_genes <- sum(res$log2FoldChange < -0.5 & res$padj < 5e-2, na.rm = TRUE)
 
@@ -6836,6 +6854,7 @@ write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q01FC
 write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q01FC1_8wN_KO_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
 
+
 # Plot CutRun RNAseq integration (PosterMidatlantic)
 ## import gene list
 ### GAIN
@@ -6930,17 +6949,43 @@ EnhancedVolcano(res_Gain,
   theme(legend.position = "none")
 dev.off()
 
+pdf("output/deseq2_hg38/plotVolcano_res_Gain_8wN_KO_vs_8wN_WT_glutamatergicSynapse_prettyV1.pdf", width=8, height=8)  
+EnhancedVolcano(res_Gain,
+  lab = res_Gain$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, 2wN',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 5,
+  labSize = 9,   # gene highlight size
+  shape = 20,
+  axisLabSize = 25,
+  captionLabSize = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.75,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
 upregulated_genes <- sum(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, na.rm = TRUE)
 downregulated_genes <- sum(res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, na.rm = TRUE)
 
 # Save as gene list for GO analysis:
 
-upregulated <- res_Gain[res_Gain$log2FoldChange > 1 & res_Gain$padj < 5e-2, ]
-upregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange > 1 & res_Gain$padj < 1e-2, ]
+upregulated <- res_Gain[res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, ]
+upregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, ]
 
 #### Filter for down-regulated genes
-downregulated <- res_Gain[res_Gain$log2FoldChange < -1 & res_Gain$padj < 5e-2, ]
-downregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange < -1 & res_Gain$padj < 1e-2, ]
+downregulated <- res_Gain[res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, ]
+downregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, ]
 #### Save
 write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05FC05_8wN_KO_vs_8wN_WT_Gain_H3K27me3_poster.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05FC05_8wN_KO_vs_8wN_WT_Gain_H3K27me3_poster.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
@@ -6983,17 +7028,43 @@ EnhancedVolcano(res_Lost,
   theme(legend.position = "none")
 dev.off()
 
+pdf("output/deseq2_hg38/plotVolcano_res_Lost_8wN_KO_vs_8wN_WT_glutamatergicSynapse_prettyV1.pdf", width=8, height=8)  
+EnhancedVolcano(res_Lost,
+  lab = res_Lost$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, 2wN',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 5,
+  labSize = 9,   # gene highlight size
+  shape = 20,
+  axisLabSize = 25,
+  captionLabSize = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.75,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
 upregulated_genes <- sum(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 5e-2, na.rm = TRUE)
 downregulated_genes <- sum(res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, na.rm = TRUE)
 
 # Save as gene list for GO analysis:
 
-upregulated <- res_Lost[res_Lost$log2FoldChange > 1 & res_Lost$padj < 5e-2, ]
-upregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange > 1 & res_Lost$padj < 1e-2, ]
+upregulated <- res_Lost[res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 5e-2, ]
+upregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 5e-2, ]
 
 #### Filter for down-regulated genes
-downregulated <- res_Lost[res_Lost$log2FoldChange < -1 & res_Lost$padj < 5e-2, ]
-downregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange < -1 & res_Lost$padj < 1e-2, ]
+downregulated <- res_Lost[res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, ]
+downregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, ]
 #### Save
 write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05FC05_8wN_KO_vs_8wN_WT_Lost_H3K27me3_poster.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05FC05_8wN_KO_vs_8wN_WT_Lost_H3K27me3_poster.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
@@ -7240,6 +7311,24 @@ EnhancedVolcano(res,
   theme(legend.position = "none")
 dev.off()
 
+pdf("output/deseq2_hg38/plotVolcano_res_q05_8wN_HET_vs_8wN_WT_prettyV1.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = "",
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'HET vs WT, 2wN',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
 upregulated_genes <- sum(res$log2FoldChange > 0.5 & res$padj < 5e-2, na.rm = TRUE)
 downregulated_genes <- sum(res$log2FoldChange < -0.5 & res$padj < 5e-2, na.rm = TRUE)
 
@@ -7464,17 +7553,43 @@ EnhancedVolcano(res_Gain,
   theme(legend.position = "none")
 dev.off()
 
+pdf("output/deseq2_hg38/plotVolcano_res_Gain_8wN_HET_vs_8wN_WT_glutamatergicSynapse_prettyV1.pdf", width=8, height=8)  
+EnhancedVolcano(res_Gain,
+  lab = res_Gain$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, 2wN',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 5,
+  labSize = 9,   # gene highlight size
+  shape = 20,
+  axisLabSize = 25,
+  captionLabSize = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.75,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
 upregulated_genes <- sum(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, na.rm = TRUE)
 downregulated_genes <- sum(res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, na.rm = TRUE)
 
 # Save as gene list for GO analysis:
 
-upregulated <- res_Gain[res_Gain$log2FoldChange > 1 & res_Gain$padj < 5e-2, ]
-upregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange > 1 & res_Gain$padj < 1e-2, ]
+upregulated <- res_Gain[res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, ]
+upregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, ]
 
 #### Filter for down-regulated genes
-downregulated <- res_Gain[res_Gain$log2FoldChange < -1 & res_Gain$padj < 5e-2, ]
-downregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange < -1 & res_Gain$padj < 1e-2, ]
+downregulated <- res_Gain[res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, ]
+downregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, ]
 #### Save
 write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05FC05_8wN_HET_vs_8wN_WT_Gain_H3K27me3_poster.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05FC05_8wN_HET_vs_8wN_WT_Gain_H3K27me3_poster.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
@@ -7517,17 +7632,43 @@ EnhancedVolcano(res_Lost,
   theme(legend.position = "none")
 dev.off()
 
+pdf("output/deseq2_hg38/plotVolcano_res_Lost_8wN_HET_vs_8wN_WT_glutamatergicSynapse_prettyV1.pdf", width=8, height=8)  
+EnhancedVolcano(res_Lost,
+  lab = res_Lost$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, 2wN',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 5,
+  labSize = 9,   # gene highlight size
+  shape = 20,
+  axisLabSize = 25,
+  captionLabSize = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.75,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
 upregulated_genes <- sum(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 5e-2, na.rm = TRUE)
 downregulated_genes <- sum(res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, na.rm = TRUE)
 
 # Save as gene list for GO analysis:
 
-upregulated <- res_Lost[res_Lost$log2FoldChange > 1 & res_Lost$padj < 5e-2, ]
-upregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange > 1 & res_Lost$padj < 1e-2, ]
+upregulated <- res_Lost[res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 5e-2, ]
+upregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 5e-2, ]
 
 #### Filter for down-regulated genes
-downregulated <- res_Lost[res_Lost$log2FoldChange < -1 & res_Lost$padj < 5e-2, ]
-downregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange < -1 & res_Lost$padj < 1e-2, ]
+downregulated <- res_Lost[res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, ]
+downregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, ]
 #### Save
 write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05FC05_8wN_HET_vs_8wN_WT_Lost_H3K27me3_poster.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05FC05_8wN_HET_vs_8wN_WT_Lost_H3K27me3_poster.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
