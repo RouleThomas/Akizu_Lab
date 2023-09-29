@@ -5816,6 +5816,7 @@ wide_df_filter = wide_df %>%
 write.table(wide_df_filter, file = "output/Pathway/msigdbr_Mus_Musculus_C2_allCategories.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 write.table(wide_df_filter, file = "output/Pathway/msigdbr_Homo_Sapiens_C2_allCategories.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
+
 ```
 
 --> For automatic cell type annotation; the [EasyCellType] [shiny app](https://biostatistics.mdanderson.org/shinyapps/EasyCellType/) has been tested. 
@@ -5870,3 +5871,40 @@ awk -F'\t' '$6 < 0.05' output/seurat/ExE_Ectoderm-cYAPKO_response.txt | wc -l # 
 awk -F'\t' '$6 < 0.05' output/seurat/Epiblast_PrimStreak-cYAPKO_response.txt | wc -l # 465
 ```
 
+
+# Shinny app
+
+
+Created with [ShinyCell](https://github.com/SGDDNB/ShinyCell); and follow [shinyapps](https://www.shinyapps.io/) to put it online 
+
+```bash
+conda activate scRNAseqV2
+# conda install -c anaconda hdf5
+```
+
+```R
+# installation
+## devtools::install_github("SGDDNB/ShinyCell")
+## install.packages('rsconnect')
+
+
+# Packages
+library("Seurat")
+library("ShinyCell")
+library("rsconnect")
+
+# Data import EMBRYO
+embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
+DefaultAssay(embryo.combined.sct) <- "RNA" # 
+
+# Generate Shiny app
+scConf = createConfig(embryo.combined.sct)
+
+makeShinyApp(embryo.combined.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "Embryo_V1",
+             shiny.dir = "shinyApp_embryo_V1/") 
+
+rsconnect::deployApp('shinyApp_embryo_V1')
+
+
+```
