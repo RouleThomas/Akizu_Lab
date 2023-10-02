@@ -46,9 +46,9 @@ done < rename_map.txt
 # Fastp cleaning
 
 ```bash
-sbatch scripts/fastp_1.sh # 5677308
-sbatch scripts/fastp_2.sh # 5677320
-sbatch scripts/fastp_3.sh # 5677323
+sbatch scripts/fastp_1.sh # 5677308 ok
+sbatch scripts/fastp_2.sh # 5677320 ok
+sbatch scripts/fastp_3.sh # 5677323 ok
 ```
 
 
@@ -56,24 +56,49 @@ sbatch scripts/fastp_3.sh # 5677323
 
 **Raw:**
 ```bash
-sbatch scripts/fastqc_1.sh # 5677297
-sbatch scripts/fastqc_2.sh # 5677298
-sbatch scripts/fastqc_3.sh # 5677299
+sbatch scripts/fastqc_1.sh # 5677297 ok
+sbatch scripts/fastqc_2.sh # 5677298 ok
+sbatch scripts/fastqc_3.sh # 5677299 ok
 ```
+
+--> some raw have over-represented sequence; otherwise mostly high quality >30
+
 **Fastp-cleaned:**
 ```bash
-sbatch --dependency=afterany:5677308 scripts/fastqc_fastp_1.sh # 5678160
-sbatch --dependency=afterany:5677320 scripts/fastqc_fastp_2.sh # 5678206
-sbatch --dependency=afterany:5677323 scripts/fastqc_fastp_3.sh # 5678207
+sbatch --dependency=afterany:5677308 scripts/fastqc_fastp_1.sh # 5678160 ok
+sbatch --dependency=afterany:5677320 scripts/fastqc_fastp_2.sh # 5678206 ok
+sbatch --dependency=afterany:5677323 scripts/fastqc_fastp_3.sh # 5678207 ok
 ```
 
+Some weird GC content (+ overrepresented seq >1.5%):
+- NPC_KO_H3K4me3 
+- NPC_KO_H3K27me1 
+- NPC_KO_IGG 
+- NPC_WT_H3K4me3 
+- NPC_WT_H3K27me3
+- NPC_WT_IGG
+- PSC_KOEF1aEZH1_H3K27me3
+- PSC_KOEF1aEZH1_IGG
+- PSC_KOsynEZH1_H3K27me3
+- PSC_KOsynEZH1_HA
+- PSC_KOsynEZH1_IGG
 
-XXX
+Maybe due to the CutRun spikein??
+
+--> Overall, it is ok!!
 
 
+# Mapping
 
+Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal --no-mixed --dovetail`)
 
+```bash
+conda activate bowtie2
 
+sbatch scripts/bowtie2_1.sh # 5680487
+sbatch scripts/bowtie2_2.sh # 5680490
+sbatch scripts/bowtie2_3.sh # 5680491
+```
 
 
 
