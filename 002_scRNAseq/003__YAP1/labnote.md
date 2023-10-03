@@ -5908,3 +5908,70 @@ rsconnect::deployApp('shinyApp_embryo_V1')
 
 
 ```
+
+
+
+# Pseudotime
+
+Let's use Monocle3 for pseudotime analsyis; some tutorial here:
+- https://ucdavis-bioinformatics-training.github.io/2021-August-Advanced-Topics-in-Single-Cell-RNA-Seq-Trajectory-and-Velocity/data_analysis/monocle_fixed
+- http://cole-trapnell-lab.github.io/monocle-release/docs/#recommended-analysis-protocol
+- http://cole-trapnell-lab.github.io/monocle-release/docs/#analyzing-branches-in-single-cell-trajectories
+
+And I'm gonna follow the [Bioinformagician stuff](https://www.youtube.com/watch?v=iq4T_uzMFcY)
+
+--> Installation was painfull starting with scRNAseqV2 so let's create a new separated conda environment for Monocle as `monocle`
+
+----> Only things that work was installation through mamba (help found [here](https://bioconda.github.io/recipes/r-monocle3/README.html))
+
+```bash
+conda create -n monocle3
+
+ conda install -c conda-forge mamba
+
+conda config --add channels bioconda
+conda config --add channels conda-forge
+
+mamba create -n monocle3 r-base=4.1 r-monocle3
+
+   mamba install r-monocle3
+and update with::
+   mamba update r-monocle3
+
+
+```
+And followed installation:
+https://cole-trapnell-lab.github.io/monocle3/docs/installation/
+```R
+# Installation
+
+
+library("monocle3")
+
+XXX
+
+
+
+
+# Data import EMBRYO
+embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
+DefaultAssay(embryo.combined.sct) <- "integrated" # According to ucDAvis tutorial I think should be in integrative mode
+
+# convert data to seurat object to cell_data_set
+cds <- as.cell_data_set(embryo.combined.sct)
+cds <- cluster_cells(cds, resolution=1e-3)
+
+p1 <- plot_cells(cds, color_cells_by = "cluster", show_trajectory_graph = FALSE)
+p2 <- plot_cells(cds, color_cells_by = "partition", show_trajectory_graph = FALSE)
+wrap_plots(p1, p2)
+
+
+```
+
+--> XXX Double check we should use integrative mode
+
+
+
+
+
+
