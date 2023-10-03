@@ -212,9 +212,9 @@ write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_histon
 ```bash
 conda activate bowtie2
 
-sbatch scripts/samtools_1.sh # 5694290
-sbatch scripts/samtools_2.sh # 5694293
-sbatch scripts/samtools_3.sh # 5694297
+sbatch scripts/samtools_1.sh # 5694290 ok
+sbatch scripts/samtools_2.sh # 5694293 ok
+sbatch scripts/samtools_3.sh # 5694297 ok
 ```
 
 ## Removing dupplicates (only uniquely aligned reads)
@@ -223,9 +223,25 @@ This is prefered for THOR bam input.
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:5694290 scripts/samtools_unique_1.sh # 5695055
-sbatch --dependency=afterany:5694293 scripts/samtools_unique_2.sh # 5695056
-sbatch --dependency=afterany:5694297 scripts/samtools_unique_3.sh # 5695057
+sbatch --dependency=afterany:5694290 scripts/samtools_unique_1.sh # 5695055 ok
+sbatch --dependency=afterany:5694293 scripts/samtools_unique_2.sh # 5695056 ok
+sbatch --dependency=afterany:5694297 scripts/samtools_unique_3.sh # 5695057 ok
+```
+
+
+# Generate bigwig coverage files
+## Raw bigwig
+Paramaters:
+- `--binSize 1` for good resolution
+- `--scaleFactor 0.5` to obtain the exact number of reads respective to the bam, otherwise it count two instead of 1
+- `--extendReads` Reads extented taking into account mean fragment size of all mated reads.
+
+```bash
+conda activate deeptools
+
+sbatch scripts/bamtobigwig_1.sh # 5696658
+sbatch scripts/bamtobigwig_2.sh # 5696658
+sbatch scripts/bamtobigwig_3.sh # 5696660
 ```
 
 
