@@ -3319,7 +3319,7 @@ Many different tools:
 - ODIN [paper](https://academic.oup.com/bioinformatics/article/30/24/3467/2422257?login=false)
 
 
-## use uniquely aligned reads only (instead of MAPQ20 per default) with THOR
+## use uniquely aligned reads only (instead of MAPQ20 per default) with THOR _ METHOD GOOD TO FOLLOW !!!!!!!!
 
 - Re-generate alignment
 - Collect library size

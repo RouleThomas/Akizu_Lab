@@ -15,12 +15,14 @@
 - Rename files
 - FastQC (fastqc)
 - Trimming (fastp)
+- Histone content (R)
 - Mapping (bowtie2)
 - Spike-in scaling (DiffBind)
 - Bigwig generation (deepTools)
 - peak calling (MACS2)
 - peak assignment to gene (ChIPseeker)
 
+--> Detail of the overall pipeline in `Meeting_20230919_draft.xlsx` 
 
 # Download / import data
 
@@ -95,9 +97,135 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 ```bash
 conda activate bowtie2
 
-sbatch scripts/bowtie2_1.sh # 5680487
-sbatch scripts/bowtie2_2.sh # 5680490
-sbatch scripts/bowtie2_3.sh # 5680491
+sbatch scripts/bowtie2_1.sh # 5680487 ok
+sbatch scripts/bowtie2_2.sh # 5680490 ok
+sbatch scripts/bowtie2_3.sh # 5680491 ok
+```
+
+
+## Quality control metrics
+Quality control plot (total read before trimming/ total read after trimming/ uniquely aligned reads)
+
+Collect nb of reads from the slurm bowtie2 jobs:
+```bash
+for file in slurm-5680487.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2/alignment_counts_5680487.txt
+
+for file in slurm-5680490.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2/alignment_counts_5680490.txt
+
+for file in slurm-5680491.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2/alignment_counts_5680491.txt
+
+```
+
+Add these values to `/home/roulet/001_EZH1_project/005__CutRun_NPC_PSC/sample.xlsx`\
+Then in R; see `/home/roulet/001_EZH1_project/001_EZH1_project.R`.
+
+--> Overall >75% input reads as been uniquely mapped to the genome
+
+
+# Calculate histone content
+
+--> This histone content will be used to generate a scaling factor which will be used to histone-scaled our library size. The calcul/method to follow is from `003__CutRun/output/spikein/spikein_histone_H3K27me3_scaling_factor_fastp.txt`
+
+**Pipeline:**
+- Count the histone barcode on the clean reads
+- Calculate SF (group by sample (replicate) and AB and calculate the total nb of reads. Then proportion of reads = nb read in sample / total reads. SF = min(proportion) / sample proportion)
+
+
+### Count the histone barcode on the clean reads
+
+
+```bash
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_1.sh # 5695005
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_2.sh # 5695008
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_3.sh # 5695009
+```
+
+--> It output the nb of reads found for each histone; then simply copy paste to the excell file `output/spikein/SpikeIn_QC_fastp.xlsx` in GoogleDrive
+
+XXX
+
+### Calculate SF
+Calculate the scaling factor as with the raw reads from `output/spikein/SpikeIn_QC_fastp.xlsx`
+
+```R
+# package
+library(tidyverse)
+library(readxl)
+# import df
+spikein <- read_excel("output/spikein/SpikeIn_QC_fastp.xlsx") # 
+
+# Filter-in H3K27me3 counts for each samples
+spikein_H3K27me3 = spikein %>%
+    filter(Target == "H3K27me3") %>%
+    group_by(sample_ID, AB) %>%
+    summarise(aligned=sum(counts))
+
+# Total reads per IP
+spikein_H3K27me3_total = spikein_H3K27me3 %>%
+    ungroup() %>%
+    group_by(AB) %>%
+    mutate(total = sum(aligned)) %>%
+    ungroup() %>%
+    distinct(AB, .keep_all = TRUE) %>%
+    select(AB,total)
+
+# Read proportion
+spikein_H3K27me3_read_prop = spikein_H3K27me3 %>%
+    left_join(spikein_H3K27me3_total) %>%
+    mutate(read_prop = aligned / total)
+
+spikein_H3K27me3_read_prop_min = spikein_H3K27me3_read_prop %>%
+    group_by(AB) %>%
+    summarise(min_prop=min(read_prop))
+
+# Scaling factor
+spikein_H3K27me3_scaling_factor = spikein_H3K27me3_read_prop %>%
+    left_join(spikein_H3K27me3_read_prop_min) %>%
+    mutate(scaling_factor = read_prop/min_prop)
+
+
+write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_histone_H3K27me3_scaling_factor_fastp.txt", sep="\t", quote=FALSE, row.names=FALSE)
+```
+
+
+
+# Samtools and read filtering
+
+--> See `METHOD GOOD TO FOLLOW` in `003__CutRun` labnote
+
+## Marking dupplicates
+```bash
+conda activate bowtie2
+
+sbatch scripts/samtools_1.sh # 5694290
+sbatch scripts/samtools_2.sh # 5694293
+sbatch scripts/samtools_3.sh # 5694297
+```
+
+## Removing dupplicates (only uniquely aligned reads)
+This is prefered for THOR bam input.
+
+```bash
+conda activate bowtie2
+
+sbatch --dependency=afterany:5694290 scripts/samtools_unique_1.sh # 5695055
+sbatch --dependency=afterany:5694293 scripts/samtools_unique_2.sh # 5695056
+sbatch --dependency=afterany:5694297 scripts/samtools_unique_3.sh # 5695057
 ```
 
 
