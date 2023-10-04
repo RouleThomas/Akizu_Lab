@@ -5907,8 +5907,30 @@ makeShinyApp(embryo.combined.sct, scConf, gene.mapping = TRUE,
 rsconnect::deployApp('shinyApp_embryo_V1')
 
 
+
+
+# Data import HUMAN
+humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid.combined.sct_V2.rds")
+DefaultAssay(humangastruloid.combined.sct) <- "RNA" # Recommended 
+
+
+# Generate Shiny app
+scConf = createConfig(humangastruloid.combined.sct)
+
+makeShinyApp(humangastruloid.combined.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "Humangastruloid_V1",
+             shiny.dir = "shinyApp_humangastruloid_V1/") 
+
+rsconnect::deployApp('shinyApp_humangastruloid_V1')
+
+
+
+
 ```
 
+--> Shiny apps:
+- https://roulethomas.shinyapps.io/shinyapp_embryo_v1/ 
+- https://roulethomas.shinyapps.io/shinyapp_humangastruloid_V1/ 
 
 
 # Pseudotime
@@ -5916,7 +5938,7 @@ rsconnect::deployApp('shinyApp_embryo_V1')
 Let's use Monocle3 for pseudotime analsyis; some tutorial here:
 - https://ucdavis-bioinformatics-training.github.io/2021-August-Advanced-Topics-in-Single-Cell-RNA-Seq-Trajectory-and-Velocity/data_analysis/monocle_fixed
 - http://cole-trapnell-lab.github.io/monocle-release/docs/#recommended-analysis-protocol
-- http://cole-trapnell-lab.github.io/monocle-release/docs/#analyzing-branches-in-single-cell-trajectories
+
 
 And I'm gonna follow the [Bioinformagician stuff](https://www.youtube.com/watch?v=iq4T_uzMFcY)
 
@@ -5938,20 +5960,32 @@ mamba create -n monocle3 r-base=4.1 r-monocle3
 and update with::
    mamba update r-monocle3
 
+## THEN JUST
+conda activate monocle3
 
+## new one to install SeuratWrappers
+conda activate monocle3_V1
+
+conda install -c bu_cnio r-seuratwrappers 
 ```
-And followed installation:
-https://cole-trapnell-lab.github.io/monocle3/docs/installation/
+
+I needed to install in additino in R Seurat (install.packages) and R.utils and install.packages("remotes") and  seurat-wrappers and and remotes::install_github('satijalab/seurat-wrappers') and 
+
+packageurl <- "https://cran.r-project.org/src/contrib/Archive/igraph/igraph_1.4.3.tar.gz"
+install.packages(packageurl, repos=NULL, type="source")
+
+
+`conda create --name monocle3_V1 --clone monocle3`
+
+
+Here is a 1st version using the integrated assay; not sure that is the best as the DEGs then failed...
+
 ```R
 # Installation
-
-
+library("igraph") # important to load it first so that v1.4.3 and not v1.5 is used (v1.5 is loaded via Seurat per default!)
 library("monocle3")
-
-XXX
-
-
-
+library("Seurat")
+library("SeuratWrappers")
 
 # Data import EMBRYO
 embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
@@ -5959,18 +5993,82 @@ DefaultAssay(embryo.combined.sct) <- "integrated" # According to ucDAvis tutoria
 
 # convert data to seurat object to cell_data_set
 cds <- as.cell_data_set(embryo.combined.sct)
-cds <- cluster_cells(cds, resolution=1e-3)
+cds <- cluster_cells(cds, resolution=1e-3) # also tries  1e-5 and 1e-1 but WEIRD
 
-p1 <- plot_cells(cds, color_cells_by = "cluster", show_trajectory_graph = FALSE)
-p2 <- plot_cells(cds, color_cells_by = "partition", show_trajectory_graph = FALSE)
-wrap_plots(p1, p2)
+
+pdf("output/monocle3/plot_cells_cluster_embryo.pdf", width=5, height=5)
+pdf("output/monocle3/plot_cells_cluster_res1e5_embryo.pdf", width=5, height=5)
+pdf("output/monocle3/plot_cells_cluster_res1e1_embryo.pdf", width=5, height=5)
+plot_cells(cds, color_cells_by = "cluster", show_trajectory_graph = FALSE)
+dev.off()
+
+pdf("output/monocle3/plot_cells_partition_embryo.pdf", width=5, height=5)
+pdf("output/monocle3/plot_cells_partition_res1e5_embryo.pdf", width=5, height=5)
+pdf("output/monocle3/plot_cells_partition_res1e1_embryo.pdf", width=5, height=5)
+plot_cells(cds, color_cells_by = "partition", show_trajectory_graph = FALSE)
+dev.off()
+
+
+# subsetting partition
+integrated.sub <- subset(as.Seurat(cds, assay = NULL), monocle3_partitions == 1)
+cds <- as.cell_data_set(integrated.sub)
+
+# Trajectory analysis
+## RAW
+cds <- learn_graph(cds, use_partition = TRUE, verbose = FALSE)
+
+pdf("output/monocle3/plot_cells_trajectory_partition1_embryo.pdf", width=5, height=5)
+plot_cells(cds,
+           color_cells_by = "cluster",
+           label_groups_by_cluster=FALSE,
+           label_leaves=FALSE,
+           label_branch_points=FALSE)
+dev.off()
+
+## COLORED BY PSEUDOTIME
+
+cds <- order_cells(cds, root_cells = colnames(cds[,clusters(cds) == 1]))
+pdf("output/monocle3/plot_cells_trajectory_partition1_Root1_embryo.pdf", width=5, height=5)
+plot_cells(cds,
+           color_cells_by = "pseudotime",
+           group_cells_by = "cluster",
+           label_cell_groups = FALSE,
+           label_groups_by_cluster=FALSE,
+           label_leaves=FALSE,
+           label_branch_points=FALSE,
+           label_roots = FALSE,
+           trajectory_graph_color = "grey60")
+dev.off()
+
+
+## PLOT as seurat object
+integrated.sub <- as.Seurat(cds, assay = NULL)
+pdf("output/monocle3/FeaturePlot_trajectory_partition1_Root1_embryo.pdf", width=5, height=5)
+FeaturePlot(integrated.sub, "monocle3_pseudotime")
+dev.off()
+
+
+# Pseudotime differential genes
+cds_graph_test_results <- graph_test(cds,
+                                     neighbor_graph = "principal_graph",
+                                     cores = 1)
+
+
+## Save the output table
+write.table(cds_graph_test_results, file = "output/monocle3/cds_graph_test_results.txt", sep="\t", row.names=TRUE, quote=FALSE)
+
+
 
 
 ```
 
---> XXX Double check we should use integrative mode
+--> All information from WT and cYAPKO is used; I think that is OK as we want to see pseudotime no comparison between gentoypes?
+
+--> I think I should NOT use the ibntegrative assay; otherwise it result VERY FEW genes only 3000 from the integration at the DEGs step... With RNA I will have all genes
 
 
+
+Here is a 2nd version using XXX
 
 
 

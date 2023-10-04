@@ -139,3 +139,16 @@ library("Seurat")
 library("AnnotationHub")
 library("SingleCellExperiment")
 library("ensembldb")
+
+
+
+### scRNAseq_V2
+
+--> Same but also allow Shiny app creation!
+
+### monocle3
+Only Monocle3 and Seurat
+
+### monocle3_V1
+
+--> Same but also with SeuratWrappers
