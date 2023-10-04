@@ -239,10 +239,14 @@ Paramaters:
 ```bash
 conda activate deeptools
 
-sbatch scripts/bamtobigwig_1.sh # 5696658
-sbatch scripts/bamtobigwig_2.sh # 5696658
-sbatch scripts/bamtobigwig_3.sh # 5696660
+sbatch scripts/bamtobigwig_1.sh # 5696658 time limit; 
+sbatch scripts/bamtobigwig_2.sh # 5696659 time limit; 
+sbatch scripts/bamtobigwig_3.sh # 5696660 ok
+
+sbatch scripts/bamtobigwig_missing_1.sh # 5712700
+sbatch scripts/bamtobigwig_missing_2.sh # 5712702
+
 ```
 
-
+XXX
 
