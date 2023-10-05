@@ -6507,20 +6507,22 @@ icMat <- evaluateK(counts = embryo, sds = SlingshotDataSet(embryo),
                    conditions = factor(embryo$condition),
                    nGenes = 300, parallel = FALSE, BPPARAM = BPPARAM, k = 3:7) # set parallel = FALSE otherwise the code never end!
 icMat
-### !!! --> EXAMINE icMat to determine the optimal nb of knots for the GAM  !!! 
+### !!! --> EXAMINE icMat to determine the optimal nb of knots for the GAM  !!! TOO LONG FUCK IT, use 6
 
 #### ->  save.image(file="output/condiments/condiments_embryo_V1.RData")
-
-XXXXX LOAD !!! Re-run icMat if needed!
-
-
 ### load("output/condiments/condiments_embryo_V1.RData")
 
 ## Fit GAM with the indicated nb of knots (4 to 7 works for most data according to developers) https://github.com/statOmics/tradeSeq/issues/54
 
 embryo <- fitGAM(counts = embryo, conditions = factor(embryo$condition), nknots = 6) # change nknots here
 
-
+## Differential expression between conditions
+condRes <- conditionTest(embryo, l2fc = log2(2), lineages = TRUE)
+condRes$padj <- p.adjust(condRes$pvalue_lineage1, "fdr")
+mean(condRes$padj <= 0.05, na.rm = TRUE)
+sum(condRes$padj <= 0.05, na.rm = TRUE)
+conditionGenes <- rownames(condRes)[condRes$padj <= 0.05]
+conditionGenes <- conditionGenes[!is.na(conditionGenes)]
 
 
 
@@ -6541,5 +6543,11 @@ conditionGenes <- conditionGenes[!is.na(conditionGenes)]
 
 --> prog_res? Lineage all pvalue signif! (paste in the ppt Conchi 20231005)
 
-to check this : https://www.bioconductor.org/packages/devel/bioc/vignettes/condiments/inst/doc/condiments.html
+--> The icMAt is too long! I gave up running it. Author recommend using 6 knots (https://github.com/statOmics/tradeSeq/issues/121).
+
+--> 
+
+to check:
+- https://www.bioconductor.org/packages/devel/bioc/vignettes/condiments/inst/doc/condiments.html
+- For [plots](https://bioconductor.org/packages/devel/bioc/vignettes/tradeSeq/inst/doc/tradeSeq.html)
 

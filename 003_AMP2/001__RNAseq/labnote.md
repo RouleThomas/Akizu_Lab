@@ -2543,4 +2543,87 @@ write.table(tpm_all_sample_tidy_median_detected %>% filter(genotype == "KO", tis
 write.table(tpm_all_sample_tidy_median_detected %>% filter(genotype == "KO", tissue == "CT", detected == "yes") %>% ungroup() %>% dplyr::select(gene) %>% unique(), file = "output/tpm/detected5_CT_KO.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 ```
 
+# Functional analysis dotplots
+
+I did venn diagram to identify the HP specific genes and HP-gentoype-specific one. Let's use the 0.5 tpm treshold detection:
+- HP specific genes in Het; 934, `output/GO/HP_HET_934.txt`
+- HP specific genes in KO; 993,  `output/GO/HP_KO_993.txt`
+- Het-specific HP-specific genes; 808, `output/GO/HP_HETspe_808`
+- KO-specofoc HP-specific genes; 867, `output/GO/HP_KOspe_867`
+
+
+
+```R
+# packages
+library("clusterProfiler")
+library("pathview")
+library("DOSE")
+library("org.Mm.eg.db")
+library("enrichplot")
+library("rtracklayer")
+library("tidyverse")
+
+
+## Read GTF file
+gtf_file <- "../../Master/meta/ENCFF159KBI.gtf"
+gtf_data <- import(gtf_file)
+
+## Extract gene_id and gene_name
+gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
+gene_id <- elementMetadata(gene_data)$gene_id
+gene_name <- elementMetadata(gene_data)$gene_name
+
+## Combine gene_id and gene_name into a data frame
+gene_id_name <- data.frame(gene_id, gene_name) %>%
+  unique() %>%
+  as_tibble()
+
+
+# Import genes_cluster list 
+HP_HET_934 = read_table(file = "output/GO/HP_HET_934.txt", col_names = FALSE)
+HP_KO_993 = read_table(file = "output/GO/HP_KO_993.txt", col_names = FALSE)
+HP_HETspe_808 = read_table(file = "output/GO/HP_HETspe_808.txt", col_names = FALSE)
+HP_KOspe_867 = read_table(file = "output/GO/HP_KOspe_867.txt", col_names = FALSE)
+
+
+
+## Run GO enrichment analysis 
+
+ego <- enrichGO(gene = as.character(HP_KOspe_867$X1), 
+                keyType = "ENSEMBL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Mm.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+###
+
+## Save GO analyses
+GO_summary <- data.frame(ego)
+
+write.csv(GO_summary, "output/GO/BP_HP_KOspe_867.csv")
+write.csv(GO_summary, "output/GO/MF_HP_KOspe_867.csv")
+write.csv(GO_summary, "output/GO/CC_HP_KOspe_867.csv")
+
+## Vizualization
+
+pdf("output/GO/dotplot_MF_HP_KOspe_867.pdf", width=6, height=3)
+dotplot(ego, showCategory=20)
+dev.off()
+pdf("output/GO/emapplot_MF_HP_KOspe_867.pdf", width=12, height=14)
+emapplot(pairwise_termsim(ego), showCategory = 20)
+dev.off()
+```
+
+
+
+
+
+
+
+
+
+
+
+
 
