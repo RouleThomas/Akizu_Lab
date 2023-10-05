@@ -6514,10 +6514,14 @@ icMat
 
 ## Fit GAM with the indicated nb of knots (4 to 7 works for most data according to developers) https://github.com/statOmics/tradeSeq/issues/54
 
+# THE BELOW CODE IS TOO LONG TO RUN, SO HAS BEEN INTRODUCED INTO A RSCRIPT INSTEAD AND IMAGE AS BEEN SAVED AS condiments_embryo_V2.RData
+
 embryo <- fitGAM(counts = embryo, conditions = factor(embryo$condition), nknots = 6) # change nknots here
 
 ## Differential expression between conditions
 condRes <- conditionTest(embryo, l2fc = log2(2), lineages = TRUE)
+
+
 condRes$padj <- p.adjust(condRes$pvalue_lineage1, "fdr")
 mean(condRes$padj <= 0.05, na.rm = TRUE)
 sum(condRes$padj <= 0.05, na.rm = TRUE)
@@ -6525,17 +6529,6 @@ conditionGenes <- rownames(condRes)[condRes$padj <= 0.05]
 conditionGenes <- conditionGenes[!is.na(conditionGenes)]
 
 
-
-# DEGs between conditions within each lineage
-
-XXX ChatGPT
-## Perform the Differential Expression Analysis:
-condRes <- conditionTest(embryo, l2fc = log2(2), lineages = TRUE)
-## Adjust for Multiple Testing:
-condRes$padj <- p.adjust(condRes$pvalue_lineage1, "fdr")
-## Filter Based on Adjusted p-value:
-conditionGenes <- rownames(condRes)[condRes$padj <= 0.05]
-conditionGenes <- conditionGenes[!is.na(conditionGenes)]
 ```
 
 --> I did all the tutorial from [here](https://hectorrdb.github.io/condimentsPaper/articles/Fibrosis.html) 
@@ -6543,11 +6536,26 @@ conditionGenes <- conditionGenes[!is.na(conditionGenes)]
 
 --> prog_res? Lineage all pvalue signif! (paste in the ppt Conchi 20231005)
 
---> The icMAt is too long! I gave up running it. Author recommend using 6 knots (https://github.com/statOmics/tradeSeq/issues/121).
+--> The icMAt is too long! I gave up running it. Author recommend using 6 knots (https://github.com/statOmics/tradeSeq/issues/121). Other discussion about [time](https://github.com/statOmics/tradeSeq/issues/41)
 
---> 
+--> Same for the fitGAM, too long, so I run it into a Rscript as follow:
+
+```bash
+conda activate condiments_V5
+
+sbatch scripts/fitGAM_6knots.sh # 5756977
+```
+
+
+
 
 to check:
 - https://www.bioconductor.org/packages/devel/bioc/vignettes/condiments/inst/doc/condiments.html
 - For [plots](https://bioconductor.org/packages/devel/bioc/vignettes/tradeSeq/inst/doc/tradeSeq.html)
+
+
+
+
+
+
 
