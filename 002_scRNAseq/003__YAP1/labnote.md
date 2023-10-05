@@ -5949,7 +5949,7 @@ And I'm gonna follow the [Bioinformagician stuff](https://www.youtube.com/watch?
 ```bash
 conda create -n monocle3
 
- conda install -c conda-forge mamba
+conda install -c conda-forge mamba
 
 conda config --add channels bioconda
 conda config --add channels conda-forge
@@ -6068,7 +6068,62 @@ write.table(cds_graph_test_results, file = "output/monocle3/cds_graph_test_resul
 
 
 
-Here is a 2nd version using RNA assay
+2nd try using RNA and separate WT and cYAPKO
+--> Then we could do Venn diagram to check the gene specific pseudotime-diff in WT and cYPAKO and plot their expression along pseudotime in x to stregnthen differences!!
+
+
+```R
+# Installation
+library("igraph") # important to load it first so that v1.4.3 and not v1.5 is used (v1.5 is loaded via Seurat per default!)
+library("monocle3")
+library("Seurat")
+library("SeuratWrappers")
+
+# Data import EMBRYO
+embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
+DefaultAssay(embryo.combined.sct) <- "RNA" # According to ucDAvis tutorial I think should be in integrative mode
+
+# subset WT and cYPAKO
+
+embryo.combined.sct.WT <- subset(embryo.combined.sct, subset = condition == "WT")
+embryo.combined.sct.cYAPKO <- subset(embryo.combined.sct, subset = condition == "cYAPKO")
+
+
+# convert data to seurat object to cell_data_set
+cds.WT <- as.cell_data_set(embryo.combined.sct.WT)
+cds.WT <- cluster_cells(cds.WT, resolution=1e-3) # also tries  1e-5 and 1e-1 but WEIRD
+
+pdf("output/monocle3/plot_cells_RNA_cluster_embryo_WT.pdf", width=5, height=5)
+plot_cells(cds.WT, color_cells_by = "cluster", show_trajectory_graph = FALSE)
+dev.off()
+
+pdf("output/monocle3/plot_cells_RNA_partition_embryo_WT.pdf", width=5, height=5)
+plot_cells(cds.WT, color_cells_by = "partition", show_trajectory_graph = FALSE)
+dev.off()
+
+
+
+cds.cYAPKO <- as.cell_data_set(embryo.combined.sct.cYAPKO)
+cds.cYAPKO <- cluster_cells(cds.cYAPKO, resolution=1e-3) # also tries  1e-5 and 1e-1 but WEIRD
+
+pdf("output/monocle3/plot_cells_RNA_cluster_embryo_cYAPKO.pdf", width=5, height=5)
+plot_cells(cds.cYAPKO, color_cells_by = "cluster", show_trajectory_graph = FALSE)
+dev.off()
+
+pdf("output/monocle3/plot_cells_RNA_partition_embryo_cYAPKO.pdf", width=5, height=5)
+plot_cells(cds.cYAPKO, color_cells_by = "partition", show_trajectory_graph = FALSE)
+dev.off()
+
+
+
+
+```
+
+--> Not clear how to handle WT and cYAPKO as with the same resolution the partition is different; thus the trajectory will not be study on the same group of cells....
+
+
+## monocle3 with RNA assay
+Here is a 3rd version using RNA assay; `conda activate monocle3_V1`
 
 
 
@@ -6143,7 +6198,8 @@ cds_graph_test_results <- graph_test(cds,
 
 
 ## Save the output table
-write.table(cds_graph_test_results, file = "output/monocle3/cds_graph_test_results_RNA.txt", sep="\t", row.names=TRUE, quote=FALSE)
+# write.table(cds_graph_test_results, file = "output/monocle3/cds_graph_test_results_RNA.txt", sep="\t", row.names=TRUE, quote=FALSE)
+# cds_graph_test_results <- read.table("output/monocle3/cds_graph_test_results_RNA.txt", header = TRUE, sep = "\t", row.names = 1, quote = "")
 
 # Check expression of some genes
 rowData(cds)$gene_short_name <- row.names(rowData(cds))
@@ -6162,6 +6218,69 @@ pdf("output/monocle3/FeaturePlot_RNA_trajectory_partition1_Root1_TopDEGsGenes_em
 FeaturePlot(integrated.sub, features = head(deg_ids), max.cutoff = 10, cols = c("grey", "red"))
 dev.off()  
 
+
+## Plot gene as a function of pseudotime
+#### Import DEGs
+cds_graph_test_results <- read.table("output/monocle3/cds_graph_test_results_RNA.txt", header = TRUE, sep = "\t", row.names = 1, quote = "")
+rowData(cds)$gene_short_name <- row.names(rowData(cds))
+head(cds_graph_test_results, error=FALSE, message=FALSE, warning=FALSE)
+deg_ids <- rownames(subset(cds_graph_test_results[order(cds_graph_test_results$morans_I, decreasing = TRUE),], q_value < 0.05))
+### Identify top 10 morans_I genes
+ordered_results <- cds_graph_test_results[order(cds_graph_test_results$morans_I, decreasing = TRUE), ]
+top_morans_I <- rownames(ordered_results)[1:10]
+
+partition_1_cds <- as.cell_data_set(integrated.sub, assay = "RNA")
+partition_1_cds <- estimate_size_factors(partition_1_cds)
+
+
+partition_1_cds <- cds[rowData(cds)$gene_short_name %in% top_morans_I,
+                       colData(cds)$monocle3_partitions %in% c("1")]
+partition_1_cds <- order_cells(partition_1_cds)
+
+partition_1_cds <- partition_1_cds[,Matrix::colSums(exprs(partition_1_cds)) != 0]
+partition_1_cds <- estimate_size_factors(partition_1_cds)
+
+
+pdf("output/monocle3/plot_genes_in_pseudotime_trajectory_partition1_top_morans_I_embryo.pdf", width=10, height=12)
+plot_genes_in_pseudotime(partition_1_cds,
+                         color_cells_by="cluster.annot",
+                         min_expr=0.5)
+dev.off()
+
+### Identify top 10 qvalue genes
+ordered_results <- cds_graph_test_results[order(cds_graph_test_results$q_value, decreasing = FALSE), ]
+top_qvalue <- rownames(ordered_results)[1:10]
+
+partition_1_cds <- as.cell_data_set(integrated.sub, assay = "RNA")
+partition_1_cds <- estimate_size_factors(partition_1_cds)
+
+
+partition_1_cds <- cds[rowData(cds)$gene_short_name %in% top_qvalue,
+                       colData(cds)$monocle3_partitions %in% c("1")]
+partition_1_cds <- order_cells(partition_1_cds)
+
+partition_1_cds <- partition_1_cds[,Matrix::colSums(exprs(partition_1_cds)) != 0]
+partition_1_cds <- estimate_size_factors(partition_1_cds)
+
+
+pdf("output/monocle3/plot_genes_in_pseudotime_trajectory_partition1_top_qvalue_embryo.pdf", width=10, height=12)
+plot_genes_in_pseudotime(partition_1_cds,
+                         color_cells_by="cluster.annot",
+                         min_expr=0.5)
+dev.off()
+
+
+# GEnerate heatmap
+
+
+XXXX
+
+
+
+
+
+
+
 ```
 
 --> Using RNA assay the clustering is slightly better; more in agreement with what we have in our previous Seurat UMAP
@@ -6170,131 +6289,56 @@ dev.off()
 
 --> There is in the [UCDavis tutorial](https://ucdavis-bioinformatics-training.github.io/2021-August-Advanced-Topics-in-Single-Cell-RNA-Seq-Trajectory-and-Velocity/data_analysis/monocle_fixed) a part where it generate heatmap with module of co-expressed genes but not sure that is necessary for us + it FAIL!
 
-
-3rd try using RNA and separate WT and cYAPKO
-
---> Then we could do Venn diagram to check the gene specific pseudotime-diff in WT and cYPAKO and plot their expression along pseudotime in x to stregnthen differences!!
+--> cds_graph_test_results output check morans_I column which is between 0 and 1 and 1 = positive correlation with pseudotime (help [here](https://cole-trapnell-lab.github.io/monocle3/docs/differential/) )
+----> The one with the highest qvalue does not seems to be the most interested; the high morans_I look more responsive to the pseudotime
 
 
 
 
-```R
-# Installation
-library("igraph") # important to load it first so that v1.4.3 and not v1.5 is used (v1.5 is loaded via Seurat per default!)
-library("monocle3")
-library("Seurat")
-library("SeuratWrappers")
-
-# Data import EMBRYO
-embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
-DefaultAssay(embryo.combined.sct) <- "RNA" # According to ucDAvis tutorial I think should be in integrative mode
-
-# subset WT and cYPAKO
-
-embryo.combined.sct.WT <- subset(embryo.combined.sct, subset = condition == "WT")
-embryo.combined.sct.cYAPKO <- subset(embryo.combined.sct, subset = condition == "cYAPKO")
-
-
-# convert data to seurat object to cell_data_set
-cds.WT <- as.cell_data_set(embryo.combined.sct.WT)
-cds.WT <- cluster_cells(cds.WT, resolution=1e-3) # also tries  1e-5 and 1e-1 but WEIRD
-
-pdf("output/monocle3/plot_cells_RNA_cluster_embryo_WT.pdf", width=5, height=5)
-plot_cells(cds.WT, color_cells_by = "cluster", show_trajectory_graph = FALSE)
-dev.off()
-
-pdf("output/monocle3/plot_cells_RNA_partition_embryo_WT.pdf", width=5, height=5)
-plot_cells(cds.WT, color_cells_by = "partition", show_trajectory_graph = FALSE)
-dev.off()
-
-
-
-cds.cYAPKO <- as.cell_data_set(embryo.combined.sct.cYAPKO)
-cds.cYAPKO <- cluster_cells(cds.cYAPKO, resolution=1e-3) # also tries  1e-5 and 1e-1 but WEIRD
-
-pdf("output/monocle3/plot_cells_RNA_cluster_embryo_cYAPKO.pdf", width=5, height=5)
-plot_cells(cds.cYAPKO, color_cells_by = "cluster", show_trajectory_graph = FALSE)
-dev.off()
-
-pdf("output/monocle3/plot_cells_RNA_partition_embryo_cYAPKO.pdf", width=5, height=5)
-plot_cells(cds.cYAPKO, color_cells_by = "partition", show_trajectory_graph = FALSE)
-dev.off()
-
-
-
-
-```
-
---> Not clear how to handle WT and cYAPKO as with the same resolution the partition is different; thus the trajectory will not be study on the same group of cells....
-
+## Condiments workflow to compare condition
 
 Let's try the Condiments workflow, specifically designed for this purpose:
 - https://www.biorxiv.org/content/10.1101/2021.03.09.433671v1.full
 - https://hectorrdb.github.io/condimentsPaper/ 
 
-Let's create a new conda env; `condiments_V1`: 
+
+
+The installation of both Seurat and condiments was EXTREMELY PAINFUL! What work was to install 1st condiments then install `Seurat_v4.0.3` in `R\4.1.0` and then some packages individually from `tidyverse` ; as follow:
 
 ```bash
-conda create -n condiments_V1 r-base=4.1.0 # same version as the paper
-conda activate condiments_V1
+conda create --name condiments_V5 --clone condiments_V1 # clone condiments_V1 where only condiments is installed
+conda activate condiments_V5
 ```
 
 ```R
-if (!require("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-
-BiocManager::install("condiments")
-
-
-```
-
-
-XXX
-
+# package installation 
+## install.packages("remotes")
+## remotes::install_github("cran/spatstat.core")
+## remotes::install_version("Seurat", "4.0.3")
+## install.packages("magrittr")
+## install.packages("magrittr")
+## install.packages("dplyr")
+## BiocManager::install("DelayedMatrixStats")
+## BiocManager::install("tradeSeq")
 
 
-
-
-
-
-
-
-
- `conda create --name condiments_V1 --clone monocle3_V1`
-```bash
-conda activate condiments_V1
-module load cairo 
-conda install -c conda-forge r-cairo
-```
-
-
-```R
-# Installation
-# BiocManager::install("condiments")
-# BiocManager::install("tradeSeq")
-# install.packages("Momocs")
-# install.packages("Cairo")
-# BiocManager::install("condiments")
-
-
-library("Seurat")
-library("slingshot")
-library("tradeSeq")
-library("RColorBrewer")
-library("cowplot")
-library("scales")
-library("magrittr")
-library("Momocs")
-library("dplyr")
-library("ggplot2")
+# packages
 library("condiments")
+library("Seurat")
+library("magrittr") # to use pipe
+library("dplyr") # to use bind_cols and sample_frac
+library("SingleCellExperiment") # for reducedDims
+library("ggplot2")
+library("slingshot")
+library("DelayedMatrixStats")
+library("tidyr")
+library("tradeSeq")
 
 # Data import EMBRYO
 embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
 DefaultAssay(embryo.combined.sct) <- "RNA" # According to condiments workflow
 
 # convert to SingleCellExperiment
-
 embryo <- as.SingleCellExperiment(embryo.combined.sct, assay = "RNA")
 
 
@@ -6322,122 +6366,180 @@ scores <- condiments::imbalance_score(
   conditions = df$condition,
   k = 20, smooth = 40)
 df$scores <- scores$scaled_scores
-p3 <- ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
+
+pdf("output/condiments/UMAP_imbalance_score_embryo.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
   geom_point(size = .7) +
   scale_color_viridis_c(option = "C") +
-  labs(col = "Scores")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# subset WT and cYPAKO
-
-embryo.combined.sct.WT <- subset(embryo.combined.sct, subset = condition == "WT")
-embryo.combined.sct.cYAPKO <- subset(embryo.combined.sct, subset = condition == "cYAPKO")
-
-
-# convert data to seurat object to cell_data_set
-cds.WT <- as.cell_data_set(embryo.combined.sct.WT)
-cds.WT <- cluster_cells(cds.WT, resolution=1e-3) # also tries  1e-5 and 1e-1 but WEIRD
-
-pdf("output/monocle3/plot_cells_RNA_cluster_embryo_WT.pdf", width=5, height=5)
-plot_cells(cds.WT, color_cells_by = "cluster", show_trajectory_graph = FALSE)
-dev.off()
-
-pdf("output/monocle3/plot_cells_RNA_partition_embryo_WT.pdf", width=5, height=5)
-plot_cells(cds.WT, color_cells_by = "partition", show_trajectory_graph = FALSE)
+  labs(col = "Scores") +
+  theme_classic()
 dev.off()
 
 
+#  Trajectory Inference and Differential Topology
 
-cds.cYAPKO <- as.cell_data_set(embryo.combined.sct.cYAPKO)
-cds.cYAPKO <- cluster_cells(cds.cYAPKO, resolution=1e-3) # also tries  1e-5 and 1e-1 but WEIRD
 
-pdf("output/monocle3/plot_cells_RNA_cluster_embryo_cYAPKO.pdf", width=5, height=5)
-plot_cells(cds.cYAPKO, color_cells_by = "cluster", show_trajectory_graph = FALSE)
+## PLOT with Separate trajectories
+embryo <- slingshot(embryo, reducedDim = 'UMAP',
+                 clusterLabels = colData(embryo)$cluster.annot,
+                 start.clus = 'Epiblast_PrimStreak', approx_points = 100)
+
+set.seed(42)
+topologyTest(SlingshotDataSet(embryo), embryo$condition) # KS_mean / 0.01 / 0.006288382 / 0.9789538
+
+
+sdss <- slingshot_conditions(SlingshotDataSet(embryo), embryo$condition)
+curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
+                    .id = "condition")
+
+pdf("output/condiments/UMAP_trajectory_separated_embryo.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(condition, Lineage, Order),
+            aes(group = interaction(Lineage, condition)), size = 1.5) +
+  theme_classic()
 dev.off()
 
-pdf("output/monocle3/plot_cells_RNA_partition_embryo_cYAPKO.pdf", width=5, height=5)
-plot_cells(cds.cYAPKO, color_cells_by = "partition", show_trajectory_graph = FALSE)
+##### MODIFY CODE BELOW TO ANNOTATE THE DIFFERENT TRAJECTORIES
+pdf("output/condiments/UMAP_trajectory_separated_trajAnnotated_embryo.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(condition, Lineage, Order),
+            aes(group = interaction(Lineage, condition)), size = 1.5) +
+  annotate("text", x = -10, y = 6, label = "Lineage1", size = 5) +
+  annotate("text", x = -7, y = -2.7, label = "Lineage2", size = 5) +
+  theme(legend.position = c(.15, .35),
+        legend.background = element_blank()) +
+  NULL
+dev.off()
+####### 
+
+
+
+
+
+
+## PLOT with common trajectories
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(embryo, "UMAP")),
+  slingPseudotime(embryo) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(embryo) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+         pst = if_else(Lineage1 > Lineage2, Lineage1_pst, Lineage2_pst),
+        # pst = max(pst) - pst)
+)
+curves <- slingCurves(embryo, as.df = TRUE)
+
+pdf("output/condiments/UMAP_trajectory_common_embryo.pdf", width=5, height=5)
+ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
+  geom_point(size = .7, aes(col = pst)) +
+  scale_color_viridis_c() +
+  labs(col = "Pseudotime") +
+  geom_path(data = curves %>% arrange(Order),
+            aes(group = Lineage), col = "black", size = 1.5) +
+  theme_classic()
 dev.off()
 
-XXX
 
-# subsetting partition
-integrated.sub <- subset(as.Seurat(cds, assay = NULL), monocle3_partitions == 1)
-cds <- as.cell_data_set(integrated.sub)
-
-# Trajectory analysis
-## RAW
-cds <- learn_graph(cds, use_partition = TRUE, verbose = TRUE)
-
-pdf("output/monocle3/plot_cells_RNA_trajectory_partition1_embryo.pdf", width=5, height=5)
-plot_cells(cds,
-           color_cells_by = "cluster",
-           label_groups_by_cluster=FALSE,
-           label_leaves=FALSE,
-           label_branch_points=FALSE)
+### With label
+#### Calculate midpoint for each trajectory to place the label
+curves_midpoints <- curves %>%
+  group_by(Lineage) %>%
+  summarise(UMAP_1 = median(UMAP_1),
+            UMAP_2 = median(UMAP_2))
+pdf("output/condiments/UMAP_trajectory_common_label_embryo.pdf", width=5, height=5)
+ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
+  geom_point(size = .7, aes(col = pst)) +
+  scale_color_viridis_c() +
+  labs(col = "Pseudotime") +
+  geom_path(data = curves %>% arrange(Order),
+            aes(group = Lineage), col = "black", size = 1) +
+  geom_text(data = curves_midpoints, aes(label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Add labels
+  theme_classic()
 dev.off()
 
-## COLORED BY PSEUDOTIME
+# Differential Progression
+progressionTest(embryo, conditions = embryo$condition, lineages = TRUE)
 
-cds <- order_cells(cds, root_cells = colnames(cds[,clusters(cds) == 1]))
-pdf("output/monocle3/plot_cells_RNA_trajectory_partition1_Root1_embryo.pdf", width=5, height=5)
-plot_cells(cds,
-           color_cells_by = "pseudotime",
-           group_cells_by = "cluster",
-           label_cell_groups = FALSE,
-           label_groups_by_cluster=FALSE,
-           label_leaves=FALSE,
-           label_branch_points=FALSE,
-           label_roots = FALSE,
-           trajectory_graph_color = "grey60")
+prog_res <- progressionTest(embryo, conditions = embryo$condition, lineages = TRUE)
+
+
+df_3 <-  slingPseudotime(embryo) %>% as.data.frame() 
+
+df_3$condition <- embryo$condition
+df_3 <- df_3 %>% 
+  pivot_longer(-condition, names_to = "Lineage",
+               values_to = "pst") %>%
+  filter(!is.na(pst))
+
+pdf("output/condiments/densityPlot_trajectory_lineages_embryo.pdf", width=10, height=5)
+ggplot(df_3, aes(x = pst)) +
+  geom_density(alpha = .8, aes(fill = condition), col = "transparent") +
+  geom_density(aes(col = condition), fill = "transparent", size = 1.5) +
+  labs(x = "Pseudotime", fill = "condition") +
+  facet_wrap(~Lineage, scales = "free_x") +
+  guides(col = "none", fill = guide_legend(
+    override.aes = list(size = 1.5, col = c("blue", "red"))
+  )) +
+  scale_fill_manual(values = c("blue", "red")) +
+  scale_color_manual(values = c("blue", "red")) +
+  theme_bw()
 dev.off()
 
 
-## PLOT as seurat object
-integrated.sub <- as.Seurat(cds, assay = NULL)
-pdf("output/monocle3/FeaturePlot_RNA_trajectory_partition1_Root1_embryo.pdf", width=5, height=5)
-FeaturePlot(integrated.sub, "monocle3_pseudotime")
-dev.off()
+# Differential fate selection
+fateSelectionTest(embryo, conditions = embryo$condition)
+## --> FAIL
+##
+
+#  Differential expression
+
+## Identify the needed number of knots 
+set.seed(42)
+BPPARAM <- BiocParallel::bpparam()
+BPPARAM$workers <- 3
+icMat <- evaluateK(counts = embryo, sds = SlingshotDataSet(embryo), 
+                   conditions = factor(embryo$condition),
+                   nGenes = 300, parallel = FALSE, BPPARAM = BPPARAM, k = 3:7) # set parallel = FALSE otherwise the code never end!
+icMat
+### !!! --> EXAMINE icMat to determine the optimal nb of knots for the GAM  !!! 
+
+#### ->  save.image(file="output/condiments/condiments_embryo_V1.RData")
+
+XXXXX LOAD !!! Re-run icMat if needed!
 
 
-# Pseudotime differential genes (1 hour!!!)
-cds_graph_test_results <- graph_test(cds,
-                                     neighbor_graph = "principal_graph",
-                                     cores = 8)
+### load("output/condiments/condiments_embryo_V1.RData")
 
+## Fit GAM with the indicated nb of knots (4 to 7 works for most data according to developers) https://github.com/statOmics/tradeSeq/issues/54
 
-## Save the output table
-write.table(cds_graph_test_results, file = "output/monocle3/cds_graph_test_results.txt", sep="\t", row.names=TRUE, quote=FALSE)
+embryo <- fitGAM(counts = embryo, conditions = factor(embryo$condition), nknots = 6) # change nknots here
 
 
 
 
+
+# DEGs between conditions within each lineage
+
+XXX ChatGPT
+## Perform the Differential Expression Analysis:
+condRes <- conditionTest(embryo, l2fc = log2(2), lineages = TRUE)
+## Adjust for Multiple Testing:
+condRes$padj <- p.adjust(condRes$pvalue_lineage1, "fdr")
+## Filter Based on Adjusted p-value:
+conditionGenes <- rownames(condRes)[condRes$padj <= 0.05]
+conditionGenes <- conditionGenes[!is.na(conditionGenes)]
 ```
 
+--> I did all the tutorial from [here](https://hectorrdb.github.io/condimentsPaper/articles/Fibrosis.html) 
+----> This part Differential fate selection FAIL; but not sure it is usefull
 
+--> prog_res? Lineage all pvalue signif! (paste in the ppt Conchi 20231005)
 
-
+to check this : https://www.bioconductor.org/packages/devel/bioc/vignettes/condiments/inst/doc/condiments.html
 

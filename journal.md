@@ -147,8 +147,20 @@ library("ensembldb")
 --> Same but also allow Shiny app creation!
 
 ### monocle3
-Only Monocle3 and Seurat
+Only `monocle3` and `Seurat_v_5`
 
 ### monocle3_V1
 
---> Same but also with SeuratWrappers
+--> Same but also with `SeuratWrappers`
+
+### condiments_V1
+
+-->  `condiments` only
+
+### condiments_V5
+
+--> `condiments` with `Seurat_v_4`
+
+*--> Can delete condiments_V2, V3, V4*
+
+
