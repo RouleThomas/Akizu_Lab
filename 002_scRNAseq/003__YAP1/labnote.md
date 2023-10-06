@@ -2604,6 +2604,8 @@ srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 2000 & srat_c
 srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$percent.mt > 25 & srat_cYAPKO@meta.data$QC == 'Pass','High_MT',srat_cYAPKO@meta.data$QC)
 srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 2000 & srat_cYAPKO@meta.data$QC != 'Pass' & srat_cYAPKO@meta.data$QC != 'High_MT',paste('High_MT',srat_cYAPKO@meta.data$QC,sep = ','),srat_cYAPKO@meta.data$QC)
 table(srat_cYAPKO[['QC']])
+
+
 ## V2 more stringeant; define after looking at integration
 ### Mark doublets
 srat_WT[['QC']] <- ifelse(srat_WT@meta.data$Is_doublet == 'True', 'Doublet', 'Pass')
@@ -3114,6 +3116,24 @@ pdf("output/seurat/UMAP_control_cYAPKO.pdf", width=10, height=6)
 DimPlot(embryo.combined.sct, reduction = "umap", split.by = "condition", label=TRUE)
 dev.off()
 
+
+
+
+
+## PLAY WITH RESOLUTION AFTER CONCHI MEETING 20231005
+## individualize germ cells; but fail at separating  
+DefaultAssay(embryo.combined.sct) <- "integrated"
+
+embryo.combined.sct <- RunPCA(embryo.combined.sct, verbose = FALSE, npcs = 19)
+embryo.combined.sct <- RunUMAP(embryo.combined.sct, reduction = "pca", dims = 1:19, verbose = FALSE)
+embryo.combined.sct <- FindNeighbors(embryo.combined.sct, reduction = "pca", k.param = 5, dims = 1:19)
+embryo.combined.sct <- FindClusters(embryo.combined.sct, resolution = 0.31, verbose = FALSE, algorithm = 4)
+
+embryo.combined.sct$condition <- factor(embryo.combined.sct$condition, levels = c("WT", "cYAPKO")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_control_cYPAKO_test.pdf", width=10, height=6)
+DimPlot(embryo.combined.sct, reduction = "umap", split.by = "condition", label=TRUE)
+dev.off()
 
 
 
@@ -5819,6 +5839,8 @@ write.table(wide_df_filter, file = "output/Pathway/msigdbr_Homo_Sapiens_C2_allCa
 
 ```
 
+--> **To reproduce code; follow "PRO WINNER" or "WINNER PRO"...**
+
 --> For automatic cell type annotation; the [EasyCellType] [shiny app](https://biostatistics.mdanderson.org/shinyapps/EasyCellType/) has been tested. 
 ----> Works great! Can play with the pval cutoff; between 0.3-0.5 is ok
 
@@ -6546,7 +6568,7 @@ conda activate condiments_V5
 sbatch scripts/fitGAM_6knots.sh # 5756977
 ```
 
-
+--> `scripts/fitGAM_6knots.sh` 24hrs still running... XXX
 
 
 to check:
