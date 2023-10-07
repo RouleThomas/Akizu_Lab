@@ -3127,11 +3127,11 @@ DefaultAssay(embryo.combined.sct) <- "integrated"
 embryo.combined.sct <- RunPCA(embryo.combined.sct, verbose = FALSE, npcs = 19)
 embryo.combined.sct <- RunUMAP(embryo.combined.sct, reduction = "pca", dims = 1:19, verbose = FALSE)
 embryo.combined.sct <- FindNeighbors(embryo.combined.sct, reduction = "pca", k.param = 5, dims = 1:19)
-embryo.combined.sct <- FindClusters(embryo.combined.sct, resolution = 0.31, verbose = FALSE, algorithm = 4)
+embryo.combined.sct <- FindClusters(embryo.combined.sct, resolution = 0.3, verbose = FALSE, algorithm = 4)
 
 embryo.combined.sct$condition <- factor(embryo.combined.sct$condition, levels = c("WT", "cYAPKO")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_control_cYPAKO_test.pdf", width=10, height=6)
+pdf("output/seurat/UMAP_control_cYAPKO_V2clust.pdf", width=10, height=6)
 DimPlot(embryo.combined.sct, reduction = "umap", split.by = "condition", label=TRUE)
 dev.off()
 
@@ -3898,13 +3898,17 @@ dev.off()
 
 
 # save
-saveRDS(embryo.combined.sct, file = "output/seurat/embryo.combined.sct.rds")
+## saveRDS(embryo.combined.sct, file = "output/seurat/embryo.combined.sct.rds")
 embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
 
 
 # Check some genes
 DefaultAssay(embryo.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
 
+## post 20231005 Conchi meeting
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Aldh1a2_Cyp26a1.pdf", width=10, height=13)
+FeaturePlot(embryo.combined.sct, features = c("Aldh1a2", "Cyp26a1"), max.cutoff = 10, cols = c("grey", "red"), split.by = "condition")
+dev.off()
 
 ## change cutoff res for highly express genes
 pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Birc5_Chchd2.pdf", width=10, height=15)
@@ -3913,12 +3917,11 @@ dev.off()
 
 
 ## Loupe Browser increase in KO
-
-
-
 pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_increaseInLoupe.pdf", width=10, height=22)
 FeaturePlot(embryo.combined.sct, features = c("Tal1", "Gata2", "Cited1", "Sox18"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
 dev.off()
+
+
 
 
 
