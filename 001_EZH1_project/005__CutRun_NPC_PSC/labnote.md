@@ -535,18 +535,16 @@ plotCorrelation \
 --> The **peaks are called on the uniquely aligned reads** (it performed better on our previous CutRun)
 
 ***PEAK CALLING:***
---> **H3K27me3, SUZ12, EZH2, EZH1 in `broad`**
---> **H3K4me3 in `narrow`**
+--> **H3K27me3, SUZ12, EZH2, EZH1, H3K4me3 in `broad`**
+
 
 ```bash
 conda activate macs2
 # genotype per genotype
-sbatch scripts/macs2_raw_PSC.sh # 5784629
-sbatch scripts/macs2_raw_NPC.sh # 5784690
+sbatch scripts/macs2_raw_PSC.sh # 5784629 ok
+sbatch scripts/macs2_raw_NPC.sh # 5784690 ok
+sbatch scripts/macs2_raw_NPC_H3K4me3.sh # 5784847
 ```
-
-
-XXXXXXX  below code to modify:
 
 Then keep only the significant peaks (re-run the script to test different qvalue cutoff) and remove peaks overlapping with blacklist regions. MACS2 column9 output is -log10(qvalue) format so if we want 0.05; 
 - q0.05: `q value = -log10(0.05) = 1.30103`
@@ -561,10 +559,15 @@ conda activate bowtie2 # for bedtools
 sbatch scripts/macs2_raw_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
 ```
 
+**Optimal qvalue** according to IGV:
+- NPC_H3K27me3 WT and KO; 2.30103
+- NPC_SUZ12 WT and KO; 1.30103
+- NPC_EZH2 WT and KO; 1.30103
+- NPC_H3K4me3 WT and KO; 1.30103 
 
+- PSC XXX LLOD AON IGV AND CHECK
 
-
-
+--> No peak called for H3K27me1 samples
 
 
 

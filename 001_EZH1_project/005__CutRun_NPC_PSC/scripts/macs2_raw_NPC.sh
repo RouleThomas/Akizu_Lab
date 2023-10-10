@@ -53,7 +53,7 @@ for ((i=0; i<${#samples_and_controls[@]}; i+=2)); do
         -c output/bowtie2/${control}.unique.dupmark.sorted.bam \
         -f BAMPE --keep-dup auto \
         --nomodel -g hs \
-        --outdir ${macs2_out} -n ${sample}
+        --outdir ${macs2_out} -n ${sample} --broad
 done
 
 
