@@ -557,6 +557,9 @@ Then keep only the significant peaks (re-run the script to test different qvalue
 ```bash
 conda activate bowtie2 # for bedtools
 sbatch scripts/macs2_raw_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
+
+# quick command to print median size of peak within a bed
+awk '{print $3-$2}' your_bed_file.bed | sort -n | awk 'BEGIN {c=0; sum=0;} {a[c++]=$1; sum+=$1;} END {if (c%2) print a[int(c/2)]; else print (a[c/2-1]+a[c/2])/2;}'
 ```
 
 **Optimal qvalue** according to IGV:
@@ -564,8 +567,10 @@ sbatch scripts/macs2_raw_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run in inter
 - NPC_SUZ12 WT and KO; 1.30103
 - NPC_EZH2 WT and KO; 1.30103
 - NPC_H3K4me3 WT and KO; 1.30103 
+- PSC_EZH1cs KOEF1aEZH1; 1.30103 
+- PSC_SUZ12 EF1aEZH1 and synEZH1; 1.30103 
+- PSC_H3K27me3 EF1aEZH1 and synEZH1; 2.30103
 
-- PSC XXX LLOD AON IGV AND CHECK
 
 --> No peak called for H3K27me1 samples
 
