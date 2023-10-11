@@ -287,13 +287,20 @@ spikein_NPC_H3K27me1_scaling_factor = spikein_NPC_H3K27me1_read_prop %>%
     left_join(spikein_NPC_H3K27me1_read_prop_min) %>%
     mutate(scaling_factor = read_prop/min_prop)
 write.table(spikein_NPC_H3K27me1_scaling_factor, file="output/spikein/spikein_histone_NPC_H3K27me1_scaling_factor_fastp.txt", sep="\t", quote=FALSE, row.names=FALSE)
+
+
+
 ```
-
---> Analysis of histon content showed that there was a sample inversion. **NPC_KO_H3K27me1 = NPC_KO_H3K4me3**
-
 --> H3K27me1 seems it did not work; even though histone enrichment...
 
---> All scaling factors combined in `output/spikein/spikein_histone_scaling_factor_fastp.txt`
+--> Analysis of histone content showed that there was a sample inversion. **NPC_KO_H3K27me1 = NPC_KO_H3K4me3**. This HAS BEEN TAKEN into account using a separate input file `output/spikein/SpikeIn_QC_fastp_corr_H3K4me3_H3K27me1.xlsx`
+----> This file is GOOD and is the SF for NPC_H3K4me3; WT `1` and KO `1.09261114977754`
+
+
+--> All scaling factors combined in `output/spikein/spikein_histone_scaling_factor_fastp.txt` 
+
+***IMPORTANT NOTE***: The sample inversion is a mess. Let's instead, rename the bam file correctly; and add "nameCorr" at the end; and re-process EVERYTHING!!! to make sure I did not make weird stuff... I only make a new file for `NPC_KO_H3K4me3`
+
 
 ## Quality control plot
 
@@ -588,14 +595,52 @@ awk '{print $3-$2}' your_bed_file.bed | sort -n | awk 'BEGIN {c=0; sum=0;} {a[c+
 conda activate bowtie2
 
 # Map and count all samples to the E Coli genome
-sbatch scripts/bowtie2_spike_Ecoli_1.sh # 5796988
-sbatch scripts/bowtie2_spike_Ecoli_2.sh # 5796989
-sbatch scripts/bowtie2_spike_Ecoli_3.sh # 5796996
+sbatch scripts/bowtie2_spike_Ecoli_1.sh # 5796988 ok
+sbatch scripts/bowtie2_spike_Ecoli_2.sh # 5796989 ok
+sbatch scripts/bowtie2_spike_Ecoli_3.sh # 5796996 ok
 
 ```
---> There is some uniq mapped reads, around XXX % (in `003__CutRun` was less than 1%)
+--> There is some uniq mapped reads, around 10% (in `003__CutRun` was less than 1%)
 
-XXX below
+Now calculate SF in R, as for histone SF:
+
+XXXX CHECK xlsx
+
+```R
+# package
+library("tidyverse")
+library("readxl")
+library("ggpubr")
+
+# import df
+spikein <- read_excel("output/spikein/SpikeIn_MG1655.xlsx") 
+
+
+# Total reads per IP
+spikein_H3K27me3_total = spikein %>%
+    group_by(AB) %>%
+    mutate(total = sum(counts)) %>%
+    ungroup() %>%
+    distinct(AB, .keep_all = TRUE) %>%
+    select(AB,total)
+
+# Read proportion
+spikein_H3K27me3_read_prop = spikein %>%
+    left_join(spikein_H3K27me3_total) %>%
+    mutate(read_prop = counts / total)
+
+spikein_H3K27me3_read_prop_min = spikein_H3K27me3_read_prop %>%
+    group_by(AB) %>%
+    summarise(min_prop=min(read_prop))
+
+# Scaling factor
+spikein_H3K27me3_scaling_factor = spikein_H3K27me3_read_prop %>%
+    left_join(spikein_H3K27me3_read_prop_min) %>%
+    mutate(scaling_factor = read_prop/min_prop)
+
+
+write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_MG1655_scaling_factor.txt", sep="\t", quote=FALSE, row.names=FALSE)
+```
 
 ## Ecoli/Exogeneous genome
 ```bash
@@ -681,7 +726,7 @@ load("output/DiffBind/sample_count_macs2raw_unique_NPC_H3K4me3.RData")
 sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
 sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
 ### TMM 
-sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(5606820,12401403), normalize = DBA_NORM_TMM) # SAME HERE THE LIB for KO = the one from H3K27me1; 12401403 and not 8281344!!!
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(5606820,9124745), normalize = DBA_NORM_TMM) # SAME HERE THE LIB for KO = the one from H3K27me1; 9124745  and not 8281344 or 12401403!!!
 #### Here is to retrieve the scaling factor value
 sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
 console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
@@ -819,7 +864,7 @@ dba.plotPCA(sample_count,DBA_FACTOR, label=DBA_TREATMENT)
 dev.off()
 ### TMM 
 sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, normalize = DBA_NORM_TMM) 
-sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(8014384,10146334,5606820,12401403,5681310,7250570,6458862,7241732), normalize = DBA_NORM_TMM) # HERE sample inversion I make sure i use H3K27me1 for KO H3K4me3!
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(8014384,10146334,5606820,9124745,5681310,7250570,6458862,7241732), normalize = DBA_NORM_TMM) # HERE sample inversion I make sure i use H3K27me1 for KO H3K4me3!
 #### Here is to retrieve the scaling factor value
 sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
 console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
@@ -832,7 +877,6 @@ pdf("output/DiffBind/PCA_sample_macs2raw_unique_NPC_blackgreylist_LibHistoneScal
 dba.plotPCA(sample_count,DBA_FACTOR, label=DBA_TREATMENT)
 dev.off()
 
-XXX PURSUE HERE:
 
 ## PSC
 ### Generate the sample metadata (in ods/copy paste to a .csv file)
@@ -849,16 +893,50 @@ dev.off()
 pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC.pdf", width=14, height=20) 
 dba.plotPCA(sample_count,DBA_FACTOR, label=DBA_TREATMENT)
 dev.off()
-
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_PSC_blackgreylist.pdf", width=14, height=20)  
+plot(sample_count)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_blackgreylist.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_FACTOR, label=DBA_TREATMENT)
+dev.off()
+### TMM 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, normalize = DBA_NORM_TMM) 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(9881249, 8556476,7595642,6895662, 5978472), normalize = DBA_NORM_TMM) # HERE sample inversion I make sure i use H3K27me1 for KO H3K4me3!
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_PSC.txt")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_PSC_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20)  
+plot(sample_count)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_FACTOR, label=DBA_TREATMENT)
+dev.off()
 ```
 
 --> Cannot retrieve SF for PSC_EZH1cs because nothing to be compare with; as no peak detected in synEZH1, it cannot normalize the signal...
 
 --> **sample inversion for NPC_H3K4me3** for this I modified accordingly the KO samples; which is NPC_KO_H3K4me3 = NPC_KO_H3K27me1. Modified in the meta file...
+DETAIL MATH:
+Then with this; calculate the histone-norm-library-size:
+- library size: `samtools flagstat output/bowtie2/NPC_KO_H3K4me3_nameCorr.unique.dupmark.sorted.bam` = 8351320
+- So correct histone-scale library size = 9124745
+- Then correct SF:  0.803424 and 1.173694 for WT and KO
+
+
 
 Now that we have the DiffBind_TMM_unique SF; lets do **THOR** (*apply DiffBind SF as Reciprocal in THOR !!!*):
 ```bash
 $norm.factors
 xxx
 ```
+
+
+
+
 
