@@ -693,7 +693,7 @@ sbatch --dependency=afterany:48408:48409:48410 scripts/bigwigmerge_DiffBind_TMM.
 *NOTE: I used the same scaling factor for IP and IGG (not sure IGG should be used; maybe the SF already account for IGG)...*
 
 
---> The reciprocal are NOT good to use; so `output/bigwig_DiffBind_TMM` is good
+--> The non-reciprocal are NOT good to use; so `output/bigwig_DiffBind_TMM` is good
 
 --> replicates looks good!!!
 

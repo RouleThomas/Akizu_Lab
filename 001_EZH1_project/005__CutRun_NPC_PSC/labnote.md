@@ -604,7 +604,7 @@ sbatch scripts/bowtie2_spike_Ecoli_3.sh # 5796996 ok
 
 Now calculate SF in R, as for histone SF:
 
-XXXX CHECK xlsx
+--> SAMPLE INVERISON: *I put the 614496 NPC_KO_H3K27me1 value for NPC_KO_H3K4me3; and opposite; **so the output table is ALL GOOD no changes to make!!!**
 
 ```R
 # package
@@ -615,7 +615,10 @@ library("ggpubr")
 # import df
 spikein <- read_excel("output/spikein/SpikeIn_MG1655.xlsx") 
 
-
+## NPC
+spikein <- read_table("output/spikein/SpikeIn_MG1655.txt") %>%
+    filter(tissue == "NPC") %>%
+    dplyr::select(-tissue)
 # Total reads per IP
 spikein_H3K27me3_total = spikein %>%
     group_by(AB) %>%
@@ -623,24 +626,49 @@ spikein_H3K27me3_total = spikein %>%
     ungroup() %>%
     distinct(AB, .keep_all = TRUE) %>%
     select(AB,total)
-
 # Read proportion
-spikein_H3K27me3_read_prop = spikein %>%
+spikein_read_prop = spikein %>%
     left_join(spikein_H3K27me3_total) %>%
     mutate(read_prop = counts / total)
-
-spikein_H3K27me3_read_prop_min = spikein_H3K27me3_read_prop %>%
+spikein_read_prop_min = spikein_read_prop %>%
     group_by(AB) %>%
     summarise(min_prop=min(read_prop))
-
 # Scaling factor
-spikein_H3K27me3_scaling_factor = spikein_H3K27me3_read_prop %>%
-    left_join(spikein_H3K27me3_read_prop_min) %>%
+spikein_scaling_factor = spikein_read_prop %>%
+    left_join(spikein_read_prop_min) %>%
     mutate(scaling_factor = read_prop/min_prop)
+write.table(spikein_scaling_factor, file="output/spikein/spikein_MG1655_NPC_scaling_factor.txt", sep="\t", quote=FALSE, row.names=FALSE)
 
 
-write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_MG1655_scaling_factor.txt", sep="\t", quote=FALSE, row.names=FALSE)
+## PSC
+spikein <- read_table("output/spikein/SpikeIn_MG1655.txt") %>%
+    filter(tissue == "PSC") %>%
+    dplyr::select(-tissue)
+# Total reads per IP
+spikein_H3K27me3_total = spikein %>%
+    group_by(AB) %>%
+    mutate(total = sum(counts)) %>%
+    ungroup() %>%
+    distinct(AB, .keep_all = TRUE) %>%
+    select(AB,total)
+# Read proportion
+spikein_read_prop = spikein %>%
+    left_join(spikein_H3K27me3_total) %>%
+    mutate(read_prop = counts / total)
+spikein_read_prop_min = spikein_read_prop %>%
+    group_by(AB) %>%
+    summarise(min_prop=min(read_prop))
+# Scaling factor
+spikein_scaling_factor = spikein_read_prop %>%
+    left_join(spikein_read_prop_min) %>%
+    mutate(scaling_factor = read_prop/min_prop)
+write.table(spikein_scaling_factor, file="output/spikein/spikein_MG1655_PSC_scaling_factor.txt", sep="\t", quote=FALSE, row.names=FALSE)
 ```
+
+
+
+
+
 
 ## Ecoli/Exogeneous genome
 ```bash
@@ -929,12 +957,196 @@ Then with this; calculate the histone-norm-library-size:
 - Then correct SF:  0.803424 and 1.173694 for WT and KO
 
 
+Now let's do the same method but using the **MG1655_library_scaled information and collect new MG1655_DiffBind_TMM_SF**:
 
-Now that we have the DiffBind_TMM_unique SF; lets do **THOR** (*apply DiffBind SF as Reciprocal in THOR !!!*):
+
 ```bash
-$norm.factors
-xxx
+srun --mem=500g --pty bash -l
+conda activate DiffBind
 ```
+```R
+library("DiffBind") 
+
+# ONE PER ONE
+## NPC_H3K27me3
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_NPC_H3K27me3.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_NPC_H3K27me3.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_NPC_H3K27me3.RData")
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### TMM 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(12342151,9417384), normalize = DBA_NORM_TMM) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibMG1655Scaled_TMM_unique_SF_NPC_H3K27me3.txt")
+
+
+# NPC_H3K4me3
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_NPC_H3K4me3.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_NPC_H3K4me3.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_NPC_H3K4me3.RData")
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### TMM 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(7064593,8351320), normalize = DBA_NORM_TMM) # SAME HERE THE LIB for KO = I USED THE GOOD ONE!
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibMG1655Scaled_TMM_unique_SF_NPC_H3K4me3.txt")
+
+# NPC_SUZ12
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_NPC_SUZ12.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_NPC_SUZ12.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_NPC_SUZ12.RData")
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### TMM 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(12726134,7250570), normalize = DBA_NORM_TMM) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibMG1655Scaled_TMM_unique_SF_NPC_SUZ12.txt")
+
+
+# NPC_EZH2
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_NPC_EZH2.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_NPC_EZH2.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_NPC_EZH2.RData")
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### TMM 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, normalize = DBA_NORM_TMM) 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(8138166,7241732), normalize = DBA_NORM_TMM) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibMG1655Scaled_TMM_unique_SF_NPC_EZH2.txt")
+
+
+
+# PSC_H3K27me3
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_PSC_H3K27me3.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_PSC_H3K27me3.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_PSC_H3K27me3.RData")
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### TMM 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, normalize = DBA_NORM_TMM) 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(20925063,8556476), normalize = DBA_NORM_TMM) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LiMG1655Scaled_TMM_unique_SF_PSC_H3K27me3.txt")
+
+
+# PSC_SUZ12
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_PSC_SUZ12.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_PSC_SUZ12.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_PSC_SUZ12.RData")
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### TMM 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, normalize = DBA_NORM_TMM) 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(7595642,13308628), normalize = DBA_NORM_TMM) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibMG1655Scaled_TMM_unique_SF_PSC_SUZ12.txt")
+
+
+
+# PSC_EZH1cs
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_PSC_EZH1cs.txt", header = TRUE, sep = "\t")) # count fail as no peak for synEZH1...
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_PSC_EZH1cs_EF1a.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba) 
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_PSC_EZH1cs.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_PSC_EZH1cs.RData")
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### TMM 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, normalize = DBA_NORM_TMM) 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(5978472,7011234), normalize = DBA_NORM_TMM) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_PSC_EZH1cs.txt")
+
+```
+
+--> Cannot generate a MG1655_DiffBind_TMM SF for PSC_EZH1cs as no peak in the syn condition; so I put 1 for both...
+
+--> The SF collected are NOT the same as the one when I used the histone-spike in methiod. However; I trust more the E coli method. As when there is more E coli DNA then the SF is more than 1 thus increasing the library size, thus decreasing the signal as there is just more DNA!
+----> Interestingly, when doing the TMM normalization; it put very close togethe the SF generated from histone and from MG1655 method... Not sure, what to conclude....
+
+## Generate Spike in scaled bigwig
+
+--> Reciprocal from DiffBind_TMM is to be used when converting bam to bigwig!
+
+### Histone scaled Bigwig
+
+
+```bash
+conda activate deeptools
+
+sbatch scripts/bamtobigwig_histone_DiffBind_TMM_1.sh # 5811580
+sbatch scripts/bamtobigwig_histone_DiffBind_TMM_2.sh # 5811582
+sbatch scripts/bamtobigwig_histone_DiffBind_TMM_3.sh # 5811584
+```
+
+
+XXX
+
+
+### MG1655/E coli scaled bigwig
+
+
+```bash
+conda activate deeptools
+
+sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM_1.sh # 5812907
+sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM_2.sh # 5812908
+sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM_3.sh # 5812915
+```
+
+
+XXX
+
+
 
 
 
