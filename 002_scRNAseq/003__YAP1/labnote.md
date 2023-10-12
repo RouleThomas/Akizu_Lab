@@ -6442,17 +6442,14 @@ for (cell_type in cell_types) {
 all_markers <- FindAllMarkers(embryo.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
 write.table(all_markers, file = "output/seurat/srat_WT_cYAPKO_all_markers_V2clust.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
-XXXX
-
-
 
 # Display the top 10 CONSERVED marker genes of each cluster
 Idents(embryo.combined.sct) <- "cluster.annot"
 
 ## DEGs cluster versus all other
 Primordial_Germ_Cells.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Primordial_Germ_Cells", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Primordial_Germ_Cells")
-Unknow_2.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Unknow_2", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Unknow_2")
-Unknow_1.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Unknow_1", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Unknow_1")
+Unknow_2.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Unknown_2", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Unknown_2")
+Unknow_1.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Unknown_1", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Unknown_1")
 Gut.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Gut", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Gut")
 Notocord.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Notocord", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Notocord")
 Surface_Ectoderm.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Surface_Ectoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Surface_Ectoderm")
@@ -6466,24 +6463,26 @@ Pharyngeal_Mesoderm.conserved <- FindConservedMarkers(embryo.combined.sct, assay
 Paraxial_Mesoderm.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Paraxial_Mesoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Paraxial_Mesoderm")
 Caudal_Mesoderm.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Caudal_Mesoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Caudal_Mesoderm")
 Somitic_Mesoderm.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Somitic_Mesoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Somitic_Mesoderm")
-ExE_Ectoderm.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "ExE_Ectoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "ExE_Ectoderm")
+ExE_Ectoderm_1.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "ExE_Ectoderm_1", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "ExE_Ectoderm_1")
+ExE_Ectoderm_2.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "ExE_Ectoderm_2", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "ExE_Ectoderm_2")
 Epiblast_PrimStreak.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Epiblast_PrimStreak", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Epiblast_PrimStreak")
 
 
-
+Unknown_2.conserved = Unknow_2.conserved
+Unknown_1.conserved = Unknow_1.conserved
 
 
 ## Combine all conserved markers into one data frame
-all_conserved <- bind_rows(Primordial_Germ_Cells.conserved, Unknow_2.conserved, Unknow_1.conserved, Gut.conserved, Notocord.conserved, Surface_Ectoderm.conserved, Blood_Progenitor_2.conserved, Blood_Progenitor_1.conserved, Mixed_Mesoderm.conserved, Mesenchyme.conserved, Haematodenothelial_progenitors.conserved, Nascent_Mesoderm.conserved, Pharyngeal_Mesoderm.conserved, Paraxial_Mesoderm.conserved, Caudal_Mesoderm.conserved, Somitic_Mesoderm.conserved, ExE_Ectoderm.conserved, Epiblast_PrimStreak.conserved)
+all_conserved <- bind_rows(Primordial_Germ_Cells.conserved, Unknown_2.conserved, Unknown_1.conserved, Gut.conserved, Notocord.conserved, Surface_Ectoderm.conserved, Blood_Progenitor_2.conserved, Blood_Progenitor_1.conserved, Mixed_Mesoderm.conserved, Mesenchyme.conserved, Haematodenothelial_progenitors.conserved, Nascent_Mesoderm.conserved, Pharyngeal_Mesoderm.conserved, Paraxial_Mesoderm.conserved, Caudal_Mesoderm.conserved, Somitic_Mesoderm.conserved, ExE_Ectoderm_1.conserved, ExE_Ectoderm_2.conserved, Epiblast_PrimStreak.conserved)
 
 all_conserved$gene <- rownames(all_conserved)
 ## Write all conserved markers to a file
-write.table(all_conserved, file = "output/seurat/srat_all_conserved_markers_embryo.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(all_conserved, file = "output/seurat/srat_all_conserved_markers_embryo_V2clust.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 ## Find the top 10 conserved markers for each cluster
 top10_conserved <- all_conserved %>%
   mutate(cluster = factor(cluster, levels = c("Primordial_Germ_Cells",
-  "Unknow_2",
-  "Unknow_1",
+  "Unknown_2",
+  "Unknown_1",
   "Gut",
   "Notocord",
   "Surface_Ectoderm",
@@ -6497,7 +6496,8 @@ top10_conserved <- all_conserved %>%
   "Paraxial_Mesoderm",
   "Caudal_Mesoderm",
   "Somitic_Mesoderm",
-  "ExE_Ectoderm",
+  "ExE_Ectoderm_1",
+  "ExE_Ectoderm_2",
   "Epiblast_PrimStreak"))) %>% 
   separate(gene, into = c("gene", "suffix"), sep = "\\.\\.\\.", remove = TRUE, extra = "drop", fill = "right") %>% 
   group_by(cluster) %>% 
@@ -6505,8 +6505,8 @@ top10_conserved <- all_conserved %>%
   slice_head(n = 10) %>% 
   ungroup() %>% 
   arrange(match(cluster, c("Primordial_Germ_Cells",
-  "Unknow_2",
-  "Unknow_1",
+  "Unknown_2",
+  "Unknown_1",
   "Gut",
   "Notocord",
   "Surface_Ectoderm",
@@ -6520,14 +6520,15 @@ top10_conserved <- all_conserved %>%
   "Paraxial_Mesoderm",
   "Caudal_Mesoderm",
   "Somitic_Mesoderm",
-  "ExE_Ectoderm",
+  "ExE_Ectoderm_1",
+  "ExE_Ectoderm_2",
   "Epiblast_PrimStreak")))
 
 ## Find the top 3 conserved markers for each cluster
 top10_conserved <- all_conserved %>%
   mutate(cluster = factor(cluster, levels = c("Primordial_Germ_Cells",
-  "Unknow_2",
-  "Unknow_1",
+  "Unknown_2",
+  "Unknown_1",
   "Gut",
   "Notocord",
   "Surface_Ectoderm",
@@ -6541,7 +6542,8 @@ top10_conserved <- all_conserved %>%
   "Paraxial_Mesoderm",
   "Caudal_Mesoderm",
   "Somitic_Mesoderm",
-  "ExE_Ectoderm",
+  "ExE_Ectoderm_1",
+  "ExE_Ectoderm_2",
   "Epiblast_PrimStreak"))) %>% 
   separate(gene, into = c("gene", "suffix"), sep = "\\.\\.\\.", remove = TRUE, extra = "drop", fill = "right") %>% 
   group_by(cluster) %>% 
@@ -6549,8 +6551,8 @@ top10_conserved <- all_conserved %>%
   slice_head(n = 3) %>% 
   ungroup() %>% 
   arrange(match(cluster, c("Primordial_Germ_Cells",
-  "Unknow_2",
-  "Unknow_1",
+  "Unknown_2",
+  "Unknown_1",
   "Gut",
   "Notocord",
   "Surface_Ectoderm",
@@ -6564,18 +6566,19 @@ top10_conserved <- all_conserved %>%
   "Paraxial_Mesoderm",
   "Caudal_Mesoderm",
   "Somitic_Mesoderm",
-  "ExE_Ectoderm",
+  "ExE_Ectoderm_1",
+  "ExE_Ectoderm_2",
   "Epiblast_PrimStreak")))
 
 
 
 ## Write the top 10 conserved markers for each cluster to a file
-write.table(top10_conserved, file = "output/seurat/srat_top10_conserved_markers_embryo.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(top10_conserved, file = "output/seurat/srat_top10_conserved_markers_embryo_V2clust.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 ## Visualize the top 10/3 conserved markers for each cluster
 marker_genes_conserved <- unique(top10_conserved$gene)
 levels(embryo.combined.sct) <- c("Primordial_Germ_Cells",
-  "Unknow_2",
-  "Unknow_1",
+  "Unknown_2",
+  "Unknown_1",
   "Gut",
   "Notocord",
   "Surface_Ectoderm",
@@ -6589,18 +6592,18 @@ levels(embryo.combined.sct) <- c("Primordial_Germ_Cells",
   "Paraxial_Mesoderm",
   "Caudal_Mesoderm",
   "Somitic_Mesoderm",
-  "ExE_Ectoderm",
+  "ExE_Ectoderm_1",
+  "ExE_Ectoderm_2",
   "Epiblast_PrimStreak")
-pdf("output/seurat/DotPlot_SCT_top10_conserved_embryo.pdf", width=35, height=5)
-pdf("output/seurat/DotPlot_SCT_top3_conserved_embryo.pdf", width=18, height=5)
 
+pdf("output/seurat/DotPlot_SCT_top3_conserved_embryo_V2clust.pdf", width=18, height=5)
 DotPlot(embryo.combined.sct, features = marker_genes_conserved, cols = c("grey", "red")) + RotatedAxis()
 dev.off()
 
 
 # save
-## saveRDS(embryo.combined.sct, file = "output/seurat/embryo.combined.sct.rds")
-embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
+## saveRDS(embryo.combined.sct, file = "output/seurat/embryo.combined.sct_V2clust.rds")
+embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct_V2clust.rds")
 
 
 
@@ -6609,7 +6612,7 @@ embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
 DefaultAssay(embryo.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
 
 ## post 20231005 Conchi meeting
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Aldh1a2_Cyp26a1.pdf", width=10, height=13)
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Aldh1a2_Cyp26a1_V2clust.pdf", width=10, height=13)
 FeaturePlot(embryo.combined.sct, features = c("Aldh1a2", "Cyp26a1"), max.cutoff = 10, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
@@ -6641,9 +6644,14 @@ library("msigdbr")
 library("ComplexHeatmap")
 library("ggrepel")
 library("ggpubr")
-embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
+embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct_V2clust.rds")
 
 DefaultAssay(embryo.combined.sct) <- "RNA" # Recommended 
+
+
+
+XXXX MODIFY CODE BELOW TO DO IT ON A LIST OF GENES; WAIT PATHWAY GENE LIST CONCHI!!! XXXX
+
 
 
 # Isolate WT and cYAPKO
@@ -7561,7 +7569,7 @@ library("rsconnect")
 embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
 DefaultAssay(embryo.combined.sct) <- "RNA" # 
 
-# Generate Shiny app
+# Generate Shiny app V1
 scConf = createConfig(embryo.combined.sct)
 
 makeShinyApp(embryo.combined.sct, scConf, gene.mapping = TRUE,
@@ -7570,6 +7578,15 @@ makeShinyApp(embryo.combined.sct, scConf, gene.mapping = TRUE,
 
 rsconnect::deployApp('shinyApp_embryo_V1')
 
+
+# Generate Shiny app V2 new clustering Conchi meeting 20231005
+scConf = createConfig(embryo.combined.sct)
+
+makeShinyApp(embryo.combined.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "Embryo_V2",
+             shiny.dir = "shinyApp_embryo_V2/") 
+
+rsconnect::deployApp('shinyApp_embryo_V2')
 
 
 
@@ -7638,8 +7655,12 @@ I needed to install in additino in R Seurat (install.packages) and R.utils and i
 packageurl <- "https://cran.r-project.org/src/contrib/Archive/igraph/igraph_1.4.3.tar.gz"
 install.packages(packageurl, repos=NULL, type="source")
 
+```bash
+conda create --name monocle3_V1 --clone monocle3
+conda activate monocle3_V1
+```
 
-`conda create --name monocle3_V1 --clone monocle3`
+
 
 
 Here is a 1st version using the integrated assay; not sure that is the best as the DEGs then failed...
@@ -7653,6 +7674,8 @@ library("SeuratWrappers")
 
 # Data import EMBRYO
 embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
+embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct_V2clust.rds")
+
 DefaultAssay(embryo.combined.sct) <- "integrated" # According to ucDAvis tutorial I think should be in integrative mode
 
 # convert data to seurat object to cell_data_set
@@ -7663,12 +7686,14 @@ cds <- cluster_cells(cds, resolution=1e-3) # also tries  1e-5 and 1e-1 but WEIRD
 pdf("output/monocle3/plot_cells_cluster_embryo.pdf", width=5, height=5)
 pdf("output/monocle3/plot_cells_cluster_res1e5_embryo.pdf", width=5, height=5)
 pdf("output/monocle3/plot_cells_cluster_res1e1_embryo.pdf", width=5, height=5)
+pdf("output/monocle3/plot_cells_cluster_embryo_V2clust.pdf", width=5, height=5)
 plot_cells(cds, color_cells_by = "cluster", show_trajectory_graph = FALSE)
 dev.off()
 
 pdf("output/monocle3/plot_cells_partition_embryo.pdf", width=5, height=5)
 pdf("output/monocle3/plot_cells_partition_res1e5_embryo.pdf", width=5, height=5)
 pdf("output/monocle3/plot_cells_partition_res1e1_embryo.pdf", width=5, height=5)
+pdf("output/monocle3/plot_cells_partition_embryo_V2clust.pdf", width=5, height=5)
 plot_cells(cds, color_cells_by = "partition", show_trajectory_graph = FALSE)
 dev.off()
 
@@ -7682,6 +7707,7 @@ cds <- as.cell_data_set(integrated.sub)
 cds <- learn_graph(cds, use_partition = TRUE, verbose = FALSE)
 
 pdf("output/monocle3/plot_cells_trajectory_partition1_embryo.pdf", width=5, height=5)
+pdf("output/monocle3/plot_cells_trajectory_partition1_embryo_V2clust.pdf", width=5, height=5)
 plot_cells(cds,
            color_cells_by = "cluster",
            label_groups_by_cluster=FALSE,
@@ -7691,8 +7717,10 @@ dev.off()
 
 ## COLORED BY PSEUDOTIME
 
-cds <- order_cells(cds, root_cells = colnames(cds[,clusters(cds) == 1]))
+cds <- order_cells(cds, root_cells = colnames(cds[,clusters(cds) == 1])) # for V1
+cds <- order_cells(cds, root_cells = colnames(cds[,clusters(cds) == 3])) # for V2cvlust
 pdf("output/monocle3/plot_cells_trajectory_partition1_Root1_embryo.pdf", width=5, height=5)
+pdf("output/monocle3/plot_cells_trajectory_partition1_Root1_embryo_V2clust.pdf", width=5, height=5)
 plot_cells(cds,
            color_cells_by = "pseudotime",
            group_cells_by = "cluster",
@@ -7708,6 +7736,7 @@ dev.off()
 ## PLOT as seurat object
 integrated.sub <- as.Seurat(cds, assay = NULL)
 pdf("output/monocle3/FeaturePlot_trajectory_partition1_Root1_embryo.pdf", width=5, height=5)
+pdf("output/monocle3/FeaturePlot_trajectory_partition1_Root1_embryo_V2clust.pdf", width=5, height=5)
 FeaturePlot(integrated.sub, "monocle3_pseudotime")
 dev.off()
 
@@ -7720,6 +7749,7 @@ cds_graph_test_results <- graph_test(cds,
 
 ## Save the output table
 write.table(cds_graph_test_results, file = "output/monocle3/cds_graph_test_results.txt", sep="\t", row.names=TRUE, quote=FALSE)
+
 
 
 
@@ -7807,11 +7837,11 @@ cds <- as.cell_data_set(embryo.combined.sct)
 cds <- cluster_cells(cds, resolution=1e-3) # also tries  1e-5 and 1e-1 but WEIRD
 
 
-pdf("output/monocle3/plot_cells_RNA_cluster_embryo.pdf", width=5, height=5)
+pdf("output/monocle3/plot_cells_RNA_cluster_embryo_V2clust.pdf", width=5, height=5)
 plot_cells(cds, color_cells_by = "cluster", show_trajectory_graph = FALSE)
 dev.off()
 
-pdf("output/monocle3/plot_cells_RNA_partition_embryo.pdf", width=5, height=5)
+pdf("output/monocle3/plot_cells_RNA_partition_embryo_V2clust.pdf", width=5, height=5)
 plot_cells(cds, color_cells_by = "partition", show_trajectory_graph = FALSE)
 dev.off()
 
@@ -7824,7 +7854,7 @@ cds <- as.cell_data_set(integrated.sub)
 ## RAW
 cds <- learn_graph(cds, use_partition = TRUE, verbose = TRUE)
 
-pdf("output/monocle3/plot_cells_RNA_trajectory_partition1_embryo.pdf", width=5, height=5)
+pdf("output/monocle3/plot_cells_RNA_trajectory_partition1_embryo_V2clust.pdf", width=5, height=5)
 plot_cells(cds,
            color_cells_by = "cluster",
            label_groups_by_cluster=FALSE,
@@ -7834,8 +7864,8 @@ dev.off()
 
 ## COLORED BY PSEUDOTIME
 
-cds <- order_cells(cds, root_cells = colnames(cds[,clusters(cds) == 1]))
-pdf("output/monocle3/plot_cells_RNA_trajectory_partition1_Root1_embryo.pdf", width=5, height=5)
+cds <- order_cells(cds, root_cells = colnames(cds[,clusters(cds) == 3]))
+pdf("output/monocle3/plot_cells_RNA_trajectory_partition1_Root1_embryo_V2clust.pdf", width=5, height=5)
 plot_cells(cds,
            color_cells_by = "pseudotime",
            group_cells_by = "cluster",
@@ -7850,7 +7880,7 @@ dev.off()
 
 ## PLOT as seurat object
 integrated.sub <- as.Seurat(cds, assay = NULL)
-pdf("output/monocle3/FeaturePlot_RNA_trajectory_partition1_Root1_embryo.pdf", width=5, height=5)
+pdf("output/monocle3/FeaturePlot_RNA_trajectory_partition1_Root1_embryo_V2clust.pdf", width=5, height=5)
 FeaturePlot(integrated.sub, "monocle3_pseudotime")
 dev.off()
 
@@ -7862,7 +7892,7 @@ cds_graph_test_results <- graph_test(cds,
 
 
 ## Save the output table
-# write.table(cds_graph_test_results, file = "output/monocle3/cds_graph_test_results_RNA.txt", sep="\t", row.names=TRUE, quote=FALSE)
+# write.table(cds_graph_test_results, file = "output/monocle3/cds_graph_test_results_RNA_V2clust.txt", sep="\t", row.names=TRUE, quote=FALSE)
 # cds_graph_test_results <- read.table("output/monocle3/cds_graph_test_results_RNA.txt", header = TRUE, sep = "\t", row.names = 1, quote = "")
 
 # Check expression of some genes
@@ -7993,6 +8023,8 @@ library("tradeSeq")
 
 # Data import EMBRYO
 embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
+embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct_V2clust.rds") XXX
+
 DefaultAssay(embryo.combined.sct) <- "RNA" # According to condiments workflow
 
 # convert to SingleCellExperiment

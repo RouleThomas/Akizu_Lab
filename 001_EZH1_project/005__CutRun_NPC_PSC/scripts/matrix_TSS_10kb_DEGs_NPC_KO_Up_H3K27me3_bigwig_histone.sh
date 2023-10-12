@@ -6,7 +6,7 @@
 computeMatrix reference-point --referencePoint TSS \
     -b 10000 -a 10000 \
     -R ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_NPC_KO_Up.gtf \
-    -S output/bigwig_histone_DiffBind_TMM/NPC_WT_H3K27me3.dupmark.sorted.bw output/bigwig_histone_DiffBind_TMM/NPC_KO_H3K27me3.dupmark.sorted.bw \
+    -S output/bigwig_histone_DiffBind_TMM/NPC_WT_H3K27me3.unique.dupmark.sorted.bw output/bigwig_histone_DiffBind_TMM/NPC_KO_H3K27me3.unique.dupmark.sorted.bw \
     --skipZeros \
     --missingDataAsZero \
     --blackListFileName ../../Master/meta/hg38-blacklist.v2.bed \

@@ -1164,18 +1164,21 @@ Let's use our RNAseq in NPC, and generate heatmap of H3K27me3 CutRun signal for 
 ```bash
 conda activate deeptools
 
-sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig.sh # 5827366
-sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig.sh # 5827369
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig.sh # 5827366 ok
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig.sh # 5827369 ok
 
-sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig_histone.sh # 5827384
-sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_histone.sh # 5827385
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig_histone.sh # 5835369
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_histone.sh # 5835370
 
-sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig_MG1655.sh # 5827386
-sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_MG1655.sh # 5827387
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig_MG1655.sh # 5835363
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_MG1655.sh # 5835367
+
 
 ```
 
---> XXX
+--> The **raw bigwig is not good**; non normalized file is NOT in agreement with gene expression; H3K27me3 signal always higher in the NPC_KO
+
+
 
 
 
