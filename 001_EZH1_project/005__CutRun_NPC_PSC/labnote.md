@@ -1123,13 +1123,11 @@ writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHiston
 ```bash
 conda activate deeptools
 
-sbatch scripts/bamtobigwig_histone_DiffBind_TMM_1.sh # 5811580
-sbatch scripts/bamtobigwig_histone_DiffBind_TMM_2.sh # 5811582
-sbatch scripts/bamtobigwig_histone_DiffBind_TMM_3.sh # 5811584
+sbatch scripts/bamtobigwig_histone_DiffBind_TMM_1.sh # 5811580 ok
+sbatch scripts/bamtobigwig_histone_DiffBind_TMM_2.sh # 5811582 ok
+sbatch scripts/bamtobigwig_histone_DiffBind_TMM_3.sh # 5811584 ok
 ```
 
-
-XXX
 
 
 ### MG1655/E coli scaled bigwig
@@ -1138,16 +1136,46 @@ XXX
 ```bash
 conda activate deeptools
 
-sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM_1.sh # 5812907
-sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM_2.sh # 5812908
-sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM_3.sh # 5812915
+sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM_1.sh # 5812907 ok
+sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM_2.sh # 5812908 ok
+sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM_3.sh # 5812915 ok
 ```
 
 
-XXX
+--> Both bigwig norm method are very similar... 
+
+Check some known target regulated in 2months neurons:
+--> NEUROG2 seems less in KO which is good.
+--> EFNA5 tiny decrease in KO (only in normalized data!)
+--> GRIK3 tiny increase in KO
+
+--> Something is WEIRD... When samples have MORE spike in, their signal should be reduced, as they overall have more DNA; but if I used the reciprocal from DiffBind_TMM; this is not respected (ie. sample with more spike in, we increased their signal...!)... That is true for both histone/MG1655-spike in DiffBind TMM norm...
+----> What should be the BEST to use, is then the NON-reciprocal_DiffBind_TMM !!!
+------> Let's try and compare with gene expression...! Maybe it is still good as we take into account the library size with the DiffBind_TMM method??
+--------> YESSS in the end we correct the library size with the SF!!!!! So we 're good!!! reciprocal DiffBind_TMM IS TO BE USED!!
 
 
 
+# Deeptools plot on DEGs
+
+
+Let's use our RNAseq in NPC, and generate heatmap of H3K27me3 CutRun signal for up and down; to confirm the normalization works great. DEGs gtf already generated (`../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_NPC_KO_Up.gtf AND ../001__RNAseq/output/deseq2_hg38/ENCFF159KBI_DEGs_NPC_KO_Down.gtf`)
+
+```bash
+conda activate deeptools
+
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig.sh # 5827366
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig.sh # 5827369
+
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig_histone.sh # 5827384
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_histone.sh # 5827385
+
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig_MG1655.sh # 5827386
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_MG1655.sh # 5827387
+
+```
+
+--> XXX
 
 
 
