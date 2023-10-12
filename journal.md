@@ -142,7 +142,7 @@ library("ensembldb")
 
 
 
-### scRNAseq_V2
+### scRNAseqV2
 
 --> Same but also allow Shiny app creation!
 

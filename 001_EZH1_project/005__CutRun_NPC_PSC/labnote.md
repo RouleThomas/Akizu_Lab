@@ -1179,4 +1179,24 @@ sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_MG1655.sh # 5827
 
 
 
+# ChIPseeker peak gene assignment
+
+## From optimal qval bed files peaks
+Let's assign peak to genes from MACS2 peak:
+
+**Optimal qvalue** according to IGV:
+- NPC_H3K27me3 WT and KO; 2.30103
+- NPC_SUZ12 WT and KO; 1.30103
+- NPC_EZH2 WT and KO; 1.30103
+- NPC_H3K4me3 WT and KO; 1.30103 
+- PSC_EZH1cs KOEF1aEZH1; 1.30103 
+- PSC_SUZ12 EF1aEZH1 and synEZH1; 1.30103 
+- PSC_H3K27me3 EF1aEZH1 and synEZH1; 2.30103
+
+
+XXX
+
+
+
+
 
