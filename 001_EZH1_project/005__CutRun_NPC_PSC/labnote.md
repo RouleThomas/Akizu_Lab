@@ -1174,8 +1174,8 @@ sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_histone.sh # 583
 sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig_MG1655.sh # 5835363 ok
 sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_MG1655.sh # 5835367 ok
 
-sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig_THOR.sh # 5861199 XXX
-sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_THOR.sh # 5861207 XXX
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig_THOR.sh # 5861199 ok
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_THOR.sh # 5861207 ok
 
 # PSC
 sbatch scripts/matrix_TSS_10kb_PSC_KOEF1aEZH1_bigwig_1.sh # 5850570 ok
@@ -1184,7 +1184,7 @@ sbatch scripts/matrix_TSS_10kb_PSC_KOEF1aEZH1_bigwig_2.sh # 5850574 ok
 ***NPC:***
 --> The **raw bigwig is not good**; non normalized file is NOT in agreement with gene expression; H3K27me3 signal always higher in the NPC_KO
 --> The **bigwig histone and MG1655 is OK**; slight differences in agreement with gene expression changes for H3K27me3. In CANNOT be perfect as the RNAseq do not match with this experiment; diff. protocol used not the same! **Let's prefer to use MG1655=same normalziation method for ALL samples!**
---> The **bigwig THOR is XXXX**
+--> The **bigwig THOR is BETTER THAN MG1655**; clearly see increase of H3K27me3 for genes down; but no changes for gene Up.
 
 
 
@@ -1273,9 +1273,9 @@ bigWigMerge
 
 # AB per AB
 sbatch scripts/THOR_NPC_EZH2.sh # 5855649 ok
-sbatch scripts/THOR_NPC_SUZ12.sh # 5856888
-sbatch scripts/THOR_NPC_H3K27me3.sh # 5856898
-sbatch scripts/THOR_NPC_H3K4me3.sh # 5856928
+sbatch scripts/THOR_NPC_SUZ12.sh # 5856888 ok
+sbatch scripts/THOR_NPC_H3K27me3.sh # 5856898 ok
+sbatch scripts/THOR_NPC_H3K4me3.sh # 5856928 ok
 ```
 
 --> By eye we seems to still see the higher EZH2 enrichment in WT / KO...
