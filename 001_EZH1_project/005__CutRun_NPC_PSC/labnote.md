@@ -1164,22 +1164,67 @@ Let's use our RNAseq in NPC, and generate heatmap of H3K27me3 CutRun signal for 
 ```bash
 conda activate deeptools
 
+# NPC
 sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig.sh # 5827366 ok
 sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig.sh # 5827369 ok
 
-sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig_histone.sh # 5835369
-sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_histone.sh # 5835370
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig_histone.sh # 5835369 ok
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_histone.sh # 5835370 ok
 
-sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig_MG1655.sh # 5835363
-sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_MG1655.sh # 5835367
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig_MG1655.sh # 5835363 ok
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_MG1655.sh # 5835367 ok
+
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig_THOR.sh # 5861199 XXX
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_THOR.sh # 5861207 XXX
+
+# PSC
+sbatch scripts/matrix_TSS_10kb_PSC_KOEF1aEZH1_bigwig_1.sh # 5850570 ok
+sbatch scripts/matrix_TSS_10kb_PSC_KOEF1aEZH1_bigwig_2.sh # 5850574 ok
+```
+***NPC:***
+--> The **raw bigwig is not good**; non normalized file is NOT in agreement with gene expression; H3K27me3 signal always higher in the NPC_KO
+--> The **bigwig histone and MG1655 is OK**; slight differences in agreement with gene expression changes for H3K27me3. In CANNOT be perfect as the RNAseq do not match with this experiment; diff. protocol used not the same! **Let's prefer to use MG1655=same normalziation method for ALL samples!**
+--> The **bigwig THOR is XXXX**
 
 
+
+***PSC:***
+For AB comparions, Need to play with  `--zMin -2 -2 0 --zMax 2 2 3` in plotHeatmap to scale the heatmap individually! (`--perGroup` do not help; it just put them one under the other)
+
+--> I used the raw bigwig, as different marks are compared.
+
+--> EZH1cs and SUZ12 co-localize well
+
+--> Order_2 (EZH1cs/SUZ12/H3K27me3) is better to assess the EZH1/H3K27me3 co-localization
+
+Let's now compare the mark within and between genotypes; check signal genome-wide:
+
+```bash
+conda activate deeptools
+
+# Within genotpes
+sbatch scripts/matrix_TSS_10kb_NPC_WT_bigwig_MG1655.sh # 5849559 ok
+sbatch scripts/matrix_TSS_10kb_NPC_KO_bigwig_MG1655.sh # 5849564 ok
+
+# Between genotypes
+sbatch scripts/matrix_TSS_10kb_NPC_H3K27me3_bigwig_MG1655.sh # 5849579 ok
+sbatch scripts/matrix_TSS_10kb_NPC_EZH2_bigwig_MG1655.sh # 5849582 ok
+sbatch scripts/matrix_TSS_10kb_NPC_SUZ12_bigwig_MG1655.sh # 5849585 ok
+sbatch scripts/matrix_TSS_10kb_NPC_H3K4me3_bigwig_MG1655.sh # 5849589 ok
+
+sbatch scripts/matrix_TSS_10kb_NPC_H3K27me3_bigwig_THOR.sh # 5861295 XXX
+sbatch scripts/matrix_TSS_10kb_NPC_EZH2_bigwig_THOR.sh # 5861354 XXX
+sbatch scripts/matrix_TSS_10kb_NPC_SUZ12_bigwig_THOR.sh # 5861385 XXX
+sbatch scripts/matrix_TSS_10kb_NPC_H3K4me3_bigwig_THOR.sh # 5861390 XXX
 ```
 
---> The **raw bigwig is not good**; non normalized file is NOT in agreement with gene expression; H3K27me3 signal always higher in the NPC_KO
+--> For  **Within genotpes, I used the MG1655 version; but could have use the raw bigwig as I compare diff marks...**
+- Nice co-localization centered around TSS of SUZ12, EZH2, H3K27me3
 
-
-
+--> For **Between genotypes, important to use the MG1655 version however!**
+- Genome-wide; signal is always higher for WT; except H3K27me3, same enrichment...
+- EZH2 and SUZ12 are weird... The signal in KO is much lower than WT, we even see it on IGV! I suspect THOR normalization to account for IGG is NEEDED. Interestingly, much more IGG signal in KO than WT...
+- Bigwig THOR XXX
 
 
 # ChIPseeker peak gene assignment
@@ -1198,6 +1243,67 @@ Let's assign peak to genes from MACS2 peak:
 
 
 XXX
+
+
+
+# THOR 
+
+Let's use THOR, notably to have IGG scaled bigwig...!
+
+Comparison to do; NPC WT vs KO:
+- EZH2
+- SUZ12
+- H3K27me3
+- H3K4me3
+
+--> SF to use in THOR are the **reciprocal of MG1655_DiffBind_TMM**
+--> Configs file created manually as `output/THOR/NPC_EZH2.config`
+
+**Run THOR**
+
+*THOR is very buggy to make it work I need to temporaly change where to look for libraries lol.. So cannot use nano anymore for example...*
+
+*Follow these parameters: `WTvsHET_unique_Keepdup` (perform best in previous CutRun)*
+
+```bash
+# Needed step to change where THOR look for libraries
+conda activate RGT
+export LD_LIBRARY_PATH=~/anaconda3/envs/RGT/lib:$LD_LIBRARY_PATH
+bigWigMerge
+
+# AB per AB
+sbatch scripts/THOR_NPC_EZH2.sh # 5855649 ok
+sbatch scripts/THOR_NPC_SUZ12.sh # 5856888
+sbatch scripts/THOR_NPC_H3K27me3.sh # 5856898
+sbatch scripts/THOR_NPC_H3K4me3.sh # 5856928
+```
+
+--> By eye we seems to still see the higher EZH2 enrichment in WT / KO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
