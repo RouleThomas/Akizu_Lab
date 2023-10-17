@@ -5646,6 +5646,10 @@ library("tidyverse")
 library("RColorBrewer")
 library("pheatmap")
 library("apeglm")
+library("EnhancedVolcano")
+library("org.Hs.eg.db")
+library("AnnotationDbi")
+library("biomaRt")
 
 # import featurecounts output and keep only gene ID and counts
 ## collect all samples ID
@@ -5657,12 +5661,25 @@ sample_data <- list()
 
 for (sample in samples) {
   sample_data[[sample]] <- read_delim(paste0("output/featurecounts_hg38/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
-    select(Geneid, starts_with("output/STAR_hg38/")) %>%
+    dplyr::select(Geneid, starts_with("output/STAR_hg38/")) %>%
     rename(!!sample := starts_with("output/STAR_hg38/"))
 }
 
 # Merge all dataframe into a single one
 counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+
+# Remove X and Y chromosome genes
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
+                   filters = "chromosome_name",
+                   values = c("X", "Y"),
+                   mart = ensembl)
+counts_all$stripped_geneid <- sub("\\..*", "", counts_all$Geneid)
+counts_all_filtered <- counts_all %>%
+  filter(!stripped_geneid %in% genes_X_Y$ensembl_gene_id)
+counts_all_filtered$stripped_geneid <- NULL
+
 
 # Pre-requisetes for the DESeqDataSet
 ## Transform merged_data into a matrix
@@ -5674,13 +5691,13 @@ make_matrix <- function(df,rownames = NULL){
   my_matrix
 }
 ### execute function
-counts_all_matrix = make_matrix(select(counts_all, -Geneid), pull(counts_all, Geneid)) 
+counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pull(counts_all_filtered, Geneid)) 
 
 ## Create colData file that describe all our samples
 ### Not including replicate
 coldata_raw <- data.frame(samples) %>%
   separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
-  select(-replicate) %>%
+  dplyr::select(-replicate) %>%
   bind_cols(data.frame(samples))
 ### Including replicate
 coldata_raw <- data.frame(samples) %>%
@@ -5688,7 +5705,7 @@ coldata_raw <- data.frame(samples) %>%
   bind_cols(data.frame(samples))
 
 ## transform df into matrix
-coldata = make_matrix(select(coldata_raw, -samples), pull(coldata_raw, samples))
+coldata = make_matrix(dplyr::select(coldata_raw, -samples), pull(coldata_raw, samples))
 
 ## Check that row name of both matrix (counts and description) are the same
 all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
@@ -5714,6 +5731,7 @@ res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm")
 
 ## Export result as 'raw_NPC_KO_vs_NPC_WT.txt'
 write.csv(res %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2_hg38/raw_NPC_KO_vs_NPC_WT.txt")
+write.csv(res %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2_hg38/raw_NPC_KO_vs_NPC_WT_filtered.txt")
 ### If need to import: res <- read_csv("output/deseq2/raw_NPC_KO_vs_NPC_WT.txt") #To import
 
 ## Plot-MA
@@ -5728,6 +5746,967 @@ text(x = max(res_df$baseMean, na.rm = TRUE) * 0.25, y = 1.75, labels = paste(n_u
 text(x = max(res_df$baseMean, na.rm = TRUE) * 0.25, y = -1.75, labels = paste(n_downregulated), adj = c(0, 0.5), cex = 0.9)
 
 dev.off()
+
+
+
+## Plot-volcano
+### GeneSymbol ID
+gene_ids <- rownames(res)
+stripped_gene_ids <- sub("\\..*", "", gene_ids)
+gene_symbols <- mapIds(org.Hs.eg.db, keys = stripped_gene_ids,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+res$GeneSymbol <- gene_symbols
+
+
+
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.5 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.5 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+
+
+
+pdf("output/deseq2_hg38/plotVolcano_res_q05_NPC_KO_vs_NPC_WT.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = res$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, NPC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 1.0,
+  labSize = 4.5,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+pdf("output/deseq2_hg38/plotVolcano_res_q05_NPC_KO_vs_NPC_WT_prettyV1.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = "",
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, NPC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+
+upregulated_genes <- sum(res$log2FoldChange > 0.5 & res$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res$log2FoldChange < -0.5 & res$padj < 5e-2, na.rm = TRUE)
+
+
+# Save as gene list for GO analysis:
+### Complete table with GeneSymbol
+write.table(res, file = "output/deseq2_hg38/filtered_q05_NPC_KO_vs_NPC_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res[res$log2FoldChange > 0.5 & res$padj < 5e-2, ]
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 0.5 & res$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05_NPC_KO_vs_NPC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05_NPC_KO_vs_NPC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+# FILTER ON QVALUE 0.01 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.5 & res$padj < 1e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.5 & res$padj < 1e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.01; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.01; log2FC < 0.5)'
+
+
+
+
+pdf("output/deseq2_hg38/plotVolcano_res_q01_NPC_KO_vs_NPC_WT.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = res$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, NPC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 1.0,
+  labSize = 4.5,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+pdf("output/deseq2_hg38/plotVolcano_res_q01_NPC_KO_vs_NPC_WT_prettyV1.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = "",
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, NPC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+
+upregulated_genes <- sum(res$log2FoldChange > 0.5 & res$padj < 1e-2, na.rm = TRUE)
+downregulated_genes <- sum(res$log2FoldChange < -0.5 & res$padj < 1e-2, na.rm = TRUE)
+
+
+# Save as gene list for GO analysis:
+### Complete table with GeneSymbol
+write.table(res, file = "output/deseq2_hg38/filtered_q01_NPC_KO_vs_NPC_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res[res$log2FoldChange > 0.5 & res$padj < 1e-2, ]
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 0.5 & res$padj < 1e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[res$log2FoldChange < -0.5 & res$padj < 1e-2, ]
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.5 & res$padj < 1e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q01_NPC_KO_vs_NPC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q01_NPC_KO_vs_NPC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+# Plot CutRun RNAseq integration (Jasmine CutRun 005__)
+
+## import gene list
+
+# H3K27me3
+### GAIN
+
+
+
+H3K27me3_qval50_Gain = read.table("../005__CutRun_NPC_PSC/output/ChIPseeker/H3K27me3_annot_gain_qval50_promoterAnd5_geneSymbol.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+
+
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene") %>%
+  drop_na()   # ADDING THIS AVOID THE BUG WITH DUPPLCIATED NAME 
+
+res_Gain = H3K27me3_qval50_Gain %>% 
+  left_join(res_tibble) 
+
+
+### LOST
+H3K27me3_qval50_Lost = read.table("../005__CutRun_NPC_PSC/output/ChIPseeker/H3K27me3_annot_lost_qval50_promoterAnd5_geneSymbol.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+
+
+
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene") %>%
+  drop_na()   # ADDING THIS AVOID THE BUG WITH DUPPLCIATED NAME 
+
+res_Lost = H3K27me3_qval50_Lost %>% 
+  left_join(res_tibble)
+
+## PLOT
+### GAIN
+highlight_genes <- c("") # 
+
+# FILTER ON QVALUE 0.01 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 1e-2, 'Sky Blue',
+    ifelse(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 1e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.01; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.01; log2FC < 0.5)'
+
+pdf("output/deseq2_hg38/plotVolcano_res_Gain_H3K27me3_qval50_NPC_KO_vs_NPC_WT.pdf", width=8, height=8)  
+EnhancedVolcano(res_Gain,
+  lab = res_Gain$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, NPC',
+  pCutoff = 1e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 1.5,
+  labSize = 4.5,
+  shape = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+pdf("output/deseq2_hg38/plotVolcano_res_Gain_H3K27me3_qval50_NPC_KO_vs_NPC_WT_prettyV1.pdf", width=8, height=8)  
+EnhancedVolcano(res_Gain,
+  lab = res_Gain$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, NPC',
+  pCutoff = 1e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 5,
+  labSize = 9,   # gene highlight size
+  shape = 20,
+  axisLabSize = 25,
+  captionLabSize = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.75,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+upregulated_genes <- sum(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 1e-2, na.rm = TRUE)
+downregulated_genes <- sum(res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 1e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+
+upregulated <- res_Gain[res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 1e-2, ]
+upregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 1e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res_Gain[res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 1e-2, ]
+downregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 1e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q01FC05_NPC_KO_vs_NPC_WT_Gain_H3K27me3_qval50.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q01FC05_NPC_KO_vs_NPC_WT_Gain_H3K27me3_qval50.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+### LOST
+highlight_genes <- c("") # NA
+
+# FILTER ON QVALUE 0.01 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 1e-2, 'Sky Blue',
+    ifelse(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 1e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.01; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.01; log2FC < -0.5)'
+
+pdf("output/deseq2_hg38/plotVolcano_res_Lost_H3K27me3_qval50_NPC_KO_vs_NPC_WT.pdf", width=8, height=8)  
+EnhancedVolcano(res_Lost,
+  lab = res_Lost$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, 2wN',
+  pCutoff = 1e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 1.5,
+  labSize = 4.5,
+  shape = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+pdf("output/deseq2_hg38/plotVolcano_res_Lost_H3K27me3_qval50_NPC_KO_vs_NPC_WT_prettyV1.pdf", width=8, height=8)  
+EnhancedVolcano(res_Lost,
+  lab = res_Lost$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, 2wN',
+  pCutoff = 1e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 5,
+  labSize = 9,   # gene highlight size
+  shape = 20,
+  axisLabSize = 25,
+  captionLabSize = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.75,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+upregulated_genes <- sum(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 1e-2, na.rm = TRUE)
+downregulated_genes <- sum(res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 1e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+
+upregulated <- res_Lost[res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 1e-2, ]
+upregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 1e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res_Lost[res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 1e-2, ]
+downregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 1e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q01FC05_NPC_KO_vs_NPC_WT_Lost_H3K27me3_qval50.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q01FC05_NPC_KO_vs_NPC_WT_Lost_H3K27me3_qval50.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
+
+# EZH2
+### GAIN
+
+
+
+EZH2_qval10_Gain = read.table("../005__CutRun_NPC_PSC/output/ChIPseeker/EZH2_annot_gain_qval10_promoterAnd5_geneSymbol.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+
+
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene") %>%
+  drop_na()   # ADDING THIS AVOID THE BUG WITH DUPPLCIATED NAME 
+
+res_Gain = EZH2_qval10_Gain %>% 
+  left_join(res_tibble) 
+
+
+### LOST
+EZH2_qval10_Lost = read.table("../005__CutRun_NPC_PSC/output/ChIPseeker/EZH2_annot_lost_qval10_promoterAnd5_geneSymbol.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+
+
+
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene") %>%
+  drop_na()   # ADDING THIS AVOID THE BUG WITH DUPPLCIATED NAME 
+
+res_Lost = EZH2_qval10_Lost %>% 
+  left_join(res_tibble)
+
+## PLOT
+### GAIN
+highlight_genes <- c("") # 
+
+# FILTER ON QVALUE 0.01 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 1e-2, 'Sky Blue',
+    ifelse(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 1e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.01; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.01; log2FC < -0.5)'
+
+pdf("output/deseq2_hg38/plotVolcano_res_Gain_EZH2_qval10_NPC_KO_vs_NPC_WT.pdf", width=8, height=8)  
+EnhancedVolcano(res_Gain,
+  lab = res_Gain$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, NPC',
+  pCutoff = 1e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 1.5,
+  labSize = 4.5,
+  shape = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+pdf("output/deseq2_hg38/plotVolcano_res_Gain_EZH2_qval10_NPC_KO_vs_NPC_WT_prettyV1.pdf", width=8, height=8)  
+EnhancedVolcano(res_Gain,
+  lab = res_Gain$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, NPC',
+  pCutoff = 1e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 5,
+  labSize = 9,   # gene highlight size
+  shape = 20,
+  axisLabSize = 25,
+  captionLabSize = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.75,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+upregulated_genes <- sum(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 1e-2, na.rm = TRUE)
+downregulated_genes <- sum(res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 1e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+
+upregulated <- res_Gain[res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 1e-2, ]
+upregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 1e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res_Gain[res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 1e-2, ]
+downregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 1e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q01FC05_NPC_KO_vs_NPC_WT_Gain_EZH2_qval10.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q01FC05_NPC_KO_vs_NPC_WT_Gain_EZH2_qval10.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+### LOST
+highlight_genes <- c("") # NA
+
+# FILTER ON QVALUE 0.01 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 1e-2, 'Sky Blue',
+    ifelse(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 1e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.01; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.01; log2FC < -0.5)'
+
+pdf("output/deseq2_hg38/plotVolcano_res_Lost_EZH2_qval10_NPC_KO_vs_NPC_WT.pdf", width=8, height=8)  
+EnhancedVolcano(res_Lost,
+  lab = res_Lost$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, 2wN',
+  pCutoff = 1e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 1.5,
+  labSize = 4.5,
+  shape = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+pdf("output/deseq2_hg38/plotVolcano_res_Lost_EZH2_qval10_NPC_KO_vs_NPC_WT_prettyV1.pdf", width=8, height=8)  
+EnhancedVolcano(res_Lost,
+  lab = res_Lost$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, 2wN',
+  pCutoff = 1e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 5,
+  labSize = 9,   # gene highlight size
+  shape = 20,
+  axisLabSize = 25,
+  captionLabSize = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.75,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+upregulated_genes <- sum(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 1e-2, na.rm = TRUE)
+downregulated_genes <- sum(res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 1e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+
+upregulated <- res_Lost[res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 1e-2, ]
+upregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 1e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res_Lost[res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 1e-2, ]
+downregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 1e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q01FC05_NPC_KO_vs_NPC_WT_Lost_EZH2_qval10.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q01FC05_NPC_KO_vs_NPC_WT_Lost_EZH2_qval10.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
+
+
+
+
+
+
+# SUZ12
+### GAIN
+
+SUZ12_qval10_Gain = read.table("../005__CutRun_NPC_PSC/output/ChIPseeker/SUZ12_annot_gain_qval10_promoterAnd5_geneSymbol.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+
+
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene") %>%
+  drop_na()   # ADDING THIS AVOID THE BUG WITH DUPPLCIATED NAME 
+
+res_Gain = SUZ12_qval10_Gain %>% 
+  left_join(res_tibble) 
+
+
+### LOST
+SUZ12_qval10_Lost = read.table("../005__CutRun_NPC_PSC/output/ChIPseeker/SUZ12_annot_lost_qval10_promoterAnd5_geneSymbol.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+
+
+
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene") %>%
+  drop_na()   # ADDING THIS AVOID THE BUG WITH DUPPLCIATED NAME 
+
+res_Lost = SUZ12_qval10_Lost %>% 
+  left_join(res_tibble)
+
+## PLOT
+### GAIN
+highlight_genes <- c("") # 
+
+# FILTER ON QVALUE 0.01 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 1e-2, 'Sky Blue',
+    ifelse(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 1e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.01; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.01; log2FC < -0.5)'
+
+pdf("output/deseq2_hg38/plotVolcano_res_Gain_SUZ12_qval10_NPC_KO_vs_NPC_WT.pdf", width=8, height=8)  
+EnhancedVolcano(res_Gain,
+  lab = res_Gain$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, NPC',
+  pCutoff = 1e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 1.5,
+  labSize = 4.5,
+  shape = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+pdf("output/deseq2_hg38/plotVolcano_res_Gain_SUZ12_qval10_NPC_KO_vs_NPC_WT_prettyV1.pdf", width=8, height=8)  
+EnhancedVolcano(res_Gain,
+  lab = res_Gain$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, NPC',
+  pCutoff = 1e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 5,
+  labSize = 9,   # gene highlight size
+  shape = 20,
+  axisLabSize = 25,
+  captionLabSize = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.75,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+upregulated_genes <- sum(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 1e-2, na.rm = TRUE)
+downregulated_genes <- sum(res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 1e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+
+upregulated <- res_Gain[res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 1e-2, ]
+upregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 1e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res_Gain[res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 1e-2, ]
+downregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 1e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q01FC05_NPC_KO_vs_NPC_WT_Gain_SUZ12_qval10.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q01FC05_NPC_KO_vs_NPC_WT_Gain_SUZ12_qval10.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+### LOST
+highlight_genes <- c("") # NA
+
+# FILTER ON QVALUE 0.01 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 1e-2, 'Sky Blue',
+    ifelse(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 1e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.01; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.01; log2FC < -0.5)'
+
+pdf("output/deseq2_hg38/plotVolcano_res_Lost_SUZ12_qval10_NPC_KO_vs_NPC_WT.pdf", width=8, height=8)  
+EnhancedVolcano(res_Lost,
+  lab = res_Lost$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, 2wN',
+  pCutoff = 1e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 1.5,
+  labSize = 4.5,
+  shape = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+pdf("output/deseq2_hg38/plotVolcano_res_Lost_SUZ12_qval10_NPC_KO_vs_NPC_WT_prettyV1.pdf", width=8, height=8)  
+EnhancedVolcano(res_Lost,
+  lab = res_Lost$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, 2wN',
+  pCutoff = 1e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 5,
+  labSize = 9,   # gene highlight size
+  shape = 20,
+  axisLabSize = 25,
+  captionLabSize = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.75,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+upregulated_genes <- sum(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 1e-2, na.rm = TRUE)
+downregulated_genes <- sum(res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 1e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+
+upregulated <- res_Lost[res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 1e-2, ]
+upregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 1e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res_Lost[res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 1e-2, ]
+downregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 1e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q01FC05_NPC_KO_vs_NPC_WT_Lost_SUZ12_qval10.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q01FC05_NPC_KO_vs_NPC_WT_Lost_SUZ12_qval10.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
+
+
+
+# H3K4me3
+### GAIN
+
+H3K4me3_qval10_Gain = read.table("../005__CutRun_NPC_PSC/output/ChIPseeker/H3K4me3_annot_gain_qval10_promoterAnd5_geneSymbol.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+
+
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene") %>%
+  drop_na()   # ADDING THIS AVOID THE BUG WITH DUPPLCIATED NAME 
+
+res_Gain = H3K4me3_qval10_Gain %>% 
+  left_join(res_tibble) 
+
+
+### LOST
+H3K4me3_qval10_Lost = read.table("../005__CutRun_NPC_PSC/output/ChIPseeker/H3K4me3_annot_lost_qval10_promoterAnd5_geneSymbol.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+
+
+
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene") %>%
+  drop_na()   # ADDING THIS AVOID THE BUG WITH DUPPLCIATED NAME 
+
+res_Lost = H3K4me3_qval10_Lost %>% 
+  left_join(res_tibble)
+
+## PLOT
+### GAIN
+highlight_genes <- c("") # 
+
+# FILTER ON QVALUE 0.01 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 1e-2, 'Sky Blue',
+    ifelse(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 1e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.01; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.01; log2FC < -0.5)'
+
+pdf("output/deseq2_hg38/plotVolcano_res_Gain_H3K4me3_qval10_NPC_KO_vs_NPC_WT.pdf", width=8, height=8)  
+EnhancedVolcano(res_Gain,
+  lab = res_Gain$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, NPC',
+  pCutoff = 1e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 1.5,
+  labSize = 4.5,
+  shape = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+pdf("output/deseq2_hg38/plotVolcano_res_Gain_H3K4me3_qval10_NPC_KO_vs_NPC_WT_prettyV1.pdf", width=8, height=8)  
+EnhancedVolcano(res_Gain,
+  lab = res_Gain$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, NPC',
+  pCutoff = 1e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 5,
+  labSize = 9,   # gene highlight size
+  shape = 20,
+  axisLabSize = 25,
+  captionLabSize = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.75,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+upregulated_genes <- sum(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 1e-2, na.rm = TRUE)
+downregulated_genes <- sum(res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 1e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+
+upregulated <- res_Gain[res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 1e-2, ]
+upregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 1e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res_Gain[res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 1e-2, ]
+downregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 1e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q01FC05_NPC_KO_vs_NPC_WT_Gain_H3K4me3_qval10.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q01FC05_NPC_KO_vs_NPC_WT_Gain_H3K4me3_qval10.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+### LOST
+highlight_genes <- c("") # NA
+
+# FILTER ON QVALUE 0.01 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 1e-2, 'Sky Blue',
+    ifelse(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 1e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.01; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.01; log2FC < -0.5)'
+
+pdf("output/deseq2_hg38/plotVolcano_res_Lost_H3K4me3_qval10_NPC_KO_vs_NPC_WT.pdf", width=8, height=8)  
+EnhancedVolcano(res_Lost,
+  lab = res_Lost$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, 2wN',
+  pCutoff = 1e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 1.5,
+  labSize = 4.5,
+  shape = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+pdf("output/deseq2_hg38/plotVolcano_res_Lost_H3K4me3_qval10_NPC_KO_vs_NPC_WT_prettyV1.pdf", width=8, height=8)  
+EnhancedVolcano(res_Lost,
+  lab = res_Lost$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, 2wN',
+  pCutoff = 1e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 5,
+  labSize = 9,   # gene highlight size
+  shape = 20,
+  axisLabSize = 25,
+  captionLabSize = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.75,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+upregulated_genes <- sum(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 1e-2, na.rm = TRUE)
+downregulated_genes <- sum(res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 1e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+
+upregulated <- res_Lost[res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 1e-2, ]
+upregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 1e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res_Lost[res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 1e-2, ]
+downregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 1e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q01FC05_NPC_KO_vs_NPC_WT_Lost_H3K4me3_qval10.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q01FC05_NPC_KO_vs_NPC_WT_Lost_H3K4me3_qval10.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
 
 
 ```

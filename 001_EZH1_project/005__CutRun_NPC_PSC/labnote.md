@@ -1324,12 +1324,12 @@ dev.off()
 
 ## create a bed file, append chr to chromosome names and write down the file
 thor_splitted %>%
-  filter(qval > 30) %>%
-  write_tsv("output/THOR/THOR_NPC_H3K27me3/THOR_qval30.bed", col_names = FALSE)
+  filter(qval > 100) %>%
+  write_tsv("output/THOR/THOR_NPC_H3K27me3/THOR_qval100.bed", col_names = FALSE)
 
 ## how many minus / plus
 thor_splitted %>%
-  filter(qval > 20) %>%
+  filter(qval > 50) %>%
   group_by(X6) %>%
   summarise(n = n())
 
@@ -1483,18 +1483,16 @@ Let's do:
 --> Do volcano plot (ugly) Then (enhancedVolcano)
 
 
-XXXX
-
-
-
 
 ### Assign THOR-diff peaks to genes and check expression
 
 Now let's compare RNAseq (expression) and CutRun for THOR qval 15 among others:
-- Filter HETvsWT and KOvsWT diff bound genes into **gain and loss H3K27me3**
+- Filter HETvsWT and KOvsWT diff bound genes into **gain and loss H3K27me3** (10 20 25 for all)
 - **Keep only signal in Promoter, gene body and TES** (ie. filter out peak assigned to intergenic)
 - **Merge with deseq2** log2FC data (tpm will not work as too variable; or log2tpm maybe?)
 - Plot in x FC and y baseMean=deseq2-norm counts (+ color qvalue) with facet_wrap~gain or lost (ie. volcano plot gain/lost)
+
+*--> FC < 1  More in WT/Less in KO | FC > 1 More in KO*
 
 ```bash
 conda activate deseq2
@@ -1509,173 +1507,362 @@ library("clusterProfiler")
 library("meshes")
 library("ReactomePA")
 library("org.Hs.eg.db")
-library(VennDiagram)
+library("VennDiagram")
 
 
 # Import diff. peaks
-## qval5
-WTvsKO = read.table('output/THOR/THOR_WTvsKO/THOR_qval5.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
-WTvsHET = read.table('output/THOR/THOR_WTvsHET/THOR_qval5.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
+
+
+
 ## qval10
-WTvsKO = read.table('output/THOR/THOR_WTvsKO/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
-WTvsHET = read.table('output/THOR/THOR_WTvsHET/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
+H3K27me3 = read.table('output/THOR/THOR_NPC_H3K27me3/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V13, FC=V14, count_WT = V11,count_KO =V12) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT,count_KO)
+EZH2 = read.table('output/THOR/THOR_NPC_EZH2/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V13, FC=V14, count_WT = V11,count_KO =V12) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT,count_KO)
+SUZ12 = read.table('output/THOR/THOR_NPC_SUZ12/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V13, FC=V14, count_WT = V11,count_KO =V12) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT,count_KO)
+H3K4me3 = read.table('output/THOR/THOR_NPC_H3K4me3/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V13, FC=V14, count_WT = V11,count_KO =V12) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT,count_KO)
 
-WTvsHET = read.table('output/THOR/THOR_WTvsHET_unique_Keepdup/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
-WTvsKO = read.table('output/THOR/THOR_WTvsKO_unique_Keepdup/THOR_qval10.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
 
-## qval15
-WTvsKO = read.table('output/THOR/THOR_WTvsKO/THOR_qval15.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
-WTvsHET = read.table('output/THOR/THOR_WTvsHET/THOR_qval15.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
-
-WTvsHET = read.table('output/THOR/THOR_WTvsHET_Keepdup/THOR_qval15.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
-WTvsKO = read.table('output/THOR/THOR_WTvsKO_Keepdup/THOR_qval15.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
-### GOOD TO USE:
-WTvsHET = read.table('output/THOR/THOR_WTvsHET_unique_Keepdup/THOR_qval15.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
-WTvsKO = read.table('output/THOR/THOR_WTvsKO_unique_Keepdup/THOR_qval15.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
-###
 
 
 ## qval20
-WTvsKO = read.table('output/THOR/THOR_WTvsKO/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
-WTvsHET = read.table('output/THOR/THOR_WTvsHET/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
+H3K27me3 = read.table('output/THOR/THOR_NPC_H3K27me3/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V13, FC=V14, count_WT = V11,count_KO =V12) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT,count_KO)
+EZH2 = read.table('output/THOR/THOR_NPC_EZH2/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V13, FC=V14, count_WT = V11,count_KO =V12) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT,count_KO)
+SUZ12 = read.table('output/THOR/THOR_NPC_SUZ12/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V13, FC=V14, count_WT = V11,count_KO =V12) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT,count_KO)
+H3K4me3 = read.table('output/THOR/THOR_NPC_H3K4me3/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V13, FC=V14, count_WT = V11,count_KO =V12) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT,count_KO)
 
-WTvsHET = read.table('output/THOR/THOR_WTvsHET_Keepdup/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
-WTvsKO = read.table('output/THOR/THOR_WTvsKO_Keepdup/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
 
-WTvsHET = read.table('output/THOR/THOR_WTvsHET_unique_Keepdup/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
-WTvsKO = read.table('output/THOR/THOR_WTvsKO_unique_Keepdup/THOR_qval20.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
 ## qval25
-WTvsHET = read.table('output/THOR/THOR_WTvsHET_Keepdup/THOR_qval25.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_HET_1=V15,count_HET_2=V16,count_HET_3=V17,count_HET_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_HET_1,count_HET_2,count_HET_3,count_HET_4)
-WTvsKO = read.table('output/THOR/THOR_WTvsKO_Keepdup/THOR_qval25.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V19, FC=V20, count_WT_1= V11, count_WT_2=V12, count_WT_3=V13, count_WT_4=V14, count_KO_1=V15,count_KO_2=V16,count_KO_3=V17,count_KO_4=V18) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT_1,count_WT_2,count_WT_3,count_WT_4,count_KO_1,count_KO_2,count_KO_3,count_KO_4)
+H3K27me3 = read.table('output/THOR/THOR_NPC_H3K27me3/THOR_qval25.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V13, FC=V14, count_WT = V11,count_KO =V12) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT,count_KO)
+EZH2 = read.table('output/THOR/THOR_NPC_EZH2/THOR_qval25.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V13, FC=V14, count_WT = V11,count_KO =V12) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT,count_KO)
+SUZ12 = read.table('output/THOR/THOR_NPC_SUZ12/THOR_qval25.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V13, FC=V14, count_WT = V11,count_KO =V12) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT,count_KO)
+H3K4me3 = read.table('output/THOR/THOR_NPC_H3K4me3/THOR_qval25.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V13, FC=V14, count_WT = V11,count_KO =V12) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT,count_KO)
+
+
+
+
+## qval30
+H3K27me3 = read.table('output/THOR/THOR_NPC_H3K27me3/THOR_qval30.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V13, FC=V14, count_WT = V11,count_KO =V12) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT,count_KO)
+EZH2 = read.table('output/THOR/THOR_NPC_EZH2/THOR_qval30.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V13, FC=V14, count_WT = V11,count_KO =V12) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT,count_KO)
+SUZ12 = read.table('output/THOR/THOR_NPC_SUZ12/THOR_qval30.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V13, FC=V14, count_WT = V11,count_KO =V12) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT,count_KO)
+H3K4me3 = read.table('output/THOR/THOR_NPC_H3K4me3/THOR_qval30.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V13, FC=V14, count_WT = V11,count_KO =V12) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT,count_KO)
+
+
+## qval40
+H3K27me3 = read.table('output/THOR/THOR_NPC_H3K27me3/THOR_qval40.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V13, FC=V14, count_WT = V11,count_KO =V12) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT,count_KO)
+## qval50
+H3K27me3 = read.table('output/THOR/THOR_NPC_H3K27me3/THOR_qval50.bed') %>% dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, strand=V6, V7=V7, V8=V8, qvalue=V13, FC=V14, count_WT = V11,count_KO =V12) %>% dplyr::select(Chr, start,end,qvalue,FC,count_WT,count_KO)
 
 
 # Tidy peaks #-->> Re-Run from here with different qvalue!!
-WTvsKO_gr = makeGRangesFromDataFrame(WTvsKO,keep.extra.columns=TRUE)
-WTvsHET_gr = makeGRangesFromDataFrame(WTvsHET,keep.extra.columns=TRUE)
+H3K27me3_gr = makeGRangesFromDataFrame(H3K27me3,keep.extra.columns=TRUE)
+EZH2_gr = makeGRangesFromDataFrame(EZH2,keep.extra.columns=TRUE)
+SUZ12_gr = makeGRangesFromDataFrame(SUZ12,keep.extra.columns=TRUE)
+H3K4me3_gr = makeGRangesFromDataFrame(H3K4me3,keep.extra.columns=TRUE)
 
-
-
-gr_list <- list(WTvsKO=WTvsKO_gr, WTvsHET=WTvsHET_gr)
-
-
-
-
-
+gr_list <- list(H3K27me3=H3K27me3_gr, EZH2=EZH2_gr,  SUZ12=SUZ12_gr, H3K4me3=H3K4me3_gr)
 
 # Export Gene peak assignemnt
 peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
                        tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
 ## Get annotation data frame
-WTvsHET_annot <- as.data.frame(peakAnnoList[["WTvsHET"]]@anno)
-WTvsKO_annot <- as.data.frame(peakAnnoList[["WTvsKO"]]@anno)
-
-
+H3K27me3_annot <- as.data.frame(peakAnnoList[["H3K27me3"]]@anno)
+EZH2_annot <- as.data.frame(peakAnnoList[["EZH2"]]@anno)
+SUZ12_annot <- as.data.frame(peakAnnoList[["SUZ12"]]@anno)
+H3K4me3_annot <- as.data.frame(peakAnnoList[["H3K4me3"]]@anno)
 
 ## Convert entrez gene IDs to gene symbols
-WTvsHET_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = WTvsHET_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-WTvsKO_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = WTvsKO_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-
-
-WTvsHET_annot$gene <- mapIds(org.Hs.eg.db, keys = WTvsHET_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-WTvsKO_annot$gene <- mapIds(org.Hs.eg.db, keys = WTvsKO_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-
+H3K27me3_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+H3K27me3_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+EZH2_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = EZH2_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+EZH2_annot$gene <- mapIds(org.Hs.eg.db, keys = EZH2_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+SUZ12_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = SUZ12_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+SUZ12_annot$gene <- mapIds(org.Hs.eg.db, keys = SUZ12_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+H3K4me3_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K4me3_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+H3K4me3_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K4me3_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
 
 ## Save output table
-write.table(WTvsHET_annot, file="output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(WTvsKO_annot, file="output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K27me3_annot, file="output/ChIPseeker/annotation_H3K27me3_qval50.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
+write.table(EZH2_annot, file="output/ChIPseeker/annotation_EZH2_qval30.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(SUZ12_annot, file="output/ChIPseeker/annotation_SUZ12_qval30.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K4me3_annot, file="output/ChIPseeker/annotation_H3K4me3_qval30.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
 # load annotation tables
-# WTvsHET_qval5_annot <- read.table("output/ChIPseeker/annotation_WTvsHET_qval5.txt", sep="\t", header=TRUE)
+# H3K27me3_annot <- read.table("output/ChIPseeker/annotation_H3K27me3_qval10.txt", sep="\t", header=TRUE)
 
 
 # Filter Gain/Loss sites
 ## KEEP Distal Intergenic (keep ALL)   ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
-WTvsHET_annot_gain = tibble(WTvsHET_annot) %>%
-    filter(FC > 1.5) %>%
-    add_column(H3K27me3 = "gain")
-WTvsHET_annot_lost = tibble(WTvsHET_annot) %>%
-    filter(FC < (1/1.5)) %>%
-    add_column(H3K27me3 = "lost")
-WTvsHET_annot_gain_lost = WTvsHET_annot_gain %>% 
-    bind_rows(WTvsHET_annot_lost) 
-    
-WTvsKO_annot_gain = tibble(WTvsKO_annot) %>%
-    filter(FC > 1.5) %>%
-    add_column(H3K27me3 = "gain")
-WTvsKO_annot_lost = tibble(WTvsKO_annot) %>%
-    filter(FC < (1/1.5)) %>%
-    add_column(H3K27me3 = "lost")
-WTvsKO_annot_gain_lost = WTvsKO_annot_gain %>% 
-    bind_rows(WTvsKO_annot_lost)
+H3K27me3_annot_gain = tibble(H3K27me3_annot) %>%
+    filter(FC > 1) %>%
+    add_column(binding = "gain")
+H3K27me3_annot_lost = tibble(H3K27me3_annot) %>%
+    filter(FC < (1/1)) %>%
+    add_column(binding = "lost")
+H3K27me3_annot_gain_lost = H3K27me3_annot_gain %>% 
+    bind_rows(H3K27me3_annot_lost) 
+### Save output gene lists
+H3K27me3_annot_gain_geneSymbol = H3K27me3_annot_gain %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+H3K27me3_annot_lost_geneSymbol = H3K27me3_annot_lost %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
 
+write.table(H3K27me3_annot_gain_geneSymbol, file = "output/ChIPseeker/H3K27me3_annot_gain_qval50_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(H3K27me3_annot_lost_geneSymbol, file = "output/ChIPseeker/H3K27me3_annot_lost_qval50_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+EZH2_annot_gain = tibble(EZH2_annot) %>%
+    filter(FC > 1) %>%
+    add_column(binding = "gain")
+EZH2_annot_lost = tibble(EZH2_annot) %>%
+    filter(FC < (1/1)) %>%
+    add_column(binding = "lost")
+EZH2_annot_gain_lost = EZH2_annot_gain %>% 
+    bind_rows(EZH2_annot_lost) 
+### Save output gene lists
+EZH2_annot_gain_geneSymbol = EZH2_annot_gain %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+EZH2_annot_lost_geneSymbol = EZH2_annot_lost %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+write.table(EZH2_annot_gain_geneSymbol, file = "output/ChIPseeker/EZH2_annot_gain_qval25_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(EZH2_annot_lost_geneSymbol, file = "output/ChIPseeker/EZH2_annot_lost_qval25_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+SUZ12_annot_gain = tibble(SUZ12_annot) %>%
+    filter(FC > 1) %>%
+    add_column(binding = "gain")
+SUZ12_annot_lost = tibble(SUZ12_annot) %>%
+    filter(FC < (1/1)) %>%
+    add_column(binding = "lost")
+SUZ12_annot_gain_lost = SUZ12_annot_gain %>% 
+    bind_rows(SUZ12_annot_lost) 
+### Save output gene lists
+SUZ12_annot_gain_geneSymbol = SUZ12_annot_gain %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+SUZ12_annot_lost_geneSymbol = SUZ12_annot_lost %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+write.table(SUZ12_annot_gain_geneSymbol, file = "output/ChIPseeker/SUZ12_annot_gain_qval25_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(SUZ12_annot_lost_geneSymbol, file = "output/ChIPseeker/SUZ12_annot_lost_qval25_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+H3K4me3_annot_gain = tibble(H3K4me3_annot) %>%
+    filter(FC > 1) %>%
+    add_column(binding = "gain")
+H3K4me3_annot_lost = tibble(H3K4me3_annot) %>%
+    filter(FC < (1/1)) %>%
+    add_column(binding = "lost")
+H3K4me3_annot_gain_lost = H3K4me3_annot_gain %>% 
+    bind_rows(H3K4me3_annot_lost) 
+### Save output gene lists
+H3K4me3_annot_gain_geneSymbol = H3K4me3_annot_gain %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+H3K4me3_annot_lost_geneSymbol = H3K4me3_annot_lost %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+write.table(H3K4me3_annot_gain_geneSymbol, file = "output/ChIPseeker/H3K4me3_annot_gain_qval25_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(H3K4me3_annot_lost_geneSymbol, file = "output/ChIPseeker/H3K4me3_annot_lost_qval25_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
 
 
 
 ## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
-WTvsHET_annot_gain = tibble(WTvsHET_annot) %>%
+H3K27me3_annot_gain = tibble(H3K27me3_annot) %>%
     filter(FC > 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
-    add_column(H3K27me3 = "gain")
-WTvsHET_annot_lost = tibble(WTvsHET_annot) %>%
+    add_column(binding = "gain")
+H3K27me3_annot_lost = tibble(H3K27me3_annot) %>%
     filter(FC < (1/1), annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
-    add_column(H3K27me3 = "lost")
-WTvsHET_annot_gain_lost = WTvsHET_annot_gain %>% 
-    bind_rows(WTvsHET_annot_lost) 
-    
-WTvsKO_annot_gain = tibble(WTvsKO_annot) %>%
+    add_column(binding = "lost")
+H3K27me3_annot_gain_lost = H3K27me3_annot_gain %>% 
+    bind_rows(H3K27me3_annot_lost) 
+### Save output gene lists
+H3K27me3_annot_gain_geneSymbol = H3K27me3_annot_gain %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+H3K27me3_annot_lost_geneSymbol = H3K27me3_annot_lost %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+write.table(H3K27me3_annot_gain_geneSymbol, file = "output/ChIPseeker/H3K27me3_annot_gain_qval50_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(H3K27me3_annot_lost_geneSymbol, file = "output/ChIPseeker/H3K27me3_annot_lost_qval50_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+EZH2_annot_gain = tibble(EZH2_annot) %>%
     filter(FC > 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
-    add_column(H3K27me3 = "gain")
-WTvsKO_annot_lost = tibble(WTvsKO_annot) %>%
+    add_column(binding = "gain")
+EZH2_annot_lost = tibble(EZH2_annot) %>%
     filter(FC < (1/1), annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
-    add_column(H3K27me3 = "lost")
-WTvsKO_annot_gain_lost = WTvsKO_annot_gain %>% 
-    bind_rows(WTvsKO_annot_lost)
+    add_column(binding = "lost")
+EZH2_annot_gain_lost = EZH2_annot_gain %>% 
+    bind_rows(EZH2_annot_lost) 
+### Save output gene lists
+EZH2_annot_gain_geneSymbol = EZH2_annot_gain %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+EZH2_annot_lost_geneSymbol = EZH2_annot_lost %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+write.table(EZH2_annot_gain_geneSymbol, file = "output/ChIPseeker/EZH2_annot_gain_qval25_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(EZH2_annot_lost_geneSymbol, file = "output/ChIPseeker/EZH2_annot_lost_qval25_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+SUZ12_annot_gain = tibble(SUZ12_annot) %>%
+    filter(FC > 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(binding = "gain")
+SUZ12_annot_lost = tibble(SUZ12_annot) %>%
+    filter(FC < (1/1), annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(binding = "lost")
+SUZ12_annot_gain_lost = SUZ12_annot_gain %>% 
+    bind_rows(SUZ12_annot_lost) 
+### Save output gene lists
+SUZ12_annot_gain_geneSymbol = SUZ12_annot_gain %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+SUZ12_annot_lost_geneSymbol = SUZ12_annot_lost %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+write.table(SUZ12_annot_gain_geneSymbol, file = "output/ChIPseeker/SUZ12_annot_gain_qval25_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(SUZ12_annot_lost_geneSymbol, file = "output/ChIPseeker/SUZ12_annot_lost_qval25_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+H3K4me3_annot_gain = tibble(H3K4me3_annot) %>%
+    filter(FC > 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(binding = "gain")
+H3K4me3_annot_lost = tibble(H3K4me3_annot) %>%
+    filter(FC < (1/1), annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(binding = "lost")
+H3K4me3_annot_gain_lost = H3K4me3_annot_gain %>% 
+    bind_rows(H3K4me3_annot_lost) 
+### Save output gene lists
+H3K4me3_annot_gain_geneSymbol = H3K4me3_annot_gain %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+H3K4me3_annot_lost_geneSymbol = H3K4me3_annot_lost %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+write.table(H3K4me3_annot_gain_geneSymbol, file = "output/ChIPseeker/H3K4me3_annot_gain_qval25_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(H3K4me3_annot_lost_geneSymbol, file = "output/ChIPseeker/H3K4me3_annot_lost_qval25_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
 
 
 
-# Save output gene lists!
-
-
-XXX Enhanced Volcano plot
-
-
-
-XXX  ORR classic ugly plot:::
 
 
 
 # Import RNAseq deseq2 output
 ## Raw FC ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
-HET_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_8wN_HET_vs_8wN_WT.txt')) %>%
-    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
-    dplyr::select(gene, baseMean,log2FoldChange,padj)
-KO_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_8wN_KO_vs_8wN_WT.txt')) %>%
+KO_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_NPC_KO_vs_NPC_WT.txt')) %>%
     separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
     dplyr::select(gene, baseMean,log2FoldChange,padj)
 ## Fitlered FC ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
-HET_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_8wN_HET_vs_8wN_WT.txt')) %>%
-    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
-    dplyr::select(gene, baseMean,log2FoldChange,padj) %>%
-    filter(log2FoldChange >= 0.5 | log2FoldChange <= -0.5)
-KO_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_8wN_KO_vs_8wN_WT.txt')) %>%
+KO_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_NPC_KO_vs_NPC_WT.txt')) %>%
     separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
     dplyr::select(gene, baseMean,log2FoldChange,padj) %>%
     filter(log2FoldChange >= 0.5 | log2FoldChange <= -0.5)
 
 # Merge files
-WTvsHET_annot_gain_lost_RNA = WTvsHET_annot_gain_lost %>% 
-    left_join(HET_vs_WT) %>%
-    dplyr::select(gene, H3K27me3,baseMean,log2FoldChange,padj) %>%
-    filter(gene != "NA") %>%
-    mutate(baseMean = replace_na(baseMean, 0),
-           log2FoldChange = replace_na(log2FoldChange, 0),
-           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
-           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
-    unique()
-
-
-
-WTvsKO_annot_gain_lost_RNA = WTvsKO_annot_gain_lost %>% 
+H3K27me3_annot_gain_lost_RNA = H3K27me3_annot_gain_lost %>% 
     left_join(KO_vs_WT) %>%
-    dplyr::select(gene, H3K27me3,baseMean,log2FoldChange,padj) %>%
+    dplyr::select(gene, binding,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
+    unique()
+EZH2_annot_gain_lost_RNA = EZH2_annot_gain_lost %>% 
+    left_join(KO_vs_WT) %>%
+    dplyr::select(gene, binding,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
+    unique()
+SUZ12_annot_gain_lost_RNA = SUZ12_annot_gain_lost %>% 
+    left_join(KO_vs_WT) %>%
+    dplyr::select(gene, binding,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
+    unique()
+H3K4me3_annot_gain_lost_RNA = H3K4me3_annot_gain_lost %>% 
+    left_join(KO_vs_WT) %>%
+    dplyr::select(gene, binding,baseMean,log2FoldChange,padj) %>%
     filter(gene != "NA") %>%
     mutate(baseMean = replace_na(baseMean, 0),
            log2FoldChange = replace_na(log2FoldChange, 0),
@@ -1684,67 +1871,57 @@ WTvsKO_annot_gain_lost_RNA = WTvsKO_annot_gain_lost %>%
     unique()
 
 
-
-
-
-# Volcano plot
-count_data <- WTvsHET_annot_gain_lost_RNA %>%
-    group_by(H3K27me3, significance) %>%
+# Volcano plot 
+count_data <- H3K27me3_annot_gain_lost_RNA %>%     # CHANGE TITLE !!!!!!!
+    group_by(binding, significance) %>%
     summarise(up = sum(log2FoldChange > 0),
               down = sum(log2FoldChange < 0),
               total = n()) %>%
     ungroup() %>%
-    group_by(H3K27me3) %>%
+    group_by(binding) %>%
     mutate(total_panel = sum(total)) %>%
     ungroup()
 
-pdf("output/ChIPseeker/THOR_qval20_HETvsWT_expression.pdf", width=7, height=4)  # CHANGE TITLE
-pdf("output/ChIPseeker/THOR_qval15_HETvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
-pdf("output/ChIPseeker/THOR_qval15_HETvsWT_expression_promoterAnd5.pdf", width=7, height=4)  # CHANGE TITLE
-pdf("output/ChIPseeker/THOR_qval15_HETvsWT_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE
-pdf("output/ChIPseeker/THOR_qval15_FC2_HETvsWT_expression.pdf", width=7, height=4)  # CHANGE TITLE
-pdf("output/ChIPseeker/THOR_qval15_FC2_HETvsWT_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE
-pdf("output/ChIPseeker/THOR_qval15_FC15_HETvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
-pdf("output/ChIPseeker/THOR_qval15_FC15_HETvsWT_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE
-pdf("output/ChIPseeker/THOR_qval15_keepAll_HETvsWT_expression.pdf", width=7, height=4)  # CHANGE TITLE
-pdf("output/ChIPseeker/THOR_qval15_keepAll_HETvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
-pdf("output/ChIPseeker/THOR_qval15_FC15_keepAll_HETvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
-pdf("output/ChIPseeker/THOR_qval10_FC15_HETvsWT_expression.pdf", width=7, height=4)  # CHANGE TITLE
-pdf("output/ChIPseeker/THOR_qval10_FC15_HETvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
-pdf("output/ChIPseeker/THOR_qval10_FC15_HETvsWT_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE
-pdf("output/ChIPseeker/THOR_qval10_keepAll_HETvsWT_expression.pdf", width=7, height=4)  # CHANGE TITLE
-pdf("output/ChIPseeker/THOR_qval10_keepAll_HETvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
-pdf("output/ChIPseeker/THOR_qval10_keepAll_FC15_HETvsWT_expression_FC05.pdf", width=7, height=4)  # CHANGE TITLE
 
-pdf("output/ChIPseeker/THOR_qval25_HETvsWT_Keepdup_expression_promoterAnd5.pdf", width=7, height=4)  # CHANGE TITLE
-pdf("output/ChIPseeker/THOR_qval15_HETvsWT_unique_Keepdup_expression_promoterAnd5.pdf", width=7, height=4)  # CHANGE TITLE
+# pdf("output/ChIPseeker/THOR_qval20_H3K4me3_expression_promoterAnd5.pdf", width=7, height=4)  # CHANGE TITLE !!!!!!!
+# pdf("output/ChIPseeker/THOR_qval20_H3K4me3_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE !!!!!!!
 
-WTvsHET_annot_gain_lost_RNA %>%
+pdf("output/ChIPseeker/THOR_qval50_H3K27me3_expression_promoterAnd5_test.pdf", width=7, height=4)  # CHANGE TITLE !!!!!!!
+
+H3K27me3_annot_gain_lost_RNA %>%         # CHANGE TITLE !!!!!!!
     ggplot(aes(x = log2FoldChange, y = -log10(padj), color = significance)) +
         geom_point(alpha = 0.8, size = 0.5) +
         scale_color_manual(values = c("grey", "red")) +
-        labs(title = "HET vs WT",
-             subtitle = "Expression level of diff. bound H3K27me3 genes",
+        labs(title = "KO vs WT",
+             subtitle = "Expression level of diff. bound H3K27me3 genes",    # CHANGE TITLE !!!!!!!
              x = "Log2 Fold Change",
              y = "-log10(q-value)",
              color = "Significant (padj <= 0.05)") +
-        facet_wrap(~H3K27me3) +
+        facet_wrap(~binding) +
         theme_bw() +
         geom_text(data = count_data %>% filter(significance), 
                   aes(x = Inf, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
                   hjust = 1.1, vjust = 1.1, size = 3, color = "black") +
-        geom_text(data = count_data %>% distinct(H3K27me3, .keep_all = TRUE),
+        geom_text(data = count_data %>% distinct(binding, .keep_all = TRUE),
                   aes(x = Inf, y = -Inf, label = paste("Total:", total_panel, "genes")),
                   hjust = 1.1, vjust = -0.1, size = 3, color = "black")
 dev.off()
 
+
+
+
 ```
 
+**Summary optimal qval** in agreement with expression:
+- H3K27me3: qval50 (close to values we ve got at 8wN; around 25% not in agreement with gene expr; lower qvalue it's worst)
+- EZH2: qval10 (higher huge drop in nb of genes)
+- SUZ12: qval10 (higher huge drop in nb of genes)
+- H3K4me3: qval10 (higher huge drop in nb of genes)
 
 
+Let's make **clean enhanced volcano plot at the optimal qvalue**:
 
-
-
+--> Done in `001__RNAseq` labnote at `### NPC KO vs WT`
 
 
 
