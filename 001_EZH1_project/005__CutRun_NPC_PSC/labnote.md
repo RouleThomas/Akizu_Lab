@@ -672,7 +672,7 @@ write.table(spikein_scaling_factor, file="output/spikein/spikein_MG1655_PSC_scal
 
 ## Ecoli/Exogeneous genome
 ```bash
-sbatch scripts/samtools_MG1655_corr.sh # XXX
+sbatch scripts/samtools_MG1655_corr.sh # ok
 ```
 
 
@@ -1230,7 +1230,7 @@ sbatch scripts/matrix_TSS_10kb_NPC_H3K4me3_bigwig_THOR.sh # 5861390 ok
 # ChIPseeker peak gene assignment
 
 ## From optimal qval bed files peaks
-Let's assign peak to genes from MACS2 peak:
+Let's assign **peak to genes from MACS2 peak**:
 
 **Optimal qvalue** according to IGV:
 - NPC_H3K27me3 WT and KO; 2.30103
@@ -1241,8 +1241,197 @@ Let's assign peak to genes from MACS2 peak:
 - PSC_SUZ12 EF1aEZH1 and synEZH1; 1.30103 
 - PSC_H3K27me3 EF1aEZH1 and synEZH1; 2.30103
 
+--> After assigning peak to genes; we will isolate putative EZH1 bound genes (SUZ12 without EZH2)
 
-XXX
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import macs2 peaks
+H3K27me3 = as_tibble(read.table('output/macs2/broad_blacklist_qval2.30103/NPC_WT_H3K27me3_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+EZH2 = as_tibble(read.table('output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)    
+SUZ12 = as_tibble(read.table('output/macs2/broad_blacklist_qval1.30103/NPC_WT_SUZ12_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)    
+H3K4me3 = as_tibble(read.table('output/macs2/broad_blacklist_qval1.30103/NPC_WT_H3K4me3_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)  
+
+
+# Tidy peaks #-->> Re-Run from here with different qvalue!!
+H3K27me3_gr = makeGRangesFromDataFrame(H3K27me3,keep.extra.columns=TRUE)
+EZH2_gr = makeGRangesFromDataFrame(EZH2,keep.extra.columns=TRUE)
+SUZ12_gr = makeGRangesFromDataFrame(SUZ12,keep.extra.columns=TRUE)
+H3K4me3_gr = makeGRangesFromDataFrame(H3K4me3,keep.extra.columns=TRUE)
+
+gr_list <- list(H3K27me3=H3K27me3_gr, EZH2=EZH2_gr,  SUZ12=SUZ12_gr, H3K4me3=H3K4me3_gr)
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## Get annotation data frame
+H3K27me3_annot <- as.data.frame(peakAnnoList[["H3K27me3"]]@anno)
+EZH2_annot <- as.data.frame(peakAnnoList[["EZH2"]]@anno)
+SUZ12_annot <- as.data.frame(peakAnnoList[["SUZ12"]]@anno)
+H3K4me3_annot <- as.data.frame(peakAnnoList[["H3K4me3"]]@anno)
+
+## Convert entrez gene IDs to gene symbols
+H3K27me3_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+H3K27me3_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+EZH2_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = EZH2_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+EZH2_annot$gene <- mapIds(org.Hs.eg.db, keys = EZH2_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+SUZ12_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = SUZ12_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+SUZ12_annot$gene <- mapIds(org.Hs.eg.db, keys = SUZ12_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+H3K4me3_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K4me3_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+H3K4me3_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K4me3_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+## Save output table
+write.table(H3K27me3_annot, file="output/ChIPseeker/annotation_macs2_WT_H3K27me3_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(EZH2_annot, file="output/ChIPseeker/annotation_macs2_WT_EZH2_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(SUZ12_annot, file="output/ChIPseeker/annotation_macs2_WT_SUZ12_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K4me3_annot, file="output/ChIPseeker/annotation_macs2_WT_H3K4me3_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+H3K27me3_annot_promoterAnd5 = tibble(H3K27me3_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+EZH2_annot_promoterAnd5 = tibble(EZH2_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+SUZ12_annot_promoterAnd5 = tibble(SUZ12_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+H3K4me3_annot_promoterAnd5 = tibble(H3K4me3_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+### Save output gene lists
+H3K27me3_annot_promoterAnd5_geneSymbol = H3K27me3_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+EZH2_annot_promoterAnd5_geneSymbol = EZH2_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+SUZ12_annot_promoterAnd5_geneSymbol = SUZ12_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+H3K4me3_annot_promoterAnd5_geneSymbol = H3K4me3_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+write.table(H3K27me3_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_macs2_WT_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(EZH2_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_macs2_WT_EZH2_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(SUZ12_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_macs2_WT_SUZ12_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(H3K4me3_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_macs2_WT_H3K4me3_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+```
+--> Export gene list to Online Venn diagram to isolate EZH1 specific (SUZ12 non EZH2); Then deepTools plot:
+- Generate gtf of EZH1; EZH2 specifc gene sets --> `output/macs2/Venn_SUZ12-[no]EZH2_geneSymbol.txt`
+- QC of our EZH1 vs EZH2 specific WT THOR bigwig with SUZ12, EZH2, H3K27me3 for bed EZH2-spe and bed EZH1-spe
+----> Make sure no EZH2 signal in the putative EZH1 one!
+- Compare H3K27me3 level for genes EZH1 and EZH2 -specific
+
+
+```bash
+# Generate gtf from gene Symbol list
+perl -p -i -e 's/\r$//' output/macs2/Venn_SUZ12-EZH2_geneSymbol.txt  # THIS TO CONVERT windowns to UNIX; as .txt from windows...
+perl -p -i -e 's/\r$//' output/macs2/Venn_SUZ12-noEZH2_geneSymbol.txt 
+### Modify the .txt file that list all genes so that it match gtf structure
+sed 's/^/gene_name "/; s/$/"/' output/macs2/Venn_SUZ12-EZH2_geneSymbol.txt > output/macs2/Venn_SUZ12-EZH2_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/macs2/Venn_SUZ12-noEZH2_geneSymbol.txt > output/macs2/Venn_SUZ12-noEZH2_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annot_macs2_WT_SUZ12_qval1.30103_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annot_macs2_WT_SUZ12_qval1.30103_promoterAnd5_as_gtf_geneSymbol.txt
+### Filter the gtf
+grep -Ff output/macs2/Venn_SUZ12-EZH2_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_SUZ12-EZH2.gtf
+grep -Ff output/macs2/Venn_SUZ12-noEZH2_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_SUZ12-noEZH2.gtf
+grep -Ff output/ChIPseeker/annot_macs2_WT_SUZ12_qval1.30103_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_macs2_WT_SUZ12_qval1.30103_promoterAnd5.gtf
+```
+
+Now deepTools
+
+```bash
+conda activate deeptools
+
+# heatmap
+sbatch scripts/matrix_TSS_10kb_THOR_SUZ12-EZH2_WT.sh # 5904250 ok
+
+sbatch scripts/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_allGenes.sh # 5904410
+sbatch scripts/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak.sh # 5904491 ok
+sbatch scripts/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_genes.sh # 5904530 ok
+```
+--> Let's try k-means method with all genes and genes with a SUZ12 peaks (from macs2)
+
+**conclusion to highlight PRC2-EZH1**:
+- `matrix_TSS_10kb_THOR_SUZ12-EZH2_WT`: Fail at separating SUZ12 no EZH2; in the end SUZ12 binding is reduced here; as EZH2...
+- `matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_allGenes`: XXX
+- `matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_genes`: Fail at separating SUZ12 no EZH2. Kmeans lead to signal and no signal for both marks.
+- `matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak`: GREAT; with 25 clusters we are able to isolate peaks that are SUZ12 without EZH2 !!!
+
+Now from `matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak`; let's isolate the peak SUZ12-EZH2 (cluster 1-24) and the SUZ12-noEZH2 (cluster 25)
+
+```bash
+# Isolate specific cluster and make bed
+output/deeptools/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_heatmap_kmeans25.bed
+## matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak cluster 1-24
+awk '$13 != "cluster_25"' output/deeptools/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_heatmap_kmeans25.bed > output/deeptools/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_heatmap_kmeans25_cluster1-24.bed
+
+### Re-format the bed from deepTools kmeans as it is buggy
+conda activate bowtie2
+bedtools intersect -wa -a output/deeptools/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_heatmap_kmeans25_cluster1-24.bed -b output/macs2/broad_blacklist_qval1.30103/NPC_WT_SUZ12_peaks.broadPeak | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4}' > output/deeptools/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_heatmap_kmeans25_cluster1-24_macs2Format.bed
+
+## matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak cluster 25
+awk '$13 == "cluster_25"' output/deeptools/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_heatmap_kmeans25.bed > output/deeptools/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_heatmap_kmeans25_cluster25.bed
+```
+
+Now we have *SUZ12-EZH2; SUZ12-noEZH2; let's check the H3K27me3 level in WT; for the peaks (not the gene)*:
+```bash
+conda activate deeptools
+
+# heatmap
+sbatch scripts/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_cl1-24_25.sh # 5908058 ok
+sbatch scripts/matrix_TSS_10kb_THOR_SUZ12_EZH2_WTandKO_SUZ12_macs2_broadPeak_cl1-24_25.sh # 5908857 ok
+sbatch scripts/matrix_TSS_10kb_THOR_SUZ12_EZH2_WTandKO_SUZ12_macs2_broadPeak_cl25.sh # 5911498
+```
+
+--> **WT control**: SUZ12-noEZH2 show a reduced level of H3K27me3 as compared to SUZ12-EZH2. Consistent as EZH2 is known as a better histone methyltransferase?
+
+--> **KO effect**: The SUZ12 and EZH2 reduction upon KO is only visible for the EZH1-sepcific peaks!! H3K27me3 does NOT seems to be affected by EZH1 KO
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1923,7 +2112,37 @@ Let's make **clean enhanced volcano plot at the optimal qvalue**:
 
 --> Done in `001__RNAseq` labnote at `### NPC KO vs WT`
 
+## deepTools on THOR diff peaks
 
+Let's do heatmap plot as this one from *003__CutRun*: `scripts/matrix_TSS_10kb_THOR_THORq15HETpeaks_positive_negative.sh`: All diff peaks; separating gain and lost
+
+- Separate positive and negative binding and create 2 bed files for each IP
+- Display as heatmap
+
+
+
+```bash
+conda activate deeptools
+
+# Separate gain / lost positive/ negative peaks
+awk -F'\t' '$14 > 1' output/THOR/THOR_NPC_H3K27me3/THOR_qval50.bed > output/THOR/THOR_NPC_H3K27me3/THOR_qval50_positive.bed
+awk -F'\t' '$14 < 1' output/THOR/THOR_NPC_H3K27me3/THOR_qval50.bed > output/THOR/THOR_NPC_H3K27me3/THOR_qval50_negative.bed
+awk -F'\t' '$14 > 1' output/THOR/THOR_NPC_EZH2/THOR_qval10.bed > output/THOR/THOR_NPC_EZH2/THOR_qval10_positive.bed
+awk -F'\t' '$14 < 1' output/THOR/THOR_NPC_EZH2/THOR_qval10.bed > output/THOR/THOR_NPC_EZH2/THOR_qval10_negative.bed
+awk -F'\t' '$14 > 1' output/THOR/THOR_NPC_SUZ12/THOR_qval10.bed > output/THOR/THOR_NPC_SUZ12/THOR_qval10_positive.bed
+awk -F'\t' '$14 < 1' output/THOR/THOR_NPC_SUZ12/THOR_qval10.bed > output/THOR/THOR_NPC_SUZ12/THOR_qval10_negative.bed
+awk -F'\t' '$14 > 1' output/THOR/THOR_NPC_H3K4me3/THOR_qval10.bed > output/THOR/THOR_NPC_H3K4me3/THOR_qval10_positive.bed
+awk -F'\t' '$14 < 1' output/THOR/THOR_NPC_H3K4me3/THOR_qval10.bed > output/THOR/THOR_NPC_H3K4me3/THOR_qval10_negative.bed
+
+# heatmap with differential peaks in KO H3
+
+sbatch scripts/matrix_TSS_10kb_THOR_H3K27me3_q50_peaks_positive_negative.sh # 5900737
+sbatch scripts/matrix_TSS_10kb_THOR_EZH2_q10_peaks_positive_negative.sh # 5901275
+sbatch scripts/matrix_TSS_10kb_THOR_SUZ12_q10_peaks_positive_negative.sh # 5901363
+sbatch scripts/matrix_TSS_10kb_THOR_H3K4me3_q10_peaks_positive_negative.sh # 5901385
+
+
+```
 
 
 
