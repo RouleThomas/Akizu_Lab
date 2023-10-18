@@ -491,7 +491,7 @@ conda activate deeptools
 sbatch scripts/multiBigwigSummary_PSC.sh # 5780604 ok
 sbatch scripts/multiBigwigSummary_PSC_subset_1.sh # 5780758
 sbatch scripts/multiBigwigSummary_NPC.sh # 5780645 ok
-
+sbatch scripts/multiBigwigSummary_NPC_THOR.sh # 5931653 XXXX
 
 
 # Plot
@@ -506,6 +506,15 @@ plotPCA -in output/bigwig/multiBigwigSummary_NPC.npz \
     --ntop 0 \
     --labels NPC_WT_EZH1cs NPC_KO_EZH1cs NPC_WT_EZH1pt NPC_KO_EZH1pt NPC_WT_H3K27me1 NPC_KO_H3K27me1 NPC_WT_H3K27me3 NPC_KO_H3K27me3 NPC_WT_H3K4me3 NPC_KO_H3K4me3 NPC_WT_EZH2 NPC_KO_EZH2 NPC_WT_SUZ12 NPC_KO_SUZ12 NPC_WT_IGG NPC_KO_IGG \
     -o output/bigwig/multiBigwigSummary_NPC_plotPCA.pdf
+plotPCA -in output/THOR/multiBigwigSummary_NPC_THOR.npz \
+    --transpose \
+    --ntop 0 \
+    --labels WT_SUZ12 KO_SUZ12 WT_EZH2 KO_EZH2 WT_H3K27me3 KO_H3K27me3 WT_H3K4me3 KO_H3K4me3 \
+    --colors blue blue green green red red gold gold \
+    --markers o s o s o s o s \
+    --plotWidth 7 \
+    -o output/THOR/multiBigwigSummary_NPC_THOR_plotPCA.pdf
+
 
 ## Heatmap
 plotCorrelation \
@@ -532,6 +541,14 @@ plotCorrelation \
     --labels NPC_WT_EZH1cs NPC_KO_EZH1cs NPC_WT_EZH1pt NPC_KO_EZH1pt NPC_WT_H3K27me1 NPC_KO_H3K27me1 NPC_WT_H3K27me3 NPC_KO_H3K27me3 NPC_WT_H3K4me3 NPC_KO_H3K4me3 NPC_WT_EZH2 NPC_KO_EZH2 NPC_WT_SUZ12 NPC_KO_SUZ12 NPC_WT_IGG NPC_KO_IGG \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
     -o output/bigwig/multiBigwigSummary_NPC_heatmap.pdf
+plotCorrelation \
+    -in output/THOR/multiBigwigSummary_NPC_THOR.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels WT_SUZ12 KO_SUZ12 WT_EZH2 KO_EZH2 WT_H3K27me3 KO_H3K27me3 WT_H3K4me3 KO_H3K4me3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/THOR/multiBigwigSummary_NPC_THOR_heatmap.pdf
 ```
 
 
@@ -1165,6 +1182,7 @@ Let's use our RNAseq in NPC, and generate heatmap of H3K27me3 CutRun signal for 
 conda activate deeptools
 
 # NPC
+## H3K27me3
 sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig.sh # 5827366 ok
 sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig.sh # 5827369 ok
 
@@ -1176,6 +1194,16 @@ sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_MG1655.sh # 5835
 
 sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig_THOR.sh # 5861199 ok
 sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_THOR.sh # 5861207 ok
+
+## SUZ12
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_SUZ12_bigwig_THOR.sh # 5932584 ok
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_SUZ12_bigwig_THOR.sh # 5933018 ok
+## EZH2
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_EZH2_bigwig_THOR.sh # 5933273 ok
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_EZH2_bigwig_THOR.sh # 5933517 ok
+## H3K4me3
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K4me3_bigwig_THOR.sh # 5933811 ok
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K4me3_bigwig_THOR.sh # 5933831 ok
 
 # PSC
 sbatch scripts/matrix_TSS_10kb_PSC_KOEF1aEZH1_bigwig_1.sh # 5850570 ok
