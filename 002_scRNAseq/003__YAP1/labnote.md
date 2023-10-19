@@ -6839,6 +6839,14 @@ dev.off()
 
 
 
+pdf("output/Pathway/dotplot_V2clust_ManualGeneLists_grey.pdf", width=10, height=4)
+ggplot(all_data_pathways_tidy, aes(x = cluster, y = Pathway)) + 
+  geom_point(aes(size = qval, fill = "black"), pch=16, alpha=0.7) +   
+  scale_size_continuous(range = c(1, 8)) +
+  theme_bw() +
+  labs(size = "q-value") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
 
 
 # heatmap
@@ -7057,7 +7065,6 @@ Somitic_Mesoderm <- FindMarkers(embryo.combined.sct, ident.1 = "Somitic_Mesoderm
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-
 Caudal_Mesoderm <- FindMarkers(embryo.combined.sct, ident.1 = "Caudal_Mesoderm-cYAPKO", ident.2 = "Caudal_Mesoderm-WT",
     verbose = TRUE,
     test.use = "wilcox",
@@ -7128,20 +7135,37 @@ Primordial_Germ_Cells <- FindMarkers(embryo.combined.sct, ident.1 = "Primordial_
 
 ### save output
 #### write.table(Primordial_Germ_Cells, file = "output/seurat/Primordial_Germ_Cells-cYAPKO_response_V2clust_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+#### import all clsuter DEGs output :
+cluster_types <- c("Epiblast_PrimStreak", "ExE_Ectoderm_1", "Nascent_Mesoderm", 
+                   "Somitic_Mesoderm", "Caudal_Mesoderm", "Paraxial_Mesoderm", 
+                   "Pharyngeal_Mesoderm", "Haematodenothelial_progenitors", 
+                   "Mesenchyme", "Blood_Progenitor_1", "Mixed_Mesoderm", 
+                   "Blood_Progenitor_2", "Surface_Ectoderm", "Gut", "Unknown_1", 
+                   "Notocord", "Unknown_2", "Primordial_Germ_Cells")
+# Loop over each cluster type to read data and assign to a variable
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-cYAPKO_response_V2clust_allGenes.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1)
+  assign(cluster, data)
+}
 
-XXXX LOAD file and DO GSEA
-
-
-Paraxial_Mesoderm <- read.delim("output/seurat/Paraxial_Mesoderm-cYAPKO_response_V2clust_allGenes.txt", header = TRUE, row.names = 1)
-
-
-
-
-###
 
 ## load list of genes to test
-pathways <- msigdbr("Mus musculus", "C2") 
-fgsea_sets <- pathways %>% split(x = .$gene_symbol, f = .$gs_name)
+Hippo = read_table(file = c("output/Pathway/Manual_geneList_hippo.txt"))
+Nodal_TGF = read_table(file = c("output/Pathway/Manual_geneList_Nodal_TGF.txt"))
+WNT = read_table(file = c("output/Pathway/Manual_geneList_WNT.txt"))
+Vitamin_A = read_table(file = c("output/Pathway/Manual_geneList_Vitamin_A.txt"))
+
+fgsea_sets <- list(
+  Hippo = read_table(file = "output/Pathway/Manual_geneList_hippo.txt")$Genes,
+  Nodal_TGF = read_table(file = "output/Pathway/Manual_geneList_Nodal_TGF.txt")$Genes,
+  WNT = read_table(file = "output/Pathway/Manual_geneList_WNT.txt")$Genes,
+  Vitamin_A = read_table(file = "output/Pathway/Manual_geneList_Vitamin_A.txt")$Genes
+)
+
+
+
+
 
 ## Rank genes based on FC
 genes <- Blood_Progenitor_1 %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
@@ -7156,28 +7180,22 @@ head(ranks)
 fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 1000)
 fgseaResTidy <- fgseaRes %>%
   as_tibble() %>%
-  arrange(desc(NES))
+  arrange(desc(ES))
 fgseaResTidy %>% 
-  dplyr::select(-leadingEdge, -ES, -nMoreExtreme) %>% 
+  dplyr::select(-leadingEdge, -NES, -nMoreExtreme) %>% 
   arrange(padj) %>% 
   head()
 
-## plot GSEA
-pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_WNT_Paraxial_Mesoderm.pdf", width=5, height=3)
-pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS_Nascent_Mesoderm.pdf", width=5, height=3)
-pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_NODAL_Pharyngeal_Mesoderm.pdf", width=5, height=3)
-pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_HIPPO_Mesenchyme.pdf", width=5, height=3)
-pdf("output/Pathway/GSEA_PID_RETINOIC_ACID_PATHWAY_Pharyngeal_Mesoderm.pdf", width=5, height=3)
-pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_NOTCH_Paraxial_Mesoderm.pdf", width=5, height=3)
-pdf("output/Pathway/GSEA_WP_BMP_SIGNALING_IN_EYELID_DEVELOPMENT_Paraxial_Mesoderm.pdf", width=5, height=3)
-pdf("output/Pathway/GSEA_REACTOME_HATS_ACETYLATE_HISTONES_Pharyngeal_Mesoderm.pdf", width=5, height=3)
-pdf("output/Pathway/GSEA_WP_MESODERMAL_COMMITMENT_PATHWAY_Mixed_Mesoderm.pdf", width=5, height=3)
-pdf("output/Pathway/GSEA_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION_Nascent_Mesoderm.pdf", width=5, height=3)
-pdf("output/Pathway/GSEA_WP_VEGFAVEGFR2_SIGNALING_PATHWAY_Nascent_Mesoderm.pdf", width=5, height=3)
-pdf("output/Pathway/GSEA_REACTOME_SIGNALING_BY_FGFR_Blood_Progenitor_1.pdf", width=5, height=3)
 
-plotEnrichment(fgsea_sets[["REACTOME_SIGNALING_BY_FGFR"]],
-               ranks) + labs(title="REACTOME_SIGNALING_BY_FGFR-Blood_Progenitor_1") +
+
+
+
+
+## plot GSEA
+pdf("output/Pathway/GSEA_V2clust_ManualGeneLists_Hippo-Primordial_Germ_Cells.pdf", width=5, height=3)
+
+plotEnrichment(fgsea_sets[["Hippo"]],
+               ranks) + labs(title="Hippo-Primordial_Germ_Cells") +
                theme_bw()
 dev.off()
 
@@ -7185,8 +7203,135 @@ dev.off()
 
 
 
+# Save output table for all pathway and cluster
+## Define the list of cluster types
+cluster_types <- c("Epiblast_PrimStreak", "ExE_Ectoderm_1", "Nascent_Mesoderm", 
+                   "Somitic_Mesoderm", "Caudal_Mesoderm", "Paraxial_Mesoderm", 
+                   "Pharyngeal_Mesoderm", "Haematodenothelial_progenitors", 
+                   "Mesenchyme", "Blood_Progenitor_1", "Mixed_Mesoderm", 
+                   "Blood_Progenitor_2", "Surface_Ectoderm", "Gut", "Unknown_1", 
+                   "Notocord", "Unknown_2", "Primordial_Germ_Cells")
+
+## Initialize an empty list to store the results for each cluster type
+all_results <- list()
+## Loop over each cluster type
+for (cluster in cluster_types) {
+  
+  # Extract genes for the current cluster
+  genes <- get(cluster) %>% 
+    rownames_to_column(var = "gene") %>%
+    arrange(desc(avg_log2FC)) %>% 
+    dplyr::select(gene, avg_log2FC)
+  
+  ranks <- deframe(genes)
+  
+  # Run GSEA for the current cluster
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 1000)
+  fgseaResTidy <- fgseaRes %>%
+    as_tibble() %>%
+    arrange(desc(ES))
+  
+  # Extract summary table and add cluster column
+  fgseaResTidy_summary = fgseaResTidy %>% 
+    dplyr::select(pathway, pval, padj, ES, size, NES) %>%
+    mutate(cluster = cluster) %>%
+    arrange(padj) %>% 
+    head()
+  
+  # Store results in the list
+  all_results[[cluster]] <- fgseaResTidy_summary
+}
+## Combine results from all cluster types into one table
+final_results <- bind_rows(all_results, .id = "cluster")
 
 
+write.table(final_results, file = c("output/Pathway/gsea_output_V2clust_ManualGeneLists.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+
+
+# Heatmap all GSEA
+
+
+pdf("output/Pathway/heatmap_gsea_padj.pdf", width=5, height=5)
+ggplot(final_results, aes(x=cluster, y=pathway, fill=ES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", ES)), 
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+
+pdf("output/Pathway/heatmap_gsea_pval_greyTile.pdf", width=5, height=5)
+ggplot(final_results, aes(x=cluster, y=pathway)) + 
+  geom_tile(aes(fill = ifelse(pval <= 0.05, ES, NA)), color = "black") +  # Conditional fill based on significance
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Enrichment\nScore", na.value="grey") +
+  # geom_text(aes(label=sprintf("%.2f", ES)), 
+  #           color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change between pvalue, qvalue,p.adjust
+  #           size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+
+dev.off()
+
+
+
+
+# SCPA and GSEA plot
+gsea_output = final_results %>% 
+  rename("pathway" = "Pathway") %>%
+  dplyr::select(Pathway, pval, padj, ES, cluster)
+scpa_output = all_data_pathways_tidy  %>%
+  dplyr::select(Pathway, qval, cluster)
+
+scpa_gsea = gsea_output %>%
+  left_join(scpa_output)
+
+## Filter data for GSEA padj < 0.05
+filtered_data <- scpa_gsea
+## Assign color based on your criteria
+filtered_data$is_significant <- filtered_data$padj < 0.05
+
+pdf("output/Pathway/dotplot_scpa_gsea_V2clust.pdf", width=10, height=4)
+
+ggplot(filtered_data, aes(x=cluster, y=Pathway, size=qval)) +
+  geom_point(aes(color=ifelse(is_significant, ES, NA), 
+                 shape=is_significant), alpha=0.7) +
+  scale_color_gradient2(low="blue", high="red", midpoint=0, na.value="black", name = "GSEA Enrichment score") +
+  scale_size_continuous(name="SCPA qval") +  # Title for size scale
+  scale_shape_manual(values=c(`TRUE`=16, `FALSE`=16)) + # Using circle shape for both
+  theme_light() +
+  labs(title="SCPA and GSEA", x="Cluster", y="Pathway") +
+  theme(legend.position="right")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
 
 ```
 
@@ -7691,7 +7836,7 @@ library("tradeSeq")
 
 # Data import EMBRYO
 embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
-embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct_V2clust.rds") XXX
+embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct_V2clust.rds") 
 
 DefaultAssay(embryo.combined.sct) <- "RNA" # According to condiments workflow
 
@@ -7710,6 +7855,7 @@ df <- bind_cols(
 # PLOT
 ## genotype overlap
 pdf("output/condiments/UMAP_condition_embryo.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_condition_embryo_V2clust.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7) +
   scale_color_manual(values = c("blue", "red")) + # Specify colors here
@@ -7725,6 +7871,8 @@ scores <- condiments::imbalance_score(
 df$scores <- scores$scaled_scores
 
 pdf("output/condiments/UMAP_imbalance_score_embryo.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_imbalance_score_embryo_V2clust.pdf", width=5, height=5)
+
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
   geom_point(size = .7) +
   scale_color_viridis_c(option = "C") +
@@ -7734,7 +7882,7 @@ dev.off()
 
 
 #  Trajectory Inference and Differential Topology
-
+set.seed(42)
 
 ## PLOT with Separate trajectories
 embryo <- slingshot(embryo, reducedDim = 'UMAP',
@@ -7750,6 +7898,7 @@ curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
                     .id = "condition")
 
 pdf("output/condiments/UMAP_trajectory_separated_embryo.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_trajectory_separated_embryo_V2clust.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7, alpha = .2) +
   scale_color_brewer(palette = "Accent") +
@@ -7758,8 +7907,9 @@ ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   theme_classic()
 dev.off()
 
-##### MODIFY CODE BELOW TO ANNOTATE THE DIFFERENT TRAJECTORIES
+##### NEED TO MODIFY THE CODE BELOW TO ANNOTATE THE DIFFERENT TRAJECTORIES
 pdf("output/condiments/UMAP_trajectory_separated_trajAnnotated_embryo.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_trajectory_separated_trajAnnotated_embryo_V2clust.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7, alpha = .2) +
   scale_color_brewer(palette = "Accent") +
@@ -7793,6 +7943,8 @@ df_2 <- bind_cols(
 curves <- slingCurves(embryo, as.df = TRUE)
 
 pdf("output/condiments/UMAP_trajectory_common_embryo.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_trajectory_common_embryo_V2clust.pdf", width=5, height=5)
+
 ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
   geom_point(size = .7, aes(col = pst)) +
   scale_color_viridis_c() +
@@ -7807,8 +7959,9 @@ dev.off()
 #### Calculate midpoint for each trajectory to place the label
 curves_midpoints <- curves %>%
   group_by(Lineage) %>%
-  summarise(UMAP_1 = median(UMAP_1),
-            UMAP_2 = median(UMAP_2))
+  summarise(UMAP_1 = mean(UMAP_1),
+            UMAP_2 = mean(UMAP_2))
+
 pdf("output/condiments/UMAP_trajectory_common_label_embryo.pdf", width=5, height=5)
 ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
   geom_point(size = .7, aes(col = pst)) +
@@ -7819,6 +7972,23 @@ ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
   geom_text(data = curves_midpoints, aes(label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Add labels
   theme_classic()
 dev.off()
+
+
+curves_endpoints <- curves %>%
+  group_by(Lineage) %>%
+  arrange(Order) %>%
+  top_n(1, Order) # Get the top/last ordered point for each group
+pdf("output/condiments/UMAP_trajectory_common_label_embryo_V2clust.pdf", width=5, height=5)
+ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
+  geom_point(size = .7, aes(col = pst)) +
+  scale_color_viridis_c() +
+  labs(col = "Pseudotime") +
+  geom_path(data = curves %>% arrange(Order),
+            aes(group = Lineage), col = "black", size = 1) +
+  geom_text(data = curves_endpoints, aes(label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+  theme_classic()
+dev.off()
+
 
 # Differential Progression
 progressionTest(embryo, conditions = embryo$condition, lineages = TRUE)
@@ -7835,11 +8005,13 @@ df_3 <- df_3 %>%
   filter(!is.na(pst))
 
 pdf("output/condiments/densityPlot_trajectory_lineages_embryo.pdf", width=10, height=5)
+pdf("output/condiments/densityPlot_trajectory_lineages_embryo_V2clust.pdf", width=10, height=5)
+
 ggplot(df_3, aes(x = pst)) +
   geom_density(alpha = .8, aes(fill = condition), col = "transparent") +
   geom_density(aes(col = condition), fill = "transparent", size = 1.5) +
   labs(x = "Pseudotime", fill = "condition") +
-  facet_wrap(~Lineage, scales = "free_x") +
+  facet_wrap(~Lineage, scales = "free", nrow=2) +
   guides(col = "none", fill = guide_legend(
     override.aes = list(size = 1.5, col = c("blue", "red"))
   )) +
@@ -7859,21 +8031,109 @@ fateSelectionTest(embryo, conditions = embryo$condition)
 ## Identify the needed number of knots 
 set.seed(42)
 BPPARAM <- BiocParallel::bpparam()
-BPPARAM$workers <- 3
+BPPARAM$workers <- 8
 icMat <- evaluateK(counts = embryo, sds = SlingshotDataSet(embryo), 
                    conditions = factor(embryo$condition),
                    nGenes = 300, parallel = FALSE, BPPARAM = BPPARAM, k = 3:7) # set parallel = FALSE otherwise the code never end!
 icMat
 ### !!! --> EXAMINE icMat to determine the optimal nb of knots for the GAM  !!! TOO LONG FUCK IT, use 6
 
-#### ->  save.image(file="output/condiments/condiments_embryo_V1.RData")
-### load("output/condiments/condiments_embryo_V1.RData")
+#### ->  save.image(file="output/condiments/condiments_embryo_V2clust.RData")
+### load("output/condiments/condiments_embryo_V2clust.RData")
 
 ## Fit GAM with the indicated nb of knots (4 to 7 works for most data according to developers) https://github.com/statOmics/tradeSeq/issues/54
 
 # THE BELOW CODE IS TOO LONG TO RUN, SO HAS BEEN INTRODUCED INTO A RSCRIPT INSTEAD AND IMAGE AS BEEN SAVED AS condiments_embryo_V2.RData
 
-embryo <- fitGAM(counts = embryo, conditions = factor(embryo$condition), nknots = 6) # change nknots here
+
+set.seed(42)
+BPPARAM <- BiocParallel::bpparam()
+BPPARAM$workers <- 8
+
+embryo <- fitGAM(counts = embryo, conditions = factor(embryo$condition), nknots = 6, parallel=TRUE, BPPARAM = BPPARAM) # change nknots here
+
+# TOO LONG FAIL !!!! Let's try to subset lineages of interest:
+
+
+# SUBSET LINEAGE
+library("mgcv") # for  gam.control()
+### Define the desired lineages to keep
+desired_lineages <- paste0("Lineage", 1:5)
+### Extract pseudotimes and cellweights for the desired lineages from the embryo object
+pseudotimes <- slingPseudotime(SlingshotDataSet(embryo), na = FALSE) [, desired_lineages]
+cellweights <- slingCurveWeights(embryo)[, desired_lineages]
+### Retain only those cells with non-zero weights
+sub_weights <- cellweights[rowSums(cellweights != 0) > 0,]
+sub_pseudotimes <- pseudotimes[rownames(pseudotimes) %in% rownames(sub_weights),]
+### Subset the embryo SingleCellExperiment object to retain only relevant cells
+embryo_sub <- embryo[,colnames(embryo) %in% rownames(sub_weights)]
+### Extract the counts
+counts <- assays(embryo_sub)$counts %>% as.matrix()
+
+# Set up the conditions and GAM control
+my_conditions <- as.factor(embryo_sub$condition)
+control <- gam.control()
+control$maxit <- 1000
+
+# Fit the GAM model using the subsetted data
+fitgam <-  fitGAM(counts = counts,
+                  pseudotime = sub_pseudotimes,
+                  cellWeights = sub_weights,
+                  control = control, 
+                  conditions = my_conditions,
+                  nknots = 6)
+
+
+fitgam <-  fitGAM(counts = counts,
+                  pseudotime = sub_pseudotimes,
+                  cellWeights = sub_weights,
+                  control = control, 
+                  conditions = my_conditions,
+                  nknots = 6,
+                  parallel=TRUE,
+                  BPPARAM = BPPARAM)
+
+## START AT 5pm ; at 9pm = 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+my_conditions<- as.factor(sce$condition)
+control <- gam.control()
+control$maxit <- 1000
+fitgam <-  fitGAM(counts = counts, # counts matrix
+                  pseudotime = sub_pseudotimes,
+                  cellWeights = sub_weights,
+                  control = control, conditions= my_conditions,
+                  nknots= 6)
+
+
+
+
+
+
+
+
+
 
 ## Differential expression between conditions
 condRes <- conditionTest(embryo, l2fc = log2(2), lineages = TRUE)
@@ -7884,6 +8144,11 @@ mean(condRes$padj <= 0.05, na.rm = TRUE)
 sum(condRes$padj <= 0.05, na.rm = TRUE)
 conditionGenes <- rownames(condRes)[condRes$padj <= 0.05]
 conditionGenes <- conditionGenes[!is.na(conditionGenes)]
+
+
+
+# THEN can plot some genes: 
+https://bioconductor.org/packages/devel/bioc/vignettes/tradeSeq/inst/doc/tradeSeq.html
 
 
 ```
@@ -7900,11 +8165,13 @@ conditionGenes <- conditionGenes[!is.na(conditionGenes)]
 ```bash
 conda activate condiments_V5
 
-sbatch scripts/fitGAM_6knots.sh # 5756977
+sbatch scripts/fitGAM_6knots.sh # 5756977 fail
+sbatch scripts/fitGAM_6knots_parralell_subset.sh # 6104946 XXXX
 ```
 
---> `scripts/fitGAM_6knots.sh` 24hrs still running... XXX
+--> `scripts/fitGAM_6knots.sh` 24hrs still running... FAIL time limit after 6 days LOL!!!!
 
+--> With parralell processing and subset lineages 1 to 5
 
 to check:
 - https://www.bioconductor.org/packages/devel/bioc/vignettes/condiments/inst/doc/condiments.html
