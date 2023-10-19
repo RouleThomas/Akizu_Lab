@@ -1405,11 +1405,16 @@ Now deepTools
 conda activate deeptools
 
 # heatmap
+## NPC
 sbatch scripts/matrix_TSS_10kb_THOR_SUZ12-EZH2_WT.sh # 5904250 ok
 
 sbatch scripts/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_allGenes.sh # 5904410
 sbatch scripts/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak.sh # 5904491 ok
 sbatch scripts/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_genes.sh # 5904530 ok
+
+## PSC
+sbatch scripts/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak.sh # 5952851 xxxx
+
 ```
 --> Let's try k-means method with all genes and genes with a SUZ12 peaks (from macs2)
 
@@ -1417,22 +1422,24 @@ sbatch scripts/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_genes.sh # 5904530
 - `matrix_TSS_10kb_THOR_SUZ12-EZH2_WT`: Fail at separating SUZ12 no EZH2; in the end SUZ12 binding is reduced here; as EZH2...
 - `matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_allGenes`: XXX
 - `matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_genes`: Fail at separating SUZ12 no EZH2. Kmeans lead to signal and no signal for both marks.
-- `matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak`: GREAT; with 25 clusters we are able to isolate peaks that are SUZ12 without EZH2 !!!
+- `matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak` and `matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak`: GREAT; with 25 clusters we are able to isolate peaks that are SUZ12 without EZH2 !!! And with SUZ12 without EZH1 (surprisingly very few!)
 
-Now from `matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak`; let's isolate the peak SUZ12-EZH2 (cluster 1-24) and the SUZ12-noEZH2 (cluster 25)
+Now from `matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak` and `matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak`; let's isolate the peak SUZ12-EZH2 (cluster 1-24) and the SUZ12-noEZH2 (cluster 25)
 
 ```bash
 # Isolate specific cluster and make bed
 output/deeptools/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_heatmap_kmeans25.bed
 ## matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak cluster 1-24
 awk '$13 != "cluster_25"' output/deeptools/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_heatmap_kmeans25.bed > output/deeptools/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_heatmap_kmeans25_cluster1-24.bed
-
+awk '$13 != "cluster_25"' output/deeptools/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_heatmap_kmeans25.bed > output/deeptools/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_heatmap_kmeans25_cluster1-24.bed
 ### Re-format the bed from deepTools kmeans as it is buggy
 conda activate bowtie2
 bedtools intersect -wa -a output/deeptools/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_heatmap_kmeans25_cluster1-24.bed -b output/macs2/broad_blacklist_qval1.30103/NPC_WT_SUZ12_peaks.broadPeak | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4}' > output/deeptools/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_heatmap_kmeans25_cluster1-24_macs2Format.bed
-
+bedtools intersect -wa -a output/deeptools/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_heatmap_kmeans25_cluster1-24.bed -b output/macs2/broad_blacklist_qval1.30103/PSC_KOEF1aEZH1_SUZ12_peaks.broadPeak | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4}' > output/deeptools/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_heatmap_kmeans25_cluster1-24_macs2Format.bed
 ## matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak cluster 25
 awk '$13 == "cluster_25"' output/deeptools/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_heatmap_kmeans25.bed > output/deeptools/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_heatmap_kmeans25_cluster25.bed
+awk '$13 == "cluster_25"' output/deeptools/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_heatmap_kmeans25.bed > output/deeptools/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_heatmap_kmeans25_cluster25.bed
+
 ```
 
 Now we have *SUZ12-EZH2; SUZ12-noEZH2; let's check the H3K27me3 level in WT; for the peaks (not the gene)*:
@@ -1440,9 +1447,15 @@ Now we have *SUZ12-EZH2; SUZ12-noEZH2; let's check the H3K27me3 level in WT; for
 conda activate deeptools
 
 # heatmap
+## NPC
 sbatch scripts/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_cl1-24_25.sh # 5908058 ok
 sbatch scripts/matrix_TSS_10kb_THOR_SUZ12_EZH2_WTandKO_SUZ12_macs2_broadPeak_cl1-24_25.sh # 5908857 ok
-sbatch scripts/matrix_TSS_10kb_THOR_SUZ12_EZH2_WTandKO_SUZ12_macs2_broadPeak_cl25.sh # 5911498
+sbatch scripts/matrix_TSS_10kb_THOR_SUZ12_EZH2_WTandKO_SUZ12_macs2_broadPeak_cl25.sh # 5911498 ok
+
+## PSC
+sbatch scripts/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_cl1-24_25.sh # 5958046 ok
+
+
 ```
 
 --> **WT control**: SUZ12-noEZH2 show a reduced level of H3K27me3 as compared to SUZ12-EZH2. Consistent as EZH2 is known as a better histone methyltransferase?
