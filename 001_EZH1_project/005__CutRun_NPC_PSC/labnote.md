@@ -1269,8 +1269,8 @@ Let's assign **peak to genes from MACS2 peak**:
 - PSC_SUZ12 EF1aEZH1 and synEZH1; 1.30103 
 - PSC_H3K27me3 EF1aEZH1 and synEZH1; 2.30103
 
---> After assigning peak to genes; we will isolate putative EZH1 bound genes (SUZ12 without EZH2)
-
+--> Assign peak to genes for NPC and PSC:
+--> *NPC*: After assigning peak to genes; we will isolate putative EZH1 bound genes (SUZ12 without EZH2)
 
 ```bash
 conda activate deseq2
@@ -1289,6 +1289,7 @@ library("VennDiagram")
 
 
 # Import macs2 peaks
+## NPC
 H3K27me3 = as_tibble(read.table('output/macs2/broad_blacklist_qval2.30103/NPC_WT_H3K27me3_peaks.broadPeak') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
 EZH2 = as_tibble(read.table('output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks.broadPeak') ) %>%
@@ -1299,13 +1300,27 @@ H3K4me3 = as_tibble(read.table('output/macs2/broad_blacklist_qval1.30103/NPC_WT_
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)  
 
 
+## PSC
+EZH1 = as_tibble(read.table('output/macs2/broad_blacklist_qval1.30103/PSC_KOEF1aEZH1_EZH1cs_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)  
+SUZ12 = as_tibble(read.table('output/macs2/broad_blacklist_qval1.30103/PSC_KOEF1aEZH1_SUZ12_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)  
+H3K27me3 = as_tibble(read.table('output/macs2/broad_blacklist_qval2.30103/PSC_KOEF1aEZH1_H3K27me3_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)  
+
 # Tidy peaks #-->> Re-Run from here with different qvalue!!
+## NPC
 H3K27me3_gr = makeGRangesFromDataFrame(H3K27me3,keep.extra.columns=TRUE)
 EZH2_gr = makeGRangesFromDataFrame(EZH2,keep.extra.columns=TRUE)
 SUZ12_gr = makeGRangesFromDataFrame(SUZ12,keep.extra.columns=TRUE)
 H3K4me3_gr = makeGRangesFromDataFrame(H3K4me3,keep.extra.columns=TRUE)
-
 gr_list <- list(H3K27me3=H3K27me3_gr, EZH2=EZH2_gr,  SUZ12=SUZ12_gr, H3K4me3=H3K4me3_gr)
+
+## PSC
+EZH1_gr = makeGRangesFromDataFrame(EZH1,keep.extra.columns=TRUE)
+SUZ12_gr = makeGRangesFromDataFrame(SUZ12,keep.extra.columns=TRUE)
+H3K27me3_gr = makeGRangesFromDataFrame(H3K27me3,keep.extra.columns=TRUE)
+gr_list <- list(EZH1=EZH1_gr, SUZ12=SUZ12_gr,  H3K27me3=H3K27me3_gr)
 
 # Export Gene peak assignemnt
 peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
@@ -1315,6 +1330,7 @@ H3K27me3_annot <- as.data.frame(peakAnnoList[["H3K27me3"]]@anno)
 EZH2_annot <- as.data.frame(peakAnnoList[["EZH2"]]@anno)
 SUZ12_annot <- as.data.frame(peakAnnoList[["SUZ12"]]@anno)
 H3K4me3_annot <- as.data.frame(peakAnnoList[["H3K4me3"]]@anno)
+EZH1_annot <- as.data.frame(peakAnnoList[["EZH1"]]@anno)
 
 ## Convert entrez gene IDs to gene symbols
 H3K27me3_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
@@ -1325,6 +1341,8 @@ SUZ12_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = SUZ12_annot$geneId, column
 SUZ12_annot$gene <- mapIds(org.Hs.eg.db, keys = SUZ12_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
 H3K4me3_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K4me3_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
 H3K4me3_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K4me3_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+EZH1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = EZH1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+EZH1_annot$gene <- mapIds(org.Hs.eg.db, keys = EZH1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
 
 ## Save output table
 write.table(H3K27me3_annot, file="output/ChIPseeker/annotation_macs2_WT_H3K27me3_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
@@ -1332,6 +1350,8 @@ write.table(EZH2_annot, file="output/ChIPseeker/annotation_macs2_WT_EZH2_qval1.3
 write.table(SUZ12_annot, file="output/ChIPseeker/annotation_macs2_WT_SUZ12_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 write.table(H3K4me3_annot, file="output/ChIPseeker/annotation_macs2_WT_H3K4me3_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 
+write.table(H3K27me3_annot, file="output/ChIPseeker/annotation_macs2_KOEF1aEZH1_H3K27me3_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(SUZ12_annot, file="output/ChIPseeker/annotation_macs2_KOEF1aEZH1_SUZ12_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 
 ## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
 H3K27me3_annot_promoterAnd5 = tibble(H3K27me3_annot) %>%
@@ -1341,6 +1361,8 @@ EZH2_annot_promoterAnd5 = tibble(EZH2_annot) %>%
 SUZ12_annot_promoterAnd5 = tibble(SUZ12_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
 H3K4me3_annot_promoterAnd5 = tibble(H3K4me3_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+EZH1_annot_promoterAnd5 = tibble(EZH1_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
 ### Save output gene lists
 H3K27me3_annot_promoterAnd5_geneSymbol = H3K27me3_annot_promoterAnd5 %>%
@@ -1353,6 +1375,9 @@ SUZ12_annot_promoterAnd5_geneSymbol = SUZ12_annot_promoterAnd5 %>%
     dplyr::select(geneSymbol) %>%
     unique()
 H3K4me3_annot_promoterAnd5_geneSymbol = H3K4me3_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+EZH1_annot_promoterAnd5_geneSymbol = EZH1_annot_promoterAnd5 %>%
     dplyr::select(geneSymbol) %>%
     unique()
 
@@ -1377,12 +1402,27 @@ write.table(H3K4me3_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/ann
             col.names = FALSE, 
             row.names = FALSE)
 
+write.table(H3K27me3_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_macs2_KOEF1aEZH1_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(SUZ12_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_macs2_KOEF1aEZH1_SUZ12_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
 ```
+**NPC**:
 --> Export gene list to Online Venn diagram to isolate EZH1 specific (SUZ12 non EZH2); Then deepTools plot:
 - Generate gtf of EZH1; EZH2 specifc gene sets --> `output/macs2/Venn_SUZ12-[no]EZH2_geneSymbol.txt`
 - QC of our EZH1 vs EZH2 specific WT THOR bigwig with SUZ12, EZH2, H3K27me3 for bed EZH2-spe and bed EZH1-spe
 ----> Make sure no EZH2 signal in the putative EZH1 one!
 - Compare H3K27me3 level for genes EZH1 and EZH2 -specific
+
+**PSC**:
+--> Export gene list to Online Venn diagram EZH1, SUZ12, H3K27me3
+--> Then do GO/KEGG on EZH1 to see if steroid-related stuff
 
 
 ```bash
@@ -2189,7 +2229,64 @@ sbatch scripts/matrix_TSS_10kb_THOR_H3K4me3_q10_peaks_positive_negative.sh # 590
 
 
 
+# Functional analysis
 
+Let's do functional analysis GO and KEGG on the genes bound with EZH1 (and SUZ12 (and H3K27me3)); to check whether anything related to steroids
+
+--> Gene list has been collected from Venn diagram (**420 genes EZH1+SUZ12 / 333 EZH1+SUZ12+H3K27me3**)
+
+```bash
+conda activate deseq2
+```
+```R
+# packages
+library("clusterProfiler")
+library("pathview")
+library("DOSE")
+library("org.Hs.eg.db")
+library("enrichplot")
+library("rtracklayer")
+library("tidyverse")
+
+
+# import genes list
+EZH1_SUZ12 = read.table(file = c("output/GO/Venn_overlap_PSC_EZH1_SUZ12.txt"), header = FALSE)
+EZH1_SUZ12_H3K27me3 = read.table(file = c("output/GO/Venn_overlap_PSC_EZH1_SUZ12_H3K27me3.txt"), header = FALSE)
+
+
+
+ego <- enrichGO(gene = as.character(EZH1_SUZ12_H3K27me3$V1),   # CHANGE NAME HERE !!!
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+                
+pdf("output/GO/dotplot_GO_BP_overlap_PSC_EZH1_SUZ12.pdf", width=7, height=7)
+pdf("output/GO/dotplot_GO_BP_overlap_PSC_EZH1_SUZ12_H3K27me3.pdf", width=7, height=7)
+dotplot(ego, showCategory=20)
+dev.off()
+
+
+## convert SYMBOL to entrezID
+EZH1_SUZ12_ENTREZID = mapIds(org.Hs.eg.db, keys = EZH1_SUZ12$V1,
+                       column = "ENTREZID", keytype = "SYMBOL", multiVals = "first")
+EZH1_SUZ12_H3K27me3_ENTREZID = mapIds(org.Hs.eg.db, keys = EZH1_SUZ12_H3K27me3$V1,
+                       column = "ENTREZID", keytype = "SYMBOL", multiVals = "first")
+
+enrichKEGG <- enrichKEGG(gene   = as.character(EZH1_SUZ12_H3K27me3_ENTREZID),        # CHANGE NAME HERE !!!
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
+
+pdf("output/GO/dotplot_KEGG_overlap_PSC_EZH1_SUZ12.pdf", width=7, height=5)
+pdf("output/GO/dotplot_KEGG_overlap_PSC_EZH1_SUZ12_H3K27me3.pdf", width=7, height=6)
+dotplot(enrichKEGG, showCategory=20)
+dev.off()
+
+
+
+```
 
 
 

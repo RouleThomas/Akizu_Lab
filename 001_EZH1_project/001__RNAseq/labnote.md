@@ -14997,6 +14997,9 @@ Objective here is to do GSEA to assess cell type population changes (notably the
   - FAN_EMBRYONIC_CTX https://www.gsea-msigdb.org/gsea/msigdb/human/geneset/FAN_EMBRYONIC_CTX_BIG_GROUPS_EXCITATORY_NEURON.html 
   - ZHONG_PFC : https://www.gsea-msigdb.org/gsea/msigdb/human/geneset/ZHONG_PFC_C1_DLX5_POS_INTERNEURON.html 
 
+
+Let's also do **GSEA to check steroids-related genes at each time points for WT vs HET/GOF**
+
 Use `conda activate deseq2` and R:
 
 
@@ -15025,6 +15028,8 @@ HET <- read.table("output/deseq2_hg38/filtered_8wN_HET_vs_8wN_WT.txt", header = 
   as_tibble()
 HET_geneSymbol = HET %>%
   filter(!is.na(GeneSymbol)) # filter to keep only the geneSymbol gene
+  
+XXX here import the filtered one ! XXX
 
 
 # import msigdbr cell marker db 
@@ -15032,7 +15037,10 @@ hs_hallmark_sets <- msigdbr(
   species = "Homo sapiens", # Replace with species name relevant to your data
   category = "C8"   # From C8 cell marker category
 )
-
+hs_hallmark_sets <- msigdbr(
+  species = "Homo sapiens", # Replace with species name relevant to your data
+  category = "C2"   # From C2 pathways
+)
 
 # Order our DEG
 ## Let's create a named vector ranked based on the log2 fold change values
@@ -15077,10 +15085,11 @@ gsea_results <- GSEA(
   )
 )
 
-
-
 gsea_result_df <- data.frame(gsea_results@result)
 
+
+
+# ASTROCYTE -----------------
 ## From this file I look for significance in 'Astrocyte' and it return:
 ## For KO
 DESCARTES_MAIN_FETAL_ASTROCYTES
@@ -15341,6 +15350,29 @@ GAUTAM_EYE_CHOROID_SCLERA_CHOROID_ENDOTHELIAL_CELLS
 GAUTAM_EYE_IRIS_CILIARY_BODY_CILIARY_BODY_ENDOTHELIAL_CELLS
 DESCARTES_FETAL_INTESTINE_VASCULAR_ENDOTHELIAL_CELLS
 DESCARTES_MAIN_FETAL_LYMPHATIC_ENDOTHELIAL_CELLS
+
+
+
+
+# STEROIDS -----------------
+# GO THERE to find steroid pathway name : https://www.gsea-msigdb.org/gsea/msigdb/human/genesets.jsp?collection=C2
+
+pdf("output/gsea/KEGG_STEROID_BIOSYNTHESIS__8wN_WTvsHET.pdf", width=14, height=8)
+enrichplot::gseaplot(
+  gsea_results,
+  geneSetID = "KEGG_STEROID_BIOSYNTHESIS",
+  title = "KEGG_STEROID_BIOSYNTHESIS",
+  color.line = "#0d76ff"
+)
+dev.off()
+
+# Save output
+readr::write_tsv(
+  gsea_result_df,
+  file.path("output/gsea/gsea_results_8wN_WTvsHET_complete_C2.tsv"
+  )
+)
+
 
 
 ```
