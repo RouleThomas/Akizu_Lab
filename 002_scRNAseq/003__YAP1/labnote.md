@@ -8046,6 +8046,7 @@ icMat
 # THE BELOW CODE IS TOO LONG TO RUN, SO HAS BEEN INTRODUCED INTO A RSCRIPT INSTEAD AND IMAGE AS BEEN SAVED AS condiments_embryo_V2.RData
 
 
+
 set.seed(42)
 BPPARAM <- BiocParallel::bpparam()
 BPPARAM$workers <- 8
@@ -8053,6 +8054,26 @@ BPPARAM$workers <- 8
 embryo <- fitGAM(counts = embryo, conditions = factor(embryo$condition), nknots = 6, parallel=TRUE, BPPARAM = BPPARAM) # change nknots here
 
 # TOO LONG FAIL !!!! Let's try to subset lineages of interest:
+
+
+
+
+# long time troubleshoot:
+
+
+counts <- embryo[["RNA"]]@counts
+cond <- factor(seurat_obj$orig.ident)
+nbm <- fitGAM(
+     counts = counts, sds = trajectory[1],
+     conditions =cond, nknots = 6,
+     genes = seq_len(10), sce = TRUE
+   )
+
+
+embryo_1 <- fitGAM(counts = embryo, conditions = factor(embryo$condition), nknots = 6, sds = trajectory[1], sce = TRUE) 
+
+
+
 
 
 # SUBSET LINEAGE
@@ -8093,7 +8114,20 @@ fitgam <-  fitGAM(counts = counts,
                   parallel=TRUE,
                   BPPARAM = BPPARAM)
 
-## START AT 5pm ; at 9pm = 
+
+fitgam <-  fitGAM(counts = counts,
+                  pseudotime = sub_pseudotimes,
+                  cellWeights = sub_weights,
+                  control = control, 
+                  conditions = my_conditions,
+                  nknots = 6,
+                  sds = sub_pseudotimes@Lineage1)
+
+
+
+
+
+
 
 
 
