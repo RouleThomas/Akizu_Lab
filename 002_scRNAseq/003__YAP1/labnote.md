@@ -8021,15 +8021,14 @@ ggplot(df_3, aes(x = pst)) +
 dev.off()
 
 
-# Differential fate selection
-fateSelectionTest(embryo, conditions = embryo$condition)
-## --> FAIL
-##
+#### ->  save.image(file="output/condiments/condiments_embryo_V2clust.RData")
+### load("output/condiments/condiments_embryo_V2clust.RData")
+set.seed(42)
 
 #  Differential expression
 
 ## Identify the needed number of knots 
-set.seed(42)
+
 BPPARAM <- BiocParallel::bpparam()
 BPPARAM$workers <- 8
 icMat <- evaluateK(counts = embryo, sds = SlingshotDataSet(embryo), 
@@ -8037,128 +8036,74 @@ icMat <- evaluateK(counts = embryo, sds = SlingshotDataSet(embryo),
                    nGenes = 300, parallel = FALSE, BPPARAM = BPPARAM, k = 3:7) # set parallel = FALSE otherwise the code never end!
 icMat
 ### !!! --> EXAMINE icMat to determine the optimal nb of knots for the GAM  !!! TOO LONG FUCK IT, use 6
-
-#### ->  save.image(file="output/condiments/condiments_embryo_V2clust.RData")
-### load("output/condiments/condiments_embryo_V2clust.RData")
-
 ## Fit GAM with the indicated nb of knots (4 to 7 works for most data according to developers) https://github.com/statOmics/tradeSeq/issues/54
 
-# THE BELOW CODE IS TOO LONG TO RUN, SO HAS BEEN INTRODUCED INTO A RSCRIPT INSTEAD AND IMAGE AS BEEN SAVED AS condiments_embryo_V2.RData
+
+# THE fitGAM() CODE IS TOO LONG TO RUN, SO HAS BEEN INTRODUCED INTO A RSCRIPT INSTEAD AND IMAGE AS BEEN SAVED AS condiments_embryo_V2.RData. But it fail too...
+
+
+# Try running the DEGs trajectory per trajectory
+### FROM THIS https://github.com/statOmics/tradeSeq/issues/64 :
+
+#### Let's try to run the DEGs trajectory per trajectory
+counts <- embryo.combined.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(embryo.combined.sct$orig.ident) # identify conditions
+#### Extract the pseudotimes and cell weights for the first lineage
+pseudotimes <- slingPseudotime(embryo, na = FALSE) [,1]
+cellweights <- slingCurveWeights(embryo) [,1]
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+
+traj1 <- fitGAM(
+     counts = sub_counts, 
+     pseudotime = sub_pseudotimes,
+     cellWeights = sub_weights,
+     conditions = sub_cond, 
+     nknots = 6,
+     sce = TRUE
+   )
+### IT WORK!!! Estimated run 24hours which is OK !!! Let's run this in slurm job traj per traj
 
 
 
-set.seed(42)
-BPPARAM <- BiocParallel::bpparam()
-BPPARAM$workers <- 8
-
-embryo <- fitGAM(counts = embryo, conditions = factor(embryo$condition), nknots = 6, parallel=TRUE, BPPARAM = BPPARAM) # change nknots here
-
-# TOO LONG FAIL !!!! Let's try to subset lineages of interest:
 
 
+# Try running the DEGs on the top 10k features (the 10k most variable genes) and trajectory per trajectory; This does not reduce a lot the time... With 10 featuers = 5hours; versus 24hours for all...
+
+## Isolate the top 10k
+embryo.combined.sct.10k <- FindVariableFeatures(embryo.combined.sct, selection.method = "vst", nfeatures = 10)
+
+#### Let's try to run the DEGs trajectory per trajectory
+counts <- embryo.combined.sct.10k[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(embryo.combined.sct.10k$orig.ident) # identify conditions
+#### Extract the pseudotimes and cell weights for the first lineage
+pseudotimes <- slingPseudotime(embryo, na = FALSE) [,1]
+cellweights <- slingCurveWeights(embryo) [,1]
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
 
 
-# long time troubleshoot:
-
-
-counts <- embryo[["RNA"]]@counts
-cond <- factor(seurat_obj$orig.ident)
-nbm <- fitGAM(
-     counts = counts, sds = trajectory[1],
-     conditions =cond, nknots = 6,
-     genes = seq_len(10), sce = TRUE
+traj1 <- fitGAM(
+     counts = sub_counts, 
+     pseudotime = sub_pseudotimes,
+     cellWeights = sub_weights,
+     conditions = sub_cond, 
+     nknots = 6,
+     sce = TRUE
    )
 
 
-embryo_1 <- fitGAM(counts = embryo, conditions = factor(embryo$condition), nknots = 6, sds = trajectory[1], sce = TRUE) 
 
 
+### Once slurm jobs finished for each trajectory; load traj1 <- readRDS("output/condiments/traj1.rds") XXXXXXXXXXX
 
-
-
-# SUBSET LINEAGE
-library("mgcv") # for  gam.control()
-### Define the desired lineages to keep
-desired_lineages <- paste0("Lineage", 1:5)
-### Extract pseudotimes and cellweights for the desired lineages from the embryo object
-pseudotimes <- slingPseudotime(SlingshotDataSet(embryo), na = FALSE) [, desired_lineages]
-cellweights <- slingCurveWeights(embryo)[, desired_lineages]
-### Retain only those cells with non-zero weights
-sub_weights <- cellweights[rowSums(cellweights != 0) > 0,]
-sub_pseudotimes <- pseudotimes[rownames(pseudotimes) %in% rownames(sub_weights),]
-### Subset the embryo SingleCellExperiment object to retain only relevant cells
-embryo_sub <- embryo[,colnames(embryo) %in% rownames(sub_weights)]
-### Extract the counts
-counts <- assays(embryo_sub)$counts %>% as.matrix()
-
-# Set up the conditions and GAM control
-my_conditions <- as.factor(embryo_sub$condition)
-control <- gam.control()
-control$maxit <- 1000
-
-# Fit the GAM model using the subsetted data
-fitgam <-  fitGAM(counts = counts,
-                  pseudotime = sub_pseudotimes,
-                  cellWeights = sub_weights,
-                  control = control, 
-                  conditions = my_conditions,
-                  nknots = 6)
-
-
-fitgam <-  fitGAM(counts = counts,
-                  pseudotime = sub_pseudotimes,
-                  cellWeights = sub_weights,
-                  control = control, 
-                  conditions = my_conditions,
-                  nknots = 6,
-                  parallel=TRUE,
-                  BPPARAM = BPPARAM)
-
-
-fitgam <-  fitGAM(counts = counts,
-                  pseudotime = sub_pseudotimes,
-                  cellWeights = sub_weights,
-                  control = control, 
-                  conditions = my_conditions,
-                  nknots = 6,
-                  sds = sub_pseudotimes@Lineage1)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-my_conditions<- as.factor(sce$condition)
-control <- gam.control()
-control$maxit <- 1000
-fitgam <-  fitGAM(counts = counts, # counts matrix
-                  pseudotime = sub_pseudotimes,
-                  cellWeights = sub_weights,
-                  control = control, conditions= my_conditions,
-                  nknots= 6)
 
 
 
@@ -8195,15 +8140,28 @@ https://bioconductor.org/packages/devel/bioc/vignettes/tradeSeq/inst/doc/tradeSe
 --> The icMAt is too long! I gave up running it. Author recommend using 6 knots (https://github.com/statOmics/tradeSeq/issues/121). Other discussion about [time](https://github.com/statOmics/tradeSeq/issues/41)
 
 --> Same for the fitGAM, too long, so I run it into a Rscript as follow:
+----> In the end; **what worked is to run trajectory per trajectory; it should last around 24-72hours per trajectory. Using the top 10k features do not reduce time significantly.**
+----> Parrelization can be stuck sometime so I ll run it without...
 
 ```bash
 conda activate condiments_V5
-
+# test
 sbatch scripts/fitGAM_6knots.sh # 5756977 fail
-sbatch scripts/fitGAM_6knots_parralell_subset.sh # 6104946 XXXX
+sbatch scripts/fitGAM_6knots_parralell_subset.sh # 6104946 fail
+
+# trajectory per trajectory (all features, no parralelization)
+sbatch scripts/fitGAM_6knots_traj1.sh # 6110340
+sbatch scripts/fitGAM_6knots_traj2.sh # 6110351
+sbatch scripts/fitGAM_6knots_traj3.sh # 6110359
+sbatch scripts/fitGAM_6knots_traj4.sh # 6110363
+sbatch scripts/fitGAM_6knots_traj5.sh # 6110370
+sbatch scripts/fitGAM_6knots_traj6.sh # 6110374
+sbatch scripts/fitGAM_6knots_traj7.sh # 6110376
+sbatch scripts/fitGAM_6knots_traj8.sh # 6110378
+
 ```
 
---> `scripts/fitGAM_6knots.sh` 24hrs still running... FAIL time limit after 6 days LOL!!!!
+--> `scripts/fitGAM_6knots.sh` 24hrs still running... FAIL time limit after 6 days LOL!!!! same for `fitGAM_6knots_parralell_subset.sh`
 
 --> With parralell processing and subset lineages 1 to 5
 
