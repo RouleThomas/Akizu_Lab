@@ -6723,9 +6723,15 @@ Go in R
 # Load packages
 library("DESeq2")
 library("tidyverse")
+library("EnhancedVolcano")
+library("apeglm")
+library("org.Hs.eg.db")
+library("biomaRt")
+
 library("RColorBrewer")
 library("pheatmap")
-library("apeglm")
+library("AnnotationDbi")
+
 
 # import featurecounts output and keep only gene ID and counts
 ## collect all samples ID
@@ -6737,12 +6743,23 @@ sample_data <- list()
 
 for (sample in samples) {
   sample_data[[sample]] <- read_delim(paste0("output/featurecounts_hg38/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
-    select(Geneid, starts_with("output/STAR_hg38/")) %>%
+    dplyr::select(Geneid, starts_with("output/STAR_hg38/")) %>%
     rename(!!sample := starts_with("output/STAR_hg38/"))
 }
 
 # Merge all dataframe into a single one
 counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+# Remove X and Y chromosome genes
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
+                   filters = "chromosome_name",
+                   values = c("X", "Y"),
+                   mart = ensembl)
+counts_all$stripped_geneid <- sub("\\..*", "", counts_all$Geneid)
+counts_all_filtered <- counts_all %>%
+  filter(!stripped_geneid %in% genes_X_Y$ensembl_gene_id)
+counts_all_filtered$stripped_geneid <- NULL
 
 # Pre-requisetes for the DESeqDataSet
 ## Transform merged_data into a matrix
@@ -6754,7 +6771,8 @@ make_matrix <- function(df,rownames = NULL){
   my_matrix
 }
 ### execute function
-counts_all_matrix = make_matrix(select(counts_all, -Geneid), pull(counts_all, Geneid)) 
+counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pull(counts_all_filtered, Geneid)) 
+
 
 ## Create colData file that describe all our samples
 ### Not including replicate
@@ -6768,7 +6786,7 @@ coldata_raw <- data.frame(samples) %>%
   bind_cols(data.frame(samples))
 
 ## transform df into matrix
-coldata = make_matrix(select(coldata_raw, -samples), pull(coldata_raw, samples))
+coldata = make_matrix(dplyr::select(coldata_raw, -samples), pull(coldata_raw, samples))
 
 ## Check that row name of both matrix (counts and description) are the same
 all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
@@ -6808,6 +6826,122 @@ text(x = max(res_df$baseMean, na.rm = TRUE) * 0.25, y = 1.75, labels = paste(n_u
 text(x = max(res_df$baseMean, na.rm = TRUE) * 0.25, y = -1.75, labels = paste(n_downregulated), adj = c(0, 0.5), cex = 0.9)
 
 dev.off()
+
+
+
+
+## Plot-volcano
+### GeneSymbol ID
+gene_ids <- rownames(res)
+stripped_gene_ids <- sub("\\..*", "", gene_ids)
+gene_symbols <- mapIds(org.Hs.eg.db, keys = stripped_gene_ids,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+res$GeneSymbol <- gene_symbols
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.5 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.5 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+
+
+
+pdf("output/deseq2_hg38/plotVolcano_res_q05_NPC_HET_vs_NPC_WT_prettyV1.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = "",
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'HET vs WT, NPC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+upregulated_genes <- sum(res$log2FoldChange > 0.5 & res$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res$log2FoldChange < -0.5 & res$padj < 5e-2, na.rm = TRUE)
+
+
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res[res$log2FoldChange > 0.5 & res$padj < 5e-2, ]
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 0.5 & res$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05_NPC_HET_vs_NPC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05_NPC_HET_vs_NPC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
+# FILTER ON QVALUE 0.01 FC 0.5
+keyvals <- ifelse(
+  res$log2FoldChange < -0.5 & res$padj < 1e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.5 & res$padj < 1e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.01; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.01; log2FC < 0.5)'
+
+
+
+pdf("output/deseq2_hg38/plotVolcano_res_q01FC05_NPC_HET_vs_NPC_WT.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = "",
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'HET vs WT, NPC',
+  pCutoff = 1e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+upregulated_genes <- sum(res$log2FoldChange > 0.5 & res$padj < 1e-2, na.rm = TRUE)
+downregulated_genes <- sum(res$log2FoldChange < -0.5 & res$padj < 1e-2, na.rm = TRUE)
+
+
+
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res[res$log2FoldChange > 0.5 & res$padj < 1e-2, ]
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 0.5 & res$padj < 1e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.5 & res$padj < 1e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q01FC05_NPC_HET_vs_NPC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q01FC05_NPC_HET_vs_NPC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+# Export complete table with geneSymbol ID (without X Y chromosome)
+write.table(res, file = "output/deseq2_hg38/filtered_NPC_HET_vs_NPC_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) 
 ```
 ### ESC KO vs WT
 Take ressource
@@ -6919,9 +7053,14 @@ Go in R
 # Load packages
 library("DESeq2")
 library("tidyverse")
+library("EnhancedVolcano")
+library("apeglm")
+library("org.Hs.eg.db")
+library("biomaRt")
+
 library("RColorBrewer")
 library("pheatmap")
-library("apeglm")
+library("AnnotationDbi")
 
 # import featurecounts output and keep only gene ID and counts
 ## collect all samples ID
@@ -6933,12 +7072,23 @@ sample_data <- list()
 
 for (sample in samples) {
   sample_data[[sample]] <- read_delim(paste0("output/featurecounts_hg38/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
-    select(Geneid, starts_with("output/STAR_hg38/")) %>%
+    dplyr::select(Geneid, starts_with("output/STAR_hg38/")) %>%
     rename(!!sample := starts_with("output/STAR_hg38/"))
 }
 
 # Merge all dataframe into a single one
 counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+# Remove X and Y chromosome genes
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
+                   filters = "chromosome_name",
+                   values = c("X", "Y"),
+                   mart = ensembl)
+counts_all$stripped_geneid <- sub("\\..*", "", counts_all$Geneid)
+counts_all_filtered <- counts_all %>%
+  filter(!stripped_geneid %in% genes_X_Y$ensembl_gene_id)
+counts_all_filtered$stripped_geneid <- NULL
 
 # Pre-requisetes for the DESeqDataSet
 ## Transform merged_data into a matrix
@@ -6950,7 +7100,8 @@ make_matrix <- function(df,rownames = NULL){
   my_matrix
 }
 ### execute function
-counts_all_matrix = make_matrix(select(counts_all, -Geneid), pull(counts_all, Geneid)) 
+counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pull(counts_all_filtered, Geneid)) 
+
 
 ## Create colData file that describe all our samples
 ### Not including replicate
@@ -6964,7 +7115,7 @@ coldata_raw <- data.frame(samples) %>%
   bind_cols(data.frame(samples))
 
 ## transform df into matrix
-coldata = make_matrix(select(coldata_raw, -samples), pull(coldata_raw, samples))
+coldata = make_matrix(dplyr::select(coldata_raw, -samples), pull(coldata_raw, samples))
 
 ## Check that row name of both matrix (counts and description) are the same
 all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
@@ -7004,6 +7155,124 @@ text(x = max(res_df$baseMean, na.rm = TRUE) * 0.25, y = 1.75, labels = paste(n_u
 text(x = max(res_df$baseMean, na.rm = TRUE) * 0.25, y = -1.75, labels = paste(n_downregulated), adj = c(0, 0.5), cex = 0.9)
 
 dev.off()
+
+
+## Plot-volcano
+### GeneSymbol ID
+gene_ids <- rownames(res)
+stripped_gene_ids <- sub("\\..*", "", gene_ids)
+gene_symbols <- mapIds(org.Hs.eg.db, keys = stripped_gene_ids,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+res$GeneSymbol <- gene_symbols
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.5 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.5 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+
+
+
+pdf("output/deseq2_hg38/plotVolcano_res_q05_ESC_HET_vs_ESC_WT_prettyV1.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = "",
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'HET vs WT, ESC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+upregulated_genes <- sum(res$log2FoldChange > 0.5 & res$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res$log2FoldChange < -0.5 & res$padj < 5e-2, na.rm = TRUE)
+
+
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res[res$log2FoldChange > 0.5 & res$padj < 5e-2, ]
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 0.5 & res$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05_ESC_HET_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05_ESC_HET_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
+# FILTER ON QVALUE 0.01 FC 0.5
+keyvals <- ifelse(
+  res$log2FoldChange < -0.5 & res$padj < 1e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.5 & res$padj < 1e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.01; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.01; log2FC < 0.5)'
+
+
+
+pdf("output/deseq2_hg38/plotVolcano_res_q01FC05_ESC_HET_vs_ESC_WT.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = "",
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'HET vs WT, ESC',
+  pCutoff = 1e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+upregulated_genes <- sum(res$log2FoldChange > 0.5 & res$padj < 1e-2, na.rm = TRUE)
+downregulated_genes <- sum(res$log2FoldChange < -0.5 & res$padj < 1e-2, na.rm = TRUE)
+
+
+
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res[res$log2FoldChange > 0.5 & res$padj < 1e-2, ]
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 0.5 & res$padj < 1e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.5 & res$padj < 1e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q01FC05_ESC_HET_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q01FC05_ESC_HET_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+# Export complete table with geneSymbol ID (without X Y chromosome)
+write.table(res, file = "output/deseq2_hg38/filtered_ESC_HET_vs_ESC_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) 
+
+
+
+
 ```
 ### 2dN KO vs WT
 Take ressource
@@ -7115,9 +7384,14 @@ Go in R
 # Load packages
 library("DESeq2")
 library("tidyverse")
+library("EnhancedVolcano")
+library("apeglm")
+library("org.Hs.eg.db")
+library("biomaRt")
+
 library("RColorBrewer")
 library("pheatmap")
-library("apeglm")
+library("AnnotationDbi")
 
 # import featurecounts output and keep only gene ID and counts
 ## collect all samples ID
@@ -7129,12 +7403,23 @@ sample_data <- list()
 
 for (sample in samples) {
   sample_data[[sample]] <- read_delim(paste0("output/featurecounts_hg38/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
-    select(Geneid, starts_with("output/STAR_hg38/")) %>%
+    dplyr::select(Geneid, starts_with("output/STAR_hg38/")) %>%
     rename(!!sample := starts_with("output/STAR_hg38/"))
 }
 
 # Merge all dataframe into a single one
 counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+# Remove X and Y chromosome genes
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
+                   filters = "chromosome_name",
+                   values = c("X", "Y"),
+                   mart = ensembl)
+counts_all$stripped_geneid <- sub("\\..*", "", counts_all$Geneid)
+counts_all_filtered <- counts_all %>%
+  filter(!stripped_geneid %in% genes_X_Y$ensembl_gene_id)
+counts_all_filtered$stripped_geneid <- NULL
 
 # Pre-requisetes for the DESeqDataSet
 ## Transform merged_data into a matrix
@@ -7146,7 +7431,8 @@ make_matrix <- function(df,rownames = NULL){
   my_matrix
 }
 ### execute function
-counts_all_matrix = make_matrix(select(counts_all, -Geneid), pull(counts_all, Geneid)) 
+counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pull(counts_all_filtered, Geneid)) 
+
 
 ## Create colData file that describe all our samples
 ### Not including replicate
@@ -7160,7 +7446,7 @@ coldata_raw <- data.frame(samples) %>%
   bind_cols(data.frame(samples))
 
 ## transform df into matrix
-coldata = make_matrix(select(coldata_raw, -samples), pull(coldata_raw, samples))
+coldata = make_matrix(dplyr::select(coldata_raw, -samples), pull(coldata_raw, samples))
 
 ## Check that row name of both matrix (counts and description) are the same
 all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
@@ -7200,6 +7486,126 @@ text(x = max(res_df$baseMean, na.rm = TRUE) * 0.25, y = 1.75, labels = paste(n_u
 text(x = max(res_df$baseMean, na.rm = TRUE) * 0.25, y = -1.75, labels = paste(n_downregulated), adj = c(0, 0.5), cex = 0.9)
 
 dev.off()
+
+
+
+
+## Plot-volcano
+### GeneSymbol ID
+gene_ids <- rownames(res)
+stripped_gene_ids <- sub("\\..*", "", gene_ids)
+gene_symbols <- mapIds(org.Hs.eg.db, keys = stripped_gene_ids,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+res$GeneSymbol <- gene_symbols
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.5 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.5 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+
+
+
+pdf("output/deseq2_hg38/plotVolcano_res_q05_2dN_HET_vs_2dN_WT_prettyV1.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = "",
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'HET vs WT, 2dN',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+upregulated_genes <- sum(res$log2FoldChange > 0.5 & res$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res$log2FoldChange < -0.5 & res$padj < 5e-2, na.rm = TRUE)
+
+
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res[res$log2FoldChange > 0.5 & res$padj < 5e-2, ]
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 0.5 & res$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05_2dN_HET_vs_2dN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05_2dN_HET_vs_2dN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
+# FILTER ON QVALUE 0.01 FC 0.5
+keyvals <- ifelse(
+  res$log2FoldChange < -0.5 & res$padj < 1e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.5 & res$padj < 1e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.01; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.01; log2FC < 0.5)'
+
+
+
+pdf("output/deseq2_hg38/plotVolcano_res_q01FC05_2dN_HET_vs_2dN_WT.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = "",
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'HET vs WT, 2dN',
+  pCutoff = 1e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+upregulated_genes <- sum(res$log2FoldChange > 0.5 & res$padj < 1e-2, na.rm = TRUE)
+downregulated_genes <- sum(res$log2FoldChange < -0.5 & res$padj < 1e-2, na.rm = TRUE)
+
+
+
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res[res$log2FoldChange > 0.5 & res$padj < 1e-2, ]
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 0.5 & res$padj < 1e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.5 & res$padj < 1e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q01FC05_2dN_HET_vs_2dN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q01FC05_2dN_HET_vs_2dN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+# Export complete table with geneSymbol ID (without X Y chromosome)
+write.table(res, file = "output/deseq2_hg38/filtered_2dN_HET_vs_2dN_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) 
+
+
+
+
 ```
 ### 4wN KO vs WT
 Take ressource
@@ -7311,9 +7717,14 @@ Go in R
 # Load packages
 library("DESeq2")
 library("tidyverse")
+library("EnhancedVolcano")
+library("apeglm")
+library("org.Hs.eg.db")
+library("biomaRt")
+
 library("RColorBrewer")
 library("pheatmap")
-library("apeglm")
+library("AnnotationDbi")
 
 # import featurecounts output and keep only gene ID and counts
 ## collect all samples ID
@@ -7322,20 +7733,33 @@ samples <- c("4wN_WT_R1", "4wN_WT_R2" ,"4wN_HET_R1", "4wN_HET_R2",
 
 ## somthing weird with our samples, try different comparison
 samples <- c("4wN_WT_R1", "4wN_WT_R2" ,"4wN_HET_R1", "4wN_HET_R2")
-samples <- c("4wN_WT_R1", "4wN_WT_R2" ,"4wN_HET_R3" ,"4wN_HET_R4") # Comparison to choose
 samples <- c("4wN_HET_R1", "4wN_HET_R2" ,"4wN_HET_R3" ,"4wN_HET_R4")
+samples <- c("4wN_WT_R1", "4wN_WT_R2" ,"4wN_HET_R3" ,"4wN_HET_R4") # Comparison to choose. THE GOOD ONE !!
+
 
 ## Make a loop for importing all featurecounts data and keep only ID and count column
 sample_data <- list()
 
 for (sample in samples) {
   sample_data[[sample]] <- read_delim(paste0("output/featurecounts_hg38/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
-    select(Geneid, starts_with("output/STAR_hg38/")) %>%
+    dplyr::select(Geneid, starts_with("output/STAR_hg38/")) %>%
     rename(!!sample := starts_with("output/STAR_hg38/"))
 }
 
+
 # Merge all dataframe into a single one
 counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+# Remove X and Y chromosome genes
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
+                   filters = "chromosome_name",
+                   values = c("X", "Y"),
+                   mart = ensembl)
+counts_all$stripped_geneid <- sub("\\..*", "", counts_all$Geneid)
+counts_all_filtered <- counts_all %>%
+  filter(!stripped_geneid %in% genes_X_Y$ensembl_gene_id)
+counts_all_filtered$stripped_geneid <- NULL
 
 # Pre-requisetes for the DESeqDataSet
 ## Transform merged_data into a matrix
@@ -7347,13 +7771,13 @@ make_matrix <- function(df,rownames = NULL){
   my_matrix
 }
 ### execute function
-counts_all_matrix = make_matrix(select(counts_all, -Geneid), pull(counts_all, Geneid)) 
+counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pull(counts_all_filtered, Geneid)) 
 
 ## Create colData file that describe all our samples
 ### Not including replicate
 coldata_raw <- data.frame(samples) %>%
   separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
-  select(-replicate) %>%
+  dplyr::select(-replicate) %>%
   bind_cols(data.frame(samples))
 ### Including replicate
 coldata_raw <- data.frame(samples) %>%
@@ -7361,7 +7785,7 @@ coldata_raw <- data.frame(samples) %>%
   bind_cols(data.frame(samples))
 
 ## transform df into matrix
-coldata = make_matrix(select(coldata_raw, -samples), pull(coldata_raw, samples))
+coldata = make_matrix(dplyr::select(coldata_raw, -samples), pull(coldata_raw, samples))
 
 ## Check that row name of both matrix (counts and description) are the same
 all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
@@ -7370,6 +7794,7 @@ all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
 dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
                               colData = coldata,
                               design= ~ genotype)
+
 
 # DEGs
 ## Filter out gene with less than 5 reads
@@ -7388,7 +7813,6 @@ res <- lfcShrink(dds, coef="genotype_HET_vs_WT", type="apeglm")
 ## Export result as 'raw_4wN_HET_vs_4wN_WT.txt'
 write.csv(res %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2_hg38/raw_4wN_HET_vs_4wN_WT.txt")
 
-write.csv(res %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/deseq2_hg38/raw_4wN_HET_R3R4_vs_4wN_WT.txt")
 ### If need to import: res <- read_csv("output/deseq2/raw_ESC_HET_vs_ESC_WT.txt") #To import
 
 ## Plot-MA
@@ -7405,6 +7829,128 @@ text(x = max(res_df$baseMean, na.rm = TRUE) * 0.25, y = 1.75, labels = paste(n_u
 text(x = max(res_df$baseMean, na.rm = TRUE) * 0.25, y = -1.75, labels = paste(n_downregulated), adj = c(0, 0.5), cex = 0.9)
 
 dev.off()
+
+
+## Plot-volcano
+### GeneSymbol ID
+gene_ids <- rownames(res)
+stripped_gene_ids <- sub("\\..*", "", gene_ids)
+gene_symbols <- mapIds(org.Hs.eg.db, keys = stripped_gene_ids,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+res$GeneSymbol <- gene_symbols
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.5 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.5 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+
+
+
+pdf("output/deseq2_hg38/plotVolcano_res_q05_4wN_HET_vs_4wN_WT_prettyV1.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = "",
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'HET vs WT, 4wN',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+upregulated_genes <- sum(res$log2FoldChange > 0.5 & res$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res$log2FoldChange < -0.5 & res$padj < 5e-2, na.rm = TRUE)
+
+
+# Save as gene list for GO analysis:
+### Complete table with GeneSymbol
+write.table(res, file = "output/deseq2_hg38/filtered_q05_4wN_HET_vs_4wN_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res[res$log2FoldChange > 0.5 & res$padj < 5e-2, ]
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 0.5 & res$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05_4wN_HET_vs_4wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05_4wN_HET_vs_4wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
+# FILTER ON QVALUE 0.01 FC 0.5
+keyvals <- ifelse(
+  res$log2FoldChange < -0.5 & res$padj < 1e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.5 & res$padj < 1e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.01; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.01; log2FC < 0.5)'
+
+
+
+pdf("output/deseq2_hg38/plotVolcano_res_q01FC05_4wN_HET_vs_4wN_WT.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = "",
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'HET vs WT, 4wN',
+  pCutoff = 1e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+upregulated_genes <- sum(res$log2FoldChange > 0.5 & res$padj < 1e-2, na.rm = TRUE)
+downregulated_genes <- sum(res$log2FoldChange < -0.5 & res$padj < 1e-2, na.rm = TRUE)
+
+
+# Save as gene list for GO analysis:
+### Complete table with GeneSymbol
+write.table(res, file = "output/deseq2_hg38/filtered_q01FC05_4wN_HET_vs_4wN_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res[res$log2FoldChange > 0.5 & res$padj < 1e-2, ]
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 0.5 & res$padj < 1e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.5 & res$padj < 1e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q01FC05_4wN_HET_vs_4wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q01FC05_4wN_HET_vs_4wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+# Export complete table with geneSymbol ID (without X Y chromosome)
+write.table(res, file = "output/deseq2_hg38/filtered_4wN_HET_vs_4wN_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) 
+
+
+
 ```
 --> Here HET R3 and R4 is preferable to choose for diff analyses, it seems that R1 and R2 present same maturation level as the WT, thus no diff expr genes
 
@@ -15029,7 +15575,14 @@ HET <- read.table("output/deseq2_hg38/filtered_8wN_HET_vs_8wN_WT.txt", header = 
 HET_geneSymbol = HET %>%
   filter(!is.na(GeneSymbol)) # filter to keep only the geneSymbol gene
   
-XXX here import the filtered one ! XXX
+
+HET <- read.table("output/deseq2_hg38/filtered_ESC_HET_vs_ESC_WT.txt", header = TRUE, sep = "\t", row.names = 1) %>%
+  rownames_to_column(var = "gene") %>%
+  as_tibble()
+HET_geneSymbol = HET %>%
+  filter(!is.na(GeneSymbol)) # filter to keep only the geneSymbol gene
+  
+
 
 
 # import msigdbr cell marker db 
@@ -15358,6 +15911,8 @@ DESCARTES_MAIN_FETAL_LYMPHATIC_ENDOTHELIAL_CELLS
 # GO THERE to find steroid pathway name : https://www.gsea-msigdb.org/gsea/msigdb/human/genesets.jsp?collection=C2
 
 pdf("output/gsea/KEGG_STEROID_BIOSYNTHESIS__8wN_WTvsHET.pdf", width=14, height=8)
+pdf("output/gsea/KEGG_STEROID_BIOSYNTHESIS__ESC_WTvsHET.pdf", width=14, height=8)
+
 enrichplot::gseaplot(
   gsea_results,
   geneSetID = "KEGG_STEROID_BIOSYNTHESIS",
@@ -15369,7 +15924,7 @@ dev.off()
 # Save output
 readr::write_tsv(
   gsea_result_df,
-  file.path("output/gsea/gsea_results_8wN_WTvsHET_complete_C2.tsv"
+  file.path("output/gsea/gsea_results_ESC_WTvsHET_complete_C2.tsv"
   )
 )
 
