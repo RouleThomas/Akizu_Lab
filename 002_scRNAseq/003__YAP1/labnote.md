@@ -8119,20 +8119,21 @@ traj8 <- readRDS("output/condiments/traj8.rds")
 condRes_traj5 <- conditionTest(traj5)
 condRes_traj8_l2fc2 <- conditionTest(traj8, l2fc = log2(2)) # let s prefer to use this one
 
+condRes_traj1_l2fc4 <- conditionTest(traj1, l2fc = log2(4)) # let s prefer to use this one
 
 
 
 
 # Correct the pvalue with fdr
 
-condRes_traj8_l2fc2$padj <- p.adjust(condRes_traj8_l2fc2$pvalue, "fdr")
+condRes_traj1_l2fc4$padj <- p.adjust(condRes_traj1_l2fc4$pvalue, "fdr")
 
 
 
 ### Save output tables
-condRes_traj8_l2fc2$gene <- rownames(condRes_traj8_l2fc2) # create new column l;abel gene; as matrix before
-condRes_traj8_l2fc2 <- condRes_traj8_l2fc2[, c(ncol(condRes_traj8_l2fc2), 1:(ncol(condRes_traj8_l2fc2)-1))] # just to put gene column 1st
-write.table(condRes_traj8_l2fc2, file = c("output/condiments/condRes_traj8_l2fc2.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+condRes_traj1_l2fc4$gene <- rownames(condRes_traj1_l2fc4) # create new column l;abel gene; as matrix before
+condRes_traj1_l2fc4 <- condRes_traj1_l2fc4[, c(ncol(condRes_traj1_l2fc4), 1:(ncol(condRes_traj1_l2fc4)-1))] # just to put gene column 1st
+write.table(condRes_traj1_l2fc4, file = c("output/condiments/condRes_traj1_l2fc4.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
 
 
@@ -8140,12 +8141,12 @@ write.table(condRes_traj8_l2fc2, file = c("output/condiments/condRes_traj8_l2fc2
 
 # Heatmap clutering DEGs per traj _ REVISED METHOD
 ## import DEGs
-condRes_traj1 <- read.table("output/condiments/condRes_traj1.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE)
+condRes_traj1 <- read.table("output/condiments/condRes_traj1_l2fc4.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE)
 ## Isolate significant DEGs and transform into a vector
-conditionGenes_traj1_vector <- condRes_traj1 %>% 
+conditionGenes_traj1_vector <- condRes_traj1_l2fc4 %>% 
   filter(padj <= 0.05) %>%
   pull(gene)
-
+  
 # Predict smoothed values
 yhatSmooth <- 
   predictSmooth(traj1, gene = conditionGenes_traj1_vector, nPoints = 50, tidy = FALSE) %>%
@@ -8156,28 +8157,88 @@ combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
 # Generate heatmap with clustering
 # Perform hierarchical clustering
 hc <- hclust(dist(combinedData))
-clusters <- cutree(hc, k=20)
+clusters <- cutree(hc, k=10)
 # Create an annotation data frame for the rows based on cluster assignments
 annotation_row <- data.frame(Cluster = factor(clusters))
 # Define colors for each cluster
-# Define colors for each cluster
+# 20
 cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "grey", "darkred", "darkblue", "gold", "darkgray", "lightblue", "lightgreen", "lightcoral", "lightpink", "lightcyan"))(20),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 10
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen" ))(10),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 7
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink" ))(7),
                            unique(annotation_row$Cluster))
 annotation_colors <- list(Cluster = cluster_colors)
 # Generate the heatmap
 pdf("output/condiments/clustered_heatmap_traj1.pdf", width=8, height=10)
+pdf("output/condiments/clustered_heatmap_traj1_cl10.pdf", width=8, height=10)
+pdf("output/condiments/clustered_heatmap_traj1_l2fc4_cl10.pdf", width=8, height=10)
+
 pheatmap(combinedData,
   cluster_cols = FALSE,
   show_rownames = FALSE,
   show_colnames = FALSE,
   main = "Trajectory 1 - Hierarchical Clustering",
   legend = TRUE,
-  cutree_rows = 20,
+  cutree_rows = 10,
   annotation_row = annotation_row,
   annotation_colors = annotation_colors
 )
 dev.off()
 
+
+# Line plots
+library("reshape2")
+library("stringr")
+# Assuming yhatSmoothScaled contains your smoothed gene expression data
+# Convert the yhatSmoothScaled data to a dataframe
+df <- as.data.frame(yhatSmoothScaled)
+df$Gene <- rownames(df)
+# Transform the data into a long format
+df_long <- melt(df, id.vars = "Gene", variable.name = "Pseudotime", value.name = "Expression")
+# Attach the cluster information to the data frame
+df$Cluster <- factor(clusters[df$Gene])
+df_long$Cluster <- df$Cluster[match(df_long$Gene, df$Gene)]
+
+# Extract condition column
+df_long$Condition <- str_extract(df_long$Pseudotime, "condition[[:alnum:]]+")
+df_long$Condition <- ifelse(str_detect(df_long$Condition, "WT"), "WT", "KO")
+
+# Extract the point value and convert it to numeric
+df_long$Updated_Pseudotime <- as.numeric(str_extract(df_long$Pseudotime, "(?<=point)\\d+"))
+
+# Define colors for the conditions
+color_map <- c("WT" = "black", "KO" = "red")
+
+# Plot using ggplot
+pdf("output/condiments/clustered_linePlot_traj1_l2fc4_cl10.pdf", width=10, height=5)
+ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
+  geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
+  geom_line(data = subset(df_long, Condition == "KO"), aes(color = Condition), alpha = 0.5) +
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~Cluster, scales = "free_y", nrow=2) +
+  theme_bw() +
+  labs(title = "Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+
+dev.off()
+
+# Plot using ggplot
+pdf("output/condiments/smoothed_linePlot_traj1_l2fc4_cl10_smooth.pdf", width=10, height=5)
+ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
+  geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~Cluster, scales = "free_y", nrow=2) +
+  theme_bw() +
+  labs(title = "Smoothed Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
 
 
 
@@ -8191,14 +8252,27 @@ output_df <- data.frame(
 
 # Write the data frame to a .txt file
 write.table(output_df, 
-            file = "output/condiments/gene_clusters_traj1.txt", 
+            file = "output/condiments/gene_clusters_traj1_l2fc4_cl10.txt", 
             sep = "\t", 
             quote = FALSE, 
             row.names = FALSE, 
             col.names = TRUE)
 
+# Check some genes individually
+## FOR LINEAGE 1
+counts <- embryo.combined.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(embryo.combined.sct$orig.ident) # identify conditions
+pseudotimes <- slingPseudotime(embryo, na = FALSE) [,1]
+cellweights <- slingCurveWeights(embryo) [,1]
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
 
-
+pdf("output/condiments/plotSmoothers_traj1_Sox17.pdf", width=8, height=4)
+plotSmoothers(traj1, sub_counts ,gene = "Sox17")
+dev.off()
 
 ```
 
