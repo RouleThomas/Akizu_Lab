@@ -7808,6 +7808,7 @@ The installation of both Seurat and condiments was EXTREMELY PAINFUL! What work 
 ```bash
 conda create --name condiments_V5 --clone condiments_V1 # clone condiments_V1 where only condiments is installed
 conda activate condiments_V5
+conda activate condiments_V6
 ```
 
 ```R
@@ -7833,6 +7834,9 @@ library("slingshot")
 library("DelayedMatrixStats")
 library("tidyr")
 library("tradeSeq")
+library("cowplot")
+library("scales")
+library("pheatmap")
 
 # Data import EMBRYO
 embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
@@ -8069,9 +8073,7 @@ traj1 <- fitGAM(
 ### IT WORK!!! Estimated run 24hours which is OK !!! Let's run this in slurm job traj per traj
 
 
-
-
-
+###### --------------
 # Try running the DEGs on the top 10k features (the 10k most variable genes) and trajectory per trajectory; This does not reduce a lot the time... With 10 featuers = 5hours; versus 24hours for all...
 
 ## Isolate the top 10k
@@ -8099,35 +8101,103 @@ traj1 <- fitGAM(
      sce = TRUE
    )
 
+###### --------------
+
+
+### Once slurm jobs finished for each trajectory; load traj1 <- readRDS("output/condiments/traj1.rds") OK
+
+traj1 <- readRDS("output/condiments/traj1.rds")
+traj2 <- readRDS("output/condiments/traj2.rds")
+traj3 <- readRDS("output/condiments/traj3.rds")
+traj4 <- readRDS("output/condiments/traj4.rds")
+traj5 <- readRDS("output/condiments/traj5.rds")
+traj6 <- readRDS("output/condiments/traj6.rds")
+traj7 <- readRDS("output/condiments/traj7.rds")
+traj8 <- readRDS("output/condiments/traj8.rds")
+
+## DEGs between condition
+condRes_traj5 <- conditionTest(traj5)
+condRes_traj8_l2fc2 <- conditionTest(traj8, l2fc = log2(2)) # let s prefer to use this one
 
 
 
-### Once slurm jobs finished for each trajectory; load traj1 <- readRDS("output/condiments/traj1.rds") XXXXXXXXXXX
+
+
+# Correct the pvalue with fdr
+
+condRes_traj8_l2fc2$padj <- p.adjust(condRes_traj8_l2fc2$pvalue, "fdr")
+
+
+
+### Save output tables
+condRes_traj8_l2fc2$gene <- rownames(condRes_traj8_l2fc2) # create new column l;abel gene; as matrix before
+condRes_traj8_l2fc2 <- condRes_traj8_l2fc2[, c(ncol(condRes_traj8_l2fc2), 1:(ncol(condRes_traj8_l2fc2)-1))] # just to put gene column 1st
+write.table(condRes_traj8_l2fc2, file = c("output/condiments/condRes_traj8_l2fc2.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
 
 
 
 
+# Heatmap clutering DEGs per traj _ REVISED METHOD
+## import DEGs
+condRes_traj1 <- read.table("output/condiments/condRes_traj1.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE)
+## Isolate significant DEGs and transform into a vector
+conditionGenes_traj1_vector <- condRes_traj1 %>% 
+  filter(padj <= 0.05) %>%
+  pull(gene)
+
+# Predict smoothed values
+yhatSmooth <- 
+  predictSmooth(traj1, gene = conditionGenes_traj1_vector, nPoints = 50, tidy = FALSE) %>%
+  log1p()
+
+yhatSmoothScaled <- t(apply(yhatSmooth, 1, scales::rescale))
+combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
+# Generate heatmap with clustering
+# Perform hierarchical clustering
+hc <- hclust(dist(combinedData))
+clusters <- cutree(hc, k=20)
+# Create an annotation data frame for the rows based on cluster assignments
+annotation_row <- data.frame(Cluster = factor(clusters))
+# Define colors for each cluster
+# Define colors for each cluster
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "grey", "darkred", "darkblue", "gold", "darkgray", "lightblue", "lightgreen", "lightcoral", "lightpink", "lightcyan"))(20),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# Generate the heatmap
+pdf("output/condiments/clustered_heatmap_traj1.pdf", width=8, height=10)
+pheatmap(combinedData,
+  cluster_cols = FALSE,
+  show_rownames = FALSE,
+  show_colnames = FALSE,
+  main = "Trajectory 1 - Hierarchical Clustering",
+  legend = TRUE,
+  cutree_rows = 20,
+  annotation_row = annotation_row,
+  annotation_colors = annotation_colors
+)
+dev.off()
 
 
 
 
 
+### Export gene list from each cluster
+## Create a data frame with gene names and their respective cluster assignments
+output_df <- data.frame(
+  gene = rownames(combinedData),
+  cluster = clusters
+)
 
-## Differential expression between conditions
-condRes <- conditionTest(embryo, l2fc = log2(2), lineages = TRUE)
+# Write the data frame to a .txt file
+write.table(output_df, 
+            file = "output/condiments/gene_clusters_traj1.txt", 
+            sep = "\t", 
+            quote = FALSE, 
+            row.names = FALSE, 
+            col.names = TRUE)
 
 
-condRes$padj <- p.adjust(condRes$pvalue_lineage1, "fdr")
-mean(condRes$padj <= 0.05, na.rm = TRUE)
-sum(condRes$padj <= 0.05, na.rm = TRUE)
-conditionGenes <- rownames(condRes)[condRes$padj <= 0.05]
-conditionGenes <- conditionGenes[!is.na(conditionGenes)]
-
-
-
-# THEN can plot some genes: 
-https://bioconductor.org/packages/devel/bioc/vignettes/tradeSeq/inst/doc/tradeSeq.html
 
 
 ```
@@ -8143,6 +8213,8 @@ https://bioconductor.org/packages/devel/bioc/vignettes/tradeSeq/inst/doc/tradeSe
 ----> In the end; **what worked is to run trajectory per trajectory; it should last around 24-72hours per trajectory. Using the top 10k features do not reduce time significantly.**
 ----> Parrelization can be stuck sometime so I ll run it without...
 
+--> The pseudotime diff looks weirk so let s use log2fc files anmd not the raw not log2fc filtered
+
 ```bash
 conda activate condiments_V5
 # test
@@ -8150,20 +8222,20 @@ sbatch scripts/fitGAM_6knots.sh # 5756977 fail
 sbatch scripts/fitGAM_6knots_parralell_subset.sh # 6104946 fail
 
 # trajectory per trajectory (all features, no parralelization)
-sbatch scripts/fitGAM_6knots_traj1.sh # 6110340
-sbatch scripts/fitGAM_6knots_traj2.sh # 6110351
-sbatch scripts/fitGAM_6knots_traj3.sh # 6110359
-sbatch scripts/fitGAM_6knots_traj4.sh # 6110363
-sbatch scripts/fitGAM_6knots_traj5.sh # 6110370
-sbatch scripts/fitGAM_6knots_traj6.sh # 6110374
-sbatch scripts/fitGAM_6knots_traj7.sh # 6110376
-sbatch scripts/fitGAM_6knots_traj8.sh # 6110378
+sbatch scripts/fitGAM_6knots_traj1.sh # 6110340 ok
+sbatch scripts/fitGAM_6knots_traj2.sh # 6110351 ok
+sbatch scripts/fitGAM_6knots_traj3.sh # 6110359 ok
+sbatch scripts/fitGAM_6knots_traj4.sh # 6110363 ok
+sbatch scripts/fitGAM_6knots_traj5.sh # 6110370 ok
+sbatch scripts/fitGAM_6knots_traj6.sh # 6110374 ok
+sbatch scripts/fitGAM_6knots_traj7.sh # 6110376 ok
+sbatch scripts/fitGAM_6knots_traj8.sh # 6110378 ok
 
 ```
 
 --> `scripts/fitGAM_6knots.sh` 24hrs still running... FAIL time limit after 6 days LOL!!!! same for `fitGAM_6knots_parralell_subset.sh`
 
---> With parralell processing and subset lineages 1 to 5
+--> Without parralell processing trajectory per traj works great!! 24-72hrs to run
 
 to check:
 - https://www.bioconductor.org/packages/devel/bioc/vignettes/condiments/inst/doc/condiments.html

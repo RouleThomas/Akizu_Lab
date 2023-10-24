@@ -163,4 +163,6 @@ Only `monocle3` and `Seurat_v_5`
 
 *--> Can delete condiments_V2, V3, V4*
 
+### condiments_V6
 
+--> `pheatmap` R package added
