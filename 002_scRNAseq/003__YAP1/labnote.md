@@ -8117,23 +8117,24 @@ traj8 <- readRDS("output/condiments/traj8.rds")
 
 ## DEGs between condition
 condRes_traj5 <- conditionTest(traj5)
-condRes_traj8_l2fc2 <- conditionTest(traj8, l2fc = log2(2)) # let s prefer to use this one
+condRes_traj8_l2fc2 <- conditionTest(traj8, l2fc = log2(2)) # 
 
 condRes_traj1_l2fc4 <- conditionTest(traj1, l2fc = log2(4)) # let s prefer to use this one
+condRes_traj2_l2fc4 <- conditionTest(traj2, l2fc = log2(4)) # let s prefer to use this one
 
 
 
 
 # Correct the pvalue with fdr
 
-condRes_traj1_l2fc4$padj <- p.adjust(condRes_traj1_l2fc4$pvalue, "fdr")
+condRes_traj2_l2fc4$padj <- p.adjust(condRes_traj2_l2fc4$pvalue, "fdr")
 
 
 
 ### Save output tables
-condRes_traj1_l2fc4$gene <- rownames(condRes_traj1_l2fc4) # create new column l;abel gene; as matrix before
-condRes_traj1_l2fc4 <- condRes_traj1_l2fc4[, c(ncol(condRes_traj1_l2fc4), 1:(ncol(condRes_traj1_l2fc4)-1))] # just to put gene column 1st
-write.table(condRes_traj1_l2fc4, file = c("output/condiments/condRes_traj1_l2fc4.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+condRes_traj2_l2fc4$gene <- rownames(condRes_traj2_l2fc4) # create new column l;abel gene; as matrix before
+condRes_traj2_l2fc4 <- condRes_traj2_l2fc4[, c(ncol(condRes_traj2_l2fc4), 1:(ncol(condRes_traj2_l2fc4)-1))] # just to put gene column 1st
+write.table(condRes_traj2_l2fc4, file = c("output/condiments/condRes_traj2_l2fc4.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
 
 
@@ -8142,8 +8143,10 @@ write.table(condRes_traj1_l2fc4, file = c("output/condiments/condRes_traj1_l2fc4
 # Heatmap clutering DEGs per traj _ REVISED METHOD
 ## import DEGs
 condRes_traj1 <- read.table("output/condiments/condRes_traj1_l2fc4.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE)
+condRes_traj1 <- read.table("output/condiments/condRes_traj5_l2fc2.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE)
+
 ## Isolate significant DEGs and transform into a vector
-conditionGenes_traj1_vector <- condRes_traj1_l2fc4 %>% 
+conditionGenes_traj1_vector <- condRes_traj1 %>% 
   filter(padj <= 0.05) %>%
   pull(gene)
   
@@ -8169,8 +8172,20 @@ annotation_colors <- list(Cluster = cluster_colors)
 cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen" ))(10),
                            unique(annotation_row$Cluster))
 annotation_colors <- list(Cluster = cluster_colors)
+# 8
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown" ))(8),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
 # 7
 cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink" ))(7),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 5
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple"))(5),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 4
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow" ))(4),
                            unique(annotation_row$Cluster))
 annotation_colors <- list(Cluster = cluster_colors)
 # Generate the heatmap
@@ -8178,13 +8193,17 @@ pdf("output/condiments/clustered_heatmap_traj1.pdf", width=8, height=10)
 pdf("output/condiments/clustered_heatmap_traj1_cl10.pdf", width=8, height=10)
 pdf("output/condiments/clustered_heatmap_traj1_l2fc4_cl10.pdf", width=8, height=10)
 
+pdf("output/condiments/clustered_heatmap_traj4_l2fc2_cl10.pdf", width=8, height=10)
+pdf("output/condiments/clustered_heatmap_traj5_l2fc2_cl10.pdf", width=8, height=10)
+pdf("output/condiments/clustered_heatmap_traj8_l2fc2_cl4.pdf", width=8, height=10)
+
 pheatmap(combinedData,
   cluster_cols = FALSE,
   show_rownames = FALSE,
   show_colnames = FALSE,
   main = "Trajectory 1 - Hierarchical Clustering",
   legend = TRUE,
-  cutree_rows = 10,
+  cutree_rows = 4,
   annotation_row = annotation_row,
   annotation_colors = annotation_colors
 )
@@ -8212,10 +8231,13 @@ df_long$Condition <- ifelse(str_detect(df_long$Condition, "WT"), "WT", "KO")
 df_long$Updated_Pseudotime <- as.numeric(str_extract(df_long$Pseudotime, "(?<=point)\\d+"))
 
 # Define colors for the conditions
-color_map <- c("WT" = "black", "KO" = "red")
+color_map <- c("WT" = "blue", "KO" = "red")
 
 # Plot using ggplot
 pdf("output/condiments/clustered_linePlot_traj1_l2fc4_cl10.pdf", width=10, height=5)
+
+pdf("output/condiments/clustered_linePlot_traj8_l2fc2_cl4.pdf", width=10, height=5)
+
 ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
   geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
   geom_line(data = subset(df_long, Condition == "KO"), aes(color = Condition), alpha = 0.5) +
@@ -8230,6 +8252,10 @@ dev.off()
 
 # Plot using ggplot
 pdf("output/condiments/smoothed_linePlot_traj1_l2fc4_cl10_smooth.pdf", width=10, height=5)
+pdf("output/condiments/smoothed_linePlot_traj2_l2fc2_cl10_smooth.pdf", width=10, height=5)
+
+pdf("output/condiments/smoothed_linePlot_traj8_l2fc2_cl4_smooth.pdf", width=10, height=5)
+
 ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
   geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
   scale_color_manual(values = color_map) + 
@@ -8252,7 +8278,7 @@ output_df <- data.frame(
 
 # Write the data frame to a .txt file
 write.table(output_df, 
-            file = "output/condiments/gene_clusters_traj1_l2fc4_cl10.txt", 
+            file = "output/condiments/gene_clusters_traj5_l2fc2_cl10.txt", 
             sep = "\t", 
             quote = FALSE, 
             row.names = FALSE, 
@@ -8270,8 +8296,9 @@ sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
 sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
 sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
 
-pdf("output/condiments/plotSmoothers_traj1_Sox17.pdf", width=8, height=4)
-plotSmoothers(traj1, sub_counts ,gene = "Sox17")
+pdf("output/condiments/plotSmoothers_traj1_Aff3.pdf", width=8, height=4)
+plotSmoothers(traj1, sub_counts, gene = "Aff3", curvesCol = c("red","blue") ) +
+scale_color_manual(values =c("red","blue"))
 dev.off()
 
 ```
