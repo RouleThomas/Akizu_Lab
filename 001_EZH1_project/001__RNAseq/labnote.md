@@ -11536,13 +11536,13 @@ Let's do a test of the pipeline with genes from cluster4 amd cluster14 from the 
 
 ```R
 # packages
-library(clusterProfiler)
-library(pathview)
-library(DOSE)
-library(org.Hs.eg.db)
-library(enrichplot)
-library(rtracklayer)
-library(tidyverse)
+library("clusterProfiler")
+library("pathview")
+library("DOSE")
+library("org.Hs.eg.db")
+library("enrichplot")
+library("rtracklayer")
+library("tidyverse")
 
 ## Read GTF file
 gtf_file <- "../../Master/meta/ENCFF159KBI.gtf"

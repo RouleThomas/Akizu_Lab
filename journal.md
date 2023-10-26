@@ -83,7 +83,7 @@ library("meshes")
 library("ReactomePA")
 library("VennDiagram")
 library("ggrepel")
-
+library("fgsea")
 
 
 ### ChIPseqSpikeInFree

@@ -8143,7 +8143,7 @@ write.table(condRes_traj2_l2fc4, file = c("output/condiments/condRes_traj2_l2fc4
 # Heatmap clutering DEGs per traj _ REVISED METHOD
 ## import DEGs
 condRes_traj1 <- read.table("output/condiments/condRes_traj1_l2fc4.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE)
-condRes_traj1 <- read.table("output/condiments/condRes_traj5_l2fc2.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE)
+condRes_traj1 <- read.table("output/condiments/condRes_traj1_l2fc2.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE)
 
 ## Isolate significant DEGs and transform into a vector
 conditionGenes_traj1_vector <- condRes_traj1 %>% 
@@ -8180,6 +8180,10 @@ annotation_colors <- list(Cluster = cluster_colors)
 cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink" ))(7),
                            unique(annotation_row$Cluster))
 annotation_colors <- list(Cluster = cluster_colors)
+# 6
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange"))(6),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
 # 5
 cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple"))(5),
                            unique(annotation_row$Cluster))
@@ -8195,7 +8199,8 @@ pdf("output/condiments/clustered_heatmap_traj1_l2fc4_cl10.pdf", width=8, height=
 
 pdf("output/condiments/clustered_heatmap_traj4_l2fc2_cl10.pdf", width=8, height=10)
 pdf("output/condiments/clustered_heatmap_traj5_l2fc2_cl10.pdf", width=8, height=10)
-pdf("output/condiments/clustered_heatmap_traj8_l2fc2_cl4.pdf", width=8, height=10)
+pdf("output/condiments/clustered_heatmap_traj3_l2fc2_cl7.pdf", width=8, height=10)
+pdf("output/condiments/clustered_heatmap_traj1_l2fc2_cl10.pdf", width=8, height=10)
 
 pheatmap(combinedData,
   cluster_cols = FALSE,
@@ -8203,7 +8208,7 @@ pheatmap(combinedData,
   show_colnames = FALSE,
   main = "Trajectory 1 - Hierarchical Clustering",
   legend = TRUE,
-  cutree_rows = 4,
+  cutree_rows = 10,
   annotation_row = annotation_row,
   annotation_colors = annotation_colors
 )
@@ -8236,7 +8241,7 @@ color_map <- c("WT" = "blue", "KO" = "red")
 # Plot using ggplot
 pdf("output/condiments/clustered_linePlot_traj1_l2fc4_cl10.pdf", width=10, height=5)
 
-pdf("output/condiments/clustered_linePlot_traj8_l2fc2_cl4.pdf", width=10, height=5)
+pdf("output/condiments/clustered_linePlot_traj4_l2fc2_cl4.pdf", width=10, height=5)
 
 ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
   geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
@@ -8254,7 +8259,7 @@ dev.off()
 pdf("output/condiments/smoothed_linePlot_traj1_l2fc4_cl10_smooth.pdf", width=10, height=5)
 pdf("output/condiments/smoothed_linePlot_traj2_l2fc2_cl10_smooth.pdf", width=10, height=5)
 
-pdf("output/condiments/smoothed_linePlot_traj8_l2fc2_cl4_smooth.pdf", width=10, height=5)
+pdf("output/condiments/smoothed_linePlot_traj4_l2fc2_cl4_smooth.pdf", width=10, height=5)
 
 ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
   geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
@@ -8278,7 +8283,7 @@ output_df <- data.frame(
 
 # Write the data frame to a .txt file
 write.table(output_df, 
-            file = "output/condiments/gene_clusters_traj5_l2fc2_cl10.txt", 
+            file = "output/condiments/gene_clusters_traj1_l2fc2_cl10.txt", 
             sep = "\t", 
             quote = FALSE, 
             row.names = FALSE, 
@@ -8301,6 +8306,57 @@ plotSmoothers(traj1, sub_counts, gene = "Aff3", curvesCol = c("red","blue") ) +
 scale_color_manual(values =c("red","blue"))
 dev.off()
 
+
+## FOR LINEAGE 2
+counts <- embryo.combined.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(embryo.combined.sct$orig.ident) # identify conditions
+pseudotimes <- slingPseudotime(embryo, na = FALSE) [,2]
+cellweights <- slingCurveWeights(embryo) [,2]
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+pdf("output/condiments/plotSmoothers_traj2_Gm28376.pdf", width=8, height=4)
+plotSmoothers(traj2, sub_counts, gene = "Gm28376", curvesCol = c("red","blue") ) +
+scale_color_manual(values =c("red","blue"))
+dev.off()
+
+## FOR LINEAGE 3
+counts <- embryo.combined.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(embryo.combined.sct$orig.ident) # identify conditions
+pseudotimes <- slingPseudotime(embryo, na = FALSE) [,3]
+cellweights <- slingCurveWeights(embryo) [,3]
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+pdf("output/condiments/plotSmoothers_traj3_Fcrla.pdf", width=8, height=4)
+plotSmoothers(traj3, sub_counts, gene = "Fcrla", curvesCol = c("red","blue") ) +
+scale_color_manual(values =c("red","blue"))
+dev.off()
+
+## FOR LINEAGE 4
+counts <- embryo.combined.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(embryo.combined.sct$orig.ident) # identify conditions
+pseudotimes <- slingPseudotime(embryo, na = FALSE) [,4]
+cellweights <- slingCurveWeights(embryo) [,4]
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+pdf("output/condiments/plotSmoothers_traj4_Hist2h2ac.pdf", width=8, height=4)
+plotSmoothers(traj4, sub_counts, gene = "Hist2h2ac", curvesCol = c("red","blue") ) +
+scale_color_manual(values =c("red","blue"))
+dev.off()
+
+
+
 ```
 
 --> I did all the tutorial from [here](https://hectorrdb.github.io/condimentsPaper/articles/Fibrosis.html) 
@@ -8315,6 +8371,7 @@ dev.off()
 ----> Parrelization can be stuck sometime so I ll run it without...
 
 --> The pseudotime diff looks weirk so let s use log2fc files anmd not the raw not log2fc filtered
+
 
 ```bash
 conda activate condiments_V5
@@ -8347,3 +8404,120 @@ to check:
 
 
 
+## Fuicntional analysis on pseudotime clustered genes
+
+This analysis is done in conda activate deseq2 to use fgsea packages
+
+--> Functional analysis following [this](https://hectorrdb.github.io/condimentsPaper/articles/TGFB.html); for BP (C5 BP) and pathway KEGG
+
+
+
+```R
+library("clusterProfiler")
+library("pathview")
+library("DOSE")
+library("org.Mm.eg.db")
+library("enrichplot")
+library("rtracklayer")
+library("tidyverse")
+
+
+
+# import gene set files and convert as entrezid
+gene_clusters_traj_cl = read.table(file = c("output/condiments/gene_clusters_traj3_l2fc2_cl7.txt"),   # CHAGNE TITLE  !!!!
+                                 header=TRUE, sep="\t", stringsAsFactors=FALSE) %>% 
+  as_tibble() %>%
+  mutate(entrez_id = mapIds(org.Mm.eg.db, keys = gene, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") ) %>%
+  dplyr::filter(cluster == 7) %>%       # !!!!!!!!  CHAGNE TITLE   !!!!!!!!!!!!!!!!
+  dplyr::select(entrez_id) %>%
+  na.omit()
+
+# transform into vector
+gene_clusters_traj_cl_vector <- pull(gene_clusters_traj_cl, entrez_id)
+
+# Traj1
+## cluster per cluster
+enrichKEGG <- enrichKEGG(gene   = gene_clusters_traj_cl$entrez_id ,
+                         organism = "mmu",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
+pdf("output/condiments/dotplot_KEGG_gene_clusters_traj3_cl7.pdf", width=7, height=7)  # !!!!!!!!  CHAGNE TITLE !!!!!!!!!!!!
+dotplot(enrichKEGG, showCategory=20)
+dev.off()
+
+
+ego <- enrichGO(gene = gene_clusters_traj_cl_vector, 
+                keyType = "ENTREZID",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Mm.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)           
+pdf("output/condiments/dotplot_BP_gene_clusters_traj3_cl7.pdf", width=7, height=7) # !!!!!!!!  CHAGNE TITLE !!!!!!!!!!!!
+dotplot(ego, showCategory=20)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## all cluster together THERE IS THE CODE, BUT THAT IS VERY CONFUSIGN SO FUCK IT
+### Initialize a list to store the gene clusters for each iteration
+gene_clusters_list <- list()
+
+### Loop through clusters 1 to 10
+for (i in 1:10) {
+  gene_clusters_list[[paste0("gene_clusters_traj1_cl", i)]] <- read.table(file = "output/condiments/gene_clusters_traj1_l2fc2_cl10.txt",
+                                                         header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+    as_tibble() %>%
+    mutate(entrez_id = mapIds(org.Mm.eg.db, keys = gene, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first")) %>%
+    dplyr::filter(cluster == i) %>%
+    dplyr::select(entrez_id) %>%
+    na.omit()
+}
+
+### Extract vectors for each cluster
+vectors_list <- lapply(gene_clusters_list, function(x) pull(x, entrez_id))
+names(vectors_list) <- paste0("gene_clusters_traj1_cl", 1:10, "_vector")
+
+### Combine the vectors into a list
+entrez_list <- list(cluster_3 = cluster_3_vector, 
+                    cluster_4 = cluster_4_vector, 
+                    cluster_6 = cluster_6_vector, 
+                    cluster_7 = cluster_7_vector, 
+                    cluster_8 = cluster_8_vector)
+
+
+## GO
+compGO <- compareCluster(geneCluster   = vectors_list,
+                         fun           = "enrichGO",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH",
+                         OrgDb         = "org.Mm.eg.db",
+                         ont           = "BP") # "BP" (Biological Process), "CC" (Cellular Component), or "MF" (Molecular Function)
+pdf("output/condiments/dotplot_BP_gene_clusters_traj1.pdf", width=10, height=25)
+dotplot(compGO, showCategory = 15, title = "GO_Biological Process Enrichment Analysis")
+dev.off()
+
+
+
+
+```
