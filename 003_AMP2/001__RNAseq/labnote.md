@@ -1784,9 +1784,9 @@ down <- edown$GO_Biological_Process_2023
 up$type <- "up"
 down$type <- "down"
 
-# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
-up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 20)
-down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 20)
+# Get top enriched terms and sort by Combined.Score 
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 5) ##  Adjust if you don't want the top 5
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 5) ##  Adjust if you don't want the top 5
 
 # Convert adjusted p-values and differentiate direction for up and down
 up$logAdjP <- -log10(up$Adjusted.P.value)
@@ -1806,6 +1806,7 @@ down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Te
 new_order <- c(down_pathways, up_pathways)
 gos$Term <- factor(gos$Term, levels = new_order)
 
+XXXX
 
 # Plotting with enhanced aesthetics
 pdf("output/GO/enrichR_GO_Biological_Process_2023_CB_KO_vs_CB_Het.pdf", width=15, height=8)
@@ -1815,7 +1816,7 @@ pdf("output/GO/enrichR_GO_Biological_Process_2023_HP_KO_vs_HP_Het.pdf", width=15
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.8) +
   # Adjusted label position based on the type of gene (up/down) and increased separation
-  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 10, color = "gray28") +
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 25, color = "gray28") +
   geom_hline(yintercept = 0, linetype="solid", color = "black") +
   scale_fill_manual(name="Expression", 
                     labels = c("Down regulated", "Up regulated"), 
@@ -1829,7 +1830,7 @@ ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) +
     panel.border = element_blank(),
     axis.ticks = element_blank(),
     axis.text.y = element_blank(),
-    axis.text.x = element_text(size = 20)
+    axis.text.x = element_text(size = 40)
   )
 dev.off()
 
@@ -2200,9 +2201,9 @@ tpm_all_sample_tidy$tissue <-
 
 
 ## Plot
-pdf("output/tpm/tpm_Cd68_stat.pdf", width=8, height=4)
-pdf("output/tpm/tpm_Tlr2_stat.pdf", width=8, height=4)
-pdf("output/tpm/tpm_Trem2_stat.pdf", width=8, height=4)
+pdf("output/tpm/tpm_Cd68_stat.pdf", width=5, height=4)
+pdf("output/tpm/tpm_Tlr2_stat.pdf", width=5, height=4)
+pdf("output/tpm/tpm_Trem2_stat.pdf", width=5, height=4)
 
 tpm_all_sample_tidy %>%
   filter(external_gene_name %in% c("Trem2") ) %>% 
@@ -2221,9 +2222,6 @@ tpm_all_sample_tidy %>%
 dev.off()
 
 
-
-+ stat_compare_means(comparisons = my_comparisons)+ # Add pairwise comparisons p-value
-  stat_compare_means(label.y = 50)    
 
 
 
