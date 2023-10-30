@@ -1766,12 +1766,12 @@ output/deseq2/upregulated_res05_HP_KO_vs_HP_Het.txt
 
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/deseq2/downregulated_res05_CB_KO_vs_CB_Het.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2/downregulated_res05_HP_KO_vs_HP_Het.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/deseq2/upregulated_res05_CB_KO_vs_CB_Het.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2/upregulated_res05_HP_KO_vs_HP_Het.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -1806,12 +1806,12 @@ down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Te
 new_order <- c(down_pathways, up_pathways)
 gos$Term <- factor(gos$Term, levels = new_order)
 
-XXXX
+
 
 # Plotting with enhanced aesthetics
 pdf("output/GO/enrichR_GO_Biological_Process_2023_CB_KO_vs_CB_Het.pdf", width=15, height=8)
-pdf("output/GO/enrichR_GO_Biological_Process_2023_CT_KO_vs_CT_Het.pdf", width=16, height=6)
-pdf("output/GO/enrichR_GO_Biological_Process_2023_HP_KO_vs_HP_Het.pdf", width=15, height=6)
+pdf("output/GO/enrichR_GO_Biological_Process_2023_CT_KO_vs_CT_Het.pdf", width=15, height=9)
+pdf("output/GO/enrichR_GO_Biological_Process_2023_HP_KO_vs_HP_Het.pdf", width=15, height=9)
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.8) +
@@ -2588,7 +2588,7 @@ HP_KOspe_867 = read_table(file = "output/GO/HP_KOspe_867.txt", col_names = FALSE
 ## Run GO enrichment analysis 
 
 ego <- enrichGO(gene = as.character(HP_KOspe_867$X1), 
-                keyType = "ENSEMBL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                keyType = "ENSEMBL",     # Use ENSEMBL if want to use ENSG000XX format
                 OrgDb = org.Mm.eg.db, 
                 ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
                 pAdjustMethod = "BH",   
