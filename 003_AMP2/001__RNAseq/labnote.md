@@ -2220,13 +2220,6 @@ tpm_all_sample_tidy %>%
       facet_wrap(~tissue) +
       ylab("log2(TPM + 1)")
 dev.off()
-
-
-
-
-
-
-
 ```
 
 

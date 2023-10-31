@@ -16428,3 +16428,131 @@ dev.off()
 
 
 
+
+# Shiny app to explore RNAseq results
+
+Let's create a shiny app for the lab members to explore the RNAseq results; (`conda activate scRNAseqV2`)
+
+Version1= type a gene and display it's TPM value in barplot (for any genotype and time-points)
+
+```R
+# packages
+library("shiny")
+library("ggplot2")
+library("dplyr")
+library("tidyr")
+library("tidyverse")
+library("biomaRt")
+library("rsconnect")
+
+# import tpm 
+tpm_all <- read_csv("output/shinyApp/RNAseqDataViewer_V1/tpm_all_sample.txt") %>%   # tpm from all_sample.txt from tpm_hg38/
+  select(-1) #To import
+
+
+# add geneSymbol
+tpm_all$Geneid <- gsub("\\..*", "", tpm_all$Geneid) # remove Ensembl gene id version
+
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+
+# Convert Ensembl gene IDs to gene symbols
+tpm_all_genesymbols <- getBM(attributes = c("ensembl_gene_id", "external_gene_name"),
+                     filters = "ensembl_gene_id",
+                     values = tpm_all$Geneid,
+                     mart = ensembl)
+
+tpm_all_withGenesymbols = tpm_all %>% 
+  dplyr::rename("ensembl_gene_id" = "Geneid") %>%
+  left_join(tpm_all_genesymbols)
+
+
+# Convert data from wide to long keep only geneSymbol
+long_data <- tpm_all_withGenesymbols %>% 
+  dplyr::select(-ensembl_gene_id) %>%
+  drop_na() %>%
+  tidyr::pivot_longer(-external_gene_name, names_to = "condition", values_to = "TPM") %>% 
+  tidyr::separate(condition, into = c("Tissue", "Genotype", "Replicate"), sep = "_")
+
+long_data_log2tpm = long_data %>%
+  mutate(log2tpm = log2(TPM + 1)) %>%
+  mutate(Genotype = recode(Genotype, "HET" = "GOF", "KO" = "LOF"))
+
+
+
+# ShinyApp
+
+ui <- fluidPage(
+  titlePanel("RNAseq Data Viewer"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("gene", "Select Gene:", unique(long_data_log2tpm$external_gene_name)),
+      checkboxGroupInput("tissue", "Select Tissue:", choices = c("ESC", "NPC", "2dN", "4wN", "8wN")),
+      checkboxGroupInput("genotype", "Select Genotype:", choices = c("WT", "GOF", "LOF"))
+    ),
+    mainPanel(
+      plotOutput("barPlot")
+    )
+  )
+)
+
+
+server <- function(input, output) {
+  output$barPlot <- renderPlot({
+    subset_data <- long_data_log2tpm %>% 
+      filter(external_gene_name == input$gene, Tissue %in% input$tissue, Genotype %in% input$genotype) %>% 
+      group_by(Genotype, Tissue) %>% 
+      summarise(
+        Median = median(log2tpm),
+        SEM = sd(log2tpm) / sqrt(n())
+      ) %>%
+      arrange(factor(Genotype, levels = c("WT", "GOF", "LOF")), factor(Tissue, levels = c("ESC", "NPC", "2dN", "4wN", "8wN")))
+
+    ggplot(subset_data, aes(x = interaction(Tissue, Genotype, sep = "_"), y = Median, fill = Genotype)) + 
+      geom_bar(stat = "identity", position = position_dodge()) + 
+      geom_errorbar(aes(ymin = Median - SEM, ymax = Median + SEM), width = 0.25, position = position_dodge(0.9)) + 
+      theme_minimal() +
+      labs(x = "Tissue_Genotype", y = "Median log2(tpm+1)") +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  })
+}
+
+
+
+
+# THIS FAIL WORK ON IT !!
+
+
+
+
+
+
+shinyApp(ui = ui, server = server)
+
+
+
+
+
+
+
+
+
+
+# Deploy the app
+rsconnect::deployApp(appDir = "output/shinyApp/RNAseqDataViewer_V1", 
+                     appName = "RNAseqDataViewer_V1", 
+                     launch.browser = TRUE, 
+                     forceUpdate = TRUE)
+
+                     
+                     
+
+
+
+
+```
+
+
+
+
+
+
