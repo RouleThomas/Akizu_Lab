@@ -1244,6 +1244,13 @@ sbatch scripts/matrix_TSS_10kb_NPC_H3K27me3_bigwig_THOR.sh # 5861295 ok
 sbatch scripts/matrix_TSS_10kb_NPC_EZH2_bigwig_THOR.sh # 5861354 ok
 sbatch scripts/matrix_TSS_10kb_NPC_SUZ12_bigwig_THOR.sh # 5861385 ok
 sbatch scripts/matrix_TSS_10kb_NPC_H3K4me3_bigwig_THOR.sh # 5861390 ok
+
+
+sbatch scripts/matrix_TSS_10kb_NPC_EZH2_bigwig_raw.sh # 6472039 XXX
+sbatch scripts/matrix_TSS_10kb_NPC_SUZ12_bigwig_raw.sh # 6472070 XXX
+sbatch scripts/matrix_TSS_10kb_NPC_H3K27me3_bigwig_raw.sh # 6472080 XXX
+sbatch scripts/matrix_TSS_10kb_NPC_H3K4me3_bigwig_raw.sh # 6472160 XXX
+
 ```
 
 --> For  **Within genotpes, I used the MG1655 version; but could have use the raw bigwig as I compare diff marks...**
@@ -2291,15 +2298,61 @@ dev.off()
 
 
 
+# Follow up tasks
+
+## Meeting 20231025
+
+Investigate why and whether true that loss EZH2 SUZ12 with KO EZH1.
+
+1- Check peak overlap between gain/lost EZH2 SUZ12 peaks. With bedtools intersect
+2- Take all WT SUZ12 peaks and check signal in WT and KO
+
+**1- Check peak overlap between gain/lost EZH2 SUZ12 peaks. With bedtools intersect**
+
+
+```bash
+conda activate BedToBigwig
+
+# peak location
+output/THOR/THOR_NPC_SUZ12/THOR_qval10_positive.bed # 1,123 (median = 400bp)
+output/THOR/THOR_NPC_SUZ12/THOR_qval10_negative.bed # 5,508 (median = 400bp)
+output/THOR/THOR_NPC_EZH2/THOR_qval10_positive.bed # 1,267 (median = 450bp)
+output/THOR/THOR_NPC_EZH2/THOR_qval10_negative.bed # 3,840 (median = 450bp)
+
+# bedtools intersect exact peak
+bedtools intersect -v -a output/THOR/THOR_NPC_SUZ12/THOR_qval10_positive.bed -b output/THOR/THOR_NPC_EZH2/THOR_qval10_positive.bed | wc -l # 745
+bedtools intersect -v -a output/THOR/THOR_NPC_SUZ12/THOR_qval10_negative.bed -b output/THOR/THOR_NPC_EZH2/THOR_qval10_negative.bed | wc -l # 5,291
+
+```
+
+- nb of POSITIVE SUZ12 peaks that do NOT overlap with EZH2 peaks = 745 (1,123 total peaks) = 34 % of overlap...
+- nb of NEGATIVE SUZ12 peaks that do NOT overlap with EZH2 peaks = 5,291 (5,508 total peaks) = 4 %
+
+
+--> Very poor overlap but the peaks are very small; like median size around 400bp...
+
+
+So let's assign these peak to genes and then check the targeted genes. For that use the already processed files:
+
+```bash
+output/ChIPseeker/SUZ12_annot_gain_qval10_promoterAnd5_geneSymbol.txt 
+output/ChIPseeker/SUZ12_annot_lost_qval10_promoterAnd5_geneSymbol.txt 
+output/ChIPseeker/EZH2_annot_gain_qval10_promoterAnd5_geneSymbol.txt 
+output/ChIPseeker/EZH2_annot_lost_qval10_promoterAnd5_geneSymbol.txt 
+```
 
 
 
+**2- Take all WT SUZ12 peaks and check signal in WT and KO**
 
 
+```bash
+conda activate deeptools
 
 
+sbatch scripts/matrix_TSS_10kb_THOR_NPC_SUZ12_macs2_broadPeak.sh # 6470946
 
-
+```
 
 
 

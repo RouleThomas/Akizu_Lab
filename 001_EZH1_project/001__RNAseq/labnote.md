@@ -16436,6 +16436,9 @@ Let's create a shiny app for the lab members to explore the RNAseq results; (`co
 Version1= type a gene and display it's TPM value in barplot (for any genotype and time-points)
 
 ```R
+
+
+
 # packages
 library("shiny")
 library("ggplot2")
@@ -16445,17 +16448,16 @@ library("tidyverse")
 library("biomaRt")
 library("rsconnect")
 
-# import tpm 
-tpm_all <- read_csv("output/shinyApp/RNAseqDataViewer_V1/tpm_all_sample.txt") %>%   # tpm from all_sample.txt from tpm_hg38/
-  select(-1) #To import
-
-
-# add geneSymbol
+# Generate the log2tpm output file
+## import tpm 
+tpm_all <- read_csv("tpm_all_sample.txt") %>%   # tpm from all_sample.txt from tpm_hg38/
+  dplyr::select(-1) #To import
+## add geneSymbol
 tpm_all$Geneid <- gsub("\\..*", "", tpm_all$Geneid) # remove Ensembl gene id version
 
 ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
 
-# Convert Ensembl gene IDs to gene symbols
+## Convert Ensembl gene IDs to gene symbols
 tpm_all_genesymbols <- getBM(attributes = c("ensembl_gene_id", "external_gene_name"),
                      filters = "ensembl_gene_id",
                      values = tpm_all$Geneid,
@@ -16466,7 +16468,7 @@ tpm_all_withGenesymbols = tpm_all %>%
   left_join(tpm_all_genesymbols)
 
 
-# Convert data from wide to long keep only geneSymbol
+## Convert data from wide to long keep only geneSymbol
 long_data <- tpm_all_withGenesymbols %>% 
   dplyr::select(-ensembl_gene_id) %>%
   drop_na() %>%
@@ -16476,28 +16478,78 @@ long_data <- tpm_all_withGenesymbols %>%
 long_data_log2tpm = long_data %>%
   mutate(log2tpm = log2(TPM + 1)) %>%
   mutate(Genotype = recode(Genotype, "HET" = "GOF", "KO" = "LOF"))
+## Save
+write.table(long_data_log2tpm, file = c("output/shinyApp/RNAseqDataViewer_V1/long_data_log2tpm.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+
+
+
+
+
 
 
 
 # ShinyApp
+## 
 
-ui <- fluidPage(
+global <- '
+library(dplyr)
+
+# import log2tpm file
+long_data_log2tpm = read.table("long_data_log2tpm.txt", sep = "\t", header = TRUE)
+'
+writeLines(global, "output/shinyApp/RNAseqDataViewer_V1/global.R")
+
+
+
+## WORK GREAT:
+
+ui_code <- '
+library(shiny)
+
+fluidPage(
   titlePanel("RNAseq Data Viewer"),
+  
   sidebarLayout(
     sidebarPanel(
-      selectInput("gene", "Select Gene:", unique(long_data_log2tpm$external_gene_name)),
+      selectizeInput("gene", "Select Gene:", unique(long_data_log2tpm$external_gene_name)),
       checkboxGroupInput("tissue", "Select Tissue:", choices = c("ESC", "NPC", "2dN", "4wN", "8wN")),
-      checkboxGroupInput("genotype", "Select Genotype:", choices = c("WT", "GOF", "LOF"))
+      checkboxGroupInput("genotype", "Select Genotype:", choices = c("WT", "GOF", "LOF")),
+      numericInput("plot_width", label = "Plot Width", value = 500, min = 100, max = 2000, step = 10),
+      numericInput("plot_height", label = "Plot Height", value = 500, min = 100, max = 2000, step = 10),
+      radioButtons("plot_type", "Choose Plot Type:", choices = c("Bar Plot", "Line Plot"))
     ),
+    
     mainPanel(
-      plotOutput("barPlot")
+      uiOutput("dynamicPlotOutput")
     )
   )
 )
+'
+writeLines(ui_code, "output/shinyApp/RNAseqDataViewer_V1/ui.R")
 
+
+
+server_code <- '
+library(shiny)
+library(dplyr)
+library(ggplot2)
 
 server <- function(input, output) {
-  output$barPlot <- renderPlot({
+  
+  plotWidth <- reactive({
+    paste0(input$plot_width, "px")
+  })
+
+  plotHeight <- reactive({
+    paste0(input$plot_height, "px")
+  })
+
+  output$dynamicPlotOutput <- renderUI({
+    plotOutput("chosenPlot", width = plotWidth(), height = plotHeight())
+  })
+  
+  output$chosenPlot <- renderPlot({
     subset_data <- long_data_log2tpm %>% 
       filter(external_gene_name == input$gene, Tissue %in% input$tissue, Genotype %in% input$genotype) %>% 
       group_by(Genotype, Tissue) %>% 
@@ -16507,44 +16559,49 @@ server <- function(input, output) {
       ) %>%
       arrange(factor(Genotype, levels = c("WT", "GOF", "LOF")), factor(Tissue, levels = c("ESC", "NPC", "2dN", "4wN", "8wN")))
 
-    ggplot(subset_data, aes(x = interaction(Tissue, Genotype, sep = "_"), y = Median, fill = Genotype)) + 
-      geom_bar(stat = "identity", position = position_dodge()) + 
-      geom_errorbar(aes(ymin = Median - SEM, ymax = Median + SEM), width = 0.25, position = position_dodge(0.9)) + 
-      theme_minimal() +
-      labs(x = "Tissue_Genotype", y = "Median log2(tpm+1)") +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    if(input$plot_type == "Bar Plot") {
+      return(
+        ggplot(subset_data, aes(x = interaction(Tissue, Genotype, sep = "_"), y = Median, fill = Genotype)) + 
+          geom_bar(stat = "identity", position = position_dodge()) + 
+          geom_errorbar(aes(ymin = Median - SEM, ymax = Median + SEM), width = 0.25, position = position_dodge(0.9)) + 
+          scale_fill_manual(values = c("WT" = "black", "GOF" = "blue", "LOF" = "red")) + 
+          theme_bw() +
+          labs(x = "Tissue_Genotype", y = "Median log2(tpm+1)") +
+          theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+          scale_x_discrete(limits = unique(as.character(interaction(subset_data$Tissue, subset_data$Genotype, sep="_"))))
+      )
+    } else {
+      return(
+        ggplot(subset_data, aes(x = factor(Tissue, levels = c("ESC", "NPC", "2dN", "4wN", "8wN")), y = Median, color = Genotype, group = Genotype)) + 
+          geom_line() + 
+          geom_errorbar(aes(ymin = Median - SEM, ymax = Median + SEM), width = 0.2, size = 1) + 
+          geom_point(shape = 18, size = 3, stroke = 1.5) +
+          scale_color_manual(values = c("WT" = "black", "GOF" = "blue", "LOF" = "red")) + 
+          theme_bw() +
+          labs(x = "Tissue", y = "Median log2(tpm+1)") +
+          theme(axis.text.x = element_text(angle = 45, hjust = 1))
+      )
+    }
   })
 }
-
-
-
-
-# THIS FAIL WORK ON IT !!
-
-
-
-
-
-
-shinyApp(ui = ui, server = server)
-
-
-
-
-
-
-
-
+'
+writeLines(server_code, "output/shinyApp/RNAseqDataViewer_V1/server.R")
 
 
 # Deploy the app
-rsconnect::deployApp(appDir = "output/shinyApp/RNAseqDataViewer_V1", 
-                     appName = "RNAseqDataViewer_V1", 
-                     launch.browser = TRUE, 
-                     forceUpdate = TRUE)
 
+rsconnect::deployApp("output/shinyApp/RNAseqDataViewer_V1")
                      
-                     
+
+
+
+
+# test
+
+
+
+
+
 
 
 
@@ -16552,7 +16609,7 @@ rsconnect::deployApp(appDir = "output/shinyApp/RNAseqDataViewer_V1",
 ```
 
 
-
+- NOTE: the `global.R` is run automaticcaly and detected by shiny app; should contain ll objects and meta
 
 
 
