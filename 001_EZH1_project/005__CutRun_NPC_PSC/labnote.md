@@ -1246,10 +1246,10 @@ sbatch scripts/matrix_TSS_10kb_NPC_SUZ12_bigwig_THOR.sh # 5861385 ok
 sbatch scripts/matrix_TSS_10kb_NPC_H3K4me3_bigwig_THOR.sh # 5861390 ok
 
 
-sbatch scripts/matrix_TSS_10kb_NPC_EZH2_bigwig_raw.sh # 6472039 XXX
-sbatch scripts/matrix_TSS_10kb_NPC_SUZ12_bigwig_raw.sh # 6472070 XXX
-sbatch scripts/matrix_TSS_10kb_NPC_H3K27me3_bigwig_raw.sh # 6472080 XXX
-sbatch scripts/matrix_TSS_10kb_NPC_H3K4me3_bigwig_raw.sh # 6472160 XXX
+sbatch scripts/matrix_TSS_10kb_NPC_EZH2_bigwig_raw.sh # 6472039 ok
+sbatch scripts/matrix_TSS_10kb_NPC_SUZ12_bigwig_raw.sh # 6472070   ok
+sbatch scripts/matrix_TSS_10kb_NPC_H3K27me3_bigwig_raw.sh # 6472080  ok
+sbatch scripts/matrix_TSS_10kb_NPC_H3K4me3_bigwig_raw.sh # 6472160  ok
 
 ```
 
