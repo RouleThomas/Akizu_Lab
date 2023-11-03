@@ -1195,7 +1195,7 @@ load("output/DiffBind/sample_count_macs2raw_unique_NPC_H3K4me3_MG1655bam.RData")
 ### Blacklist/Greylist generation
 sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist 
 
-XXXX
+
 
 sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
 ### Spike in normalization 
@@ -1370,11 +1370,15 @@ sbatch scripts/matrix_TSS_10kb_NPC_EZH2_bigwig_THOR.sh # 5861354 ok
 sbatch scripts/matrix_TSS_10kb_NPC_SUZ12_bigwig_THOR.sh # 5861385 ok
 sbatch scripts/matrix_TSS_10kb_NPC_H3K4me3_bigwig_THOR.sh # 5861390 ok
 
-
 sbatch scripts/matrix_TSS_10kb_NPC_EZH2_bigwig_raw.sh # 6472039 ok
 sbatch scripts/matrix_TSS_10kb_NPC_SUZ12_bigwig_raw.sh # 6472070 ok
 sbatch scripts/matrix_TSS_10kb_NPC_H3K27me3_bigwig_raw.sh # 6472080 ok
 sbatch scripts/matrix_TSS_10kb_NPC_H3K4me3_bigwig_raw.sh # 6472160 ok
+
+sbatch --dependency=afterany:6551938 scripts/matrix_TSS_10kb_NPC_EZH2_bigwig_LIB_spikein.sh # 6556104 XXX
+sbatch scripts/matrix_TSS_10kb_NPC_SUZ12_bigwig_LIB_spikein.sh # 6556141 XXX
+sbatch scripts/matrix_TSS_10kb_NPC_H3K27me3_bigwig_LIB_spikein.sh # 6556167 XXX
+sbatch scripts/matrix_TSS_10kb_NPC_H3K4me3_bigwig_LIB_spikein.sh # 6556182 XXX
 
 ```
 
@@ -1585,7 +1589,7 @@ sbatch scripts/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak.sh # 590
 sbatch scripts/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_genes.sh # 5904530 ok
 
 ## PSC
-sbatch scripts/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak.sh # 5952851 xxxx
+sbatch scripts/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak.sh # 5952851 ok
 
 ```
 --> Let's try k-means method with all genes and genes with a SUZ12 peaks (from macs2)
@@ -1661,6 +1665,11 @@ Comparison to do; NPC WT vs KO:
 --> SF to use in THOR are the **reciprocal of MG1655_DiffBind_TMM**
 --> Configs file created manually as `output/THOR/NPC_EZH2.config`
 
+--> Lets also try to use the DiffBind spike in BAM method (similarly use the reciprocal from diffBind)
+
+
+
+
 ## Run THOR
 
 *THOR is very buggy to make it work I need to temporaly change where to look for libraries lol.. So cannot use nano anymore for example...*
@@ -1680,13 +1689,18 @@ sbatch scripts/THOR_NPC_H3K27me3.sh # 5856898 ok
 sbatch scripts/THOR_NPC_H3K4me3.sh # 5856928 ok
 
 # DiffBind MG1655 bam scaling factor
-
-XXX
+## doin the math (SF dibbfinb recipocal * lib size)
+sbatch scripts/THOR_NPC_EZH2_LIB_spikein.sh # 6551938 ok
+sbatch scripts/THOR_NPC_SUZ12_LIB_spikein.sh # 6552579 ok
+sbatch scripts/THOR_NPC_H3K27me3_LIB_spikein.sh # 6552666 ok
+sbatch scripts/THOR_NPC_H3K4me3_LIB_spikein.sh # 6552713 ok
 
 ```
 
---> By eye we seems to still see the higher EZH2 enrichment in WT / KO... 
-----> Using the DiffBind MG1655 bam scaling factor is XXX
+--> (Using Recirpocl DiffBind TMM initial method) By eye we seems to still see the higher EZH2 enrichment in WT / KO... 
+----> Using the DiffBind MG1655 bam scaling factor looks good, and value are VERY DIFFERENT thatn the 1st method. Lets' see peak gene assgihnent to gene and expression...
+
+
 
 
 
