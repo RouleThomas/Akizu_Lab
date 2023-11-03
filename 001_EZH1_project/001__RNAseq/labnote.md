@@ -16599,17 +16599,38 @@ rsconnect::deployApp("output/shinyApp/RNAseqDataViewer_V1")
 # test
 
 
-
-
-
-
-
-
-
 ```
 
 
 - NOTE: the `global.R` is run automaticcaly and detected by shiny app; should contain ll objects and meta
+
+
+--> The version 1 works great!
+
+In version 2, let's implement other functino such as:
+- looking at multiple genes? Heatmap?
+- statistical test?
+
+
+
+# MuSiC2 RNAseq bulk deconvolution
+
+Let's try to use [MuSiC2](https://academic.oup.com/bib/article-abstract/23/6/bbac430/6751147?redirectedFrom=fulltext) for RNAseq deconvolution. Good as it use just 1 scRNAseq file for reference and we can compare different bulk RNAseq samples! Otherwise we need scRNAseq for each of our genotype...
+
+
+- scRNAseq signature: [Human brain organoid](https://www.nature.com/articles/s41586-023-06473-y)
+- [Tutorial](https://jiaxin-fan.github.io/MuSiC2/articles/introduction.html) to follow for MuSiC2 
+
+XXXX
+
+
+
+
+
+
+
+
+
 
 
 

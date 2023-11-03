@@ -446,6 +446,24 @@ sbatch --dependency=afterany:5694293 scripts/samtools_unique_2.sh # 5695056 ok
 sbatch --dependency=afterany:5694297 scripts/samtools_unique_3.sh # 5695057 ok
 ```
 
+Let's do the same for E coli MG1655 spike in samples:
+
+```bash
+conda activate bowtie2
+
+sbatch scripts/samtools_MG1655_unique_1.sh # 6544133 ok
+sbatch scripts/samtools_MG1655_unique_2.sh # 6544173 ok
+sbatch scripts/samtools_MG1655_unique_3.sh # 6544194 ok
+
+# Create index for the genome to be load in IGV
+samtools faidx ../003__CutRun/meta/MG1655_v2.fa
+
+```
+
+- *NOTE: to know what are the contig/chromosome names of MG1655; use `samtools idxstats output/spikein/*.sam`*
+- *NOTE: The MG1655 fasta genome got an empty line at row 452 and many others... WTF, remove it and save the new fasta as 003__CutRun/meta/MG1655_v2.fa*
+
+--> E coli MG1655 alignemnt seems to have work can see reads on IGV !!
 
 # Generate bigwig coverage files
 ## Raw bigwig
@@ -1123,12 +1141,119 @@ sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_
 console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
 writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_PSC_EZH1cs.txt")
 
+
 ```
 
 --> Cannot generate a MG1655_DiffBind_TMM SF for PSC_EZH1cs as no peak in the syn condition; so I put 1 for both...
 
 --> The SF collected are NOT the same as the one when I used the histone-spike in methiod. However; I trust more the E coli method. As when there is more E coli DNA then the SF is more than 1 thus increasing the library size, thus decreasing the signal as there is just more DNA!
-----> Interestingly, when doing the TMM normalization; it put very close togethe the SF generated from histone and from MG1655 method... Not sure, what to conclude....
+----> Interestingly, when doing the TMM normalization; it put very close togethe the SF generated from histone and from MG1655 method... Not sure, what to conclude.... That looks weird!!
+
+
+Lets try to use the **E coli bam spike in scaling method** (add MG1655 bam files in the meta file):
+--> For NPC samples only
+--> Vignete 7.6 from [DiffBind doc](https://bioconductor.org/packages/release/bioc/vignettes/DiffBind/inst/doc/DiffBind.pdf) to check how apply spikein
+
+```bash
+conda activate DiffBind
+```
+
+```R
+library("DiffBind") 
+
+
+# ONE PER ONE
+## NPC_H3K27me3
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_NPC_H3K27me3_MG1655bam.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_NPC_H3K27me3_MG1655bam.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_NPC_H3K27me3_MG1655bam.RData")
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### Spike in normalization 
+sample_count_blackgreylist_LIB_spikein = dba.normalize(sample_count_blackgreylist, normalize=DBA_NORM_LIB, spikein=TRUE) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LIB_spikein_SF = dba.normalize(sample_count_blackgreylist_LIB_spikein, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_LIB_spikein_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LIB_spikein_SF_NPC_H3K27me3.txt")
+
+
+
+
+# NPC_H3K4me3
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_NPC_H3K4me3_MG1655bam.txt", header = TRUE, sep = "\t")) # HERE I MADE SURE USING THE CORRECT SAMPLE FILE (sampel inversion!)
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_NPC_H3K4me3_MG1655bam.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_NPC_H3K4me3_MG1655bam.RData")
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist 
+
+XXXX
+
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### Spike in normalization 
+sample_count_blackgreylist_LIB_spikein = dba.normalize(sample_count_blackgreylist, normalize=DBA_NORM_LIB, spikein=TRUE) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LIB_spikein_SF = dba.normalize(sample_count_blackgreylist_LIB_spikein, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_LIB_spikein_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LIB_spikein_SF_NPC_H3K4me3.txt")
+
+
+
+
+
+
+# NPC_SUZ12
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_NPC_SUZ12_MG1655bam.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_NPC_SUZ12_MG1655bam.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_NPC_SUZ12_MG1655bam.RData")
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### Spike in normalization 
+sample_count_blackgreylist_LIB_spikein = dba.normalize(sample_count_blackgreylist, normalize=DBA_NORM_LIB, spikein=TRUE) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LIB_spikein_SF = dba.normalize(sample_count_blackgreylist_LIB_spikein, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_LIB_spikein_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LIB_spikein_SF_NPC_SUZ12.txt")
+
+
+# NPC_EZH2
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_NPC_EZH2_MG1655bam.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_NPC_EZH2_MG1655bam.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_NPC_EZH2_MG1655bam.RData")
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### Spike in normalization 
+sample_count_blackgreylist_LIB_spikein = dba.normalize(sample_count_blackgreylist, normalize=DBA_NORM_LIB, spikein=TRUE) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LIB_spikein_SF = dba.normalize(sample_count_blackgreylist_LIB_spikein, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_LIB_spikein_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LIB_spikein_SF_NPC_EZH2.txt")
+
+```
+
+
+
+
+
+
 
 ## Generate Spike in scaled bigwig
 
@@ -1247,9 +1372,9 @@ sbatch scripts/matrix_TSS_10kb_NPC_H3K4me3_bigwig_THOR.sh # 5861390 ok
 
 
 sbatch scripts/matrix_TSS_10kb_NPC_EZH2_bigwig_raw.sh # 6472039 ok
-sbatch scripts/matrix_TSS_10kb_NPC_SUZ12_bigwig_raw.sh # 6472070   ok
-sbatch scripts/matrix_TSS_10kb_NPC_H3K27me3_bigwig_raw.sh # 6472080  ok
-sbatch scripts/matrix_TSS_10kb_NPC_H3K4me3_bigwig_raw.sh # 6472160  ok
+sbatch scripts/matrix_TSS_10kb_NPC_SUZ12_bigwig_raw.sh # 6472070 ok
+sbatch scripts/matrix_TSS_10kb_NPC_H3K27me3_bigwig_raw.sh # 6472080 ok
+sbatch scripts/matrix_TSS_10kb_NPC_H3K4me3_bigwig_raw.sh # 6472160 ok
 
 ```
 
@@ -1553,9 +1678,17 @@ sbatch scripts/THOR_NPC_EZH2.sh # 5855649 ok
 sbatch scripts/THOR_NPC_SUZ12.sh # 5856888 ok
 sbatch scripts/THOR_NPC_H3K27me3.sh # 5856898 ok
 sbatch scripts/THOR_NPC_H3K4me3.sh # 5856928 ok
+
+# DiffBind MG1655 bam scaling factor
+
+XXX
+
 ```
 
---> By eye we seems to still see the higher EZH2 enrichment in WT / KO...
+--> By eye we seems to still see the higher EZH2 enrichment in WT / KO... 
+----> Using the DiffBind MG1655 bam scaling factor is XXX
+
+
 
 ## Filter THOR peaks (qvalue)
 
