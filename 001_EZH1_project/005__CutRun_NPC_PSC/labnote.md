@@ -1320,6 +1320,9 @@ sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_MG1655.sh # 5835
 sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig_THOR.sh # 5861199 ok
 sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_THOR.sh # 5861207 ok
 
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig_LIB_spikein_THOR.sh # 6619767 ok
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_LIB_spikein_THOR.sh # 6619963 ok
+
 ## SUZ12
 sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_SUZ12_bigwig_THOR.sh # 5932584 ok
 sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_SUZ12_bigwig_THOR.sh # 5933018 ok
@@ -1338,7 +1341,7 @@ sbatch scripts/matrix_TSS_10kb_PSC_KOEF1aEZH1_bigwig_2.sh # 5850574 ok
 --> The **raw bigwig is not good**; non normalized file is NOT in agreement with gene expression; H3K27me3 signal always higher in the NPC_KO
 --> The **bigwig histone and MG1655 is OK**; slight differences in agreement with gene expression changes for H3K27me3. In CANNOT be perfect as the RNAseq do not match with this experiment; diff. protocol used not the same! **Let's prefer to use MG1655=same normalziation method for ALL samples!**
 --> The **bigwig THOR is BETTER THAN MG1655**; clearly see increase of H3K27me3 for genes down; but no changes for gene Up.
-
+--> The **matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig_LIB_spikein_THOR** is SHIT. The DEGs H3K27me3 is NOT in agreement with profile; KO always higher...
 
 
 ***PSC:***
@@ -1375,10 +1378,10 @@ sbatch scripts/matrix_TSS_10kb_NPC_SUZ12_bigwig_raw.sh # 6472070 ok
 sbatch scripts/matrix_TSS_10kb_NPC_H3K27me3_bigwig_raw.sh # 6472080 ok
 sbatch scripts/matrix_TSS_10kb_NPC_H3K4me3_bigwig_raw.sh # 6472160 ok
 
-sbatch --dependency=afterany:6551938 scripts/matrix_TSS_10kb_NPC_EZH2_bigwig_LIB_spikein.sh # 6556104 XXX
-sbatch scripts/matrix_TSS_10kb_NPC_SUZ12_bigwig_LIB_spikein.sh # 6556141 XXX
-sbatch scripts/matrix_TSS_10kb_NPC_H3K27me3_bigwig_LIB_spikein.sh # 6556167 XXX
-sbatch scripts/matrix_TSS_10kb_NPC_H3K4me3_bigwig_LIB_spikein.sh # 6556182 XXX
+sbatch --dependency=afterany:6551938 scripts/matrix_TSS_10kb_NPC_EZH2_bigwig_LIB_spikein.sh # 6556104 ok
+sbatch scripts/matrix_TSS_10kb_NPC_SUZ12_bigwig_LIB_spikein.sh # 6556141 ok
+sbatch scripts/matrix_TSS_10kb_NPC_H3K27me3_bigwig_LIB_spikein.sh # 6556167 ok
+sbatch scripts/matrix_TSS_10kb_NPC_H3K4me3_bigwig_LIB_spikein.sh # 6556182 ok
 
 ```
 
@@ -1695,6 +1698,7 @@ sbatch scripts/THOR_NPC_SUZ12_LIB_spikein.sh # 6552579 ok
 sbatch scripts/THOR_NPC_H3K27me3_LIB_spikein.sh # 6552666 ok
 sbatch scripts/THOR_NPC_H3K4me3_LIB_spikein.sh # 6552713 ok
 
+sbatch scripts/THOR_NPC_H3K27me3_LIB_spikein_NotReciprocal.sh # 6625785 XXX
 ```
 
 --> (Using Recirpocl DiffBind TMM initial method) By eye we seems to still see the higher EZH2 enrichment in WT / KO... 

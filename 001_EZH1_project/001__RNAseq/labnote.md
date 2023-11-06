@@ -16618,12 +16618,57 @@ In version 2, let's implement other functino such as:
 Let's try to use [MuSiC2](https://academic.oup.com/bib/article-abstract/23/6/bbac430/6751147?redirectedFrom=fulltext) for RNAseq deconvolution. Good as it use just 1 scRNAseq file for reference and we can compare different bulk RNAseq samples! Otherwise we need scRNAseq for each of our genotype...
 
 
-- scRNAseq signature: [Human brain organoid](https://www.nature.com/articles/s41586-023-06473-y)
+- scRNAseq signature: [Human brain organoid](https://www.nature.com/articles/s41586-023-06473-y); files downloaded `CHOOSE_CTRL_annot_srt.rds`
 - [Tutorial](https://jiaxin-fan.github.io/MuSiC2/articles/introduction.html) to follow for MuSiC2 
 
-XXXX
+
+--> Install MuSic; need devtools and Seurat so let's clone `scRNAseqV2` and install MuSiC2:
+
+```bash
+conda activate scRNAseqV2
+
+conda create --name scRNAseqV3 --clone scRNAseqV2
+```
 
 
+Check wether the control scRNAseq seurat object is good (generate UMAP with cell type label); is so, start MuSiC
+```R
+# install MuSiC2; requires installation of dependencies separaetly
+BiocManager::install("TOAST")
+devtools::install_github('xuranw/MuSiC')
+remotes::install_github("renozao/xbioc")
+if (!"MuSiC2" %in% rownames(installed.packages())) {
+  devtools::install_github('Jiaxin-Fan/MuSiC2')
+}
+
+
+# library
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") 
+library("SCPA")
+library("circlize")
+library("magrittr")
+library("msigdb")
+library("msigdbr")
+library("ComplexHeatmap")
+library("ggrepel")
+library("ggpubr")
+library("MuSiC2")
+
+
+XXX
+
+
+```
 
 
 
