@@ -509,7 +509,7 @@ conda activate deeptools
 sbatch scripts/multiBigwigSummary_PSC.sh # 5780604 ok
 sbatch scripts/multiBigwigSummary_PSC_subset_1.sh # 5780758
 sbatch scripts/multiBigwigSummary_NPC.sh # 5780645 ok
-sbatch scripts/multiBigwigSummary_NPC_THOR.sh # 5931653 XXXX
+sbatch scripts/multiBigwigSummary_NPC_THOR.sh # 5931653 ok
 
 
 # Plot
@@ -1154,6 +1154,8 @@ Lets try to use the **E coli bam spike in scaling method** (add MG1655 bam files
 --> For NPC samples only
 --> Vignete 7.6 from [DiffBind doc](https://bioconductor.org/packages/release/bioc/vignettes/DiffBind/inst/doc/DiffBind.pdf) to check how apply spikein
 
+**spikein_LIB normalization**
+
 ```bash
 conda activate DiffBind
 ```
@@ -1250,6 +1252,36 @@ writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LIB_spike
 ```
 
 
+**spikein_TMM and RLE normalization**
+
+Some info [here](https://support.bioconductor.org/p/9148431/#9148434)
+
+```R
+library("DiffBind") 
+
+
+# ONE PER ONE
+## NPC_H3K27me3
+load("output/DiffBind/sample_count_macs2raw_unique_NPC_H3K27me3_MG1655bam.RData")
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### Spike in normalization        _ TMM
+sample_count_blackgreylist_TMM_spikein = dba.normalize(sample_count_blackgreylist, normalize=DBA_NORM_TMM, spikein=TRUE) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_TMM_spikein_SF = dba.normalize(sample_count_blackgreylist_TMM_spikein, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_TMM_spikein_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_TMM_spikein_SF_NPC_H3K27me3.txt")
+### Spike in normalization        _ RLE       
+sample_count_blackgreylist_RLE_spikein = dba.normalize(sample_count_blackgreylist, normalize=DBA_NORM_RLE, spikein=TRUE) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_RLE_spikein_SF = dba.normalize(sample_count_blackgreylist_RLE_spikein, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_RLE_spikein_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_RLE_spikein_SF_NPC_H3K27me3.txt")
+
+```
+
+--> SF are unchanged compared to the LIB method...
 
 
 
@@ -1322,6 +1354,10 @@ sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_THOR.sh # 586120
 
 sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig_LIB_spikein_THOR.sh # 6619767 ok
 sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_LIB_spikein_THOR.sh # 6619963 ok
+
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_H3K27me3_bigwig_LIB_spikein_NotReciprocal_THOR.sh # 6664317 ok
+sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Down_H3K27me3_bigwig_LIB_spikein_NotReciprocal_THOR.sh # 6664367 ok
+
 
 ## SUZ12
 sbatch scripts/matrix_TSS_10kb_DEGs_NPC_KO_Up_SUZ12_bigwig_THOR.sh # 5932584 ok
@@ -1698,7 +1734,7 @@ sbatch scripts/THOR_NPC_SUZ12_LIB_spikein.sh # 6552579 ok
 sbatch scripts/THOR_NPC_H3K27me3_LIB_spikein.sh # 6552666 ok
 sbatch scripts/THOR_NPC_H3K4me3_LIB_spikein.sh # 6552713 ok
 
-sbatch scripts/THOR_NPC_H3K27me3_LIB_spikein_NotReciprocal.sh # 6625785 XXX
+sbatch scripts/THOR_NPC_H3K27me3_LIB_spikein_NotReciprocal.sh # 6625785 ok
 ```
 
 --> (Using Recirpocl DiffBind TMM initial method) By eye we seems to still see the higher EZH2 enrichment in WT / KO... 
@@ -2414,7 +2450,7 @@ EZH1_SUZ12_H3K27me3 = read.table(file = c("output/GO/Venn_overlap_PSC_EZH1_SUZ12
 
 
 ego <- enrichGO(gene = as.character(EZH1_SUZ12_H3K27me3$V1),   # CHANGE NAME HERE !!!
-                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XX format
                 OrgDb = org.Hs.eg.db, 
                 ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
                 pAdjustMethod = "BH",   
