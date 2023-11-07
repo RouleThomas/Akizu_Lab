@@ -1641,19 +1641,32 @@ sbatch scripts/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak.sh
 
 Now from `matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak` and `matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak`; let's isolate the peak SUZ12-EZH2 (cluster 1-24) and the SUZ12-noEZH2 (cluster 25)
 
+Also isolate cluster 22-25 as PRC2-EZH2 instead of only the cl25
+
 ```bash
 # Isolate specific cluster and make bed
 output/deeptools/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_heatmap_kmeans25.bed
 ## matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak cluster 1-24
 awk '$13 != "cluster_25"' output/deeptools/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_heatmap_kmeans25.bed > output/deeptools/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_heatmap_kmeans25_cluster1-24.bed
 awk '$13 != "cluster_25"' output/deeptools/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_heatmap_kmeans25.bed > output/deeptools/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_heatmap_kmeans25_cluster1-24.bed
+
+awk '$13 != "cluster_25" && $13 != "cluster_24" && $13 != "cluster_23" && $13 != "cluster_22"' output/deeptools/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_heatmap_kmeans25.bed > output/deeptools/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_heatmap_kmeans25_cluster1-21.bed
+
+
 ### Re-format the bed from deepTools kmeans as it is buggy
 conda activate bowtie2
 bedtools intersect -wa -a output/deeptools/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_heatmap_kmeans25_cluster1-24.bed -b output/macs2/broad_blacklist_qval1.30103/NPC_WT_SUZ12_peaks.broadPeak | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4}' > output/deeptools/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_heatmap_kmeans25_cluster1-24_macs2Format.bed
 bedtools intersect -wa -a output/deeptools/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_heatmap_kmeans25_cluster1-24.bed -b output/macs2/broad_blacklist_qval1.30103/PSC_KOEF1aEZH1_SUZ12_peaks.broadPeak | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4}' > output/deeptools/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_heatmap_kmeans25_cluster1-24_macs2Format.bed
+
+bedtools intersect -wa -a output/deeptools/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_heatmap_kmeans25_cluster1-21.bed -b output/macs2/broad_blacklist_qval1.30103/PSC_KOEF1aEZH1_SUZ12_peaks.broadPeak | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4}' > output/deeptools/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_heatmap_kmeans25_cluster1-21_macs2Format.bed
+bedtools intersect -wa -a output/deeptools/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_heatmap_kmeans25_cluster22-25.bed -b output/macs2/broad_blacklist_qval1.30103/PSC_KOEF1aEZH1_SUZ12_peaks.broadPeak | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4}' > output/deeptools/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_heatmap_kmeans25_cluster22-25_macs2Format.bed
+
+
 ## matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak cluster 25
 awk '$13 == "cluster_25"' output/deeptools/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_heatmap_kmeans25.bed > output/deeptools/matrix_TSS_10kb_THOR_SUZ12_EZH2_WT_SUZ12_macs2_broadPeak_heatmap_kmeans25_cluster25.bed
 awk '$13 == "cluster_25"' output/deeptools/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_heatmap_kmeans25.bed > output/deeptools/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_heatmap_kmeans25_cluster25.bed
+
+awk '$13 == "cluster_25" || $13 == "cluster_24" || $13 == "cluster_23" || $13 == "cluster_22"' output/deeptools/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_heatmap_kmeans25.bed > output/deeptools/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_heatmap_kmeans25_cluster22-25.bed
 
 ```
 
@@ -1669,7 +1682,7 @@ sbatch scripts/matrix_TSS_10kb_THOR_SUZ12_EZH2_WTandKO_SUZ12_macs2_broadPeak_cl2
 
 ## PSC
 sbatch scripts/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_cl1-24_25.sh # 5958046 ok
-
+sbatch scripts/matrix_TSS_10kb_bigwig_SUZ12_EZH1cs_KOEF1aEZH1_macs2_broadPeak_cl1-21_22-25.sh # 6668812 ok
 
 ```
 
