@@ -17029,8 +17029,8 @@ est = my_music2_prop_toast_V2(bulk.control.mtx = bulk.control.mtx, bulk.case.mtx
 ```bash
 conda activate scRNAseqV3
 # 8wN WT vs HET using Control scRNAseq data
-sbatch scripts/music2_prop_t_statistics.8wN_WTvsHET_CHOOSE_CTRL.sh # 6729977 
-
+sbatch scripts/music2_prop_t_statistics.8wN_WTvsHET_CHOOSE_CTRL.sh # 6729977 ok FAIL with if (sum(abs(p.weight.new - p.weight)) error...
+sbatch scripts/my_music2_prop_toast_V2.8wN_WTvsHET_CHOOSE_CTRL.sh # 
 
 
 ```
