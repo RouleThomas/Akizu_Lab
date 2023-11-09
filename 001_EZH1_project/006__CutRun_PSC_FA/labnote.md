@@ -179,10 +179,21 @@ sbatch --dependency=afterany:6712296 scripts/bamtobigwig_unique_1.sh # 6712485 o
 sbatch --dependency=afterany:6712305 scripts/bamtobigwig_unique_2.sh # 6712486 ok
 sbatch --dependency=afterany:6712321 scripts/bamtobigwig_unique_3.sh # 6712487 ok
 
-sbatch scripts/bamtobigwig_unique_1_missing.sh # 6731623
+sbatch scripts/bamtobigwig_unique_1_missing.sh # 6731623 ok
 ```
 
---> XXX 
+
+
+- KOEF1aEZH1
+*Pass*: SUZ12, EZH1cs, EZH2, H3K27me3
+*Failed*: HA
+- WT
+*Pass*: SUZ12, EZH2, H3K27me3
+*Failed*: HA, EZH1cs (better than earlier, more peaks, but still poorly)
+- KO
+*Pass*: H3K27me3
+*Failed*: HA, SUZ12, EZH1cs, EZH2
+
 
 
 
@@ -197,71 +208,81 @@ conda activate deeptools
 sbatch --dependency=afterany:6731623 scripts/multiBigwigSummary_all.sh # 6731623
 
 
-
-XXXXXX modify below :
-
-
 # Plot
 ## PCA
-plotPCA -in output/bigwig/multiBigwigSummary_PSC.npz \
+plotPCA -in output/bigwig/multiBigwigSummary_all.npz \
     --transpose \
     --ntop 0 \
-    --labels PSC_KOEF1aEZH1_EZH1cs PSC_KOsynEZH1_EZH1cs PSC_KOEF1aEZH1_EZH1pt PSC_KOsynEZH1_EZH1pt PSC_KOEF1aEZH1_H3K27me3 PSC_KOsynEZH1_H3K27me3 PSC_KOEF1aEZH1_HA PSC_KOsynEZH1_HA PSC_KOEF1aEZH1_SUZ12 PSC_KOsynEZH1_SUZ12 PSC_KOEF1aEZH1_IGG PSC_KOsynEZH1_IGG \
-    -o output/bigwig/multiBigwigSummary_PSC_plotPCA.pdf
-plotPCA -in output/bigwig/multiBigwigSummary_NPC.npz \
-    --transpose \
-    --ntop 0 \
-    --labels NPC_WT_EZH1cs NPC_KO_EZH1cs NPC_WT_EZH1pt NPC_KO_EZH1pt NPC_WT_H3K27me1 NPC_KO_H3K27me1 NPC_WT_H3K27me3 NPC_KO_H3K27me3 NPC_WT_H3K4me3 NPC_KO_H3K4me3 NPC_WT_EZH2 NPC_KO_EZH2 NPC_WT_SUZ12 NPC_KO_SUZ12 NPC_WT_IGG NPC_KO_IGG \
-    -o output/bigwig/multiBigwigSummary_NPC_plotPCA.pdf
-plotPCA -in output/THOR/multiBigwigSummary_NPC_THOR.npz \
-    --transpose \
-    --ntop 0 \
-    --labels WT_SUZ12 KO_SUZ12 WT_EZH2 KO_EZH2 WT_H3K27me3 KO_H3K27me3 WT_H3K4me3 KO_H3K4me3 \
-    --colors blue blue green green red red gold gold \
-    --markers o s o s o s o s \
-    --plotWidth 7 \
-    -o output/THOR/multiBigwigSummary_NPC_THOR_plotPCA.pdf
+    --labels PSC_KOEF1aEZH1_SUZ12 PSC_KOEF1aEZH1_EZH2 PSC_KOEF1aEZH1_HA PSC_KOEF1aEZH1_EZH1cs PSC_KOEF1aEZH1_H3K27me3 PSC_KOEF1aEZH1_IGG PSC_WT_SUZ12 PSC_WT_EZH2 PSC_WT_HA PSC_WT_EZH1cs PSC_WT_H3K27me3 PSC_WT_IGG PSC_KO_SUZ12 PSC_KO_EZH2 PSC_KO_HA PSC_KO_EZH1cs PSC_KO_H3K27me3 PSC_KO_IGG \
+    -o output/bigwig/multiBigwigSummary_all_plotPCA.pdf
 
 
 ## Heatmap
 plotCorrelation \
-    -in output/bigwig/multiBigwigSummary_PSC.npz \
+    -in output/bigwig/multiBigwigSummary_all.npz \
     --corMethod pearson --skipZeros \
     --plotTitle "Pearson Correlation" \
     --removeOutliers \
-    --labels PSC_KOEF1aEZH1_EZH1cs PSC_KOsynEZH1_EZH1cs PSC_KOEF1aEZH1_EZH1pt PSC_KOsynEZH1_EZH1pt PSC_KOEF1aEZH1_H3K27me3 PSC_KOsynEZH1_H3K27me3 PSC_KOEF1aEZH1_HA PSC_KOsynEZH1_HA PSC_KOEF1aEZH1_SUZ12 PSC_KOsynEZH1_SUZ12 PSC_KOEF1aEZH1_IGG PSC_KOsynEZH1_IGG \
+    --labels PSC_KOEF1aEZH1_SUZ12 PSC_KOEF1aEZH1_EZH2 PSC_KOEF1aEZH1_HA PSC_KOEF1aEZH1_EZH1cs PSC_KOEF1aEZH1_H3K27me3 PSC_KOEF1aEZH1_IGG PSC_WT_SUZ12 PSC_WT_EZH2 PSC_WT_HA PSC_WT_EZH1cs PSC_WT_H3K27me3 PSC_WT_IGG PSC_KO_SUZ12 PSC_KO_EZH2 PSC_KO_HA PSC_KO_EZH1cs PSC_KO_H3K27me3 PSC_KO_IGG \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig/multiBigwigSummary_PSC_heatmap.pdf
-plotCorrelation \
-    -in output/bigwig/multiBigwigSummary_PSC_subset_1.npz \
-    --corMethod pearson --skipZeros \
-    --plotTitle "Pearson Correlation" \
-    --removeOutliers \
-    --labels PSC_KOEF1aEZH1_EZH1cs PSC_KOsynEZH1_EZH1cs   PSC_KOEF1aEZH1_H3K27me3 PSC_KOsynEZH1_H3K27me3 PSC_KOEF1aEZH1_SUZ12 PSC_KOsynEZH1_SUZ12 PSC_KOEF1aEZH1_IGG PSC_KOsynEZH1_IGG \
-    --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig/multiBigwigSummary_PSC_subset_1_heatmap.pdf
-plotCorrelation \
-    -in output/bigwig/multiBigwigSummary_NPC.npz \
-    --corMethod pearson --skipZeros \
-    --plotTitle "Pearson Correlation" \
-    --removeOutliers \
-    --labels NPC_WT_EZH1cs NPC_KO_EZH1cs NPC_WT_EZH1pt NPC_KO_EZH1pt NPC_WT_H3K27me1 NPC_KO_H3K27me1 NPC_WT_H3K27me3 NPC_KO_H3K27me3 NPC_WT_H3K4me3 NPC_KO_H3K4me3 NPC_WT_EZH2 NPC_KO_EZH2 NPC_WT_SUZ12 NPC_KO_SUZ12 NPC_WT_IGG NPC_KO_IGG \
-    --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig/multiBigwigSummary_NPC_heatmap.pdf
-plotCorrelation \
-    -in output/THOR/multiBigwigSummary_NPC_THOR.npz \
-    --corMethod pearson --skipZeros \
-    --plotTitle "Pearson Correlation" \
-    --removeOutliers \
-    --labels WT_SUZ12 KO_SUZ12 WT_EZH2 KO_EZH2 WT_H3K27me3 KO_H3K27me3 WT_H3K4me3 KO_H3K4me3 \
-    --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/THOR/multiBigwigSummary_NPC_THOR_heatmap.pdf
+    -o output/bigwig/multiBigwigSummary_all_heatmap.pdf
+
+
 ```
 
 
 
 
 
+
+# MACS2 peak calling on bam unique
+
+--> IGG samples used as control
+
+--> The **peaks are called on the uniquely aligned reads** (it performed better on our previous CutRun)
+
+**PEAK CALLING  in `broad`**
+
+
+```bash
+conda activate macs2
+# genotype per genotype
+sbatch scripts/macs2_raw_1.sh # 6749578
+sbatch scripts/macs2_raw_2.sh # 6749582
+sbatch scripts/macs2_raw_3.sh # 6749583
+```
+
+
+XXX HBELOW TO MOD XXX
+
+
+Then keep only the significant peaks (re-run the script to test different qvalue cutoff) and remove peaks overlapping with blacklist regions. MACS2 column9 output is -log10(qvalue) format so if we want 0.05; 
+- q0.05: `q value = -log10(0.05) = 1.30103`
+- q0.01 = 2
+- q0.005 = 2.30103
+- q0.001 = 3
+- q0.0001 = 4
+- q0.00001 = 5
+
+```bash
+conda activate bowtie2 # for bedtools
+sbatch scripts/macs2_raw_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
+
+# quick command to print median size of peak within a bed
+awk '{print $3-$2}' your_bed_file.bed | sort -n | awk 'BEGIN {c=0; sum=0;} {a[c++]=$1; sum+=$1;} END {if (c%2) print a[int(c/2)]; else print (a[c/2-1]+a[c/2])/2;}'
+```
+
+**Optimal qvalue** according to IGV:
+- NPC_H3K27me3 WT and KO; 2.30103
+- NPC_SUZ12 WT and KO; 1.30103
+- NPC_EZH2 WT and KO; 1.30103
+- NPC_H3K4me3 WT and KO; 1.30103 
+- PSC_EZH1cs KOEF1aEZH1; 1.30103 
+- PSC_SUZ12 EF1aEZH1 and synEZH1; 1.30103 
+- PSC_H3K27me3 EF1aEZH1 and synEZH1; 2.30103
+
+
+--> No peak called for H3K27me1 samples
 
 
 
