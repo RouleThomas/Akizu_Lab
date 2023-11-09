@@ -175,9 +175,9 @@ Paramaters:
 ```bash
 conda activate deeptools
 
-sbatch --dependency=afterany:6712296 scripts/bamtobigwig_unique_1.sh # 6712485 
-sbatch --dependency=afterany:6712305 scripts/bamtobigwig_unique_2.sh # 6712486
-sbatch --dependency=afterany:6712321 scripts/bamtobigwig_unique_3.sh # 6712487
+sbatch --dependency=afterany:6712296 scripts/bamtobigwig_unique_1.sh # 6712485 ok
+sbatch --dependency=afterany:6712305 scripts/bamtobigwig_unique_2.sh # 6712486 ok
+sbatch --dependency=afterany:6712321 scripts/bamtobigwig_unique_3.sh # 6712487 ok
 
 sbatch scripts/bamtobigwig_unique_1_missing.sh # 6731623
 ```
@@ -185,6 +185,78 @@ sbatch scripts/bamtobigwig_unique_1_missing.sh # 6731623
 --> XXX 
 
 
+
+
+## Pearson correlation heatmap on bigwig signals
+
+
+
+```bash
+conda activate deeptools
+# Generate compile bigwig (.npz) files
+sbatch --dependency=afterany:6731623 scripts/multiBigwigSummary_all.sh # 6731623
+
+
+
+XXXXXX modify below :
+
+
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_PSC.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_KOEF1aEZH1_EZH1cs PSC_KOsynEZH1_EZH1cs PSC_KOEF1aEZH1_EZH1pt PSC_KOsynEZH1_EZH1pt PSC_KOEF1aEZH1_H3K27me3 PSC_KOsynEZH1_H3K27me3 PSC_KOEF1aEZH1_HA PSC_KOsynEZH1_HA PSC_KOEF1aEZH1_SUZ12 PSC_KOsynEZH1_SUZ12 PSC_KOEF1aEZH1_IGG PSC_KOsynEZH1_IGG \
+    -o output/bigwig/multiBigwigSummary_PSC_plotPCA.pdf
+plotPCA -in output/bigwig/multiBigwigSummary_NPC.npz \
+    --transpose \
+    --ntop 0 \
+    --labels NPC_WT_EZH1cs NPC_KO_EZH1cs NPC_WT_EZH1pt NPC_KO_EZH1pt NPC_WT_H3K27me1 NPC_KO_H3K27me1 NPC_WT_H3K27me3 NPC_KO_H3K27me3 NPC_WT_H3K4me3 NPC_KO_H3K4me3 NPC_WT_EZH2 NPC_KO_EZH2 NPC_WT_SUZ12 NPC_KO_SUZ12 NPC_WT_IGG NPC_KO_IGG \
+    -o output/bigwig/multiBigwigSummary_NPC_plotPCA.pdf
+plotPCA -in output/THOR/multiBigwigSummary_NPC_THOR.npz \
+    --transpose \
+    --ntop 0 \
+    --labels WT_SUZ12 KO_SUZ12 WT_EZH2 KO_EZH2 WT_H3K27me3 KO_H3K27me3 WT_H3K4me3 KO_H3K4me3 \
+    --colors blue blue green green red red gold gold \
+    --markers o s o s o s o s \
+    --plotWidth 7 \
+    -o output/THOR/multiBigwigSummary_NPC_THOR_plotPCA.pdf
+
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_PSC.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels PSC_KOEF1aEZH1_EZH1cs PSC_KOsynEZH1_EZH1cs PSC_KOEF1aEZH1_EZH1pt PSC_KOsynEZH1_EZH1pt PSC_KOEF1aEZH1_H3K27me3 PSC_KOsynEZH1_H3K27me3 PSC_KOEF1aEZH1_HA PSC_KOsynEZH1_HA PSC_KOEF1aEZH1_SUZ12 PSC_KOsynEZH1_SUZ12 PSC_KOEF1aEZH1_IGG PSC_KOsynEZH1_IGG \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_PSC_heatmap.pdf
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_PSC_subset_1.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels PSC_KOEF1aEZH1_EZH1cs PSC_KOsynEZH1_EZH1cs   PSC_KOEF1aEZH1_H3K27me3 PSC_KOsynEZH1_H3K27me3 PSC_KOEF1aEZH1_SUZ12 PSC_KOsynEZH1_SUZ12 PSC_KOEF1aEZH1_IGG PSC_KOsynEZH1_IGG \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_PSC_subset_1_heatmap.pdf
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_NPC.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels NPC_WT_EZH1cs NPC_KO_EZH1cs NPC_WT_EZH1pt NPC_KO_EZH1pt NPC_WT_H3K27me1 NPC_KO_H3K27me1 NPC_WT_H3K27me3 NPC_KO_H3K27me3 NPC_WT_H3K4me3 NPC_KO_H3K4me3 NPC_WT_EZH2 NPC_KO_EZH2 NPC_WT_SUZ12 NPC_KO_SUZ12 NPC_WT_IGG NPC_KO_IGG \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_NPC_heatmap.pdf
+plotCorrelation \
+    -in output/THOR/multiBigwigSummary_NPC_THOR.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels WT_SUZ12 KO_SUZ12 WT_EZH2 KO_EZH2 WT_H3K27me3 KO_H3K27me3 WT_H3K4me3 KO_H3K4me3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/THOR/multiBigwigSummary_NPC_THOR_heatmap.pdf
+```
 
 
 
