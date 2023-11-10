@@ -43,12 +43,37 @@ module load BCFtools/1.15.1-GCC-11.3.0
 # compress vcf with bgzip to use bcftools
 bgzip -c input/pangenome/minigraph-cactus/decomposed_test/hprc-v1.1-mc-grch38.vcfbub.a100k.wave.vcf.vcf > input/pangenome/minigraph-cactus/decomposed_test/hprc-v1.1-mc-grch38.vcfbub.a100k.wave.vcf.vcf.gz
 
-# Hg38 coordinates
-bcftools view -r chr3:61228469-61513944 input/pangenome/minigraph-cactus/decomposed_test/hprc-v1.1-mc-grch38.vcfbub.a100k.wave.vcf.vcf.gz
+# generate index
+bcftools index input/pangenome/minigraph-cactus/decomposed_test/hprc-v1.1-mc-grch38.vcfbub.a100k.wave.vcf.vcf.gz
 
+# Collect all event in each coordinates
+## Chr3p14.2
+bcftools query -f '%CHROM\t%POS\t%ID\t%REF\t%ALT\t%QUAL\t%FILTER\t%INFO\n' -r chr3:61228469-61513944 input/pangenome/minigraph-cactus/decomposed_test/hprc-v1.1-mc-grch38.vcfbub.a100k.wave.vcf.vcf.gz > output/bcftools/Chr3p14.2.txt
+## Chr3p13
+bcftools query -f '%CHROM\t%POS\t%ID\t%REF\t%ALT\t%QUAL\t%FILTER\t%INFO\n' -r chr3:72338808-72453693 input/pangenome/minigraph-cactus/decomposed_test/hprc-v1.1-mc-grch38.vcfbub.a100k.wave.vcf.vcf.gz > output/bcftools/Chr3p13.txt
 
 
 ```
 
+
+To facilitate observation of Deletion events; lets generate a new VCF file containing only deletion
+
+```bash
+# Extract coordinates of the deletion event
+bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\n' input/pangenome/minigraph-cactus/decomposed_test/hprc-v1.1-mc-grch38.vcfbub.a100k.wave.vcf.vcf.gz | awk -F"\t" 'length($3) > length($4)' > output/bcftools/deletions.txt
+# Filter the original vcf for these deletion coordinates
+bcftools view -T output/bcftools/deletions.txt input/pangenome/minigraph-cactus/decomposed_test/hprc-v1.1-mc-grch38.vcfbub.a100k.wave.vcf.vcf.gz -Oz -o output/bcftools/deletions.vcf.gz
+# decompress the vcf for vizualization in IGV
+cp output/bcftools/deletions.vcf.gz output/bcftools/IGV_deletions.vcf.gz
+gunzip output/bcftools/IGV_deletions.vcf.gz
+
+```
+
+- *NOTE: To isolate deletion we compare the size of refernece versus alternate allele, if reference > alternate = Deletion event*
+
+Conclusion:
+- Chr3p13: no big deletion event detected
+- Chr9q33: no big deletion event detected
+- Chr6p22: no big deletion event detected
 
 
