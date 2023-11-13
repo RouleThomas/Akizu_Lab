@@ -160,6 +160,10 @@ makeblastdb -in output/bcftools/insertion_clean.fasta -dbtype nucl -out output/b
 blastn -query output/fasta/Chr3p14.fa -db output/blast/insertion_db -out output/blast/Chr3p14_blast.txt
 blastn -query output/fasta/Chr18q22.fa -db output/blast/insertion_db -out output/blast/Chr18q22_blast.txt
 
+## Extract the Length infoprmation (lenght of signficant overlap)
+
+grep "Length=" output/blast/Chr3p14_blast.txt | sed 's/.*Length=//' | sed 's/[^0-9]*//g' > output/blast/Chr3p14_blast_Length.txt
+grep "Length=" output/blast/Chr18q22_blast.txt | sed 's/.*Length=//' | sed 's/[^0-9]*//g' > output/blast/Chr18q22_blast_Length.txt
 
 ```
 
