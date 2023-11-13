@@ -24,17 +24,36 @@ Chr9q33. Chr9:119244942-119355584
 Chr6p22. Chr6:15487649-15722102
 
 **Hg38 coordinates**
-Chr3p14.2. chr3:61228469-61513944 (chr3:61149366-61925600)
-Chr18q22.1. chr18:59782308-59931939
-Chr3p13. chr3:72338808-72453693
-Chr9q33. chr9:122007220-122117862
-Chr6p22. chr6:15487880-15722333
+
+Chr3p14.2. chr3:61257121-61542596
+Chr18q22.1. chr18:64447840-64597471
+Chr3p13. chr3:72240506-72355391
+Chr9q33. chr9:116482663-116593305
+Chr6p22. chr6:15487418-15721871
+
+
+
+
+
+To check for **dupplication**:
+- Extract sequence (of the duplicated CNV)
+- In the pangenome VCF filter to keep all Dupplication event
+- Retrieve all dupplicated sequence from the VCF
+- BLAST extracted sequence to pangenome duplicated sequence
+
+
+To check for **deletion**:
+- In the pangenome VCF filter to keep all Deletion event
+- Check on IGV region of interest for large deletion
+
+
+
 
 
 
 # Check our variant with bcftools
 
-
+## Deletion 
 Check what variant are found within our genomic coordinates:
 
 ```bash
@@ -75,5 +94,91 @@ Conclusion:
 - Chr3p13: no big deletion event detected
 - Chr9q33: no big deletion event detected
 - Chr6p22: no big deletion event detected
+
+
+
+
+
+# Dupplication
+
+
+- Extract FASTA sequence of these coordinates:
+Chr3p14.2. chr3:61257121-61542596
+Chr18q22.1. chr18:64447840-64597471
+- Filter VCF to keep only dupplication
+- Extract DNA sequence as FASTA format
+- BLAST
+
+Install Blast+ to perform blast:
+
+```bash
+
+conda create -n blast -c bioconda blast # command can be launch from anywhere (directory and node)
+
+conda create -n blast blast==2.15.0
+
+
+```
+
+```bash
+conda activate bowtie2 
+
+# create bed of coordinate
+nano output/fasta/Chr3p14.bed 
+nano output/fasta/Chr18q22.bed 
+
+# use getfasta to get fasta seq
+bedtools getfasta -fi ../Master/meta/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta -bed output/fasta/Chr3p14.bed > output/fasta/Chr3p14.fa
+bedtools getfasta -fi ../Master/meta/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta -bed output/fasta/Chr18q22.bed > output/fasta/Chr18q22.fa
+
+
+# Extract all dupplicated sequence from the VCF
+## Extract coordinates of the deletion event
+bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\n' input/pangenome/minigraph-cactus/decomposed_test/hprc-v1.1-mc-grch38.vcfbub.a100k.wave.vcf.vcf.gz | awk -F"\t" 'length($3) < length($4)' > output/bcftools/insertion.txt
+## Filter the original vcf for these deletion coordinates
+bcftools view -T output/bcftools/insertion.txt input/pangenome/minigraph-cactus/decomposed_test/hprc-v1.1-mc-grch38.vcfbub.a100k.wave.vcf.vcf.gz -Oz -o output/bcftools/insertion.vcf.gz
+## Generate a FASTA of all insertions sequence from the output output/bcftools/insertion.txt
+awk 'BEGIN{OFS="\n"}{print ">"$1":"$2, $4}' output/bcftools/insertion.txt > output/bcftools/insertion.fasta
+## clean the FASTA (for when there is A,T in a row)
+awk '
+BEGIN {FS="\n"; RS=">"; ORS=""}
+NR > 1 {
+    header = $1;
+    gsub(/\r/, "", header);
+    split($2, seqs, ",");
+    for (i in seqs) {
+        if (length(seqs[i]) > 0) {
+            printf(">%s\n%s\n", header, seqs[i]);
+        }
+    }
+}' output/bcftools/insertion.fasta | sed 's/>$//' > output/bcftools/insertion_clean.fasta
+## Create a BLAST db
+conda activate blast 
+makeblastdb -in output/bcftools/insertion_clean.fasta -dbtype nucl -out output/blast/insertion_db
+## BLAST
+
+blastn -query output/fasta/Chr3p14.fa -db output/blast/insertion_db -out output/blast/Chr3p14_blast.txt
+blastn -query output/fasta/Chr18q22.fa -db output/blast/insertion_db -out output/blast/Chr18q22_blast.txt
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
