@@ -482,6 +482,10 @@ sbatch scripts/bamtobigwig_3.sh # 5696660 ok
 sbatch scripts/bamtobigwig_missing_1.sh # 5712700 ok
 sbatch scripts/bamtobigwig_missing_2.sh # 5712702 ok
 
+
+sbatch scripts/bamtobigwig_unique_1.sh # 7022154
+sbatch scripts/bamtobigwig_unique_2.sh # 7022155
+sbatch scripts/bamtobigwig_unique_3.sh # 7022156
 ```
 
 --> All good.
@@ -1418,6 +1422,11 @@ sbatch --dependency=afterany:6551938 scripts/matrix_TSS_10kb_NPC_EZH2_bigwig_LIB
 sbatch scripts/matrix_TSS_10kb_NPC_SUZ12_bigwig_LIB_spikein.sh # 6556141 ok
 sbatch scripts/matrix_TSS_10kb_NPC_H3K27me3_bigwig_LIB_spikein.sh # 6556167 ok
 sbatch scripts/matrix_TSS_10kb_NPC_H3K4me3_bigwig_LIB_spikein.sh # 6556182 ok
+
+# Compare effect of crosslinking (native vs FA 005vs006)
+sbatch --dependency=afterany:7022154:7022155:7022156 scripts/matrix_TSS_10kb_PSC_H3K27me3_bigwig_unique_005vs006.sh # 7022288 XXXX
+
+
 
 ```
 

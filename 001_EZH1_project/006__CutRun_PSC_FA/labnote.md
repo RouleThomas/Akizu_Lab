@@ -247,13 +247,11 @@ plotCorrelation \
 ```bash
 conda activate macs2
 # genotype per genotype
-sbatch scripts/macs2_raw_1.sh # 6749578
-sbatch scripts/macs2_raw_2.sh # 6749582
-sbatch scripts/macs2_raw_3.sh # 6749583
+sbatch scripts/macs2_raw_1.sh # 6749578 ok
+sbatch scripts/macs2_raw_2.sh # 6749582 ok
+sbatch scripts/macs2_raw_3.sh # 6749583 ok
 ```
 
-
-XXX HBELOW TO MOD XXX
 
 
 Then keep only the significant peaks (re-run the script to test different qvalue cutoff) and remove peaks overlapping with blacklist regions. MACS2 column9 output is -log10(qvalue) format so if we want 0.05; 
@@ -273,16 +271,252 @@ awk '{print $3-$2}' your_bed_file.bed | sort -n | awk 'BEGIN {c=0; sum=0;} {a[c+
 ```
 
 **Optimal qvalue** according to IGV:
-- NPC_H3K27me3 WT and KO; 2.30103
-- NPC_SUZ12 WT and KO; 1.30103
-- NPC_EZH2 WT and KO; 1.30103
-- NPC_H3K4me3 WT and KO; 1.30103 
-- PSC_EZH1cs KOEF1aEZH1; 1.30103 
-- PSC_SUZ12 EF1aEZH1 and synEZH1; 1.30103 
-- PSC_H3K27me3 EF1aEZH1 and synEZH1; 2.30103
+- PSC_KOEF1aEZH1_SUZ12: 1.30103 (2.3 more true peak)
+- PSC_KOEF1aEZH1_EZH2: 1.30103
+- PSC_KOEF1aEZH1_EZH1cs: 1.30103
+- PSC_KOEF1aEZH1_H3K27me3: 3
+- PSC_WT_SUZ12: 1.30103 (2.3 more true peak)
+- PSC_WT_EZH2: 1.30103
+- PSC_WT_EZH1cs: FAIL
+- PSC_WT_H3K27me3: 1.30103 (many true peak surprinsgly!)
+- PSC_KO_SUZ12: FAIL
+- PSC_KO_EZH2: FAIL
+- PSC_KO_EZH1cs: FAIL
+- PSC_KO_H3K27me3: 1.30103 (many true peak surprinsgly!)
 
 
---> No peak called for H3K27me1 samples
+
+--> Assign peak to genes for NPC and PSC:
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import macs2 peaks
+## KOEF
+SUZ12 = as_tibble(read.table('output/macs2/broad_blacklist_qval1.30103/PSC_KOEF1aEZH1_SUZ12_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+EZH2 = as_tibble(read.table('output/macs2/broad_blacklist_qval1.30103/PSC_KOEF1aEZH1_EZH2_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+EZH1 = as_tibble(read.table('output/macs2/broad_blacklist_qval1.30103/PSC_KOEF1aEZH1_EZH1cs_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+H3K27me3 = as_tibble(read.table('output/macs2/broad_blacklist_qval3/PSC_KOEF1aEZH1_H3K27me3_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+
+
+## Tidy peaks #-->> Re-Run from here with different qvalue!!
+SUZ12_gr = makeGRangesFromDataFrame(SUZ12,keep.extra.columns=TRUE)
+EZH2_gr = makeGRangesFromDataFrame(EZH2,keep.extra.columns=TRUE)
+EZH1_gr = makeGRangesFromDataFrame(EZH1,keep.extra.columns=TRUE)
+H3K27me3_gr = makeGRangesFromDataFrame(H3K27me3,keep.extra.columns=TRUE)
+gr_list <- list(SUZ12=SUZ12_gr, EZH2=EZH2_gr, EZH1=EZH1_gr,  H3K27me3=H3K27me3_gr)
+## Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## Get annotation data frame
+SUZ12_annot <- as.data.frame(peakAnnoList[["SUZ12"]]@anno)
+EZH2_annot <- as.data.frame(peakAnnoList[["EZH2"]]@anno)
+EZH1_annot <- as.data.frame(peakAnnoList[["EZH1"]]@anno)
+H3K27me3_annot <- as.data.frame(peakAnnoList[["H3K27me3"]]@anno)
+## Convert entrez gene IDs to gene symbols
+SUZ12_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = SUZ12_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+SUZ12_annot$gene <- mapIds(org.Hs.eg.db, keys = SUZ12_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+EZH2_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = EZH2_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+EZH2_annot$gene <- mapIds(org.Hs.eg.db, keys = EZH2_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+EZH1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = EZH1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+EZH1_annot$gene <- mapIds(org.Hs.eg.db, keys = EZH1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+H3K27me3_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+H3K27me3_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+## Save output table
+write.table(SUZ12_annot, file="output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1_SUZ12_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(EZH2_annot, file="output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1_EZH2_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(EZH1_annot, file="output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1_EZH1_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K27me3_annot, file="output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1_H3K27me3_qval3.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+SUZ12_annot_promoterAnd5 = tibble(SUZ12_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+EZH2_annot_promoterAnd5 = tibble(EZH2_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+EZH1_annot_promoterAnd5 = tibble(EZH1_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+H3K27me3_annot_promoterAnd5 = tibble(H3K27me3_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))    
+
+### Save output gene lists
+SUZ12_annot_promoterAnd5_geneSymbol = SUZ12_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+EZH2_annot_promoterAnd5_geneSymbol = EZH2_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+EZH1_annot_promoterAnd5_geneSymbol = EZH1_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+H3K27me3_annot_promoterAnd5_geneSymbol = H3K27me3_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()   
+
+write.table(SUZ12_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1_SUZ12_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(EZH2_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1_EZH2_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(EZH1_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1_EZH1_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(H3K27me3_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1_H3K27me3_qval3_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)    
+
+
+
+
+## WT  
+
+SUZ12 = as_tibble(read.table('output/macs2/broad_blacklist_qval1.30103/PSC_WT_SUZ12_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+EZH2 = as_tibble(read.table('output/macs2/broad_blacklist_qval1.30103/PSC_WT_EZH2_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+H3K27me3 = as_tibble(read.table('output/macs2/broad_blacklist_qval1.30103/PSC_WT_H3K27me3_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+
+
+## Tidy peaks #-->> Re-Run from here with different qvalue!!
+SUZ12_gr = makeGRangesFromDataFrame(SUZ12,keep.extra.columns=TRUE)
+EZH2_gr = makeGRangesFromDataFrame(EZH2,keep.extra.columns=TRUE)
+H3K27me3_gr = makeGRangesFromDataFrame(H3K27me3,keep.extra.columns=TRUE)
+gr_list <- list(SUZ12=SUZ12_gr, EZH2=EZH2_gr, H3K27me3=H3K27me3_gr)
+## Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## Get annotation data frame
+SUZ12_annot <- as.data.frame(peakAnnoList[["SUZ12"]]@anno)
+EZH2_annot <- as.data.frame(peakAnnoList[["EZH2"]]@anno)
+H3K27me3_annot <- as.data.frame(peakAnnoList[["H3K27me3"]]@anno)
+## Convert entrez gene IDs to gene symbols
+SUZ12_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = SUZ12_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+SUZ12_annot$gene <- mapIds(org.Hs.eg.db, keys = SUZ12_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+EZH2_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = EZH2_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+EZH2_annot$gene <- mapIds(org.Hs.eg.db, keys = EZH2_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+H3K27me3_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+H3K27me3_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+## Save output table
+write.table(SUZ12_annot, file="output/ChIPseeker/annotation_macs2_PSC_WT_SUZ12_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(EZH2_annot, file="output/ChIPseeker/annotation_macs2_PSC_WT_EZH2_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K27me3_annot, file="output/ChIPseeker/annotation_macs2_PSC_WT_H3K27me3_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+SUZ12_annot_promoterAnd5 = tibble(SUZ12_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+EZH2_annot_promoterAnd5 = tibble(EZH2_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+H3K27me3_annot_promoterAnd5 = tibble(H3K27me3_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))    
+
+### Save output gene lists
+SUZ12_annot_promoterAnd5_geneSymbol = SUZ12_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+EZH2_annot_promoterAnd5_geneSymbol = EZH2_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+H3K27me3_annot_promoterAnd5_geneSymbol = H3K27me3_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()   
+
+write.table(SUZ12_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_PSC_WT_SUZ12_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(EZH2_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_PSC_WT_EZH2_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(H3K27me3_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_PSC_WT_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)    
+
+
+
+## KO
+
+
+
+H3K27me3 = as_tibble(read.table('output/macs2/broad_blacklist_qval1.30103/PSC_KO_H3K27me3_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+
+
+## Tidy peaks #-->> Re-Run from here with different qvalue!!
+
+H3K27me3_gr = makeGRangesFromDataFrame(H3K27me3,keep.extra.columns=TRUE)
+gr_list <- list(H3K27me3=H3K27me3_gr)
+## Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## Get annotation data frame
+
+H3K27me3_annot <- as.data.frame(peakAnnoList[["H3K27me3"]]@anno)
+## Convert entrez gene IDs to gene symbols
+
+H3K27me3_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+H3K27me3_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+## Save output table
+
+write.table(H3K27me3_annot, file="output/ChIPseeker/annotation_macs2_PSC_KO_H3K27me3_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+
+H3K27me3_annot_promoterAnd5 = tibble(H3K27me3_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))    
+
+### Save output gene lists
+
+H3K27me3_annot_promoterAnd5_geneSymbol = H3K27me3_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()   
+
+
+write.table(H3K27me3_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_PSC_KO_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)    
+
+   
+```
+
+
+
 
 
 
