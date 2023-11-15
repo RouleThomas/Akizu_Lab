@@ -521,6 +521,57 @@ write.table(H3K27me3_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/an
 
 
 
+# Deeptools plot for comparison EZH1 EZH2 co-localization
+
+Let's check whether EZH1 and EZH2 co-localize; identify EZH1 and EZH2 solely bound regions and check H3K27me3 levels.
+
+- Venn diagram online of the genes assigned with EZH1 and EZH2 peaks (file named `Venn_overlap_EZH1EZH2__*.txt`)
+- Exctract and import to cluster these list of genes
+- Generate new gtf (EZH1; EZH1-EZH2; EZH2)
+- Check EZH1, EZH2, and H3K27me3 deeptool profile in these 3 groups of genes
+
+
+
+
+
+```bash
+
+# Generate gtf from gene Symbol list
+perl -p -i -e 's/\r$//' output/ChIPseeker/Venn_overlap_EZH1EZH2__EZH1only.txt  # THIS TO CONVERT windowns to UNIX; as .txt from windows...
+perl -p -i -e 's/\r$//' output/ChIPseeker/Venn_overlap_EZH1EZH2__EZH2only.txt  # THIS TO CONVERT windowns to UNIX; as .txt from windows...
+perl -p -i -e 's/\r$//' output/ChIPseeker/Venn_overlap_EZH1EZH2__EZH1andEZH2.txt  # THIS TO CONVERT windowns to UNIX; as .txt from windows...
+
+### Modify the .txt file that list all genes so that it match gtf structure
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/Venn_overlap_EZH1EZH2__EZH1only.txt > output/ChIPseeker/Venn_overlap_EZH1EZH2__EZH1only_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/Venn_overlap_EZH1EZH2__EZH2only.txt > output/ChIPseeker/Venn_overlap_EZH1EZH2__EZH2only_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/Venn_overlap_EZH1EZH2__EZH1andEZH2.txt > output/ChIPseeker/Venn_overlap_EZH1EZH2__EZH1andEZH2_as_gtf_geneSymbol.txt
+
+
+### Filter the gtf
+grep -Ff output/ChIPseeker/Venn_overlap_EZH1EZH2__EZH1only_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI-EZH1EZH2__EZH1only.gtf
+grep -Ff output/ChIPseeker/Venn_overlap_EZH1EZH2__EZH2only_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI-EZH1EZH2__EZH2only.gtf
+grep -Ff output/ChIPseeker/Venn_overlap_EZH1EZH2__EZH1andEZH2_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI-EZH1EZH2__EZH1andEZH2.gtf
+
+```
+
+
+Now deepTools
+
+```bash
+conda activate deeptools
+
+sbatch scripts/matrix_TSS_10kb_bigwig_unique-EZH1EZH2_PSC.sh # 7075199 XXX
+
+
+
+
+```
+
+
+
+
+
+
 
 
 

@@ -1424,8 +1424,8 @@ sbatch scripts/matrix_TSS_10kb_NPC_H3K27me3_bigwig_LIB_spikein.sh # 6556167 ok
 sbatch scripts/matrix_TSS_10kb_NPC_H3K4me3_bigwig_LIB_spikein.sh # 6556182 ok
 
 # Compare effect of crosslinking (native vs FA 005vs006)
-sbatch --dependency=afterany:7022154:7022155:7022156 scripts/matrix_TSS_10kb_PSC_H3K27me3_bigwig_unique_005vs006.sh # 7022288 XXXX
-
+sbatch --dependency=afterany:7022154:7022155:7022156 scripts/matrix_TSS_10kb_PSC_H3K27me3_bigwig_unique_005vs006.sh # 7022288 ok
+sbatch scripts/matrix_TSS_10kb_PSC_SUZ12_bigwig_unique_005vs006.sh # 7063737 ok
 
 
 ```
@@ -1596,6 +1596,42 @@ write.table(SUZ12_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
+
+
+
+
+# Comparison peak position to features 005vs006
+H3K27me3_native = as_tibble(read.table('output/macs2/broad_blacklist_qval2.30103/PSC_KOEF1aEZH1_H3K27me3_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)  
+H3K27me3_FA = as_tibble(read.table('../006__CutRun_PSC_FA/output/macs2/broad_blacklist_qval3/PSC_KOEF1aEZH1_H3K27me3_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+
+SUZ12_native = as_tibble(read.table('output/macs2/broad_blacklist_qval1.30103/PSC_KOEF1aEZH1_SUZ12_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)  
+SUZ12_FA = as_tibble(read.table('../006__CutRun_PSC_FA/output/macs2/broad_blacklist_qval1.30103/PSC_KOEF1aEZH1_SUZ12_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+
+H3K27me3_native_gr = makeGRangesFromDataFrame(H3K27me3_native,keep.extra.columns=TRUE)
+H3K27me3_FA_gr = makeGRangesFromDataFrame(H3K27me3_FA,keep.extra.columns=TRUE)
+SUZ12_native_gr = makeGRangesFromDataFrame(SUZ12_native,keep.extra.columns=TRUE)
+SUZ12_FA_gr = makeGRangesFromDataFrame(SUZ12_FA,keep.extra.columns=TRUE)
+
+gr_list <- list(H3K27me3_native=H3K27me3_native_gr, H3K27me3_FA=H3K27me3_FA_gr, SUZ12_native=SUZ12_native_gr, SUZ12_FA=SUZ12_FA_gr)
+
+## Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE)
+## plots
+pdf("output/ChIPseeker/plotAnnoBar_005vs006.pdf", width = 8, height = 3)
+plotAnnoBar(peakAnnoList)
+dev.off()
+
+
+pdf("output/ChIPseeker/plotDistToTSS_005vs006.pdf", width = 8, height = 3)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
+
+
 ```
 **NPC**:
 --> Export gene list to Online Venn diagram to isolate EZH1 specific (SUZ12 non EZH2); Then deepTools plot:
