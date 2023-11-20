@@ -50,16 +50,21 @@ output/GO/geneSymbol_1year_CB_qval05FCmore1.txt
 output/GO/geneSymbol_1year_CX_qval05FCless1.txt
 output/GO/geneSymbol_1year_CX_qval05FCmore1.txt
 
+output/GO/geneSymbol_1month_CB_qval05FCless0.5.txt
+output/GO/geneSymbol_1month_CB_qval05FCmore0.5.txt
+output/GO/geneSymbol_1year_CB_qval05FCless0.5.txt
+output/GO/geneSymbol_1year_CB_qval05FCmore0.5.txt
+
 # Define databases for enrichment
 dbs <- c("GO_Biological_Process_2023")
 
 # Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/GO/geneSymbol_1year_CX_qval05FCless1.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/GO/geneSymbol_1month_CB_qval05FCless0.5.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 
 # Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/GO/geneSymbol_1year_CX_qval05FCmore1.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/GO/geneSymbol_1month_CB_qval05FCmore0.5.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -70,8 +75,8 @@ up$type <- "up"
 down$type <- "down"
 
 # Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
-up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 25)
-down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 25)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 50)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 50)
 
 # Convert adjusted p-values and differentiate direction for up and down
 up$logAdjP <- -log10(up$Adjusted.P.value)
@@ -100,6 +105,7 @@ pdf("output/GO/enrichR_GO_BP_1year_CX_qval05FC0.pdf", width=12, height=6)
 pdf("output/GO/enrichR_GO_BP_1month_CB_qval05FC1.pdf", width=12, height=9)
 pdf("output/GO/enrichR_GO_BP_1year_CB_qval05FC1.pdf", width=12, height=4)
 
+pdf("output/GO/enrichR_GO_BP_1month_CB_qval05FC0.5.pdf", width=12, height=11)
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
@@ -133,6 +139,7 @@ write.table(gos, "output/GO/enrichR_GO_BP_1year_CX_qval05FC0.txt", sep="\t", row
 write.table(gos, "output/GO/enrichR_GO_BP_1month_CB_qval05FC1.txt", sep="\t", row.names=FALSE, quote=FALSE)
 write.table(gos, "output/GO/enrichR_GO_BP_1year_CB_qval05FC1.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
+write.table(gos, "output/GO/enrichR_GO_BP_1month_CB_qval05FC0.5.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 
