@@ -2403,6 +2403,293 @@ dev.off()
 
 ```
 
+Let's GSEA with updated Naiara gene list (20231120) and test:
+- log2fc ranking
+- log2fc and pvalue ranking (combined_score = log2FoldChange * -log10(pvalue) )
+
+
+
+
+```R
+# Packages
+library("tidyverse")
+library("clusterProfiler")
+library("msigdbr") # BiocManager::install("msigdbr")
+library("org.Mm.eg.db")
+library("enrichplot") # for gseaplot2()
+library("pheatmap")
+
+# import DEGs
+HP = read.table("output/deseq2/filtered_HP_KO_vs_HP_Het_res05.txt", header = TRUE, sep = "\t") %>%
+  as_tibble() 
+HP_geneSymbol = HP %>%
+  filter(!is.na(GeneSymbol)) # filter to keep only the geneSymbol gene
+CB = read.table("output/deseq2/filtered_CB_KO_vs_CB_Het_res05.txt", header = TRUE, sep = "\t") %>%
+  as_tibble() 
+CB_geneSymbol = CB %>%
+  filter(!is.na(GeneSymbol)) # filter to keep only the geneSymbol gene
+CT = read.table("output/deseq2/filtered_CT_KO_vs_CT_Het_res05.txt", header = TRUE, sep = "\t") %>%
+  as_tibble() 
+CT_geneSymbol = CT %>%
+  filter(!is.na(GeneSymbol)) # filter to keep only the geneSymbol gene
+
+
+# import gene signature lists
+read_cell_file <- function(cell_name) {
+  filepath <- paste0("output/gsea/", cell_name, "_v2.txt")
+  df <- read.table(filepath, header = FALSE, sep = "\t") %>%
+    as_tibble() %>%
+    dplyr::rename("gene" = "V1") %>%
+    add_column(cellName = cell_name)
+  
+  return(df)
+} 
+cell_names <- c("DAM_microglia", "homeostatic_microglia")
+all_data <- lapply(cell_names, read_cell_file) %>%
+  bind_rows()
+
+
+# METHOD 1 log2fc ordering only
+
+## Order our DEG
+### Let's create a named vector ranked based on the log2 fold change values
+lfc_vector <- CB_geneSymbol$log2FoldChange  ### CHAGNE HERE DATA!!!!!!!
+names(lfc_vector) <- CB_geneSymbol$GeneSymbol ### CHAGNE HERE DATA!!!!!!!
+### We need to sort the log2 fold change values in descending order here
+lfc_vector <- sort(lfc_vector, decreasing = TRUE)
+### Set the seed so our results are reproducible:
+set.seed(42)
+
+
+# run GSEA
+## without pvalue
+gsea_results <- GSEA(
+  geneList = lfc_vector,
+  minGSSize = 1,
+  maxGSSize = 5000,
+  pvalueCutoff = 1,
+  eps = 0,
+  seed = TRUE,
+  pAdjustMethod = "BH",
+  TERM2GENE = all_data %>% dplyr::select(cellName,gene), # Need to be in that order...
+)
+
+
+
+gsea_result_df <- data.frame(gsea_results@result)
+# Save output
+readr::write_tsv(
+  gsea_result_df,
+  file.path("output/gsea/gsea_results_CT_v2_complete.tsv"
+  )
+)
+
+# plots
+c("DAM_microglia", "homeostatic_microglia")
+
+
+pdf("output/gsea/CT_DAM_microglia_v2.pdf", width=10, height=8)
+
+enrichplot::gseaplot(
+  gsea_results,
+  geneSetID = "DAM_microglia",
+  title = "DAM_microglia",
+  color.line = "#0d76ff"
+)
+dev.off()
+
+
+
+### Set up the heatmap
+c("DAM_microglia", "homeostatic_microglia")
+
+gsea_result_df_CT <- gsea_result_df
+gsea_result_df_CB <- gsea_result_df
+gsea_result_df_HP <- gsea_result_df
+
+
+desired_ids <- c("DAM_microglia", "homeostatic_microglia")
+
+gsea_result_df_CT_filt = as_tibble(gsea_result_df_CT) %>%
+  dplyr::select(ID, NES, qvalue) %>% # change btween pvalue, qvalue,p.adjust
+  add_column(tissue = "CT")
+gsea_result_df_CB_filt = as_tibble(gsea_result_df_CB) %>%
+  dplyr::select(ID, NES, qvalue) %>%
+  add_column(tissue = "CB")
+gsea_result_df_HP_filt = as_tibble(gsea_result_df_HP) %>%
+  dplyr::select(ID, NES, qvalue) %>%
+  add_column(tissue = "HP")
+
+gsea_result_df_tidy = gsea_result_df_CT_filt %>%
+  bind_rows(gsea_result_df_CB_filt) %>%
+  bind_rows(gsea_result_df_HP_filt)
+# Filter the data for desired IDs
+
+filtered_data <- gsea_result_df_tidy %>%
+  filter(ID %in% desired_ids)
+
+filtered_data$ID = factor(filtered_data$ID, c("homeostatic_microglia", "DAM_microglia"))
+
+pdf("output/gsea/heatmap_gsea_qvalue_v2.pdf", width=3.5, height=3.5)
+ggplot(filtered_data, aes(x=ID, y=tissue, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 8, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="NES") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(filtered_data$qvalue <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=4) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+
+
+
+# METHOD2 order log2fc and pvalue
+
+HP = read.table("output/deseq2/filtered_HP_KO_vs_HP_Het_res05.txt", header = TRUE, sep = "\t") %>%
+  as_tibble() 
+HP_geneSymbol = HP %>%
+  filter(!is.na(GeneSymbol)) %>%
+  mutate(combined_score = log2FoldChange * -log10(pvalue))
+CB = read.table("output/deseq2/filtered_CB_KO_vs_CB_Het_res05.txt", header = TRUE, sep = "\t") %>%
+  as_tibble() 
+CB_geneSymbol = CB %>%
+  filter(!is.na(GeneSymbol)) %>%
+  mutate(combined_score = log2FoldChange * -log10(pvalue))
+CT = read.table("output/deseq2/filtered_CT_KO_vs_CT_Het_res05.txt", header = TRUE, sep = "\t") %>%
+  as_tibble() 
+CT_geneSymbol = CT %>%
+  filter(!is.na(GeneSymbol)) %>%
+  mutate(combined_score = log2FoldChange * -log10(pvalue))
+
+
+
+
+
+## Order our DEG
+### Let's create a named vector ranked based on the log2 fold change values
+lfc_vector <- CB_geneSymbol$combined_score  ### CHAGNE HERE DATA!!!!!!!
+names(lfc_vector) <- CB_geneSymbol$GeneSymbol ### CHAGNE HERE DATA!!!!!!!
+### We need to sort the log2 fold change values in descending order here
+lfc_vector <- sort(lfc_vector, decreasing = TRUE)
+### Set the seed so our results are reproducible:
+set.seed(42)
+
+
+# run GSEA
+## without pvalue
+gsea_results <- GSEA(
+  geneList = lfc_vector,
+  minGSSize = 1,
+  maxGSSize = 5000,
+  pvalueCutoff = 1,
+  eps = 0,
+  seed = TRUE,
+  pAdjustMethod = "BH",
+  TERM2GENE = all_data %>% dplyr::select(cellName,gene), # Need to be in that order...
+)
+
+
+
+gsea_result_df <- data.frame(gsea_results@result)
+# Save output
+readr::write_tsv(
+  gsea_result_df,
+  file.path("output/gsea/gsea_results_CB_v2_complete_combinedScore.tsv"
+  )
+)
+
+# plots
+c("DAM_microglia", "homeostatic_microglia")
+
+
+pdf("output/gsea/CB_homeostatic_microglia_v2_combinedScore.pdf", width=10, height=8)
+
+enrichplot::gseaplot(
+  gsea_results,
+  geneSetID = "homeostatic_microglia",
+  title = "homeostatic_microglia",
+  color.line = "#0d76ff"
+)
+dev.off()
+
+
+
+### Set up the heatmap
+c("DAM_microglia", "homeostatic_microglia")
+
+gsea_result_df_CT <- gsea_result_df
+gsea_result_df_CB <- gsea_result_df
+gsea_result_df_HP <- gsea_result_df
+
+
+desired_ids <- c("DAM_microglia", "homeostatic_microglia")
+
+gsea_result_df_CT_filt = as_tibble(gsea_result_df_CT) %>%
+  dplyr::select(ID, NES, p.adjust) %>% # change btween pvalue, qvalue,p.adjust
+  add_column(tissue = "CT")
+gsea_result_df_CB_filt = as_tibble(gsea_result_df_CB) %>%
+  dplyr::select(ID, NES, p.adjust) %>%
+  add_column(tissue = "CB")
+gsea_result_df_HP_filt = as_tibble(gsea_result_df_HP) %>%
+  dplyr::select(ID, NES, p.adjust) %>%
+  add_column(tissue = "HP")
+
+gsea_result_df_tidy = gsea_result_df_CT_filt %>%
+  bind_rows(gsea_result_df_CB_filt) %>%
+  bind_rows(gsea_result_df_HP_filt)
+# Filter the data for desired IDs
+
+filtered_data <- gsea_result_df_tidy %>%
+  filter(ID %in% desired_ids)
+
+filtered_data$ID = factor(filtered_data$ID, c("homeostatic_microglia", "DAM_microglia"))
+
+pdf("output/gsea/heatmap_gsea_padjust_v2_combinedScore.pdf", width=3.5, height=3.5)
+ggplot(filtered_data, aes(x=ID, y=tissue, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 8, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="NES") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(filtered_data$p.adjust <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=4) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+
+```
+
+
+
+
+
+
 
 
 

@@ -876,3 +876,37 @@ dev.off()
 ```
 
 
+
+
+
+# Let's generate TPM from the bam
+
+- Transfer bam files to cluster (one done with Novogene and the other with something else; hopefully comparable...)
+- Do featureCounts from the bam
+- Do tpm from featureCounts
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
