@@ -886,12 +886,22 @@ dev.off()
 - Do tpm from featureCounts
 
 
+Sample name for 1year:
+- CTRL= 171HetCB	175HetCB	474WTCB	(or CX)
+- KO= 174MTCB	 177MTCB	(or CX)
 
 
+```bash
+conda activate featurecounts
+
+sbatch scripts/featurecounts_1month_CB.sh # 7865267
+sbatch scripts/featurecounts_1month_CX.sh # 7865273
+sbatch scripts/featurecounts_1year_CB.sh # 7865290
+sbatch scripts/featurecounts_1year_CX.sh # 7865295
+```
 
 
-
-
+--> XXX
 
 
 

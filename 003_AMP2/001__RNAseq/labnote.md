@@ -1785,8 +1785,10 @@ up$type <- "up"
 down$type <- "down"
 
 # Get top enriched terms and sort by Combined.Score 
-up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 5) ##  Adjust if you don't want the top 5
-down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 5) ##  Adjust if you don't want the top 5
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 25) ##  Adjust if you don't want the top 5
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 25) ##  Adjust if you don't want the top 5
+
+
 
 # Convert adjusted p-values and differentiate direction for up and down
 up$logAdjP <- -log10(up$Adjusted.P.value)
@@ -1806,12 +1808,18 @@ down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Te
 new_order <- c(down_pathways, up_pathways)
 gos$Term <- factor(gos$Term, levels = new_order)
 
-
+# extract the top 5 rows (p adj ordered)
+gos <- head(gos, n = 5)
 
 # Plotting with enhanced aesthetics
 pdf("output/GO/enrichR_GO_Biological_Process_2023_CB_KO_vs_CB_Het.pdf", width=15, height=8)
 pdf("output/GO/enrichR_GO_Biological_Process_2023_CT_KO_vs_CT_Het.pdf", width=15, height=9)
 pdf("output/GO/enrichR_GO_Biological_Process_2023_HP_KO_vs_HP_Het.pdf", width=15, height=9)
+
+pdf("output/GO/enrichR_GO_Biological_Process_2023_CT_KO_vs_CT_Het_FigV3.pdf", width=15, height=9)
+pdf("output/GO/enrichR_GO_Biological_Process_2023_CB_KO_vs_CB_Het_FigV3.pdf", width=15, height=9)
+pdf("output/GO/enrichR_GO_Biological_Process_2023_HP_KO_vs_HP_Het_FigV3.pdf", width=15, height=9)
+
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.8) +
