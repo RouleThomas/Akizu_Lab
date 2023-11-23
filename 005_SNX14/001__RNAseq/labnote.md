@@ -894,15 +894,221 @@ Sample name for 1year:
 ```bash
 conda activate featurecounts
 
-sbatch scripts/featurecounts_1month_CB.sh # 7865267
-sbatch scripts/featurecounts_1month_CX.sh # 7865273
-sbatch scripts/featurecounts_1year_CB.sh # 7865290
-sbatch scripts/featurecounts_1year_CX.sh # 7865295
+sbatch scripts/featurecounts_1month_CB.sh # 7865267 ok
+sbatch scripts/featurecounts_1month_CX.sh # 7865273 ok
+sbatch scripts/featurecounts_1year_CB.sh # 7865290 ok
+sbatch scripts/featurecounts_1year_CX.sh # 7865295 ok
+```
+
+--> All > 75% alignment. Good!
+
+
+
+## Calculate TPM and RPKM
+
+Use custom R script `RPKM_TPM_featurecounts.R` as follow:
+```bash
+conda activate deseq2
+# Rscript scripts/RPKM_TPM_featurecounts.R INPUT OUTPUT_PREFIX
+sbatch scripts/featurecounts_TPM.sh #
+# mv all output to output/tpm or rpkm folder
+mv output/featurecounts/*tpm* output/tpm/
+mv output/featurecounts/*rpkm* output/rpkm/
+```
+
+All good. 
+
+If needed to **display gene with TPM**:
+
+Let's generate a heatmap to check expression level of [RESPONSE_TO_LIPID GOBP genes](https://www.gsea-msigdb.org/gsea/msigdb/mouse/geneset/GOBP_RESPONSE_TO_LIPID.html)
+
+
+
+```bash
+nano output/tpm/GOBP_RESPONSE_TO_LIPID_raw.txt # here copy paste gene list
+
 ```
 
 
---> XXX
+```R
+# library
+library("biomaRt")
+library("readr")
+library("stringr")
+library("tidyverse")
+library("dplyr")
+library("ComplexHeatmap")
+library("circlize")
 
+# import gene list BP lipid
+GOBP_RESPONSE_TO_LIPID_raw <- read_lines("output/tpm/GOBP_RESPONSE_TO_LIPID_raw.txt") 
+GOBP_RESPONSE_TO_LIPID =  tibble(geneSymbol = unlist(str_split(GOBP_RESPONSE_TO_LIPID_raw, ",")))
+
+# create df for file renaming
+ID	genotype	time	tissue	replicate
+S_CB_KO1	KO	1month	CB	R1
+S_CB_KO2	KO	1month	CB	R2
+S_CB_KO3	KO	1month	CB	R3
+S_CB_WT1	WT	1month	CB	R1
+S_CB_WT2	WT	1month	CB	R2
+S_CB_WT3	WT	1month	CB	R3
+S_CX_KO1	KO	1month	CX	R1
+S_CX_KO2	KO	1month	CX	R2
+S_CX_KO3	KO	1month	CX	R3
+S_CX_WT1	WT	1month	CX	R1
+S_CX_WT2	WT	1month	CX	R2
+S_CX_WT3	WT	1month	CX	R3
+171HetCB	WT	1year	CB	R1
+174MTCB	KO	1year	CB	R1
+175HetCB	WT	1year	CB	R2
+177MTCB	KO	1year	CB	R2
+474WTCB	WT	1year	CB	R3
+171HetCX	WT	1year	CX	R1
+174MTCX	KO	1year	CX	R1
+175HetCX	WT	1year	CX	R2
+177MTCX	KO	1year	CX	R2
+474WTCX	WT	1year	CX	R3
+
+
+
+fileName <- tibble(
+  ID = c("S_CB_KO1", "S_CB_KO2", "S_CB_KO3", "S_CB_WT1", "S_CB_WT2", "S_CB_WT3", 
+         "S_CX_KO1", "S_CX_KO2", "S_CX_KO3", "S_CX_WT1", "S_CX_WT2", "S_CX_WT3", 
+         "171HetCB", "174MTCB", "175HetCB", "177MTCB", "474WTCB", 
+         "171HetCX", "174MTCX", "175HetCX", "177MTCX", "474WTCX"),
+  genotype = c("KO", "KO", "KO", "WT", "WT", "WT", 
+               "KO", "KO", "KO", "WT", "WT", "WT", 
+               "WT", "KO", "WT", "KO", "WT", 
+               "WT", "KO", "WT", "KO", "WT"),
+  time = c(rep("1month", 12), rep("1year", 10)),
+  tissue = c(rep("CB", 6), rep("CX", 6), rep("CB", 5), rep("CX", 5)),
+  replicate = c(rep("R1", 2), rep("R2", 2), rep("R3", 2), rep("R1", 2), rep("R2", 2), rep("R3", 2), "R1", "R1", "R2", "R2", "R3", "R1", "R1", "R2", "R2", "R3"), 
+  new_ID = c("1month_CB_KO_R1", "1month_CB_KO_R2", "1month_CB_KO_R3", 
+             "1month_CB_WT_R1", "1month_CB_WT_R2", "1month_CB_WT_R3", 
+             "1month_CX_KO_R1", "1month_CX_KO_R2", "1month_CX_KO_R3", 
+             "1month_CX_WT_R1", "1month_CX_WT_R2", "1month_CX_WT_R3", 
+             "1year_CB_WT_R1", "1year_CB_KO_R1", "1year_CB_WT_R2", 
+             "1year_CB_KO_R2", "1year_CB_WT_R3", "1year_CX_WT_R1", 
+             "1year_CX_KO_R1", "1year_CX_WT_R2", "1year_CX_KO_R2", 
+             "1year_CX_WT_R3")
+) 
+
+
+## import tpm
+#### Generate TPM for ALL samples
+#### collect all samples ID
+samples_1month <- c("S_CB_KO1", "S_CB_KO2", "S_CB_KO3", "S_CB_WT1", "S_CB_WT2", "S_CB_WT3", "S_CX_KO1", "S_CX_KO2", "S_CX_KO3", "S_CX_WT1", "S_CX_WT2", "S_CX_WT3")
+
+## Make a loop for importing all tpm data and keep only ID and count column
+sample_data_1month <- list()
+for (sample in samples_1month) {
+  sample_data_1month[[sample]] <- read_delim(paste0("../001__RNAseq/output/tpm/", sample, "_tpm.txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>%
+    select(Geneid, starts_with("output.bam.1month_rnaseqyz072420.")) %>%
+    rename(!!sample := starts_with("output.bam.1month_rnaseqyz072420."))
+}
+
+samples_1year <- c("171HetCB", "174MTCB", "175HetCB", "177MTCB", "474WTCB", "171HetCX", "174MTCX", "175HetCX", "177MTCX", "474WTCX")
+
+sample_data_1year <- list()
+for (sample in samples_1year) {
+  sample_data_1year[[sample]] <- read_delim(paste0("../001__RNAseq/output/tpm/", sample, "_tpm.txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>%
+    select(Geneid, starts_with("output.bam.1year_AL1804271_R2_new_analysis.")) %>%
+    rename(!!sample := starts_with("output.bam.1year_AL1804271_R2_new_analysis."))
+}
+
+
+
+## Merge all dataframe into a single one
+tpm_all_sample_1month <- purrr::reduce(sample_data_1month, full_join, by = "Geneid")
+tpm_all_sample_1year <- purrr::reduce(sample_data_1year, full_join, by = "Geneid")
+
+tpm_all_sample = tpm_all_sample_1month %>%
+  left_join(tpm_all_sample_1year)
+
+
+
+# write.csv(tpm_all_sample, file="../001__RNAseq/output/tpm/tpm_all_sample.txt")
+### If need to import: tpm_all_sample <- read_csv("../001__RNAseq/output/tpm/tpm_all_sample.txt") %>% dplyr::select(-("...1"))#To import
+
+# plot some genes
+tpm_all_sample_tidy <- tpm_all_sample %>%
+  gather(key = 'ID', value = 'tpm', -Geneid) %>%
+  left_join(fileName)
+  
+  
+tpm_all_sample_tidy$Geneid <- gsub("\\..*", "", tpm_all_sample_tidy$Geneid)
+
+
+tpm_all_sample_tidy_geneOnly = tpm_all_sample_tidy %>%
+  dplyr::select(Geneid)
+
+## convert gene Ensembl to symbol 
+ensembl <- useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+
+# Convert Ensembl gene IDs to gene symbols
+genesymbols <- getBM(attributes = c("ensembl_gene_id", "external_gene_name"),
+                     filters = "ensembl_gene_id",
+                     values = tpm_all_sample_tidy_geneOnly$Geneid,
+                     mart = ensembl)
+
+# Merge gene symbols to your dataframe
+tpm_all_sample_tidy <- left_join(tpm_all_sample_tidy, genesymbols, 
+                                 by = c("Geneid" = "ensembl_gene_id")) %>%
+                       unique() 
+
+
+tpm_all_sample_tidy_GOBP_RESPONSE_TO_LIPID = GOBP_RESPONSE_TO_LIPID %>%
+  rename("external_gene_name" = "geneSymbol") %>%
+  left_join(tpm_all_sample_tidy) %>%
+  mutate(TPM = log2(tpm +1)) %>%
+  filter(!is.na(external_gene_name) & external_gene_name != "") %>% # remove geneanme NA
+  unique()  %>%
+  group_by(external_gene_name, new_ID) %>%
+  summarise(TPM = mean(TPM, na.rm = TRUE), .groups = 'drop') # clean  data
+
+
+# heatmap
+
+
+
+CB_1month <- tpm_all_sample_tidy_GOBP_RESPONSE_TO_LIPID %>%
+  filter(new_ID %in% c("1month_CB_WT_R1", "1month_CB_WT_R2", "1month_CB_WT_R3", 
+                       "1month_CB_KO_R1", "1month_CB_KO_R2", "1month_CB_KO_R3")) 
+## Pivot the data to a wide format suitable for the heatmap
+wide_data <- CB_1month %>%
+  pivot_wider(names_from = new_ID, values_from = TPM) %>%
+  select(external_gene_name, `1month_CB_WT_R1`, `1month_CB_WT_R2`, `1month_CB_WT_R3`, 
+         `1month_CB_KO_R1`, `1month_CB_KO_R2`, `1month_CB_KO_R3`) %>%
+  arrange(desc(`1month_CB_WT_R1`)) 
+
+
+
+XXx the code bug, need woprk XXX maybe chgeckl how i did my ehatmap in scRNAseq
+
+
+
+
+
+### Define color scale
+color_scale <- colorRamp2(c(min(wide_data[,-1], na.rm = TRUE), 0, max(wide_data[,-1], na.rm = TRUE)), c("blue", "white", "red"))
+
+### Generate the heatmap
+
+pdf("output/tpm/heatmap_CB_1month_raw.pdf", width=7, height=6)    
+Heatmap(as.matrix(wide_data[, -1]), 
+        name = "log2(TPM+1)", 
+        col = color_scale,
+        row_names = wide_data$external_gene_name,
+        column_order = c(`1month_CB_WT_R1`, `1month_CB_WT_R2`, `1month_CB_WT_R3`, 
+         `1month_CB_KO_R1`, `1month_CB_KO_R2`, `1month_CB_KO_R3`),
+        cluster_rows = FALSE,  # No clustering for rows, as per your request
+        show_row_names = TRUE,
+        show_column_names = TRUE)
+dev.off()
+
+
+
+```
 
 
 
