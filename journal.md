@@ -144,7 +144,11 @@ library("ensembldb")
 
 ### scRNAseqV2
 
---> Same but also allow Shiny app creation!
+--> Same scRNAseq but also allow Shiny app creation!
+
+### scRNAseqV3
+
+--> Same `scRNAseqV2` but with MuSic2 and bisque
 
 ### monocle3
 Only `monocle3` and `Seurat_v_5`

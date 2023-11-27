@@ -15,14 +15,20 @@ computeMatrix reference-point --referencePoint center \
 
 
 
+
 plotHeatmap -m output/deeptools/matrix_TSS_10kb_bigwig_unique-EZH1EZH2_PSC.gz \
-    -out output/deeptools/matrix_TSS_10kb_bigwig_unique-EZH1EZH2_PSC_heatmap.pdf \
+    -out output/deeptools/matrix_TSS_10kb_bigwig_unique-EZH1EZH2_PSC_heatmap2.pdf \
     --samplesLabel "EZH1" "EZH2" "H3K27me3" \
     --colorMap bwr \
-    --whatToShow 'plot, heatmap and colorbar' \
+    --whatToShow 'heatmap and colorbar' \
     --heatmapHeight 15 \
-    --heatmapWidth 2
+    --heatmapWidth 2 \
+    --zMin 0 0 0 --zMax 5 5 40 
 
 
-   # --zMin 0 0 0 --zMax 30 30 30 
-
+plotProfile -m output/deeptools/matrix_TSS_10kb_bigwig_unique-EZH1EZH2_PSC.gz \
+    -out output/deeptools/matrix_TSS_10kb_bigwig_unique-EZH1EZH2_PSC_profile.pdf \
+    --colors lightblue purple pink \
+    --samplesLabel "EZH1" "EZH2" "H3K27me3" \
+    --refPointLabel "TSS" \
+    --yMin 0 0 0 --yMax 5 5 40 

@@ -1120,8 +1120,122 @@ dev.off()
 
 
 
-XXXX DO WITH OTHER TISSUE the code up XXX
+## CB_1year
+CB_1year <- tpm_all_sample_tidy_GOBP_RESPONSE_TO_LIPID %>%
+  filter(new_ID %in% c("1year_CB_WT_R1", "1year_CB_WT_R2", "1year_CB_WT_R3", 
+                       "1year_CB_KO_R1", "1year_CB_KO_R2", "1year_CB_KO_R3")) 
 
+CB_1year$new_ID_ordered <- factor(CB_1year$new_ID, levels = c("1year_CB_WT_R1", "1year_CB_WT_R2", "1year_CB_WT_R3", 
+                                                  "1year_CB_KO_R1", "1year_CB_KO_R2", "1year_CB_KO_R3"))
+### Order the rows based on the new ID order and TPM values
+CB_1year <- CB_1year %>%
+  arrange(new_ID_ordered, desc(TPM))
+### Pivot the data to a long format suitable for ggplot
+long_df <- CB_1year %>%
+  pivot_longer(cols = TPM, names_to = "Condition", values_to = "Expression")
+### Raw uncluseted heatmap
+pdf("output/tpm/heatmap_CB_1year-GOBP_RESPONSE_TO_LIPID.pdf", width=4, height=8)
+ggplot(long_df, aes(x = new_ID_ordered, y = reorder(external_gene_name, Expression), fill = Expression)) +
+  geom_tile() +
+  scale_fill_viridis(direction = 1, option = "viridis", name="Expression")  +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = -1))
+dev.off()
+### Raw uncluseted heatmap with only DEGs
+#### import DEGs
+
+geneSymbol_1year_CB_qval05FCmore0 <- read.csv("output/GO/geneSymbol_1year_CB_qval05FCmore0.txt", header=FALSE, stringsAsFactors=FALSE)
+geneSymbol_1year_CB_qval05FCless0 <- read.csv("output/GO/geneSymbol_1year_CB_qval05FCless0.txt", header=FALSE, stringsAsFactors=FALSE)
+geneSymbol_1year_CB_qval05FC0 = geneSymbol_1year_CB_qval05FCmore0 %>%
+  bind_rows(geneSymbol_1year_CB_qval05FCless0) %>%
+  rename("external_gene_name" = "V1")
+
+pdf("output/tpm/heatmap_CB_1year-GOBP_RESPONSE_TO_LIPID-DEGs.pdf", width=4, height=8)
+ggplot(long_df %>% inner_join(geneSymbol_1year_CB_qval05FC0), aes(x = new_ID_ordered, y = reorder(external_gene_name, Expression), fill = Expression)) +
+  geom_tile() +
+  scale_fill_viridis(direction = 1, option = "viridis", name="Expression")  +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = -1))
+dev.off()
+
+
+
+## CX_1month
+CX_1month <- tpm_all_sample_tidy_GOBP_RESPONSE_TO_LIPID %>%
+  filter(new_ID %in% c("1month_CX_WT_R1", "1month_CX_WT_R2", "1month_CX_WT_R3", 
+                       "1month_CX_KO_R1", "1month_CX_KO_R2", "1month_CX_KO_R3")) 
+
+CX_1month$new_ID_ordered <- factor(CX_1month$new_ID, levels = c("1month_CX_WT_R1", "1month_CX_WT_R2", "1month_CX_WT_R3", 
+                                                  "1month_CX_KO_R1", "1month_CX_KO_R2", "1month_CX_KO_R3"))
+### Order the rows based on the new ID order and TPM values
+CX_1month <- CX_1month %>%
+  arrange(new_ID_ordered, desc(TPM))
+### Pivot the data to a long format suitable for ggplot
+long_df <- CX_1month %>%
+  pivot_longer(cols = TPM, names_to = "Condition", values_to = "Expression")
+### Raw uncluseted heatmap
+pdf("output/tpm/heatmap_CX_1month-GOBP_RESPONSE_TO_LIPID.pdf", width=4, height=8)
+ggplot(long_df, aes(x = new_ID_ordered, y = reorder(external_gene_name, Expression), fill = Expression)) +
+  geom_tile() +
+  scale_fill_viridis(direction = 1, option = "viridis", name="Expression")  +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = -1))
+dev.off()
+### Raw uncluseted heatmap with only DEGs
+#### import DEGs
+
+geneSymbol_1month_CX_qval05FCmore0 <- read.csv("output/GO/geneSymbol_1month_CX_qval05FCmore0.txt", header=FALSE, stringsAsFactors=FALSE)
+geneSymbol_1month_CX_qval05FCless0 <- read.csv("output/GO/geneSymbol_1month_CX_qval05FCless0.txt", header=FALSE, stringsAsFactors=FALSE)
+geneSymbol_1month_CX_qval05FC0 = geneSymbol_1month_CX_qval05FCmore0 %>%
+  bind_rows(geneSymbol_1month_CX_qval05FCless0) %>%
+  rename("external_gene_name" = "V1")
+
+pdf("output/tpm/heatmap_CX_1month-GOBP_RESPONSE_TO_LIPID-DEGs.pdf", width=4, height=2)
+ggplot(long_df %>% inner_join(geneSymbol_1month_CX_qval05FC0), aes(x = new_ID_ordered, y = reorder(external_gene_name, Expression), fill = Expression)) +
+  geom_tile() +
+  scale_fill_viridis(direction = 1, option = "viridis", name="Expression")  +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = -1))
+dev.off()
+
+
+## CX_1year
+CX_1year <- tpm_all_sample_tidy_GOBP_RESPONSE_TO_LIPID %>%
+  filter(new_ID %in% c("1year_CX_WT_R1", "1year_CX_WT_R2", "1year_CX_WT_R3", 
+                       "1year_CX_KO_R1", "1year_CX_KO_R2", "1year_CX_KO_R3")) 
+
+CX_1year$new_ID_ordered <- factor(CX_1year$new_ID, levels = c("1year_CX_WT_R1", "1year_CX_WT_R2", "1year_CX_WT_R3", 
+                                                  "1year_CX_KO_R1", "1year_CX_KO_R2", "1year_CX_KO_R3"))
+### Order the rows based on the new ID order and TPM values
+CX_1year <- CX_1year %>%
+  arrange(new_ID_ordered, desc(TPM))
+### Pivot the data to a long format suitable for ggplot
+long_df <- CX_1year %>%
+  pivot_longer(cols = TPM, names_to = "Condition", values_to = "Expression")
+### Raw uncluseted heatmap
+pdf("output/tpm/heatmap_CX_1year-GOBP_RESPONSE_TO_LIPID.pdf", width=4, height=8)
+ggplot(long_df, aes(x = new_ID_ordered, y = reorder(external_gene_name, Expression), fill = Expression)) +
+  geom_tile() +
+  scale_fill_viridis(direction = 1, option = "viridis", name="Expression")  +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = -1))
+dev.off()
+### Raw uncluseted heatmap with only DEGs
+#### import DEGs
+
+geneSymbol_1year_CX_qval05FCmore0 <- read.csv("output/GO/geneSymbol_1year_CX_qval05FCmore0.txt", header=FALSE, stringsAsFactors=FALSE)
+geneSymbol_1year_CX_qval05FCless0 <- read.csv("output/GO/geneSymbol_1year_CX_qval05FCless0.txt", header=FALSE, stringsAsFactors=FALSE)
+geneSymbol_1year_CX_qval05FC0 = geneSymbol_1year_CX_qval05FCmore0 %>%
+  bind_rows(geneSymbol_1year_CX_qval05FCless0) %>%
+  rename("external_gene_name" = "V1")
+
+pdf("output/tpm/heatmap_CX_1year-GOBP_RESPONSE_TO_LIPID-DEGs.pdf", width=4, height=2)
+ggplot(long_df %>% inner_join(geneSymbol_1year_CX_qval05FC0), aes(x = new_ID_ordered, y = reorder(external_gene_name, Expression), fill = Expression)) +
+  geom_tile() +
+  scale_fill_viridis(direction = 1, option = "viridis", name="Expression")  +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = -1))
+dev.off()
 
 
 

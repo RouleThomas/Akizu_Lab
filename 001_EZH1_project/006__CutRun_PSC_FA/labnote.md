@@ -560,12 +560,13 @@ Now deepTools
 ```bash
 conda activate deeptools
 
-sbatch scripts/matrix_TSS_10kb_bigwig_unique-EZH1EZH2_PSC.sh # 7075199 XXX
-
-
+sbatch scripts/matrix_TSS_10kb_bigwig_unique-EZH1EZH2_PSC.sh # 7075199 ok
 
 
 ```
+
+--> EZH1 and EZH2 seems to always co-localize.
+
 
 
 
