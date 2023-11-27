@@ -939,6 +939,8 @@ library("tidyverse")
 library("dplyr")
 library("ComplexHeatmap")
 library("circlize")
+library("viridis")
+library("reshape2")
 
 # import gene list BP lipid
 GOBP_RESPONSE_TO_LIPID_raw <- read_lines("output/tpm/GOBP_RESPONSE_TO_LIPID_raw.txt") 
@@ -1044,6 +1046,16 @@ tpm_all_sample_tidy_geneOnly = tpm_all_sample_tidy %>%
 
 ## convert gene Ensembl to symbol 
 ensembl <- useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+############ IF ensembl fail; try using mirror or previosu version
+ensembl <-  useEnsembl(biomart = "ensembl", 
+                   dataset = "mmusculus_gene_ensembl", 
+                   mirror = "useast") # uswest useast asia
+
+ensembl <-  useEnsembl(biomart = 'ensembl', 
+                       dataset = 'mmusculus_gene_ensembl',
+                       version = 110)
+############ (more info: https://bioconductor.org/packages/release/bioc/vignettes/biomaRt/inst/doc/accessing_ensembl.html)
+
 
 # Convert Ensembl gene IDs to gene symbols
 genesymbols <- getBM(attributes = c("ensembl_gene_id", "external_gene_name"),
@@ -1068,43 +1080,121 @@ tpm_all_sample_tidy_GOBP_RESPONSE_TO_LIPID = GOBP_RESPONSE_TO_LIPID %>%
 
 
 # heatmap
-
-
-
+## CB_1month
 CB_1month <- tpm_all_sample_tidy_GOBP_RESPONSE_TO_LIPID %>%
   filter(new_ID %in% c("1month_CB_WT_R1", "1month_CB_WT_R2", "1month_CB_WT_R3", 
                        "1month_CB_KO_R1", "1month_CB_KO_R2", "1month_CB_KO_R3")) 
-## Pivot the data to a wide format suitable for the heatmap
-wide_data <- CB_1month %>%
-  pivot_wider(names_from = new_ID, values_from = TPM) %>%
-  select(external_gene_name, `1month_CB_WT_R1`, `1month_CB_WT_R2`, `1month_CB_WT_R3`, 
-         `1month_CB_KO_R1`, `1month_CB_KO_R2`, `1month_CB_KO_R3`) %>%
-  arrange(desc(`1month_CB_WT_R1`)) 
 
-
-
-XXx the code bug, need woprk XXX maybe chgeckl how i did my ehatmap in scRNAseq
-
-
-
-
-
-### Define color scale
-color_scale <- colorRamp2(c(min(wide_data[,-1], na.rm = TRUE), 0, max(wide_data[,-1], na.rm = TRUE)), c("blue", "white", "red"))
-
-### Generate the heatmap
-
-pdf("output/tpm/heatmap_CB_1month_raw.pdf", width=7, height=6)    
-Heatmap(as.matrix(wide_data[, -1]), 
-        name = "log2(TPM+1)", 
-        col = color_scale,
-        row_names = wide_data$external_gene_name,
-        column_order = c(`1month_CB_WT_R1`, `1month_CB_WT_R2`, `1month_CB_WT_R3`, 
-         `1month_CB_KO_R1`, `1month_CB_KO_R2`, `1month_CB_KO_R3`),
-        cluster_rows = FALSE,  # No clustering for rows, as per your request
-        show_row_names = TRUE,
-        show_column_names = TRUE)
+CB_1month$new_ID_ordered <- factor(CB_1month$new_ID, levels = c("1month_CB_WT_R1", "1month_CB_WT_R2", "1month_CB_WT_R3", 
+                                                  "1month_CB_KO_R1", "1month_CB_KO_R2", "1month_CB_KO_R3"))
+### Order the rows based on the new ID order and TPM values
+CB_1month <- CB_1month %>%
+  arrange(new_ID_ordered, desc(TPM))
+### Pivot the data to a long format suitable for ggplot
+long_df <- CB_1month %>%
+  pivot_longer(cols = TPM, names_to = "Condition", values_to = "Expression")
+### Raw uncluseted heatmap
+pdf("output/tpm/heatmap_CB_1month-GOBP_RESPONSE_TO_LIPID.pdf", width=4, height=8)
+ggplot(long_df, aes(x = new_ID_ordered, y = reorder(external_gene_name, Expression), fill = Expression)) +
+  geom_tile() +
+  scale_fill_viridis(direction = 1, option = "viridis", name="Expression")  +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = -1))
 dev.off()
+### Raw uncluseted heatmap with only DEGs
+#### import DEGs
+
+geneSymbol_1month_CB_qval05FCmore0 <- read.csv("output/GO/geneSymbol_1month_CB_qval05FCmore0.txt", header=FALSE, stringsAsFactors=FALSE)
+geneSymbol_1month_CB_qval05FCless0 <- read.csv("output/GO/geneSymbol_1month_CB_qval05FCless0.txt", header=FALSE, stringsAsFactors=FALSE)
+geneSymbol_1month_CB_qval05FC0 = geneSymbol_1month_CB_qval05FCmore0 %>%
+  bind_rows(geneSymbol_1month_CB_qval05FCless0) %>%
+  rename("external_gene_name" = "V1")
+
+pdf("output/tpm/heatmap_CB_1month-GOBP_RESPONSE_TO_LIPID-DEGs.pdf", width=4, height=8)
+ggplot(long_df %>% inner_join(geneSymbol_1month_CB_qval05FC0), aes(x = new_ID_ordered, y = reorder(external_gene_name, Expression), fill = Expression)) +
+  geom_tile() +
+  scale_fill_viridis(direction = 1, option = "viridis", name="Expression")  +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = -1))
+dev.off()
+
+
+
+XXXX DO WITH OTHER TISSUE the code up XXX
+
+
+
+
+
+
+
+
+## clustered heatmap _ v1 with all replicate
+
+desired_samples <- tpm_all_sample_tidy_GOBP_RESPONSE_TO_LIPID %>% 
+  filter(new_ID %in% c("1month_CB_WT_R1", "1month_CB_WT_R2", "1month_CB_WT_R3", 
+                       "1month_CB_KO_R1", "1month_CB_KO_R2", "1month_CB_KO_R3")) 
+
+### Create a matrix for the heatmap
+heatmap_data <- dcast(desired_samples, external_gene_name ~ new_ID, value.var = "TPM")
+
+### Convert to matrix and transpose
+heatmap_matrix <- as.matrix(heatmap_data[, -1]) # remove the gene names column
+rownames(heatmap_matrix) <- heatmap_data$external_gene_name
+
+### Remove all rows which have 0 or 1 across all samples
+heatmap_matrix <- heatmap_matrix[!(rowSums(heatmap_matrix != 0) <= 1), ]
+
+### plot
+
+
+pdf("output/tpm/heatmap_CB_1month-GOBP_RESPONSE_TO_LIPID-cluster.pdf", width=5, height=8)
+pheatmap(heatmap_matrix, 
+         scale = "none", 
+         clustering_distance_rows = "euclidean", 
+         clustering_distance_cols = "euclidean", 
+         clustering_method = "complete", 
+         color = viridis::viridis(100), 
+         border_color = NA)
+dev.off()
+
+
+## clustered heatmap _ v2 with median replicates
+
+desired_samples <- tpm_all_sample_tidy_GOBP_RESPONSE_TO_LIPID %>% 
+  filter(new_ID %in% c("1month_CB_WT_R1", "1month_CB_WT_R2", "1month_CB_WT_R3", 
+                       "1month_CB_KO_R1", "1month_CB_KO_R2", "1month_CB_KO_R3")) %>%
+  mutate(new_ID_grouped = sub("_R[0-9]+$", "", new_ID)) %>%
+  group_by(new_ID_grouped, external_gene_name) %>%
+  mutate(tpm_median = median(TPM)) %>%
+  dplyr::select(-TPM, -new_ID) %>%
+  unique()
+
+
+
+### Create a matrix for the heatmap
+heatmap_data <- dcast(desired_samples, external_gene_name ~ new_ID_grouped, value.var = "tpm_median")
+
+### Convert to matrix and transpose
+heatmap_matrix <- as.matrix(heatmap_data[, -1]) # remove the gene names column
+rownames(heatmap_matrix) <- heatmap_data$external_gene_name
+
+### Remove all rows which have 0 or 1 across all samples
+heatmap_matrix <- heatmap_matrix[!(rowSums(heatmap_matrix != 0) <= 1), ]
+
+### plot
+
+
+pdf("output/tpm/heatmap_CB_1month-GOBP_RESPONSE_TO_LIPID-cluster_median.pdf", width=4, height=8)
+pheatmap(heatmap_matrix, 
+         scale = "none", 
+         clustering_distance_rows = "euclidean", 
+         clustering_distance_cols = "euclidean", 
+         clustering_method = "complete", 
+         color = viridis::viridis(100), 
+         border_color = NA)
+dev.off()
+
 
 
 
