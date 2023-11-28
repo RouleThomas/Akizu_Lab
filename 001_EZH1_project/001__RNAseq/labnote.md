@@ -17799,8 +17799,16 @@ writeLines(console_output, "output/MuSiC2/bisque-8wN_all-ReferenceBasedDecomposi
 
 [tuto](https://bioconductor.org/packages/release/bioc/vignettes/granulator/inst/doc/granulator.html)
 
-```R
+Seems granulator needs a reference profile (Average gene expression within each cell types); seems to work with already processed data. So let's use the BisqueRNA tool to create **normalized bulk** and **signature profile**
+- normalized bulk will be extracted from BisqueRNA output `res$transformed.bulk`
+- signature will be genrate using BisqueRNA with `GenerateSCReference`(https://cran.r-project.org/web/packages/BisqueRNA/BisqueRNA.pdf)
 
+--> input files generated within `scRNAseqV3`; then granulator need a separate conda env... (as R install failed)
+
+
+## Granulator input generation
+
+```R
 # library
 library("BisqueRNA")
 library("SoupX")
@@ -17823,38 +17831,20 @@ library("ComplexHeatmap")
 library("ggrepel")
 library("ggpubr")
 library("biomaRt")
-
-
-## import seurat object
-CHOOSE_CTRL_annot_srt <- readRDS(file = "output/MuSiC2/CHOOSE_CTRL_annot_srt.rds")
-DefaultAssay(CHOOSE_CTRL_annot_srt) <- "RNA" # 
-## isolate the cells of interest; control one
-cells_to_keep <- WhichCells(CHOOSE_CTRL_annot_srt, expression = celltype_cl_coarse2 != "NA")
-CHOOSE_CTRL_annot_srt.subset_celltype_cl_coarse2 <- subset(CHOOSE_CTRL_annot_srt, cells = cells_to_keep)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+library("granulator")
 
 
 # Import raw RNAseq read counts
 # code for ensembl to genesymbol conv
 ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+ensembl <-  useEnsembl(biomart = "ensembl", 
+                   dataset = "hsapiens_gene_ensembl", 
+                   mirror = "uswest") # uswest useast asia
+ensembl <-  useEnsembl(biomart = 'ensembl', 
+                       dataset = 'hsapiens_gene_ensembl',
+                       version = 110)
 X8wN_WT_R1 <- read.delim("output/featurecounts_hg38/8wN_WT_R1.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+X8wN_WT_R1$Geneid <- gsub("\\..*", "", X8wN_WT_R1$Geneid)
 genes <- X8wN_WT_R1$Geneid
 #### Get the mapping from Ensembl ID to gene symbol
 genes_mapped  <- getBM(attributes = c('ensembl_gene_id', 'external_gene_name'),
@@ -18033,8 +18023,8 @@ X8wN_KO_R2_count_summary <- X8wN_KO_R2_geneSymbol %>%
   summarize(median_count = median(`output.STAR_hg38.8wN_KO_R2_Aligned.sortedByCoord.out.bam`)) %>%
   ungroup() 
 X8wN_KO_R2_count_matrix <- as.matrix(X8wN_KO_R2_count_summary$median_count)
-rownames(X8wN_KO_R2_count_summary) <- X8wN_KO_R2_count_summary$external_gene_name
-colnames(X8wN_KO_R2_count_summary) <- "8wN_KO_R2"
+rownames(X8wN_KO_R2_count_matrix) <- X8wN_KO_R2_count_summary$external_gene_name
+colnames(X8wN_KO_R2_count_matrix) <- "8wN_KO_R2"
 
 
 
@@ -18051,8 +18041,8 @@ X8wN_KO_R3_count_summary <- X8wN_KO_R3_geneSymbol %>%
   summarize(median_count = median(`output.STAR_hg38.8wN_KO_R3_Aligned.sortedByCoord.out.bam`)) %>%
   ungroup() 
 X8wN_KO_R3_count_matrix <- as.matrix(X8wN_KO_R3_count_summary$median_count)
-rownames(X8wN_KO_R3_count_summary) <- X8wN_KO_R3_count_summary$external_gene_name
-colnames(X8wN_KO_R3_count_summary) <- "8wN_KO_R3"
+rownames(X8wN_KO_R3_count_matrix) <- X8wN_KO_R3_count_summary$external_gene_name
+colnames(X8wN_KO_R3_count_matrix) <- "8wN_KO_R3"
 
 
 
@@ -18069,14 +18059,12 @@ X8wN_KO_R4_count_summary <- X8wN_KO_R4_geneSymbol %>%
   summarize(median_count = median(`output.STAR_hg38.8wN_KO_R4_Aligned.sortedByCoord.out.bam`)) %>%
   ungroup() 
 X8wN_KO_R4_count_matrix <- as.matrix(X8wN_KO_R4_count_summary$median_count)
-rownames(X8wN_KO_R4_count_summary) <- X8wN_KO_R4_count_summary$external_gene_name
-colnames(X8wN_KO_R4_count_summary) <- "8wN_KO_R4"
+rownames(X8wN_KO_R4_count_matrix) <- X8wN_KO_R4_count_summary$external_gene_name
+colnames(X8wN_KO_R4_count_matrix) <- "8wN_KO_R4"
 
 
 
-
-
-## WT deconvolution
+# WT expressionSet
 all_counts <- cbind(X8wN_WT_R1_count_matrix, X8wN_WT_R2_count_matrix, X8wN_WT_R3_count_matrix, X8wN_WT_R4_count_matrix)
 ### Create the phenotype data frame
 pheno_data <- data.frame(sampleID = colnames(all_counts),
@@ -18090,15 +18078,159 @@ all_counts_matrix <- as.matrix(all_counts)
 WT_8wN.bulkeset <- ExpressionSet(assayData = all_counts_matrix,
                       phenoData = phenoData)
 
-### Rename the group into SubjectName to be used with Bisque
-pData(WT_8wN.bulkeset)$SubjectName <- 
-  pData(WT_8wN.bulkeset)$group
-### Rename the celltype_cl_coarse2 into cellType to be used with Bisque
-pData(CHOOSE_CTRL_annot_srt.subset_celltype_cl_coarse2.sceset)$cellType <- 
-  pData(CHOOSE_CTRL_annot_srt.subset_celltype_cl_coarse2.sceset)$celltype_cl_coarse2
-### Add WT to all entries of our scRNAseq
-pData(CHOOSE_CTRL_annot_srt.subset_celltype_cl_coarse2.sceset)$SubjectName <- rep("WT", nrow(pData(CHOOSE_CTRL_annot_srt.subset_celltype_cl_coarse2.sceset)))
+# HET expressionSet
+all_counts <- cbind(X8wN_HET_R1_count_matrix, X8wN_HET_R2_count_matrix, X8wN_HET_R3_count_matrix, X8wN_HET_R4_count_matrix)
+### Create the phenotype data frame
+pheno_data <- data.frame(sampleID = colnames(all_counts),
+                         group = c("HET", "HET","HET", "HET"),
+                         row.names = colnames(all_counts))
+### Convert pheno_data to AnnotatedDataFrame
+phenoData <- new("AnnotatedDataFrame", data = pheno_data)
+# Make sure that your combined matrix is indeed a matrix
+all_counts_matrix <- as.matrix(all_counts)
+### Now create the ExpressionSet object
+HET_8wN.bulkeset <- ExpressionSet(assayData = all_counts_matrix,
+                      phenoData = phenoData)  
+
+# KO expressionSet
+all_counts <- cbind(X8wN_KO_R1_count_matrix, X8wN_KO_R2_count_matrix, X8wN_KO_R3_count_matrix, X8wN_KO_R4_count_matrix)
+### Create the phenotype data frame
+pheno_data <- data.frame(sampleID = colnames(all_counts),
+                         group = c("KO", "KO","KO", "KO"),
+                         row.names = colnames(all_counts))
+### Convert pheno_data to AnnotatedDataFrame
+phenoData <- new("AnnotatedDataFrame", data = pheno_data)
+# Make sure that your combined matrix is indeed a matrix
+all_counts_matrix <- as.matrix(all_counts)
+### Now create the ExpressionSet object
+KO_8wN.bulkeset <- ExpressionSet(assayData = all_counts_matrix,
+                      phenoData = phenoData)  
+
+# ALL expressionSet
+all_counts <- cbind(X8wN_WT_R1_count_matrix, X8wN_WT_R2_count_matrix, X8wN_WT_R3_count_matrix, X8wN_WT_R4_count_matrix, X8wN_HET_R1_count_matrix, X8wN_HET_R2_count_matrix, X8wN_HET_R3_count_matrix, X8wN_HET_R4_count_matrix, X8wN_KO_R1_count_matrix, X8wN_KO_R2_count_matrix, X8wN_KO_R3_count_matrix, X8wN_KO_R4_count_matrix)
+### Create the phenotype data frame
+pheno_data <- data.frame(sampleID = colnames(all_counts),
+                         group = c("WT", "WT","WT", "WT", "HET", "HET","HET", "HET", "KO", "KO","KO", "KO"),
+                         row.names = colnames(all_counts))
+### Convert pheno_data to AnnotatedDataFrame
+phenoData <- new("AnnotatedDataFrame", data = pheno_data)
+# Make sure that your combined matrix is indeed a matrix
+all_counts_matrix <- as.matrix(all_counts)
+### Now create the ExpressionSet object
+X8wN.bulkeset <- ExpressionSet(assayData = all_counts_matrix,
+                      phenoData = phenoData)
+
+
+
+# V2 scRNASeq import all
+CHOOSE_full_dataset_srt <- readRDS(file = "output/MuSiC2/CHOOSE_full_dataset_srt.rds")
+DefaultAssay(CHOOSE_full_dataset_srt) <- "RNA" #
+
+
+## celltype_ctrl_transfer is GOOD
+## Transform scRNAseq data in ExpressionSet Class
+CHOOSE_full_dataset_srt.sceset = ExpressionSet(assayData = as.matrix(GetAssayData(CHOOSE_full_dataset_srt)), phenoData =  new("AnnotatedDataFrame",CHOOSE_full_dataset_srt@meta.data))
+
+
+
+# run reference based deconvolution _ celltype_ctrl_transfer
+res <- BisqueRNA::ReferenceBasedDecomposition(bulk.eset = WT_8wN.bulkeset, sc.eset = CHOOSE_full_dataset_srt.sceset, markers=NULL, use.overlap=FALSE, cell.types = "celltype_ctrl_transfer", subject.names = "gRNA")
+
+
+res.HET <- BisqueRNA::ReferenceBasedDecomposition(bulk.eset = HET_8wN.bulkeset, sc.eset = CHOOSE_full_dataset_srt.sceset, markers=NULL, use.overlap=FALSE, cell.types = "celltype_ctrl_transfer", subject.names = "gRNA")
+
+
+res.KO <- BisqueRNA::ReferenceBasedDecomposition(bulk.eset = KO_8wN.bulkeset, sc.eset = CHOOSE_full_dataset_srt.sceset, markers=NULL, use.overlap=FALSE, cell.types = "celltype_ctrl_transfer", subject.names = "gRNA")
+
+res.all <- BisqueRNA::ReferenceBasedDecomposition(bulk.eset = X8wN.bulkeset, sc.eset = CHOOSE_full_dataset_srt.sceset, markers=NULL, use.overlap=FALSE, cell.types = "celltype_ctrl_transfer", subject.names = "gRNA")
+
+# collect cpm (normalized bulk RNA seq)
+WT_bulk_CPM = res$transformed.bulk
+HET_bulk_CPM = res.HET$transformed.bulk
+KO_bulk_CPM = res.KO$transformed.bulk
+all_bulk_CPM = res.all$transformed.bulk
+
+# generate scRNAseq signature
+
+CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature = GenerateSCReference(sc.eset = CHOOSE_full_dataset_srt.sceset, cell.types = "celltype_ctrl_transfer")
+
+
+
+## write output files
+
+write.table(CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature, file = "output/MuSiC2/CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature.txt", sep = "\t", row.names = TRUE, col.names = NA, quote = FALSE)
+write.table(WT_bulk_CPM, file = "output/MuSiC2/WT_bulk_CPM.txt", sep = "\t", row.names = TRUE, col.names = NA, quote = FALSE)
+write.table(HET_bulk_CPM, file = "output/MuSiC2/HET_bulk_CPM.txt", sep = "\t", row.names = TRUE, col.names = NA, quote = FALSE)
+write.table(KO_bulk_CPM, file = "output/MuSiC2/KO_bulk_CPM.txt", sep = "\t", row.names = TRUE, col.names = NA, quote = FALSE)
+write.table(all_bulk_CPM, file = "output/MuSiC2/all_bulk_CPM.txt", sep = "\t", row.names = TRUE, col.names = NA, quote = FALSE)
+
 
 
 ```
+
+## Granulator deconvolution
+
+
+Install granulator on R\4.3.1 like in the [tuto](https://bioconductor.org/packages/release/bioc/vignettes/granulator/inst/doc/granulator.html#installation)
+
+create `granulator` conda env `conda create -n granulator r-base=4.3.1`; then install within R with bioconduct
+
+```bash
+conda activate granulator
+```
+
+***installation troubleshoot:***
+
+
+
+
+
+
+```R
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("granulator")
+##--> dependencies fail ragg, officer, gdtools, xml2, flextable
+install.packages('ragg') # FAIL so try conda `conda install -c conda-forge r-ragg`
+##--> xml2 fail
+install.packages('xml2') # FAIL so try conda `conda install -c r r-xml2 `
+
+
+
+XXX
+
+
+
+# packages
+library("granulator")
+
+
+
+
+# import files
+
+
+
+
+
+
+# run granulator
+
+
+decon <- deconvolute(m = bulkRNAseq_ABIS, sigMatrix = CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature)
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
 
