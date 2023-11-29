@@ -2443,8 +2443,23 @@ CT_geneSymbol = CT %>%
 
 
 # import gene signature lists
+## top 100
 read_cell_file <- function(cell_name) {
   filepath <- paste0("output/gsea/", cell_name, "_v2.txt")
+  df <- read.table(filepath, header = FALSE, sep = "\t") %>%
+    as_tibble() %>%
+    dplyr::rename("gene" = "V1") %>%
+    add_column(cellName = cell_name)
+  
+  return(df)
+} 
+cell_names <- c("DAM_microglia", "homeostatic_microglia")
+all_data <- lapply(cell_names, read_cell_file) %>%
+  bind_rows()
+
+## top 50
+read_cell_file <- function(cell_name) {
+  filepath <- paste0("output/gsea/", cell_name, "_top50_v2.txt")
   df <- read.table(filepath, header = FALSE, sep = "\t") %>%
     as_tibble() %>%
     dplyr::rename("gene" = "V1") %>%
@@ -2461,8 +2476,8 @@ all_data <- lapply(cell_names, read_cell_file) %>%
 
 ## Order our DEG
 ### Let's create a named vector ranked based on the log2 fold change values
-lfc_vector <- CB_geneSymbol$log2FoldChange  ### CHAGNE HERE DATA!!!!!!!
-names(lfc_vector) <- CB_geneSymbol$GeneSymbol ### CHAGNE HERE DATA!!!!!!!
+lfc_vector <- CT_geneSymbol$log2FoldChange  ### CHAGNE HERE DATA!!!!!!!
+names(lfc_vector) <- CT_geneSymbol$GeneSymbol ### CHAGNE HERE DATA!!!!!!!
 ### We need to sort the log2 fold change values in descending order here
 lfc_vector <- sort(lfc_vector, decreasing = TRUE)
 ### Set the seed so our results are reproducible:
@@ -2488,7 +2503,7 @@ gsea_result_df <- data.frame(gsea_results@result)
 # Save output
 readr::write_tsv(
   gsea_result_df,
-  file.path("output/gsea/gsea_results_CT_v2_complete.tsv"
+  file.path("output/gsea/gsea_results_CT_top50_v2_complete.tsv"
   )
 )
 
@@ -2496,7 +2511,7 @@ readr::write_tsv(
 c("DAM_microglia", "homeostatic_microglia")
 
 
-pdf("output/gsea/CT_DAM_microglia_v2.pdf", width=10, height=8)
+pdf("output/gsea/CT_DAM_microglia_top50_v2.pdf", width=10, height=8)
 
 enrichplot::gseaplot(
   gsea_results,
@@ -2539,6 +2554,8 @@ filtered_data <- gsea_result_df_tidy %>%
 filtered_data$ID = factor(filtered_data$ID, c("homeostatic_microglia", "DAM_microglia"))
 
 pdf("output/gsea/heatmap_gsea_qvalue_v2.pdf", width=3.5, height=3.5)
+pdf("output/gsea/heatmap_gsea_qvalue_top50_v2.pdf", width=3.5, height=3.5)
+
 ggplot(filtered_data, aes(x=ID, y=tissue, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -2589,8 +2606,8 @@ CT_geneSymbol = CT %>%
 
 ## Order our DEG
 ### Let's create a named vector ranked based on the log2 fold change values
-lfc_vector <- CB_geneSymbol$combined_score  ### CHAGNE HERE DATA!!!!!!!
-names(lfc_vector) <- CB_geneSymbol$GeneSymbol ### CHAGNE HERE DATA!!!!!!!
+lfc_vector <- HP_geneSymbol$combined_score  ### CHAGNE HERE DATA!!!!!!!
+names(lfc_vector) <- HP_geneSymbol$GeneSymbol ### CHAGNE HERE DATA!!!!!!!
 ### We need to sort the log2 fold change values in descending order here
 lfc_vector <- sort(lfc_vector, decreasing = TRUE)
 ### Set the seed so our results are reproducible:
@@ -2616,7 +2633,7 @@ gsea_result_df <- data.frame(gsea_results@result)
 # Save output
 readr::write_tsv(
   gsea_result_df,
-  file.path("output/gsea/gsea_results_CB_v2_complete_combinedScore.tsv"
+  file.path("output/gsea/gsea_results_HP_top50_v2_complete_combinedScore.tsv"
   )
 )
 
@@ -2624,7 +2641,7 @@ readr::write_tsv(
 c("DAM_microglia", "homeostatic_microglia")
 
 
-pdf("output/gsea/CB_homeostatic_microglia_v2_combinedScore.pdf", width=10, height=8)
+pdf("output/gsea/HP_homeostatic_microglia_top50_v2_combinedScore.pdf", width=10, height=8)
 
 enrichplot::gseaplot(
   gsea_results,
@@ -2667,6 +2684,8 @@ filtered_data <- gsea_result_df_tidy %>%
 filtered_data$ID = factor(filtered_data$ID, c("homeostatic_microglia", "DAM_microglia"))
 
 pdf("output/gsea/heatmap_gsea_padjust_v2_combinedScore.pdf", width=3.5, height=3.5)
+pdf("output/gsea/heatmap_gsea_padjust_top50_v2_combinedScore.pdf", width=3.5, height=3.5)
+
 ggplot(filtered_data, aes(x=ID, y=tissue, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
