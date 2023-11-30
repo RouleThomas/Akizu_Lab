@@ -17707,11 +17707,8 @@ all.bulk.mtx = exprs(all_8wN.bulkeset_subset)
 Est.prop.all = music_prop(bulk.mtx = all.bulk.mtx, CHOOSE_full_dataset_srt.SingleCellExperiment, clusters = 'celltype_ctrl_transfer', samples = 'gRNA', select.ct = c("Astrocytes", "ccRG", "ccvRG", "CGE_IN", "CGE_LGE_IN", "INP", "IP", "L23", "L4", "L56", "L6_CThPN", "LGE_IN", "OPC", "oRG", "RG","vRG"), verbose = TRUE)
 
 ## write output
-XXXXXX
-
-
-console_output <- capture.output(print(Est.prop.KO$Est.prop.weighted))
-writeLines(console_output, "output/deconv/MuSiC-Est.prop.weighted-KO.txt")
+console_output <- capture.output(print(Est.prop.all$Est.prop.weighted))
+writeLines(console_output, "output/deconv/MuSiC-Est.prop.weighted-all.txt")
 
 
 
@@ -17734,8 +17731,766 @@ Jitter_Est(list(data.matrix(Est.prop.KO$Est.prop.weighted),
                         method.name = c('MuSiC', 'NNLS'), title = 'Jitter plot of Est Proportions')
 dev.off()
 
+XXX plopt with cvolor
 ```
 
+--> It work great; notably MuSiC method; produce similar result as braindeconv with more astrocyte HET and less for KO
+
+Let's do deconvolution for all previous RNAseq point as QC:
+
+```R
+
+
+# library
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") 
+library("SCPA")
+library("circlize")
+library("magrittr")
+library("msigdb")
+library("msigdbr")
+library("ComplexHeatmap")
+library("ggrepel")
+library("ggpubr")
+library("MuSiC2")
+library("MuSiC")
+library("biomaRt")
+
+
+
+# scRNASeq import all
+CHOOSE_full_dataset_srt <- readRDS(file = "output/deconv/CHOOSE_full_dataset_srt.rds")
+DefaultAssay(CHOOSE_full_dataset_srt) <- "RNA" # 
+## Transform scRNAseq data in SingleCellExperiment
+CHOOSE_full_dataset_srt.SingleCellExperiment <- as.SingleCellExperiment(CHOOSE_full_dataset_srt, assay = "RNA")
+## Transform scRNAseq data in SingleCellExperiment (FOR the out of bound error)
+CHOOSE_full_dataset_srt.sceset = ExpressionSet(assayData = as.matrix(GetAssayData(CHOOSE_full_dataset_srt)), phenoData =  new("AnnotatedDataFrame",CHOOSE_full_dataset_srt@meta.data))
+
+
+# Import raw RNAseq read counts
+### code for ensembl to genesymbol conv
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+ensembl <-  useEnsembl(biomart = "ensembl", 
+                   dataset = "hsapiens_gene_ensembl", 
+                   mirror = "uswest") # uswest useast asia
+ensembl <-  useEnsembl(biomart = 'ensembl', 
+                       dataset = 'hsapiens_gene_ensembl',
+                       version = 110)
+##                       
+X8wN_WT_R1 <- read.delim("output/featurecounts_hg38/8wN_WT_R1.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+X8wN_WT_R1$Geneid <- gsub("\\..*", "", X8wN_WT_R1$Geneid)
+genes <- X8wN_WT_R1$Geneid
+#### Get the mapping from Ensembl ID to gene symbol
+genes_mapped  <- getBM(attributes = c('ensembl_gene_id', 'external_gene_name'),
+                      filters = 'ensembl_gene_id',
+                      values = genes,
+                      mart = ensembl)
+####
+
+### import featureCounts output
+## 2dN
+#### 2dN WT R1
+X2dN_WT_R1 <- read.delim("output/featurecounts_hg38/2dN_WT_R1.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X2dN_WT_R1$Geneid <- gsub("\\..*", "", X2dN_WT_R1$Geneid)
+X2dN_WT_R1_geneSymbol <- merge(X2dN_WT_R1, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.2dN_WT_R1_Aligned.sortedByCoord.out.bam')
+## Calculate median as gene dupplicated with the conversino!
+X2dN_WT_R1_count_summary <- X2dN_WT_R1_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.2dN_WT_R1_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X2dN_WT_R1_count_matrix <- as.matrix(X2dN_WT_R1_count_summary$median_count)
+rownames(X2dN_WT_R1_count_matrix) <- X2dN_WT_R1_count_summary$external_gene_name
+colnames(X2dN_WT_R1_count_matrix) <- "2dN_WT_R1"
+
+
+
+#### 2dN WT R2
+X2dN_WT_R2 <- read.delim("output/featurecounts_hg38/2dN_WT_R2.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X2dN_WT_R2$Geneid <- gsub("\\..*", "", X2dN_WT_R2$Geneid)
+X2dN_WT_R2_geneSymbol <- merge(X2dN_WT_R2, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.2dN_WT_R2_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+X2dN_WT_R2_count_summary <- X2dN_WT_R2_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.2dN_WT_R2_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X2dN_WT_R2_count_matrix <- as.matrix(X2dN_WT_R2_count_summary$median_count)
+rownames(X2dN_WT_R2_count_matrix) <- X2dN_WT_R2_count_summary$external_gene_name
+colnames(X2dN_WT_R2_count_matrix) <- "2dN_WT_R2"
+
+
+#### 2dN WT R3
+X2dN_WT_R3 <- read.delim("output/featurecounts_hg38/2dN_WT_R3.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X2dN_WT_R3$Geneid <- gsub("\\..*", "", X2dN_WT_R3$Geneid)
+X2dN_WT_R3_geneSymbol <- merge(X2dN_WT_R3, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.2dN_WT_R3_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+X2dN_WT_R3_count_summary <- X2dN_WT_R3_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.2dN_WT_R3_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X2dN_WT_R3_count_matrix <- as.matrix(X2dN_WT_R3_count_summary$median_count)
+rownames(X2dN_WT_R3_count_matrix) <- X2dN_WT_R3_count_summary$external_gene_name
+colnames(X2dN_WT_R3_count_matrix) <- "2dN_WT_R3"
+
+
+#### 2dN WT R4
+X2dN_WT_R4 <- read.delim("output/featurecounts_hg38/2dN_WT_R4.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X2dN_WT_R4$Geneid <- gsub("\\..*", "", X2dN_WT_R4$Geneid)
+X2dN_WT_R4_geneSymbol <- merge(X2dN_WT_R4, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.2dN_WT_R4_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+X2dN_WT_R4_count_summary <- X2dN_WT_R4_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.2dN_WT_R4_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X2dN_WT_R4_count_matrix <- as.matrix(X2dN_WT_R4_count_summary$median_count)
+rownames(X2dN_WT_R4_count_matrix) <- X2dN_WT_R4_count_summary$external_gene_name
+colnames(X2dN_WT_R4_count_matrix) <- "2dN_WT_R4"
+
+
+#### 2dN HET R1
+X2dN_HET_R1 <- read.delim("output/featurecounts_hg38/2dN_HET_R1.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X2dN_HET_R1$Geneid <- gsub("\\..*", "", X2dN_HET_R1$Geneid)
+X2dN_HET_R1_geneSymbol <- merge(X2dN_HET_R1, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.2dN_HET_R1_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+X2dN_HET_R1_count_summary <- X2dN_HET_R1_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.2dN_HET_R1_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X2dN_HET_R1_count_matrix <- as.matrix(X2dN_HET_R1_count_summary$median_count)
+rownames(X2dN_HET_R1_count_matrix) <- X2dN_HET_R1_count_summary$external_gene_name
+colnames(X2dN_HET_R1_count_matrix) <- "2dN_HET_R1"
+
+
+
+#### 2dN HET R2
+X2dN_HET_R2 <- read.delim("output/featurecounts_hg38/2dN_HET_R2.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X2dN_HET_R2$Geneid <- gsub("\\..*", "", X2dN_HET_R2$Geneid)
+X2dN_HET_R2_geneSymbol <- merge(X2dN_HET_R2, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.2dN_HET_R2_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+X2dN_HET_R2_count_summary <- X2dN_HET_R2_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.2dN_HET_R2_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X2dN_HET_R2_count_matrix <- as.matrix(X2dN_HET_R2_count_summary$median_count)
+rownames(X2dN_HET_R2_count_matrix) <- X2dN_HET_R2_count_summary$external_gene_name
+colnames(X2dN_HET_R2_count_matrix) <- "2dN_HET_R2"
+
+
+#### 2dN HET R3
+X2dN_HET_R3 <- read.delim("output/featurecounts_hg38/2dN_HET_R3.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X2dN_HET_R3$Geneid <- gsub("\\..*", "", X2dN_HET_R3$Geneid)
+X2dN_HET_R3_geneSymbol <- merge(X2dN_HET_R3, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.2dN_HET_R3_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+X2dN_HET_R3_count_summary <- X2dN_HET_R3_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.2dN_HET_R3_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X2dN_HET_R3_count_matrix <- as.matrix(X2dN_HET_R3_count_summary$median_count)
+rownames(X2dN_HET_R3_count_matrix) <- X2dN_HET_R3_count_summary$external_gene_name
+colnames(X2dN_HET_R3_count_matrix) <- "2dN_HET_R3"
+
+
+#### 2dN HET R4
+X2dN_HET_R4 <- read.delim("output/featurecounts_hg38/2dN_HET_R4.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X2dN_HET_R4$Geneid <- gsub("\\..*", "", X2dN_HET_R4$Geneid)
+X2dN_HET_R4_geneSymbol <- merge(X2dN_HET_R4, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.2dN_HET_R4_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+X2dN_HET_R4_count_summary <- X2dN_HET_R4_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.2dN_HET_R4_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X2dN_HET_R4_count_matrix <- as.matrix(X2dN_HET_R4_count_summary$median_count)
+rownames(X2dN_HET_R4_count_matrix) <- X2dN_HET_R4_count_summary$external_gene_name
+colnames(X2dN_HET_R4_count_matrix) <- "2dN_HET_R4"
+
+
+#### 2dN KO R1
+X2dN_KO_R1 <- read.delim("output/featurecounts_hg38/2dN_KO_R1.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X2dN_KO_R1$Geneid <- gsub("\\..*", "", X2dN_KO_R1$Geneid)
+X2dN_KO_R1_geneSymbol <- merge(X2dN_KO_R1, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.2dN_KO_R1_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+X2dN_KO_R1_count_summary <- X2dN_KO_R1_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.2dN_KO_R1_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X2dN_KO_R1_count_matrix <- as.matrix(X2dN_KO_R1_count_summary$median_count)
+rownames(X2dN_KO_R1_count_matrix) <- X2dN_KO_R1_count_summary$external_gene_name
+colnames(X2dN_KO_R1_count_matrix) <- "2dN_KO_R1"
+
+
+
+#### 2dN KO R2
+X2dN_KO_R2 <- read.delim("output/featurecounts_hg38/2dN_KO_R2.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X2dN_KO_R2$Geneid <- gsub("\\..*", "", X2dN_KO_R2$Geneid)
+X2dN_KO_R2_geneSymbol <- merge(X2dN_KO_R2, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.2dN_KO_R2_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+X2dN_KO_R2_count_summary <- X2dN_KO_R2_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.2dN_KO_R2_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X2dN_KO_R2_count_matrix <- as.matrix(X2dN_KO_R2_count_summary$median_count)
+rownames(X2dN_KO_R2_count_matrix) <- X2dN_KO_R2_count_summary$external_gene_name
+colnames(X2dN_KO_R2_count_matrix) <- "2dN_KO_R2"
+
+
+
+#### 2dN KO R3
+X2dN_KO_R3 <- read.delim("output/featurecounts_hg38/2dN_KO_R3.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X2dN_KO_R3$Geneid <- gsub("\\..*", "", X2dN_KO_R3$Geneid)
+X2dN_KO_R3_geneSymbol <- merge(X2dN_KO_R3, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.2dN_KO_R3_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+X2dN_KO_R3_count_summary <- X2dN_KO_R3_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.2dN_KO_R3_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X2dN_KO_R3_count_matrix <- as.matrix(X2dN_KO_R3_count_summary$median_count)
+rownames(X2dN_KO_R3_count_matrix) <- X2dN_KO_R3_count_summary$external_gene_name
+colnames(X2dN_KO_R3_count_matrix) <- "2dN_KO_R3"
+
+
+
+#### 2dN KO R4
+X2dN_KO_R4 <- read.delim("output/featurecounts_hg38/2dN_KO_R4.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X2dN_KO_R4$Geneid <- gsub("\\..*", "", X2dN_KO_R4$Geneid)
+X2dN_KO_R4_geneSymbol <- merge(X2dN_KO_R4, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.2dN_KO_R4_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+X2dN_KO_R4_count_summary <- X2dN_KO_R4_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.2dN_KO_R4_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X2dN_KO_R4_count_matrix <- as.matrix(X2dN_KO_R4_count_summary$median_count)
+rownames(X2dN_KO_R4_count_matrix) <- X2dN_KO_R4_count_summary$external_gene_name
+colnames(X2dN_KO_R4_count_matrix) <- "2dN_KO_R4"
+
+
+
+## NPC
+#### NPC WT R1
+XNPC_WT_R1 <- read.delim("output/featurecounts_hg38/NPC_WT_R1.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+XNPC_WT_R1$Geneid <- gsub("\\..*", "", XNPC_WT_R1$Geneid)
+XNPC_WT_R1_geneSymbol <- merge(XNPC_WT_R1, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.NPC_WT_R1_Aligned.sortedByCoord.out.bam')
+## Calculate median as gene dupplicated with the conversino!
+XNPC_WT_R1_count_summary <- XNPC_WT_R1_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.NPC_WT_R1_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+XNPC_WT_R1_count_matrix <- as.matrix(XNPC_WT_R1_count_summary$median_count)
+rownames(XNPC_WT_R1_count_matrix) <- XNPC_WT_R1_count_summary$external_gene_name
+colnames(XNPC_WT_R1_count_matrix) <- "NPC_WT_R1"
+
+
+
+#### NPC WT R2
+XNPC_WT_R2 <- read.delim("output/featurecounts_hg38/NPC_WT_R2.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+XNPC_WT_R2$Geneid <- gsub("\\..*", "", XNPC_WT_R2$Geneid)
+XNPC_WT_R2_geneSymbol <- merge(XNPC_WT_R2, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.NPC_WT_R2_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+XNPC_WT_R2_count_summary <- XNPC_WT_R2_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.NPC_WT_R2_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+XNPC_WT_R2_count_matrix <- as.matrix(XNPC_WT_R2_count_summary$median_count)
+rownames(XNPC_WT_R2_count_matrix) <- XNPC_WT_R2_count_summary$external_gene_name
+colnames(XNPC_WT_R2_count_matrix) <- "NPC_WT_R2"
+
+
+#### NPC WT R3
+XNPC_WT_R3 <- read.delim("output/featurecounts_hg38/NPC_WT_R3.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+XNPC_WT_R3$Geneid <- gsub("\\..*", "", XNPC_WT_R3$Geneid)
+XNPC_WT_R3_geneSymbol <- merge(XNPC_WT_R3, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.NPC_WT_R3_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+XNPC_WT_R3_count_summary <- XNPC_WT_R3_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.NPC_WT_R3_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+XNPC_WT_R3_count_matrix <- as.matrix(XNPC_WT_R3_count_summary$median_count)
+rownames(XNPC_WT_R3_count_matrix) <- XNPC_WT_R3_count_summary$external_gene_name
+colnames(XNPC_WT_R3_count_matrix) <- "NPC_WT_R3"
+
+
+#### NPC WT R4
+XNPC_WT_R4 <- read.delim("output/featurecounts_hg38/NPC_WT_R4.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+XNPC_WT_R4$Geneid <- gsub("\\..*", "", XNPC_WT_R4$Geneid)
+XNPC_WT_R4_geneSymbol <- merge(XNPC_WT_R4, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.NPC_WT_R4_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+XNPC_WT_R4_count_summary <- XNPC_WT_R4_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.NPC_WT_R4_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+XNPC_WT_R4_count_matrix <- as.matrix(XNPC_WT_R4_count_summary$median_count)
+rownames(XNPC_WT_R4_count_matrix) <- XNPC_WT_R4_count_summary$external_gene_name
+colnames(XNPC_WT_R4_count_matrix) <- "NPC_WT_R4"
+
+
+#### NPC HET R1
+XNPC_HET_R1 <- read.delim("output/featurecounts_hg38/NPC_HET_R1.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+XNPC_HET_R1$Geneid <- gsub("\\..*", "", XNPC_HET_R1$Geneid)
+XNPC_HET_R1_geneSymbol <- merge(XNPC_HET_R1, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.NPC_HET_R1_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+XNPC_HET_R1_count_summary <- XNPC_HET_R1_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.NPC_HET_R1_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+XNPC_HET_R1_count_matrix <- as.matrix(XNPC_HET_R1_count_summary$median_count)
+rownames(XNPC_HET_R1_count_matrix) <- XNPC_HET_R1_count_summary$external_gene_name
+colnames(XNPC_HET_R1_count_matrix) <- "NPC_HET_R1"
+
+
+
+#### NPC HET R2
+XNPC_HET_R2 <- read.delim("output/featurecounts_hg38/NPC_HET_R2.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+XNPC_HET_R2$Geneid <- gsub("\\..*", "", XNPC_HET_R2$Geneid)
+XNPC_HET_R2_geneSymbol <- merge(XNPC_HET_R2, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.NPC_HET_R2_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+XNPC_HET_R2_count_summary <- XNPC_HET_R2_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.NPC_HET_R2_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+XNPC_HET_R2_count_matrix <- as.matrix(XNPC_HET_R2_count_summary$median_count)
+rownames(XNPC_HET_R2_count_matrix) <- XNPC_HET_R2_count_summary$external_gene_name
+colnames(XNPC_HET_R2_count_matrix) <- "NPC_HET_R2"
+
+
+#### NPC HET R3
+XNPC_HET_R3 <- read.delim("output/featurecounts_hg38/NPC_HET_R3.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+XNPC_HET_R3$Geneid <- gsub("\\..*", "", XNPC_HET_R3$Geneid)
+XNPC_HET_R3_geneSymbol <- merge(XNPC_HET_R3, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.NPC_HET_R3_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+XNPC_HET_R3_count_summary <- XNPC_HET_R3_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.NPC_HET_R3_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+XNPC_HET_R3_count_matrix <- as.matrix(XNPC_HET_R3_count_summary$median_count)
+rownames(XNPC_HET_R3_count_matrix) <- XNPC_HET_R3_count_summary$external_gene_name
+colnames(XNPC_HET_R3_count_matrix) <- "NPC_HET_R3"
+
+
+#### NPC HET R4
+XNPC_HET_R4 <- read.delim("output/featurecounts_hg38/NPC_HET_R4.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+XNPC_HET_R4$Geneid <- gsub("\\..*", "", XNPC_HET_R4$Geneid)
+XNPC_HET_R4_geneSymbol <- merge(XNPC_HET_R4, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.NPC_HET_R4_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+XNPC_HET_R4_count_summary <- XNPC_HET_R4_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.NPC_HET_R4_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+XNPC_HET_R4_count_matrix <- as.matrix(XNPC_HET_R4_count_summary$median_count)
+rownames(XNPC_HET_R4_count_matrix) <- XNPC_HET_R4_count_summary$external_gene_name
+colnames(XNPC_HET_R4_count_matrix) <- "NPC_HET_R4"
+
+
+#### NPC KO R1
+XNPC_KO_R1 <- read.delim("output/featurecounts_hg38/NPC_KO_R1.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+XNPC_KO_R1$Geneid <- gsub("\\..*", "", XNPC_KO_R1$Geneid)
+XNPC_KO_R1_geneSymbol <- merge(XNPC_KO_R1, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.NPC_KO_R1_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+XNPC_KO_R1_count_summary <- XNPC_KO_R1_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.NPC_KO_R1_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+XNPC_KO_R1_count_matrix <- as.matrix(XNPC_KO_R1_count_summary$median_count)
+rownames(XNPC_KO_R1_count_matrix) <- XNPC_KO_R1_count_summary$external_gene_name
+colnames(XNPC_KO_R1_count_matrix) <- "NPC_KO_R1"
+
+
+
+#### NPC KO R2
+XNPC_KO_R2 <- read.delim("output/featurecounts_hg38/NPC_KO_R2.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+XNPC_KO_R2$Geneid <- gsub("\\..*", "", XNPC_KO_R2$Geneid)
+XNPC_KO_R2_geneSymbol <- merge(XNPC_KO_R2, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.NPC_KO_R2_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+XNPC_KO_R2_count_summary <- XNPC_KO_R2_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.NPC_KO_R2_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+XNPC_KO_R2_count_matrix <- as.matrix(XNPC_KO_R2_count_summary$median_count)
+rownames(XNPC_KO_R2_count_matrix) <- XNPC_KO_R2_count_summary$external_gene_name
+colnames(XNPC_KO_R2_count_matrix) <- "NPC_KO_R2"
+
+
+
+#### NPC KO R3
+XNPC_KO_R3 <- read.delim("output/featurecounts_hg38/NPC_KO_R3.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+XNPC_KO_R3$Geneid <- gsub("\\..*", "", XNPC_KO_R3$Geneid)
+XNPC_KO_R3_geneSymbol <- merge(XNPC_KO_R3, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.NPC_KO_R3_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+XNPC_KO_R3_count_summary <- XNPC_KO_R3_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.NPC_KO_R3_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+XNPC_KO_R3_count_matrix <- as.matrix(XNPC_KO_R3_count_summary$median_count)
+rownames(XNPC_KO_R3_count_matrix) <- XNPC_KO_R3_count_summary$external_gene_name
+colnames(XNPC_KO_R3_count_matrix) <- "NPC_KO_R3"
+
+
+
+#### NPC KO R4
+XNPC_KO_R4 <- read.delim("output/featurecounts_hg38/NPC_KO_R4.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+XNPC_KO_R4$Geneid <- gsub("\\..*", "", XNPC_KO_R4$Geneid)
+XNPC_KO_R4_geneSymbol <- merge(XNPC_KO_R4, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.NPC_KO_R4_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+XNPC_KO_R4_count_summary <- XNPC_KO_R4_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.NPC_KO_R4_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+XNPC_KO_R4_count_matrix <- as.matrix(XNPC_KO_R4_count_summary$median_count)
+rownames(XNPC_KO_R4_count_matrix) <- XNPC_KO_R4_count_summary$external_gene_name
+colnames(XNPC_KO_R4_count_matrix) <- "NPC_KO_R4"
+
+
+
+## 4wN
+#### 4wN WT R1
+X4wN_WT_R1 <- read.delim("output/featurecounts_hg38/4wN_WT_R1.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X4wN_WT_R1$Geneid <- gsub("\\..*", "", X4wN_WT_R1$Geneid)
+X4wN_WT_R1_geneSymbol <- merge(X4wN_WT_R1, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.4wN_WT_R1_Aligned.sortedByCoord.out.bam')
+## Calculate median as gene dupplicated with the conversino!
+X4wN_WT_R1_count_summary <- X4wN_WT_R1_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.4wN_WT_R1_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X4wN_WT_R1_count_matrix <- as.matrix(X4wN_WT_R1_count_summary$median_count)
+rownames(X4wN_WT_R1_count_matrix) <- X4wN_WT_R1_count_summary$external_gene_name
+colnames(X4wN_WT_R1_count_matrix) <- "4wN_WT_R1"
+
+
+
+#### 4wN WT R2
+X4wN_WT_R2 <- read.delim("output/featurecounts_hg38/4wN_WT_R2.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X4wN_WT_R2$Geneid <- gsub("\\..*", "", X4wN_WT_R2$Geneid)
+X4wN_WT_R2_geneSymbol <- merge(X4wN_WT_R2, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.4wN_WT_R2_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+X4wN_WT_R2_count_summary <- X4wN_WT_R2_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.4wN_WT_R2_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X4wN_WT_R2_count_matrix <- as.matrix(X4wN_WT_R2_count_summary$median_count)
+rownames(X4wN_WT_R2_count_matrix) <- X4wN_WT_R2_count_summary$external_gene_name
+colnames(X4wN_WT_R2_count_matrix) <- "4wN_WT_R2"
+
+
+#### 4wN WT R3
+X4wN_WT_R3 <- read.delim("output/featurecounts_hg38/4wN_WT_R3.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X4wN_WT_R3$Geneid <- gsub("\\..*", "", X4wN_WT_R3$Geneid)
+X4wN_WT_R3_geneSymbol <- merge(X4wN_WT_R3, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.4wN_WT_R3_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+X4wN_WT_R3_count_summary <- X4wN_WT_R3_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.4wN_WT_R3_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X4wN_WT_R3_count_matrix <- as.matrix(X4wN_WT_R3_count_summary$median_count)
+rownames(X4wN_WT_R3_count_matrix) <- X4wN_WT_R3_count_summary$external_gene_name
+colnames(X4wN_WT_R3_count_matrix) <- "4wN_WT_R3"
+
+
+#### 4wN WT R4
+X4wN_WT_R4 <- read.delim("output/featurecounts_hg38/4wN_WT_R4.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X4wN_WT_R4$Geneid <- gsub("\\..*", "", X4wN_WT_R4$Geneid)
+X4wN_WT_R4_geneSymbol <- merge(X4wN_WT_R4, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.4wN_WT_R4_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+X4wN_WT_R4_count_summary <- X4wN_WT_R4_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.4wN_WT_R4_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X4wN_WT_R4_count_matrix <- as.matrix(X4wN_WT_R4_count_summary$median_count)
+rownames(X4wN_WT_R4_count_matrix) <- X4wN_WT_R4_count_summary$external_gene_name
+colnames(X4wN_WT_R4_count_matrix) <- "4wN_WT_R4"
+
+
+#### 4wN HET R1
+X4wN_HET_R1 <- read.delim("output/featurecounts_hg38/4wN_HET_R1.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X4wN_HET_R1$Geneid <- gsub("\\..*", "", X4wN_HET_R1$Geneid)
+X4wN_HET_R1_geneSymbol <- merge(X4wN_HET_R1, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.4wN_HET_R1_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+X4wN_HET_R1_count_summary <- X4wN_HET_R1_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.4wN_HET_R1_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X4wN_HET_R1_count_matrix <- as.matrix(X4wN_HET_R1_count_summary$median_count)
+rownames(X4wN_HET_R1_count_matrix) <- X4wN_HET_R1_count_summary$external_gene_name
+colnames(X4wN_HET_R1_count_matrix) <- "4wN_HET_R1"
+
+
+
+#### 4wN HET R2
+X4wN_HET_R2 <- read.delim("output/featurecounts_hg38/4wN_HET_R2.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X4wN_HET_R2$Geneid <- gsub("\\..*", "", X4wN_HET_R2$Geneid)
+X4wN_HET_R2_geneSymbol <- merge(X4wN_HET_R2, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.4wN_HET_R2_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+X4wN_HET_R2_count_summary <- X4wN_HET_R2_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.4wN_HET_R2_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X4wN_HET_R2_count_matrix <- as.matrix(X4wN_HET_R2_count_summary$median_count)
+rownames(X4wN_HET_R2_count_matrix) <- X4wN_HET_R2_count_summary$external_gene_name
+colnames(X4wN_HET_R2_count_matrix) <- "4wN_HET_R2"
+
+
+#### 4wN HET R3
+X4wN_HET_R3 <- read.delim("output/featurecounts_hg38/4wN_HET_R3.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X4wN_HET_R3$Geneid <- gsub("\\..*", "", X4wN_HET_R3$Geneid)
+X4wN_HET_R3_geneSymbol <- merge(X4wN_HET_R3, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.4wN_HET_R3_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+X4wN_HET_R3_count_summary <- X4wN_HET_R3_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.4wN_HET_R3_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X4wN_HET_R3_count_matrix <- as.matrix(X4wN_HET_R3_count_summary$median_count)
+rownames(X4wN_HET_R3_count_matrix) <- X4wN_HET_R3_count_summary$external_gene_name
+colnames(X4wN_HET_R3_count_matrix) <- "4wN_HET_R3"
+
+
+#### 4wN HET R4
+X4wN_HET_R4 <- read.delim("output/featurecounts_hg38/4wN_HET_R4.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X4wN_HET_R4$Geneid <- gsub("\\..*", "", X4wN_HET_R4$Geneid)
+X4wN_HET_R4_geneSymbol <- merge(X4wN_HET_R4, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.4wN_HET_R4_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+X4wN_HET_R4_count_summary <- X4wN_HET_R4_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.4wN_HET_R4_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X4wN_HET_R4_count_matrix <- as.matrix(X4wN_HET_R4_count_summary$median_count)
+rownames(X4wN_HET_R4_count_matrix) <- X4wN_HET_R4_count_summary$external_gene_name
+colnames(X4wN_HET_R4_count_matrix) <- "4wN_HET_R4"
+
+
+#### 4wN KO R1
+X4wN_KO_R1 <- read.delim("output/featurecounts_hg38/4wN_KO_R1.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X4wN_KO_R1$Geneid <- gsub("\\..*", "", X4wN_KO_R1$Geneid)
+X4wN_KO_R1_geneSymbol <- merge(X4wN_KO_R1, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.4wN_KO_R1_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+X4wN_KO_R1_count_summary <- X4wN_KO_R1_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.4wN_KO_R1_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X4wN_KO_R1_count_matrix <- as.matrix(X4wN_KO_R1_count_summary$median_count)
+rownames(X4wN_KO_R1_count_matrix) <- X4wN_KO_R1_count_summary$external_gene_name
+colnames(X4wN_KO_R1_count_matrix) <- "4wN_KO_R1"
+
+
+
+#### 4wN KO R2
+X4wN_KO_R2 <- read.delim("output/featurecounts_hg38/4wN_KO_R2.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X4wN_KO_R2$Geneid <- gsub("\\..*", "", X4wN_KO_R2$Geneid)
+X4wN_KO_R2_geneSymbol <- merge(X4wN_KO_R2, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.4wN_KO_R2_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+X4wN_KO_R2_count_summary <- X4wN_KO_R2_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.4wN_KO_R2_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X4wN_KO_R2_count_matrix <- as.matrix(X4wN_KO_R2_count_summary$median_count)
+rownames(X4wN_KO_R2_count_matrix) <- X4wN_KO_R2_count_summary$external_gene_name
+colnames(X4wN_KO_R2_count_matrix) <- "4wN_KO_R2"
+
+
+
+#### 4wN KO R3
+X4wN_KO_R3 <- read.delim("output/featurecounts_hg38/4wN_KO_R3.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X4wN_KO_R3$Geneid <- gsub("\\..*", "", X4wN_KO_R3$Geneid)
+X4wN_KO_R3_geneSymbol <- merge(X4wN_KO_R3, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.4wN_KO_R3_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+X4wN_KO_R3_count_summary <- X4wN_KO_R3_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.4wN_KO_R3_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X4wN_KO_R3_count_matrix <- as.matrix(X4wN_KO_R3_count_summary$median_count)
+rownames(X4wN_KO_R3_count_matrix) <- X4wN_KO_R3_count_summary$external_gene_name
+colnames(X4wN_KO_R3_count_matrix) <- "4wN_KO_R3"
+
+
+
+#### 4wN KO R4
+X4wN_KO_R4 <- read.delim("output/featurecounts_hg38/4wN_KO_R4.txt", header=TRUE, stringsAsFactors=FALSE, skip = 1) 
+### convert enesembl ID to gene Symbol
+X4wN_KO_R4$Geneid <- gsub("\\..*", "", X4wN_KO_R4$Geneid)
+X4wN_KO_R4_geneSymbol <- merge(X4wN_KO_R4, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na() %>%
+  dplyr::select(external_gene_name, 'output.STAR_hg38.4wN_KO_R4_Aligned.sortedByCoord.out.bam')
+### Calculate median as gene dupplicated with the conversino!
+X4wN_KO_R4_count_summary <- X4wN_KO_R4_geneSymbol %>%
+  group_by(external_gene_name) %>%
+  summarize(median_count = median(`output.STAR_hg38.4wN_KO_R4_Aligned.sortedByCoord.out.bam`)) %>%
+  ungroup() 
+X4wN_KO_R4_count_matrix <- as.matrix(X4wN_KO_R4_count_summary$median_count)
+rownames(X4wN_KO_R4_count_matrix) <- X4wN_KO_R4_count_summary$external_gene_name
+colnames(X4wN_KO_R4_count_matrix) <- "4wN_KO_R4"
+
+
+
+
+
+
+# NPC, 2dN and 4wN expressionSet
+all_counts <- cbind(XNPC_WT_R1_count_matrix, XNPC_WT_R2_count_matrix, XNPC_WT_R3_count_matrix, 
+XNPC_HET_R1_count_matrix, XNPC_HET_R2_count_matrix, XNPC_HET_R3_count_matrix,
+XNPC_KO_R1_count_matrix, XNPC_KO_R2_count_matrix, XNPC_KO_R3_count_matrix,
+X2dN_WT_R1_count_matrix, X2dN_WT_R2_count_matrix, X2dN_WT_R3_count_matrix, 
+X2dN_HET_R1_count_matrix, X2dN_HET_R2_count_matrix, X2dN_HET_R3_count_matrix,
+X2dN_KO_R1_count_matrix, X2dN_KO_R2_count_matrix, X2dN_KO_R3_count_matrix,
+X4wN_WT_R1_count_matrix, X4wN_WT_R2_count_matrix,
+X4wN_HET_R1_count_matrix, X4wN_HET_R2_count_matrix, X4wN_HET_R3_count_matrix, X4wN_HET_R4_count_matrix,
+X4wN_KO_R1_count_matrix, X4wN_KO_R2_count_matrix)
+### Create the phenotype data frame
+pheno_data <- data.frame(sampleID = colnames(all_counts),
+                         row.names = colnames(all_counts))
+### Convert pheno_data to AnnotatedDataFrame
+phenoData <- new("AnnotatedDataFrame", data = pheno_data)
+# Make sure that your combined matrix is indeed a matrix
+all_counts_matrix <- as.matrix(all_counts)
+### Now create the ExpressionSet object
+all_NPC_2dN_4wN.bulkeset <- ExpressionSet(assayData = all_counts_matrix,
+                      phenoData = phenoData)
+### Then convert to expression matrix
+all_NPC_2dN_4wN.bulk.mtx = exprs(all_NPC_2dN_4wN.bulkeset)
+
+
+
+# MuSiC1 deconvolution
+
+## Estimate cell type proportions
+# TO AVOID SUBSCRIPTY OUT OF BOUND ERROR:
+### subset bulk features that are only present in scRNAseq assay
+###### Assuming 'featureNames' can be used to retrieve the features from both ExpressionSets
+common_features <- intersect(featureNames(all_NPC_2dN_4wN.bulkeset), featureNames(CHOOSE_full_dataset_srt.sceset))
+# Subset the WT_HET_8wN.bulkeset to only include common features
+all_NPC_2dN_4wN.bulkeset_subset <- all_NPC_2dN_4wN.bulkeset[common_features, ]
+all_NPC_2dN_4wN.bulk.mtx = exprs(all_NPC_2dN_4wN.bulkeset_subset)
+Est.prop.all_NPC_2dN_4wN = music_prop(bulk.mtx = all_NPC_2dN_4wN.bulk.mtx, CHOOSE_full_dataset_srt.SingleCellExperiment, clusters = 'celltype_ctrl_transfer', samples = 'gRNA', select.ct = c("Astrocytes", "ccRG", "ccvRG", "CGE_IN", "CGE_LGE_IN", "INP", "IP", "L23", "L4", "L56", "L6_CThPN", "LGE_IN", "OPC", "oRG", "RG","vRG"), verbose = TRUE)
+
+
+## write output
+console_output <- capture.output(print(Est.prop.all_NPC_2dN_4wN$Est.prop.weighted))
+writeLines(console_output, "output/deconv/MuSiC-Est.prop.weighted-all_NPC_2dN_4wN.txt")
+
+XXX below to change
+
+
+# Check diff between estimation method (MuSiC vs NNLS)
+## Jitter plot of estimated cell type proportions
+pdf("output/deconv/MuSiC-jitterPlot_Est.prop.weighted-WT.pdf", width=14, height=20)  
+Jitter_Est(list(data.matrix(Est.prop.WT$Est.prop.weighted),
+                             data.matrix(Est.prop.WT$Est.prop.allgene)),
+                        method.name = c('MuSiC', 'NNLS'), title = 'Jitter plot of Est Proportions')
+dev.off()
+
+
+
+
+
+```
 
 
 
