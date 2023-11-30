@@ -17801,9 +17801,11 @@ writeLines(console_output, "output/MuSiC2/bisque-8wN_all-ReferenceBasedDecomposi
 
 Seems granulator needs a reference profile (Average gene expression within each cell types); seems to work with already processed data. So let's use the BisqueRNA tool to create **normalized bulk** and **signature profile**
 - normalized bulk will be extracted from BisqueRNA output `res$transformed.bulk`
+*--> The norm bulk are not good as contained negative value!! Instead let's use TPM*
 - signature will be genrate using BisqueRNA with `GenerateSCReference`(https://cran.r-project.org/web/packages/BisqueRNA/BisqueRNA.pdf)
 
 --> input files generated within `scRNAseqV3`; then granulator need a separate conda env... (as R install failed)
+
 
 
 ## Granulator input generation
@@ -17831,7 +17833,6 @@ library("ComplexHeatmap")
 library("ggrepel")
 library("ggpubr")
 library("biomaRt")
-library("granulator")
 
 
 # Import raw RNAseq read counts
@@ -18166,6 +18167,24 @@ write.table(all_bulk_CPM, file = "output/MuSiC2/all_bulk_CPM.txt", sep = "\t", r
 
 
 
+
+
+
+# Generate tpm files with geneSymbol
+
+
+tpm_all_sample <- read_csv("output/tpm_hg38/tpm_all_sample.txt") %>%
+  dplyr::select(-'...1')
+
+tpm_all_sample$Geneid <- gsub("\\..*", "", tpm_all_sample$Geneid)
+tpm_all_sample_geneSymbol <- merge(tpm_all_sample, genes_mapped, by.x = 'Geneid', by.y = 'ensembl_gene_id', all.x = TRUE) %>% 
+  drop_na()
+
+
+### Output table
+write.table(tpm_all_sample_geneSymbol, file = "output/tpm_hg38/tpm_all_sample_geneSymbol.txt", sep = "\t", row.names = TRUE, col.names = NA, quote = FALSE)
+
+
 ```
 
 ## Granulator deconvolution
@@ -18173,51 +18192,87 @@ write.table(all_bulk_CPM, file = "output/MuSiC2/all_bulk_CPM.txt", sep = "\t", r
 
 Install granulator on R\4.3.1 like in the [tuto](https://bioconductor.org/packages/release/bioc/vignettes/granulator/inst/doc/granulator.html#installation)
 
-create `granulator` conda env `conda create -n granulator r-base=4.3.1`; then install within R with bioconduct
+
+--> Lot of fail installing it with Bioconda, even when using the R4.3.1 version from the tutorial, I ended up installing it through conda with `conda create -n granulator r-base=4.3.1 bioconductor-granulator -c conda-forge -c bioconda`
+
+
+
 
 ```bash
 conda activate granulator
 ```
 
-***installation troubleshoot:***
-
-
-
-
 
 
 ```R
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-BiocManager::install("granulator")
-##--> dependencies fail ragg, officer, gdtools, xml2, flextable
-install.packages('ragg') # FAIL so try conda `conda install -c conda-forge r-ragg`
-##--> xml2 fail
-install.packages('xml2') # FAIL so try conda `conda install -c r r-xml2 `
-
-
-
-XXX
-
-
-
 # packages
 library("granulator")
+library("tidyverse")
 
 
 
+# import files _ V1
 
-# import files
+CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature <- read.delim("output/MuSiC2/CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature.txt",   header = TRUE,  row.names = 1)
+WT_bulk_CPM <- read.delim("output/MuSiC2/WT_bulk_CPM.txt",   header = TRUE,  row.names = 1)
+HET_bulk_CPM <- read.delim("output/MuSiC2/HET_bulk_CPM.txt",   header = TRUE,  row.names = 1)
+KO_bulk_CPM <- read.delim("output/MuSiC2/KO_bulk_CPM.txt",   header = TRUE,  row.names = 1)
+all_bulk_CPM <- read.delim("output/MuSiC2/all_bulk_CPM.txt",   header = TRUE,  row.names = 1)
 
-
-
+# import tpm _ V2
+all_TPM <- read.delim("output/tpm_hg38/tpm_all_sample_geneSymbol.txt",   header = TRUE,  row.names = 1)
+## WT
+WT_bulk_TPM <- all_TPM %>%
+  dplyr::select(external_gene_name, X8wN_WT_R1, X8wN_WT_R2, X8wN_WT_R3, X8wN_WT_R4) %>%
+  as.tibble()
+WT_bulk_matrix <- as.matrix(WT_bulk_TPM[,-1])  # Exclude the first column before converting
+rownames(WT_bulk_matrix) <- WT_bulk_TPM$external_gene_name
+## HET
+HET_bulk_TPM <- all_TPM %>%
+  dplyr::select(external_gene_name, X8wN_HET_R1, X8wN_HET_R2, X8wN_HET_R3, X8wN_HET_R4) %>%
+  as.tibble()
+HET_bulk_matrix <- as.matrix(HET_bulk_TPM[,-1])  # Exclude the first column before converting
+rownames(HET_bulk_matrix) <- HET_bulk_TPM$external_gene_name
+## KO
+KO_bulk_TPM <- all_TPM %>%
+  dplyr::select(external_gene_name, X8wN_KO_R1, X8wN_KO_R2, X8wN_KO_R3, X8wN_KO_R4) %>%
+  as.tibble()
+KO_bulk_matrix <- as.matrix(KO_bulk_TPM[,-1])  # Exclude the first column before converting
+rownames(KO_bulk_matrix) <- KO_bulk_TPM$external_gene_name
 
 
 
 # run granulator
+## WT
+decon <- deconvolute(m = as.matrix(WT_bulk_matrix), sigMatrix = as.matrix(CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature) )
+decon <- deconvolute(m = as.matrix(WT_bulk_matrix), sigMatrix = as.matrix(CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature) , methods = "dtangle")
+## HET
+decon <- deconvolute(m = as.matrix(HET_bulk_matrix), sigMatrix = as.matrix(CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature), methods = "dtangle")
+## KO
+decon <- deconvolute(m = as.matrix(KO_bulk_matrix), sigMatrix = as.matrix(CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature), methods = "dtangle")
 
 
-decon <- deconvolute(m = bulkRNAseq_ABIS, sigMatrix = CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature)
+## Save output
+console_output <- capture.output(print(decon))
+writeLines(console_output, "output/MuSiC2/granulator_WT_dtangle.txt")
+console_output <- capture.output(print(decon))
+writeLines(console_output, "output/MuSiC2/granulator_HET_dtangle.txt")
+console_output <- capture.output(print(decon))
+writeLines(console_output, "output/MuSiC2/granulator_KO_dtangle.txt")
+
+## granulator plot
+pdf("output/MuSiC2/granulator-plot_similarity_CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature.pdf", width=14, height=20)  
+plot_similarity(sigMatrix=as.matrix(CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature))
+dev.off()
+pdf("output/MuSiC2/granulator_WT-plot_deconvolute.pdf", width=14, height=20)  
+plot_deconvolute(deconvoluted = decon, scale = TRUE, labels = FALSE)
+dev.off()
+
+
+## save environemnt
+
+save.image(file="output/MuSiC2/granulator_WT.RData")
+load("output/MuSiC2/granulator_WT.RData")
 
 
 
@@ -18225,7 +18280,7 @@ decon <- deconvolute(m = bulkRNAseq_ABIS, sigMatrix = CHOOSE_full_dataset_srt.sc
 ```
 
 
-
+--> only **dTangle** work; the other mthod fail; gave weird results
 
 
 
