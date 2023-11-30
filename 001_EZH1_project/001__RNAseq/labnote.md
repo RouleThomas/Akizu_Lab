@@ -16679,11 +16679,11 @@ library("biomaRt")
 
 
 ## import seurat object
-CHOOSE_CTRL_annot_srt <- readRDS(file = "output/MuSiC2/CHOOSE_CTRL_annot_srt.rds")
+CHOOSE_CTRL_annot_srt <- readRDS(file = "output/deconv/CHOOSE_CTRL_annot_srt.rds")
 DefaultAssay(CHOOSE_CTRL_annot_srt) <- "RNA" # 
 
 
-pdf("output/MuSiC2/UMAP_CHOOSE_CTRL_annot_srt.celltype_cl_coarse2.pdf", width=10, height=6)
+pdf("output/deconv/UMAP_CHOOSE_CTRL_annot_srt.celltype_cl_coarse2.pdf", width=10, height=6)
 DimPlot(CHOOSE_CTRL_annot_srt, reduction = "umap", group.by = "celltype_cl_coarse2", label=TRUE)
 dev.off()
 
@@ -16693,11 +16693,11 @@ cells_to_keep <- WhichCells(CHOOSE_CTRL_annot_srt, expression = celltype_cl_coar
 CHOOSE_CTRL_annot_srt.subset_celltype_cl_coarse2 <- subset(CHOOSE_CTRL_annot_srt, cells = cells_to_keep)
 
 
-pdf("output/MuSiC2/UMAP_CHOOSE_CTRL_annot_srt.subset_celltype_cl_coarse2.pdf", width=10, height=6)
+pdf("output/deconv/UMAP_CHOOSE_CTRL_annot_srt.subset_celltype_cl_coarse2.pdf", width=10, height=6)
 DimPlot(CHOOSE_CTRL_annot_srt.subset_celltype_cl_coarse2, reduction = "umap", group.by = "celltype_cl_coarse2", label=TRUE)
 dev.off()
 
-pdf("output/MuSiC2/UMAP_CHOOSE_CTRL_annot_srt.subset_pseudotime_ranks.pdf", width=10, height=6)
+pdf("output/deconv/UMAP_CHOOSE_CTRL_annot_srt.subset_pseudotime_ranks.pdf", width=10, height=6)
 FeaturePlot(
   object = CHOOSE_CTRL_annot_srt.subset_celltype_cl_coarse2,
   features = 'pseudotime_ranks', 
@@ -17666,18 +17666,18 @@ X8wN.bulkeset <- ExpressionSet(assayData = all_counts_matrix,
 # V1 
 # scRNASeq import; filter control
 ## import seurat object
-CHOOSE_CTRL_annot_srt <- readRDS(file = "output/MuSiC2/CHOOSE_CTRL_annot_srt.rds")
+CHOOSE_CTRL_annot_srt <- readRDS(file = "output/deconv/CHOOSE_CTRL_annot_srt.rds")
 DefaultAssay(CHOOSE_CTRL_annot_srt) <- "RNA" # 
-pdf("output/MuSiC2/UMAP_CHOOSE_CTRL_annot_srt.celltype_cl_coarse2.pdf", width=10, height=6)
+pdf("output/deconv/UMAP_CHOOSE_CTRL_annot_srt.celltype_cl_coarse2.pdf", width=10, height=6)
 DimPlot(CHOOSE_CTRL_annot_srt, reduction = "umap", group.by = "celltype_cl_coarse2", label=TRUE)
 dev.off()
 ## isolate the cells of interest; control one
 cells_to_keep <- WhichCells(CHOOSE_CTRL_annot_srt, expression = celltype_cl_coarse2 != "NA")
 CHOOSE_CTRL_annot_srt.subset_celltype_cl_coarse2 <- subset(CHOOSE_CTRL_annot_srt, cells = cells_to_keep)
-pdf("output/MuSiC2/UMAP_CHOOSE_CTRL_annot_srt.subset_celltype_cl_coarse2.pdf", width=10, height=6)
+pdf("output/deconv/UMAP_CHOOSE_CTRL_annot_srt.subset_celltype_cl_coarse2.pdf", width=10, height=6)
 DimPlot(CHOOSE_CTRL_annot_srt.subset_celltype_cl_coarse2, reduction = "umap", group.by = "celltype_cl_coarse2", label=TRUE)
 dev.off()
-pdf("output/MuSiC2/UMAP_CHOOSE_CTRL_annot_srt.subset_pseudotime_ranks.pdf", width=10, height=6)
+pdf("output/deconv/UMAP_CHOOSE_CTRL_annot_srt.subset_pseudotime_ranks.pdf", width=10, height=6)
 FeaturePlot(
   object = CHOOSE_CTRL_annot_srt.subset_celltype_cl_coarse2,
   features = 'pseudotime_ranks', 
@@ -17695,30 +17695,30 @@ pData(CHOOSE_CTRL_annot_srt.subset_celltype_cl_coarse2.sceset)$group <- rep("WT"
 
 
 # V2 scRNASeq import all
-CHOOSE_full_dataset_srt <- readRDS(file = "output/MuSiC2/CHOOSE_full_dataset_srt.rds")
+CHOOSE_full_dataset_srt <- readRDS(file = "output/deconv/CHOOSE_full_dataset_srt.rds")
 DefaultAssay(CHOOSE_full_dataset_srt) <- "RNA" # 
-pdf("output/MuSiC2/UMAP_CHOOSE_full_dataset_srt.celltype_cl_coarse2.pdf", width=10, height=6)
+pdf("output/deconv/UMAP_CHOOSE_full_dataset_srt.celltype_cl_coarse2.pdf", width=10, height=6)
 DimPlot(CHOOSE_full_dataset_srt, reduction = "umap", group.by = "celltype_cl_coarse2", label=TRUE)
 dev.off()
-pdf("output/MuSiC2/UMAP_CHOOSE_full_dataset_srt.gRNA.pdf", width=10, height=6)
+pdf("output/deconv/UMAP_CHOOSE_full_dataset_srt.gRNA.pdf", width=10, height=6)
 DimPlot(CHOOSE_full_dataset_srt, reduction = "umap", group.by = "gRNA", label=TRUE)
 dev.off()
-pdf("output/MuSiC2/UMAP_CHOOSE_full_dataset_srt.celltype_cl_refined.pdf", width=10, height=6)
+pdf("output/deconv/UMAP_CHOOSE_full_dataset_srt.celltype_cl_refined.pdf", width=10, height=6)
 DimPlot(CHOOSE_full_dataset_srt, reduction = "umap", group.by = "celltype_cl_refined", label=TRUE)
 dev.off()
-pdf("output/MuSiC2/UMAP_CHOOSE_full_dataset_srt.celltype_jf_refined.pdf", width=10, height=6)
+pdf("output/deconv/UMAP_CHOOSE_full_dataset_srt.celltype_jf_refined.pdf", width=10, height=6)
 DimPlot(CHOOSE_full_dataset_srt, reduction = "umap", group.by = "celltype_jf_refined", label=TRUE)
 dev.off()
-pdf("output/MuSiC2/UMAP_CHOOSE_full_dataset_srt.celltype_ctrl_transfer.pdf", width=10, height=6)
+pdf("output/deconv/UMAP_CHOOSE_full_dataset_srt.celltype_ctrl_transfer.pdf", width=10, height=6)
 DimPlot(CHOOSE_full_dataset_srt, reduction = "umap", group.by = "celltype_ctrl_transfer", label=TRUE)
 dev.off()
-pdf("output/MuSiC2/UMAP_CHOOSE_full_dataset_srt.celltype_ctrl_transfer_coarse.pdf", width=10, height=6)
+pdf("output/deconv/UMAP_CHOOSE_full_dataset_srt.celltype_ctrl_transfer_coarse.pdf", width=10, height=6)
 DimPlot(CHOOSE_full_dataset_srt, reduction = "umap", group.by = "celltype_ctrl_transfer_coarse", label=TRUE)
 dev.off()
-pdf("output/MuSiC2/UMAP_CHOOSE_full_dataset_srt.celltype_jf_ctrl.pdf", width=10, height=6)
+pdf("output/deconv/UMAP_CHOOSE_full_dataset_srt.celltype_jf_ctrl.pdf", width=10, height=6)
 DimPlot(CHOOSE_full_dataset_srt, reduction = "umap", group.by = "celltype_jf_ctrl", label=TRUE)
 dev.off()
-pdf("output/MuSiC2/UMAP_CHOOSE_full_dataset_srt.lineage.pdf", width=10, height=6)
+pdf("output/deconv/UMAP_CHOOSE_full_dataset_srt.lineage.pdf", width=10, height=6)
 DimPlot(CHOOSE_full_dataset_srt, reduction = "umap", group.by = "lineage", label=TRUE)
 dev.off()
 
@@ -17746,13 +17746,13 @@ knitr::kable(ref.based.estimates.all, digits=2)
 
 ## write output
 console_output <- capture.output(print(knitr::kable(ref.based.estimates, digits=2)))
-writeLines(console_output, "output/MuSiC2/bisque-8wN_WT-ReferenceBasedDecomposition.txt")
+writeLines(console_output, "output/deconv/bisque-8wN_WT-ReferenceBasedDecomposition.txt")
 console_output <- capture.output(print(knitr::kable(ref.based.estimates.HET, digits=2)))
-writeLines(console_output, "output/MuSiC2/bisque-8wN_HET-ReferenceBasedDecomposition.txt")
+writeLines(console_output, "output/deconv/bisque-8wN_HET-ReferenceBasedDecomposition.txt")
 console_output <- capture.output(print(knitr::kable(ref.based.estimates.KO, digits=2)))
-writeLines(console_output, "output/MuSiC2/bisque-8wN_KO-ReferenceBasedDecomposition.txt")
+writeLines(console_output, "output/deconv/bisque-8wN_KO-ReferenceBasedDecomposition.txt")
 console_output <- capture.output(print(knitr::kable(ref.based.estimates.all, digits=2)))
-writeLines(console_output, "output/MuSiC2/bisque-8wN_all-ReferenceBasedDecomposition.txt")
+writeLines(console_output, "output/deconv/bisque-8wN_all-ReferenceBasedDecomposition.txt")
 
 
 
@@ -17777,13 +17777,13 @@ knitr::kable(ref.based.estimates.all, digits=2)
 
 ## write output
 console_output <- capture.output(print(knitr::kable(ref.based.estimates, digits=2)))
-writeLines(console_output, "output/MuSiC2/bisque-8wN_WT-ReferenceBasedDecomposition-lineage.txt")
+writeLines(console_output, "output/deconv/bisque-8wN_WT-ReferenceBasedDecomposition-lineage.txt")
 console_output <- capture.output(print(knitr::kable(ref.based.estimates.HET, digits=2)))
-writeLines(console_output, "output/MuSiC2/bisque-8wN_HET-ReferenceBasedDecomposition-lineage.txt")
+writeLines(console_output, "output/deconv/bisque-8wN_HET-ReferenceBasedDecomposition-lineage.txt")
 console_output <- capture.output(print(knitr::kable(ref.based.estimates.KO, digits=2)))
-writeLines(console_output, "output/MuSiC2/bisque-8wN_KO-ReferenceBasedDecomposition-lineage.txt")
+writeLines(console_output, "output/deconv/bisque-8wN_KO-ReferenceBasedDecomposition-lineage.txt")
 console_output <- capture.output(print(knitr::kable(ref.based.estimates.all, digits=2)))
-writeLines(console_output, "output/MuSiC2/bisque-8wN_all-ReferenceBasedDecomposition-lineage.txt")
+writeLines(console_output, "output/deconv/bisque-8wN_all-ReferenceBasedDecomposition-lineage.txt")
 
 
 ```
@@ -18124,7 +18124,7 @@ X8wN.bulkeset <- ExpressionSet(assayData = all_counts_matrix,
 
 
 # V2 scRNASeq import all
-CHOOSE_full_dataset_srt <- readRDS(file = "output/MuSiC2/CHOOSE_full_dataset_srt.rds")
+CHOOSE_full_dataset_srt <- readRDS(file = "output/deconv/CHOOSE_full_dataset_srt.rds")
 DefaultAssay(CHOOSE_full_dataset_srt) <- "RNA" #
 
 
@@ -18159,11 +18159,11 @@ CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature = GenerateSCRefe
 
 ## write output files
 
-write.table(CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature, file = "output/MuSiC2/CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature.txt", sep = "\t", row.names = TRUE, col.names = NA, quote = FALSE)
-write.table(WT_bulk_CPM, file = "output/MuSiC2/WT_bulk_CPM.txt", sep = "\t", row.names = TRUE, col.names = NA, quote = FALSE)
-write.table(HET_bulk_CPM, file = "output/MuSiC2/HET_bulk_CPM.txt", sep = "\t", row.names = TRUE, col.names = NA, quote = FALSE)
-write.table(KO_bulk_CPM, file = "output/MuSiC2/KO_bulk_CPM.txt", sep = "\t", row.names = TRUE, col.names = NA, quote = FALSE)
-write.table(all_bulk_CPM, file = "output/MuSiC2/all_bulk_CPM.txt", sep = "\t", row.names = TRUE, col.names = NA, quote = FALSE)
+write.table(CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature, file = "output/deconv/CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature.txt", sep = "\t", row.names = TRUE, col.names = NA, quote = FALSE)
+write.table(WT_bulk_CPM, file = "output/deconv/WT_bulk_CPM.txt", sep = "\t", row.names = TRUE, col.names = NA, quote = FALSE)
+write.table(HET_bulk_CPM, file = "output/deconv/HET_bulk_CPM.txt", sep = "\t", row.names = TRUE, col.names = NA, quote = FALSE)
+write.table(KO_bulk_CPM, file = "output/deconv/KO_bulk_CPM.txt", sep = "\t", row.names = TRUE, col.names = NA, quote = FALSE)
+write.table(all_bulk_CPM, file = "output/deconv/all_bulk_CPM.txt", sep = "\t", row.names = TRUE, col.names = NA, quote = FALSE)
 
 
 
@@ -18213,11 +18213,11 @@ library("tidyverse")
 
 # import files _ V1
 
-CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature <- read.delim("output/MuSiC2/CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature.txt",   header = TRUE,  row.names = 1)
-WT_bulk_CPM <- read.delim("output/MuSiC2/WT_bulk_CPM.txt",   header = TRUE,  row.names = 1)
-HET_bulk_CPM <- read.delim("output/MuSiC2/HET_bulk_CPM.txt",   header = TRUE,  row.names = 1)
-KO_bulk_CPM <- read.delim("output/MuSiC2/KO_bulk_CPM.txt",   header = TRUE,  row.names = 1)
-all_bulk_CPM <- read.delim("output/MuSiC2/all_bulk_CPM.txt",   header = TRUE,  row.names = 1)
+CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature <- read.delim("output/deconv/CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature.txt",   header = TRUE,  row.names = 1)
+WT_bulk_CPM <- read.delim("output/deconv/WT_bulk_CPM.txt",   header = TRUE,  row.names = 1)
+HET_bulk_CPM <- read.delim("output/deconv/HET_bulk_CPM.txt",   header = TRUE,  row.names = 1)
+KO_bulk_CPM <- read.delim("output/deconv/KO_bulk_CPM.txt",   header = TRUE,  row.names = 1)
+all_bulk_CPM <- read.delim("output/deconv/all_bulk_CPM.txt",   header = TRUE,  row.names = 1)
 
 # import tpm _ V2
 all_TPM <- read.delim("output/tpm_hg38/tpm_all_sample_geneSymbol.txt",   header = TRUE,  row.names = 1)
@@ -18254,25 +18254,25 @@ decon <- deconvolute(m = as.matrix(KO_bulk_matrix), sigMatrix = as.matrix(CHOOSE
 
 ## Save output
 console_output <- capture.output(print(decon))
-writeLines(console_output, "output/MuSiC2/granulator_WT_dtangle.txt")
+writeLines(console_output, "output/deconv/granulator_WT_dtangle.txt")
 console_output <- capture.output(print(decon))
-writeLines(console_output, "output/MuSiC2/granulator_HET_dtangle.txt")
+writeLines(console_output, "output/deconv/granulator_HET_dtangle.txt")
 console_output <- capture.output(print(decon))
-writeLines(console_output, "output/MuSiC2/granulator_KO_dtangle.txt")
+writeLines(console_output, "output/deconv/granulator_KO_dtangle.txt")
 
 ## granulator plot
-pdf("output/MuSiC2/granulator-plot_similarity_CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature.pdf", width=14, height=20)  
+pdf("output/deconv/granulator-plot_similarity_CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature.pdf", width=14, height=20)  
 plot_similarity(sigMatrix=as.matrix(CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature))
 dev.off()
-pdf("output/MuSiC2/granulator_WT-plot_deconvolute.pdf", width=14, height=20)  
+pdf("output/deconv/granulator_WT-plot_deconvolute.pdf", width=14, height=20)  
 plot_deconvolute(deconvoluted = decon, scale = TRUE, labels = FALSE)
 dev.off()
 
 
 ## save environemnt
 
-save.image(file="output/MuSiC2/granulator_WT.RData")
-load("output/MuSiC2/granulator_WT.RData")
+save.image(file="output/deconv/granulator_WT.RData")
+load("output/deconv/granulator_WT.RData")
 
 
 
