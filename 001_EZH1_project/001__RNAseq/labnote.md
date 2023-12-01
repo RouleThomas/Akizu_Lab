@@ -18475,17 +18475,6 @@ Est.prop.all_NPC_2dN_4wN = music_prop(bulk.mtx = all_NPC_2dN_4wN.bulk.mtx, CHOOS
 console_output <- capture.output(print(Est.prop.all_NPC_2dN_4wN$Est.prop.weighted))
 writeLines(console_output, "output/deconv/MuSiC-Est.prop.weighted-all_NPC_2dN_4wN.txt")
 
-XXX below to change
-
-
-# Check diff between estimation method (MuSiC vs NNLS)
-## Jitter plot of estimated cell type proportions
-pdf("output/deconv/MuSiC-jitterPlot_Est.prop.weighted-WT.pdf", width=14, height=20)  
-Jitter_Est(list(data.matrix(Est.prop.WT$Est.prop.weighted),
-                             data.matrix(Est.prop.WT$Est.prop.allgene)),
-                        method.name = c('MuSiC', 'NNLS'), title = 'Jitter plot of Est Proportions')
-dev.off()
-
 
 
 
@@ -18493,7 +18482,24 @@ dev.off()
 ```
 
 
+## MuSiC1 data vizualization
 
+Let's import the MuSiC deconvolution output and generate plot
+
+--> MuSiC1 output `output/deconv/MuSiC-Est.prop.weighted-*.txt` transferred in local to generate tidy txt file via Xcell = and transferred back to the cluster as `output/deconv/MuSiC-Est.prop.weighted-tidy_all.txt` (proporiton for all time points/all genotpes)
+
+
+```bash
+conda activate deseq2
+```
+
+
+
+```R
+XXX
+
+
+```
 
 
 
