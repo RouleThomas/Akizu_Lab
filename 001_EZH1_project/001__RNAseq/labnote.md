@@ -18482,32 +18482,6 @@ writeLines(console_output, "output/deconv/MuSiC-Est.prop.weighted-all_NPC_2dN_4w
 ```
 
 
-## MuSiC1 data vizualization
-
-Let's import the MuSiC deconvolution output and generate plot
-
---> MuSiC1 output `output/deconv/MuSiC-Est.prop.weighted-*.txt` transferred in local to generate tidy txt file via Xcell = and transferred back to the cluster as `output/deconv/MuSiC-Est.prop.weighted-tidy_all.txt` (proporiton for all time points/all genotpes)
-
-
-```bash
-conda activate deseq2
-```
-
-
-
-```R
-XXX
-
-
-```
-
-
-
-
-
-
-
-
 # Bisque RNAseq bulk deconvolution
 
 [Paper](https://www.nature.com/articles/s41467-020-15816-6) and [github](https://github.com/cozygene/bisque) and [docs](https://cran.r-project.org/web/packages/BisqueRNA/BisqueRNA.pdf) and [tuto](https://cran.r-project.org/web/packages/BisqueRNA/vignettes/bisque.html) and [tuto2](https://cozygene.r-universe.dev/BisqueRNA/doc/manual.html)
@@ -19456,6 +19430,77 @@ load("output/deconv/granulator_WT.RData")
 
 
 
+
+## decvonvolution data vizualization
+
+
+--> MuSiC1 (`output/deconv/MuSiC-Est.prop.weighted-*.txt`) and Bisque outputs transferred in local to generate tidy txt file via Xcell = and transferred back to the cluster as `output/deconv/deconv_Lietal2023.txt` (proporiton for all time points/all genotpes)
+
+
+
+
+```bash
+conda activate deseq2
+```
+
+
+
+```R
+library("tidyverse")
+
+deconv_Lietal2023 = read.table("output/deconv/deconv_Lietal2023.txt", 
+                                           header = TRUE) %>%
+                               as_tibble()
+
+deconv_Lietal2023_MuSiC = deconv_Lietal2023 %>% filter(method == "MuSiC") %>%
+  dplyr::select(-method) %>%
+  pivot_longer(cols = -sample, names_to = "tissue", values_to = "proportion") %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep ="_") %>%
+  add_column(method = "MuSiC")
+deconv_Lietal2023_bisque = deconv_Lietal2023 %>% filter(method == "bisque") %>%
+  dplyr::select(-method) %>%
+  pivot_longer(cols = -sample, names_to = "tissue", values_to = "proportion") %>%
+  separate(sample, into = c("time", "genotype", "replicate"), sep ="_") %>%
+  add_column(method = "bisque")
+
+deconv_Lietal2023_tidy = deconv_Lietal2023_MuSiC %>%
+  bind_rows(deconv_Lietal2023_bisque)
+
+
+
+# calculate the mean and standard error for each tissue-genotype combination
+deconv_Lietal2023_stat <- deconv_Lietal2023_tidy %>%
+  group_by(tissue, genotype,method) %>%
+  summarize(
+    mean_proportion = mean(proportion),
+    se_proportion = sd(proportion) / sqrt(n()),
+    .groups = 'drop'
+  )
+
+
+deconv_Lietal2023_stat$genotype <-
+  factor(deconv_Lietal2023_stat$genotype,
+         c("WT", "HET", "KO"))
+
+
+# Create the plot
+pdf("output/deconv/deconv_Lietal2023_barplot.pdf", width=18, height=10)  
+ggplot(deconv_Lietal2023_stat, aes(x = tissue, y = mean_proportion, fill = genotype)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_errorbar(
+    aes(ymin = mean_proportion - se_proportion, ymax = mean_proportion + se_proportion),
+    position = position_dodge(0.9),
+    width = 0.25
+  ) +
+  scale_fill_manual(values = c("WT" = "black", "HET" = "blue", "KO" = "red")) +
+  facet_wrap(~method) +
+  theme_bw() +
+  labs(x = "Tissue", y = "Proportion", fill = "Genotype") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+```
 
 
 
