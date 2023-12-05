@@ -1869,12 +1869,12 @@ output/deseq2/upregulated_res05_HP_KO_vs_HP_Het.txt
 
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/deseq2/downregulated_res05_CT_KO_vs_CT_Het.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2/downregulated_res05_HP_KO_vs_HP_Het.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/deseq2/upregulated_res05_CT_KO_vs_CT_Het.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2/upregulated_res05_HP_KO_vs_HP_Het.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -1914,10 +1914,10 @@ gos$Term <- factor(gos$Term, levels = new_order)
 
 
 # Plotting with enhanced aesthetics
-pdf("output/GO/enrichR_GO_Biological_Process_2023_CB_KO_vs_CB_Het_FigV4.pdf", width=15, height=9)
-pdf("output/GO/enrichR_GO_Biological_Process_2023_HP_KO_vs_HP_Het_FigV4.pdf", width=15, height=9)
 
 pdf("output/GO/enrichR_GO_Biological_Process_2023_CT_KO_vs_CT_Het_FigV4.pdf", width=20, height=9)
+pdf("output/GO/enrichR_GO_Biological_Process_2023_CB_KO_vs_CB_Het_FigV4.pdf", width=15, height=9)
+pdf("output/GO/enrichR_GO_Biological_Process_2023_HP_KO_vs_HP_Het_FigV4.pdf", width=15, height=9)
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.8) +
@@ -1939,11 +1939,6 @@ ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) +
     axis.text.x = element_text(size = 40)
   )
 dev.off()
-
-xxxxxx
-
-
-
 
 
 
