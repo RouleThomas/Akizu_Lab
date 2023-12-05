@@ -50,6 +50,7 @@ output/GO/geneSymbol_1year_CB_qval05FCmore1.txt
 output/GO/geneSymbol_1year_CX_qval05FCless1.txt
 output/GO/geneSymbol_1year_CX_qval05FCmore1.txt
 
+
 output/GO/geneSymbol_1month_CB_qval05FCless0.5.txt
 output/GO/geneSymbol_1month_CB_qval05FCmore0.5.txt
 output/GO/geneSymbol_1year_CB_qval05FCless0.5.txt
@@ -63,12 +64,12 @@ output/GO/geneSymbol_1year_CX_qval05FCmore0.5.txt
 dbs <- c("GO_Biological_Process_2023")
 
 # Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/GO/geneSymbol_1year_CB_qval05FCless0.5.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/GO/geneSymbol_1year_CX_qval05FCless0.5.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 
 # Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/GO/geneSymbol_1year_CB_qval05FCmore0.5.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/GO/geneSymbol_1year_CX_qval05FCmore0.5.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -78,10 +79,10 @@ down <- edown$GO_Biological_Process_2023
 up$type <- "up"
 down$type <- "down"
 
-# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
-up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 50)
-down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 50)
-
+# Get top enriched terms and sort by Adjusted.P.value (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Adjusted.P.value, decreasing = TRUE), ], 50)  #---> this not run for `*_complete.txt`
+down <- head(down[order(down$Adjusted.P.value, decreasing = TRUE), ], 50) #---> this not run for `*_complete.txt`
+ 
 # Convert adjusted p-values and differentiate direction for up and down
 up$logAdjP <- -log10(up$Adjusted.P.value)
 down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
@@ -92,6 +93,7 @@ gos <- gos %>% arrange(logAdjP)
 
 # Filter out rows where absolute logAdjP 1.3 = 0.05
 gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos <- gos %>% filter(P.value <= 0.05)
 gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
 
 # Create the order based on the approach given
@@ -154,6 +156,9 @@ write.table(gos, "output/GO/enrichR_GO_BP_1month_CB_qval05FC0.5.txt", sep="\t", 
 write.table(gos, "output/GO/enrichR_GO_BP_1year_CB_qval05FC0.5.txt", sep="\t", row.names=FALSE, quote=FALSE)
 write.table(gos, "output/GO/enrichR_GO_BP_1year_CX_qval05FC0.5.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
+write.table(gos, "output/GO/enrichR_GO_BP_1month_CB_qval05FC0.5_complete.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_GO_BP_1year_CB_qval05FC0.5_complete.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_GO_BP_1year_CX_qval05FC0.5_complete.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 # Define databases for enrichment
