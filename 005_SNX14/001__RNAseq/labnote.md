@@ -881,6 +881,116 @@ dev.off()
 ```
 
 
+## GSEA using [webtool](https://www.webgestalt.org/)
+
+
+Let's try to reproduce Ying analysis; she may have used only the signficiant DEGs as input for GSEA (*this method is NOT recommended*)
+
+Let's create a `*.rnk` file with 2 columns; geneSymbol and rank score --> **let's filter the DEGs only and rank with log2fc**
+
+--> Let's create 2 input files; using pvalue treshold 0.05 and qvalue 0.05
+
+```R
+# packages
+library("tidyverse")
+library("readxl")
+
+
+# pvalue filtering
+
+# import DEGs
+CB_1month = read_excel("output/gsea/RNAseq of CB&CX_1mon&1yr.xlsx", sheet = 1) %>%
+  dplyr::select(gene_name, log2FoldChange, pvalue) %>%
+  filter(pvalue <=0.05) %>%
+  dplyr::select(-pvalue)
+CX_1month = read_excel("output/gsea/RNAseq of CB&CX_1mon&1yr.xlsx", sheet = 3) %>%
+  dplyr::select(gene_name, log2FoldChange, pvalue) %>%
+  filter(pvalue <=0.05) %>%
+  dplyr::select(-pvalue)
+CB_1year = read_excel("output/gsea/RNAseq of CB&CX_1mon&1yr.xlsx", sheet = 2) %>%
+  dplyr::select(Gene.name, log2FoldChange, pvalue) %>%
+  dplyr::rename(gene_name = Gene.name)%>%
+  filter(pvalue <=0.05) %>%
+  dplyr::select(-pvalue)
+CX_1year = read_excel("output/gsea/RNAseq of CB&CX_1mon&1yr.xlsx", sheet = 4) %>%
+  dplyr::select(Gene.name, log2FoldChange, pvalue) %>%
+  dplyr::rename(gene_name = Gene.name)%>%
+  filter(pvalue <=0.05) %>%
+  dplyr::select(-pvalue)
+
+
+# Create .rnk file
+## Order our DEG
+CB_1month_rank = CB_1month %>%
+  arrange(desc(log2FoldChange))
+CB_1year_rank = CB_1year %>%
+  arrange(desc(log2FoldChange))
+CX_1month_rank = CX_1month %>%
+  arrange(desc(log2FoldChange))
+CX_1year_rank = CX_1year %>%
+  arrange(desc(log2FoldChange))
+### save output
+
+write.table(CB_1month_rank, "output/gsea/CB_1month_rank_pvalue.rnk", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+write.table(CB_1year_rank, "output/gsea/CB_1year_rank_pvalue.rnk", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+write.table(CX_1month_rank, "output/gsea/CX_1month_rank_pvalue.rnk", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+write.table(CX_1year_rank, "output/gsea/CX_1year_rank_pvalue.rnk", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+
+
+# qvalue filtering
+
+# import DEGs
+CB_1month = read_excel("output/gsea/RNAseq of CB&CX_1mon&1yr.xlsx", sheet = 1) %>%
+  dplyr::select(gene_name, log2FoldChange, padj) %>%
+  filter(padj <=0.05) %>%
+  dplyr::select(-padj)
+CX_1month = read_excel("output/gsea/RNAseq of CB&CX_1mon&1yr.xlsx", sheet = 3) %>%
+  dplyr::select(gene_name, log2FoldChange, padj) %>%
+  filter(padj <=0.05) %>%
+  dplyr::select(-padj)
+CB_1year = read_excel("output/gsea/RNAseq of CB&CX_1mon&1yr.xlsx", sheet = 2) %>%
+  dplyr::select(Gene.name, log2FoldChange, padj) %>%
+  dplyr::rename(gene_name = Gene.name)%>%
+  filter(padj <=0.05) %>%
+  dplyr::select(-padj)
+CX_1year = read_excel("output/gsea/RNAseq of CB&CX_1mon&1yr.xlsx", sheet = 4) %>%
+  dplyr::select(Gene.name, log2FoldChange, padj) %>%
+  dplyr::rename(gene_name = Gene.name)%>%
+  filter(padj <=0.05) %>%
+  dplyr::select(-padj)
+
+
+# Create .rnk file
+## Order our DEG
+CB_1month_rank = CB_1month %>%
+  arrange(desc(log2FoldChange))
+CB_1year_rank = CB_1year %>%
+  arrange(desc(log2FoldChange))
+CX_1month_rank = CX_1month %>%
+  arrange(desc(log2FoldChange))
+CX_1year_rank = CX_1year %>%
+  arrange(desc(log2FoldChange))
+### save output
+
+write.table(CB_1month_rank, "output/gsea/CB_1month_rank_padj.rnk", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+write.table(CB_1year_rank, "output/gsea/CB_1year_rank_padj.rnk", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+write.table(CX_1month_rank, "output/gsea/CX_1month_rank_padj.rnk", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+write.table(CX_1year_rank, "output/gsea/CX_1year_rank_padj.rnk", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
 
 
 
