@@ -16,6 +16,7 @@ Objectives:
 - Confirm expected YAP1 target are deregulated
 --> Send update to Estaras lab
 
+*NOTE: data downloaded in local from basespace and then imported into the cluster*
 
 # Quick 1st analysis; data per data
 
@@ -8517,7 +8518,76 @@ pdf("output/condiments/dotplot_BP_gene_clusters_traj1.pdf", width=10, height=25)
 dotplot(compGO, showCategory = 15, title = "GO_Biological Process Enrichment Analysis")
 dev.off()
 
-
-
-
 ```
+
+
+# New time point 20231206
+Fodler label as `12.5.23 E7 cYAP KO and 24h human gastruloids treated with DASATINIB` in basespace
+
+***NOTE: the 24hr UNTREATED are .gz.temp! Weird; I just remove the .temp...***
+
+## Counting with cellranger count
+
+```bash 
+conda activate scRNAseq
+which cellranger
+
+# Run counting sample per sample for humangastruloid
+sbatch scripts/cellranger_count_humangastruloid_UNTREATED24hr.sh # 9010720
+sbatch scripts/cellranger_count_humangastruloid_DASATINIB24hr.sh # 9010738
+
+# Run count for embryo using mice genome
+sbatch scripts/cellranger_count_embryo_control_E7_mice.sh # 9010616; with QCNOTfail XXX
+sbatch scripts/cellranger_count_embryo_cYAPKO_E7_mice.sh # 9010675
+```
+--> Weird bug for `embryo_control_E7`: `I0 error in FASTQ dile ... line: 0 failed to fill whole buffer`
+----> There is 2 embryo_control_E7 files in BaseSpace; QC fail and not  QC failed; lets test both;
+------> I indeed imported the QC fail one; let's use the QC not fail
+
+
+
+
+
+## RNA contamination and doublet detection
+- doublet detection using [scrublet](https://github.com/swolock/scrublet) **on the filtered matrix**
+- ambient RNA correction using `soupX` in R before generating the Seurat object
+
+```bash
+srun --mem=500g --pty bash -l
+conda deactivate # base environment needed
+python3 scrublet.py [input_path] [output_path]
+# Run doublet detection/scrublet sample per sample
+python3 scripts/scrublet_doublets.py humangastruloid_UNTREATED72hr/outs/filtered_feature_bc_matrix output/doublets/humangastruloid_UNTREATED72hr.tsv
+python3 scripts/scrublet_doublets.py humangastruloid_DASATINIB72hr/outs/filtered_feature_bc_matrix output/doublets/humangastruloid_DASATINIB72hr.tsv
+python3 scripts/scrublet_doublets.py embryo_control_e775_mice/outs/filtered_feature_bc_matrix output/doublets/embryo_control.tsv
+python3 scripts/scrublet_doublets.py embryo_cYAPKO_e775_mice/outs/filtered_feature_bc_matrix output/doublets/embryo_cYAPKO.tsv
+```
+Doublet detection score:
+- humangastruloid_UNTREATED72hr: 0% doublet
+- humangastruloid_DASATINIB72hr: 34.2% doublet
+- embryo_control: 0.1% doublet
+- embryo_cYAPKO: 3.6%
+--> Successfully assigned doublet
+
+# humangastruloid analysis in Seurat
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

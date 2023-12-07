@@ -7746,7 +7746,7 @@ quintile_breaks
 
 
 
-# import all genes
+# import all genes using gene ID
 ## FOR WT
 tpm_all_8wN = as.tibble(read.table(file = "../001__RNAseq/output/tpm_hg38/tpm_all_sample_tidy_median.txt", header = TRUE, sep = "\t"))
 ## tidy
@@ -7826,6 +7826,109 @@ write.table(tpm_WT_8wN_express %>% filter(quintile == 1) %>% dplyr::select(gene)
 write.table(tpm_WT_8wN_express %>% filter(quintile == 2) %>% dplyr::select(gene), file = "meta/quintile_8wN_KO_quint2.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
 write.table(tpm_WT_8wN_express %>% filter(quintile == 3) %>% dplyr::select(gene), file = "meta/quintile_8wN_KO_quint3.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
 write.table(tpm_WT_8wN_express %>% filter(quintile == 4) %>% dplyr::select(gene), file = "meta/quintile_8wN_KO_quint4.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+
+
+
+# import all genes using geneSymbol
+tpm_all_sample_geneSymbol = as.tibble(read.table(file = "../001__RNAseq/output/tpm_hg38/tpm_all_sample_geneSymbol.txt", header = TRUE, sep = "\t")) 
+
+## FOR WT
+## tidy
+tpm_WT_8wN = tpm_all_sample_geneSymbol %>% 
+  dplyr::select(external_gene_name, X8wN_WT_R1, X8wN_WT_R2, X8wN_WT_R3, X8wN_WT_R4) %>%
+  unique() %>%
+  pivot_longer(cols = -external_gene_name, names_to = "sample", values_to = "tpm") %>%
+  group_by(external_gene_name) %>%
+  mutate(median_tpm = median(tpm)) %>%
+  ungroup() %>%
+  dplyr::select(external_gene_name, median_tpm) %>%
+  unique() %>%
+  rename("gene" = "external_gene_name", "median" = "median_tpm")
+## isolate the non express gene
+tpm_WT_8wN_notExpress = tpm_WT_8wN %>%
+  filter(median == 0)
+### write output
+write.table(tpm_WT_8wN_notExpress %>% dplyr::select(gene), file = "meta/quintile_8wN_WT_notExpress_geneSymbol.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+## isolate the express genes
+tpm_WT_8wN_express = tpm_WT_8wN %>%
+  filter(median > 0)
+## create quintile of expression
+quintile_breaks <- quantile(tpm_WT_8wN_express$median, probs = seq(0, 1, by = 0.25), na.rm = TRUE)
+quintile_breaks
+## Use the cut function to create a factor variable for the quintiles
+tpm_WT_8wN_express$quintile <- cut(tpm_WT_8wN_express$median, breaks = quintile_breaks, include.lowest = TRUE, labels = FALSE)
+### write output
+write.table(tpm_WT_8wN_express %>% filter(quintile == 1) %>% dplyr::select(gene), file = "meta/quintile_8wN_WT_quint1_geneSymbol.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+write.table(tpm_WT_8wN_express %>% filter(quintile == 2) %>% dplyr::select(gene), file = "meta/quintile_8wN_WT_quint2_geneSymbol.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+write.table(tpm_WT_8wN_express %>% filter(quintile == 3) %>% dplyr::select(gene), file = "meta/quintile_8wN_WT_quint3_geneSymbol.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+write.table(tpm_WT_8wN_express %>% filter(quintile == 4) %>% dplyr::select(gene), file = "meta/quintile_8wN_WT_quint4_geneSymbol.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+
+
+## FOR HET
+## tidy
+tpm_WT_8wN = tpm_all_sample_geneSymbol %>% 
+  dplyr::select(external_gene_name, X8wN_HET_R1, X8wN_HET_R2, X8wN_HET_R3, X8wN_HET_R4) %>%   # CHANGE HERE GENOTYPE !!!!!!
+  unique() %>%
+  pivot_longer(cols = -external_gene_name, names_to = "sample", values_to = "tpm") %>%
+  group_by(external_gene_name) %>%
+  mutate(median_tpm = median(tpm)) %>%
+  ungroup() %>%
+  dplyr::select(external_gene_name, median_tpm) %>%
+  unique() %>%
+  rename("gene" = "external_gene_name", "median" = "median_tpm")
+## isolate the non express gene
+tpm_WT_8wN_notExpress = tpm_WT_8wN %>%
+  filter(median == 0)
+### write output
+write.table(tpm_WT_8wN_notExpress %>% dplyr::select(gene), file = "meta/quintile_8wN_HET_notExpress_geneSymbol.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+## isolate the express genes
+tpm_WT_8wN_express = tpm_WT_8wN %>%
+  filter(median > 0)
+## create quintile of expression
+quintile_breaks <- quantile(tpm_WT_8wN_express$median, probs = seq(0, 1, by = 0.25), na.rm = TRUE)
+quintile_breaks
+## Use the cut function to create a factor variable for the quintiles
+tpm_WT_8wN_express$quintile <- cut(tpm_WT_8wN_express$median, breaks = quintile_breaks, include.lowest = TRUE, labels = FALSE)
+### write output
+write.table(tpm_WT_8wN_express %>% filter(quintile == 1) %>% dplyr::select(gene), file = "meta/quintile_8wN_HET_quint1_geneSymbol.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+write.table(tpm_WT_8wN_express %>% filter(quintile == 2) %>% dplyr::select(gene), file = "meta/quintile_8wN_HET_quint2_geneSymbol.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+write.table(tpm_WT_8wN_express %>% filter(quintile == 3) %>% dplyr::select(gene), file = "meta/quintile_8wN_HET_quint3_geneSymbol.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+write.table(tpm_WT_8wN_express %>% filter(quintile == 4) %>% dplyr::select(gene), file = "meta/quintile_8wN_HET_quint4_geneSymbol.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+
+
+
+## FOR KO
+## tidy
+tpm_WT_8wN = tpm_all_sample_geneSymbol %>% 
+  dplyr::select(external_gene_name, X8wN_KO_R1, X8wN_KO_R2, X8wN_KO_R3, X8wN_KO_R4) %>%   # CHANGE HERE GENOTYPE !!!!!!
+  unique() %>%
+  pivot_longer(cols = -external_gene_name, names_to = "sample", values_to = "tpm") %>%
+  group_by(external_gene_name) %>%
+  mutate(median_tpm = median(tpm)) %>%
+  ungroup() %>%
+  dplyr::select(external_gene_name, median_tpm) %>%
+  unique() %>%
+  rename("gene" = "external_gene_name", "median" = "median_tpm")
+## isolate the non express gene
+tpm_WT_8wN_notExpress = tpm_WT_8wN %>%
+  filter(median == 0)
+### write output
+write.table(tpm_WT_8wN_notExpress %>% dplyr::select(gene), file = "meta/quintile_8wN_KO_notExpress_geneSymbol.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+## isolate the express genes
+tpm_WT_8wN_express = tpm_WT_8wN %>%
+  filter(median > 0)
+## create quintile of expression
+quintile_breaks <- quantile(tpm_WT_8wN_express$median, probs = seq(0, 1, by = 0.25), na.rm = TRUE)
+quintile_breaks
+## Use the cut function to create a factor variable for the quintiles
+tpm_WT_8wN_express$quintile <- cut(tpm_WT_8wN_express$median, breaks = quintile_breaks, include.lowest = TRUE, labels = FALSE)
+### write output
+write.table(tpm_WT_8wN_express %>% filter(quintile == 1) %>% dplyr::select(gene), file = "meta/quintile_8wN_KO_quint1_geneSymbol.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+write.table(tpm_WT_8wN_express %>% filter(quintile == 2) %>% dplyr::select(gene), file = "meta/quintile_8wN_KO_quint2_geneSymbol.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+write.table(tpm_WT_8wN_express %>% filter(quintile == 3) %>% dplyr::select(gene), file = "meta/quintile_8wN_KO_quint3_geneSymbol.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+write.table(tpm_WT_8wN_express %>% filter(quintile == 4) %>% dplyr::select(gene), file = "meta/quintile_8wN_KO_quint4_geneSymbol.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+
+
 ```
 
 
@@ -7833,10 +7936,69 @@ write.table(tpm_WT_8wN_express %>% filter(quintile == 4) %>% dplyr::select(gene)
 
 
 --> Now let's generate gtf using the gene ID output files
+----> No let's do it using geneSymbol instead (because code already ready and I mostly used geneSymbol in all analysis)
 
 
-XXXXX
+```bash
+# WT
+## Modify the .txt file that list all genes so that it match gtf structure
+sed 's/^/gene_name "/; s/$/"/' meta/quintile_8wN_WT_notExpress_geneSymbol.txt > meta/quintile_8wN_WT_notExpress_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' meta/quintile_8wN_WT_quint1_geneSymbol.txt > meta/quintile_8wN_WT_quint1_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' meta/quintile_8wN_WT_quint2_geneSymbol.txt > meta/quintile_8wN_WT_quint2_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' meta/quintile_8wN_WT_quint3_geneSymbol.txt > meta/quintile_8wN_WT_quint3_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' meta/quintile_8wN_WT_quint4_geneSymbol.txt > meta/quintile_8wN_WT_quint4_as_gtf_geneSymbol.txt
+## Filter the gtf
+grep -Ff meta/quintile_8wN_WT_notExpress_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_quintile_8wN_WT_notExpress.gtf
+grep -Ff meta/quintile_8wN_WT_quint1_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_quintile_8wN_WT_quint1.gtf
+grep -Ff meta/quintile_8wN_WT_quint2_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_quintile_8wN_WT_quint2.gtf
+grep -Ff meta/quintile_8wN_WT_quint3_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_quintile_8wN_WT_quint3.gtf
+grep -Ff meta/quintile_8wN_WT_quint4_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_quintile_8wN_WT_quint4.gtf
 
+# HET
+## Modify the .txt file that list all genes so that it match gtf structure
+sed 's/^/gene_name "/; s/$/"/' meta/quintile_8wN_HET_notExpress_geneSymbol.txt > meta/quintile_8wN_HET_notExpress_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' meta/quintile_8wN_HET_quint1_geneSymbol.txt > meta/quintile_8wN_HET_quint1_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' meta/quintile_8wN_HET_quint2_geneSymbol.txt > meta/quintile_8wN_HET_quint2_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' meta/quintile_8wN_HET_quint3_geneSymbol.txt > meta/quintile_8wN_HET_quint3_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' meta/quintile_8wN_HET_quint4_geneSymbol.txt > meta/quintile_8wN_HET_quint4_as_gtf_geneSymbol.txt
+## Filter the gtf
+grep -Ff meta/quintile_8wN_HET_notExpress_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_quintile_8wN_HET_notExpress.gtf
+grep -Ff meta/quintile_8wN_HET_quint1_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_quintile_8wN_HET_quint1.gtf
+grep -Ff meta/quintile_8wN_HET_quint2_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_quintile_8wN_HET_quint2.gtf
+grep -Ff meta/quintile_8wN_HET_quint3_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_quintile_8wN_HET_quint3.gtf
+grep -Ff meta/quintile_8wN_HET_quint4_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_quintile_8wN_HET_quint4.gtf
+
+# KO
+## Modify the .txt file that list all genes so that it match gtf structure
+sed 's/^/gene_name "/; s/$/"/' meta/quintile_8wN_KO_notExpress_geneSymbol.txt > meta/quintile_8wN_KO_notExpress_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' meta/quintile_8wN_KO_quint1_geneSymbol.txt > meta/quintile_8wN_KO_quint1_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' meta/quintile_8wN_KO_quint2_geneSymbol.txt > meta/quintile_8wN_KO_quint2_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' meta/quintile_8wN_KO_quint3_geneSymbol.txt > meta/quintile_8wN_KO_quint3_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' meta/quintile_8wN_KO_quint4_geneSymbol.txt > meta/quintile_8wN_KO_quint4_as_gtf_geneSymbol.txt
+## Filter the gtf
+grep -Ff meta/quintile_8wN_KO_notExpress_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_quintile_8wN_KO_notExpress.gtf
+grep -Ff meta/quintile_8wN_KO_quint1_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_quintile_8wN_KO_quint1.gtf
+grep -Ff meta/quintile_8wN_KO_quint2_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_quintile_8wN_KO_quint2.gtf
+grep -Ff meta/quintile_8wN_KO_quint3_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_quintile_8wN_KO_quint3.gtf
+grep -Ff meta/quintile_8wN_KO_quint4_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_quintile_8wN_KO_quint4.gtf
+```
+
+--> Now let's generate deepTools plot with these gtf
+
+
+```bash
+conda activate deeptools
+
+sbatch scripts/matrix_gene_1kb_THOR_WT_8wN_quintile.sh # 9010348 ok
+sbatch scripts/matrix_gene_1kb_THOR_HET_8wN_quintile.sh # 9011456 ok
+sbatch scripts/matrix_gene_1kb_THOR_KO_8wN_quintile.sh # 9011493 ok
+
+
+```
+
+--> Not the best representation as the non express genes are less H3K27me3 than the quintile1 very lowly expressed... 
+
+Let's try the heatmap representation xXXXX
 
 
 
