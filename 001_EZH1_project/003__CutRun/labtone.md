@@ -7691,7 +7691,152 @@ sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_KO_Up.sh # 1334826
 
 --> DEGs opposite behavior looks great ! Both normalization perform well. Maybe THOR-scaled a bit more striking
 
-Overall, THOR-bigwig looks cleaner (more smooth) and show pattern more in agreement with expression and diff. bound sites
+Overall, **THOR-bigwig looks cleaner (more smooth) and show pattern more in agreement with expression and diff. bound sites**
+
+
+#### Put together CutRun and RNAseq
+
+To put together CutRun and RNAseq (inspired from [this](10.1101/gad.350594.123)); let's:
+- separate all the genes into 5 quartile of expression (log2(tpm+1)); for each genotype separately
+- extract genes and convert to gtf
+- generate deepTool plot with these genes
+
+
+##### Separate the genes into quartile of expression
+
+**For 8wN** --> Gene list of quitinle save in `meta/`
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+
+# import all genes
+tpm_all_8wN = as.tibble(read.table(file = "../001__RNAseq/output/tpm_hg38/tpm_all_sample_tidy_median.txt", header = TRUE, sep = "\t"))
+## tidy
+tpm_WT_8wN = tpm_all_8wN %>% 
+  filter(genotype =="WT") %>%
+  dplyr::select(gene, median) %>%
+  unique()
+## Calculate the quantile breaks for the TPM values
+quintile_breaks <- quantile(tpm_WT_8wN$median, probs = seq(0, 1, by = 0.25), na.rm = TRUE)
+### FAILL --> Too many genes not express; result in 2 groups with 0 of expression...
+
+# import geneSymbol genes only
+tpm_all_sample_geneSymbol = as.tibble(read.table(file = "../001__RNAseq/output/tpm_hg38/tpm_all_sample_geneSymbol.txt", header = TRUE, sep = "\t")) 
+## tidy
+tpm_WT_8wN = tpm_all_sample_geneSymbol %>% 
+  dplyr::select(external_gene_name, X8wN_WT_R1, X8wN_WT_R2, X8wN_WT_R3, X8wN_WT_R4) %>%
+  unique() %>%
+  pivot_longer(cols = -external_gene_name, names_to = "sample", values_to = "tpm") %>%
+  group_by(external_gene_name) %>%
+  mutate(median_tpm = median(tpm)) %>%
+  ungroup() %>%
+  dplyr::select(external_gene_name, median_tpm) %>%
+  unique()
+
+quintile_breaks <- quantile(tpm_WT_8wN$median_tpm, probs = seq(0, 1, by = 0.2), na.rm = TRUE)
+quintile_breaks
+## FAIL --> The cut will fail as 2 group have 0 tpm!
+
+
+
+
+
+# import all genes
+## FOR WT
+tpm_all_8wN = as.tibble(read.table(file = "../001__RNAseq/output/tpm_hg38/tpm_all_sample_tidy_median.txt", header = TRUE, sep = "\t"))
+## tidy
+tpm_WT_8wN = tpm_all_8wN %>% 
+  filter(genotype =="WT") %>%
+  dplyr::select(gene, median) %>%
+  unique()
+## isolate the non express gene
+tpm_WT_8wN_notExpress = tpm_WT_8wN %>%
+  filter(median == 0)
+### write output
+write.table(tpm_WT_8wN_notExpress %>% dplyr::select(gene), file = "meta/quintile_8wN_WT_notExpress.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+## isolate the express genes
+tpm_WT_8wN_express = tpm_WT_8wN %>%
+  filter(median > 0)
+## create quintile of expression
+quintile_breaks <- quantile(tpm_WT_8wN_express$median, probs = seq(0, 1, by = 0.25), na.rm = TRUE)
+quintile_breaks
+## Use the cut function to create a factor variable for the quintiles
+tpm_WT_8wN_express$quintile <- cut(tpm_WT_8wN_express$median, breaks = quintile_breaks, include.lowest = TRUE, labels = FALSE)
+### write output
+write.table(tpm_WT_8wN_express %>% filter(quintile == 1) %>% dplyr::select(gene), file = "meta/quintile_8wN_WT_quint1.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+write.table(tpm_WT_8wN_express %>% filter(quintile == 2) %>% dplyr::select(gene), file = "meta/quintile_8wN_WT_quint2.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+write.table(tpm_WT_8wN_express %>% filter(quintile == 3) %>% dplyr::select(gene), file = "meta/quintile_8wN_WT_quint3.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+write.table(tpm_WT_8wN_express %>% filter(quintile == 4) %>% dplyr::select(gene), file = "meta/quintile_8wN_WT_quint4.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+
+
+## FOR HET
+tpm_all_8wN = as.tibble(read.table(file = "../001__RNAseq/output/tpm_hg38/tpm_all_sample_tidy_median.txt", header = TRUE, sep = "\t"))
+## tidy
+tpm_WT_8wN = tpm_all_8wN %>% 
+  filter(genotype =="HET") %>%
+  dplyr::select(gene, median) %>%
+  unique()
+## isolate the non express gene
+tpm_WT_8wN_notExpress = tpm_WT_8wN %>%
+  filter(median == 0)
+### write output
+write.table(tpm_WT_8wN_notExpress %>% dplyr::select(gene), file = "meta/quintile_8wN_HET_notExpress.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+## isolate the express genes
+tpm_WT_8wN_express = tpm_WT_8wN %>%
+  filter(median > 0)
+## create quintile of expression
+quintile_breaks <- quantile(tpm_WT_8wN_express$median, probs = seq(0, 1, by = 0.25), na.rm = TRUE)
+quintile_breaks
+## Use the cut function to create a factor variable for the quintiles
+tpm_WT_8wN_express$quintile <- cut(tpm_WT_8wN_express$median, breaks = quintile_breaks, include.lowest = TRUE, labels = FALSE)
+### write output
+write.table(tpm_WT_8wN_express %>% filter(quintile == 1) %>% dplyr::select(gene), file = "meta/quintile_8wN_HET_quint1.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+write.table(tpm_WT_8wN_express %>% filter(quintile == 2) %>% dplyr::select(gene), file = "meta/quintile_8wN_HET_quint2.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+write.table(tpm_WT_8wN_express %>% filter(quintile == 3) %>% dplyr::select(gene), file = "meta/quintile_8wN_HET_quint3.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+write.table(tpm_WT_8wN_express %>% filter(quintile == 4) %>% dplyr::select(gene), file = "meta/quintile_8wN_HET_quint4.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+
+
+## FOR KO
+tpm_all_8wN = as.tibble(read.table(file = "../001__RNAseq/output/tpm_hg38/tpm_all_sample_tidy_median.txt", header = TRUE, sep = "\t"))
+## tidy
+tpm_WT_8wN = tpm_all_8wN %>% 
+  filter(genotype =="KO") %>%   # CHANGE GENOTYPE HERE AND IN THE SAVING OUTPUT
+  dplyr::select(gene, median) %>%
+  unique()
+## isolate the non express gene
+tpm_WT_8wN_notExpress = tpm_WT_8wN %>%
+  filter(median == 0)
+### write output
+write.table(tpm_WT_8wN_notExpress %>% dplyr::select(gene), file = "meta/quintile_8wN_KO_notExpress.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+## isolate the express genes
+tpm_WT_8wN_express = tpm_WT_8wN %>%
+  filter(median > 0)
+## create quintile of expression
+quintile_breaks <- quantile(tpm_WT_8wN_express$median, probs = seq(0, 1, by = 0.25), na.rm = TRUE)
+quintile_breaks
+## Use the cut function to create a factor variable for the quintiles
+tpm_WT_8wN_express$quintile <- cut(tpm_WT_8wN_express$median, breaks = quintile_breaks, include.lowest = TRUE, labels = FALSE)
+### write output
+write.table(tpm_WT_8wN_express %>% filter(quintile == 1) %>% dplyr::select(gene), file = "meta/quintile_8wN_KO_quint1.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+write.table(tpm_WT_8wN_express %>% filter(quintile == 2) %>% dplyr::select(gene), file = "meta/quintile_8wN_KO_quint2.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+write.table(tpm_WT_8wN_express %>% filter(quintile == 3) %>% dplyr::select(gene), file = "meta/quintile_8wN_KO_quint3.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+write.table(tpm_WT_8wN_express %>% filter(quintile == 4) %>% dplyr::select(gene), file = "meta/quintile_8wN_KO_quint4.txt", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+```
+
+
+- *NOTE: the cut function fail if we used all genes or even the geneSymbol genes only; that is because 2 group are at 0; so instead; I isolated the non express genes (will be our group 5=not express; then4 to 1 separate with 25% expression)*
+
+
+--> Now let's generate gtf using the gene ID output files
+
+
+XXXXX
+
 
 
 
