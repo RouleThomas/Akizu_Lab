@@ -8546,6 +8546,10 @@ sbatch scripts/cellranger_count_embryo_cYAPKO_E7_mice.sh # 9010675 ok
 
 
 --> Bug for `cellranger_count_humangastruloid_UNTREATED24hr`: `Sequence and quality length mismatch: file: "/scr1/users/roulet/Akizu_Lab/002_scRNAseq/003__YAP1/input/24hgastruloidhumanUN/24hgastruloidhumanUN_S1_L001_R2_001.fastq.gz", line: 563052004`
+----> There is 2 24hgastruloidhumanUN files in BaseSpace; QC fail and not  QC failed; lets test both;
+------> I indeed imported the QC fail one; let's use the QC not fail
+
+XXX RE DFO COUNT FOR 24 UN !!! XXX
 
 
 

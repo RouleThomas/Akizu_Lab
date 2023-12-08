@@ -2317,6 +2317,69 @@ tpm_all_sample_tidy %>%
       facet_wrap(~tissue) +
       ylab("log2(TPM + 1)")
 dev.off()
+
+
+# Display expression in heatmap
+
+### genes 
+
+tpm_all_sample_tidy_clean = tpm_all_sample_tidy %>%
+  unique()
+
+#### save/import output 
+# write.table(tpm_all_sample_tidy_clean, "output/tpm/tpm_all_sample_tidy_clean.txt", sep="\t", row.names=FALSE, quote=FALSE)
+# tpm_all_sample_tidy_clean =  as.tibble(read.table("output/tpm/tpm_all_sample_tidy_clean.txt", 
+                                        header = TRUE, 
+                                        sep = "\t", 
+                                        quote = "", 
+                                        stringsAsFactors = FALSE) )
+
+
+
+c("Impdh1", "Impdh2", "Ampd1", "Ampd2", "Ampd3", "Prps1", "Ppat", "Gart", "Pfas", "Paics", "Adsl", "Atic", "Hprt", "Ada") # 
+c("Abca7", "C4a", "Ccl2", "Cd300lf", "Cfb", "Or4c58", "Trem2")
+
+
+plot_data <- tpm_all_sample_tidy_clean %>%
+  unique() %>%
+  filter(external_gene_name %in% c("Impdh1", "Impdh2", "Ampd1", "Ampd2", "Ampd3", "Prps1", "Ppat", "Gart", "Pfas", "Paics", "Adsl", "Atic", "Hprt", "Ada")) %>%
+  group_by(gene, genotype, tissue,external_gene_name) %>%
+  summarise(mean_log2tpm = mean(log2(tpm + 1)),
+            se_log2tpm = sd(log2(tpm + 1)) / sqrt(n())) %>%
+  ungroup() %>%
+  dplyr::select(external_gene_name, genotype, tissue, mean_log2tpm) %>%
+  unite(sample, genotype, tissue, sep = "_") %>%
+  mutate(sample = factor(sample, levels = c("Het_HP", "KO_HP", "Het_CT", "KO_CT", "Het_CB", "KO_CB")))
+
+
+## Re-order based on Het_HP expr
+### Calculate the mean expression for Het_HP sample
+Het_HP_expression <- plot_data %>%
+  filter(sample == "Het_HP") %>%
+  arrange(mean_log2tpm) %>%
+  pull(external_gene_name)
+
+
+# Reorder the gene factor levels based on the Het_HP expression
+plot_data$external_gene_name <- factor(plot_data$external_gene_name, levels = Het_HP_expression)
+
+## heatmap
+
+pdf("output/tpm/heatmap_geneList1.pdf", width=5, height=4)
+pdf("output/tpm/heatmap_positiveRegulationOfApoptoticCellClearance.pdf", width=5, height=4)
+ggplot(plot_data, aes(x = sample, y = external_gene_name, fill = mean_log2tpm)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 4) +    # mid 4 for geneList1; 2.25 for *CellClearance
+  labs(x = "Sample", y = "Gene", fill = "Expression (log2 TPM)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
+
+
 ```
 
 

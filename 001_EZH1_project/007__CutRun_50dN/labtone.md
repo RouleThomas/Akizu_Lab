@@ -54,3 +54,49 @@ done < rename_map.txt
 ```
 
 --> All good 
+
+
+# Fastp cleaning
+
+```bash
+sbatch scripts/fastp_1.sh # 9019614
+sbatch scripts/fastp_2.sh # 9019615
+sbatch scripts/fastp_3.sh # 9019616
+sbatch scripts/fastp_4.sh # 9019617
+```
+
+# FastQC
+
+**Fastp-cleaned:**
+```bash
+sbatch --dependency=afterany:9019614 scripts/fastqc_fastp_1.sh # 9019677
+sbatch --dependency=afterany:9019615 scripts/fastqc_fastp_2.sh # 9019678
+sbatch --dependency=afterany:9019616 scripts/fastqc_fastp_3.sh # 9019680
+sbatch --dependency=afterany:9019617 scripts/fastqc_fastp_4.sh # 9019681
+```
+
+--> all good
+
+
+# Mapping
+
+Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal --no-mixed --dovetail`)
+
+```bash
+conda activate bowtie2
+
+sbatch --dependency=afterany:9019677 scripts/bowtie2_1.sh # 9020294
+sbatch --dependency=afterany:9019678 scripts/bowtie2_2.sh # 9020295
+sbatch --dependency=afterany:9019680 scripts/bowtie2_3.sh # 9020297
+sbatch --dependency=afterany:9019681 scripts/bowtie2_4.sh # 9020298
+
+```
+
+--> Looks good
+
+
+XXX
+
+
+
+
