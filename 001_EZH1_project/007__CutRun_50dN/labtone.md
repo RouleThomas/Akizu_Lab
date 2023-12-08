@@ -42,10 +42,10 @@ I created a `nano url.txt` with all link and used `wget -i url.txt` to download 
 
 I created a tab separated file with current (`sample_name.txt`) / new file names (keeping the .fq.gz sufix) and then:
 
-XXXXX --> REVIEW NAME WITH JASMINE AND CREATE THE txt file check samples_007 !!
+**make sure to convert the `rename_map.txt` into unix tab sep  format with `dos2unix`!!**
 
 ```bash
-cd input
+cd input_raw
 
 while IFS=$'\t' read -r old_name new_name
 do
@@ -53,4 +53,4 @@ do
 done < rename_map.txt
 ```
 
---> All good
+--> All good 

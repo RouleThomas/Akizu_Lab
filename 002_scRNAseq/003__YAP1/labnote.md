@@ -8533,17 +8533,19 @@ conda activate scRNAseq
 which cellranger
 
 # Run counting sample per sample for humangastruloid
-sbatch scripts/cellranger_count_humangastruloid_UNTREATED24hr.sh # 9010720
-sbatch scripts/cellranger_count_humangastruloid_DASATINIB24hr.sh # 9010738
+sbatch scripts/cellranger_count_humangastruloid_UNTREATED24hr.sh # 9010720 FAIL
+sbatch scripts/cellranger_count_humangastruloid_DASATINIB24hr.sh # 9010738 ok
 
 # Run count for embryo using mice genome
-sbatch scripts/cellranger_count_embryo_control_E7_mice.sh # 9010616; with QCNOTfail XXX
-sbatch scripts/cellranger_count_embryo_cYAPKO_E7_mice.sh # 9010675
+sbatch scripts/cellranger_count_embryo_control_E7_mice.sh # 9010616; with QCNOTfail 9016750 XXX
+sbatch scripts/cellranger_count_embryo_cYAPKO_E7_mice.sh # 9010675 ok
 ```
 --> Weird bug for `embryo_control_E7`: `I0 error in FASTQ dile ... line: 0 failed to fill whole buffer`
 ----> There is 2 embryo_control_E7 files in BaseSpace; QC fail and not  QC failed; lets test both;
 ------> I indeed imported the QC fail one; let's use the QC not fail
 
+
+--> Bug for `cellranger_count_humangastruloid_UNTREATED24hr`: `Sequence and quality length mismatch: file: "/scr1/users/roulet/Akizu_Lab/002_scRNAseq/003__YAP1/input/24hgastruloidhumanUN/24hgastruloidhumanUN_S1_L001_R2_001.fastq.gz", line: 563052004`
 
 
 

@@ -4,9 +4,9 @@
 
 
 
-cellranger count --id=E7mousecontrol \
+cellranger count --id=E7mousecontrolQCNOTfail \
                    --transcriptome=../meta/refdata-gex-mm10-2020-A \
-                   --fastqs=input/E7mousecontrol \
+                   --fastqs=input/E7mousecontrolQCNOTfail \
                    --sample=E7mousecontrol
 
                    
