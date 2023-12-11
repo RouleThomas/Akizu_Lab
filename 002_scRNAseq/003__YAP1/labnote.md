@@ -8561,25 +8561,24 @@ srun --mem=500g --pty bash -l
 conda deactivate # base environment needed
 python3 scrublet.py [input_path] [output_path]
 # Run doublet detection/scrublet sample per sample
-python3 scripts/scrublet_doublets.py 24hgastruloidhumanUNQCNOTfail/outs/filtered_feature_bc_matrix output/doublets/humangastruloid_UNTREATED24hr.tsv
-python3 scripts/scrublet_doublets.py 24hgastruloidhumanDASA/outs/filtered_feature_bc_matrix output/doublets/humangastruloid_DASATINIB24hr.tsv
-
 python3 scripts/scrublet_doublets.py E7mousecontrolQCNOTfail/outs/filtered_feature_bc_matrix output/doublets/embryo_E7_control.tsv
 python3 scripts/scrublet_doublets.py E7mousecYAPKO/outs/filtered_feature_bc_matrix output/doublets/embryo_E7_cYAPKO.tsv
+
+XXXX TO RUN :  python3 scripts/scrublet_doublets.py 24hgastruloidhumanUNQCNOTfail/outs/filtered_feature_bc_matrix output/doublets/humangastruloid_UNTREATED24hr.tsv
+XXXX TO RUN : python3 scripts/scrublet_doublets.py 24hgastruloidhumanDASA/outs/filtered_feature_bc_matrix output/doublets/humangastruloid_DASATINIB24hr.tsv
+
 ```
 Doublet detection score:
 - humangastruloid_UNTREATED24hr: XXX% (previous time: 0% doublet)
 - humangastruloid_DASATINIB24hr: XXX% (previous time: 34.2% doublet)
-- embryo_E7_control: XXX% (previous time: 0.1% doublet)
-- embryo_E7_cYAPKO: XXX% (previous time: 3.6%)
+- embryo_E7_control: 7.2% (previous time: 0.1% doublet)
+- embryo_E7_cYAPKO: 6.2% (previous time: 3.6%)
 --> Successfully assigned doublet
 
 
 
 # embryo E7 (second sample) analysis in Seurat
 
-
-XXXXXXXXXXXXX ALL CODE BELOW copy paste from above; lets adavne trhoug it
 
 Then `conda activate scRNAseq` and go into R and filtered out **RNA contamination and start with SEURAT**.
 
@@ -8603,19 +8602,19 @@ library("gprofiler2") # for human mouse gene conversion for cell cycle genes
 
 # soupX decontamination
 ## Decontaminate one channel of 10X data mapped with cellranger
-sc = load10X('embryo_control_e775_mice/outs') 
-sc = load10X('embryo_cYAPKO_e775_mice/outs') 
+sc = load10X('E7mousecontrolQCNOTfail/outs') 
+sc = load10X('E7mousecYAPKO/outs') 
 
 ## Assess % of conta
-pdf("output/soupX/autoEstCont_embryo_control_e775_mice.pdf", width=10, height=10)
-pdf("output/soupX/autoEstCont_embryo_cYAPKO_e775_mice.pdf", width=10, height=10)
+pdf("output/soupX/autoEstCont_E7mousecYAPKO.pdf", width=10, height=10)
+pdf("output/soupX/autoEstCont_E7mousecontrol.pdf", width=10, height=10)
 sc = autoEstCont(sc)
 dev.off()
 ## Generate the corrected matrix
 out = adjustCounts(sc)
 ## Save the matrix
-save(out, file = "output/soupX/out_embryo_control_e775_mice.RData")
-save(out, file = "output/soupX/out_embryo_cYAPKO_e775_mice.RData")
+save(out, file = "output/soupX/out_E7mousecontrol.RData")
+save(out, file = "output/soupX/out_E7mousecYAPKO.RData")
 
 ```
 
@@ -8627,38 +8626,82 @@ Let's 1st try to **perform clustering that look like the E775 time-point** (use 
 
 
 
-
 ```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+
 ## Load the matrix and Create SEURAT object
-load("output/soupX/out_embryo_control_e775_mice.RData")
-srat_WT <- CreateSeuratObject(counts = out, project = "WT") # 32,285 features across 5,568 samples
+load("output/soupX/out_E7mousecontrol.RData")
+srat_WT_E7 <- CreateSeuratObject(counts = out, project = "WT_E7") # 32,285 features across 1,829 samples
 
-load("output/soupX/out_embryo_cYAPKO_e775_mice.RData")
-srat_cYAPKO <- CreateSeuratObject(counts = out, project = "cYAPKO") # 32,285 features across 4,504 samples
-
-
+load("output/soupX/out_E7mousecYAPKO.RData")
+srat_cYAPKO_E7 <- CreateSeuratObject(counts = out, project = "cYAPKO_E7") # 32,285 features across 1,897 samples
 
 
 # QUALITY CONTROL
 ## add mitochondrial and Ribosomal conta 
-srat_WT[["percent.mt"]] <- PercentageFeatureSet(srat_WT, pattern = "^mt-")
-srat_WT[["percent.rb"]] <- PercentageFeatureSet(srat_WT, pattern = "^Rp[sl]")
+srat_WT_E7[["percent.mt"]] <- PercentageFeatureSet(srat_WT_E7, pattern = "^mt-")
+srat_WT_E7[["percent.rb"]] <- PercentageFeatureSet(srat_WT_E7, pattern = "^Rp[sl]")
 
-srat_cYAPKO[["percent.mt"]] <- PercentageFeatureSet(srat_cYAPKO, pattern = "^mt-")
-srat_cYAPKO[["percent.rb"]] <- PercentageFeatureSet(srat_cYAPKO, pattern = "^Rp[sl]")
+srat_cYAPKO_E7[["percent.mt"]] <- PercentageFeatureSet(srat_cYAPKO_E7, pattern = "^mt-")
+srat_cYAPKO_E7[["percent.rb"]] <- PercentageFeatureSet(srat_cYAPKO_E7, pattern = "^Rp[sl]")
 
 ## add doublet information (scrublet)
-doublets <- read.table("output/doublets/embryo_control.tsv",header = F,row.names = 1)
+doublets <- read.table("output/doublets/embryo_E7_control.tsv",header = F,row.names = 1)
 colnames(doublets) <- c("Doublet_score","Is_doublet")
-srat_WT <- AddMetaData(srat_WT,doublets)
-srat_WT$Doublet_score <- as.numeric(srat_WT$Doublet_score) # make score as numeric
-head(srat_WT[[]])
+srat_WT_E7 <- AddMetaData(srat_WT_E7,doublets)
+srat_WT_E7$Doublet_score <- as.numeric(srat_WT_E7$Doublet_score) # make score as numeric
+head(srat_WT_E7[[]])
 
-doublets <- read.table("output/doublets/embryo_cYAPKO.tsv",header = F,row.names = 1)
+doublets <- read.table("output/doublets/embryo_E7_cYAPKO.tsv",header = F,row.names = 1)
 colnames(doublets) <- c("Doublet_score","Is_doublet")
-srat_cYAPKO <- AddMetaData(srat_cYAPKO,doublets)
-srat_cYAPKO$Doublet_score <- as.numeric(srat_cYAPKO$Doublet_score) # make score as numeric
-head(srat_cYAPKO[[]])
+srat_cYAPKO_E7 <- AddMetaData(srat_cYAPKO_E7,doublets)
+srat_cYAPKO_E7$Doublet_score <- as.numeric(srat_cYAPKO_E7$Doublet_score) # make score as numeric
+head(srat_cYAPKO_E7[[]])
+
+
+
+## Plot
+pdf("output/seurat/VlnPlot_QC_embryo_control_E7.pdf", width=10, height=6)
+pdf("output/seurat/VlnPlot_QC_embryo_cYAPKO_E7.pdf", width=10, height=6)
+VlnPlot(srat_cYAPKO_E7, features = c("nFeature_RNA","nCount_RNA","percent.mt","percent.rb"),ncol = 4,pt.size = 0.1) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+
+pdf("output/seurat/FeatureScatter_QC_RNAcount_mt_cYAPKO_E7.pdf", width=5, height=5)
+pdf("output/seurat/FeatureScatter_QC_RNAcount_mt_control_E7.pdf", width=5, height=5)
+FeatureScatter(srat_cYAPKO_E7, feature1 = "nCount_RNA", feature2 = "percent.mt")
+dev.off()
+pdf("output/seurat/FeatureScatter_QC_RNAcount_RNAfeature_cYAPKO_E7.pdf", width=5, height=5)
+pdf("output/seurat/FeatureScatter_QC_RNAcount_RNAfeature_control_E7.pdf", width=5, height=5)
+FeatureScatter(srat_cYAPKO_E7, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+dev.off()
+pdf("output/seurat/FeatureScatter_QC_rb_mt_cYAPKO_E7.pdf", width=5, height=5)
+pdf("output/seurat/FeatureScatter_QC_rb_mt_control_E7.pdf", width=5, height=5)
+FeatureScatter(srat_cYAPKO_E7, feature1 = "percent.rb", feature2 = "percent.mt")
+dev.off()
+pdf("output/seurat/FeatureScatter_QC_mt_doublet_cYAPKO_E7.pdf", width=5, height=5)
+pdf("output/seurat/FeatureScatter_QC_mt_doublet_control_E7.pdf", width=5, height=5)
+FeatureScatter(srat_cYAPKO_E7, feature1 = "percent.mt", feature2 = "Doublet_score")
+dev.off()
+pdf("output/seurat/FeatureScatter_QC_RNAfeature_doublet_cYAPKO_E7.pdf", width=5, height=5)
+pdf("output/seurat/FeatureScatter_QC_RNAfeature_doublet_control_E7.pdf", width=5, height=5)
+FeatureScatter(srat_cYAPKO_E7, feature1 = "nFeature_RNA", feature2 = "Doublet_score")
+dev.off()
+
+
+XXX
+
 
 
 ## After seeing the plot; add QC information in our seurat object
