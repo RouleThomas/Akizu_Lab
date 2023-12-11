@@ -59,20 +59,20 @@ done < rename_map.txt
 # Fastp cleaning
 
 ```bash
-sbatch scripts/fastp_1.sh # 9019614
-sbatch scripts/fastp_2.sh # 9019615
-sbatch scripts/fastp_3.sh # 9019616
-sbatch scripts/fastp_4.sh # 9019617
+sbatch scripts/fastp_1.sh # 9019614 ok
+sbatch scripts/fastp_2.sh # 9019615 ok
+sbatch scripts/fastp_3.sh # 9019616 ok
+sbatch scripts/fastp_4.sh # 9019617 ok
 ```
 
 # FastQC
 
 **Fastp-cleaned:**
 ```bash
-sbatch --dependency=afterany:9019614 scripts/fastqc_fastp_1.sh # 9019677
-sbatch --dependency=afterany:9019615 scripts/fastqc_fastp_2.sh # 9019678
-sbatch --dependency=afterany:9019616 scripts/fastqc_fastp_3.sh # 9019680
-sbatch --dependency=afterany:9019617 scripts/fastqc_fastp_4.sh # 9019681
+sbatch --dependency=afterany:9019614 scripts/fastqc_fastp_1.sh # 9019677 ok
+sbatch --dependency=afterany:9019615 scripts/fastqc_fastp_2.sh # 9019678 ok
+sbatch --dependency=afterany:9019616 scripts/fastqc_fastp_3.sh # 9019680 ok
+sbatch --dependency=afterany:9019617 scripts/fastqc_fastp_4.sh # 9019681 ok
 ```
 
 --> all good
@@ -85,18 +85,133 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:9019677 scripts/bowtie2_1.sh # 9020294
-sbatch --dependency=afterany:9019678 scripts/bowtie2_2.sh # 9020295
-sbatch --dependency=afterany:9019680 scripts/bowtie2_3.sh # 9020297
-sbatch --dependency=afterany:9019681 scripts/bowtie2_4.sh # 9020298
+sbatch --dependency=afterany:9019677 scripts/bowtie2_1.sh # 9020294 ok
+sbatch --dependency=afterany:9019678 scripts/bowtie2_2.sh # 9020295 ok
+sbatch --dependency=afterany:9019680 scripts/bowtie2_3.sh # 9020297 ok
+sbatch --dependency=afterany:9019681 scripts/bowtie2_4.sh # 9020298 ok
 
 ```
 
 --> Looks good
 
+Mapping on E coli --> TO DO LATER! XXXXX
 
-XXX
+```bash
+conda activate bowtie2
+
+sbatch --dependency=afterany:9019677 scripts/bowtie2_MG1655_1.sh # XXX
+sbatch --dependency=afterany:9019678 scripts/bowtie2_MG1655_2.sh # XXX
+sbatch --dependency=afterany:9019680 scripts/bowtie2_MG1655_3.sh # XXX
+sbatch --dependency=afterany:9019681 scripts/bowtie2_MG1655_4.sh # XXX
+
+```
 
 
 
+
+## Quality control metrics
+Quality control plot (total read before trimming/ total read after trimming/ uniquely aligned reads)
+
+Collect nb of reads from the slurm bowtie2 jobs:
+```bash
+for file in slurm-9020294.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2/alignment_counts_9020294.txt
+
+for file in slurm-9020295.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2/alignment_counts_9020295.txt
+
+for file in slurm-9020297.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2/alignment_counts_9020297.txt
+
+for file in slurm-9020298.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2/alignment_counts_9020298.txt
+```
+
+Add these values to `/home/roulet/001_EZH1_project/007__CutRun_50dN/samples_007.xlsx`\
+Then in R; see `/home/roulet/001_EZH1_project/001_EZH1_project.R`.
+
+--> Overall >72% input reads as been uniquely mapped to the genome (90% non uniq)
+
+
+
+
+
+## Removing dupplicates (only uniquely aligned reads)
+This is prefered for THOR bam input.
+
+```bash
+conda activate bowtie2
+
+sbatch scripts/samtools_unique_1.sh # 9048648 XXX
+sbatch scripts/samtools_unique_2.sh # 9048649 XXX
+sbatch scripts/samtools_unique_3.sh # 9048650 XXX
+sbatch scripts/samtools_unique_4.sh # 9048651 XXX
+
+```
+
+Let's do the same for E coli MG1655 spike in samples:
+
+```bash
+conda activate bowtie2
+
+sbatch scripts/samtools_MG1655_unique_1.sh # xxx
+sbatch scripts/samtools_MG1655_unique_2.sh # xxx
+sbatch scripts/samtools_MG1655_unique_3.sh # xxx
+sbatch scripts/samtools_MG1655_unique_4.sh # xxx
+
+
+```
+
+--> More information on this step in the `005__CutRun` labnote
+
+# Generate bigwig coverage files
+## Raw bigwig
+Paramaters:
+- `--binSize 1` for good resolution
+- `--scaleFactor 0.5` to obtain the exact number of reads respective to the bam, otherwise it count two instead of 1
+- `--extendReads` Reads extented taking into account mean fragment size of all mated reads.
+
+```bash
+conda activate deeptools
+
+sbatch --dependency=afterany:9048648 scripts/bamtobigwig_unique_1.sh # 9048669 xxx
+sbatch --dependency=afterany:9048649 scripts/bamtobigwig_unique_2.sh # 9048672 xxx
+sbatch --dependency=afterany:9048650 scripts/bamtobigwig_unique_3.sh # 9048673 xxx
+sbatch --dependency=afterany:9048651 scripts/bamtobigwig_unique_4.sh # 9048674 xxx
+```
+
+
+
+- KOEF1aEZH1
+*Pass*: 
+*Failed*: 
+- KO
+*Pass*: 
+*Failed*: 
+- WTQ731E
+*Pass*: 
+*Failed*: 
+- WT (PSC)
+*Pass*: 
+*Failed*: 
+
+
+
+XXXXX
 

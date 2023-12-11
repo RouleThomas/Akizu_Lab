@@ -4,9 +4,9 @@
 
 
 
-cellranger count --id=24hgastruloidhumanUN \
+cellranger count --id=24hgastruloidhumanUNQCNOTfail \
                    --transcriptome=../meta/refdata-gex-GRCh38-2020-A \
-                   --fastqs=input/24hgastruloidhumanUN \
+                   --fastqs=input/24hgastruloidhumanUNQCNOTfail \
                    --sample=24hgastruloidhumanUN
 
                    
