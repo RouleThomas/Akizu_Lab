@@ -158,10 +158,10 @@ This is prefered for THOR bam input.
 ```bash
 conda activate bowtie2
 
-sbatch scripts/samtools_unique_1.sh # 9048648 XXX
-sbatch scripts/samtools_unique_2.sh # 9048649 XXX
-sbatch scripts/samtools_unique_3.sh # 9048650 XXX
-sbatch scripts/samtools_unique_4.sh # 9048651 XXX
+sbatch scripts/samtools_unique_1.sh # 9048648 ok
+sbatch scripts/samtools_unique_2.sh # 9048649 ok
+sbatch scripts/samtools_unique_3.sh # 9048650 ok
+sbatch scripts/samtools_unique_4.sh # 9048651 ok
 
 ```
 
@@ -190,28 +190,156 @@ Paramaters:
 ```bash
 conda activate deeptools
 
-sbatch --dependency=afterany:9048648 scripts/bamtobigwig_unique_1.sh # 9048669 xxx
-sbatch --dependency=afterany:9048649 scripts/bamtobigwig_unique_2.sh # 9048672 xxx
-sbatch --dependency=afterany:9048650 scripts/bamtobigwig_unique_3.sh # 9048673 xxx
-sbatch --dependency=afterany:9048651 scripts/bamtobigwig_unique_4.sh # 9048674 xxx
+sbatch --dependency=afterany:9048648 scripts/bamtobigwig_unique_1.sh # 9048669 ok
+sbatch --dependency=afterany:9048649 scripts/bamtobigwig_unique_2.sh # 9048672 ok
+sbatch --dependency=afterany:9048650 scripts/bamtobigwig_unique_3.sh # 9048673 ok
+sbatch --dependency=afterany:9048651 scripts/bamtobigwig_unique_4.sh # 9048674 ok
 ```
 
 
 
 - KOEF1aEZH1
-*Pass*: 
-*Failed*: 
+*Pass*: H3K27me3
+*Failed*: EZH1cs, EZH2, SUZ12
 - KO
-*Pass*: 
-*Failed*: 
+*Pass*: H3K27me3
+*Failed*: EZH1cs, EZH2, SUZ12
 - WTQ731E
-*Pass*: 
-*Failed*: 
+*Pass*: H3K27me3
+*Failed*: EZH1cs, EZH2, SUZ12
 - WT (PSC)
-*Pass*: 
-*Failed*: 
+*Pass*: NA
+*Failed*: EZH1cs and H3K27me1
 
 
 
-XXXXX
+## Pearson correlation heatmap on bigwig signals
+
+
+
+```bash
+conda activate deeptools
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_50dN.sh # 9064423
+sbatch scripts/multiBigwigSummary_PSC.sh # 9064427
+sbatch scripts/multiBigwigSummary_all.sh # 9064458
+
+XXXXX TO DO AFTER XXXXX
+
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_all.npz \
+    --transpose \
+    --ntop 0 \
+    --labels 50dN_KOEF1aEZH1_EZH1cs_R1 50dN_KOEF1aEZH1_EZH1cs_R2 50dN_KOEF1aEZH1_EZH2_R1 50dN_KOEF1aEZH1_EZH2_R2 50dN_KOEF1aEZH1_H3K27me3_R1 50dN_KOEF1aEZH1_H3K27me3_R2 50dN_KOEF1aEZH1_IGG_R1 50dN_KOEF1aEZH1_SUZ12_R1 50dN_KOEF1aEZH1_SUZ12_R2 50dN_KO_EZH1cs_R1 50dN_KO_EZH1cs_R2 50dN_KO_EZH2_R1 50dN_KO_EZH2_R2 50dN_KO_H3K27me3_R1 50dN_KO_H3K27me3_R2 50dN_KO_IGG_R1 50dN_KO_IGG_R2 50dN_KO_SUZ12_R1 50dN_KO_SUZ12_R2 50dN_WTQ731E_EZH1cs_R1 50dN_WTQ731E_EZH1cs_R2 50dN_WTQ731E_EZH2_R1 50dN_WTQ731E_EZH2_R2 50dN_WTQ731E_H3K27me3_R1 50dN_WTQ731E_H3K27me3_R2 50dN_WTQ731E_H3K27me3_R3 50dN_WTQ731E_IGG_R1 50dN_WTQ731E_IGG_R2 50dN_WTQ731E_SUZ12_R1 50dN_WTQ731E_SUZ12_R2 PSC_WT_EZH1cs_01FA PSC_WT_EZH1cs_1FA PSC_WT_H3K27me1_01FA PSC_WT_H3K27me1_1FA \
+    -o output/bigwig/multiBigwigSummary_all_plotPCA.pdf
+
+plotPCA -in output/bigwig/multiBigwigSummary_PSC.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_WT_EZH1cs_01FA PSC_WT_EZH1cs_1FA PSC_WT_H3K27me1_01FA PSC_WT_H3K27me1_1FA \
+    -o output/bigwig/multiBigwigSummary_PSC_plotPCA.pdf
+
+plotPCA -in output/bigwig/multiBigwigSummary_50dN.npz \
+    --transpose \
+    --ntop 0 \
+    --labels 50dN_KOEF1aEZH1_EZH1cs_R1 50dN_KOEF1aEZH1_EZH1cs_R2 50dN_KOEF1aEZH1_EZH2_R1 50dN_KOEF1aEZH1_EZH2_R2 50dN_KOEF1aEZH1_H3K27me3_R1 50dN_KOEF1aEZH1_H3K27me3_R2 50dN_KOEF1aEZH1_IGG_R1 50dN_KOEF1aEZH1_SUZ12_R1 50dN_KOEF1aEZH1_SUZ12_R2 50dN_KO_EZH1cs_R1 50dN_KO_EZH1cs_R2 50dN_KO_EZH2_R1 50dN_KO_EZH2_R2 50dN_KO_H3K27me3_R1 50dN_KO_H3K27me3_R2 50dN_KO_IGG_R1 50dN_KO_IGG_R2 50dN_KO_SUZ12_R1 50dN_KO_SUZ12_R2 50dN_WTQ731E_EZH1cs_R1 50dN_WTQ731E_EZH1cs_R2 50dN_WTQ731E_EZH2_R1 50dN_WTQ731E_EZH2_R2 50dN_WTQ731E_H3K27me3_R1 50dN_WTQ731E_H3K27me3_R2 50dN_WTQ731E_H3K27me3_R3 50dN_WTQ731E_IGG_R1 50dN_WTQ731E_IGG_R2 50dN_WTQ731E_SUZ12_R1 50dN_WTQ731E_SUZ12_R2 \
+    -o output/bigwig/multiBigwigSummary_50dN_plotPCA.pdf
+
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_all.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels 50dN_KOEF1aEZH1_EZH1cs_R1 50dN_KOEF1aEZH1_EZH1cs_R2 50dN_KOEF1aEZH1_EZH2_R1 50dN_KOEF1aEZH1_EZH2_R2 50dN_KOEF1aEZH1_H3K27me3_R1 50dN_KOEF1aEZH1_H3K27me3_R2 50dN_KOEF1aEZH1_IGG_R1 50dN_KOEF1aEZH1_SUZ12_R1 50dN_KOEF1aEZH1_SUZ12_R2 50dN_KO_EZH1cs_R1 50dN_KO_EZH1cs_R2 50dN_KO_EZH2_R1 50dN_KO_EZH2_R2 50dN_KO_H3K27me3_R1 50dN_KO_H3K27me3_R2 50dN_KO_IGG_R1 50dN_KO_IGG_R2 50dN_KO_SUZ12_R1 50dN_KO_SUZ12_R2 50dN_WTQ731E_EZH1cs_R1 50dN_WTQ731E_EZH1cs_R2 50dN_WTQ731E_EZH2_R1 50dN_WTQ731E_EZH2_R2 50dN_WTQ731E_H3K27me3_R1 50dN_WTQ731E_H3K27me3_R2 50dN_WTQ731E_H3K27me3_R3 50dN_WTQ731E_IGG_R1 50dN_WTQ731E_IGG_R2 50dN_WTQ731E_SUZ12_R1 50dN_WTQ731E_SUZ12_R2 PSC_WT_EZH1cs_01FA PSC_WT_EZH1cs_1FA PSC_WT_H3K27me1_01FA PSC_WT_H3K27me1_1FA \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_all_heatmap.pdf
+
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_PSC.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels PSC_WT_EZH1cs_01FA PSC_WT_EZH1cs_1FA PSC_WT_H3K27me1_01FA PSC_WT_H3K27me1_1FA \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_PSC_heatmap.pdf
+
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_50dN.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels 50dN_KOEF1aEZH1_EZH1cs_R1 50dN_KOEF1aEZH1_EZH1cs_R2 50dN_KOEF1aEZH1_EZH2_R1 50dN_KOEF1aEZH1_EZH2_R2 50dN_KOEF1aEZH1_H3K27me3_R1 50dN_KOEF1aEZH1_H3K27me3_R2 50dN_KOEF1aEZH1_IGG_R1 50dN_KOEF1aEZH1_SUZ12_R1 50dN_KOEF1aEZH1_SUZ12_R2 50dN_KO_EZH1cs_R1 50dN_KO_EZH1cs_R2 50dN_KO_EZH2_R1 50dN_KO_EZH2_R2 50dN_KO_H3K27me3_R1 50dN_KO_H3K27me3_R2 50dN_KO_IGG_R1 50dN_KO_IGG_R2 50dN_KO_SUZ12_R1 50dN_KO_SUZ12_R2 50dN_WTQ731E_EZH1cs_R1 50dN_WTQ731E_EZH1cs_R2 50dN_WTQ731E_EZH2_R1 50dN_WTQ731E_EZH2_R2 50dN_WTQ731E_H3K27me3_R1 50dN_WTQ731E_H3K27me3_R2 50dN_WTQ731E_H3K27me3_R3 50dN_WTQ731E_IGG_R1 50dN_WTQ731E_IGG_R2 50dN_WTQ731E_SUZ12_R1 50dN_WTQ731E_SUZ12_R2 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_50dN_heatmap.pdf
+
+```
+
+--> two big groups: H3K27me3 IP versus the other
+----> Seems only H3K27me3 IP has worked here
+
+
+
+
+# MACS2 peak calling on bam unique
+
+--> IGG samples used as control
+
+--> The **peaks are called on the uniquely aligned reads** (it performed better on our previous CutRun)
+
+**PEAK CALLING  in `broad`**
+
+
+```bash
+conda activate macs2
+# genotype per genotype
+sbatch scripts/macs2_broad_1.sh # 9065217
+sbatch scripts/macs2_broad_2.sh # 9065218
+sbatch scripts/macs2_broad_3.sh # 9065220
+sbatch scripts/macs2_broad_4.sh # xxx TO DO NO CNTROL !! XX
+
+sbatch scripts/macs2_narrow_1.sh # 9065230
+sbatch scripts/macs2_narrow_2.sh # 9065234
+sbatch scripts/macs2_narrow_3.sh # 9065240
+sbatch scripts/macs2_narrow_4.sh # xxx TO DO NO CNTROL !! XX
+```
+
+--> Very few peaks for all IP except H3K27me3... Technical issue...
+
+
+
+Then keep only the significant peaks (re-run the script to test different qvalue cutoff) and remove peaks overlapping with blacklist regions. MACS2 column9 output is -log10(qvalue) format so if we want 0.05; 
+- q0.05: `q value = -log10(0.05) = 1.30103`
+- q0.01 = 2
+- q0.005 = 2.30103
+- q0.001 = 3
+- q0.0001 = 4
+- q0.00001 = 5
+
+```bash
+conda activate bowtie2 # for bedtools
+sbatch scripts/macs2_raw_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
+
+# quick command to print median size of peak within a bed
+awk '{print $3-$2}' your_bed_file.bed | sort -n | awk 'BEGIN {c=0; sum=0;} {a[c++]=$1; sum+=$1;} END {if (c%2) print a[int(c/2)]; else print (a[c/2-1]+a[c/2])/2;}'
+```
+
+**Optimal qvalue** according to IGV:
+- PSC_KOEF1aEZH1_SUZ12: 1.30103 (2.3 more true peak)
+- PSC_KOEF1aEZH1_EZH2: 1.30103
+- PSC_KOEF1aEZH1_EZH1cs: 1.30103
+- PSC_KOEF1aEZH1_H3K27me3: 3
+- PSC_WT_SUZ12: 1.30103 (2.3 more true peak)
+- PSC_WT_EZH2: 1.30103
+- PSC_WT_EZH1cs: FAIL
+- PSC_WT_H3K27me3: 1.30103 (many true peak surprinsgly!)
+- PSC_KO_SUZ12: FAIL
+- PSC_KO_EZH2: FAIL
+- PSC_KO_EZH1cs: FAIL
+- PSC_KO_H3K27me3: 1.30103 (many true peak surprinsgly!)
+
+
+
 
