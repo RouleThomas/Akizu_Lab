@@ -99,14 +99,13 @@ Mapping on E coli --> TO DO LATER! XXXXX
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:9019677 scripts/bowtie2_MG1655_1.sh # XXX
-sbatch --dependency=afterany:9019678 scripts/bowtie2_MG1655_2.sh # XXX
-sbatch --dependency=afterany:9019680 scripts/bowtie2_MG1655_3.sh # XXX
-sbatch --dependency=afterany:9019681 scripts/bowtie2_MG1655_4.sh # XXX
+sbatch scripts/bowtie2_MG1655_1.sh # 9101160 ok
+sbatch scripts/bowtie2_MG1655_2.sh # 9101602 ok
+sbatch scripts/bowtie2_MG1655_3.sh # 9101606 ok
 
 ```
 
-
+--> between 0.5 - 2% uniquely aligned reads (not a lot..; previously `005__CutRun` 10% (in `003__CutRun` was less than 1%) )
 
 
 ## Quality control metrics
@@ -220,11 +219,10 @@ sbatch --dependency=afterany:9048651 scripts/bamtobigwig_unique_4.sh # 9048674 o
 ```bash
 conda activate deeptools
 # Generate compile bigwig (.npz) files
-sbatch scripts/multiBigwigSummary_50dN.sh # 9064423
-sbatch scripts/multiBigwigSummary_PSC.sh # 9064427
-sbatch scripts/multiBigwigSummary_all.sh # 9064458
+sbatch scripts/multiBigwigSummary_50dN.sh # 9064423 ok 
+sbatch scripts/multiBigwigSummary_PSC.sh # 9064427 ok 
+sbatch scripts/multiBigwigSummary_all.sh # 9064458 ok 
 
-XXXXX TO DO AFTER XXXXX
 
 # Plot
 ## PCA
@@ -309,6 +307,13 @@ sbatch scripts/macs2_narrow_4.sh # xxx TO DO NO CNTROL !! XX
 --> Very few peaks for all IP except H3K27me3... Technical issue...
 
 
+```bash
+conda activate bowtie2 # for bedtools
+sbatch scripts/macs2_raw_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
+
+# quick command to print median size of peak within a bed
+awk '{print $3-$2}' your_bed_file.bed | sort -n | awk 'BEGIN {c=0; sum=0;} {a[c++]=$1; sum+=$1;} END {if (c%2) print a[int(c/2)]; else print (a[c/2-1]+a[c/2])/2;}'
+```
 
 Then keep only the significant peaks (re-run the script to test different qvalue cutoff) and remove peaks overlapping with blacklist regions. MACS2 column9 output is -log10(qvalue) format so if we want 0.05; 
 - q0.05: `q value = -log10(0.05) = 1.30103`
@@ -327,18 +332,20 @@ awk '{print $3-$2}' your_bed_file.bed | sort -n | awk 'BEGIN {c=0; sum=0;} {a[c+
 ```
 
 **Optimal qvalue** according to IGV:
-- PSC_KOEF1aEZH1_SUZ12: 1.30103 (2.3 more true peak)
-- PSC_KOEF1aEZH1_EZH2: 1.30103
-- PSC_KOEF1aEZH1_EZH1cs: 1.30103
-- PSC_KOEF1aEZH1_H3K27me3: 3
-- PSC_WT_SUZ12: 1.30103 (2.3 more true peak)
-- PSC_WT_EZH2: 1.30103
-- PSC_WT_EZH1cs: FAIL
-- PSC_WT_H3K27me3: 1.30103 (many true peak surprinsgly!)
-- PSC_KO_SUZ12: FAIL
-- PSC_KO_EZH2: FAIL
-- PSC_KO_EZH1cs: FAIL
-- PSC_KO_H3K27me3: 1.30103 (many true peak surprinsgly!)
+- 50dN_KOEF1aEZH1_H3K27me3: 1.30103 (2.3 more true peaks)
+- 50dN_KO_H3K27me3: 1.30103 (2.3 more true peaks)
+- 50dN_WTQ731E_H3K27me3: 1.30103 (2.3 more true peaks)
+
+
+
+
+
+
+
+
+
+
+
 
 
 

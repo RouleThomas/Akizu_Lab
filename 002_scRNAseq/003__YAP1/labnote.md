@@ -8533,7 +8533,7 @@ conda activate scRNAseq
 which cellranger
 
 # Run counting sample per sample for humangastruloid
-sbatch scripts/cellranger_count_humangastruloid_UNTREATED24hr.sh # 9010720 FAIL; with QCNOTfail 9047403 XXX
+sbatch scripts/cellranger_count_humangastruloid_UNTREATED24hr.sh # 9010720 FAIL; with QCNOTfail 9047403 ok
 sbatch scripts/cellranger_count_humangastruloid_DASATINIB24hr.sh # 9010738 ok
 
 # Run count for embryo using mice genome
@@ -8547,7 +8547,7 @@ sbatch scripts/cellranger_count_embryo_cYAPKO_E7_mice.sh # 9010675 ok
 
 --> Bug for `cellranger_count_humangastruloid_UNTREATED24hr`: `Sequence and quality length mismatch: file: "/scr1/users/roulet/Akizu_Lab/002_scRNAseq/003__YAP1/input/24hgastruloidhumanUN/24hgastruloidhumanUN_S1_L001_R2_001.fastq.gz", line: 563052004`
 ----> There is 2 24hgastruloidhumanUN files in BaseSpace; QC fail and not  QC failed; lets test both;
-------> I indeed imported the QC fail one; let's use the QC not fail: *XXX*
+------> I indeed imported the QC fail one; let's use the QC not fail: *Success*
 
 
 
@@ -8564,13 +8564,13 @@ python3 scrublet.py [input_path] [output_path]
 python3 scripts/scrublet_doublets.py E7mousecontrolQCNOTfail/outs/filtered_feature_bc_matrix output/doublets/embryo_E7_control.tsv
 python3 scripts/scrublet_doublets.py E7mousecYAPKO/outs/filtered_feature_bc_matrix output/doublets/embryo_E7_cYAPKO.tsv
 
-XXXX TO RUN :  python3 scripts/scrublet_doublets.py 24hgastruloidhumanUNQCNOTfail/outs/filtered_feature_bc_matrix output/doublets/humangastruloid_UNTREATED24hr.tsv
-XXXX TO RUN : python3 scripts/scrublet_doublets.py 24hgastruloidhumanDASA/outs/filtered_feature_bc_matrix output/doublets/humangastruloid_DASATINIB24hr.tsv
+python3 scripts/scrublet_doublets.py 24hgastruloidhumanUNQCNOTfail/outs/filtered_feature_bc_matrix output/doublets/humangastruloid_UNTREATED24hr.tsv
+python3 scripts/scrublet_doublets.py 24hgastruloidhumanDASA/outs/filtered_feature_bc_matrix output/doublets/humangastruloid_DASATINIB24hr.tsv
 
 ```
 Doublet detection score:
-- humangastruloid_UNTREATED24hr: XXX% (previous time: 0% doublet)
-- humangastruloid_DASATINIB24hr: XXX% (previous time: 34.2% doublet)
+- humangastruloid_UNTREATED24hr: 42% (previous time: 0% doublet)
+- humangastruloid_DASATINIB24hr: 0.2% (previous time: 34.2% doublet)
 - embryo_E7_control: 7.2% (previous time: 0.1% doublet)
 - embryo_E7_cYAPKO: 6.2% (previous time: 3.6%)
 --> Successfully assigned doublet
@@ -8700,34 +8700,67 @@ FeatureScatter(srat_cYAPKO_E7, feature1 = "nFeature_RNA", feature2 = "Doublet_sc
 dev.off()
 
 
-XXX
-
 
 
 ## After seeing the plot; add QC information in our seurat object
-## V1 QC; optimal with vst V1; dim 19 k param 70 es 0.9 --> THE WINNER pro winner
-srat_WT[['QC']] <- ifelse(srat_WT@meta.data$Is_doublet == 'True','Doublet','Pass')
-srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 2000 & srat_WT@meta.data$QC == 'Pass','Low_nFeature',srat_WT@meta.data$QC)
-srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 2000 & srat_WT@meta.data$QC != 'Pass' & srat_WT@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_WT@meta.data$QC,sep = ','),srat_WT@meta.data$QC)
-srat_WT[['QC']] <- ifelse(srat_WT@meta.data$percent.mt > 25 & srat_WT@meta.data$QC == 'Pass','High_MT',srat_WT@meta.data$QC)
-srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 2000 & srat_WT@meta.data$QC != 'Pass' & srat_WT@meta.data$QC != 'High_MT',paste('High_MT',srat_WT@meta.data$QC,sep = ','),srat_WT@meta.data$QC)
-table(srat_WT[['QC']])
+### V1 not super stringeant
+srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$Is_doublet == 'True','Doublet','Pass')
+srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$nFeature_RNA < 500 & srat_WT_E7@meta.data$QC == 'Pass','Low_nFeature',srat_WT_E7@meta.data$QC)
+srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$nFeature_RNA < 500 & srat_WT_E7@meta.data$QC != 'Pass' & srat_WT_E7@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_WT_E7@meta.data$QC,sep = ','),srat_WT_E7@meta.data$QC)
+srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$percent.mt > 10 & srat_WT_E7@meta.data$QC == 'Pass','High_MT',srat_WT_E7@meta.data$QC)
+srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$nFeature_RNA < 500 & srat_WT_E7@meta.data$QC != 'Pass' & srat_WT_E7@meta.data$QC != 'High_MT',paste('High_MT',srat_WT_E7@meta.data$QC,sep = ','),srat_WT_E7@meta.data$QC)
+table(srat_WT_E7[['QC']])
 ## 
-srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$Is_doublet == 'True','Doublet','Pass')
-srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 2000 & srat_cYAPKO@meta.data$QC == 'Pass','Low_nFeature',srat_cYAPKO@meta.data$QC)
-srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 2000 & srat_cYAPKO@meta.data$QC != 'Pass' & srat_cYAPKO@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_cYAPKO@meta.data$QC,sep = ','),srat_cYAPKO@meta.data$QC)
-srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$percent.mt > 25 & srat_cYAPKO@meta.data$QC == 'Pass','High_MT',srat_cYAPKO@meta.data$QC)
-srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 2000 & srat_cYAPKO@meta.data$QC != 'Pass' & srat_cYAPKO@meta.data$QC != 'High_MT',paste('High_MT',srat_cYAPKO@meta.data$QC,sep = ','),srat_cYAPKO@meta.data$QC)
-table(srat_cYAPKO[['QC']])
+srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$Is_doublet == 'True','Doublet','Pass')
+srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 500 & srat_cYAPKO_E7@meta.data$QC == 'Pass','Low_nFeature',srat_cYAPKO_E7@meta.data$QC)
+srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 500 & srat_cYAPKO_E7@meta.data$QC != 'Pass' & srat_cYAPKO_E7@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_cYAPKO_E7@meta.data$QC,sep = ','),srat_cYAPKO_E7@meta.data$QC)
+srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$percent.mt > 10 & srat_cYAPKO_E7@meta.data$QC == 'Pass','High_MT',srat_cYAPKO_E7@meta.data$QC)
+srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 500 & srat_cYAPKO_E7@meta.data$QC != 'Pass' & srat_cYAPKO_E7@meta.data$QC != 'High_MT',paste('High_MT',srat_cYAPKO_E7@meta.data$QC,sep = ','),srat_cYAPKO_E7@meta.data$QC)
+table(srat_cYAPKO_E7[['QC']])
+
+
+### V2 more stringeant
+srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$Is_doublet == 'True','Doublet','Pass')
+srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$nFeature_RNA < 5000 & srat_WT_E7@meta.data$QC == 'Pass','Low_nFeature',srat_WT_E7@meta.data$QC)
+srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$nFeature_RNA < 5000 & srat_WT_E7@meta.data$QC != 'Pass' & srat_WT_E7@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_WT_E7@meta.data$QC,sep = ','),srat_WT_E7@meta.data$QC)
+srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$percent.mt > 10 & srat_WT_E7@meta.data$QC == 'Pass','High_MT',srat_WT_E7@meta.data$QC)
+srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$nFeature_RNA < 5000 & srat_WT_E7@meta.data$QC != 'Pass' & srat_WT_E7@meta.data$QC != 'High_MT',paste('High_MT',srat_WT_E7@meta.data$QC,sep = ','),srat_WT_E7@meta.data$QC)
+table(srat_WT_E7[['QC']])
+## 
+srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$Is_doublet == 'True','Doublet','Pass')
+srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 5000 & srat_cYAPKO_E7@meta.data$QC == 'Pass','Low_nFeature',srat_cYAPKO_E7@meta.data$QC)
+srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 5000 & srat_cYAPKO_E7@meta.data$QC != 'Pass' & srat_cYAPKO_E7@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_cYAPKO_E7@meta.data$QC,sep = ','),srat_cYAPKO_E7@meta.data$QC)
+srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$percent.mt > 10 & srat_cYAPKO_E7@meta.data$QC == 'Pass','High_MT',srat_cYAPKO_E7@meta.data$QC)
+srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 5000 & srat_cYAPKO_E7@meta.data$QC != 'Pass' & srat_cYAPKO_E7@meta.data$QC != 'High_MT',paste('High_MT',srat_cYAPKO_E7@meta.data$QC,sep = ','),srat_cYAPKO_E7@meta.data$QC)
+table(srat_cYAPKO_E7[['QC']])
+
+
+
+
+
+
+# Quality check after QC filtering
+pdf("output/seurat/VlnPlot_QCPass_embryo_control_E7.pdf", width=10, height=6)
+pdf("output/seurat/VlnPlot_QCPass_embryo_cYAPKO_E7.pdf", width=10, height=6)
+pdf("output/seurat/VlnPlot_QCPassV2_embryo_control_E7.pdf", width=10, height=6)
+pdf("output/seurat/VlnPlot_QCPassV2_embryo_cYAPKO_E7.pdf", width=10, height=6)
+
+VlnPlot(subset(srat_cYAPKO_E7, subset = QC == 'Pass'), 
+        features = c("nFeature_RNA", "nCount_RNA", "percent.mt","percent.rb"), ncol = 4, pt.size = 0.1) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+
+
+
 
 
 
 
 ## subset my seurat object to only analyze the cells that pass the QC
-srat_WT <- subset(srat_WT, subset = QC == 'Pass')
-srat_cYAPKO <- subset(srat_cYAPKO, subset = QC == 'Pass')
-srat_WT$condition <- "WT"
-srat_cYAPKO$condition <- "cYAPKO"
+srat_WT_E7 <- subset(srat_WT_E7, subset = QC == 'Pass')
+srat_cYAPKO_E7 <- subset(srat_cYAPKO_E7, subset = QC == 'Pass')
+srat_WT_E7$condition <- "WT_E7"
+srat_cYAPKO_E7$condition <- "cYAPKO_E7"
 
 
 
@@ -8736,57 +8769,100 @@ mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", 
 
 
 ## NORMALIZE AND SCALE DATA BEFORE RUNNING CELLCYCLESORTING
-srat_WT <- NormalizeData(srat_WT, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
-all.genes <- rownames(srat_WT)
-srat_WT <- ScaleData(srat_WT, features = all.genes) # zero-centres and scales it
+srat_WT_E7 <- NormalizeData(srat_WT_E7, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(srat_WT_E7)
+srat_WT_E7 <- ScaleData(srat_WT_E7, features = all.genes) # zero-centres and scales it
 
-srat_cYAPKO <- NormalizeData(srat_cYAPKO, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
-all.genes <- rownames(srat_cYAPKO)
-srat_cYAPKO <- ScaleData(srat_cYAPKO, features = all.genes) # zero-centres and scales it
+srat_cYAPKO_E7 <- NormalizeData(srat_cYAPKO_E7, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(srat_cYAPKO_E7)
+srat_cYAPKO_E7 <- ScaleData(srat_cYAPKO_E7, features = all.genes) # zero-centres and scales it
 
 ### CELLCYCLESORTING
-srat_WT <- CellCycleScoring(srat_WT, s.features = mmus_s, g2m.features = mmus_g2m)
-table(srat_WT[[]]$Phase)
-srat_cYAPKO <- CellCycleScoring(srat_cYAPKO, s.features = mmus_s, g2m.features = mmus_g2m)
-table(srat_cYAPKO[[]]$Phase)
+srat_WT_E7 <- CellCycleScoring(srat_WT_E7, s.features = mmus_s, g2m.features = mmus_g2m)
+table(srat_WT_E7[[]]$Phase)
+srat_cYAPKO_E7 <- CellCycleScoring(srat_cYAPKO_E7, s.features = mmus_s, g2m.features = mmus_g2m)
+table(srat_cYAPKO_E7[[]]$Phase)
 
 set.seed(42)
 
+# elbow
+## srat_WT_E7_elbow = SCTransform(srat_WT_E7, method = "glmGamPoi", ncells = 1624, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 50, verbose = FALSE)
 
 
-set.seed(42)
+pdf("output/seurat/Elbow_srat_WT_E7QCV2.pdf", width=10, height=10)
+ElbowPlot(srat_WT_E7_elbow) # 10 or 15 or 19
+dev.off()
 
-## TEST RNA regression  --> THE WINNER PRO WINNER !!! RNA regression 
-srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4812, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+
+# clustering
+## Optimal parameter for previous time-point ("THE WINNER PRO WINNER !!! RNA regression ")
+srat_WT_E7 <- SCTransform(srat_WT_E7, method = "glmGamPoi", ncells = 788, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
     RunPCA(npcs = 19, verbose = FALSE)
-srat_cYAPKO <- SCTransform(srat_cYAPKO, method = "glmGamPoi", ncells = 3621, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
+srat_cYAPKO_E7 <- SCTransform(srat_cYAPKO_E7, method = "glmGamPoi", ncells = 862, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
     RunPCA(npcs = 19, verbose = FALSE)
+
+
 # Data integration (check active assay is 'SCT')
-srat.list <- list(srat_WT = srat_WT, srat_cYAPKO = srat_cYAPKO)
+srat.list <- list(srat_WT_E7 = srat_WT_E7, srat_cYAPKO_E7 = srat_cYAPKO_E7)
 features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
 srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
 
-embryo.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+embryoE7.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
     anchor.features = features)
-embryo.combined.sct <- IntegrateData(anchorset = embryo.anchors, normalization.method = "SCT")
+embryoE7.combined.sct <- IntegrateData(anchorset = embryoE7.anchors, normalization.method = "SCT")
 
 set.seed(42)
 
-## PLAY WITH RESOLUTION AFTER CONCHI MEETING 20231005
-## individualize germ cells; but fail at separating  
-DefaultAssay(embryo.combined.sct) <- "integrated"
 
-embryo.combined.sct <- RunPCA(embryo.combined.sct, verbose = FALSE, npcs = 19)
-embryo.combined.sct <- RunUMAP(embryo.combined.sct, reduction = "pca", dims = 1:19, verbose = FALSE)
-embryo.combined.sct <- FindNeighbors(embryo.combined.sct, reduction = "pca", k.param = 5, dims = 1:19)
-embryo.combined.sct <- FindClusters(embryo.combined.sct, resolution = 0.3, verbose = FALSE, algorithm = 4)
+DefaultAssay(embryoE7.combined.sct) <- "integrated"
 
-embryo.combined.sct$condition <- factor(embryo.combined.sct$condition, levels = c("WT", "cYAPKO")) # Reorder untreated 1st
+embryoE7.combined.sct <- RunPCA(embryoE7.combined.sct, verbose = FALSE, npcs = 19)
+embryoE7.combined.sct <- RunUMAP(embryoE7.combined.sct, reduction = "pca", dims = 1:19, verbose = FALSE)
+embryoE7.combined.sct <- FindNeighbors(embryoE7.combined.sct, reduction = "pca", k.param = 5, dims = 1:19)
+embryoE7.combined.sct <- FindClusters(embryoE7.combined.sct, resolution = 0.3, verbose = FALSE, algorithm = 4)
 
-pdf("output/seurat/UMAP_control_cYAPKO_V2clust__.pdf", width=10, height=6)
-DimPlot(embryo.combined.sct, reduction = "umap", split.by = "condition", label=TRUE)
+embryoE7.combined.sct$condition <- factor(embryoE7.combined.sct$condition, levels = c("WT_E7", "cYAPKO_E7")) # Reorder untreated 1st
+
+
+
+
+####
+
+## CLUSTERING testing
+srat_WT_E7 <- SCTransform(srat_WT_E7, method = "glmGamPoi", ncells = 788, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 30, verbose = FALSE)
+srat_cYAPKO_E7 <- SCTransform(srat_cYAPKO_E7, method = "glmGamPoi", ncells = 862, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
+    RunPCA(npcs = 30, verbose = FALSE)
+# Data integration (check active assay is 'SCT')
+srat.list <- list(srat_WT_E7 = srat_WT_E7, srat_cYAPKO_E7 = srat_cYAPKO_E7)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+embryoE7.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+embryoE7.combined.sct <- IntegrateData(anchorset = embryoE7.anchors, normalization.method = "SCT")
+set.seed(42)
+
+
+DefaultAssay(embryoE7.combined.sct) <- "integrated"
+embryoE7.combined.sct <- RunPCA(embryoE7.combined.sct, verbose = FALSE, npcs = 30)
+embryoE7.combined.sct <- RunUMAP(embryoE7.combined.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
+embryoE7.combined.sct <- FindNeighbors(embryoE7.combined.sct, reduction = "pca", k.param = 5, dims = 1:30)
+embryoE7.combined.sct <- FindClusters(embryoE7.combined.sct, resolution = 0.3, verbose = FALSE, algorithm = 4)
+embryoE7.combined.sct$condition <- factor(embryoE7.combined.sct$condition, levels = c("WT_E7", "cYAPKO_E7")) # Reorder untreated 1st
+
+
+####
+
+
+
+
+pdf("output/seurat/UMAP_control_cYAPKO_E7.pdf", width=10, height=6)
+pdf("output/seurat/UMAP_control_cYAPKO_E7.pdf", width=10, height=4)
+pdf("output/seurat/UMAP_control_cYAPKO_E7_test.pdf", width=10, height=4)
+
+DimPlot(embryoE7.combined.sct, reduction = "umap", split.by = "condition", label=TRUE)
 dev.off()
-
 
 
 
@@ -8813,66 +8889,267 @@ Primordial_Germ_Cells = c("Dppa3","Sprr2a3","Irf1","Ifitm3") # between 12 and 13
 
 
 
-DefaultAssay(embryo.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Epiblast_PrimStreak_V2clust.pdf", width=10, height=10)
-FeaturePlot(embryo.combined.sct, features = Epiblast_PrimStreak, max.cutoff = 3, cols = c("grey", "red"))
+
+
+# test
+DefaultAssay(embryoE7.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
+
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Notocord_test.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Notocord, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_ExE_Ectoderm_V2clust.pdf", width=10, height=10)
-FeaturePlot(embryo.combined.sct, features = ExE_Ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Mesenchyme_test.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Mesenchyme, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Nascent_Mesoderm_V2clust.pdf", width=10, height=10)
-FeaturePlot(embryo.combined.sct, features = Nascent_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_ExE_Ectoderm_test.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = ExE_Ectoderm, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Somitic_Mesoderm_V2clust.pdf", width=10, height=10)
-FeaturePlot(embryo.combined.sct, features = Somitic_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Nascent_Mesoderm_test.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Nascent_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Caudal_Mesoderm_V2clust.pdf", width=10, height=10)
-FeaturePlot(embryo.combined.sct, features = Caudal_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Blood_Progenitor_1_test.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Blood_Progenitor_1, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Haematodenothelial_progenitors_V2clust.pdf", width=10, height=10)
-FeaturePlot(embryo.combined.sct, features = Haematodenothelial_progenitors, max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Epiblast_PrimStreak_test.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Epiblast_PrimStreak, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Paraxial_Mesoderm_V2clust.pdf", width=10, height=10)
-FeaturePlot(embryo.combined.sct, features = Paraxial_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Primordial_Germ_Cells_test.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Primordial_Germ_Cells, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Mesenchyme_V2clust.pdf", width=10, height=10)
-FeaturePlot(embryo.combined.sct, features = Mesenchyme, max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Somitic_Mesoderm_test.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Somitic_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Blood_Progenitor_1_V2clust.pdf", width=10, height=10)
-FeaturePlot(embryo.combined.sct, features = Blood_Progenitor_1, max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Caudal_Mesoderm_test.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Caudal_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Caudal_Neurectoderm_V2clust.pdf", width=10, height=10)
-FeaturePlot(embryo.combined.sct, features = Caudal_Neurectoderm, max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Haematodenothelial_progenitors_test.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Haematodenothelial_progenitors, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Pharyngeal_Mesoderm_V2clust.pdf", width=10, height=10)
-FeaturePlot(embryo.combined.sct, features = Pharyngeal_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Paraxial_Mesoderm_test.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Paraxial_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Blood_Progenitor_2_V2clust.pdf", width=10, height=10)
-FeaturePlot(embryo.combined.sct, features = Blood_Progenitor_2, max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Caudal_Neurectoderm_test.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Caudal_Neurectoderm, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Intermediate_Mesoderm_V2clust.pdf", width=10, height=10)
-FeaturePlot(embryo.combined.sct, features = Intermediate_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Pharyngeal_Mesoderm_test.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Pharyngeal_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Surface_Ectoderm_V2clust.pdf", width=10, height=10)
-FeaturePlot(embryo.combined.sct, features = Surface_Ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Blood_Progenitor_2_test.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Blood_Progenitor_2, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Mixed_Mesoderm_V2clust.pdf", width=10, height=10)
-FeaturePlot(embryo.combined.sct, features = Mixed_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Intermediate_Mesoderm_test.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Intermediate_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Notocord_V2clust.pdf", width=10, height=10)
-FeaturePlot(embryo.combined.sct, features = Notocord, max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Surface_Ectoderm_test.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Surface_Ectoderm, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Gut_V2clust.pdf", width=10, height=10)
-FeaturePlot(embryo.combined.sct, features = Gut, max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Mixed_Mesoderm_test.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Mixed_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Primordial_Germ_Cells_V2clust.pdf", width=10, height=10)
-FeaturePlot(embryo.combined.sct, features = Primordial_Germ_Cells, max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Gut_test.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Gut, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
 
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Noto_V2clust.pdf", width=10, height=10)
-FeaturePlot(embryo.combined.sct, features = "Noto", max.cutoff = 3, cols = c("grey", "red"))
+
+
+
+# display features
+
+pdf("output/seurat/UMAP_control_cYAPKO_E7_Phase.pdf", width=10, height=6)
+DimPlot(embryoE7.combined.sct, reduction = "umap", split.by = "condition", label=TRUE, group.by = "Phase")
+dev.off()
+pdf("output/seurat/UMAP_control_cYAPKO_E7_nCount_RNA.pdf", width=10, height=6)
+FeaturePlot(embryoE7.combined.sct, "nCount_RNA")
+dev.off()
+pdf("output/seurat/UMAP_control_cYAPKO_E7_percent.mt.pdf", width=10, height=6)
+FeaturePlot(embryoE7.combined.sct, "percent.mt")
+dev.off()
+pdf("output/seurat/UMAP_control_cYAPKO_E7_nFeature_RNA.pdf", width=10, height=6)
+FeaturePlot(embryoE7.combined.sct, "nFeature_RNA")
 dev.off()
 
+pdf("output/seurat/UMAP_control_cYAPKO_E7_Phase_QCV2.pdf", width=10, height=6)
+DimPlot(embryoE7.combined.sct, reduction = "umap", split.by = "condition", label=TRUE, group.by = "Phase")
+dev.off()
+pdf("output/seurat/UMAP_control_cYAPKO_E7_nCount_RNA_QCV2.pdf", width=10, height=6)
+FeaturePlot(embryoE7.combined.sct, "nCount_RNA")
+dev.off()
+pdf("output/seurat/UMAP_control_cYAPKO_E7_percent.mt_QCV2.pdf", width=10, height=6)
+FeaturePlot(embryoE7.combined.sct, "percent.mt")
+dev.off()
+pdf("output/seurat/UMAP_control_cYAPKO_E7_nFeature_RNA_QCV2.pdf", width=10, height=6)
+FeaturePlot(embryoE7.combined.sct, "nFeature_RNA")
+dev.off()
+
+
+
+DefaultAssay(embryoE7.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
+# QCV1
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Notocord.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Notocord, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Mesenchyme.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Mesenchyme, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_ExE_Ectoderm.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = ExE_Ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Nascent_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Nascent_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Blood_Progenitor_1.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Blood_Progenitor_1, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Epiblast_PrimStreak.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Epiblast_PrimStreak, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Primordial_Germ_Cells.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Primordial_Germ_Cells, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Somitic_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Somitic_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Caudal_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Caudal_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Haematodenothelial_progenitors.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Haematodenothelial_progenitors, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Paraxial_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Paraxial_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Caudal_Neurectoderm.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Caudal_Neurectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Pharyngeal_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Pharyngeal_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Blood_Progenitor_2.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Blood_Progenitor_2, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Intermediate_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Intermediate_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Surface_Ectoderm.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Surface_Ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Mixed_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Mixed_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Gut.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Gut, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+
+# QCV2
+DefaultAssay(embryoE7.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
+
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Notocord_QCV2.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Notocord, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Mesenchyme_QCV2.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Mesenchyme, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_ExE_Ectoderm_QCV2.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = ExE_Ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Nascent_Mesoderm_QCV2.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Nascent_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Blood_Progenitor_1_QCV2.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Blood_Progenitor_1, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Epiblast_PrimStreak_QCV2.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Epiblast_PrimStreak, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Primordial_Germ_Cells_QCV2.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Primordial_Germ_Cells, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Somitic_Mesoderm_QCV2.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Somitic_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Caudal_Mesoderm_QCV2.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Caudal_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Haematodenothelial_progenitors_QCV2.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Haematodenothelial_progenitors, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Paraxial_Mesoderm_QCV2.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Paraxial_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Caudal_Neurectoderm_QCV2.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Caudal_Neurectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Pharyngeal_Mesoderm_QCV2.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Pharyngeal_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Blood_Progenitor_2_QCV2.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Blood_Progenitor_2, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Intermediate_Mesoderm_QCV2.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Intermediate_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Surface_Ectoderm_QCV2.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Surface_Ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Mixed_Mesoderm_QCV2.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Mixed_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Gut_QCV2.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Gut, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+
+
+
+### conclusion QCV1 and previous parameter clustering:
+- Noto: bottom
+- mesenchyme: top a tiny bit
+- ExE_Ectoderm: good, cluster on the right
+- Nascent_Mesdoerm: good, top
+- Blood_Progenitor_1: good, top
+- Epiblast_Primstreak: good, most of the cells middle
+- Germ_cells: good, form small cluster  middle
+
+- Gut: bad, lowly express/absent
+- Haematodenothelial_progenitors: bad, lowly express
+- Mesoderm: bad, lowly and dispersed
+- Caudal_Mesoderm: bad, dispersed
+- Somitic_Mesdoerm: bad, lowly express
+- Surface_Ectoderm: bad, lowly express
+- Paraxial_Mesdoerm: bad, dispersed
+- Blood_Progenitor_2: bad, lowly express
+- Caudal_Neuroectoderm: bad, lowly express
+- Pharyngeal_Mesoderm: bad, everywhere
+- Intermediate_Mesoderm: bad, lowly express
+
+
+--> Any cluster in the non express regions? 
+
+
+### conclusion V2 QCV2 and previous parameter clustering:
+- Noto: bottom and up
+- mesenchyme: bottom
+- ExE_Ectoderm: good, left side
+- Nascent_Mesdoerm: good, left side
+- Blood_Progenitor_1: good, top
+- Epiblast_Primstreak: good, most of the cells middle
+- Germ_cells: good, form small cluster  middle
+- Gut: good, right
+- Caudal_Mesoderm: ok, up and top
+- Surface_Ectoderm: good, middle
+- Paraxial_Mesdoerm: ok, middle right
+- Blood_Progenitor_2: good bottom
+- Caudal_Neuroectoderm: good, top
+- Pharyngeal_Mesoderm: good, bottom left
+- Intermediate_Mesoderm: ok, bottom
+- Mixed_Mesoderm: good, middle left
+
+- Haematodenothelial_progenitors: bad, lowly express
+- Mesoderm: bad, lowly and dispersed
+- Somitic_Mesdoerm: bad, lowly dispersed
 
 
 
