@@ -169,12 +169,9 @@ Let's do the same for E coli MG1655 spike in samples:
 ```bash
 conda activate bowtie2
 
-sbatch scripts/samtools_MG1655_unique_1.sh # xxx
-sbatch scripts/samtools_MG1655_unique_2.sh # xxx
-sbatch scripts/samtools_MG1655_unique_3.sh # xxx
-sbatch scripts/samtools_MG1655_unique_4.sh # xxx
-
-
+sbatch scripts/samtools_MG1655_unique_1.sh # 9162457
+sbatch scripts/samtools_MG1655_unique_2.sh # 9162461
+sbatch scripts/samtools_MG1655_unique_3.sh # 9162467
 ```
 
 --> More information on this step in the `005__CutRun` labnote
@@ -338,10 +335,6 @@ awk '{print $3-$2}' your_bed_file.bed | sort -n | awk 'BEGIN {c=0; sum=0;} {a[c+
 
 
 
-
-
-
-
 # Spike in factor
 
 Let's do the analysis for H3K27me3 only; compare WT vs KO vs KOEF1a. Test 2 spikein normalization method (histone and Ecoli)
@@ -361,13 +354,17 @@ Let's do the analysis for H3K27me3 only; compare WT vs KO vs KOEF1a. Test 2 spik
 
 
 ```bash
-sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp.sh # 9128747
-```
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp.sh # 9128747 ok
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_IGG_1.sh # 9156030 ok
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_IGG_2.sh # 9156040 ok
 
-xxxx
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_PSC.sh # 9155614 ok
+```
 
 --> It output the nb of reads found for each histone; then simply copy paste to the excell file `output/spikein/SpikeIn_QC_fastp_007.xlsx` in GoogleDrive
 
+- *H3K27me3 50dN samples*: all samples well enriched for H3K27me3
+- *H3K27me1 PSC samples*: all samples well enriched for H3K27me3
 
 
 ## histone spike in factor
@@ -378,17 +375,17 @@ xxxx
 library("tidyverse")
 library("readxl")
 # import df
-spikein <- read_excel("output/spikein/SpikeIn_QC_fastp.xlsx") 
+spikein <- read_excel("output/spikein/SpikeIn_QC_fastp_007.xlsx") 
 
-# PSC
+# 50dN
 ## H3K27me3
-spikein_PSC_H3K27me3 = spikein %>%
-    filter(tissue == "PSC",
+spikein_50dN_H3K27me3 = spikein %>%
+    filter(tissue == "50dN",
            Target == "H3K27me3") %>%
     group_by(sample_ID, AB) %>%
     summarise(aligned=sum(counts))
 # Total reads per IP
-spikein_PSC_H3K27me3_total = spikein_PSC_H3K27me3 %>%
+spikein_50dN_H3K27me3_total = spikein_50dN_H3K27me3 %>%
     ungroup() %>%
     group_by(AB) %>%
     mutate(total = sum(aligned)) %>%
@@ -396,19 +393,22 @@ spikein_PSC_H3K27me3_total = spikein_PSC_H3K27me3 %>%
     distinct(AB, .keep_all = TRUE) %>%
     select(AB,total)
 # Read proportion
-spikein_PSC_H3K27me3_read_prop = spikein_PSC_H3K27me3 %>%
-    left_join(spikein_PSC_H3K27me3_total) %>%
+spikein_50dN_H3K27me3_read_prop = spikein_50dN_H3K27me3 %>%
+    left_join(spikein_50dN_H3K27me3_total) %>%
     mutate(read_prop = aligned / total)
-spikein_PSC_H3K27me3_read_prop_min = spikein_PSC_H3K27me3_read_prop %>%
+spikein_50dN_H3K27me3_read_prop_min = spikein_50dN_H3K27me3_read_prop %>%
     group_by(AB) %>%
     summarise(min_prop=min(read_prop))
 # Scaling factor
-spikein_PSC_H3K27me3_scaling_factor = spikein_PSC_H3K27me3_read_prop %>%
-    left_join(spikein_PSC_H3K27me3_read_prop_min) %>%
+spikein_50dN_H3K27me3_scaling_factor = spikein_50dN_H3K27me3_read_prop %>%
+    left_join(spikein_50dN_H3K27me3_read_prop_min) %>%
     mutate(scaling_factor = read_prop/min_prop)
-write.table(spikein_PSC_H3K27me3_scaling_factor, file="output/spikein/spikein_histone_PSC_H3K27me3_scaling_factor_fastp.txt", sep="\t", quote=FALSE, row.names=FALSE)
+write.table(spikein_50dN_H3K27me3_scaling_factor, file="output/spikein/spikein_histone_50dN_H3K27me3_scaling_factor_fastp.txt", sep="\t", quote=FALSE, row.names=FALSE)
+
 
 ```
+
+--> KO has a high SF!! High proportion of histone reads; so means that we will decrease it's signal! Which is good
 
 
 
@@ -421,7 +421,7 @@ Then look at the xlsx file from [EpiCypher](https://www.epicypher.com/products/n
 library("tidyverse")
 library("readxl")
 # import df adn tidy to remove AB used in sample_ID
-spikein <- read_excel("output/spikein/SpikeIn_QC_fastp.xlsx") %>%
+spikein <- read_excel("output/spikein/SpikeIn_QC_fastp_007.xlsx") %>%
   separate(sample_ID, into = c("type", "condition", "tag"), sep = "_") %>%
   mutate(sample_ID = paste(type, condition, sep = "_")) %>%
   select(-type, -condition, -tag, -tissue)
@@ -463,7 +463,7 @@ spikein_all_scale = spikein_all %>%
 # Plot
 pdf("output/spikein/QC_histone_spike_in_H3K27me3.pdf", width = 14, height = 4)
 spikein_all_scale %>%
-    filter(sample_ID %in% c("NPC_WT", "NPC_KO", "PSC_KOEF1aEZH1", "PSC_KOsynEZH1"),
+    filter(
            AB %in% c("H3K27me3", "IGG")) %>%
         ggplot(aes(x = Target, y = scaled_target_norm, fill = AB)) +
         geom_col(position = "dodge") +
@@ -474,20 +474,88 @@ spikein_all_scale %>%
 dev.off()
 
 
+## Histone scaling for H3K27me1
+spikein_all_scale = spikein_all %>%
+  group_by(sample_ID) %>%
+  # Find the target_norm value when Target is H3K27me1 and AB is H3K27me1
+  mutate(scaling_factor = ifelse(Target == "H3K27me1" & AB == "H3K27me1", target_norm, NA)) %>%
+  # Fill the scaling_factor column with the appropriate value within each group
+  fill(scaling_factor, .direction = "downup") %>%
+  # Scale the target_norm values
+  mutate(scaled_target_norm = target_norm / scaling_factor * 100) %>%
+  # Remove the scaling_factor column
+  select(-scaling_factor) %>%
+  # Ungroup the data
+  ungroup()
+# Plot
+pdf("output/spikein/QC_histone_spike_in_H3K27me1.pdf", width = 14, height = 4)
+spikein_all_scale %>%
+    filter(
+           AB %in% c("H3K27me1", "IGG")) %>%
+        ggplot(aes(x = Target, y = scaled_target_norm, fill = AB)) +
+        geom_col(position = "dodge") +
+        facet_wrap(~sample_ID, nrow=1) +
+        geom_hline(yintercept = 20, color = "red", linetype = "longdash") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+dev.off()
 
 
 ```
 
 
+--> All good H3K27me3 IP H3K27me3 and H3K27me1 IP H3K27me1
 
-XXXX SF calcul
+
+
 
 
 ## Ecoli MG1655 spike in factor
 
 
+- Using the number of aligned reads to the spike-in control sequences for each sample `samtools view -S -F 4 -c sample_h3k27me3_rep1_spikein.sam > sample_h3k27me3_rep1_spikein_count.txt` --> *has been run in bowtie2 scripts* (**construct table on Google Drive**)
+- Do the math for scaling factor, same method as when using histone spike-in
+
+Now calculate SF in R, as for histone SF:
+
+XXXXX
 
 
+```R
+# package
+library("tidyverse")
+library("readxl")
+library("ggpubr")
+
+# import df
+spikein <- read_excel("output/spikein/SpikeIn_MG1655.xlsx") 
+
+## 50dN
+spikein <- read_table("output/spikein/SpikeIn_MG1655.txt") %>%
+    filter(tissue == "NPC") %>%
+    dplyr::select(-tissue)
+# Total reads per IP
+spikein_H3K27me3_total = spikein %>%
+    group_by(AB) %>%
+    mutate(total = sum(counts)) %>%
+    ungroup() %>%
+    distinct(AB, .keep_all = TRUE) %>%
+    select(AB,total)
+# Read proportion
+spikein_read_prop = spikein %>%
+    left_join(spikein_H3K27me3_total) %>%
+    mutate(read_prop = counts / total)
+spikein_read_prop_min = spikein_read_prop %>%
+    group_by(AB) %>%
+    summarise(min_prop=min(read_prop))
+# Scaling factor
+spikein_scaling_factor = spikein_read_prop %>%
+    left_join(spikein_read_prop_min) %>%
+    mutate(scaling_factor = read_prop/min_prop)
+write.table(spikein_scaling_factor, file="output/spikein/spikein_MG1655_NPC_scaling_factor.txt", sep="\t", quote=FALSE, row.names=FALSE)
+
+
+```
 
 
 

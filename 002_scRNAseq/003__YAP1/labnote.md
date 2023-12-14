@@ -8786,8 +8786,7 @@ table(srat_cYAPKO_E7[[]]$Phase)
 set.seed(42)
 
 # elbow
-## srat_WT_E7_elbow = SCTransform(srat_WT_E7, method = "glmGamPoi", ncells = 1624, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
-    RunPCA(npcs = 50, verbose = FALSE)
+## srat_WT_E7_elbow = SCTransform(srat_WT_E7, method = "glmGamPoi", ncells = 1624, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% RunPCA(npcs = 50, verbose = FALSE)
 
 
 pdf("output/seurat/Elbow_srat_WT_E7QCV2.pdf", width=10, height=10)
@@ -8829,11 +8828,12 @@ embryoE7.combined.sct$condition <- factor(embryoE7.combined.sct$condition, level
 
 ####
 
+
 ## CLUSTERING testing
 srat_WT_E7 <- SCTransform(srat_WT_E7, method = "glmGamPoi", ncells = 788, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
-    RunPCA(npcs = 30, verbose = FALSE)
+    RunPCA(npcs = 50, verbose = FALSE)
 srat_cYAPKO_E7 <- SCTransform(srat_cYAPKO_E7, method = "glmGamPoi", ncells = 862, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
-    RunPCA(npcs = 30, verbose = FALSE)
+    RunPCA(npcs = 50, verbose = FALSE)
 # Data integration (check active assay is 'SCT')
 srat.list <- list(srat_WT_E7 = srat_WT_E7, srat_cYAPKO_E7 = srat_cYAPKO_E7)
 features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
@@ -8845,9 +8845,9 @@ set.seed(42)
 
 
 DefaultAssay(embryoE7.combined.sct) <- "integrated"
-embryoE7.combined.sct <- RunPCA(embryoE7.combined.sct, verbose = FALSE, npcs = 30)
-embryoE7.combined.sct <- RunUMAP(embryoE7.combined.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
-embryoE7.combined.sct <- FindNeighbors(embryoE7.combined.sct, reduction = "pca", k.param = 5, dims = 1:30)
+embryoE7.combined.sct <- RunPCA(embryoE7.combined.sct, verbose = FALSE, npcs = 50)
+embryoE7.combined.sct <- RunUMAP(embryoE7.combined.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
+embryoE7.combined.sct <- FindNeighbors(embryoE7.combined.sct, reduction = "pca", k.param = 5, dims = 1:50)
 embryoE7.combined.sct <- FindClusters(embryoE7.combined.sct, resolution = 0.3, verbose = FALSE, algorithm = 4)
 embryoE7.combined.sct$condition <- factor(embryoE7.combined.sct$condition, levels = c("WT_E7", "cYAPKO_E7")) # Reorder untreated 1st
 
@@ -8888,11 +8888,48 @@ Gut = c("Pga5","Hs3cst1","Wfdc1","Islr2") # 14  \   $  14 + %  15
 Primordial_Germ_Cells = c("Dppa3","Sprr2a3","Irf1","Ifitm3") # between 12 and 13    + %  18
 
 
+#### Conchi new list 20231214
+Epiblast = c("Pou5f1", "Sox2", "Cdh1")
+Primitive_Streak = c("Mixl1", "Eomes", "T")
+Blood_Progenitor = c("Gata1", "Tal1", "Kdr", "Runx1", "Ets2", "Etv2")
+Nascent_Mesoderm = c("Mesp1")
+Endoderm =c("Sox17", "Foxa2")  # These cells will also be positive for Primitive streak markers, such as Eomes or T
+ExE_Endoderm = c("Ttr", "Dab2", "Sox7", "Fabp1", "Fabp2", "Gata4", "Cldn6") # This cells will be negative or have low levels of Primitive streak markers
+ExE_Ectoderm =c("Elf5", "Rhox5")
 
 
+# test_newconchi list 20231214
+DefaultAssay(embryoE7.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
+
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Epiblast_List20231214_test.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Epiblast, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Primitive_Streak_List20231214_test.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Primitive_Streak, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Blood_Progenitor_List20231214_test.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Blood_Progenitor, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Nascent_Mesoderm_List20231214_test.pdf", width=5, height=5)
+FeaturePlot(embryoE7.combined.sct, features = Nascent_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Endoderm_List20231214_test.pdf", width=10, height=5)
+FeaturePlot(embryoE7.combined.sct, features = Endoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_ExE_Endoderm_List20231214_test.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = ExE_Endoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_ExE_Ectoderm_List20231214_test.pdf", width=10, height=5)
+FeaturePlot(embryoE7.combined.sct, features = ExE_Ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
 
 # test
 DefaultAssay(embryoE7.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
+# DefaultAssay(embryoE7.combined.sct) <- "RNA" # For vizualization either use SCT or norm RNA
+
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_NODAL_test.pdf", width=10, height=15)
+FeaturePlot(embryoE7.combined.sct, features = c("Nodal", "Axin2", "Sp5"), split.by = "condition", max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
 
 pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Notocord_test.pdf", width=10, height=10)
 FeaturePlot(embryoE7.combined.sct, features = Notocord, max.cutoff = 3, cols = c("grey", "red"))
