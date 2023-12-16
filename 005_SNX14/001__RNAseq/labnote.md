@@ -875,10 +875,202 @@ ggplot(filtered_data, aes(x=genotype, y=ID, fill=NES)) +
 dev.off()
 
 
+```
+Now GSEA with the log2fc ranking 
 
+
+```R
+# Packages
+library("tidyverse")
+library("clusterProfiler")
+library("msigdbr") # BiocManager::install("msigdbr")
+library("org.Mm.eg.db")
+library("enrichplot") # for gseaplot2()
+library("pheatmap")
+library("readxl")
+
+# import DEGs
+
+
+CB_1month = read_excel("output/gsea/RNAseq of CB&CX_1mon&1yr.xlsx", sheet = 1) %>%
+  dplyr::select(gene_name, log2FoldChange)
+CX_1month = read_excel("output/gsea/RNAseq of CB&CX_1mon&1yr.xlsx", sheet = 3) %>%
+  dplyr::select(gene_name, log2FoldChange)
+CB_1year = read_excel("output/gsea/RNAseq of CB&CX_1mon&1yr.xlsx", sheet = 2) %>%
+  dplyr::select(Gene.name, log2FoldChange)%>%
+  dplyr::rename(gene_name = Gene.name)
+CX_1year = read_excel("output/gsea/RNAseq of CB&CX_1mon&1yr.xlsx", sheet = 4) %>%
+  dplyr::select(Gene.name, log2FoldChange)%>%
+  dplyr::rename(gene_name = Gene.name)
+
+
+# import msigdbr cell marker db 
+hs_hallmark_sets <- msigdbr(
+  species = "Mus musculus", # Replace with species name relevant to your data
+  category = "C2"   # From C2 pathways
+)
+hs_hallmark_sets <- msigdbr(
+  species = "Mus musculus", # Replace with species name relevant to your data
+  category = "C5"   # From C5 ontology
+)
+
+
+# Order our DEG
+## Let's create a named vector ranked based on the log2 fold change values
+lfc_vector <- CX_1year$log2FoldChange           ################ CHANGE !!!!!!!!!!!!!!!! ######################
+names(lfc_vector) <- CX_1year$gene_name           ################ CHANGE !!!!!!!!!!!!!!!! ######################
+## We need to sort the log2 fold change values in descending order here
+lfc_vector <- sort(lfc_vector, decreasing = TRUE)
+### Set the seed so our results are reproducible:
+set.seed(42)
+
+
+# run GSEA
+
+## without pvalue cutoff
+gsea_results <- GSEA(
+  geneList = lfc_vector,
+  minGSSize = 1,
+  maxGSSize = 5000,
+  pvalueCutoff = 1,
+  eps = 0,
+  seed = TRUE,
+  pAdjustMethod = "BH",
+  TERM2GENE = dplyr::select(
+    hs_hallmark_sets,
+    gs_name,
+    gene_symbol
+  )
+)
+
+gsea_result_df <- data.frame(gsea_results@result)
+
+
+
+readr::write_tsv(
+  gsea_result_df,
+  file.path("output/gsea/gsea_results_CX_1year_C5_complete-log2FoldChangeRanking.tsv"        ################ CHANGE !!!!!!!!!!!!!!!! ######################
+  )
+)
+
+
+
+
+#### BELOW CODE TO MODIFY!!!!!!!
+
+# lipid-containg term
+REACTOME_METABOLISM_OF_LIPIDS
+GOBP_RESPONSE_TO_LIPID
+
+
+# plots
+
+
+pdf("output/gsea/gsea_CB_1month_C2-REACTOME_METABOLISM_OF_LIPIDS.pdf", width=14, height=8)
+pdf("output/gsea/gsea_CX_1month_C2-REACTOME_METABOLISM_OF_LIPIDS.pdf", width=14, height=8)
+pdf("output/gsea/gsea_CB_1year_C2-REACTOME_METABOLISM_OF_LIPIDS.pdf", width=14, height=8)
+pdf("output/gsea/gsea_CX_1year_C2-REACTOME_METABOLISM_OF_LIPIDS.pdf", width=14, height=8)
+
+pdf("output/gsea/gsea_CB_1month_C5-GOPB_RESPONSE_TO_LIPID.pdf", width=14, height=8)
+pdf("output/gsea/gsea_CX_1month_C5-GOPB_RESPONSE_TO_LIPID.pdf", width=14, height=8)
+pdf("output/gsea/gsea_CX_1year_C5-GOPB_RESPONSE_TO_LIPID.pdf", width=14, height=8)
+pdf("output/gsea/gsea_CB_1year_C5-GOPB_RESPONSE_TO_LIPID.pdf", width=14, height=8)
+
+enrichplot::gseaplot(
+  gsea_results,
+  geneSetID = "GOBP_RESPONSE_TO_LIPID",
+  title = "GOBP_RESPONSE_TO_LIPID",
+  color.line = "#0d76ff"
+)
+dev.off()
+
+
+
+
+
+
+
+## heatmap Norm Enrichment Score
+### import gsea results
+
+CX_1month_C5 = readr::read_tsv("output/gsea/gsea_results_CX_1month_C5_complete.tsv") %>%
+  dplyr::select(ID, NES, pvalue) %>%
+  add_column(genotype = "CX_1month")
+CX_1year_C5 = readr::read_tsv("output/gsea/gsea_results_CX_1year_C5_complete.tsv") %>%
+  dplyr::select(ID, NES, pvalue) %>%
+  add_column(genotype = "CX_1year")
+CB_1month_C5 = readr::read_tsv("output/gsea/gsea_results_CB_1month_C5_complete.tsv") %>%
+  dplyr::select(ID, NES, pvalue) %>%
+  add_column(genotype = "CB_1month")
+CB_1year_C5 = readr::read_tsv("output/gsea/gsea_results_CB_1year_C5_complete.tsv") %>%
+  dplyr::select(ID, NES, pvalue) %>%
+  add_column(genotype = "CB_1year")
+
+
+
+
+
+gsea_result_df_tidy = CX_1month_C5 %>%
+  bind_rows(CX_1year_C5) %>%
+  bind_rows(CB_1month_C5) %>%
+  bind_rows(CB_1year_C5)
+
+### Set up the heatmap
+desired_ids <- c(
+"GOBP_RESPONSE_TO_LIPID",
+"GOBP_CELLULAR_RESPONSE_TO_LIPID",
+"GOBP_LIPID_METABOLIC_PROCESS"
+)
+
+
+
+
+
+# Filter the data for desired IDs
+filtered_data <- gsea_result_df_tidy %>%
+  filter(ID %in% desired_ids)
+
+filtered_data$genotype <-
+  factor(filtered_data$genotype,
+         c("CX_1month", "CX_1year", "CB_1month", "CB_1year"))
+
+
+pdf("output/gsea/heatmap_GOBP_LIPID.pdf", width=3, height=4)
+
+
+
+ggplot(filtered_data, aes(x=genotype, y=ID, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 6),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="NES") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(filtered_data$pvalue <= 0.01, "black", "grey50"), 
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
 
 
 ```
+
+
+
+
+
+
+
+
 
 
 ## GSEA using [webtool](https://www.webgestalt.org/)

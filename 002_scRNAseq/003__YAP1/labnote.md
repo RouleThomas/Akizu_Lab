@@ -8795,41 +8795,7 @@ dev.off()
 
 
 # clustering
-## Optimal parameter for previous time-point ("THE WINNER PRO WINNER !!! RNA regression ")
-srat_WT_E7 <- SCTransform(srat_WT_E7, method = "glmGamPoi", ncells = 788, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
-    RunPCA(npcs = 19, verbose = FALSE)
-srat_cYAPKO_E7 <- SCTransform(srat_cYAPKO_E7, method = "glmGamPoi", ncells = 862, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
-    RunPCA(npcs = 19, verbose = FALSE)
-
-
-# Data integration (check active assay is 'SCT')
-srat.list <- list(srat_WT_E7 = srat_WT_E7, srat_cYAPKO_E7 = srat_cYAPKO_E7)
-features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
-srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
-
-embryoE7.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
-    anchor.features = features)
-embryoE7.combined.sct <- IntegrateData(anchorset = embryoE7.anchors, normalization.method = "SCT")
-
-set.seed(42)
-
-
-DefaultAssay(embryoE7.combined.sct) <- "integrated"
-
-embryoE7.combined.sct <- RunPCA(embryoE7.combined.sct, verbose = FALSE, npcs = 19)
-embryoE7.combined.sct <- RunUMAP(embryoE7.combined.sct, reduction = "pca", dims = 1:19, verbose = FALSE)
-embryoE7.combined.sct <- FindNeighbors(embryoE7.combined.sct, reduction = "pca", k.param = 5, dims = 1:19)
-embryoE7.combined.sct <- FindClusters(embryoE7.combined.sct, resolution = 0.3, verbose = FALSE, algorithm = 4)
-
-embryoE7.combined.sct$condition <- factor(embryoE7.combined.sct$condition, levels = c("WT_E7", "cYAPKO_E7")) # Reorder untreated 1st
-
-
-
-
-####
-
-
-## CLUSTERING testing
+## Optimal parameter 50 dim
 srat_WT_E7 <- SCTransform(srat_WT_E7, method = "glmGamPoi", ncells = 788, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
     RunPCA(npcs = 50, verbose = FALSE)
 srat_cYAPKO_E7 <- SCTransform(srat_cYAPKO_E7, method = "glmGamPoi", ncells = 862, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
@@ -8842,24 +8808,70 @@ embryoE7.anchors <- FindIntegrationAnchors(object.list = srat.list, normalizatio
     anchor.features = features)
 embryoE7.combined.sct <- IntegrateData(anchorset = embryoE7.anchors, normalization.method = "SCT")
 set.seed(42)
-
-
 DefaultAssay(embryoE7.combined.sct) <- "integrated"
 embryoE7.combined.sct <- RunPCA(embryoE7.combined.sct, verbose = FALSE, npcs = 50)
 embryoE7.combined.sct <- RunUMAP(embryoE7.combined.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
 embryoE7.combined.sct <- FindNeighbors(embryoE7.combined.sct, reduction = "pca", k.param = 5, dims = 1:50)
-embryoE7.combined.sct <- FindClusters(embryoE7.combined.sct, resolution = 0.3, verbose = FALSE, algorithm = 4)
+embryoE7.combined.sct <- FindClusters(embryoE7.combined.sct, resolution = 0.2, verbose = FALSE, algorithm = 4)
 embryoE7.combined.sct$condition <- factor(embryoE7.combined.sct$condition, levels = c("WT_E7", "cYAPKO_E7")) # Reorder untreated 1st
+
+
+
+
+## Optimal parameter 19 dim
+srat_WT_E7 <- SCTransform(srat_WT_E7, method = "glmGamPoi", ncells = 788, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 19, verbose = FALSE)
+srat_cYAPKO_E7 <- SCTransform(srat_cYAPKO_E7, method = "glmGamPoi", ncells = 862, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
+    RunPCA(npcs = 19, verbose = FALSE)
+# Data integration (check active assay is 'SCT')
+srat.list <- list(srat_WT_E7 = srat_WT_E7, srat_cYAPKO_E7 = srat_cYAPKO_E7)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+embryoE7.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+embryoE7.combined.sct <- IntegrateData(anchorset = embryoE7.anchors, normalization.method = "SCT")
+set.seed(42)
+DefaultAssay(embryoE7.combined.sct) <- "integrated"
+embryoE7.combined.sct <- RunPCA(embryoE7.combined.sct, verbose = FALSE, npcs = 19)
+embryoE7.combined.sct <- RunUMAP(embryoE7.combined.sct, reduction = "pca", dims = 1:19, verbose = FALSE)
+embryoE7.combined.sct <- FindNeighbors(embryoE7.combined.sct, reduction = "pca", k.param = 4, dims = 1:19)
+embryoE7.combined.sct <- FindClusters(embryoE7.combined.sct, resolution = 0.07, verbose = FALSE, algorithm = 4)
+embryoE7.combined.sct$condition <- factor(embryoE7.combined.sct$condition, levels = c("WT_E7", "cYAPKO_E7")) # Reorder untreated 1st
+
+
+
+
+## CLUSTERING testing
+srat_WT_E7 <- SCTransform(srat_WT_E7, method = "glmGamPoi", ncells = 788, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 19, verbose = FALSE)
+srat_cYAPKO_E7 <- SCTransform(srat_cYAPKO_E7, method = "glmGamPoi", ncells = 862, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
+    RunPCA(npcs = 19, verbose = FALSE)
+# Data integration (check active assay is 'SCT')
+srat.list <- list(srat_WT_E7 = srat_WT_E7, srat_cYAPKO_E7 = srat_cYAPKO_E7)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+embryoE7.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+embryoE7.combined.sct <- IntegrateData(anchorset = embryoE7.anchors, normalization.method = "SCT")
+set.seed(42)
+DefaultAssay(embryoE7.combined.sct) <- "integrated"
+embryoE7.combined.sct <- RunPCA(embryoE7.combined.sct, verbose = FALSE, npcs = 19)
+embryoE7.combined.sct <- RunUMAP(embryoE7.combined.sct, reduction = "pca", dims = 1:19, verbose = FALSE)
+embryoE7.combined.sct <- FindNeighbors(embryoE7.combined.sct, reduction = "pca", k.param = 4, dims = 1:19)
+embryoE7.combined.sct <- FindClusters(embryoE7.combined.sct, resolution = 0.07, verbose = FALSE, algorithm = 4)
+embryoE7.combined.sct$condition <- factor(embryoE7.combined.sct$condition, levels = c("WT_E7", "cYAPKO_E7")) # Reorder untreated 1st
+
 
 
 ####
 
 
+pdf("output/seurat/UMAP_control_cYAPKO_E7_50dimOpt.pdf", width=10, height=4)
 
 
-pdf("output/seurat/UMAP_control_cYAPKO_E7.pdf", width=10, height=6)
-pdf("output/seurat/UMAP_control_cYAPKO_E7.pdf", width=10, height=4)
 pdf("output/seurat/UMAP_control_cYAPKO_E7_test.pdf", width=10, height=4)
+
+pdf("output/seurat/UMAP_control_cYAPKO_E7_19dimOpt.pdf", width=10, height=4)
 
 DimPlot(embryoE7.combined.sct, reduction = "umap", split.by = "condition", label=TRUE)
 dev.off()
@@ -8899,29 +8911,69 @@ ExE_Ectoderm =c("Elf5", "Rhox5")
 
 
 # test_newconchi list 20231214
+## 50 dim
 DefaultAssay(embryoE7.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
 
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Epiblast_List20231214_test.pdf", width=10, height=10)
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_NODAL_50dim.pdf", width=10, height=12)
+FeaturePlot(embryoE7.combined.sct, features = c("Nodal", "Axin2", "Sp5"), split.by = "condition", max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Epiblast_List20231214_50dim.pdf", width=10, height=10)
 FeaturePlot(embryoE7.combined.sct, features = Epiblast, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Primitive_Streak_List20231214_test.pdf", width=10, height=10)
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Primitive_Streak_List20231214_50dim.pdf", width=10, height=10)
 FeaturePlot(embryoE7.combined.sct, features = Primitive_Streak, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Blood_Progenitor_List20231214_test.pdf", width=10, height=10)
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Blood_Progenitor_List20231214_50dim.pdf", width=10, height=10)
 FeaturePlot(embryoE7.combined.sct, features = Blood_Progenitor, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Nascent_Mesoderm_List20231214_test.pdf", width=5, height=5)
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Nascent_Mesoderm_List20231214_50dim.pdf", width=5, height=5)
 FeaturePlot(embryoE7.combined.sct, features = Nascent_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Endoderm_List20231214_test.pdf", width=10, height=5)
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Endoderm_List20231214_50dim.pdf", width=10, height=5)
 FeaturePlot(embryoE7.combined.sct, features = Endoderm, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_ExE_Endoderm_List20231214_test.pdf", width=10, height=10)
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_ExE_Endoderm_List20231214_50dim.pdf", width=10, height=10)
 FeaturePlot(embryoE7.combined.sct, features = ExE_Endoderm, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_ExE_Ectoderm_List20231214_test.pdf", width=10, height=5)
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_ExE_Ectoderm_List20231214_50dim.pdf", width=10, height=5)
 FeaturePlot(embryoE7.combined.sct, features = ExE_Ectoderm, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
+
+
+
+## 19 dim
+DefaultAssay(embryoE7.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
+
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_NODAL_19dim.pdf", width=10, height=12)
+FeaturePlot(embryoE7.combined.sct, features = c("Nodal", "Axin2", "Sp5"), split.by = "condition", max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Epiblast_List20231214_19dim.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Epiblast, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Primitive_Streak_List20231214_19dim.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Primitive_Streak, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Blood_Progenitor_List20231214_19dim.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = Blood_Progenitor, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Nascent_Mesoderm_List20231214_19dim.pdf", width=5, height=5)
+FeaturePlot(embryoE7.combined.sct, features = Nascent_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Endoderm_List20231214_19dim.pdf", width=10, height=5)
+FeaturePlot(embryoE7.combined.sct, features = Endoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_ExE_Endoderm_List20231214_19dim.pdf", width=10, height=10)
+FeaturePlot(embryoE7.combined.sct, features = ExE_Endoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_ExE_Ectoderm_List20231214_19dim.pdf", width=10, height=5)
+FeaturePlot(embryoE7.combined.sct, features = ExE_Ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+
+
+
 
 # test
 DefaultAssay(embryoE7.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
@@ -9193,133 +9245,180 @@ dev.off()
 
 
 # Rename cluster
-Epiblast_PrimStreak  # cluster_1
-ExE_Ectoderm_1 # cluster_2
-Nascent_Mesoderm  # cluster_3
-Somitic_Mesoderm  # cluster_4
-Caudal_Mesoderm # cluster_5
-Paraxial_Mesoderm  # cluster_6
-Pharyngeal_Mesoderm # cluster_7
-Haematodenothelial_progenitors  # cluster_8
-Mesenchyme # cluster_9
-Blood_Progenitor_1 # cluster_10 (and 3)
-Mixed_Mesoderm # cluster_11
-Blood_Progenitor_2 # cluster_12
-Surface_Ectoderm  # cluster_13
-Gut #  cluster_14
-Unknown_1 # cluster_15
-Notocord # cluster_16
-Unknown_2 # cluster_17
-Primordial_Germ_Cells # cluster_18
-ExE_Ectoderm_2 # cluster_19
-
+## 50 dim
 
 
 new.cluster.ids <- c(
-  "Epiblast_PrimStreak", 
-  "ExE_Ectoderm_1", 
-  "Nascent_Mesoderm", 
-  "Somitic_Mesoderm", 
-  "Caudal_Mesoderm", 
-  "Paraxial_Mesoderm", 
-  "Pharyngeal_Mesoderm", 
-  "Haematodenothelial_progenitors", 
-  "Mesenchyme", 
-  "Blood_Progenitor_1", 
-  "Mixed_Mesoderm", 
-  "Blood_Progenitor_2", 
-  "Surface_Ectoderm", 
-  "Gut", 
-  "Unknown_1", 
-  "Notocord", 
-  "Unknown_2", 
-  "Primordial_Germ_Cells", 
-  "ExE_Ectoderm_2"
+  "Epiblast",
+  "Exe_Ectoderm",
+  "Primitive_Streak-Nascent_Mesoderm_1",
+  "Exe_Endoderm_1",
+  "Primitive_Streak-Nascent_Mesoderm_2",
+  "Endoderm",
+  "Exe_Endoderm_2",
+  "Blood_Progenitor"
 )
 
-names(new.cluster.ids) <- levels(embryo.combined.sct)
-embryo.combined.sct <- RenameIdents(embryo.combined.sct, new.cluster.ids)
+names(new.cluster.ids) <- levels(embryoE7.combined.sct)
+embryoE7.combined.sct <- RenameIdents(embryoE7.combined.sct, new.cluster.ids)
 
-embryo.combined.sct$cluster.annot <- Idents(embryo.combined.sct) # create a new slot in my seurat object
+embryoE7.combined.sct$cluster.annot <- Idents(embryoE7.combined.sct) # create a new slot in my seurat object
 
 
-pdf("output/seurat/UMAP_control_cYAPKO_label_V2clust.pdf", width=12, height=6)
-DimPlot(embryo.combined.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+pdf("output/seurat/UMAP_control_cYAPKO_E7_label_50dim.pdf", width=12, height=6)
+DimPlot(embryoE7.combined.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+dev.off()
+
+pdf("output/seurat/UMAP_control_cYAPKO_E7_label2_50dim.pdf", width=10, height=5)
+DimPlot(embryoE7.combined.sct, reduction = "umap", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
 dev.off()
 
 #overlapping condition
-pdf("output/seurat/UMAP_control_cYAPKO_label_overlap_V2clust.pdf", width=6, height=5)
-DimPlot(embryo.combined.sct, reduction = "umap", group.by = "condition", pt.size = 0.000001, cols = c("blue","red"))
+pdf("output/seurat/UMAP_control_cYAPKO_E7_label_overlap_50dim.pdf", width=6, height=5)
+DimPlot(embryoE7.combined.sct, reduction = "umap", group.by = "condition", pt.size = 0.5, cols = c("blue","red"))
 dev.off()
 
 
 # All in dotplot
-DefaultAssay(embryo.combined.sct) <- "SCT"
+DefaultAssay(embryoE7.combined.sct) <- "SCT"
 
-Epiblast_PrimStreak = c("Hesx1","Otx2","Pax2","Otx2os1") # cluster_1
-ExE_Ectoderm_1 = c("Tex19.1","Elf5","Wnt7b","Dnmt3l") # cluster_2
-Somitic_Mesoderm = c("Meox1","Aldh1a2","Synm","Pcdh8") # cluster_3
-Caudal_Mesoderm = c("Wnt3a","Nkx1-2","Apln","Rxrg") # cluster_4
-Paraxial_Mesoderm = c("Ebf2","Ptgfr","Ebf3","Col23a1") # cluster_5
-Pharyngeal_Mesoderm = c("Nkx2-5","Tbx5","Mef2c","Myocd") # cluster_6
-Nascent_Mesoderm = c("Col9a1","Mesp1","Osr1") # cluster_7
-Haematodenothelial_progenitors = c("Hoxa9","Hoxa10","Tbx4","Pitx1") # cluster_8
-Mesenchyme = c("Tdo2","Adamts2","Colec11","Snai2") # cluster_9
-Mixed_Mesoderm = c("Tbx6","Dll1","Hes7","Fgf17") # cluster_10 (and 3)
-Blood_Progenitor_1 = c("Sox18","Esam","Rhoj","Flt4") # cluster_11
-Blood_Progenitor_2 = c("Gypa","Gata1","Cited4","Gfi1b") # cluster_12
-Surface_Ectoderm = c("Tfap2a","Npnt","Wnt4","Id4") # cluster_13
-Notocord = c("Shh","Noto","Vtn","Fgg") #  cluster_14
-Gut = c("Pga5","Hs3cst1","Wfdc1","Islr2") # cluster_15
-Primordial_Germ_Cells = c("Dppa3","Sprr2a3","Irf1","Ifitm3")  # cluster_18
+  "Epiblast",
+  "Exe_Ectoderm",
+  "Primitive_Streak-Nascent_Mesoderm_1",
+  "Exe_Endoderm_1",
+  "Primitive_Streak-Nascent_Mesoderm_2",
+  "Endoderm",
+  "Exe_Endoderm_2",
+  "Blood_Progenitor"
+
+
+#### Conchi new list 20231214
+
+Epiblast = c("Pou5f1", "Sox2", "Cdh1") # 
+Exe_Ectoderm = c("Elf5", "Rhox5") # 
+Primitive_Streak-Nascent_Mesoderm_1 = c("Mixl1", "Eomes", "T", "Mesp1") # 
+Exe_Endoderm_1 = c("Ttr", "Dab2", "Sox7", "Fabp1", "Fabp2", "Gata4", "Cldn6") # 
+Primitive_Streak-Nascent_Mesoderm_2 = c("Mixl1", "Eomes", "T", "Mesp1") # 
+Endoderm = c("Sox17", "Foxa2") # 
+Exe_Endoderm_2 = c("Ttr", "Dab2", "Sox7", "Fabp1", "Fabp2", "Gata4", "Cldn6") # 
+Blood_Progenitor = c("Gata1", "Tal1", "Kdr", "Runx1", "Ets2", "Etv2") # 
+
 
 
 all_markers <- c(
-  "Hesx1", "Otx2", "Pax2", "Otx2os1",
-  "Tex19.1", "Elf5", "Wnt7b", "Dnmt3l",
-  "Meox1", "Aldh1a2", "Synm", "Pcdh8",
-  "Wnt3a", "Nkx1-2", "Apln", "Rxrg",
-  "Ebf2", "Ptgfr", "Ebf3", "Col23a1",
-  "Nkx2-5", "Tbx5", "Mef2c", "Myocd",
-  "Col9a1", "Mesp1", "Osr1",
-  "Hoxa9", "Hoxa10", "Tbx4", "Pitx1",
-  "Tdo2", "Adamts2", "Colec11", "Snai2",
-  "Tbx6", "Dll1", "Hes7", "Fgf17",
-  "Sox18", "Esam", "Rhoj", "Flt4",
-  "Gypa", "Gata1", "Cited4", "Gfi1b",
-  "Tfap2a", "Npnt", "Wnt4", "Id4",
-  "Shh", "Noto", "Vtn", "Fgg",
-  "Pga5", "Hs3cst1", "Wfdc1", "Islr2",
-  "Dppa3", "Sprr2a3", "Irf1", "Ifitm3"
+  "Pou5f1", "Sox2", "Cdh1",
+  "Elf5", "Rhox5",
+  "Mixl1", "Eomes", "T", "Mesp1",
+  "Ttr", "Dab2", "Sox7", "Fabp1", "Fabp2", "Gata4", "Cldn6",
+  "Sox17", "Foxa2",
+  "Gata1", "Tal1", "Kdr", "Runx1", "Ets2", "Etv2"
 )
 
 
-levels(embryo.combined.sct) <- c(
-  "ExE_Ectoderm_2",
-  "Primordial_Germ_Cells",
-  "Unknown_2",
-  "Notocord",
-  "Unknown_1",
-  "Gut",
-  "Surface_Ectoderm",
-  "Blood_Progenitor_2",
-  "Mixed_Mesoderm",
-  "Blood_Progenitor_1",
-  "Mesenchyme",
-  "Haematodenothelial_progenitors",
-  "Pharyngeal_Mesoderm",
-  "Paraxial_Mesoderm",
-  "Caudal_Mesoderm",
-  "Somitic_Mesoderm",
-  "Nascent_Mesoderm",
-  "ExE_Ectoderm_1",
-  "Epiblast_PrimStreak"
+levels(embryoE7.combined.sct) <- c(
+  "Blood_Progenitor",
+  "Endoderm",
+  "Exe_Endoderm_2",
+  "Exe_Endoderm_1",
+  "Primitive_Streak-Nascent_Mesoderm_2",
+  "Primitive_Streak-Nascent_Mesoderm_1",
+  "Exe_Ectoderm",
+  "Epiblast"
 )
-pdf("output/seurat/DotPlot_SCT_control_cYAPKO_ident_V2clust.pdf", width=16.5, height=4.5)
-DotPlot(embryo.combined.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
+
+
+pdf("output/seurat/DotPlot_SCT_control_cYAPKO_E7_ident_50dim.pdf", width=12, height=3)
+DotPlot(embryoE7.combined.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
+
+# SAve rds 
+saveRDS(embryoE7.combined.sct, file = "output/seurat/embryoE7.combined.sct_50dim.rds")
+
+
+
+
+
+
+
+## 19 dim
+
+
+new.cluster.ids <- c(
+  "Epiblast",
+  "Exe_Endoderm",
+  "Primitive_Streak-Nascent_Mesoderm",
+  "Exe_Ectoderm",
+  "Endoderm",
+  "Blood_Progenitor"
+)
+
+names(new.cluster.ids) <- levels(embryoE7.combined.sct)
+embryoE7.combined.sct <- RenameIdents(embryoE7.combined.sct, new.cluster.ids)
+
+embryoE7.combined.sct$cluster.annot <- Idents(embryoE7.combined.sct) # create a new slot in my seurat object
+
+
+pdf("output/seurat/UMAP_control_cYAPKO_E7_label_19dim.pdf", width=12, height=5)
+DimPlot(embryoE7.combined.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+dev.off()
+
+pdf("output/seurat/UMAP_control_cYAPKO_E7_label2_19dim.pdf", width=10, height=5)
+DimPlot(embryoE7.combined.sct, reduction = "umap", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+dev.off()
+
+#overlapping condition
+pdf("output/seurat/UMAP_control_cYAPKO_E7_label_overlap_19dim.pdf", width=6, height=4)
+DimPlot(embryoE7.combined.sct, reduction = "umap", group.by = "condition", pt.size = 0.5, cols = c("blue","red"))
 dev.off()
 
 
+# All in dotplot
+DefaultAssay(embryoE7.combined.sct) <- "SCT"
+
+#### Conchi new list 20231214
+
+Epiblast = c("Pou5f1", "Sox2", "Cdh1") # 
+Exe_Endoderm = c("Ttr", "Dab2", "Sox7", "Fabp1", "Fabp2", "Gata4", "Cldn6") # 
+Primitive_Streak-Nascent_Mesoderm = c("Mixl1", "Eomes", "T", "Mesp1") # 
+Exe_Ectoderm = c("Elf5", "Rhox5") # 
+Endoderm = c("Sox17", "Foxa2") # 
+Blood_Progenitor = c("Gata1", "Tal1", "Kdr", "Runx1", "Ets2", "Etv2") # 
+
+
+all_markers <- c(
+  "Pou5f1", "Sox2", "Cdh1",
+  "Ttr", "Dab2", "Sox7", "Fabp1", "Fabp2", "Gata4", "Cldn6",
+  "Mixl1", "Eomes", "T", "Mesp1",
+  "Elf5", "Rhox5",
+  "Sox17", "Foxa2",
+  "Gata1", "Tal1", "Kdr", "Runx1", "Ets2", "Etv2"
+)
+
+
+
+levels(embryoE7.combined.sct) <- c(
+  "Blood_Progenitor",
+  "Endoderm",
+  "Exe_Ectoderm",
+  "Primitive_Streak-Nascent_Mesoderm",
+  "Exe_Endoderm",
+  "Epiblast"
+)
+
+
+pdf("output/seurat/DotPlot_SCT_control_cYAPKO_E7_ident_19dim.pdf", width=12, height=3)
+DotPlot(embryoE7.combined.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
+
+# SAve rds 
+saveRDS(embryoE7.combined.sct, file = "output/seurat/embryoE7.combined.sct_19dim.rds")
+
+
+
+
+# XXXXXX CODE BELOW IS UNCHANGED !!!!!!!!!!
+# XXXXXX CODE BELOW IS UNCHANGED !!!!!!!!!!
+# XXXXXX CODE BELOW IS UNCHANGED !!!!!!!!!!
 
 
 
@@ -9705,53 +9804,42 @@ library("Seurat")
 library("ShinyCell")
 library("rsconnect")
 
-# Data import EMBRYO
-embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
-DefaultAssay(embryo.combined.sct) <- "RNA" # 
+# Data import EMBRYO E7 50 dim
+embryoE7.combined.sct <- readRDS(file = "output/seurat/embryoE7.combined.sct_50dim.rds")
+DefaultAssay(embryoE7.combined.sct) <- "RNA" # 
 
 # Generate Shiny app V1
-scConf = createConfig(embryo.combined.sct)
+scConf = createConfig(embryoE7.combined.sct)
 
-makeShinyApp(embryo.combined.sct, scConf, gene.mapping = TRUE,
-             shiny.title = "Embryo_V1",
-             shiny.dir = "shinyApp_embryo_V1/") 
+makeShinyApp(embryoE7.combined.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "Embryo_E7_50dim_V1",
+             shiny.dir = "shinyApp_embryo_E7_50dim_V1/") 
 
-rsconnect::deployApp('shinyApp_embryo_V1')
-
-
-# Generate Shiny app V2 new clustering Conchi meeting 20231005
-scConf = createConfig(embryo.combined.sct)
-
-makeShinyApp(embryo.combined.sct, scConf, gene.mapping = TRUE,
-             shiny.title = "Embryo_V2",
-             shiny.dir = "shinyApp_embryo_V2/") 
-
-rsconnect::deployApp('shinyApp_embryo_V2')
+rsconnect::deployApp('shinyApp_embryo_E7_50dim_V1')
 
 
 
-# Data import HUMAN
-humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid.combined.sct_V2.rds")
-DefaultAssay(humangastruloid.combined.sct) <- "RNA" # Recommended 
+# Data import EMBRYO E7 19 dim
+embryoE7.combined.sct <- readRDS(file = "output/seurat/embryoE7.combined.sct_19dim.rds")
+DefaultAssay(embryoE7.combined.sct) <- "RNA" # 
 
+# Generate Shiny app V1
+scConf = createConfig(embryoE7.combined.sct)
 
-# Generate Shiny app
-scConf = createConfig(humangastruloid.combined.sct)
+makeShinyApp(embryoE7.combined.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "Embryo_E7_19dim_V1",
+             shiny.dir = "shinyApp_embryo_E7_19dim_V1/") 
 
-makeShinyApp(humangastruloid.combined.sct, scConf, gene.mapping = TRUE,
-             shiny.title = "Humangastruloid_V1",
-             shiny.dir = "shinyApp_humangastruloid_V1/") 
-
-rsconnect::deployApp('shinyApp_humangastruloid_V1')
-
-
+rsconnect::deployApp('shinyApp_embryo_E7_19dim_V1')
 
 
 ```
 
 --> Shiny apps:
-- https://roulethomas.shinyapps.io/shinyapp_embryo_v1/ 
-- https://roulethomas.shinyapps.io/shinyapp_humangastruloid_V1/ 
+- https://roulethomas.shinyapps.io/shinyApp_embryo_E7_50dim_V1/ 
+- https://roulethomas.shinyapps.io/shinyApp_embryo_E7_19dim_V1/ 
+
+
 
 
 
