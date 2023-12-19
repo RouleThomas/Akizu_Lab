@@ -2339,12 +2339,13 @@ tpm_all_sample_tidy_clean = tpm_all_sample_tidy %>%
 c("Impdh1", "Impdh2", "Ampd1", "Ampd2", "Ampd3", "Prps1", "Ppat", "Gart", "Pfas", "Paics", "Adsl", "Atic", "Hprt", "Ada") # 
 c("Abca7", "C4a", "Ccl2", "Cd300lf", "Cfb", "Or4c58", "Trem2")
 c("Mndal", "Lilrb4a","Gfap","Ly86","Cd68","Ptprc","Trem2","Mef2a","Hexb","Pros1","Cst7","C1qb","Cd14","Csf1","C4b","Fcer1g","Lyz2") # microglia genes V1
-
+c("C3ar1","Cd68","Ctss","Fcer1g","Hexb","Lair1","Ly86","Lyz2","Mef2a","Pabpc1","Sparc","Timp2","Trem2") # microglia genes V2
+c("C3ar1","Cd68","Ctss","Fcer1g","Hexb","Lair1","Ly86","Lyz2","Mef2a","Pabpc1","Timp2","Trem2") # microglia genes V3
 
 
 plot_data <- tpm_all_sample_tidy_clean %>%
   unique() %>%
-  filter(external_gene_name %in% c("Mndal", "Lilrb4a","Gfap","Ly86","Cd68","Ptprc","Trem2","Mef2a","Hexb","Pros1","Cst7","C1qb","Cd14","Csf1","C4b","Fcer1g","Lyz2")) %>%
+  filter(external_gene_name %in% c("C3ar1","Cd68","Ctss","Fcer1g","Hexb","Lair1","Ly86","Lyz2","Mef2a","Pabpc1","Timp2","Trem2")) %>%
   group_by(gene, genotype, tissue,external_gene_name) %>%
   summarise(mean_log2tpm = mean(log2(tpm + 1)),
             se_log2tpm = sd(log2(tpm + 1)) / sqrt(n())) %>%
@@ -2373,9 +2374,18 @@ pdf("output/tpm/heatmap_microgliaGenes_V1.pdf", width=5, height=4)
 pdf("output/tpm/heatmap_microgliaGenes_V1_formatWide.pdf", width=6, height=3)
 pdf("output/tpm/heatmap_microgliaGenes_V1_formatWide2.pdf", width=6, height=4)
 
+
+pdf("output/tpm/heatmap_microgliaGenes_V2.pdf", width=5, height=4)
+pdf("output/tpm/heatmap_microgliaGenes_V2_formatWide.pdf", width=6, height=3)
+pdf("output/tpm/heatmap_microgliaGenes_V2_formatWide2.pdf", width=6, height=4)
+
+pdf("output/tpm/heatmap_microgliaGenes_V3.pdf", width=5, height=4)
+pdf("output/tpm/heatmap_microgliaGenes_V3_formatWide.pdf", width=6, height=3)
+pdf("output/tpm/heatmap_microgliaGenes_V3_formatWide2.pdf", width=6, height=4)
+
 ggplot(plot_data, aes(x = sample, y = external_gene_name, fill = mean_log2tpm)) +
   geom_tile() +
-  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 4.5) +    # mid 4 for geneList1; 2.25 for *CellClearance 4.5 for micrlogia genes
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 4) +    # mid 4 for geneList1; 2.25 for *CellClearance 4.5 for micrlogia genes; V2 5.5
   labs(x = "Sample", y = "Gene", fill = "Expression (log2 TPM)") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -2452,7 +2462,7 @@ dev.off()
 ## AllPoints (BETTER)
 plot_data <- tpm_all_sample_tidy_clean %>%
   unique() %>%
-  filter(external_gene_name %in% c("Mndal", "Lilrb4a","Gfap","Ly86","Cd68","Ptprc","Trem2","Mef2a","Hexb","Pros1","Cst7","C1qb","Cd14","Csf1","C4b","Fcer1g","Lyz2")) %>%
+  filter(external_gene_name %in% c("C3ar1","Cd68","Ctss","Fcer1g","Hexb","Lair1","Ly86","Lyz2","Mef2a","Pabpc1","Timp2","Trem2")) %>%
   group_by(gene, genotype, tissue,external_gene_name) %>%
   summarise(tpm = log2(tpm + 1)  ) %>%
   ungroup() %>%
@@ -2460,7 +2470,7 @@ plot_data <- tpm_all_sample_tidy_clean %>%
   unite(sample, genotype, tissue, sep = "_") %>%
   mutate(sample = factor(sample, levels = c("Het_HP", "KO_HP", "Het_CT", "KO_CT", "Het_CB", "KO_CB")))
 
-pdf("output/tpm/boxplot_microgliaGenes_V1_allPoints_stat.pdf", width=6, height=4)
+pdf("output/tpm/boxplot_microgliaGenes_V3_allPoints_stat.pdf", width=6, height=4)
 ggboxplot(plot_data, x = "sample", y = "tpm",
   add.params = list(size = 1, alpha = 0.5),
       fill = "sample", palette = c("darkgrey","darkgrey","darkgrey","darkgrey","darkgrey","darkgrey"),  add = "jitter") + theme_classic() +
@@ -2470,7 +2480,7 @@ dev.off()
 ## Mean
 plot_data <- tpm_all_sample_tidy_clean %>%
   unique() %>%
-  filter(external_gene_name %in% c("Mndal", "Lilrb4a","Gfap","Ly86","Cd68","Ptprc","Trem2","Mef2a","Hexb","Pros1","Cst7","C1qb","Cd14","Csf1","C4b","Fcer1g","Lyz2")) %>%
+  filter(external_gene_name %in% c("C3ar1","Cd68","Ctss","Fcer1g","Hexb","Lair1","Ly86","Lyz2","Mef2a","Pabpc1","Timp2","Trem2")) %>%
   group_by(gene, genotype, tissue,external_gene_name) %>%
   summarise(mean_log2tpm = mean(log2(tpm + 1) ) ) %>%
   ungroup() %>%
@@ -2479,7 +2489,7 @@ plot_data <- tpm_all_sample_tidy_clean %>%
   mutate(sample = factor(sample, levels = c("Het_HP", "KO_HP", "Het_CT", "KO_CT", "Het_CB", "KO_CB")))
 
 
-pdf("output/tpm/boxplot_microgliaGenes_V1_mean_stat.pdf", width=6, height=4)
+pdf("output/tpm/boxplot_microgliaGenes_V3_mean_stat.pdf", width=6, height=4)
 ggboxplot(plot_data, x = "sample", y = "mean_log2tpm",
   add.params = list(size = 1, alpha = 0.5),
       fill = "sample", palette = c("darkgrey","darkgrey","darkgrey","darkgrey","darkgrey","darkgrey"),  add = "jitter") + theme_classic() +
