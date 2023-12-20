@@ -10323,7 +10323,7 @@ DotPlot(humangastruloid24hr.combined.sct, assay = "SCT", features = all_markers,
 dev.off()
 
 
-
+XXXXXXXXXXXXXX here pursue!!!
 
 
 ## Downsampling with bootstrap to compare the nb of cell per cell types
@@ -10357,7 +10357,7 @@ for (i in 1:100) { # Change this to 100 for the final run
   DASATINIB24hr_clusters_counts[i, names(DASATINIB24hr_clusters)] <- as.numeric(DASATINIB24hr_clusters)
 }
 
-XXXXXXXXXXXXXX here pursue!!!
+
 
 ### Calculate mean and standard error
 mean_UNTREATED24hr_clusters <- colMeans(UNTREATED24hr_clusters_counts)
