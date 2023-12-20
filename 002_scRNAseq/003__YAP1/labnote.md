@@ -9364,7 +9364,7 @@ saveRDS(embryoE7.combined.sct, file = "output/seurat/embryoE7.combined.sct_50dim
 
 
 
-## 19 dim _ V1
+## 19 dim 
 
 
 new.cluster.ids <- c(
@@ -9398,6 +9398,7 @@ embryoE7.combined.sct$cluster.annot <- Idents(embryoE7.combined.sct) # create a 
 
 pdf("output/seurat/UMAP_control_cYAPKO_E7_label_19dim.pdf", width=12, height=5)
 pdf("output/seurat/UMAP_control_cYAPKO_E7_label_19dim_V2.pdf", width=12, height=5)
+
 DimPlot(embryoE7.combined.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
 dev.off()
 
@@ -9408,10 +9409,10 @@ dev.off()
 
 
 
-XXXXXXX HERE WITH V2 XXXXXXXXX
-
 #overlapping condition
 pdf("output/seurat/UMAP_control_cYAPKO_E7_label_overlap_19dim.pdf", width=6, height=4)
+
+pdf("output/seurat/UMAP_control_cYAPKO_E7_label_overlap_19dim_V2.pdf", width=6, height=4)
 DimPlot(embryoE7.combined.sct, reduction = "umap", group.by = "condition", pt.size = 0.5, cols = c("blue","red"))
 dev.off()
 
@@ -9420,14 +9421,13 @@ dev.off()
 DefaultAssay(embryoE7.combined.sct) <- "SCT"
 
 #### Conchi new list 20231214
-
+###### V1
 Epiblast = c("Pou5f1", "Sox2", "Cdh1") # 
 Exe_Endoderm = c("Ttr", "Dab2", "Sox7", "Fabp1", "Fabp2", "Gata4", "Cldn6") # 
 Primitive_Streak-Nascent_Mesoderm = c("Mixl1", "Eomes", "T", "Mesp1") # 
 Exe_Ectoderm = c("Elf5", "Rhox5") # 
 Endoderm = c("Sox17", "Foxa2") # 
 Blood_Progenitor = c("Gata1", "Tal1", "Kdr", "Runx1", "Ets2", "Etv2") # 
-
 
 all_markers <- c(
   "Pou5f1", "Sox2", "Cdh1",
@@ -9437,9 +9437,6 @@ all_markers <- c(
   "Sox17", "Foxa2",
   "Gata1", "Tal1", "Kdr", "Runx1", "Ets2", "Etv2"
 )
-
-
-
 levels(embryoE7.combined.sct) <- c(
   "Blood_Progenitor",
   "Endoderm",
@@ -9449,8 +9446,48 @@ levels(embryoE7.combined.sct) <- c(
   "Epiblast"
 )
 
+#### V2
+
+Epiblast = c("Pou5f1", "Sox2", "Cdh1") # 
+Primitive_Streak = c("Eomes", "Fgf8", "Nodal") # 
+Nascent_Mesoderm = c("Mesp1") # 
+Cardiac_Mesoderm = c("Hand1") # 
+Endoderm = c("Sox17", "Foxa2") # 
+Exe_Endoderm = c("Ttr", "Dab2", "Sox7", "Fabp1", "Fabp2", "Gata4", "Cldn6") # 
+Exe_Ectoderm = c("Elf5", "Rhox5") # 
+Blood_Progenitor = c("Gata1", "Tal1", "Kdr", "Runx1", "Ets2", "Etv2") # 
+
+
+all_markers <- c(
+  "Pou5f1", "Sox2", "Cdh1",
+  "Eomes", "Fgf8", "Nodal",
+  "Mesp1",
+  "Hand1",
+  "Sox17", "Foxa2",
+  "Ttr", "Dab2", "Sox7", "Fabp1", "Fabp2", "Gata4", "Cldn6",
+  "Elf5", "Rhox5",
+  "Gata1", "Tal1", "Kdr", "Runx1", "Ets2", "Etv2"
+)
+
+
+levels(embryoE7.combined.sct) <- c(
+  "Blood_Progenitor",
+  "Exe_Ectoderm",
+  "Exe_Endoderm_2",
+  "Exe_Endoderm_1",
+  "Endoderm",
+  "Cardiac_Mesoderm",
+  "Nascent_Mesoderm",
+  "Primitive_Streak",
+  "Epiblast"
+)
+
+
+
 
 pdf("output/seurat/DotPlot_SCT_control_cYAPKO_E7_ident_19dim.pdf", width=12, height=3)
+pdf("output/seurat/DotPlot_SCT_control_cYAPKO_E7_ident_19dim_V2.pdf", width=12, height=3)
+
 DotPlot(embryoE7.combined.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
 dev.off()
 
@@ -9491,8 +9528,8 @@ dev.off()
 
 
 # SAve rds 
-## saveRDS(embryoE7.combined.sct, file = "output/seurat/embryoE7.combined.sct_19dim.rds")
-embryoE7.combined.sct = readRDS(file = "output/seurat/embryoE7.combined.sct_19dim.rds")
+## saveRDS(embryoE7.combined.sct, file = "output/seurat/embryoE7.combined.sct_19dim_V2.rds")
+embryoE7.combined.sct = readRDS(file = "output/seurat/embryoE7.combined.sct_19dim_V2.rds")
 
 
 
@@ -9582,16 +9619,21 @@ plot_data <- data.frame(
   )
 
 plot_data$condition <- factor(plot_data$condition, levels = c("WT_E7", "cYAPKO_E7")) # Reorder untreated 1st
-plot_data$cluster <- factor(plot_data$cluster, levels = c("Blood_Progenitor",
-  "Endoderm",
+plot_data$cluster <- factor(plot_data$cluster, levels = c(  "Blood_Progenitor",
   "Exe_Ectoderm",
-  "Primitive_Streak-Nascent_Mesoderm",
-  "Exe_Endoderm",
+  "Exe_Endoderm_2",
+  "Exe_Endoderm_1",
+  "Endoderm",
+  "Cardiac_Mesoderm",
+  "Nascent_Mesoderm",
+  "Primitive_Streak",
   "Epiblast")) # Reorder untreated 1st
 
 
 # Plotting using ggplot2
 pdf("output/seurat/Cluster_cell_counts_BootstrapDownsampling10_clean_embryo_E7_19dim.pdf", width=5, height=4)
+pdf("output/seurat/Cluster_cell_counts_BootstrapDownsampling10_clean_embryo_E7_19dim_V2.pdf", width=5, height=4)
+
 ggplot(plot_data, aes(x = cluster, y = value, fill = condition)) +
   geom_bar(stat = "identity", position = "dodge") +
   geom_text(
@@ -9629,12 +9671,16 @@ Idents(embryoE7.combined.sct) <- "celltype.stim"
 embryoE7.combined.sct <- PrepSCTFindMarkers(embryoE7.combined.sct)
 
 
+
 ## Automation::
 cell_types <- c("Blood_Progenitor",
-  "Endoderm",
   "Exe_Ectoderm",
-  "Primitive_Streak-Nascent_Mesoderm",
-  "Exe_Endoderm",
+  "Exe_Endoderm_2",
+  "Exe_Endoderm_1",
+  "Endoderm",
+  "Cardiac_Mesoderm",
+  "Nascent_Mesoderm",
+  "Primitive_Streak",
   "Epiblast")
 
 for (cell_type in cell_types) {
@@ -9646,7 +9692,7 @@ for (cell_type in cell_types) {
   
   print(head(response, n = 15))
   
-  file_name <- paste("output/seurat/", cell_type, "-cYAPKO_E7_response_19dim.txt", sep = "")
+  file_name <- paste("output/seurat/", cell_type, "-cYAPKO_E7_response_19dim_V2.txt", sep = "")
   write.table(response, file = file_name, sep = "\t", quote = FALSE, row.names = TRUE)
 }
 
@@ -9654,7 +9700,7 @@ for (cell_type in cell_types) {
 
 ### Find all markers 
 all_markers <- FindAllMarkers(embryoE7.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
-write.table(all_markers, file = "output/seurat/srat_WT_cYAPKO_all_markers_E7_19dim.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(all_markers, file = "output/seurat/srat_WT_cYAPKO_all_markers_E7_19di_V2_.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 
 # Display the top 10 CONSERVED marker genes of each cluster
@@ -9664,26 +9710,30 @@ Idents(embryoE7.combined.sct) <- "cluster.annot"
 Blood_Progenitor.conserved <- FindConservedMarkers(embryoE7.combined.sct, assay = "RNA", ident.1 = "Blood_Progenitor", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Blood_Progenitor")
 Endoderm.conserved <- FindConservedMarkers(embryoE7.combined.sct, assay = "RNA", ident.1 = "Endoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Endoderm")
 Exe_Ectoderm.conserved <- FindConservedMarkers(embryoE7.combined.sct, assay = "RNA", ident.1 = "Exe_Ectoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Exe_Ectoderm")
-Exe_Endoderm.conserved <- FindConservedMarkers(embryoE7.combined.sct, assay = "RNA", ident.1 = "Exe_Endoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Exe_Endoderm")
+Exe_Endoderm_1.conserved <- FindConservedMarkers(embryoE7.combined.sct, assay = "RNA", ident.1 = "Exe_Endoderm_1", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Exe_Endoderm_1")
+Exe_Endoderm_2.conserved <- FindConservedMarkers(embryoE7.combined.sct, assay = "RNA", ident.1 = "Exe_Endoderm_2", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Exe_Endoderm_2")
 Epiblast.conserved <- FindConservedMarkers(embryoE7.combined.sct, assay = "RNA", ident.1 = "Epiblast", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Epiblast")
-Primitive_Streak_Nascent_Mesoderm.conserved <- FindConservedMarkers(embryoE7.combined.sct, assay = "RNA", ident.1 = 'Primitive_Streak-Nascent_Mesoderm', grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Primitive_Streak-Nascent_Mesoderm")
-
-
+Nascent_Mesoderm.conserved <- FindConservedMarkers(embryoE7.combined.sct, assay = "RNA", ident.1 = 'Nascent_Mesoderm', grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Nascent_Mesoderm")
+Primitive_Streak.conserved <- FindConservedMarkers(embryoE7.combined.sct, assay = "RNA", ident.1 = 'Primitive_Streak', grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Primitive_Streak")
+Cardiac_Mesoderm.conserved <- FindConservedMarkers(embryoE7.combined.sct, assay = "RNA", ident.1 = 'Cardiac_Mesoderm', grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Cardiac_Mesoderm")
 
 
 ## Combine all conserved markers into one data frame
-all_conserved <- bind_rows(Blood_Progenitor.conserved, Endoderm.conserved, Exe_Ectoderm.conserved, Exe_Endoderm.conserved, Epiblast.conserved , Primitive_Streak_Nascent_Mesoderm.conserved)
+all_conserved <- bind_rows(Blood_Progenitor.conserved, Endoderm.conserved, Exe_Ectoderm.conserved, Exe_Endoderm_1.conserved, Exe_Endoderm_2.conserved, Epiblast.conserved , Primitive_Streak.conserved, Nascent_Mesoderm.conserved, Cardiac_Mesoderm.conserved)
 
 all_conserved$gene <- rownames(all_conserved)
 ## Write all conserved markers to a file
-write.table(all_conserved, file = "output/seurat/srat_all_conserved_markers_embryo_E7_19dim.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(all_conserved, file = "output/seurat/srat_all_conserved_markers_embryo_E7_19dim_V2.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 ## Find the top 10 conserved markers for each cluster
 top10_conserved <- all_conserved %>%
   mutate(cluster = factor(cluster, levels = c("Blood_Progenitor",
-  "Endoderm",
   "Exe_Ectoderm",
-  "Primitive_Streak-Nascent_Mesoderm",
-  "Exe_Endoderm",
+  "Exe_Endoderm_2",
+  "Exe_Endoderm_1",
+  "Endoderm",
+  "Cardiac_Mesoderm",
+  "Nascent_Mesoderm",
+  "Primitive_Streak",
   "Epiblast"))) %>% 
   separate(gene, into = c("gene", "suffix"), sep = "\\.\\.\\.", remove = TRUE, extra = "drop", fill = "right") %>% 
   group_by(cluster) %>% 
@@ -9691,10 +9741,13 @@ top10_conserved <- all_conserved %>%
   slice_head(n = 10) %>% 
   ungroup() %>% 
   arrange(match(cluster, c("Blood_Progenitor",
-  "Endoderm",
   "Exe_Ectoderm",
-  "Primitive_Streak-Nascent_Mesoderm",
-  "Exe_Endoderm",
+  "Exe_Endoderm_2",
+  "Exe_Endoderm_1",
+  "Endoderm",
+  "Cardiac_Mesoderm",
+  "Nascent_Mesoderm",
+  "Primitive_Streak",
   "Epiblast")))
 
 ## Find the top 3 conserved markers for each cluster
@@ -9720,23 +9773,26 @@ top10_conserved <- all_conserved %>%
 
 
 ## Write the top 10 conserved markers for each cluster to a file
-write.table(top10_conserved, file = "output/seurat/srat_top10_conserved_markers_embryo_E7_19dim.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(top10_conserved, file = "output/seurat/srat_top10_conserved_markers_embryo_E7_19dim_V2.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 ## Visualize the top 10/3 conserved markers for each cluster
 marker_genes_conserved <- unique(top10_conserved$gene)
 levels(embryoE7.combined.sct) <- c("Blood_Progenitor",
-  "Endoderm",
   "Exe_Ectoderm",
-  "Primitive_Streak-Nascent_Mesoderm",
-  "Exe_Endoderm",
+  "Exe_Endoderm_2",
+  "Exe_Endoderm_1",
+  "Endoderm",
+  "Cardiac_Mesoderm",
+  "Nascent_Mesoderm",
+  "Primitive_Streak",
   "Epiblast")
 
-pdf("output/seurat/DotPlot_SCT_top10_conserved_embryo_E7_19dim.pdf", width=18, height=5)
+pdf("output/seurat/DotPlot_SCT_top10_conserved_embryo_E7_19dim_V2.pdf", width=21, height=4)
 DotPlot(embryoE7.combined.sct, features = marker_genes_conserved, cols = c("grey", "red")) + RotatedAxis()
 dev.off()
 
 
 # save
-## saveRDS(embryoE7.combined.sct, file = "output/seurat/embryoE7.combined.sct_19dim.rds")
+## saveRDS(embryoE7.combined.sct, file = "output/seurat/embryoE7.combined.sct_19dim_V2.rds")
 embryoE7.combined.sct <- readRDS(file = "output/seurat/embryoE7.combined.sct_19dim.rds")
 
 
@@ -9767,20 +9823,41 @@ Exe_Ectoderm <- FindMarkers(embryoE7.combined.sct, ident.1 = "Exe_Ectoderm-cYAPK
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")     
-Primitive_Streak_Nascent_Mesoderm <- FindMarkers(embryoE7.combined.sct, ident.1 = "Primitive_Streak-Nascent_Mesoderm-cYAPKO_E7", ident.2 = "Primitive_Streak-Nascent_Mesoderm-WT_E7",
+Primitive_Streak <- FindMarkers(embryoE7.combined.sct, ident.1 = "Primitive_Streak-cYAPKO_E7", ident.2 = "Primitive_Streak-WT_E7",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+Nascent_Mesoderm <- FindMarkers(embryoE7.combined.sct, ident.1 = "Nascent_Mesoderm-cYAPKO_E7", ident.2 = "Nascent_Mesoderm-WT_E7",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")    
+Cardiac_Mesoderm <- FindMarkers(embryoE7.combined.sct, ident.1 = "Cardiac_Mesoderm-cYAPKO_E7", ident.2 = "Cardiac_Mesoderm-WT_E7",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")   
-Exe_Endoderm <- FindMarkers(embryoE7.combined.sct, ident.1 = "Exe_Endoderm-cYAPKO_E7", ident.2 = "Exe_Endoderm-WT_E7",
+Exe_Endoderm_1 <- FindMarkers(embryoE7.combined.sct, ident.1 = "Exe_Endoderm_1-cYAPKO_E7", ident.2 = "Exe_Endoderm_1-WT_E7",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")   
+Exe_Endoderm_2 <- FindMarkers(embryoE7.combined.sct, ident.1 = "Exe_Endoderm_2-cYAPKO_E7", ident.2 = "Exe_Endoderm_2-WT_E7",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
 Epiblast <- FindMarkers(embryoE7.combined.sct, ident.1 = "Epiblast-cYAPKO_E7", ident.2 = "Epiblast-WT_E7",
     verbose = TRUE,
     test.use = "wilcox",
@@ -9791,12 +9868,8 @@ Epiblast <- FindMarkers(embryoE7.combined.sct, ident.1 = "Epiblast-cYAPKO_E7", i
 
 
 
-
-
 ### save output
-#### write.table(Epiblast, file = "output/seurat/Epiblast-cYAPKO_response_E7_19dim_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-
-
+#### write.table(Cardiac_Mesoderm, file = "output/seurat/Cardiac_Mesoderm-cYAPKO_response_E7_19dim_allGenes_V2.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 
 
@@ -10193,22 +10266,21 @@ dev.off()
 
 # SAve 
 ## saveRDS(humangastruloid24hr.combined.sct, file = "output/seurat/humangastruloid24hr.combined.sct_25dim.rds")
-humangastruloid24hr.combined.sct = readRDS(file = "output/seurat/humangastruloid24hr.combined.sct_19dim.rds")
-
-XXXXXXXXXXXXXXXXX CHUI ALLLLL
+humangastruloid24hr.combined.sct = readRDS(file = "output/seurat/humangastruloid24hr.combined.sct_25dim.rds")
 
 
 
 
 
 #overlapping condition
-pdf("output/seurat/UMAP_control_cYAPKO_E7_label_overlap_50dim.pdf", width=6, height=5)
-DimPlot(embryoE7.combined.sct, reduction = "umap", group.by = "condition", pt.size = 0.5, cols = c("blue","red"))
+pdf("output/seurat/UMAP_humangastruloid24hr_label_overlap_25dim.pdf", width=6, height=5)
+DimPlot(humangastruloid24hr.combined.sct, reduction = "umap", group.by = "condition", pt.size = 0.5, cols = c("blue","red"))
 dev.off()
 
 
+
 # All in dotplot
-DefaultAssay(embryoE7.combined.sct) <- "SCT"
+DefaultAssay(humangastruloid24hr.combined.sct) <- "SCT"
 
   "Epiblast",
   "Exe_Ectoderm",
@@ -10222,163 +10294,33 @@ DefaultAssay(embryoE7.combined.sct) <- "SCT"
 
 #### Conchi new list 20231214
 
-Epiblast = c("Pou5f1", "Sox2", "Cdh1") # 
-Exe_Ectoderm = c("Elf5", "Rhox5") # 
-Primitive_Streak-Nascent_Mesoderm_1 = c("Mixl1", "Eomes", "T", "Mesp1") # 
-Exe_Endoderm_1 = c("Ttr", "Dab2", "Sox7", "Fabp1", "Fabp2", "Gata4", "Cldn6") # 
-Primitive_Streak-Nascent_Mesoderm_2 = c("Mixl1", "Eomes", "T", "Mesp1") # 
-Endoderm = c("Sox17", "Foxa2") # 
-Exe_Endoderm_2 = c("Ttr", "Dab2", "Sox7", "Fabp1", "Fabp2", "Gata4", "Cldn6") # 
-Blood_Progenitor = c("Gata1", "Tal1", "Kdr", "Runx1", "Ets2", "Etv2") # 
+Epiblast = c("POU5F1", "NANOG", "SOX2", "CDH1", "NODAL")
+Primitive_Streak = c("TBXT", "EOMES", "MIXL1")
+Nascent_Mesoderm = c("MESP1")
+Endoderm =c("SOX17", "FOXA2")  # These cells will also be positive for Primitive streak markers, such as Eomes or T
 
 
 
 all_markers <- c(
-  "Pou5f1", "Sox2", "Cdh1",
-  "Elf5", "Rhox5",
-  "Mixl1", "Eomes", "T", "Mesp1",
-  "Ttr", "Dab2", "Sox7", "Fabp1", "Fabp2", "Gata4", "Cldn6",
-  "Sox17", "Foxa2",
-  "Gata1", "Tal1", "Kdr", "Runx1", "Ets2", "Etv2"
+"POU5F1", "NANOG", "SOX2", "CDH1", "NODAL",
+"TBXT", "EOMES", "MIXL1",
+"MESP1",
+"SOX17", "FOXA2"
 )
 
 
-levels(embryoE7.combined.sct) <- c(
-  "Blood_Progenitor",
+levels(humangastruloid24hr.combined.sct) <- c(
+  "Unknown",
   "Endoderm",
-  "Exe_Endoderm_2",
-  "Exe_Endoderm_1",
-  "Primitive_Streak-Nascent_Mesoderm_2",
-  "Primitive_Streak-Nascent_Mesoderm_1",
-  "Exe_Ectoderm",
+  "Nascent_Mesoderm",
+  "Primitive_Streak",
   "Epiblast"
 )
 
 
-pdf("output/seurat/DotPlot_SCT_control_cYAPKO_E7_ident_50dim.pdf", width=12, height=3)
-DotPlot(embryoE7.combined.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
+pdf("output/seurat/DotPlot_humangastruloid24hr_ident_25dim.pdf", width=8, height=3)
+DotPlot(humangastruloid24hr.combined.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
 dev.off()
-
-
-
-# SAve rds 
-saveRDS(embryoE7.combined.sct, file = "output/seurat/embryoE7.combined.sct_50dim.rds")
-
-
-
-
-
-
-
-## 19 dim
-
-
-new.cluster.ids <- c(
-  "Epiblast",
-  "Exe_Endoderm",
-  "Primitive_Streak-Nascent_Mesoderm",
-  "Exe_Ectoderm",
-  "Endoderm",
-  "Blood_Progenitor"
-)
-
-names(new.cluster.ids) <- levels(embryoE7.combined.sct)
-embryoE7.combined.sct <- RenameIdents(embryoE7.combined.sct, new.cluster.ids)
-
-embryoE7.combined.sct$cluster.annot <- Idents(embryoE7.combined.sct) # create a new slot in my seurat object
-
-
-pdf("output/seurat/UMAP_control_cYAPKO_E7_label_19dim.pdf", width=12, height=5)
-DimPlot(embryoE7.combined.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
-dev.off()
-
-pdf("output/seurat/UMAP_control_cYAPKO_E7_label2_19dim.pdf", width=10, height=5)
-DimPlot(embryoE7.combined.sct, reduction = "umap", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
-dev.off()
-
-#overlapping condition
-pdf("output/seurat/UMAP_control_cYAPKO_E7_label_overlap_19dim.pdf", width=6, height=4)
-DimPlot(embryoE7.combined.sct, reduction = "umap", group.by = "condition", pt.size = 0.5, cols = c("blue","red"))
-dev.off()
-
-
-# All in dotplot
-DefaultAssay(embryoE7.combined.sct) <- "SCT"
-
-#### Conchi new list 20231214
-
-Epiblast = c("Pou5f1", "Sox2", "Cdh1") # 
-Exe_Endoderm = c("Ttr", "Dab2", "Sox7", "Fabp1", "Fabp2", "Gata4", "Cldn6") # 
-Primitive_Streak-Nascent_Mesoderm = c("Mixl1", "Eomes", "T", "Mesp1") # 
-Exe_Ectoderm = c("Elf5", "Rhox5") # 
-Endoderm = c("Sox17", "Foxa2") # 
-Blood_Progenitor = c("Gata1", "Tal1", "Kdr", "Runx1", "Ets2", "Etv2") # 
-
-
-all_markers <- c(
-  "Pou5f1", "Sox2", "Cdh1",
-  "Ttr", "Dab2", "Sox7", "Fabp1", "Fabp2", "Gata4", "Cldn6",
-  "Mixl1", "Eomes", "T", "Mesp1",
-  "Elf5", "Rhox5",
-  "Sox17", "Foxa2",
-  "Gata1", "Tal1", "Kdr", "Runx1", "Ets2", "Etv2"
-)
-
-
-
-levels(embryoE7.combined.sct) <- c(
-  "Blood_Progenitor",
-  "Endoderm",
-  "Exe_Ectoderm",
-  "Primitive_Streak-Nascent_Mesoderm",
-  "Exe_Endoderm",
-  "Epiblast"
-)
-
-
-pdf("output/seurat/DotPlot_SCT_control_cYAPKO_E7_ident_19dim.pdf", width=12, height=3)
-DotPlot(embryoE7.combined.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
-dev.off()
-
-
-
-
-## previous E775 time point cell type marker genes expression
-
-Blood_Progenitor = c("Sox18","Esam","Rhoj","Flt4","Gypa","Gata1","Cited4","Gfi1b") # 11  \  $ 11 +   %  11
-ExE_Ectoderm = c("Tex19.1","Elf5","Wnt7b","Dnmt3l") # 3 \ 4 $ 3  + 4 %  2
-Epiblast_PrimStreak_Nascent_Mesoderm = c("Hesx1","Otx2","Pax2","Otx2os1","Col9a1","Mesp1","Osr1") # 1 \  1 $ 1 + 1 %  1
-
-
-all_markers <- c(
-  "Sox18","Esam","Rhoj","Flt4","Gypa","Gata1","Cited4","Gfi1b",
-  "Tex19.1","Elf5","Wnt7b","Dnmt3l",
-  "Hesx1","Otx2","Pax2","Otx2os1","Col9a1","Mesp1","Osr1"
-
-)
-
-
-levels(embryoE7.combined.sct) <- c(
-  "Blood_Progenitor",
-  "Endoderm",
-  "Exe_Ectoderm",
-  "Primitive_Streak-Nascent_Mesoderm",
-  "Exe_Endoderm",
-  "Epiblast"
-)
-
-
-pdf("output/seurat/DotPlot_SCT_control_cYAPKO_E7_ident_19dim_E775markers.pdf", width=12, height=3)
-DotPlot(embryoE7.combined.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
-dev.off()
-
-
-
-
-
-# SAve rds 
-## saveRDS(embryoE7.combined.sct, file = "output/seurat/embryoE7.combined.sct_19dim.rds")
-embryoE7.combined.sct = readRDS(file = "output/seurat/embryoE7.combined.sct_19dim.rds")
 
 
 
@@ -10389,38 +10331,38 @@ embryoE7.combined.sct = readRDS(file = "output/seurat/embryoE7.combined.sct_19di
 library("tidyverse")
 
 ### Identify the unique clusters
-unique_clusters <- unique(Idents(embryoE7.combined.sct))
+unique_clusters <- unique(Idents(humangastruloid24hr.combined.sct))
 
 ### Create empty matrices to store cell counts
-control_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters))
-cYAPKO_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters))
-colnames(control_clusters_counts) <- unique_clusters
-colnames(cYAPKO_clusters_counts) <- unique_clusters
+UNTREATED24hr_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters))
+DASATINIB24hr_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters))
+colnames(UNTREATED24hr_clusters_counts) <- unique_clusters
+colnames(DASATINIB24hr_clusters_counts) <- unique_clusters
 
 ### Loop through 100 iterations
-embryoE7.combined.sct_WT <- which(embryoE7.combined.sct$orig.ident == 'WT_E7') # 788 cells
-embryoE7.combined.sct_cYAPKO <- which(embryoE7.combined.sct$orig.ident == 'cYAPKO_E7') # 862 cells
+humangastruloid24hr.combined.sct_UNTREATED24hr <- which(humangastruloid24hr.combined.sct$orig.ident == 'UNTREATED24hr') # 7331 cells
+humangastruloid24hr.combined.sct_DASATINIB24hr <- which(humangastruloid24hr.combined.sct$orig.ident == 'DASATINIB24hr') # 6613 cells
 
 for (i in 1:100) { # Change this to 100 for the final run
   # Downsampling
-  embryoE7.combined.sct_cYAPKO_downsample <- sample(embryoE7.combined.sct_cYAPKO, 788)
-  embryoE7.combined.sct_integrated_downsample <- embryoE7.combined.sct[,c(embryoE7.combined.sct_WT, embryoE7.combined.sct_cYAPKO_downsample)]
+  humangastruloid24hr.combined.sct_UNTREATED24hr_downsample <- sample(humangastruloid24hr.combined.sct_UNTREATED24hr, 6613)
+  humangastruloid24hr.combined.sct_integrated_downsample <- humangastruloid24hr.combined.sct[,c(humangastruloid24hr.combined.sct_UNTREATED24hr_downsample, humangastruloid24hr.combined.sct_DASATINIB24hr)]
 
   # Count nb of cells in each cluster
-  control_clusters <- table(Idents(embryoE7.combined.sct_integrated_downsample)[embryoE7.combined.sct_integrated_downsample$condition == "WT_E7"])
-  cYAPKO_clusters <- table(Idents(embryoE7.combined.sct_integrated_downsample)[embryoE7.combined.sct_integrated_downsample$condition == "cYAPKO_E7"])
+  UNTREATED24hr_clusters <- table(Idents(humangastruloid24hr.combined.sct_integrated_downsample)[humangastruloid24hr.combined.sct_integrated_downsample$condition == "UNTREATED24hr"])
+  DASATINIB24hr_clusters <- table(Idents(humangastruloid24hr.combined.sct_integrated_downsample)[humangastruloid24hr.combined.sct_integrated_downsample$condition == "DASATINIB24hr"])
 
   # Align the counts with the unique clusters
-  control_clusters_counts[i, names(control_clusters)] <- as.numeric(control_clusters)
-  cYAPKO_clusters_counts[i, names(cYAPKO_clusters)] <- as.numeric(cYAPKO_clusters)
+  UNTREATED24hr_clusters_counts[i, names(UNTREATED24hr_clusters)] <- as.numeric(UNTREATED24hr_clusters)
+  DASATINIB24hr_clusters_counts[i, names(DASATINIB24hr_clusters)] <- as.numeric(DASATINIB24hr_clusters)
 }
 
-
+XXXXXXXXXXXXXX here pursue!!!
 
 ### Calculate mean and standard error
-mean_control_clusters <- colMeans(control_clusters_counts)
-mean_cYAPKO_clusters <- colMeans(cYAPKO_clusters_counts)
-std_error_WT_clusters <- apply(control_clusters_counts, 2, sd) / sqrt(100)
+mean_UNTREATED24hr_clusters <- colMeans(UNTREATED24hr_clusters_counts)
+mean_DASATINIB24hr_clusters <- colMeans(DASATINIB24hr_clusters_counts)
+std_error_UNTREATED24hr_clusters <- apply(UNTREATED24hr_clusters_counts, 2, sd) / sqrt(100)
 
 # Chi-squared test
 p_values <- numeric(length(unique_clusters))
@@ -10428,14 +10370,14 @@ p_values <- numeric(length(unique_clusters))
 for (i in 1:length(unique_clusters)) {
   # Create a matrix to store the counts for the chi-squared test
   contingency_table <- matrix(0, nrow=2, ncol=2)
-  colnames(contingency_table) <- c("WT_E7", "cYAPKO_E7")
+  colnames(contingency_table) <- c("UNTREATED24hr", "DASATINIB24hr")
   rownames(contingency_table) <- c("Cluster", "NotCluster")
   
   for (j in 1:100) { # Number of bootstrap iterations
-    contingency_table[1,1] <- control_clusters_counts[j,i]
-    contingency_table[1,2] <- cYAPKO_clusters_counts[j,i]
-    contingency_table[2,1] <- sum(control_clusters_counts[j,-i])
-    contingency_table[2,2] <- sum(cYAPKO_clusters_counts[j,-i])
+    contingency_table[1,1] <- UNTREATED24hr_clusters_counts[j,i]
+    contingency_table[1,2] <- DASATINIB24hr_clusters_counts[j,i]
+    contingency_table[2,1] <- sum(UNTREATED24hr_clusters_counts[j,-i])
+    contingency_table[2,2] <- sum(DASATINIB24hr_clusters_counts[j,-i])
     
     # Perform the chi-squared test on the contingency table
     chi_test <- chisq.test(contingency_table)
@@ -10453,10 +10395,10 @@ adjusted_p_values <- p.adjust(p_values, method = "bonferroni")
 
 # Create a tidy data frame for plotting
 plot_data <- data.frame(
-  cluster = names(mean_control_clusters),
-  untreated = mean_control_clusters,
-  dasatinib = mean_cYAPKO_clusters,
-  std_error_WT = std_error_WT_clusters,
+  cluster = names(mean_UNTREATED24hr_clusters),
+  untreated = mean_UNTREATED24hr_clusters,
+  dasatinib = mean_DASATINIB24hr_clusters,
+  std_error_UNTREATED24hr_clusters = std_error_UNTREATED24hr_clusters,
   p_value = adjusted_p_values
 ) %>%
   gather(key = "condition", value = "value", -cluster, -std_error_WT, -p_value) %>%
@@ -10817,6 +10759,22 @@ makeShinyApp(embryoE7.combined.sct, scConf, gene.mapping = TRUE,
              shiny.dir = "shinyApp_embryo_E7_19dim_V1/") 
 
 rsconnect::deployApp('shinyApp_embryo_E7_19dim_V1')
+
+
+
+# Data import EMBRYO E7 19 dim
+embryoE7.combined.sct <- readRDS(file = "output/seurat/embryoE7.combined.sct_19dim_V2.rds")
+DefaultAssay(embryoE7.combined.sct) <- "RNA" # 
+
+# Generate Shiny app V1
+scConf = createConfig(embryoE7.combined.sct)
+
+makeShinyApp(embryoE7.combined.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "Embryo_E7_19dim_V2",
+             shiny.dir = "shinyApp_embryo_E7_19dim_V2/") 
+
+rsconnect::deployApp('shinyApp_embryo_E7_19dim_V2')
+
 
 
 

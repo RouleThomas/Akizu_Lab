@@ -560,3 +560,38 @@ write.table(spikein_scaling_factor, file="output/spikein/spikein_MG1655_NPC_scal
 
 
 
+
+
+
+# depTools plot
+
+deepTools plot to check H3K27me3 signal and compare the 3ng (R1, R2) and 6ng input used
+
+
+
+```bash
+conda activate deeptools
+
+sbatch scripts/matrix_TSS_10kb_bigwig_unique_50dN_WT_H3K27me3.sh # 9760025 ok
+sbatch scripts/matrix_TSS_10kb_bigwig_unique_50dN_WT_H3K27me3__ENCFF159KBI_WTpeaks_Promoter_5.sh # 9760026 ok
+
+# Check median size of peaks
+
+awk '{print $3-$2}' output/macs2/broad/broad_blacklist_qval1.30103/50dN_WTQ731E_H3K27me3_R1_peaks.broadPeak | sort -n | awk ' { a[i++]=$1; } END { x=int(i/2); if(i%2){print a[x];}else{print (a[x-1]+a[x])/2;} }' # 810
+awk '{print $3-$2}' output/macs2/broad/broad_blacklist_qval1.30103/50dN_WTQ731E_H3K27me3_R2_peaks.broadPeak | sort -n | awk ' { a[i++]=$1; } END { x=int(i/2); if(i%2){print a[x];}else{print (a[x-1]+a[x])/2;} }' # 910
+awk '{print $3-$2}' output/macs2/broad/broad_blacklist_qval1.30103/50dN_WTQ731E_H3K27me3_R3_peaks.broadPeak | sort -n | awk ' { a[i++]=$1; } END { x=int(i/2); if(i%2){print a[x];}else{print (a[x-1]+a[x])/2;} }' # 822
+
+```
+
+
+--> Overall the signal intensity is very comparable between samples, R1 a bit lower than R2 and R3...
+
+--> The pearson correlation bigwig show a higher correlation between R1 R2 than with R3
+
+--> peaks overall the same size between 3 and 6ng
+
+--> Overall variability seems comparable to biological replicates
+
+
+
+
