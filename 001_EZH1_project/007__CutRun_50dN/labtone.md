@@ -518,7 +518,7 @@ dev.off()
 
 Now calculate SF in R, as for histone SF:
 
-XXXXX
+
 
 
 ```R
@@ -528,12 +528,9 @@ library("readxl")
 library("ggpubr")
 
 # import df
-spikein <- read_excel("output/spikein/SpikeIn_MG1655.xlsx") 
-
-## 50dN
-spikein <- read_table("output/spikein/SpikeIn_MG1655.txt") %>%
-    filter(tissue == "NPC") %>%
+spikein <- read_excel("output/spikein/SpikeIn_MG1655_007.xlsx")  %>%
     dplyr::select(-tissue)
+
 # Total reads per IP
 spikein_H3K27me3_total = spikein %>%
     group_by(AB) %>%
@@ -552,10 +549,207 @@ spikein_read_prop_min = spikein_read_prop %>%
 spikein_scaling_factor = spikein_read_prop %>%
     left_join(spikein_read_prop_min) %>%
     mutate(scaling_factor = read_prop/min_prop)
-write.table(spikein_scaling_factor, file="output/spikein/spikein_MG1655_NPC_scaling_factor.txt", sep="\t", quote=FALSE, row.names=FALSE)
+write.table(spikein_scaling_factor, file="output/spikein/spikein_MG1655_50dN_scaling_factor.txt", sep="\t", quote=FALSE, row.names=FALSE)
 
 
 ```
+
+## Spike in Diffbind calcluation
+### Histone spike in
+
+
+**Using our scaling factor, let's estimate the 'new' library size** and provide it to `dba.normalize(library = c(1000, 12000))` = Like that our library size will be change taking into account our scaling factor! **Then we can normalize with library-size, RLE or TMM**... (issue discussed [here](https://support.bioconductor.org/p/9147040/)) 
+
+
+### Adjust library size with histone scaling factor and apply normalization
+Total number of reads is our library size (used samtools flagstat to double check) :
+
+`samtools flagstat output/bowtie2/*unique.dupmark.sorted.bam` used to obtain library size (first value=library size)
+--> Values save in GoogleDrive `007__*/sample_007.xlsx`. Histone-norm-library-size = library-size * SF. Using the non-reciprocal scaling factor, we increase the library-size; the more histone enriched, the more library size is increased, thus the more signal will decrease.
+
+Now let's use these new histone-scaled library size and normalize with library-size,TMM or RLE. Let's use the **unique bam files** together with the **unique bam MACS2 raw files (xlsx, not the bed with pre-filtered qvalue)**
+
+***Key points:***
+- **Let's do 1 DiffBind per AB (H3K27me3) and tissue (50dN); otherwise the TMM normalization may take all, unrelated, samples into account!** --> Files are `meta_sample_macs2raw_unique*.txt`
+- For **50dN_WTQ731E_H3K27me3_R3 I take 50dN_WTQ731E_H3K27me3_R1 IGG as control!**
+
+```bash
+srun --mem=500g --pty bash -l
+conda activate DiffBind
+```
+```R
+library("DiffBind") 
+
+# All 50dN H3K27me3
+## 50dN_H3K27me3
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_50dN_H3K27me3_histoneSF.txt", header = TRUE, sep = "\t"))
+
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+
+
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_50dN_H3K27me3_histoneSF.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_50dN_H3K27me3_histoneSF.RData")
+
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_50dN_H3K27me3.pdf", width=14, height=20)  
+plot(sample_count)
+dev.off()
+
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_50dN_H3K27me3.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+
+### TMM 
+
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(8533246,15652994,47009725,51026263,26083225,27542538,30204595), normalize = DBA_NORM_TMM) 
+
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+
+
+console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_50dN_H3K27me3.txt")
+
+
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_50dN_H3K27me3_histoneSF.pdf", width=14, height=20)  
+plot(sample_count_blackgreylist_LibHistoneScaled_TMM)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_50dN_H3K27me3_histoneSF.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+```
+
+
+
+Now let's do the same method but using the **MG1655_library_scaled information and collect new MG1655_DiffBind_TMM_SF**:
+
+
+```bash
+srun --mem=500g --pty bash -l
+conda activate DiffBind
+```
+```R
+library("DiffBind") 
+
+
+
+load("output/DiffBind/sample_count_macs2raw_unique_50dN_H3K27me3_histoneSF.RData")
+
+
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### TMM 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(8533246,10079430,32469281,25669150,15181711,18083570,13174869), normalize = DBA_NORM_TMM) 
+
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+
+console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibMG1655Scaled_TMM_unique_SF_50dN_H3K27me3.txt")
+
+
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_50dN_H3K27me3_MG1655SF.pdf", width=14, height=20)  
+plot(sample_count_blackgreylist_LibHistoneScaled_TMM)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_50dN_H3K27me3_MG1655SF.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+```
+
+
+
+--> SF from histone and MG1655 are very comparable
+
+--> No striking difference in histone SF between H3K27me3 R1 and R3
+
+
+
+
+## Generate Spike in scaled bigwig
+
+--> Reciprocal from DiffBind_TMM is to be used when converting bam to bigwig!
+
+
+### Histone scaled Bigwig (NON_Diffbind_TMM)
+
+
+```bash
+conda activate deeptools
+
+sbatch scripts/bamtobigwig_histone_1.sh # 9846985
+sbatch scripts/bamtobigwig_histone_2.sh # 9846998
+sbatch scripts/bamtobigwig_histone_3.sh # 9847001
+```
+
+### MG1655 scaled Bigwig (NON_Diffbind_TMM)
+
+
+```bash
+conda activate deeptools
+
+sbatch scripts/bamtobigwig_MG1655_1.sh # 9847015
+sbatch scripts/bamtobigwig_MG1655_2.sh # 9847016
+sbatch scripts/bamtobigwig_MG1655_3.sh # 9847017
+```
+
+
+
+
+### Histone scaled Bigwig DiffBind_TMM
+
+
+```bash
+conda activate deeptools
+
+sbatch scripts/bamtobigwig_histone_DiffBind_TMM_1.sh # 9846509
+sbatch scripts/bamtobigwig_histone_DiffBind_TMM_2.sh # 9846512
+sbatch scripts/bamtobigwig_histone_DiffBind_TMM_3.sh # 9846519
+```
+
+
+### MG1655/E coli scaled bigwig DiffBind_TMM
+
+
+```bash
+conda activate deeptools
+
+sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM_1.sh # 9846532
+sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM_2.sh # 9846537
+sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM_3.sh # 9846538
+```
+
+XXXXXXXXXXXXX TO MODIFY CONCLU BELOW:
+
+--> Both bigwig norm method are very similar... 
+
+Check some known target regulated in 2months neurons:
+--> NEUROG2 seems less in KO which is good.
+--> EFNA5 tiny decrease in KO (only in normalized data!)
+--> GRIK3 tiny increase in KO
+
+--> Something is WEIRD... When samples have MORE spike in, their signal should be reduced, as they overall have more DNA; but if I used the reciprocal from DiffBind_TMM; this is not respected (ie. sample with more spike in, we increased their signal...!)... That is true for both histone/MG1655-spike in DiffBind TMM norm...
+----> What should be the BEST to use, is then the NON-reciprocal_DiffBind_TMM !!!
+------> Let's try and compare with gene expression...! Maybe it is still good as we take into account the library size with the DiffBind_TMM method??
+--------> YESSS in the end we correct the library size with the SF!!!!! So we 're good!!! **reciprocal DiffBind_TMM IS TO BE USED**!!
+
+
+XXXXXXXXXX
+
+
 
 
 
@@ -565,6 +759,7 @@ write.table(spikein_scaling_factor, file="output/spikein/spikein_MG1655_NPC_scal
 
 # depTools plot
 
+## raw
 deepTools plot to check H3K27me3 signal and compare the 3ng (R1, R2) and 6ng input used
 
 
@@ -593,5 +788,48 @@ awk '{print $3-$2}' output/macs2/broad/broad_blacklist_qval1.30103/50dN_WTQ731E_
 --> Overall variability seems comparable to biological replicates
 
 
+## spike in with raw SF (NON- DiffBind TMM normalized)
 
 
+```bash
+conda activate deeptools
+
+## all
+sbatch --dependency=afterany:9846985:9846998:9847001 scripts/matrix_TSS_10kb_bigwig_unique_histone_50dN_H3K27me3.sh # 9847384
+sbatch --dependency=afterany:9847015:9847016:9847017 scripts/matrix_TSS_10kb_bigwig_unique_MG1655_50dN_H3K27me3.sh # 9847393
+
+## WT only
+sbatch --dependency=afterany:9846985:9846998:9847001 scripts/matrix_TSS_10kb_bigwig_unique_histone_50dN_WT_H3K27me3.sh # 9847400
+sbatch --dependency=afterany:9847015:9847016:9847017 scripts/matrix_TSS_10kb_bigwig_unique_MG1655_50dN_WT_H3K27me3.sh # 9847410
+```
+
+
+--> XXX
+
+
+
+
+## spike in (histone and MG1655) DiffBind Lib scaled (method 003__CutRun)
+
+
+```bash
+conda activate deeptools
+
+## all
+sbatch --dependency=afterany:9846509:9846512:9846519 scripts/matrix_TSS_10kb_bigwig_unique_histone_DiffBind_TMM_50dN_H3K27me3.sh # 9846649
+sbatch --dependency=afterany:9846532:9846537:9846538 scripts/matrix_TSS_10kb_bigwig_unique_MG1655_DiffBind_TMM_50dN_H3K27me3.sh # 9846669
+
+## WT only
+sbatch --dependency=afterany:9846509:9846512:9846519 scripts/matrix_TSS_10kb_bigwig_unique_histone_DiffBind_TMM_50dN_WT_H3K27me3.sh # 9846767
+sbatch --dependency=afterany:9846532:9846537:9846538 scripts/matrix_TSS_10kb_bigwig_unique_MG1655_DiffBind_TMM_50dN_WT_H3K27me3.sh # 9846779
+```
+
+
+--> XXX
+
+
+
+
+
+
+XXX

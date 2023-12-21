@@ -29,6 +29,7 @@ plotHeatmap -m output/deeptools/matrix_TSS_10kb_bigwig_unique_50dN_WT_H3K27me3.g
 plotProfile -m output/deeptools/matrix_TSS_10kb_bigwig_unique_50dN_WT_H3K27me3.gz \
     -out output/deeptools/matrix_TSS_10kb_bigwig_unique_50dN_WT_H3K27me3_profile.pdf \
     --samplesLabel "H3K27me3_R1" "H3K27me3_R2" "H3K27me3_R3" \
-    --refPointLabel "TSS" 
+    --refPointLabel "TSS" \
+    --perGroup
   #  --yMin 0 0 0 --yMax 5 5 40 
     #  --colors lightblue purple pink \
