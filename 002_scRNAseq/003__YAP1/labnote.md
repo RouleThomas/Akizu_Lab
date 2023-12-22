@@ -10586,23 +10586,18 @@ Epiblast <- FindMarkers(humangastruloid24hr.combined.sct, ident.1 = "Epiblast-DA
 
 
 ### save output
-#### write.table(Epiblast, file = "output/seurat/Epiblast-cYAPKO_response_E7_19dim_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-
-write.table(Unknown, file = "output/seurat/Unknown-humangastruloid24hr_25dim_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(Endoderm, file = "output/seurat/Endoderm-humangastruloid24hr_25dim_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(Nascent_Mesoderm, file = "output/seurat/Nascent_Mesoderm-humangastruloid24hr_25dim_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(Primitive_Streak, file = "output/seurat/Primitive_Streak-humangastruloid24hr_25dim_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(Epiblast, file = "output/seurat/Epiblast-humangastruloid24hr_25dim_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+#### write.table(Epiblast, file = "output/seurat/Epiblast-humangastruloid24hr_25dim_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 
-XXXXXXXXXXX HERE I SHOULD HAVE SAVE epiblast but double check XXXXXXXXXXX
+
+
 
 # Check some genes
-DefaultAssay(embryoE7.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
+DefaultAssay(humangastruloid24hr.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
 
 ## Conchi geneList 20231214
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_NODAL_19dim.pdf", width=10, height=12)
-FeaturePlot(embryoE7.combined.sct, features = c("Yap1","Nodal", "Axin2", "Sp5"), split.by = "condition", max.cutoff = 5, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_humangastruloid24hr_NODAL_25dim.pdf", width=8, height=12)
+FeaturePlot(humangastruloid24hr.combined.sct, features = c("YAP1","NODAL", "AXIN2", "SP5"), split.by = "condition", max.cutoff = 5, cols = c("grey", "red"))
 dev.off()
 
 
@@ -10610,46 +10605,48 @@ dev.off()
 
 YAP1_NODAL <- c("Shh", "Dmrt1", "Cited2", 'Dact2', "Tgif2", "Acvr1b", 'Smad3', 'Dand5', 'Smad2','Cer1', 'Nodal', 'Foxh1', 'Dact1', 'Tdgf1', 'Cripto3', 'Acvr1c', 'Cfc1', 'Cfc1b') 
 
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_19dim_YAP1_NODAL.pdf", width=10, height=70)
-FeaturePlot(embryoE7.combined.sct, features = YAP1_NODAL, max.cutoff = 4, cols = c("grey", "red"), split.by = "condition")
+YAP1_NODAL <- c("SHH", "DMRT1", "CITED2", 'DACT2', "TGIF2", "ACVR1B", 'SMAD3', 'DAND5', 'SMAD2','CER1', 'NODAL', 'FOXH1', 'DACT1', 'TDGF1', 'TDGF1P3', 'ACVR1C', 'CFC1', 'CFC1B') 
+
+pdf("output/seurat/FeaturePlot_SCT_humangastruloid24hr_25dim_YAP1_NODAL.pdf", width=10, height=70)
+FeaturePlot(humangastruloid24hr.combined.sct, features = YAP1_NODAL, max.cutoff = 4, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
 ## Anxa gene family
+"Anxa1","Amotl2","Ccn1","Ccn2","Tagln","Anxa3","Chchd2"
 
-
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_ANXA_19dim.pdf", width=10, height=25)
-FeaturePlot(embryoE7.combined.sct, features = c("Anxa1","Amotl2","Ccn1","Ccn2","Tagln","Anxa3","Chchd2"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+pdf("output/seurat/FeaturePlot_SCT_humangastruloid24hr_ANXA_25dim.pdf", width=10, height=25)
+FeaturePlot(humangastruloid24hr.combined.sct, features = c("ANXA1","AMOTL2","CCN1","CCN2","TAGLN","ANXA3","CHCHD2"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
 
 
 ## PRC2-related genes
 
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_PRC2_19dim.pdf", width=10, height=22)
-FeaturePlot(embryoE7.combined.sct, features = c("Ezh2", "Kdm6b", "Gata6", "Cdx2","T"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+pdf("output/seurat/FeaturePlot_SCT_humangastruloid24hr_PRC2_25dim.pdf", width=10, height=22)
+FeaturePlot(humangastruloid24hr.combined.sct, features = c("EZH2", "KDM6B", "GATA6", "CDX2"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
 
 ### Check YAP1 hippo bulk-regulated genes
+"Tead1", "Tead4", "Ccn2", "Ccn1","Areg","Myc","Gli2","Vim","Axl","Birc5"
 
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_YAP1_hippo_19dim.pdf", width=7, height=30)
-
-FeaturePlot(embryoE7.combined.sct, features = c("Tead1", "Tead4", "Ccn2", "Ccn1","Areg","Myc","Gli2","Vim","Axl","Birc5"), split.by = "condition", max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_humangastruloid24hr_YAP1_hippo_25dim.pdf", width=7, height=30)
+FeaturePlot(humangastruloid24hr.combined.sct, features = c("TEAD1", "TEAD4", "CCN2", "CCN1","AREG","MYC","GLI2","VIM","AXL","BIRC5"), split.by = "condition", max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
 
 
 
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_YAP1_19dim.pdf", width=10, height=5)
+pdf("output/seurat/FeaturePlot_SCT_humangastruloid24hr_YAP1_25dim.pdf", width=10, height=5)
 
-FeaturePlot(embryoE7.combined.sct, features = c("Yap1"), split.by = "condition", max.cutoff = 3, cols = c("grey", "red"))
+FeaturePlot(humangastruloid24hr.combined.sct, features = c("YAP1"), split.by = "condition", max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
 
 
 ## Wnt related
 
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_Wnt_19dim.pdf", width=10, height=7)
+pdf("output/seurat/FeaturePlot_SCT_humangastruloid24hr_Wnt_25dim.pdf", width=8, height=7)
 
-FeaturePlot(embryoE7.combined.sct, features = c("Axin2", "Sp5"), split.by = "condition", max.cutoff = 3, cols = c("grey", "red"))
+FeaturePlot(humangastruloid24hr.combined.sct, features = c("AXIN2", "SP5"), split.by = "condition", max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
 
 
