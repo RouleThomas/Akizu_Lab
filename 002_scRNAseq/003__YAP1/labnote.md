@@ -9571,7 +9571,7 @@ for (i in 1:100) { # Change this to 100 for the final run
 ### Calculate mean and standard error
 mean_control_clusters <- colMeans(control_clusters_counts)
 mean_cYAPKO_clusters <- colMeans(cYAPKO_clusters_counts)
-std_error_WT_clusters <- apply(control_clusters_counts, 2, sd) / sqrt(100)
+std_error_cYAPKO_clusters <- apply(cYAPKO_clusters_counts, 2, sd) / sqrt(100)
 
 # Chi-squared test
 p_values <- numeric(length(unique_clusters))
@@ -9607,10 +9607,10 @@ plot_data <- data.frame(
   cluster = names(mean_control_clusters),
   untreated = mean_control_clusters,
   dasatinib = mean_cYAPKO_clusters,
-  std_error_WT = std_error_WT_clusters,
+  std_error_cYAPKO = std_error_cYAPKO_clusters,
   p_value = adjusted_p_values
 ) %>%
-  gather(key = "condition", value = "value", -cluster, -std_error_WT, -p_value) %>%
+  gather(key = "condition", value = "value", -cluster, -std_error_cYAPKO, -p_value) %>%
   mutate(
     condition = if_else(condition == "untreated", "WT_E7", "cYAPKO_E7"),
     significance = ifelse(p_value < 0.0001, "***",
@@ -9638,7 +9638,7 @@ ggplot(plot_data, aes(x = cluster, y = value, fill = condition)) +
   geom_bar(stat = "identity", position = "dodge") +
   geom_text(
     data = filter(plot_data, condition == "cYAPKO_E7"),
-    aes(label = significance, y = value + std_error_WT_clusters),
+    aes(label = significance, y = value + std_error_cYAPKO_clusters),
     vjust = -0.8,
     position = position_dodge(0.9), size = 5
   ) +
@@ -9647,7 +9647,6 @@ ggplot(plot_data, aes(x = cluster, y = value, fill = condition)) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
 dev.off()
-
 
 
 
@@ -10323,7 +10322,6 @@ DotPlot(humangastruloid24hr.combined.sct, assay = "SCT", features = all_markers,
 dev.off()
 
 
-XXXXXXXXXXXXXX here pursue!!!
 
 
 ## Downsampling with bootstrap to compare the nb of cell per cell types
@@ -10398,40 +10396,40 @@ plot_data <- data.frame(
   cluster = names(mean_UNTREATED24hr_clusters),
   untreated = mean_UNTREATED24hr_clusters,
   dasatinib = mean_DASATINIB24hr_clusters,
-  std_error_UNTREATED24hr_clusters = std_error_UNTREATED24hr_clusters,
+  std_error_UNTREATED24hr = std_error_UNTREATED24hr_clusters,
   p_value = adjusted_p_values
 ) %>%
-  gather(key = "condition", value = "value", -cluster, -std_error_WT, -p_value) %>%
+  gather(key = "condition", value = "value", -cluster, -std_error_UNTREATED24hr, -p_value) %>%
   mutate(
-    condition = if_else(condition == "untreated", "WT_E7", "cYAPKO_E7"),
+    condition = if_else(condition == "untreated", "UNTREATED24hr", "DASATINIB24hr"),
     significance = ifelse(p_value < 0.0001, "***",
                        ifelse(p_value < 0.001, "**",
                               ifelse(p_value < 0.05, "*", "")))
   )
 
-plot_data$condition <- factor(plot_data$condition, levels = c("WT_E7", "cYAPKO_E7")) # Reorder untreated 1st
-plot_data$cluster <- factor(plot_data$cluster, levels = c("Blood_Progenitor",
+plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED24hr", "DASATINIB24hr")) # Reorder untreated 1st
+plot_data$cluster <- factor(plot_data$cluster, levels = c(  "Unknown",
   "Endoderm",
-  "Exe_Ectoderm",
-  "Primitive_Streak-Nascent_Mesoderm",
-  "Exe_Endoderm",
+  "Nascent_Mesoderm",
+  "Primitive_Streak",
   "Epiblast")) # Reorder untreated 1st
 
 
 # Plotting using ggplot2
-pdf("output/seurat/Cluster_cell_counts_BootstrapDownsampling10_clean_embryo_E7_19dim.pdf", width=5, height=4)
+pdf("output/seurat/Cluster_cell_counts_BootstrapDownsampling100_clean_humangastruloid24hr_25dim.pdf", width=5, height=4)
 ggplot(plot_data, aes(x = cluster, y = value, fill = condition)) +
   geom_bar(stat = "identity", position = "dodge") +
   geom_text(
-    data = filter(plot_data, condition == "cYAPKO_E7"),
-    aes(label = significance, y = value + std_error_WT_clusters),
+    data = filter(plot_data, condition == "DASATINIB24hr"),
+    aes(label = significance, y = value + std_error_UNTREATED24hr_clusters),
     vjust = -0.8,
     position = position_dodge(0.9), size = 5
   ) +
-  scale_fill_manual(values = c("WT_E7" = "blue", "cYAPKO_E7" = "red")) +
+  scale_fill_manual(values = c("UNTREATED24hr" = "blue", "DASATINIB24hr" = "red")) +
   labs(x = "Cluster", y = "Number of Cells") +
   theme_bw() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ylim(0,4000)
 dev.off()
 
 
@@ -10440,193 +10438,164 @@ dev.off()
 # differential expressed genes across conditions
 ## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
 
-DefaultAssay(embryoE7.combined.sct) <- "RNA"
+DefaultAssay(humangastruloid24hr.combined.sct) <- "RNA"
 
-embryoE7.combined.sct <- NormalizeData(embryoE7.combined.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
-all.genes <- rownames(embryoE7.combined.sct)
-embryoE7.combined.sct <- ScaleData(embryoE7.combined.sct, features = all.genes) # zero-centres and scales it
+humangastruloid24hr.combined.sct <- NormalizeData(humangastruloid24hr.combined.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(humangastruloid24hr.combined.sct)
+humangastruloid24hr.combined.sct <- ScaleData(humangastruloid24hr.combined.sct, features = all.genes) # zero-centres and scales it
 
 
 ## what genes change in different conditions for cells of the same type
 
-embryoE7.combined.sct$celltype.stim <- paste(embryoE7.combined.sct$cluster.annot, embryoE7.combined.sct$condition,
+humangastruloid24hr.combined.sct$celltype.stim <- paste(humangastruloid24hr.combined.sct$cluster.annot, humangastruloid24hr.combined.sct$condition,
     sep = "-")
-Idents(embryoE7.combined.sct) <- "celltype.stim"
+Idents(humangastruloid24hr.combined.sct) <- "celltype.stim"
 
 # use RNA corrected count for DEGs
-embryoE7.combined.sct <- PrepSCTFindMarkers(embryoE7.combined.sct)
+humangastruloid24hr.combined.sct <- PrepSCTFindMarkers(humangastruloid24hr.combined.sct)
 
 
 ## Automation::
-cell_types <- c("Blood_Progenitor",
+cell_types <- c("Unknown",
   "Endoderm",
-  "Exe_Ectoderm",
-  "Primitive_Streak-Nascent_Mesoderm",
-  "Exe_Endoderm",
+  "Nascent_Mesoderm",
+  "Primitive_Streak",
   "Epiblast")
 
 for (cell_type in cell_types) {
-  response_name <- paste(cell_type, "cYAPKO_E7.response", sep = ".")
-  ident_1 <- paste(cell_type, "-cYAPKO_E7", sep = "")
-  ident_2 <- paste(cell_type, "-WT_E7", sep = "")
+  response_name <- paste(cell_type, "DASATINIB24hr.response", sep = ".")
+  ident_1 <- paste(cell_type, "-DASATINIB24hr", sep = "")
+  ident_2 <- paste(cell_type, "-UNTREATED24hr", sep = "")
 
-  response <- FindMarkers(embryoE7.combined.sct, assay = "RNA", ident.1 = ident_1, ident.2 = ident_2, verbose = FALSE)
+  response <- FindMarkers(humangastruloid24hr.combined.sct, assay = "RNA", ident.1 = ident_1, ident.2 = ident_2, verbose = FALSE)
   
   print(head(response, n = 15))
   
-  file_name <- paste("output/seurat/", cell_type, "-cYAPKO_E7_response_19dim.txt", sep = "")
+  file_name <- paste("output/seurat/", cell_type, "-DASATINIB24hr_25dim.txt", sep = "")
   write.table(response, file = file_name, sep = "\t", quote = FALSE, row.names = TRUE)
 }
 
 
 
 ### Find all markers 
-all_markers <- FindAllMarkers(embryoE7.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
-write.table(all_markers, file = "output/seurat/srat_WT_cYAPKO_all_markers_E7_19dim.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+all_markers <- FindAllMarkers(humangastruloid24hr.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all_markers, file = "output/seurat/srat_humangastruloid24hr_all_markers_25dim.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 
 # Display the top 10 CONSERVED marker genes of each cluster
-Idents(embryoE7.combined.sct) <- "cluster.annot"
+Idents(humangastruloid24hr.combined.sct) <- "cluster.annot"
 
 ## DEGs cluster versus all other
-Blood_Progenitor.conserved <- FindConservedMarkers(embryoE7.combined.sct, assay = "RNA", ident.1 = "Blood_Progenitor", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Blood_Progenitor")
-Endoderm.conserved <- FindConservedMarkers(embryoE7.combined.sct, assay = "RNA", ident.1 = "Endoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Endoderm")
-Exe_Ectoderm.conserved <- FindConservedMarkers(embryoE7.combined.sct, assay = "RNA", ident.1 = "Exe_Ectoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Exe_Ectoderm")
-Exe_Endoderm.conserved <- FindConservedMarkers(embryoE7.combined.sct, assay = "RNA", ident.1 = "Exe_Endoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Exe_Endoderm")
-Epiblast.conserved <- FindConservedMarkers(embryoE7.combined.sct, assay = "RNA", ident.1 = "Epiblast", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Epiblast")
-Primitive_Streak_Nascent_Mesoderm.conserved <- FindConservedMarkers(embryoE7.combined.sct, assay = "RNA", ident.1 = 'Primitive_Streak-Nascent_Mesoderm', grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Primitive_Streak-Nascent_Mesoderm")
-
-
+Unknown.conserved <- FindConservedMarkers(humangastruloid24hr.combined.sct, assay = "RNA", ident.1 = "Unknown", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Unknown")
+Endoderm.conserved <- FindConservedMarkers(humangastruloid24hr.combined.sct, assay = "RNA", ident.1 = "Endoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Endoderm")
+Nascent_Mesoderm.conserved <- FindConservedMarkers(humangastruloid24hr.combined.sct, assay = "RNA", ident.1 = "Nascent_Mesoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Nascent_Mesoderm")
+Primitive_Streak.conserved <- FindConservedMarkers(humangastruloid24hr.combined.sct, assay = "RNA", ident.1 = "Primitive_Streak", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Primitive_Streak")
+Epiblast.conserved <- FindConservedMarkers(humangastruloid24hr.combined.sct, assay = "RNA", ident.1 = "Epiblast", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Epiblast")
 
 
 ## Combine all conserved markers into one data frame
-all_conserved <- bind_rows(Blood_Progenitor.conserved, Endoderm.conserved, Exe_Ectoderm.conserved, Exe_Endoderm.conserved, Epiblast.conserved , Primitive_Streak_Nascent_Mesoderm.conserved)
+all_conserved <- bind_rows(Unknown.conserved, Endoderm.conserved, Nascent_Mesoderm.conserved, Primitive_Streak.conserved, Epiblast.conserved)
 
 all_conserved$gene <- rownames(all_conserved)
 ## Write all conserved markers to a file
-write.table(all_conserved, file = "output/seurat/srat_all_conserved_markers_embryo_E7_19dim.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(all_conserved, file = "output/seurat/srat_all_conserved_markers_humangastruloid24hr_25dim.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
 ## Find the top 10 conserved markers for each cluster
 top10_conserved <- all_conserved %>%
-  mutate(cluster = factor(cluster, levels = c("Blood_Progenitor",
+  mutate(cluster = factor(cluster, levels = c("Unknown",
   "Endoderm",
-  "Exe_Ectoderm",
-  "Primitive_Streak-Nascent_Mesoderm",
-  "Exe_Endoderm",
+  "Nascent_Mesoderm",
+  "Primitive_Streak",
   "Epiblast"))) %>% 
   separate(gene, into = c("gene", "suffix"), sep = "\\.\\.\\.", remove = TRUE, extra = "drop", fill = "right") %>% 
   group_by(cluster) %>% 
   arrange((max_pval)) %>% 
   slice_head(n = 10) %>% 
   ungroup() %>% 
-  arrange(match(cluster, c("Blood_Progenitor",
+  arrange(match(cluster, c("Unknown",
   "Endoderm",
-  "Exe_Ectoderm",
-  "Primitive_Streak-Nascent_Mesoderm",
-  "Exe_Endoderm",
-  "Epiblast")))
-
-## Find the top 3 conserved markers for each cluster
-top10_conserved <- all_conserved %>%
-  mutate(cluster = factor(cluster, levels = c("Blood_Progenitor",
-  "Endoderm",
-  "Exe_Ectoderm",
-  "Primitive_Streak-Nascent_Mesoderm",
-  "Exe_Endoderm",
-  "Epiblast"))) %>% 
-  separate(gene, into = c("gene", "suffix"), sep = "\\.\\.\\.", remove = TRUE, extra = "drop", fill = "right") %>% 
-  group_by(cluster) %>% 
-  arrange((max_pval)) %>% 
-  slice_head(n = 3) %>% 
-  ungroup() %>% 
-  arrange(match(cluster, c("Blood_Progenitor",
-  "Endoderm",
-  "Exe_Ectoderm",
-  "Primitive_Streak-Nascent_Mesoderm",
-  "Exe_Endoderm",
+  "Nascent_Mesoderm",
+  "Primitive_Streak",
   "Epiblast")))
 
 
 
 ## Write the top 10 conserved markers for each cluster to a file
-write.table(top10_conserved, file = "output/seurat/srat_top10_conserved_markers_embryo_E7_19dim.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(top10_conserved, file = "output/seurat/srat_top10_conserved_markers_humangastruloid24hr_25dim.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 ## Visualize the top 10/3 conserved markers for each cluster
 marker_genes_conserved <- unique(top10_conserved$gene)
-levels(embryoE7.combined.sct) <- c("Blood_Progenitor",
+levels(humangastruloid24hr.combined.sct) <- c("Unknown",
   "Endoderm",
-  "Exe_Ectoderm",
-  "Primitive_Streak-Nascent_Mesoderm",
-  "Exe_Endoderm",
+  "Nascent_Mesoderm",
+  "Primitive_Streak",
   "Epiblast")
 
-pdf("output/seurat/DotPlot_SCT_top10_conserved_embryo_E7_19dim.pdf", width=18, height=5)
-DotPlot(embryoE7.combined.sct, features = marker_genes_conserved, cols = c("grey", "red")) + RotatedAxis()
+pdf("output/seurat/DotPlot_SCT_top10_conserved_humangastruloid24hr_25dim.pdf", width=18, height=3)
+DotPlot(humangastruloid24hr.combined.sct, features = marker_genes_conserved, cols = c("grey", "red")) + RotatedAxis()
 dev.off()
 
 
 # save
-## saveRDS(embryoE7.combined.sct, file = "output/seurat/embryoE7.combined.sct_19dim.rds")
-embryoE7.combined.sct <- readRDS(file = "output/seurat/embryoE7.combined.sct_19dim.rds")
+## saveRDS(humangastruloid24hr.combined.sct, file = "output/seurat/humangastruloid24hr.combined.sct_25dim.rds")
+humangastruloid24hr.combined.sct <- readRDS(file = "output/seurat/humangastruloid24hr.combined.sct_25dim.rds")
 
 
 
 ## Re-calculate DEGs keeping ALL genes
-embryoE7.combined.sct$celltype.stim <- paste(embryoE7.combined.sct$cluster.annot, embryoE7.combined.sct$condition,
+humangastruloid24hr.combined.sct$celltype.stim <- paste(humangastruloid24hr.combined.sct$cluster.annot, humangastruloid24hr.combined.sct$condition,
     sep = "-")
-Idents(embryoE7.combined.sct) <- "celltype.stim"
+Idents(humangastruloid24hr.combined.sct) <- "celltype.stim"
 
-Blood_Progenitor <- FindMarkers(embryoE7.combined.sct, ident.1 = "Blood_Progenitor-cYAPKO_E7", ident.2 = "Blood_Progenitor-WT_E7",
+Unknown <- FindMarkers(humangastruloid24hr.combined.sct, ident.1 = "Unknown-DASATINIB24hr", ident.2 = "Unknown-UNTREATED24hr",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA") 
-Endoderm <- FindMarkers(embryoE7.combined.sct, ident.1 = "Endoderm-cYAPKO_E7", ident.2 = "Endoderm-WT_E7",
+Endoderm <- FindMarkers(humangastruloid24hr.combined.sct, ident.1 = "Endoderm-DASATINIB24hr", ident.2 = "Endoderm-UNTREATED24hr",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
-    assay = "RNA")     
-Exe_Ectoderm <- FindMarkers(embryoE7.combined.sct, ident.1 = "Exe_Ectoderm-cYAPKO_E7", ident.2 = "Exe_Ectoderm-WT_E7",
+    assay = "RNA") 
+Nascent_Mesoderm <- FindMarkers(humangastruloid24hr.combined.sct, ident.1 = "Nascent_Mesoderm-DASATINIB24hr", ident.2 = "Nascent_Mesoderm-UNTREATED24hr",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
-    assay = "RNA")     
-Primitive_Streak_Nascent_Mesoderm <- FindMarkers(embryoE7.combined.sct, ident.1 = "Primitive_Streak-Nascent_Mesoderm-cYAPKO_E7", ident.2 = "Primitive_Streak-Nascent_Mesoderm-WT_E7",
+    assay = "RNA") 
+Primitive_Streak <- FindMarkers(humangastruloid24hr.combined.sct, ident.1 = "Primitive_Streak-DASATINIB24hr", ident.2 = "Primitive_Streak-UNTREATED24hr",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
-    assay = "RNA")   
-Exe_Endoderm <- FindMarkers(embryoE7.combined.sct, ident.1 = "Exe_Endoderm-cYAPKO_E7", ident.2 = "Exe_Endoderm-WT_E7",
+    assay = "RNA") 
+Epiblast <- FindMarkers(humangastruloid24hr.combined.sct, ident.1 = "Epiblast-DASATINIB24hr", ident.2 = "Epiblast-UNTREATED24hr",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
-    assay = "RNA")   
-Epiblast <- FindMarkers(embryoE7.combined.sct, ident.1 = "Epiblast-cYAPKO_E7", ident.2 = "Epiblast-WT_E7",
-    verbose = TRUE,
-    test.use = "wilcox",
-    logfc.threshold = -Inf,
-    min.pct = -Inf,
-    min.diff.pct = -Inf, # 
-    assay = "RNA")   
-
-
+    assay = "RNA") 
+    
 
 
 
 ### save output
 #### write.table(Epiblast, file = "output/seurat/Epiblast-cYAPKO_response_E7_19dim_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
+write.table(Unknown, file = "output/seurat/Unknown-humangastruloid24hr_25dim_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Endoderm, file = "output/seurat/Endoderm-humangastruloid24hr_25dim_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Nascent_Mesoderm, file = "output/seurat/Nascent_Mesoderm-humangastruloid24hr_25dim_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Primitive_Streak, file = "output/seurat/Primitive_Streak-humangastruloid24hr_25dim_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Epiblast, file = "output/seurat/Epiblast-humangastruloid24hr_25dim_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 
-
+XXXXXXXXXXX HERE I SHOULD HAVE SAVE epiblast but double check XXXXXXXXXXX
 
 # Check some genes
 DefaultAssay(embryoE7.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
