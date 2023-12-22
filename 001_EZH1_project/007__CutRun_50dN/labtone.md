@@ -690,9 +690,9 @@ dev.off()
 ```bash
 conda activate deeptools
 
-sbatch scripts/bamtobigwig_histone_1.sh # 9846985
-sbatch scripts/bamtobigwig_histone_2.sh # 9846998
-sbatch scripts/bamtobigwig_histone_3.sh # 9847001
+sbatch scripts/bamtobigwig_histone_1.sh # 9846985 ok
+sbatch scripts/bamtobigwig_histone_2.sh # 9846998 ok
+sbatch scripts/bamtobigwig_histone_3.sh # 9847001 ok
 ```
 
 ### MG1655 scaled Bigwig (NON_Diffbind_TMM)
@@ -701,9 +701,9 @@ sbatch scripts/bamtobigwig_histone_3.sh # 9847001
 ```bash
 conda activate deeptools
 
-sbatch scripts/bamtobigwig_MG1655_1.sh # 9847015
-sbatch scripts/bamtobigwig_MG1655_2.sh # 9847016
-sbatch scripts/bamtobigwig_MG1655_3.sh # 9847017
+sbatch scripts/bamtobigwig_MG1655_1.sh # 9847015 ok
+sbatch scripts/bamtobigwig_MG1655_2.sh # 9847016 ok
+sbatch scripts/bamtobigwig_MG1655_3.sh # 9847017 ok
 ```
 
 
@@ -715,9 +715,9 @@ sbatch scripts/bamtobigwig_MG1655_3.sh # 9847017
 ```bash
 conda activate deeptools
 
-sbatch scripts/bamtobigwig_histone_DiffBind_TMM_1.sh # 9846509
-sbatch scripts/bamtobigwig_histone_DiffBind_TMM_2.sh # 9846512
-sbatch scripts/bamtobigwig_histone_DiffBind_TMM_3.sh # 9846519
+sbatch scripts/bamtobigwig_histone_DiffBind_TMM_1.sh # 9846509 ok
+sbatch scripts/bamtobigwig_histone_DiffBind_TMM_2.sh # 9846512 ok
+sbatch scripts/bamtobigwig_histone_DiffBind_TMM_3.sh # 9846519 ok
 ```
 
 
@@ -727,9 +727,9 @@ sbatch scripts/bamtobigwig_histone_DiffBind_TMM_3.sh # 9846519
 ```bash
 conda activate deeptools
 
-sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM_1.sh # 9846532
-sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM_2.sh # 9846537
-sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM_3.sh # 9846538
+sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM_1.sh # 9846532 ok
+sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM_2.sh # 9846537 ok
+sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM_3.sh # 9846538 ok
 ```
 
 XXXXXXXXXXXXX TO MODIFY CONCLU BELOW:
@@ -799,14 +799,14 @@ sbatch --dependency=afterany:9846985:9846998:9847001 scripts/matrix_TSS_10kb_big
 sbatch --dependency=afterany:9847015:9847016:9847017 scripts/matrix_TSS_10kb_bigwig_unique_MG1655_50dN_H3K27me3.sh # 9847393
 
 ## WT only
-sbatch --dependency=afterany:9846985:9846998:9847001 scripts/matrix_TSS_10kb_bigwig_unique_histone_50dN_WT_H3K27me3.sh # 9847400
-sbatch --dependency=afterany:9847015:9847016:9847017 scripts/matrix_TSS_10kb_bigwig_unique_MG1655_50dN_WT_H3K27me3.sh # 9847410
+sbatch --dependency=afterany:9846985:9846998:9847001 scripts/matrix_TSS_10kb_bigwig_unique_histone_50dN_WT_H3K27me3.sh # 9847400 ok
+sbatch --dependency=afterany:9847015:9847016:9847017 scripts/matrix_TSS_10kb_bigwig_unique_MG1655_50dN_WT_H3K27me3.sh # 9847410 ok
 ```
 
 
+--> WT samples are weird. Profile are ugly and result changed when using histone or MG1655 -spike in SF...
+
 --> XXX
-
-
 
 
 ## spike in (histone and MG1655) DiffBind Lib scaled (method 003__CutRun)
@@ -820,16 +820,12 @@ sbatch --dependency=afterany:9846509:9846512:9846519 scripts/matrix_TSS_10kb_big
 sbatch --dependency=afterany:9846532:9846537:9846538 scripts/matrix_TSS_10kb_bigwig_unique_MG1655_DiffBind_TMM_50dN_H3K27me3.sh # 9846669
 
 ## WT only
-sbatch --dependency=afterany:9846509:9846512:9846519 scripts/matrix_TSS_10kb_bigwig_unique_histone_DiffBind_TMM_50dN_WT_H3K27me3.sh # 9846767
+sbatch --dependency=afterany:9846509:9846512:9846519 scripts/matrix_TSS_10kb_bigwig_unique_histone_DiffBind_TMM_50dN_WT_H3K27me3.sh # 9846767 ok
 sbatch --dependency=afterany:9846532:9846537:9846538 scripts/matrix_TSS_10kb_bigwig_unique_MG1655_DiffBind_TMM_50dN_WT_H3K27me3.sh # 9846779
 ```
 
 
+--> WT result are good! Samples are more closely related and R3 (6ng) seems to have a bit more signal than R1 and R2 (3ng). Overall very comparable histone and MG1655 -norm.
+
 --> XXX
 
-
-
-
-
-
-XXX
