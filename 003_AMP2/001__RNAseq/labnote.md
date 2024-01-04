@@ -3200,11 +3200,413 @@ dev.off()
 
 
 
+# Venn diagram with DEGs
+
+## With all DEGs together (up and down)
+
+- Collect all DEGs tissue per tissue (Het vs KO): *on xls*
+- Venn diagram tissue per tissue: *on Venn webtool*
+- GO on tissue specific DEGs genes: *Files transfered to `output/deseq2/Venn_DEG_*spe_*.txt`*
+
+
+--> Below code modified to show only 1 set of genes (no up and down, only 1 set)
+
+
+```R
+# packages
+
+library("tidyverse")
+library("enrichR")
+
+
+# Define databases for enrichment
+dbs <- c("GO_Biological_Process_2023") # 
+
+### GeneSymbol list of DEGs per tissue
+output/deseq2/Venn_DEG_HPspe_426.txt
+output/deseq2/Venn_DEG_CTspe_118.txt
+output/deseq2/Venn_DEG_CBspe_268.txt
+
+# IF starting with geneSymbol
+
+## Read and preprocess data for DEGs genes
+gene_names_up <- read.csv("output/deseq2/Venn_DEG_CBspe_268.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+
+
+
+# Extracting KEGG data and assigning types
+up <- eup$GO_Biological_Process_2023
+up$type <- "up"
+
+# Get top enriched terms and sort by Combined.Score 
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 50) ##  Adjust if you don't want the top 5
+
+
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- up
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+new_order <- up_pathways
+gos$Term <- factor(gos$Term, levels = new_order)
+
+
+# extract the top 5 rows (p adj ordered)
+## gos <- head(gos, n = 5)
+
+# Plotting with enhanced aesthetics
+pdf("output/GO/enrichR_GO_Biological_Process_2023_Venn_DEG_HPspe_426.pdf", width=20, height=8)
+pdf("output/GO/enrichR_GO_Biological_Process_2023_Venn_DEG_CTspe_118.pdf", width=10, height=2)
+pdf("output/GO/enrichR_GO_Biological_Process_2023_Venn_DEG_CBspe_268.pdf", width=20, height=6)
+
+
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.8) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 12, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="Sky Blue", "up"="Green")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for KEGG pathways") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 30)
+  )
+dev.off()
+
+
+## save output
+write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_Venn_DEG_HPspe_426.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_Venn_DEG_CTspe_118.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 
 
 
+
+# Define databases for enrichment
+dbs <- c("MSigDB_Hallmark_2020") # 
+
+### GeneSymbol list of DEGs per tissue
+output/deseq2/Venn_DEG_HPspe_426.txt
+output/deseq2/Venn_DEG_CTspe_118.txt
+output/deseq2/Venn_DEG_CBspe_268.txt
+
+# IF starting with geneSymbol
+
+## Read and preprocess data for DEGs genes
+gene_names_up <- read.csv("output/deseq2/Venn_DEG_CBspe_268.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+
+
+
+# Extracting KEGG data and assigning types
+up <- eup$MSigDB_Hallmark_2020
+up$type <- "up"
+
+# Get top enriched terms and sort by Combined.Score 
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 50) ##  Adjust if you don't want the top 5
+
+
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- up
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+new_order <- up_pathways
+gos$Term <- factor(gos$Term, levels = new_order)
+
+
+# extract the top 5 rows (p adj ordered)
+## gos <- head(gos, n = 5)
+
+# Plotting with enhanced aesthetics
+pdf("output/GO/enrichR_GO_Biological_Process_2023_Venn_DEG_CBspe_268.pdf", width=20, height=6)
+
+
+pdf("output/GO/enrichR_MSigDB_Hallmark_2020_Venn_DEG_HPspe_426.pdf", width=15, height=8)
+pdf("output/GO/enrichR_MSigDB_Hallmark_2020_Venn_DEG_CTspe_118.pdf", width=10, height=3.5)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.8) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 12, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="Sky Blue", "up"="Green")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for KEGG pathways") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 30)
+  )
+dev.off()
+
+
+## save output
+write.table(gos, "output/GO/enrichR_MSigDB_Hallmark_2020_Venn_DEG_HPspe_426.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_MSigDB_Hallmark_2020_Venn_DEG_CTspe_118.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+```
+
+
+
+## With up and down DEGs separated
+
+- Collect **up** DEGs tissue per tissue (Het vs KO)
+- Venn diagram tissue per tissue
+- GO on tissue specific DEGs genes
+--> Repeat with **down** DEGs
+
+
+```R
+# packages
+library("tidyverse")
+library("enrichR")
+
+
+
+# Define databases for enrichment
+dbs <- c("GO_Biological_Process_2023") # 
+
+
+### GeneSymbol list of signif up/down genes in each genotypes
+output/deseq2/Venn_DEG_Up_HPspe_216.txt
+output/deseq2/Venn_DEG_Down_HPspe_211.txt
+
+output/deseq2/Venn_DEG_Up_CTspe_44.txt
+output/deseq2/Venn_DEG_Down_CTspe_74.txt
+
+output/deseq2/Venn_DEG_Up_CBspe_157.txt
+output/deseq2/Venn_DEG_Down_CBspe_113.txt
+
+
+# IF starting with geneSymbol
+## Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/deseq2/Venn_DEG_Down_CBspe_113.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+
+## Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/deseq2/Venn_DEG_Up_CBspe_157.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+
+
+
+# Extracting KEGG data and assigning types
+up <- eup$GO_Biological_Process_2023
+down <- edown$GO_Biological_Process_2023
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score 
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 25) ##  Adjust if you don't want the top 5
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 25) ##  Adjust if you don't want the top 5
+
+
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+
+# extract the top 5 rows (p adj ordered)
+## gos <- head(gos, n = 5)
+
+# Plotting with enhanced aesthetics
+pdf("output/GO/enrichR_GO_Biological_Process_2023_Venn_DEG_Down_Up_HPspe.pdf", width=20, height=8)
+pdf("output/GO/enrichR_GO_Biological_Process_2023_Venn_DEG_Down_Up_CBspe.pdf", width=20, height=8)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.8) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 12, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for KEGG pathways") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 30)
+  )
+dev.off()
+
+
+## save output
+write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_Venn_DEG_Down_Up_HPspe.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_Venn_DEG_Down_Up_CBspe.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("MSigDB_Hallmark_2020") # 
+
+
+### GeneSymbol list of signif up/down genes in each genotypes
+output/deseq2/Venn_DEG_Up_HPspe_216.txt
+output/deseq2/Venn_DEG_Down_HPspe_211.txt
+
+output/deseq2/Venn_DEG_Up_CTspe_44.txt
+output/deseq2/Venn_DEG_Down_CTspe_74.txt
+
+output/deseq2/Venn_DEG_Up_CBspe_157.txt
+output/deseq2/Venn_DEG_Down_CBspe_113.txt
+
+
+# IF starting with geneSymbol
+## Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/deseq2/Venn_DEG_Down_HPspe_211.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+
+## Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/deseq2/Venn_DEG_Up_HPspe_216.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+
+
+
+# Extracting KEGG data and assigning types
+up <- eup$MSigDB_Hallmark_2020
+down <- edown$MSigDB_Hallmark_2020
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score 
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 25) ##  Adjust if you don't want the top 5
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 25) ##  Adjust if you don't want the top 5
+
+
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+
+# extract the top 5 rows (p adj ordered)
+## gos <- head(gos, n = 5)
+
+# Plotting with enhanced aesthetics
+
+pdf("output/GO/enrichR_MSigDB_Hallmark_2020_Venn_DEG_Down_Up_CBspe.pdf", width=15, height=2)
+pdf("output/GO/enrichR_MSigDB_Hallmark_2020_Venn_DEG_Down_Up_CTspe.pdf", width=15, height=4)
+pdf("output/GO/enrichR_MSigDB_Hallmark_2020_Venn_DEG_Down_Up_HPspe.pdf", width=15, height=6)
+
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.8) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 12, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for KEGG pathways") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 30)
+  )
+dev.off()
+
+
+## save output
+write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_Venn_DEG_Down_Up_HPspe.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_MSigDB_Hallmark_2020_Venn_DEG_Down_Up_CBspe.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_MSigDB_Hallmark_2020_Venn_DEG_Down_Up_CTspe.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+```
 
 
 
