@@ -795,8 +795,8 @@ awk '{print $3-$2}' output/macs2/broad/broad_blacklist_qval1.30103/50dN_WTQ731E_
 conda activate deeptools
 
 ## all
-sbatch --dependency=afterany:9846985:9846998:9847001 scripts/matrix_TSS_10kb_bigwig_unique_histone_50dN_H3K27me3.sh # 9847384
-sbatch --dependency=afterany:9847015:9847016:9847017 scripts/matrix_TSS_10kb_bigwig_unique_MG1655_50dN_H3K27me3.sh # 9847393
+sbatch --dependency=afterany:9846985:9846998:9847001 scripts/matrix_TSS_10kb_bigwig_unique_histone_50dN_H3K27me3.sh # 9847384 ok
+sbatch --dependency=afterany:9847015:9847016:9847017 scripts/matrix_TSS_10kb_bigwig_unique_MG1655_50dN_H3K27me3.sh # 9847393 ok
 
 ## WT only
 sbatch --dependency=afterany:9846985:9846998:9847001 scripts/matrix_TSS_10kb_bigwig_unique_histone_50dN_WT_H3K27me3.sh # 9847400 ok
@@ -804,9 +804,8 @@ sbatch --dependency=afterany:9847015:9847016:9847017 scripts/matrix_TSS_10kb_big
 ```
 
 
---> WT samples are weird. Profile are ugly and result changed when using histone or MG1655 -spike in SF...
+--> all samples are weird (notably WT). Profile are ugly and result changed when using histone or MG1655 -spike in SF...
 
---> XXX
 
 
 ## spike in (histone and MG1655) DiffBind Lib scaled (method 003__CutRun)
@@ -816,8 +815,8 @@ sbatch --dependency=afterany:9847015:9847016:9847017 scripts/matrix_TSS_10kb_big
 conda activate deeptools
 
 ## all
-sbatch --dependency=afterany:9846509:9846512:9846519 scripts/matrix_TSS_10kb_bigwig_unique_histone_DiffBind_TMM_50dN_H3K27me3.sh # 9846649
-sbatch --dependency=afterany:9846532:9846537:9846538 scripts/matrix_TSS_10kb_bigwig_unique_MG1655_DiffBind_TMM_50dN_H3K27me3.sh # 9846669
+sbatch --dependency=afterany:9846509:9846512:9846519 scripts/matrix_TSS_10kb_bigwig_unique_histone_DiffBind_TMM_50dN_H3K27me3.sh # 9846649 ok
+sbatch --dependency=afterany:9846532:9846537:9846538 scripts/matrix_TSS_10kb_bigwig_unique_MG1655_DiffBind_TMM_50dN_H3K27me3.sh # 9846669 ok
 
 ## WT only
 sbatch --dependency=afterany:9846509:9846512:9846519 scripts/matrix_TSS_10kb_bigwig_unique_histone_DiffBind_TMM_50dN_WT_H3K27me3.sh # 9846767 ok
@@ -827,5 +826,10 @@ sbatch --dependency=afterany:9846532:9846537:9846538 scripts/matrix_TSS_10kb_big
 
 --> WT result are good! Samples are more closely related and R3 (6ng) seems to have a bit more signal than R1 and R2 (3ng). Overall very comparable histone and MG1655 -norm.
 
---> XXX
+--> H3K27me3 level: KOEF1a > WT > KO (overall, as expected!!)
+
+
+
+
+
 
