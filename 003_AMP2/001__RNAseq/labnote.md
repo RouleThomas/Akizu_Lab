@@ -3610,3 +3610,29 @@ write.table(gos, "output/GO/enrichR_MSigDB_Hallmark_2020_Venn_DEG_Down_Up_CTspe.
 
 
 
+
+# Upload files to GEO
+
+Go [here](https://www.ncbi.nlm.nih.gov/geo/info/seq.html); and follow instructions in `Transfer Files`. Connect to my personal space (`uploads/thomasroule@orcid_A787EGG4`) and transfer files.
+
+- Create a clean `GEO` folder with all `*fq.gz` and `*bigwig` (re-name file so that they have same prefix; only extension differ)
+- Fill in the `seq_template.xlsx` (`Metada` and `MD5` sheet notably)
+- submit files
+
+```bash
+# do file integrity check with md5
+md5sum * | awk '{print $2 "\t" $1}' > md5sums.txt
+
+
+
+
+module load lftp
+
+# connect to ftp
+lftp -u geoftp,inAlwokhodAbnib5 ftp-private.ncbi.nlm.nih.gov # geoftp = username; inAlwokhodAbnib5 = pwd
+cd uploads/thomasroule@orcid_A787EGG4
+
+mirror -R ../001__RNAseq/geo_sub_RNAseq_AMPD2/
+```
+
+
