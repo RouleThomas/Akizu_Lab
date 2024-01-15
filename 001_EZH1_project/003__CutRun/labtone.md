@@ -8086,11 +8086,11 @@ grep -Ff meta/quintile_8wN_WT_peak_quint4_as_gtf_geneSymbol.txt meta/ENCFF159KBI
 ```bash
 conda activate deeptools
 
-sbatch scripts/matrix_gene_1kb_THOR_WT_peak_8wN_quintile.sh # 10922517 XXX
+sbatch scripts/matrix_gene_1kb_THOR_WT_peak_8wN_quintile.sh # 10922517 ok
 
 ```
 
--->  XXXXX
+-->  not express genes still a bit lower in H3K27me3 as compared to lowly expressed genes (but less extent thatn when taking all genes, even the non peak)
 
 --> Then what to do with this??? Meeting XXX
 

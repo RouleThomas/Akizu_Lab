@@ -724,7 +724,7 @@ Generate median tracks:
 ```bash
 conda activate BedToBigwig
 
-sbatch scripts/bigwigmerge_histone_DiffBind_TMM.sh # 10922925 XXX
+sbatch scripts/bigwigmerge_histone_DiffBind_TMM.sh # 10922925 ok
 ```
 
 ### MG1655/E coli scaled bigwig DiffBind_TMM
@@ -743,7 +743,7 @@ Generate median tracks:
 ```bash
 conda activate BedToBigwig
 
-sbatch scripts/bigwigmerge_MG1655_DiffBind_TMM.sh # 10922976 XXX
+sbatch scripts/bigwigmerge_MG1655_DiffBind_TMM.sh # 10922976 ok
 ```
 
 --> Both bigwig norm method are very similar... 
@@ -757,13 +757,6 @@ Check some known target regulated in 2months neurons:
 --> EFNA5 tiny decrease in KO (only in normalized data!)
 --> GRIK3 tiny increase in KO
 XXXXXXXXXXXXXXXXXXXXXXXXX
-
-
-
-
-
-
-
 
 
 
@@ -832,7 +825,14 @@ sbatch --dependency=afterany:9846532:9846537:9846538 scripts/matrix_TSS_10kb_big
 
 ## WT only
 sbatch --dependency=afterany:9846509:9846512:9846519 scripts/matrix_TSS_10kb_bigwig_unique_histone_DiffBind_TMM_50dN_WT_H3K27me3.sh # 9846767 ok
-sbatch --dependency=afterany:9846532:9846537:9846538 scripts/matrix_TSS_10kb_bigwig_unique_MG1655_DiffBind_TMM_50dN_WT_H3K27me3.sh # 9846779
+sbatch --dependency=afterany:9846532:9846537:9846538 scripts/matrix_TSS_10kb_bigwig_unique_MG1655_DiffBind_TMM_50dN_WT_H3K27me3.sh # 9846779 ok
+
+## median H3K27me3
+sbatch scripts/matrix_TSS_10kb_bigwig_unique_histone_DiffBind_TMM_50dN_H3K27me3_median.sh # 10929886 XXX
+sbatch scripts/matrix_TSS_10kb_bigwig_unique_MG1655_DiffBind_TMM_50dN_H3K27me3_median.sh # 10929206 XXX
+
+
+
 ```
 
 
