@@ -2,7 +2,7 @@
 - Neurons 50 days:
     - EF1a: EZH1, EZH2, H3K27me3, SUZ12, IGG
     - KO:  EZH1, EZH2, H3K27me3, SUZ12, IGG
-    - Q731E (strong GOF):  EZH1, EZH2, H3K27me3, SUZ12, IGG
+    - WTQ731E:  EZH1, EZH2, H3K27me3, SUZ12, IGG
 - PSC:
     - WT_ FA???: EZH1, H3K27me1
     - WT_ FA???: EZH1, H3K27me1
@@ -720,6 +720,12 @@ sbatch scripts/bamtobigwig_histone_DiffBind_TMM_2.sh # 9846512 ok
 sbatch scripts/bamtobigwig_histone_DiffBind_TMM_3.sh # 9846519 ok
 ```
 
+Generate median tracks:
+```bash
+conda activate BedToBigwig
+
+sbatch scripts/bigwigmerge_histone_DiffBind_TMM.sh # 10922925 XXX
+```
 
 ### MG1655/E coli scaled bigwig DiffBind_TMM
 
@@ -732,22 +738,28 @@ sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM_2.sh # 9846537 ok
 sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM_3.sh # 9846538 ok
 ```
 
-XXXXXXXXXXXXX TO MODIFY CONCLU BELOW:
+
+Generate median tracks:
+```bash
+conda activate BedToBigwig
+
+sbatch scripts/bigwigmerge_MG1655_DiffBind_TMM.sh # 10922976 XXX
+```
 
 --> Both bigwig norm method are very similar... 
 
+--> **reciprocal DiffBind_TMM IS TO BE USED**!!
+
+
+XXXXXXXXXXXXXXXXXXXX CVEHCK IF CORRECT:
 Check some known target regulated in 2months neurons:
 --> NEUROG2 seems less in KO which is good.
 --> EFNA5 tiny decrease in KO (only in normalized data!)
 --> GRIK3 tiny increase in KO
-
---> Something is WEIRD... When samples have MORE spike in, their signal should be reduced, as they overall have more DNA; but if I used the reciprocal from DiffBind_TMM; this is not respected (ie. sample with more spike in, we increased their signal...!)... That is true for both histone/MG1655-spike in DiffBind TMM norm...
-----> What should be the BEST to use, is then the NON-reciprocal_DiffBind_TMM !!!
-------> Let's try and compare with gene expression...! Maybe it is still good as we take into account the library size with the DiffBind_TMM method??
---------> YESSS in the end we correct the library size with the SF!!!!! So we 're good!!! **reciprocal DiffBind_TMM IS TO BE USED**!!
+XXXXXXXXXXXXXXXXXXXXXXXXX
 
 
-XXXXXXXXXX
+
 
 
 

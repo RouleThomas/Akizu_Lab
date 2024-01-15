@@ -1,13 +1,12 @@
 # Project
 
-2 conditions, 2 genotypes, plenty of AB
-- NPC; WT and KO; AB: EZH1 (2 AB cs and pt), EZH2, H3K27me1/3, SUZ12 and IGG --> Objective, check whether SUZ12 overlap with EZH1 solely? Or also EZH2? Does EZH2 expression/binding increase with EZH1 KO?
-- PSC (ESC); KOsynEZH1 (KO EZH1 with synapse-specific EZH1-HA tag=negative control) and KOEF1aEZH1 (KO EZH1 with ef1a strong promoter EZH1-HA); AB: EZH1 (2 AB cs and pt), EZH2, H3K27me3, SUZ12 and IGG
+1 condition, 3 genotypes, plenty of AB
+- PSC (ESC); WT, KO and KOEF1aEZH1 (KO EZH1 with ef1a strong promoter EZH1-HA); AB: EZH1cs, EZH2, H3K27me3, SUZ12 and IGG
 
 
 **Objectives:**
-- Check EZH1, EZH2, H3K27me3 overlapping and notably upon EZH1 KO
-- Validate the EZH1 AB specificity (compare EZH1-tag with EZH1 AB)
+- Check EZH1 is working without overexpressing
+- Compare level of H3K27me3 between WT and KO
 
 
 # Pipeline
