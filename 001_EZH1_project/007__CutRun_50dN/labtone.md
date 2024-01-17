@@ -847,17 +847,28 @@ sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3.sh 
 ## H3K27me3 median
 sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median.sh # 11001463 ok
 
-## H3K27me3 median with threshold 5
+## H3K27me3 median with threshold 5 / 10- FAIL value remove!
 sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_threshold5.sh # 11037365 ok
-
-## H3K27me3 median with threshold 5
 sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_threshold10.sh # 11037550 ok
 
 ## H3K27me3 median; genes with peak in WT only
 sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_WTH3K27me3peaks_median.sh # 11039919 ok
 
 ## H3K27me3 median; without skipZeros argument
-sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_noskipZeros.sh # 11041574
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_noskipZeros.sh # 11041574 ok
+
+## H3K27me3 median; with treshold 5 / 10 - bigwig modified (bedGraph)
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_bedGraph_threshold5.sh # 11043468 ok
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_bedGraph_threshold10.sh # 11043473 ok
+
+## H3K27me3 median; raw THOR bigwig; region that gain vs lost H3K27me3
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKO_THORq10_positive_negative.sh # 11045278 ok
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKO_THORq15_positive_negative.sh # 11045279 ok
+
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKOEF1aEZH1_THORq10_positive_negative.sh # 11045282 ok
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKOEF1aEZH1_THORq15_positive_negative.sh # 11045283 ok
+
+
 ```
 
 --> The 2 replicates are comparable
@@ -865,10 +876,56 @@ sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_med
 --> The signal is NOT more centered into the TSS...
 ----> Let's try to add a threshold to the bigiwg, like not take signal under 5 and 10
 ------> Taking a threshold is not working, I got an oscilating profile WTF!!! and very few peaks. The issue is that the `--minThreshold` argument skip the value! I need to set them at 0...
----------> Maybe not use the argument `--skipZeros` ! XXXXXXX
+---------> Maybe not use the argument `--skipZeros` ! Do not change anyhting!
 
 Let's isolate the genes with peak in WT; create gtf and redo deepTool plots.
 --> better, but still not a strong peak aound TSS
+
+--> Using clean bigwig (removing low values) improve a bit, but we lose the diff between WT and KO... Overall using the **peaks in WT only is better (but still weird)...**
+
+
+
+
+# clean bigwig file (remove low value)
+
+The deeptool profile is weird probably due to high level of noise. Let's try to renmove the low value; assign value under 5 to 0:
+- convert bigwig into bedgraph
+- remove low value
+- re-convert into bigwig
+
+
+```bash
+conda activate BedToBigwig
+
+# convert bigwig to bedGrah
+bigWigToBedGraph output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-s1_median.bw output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-s1_median.bedGraph
+bigWigToBedGraph output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-s2_median.bw output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-s2_median.bedGraph
+bigWigToBedGraph output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/50dNH3K27me3WTvsKOEF1aEZH1-s2_median.bw output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/50dNH3K27me3WTvsKOEF1aEZH1-s2_median.bedGraph
+
+# put value less than 5 to 0
+awk '{ if ($4 <= 5) $4 = 0; print }' output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-s1_median.bedGraph > output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-s1_median_threshold5.bedGraph
+awk '{ if ($4 <= 5) $4 = 0; print }' output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-s2_median.bedGraph > output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-s2_median_threshold5.bedGraph
+awk '{ if ($4 <= 5) $4 = 0; print }' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/50dNH3K27me3WTvsKOEF1aEZH1-s2_median.bedGraph > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/50dNH3K27me3WTvsKOEF1aEZH1-s2_median_threshold5.bedGraph
+
+# put value less than 10 to 0
+awk '{ if ($4 <= 10) $4 = 0; print }' output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-s1_median.bedGraph > output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-s1_median_threshold10.bedGraph
+awk '{ if ($4 <= 10) $4 = 0; print }' output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-s2_median.bedGraph > output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-s2_median_threshold10.bedGraph
+awk '{ if ($4 <= 10) $4 = 0; print }' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/50dNH3K27me3WTvsKOEF1aEZH1-s2_median.bedGraph > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/50dNH3K27me3WTvsKOEF1aEZH1-s2_median_threshold10.bedGraph
+
+
+# re-convert bedGraph to bigwig
+bedGraphToBigWig output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-s1_median_threshold5.bedGraph ../../Master/meta/GRCh38_chrom_sizes.tab output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-s1_median_threshold5.bw
+bedGraphToBigWig output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-s2_median_threshold5.bedGraph ../../Master/meta/GRCh38_chrom_sizes.tab output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-s2_median_threshold5.bw
+bedGraphToBigWig output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/50dNH3K27me3WTvsKOEF1aEZH1-s2_median_threshold5.bedGraph ../../Master/meta/GRCh38_chrom_sizes.tab output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/50dNH3K27me3WTvsKOEF1aEZH1-s2_median_threshold5.bw
+
+bedGraphToBigWig output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-s1_median_threshold10.bedGraph ../../Master/meta/GRCh38_chrom_sizes.tab output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-s1_median_threshold10.bw
+bedGraphToBigWig output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-s2_median_threshold10.bedGraph ../../Master/meta/GRCh38_chrom_sizes.tab output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-s2_median_threshold10.bw
+bedGraphToBigWig output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/50dNH3K27me3WTvsKOEF1aEZH1-s2_median_threshold10.bedGraph ../../Master/meta/GRCh38_chrom_sizes.tab output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/50dNH3K27me3WTvsKOEF1aEZH1-s2_median_threshold10.bw
+```
+
+
+
+
 
 
 
@@ -881,7 +938,6 @@ Let's assign **peak to genes from MACS2 peak**:
 - 50dN_KOEF1aEZH1_H3K27me3: 1.30103 (2.3 more true peaks)
 - 50dN_KO_H3K27me3: 1.30103 (2.3 more true peaks)
 - 50dN_WTQ731E_H3K27me3: 1.30103 (2.3 more true peaks)
-
 
 
 
@@ -1017,6 +1073,137 @@ grep -Ff output/ChIPseeker/annot_macs2_WTQ731E_H3K27me3_qval1.30103_promoterAnd5
 
 
 
+## From THOR diff peaks
+Let's assign **peak to genes from THOR positive (gain) and negative (lost) peaks** (for qval 10 and 15):
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+
+# Import THOR diff peaks
+## qval 10
+KO_gain = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval10_positive.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+KO_lost = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval10_negative.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)       
+
+KOEF1aEZH1_gain = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10_positive.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+KOEF1aEZH1_lost = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10_negative.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)   
+
+
+
+
+# Tidy peaks #-->> Re-Run from here with different qvalue!!
+## 50dN
+KO_gain_gr = makeGRangesFromDataFrame(KO_gain,keep.extra.columns=TRUE)
+KO_lost_gr = makeGRangesFromDataFrame(KO_lost,keep.extra.columns=TRUE)
+KOEF1aEZH1_gain_gr = makeGRangesFromDataFrame(KOEF1aEZH1_gain,keep.extra.columns=TRUE)
+KOEF1aEZH1_lost_gr = makeGRangesFromDataFrame(KOEF1aEZH1_lost,keep.extra.columns=TRUE)
+
+gr_list <- list(KO_gain=KO_gain_gr, KO_lost=KO_lost_gr,  KOEF1aEZH1_gain=KOEF1aEZH1_gain_gr,  KOEF1aEZH1_lost=KOEF1aEZH1_lost_gr)
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## Get annotation data frame
+KO_gain_annot <- as.data.frame(peakAnnoList[["KO_gain"]]@anno)
+KO_lost_annot <- as.data.frame(peakAnnoList[["KO_lost"]]@anno)
+KOEF1aEZH1_gain_annot <- as.data.frame(peakAnnoList[["KOEF1aEZH1_gain"]]@anno)
+KOEF1aEZH1_lost_annot <- as.data.frame(peakAnnoList[["KOEF1aEZH1_lost"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+KO_gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = KO_gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+KO_gain_annot$gene <- mapIds(org.Hs.eg.db, keys = KO_gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+KO_lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = KO_lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+KO_lost_annot$gene <- mapIds(org.Hs.eg.db, keys = KO_lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+KOEF1aEZH1_gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = KOEF1aEZH1_gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+KOEF1aEZH1_gain_annot$gene <- mapIds(org.Hs.eg.db, keys = KOEF1aEZH1_gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+KOEF1aEZH1_lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = KOEF1aEZH1_lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+KOEF1aEZH1_lost_annot$gene <- mapIds(org.Hs.eg.db, keys = KOEF1aEZH1_lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+## Save output table
+write.table(KO_gain_annot, file="output/ChIPseeker/annotation_THOR_KO_gain_annot_qval10.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(KO_lost_annot, file="output/ChIPseeker/annotation_THOR_KO_lost_annot_qval10.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(KOEF1aEZH1_gain_annot, file="output/ChIPseeker/annotation_THOR_KOEF1aEZH1_gain_annot_qval10.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(KOEF1aEZH1_lost_annot, file="output/ChIPseeker/annotation_THOR_KOEF1aEZH1_lost_annot_qval10.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+KO_gain_annot_promoterAnd5 = tibble(KO_gain_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+KO_lost_annot_promoterAnd5 = tibble(KO_lost_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+KOEF1aEZH1_gain_annot_promoterAnd5 = tibble(KOEF1aEZH1_gain_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+KOEF1aEZH1_lost_annot_promoterAnd5 = tibble(KOEF1aEZH1_lost_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+### Save output gene lists
+KO_gain_annot_promoterAnd5_geneSymbol = KO_gain_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+KO_lost_annot_promoterAnd5_geneSymbol = KO_lost_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+KOEF1aEZH1_gain_annot_promoterAnd5_geneSymbol = KOEF1aEZH1_gain_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+KOEF1aEZH1_lost_annot_promoterAnd5_geneSymbol = KOEF1aEZH1_lost_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+write.table(KO_gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KO_gain_qval10_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(KO_lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KO_lost_qval10_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(KOEF1aEZH1_gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KOEF1aEZH1_gain_qval10_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(KOEF1aEZH1_lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KOEF1aEZH1_lost_qval10_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+# Comparison peak position WT vs KO vs KOEF1aEZH1
+## plots
+pdf("output/ChIPseeker/plotAnnoBar_H3K27me3_THORq10_gain_lost.pdf", width = 8, height = 3)
+plotAnnoBar(peakAnnoList)
+dev.off()
+
+
+pdf("output/ChIPseeker/plotDistToTSS_H3K27me3_THORq10_gain_lost.pdf", width = 8, height = 3)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
+
+
+```
 
 
 
@@ -1171,6 +1358,26 @@ thor_splitted %>%
 --> *H3K27me3*; qval 10 looks great!
 
 --> In agreement with `003__CutRun`; in KO overall same number of gain and lost regions; and in KOEF1aEZH1 much more gain of H3K27me3 (act like the HET)
+
+Isolate positive and negative THOR peaks to display deepTool plots
+
+```bash
+# positive negative peaks
+## qval 10
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval10.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval10_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval10.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval10_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10_negative.bed
+
+## qval 15
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval15.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval15_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval15.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval15_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval15.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval15_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval15.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval15_negative.bed
+
+```
 
 
 
