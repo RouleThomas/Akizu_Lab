@@ -828,8 +828,8 @@ sbatch --dependency=afterany:9846509:9846512:9846519 scripts/matrix_TSS_10kb_big
 sbatch --dependency=afterany:9846532:9846537:9846538 scripts/matrix_TSS_10kb_bigwig_unique_MG1655_DiffBind_TMM_50dN_WT_H3K27me3.sh # 9846779 ok
 
 ## median H3K27me3
-sbatch scripts/matrix_TSS_10kb_bigwig_unique_histone_DiffBind_TMM_50dN_H3K27me3_median.sh # 10929886 XXX
-sbatch scripts/matrix_TSS_10kb_bigwig_unique_MG1655_DiffBind_TMM_50dN_H3K27me3_median.sh # 10929206 XXX
+sbatch scripts/matrix_TSS_10kb_bigwig_unique_histone_DiffBind_TMM_50dN_H3K27me3_median.sh # 10929886 ok
+sbatch scripts/matrix_TSS_10kb_bigwig_unique_MG1655_DiffBind_TMM_50dN_H3K27me3_median.sh # 10929206 ok
 
 
 
@@ -840,6 +840,155 @@ sbatch scripts/matrix_TSS_10kb_bigwig_unique_MG1655_DiffBind_TMM_50dN_H3K27me3_m
 
 --> H3K27me3 level: KOEF1a > WT > KO (overall, as expected!!)
 
+--> The profile is a bit flat, lowly enriched/higher around the TSS; maybe because non IGG norm?
+
+
+## THOR - with SF spike in (MG1655) DiffBind TMM scaled (method 003__CutRun)
+
+
+```bash
+conda activate deeptools
+
+## H3K27me3 all replicates
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3.sh # 10988809 XXX
+
+
+
+
+
+## H3K27me3 median
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median.sh # 11001463 XXX
+
+
+```
+
+--> XXXXX The signal is NOT more centered into the TSS XXXX
+
+
+
+
+# THOR diff peaks
+
+Let's use THOR, notably to have IGG scaled bigwig...!
+
+Comparison to do; 50dN WT vs KO and WT vs KOEF1a:
+- H3K27me3
+
+--> SF to use in THOR are the **reciprocal of MG1655_DiffBind_TMM** (histone are the same, so lets use the MG1655 ones)
+--> Configs file created manually as `output/THOR/50dN_H3K27me3_WTvsKO.config` and `output/THOR/50dN_H3K27me3_WTvsKOEF1aEZH1.config` 
+
+
+
+## Run THOR
+
+*THOR is very buggy to make it work I need to temporaly change where to look for libraries lol.. So cannot use nano anymore for example...*
+
+*Follow these parameters: `WTvsHET_unique_Keepdup` (perform best in previous CutRun)*
+
+```bash
+# Needed step to change where THOR look for libraries
+conda activate RGT
+export LD_LIBRARY_PATH=~/anaconda3/envs/RGT/lib:$LD_LIBRARY_PATH
+bigWigMerge
+
+# AB per AB (DiffBind TMM MG1655)
+sbatch scripts/THOR_50dN_H3K27me3_WTvsKO.sh # 10983795 ok
+sbatch scripts/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1.sh # 10984013 ok
+
+
+```
+
+Generate median tracks:
+```bash
+conda activate BedToBigwig
+
+sbatch scripts/bigwigmerge_MG1655_THOR_DiffBind_TMM.sh # 11001294 XXX
+```
+
+
+
+
+
+
+
+
+
+XXXXXX below to modify XXXXXXXXXXX
+
+
+--> (Using Recirpocl DiffBind TMM initial method) By eye we seems to still see the higher EZH2 enrichment in WT / KO... 
+----> Using the DiffBind MG1655 bam scaling factor looks good, and value are VERY DIFFERENT thatn the 1st method. Lets' see peak gene assgihnent to gene and expression...
+
+
+
+## Filter THOR peaks (qvalue)
+
+Let's find the optimal qvalue for THOR diff peaks
+
+
+
+```R
+
+# load the file using the tidyverse
+library("readr")
+library("dplyr")
+library("ggplot2")
+library("tidyr")
+
+# H3K27me3
+diffpeaks <- read_tsv("output/THOR/THOR_NPC_H3K27me3/NPCH3K27me3-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE)  %>%
+  mutate(FC = (count_KO) / (count_WT))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_NPC_H3K27me3/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("NPC_WT vs KO") +
+  theme_bw()
+dev.off()
+
+pdf("output/THOR/THOR_NPC_H3K27me3/log2FC_qval20.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 20) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("NPC_WT vs KO_qval20") +
+  theme_bw()
+dev.off()
+
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 100) %>%
+  write_tsv("output/THOR/THOR_NPC_H3K27me3/THOR_qval100.bed", col_names = FALSE)
+
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 50) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
+
+```
+
+- *NOTE: FC positive = less in KO; negative = more in KO*
+
+**Optimal qvalue:**
+--> *H3K27me3*; qval 20/25 (may worth to check qval 10 too)
+--> *EZH2*; qval 10
+--> *SUZ12*; qval 10 
+--> *H3K4me3*; qval 20/25 (may worth to check qval 10 too)
+
+
+XXXXXX up to modify XXXXXXXXXXX
 
 
 

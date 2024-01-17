@@ -6617,6 +6617,11 @@ pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Aldh1a2_Cyp26a1_V2clust.pdf", 
 FeaturePlot(embryo.combined.sct, features = c("Aldh1a2", "Cyp26a1"), max.cutoff = 10, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
+## post 20240110 Conchi email
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_20240110geneList_V2clust.pdf", width=10, height=75)
+FeaturePlot(embryo.combined.sct, features = c("Crabp2", "Hand1", "Rbp1", "Aldh1a2", "Cyp26a1", "Hoxa1", "Fgf8", "Nr2f2", "Tnnt2", "Actc1", "Myl6", "Myl7", "Myl3", "Tbx1", "Tbx5", "Mab21l2", "Lbh"), max.cutoff = 10, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
 
 
 # Compare WT and cYAPKO using SCPA ##########################################
