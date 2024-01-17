@@ -34,3 +34,13 @@ plotProfile -m output/deeptools/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_
     --colors black red grey
   #  --yMin 0 0 0 --yMax 5 5 40 
     #  --colors lightblue purple pink \
+
+
+plotHeatmap -m output/deeptools/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median.gz \
+    -out output/deeptools/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_heatmap.pdf \
+    --samplesLabel "WT" "KO" "KOEF1aEZH1" \
+    --colorMap bwr \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 15 \
+    --heatmapWidth 2 \
+    --zMin 0 0 0 --zMax 5 5 5

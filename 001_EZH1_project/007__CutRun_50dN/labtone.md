@@ -299,6 +299,12 @@ sbatch scripts/macs2_narrow_1.sh # 9065230
 sbatch scripts/macs2_narrow_2.sh # 9065234
 sbatch scripts/macs2_narrow_3.sh # 9065240
 sbatch scripts/macs2_narrow_4.sh # xxx TO DO NO CNTROL !! XX
+
+
+# H3K27me3 all 2 replicates together
+sbatch scripts/macs2_broad_H3K27me3_pool.sh # 11037847 ok
+
+
 ```
 
 --> Very few peaks for all IP except H3K27me3... Technical issue...
@@ -307,6 +313,8 @@ sbatch scripts/macs2_narrow_4.sh # xxx TO DO NO CNTROL !! XX
 ```bash
 conda activate bowtie2 # for bedtools
 sbatch scripts/macs2_raw_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
+sbatch scripts/macs2_raw_peak_signif_pool.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
+
 
 # quick command to print median size of peak within a bed
 awk '{print $3-$2}' your_bed_file.bed | sort -n | awk 'BEGIN {c=0; sum=0;} {a[c++]=$1; sum+=$1;} END {if (c%2) print a[int(c/2)]; else print (a[c/2-1]+a[c/2])/2;}'
@@ -320,13 +328,6 @@ Then keep only the significant peaks (re-run the script to test different qvalue
 - q0.0001 = 4
 - q0.00001 = 5
 
-```bash
-conda activate bowtie2 # for bedtools
-sbatch scripts/macs2_raw_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
-
-# quick command to print median size of peak within a bed
-awk '{print $3-$2}' your_bed_file.bed | sort -n | awk 'BEGIN {c=0; sum=0;} {a[c++]=$1; sum+=$1;} END {if (c%2) print a[int(c/2)]; else print (a[c/2-1]+a[c/2])/2;}'
-```
 
 **Optimal qvalue** according to IGV:
 - 50dN_KOEF1aEZH1_H3K27me3: 1.30103 (2.3 more true peaks)
@@ -751,15 +752,6 @@ sbatch scripts/bigwigmerge_MG1655_DiffBind_TMM.sh # 10922976 ok
 --> **reciprocal DiffBind_TMM IS TO BE USED**!!
 
 
-XXXXXXXXXXXXXXXXXXXX CVEHCK IF CORRECT:
-Check some known target regulated in 2months neurons:
---> NEUROG2 seems less in KO which is good.
---> EFNA5 tiny decrease in KO (only in normalized data!)
---> GRIK3 tiny increase in KO
-XXXXXXXXXXXXXXXXXXXXXXXXX
-
-
-
 
 
 # depTools plot
@@ -850,19 +842,182 @@ sbatch scripts/matrix_TSS_10kb_bigwig_unique_MG1655_DiffBind_TMM_50dN_H3K27me3_m
 conda activate deeptools
 
 ## H3K27me3 all replicates
-sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3.sh # 10988809 XXX
-
-
-
-
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3.sh # 10988809 ok
 
 ## H3K27me3 median
-sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median.sh # 11001463 XXX
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median.sh # 11001463 ok
+
+## H3K27me3 median with threshold 5
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_threshold5.sh # 11037365 ok
+
+## H3K27me3 median with threshold 5
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_threshold10.sh # 11037550 ok
+
+## H3K27me3 median; genes with peak in WT only
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_WTH3K27me3peaks_median.sh # 11039919 ok
+
+## H3K27me3 median; without skipZeros argument
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_noskipZeros.sh # 11041574
+```
+
+--> The 2 replicates are comparable
+
+--> The signal is NOT more centered into the TSS...
+----> Let's try to add a threshold to the bigiwg, like not take signal under 5 and 10
+------> Taking a threshold is not working, I got an oscilating profile WTF!!! and very few peaks. The issue is that the `--minThreshold` argument skip the value! I need to set them at 0...
+---------> Maybe not use the argument `--skipZeros` ! XXXXXXX
+
+Let's isolate the genes with peak in WT; create gtf and redo deepTool plots.
+--> better, but still not a strong peak aound TSS
+
+
+
+# ChIPseeker peak gene assignment
+
+## From optimal qval bed files peaks
+Let's assign **peak to genes from MACS2 peak**:
+
+**Optimal qvalue** according to IGV:
+- 50dN_KOEF1aEZH1_H3K27me3: 1.30103 (2.3 more true peaks)
+- 50dN_KO_H3K27me3: 1.30103 (2.3 more true peaks)
+- 50dN_WTQ731E_H3K27me3: 1.30103 (2.3 more true peaks)
+
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+
+# Import macs2 peaks
+## 50dN
+WTQ731E = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval1.30103/50dN_WTQ731E_H3K27me3_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+KO = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval1.30103/50dN_KO_H3K27me3_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)    
+KOEF1aEZH1 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval1.30103/50dN_KOEF1aEZH1_H3K27me3_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+     
+
+# Tidy peaks #-->> Re-Run from here with different qvalue!!
+## 50dN
+WTQ731E_gr = makeGRangesFromDataFrame(WTQ731E,keep.extra.columns=TRUE)
+KO_gr = makeGRangesFromDataFrame(KO,keep.extra.columns=TRUE)
+KOEF1aEZH1_gr = makeGRangesFromDataFrame(KOEF1aEZH1,keep.extra.columns=TRUE)
+gr_list <- list(WTQ731E=WTQ731E_gr, KO=KO_gr,  KOEF1aEZH1=KOEF1aEZH1_gr)
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## Get annotation data frame
+WTQ731E_annot <- as.data.frame(peakAnnoList[["WTQ731E"]]@anno)
+KO_annot <- as.data.frame(peakAnnoList[["KO"]]@anno)
+KOEF1aEZH1_annot <- as.data.frame(peakAnnoList[["KOEF1aEZH1"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+WTQ731E_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = WTQ731E_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+WTQ731E_annot$gene <- mapIds(org.Hs.eg.db, keys = WTQ731E_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+KO_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = KO_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+KO_annot$gene <- mapIds(org.Hs.eg.db, keys = KO_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+KOEF1aEZH1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = KOEF1aEZH1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+KOEF1aEZH1_annot$gene <- mapIds(org.Hs.eg.db, keys = KOEF1aEZH1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+
+## Save output table
+write.table(WTQ731E_annot, file="output/ChIPseeker/annotation_macs2_WTQ731E_H3K27me3_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(KO_annot, file="output/ChIPseeker/annotation_macs2_KO_H3K27me3_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(KOEF1aEZH1_annot, file="output/ChIPseeker/annotation_macs2_KOEF1aEZH1_annot_H3K27me3_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+WTQ731E_annot_promoterAnd5 = tibble(WTQ731E_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+KO_annot_promoterAnd5 = tibble(KO_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+KOEF1aEZH1_annot_promoterAnd5 = tibble(KOEF1aEZH1_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+
+### Save output gene lists
+WTQ731E_annot_promoterAnd5_geneSymbol = WTQ731E_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+KO_annot_promoterAnd5_geneSymbol = KO_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+KOEF1aEZH1_annot_promoterAnd5_geneSymbol = KOEF1aEZH1_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+
+write.table(WTQ731E_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_macs2_WTQ731E_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(KO_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_macs2_KO_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(KOEF1aEZH1_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_macs2_KOEF1aEZH1_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+# Comparison peak position WT vs KO vs KOEF1aEZH1
+## plots
+pdf("output/ChIPseeker/plotAnnoBar_H3K27me3.pdf", width = 8, height = 3)
+plotAnnoBar(peakAnnoList)
+dev.off()
+
+
+pdf("output/ChIPseeker/plotDistToTSS_H3K27me3.pdf", width = 8, height = 3)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
 
 
 ```
+**50dN**:
+- Export gene list of genes with peak in WT
+- Generate gtf 
+- do deepTool plot
 
---> XXXXX The signal is NOT more centered into the TSS XXXX
+
+
+```bash
+# Generate gtf from gene Symbol list
+### Modify the .txt file that list all genes so that it match gtf structure
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annot_macs2_WTQ731E_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annot_macs2_WTQ731E_H3K27me3_qval1.30103_promoterAnd5_as_gtf_geneSymbol.txt
+
+### Filter the gtf
+grep -Ff output/ChIPseeker/annot_macs2_WTQ731E_H3K27me3_qval1.30103_promoterAnd5_as_gtf_geneSymbol.txt ../003__CutRun/meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_WT_H3K27me3peaks.gtf
+
+```
+
+
+
+
+
+
 
 
 
@@ -902,29 +1057,18 @@ Generate median tracks:
 ```bash
 conda activate BedToBigwig
 
-sbatch scripts/bigwigmerge_MG1655_THOR_DiffBind_TMM.sh # 11001294 XXX
+sbatch scripts/bigwigmerge_MG1655_THOR_DiffBind_TMM.sh # 11001294 ok
 ```
 
 
 
-
-
-
-
-
-
-XXXXXX below to modify XXXXXXXXXXX
-
-
---> (Using Recirpocl DiffBind TMM initial method) By eye we seems to still see the higher EZH2 enrichment in WT / KO... 
-----> Using the DiffBind MG1655 bam scaling factor looks good, and value are VERY DIFFERENT thatn the 1st method. Lets' see peak gene assgihnent to gene and expression...
+--> THOR bigwig tracks looks good! Prevous finding from `003__CutRun` (NEUROG2, GRIK3, GRIN1, EFNA5) found here too!!
 
 
 
 ## Filter THOR peaks (qvalue)
 
 Let's find the optimal qvalue for THOR diff peaks
-
 
 
 ```R
@@ -935,60 +1079,99 @@ library("dplyr")
 library("ggplot2")
 library("tidyr")
 
-# H3K27me3
-diffpeaks <- read_tsv("output/THOR/THOR_NPC_H3K27me3/NPCH3K27me3-diffpeaks.bed",
+# WTvsKO
+diffpeaks <- read_tsv("output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-diffpeaks.bed",
                       col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
 ## split the last field and calculate FC
 thor_splitted = diffpeaks %>%
-  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE)  %>%
-  mutate(FC = (count_KO) / (count_WT))
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2) / (count_WT_1+count_WT_2))
   
 ## plot the histogram of the fold-change computed above, count second condition / count 1st condition
-pdf("output/THOR/THOR_NPC_H3K27me3/log2FC.pdf", width=14, height=14)
+pdf("output/THOR/THOR_50dN_H3K27me3_WTvsKO/log2FC.pdf", width=14, height=14)
 thor_splitted %>%
   ggplot(aes(x = log2(FC))) +
   geom_histogram() +
   scale_x_continuous(breaks = seq(-5, 3, 1)) +
-  ggtitle("NPC_WT vs KO") +
+  ggtitle("50dN_WT vs KO") +
   theme_bw()
 dev.off()
 
-pdf("output/THOR/THOR_NPC_H3K27me3/log2FC_qval20.pdf", width=14, height=14)
+pdf("output/THOR/THOR_50dN_H3K27me3_WTvsKO/log2FC_qval25.pdf", width=14, height=14)
 thor_splitted %>%
-  filter(qval > 20) %>%
+  filter(qval > 25) %>%
   ggplot(aes(x = log2(FC))) +
   geom_histogram() +
   scale_x_continuous(breaks = seq(-5, 3, 1)) +
-  ggtitle("NPC_WT vs KO_qval20") +
+  ggtitle("NPC_WT vs KO_qval25") +
   theme_bw()
 dev.off()
 
 ## create a bed file, append chr to chromosome names and write down the file
 thor_splitted %>%
-  filter(qval > 100) %>%
-  write_tsv("output/THOR/THOR_NPC_H3K27me3/THOR_qval100.bed", col_names = FALSE)
+  filter(qval > 25) %>%
+  write_tsv("output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval25.bed", col_names = FALSE)
 
 ## how many minus / plus
 thor_splitted %>%
-  filter(qval > 50) %>%
+  filter(qval > 25) %>%
   group_by(X6) %>%
   summarise(n = n())
 
 
 
 
+# WTvsKOEF1aEZH1
+diffpeaks <- read_tsv("output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/50dNH3K27me3WTvsKOEF1aEZH1-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KOEF1aEZH1", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2"), sep = ":", convert = TRUE) %>%
+  separate(count_KOEF1aEZH1, into = c("count_KOEF1aEZH1_1","count_KOEF1aEZH1_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KOEF1aEZH1_1+count_KOEF1aEZH1_2) / (count_WT_1+count_WT_2))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("50dN_WT vs KOEF1aEZH1") +
+  theme_bw()
+dev.off()
+
+pdf("output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/log2FC_qval10.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 10) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("NPC_WT vs KO_qval10") +
+  theme_bw()
+dev.off()
+
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 10) %>%
+  write_tsv("output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10.bed", col_names = FALSE)
+
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 10) %>%
+  group_by(X6) %>%
+  summarise(n = n())
 ```
 
 - *NOTE: FC positive = less in KO; negative = more in KO*
 
 **Optimal qvalue:**
---> *H3K27me3*; qval 20/25 (may worth to check qval 10 too)
---> *EZH2*; qval 10
---> *SUZ12*; qval 10 
---> *H3K4me3*; qval 20/25 (may worth to check qval 10 too)
+--> *H3K27me3*; qval 10 looks great!
 
+--> In agreement with `003__CutRun`; in KO overall same number of gain and lost regions; and in KOEF1aEZH1 much more gain of H3K27me3 (act like the HET)
 
-XXXXXX up to modify XXXXXXXXXXX
 
 
 
