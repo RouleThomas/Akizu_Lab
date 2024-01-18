@@ -1410,7 +1410,12 @@ awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval20.b
 
 ## GO
 
+
 ### regular GO - for unique list of genes (not enrichR)
+
+- H3K27me3 gain in KOEF1aEZH1 and lost in KO
+
+
 
 ```bash
 conda activate deseq2
@@ -1476,3 +1481,342 @@ dev.off()
 
 
 ```
+
+
+### enrichR GO - for up/down list of genes 
+
+
+- specifically gain or down in KOEF1aEZH1 and KO
+
+
+```R
+# libr
+library("tidyverse")
+library("enrichR")
+
+# Define databases for enrichment
+dbs <- c("GO_Biological_Process_2023") # 
+
+
+### GeneSymbol list of gain and lost
+#### KO
+output/ChIPseeker/Venn_overlap_THOR_KO_lost_specific_qval10_promoterAnd5_geneSymbol_1459.txt
+output/ChIPseeker/Venn_overlap_THOR_KO_gain_specific_qval10_promoterAnd5_geneSymbol_2121.txt
+output/ChIPseeker/Venn_overlap_THOR_KO_lost_specific_qval15_promoterAnd5_geneSymbol_1128.txt
+output/ChIPseeker/Venn_overlap_THOR_KO_gain_specific_qval15_promoterAnd5_geneSymbol_1883.txt
+output/ChIPseeker/Venn_overlap_THOR_KO_lost_specific_qval20_promoterAnd5_geneSymbol_901.txt
+output/ChIPseeker/Venn_overlap_THOR_KO_gain_specific_qval20_promoterAnd5_geneSymbol_1631.txt
+#### KOEF1aEZH1
+output/ChIPseeker/Venn_overlap_THOR_KOEF1aEZH1_lost_specific_qval10_promoterAnd5_geneSymbol_1459.txt
+output/ChIPseeker/Venn_overlap_THOR_KOEF1aEZH1_gain_specific_qval10_promoterAnd5_geneSymbol_4804.txt
+output/ChIPseeker/Venn_overlap_THOR_KOEF1aEZH1_lost_specific_qval15_promoterAnd5_geneSymbol_1330.txt
+output/ChIPseeker/Venn_overlap_THOR_KOEF1aEZH1_gain_specific_qval15_promoterAnd5_geneSymbol_3265.txt
+output/ChIPseeker/Venn_overlap_THOR_KOEF1aEZH1_lost_specific_qval20_promoterAnd5_geneSymbol_1087.txt
+output/ChIPseeker/Venn_overlap_THOR_KOEF1aEZH1_gain_specific_qval20_promoterAnd5_geneSymbol_2122.txt
+
+
+# IF starting with geneSymbol
+## Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/ChIPseeker/Venn_overlap_THOR_KOEF1aEZH1_lost_specific_qval15_promoterAnd5_geneSymbol_1330.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+
+## Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/ChIPseeker/Venn_overlap_THOR_KOEF1aEZH1_gain_specific_qval15_promoterAnd5_geneSymbol_3265.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$GO_Biological_Process_2023
+down <- edown$GO_Biological_Process_2023
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 25)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 25)
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+
+
+# Plotting with enhanced aesthetics
+pdf("output/GO/enrichR_GO_Biological_Process_2023_THOR_KO_specific_qval10_promoterAnd5_geneSymbol.pdf", width=10, height=10)
+pdf("output/GO/enrichR_GO_Biological_Process_2023_THOR_KO_specific_qval15_promoterAnd5_geneSymbol.pdf", width=10, height=10)
+pdf("output/GO/enrichR_GO_Biological_Process_2023_THOR_KO_specific_qval20_promoterAnd5_geneSymbol.pdf", width=10, height=10)
+
+pdf("output/GO/enrichR_GO_Biological_Process_2023_THOR_KOEF1aEZH1_specific_qval10_promoterAnd5_geneSymbol.pdf", width=10, height=7)
+pdf("output/GO/enrichR_GO_Biological_Process_2023_THOR_KOEF1aEZH1_specific_qval15_promoterAnd5_geneSymbol.pdf", width=10, height=7)
+pdf("output/GO/enrichR_GO_Biological_Process_2023_THOR_KOEF1aEZH1_specific_qval20_promoterAnd5_geneSymbol.pdf", width=10, height=7)
+
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  
+  scale_fill_manual(name="Peaks", 
+                    labels = c("Lost", "Gain"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for GO BP") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+
+
+## save output
+write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_THOR_KOEF1aEZH1_specific_qval20_promoterAnd5_geneSymbol.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+# Define databases for enrichment
+dbs <- c("KEGG_2021_Human") # 
+
+
+### GeneSymbol list of gain and lost
+#### KO
+output/ChIPseeker/Venn_overlap_THOR_KO_lost_specific_qval10_promoterAnd5_geneSymbol_1459.txt
+output/ChIPseeker/Venn_overlap_THOR_KO_gain_specific_qval10_promoterAnd5_geneSymbol_2121.txt
+output/ChIPseeker/Venn_overlap_THOR_KO_lost_specific_qval15_promoterAnd5_geneSymbol_1128.txt
+output/ChIPseeker/Venn_overlap_THOR_KO_gain_specific_qval15_promoterAnd5_geneSymbol_1883.txt
+output/ChIPseeker/Venn_overlap_THOR_KO_lost_specific_qval20_promoterAnd5_geneSymbol_901.txt
+output/ChIPseeker/Venn_overlap_THOR_KO_gain_specific_qval20_promoterAnd5_geneSymbol_1631.txt
+#### KOEF1aEZH1
+output/ChIPseeker/Venn_overlap_THOR_KOEF1aEZH1_lost_specific_qval10_promoterAnd5_geneSymbol_1459.txt
+output/ChIPseeker/Venn_overlap_THOR_KOEF1aEZH1_gain_specific_qval10_promoterAnd5_geneSymbol_4804.txt
+output/ChIPseeker/Venn_overlap_THOR_KOEF1aEZH1_lost_specific_qval15_promoterAnd5_geneSymbol_1330.txt
+output/ChIPseeker/Venn_overlap_THOR_KOEF1aEZH1_gain_specific_qval15_promoterAnd5_geneSymbol_3265.txt
+output/ChIPseeker/Venn_overlap_THOR_KOEF1aEZH1_lost_specific_qval20_promoterAnd5_geneSymbol_1087.txt
+output/ChIPseeker/Venn_overlap_THOR_KOEF1aEZH1_gain_specific_qval20_promoterAnd5_geneSymbol_2122.txt
+
+
+# IF starting with geneSymbol
+## Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/ChIPseeker/Venn_overlap_THOR_KOEF1aEZH1_lost_specific_qval20_promoterAnd5_geneSymbol_1087.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+
+## Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/ChIPseeker/Venn_overlap_THOR_KOEF1aEZH1_gain_specific_qval20_promoterAnd5_geneSymbol_2122.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$KEGG_2021_Human
+down <- edown$KEGG_2021_Human
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 25)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 25)
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+
+## FAIL as dupplicates:
+up_pathways_suffixed <- paste0(up_pathways, "_up")
+down_pathways_suffixed <- paste0(down_pathways, "_down")
+new_order <- c(down_pathways_suffixed, up_pathways_suffixed)
+gos$Term <- ifelse(gos$type == "up", paste0(gos$Term, "_up"), paste0(gos$Term, "_down"))
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+pdf("output/GO/enrichR_KEGG_2021_Human_THOR_KO_specific_qval10_promoterAnd5_geneSymbol.pdf", width=10, height=10)
+pdf("output/GO/enrichR_KEGG_2021_Human_THOR_KO_specific_qval15_promoterAnd5_geneSymbol.pdf", width=10, height=10)
+pdf("output/GO/enrichR_KEGG_2021_Human_THOR_KO_specific_qval20_promoterAnd5_geneSymbol.pdf", width=10, height=10)
+
+pdf("output/GO/enrichR_KEGG_2021_Human_THOR_KOEF1aEZH1_specific_qval10_promoterAnd5_geneSymbol.pdf", width=10, height=5)
+pdf("output/GO/enrichR_KEGG_2021_Human_THOR_KOEF1aEZH1_specific_qval15_promoterAnd5_geneSymbol.pdf", width=10, height=5)
+pdf("output/GO/enrichR_KEGG_2021_Human_THOR_KOEF1aEZH1_specific_qval20_promoterAnd5_geneSymbol.pdf", width=10, height=5)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  
+  scale_fill_manual(name="Peaks", 
+                    labels = c("Lost", "Gain"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for KEGG") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+
+
+## save output
+write.table(gos, "output/GO/enrichR_KEGG_2021_Human_THOR_KOEF1aEZH1_specific_qval20_promoterAnd5_geneSymbol.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+```
+
+
+# Compare CutRun and RNAseq expression (from 2 months old neurons)
+
+
+- import gene list that gain / lost H3K27me3 in KO: `output/ChIPseeker/annot_THOR_KO_*_qval*_promoterAnd5_geneSymbol.txt`
+- join with expression data
+
+
+
+
+
+```R
+# packages
+library("tidyverse")
+
+
+XXXXXXXXXX below to mod
+
+
+
+
+# Import RNAseq deseq2 output
+## Raw FC ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+KO_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_NPC_KO_vs_NPC_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj)
+## Fitlered FC ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+KO_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_NPC_KO_vs_NPC_WT.txt')) %>%
+    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
+    dplyr::select(gene, baseMean,log2FoldChange,padj) %>%
+    filter(log2FoldChange >= 0.5 | log2FoldChange <= -0.5)
+
+# Merge files
+H3K27me3_annot_gain_lost_RNA = H3K27me3_annot_gain_lost %>% 
+    left_join(KO_vs_WT) %>%
+    dplyr::select(gene, binding,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
+    unique()
+EZH2_annot_gain_lost_RNA = EZH2_annot_gain_lost %>% 
+    left_join(KO_vs_WT) %>%
+    dplyr::select(gene, binding,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
+    unique()
+SUZ12_annot_gain_lost_RNA = SUZ12_annot_gain_lost %>% 
+    left_join(KO_vs_WT) %>%
+    dplyr::select(gene, binding,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
+    unique()
+H3K4me3_annot_gain_lost_RNA = H3K4me3_annot_gain_lost %>% 
+    left_join(KO_vs_WT) %>%
+    dplyr::select(gene, binding,baseMean,log2FoldChange,padj) %>%
+    filter(gene != "NA") %>%
+    mutate(baseMean = replace_na(baseMean, 0),
+           log2FoldChange = replace_na(log2FoldChange, 0),
+           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
+           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
+    unique()
+
+
+# Volcano plot 
+count_data <- H3K27me3_annot_gain_lost_RNA %>%     # CHANGE TITLE !!!!!!!
+    group_by(binding, significance) %>%
+    summarise(up = sum(log2FoldChange > 0),
+              down = sum(log2FoldChange < 0),
+              total = n()) %>%
+    ungroup() %>%
+    group_by(binding) %>%
+    mutate(total_panel = sum(total)) %>%
+    ungroup()
+
+
+# pdf("output/ChIPseeker/THOR_qval20_H3K4me3_expression_promoterAnd5.pdf", width=7, height=4)  # CHANGE TITLE !!!!!!!
+# pdf("output/ChIPseeker/THOR_qval20_H3K4me3_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE !!!!!!!
+
+pdf("output/ChIPseeker/THOR_qval50_H3K27me3_expression_promoterAnd5_test.pdf", width=7, height=4)  # CHANGE TITLE !!!!!!!
+
+H3K27me3_annot_gain_lost_RNA %>%         # CHANGE TITLE !!!!!!!
+    ggplot(aes(x = log2FoldChange, y = -log10(padj), color = significance)) +
+        geom_point(alpha = 0.8, size = 0.5) +
+        scale_color_manual(values = c("grey", "red")) +
+        labs(title = "KO vs WT",
+             subtitle = "Expression level of diff. bound H3K27me3 genes",    # CHANGE TITLE !!!!!!!
+             x = "Log2 Fold Change",
+             y = "-log10(q-value)",
+             color = "Significant (padj <= 0.05)") +
+        facet_wrap(~binding) +
+        theme_bw() +
+        geom_text(data = count_data %>% filter(significance), 
+                  aes(x = Inf, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
+                  hjust = 1.1, vjust = 1.1, size = 3, color = "black") +
+        geom_text(data = count_data %>% distinct(binding, .keep_all = TRUE),
+                  aes(x = Inf, y = -Inf, label = paste("Total:", total_panel, "genes")),
+                  hjust = 1.1, vjust = -0.1, size = 3, color = "black")
+dev.off()
+
+
+
+
+```
+
+
+
+
