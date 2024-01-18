@@ -864,10 +864,11 @@ sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_med
 ## H3K27me3 median; raw THOR bigwig; region that gain vs lost H3K27me3
 sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKO_THORq10_positive_negative.sh # 11045278 ok
 sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKO_THORq15_positive_negative.sh # 11045279 ok
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKO_THORq20_positive_negative.sh # 11084288 ok
 
 sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKOEF1aEZH1_THORq10_positive_negative.sh # 11045282 ok
 sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKOEF1aEZH1_THORq15_positive_negative.sh # 11045283 ok
-
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKOEF1aEZH1_THORq20_positive_negative.sh # 11084527 ok
 
 ```
 
@@ -1105,8 +1106,27 @@ KOEF1aEZH1_gain = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1
 KOEF1aEZH1_lost = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10_negative.bed') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)   
 
+## qval 15
+KO_gain = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval15_positive.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+KO_lost = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval15_negative.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)       
 
+KOEF1aEZH1_gain = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval15_positive.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+KOEF1aEZH1_lost = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval15_negative.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)   
 
+## qval 20
+KO_gain = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval20_positive.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+KO_lost = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval20_negative.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)       
+
+KOEF1aEZH1_gain = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval20_positive.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+KOEF1aEZH1_lost = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval20_negative.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)  
 
 # Tidy peaks #-->> Re-Run from here with different qvalue!!
 ## 50dN
@@ -1139,10 +1159,10 @@ KOEF1aEZH1_lost_annot$gene <- mapIds(org.Hs.eg.db, keys = KOEF1aEZH1_lost_annot$
 
 
 ## Save output table
-write.table(KO_gain_annot, file="output/ChIPseeker/annotation_THOR_KO_gain_annot_qval10.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(KO_lost_annot, file="output/ChIPseeker/annotation_THOR_KO_lost_annot_qval10.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(KOEF1aEZH1_gain_annot, file="output/ChIPseeker/annotation_THOR_KOEF1aEZH1_gain_annot_qval10.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(KOEF1aEZH1_lost_annot, file="output/ChIPseeker/annotation_THOR_KOEF1aEZH1_lost_annot_qval10.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(KO_gain_annot, file="output/ChIPseeker/annotation_THOR_KO_gain_annot_qval20.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(KO_lost_annot, file="output/ChIPseeker/annotation_THOR_KO_lost_annot_qval20.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(KOEF1aEZH1_gain_annot, file="output/ChIPseeker/annotation_THOR_KOEF1aEZH1_gain_annot_qval20.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(KOEF1aEZH1_lost_annot, file="output/ChIPseeker/annotation_THOR_KOEF1aEZH1_lost_annot_qval20.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 
 
 ## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
@@ -1170,22 +1190,22 @@ KOEF1aEZH1_lost_annot_promoterAnd5_geneSymbol = KOEF1aEZH1_lost_annot_promoterAn
     unique()
 
 
-write.table(KO_gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KO_gain_qval10_promoterAnd5_geneSymbol.txt",
+write.table(KO_gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KO_gain_qval20_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(KO_lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KO_lost_qval10_promoterAnd5_geneSymbol.txt",
+write.table(KO_lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KO_lost_qval20_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(KOEF1aEZH1_gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KOEF1aEZH1_gain_qval10_promoterAnd5_geneSymbol.txt",
+write.table(KOEF1aEZH1_gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KOEF1aEZH1_gain_qval20_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(KOEF1aEZH1_lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KOEF1aEZH1_lost_qval10_promoterAnd5_geneSymbol.txt",
+write.table(KOEF1aEZH1_lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KOEF1aEZH1_lost_qva20_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
@@ -1193,16 +1213,14 @@ write.table(KOEF1aEZH1_lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPse
 
 # Comparison peak position WT vs KO vs KOEF1aEZH1
 ## plots
-pdf("output/ChIPseeker/plotAnnoBar_H3K27me3_THORq10_gain_lost.pdf", width = 8, height = 3)
+pdf("output/ChIPseeker/plotAnnoBar_H3K27me3_THORq20_gain_lost.pdf", width = 8, height = 3)
 plotAnnoBar(peakAnnoList)
 dev.off()
 
 
-pdf("output/ChIPseeker/plotDistToTSS_H3K27me3_THORq10_gain_lost.pdf", width = 8, height = 3)
+pdf("output/ChIPseeker/plotDistToTSS_H3K27me3_THORq20_gain_lost.pdf", width = 8, height = 3)
 plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
 dev.off()
-
-
 ```
 
 
@@ -1377,10 +1395,84 @@ awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval15.bed > out
 awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval15.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval15_positive.bed
 awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval15.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval15_negative.bed
 
+## qval 20
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval20.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval20_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval20.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval20_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval20.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval20_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval20.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval20_negative.bed
 ```
 
 
 
 
+# Functional analysis
+
+## GO
+
+### regular GO - for unique list of genes (not enrichR)
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("clusterProfiler")
+library("pathview")
+library("DOSE")
+library("org.Hs.eg.db")
+library("enrichplot")
+library("rtracklayer")
+library("tidyverse")
+library("biomaRt")
+
+# import gene lists
+list = read_csv("output/ChIPseeker/Venn_overlap_THOR_KOEF1aEZH1_gain_KO_lost_qval10_promoterAnd5_geneSymbol_224.txt", col_names = FALSE)
+list = read_csv("output/ChIPseeker/Venn_overlap_THOR_KOEF1aEZH1_gain_KO_lost_qval15_promoterAnd5_geneSymbol_135.txt", col_names = FALSE)
+list = read_csv("output/ChIPseeker/Venn_overlap_THOR_KOEF1aEZH1_gain_KO_lost_qval20_promoterAnd5_geneSymbol_76.txt", col_names = FALSE)
+
+## GO
+ego <- enrichGO(gene = (list$X1), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+
+pdf("output/GO/dotplot_BP_Venn_overlap_THOR_KOEF1aEZH1_gain_KO_lost_qval10_promoterAnd5_geneSymbol_224.pdf", width=5, height=12)
+pdf("output/GO/dotplot_BP_Venn_overlap_THOR_KOEF1aEZH1_gain_KO_lost_qval20_promoterAnd5_geneSymbol_76.pdf", width=5, height=20)
+
+dotplot(ego, showCategory = 50, title = "GO_Biological Process Enrichment Analysis")
+dev.off()
 
 
+GO_summary <- data.frame(ego)
+write.csv(GO_summary, "output/GO/dotplot_BP_Venn_overlap_THOR_KOEF1aEZH1_gain_KO_lost_qval20_promoterAnd5_geneSymbol_76.csv")
+
+## KEGG
+### convert geneSymbol to entrezID
+mart <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+#### Get the Entrez IDs corresponding to the gene symbols
+genes_entrez <- getBM(attributes = c("hgnc_symbol", "entrezgene_id"),
+                      filters = "hgnc_symbol",
+                      values = list$X1, 
+                      mart = mart)
+#### Merge to retain the original order and to include all gene symbols
+list_entrezid <- as_tibble(genes_entrez) 
+
+
+ekegg <- enrichKEGG(gene = (list_entrezid$entrezgene_id), 
+                keyType = "kegg",     # Use ENSEMBL if want to use ENSG000XXXX format
+                organism = "hsa", 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05)
+
+pdf("output/GO/dotplot_KEGG_Venn_overlap_THOR_KOEF1aEZH1_gain_KO_lost_qval15_promoterAnd5_geneSymbol_135.pdf", width=5, height=2)
+dotplot(ekegg, showCategory = 15, title = "KEGG pathway Enrichment Analysis")
+dev.off()
+
+
+
+```
