@@ -22,3 +22,37 @@ plotHeatmap -m output/deeptools/matrix_TSS2_5kp_THOR_allGenes.gz \
     --whatToShow 'heatmap and colorbar' \
     --heatmapHeight 15
 
+
+
+# 20240119 Naiara tasks
+
+
+plotHeatmap -m output/deeptools/matrix_TSS2_5kp_THOR_allGenes.gz \
+    -out output/deeptools/matrix_TSS2_5kp_THOR_allGenes_heatmap2_colorSmall.pdf \
+    --samplesLabel "WT" "HET" "KO" \
+    --colorMap bwr \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2
+
+
+plotHeatmap -m output/deeptools/matrix_TSS2_5kp_THOR_allGenes.gz \
+    -out output/deeptools/matrix_TSS2_5kp_THOR_allGenes_heatmap2_colorSmall_kmeans20.pdf \
+    --samplesLabel "WT" "HET" "KO" \
+    --colorMap bwr \
+    --whatToShow 'heatmap and colorbar' \
+    --kmeans 20 \
+    --heatmapHeight 20 \
+    --heatmapWidth 2
+
+
+plotHeatmap -m output/deeptools/matrix_TSS2_5kp_THOR_allGenes.gz \
+    -out output/deeptools/matrix_TSS2_5kp_THOR_allGenes_heatmap2_colorSmall_kmeans8.pdf \
+    --samplesLabel "WT" "HET" "KO" \
+    --colorMap bwr \
+    --whatToShow 'heatmap and colorbar' \
+    --kmeans 8 \
+    --heatmapHeight 20 \
+    --heatmapWidth 2
+
+

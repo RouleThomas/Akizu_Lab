@@ -8783,6 +8783,69 @@ write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q
 
 
 
+# FILTER ON QVALUE 0.05 and FC 2 (NaiaraPlot 20240119)
+keyvals <- ifelse(
+  res$log2FoldChange < -2 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 2 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 2)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -2)'
+
+pdf("output/deseq2_hg38/plotVolcano_res_q05FC2_8wN_KO_vs_8wN_WT.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = res$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, 2wN',
+  pCutoff = 5e-2,         #
+  FCcutoff = 2,
+  pointSize = 1.0,
+  labSize = 4.5,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+upregulated_genes <- sum(res$log2FoldChange > 2 & res$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res$log2FoldChange < -2 & res$padj < 5e-2, na.rm = TRUE)
+
+
+# Save as gene list for GO analysis:
+### Complete table with GeneSymbol
+write.table(res, file = "output/deseq2_hg38/filtered_q05FC2_8wN_KO_vs_8wN_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res[res$log2FoldChange > 2 & res$padj < 5e-2, ]
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 2 & res$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[res$log2FoldChange < -1 & res$padj < 5e-2, ]
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -2 & res$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05FC2_8wN_KO_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05FC2_8wN_KO_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Plot CutRun RNAseq integration (PosterMidatlantic)
 ## import gene list
 ### GAIN
@@ -9387,6 +9450,122 @@ write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q
 
 
 
+
+
+
+# FILTER ON QVALUE 0.05 FC 2
+keyvals <- ifelse(
+  res$log2FoldChange < -2 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 2 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 2)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -2)'
+
+
+
+pdf("output/deseq2_hg38/plotVolcano_res_q05FC2_8wN_HET_vs_8wN_WT.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = res$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'HET vs WT, 2wN',
+  pCutoff = 5e-2,         #
+  FCcutoff = 2,
+  pointSize = 1.0,
+  labSize = 4.5,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+upregulated_genes <- sum(res$log2FoldChange > 2 & res$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res$log2FoldChange < -2 & res$padj < 5e-2, na.rm = TRUE)
+
+
+# Save as gene list for GO analysis:
+### Complete table with GeneSymbol
+write.table(res, file = "output/deseq2_hg38/filtered_q05FC2_8wN_HET_vs_8wN_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res[res$log2FoldChange > 1 & res$padj < 1e-2, ]
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 2 & res$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -2 & res$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05FC2_8wN_HET_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05FC2_8wN_HET_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
+# FILTER ON QVALUE 0.05 FC 1
+keyvals <- ifelse(
+  res$log2FoldChange < -1 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 1 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 1)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -1)'
+
+
+
+pdf("output/deseq2_hg38/plotVolcano_res_q05FC1_8wN_HET_vs_8wN_WT.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = res$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'HET vs WT, 2wN',
+  pCutoff = 5e-2,         #
+  FCcutoff = 1,
+  pointSize = 1.0,
+  labSize = 4.5,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+upregulated_genes <- sum(res$log2FoldChange > 1 & res$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res$log2FoldChange < -1 & res$padj < 5e-2, na.rm = TRUE)
+
+
+# Save as gene list for GO analysis:
+### Complete table with GeneSymbol
+write.table(res, file = "output/deseq2_hg38/filtered_q05FC1_8wN_HET_vs_8wN_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res[res$log2FoldChange > 1 & res$padj < 1e-2, ]
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 1 & res$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -1 & res$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05FC1_8wN_HET_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05FC1_8wN_HET_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
+
+
+
+
+
 # Plot CutRun RNAseq integration (PosterMidatlantic)
 ## import gene list
 ### GAIN
@@ -9510,6 +9689,89 @@ dev.off()
 upregulated_genes <- sum(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, na.rm = TRUE)
 downregulated_genes <- sum(res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, na.rm = TRUE)
 
+
+################## Naira 20240119 tasks --- Get average log2fc of genes that lost H3K27me3 signif and not signif DEGs
+
+## Re do more properly the  CutRun expression integration 
+
+XXXXX 
+
+## Signif DEGs
+### Filter for significantly downregulated genes
+downregulated_genes <- res_Gain[res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, na.rm = TRUE]
+### Calculate the average log2FoldChange for these genes
+average_log2FC <- mean(downregulated_genes$log2FoldChange, na.rm = TRUE)
+
+## Not signif DEGs
+### import the 679? 346? genes that gain H3K27me3 in promoter in HET
+WTvsHET_annot_gain <- as_tibble(read.table("../003__CutRun/output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15.txt", sep="\t", header=TRUE)) %>%
+    filter(FC > 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(H3K27me3 = "gain") %>%
+    dplyr::select(geneSymbol) %>% 
+    unique() %>%
+    rename(GeneSymbol = geneSymbol)
+
+
+WTvsHET_annot_lost <- as_tibble(read.table("../003__CutRun/output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15.txt", sep="\t", header=TRUE)) %>%
+    filter(FC < 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(H3K27me3 = "lost") %>%
+    dplyr::select(geneSymbol) %>% 
+    unique() %>%
+    rename(GeneSymbol = geneSymbol)
+
+
+################ copy to KO part
+WTvsKO_annot_lost <- as_tibble(read.table("../003__CutRun/output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15.txt", sep="\t", header=TRUE)) %>%
+    filter(FC > 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(H3K27me3 = "gain") %>%
+    dplyr::select(geneSymbol) %>% 
+    unique() %>%
+    rename(GeneSymbol = geneSymbol)
+
+WTvsKO_annot_lost <- as_tibble(read.table("../003__CutRun/output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15.txt", sep="\t", header=TRUE)) %>%
+    filter(FC < 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(H3K27me3 = "lost") %>%
+    dplyr::select(geneSymbol) %>% 
+    unique() %>%
+    rename(GeneSymbol = geneSymbol)
+
+
+################
+
+### import the 184 signif ones
+downregulated_geneSymbol = downregulated_genes %>%
+  dplyr::select(GeneSymbol) %>%
+  unique() %>%
+  na.omit()
+### isolate the non signif ones (there is 443 total genes and not 346)
+WTvsHET_annot_gain_nonSignif = WTvsHET_annot_gain %>%
+  anti_join(downregulated_geneSymbol)
+
+
+
+downregulated_geneSymbol %>% inner_join(WTvsHET_annot_gain) # 87 genes!
+
+
+
+### add gene expression information
+
+
+WTvsHET_annot_gain_expression = WTvsHET_annot_gain %>%
+  left_join(res_tibble %>% dplyr::select(GeneSymbol, log2FoldChange, padj)) %>%
+  mutate(log2FoldChange = ifelse(is.na(log2FoldChange), 0, log2FoldChange),
+         padj = ifelse(is.na(padj), 1, padj)) %>%
+  unique() %>%
+  na.omit()
+
+
+
+WTvsHET_annot_gain_expression_notSignif = downregulated_geneSymbol %>%
+  left_join(WTvsHET_annot_gain_expression)
+
+XXXXXXXXXXXXX
+
+############################
+
 # Save as gene list for GO analysis:
 
 upregulated <- res_Gain[res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, ]
@@ -9601,6 +9863,12 @@ downregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj
 write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05FC05_8wN_HET_vs_8wN_WT_Lost_H3K27me3_poster.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05FC05_8wN_HET_vs_8wN_WT_Lost_H3K27me3_poster.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 ```
+
+--> **Naiara task 20240119**: I re-do more propelry the CutRun RNAseq integration; there was over-filtering; because I imported already signficiant genes that gain and down expr; let's instead import list of genes that gain HEt, and then incorprorate expression; so I did:
+- Import all genes that gain / lost H3K27me3 in promoter
+- Put expression information
+- Plot enhanced volcano
+
 
 
 ### 8wN HET vs KO
@@ -15755,7 +16023,205 @@ dev.off()
 ## save output
 write.table(gos, "output/GO_hg38/enrichR_Azimuth_Cell_Types_2021_8wN_KO_vs_8wN_WT_q01FC05.txt", sep="\t", row.names=FALSE, quote=FALSE)
 write.table(gos, "output/GO_hg38/enrichR_Azimuth_Cell_Types_2021_8wN_HET_vs_8wN_WT_q01FC05.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+# For NaiaraPlot (20240119)
+
+# Define databases for enrichment
+dbs <- c("GO_Biological_Process_2023")
+
+### Gene list symbol for qval 0.05 and FC 1
+output/deseq2_hg38/downregulated_q05FC1_8wN_HET_vs_8wN_WT.txt
+output/deseq2_hg38/upregulated_q05FC1_8wN_HET_vs_8wN_WT.txt
+output/deseq2_hg38/downregulated_q05FC1_8wN_KO_vs_8wN_WT.txt
+output/deseq2_hg38/upregulated_q05FC1_8wN_KO_vs_8wN_WT.txt
+
+### Gene list symbol for qval 0.05 and FC 2
+output/deseq2_hg38/downregulated_q05FC2_8wN_HET_vs_8wN_WT.txt
+output/deseq2_hg38/upregulated_q05FC2_8wN_HET_vs_8wN_WT.txt
+output/deseq2_hg38/downregulated_q05FC2_8wN_KO_vs_8wN_WT.txt
+output/deseq2_hg38/upregulated_q05FC2_8wN_KO_vs_8wN_WT.txt
+
+
+# Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_q05FC2_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+
+# Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_q05FC2_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$GO_Biological_Process_2023
+down <- edown$GO_Biological_Process_2023
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 25)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 25)
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+## FAIL as dupplicates:
+up_pathways_suffixed <- paste0(up_pathways, "_up")
+down_pathways_suffixed <- paste0(down_pathways, "_down")
+new_order <- c(down_pathways_suffixed, up_pathways_suffixed)
+gos$Term <- ifelse(gos$type == "up", paste0(gos$Term, "_up"), paste0(gos$Term, "_down"))
+gos$Term <- factor(gos$Term, levels = new_order)
+
+
+# Plotting with enhanced aesthetics 
+pdf("output/GO_hg38/enrichR_GO_Biological_Process_2023_8wN_HET_vs_8wN_WT_q05FC1.pdf", width=14, height=7)
+pdf("output/GO_hg38/enrichR_GO_Biological_Process_2023_8wN_KO_vs_8wN_WT_q05FC1.pdf", width=14, height=7)
+pdf("output/GO_hg38/enrichR_GO_Biological_Process_2023_8wN_HET_vs_8wN_WT_q05FC2.pdf", width=14, height=7) #no enricghment
+pdf("output/GO_hg38/enrichR_GO_Biological_Process_2023_8wN_KO_vs_8wN_WT_q05FC2.pdf", width=14, height=7) 
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for GO BP pathways") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+## save output
+write.table(gos, "output/GO_hg38/enrichR_GO_Biological_Process_2023_8wN_KO_vs_8wN_WT_q05FC2.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("KEGG_2021_Human")
+
+### Gene list symbol for qval 0.05 and FC 1
+output/deseq2_hg38/downregulated_q05FC1_8wN_HET_vs_8wN_WT.txt
+output/deseq2_hg38/upregulated_q05FC1_8wN_HET_vs_8wN_WT.txt
+output/deseq2_hg38/downregulated_q05FC1_8wN_KO_vs_8wN_WT.txt
+output/deseq2_hg38/upregulated_q05FC1_8wN_KO_vs_8wN_WT.txt
+
+### Gene list symbol for qval 0.05 and FC 2
+output/deseq2_hg38/downregulated_q05FC2_8wN_HET_vs_8wN_WT.txt
+output/deseq2_hg38/upregulated_q05FC2_8wN_HET_vs_8wN_WT.txt
+output/deseq2_hg38/downregulated_q05FC2_8wN_KO_vs_8wN_WT.txt
+output/deseq2_hg38/upregulated_q05FC2_8wN_KO_vs_8wN_WT.txt
+
+
+# Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_q05FC2_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+
+# Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_q05FC2_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$KEGG_2021_Human
+down <- edown$KEGG_2021_Human
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 25)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 25)
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+## FAIL as dupplicates:
+up_pathways_suffixed <- paste0(up_pathways, "_up")
+down_pathways_suffixed <- paste0(down_pathways, "_down")
+new_order <- c(down_pathways_suffixed, up_pathways_suffixed)
+gos$Term <- ifelse(gos$type == "up", paste0(gos$Term, "_up"), paste0(gos$Term, "_down"))
+gos$Term <- factor(gos$Term, levels = new_order)
+
+
+# Plotting with enhanced aesthetics 
+pdf("output/GO_hg38/enrichR_KEGG_2021_Human_8wN_HET_vs_8wN_WT_q05FC1.pdf", width=14, height=7)
+pdf("output/GO_hg38/enrichR_KEGG_2021_Human_8wN_KO_vs_8wN_WT_q05FC1.pdf", width=14, height=3)
+pdf("output/GO_hg38/enrichR_KEGG_2021_Human_8wN_KO_vs_8wN_WT_q05FC2.pdf", width=14, height=3)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for GO BP pathways") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+## save output
+write.table(gos, "output/GO_hg38/enrichR_KEGG_2021_Human_8wN_KO_vs_8wN_WT_q05FC1.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
 ```
+
+
 
 
 

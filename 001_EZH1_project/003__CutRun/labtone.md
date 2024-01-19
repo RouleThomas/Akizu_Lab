@@ -4400,7 +4400,7 @@ WTvsKO_annot$gene <- mapIds(org.Hs.eg.db, keys = WTvsKO_annot$geneId, column = "
 write.table(WTvsHET_annot, file="output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 write.table(WTvsKO_annot, file="output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 # load annotation tables
-# WTvsHET_qval5_annot <- read.table("output/ChIPseeker/annotation_WTvsHET_qval5.txt", sep="\t", header=TRUE)
+# WTvsHET_annot <- as_tibble(read.table("../003__CutRun/output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15.txt", sep="\t", header=TRUE))
 
 
 # Filter Gain/Loss sites
@@ -5113,7 +5113,7 @@ sbatch scripts/matrix_gene_XXXX
 
 ```
 
-Here is steps to **generate GTF file of gene that contains peak in WT promoter or all diff bound genes**:
+Here is steps to **generate GTF file of gene that contains peak in WT promoter (also in HET or KO) or all diff bound genes**:
 ```bash
 # PEAK IN PROMOTER WT
 ## Filter to keep only WT genes annotated with a H3K27me3 within its promoter or 5'UTR (annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
@@ -5126,6 +5126,34 @@ awk -F'\t' '$11 == "Promoter (<=1kb)" || $11 == "Promoter (1-2kb)" || $11 == "Pr
 sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_WT_Promoter_5_geneSymbol.txt > output/ChIPseeker/annotation_WT_Promoter_5_as_gtf_geneSymbol.txt
 ### Filter the gtf
 grep -Ff output/ChIPseeker/annotation_WT_Promoter_5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_WTpeaks_Promoter_5.gtf
+
+
+# PEAK IN PROMOTER HET
+## Filter to keep only HET genes annotated with a H3K27me3 within its promoter or 5'UTR (annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+output/macs2/broad_blacklist_qval2.30103/8wN_HET_H3K27me3_pool_peaks.broadPeak
+awk -F'\t' '$11 == "Promoter (<=1kb)" || $11 == "Promoter (1-2kb)" || $11 == "Promoter (2-3kb)" || $11 == "5'\'' UTR"' output/ChIPseeker/annotation_HET.txt > output/ChIPseeker/annotation_HET_Promoter_5.txt
+## Filter only peak in promoter abd 5' and Isolate geneSymbol
+awk -F'\t' '$11 == "Promoter (<=1kb)" || $11 == "Promoter (1-2kb)" || $11 == "Promoter (2-3kb)" || $11 == "5'\'' UTR"' output/ChIPseeker/annotation_HET.txt | awk -F'\t' '{print $20}' | sort | uniq > output/ChIPseeker/annotation_HET_Promoter_5_geneSymbol.txt
+## Filter in the gtf
+### Modify the .txt file that list all genes so that it match gtf structure
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_HET_Promoter_5_geneSymbol.txt > output/ChIPseeker/annotation_HET_Promoter_5_as_gtf_geneSymbol.txt
+### Filter the gtf
+grep -Ff output/ChIPseeker/annotation_HET_Promoter_5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_HETpeaks_Promoter_5.gtf
+
+
+# PEAK IN PROMOTER KO
+## Filter to keep only KO genes annotated with a H3K27me3 within its promoter or 5'UTR (annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+output/macs2/broad_blacklist_qval2.30103/8wN_KO_H3K27me3_pool_peaks.broadPeak
+awk -F'\t' '$11 == "Promoter (<=1kb)" || $11 == "Promoter (1-2kb)" || $11 == "Promoter (2-3kb)" || $11 == "5'\'' UTR"' output/ChIPseeker/annotation_KO.txt > output/ChIPseeker/annotation_KO_Promoter_5.txt
+## Filter only peak in promoter abd 5' and Isolate geneSymbol
+awk -F'\t' '$11 == "Promoter (<=1kb)" || $11 == "Promoter (1-2kb)" || $11 == "Promoter (2-3kb)" || $11 == "5'\'' UTR"' output/ChIPseeker/annotation_KO.txt | awk -F'\t' '{print $20}' | sort | uniq > output/ChIPseeker/annotation_KO_Promoter_5_geneSymbol.txt
+## Filter in the gtf
+### Modify the .txt file that list all genes so that it match gtf structure
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_KO_Promoter_5_geneSymbol.txt > output/ChIPseeker/annotation_KO_Promoter_5_as_gtf_geneSymbol.txt
+### Filter the gtf
+grep -Ff output/ChIPseeker/annotation_KO_Promoter_5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_KOpeaks_Promoter_5.gtf
+
+
 
 # ALL GENES WITH A DIFF PEAK (from THOR*_unique_keepDup qval15)
 ## Filter to keep only genes annotated with a H3K27me3 within its promoter or 5'UTR (annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
@@ -5452,6 +5480,29 @@ plotAnnoBar(peakAnnoList)
 dev.off()
 ### Barplot
 plotDistToTSS()
+
+######### NairaPlot 20240119 - Raw number of peaks for each features ###########################
+# Function to count peak occurrences in each region using appropriate methods for S4 objects
+countPeaks <- function(anno) {
+    anno_df <- as.data.frame(anno)
+    table(anno_df$annotation)
+}
+
+# Apply the counting function to each annotated peak list
+peakCounts <- lapply(peakAnnoList, countPeaks)
+
+countSpecificPeaks <- function(anno) {
+    anno_df <- as.data.frame(anno)
+    specific_features <- c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")
+    filtered_df <- anno_df[anno_df$annotation %in% specific_features, ]
+    table(filtered_df$annotation)
+}
+
+# Apply the function to count peaks for specific features in each annotated peak list
+specificPeakCounts <- lapply(peakAnnoList, countSpecificPeaks)
+
+####################################
+
 
 ## Peak distance to TSS
 pdf("output/ChIPseeker/DistToTSS.pdf", width=14, height=5)
@@ -8086,17 +8137,29 @@ grep -Ff meta/quintile_8wN_WT_peak_quint4_as_gtf_geneSymbol.txt meta/ENCFF159KBI
 ```bash
 conda activate deeptools
 
+# peak in WT only
 sbatch scripts/matrix_gene_1kb_THOR_WT_peak_8wN_quintile.sh # 10922517 ok
+sbatch scripts/matrix_TSS_10kb_THOR_WT_peak_8wN_quintile.sh # 11205367 ok
+sbatch scripts/matrix_TSS_5kb_THOR_WT_peak_8wN_quintile.sh # 11205734 ok
+
+sbatch scripts/matrix_TSS_5kb_THOR_WT_peak_8wN_quintile_test.sh # 11203845 ok
+
+# in all genes
+sbatch scripts/matrix_TSS_5kb_THOR_WT_8wN_quintile.sh # 11206265 ok
+sbatch scripts/matrix_TSS_10kb_THOR_WT_8wN_quintile.sh # 11206329 ok
 
 ```
 
 -->  not express genes still a bit lower in H3K27me3 as compared to lowly expressed genes (but less extent thatn when taking all genes, even the non peak)
 
---> Then what to do with this??? Meeting XXX
+--> Then what to do with this??? Naiara tasks 20240119
+
+- Do around TSS instead of TSS to TES (gene)
+- Why peak not as sharp?
+--> Because I isolated the peak in WT only, overall higher signal but less genes included thus sharpness decreases. No taking all genes do not improve that is even worst!!
 
 
-
-
+XXXXXXX
 
 
 
