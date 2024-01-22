@@ -5607,7 +5607,7 @@ p + p_stat
 ```
 
 
-## DEGs with deseq2 (and CutRun integration)
+# DEGs with deseq2 (and CutRun integration)
 
 **IMPORTANT NOTE: Here it is advisable to REMOVE all genes from chromosome X and Y BEFORE doing the DEGs analysis (X chromosome re-activation occurs in some samples, notably these with more cell passage; in our case, the HET and KO)**
 --> It is good to do this on the count matrix see [here](https://support.bioconductor.org/p/119932/)
@@ -8829,20 +8829,6 @@ downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2Fol
 #### Save
 write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05FC2_8wN_KO_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05FC2_8wN_KO_vs_8wN_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

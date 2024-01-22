@@ -1128,6 +1128,77 @@ KOEF1aEZH1_gain = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1
 KOEF1aEZH1_lost = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval20_negative.bed') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)  
 
+## qval 30
+KO_gain = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval30_positive.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+KO_lost = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval30_negative.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)       
+
+KOEF1aEZH1_gain = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval30_positive.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+KOEF1aEZH1_lost = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval30_negative.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)  
+
+## qval 40
+KO_gain = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval40_positive.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+KO_lost = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval40_negative.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)       
+
+KOEF1aEZH1_gain = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval40_positive.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+KOEF1aEZH1_lost = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval40_negative.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)  
+
+
+## qval 50
+KO_gain = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval50_positive.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+KO_lost = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval50_negative.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)       
+
+KOEF1aEZH1_gain = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval50_positive.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+KOEF1aEZH1_lost = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval50_negative.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)  
+
+
+## qval 60
+KO_gain = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval60_positive.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+KO_lost = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval60_negative.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)       
+
+KOEF1aEZH1_gain = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval60_positive.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+KOEF1aEZH1_lost = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval60_negative.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)  
+
+## qval 70
+KO_gain = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval70_positive.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+KO_lost = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval70_negative.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)       
+
+KOEF1aEZH1_gain = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval70_positive.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+KOEF1aEZH1_lost = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval70_negative.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)  
+
+
+## qval 80
+KO_gain = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval80_positive.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+KO_lost = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval80_negative.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)       
+
+KOEF1aEZH1_gain = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval80_positive.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+KOEF1aEZH1_lost = as_tibble(read.table('output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval80_negative.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)  
+
+
+
 # Tidy peaks #-->> Re-Run from here with different qvalue!!
 ## 50dN
 KO_gain_gr = makeGRangesFromDataFrame(KO_gain,keep.extra.columns=TRUE)
@@ -1159,10 +1230,10 @@ KOEF1aEZH1_lost_annot$gene <- mapIds(org.Hs.eg.db, keys = KOEF1aEZH1_lost_annot$
 
 
 ## Save output table
-write.table(KO_gain_annot, file="output/ChIPseeker/annotation_THOR_KO_gain_annot_qval20.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(KO_lost_annot, file="output/ChIPseeker/annotation_THOR_KO_lost_annot_qval20.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(KOEF1aEZH1_gain_annot, file="output/ChIPseeker/annotation_THOR_KOEF1aEZH1_gain_annot_qval20.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(KOEF1aEZH1_lost_annot, file="output/ChIPseeker/annotation_THOR_KOEF1aEZH1_lost_annot_qval20.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(KO_gain_annot, file="output/ChIPseeker/annotation_THOR_KO_gain_annot_qval80.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(KO_lost_annot, file="output/ChIPseeker/annotation_THOR_KO_lost_annot_qval80.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(KOEF1aEZH1_gain_annot, file="output/ChIPseeker/annotation_THOR_KOEF1aEZH1_gain_annot_qval80.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(KOEF1aEZH1_lost_annot, file="output/ChIPseeker/annotation_THOR_KOEF1aEZH1_lost_annot_qval80.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 
 
 ## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
@@ -1190,22 +1261,22 @@ KOEF1aEZH1_lost_annot_promoterAnd5_geneSymbol = KOEF1aEZH1_lost_annot_promoterAn
     unique()
 
 
-write.table(KO_gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KO_gain_qval20_promoterAnd5_geneSymbol.txt",
+write.table(KO_gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KO_gain_qval80_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(KO_lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KO_lost_qval20_promoterAnd5_geneSymbol.txt",
+write.table(KO_lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KO_lost_qval80_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(KOEF1aEZH1_gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KOEF1aEZH1_gain_qval20_promoterAnd5_geneSymbol.txt",
+write.table(KOEF1aEZH1_gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KOEF1aEZH1_gain_qval80_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(KOEF1aEZH1_lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KOEF1aEZH1_lost_qva20_promoterAnd5_geneSymbol.txt",
+write.table(KOEF1aEZH1_lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KOEF1aEZH1_lost_qval80_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
@@ -1213,12 +1284,12 @@ write.table(KOEF1aEZH1_lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPse
 
 # Comparison peak position WT vs KO vs KOEF1aEZH1
 ## plots
-pdf("output/ChIPseeker/plotAnnoBar_H3K27me3_THORq20_gain_lost.pdf", width = 8, height = 3)
+pdf("output/ChIPseeker/plotAnnoBar_H3K27me3_THORq80_gain_lost.pdf", width = 8, height = 3)
 plotAnnoBar(peakAnnoList)
 dev.off()
 
 
-pdf("output/ChIPseeker/plotDistToTSS_H3K27me3_THORq20_gain_lost.pdf", width = 8, height = 3)
+pdf("output/ChIPseeker/plotDistToTSS_H3K27me3_THORq80_gain_lost.pdf", width = 8, height = 3)
 plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
 dev.off()
 ```
@@ -1316,8 +1387,8 @@ dev.off()
 
 ## create a bed file, append chr to chromosome names and write down the file
 thor_splitted %>%
-  filter(qval > 25) %>%
-  write_tsv("output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval25.bed", col_names = FALSE)
+  filter(qval > 100) %>%
+  write_tsv("output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval100.bed", col_names = FALSE)
 
 ## how many minus / plus
 thor_splitted %>%
@@ -1360,8 +1431,8 @@ dev.off()
 
 ## create a bed file, append chr to chromosome names and write down the file
 thor_splitted %>%
-  filter(qval > 10) %>%
-  write_tsv("output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10.bed", col_names = FALSE)
+  filter(qval > 100) %>%
+  write_tsv("output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval100.bed", col_names = FALSE)
 
 ## how many minus / plus
 thor_splitted %>%
@@ -1401,6 +1472,62 @@ awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval20.bed > out
 
 awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval20.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval20_positive.bed
 awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval20.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval20_negative.bed
+
+## qval 30
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval30.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval30_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval30.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval30_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval30.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval30_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval30.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval30_negative.bed
+
+## qval 40
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval40.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval40_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval40.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval40_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval40.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval40_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval40.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval40_negative.bed
+
+## qval 50
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval50.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval50_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval50.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval50_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval50.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval50_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval50.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval50_negative.bed
+
+## qval 60
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval60.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval60_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval60.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval60_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval60.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval60_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval60.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval60_negative.bed
+
+## qval 70
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval70.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval70_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval70.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval70_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval70.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval70_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval70.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval70_negative.bed
+
+## qval 80
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval80.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval80_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval80.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval80_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval80.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval80_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval80.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval80_negative.bed
+
+## qval 90
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval90.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval90_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval90.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval90_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval90.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval90_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval90.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval90_negative.bed
+
+## qval 100
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval100.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval100_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval100.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval100_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval100.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval100_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval100.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval100_negative.bed
 ```
 
 
@@ -1708,115 +1835,301 @@ write.table(gos, "output/GO/enrichR_KEGG_2021_Human_THOR_KOEF1aEZH1_specific_qva
 
 # Compare CutRun and RNAseq expression (from 2 months old neurons)
 
-
+- import expression data  (for clarity the deseq2 analysis is redo) 
 - import gene list that gain / lost H3K27me3 in KO: `output/ChIPseeker/annot_THOR_KO_*_qval*_promoterAnd5_geneSymbol.txt`
-- join with expression data
+- bound both and do plots
+
+--> Method of `20240119` used
 
 
 
 
-
+Go in R
 ```R
-# packages
+
+# Load packages
+library("DESeq2")
 library("tidyverse")
+library("EnhancedVolcano")
+library("apeglm")
+library("org.Hs.eg.db")
+library("biomaRt")
+
+library("RColorBrewer")
+library("pheatmap")
+library("AnnotationDbi")
+
+# WT vs KO
 
 
-XXXXXXXXXX below to mod
+# import featurecounts output and keep only gene ID and counts
+## collect all samples ID
+samples <- c("8wN_WT_R1", "8wN_WT_R2" ,"8wN_WT_R3" ,"8wN_WT_R4" ,"8wN_KO_R1",
+   "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4")
+
+## Make a loop for importing all featurecounts data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("../001__RNAseq/output/featurecounts_hg38/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    dplyr::select(Geneid, starts_with("output/STAR_hg38/")) %>%
+    rename(!!sample := starts_with("output/STAR_hg38/"))
+}
+
+# Merge all dataframe into a single one
+counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+# Remove X and Y chromosome genes
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
+                   filters = "chromosome_name",
+                   values = c("X", "Y"),
+                   mart = ensembl)
+counts_all$stripped_geneid <- sub("\\..*", "", counts_all$Geneid)
+counts_all_filtered <- counts_all %>%
+  filter(!stripped_geneid %in% genes_X_Y$ensembl_gene_id)
+counts_all_filtered$stripped_geneid <- NULL
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pull(counts_all_filtered, Geneid)) 
+
+## Create colData file that describe all our samples
+### Not including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  dplyr::select(-replicate) %>%
+  bind_cols(data.frame(samples))
+### Including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  bind_cols(data.frame(samples))
+
+## transform df into matrix
+coldata = make_matrix(dplyr::select(coldata_raw, -samples), pull(coldata_raw, samples))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design= ~ genotype)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 5
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm")
+
+
+### GeneSymbol ID
+gene_ids <- rownames(res)
+stripped_gene_ids <- sub("\\..*", "", gene_ids)
+gene_symbols <- mapIds(org.Hs.eg.db, keys = stripped_gene_ids,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+res$GeneSymbol <- gene_symbols
 
 
 
-
-# Import RNAseq deseq2 output
-## Raw FC ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
-KO_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_NPC_KO_vs_NPC_WT.txt')) %>%
-    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
-    dplyr::select(gene, baseMean,log2FoldChange,padj)
-## Fitlered FC ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
-KO_vs_WT = tibble(read.csv('../001__RNAseq/output/deseq2_hg38/raw_NPC_KO_vs_NPC_WT.txt')) %>%
-    separate(gene, into = c("gene", "trash"), sep ="\\.") %>%
-    dplyr::select(gene, baseMean,log2FoldChange,padj) %>%
-    filter(log2FoldChange >= 0.5 | log2FoldChange <= -0.5)
-
-# Merge files
-H3K27me3_annot_gain_lost_RNA = H3K27me3_annot_gain_lost %>% 
-    left_join(KO_vs_WT) %>%
-    dplyr::select(gene, binding,baseMean,log2FoldChange,padj) %>%
-    filter(gene != "NA") %>%
-    mutate(baseMean = replace_na(baseMean, 0),
-           log2FoldChange = replace_na(log2FoldChange, 0),
-           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
-           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
-    unique()
-EZH2_annot_gain_lost_RNA = EZH2_annot_gain_lost %>% 
-    left_join(KO_vs_WT) %>%
-    dplyr::select(gene, binding,baseMean,log2FoldChange,padj) %>%
-    filter(gene != "NA") %>%
-    mutate(baseMean = replace_na(baseMean, 0),
-           log2FoldChange = replace_na(log2FoldChange, 0),
-           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
-           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
-    unique()
-SUZ12_annot_gain_lost_RNA = SUZ12_annot_gain_lost %>% 
-    left_join(KO_vs_WT) %>%
-    dplyr::select(gene, binding,baseMean,log2FoldChange,padj) %>%
-    filter(gene != "NA") %>%
-    mutate(baseMean = replace_na(baseMean, 0),
-           log2FoldChange = replace_na(log2FoldChange, 0),
-           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
-           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
-    unique()
-H3K4me3_annot_gain_lost_RNA = H3K4me3_annot_gain_lost %>% 
-    left_join(KO_vs_WT) %>%
-    dplyr::select(gene, binding,baseMean,log2FoldChange,padj) %>%
-    filter(gene != "NA") %>%
-    mutate(baseMean = replace_na(baseMean, 0),
-           log2FoldChange = replace_na(log2FoldChange, 0),
-           padj = replace_na(padj, 1),  # replace baseMean of NA with 0 and padj of NA with 1 
-           significance = padj <= 0.05) %>%  # add signif TRUE if 0.05
-    unique()
+### import the genes that gain H3K27me3 in promoter in KO
+WTvsKO_annot_gain <- as_tibble(read.csv(file = "../007__CutRun_50dN/output/ChIPseeker/annotation_THOR_KO_gain_annot_qval70.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(H3K27me3 = "gain") %>%
+    dplyr::select(gene,geneSymbol,H3K27me3) %>% 
+    unique() %>%
+    rename(GeneSymbol = geneSymbol)
+WTvsKO_annot_lost <- as_tibble(read.csv(file = "../007__CutRun_50dN/output/ChIPseeker/annotation_THOR_KO_lost_annot_qval70.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(H3K27me3 = "lost") %>%
+    dplyr::select(gene,geneSymbol,H3K27me3) %>% 
+    unique() %>%
+    rename(GeneSymbol = geneSymbol)
+WTvsKO_annot_gain_lost = WTvsKO_annot_gain %>%
+  bind_rows(WTvsKO_annot_lost)
 
 
-# Volcano plot 
-count_data <- H3K27me3_annot_gain_lost_RNA %>%     # CHANGE TITLE !!!!!!!
-    group_by(binding, significance) %>%
-    summarise(up = sum(log2FoldChange > 0),
-              down = sum(log2FoldChange < 0),
-              total = n()) %>%
-    ungroup() %>%
-    group_by(binding) %>%
-    mutate(total_panel = sum(total)) %>%
-    ungroup()
+### add gene expression information
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene")
+
+#### combine expression and gain lost
+WTvsKO_annot_gain_lost_expression = WTvsKO_annot_gain_lost %>%
+  left_join(res_tibble %>% dplyr::select(gene, log2FoldChange,pvalue,padj)) %>%
+  unique() %>%
+  mutate(log2FoldChange = ifelse(is.na(log2FoldChange), 0, log2FoldChange),
+         padj = ifelse(is.na(padj), 1, padj),
+         pvalue = ifelse(is.na(pvalue), 1, pvalue))
+##### save output: write.table(WTvsKO_annot_gain_lost_expression, file = "output/deseq2/WTvsKO_annot_gain_lost_THORq70_expression.txt", sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
+WTvsKO_annot_gain_expression = WTvsKO_annot_gain_lost_expression %>%
+  filter(H3K27me3 == "gain")
+WTvsKO_annot_lost_expression = WTvsKO_annot_gain_lost_expression %>%
+  filter(H3K27me3 == "lost")
+
+#### volcano plot ------- GAIN
+###### FILTER ON QVALUE 0.05 FC 05
+keyvals <- ifelse(
+  WTvsKO_annot_gain_expression$log2FoldChange < -0.5 & WTvsKO_annot_gain_expression$padj < 5e-2, 'Sky Blue',
+    ifelse(WTvsKO_annot_gain_expression$log2FoldChange > 0.5 & WTvsKO_annot_gain_expression$padj < 5e-2, 'Orange',
+      'grey'))
 
 
-# pdf("output/ChIPseeker/THOR_qval20_H3K4me3_expression_promoterAnd5.pdf", width=7, height=4)  # CHANGE TITLE !!!!!!!
-# pdf("output/ChIPseeker/THOR_qval20_H3K4me3_expression_promoterAnd5_FC05.pdf", width=7, height=4)  # CHANGE TITLE !!!!!!!
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.5)'
 
-pdf("output/ChIPseeker/THOR_qval50_H3K27me3_expression_promoterAnd5_test.pdf", width=7, height=4)  # CHANGE TITLE !!!!!!!
 
-H3K27me3_annot_gain_lost_RNA %>%         # CHANGE TITLE !!!!!!!
-    ggplot(aes(x = log2FoldChange, y = -log10(padj), color = significance)) +
-        geom_point(alpha = 0.8, size = 0.5) +
-        scale_color_manual(values = c("grey", "red")) +
-        labs(title = "KO vs WT",
-             subtitle = "Expression level of diff. bound H3K27me3 genes",    # CHANGE TITLE !!!!!!!
-             x = "Log2 Fold Change",
-             y = "-log10(q-value)",
-             color = "Significant (padj <= 0.05)") +
-        facet_wrap(~binding) +
-        theme_bw() +
-        geom_text(data = count_data %>% filter(significance), 
-                  aes(x = Inf, y = Inf, label = paste(up, "genes up\n", down, "genes down")),
-                  hjust = 1.1, vjust = 1.1, size = 3, color = "black") +
-        geom_text(data = count_data %>% distinct(binding, .keep_all = TRUE),
-                  aes(x = Inf, y = -Inf, label = paste("Total:", total_panel, "genes")),
-                  hjust = 1.1, vjust = -0.1, size = 3, color = "black")
+pdf("output/deseq2/plotVolcano_res_q05FC05_8wN_KO_vs_8wN_WT_WTvsKO_annot_gain_THORq70.pdf", width=7, height=8)    
+EnhancedVolcano(WTvsKO_annot_gain_expression,
+  lab = WTvsKO_annot_gain_expression$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, 8wN RNAseq; 50dN CutRun',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 1.0,
+  labSize = 4.5,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
 dev.off()
 
+pdf("output/deseq2/plotVolcano_res_q05FC05_8wN_KO_vs_8wN_WT_WTvsKO_annot_gain_THORq70_nolabel.pdf", width=7, height=8)    
+EnhancedVolcano(WTvsKO_annot_gain_expression,
+  lab = c(""),
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, 8wN RNAseq; 50dN CutRun',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 2.0,
+  labSize = 4.5,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+upregulated_genes <- sum(WTvsKO_annot_gain_expression$log2FoldChange > 0.5 & WTvsKO_annot_gain_expression$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(WTvsKO_annot_gain_expression$log2FoldChange < -0.5 & WTvsKO_annot_gain_expression$padj < 5e-2, na.rm = TRUE)
+
+
+## XXXXXXXXXXXXXXXXXXXXXX BELOW NOT MODIFIED !!!!!!!!!!!!
+
+#### mean log2fc signficiant vs non signfiicant
+WTvsKO_annot_gain_expression %>%
+  filter(log2FoldChange < -0.5, padj < 5e-2) %>%
+  summarise(mean_log2FoldChange = mean(log2FoldChange, na.rm = TRUE))
+WTvsKO_annot_gain_expression_signif = WTvsKO_annot_gain_expression %>%
+  filter(log2FoldChange < -0.5, padj < 5e-2) %>%
+  dplyr::select(gene,GeneSymbol)
+WTvsKO_annot_gain_expression %>%
+anti_join(WTvsKO_annot_gain_expression_signif) %>%
+  summarise(mean_log2FoldChange = mean(log2FoldChange, na.rm = TRUE))
+####
+
+# Save as gene list for GO analysis
+#### Filter for up-regulated genes
+upregulated <- WTvsKO_annot_gain_expression[WTvsKO_annot_gain_expression$log2FoldChange > 0.5 & WTvsKO_annot_gain_expression$padj < 5e-2, ]
+upregulated <- WTvsKO_annot_gain_expression[!is.na(WTvsKO_annot_gain_expression$log2FoldChange) & !is.na(WTvsKO_annot_gain_expression$padj) & WTvsKO_annot_gain_expression$log2FoldChange > 0.5 & WTvsKO_annot_gain_expression$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- WTvsKO_annot_gain_expression[WTvsKO_annot_gain_expression$log2FoldChange < -0.5 & WTvsKO_annot_gain_expression$padj < 5e-2, ]
+downregulated <- WTvsKO_annot_gain_expression[!is.na(WTvsKO_annot_gain_expression$log2FoldChange) & !is.na(WTvsKO_annot_gain_expression$padj) & WTvsKO_annot_gain_expression$log2FoldChange < -1 & WTvsKO_annot_gain_expression$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05FC05_8wN_KO_vs_8wN_WT_20240119_WTvsKO_annot_gain.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05FC05_8wN_KO_vs_8wN_WT_20240119_WTvsKO_annot_gain.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+#### volcano plot ------- LOST
+###### FILTER ON QVALUE 0.05 FC 05
+keyvals <- ifelse(
+  WTvsKO_annot_lost_expression$log2FoldChange < -0.5 & WTvsKO_annot_lost_expression$padj < 5e-2, 'Sky Blue',
+    ifelse(WTvsKO_annot_lost_expression$log2FoldChange > 0.5 & WTvsKO_annot_lost_expression$padj < 5e-2, 'Orange',
+      'grey'))
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.5)'
+
+
+pdf("output/deseq2_hg38/plotVolcano_res_q05FC05_8wN_KO_vs_8wN_WT_20240119_WTvsHET_annot_lost.pdf", width=7, height=8)    
+EnhancedVolcano(WTvsKO_annot_lost_expression,
+  lab = WTvsKO_annot_lost_expression$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, 8wN',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 1.0,
+  labSize = 4.5,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+pdf("output/deseq2_hg38/plotVolcano_res_q05FC05_8wN_KO_vs_8wN_WT_20240119_WTvsHET_annot_lost_nolabel.pdf", width=7, height=8)    
+EnhancedVolcano(WTvsKO_annot_lost_expression,
+  lab = c(""),
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, 8wN',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 2.0,
+  labSize = 4.5,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+upregulated_genes <- sum(WTvsKO_annot_lost_expression$log2FoldChange > 0.5 & WTvsKO_annot_lost_expression$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(WTvsKO_annot_lost_expression$log2FoldChange < -0.5 & WTvsKO_annot_lost_expression$padj < 5e-2, na.rm = TRUE)
+
+
+# Save as gene list for GO analysis
+#### Filter for up-regulated genes
+upregulated <- WTvsKO_annot_lost_expression[WTvsKO_annot_lost_expression$log2FoldChange > 0.5 & WTvsKO_annot_lost_expression$padj < 5e-2, ]
+upregulated <- WTvsKO_annot_lost_expression[!is.na(WTvsKO_annot_lost_expression$log2FoldChange) & !is.na(WTvsKO_annot_lost_expression$padj) & WTvsKO_annot_lost_expression$log2FoldChange > 0.5 & WTvsKO_annot_lost_expression$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- WTvsKO_annot_lost_expression[WTvsKO_annot_lost_expression$log2FoldChange < -0.5 & WTvsKO_annot_lost_expression$padj < 5e-2, ]
+downregulated <- WTvsKO_annot_lost_expression[!is.na(WTvsKO_annot_lost_expression$log2FoldChange) & !is.na(WTvsKO_annot_lost_expression$padj) & WTvsKO_annot_lost_expression$log2FoldChange < -1 & WTvsKO_annot_lost_expression$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05FC05_8wN_KO_vs_8wN_WT_20240119_WTvsKO_annot_lost.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05FC05_8wN_KO_vs_8wN_WT_20240119_WTvsKO_annot_lost.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
 
 
 ```
 
 
-
+--> Integrated 50dN CutRun with 8wN RNAseq is not working well; the expression is poorly in agreement with gain / lost of H3K27me3
+----> Corresponging RNAseq is likely needed
 
