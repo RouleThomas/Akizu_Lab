@@ -9069,13 +9069,13 @@ write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q
 ## Re do more properly the  CutRun expression integration 
 
 ### import the 679? 346? genes that gain H3K27me3 in promoter in KO
-WTvsKO_annot_gain <- as_tibble(read.table("../003__CutRun/output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15.txt", sep="\t", header=TRUE)) %>%
+WTvsKO_annot_gain <- as_tibble(read.csv(file = "../003__CutRun/output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)) %>%
     filter(FC > 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
     add_column(H3K27me3 = "gain") %>%
     dplyr::select(gene,geneSymbol,H3K27me3) %>% 
     unique() %>%
     rename(GeneSymbol = geneSymbol)
-WTvsKO_annot_lost <- as_tibble(read.table("../003__CutRun/output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15.txt", sep="\t", header=TRUE)) %>%
+WTvsKO_annot_lost <- as_tibble(read.csv(file = "../003__CutRun/output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)) %>%
     filter(FC < 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
     add_column(H3K27me3 = "lost") %>%
     dplyr::select(gene,geneSymbol,H3K27me3) %>% 
@@ -9083,6 +9083,32 @@ WTvsKO_annot_lost <- as_tibble(read.table("../003__CutRun/output/ChIPseeker/anno
     rename(GeneSymbol = geneSymbol)
 WTvsKO_annot_gain_lost = WTvsKO_annot_gain %>%
   bind_rows(WTvsKO_annot_lost)
+
+#### save output gene list gain lost
+write.table(as_tibble(read.csv(file = "../003__CutRun/output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)) %>%
+    filter(FC > 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(H3K27me3 = "gain") %>%
+    unique() %>%
+    rename(GeneSymbol = geneSymbol), file = "../003__CutRun/output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15_gain_Promoter5.txt", sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE) 
+write.table(as_tibble(read.csv(file = "../003__CutRun/output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)) %>%
+    filter(FC > 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(H3K27me3 = "gain") %>%
+    dplyr::select(gene,geneSymbol,H3K27me3) %>% 
+    unique() %>%
+    rename(GeneSymbol = geneSymbol), file = "../003__CutRun/output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15_gain_Promoter5_geneSymbol.txt", sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE) 
+write.table(as_tibble(read.csv(file = "../003__CutRun/output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)) %>%
+    filter(FC < 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(H3K27me3 = "lost") %>%
+    unique() %>%
+    rename(GeneSymbol = geneSymbol), file = "../003__CutRun/output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15_lost_Promoter5.txt", sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
+write.table(as_tibble(read.csv(file = "../003__CutRun/output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)) %>%
+    filter(FC < 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(H3K27me3 = "lost") %>%
+    dplyr::select(gene,geneSymbol,H3K27me3) %>% 
+    unique() %>%
+    rename(GeneSymbol = geneSymbol), file = "../003__CutRun/output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15_lost_Promoter5_geneSymbol.txt", sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
+
+
 ### add gene expression information
 #### Remove gene version on the res and compil with THOR diff genes
 rownames(res) <- gsub("\\..*", "", rownames(res))
@@ -9972,13 +9998,13 @@ write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q
 ## Re do more properly the  CutRun expression integration 
 
 ### import the 679? 346? genes that gain H3K27me3 in promoter in HET
-WTvsHET_annot_gain <- as_tibble(read.table("../003__CutRun/output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15.txt", sep="\t", header=TRUE)) %>%
+WTvsHET_annot_gain <- as_tibble(read.csv(file = "../003__CutRun/output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)) %>%
     filter(FC > 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
     add_column(H3K27me3 = "gain") %>%
     dplyr::select(gene,geneSymbol,H3K27me3) %>% 
     unique() %>%
     rename(GeneSymbol = geneSymbol)
-WTvsHET_annot_lost <- as_tibble(read.table("../003__CutRun/output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15.txt", sep="\t", header=TRUE)) %>%
+WTvsHET_annot_lost <- as_tibble(read.csv(file = "../003__CutRun/output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)) %>%
     filter(FC < 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
     add_column(H3K27me3 = "lost") %>%
     dplyr::select(gene,geneSymbol,H3K27me3) %>% 
@@ -9986,6 +10012,30 @@ WTvsHET_annot_lost <- as_tibble(read.table("../003__CutRun/output/ChIPseeker/ann
     rename(GeneSymbol = geneSymbol)
 WTvsHET_annot_gain_lost = WTvsHET_annot_gain %>%
   bind_rows(WTvsHET_annot_lost)
+
+#### save output gene list gain lost
+write.table(as_tibble(read.csv(file = "../003__CutRun/output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)) %>%
+    filter(FC > 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(H3K27me3 = "gain") %>%
+    unique() %>%
+    rename(GeneSymbol = geneSymbol), file = "../003__CutRun/output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15_gain_Promoter5.txt", sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE) 
+write.table(as_tibble(read.csv(file = "../003__CutRun/output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)) %>%
+    filter(FC > 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(H3K27me3 = "gain") %>%
+    dplyr::select(gene,geneSymbol,H3K27me3) %>% 
+    unique() %>%
+    rename(GeneSymbol = geneSymbol), file = "../003__CutRun/output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15_gain_Promoter5_geneSymbol.txt", sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE) 
+write.table(as_tibble(read.csv(file = "../003__CutRun/output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)) %>%
+    filter(FC < 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(H3K27me3 = "lost") %>%
+    unique() %>%
+    rename(GeneSymbol = geneSymbol), file = "../003__CutRun/output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15_lost_Promoter5.txt", sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
+write.table(as_tibble(read.csv(file = "../003__CutRun/output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)) %>%
+    filter(FC < 1, annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+    add_column(H3K27me3 = "lost") %>%
+    dplyr::select(gene,geneSymbol,H3K27me3) %>% 
+    unique() %>%
+    rename(GeneSymbol = geneSymbol), file = "../003__CutRun/output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15_lost_Promoter5_geneSymbol.txt", sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
 ### add gene expression information
 #### Remove gene version on the res and compil with THOR diff genes
 rownames(res) <- gsub("\\..*", "", rownames(res))
@@ -10150,7 +10200,7 @@ write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q
 ```
 
 --> **Naiara task 20240119**: I re-do more propelry the CutRun RNAseq integration; there was over-filtering; because I imported already signficiant genes that gain and down expr; let's instead import list of genes that gain HEt, and then incorprorate expression; so I did:
-- Import all genes that gain / lost H3K27me3 in promoter
+- Import all genes that gain / lost H3K27me3 in promoter (by NOT using `read.table()` this function is FUCKED !! [Not import all rows](https://www.biostars.org/p/221983/))
 - Put expression information
 - Plot enhanced volcano
 
@@ -16336,6 +16386,7 @@ output/deseq2_hg38/downregulated_q05FC05_8wN_HET_vs_8wN_WT_20240119_WTvsHET_anno
 output/deseq2_hg38/upregulated_q05FC05_8wN_HET_vs_8wN_WT_20240119_WTvsHET_annot_lost.txt
 
 
+
 # Read and preprocess data for downregulated genes
 gene_names_down <- read.csv("output/deseq2_hg38/downregulated_q05FC05_8wN_HET_vs_8wN_WT_20240119_WTvsHET_annot_gain.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
@@ -16388,6 +16439,7 @@ pdf("output/GO_hg38/enrichR_GO_Biological_Process_2023_8wN_KO_vs_8wN_WT_q05FC1.p
 pdf("output/GO_hg38/enrichR_GO_Biological_Process_2023_8wN_HET_vs_8wN_WT_q05FC2.pdf", width=14, height=7) #no enricghment
 pdf("output/GO_hg38/enrichR_GO_Biological_Process_2023_8wN_KO_vs_8wN_WT_q05FC2.pdf", width=14, height=7) 
 
+pdf("output/GO_hg38/enrichR_GO_Biological_Process_2023_q05FC05_8wN_KO_vs_8wN_WT_20240119_WTvsKO_annot.pdf", width=10, height=3) 
 pdf("output/GO_hg38/enrichR_GO_Biological_Process_2023_q05FC05_8wN_HET_vs_8wN_WT_20240119_WTvsHET_annot.pdf", width=10, height=3) 
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
@@ -16446,12 +16498,12 @@ output/deseq2_hg38/upregulated_q05FC05_8wN_HET_vs_8wN_WT_20240119_WTvsHET_annot_
 
 
 # Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/deseq2_hg38/downregulated_q05FC05_8wN_HET_vs_8wN_WT_20240119_WTvsHET_annot_gain.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_q05FC05_8wN_KO_vs_8wN_WT_20240119_WTvsKO_annot_gain.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 
 # Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/deseq2_hg38/upregulated_q05FC05_8wN_HET_vs_8wN_WT_20240119_WTvsHET_annot_lost.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_q05FC05_8wN_KO_vs_8wN_WT_20240119_WTvsKO_annot_lost.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -16496,9 +16548,9 @@ pdf("output/GO_hg38/enrichR_KEGG_2021_Human_8wN_HET_vs_8wN_WT_q05FC1.pdf", width
 pdf("output/GO_hg38/enrichR_KEGG_2021_Human_8wN_KO_vs_8wN_WT_q05FC1.pdf", width=14, height=3)
 pdf("output/GO_hg38/enrichR_KEGG_2021_Human_8wN_KO_vs_8wN_WT_q05FC2.pdf", width=14, height=3)
 
-pdf("output/GO_hg38/enrichR_KEGG_2021_Human_q05FC05_8wN_KO_vs_8wN_WT_20240119_WTvsKO_annot.pdf", width=10, height=6)
-pdf("output/GO_hg38/enrichR_KEGG_2021_Human_q05FC05_8wN_HET_vs_8wN_WT_20240119_WTvsHET_annot.pdf", width=10, height=4)
 
+pdf("output/GO_hg38/enrichR_KEGG_2021_Human_q05FC05_8wN_KO_vs_8wN_WT_20240119_WTvsKO_annot.pdf", width=10, height=6)
+pdf("output/GO_hg38/enrichR_KEGG_2021_Human_q05FC05_8wN_HET_vs_8wN_WT_20240119_WTvsHET_annot.pdf", width=10, height=5)
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
