@@ -676,10 +676,25 @@ dev.off()
 
 # GSEA
 
+
+
 Let's do GSEA and look for signficant hit related to lipid:
 - C2; curated gene list (KEGG, wikipathway, reactome, …)
 - C5; ontology
 - C8; cell type signature
+
+Then do gsea plots for *term that are significant in 1mo CB but not in 1mo CTX* from the GSEA_GO_BP_V1 analysis (log2fc+pvalue ranking):
+*POSITIVE_REGULATION_OF_FATTY_ACID_OXIDATION*
+*UNSATURATED_FATTY_ACID_BIOSYNTHETIC_PROCESS*
+*UNSATURATED_FATTY_ACID_METABOLIC_PROCESS*
+*LONG_CHAIN_FATTY_ACID_METABOLIC_PROCESS*
+FATTY_ACID_METABOLIC_PROCESS
+CELLULAR_RESPONSE_TO_LIPID
+*RESPONSE_TO_LIPID* (this may be redundant to cellular response to lipid, if so just choose one)
+*CELLULAR_RESPONSE_TO_OXYGEN_LEVELS*
+CELLULAR_RESPONSE_TO_OXYGEN_CONTAINING_COMPOUND
+RESPONSE_TO_OXYGEN_LEVELS (this may be redundant to cellular response to oxygen containing compound, if so just choose one)
+
 
 
 Use `conda activate deseq2` and R:
@@ -728,8 +743,8 @@ hs_hallmark_sets <- msigdbr(
 
 # Order our DEG
 ## Let's create a named vector ranked based on the log2 fold change values
-lfc_vector <- CB_1year$combined_score           ################ CHANGE !!!!!!!!!!!!!!!! ######################
-names(lfc_vector) <- CB_1year$gene_name           ################ CHANGE !!!!!!!!!!!!!!!! ######################
+lfc_vector <- CX_1year$combined_score           ################ CHANGE !!!!!!!!!!!!!!!! ######################
+names(lfc_vector) <- CX_1year$gene_name           ################ CHANGE !!!!!!!!!!!!!!!! ######################
 ## We need to sort the log2 fold change values in descending order here
 lfc_vector <- sort(lfc_vector, decreasing = TRUE)
 ### Set the seed so our results are reproducible:
@@ -798,6 +813,91 @@ enrichplot::gseaplot(
 dev.off()
 
 
+# plot for term that are significant in 1mo CB but not in 1mo CTX (all condition in same plot; 1 plot per term)
+## 20240124 ppt
+## Find corresponding gene ID number
+gsea_results$ID # TO CHECK WHICH NB (=gene lists genes) TO USE
+which(gsea_results$ID == "GOBP_RESPONSE_TO_OXYGEN_LEVELS")
+
+### CX_1month IDs; 250, 1145, 1505, 538, 8267, 1708, 7148, 1108
+gsea_results_CX_1month = gsea_results
+
+250 FATTY_ACID_METABOLIC_PROCESS
+1145 UNSATURATED_FATTY_ACID_METABOLIC_PROCESS
+1505 LONG_CHAIN_FATTY_ACID_METABOLIC_PROCESS
+538 UNSATURATED_FATTY_ACID_BIOSYNTHETIC_PROCESS
+8267 POSITIVE_REGULATION_OF_FATTY_ACID_OXIDATION
+1708 RESPONSE_TO_LIPID (this may be redundant to cellular response to lipid, if so just choose one)
+7148 RESPONSE_TO_OXYGEN_LEVELS (this may be redundant to cellular response to oxygen containing compound, if so just choose one)
+1108 CELLULAR_RESPONSE_TO_OXYGEN_CONTAINING_COMPOUND
+
+4716 CELLULAR_RESPONSE_TO_OXYGEN_LEVELS
+10714 CELLULAR_RESPONSE_TO_LIPID
+
+### CX_1year IDs; 4657, 5573, 9494, 688, 4932, 7407, 12234, 6616
+gsea_results_CX_1year = gsea_results
+
+
+4657 FATTY_ACID_METABOLIC_PROCESS
+5573 UNSATURATED_FATTY_ACID_METABOLIC_PROCESS
+9494 LONG_CHAIN_FATTY_ACID_METABOLIC_PROCESS
+688 UNSATURATED_FATTY_ACID_BIOSYNTHETIC_PROCESS
+4932 POSITIVE_REGULATION_OF_FATTY_ACID_OXIDATION
+7407 RESPONSE_TO_LIPID (this may be redundant to cellular response to lipid, if so just choose one)
+12234 RESPONSE_TO_OXYGEN_LEVELS (this may be redundant to cellular response to oxygen containing compound, if so just choose one)
+6616 CELLULAR_RESPONSE_TO_OXYGEN_CONTAINING_COMPOUND
+
+8738 CELLULAR_RESPONSE_TO_OXYGEN_LEVELS
+3563 CELLULAR_RESPONSE_TO_LIPID
+
+
+
+### CB_1month IDs; 391, 607, 684, 1070, 851, 37, 675, 42
+gsea_results_CB_1month = gsea_results
+
+
+391 FATTY_ACID_METABOLIC_PROCESS
+607 UNSATURATED_FATTY_ACID_METABOLIC_PROCESS
+684 LONG_CHAIN_FATTY_ACID_METABOLIC_PROCESS
+1070 UNSATURATED_FATTY_ACID_BIOSYNTHETIC_PROCESS
+851 POSITIVE_REGULATION_OF_FATTY_ACID_OXIDATION
+37 RESPONSE_TO_LIPID (this may be redundant to cellular response to lipid, if so just choose one)
+675 RESPONSE_TO_OXYGEN_LEVELS (this may be redundant to cellular response to oxygen containing compound, if so just choose one)
+42 CELLULAR_RESPONSE_TO_OXYGEN_CONTAINING_COMPOUND
+
+571 CELLULAR_RESPONSE_TO_OXYGEN_LEVELS
+82 CELLULAR_RESPONSE_TO_LIPID
+
+
+### CB_1year IDs; 2223, 10335, 11523, 4074, 9118, 22, 3692, 574
+gsea_results_CB_1year = gsea_results
+
+
+2223 FATTY_ACID_METABOLIC_PROCESS
+10335 UNSATURATED_FATTY_ACID_METABOLIC_PROCESS
+11523 LONG_CHAIN_FATTY_ACID_METABOLIC_PROCESS
+4074 UNSATURATED_FATTY_ACID_BIOSYNTHETIC_PROCESS
+9118 POSITIVE_REGULATION_OF_FATTY_ACID_OXIDATION
+22 RESPONSE_TO_LIPID (this may be redundant to cellular response to lipid, if so just choose one)
+3692 RESPONSE_TO_OXYGEN_LEVELS (this may be redundant to cellular response to oxygen containing compound, if so just choose one)
+574 CELLULAR_RESPONSE_TO_OXYGEN_CONTAINING_COMPOUND
+
+1865 CELLULAR_RESPONSE_TO_OXYGEN_LEVELS
+205 CELLULAR_RESPONSE_TO_LIPID
+
+
+
+pdf("output/gsea/gsea_CX_1month-curatedTerms_V1.pdf", width=14, height=8)
+pdf("output/gsea/gsea_CX_1year-curatedTerms_V1.pdf", width=14, height=8)
+pdf("output/gsea/gsea_CB_1month-curatedTerms_V1.pdf", width=14, height=8)
+pdf("output/gsea/gsea_CB_1year-curatedTerms_V1.pdf", width=14, height=8)
+### CX_1month IDs; 250, 1145, 1505, 538, 8267, 1708, 7148, 1108
+### CX_1year IDs; 4657, 5573, 9494, 688, 4932, 7407, 12234, 6616
+### CB_1month IDs; 391, 607, 684, 1070, 851, 37, 675, 42
+### CB_1year IDs; 2223, 10335, 11523, 4074, 9118, 22, 3692, 574
+pdf("output/gsea/gsea_CB_1year-curatedTerms_V2.pdf", width=10, height=8)
+gseaplot2(gsea_results_CB_1year, geneSetID = c(2223, 10335, 11523, 4074, 9118, 22, 3692, 574))
+dev.off()
 
 
 
@@ -835,7 +935,16 @@ desired_ids <- c(
 "GOBP_LIPID_METABOLIC_PROCESS"
 )
 
-
+desired_ids <- c(
+"GOBP_FATTY_ACID_METABOLIC_PROCESS",
+"GOBP_UNSATURATED_FATTY_ACID_METABOLIC_PROCESS",
+"GOBP_LONG_CHAIN_FATTY_ACID_METABOLIC_PROCESS",
+"GOBP_UNSATURATED_FATTY_ACID_BIOSYNTHETIC_PROCESS",
+"GOBP_POSITIVE_REGULATION_OF_FATTY_ACID_OXIDATION",
+"GOBP_RESPONSE_TO_LIPID",
+"GOBP_RESPONSE_TO_OXYGEN_LEVELS",
+"GOBP_CELLULAR_RESPONSE_TO_OXYGEN_CONTAINING_COMPOUND"
+)
 
 
 
@@ -850,8 +959,7 @@ filtered_data$genotype <-
 
 pdf("output/gsea/heatmap_GOBP_LIPID.pdf", width=3, height=4)
 
-
-
+pdf("output/gsea/heatmap_GOBP_LIPID-curatedTerms_V2.pdf", width=8, height=4)
 ggplot(filtered_data, aes(x=genotype, y=ID, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -875,8 +983,34 @@ ggplot(filtered_data, aes(x=genotype, y=ID, fill=NES)) +
 dev.off()
 
 
+filtered_data$genotype <- factor(filtered_data$genotype,
+                                 levels = c("CX_1month", "CX_1year", "CB_1month", "CB_1year"))
+
+pdf("output/gsea/heatmap_GOBP_LIPID-curatedTerms_V2_greyTale.pdf", width=8, height=4)
+ggplot(filtered_data, aes(x=genotype, y=ID, fill=NES)) + 
+  geom_tile(data = subset(filtered_data, pvalue <= 0.01), color = "black") +  # Add black contour to only significant tiles
+  geom_tile(data = subset(filtered_data, pvalue > 0.01), fill = "grey", color = "black") +  # Fill non-significant tiles with grey
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 6),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="NES") +
+  geom_text(data = subset(filtered_data, pvalue <= 0.01), aes(label=sprintf("%.2f", NES)), 
+            color = "black", size=2) +  # Add text only to significant tiles
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
 ```
-Now GSEA with the log2fc ranking 
+Now GSEA with the log2fc ranking (save under `GoogleDrive/*/gsea/gsea_GO_BP_V2_log2FoldChangeRanking.xlsx`)
 
 
 ```R
@@ -1064,7 +1198,7 @@ dev.off()
 
 ```
 
-
+--> **gsea log2fc + pvalue ranking is better**
 
 
 
@@ -1374,6 +1508,9 @@ genesymbols <- getBM(attributes = c("ensembl_gene_id", "external_gene_name"),
 tpm_all_sample_tidy <- left_join(tpm_all_sample_tidy, genesymbols, 
                                  by = c("Geneid" = "ensembl_gene_id")) %>%
                        unique() 
+## save output:  write.table(tpm_all_sample_tidy, sep = "\t", quote = FALSE, row.names=FALSE, file="output/tpm/tpm_all_sample_tidy.txt")
+## read: 
+
 
 
 tpm_all_sample_tidy_GOBP_RESPONSE_TO_LIPID = GOBP_RESPONSE_TO_LIPID %>%
@@ -1582,6 +1719,8 @@ dev.off()
 
 ## clustered heatmap _ v2 with median replicates
 
+
+
 desired_samples <- tpm_all_sample_tidy_GOBP_RESPONSE_TO_LIPID %>% 
   filter(new_ID %in% c("1month_CB_WT_R1", "1month_CB_WT_R2", "1month_CB_WT_R3", 
                        "1month_CB_KO_R1", "1month_CB_KO_R2", "1month_CB_KO_R3")) %>%
@@ -1590,7 +1729,6 @@ desired_samples <- tpm_all_sample_tidy_GOBP_RESPONSE_TO_LIPID %>%
   mutate(tpm_median = median(TPM)) %>%
   dplyr::select(-TPM, -new_ID) %>%
   unique()
-
 
 
 ### Create a matrix for the heatmap
@@ -1618,6 +1756,71 @@ dev.off()
 
 
 
+
+
+## heatmap _ v2 with median replicates - geneLists 20240124
+### import gene list
+geneLists = read_csv("output/tpm/geneListsCurated_heatmap_20240124_geneSymbol.txt") 
+
+
+### combine with expression
+tpm_all_sample_tidy_geneLists <- geneLists %>%
+  left_join(tpm_all_sample_tidy, by = "external_gene_name")
+
+desired_samples <- tpm_all_sample_tidy_geneLists %>%
+  filter(new_ID %in% c("1month_CB_WT_R1", "1month_CB_WT_R2", "1month_CB_WT_R3", 
+                       "1month_CB_KO_R1", "1month_CB_KO_R2", "1month_CB_KO_R3",
+                       "1year_CB_WT_R1", "1year_CB_WT_R2", "1year_CB_WT_R3", 
+                       "1year_CB_KO_R1", "1year_CB_KO_R2", "1year_CB_KO_R3",
+                       "1month_CX_WT_R1", "1month_CX_WT_R2", "1month_CX_WT_R3", 
+                       "1month_CX_KO_R1", "1month_CX_KO_R2", "1month_CX_KO_R3",
+                       "1year_CX_WT_R1", "1year_CX_WT_R2", "1year_CX_WT_R3", 
+                       "1year_CX_KO_R1", "1year_CX_KO_R2", "1year_CX_KO_R3")) %>%
+  mutate(new_ID_grouped = sub("_R[0-9]+$", "", new_ID)) %>%
+  group_by(new_ID_grouped, external_gene_name) %>%
+  summarise(tpm_median = median(log2(tpm + 1))) %>%
+  ungroup()
+
+# Pivot the data to a long format suitable for ggplot
+long_df <- desired_samples %>%
+  pivot_longer(cols = tpm_median, names_to = "Condition", values_to = "Expression")
+
+
+long_df$new_ID_grouped <-
+  factor(long_df$new_ID_grouped,
+         c("1month_CX_WT", "1month_CX_KO", "1year_CX_WT", "1year_CX_KO",
+           "1month_CB_WT", "1month_CB_KO", "1year_CB_WT", "1year_CB_KO"))
+
+pdf("output/tpm/heatmap-geneListsCurated-median.pdf", width=5, height=5)
+ggplot(long_df, aes(x = new_ID_grouped, y = reorder(external_gene_name, Expression), fill = Expression) )+
+  geom_tile() +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=3, name="log2(tpm+1)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+        axis.text.y = element_text(size = 8),
+        legend.position = "right")
+dev.off()
+
+library("ggpubr")
+
+pdf("output/tpm/boxplot-geneListsCurated-median.pdf", width=6, height=4)
+ggboxplot(long_df, x = "new_ID_grouped", y = "Expression",
+  add.params = list(size = 1, alpha = 0.5),
+      fill = "new_ID_grouped", palette = c("darkgrey","darkgrey","darkgrey","darkgrey","darkgrey","darkgrey","darkgrey","darkgrey"),  add = "jitter") + theme_classic() +
+  stat_compare_means(comparisons = list( c("1month_CX_WT", "1month_CX_KO"), c("1year_CX_WT", "1year_CX_KO"), c("1month_CB_WT", "1month_CB_KO"), c("1year_CB_WT", "1year_CB_KO") )) + # Add pairwise comparisons p-value
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5) )
+dev.off()
+
+
+pdf("output/tpm/boxplot_nojitter-geneListsCurated-median.pdf", width=6, height=4)
+ggboxplot(long_df, x = "new_ID_grouped", y = "Expression",
+  add.params = list(size = 1, alpha = 0.5),
+      fill = "new_ID_grouped", palette = c("darkgrey","darkgrey","darkgrey","darkgrey","darkgrey","darkgrey","darkgrey","darkgrey")) + theme_classic() +
+  stat_compare_means(comparisons = list( c("1month_CX_WT", "1month_CX_KO"), c("1year_CX_WT", "1year_CX_KO"), c("1month_CB_WT", "1month_CB_KO"), c("1year_CB_WT", "1year_CB_KO") )) + # Add pairwise comparisons p-value
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5) )
+dev.off()
 
 ```
 
