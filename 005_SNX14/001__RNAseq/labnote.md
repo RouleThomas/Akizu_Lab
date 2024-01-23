@@ -1825,11 +1825,136 @@ dev.off()
 ```
 
 
+# volcano plot labelling genes
+
+Let's label some genes in the volcano plots
+- import RNAseq Novogen data
+- label genes with enhancedvolcano
+
+
+Take ressource
+```bash
+module load R/4.2.2
+srun --mem=50g --pty bash -l
+R
+```
+Go in R
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+library("apeglm")
+library("EnhancedVolcano")
+library("org.Hs.eg.db")
+library("AnnotationDbi")
+library("biomaRt")
+library("readxl")
+
+# import DEGs output
+DEG_CB_1month = read_excel('output/deseq2/RNAseq of CB&CX_1mon&1yr.xlsx', sheet = 1) %>%
+  dplyr::select(gene_name, log2FoldChange,padj) %>%
+  unique()
+DEG_CB_1year= read_excel('output/deseq2/RNAseq of CB&CX_1mon&1yr.xlsx', sheet = 2) %>%
+  dplyr::select(Gene.name, log2FoldChange,padj) %>%
+  unique() %>%
+  dplyr::rename("gene_name" = "Gene.name")
+DEG_CX_1month = read_excel('output/deseq2/RNAseq of CB&CX_1mon&1yr.xlsx', sheet = 3) %>%
+  dplyr::select(gene_name, log2FoldChange,padj) %>%
+  unique()
+DEG_CX_1year= read_excel('output/deseq2/RNAseq of CB&CX_1mon&1yr.xlsx', sheet = 4)%>%
+  dplyr::select(Gene.name, log2FoldChange,padj) %>%
+  unique() %>%
+  dplyr::rename("gene_name" = "Gene.name")
+
+
+# re-calculate pvalue adj
+DEG_CB_1month = read_excel('output/deseq2/RNAseq of CB&CX_1mon&1yr.xlsx', sheet = 1) %>%
+  dplyr::select(gene_name, log2FoldChange,pvalue) %>%
+  unique() %>%
+  mutate(padj = p.adjust(pvalue, method = "BH")) # Benjamini & Hochberg method
+DEG_CB_1year= read_excel('output/deseq2/RNAseq of CB&CX_1mon&1yr.xlsx', sheet = 2) %>%
+  dplyr::select(Gene.name, log2FoldChange,pvalue) %>%
+  unique() %>%
+  dplyr::rename("gene_name" = "Gene.name")%>%
+  mutate(padj = p.adjust(pvalue, method = "BH")) # Benjamini & Hochberg method
+DEG_CX_1month = read_excel('output/deseq2/RNAseq of CB&CX_1mon&1yr.xlsx', sheet = 3) %>%
+  dplyr::select(gene_name, log2FoldChange,pvalue) %>%
+  unique()%>%
+  mutate(padj = p.adjust(pvalue, method = "BH")) # Benjamini & Hochberg method
+DEG_CX_1year= read_excel('output/deseq2/RNAseq of CB&CX_1mon&1yr.xlsx', sheet = 4)%>%
+  dplyr::select(Gene.name, log2FoldChange,pvalue) %>%
+  unique() %>%
+  dplyr::rename("gene_name" = "Gene.name")%>%
+  mutate(padj = p.adjust(pvalue, method = "BH")) # Benjamini & Hochberg method
 
 
 
 
 
+### DEG_CB_1month
+highlight_genes <- c("Fabp5", "Fabp1", "Acsl5", "Gstm2", "Dcn", "Hmox1", "Nol3", "Snx14") # 1month_CB
+highlight_genes <- c("Fabp5", "Dcn", "Snx14") # 1month_CB_signifOnly
+
+highlight_genes <- c("Acacb", "Acsm5", "Cp","Lyz2", "C4b", "Cd68", "Trem2", "Apoe","Gfap","Casp3","Lcn2","Snx14" ) # 1year_CB 
+highlight_genes <- c("Snx14" ) # 1month_CX 
+highlight_genes <- c("Sv2c", "Doc2b","Snx14") # 1year_CX
+
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  DEG_CX_1year$log2FoldChange < -0.5 & DEG_CX_1year$padj < 5e-2, 'Sky Blue',
+    ifelse(DEG_CX_1year$log2FoldChange > 0.5 & DEG_CX_1year$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+pdf("output/deseq2/plotVolcano_DEG_CB_1month.pdf", width=8, height=8)  
+pdf("output/deseq2/plotVolcano_DEG_CB_1month_signifOnly.pdf", width=8, height=8)  
+
+pdf("output/deseq2/plotVolcano_DEG_CX_1month.pdf", width=8, height=8)  
+pdf("output/deseq2/plotVolcano_DEG_CX_1year.pdf", width=8, height=8)  
+
+pdf("output/deseq2/plotVolcano_DEG_CB_1year.pdf", width=8, height=8)  
+
+pdf("output/deseq2/plotVolcano_DEG_CB_1month_pvalueadj_signifOnly.pdf", width=8, height=8)  
+pdf("output/deseq2/plotVolcano_DEG_CB_1year_pvalueadj.pdf", width=8, height=8)  
+pdf("output/deseq2/plotVolcano_DEG_CX_1month_pvalueadj.pdf", width=8, height=8)  
+pdf("output/deseq2/plotVolcano_DEG_CX_1year_pvalueadj.pdf", width=8, height=8)  
+
+
+EnhancedVolcano(DEG_CX_1year,
+  lab = DEG_CX_1year$gene_name,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, 1yearCB',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 1.5,
+  labSize = 4.5,
+  shape = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+```
+
+
+
+
+--> Needed to re-calculate the padj as some genes were having an NA value... Including Lcn2...
+----> Plot corrected as `*pvalueadj.pdf`
 
 
 
