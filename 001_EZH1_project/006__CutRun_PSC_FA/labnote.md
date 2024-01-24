@@ -572,6 +572,187 @@ sbatch scripts/matrix_TSS_10kb_bigwig_unique-EZH1EZH2_PSC.sh # 7075199 ok
 
 
 
+# Deeptools plot for comparison EZH1 CutRun in native (`005`) and FA (`006`) conditions in PSC KOEF1aEZH1
+
+## Gene comparison
+- Collect all genes bound with EZH1cs (=860 genes); according to macs2 qval 1.3 (`output/ChIPseeker/annot_macs2_KOEF1aEZH1_EZH1cs_qval1.30103_promoterAnd5_geneSymbol.txt`) in 005 and 006 = `annotation_macs2_PSC_KOEF1aEZH1_EZH1_qval1.30103_promoterAnd5_geneSymbol-CutRun005and006.txt`
+- Generate gtf of these genes
+- deeptool plots with bigwig EZH1cs `005` and `006`
+
+
+
+```bash
+
+# Generate gtf from gene Symbol list
+perl -p -i -e 's/\r$//' output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1_EZH1_qval1.30103_promoterAnd5_geneSymbol-CutRun005and006.txt  # THIS TO CONVERT windowns to UNIX; as .txt from windows...
+
+
+### Modify the .txt file that list all genes so that it match gtf structure
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1_EZH1_qval1.30103_promoterAnd5_geneSymbol-CutRun005and006.txt > output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1_EZH1_qval1.30103_promoterAnd5_geneSymbol-CutRun005and006_as_gtf_geneSymbol.txt
+
+### Filter the gtf
+grep -Ff output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1_EZH1_qval1.30103_promoterAnd5_geneSymbol-CutRun005and006_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI-annotation_macs2_PSC_KOEF1aEZH1_EZH1_qval1.30103_promoterAnd5_geneSymbol-CutRun005and006.gtf
+
+
+```
+
+
+Now deepTools with *bigiwg_unique* files
+
+```bash
+conda activate deeptools
+
+# all 860 genes
+sbatch scripts/matrix_TSS_10kb_bigwig_unique-annotation_macs2_PSC_KOEF1aEZH1_EZH1_qval1.30103_promoterAnd5_geneSymbol-CutRun005and006.sh # 11447101 ok
+
+
+```
+
+--> **FA for EZH1cs CutRun in PSC works better than native**; the signal to noise ratio is higher
+
+
+## Peak comparison
+
+- Collect native peaks and check EZH1 profile for native and FA
+- Same starting with FA peaks
+
+
+```bash
+# peak in 005 native
+sbatch scripts/matrix_TSS_10kb_bigwig_unique-annotation_macs2_PSC_KOEF1aEZH1_EZH1_qval1.30103-CutRun005.sh # 11455500 ok
+
+# peak in 006 FA
+sbatch scripts/matrix_TSS_10kb_bigwig_unique-annotation_macs2_PSC_KOEF1aEZH1_EZH1_qval1.30103-CutRun006.sh # 11455846 ok
+
+```
+
+
+
+# Deeptools plot for comparison EZH1 CutRun in WT vs KOEF1EZH1
+
+
+Is the signal in WT, true or not? --> Collect true EZH1cs signal in PSC_KOEF1EZH1 in FA condition (better than native) and check signal in WT
+- Overlap= signal is true; play with IGG to clean it
+- No overlap= what we see is mostly ‘noise’; no need computational trick
+
+
+Now deepTools with *bigiwg_unique* files
+
+```bash
+conda activate deeptools
+
+# all EZH1cs peaks in KOEF1aEZH1
+sbatch scripts/matrix_TSS_10kb_bigwig_unique-annotation_macs2_PSC_KOEF1aEZH1_EZH1_qval1.30103-CutRun005and006_KOEF1aEZH1andWT.sh # 11457719 ok
+
+# all 860 genes bound with EZH1cs
+sbatch scripts/matrix_TSS_10kb_bigwig_unique-annotation_macs2_PSC_KOEF1aEZH1_EZH1_qval1.30103_promoterAnd5_geneSymbol-CutRun005and006_KOEF1aEZH1andWT.sh # 11457352 ok
+
+
+
+```
+
+
+--> There is overlap so the very low EZH1cs signal in WT is true signal as it overlap with KOEF1EZH1 signal.
+----> There might be computational tricks to clean out low and noisy EZH1cs signal in the WT...?
+
+
+
+
+
+# Deeptools plot for comparison EZH1 CutRun in WT vs KOEF1EZH1
+
+
+Is the signal in WT, true or not? --> Collect true EZH1cs signal in PSC_KOEF1EZH1 in FA condition (better than native) and check signal in WT
+- Overlap= signal is true; play with IGG to clean it
+- No overlap= what we see is mostly ‘noise’; no need computational trick
+
+
+Now deepTools with *bigiwg_unique* files
+
+```bash
+conda activate deeptools
+
+# all EZH1cs peaks in KOEF1aEZH1
+sbatch scripts/matrix_TSS_10kb_bigwig_unique-annotation_macs2_PSC_KOEF1aEZH1_EZH1_qval1.30103-CutRun005and006_KOEF1aEZH1andWT.sh # 11457719 ok
+
+# all 860 genes bound with EZH1cs
+sbatch scripts/matrix_TSS_10kb_bigwig_unique-annotation_macs2_PSC_KOEF1aEZH1_EZH1_qval1.30103_promoterAnd5_geneSymbol-CutRun005and006_KOEF1aEZH1andWT.sh # 11457352 ok
+
+
+
+```
+
+
+--> There is overlap so the very low EZH1cs signal in WT is true signal as it overlap with KOEF1EZH1 signal.
+----> There might be computational tricks to clean out low and noisy EZH1cs signal in the WT...?
+
+
+
+
+
+# Deeptools plot for comparison EZH2 CutRun in WT vs KOEF1EZH1
+
+## Gene comparison
+
+To check EZH2 AB specificity? Not clear to me:
+
+*“High overlap could suggest that EZH2 recognize EZH1”*… Why?? Because many EZH1 in KOEF1EZH1 so EZH2 could recognize them? High overlap could also suggest EZH2 binding is not affected by EZH1 overexpression, right?
+
+- Collect all 1,437 genes that are bound with EZH2 in either WT and KOEF1aEZH1 and check EZH2 profile (file = `output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1andWT_EZH2_qval1.30103_promoterAnd5_geneSymbol.txt`)
+- generate gtf of these genes
+
+
+```bash
+
+# Generate gtf from gene Symbol list
+perl -p -i -e 's/\r$//' output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1andWT_EZH2_qval1.30103_promoterAnd5_geneSymbol.txt  # THIS TO CONVERT windowns to UNIX; as .txt from windows...
+
+
+### Modify the .txt file that list all genes so that it match gtf structure
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1andWT_EZH2_qval1.30103_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1andWT_EZH2_qval1.30103_promoterAnd5_as_gtf_geneSymbol.txt
+
+### Filter the gtf
+grep -Ff output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1andWT_EZH2_qval1.30103_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI-annotation_macs2_PSC_KOEF1aEZH1andWT_EZH2_qval1.30103_promoterAnd5_geneSymbol.gtf
+
+
+```
+
+
+
+
+Now deepTools with *bigiwg_unique* files
+
+```bash
+conda activate deeptools
+
+# all 1,437 genes bound with EZH2
+sbatch scripts/matrix_TSS_10kb_bigwig_unique-annotation_macs2_PSC_KOEF1aEZH1andWT_EZH2_qval1.30103_promoterAnd5_geneSymbol.sh # 11460412 ok
+
+```
+
+
+--> very high overlap!
+
+
+
+## Peak comparison
+
+- Collect WT peaks and check EZH2 profile for WT and KOEF1EZH1
+- Same starting with KOEF1EZH1 peaks
+
+
+
+```bash
+# peak in WT
+sbatch scripts/matrix_TSS_10kb_bigwig_unique-annotation_macs2_PSC_WT_EZH2_qval1.30103-WTandKOEF1aEZH1.sh # 11460783 ok
+
+# peak in KOEF1aEZH1
+sbatch scripts/matrix_TSS_10kb_bigwig_unique-annotation_macs2_PSC_KOEF1aEZH1_EZH2_qval1.30103-WTandKOEF1aEZH1.sh # 11460843 ok
+```
+
+--> very high overlap!
+
+
 
 
 
