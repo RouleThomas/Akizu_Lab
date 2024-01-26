@@ -1965,14 +1965,14 @@ highlight_genes <- c("Sv2c", "Doc2b","Snx14") # 1year_CX
 
 # FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
 keyvals <- ifelse(
-  DEG_CB_1month$log2FoldChange < -0.5 & DEG_CB_1month$padj < 5e-2, 'Sky Blue',
-    ifelse(DEG_CB_1month$log2FoldChange > 0.5 & DEG_CB_1month$padj < 5e-2, 'Orange',
+  DEG_CX_1year$log2FoldChange < -0.5 & DEG_CX_1year$padj < 5e-2, 'Sky Blue',
+    ifelse(DEG_CX_1year$log2FoldChange > 0.5 & DEG_CX_1year$padj < 5e-2, 'Orange',
       'grey'))
 
 keyvals[is.na(keyvals)] <- 'black'
-names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'Red'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
 names(keyvals)[keyvals == 'grey'] <- 'Not significant'
-names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+names(keyvals)[keyvals == 'Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
 
 pdf("output/deseq2/plotVolcano_DEG_CB_1month.pdf", width=8, height=8)  
 pdf("output/deseq2/plotVolcano_DEG_CB_1month_signifOnly.pdf", width=8, height=8)  
@@ -1982,11 +1982,13 @@ pdf("output/deseq2/plotVolcano_DEG_CX_1year.pdf", width=8, height=8)
 
 pdf("output/deseq2/plotVolcano_DEG_CB_1year.pdf", width=8, height=8)  
 
+
 pdf("output/deseq2/plotVolcano_DEG_CB_1month_pvalueadj_signifOnly.pdf", width=8, height=8)  
+
+
 pdf("output/deseq2/plotVolcano_DEG_CB_1year_pvalueadj.pdf", width=8, height=8)  
 pdf("output/deseq2/plotVolcano_DEG_CX_1month_pvalueadj.pdf", width=8, height=8)  
 pdf("output/deseq2/plotVolcano_DEG_CX_1year_pvalueadj.pdf", width=8, height=8)  
-
 
 EnhancedVolcano(DEG_CX_1year,
   lab = DEG_CX_1year$gene_name,
@@ -1996,17 +1998,24 @@ EnhancedVolcano(DEG_CX_1year,
   title = 'KO vs WT, 1yearCB',
   pCutoff = 5e-2,         #
   FCcutoff = 0.5,
-  pointSize = 1.5,
-  labSize = 4.5,
+  pointSize = 6,
+  labSize = 11,
   shape = 20,
   colCustom = keyvals,
   drawConnectors = TRUE,
-  widthConnectors = 0.5,
+  widthConnectors = 1,
   colConnectors = 'black',
   max.overlaps = 100,
   arrowheads = FALSE)  + 
   theme_bw() +
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  theme(legend.position = "none",
+        axis.title.x = element_text(size = 30),
+        axis.title.y = element_text(size = 30),
+        axis.text.x = element_text(size = 40),
+        axis.text.y = element_text(size = 40)) +
+  ylim(0,100)
+
 dev.off()
 
 
