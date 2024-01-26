@@ -899,7 +899,13 @@ pdf("output/gsea/gsea_CB_1year-curatedTerms_V2.pdf", width=10, height=8)
 gseaplot2(gsea_results_CB_1year, geneSetID = c(2223, 10335, 11523, 4074, 9118, 22, 3692, 574))
 dev.off()
 
-
+### CX_1month; 7148, 1708, 8267, 1505
+### CX_1year; 12234, 7407, 4932, 9494
+### CB_1month; 675, 37, 851, 684
+### CB_1year; 3692, 22, 9118, 11523
+pdf("output/gsea/gsea_CB_1year-curatedTerms_V3.pdf", width=7, height=7)
+gseaplot2(gsea_results_CB_1year, geneSetID = c(3692, 22, 9118, 11523), base_size = 30) 
+dev.off()
 
 
 
@@ -947,6 +953,12 @@ desired_ids <- c(
 )
 
 
+desired_ids <- c(
+"GOBP_RESPONSE_TO_OXYGEN_LEVELS",
+"GOBP_RESPONSE_TO_LIPID",
+"GOBP_POSITIVE_REGULATION_OF_FATTY_ACID_OXIDATION",
+"GOBP_LONG_CHAIN_FATTY_ACID_METABOLIC_PROCESS"
+)
 
 # Filter the data for desired IDs
 filtered_data <- gsea_result_df_tidy %>%
@@ -960,12 +972,14 @@ filtered_data$genotype <-
 pdf("output/gsea/heatmap_GOBP_LIPID.pdf", width=3, height=4)
 
 pdf("output/gsea/heatmap_GOBP_LIPID-curatedTerms_V2.pdf", width=8, height=4)
+pdf("output/gsea/heatmap_GOBP_LIPID-curatedTerms_V3.pdf", width=8, height=4)
+
 ggplot(filtered_data, aes(x=genotype, y=ID, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
   theme(
-    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
-    axis.text.y = element_text(size = 6),
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 14, vjust = 1),
+    axis.text.y = element_text(size = 12),
     axis.title.x = element_blank(),
     axis.title.y = element_blank(),
     panel.grid.major = element_blank(),
@@ -978,7 +992,7 @@ ggplot(filtered_data, aes(x=genotype, y=ID, fill=NES)) +
   scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="NES") +
   geom_text(aes(label=sprintf("%.2f", NES)), 
             color = ifelse(filtered_data$pvalue <= 0.01, "black", "grey50"), 
-            size=2) +
+            size=5.2) +
   coord_fixed()  # Force aspect ratio of the plot to be 1:1
 dev.off()
 
@@ -1509,7 +1523,7 @@ tpm_all_sample_tidy <- left_join(tpm_all_sample_tidy, genesymbols,
                                  by = c("Geneid" = "ensembl_gene_id")) %>%
                        unique() 
 ## save output:  write.table(tpm_all_sample_tidy, sep = "\t", quote = FALSE, row.names=FALSE, file="output/tpm/tpm_all_sample_tidy.txt")
-## read: 
+## read: tpm_all_sample_tidy <- read.csv("output/tpm/tpm_all_sample_tidy.txt", sep = "\t", header = TRUE)
 
 
 
@@ -1759,9 +1773,10 @@ dev.off()
 
 
 ## heatmap _ v2 with median replicates - geneLists 20240124
+tpm_all_sample_tidy <- read.csv("output/tpm/tpm_all_sample_tidy.txt", sep = "\t", header = TRUE)
 ### import gene list
-geneLists = read_csv("output/tpm/geneListsCurated_heatmap_20240124_geneSymbol.txt") 
-
+geneLists = read_csv("output/tpm/geneListsCurated_heatmap_20240124_geneSymbol.txt") # all leading edge genes
+geneLists = read_csv("output/tpm/geneListsCurated_heatmap_20240124_geneSymbol_CB1monthGenes.txt") # CB 1 month leading genes only
 
 ### combine with expression
 tpm_all_sample_tidy_geneLists <- geneLists %>%
@@ -1792,6 +1807,8 @@ long_df$new_ID_grouped <-
            "1month_CB_WT", "1month_CB_KO", "1year_CB_WT", "1year_CB_KO"))
 
 pdf("output/tpm/heatmap-geneListsCurated-median.pdf", width=5, height=5)
+pdf("output/tpm/heatmap-geneListsCurated_CB1monthGenes-median.pdf", width=3, height=8)
+
 ggplot(long_df, aes(x = new_ID_grouped, y = reorder(external_gene_name, Expression), fill = Expression) )+
   geom_tile() +
   scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=3, name="log2(tpm+1)") +
@@ -1800,6 +1817,50 @@ ggplot(long_df, aes(x = new_ID_grouped, y = reorder(external_gene_name, Expressi
         axis.text.y = element_text(size = 8),
         legend.position = "right")
 dev.off()
+
+
+## Z - score plot ######################
+# Pivot the data to a long format suitable for ggplot
+
+desired_samples <- tpm_all_sample_tidy_geneLists %>%
+  filter(new_ID %in% c("1month_CB_WT_R1", "1month_CB_WT_R2", "1month_CB_WT_R3", 
+                       "1month_CB_KO_R1", "1month_CB_KO_R2", "1month_CB_KO_R3",
+                       "1year_CB_WT_R1", "1year_CB_WT_R2", "1year_CB_WT_R3", 
+                       "1year_CB_KO_R1", "1year_CB_KO_R2", "1year_CB_KO_R3",
+                       "1month_CX_WT_R1", "1month_CX_WT_R2", "1month_CX_WT_R3", 
+                       "1month_CX_KO_R1", "1month_CX_KO_R2", "1month_CX_KO_R3",
+                       "1year_CX_WT_R1", "1year_CX_WT_R2", "1year_CX_WT_R3", 
+                       "1year_CX_KO_R1", "1year_CX_KO_R2", "1year_CX_KO_R3")) %>%
+  mutate(new_ID_grouped = sub("_R[0-9]+$", "", new_ID)) %>%
+  group_by(new_ID_grouped, external_gene_name) %>%
+  summarise(tpm_median = median(log2(tpm + 1))) %>%
+  ungroup() %>%
+  mutate(z_score = (tpm_median - mean(tpm_median)) / sd(tpm_median))
+
+
+long_df <- desired_samples %>%
+  pivot_longer(cols = z_score, names_to = "Condition", values_to = "Expression")
+
+
+long_df$new_ID_grouped <-
+  factor(long_df$new_ID_grouped,
+         c("1month_CX_WT", "1month_CX_KO", "1year_CX_WT", "1year_CX_KO",
+           "1month_CB_WT", "1month_CB_KO", "1year_CB_WT", "1year_CB_KO"))
+
+pdf("output/tpm/heatmap-geneListsCurated_CB1monthGenes-median_Zscore.pdf", width=4, height=8)
+
+ggplot(long_df, aes(x = new_ID_grouped, y = reorder(external_gene_name, Expression), fill = Expression) )+
+  geom_tile() +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="red", midpoint=0, name="z-score") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+        axis.text.y = element_text(size = 8),
+        legend.position = "right")
+dev.off()
+
+########################################
+
+
 
 library("ggpubr")
 
@@ -1904,8 +1965,8 @@ highlight_genes <- c("Sv2c", "Doc2b","Snx14") # 1year_CX
 
 # FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
 keyvals <- ifelse(
-  DEG_CX_1year$log2FoldChange < -0.5 & DEG_CX_1year$padj < 5e-2, 'Sky Blue',
-    ifelse(DEG_CX_1year$log2FoldChange > 0.5 & DEG_CX_1year$padj < 5e-2, 'Orange',
+  DEG_CB_1month$log2FoldChange < -0.5 & DEG_CB_1month$padj < 5e-2, 'Sky Blue',
+    ifelse(DEG_CB_1month$log2FoldChange > 0.5 & DEG_CB_1month$padj < 5e-2, 'Orange',
       'grey'))
 
 keyvals[is.na(keyvals)] <- 'black'
@@ -1947,6 +2008,15 @@ EnhancedVolcano(DEG_CX_1year,
   theme_bw() +
   theme(legend.position = "none")
 dev.off()
+
+
+# count genes
+
+
+upregulated_genes <- sum(DEG_CX_1year$log2FoldChange > 0.5 & DEG_CX_1year$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(DEG_CX_1year$log2FoldChange < -0.5 & DEG_CX_1year$padj < 5e-2, na.rm = TRUE)
+
+
 
 ```
 
