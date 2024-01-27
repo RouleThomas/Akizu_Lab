@@ -1954,6 +1954,35 @@ DEG_CX_1year= read_excel('output/deseq2/RNAseq of CB&CX_1mon&1yr.xlsx', sheet = 
 
 
 
+# re-calculate pvalue adj and compare with previous   ########################
+DEG_CB_1month = read_excel('output/deseq2/RNAseq of CB&CX_1mon&1yr.xlsx', sheet = 1) %>%
+  dplyr::select(gene_name, log2FoldChange,pvalue,padj) %>%
+  unique() %>%
+  mutate(padj_new = p.adjust(pvalue, method = "BH")) # Benjamini & Hochberg method
+DEG_CB_1year= read_excel('output/deseq2/RNAseq of CB&CX_1mon&1yr.xlsx', sheet = 2) %>%
+  dplyr::select(Gene.name, log2FoldChange,pvalue,padj) %>%
+  unique() %>%
+  dplyr::rename("gene_name" = "Gene.name")%>%
+  mutate(padj_new = p.adjust(pvalue, method = "BH")) # Benjamini & Hochberg method
+DEG_CX_1month = read_excel('output/deseq2/RNAseq of CB&CX_1mon&1yr.xlsx', sheet = 3) %>%
+  dplyr::select(gene_name, log2FoldChange,pvalue,padj) %>%
+  unique()%>%
+  mutate(padj_new = p.adjust(pvalue, method = "BH")) # Benjamini & Hochberg method
+DEG_CX_1year= read_excel('output/deseq2/RNAseq of CB&CX_1mon&1yr.xlsx', sheet = 4)%>%
+  dplyr::select(Gene.name, log2FoldChange,pvalue,padj) %>%
+  unique() %>%
+  dplyr::rename("gene_name" = "Gene.name")%>%
+  mutate(padj_new = p.adjust(pvalue, method = "BH")) # Benjamini & Hochberg method
+
+
+write.table(DEG_CB_1month, sep = "\t", quote = FALSE, row.names=FALSE, file="output/deseq2/DEG_CB_1month.txt")
+write.table(DEG_CB_1year, sep = "\t", quote = FALSE, row.names=FALSE, file="output/deseq2/DEG_CB_1year.txt")
+write.table(DEG_CX_1month, sep = "\t", quote = FALSE, row.names=FALSE, file="output/deseq2/DEG_CX_1month.txt")
+write.table(DEG_CX_1year, sep = "\t", quote = FALSE, row.names=FALSE, file="output/deseq2/DEG_CX_1year.txt")
+
+########################################################################
+
+
 ### DEG_CB_1month
 highlight_genes <- c("Fabp5", "Fabp1", "Acsl5", "Gstm2", "Dcn", "Hmox1", "Nol3", "Snx14") # 1month_CB
 highlight_genes <- c("Fabp5", "Dcn", "Snx14") # 1month_CB_signifOnly
@@ -1965,8 +1994,8 @@ highlight_genes <- c("Sv2c", "Doc2b","Snx14") # 1year_CX
 
 # FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
 keyvals <- ifelse(
-  DEG_CX_1year$log2FoldChange < -0.5 & DEG_CX_1year$padj < 5e-2, 'Sky Blue',
-    ifelse(DEG_CX_1year$log2FoldChange > 0.5 & DEG_CX_1year$padj < 5e-2, 'Orange',
+  DEG_CB_1month$log2FoldChange < -0.5 & DEG_CB_1month$padj < 5e-2, 'Sky Blue',
+    ifelse(DEG_CB_1month$log2FoldChange > 0.5 & DEG_CB_1month$padj < 5e-2, 'Orange',
       'grey'))
 
 keyvals[is.na(keyvals)] <- 'black'
@@ -2026,6 +2055,15 @@ upregulated_genes <- sum(DEG_CX_1year$log2FoldChange > 0.5 & DEG_CX_1year$padj <
 downregulated_genes <- sum(DEG_CX_1year$log2FoldChange < -0.5 & DEG_CX_1year$padj < 5e-2, na.rm = TRUE)
 
 
+
+# Save as gene list for GO analysis:
+upregulated <- DEG_CX_1year[!is.na(DEG_CX_1year$log2FoldChange) & !is.na(DEG_CX_1year$padj) & DEG_CX_1year$log2FoldChange > 0.5 & DEG_CX_1year$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- DEG_CX_1year[!is.na(DEG_CX_1year$log2FoldChange) & !is.na(DEG_CX_1year$padj) & DEG_CX_1year$log2FoldChange < -0.5 & DEG_CX_1year$padj < 5e-2, ]
+#### Save
+write.table(upregulated$gene_name, file = "output/deseq2/upregulated_q05FC05_DEG_CX_1year.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$gene_name, file = "output/deseq2/downregulated_q05FC05_DEG_DEG_CX_1year.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
 ```
 
