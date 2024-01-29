@@ -1886,7 +1886,1019 @@ dev.off()
 ```
 
 
-# volcano plot labelling genes
+## bigwig coverage files
+
+Generate bigwig coverage files from the bam.
+
+
+Let's generate **TPM coverage**:
+
+```bash
+conda activate deeptools
+# run time-per-time:
+sbatch scripts/TPM_bw_1.sh # 11761814 xxx
+sbatch scripts/TPM_bw_2.sh # 11761885 xxx
+```
+
+
+
+# DEGs with deseq2
+
+
+**IMPORTANT NOTE: Here it is advisable to REMOVE all genes from chromosome X and Y BEFORE doing the DEGs analysis (X chromosome re-activation occurs in some samples, notably these with more cell passage; in our case, the HET and KO)**
+
+
+## PCA and clustering with deseq2 mm10
+
+In R; Import all counts and combine into one matrix, deseq2 dataframe (dds)
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+
+# import featurecounts output and keep only gene ID and counts
+## collect all samples ID
+### 1month data
+samples <- c("S_CB_KO1", "S_CB_KO2", "S_CB_KO3", "S_CB_WT1", "S_CB_WT2", "S_CB_WT3", "S_CX_KO1" ,"S_CX_KO2" ,"S_CX_KO3" ,"S_CX_WT1", "S_CX_WT2" ,"S_CX_WT3")
+
+## Make a loop for importing all featurecounts data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/featurecounts/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    select(Geneid, starts_with("output/bam/1month_rnaseqyz072420/")) %>%
+    rename(!!sample := starts_with("output/bam/1month_rnaseqyz072420/"))
+}
+
+# Merge all dataframe into a single one
+counts_all_1 <- reduce(sample_data, full_join, by = "Geneid")
+
+### 1year data
+samples <- c("171HetCB", "174MTCB", "175HetCB" ,"177MTCB" ,"474WTCB", "171HetCX", "174MTCX" ,"175HetCX", "177MTCX", "474WTCX")
+
+## Make a loop for importing all featurecounts data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/featurecounts/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    select(Geneid, starts_with("output/bam/1year_AL1804271_R2_new_analysis/")) %>%
+    rename(!!sample := starts_with("output/bam/1year_AL1804271_R2_new_analysis/"))
+}
+
+counts_all_2 <- reduce(sample_data, full_join, by = "Geneid")
+
+### combine 1month and 1year
+counts_all = counts_all_1 %>%
+  left_join(counts_all_2)
+
+### rename sample
+fileName <- tibble(
+  ID = c("S_CB_KO1", "S_CB_KO2", "S_CB_KO3", "S_CB_WT1", "S_CB_WT2", "S_CB_WT3", 
+         "S_CX_KO1", "S_CX_KO2", "S_CX_KO3", "S_CX_WT1", "S_CX_WT2", "S_CX_WT3", 
+         "171HetCB", "174MTCB", "175HetCB", "177MTCB", "474WTCB", 
+         "171HetCX", "174MTCX", "175HetCX", "177MTCX", "474WTCX"),
+  genotype = c("KO", "KO", "KO", "WT", "WT", "WT", 
+               "KO", "KO", "KO", "WT", "WT", "WT", 
+               "WT", "KO", "WT", "KO", "WT", 
+               "WT", "KO", "WT", "KO", "WT"),
+  time = c(rep("1month", 12), rep("1year", 10)),
+  tissue = c(rep("CB", 6), rep("CX", 6), rep("CB", 5), rep("CX", 5)),
+  replicate = c(rep("R1", 2), rep("R2", 2), rep("R3", 2), rep("R1", 2), rep("R2", 2), rep("R3", 2), "R1", "R1", "R2", "R2", "R3", "R1", "R1", "R2", "R2", "R3"), 
+  new_ID = c("1month_CB_KO_R1", "1month_CB_KO_R2", "1month_CB_KO_R3", 
+             "1month_CB_WT_R1", "1month_CB_WT_R2", "1month_CB_WT_R3", 
+             "1month_CX_KO_R1", "1month_CX_KO_R2", "1month_CX_KO_R3", 
+             "1month_CX_WT_R1", "1month_CX_WT_R2", "1month_CX_WT_R3", 
+             "1year_CB_WT_R1", "1year_CB_KO_R1", "1year_CB_WT_R2", 
+             "1year_CB_KO_R2", "1year_CB_WT_R3", "1year_CX_WT_R1", 
+             "1year_CX_KO_R1", "1year_CX_WT_R2", "1year_CX_KO_R2", 
+             "1year_CX_WT_R3")
+) 
+
+id_to_new_id <- fileName[, c("ID", "new_ID")]
+new_column_names <- setNames(id_to_new_id$new_ID, id_to_new_id$ID)
+counts_all_rename <- counts_all
+names(counts_all_rename)[-1] <- new_column_names[match(names(counts_all)[-1], names(new_column_names))]
+
+
+
+# ALL sample together
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(select(counts_all_rename, -Geneid), pull(counts_all_rename, Geneid)) 
+
+## Create colData file that describe all our samples
+### Including replicate
+
+
+coldata_raw <- data.frame(fileName) %>%
+  dplyr::select(-ID)
+
+## transform df into matrix
+coldata = make_matrix(select(coldata_raw, -new_ID), pull(coldata_raw, new_ID))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+### Genotype only
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design= ~ genotype )
+#### Tissue and genotype and time
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design= ~ genotype + tissue + time)
+
+
+
+# Data normalization
+vsd <- vst(dds, blind=TRUE)
+
+
+# Vizualization for quality metrics
+## Heatmap of the sample-to-sample distances
+### vsd 
+sampleDists <- dist(t(assay(vsd)))
+sampleDistMatrix <- as.matrix(sampleDists)
+rownames(sampleDistMatrix) <- paste(vsd$time, vsd$tissue, vsd$genotype, vsd$replicate, sep="_")
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+
+pdf("output/deseq2_corr/heatmap_cluster_vsd.pdf", width=5, height=6)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows=sampleDists,
+         clustering_distance_cols=sampleDists,
+         col=colors)
+dev.off()
+
+## PCA
+### vsd 
+pdf("output/deseq2_corr/PCA_vsd.pdf", width=7, height=5)
+
+pcaData <- plotPCA(vsd, intgroup=c("time", "tissue", "genotype"), returnData=TRUE)
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(PC1, PC2, color=tissue, shape=genotype)) +
+  geom_point(size=3) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  theme_bw()
+dev.off()
+
+pdf("output/deseq2_corr/PCA_vsd_1.pdf", width=7, height=5)
+
+pcaData <- plotPCA(vsd, intgroup=c("time", "tissue", "genotype"), returnData=TRUE)
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(PC1, PC2, color=time, shape=genotype)) +
+  geom_point(size=3) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  theme_bw()
+dev.off()
+
+
+
+# Separated by time
+counts_all_rename_1month = counts_all_rename %>%
+  dplyr::select("Geneid", "1month_CB_KO_R1", "1month_CB_KO_R2", "1month_CB_KO_R3", 
+             "1month_CB_WT_R1", "1month_CB_WT_R2", "1month_CB_WT_R3", 
+             "1month_CX_KO_R1", "1month_CX_KO_R2", "1month_CX_KO_R3", 
+             "1month_CX_WT_R1", "1month_CX_WT_R2", "1month_CX_WT_R3")
+
+counts_all_rename_1year = counts_all_rename %>%
+  dplyr::select("Geneid", "1year_CB_WT_R1", "1year_CB_KO_R1", "1year_CB_WT_R2", 
+             "1year_CB_KO_R2", "1year_CB_WT_R3", "1year_CX_WT_R1", 
+             "1year_CX_KO_R1", "1year_CX_WT_R2", "1year_CX_KO_R2", 
+             "1year_CX_WT_R3")
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(select(counts_all_rename_1year, -Geneid), pull(counts_all_rename_1year, Geneid)) 
+
+## Create colData file that describe all our samples
+### Including replicate
+
+
+coldata_raw <- data.frame(fileName) %>%
+  dplyr::select(-ID) %>%
+  filter(time == "1month")
+
+coldata_raw <- data.frame(fileName) %>%
+  dplyr::select(-ID) %>%
+  filter(time == "1year")
+
+## transform df into matrix
+coldata = make_matrix(select(coldata_raw, -new_ID), pull(coldata_raw, new_ID))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+#### Tissue and genotype and time
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design= ~ genotype + tissue)
+
+
+
+# Data normalization
+vsd <- vst(dds, blind=TRUE)
+
+
+# Vizualization for quality metrics
+## Heatmap of the sample-to-sample distances
+### vsd 
+sampleDists <- dist(t(assay(vsd)))
+sampleDistMatrix <- as.matrix(sampleDists)
+rownames(sampleDistMatrix) <- paste(vsd$tissue, vsd$genotype, vsd$replicate, sep="_")
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+
+pdf("output/deseq2_corr/heatmap_cluster_vsd_1month.pdf", width=5, height=6)
+pdf("output/deseq2_corr/heatmap_cluster_vsd_1year.pdf", width=5, height=6)
+
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows=sampleDists,
+         clustering_distance_cols=sampleDists,
+         col=colors)
+dev.off()
+
+## PCA
+### vsd 
+pdf("output/deseq2_corr/PCA_vsd_1month.pdf", width=7, height=5)
+pdf("output/deseq2_corr/PCA_vsd_1year.pdf", width=7, height=5)
+
+pcaData <- plotPCA(vsd, intgroup=c("tissue", "genotype"), returnData=TRUE)
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(PC1, PC2, color=tissue, shape=genotype)) +
+  geom_point(size=3) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  theme_bw()
+dev.off()
+
+
+
+# Separated by tissue
+counts_all_rename_CB = counts_all_rename %>%
+  dplyr::select("Geneid", "1month_CB_KO_R1", "1month_CB_KO_R2", "1month_CB_KO_R3", 
+             "1month_CB_WT_R1", "1month_CB_WT_R2", "1month_CB_WT_R3", "1year_CB_WT_R1", "1year_CB_KO_R1", "1year_CB_WT_R2", 
+             "1year_CB_KO_R2", "1year_CB_WT_R3")
+
+counts_all_rename_CX = counts_all_rename %>%
+  dplyr::select("Geneid", 
+             "1month_CX_KO_R1", "1month_CX_KO_R2", "1month_CX_KO_R3", 
+             "1month_CX_WT_R1", "1month_CX_WT_R2", "1month_CX_WT_R3", "1year_CX_WT_R1", 
+             "1year_CX_KO_R1", "1year_CX_WT_R2", "1year_CX_KO_R2", 
+             "1year_CX_WT_R3")
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(select(counts_all_rename_CX, -Geneid), pull(counts_all_rename_CX, Geneid)) 
+
+## Create colData file that describe all our samples
+### Including replicate
+
+
+coldata_raw <- data.frame(fileName) %>%
+  dplyr::select(-ID) %>%
+  filter(tissue == "CB")
+
+coldata_raw <- data.frame(fileName) %>%
+  dplyr::select(-ID) %>%
+  filter(tissue == "CX")
+
+## transform df into matrix
+coldata = make_matrix(select(coldata_raw, -new_ID), pull(coldata_raw, new_ID))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+#### Tissue and genotype and time
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design= ~ genotype + time)
+
+
+
+# Data normalization
+vsd <- vst(dds, blind=TRUE)
+
+
+# Vizualization for quality metrics
+## Heatmap of the sample-to-sample distances
+### vsd 
+sampleDists <- dist(t(assay(vsd)))
+sampleDistMatrix <- as.matrix(sampleDists)
+rownames(sampleDistMatrix) <- paste(vsd$tissue, vsd$genotype, vsd$replicate, sep="_")
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+
+pdf("output/deseq2_corr/heatmap_cluster_vsd_CB.pdf", width=5, height=6)
+pdf("output/deseq2_corr/heatmap_cluster_vsd_CX.pdf", width=5, height=6)
+
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows=sampleDists,
+         clustering_distance_cols=sampleDists,
+         col=colors)
+dev.off()
+
+## PCA
+### vsd 
+
+pdf("output/deseq2_corr/PCA_vsd_CB.pdf", width=7, height=5)
+pdf("output/deseq2_corr/PCA_vsd_CX.pdf", width=7, height=5)
+
+pcaData <- plotPCA(vsd, intgroup=c("time", "genotype"), returnData=TRUE)
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(PC1, PC2, color=time, shape=genotype)) +
+  geom_point(size=3) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  theme_bw()
+dev.off()
+```
+
+
+
+## 'one-by-one' comparison
+Comparison tisse/time per tisse/time:
+- CB_1month _ WT vs KO
+- CB_1year _ WT vs KO
+- CX_1month _ WT vs KO
+- CX_1year _ WT vs KO
+
+*NOTE: For the relax1 featureCounts version, number are with decimal as I used the `fraction` option, so I need to round them to make it work with deseq2 at the dds step.*
+
+###  CB_1month _ WT vs KO
+
+Go in R
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+library("apeglm")
+library("EnhancedVolcano")
+library("org.Mm.eg.db")
+library("AnnotationDbi")
+library("biomaRt")
+
+# import featurecounts output and keep only gene ID and counts
+## collect all samples ID
+### 1month data
+samples <- c("S_CB_KO1", "S_CB_KO2", "S_CB_KO3", "S_CB_WT1", "S_CB_WT2", "S_CB_WT3")
+
+
+## Make a loop for importing all featurecounts data and keep only ID and count column
+
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/featurecounts/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    dplyr::select(Geneid, starts_with("output/bam/1month_rnaseqyz072420/")) %>%
+    dplyr::rename(!!sample := starts_with("output/bam/1month_rnaseqyz072420/"))
+}
+
+# Merge all dataframe into a single one
+counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+
+fileName <- tibble(
+  ID = c("S_CB_KO1", "S_CB_KO2", "S_CB_KO3", "S_CB_WT1", "S_CB_WT2", "S_CB_WT3", 
+         "S_CX_KO1", "S_CX_KO2", "S_CX_KO3", "S_CX_WT1", "S_CX_WT2", "S_CX_WT3", 
+         "171HetCB", "174MTCB", "175HetCB", "177MTCB", "474WTCB", 
+         "171HetCX", "174MTCX", "175HetCX", "177MTCX", "474WTCX"),
+  genotype = c("KO", "KO", "KO", "WT", "WT", "WT", 
+               "KO", "KO", "KO", "WT", "WT", "WT", 
+               "WT", "KO", "WT", "KO", "WT", 
+               "WT", "KO", "WT", "KO", "WT"),
+  time = c(rep("1month", 12), rep("1year", 10)),
+  tissue = c(rep("CB", 6), rep("CX", 6), rep("CB", 5), rep("CX", 5)),
+  replicate = c(rep("R1", 2), rep("R2", 2), rep("R3", 2), rep("R1", 2), rep("R2", 2), rep("R3", 2), "R1", "R1", "R2", "R2", "R3", "R1", "R1", "R2", "R2", "R3"), 
+  new_ID = c("1month_CB_KO_R1", "1month_CB_KO_R2", "1month_CB_KO_R3", 
+             "1month_CB_WT_R1", "1month_CB_WT_R2", "1month_CB_WT_R3", 
+             "1month_CX_KO_R1", "1month_CX_KO_R2", "1month_CX_KO_R3", 
+             "1month_CX_WT_R1", "1month_CX_WT_R2", "1month_CX_WT_R3", 
+             "1year_CB_WT_R1", "1year_CB_KO_R1", "1year_CB_WT_R2", 
+             "1year_CB_KO_R2", "1year_CB_WT_R3", "1year_CX_WT_R1", 
+             "1year_CX_KO_R1", "1year_CX_WT_R2", "1year_CX_KO_R2", 
+             "1year_CX_WT_R3")
+) 
+
+id_to_new_id <- fileName[, c("ID", "new_ID")]
+new_column_names <- setNames(id_to_new_id$new_ID, id_to_new_id$ID)
+counts_all_rename <- counts_all
+names(counts_all_rename)[-1] <- new_column_names[match(names(counts_all)[-1], names(new_column_names))]
+
+counts_all = counts_all_rename
+
+# Remove X and Y chromosome genes
+ensembl <- useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
+                   filters = "chromosome_name",
+                   values = c("X", "Y"),
+                   mart = ensembl)
+counts_all$stripped_geneid <- sub("\\..*", "", counts_all$Geneid)
+counts_all_filtered <- counts_all %>%
+  filter(!stripped_geneid %in% genes_X_Y$ensembl_gene_id)
+counts_all_filtered$stripped_geneid <- NULL
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+
+counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pull(counts_all_filtered, Geneid)) 
+
+## Create colData file that describe all our samples
+### Including replicate
+coldata_raw <- data.frame(fileName) %>%
+  dplyr::select(-ID) %>%
+  filter(tissue == "CB",
+         time == "1month")
+
+
+## transform df into matrix
+coldata = make_matrix(dplyr::select(coldata_raw, -new_ID), pull(coldata_raw, new_ID))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix, 
+                              colData = coldata,
+                              design= ~ genotype)
+
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 5
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm")
+
+## Plot-volcano
+### GeneSymbol ID
+gene_ids <- rownames(res)
+stripped_gene_ids <- sub("\\..*", "", gene_ids)
+gene_symbols <- mapIds(org.Mm.eg.db, keys = stripped_gene_ids,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+res$GeneSymbol <- gene_symbols
+
+###### save output
+res %>%
+  as.data.frame() %>%
+  rownames_to_column("gene") %>%
+  write.table(file = "output/deseq2_corr/filtered_CB_1month__KO_vs_WT.txt", 
+              sep = "\t", 
+              quote = FALSE, 
+              row.names = FALSE)
+######
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+
+keyvals <- ifelse(
+  res$log2FoldChange < -0.5 & res$padj < 5e-2, '#165CAA',
+    ifelse(res$log2FoldChange > 0.5 & res$padj < 5e-2, 'Red',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Red'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == '#165CAA'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+### DEG_CB_1month
+highlight_genes <- c("Fabp5", "Fabp1", "Acsl5", "Gstm2", "Dcn", "Hmox1", "Nol3", "Snx14") # 1month_CB
+highlight_genes <- c("Fabp5", "Dcn", "Snx14") # 1month_CB_signifOnly
+
+pdf("output/deseq2_corr/plotVolcano_DEG_CB_1month.pdf", width=8, height=8)  
+pdf("output/deseq2_corr/plotVolcano_DEG_CB_1month_signifOnly.pdf", width=8, height=8)  
+
+
+EnhancedVolcano(res,
+  lab = res$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = ' ',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 6,
+  labSize = 11,
+  shape = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 1,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(legend.position = "none",
+        axis.title.x = element_text(size = 30),
+        axis.title.y = element_text(size = 30),
+        axis.text.x = element_text(size = 40),
+        axis.text.y = element_text(size = 40)) +
+  ylim(0,110)
+
+dev.off()
+
+
+# count genes
+
+
+upregulated_genes <- sum(res$log2FoldChange > 0.5 & res$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res$log2FoldChange < -0.5 & res$padj < 5e-2, na.rm = TRUE)
+
+
+
+# Save as gene list for GO analysis:
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 0.5 & res$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_corr/upregulated_q05FC05_DEG_CB_1month.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_corr/downregulated_q05FC05_DEG_CB_1month.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+```
+
+
+
+
+###  CB_1year _ WT vs KO
+
+Go in R
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+library("apeglm")
+library("EnhancedVolcano")
+library("org.Mm.eg.db")
+library("AnnotationDbi")
+library("biomaRt")
+
+# import featurecounts output and keep only gene ID and counts
+## collect all samples ID
+### 1year data
+samples <- c("171HetCB", "174MTCB", "175HetCB" ,"177MTCB" ,"474WTCB")
+
+## Make a loop for importing all featurecounts data and keep only ID and count column
+
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/featurecounts/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    dplyr::select(Geneid, starts_with("output/bam/1year_AL1804271_R2_new_analysis/")) %>%
+    dplyr::rename(!!sample := starts_with("output/bam/1year_AL1804271_R2_new_analysis/"))
+}
+
+# Merge all dataframe into a single one
+counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+
+fileName <- tibble(
+  ID = c("S_CB_KO1", "S_CB_KO2", "S_CB_KO3", "S_CB_WT1", "S_CB_WT2", "S_CB_WT3", 
+         "S_CX_KO1", "S_CX_KO2", "S_CX_KO3", "S_CX_WT1", "S_CX_WT2", "S_CX_WT3", 
+         "171HetCB", "174MTCB", "175HetCB", "177MTCB", "474WTCB", 
+         "171HetCX", "174MTCX", "175HetCX", "177MTCX", "474WTCX"),
+  genotype = c("KO", "KO", "KO", "WT", "WT", "WT", 
+               "KO", "KO", "KO", "WT", "WT", "WT", 
+               "WT", "KO", "WT", "KO", "WT", 
+               "WT", "KO", "WT", "KO", "WT"),
+  time = c(rep("1month", 12), rep("1year", 10)),
+  tissue = c(rep("CB", 6), rep("CX", 6), rep("CB", 5), rep("CX", 5)),
+  replicate = c(rep("R1", 2), rep("R2", 2), rep("R3", 2), rep("R1", 2), rep("R2", 2), rep("R3", 2), "R1", "R1", "R2", "R2", "R3", "R1", "R1", "R2", "R2", "R3"), 
+  new_ID = c("1month_CB_KO_R1", "1month_CB_KO_R2", "1month_CB_KO_R3", 
+             "1month_CB_WT_R1", "1month_CB_WT_R2", "1month_CB_WT_R3", 
+             "1month_CX_KO_R1", "1month_CX_KO_R2", "1month_CX_KO_R3", 
+             "1month_CX_WT_R1", "1month_CX_WT_R2", "1month_CX_WT_R3", 
+             "1year_CB_WT_R1", "1year_CB_KO_R1", "1year_CB_WT_R2", 
+             "1year_CB_KO_R2", "1year_CB_WT_R3", "1year_CX_WT_R1", 
+             "1year_CX_KO_R1", "1year_CX_WT_R2", "1year_CX_KO_R2", 
+             "1year_CX_WT_R3")
+) 
+
+id_to_new_id <- fileName[, c("ID", "new_ID")]
+new_column_names <- setNames(id_to_new_id$new_ID, id_to_new_id$ID)
+counts_all_rename <- counts_all
+names(counts_all_rename)[-1] <- new_column_names[match(names(counts_all)[-1], names(new_column_names))]
+
+counts_all = counts_all_rename
+
+# Remove X and Y chromosome genes
+ensembl <- useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
+                   filters = "chromosome_name",
+                   values = c("X", "Y"),
+                   mart = ensembl)
+counts_all$stripped_geneid <- sub("\\..*", "", counts_all$Geneid)
+counts_all_filtered <- counts_all %>%
+  filter(!stripped_geneid %in% genes_X_Y$ensembl_gene_id)
+counts_all_filtered$stripped_geneid <- NULL
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+
+counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pull(counts_all_filtered, Geneid)) 
+
+## Create colData file that describe all our samples
+### Including replicate
+coldata_raw <- data.frame(fileName) %>%
+  dplyr::select(-ID) %>%
+  filter(tissue == "CB",
+         time == "1year")
+
+
+## transform df into matrix
+coldata = make_matrix(dplyr::select(coldata_raw, -new_ID), pull(coldata_raw, new_ID))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix, 
+                              colData = coldata,
+                              design= ~ genotype)
+
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 5
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm")
+
+## Plot-volcano
+### GeneSymbol ID
+gene_ids <- rownames(res)
+stripped_gene_ids <- sub("\\..*", "", gene_ids)
+gene_symbols <- mapIds(org.Mm.eg.db, keys = stripped_gene_ids,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+res$GeneSymbol <- gene_symbols
+
+###### save output
+res %>%
+  as.data.frame() %>%
+  rownames_to_column("gene") %>%
+  write.table(file = "output/deseq2_corr/filtered_CB_1year__KO_vs_WT.txt", 
+              sep = "\t", 
+              quote = FALSE, 
+              row.names = FALSE)
+######
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+
+keyvals <- ifelse(
+  res$log2FoldChange < -0.5 & res$padj < 5e-2, '#165CAA',
+    ifelse(res$log2FoldChange > 0.5 & res$padj < 5e-2, 'Red',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Red'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == '#165CAA'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+### DEG_CB_1year
+highlight_genes <- c("Acacb", "Acsm5", "Cp","Lyz2", "C4b", "Cd68", "Trem2", "Apoe","Gfap","Casp3","Lcn2","Snx14" ) # 1year_CB 
+
+pdf("output/deseq2_corr/plotVolcano_DEG_CB_1year.pdf", width=8, height=8)  
+
+
+EnhancedVolcano(res,
+  lab = res$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = ' ',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 6,
+  labSize = 11,
+  shape = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 1,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(legend.position = "none",
+        axis.title.x = element_text(size = 30),
+        axis.title.y = element_text(size = 30),
+        axis.text.x = element_text(size = 40),
+        axis.text.y = element_text(size = 40)) +
+  ylim(0,110)
+
+dev.off()
+
+
+# count genes
+
+
+upregulated_genes <- sum(res$log2FoldChange > 0.5 & res$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res$log2FoldChange < -0.5 & res$padj < 5e-2, na.rm = TRUE)
+
+
+
+# Save as gene list for GO analysis:
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 0.5 & res$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_corr/upregulated_q05FC05_DEG_CB_1year.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_corr/downregulated_q05FC05_DEG_CB_1year.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+```
+
+
+###  CX_1month _ WT vs KO
+
+I had to update conda env deseq2 due to lfcShrink error (discuss [here](https://www.biostars.org/p/9559740/)): 
+```bash
+Error in optimHess(par = init, fn = nbinomFn, gr = nbinomGr, x = x, y = y,  : 
+  non-finite value supplied by optim; 
+```
+
+- clone conda env with `conda create --name deseq2V2 --clone deseq2`
+- install last version of apeglm: `devtools::install_github("azhu513/apeglm")`
+xxxx
+
+
+Go in R
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+library("apeglm")
+library("EnhancedVolcano")
+library("org.Mm.eg.db")
+library("AnnotationDbi")
+library("biomaRt")
+
+# import featurecounts output and keep only gene ID and counts
+## collect all samples ID
+### 1month data
+samples <- c("S_CX_KO1", "S_CX_KO2", "S_CX_KO3", "S_CX_WT1", "S_CX_WT2", "S_CX_WT3")
+
+
+## Make a loop for importing all featurecounts data and keep only ID and count column
+
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/featurecounts/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    dplyr::select(Geneid, starts_with("output/bam/1month_rnaseqyz072420/")) %>%
+    dplyr::rename(!!sample := starts_with("output/bam/1month_rnaseqyz072420/"))
+}
+
+# Merge all dataframe into a single one
+counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+
+fileName <- tibble(
+  ID = c("S_CB_KO1", "S_CB_KO2", "S_CB_KO3", "S_CB_WT1", "S_CB_WT2", "S_CB_WT3", 
+         "S_CX_KO1", "S_CX_KO2", "S_CX_KO3", "S_CX_WT1", "S_CX_WT2", "S_CX_WT3", 
+         "171HetCB", "174MTCB", "175HetCB", "177MTCB", "474WTCB", 
+         "171HetCX", "174MTCX", "175HetCX", "177MTCX", "474WTCX"),
+  genotype = c("KO", "KO", "KO", "WT", "WT", "WT", 
+               "KO", "KO", "KO", "WT", "WT", "WT", 
+               "WT", "KO", "WT", "KO", "WT", 
+               "WT", "KO", "WT", "KO", "WT"),
+  time = c(rep("1month", 12), rep("1year", 10)),
+  tissue = c(rep("CB", 6), rep("CX", 6), rep("CB", 5), rep("CX", 5)),
+  replicate = c(rep("R1", 2), rep("R2", 2), rep("R3", 2), rep("R1", 2), rep("R2", 2), rep("R3", 2), "R1", "R1", "R2", "R2", "R3", "R1", "R1", "R2", "R2", "R3"), 
+  new_ID = c("1month_CB_KO_R1", "1month_CB_KO_R2", "1month_CB_KO_R3", 
+             "1month_CB_WT_R1", "1month_CB_WT_R2", "1month_CB_WT_R3", 
+             "1month_CX_KO_R1", "1month_CX_KO_R2", "1month_CX_KO_R3", 
+             "1month_CX_WT_R1", "1month_CX_WT_R2", "1month_CX_WT_R3", 
+             "1year_CB_WT_R1", "1year_CB_KO_R1", "1year_CB_WT_R2", 
+             "1year_CB_KO_R2", "1year_CB_WT_R3", "1year_CX_WT_R1", 
+             "1year_CX_KO_R1", "1year_CX_WT_R2", "1year_CX_KO_R2", 
+             "1year_CX_WT_R3")
+) 
+
+id_to_new_id <- fileName[, c("ID", "new_ID")]
+new_column_names <- setNames(id_to_new_id$new_ID, id_to_new_id$ID)
+counts_all_rename <- counts_all
+names(counts_all_rename)[-1] <- new_column_names[match(names(counts_all)[-1], names(new_column_names))]
+
+counts_all = counts_all_rename
+
+# Remove X and Y chromosome genes
+ensembl <- useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
+                   filters = "chromosome_name",
+                   values = c("X", "Y"),
+                   mart = ensembl)
+counts_all$stripped_geneid <- sub("\\..*", "", counts_all$Geneid)
+counts_all_filtered <- counts_all %>%
+  filter(!stripped_geneid %in% genes_X_Y$ensembl_gene_id)
+counts_all_filtered$stripped_geneid <- NULL
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+
+counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pull(counts_all_filtered, Geneid)) 
+
+## Create colData file that describe all our samples
+### Including replicate
+coldata_raw <- data.frame(fileName) %>%
+  dplyr::select(-ID) %>%
+  filter(tissue == "CX",
+         time == "1month")
+
+
+## transform df into matrix
+coldata = make_matrix(dplyr::select(coldata_raw, -new_ID), pull(coldata_raw, new_ID))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix, 
+                              colData = coldata,
+                              design= ~ genotype)
+
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 5
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm")
+
+## Plot-volcano
+### GeneSymbol ID
+gene_ids <- rownames(res)
+stripped_gene_ids <- sub("\\..*", "", gene_ids)
+gene_symbols <- mapIds(org.Mm.eg.db, keys = stripped_gene_ids,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+res$GeneSymbol <- gene_symbols
+
+###### save output
+res %>%
+  as.data.frame() %>%
+  rownames_to_column("gene") %>%
+  write.table(file = "output/deseq2_corr/filtered_CX_1month__KO_vs_WT.txt", 
+              sep = "\t", 
+              quote = FALSE, 
+              row.names = FALSE)
+######
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+
+keyvals <- ifelse(
+  res$log2FoldChange < -0.5 & res$padj < 5e-2, '#165CAA',
+    ifelse(res$log2FoldChange > 0.5 & res$padj < 5e-2, 'Red',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Red'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == '#165CAA'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+### DEG_CB_1month
+highlight_genes <- c("Fabp5", "Fabp1", "Acsl5", "Gstm2", "Dcn", "Hmox1", "Nol3", "Snx14") # 1month_CB
+highlight_genes <- c("Fabp5", "Dcn", "Snx14") # 1month_CB_signifOnly
+
+pdf("output/deseq2_corr/plotVolcano_DEG_CB_1month.pdf", width=8, height=8)  
+pdf("output/deseq2_corr/plotVolcano_DEG_CB_1month_signifOnly.pdf", width=8, height=8)  
+
+
+EnhancedVolcano(res,
+  lab = res$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = ' ',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 6,
+  labSize = 11,
+  shape = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 1,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(legend.position = "none",
+        axis.title.x = element_text(size = 30),
+        axis.title.y = element_text(size = 30),
+        axis.text.x = element_text(size = 40),
+        axis.text.y = element_text(size = 40)) +
+  ylim(0,110)
+
+dev.off()
+
+
+# count genes
+
+
+upregulated_genes <- sum(res$log2FoldChange > 0.5 & res$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res$log2FoldChange < -0.5 & res$padj < 5e-2, na.rm = TRUE)
+
+
+
+# Save as gene list for GO analysis:
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 0.5 & res$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_corr/upregulated_q05FC05_DEG_CB_1month.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_corr/downregulated_q05FC05_DEG_CB_1month.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# volcano plot labelling genes _ V1 with output from Novogene & Genewiser
 
 Let's label some genes in the volcano plots
 - import RNAseq Novogen data

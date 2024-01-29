@@ -85,6 +85,10 @@ library("VennDiagram")
 library("ggrepel")
 library("fgsea")
 
+### deseq2V2
+
+Same as deseq2 with `apeglm` R package updated (see error from `005_SNX14/001/RNAseq`)
+
 
 ### ChIPseqSpikeInFree
 R/3.6.1 with **ChIPseqSpikeInFree** notably + following libraries:
