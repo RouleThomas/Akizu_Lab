@@ -59,17 +59,28 @@ output/GO/geneSymbol_1year_CB_qval05FCmore0.5.txt
 output/GO/geneSymbol_1year_CX_qval05FCless0.5.txt
 output/GO/geneSymbol_1year_CX_qval05FCmore0.5.txt
 
+## re analysis (`output/deseq2_corr`)
+output/deseq2_corr/downregulated_q05FC05_DEG_CB_1month.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CB_1month.txt
 
+output/deseq2_corr/downregulated_q05FC05_DEG_CB_1year.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CB_1year.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CX_1month.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CX_1month.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt
 # Define databases for enrichment
 dbs <- c("GO_Biological_Process_2023")
 
 # Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/GO/geneSymbol_1year_CX_qval05FCless0.5.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 
 # Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/GO/geneSymbol_1year_CX_qval05FCmore0.5.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -119,6 +130,9 @@ pdf("output/GO/enrichR_GO_BP_1year_CX_qval05FC0.5.pdf", width=12, height=4)
 pdf("output/GO/enrichR_GO_BP_1month_CB_qval05FC0.5_filtUp.pdf", width=12, height=11)
 pdf("output/GO/enrichR_GO_BP_1year_CB_qval05FC0.5_filtUp.pdf", width=12, height=8)
 
+pdf("output/GO/enrichR_GO_BP_1month_CB_corr.pdf", width=12, height=5)
+pdf("output/GO/enrichR_GO_BP_1month_CX_corr.pdf", width=12, height=5)
+pdf("output/GO/enrichR_GO_BP_1year_CX_corr.pdf", width=12, height=3)
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
@@ -127,7 +141,7 @@ ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) +
   geom_hline(yintercept = 0, linetype="solid", color = "black") +
   scale_fill_manual(name="Expression", 
                     labels = c("Down regulated", "Up regulated"), 
-                    values = c("down"="dodgerblue2", "up"="firebrick2")) + 
+                    values = c("down"="#165CAA", "up"="firebrick2")) + 
   labs(title= "Diverging bars of -log10 Adjusted P-value for GO BP pathways") + 
   coord_flip() + 
   theme_minimal() +
@@ -160,6 +174,108 @@ write.table(gos, "output/GO/enrichR_GO_BP_1month_CB_qval05FC0.5_complete.txt", s
 write.table(gos, "output/GO/enrichR_GO_BP_1year_CB_qval05FC0.5_complete.txt", sep="\t", row.names=FALSE, quote=FALSE)
 write.table(gos, "output/GO/enrichR_GO_BP_1year_CX_qval05FC0.5_complete.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
+write.table(gos, "output/GO/enrichR_GO_BP_1year_CX_corr.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+# Define databases for enrichment
+dbs <- c("GO_Molecular_Function_2023") 
+
+# import DEG gene list
+
+## re analysis (`output/deseq2_corr`)
+output/deseq2_corr/downregulated_q05FC05_DEG_CB_1month.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CB_1month.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CB_1year.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CB_1year.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CX_1month.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CX_1month.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt
+
+
+# Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+
+# Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$GO_Molecular_Function_2023
+down <- edown$GO_Molecular_Function_2023
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 10)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 10)
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+
+pdf("output/GO/enrichR_GO_MF_1month_CB_corr.pdf", width=12, height=5)
+
+pdf("output/GO/enrichR_GO_MF_1year_CB_corr.pdf", width=8, height=2)
+
+pdf("output/GO/enrichR_GO_MF_1month_CX_corr.pdf", width=12, height=3)
+
+pdf("output/GO/enrichR_GO_MF_1year_CX_corr.pdf", width=8, height=2)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="dodgerblue2", "up"="firebrick2")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for GO MF pathways") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 18),
+    legend.position = "none"
+  )
+dev.off()
+
+
+## save output
+
+write.table(gos, "output/GO/enrichR_GO_MF_1year_CX_corr.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
 
 # Define databases for enrichment
 dbs <- c("GO_Cellular_Component_2023") 
@@ -187,16 +303,27 @@ output/GO/geneSymbol_1year_CB_qval05FCmore0.5.txt
 
 output/GO/geneSymbol_1year_CX_qval05FCless0.5.txt
 output/GO/geneSymbol_1year_CX_qval05FCmore0.5.txt
+## re analysis (`output/deseq2_corr`)
+output/deseq2_corr/downregulated_q05FC05_DEG_CB_1month.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CB_1month.txt
 
+output/deseq2_corr/downregulated_q05FC05_DEG_CB_1year.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CB_1year.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CX_1month.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CX_1month.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt
 
 
 # Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/GO/geneSymbol_1year_CX_qval05FCless0.5.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 
 # Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/GO/geneSymbol_1year_CX_qval05FCmore0.5.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -240,6 +367,10 @@ pdf("output/GO/enrichR_GO_CC_1year_CB_qval05FC1.pdf", width=12, height=3)
 pdf("output/GO/enrichR_GO_CC_1month_CB_qval05FC0.5.pdf", width=12, height=4)
 pdf("output/GO/enrichR_GO_CC_1year_CB_qval05FC0.5.pdf", width=12, height=4)
 
+pdf("output/GO/enrichR_GO_CC_1month_CB_corr.pdf", width=12, height=4)
+pdf("output/GO/enrichR_GO_CC_1year_CB_corr.pdf", width=12, height=4)
+
+pdf("output/GO/enrichR_GO_CC_1year_CX_corr.pdf", width=12, height=2)
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
@@ -275,6 +406,106 @@ write.table(gos, "output/GO/enrichR_GO_CC_1month_CB_qval05FC0.5.txt", sep="\t", 
 write.table(gos, "output/GO/enrichR_GO_CC_1year_CB_qval05FC0.5.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
+write.table(gos, "output/GO/enrichR_GO_CC_1year_CX_corr.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("Reactome_2022") 
+
+# import DEG gene list
+## re analysis (`output/deseq2_corr`)
+output/deseq2_corr/downregulated_q05FC05_DEG_CB_1month.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CB_1month.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CB_1year.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CB_1year.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CX_1month.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CX_1month.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt
+
+
+# Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+
+# Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$Reactome_2022
+down <- edown$Reactome_2022
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 10)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 10)
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("R-HSA-[0-9]+$", "", gos$Term)
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+pdf("output/GO/enrichR_Reactome_2022_1month_CB_corr.pdf", width=10, height=4)
+
+pdf("output/GO/enrichR_Reactome_2022_1year_CB_corr.pdf", width=10, height=5)
+
+pdf("output/GO/enrichR_Reactome_2022_1month_CX_corr.pdf", width=10, height=4)
+
+pdf("output/GO/enrichR_Reactome_2022_1year_CX_corr.pdf", width=10, height=5)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="dodgerblue2", "up"="firebrick2")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for GO BP pathways") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 18),
+    legend.position = "none"
+  )
+dev.off()
+
+
+## save output
+
+write.table(gos, "output/GO/enrichR_Reactome_2022_1year_CX_corr.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
 
 
 
@@ -306,15 +537,27 @@ output/GO/geneSymbol_1year_CB_qval05FCmore0.5.txt
 output/GO/geneSymbol_1year_CX_qval05FCless0.5.txt
 output/GO/geneSymbol_1year_CX_qval05FCmore0.5.txt
 
+## re analysis (`output/deseq2_corr`)
+output/deseq2_corr/downregulated_q05FC05_DEG_CB_1month.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CB_1month.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CB_1year.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CB_1year.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CX_1month.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CX_1month.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt
 
 
 # Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/GO/geneSymbol_1year_CX_qval05FCless0.5.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 
 # Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/GO/geneSymbol_1year_CX_qval05FCmore0.5.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -358,6 +601,11 @@ pdf("output/GO/enrichR_KEGG_2019_Mouse_1month_CB_qval05FC0.5.pdf", width=12, hei
 pdf("output/GO/enrichR_KEGG_2019_Mouse_1year_CB_qval05FC0.5.pdf", width=12, height=4)
 pdf("output/GO/enrichR_KEGG_2019_Mouse_1year_CX_qval05FC0.5.pdf", width=12, height=2)
 
+pdf("output/GO/enrichR_KEGG_2019_Mouse_1month_CB_corr.pdf", width=10, height=4)
+pdf("output/GO/enrichR_KEGG_2019_Mouse_1year_CB_corr.pdf", width=10, height=4)
+
+pdf("output/GO/enrichR_KEGG_2019_Mouse_1month_CX_corr.pdf", width=10, height=2)
+pdf("output/GO/enrichR_KEGG_2019_Mouse_1year_CX_corr.pdf", width=10, height=3)
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
@@ -395,6 +643,7 @@ write.table(gos, "output/GO/enrichR_KEGG_2019_Mouse_1year_CB_qval05FC0.5.txt", s
 
 write.table(gos, "output/GO/enrichR_KEGG_2019_Mouse_1year_CX_qval05FC0.5.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
+write.table(gos, "output/GO/enrichR_KEGG_2019_Mouse_1year_CX_corr.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 
@@ -427,13 +676,28 @@ output/GO/geneSymbol_1year_CB_qval05FCmore0.5.txt
 output/GO/geneSymbol_1year_CX_qval05FCless0.5.txt
 output/GO/geneSymbol_1year_CX_qval05FCmore0.5.txt
 
+## re analysis (`output/deseq2_corr`)
+output/deseq2_corr/downregulated_q05FC05_DEG_CB_1month.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CB_1month.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CB_1year.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CB_1year.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CX_1month.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CX_1month.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt
+
+
+
 # Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/GO/geneSymbol_1year_CB_qval05FCless0.5.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 
 # Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/GO/geneSymbol_1year_CB_qval05FCmore0.5.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -457,6 +721,7 @@ gos <- gos %>% arrange(logAdjP)
 
 # Filter out rows where absolute logAdjP 1.3 = 0.05
 gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("WP[0-9]+$", "", gos$Term)
 
 # Create the order based on the approach given
 up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
@@ -473,6 +738,13 @@ pdf("output/GO/enrichR_WikiPathways_2019_Mouse_1month_CB_qval05FC1.pdf", width=1
 pdf("output/GO/enrichR_WikiPathways_2019_Mouse_1month_CB_qval05FC0.5.pdf", width=12, height=4)
 pdf("output/GO/enrichR_WikiPathways_2019_Mouse_1year_CB_qval05FC0.5.pdf", width=12, height=4)
 
+pdf("output/GO/enrichR_WikiPathways_2019_Mouse_1month_CB_corr.pdf", width=12, height=4)
+
+pdf("output/GO/enrichR_WikiPathways_2019_Mouse_1year_CB_corr.pdf", width=12, height=4)
+
+pdf("output/GO/enrichR_WikiPathways_2019_Mouse_1month_CX_corr.pdf", width=12, height=4)
+
+pdf("output/GO/enrichR_WikiPathways_2019_Mouse_1year_CX_corr.pdf", width=12, height=4)
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
@@ -500,12 +772,432 @@ dev.off()
 ## save output
 write.table(gos, "output/GO/enrichR_WikiPathways_2019_Mouse_1month_CB_qval05FC0.txt", sep="\t", row.names=FALSE, quote=FALSE)
 write.table(gos, "output/GO/enrichR_WikiPathways_2019_Mouse_1year_CB_qval05FC0.txt", sep="\t", row.names=FALSE, quote=FALSE)
-
 write.table(gos, "output/GO/enrichR_WikiPathways_2019_Mouse_1month_CB_qval05FC1.txt", sep="\t", row.names=FALSE, quote=FALSE)
-
 write.table(gos, "output/GO/enrichR_WikiPathways_2019_Mouse_1month_CB_qval05FC0.5.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
-write.table(gos, "output/GO/enrichR_WikiPathways_2019_Mouse_1year_CB_qval05FC0.5.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_WikiPathways_2019_Mouse_1year_CX_corr.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("HDSigDB_Mouse_2021") 
+
+# import DEG gene list
+
+## re analysis (`output/deseq2_corr`)
+output/deseq2_corr/downregulated_q05FC05_DEG_CB_1month.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CB_1month.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CB_1year.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CB_1year.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CX_1month.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CX_1month.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt
+
+
+
+# Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+
+# Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$HDSigDB_Mouse_2021
+down <- edown$HDSigDB_Mouse_2021
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 10)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 10)
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+
+pdf("output/GO/enrichR_HDSigDB_Mouse_2021_1month_CB_corr.pdf", width=12, height=4)
+
+pdf("output/GO/enrichR_HDSigDB_Mouse_2021_1year_CB_corr.pdf", width=12, height=7)
+
+pdf("output/GO/enrichR_HDSigDB_Mouse_2021_1month_CX_corr.pdf", width=12, height=2)
+
+pdf("output/GO/enrichR_HDSigDB_Mouse_2021_1year_CX_corr.pdf", width=12, height=7)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="dodgerblue2", "up"="firebrick2")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for GO BP pathways") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 18),
+    legend.position = "none"
+  )
+dev.off()
+
+
+## save output
+
+write.table(gos, "output/GO/enrichR_HDSigDB_Mouse_2021_1year_CX_corr.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+# Define databases for enrichment
+dbs <- c("Descartes_Cell_Types_and_Tissue_2021") 
+
+# import DEG gene list
+
+## re analysis (`output/deseq2_corr`)
+output/deseq2_corr/downregulated_q05FC05_DEG_CB_1month.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CB_1month.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CB_1year.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CB_1year.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CX_1month.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CX_1month.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt
+
+
+
+# Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+
+# Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$Descartes_Cell_Types_and_Tissue_2021
+down <- edown$Descartes_Cell_Types_and_Tissue_2021
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 10)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 10)
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+
+
+
+pdf("output/GO/enrichR_Descartes_Cell_Types_and_Tissue_2021_1month_CB_corr.pdf", width=12, height=7)
+pdf("output/GO/enrichR_Descartes_Cell_Types_and_Tissue_2021_1year_CB_corr.pdf", width=12, height=7)
+
+pdf("output/GO/enrichR_Descartes_Cell_Types_and_Tissue_2021_1month_CX_corr.pdf", width=12, height=7)
+
+pdf("output/GO/enrichR_Descartes_Cell_Types_and_Tissue_2021_1year_CX_corr.pdf", width=12, height=7)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="dodgerblue2", "up"="firebrick2")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for GO BP pathways") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 18),
+    legend.position = "none"
+  )
+dev.off()
+
+
+## save output
+
+write.table(gos, "output/GO/enrichR_Descartes_Cell_Types_and_Tissue_2021_1year_CX_corr.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("Tabula_Muris") 
+
+# import DEG gene list
+
+## re analysis (`output/deseq2_corr`)
+output/deseq2_corr/downregulated_q05FC05_DEG_CB_1month.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CB_1month.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CB_1year.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CB_1year.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CX_1month.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CX_1month.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt
+
+
+
+# Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+
+# Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$Tabula_Muris
+down <- edown$Tabula_Muris
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 25)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 25)
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("CL:[0-9]+$", "", gos$Term)
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+
+## FAIL as dupplicates:
+up_pathways_suffixed <- paste0(up_pathways, "_up")
+down_pathways_suffixed <- paste0(down_pathways, "_down")
+new_order <- c(down_pathways_suffixed, up_pathways_suffixed)
+gos$Term <- ifelse(gos$type == "up", paste0(gos$Term, "_up"), paste0(gos$Term, "_down"))
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+
+pdf("output/GO/enrichR_Tabula_Muris_1month_CB_corr.pdf", width=12, height=7)
+
+pdf("output/GO/enrichR_Tabula_Muris_1year_CB_corr.pdf", width=12, height=9)
+
+pdf("output/GO/enrichR_Tabula_Muris_1month_CX_corr.pdf", width=12, height=7)
+
+pdf("output/GO/enrichR_Tabula_Muris_1year_CX_corr.pdf", width=12, height=9)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="dodgerblue2", "up"="firebrick2")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for GO BP pathways") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 18),
+    legend.position = "none"
+  )
+dev.off()
+
+
+## save output
+
+write.table(gos, "output/GO/enrichR_Tabula_Muris_1year_CX_corr.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("DisGeNET") 
+
+# import DEG gene list
+
+## re analysis (`output/deseq2_corr`)
+output/deseq2_corr/downregulated_q05FC05_DEG_CB_1month.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CB_1month.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CB_1year.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CB_1year.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CX_1month.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CX_1month.txt
+
+output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt
+output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt
+
+
+
+# Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+
+# Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$DisGeNET
+down <- edown$DisGeNET
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 25)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 25)
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+
+## FAIL as dupplicates:
+up_pathways_suffixed <- paste0(up_pathways, "_up")
+down_pathways_suffixed <- paste0(down_pathways, "_down")
+new_order <- c(down_pathways_suffixed, up_pathways_suffixed)
+gos$Term <- ifelse(gos$type == "up", paste0(gos$Term, "_up"), paste0(gos$Term, "_down"))
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+
+pdf("output/GO/enrichR_DisGeNET_1month_CB_corr.pdf", width=12, height=12)
+pdf("output/GO/enrichR_DisGeNET_1year_CB_corr.pdf", width=12, height=12)
+
+pdf("output/GO/enrichR_DisGeNET_1month_CX_corr.pdf", width=12, height=12)
+pdf("output/GO/enrichR_DisGeNET_1year_CX_corr.pdf", width=12, height=12)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="dodgerblue2", "up"="firebrick2")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for GO BP pathways") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 18),
+    legend.position = "none"
+  )
+dev.off()
+
+
+## save output
+
+write.table(gos, "output/GO/enrichR_DisGeNET_1year_CX_corr.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+
+
 
 # Define databases for enrichment
 dbs <- c("KOMP2_Mouse_Phenotypes_2022") # nothing
@@ -729,6 +1421,39 @@ CX_1year = read_excel("output/gsea/RNAseq of CB&CX_1mon&1yr.xlsx", sheet = 4) %>
   mutate(combined_score = log2FoldChange * -log10(pvalue)) %>%
   dplyr::rename(gene_name = Gene.name)
 
+# import DEGs - re-alanalysis (_corr)
+CB_1month <- read.table("output/deseq2_corr/filtered_CB_1month__KO_vs_WT.txt", header = TRUE, sep = "\t", row.names = 1) %>%
+  rownames_to_column(var = "gene") %>%
+  as_tibble()  %>%
+  filter(!is.na(GeneSymbol)) %>% # filter to keep only the geneSymbol gene
+  dplyr::select(GeneSymbol, log2FoldChange, pvalue) %>%
+  mutate(combined_score = log2FoldChange * -log10(pvalue)) %>%
+  unique()
+
+CB_1year <- read.table("output/deseq2_corr/filtered_CB_1year__KO_vs_WT.txt", header = TRUE, sep = "\t", row.names = 1) %>%
+  rownames_to_column(var = "gene") %>%
+  as_tibble()  %>%
+  filter(!is.na(GeneSymbol)) %>% # filter to keep only the geneSymbol gene
+  dplyr::select(GeneSymbol, log2FoldChange, pvalue) %>%
+  mutate(combined_score = log2FoldChange * -log10(pvalue)) %>%
+  unique()
+
+CX_1month <- read.table("output/deseq2_corr/filtered_CX_1month__KO_vs_WT.txt", header = TRUE, sep = "\t", row.names = 1) %>%
+  rownames_to_column(var = "gene") %>%
+  as_tibble()  %>%
+  filter(!is.na(GeneSymbol)) %>% # filter to keep only the geneSymbol gene
+  dplyr::select(GeneSymbol, log2FoldChange, pvalue) %>%
+  mutate(combined_score = log2FoldChange * -log10(pvalue)) %>%
+  unique()
+
+CX_1year <- read.table("output/deseq2_corr/filtered_CX_1year__KO_vs_WT.txt", header = TRUE, sep = "\t", row.names = 1) %>%
+  rownames_to_column(var = "gene") %>%
+  as_tibble()  %>%
+  filter(!is.na(GeneSymbol)) %>% # filter to keep only the geneSymbol gene
+  dplyr::select(GeneSymbol, log2FoldChange, pvalue) %>%
+  mutate(combined_score = log2FoldChange * -log10(pvalue)) %>%
+  unique()
+
 
 # import msigdbr cell marker db 
 hs_hallmark_sets <- msigdbr(
@@ -744,7 +1469,7 @@ hs_hallmark_sets <- msigdbr(
 # Order our DEG
 ## Let's create a named vector ranked based on the log2 fold change values
 lfc_vector <- CX_1year$combined_score           ################ CHANGE !!!!!!!!!!!!!!!! ######################
-names(lfc_vector) <- CX_1year$gene_name           ################ CHANGE !!!!!!!!!!!!!!!! ######################
+names(lfc_vector) <- CX_1year$GeneSymbol           ################ CHANGE !!!!!!!!!!!!!!!! ######################
 ## We need to sort the log2 fold change values in descending order here
 lfc_vector <- sort(lfc_vector, decreasing = TRUE)
 ### Set the seed so our results are reproducible:
@@ -784,6 +1509,14 @@ readr::write_tsv(
   file.path("output/gsea/gsea_results_CB_1year_C5_complete.tsv"        ################ CHANGE !!!!!!!!!!!!!!!! ######################
   )
 )
+
+
+readr::write_tsv(
+  gsea_result_df,
+  file.path("output/gsea/gsea_results_CX_1year_C2_complete_corr.tsv"        ################ CHANGE !!!!!!!!!!!!!!!! ######################
+  )
+)
+
 
 
 # lipid-containg term
@@ -925,14 +1658,40 @@ CB_1year_C5 = readr::read_tsv("output/gsea/gsea_results_CB_1year_C5_complete.tsv
   dplyr::select(ID, NES, pvalue) %>%
   add_column(genotype = "CB_1year")
 
+### import gsea results - re-analysis C5
+CX_1month_C5 = readr::read_tsv("output/gsea/gsea_results_CX_1month_C5_complete_corr.tsv") %>%
+  dplyr::select(ID, NES, pvalue) %>%
+  add_column(genotype = "CX_1month")
+CX_1year_C5 = readr::read_tsv("output/gsea/gsea_results_CX_1year_C5_complete_corr.tsv") %>%
+  dplyr::select(ID, NES, pvalue) %>%
+  add_column(genotype = "CX_1year")
+CB_1month_C5 = readr::read_tsv("output/gsea/gsea_results_CB_1month_C5_complete_corr.tsv") %>%
+  dplyr::select(ID, NES, pvalue) %>%
+  add_column(genotype = "CB_1month")
+CB_1year_C5 = readr::read_tsv("output/gsea/gsea_results_CB_1year_C5_complete_corr.tsv") %>%
+  dplyr::select(ID, NES, pvalue) %>%
+  add_column(genotype = "CB_1year")
 
 
+### import gsea results - re-analysis C2
+CX_1month_C2 = readr::read_tsv("output/gsea/gsea_results_CX_1month_C2_complete_corr.tsv") %>%
+  dplyr::select(ID, NES, pvalue) %>%
+  add_column(genotype = "CX_1month")
+CX_1year_C2 = readr::read_tsv("output/gsea/gsea_results_CX_1year_C2_complete_corr.tsv") %>%
+  dplyr::select(ID, NES, pvalue) %>%
+  add_column(genotype = "CX_1year")
+CB_1month_C2 = readr::read_tsv("output/gsea/gsea_results_CB_1month_C2_complete_corr.tsv") %>%
+  dplyr::select(ID, NES, pvalue) %>%
+  add_column(genotype = "CB_1month")
+CB_1year_C2 = readr::read_tsv("output/gsea/gsea_results_CB_1year_C2_complete_corr.tsv") %>%
+  dplyr::select(ID, NES, pvalue) %>%
+  add_column(genotype = "CB_1year")
 
 
-gsea_result_df_tidy = CX_1month_C5 %>%
-  bind_rows(CX_1year_C5) %>%
-  bind_rows(CB_1month_C5) %>%
-  bind_rows(CB_1year_C5)
+gsea_result_df_tidy = CX_1month_C2 %>%
+  bind_rows(CX_1year_C2) %>%
+  bind_rows(CB_1month_C2) %>%
+  bind_rows(CB_1year_C2)
 
 ### Set up the heatmap
 desired_ids <- c(
@@ -974,6 +1733,10 @@ pdf("output/gsea/heatmap_GOBP_LIPID.pdf", width=3, height=4)
 pdf("output/gsea/heatmap_GOBP_LIPID-curatedTerms_V2.pdf", width=8, height=4)
 pdf("output/gsea/heatmap_GOBP_LIPID-curatedTerms_V3.pdf", width=8, height=4)
 
+pdf("output/gsea/heatmap_GOBP_LIPID-curatedTerms_corr.pdf", width=8, height=4)
+
+pdf("output/gsea/heatmap_GOBP_LIPID_corr.pdf", width=12, height=6)
+
 ggplot(filtered_data, aes(x=genotype, y=ID, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -991,7 +1754,7 @@ ggplot(filtered_data, aes(x=genotype, y=ID, fill=NES)) +
   ) +
   scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="NES") +
   geom_text(aes(label=sprintf("%.2f", NES)), 
-            color = ifelse(filtered_data$pvalue <= 0.01, "black", "grey50"), 
+            color = ifelse(filtered_data$pvalue <= 0.05, "black", "grey50"), 
             size=5.2) +
   coord_fixed()  # Force aspect ratio of the plot to be 1:1
 dev.off()
@@ -1022,6 +1785,39 @@ ggplot(filtered_data, aes(x=genotype, y=ID, fill=NES)) +
             color = "black", size=2) +  # Add text only to significant tiles
   coord_fixed()  # Force aspect ratio of the plot to be 1:1
 dev.off()
+
+
+## re-analysis
+
+### --> output all terms significant in CB but not significant in CX
+#### Step 1: Filter for significant CB_1month or CB_1year
+significant_CB <- gsea_result_df_tidy %>%
+  filter((genotype == "CB_1month" | genotype == "CB_1year") & pvalue <= 0.05)
+#### Step 2: Identify IDs significant in both CX_1month and CX_1year
+significant_CX_both <- gsea_result_df_tidy %>%
+  filter(genotype == "CX_1month" & pvalue <= 0.05) %>%
+  select(ID) %>%
+  intersect(gsea_result_df_tidy %>%
+              filter(genotype == "CX_1year" & pvalue <= 0.05) %>%
+              select(ID))
+
+# Final step: Exclude IDs that are significant in both CX_1month and CX_1year from the CB results
+final_filtered_results <- significant_CB %>%
+  filter(!ID %in% significant_CX_both$ID)
+
+
+readr::write_tsv(
+  final_filtered_results,
+  file.path("output/gsea/final_filtered__results_C2_corr.tsv"        ################ CHANGE !!!!!!!!!!!!!!!! ######################
+  )
+)
+
+
+
+
+
+
+
 
 ```
 Now GSEA with the log2fc ranking (save under `GoogleDrive/*/gsea/gsea_GO_BP_V2_log2FoldChangeRanking.xlsx`)
@@ -2614,7 +3410,9 @@ names(keyvals)[keyvals == 'grey'] <- 'Not significant'
 names(keyvals)[keyvals == '#165CAA'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
 
 ### DEG_CB_1year
-highlight_genes <- c("Acacb", "Acsm5", "Cp","Lyz2", "C4b", "Cd68", "Trem2", "Apoe","Gfap","Casp3","Lcn2","Snx14" ) # 1year_CB 
+highlight_genes <- c("Acacb", "Acsm5", "Cp","Lyz2", "C4b", "Cd68", "Trem2", "Apoe","Gfap","Casp3","Lcn2","Snx14","Rgs8" ,"Pcp2","Car8","Calb1") # 1year_CB 
+
+
 
 pdf("output/deseq2_corr/plotVolcano_DEG_CB_1year.pdf", width=8, height=8)  
 
@@ -2676,8 +3474,9 @@ Error in optimHess(par = init, fn = nbinomFn, gr = nbinomGr, x = x, y = y,  :
 ```
 
 - clone conda env with `conda create --name deseq2V2 --clone deseq2`
+- install devtools in R: `install.packages("devtools")`
 - install last version of apeglm: `devtools::install_github("azhu513/apeglm")`
-xxxx
+
 
 
 Go in R
@@ -2829,12 +3628,10 @@ names(keyvals)[keyvals == 'Red'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
 names(keyvals)[keyvals == 'grey'] <- 'Not significant'
 names(keyvals)[keyvals == '#165CAA'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
 
-### DEG_CB_1month
-highlight_genes <- c("Fabp5", "Fabp1", "Acsl5", "Gstm2", "Dcn", "Hmox1", "Nol3", "Snx14") # 1month_CB
-highlight_genes <- c("Fabp5", "Dcn", "Snx14") # 1month_CB_signifOnly
+### DEG_CX_1month
+highlight_genes <- c("Snx14" ) # 1month_CX 
 
-pdf("output/deseq2_corr/plotVolcano_DEG_CB_1month.pdf", width=8, height=8)  
-pdf("output/deseq2_corr/plotVolcano_DEG_CB_1month_signifOnly.pdf", width=8, height=8)  
+pdf("output/deseq2_corr/plotVolcano_DEG_CX_1month.pdf", width=8, height=8)  
 
 
 EnhancedVolcano(res,
@@ -2880,11 +3677,217 @@ upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldC
 #### Filter for down-regulated genes
 downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
 #### Save
-write.table(upregulated$GeneSymbol, file = "output/deseq2_corr/upregulated_q05FC05_DEG_CB_1month.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
-write.table(downregulated$GeneSymbol, file = "output/deseq2_corr/downregulated_q05FC05_DEG_CB_1month.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(upregulated$GeneSymbol, file = "output/deseq2_corr/upregulated_q05FC05_DEG_CX_1month.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_corr/downregulated_q05FC05_DEG_CX_1month.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 ```
 
 
+
+
+
+###  CX_1year _ WT vs KO
+
+Go in R
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+library("apeglm")
+library("EnhancedVolcano")
+library("org.Mm.eg.db")
+library("AnnotationDbi")
+library("biomaRt")
+
+# import featurecounts output and keep only gene ID and counts
+## collect all samples ID
+### 1year data
+samples <- c("171HetCX", "174MTCX", "175HetCX" ,"177MTCX" ,"474WTCX")
+
+## Make a loop for importing all featurecounts data and keep only ID and count column
+
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/featurecounts/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    dplyr::select(Geneid, starts_with("output/bam/1year_AL1804271_R2_new_analysis/")) %>%
+    dplyr::rename(!!sample := starts_with("output/bam/1year_AL1804271_R2_new_analysis/"))
+}
+
+# Merge all dataframe into a single one
+counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+
+fileName <- tibble(
+  ID = c("S_CB_KO1", "S_CB_KO2", "S_CB_KO3", "S_CB_WT1", "S_CB_WT2", "S_CB_WT3", 
+         "S_CX_KO1", "S_CX_KO2", "S_CX_KO3", "S_CX_WT1", "S_CX_WT2", "S_CX_WT3", 
+         "171HetCB", "174MTCB", "175HetCB", "177MTCB", "474WTCB", 
+         "171HetCX", "174MTCX", "175HetCX", "177MTCX", "474WTCX"),
+  genotype = c("KO", "KO", "KO", "WT", "WT", "WT", 
+               "KO", "KO", "KO", "WT", "WT", "WT", 
+               "WT", "KO", "WT", "KO", "WT", 
+               "WT", "KO", "WT", "KO", "WT"),
+  time = c(rep("1month", 12), rep("1year", 10)),
+  tissue = c(rep("CB", 6), rep("CX", 6), rep("CB", 5), rep("CX", 5)),
+  replicate = c(rep("R1", 2), rep("R2", 2), rep("R3", 2), rep("R1", 2), rep("R2", 2), rep("R3", 2), "R1", "R1", "R2", "R2", "R3", "R1", "R1", "R2", "R2", "R3"), 
+  new_ID = c("1month_CB_KO_R1", "1month_CB_KO_R2", "1month_CB_KO_R3", 
+             "1month_CB_WT_R1", "1month_CB_WT_R2", "1month_CB_WT_R3", 
+             "1month_CX_KO_R1", "1month_CX_KO_R2", "1month_CX_KO_R3", 
+             "1month_CX_WT_R1", "1month_CX_WT_R2", "1month_CX_WT_R3", 
+             "1year_CB_WT_R1", "1year_CB_KO_R1", "1year_CB_WT_R2", 
+             "1year_CB_KO_R2", "1year_CB_WT_R3", "1year_CX_WT_R1", 
+             "1year_CX_KO_R1", "1year_CX_WT_R2", "1year_CX_KO_R2", 
+             "1year_CX_WT_R3")
+) 
+
+id_to_new_id <- fileName[, c("ID", "new_ID")]
+new_column_names <- setNames(id_to_new_id$new_ID, id_to_new_id$ID)
+counts_all_rename <- counts_all
+names(counts_all_rename)[-1] <- new_column_names[match(names(counts_all)[-1], names(new_column_names))]
+
+counts_all = counts_all_rename
+
+# Remove X and Y chromosome genes
+ensembl <- useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
+                   filters = "chromosome_name",
+                   values = c("X", "Y"),
+                   mart = ensembl)
+counts_all$stripped_geneid <- sub("\\..*", "", counts_all$Geneid)
+counts_all_filtered <- counts_all %>%
+  filter(!stripped_geneid %in% genes_X_Y$ensembl_gene_id)
+counts_all_filtered$stripped_geneid <- NULL
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+
+counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pull(counts_all_filtered, Geneid)) 
+
+## Create colData file that describe all our samples
+### Including replicate
+coldata_raw <- data.frame(fileName) %>%
+  dplyr::select(-ID) %>%
+  filter(tissue == "CX",
+         time == "1year")
+
+
+## transform df into matrix
+coldata = make_matrix(dplyr::select(coldata_raw, -new_ID), pull(coldata_raw, new_ID))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix, 
+                              colData = coldata,
+                              design= ~ genotype)
+
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 5
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm")
+
+## Plot-volcano
+### GeneSymbol ID
+gene_ids <- rownames(res)
+stripped_gene_ids <- sub("\\..*", "", gene_ids)
+gene_symbols <- mapIds(org.Mm.eg.db, keys = stripped_gene_ids,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+res$GeneSymbol <- gene_symbols
+
+###### save output
+res %>%
+  as.data.frame() %>%
+  rownames_to_column("gene") %>%
+  write.table(file = "output/deseq2_corr/filtered_CX_1year__KO_vs_WT.txt", 
+              sep = "\t", 
+              quote = FALSE, 
+              row.names = FALSE)
+######
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+
+keyvals <- ifelse(
+  res$log2FoldChange < -0.5 & res$padj < 5e-2, '#165CAA',
+    ifelse(res$log2FoldChange > 0.5 & res$padj < 5e-2, 'Red',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Red'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == '#165CAA'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+### DEG_CX_1year
+highlight_genes <- c("Sv2c", "Doc2b","Snx14") # 1year_CX
+
+
+pdf("output/deseq2_corr/plotVolcano_DEG_CX_1year.pdf", width=8, height=8)  
+
+
+EnhancedVolcano(res,
+  lab = res$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = ' ',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 6,
+  labSize = 11,
+  shape = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 1,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(legend.position = "none",
+        axis.title.x = element_text(size = 30),
+        axis.title.y = element_text(size = 30),
+        axis.text.x = element_text(size = 40),
+        axis.text.y = element_text(size = 40)) +
+  ylim(0,110)
+
+dev.off()
+
+
+# count genes
+
+
+upregulated_genes <- sum(res$log2FoldChange > 0.5 & res$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res$log2FoldChange < -0.5 & res$padj < 5e-2, na.rm = TRUE)
+
+
+
+# Save as gene list for GO analysis:
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 0.5 & res$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+```
 
 
 
