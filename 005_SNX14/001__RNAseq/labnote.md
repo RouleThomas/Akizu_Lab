@@ -1673,6 +1673,11 @@ CB_1year_C5 = readr::read_tsv("output/gsea/gsea_results_CB_1year_C5_complete_cor
   add_column(genotype = "CB_1year")
 
 
+gsea_result_df_tidy = CX_1month_C5 %>%
+  bind_rows(CX_1year_C5) %>%
+  bind_rows(CB_1month_C5) %>%
+  bind_rows(CB_1year_C5)
+
 ### import gsea results - re-analysis C2
 CX_1month_C2 = readr::read_tsv("output/gsea/gsea_results_CX_1month_C2_complete_corr.tsv") %>%
   dplyr::select(ID, NES, pvalue) %>%
@@ -1719,6 +1724,42 @@ desired_ids <- c(
 "GOBP_LONG_CHAIN_FATTY_ACID_METABOLIC_PROCESS"
 )
 
+desired_ids <- c(
+"GOBP_REGULATION_OF_SYNAPSE_MATURATION",
+"GOBP_POSITIVE_REGULATION_OF_NEURON_MIGRATION",
+"GOCC_NEURON_TO_NEURON_SYNAPSE",
+"GOCC_NEURON_PROJECTION",
+"GOBP_GABAERGIC_NEURON_DIFFERENTIATION",
+"HP_NEUROMUSCULAR_DYSPHAGIA",
+"GOBP_LIPID_LOCALIZATION",
+"GOBP_LIPID_EXPORT_FROM_CELL",
+"GOBP_REGULATION_OF_LIPID_TRANSPORT",
+"GOBP_REGULATION_OF_LIPID_METABOLIC_PROCESS",
+"GOBP_FATTY_ACID_HOMEOSTASIS",
+"GOBP_POSITIVE_REGULATION_OF_UNSATURATED_FATTY_ACID_BIOSYNTHETIC_PROCESS",
+"GOBP_FATTY_ACID_TRANSPORT",
+"GOMF_OXYGEN_CARRIER_ACTIVITY",
+"GOBP_OXYGEN_TRANSPORT",
+"GOMF_OXYGEN_BINDING",
+"GOBP_RESPONSE_TO_OXYGEN_CONTAINING_COMPOUND",
+"GOBP_RESPONSE_TO_REACTIVE_OXYGEN_SPECIES"
+)
+
+
+desired_ids <- c(
+"WP_SYNAPTIC_SIGNALING_PATHWAYS_ASSOCIATED_WITH_AUTISM_SPECTRUM_DISORDER",
+"LEIN_CEREBELLUM_MARKERS",
+"KONDO_HYPOXIA",
+"BURTON_ADIPOGENESIS_11",
+"REACTOME_FATTY_ACID_METABOLISM",
+"KIM_BIPOLAR_DISORDER_OLIGODENDROCYTE_DENSITY_CORR_DN",
+"LEIN_CEREBELLUM_MARKERS",
+"LEIN_ASTROCYTE_MARKERS",
+"WP_COMPLEMENT_SYSTEM_IN_NEURONAL_DEVELOPMENT_AND_PLASTICITY",
+"WP_LIPID_PARTICLES_COMPOSITION"
+)
+
+
 # Filter the data for desired IDs
 filtered_data <- gsea_result_df_tidy %>%
   filter(ID %in% desired_ids)
@@ -1736,6 +1777,9 @@ pdf("output/gsea/heatmap_GOBP_LIPID-curatedTerms_V3.pdf", width=8, height=4)
 pdf("output/gsea/heatmap_GOBP_LIPID-curatedTerms_corr.pdf", width=8, height=4)
 
 pdf("output/gsea/heatmap_GOBP_LIPID_corr.pdf", width=12, height=6)
+
+pdf("output/gsea/heatmap_C5_examplesV1.pdf", width=18, height=10)
+pdf("output/gsea/heatmap_C2_examplesV1.pdf", width=18, height=10)
 
 ggplot(filtered_data, aes(x=genotype, y=ID, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
@@ -1755,40 +1799,14 @@ ggplot(filtered_data, aes(x=genotype, y=ID, fill=NES)) +
   scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="NES") +
   geom_text(aes(label=sprintf("%.2f", NES)), 
             color = ifelse(filtered_data$pvalue <= 0.05, "black", "grey50"), 
-            size=5.2) +
+            size=4) +
   coord_fixed()  # Force aspect ratio of the plot to be 1:1
 dev.off()
 
 
-filtered_data$genotype <- factor(filtered_data$genotype,
-                                 levels = c("CX_1month", "CX_1year", "CB_1month", "CB_1year"))
 
-pdf("output/gsea/heatmap_GOBP_LIPID-curatedTerms_V2_greyTale.pdf", width=8, height=4)
-ggplot(filtered_data, aes(x=genotype, y=ID, fill=NES)) + 
-  geom_tile(data = subset(filtered_data, pvalue <= 0.01), color = "black") +  # Add black contour to only significant tiles
-  geom_tile(data = subset(filtered_data, pvalue > 0.01), fill = "grey", color = "black") +  # Fill non-significant tiles with grey
-  theme_bw() +  # Use black-white theme for cleaner look
-  theme(
-    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
-    axis.text.y = element_text(size = 6),
-    axis.title.x = element_blank(),
-    axis.title.y = element_blank(),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.border = element_blank(),
-    panel.background = element_blank(),
-    axis.line = element_blank(),
-    legend.position = "bottom"
-  ) +
-  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="NES") +
-  geom_text(data = subset(filtered_data, pvalue <= 0.01), aes(label=sprintf("%.2f", NES)), 
-            color = "black", size=2) +  # Add text only to significant tiles
-  coord_fixed()  # Force aspect ratio of the plot to be 1:1
-dev.off()
-
-
-## re-analysis
-
+## re-analysis select relevant terms
+# V1
 ### --> output all terms significant in CB but not significant in CX
 #### Step 1: Filter for significant CB_1month or CB_1year
 significant_CB <- gsea_result_df_tidy %>%
@@ -1805,6 +1823,20 @@ significant_CX_both <- gsea_result_df_tidy %>%
 final_filtered_results <- significant_CB %>%
   filter(!ID %in% significant_CX_both$ID)
 
+# V2 corrected
+#### Step 1: Filter for significant CB_1month or CB_1year
+significant_CB <- gsea_result_df_tidy %>%
+  filter((genotype == "CB_1month" | genotype == "CB_1year") & pvalue <= 0.05)
+# Identify IDs significant in either CX_1month or CX_1year
+significant_CX_either <- gsea_result_df_tidy %>%
+  filter((genotype == "CX_1month" | genotype == "CX_1year") & pvalue <= 0.05) %>%
+  dplyr::select(ID) %>%
+  distinct()
+# Final step: Exclude IDs that are significant in either CX_1month or CX_1year from the CB results
+final_filtered_results <- significant_CB %>%
+  filter(!ID %in% significant_CX_either$ID)
+
+
 
 readr::write_tsv(
   final_filtered_results,
@@ -1815,11 +1847,12 @@ readr::write_tsv(
 
 
 
-
-
-
-
 ```
+
+
+
+
+
 Now GSEA with the log2fc ranking (save under `GoogleDrive/*/gsea/gsea_GO_BP_V2_log2FoldChangeRanking.xlsx`)
 
 
