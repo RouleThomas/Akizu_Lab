@@ -32,7 +32,17 @@ wget -i url.txt
 
 --> Data succesfully downloaded (fastq only)
 
+*NOTE: I had to unzip manually on Windows the genome STAR file; it failed using `unzip *.zip`*; the file seems corrupted, trying to clean it with:  zip -FF broken.zip --out fixed.zip --> So I downloaded new mm10 genome from pipseeker [website](https://www.fluentbio.com/resources/pipseeker-downloads/) `tar -xvzf *.tar.gz`
 
 # Run pipseeker
+
+
+```bash
+sbatch scripts/pipseeker.sh # 11850273
+sbatch scripts/pipseeker_quick.sh # 1186325
+
+
+```
+
 
 
