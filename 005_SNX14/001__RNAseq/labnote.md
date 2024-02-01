@@ -1402,6 +1402,7 @@ library("org.Mm.eg.db")
 library("enrichplot") # for gseaplot2()
 library("pheatmap")
 library("readxl")
+library("ggrepel")
 
 # import DEGs
 
@@ -1677,7 +1678,7 @@ gsea_result_df_tidy = CX_1month_C5 %>%
   bind_rows(CX_1year_C5) %>%
   bind_rows(CB_1month_C5) %>%
   bind_rows(CB_1year_C5)
-
+gsea_result_df_tidy_C5 = gsea_result_df_tidy
 ### import gsea results - re-analysis C2
 CX_1month_C2 = readr::read_tsv("output/gsea/gsea_results_CX_1month_C2_complete_corr.tsv") %>%
   dplyr::select(ID, NES, pvalue) %>%
@@ -1697,7 +1698,7 @@ gsea_result_df_tidy = CX_1month_C2 %>%
   bind_rows(CX_1year_C2) %>%
   bind_rows(CB_1month_C2) %>%
   bind_rows(CB_1year_C2)
-
+gsea_result_df_tidy_C2 = gsea_result_df_tidy
 ### Set up the heatmap
 desired_ids <- c(
 "GOBP_RESPONSE_TO_LIPID",
@@ -1846,9 +1847,302 @@ readr::write_tsv(
 
 
 
+# dotplot with term highlighted
+## Term to highlight C2 db
+gsea_result_df_tidy_C2
+
+desired_ids <- c(
+"REACTOME_FATTY_ACID_METABOLISM",
+"WP_LIPID_PARTICLES_COMPOSITION",
+"REACTOME_TRANSPORT_OF_FATTY_ACIDS"
+)
+
+gsea_result_df_tidy_C2_sample = gsea_result_df_tidy_C2 %>% 
+  filter(genotype == "CB_1year",
+         NES >0,
+         pvalue <0.15) %>%
+  dplyr::select(-genotype)
+
+
+# Creating a new column for color
+gsea_result_df_tidy_C2_sample$color <- ifelse(gsea_result_df_tidy_C2_sample$ID %in% desired_ids, "red", "grey")
+
+pdf("output/gsea/dotplot_C2_CB_1year_pos.pdf", width=10, height=8)
+ggplot(gsea_result_df_tidy_C2_sample, aes(x = pvalue, y = NES, label = ID)) +
+  # Add grey points for all IDs
+  geom_point(aes(color = color), size = 2, alpha = 0.5) +
+  # Add red points for desired IDs on top
+  geom_point(data = subset(gsea_result_df_tidy_C2_sample, ID %in% desired_ids),
+             aes(color = color), size = 4, alpha = 0.8) +
+  scale_color_identity() + # Use the colors as is
+  # Add text labels with repelling
+  geom_text_repel(
+    data = subset(gsea_result_df_tidy_C2_sample, ID %in% desired_ids),
+    aes(label = ID), 
+    box.padding = unit(0.35, "lines"), 
+    point.padding = unit(0.5, "lines"),
+    size = 5,
+    color = "black"
+  ) +
+  # Add theme and vertical line
+  theme_bw() +
+  geom_vline(xintercept = 0.05, linetype = "dotted", color = "black") +
+  labs(title = "", x = "p.value", y = "Normalized Enrichment Score (NES)") +
+  theme(
+    legend.position = "none", # Remove legend
+    axis.text.x = element_text(size = 15),
+    axis.text.y = element_text(size = 15),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14)
+  )+
+  ylim(1,1.7) # value pos: 1,1.7; value neg: -1.4,-1.20
+dev.off()
+
+## Term to highlight C5 db
+gsea_result_df_tidy_C5
+
+desired_ids <- c(
+"GOBP_OXYGEN_TRANSPORT",
+"GOBP_RESPONSE_TO_OXYGEN_CONTAINING_COMPOUND",
+"GOBP_CELLULAR_RESPONSE_TO_OXYGEN_CONTAINING_COMPOUND",
+"GOBP_LIPID_LOCALIZATION",
+"GOBP_REGULATION_OF_LIPID_LOCALIZATION",
+"GOBP_LIPID_EXPORT_FROM_CELL",
+"GOBP_REGULATION_OF_LIPID_TRANSPORT",
+"GOBP_NEGATIVE_REGULATION_OF_LIPID_METABOLIC_PROCESS",
+"GOBP_NEGATIVE_REGULATION_OF_LIPID_BIOSYNTHETIC_PROCESS",
+"GOBP_POSITIVE_REGULATION_OF_LIPID_LOCALIZATION",
+"GOBP_POSITIVE_REGULATION_OF_LIPID_TRANSPORT",
+"GOBP_REGULATION_OF_LIPID_METABOLIC_PROCESS",
+"GOMF_IRON_ION_BINDING",
+"GOBP_POSITIVE_REGULATION_OF_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS",
+"GOBP_RESPONSE_TO_REACTIVE_OXYGEN_SPECIES",
+"GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS",
+"GOBP_RESPONSE_TO_LIPID",
+"GOBP_SEQUESTERING_OF_IRON_ION",
+"GOMF_LIPID_KINASE_ACTIVITY",
+"GOBP_REGULATION_OF_IRON_ION_TRANSMEMBRANE_TRANSPORT",
+"GOBP_CELLULAR_RESPONSE_TO_LIPID",
+"GOBP_RESPONSE_TO_OXYGEN_CONTAINING_COMPOUND",
+"GOBP_POSITIVE_REGULATION_OF_UNSATURATED_FATTY_ACID_BIOSYNTHETIC_PROCESS",
+"GOBP_FATTY_ACID_TRANSPORT",
+"GOBP_LONG_CHAIN_FATTY_ACID_TRANSPORT",
+"GOBP_NEGATIVE_REGULATION_OF_FATTY_ACID_BETA_OXIDATION",
+"GOBP_FATTY_ACID_HOMEOSTASIS",
+"GOBP_NEGATIVE_REGULATION_OF_FATTY_ACID_METABOLIC_PROCESS"
+)
+
+gsea_result_df_tidy_C5_sample = gsea_result_df_tidy_C5 %>% 
+  filter(genotype == "CX_1month",
+         NES <0,
+         pvalue <0.15) %>%
+  dplyr::select(-genotype)
+
+
+# Creating a new column for color
+gsea_result_df_tidy_C5_sample$color <- ifelse(gsea_result_df_tidy_C5_sample$ID %in% desired_ids, "red", "grey")
+
+pdf("output/gsea/dotplot_C5_CX_1month_neg.pdf", width=10, height=8)
+ggplot(gsea_result_df_tidy_C5_sample, aes(x = pvalue, y = NES, label = ID)) +
+  # Add grey points for all IDs
+  geom_point(aes(color = color), size = 2, alpha = 0.5) +
+  # Add red points for desired IDs on top
+  geom_point(data = subset(gsea_result_df_tidy_C5_sample, ID %in% desired_ids),
+             aes(color = color), size = 4, alpha = 0.8) +
+  scale_color_identity() + # Use the colors as is
+  # Add text labels with repelling
+  geom_text_repel(
+    data = subset(gsea_result_df_tidy_C5_sample, ID %in% desired_ids),
+    aes(label = ID), 
+    box.padding = unit(0.35, "lines"), 
+    point.padding = unit(0.5, "lines"),
+    size = 3,
+    color = "black",
+    max.overlaps = 50
+  ) +
+  # Add theme and vertical line
+  theme_bw() +
+  geom_vline(xintercept = 0.05, linetype = "dotted", color = "black") +
+  labs(title = "", x = "p.value", y = "Normalized Enrichment Score (NES)") +
+  theme(
+    legend.position = "none", # Remove legend
+    axis.text.x = element_text(size = 15),
+    axis.text.y = element_text(size = 15),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14)
+  ) +
+  ylim(-1.4,-1.20) # value pos: 1,1.7 ; value neg: -1.4,-1.20
+dev.off()
+
+
+
+
+# Remove some term for C5 and add class
+
+# Oxygen-related processes
+Oxygen = c(
+  "GOBP_OXYGEN_TRANSPORT",
+  "GOBP_RESPONSE_TO_OXYGEN_CONTAINING_COMPOUND",
+  "GOBP_POSITIVE_REGULATION_OF_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS",
+  "GOBP_RESPONSE_TO_REACTIVE_OXYGEN_SPECIES",
+  "GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS"
+)
+
+# Lipid-related processes
+Lipid = c(
+  "GOBP_LIPID_LOCALIZATION",
+  "GOBP_LIPID_EXPORT_FROM_CELL",
+  "GOBP_REGULATION_OF_LIPID_TRANSPORT",
+  "GOBP_RESPONSE_TO_LIPID",
+  "GOBP_REGULATION_OF_LIPID_METABOLIC_PROCESS",
+  "GOBP_FATTY_ACID_TRANSPORT",
+  "GOMF_LIPID_KINASE_ACTIVITY",
+  "GOBP_LONG_CHAIN_FATTY_ACID_TRANSPORT",
+  "GOBP_FATTY_ACID_HOMEOSTASIS"
+)
+
+# Iron-related processes
+Iron = c(
+  "GOMF_IRON_ION_BINDING",
+  "GOBP_SEQUESTERING_OF_IRON_ION",
+  "GOBP_REGULATION_OF_IRON_ION_TRANSMEMBRANE_TRANSPORT"
+)
+
+
+
+gsea_result_df_tidy_C5_sample = gsea_result_df_tidy_C5 %>% 
+  filter(genotype == "CB_1year",
+         NES >0,
+         pvalue <0.15) %>%
+  dplyr::select(-genotype)
+
+special_ids <- c(Oxygen, Lipid, Iron)
+
+# Creating a new column for color based on category
+gsea_result_df_tidy_C5_sample$color <- case_when(
+  gsea_result_df_tidy_C5_sample$ID %in% Lipid ~ "red",
+  gsea_result_df_tidy_C5_sample$ID %in% Oxygen ~ "blue",
+  gsea_result_df_tidy_C5_sample$ID %in% Iron ~ "black",
+  TRUE ~ "grey" # Default color
+)
+
+# Creating a new column for size based on category membership
+gsea_result_df_tidy_C5_sample$size <- ifelse(gsea_result_df_tidy_C5_sample$ID %in% special_ids, 4, 2)
+
+#pdf("output/gsea/dotplot_C5_CB_1year_neg_filtV1.pdf", width=10, height=8)
+pdf("output/gsea/dotplot_C5_CB_1year_pos_filtV1.pdf", width=10, height=8)
+ggplot(gsea_result_df_tidy_C5_sample, aes(x = pvalue, y = NES, label = ID)) +
+  geom_point(aes(color = color, size = size), alpha = 0.5) +
+  scale_color_identity() +
+  scale_size_identity() +
+  geom_text_repel(
+    data = subset(gsea_result_df_tidy_C5_sample, ID %in% special_ids),
+    aes(label = ID), 
+    box.padding = unit(0.35, "lines"), 
+    point.padding = unit(0.5, "lines"),
+    size = 4,
+    color = "black",
+    max.overlaps = 50
+  ) +
+  theme_bw() +
+  geom_vline(xintercept = 0.05, linetype = "dotted", color = "black") +
+  labs(title = "", x = "p.value", y = "Normalized Enrichment Score (NES)") +
+  theme(
+    axis.text.x = element_text(size = 15),
+    axis.text.y = element_text(size = 15),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14)
+  ) +
+  ylim(1,1.7) # value pos: 1,1.7 ; value neg: -1.4,-1.20
+dev.off()
+
+
+
+# improve readability with geom_line
+Oxygen = c(
+  "GOBP_OXYGEN_TRANSPORT",
+  "GOBP_RESPONSE_TO_OXYGEN_CONTAINING_COMPOUND",
+  "GOBP_POSITIVE_REGULATION_OF_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS",
+  "GOBP_RESPONSE_TO_REACTIVE_OXYGEN_SPECIES",
+  "GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS"
+)
+
+# Lipid-related processes
+Lipid = c(
+  "GOBP_LIPID_LOCALIZATION",
+  "GOBP_LIPID_EXPORT_FROM_CELL",
+  "GOBP_REGULATION_OF_LIPID_TRANSPORT",
+  "GOBP_RESPONSE_TO_LIPID",
+  "GOBP_REGULATION_OF_LIPID_METABOLIC_PROCESS",
+  "GOBP_FATTY_ACID_TRANSPORT",
+  "GOMF_LIPID_KINASE_ACTIVITY",
+  "GOBP_LONG_CHAIN_FATTY_ACID_TRANSPORT",
+  "GOBP_FATTY_ACID_HOMEOSTASIS"
+)
+
+# Iron-related processes
+Iron = c(
+  "GOMF_IRON_ION_BINDING",
+  "GOBP_SEQUESTERING_OF_IRON_ION",
+  "GOBP_REGULATION_OF_IRON_ION_TRANSMEMBRANE_TRANSPORT"
+)
+special_ids <- c(Oxygen, Lipid, Iron)
+
+## Adjusting the data frame
+gsea_result_df_tidy_C5_sample <- gsea_result_df_tidy_C5 %>% 
+  filter(genotype == "CB_1year", NES < 0, pvalue < 0.15) %>%
+  dplyr::select(-genotype) %>%
+  mutate(
+    color = case_when(
+      ID %in% Lipid ~ "red",
+      ID %in% Oxygen ~ "blue",
+      ID %in% Iron ~ "black",
+      TRUE ~ "grey" # Default color
+    ),
+    size = ifelse(ID %in% special_ids, 4, 1) # Assign size based on ID being in special_ids
+  )
+
+  
+#pdf("output/gsea/dotplot_C5_CX_1month_pos_filtV2.pdf", width=10, height=8)
+pdf("output/gsea/dotplot_C5_CB_1year_neg_filtV2.pdf", width=10, height=8)
+
+ggplot(gsea_result_df_tidy_C5_sample, aes(x = pvalue, y = NES)) +
+  geom_point(aes(color = color, size = size), alpha = 0.2) + # All points
+  scale_color_identity() +
+  scale_size_identity() +
+  geom_smooth(aes(group = 1), method = "loess", color = "darkgrey", size = 1) + # Smooth line
+  geom_point(data = subset(gsea_result_df_tidy_C5_sample, ID %in% special_ids),
+             aes(color = color), size = 4, alpha = 0.8) + # Special points with correct colors
+  geom_text_repel(
+    data = subset(gsea_result_df_tidy_C5_sample, ID %in% special_ids),
+    aes(label = ID, color = color), 
+    box.padding = unit(0.35, "lines"), 
+    point.padding = unit(0.5, "lines"),
+    size = 4,
+    max.overlaps = 50
+  ) +
+  guides(color = guide_legend(title = "Category")) + # Add a legend for color
+  theme_bw() +
+  geom_vline(xintercept = 0.05, linetype = "dotted", color = "black") +
+  labs(title = "", x = "p.value", y = "Normalized Enrichment Score (NES)") +
+  theme(
+    legend.position = "right",
+    axis.text.x = element_text(size = 15),
+    axis.text.y = element_text(size = 15),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14)
+  ) +
+  ylim(-1.4,-1.20) # value pos: 1,1.7 ; value neg: -1.4,-1.20
+
+dev.off()
+
+
+
+
 
 ```
 
+--> The GSEA dotplot where very dense, notably for C5, so I generated a more condensed version `*_filt.pdf` and add color per category
 
 
 

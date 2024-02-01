@@ -39,10 +39,11 @@ wget -i url.txt
 
 ```bash
 sbatch scripts/pipseeker.sh # 11850273
-sbatch scripts/pipseeker_quick.sh # 1186325
+sbatch scripts/pipseeker_quick.sh # 11863225 ok
 
 
 ```
 
+--> The `quick` version is over in less than 12hrs, the other is still running after 22hrs!
 
 
