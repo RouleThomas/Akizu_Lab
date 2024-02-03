@@ -38,7 +38,7 @@ wget -i url.txt
 
 
 ```bash
-sbatch scripts/pipseeker.sh # 11850273
+sbatch scripts/pipseeker.sh # 11850273 cancelled too long with 1 thread
 sbatch scripts/pipseeker_quick.sh # 11863225 ok
 
 sbatch scripts/pipseeker_GFP.sh # 12007387 

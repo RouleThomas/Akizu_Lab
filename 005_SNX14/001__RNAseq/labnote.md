@@ -3114,6 +3114,9 @@ dev.off()
 tpm_all_sample_tidy <- read.csv("output/tpm/tpm_all_sample_tidy.txt", sep = "\t", header = TRUE)
 ### import gene list
 geneLists <- read_tsv("output/tpm/GSEA_leadingEdgeGenes_CB_1year_corr.txt") # top 5
+geneLists <- read_tsv("output/tpm/GSEA_leadingEdgeGenes_CB_1month_Top5_corr.txt") # top 5
+geneLists <- read_tsv("output/tpm/GSEA_leadingEdgeGenes_CB_1month_Top10_corr.txt") # top 5
+geneLists <- read_tsv("output/tpm/GSEA_leadingEdgeGenes_CB_1month_Top20_corr.txt") # top 5
 
 ## from top5 GSEA terms TPM
 
@@ -3146,11 +3149,11 @@ long_df$new_ID_grouped <-
          c("1month_CX_WT", "1month_CX_KO", "1year_CX_WT", "1year_CX_KO",
            "1month_CB_WT", "1month_CB_KO", "1year_CB_WT", "1year_CB_KO"))
 
-pdf("output/tpm/heatmap-leadingEdgeGenes_CB_1year_corr-median.pdf", width=5, height=5)
+pdf("output/tpm/heatmap-leadingEdgeGenes_CB_1month_Top20_corr-median.pdf", width=5, height=5)
 
 ggplot(long_df, aes(x = new_ID_grouped, y = reorder(external_gene_name, Expression), fill = Expression) )+
   geom_tile() +
-  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=4, name="log2(tpm+1)") +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=2.5, name="log2(tpm+1)") +  # mid point4 CB1year / CB 1 month Top5/10 2.5 / Top10   / Top20
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
         axis.text.y = element_text(size = 8),
@@ -3176,6 +3179,13 @@ dev.off()
 ## Zscore 
 
 ## from top5 GSEA terms TPM
+geneLists <- read_tsv("output/tpm/GSEA_leadingEdgeGenes_CB_1year_corr.txt") # top 5
+
+
+geneLists <- read_tsv("output/tpm/GSEA_leadingEdgeGenes_CB_1month_Top5_corr.txt") # top 5
+geneLists <- read_tsv("output/tpm/GSEA_leadingEdgeGenes_CB_1month_Top10_corr.txt") # top 10
+geneLists <- read_tsv("output/tpm/GSEA_leadingEdgeGenes_CB_1month_Top20_corr.txt") # top 20
+
 
 ### combine with expression
 tpm_all_sample_tidy_geneLists <- geneLists %>%
@@ -3209,7 +3219,8 @@ long_df$new_ID_grouped <-
          c("1month_CX_WT", "1month_CX_KO", "1year_CX_WT", "1year_CX_KO",
            "1month_CB_WT", "1month_CB_KO", "1year_CB_WT", "1year_CB_KO"))
 
-pdf("output/tpm/heatmap-leadingEdgeGenes_CB_1year_corr-Zscore.pdf", width=5, height=5)
+# pdf("output/tpm/heatmap-leadingEdgeGenes_CB_1year_corr-Zscore.pdf", width=5, height=5)
+pdf("output/tpm/heatmap-leadingEdgeGenes_CB_1month_Top20_corr-Zscore.pdf", width=5, height=5)
 
 ggplot(long_df, aes(x = new_ID_grouped, y = reorder(external_gene_name, Expression), fill = Expression) )+
   geom_tile() +
@@ -4764,29 +4775,28 @@ write.table(downregulated$gene_name, file = "output/deseq2/downregulated_q05FC05
 # Upload files to GEO
 
 
-XXX to modify XXX
+Let's upload additional files to the current FTP server (see email 2/2/2024)
 
-Go [here](https://www.ncbi.nlm.nih.gov/geo/info/seq.html); and follow instructions in `Transfer Files`. Connect to my personal space (`uploads/thomasroule@orcid_A787EGG4`) and transfer files.
+- upload the processed file to my personal space (`uploads/thomasroule@orcid_A787EGG4`) and transfer files
+- send email to GEO to confirm (here no need to send another metadata file!)
 
-- Create a clean `GEO` folder with all `*fq.gz` and `*bigwig` (re-name file so that they have same prefix; only extension differ)
-- Fill in the `seq_template.xlsx` (`Metada` and `MD5` sheet notably)
-- submit files
+*NOTE: For count files, I had to copy all of them into a new folder `001__RNAseq/count/` as I have to upload the entire content to geo and do not want to add the summary files.*
+
 
 ```bash
-# do file integrity check with md5
-md5sum * | awk '{print $2 "\t" $1}' > md5sums.txt
-
-
-
-
 module load lftp
+
 
 # connect to ftp
 lftp -u geoftp,inAlwokhodAbnib5 ftp-private.ncbi.nlm.nih.gov # geoftp = username; inAlwokhodAbnib5 = pwd
 cd uploads/thomasroule@orcid_A787EGG4
 
-mirror -R ../001__RNAseq/geo_sub_RNAseq_AMPD2/
+mirror -R ../001__RNAseq/output/bigwig/
+mirror -R ../001__RNAseq/count/
+mirror -R ../001__RNAseq/meta/ # contain the meta_additionalProcessedFiles.xlsx file
 ```
+
+
 
 
 
