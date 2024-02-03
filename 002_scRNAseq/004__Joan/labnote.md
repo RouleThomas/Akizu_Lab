@@ -41,9 +41,16 @@ wget -i url.txt
 sbatch scripts/pipseeker.sh # 11850273
 sbatch scripts/pipseeker_quick.sh # 11863225 ok
 
-
+sbatch scripts/pipseeker_GFP.sh # 12007387 
 ```
 
 --> The `quick` version is over in less than 12hrs, the other is still running after 22hrs!
+
+--> The custom genome is needed as it allow them to track GFP expressing cells.
+----> It now work, the issue was that the .zip and unzipping; I had download file per file to avoid compression and it work!
+
+--> I did not use in output_EGFP/ their `-min--sensitivity` and `-max--sensitivty` parameters as do not exist in my version!
+
+
 
 

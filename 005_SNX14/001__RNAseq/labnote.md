@@ -1403,6 +1403,7 @@ library("enrichplot") # for gseaplot2()
 library("pheatmap")
 library("readxl")
 library("ggrepel")
+library("forcats") 
 
 # import DEGs
 
@@ -1977,7 +1978,7 @@ dev.off()
 
 
 
-# Remove some term for C5 and add class
+# Remove some term for C5 and add class (option 1) )
 
 # Oxygen-related processes
 Oxygen = c(
@@ -2058,7 +2059,101 @@ dev.off()
 
 
 
-# improve readability with geom_line
+# Remove some term for C5 and add class (option 1) and only display the top 150 signficant term in waterfall plot )
+
+# Oxygen-related processes
+Oxygen = c(
+  "GOBP_OXYGEN_TRANSPORT",
+  "GOBP_RESPONSE_TO_OXYGEN_CONTAINING_COMPOUND",
+  "GOBP_POSITIVE_REGULATION_OF_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS",
+  "GOBP_RESPONSE_TO_REACTIVE_OXYGEN_SPECIES",
+  "GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS"
+)
+
+# Lipid-related processes
+Lipid = c(
+  "GOBP_LIPID_LOCALIZATION",
+  "GOBP_LIPID_EXPORT_FROM_CELL",
+  "GOBP_REGULATION_OF_LIPID_TRANSPORT",
+  "GOBP_RESPONSE_TO_LIPID",
+  "GOBP_REGULATION_OF_LIPID_METABOLIC_PROCESS",
+  "GOBP_FATTY_ACID_TRANSPORT",
+  "GOMF_LIPID_KINASE_ACTIVITY",
+  "GOBP_LONG_CHAIN_FATTY_ACID_TRANSPORT",
+  "GOBP_FATTY_ACID_HOMEOSTASIS"
+)
+
+# Iron-related processes
+Iron = c(
+  "GOMF_IRON_ION_BINDING",
+  "GOBP_SEQUESTERING_OF_IRON_ION",
+  "GOBP_REGULATION_OF_IRON_ION_TRANSMEMBRANE_TRANSPORT"
+)
+special_ids <- c(Oxygen, Lipid, Iron)
+
+### Filter and prepare the dataset
+gsea_result_df_tidy_C5_sample <- gsea_result_df_tidy_C5 %>%
+  filter(genotype == "CX_1year", NES > 0, pvalue < 0.05) %>%
+  mutate(
+    Category = case_when(
+      ID %in% Lipid ~ "Lipid",
+      ID %in% Oxygen ~ "Oxygen",
+      ID %in% Iron ~ "Iron",
+      TRUE ~ "Other"
+    ),
+    color = case_when(
+      ID %in% Lipid ~ "red",
+      ID %in% Oxygen ~ "blue",
+      ID %in% Iron ~ "black",
+      TRUE ~ "grey" # Default color
+    )
+  ) %>%
+  mutate(Label = ifelse(ID %in% special_ids, as.character(ID), NA_character_)) %>%
+  arrange(desc(NES))
+
+# Plotting
+pdf("output/gsea/waterfall_C5_CX_1year_pos.pdf", width=8, height=5)
+ggplot(gsea_result_df_tidy_C5_sample, aes(x = reorder(ID, -NES), y = NES)) +
+  geom_point(aes(color = color), size = 2, alpha = 0.6) +
+  scale_color_identity() +
+  geom_text_repel(
+    aes(label = Label, color = color), 
+    box.padding = unit(0.35, "lines"), 
+    point.padding = unit(0.5, "lines"), 
+    size = 3, 
+    na.rm = TRUE,
+    max.overlaps = 50
+  ) +
+  theme_classic() +
+  labs(title = "", x = "", y = "NES") +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_blank(), # Remove the x-axis text
+    axis.text.y = element_text(size = 10),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14)
+  ) 
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# improve readability with geom_line (option 2); not the chosen one)
 Oxygen = c(
   "GOBP_OXYGEN_TRANSPORT",
   "GOBP_RESPONSE_TO_OXYGEN_CONTAINING_COMPOUND",
@@ -2646,7 +2741,9 @@ tpm_all_sample_tidy <- left_join(tpm_all_sample_tidy, genesymbols,
                                  by = c("Geneid" = "ensembl_gene_id")) %>%
                        unique() 
 ## save output:  write.table(tpm_all_sample_tidy, sep = "\t", quote = FALSE, row.names=FALSE, file="output/tpm/tpm_all_sample_tidy.txt")
-## read: tpm_all_sample_tidy <- read.csv("output/tpm/tpm_all_sample_tidy.txt", sep = "\t", header = TRUE)
+
+
+## HERE GOOD!!!!!!!! read: tpm_all_sample_tidy <- read.csv("output/tpm/tpm_all_sample_tidy.txt", sep = "\t", header = TRUE)
 
 
 
@@ -2942,6 +3039,9 @@ ggplot(long_df, aes(x = new_ID_grouped, y = reorder(external_gene_name, Expressi
 dev.off()
 
 
+
+
+
 ## Z - score plot ######################
 # Pivot the data to a long format suitable for ggplot
 
@@ -2981,7 +3081,7 @@ ggplot(long_df, aes(x = new_ID_grouped, y = reorder(external_gene_name, Expressi
         legend.position = "right")
 dev.off()
 
-########################################
+######################################## STAT boxplot
 
   
 
@@ -3006,7 +3106,246 @@ ggboxplot(long_df, x = "new_ID_grouped", y = "Expression",
     axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5) )
 dev.off()
 
+########################################
+
+
+## heatmap _ from top5 GSEA terms
+
+tpm_all_sample_tidy <- read.csv("output/tpm/tpm_all_sample_tidy.txt", sep = "\t", header = TRUE)
+### import gene list
+geneLists <- read_tsv("output/tpm/GSEA_leadingEdgeGenes_CB_1year_corr.txt") # top 5
+
+## from top5 GSEA terms TPM
+
+### combine with expression
+tpm_all_sample_tidy_geneLists <- geneLists %>%
+  left_join(tpm_all_sample_tidy, by = "external_gene_name")
+
+desired_samples <- tpm_all_sample_tidy_geneLists %>%
+  filter(new_ID %in% c("1month_CB_WT_R1", "1month_CB_WT_R2", "1month_CB_WT_R3", 
+                       "1month_CB_KO_R1", "1month_CB_KO_R2", "1month_CB_KO_R3",
+                       "1year_CB_WT_R1", "1year_CB_WT_R2", "1year_CB_WT_R3", 
+                       "1year_CB_KO_R1", "1year_CB_KO_R2", "1year_CB_KO_R3",
+                       "1month_CX_WT_R1", "1month_CX_WT_R2", "1month_CX_WT_R3", 
+                       "1month_CX_KO_R1", "1month_CX_KO_R2", "1month_CX_KO_R3",
+                       "1year_CX_WT_R1", "1year_CX_WT_R2", "1year_CX_WT_R3", 
+                       "1year_CX_KO_R1", "1year_CX_KO_R2", "1year_CX_KO_R3")) %>%
+  mutate(new_ID_grouped = sub("_R[0-9]+$", "", new_ID)) %>%
+  group_by(new_ID_grouped, external_gene_name) %>%
+  summarise(tpm_median = median(log2(tpm + 1))) %>%
+  ungroup() 
+
+
+# Pivot the data to a long format suitable for ggplot
+long_df <- desired_samples %>%
+  pivot_longer(cols = tpm_median, names_to = "Condition", values_to = "Expression")
+
+
+long_df$new_ID_grouped <-
+  factor(long_df$new_ID_grouped,
+         c("1month_CX_WT", "1month_CX_KO", "1year_CX_WT", "1year_CX_KO",
+           "1month_CB_WT", "1month_CB_KO", "1year_CB_WT", "1year_CB_KO"))
+
+pdf("output/tpm/heatmap-leadingEdgeGenes_CB_1year_corr-median.pdf", width=5, height=5)
+
+ggplot(long_df, aes(x = new_ID_grouped, y = reorder(external_gene_name, Expression), fill = Expression) )+
+  geom_tile() +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=4, name="log2(tpm+1)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+        axis.text.y = element_text(size = 8),
+        legend.position = "right")
+dev.off()
+
+########################## boxplot stat
+
+library("ggpubr")
+
+pdf("output/tpm/boxplot-leadingEdgeGenes_CB_1year_corr-median.pdf", width=6, height=4)
+ggboxplot(long_df, x = "new_ID_grouped", y = "Expression",
+  add.params = list(size = 1, alpha = 0.5),
+      fill = "new_ID_grouped", palette = c("darkgrey","darkgrey","darkgrey","darkgrey","darkgrey","darkgrey","darkgrey","darkgrey"),  add = "jitter") + theme_classic() +
+  stat_compare_means(comparisons = list( c("1month_CX_WT", "1month_CX_KO"), c("1year_CX_WT", "1year_CX_KO"), c("1month_CB_WT", "1month_CB_KO"), c("1year_CB_WT", "1year_CB_KO") )) + # Add pairwise comparisons p-value
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5) )
+dev.off()
+
+
+##########################
+
+## Zscore 
+
+## from top5 GSEA terms TPM
+
+### combine with expression
+tpm_all_sample_tidy_geneLists <- geneLists %>%
+  left_join(tpm_all_sample_tidy, by = "external_gene_name")
+
+desired_samples <- tpm_all_sample_tidy_geneLists %>%
+  filter(new_ID %in% c("1month_CB_WT_R1", "1month_CB_WT_R2", "1month_CB_WT_R3", 
+                       "1month_CB_KO_R1", "1month_CB_KO_R2", "1month_CB_KO_R3",
+                       "1year_CB_WT_R1", "1year_CB_WT_R2", "1year_CB_WT_R3", 
+                       "1year_CB_KO_R1", "1year_CB_KO_R2", "1year_CB_KO_R3",
+                       "1month_CX_WT_R1", "1month_CX_WT_R2", "1month_CX_WT_R3", 
+                       "1month_CX_KO_R1", "1month_CX_KO_R2", "1month_CX_KO_R3",
+                       "1year_CX_WT_R1", "1year_CX_WT_R2", "1year_CX_WT_R3", 
+                       "1year_CX_KO_R1", "1year_CX_KO_R2", "1year_CX_KO_R3")) %>%
+  mutate(new_ID_grouped = sub("_R[0-9]+$", "", new_ID)) %>%
+  group_by(new_ID_grouped, external_gene_name) %>%
+  summarise(tpm_median = median(log2(tpm + 1))) %>%
+  ungroup()%>%
+  mutate(z_score = (tpm_median - mean(tpm_median)) / sd(tpm_median))
+
+
+
+
+# Pivot the data to a long format suitable for ggplot
+long_df <- desired_samples %>%
+  pivot_longer(cols = z_score, names_to = "Condition", values_to = "Expression")
+
+
+long_df$new_ID_grouped <-
+  factor(long_df$new_ID_grouped,
+         c("1month_CX_WT", "1month_CX_KO", "1year_CX_WT", "1year_CX_KO",
+           "1month_CB_WT", "1month_CB_KO", "1year_CB_WT", "1year_CB_KO"))
+
+pdf("output/tpm/heatmap-leadingEdgeGenes_CB_1year_corr-Zscore.pdf", width=5, height=5)
+
+ggplot(long_df, aes(x = new_ID_grouped, y = reorder(external_gene_name, Expression), fill = Expression) )+
+  geom_tile() +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Z-score") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+        axis.text.y = element_text(size = 8),
+        legend.position = "right")
+dev.off()
+
+
+
+
+
+
+## zscore on tpm 
+
+## from top5 GSEA terms TPM
+
+### combine with expression
+tpm_all_sample_tidy_geneLists <- geneLists %>%
+  left_join(tpm_all_sample_tidy, by = "external_gene_name")
+
+desired_samples <- tpm_all_sample_tidy_geneLists %>%
+  filter(new_ID %in% c("1month_CB_WT_R1", "1month_CB_WT_R2", "1month_CB_WT_R3", 
+                       "1month_CB_KO_R1", "1month_CB_KO_R2", "1month_CB_KO_R3",
+                       "1year_CB_WT_R1", "1year_CB_WT_R2", "1year_CB_WT_R3", 
+                       "1year_CB_KO_R1", "1year_CB_KO_R2", "1year_CB_KO_R3",
+                       "1month_CX_WT_R1", "1month_CX_WT_R2", "1month_CX_WT_R3", 
+                       "1month_CX_KO_R1", "1month_CX_KO_R2", "1month_CX_KO_R3",
+                       "1year_CX_WT_R1", "1year_CX_WT_R2", "1year_CX_WT_R3", 
+                       "1year_CX_KO_R1", "1year_CX_KO_R2", "1year_CX_KO_R3")) %>%
+  mutate(new_ID_grouped = sub("_R[0-9]+$", "", new_ID)) %>%
+  group_by(new_ID_grouped, external_gene_name) %>%
+  summarise(tpm_median = median(tpm + 1)) %>%
+  ungroup()%>%
+  mutate(z_score = (tpm_median - mean(tpm_median)) / sd(tpm_median))
+
+
+
+
+# Pivot the data to a long format suitable for ggplot
+long_df <- desired_samples %>%
+  pivot_longer(cols = z_score, names_to = "Condition", values_to = "Expression")
+
+
+long_df$new_ID_grouped <-
+  factor(long_df$new_ID_grouped,
+         c("1month_CX_WT", "1month_CX_KO", "1year_CX_WT", "1year_CX_KO",
+           "1month_CB_WT", "1month_CB_KO", "1year_CB_WT", "1year_CB_KO"))
+
+pdf("output/tpm/heatmap-leadingEdgeGenes_CB_1year_corr-tpmZscore.pdf", width=5, height=5)
+
+ggplot(long_df, aes(x = new_ID_grouped, y = reorder(external_gene_name, Expression), fill = Expression) )+
+  geom_tile() +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=2, name="Z-score") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+        axis.text.y = element_text(size = 8),
+        legend.position = "right")
+dev.off()
+
+
+
+
+
+## heatmap _ from top5 GSEA terms and using log2fc instead of tpm!
+
+CX_1month <- as_tibble(read.csv("output/deseq2_corr/filtered_CX_1month__KO_vs_WT.txt", sep = "\t", header = TRUE) ) %>%
+  dplyr::select(GeneSymbol, log2FoldChange, padj) %>%
+  add_column(group = "CX_1month") %>%
+  drop_na()
+CX_1year <- as_tibble(read.csv("output/deseq2_corr/filtered_CX_1year__KO_vs_WT.txt", sep = "\t", header = TRUE) ) %>%
+  dplyr::select(GeneSymbol, log2FoldChange, padj) %>%
+  add_column(group = "CX_1year")  %>%
+  drop_na()
+CB_1month <- as_tibble(read.csv("output/deseq2_corr/filtered_CB_1month__KO_vs_WT.txt", sep = "\t", header = TRUE) ) %>%
+  dplyr::select(GeneSymbol, log2FoldChange, padj) %>%
+  add_column(group = "CB_1month")  %>%
+  drop_na()
+CB_1year <- as_tibble(read.csv("output/deseq2_corr/filtered_CB_1year__KO_vs_WT.txt", sep = "\t", header = TRUE) ) %>%
+  dplyr::select(GeneSymbol, log2FoldChange, padj) %>%
+  add_column(group = "CB_1year")  %>%
+  drop_na()
+
+DEGs_tidy = CX_1month %>%
+  bind_rows(CX_1year) %>%
+  bind_rows(CB_1month) %>%
+  bind_rows(CB_1year) %>%
+  dplyr::rename("external_gene_name" = "GeneSymbol") %>%
+  mutate(log2FoldChange = ifelse(padj > 0.05, 0, log2FoldChange)) # Set log2FC to 0 for non-significant genes
+
+
+# Import gene list
+geneLists <- read_tsv("output/tpm/GSEA_leadingEdgeGenes_CB_1year_corr.txt")
+
+# Combine with expression
+DEGs_tidy_geneLists <- geneLists %>%
+  left_join(DEGs_tidy, by = "external_gene_name")
+
+# Pivot the data for heatmap plotting
+long_heatmap_data <- DEGs_tidy_geneLists %>%
+  pivot_longer(cols = starts_with("log2FoldChange"), names_to = "Condition", values_to = "Expression") %>%
+  mutate(group = factor(group, levels = c("CX_1month", "CX_1year", "CB_1month", "CB_1year")))
+  
+
+
+# Plot the heatmap
+pdf("output/deseq2_corr/heatmap-leadingEdgeGenes_CB_1year_corr-DEGslog2FC.pdf", width = 10, height = 8)
+ggplot(long_heatmap_data, aes(x = group, y = reorder(external_gene_name, Expression), fill = Expression)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "red", midpoint = 0, name = "log2(FoldChange)", 
+                       limit = c(-2, 2), space = "Lab", na.value = "white") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    axis.text.y = element_blank(), # Remove y-axis labels
+    axis.ticks.y = element_blank(), # Remove y-axis ticks
+    legend.position = "right"
+  ) +
+  labs(x = "", y = "Gene")
+dev.off()
+
+
+
 ```
+
+
+--> `*top5` correspond to the selection of the top 5 leading edge genes from each Term of the signficant GSEA at 1year CB; excell file for selection in `Fig_V2/GSEA_leadingEdgeGenes_CB_1year_corr.xlsx` and output gene list as `Fig_V2/GSEA_leadingEdgeGenes_CB_1year_corr.txt` cp into `tpm/GSEA_leadingEdgeGenes_CB_1year_corr.txt` in HPC
+
+--> To strenghten difference I tried tpm solely or zscore on tpm solely but  it is bad, not visible because value are too different
+
+
+
+
+
 
 
 ## bigwig coverage files
@@ -4420,6 +4759,34 @@ write.table(downregulated$gene_name, file = "output/deseq2/downregulated_q05FC05
 
 
 
+
+
+# Upload files to GEO
+
+
+XXX to modify XXX
+
+Go [here](https://www.ncbi.nlm.nih.gov/geo/info/seq.html); and follow instructions in `Transfer Files`. Connect to my personal space (`uploads/thomasroule@orcid_A787EGG4`) and transfer files.
+
+- Create a clean `GEO` folder with all `*fq.gz` and `*bigwig` (re-name file so that they have same prefix; only extension differ)
+- Fill in the `seq_template.xlsx` (`Metada` and `MD5` sheet notably)
+- submit files
+
+```bash
+# do file integrity check with md5
+md5sum * | awk '{print $2 "\t" $1}' > md5sums.txt
+
+
+
+
+module load lftp
+
+# connect to ftp
+lftp -u geoftp,inAlwokhodAbnib5 ftp-private.ncbi.nlm.nih.gov # geoftp = username; inAlwokhodAbnib5 = pwd
+cd uploads/thomasroule@orcid_A787EGG4
+
+mirror -R ../001__RNAseq/geo_sub_RNAseq_AMPD2/
+```
 
 
 
