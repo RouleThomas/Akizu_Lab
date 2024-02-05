@@ -75,12 +75,12 @@ output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt
 dbs <- c("GO_Biological_Process_2023")
 
 # Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2_corr/downregulated_q05FC05_DEG_CB_1month.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 
 # Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2_corr/upregulated_q05FC05_DEG_CB_1month.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
