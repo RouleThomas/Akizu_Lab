@@ -1299,7 +1299,7 @@ write.table(gos, "output/GO/enrichR_KEGG_2019_Mouse_1year_CX_qval05FC0.txt", sep
 --> qval 05 FC 0.5 is the best parameter; the only one displaying lipid-related terms
 ----> filter to keep when overlap >1 gene
 
-Enhanced vizualization in dotplot:
+### Enhanced vizualization in dotplot for GO:
 - import enrichR output
 - calculate overlap (eg. gene list / gene total)
 - combine enrichR BP/MF/CC
@@ -1384,10 +1384,12 @@ gos_BP_1year_CC <- as_tibble(read.table("output/GO/enrichR_GO_CC_1year_CB_corr.t
 
 gos_BP_1year = gos_BP_1year_MF %>%
   bind_rows(gos_BP_1year_CC) %>%
-  filter(Term %in% c("Glutamate Receptor Binding ", "Postsynaptic Density ", "Postsynaptic Specialization Membrane ", "Dendritic Spine Membrane ", "Sarcoplasmic Reticulum ", "Platelet Dense Tubular Network ", "Vacuolar Lumen ", "Collagen-Containing Extracellular Matrix "))
+  filter(Term %in% c("Glutamate Receptor Binding ", "Postsynaptic Density ", "Postsynaptic Specialization Membrane ", "Dendritic Spine Membrane ", "Sarcoplasmic Reticulum ", "Vacuolar Lumen ", "Collagen-Containing Extracellular Matrix "))
 
 
 pdf("output/GO/enrichR_GO_BP_1year_CB_corr_dotplot_v1.pdf", width=7, height=5)
+pdf("output/GO/enrichR_GO_BP_1year_CB_corr_dotplot_v2.pdf", width=7, height=5)
+
 ggplot(gos_BP_1year, aes(x = abs(logAdjP), y = reorder(Term, abs(logAdjP) ), size = overlap, color = type)) +
   geom_point(alpha = 1) +  # Adjust point transparency with alpha
   scale_size_continuous(range = c(1, 10)) + # Adjust the size range for the points
@@ -1397,6 +1399,8 @@ ggplot(gos_BP_1year, aes(x = abs(logAdjP), y = reorder(Term, abs(logAdjP) ), siz
 dev.off()
 
 pdf("output/GO/enrichR_GO_BP_1year_CB_corr_dotplot_v1Nolegend.pdf", width=4, height=4)
+pdf("output/GO/enrichR_GO_BP_1year_CB_corr_dotplot_v2Nolegend.pdf", width=4, height=4)
+
 ggplot(gos_BP_1year, aes(x = abs(logAdjP), y = reorder(Term, abs(logAdjP) ), size = overlap, color = type)) +
   geom_point(alpha = 1) +  # Adjust point transparency with alpha
   scale_size_continuous(range = c(1, 10)) + # Adjust the size range for the points
@@ -1437,10 +1441,11 @@ gos_BP_1month_CC <- as_tibble(read.table("output/GO/enrichR_GO_CC_1month_CB_corr
 
 gos_BP_1month = gos_BP_1month_MF %>%
   bind_rows(gos_BP_1month_CC) %>%
-  filter(Term %in% c("Gamma-Aminobutyric Acid Transmembrane Transporter Activity ", "Phospholipase Inhibitor Activity ", "Dendrite ", "Extracellular Vesicle ", "GABA-A Receptor Complex ", "Collagen-Containing Extracellular Matrix "))
+  filter(Term %in% c("G Protein-Coupled Serotonin Receptor Activity ", "Endoplasmic Reticulum Lumen ", "Dendrite ", "Extracellular Vesicle ", "Extracellular Vesicle ", "Collagen-Containing Extracellular Matrix "))
 
 
 pdf("output/GO/enrichR_GO_BP_1month_CB_corr_dotplot_v1.pdf", width=7, height=5)
+pdf("output/GO/enrichR_GO_BP_1month_CB_corr_dotplot_v2.pdf", width=7, height=5)
 
 ggplot(gos_BP_1month, aes(x = abs(logAdjP), y = reorder(Term, abs(logAdjP) ), size = overlap, color = type)) +
   geom_point(alpha = 1) +  # Adjust point transparency with alpha
@@ -1452,6 +1457,8 @@ dev.off()
 
 
 pdf("output/GO/enrichR_GO_BP_1month_CB_corr_dotplot_v1Nolegend.pdf", width=4, height=4)
+pdf("output/GO/enrichR_GO_BP_1month_CB_corr_dotplot_v2Nolegend.pdf", width=4, height=4)
+
 ggplot(gos_BP_1month, aes(x = abs(logAdjP), y = reorder(Term, abs(logAdjP) ), size = overlap, color = type)) +
   geom_point(alpha = 1) +  # Adjust point transparency with alpha
   scale_size_continuous(range = c(1, 10)) + # Adjust the size range for the points
@@ -2285,8 +2292,8 @@ dev.off()
 
 
 
-# Remove some term for C5 and add class (option 1) and only display the top 150 signficant term in waterfall plot )
-
+# Remove some term for C5 and add class (option 1) and only display in waterfall plot )
+### 1year_CB
 # Oxygen-related processes
 Oxygen = c(
   "GOBP_OXYGEN_TRANSPORT",
@@ -2339,6 +2346,7 @@ gsea_result_df_tidy_C5_sample <- gsea_result_df_tidy_C5 %>%
 
 # Plotting
 pdf("output/gsea/waterfall_C5_CB_1year_pos.pdf", width=6, height=5)
+
 ggplot(gsea_result_df_tidy_C5_sample, aes(x = reorder(ID, -NES), y = NES)) +
   geom_point(aes(color = color), size = 2, alpha = 0.6) +
   scale_color_identity() +
@@ -2363,11 +2371,70 @@ dev.off()
 
 
 
+### 1month CB (waterfall plot)
+# Oxygen-related processes
+Oxygen = c(
+  "GOBP_OXYGEN_TRANSPORT",
+  "GOBP_RESPONSE_TO_OXYGEN_CONTAINING_COMPOUND",
+  "GOBP_CELLULAR_RESPONSE_TO_OXYGEN_CONTAINING_COMPOUND"
+)
+
+# Lipid-related processes
+Lipid = c(
+  "GOBP_POSITIVE_REGULATION_OF_UNSATURATED_FATTY_ACID_BIOSYNTHETIC_PROCESS"
+)
+
+# Iron-related processes
+Iron = c(
+  ""
+)
+special_ids <- c(Oxygen, Lipid, Iron)
+
+### Filter and prepare the dataset
+gsea_result_df_tidy_C5_sample <- gsea_result_df_tidy_C5 %>%
+  filter(genotype == "CB_1month", NES > 0, pvalue < 0.05) %>%
+  mutate(
+    Category = case_when(
+      ID %in% Lipid ~ "Lipid",
+      ID %in% Oxygen ~ "Oxygen",
+      ID %in% Iron ~ "Iron",
+      TRUE ~ "Other"
+    ),
+    color = case_when(
+      ID %in% Lipid ~ "red",
+      ID %in% Oxygen ~ "blue",
+      ID %in% Iron ~ "black",
+      TRUE ~ "grey" # Default color
+    )
+  ) %>%
+  mutate(Label = ifelse(ID %in% special_ids, as.character(ID), NA_character_)) %>%
+  arrange(desc(NES))
 
 
+pdf("output/gsea/waterfall_C5_CB_1month_pos.pdf", width=6, height=5)
 
 
-
+ggplot(gsea_result_df_tidy_C5_sample, aes(x = reorder(ID, -NES), y = NES)) +
+  geom_point(aes(color = color), size = 2, alpha = 0.6) +
+  scale_color_identity() +
+  geom_text_repel(
+    aes(label = Label, color = color), 
+    box.padding = unit(0.35, "lines"), 
+    point.padding = unit(0.5, "lines"), 
+    size = 5, 
+    na.rm = TRUE,
+    max.overlaps = 50
+  ) +
+  theme_classic() +
+  labs(title = "", x = "", y = "NES") +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_blank(), # Remove the x-axis text
+    axis.text.y = element_text(size = 30),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 34)
+  ) 
+dev.off()
 
 
 
@@ -3343,6 +3410,7 @@ geneLists <- read_tsv("output/tpm/GSEA_leadingEdgeGenes_CB_1year_corr.txt") # to
 geneLists <- read_tsv("output/tpm/GSEA_leadingEdgeGenes_CB_1month_Top5_corr.txt") # top 5
 geneLists <- read_tsv("output/tpm/GSEA_leadingEdgeGenes_CB_1month_Top10_corr.txt") # top 5
 geneLists <- read_tsv("output/tpm/GSEA_leadingEdgeGenes_CB_1month_Top20_corr.txt") # top 5
+geneLists <- read_tsv("output/tpm/GSEA_leadingEdgeGenes_CB_1month_Top20_Fabp5_corr.txt") # top 5
 
 ## from top5 GSEA terms TPM
 
@@ -3483,7 +3551,7 @@ long_df$new_ID_grouped <-
            "1month_CB_WT", "1month_CB_KO", "1year_CB_WT", "1year_CB_KO"))
 
 # Now you can create your plot, with genes ordered based on the median expression in 1year_CB_KO
-pdf("output/tpm/heatmap-leadingEdgeGenes_CB_1month_corr-Zscore_KOorder.pdf", width=5, height=5)
+pdf("output/tpm/heatmap-leadingEdgeGenes_CB_1month_Fabp5_corr-Zscore_KOorder.pdf", width=5, height=5)
 ggplot(long_df, aes(x = new_ID_grouped, y = external_gene_name, fill = Expression)) +
   geom_tile() +
   scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Z-score") +
