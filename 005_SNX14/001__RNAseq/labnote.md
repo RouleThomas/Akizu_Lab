@@ -75,12 +75,12 @@ output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt
 dbs <- c("GO_Biological_Process_2023")
 
 # Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/deseq2_corr/downregulated_q05FC05_DEG_CB_1month.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2_corr/downregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 
 # Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/deseq2_corr/upregulated_q05FC05_DEG_CB_1month.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2_corr/upregulated_q05FC05_DEG_CX_1year.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -176,6 +176,7 @@ write.table(gos, "output/GO/enrichR_GO_BP_1year_CX_qval05FC0.5_complete.txt", se
 
 write.table(gos, "output/GO/enrichR_GO_BP_1year_CX_corr.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
+write.table(gos, "output/GO/enrichR_GO_BP_1year_CB_corr.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 # Define databases for enrichment
@@ -1298,6 +1299,231 @@ write.table(gos, "output/GO/enrichR_KEGG_2019_Mouse_1year_CX_qval05FC0.txt", sep
 --> qval 05 FC 0.5 is the best parameter; the only one displaying lipid-related terms
 ----> filter to keep when overlap >1 gene
 
+Enhanced vizualization in dotplot:
+- import enrichR output
+- calculate overlap (eg. gene list / gene total)
+- combine enrichR BP/MF/CC
+- display in dotplot (x logPadj, y Terms, red = up blue = down, size = overlap)
+
+
+
+```R
+library("tidyverse")
+
+# import outputs
+
+## 1year CB Descartes
+gos_Descartes_1year <- as_tibble(read.table("output/GO/enrichR_Descartes_Cell_Types_and_Tissue_2021_1year_CB_corr.txt", sep="\t", header=TRUE, quote="") )  %>%
+  separate(col = Overlap, into = c("n_gene", "n_total"), sep = "/", convert = TRUE) %>%
+  mutate(overlap = n_gene/n_total) %>%
+  filter(abs(logAdjP) >3.1) # to filter out: Stromal cells in stomach, myeloid cells in kidney, myeloid cells in adrenal and microglia in eye, due to less significant
+
+
+pdf("output/GO/enrichR_Descartes_Cell_Types_and_Tissue_2021_1year_CB_corr_dotplot_v1.pdf", width=7, height=5)
+ggplot(gos_Descartes_1year, aes(x = abs(logAdjP), y = reorder(Term, abs(logAdjP) ), size = overlap, color = type)) +
+  geom_point(alpha = 1) +  # Adjust point transparency with alpha
+  scale_size_continuous(range = c(1, 10)) + # Adjust the size range for the points
+  scale_color_manual(values = c("up" = "red", "down" = "blue")) + # Set colors for the points
+  labs(x = "Log Adjusted P-Value", y = "Terms", size = "Gene Overlap") + # Labeling axes and size
+  theme_bw() # Use a minimal theme
+dev.off()
+
+pdf("output/GO/enrichR_Descartes_Cell_Types_and_Tissue_2021_1year_CB_corr_dotplot_v1Nolegend.pdf", width=4, height=4)
+ggplot(gos_Descartes_1year, aes(x = abs(logAdjP), y = reorder(Term, abs(logAdjP) ), size = overlap, color = type)) +
+  geom_point(alpha = 1) +  # Adjust point transparency with alpha
+  scale_size_continuous(range = c(1, 10)) + # Adjust the size range for the points
+  scale_color_manual(values = c("up" = "red", "down" = "blue")) + # Set colors for the points
+  labs(x = "Log Adjusted P-Value", y = "Terms", size = "Gene Overlap") + # Labeling axes and size
+  theme_bw() + # Use a black and white theme
+  theme(axis.text.y = element_blank(),
+        axis.title.x = element_text(size = 14),
+        axis.text.x = element_text(size = 16))
+dev.off()
+
+
+
+## 1year CB Disgenet
+gos_Descartes_1year <- as_tibble(read.table("output/GO/enrichR_DisGeNET_1year_CB_corr.txt", sep="\t", header=TRUE, quote="") )  %>%
+  separate(col = Overlap, into = c("n_gene", "n_total"), sep = "/", convert = TRUE) %>%
+  mutate(overlap = n_gene/n_total) %>%
+  filter(abs(logAdjP) >2) # to filter out all term less signifcant than Syringomyelia
+
+
+pdf("output/GO/enrichR_DisGeNET_1year_CB_corr_dotplot_v1.pdf", width=7, height=5)
+ggplot(gos_Descartes_1year, aes(x = abs(logAdjP), y = reorder(Term, abs(logAdjP) ), size = overlap, color = type)) +
+  geom_point(alpha = 1) +  # Adjust point transparency with alpha
+  scale_size_continuous(range = c(1, 10)) + # Adjust the size range for the points
+  scale_color_manual(values = c("up" = "red", "down" = "blue")) + # Set colors for the points
+  labs(x = "Log Adjusted P-Value", y = "Terms", size = "Gene Overlap") + # Labeling axes and size
+  theme_bw() # Use a minimal theme
+dev.off()
+
+pdf("output/GO/enrichR_DisGeNET_1year_CB_corr_dotplot_v1Nolegend.pdf", width=4, height=4)
+ggplot(gos_Descartes_1year, aes(x = abs(logAdjP), y = reorder(Term, abs(logAdjP) ), size = overlap, color = type)) +
+  geom_point(alpha = 1) +  # Adjust point transparency with alpha
+  scale_size_continuous(range = c(1, 10)) + # Adjust the size range for the points
+  scale_color_manual(values = c("up" = "red", "down" = "blue")) + # Set colors for the points
+  labs(x = "Log Adjusted P-Value", y = "Terms", size = "Gene Overlap") + # Labeling axes and size
+  theme_bw() + # Use a black and white theme
+  theme(axis.text.y = element_blank(),
+        axis.title.x = element_text(size = 14),
+        axis.text.x = element_text(size = 16))
+dev.off()
+
+
+
+## 1year CB BP
+gos_BP_1year_MF <- as_tibble(read.table("output/GO/enrichR_GO_MF_1year_CB_corr.txt", sep="\t", header=TRUE, quote="") ) %>%
+  add_column(GO = "Molecular Function") %>%
+  separate(col = Overlap, into = c("n_gene", "n_total"), sep = "/", convert = TRUE) %>%
+  mutate(overlap = n_gene/n_total)
+gos_BP_1year_CC <- as_tibble(read.table("output/GO/enrichR_GO_CC_1year_CB_corr.txt", sep="\t", header=TRUE, quote="") ) %>%
+  add_column(GO = "Cellular Component") %>%
+  separate(col = Overlap, into = c("n_gene", "n_total"), sep = "/", convert = TRUE) %>%
+  mutate(overlap = n_gene/n_total)
+
+gos_BP_1year = gos_BP_1year_MF %>%
+  bind_rows(gos_BP_1year_CC) %>%
+  filter(Term %in% c("Glutamate Receptor Binding ", "Postsynaptic Density ", "Postsynaptic Specialization Membrane ", "Dendritic Spine Membrane ", "Sarcoplasmic Reticulum ", "Platelet Dense Tubular Network ", "Vacuolar Lumen ", "Collagen-Containing Extracellular Matrix "))
+
+
+pdf("output/GO/enrichR_GO_BP_1year_CB_corr_dotplot_v1.pdf", width=7, height=5)
+ggplot(gos_BP_1year, aes(x = abs(logAdjP), y = reorder(Term, abs(logAdjP) ), size = overlap, color = type)) +
+  geom_point(alpha = 1) +  # Adjust point transparency with alpha
+  scale_size_continuous(range = c(1, 10)) + # Adjust the size range for the points
+  scale_color_manual(values = c("up" = "red", "down" = "blue")) + # Set colors for the points
+  labs(x = "Log Adjusted P-Value", y = "Terms", size = "Gene Overlap") + # Labeling axes and size
+  theme_bw() # Use a minimal theme
+dev.off()
+
+pdf("output/GO/enrichR_GO_BP_1year_CB_corr_dotplot_v1Nolegend.pdf", width=4, height=4)
+ggplot(gos_BP_1year, aes(x = abs(logAdjP), y = reorder(Term, abs(logAdjP) ), size = overlap, color = type)) +
+  geom_point(alpha = 1) +  # Adjust point transparency with alpha
+  scale_size_continuous(range = c(1, 10)) + # Adjust the size range for the points
+  scale_color_manual(values = c("up" = "red", "down" = "blue")) + # Set colors for the points
+  labs(x = "Log Adjusted P-Value", y = "Terms", size = "Gene Overlap") + # Labeling axes and size
+  theme_bw() + # Use a black and white theme
+  theme(axis.text.y = element_blank(),
+        axis.title.x = element_text(size = 14),
+        axis.text.x = element_text(size = 16))
+dev.off()
+
+
+# with gradient color for overlap (not chosen method)
+gos_BP_1year_grad <- gos_BP_1year %>%
+  mutate(gradient_color = ifelse(type == "up", overlap, -overlap))
+
+pdf("output/GO/enrichR_GO_BP_1year_CB_corr_dotplot_v2.pdf", width=7, height=5)
+ggplot(gos_BP_1year_grad, aes(x = abs(logAdjP), y = reorder(Term, abs(logAdjP)), size = n_gene, color = gradient_color)) +
+  geom_point(alpha = 1) +  # Adjust point transparency with alpha
+  scale_size_continuous(range = c(1, 10)) + # Adjust the size range for the points
+  scale_color_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, 
+                        limit = c(min(gos_BP_1year_grad$gradient_color), max(gos_BP_1year_grad$gradient_color)), space = "Lab") +
+  labs(x = "Log Adjusted P-Value", y = "Terms", size = "Nb of genes", color = "Overlap Intensity") + # Labeling axes and size
+  theme_bw() # Use a black and white theme
+dev.off()
+
+
+
+## 1month CB
+gos_BP_1month_MF <- as_tibble(read.table("output/GO/enrichR_GO_MF_1month_CB_corr.txt", sep="\t", header=TRUE, quote="") ) %>%
+  add_column(GO = "Molecular Function") %>%
+  separate(col = Overlap, into = c("n_gene", "n_total"), sep = "/", convert = TRUE) %>%
+  mutate(overlap = n_gene/n_total)
+gos_BP_1month_CC <- as_tibble(read.table("output/GO/enrichR_GO_CC_1month_CB_corr.txt", sep="\t", header=TRUE, quote="") ) %>%
+  add_column(GO = "Cellular Component") %>%
+  separate(col = Overlap, into = c("n_gene", "n_total"), sep = "/", convert = TRUE) %>%
+  mutate(overlap = n_gene/n_total)
+
+gos_BP_1month = gos_BP_1month_MF %>%
+  bind_rows(gos_BP_1month_CC) %>%
+  filter(Term %in% c("Gamma-Aminobutyric Acid Transmembrane Transporter Activity ", "Phospholipase Inhibitor Activity ", "Dendrite ", "Extracellular Vesicle ", "GABA-A Receptor Complex ", "Collagen-Containing Extracellular Matrix "))
+
+
+pdf("output/GO/enrichR_GO_BP_1month_CB_corr_dotplot_v1.pdf", width=7, height=5)
+
+ggplot(gos_BP_1month, aes(x = abs(logAdjP), y = reorder(Term, abs(logAdjP) ), size = overlap, color = type)) +
+  geom_point(alpha = 1) +  # Adjust point transparency with alpha
+  scale_size_continuous(range = c(1, 10)) + # Adjust the size range for the points
+  scale_color_manual(values = c("up" = "red", "down" = "blue")) + # Set colors for the points
+  labs(x = "Log Adjusted P-Value", y = "Terms", size = "Gene Overlap") + # Labeling axes and size
+  theme_bw() # Use a minimal theme
+dev.off()
+
+
+pdf("output/GO/enrichR_GO_BP_1month_CB_corr_dotplot_v1Nolegend.pdf", width=4, height=4)
+ggplot(gos_BP_1month, aes(x = abs(logAdjP), y = reorder(Term, abs(logAdjP) ), size = overlap, color = type)) +
+  geom_point(alpha = 1) +  # Adjust point transparency with alpha
+  scale_size_continuous(range = c(1, 10)) + # Adjust the size range for the points
+  scale_color_manual(values = c("up" = "red", "down" = "blue")) + # Set colors for the points
+  labs(x = "Log Adjusted P-Value", y = "Terms", size = "Gene Overlap") + # Labeling axes and size
+  theme_bw() + # Use a black and white theme
+  theme(axis.text.y = element_blank(),
+        axis.title.x = element_text(size = 14),
+        axis.text.x = element_text(size = 16))
+dev.off()
+
+
+
+
+
+
+## 1year CX
+gos_BP_1yearCX_MF <- as_tibble(read.table("output/GO/enrichR_GO_MF_1year_CX_corr.txt", sep="\t", header=TRUE, quote="") ) %>%
+  add_column(GO = "Molecular Function") %>%
+  separate(col = Overlap, into = c("n_gene", "n_total"), sep = "/", convert = TRUE) %>%
+  mutate(overlap = n_gene/n_total)
+gos_BP_1yearCX_CC <- as_tibble(read.table("output/GO/enrichR_GO_CC_1year_CX_corr.txt", sep="\t", header=TRUE, quote="") ) %>%
+  add_column(GO = "Cellular Component") %>%
+  separate(col = Overlap, into = c("n_gene", "n_total"), sep = "/", convert = TRUE) %>%
+  mutate(overlap = n_gene/n_total)
+
+gos_BP_1yearCX = gos_BP_1yearCX_MF %>%
+  bind_rows(gos_BP_1yearCX_CC) %>%
+  filter(Term %in% c("Synaptic Vesicle Membrane ", "Exocytic Vesicle Membrane "))
+
+
+pdf("output/GO/enrichR_GO_BP_1year_CX_corr_dotplot_v1.pdf", width=7, height=5)
+
+ggplot(gos_BP_1yearCX, aes(x = abs(logAdjP), y = reorder(Term, abs(logAdjP) ), size = overlap, color = type)) +
+  geom_point(alpha = 1) +  # Adjust point transparency with alpha
+  scale_size_continuous(range = c(1, 10)) + # Adjust the size range for the points
+  scale_color_manual(values = c("up" = "red", "down" = "blue")) + # Set colors for the points
+  labs(x = "Log Adjusted P-Value", y = "Terms", size = "Gene Overlap") + # Labeling axes and size
+  theme_bw() # Use a minimal theme
+dev.off()
+
+
+pdf("output/GO/enrichR_GO_BP_1year_CX_corr_dotplot_v1Nolegend.pdf", width=4, height=4)
+ggplot(gos_BP_1yearCX, aes(x = abs(logAdjP), y = reorder(Term, abs(logAdjP) ), size = overlap, color = type)) +
+  geom_point(alpha = 1) +  # Adjust point transparency with alpha
+  scale_size_continuous(range = c(1, 10)) + # Adjust the size range for the points
+  scale_color_manual(values = c("up" = "red", "down" = "blue")) + # Set colors for the points
+  labs(x = "Log Adjusted P-Value", y = "Terms", size = "Gene Overlap") + # Labeling axes and size
+  theme_bw() + # Use a black and white theme
+  theme(axis.text.y = element_blank(),
+        axis.title.x = element_text(size = 14),
+        axis.text.x = element_text(size = 16))
+dev.off()
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 Let's try **gene network** vizualization (may be better in our case); **emaplot**:
@@ -2093,7 +2319,7 @@ special_ids <- c(Oxygen, Lipid, Iron)
 
 ### Filter and prepare the dataset
 gsea_result_df_tidy_C5_sample <- gsea_result_df_tidy_C5 %>%
-  filter(genotype == "CX_1year", NES > 0, pvalue < 0.05) %>%
+  filter(genotype == "CB_1year", NES > 0, pvalue < 0.05) %>%
   mutate(
     Category = case_when(
       ID %in% Lipid ~ "Lipid",
@@ -2112,7 +2338,7 @@ gsea_result_df_tidy_C5_sample <- gsea_result_df_tidy_C5 %>%
   arrange(desc(NES))
 
 # Plotting
-pdf("output/gsea/waterfall_C5_CX_1year_pos.pdf", width=8, height=5)
+pdf("output/gsea/waterfall_C5_CB_1year_pos.pdf", width=6, height=5)
 ggplot(gsea_result_df_tidy_C5_sample, aes(x = reorder(ID, -NES), y = NES)) +
   geom_point(aes(color = color), size = 2, alpha = 0.6) +
   scale_color_identity() +
@@ -2120,7 +2346,7 @@ ggplot(gsea_result_df_tidy_C5_sample, aes(x = reorder(ID, -NES), y = NES)) +
     aes(label = Label, color = color), 
     box.padding = unit(0.35, "lines"), 
     point.padding = unit(0.5, "lines"), 
-    size = 3, 
+    size = 5, 
     na.rm = TRUE,
     max.overlaps = 50
   ) +
@@ -2129,9 +2355,9 @@ ggplot(gsea_result_df_tidy_C5_sample, aes(x = reorder(ID, -NES), y = NES)) +
   theme(
     legend.position = "none",
     axis.text.x = element_blank(), # Remove the x-axis text
-    axis.text.y = element_text(size = 10),
+    axis.text.y = element_text(size = 30),
     axis.title.x = element_text(size = 14),
-    axis.title.y = element_text(size = 14)
+    axis.title.y = element_text(size = 34)
   ) 
 dev.off()
 
@@ -3220,8 +3446,9 @@ long_df$new_ID_grouped <-
            "1month_CB_WT", "1month_CB_KO", "1year_CB_WT", "1year_CB_KO"))
 
 # pdf("output/tpm/heatmap-leadingEdgeGenes_CB_1year_corr-Zscore.pdf", width=5, height=5)
-pdf("output/tpm/heatmap-leadingEdgeGenes_CB_1month_Top20_corr-Zscore.pdf", width=5, height=5)
+# pdf("output/tpm/heatmap-leadingEdgeGenes_CB_1month_Top20_corr-Zscore.pdf", width=5, height=5)
 
+pdf("output/tpm/heatmap-leadingEdgeGenes_CB_1year_corr-Zscore.pdf", width=5, height=5)
 ggplot(long_df, aes(x = new_ID_grouped, y = reorder(external_gene_name, Expression), fill = Expression) )+
   geom_tile() +
   scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Z-score") +
@@ -3232,6 +3459,41 @@ ggplot(long_df, aes(x = new_ID_grouped, y = reorder(external_gene_name, Expressi
 dev.off()
 
 
+
+################## Re order based on 1 yea/month KO ########################
+# Filter for the specific sample you're interested in
+one_year_ko_data <- tpm_all_sample_tidy_geneLists %>%
+  filter(genotype == "KO",
+         time =="1month",
+         tissue == "CB") %>%
+  group_by(external_gene_name) %>%
+  summarise(tpm_median_ko = median(log2(tpm + 1), na.rm = TRUE)) %>%
+  ungroup()
+
+# Join this back to your main dataset
+long_df <- desired_samples %>%
+  left_join(one_year_ko_data, by = "external_gene_name") %>%
+  arrange(tpm_median_ko) %>%
+  mutate(external_gene_name = factor(external_gene_name, levels = unique(external_gene_name))) %>%
+  pivot_longer(cols = z_score, names_to = "Condition", values_to = "Expression")
+
+long_df$new_ID_grouped <-
+  factor(long_df$new_ID_grouped,
+         c("1month_CX_WT", "1month_CX_KO", "1year_CX_WT", "1year_CX_KO",
+           "1month_CB_WT", "1month_CB_KO", "1year_CB_WT", "1year_CB_KO"))
+
+# Now you can create your plot, with genes ordered based on the median expression in 1year_CB_KO
+pdf("output/tpm/heatmap-leadingEdgeGenes_CB_1month_corr-Zscore_KOorder.pdf", width=5, height=5)
+ggplot(long_df, aes(x = new_ID_grouped, y = external_gene_name, fill = Expression)) +
+  geom_tile() +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Z-score") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+        axis.text.y = element_text(size = 8),
+        legend.position = "right")
+dev.off()
+
+########################################################################
 
 
 
