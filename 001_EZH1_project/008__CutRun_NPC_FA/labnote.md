@@ -43,14 +43,12 @@ I created a `nano url.txt` with all link and used `wget -i url.txt` to download 
 Concatenate fastq discuss [here](https://www.biostars.org/p/317385/): `cat string_L001_sampleID_R1.fastq.gz string_L002_sampleID_R1.fastq.gz  > string_sampleID_R1.fastq.gz`.
 
 --> Several of our samples dispatched in two lanes (`L1` and `L4`; **the concatenated are names `L14`; all unique are `L4`**)
-
-
-XXXXX
+----> input sample: `input_raw_Novogene/` output to `input/`
 
 ```bash
-sbatch scripts/concatenate.sh #
-
-
+sbatch scripts/concatenate_1.sh # 12228326 ok 
+sbatch scripts/concatenate_2.sh # 12228327 ok 
+sbatch scripts/concatenate_3.sh # 12228328 ok
 ```
 
 
