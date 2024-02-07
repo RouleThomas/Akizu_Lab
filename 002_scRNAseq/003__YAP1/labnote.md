@@ -10659,9 +10659,258 @@ dev.off()
 
 
 
+# Embryo E7 - E7.75 data integration
+
+
+Let's integrate E7 E7.75 dataset into a single dataframe.
+
+Can use (seurat v5 data integration method)[https://satijalab.org/seurat/articles/seurat5_integration]; they integrate together data from different sequencing platforms; same cell type. 
+
+
+Let's try using our previous method, and simply add in the list of srat; all samples:
+- clean data E7 and E7.75 (same parameters as before)
+- integrate all samples
+- separate plot per WT and KO and color cells for E7 and E7.75
+
+*NOTE: these methods are mostly to integrate data from the same condition! So same time-point, as it tries to "force" cells that are probably the same cell type to cluster closer together : "These methods aim to identify shared cell states that are present across different datasets, even if they were collected from different individuals, experimental conditions, technologies, or even species" from (here)[https://satijalab.org/seurat/archive/v3.0/integration.html]. But let's try! As using this we identify cluster only present in KO sometime!*
 
 
 
+```R
+
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+
+# E7 data
+
+## Load the matrix and Create SEURAT object
+load("output/soupX/out_E7mousecontrol.RData")
+srat_WT_E7 <- CreateSeuratObject(counts = out, project = "WT_E7") # 32,285 features across 1,829 samples
+
+load("output/soupX/out_E7mousecYAPKO.RData")
+srat_cYAPKO_E7 <- CreateSeuratObject(counts = out, project = "cYAPKO_E7") # 32,285 features across 1,897 samples
+
+# QUALITY CONTROL
+## add mitochondrial and Ribosomal conta 
+srat_WT_E7[["percent.mt"]] <- PercentageFeatureSet(srat_WT_E7, pattern = "^mt-")
+srat_WT_E7[["percent.rb"]] <- PercentageFeatureSet(srat_WT_E7, pattern = "^Rp[sl]")
+
+srat_cYAPKO_E7[["percent.mt"]] <- PercentageFeatureSet(srat_cYAPKO_E7, pattern = "^mt-")
+srat_cYAPKO_E7[["percent.rb"]] <- PercentageFeatureSet(srat_cYAPKO_E7, pattern = "^Rp[sl]")
+
+## add doublet information (scrublet)
+doublets <- read.table("output/doublets/embryo_E7_control.tsv",header = F,row.names = 1)
+colnames(doublets) <- c("Doublet_score","Is_doublet")
+srat_WT_E7 <- AddMetaData(srat_WT_E7,doublets)
+srat_WT_E7$Doublet_score <- as.numeric(srat_WT_E7$Doublet_score) # make score as numeric
+head(srat_WT_E7[[]])
+
+doublets <- read.table("output/doublets/embryo_E7_cYAPKO.tsv",header = F,row.names = 1)
+colnames(doublets) <- c("Doublet_score","Is_doublet")
+srat_cYAPKO_E7 <- AddMetaData(srat_cYAPKO_E7,doublets)
+srat_cYAPKO_E7$Doublet_score <- as.numeric(srat_cYAPKO_E7$Doublet_score) # make score as numeric
+head(srat_cYAPKO_E7[[]])
+
+
+### V2 more stringeant
+srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$Is_doublet == 'True','Doublet','Pass')
+srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$nFeature_RNA < 5000 & srat_WT_E7@meta.data$QC == 'Pass','Low_nFeature',srat_WT_E7@meta.data$QC)
+srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$nFeature_RNA < 5000 & srat_WT_E7@meta.data$QC != 'Pass' & srat_WT_E7@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_WT_E7@meta.data$QC,sep = ','),srat_WT_E7@meta.data$QC)
+srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$percent.mt > 10 & srat_WT_E7@meta.data$QC == 'Pass','High_MT',srat_WT_E7@meta.data$QC)
+srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$nFeature_RNA < 5000 & srat_WT_E7@meta.data$QC != 'Pass' & srat_WT_E7@meta.data$QC != 'High_MT',paste('High_MT',srat_WT_E7@meta.data$QC,sep = ','),srat_WT_E7@meta.data$QC)
+table(srat_WT_E7[['QC']])
+## 
+srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$Is_doublet == 'True','Doublet','Pass')
+srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 5000 & srat_cYAPKO_E7@meta.data$QC == 'Pass','Low_nFeature',srat_cYAPKO_E7@meta.data$QC)
+srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 5000 & srat_cYAPKO_E7@meta.data$QC != 'Pass' & srat_cYAPKO_E7@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_cYAPKO_E7@meta.data$QC,sep = ','),srat_cYAPKO_E7@meta.data$QC)
+srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$percent.mt > 10 & srat_cYAPKO_E7@meta.data$QC == 'Pass','High_MT',srat_cYAPKO_E7@meta.data$QC)
+srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 5000 & srat_cYAPKO_E7@meta.data$QC != 'Pass' & srat_cYAPKO_E7@meta.data$QC != 'High_MT',paste('High_MT',srat_cYAPKO_E7@meta.data$QC,sep = ','),srat_cYAPKO_E7@meta.data$QC)
+table(srat_cYAPKO_E7[['QC']])
+
+
+
+## subset my seurat object to only analyze the cells that pass the QC
+srat_WT_E7 <- subset(srat_WT_E7, subset = QC == 'Pass')
+srat_cYAPKO_E7 <- subset(srat_cYAPKO_E7, subset = QC == 'Pass')
+srat_WT_E7$condition <- "WT_E7"
+srat_cYAPKO_E7$condition <- "cYAPKO_E7"
+
+
+
+mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+
+
+## NORMALIZE AND SCALE DATA BEFORE RUNNING CELLCYCLESORTING
+srat_WT_E7 <- NormalizeData(srat_WT_E7, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(srat_WT_E7)
+srat_WT_E7 <- ScaleData(srat_WT_E7, features = all.genes) # zero-centres and scales it
+
+srat_cYAPKO_E7 <- NormalizeData(srat_cYAPKO_E7, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(srat_cYAPKO_E7)
+srat_cYAPKO_E7 <- ScaleData(srat_cYAPKO_E7, features = all.genes) # zero-centres and scales it
+
+### CELLCYCLESORTING
+srat_WT_E7 <- CellCycleScoring(srat_WT_E7, s.features = mmus_s, g2m.features = mmus_g2m)
+table(srat_WT_E7[[]]$Phase)
+srat_cYAPKO_E7 <- CellCycleScoring(srat_cYAPKO_E7, s.features = mmus_s, g2m.features = mmus_g2m)
+table(srat_cYAPKO_E7[[]]$Phase)
+
+set.seed(42)
+
+
+# E7.75 data
+
+
+## Load the matrix and Create SEURAT object
+load("output/soupX/out_embryo_control_e775_mice.RData")
+srat_WT <- CreateSeuratObject(counts = out, project = "WT") # 32,285 features across 5,568 samples
+
+load("output/soupX/out_embryo_cYAPKO_e775_mice.RData")
+srat_cYAPKO <- CreateSeuratObject(counts = out, project = "cYAPKO") # 32,285 features across 4,504 samples
+
+
+# QUALITY CONTROL
+## add mitochondrial and Ribosomal conta 
+srat_WT[["percent.mt"]] <- PercentageFeatureSet(srat_WT, pattern = "^mt-")
+srat_WT[["percent.rb"]] <- PercentageFeatureSet(srat_WT, pattern = "^Rp[sl]")
+
+srat_cYAPKO[["percent.mt"]] <- PercentageFeatureSet(srat_cYAPKO, pattern = "^mt-")
+srat_cYAPKO[["percent.rb"]] <- PercentageFeatureSet(srat_cYAPKO, pattern = "^Rp[sl]")
+
+## add doublet information (scrublet)
+doublets <- read.table("output/doublets/embryo_control.tsv",header = F,row.names = 1)
+colnames(doublets) <- c("Doublet_score","Is_doublet")
+srat_WT <- AddMetaData(srat_WT,doublets)
+srat_WT$Doublet_score <- as.numeric(srat_WT$Doublet_score) # make score as numeric
+head(srat_WT[[]])
+
+doublets <- read.table("output/doublets/embryo_cYAPKO.tsv",header = F,row.names = 1)
+colnames(doublets) <- c("Doublet_score","Is_doublet")
+srat_cYAPKO <- AddMetaData(srat_cYAPKO,doublets)
+srat_cYAPKO$Doublet_score <- as.numeric(srat_cYAPKO$Doublet_score) # make score as numeric
+head(srat_cYAPKO[[]])
+
+
+## After seeing the plot; add QC information in our seurat object
+## V1 QC; optimal with vst V1; dim 19 k param 70 es 0.9 --> THE WINNER pro winner
+srat_WT[['QC']] <- ifelse(srat_WT@meta.data$Is_doublet == 'True','Doublet','Pass')
+srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 2000 & srat_WT@meta.data$QC == 'Pass','Low_nFeature',srat_WT@meta.data$QC)
+srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 2000 & srat_WT@meta.data$QC != 'Pass' & srat_WT@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_WT@meta.data$QC,sep = ','),srat_WT@meta.data$QC)
+srat_WT[['QC']] <- ifelse(srat_WT@meta.data$percent.mt > 25 & srat_WT@meta.data$QC == 'Pass','High_MT',srat_WT@meta.data$QC)
+srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 2000 & srat_WT@meta.data$QC != 'Pass' & srat_WT@meta.data$QC != 'High_MT',paste('High_MT',srat_WT@meta.data$QC,sep = ','),srat_WT@meta.data$QC)
+table(srat_WT[['QC']])
+## 
+srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$Is_doublet == 'True','Doublet','Pass')
+srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 2000 & srat_cYAPKO@meta.data$QC == 'Pass','Low_nFeature',srat_cYAPKO@meta.data$QC)
+srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 2000 & srat_cYAPKO@meta.data$QC != 'Pass' & srat_cYAPKO@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_cYAPKO@meta.data$QC,sep = ','),srat_cYAPKO@meta.data$QC)
+srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$percent.mt > 25 & srat_cYAPKO@meta.data$QC == 'Pass','High_MT',srat_cYAPKO@meta.data$QC)
+srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 2000 & srat_cYAPKO@meta.data$QC != 'Pass' & srat_cYAPKO@meta.data$QC != 'High_MT',paste('High_MT',srat_cYAPKO@meta.data$QC,sep = ','),srat_cYAPKO@meta.data$QC)
+table(srat_cYAPKO[['QC']])
+
+
+
+
+## subset my seurat object to only analyze the cells that pass the QC
+srat_WT <- subset(srat_WT, subset = QC == 'Pass')
+srat_cYAPKO <- subset(srat_cYAPKO, subset = QC == 'Pass')
+srat_WT$condition <- "WT"
+srat_cYAPKO$condition <- "cYAPKO"
+
+
+
+mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+
+
+## NORMALIZE AND SCALE DATA BEFORE RUNNING CELLCYCLESORTING
+srat_WT <- NormalizeData(srat_WT, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(srat_WT)
+srat_WT <- ScaleData(srat_WT, features = all.genes) # zero-centres and scales it
+
+srat_cYAPKO <- NormalizeData(srat_cYAPKO, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(srat_cYAPKO)
+srat_cYAPKO <- ScaleData(srat_cYAPKO, features = all.genes) # zero-centres and scales it
+
+### CELLCYCLESORTING
+srat_WT <- CellCycleScoring(srat_WT, s.features = mmus_s, g2m.features = mmus_g2m)
+table(srat_WT[[]]$Phase)
+srat_cYAPKO <- CellCycleScoring(srat_cYAPKO, s.features = mmus_s, g2m.features = mmus_g2m)
+table(srat_cYAPKO[[]]$Phase)
+
+set.seed(42)
+
+
+
+
+# Both E7 and E7.75 used 19 dims
+
+
+srat_WT_E7 <- SCTransform(srat_WT_E7, method = "glmGamPoi", ncells = 788, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 19, verbose = FALSE)
+srat_cYAPKO_E7 <- SCTransform(srat_cYAPKO_E7, method = "glmGamPoi", ncells = 862, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
+    RunPCA(npcs = 19, verbose = FALSE)
+    
+    
+srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4812, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 19, verbose = FALSE)
+srat_cYAPKO <- SCTransform(srat_cYAPKO, method = "glmGamPoi", ncells = 3621, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
+    RunPCA(npcs = 19, verbose = FALSE)
+
+
+
+# Data integration (check active assay is 'SCT')
+srat.list <- list(srat_WT = srat_WT, srat_cYAPKO = srat_cYAPKO)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+
+embryo.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+embryo.combined.sct <- IntegrateData(anchorset = embryo.anchors, normalization.method = "SCT")
+
+set.seed(42)
+
+## PLAY WITH RESOLUTION AFTER CONCHI MEETING 20231005
+## individualize germ cells; but fail at separating  
+DefaultAssay(embryo.combined.sct) <- "integrated"
+
+embryo.combined.sct <- RunPCA(embryo.combined.sct, verbose = FALSE, npcs = 19)
+embryo.combined.sct <- RunUMAP(embryo.combined.sct, reduction = "pca", dims = 1:19, verbose = FALSE)
+embryo.combined.sct <- FindNeighbors(embryo.combined.sct, reduction = "pca", k.param = 5, dims = 1:19)
+embryo.combined.sct <- FindClusters(embryo.combined.sct, resolution = 0.3, verbose = FALSE, algorithm = 4)
+
+embryo.combined.sct$condition <- factor(embryo.combined.sct$condition, levels = c("WT", "cYAPKO")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_control_cYAPKO_V2clust__.pdf", width=10, height=6)
+DimPlot(embryo.combined.sct, reduction = "umap", split.by = "condition", label=TRUE)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
 
 
 
