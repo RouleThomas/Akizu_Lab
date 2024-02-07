@@ -7,7 +7,7 @@
     - WT
     - KO
 
-
+--> All in simplicate
 
 **Objectives:**
 - 50dN: check whether FA improve CutRun, notably for EZH1cs (CutRun 007 failed, technical issue)
@@ -18,6 +18,7 @@
 
 # Pipeline
 - Download data (wget)
+- **combine samples (from multiple lanes)**
 - Rename files
 - FastQC (fastqc)
 - Trimming (fastp)
@@ -35,6 +36,22 @@
 Go [there](http://data-deliver.novogene.com/login/X202SC24012448-Z01-F001) and enter credetnial: (check email Novogen)
 
 I created a `nano url.txt` with all link and used `wget -i url.txt` to download them all (1 link per raw); then `mv input_raw_Novogene/*fq.gz input` .
+
+
+# Combine files from multiple lanes
+
+Concatenate fastq discuss [here](https://www.biostars.org/p/317385/): `cat string_L001_sampleID_R1.fastq.gz string_L002_sampleID_R1.fastq.gz  > string_sampleID_R1.fastq.gz`.
+
+--> Several of our samples dispatched in two lanes (`L1` and `L4`; **the concatenated are names `L14`; all unique are `L4`**)
+
+
+XXXXX
+
+```bash
+sbatch scripts/concatenate.sh #
+
+
+```
 
 
 

@@ -10674,7 +10674,9 @@ Let's try using our previous method, and simply add in the list of srat; all sam
 
 *NOTE: these methods are mostly to integrate data from the same condition! So same time-point, as it tries to "force" cells that are probably the same cell type to cluster closer together : "These methods aim to identify shared cell states that are present across different datasets, even if they were collected from different individuals, experimental conditions, technologies, or even species" from (here)[https://satijalab.org/seurat/archive/v3.0/integration.html]. But let's try! As using this we identify cluster only present in KO sometime!*
 
-
+```bash
+conda activate scRNAseqV3
+```
 
 ```R
 
@@ -10742,8 +10744,8 @@ table(srat_cYAPKO_E7[['QC']])
 ## subset my seurat object to only analyze the cells that pass the QC
 srat_WT_E7 <- subset(srat_WT_E7, subset = QC == 'Pass')
 srat_cYAPKO_E7 <- subset(srat_cYAPKO_E7, subset = QC == 'Pass')
-srat_WT_E7$condition <- "WT_E7"
-srat_cYAPKO_E7$condition <- "cYAPKO_E7"
+srat_WT_E7$condition <- "WT"
+srat_cYAPKO_E7$condition <- "cYAPKO"
 
 
 
@@ -10774,58 +10776,58 @@ set.seed(42)
 
 ## Load the matrix and Create SEURAT object
 load("output/soupX/out_embryo_control_e775_mice.RData")
-srat_WT <- CreateSeuratObject(counts = out, project = "WT") # 32,285 features across 5,568 samples
+srat_WT_E775 <- CreateSeuratObject(counts = out, project = "WT") # 32,285 features across 5,568 samples
 
 load("output/soupX/out_embryo_cYAPKO_e775_mice.RData")
-srat_cYAPKO <- CreateSeuratObject(counts = out, project = "cYAPKO") # 32,285 features across 4,504 samples
+srat_cYAPKO_E775 <- CreateSeuratObject(counts = out, project = "cYAPKO") # 32,285 features across 4,504 samples
 
 
 # QUALITY CONTROL
 ## add mitochondrial and Ribosomal conta 
-srat_WT[["percent.mt"]] <- PercentageFeatureSet(srat_WT, pattern = "^mt-")
-srat_WT[["percent.rb"]] <- PercentageFeatureSet(srat_WT, pattern = "^Rp[sl]")
+srat_WT_E775[["percent.mt"]] <- PercentageFeatureSet(srat_WT_E775, pattern = "^mt-")
+srat_WT_E775[["percent.rb"]] <- PercentageFeatureSet(srat_WT_E775, pattern = "^Rp[sl]")
 
-srat_cYAPKO[["percent.mt"]] <- PercentageFeatureSet(srat_cYAPKO, pattern = "^mt-")
-srat_cYAPKO[["percent.rb"]] <- PercentageFeatureSet(srat_cYAPKO, pattern = "^Rp[sl]")
+srat_cYAPKO_E775[["percent.mt"]] <- PercentageFeatureSet(srat_cYAPKO_E775, pattern = "^mt-")
+srat_cYAPKO_E775[["percent.rb"]] <- PercentageFeatureSet(srat_cYAPKO_E775, pattern = "^Rp[sl]")
 
 ## add doublet information (scrublet)
 doublets <- read.table("output/doublets/embryo_control.tsv",header = F,row.names = 1)
 colnames(doublets) <- c("Doublet_score","Is_doublet")
-srat_WT <- AddMetaData(srat_WT,doublets)
-srat_WT$Doublet_score <- as.numeric(srat_WT$Doublet_score) # make score as numeric
-head(srat_WT[[]])
+srat_WT_E775 <- AddMetaData(srat_WT_E775,doublets)
+srat_WT_E775$Doublet_score <- as.numeric(srat_WT_E775$Doublet_score) # make score as numeric
+head(srat_WT_E775[[]])
 
 doublets <- read.table("output/doublets/embryo_cYAPKO.tsv",header = F,row.names = 1)
 colnames(doublets) <- c("Doublet_score","Is_doublet")
-srat_cYAPKO <- AddMetaData(srat_cYAPKO,doublets)
-srat_cYAPKO$Doublet_score <- as.numeric(srat_cYAPKO$Doublet_score) # make score as numeric
-head(srat_cYAPKO[[]])
+srat_cYAPKO_E775 <- AddMetaData(srat_cYAPKO_E775,doublets)
+srat_cYAPKO_E775$Doublet_score <- as.numeric(srat_cYAPKO_E775$Doublet_score) # make score as numeric
+head(srat_cYAPKO_E775[[]])
 
 
 ## After seeing the plot; add QC information in our seurat object
 ## V1 QC; optimal with vst V1; dim 19 k param 70 es 0.9 --> THE WINNER pro winner
-srat_WT[['QC']] <- ifelse(srat_WT@meta.data$Is_doublet == 'True','Doublet','Pass')
-srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 2000 & srat_WT@meta.data$QC == 'Pass','Low_nFeature',srat_WT@meta.data$QC)
-srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 2000 & srat_WT@meta.data$QC != 'Pass' & srat_WT@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_WT@meta.data$QC,sep = ','),srat_WT@meta.data$QC)
-srat_WT[['QC']] <- ifelse(srat_WT@meta.data$percent.mt > 25 & srat_WT@meta.data$QC == 'Pass','High_MT',srat_WT@meta.data$QC)
-srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 2000 & srat_WT@meta.data$QC != 'Pass' & srat_WT@meta.data$QC != 'High_MT',paste('High_MT',srat_WT@meta.data$QC,sep = ','),srat_WT@meta.data$QC)
-table(srat_WT[['QC']])
+srat_WT_E775[['QC']] <- ifelse(srat_WT_E775@meta.data$Is_doublet == 'True','Doublet','Pass')
+srat_WT_E775[['QC']] <- ifelse(srat_WT_E775@meta.data$nFeature_RNA < 2000 & srat_WT_E775@meta.data$QC == 'Pass','Low_nFeature',srat_WT_E775@meta.data$QC)
+srat_WT_E775[['QC']] <- ifelse(srat_WT_E775@meta.data$nFeature_RNA < 2000 & srat_WT_E775@meta.data$QC != 'Pass' & srat_WT_E775@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_WT_E775@meta.data$QC,sep = ','),srat_WT_E775@meta.data$QC)
+srat_WT_E775[['QC']] <- ifelse(srat_WT_E775@meta.data$percent.mt > 25 & srat_WT_E775@meta.data$QC == 'Pass','High_MT',srat_WT_E775@meta.data$QC)
+srat_WT_E775[['QC']] <- ifelse(srat_WT_E775@meta.data$nFeature_RNA < 2000 & srat_WT_E775@meta.data$QC != 'Pass' & srat_WT_E775@meta.data$QC != 'High_MT',paste('High_MT',srat_WT_E775@meta.data$QC,sep = ','),srat_WT_E775@meta.data$QC)
+table(srat_WT_E775[['QC']])
 ## 
-srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$Is_doublet == 'True','Doublet','Pass')
-srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 2000 & srat_cYAPKO@meta.data$QC == 'Pass','Low_nFeature',srat_cYAPKO@meta.data$QC)
-srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 2000 & srat_cYAPKO@meta.data$QC != 'Pass' & srat_cYAPKO@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_cYAPKO@meta.data$QC,sep = ','),srat_cYAPKO@meta.data$QC)
-srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$percent.mt > 25 & srat_cYAPKO@meta.data$QC == 'Pass','High_MT',srat_cYAPKO@meta.data$QC)
-srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 2000 & srat_cYAPKO@meta.data$QC != 'Pass' & srat_cYAPKO@meta.data$QC != 'High_MT',paste('High_MT',srat_cYAPKO@meta.data$QC,sep = ','),srat_cYAPKO@meta.data$QC)
-table(srat_cYAPKO[['QC']])
+srat_cYAPKO_E775[['QC']] <- ifelse(srat_cYAPKO_E775@meta.data$Is_doublet == 'True','Doublet','Pass')
+srat_cYAPKO_E775[['QC']] <- ifelse(srat_cYAPKO_E775@meta.data$nFeature_RNA < 2000 & srat_cYAPKO_E775@meta.data$QC == 'Pass','Low_nFeature',srat_cYAPKO_E775@meta.data$QC)
+srat_cYAPKO_E775[['QC']] <- ifelse(srat_cYAPKO_E775@meta.data$nFeature_RNA < 2000 & srat_cYAPKO_E775@meta.data$QC != 'Pass' & srat_cYAPKO_E775@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_cYAPKO_E775@meta.data$QC,sep = ','),srat_cYAPKO_E775@meta.data$QC)
+srat_cYAPKO_E775[['QC']] <- ifelse(srat_cYAPKO_E775@meta.data$percent.mt > 25 & srat_cYAPKO_E775@meta.data$QC == 'Pass','High_MT',srat_cYAPKO_E775@meta.data$QC)
+srat_cYAPKO_E775[['QC']] <- ifelse(srat_cYAPKO_E775@meta.data$nFeature_RNA < 2000 & srat_cYAPKO_E775@meta.data$QC != 'Pass' & srat_cYAPKO_E775@meta.data$QC != 'High_MT',paste('High_MT',srat_cYAPKO_E775@meta.data$QC,sep = ','),srat_cYAPKO_E775@meta.data$QC)
+table(srat_cYAPKO_E775[['QC']])
 
 
 
 
 ## subset my seurat object to only analyze the cells that pass the QC
-srat_WT <- subset(srat_WT, subset = QC == 'Pass')
-srat_cYAPKO <- subset(srat_cYAPKO, subset = QC == 'Pass')
-srat_WT$condition <- "WT"
-srat_cYAPKO$condition <- "cYAPKO"
+srat_WT_E775 <- subset(srat_WT_E775, subset = QC == 'Pass')
+srat_cYAPKO_E775 <- subset(srat_cYAPKO_E775, subset = QC == 'Pass')
+srat_WT_E775$condition <- "WT"
+srat_cYAPKO_E775$condition <- "cYAPKO"
 
 
 
@@ -10834,19 +10836,19 @@ mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", 
 
 
 ## NORMALIZE AND SCALE DATA BEFORE RUNNING CELLCYCLESORTING
-srat_WT <- NormalizeData(srat_WT, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
-all.genes <- rownames(srat_WT)
-srat_WT <- ScaleData(srat_WT, features = all.genes) # zero-centres and scales it
+srat_WT_E775 <- NormalizeData(srat_WT_E775, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(srat_WT_E775)
+srat_WT_E775 <- ScaleData(srat_WT_E775, features = all.genes) # zero-centres and scales it
 
-srat_cYAPKO <- NormalizeData(srat_cYAPKO, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
-all.genes <- rownames(srat_cYAPKO)
-srat_cYAPKO <- ScaleData(srat_cYAPKO, features = all.genes) # zero-centres and scales it
+srat_cYAPKO_E775 <- NormalizeData(srat_cYAPKO_E775, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(srat_cYAPKO_E775)
+srat_cYAPKO_E775 <- ScaleData(srat_cYAPKO_E775, features = all.genes) # zero-centres and scales it
 
 ### CELLCYCLESORTING
-srat_WT <- CellCycleScoring(srat_WT, s.features = mmus_s, g2m.features = mmus_g2m)
-table(srat_WT[[]]$Phase)
-srat_cYAPKO <- CellCycleScoring(srat_cYAPKO, s.features = mmus_s, g2m.features = mmus_g2m)
-table(srat_cYAPKO[[]]$Phase)
+srat_WT_E775 <- CellCycleScoring(srat_WT_E775, s.features = mmus_s, g2m.features = mmus_g2m)
+table(srat_WT_E775[[]]$Phase)
+srat_cYAPKO_E775 <- CellCycleScoring(srat_cYAPKO_E775, s.features = mmus_s, g2m.features = mmus_g2m)
+table(srat_cYAPKO_E775[[]]$Phase)
 
 set.seed(42)
 
@@ -10854,60 +10856,118 @@ set.seed(42)
 
 
 # Both E7 and E7.75 used 19 dims
-
-
 srat_WT_E7 <- SCTransform(srat_WT_E7, method = "glmGamPoi", ncells = 788, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
     RunPCA(npcs = 19, verbose = FALSE)
 srat_cYAPKO_E7 <- SCTransform(srat_cYAPKO_E7, method = "glmGamPoi", ncells = 862, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
     RunPCA(npcs = 19, verbose = FALSE)
-    
-    
-srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4812, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+srat_WT_E775 <- SCTransform(srat_WT_E775, method = "glmGamPoi", ncells = 4812, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
     RunPCA(npcs = 19, verbose = FALSE)
-srat_cYAPKO <- SCTransform(srat_cYAPKO, method = "glmGamPoi", ncells = 3621, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
+srat_cYAPKO_E775 <- SCTransform(srat_cYAPKO_E775, method = "glmGamPoi", ncells = 3621, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
     RunPCA(npcs = 19, verbose = FALSE)
 
-
+### Add time as factor:
+srat_WT_E775$time <- "E775"
+srat_cYAPKO_E775$time <- "E775"
+srat_WT_E7$time <- "E7"
+srat_cYAPKO_E7$time <- "E7"
 
 # Data integration (check active assay is 'SCT')
-srat.list <- list(srat_WT = srat_WT, srat_cYAPKO = srat_cYAPKO)
+srat.list <- list(srat_WT_E7 = srat_WT_E7, srat_WT_E775 = srat_WT_E775, srat_cYAPKO_E7 = srat_cYAPKO_E7, srat_cYAPKO_E775 = srat_cYAPKO_E775)
 features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
 srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
 
 embryo.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
     anchor.features = features)
-embryo.combined.sct <- IntegrateData(anchorset = embryo.anchors, normalization.method = "SCT")
+embryo.combined.E7E775.sct <- IntegrateData(anchorset = embryo.anchors, normalization.method = "SCT")
 
 set.seed(42)
 
-## PLAY WITH RESOLUTION AFTER CONCHI MEETING 20231005
-## individualize germ cells; but fail at separating  
-DefaultAssay(embryo.combined.sct) <- "integrated"
+## cluster all samples
+DefaultAssay(embryo.combined.E7E775.sct) <- "integrated"
 
-embryo.combined.sct <- RunPCA(embryo.combined.sct, verbose = FALSE, npcs = 19)
-embryo.combined.sct <- RunUMAP(embryo.combined.sct, reduction = "pca", dims = 1:19, verbose = FALSE)
-embryo.combined.sct <- FindNeighbors(embryo.combined.sct, reduction = "pca", k.param = 5, dims = 1:19)
-embryo.combined.sct <- FindClusters(embryo.combined.sct, resolution = 0.3, verbose = FALSE, algorithm = 4)
+embryo.combined.E7E775.sct <- RunPCA(embryo.combined.E7E775.sct, verbose = FALSE, npcs = 19)
+embryo.combined.E7E775.sct <- RunUMAP(embryo.combined.E7E775.sct, reduction = "pca", dims = 1:19, verbose = FALSE)
+embryo.combined.E7E775.sct <- FindNeighbors(embryo.combined.E7E775.sct, reduction = "pca", k.param = 5, dims = 1:19)
+embryo.combined.E7E775.sct <- FindClusters(embryo.combined.E7E775.sct, resolution = 0.3, verbose = FALSE, algorithm = 4)
 
-embryo.combined.sct$condition <- factor(embryo.combined.sct$condition, levels = c("WT", "cYAPKO")) # Reorder untreated 1st
+embryo.combined.E7E775.sct$condition <- factor(embryo.combined.E7E775.sct$condition, levels = c("WT", "cYAPKO")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_control_cYAPKO_V2clust__.pdf", width=10, height=6)
-DimPlot(embryo.combined.sct, reduction = "umap", split.by = "condition", label=TRUE)
+pdf("output/seurat/UMAP_embryo_E7E775.pdf", width=10, height=6)
+DimPlot(embryo.combined.E7E775.sct, reduction = "umap", split.by = "condition", label=TRUE)
+dev.off()
+
+
+pdf("output/seurat/UMAP_embryo_E7E775_time.pdf", width=6, height=6)
+DimPlot(embryo.combined.E7E775.sct, reduction = "umap", group.by = "time", label=TRUE, pt.size = 0.5, shuffle = TRUE, label.size = 6, cols = c('E7' = '#78C850', 'E775' = '#FDB813') )
 dev.off()
 
 
 
+# cell type assignment
+
+### E775 markers (Updated marker gene list from Alex + WINNER pro-winner)
+Epiblast_PrimStreak = c("Hesx1","Otx2","Pax2","Otx2os1") # 
+ExE_Ectoderm = c("Tex19.1","Elf5","Wnt7b","Dnmt3l") # 
+Nascent_Mesoderm = c("Col9a1","Mesp1","Osr1") # 
+Somitic_Mesoderm = c("Meox1","Aldh1a2","Synm","Pcdh8") # 
+Caudal_Mesoderm = c("Wnt3a","Nkx1-2","Apln","Rxrg") # 
+Haematodenothelial_progenitors = c("Hoxa9","Hoxa10","Tbx4","Pitx1") # 
+Paraxial_Mesoderm = c("Ebf2","Ptgfr","Ebf3","Col23a1") # 
+Mesenchyme = c("Tdo2","Adamts2","Colec11","Snai2") # 
+Blood_Progenitor_1 = c("Sox18","Esam","Rhoj","Flt4") # 
+Caudal_Neurectoderm = c("Olig3","Hes3","Lrrc7","Cntfr") # 
+Pharyngeal_Mesoderm = c("Nkx2-5","Tbx5","Mef2c","Myocd") # 
+Blood_Progenitor_2 = c("Gypa","Gata1","Cited4","Gfi1b") # 
+Intermediate_Mesoderm = c("Bik","Arg1","Meox1","Ism1") # 
+Surface_Ectoderm = c("Tfap2a","Npnt","Wnt4","Id4") # 
+Mixed_Mesoderm = c("Tbx6","Dll1","Hes7","Fgf17") # 
+Notocord = c("Shh","Noto","Vtn","Fgg") #  
+Gut = c("Pga5","Hs3cst1","Wfdc1","Islr2") # 
+Primordial_Germ_Cells = c("Dppa3","Sprr2a3","Irf1","Ifitm3") # 
 
 
+#### E7 markers (Conchi new list 20231214)
+Epiblast = c("Pou5f1", "Sox2", "Cdh1")
+Primitive_Streak = c("Mixl1", "Eomes", "T")
+Blood_Progenitor = c("Gata1", "Tal1", "Kdr", "Runx1", "Ets2", "Etv2")
+Nascent_Mesoderm = c("Mesp1")
+Endoderm =c("Sox17", "Foxa2")  # These cells will also be positive for Primitive streak markers, such as Eomes or T
+ExE_Endoderm = c("Ttr", "Dab2", "Sox7", "Fabp1", "Fabp2", "Gata4", "Cldn6") # This cells will be negative or have low levels of Primitive streak markers
+ExE_Ectoderm =c("Elf5", "Rhox5")
 
+#### combine markers:
+# Epiblast_PrimStreak = c("Hesx1","Otx2","Pax2","Otx2os1") # 
+ExE_Ectoderm = c("Tex19.1","Elf5","Wnt7b","Dnmt3l", "Rhox5")
+Nascent_Mesoderm = c("Col9a1","Mesp1","Osr1") # 
+Somitic_Mesoderm = c("Meox1","Aldh1a2","Synm","Pcdh8") # 
+Caudal_Mesoderm = c("Wnt3a","Nkx1-2","Apln","Rxrg") # 
+Haematodenothelial_progenitors = c("Hoxa9","Hoxa10","Tbx4","Pitx1") # 
+Paraxial_Mesoderm = c("Ebf2","Ptgfr","Ebf3","Col23a1") # 
+Mesenchyme = c("Tdo2","Adamts2","Colec11","Snai2") # 
+Blood_Progenitor_1 = c("Sox18","Esam","Rhoj","Flt4") # 
+Blood_Progenitor_2 = c("Gypa","Gata1","Cited4","Gfi1b") # 
+Blood_Progenitor_E7 = c("Tal1", "Kdr", "Runx1", "Ets2", "Etv2") # removed Gata1
+Surface_Ectoderm = c("Tfap2a","Npnt","Wnt4","Id4") # 
+Mixed_Mesoderm = c("Tbx6","Dll1","Hes7","Fgf17") # 
+Notocord = c("Shh","Noto","Vtn","Fgg") #  
+Gut = c("Pga5","Hs3cst1","Wfdc1","Islr2") # 
+Primordial_Germ_Cells = c("Dppa3","Sprr2a3","Irf1","Ifitm3") # 
+Epiblast = c("Pou5f1", "Sox2", "Cdh1")
+Primitive_Streak = c("Mixl1", "Eomes", "T")
+Endoderm =c("Sox17", "Foxa2")  # These cells will also be positive for Primitive streak markers, such as Eomes or T
+ExE_Endoderm = c("Ttr", "Dab2", "Sox7", "Fabp1", "Fabp2", "Gata4", "Cldn6") # This cells will be negative or have low levels of Primitive streak markers
 
+#######################
+# SAVE: saveRDS(embryo.combined.E7E775.sct, file = "output/seurat/embryo.combined.E7E775.sct.rds")
+# LOAD: embryo.combined.E7E775.sct <- readRDS(file = "output/seurat/embryo.combined.E7E775.sct.rds")
+#######################
 
+# expression of marker genes
+pdf("output/seurat/FeaturePlot_SCT_embryo_E7E775-ExE_Ectoderm.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.E7E775.sct, features = ExE_Ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
 
-
-
-
-
-
+xxxxx
 
 
 ```
