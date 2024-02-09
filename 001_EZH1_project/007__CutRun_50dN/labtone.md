@@ -94,7 +94,7 @@ sbatch --dependency=afterany:9019681 scripts/bowtie2_4.sh # 9020298 ok
 
 --> Looks good
 
-Mapping on E coli --> TO DO LATER! XXXXX
+Mapping on E coli --> TO DO LATER! 
 
 ```bash
 conda activate bowtie2

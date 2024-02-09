@@ -11409,135 +11409,250 @@ all_conserved$gene <- rownames(all_conserved)
 ## Write all conserved markers to a file
 write.table(all_conserved, file = "output/seurat/srat_all_conserved_markers_embryo_E7E775.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
-xxxxxxxxx check ti thas been save
+
 
 
 ## Find the top 10 conserved markers for each cluster
 top10_conserved <- all_conserved %>%
-  mutate(cluster = factor(cluster, levels = c("Primordial_Germ_Cells",
-  "Unknown_2",
-  "Unknown_1",
-  "Gut",
-  "Notocord",
-  "Surface_Ectoderm",
-  "Blood_Progenitor_2",
-  "Blood_Progenitor_1",
-  "Mixed_Mesoderm",
-  "Mesenchyme",
-  "Haematodenothelial_progenitors",
-  "Nascent_Mesoderm",
-  "Pharyngeal_Mesoderm",
-  "Paraxial_Mesoderm",
-  "Caudal_Mesoderm",
-  "Somitic_Mesoderm",
-  "ExE_Ectoderm_1",
-  "ExE_Ectoderm_2",
-  "Epiblast_PrimStreak"))) %>% 
+  mutate(cluster = factor(cluster, levels = c(
+    "Epiblast_1",
+    "Epiblast_2",
+    "Unknown_3" ,
+    "Nascent_Mesoderm",
+    "Somitic_Mesoderm",
+    "Unknown_2" ,
+    "Caudal_Mesoderm",
+    "Pharyngeal_Mesoderm",
+    "Unknown_1" ,
+    "Paraxial_Mesoderm",
+    "Mixed_Mesoderm",
+    "Notocord",
+    "Haematodenothelial_progenitors",
+    "Blood_Progenitor_1",
+    "Blood_Progenitor_2",
+    "Blood_Progenitor_3",
+    "Endoderm",
+    "ExE_Endoderm",
+    "Mesenchyme",
+    "Surface_Ectoderm",
+    "ExE_Ectoderm_1",
+    "ExE_Ectoderm_2",
+    "Primordial_Germ_Cells",
+    "Gut"))) %>% 
   separate(gene, into = c("gene", "suffix"), sep = "\\.\\.\\.", remove = TRUE, extra = "drop", fill = "right") %>% 
   group_by(cluster) %>% 
   arrange((max_pval)) %>% 
   slice_head(n = 10) %>% 
   ungroup() %>% 
-  arrange(match(cluster, c("Primordial_Germ_Cells",
-  "Unknown_2",
-  "Unknown_1",
-  "Gut",
-  "Notocord",
-  "Surface_Ectoderm",
-  "Blood_Progenitor_2",
-  "Blood_Progenitor_1",
-  "Mixed_Mesoderm",
-  "Mesenchyme",
-  "Haematodenothelial_progenitors",
-  "Nascent_Mesoderm",
-  "Pharyngeal_Mesoderm",
-  "Paraxial_Mesoderm",
-  "Caudal_Mesoderm",
-  "Somitic_Mesoderm",
-  "ExE_Ectoderm_1",
-  "ExE_Ectoderm_2",
-  "Epiblast_PrimStreak")))
+  arrange(match(cluster, c(
+      "Epiblast_1",
+    "Epiblast_2",
+    "Unknown_3" ,
+    "Nascent_Mesoderm",
+    "Somitic_Mesoderm",
+    "Unknown_2" ,
+    "Caudal_Mesoderm",
+    "Pharyngeal_Mesoderm",
+    "Unknown_1" ,
+    "Paraxial_Mesoderm",
+    "Mixed_Mesoderm",
+    "Notocord",
+    "Haematodenothelial_progenitors",
+    "Blood_Progenitor_1",
+    "Blood_Progenitor_2",
+    "Blood_Progenitor_3",
+    "Endoderm",
+    "ExE_Endoderm",
+    "Mesenchyme",
+    "Surface_Ectoderm",
+    "ExE_Ectoderm_1",
+    "ExE_Ectoderm_2",
+    "Primordial_Germ_Cells",
+    "Gut")))
 
-## Find the top 3 conserved markers for each cluster
+
+## Find the top 10 conserved markers for each cluster
 top10_conserved <- all_conserved %>%
-  mutate(cluster = factor(cluster, levels = c("Primordial_Germ_Cells",
-  "Unknown_2",
-  "Unknown_1",
-  "Gut",
-  "Notocord",
-  "Surface_Ectoderm",
-  "Blood_Progenitor_2",
-  "Blood_Progenitor_1",
-  "Mixed_Mesoderm",
-  "Mesenchyme",
-  "Haematodenothelial_progenitors",
-  "Nascent_Mesoderm",
-  "Pharyngeal_Mesoderm",
-  "Paraxial_Mesoderm",
-  "Caudal_Mesoderm",
-  "Somitic_Mesoderm",
-  "ExE_Ectoderm_1",
-  "ExE_Ectoderm_2",
-  "Epiblast_PrimStreak"))) %>% 
+  mutate(cluster = factor(cluster, levels = c(
+    "Epiblast_1",
+    "Epiblast_2",
+    "Unknown_3" ,
+    "Nascent_Mesoderm",
+    "Somitic_Mesoderm",
+    "Unknown_2" ,
+    "Caudal_Mesoderm",
+    "Pharyngeal_Mesoderm",
+    "Unknown_1" ,
+    "Paraxial_Mesoderm",
+    "Mixed_Mesoderm",
+    "Notocord",
+    "Haematodenothelial_progenitors",
+    "Blood_Progenitor_1",
+    "Blood_Progenitor_2",
+    "Blood_Progenitor_3",
+    "Endoderm",
+    "ExE_Endoderm",
+    "Mesenchyme",
+    "Surface_Ectoderm",
+    "ExE_Ectoderm_1",
+    "ExE_Ectoderm_2",
+    "Primordial_Germ_Cells",
+    "Gut"))) %>% 
+  separate(gene, into = c("gene", "suffix"), sep = "\\.\\.\\.", remove = TRUE, extra = "drop", fill = "right") %>% 
+  group_by(cluster) %>% 
+  arrange((max_pval)) %>% 
+  slice_head(n = 10) %>% 
+  ungroup() %>% 
+  arrange(match(cluster, c(
+
+
+## Find the top 10 conserved markers for each cluster
+top10_conserved <- all_conserved %>%
+  mutate(cluster = factor(cluster, levels = c(
+    "Epiblast_1",
+    "Epiblast_2",
+    "Unknown_3" ,
+    "Nascent_Mesoderm",
+    "Somitic_Mesoderm",
+    "Unknown_2" ,
+    "Caudal_Mesoderm",
+    "Pharyngeal_Mesoderm",
+    "Unknown_1" ,
+    "Paraxial_Mesoderm",
+    "Mixed_Mesoderm",
+    "Notocord",
+    "Haematodenothelial_progenitors",
+    "Blood_Progenitor_1",
+    "Blood_Progenitor_2",
+    "Blood_Progenitor_3",
+    "Endoderm",
+    "ExE_Endoderm",
+    "Mesenchyme",
+    "Surface_Ectoderm",
+    "ExE_Ectoderm_1",
+    "ExE_Ectoderm_2",
+    "Primordial_Germ_Cells",
+    "Gut"))) %>% 
   separate(gene, into = c("gene", "suffix"), sep = "\\.\\.\\.", remove = TRUE, extra = "drop", fill = "right") %>% 
   group_by(cluster) %>% 
   arrange((max_pval)) %>% 
   slice_head(n = 3) %>% 
   ungroup() %>% 
-  arrange(match(cluster, c("Primordial_Germ_Cells",
-  "Unknown_2",
-  "Unknown_1",
-  "Gut",
-  "Notocord",
-  "Surface_Ectoderm",
-  "Blood_Progenitor_2",
-  "Blood_Progenitor_1",
-  "Mixed_Mesoderm",
-  "Mesenchyme",
-  "Haematodenothelial_progenitors",
-  "Nascent_Mesoderm",
-  "Pharyngeal_Mesoderm",
-  "Paraxial_Mesoderm",
-  "Caudal_Mesoderm",
-  "Somitic_Mesoderm",
-  "ExE_Ectoderm_1",
-  "ExE_Ectoderm_2",
-  "Epiblast_PrimStreak")))
+  arrange(match(cluster, c(
+    "Epiblast_1",
+    "Epiblast_2",
+    "Unknown_3" ,
+    "Nascent_Mesoderm",
+    "Somitic_Mesoderm",
+    "Unknown_2" ,
+    "Caudal_Mesoderm",
+    "Pharyngeal_Mesoderm",
+    "Unknown_1" ,
+    "Paraxial_Mesoderm",
+    "Mixed_Mesoderm",
+    "Notocord",
+    "Haematodenothelial_progenitors",
+    "Blood_Progenitor_1",
+    "Blood_Progenitor_2",
+    "Blood_Progenitor_3",
+    "Endoderm",
+    "ExE_Endoderm",
+    "Mesenchyme",
+    "Surface_Ectoderm",
+    "ExE_Ectoderm_1",
+    "ExE_Ectoderm_2",
+    "Primordial_Germ_Cells",
+    "Gut")))
 
 
 
 ## Write the top 10 conserved markers for each cluster to a file
-write.table(top10_conserved, file = "output/seurat/srat_top10_conserved_markers_embryo_V2clust.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(top10_conserved, file = "output/seurat/srat_top10_conserved_markers_embryo_E7E775.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 ## Visualize the top 10/3 conserved markers for each cluster
 marker_genes_conserved <- unique(top10_conserved$gene)
-levels(embryo.combined.sct) <- c("Primordial_Germ_Cells",
-  "Unknown_2",
-  "Unknown_1",
-  "Gut",
-  "Notocord",
-  "Surface_Ectoderm",
-  "Blood_Progenitor_2",
-  "Blood_Progenitor_1",
-  "Mixed_Mesoderm",
-  "Mesenchyme",
-  "Haematodenothelial_progenitors",
-  "Nascent_Mesoderm",
-  "Pharyngeal_Mesoderm",
-  "Paraxial_Mesoderm",
-  "Caudal_Mesoderm",
-  "Somitic_Mesoderm",
-  "ExE_Ectoderm_1",
-  "ExE_Ectoderm_2",
-  "Epiblast_PrimStreak")
+levels(embryo.combined.E7E775.sct) <- c(
+    "Epiblast_1",
+    "Epiblast_2",
+    "Unknown_3" ,
+    "Nascent_Mesoderm",
+    "Somitic_Mesoderm",
+    "Unknown_2" ,
+    "Caudal_Mesoderm",
+    "Pharyngeal_Mesoderm",
+    "Unknown_1" ,
+    "Paraxial_Mesoderm",
+    "Mixed_Mesoderm",
+    "Notocord",
+    "Haematodenothelial_progenitors",
+    "Blood_Progenitor_1",
+    "Blood_Progenitor_2",
+    "Blood_Progenitor_3",
+    "Endoderm",
+    "ExE_Endoderm",
+    "Mesenchyme",
+    "Surface_Ectoderm",
+    "ExE_Ectoderm_1",
+    "ExE_Ectoderm_2",
+    "Primordial_Germ_Cells",
+    "Gut")
 
-pdf("output/seurat/DotPlot_SCT_top3_conserved_embryo_V2clust.pdf", width=18, height=5)
-DotPlot(embryo.combined.sct, features = marker_genes_conserved, cols = c("grey", "red")) + RotatedAxis()
+pdf("output/seurat/DotPlot_SCT_top3_conserved_embryo_E7E775.pdf", width=20, height=5)
+DotPlot(embryo.combined.E7E775.sct, features = marker_genes_conserved, cols = c("grey", "red")) + RotatedAxis()
 dev.off()
 
 
-# save
-## saveRDS(embryo.combined.sct, file = "output/seurat/embryo.combined.sct_V2clust.rds")
-embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct_V2clust.rds")
+################## 
+## SAVE saveRDS(embryo.combined.E7E775.sct, file = "output/seurat/embryo.combined.E7E775.sct.rds")
+## LOAD embryo.combined.E7E775.sct <- readRDS(file = "output/seurat/embryo.combined.E7E775.sct.rds")
+##################
+
+
+# Check some genes
+DefaultAssay(embryo.combined.E7E775.sct) <- "SCT" # For vizualization either use SCT or norm RNA
+
+### Check YAP1 hippo bulk-regulated genes:
+pdf("output/seurat/FeaturePlot_SCT_embryo_E7E775_YAP1_hippo.pdf", width=7, height=30)
+# CTGF, CRY61, AREG, MYC, GLI2, VIM, AXL and BIRC5
+
+FeaturePlot(embryo.combined.E7E775.sct, features = c("Tead1", "Tead4", "Ccn2", "Ccn1","Areg","Myc","Gli2","Vim","Axl","Birc5"), split.by = "condition", max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+
+
+### Check YAP1 NODAL bulk-regulated genes:
+
+YAP1_NODAL <- c("Shh", "Dmrt1", "Cited2", 'Dact2', "Tgif2", "Acvr1b", 'Smad3', 'Dand5', 'Smad2','Cer1', 'Nodal', 'Foxh1', 'Dact1', 'Tdgf1', 'Cripto3', 'Acvr1c', 'Cfc1', 'Cfc1b') 
+
+pdf("output/seurat/FeaturePlot_SCT_embryo_E7E775_YAP1_NODAL.pdf", width=10, height=80)
+FeaturePlot(embryo.combined.E7E775.sct, features = YAP1_NODAL, max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+### Check ANXA NODAL bulk-regulated genes:
+
+
+pdf("output/seurat/FeaturePlot_SCT_embryo_E7E775_ANXA.pdf", width=10, height=35)
+FeaturePlot(embryo.combined.E7E775.sct, features = c("Anxa1","Amotl2","Ccn1","Ccn2","Tagln","Anxa3","Chchd2"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+## cell cycle
+
+
+pdf("output/seurat/FeaturePlot_SCT_embryo_E7E775_cellCycle.pdf", width=10, height=5)
+FeaturePlot(embryo.combined.E7E775.sct,features = c("S.Score","G2M.Score"),label.size = 4,repel = T,label = T) & 
+  theme(plot.title = element_text(size=10))
+dev.off()  
+
+
+## PRC2-related genes
+
+pdf("output/seurat/FeaturePlot_SCT_embryo_E7E775_PRC2.pdf", width=10, height=22)
+FeaturePlot(embryo.combined.E7E775.sct, features = c("Ezh2", "Kdm6b", "Gata6", "Cdx2","T"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+## Hand1
+pdf("output/seurat/FeaturePlot_SCT_embryo_E7E775_HAND1.pdf", width=10, height=5)
+FeaturePlot(embryo.combined.E7E775.sct, features = c("Hand1"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
 
 
 
@@ -11545,14 +11660,424 @@ embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct_V2clust
 
 
 
+# GSEA plot
+library("fgsea")
+## Re-calculate DEGs keeping ALL genes
+DefaultAssay(embryo.combined.E7E775.sct) <- "RNA" # For DEGs
+
+
+
+embryo.combined.E7E775.sct$celltype.stim <- paste(embryo.combined.E7E775.sct$cluster.annot, embryo.combined.E7E775.sct$condition,
+    sep = "-")
+Idents(embryo.combined.E7E775.sct) <- "celltype.stim"
+
+Epiblast_1 <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "Epiblast_1-cYAPKO", ident.2 = "Epiblast_1-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+
+Epiblast_2 <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "Epiblast_2-cYAPKO", ident.2 = "Epiblast_2-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+
+
+Paraxial_Mesoderm <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "Paraxial_Mesoderm-cYAPKO", ident.2 = "Paraxial_Mesoderm-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+Nascent_Mesoderm <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "Nascent_Mesoderm-cYAPKO", ident.2 = "Nascent_Mesoderm-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+Pharyngeal_Mesoderm <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "Pharyngeal_Mesoderm-cYAPKO", ident.2 = "Pharyngeal_Mesoderm-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+Mesenchyme <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "Mesenchyme-cYAPKO", ident.2 = "Mesenchyme-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")    
+
+Mixed_Mesoderm <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "Mixed_Mesoderm-cYAPKO", ident.2 = "Mixed_Mesoderm-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")    
+Blood_Progenitor_1 <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "Blood_Progenitor_1-cYAPKO", ident.2 = "Blood_Progenitor_1-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+
+ExE_Ectoderm_1 <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "ExE_Ectoderm_1-cYAPKO", ident.2 = "ExE_Ectoderm_1-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+Somitic_Mesoderm <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "Somitic_Mesoderm-cYAPKO", ident.2 = "Somitic_Mesoderm-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+Caudal_Mesoderm <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "Caudal_Mesoderm-cYAPKO", ident.2 = "Caudal_Mesoderm-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+Haematodenothelial_progenitors <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "Haematodenothelial_progenitors-cYAPKO", ident.2 = "Haematodenothelial_progenitors-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+Blood_Progenitor_2 <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "Blood_Progenitor_2-cYAPKO", ident.2 = "Blood_Progenitor_2-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+Blood_Progenitor_3 <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "Blood_Progenitor_3-cYAPKO", ident.2 = "Blood_Progenitor_3-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+Surface_Ectoderm <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "Surface_Ectoderm-cYAPKO", ident.2 = "Surface_Ectoderm-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+Gut <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "Gut-cYAPKO", ident.2 = "Gut-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+Unknown_1 <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "Unknown_1-cYAPKO", ident.2 = "Unknown_1-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+Unknown_2 <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "Unknown_2-cYAPKO", ident.2 = "Unknown_2-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+Unknown_3 <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "Unknown_3-cYAPKO", ident.2 = "Unknown_3-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+Notocord <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "Notocord-cYAPKO", ident.2 = "Notocord-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+Primordial_Germ_Cells <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "Primordial_Germ_Cells-cYAPKO", ident.2 = "Primordial_Germ_Cells-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+
+
+Endoderm <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "Endoderm-cYAPKO", ident.2 = "Endoderm-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+
+ExE_Ectoderm_2 <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "ExE_Ectoderm_2-cYAPKO", ident.2 = "ExE_Ectoderm_2-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+
+ExE_Endoderm <- FindMarkers(embryo.combined.E7E775.sct, ident.1 = "ExE_Endoderm-cYAPKO", ident.2 = "ExE_Endoderm-WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+
+
+
+### save output
+####
+write.table(Epiblast_1, file = "output/seurat/Epiblast_1-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Epiblast_2, file = "output/seurat/Epiblast_2-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Unknown_3, file = "output/seurat/Unknown_3-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Nascent_Mesoderm, file = "output/seurat/Nascent_Mesoderm-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Somitic_Mesoderm, file = "output/seurat/Somitic_Mesoderm-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Unknown_2, file = "output/seurat/Unknown_2-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Caudal_Mesoderm, file = "output/seurat/Caudal_Mesoderm-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Pharyngeal_Mesoderm, file = "output/seurat/Pharyngeal_Mesoderm-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Unknown_1, file = "output/seurat/Unknown_1-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Paraxial_Mesoderm, file = "output/seurat/Paraxial_Mesoderm-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Mixed_Mesoderm, file = "output/seurat/Mixed_Mesoderm-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Notocord, file = "output/seurat/Notocord-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Haematodenothelial_progenitors, file = "output/seurat/Haematodenothelial_progenitors-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Blood_Progenitor_1, file = "output/seurat/Blood_Progenitor_1-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Blood_Progenitor_2, file = "output/seurat/Blood_Progenitor_2-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Endoderm, file = "output/seurat/Endoderm-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(ExE_Endoderm, file = "output/seurat/ExE_Endoderm-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Mesenchyme, file = "output/seurat/Mesenchyme-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Surface_Ectoderm, file = "output/seurat/Surface_Ectoderm-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(ExE_Ectoderm_1, file = "output/seurat/ExE_Ectoderm_1-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(ExE_Ectoderm_2, file = "output/seurat/ExE_Ectoderm_2-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Primordial_Germ_Cells, file = "output/seurat/Primordial_Germ_Cells-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Gut, file = "output/seurat/Gut-cYAPKO_response_E7E775_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+##--> No blood_prog_3 because no cells in WT
+
+XXXXXXXXXXXX BELOW TO MOD XXXXXXXXXXXXXXXXX
+
+#### import all clsuter DEGs output :
+cluster_types <- c("Epiblast_PrimStreak", "ExE_Ectoderm_1", "Nascent_Mesoderm", 
+                   "Somitic_Mesoderm", "Caudal_Mesoderm", "Paraxial_Mesoderm", 
+                   "Pharyngeal_Mesoderm", "Haematodenothelial_progenitors", 
+                   "Mesenchyme", "Blood_Progenitor_1", "Mixed_Mesoderm", 
+                   "Blood_Progenitor_2", "Surface_Ectoderm", "Gut", "Unknown_1", 
+                   "Notocord", "Unknown_2", "Primordial_Germ_Cells")
+# Loop over each cluster type to read data and assign to a variable
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-cYAPKO_response_V2clust_allGenes.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1)
+  assign(cluster, data)
+}
+
+
+## load list of genes to test
+Hippo = read_table(file = c("output/Pathway/Manual_geneList_hippo.txt"))
+Nodal_TGF = read_table(file = c("output/Pathway/Manual_geneList_Nodal_TGF.txt"))
+WNT = read_table(file = c("output/Pathway/Manual_geneList_WNT.txt"))
+Vitamin_A = read_table(file = c("output/Pathway/Manual_geneList_Vitamin_A.txt"))
+
+fgsea_sets <- list(
+  Hippo = read_table(file = "output/Pathway/Manual_geneList_hippo.txt")$Genes,
+  Nodal_TGF = read_table(file = "output/Pathway/Manual_geneList_Nodal_TGF.txt")$Genes,
+  WNT = read_table(file = "output/Pathway/Manual_geneList_WNT.txt")$Genes,
+  Vitamin_A = read_table(file = "output/Pathway/Manual_geneList_Vitamin_A.txt")$Genes
+)
+
+
+
+
+
+## Rank genes based on FC
+genes <- Blood_Progenitor_1 %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+  rownames_to_column(var = "gene") %>%
+  arrange(desc(avg_log2FC)) %>% 
+  dplyr::select(gene, avg_log2FC)
+
+ranks <- deframe(genes)
+head(ranks)
+## Run GSEA
+
+fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 1000)
+fgseaResTidy <- fgseaRes %>%
+  as_tibble() %>%
+  arrange(desc(ES))
+fgseaResTidy %>% 
+  dplyr::select(-leadingEdge, -NES, -nMoreExtreme) %>% 
+  arrange(padj) %>% 
+  head()
 
 
 
 
 
 
+## plot GSEA
+pdf("output/Pathway/GSEA_V2clust_ManualGeneLists_Hippo-Primordial_Germ_Cells.pdf", width=5, height=3)
+
+plotEnrichment(fgsea_sets[["Hippo"]],
+               ranks) + labs(title="Hippo-Primordial_Germ_Cells") +
+               theme_bw()
+dev.off()
 
 
+
+
+
+# Save output table for all pathway and cluster
+## Define the list of cluster types
+cluster_types <- c("Epiblast_PrimStreak", "ExE_Ectoderm_1", "Nascent_Mesoderm", 
+                   "Somitic_Mesoderm", "Caudal_Mesoderm", "Paraxial_Mesoderm", 
+                   "Pharyngeal_Mesoderm", "Haematodenothelial_progenitors", 
+                   "Mesenchyme", "Blood_Progenitor_1", "Mixed_Mesoderm", 
+                   "Blood_Progenitor_2", "Surface_Ectoderm", "Gut", "Unknown_1", 
+                   "Notocord", "Unknown_2", "Primordial_Germ_Cells")
+
+## Initialize an empty list to store the results for each cluster type
+all_results <- list()
+## Loop over each cluster type
+for (cluster in cluster_types) {
+  
+  # Extract genes for the current cluster
+  genes <- get(cluster) %>% 
+    rownames_to_column(var = "gene") %>%
+    arrange(desc(avg_log2FC)) %>% 
+    dplyr::select(gene, avg_log2FC)
+  
+  ranks <- deframe(genes)
+  
+  # Run GSEA for the current cluster
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 1000)
+  fgseaResTidy <- fgseaRes %>%
+    as_tibble() %>%
+    arrange(desc(ES))
+  
+  # Extract summary table and add cluster column
+  fgseaResTidy_summary = fgseaResTidy %>% 
+    dplyr::select(pathway, pval, padj, ES, size, NES) %>%
+    mutate(cluster = cluster) %>%
+    arrange(padj) %>% 
+    head()
+  
+  # Store results in the list
+  all_results[[cluster]] <- fgseaResTidy_summary
+}
+## Combine results from all cluster types into one table
+final_results <- bind_rows(all_results, .id = "cluster")
+
+
+write.table(final_results, file = c("output/Pathway/gsea_output_V2clust_ManualGeneLists.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+
+
+# Heatmap all GSEA
+
+
+pdf("output/Pathway/heatmap_gsea_padj.pdf", width=5, height=5)
+ggplot(final_results, aes(x=cluster, y=pathway, fill=ES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", ES)), 
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+
+pdf("output/Pathway/heatmap_gsea_pval_greyTile.pdf", width=5, height=5)
+ggplot(final_results, aes(x=cluster, y=pathway)) + 
+  geom_tile(aes(fill = ifelse(pval <= 0.05, ES, NA)), color = "black") +  # Conditional fill based on significance
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Enrichment\nScore", na.value="grey") +
+  # geom_text(aes(label=sprintf("%.2f", ES)), 
+  #           color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change between pvalue, qvalue,p.adjust
+  #           size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+
+dev.off()
+
+
+
+
+# SCPA and GSEA plot
+gsea_output = final_results %>% 
+  rename("pathway" = "Pathway") %>%
+  dplyr::select(Pathway, pval, padj, ES, cluster)
+scpa_output = all_data_pathways_tidy  %>%
+  dplyr::select(Pathway, qval, cluster)
+
+scpa_gsea = gsea_output %>%
+  left_join(scpa_output)
+
+## Filter data for GSEA padj < 0.05
+filtered_data <- scpa_gsea
+## Assign color based on your criteria
+filtered_data$is_significant <- filtered_data$padj < 0.05
+
+pdf("output/Pathway/dotplot_scpa_gsea_V2clust.pdf", width=10, height=4)
+
+ggplot(filtered_data, aes(x=cluster, y=Pathway, size=qval)) +
+  geom_point(aes(color=ifelse(is_significant, ES, NA), 
+                 shape=is_significant), alpha=0.7) +
+  scale_color_gradient2(low="blue", high="red", midpoint=0, na.value="black", name = "GSEA Enrichment score") +
+  scale_size_continuous(name="SCPA qval") +  # Title for size scale
+  scale_shape_manual(values=c(`TRUE`=16, `FALSE`=16)) + # Using circle shape for both
+  theme_light() +
+  labs(title="SCPA and GSEA", x="Cluster", y="Pathway") +
+  theme(legend.position="right")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
 
 
 
