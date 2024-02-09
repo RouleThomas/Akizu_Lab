@@ -11159,15 +11159,13 @@ DotPlot(embryo.combined.E7E775.sct, assay = "SCT", features = all_markers, cols 
 dev.off()
 
 
-XXXXXXXXXXXXXXXXXX
-
 
 ## Downsampling with bootstrap to compare the nb of cell per cell types
 
 library("tidyverse")
 
 ### Identify the unique clusters
-unique_clusters <- unique(Idents(embryo.combined.sct))
+unique_clusters <- unique(Idents(embryo.combined.E7E775.sct))
 
 ### Create empty matrices to store cell counts
 control_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters))
@@ -11176,17 +11174,17 @@ colnames(control_clusters_counts) <- unique_clusters
 colnames(cYAPKO_clusters_counts) <- unique_clusters
 
 ### Loop through 100 iterations
-embryo.combined.sct_WT <- which(embryo.combined.sct$orig.ident == 'WT')
-embryo.combined.sct_cYAPKO <- which(embryo.combined.sct$orig.ident == 'cYAPKO')
+embryo.combined.E7E775.sct_WT <- which(embryo.combined.E7E775.sct$orig.ident == 'WT')
+embryo.combined.E7E775.sct_cYAPKO <- which(embryo.combined.E7E775.sct$orig.ident == 'cYAPKO')
 
 for (i in 1:100) { # Change this to 100 for the final run
   # Downsampling
-  embryo.combined.sct_WT_downsample <- sample(embryo.combined.sct_WT, 3621)
-  embryo.combined.sct_integrated_downsample <- embryo.combined.sct[,c(embryo.combined.sct_cYAPKO, embryo.combined.sct_WT_downsample)]
+  embryo.combined.E7E775.sct_WT_downsample <- sample(embryo.combined.E7E775.sct_WT, 4483)
+  embryo.combined.E7E775.sct_integrated_downsample <- embryo.combined.E7E775.sct[,c(embryo.combined.E7E775.sct_cYAPKO, embryo.combined.E7E775.sct_WT_downsample)]
 
   # Count nb of cells in each cluster
-  control_clusters <- table(Idents(embryo.combined.sct_integrated_downsample)[embryo.combined.sct_integrated_downsample$condition == "WT"])
-  cYAPKO_clusters <- table(Idents(embryo.combined.sct_integrated_downsample)[embryo.combined.sct_integrated_downsample$condition == "cYAPKO"])
+  control_clusters <- table(Idents(embryo.combined.E7E775.sct_integrated_downsample)[embryo.combined.E7E775.sct_integrated_downsample$condition == "WT"])
+  cYAPKO_clusters <- table(Idents(embryo.combined.E7E775.sct_integrated_downsample)[embryo.combined.E7E775.sct_integrated_downsample$condition == "cYAPKO"])
 
   # Align the counts with the unique clusters
   control_clusters_counts[i, names(control_clusters)] <- as.numeric(control_clusters)
@@ -11246,29 +11244,36 @@ plot_data <- data.frame(
   )
 
 plot_data$condition <- factor(plot_data$condition, levels = c("WT", "cYAPKO")) # Reorder untreated 1st
-plot_data$cluster <- factor(plot_data$cluster, levels = c("Epiblast_PrimStreak",  # Early developmental stage
-  "ExE_Ectoderm_1",         # Extraembryonic ectoderm; related to the epiblast
-  "ExE_Ectoderm_2",         # Extraembryonic ectoderm; related to the epiblast
-  "Surface_Ectoderm",     # Forms from ectoderm
-  "Notocord",             # Important mesodermal structure
-  "Nascent_Mesoderm",     # Early mesoderm
-  "Paraxial_Mesoderm",    # Forms alongside notochord
-  "Somitic_Mesoderm",     # Gives rise to somites
-  "Pharyngeal_Mesoderm",  # Part of head mesoderm
-  "Caudal_Mesoderm",      # Posterior mesoderm
-  "Mixed_Mesoderm",       # Intermediate mesodermal stage
-  "Mesenchyme",           # Loose, undifferentiated cells often derived from mesoderm
-  "Haematodenothelial_progenitors", # Blood and endothelial progenitors
-  "Blood_Progenitor_1",   # Blood precursors
-  "Blood_Progenitor_2",   # Blood precursors
-  "Gut",                  # Derived from endoderm
-  "Primordial_Germ_Cells",# Early germ cell precursors
-  "Unknown_1",             # Unknown categories placed at the end
-  "Unknown_2")) # Reorder untreated 1st
+plot_data$cluster <- factor(plot_data$cluster, levels = c(
+    "Epiblast_1",
+    "Epiblast_2",
+    "Unknown_3" ,
+    "Nascent_Mesoderm",
+    "Somitic_Mesoderm",
+    "Unknown_2" ,
+    "Caudal_Mesoderm",
+    "Pharyngeal_Mesoderm",
+    "Unknown_1" ,
+    "Paraxial_Mesoderm",
+    "Mixed_Mesoderm",
+    "Notocord",
+    "Haematodenothelial_progenitors",
+    "Blood_Progenitor_1",
+    "Blood_Progenitor_2",
+    "Blood_Progenitor_3",
+    "Endoderm",
+    "ExE_Endoderm",
+    "Mesenchyme",
+    "Surface_Ectoderm",
+    "ExE_Ectoderm_1",
+    "ExE_Ectoderm_2",
+    "Primordial_Germ_Cells",
+    "Gut"
+)) # Reorder untreated 1st
 
 
 # Plotting using ggplot2
-pdf("output/seurat/Cluster_cell_counts_BootstrapDownsampling10_clean_embryo_V2clust.pdf", width=9, height=4)
+pdf("output/seurat/Cluster_cell_counts_BootstrapDownsampling100_embryo_E7E775.pdf", width=9, height=4)
 ggplot(plot_data, aes(x = cluster, y = value, fill = condition)) +
   geom_bar(stat = "identity", position = "dodge") +
   geom_text(
@@ -11280,8 +11285,7 @@ ggplot(plot_data, aes(x = cluster, y = value, fill = condition)) +
   scale_fill_manual(values = c("WT" = "blue", "cYAPKO" = "red")) +
   labs(x = "Cluster", y = "Number of Cells") +
   theme_bw() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ylim(0,900)
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 dev.off()
 
 
@@ -11290,99 +11294,124 @@ dev.off()
 # differential expressed genes across conditions
 ## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
 
-DefaultAssay(embryo.combined.sct) <- "RNA"
+DefaultAssay(embryo.combined.E7E775.sct) <- "RNA"
 
-embryo.combined.sct <- NormalizeData(embryo.combined.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
-all.genes <- rownames(embryo.combined.sct)
-embryo.combined.sct <- ScaleData(embryo.combined.sct, features = all.genes) # zero-centres and scales it
+embryo.combined.E7E775.sct <- NormalizeData(embryo.combined.E7E775.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(embryo.combined.E7E775.sct)
+embryo.combined.E7E775.sct <- ScaleData(embryo.combined.E7E775.sct, features = all.genes) # zero-centres and scales it
 
 
 ## what genes change in different conditions for cells of the same type
 
-embryo.combined.sct$celltype.stim <- paste(embryo.combined.sct$cluster.annot, embryo.combined.sct$condition,
+embryo.combined.E7E775.sct$celltype.stim <- paste(embryo.combined.E7E775.sct$cluster.annot, embryo.combined.E7E775.sct$condition,
     sep = "-")
-Idents(embryo.combined.sct) <- "celltype.stim"
+Idents(embryo.combined.E7E775.sct) <- "celltype.stim"
 
 # use RNA corrected count for DEGs
-embryo.combined.sct <- PrepSCTFindMarkers(embryo.combined.sct)
+embryo.combined.E7E775.sct <- PrepSCTFindMarkers(embryo.combined.E7E775.sct)
 
 
 ## Automation::
 cell_types <- c(
-  "Primordial_Germ_Cells",
-  "Unknown_2",
-  "Notocord",
-  "Unknown_1",
-  "Gut",
-  "Surface_Ectoderm",
-  "Blood_Progenitor_2",
-  "Mixed_Mesoderm",
-  "Blood_Progenitor_1",
-  "Mesenchyme",
-  "Haematodenothelial_progenitors",
-  "Pharyngeal_Mesoderm",
-  "Paraxial_Mesoderm",
-  "Caudal_Mesoderm",
-  "Somitic_Mesoderm",
-  "Nascent_Mesoderm",
-  "ExE_Ectoderm_1",
-  "Epiblast_PrimStreak")
+  "Epiblast_1",
+    "Epiblast_2",
+    "Unknown_3" ,
+    "Nascent_Mesoderm",
+    "Somitic_Mesoderm",
+    "Unknown_2" ,
+    "Caudal_Mesoderm",
+    "Pharyngeal_Mesoderm",
+    "Unknown_1" ,
+    "Paraxial_Mesoderm",
+    "Mixed_Mesoderm",
+    "Notocord",
+    "Haematodenothelial_progenitors",
+    "Blood_Progenitor_1",
+    "Blood_Progenitor_2",
+   # "Blood_Progenitor_3", Removed as not in WT
+    "Endoderm",
+    "ExE_Endoderm",
+    "Mesenchyme",
+    "Surface_Ectoderm",
+    "ExE_Ectoderm_1",
+    "ExE_Ectoderm_2",
+    "Primordial_Germ_Cells",
+    "Gut")
 
 for (cell_type in cell_types) {
   response_name <- paste(cell_type, "cYAPKO.response", sep = ".")
   ident_1 <- paste(cell_type, "-cYAPKO", sep = "")
   ident_2 <- paste(cell_type, "-WT", sep = "")
 
-  response <- FindMarkers(embryo.combined.sct, assay = "RNA", ident.1 = ident_1, ident.2 = ident_2, verbose = FALSE)
+  response <- FindMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = ident_1, ident.2 = ident_2, verbose = FALSE)
   
   print(head(response, n = 15))
   
-  file_name <- paste("output/seurat/", cell_type, "-cYAPKO_response_V2clust.txt", sep = "")
+  file_name <- paste("output/seurat/", cell_type, "-cYAPKO_response_E7E775.txt", sep = "")
   write.table(response, file = file_name, sep = "\t", quote = FALSE, row.names = TRUE)
 }
 
 
 
 ### Find all markers 
-all_markers <- FindAllMarkers(embryo.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
-write.table(all_markers, file = "output/seurat/srat_WT_cYAPKO_all_markers_V2clust.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+all_markers <- FindAllMarkers(embryo.combined.E7E775.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all_markers, file = "output/seurat/srat_embryo_E7E775_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 
 # Display the top 10 CONSERVED marker genes of each cluster
-Idents(embryo.combined.sct) <- "cluster.annot"
+Idents(embryo.combined.E7E775.sct) <- "cluster.annot"
 
 ## DEGs cluster versus all other
-Primordial_Germ_Cells.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Primordial_Germ_Cells", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Primordial_Germ_Cells")
-Unknow_2.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Unknown_2", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Unknown_2")
-Unknow_1.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Unknown_1", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Unknown_1")
-Gut.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Gut", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Gut")
-Notocord.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Notocord", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Notocord")
-Surface_Ectoderm.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Surface_Ectoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Surface_Ectoderm")
-Blood_Progenitor_2.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Blood_Progenitor_2", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Blood_Progenitor_2")
-Blood_Progenitor_1.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Blood_Progenitor_1", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Blood_Progenitor_1")
-Mixed_Mesoderm.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Mixed_Mesoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Mixed_Mesoderm")
-Mesenchyme.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Mesenchyme", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Mesenchyme")
-Haematodenothelial_progenitors.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Haematodenothelial_progenitors", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Haematodenothelial_progenitors")
-Nascent_Mesoderm.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Nascent_Mesoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Nascent_Mesoderm")
-Pharyngeal_Mesoderm.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Pharyngeal_Mesoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Pharyngeal_Mesoderm")
-Paraxial_Mesoderm.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Paraxial_Mesoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Paraxial_Mesoderm")
-Caudal_Mesoderm.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Caudal_Mesoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Caudal_Mesoderm")
-Somitic_Mesoderm.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Somitic_Mesoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Somitic_Mesoderm")
-ExE_Ectoderm_1.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "ExE_Ectoderm_1", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "ExE_Ectoderm_1")
-ExE_Ectoderm_2.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "ExE_Ectoderm_2", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "ExE_Ectoderm_2")
-Epiblast_PrimStreak.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "Epiblast_PrimStreak", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Epiblast_PrimStreak")
+Primordial_Germ_Cells.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "Primordial_Germ_Cells", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Primordial_Germ_Cells")
+Epiblast_1.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "Epiblast_1", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Epiblast_1")
+Epiblast_2.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "Epiblast_2", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Epiblast_2")
+Unknown_3.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "Unknown_3", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Unknown_3")
+Nascent_Mesoderm.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "Nascent_Mesoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Nascent_Mesoderm")
+Somitic_Mesoderm.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "Somitic_Mesoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Somitic_Mesoderm")
+
+Unknown_2.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "Unknown_2", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Unknown_2")
+Caudal_Mesoderm.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "Caudal_Mesoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Caudal_Mesoderm")
+Pharyngeal_Mesoderm.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "Pharyngeal_Mesoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Pharyngeal_Mesoderm")
+Unknown_1.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "Unknown_1", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Unknown_1")
+Paraxial_Mesoderm.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "Paraxial_Mesoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Paraxial_Mesoderm")
+Mixed_Mesoderm.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "Mixed_Mesoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Mixed_Mesoderm")
+Notocord.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "Notocord", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Notocord")
+Haematodenothelial_progenitors.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "Haematodenothelial_progenitors", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Haematodenothelial_progenitors")
+
+Blood_Progenitor_1.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "Blood_Progenitor_1", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Blood_Progenitor_1")
+Blood_Progenitor_2.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "Blood_Progenitor_2", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Blood_Progenitor_2")
+Blood_Progenitor_3.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "Blood_Progenitor_3", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Blood_Progenitor_3")
+Endoderm.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "Endoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Endoderm")
+ExE_Endoderm.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "ExE_Endoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "ExE_Endoderm")
+Mesenchyme.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "Mesenchyme", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Mesenchyme")
+Surface_Ectoderm.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "Surface_Ectoderm", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Surface_Ectoderm")
+ExE_Ectoderm_1.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "ExE_Ectoderm_1", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "ExE_Ectoderm_1")
+ExE_Ectoderm_2.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "ExE_Ectoderm_2", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "ExE_Ectoderm_2")
+Primordial_Germ_Cells.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "Primordial_Germ_Cells", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Primordial_Germ_Cells")
+Gut.conserved <- FindConservedMarkers(embryo.combined.E7E775.sct, assay = "RNA", ident.1 = "Gut", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "Gut")
 
 
-Unknown_2.conserved = Unknow_2.conserved
-Unknown_1.conserved = Unknow_1.conserved
+
+
+#######################
+# SAVE: saveRDS(embryo.combined.E7E775.sct, file = "output/seurat/embryo.combined.E7E775.sct.rds")
+# LOAD: embryo.combined.E7E775.sct <- readRDS(file = "output/seurat/embryo.combined.E7E775.sct.rds")
+#######################
+
+
+
 
 
 ## Combine all conserved markers into one data frame
-all_conserved <- bind_rows(Primordial_Germ_Cells.conserved, Unknown_2.conserved, Unknown_1.conserved, Gut.conserved, Notocord.conserved, Surface_Ectoderm.conserved, Blood_Progenitor_2.conserved, Blood_Progenitor_1.conserved, Mixed_Mesoderm.conserved, Mesenchyme.conserved, Haematodenothelial_progenitors.conserved, Nascent_Mesoderm.conserved, Pharyngeal_Mesoderm.conserved, Paraxial_Mesoderm.conserved, Caudal_Mesoderm.conserved, Somitic_Mesoderm.conserved, ExE_Ectoderm_1.conserved, ExE_Ectoderm_2.conserved, Epiblast_PrimStreak.conserved)
+all_conserved <- bind_rows(Primordial_Germ_Cells.conserved,Epiblast_1.conserved,Epiblast_2.conserved,Unknown_3.conserved,Nascent_Mesoderm.conserved,Somitic_Mesoderm.conserved,Unknown_2.conserved,Caudal_Mesoderm.conserved,Pharyngeal_Mesoderm.conserved,Unknown_1.conserved,Paraxial_Mesoderm.conserved,Mixed_Mesoderm.conserved,Notocord.conserved,Haematodenothelial_progenitors.conserved,Blood_Progenitor_1.conserved,Blood_Progenitor_2.conserved,Blood_Progenitor_3.conserved,Endoderm.conserved,ExE_Endoderm.conserved,Mesenchyme.conserved,Surface_Ectoderm.conserved,ExE_Ectoderm_1.conserved,ExE_Ectoderm_2.conserved,Primordial_Germ_Cells.conserved,Gut.conserved)
 
 all_conserved$gene <- rownames(all_conserved)
 ## Write all conserved markers to a file
-write.table(all_conserved, file = "output/seurat/srat_all_conserved_markers_embryo_V2clust.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(all_conserved, file = "output/seurat/srat_all_conserved_markers_embryo_E7E775.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+xxxxxxxxx check ti thas been save
+
+
 ## Find the top 10 conserved markers for each cluster
 top10_conserved <- all_conserved %>%
   mutate(cluster = factor(cluster, levels = c("Primordial_Germ_Cells",
