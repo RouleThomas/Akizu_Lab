@@ -152,7 +152,7 @@ done > output/bowtie2/alignment_counts_12505547.txt
 Add these values to `/home/roulet/001_EZH1_project/008__CutRun_NPC_FA/samples_008.xlsx`\
 Then in R; see `/home/roulet/001_EZH1_project/001_EZH1_project.R`.
 
---> Overall >XXX% input reads as been uniquely mapped to the genome (90% non uniq)
+--> Overall >75% input reads as been uniquely mapped to the genome (90% non uniq)
 
 
 
@@ -200,12 +200,15 @@ sbatch --dependency=afterany:12505897 scripts/bamtobigwig_unique_3.sh # 12514791
 
 
 
-- 50dNnative
+- 50dN native and FA
 *Pass*: 
-*Failed*: 
-- 50dNFA
-
-xxx
+*Failed*: H3K27me3, EZH1cs, EZH2
+- NPC _ WT
+*Pass*: H3K27ac, H3K4me3
+*Failed*: EZH1cs, EZH2, SUZ12
+- NPC _ KOEF1aEZH1
+*Pass*: H3K27me3, H3K4me3, H
+*Failed*: EZH1cs, SUZ12
 
 
 
@@ -222,7 +225,7 @@ sbatch scripts/multiBigwigSummary_50dN.sh # 12654211 ok
 sbatch scripts/multiBigwigSummary_NPC.sh # 12654309 ok
 
 sbatch scripts/multiBigwigSummary_WT.sh # 12654318 ok
-sbatch scripts/multiBigwigSummary_KOEF1aEZH1.sh # 12654324; 12654560
+sbatch scripts/multiBigwigSummary_KOEF1aEZH1.sh # 12654324; 12654560 ok
 sbatch scripts/multiBigwigSummary_KO.sh # 12654331; 12654558 ok
 
 
@@ -326,20 +329,9 @@ plotCorrelation \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
     -o output/bigwig/multiBigwigSummary_KO_heatmap.pdf
 
-
-
-
-
 ```
 
-
-
-
-
-
-
-
---> XXX
+--> Hard to conclude stuff
 
 
 
@@ -378,6 +370,8 @@ sbatch scripts/macs2_narrow_WT.sh # 12655475 ok
 --> NPC histone marks: OK for H3K4me3, H3K27ac, and H3K27me3; sharp and clear peaks.
 
 --> NPC PRC2 components: too noisy...
+
+
 
 XXXXXXXXXX below not mod
 
