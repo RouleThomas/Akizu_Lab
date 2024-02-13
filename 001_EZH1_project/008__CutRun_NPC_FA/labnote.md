@@ -76,17 +76,23 @@ done < rename_map.txt
 
 ```bash
 sbatch scripts/fastp_1.sh # 12504999 ok
-sbatch scripts/fastp_2.sh # 12505000 xxx
-sbatch scripts/fastp_3.sh # 12505001 xxx
+sbatch scripts/fastp_2.sh # 12505000 ok
+sbatch scripts/fastp_3.sh # 12505001 ok
 ```
 
 # FastQC
 
+**raw**
+```bash
+sbatch --dependency=afterany:12504999 scripts/fastqc_raw.sh # xxx
+```
+
+
 **Fastp-cleaned:**
 ```bash
-sbatch --dependency=afterany:12504999 scripts/fastqc_fastp_1.sh # 12505357 xxx
-sbatch --dependency=afterany:12505000 scripts/fastqc_fastp_2.sh # 12505358 xxx
-sbatch --dependency=afterany:12505001 scripts/fastqc_fastp_3.sh # 12505359 xxx
+sbatch --dependency=afterany:12504999 scripts/fastqc_fastp_1.sh # 12505357 ok
+sbatch --dependency=afterany:12505000 scripts/fastqc_fastp_2.sh # 12505358 ok
+sbatch --dependency=afterany:12505001 scripts/fastqc_fastp_3.sh # 12505359 ok
 ```
 
 --> all good
