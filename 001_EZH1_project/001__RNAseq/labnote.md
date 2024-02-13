@@ -9480,6 +9480,7 @@ names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC <
 
 
 pdf("output/deseq2_hg38/plotVolcano_res_q05_8wN_HET_vs_8wN_WT.pdf", width=7, height=8)    
+
 EnhancedVolcano(res,
   lab = res$GeneSymbol,
   x = 'log2FoldChange',
@@ -9496,7 +9497,9 @@ EnhancedVolcano(res,
   theme(legend.position = "none")
 dev.off()
 
-pdf("output/deseq2_hg38/plotVolcano_res_q05_8wN_HET_vs_8wN_WT_prettyV1.pdf", width=7, height=8)    
+pdf("output/deseq2_hg38/plotVolcano_res_q05_8wN_HET_vs_8wN_WT_prettyV1.pdf", width=7, height=8)   
+pdf("output/deseq2_hg38/plotVolcano_res_q05FC05_8wN_HET_vs_8wN_WT.pdf", width=7, height=8)    
+
 EnhancedVolcano(res,
   lab = "",
   x = 'log2FoldChange',

@@ -99,13 +99,13 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:12505357 scripts/bowtie2_1.sh # 12505521 xxx
-sbatch --dependency=afterany:12505358 scripts/bowtie2_2.sh # 12505546 xxx
-sbatch --dependency=afterany:12505359 scripts/bowtie2_3.sh # 12505547 xxx
+sbatch --dependency=afterany:12505357 scripts/bowtie2_1.sh # 12505521 ok
+sbatch --dependency=afterany:12505358 scripts/bowtie2_2.sh # 12505546 ok
+sbatch --dependency=afterany:12505359 scripts/bowtie2_3.sh # 12505547 ok
 
 ```
 
---> Looks good
+--> Looks good; overall ~70% uniquely aligned reads
 
 Mapping on E coli --> TO DO LATER!  XXX
 
@@ -165,9 +165,9 @@ This is prefered for THOR bam input.
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:12505521 scripts/samtools_unique_1.sh # 12505895 xxx
-sbatch --dependency=afterany:12505546 scripts/samtools_unique_2.sh # 12505896 xxx
-sbatch --dependency=afterany:12505547 scripts/samtools_unique_3.sh # 12505897 xxx
+sbatch --dependency=afterany:12505521 scripts/samtools_unique_1.sh # 12505895 ok
+sbatch --dependency=afterany:12505546 scripts/samtools_unique_2.sh # 12505896 ok
+sbatch --dependency=afterany:12505547 scripts/samtools_unique_3.sh # 12505897 ok
 
 ```
 
@@ -193,9 +193,9 @@ Paramaters:
 ```bash
 conda activate deeptools
 
-sbatch --dependency=afterany:12505895 scripts/bamtobigwig_unique_1.sh # 12514789 xxx
-sbatch --dependency=afterany:12505896 scripts/bamtobigwig_unique_2.sh # 12514790 xxx
-sbatch --dependency=afterany:12505897 scripts/bamtobigwig_unique_3.sh # 12514791 xxx
+sbatch --dependency=afterany:12505895 scripts/bamtobigwig_unique_1.sh # 12514789 ok
+sbatch --dependency=afterany:12505896 scripts/bamtobigwig_unique_2.sh # 12514790 ok
+sbatch --dependency=afterany:12505897 scripts/bamtobigwig_unique_3.sh # 12514791 ok
 ```
 
 
@@ -216,9 +216,15 @@ xxx
 ```bash
 conda activate deeptools
 # Generate compile bigwig (.npz) files
-sbatch scripts/multiBigwigSummary_50dN.sh # 9064423 ok 
-sbatch scripts/multiBigwigSummary_PSC.sh # 9064427 ok 
-sbatch scripts/multiBigwigSummary_all.sh # 9064458 ok 
+sbatch scripts/multiBigwigSummary_all.sh # 12654374 ok
+
+sbatch scripts/multiBigwigSummary_50dN.sh # 12654211 ok
+sbatch scripts/multiBigwigSummary_NPC.sh # 12654309 ok
+
+sbatch scripts/multiBigwigSummary_WT.sh # 12654318 ok
+sbatch scripts/multiBigwigSummary_KOEF1aEZH1.sh # 12654324; 12654560
+sbatch scripts/multiBigwigSummary_KO.sh # 12654331; 12654558 ok
+
 
 
 # Plot
@@ -226,21 +232,43 @@ sbatch scripts/multiBigwigSummary_all.sh # 9064458 ok
 plotPCA -in output/bigwig/multiBigwigSummary_all.npz \
     --transpose \
     --ntop 0 \
-    --labels 50dN_KOEF1aEZH1_EZH1cs_R1 50dN_KOEF1aEZH1_EZH1cs_R2 50dN_KOEF1aEZH1_EZH2_R1 50dN_KOEF1aEZH1_EZH2_R2 50dN_KOEF1aEZH1_H3K27me3_R1 50dN_KOEF1aEZH1_H3K27me3_R2 50dN_KOEF1aEZH1_IGG_R1 50dN_KOEF1aEZH1_SUZ12_R1 50dN_KOEF1aEZH1_SUZ12_R2 50dN_KO_EZH1cs_R1 50dN_KO_EZH1cs_R2 50dN_KO_EZH2_R1 50dN_KO_EZH2_R2 50dN_KO_H3K27me3_R1 50dN_KO_H3K27me3_R2 50dN_KO_IGG_R1 50dN_KO_IGG_R2 50dN_KO_SUZ12_R1 50dN_KO_SUZ12_R2 50dN_WTQ731E_EZH1cs_R1 50dN_WTQ731E_EZH1cs_R2 50dN_WTQ731E_EZH2_R1 50dN_WTQ731E_EZH2_R2 50dN_WTQ731E_H3K27me3_R1 50dN_WTQ731E_H3K27me3_R2 50dN_WTQ731E_H3K27me3_R3 50dN_WTQ731E_IGG_R1 50dN_WTQ731E_IGG_R2 50dN_WTQ731E_SUZ12_R1 50dN_WTQ731E_SUZ12_R2 PSC_WT_EZH1cs_01FA PSC_WT_EZH1cs_1FA PSC_WT_H3K27me1_01FA PSC_WT_H3K27me1_1FA \
+    --labels 50dNFA_KOEF1aEZH1_EZH1cs 50dNnative_KOEF1aEZH1_EZH1cs 50dNFA_KOEF1aEZH1_EZH2 50dNnative_KOEF1aEZH1_EZH2 50dNFA_KOEF1aEZH1_H3K27me3 NPC_KO_EZH1cs NPC_KO_EZH2 NPC_KO_H3K27ac NPC_KO_IGG NPC_KOEF1aEZH1_EZH1cs NPC_KOEF1aEZH1_H3K27me3 NPC_KOEF1aEZH1_H3K4me3 NPC_KOEF1aEZH1_IGG NPC_KOEF1aEZH1_SUZ12 NPC_WT_EZH1cs NPC_WT_EZH2 NPC_WT_H3K27ac NPC_WT_H3K4me3 NPC_WT_SUZ12 \
     -o output/bigwig/multiBigwigSummary_all_plotPCA.pdf
-
-plotPCA -in output/bigwig/multiBigwigSummary_PSC.npz \
-    --transpose \
-    --ntop 0 \
-    --labels PSC_WT_EZH1cs_01FA PSC_WT_EZH1cs_1FA PSC_WT_H3K27me1_01FA PSC_WT_H3K27me1_1FA \
-    -o output/bigwig/multiBigwigSummary_PSC_plotPCA.pdf
 
 plotPCA -in output/bigwig/multiBigwigSummary_50dN.npz \
     --transpose \
     --ntop 0 \
-    --labels 50dN_KOEF1aEZH1_EZH1cs_R1 50dN_KOEF1aEZH1_EZH1cs_R2 50dN_KOEF1aEZH1_EZH2_R1 50dN_KOEF1aEZH1_EZH2_R2 50dN_KOEF1aEZH1_H3K27me3_R1 50dN_KOEF1aEZH1_H3K27me3_R2 50dN_KOEF1aEZH1_IGG_R1 50dN_KOEF1aEZH1_SUZ12_R1 50dN_KOEF1aEZH1_SUZ12_R2 50dN_KO_EZH1cs_R1 50dN_KO_EZH1cs_R2 50dN_KO_EZH2_R1 50dN_KO_EZH2_R2 50dN_KO_H3K27me3_R1 50dN_KO_H3K27me3_R2 50dN_KO_IGG_R1 50dN_KO_IGG_R2 50dN_KO_SUZ12_R1 50dN_KO_SUZ12_R2 50dN_WTQ731E_EZH1cs_R1 50dN_WTQ731E_EZH1cs_R2 50dN_WTQ731E_EZH2_R1 50dN_WTQ731E_EZH2_R2 50dN_WTQ731E_H3K27me3_R1 50dN_WTQ731E_H3K27me3_R2 50dN_WTQ731E_H3K27me3_R3 50dN_WTQ731E_IGG_R1 50dN_WTQ731E_IGG_R2 50dN_WTQ731E_SUZ12_R1 50dN_WTQ731E_SUZ12_R2 \
+    --labels 50dNFA_KOEF1aEZH1_EZH1cs 50dNnative_KOEF1aEZH1_EZH1cs 50dNFA_KOEF1aEZH1_EZH2 50dNnative_KOEF1aEZH1_EZH2 50dNFA_KOEF1aEZH1_H3K27me3 \
     -o output/bigwig/multiBigwigSummary_50dN_plotPCA.pdf
 
+plotPCA -in output/bigwig/multiBigwigSummary_NPC.npz \
+    --transpose \
+    --ntop 0 \
+    --labels NPC_KO_EZH1cs NPC_KO_EZH2 NPC_KO_H3K27ac NPC_KO_IGG NPC_KOEF1aEZH1_EZH1cs NPC_KOEF1aEZH1_H3K27me3 NPC_KOEF1aEZH1_H3K4me3 NPC_KOEF1aEZH1_IGG NPC_KOEF1aEZH1_SUZ12 NPC_WT_EZH1cs NPC_WT_EZH2 NPC_WT_H3K27ac NPC_WT_H3K4me3 NPC_WT_SUZ12 \
+    -o output/bigwig/multiBigwigSummary_NPC_plotPCA.pdf
+
+
+plotPCA -in output/bigwig/multiBigwigSummary_WT.npz \
+    --transpose \
+    --ntop 0 \
+    --labels NPC_WT_EZH1cs NPC_WT_EZH2 NPC_WT_H3K27ac NPC_WT_H3K4me3 NPC_WT_SUZ12 \
+    -o output/bigwig/multiBigwigSummary_WT_plotPCA.pdf
+
+
+
+plotPCA -in output/bigwig/multiBigwigSummary_KOEF1aEZH1.npz \
+    --transpose \
+    --ntop 0 \
+    --labels NPC_KOEF1aEZH1_EZH1cs NPC_KOEF1aEZH1_H3K27me3 NPC_KOEF1aEZH1_H3K4me3 NPC_KOEF1aEZH1_IGG NPC_KOEF1aEZH1_SUZ12 \
+    -o output/bigwig/multiBigwigSummary_KOEF1aEZH1_plotPCA.pdf
+
+
+
+plotPCA -in output/bigwig/multiBigwigSummary_KO.npz \
+    --transpose \
+    --ntop 0 \
+    --labels NPC_KO_EZH1cs NPC_KO_EZH2 NPC_KO_H3K27ac NPC_KO_IGG \
+    -o output/bigwig/multiBigwigSummary_KO_plotPCA.pdf
 
 ## Heatmap
 plotCorrelation \
@@ -248,34 +276,138 @@ plotCorrelation \
     --corMethod pearson --skipZeros \
     --plotTitle "Pearson Correlation" \
     --removeOutliers \
-    --labels 50dN_KOEF1aEZH1_EZH1cs_R1 50dN_KOEF1aEZH1_EZH1cs_R2 50dN_KOEF1aEZH1_EZH2_R1 50dN_KOEF1aEZH1_EZH2_R2 50dN_KOEF1aEZH1_H3K27me3_R1 50dN_KOEF1aEZH1_H3K27me3_R2 50dN_KOEF1aEZH1_IGG_R1 50dN_KOEF1aEZH1_SUZ12_R1 50dN_KOEF1aEZH1_SUZ12_R2 50dN_KO_EZH1cs_R1 50dN_KO_EZH1cs_R2 50dN_KO_EZH2_R1 50dN_KO_EZH2_R2 50dN_KO_H3K27me3_R1 50dN_KO_H3K27me3_R2 50dN_KO_IGG_R1 50dN_KO_IGG_R2 50dN_KO_SUZ12_R1 50dN_KO_SUZ12_R2 50dN_WTQ731E_EZH1cs_R1 50dN_WTQ731E_EZH1cs_R2 50dN_WTQ731E_EZH2_R1 50dN_WTQ731E_EZH2_R2 50dN_WTQ731E_H3K27me3_R1 50dN_WTQ731E_H3K27me3_R2 50dN_WTQ731E_H3K27me3_R3 50dN_WTQ731E_IGG_R1 50dN_WTQ731E_IGG_R2 50dN_WTQ731E_SUZ12_R1 50dN_WTQ731E_SUZ12_R2 PSC_WT_EZH1cs_01FA PSC_WT_EZH1cs_1FA PSC_WT_H3K27me1_01FA PSC_WT_H3K27me1_1FA \
+    --labels 50dNFA_KOEF1aEZH1_EZH1cs 50dNnative_KOEF1aEZH1_EZH1cs 50dNFA_KOEF1aEZH1_EZH2 50dNnative_KOEF1aEZH1_EZH2 50dNFA_KOEF1aEZH1_H3K27me3 NPC_KO_EZH1cs NPC_KO_EZH2 NPC_KO_H3K27ac NPC_KO_IGG NPC_KOEF1aEZH1_EZH1cs NPC_KOEF1aEZH1_H3K27me3 NPC_KOEF1aEZH1_H3K4me3 NPC_KOEF1aEZH1_IGG NPC_KOEF1aEZH1_SUZ12 NPC_WT_EZH1cs NPC_WT_EZH2 NPC_WT_H3K27ac NPC_WT_H3K4me3 NPC_WT_SUZ12 \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
     -o output/bigwig/multiBigwigSummary_all_heatmap.pdf
-
-plotCorrelation \
-    -in output/bigwig/multiBigwigSummary_PSC.npz \
-    --corMethod pearson --skipZeros \
-    --plotTitle "Pearson Correlation" \
-    --removeOutliers \
-    --labels PSC_WT_EZH1cs_01FA PSC_WT_EZH1cs_1FA PSC_WT_H3K27me1_01FA PSC_WT_H3K27me1_1FA \
-    --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig/multiBigwigSummary_PSC_heatmap.pdf
 
 plotCorrelation \
     -in output/bigwig/multiBigwigSummary_50dN.npz \
     --corMethod pearson --skipZeros \
     --plotTitle "Pearson Correlation" \
     --removeOutliers \
-    --labels 50dN_KOEF1aEZH1_EZH1cs_R1 50dN_KOEF1aEZH1_EZH1cs_R2 50dN_KOEF1aEZH1_EZH2_R1 50dN_KOEF1aEZH1_EZH2_R2 50dN_KOEF1aEZH1_H3K27me3_R1 50dN_KOEF1aEZH1_H3K27me3_R2 50dN_KOEF1aEZH1_IGG_R1 50dN_KOEF1aEZH1_SUZ12_R1 50dN_KOEF1aEZH1_SUZ12_R2 50dN_KO_EZH1cs_R1 50dN_KO_EZH1cs_R2 50dN_KO_EZH2_R1 50dN_KO_EZH2_R2 50dN_KO_H3K27me3_R1 50dN_KO_H3K27me3_R2 50dN_KO_IGG_R1 50dN_KO_IGG_R2 50dN_KO_SUZ12_R1 50dN_KO_SUZ12_R2 50dN_WTQ731E_EZH1cs_R1 50dN_WTQ731E_EZH1cs_R2 50dN_WTQ731E_EZH2_R1 50dN_WTQ731E_EZH2_R2 50dN_WTQ731E_H3K27me3_R1 50dN_WTQ731E_H3K27me3_R2 50dN_WTQ731E_H3K27me3_R3 50dN_WTQ731E_IGG_R1 50dN_WTQ731E_IGG_R2 50dN_WTQ731E_SUZ12_R1 50dN_WTQ731E_SUZ12_R2 \
+    --labels 50dNFA_KOEF1aEZH1_EZH1cs 50dNnative_KOEF1aEZH1_EZH1cs 50dNFA_KOEF1aEZH1_EZH2 50dNnative_KOEF1aEZH1_EZH2 50dNFA_KOEF1aEZH1_H3K27me3 \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
     -o output/bigwig/multiBigwigSummary_50dN_heatmap.pdf
 
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_NPC.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels NPC_KO_EZH1cs NPC_KO_EZH2 NPC_KO_H3K27ac NPC_KO_IGG NPC_KOEF1aEZH1_EZH1cs NPC_KOEF1aEZH1_H3K27me3 NPC_KOEF1aEZH1_H3K4me3 NPC_KOEF1aEZH1_IGG NPC_KOEF1aEZH1_SUZ12 NPC_WT_EZH1cs NPC_WT_EZH2 NPC_WT_H3K27ac NPC_WT_H3K4me3 NPC_WT_SUZ12 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_NPC_heatmap.pdf
+
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_WT.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels NPC_WT_EZH1cs NPC_WT_EZH2 NPC_WT_H3K27ac NPC_WT_H3K4me3 NPC_WT_SUZ12 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_WT_heatmap.pdf
+
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_KOEF1aEZH1.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels NPC_KOEF1aEZH1_EZH1cs NPC_KOEF1aEZH1_H3K27me3 NPC_KOEF1aEZH1_H3K4me3 NPC_KOEF1aEZH1_IGG NPC_KOEF1aEZH1_SUZ12 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_KOEF1aEZH1_heatmap.pdf
+
+
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_KO.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels NPC_KO_EZH1cs NPC_KO_EZH2 NPC_KO_H3K27ac NPC_KO_IGG \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_KO_heatmap.pdf
+
+
+
+
+
 ```
 
---> two big groups: H3K27me3 IP versus the other
-----> Seems only H3K27me3 IP has worked here
 
+
+
+
+
+
+
+--> XXX
 
 
 
 # MACS2 peak calling on bam unique
+
+
+
+--> IGG samples used as control when available; **for NPC WT, IGG from KO has been used**
+----> For 50dN, no IGG control used for peak calling...
+
+
+--> The **peaks are called on the uniquely aligned reads** (it performed better on our previous CutRun)
+
+**PEAK CALLING  in `broad`**
+
+
+```bash
+conda activate macs2
+# genotype per genotype
+sbatch scripts/macs2_broad_50dN.sh # 12654885 ok
+sbatch scripts/macs2_broad_KO_KOEF1aEZH1.sh # 12655091 ok
+sbatch scripts/macs2_broad_WT.sh # 12655165 ok
+
+sbatch scripts/macs2_narrow_50dN.sh # 12655462 ok
+sbatch scripts/macs2_narrow_KO_KOEF1aEZH1.sh # 12655472 ok
+sbatch scripts/macs2_narrow_WT.sh # 12655475 ok
+
+
+
+
+
+```
+
+--> OEF1aEZH1 in 50-day neurons: too noisy for EZH1, EZH2, and H3K27me3
+
+--> NPC histone marks: OK for H3K4me3, H3K27ac, and H3K27me3; sharp and clear peaks.
+
+--> NPC PRC2 components: too noisy...
+
+XXXXXXXXXX below not mod
+
+
+
+
+
+```bash
+conda activate bowtie2 # for bedtools
+sbatch scripts/macs2_raw_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
+sbatch scripts/macs2_raw_peak_signif_pool.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
+
+
+# quick command to print median size of peak within a bed
+awk '{print $3-$2}' your_bed_file.bed | sort -n | awk 'BEGIN {c=0; sum=0;} {a[c++]=$1; sum+=$1;} END {if (c%2) print a[int(c/2)]; else print (a[c/2-1]+a[c/2])/2;}'
+```
+
+Then keep only the significant peaks (re-run the script to test different qvalue cutoff) and remove peaks overlapping with blacklist regions. MACS2 column9 output is -log10(qvalue) format so if we want 0.05; 
+- q0.05: `q value = -log10(0.05) = 1.30103`
+- q0.01 = 2
+- q0.005 = 2.30103
+- q0.001 = 3
+- q0.0001 = 4
+- q0.00001 = 5
+
+
+**Optimal qvalue** according to IGV:
+- 50dN_KOEF1aEZH1_H3K27me3: 1.30103 (2.3 more true peaks)
+- 50dN_KO_H3K27me3: 1.30103 (2.3 more true peaks)
+- 50dN_WTQ731E_H3K27me3: 1.30103 (2.3 more true peaks)
+
+
+
