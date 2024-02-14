@@ -9,6 +9,8 @@
 
 --> All in simplicate
 
+**!!! KOEF1aEZH1 do NOT overexpress EZH1 !!! So should be considered as KO !!!**
+
 **Objectives:**
 - 50dN: check whether FA improve CutRun, notably for EZH1cs (CutRun 007 failed, technical issue)
 - NPC FA: check whether we detect EZH1cs in NPC in WT or EZH1cs + test other AB
@@ -84,7 +86,7 @@ sbatch scripts/fastp_3.sh # 12505001 ok
 
 **raw**
 ```bash
-sbatch --dependency=afterany:12504999 scripts/fastqc_raw.sh # xxx
+sbatch scripts/fastqc_raw.sh # 12696467 xxx
 ```
 
 

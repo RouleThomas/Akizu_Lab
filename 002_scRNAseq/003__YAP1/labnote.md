@@ -7801,7 +7801,7 @@ dev.off()
 
 
 
-## Condiments workflow to compare condition
+## Condiments workflow to compare condition - E775
 
 Let's try the Condiments workflow, specifically designed for this purpose:
 - https://www.biorxiv.org/content/10.1101/2021.03.09.433671v1.full
@@ -7954,6 +7954,608 @@ curves <- slingCurves(embryo, as.df = TRUE)
 
 pdf("output/condiments/UMAP_trajectory_common_embryo.pdf", width=5, height=5)
 pdf("output/condiments/UMAP_trajectory_common_embryo_V2clust.pdf", width=5, height=5)
+
+ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
+  geom_point(size = .7, aes(col = pst)) +
+  scale_color_viridis_c() +
+  labs(col = "Pseudotime") +
+  geom_path(data = curves %>% arrange(Order),
+            aes(group = Lineage), col = "black", size = 1.5) +
+  theme_classic()
+dev.off()
+
+
+### With label
+#### Calculate midpoint for each trajectory to place the label
+curves_midpoints <- curves %>%
+  group_by(Lineage) %>%
+  summarise(UMAP_1 = mean(UMAP_1),
+            UMAP_2 = mean(UMAP_2))
+
+pdf("output/condiments/UMAP_trajectory_common_label_embryo.pdf", width=5, height=5)
+ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
+  geom_point(size = .7, aes(col = pst)) +
+  scale_color_viridis_c() +
+  labs(col = "Pseudotime") +
+  geom_path(data = curves %>% arrange(Order),
+            aes(group = Lineage), col = "black", size = 1) +
+  geom_text(data = curves_midpoints, aes(label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Add labels
+  theme_classic()
+dev.off()
+
+
+curves_endpoints <- curves %>%
+  group_by(Lineage) %>%
+  arrange(Order) %>%
+  top_n(1, Order) # Get the top/last ordered point for each group
+pdf("output/condiments/UMAP_trajectory_common_label_embryo_V2clust.pdf", width=5, height=5)
+ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
+  geom_point(size = .7, aes(col = pst)) +
+  scale_color_viridis_c() +
+  labs(col = "Pseudotime") +
+  geom_path(data = curves %>% arrange(Order),
+            aes(group = Lineage), col = "black", size = 1) +
+  geom_text(data = curves_endpoints, aes(label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+  theme_classic()
+dev.off()
+
+
+# Differential Progression
+progressionTest(embryo, conditions = embryo$condition, lineages = TRUE)
+
+prog_res <- progressionTest(embryo, conditions = embryo$condition, lineages = TRUE)
+
+
+df_3 <-  slingPseudotime(embryo) %>% as.data.frame() 
+
+df_3$condition <- embryo$condition
+df_3 <- df_3 %>% 
+  pivot_longer(-condition, names_to = "Lineage",
+               values_to = "pst") %>%
+  filter(!is.na(pst))
+
+pdf("output/condiments/densityPlot_trajectory_lineages_embryo.pdf", width=10, height=5)
+pdf("output/condiments/densityPlot_trajectory_lineages_embryo_V2clust.pdf", width=10, height=5)
+
+ggplot(df_3, aes(x = pst)) +
+  geom_density(alpha = .8, aes(fill = condition), col = "transparent") +
+  geom_density(aes(col = condition), fill = "transparent", size = 1.5) +
+  labs(x = "Pseudotime", fill = "condition") +
+  facet_wrap(~Lineage, scales = "free", nrow=2) +
+  guides(col = "none", fill = guide_legend(
+    override.aes = list(size = 1.5, col = c("blue", "red"))
+  )) +
+  scale_fill_manual(values = c("blue", "red")) +
+  scale_color_manual(values = c("blue", "red")) +
+  theme_bw()
+dev.off()
+
+
+#### ->  save.image(file="output/condiments/condiments_embryo_V2clust.RData")
+### load("output/condiments/condiments_embryo_V2clust.RData")
+set.seed(42)
+
+#  Differential expression
+
+## Identify the needed number of knots 
+
+BPPARAM <- BiocParallel::bpparam()
+BPPARAM$workers <- 8
+icMat <- evaluateK(counts = embryo, sds = SlingshotDataSet(embryo), 
+                   conditions = factor(embryo$condition),
+                   nGenes = 300, parallel = FALSE, BPPARAM = BPPARAM, k = 3:7) # set parallel = FALSE otherwise the code never end!
+icMat
+### !!! --> EXAMINE icMat to determine the optimal nb of knots for the GAM  !!! TOO LONG FUCK IT, use 6
+## Fit GAM with the indicated nb of knots (4 to 7 works for most data according to developers) https://github.com/statOmics/tradeSeq/issues/54
+
+
+# THE fitGAM() CODE IS TOO LONG TO RUN, SO HAS BEEN INTRODUCED INTO A RSCRIPT INSTEAD AND IMAGE AS BEEN SAVED AS condiments_embryo_V2.RData. But it fail too...
+
+
+# Try running the DEGs trajectory per trajectory
+### FROM THIS https://github.com/statOmics/tradeSeq/issues/64 :
+
+#### Let's try to run the DEGs trajectory per trajectory
+counts <- embryo.combined.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(embryo.combined.sct$orig.ident) # identify conditions
+#### Extract the pseudotimes and cell weights for the first lineage
+pseudotimes <- slingPseudotime(embryo, na = FALSE) [,1]
+cellweights <- slingCurveWeights(embryo) [,1]
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+
+traj1 <- fitGAM(
+     counts = sub_counts, 
+     pseudotime = sub_pseudotimes,
+     cellWeights = sub_weights,
+     conditions = sub_cond, 
+     nknots = 6,
+     sce = TRUE
+   )
+### IT WORK!!! Estimated run 24hours which is OK !!! Let's run this in slurm job traj per traj
+
+
+###### --------------
+# Try running the DEGs on the top 10k features (the 10k most variable genes) and trajectory per trajectory; This does not reduce a lot the time... With 10 featuers = 5hours; versus 24hours for all...
+
+## Isolate the top 10k
+embryo.combined.sct.10k <- FindVariableFeatures(embryo.combined.sct, selection.method = "vst", nfeatures = 10)
+
+#### Let's try to run the DEGs trajectory per trajectory
+counts <- embryo.combined.sct.10k[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(embryo.combined.sct.10k$orig.ident) # identify conditions
+#### Extract the pseudotimes and cell weights for the first lineage
+pseudotimes <- slingPseudotime(embryo, na = FALSE) [,1]
+cellweights <- slingCurveWeights(embryo) [,1]
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+
+traj1 <- fitGAM(
+     counts = sub_counts, 
+     pseudotime = sub_pseudotimes,
+     cellWeights = sub_weights,
+     conditions = sub_cond, 
+     nknots = 6,
+     sce = TRUE
+   )
+
+###### --------------
+
+
+### Once slurm jobs finished for each trajectory; load traj1 <- readRDS("output/condiments/traj1.rds") OK
+
+traj1 <- readRDS("output/condiments/traj1.rds")
+traj2 <- readRDS("output/condiments/traj2.rds")
+traj3 <- readRDS("output/condiments/traj3.rds")
+traj4 <- readRDS("output/condiments/traj4.rds")
+traj5 <- readRDS("output/condiments/traj5.rds")
+traj6 <- readRDS("output/condiments/traj6.rds")
+traj7 <- readRDS("output/condiments/traj7.rds")
+traj8 <- readRDS("output/condiments/traj8.rds")
+
+## DEGs between condition
+condRes_traj5 <- conditionTest(traj5)
+condRes_traj8_l2fc2 <- conditionTest(traj8, l2fc = log2(2)) # 
+
+condRes_traj1_l2fc4 <- conditionTest(traj1, l2fc = log2(4)) # let s prefer to use this one
+condRes_traj2_l2fc4 <- conditionTest(traj2, l2fc = log2(4)) # let s prefer to use this one
+
+
+
+
+# Correct the pvalue with fdr
+
+condRes_traj2_l2fc4$padj <- p.adjust(condRes_traj2_l2fc4$pvalue, "fdr")
+
+
+
+### Save output tables
+condRes_traj2_l2fc4$gene <- rownames(condRes_traj2_l2fc4) # create new column l;abel gene; as matrix before
+condRes_traj2_l2fc4 <- condRes_traj2_l2fc4[, c(ncol(condRes_traj2_l2fc4), 1:(ncol(condRes_traj2_l2fc4)-1))] # just to put gene column 1st
+write.table(condRes_traj2_l2fc4, file = c("output/condiments/condRes_traj2_l2fc4.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+
+
+
+
+# Heatmap clutering DEGs per traj _ REVISED METHOD
+## import DEGs
+condRes_traj1 <- read.table("output/condiments/condRes_traj1_l2fc4.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE)
+condRes_traj1 <- read.table("output/condiments/condRes_traj1_l2fc2.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE)
+
+## Isolate significant DEGs and transform into a vector
+conditionGenes_traj1_vector <- condRes_traj1 %>% 
+  filter(padj <= 0.05) %>%
+  pull(gene)
+  
+# Predict smoothed values
+yhatSmooth <- 
+  predictSmooth(traj1, gene = conditionGenes_traj1_vector, nPoints = 50, tidy = FALSE) %>%
+  log1p()
+
+yhatSmoothScaled <- t(apply(yhatSmooth, 1, scales::rescale))
+combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
+# Generate heatmap with clustering
+# Perform hierarchical clustering
+hc <- hclust(dist(combinedData))
+clusters <- cutree(hc, k=10)
+# Create an annotation data frame for the rows based on cluster assignments
+annotation_row <- data.frame(Cluster = factor(clusters))
+# Define colors for each cluster
+# 20
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "grey", "darkred", "darkblue", "gold", "darkgray", "lightblue", "lightgreen", "lightcoral", "lightpink", "lightcyan"))(20),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 10
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen" ))(10),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 8
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown" ))(8),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 7
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink" ))(7),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 6
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange"))(6),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 5
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple"))(5),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 4
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow" ))(4),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# Generate the heatmap
+pdf("output/condiments/clustered_heatmap_traj1.pdf", width=8, height=10)
+pdf("output/condiments/clustered_heatmap_traj1_cl10.pdf", width=8, height=10)
+pdf("output/condiments/clustered_heatmap_traj1_l2fc4_cl10.pdf", width=8, height=10)
+
+pdf("output/condiments/clustered_heatmap_traj4_l2fc2_cl10.pdf", width=8, height=10)
+pdf("output/condiments/clustered_heatmap_traj5_l2fc2_cl10.pdf", width=8, height=10)
+pdf("output/condiments/clustered_heatmap_traj3_l2fc2_cl7.pdf", width=8, height=10)
+pdf("output/condiments/clustered_heatmap_traj1_l2fc2_cl10.pdf", width=8, height=10)
+
+pheatmap(combinedData,
+  cluster_cols = FALSE,
+  show_rownames = FALSE,
+  show_colnames = FALSE,
+  main = "Trajectory 1 - Hierarchical Clustering",
+  legend = TRUE,
+  cutree_rows = 10,
+  annotation_row = annotation_row,
+  annotation_colors = annotation_colors
+)
+dev.off()
+
+
+# Line plots
+library("reshape2")
+library("stringr")
+# Assuming yhatSmoothScaled contains your smoothed gene expression data
+# Convert the yhatSmoothScaled data to a dataframe
+df <- as.data.frame(yhatSmoothScaled)
+df$Gene <- rownames(df)
+# Transform the data into a long format
+df_long <- melt(df, id.vars = "Gene", variable.name = "Pseudotime", value.name = "Expression")
+# Attach the cluster information to the data frame
+df$Cluster <- factor(clusters[df$Gene])
+df_long$Cluster <- df$Cluster[match(df_long$Gene, df$Gene)]
+
+# Extract condition column
+df_long$Condition <- str_extract(df_long$Pseudotime, "condition[[:alnum:]]+")
+df_long$Condition <- ifelse(str_detect(df_long$Condition, "WT"), "WT", "KO")
+
+# Extract the point value and convert it to numeric
+df_long$Updated_Pseudotime <- as.numeric(str_extract(df_long$Pseudotime, "(?<=point)\\d+"))
+
+# Define colors for the conditions
+color_map <- c("WT" = "blue", "KO" = "red")
+
+# Plot using ggplot
+pdf("output/condiments/clustered_linePlot_traj1_l2fc4_cl10.pdf", width=10, height=5)
+
+pdf("output/condiments/clustered_linePlot_traj4_l2fc2_cl4.pdf", width=10, height=5)
+
+ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
+  geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
+  geom_line(data = subset(df_long, Condition == "KO"), aes(color = Condition), alpha = 0.5) +
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~Cluster, scales = "free_y", nrow=2) +
+  theme_bw() +
+  labs(title = "Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+
+dev.off()
+
+# Plot using ggplot
+pdf("output/condiments/smoothed_linePlot_traj1_l2fc4_cl10_smooth.pdf", width=10, height=5)
+pdf("output/condiments/smoothed_linePlot_traj2_l2fc2_cl10_smooth.pdf", width=10, height=5)
+
+pdf("output/condiments/smoothed_linePlot_traj4_l2fc2_cl4_smooth.pdf", width=10, height=5)
+
+ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
+  geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~Cluster, scales = "free_y", nrow=2) +
+  theme_bw() +
+  labs(title = "Smoothed Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+
+
+
+### Export gene list from each cluster
+## Create a data frame with gene names and their respective cluster assignments
+output_df <- data.frame(
+  gene = rownames(combinedData),
+  cluster = clusters
+)
+
+# Write the data frame to a .txt file
+write.table(output_df, 
+            file = "output/condiments/gene_clusters_traj1_l2fc2_cl10.txt", 
+            sep = "\t", 
+            quote = FALSE, 
+            row.names = FALSE, 
+            col.names = TRUE)
+
+# Check some genes individually
+## FOR LINEAGE 1
+counts <- embryo.combined.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(embryo.combined.sct$orig.ident) # identify conditions
+pseudotimes <- slingPseudotime(embryo, na = FALSE) [,1]
+cellweights <- slingCurveWeights(embryo) [,1]
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+pdf("output/condiments/plotSmoothers_traj1_Aff3.pdf", width=8, height=4)
+plotSmoothers(traj1, sub_counts, gene = "Aff3", curvesCol = c("red","blue") ) +
+scale_color_manual(values =c("red","blue"))
+dev.off()
+
+
+## FOR LINEAGE 2
+counts <- embryo.combined.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(embryo.combined.sct$orig.ident) # identify conditions
+pseudotimes <- slingPseudotime(embryo, na = FALSE) [,2]
+cellweights <- slingCurveWeights(embryo) [,2]
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+pdf("output/condiments/plotSmoothers_traj2_Gm28376.pdf", width=8, height=4)
+plotSmoothers(traj2, sub_counts, gene = "Gm28376", curvesCol = c("red","blue") ) +
+scale_color_manual(values =c("red","blue"))
+dev.off()
+
+## FOR LINEAGE 3
+counts <- embryo.combined.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(embryo.combined.sct$orig.ident) # identify conditions
+pseudotimes <- slingPseudotime(embryo, na = FALSE) [,3]
+cellweights <- slingCurveWeights(embryo) [,3]
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+pdf("output/condiments/plotSmoothers_traj3_Fcrla.pdf", width=8, height=4)
+plotSmoothers(traj3, sub_counts, gene = "Fcrla", curvesCol = c("red","blue") ) +
+scale_color_manual(values =c("red","blue"))
+dev.off()
+
+## FOR LINEAGE 4
+counts <- embryo.combined.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(embryo.combined.sct$orig.ident) # identify conditions
+pseudotimes <- slingPseudotime(embryo, na = FALSE) [,4]
+cellweights <- slingCurveWeights(embryo) [,4]
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+pdf("output/condiments/plotSmoothers_traj4_Hist2h2ac.pdf", width=8, height=4)
+plotSmoothers(traj4, sub_counts, gene = "Hist2h2ac", curvesCol = c("red","blue") ) +
+scale_color_manual(values =c("red","blue"))
+dev.off()
+
+
+
+```
+
+--> I did all the tutorial from [here](https://hectorrdb.github.io/condimentsPaper/articles/Fibrosis.html) 
+----> This part Differential fate selection FAIL; but not sure it is usefull
+
+--> prog_res? Lineage all pvalue signif! (paste in the ppt Conchi 20231005)
+
+--> The icMAt is too long! I gave up running it. Author recommend using 6 knots (https://github.com/statOmics/tradeSeq/issues/121). Other discussion about [time](https://github.com/statOmics/tradeSeq/issues/41)
+
+--> Same for the fitGAM, too long, so I run it into a Rscript as follow:
+----> In the end; **what worked is to run trajectory per trajectory; it should last around 24-72hours per trajectory. Using the top 10k features do not reduce time significantly.**
+----> Parrelization can be stuck sometime so I ll run it without...
+
+--> The pseudotime diff looks weirk so let s use log2fc files anmd not the raw not log2fc filtered
+
+
+```bash
+conda activate condiments_V5
+# test
+sbatch scripts/fitGAM_6knots.sh # 5756977 fail
+sbatch scripts/fitGAM_6knots_parralell_subset.sh # 6104946 fail
+
+# trajectory per trajectory (all features, no parralelization)
+sbatch scripts/fitGAM_6knots_traj1.sh # 6110340 ok
+sbatch scripts/fitGAM_6knots_traj2.sh # 6110351 ok
+sbatch scripts/fitGAM_6knots_traj3.sh # 6110359 ok
+sbatch scripts/fitGAM_6knots_traj4.sh # 6110363 ok
+sbatch scripts/fitGAM_6knots_traj5.sh # 6110370 ok
+sbatch scripts/fitGAM_6knots_traj6.sh # 6110374 ok
+sbatch scripts/fitGAM_6knots_traj7.sh # 6110376 ok
+sbatch scripts/fitGAM_6knots_traj8.sh # 6110378 ok
+
+```
+
+--> `scripts/fitGAM_6knots.sh` 24hrs still running... FAIL time limit after 6 days LOL!!!! same for `fitGAM_6knots_parralell_subset.sh`
+
+--> Without parralell processing trajectory per traj works great!! 24-72hrs to run
+
+to check:
+- https://www.bioconductor.org/packages/devel/bioc/vignettes/condiments/inst/doc/condiments.html
+- For [plots](https://bioconductor.org/packages/devel/bioc/vignettes/tradeSeq/inst/doc/tradeSeq.html)
+
+
+
+
+## Condiments workflow to compare condition - E7 and E775 integrated
+
+```bash
+conda activate condiments_V6
+```
+
+```R
+# package installation 
+## install.packages("remotes")
+## remotes::install_github("cran/spatstat.core")
+## remotes::install_version("Seurat", "4.0.3")
+## install.packages("magrittr")
+## install.packages("magrittr")
+## install.packages("dplyr")
+## BiocManager::install("DelayedMatrixStats")
+## BiocManager::install("tradeSeq")
+
+
+# packages
+library("condiments")
+library("Seurat")
+library("magrittr") # to use pipe
+library("dplyr") # to use bind_cols and sample_frac
+library("SingleCellExperiment") # for reducedDims
+library("ggplot2")
+library("slingshot")
+library("DelayedMatrixStats")
+library("tidyr")
+library("tradeSeq")
+library("cowplot")
+library("scales")
+library("pheatmap")
+
+# Data import EMBRYO
+embryo.combined.E7E775.sct <- readRDS(file = "output/seurat/embryo.combined.E7E775.sct.rds") 
+
+DefaultAssay(embryo.combined.E7E775.sct) <- "RNA" # According to condiments workflow
+
+# convert to SingleCellExperiment
+embryo <- as.SingleCellExperiment(embryo.combined.E7E775.sct, assay = "RNA")
+
+
+# tidy
+
+df <- bind_cols(
+  as.data.frame(reducedDims(embryo)$UMAP),
+  as.data.frame(colData(embryo)[, -3])
+  ) %>%
+  sample_frac(1)
+
+# PLOT
+## genotype overlap
+pdf("output/condiments/UMAP_condition_embryo_E7E775.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7) +
+  scale_color_manual(values = c("blue", "red")) + # Specify colors here
+  labs(col = "Genotypes") +
+  theme_classic()
+dev.off()
+
+## imbalance score
+scores <- condiments::imbalance_score(
+  Object = df %>% select(UMAP_1, UMAP_2) %>% as.matrix(), 
+  conditions = df$condition,
+  k = 20, smooth = 40)
+df$scores <- scores$scaled_scores
+
+pdf("output/condiments/UMAP_imbalance_score_embryo_E7E775.pdf", width=5, height=5)
+
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
+  geom_point(size = .7) +
+  scale_color_viridis_c(option = "C") +
+  labs(col = "Scores") +
+  theme_classic()
+dev.off()
+
+
+#  Trajectory Inference and Differential Topology
+set.seed(42)
+
+## PLOT with Separate trajectories
+embryo <- slingshot(embryo, reducedDim = 'UMAP',
+                 clusterLabels = colData(embryo)$cluster.annot,
+                 start.clus = 'Epiblast_1', approx_points = 100)
+
+### fine tune nb of trajectories
+#### end.clusV1
+embryo <- slingshot(embryo, reducedDim = 'UMAP',
+                 clusterLabels = colData(embryo)$cluster.annot,
+                 start.clus = 'Epiblast_1',
+                 end.clus = c("Blood_Progenitor_2", "ExE_Ectoderm_2", "Endoderm", "Notocord", "Paraxial_Mesoderm", "Pharyngeal_Mesoderm", "Mesenchyme" ),
+                 approx_points = 100)
+###
+set.seed(42)
+topologyTest(SlingshotDataSet(embryo), embryo$condition) # KS_mean / 0.01 / 0.007581268 / 0.7581611
+
+
+sdss <- slingshot_conditions(SlingshotDataSet(embryo), embryo$condition)
+curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
+                    .id = "condition")
+
+# pdf("output/condiments/UMAP_trajectory_separated_embryo_E7E775.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_trajectory_separated_embryo_E7E775_end.clusV1.pdf", width=5, height=5)
+
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(condition, Lineage, Order),
+            aes(group = interaction(Lineage, condition)), size = 1.5) +
+  theme_classic()
+dev.off()
+
+##### NEED TO MODIFY THE CODE BELOW TO ANNOTATE THE DIFFERENT TRAJECTORIES
+pdf("output/condiments/UMAP_trajectory_separated_trajAnnotated_embryo.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_trajectory_separated_trajAnnotated_embryo_V2clust.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(condition, Lineage, Order),
+            aes(group = interaction(Lineage, condition)), size = 1.5) +
+  annotate("text", x = -10, y = 6, label = "Lineage1", size = 5) +
+  annotate("text", x = -7, y = -2.7, label = "Lineage2", size = 5) +
+  theme(legend.position = c(.15, .35),
+        legend.background = element_blank()) +
+  NULL
+dev.off()
+####### 
+
+
+
+
+
+
+## PLOT with common trajectories
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(embryo, "UMAP")),
+  slingPseudotime(embryo) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(embryo) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+         pst = if_else(Lineage1 > Lineage2, Lineage1_pst, Lineage2_pst),
+        # pst = max(pst) - pst)
+)
+curves <- slingCurves(embryo, as.df = TRUE)
+
+pdf("output/condiments/UMAP_trajectory_common_embryo_E7E775.pdf", width=5, height=5)
 
 ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
   geom_point(size = .7, aes(col = pst)) +
@@ -10899,6 +11501,9 @@ pdf("output/seurat/UMAP_embryo_E7E775_time.pdf", width=6, height=6)
 DimPlot(embryo.combined.E7E775.sct, reduction = "umap", group.by = "time", label=TRUE, pt.size = 0.5, shuffle = TRUE, label.size = 6, cols = c('E7' = '#78C850', 'E775' = '#FDB813') )
 dev.off()
 
+pdf("output/seurat/UMAP_embryo_E7E775_timeSplit.pdf", width=15, height=6)
+DimPlot(embryo.combined.E7E775.sct, reduction = "umap", split.by = "time", label=TRUE, pt.size = 0.5, shuffle = TRUE, label.size = 2.5 )
+dev.off()
 
 
 # cell type assignment
@@ -11025,6 +11630,10 @@ FeaturePlot(embryo.combined.E7E775.sct, features = ExE_Endoderm, max.cutoff = 3,
 dev.off()
 pdf("output/seurat/FeaturePlot_SCT_embryo_E7E775-Pharyngeal_Mesoderm.pdf", width=10, height=10)
 FeaturePlot(embryo.combined.E7E775.sct, features = Pharyngeal_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_embryo_E7E775-Primitive_Streak_Cardiac_Mesoderm.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.E7E775.sct, features = c("Eomes", "Fgf8", "Nodal","Hand1"), max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
 
 
@@ -11654,7 +12263,10 @@ pdf("output/seurat/FeaturePlot_SCT_embryo_E7E775_HAND1.pdf", width=10, height=5)
 FeaturePlot(embryo.combined.E7E775.sct, features = c("Hand1"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
-
+## Yap1
+pdf("output/seurat/FeaturePlot_SCT_embryo_E7E775_Yap1.pdf", width=10, height=5)
+FeaturePlot(embryo.combined.E7E775.sct, features = c("Yap1"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
 
 
 
@@ -11879,18 +12491,11 @@ write.table(Gut, file = "output/seurat/Gut-cYAPKO_response_E7E775_allGenes.txt",
 
 ##--> No blood_prog_3 because no cells in WT
 
-XXXXXXXXXXXX BELOW TO MOD XXXXXXXXXXXXXXXXX
-
 #### import all clsuter DEGs output :
-cluster_types <- c("Epiblast_PrimStreak", "ExE_Ectoderm_1", "Nascent_Mesoderm", 
-                   "Somitic_Mesoderm", "Caudal_Mesoderm", "Paraxial_Mesoderm", 
-                   "Pharyngeal_Mesoderm", "Haematodenothelial_progenitors", 
-                   "Mesenchyme", "Blood_Progenitor_1", "Mixed_Mesoderm", 
-                   "Blood_Progenitor_2", "Surface_Ectoderm", "Gut", "Unknown_1", 
-                   "Notocord", "Unknown_2", "Primordial_Germ_Cells")
+cluster_types <- c("Epiblast_1", "Epiblast_2", "Paraxial_Mesoderm", "Nascent_Mesoderm", "Pharyngeal_Mesoderm", "Mesenchyme", "Mixed_Mesoderm", "Blood_Progenitor_1", "ExE_Ectoderm_1", "Somitic_Mesoderm", "Caudal_Mesoderm", "Haematodenothelial_progenitors", "Blood_Progenitor_2", "Surface_Ectoderm", "Gut", "Unknown_1", "Unknown_2", "Unknown_3", "Notocord", "Primordial_Germ_Cells", "Endoderm", "ExE_Ectoderm_2", "ExE_Endoderm")
 # Loop over each cluster type to read data and assign to a variable
 for (cluster in cluster_types) {
-  file_path <- paste0("output/seurat/", cluster, "-cYAPKO_response_V2clust_allGenes.txt")
+  file_path <- paste0("output/seurat/", cluster, "-cYAPKO_response_E7E775_allGenes.txt")
   data <- read.delim(file_path, header = TRUE, row.names = 1)
   assign(cluster, data)
 }
@@ -11914,7 +12519,7 @@ fgsea_sets <- list(
 
 
 ## Rank genes based on FC
-genes <- Blood_Progenitor_1 %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+genes <- Haematodenothelial_progenitors %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
   rownames_to_column(var = "gene") %>%
   arrange(desc(avg_log2FC)) %>% 
   dplyr::select(gene, avg_log2FC)
@@ -11935,28 +12540,19 @@ fgseaResTidy %>%
 
 
 
-
-
 ## plot GSEA
-pdf("output/Pathway/GSEA_V2clust_ManualGeneLists_Hippo-Primordial_Germ_Cells.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_E7E775_ManualGeneLists_Vitamin_A-Haematodenothelial_progenitors.pdf", width=5, height=3)
 
-plotEnrichment(fgsea_sets[["Hippo"]],
-               ranks) + labs(title="Hippo-Primordial_Germ_Cells") +
+plotEnrichment(fgsea_sets[["Vitamin_A"]],
+               ranks) + labs(title="Vitamin_A-Haematodenothelial_progenitors") +
                theme_bw()
 dev.off()
 
 
 
-
-
 # Save output table for all pathway and cluster
 ## Define the list of cluster types
-cluster_types <- c("Epiblast_PrimStreak", "ExE_Ectoderm_1", "Nascent_Mesoderm", 
-                   "Somitic_Mesoderm", "Caudal_Mesoderm", "Paraxial_Mesoderm", 
-                   "Pharyngeal_Mesoderm", "Haematodenothelial_progenitors", 
-                   "Mesenchyme", "Blood_Progenitor_1", "Mixed_Mesoderm", 
-                   "Blood_Progenitor_2", "Surface_Ectoderm", "Gut", "Unknown_1", 
-                   "Notocord", "Unknown_2", "Primordial_Germ_Cells")
+cluster_types <- c("Epiblast_1", "Epiblast_2", "Paraxial_Mesoderm", "Nascent_Mesoderm", "Pharyngeal_Mesoderm", "Mesenchyme", "Mixed_Mesoderm", "Blood_Progenitor_1", "ExE_Ectoderm_1", "Somitic_Mesoderm", "Caudal_Mesoderm", "Haematodenothelial_progenitors", "Blood_Progenitor_2", "Surface_Ectoderm", "Gut", "Unknown_1", "Unknown_2", "Unknown_3", "Notocord", "Primordial_Germ_Cells", "Endoderm", "ExE_Ectoderm_2", "ExE_Endoderm")
 
 ## Initialize an empty list to store the results for each cluster type
 all_results <- list()
@@ -11991,14 +12587,14 @@ for (cluster in cluster_types) {
 final_results <- bind_rows(all_results, .id = "cluster")
 
 
-write.table(final_results, file = c("output/Pathway/gsea_output_V2clust_ManualGeneLists.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(final_results, file = c("output/Pathway/gsea_output_E7E775_ManualGeneLists.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 
 
 # Heatmap all GSEA
 
 
-pdf("output/Pathway/heatmap_gsea_padj.pdf", width=5, height=5)
+pdf("output/Pathway/heatmap_E7E775_gsea_padj.pdf", width=5, height=5)
 ggplot(final_results, aes(x=cluster, y=pathway, fill=ES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -12023,9 +12619,9 @@ dev.off()
 
 
 
-pdf("output/Pathway/heatmap_gsea_pval_greyTile.pdf", width=5, height=5)
+pdf("output/Pathway/heatmap_E7E775_gsea_pval_greyTile.pdf", width=5, height=5)
 ggplot(final_results, aes(x=cluster, y=pathway)) + 
-  geom_tile(aes(fill = ifelse(pval <= 0.05, ES, NA)), color = "black") +  # Conditional fill based on significance
+  geom_tile(aes(fill = ifelse(pval <= 0.05, NES, NA)), color = "black") +  # Conditional fill based on significance
   theme_bw() +  # Use black-white theme for cleaner look
   theme(
     axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
@@ -12039,7 +12635,7 @@ ggplot(final_results, aes(x=cluster, y=pathway)) +
     axis.line = element_blank(),
     legend.position = "bottom"
   ) +
-  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Enrichment\nScore", na.value="grey") +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Normalized Enrichment\nScore", na.value="grey") +
   # geom_text(aes(label=sprintf("%.2f", ES)), 
   #           color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change between pvalue, qvalue,p.adjust
   #           size=2) +
@@ -12049,8 +12645,290 @@ dev.off()
 
 
 
+# SCPA
 
-# SCPA and GSEA plot
+
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") 
+library("SCPA")
+library("circlize")
+library("magrittr")
+library("msigdb")
+library("msigdbr")
+library("ComplexHeatmap")
+library("ggrepel")
+library("ggpubr")
+
+DefaultAssay(embryo.combined.E7E775.sct) <- "RNA" # Recommended 
+
+
+
+# Import manually curated gene list as a list
+#### Need to folllow this format
+pathways <- msigdbr("Mus musculus", "C2") %>%
+format_pathways()
+names(pathways) <- sapply(pathways, function(x) x$Pathway[1]) # just to name the list, so easier to visualise
+pathways$REACTOME_SIGNALING_BY_RETINOIC_ACID$Genes
+### Convert table to list of genes
+Hippo = read_table(file = c("output/Pathway/Manual_geneList_hippo.txt"))
+Nodal_TGF = read_table(file = c("output/Pathway/Manual_geneList_Nodal_TGF.txt"))
+WNT = read_table(file = c("output/Pathway/Manual_geneList_WNT.txt"))
+Vitamin_A = read_table(file = c("output/Pathway/Manual_geneList_Vitamin_A.txt"))
+
+pathways <- list(
+  Hippo = read_table(file = "output/Pathway/Manual_geneList_hippo.txt"),
+  Nodal_TGF = read_table(file = "output/Pathway/Manual_geneList_Nodal_TGF.txt"),
+  WNT = read_table(file = "output/Pathway/Manual_geneList_WNT.txt"),
+  Vitamin_A = read_table(file = "output/Pathway/Manual_geneList_Vitamin_A.txt")
+)
+
+pathways$Hippo$Genes
+
+
+# Compare pathway activity between condition within  
+cell_types <- unique(embryo.combined.E7E775.sct$cluster.annot)
+embryo.combined.E7E775.sct_split <- SplitObject(embryo.combined.E7E775.sct, split.by = "condition")
+
+# SCPA comparison
+## keep all columns
+scpa_out_all <- list()
+for (i in cell_types) {
+  
+  WT <- seurat_extract(embryo.combined.E7E775.sct_split$WT, 
+                            meta1 = "cluster.annot", value_meta1 = i)
+  
+  cYAPKO <- seurat_extract(embryo.combined.E7E775.sct_split$cYAPKO, 
+                          meta1 = "cluster.annot", value_meta1 = i)
+  
+  print(paste("comparing", i))
+  scpa_out_all[[i]] <- compare_pathways(list(WT, cYAPKO), pathways, parallel = TRUE, cores = 8) %>%
+    set_colnames(c("Pathway", paste(i, "qval", sep = "_")))
+# For faster analysis with parallel processing, use 'parallel = TRUE' and 'cores = x' arguments
+}
+## keep only PAthway and qval column (Best for heatmap qval representation)
+scpa_out <- list()
+for (i in cell_types) {
+  
+  WT <- seurat_extract(embryo.combined.E7E775.sct_split$WT, 
+                            meta1 = "cluster.annot", value_meta1 = i)
+  
+  cYAPKO <- seurat_extract(embryo.combined.E7E775.sct_split$cYAPKO, 
+                          meta1 = "cluster.annot", value_meta1 = i)
+  
+  print(paste("comparing", i))
+  scpa_out[[i]] <- compare_pathways(list(WT, cYAPKO), pathways, parallel = TRUE, cores = 8) %>%
+    select(Pathway, qval) %>%
+    set_colnames(c("Pathway", paste(i, "qval", sep = "_")))
+# For faster analysis with parallel processing, use 'parallel = TRUE' and 'cores = x' arguments
+}
+
+
+saveRDS(scpa_out_all, file = "output/Pathway/scpa_out_eachCellTypes_ManualGeneLists_E7E775.rds")
+
+console_output <- capture.output(print(scpa_out_all))
+writeLines(console_output, "output/Pathway/scpa_out_console_ManualGeneLists_E7E775.txt")
+
+## Save output as R object
+# saveRDS(scpa_out, file = "output/Pathway/scpa_out_eachCellTypes_E7E775.rds")
+# scpa_out_all <- readRDS("output/Pathway/scpa_out_all_eachCellTypes_E7E775.rds")
+
+
+# plot output
+
+# Code to save output for each cell type comparison
+clusters = c(
+"Epiblast_1", "Epiblast_2", "Paraxial_Mesoderm", "Nascent_Mesoderm", "Pharyngeal_Mesoderm", "Mesenchyme", "Mixed_Mesoderm", "Blood_Progenitor_1", "ExE_Ectoderm_1", "Somitic_Mesoderm", "Caudal_Mesoderm", "Haematodenothelial_progenitors", "Blood_Progenitor_2", "Surface_Ectoderm", "Gut", "Unknown_1", "Unknown_2", "Unknown_3", "Notocord", "Primordial_Germ_Cells", "Endoderm", "ExE_Ectoderm_2", "ExE_Endoderm"
+) # Blood_Prog_3 removed
+
+### Loop through each value
+for (cluster in clusters) {
+  #### Extract data for WT and cYAPKO based on current value
+  WT <- seurat_extract(embryo.combined.E7E775.sct,
+                       meta1 = "condition", value_meta1 = "WT",
+                       meta2 = "cluster.annot", value_meta2 = cluster)
+
+  cYAPKO <- seurat_extract(embryo.combined.E7E775.sct,
+                           meta1 = "condition", value_meta1 = "cYAPKO",
+                           meta2 = "cluster.annot", value_meta2 = cluster)
+
+  ##### Compare pathways
+  WT_cYAPKO <- compare_pathways(samples = list(WT, cYAPKO),
+                                pathways = pathways,
+                                parallel = TRUE, cores = 8)
+
+  ##### Write to file using the current value in the filename
+  output_filename <- paste0("output/Pathway/SCPA_E7E775_ManualGeneLists_", cluster, ".txt")
+  write.table(WT_cYAPKO, file = output_filename, sep = "\t", quote = FALSE, row.names = FALSE)
+}
+
+
+
+# BALOW CLEAN CODE; dotplot>enrichplot>heatmap>violinplot
+# DOT PLOT pepresetnation
+## load all the comparison for each cell type (FC qval information)
+clusters = c(
+"Epiblast_1", "Epiblast_2", "Paraxial_Mesoderm", "Nascent_Mesoderm", "Pharyngeal_Mesoderm", "Mesenchyme", "Mixed_Mesoderm", "Blood_Progenitor_1", "ExE_Ectoderm_1", "Somitic_Mesoderm", "Caudal_Mesoderm", "Haematodenothelial_progenitors", "Blood_Progenitor_2", "Surface_Ectoderm", "Gut", "Unknown_1", "Unknown_2", "Unknown_3", "Notocord", "Primordial_Germ_Cells", "Endoderm", "ExE_Ectoderm_2", "ExE_Endoderm"
+) # Blood_Prog_3 removed
+
+## import with a function
+### A function to read and add the cluster column
+read_and_add_cluster <- function(cluster) {
+  path <- paste0("output/Pathway/SCPA_E7E775_ManualGeneLists_", cluster, ".txt")
+  df <- read.delim(path, header = TRUE) %>%
+    add_column(cluster = cluster)
+  return(df)
+}
+### Use lapply to apply the function on each cluster and bind all data frames together
+all_data <- bind_rows(lapply(clusters, read_and_add_cluster))
+# --> import the gene pathways (used table from Conchi `Pathwyas of interest*.xlsx`)
+pathways = c("Hippo", "Nodal_TGF", "WNT", "Vitamin_A")
+all_data_pathways = as_tibble(all_data) %>% 
+  filter(Pathway %in% pathways)
+
+# tidy the df
+all_data_pathways_tidy <- all_data_pathways %>%
+  filter(qval >= 1.4) 
+
+
+
+# REFINE COLOR
+custom_color <- function(fc_value){
+  ifelse(fc_value >= 5, "strong_blue", 
+         ifelse(fc_value > 2, "light_blue",
+                ifelse(fc_value <= -5, "strong_red", 
+                       ifelse(fc_value < -2, "light_red", "grey"))))
+}
+
+# Add a column for this custom color
+all_data_pathways_tidy <- all_data_pathways_tidy %>%
+  mutate(custom_col = sapply(FC, custom_color))
+
+pdf("output/Pathway/dotplot_E7E775_ManualGeneLists_FCtresh.pdf", width=10, height=4)
+ggplot(all_data_pathways_tidy, aes(x = cluster, y = Pathway)) + 
+  geom_point(aes(size = qval, color = custom_col), pch=16, alpha=0.7) +   
+  scale_size_continuous(range = c(1, 8)) +
+  scale_color_manual(values = c("strong_blue" = "dodgerblue4",
+                                "light_blue" = "lightblue2",
+                                "grey" = "grey",
+                                "light_red" = "indianred1",
+                                "strong_red" = "red3")) +
+  theme_bw() +
+  labs(size = "q-value", color = "Fold Change") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+pdf("output/Pathway/dotplot_E7E775_ManualGeneLists_grey.pdf", width=10, height=4)
+ggplot(all_data_pathways_tidy, aes(x = cluster, y = Pathway)) + 
+  geom_point(aes(size = qval, fill = "black"), pch=16, alpha=0.7) +   
+  scale_size_continuous(range = c(1, 8)) +
+  theme_bw() +
+  labs(size = "q-value") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+# heatmap XXX to do if needed XXX
+
+Hippo = read_table(file = c("output/Pathway/Manual_geneList_hippo.txt"))
+Nodal_TGF = read_table(file = c("output/Pathway/Manual_geneList_Nodal_TGF.txt"))
+WNT = read_table(file = c("output/Pathway/Manual_geneList_WNT.txt"))
+Vitamin_A = read_table(file = c("output/Pathway/Manual_geneList_Vitamin_A.txt"))
+
+pathways <- list(
+  Hippo = read_table(file = "output/Pathway/Manual_geneList_hippo.txt"),
+  Nodal_TGF = read_table(file = "output/Pathway/Manual_geneList_Nodal_TGF.txt"),
+  WNT = read_table(file = "output/Pathway/Manual_geneList_WNT.txt"),
+  Vitamin_A = read_table(file = "output/Pathway/Manual_geneList_Vitamin_A.txt")
+)
+
+pathways$Hippo$Genes
+
+
+
+genes_of_interest <- pathways$Hippo$Genes
+genes_of_interest <- genes_of_interest[genes_of_interest %in% rownames(embryo.combined.sct@assays$RNA@data)]
+### extract WT and cYAPKO gene expression values from RNA assay
+WT_expression <- embryo.combined.sct@assays$RNA@data[genes_of_interest, colnames(embryo.combined.sct)[embryo.combined.sct$condition == "WT" & embryo.combined.sct$cluster.annot == "Unknown_1"]]
+cYAPKO_expression <- embryo.combined.sct@assays$RNA@data[genes_of_interest, colnames(embryo.combined.sct)[embryo.combined.sct$condition == "cYAPKO" & embryo.combined.sct$cluster.annot == "Unknown_1"]]
+### mean expression values for each gene
+WT_mean <- rowMeans(WT_expression)
+cYAPKO_mean <- rowMeans(cYAPKO_expression)
+data_for_plot <- data.frame(
+  Gene = genes_of_interest,
+  WT = WT_mean,
+  cYAPKO = cYAPKO_mean
+) %>% 
+pivot_longer(cols = c(WT, cYAPKO), names_to = "Condition", values_to = "Expression")
+## ORder from low to high express
+### Reordering the genes based on their mean expression in WT in ascending order
+ordered_genes <- names(sort(WT_mean))
+### Extracting unique gene names from the ordered list
+unique_ordered_genes <- unique(ordered_genes)
+### Filter out rows from data_for_plot that don't have their genes in unique_ordered_genes
+data_for_plot <- data_for_plot[data_for_plot$Gene %in% unique_ordered_genes, ]
+### Set the factor levels for 'Gene' according to the unique ordered list
+data_for_plot$Gene <- factor(data_for_plot$Gene, levels = unique_ordered_genes)
+
+
+# if few genes:
+pdf("output/Pathway/heatmap_embryo_RNAexpression_E7E775_ManualGeneLists_Nodal_TGF_Blood_Progenitor_1.pdf", width=6, height=2)
+
+
+library("viridis")
+ggplot(data_for_plot, aes(x=Gene, y=Condition, fill=Expression)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 8, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_viridis(direction = 1, option = "viridis", name="Expression") +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+# if many genesL
+pdf("output/Pathway/heatmap_embryo_RNAexpression_E7E775_ManualGeneLists_WNT_Blood_Progenitor_1.pdf", width=3, height=2)
+
+ggplot(data_for_plot, aes(x=Gene, y=Condition, fill=Expression)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 8, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_viridis(direction = 1, option = "viridis", name="Expression") 
+dev.off()
+
+
+
+# SCPA and GSEA 
 gsea_output = final_results %>% 
   rename("pathway" = "Pathway") %>%
   dplyr::select(Pathway, pval, padj, ES, cluster)
@@ -12065,7 +12943,7 @@ filtered_data <- scpa_gsea
 ## Assign color based on your criteria
 filtered_data$is_significant <- filtered_data$padj < 0.05
 
-pdf("output/Pathway/dotplot_scpa_gsea_V2clust.pdf", width=10, height=4)
+pdf("output/Pathway/dotplot_scpa_gsea_E7E775.pdf", width=10, height=4)
 
 ggplot(filtered_data, aes(x=cluster, y=Pathway, size=qval)) +
   geom_point(aes(color=ifelse(is_significant, ES, NA), 
@@ -12080,11 +12958,9 @@ ggplot(filtered_data, aes(x=cluster, y=Pathway, size=qval)) +
 dev.off()
 
 
-
 ```
 
-
-
+--> Pseudotime done in a separate section 
 
 
 

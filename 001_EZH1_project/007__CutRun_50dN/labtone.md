@@ -7,6 +7,8 @@
     - WT_ FA???: EZH1, H3K27me1
     - WT_ FA???: EZH1, H3K27me1
 
+**!!! KOEF1aEZH1 do NOT overexpress EZH1 !!! So should be considered as KO !!!**
+
 
 **Objectives:**
 - Check whether Q731E indeed increase highly H3K27me3
@@ -66,6 +68,13 @@ sbatch scripts/fastp_4.sh # 9019617 ok
 ```
 
 # FastQC
+
+
+**raw**
+```bash
+sbatch scripts/fastqc_raw.sh # 12697124 xxx
+```
+
 
 **Fastp-cleaned:**
 ```bash
