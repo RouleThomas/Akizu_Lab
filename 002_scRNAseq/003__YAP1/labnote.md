@@ -7635,7 +7635,7 @@ dev.off()
 --> Not clear how to handle WT and cYAPKO as with the same resolution the partition is different; thus the trajectory will not be study on the same group of cells....
 
 
-## monocle3 with RNA assay
+## monocle3 with RNA assay - E7.75
 Here is a 3rd version using RNA assay; `conda activate monocle3_V1`
 
 
@@ -7797,6 +7797,168 @@ dev.off()
 
 --> cds_graph_test_results output check morans_I column which is between 0 and 1 and 1 = positive correlation with pseudotime (help [here](https://cole-trapnell-lab.github.io/monocle3/docs/differential/) )
 ----> The one with the highest qvalue does not seems to be the most interested; the high morans_I look more responsive to the pseudotime
+
+
+
+## monocle3 with RNA assay - integration E7 and E7.75
+Here is a 3rd version using RNA assay; `conda activate monocle3_V1`
+
+
+
+```R
+# Installation
+library("igraph") # important to load it first so that v1.4.3 and not v1.5 is used (v1.5 is loaded via Seurat per default!)
+library("monocle3")
+library("Seurat")
+library("SeuratWrappers")
+
+# Data import EMBRYO
+embryo.combined.E7E775.sct <- readRDS(file = "output/seurat/embryo.combined.E7E775.sct.rds")
+DefaultAssay(embryo.combined.E7E775.sct) <- "RNA" # According to ucDAvis tutorial I think should be in integrative mode
+
+# convert data to seurat object to cell_data_set
+cds <- as.cell_data_set(embryo.combined.E7E775.sct)
+cds <- cluster_cells(cds, resolution=1e-3) # also tries  1e-5 show one big cluster with all cells
+
+
+pdf("output/monocle3/plot_cells_RNA_cluster_embryo_E7E775.pdf", width=5, height=5)
+plot_cells(cds, color_cells_by = "cluster", show_trajectory_graph = FALSE)
+dev.off()
+
+pdf("output/monocle3/plot_cells_RNA_partition_embryo_E7E775.pdf", width=5, height=5)
+plot_cells(cds, color_cells_by = "partition", show_trajectory_graph = FALSE)
+dev.off()
+
+
+# subsetting partition
+integrated.sub <- subset(as.Seurat(cds, assay = NULL), monocle3_partitions == 1) # change partition/trajectory
+cds <- as.cell_data_set(integrated.sub)
+
+# Trajectory analysis
+## RAW
+cds <- learn_graph(cds, use_partition = TRUE, verbose = TRUE)
+
+pdf("output/monocle3/plot_cells_RNA_trajectory_partition1_embryo_E7E775.pdf", width=5, height=5)
+plot_cells(cds,
+           color_cells_by = "cluster",
+           label_groups_by_cluster=FALSE,
+           label_leaves=FALSE,
+           label_branch_points=FALSE)
+dev.off()
+
+## COLORED BY PSEUDOTIME
+
+cds <- order_cells(cds, root_cells = colnames(cds[,clusters(cds) == 1])) # ROOT cluster
+pdf("output/monocle3/plot_cells_RNA_trajectory_partition1_Root1_embryo_E7E775.pdf", width=5, height=5)
+plot_cells(cds,
+           color_cells_by = "pseudotime",
+           group_cells_by = "cluster",
+           label_cell_groups = FALSE,
+           label_groups_by_cluster=FALSE,
+           label_leaves=FALSE,
+           label_branch_points=FALSE,
+           label_roots = FALSE,
+           trajectory_graph_color = "grey60")
+dev.off()
+
+
+X
+#################### BELOW NOT MODIFIED ####################
+X
+
+
+## PLOT as seurat object
+integrated.sub <- as.Seurat(cds, assay = NULL)
+pdf("output/monocle3/FeaturePlot_RNA_trajectory_partition1_Root1_embryo_V2clust.pdf", width=5, height=5)
+FeaturePlot(integrated.sub, "monocle3_pseudotime")
+dev.off()
+
+
+# Pseudotime differential genes (1 hour!!!)
+cds_graph_test_results <- graph_test(cds,
+                                     neighbor_graph = "principal_graph",
+                                     cores = 8)
+
+
+## Save the output table
+# write.table(cds_graph_test_results, file = "output/monocle3/cds_graph_test_results_RNA_V2clust.txt", sep="\t", row.names=TRUE, quote=FALSE)
+# cds_graph_test_results <- read.table("output/monocle3/cds_graph_test_results_RNA.txt", header = TRUE, sep = "\t", row.names = 1, quote = "")
+
+# Check expression of some genes
+rowData(cds)$gene_short_name <- row.names(rowData(cds))
+head(cds_graph_test_results, error=FALSE, message=FALSE, warning=FALSE)
+deg_ids <- rownames(subset(cds_graph_test_results[order(cds_graph_test_results$morans_I, decreasing = TRUE),], q_value < 0.05))
+
+pdf("output/monocle3/plot_cells_RNA_trajectory_partition1_Root1_TopDEGsGenes_embryo.pdf", width=5, height=5)
+plot_cells(cds,
+           genes=head(deg_ids),
+           show_trajectory_graph = FALSE,
+           label_cell_groups = FALSE,
+           label_leaves = FALSE)
+dev.off()
+
+pdf("output/monocle3/FeaturePlot_RNA_trajectory_partition1_Root1_TopDEGsGenes_embryo.pdf", width=10, height=12)
+FeaturePlot(integrated.sub, features = head(deg_ids), max.cutoff = 10, cols = c("grey", "red"))
+dev.off()  
+
+
+## Plot gene as a function of pseudotime
+#### Import DEGs
+cds_graph_test_results <- read.table("output/monocle3/cds_graph_test_results_RNA.txt", header = TRUE, sep = "\t", row.names = 1, quote = "")
+rowData(cds)$gene_short_name <- row.names(rowData(cds))
+head(cds_graph_test_results, error=FALSE, message=FALSE, warning=FALSE)
+deg_ids <- rownames(subset(cds_graph_test_results[order(cds_graph_test_results$morans_I, decreasing = TRUE),], q_value < 0.05))
+### Identify top 10 morans_I genes
+ordered_results <- cds_graph_test_results[order(cds_graph_test_results$morans_I, decreasing = TRUE), ]
+top_morans_I <- rownames(ordered_results)[1:10]
+
+partition_1_cds <- as.cell_data_set(integrated.sub, assay = "RNA")
+partition_1_cds <- estimate_size_factors(partition_1_cds)
+
+
+partition_1_cds <- cds[rowData(cds)$gene_short_name %in% top_morans_I,
+                       colData(cds)$monocle3_partitions %in% c("1")]
+partition_1_cds <- order_cells(partition_1_cds)
+
+partition_1_cds <- partition_1_cds[,Matrix::colSums(exprs(partition_1_cds)) != 0]
+partition_1_cds <- estimate_size_factors(partition_1_cds)
+
+
+pdf("output/monocle3/plot_genes_in_pseudotime_trajectory_partition1_top_morans_I_embryo.pdf", width=10, height=12)
+plot_genes_in_pseudotime(partition_1_cds,
+                         color_cells_by="cluster.annot",
+                         min_expr=0.5)
+dev.off()
+
+### Identify top 10 qvalue genes
+ordered_results <- cds_graph_test_results[order(cds_graph_test_results$q_value, decreasing = FALSE), ]
+top_qvalue <- rownames(ordered_results)[1:10]
+
+partition_1_cds <- as.cell_data_set(integrated.sub, assay = "RNA")
+partition_1_cds <- estimate_size_factors(partition_1_cds)
+
+
+partition_1_cds <- cds[rowData(cds)$gene_short_name %in% top_qvalue,
+                       colData(cds)$monocle3_partitions %in% c("1")]
+partition_1_cds <- order_cells(partition_1_cds)
+
+partition_1_cds <- partition_1_cds[,Matrix::colSums(exprs(partition_1_cds)) != 0]
+partition_1_cds <- estimate_size_factors(partition_1_cds)
+
+
+pdf("output/monocle3/plot_genes_in_pseudotime_trajectory_partition1_top_qvalue_embryo.pdf", width=10, height=12)
+plot_genes_in_pseudotime(partition_1_cds,
+                         color_cells_by="cluster.annot",
+                         min_expr=0.5)
+dev.off()
+
+
+# GEnerate heatmap
+
+
+
+```
+
 
 
 
@@ -12979,7 +13141,7 @@ dev.off()
 
 
 
-# Shiny app second time points
+# Shiny app second time points and data integration
 
 Created with [ShinyCell](https://github.com/SGDDNB/ShinyCell); and follow [shinyapps](https://www.shinyapps.io/) to put it online 
 
@@ -13045,7 +13207,7 @@ rsconnect::deployApp('shinyApp_embryo_E7_19dim_V2')
 
 
 
-# Data import EMBRYO E7 19 dim
+# Data import humangastruloid24hr
 humangastruloid24hr.combined.sct <- readRDS(file = "output/seurat/humangastruloid24hr.combined.sct_19dim.rds")
 DefaultAssay(humangastruloid24hr.combined.sct) <- "RNA" # 
 
@@ -13059,11 +13221,30 @@ makeShinyApp(humangastruloid24hr.combined.sct, scConf, gene.mapping = TRUE,
 rsconnect::deployApp('shinyApp_humangastruloid24hr_25dim_V1')
 
 
+
+
+# Data import EMBRYO E7 E775 19dim data integration
+embryo.combined.E7E775.sct <- readRDS(file = "output/seurat/embryo.combined.E7E775.sct.rds")
+DefaultAssay(embryo.combined.E7E775.sct) <- "RNA" # 
+
+# Generate Shiny app V1
+scConf = createConfig(embryo.combined.E7E775.sct)
+
+makeShinyApp(embryo.combined.E7E775.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "Embryo_E7E775_19dim_V1",
+             shiny.dir = "shinyApp_Embryo_E7E775_19dim_V1/") 
+
+rsconnect::deployApp('shinyApp_Embryo_E7E775_19dim_V1')
+
+
+
 ```
 
 --> Shiny apps:
 - https://roulethomas.shinyapps.io/shinyApp_embryo_E7_50dim_V1/ 
 - https://roulethomas.shinyapps.io/shinyApp_embryo_E7_19dim_V1/ 
+- https://roulethomas.shinyapps.io/shinyapp_embryo_e7e775_19dim_v1/ 
+
 
 
 --> On 20231218 I shared to Conchi the first embryo E7 analysis with DEGs, UMAP marker genes, ppt (`YAP1_scRNAseq_embryo_E7_TR_V1.pptx`)
