@@ -179,3 +179,11 @@ Only `monocle3` and `Seurat_v_5`
 ### granulator
 
 R4.3.1 with `granulator` and `tidyverse`
+
+
+# cool random command
+
+
+*Copy all files within a folder, excluding a specific pattern/string*: `for file in *; do if [[ ! $file =~ \.fq\.gz$ ]]; then cp "$file" /path/to/destination/; fi; done`
+
+
