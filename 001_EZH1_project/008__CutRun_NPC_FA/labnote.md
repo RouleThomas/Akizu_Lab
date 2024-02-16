@@ -381,11 +381,7 @@ sbatch scripts/macs2_narrow_WT.sh # 12655475 ok
 
 
 
-XXXXXXXXXX below not mod
-
-
-
-
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX below not mod
 
 ```bash
 conda activate bowtie2 # for bedtools
@@ -411,5 +407,186 @@ Then keep only the significant peaks (re-run the script to test different qvalue
 - 50dN_KO_H3K27me3: 1.30103 (2.3 more true peaks)
 - 50dN_WTQ731E_H3K27me3: 1.30103 (2.3 more true peaks)
 
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+
+
+
+
+
+# Spike in factor
+
+Let's do the analysis for H3K27me3 only; compare WT vs KO vs KOEF1a. Test 2 spikein normalization method (histone and Ecoli)
+
+
+## Calculate histone content
+
+--> This histone content will be used to generate a scaling factor which will be used to histone-scaled our library size. The calcul/method to follow is from `003__CutRun/output/spikein/spikein_histone_H3K27me3_scaling_factor_fastp.txt`
+
+**Pipeline:**
+- Count the histone barcode on the clean reads
+- Calculate SF (group by sample (replicate) and AB and calculate the total nb of reads. Then proportion of reads = nb read in sample / total reads. SF = min(proportion) / sample proportion)
+
+
+## Count the histone barcode on the clean reads
+
+
+
+```bash
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp.sh # 12922764 xxx
+
+```
+
+--> It output the nb of reads found for each histone; then simply copy paste to the excell file `output/spikein/SpikeIn_QC_fastp_008.xlsx` in GoogleDrive
+
+- `50dNFA_KOEF1aEZH1_H3K27me3`: XXX
+- `NPC_KO_H3K27ac`: XXX
+- `NPC_KOEF1aEZH1_H3K27me3`: XXX
+- `NPC_KOEF1aEZH1_H3K4me3`: XXX
+- `NPC_WT_H3K27ac`: XXX
+- `NPC_WT_H3K4me3`: XXX
+
+
+XXXXXXXXXXXXXXXX BELOW NOT MOD:
+
+
+## histone spike in factor
+
+
+```R
+# package
+library("tidyverse")
+library("readxl")
+# import df
+spikein <- read_excel("output/spikein/SpikeIn_QC_fastp_007.xlsx") 
+
+# 50dN
+## H3K27me3
+spikein_50dN_H3K27me3 = spikein %>%
+    filter(tissue == "50dN",
+           Target == "H3K27me3") %>%
+    group_by(sample_ID, AB) %>%
+    summarise(aligned=sum(counts))
+# Total reads per IP
+spikein_50dN_H3K27me3_total = spikein_50dN_H3K27me3 %>%
+    ungroup() %>%
+    group_by(AB) %>%
+    mutate(total = sum(aligned)) %>%
+    ungroup() %>%
+    distinct(AB, .keep_all = TRUE) %>%
+    select(AB,total)
+# Read proportion
+spikein_50dN_H3K27me3_read_prop = spikein_50dN_H3K27me3 %>%
+    left_join(spikein_50dN_H3K27me3_total) %>%
+    mutate(read_prop = aligned / total)
+spikein_50dN_H3K27me3_read_prop_min = spikein_50dN_H3K27me3_read_prop %>%
+    group_by(AB) %>%
+    summarise(min_prop=min(read_prop))
+# Scaling factor
+spikein_50dN_H3K27me3_scaling_factor = spikein_50dN_H3K27me3_read_prop %>%
+    left_join(spikein_50dN_H3K27me3_read_prop_min) %>%
+    mutate(scaling_factor = read_prop/min_prop)
+write.table(spikein_50dN_H3K27me3_scaling_factor, file="output/spikein/spikein_histone_50dN_H3K27me3_scaling_factor_fastp.txt", sep="\t", quote=FALSE, row.names=FALSE)
+
+
+```
+
+--> KO has a high SF!! High proportion of histone reads; so means that we will decrease it's signal! Which is good
+
+
+
+
+### Quality control plot
+
+Then look at the xlsx file from [EpiCypher](https://www.epicypher.com/products/nucleosomes/snap-cutana-k-metstat-panel) to generate quality control plot. Use R cluster for vizualization (file is `spikein_QC.xlsx` in Google Drive), file in `output/spikein`.
+```R
+# package
+library("tidyverse")
+library("readxl")
+# import df adn tidy to remove AB used in sample_ID
+spikein <- read_excel("output/spikein/SpikeIn_QC_fastp_007.xlsx") %>%
+  separate(sample_ID, into = c("type", "condition", "tag"), sep = "_") %>%
+  mutate(sample_ID = paste(type, condition, sep = "_")) %>%
+  select(-type, -condition, -tag, -tissue)
+
+
+
+
+# PSC
+# data processing
+spikein_sum_Barcode_read <- spikein %>%
+	select(-Barcode) %>%
+  	group_by(sample_ID, Target, AB) %>% 
+	summarise(sum_read=sum(counts)) %>%
+	unique() 
+
+spikein_sum_Total_read <- spikein %>%
+	select(-Barcode, -Target) %>%
+  	group_by(sample_ID, AB) %>% 
+	summarise(total_read=sum(counts)) %>%
+	unique() 	
+
+spikein_all <- spikein_sum_Barcode_read %>%
+	left_join(spikein_sum_Total_read) %>%
+	mutate(target_norm = (sum_read/total_read)*100)
+
+## Histone scaling for H3K27me3
+spikein_all_scale = spikein_all %>%
+  group_by(sample_ID) %>%
+  # Find the target_norm value when Target is H3K27me3 and AB is H3K27me3
+  mutate(scaling_factor = ifelse(Target == "H3K27me3" & AB == "H3K27me3", target_norm, NA)) %>%
+  # Fill the scaling_factor column with the appropriate value within each group
+  fill(scaling_factor, .direction = "downup") %>%
+  # Scale the target_norm values
+  mutate(scaled_target_norm = target_norm / scaling_factor * 100) %>%
+  # Remove the scaling_factor column
+  select(-scaling_factor) %>%
+  # Ungroup the data
+  ungroup()
+# Plot
+pdf("output/spikein/QC_histone_spike_in_H3K27me3.pdf", width = 14, height = 4)
+spikein_all_scale %>%
+    filter(
+           AB %in% c("H3K27me3", "IGG")) %>%
+        ggplot(aes(x = Target, y = scaled_target_norm, fill = AB)) +
+        geom_col(position = "dodge") +
+        facet_wrap(~sample_ID, nrow=1) +
+        geom_hline(yintercept = 20, color = "red", linetype = "longdash") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+dev.off()
+
+
+## Histone scaling for H3K27me1
+spikein_all_scale = spikein_all %>%
+  group_by(sample_ID) %>%
+  # Find the target_norm value when Target is H3K27me1 and AB is H3K27me1
+  mutate(scaling_factor = ifelse(Target == "H3K27me1" & AB == "H3K27me1", target_norm, NA)) %>%
+  # Fill the scaling_factor column with the appropriate value within each group
+  fill(scaling_factor, .direction = "downup") %>%
+  # Scale the target_norm values
+  mutate(scaled_target_norm = target_norm / scaling_factor * 100) %>%
+  # Remove the scaling_factor column
+  select(-scaling_factor) %>%
+  # Ungroup the data
+  ungroup()
+# Plot
+pdf("output/spikein/QC_histone_spike_in_H3K27me1.pdf", width = 14, height = 4)
+spikein_all_scale %>%
+    filter(
+           AB %in% c("H3K27me1", "IGG")) %>%
+        ggplot(aes(x = Target, y = scaled_target_norm, fill = AB)) +
+        geom_col(position = "dodge") +
+        facet_wrap(~sample_ID, nrow=1) +
+        geom_hline(yintercept = 20, color = "red", linetype = "longdash") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+dev.off()
+
+
+```
+
+
+--> All good H3K27me3 IP H3K27me3 and H3K27me1 IP H3K27me1
 
 
