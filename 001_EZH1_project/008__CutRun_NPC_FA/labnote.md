@@ -433,21 +433,19 @@ Let's do the analysis for H3K27me3 only; compare WT vs KO vs KOEF1a. Test 2 spik
 
 
 ```bash
-sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp.sh # 12922764 xxx
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp.sh # 12922764 ok
 
 ```
 
 --> It output the nb of reads found for each histone; then simply copy paste to the excell file `output/spikein/SpikeIn_QC_fastp_008.xlsx` in GoogleDrive
 
-- `50dNFA_KOEF1aEZH1_H3K27me3`: XXX
-- `NPC_KO_H3K27ac`: XXX
-- `NPC_KOEF1aEZH1_H3K27me3`: XXX
-- `NPC_KOEF1aEZH1_H3K4me3`: XXX
-- `NPC_WT_H3K27ac`: XXX
-- `NPC_WT_H3K4me3`: XXX
+- `50dNFA_KOEF1aEZH1_H3K27me3`: enriched in H3K27me3, but much less nb of reads as compare to the NPC sample!
+- `NPC_KO_H3K27ac`: not in histone control..
+- `NPC_KOEF1aEZH1_H3K27me3`: enriched in H3K27me3
+- `NPC_KOEF1aEZH1_H3K4me3`: enriched in H3K4me3
+- `NPC_WT_H3K27ac`: not in histone control..
+- `NPC_WT_H3K4me3`: enriched in H3K4me3
 
-
-XXXXXXXXXXXXXXXX BELOW NOT MOD:
 
 
 ## histone spike in factor
@@ -458,17 +456,15 @@ XXXXXXXXXXXXXXXX BELOW NOT MOD:
 library("tidyverse")
 library("readxl")
 # import df
-spikein <- read_excel("output/spikein/SpikeIn_QC_fastp_007.xlsx") 
+spikein <- read_excel("output/spikein/SpikeIn_QC_fastp_008.xlsx") 
 
-# 50dN
 ## H3K27me3
-spikein_50dN_H3K27me3 = spikein %>%
-    filter(tissue == "50dN",
-           Target == "H3K27me3") %>%
+spikein_H3K27me3 = spikein %>%
+    filter(Target == "H3K27me3") %>%
     group_by(sample_ID, AB) %>%
     summarise(aligned=sum(counts))
 # Total reads per IP
-spikein_50dN_H3K27me3_total = spikein_50dN_H3K27me3 %>%
+spikein_H3K27me3_total = spikein_H3K27me3 %>%
     ungroup() %>%
     group_by(AB) %>%
     mutate(total = sum(aligned)) %>%
@@ -476,22 +472,51 @@ spikein_50dN_H3K27me3_total = spikein_50dN_H3K27me3 %>%
     distinct(AB, .keep_all = TRUE) %>%
     select(AB,total)
 # Read proportion
-spikein_50dN_H3K27me3_read_prop = spikein_50dN_H3K27me3 %>%
-    left_join(spikein_50dN_H3K27me3_total) %>%
+spikein_H3K27me3_read_prop = spikein_H3K27me3 %>%
+    left_join(spikein_H3K27me3_total) %>%
     mutate(read_prop = aligned / total)
-spikein_50dN_H3K27me3_read_prop_min = spikein_50dN_H3K27me3_read_prop %>%
+spikein_H3K27me3_read_prop_min = spikein_H3K27me3_read_prop %>%
     group_by(AB) %>%
     summarise(min_prop=min(read_prop))
 # Scaling factor
-spikein_50dN_H3K27me3_scaling_factor = spikein_50dN_H3K27me3_read_prop %>%
-    left_join(spikein_50dN_H3K27me3_read_prop_min) %>%
+spikein_H3K27me3_scaling_factor = spikein_H3K27me3_read_prop %>%
+    left_join(spikein_H3K27me3_read_prop_min) %>%
     mutate(scaling_factor = read_prop/min_prop)
-write.table(spikein_50dN_H3K27me3_scaling_factor, file="output/spikein/spikein_histone_50dN_H3K27me3_scaling_factor_fastp.txt", sep="\t", quote=FALSE, row.names=FALSE)
+write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_histone_H3K27me3_scaling_factor_fastp.txt", sep="\t", quote=FALSE, row.names=FALSE)
+
+
+## H3K4me3
+spikein_H3K4me3 = spikein %>%
+    filter(Target == "H3K4me3") %>%
+    group_by(sample_ID, AB) %>%
+    summarise(aligned=sum(counts))
+# Total reads per IP
+spikein_H3K4me3_total = spikein_H3K4me3 %>%
+    ungroup() %>%
+    group_by(AB) %>%
+    mutate(total = sum(aligned)) %>%
+    ungroup() %>%
+    distinct(AB, .keep_all = TRUE) %>%
+    select(AB,total)
+# Read proportion
+spikein_H3K4me3_read_prop = spikein_H3K4me3 %>%
+    left_join(spikein_H3K4me3_total) %>%
+    mutate(read_prop = aligned / total)
+spikein_H3K4me3_read_prop_min = spikein_H3K4me3_read_prop %>%
+    group_by(AB) %>%
+    summarise(min_prop=min(read_prop))
+# Scaling factor
+spikein_H3K4me3_scaling_factor = spikein_H3K4me3_read_prop %>%
+    left_join(spikein_H3K4me3_read_prop_min) %>%
+    mutate(scaling_factor = read_prop/min_prop)
+write.table(spikein_H3K4me3_scaling_factor, file="output/spikein/spikein_histone_H3K4me3_scaling_factor_fastp.txt", sep="\t", quote=FALSE, row.names=FALSE)
 
 
 ```
 
---> KO has a high SF!! High proportion of histone reads; so means that we will decrease it's signal! Which is good
+--> The H3K27me3 may not be taken into account as H3K27me3 FAIL for 50dN sample
+
+--> The H3K4me3 SF looks good!
 
 
 
@@ -504,7 +529,7 @@ Then look at the xlsx file from [EpiCypher](https://www.epicypher.com/products/n
 library("tidyverse")
 library("readxl")
 # import df adn tidy to remove AB used in sample_ID
-spikein <- read_excel("output/spikein/SpikeIn_QC_fastp_007.xlsx") %>%
+spikein <- read_excel("output/spikein/SpikeIn_QC_fastp_008.xlsx") %>%
   separate(sample_ID, into = c("type", "condition", "tag"), sep = "_") %>%
   mutate(sample_ID = paste(type, condition, sep = "_")) %>%
   select(-type, -condition, -tag, -tissue)
@@ -544,7 +569,7 @@ spikein_all_scale = spikein_all %>%
   # Ungroup the data
   ungroup()
 # Plot
-pdf("output/spikein/QC_histone_spike_in_H3K27me3.pdf", width = 14, height = 4)
+pdf("output/spikein/QC_histone_spike_in_H3K27me3.pdf", width = 10, height = 4)
 spikein_all_scale %>%
     filter(
            AB %in% c("H3K27me3", "IGG")) %>%
@@ -557,11 +582,11 @@ spikein_all_scale %>%
 dev.off()
 
 
-## Histone scaling for H3K27me1
+## Histone scaling for H3K4me3
 spikein_all_scale = spikein_all %>%
   group_by(sample_ID) %>%
-  # Find the target_norm value when Target is H3K27me1 and AB is H3K27me1
-  mutate(scaling_factor = ifelse(Target == "H3K27me1" & AB == "H3K27me1", target_norm, NA)) %>%
+  # Find the target_norm value when Target is H3K4me3 and AB is H3K4me3
+  mutate(scaling_factor = ifelse(Target == "H3K4me3" & AB == "H3K4me3", target_norm, NA)) %>%
   # Fill the scaling_factor column with the appropriate value within each group
   fill(scaling_factor, .direction = "downup") %>%
   # Scale the target_norm values
@@ -571,10 +596,10 @@ spikein_all_scale = spikein_all %>%
   # Ungroup the data
   ungroup()
 # Plot
-pdf("output/spikein/QC_histone_spike_in_H3K27me1.pdf", width = 14, height = 4)
+pdf("output/spikein/QC_histone_spike_in_H3K4me3.pdf", width = 10, height = 4)
 spikein_all_scale %>%
     filter(
-           AB %in% c("H3K27me1", "IGG")) %>%
+           AB %in% c("H3K4me3")) %>%
         ggplot(aes(x = Target, y = scaled_target_norm, fill = AB)) +
         geom_col(position = "dodge") +
         facet_wrap(~sample_ID, nrow=1) +
@@ -587,6 +612,6 @@ dev.off()
 ```
 
 
---> All good H3K27me3 IP H3K27me3 and H3K27me1 IP H3K27me1
+--> All good H3K27me3 and H3K4me3 enriched
 
 
