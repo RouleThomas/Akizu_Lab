@@ -204,6 +204,12 @@ conda activate deeptools
 sbatch --dependency=afterany:12505895 scripts/bamtobigwig_unique_1.sh # 12514789 ok
 sbatch --dependency=afterany:12505896 scripts/bamtobigwig_unique_2.sh # 12514790 ok
 sbatch --dependency=afterany:12505897 scripts/bamtobigwig_unique_3.sh # 12514791 ok
+
+
+# Non unique bigiwig
+sbatch scripts/bamtobigwig_1.sh # 13164849 xxx
+sbatch scripts/bamtobigwig_2.sh # 13164850 xxx
+sbatch scripts/bamtobigwig_3.sh # 13164851 xxx
 ```
 
 
@@ -218,6 +224,8 @@ sbatch --dependency=afterany:12505897 scripts/bamtobigwig_unique_3.sh # 12514791
 *Pass*: H3K27me3, H3K4me3, H
 *Failed*: EZH1cs, SUZ12
 
+
+--> Non unique (all raw reads!) vs unique bigwig (less signal or more noise?): XXXXXXXXXXXXXXXXX
 
 
 ## Pearson correlation heatmap on bigwig signals

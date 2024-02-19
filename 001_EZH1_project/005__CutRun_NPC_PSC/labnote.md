@@ -475,6 +475,7 @@ Paramaters:
 ```bash
 conda activate deeptools
 
+# non unique
 sbatch scripts/bamtobigwig_1.sh # 5696658 time limit; 
 sbatch scripts/bamtobigwig_2.sh # 5696659 time limit; 
 sbatch scripts/bamtobigwig_3.sh # 5696660 ok
@@ -482,14 +483,24 @@ sbatch scripts/bamtobigwig_3.sh # 5696660 ok
 sbatch scripts/bamtobigwig_missing_1.sh # 5712700 ok
 sbatch scripts/bamtobigwig_missing_2.sh # 5712702 ok
 
-
+# unique 
 sbatch scripts/bamtobigwig_unique_1.sh # 7022154
 sbatch scripts/bamtobigwig_unique_2.sh # 7022155
 sbatch scripts/bamtobigwig_unique_3.sh # 7022156
+
+
+# raw non unique
+sbatch scripts/bamtobigwig_raw_1.sh # 13166554 xxx
+sbatch scripts/bamtobigwig_raw_2.sh # 13166556 xxx 
+sbatch scripts/bamtobigwig_raw_3.sh # 13166564 xxx
+
+
 ```
 
 --> All good.
 
+
+--> Raw vs non unique vs unique bigwig: XXXXXXX
 
 
 ## Histone spike in normalized bigiwg

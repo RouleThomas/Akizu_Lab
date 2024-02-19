@@ -199,6 +199,13 @@ sbatch --dependency=afterany:9048648 scripts/bamtobigwig_unique_1.sh # 9048669 o
 sbatch --dependency=afterany:9048649 scripts/bamtobigwig_unique_2.sh # 9048672 ok
 sbatch --dependency=afterany:9048650 scripts/bamtobigwig_unique_3.sh # 9048673 ok
 sbatch --dependency=afterany:9048651 scripts/bamtobigwig_unique_4.sh # 9048674 ok
+
+# raw non unique bigwig
+
+sbatch scripts/bamtobigwig_1.sh # 13165303 xxx
+sbatch scripts/bamtobigwig_2.sh # 13165304 xxx
+sbatch scripts/bamtobigwig_3.sh # 13165305 xxx
+sbatch scripts/bamtobigwig_4.sh # 13165306 xxx
 ```
 
 
@@ -215,6 +222,7 @@ sbatch --dependency=afterany:9048651 scripts/bamtobigwig_unique_4.sh # 9048674 o
 - WT (PSC)
 *Pass*: NA
 *Failed*: EZH1cs and H3K27me1
+
 
 
 

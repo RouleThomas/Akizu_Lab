@@ -553,7 +553,19 @@ sbatch scripts/bamtobigwig_KO.sh # 11827233 ok
 
 sbatch scripts/bamtobigwig_patient.sh  # 11857843 ok
 sbatch scripts/bamtobigwig_missing.sh # 12091320 ok
+
+
+# raw non unique bigwig
+sbatch scripts/bamtobigwig_raw_WT.sh # 13167794 xxx
+sbatch scripts/bamtobigwig_raw_HET.sh # 13167795 xxx
+sbatch scripts/bamtobigwig_raw_KO.sh # 13167796 xxx
+
+
+
 ```
+
+*NOTE: In the **raw non unique bigwig** generation I used the .pgbam. not sure where this `pg` come from!! It should be `.bam not `.pgbam`...*
+
 
 Generate median tracks:
 ```bash
