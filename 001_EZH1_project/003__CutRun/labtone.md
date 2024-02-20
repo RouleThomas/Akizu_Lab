@@ -556,9 +556,9 @@ sbatch scripts/bamtobigwig_missing.sh # 12091320 ok
 
 
 # raw non unique bigwig
-sbatch scripts/bamtobigwig_raw_WT.sh # 13167794 xxx
-sbatch scripts/bamtobigwig_raw_HET.sh # 13167795 xxx
-sbatch scripts/bamtobigwig_raw_KO.sh # 13167796 xxx
+sbatch scripts/bamtobigwig_raw_WT.sh # 13167794 ok
+sbatch scripts/bamtobigwig_raw_HET.sh # 13167795 ok
+sbatch scripts/bamtobigwig_raw_KO.sh # 13167796 ok
 
 
 

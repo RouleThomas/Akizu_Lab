@@ -490,9 +490,9 @@ sbatch scripts/bamtobigwig_unique_3.sh # 7022156
 
 
 # raw non unique
-sbatch scripts/bamtobigwig_raw_1.sh # 13166554 xxx
-sbatch scripts/bamtobigwig_raw_2.sh # 13166556 xxx 
-sbatch scripts/bamtobigwig_raw_3.sh # 13166564 xxx
+sbatch scripts/bamtobigwig_raw_1.sh # 13166554 ok
+sbatch scripts/bamtobigwig_raw_2.sh # 13166556 ok 
+sbatch scripts/bamtobigwig_raw_3.sh # 13166564 ok
 
 
 ```

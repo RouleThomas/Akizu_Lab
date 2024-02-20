@@ -207,9 +207,9 @@ sbatch --dependency=afterany:12505897 scripts/bamtobigwig_unique_3.sh # 12514791
 
 
 # Non unique bigiwig
-sbatch scripts/bamtobigwig_1.sh # 13164849 xxx
-sbatch scripts/bamtobigwig_2.sh # 13164850 xxx
-sbatch scripts/bamtobigwig_3.sh # 13164851 xxx
+sbatch scripts/bamtobigwig_1.sh # 13164849 ok
+sbatch scripts/bamtobigwig_2.sh # 13164850 ok
+sbatch scripts/bamtobigwig_3.sh # 13164851 ok
 ```
 
 
@@ -225,7 +225,7 @@ sbatch scripts/bamtobigwig_3.sh # 13164851 xxx
 *Failed*: EZH1cs, SUZ12
 
 
---> Non unique (all raw reads!) vs unique bigwig (less signal or more noise?): XXXXXXXXXXXXXXXXX
+--> Non unique (all raw reads!) vs unique bigwig (less signal or more noise?): Very similar. increase signal on the one that work but more bakground
 
 
 ## Pearson correlation heatmap on bigwig signals

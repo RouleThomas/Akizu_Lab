@@ -181,9 +181,9 @@ sbatch --dependency=afterany:6712321 scripts/bamtobigwig_unique_3.sh # 6712487 o
 sbatch scripts/bamtobigwig_unique_1_missing.sh # 6731623 ok
 
 # raw non unique bigwig
-sbatch scripts/bamtobigwig_1.sh # 13165557 xxx
-sbatch scripts/bamtobigwig_2.sh # 13165558 xxx
-sbatch scripts/bamtobigwig_3.sh # 13165559 xxx
+sbatch scripts/bamtobigwig_1.sh # 13165557 ok
+sbatch scripts/bamtobigwig_2.sh # 13165558 ok
+sbatch scripts/bamtobigwig_3.sh # 13165559 ok
 ```
 
 
