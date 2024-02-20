@@ -73,6 +73,18 @@ done < rename_map.txt
 --> All good 
 
 
+Rename the missing ones! The one that I did not concatenate!!
+```bash
+cd input_raw
+
+while IFS=$'\t' read -r old_name new_name
+do
+    mv "$old_name" "$new_name"
+done < rename_map_missing.txt
+```
+
+XXXXXXXXXXXXXXXXXXXXXX
+
 
 # Fastp cleaning
 
@@ -80,13 +92,16 @@ done < rename_map.txt
 sbatch scripts/fastp_1.sh # 12504999 ok
 sbatch scripts/fastp_2.sh # 12505000 ok
 sbatch scripts/fastp_3.sh # 12505001 ok
+
+sbatch scripts/fastp_missing.sh #  xxx
+
 ```
 
 # FastQC
 
 **raw**
 ```bash
-sbatch scripts/fastqc_raw.sh # 12696467 xxx
+sbatch scripts/fastqc_raw.sh # 12696467 ok
 ```
 
 
