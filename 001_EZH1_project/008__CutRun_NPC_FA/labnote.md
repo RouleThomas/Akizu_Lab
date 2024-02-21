@@ -73,9 +73,13 @@ done < rename_map.txt
 --> All good 
 
 
-Rename the missing ones! The one that I did not concatenate!!
+Rename the missing ones! The one that I did not concatenate!!:
+`cp input_raw_Novogene/NPC_WT_IGG_CKDL240001568-1A_HWK3JDSX7_L4_1.fq.gz input_raw_Novogene/NPC_WT_IGG_CKDL240001568-1A_HWK3JDSX7_L4_2.fq.gz input_raw_Novogene/NPC_WT_H3K27me3_CKDL240001570-1A_HWK3JDSX7_L4_1.fq.gz input_raw_Novogene/NPC_WT_H3K27me3_CKDL240001570-1A_HWK3JDSX7_L4_2.fq.gz input_raw_Novogene/NPC_KO_H3K4me3_CKDL240001576-1A_HWK3JDSX7_L4_1.fq.gz input_raw_Novogene/NPC_KO_H3K4me3_CKDL240001576-1A_HWK3JDSX7_L4_2.fq.gz input_raw_Novogene/NPC_KO_H3K27me3_CKDL240001577-1A_HWK3JDSX7_L4_1.fq.gz input_raw_Novogene/NPC_KO_H3K27me3_CKDL240001577-1A_HWK3JDSX7_L4_2.fq.gz input_raw_Novogene/NPC_KO_SUZ12_CKDL240001581-1A_HWK3JDSX7_L4_1.fq.gz input_raw_Novogene/NPC_KO_SUZ12_CKDL240001581-1A_HWK3JDSX7_L4_2.fq.gz input_raw_Novogene/NPC_OE_KOH3K27ac_CKDL240001585-1A_HWK3JDSX7_L4_1.fq.gz input_raw_Novogene/NPC_OE_KOH3K27ac_CKDL240001585-1A_HWK3JDSX7_L4_2.fq.gz input_raw_Novogene/NPC_OE_KO_EZH2_CKDL240001587-1A_HWK3JDSX7_L4_1.fq.gz input_raw_Novogene/NPC_OE_KO_EZH2_CKDL240001587-1A_HWK3JDSX7_L4_2.fq.gz input_raw_Novogene/NEU_OE_KO_IGG_CL_CKDL240001589-1A_HWK3JDSX7_L4_1.fq.gz input_raw_Novogene/NEU_OE_KO_IGG_CL_CKDL240001589-1A_HWK3JDSX7_L4_2.fq.gz input_raw_Novogene/NEU_OE_KO_IGG_CKDL240001593-1A_HWK3JDSX7_L4_1.fq.gz input_raw_Novogene/NEU_OE_KO_IGG_CKDL240001593-1A_HWK3JDSX7_L4_2.fq.gz input_raw_Novogene/NEU_OE_KO_H3K27me3_CKDL240001594-1A_HWK3JDSX7_L4_1.fq.gz input_raw_Novogene/NEU_OE_KO_H3K27me3_CKDL240001594-1A_HWK3JDSX7_L4_2.fq.gz input/ `
+
+
+
 ```bash
-cd input_raw
+cd input
 
 while IFS=$'\t' read -r old_name new_name
 do
@@ -83,7 +87,7 @@ do
 done < rename_map_missing.txt
 ```
 
-XXXXXXXXXXXXXXXXXXXXXX
+--> All good 
 
 
 # Fastp cleaning
@@ -93,7 +97,7 @@ sbatch scripts/fastp_1.sh # 12504999 ok
 sbatch scripts/fastp_2.sh # 12505000 ok
 sbatch scripts/fastp_3.sh # 12505001 ok
 
-sbatch scripts/fastp_missing.sh #  xxx
+sbatch scripts/fastp_missing.sh # 13300220 ok
 
 ```
 
@@ -126,6 +130,7 @@ sbatch --dependency=afterany:12505357 scripts/bowtie2_1.sh # 12505521 ok
 sbatch --dependency=afterany:12505358 scripts/bowtie2_2.sh # 12505546 ok
 sbatch --dependency=afterany:12505359 scripts/bowtie2_3.sh # 12505547 ok
 
+sbatch scripts/bowtie2_missing.sh # 13300398 xxx
 ```
 
 --> Looks good; overall ~70% uniquely aligned reads
