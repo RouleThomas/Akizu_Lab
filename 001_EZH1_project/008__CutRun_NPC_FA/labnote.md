@@ -130,19 +130,20 @@ sbatch --dependency=afterany:12505357 scripts/bowtie2_1.sh # 12505521 ok
 sbatch --dependency=afterany:12505358 scripts/bowtie2_2.sh # 12505546 ok
 sbatch --dependency=afterany:12505359 scripts/bowtie2_3.sh # 12505547 ok
 
-sbatch scripts/bowtie2_missing.sh # 13300398 xxx
+sbatch scripts/bowtie2_missing.sh # 13300398 ok
 ```
 
 --> Looks good; overall ~70% uniquely aligned reads
 
-Mapping on E coli --> TO DO LATER!  XXX
+Mapping on E coli --> TO DO LATER! 
 
 ```bash
 conda activate bowtie2
 
-sbatch scripts/bowtie2_MG1655_1.sh # xxx
-sbatch scripts/bowtie2_MG1655_2.sh # xxx
-sbatch scripts/bowtie2_MG1655_3.sh # xxx
+sbatch scripts/bowtie2_MG1655_1.sh # 13345349 xxx
+sbatch scripts/bowtie2_MG1655_2.sh # 13345352 xxx
+sbatch scripts/bowtie2_MG1655_3.sh # 13345353 xxx
+sbatch scripts/bowtie2_MG1655_missing.sh # 13345354 xxx
 
 ```
 
@@ -175,6 +176,14 @@ for file in slurm-12505547.out; do
     echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
 done > output/bowtie2/alignment_counts_12505547.txt
 
+for file in slurm-13300398.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2/alignment_counts_13300398.txt
+
+
 ```
 
 Add these values to `/home/roulet/001_EZH1_project/008__CutRun_NPC_FA/samples_008.xlsx`\
@@ -197,6 +206,7 @@ sbatch --dependency=afterany:12505521 scripts/samtools_unique_1.sh # 12505895 ok
 sbatch --dependency=afterany:12505546 scripts/samtools_unique_2.sh # 12505896 ok
 sbatch --dependency=afterany:12505547 scripts/samtools_unique_3.sh # 12505897 ok
 
+sbatch scripts/samtools_unique_missing.sh # 13343264 xxx
 ```
 
 Let's do the same for E coli MG1655 spike in samples:
@@ -204,9 +214,12 @@ Let's do the same for E coli MG1655 spike in samples:
 ```bash
 conda activate bowtie2
 
-sbatch scripts/samtools_MG1655_unique_1.sh # xxx
-sbatch scripts/samtools_MG1655_unique_2.sh # xxx
-sbatch scripts/samtools_MG1655_unique_3.sh # xxx
+sbatch --dependency=afterany:13345349:13345352:13345353:13345354 scripts/samtools_MG1655_unique_1.sh # 13345712 xxx
+sbatch --dependency=afterany:13345349:13345352:13345353:13345354 scripts/samtools_MG1655_unique_2.sh # 13345713 xxx
+sbatch --dependency=afterany:13345349:13345352:13345353:13345354 scripts/samtools_MG1655_unique_3.sh # 13345715 xxx
+sbatch --dependency=afterany:13345349:13345352:13345353:13345354 scripts/samtools_MG1655_unique_missing.sh # 13345737 xxx
+
+
 ```
 
 --> More information on this step in the `005__CutRun` labnote
@@ -224,6 +237,9 @@ conda activate deeptools
 sbatch --dependency=afterany:12505895 scripts/bamtobigwig_unique_1.sh # 12514789 ok
 sbatch --dependency=afterany:12505896 scripts/bamtobigwig_unique_2.sh # 12514790 ok
 sbatch --dependency=afterany:12505897 scripts/bamtobigwig_unique_3.sh # 12514791 ok
+
+sbatch --dependency=afterany:13343264 scripts/bamtobigwig_unique_missing.sh # 13343408 xxx
+
 
 
 # Non unique bigiwig
@@ -375,10 +391,6 @@ plotCorrelation \
 
 
 
---> IGG samples used as control when available; **for NPC WT, IGG from KO has been used**
-----> For 50dN, no IGG control used for peak calling...
-
-
 --> The **peaks are called on the uniquely aligned reads** (it performed better on our previous CutRun)
 
 **PEAK CALLING  in `broad`**
@@ -387,17 +399,13 @@ plotCorrelation \
 ```bash
 conda activate macs2
 # genotype per genotype
-sbatch scripts/macs2_broad_50dN.sh # 12654885 ok
-sbatch scripts/macs2_broad_KO_KOEF1aEZH1.sh # 12655091 ok
-sbatch scripts/macs2_broad_WT.sh # 12655165 ok
+sbatch --dependency=afterany:13343264 scripts/macs2_broad_50dN.sh # 12654885 ok missed sample added; 13343914 xxx
+sbatch --dependency=afterany:13343264 scripts/macs2_broad_KO_KOEF1aEZH1.sh # 12655091 ok missed sample added; 13344031 xxx
+sbatch --dependency=afterany:13343264 scripts/macs2_broad_WT.sh # 12655165 ok missed sample added; 13344112 xxx
 
-sbatch scripts/macs2_narrow_50dN.sh # 12655462 ok
-sbatch scripts/macs2_narrow_KO_KOEF1aEZH1.sh # 12655472 ok
-sbatch scripts/macs2_narrow_WT.sh # 12655475 ok
-
-
-
-
+sbatch --dependency=afterany:13343264 scripts/macs2_narrow_50dN.sh # 12655462 ok missed sample added; 13344314 xxx
+sbatch --dependency=afterany:13343264 scripts/macs2_narrow_KO_KOEF1aEZH1.sh # 12655472 ok missed sample added; 13344540 xxx
+sbatch --dependency=afterany:13343264 scripts/macs2_narrow_WT.sh # 12655475 ok missed sample added; 13344565 xxx
 
 ```
 
@@ -407,7 +415,7 @@ sbatch scripts/macs2_narrow_WT.sh # 12655475 ok
 
 --> NPC PRC2 components: too noisy...
 
-
+*- NOTE: peak calling has been run 2 times adding the missing samples!*
 
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX below not mod
 
@@ -444,7 +452,9 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 # Spike in factor
 
-Let's do the analysis for H3K27me3 only; compare WT vs KO vs KOEF1a. Test 2 spikein normalization method (histone and Ecoli)
+Let's do the analysis for H3K27me3, H3K4me3 only; **compare WT vs KO only; as the KOEF1aEZH1 is NOT overexpressing!**
+
+vs KOEF1a. Test 2 spikein normalization method (histone and Ecoli)
 
 
 ## Calculate histone content
@@ -463,9 +473,14 @@ Let's do the analysis for H3K27me3 only; compare WT vs KO vs KOEF1a. Test 2 spik
 ```bash
 sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp.sh # 12922764 ok
 
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_missing.sh # 13346147 xxx
+
+
 ```
 
 --> It output the nb of reads found for each histone; then simply copy paste to the excell file `output/spikein/SpikeIn_QC_fastp_008.xlsx` in GoogleDrive
+
+XXXXXX HERE UPDATE xlsx and re calculate SF!
 
 - `50dNFA_KOEF1aEZH1_H3K27me3`: enriched in H3K27me3, but much less nb of reads as compare to the NPC sample!
 - `NPC_KO_H3K27ac`: not in histone control..

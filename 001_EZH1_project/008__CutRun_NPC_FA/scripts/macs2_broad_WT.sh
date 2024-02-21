@@ -8,11 +8,12 @@ blacklist="../../Master/meta/hg38-blacklist.v2.bed"
 
 
 samples_and_controls=(
-    "NPC_WT_EZH1cs" "NPC_KO_IGG"
-    "NPC_WT_EZH2" "NPC_KO_IGG"
-    "NPC_WT_H3K27ac" "NPC_KO_IGG"
-    "NPC_WT_H3K4me3" "NPC_KO_IGG"
-    "NPC_WT_SUZ12" "NPC_KO_IGG"
+    "NPC_WT_EZH1cs" "NPC_WT_IGG"
+    "NPC_WT_EZH2" "NPC_WT_IGG"
+    "NPC_WT_H3K27ac" "NPC_WT_IGG"
+    "NPC_WT_H3K4me3" "NPC_WT_IGG"
+    "NPC_WT_SUZ12" "NPC_WT_IGG"
+    "NPC_WT_H3K27me3" "NPC_WT_IGG"
 )
 
 
