@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --mem=50G
+#SBATCH --mem=200G
 #SBATCH --time=100:00:00
 
 
@@ -25,7 +25,7 @@ x=(
 )
         
 for x in "${x[@]}"; do
-featureCounts -p -C -O \
+featureCounts -p -C -O -s 2 \
 	-a /scr1/users/roulet/Akizu_Lab/Master/meta/ENCFF159KBI.gtf \
-	-o output/featurecounts/${x}.txt output/STAR/fastp/${x}_Aligned.sortedByCoord.out.bam
+	-o output/featurecounts_stranded/${x}.txt output/STAR/fastp/${x}_Aligned.sortedByCoord.out.bam
 done

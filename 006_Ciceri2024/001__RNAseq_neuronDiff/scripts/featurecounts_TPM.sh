@@ -1,6 +1,7 @@
 #!/bin/bash
-#SBATCH --mem=50G
-#SBATCH --time=100:00:00
+#SBATCH --mem=200G
+#SBATCH --time=72:00:00
+
 
 
 x=(
@@ -23,9 +24,8 @@ x=(
     "NPC_WT_R3"
     "ESC_WT_R3"
 )
-        
+  
+
 for x in "${x[@]}"; do
-featureCounts -p -C -O \
-	-a /scr1/users/roulet/Akizu_Lab/Master/meta/ENCFF159KBI.gtf \
-	-o output/featurecounts/${x}.txt output/STAR/fastp/${x}_Aligned.sortedByCoord.out.bam
+    Rscript scripts/RPKM_TPM_featurecounts.R output/featurecounts/${x}.txt output/tpm/${x}
 done
