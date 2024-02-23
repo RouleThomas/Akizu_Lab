@@ -1006,10 +1006,6 @@ XXX Fuck that for now, if need to do it see `005`
 On all genes, compare raw, DiffBind_TMM, THOR bigwigs
 
 
-XXXXXXX for depednency codeL XXX
-
-
-
 ```bash
 conda activate deeptools
 
@@ -1031,11 +1027,11 @@ sbatch scripts/matrix_TSS_10kb_H3K27ac_THOR_allGenes.sh # 13550775 fail; 1358656
 
 ```
 
---> XXX
+--> H3K27me3 higher in KO (in agreement with 8wN data)
 
+--> H3K4me3 similar in WT and KO
 
-
-
+--> H3K27ac higher in KO (over -compensate the gain of H3K27me3?)
 
 
 
