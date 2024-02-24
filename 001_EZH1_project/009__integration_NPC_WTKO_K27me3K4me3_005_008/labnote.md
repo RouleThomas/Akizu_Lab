@@ -147,39 +147,38 @@ library("DiffBind")
 ## NPC_H3K27me3
 ### Generate the sample metadata (in ods/copy paste to a .csv file)
 sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_NPC_H3K27me3.txt", header = TRUE, sep = "\t"))
-
 ### Batch effect investigation; heatmaps and PCA plots
 sample_count = dba.count(sample_dba)
-
-
 ## This take time, here is checkpoint command to save/load:
 save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_NPC_H3K27me3.RData")
 load("output/DiffBind/sample_count_macs2raw_unique_NPC_H3K27me3.RData")
-
 ### plot
 pdf("output/DiffBind/clustering_sample_macs2raw_unique_NPC_H3K27me3.pdf", width=14, height=20)  
 plot(sample_count)
 dev.off()
-
 pdf("output/DiffBind/PCA_sample_macs2raw_unique_NPC_H3K27me3.pdf", width=14, height=20) 
 dba.plotPCA(sample_count,DBA_REPLICATE, label=DBA_TREATMENT)
 dev.off()
-
 ### Blacklist/Greylist generation
 sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
-
 sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
-
 ### TMM 
-
-sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(9181686,16861572), normalize = DBA_NORM_TMM) 
-
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(12342151,11660741,9417384,21433114), normalize = DBA_NORM_TMM) 
 #### Here is to retrieve the scaling factor value
 sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
-
-
 console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
 writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_NPC_H3K27me3.txt")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_NPC_H3K27me3_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20)  
+plot(sample_count_blackgreylist_LibHistoneScaled_TMM)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_NPC_H3K27me3_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+
+
+
 
 
 # NPC_H3K4me3
@@ -190,33 +189,29 @@ sample_count = dba.count(sample_dba)
 ## This take time, here is checkpoint command to save/load:
 save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_NPC_H3K4me3.RData")
 load("output/DiffBind/sample_count_macs2raw_unique_NPC_H3K4me3.RData")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_NPC_H3K4me3.pdf", width=14, height=20)  
+plot(sample_count)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_NPC_H3K4me3.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
 ### Blacklist/Greylist generation
 sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
 sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
 ### TMM 
-sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(11433838,8912968), normalize = DBA_NORM_TMM) # 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(7793480, 11433838, 9269965, 8910719), normalize = DBA_NORM_TMM) # 
 #### Here is to retrieve the scaling factor value
 sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
 console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
 writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_NPC_H3K4me3.txt")
-
-# NPC_H3K27ac
-### Generate the sample metadata (in ods/copy paste to a .csv file)
-sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_NPC_H3K27ac.txt", header = TRUE, sep = "\t"))
-### Batch effect investigation; heatmaps and PCA plots
-sample_count = dba.count(sample_dba)
-## This take time, here is checkpoint command to save/load:
-save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_NPC_H3K27ac.RData")
-load("output/DiffBind/sample_count_macs2raw_unique_NPC_H3K27ac.RData")
-### Blacklist/Greylist generation
-sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
-sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
-### TMM 
-sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(10279172,24996045), normalize = DBA_NORM_TMM) # 
-#### Here is to retrieve the scaling factor value
-sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
-console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
-writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_NPC_H3K27ac.txt")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_NPC_H3K4me_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20)  
+plot(sample_count_blackgreylist_LibHistoneScaled_TMM)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_NPC_H3K4me_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
 
 
 
@@ -239,29 +234,31 @@ dev.off()
 ### Blacklist/Greylist generation
 sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
 sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
-### plot
-pdf("output/DiffBind/clustering_sample_macs2raw_unique_NPC_blackgreylist.pdf", width=14, height=20)  
-plot(sample_count)
-dev.off()
-pdf("output/DiffBind/PCA_sample_macs2raw_unique_NPC_blackgreylist.pdf", width=14, height=20) 
-dba.plotPCA(sample_count,DBA_FACTOR, label=DBA_TREATMENT)
-dev.off()
 ### TMM 
 sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, normalize = DBA_NORM_TMM) 
-sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(9181686,16861572,11433838,8912968,10279172,24996045), normalize = DBA_NORM_TMM) # 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(12342151,11660741,9417384,21433114,7793480, 11433838, 9269965, 8910719), normalize = DBA_NORM_TMM) # 
 sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
 console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
 writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_NPC.txt")
 ### plot
 pdf("output/DiffBind/clustering_sample_macs2raw_unique_NPC_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20)  
-plot(sample_count)
+plot(sample_count_blackgreylist_LibHistoneScaled_TMM)
 dev.off()
 pdf("output/DiffBind/PCA_sample_macs2raw_unique_NPC_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20) 
-dba.plotPCA(sample_count,DBA_FACTOR, label=DBA_TREATMENT)
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM,DBA_FACTOR, label=DBA_TREATMENT)
 dev.off()
 
 
 ```
+
+--> Samples cluster more by experiment (005; 008) than per genotypes. However, applying Greylist/blacklist/LibSpikeIn scaled increase the genotype clustering.
+----> GOOD
+
+
+
+XXXXX HER !!!!!! XXXXXXXXXXXX
+
+
 
 
 
