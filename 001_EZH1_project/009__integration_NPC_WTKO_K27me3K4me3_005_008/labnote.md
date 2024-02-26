@@ -256,13 +256,6 @@ dev.off()
 
 
 
-XXXXX HER !!!!!! XXXXXXXXXXXX
-
-
-
-
-
-
 # Generate Spike in scaled bigwig
 
 --> Reciprocal from DiffBind_TMM is to be used when converting bam to bigwig!
@@ -274,11 +267,11 @@ XXXXX HER !!!!!! XXXXXXXXXXXX
 ```bash
 conda activate deeptools
 
-sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM.sh # 13532257 fail; 13548881
+sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM.sh # 14461837 xxx
 ```
 
 
-
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 Check some known target regulated in 2months neurons:
 --> NEUROG2 seems less in KO which is good.
 --> EFNA5 tiny decrease in KO (only in normalized data!)
@@ -288,7 +281,7 @@ Check some known target regulated in 2months neurons:
 ----> What should be the BEST to use, is then the NON-reciprocal_DiffBind_TMM !!!
 ------> Let's try and compare with gene expression...! Maybe it is still good as we take into account the library size with the DiffBind_TMM method??
 --------> YESSS in the end we correct the library size with the SF!!!!! So we 're good!!! reciprocal DiffBind_TMM IS TO BE USED!!
-
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 # THOR
 
@@ -297,15 +290,10 @@ Let's use THOR, notably to have IGG scaled bigwig...!
 Comparison to do; NPC WT vs KO:
 - H3K27me3
 - H3K4me3
-- H3K27ac
 
 
 --> SF to use in THOR are the **reciprocal of MG1655_DiffBind_TMM**
---> Configs file created manually as `output/THOR/NPC_EZH2.config`
-
---> Lets also try to use the DiffBind spike in BAM method (similarly use the reciprocal from diffBind)
-
-
+--> Configs file created manually as `output/THOR/NPC_H3K27me3.config`
 
 
 *THOR is very buggy to make it work I need to temporaly change where to look for libraries lol.. So cannot use nano anymore for example...*
@@ -319,9 +307,8 @@ export LD_LIBRARY_PATH=~/anaconda3/envs/RGT/lib:$LD_LIBRARY_PATH
 bigWigMerge
 
 # AB per AB
-sbatch scripts/THOR_NPC_H3K27me3.sh # 13533943 fail; 13548195
-sbatch scripts/THOR_NPC_H3K4me3.sh # 13534301 fail; 13535831 fail; 13548461
-sbatch scripts/THOR_NPC_H3K27ac.sh # 13534612 fail; 13535918 fail; 13548462
+sbatch scripts/THOR_NPC_H3K27me3.sh # 14462899 xxx
+sbatch scripts/THOR_NPC_H3K4me3.sh # 14462901 xxx
 
 ```
 
@@ -346,27 +333,36 @@ On all genes, compare raw, DiffBind_TMM, THOR bigwigs
 conda activate deeptools
 
 # H3K27me3
-sbatch scripts/matrix_TSS_10kb_H3K27me3_raw_allGenes.sh # 13550806 fail; 13562861 xxx
-sbatch scripts/matrix_TSS_10kb_H3K27me3_DiffBindTMM_allGenes.sh # 13551680 fail; 13585180 xxx
-sbatch scripts/matrix_TSS_10kb_H3K27me3_THOR_allGenes.sh # 13550735 fail; 13585432 xxx
+sbatch scripts/matrix_TSS_10kb_H3K27me3_raw_allGenes.sh # 14466946 fail; 14477113 xxx
+sbatch --dependency=afterany:14461837 scripts/matrix_TSS_10kb_H3K27me3_DiffBindTMM_allGenes.sh # 14470202 xxx
+sbatch --dependency=afterany:14462899:14462901 scripts/matrix_TSS_10kb_H3K27me3_THOR_allGenes.sh # 14471783 xxx
 
 # H3K4me3
-sbatch scripts/matrix_TSS_10kb_H3K4me3_raw_allGenes.sh # 13550882 fail; 13585574 xxx
-sbatch scripts/matrix_TSS_10kb_H3K4me3_DiffBindTMM_allGenes.sh # 13551681 fail; 13585759 xxx
-sbatch scripts/matrix_TSS_10kb_H3K4me3_THOR_allGenes.sh # 13550762 fail; 13586013 xxx
+sbatch scripts/matrix_TSS_10kb_H3K4me3_raw_allGenes.sh # 14467901 fail; 14477116 xxx
+sbatch --dependency=afterany:14461837 scripts/matrix_TSS_10kb_H3K4me3_DiffBindTMM_allGenes.sh # 14470728 xxx
+sbatch --dependency=afterany:14462899:14462901 scripts/matrix_TSS_10kb_H3K4me3_THOR_allGenes.sh # 14472822 xxx
 
-# H3K27ac
-sbatch scripts/matrix_TSS_10kb_H3K27ac_raw_allGenes.sh # 13550883 fail; 13586235 xxx
-sbatch scripts/matrix_TSS_10kb_H3K27ac_DiffBindTMM_allGenes.sh # 13551682 fail; 13586308 xxx
-sbatch scripts/matrix_TSS_10kb_H3K27ac_THOR_allGenes.sh # 13550775 fail; 13586565 xxx
 
+# pearson corr plots
+sbatch scripts/multiBigwigSummary_H3K27me3_raw.sh # 14480543 xxx
+sbatch --dependency=afterany:14461837 scripts/multiBigwigSummary_H3K27me3_DiffBindTMM.sh # 14481446 xxx
+sbatch --dependency=afterany:14462899:14462901 scripts/multiBigwigSummary_H3K27me3_THOR.sh # 14482864 xxx
+
+sbatch scripts/multiBigwigSummary_H3K4me3_raw.sh # 14481079 xxx
+sbatch --dependency=afterany:14461837 scripts/multiBigwigSummary_H3K4me3_DiffBindTMM.sh # 14482286 xxx
+sbatch --dependency=afterany:14462899:14462901 scripts/multiBigwigSummary_H3K4me3_THOR.sh # 14482923 xxx
 
 ```
 
---> H3K27me3 higher in KO (in agreement with 8wN data)
 
---> H3K4me3 similar in WT and KO
 
---> H3K27ac higher in KO (over -compensate the gain of H3K27me3?)
+
+
+
+
+
+--> xxx
+
+
 
 
