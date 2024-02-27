@@ -12,6 +12,7 @@ plotPCA -in output/bigwig/multiBigwigSummary_H3K4me3_raw.npz \
     --transpose \
     --ntop 0 \
     --labels WT_005 WT_008 KO_005 KO_008 \
+    --colors black darkgrey red darkred \
     -o output/bigwig/multiBigwigSummary_H3K4me3_raw_plotPCA.pdf
 
 ## Heatmap

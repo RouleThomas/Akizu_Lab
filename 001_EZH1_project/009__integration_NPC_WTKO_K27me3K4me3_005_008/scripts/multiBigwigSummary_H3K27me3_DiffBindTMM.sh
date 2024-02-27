@@ -12,6 +12,7 @@ plotPCA -in output/bigwig_MG1655_DiffBind_TMM/multiBigwigSummary_H3K27me3_DiffBi
     --transpose \
     --ntop 0 \
     --labels WT_005 WT_008 KO_005 KO_008 \
+    --colors black darkgrey red darkred \
     -o output/bigwig_MG1655_DiffBind_TMM/multiBigwigSummary_H3K27me3_DiffBindTMM_plotPCA.pdf
 
 ## Heatmap

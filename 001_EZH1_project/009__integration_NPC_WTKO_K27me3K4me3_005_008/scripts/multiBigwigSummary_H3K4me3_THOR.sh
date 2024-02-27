@@ -12,6 +12,7 @@ plotPCA -in output/THOR/THOR_NPC_WTvsKO_H3K4me3/multiBigwigSummary_H3K4me3_THOR.
     --transpose \
     --ntop 0 \
     --labels WT_005 WT_008 KO_005 KO_008 \
+    --colors black darkgrey red darkred \
     -o output/THOR/THOR_NPC_WTvsKO_H3K4me3/multiBigwigSummary_H3K4me3_THOR_plotPCA.pdf
 
 ## Heatmap

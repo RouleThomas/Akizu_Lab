@@ -134,8 +134,6 @@ Now let's use these new histone-scaled library size and normalize with library-s
 
 
 
-XXX CHUI ALL !!!!!!!! XXXXXXXXXXXXXXXXXXXXX
-
 ```bash
 srun --mem=500g --pty bash -l
 conda activate DiffBind
@@ -251,8 +249,72 @@ dev.off()
 
 ```
 
---> Samples cluster more by experiment (005; 008) than per genotypes. However, applying Greylist/blacklist/LibSpikeIn scaled increase the genotype clustering.
+--> experimental batch effect.. Samples cluster more by experiment (005; 008) than per genotypes. However, applying Greylist/blacklist/LibSpikeIn scaled increase the genotype clustering.
 ----> GOOD
+
+
+Let's try to **reduce batch effect using `dba.contrast block**`, discuss [here](https://support.bioconductor.org/p/96441/)
+
+
+
+
+```bash
+srun --mem=500g --pty bash -l
+conda activate DiffBind
+```
+```R
+library("DiffBind") 
+
+# ONE PER ONE
+## NPC_H3K27me3
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+load("output/DiffBind/sample_count_macs2raw_unique_NPC_H3K27me3.RData")
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+## apply blocking replicate factor 
+sample_count_blackgreylist_block =  dba.contrast(sample_count_blackgreylist, block=DBA_REPLICATE, minMembers = 2)
+
+sample_count_blackgreylist_block <- dba.contrast(sample_count_blackgreylist,
+                           design="~Replicate + Treatment", minMembers =2, 
+                           contrast=c("Treatment", "WT", "KO"))
+
+
+### TMM 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist_block, library = c(12342151,11660741,9417384,21433114), normalize = DBA_NORM_TMM) 
+
+
+sample_count_blackgreylist_LibHistoneScaled_TMM_analyze <- dba.analyze(sample_count_blackgreylist_LibHistoneScaled_TMM)
+
+sample_count_blackgreylist_LibHistoneScaled_TMM_analyze.DB <- dba.report(sample_count_blackgreylist_LibHistoneScaled_TMM_analyze, contrast=1, method=DBA_DESEQ2_BLOCK, bCounts=TRUE)
+
+dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM_analyze, bRetrieve=TRUE)
+
+
+
+
+
+
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_NPC_H3K27me3_blackgreylist_block_LibHistoneScaled_TMM.pdf", width=14, height=20)  
+plot(sample_count_blackgreylist_LibHistoneScaled_TMM)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_NPC_H3K27me3_blackgreylist_block_LibHistoneScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+#### Here is to retrieve the scaling factor value
+#sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+#console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
+#writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_NPC_H3K27me3.txt")
+
+
+
+```
+
+--> Playing with block factor do not change anything on the SF values, nor PCA/heatmap plots...
+
+
+
 
 
 
@@ -267,7 +329,7 @@ dev.off()
 ```bash
 conda activate deeptools
 
-sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM.sh # 14461837 xxx
+sbatch scripts/bamtobigwig_MG1655_DiffBind_TMM.sh # 14461837 ok
 ```
 
 
@@ -308,12 +370,13 @@ bigWigMerge
 
 # AB per AB
 sbatch scripts/THOR_NPC_H3K27me3.sh # 14462899 xxx
-sbatch scripts/THOR_NPC_H3K4me3.sh # 14462901 xxx
+sbatch scripts/THOR_NPC_H3K4me3.sh # 14462901 ok
 
 ```
 
-
-
+Comparing **raw vs DiffBind_TMM vs THOR** on IGV
+- H3K4me3: THOR is the cleaner, replicates looks more similar
+- H3K27me3: THOR is the cleaner, replicates looks more similar 
 
 
 
@@ -333,35 +396,54 @@ On all genes, compare raw, DiffBind_TMM, THOR bigwigs
 conda activate deeptools
 
 # H3K27me3
-sbatch scripts/matrix_TSS_10kb_H3K27me3_raw_allGenes.sh # 14466946 fail; 14477113 xxx
-sbatch --dependency=afterany:14461837 scripts/matrix_TSS_10kb_H3K27me3_DiffBindTMM_allGenes.sh # 14470202 xxx
+sbatch scripts/matrix_TSS_10kb_H3K27me3_raw_allGenes.sh # 14466946 fail; 14477113 ok
+sbatch --dependency=afterany:14461837 scripts/matrix_TSS_10kb_H3K27me3_DiffBindTMM_allGenes.sh # 14470202 ok
 sbatch --dependency=afterany:14462899:14462901 scripts/matrix_TSS_10kb_H3K27me3_THOR_allGenes.sh # 14471783 xxx
 
 # H3K4me3
-sbatch scripts/matrix_TSS_10kb_H3K4me3_raw_allGenes.sh # 14467901 fail; 14477116 xxx
+sbatch scripts/matrix_TSS_10kb_H3K4me3_raw_allGenes.sh # 14467901 fail; 14477116 fail (missabotated sample); 14516566 ok
 sbatch --dependency=afterany:14461837 scripts/matrix_TSS_10kb_H3K4me3_DiffBindTMM_allGenes.sh # 14470728 xxx
 sbatch --dependency=afterany:14462899:14462901 scripts/matrix_TSS_10kb_H3K4me3_THOR_allGenes.sh # 14472822 xxx
 
 
 # pearson corr plots
-sbatch scripts/multiBigwigSummary_H3K27me3_raw.sh # 14480543 xxx
-sbatch --dependency=afterany:14461837 scripts/multiBigwigSummary_H3K27me3_DiffBindTMM.sh # 14481446 xxx
-sbatch --dependency=afterany:14462899:14462901 scripts/multiBigwigSummary_H3K27me3_THOR.sh # 14482864 xxx
+sbatch scripts/multiBigwigSummary_H3K27me3_raw.sh # 14480543 ok fail erase; 14554827 ok
+sbatch scripts/multiBigwigSummary_H3K27me3_DiffBindTMM.sh # 14481446 ok fail erase; 14554967 ok
+sbatch scripts/multiBigwigSummary_H3K27me3_THOR.sh # 14482864 ok fail erase; 14554971 ok
 
-sbatch scripts/multiBigwigSummary_H3K4me3_raw.sh # 14481079 xxx
-sbatch --dependency=afterany:14461837 scripts/multiBigwigSummary_H3K4me3_DiffBindTMM.sh # 14482286 xxx
-sbatch --dependency=afterany:14462899:14462901 scripts/multiBigwigSummary_H3K4me3_THOR.sh # 14482923 xxx
+sbatch scripts/multiBigwigSummary_H3K4me3_raw.sh # 14481079 fail (missabotated sample); 14516643 ok fail erase; 14554975 ok
+sbatch scripts/multiBigwigSummary_H3K4me3_DiffBindTMM.sh # 14482286 ok fail erase; 14554976 ok
+sbatch scripts/multiBigwigSummary_H3K4me3_THOR.sh # 14522864 ok fail erase; 14554977 ok
 
 ```
 
 
+--> experimental batch effect.. Cluster more per experiment than per genotype for raw, DiffBindTMM and THOR...
+----> Maybe batch effect because of overall aspecific signal like in intergenic region? Let's do pearson corr plot in gene body region only, and then in gene body and promoters (add 2kb upstream TSS)
 
 
 
+```bash
+conda activate deeptools
 
 
+# generate bed file from the gtf
+cat /scr1/users/roulet/Akizu_Lab/Master/meta/ENCFF159KBI.gtf |  awk 'OFS="\t" {if ($3=="gene") {print $1,$4-1,$5,$10,$7}}' | tr -d '";' > /scr1/users/roulet/Akizu_Lab/Master/meta/ENCFF159KBI_gene.bed
 
---> xxx
+
+# pearson corr plots - gene body
+sbatch scripts/multiBigwigSummary_H3K27me3_raw_BEDgene.sh # 14551329 fail; 14555735 ok
+sbatch scripts/multiBigwigSummary_H3K27me3_DiffBindTMM_BEDgene.sh # 14551977 fail; 14555790 ok
+sbatch scripts/multiBigwigSummary_H3K27me3_THOR_BEDgene.sh # 14552069 fail; 14555796 ok
+
+sbatch scripts/multiBigwigSummary_H3K4me3_raw_BEDgene.sh # 14551893 fail; 14555902 ok
+sbatch scripts/multiBigwigSummary_H3K4me3_DiffBindTMM_BEDgene.sh # 14552266 fail; 14555905 ok
+sbatch scripts/multiBigwigSummary_H3K4me3_THOR_BEDgene.sh # 14552400 fail; 14556059 ok
+```
+
+
+--> using gene only or whole genome do NOT change anything..
+
 
 
 
