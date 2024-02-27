@@ -3668,7 +3668,7 @@ rtRlimm3_tibble = as_tibble(rtRlimm3)
 
 
 
-## THOR for diff. bound sites
+# THOR for diff. bound sites
 
 THOR looks cool, used bam as input and we can provide scaling factor! in our case (spikein SF !!). Moreover we can use housekeeping genes for normalization! Looks great with many parameters that can be tweak. Here is the [paper](https://academic.oup.com/nar/article/44/20/e153/2607977) and some [tutorial](https://reg-gen.readthedocs.io/en/latest/thor/introduction.html) and [more](https://reg-gen.readthedocs.io/en/latest/thor/tool_usage.html).
 
