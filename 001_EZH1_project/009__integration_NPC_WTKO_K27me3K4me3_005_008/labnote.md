@@ -609,15 +609,10 @@ sbatch scripts/matrix_TSS_5kb_H3K4me3_THOR_q30_peak.sh # 14898706 ok
 #### Modify the .txt file that list all genes so that it match gtf structure
 
 ## Modify the .txt file that list all genes so that it match gtf structure
-sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/annotation_THOR_H3K4me3_q30_neg_promoterAnd5_geneSymbol_Venndiagram194.txt > output/ChIPseeker/annotation_THOR_H3K4me3_q30_neg_promoterAnd5_geneSymbol_Venndiagram194_as_gtf_geneSymbol.txt
-
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Venndiagram836.txt > output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Venndiagram836_as_gtf_geneSymbol.txt
 
 ## Filter the gtf
-grep -Ff output/ChIPseeker/annotation_THOR_H3K4me3_q30_neg_promoterAnd5_geneSymbol_Venndiagram194_as_gtf_geneSymbol.txt > meta/ENCFF159KBI_H3K4me3_q30_neg_Promoter_5.gtf
-
-xxxxxxxxxxxxxxxxxxxx BUGGGY AS HELLL XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-
+grep -Ff output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Venndiagram836_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_H3K27me3_q30_pos_Promoter_5.gtf
 
 
 ## files
@@ -625,8 +620,8 @@ output/ChIPseeker/annotation_THOR_H3K4me3_q30_neg_promoterAnd5_geneSymbol_Venndi
 output/ChIPseeker/annotation_THOR_H3K4me3_q30_pos_promoterAnd5_geneSymbol_Venndiagram355.txt
 output/ChIPseeker/annotation_THOR_H3K4me3_q20_neg_promoterAnd5_geneSymbol_Venndiagram462.txt
 output/ChIPseeker/annotation_THOR_H3K4me3_q20_pos_promoterAnd5_geneSymbol_Venndiagram636.txt
-output/ChIPseeker/annotation_THOR_H3K27me3_q40_neg_promoterAnd5_geneSymbol_Venndiagram97.txt
-output/ChIPseeker/annotation_THOR_H3K27me3_q40_pos_promoterAnd5_geneSymbol_Venndiagram229.txt
+output/ChIPseeker/annotation_THOR_H3K27me3_q40_neg_promoterAnd5_geneSymbol_Venndiagram145.txt
+output/ChIPseeker/annotation_THOR_H3K27me3_q40_pos_promoterAnd5_geneSymbol_Venndiagram554.txt
 output/ChIPseeker/annotation_THOR_H3K27me3_q30_neg_promoterAnd5_geneSymbol_Venndiagram220.txt
 output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Venndiagram836.txt
 
@@ -642,17 +637,14 @@ meta/ENCFF159KBI_H3K4me3_q30_pos_Promoter_5.gtf
 meta/ENCFF159KBI_H3K4me3_q30_neg_Promoter_5.gtf
 
 ## deeptools plot
-sbatch scripts/matrix_TSS_10kb_H3K27me3_THOR_q30_gene.sh # 14900049 xxx
-sbatch scripts/matrix_TSS_10kb_H3K27me3_THOR_q40_gene.sh # 14900082 xxx
-
-sbatch scripts/matrix_TSS_5kb_H3K4me3_THOR_q20_gene.sh # 14900149 xxx
-sbatch scripts/matrix_TSS_5kb_H3K4me3_THOR_q30_gene.sh # 14900199 xxx
-
-
+sbatch scripts/matrix_TSS_10kb_H3K27me3_THOR_q30_gene.sh # 14900049 fail gtf; 15121974 ok
+sbatch scripts/matrix_TSS_10kb_H3K27me3_THOR_q40_gene.sh # 14900082 fail gtf; 15121985 ok
+sbatch scripts/matrix_TSS_5kb_H3K4me3_THOR_q20_gene.sh # 14900149 fail gtf; 15122006 ok
+sbatch scripts/matrix_TSS_5kb_H3K4me3_THOR_q30_gene.sh # 14900199 fail gtf; 15122007 ok
 
 ```
 
-
+--> Mybe qvalue treshold could be increase to make gian lost more clear
 
 
 

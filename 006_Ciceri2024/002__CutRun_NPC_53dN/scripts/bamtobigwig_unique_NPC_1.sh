@@ -1,6 +1,7 @@
 #!/bin/bash
 #SBATCH --mem=250G
 #SBATCH --time=200:00:00
+#SBATCH --cpus-per-task=6   # Number of CPU cores per task
 
 
 
@@ -20,7 +21,7 @@ for x in "${input_list[@]}"; do
         --outFileName output/bigwig/${x}.unique.dupmark.sorted.bw \
         --outFileFormat bigwig \
         --binSize 1 \
-        --numberOfProcessors 7 \
+        --numberOfProcessors 5 \
         --extendReads \
         --scaleFactor 0.5
 done

@@ -8450,4 +8450,56 @@ sbatch --dependency=afterany:49489 scripts/matrix_gene_1kb_DiffBind_TMM_subtract
 
 
 
+# deepTool plots
+
+CutRun with RNAseq as heatmap profile:
+
+option1_**deepTools heatmap**:
+- use bigwig TPM RNAseq with bigwig THOR CutRun
+- 1st column = RNAseq;then CutRun
+- Count -1 kb / 300bp TSS / TES
+
+
+```bash
+conda activate deeptools
+
+sbatch scripts/matrix_gene_1kb300bp_TPM_THOR_WT_allGenes.sh # 15131389 xxx
+```
+
+--> fail; not good, it is a mess with the splicing events, this option suck
+
+
+
+option2_**ggplot2 heatmap**:
+- RNA: for each gene; median tpm (color scale)
+- H3K27me3: count reads THOR norm around the TSS (1 kb up and down; and test 2kb too) --> We do not care about gene size normalization for H3K27me3 as reads are all around TSS whatever size of the gene!!
+--> Let's use deeptools to perform the counting (another option would be to use featureCounts for counting; but the reads will NOT be normalized...)
+
+
+
+```bash
+conda activate deeptools
+
+sbatch scripts/matrix_gene_1kb1kb_THOR_WT_allGenes.sh # 15140694 fail; 15145597 xxx
+```
+
+*NOTE: here the matrix count is in `--outFileNameMatrix`*
+
+--> fail, the output is not clear; not clear from which genes the count comes from
+
+
+Let's use another tool to **count the reads of my bigwig around TSS region of all genes**:
+--> Can use the bedGraph file; it provide count from the bigwig; every 700bp; may need to re-generate this...
+--> Or use bedops to convert bigwig into bed; then use `bedtools CoverageBed counts` to count within the TSS
+
+
+
+
+
+
+XXXXXXXXX
+
+
+
+
 

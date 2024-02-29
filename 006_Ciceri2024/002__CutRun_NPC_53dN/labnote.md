@@ -13,7 +13,7 @@ Re-analysis of CutRun dataset from (Ciceri et al)[https://www.nature.com/article
 - Add to collections and select `Bash script for downloading FastQ files` --> copy into `scripts/download_urls.sh`
 
 ```bash
-sbatch scripts/download_urls.sh # 14679607 XXX
+sbatch scripts/download_urls.sh # 14679607 ok
 
 ```
 
@@ -105,8 +105,8 @@ sbatch --dependency=afterany:14681230 scripts/samtools_unique_NPC.sh # 14681286 
 sbatch --dependency=afterany:14681246 scripts/samtools_unique_53dN.sh # 14681396 NODE failure
 
 
-sbatch scripts/samtools_unique_NPC_1.sh # 15101660 xxx
-sbatch scripts/samtools_unique_53dN_1.sh # 15101878 xxx
+sbatch scripts/samtools_unique_NPC_1.sh # 15101660 fail; 15116487 ok
+sbatch scripts/samtools_unique_53dN_1.sh # 15101878 ok
 
 ```
 
@@ -125,7 +125,7 @@ sbatch --dependency=afterany:14681286 scripts/bamtobigwig_unique_NPC.sh # 146814
 sbatch --dependency=afterany:14681396 scripts/bamtobigwig_unique_53dN.sh # 14681480 node failure; 
 
 sbatch --dependency=afterany:15101878 scripts/bamtobigwig_unique_53dN_1.sh # 15102289 xxx
-sbatch --dependency=afterany:15101660 scripts/bamtobigwig_unique_NPC_1.sh # 15102387 xxx
+sbatch scripts/bamtobigwig_unique_NPC_1.sh # 15102387 fail; 15116725 fail; 15137560 xxx
 
 ```
 

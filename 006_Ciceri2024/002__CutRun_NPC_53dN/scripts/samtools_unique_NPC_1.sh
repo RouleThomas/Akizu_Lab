@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --mem=500G
+#SBATCH --mem=250G
 #SBATCH --time=100:00:00
 
 nthreads=10
@@ -8,7 +8,6 @@ module load SAMtools/1.16.1-GCC-11.3.0
 module load picard/2.26.10-Java-15
 
 x=(
-    "NPC_WT_H3K27me3_R2"
     "NPC_WT_H3K4me3_R1"
     "NPC_WT_H3K4me3_R2"
     "NPC_WT_H3K9me3_R1"

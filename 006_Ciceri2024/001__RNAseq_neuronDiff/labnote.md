@@ -172,6 +172,27 @@ write.table(long_data_log2tpm, file = c("output/tpm/long_data_log2tpm_Ciceri.txt
 
 
 
+# Generate Bigwig coverage files
+
+Let's generate **TPM coverage**:
+
+```bash
+conda activate deeptools
+# run time-per-time:
+sbatch scripts/TPM_bw.sh # 15126648 xxx
+```
+
+
+Let's merge the bigwig into 1 file with wiggletools (will do average of bigwig signal and not sum, many options see [github](https://github.com/Ensembl/WiggleTools)):
+
+
+**Run wiggletools:**
+```bash
+conda activate BedToBigwig
+sbatch --dependency=afterany:15126648 scripts/bigwigmerge_TPM.sh # 15127640 xxx
+```
+*NOTE: bigwig are merge into 1 bedgraph which is then converted into 1 bigwig (wiggletools cannot output bigwig directly so need to pass by bedgraph or wiggle in between)*
+
 
 
 

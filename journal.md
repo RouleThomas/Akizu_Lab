@@ -186,4 +186,5 @@ R4.3.1 with `granulator` and `tidyverse`
 
 *Copy all files within a folder, excluding a specific pattern/string*: `for file in *; do if [[ ! $file =~ \.fq\.gz$ ]]; then cp "$file" /path/to/destination/; fi; done`
 
+Count nb of unique genes in a gtf: `awk '$3 == "gene" {print $10}' your_file.gtf | sort | uniq | wc -l`
 
