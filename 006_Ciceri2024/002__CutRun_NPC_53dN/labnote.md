@@ -57,13 +57,12 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:14681036 scripts/bowtie2_NPC.sh # 14681230 xxx
-sbatch --dependency=afterany:14681036 scripts/bowtie2_53dN.sh # 14681246 xxx
-
+sbatch --dependency=afterany:14681036 scripts/bowtie2_NPC.sh # 14681230 ok
+sbatch --dependency=afterany:14681036 scripts/bowtie2_53dN.sh # 14681246 ok
 ```
 
---> Looks good; overall ~xxx% uniquely aligned reads
-
+--> Looks good; overall ~30-80% uniquely aligned reads
+----> Seems less uniquel mapped reads than us but they sequence FAR more depth (~20m reads vs 5 for us)
 
 
 ## Quality control metrics
@@ -102,8 +101,12 @@ This is prefered for THOR bam input.
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:14681230 scripts/samtools_unique_NPC.sh # 14681286 xxx
-sbatch --dependency=afterany:14681246 scripts/samtools_unique_53dN.sh # 14681396 xxx
+sbatch --dependency=afterany:14681230 scripts/samtools_unique_NPC.sh # 14681286 NODE failure
+sbatch --dependency=afterany:14681246 scripts/samtools_unique_53dN.sh # 14681396 NODE failure
+
+
+sbatch scripts/samtools_unique_NPC_1.sh # 15101660 xxx
+sbatch scripts/samtools_unique_53dN_1.sh # 15101878 xxx
 
 ```
 
@@ -118,8 +121,11 @@ Paramaters:
 ```bash
 conda activate deeptools
 
-sbatch --dependency=afterany:14681286 scripts/bamtobigwig_unique_NPC.sh # 14681462 xxx
-sbatch --dependency=afterany:14681396 scripts/bamtobigwig_unique_53dN.sh # 14681480 xxx
+sbatch --dependency=afterany:14681286 scripts/bamtobigwig_unique_NPC.sh # 14681462 node failure
+sbatch --dependency=afterany:14681396 scripts/bamtobigwig_unique_53dN.sh # 14681480 node failure; 
+
+sbatch --dependency=afterany:15101878 scripts/bamtobigwig_unique_53dN_1.sh # 15102289 xxx
+sbatch --dependency=afterany:15101660 scripts/bamtobigwig_unique_NPC_1.sh # 15102387 xxx
 
 ```
 
@@ -157,107 +163,6 @@ sbatch scripts/multiBigwigSummary_NPC.sh # 12654309 ok
 sbatch scripts/multiBigwigSummary_WT.sh # 12654318 ok
 sbatch scripts/multiBigwigSummary_KOEF1aEZH1.sh # 12654324; 12654560 ok
 sbatch scripts/multiBigwigSummary_KO.sh # 12654331; 12654558 ok
-
-
-
-# Plot
-## PCA
-plotPCA -in output/bigwig/multiBigwigSummary_all.npz \
-    --transpose \
-    --ntop 0 \
-    --labels 50dNFA_KOEF1aEZH1_EZH1cs 50dNnative_KOEF1aEZH1_EZH1cs 50dNFA_KOEF1aEZH1_EZH2 50dNnative_KOEF1aEZH1_EZH2 50dNFA_KOEF1aEZH1_H3K27me3 NPC_KO_EZH1cs NPC_KO_EZH2 NPC_KO_H3K27ac NPC_KO_IGG NPC_KOEF1aEZH1_EZH1cs NPC_KOEF1aEZH1_H3K27me3 NPC_KOEF1aEZH1_H3K4me3 NPC_KOEF1aEZH1_IGG NPC_KOEF1aEZH1_SUZ12 NPC_WT_EZH1cs NPC_WT_EZH2 NPC_WT_H3K27ac NPC_WT_H3K4me3 NPC_WT_SUZ12 \
-    -o output/bigwig/multiBigwigSummary_all_plotPCA.pdf
-
-plotPCA -in output/bigwig/multiBigwigSummary_50dN.npz \
-    --transpose \
-    --ntop 0 \
-    --labels 50dNFA_KOEF1aEZH1_EZH1cs 50dNnative_KOEF1aEZH1_EZH1cs 50dNFA_KOEF1aEZH1_EZH2 50dNnative_KOEF1aEZH1_EZH2 50dNFA_KOEF1aEZH1_H3K27me3 \
-    -o output/bigwig/multiBigwigSummary_50dN_plotPCA.pdf
-
-plotPCA -in output/bigwig/multiBigwigSummary_NPC.npz \
-    --transpose \
-    --ntop 0 \
-    --labels NPC_KO_EZH1cs NPC_KO_EZH2 NPC_KO_H3K27ac NPC_KO_IGG NPC_KOEF1aEZH1_EZH1cs NPC_KOEF1aEZH1_H3K27me3 NPC_KOEF1aEZH1_H3K4me3 NPC_KOEF1aEZH1_IGG NPC_KOEF1aEZH1_SUZ12 NPC_WT_EZH1cs NPC_WT_EZH2 NPC_WT_H3K27ac NPC_WT_H3K4me3 NPC_WT_SUZ12 \
-    -o output/bigwig/multiBigwigSummary_NPC_plotPCA.pdf
-
-
-plotPCA -in output/bigwig/multiBigwigSummary_WT.npz \
-    --transpose \
-    --ntop 0 \
-    --labels NPC_WT_EZH1cs NPC_WT_EZH2 NPC_WT_H3K27ac NPC_WT_H3K4me3 NPC_WT_SUZ12 \
-    -o output/bigwig/multiBigwigSummary_WT_plotPCA.pdf
-
-
-
-plotPCA -in output/bigwig/multiBigwigSummary_KOEF1aEZH1.npz \
-    --transpose \
-    --ntop 0 \
-    --labels NPC_KOEF1aEZH1_EZH1cs NPC_KOEF1aEZH1_H3K27me3 NPC_KOEF1aEZH1_H3K4me3 NPC_KOEF1aEZH1_IGG NPC_KOEF1aEZH1_SUZ12 \
-    -o output/bigwig/multiBigwigSummary_KOEF1aEZH1_plotPCA.pdf
-
-
-
-plotPCA -in output/bigwig/multiBigwigSummary_KO.npz \
-    --transpose \
-    --ntop 0 \
-    --labels NPC_KO_EZH1cs NPC_KO_EZH2 NPC_KO_H3K27ac NPC_KO_IGG \
-    -o output/bigwig/multiBigwigSummary_KO_plotPCA.pdf
-
-## Heatmap
-plotCorrelation \
-    -in output/bigwig/multiBigwigSummary_all.npz \
-    --corMethod pearson --skipZeros \
-    --plotTitle "Pearson Correlation" \
-    --removeOutliers \
-    --labels 50dNFA_KOEF1aEZH1_EZH1cs 50dNnative_KOEF1aEZH1_EZH1cs 50dNFA_KOEF1aEZH1_EZH2 50dNnative_KOEF1aEZH1_EZH2 50dNFA_KOEF1aEZH1_H3K27me3 NPC_KO_EZH1cs NPC_KO_EZH2 NPC_KO_H3K27ac NPC_KO_IGG NPC_KOEF1aEZH1_EZH1cs NPC_KOEF1aEZH1_H3K27me3 NPC_KOEF1aEZH1_H3K4me3 NPC_KOEF1aEZH1_IGG NPC_KOEF1aEZH1_SUZ12 NPC_WT_EZH1cs NPC_WT_EZH2 NPC_WT_H3K27ac NPC_WT_H3K4me3 NPC_WT_SUZ12 \
-    --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig/multiBigwigSummary_all_heatmap.pdf
-
-plotCorrelation \
-    -in output/bigwig/multiBigwigSummary_50dN.npz \
-    --corMethod pearson --skipZeros \
-    --plotTitle "Pearson Correlation" \
-    --removeOutliers \
-    --labels 50dNFA_KOEF1aEZH1_EZH1cs 50dNnative_KOEF1aEZH1_EZH1cs 50dNFA_KOEF1aEZH1_EZH2 50dNnative_KOEF1aEZH1_EZH2 50dNFA_KOEF1aEZH1_H3K27me3 \
-    --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig/multiBigwigSummary_50dN_heatmap.pdf
-
-plotCorrelation \
-    -in output/bigwig/multiBigwigSummary_NPC.npz \
-    --corMethod pearson --skipZeros \
-    --plotTitle "Pearson Correlation" \
-    --removeOutliers \
-    --labels NPC_KO_EZH1cs NPC_KO_EZH2 NPC_KO_H3K27ac NPC_KO_IGG NPC_KOEF1aEZH1_EZH1cs NPC_KOEF1aEZH1_H3K27me3 NPC_KOEF1aEZH1_H3K4me3 NPC_KOEF1aEZH1_IGG NPC_KOEF1aEZH1_SUZ12 NPC_WT_EZH1cs NPC_WT_EZH2 NPC_WT_H3K27ac NPC_WT_H3K4me3 NPC_WT_SUZ12 \
-    --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig/multiBigwigSummary_NPC_heatmap.pdf
-
-plotCorrelation \
-    -in output/bigwig/multiBigwigSummary_WT.npz \
-    --corMethod pearson --skipZeros \
-    --plotTitle "Pearson Correlation" \
-    --removeOutliers \
-    --labels NPC_WT_EZH1cs NPC_WT_EZH2 NPC_WT_H3K27ac NPC_WT_H3K4me3 NPC_WT_SUZ12 \
-    --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig/multiBigwigSummary_WT_heatmap.pdf
-
-plotCorrelation \
-    -in output/bigwig/multiBigwigSummary_KOEF1aEZH1.npz \
-    --corMethod pearson --skipZeros \
-    --plotTitle "Pearson Correlation" \
-    --removeOutliers \
-    --labels NPC_KOEF1aEZH1_EZH1cs NPC_KOEF1aEZH1_H3K27me3 NPC_KOEF1aEZH1_H3K4me3 NPC_KOEF1aEZH1_IGG NPC_KOEF1aEZH1_SUZ12 \
-    --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig/multiBigwigSummary_KOEF1aEZH1_heatmap.pdf
-
-
-plotCorrelation \
-    -in output/bigwig/multiBigwigSummary_KO.npz \
-    --corMethod pearson --skipZeros \
-    --plotTitle "Pearson Correlation" \
-    --removeOutliers \
-    --labels NPC_KO_EZH1cs NPC_KO_EZH2 NPC_KO_H3K27ac NPC_KO_IGG \
-    --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig/multiBigwigSummary_KO_heatmap.pdf
 
 ```
 
