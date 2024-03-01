@@ -152,25 +152,24 @@ FAIL: *H3K9me3* could be there
 # gunzip the file
 
 # Convert wig to bigwig
-srun --mem=250g --pty bash -l
+srun --mem=500g --pty bash -l
 
 ## install wigtobigwig
 conda activate BedToBigwig
 conda install bioconda::ucsc-wigtobigwig # fail
 conda install bioconda/label/cf201901::ucsc-wigtobigwig  # fail
 #### --> fail create a new conda env
-
-
-xxxxxxxxxxxxxxx
+conda create -n wigtobigwig -c bioconda ucsc-wigtobigwig
+conda activate wigtobigwig
 
 ## convert wig to bigwig
-
-
-xxxxxxxxxxxxxxx
+wigToBigWig output/bigwig_hg19/GSM767343_UCSD.H1_Derived_Neuronal_Progenitor_Cultured_Cells.H3K27ac.SK504.wig ../../Master/meta/hg19.chrom.sizes output/bigwig_hg19/GSM767343_UCSD.H1_Derived_Neuronal_Progenitor_Cultured_Cells.H3K27ac.SK504.bw
+wigToBigWig output/bigwig_hg19/GSM818031_UCSD.H1_Derived_Neuronal_Progenitor_Cultured_Cells.H3K27ac.AK220.wig ../../Master/meta/hg19.chrom.sizes output/bigwig_hg19/GSM818031_UCSD.H1_Derived_Neuronal_Progenitor_Cultured_Cells.H3K27ac.AK220.bw
+wigToBigWig output/bigwig_hg19/GSM896162_UCSD.H1_Derived_Neuronal_Progenitor_Cultured_Cells.H3K27ac.AK319.wig ../../Master/meta/hg19.chrom.sizes output/bigwig_hg19/GSM896162_UCSD.H1_Derived_Neuronal_Progenitor_Cultured_Cells.H3K27ac.AK319.bw
 
 
 ```
-
+NOTE: hg19 chrom size copy from [ucsc](https://hgdownload.cse.ucsc.edu/goldenpath/hg19/bigZips/)
 
 
 
@@ -190,6 +189,10 @@ sbatch scripts/multiBigwigSummary_NPC_Ciceri.sh # 15280901 ok
 sbatch scripts/multiBigwigSummary_53dN_Ciceri.sh # 15281092 ok
 
 
+# Akizu with Ciceri _ NPC
+sbatch scripts/multiBigwigSummary_NPC_CutRun001008_Ciceri.sh # 15290030 ok
+
+
 ```
 
 **Good to use**:
@@ -201,6 +204,8 @@ sbatch scripts/multiBigwigSummary_53dN_Ciceri.sh # 15281092 ok
 - *53dN*: AB mix between IGG, H3K4me3, H3K27ac
 
 --> Same observation between Akizu and Ciceri analysis(hg38 hg19)
+
+--> The *good to use* ones nicely correlate with our data in NPC WT `CutRun__005008` (`CutRun__009`)
 
 
 

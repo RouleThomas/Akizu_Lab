@@ -189,7 +189,7 @@ Let's merge the bigwig into 1 file with wiggletools (will do average of bigwig s
 **Run wiggletools:**
 ```bash
 conda activate BedToBigwig
-sbatch --dependency=afterany:15126648 scripts/bigwigmerge_TPM.sh # 15127640 xxx
+sbatch --dependency=afterany:15126648 scripts/bigwigmerge_TPM.sh # 15127640 ok
 ```
 *NOTE: bigwig are merge into 1 bedgraph which is then converted into 1 bigwig (wiggletools cannot output bigwig directly so need to pass by bedgraph or wiggle in between)*
 
