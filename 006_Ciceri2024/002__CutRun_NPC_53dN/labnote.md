@@ -106,6 +106,7 @@ sbatch --dependency=afterany:14681246 scripts/samtools_unique_53dN.sh # 14681396
 
 
 sbatch scripts/samtools_unique_NPC_1.sh # 15101660 fail; 15116487 ok
+sbatch scripts/samtools_unique_NPC_2.sh # 15275393 ok
 sbatch scripts/samtools_unique_53dN_1.sh # 15101878 ok
 
 ```
@@ -124,28 +125,53 @@ conda activate deeptools
 sbatch --dependency=afterany:14681286 scripts/bamtobigwig_unique_NPC.sh # 14681462 node failure
 sbatch --dependency=afterany:14681396 scripts/bamtobigwig_unique_53dN.sh # 14681480 node failure; 
 
-sbatch --dependency=afterany:15101878 scripts/bamtobigwig_unique_53dN_1.sh # 15102289 xxx
-sbatch scripts/bamtobigwig_unique_NPC_1.sh # 15102387 fail; 15116725 fail; 15137560 xxx
+sbatch --dependency=afterany:15101878 scripts/bamtobigwig_unique_53dN_1.sh # 15102289 ok
+sbatch scripts/bamtobigwig_unique_NPC_1.sh # 15102387 fail; 15116725 fail; 15137560 ok
+sbatch --dependency=afterany:15275393 scripts/bamtobigwig_unique_NPC_2.sh # 15275543 ok
+
+
 
 ```
 
 
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX BELOW NOT MD XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+- NPC
+PASS: H3K4m3 (rep very diff.), H3K9me3 (a bit noisy), H3K27me3
+FAIL: H3K27ac (very low signal and noisy, seems R2 work better)
+- 53dN
+PASS: H3K4me3, H3K9me3 (a bit noisy), H3K27ac, H3K27me3
+FAIL: *H3K9me3* could be there
 
 
+--> The failed one, are also failed in the bigwig Ciceri files...
 
-- 50dN native and FA
-*Pass*: 
-*Failed*: H3K27me3, EZH1cs, EZH2
-- NPC _ WT
-*Pass*: H3K27ac, H3K4me3
-*Failed*: EZH1cs, EZH2, SUZ12
-- NPC _ KOEF1aEZH1
-*Pass*: H3K27me3, H3K4me3, H
-*Failed*: EZH1cs, SUZ12
+--> Compare with H3K27ac from (ENCODE)[https://www.encodeproject.org/experiments/ENCSR799SRL/]
 
 
---> Non unique (all raw reads!) vs unique bigwig (less signal or more noise?): Very similar. increase signal on the one that work but more bakground
+```bash
+# gunzip the file
+
+# Convert wig to bigwig
+srun --mem=250g --pty bash -l
+
+## install wigtobigwig
+conda activate BedToBigwig
+conda install bioconda::ucsc-wigtobigwig # fail
+conda install bioconda/label/cf201901::ucsc-wigtobigwig  # fail
+#### --> fail create a new conda env
+
+
+xxxxxxxxxxxxxxx
+
+## convert wig to bigwig
+
+
+xxxxxxxxxxxxxxx
+
+
+```
+
+
 
 
 ## Pearson correlation heatmap on bigwig signals
@@ -154,19 +180,27 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX BELOW NOT MD XXXXXXXXXXXXXXXXXXXXXXXXXX
 
 ```bash
 conda activate deeptools
-# Generate compile bigwig (.npz) files
-sbatch scripts/multiBigwigSummary_all.sh # 12654374 ok
 
-sbatch scripts/multiBigwigSummary_50dN.sh # 12654211 ok
-sbatch scripts/multiBigwigSummary_NPC.sh # 12654309 ok
+# Generate compile bigwig (.npz) files _ hg38 Akizu analysis
+sbatch scripts/multiBigwigSummary_NPC.sh # 15280856 ok
+sbatch scripts/multiBigwigSummary_53dN.sh # 15280864 ok
 
-sbatch scripts/multiBigwigSummary_WT.sh # 12654318 ok
-sbatch scripts/multiBigwigSummary_KOEF1aEZH1.sh # 12654324; 12654560 ok
-sbatch scripts/multiBigwigSummary_KO.sh # 12654331; 12654558 ok
+# Generate compile bigwig (.npz) files _ hg19 Ciceri analysis
+sbatch scripts/multiBigwigSummary_NPC_Ciceri.sh # 15280901 ok
+sbatch scripts/multiBigwigSummary_53dN_Ciceri.sh # 15281092 ok
+
 
 ```
 
---> Hard to conclude stuff
+**Good to use**:
+- *NPC*: H3K27me3, H3K4me3, H3K9me3, IGG
+- *53dN*: H3K27me3, H3K9me3
+
+**Bad to use**:
+- *NPC*: H3K27ac: no signal! Like IGG
+- *53dN*: AB mix between IGG, H3K4me3, H3K27ac
+
+--> Same observation between Akizu and Ciceri analysis(hg38 hg19)
 
 
 

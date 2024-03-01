@@ -113,6 +113,10 @@ library("csaw")
 
 **bedtools**, **genomeCoverageBed**, **bedGraphToBigWig**, **wiggletools** 
 
+### wigtobigwig
+
+**wigtobigwig**
+
 
 
 ### scRNAseq
