@@ -8463,7 +8463,7 @@ option1_**deepTools heatmap**:
 ```bash
 conda activate deeptools
 
-sbatch scripts/matrix_gene_1kb300bp_TPM_THOR_WT_allGenes.sh # 15131389 xxx
+sbatch scripts/matrix_gene_1kb300bp_TPM_THOR_WT_allGenes.sh # 15131389 ok
 ```
 
 --> fail; not good, it is a mess with the splicing events, this option suck
@@ -8480,7 +8480,7 @@ option2_**ggplot2 heatmap**:
 ```bash
 conda activate deeptools
 
-sbatch scripts/matrix_gene_1kb1kb_THOR_WT_allGenes.sh # 15140694 fail; 15145597 xxx
+sbatch scripts/matrix_gene_1kb1kb_THOR_WT_allGenes.sh # 15140694 fail; 15145597 ok
 ```
 
 *NOTE: here the matrix count is in `--outFileNameMatrix`*
@@ -8491,6 +8491,15 @@ sbatch scripts/matrix_gene_1kb1kb_THOR_WT_allGenes.sh # 15140694 fail; 15145597 
 Let's use another tool to **count the reads of my bigwig around TSS region of all genes**:
 --> Can use the bedGraph file; it provide count from the bigwig; every 700bp; may need to re-generate this...
 --> Or use bedops to convert bigwig into bed; then use `bedtools CoverageBed counts` to count within the TSS
+
+**Pipeline cutrun with rna:**
+- Generate bed file of region 1kb (and 2kb) around TSS (keep column gene name!)
+- Use `bedtools CoverageBed counts` to count the reads of the THOR bigwog bedGraph median (`WTvsHETuniqueKeepdup-s1_median.bedGraph`) 
+- Isolate gene name with counts for each genes
+- Put together RNA median TPM with bedtool output and generate heatmap
+
+
+
 
 
 

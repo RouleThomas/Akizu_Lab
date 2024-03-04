@@ -45,7 +45,7 @@ done < rename_002.txt
 Run fastp
 ```bash
 # run rep per rep
-sbatch scripts/fastp_raw.sh # 14681036 xxx
+sbatch scripts/fastp_raw.sh # 14681036 ok
 ```
 
 
@@ -90,7 +90,7 @@ done > output/bowtie2/alignment_counts_14681246.txt
 Add these values to `/home/roulet/006_Ciceri2024/002__CutRun_NPC_53dN/samples_002.xlsx`\
 Then in R; see `/home/roulet/006_Ciceri2024/006_Ciceri2024.R`.
 
---> Overall >xxx% input reads as been uniquely mapped to the genome (90% non uniq)
+--> Overall >60% input reads as been uniquely mapped to the genome (90% non uniq)
 
 
 
@@ -221,23 +221,20 @@ sbatch scripts/multiBigwigSummary_NPC_CutRun001008_Ciceri.sh # 15290030 ok
 ```bash
 conda activate macs2
 # genotype per genotype
-sbatch --dependency=afterany:13343264 scripts/macs2_broad_50dN.sh # 12654885 ok missed sample added; 13343914 ok
-sbatch --dependency=afterany:13343264 scripts/macs2_broad_KO_KOEF1aEZH1.sh # 12655091 ok missed sample added; 13344031 ok
-sbatch --dependency=afterany:13343264 scripts/macs2_broad_WT.sh # 12655165 ok missed sample added; 13344112 ok
+sbatch scripts/macs2_broad_53dN.sh # 15401244 xxx
+sbatch scripts/macs2_broad_NPC.sh # 15401308 xxx
 
-sbatch --dependency=afterany:13343264 scripts/macs2_narrow_50dN.sh # 12655462 ok missed sample added; 13344314 ok
-sbatch --dependency=afterany:13343264 scripts/macs2_narrow_KO_KOEF1aEZH1.sh # 12655472 ok missed sample added; 13344540 ok
-sbatch --dependency=afterany:13343264 scripts/macs2_narrow_WT.sh # 12655475 ok missed sample added; 13344565 ok
-
+sbatch scripts/macs2_broad_53dN_noIGG.sh # 15401429 xxx
 ```
 
---> OEF1aEZH1 in 50-day neurons: too noisy for EZH1, EZH2, and H3K27me3
+--> H3K27ac in NPC show XXX
 
---> NPC histone marks: OK for H3K4me3, H3K27ac, and H3K27me3; sharp and clear peaks.
+--> 53dN IGG vs not using IGG: XXX
 
---> NPC PRC2 components: too noisy...
 
-*- NOTE: peak calling has been run 2 times adding the missing samples!*
+
+
+
 
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX below not mod
 
@@ -266,6 +263,37 @@ Then keep only the significant peaks (re-run the script to test different qvalue
 - 50dN_WTQ731E_H3K27me3: 1.30103 (2.3 more true peaks)
 
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+
+
+# deepTool plots
+
+
+On all genes, compare raw, DiffBind_TMM, THOR bigwigs
+
+
+```bash
+conda activate deeptools
+
+# All genes all histone marks
+## NPC
+sbatch scripts/matrix_TSS_10kb_NPC_raw_allGenes.sh # 15402417 xxx
+sbatch scripts/matrix_TSS_5kb_NPC_H3K27ac_raw_allGenes.sh # 15402511 xxx
+sbatch scripts/matrix_TSS_10kb_NPC_H3K27me3_H3K4me3_raw_allGenes.sh # 15402602 xxx
+
+
+## 53dN
+sbatch scripts/matrix_TSS_10kb_53dN_raw_allGenes.sh # 15402437 xxx
+sbatch scripts/matrix_TSS_5kb_53dN_H3K27ac_raw_allGenes.sh # 15402531 xxx
+sbatch scripts/matrix_TSS_10kb_53dN_H3K27me3_H3K4me3_raw_allGenes.sh # 15402648 xxx
+
+```
+
+
+--> xxx
+
+
+
 
 
 

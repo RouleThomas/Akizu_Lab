@@ -179,7 +179,7 @@ Let's generate **TPM coverage**:
 ```bash
 conda activate deeptools
 # run time-per-time:
-sbatch scripts/TPM_bw.sh # 15126648 xxx
+sbatch scripts/TPM_bw.sh # 15126648 ok
 ```
 
 
