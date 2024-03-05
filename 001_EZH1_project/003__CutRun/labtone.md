@@ -8494,19 +8494,128 @@ Let's use another tool to **count the reads of my bigwig around TSS region of al
 
 **Pipeline cutrun with rna:**
 - Generate bed file of region 1kb (and 2kb) around TSS (keep column gene name!)
+--> Start with the `Master/meta/ENCFF*_gene.bed`; generated in `009*/` `# generate bed file from the gtf`
+----> Copy it and work in `003__CutRun/meta`
 - Use `bedtools CoverageBed counts` to count the reads of the THOR bigwog bedGraph median (`WTvsHETuniqueKeepdup-s1_median.bedGraph`) 
 - Isolate gene name with counts for each genes
-- Put together RNA median TPM with bedtool output and generate heatmap
+- Put together RNA median TPM with bedtool output and generate heatmap in `R`
+
+
+```bash
+conda activate BedToBigwig
+
+# add + - 1kb around the TSS of eachg gene (watchout + - strand genes!)
+awk '$5 == "+" {print $1"\t"($2-1000)"\t"($2+1000)"\t"$4"\t"$5}' meta/ENCFF159KBI_gene.bed > meta/ENCFF159KBI_gene_1kbTSS_plusStrand.bed
+awk '$5 == "-" {print $1"\t"($3-1000)"\t"($3+1000)"\t"$4"\t"$5}' meta/ENCFF159KBI_gene.bed > meta/ENCFF159KBI_gene_1kbTSS_minusStrand.bed
+cat meta/ENCFF159KBI_gene_1kbTSS_plusStrand.bed meta/ENCFF159KBI_gene_1kbTSS_minusStrand.bed > meta/ENCFF159KBI_gene_1kbTSS.bed
+sort -k1,1 -k2,2n meta/ENCFF159KBI_gene_1kbTSS.bed > meta/ENCFF159KBI_gene_1kbTSS_sorted.bed
+
+# count bedgraph
+## with -counts option
+bedtools coverage -counts -a meta/ENCFF159KBI_gene_1kbTSS_sorted.bed -b output/THOR/THOR_WTvsHET_unique_Keepdup/WTvsHETuniqueKeepdup-s1_median.bedGraph > meta/ENCFF159KBI_gene_1kbTSS_sorted-WTvsHETuniqueKeepdup_bedtoolsCoverageCounts.bed
+## without -counts option
+bedtools coverage -a meta/ENCFF159KBI_gene_1kbTSS_sorted.bed -b output/THOR/THOR_WTvsHET_unique_Keepdup/WTvsHETuniqueKeepdup-s1_median.bedGraph > meta/ENCFF159KBI_gene_1kbTSS_sorted-WTvsHETuniqueKeepdup_bedtoolsCoverage.bed
+
+```
+
+--> The `meta/ENCFF159KBI_gene_1kbTSS_sorted.bed` looks good, 1kb has been added around the TSS of each transcripts!
+----> **NOTE: I manually change to 0 two chrM coordinates that have a negative value at start.**
+
+--> check manually the HOXA1 gene (Ensembl:ENSG00000105991); hhighly enriched and it has a count value of 36 which looks in agreement with the bigwig
+----> not clear how exactly that is counted; average? check [here](https://bedtools.readthedocs.io/en/latest/content/tools/coverage.html)
 
 
 
+--> *With vs without count option*: without provide more information but the count value look similar (6th column)!
+
+Go in R and generate the heatmap
 
 
 
+```R
+# package
+library("tidyverse")
+library("pheatmap")
+
+
+# import files
+## H3K27me3 bigwig count around TSS
+H3K27me3 = read_delim("meta/ENCFF159KBI_gene_1kbTSS_sorted-WTvsHETuniqueKeepdup_bedtoolsCoverageCounts.bed", 
+                     col_names = FALSE, 
+                     delim = "\t") %>%
+    rename(gene = X4, H3K27me3 = X6) %>%
+    separate(gene, into = c("gene", "trash"), sep = "\\.") %>%
+    dplyr::select(gene, H3K27me3) 
+
+## TPM all genes
+tpm_all_sample_geneSymbol = as.tibble(read.table(file = "../001__RNAseq/output/tpm_hg38/tpm_all_sample_geneSymbol.txt", header = TRUE, sep = "\t")) %>%
+  dplyr::select(Geneid, X8wN_WT_R1, X8wN_WT_R2, X8wN_WT_R3, X8wN_WT_R4) %>%
+  unique() %>%
+  pivot_longer(cols = -Geneid, names_to = "sample", values_to = "tpm") %>%
+  group_by(Geneid) %>%
+  mutate(tpm = log2(tpm+1)) %>%
+  mutate(median_tpm = median(tpm)) %>%
+  ungroup() %>%
+  dplyr::select(Geneid, median_tpm) %>%
+  unique() %>%
+  rename("gene" = "Geneid", "median" = "median_tpm") 
+
+## genes with H3K27me3 peak in WT in promoter (macs2 based)
+H3K27me3_genes = as.tibble(read.table(file = "output/ChIPseeker/annotation_WT_Promoter_5.txt", header = FALSE, sep = "\t")) %>% 
+  dplyr::select(V21) %>%
+  unique() %>%
+  rename("gene" = "V21")
 
 
 
-XXXXXXXXX
+# combine RNA and H3K27me3 and compute zscore
+H3K27me3_TPM = H3K27me3_genes %>%
+  left_join(tpm_all_sample_geneSymbol) %>% 
+  left_join(H3K27me3) %>%
+  unique() %>%
+  replace_na(list(zscore_median = 0, zscore_H3K27me3 = 0)) %>%
+  mutate(zscore_TPM = scale(median, center = TRUE, scale = TRUE)[,1]) %>%
+  mutate(zscore_H3K27me3 = scale(H3K27me3, center = TRUE, scale = TRUE)[,1]) %>%
+  na.omit()
+
+
+# heatmap generation
+## order the genes
+H3K27me3_TPM <- H3K27me3_TPM %>%
+  arrange(zscore_TPM) %>%
+  mutate(gene = factor(gene, levels = unique(gene)))
+
+
+# Convert to long format for ggplot
+long_data <- H3K27me3_TPM %>%
+  pivot_longer(cols = c("zscore_TPM", "zscore_H3K27me3"), names_to = "measurement", values_to = "value")
+
+# Find range and midpoint
+zscore_range <- range(long_data$value, na.rm = TRUE)
+midpoint <- mean(zscore_range)
+
+# Generate the heatmap
+pdf("output/tmp/heatmap_H3K27me3_TPM_V1.pdf", width = 5, height = 10)
+ggplot(long_data, aes(x = measurement, y = gene, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "red", midpoint = 0, limits = c(zscore_min, zscore_max)) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        legend.position = "right")
+dev.off()
+
+```
+
+--> Taking all genes it fail
+
+--> Taking only express genes, fail too
+
+--> Try taking only genes that has a H3K27me3 peak; it is better but ugly...
+
+
+I think the **code is good, now we need to show less genes, and maybe refine the H3K27me3 calculation**
 
 
 

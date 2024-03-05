@@ -221,15 +221,15 @@ sbatch scripts/multiBigwigSummary_NPC_CutRun001008_Ciceri.sh # 15290030 ok
 ```bash
 conda activate macs2
 # genotype per genotype
-sbatch scripts/macs2_broad_53dN.sh # 15401244 xxx
-sbatch scripts/macs2_broad_NPC.sh # 15401308 xxx
+sbatch scripts/macs2_broad_53dN.sh # 15401244 ok
+sbatch scripts/macs2_broad_NPC.sh # 15401308 ok
 
-sbatch scripts/macs2_broad_53dN_noIGG.sh # 15401429 xxx
+sbatch scripts/macs2_broad_53dN_noIGG.sh # 15401429 ok
 ```
 
---> H3K27ac in NPC show XXX
+--> H3K27ac in NPC show 3 peak in R1! And a ~7k peaks in R2. R2 is better, but still very ugly and noisy!
 
---> 53dN IGG vs not using IGG: XXX
+--> 53dN IGG vs not using IGG: almost the same, so let's better use IGG
 
 
 
@@ -269,7 +269,7 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # deepTool plots
 
 
-On all genes, compare raw, DiffBind_TMM, THOR bigwigs
+On all genes
 
 
 ```bash
@@ -277,20 +277,25 @@ conda activate deeptools
 
 # All genes all histone marks
 ## NPC
-sbatch scripts/matrix_TSS_10kb_NPC_raw_allGenes.sh # 15402417 xxx
-sbatch scripts/matrix_TSS_5kb_NPC_H3K27ac_raw_allGenes.sh # 15402511 xxx
-sbatch scripts/matrix_TSS_10kb_NPC_H3K27me3_H3K4me3_raw_allGenes.sh # 15402602 xxx
+sbatch scripts/matrix_TSS_10kb_NPC_raw_allGenes.sh # 15402417 ok
+sbatch scripts/matrix_TSS_5kb_NPC_H3K27ac_raw_allGenes.sh # 15402511 ok
+sbatch scripts/matrix_TSS_10kb_NPC_H3K27me3_H3K4me3_raw_allGenes.sh # 15402602 ok
 
 
 ## 53dN
-sbatch scripts/matrix_TSS_10kb_53dN_raw_allGenes.sh # 15402437 xxx
-sbatch scripts/matrix_TSS_5kb_53dN_H3K27ac_raw_allGenes.sh # 15402531 xxx
-sbatch scripts/matrix_TSS_10kb_53dN_H3K27me3_H3K4me3_raw_allGenes.sh # 15402648 xxx
+sbatch scripts/matrix_TSS_10kb_53dN_raw_allGenes.sh # 15402437 ok
+sbatch scripts/matrix_TSS_5kb_53dN_H3K27ac_raw_allGenes.sh # 15402531 ok
+sbatch scripts/matrix_TSS_10kb_53dN_H3K27me3_H3K4me3_raw_allGenes.sh # 15402648 ok
+
+
+# Akizu and Ciceri H3K27me3, H3K4me3, IGG
+sbatch scripts/matrix_TSS_10kb_H3K27me3_H3K4me3_CutRun001008_Ciceri_raw_allGenes.sh # 15432941 xxx
+
 
 ```
 
 
---> xxx
+--> signal is very poor for H3K27ac in NPC as compared to 53dN, notably for R1, almost like IGG...
 
 
 
