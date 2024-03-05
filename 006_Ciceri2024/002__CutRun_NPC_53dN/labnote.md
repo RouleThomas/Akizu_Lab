@@ -289,7 +289,7 @@ sbatch scripts/matrix_TSS_10kb_53dN_H3K27me3_H3K4me3_raw_allGenes.sh # 15402648 
 
 
 # Akizu and Ciceri H3K27me3, H3K4me3, IGG
-sbatch scripts/matrix_TSS_10kb_H3K27me3_H3K4me3_CutRun001008_Ciceri_raw_allGenes.sh # 15432941 xxx
+sbatch scripts/matrix_TSS_10kb_H3K27me3_H3K4me3_CutRun001008_Ciceri_raw_allGenes.sh # 15432941 ok
 
 
 ```
