@@ -35,6 +35,10 @@ conda activate macs2
 # AB per AB
 sbatch scripts/macs2_broad_H3K27me3.sh # 13878669 ok
 sbatch scripts/macs2_broad_H3K4me3.sh # 13878889 ok
+
+# pool
+sbatch scripts/macs2_broad_H3K27me3_pool.sh # 15518679 ok
+sbatch scripts/macs2_broad_H3K4me3_pool.sh # 15518691 ok
 ```
 
 
@@ -407,6 +411,16 @@ Comparing **raw vs DiffBind_TMM vs THOR** on IGV
 - H3K27me3: THOR is the cleaner, replicates looks more similar 
 
 
+Generate median tracks:
+```bash
+conda activate BedToBigwig
+
+sbatch scripts/bigwigmerge_THOR.sh # 15516016 ok
+sbatch scripts/bigwigmerge_THOR_H3K4me3.sh # 15517815 ok
+
+```
+
+
 
 ## Filter THOR peaks (qvalue)
 
@@ -537,6 +551,32 @@ sbatch --dependency=afterany:14461837 scripts/matrix_TSS_10kb_H3K4me3_DiffBindTM
 sbatch --dependency=afterany:14462899:14462901 scripts/matrix_TSS_10kb_H3K4me3_THOR_allGenes.sh # 14472822 ok
 
 
+# median tracks
+## all genes
+sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_allGenes.sh # 15516179 xxxx
+sbatch scripts/matrix_TSS_5kb_H3K27me3_median_THOR_allGenes.sh # 15516394 xxxx
+sbatch scripts/matrix_TSS_5kb_H3K4me3_median_THOR_allGenes.sh # 15516489 xxx
+sbatch scripts/matrix_TSS_2kb_H3K4me3_median_THOR_allGenes.sh # 15518489 xxxx
+
+
+## only genes with peak in WT and or KO qval 2.3
+sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks.sh # 15523775 ok
+sbatch scripts/matrix_TSS_5kb_H3K27me3_median_THOR_genePeaks.sh # 15523776 ok
+sbatch scripts/matrix_TSS_5kb_H3K4me3_median_THOR_genePeaks.sh # 15523800 ok
+sbatch scripts/matrix_TSS_2kb_H3K4me3_median_THOR_genePeaks.sh # 15523832 ok
+
+## only genes with peak in WT and or KO qval 3
+sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_macs2q3.sh # 15529967 xxx
+sbatch scripts/matrix_TSS_5kb_H3K27me3_median_THOR_genePeaks_macs2q3.sh # 15529966 xxx
+#XX sbatch scripts/matrix_TSS_5kb_H3K4me3_median_THOR_genePeaks_macs2q3.sh #  xxx
+#XX sbatch scripts/matrix_TSS_2kb_H3K4me3_median_THOR_genePeaks_macs2q3.sh #  xxx
+
+## only genes with peak in WT and or KO qval 4
+sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_macs2q4.sh # 15529977 xxx
+sbatch scripts/matrix_TSS_5kb_H3K27me3_median_THOR_genePeaks_macs2q4.sh # 15529988 xxx
+#XX sbatch scripts/matrix_TSS_5kb_H3K4me3_median_THOR_genePeaks_macs2q4.sh #  xxx
+#XX sbatch scripts/matrix_TSS_2kb_H3K4me3_median_THOR_genePeaks_macs2q4.sh #  xxx
+
 # pearson corr plots
 sbatch scripts/multiBigwigSummary_H3K27me3_raw.sh # 14480543 ok fail erase; 14554827 ok
 sbatch scripts/multiBigwigSummary_H3K27me3_DiffBindTMM.sh # 14481446 ok fail erase; 14554967 ok
@@ -603,9 +643,15 @@ sbatch scripts/matrix_TSS_10kb_H3K27me3_THOR_q40_peak.sh # 14898622 ok
 sbatch scripts/matrix_TSS_5kb_H3K4me3_THOR_q20_peak.sh # 14898678 ok
 sbatch scripts/matrix_TSS_5kb_H3K4me3_THOR_q30_peak.sh # 14898706 ok
 
+### with median not separating up and down
+sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_q30_peak.sh # 15530182 xxx
+sbatch scripts/matrix_TSS_5kb_H3K4me3_median_THOR_q20_peak.sh # 15530189 xxx
+
+
 
 # GENE
-### create gtf of diff bound genes
+### create gtf from gene list
+#### create gtf of diff bound genes 
 #### Modify the .txt file that list all genes so that it match gtf structure
 
 ## Modify the .txt file that list all genes so that it match gtf structure
@@ -687,6 +733,11 @@ H3K27me3_KO_005 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2
 H3K27me3_KO_008 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/NPC_KO_H3K27me3_008_peaks.broadPeak') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
 
+H3K27me3_WT_pool = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval4/NPC_WT_H3K27me3_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+H3K27me3_KO_pool = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval4/NPC_KO_H3K27me3_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+
 ## H3K4me3
 H3K4me3_WT_005 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/NPC_WT_H3K4me3_005_peaks.broadPeak') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
@@ -697,6 +748,10 @@ H3K4me3_KO_005 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.
 H3K4me3_KO_008 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/NPC_KO_H3K4me3_008_peaks.broadPeak') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
 
+H3K4me3_WT_pool = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval4/NPC_WT_H3K4me3_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+H3K4me3_KO_pool = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval4/NPC_KO_H3K4me3_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
 
 # Tidy peaks 
 ## H3K27me3
@@ -706,14 +761,18 @@ H3K27me3_KO_005_gr = makeGRangesFromDataFrame(H3K27me3_KO_005,keep.extra.columns
 H3K27me3_KO_008_gr = makeGRangesFromDataFrame(H3K27me3_KO_008,keep.extra.columns=TRUE)
 gr_list <- list(H3K27me3_WT_005=H3K27me3_WT_005_gr, H3K27me3_WT_008=H3K27me3_WT_008_gr,  H3K27me3_KO_005=H3K27me3_KO_005_gr, H3K27me3_KO_008=H3K27me3_KO_008_gr)
 
+H3K27me3_WT_pool_gr = makeGRangesFromDataFrame(H3K27me3_WT_pool,keep.extra.columns=TRUE)
+H3K27me3_KO_pool_gr = makeGRangesFromDataFrame(H3K27me3_KO_pool,keep.extra.columns=TRUE)
+gr_list <- list(H3K27me3_WT_pool=H3K27me3_WT_pool_gr, H3K27me3_KO_pool=H3K27me3_KO_pool_gr)
+
 # Export Gene peak assignemnt
 peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
                        tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
 ## plots
-pdf("output/ChIPseeker/plotAnnoBar_H3K27me3.pdf", width = 8, height = 3)
+pdf("output/ChIPseeker/plotAnnoBar_H3K27me3_pool.pdf", width = 8, height = 3)
 plotAnnoBar(peakAnnoList)
 dev.off()
-pdf("output/ChIPseeker/plotDistToTSS_H3K27me3.pdf", width = 8, height = 3)
+pdf("output/ChIPseeker/plotDistToTSS_H3K27me3_pool.pdf", width = 8, height = 3)
 plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
 dev.off()
 
@@ -723,22 +782,35 @@ H3K27me3_WT_008_annot <- as.data.frame(peakAnnoList[["H3K27me3_WT_008"]]@anno)
 H3K27me3_KO_005_annot <- as.data.frame(peakAnnoList[["H3K27me3_KO_005"]]@anno)
 H3K27me3_KO_008_annot <- as.data.frame(peakAnnoList[["H3K27me3_KO_008"]]@anno)
 
+H3K27me3_WT_pool_annot <- as.data.frame(peakAnnoList[["H3K27me3_WT_pool"]]@anno)
+H3K27me3_KO_pool_annot <- as.data.frame(peakAnnoList[["H3K27me3_KO_pool"]]@anno)
+
 ## Convert entrez gene IDs to gene symbols
 H3K27me3_WT_005_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_WT_005_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
 H3K27me3_WT_005_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_WT_005_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
 H3K27me3_WT_008_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_WT_008_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
 H3K27me3_WT_008_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_WT_008_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
 
+H3K27me3_WT_pool_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_WT_pool_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+H3K27me3_WT_pool_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_WT_pool_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
 H3K27me3_KO_005_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_KO_005_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
 H3K27me3_KO_005_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_KO_005_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
 H3K27me3_KO_008_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_KO_008_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
 H3K27me3_KO_008_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_KO_008_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+H3K27me3_KO_pool_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_KO_pool_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+H3K27me3_KO_pool_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_KO_pool_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
 
 ## Save output table
 write.table(H3K27me3_WT_005_annot, file="output/ChIPseeker/annotation_macs2_H3K27me3_WT_005_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 write.table(H3K27me3_WT_008_annot, file="output/ChIPseeker/annotation_macs2_H3K27me3_WT_008_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 write.table(H3K27me3_KO_005_annot, file="output/ChIPseeker/annotation_macs2_H3K27me3_KO_005_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 write.table(H3K27me3_KO_008_annot, file="output/ChIPseeker/annotation_macs2_H3K27me3_KO_008_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K27me3_WT_pool_annot, file="output/ChIPseeker/annotation_macs2_H3K27me3_WT_pool_qval4.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K27me3_KO_pool_annot, file="output/ChIPseeker/annotation_macs2_H3K27me3_KO_pool_qval4.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 
 ## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
 H3K27me3_WT_005_annot_promoterAnd5 = tibble(H3K27me3_WT_005_annot) %>%
@@ -748,6 +820,11 @@ H3K27me3_WT_008_annot_promoterAnd5 = tibble(H3K27me3_WT_008_annot) %>%
 H3K27me3_KO_005_annot_promoterAnd5 = tibble(H3K27me3_KO_005_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
 H3K27me3_KO_008_annot_promoterAnd5 = tibble(H3K27me3_KO_008_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+H3K27me3_WT_pool_annot_promoterAnd5 = tibble(H3K27me3_WT_pool_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+H3K27me3_KO_pool_annot_promoterAnd5 = tibble(H3K27me3_KO_pool_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
 
 ### Save output gene lists
@@ -761,6 +838,13 @@ H3K27me3_KO_005_annot_promoterAnd5_geneSymbol = H3K27me3_KO_005_annot_promoterAn
     dplyr::select(geneSymbol) %>%
     unique()
 H3K27me3_KO_008_annot_promoterAnd5_geneSymbol = H3K27me3_KO_008_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+H3K27me3_WT_pool_annot_promoterAnd5_geneSymbol = H3K27me3_WT_pool_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+H3K27me3_KO_pool_annot_promoterAnd5_geneSymbol = H3K27me3_KO_pool_annot_promoterAnd5 %>%
     dplyr::select(geneSymbol) %>%
     unique()
 
@@ -786,7 +870,16 @@ write.table(H3K27me3_KO_008_annot_promoterAnd5_geneSymbol, file = "output/ChIPse
             col.names = FALSE, 
             row.names = FALSE)
 
-
+write.table(H3K27me3_WT_pool_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_H3K27me3_WT_pool_qval4_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(H3K27me3_KO_pool_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_H3K27me3_KO_pool_qval4_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
 
 
 
@@ -798,14 +891,18 @@ H3K4me3_KO_005_gr = makeGRangesFromDataFrame(H3K4me3_KO_005,keep.extra.columns=T
 H3K4me3_KO_008_gr = makeGRangesFromDataFrame(H3K4me3_KO_008,keep.extra.columns=TRUE)
 gr_list <- list(H3K4me3_WT_005=H3K4me3_WT_005_gr, H3K4me3_WT_008=H3K4me3_WT_008_gr,  H3K4me3_KO_005=H3K4me3_KO_005_gr,  H3K4me3_KO_008=H3K4me3_KO_008_gr)
 
+H3K4me3_WT_pool_gr = makeGRangesFromDataFrame(H3K4me3_WT_pool,keep.extra.columns=TRUE)
+H3K4me3_KO_pool_gr = makeGRangesFromDataFrame(H3K4me3_KO_pool,keep.extra.columns=TRUE)
+gr_list <- list(H3K4me3_WT_pool=H3K4me3_WT_pool_gr, H3K4me3_KO_pool=H3K4me3_KO_pool_gr)
+
 # Export Gene peak assignemnt
 peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
                        tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
 ## plots
-pdf("output/ChIPseeker/plotAnnoBar_H3K4me3.pdf", width = 8, height = 3)
+pdf("output/ChIPseeker/plotAnnoBar_H3K4me3_pool.pdf", width = 8, height = 3)
 plotAnnoBar(peakAnnoList)
 dev.off()
-pdf("output/ChIPseeker/plotDistToTSS_H3K4me3.pdf", width = 8, height = 3)
+pdf("output/ChIPseeker/plotDistToTSS_H3K4me3_pool.pdf", width = 8, height = 3)
 plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
 dev.off()
 
@@ -815,22 +912,34 @@ H3K4me3_WT_008_annot <- as.data.frame(peakAnnoList[["H3K4me3_WT_008"]]@anno)
 H3K4me3_KO_005_annot <- as.data.frame(peakAnnoList[["H3K4me3_KO_005"]]@anno)
 H3K4me3_KO_008_annot <- as.data.frame(peakAnnoList[["H3K4me3_KO_008"]]@anno)
 
+H3K4me3_WT_pool_annot <- as.data.frame(peakAnnoList[["H3K4me3_WT_pool"]]@anno)
+H3K4me3_KO_pool_annot <- as.data.frame(peakAnnoList[["H3K4me3_KO_pool"]]@anno)
 ## Convert entrez gene IDs to gene symbols
 H3K4me3_WT_005_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K4me3_WT_005_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
 H3K4me3_WT_005_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K4me3_WT_005_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
 H3K4me3_WT_008_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K4me3_WT_008_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
 H3K4me3_WT_008_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K4me3_WT_008_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
 
+H3K4me3_WT_pool_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K4me3_WT_pool_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+H3K4me3_WT_pool_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K4me3_WT_pool_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+
 H3K4me3_KO_005_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K4me3_KO_005_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
 H3K4me3_KO_005_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K4me3_KO_005_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
 H3K4me3_KO_008_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K4me3_KO_008_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
 H3K4me3_KO_008_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K4me3_KO_008_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+H3K4me3_KO_pool_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K4me3_KO_pool_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+H3K4me3_KO_pool_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K4me3_KO_pool_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
 
 ## Save output table
 write.table(H3K4me3_WT_005_annot, file="output/ChIPseeker/annotation_macs2_H3K4me3_WT_005_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 write.table(H3K4me3_WT_008_annot, file="output/ChIPseeker/annotation_macs2_H3K4me3_WT_008_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 write.table(H3K4me3_KO_005_annot, file="output/ChIPseeker/annotation_macs2_H3K4me3_KO_005_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 write.table(H3K4me3_KO_008_annot, file="output/ChIPseeker/annotation_macs2_H3K4me3_KO_008_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K4me3_WT_pool_annot, file="output/ChIPseeker/annotation_macs2_H3K4me3_WT_pool_qval4.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K4me3_KO_pool_annot, file="output/ChIPseeker/annotation_macs2_H3K4me3_KO_pool_qval4.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 
 ## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
 H3K4me3_WT_005_annot_promoterAnd5 = tibble(H3K4me3_WT_005_annot) %>%
@@ -840,6 +949,11 @@ H3K4me3_WT_008_annot_promoterAnd5 = tibble(H3K4me3_WT_008_annot) %>%
 H3K4me3_KO_005_annot_promoterAnd5 = tibble(H3K4me3_KO_005_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
 H3K4me3_KO_008_annot_promoterAnd5 = tibble(H3K4me3_KO_008_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+H3K4me3_WT_pool_annot_promoterAnd5 = tibble(H3K4me3_WT_pool_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+H3K4me3_KO_pool_annot_promoterAnd5 = tibble(H3K4me3_KO_pool_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
 
 ### Save output gene lists
@@ -853,6 +967,13 @@ H3K4me3_KO_005_annot_promoterAnd5_geneSymbol = H3K4me3_KO_005_annot_promoterAnd5
     dplyr::select(geneSymbol) %>%
     unique()
 H3K4me3_KO_008_annot_promoterAnd5_geneSymbol = H3K4me3_KO_008_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+H3K4me3_WT_pool_annot_promoterAnd5_geneSymbol = H3K4me3_WT_pool_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+H3K4me3_KO_pool_annot_promoterAnd5_geneSymbol = H3K4me3_KO_pool_annot_promoterAnd5 %>%
     dplyr::select(geneSymbol) %>%
     unique()
 
@@ -878,13 +999,45 @@ write.table(H3K4me3_KO_008_annot_promoterAnd5_geneSymbol, file = "output/ChIPsee
             col.names = FALSE, 
             row.names = FALSE)
 
-
+write.table(H3K4me3_WT_pool_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_H3K4me3_WT_pool_qval4_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(H3K4me3_KO_pool_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_H3K4me3_KO_pool_qval4_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
 
 ```
+
 
 **NPC**:
 
 --> Export gene list (`output/ChIPseeker/annotation_macs2_H3K*me3_*_00*_qval2.30103_promoterAnd5_geneSymbol.txt`) to Online Venn diagram to check replicate homonegeity between `CutRun__005` and `CutRun__008`
+
+
+#### create gtf of gene with peak in WT and/or KO
+
+```bash
+# isolate all the genes bound with H3K27me3/H3K4me3 in WT and or KO
+cat output/ChIPseeker/annotation_macs2_H3K4me3_WT_pool_qval4_promoterAnd5_geneSymbol.txt output/ChIPseeker/annotation_macs2_H3K4me3_KO_pool_qval4_promoterAnd5_geneSymbol.txt | sort | uniq > output/ChIPseeker/annotation_macs2_H3K4me3_WTKO_pool_qval4_promoterAnd5_geneSymbol.txt
+
+cat output/ChIPseeker/annotation_macs2_H3K27me3_WT_pool_qval4_promoterAnd5_geneSymbol.txt output/ChIPseeker/annotation_macs2_H3K27me3_KO_pool_qval4_promoterAnd5_geneSymbol.txt | sort | uniq > output/ChIPseeker/annotation_macs2_H3K27me3_WTKO_pool_qval4_promoterAnd5_geneSymbol.txt
+
+### create gtf from gene list
+#### Modify the .txt file that list all genes so that it match gtf structure
+
+## Modify the .txt file that list all genes so that it match gtf structure
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_macs2_H3K4me3_WTKO_pool_qval4_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_macs2_H3K4me3_WTKO_pool_qval4_promoterAnd5_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_macs2_H3K27me3_WTKO_pool_qval4_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_macs2_H3K27me3_WTKO_pool_qval4_promoterAnd5_as_gtf_geneSymbol.txt
+## Filter the gtf
+grep -Ff output/ChIPseeker/annotation_macs2_H3K4me3_WTKO_pool_qval4_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_macs2_H3K4me3_WTKO_pool_qval4_Promoter_5.gtf
+grep -Ff output/ChIPseeker/annotation_macs2_H3K27me3_WTKO_pool_qval4_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_macs2_H3K27me3_WTKO_pool_qval4_Promoter_5.gtf
+
+
+```
 
 
 
