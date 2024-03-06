@@ -18,28 +18,13 @@ computeMatrix reference-point --referencePoint TSS \
 plotHeatmap -m output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks.gz \
     -out output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_heatmap_colorSmall.pdf \
     --samplesLabel "WT" "KO" \
-    --colorMap hot \
-    --whatToShow 'heatmap and colorbar' \
-    --zMax 20 20 \
-    --heatmapHeight 10 \
-    --heatmapWidth 2
-
-
-plotHeatmap -m output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks.gz \
-    -out output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_heatmap_colorSmall.pdf \
-    --samplesLabel "WT" "KO" \
-    --colorMap YlGnBu \
     --whatToShow 'heatmap and colorbar' \
     --heatmapHeight 10 \
-    --heatmapWidth 2
+    --heatmapWidth 2 \
+    --colorList grey,blue \
+    --colorNumber 2
 
-plotHeatmap -m output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks.gz \
-    -out output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_heatmap_colorSmall.pdf \
-    --samplesLabel "WT" "KO" \
-    --colorMap seismic \
-    --whatToShow 'heatmap and colorbar' \
-    --heatmapHeight 10 \
-    --heatmapWidth 2
+
 
 plotProfile -m output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks.gz \
     -out output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_profile.pdf \

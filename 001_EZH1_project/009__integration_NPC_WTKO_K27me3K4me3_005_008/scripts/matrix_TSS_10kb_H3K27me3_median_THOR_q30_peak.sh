@@ -24,3 +24,12 @@ plotHeatmap -m output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_q30_peak.gz
     --heatmapWidth 2
 
 
+plotHeatmap -m output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_q30_peak.gz \
+    -out output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_q30_peak_heatmap2.pdf \
+    --samplesLabel "WT" "KO" \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --colorList grey,blue,blue \
+    --colorNumber 3
+

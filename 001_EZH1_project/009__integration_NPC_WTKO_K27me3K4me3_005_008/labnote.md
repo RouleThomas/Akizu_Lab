@@ -553,29 +553,41 @@ sbatch --dependency=afterany:14462899:14462901 scripts/matrix_TSS_10kb_H3K4me3_T
 
 # median tracks
 ## all genes
-sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_allGenes.sh # 15516179 xxxx
-sbatch scripts/matrix_TSS_5kb_H3K27me3_median_THOR_allGenes.sh # 15516394 xxxx
-sbatch scripts/matrix_TSS_5kb_H3K4me3_median_THOR_allGenes.sh # 15516489 xxx
-sbatch scripts/matrix_TSS_2kb_H3K4me3_median_THOR_allGenes.sh # 15518489 xxxx
+sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_allGenes.sh # 15516179 ok
+sbatch scripts/matrix_TSS_5kb_H3K27me3_median_THOR_allGenes.sh # 15516394 ok
+sbatch scripts/matrix_TSS_5kb_H3K4me3_median_THOR_allGenes.sh # 15516489 ok
+sbatch scripts/matrix_TSS_2kb_H3K4me3_median_THOR_allGenes.sh # 15518489 ok
 
 
 ## only genes with peak in WT and or KO qval 2.3
-sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks.sh # 15523775 ok
+sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks.sh # 15523775 disapear so relaunche as 15649755 xxx
 sbatch scripts/matrix_TSS_5kb_H3K27me3_median_THOR_genePeaks.sh # 15523776 ok
 sbatch scripts/matrix_TSS_5kb_H3K4me3_median_THOR_genePeaks.sh # 15523800 ok
 sbatch scripts/matrix_TSS_2kb_H3K4me3_median_THOR_genePeaks.sh # 15523832 ok
 
 ## only genes with peak in WT and or KO qval 3
-sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_macs2q3.sh # 15529967 xxx
-sbatch scripts/matrix_TSS_5kb_H3K27me3_median_THOR_genePeaks_macs2q3.sh # 15529966 xxx
-#XX sbatch scripts/matrix_TSS_5kb_H3K4me3_median_THOR_genePeaks_macs2q3.sh #  xxx
-#XX sbatch scripts/matrix_TSS_2kb_H3K4me3_median_THOR_genePeaks_macs2q3.sh #  xxx
+sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_macs2q3.sh # 15529967 ok
+sbatch scripts/matrix_TSS_5kb_H3K27me3_median_THOR_genePeaks_macs2q3.sh # 15529966 ok
+#XX sbatch scripts/matrix_TSS_5kb_H3K4me3_median_THOR_genePeaks_macs2q3.sh #  x
+#XX sbatch scripts/matrix_TSS_2kb_H3K4me3_median_THOR_genePeaks_macs2q3.sh #  x
 
 ## only genes with peak in WT and or KO qval 4
-sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_macs2q4.sh # 15529977 xxx
-sbatch scripts/matrix_TSS_5kb_H3K27me3_median_THOR_genePeaks_macs2q4.sh # 15529988 xxx
-#XX sbatch scripts/matrix_TSS_5kb_H3K4me3_median_THOR_genePeaks_macs2q4.sh #  xxx
-#XX sbatch scripts/matrix_TSS_2kb_H3K4me3_median_THOR_genePeaks_macs2q4.sh #  xxx
+sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_macs2q4.sh # 15529977 ok
+sbatch scripts/matrix_TSS_5kb_H3K27me3_median_THOR_genePeaks_macs2q4.sh # 15529988 ok
+#XX sbatch scripts/matrix_TSS_5kb_H3K4me3_median_THOR_genePeaks_macs2q4.sh #  x
+#XX sbatch scripts/matrix_TSS_2kb_H3K4me3_median_THOR_genePeaks_macs2q4.sh #  x
+
+## only genes with peak in WT and or KO qval 5
+sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_macs2q5.sh # 15635588 ok
+
+## only genes with peak in WT and or KO qval 1.3
+sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_macs2q1.30103.sh # 15641090 xxx
+
+## only genes with peak in WT and or KO qval 8
+sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_macs2q8.sh # 15641207/15641968 fail not sure why; 15642663 xxx
+
+## only genes with peak in WT and or KO qval 10
+sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_macs2q10.sh # 15641571 xxx
 
 # pearson corr plots
 sbatch scripts/multiBigwigSummary_H3K27me3_raw.sh # 14480543 ok fail erase; 14554827 ok
@@ -616,7 +628,7 @@ sbatch scripts/multiBigwigSummary_H3K4me3_THOR_BEDgene.sh # 14552400 fail; 14556
 --> using gene only or whole genome do NOT change anything..
 
 
-## deepTools plot on THOR diff peak genes
+# deepTools plot on THOR diff peak genes
 
 
 - isolate peak gain / lost --> deepTool plot
@@ -644,8 +656,8 @@ sbatch scripts/matrix_TSS_5kb_H3K4me3_THOR_q20_peak.sh # 14898678 ok
 sbatch scripts/matrix_TSS_5kb_H3K4me3_THOR_q30_peak.sh # 14898706 ok
 
 ### with median not separating up and down
-sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_q30_peak.sh # 15530182 xxx
-sbatch scripts/matrix_TSS_5kb_H3K4me3_median_THOR_q20_peak.sh # 15530189 xxx
+sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_q30_peak.sh # 15530182 ok
+sbatch scripts/matrix_TSS_5kb_H3K4me3_median_THOR_q20_peak.sh # 15530189 ok
 
 
 
@@ -687,6 +699,11 @@ sbatch scripts/matrix_TSS_10kb_H3K27me3_THOR_q30_gene.sh # 14900049 fail gtf; 15
 sbatch scripts/matrix_TSS_10kb_H3K27me3_THOR_q40_gene.sh # 14900082 fail gtf; 15121985 ok
 sbatch scripts/matrix_TSS_5kb_H3K4me3_THOR_q20_gene.sh # 14900149 fail gtf; 15122006 ok
 sbatch scripts/matrix_TSS_5kb_H3K4me3_THOR_q30_gene.sh # 14900199 fail gtf; 15122007 ok
+
+### with median not separating up and down
+sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_q30_gene.sh # 15647072 ok
+sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_q40_gene.sh # 15647203 ok
+sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_q50_gene.sh # 15647306 ok
 
 ```
 
@@ -733,9 +750,9 @@ H3K27me3_KO_005 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2
 H3K27me3_KO_008 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/NPC_KO_H3K27me3_008_peaks.broadPeak') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
 
-H3K27me3_WT_pool = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval4/NPC_WT_H3K27me3_pool_peaks.broadPeak') ) %>%
+H3K27me3_WT_pool = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval10/NPC_WT_H3K27me3_pool_peaks.broadPeak') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
-H3K27me3_KO_pool = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval4/NPC_KO_H3K27me3_pool_peaks.broadPeak') ) %>%
+H3K27me3_KO_pool = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval10/NPC_KO_H3K27me3_pool_peaks.broadPeak') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
 
 ## H3K4me3
@@ -809,8 +826,8 @@ write.table(H3K27me3_WT_005_annot, file="output/ChIPseeker/annotation_macs2_H3K2
 write.table(H3K27me3_WT_008_annot, file="output/ChIPseeker/annotation_macs2_H3K27me3_WT_008_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 write.table(H3K27me3_KO_005_annot, file="output/ChIPseeker/annotation_macs2_H3K27me3_KO_005_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 write.table(H3K27me3_KO_008_annot, file="output/ChIPseeker/annotation_macs2_H3K27me3_KO_008_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(H3K27me3_WT_pool_annot, file="output/ChIPseeker/annotation_macs2_H3K27me3_WT_pool_qval4.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(H3K27me3_KO_pool_annot, file="output/ChIPseeker/annotation_macs2_H3K27me3_KO_pool_qval4.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K27me3_WT_pool_annot, file="output/ChIPseeker/annotation_macs2_H3K27me3_WT_pool_qval10.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K27me3_KO_pool_annot, file="output/ChIPseeker/annotation_macs2_H3K27me3_KO_pool_qval10.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 
 ## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
 H3K27me3_WT_005_annot_promoterAnd5 = tibble(H3K27me3_WT_005_annot) %>%
@@ -870,12 +887,12 @@ write.table(H3K27me3_KO_008_annot_promoterAnd5_geneSymbol, file = "output/ChIPse
             col.names = FALSE, 
             row.names = FALSE)
 
-write.table(H3K27me3_WT_pool_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_H3K27me3_WT_pool_qval4_promoterAnd5_geneSymbol.txt",
+write.table(H3K27me3_WT_pool_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_H3K27me3_WT_pool_qval10_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(H3K27me3_KO_pool_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_H3K27me3_KO_pool_qval4_promoterAnd5_geneSymbol.txt",
+write.table(H3K27me3_KO_pool_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_H3K27me3_KO_pool_qval10_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
@@ -1018,23 +1035,31 @@ write.table(H3K4me3_KO_pool_annot_promoterAnd5_geneSymbol, file = "output/ChIPse
 --> Export gene list (`output/ChIPseeker/annotation_macs2_H3K*me3_*_00*_qval2.30103_promoterAnd5_geneSymbol.txt`) to Online Venn diagram to check replicate homonegeity between `CutRun__005` and `CutRun__008`
 
 
-#### create gtf of gene with peak in WT and/or KO
+# create gtf of gene with peak in WT and/or KO
 
 ```bash
 # isolate all the genes bound with H3K27me3/H3K4me3 in WT and or KO
 cat output/ChIPseeker/annotation_macs2_H3K4me3_WT_pool_qval4_promoterAnd5_geneSymbol.txt output/ChIPseeker/annotation_macs2_H3K4me3_KO_pool_qval4_promoterAnd5_geneSymbol.txt | sort | uniq > output/ChIPseeker/annotation_macs2_H3K4me3_WTKO_pool_qval4_promoterAnd5_geneSymbol.txt
 
-cat output/ChIPseeker/annotation_macs2_H3K27me3_WT_pool_qval4_promoterAnd5_geneSymbol.txt output/ChIPseeker/annotation_macs2_H3K27me3_KO_pool_qval4_promoterAnd5_geneSymbol.txt | sort | uniq > output/ChIPseeker/annotation_macs2_H3K27me3_WTKO_pool_qval4_promoterAnd5_geneSymbol.txt
+cat output/ChIPseeker/annotation_macs2_H3K27me3_WT_pool_qval8_promoterAnd5_geneSymbol.txt output/ChIPseeker/annotation_macs2_H3K27me3_KO_pool_qval8_promoterAnd5_geneSymbol.txt | sort | uniq > output/ChIPseeker/annotation_macs2_H3K27me3_WTKO_pool_qval8_promoterAnd5_geneSymbol.txt
+
 
 ### create gtf from gene list
 #### Modify the .txt file that list all genes so that it match gtf structure
 
 ## Modify the .txt file that list all genes so that it match gtf structure
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_macs2_H3K4me3_WTKO_pool_qval4_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_macs2_H3K4me3_WTKO_pool_qval4_promoterAnd5_as_gtf_geneSymbol.txt
-sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_macs2_H3K27me3_WTKO_pool_qval4_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_macs2_H3K27me3_WTKO_pool_qval4_promoterAnd5_as_gtf_geneSymbol.txt
+
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_macs2_H3K27me3_WTKO_pool_qval8_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_macs2_H3K27me3_WTKO_pool_qval8_promoterAnd5_as_gtf_geneSymbol.txt
+
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_THOR_H3K27me3_q30_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_THOR_H3K27me3_q30_promoterAnd5_as_gtf_geneSymbol.txt
+
 ## Filter the gtf
 grep -Ff output/ChIPseeker/annotation_macs2_H3K4me3_WTKO_pool_qval4_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_macs2_H3K4me3_WTKO_pool_qval4_Promoter_5.gtf
-grep -Ff output/ChIPseeker/annotation_macs2_H3K27me3_WTKO_pool_qval4_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_macs2_H3K27me3_WTKO_pool_qval4_Promoter_5.gtf
+
+grep -Ff output/ChIPseeker/annotation_macs2_H3K27me3_WTKO_pool_qval8_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_macs2_H3K27me3_WTKO_pool_qval8_Promoter_5.gtf
+
+grep -Ff output/ChIPseeker/annotation_THOR_H3K27me3_q30_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_THOR_H3K27me3_q30_Promoter_5.gtf
 
 
 ```
@@ -1077,6 +1102,9 @@ H3K27me3_q30_pos = as_tibble(read.table('output/THOR/THOR_NPC_WTvsKO_H3K27me3/TH
 H3K27me3_q30_neg = as_tibble(read.table('output/THOR/THOR_NPC_WTvsKO_H3K27me3/THOR_qval30.bed') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, FC=V16) %>%
     filter(FC <1) 
+H3K27me3_q30 = as_tibble(read.table('output/THOR/THOR_NPC_WTvsKO_H3K27me3/THOR_qval30.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, FC=V16)
+
 ## H3K27me3 _ q40
 H3K27me3_q40_pos = as_tibble(read.table('output/THOR/THOR_NPC_WTvsKO_H3K27me3/THOR_qval40.bed') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, FC=V16) %>%
@@ -1084,6 +1112,9 @@ H3K27me3_q40_pos = as_tibble(read.table('output/THOR/THOR_NPC_WTvsKO_H3K27me3/TH
 H3K27me3_q40_neg = as_tibble(read.table('output/THOR/THOR_NPC_WTvsKO_H3K27me3/THOR_qval40.bed') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, FC=V16) %>%
     filter(FC <1) 
+H3K27me3_q40 = as_tibble(read.table('output/THOR/THOR_NPC_WTvsKO_H3K27me3/THOR_qval40.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, FC=V16)
+
 ## H3K27me3 _ q50
 H3K27me3_q50_pos = as_tibble(read.table('output/THOR/THOR_NPC_WTvsKO_H3K27me3/THOR_qval50.bed') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, FC=V16) %>%
@@ -1091,7 +1122,8 @@ H3K27me3_q50_pos = as_tibble(read.table('output/THOR/THOR_NPC_WTvsKO_H3K27me3/TH
 H3K27me3_q50_neg = as_tibble(read.table('output/THOR/THOR_NPC_WTvsKO_H3K27me3/THOR_qval50.bed') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, FC=V16) %>%
     filter(FC <1) 
-
+H3K27me3_q50 = as_tibble(read.table('output/THOR/THOR_NPC_WTvsKO_H3K27me3/THOR_qval50.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, FC=V16)
 
 
 # Tidy peaks 
@@ -1104,6 +1136,12 @@ H3K27me3_q50_pos_gr = makeGRangesFromDataFrame(H3K27me3_q50_pos,keep.extra.colum
 H3K27me3_q50_neg_gr = makeGRangesFromDataFrame(H3K27me3_q50_neg,keep.extra.columns=TRUE)
 gr_list <- list(H3K27me3_q30_pos=H3K27me3_q30_pos_gr, H3K27me3_q30_neg=H3K27me3_q30_neg_gr,  H3K27me3_q40_pos=H3K27me3_q40_pos_gr, H3K27me3_q40_neg=H3K27me3_q40_neg_gr,
 H3K27me3_q50_pos=H3K27me3_q50_pos_gr, H3K27me3_q50_neg=H3K27me3_q50_neg_gr)
+
+H3K27me3_q30_gr = makeGRangesFromDataFrame(H3K27me3_q30,keep.extra.columns=TRUE)
+H3K27me3_q40_gr = makeGRangesFromDataFrame(H3K27me3_q40,keep.extra.columns=TRUE)
+H3K27me3_q50_gr = makeGRangesFromDataFrame(H3K27me3_q50,keep.extra.columns=TRUE)
+gr_list <- list(H3K27me3_q30=H3K27me3_q30_gr, H3K27me3_q40=H3K27me3_q40_gr,  H3K27me3_q50=H3K27me3_q50_gr)
+
 
 # Export Gene peak assignemnt
 peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
@@ -1124,6 +1162,11 @@ H3K27me3_q40_neg_annot <- as.data.frame(peakAnnoList[["H3K27me3_q40_neg"]]@anno)
 H3K27me3_q50_pos_annot <- as.data.frame(peakAnnoList[["H3K27me3_q50_pos"]]@anno)
 H3K27me3_q50_neg_annot <- as.data.frame(peakAnnoList[["H3K27me3_q50_neg"]]@anno)
 
+H3K27me3_q30_annot <- as.data.frame(peakAnnoList[["H3K27me3_q30"]]@anno)
+H3K27me3_q40_annot <- as.data.frame(peakAnnoList[["H3K27me3_q40"]]@anno)
+H3K27me3_q50_annot <- as.data.frame(peakAnnoList[["H3K27me3_q50"]]@anno)
+
+
 ## Convert entrez gene IDs to gene symbols
 H3K27me3_q30_pos_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_q30_pos_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
 H3K27me3_q30_pos_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_q30_pos_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
@@ -1140,6 +1183,12 @@ H3K27me3_q50_pos_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_q50_pos_anno
 H3K27me3_q50_neg_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_q50_neg_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
 H3K27me3_q50_neg_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_q50_neg_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
 
+H3K27me3_q30_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_q30_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+H3K27me3_q30_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_q30_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+H3K27me3_q40_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_q40_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+H3K27me3_q40_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_q40_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+H3K27me3_q50_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_q50_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+H3K27me3_q50_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_q50_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
 
 
 ## Save output table
@@ -1149,6 +1198,10 @@ write.table(H3K27me3_q40_pos_annot, file="output/ChIPseeker/annotation_THOR_H3K2
 write.table(H3K27me3_q40_neg_annot, file="output/ChIPseeker/annotation_THOR_H3K27me3_q40_neg.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 write.table(H3K27me3_q50_pos_annot, file="output/ChIPseeker/annotation_THOR_H3K27me3_q50_pos.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 write.table(H3K27me3_q50_neg_annot, file="output/ChIPseeker/annotation_THOR_H3K27me3_q50_neg.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
+write.table(H3K27me3_q30_annot, file="output/ChIPseeker/annotation_THOR_H3K27me3_q30.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K27me3_q40_annot, file="output/ChIPseeker/annotation_THOR_H3K27me3_q40.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K27me3_q50_annot, file="output/ChIPseeker/annotation_THOR_H3K27me3_q50.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 
 
 ## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
@@ -1163,6 +1216,13 @@ H3K27me3_q40_neg_annot_promoterAnd5 = tibble(H3K27me3_q40_neg_annot) %>%
 H3K27me3_q50_pos_annot_promoterAnd5 = tibble(H3K27me3_q50_pos_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
 H3K27me3_q50_neg_annot_promoterAnd5 = tibble(H3K27me3_q50_neg_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+H3K27me3_q30_annot_promoterAnd5 = tibble(H3K27me3_q30_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+H3K27me3_q40_annot_promoterAnd5 = tibble(H3K27me3_q40_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+H3K27me3_q50_annot_promoterAnd5 = tibble(H3K27me3_q50_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
 
 
@@ -1187,6 +1247,15 @@ H3K27me3_q50_neg_annot_promoterAnd5_geneSymbol = H3K27me3_q50_neg_annot_promoter
     dplyr::select(geneSymbol) %>%
     unique()
 
+H3K27me3_q30_annot_promoterAnd5_geneSymbol = H3K27me3_q30_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+H3K27me3_q40_annot_promoterAnd5_geneSymbol = H3K27me3_q40_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+H3K27me3_q50_annot_promoterAnd5_geneSymbol = H3K27me3_q50_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
 
 
 write.table(H3K27me3_q30_pos_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol.txt",
@@ -1215,6 +1284,22 @@ write.table(H3K27me3_q50_pos_annot_promoterAnd5_geneSymbol, file = "output/ChIPs
             col.names = FALSE, 
             row.names = FALSE)
 write.table(H3K27me3_q50_neg_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_THOR_H3K27me3_q50_neg_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+write.table(H3K27me3_q30_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_THOR_H3K27me3_q30_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(H3K27me3_q40_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_THOR_H3K27me3_q40_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(H3K27me3_q50_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_THOR_H3K27me3_q50_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 

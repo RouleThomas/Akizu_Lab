@@ -24,6 +24,30 @@ plotHeatmap -m output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_m
     --heatmapWidth 2
 
 
+
+
+plotHeatmap -m output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_macs2q4.gz \
+    -out output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_macs2q4_heatmap_colorSmall.pdf \
+    --samplesLabel "WT" "KO" \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --colorList grey,blue \
+    --colorNumber 2
+
+
+plotHeatmap -m output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_macs2q4.gz \
+    -out output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_macs2q4_heatmap_colorSmall.pdf \
+    --samplesLabel "WT" "KO" \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --colorList grey,blue \
+    --colorNumber 2 \
+    --boxAroundHeatmaps no
+
+
+
 plotProfile -m output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_macs2q4.gz \
     -out output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_macs2q4_profile.pdf \
     --samplesLabel "WT" "KO" \

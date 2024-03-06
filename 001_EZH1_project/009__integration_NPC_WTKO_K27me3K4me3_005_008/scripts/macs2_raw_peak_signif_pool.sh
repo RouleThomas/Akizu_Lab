@@ -8,7 +8,7 @@ macs2_out="output/macs2/broad"
 blacklist="../../Master/meta/hg38-blacklist.v2.bed"
 
 # average basepair q-value threshold (log5)
-q=5
+q=10
 
 # make output directory
 mkdir -p ${macs2_out}/broad_noMask_qval${q}
