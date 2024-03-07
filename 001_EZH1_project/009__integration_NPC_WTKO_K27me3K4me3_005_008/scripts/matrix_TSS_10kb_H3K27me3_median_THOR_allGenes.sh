@@ -21,8 +21,38 @@ plotHeatmap -m output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_allGenes.gz
     --colorMap bwr \
     --whatToShow 'heatmap and colorbar' \
     --heatmapHeight 10 \
+    --heatmapWidth 2
+
+
+plotHeatmap -m output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_allGenes.gz \
+    -out output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_allGenes_heatmap2.pdf \
+    --samplesLabel "WT" "KO" \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
     --heatmapWidth 2 \
-    --zMax 20
+    --colorList grey,blue \
+    --colorNumber 2
+
+
+plotHeatmap -m output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_allGenes.gz \
+    -out output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_allGenes_heatmap3.pdf \
+    --samplesLabel "WT" "KO" \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --colorList grey,blue,blue,blue \
+    --colorNumber 4
+
+
+plotHeatmap -m output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_allGenes.gz \
+    -out output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_allGenes_heatmap4.pdf \
+    --samplesLabel "WT" "KO" \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --colorList grey,blue,blue,blue,blue,blue,blue,blue,blue,blue \
+    --colorNumber 10
+
 
 
 plotProfile -m output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_allGenes.gz \

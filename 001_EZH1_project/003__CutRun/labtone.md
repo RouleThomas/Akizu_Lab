@@ -7739,6 +7739,8 @@ sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_HET_Down.sh # 1334
 sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_HET_Up.sh # 1334143 ok
 sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_KO_Down.sh # 1334144 ok
 sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_KO_Up.sh # 1334826 ok
+
+
 ```
 *NOTE: I had to bedtools sort the `meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique_THOR_qval10_DownHET_UpKO_sort.gtf` to avoid `IndexError: list index out of range` error*
 
@@ -7755,6 +7757,44 @@ sbatch scripts/matrix_gene_1kb_DiffBind_TMM_noIntergenic_DEGs_KO_Up.sh # 1334826
 --> DEGs opposite behavior looks great ! Both normalization perform well. Maybe THOR-scaled a bit more striking
 
 Overall, **THOR-bigwig looks cleaner (more smooth) and show pattern more in agreement with expression and diff. bound sites**
+
+
+
+### deeptools plot to hihglight WT vs KO increase H3K27me3 (meeting Naiara 20240305):
+- all genes with peak in WT and or KO (macs2 peaks; prefered used qval2.3 as in `CutRun__009`)
+- all diff. peaks WT vs KO (THOR; preferred used qval30 as in `CutRun__009`) 
+
+Generate gtf file from gene list; start with gene with peak in promoter (qval macs2 2.3):
+
+```bash
+# isolate all the genes bound with H3K27me3/H3K4me3 in WT and or KO
+cat output/ChIPseeker/annotation_WT_Promoter_5_geneSymbol.txt output/ChIPseeker/annotation_KO_Promoter_5_geneSymbol.txt | sort | uniq > output/ChIPseeker/annotation_WTKO_Promoter_5_geneSymbol.txt
+
+### create gtf from gene list
+#### Modify the .txt file that list all genes so that it match gtf structure
+## Modify the .txt file that list all genes so that it match gtf structure
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_WTKO_Promoter_5_geneSymbol.txt > output/ChIPseeker/annotation_WTKO_Promoter_5_as_gtf_geneSymbol.txt
+
+## Filter the gtf
+grep -Ff output/ChIPseeker/annotation_WTKO_Promoter_5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_macs2_H3K27me3_WTKO_pool_qval2.30103_Promoter_5.gtf
+
+
+
+# deeptool plots
+## only genes with peak in WT and or KO qval 2.3
+sbatch scripts/matrix_TSS_10kb_WTvsKO_H3K27me3_median_THOR_genePeaks_macs2q2.30103.sh # 15694080 ok
+## THOR diff peaks
+### with median not separating up and down
+sbatch scripts/matrix_TSS_10kb_WTvsKO_H3K27me3_median_THOR_q15_peak.sh # 15694324 ok
+## all genes
+sbatch scripts/matrix_TSS_10kb_WTvsKO_H3K27me3_median_THOR_allGenes.sh # 15696295 xxx
+
+```
+
+*NOTE: qval15 was defined as optimal for THOR*
+
+
+
 
 
 #### Put together CutRun and RNAseq
@@ -8450,7 +8490,7 @@ sbatch --dependency=afterany:49489 scripts/matrix_gene_1kb_DiffBind_TMM_subtract
 
 
 
-# deepTool plots
+### deepTool plots
 
 CutRun with RNAseq as heatmap profile:
 

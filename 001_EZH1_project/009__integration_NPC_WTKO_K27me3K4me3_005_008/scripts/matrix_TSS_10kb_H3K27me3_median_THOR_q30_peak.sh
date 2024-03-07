@@ -30,6 +30,6 @@ plotHeatmap -m output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_q30_peak.gz
     --whatToShow 'heatmap and colorbar' \
     --heatmapHeight 10 \
     --heatmapWidth 2 \
-    --colorList grey,blue,blue \
-    --colorNumber 3
+    --colorList grey,blue,blue,blue \
+    --colorNumber 4
 
