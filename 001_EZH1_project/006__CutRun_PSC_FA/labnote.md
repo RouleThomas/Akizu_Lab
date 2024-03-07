@@ -89,6 +89,23 @@ sbatch scripts/bowtie2_3.sh # 6678383 ok
 --> Looks good
 
 
+Mapping on E coli --> TO DO LATER! 
+
+```bash
+conda activate bowtie2
+
+sbatch scripts/bowtie2_MG1655_1.sh # 15829778 xxx
+sbatch scripts/bowtie2_MG1655_2.sh # 15829779 xxx
+sbatch scripts/bowtie2_MG1655_3.sh # 15829786 xxx
+
+```
+
+--> between 0.5 - 2% uniquely aligned reads (not a lot..; previously `005__CutRun` 10% (in `003__CutRun` was less than 1%) )
+
+
+
+
+
 ## Quality control metrics
 Quality control plot (total read before trimming/ total read after trimming/ uniquely aligned reads)
 
@@ -156,11 +173,14 @@ Let's do the same for E coli MG1655 spike in samples:
 ```bash
 conda activate bowtie2
 
-sbatch scripts/samtools_MG1655_unique_1.sh # xxx
-sbatch scripts/samtools_MG1655_unique_2.sh # xxx
-sbatch scripts/samtools_MG1655_unique_3.sh # xxx
-
+sbatch --dependency=afterany:15829778 scripts/samtools_MG1655_unique_1.sh # 15829889 xxx
+sbatch --dependency=afterany:15829779 scripts/samtools_MG1655_unique_2.sh # 15829890 xxx
+sbatch --dependency=afterany:15829786 scripts/samtools_MG1655_unique_3.sh # 15829891 xxx
 ```
+
+
+XXXXXXXXXXXXX i am here pursue below and do like 008 where i do the e coli spike calcul xxxxxxxxxxxxx
+
 
 --> More information on this step in the `005__CutRun` labnote
 

@@ -5066,7 +5066,7 @@ sbatch scripts/matrix_TSS_1kb_THOR_qval15_HET_Gain_DEG_Up.sh # 4089606 ok
 sbatch scripts/matrix_TSS_1kb_THOR_allGenes.sh # 4159000 ok # TSS and TES
 sbatch scripts/matrix_TSS_2kb_THOR_allGenes.sh # 4159013 ok # TSS and TES
 sbatch scripts/matrix_TSS_5kb_THOR_allGenes.sh # 4159030 ok # TSS and TES
-sbatch scripts/matrix_TSS_10kb_THOR_allGenes.sh # 4159040 xxx # TSS and TES
+sbatch scripts/matrix_TSS_10kb_THOR_allGenes.sh # 4159040 ok # TSS and TES
 sbatch scripts/matrix_TSS2_500bp_THOR_allGenes.sh # 4166961 ok # TSS only
 sbatch scripts/matrix_TSS2_1kb_THOR_allGenes.sh # 4166982 ok # TSS only
 sbatch scripts/matrix_TSS2_2kb_THOR_allGenes.sh # 4167006 ok
@@ -7787,7 +7787,7 @@ sbatch scripts/matrix_TSS_10kb_WTvsKO_H3K27me3_median_THOR_genePeaks_macs2q2.301
 ### with median not separating up and down
 sbatch scripts/matrix_TSS_10kb_WTvsKO_H3K27me3_median_THOR_q15_peak.sh # 15694324 ok
 ## all genes
-sbatch scripts/matrix_TSS_10kb_WTvsKO_H3K27me3_median_THOR_allGenes.sh # 15696295 xxx
+sbatch scripts/matrix_TSS_10kb_WTvsKO_H3K27me3_median_THOR_allGenes.sh # 15696295 ok
 
 ```
 

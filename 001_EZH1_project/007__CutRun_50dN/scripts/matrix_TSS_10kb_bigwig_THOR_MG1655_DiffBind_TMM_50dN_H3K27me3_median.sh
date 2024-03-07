@@ -1,11 +1,12 @@
 #!/bin/bash
-#SBATCH --mem=500G
+#SBATCH --mem=400G
 #SBATCH --time=200:00:00
+#SBATCH --cpus-per-task=6
 
 
-computeMatrix reference-point --referencePoint center \
+computeMatrix reference-point --referencePoint TSS \
     -b 10000 -a 10000 \
-    -R ../005__CutRun_NPC_PSC/meta/ENCFF159KBI.gtf \
+    -R ../../Master/meta/ENCFF159KBI.gtf \
     -S output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-s1_median.bw output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-s2_median.bw output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/50dNH3K27me3WTvsKOEF1aEZH1-s2_median.bw \
     --skipZeros \
     --missingDataAsZero \

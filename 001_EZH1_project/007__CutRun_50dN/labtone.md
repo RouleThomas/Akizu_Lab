@@ -859,11 +859,15 @@ sbatch scripts/matrix_TSS_10kb_bigwig_unique_MG1655_DiffBind_TMM_50dN_H3K27me3_m
 conda activate deeptools
 
 ## H3K27me3 all replicates
-sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3.sh # 10988809 ok
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3.sh # 10988809 fail ref point center.. need to be tss; 15828284 XXX
 
 ## H3K27me3 median
-sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median.sh # 11001463 ok
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median.sh # 11001463 fail use refpoint center need tss; 15828345 XXX
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_WTvsKO_median.sh # 15828468 XXX
 
+
+#########################################
+#!!! profile were weird so i tested parameters; but that was because I use reference-point center and not TSS!!!!!!!
 ## H3K27me3 median with threshold 5 / 10- FAIL value remove!
 sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_threshold5.sh # 11037365 ok
 sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_threshold10.sh # 11037550 ok
@@ -877,6 +881,8 @@ sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_med
 ## H3K27me3 median; with treshold 5 / 10 - bigwig modified (bedGraph)
 sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_bedGraph_threshold5.sh # 11043468 ok
 sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_bedGraph_threshold10.sh # 11043473 ok
+#########################################
+
 
 ## H3K27me3 median; raw THOR bigwig; region that gain vs lost H3K27me3
 sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKO_THORq10_positive_negative.sh # 11045278 ok
@@ -886,6 +892,16 @@ sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_med
 sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKOEF1aEZH1_THORq10_positive_negative.sh # 11045282 ok
 sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKOEF1aEZH1_THORq15_positive_negative.sh # 11045283 ok
 sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKOEF1aEZH1_THORq20_positive_negative.sh # 11084527 ok
+
+
+#### WT vs KO only pos and neg mixed, no separation
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKO_THORq10_peak.sh # 15828833 XXX
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKO_THORq20_peak.sh # 15828853 XXX
+
+
+
+
+
 
 ```
 
@@ -900,6 +916,40 @@ Let's isolate the genes with peak in WT; create gtf and redo deepTool plots.
 --> better, but still not a strong peak aound TSS
 
 --> Using clean bigwig (removing low values) improve a bit, but we lose the diff between WT and KO... Overall using the **peaks in WT only is better (but still weird)...**
+
+*NOTE: qval10 was defined as optimal for THOR*
+
+
+
+
+### deeptools plot to hihglight WT vs KO increase H3K27me3 (meeting Naiara 20240305):
+- all genes with peak in WT and or KO (macs2 peaks; prefered used qval2.3 as in `CutRun__009`; not a big deal if using another qvalue)
+- all diff. peaks WT vs KO (THOR; preferred used qval30 as in `CutRun__009`) 
+
+Generate gtf file from gene list; start with gene with peak in promoter (qval macs2 2.3):
+
+```bash
+# isolate all the genes bound with H3K27me3/H3K4me3 in WT and or KO
+cat output/ChIPseeker/annot_macs2_WTQ731E_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt output/ChIPseeker/annot_macs2_KO_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt | sort | uniq > output/ChIPseeker/annot_macs2_WTQ731EKO_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt
+
+### create gtf from gene list
+#### Modify the .txt file that list all genes so that it match gtf structure
+## Modify the .txt file that list all genes so that it match gtf structure
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annot_macs2_WTQ731EKO_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annot_macs2_WTQ731EKO_H3K27me3_qval2.30103_promoterAnd5_as_gtf_geneSymbol.txt
+
+## Filter the gtf
+grep -Ff output/ChIPseeker/annot_macs2_WTQ731EKO_H3K27me3_qval2.30103_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_macs2_H3K27me3_WTQ731EKO_pool_qval2.30103_Promoter_5.gtf
+
+
+# deeptool plots
+## only genes with peak in WT and or KO qval 2.3
+sbatch scripts/matrix_TSS_10kb_WTQ731EvsKO_H3K27me3_median_THOR_genePeaks_macs2q2.30103.sh # 15829203 xxx
+
+
+```
+
+*NOTE: qval1.3 (or 2.3 for more true peak) was defined as optimal for macs2*
+
 
 
 
@@ -985,6 +1035,12 @@ KO = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval1.30103/50dN_K
 KOEF1aEZH1 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval1.30103/50dN_KOEF1aEZH1_H3K27me3_pool_peaks.broadPeak') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
      
+WTQ731E = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/50dN_WTQ731E_H3K27me3_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+KO = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/50dN_KO_H3K27me3_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)    
+KOEF1aEZH1 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/50dN_KOEF1aEZH1_H3K27me3_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
 
 # Tidy peaks #-->> Re-Run from here with different qvalue!!
 ## 50dN
@@ -1013,9 +1069,9 @@ KOEF1aEZH1_annot$gene <- mapIds(org.Hs.eg.db, keys = KOEF1aEZH1_annot$geneId, co
 
 
 ## Save output table
-write.table(WTQ731E_annot, file="output/ChIPseeker/annotation_macs2_WTQ731E_H3K27me3_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(KO_annot, file="output/ChIPseeker/annotation_macs2_KO_H3K27me3_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(KOEF1aEZH1_annot, file="output/ChIPseeker/annotation_macs2_KOEF1aEZH1_annot_H3K27me3_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(WTQ731E_annot, file="output/ChIPseeker/annotation_macs2_WTQ731E_H3K27me3_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(KO_annot, file="output/ChIPseeker/annotation_macs2_KO_H3K27me3_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(KOEF1aEZH1_annot, file="output/ChIPseeker/annotation_macs2_KOEF1aEZH1_annot_H3K27me3_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 
 
 ## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
@@ -1040,17 +1096,17 @@ KOEF1aEZH1_annot_promoterAnd5_geneSymbol = KOEF1aEZH1_annot_promoterAnd5 %>%
 
 
 
-write.table(WTQ731E_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_macs2_WTQ731E_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt",
+write.table(WTQ731E_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_macs2_WTQ731E_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(KO_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_macs2_KO_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt",
+write.table(KO_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_macs2_KO_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(KOEF1aEZH1_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_macs2_KOEF1aEZH1_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt",
+write.table(KOEF1aEZH1_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_macs2_KOEF1aEZH1_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 

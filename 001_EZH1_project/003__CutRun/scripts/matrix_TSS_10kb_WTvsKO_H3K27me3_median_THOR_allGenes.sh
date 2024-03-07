@@ -15,18 +15,17 @@ computeMatrix reference-point --referencePoint TSS \
 
 
 plotHeatmap -m output/deeptools/matrix_TSS_10kb_WTvsKO_H3K27me3_median_THOR_allGenes.gz \
-    -out output/deeptools/matrix_TSS_10kb_WTvsKO_H3K27me3_median_THOR_allGenes_heatmap.png \
+    -out output/deeptools/matrix_TSS_10kb_WTvsKO_H3K27me3_median_THOR_allGenes_heatmap.pdf \
     --samplesLabel "WT" "KO" \
-    --colorList bwr \
+    --colorMap bwr \
     --whatToShow 'heatmap and colorbar' \
     --heatmapHeight 10 \
-    --heatmapWidth 2 \
+    --heatmapWidth 2
 
 
 plotHeatmap -m output/deeptools/matrix_TSS_10kb_WTvsKO_H3K27me3_median_THOR_allGenes.gz \
-    -out output/deeptools/matrix_TSS_10kb_WTvsKO_H3K27me3_median_THOR_allGenes_heatmap2.png \
+    -out output/deeptools/matrix_TSS_10kb_WTvsKO_H3K27me3_median_THOR_allGenes_heatmap2.pdf \
     --samplesLabel "WT" "KO" \
-    --colorList bwr \
     --whatToShow 'heatmap and colorbar' \
     --heatmapHeight 10 \
     --heatmapWidth 2 \
@@ -35,9 +34,8 @@ plotHeatmap -m output/deeptools/matrix_TSS_10kb_WTvsKO_H3K27me3_median_THOR_allG
 
 
 plotHeatmap -m output/deeptools/matrix_TSS_10kb_WTvsKO_H3K27me3_median_THOR_allGenes.gz \
-    -out output/deeptools/matrix_TSS_10kb_WTvsKO_H3K27me3_median_THOR_allGenes_heatmap3.png \
+    -out output/deeptools/matrix_TSS_10kb_WTvsKO_H3K27me3_median_THOR_allGenes_heatmap3.pdf \
     --samplesLabel "WT" "KO" \
-    --colorList bwr \
     --whatToShow 'heatmap and colorbar' \
     --heatmapHeight 10 \
     --heatmapWidth 2 \

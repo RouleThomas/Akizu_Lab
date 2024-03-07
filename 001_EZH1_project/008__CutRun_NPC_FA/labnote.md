@@ -140,10 +140,10 @@ Mapping on E coli --> TO DO LATER!
 ```bash
 conda activate bowtie2
 
-sbatch scripts/bowtie2_MG1655_1.sh # 13345349 xxx
-sbatch scripts/bowtie2_MG1655_2.sh # 13345352 xxx
-sbatch scripts/bowtie2_MG1655_3.sh # 13345353 xxx
-sbatch scripts/bowtie2_MG1655_missing.sh # 13345354 xxx
+sbatch scripts/bowtie2_MG1655_1.sh # 13345349 ok
+sbatch scripts/bowtie2_MG1655_2.sh # 13345352 ok
+sbatch scripts/bowtie2_MG1655_3.sh # 13345353 ok
+sbatch scripts/bowtie2_MG1655_missing.sh # 13345354 ok
 
 ```
 
