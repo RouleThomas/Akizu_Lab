@@ -72,7 +72,7 @@ sbatch scripts/fastp_4.sh # 9019617 ok
 
 **raw**
 ```bash
-sbatch scripts/fastqc_raw.sh # 12697124 xxx
+sbatch scripts/fastqc_raw.sh # 12697124 ok
 ```
 
 
@@ -862,8 +862,8 @@ conda activate deeptools
 sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3.sh # 10988809 fail ref point center.. need to be tss; 15828284 XXX
 
 ## H3K27me3 median
-sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median.sh # 11001463 fail use refpoint center need tss; 15828345 XXX
-sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_WTvsKO_median.sh # 15828468 XXX
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median.sh # 11001463 fail use refpoint center need tss; 15828345 ok
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_WTvsKO_median.sh # 15828468 ok
 
 
 #########################################
@@ -895,10 +895,8 @@ sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_med
 
 
 #### WT vs KO only pos and neg mixed, no separation
-sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKO_THORq10_peak.sh # 15828833 XXX
-sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKO_THORq20_peak.sh # 15828853 XXX
-
-
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKO_THORq10_peak.sh # 15828833 ok
+sbatch scripts/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKO_THORq20_peak.sh # 15828853 ok
 
 
 
@@ -943,7 +941,7 @@ grep -Ff output/ChIPseeker/annot_macs2_WTQ731EKO_H3K27me3_qval2.30103_promoterAn
 
 # deeptool plots
 ## only genes with peak in WT and or KO qval 2.3
-sbatch scripts/matrix_TSS_10kb_WTQ731EvsKO_H3K27me3_median_THOR_genePeaks_macs2q2.30103.sh # 15829203 xxx
+sbatch scripts/matrix_TSS_10kb_WTQ731EvsKO_H3K27me3_median_THOR_genePeaks_macs2q2.30103.sh # 15829203 ok
 
 
 ```
@@ -1639,7 +1637,7 @@ list = read_csv("output/ChIPseeker/Venn_overlap_THOR_KOEF1aEZH1_gain_KO_lost_qva
 
 ## GO
 ego <- enrichGO(gene = (list$X1), 
-                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000X format
                 OrgDb = org.Hs.eg.db, 
                 ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
                 pAdjustMethod = "BH",   
