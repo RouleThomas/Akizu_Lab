@@ -801,22 +801,19 @@ Test 2 spikein normalization method (histone and Ecoli)
 
 
 ```bash
-sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp.sh # 15836536 xxx
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp.sh # 15836536 ok
 
 ```
 
 
-xxxxxxxx WAIT cutanaq count to finsh
-
-
 --> It output the nb of reads found for each histone; then simply copy paste to the excell file `output/spikein/SpikeIn_QC_fastp_006.xlsx` in GoogleDrive
 
-- `PSC_WT_IGG`: enriched in H3K27me3
-- `PSC_KO_IGG`: enriched in H3K27me3
+- `PSC_WT_H3K27me3`: enriched in H3K27me3
+- `PSC_KO_H3K27me3`: enriched in H3K27me3
 - `PSC_KOEF1aEZH1_H3K27me3`: enriched in H3K27me3
 
 
-xxxxxxxx
+
 
 
 
@@ -824,19 +821,17 @@ xxxxxxxx
 ## histone spike in factor
 
 
---> SF only calculating on WT and KO as KOEF1aEZH1 is NOT overexpressing..
-
 ```R
 # package
 library("tidyverse")
 library("readxl")
 # import df
-spikein <- read_excel("output/spikein/SpikeIn_QC_fastp_008.xlsx") 
+spikein <- read_excel("output/spikein/SpikeIn_QC_fastp_006.xlsx") 
 
-## H3K27me3 with only WT and KO
+## H3K27me3 
 spikein_H3K27me3 = spikein %>%
     filter(Target == "H3K27me3",
-    sample_ID %in% c("NPC_WT_H3K27me3", "NPC_KO_H3K27me3")) %>%
+    sample_ID %in% c("PSC_KO_H3K27me3", "PSC_KOEF1aEZH1_H3K27me3","PSC_WT_H3K27me3")) %>%
     group_by(sample_ID, AB) %>%
     summarise(aligned=sum(counts))
 # Total reads per IP
@@ -866,7 +861,7 @@ write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_histon
 
 ```
 
---> XXX All good XXX
+--> All good, histone SF closely similar to the MG1655 ones
 
 
 
@@ -879,7 +874,7 @@ Then look at the xlsx file from [EpiCypher](https://www.epicypher.com/products/n
 library("tidyverse")
 library("readxl")
 # import df adn tidy to remove AB used in sample_ID
-spikein <- read_excel("output/spikein/SpikeIn_QC_fastp_008.xlsx") %>%
+spikein <- read_excel("output/spikein/SpikeIn_QC_fastp_006.xlsx") %>%
   separate(sample_ID, into = c("type", "condition", "tag"), sep = "_") %>%
   mutate(sample_ID = paste(type, condition, sep = "_")) %>%
   select(-type, -condition, -tag, -tissue)
@@ -935,7 +930,7 @@ dev.off()
 ```
 
 
---> XX All good H3K27me3 enriched XXX
+--> All good H3K27me3 enriched 
 
 
 
@@ -1084,10 +1079,34 @@ spikein_scaling_factor = spikein_read_prop %>%
     mutate(scaling_factor = read_prop/min_prop)
 write.table(spikein_scaling_factor, file="output/spikein/spikein_MG1655_HA_scaling_factor.txt", sep="\t", quote=FALSE, row.names=FALSE)
 
+# SF SUZ12
+spikein <- read_excel("output/spikein/SpikeIn_MG1655_006.xlsx") %>%
+    dplyr::select(-tissue) %>%
+    filter(AB == "SUZ12")
+# Total reads per IP
+spikein_SUZ12_total = spikein %>%
+    group_by(AB) %>%
+    mutate(total = sum(counts)) %>%
+    ungroup() %>%
+    distinct(AB, .keep_all = TRUE) %>%
+    select(AB,total)
+# Read proportion
+spikein_read_prop = spikein %>%
+    left_join(spikein_SUZ12_total) %>%
+    mutate(read_prop = counts / total)
+spikein_read_prop_min = spikein_read_prop %>%
+    group_by(AB) %>%
+    summarise(min_prop=min(read_prop))
+# Scaling factor
+spikein_scaling_factor = spikein_read_prop %>%
+    left_join(spikein_read_prop_min) %>%
+    mutate(scaling_factor = read_prop/min_prop)
+write.table(spikein_scaling_factor, file="output/spikein/spikein_MG1655_SUZ12_scaling_factor.txt", sep="\t", quote=FALSE, row.names=FALSE)
+
 
 ```
 
---> XXX histone vs MG1655 SF; same direction; histone a bit more *extreme*  XXX
+-->  histone vs MG1655 SF; same direction
 ----> GOOD!!
 
 
@@ -1115,8 +1134,7 @@ Now let's use these new histone-scaled library size and normalize with library-s
 - **For the non-histone CutRun, I will use the library size non histone scaled in DiffBind to collect TMM normalized SF**; I tested with and without specifying library size; and it does not change a lot the SF... Let's better use the one RiP method w/o providing the library size! Should provide BETTER correction
 
 
-XXXXXXXXXXXX HERE below not mod
-
+**--> MG1655 SF used:**
 
 ```bash
 srun --mem=500g --pty bash -l
@@ -1126,24 +1144,24 @@ conda activate DiffBind
 library("DiffBind") 
 
 # ONE PER ONE
-## NPC_H3K27me3
+## PSC_H3K27me3
 ### Generate the sample metadata (in ods/copy paste to a .csv file)
-sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_NPC_H3K27me3.txt", header = TRUE, sep = "\t"))
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_PSC_H3K27me3.txt", header = TRUE, sep = "\t"))
 
 ### Batch effect investigation; heatmaps and PCA plots
 sample_count = dba.count(sample_dba)
 
 
 ## This take time, here is checkpoint command to save/load:
-save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_NPC_H3K27me3.RData")
-load("output/DiffBind/sample_count_macs2raw_unique_NPC_H3K27me3.RData")
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_PSC_H3K27me3.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_PSC_H3K27me3.RData")
 
 ### plot
-pdf("output/DiffBind/clustering_sample_macs2raw_unique_NPC_H3K27me3.pdf", width=14, height=20)  
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_PSC_H3K27me3.pdf", width=14, height=20)  
 plot(sample_count)
 dev.off()
 
-pdf("output/DiffBind/PCA_sample_macs2raw_unique_NPC_H3K27me3.pdf", width=14, height=20) 
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_H3K27me3.pdf", width=14, height=20) 
 dba.plotPCA(sample_count,DBA_REPLICATE, label=DBA_TREATMENT)
 dev.off()
 
@@ -1154,111 +1172,32 @@ sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
 
 ### TMM 
 
-sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(9181686,16861572), normalize = DBA_NORM_TMM) 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(37338241,7794352,38565592), normalize = DBA_NORM_TMM) 
 
 #### Here is to retrieve the scaling factor value
 sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
 
 
 console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
-writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_NPC_H3K27me3.txt")
-
-
-# NPC_H3K4me3
-### Generate the sample metadata (in ods/copy paste to a .csv file)
-sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_NPC_H3K4me3.txt", header = TRUE, sep = "\t"))
-### Batch effect investigation; heatmaps and PCA plots
-sample_count = dba.count(sample_dba)
-## This take time, here is checkpoint command to save/load:
-save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_NPC_H3K4me3.RData")
-load("output/DiffBind/sample_count_macs2raw_unique_NPC_H3K4me3.RData")
-### Blacklist/Greylist generation
-sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
-sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
-### TMM 
-sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(11433838,8912968), normalize = DBA_NORM_TMM) # 
-#### Here is to retrieve the scaling factor value
-sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
-console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
-writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_NPC_H3K4me3.txt")
-
-# NPC_H3K27ac
-### Generate the sample metadata (in ods/copy paste to a .csv file)
-sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_NPC_H3K27ac.txt", header = TRUE, sep = "\t"))
-### Batch effect investigation; heatmaps and PCA plots
-sample_count = dba.count(sample_dba)
-## This take time, here is checkpoint command to save/load:
-save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_NPC_H3K27ac.RData")
-load("output/DiffBind/sample_count_macs2raw_unique_NPC_H3K27ac.RData")
-### Blacklist/Greylist generation
-sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
-sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
-### TMM 
-sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(10279172,24996045), normalize = DBA_NORM_TMM) # 
-#### Here is to retrieve the scaling factor value
-sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
-console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
-writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_NPC_H3K27ac.txt")
-
-
-
-# ALL TOGETHER FOR PCA/HEATMAP PLOT
-## NPC
-### Generate the sample metadata (in ods/copy paste to a .csv file)
-sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_NPC.txt", header = TRUE, sep = "\t"))
-### Batch effect investigation; heatmaps and PCA plots
-sample_count = dba.count(sample_dba)
-## This take time, here is checkpoint command to save/load:
-save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_NPC.RData")
-load("output/DiffBind/sample_count_macs2raw_unique_NPC.RData")
-### plot
-pdf("output/DiffBind/clustering_sample_macs2raw_unique_NPC.pdf", width=14, height=20)  
-plot(sample_count)
-dev.off()
-pdf("output/DiffBind/PCA_sample_macs2raw_unique_NPC.pdf", width=14, height=20) 
-dba.plotPCA(sample_count,DBA_FACTOR, label=DBA_TREATMENT)
-dev.off()
-### Blacklist/Greylist generation
-sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
-sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
-### plot
-pdf("output/DiffBind/clustering_sample_macs2raw_unique_NPC_blackgreylist.pdf", width=14, height=20)  
-plot(sample_count)
-dev.off()
-pdf("output/DiffBind/PCA_sample_macs2raw_unique_NPC_blackgreylist.pdf", width=14, height=20) 
-dba.plotPCA(sample_count,DBA_FACTOR, label=DBA_TREATMENT)
-dev.off()
-### TMM 
-sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, normalize = DBA_NORM_TMM) 
-sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(9181686,16861572,11433838,8912968,10279172,24996045), normalize = DBA_NORM_TMM) # 
-sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
-console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
-writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_NPC.txt")
-### plot
-pdf("output/DiffBind/clustering_sample_macs2raw_unique_NPC_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20)  
-plot(sample_count)
-dev.off()
-pdf("output/DiffBind/PCA_sample_macs2raw_unique_NPC_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20) 
-dba.plotPCA(sample_count,DBA_FACTOR, label=DBA_TREATMENT)
-dev.off()
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_PSC_H3K27me3.txt")
 
 
 ```
 
+--> WT and KOEFaEZH1 cluster more together, KO is apart
 
 
 # THOR
 
 Let's use THOR, notably to have IGG scaled bigwig...!
 
-Comparison to do; NPC WT vs KO:
+Comparison to do; PSC WT vs KO and WT vs KOEF1aEZH1:
 - H3K27me3
-- H3K4me3
-- H3K27ac
+
 
 
 --> SF to use in THOR are the **reciprocal of MG1655_DiffBind_TMM**
---> Configs file created manually as `output/THOR/NPC_EZH2.config`
+--> Configs file created manually as `output/THOR/PSC_WTvsKO_H3K27me3.config`
 
 --> Lets also try to use the DiffBind spike in BAM method (similarly use the reciprocal from diffBind)
 
@@ -1276,14 +1215,14 @@ export LD_LIBRARY_PATH=~/anaconda3/envs/RGT/lib:$LD_LIBRARY_PATH
 bigWigMerge
 
 # AB per AB
-sbatch scripts/THOR_NPC_H3K27me3.sh # 13533943 fail; 13548195
-sbatch scripts/THOR_NPC_H3K4me3.sh # 13534301 fail; 13535831 fail; 13548461
-sbatch scripts/THOR_NPC_H3K27ac.sh # 13534612 fail; 13535918 fail; 13548462
+sbatch scripts/THOR_PSC_WTvsKO_H3K27me3.sh # 15945828 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3.sh # 15945937 xxx
+
 
 ```
 
 
-
+XXXXXXXXXXXXXXXXXX HERE !!!!!!!!!
 
 
 
