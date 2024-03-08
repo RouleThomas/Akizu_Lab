@@ -426,6 +426,12 @@ EZH2 = as_tibble(read.table('output/macs2/broad_blacklist_qval1.30103/PSC_WT_EZH
 H3K27me3 = as_tibble(read.table('output/macs2/broad_blacklist_qval1.30103/PSC_WT_H3K27me3_peaks.broadPeak') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
 
+SUZ12 = as_tibble(read.table('output/macs2/broad_blacklist_qval2.30103/PSC_WT_SUZ12_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+EZH2 = as_tibble(read.table('output/macs2/broad_blacklist_qval2.30103/PSC_WT_EZH2_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+H3K27me3 = as_tibble(read.table('output/macs2/broad_blacklist_qval2.30103/PSC_WT_H3K27me3_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
 
 ## Tidy peaks #-->> Re-Run from here with different qvalue!!
 SUZ12_gr = makeGRangesFromDataFrame(SUZ12,keep.extra.columns=TRUE)
@@ -448,9 +454,9 @@ H3K27me3_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_annot$geneId, 
 H3K27me3_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
 
 ## Save output table
-write.table(SUZ12_annot, file="output/ChIPseeker/annotation_macs2_PSC_WT_SUZ12_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(EZH2_annot, file="output/ChIPseeker/annotation_macs2_PSC_WT_EZH2_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(H3K27me3_annot, file="output/ChIPseeker/annotation_macs2_PSC_WT_H3K27me3_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(SUZ12_annot, file="output/ChIPseeker/annotation_macs2_PSC_WT_SUZ12_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(EZH2_annot, file="output/ChIPseeker/annotation_macs2_PSC_WT_EZH2_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K27me3_annot, file="output/ChIPseeker/annotation_macs2_PSC_WT_H3K27me3_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 
 ## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
 SUZ12_annot_promoterAnd5 = tibble(SUZ12_annot) %>%
@@ -471,17 +477,17 @@ H3K27me3_annot_promoterAnd5_geneSymbol = H3K27me3_annot_promoterAnd5 %>%
     dplyr::select(geneSymbol) %>%
     unique()   
 
-write.table(SUZ12_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_PSC_WT_SUZ12_qval1.30103_promoterAnd5_geneSymbol.txt",
+write.table(SUZ12_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_PSC_WT_SUZ12_qval2.30103_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(EZH2_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_PSC_WT_EZH2_qval1.30103_promoterAnd5_geneSymbol.txt",
+write.table(EZH2_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_PSC_WT_EZH2_qval2.30103_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(H3K27me3_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_PSC_WT_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt",
+write.table(H3K27me3_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_PSC_WT_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
@@ -495,7 +501,8 @@ write.table(H3K27me3_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/an
 
 H3K27me3 = as_tibble(read.table('output/macs2/broad_blacklist_qval1.30103/PSC_KO_H3K27me3_peaks.broadPeak') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
-
+H3K27me3 = as_tibble(read.table('output/macs2/broad_blacklist_qval2.30103/PSC_KO_H3K27me3_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
 
 ## Tidy peaks #-->> Re-Run from here with different qvalue!!
 
@@ -514,7 +521,7 @@ H3K27me3_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_annot$geneId, column
 
 ## Save output table
 
-write.table(H3K27me3_annot, file="output/ChIPseeker/annotation_macs2_PSC_KO_H3K27me3_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K27me3_annot, file="output/ChIPseeker/annotation_macs2_PSC_KO_H3K27me3_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 
 ## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
 
@@ -528,7 +535,7 @@ H3K27me3_annot_promoterAnd5_geneSymbol = H3K27me3_annot_promoterAnd5 %>%
     unique()   
 
 
-write.table(H3K27me3_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_PSC_KO_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt",
+write.table(H3K27me3_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_PSC_KO_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
@@ -811,10 +818,6 @@ sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp.sh # 15836536 ok
 - `PSC_WT_H3K27me3`: enriched in H3K27me3
 - `PSC_KO_H3K27me3`: enriched in H3K27me3
 - `PSC_KOEF1aEZH1_H3K27me3`: enriched in H3K27me3
-
-
-
-
 
 
 
@@ -1215,14 +1218,11 @@ export LD_LIBRARY_PATH=~/anaconda3/envs/RGT/lib:$LD_LIBRARY_PATH
 bigWigMerge
 
 # AB per AB
-sbatch scripts/THOR_PSC_WTvsKO_H3K27me3.sh # 15945828 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3.sh # 15945937 xxx
+sbatch scripts/THOR_PSC_WTvsKO_H3K27me3.sh # 15945828 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3.sh # 15945937 ok
 
 
 ```
-
-
-XXXXXXXXXXXXXXXXXX HERE !!!!!!!!!
 
 
 
@@ -1230,5 +1230,168 @@ XXXXXXXXXXXXXXXXXX HERE !!!!!!!!!
 
 Let's find the optimal qvalue for THOR diff peaks
 
-XXX Fuck that for now, if need to do it see `005`
+
+```R
+
+# load the file using the tidyverse
+library("readr")
+library("dplyr")
+library("ggplot2")
+library("tidyr")
+
+# H3K27me3 WTvsKO
+diffpeaks <- read_tsv("output/THOR/THOR_PSC_WTvsKO_H3K27me3/PSCWTvsKOH3K27me3-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  mutate(FC = (count_KO) / (count_WT))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_PSC_WTvsKO_H3K27me3/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KO") +
+  theme_bw()
+dev.off()
+
+pdf("output/THOR/THOR_PSC_WTvsKO_H3K27me3/log2FC_qval30.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 30) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KO_qval30") +
+  theme_bw()
+dev.off()
+
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 100) %>%
+  write_tsv("output/THOR/THOR_PSC_WTvsKO_H3K27me3/THOR_qval100.bed", col_names = FALSE)
+
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 30) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
+# H3K27me3 WTvsKOEF1aEZH1
+diffpeaks <- read_tsv("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3/PSCWTvsKOEF1aEZH1H3K27me3-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KOEF1aEZH1", "qval"), sep = ";", convert = TRUE) %>%
+  mutate(FC = (count_KOEF1aEZH1) / (count_WT))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KOEF1aEZH1") +
+  theme_bw()
+dev.off()
+
+pdf("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3/log2FC_qval30.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 30) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KOEF1aEZH1_qval30") +
+  theme_bw()
+dev.off()
+
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 50) %>%
+  write_tsv("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3/THOR_qval50.bed", col_names = FALSE)
+
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 50) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+```
+
+- *NOTE: FC positive = less in KO; negative = more in KO*
+
+**Optimal qvalue:**
+--> *H3K27me3*; qval 30 (qval50 ok also,more stringeant)
+
+
+
+
+
+## deeptools plot THOR bigwig
+- all genes with peak in WT and or KO (macs2 peaks; prefered used qval2.3 as in `CutRun__009`)
+- all diff. peaks WT vs KO (THOR; preferred used qval30 as in `CutRun__009`) 
+
+Let's see WT vs KO in PSC (in neurons (`003__CutRun` and `007__CutRun`) and NPC (`006__CutRun` and `008__CutRun`) we have more H3K27me3 in KO)
+
+And check WT vs KOEF1aEZH1; would expect increased H3K27me3 too?
+
+
+```bash
+
+# allGenes
+sbatch scripts/matrix_TSS_10kb_WTvsKO_H3K27me3_THOR_allGenes.sh # 15955393 xxx
+sbatch scripts/matrix_TSS_10kb_WTvsKOEF1aEZH1_H3K27me3_THOR_allGenes.sh # 15955612 xxx
+
+# diff peaks
+sbatch scripts/matrix_TSS_10kb_WTvsKO_H3K27me3_THOR_q30_peak.sh # 15959030 ok
+sbatch scripts/matrix_TSS_10kb_WTvsKO_H3K27me3_THOR_q50_peak.sh # 15959141 ok
+
+sbatch scripts/matrix_TSS_10kb_WTvsKOEF1aEZH1_H3K27me3_THOR_q30_peak.sh # 15959410 ok
+sbatch scripts/matrix_TSS_10kb_WTvsKOEF1aEZH1_H3K27me3_THOR_q50_peak.sh # 15959511 ok
+
+```
+
+Generate gtf file from gene list; start with gene with peak in promoter (qval macs2 2.3):
+
+```bash
+# isolate all the genes bound with H3K27me3 in WT and or KO
+cat output/ChIPseeker/annotation_macs2_PSC_WT_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt output/ChIPseeker/annotation_macs2_PSC_KO_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt | sort | uniq > output/ChIPseeker/annotation_macs2_PSC_WTKO_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt
+cat output/ChIPseeker/annotation_macs2_PSC_WT_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt output/ChIPseeker/annotation_macs2_PSC_KO_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt | sort | uniq > output/ChIPseeker/annotation_macs2_PSC_WTKO_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt
+### create gtf from gene list
+#### Modify the .txt file that list all genes so that it match gtf structure
+## Modify the .txt file that list all genes so that it match gtf structure
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_macs2_PSC_WTKO_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_WTKO_H3K27me3_qval2.30103_Promoter_5_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_macs2_PSC_WTKO_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_WTKO_H3K27me3_qval1.30103_Promoter_5_as_gtf_geneSymbol.txt
+## Filter the gtf
+grep -Ff output/ChIPseeker/annotation_WTKO_H3K27me3_qval2.30103_Promoter_5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_macs2_H3K27me3_WTKO_qval2.30103_Promoter_5.gtf
+grep -Ff output/ChIPseeker/annotation_WTKO_H3K27me3_qval1.30103_Promoter_5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_macs2_H3K27me3_WTKO_qval1.30103_Promoter_5.gtf
+
+
+# deeptool plots
+sbatch scripts/matrix_TSS_10kb_H3K27me3_THOR_genePeaks_macs2q1.30103.sh # 15963978 xxx
+sbatch scripts/matrix_TSS_10kb_H3K27me3_THOR_genePeaks_macs2q2.30103.sh # 15964044 xxx
+
+
+
+```
+
+- *NOTE: qval1.3 was defined as optimal for macs2*
+- *NOTE: qval30 (or 05) was defined as optimal for THOR*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
