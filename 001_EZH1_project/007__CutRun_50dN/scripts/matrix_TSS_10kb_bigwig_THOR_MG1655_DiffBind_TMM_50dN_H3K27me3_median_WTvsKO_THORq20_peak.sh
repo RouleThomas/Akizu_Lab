@@ -56,3 +56,12 @@ plotProfile -m output/deeptools/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_
     -z ""
 
 
+
+plotHeatmap -m output/deeptools/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKO_THORq20_peak.gz \
+    -out output/deeptools/matrix_TSS_10kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKO_THORq20_peak_heatmap4.pdf \
+    --samplesLabel "WT" "KO" \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --colorList White,White,LightGrey,"#c5c9c7",DarkGray,Gray,DimGray,"#3c4142","#1b2431",Black \
+    --colorNumber 10

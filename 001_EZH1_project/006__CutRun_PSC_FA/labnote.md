@@ -308,7 +308,7 @@ awk '{print $3-$2}' your_bed_file.bed | sort -n | awk 'BEGIN {c=0; sum=0;} {a[c+
 
 
 
---> Assign peak to genes for NPC and PSC:
+## Assign peak to genes for NPC and PSC - raw macs2
 
 
 ```bash
@@ -1342,8 +1342,8 @@ And check WT vs KOEF1aEZH1; would expect increased H3K27me3 too?
 ```bash
 
 # allGenes
-sbatch scripts/matrix_TSS_10kb_WTvsKO_H3K27me3_THOR_allGenes.sh # 15955393 xxx
-sbatch scripts/matrix_TSS_10kb_WTvsKOEF1aEZH1_H3K27me3_THOR_allGenes.sh # 15955612 xxx
+sbatch scripts/matrix_TSS_10kb_WTvsKO_H3K27me3_THOR_allGenes.sh # 15955393 ok
+sbatch scripts/matrix_TSS_10kb_WTvsKOEF1aEZH1_H3K27me3_THOR_allGenes.sh # 15955612 ok
 
 # diff peaks
 sbatch scripts/matrix_TSS_10kb_WTvsKO_H3K27me3_THOR_q30_peak.sh # 15959030 ok
@@ -1383,6 +1383,104 @@ sbatch scripts/matrix_TSS_10kb_H3K27me3_THOR_genePeaks_macs2q2.30103.sh # 159640
 
 
 
+
+
+
+## Assign peak to genes for NPC and PSC - THOR peaks
+
+
+Isolate positive and negative THOR peaks
+```bash
+# positive negative peaks
+## qval 30
+awk -F'\t' '$14 > 1' output/THOR/THOR_PSC_WTvsKO_H3K27me3/THOR_qval30.bed > output/THOR/THOR_PSC_WTvsKO_H3K27me3/THOR_qval30_positive.bed
+awk -F'\t' '$14 < 1' output/THOR/THOR_PSC_WTvsKO_H3K27me3/THOR_qval30.bed > output/THOR/THOR_PSC_WTvsKO_H3K27me3/THOR_qval30_negative.bed
+
+## qval 50
+awk -F'\t' '$14 > 1' output/THOR/THOR_PSC_WTvsKO_H3K27me3/THOR_qval50.bed > output/THOR/THOR_PSC_WTvsKO_H3K27me3/THOR_qval50_positive.bed
+awk -F'\t' '$14 < 1' output/THOR/THOR_PSC_WTvsKO_H3K27me3/THOR_qval50.bed > output/THOR/THOR_PSC_WTvsKO_H3K27me3/THOR_qval50_negative.bed
+```
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import macs2 peaks
+## WTvsKO _ q30
+KO_gain = as_tibble(read.table('output/THOR/THOR_PSC_WTvsKO_H3K27me3/THOR_qval30_positive.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+KO_lost = as_tibble(read.table('output/THOR/THOR_PSC_WTvsKO_H3K27me3/THOR_qval30_negative.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)       
+## WTvsKO _ q50
+KO_gain = as_tibble(read.table('output/THOR/THOR_PSC_WTvsKO_H3K27me3/THOR_qval50_positive.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+KO_lost = as_tibble(read.table('output/THOR/THOR_PSC_WTvsKO_H3K27me3/THOR_qval50_negative.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)       
+
+
+## Tidy peaks #-->> Re-Run from here with different qvalue!!
+KO_gain_gr = makeGRangesFromDataFrame(KO_gain,keep.extra.columns=TRUE)
+KO_lost_gr = makeGRangesFromDataFrame(KO_lost,keep.extra.columns=TRUE)
+gr_list <- list(KO_gain=KO_gain_gr, KO_lost=KO_lost_gr)
+## Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## Get annotation data frame
+KO_gain_annot <- as.data.frame(peakAnnoList[["KO_gain"]]@anno)
+KO_lost_annot <- as.data.frame(peakAnnoList[["KO_lost"]]@anno)
+
+## Convert entrez gene IDs to gene symbols
+KO_gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = KO_gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+KO_gain_annot$gene <- mapIds(org.Hs.eg.db, keys = KO_gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+KO_lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = KO_lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+KO_lost_annot$gene <- mapIds(org.Hs.eg.db, keys = KO_lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+## Save output table
+write.table(KO_gain_annot, file="output/ChIPseeker/annotation_THOR_KO_gain_annot_qval50.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(KO_lost_annot, file="output/ChIPseeker/annotation_THOR_KO_lost_annot_qval50.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+KO_gain_annot_promoterAnd5 = tibble(KO_gain_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+KO_lost_annot_promoterAnd5 = tibble(KO_lost_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+### Save output gene lists
+KO_gain_annot_promoterAnd5_geneSymbol = KO_gain_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+KO_lost_annot_promoterAnd5_geneSymbol = KO_lost_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+write.table(KO_gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KO_gain_qval50_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(KO_lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KO_lost_qval50_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+   
+```
 
 
 

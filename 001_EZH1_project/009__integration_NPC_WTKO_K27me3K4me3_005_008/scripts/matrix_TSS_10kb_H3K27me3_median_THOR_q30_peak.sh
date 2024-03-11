@@ -33,3 +33,24 @@ plotHeatmap -m output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_q30_peak.gz
     --colorList grey,blue,blue,blue \
     --colorNumber 4
 
+plotHeatmap -m output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_q30_peak.gz \
+    -out output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_q30_peak_heatmap3.pdf \
+    --samplesLabel "WT" "KO" \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --colorList White,White,LightGrey,"#c5c9c7",DarkGray,Gray,DimGray,"#3c4142","#1b2431",Black \
+    --colorNumber 10
+
+
+
+
+
+plotProfile -m output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_q30_peak.gz \
+    -out output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_q30_peak_profile.pdf \
+    --samplesLabel "WT" "KO" \
+    --perGroup \
+    --colors black red \
+    --refPointLabel "TSS" \
+    -T "H3K27me3 read density" \
+    -z ""
