@@ -16,7 +16,14 @@ computeMatrix reference-point --referencePoint center \
 
 
 plotHeatmap -m output/deeptools/matrix_TSS_10kp_THORq15HETpeaks.gz \
-    -out output/deeptools/matrix_TSS_10kp_THORq15HETpeaks_heatmap.png \
+    -out output/deeptools/matrix_TSS_10kp_THORq15HETpeaks_heatmap.pdf \
+    --samplesLabel "WT" "HET" "KO" \
+    --colorMap Greys \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 15
+
+plotHeatmap -m output/deeptools/matrix_TSS_10kp_THORq15HETpeaks.gz \
+    -out output/deeptools/matrix_TSS_10kp_THORq15HETpeaks_heatmap.pdf \
     --samplesLabel "WT" "HET" "KO" \
     --colorMap Greys \
     --whatToShow 'heatmap and colorbar' \
@@ -39,3 +46,33 @@ plotProfile -m output/deeptools/matrix_TSS_10kp_THORq15HETpeaks.gz \
     --refPointLabel "0" \
     -T "H3K27me3 read density" \
     -z ""
+
+
+# 20240310 Naiara plot Slack
+
+
+plotHeatmap -m output/deeptools/matrix_TSS_10kp_THORq15HETpeaks.gz \
+    -out output/deeptools/matrix_TSS_10kp_THORq15HETpeaks_heatmap1.pdf \
+    --samplesLabel "WT" "HET" "KO" \
+    --colorMap bwr \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2
+
+plotHeatmap -m output/deeptools/matrix_TSS_10kp_THORq15HETpeaks.gz \
+    -out output/deeptools/matrix_TSS_10kp_THORq15HETpeaks_heatmap2.pdf \
+    --samplesLabel "WT" "HET" "KO" \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --colorList grey,blue \
+    --colorNumber 2
+
+plotHeatmap -m output/deeptools/matrix_TSS_10kp_THORq15HETpeaks.gz \
+    -out output/deeptools/matrix_TSS_10kp_THORq15HETpeaks_heatmap3.pdf \
+    --samplesLabel "WT" "HET" "KO" \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --colorList grey,blue,blue \
+    --colorNumber 3

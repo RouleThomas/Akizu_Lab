@@ -50,3 +50,65 @@ plotHeatmap -m output/deeptools/matrix_TSS2_10kp_THOR_allGenes.gz \
     --whatToShow 'heatmap and colorbar' \
     --heatmapHeight 10 \
     --heatmapWidth 2
+
+# 20240310 Naiara plot Slack
+
+
+
+
+plotHeatmap -m output/deeptools/matrix_TSS2_10kp_THOR_allGenes.gz \
+    -out output/deeptools/matrix_TSS2_10kp_THOR_allGenes_heatmap3_colorSmall.pdf \
+    --samplesLabel "WT" "HET" "KO" \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --colorList grey,blue \
+    --colorNumber 2
+
+plotHeatmap -m output/deeptools/matrix_TSS2_10kp_THOR_allGenes.gz \
+    -out output/deeptools/matrix_TSS2_10kp_THOR_allGenes_heatmap4_colorSmall.pdf \
+    --samplesLabel "WT" "HET" "KO" \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --colorList grey,blue,blue \
+    --colorNumber 3
+
+
+plotHeatmap -m output/deeptools/matrix_TSS2_10kp_THOR_allGenes.gz \
+    -out output/deeptools/matrix_TSS2_10kp_THOR_allGenes_heatmap4_colorSmall.pdf \
+    --samplesLabel "WT" "HET" "KO" \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --colorList grey,blue,blue,blue,blue,blue \
+    --colorNumber 6
+
+
+plotHeatmap -m output/deeptools/matrix_TSS2_10kp_THOR_allGenes.gz \
+    -out output/deeptools/matrix_TSS2_10kp_THOR_allGenes_heatmap5_colorSmall.pdf \
+    --samplesLabel "WT" "HET" "KO" \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --colorMap binary
+
+plotHeatmap -m output/deeptools/matrix_TSS2_10kp_THOR_allGenes.gz \
+    -out output/deeptools/matrix_TSS2_10kp_THOR_allGenes_heatmap6_colorSmall.pdf \
+    --samplesLabel "WT" "HET" "KO" \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --colorList White,Gainsboro,LightGrey,"#c5c9c7",DarkGray,Gray,DimGray,"#3c4142","#1b2431",Black \
+    --colorNumber 10
+
+
+plotHeatmap -m output/deeptools/matrix_TSS2_10kp_THOR_allGenes.gz \
+    -out output/deeptools/matrix_TSS2_10kp_THOR_allGenes_heatmap7_colorSmall.pdf \
+    --samplesLabel "WT" "HET" "KO" \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --colorList White,White,LightGrey,"#c5c9c7",DarkGray,Gray,DimGray,"#3c4142","#1b2431",Black \
+    --colorNumber 10
+
