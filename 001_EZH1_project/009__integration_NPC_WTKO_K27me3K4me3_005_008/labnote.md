@@ -346,6 +346,54 @@ dev.off()
 --> Playing with block factor do not change anything on the SF values, nor PCA/heatmap plots...
 
 
+#### E coli bam spike in scaling method
+
+
+Lets try to use the **E coli bam spike in scaling method** (add MG1655 bam files in the meta file):
+--> For NPC samples only
+--> Vignete 7.6 from [DiffBind doc](https://bioconductor.org/packages/release/bioc/vignettes/DiffBind/inst/doc/DiffBind.pdf) to check how apply spikein
+
+**spikein_LIB normalization**
+
+```bash
+conda activate DiffBind
+```
+
+```R
+library("DiffBind") 
+
+
+# ONE PER ONE
+## NPC_H3K27me3
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_NPC_H3K27me3_MG1655bam.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_NPC_H3K27me3_MG1655bam.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_NPC_H3K27me3_MG1655bam.RData")
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### Spike in normalization 
+sample_count_blackgreylist_LIB_spikein = dba.normalize(sample_count_blackgreylist, normalize=DBA_NORM_LIB, spikein=TRUE) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LIB_spikein_SF = dba.normalize(sample_count_blackgreylist_LIB_spikein, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_LIB_spikein_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LIB_spikein_SF_NPC_H3K27me3.txt")
+
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_NPC_H3K27me3_blackgreylist_LIB_spikein_SF.pdf", width=14, height=20)  
+plot(sample_count_blackgreylist_LIB_spikein)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_NPC_H3K27me3_blackgreylist_LIB_spikein_SF.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LIB_spikein,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+```
+
+
+*NOTE: if apply the TMM, it seems to 'erase' the spike in bam effect; because in samples_005.xlsx, the DiffBind TMM (classic) SF = TMM_spikein_SF. So maybe TMM_spikein_SF is the way to go? NEED RNASEQ!!!*
+
 
 
 
@@ -400,9 +448,14 @@ conda activate RGT
 export LD_LIBRARY_PATH=~/anaconda3/envs/RGT/lib:$LD_LIBRARY_PATH
 bigWigMerge
 
-# AB per AB
+# classic DiffBind TMM method
 sbatch scripts/THOR_NPC_H3K27me3.sh # 14462899 ok
 sbatch scripts/THOR_NPC_H3K4me3.sh # 14462901 ok
+
+# LIB_spikein_SF method (bam spike in)
+sbatch scripts/THOR_NPC_H3K27me3_LIB_spikein.sh # 16224494 xxx
+
+
 
 ```
 
@@ -414,9 +467,12 @@ Comparing **raw vs DiffBind_TMM vs THOR** on IGV
 Generate median tracks:
 ```bash
 conda activate BedToBigwig
-
+# classic DiffBind TMM method
 sbatch scripts/bigwigmerge_THOR.sh # 15516016 ok
 sbatch scripts/bigwigmerge_THOR_H3K4me3.sh # 15517815 ok
+
+# LIB_spikein_SF method (bam spike in)
+sbatch --dependency=afterany:16224494 scripts/bigwigmerge_THOR_H3K27me3_LIB_spikein.sh # 16224515 xxx
 
 ```
 
@@ -1837,8 +1893,14 @@ Check bigwig files of H3K27me3 (`009__CutRun`; THOR q30) and EZH2 (`005__CutRun`
 ```bash
 conda activate deeptools
 
+# Using classic Recirpocl DiffBind TMM method
 sbatch scripts/matrix_TSS_10kb_H3K27me3_EZH2_median_THOR_gainLost.sh # 16222103 ok
 sbatch scripts/matrix_TSS_10kb_H3K27me3_EZH2_SUZ12_median_THOR_gainLost.sh # 16222113 ok
+
+# Using DiffBind MG1655 bam scaling factor (see 005); use bam MG1655 in DiffBind and Library seq normalization
+sbatch scripts/matrix_TSS_10kb_H3K27me3_THORDiffBindTMM_EZH2SUZ12_THORLIBspikein_gainLost.sh # 16223845 ok
+
+
 
 ```
 
