@@ -1829,9 +1829,22 @@ write.table(gos, "output/GO/enrichR_KEGG_2021_Human_THOR_H3K27me3_q40.txt", sep=
 
 
 
+# Does the peak that gain H3K27me3 in KO is because of EZH2 binding in NPC?
 
 
+Check bigwig files of H3K27me3 (`009__CutRun`; THOR q30) and EZH2 (`005__CutRun`; THOR qval10) in WT and KO for the peaks that gain and lost H3K27me3 (2 separate bed). If EZH2 binding increase in the peak that gain H3K27me3 then it strenghten EZH2 compensation in EZH1 KO.
 
+```bash
+conda activate deeptools
+
+sbatch scripts/matrix_TSS_10kb_H3K27me3_EZH2_median_THOR_gainLost.sh # 16222103 ok
+sbatch scripts/matrix_TSS_10kb_H3K27me3_EZH2_SUZ12_median_THOR_gainLost.sh # 16222113 ok
+
+```
+
+--> No changes of EZH2 and SUZ12 in peak that gain H3K27me3 in KO... But only 1 replicate... Also looking at all genes strong decrease of EZH2 and SUZ12 binding in KO, here, same level... Another replicate may show changes!!!
+
+--> Also all peaks that gain H3K27me3 in KO, seems already bound by EZH2 and SUZ12 in the WT! So maybe there is an increase EZH2 activity upon EZH1 KO, rather than an increase binding
 
 
 

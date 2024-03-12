@@ -55,7 +55,43 @@ Run fastp
 ```bash
 # run rep per rep
 sbatch scripts/fastp_raw.sh # 16197773 xxx
+
+sbatch scripts/fastp_raw_missing.sh # 16220591 xxx
+
 ```
+*ERROR: `EZH2inh_H3K4me3_R1` sequence and quality have different length!*
+```ruby
+@SRR26553062.12321957 A00333:479:HM2NVDSX3:2:2117:28230:31876/2
+TCCTGCAGGGAGCTGGTGCCAGCCGACAGCCGCGCCAGGGCCGCTCCGGG
+```
+--> Re-launch as `scripts/fastp_raw_missing.sh`; weird the file renaiming is good...!
+
+Here is how solve the [issue](https://github.com/OpenGene/fastp/issues/340):
+- Unzipped and opened the fastq (used text editor).
+- ctrl+f to sequence number giving the error - turns out was in the same line as sequence before it (i.e., they - are all supposed to start on their own line, but for some reason this one read was running up against the one directly preceding - where there should have been a space/"return" key pressed, there was not).
+- Put in a space/pressed "return", putting that read on it's own line.
+- Saved, re-zipped and ran.
+
+
+Try re-download `EZH2inh_H3K4me3_R1`:
+
+
+```bash
+# download
+cd tmp/
+curl -L ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR265/062/SRR26553062/SRR26553062_1.fastq.gz -o SRR26553062_GSM7869111_CnR_EZH2inh_H3K4me3_rep1_Homo_sapiens_OTHER_1.fastq.gz
+curl -L ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR265/062/SRR26553062/SRR26553062_2.fastq.gz -o SRR26553062_GSM7869111_CnR_EZH2inh_H3K4me3_rep1_Homo_sapiens_OTHER_2.fastq.gz
+
+# fastp
+fastp -i SRR26553062_GSM7869111_CnR_EZH2inh_H3K4me3_rep1_Homo_sapiens_OTHER_1.fastq.gz -I SRR26553062_GSM7869111_CnR_EZH2inh_H3K4me3_rep1_Homo_sapiens_OTHER_2.fastq.gz \
+    -o SRR26553062_GSM7869111_CnR_EZH2inh_H3K4me3_rep1_Homo_sapiens_OTHER_1.fq.gz -O SRR26553062_GSM7869111_CnR_EZH2inh_H3K4me3_rep1_Homo_sapiens_OTHER_2.fq.gz \
+    -j SRR26553062_GSM7869111_CnR_EZH2inh_H3K4me3_rep1_Homo_sapiens_OTHER -h SRR26553062_GSM7869111_CnR_EZH2inh_H3K4me3_rep1_Homo_sapiens_OTHER
+
+# --> mv and rename manually file to `output/fastp`
+
+```
+--> IT WORK!! Files has been corrupted upon downloading!!!
+
 
 
 
@@ -66,8 +102,8 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:16197773 scripts/bowtie2_1.sh # 16198162 xxx
-sbatch --dependency=afterany:16197773 scripts/bowtie2_2.sh # 16198215 xxx
+sbatch scripts/bowtie2_1.sh # 16221819 xxx
+sbatch scripts/bowtie2_2.sh # 16221821 xxx
 ```
 
 -->  XXX Looks good; overall ~30-80% uniquely aligned reads XXX
@@ -79,19 +115,19 @@ Quality control plot (total read before trimming/ total read after trimming/ uni
 
 Collect nb of reads from the slurm bowtie2 jobs:
 ```bash
-for file in slurm-16198162.out; do
+for file in slurm-16221819.out; do
     total_reads=$(grep "reads; of these" $file | awk '{print $1}')
     aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
     aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
     echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
-done > output/bowtie2/alignment_counts_16198162.txt
+done > output/bowtie2/alignment_counts_16221819.txt
 
-for file in slurm-16198215.out; do
+for file in slurm-16221821.out; do
     total_reads=$(grep "reads; of these" $file | awk '{print $1}')
     aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
     aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
     echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
-done > output/bowtie2/alignment_counts_16198215.txt
+done > output/bowtie2/alignment_counts_16221821.txt
 
 
 ```
@@ -110,8 +146,8 @@ This is prefered for THOR bam input.
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:16198162 scripts/samtools_unique_1.sh # 16198634 xxx
-sbatch --dependency=afterany:16198215 scripts/samtools_unique_2.sh # 16198636 xxx
+sbatch --dependency=afterany:16221819 scripts/samtools_unique_1.sh # 16221854 xxx
+sbatch --dependency=afterany:16221821 scripts/samtools_unique_2.sh # 16221855 xxx
 
 
 ```
@@ -124,11 +160,13 @@ Paramaters:
 - `--scaleFactor 0.5` to obtain the exact number of reads respective to the bam, otherwise it count two instead of 1
 - `--extendReads` Reads extented taking into account mean fragment size of all mated reads.
 
+
+
 ```bash
 conda activate deeptools
 
-sbatch --dependency=afterany:16198634 scripts/bamtobigwig_unique_1.sh # 16198742 xxx
-sbatch --dependency=afterany:16198636 scripts/bamtobigwig_unique_2.sh # 16198743 xxx
+sbatch --dependency=afterany:16221854 scripts/bamtobigwig_unique_1.sh # 16221861 xxx
+sbatch --dependency=afterany:16221855 scripts/bamtobigwig_unique_2.sh # 16221862 xxx
 
 ```
 
