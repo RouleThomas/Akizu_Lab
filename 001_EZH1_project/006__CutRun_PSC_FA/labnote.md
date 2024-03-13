@@ -545,6 +545,25 @@ write.table(H3K27me3_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/an
 ```
 
 
+# Deeptools plot in KOEF1aEZH1
+
+Check co-localization of EZH1cs, EZH2, SUZ12, H3K27me3 in KOEF1aEZH1 using the unique bigiwg raw
+
+
+```bash
+sbatch scripts/matrix_TSS_10kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_raw_allGenes.sh # 16290946 xxx
+sbatch scripts/matrix_TSS_5kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_raw_allGenes.sh # 16290958 xxx
+sbatch scripts/matrix_TSS_2kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_raw_allGenes.sh # 16290920 xxx
+
+sbatch scripts/matrix_TSS_10kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_raw_EZH1csPeaks_macs2q1.30103.sh # 16291108 xxx
+sbatch scripts/matrix_TSS_5kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_raw_EZH1cspeaks_macs2q1.30103.sh # 16291163 xxx
+sbatch scripts/matrix_TSS_2kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_raw_EZH1cspeaks_macs2q1.30103.sh # 16291207 xxx
+
+```
+
+*NOTE: EZH1cs optimal MACS2 qval 1.30103 with 1,271 peaks*
+
+--> XXX Clear co-localization of EZH1, EZH2, SUZ12, and H3K27me3 ; especially when looking at the EZH1cs peaks XXX
 
 
 
