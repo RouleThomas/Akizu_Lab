@@ -551,19 +551,39 @@ Check co-localization of EZH1cs, EZH2, SUZ12, H3K27me3 in KOEF1aEZH1 using the u
 
 
 ```bash
+# all genes
 sbatch scripts/matrix_TSS_10kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_raw_allGenes.sh # 16290946 ok
 sbatch scripts/matrix_TSS_5kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_raw_allGenes.sh # 16290958 ok
 sbatch scripts/matrix_TSS_2kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_raw_allGenes.sh # 16290920 ok
 
+# macs2 EZH1cs peaks
 sbatch scripts/matrix_TSS_10kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_raw_EZH1csPeaks_macs2q1.30103.sh # 16291108 ok
 sbatch scripts/matrix_TSS_5kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_raw_EZH1cspeaks_macs2q1.30103.sh # 16291163 ok
 sbatch scripts/matrix_TSS_2kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_raw_EZH1cspeaks_macs2q1.30103.sh # 16291207 ok
 
+# macs2 EZH2 peaks
+sbatch scripts/matrix_TSS_10kb_EZH2_EZH1cs_SUZ12_H3K27me3_IGG_raw_EZH2Peaks_macs2q1.30103.sh # 16346993 ok
+sbatch scripts/matrix_TSS_5kb_EZH2_EZH1cs_SUZ12_H3K27me3_IGG_raw_EZH2Peaks_macs2q1.30103.sh # 16347015 ok
+sbatch scripts/matrix_TSS_2kb_EZH2_EZH1cs_SUZ12_H3K27me3_IGG_raw_EZH2Peaks_macs2q1.30103.sh # 16347040 ok
+
+# Comparison KOEF1aEZH1 with WT (from 005__CutRun)
+## all genes
+sbatch scripts/matrix_TSS_10kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_allGenes.sh # 16347385 xxx
+sbatch scripts/matrix_TSS_5kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_allGenes.sh # 16347404 xxx
+sbatch scripts/matrix_TSS_2kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_allGenes.sh # 16347417 xxx
+
+
+## EZH1 peaks
+sbatch scripts/matrix_TSS_10kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_EZH1csPeaks_macs2q1.30103.sh # 16347554 xxx
+sbatch scripts/matrix_TSS_5kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_EZH1csPeaks_macs2q1.30103.sh # 16347591 xxx
+sbatch scripts/matrix_TSS_2kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_EZH1csPeaks_macs2q1.30103.sh # 16347612 xxx
+
+
 ```
 
-*NOTE: EZH1cs optimal MACS2 qval 1.30103 with 1,271 peaks*
+*NOTE: EZH1cs and EZH2 optimal MACS2 qval 1.30103 with 1,271 peaks*
 
---> Clear co-localization of EZH1, EZH2, SUZ12, and H3K27me3 ; especially when looking at the EZH1cs peaks
+--> Clear co-localization of EZH1, EZH2, SUZ12, and H3K27me3 ; especially when looking at the EZH1cs or EZH2 peaks
 
 
 
