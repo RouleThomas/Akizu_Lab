@@ -453,7 +453,7 @@ sbatch scripts/THOR_NPC_H3K27me3.sh # 14462899 ok
 sbatch scripts/THOR_NPC_H3K4me3.sh # 14462901 ok
 
 # LIB_spikein_SF method (bam spike in)
-sbatch scripts/THOR_NPC_H3K27me3_LIB_spikein.sh # 16224494 xxx
+sbatch scripts/THOR_NPC_H3K27me3_LIB_spikein.sh # 16224494 ok
 
 
 
@@ -472,9 +472,11 @@ sbatch scripts/bigwigmerge_THOR.sh # 15516016 ok
 sbatch scripts/bigwigmerge_THOR_H3K4me3.sh # 15517815 ok
 
 # LIB_spikein_SF method (bam spike in)
-sbatch --dependency=afterany:16224494 scripts/bigwigmerge_THOR_H3K27me3_LIB_spikein.sh # 16224515 xxx
+sbatch --dependency=afterany:16224494 scripts/bigwigmerge_THOR_H3K27me3_LIB_spikein.sh # 16224515 ok
 
 ```
+
+--> TMM and LIB spike in method look very similar, at least for the few genes I checked 
 
 
 
