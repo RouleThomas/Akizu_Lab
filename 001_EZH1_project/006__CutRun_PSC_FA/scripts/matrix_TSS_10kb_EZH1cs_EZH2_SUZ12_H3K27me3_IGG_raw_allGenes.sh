@@ -16,6 +16,14 @@ computeMatrix reference-point --referencePoint TSS \
     -p 6
 
 
+plotHeatmap -m output/deeptools/matrix_TSS_10kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_raw_allGenes.gz \
+    -out output/deeptools/matrix_TSS_10kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_raw_allGenes_heatmap_colorSmall1.pdf \
+    --samplesLabel "EZH1cs" "EZH2" "SUZ12" "H3K27me3" "IGG" \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --colorMap bwr
+
 
 plotHeatmap -m output/deeptools/matrix_TSS_10kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_raw_allGenes.gz \
     -out output/deeptools/matrix_TSS_10kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_raw_allGenes_heatmap_colorSmall.pdf \

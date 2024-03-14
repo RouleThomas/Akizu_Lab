@@ -102,8 +102,8 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 ```bash
 conda activate bowtie2
 
-sbatch scripts/bowtie2_1.sh # 16221819 xxx
-sbatch scripts/bowtie2_2.sh # 16221821 xxx
+sbatch scripts/bowtie2_1.sh # 16221819 ok
+sbatch scripts/bowtie2_2.sh # 16221821 ok
 ```
 
 -->  XXX Looks good; overall ~30-80% uniquely aligned reads XXX
@@ -135,7 +135,7 @@ done > output/bowtie2/alignment_counts_16221821.txt
 Add these values to `/home/roulet/006_Ciceri2024/003__CutRun_EpigeneticInhibitors/samples_003.xlsx`\
 Then in R; see `/home/roulet/006_Ciceri2024/006_Ciceri2024.R`.
 
---> XXX Overall >60% input reads as been uniquely mapped to the genome (90% non uniq) XXX
+--> Overall 65-80% input reads as been uniquely mapped to the genome (90% non uniq)
 
 
 
