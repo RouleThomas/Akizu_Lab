@@ -1525,11 +1525,19 @@ write.table(KO_lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/ann
 
 
 
+# THOR with ChIPseeker
+
+Generate xls file with gene name and THOR peak metrics (Naiara Slack task 20240314):
+- import THOR bed output (correct qvalue) `output/THOR/THOR*/THOR_qval*.bed`
+- import ChIPseeker output `output/ChIPseeker/annotation_THOR*.txt`
+- combine THOR and ChIPseeker with Peak name
+- output all metrics! Then filter them in xls to keep only the relevant ones
 
 
+```R
 
 
-
+```
 
 
 
