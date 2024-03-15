@@ -568,15 +568,16 @@ sbatch scripts/matrix_TSS_2kb_EZH2_EZH1cs_SUZ12_H3K27me3_IGG_raw_EZH2Peaks_macs2
 
 # Comparison KOEF1aEZH1 with WT (from 005__CutRun)
 ## all genes
-sbatch scripts/matrix_TSS_10kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_allGenes.sh # 16347385 xxx
-sbatch scripts/matrix_TSS_5kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_allGenes.sh # 16347404 xxx
-sbatch scripts/matrix_TSS_2kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_allGenes.sh # 16347417 xxx
+sbatch scripts/matrix_TSS_10kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_allGenes.sh # 16347385 ok
+sbatch scripts/matrix_TSS_5kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_allGenes.sh # 16347404 ok
+sbatch scripts/matrix_TSS_2kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_allGenes.sh # 16347417 ok
 
 
 ## EZH1 peaks
-sbatch scripts/matrix_TSS_10kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_EZH1csPeaks_macs2q1.30103.sh # 16347554 xxx
-sbatch scripts/matrix_TSS_5kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_EZH1csPeaks_macs2q1.30103.sh # 16347591 xxx
-sbatch scripts/matrix_TSS_2kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_EZH1csPeaks_macs2q1.30103.sh # 16347612 xxx
+sbatch scripts/matrix_TSS_10kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_EZH1csPeaks_macs2q1.30103.sh # 16347554 ok
+sbatch scripts/matrix_TSS_5kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_EZH1csPeaks_macs2q1.30103.sh # 16347591 fail; 16380981
+sbatch scripts/matrix_TSS_2kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_EZH1csPeaks_macs2q1.30103.sh # 16347612 fail; 16381048
+
 
 
 ```
@@ -585,7 +586,7 @@ sbatch scripts/matrix_TSS_2kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT00
 
 --> Clear co-localization of EZH1, EZH2, SUZ12, and H3K27me3 ; especially when looking at the EZH1cs or EZH2 peaks
 
-
+--> KOEF1aEZH1 and WT look the same for 
 
 
 

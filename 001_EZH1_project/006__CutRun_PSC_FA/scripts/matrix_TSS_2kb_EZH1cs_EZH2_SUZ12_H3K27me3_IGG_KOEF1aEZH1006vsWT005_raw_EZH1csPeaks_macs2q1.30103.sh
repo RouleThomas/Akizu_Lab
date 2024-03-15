@@ -6,7 +6,7 @@
 
 computeMatrix reference-point --referencePoint center \
     -b 2000 -a 2000 \
-    -R output/macs2/broad_blacklist_qval1.30103/PSC_KOEF1aEZH1_EZH2_peaks.broadPeak \
+    -R output/macs2/broad_blacklist_qval1.30103/PSC_KOEF1aEZH1_EZH1cs_peaks.broadPeak \
     -S output/bigwig/PSC_KOEF1aEZH1_EZH1cs.unique.dupmark.sorted.bw output/bigwig/PSC_WT_EZH1cs.unique.dupmark.sorted.bw output/bigwig/PSC_KOEF1aEZH1_EZH2.unique.dupmark.sorted.bw output/bigwig/PSC_WT_EZH2.unique.dupmark.sorted.bw output/bigwig/PSC_KOEF1aEZH1_SUZ12.unique.dupmark.sorted.bw output/bigwig/PSC_WT_SUZ12.unique.dupmark.sorted.bw output/bigwig/PSC_KOEF1aEZH1_H3K27me3.unique.dupmark.sorted.bw output/bigwig/PSC_WT_H3K27me3.unique.dupmark.sorted.bw output/bigwig/PSC_KOEF1aEZH1_IGG.unique.dupmark.sorted.bw output/bigwig/PSC_WT_IGG.unique.dupmark.sorted.bw \
     --skipZeros \
     --missingDataAsZero \
