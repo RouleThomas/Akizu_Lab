@@ -57,7 +57,7 @@ plotProfile -m output/deeptools/matrix_TSS_5kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KO
     -out output/deeptools/matrix_TSS_5kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_allGenes_profile.pdf \
     --samplesLabel "EZH1cs_KOEF1aEZH1" "EZH1cs_WT" "EZH2_KOEF1aEZH1" "EZH2_WT" "SUZ12_KOEF1aEZH1" "SUZ12_WT" "H3K27me3_KOEF1aEZH1" "H3K27me3_WT" "IGG_KOEF1aEZH1" "IGG_WT" \
     --perGroup \
-    --colors green purple blue red grey \
+    --colors white white white white white white blue black grey grey \
     --refPointLabel "TSS" \
     -T "H3K27me3 read density" \
     -z ""

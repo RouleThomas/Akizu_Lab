@@ -54,9 +54,9 @@ done < rename_003.txt
 Run fastp
 ```bash
 # run rep per rep
-sbatch scripts/fastp_raw.sh # 16197773 xxx
+sbatch scripts/fastp_raw.sh # 16197773 ok
 
-sbatch scripts/fastp_raw_missing.sh # 16220591 xxx
+sbatch scripts/fastp_raw_missing.sh # 16220591 ok
 
 ```
 *ERROR: `EZH2inh_H3K4me3_R1` sequence and quality have different length!*
@@ -146,8 +146,8 @@ This is prefered for THOR bam input.
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:16221819 scripts/samtools_unique_1.sh # 16221854 xxx
-sbatch --dependency=afterany:16221821 scripts/samtools_unique_2.sh # 16221855 xxx
+sbatch --dependency=afterany:16221819 scripts/samtools_unique_1.sh # 16221854 ok
+sbatch --dependency=afterany:16221821 scripts/samtools_unique_2.sh # 16221855 ok
 
 
 ```
@@ -170,7 +170,7 @@ sbatch --dependency=afterany:16221855 scripts/bamtobigwig_unique_2.sh # 16221862
 
 ```
 
-
+XXXXXXXXXXXX 
 
 - EZH2inh
 PASS: 
