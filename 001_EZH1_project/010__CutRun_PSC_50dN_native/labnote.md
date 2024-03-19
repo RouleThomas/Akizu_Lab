@@ -36,56 +36,14 @@ I created a `nano url.txt` with all link and used `wget -i url.txt` to download 
 
 
 
-XXXXXXXXXXXXXXXXXXXXXXXXX
-
-
-
-
-# Combine files from multiple lanes
-
-Concatenate fastq discuss [here](https://www.biostars.org/p/317385/): `cat string_L001_sampleID_R1.fastq.gz string_L002_sampleID_R1.fastq.gz  > string_sampleID_R1.fastq.gz`.
-
---> Several of our samples dispatched in two lanes (`L1` and `L4`; **the concatenated are names `L14`; all unique are `L4`**)
-----> input sample: `input_raw_Novogene/` output to `input/`
-
-```bash
-sbatch scripts/concatenate_1.sh # 12228326 ok 
-sbatch scripts/concatenate_2.sh # 12228327 ok 
-sbatch scripts/concatenate_3.sh # 12228328 ok
-```
-
-
-
 # Rename file
 
-I created a tab separated file with current (`sample_name.txt`) / new file names (keeping the .fq.gz sufix) and then:
-
-**make sure to convert the `rename_map.txt` into unix tab sep  format with `dos2unix`!!**
-
-```bash
-cd input_raw
-
-while IFS=$'\t' read -r old_name new_name
-do
-    mv "$old_name" "$new_name"
-done < rename_map.txt
-```
-
---> All good 
-
-
-Rename the missing ones! The one that I did not concatenate!!:
-`cp input_raw_Novogene/NPC_WT_IGG_CKDL240001568-1A_HWK3JDSX7_L4_1.fq.gz input_raw_Novogene/NPC_WT_IGG_CKDL240001568-1A_HWK3JDSX7_L4_2.fq.gz input_raw_Novogene/NPC_WT_H3K27me3_CKDL240001570-1A_HWK3JDSX7_L4_1.fq.gz input_raw_Novogene/NPC_WT_H3K27me3_CKDL240001570-1A_HWK3JDSX7_L4_2.fq.gz input_raw_Novogene/NPC_KO_H3K4me3_CKDL240001576-1A_HWK3JDSX7_L4_1.fq.gz input_raw_Novogene/NPC_KO_H3K4me3_CKDL240001576-1A_HWK3JDSX7_L4_2.fq.gz input_raw_Novogene/NPC_KO_H3K27me3_CKDL240001577-1A_HWK3JDSX7_L4_1.fq.gz input_raw_Novogene/NPC_KO_H3K27me3_CKDL240001577-1A_HWK3JDSX7_L4_2.fq.gz input_raw_Novogene/NPC_KO_SUZ12_CKDL240001581-1A_HWK3JDSX7_L4_1.fq.gz input_raw_Novogene/NPC_KO_SUZ12_CKDL240001581-1A_HWK3JDSX7_L4_2.fq.gz input_raw_Novogene/NPC_OE_KOH3K27ac_CKDL240001585-1A_HWK3JDSX7_L4_1.fq.gz input_raw_Novogene/NPC_OE_KOH3K27ac_CKDL240001585-1A_HWK3JDSX7_L4_2.fq.gz input_raw_Novogene/NPC_OE_KO_EZH2_CKDL240001587-1A_HWK3JDSX7_L4_1.fq.gz input_raw_Novogene/NPC_OE_KO_EZH2_CKDL240001587-1A_HWK3JDSX7_L4_2.fq.gz input_raw_Novogene/NEU_OE_KO_IGG_CL_CKDL240001589-1A_HWK3JDSX7_L4_1.fq.gz input_raw_Novogene/NEU_OE_KO_IGG_CL_CKDL240001589-1A_HWK3JDSX7_L4_2.fq.gz input_raw_Novogene/NEU_OE_KO_IGG_CKDL240001593-1A_HWK3JDSX7_L4_1.fq.gz input_raw_Novogene/NEU_OE_KO_IGG_CKDL240001593-1A_HWK3JDSX7_L4_2.fq.gz input_raw_Novogene/NEU_OE_KO_H3K27me3_CKDL240001594-1A_HWK3JDSX7_L4_1.fq.gz input_raw_Novogene/NEU_OE_KO_H3K27me3_CKDL240001594-1A_HWK3JDSX7_L4_2.fq.gz input/ `
+Renamed manually as only 8 samples
 
 
 
 ```bash
-cd input
-
-while IFS=$'\t' read -r old_name new_name
-do
-    mv "$old_name" "$new_name"
-done < rename_map_missing.txt
+cp input_raw_Novogene/*.gz input/
 ```
 
 --> All good 
@@ -94,30 +52,10 @@ done < rename_map_missing.txt
 # Fastp cleaning
 
 ```bash
-sbatch scripts/fastp_1.sh # 12504999 ok
-sbatch scripts/fastp_2.sh # 12505000 ok
-sbatch scripts/fastp_3.sh # 12505001 ok
-
-sbatch scripts/fastp_missing.sh # 13300220 ok
+sbatch scripts/fastp_1.sh # 16520720 xxx
+sbatch scripts/fastp_2.sh # 16520721 xxx
 
 ```
-
-# FastQC
-
-**raw**
-```bash
-sbatch scripts/fastqc_raw.sh # 12696467 ok
-```
-
-
-**Fastp-cleaned:**
-```bash
-sbatch --dependency=afterany:12504999 scripts/fastqc_fastp_1.sh # 12505357 ok
-sbatch --dependency=afterany:12505000 scripts/fastqc_fastp_2.sh # 12505358 ok
-sbatch --dependency=afterany:12505001 scripts/fastqc_fastp_3.sh # 12505359 ok
-```
-
---> all good
 
 
 # Mapping
@@ -127,14 +65,13 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:12505357 scripts/bowtie2_1.sh # 12505521 ok
-sbatch --dependency=afterany:12505358 scripts/bowtie2_2.sh # 12505546 ok
-sbatch --dependency=afterany:12505359 scripts/bowtie2_3.sh # 12505547 ok
-
-sbatch scripts/bowtie2_missing.sh # 13300398 ok
+sbatch --dependency=afterany:16520720 scripts/bowtie2_1.sh # 16520751 xxx
+sbatch --dependency=afterany:16520721 scripts/bowtie2_2.sh # 16520752 xxx
 ```
 
---> Looks good; overall ~70% uniquely aligned reads
+--> XXX Looks good; overall ~70% uniquely aligned reads XXX
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 Mapping on E coli --> TO DO LATER! 
 
@@ -151,48 +88,35 @@ sbatch scripts/bowtie2_MG1655_missing.sh # 13345354 ok
 --> between 0.5 - 2% uniquely aligned reads (not a lot..; previously `005__CutRun` 10% (in `003__CutRun` was less than 1%) )
 
 
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+
+
 ## Quality control metrics
 Quality control plot (total read before trimming/ total read after trimming/ uniquely aligned reads)
 
 Collect nb of reads from the slurm bowtie2 jobs:
 ```bash
-for file in slurm-12505521.out; do
+for file in slurm-16520751.out; do
     total_reads=$(grep "reads; of these" $file | awk '{print $1}')
     aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
     aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
     echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
-done > output/bowtie2/alignment_counts_12505521.txt
+done > output/bowtie2/alignment_counts_16520751.txt
 
-for file in slurm-12505546.out; do
+for file in slurm-16520752.out; do
     total_reads=$(grep "reads; of these" $file | awk '{print $1}')
     aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
     aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
     echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
-done > output/bowtie2/alignment_counts_12505546.txt
-
-for file in slurm-12505547.out; do
-    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
-    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
-    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
-    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
-done > output/bowtie2/alignment_counts_12505547.txt
-
-for file in slurm-13300398.out; do
-    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
-    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
-    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
-    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
-done > output/bowtie2/alignment_counts_13300398.txt
-
+done > output/bowtie2/alignment_counts_16520752.txt
 
 ```
 
-Add these values to `/home/roulet/001_EZH1_project/008__CutRun_NPC_FA/samples_008.xlsx`\
+Add these values to `/home/roulet/001_EZH1_project/010__CutRun_PSC_50dN_native/samples_009.xlsx`\
 Then in R; see `/home/roulet/001_EZH1_project/001_EZH1_project.R`.
 
---> Overall >75% input reads as been uniquely mapped to the genome (90% non uniq)
-
-
+--> XXX Overall >75% input reads as been uniquely mapped to the genome (90% non uniq) XXX
 
 
 
@@ -200,15 +124,17 @@ Then in R; see `/home/roulet/001_EZH1_project/001_EZH1_project.R`.
 This is prefered for THOR bam input.
 
 
+
+
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:12505521 scripts/samtools_unique_1.sh # 12505895 ok
-sbatch --dependency=afterany:12505546 scripts/samtools_unique_2.sh # 12505896 ok
-sbatch --dependency=afterany:12505547 scripts/samtools_unique_3.sh # 12505897 ok
+sbatch --dependency=afterany:16520751 scripts/samtools_unique_1.sh # 16520802 xxx
+sbatch --dependency=afterany:16520752 scripts/samtools_unique_2.sh # 16520803 xxx
 
-sbatch scripts/samtools_unique_missing.sh # 13343264 ok
 ```
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 Let's do the same for E coli MG1655 spike in samples:
 
@@ -225,6 +151,8 @@ sbatch --dependency=afterany:13345349:13345352:13345353:13345354 scripts/samtool
 
 --> More information on this step in the `005__CutRun` labnote
 
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 # Generate bigwig coverage files
 ## Raw bigwig
 Paramaters:
@@ -235,31 +163,21 @@ Paramaters:
 ```bash
 conda activate deeptools
 
-sbatch --dependency=afterany:12505895 scripts/bamtobigwig_unique_1.sh # 12514789 ok
-sbatch --dependency=afterany:12505896 scripts/bamtobigwig_unique_2.sh # 12514790 ok
-sbatch --dependency=afterany:12505897 scripts/bamtobigwig_unique_3.sh # 12514791 ok
-
-sbatch --dependency=afterany:13343264 scripts/bamtobigwig_unique_missing.sh # 13343408 xxx
+sbatch --dependency=afterany:16520802 scripts/bamtobigwig_unique_1.sh # 16520886 xxx
+sbatch --dependency=afterany:16520803 scripts/bamtobigwig_unique_2.sh # 16520889 xxx
 
 
-
-# Non unique bigiwig
-sbatch scripts/bamtobigwig_1.sh # 13164849 ok
-sbatch scripts/bamtobigwig_2.sh # 13164850 ok
-sbatch scripts/bamtobigwig_3.sh # 13164851 ok
 ```
 
 
-
-- 50dN native and FA
+- PSC native
 *Pass*: 
-*Failed*: H3K27me3, EZH1cs, EZH2
-- NPC _ WT
-*Pass*: H3K27ac, H3K4me3
-*Failed*: EZH1cs, EZH2, SUZ12
-- NPC _ KOEF1aEZH1
-*Pass*: H3K27me3, H3K4me3, H
-*Failed*: EZH1cs, SUZ12
+*Failed*: 
+- 50dN native
+*Pass*: 
+*Failed*:
+
+
 
 
 --> Non unique (all raw reads!) vs unique bigwig (less signal or more noise?): Very similar. increase signal on the one that work but more bakground
@@ -272,16 +190,9 @@ sbatch scripts/bamtobigwig_3.sh # 13164851 ok
 ```bash
 conda activate deeptools
 # Generate compile bigwig (.npz) files
-sbatch scripts/multiBigwigSummary_all.sh # 12654374 ok
+sbatch --dependency=afterany:16520886:16520889 scripts/multiBigwigSummary_all.sh # 16521108 xxx
 
-sbatch scripts/multiBigwigSummary_50dN.sh # 12654211 ok
-sbatch scripts/multiBigwigSummary_NPC.sh # 12654309 ok
-
-sbatch scripts/multiBigwigSummary_WT.sh # 12654318 ok
-sbatch scripts/multiBigwigSummary_KOEF1aEZH1.sh # 12654324; 12654560 ok
-sbatch scripts/multiBigwigSummary_KO.sh # 12654331; 12654558 ok
-
-
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 # Plot
 ## PCA
@@ -290,41 +201,6 @@ plotPCA -in output/bigwig/multiBigwigSummary_all.npz \
     --ntop 0 \
     --labels 50dNFA_KOEF1aEZH1_EZH1cs 50dNnative_KOEF1aEZH1_EZH1cs 50dNFA_KOEF1aEZH1_EZH2 50dNnative_KOEF1aEZH1_EZH2 50dNFA_KOEF1aEZH1_H3K27me3 NPC_KO_EZH1cs NPC_KO_EZH2 NPC_KO_H3K27ac NPC_KO_IGG NPC_KOEF1aEZH1_EZH1cs NPC_KOEF1aEZH1_H3K27me3 NPC_KOEF1aEZH1_H3K4me3 NPC_KOEF1aEZH1_IGG NPC_KOEF1aEZH1_SUZ12 NPC_WT_EZH1cs NPC_WT_EZH2 NPC_WT_H3K27ac NPC_WT_H3K4me3 NPC_WT_SUZ12 \
     -o output/bigwig/multiBigwigSummary_all_plotPCA.pdf
-
-plotPCA -in output/bigwig/multiBigwigSummary_50dN.npz \
-    --transpose \
-    --ntop 0 \
-    --labels 50dNFA_KOEF1aEZH1_EZH1cs 50dNnative_KOEF1aEZH1_EZH1cs 50dNFA_KOEF1aEZH1_EZH2 50dNnative_KOEF1aEZH1_EZH2 50dNFA_KOEF1aEZH1_H3K27me3 \
-    -o output/bigwig/multiBigwigSummary_50dN_plotPCA.pdf
-
-plotPCA -in output/bigwig/multiBigwigSummary_NPC.npz \
-    --transpose \
-    --ntop 0 \
-    --labels NPC_KO_EZH1cs NPC_KO_EZH2 NPC_KO_H3K27ac NPC_KO_IGG NPC_KOEF1aEZH1_EZH1cs NPC_KOEF1aEZH1_H3K27me3 NPC_KOEF1aEZH1_H3K4me3 NPC_KOEF1aEZH1_IGG NPC_KOEF1aEZH1_SUZ12 NPC_WT_EZH1cs NPC_WT_EZH2 NPC_WT_H3K27ac NPC_WT_H3K4me3 NPC_WT_SUZ12 \
-    -o output/bigwig/multiBigwigSummary_NPC_plotPCA.pdf
-
-
-plotPCA -in output/bigwig/multiBigwigSummary_WT.npz \
-    --transpose \
-    --ntop 0 \
-    --labels NPC_WT_EZH1cs NPC_WT_EZH2 NPC_WT_H3K27ac NPC_WT_H3K4me3 NPC_WT_SUZ12 \
-    -o output/bigwig/multiBigwigSummary_WT_plotPCA.pdf
-
-
-
-plotPCA -in output/bigwig/multiBigwigSummary_KOEF1aEZH1.npz \
-    --transpose \
-    --ntop 0 \
-    --labels NPC_KOEF1aEZH1_EZH1cs NPC_KOEF1aEZH1_H3K27me3 NPC_KOEF1aEZH1_H3K4me3 NPC_KOEF1aEZH1_IGG NPC_KOEF1aEZH1_SUZ12 \
-    -o output/bigwig/multiBigwigSummary_KOEF1aEZH1_plotPCA.pdf
-
-
-
-plotPCA -in output/bigwig/multiBigwigSummary_KO.npz \
-    --transpose \
-    --ntop 0 \
-    --labels NPC_KO_EZH1cs NPC_KO_EZH2 NPC_KO_H3K27ac NPC_KO_IGG \
-    -o output/bigwig/multiBigwigSummary_KO_plotPCA.pdf
 
 ## Heatmap
 plotCorrelation \
@@ -336,55 +212,13 @@ plotCorrelation \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
     -o output/bigwig/multiBigwigSummary_all_heatmap.pdf
 
-plotCorrelation \
-    -in output/bigwig/multiBigwigSummary_50dN.npz \
-    --corMethod pearson --skipZeros \
-    --plotTitle "Pearson Correlation" \
-    --removeOutliers \
-    --labels 50dNFA_KOEF1aEZH1_EZH1cs 50dNnative_KOEF1aEZH1_EZH1cs 50dNFA_KOEF1aEZH1_EZH2 50dNnative_KOEF1aEZH1_EZH2 50dNFA_KOEF1aEZH1_H3K27me3 \
-    --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig/multiBigwigSummary_50dN_heatmap.pdf
 
-plotCorrelation \
-    -in output/bigwig/multiBigwigSummary_NPC.npz \
-    --corMethod pearson --skipZeros \
-    --plotTitle "Pearson Correlation" \
-    --removeOutliers \
-    --labels NPC_KO_EZH1cs NPC_KO_EZH2 NPC_KO_H3K27ac NPC_KO_IGG NPC_KOEF1aEZH1_EZH1cs NPC_KOEF1aEZH1_H3K27me3 NPC_KOEF1aEZH1_H3K4me3 NPC_KOEF1aEZH1_IGG NPC_KOEF1aEZH1_SUZ12 NPC_WT_EZH1cs NPC_WT_EZH2 NPC_WT_H3K27ac NPC_WT_H3K4me3 NPC_WT_SUZ12 \
-    --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig/multiBigwigSummary_NPC_heatmap.pdf
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-plotCorrelation \
-    -in output/bigwig/multiBigwigSummary_WT.npz \
-    --corMethod pearson --skipZeros \
-    --plotTitle "Pearson Correlation" \
-    --removeOutliers \
-    --labels NPC_WT_EZH1cs NPC_WT_EZH2 NPC_WT_H3K27ac NPC_WT_H3K4me3 NPC_WT_SUZ12 \
-    --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig/multiBigwigSummary_WT_heatmap.pdf
-
-plotCorrelation \
-    -in output/bigwig/multiBigwigSummary_KOEF1aEZH1.npz \
-    --corMethod pearson --skipZeros \
-    --plotTitle "Pearson Correlation" \
-    --removeOutliers \
-    --labels NPC_KOEF1aEZH1_EZH1cs NPC_KOEF1aEZH1_H3K27me3 NPC_KOEF1aEZH1_H3K4me3 NPC_KOEF1aEZH1_IGG NPC_KOEF1aEZH1_SUZ12 \
-    --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig/multiBigwigSummary_KOEF1aEZH1_heatmap.pdf
-
-
-plotCorrelation \
-    -in output/bigwig/multiBigwigSummary_KO.npz \
-    --corMethod pearson --skipZeros \
-    --plotTitle "Pearson Correlation" \
-    --removeOutliers \
-    --labels NPC_KO_EZH1cs NPC_KO_EZH2 NPC_KO_H3K27ac NPC_KO_IGG \
-    --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig/multiBigwigSummary_KO_heatmap.pdf
 
 ```
 
---> Hard to conclude stuff
+--> XXX Hard to conclude stuff XXX
 
 
 
@@ -400,15 +234,16 @@ plotCorrelation \
 ```bash
 conda activate macs2
 # genotype per genotype
-sbatch --dependency=afterany:13343264 scripts/macs2_broad_50dN.sh # 12654885 ok missed sample added; 13343914 ok
-sbatch --dependency=afterany:13343264 scripts/macs2_broad_KO_KOEF1aEZH1.sh # 12655091 ok missed sample added; 13344031 ok
-sbatch --dependency=afterany:13343264 scripts/macs2_broad_WT.sh # 12655165 ok missed sample added; 13344112 ok
-
-sbatch --dependency=afterany:13343264 scripts/macs2_narrow_50dN.sh # 12655462 ok missed sample added; 13344314 ok
-sbatch --dependency=afterany:13343264 scripts/macs2_narrow_KO_KOEF1aEZH1.sh # 12655472 ok missed sample added; 13344540 ok
-sbatch --dependency=afterany:13343264 scripts/macs2_narrow_WT.sh # 12655475 ok missed sample added; 13344565 ok
+sbatch --dependency=afterany:16520802 scripts/macs2_broad_1.sh # 16521538 xxx
+sbatch --dependency=afterany:16520803 scripts/macs2_broad_2.sh # 16521568 xxx
 
 ```
+
+
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX below not mod
+
+
 
 --> OEF1aEZH1 in 50-day neurons: too noisy for EZH1, EZH2, and H3K27me3
 
@@ -418,7 +253,10 @@ sbatch --dependency=afterany:13343264 scripts/macs2_narrow_WT.sh # 12655475 ok m
 
 *- NOTE: peak calling has been run 2 times adding the missing samples!*
 
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX below not mod
+
+
+
+
 
 ```bash
 conda activate bowtie2 # for bedtools
