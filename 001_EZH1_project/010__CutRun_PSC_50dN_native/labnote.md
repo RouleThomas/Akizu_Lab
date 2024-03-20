@@ -234,26 +234,26 @@ plotCorrelation \
 ```bash
 conda activate macs2
 # genotype per genotype
-sbatch scripts/macs2_broad_1.sh # 16581946 xxx
-sbatch scripts/macs2_broad_2.sh # 16581955 xxx
+sbatch scripts/macs2_broad_1.sh # 16581946 ok
+sbatch scripts/macs2_broad_2.sh # 16581955 ok
+
+sbatch scripts/macs2_narrow_1.sh # 16582595 xxx
 
 ```
 
 
 
+--> 50dN no to few peaks
+
+--> PSC H3K27me1, no peaks
+
+--> PSC EZH2 ~ 750 peaks (3,580 in 006__CutRun...)
+
+--. XX narrow xxx
+
+
 
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX below not mod
-
-
-
---> OEF1aEZH1 in 50-day neurons: too noisy for EZH1, EZH2, and H3K27me3
-
---> NPC histone marks: OK for H3K4me3, H3K27ac, and H3K27me3; sharp and clear peaks.
-
---> NPC PRC2 components: too noisy...
-
-*- NOTE: peak calling has been run 2 times adding the missing samples!*
-
 
 
 
