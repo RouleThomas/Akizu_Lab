@@ -1,5 +1,6 @@
 # Project
 
+**H9 cell lines**
 
 - PSC and 50dN native (FA was not so good so back to native!):
     - WT: H3K27me3, H3K27me1, EZH2, IGG
@@ -52,8 +53,8 @@ cp input_raw_Novogene/*.gz input/
 # Fastp cleaning
 
 ```bash
-sbatch scripts/fastp_1.sh # 16520720 xxx
-sbatch scripts/fastp_2.sh # 16520721 xxx
+sbatch scripts/fastp_1.sh # 16520720 ok
+sbatch scripts/fastp_2.sh # 16520721 ok
 
 ```
 
@@ -65,11 +66,11 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:16520720 scripts/bowtie2_1.sh # 16520751 xxx
-sbatch --dependency=afterany:16520721 scripts/bowtie2_2.sh # 16520752 xxx
+sbatch --dependency=afterany:16520720 scripts/bowtie2_1.sh # 16520751 ok
+sbatch --dependency=afterany:16520721 scripts/bowtie2_2.sh # 16520752 ok
 ```
 
---> XXX Looks good; overall ~70% uniquely aligned reads XXX
+--> Looks good; overall ~75% uniquely aligned reads
 
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -113,10 +114,10 @@ done > output/bowtie2/alignment_counts_16520752.txt
 
 ```
 
-Add these values to `/home/roulet/001_EZH1_project/010__CutRun_PSC_50dN_native/samples_009.xlsx`\
+Add these values to `/home/roulet/001_EZH1_project/010__CutRun_PSC_50dN_native/samples_010.xlsx`\
 Then in R; see `/home/roulet/001_EZH1_project/001_EZH1_project.R`.
 
---> XXX Overall >75% input reads as been uniquely mapped to the genome (90% non uniq) XXX
+--> Overall >75% input reads as been uniquely mapped to the genome (90% non uniq) 
 
 
 
@@ -129,8 +130,8 @@ This is prefered for THOR bam input.
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:16520751 scripts/samtools_unique_1.sh # 16520802 xxx
-sbatch --dependency=afterany:16520752 scripts/samtools_unique_2.sh # 16520803 xxx
+sbatch --dependency=afterany:16520751 scripts/samtools_unique_1.sh # 16520802 ok
+sbatch --dependency=afterany:16520752 scripts/samtools_unique_2.sh # 16520803 ok
 
 ```
 
@@ -163,24 +164,22 @@ Paramaters:
 ```bash
 conda activate deeptools
 
-sbatch --dependency=afterany:16520802 scripts/bamtobigwig_unique_1.sh # 16520886 xxx
-sbatch --dependency=afterany:16520803 scripts/bamtobigwig_unique_2.sh # 16520889 xxx
+sbatch --dependency=afterany:16520802 scripts/bamtobigwig_unique_1.sh # 16520886 ok
+sbatch --dependency=afterany:16520803 scripts/bamtobigwig_unique_2.sh # 16520889 ok
 
 
 ```
 
 
 - PSC native
-*Pass*: 
-*Failed*: 
+*Pass*: PSC_H3K27me3, PSC_EZH2
+*Failed*: PSC_H3K27me1
 - 50dN native
-*Pass*: 
-*Failed*:
+*Pass*: NA
+*Failed*: 50dN_H3K27me3, 50dN_EZH2, 50dN_H3K27me1
 
 
 
-
---> Non unique (all raw reads!) vs unique bigwig (less signal or more noise?): Very similar. increase signal on the one that work but more bakground
 
 
 ## Pearson correlation heatmap on bigwig signals
@@ -190,16 +189,16 @@ sbatch --dependency=afterany:16520803 scripts/bamtobigwig_unique_2.sh # 16520889
 ```bash
 conda activate deeptools
 # Generate compile bigwig (.npz) files
-sbatch --dependency=afterany:16520886:16520889 scripts/multiBigwigSummary_all.sh # 16521108 xxx
+sbatch --dependency=afterany:16520886:16520889 scripts/multiBigwigSummary_all.sh # 16521108 ok
 
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 
 # Plot
 ## PCA
 plotPCA -in output/bigwig/multiBigwigSummary_all.npz \
     --transpose \
     --ntop 0 \
-    --labels 50dNFA_KOEF1aEZH1_EZH1cs 50dNnative_KOEF1aEZH1_EZH1cs 50dNFA_KOEF1aEZH1_EZH2 50dNnative_KOEF1aEZH1_EZH2 50dNFA_KOEF1aEZH1_H3K27me3 NPC_KO_EZH1cs NPC_KO_EZH2 NPC_KO_H3K27ac NPC_KO_IGG NPC_KOEF1aEZH1_EZH1cs NPC_KOEF1aEZH1_H3K27me3 NPC_KOEF1aEZH1_H3K4me3 NPC_KOEF1aEZH1_IGG NPC_KOEF1aEZH1_SUZ12 NPC_WT_EZH1cs NPC_WT_EZH2 NPC_WT_H3K27ac NPC_WT_H3K4me3 NPC_WT_SUZ12 \
+    --labels PSC_WT_EZH2 PSC_WT_H3K27me1 PSC_WT_H3K27me3 PSC_WT_IGG 50dN_WT_EZH2 50dN_WT_H3K27me1 50dN_WT_H3K27me3 50dN_WT_IGG \
     -o output/bigwig/multiBigwigSummary_all_plotPCA.pdf
 
 ## Heatmap
@@ -208,17 +207,18 @@ plotCorrelation \
     --corMethod pearson --skipZeros \
     --plotTitle "Pearson Correlation" \
     --removeOutliers \
-    --labels 50dNFA_KOEF1aEZH1_EZH1cs 50dNnative_KOEF1aEZH1_EZH1cs 50dNFA_KOEF1aEZH1_EZH2 50dNnative_KOEF1aEZH1_EZH2 50dNFA_KOEF1aEZH1_H3K27me3 NPC_KO_EZH1cs NPC_KO_EZH2 NPC_KO_H3K27ac NPC_KO_IGG NPC_KOEF1aEZH1_EZH1cs NPC_KOEF1aEZH1_H3K27me3 NPC_KOEF1aEZH1_H3K4me3 NPC_KOEF1aEZH1_IGG NPC_KOEF1aEZH1_SUZ12 NPC_WT_EZH1cs NPC_WT_EZH2 NPC_WT_H3K27ac NPC_WT_H3K4me3 NPC_WT_SUZ12 \
+    --labels PSC_WT_EZH2 PSC_WT_H3K27me1 PSC_WT_H3K27me3 PSC_WT_IGG 50dN_WT_EZH2 50dN_WT_H3K27me1 50dN_WT_H3K27me3 50dN_WT_IGG \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
     -o output/bigwig/multiBigwigSummary_all_heatmap.pdf
 
 
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-
 ```
 
---> XXX Hard to conclude stuff XXX
+--> 50dN form a group, with IGG PSC; confirming fail
+
+--> H3K27me1 is apart, which show it may have work. Compare with ENCODE data, no ENCODE data.. Nor available data!! I only found [cancer cell lines HCT116 with H3K27me1 ChIP](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE75217)
+
+
 
 
 
@@ -234,10 +234,11 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```bash
 conda activate macs2
 # genotype per genotype
-sbatch --dependency=afterany:16520802 scripts/macs2_broad_1.sh # 16521538 xxx
-sbatch --dependency=afterany:16520803 scripts/macs2_broad_2.sh # 16521568 xxx
+sbatch scripts/macs2_broad_1.sh # 16581946 xxx
+sbatch scripts/macs2_broad_2.sh # 16581955 xxx
 
 ```
+
 
 
 
