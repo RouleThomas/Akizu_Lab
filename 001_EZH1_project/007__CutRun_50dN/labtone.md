@@ -2204,3 +2204,50 @@ write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q
 --> Integrated 50dN CutRun with 8wN RNAseq is not working well; the expression is poorly in agreement with gain / lost of H3K27me3
 ----> Corresponging RNAseq is likely needed
 
+
+
+
+
+
+# THOR with ChIPseeker
+
+Generate xls file with gene name and THOR peak metrics (Naiara Slack task 20240314):
+- import THOR bed output (correct qvalue) `output/THOR/THOR*/THOR_qval*.bed` (q20)
+- import ChIPseeker output `output/ChIPseeker/annotation_THOR*.txt`
+- combine THOR and ChIPseeker with Peak name
+- output all metrics in `THOR` folder! Then filter them in xls to keep only the relevant ones
+
+
+```R
+library("tidyverse")
+
+# import files
+THOR = read_tsv("output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval20.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character())) %>%
+       rename("name" = "X4", "qval" = "X15", "FC" = "X16", "WT_count_1" = "X11", "WT_count_2" = "X12", "KO_count_1" = "X13", "KO_count_2" = "X14") %>%
+       mutate(WT_count = (WT_count_1)+(WT_count_2) / 2,
+              KO_count = (KO_count_1)+(KO_count_2) / 2) %>%
+       dplyr::select(name, WT_count, KO_count, FC, qval)
+
+chipseeker_gain = read_tsv("output/ChIPseeker/annotation_THOR_KO_gain_annot_qval20.txt",
+                      col_names = TRUE, trim_ws = TRUE) %>%
+       dplyr::select(seqnames, start, end, width, name, annotation, geneChr, geneStart, geneEnd, geneLength, geneStrand, geneId, transcriptId, distanceToTSS, geneSymbol, gene) %>%
+       add_column(peak = "gain")
+chipseeker_lost = read_tsv("output/ChIPseeker/annotation_THOR_KO_lost_annot_qval20.txt",
+                      col_names = TRUE, trim_ws = TRUE) %>%
+       dplyr::select(seqnames, start, end, width, name, annotation, geneChr, geneStart, geneEnd, geneLength, geneStrand, geneId, transcriptId, distanceToTSS, geneSymbol, gene) %>%
+       add_column(peak = "lost")
+chipseeker = chipseeker_gain %>%
+    bind_rows(chipseeker_lost)
+# combine and filter
+
+THOR_chipseeker = THOR %>% left_join(chipseeker)
+
+
+write.table(THOR_chipseeker, file="output/THOR/THOR_50dN_H3K27me3_WTvsKO/THORq20_chipseeker-50dN_WTvsKO.txt", sep="\t", quote=FALSE, row.names=FALSE)
+
+
+
+```
+
+

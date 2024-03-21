@@ -8661,3 +8661,48 @@ I think the **code is good, now we need to show less genes, and maybe refine the
 
 
 
+
+
+# THOR with ChIPseeker
+
+Generate xls file with gene name and THOR peak metrics (Naiara Slack task 20240314):
+- import THOR bed output (correct qvalue) `output/THOR/THOR*/THOR_qval*.bed` (q15)
+- import ChIPseeker output `output/ChIPseeker/annotation_THOR*.txt`
+- combine THOR and ChIPseeker with Peak name
+- output all metrics in `THOR` folder! Then filter them in xls to keep only the relevant ones
+
+
+```R
+library("tidyverse")
+
+# import files
+
+THOR = read_tsv("output/THOR/THOR_WTvsKO_unique_Keepdup/THOR_qval15.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character())) %>%
+       rename("seqnames" = "X1", "start" = "X2", "end" = "X3", "name" = "X4", "qval" = "X19", "FC" = "X20", "WT_count_1" = "X11", "WT_count_2" = "X12", "WT_count_3" = "X13", "WT_count_4" = "X14", "KO_count_1" = "X15", "KO_count_2" = "X16","KO_count_3" = "X17", "KO_count_4" = "X18") %>%
+       mutate(WT_count = (WT_count_1)+(WT_count_2)+(WT_count_3)+(WT_count_4) / 4,
+              KO_count = (KO_count_1)+(KO_count_2)+(KO_count_3)+(KO_count_4) / 4) %>%
+       dplyr::select(seqnames, start, end, name, WT_count, KO_count, FC, qval)
+
+chipseeker_gain = read_tsv("output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15.txt",
+                      col_names = TRUE, trim_ws = TRUE) %>%
+       dplyr::select(seqnames, start, end, width, annotation, geneChr, geneStart, geneEnd, geneLength, geneStrand, geneId, transcriptId, distanceToTSS, geneSymbol, gene, FC) %>%
+       filter(FC > 1) %>%
+       add_column(peak = "gain")
+chipseeker_lost = read_tsv("output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15.txt",
+                      col_names = TRUE, trim_ws = TRUE) %>%
+       dplyr::select(seqnames, start, end, width, annotation, geneChr, geneStart, geneEnd, geneLength, geneStrand, geneId, transcriptId, distanceToTSS, geneSymbol, gene, FC) %>%
+       filter(FC < 1) %>%
+       add_column(peak = "lost")
+chipseeker = chipseeker_gain %>%
+    bind_rows(chipseeker_lost)
+# combine and filter
+
+THOR_chipseeker = THOR %>% left_join(chipseeker)
+
+
+write.table(THOR_chipseeker, file="output/THOR/THOR_WTvsKO_unique_Keepdup/THORq15_chipseeker-8wN_WTvsKO.txt", sep="\t", quote=FALSE, row.names=FALSE)
+
+
+
+```

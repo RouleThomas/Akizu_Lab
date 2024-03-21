@@ -237,7 +237,7 @@ conda activate macs2
 sbatch scripts/macs2_broad_1.sh # 16581946 ok
 sbatch scripts/macs2_broad_2.sh # 16581955 ok
 
-sbatch scripts/macs2_narrow_1.sh # 16582595 xxx
+sbatch scripts/macs2_narrow_1.sh # 16582595 ok
 
 ```
 
@@ -247,9 +247,9 @@ sbatch scripts/macs2_narrow_1.sh # 16582595 xxx
 
 --> PSC H3K27me1, no peaks
 
---> PSC EZH2 ~ 750 peaks (3,580 in 006__CutRun...)
+--> PSC EZH2 ~ 750 peaks broad and 543 narrow (3,580 in 006__CutRun...)
 
---. XX narrow xxx
+
 
 
 
@@ -291,3 +291,26 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 # Spike in factor
+
+XXX
+
+
+# deepTool plots
+
+
+```bash
+conda activate deeptools
+
+# all genes 
+sbatch scripts/matrix_TSS_10kb_allGenes.sh # 16677909 xxx
+sbatch scripts/matrix_TSS_10kb_PSC_allGenes.sh # 16678016 xxx
+
+# H3K27me3 peaks
+sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3Peaks.sh # 16678626 ok
+
+```
+
+
+--> PSC; H3K27me3 and EZH2 co-localize well
+
+

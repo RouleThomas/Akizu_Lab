@@ -1528,16 +1528,43 @@ write.table(KO_lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/ann
 # THOR with ChIPseeker
 
 Generate xls file with gene name and THOR peak metrics (Naiara Slack task 20240314):
-- import THOR bed output (correct qvalue) `output/THOR/THOR*/THOR_qval*.bed`
+- import THOR bed output (correct qvalue) `output/THOR/THOR*/THOR_qval*.bed` (q50)
 - import ChIPseeker output `output/ChIPseeker/annotation_THOR*.txt`
 - combine THOR and ChIPseeker with Peak name
-- output all metrics! Then filter them in xls to keep only the relevant ones
+- output all metrics in `THOR` folder! Then filter them in xls to keep only the relevant ones
 
 
 ```R
+library("tidyverse")
+
+# import files
+THOR = read_tsv("output/THOR/THOR_PSC_WTvsKO_H3K27me3/THOR_qval50.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character())) %>%
+       rename("name" = "X4", "qval" = "X13", "FC" = "X14", "WT_count" = "X11", "KO_count" = "X12") %>%
+       dplyr::select(name, WT_count, KO_count, FC, qval)
+
+chipseeker_gain = read_tsv("output/ChIPseeker/annotation_THOR_KO_gain_annot_qval50.txt",
+                      col_names = TRUE, trim_ws = TRUE) %>%
+       dplyr::select(seqnames, start, end, width, name, annotation, geneChr, geneStart, geneEnd, geneLength, geneStrand, geneId, transcriptId, distanceToTSS, geneSymbol, gene) %>%
+       add_column(peak = "gain")
+chipseeker_lost = read_tsv("output/ChIPseeker/annotation_THOR_KO_lost_annot_qval50.txt",
+                      col_names = TRUE, trim_ws = TRUE) %>%
+       dplyr::select(seqnames, start, end, width, name, annotation, geneChr, geneStart, geneEnd, geneLength, geneStrand, geneId, transcriptId, distanceToTSS, geneSymbol, gene) %>%
+       add_column(peak = "lost")
+chipseeker = chipseeker_gain %>%
+    bind_rows(chipseeker_lost)
+# combine and filter
+
+THOR_chipseeker = THOR %>% left_join(chipseeker)
+
+
+write.table(THOR_chipseeker, file="output/THOR/THOR_PSC_WTvsKO_H3K27me3/THORq50_chipseeker-PSC_WTvsKO.txt", sep="\t", quote=FALSE, row.names=FALSE)
+
 
 
 ```
+
+
 
 
 
