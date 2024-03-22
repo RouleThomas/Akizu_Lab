@@ -307,7 +307,7 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 ```bash
-sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp.sh # 16737105 xxx
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp.sh # 16737105 ok
 
 
 
@@ -315,17 +315,16 @@ sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp.sh # 16737105 xxx
 
 --> It output the nb of reads found for each histone; then simply copy paste to the excell file `output/spikein/SpikeIn_QC_fastp_008.xlsx` in GoogleDrive
 
-- `50dNFA_KOEF1aEZH1_H3K27me3`: enriched in H3K27me3, but much less nb of reads as compare to the NPC sample!
-- `NPC_KO_H3K27ac`: not in histone control..
-- `NPC_KOEF1aEZH1_H3K27me3`: enriched in H3K27me3
-- `NPC_KOEF1aEZH1_H3K4me3`: enriched in H3K4me3
-- `NPC_WT_H3K27ac`: not in histone control..
-- `NPC_WT_H3K4me3`: enriched in H3K4me3
+- `50dN_WT_H3K27me3`: enriched in H3K27me3, but much less nb of reads as compare to the PSC sample!
+- `50dN_WT_H3K27me1`: no enrichment!
+- `PSC_WT_H3K27me3`: enriched in H3K27me3
+- `PSC_WT_H3K27me1`: no enrichment!
 
 
 
 ## histone spike in factor
 
+XXXXXXXXX below not modified XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 --> SF only calculating on WT and KO as KOEF1aEZH1 is NOT overexpressing..
 
@@ -396,7 +395,7 @@ write.table(spikein_H3K4me3_scaling_factor, file="output/spikein/spikein_histone
 
 --> All good; in KO higher SF for H3K27me3
 
-
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 ### Quality control plot
@@ -407,13 +406,12 @@ Then look at the xlsx file from [EpiCypher](https://www.epicypher.com/products/n
 library("tidyverse")
 library("readxl")
 # import df adn tidy to remove AB used in sample_ID
-spikein <- read_excel("output/spikein/SpikeIn_QC_fastp_008.xlsx") %>%
+spikein <- read_excel("output/spikein/SpikeIn_QC_fastp_010.xlsx") %>%
   separate(sample_ID, into = c("type", "condition", "tag"), sep = "_") %>%
   mutate(sample_ID = paste(type, condition, sep = "_")) %>%
-  select(-type, -condition, -tag, -tissue)
+  select(-type, -condition, -tag)
 
 
-# NPC
 # data processing
 spikein_sum_Barcode_read <- spikein %>%
 	select(-Barcode) %>%
@@ -458,11 +456,11 @@ spikein_all_scale %>%
 dev.off()
 
 
-## Histone scaling for H3K4me3
+## Histone scaling for H3K27me1
 spikein_all_scale = spikein_all %>%
   group_by(sample_ID) %>%
-  # Find the target_norm value when Target is H3K4me3 and AB is H3K4me3
-  mutate(scaling_factor = ifelse(Target == "H3K4me3" & AB == "H3K4me3", target_norm, NA)) %>%
+  # Find the target_norm value when Target is H3K27me1 and AB is H3K27me1
+  mutate(scaling_factor = ifelse(Target == "H3K27me1" & AB == "H3K27me1", target_norm, NA)) %>%
   # Fill the scaling_factor column with the appropriate value within each group
   fill(scaling_factor, .direction = "downup") %>%
   # Scale the target_norm values
@@ -472,10 +470,10 @@ spikein_all_scale = spikein_all %>%
   # Ungroup the data
   ungroup()
 # Plot
-pdf("output/spikein/QC_histone_spike_in_H3K4me3.pdf", width = 10, height = 4)
+pdf("output/spikein/QC_histone_spike_in_H3K27me1.pdf", width = 10, height = 4)
 spikein_all_scale %>%
     filter(
-           AB %in% c("H3K4me3")) %>%
+           AB %in% c("H3K27me1", "IGG")) %>%
         ggplot(aes(x = Target, y = scaled_target_norm, fill = AB)) +
         geom_col(position = "dodge") +
         facet_wrap(~sample_ID, nrow=1) +
@@ -488,7 +486,9 @@ dev.off()
 ```
 
 
---> All good H3K27me3 and H3K4me3 enriched
+--> H3K27me3 is enriched; but 50dN has few number of barcode reads
+
+--> H3K27me1 do not work, not enriched! New AB was testeed, that is a bad one, as previous one show enrichment (see `007__CutRun`)
 
 
 

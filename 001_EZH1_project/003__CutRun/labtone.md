@@ -8665,6 +8665,99 @@ I think the **code is good, now we need to show less genes, and maybe refine the
 
 # THOR with ChIPseeker
 
+## ChIPseeker on THOR q15
+
+The file I used `output/ChIPseeker/annotation_THOR*.txt` is weird, many gene missing, let s redo this step..
+
+
+
+Let's assign **peak to genes from THOR positive (gain) and negative (lost) peaks** (for qval 10 and 15):
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+
+# Import THOR diff peaks
+## qval 15
+KO_gain = as_tibble(read.table('output/THOR/THOR_WTvsKO_unique_Keepdup/THOR_qval15_positive.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)
+KO_lost = as_tibble(read.table('output/THOR/THOR_WTvsKO_unique_Keepdup/THOR_qval15_negative.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)       
+
+
+
+# Tidy peaks #-->> Re-Run from here with different qvalue!!
+## 50dN
+KO_gain_gr = makeGRangesFromDataFrame(KO_gain,keep.extra.columns=TRUE)
+KO_lost_gr = makeGRangesFromDataFrame(KO_lost,keep.extra.columns=TRUE)
+
+gr_list <- list(KO_gain=KO_gain_gr, KO_lost=KO_lost_gr)
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## Get annotation data frame
+KO_gain_annot <- as.data.frame(peakAnnoList[["KO_gain"]]@anno)
+KO_lost_annot <- as.data.frame(peakAnnoList[["KO_lost"]]@anno)
+
+
+
+## Convert entrez gene IDs to gene symbols
+KO_gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = KO_gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+KO_gain_annot$gene <- mapIds(org.Hs.eg.db, keys = KO_gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+KO_lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = KO_lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+KO_lost_annot$gene <- mapIds(org.Hs.eg.db, keys = KO_lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+## Save output table
+write.table(KO_gain_annot, file="output/ChIPseeker/annotation_THOR_KO_gain_annot_qval15.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(KO_lost_annot, file="output/ChIPseeker/annotation_THOR_KO_lost_annot_qval15.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+KO_gain_annot_promoterAnd5 = tibble(KO_gain_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+KO_lost_annot_promoterAnd5 = tibble(KO_lost_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+
+### Save output gene lists
+KO_gain_annot_promoterAnd5_geneSymbol = KO_gain_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+KO_lost_annot_promoterAnd5_geneSymbol = KO_lost_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+write.table(KO_gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KO_gain_qval15_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(KO_lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annot_THOR_KO_lost_qval15_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+```
+
+
+## THOR with ChIPseeker
+
 Generate xls file with gene name and THOR peak metrics (Naiara Slack task 20240314):
 - import THOR bed output (correct qvalue) `output/THOR/THOR*/THOR_qval*.bed` (q15)
 - import ChIPseeker output `output/ChIPseeker/annotation_THOR*.txt`
@@ -8684,18 +8777,18 @@ THOR = read_tsv("output/THOR/THOR_WTvsKO_unique_Keepdup/THOR_qval15.bed",
               KO_count = (KO_count_1)+(KO_count_2)+(KO_count_3)+(KO_count_4) / 4) %>%
        dplyr::select(seqnames, start, end, name, WT_count, KO_count, FC, qval)
 
-chipseeker_gain = read_tsv("output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15.txt",
+
+chipseeker_gain = read_tsv("output/ChIPseeker/annotation_THOR_KO_gain_annot_qval15.txt",
                       col_names = TRUE, trim_ws = TRUE) %>%
-       dplyr::select(seqnames, start, end, width, annotation, geneChr, geneStart, geneEnd, geneLength, geneStrand, geneId, transcriptId, distanceToTSS, geneSymbol, gene, FC) %>%
-       filter(FC > 1) %>%
+       dplyr::select(seqnames, start, end, width, name, annotation, geneChr, geneStart, geneEnd, geneLength, geneStrand, geneId, transcriptId, distanceToTSS, geneSymbol, gene) %>%
        add_column(peak = "gain")
-chipseeker_lost = read_tsv("output/ChIPseeker/annotation_WTvsKO_unique_Keepdup_qval15.txt",
+chipseeker_lost = read_tsv("output/ChIPseeker/annotation_THOR_KO_lost_annot_qval15.txt",
                       col_names = TRUE, trim_ws = TRUE) %>%
-       dplyr::select(seqnames, start, end, width, annotation, geneChr, geneStart, geneEnd, geneLength, geneStrand, geneId, transcriptId, distanceToTSS, geneSymbol, gene, FC) %>%
-       filter(FC < 1) %>%
+       dplyr::select(seqnames, start, end, width, name, annotation, geneChr, geneStart, geneEnd, geneLength, geneStrand, geneId, transcriptId, distanceToTSS, geneSymbol, gene) %>%
        add_column(peak = "lost")
 chipseeker = chipseeker_gain %>%
     bind_rows(chipseeker_lost)
+
 # combine and filter
 
 THOR_chipseeker = THOR %>% left_join(chipseeker)
