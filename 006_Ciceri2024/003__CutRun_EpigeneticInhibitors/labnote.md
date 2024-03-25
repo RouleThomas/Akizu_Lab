@@ -165,25 +165,24 @@ Paramaters:
 ```bash
 conda activate deeptools
 
-sbatch --dependency=afterany:16221854 scripts/bamtobigwig_unique_1.sh # 16221861 xxx
-sbatch --dependency=afterany:16221855 scripts/bamtobigwig_unique_2.sh # 16221862 xxx
+sbatch --dependency=afterany:16221854 scripts/bamtobigwig_unique_1.sh # 16221861 ok
+sbatch --dependency=afterany:16221855 scripts/bamtobigwig_unique_2.sh # 16221862 ok
 
 ```
 
-XXXXXXXXXXXX 
 
 - EZH2inh
-PASS: 
-FAIL: 
-- EHMTinh
-PASS: 
-FAIL: 
-- DOT1Linh
-PASS: 
-FAIL: 
+PASS: R1, R2
+FAIL: NA
 - DMSO
-PASS: 
-FAIL: 
+PASS: R1, R2
+FAIL: NA
+- EHMTinh
+PASS: XXX
+FAIL: XXX
+- DOT1Linh
+PASS: XXX
+FAIL: XXX
 
 
 
@@ -197,26 +196,81 @@ FAIL:
 conda activate deeptools
 
 # Generate compile bigwig (.npz) files _ hg38 Akizu analysis
-sbatch --dependency=afterany:16198742:16198743 scripts/multiBigwigSummary_all.sh # 16200148 xxx
+sbatch scripts/multiBigwigSummary_all.sh # 17148596 ok
 
+sbatch scripts/multiBigwigSummary_EZH2inh_H3K27me3noAB.sh # 17148950 xxx
+
+```
+
+--> AB clearly clustered together
+
+--> DMSO and EZH2inh samples cluster well as expected
+
+
+
+# THOR without spike in, TMM default norm
+
+No spikein in Ciceri data, so let's use THOR with default (TMM) normalization: EZH2inh vs DMSO
+
+
+```bash
+# Needed step to change where THOR look for libraries
+conda activate RGT
+export LD_LIBRARY_PATH=~/anaconda3/envs/RGT/lib:$LD_LIBRARY_PATH
+bigWigMerge
+
+# Default TMM method
+sbatch scripts/THOR_EZH2inh_H3K27me3.sh # 17151035 xxx
 
 
 ```
 
+- *NOTE: no DMSO noAB rep2, so I used R1 for both replicates*
+
+
+
+Generate median tracks:
+```bash
+conda activate BedToBigwig
+# Default TMM method
+sbatch --dependency=afterany:17151035 scripts/bigwigmerge_THOR_EZH2inh_H3K27me3.sh # 17151091 xxx
+
+```
+
+
+
+
+# deepTool plots
+
+
+check whether genes that gain H3K27me3 in KO (in 50dN; `007__CutRun`) are EZH2-specific = the one that lose H3K27me3 with EZH2 inhibitor:
+- use gain lost H3K27me3 region WT vs KO (`007__CutRun`) *THOR q20*
+- use gain lost EZH2inh region; THOR *qXXX*
+
+
+```bash
+conda activate deeptools
+
+# CutRun__007 gain/lost THOR q20 WT vs KO H3K27me3 region
+## 
+sbatch --dependency=afterany:17151091 scripts/matrix_TSS_10kb_H3K27me3_CutRun007_CiceriEpiInh_007H3K72me3GainLost_007THOR_q20_peaks.sh # 17151348 xxx
+XXX Need generate gtf XXX sbatch scripts/matrix_TSS_10kb_H3K27me3_CutRun007_CiceriEpiInh_007H3K72me3GainLost_007THOR_q20_gene.sh #  xxx
+
+
+# gain lost EZH2 inh region
+XXX NEED ASSIGN EZH2 diff peak to genes
+
+
+```
+
+
+--> xxx
+
+
+
+
+
 XXXXXXXXXXXXX CHUI AL below not mod XXXXXXXXXXXXX
-
-**Good to use**:
-- *NPC*: H3K27me3, H3K4me3, H3K9me3, IGG
-- *53dN*: H3K27me3, H3K9me3
-
-**Bad to use**:
-- *NPC*: H3K27ac: no signal! Like IGG
-- *53dN*: AB mix between IGG, H3K4me3, H3K27ac
-
---> Same observation between Akizu and Ciceri analysis(hg38 hg19)
-
---> The *good to use* ones nicely correlate with our data in NPC WT `CutRun__005008` (`CutRun__009`)
-
 
 
 # MACS2 peak calling on bam unique
@@ -274,38 +328,6 @@ Then keep only the significant peaks (re-run the script to test different qvalue
 
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-
-
-# deepTool plots
-
-
-On all genes
-
-
-```bash
-conda activate deeptools
-
-# All genes all histone marks
-## NPC
-sbatch scripts/matrix_TSS_10kb_NPC_raw_allGenes.sh # 15402417 ok
-sbatch scripts/matrix_TSS_5kb_NPC_H3K27ac_raw_allGenes.sh # 15402511 ok
-sbatch scripts/matrix_TSS_10kb_NPC_H3K27me3_H3K4me3_raw_allGenes.sh # 15402602 ok
-
-
-## 53dN
-sbatch scripts/matrix_TSS_10kb_53dN_raw_allGenes.sh # 15402437 ok
-sbatch scripts/matrix_TSS_5kb_53dN_H3K27ac_raw_allGenes.sh # 15402531 ok
-sbatch scripts/matrix_TSS_10kb_53dN_H3K27me3_H3K4me3_raw_allGenes.sh # 15402648 ok
-
-
-# Akizu and Ciceri H3K27me3, H3K4me3, IGG
-sbatch scripts/matrix_TSS_10kb_H3K27me3_H3K4me3_CutRun001008_Ciceri_raw_allGenes.sh # 15432941 ok
-
-
-```
-
-
---> signal is very poor for H3K27ac in NPC as compared to 53dN, notably for R1, almost like IGG...
 
 
 

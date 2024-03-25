@@ -14,6 +14,13 @@ computeMatrix reference-point --referencePoint TSS \
     -p 6
 
 
+plotHeatmap -m output/deeptools/matrix_TSS_10kb_H3K27me3_median_THORLIBspikein_genePeaks.gz \
+    -out output/deeptools/matrix_TSS_10kb_H3K27me3_median_THORLIBspikein_genePeaks_heatmap_colorSmall.pdf \
+    --samplesLabel "WT" "KO" \
+    --colorMap bwr \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2
 
 plotHeatmap -m output/deeptools/matrix_TSS_10kb_H3K27me3_median_THORLIBspikein_genePeaks.gz \
     -out output/deeptools/matrix_TSS_10kb_H3K27me3_median_THORLIBspikein_genePeaks_heatmap_colorSmall.pdf \
