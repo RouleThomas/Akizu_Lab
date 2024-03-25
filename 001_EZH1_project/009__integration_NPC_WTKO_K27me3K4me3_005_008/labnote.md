@@ -493,7 +493,7 @@ library("dplyr")
 library("ggplot2")
 library("tidyr")
 
-# H3K27me3
+# H3K27me3 TMM method (classic)
 diffpeaks <- read_tsv("output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-diffpeaks.bed",
                       col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
 ## split the last field and calculate FC
@@ -577,12 +577,56 @@ thor_splitted %>%
   filter(qval > 20) %>%
   group_by(X6) %>%
   summarise(n = n())
+
+
+# H3K27me3 LIB method
+diffpeaks <- read_tsv("output/THOR/THOR_NPC_WTvsKO_H3K27me3_LIB_spikein/NPCWTvsKOH3K27me3LIBspikein-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2) / (count_WT_1+count_WT_2))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_NPC_WTvsKO_H3K27me3_LIB_spikein/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("NPC_WT vs KO") +
+  theme_bw()
+dev.off()
+
+pdf("output/THOR/THOR_NPC_WTvsKO_H3K27me3_LIB_spikein/log2FC_qval50.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 50) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("NPC_WT vs KO_qval50") +
+  theme_bw()
+dev.off()
+
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 40) %>%
+  write_tsv("output/THOR/THOR_NPC_WTvsKO_H3K27me3_LIB_spikein/THOR_qval40.bed", col_names = FALSE)
+
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 30) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
 ```
 
 - *NOTE: FC positive = less in KO; negative = more in KO*
 
 **Optimal qvalue:**
---> *H3K27me3*; qval 30 (qval40 ok also,more stringeant)
+--> *H3K27me3*; qval 30 for TMM and LIB (qval40 ok also,more stringeant)
 --> *H3K4me3*; qval 20 (qval30 ok also,more stringeant)
 
 
@@ -615,6 +659,7 @@ sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_allGenes.sh # 15516179 ok
 sbatch scripts/matrix_TSS_5kb_H3K27me3_median_THOR_allGenes.sh # 15516394 ok
 sbatch scripts/matrix_TSS_5kb_H3K4me3_median_THOR_allGenes.sh # 15516489 ok
 sbatch scripts/matrix_TSS_2kb_H3K4me3_median_THOR_allGenes.sh # 15518489 ok
+sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THORLIBspikein_allGenes.sh # 17135510 xxx
 
 
 ## only genes with peak in WT and or KO qval 2.3
@@ -622,6 +667,9 @@ sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks.sh # 15523775 disa
 sbatch scripts/matrix_TSS_5kb_H3K27me3_median_THOR_genePeaks.sh # 15523776 ok
 sbatch scripts/matrix_TSS_5kb_H3K4me3_median_THOR_genePeaks.sh # 15523800 ok
 sbatch scripts/matrix_TSS_2kb_H3K4me3_median_THOR_genePeaks.sh # 15523832 ok
+sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THORLIBspikein_genePeaks.sh # 17135552 xxx
+
+
 
 ## only genes with peak in WT and or KO qval 3
 sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_macs2q3.sh # 15529967 ok
@@ -651,6 +699,7 @@ sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_genePeaks_macs2q10.sh # 1564
 sbatch scripts/multiBigwigSummary_H3K27me3_raw.sh # 14480543 ok fail erase; 14554827 ok
 sbatch scripts/multiBigwigSummary_H3K27me3_DiffBindTMM.sh # 14481446 ok fail erase; 14554967 ok
 sbatch scripts/multiBigwigSummary_H3K27me3_THOR.sh # 14482864 ok fail erase; 14554971 ok
+sbatch scripts/multiBigwigSummary_H3K27me3_THORLIBspikein.sh # 17135572 xxx
 
 sbatch scripts/multiBigwigSummary_H3K4me3_raw.sh # 14481079 fail (missabotated sample); 14516643 ok fail erase; 14554975 ok
 sbatch scripts/multiBigwigSummary_H3K4me3_DiffBindTMM.sh # 14482286 ok fail erase; 14554976 ok
@@ -704,6 +753,9 @@ awk -F'\t' '$16 < 1' output/THOR/THOR_NPC_WTvsKO_H3K27me3/THOR_qval40.bed > outp
 
 awk -F'\t' '$16 > 1' output/THOR/THOR_NPC_WTvsKO_H3K4me3/THOR_qval20.bed > output/THOR/THOR_NPC_WTvsKO_H3K4me3/THOR_qval20_gain.bed
 awk -F'\t' '$16 < 1' output/THOR/THOR_NPC_WTvsKO_H3K4me3/THOR_qval20.bed > output/THOR/THOR_NPC_WTvsKO_H3K4me3/THOR_qval20_lost.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_NPC_WTvsKO_H3K27me3_LIB_spikein/THOR_qval30.bed > output/THOR/THOR_NPC_WTvsKO_H3K27me3_LIB_spikein/THOR_qval30_gain.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_NPC_WTvsKO_H3K27me3_LIB_spikein/THOR_qval30.bed > output/THOR/THOR_NPC_WTvsKO_H3K27me3_LIB_spikein/THOR_qval30_lost.bed
 
 
 ## deeptools plot
@@ -1153,6 +1205,7 @@ library("VennDiagram")
 
 
 # Import THOR peaks
+# TMM
 ## H3K27me3 _ q30
 H3K27me3_q30_pos = as_tibble(read.table('output/THOR/THOR_NPC_WTvsKO_H3K27me3/THOR_qval30.bed') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, FC=V16) %>%
@@ -1184,6 +1237,33 @@ H3K27me3_q50 = as_tibble(read.table('output/THOR/THOR_NPC_WTvsKO_H3K27me3/THOR_q
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, FC=V16)
 
 
+# LIBspikein
+## H3K27me3 _ q30
+H3K27me3_q30_pos = as_tibble(read.table('output/THOR/THOR_NPC_WTvsKO_H3K27me3_LIB_spikein/THOR_qval30.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, FC=V16) %>%
+    filter(FC >1) 
+H3K27me3_q30_neg = as_tibble(read.table('output/THOR/THOR_NPC_WTvsKO_H3K27me3_LIB_spikein/THOR_qval30.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, FC=V16) %>%
+    filter(FC <1) 
+
+## H3K27me3 _ q40
+H3K27me3_q40_pos = as_tibble(read.table('output/THOR/THOR_NPC_WTvsKO_H3K27me3_LIB_spikein/THOR_qval40.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, FC=V16) %>%
+    filter(FC >1) 
+H3K27me3_q40_neg = as_tibble(read.table('output/THOR/THOR_NPC_WTvsKO_H3K27me3_LIB_spikein/THOR_qval40.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, FC=V16) %>%
+    filter(FC <1) 
+
+## H3K27me3 _ q50
+H3K27me3_q50_pos = as_tibble(read.table('output/THOR/THOR_NPC_WTvsKO_H3K27me3_LIB_spikein/THOR_qval50.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, FC=V16) %>%
+    filter(FC >1) 
+H3K27me3_q50_neg = as_tibble(read.table('output/THOR/THOR_NPC_WTvsKO_H3K27me3_LIB_spikein/THOR_qval50.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, FC=V16) %>%
+    filter(FC <1) 
+
+
+
 # Tidy peaks 
 ## H3K27me3
 H3K27me3_q30_pos_gr = makeGRangesFromDataFrame(H3K27me3_q30_pos,keep.extra.columns=TRUE)
@@ -1206,9 +1286,11 @@ peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
                        tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
 ## plots
 pdf("output/ChIPseeker/plotAnnoBar_THOR_H3K27me3.pdf", width = 8, height = 3)
+pdf("output/ChIPseeker/plotAnnoBar_THORLIBspikein_H3K27me3.pdf", width = 8, height = 3)
 plotAnnoBar(peakAnnoList)
 dev.off()
 pdf("output/ChIPseeker/plotDistToTSS_THOR_H3K27me3.pdf", width = 8, height = 3)
+pdf("output/ChIPseeker/plotDistToTSS_THORLIBspikein_H3K27me3.pdf", width = 8, height = 3)
 plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
 dev.off()
 
@@ -1250,12 +1332,12 @@ H3K27me3_q50_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_q50_annot$geneId
 
 
 ## Save output table
-write.table(H3K27me3_q30_pos_annot, file="output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(H3K27me3_q30_neg_annot, file="output/ChIPseeker/annotation_THOR_H3K27me3_q30_neg.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(H3K27me3_q40_pos_annot, file="output/ChIPseeker/annotation_THOR_H3K27me3_q40_pos.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(H3K27me3_q40_neg_annot, file="output/ChIPseeker/annotation_THOR_H3K27me3_q40_neg.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(H3K27me3_q50_pos_annot, file="output/ChIPseeker/annotation_THOR_H3K27me3_q50_pos.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(H3K27me3_q50_neg_annot, file="output/ChIPseeker/annotation_THOR_H3K27me3_q50_neg.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K27me3_q30_pos_annot, file="output/ChIPseeker/annotation_THORLIBspikein_H3K27me3_q30_pos.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K27me3_q30_neg_annot, file="output/ChIPseeker/annotation_THORLIBspikein_H3K27me3_q30_neg.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K27me3_q40_pos_annot, file="output/ChIPseeker/annotation_THORLIBspikein_H3K27me3_q40_pos.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K27me3_q40_neg_annot, file="output/ChIPseeker/annotation_THORLIBspikein_H3K27me3_q40_neg.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K27me3_q50_pos_annot, file="output/ChIPseeker/annotation_THORLIBspikein_H3K27me3_q50_pos.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K27me3_q50_neg_annot, file="output/ChIPseeker/annotation_THORLIBspikein_H3K27me3_q50_neg.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 
 write.table(H3K27me3_q30_annot, file="output/ChIPseeker/annotation_THOR_H3K27me3_q30.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
 write.table(H3K27me3_q40_annot, file="output/ChIPseeker/annotation_THOR_H3K27me3_q40.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
@@ -1316,32 +1398,32 @@ H3K27me3_q50_annot_promoterAnd5_geneSymbol = H3K27me3_q50_annot_promoterAnd5 %>%
     unique()
 
 
-write.table(H3K27me3_q30_pos_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol.txt",
+write.table(H3K27me3_q30_pos_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_THORLIBspikein_H3K27me3_q30_pos_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(H3K27me3_q30_neg_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_THOR_H3K27me3_q30_neg_promoterAnd5_geneSymbol.txt",
+write.table(H3K27me3_q30_neg_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_THORLIBspikein_H3K27me3_q30_neg_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(H3K27me3_q40_pos_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_THOR_H3K27me3_q40_pos_promoterAnd5_geneSymbol.txt",
+write.table(H3K27me3_q40_pos_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_THORLIBspikein_H3K27me3_q40_pos_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(H3K27me3_q40_neg_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_THOR_H3K27me3_q40_neg_promoterAnd5_geneSymbol.txt",
+write.table(H3K27me3_q40_neg_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_THORLIBspikein_H3K27me3_q40_neg_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(H3K27me3_q50_pos_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_THOR_H3K27me3_q50_pos_promoterAnd5_geneSymbol.txt",
+write.table(H3K27me3_q50_pos_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_THORLIBspikein_H3K27me3_q50_pos_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(H3K27me3_q50_neg_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_THOR_H3K27me3_q50_neg_promoterAnd5_geneSymbol.txt",
+write.table(H3K27me3_q50_neg_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_THORLIBspikein_H3K27me3_q50_neg_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
@@ -1900,8 +1982,8 @@ sbatch scripts/matrix_TSS_10kb_H3K27me3_EZH2_median_THOR_gainLost.sh # 16222103 
 sbatch scripts/matrix_TSS_10kb_H3K27me3_EZH2_SUZ12_median_THOR_gainLost.sh # 16222113 ok
 
 # Using DiffBind MG1655 bam scaling factor (see 005); use bam MG1655 in DiffBind and Library seq normalization
-sbatch scripts/matrix_TSS_10kb_H3K27me3_THORDiffBindTMM_EZH2SUZ12_THORLIBspikein_gainLost.sh # 16223845 ok
-
+sbatch scripts/matrix_TSS_10kb_H3K27me3_THORDiffBindTMM_EZH2SUZ12_THORLIBspikein_gainLost.sh # 16223845 ok FAIL because H3K27me3 data with TMM (classice) and PRC2 subunits with LIB norm.
+sbatch scripts/matrix_TSS_10kb_H3K27me3_THORDiffBindTMM_EZH2SUZ12_THORLIBspikein_gainLost_corr.sh # 17139835 xxx
 
 
 ```
