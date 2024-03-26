@@ -220,7 +220,7 @@ export LD_LIBRARY_PATH=~/anaconda3/envs/RGT/lib:$LD_LIBRARY_PATH
 bigWigMerge
 
 # Default TMM method
-sbatch scripts/THOR_EZH2inh_H3K27me3.sh # 17151035 xxx
+sbatch scripts/THOR_EZH2inh_H3K27me3.sh # 17151035 ok
 
 
 ```
@@ -233,9 +233,76 @@ Generate median tracks:
 ```bash
 conda activate BedToBigwig
 # Default TMM method
-sbatch --dependency=afterany:17151035 scripts/bigwigmerge_THOR_EZH2inh_H3K27me3.sh # 17151091 xxx
+sbatch --dependency=afterany:17151035 scripts/bigwigmerge_THOR_EZH2inh_H3K27me3.sh # 17151091 ok
 
 ```
+
+
+
+
+## Filter THOR peaks (qvalue)
+
+Let's find the optimal qvalue for THOR diff peaks
+
+
+```R
+
+# load the file using the tidyverse
+library("readr")
+library("dplyr")
+library("ggplot2")
+library("tidyr")
+
+# H3K27me3 TMM default norm wthout spike in
+diffpeaks <- read_tsv("output/THOR/THOR_EZH2inh_H3K27me3/EZH2inhH3K27me3-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_DMSO", "count_EZH2inh", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_DMSO, into = c("count_DMSO_1","count_DMSO_2"), sep = ":", convert = TRUE) %>%
+  separate(count_EZH2inh, into = c("count_EZH2inh_1","count_EZH2inh_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_EZH2inh_1+count_EZH2inh_2) / (count_DMSO_1+count_DMSO_2))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_EZH2inh_H3K27me3/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("28dN_DMSO vs EZH2inh") +
+  theme_bw()
+dev.off()
+
+pdf("output/THOR/THOR_EZH2inh_H3K27me3/log2FC_qval50.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 50) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("28dN_DMSO vs EZH2inh_qval50") +
+  theme_bw()
+dev.off()
+
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 50) %>%
+  write_tsv("output/THOR/THOR_EZH2inh_H3K27me3/THOR_qval50.bed", col_names = FALSE)
+
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 50) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
+
+```
+
+**Optimal qvalue:**
+--> *H3K27me3*; qval 50 for TMM default no spikein
+
+
 
 
 
@@ -244,22 +311,37 @@ sbatch --dependency=afterany:17151035 scripts/bigwigmerge_THOR_EZH2inh_H3K27me3.
 
 
 check whether genes that gain H3K27me3 in KO (in 50dN; `007__CutRun`) are EZH2-specific = the one that lose H3K27me3 with EZH2 inhibitor:
-- use gain lost H3K27me3 region WT vs KO (`007__CutRun`) *THOR q20*
-- use gain lost EZH2inh region; THOR *qXXX*
+- use gain lost H3K27me3 region WT vs KO (`007__CutRun`) *THORq20*
+- use gain lost EZH2inh region; *THORq50*
 
 
 ```bash
 conda activate deeptools
 
-# CutRun__007 gain/lost THOR q20 WT vs KO H3K27me3 region
-## 
-sbatch --dependency=afterany:17151091 scripts/matrix_TSS_10kb_H3K27me3_CutRun007_CiceriEpiInh_007H3K72me3GainLost_007THOR_q20_peaks.sh # 17151348 xxx
+# deeptool plot on PEAKS
+## CutRun__007 gain/lost THOR q20 WT vs KO H3K27me3 region
+sbatch scripts/matrix_TSS_10kb_H3K27me3_CutRun007_CiceriEpiInh_007H3K72me3GainLost_007THOR_q20_peaks.sh # 17164413 xxx
+
+
+
+## gain lost EZH2 inh region
+### isolate gain / lost peaks
+awk -F'\t' '$16 > 1' output/THOR/THOR_EZH2inh_H3K27me3/THOR_qval50.bed > output/THOR/THOR_EZH2inh_H3K27me3/THOR_qval50_gain.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_EZH2inh_H3K27me3/THOR_qval50.bed > output/THOR/THOR_EZH2inh_H3K27me3/THOR_qval50_lost.bed
+
+### deeptool plots
+sbatch scripts/matrix_TSS_10kb_H3K27me3_CutRun007_CiceriEpiInh_007H3K72me3GainLost_THOR_q50_peaks.sh # 17164635 xxx
+
+
+
+# deeptool plot on GENES
+## CutRun__007 gain/lost THOR q20 WT vs KO H3K27me3 region
 XXX Need generate gtf XXX sbatch scripts/matrix_TSS_10kb_H3K27me3_CutRun007_CiceriEpiInh_007H3K72me3GainLost_007THOR_q20_gene.sh #  xxx
 
+## gain lost EZH2 inh region
 
-# gain lost EZH2 inh region
 XXX NEED ASSIGN EZH2 diff peak to genes
-
+XXX Need generate gtf XXX 
 
 ```
 
@@ -267,6 +349,116 @@ XXX NEED ASSIGN EZH2 diff peak to genes
 --> xxx
 
 
+
+
+
+# ChIPseeker peak gene assignment
+
+## From THOR diff bound peaks
+Let's assign **peak to genes from THORs peak**:
+
+**Optimal qvalue** according to IGV:
+- 28dN_H3K27me3 DMSO vs EZH2inh; qval 50
+
+
+--> Assign peak to genes for 28dN:
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import THOR peaks
+# TMM defalt
+## H3K27me3 _ q50
+H3K27me3_q50_pos = as_tibble(read.table('output/THOR/THOR_EZH2inh_H3K27me3/THOR_qval50.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, FC=V16) %>%
+    filter(FC >1) 
+H3K27me3_q50_neg = as_tibble(read.table('output/THOR/THOR_EZH2inh_H3K27me3/THOR_qval50.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4, FC=V16) %>%
+    filter(FC <1) 
+    
+# Tidy peaks 
+## H3K27me3
+H3K27me3_q50_pos_gr = makeGRangesFromDataFrame(H3K27me3_q50_pos,keep.extra.columns=TRUE)
+H3K27me3_q50_neg_gr = makeGRangesFromDataFrame(H3K27me3_q50_neg,keep.extra.columns=TRUE)
+gr_list <- list(H3K27me3_q50_pos=H3K27me3_q50_pos_gr, H3K27me3_q50_neg=H3K27me3_q50_neg_gr)
+
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## plots
+pdf("output/ChIPseeker/plotAnnoBar_THOR_H3K27me3_EZH2inh.pdf", width = 8, height = 3)
+plotAnnoBar(peakAnnoList)
+dev.off()
+pdf("output/ChIPseeker/plotDistToTSS_THOR_H3K27me3_EZH2inh.pdf", width = 8, height = 3)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
+
+## Get annotation data frame
+
+H3K27me3_q50_pos_annot <- as.data.frame(peakAnnoList[["H3K27me3_q50_pos"]]@anno)
+H3K27me3_q50_neg_annot <- as.data.frame(peakAnnoList[["H3K27me3_q50_neg"]]@anno)
+
+
+
+## Convert entrez gene IDs to gene symbols
+
+H3K27me3_q50_pos_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_q50_pos_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+H3K27me3_q50_pos_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_q50_pos_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+H3K27me3_q50_neg_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_q50_neg_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+H3K27me3_q50_neg_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_q50_neg_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+
+## Save output table
+write.table(H3K27me3_q50_pos_annot, file="output/ChIPseeker/annotation_THOR_H3K27me3_EZH2inh_q50_pos.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K27me3_q50_neg_annot, file="output/ChIPseeker/annotation_THOR_H3K27me3_EZH2inh_q50_neg.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+H3K27me3_q50_pos_annot_promoterAnd5 = tibble(H3K27me3_q50_pos_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+H3K27me3_q50_neg_annot_promoterAnd5 = tibble(H3K27me3_q50_neg_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+
+
+### Save output gene lists
+H3K27me3_q50_pos_annot_promoterAnd5_geneSymbol = H3K27me3_q50_pos_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+H3K27me3_q50_neg_annot_promoterAnd5_geneSymbol = H3K27me3_q50_neg_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+write.table(H3K27me3_q50_pos_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_THOR_EZH2inh_H3K27me3_q50_pos_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(H3K27me3_q50_neg_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_THOR_EZH2inh_H3K27me3_q50_neg_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+```
+
+--> 4,198 genes gain and 25 genes lost H3K27me3 in resp to EZH2inh (THORq50)
 
 
 
