@@ -1977,13 +1977,19 @@ Check bigwig files of H3K27me3 (`009__CutRun`; THOR q30) and EZH2 (`005__CutRun`
 ```bash
 conda activate deeptools
 
-# Using classic Recirpocl DiffBind TMM method
+# PEAKS
+
+## Using classic Recirpocl DiffBind TMM method
 sbatch scripts/matrix_TSS_10kb_H3K27me3_EZH2_median_THOR_gainLost.sh # 16222103 ok
 sbatch scripts/matrix_TSS_10kb_H3K27me3_EZH2_SUZ12_median_THOR_gainLost.sh # 16222113 ok
 
-# Using DiffBind MG1655 bam scaling factor (see 005); use bam MG1655 in DiffBind and Library seq normalization
-sbatch scripts/matrix_TSS_10kb_H3K27me3_THORDiffBindTMM_EZH2SUZ12_THORLIBspikein_gainLost.sh # 16223845 ok FAIL because H3K27me3 data with TMM (classice) and PRC2 subunits with LIB norm.
+## Using DiffBind MG1655 bam scaling factor (see 005); use bam MG1655 in DiffBind and Library seq normalization
+sbatch scripts/matrix_TSS_10kb_H3K27me3_THORDiffBindTMM_EZH2SUZ12_THORLIBspikein_gainLost.sh # 16223845 ok FAIL because H3K27me3 data with TMM (classic) and PRC2 subunits with LIB norm.
 sbatch scripts/matrix_TSS_10kb_H3K27me3_THORDiffBindTMM_EZH2SUZ12_THORLIBspikein_gainLost_corr.sh # 17139835 ok
+
+# GENES
+## Using classic Recirpocl DiffBind TMM method
+sbatch scripts/matrix_TSS_10kb_H3K27me3_EZH2_SUZ12_median_THOR_gainLost_gene.sh # 17197231 xxx
 
 
 ```
@@ -1992,6 +1998,9 @@ sbatch scripts/matrix_TSS_10kb_H3K27me3_THORDiffBindTMM_EZH2SUZ12_THORLIBspikein
 
 --> Also all peaks that gain H3K27me3 in KO, seems already bound by EZH2 and SUZ12 in the WT! So maybe there is an increase EZH2 activity upon EZH1 KO, rather than an increase binding
 
+--> Showing gene or peaks lead to same result (EZH2, SUZ12, barely follow H3K27me3 WTvsKO pattern)
+
+--> `*THORLIBspikein*` norm is weird as show always gain of EZH2/SUZ12, even in regions that lose H3K27me3...
 
 
 

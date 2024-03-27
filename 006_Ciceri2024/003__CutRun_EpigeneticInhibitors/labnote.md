@@ -336,12 +336,48 @@ sbatch scripts/matrix_TSS_10kb_H3K27me3_CutRun007_CiceriEpiInh_007H3K72me3GainLo
 
 # deeptool plot on GENES
 ## CutRun__007 gain/lost THOR q20 WT vs KO H3K27me3 region
-XXX Need generate gtf XXX sbatch scripts/matrix_TSS_10kb_H3K27me3_CutRun007_CiceriEpiInh_007H3K72me3GainLost_007THOR_q20_gene.sh #  xxx
+### Generate gtf from gene Symbol list
+perl -p -i -e 's/\r$//' output/ChIPseeker/Venn_overlap_THOR_KO_gain_specific_qval20_promoterAnd5_geneSymbol_1631.txt  # CONVERT windowns to UNIX
+perl -p -i -e 's/\r$//' output/ChIPseeker/Venn_overlap_THOR_KO_lost_specific_qval20_promoterAnd5_geneSymbol_901.txt  # CONVERT windowns to UNIX
+######## put gain and lost together
+cat output/ChIPseeker/Venn_overlap_THOR_KO_gain_specific_qval20_promoterAnd5_geneSymbol_1631.txt output/ChIPseeker/Venn_overlap_THOR_KO_lost_specific_qval20_promoterAnd5_geneSymbol_901.txt | sort | uniq > output/ChIPseeker/Venn_overlap_THOR_KO_GainLostCombined_specific_qval20_promoterAnd5_geneSymbol.txt
+########
+### Modify the .txt file that list all genes so that it match gtf structure
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/Venn_overlap_THOR_KO_gain_specific_qval20_promoterAnd5_geneSymbol_1631.txt > output/ChIPseeker/Venn_overlap_THOR_KO_gain_specific_qval20_promoterAnd5_geneSymbol_1631_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/Venn_overlap_THOR_KO_lost_specific_qval20_promoterAnd5_geneSymbol_901.txt > output/ChIPseeker/Venn_overlap_THOR_KO_lost_specific_qval20_promoterAnd5_geneSymbol_901_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/Venn_overlap_THOR_KO_GainLostCombined_specific_qval20_promoterAnd5_geneSymbol.txt > output/ChIPseeker/Venn_overlap_THOR_KO_GainLostCombined_specific_qval20_promoterAnd5_geneSymbol_901_as_gtf_geneSymbol.txt
+### Filter the gtf
+grep -Ff output/ChIPseeker/Venn_overlap_THOR_KO_gain_specific_qval20_promoterAnd5_geneSymbol_1631_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI-THOR_KO_gain_specific_qval20_promoterAnd5_geneSymbol_1631.gtf
+grep -Ff output/ChIPseeker/Venn_overlap_THOR_KO_lost_specific_qval20_promoterAnd5_geneSymbol_901_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI-THOR_KO_lost_specific_qval20_promoterAnd5_geneSymbol_901.gtf
+grep -Ff output/ChIPseeker/Venn_overlap_THOR_KO_GainLostCombined_specific_qval20_promoterAnd5_geneSymbol_901_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI-THOR_KO_GainLostCombined_specific_qval20_promoterAnd5_geneSymbol.gtf
+#### deeptool plot
+sbatch scripts/matrix_TSS_10kb_H3K27me3_CutRun007_CiceriEpiInh_007H3K72me3GainLost_007THOR_q20_gene.sh # 17196669 ok
+sbatch scripts/matrix_TSS_10kb_H3K27me3_CutRun007_CiceriEpiInh_007H3K72me3GainLost_007THOR_q20_geneGainLostCombined.sh # 17196697 ok
+
+
 
 ## gain lost EZH2 inh region
 
-XXX NEED ASSIGN EZH2 diff peak to genes
-XXX Need generate gtf XXX 
+### Generate gtf from gene Symbol list
+perl -p -i -e 's/\r$//' output/ChIPseeker/Venn_overlap_THOR_EZH2inh_gain_specific_qval50_promoterAnd5_geneSymbol_6.txt  # CONVERT windowns to UNIX
+perl -p -i -e 's/\r$//' output/ChIPseeker/Venn_overlap_THOR_EZH2inh_lost_specific_qval50_promoterAnd5_geneSymbol_4179.txt  # CONVERT windowns to UNIX
+######## put gain and lost together
+cat output/ChIPseeker/Venn_overlap_THOR_EZH2inh_gain_specific_qval50_promoterAnd5_geneSymbol_6.txt output/ChIPseeker/Venn_overlap_THOR_EZH2inh_lost_specific_qval50_promoterAnd5_geneSymbol_4179.txt | sort | uniq > output/ChIPseeker/Venn_overlap_THOR_EZH2inh_GainLostCombined_specific_qval50_promoterAnd5_geneSymbol.txt
+########
+### Modify the .txt file that list all genes so that it match gtf structure
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/Venn_overlap_THOR_EZH2inh_gain_specific_qval50_promoterAnd5_geneSymbol_6.txt > output/ChIPseeker/Venn_overlap_THOR_EZH2inh_gain_specific_qval50_promoterAnd5_geneSymbol_6_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/Venn_overlap_THOR_EZH2inh_lost_specific_qval50_promoterAnd5_geneSymbol_4179.txt > output/ChIPseeker/Venn_overlap_THOR_EZH2inh_lost_specific_qval50_promoterAnd5_geneSymbol_4179_as_gtf_geneSymbol.txt
+sed 's/^/gene_name "/; s/$/"/' output/ChIPseeker/Venn_overlap_THOR_EZH2inh_GainLostCombined_specific_qval50_promoterAnd5_geneSymbol.txt > output/ChIPseeker/Venn_overlap_THOR_EZH2inh_GainLostCombined_specific_qval50_promoterAnd5_geneSymbol_as_gtf_geneSymbol.txt
+### Filter the gtf
+grep -Ff output/ChIPseeker/Venn_overlap_THOR_EZH2inh_gain_specific_qval50_promoterAnd5_geneSymbol_6_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI-THOR_EZH2inh_gain_specific_qval50_promoterAnd5_geneSymbol_6.gtf
+grep -Ff output/ChIPseeker/Venn_overlap_THOR_EZH2inh_lost_specific_qval50_promoterAnd5_geneSymbol_4179_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI-THOR_EZH2inh_lost_specific_qval50_promoterAnd5_geneSymbol_4179.gtf
+grep -Ff output/ChIPseeker/Venn_overlap_THOR_EZH2inh_GainLostCombined_specific_qval50_promoterAnd5_geneSymbol_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI-THOR_EZH2inh_GainLostCombined_specific_qval50_promoterAnd5_geneSymbol.gtf
+#### deeptool plot
+sbatch scripts/matrix_TSS_10kb_H3K27me3_CutRun007_CiceriEpiInh_007H3K72me3GainLost_THOR_q50_gene.sh # 17196904 xxx
+sbatch scripts/matrix_TSS_10kb_H3K27me3_CutRun007_CiceriEpiInh_007H3K72me3GainLost_THOR_q50_geneGainLostCombined.sh # 17196920 xxx
+
+
+
 
 ```
 
