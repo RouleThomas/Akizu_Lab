@@ -2047,3 +2047,66 @@ write.table(THOR_chipseeker, file="output/THOR/THOR_NPC_WTvsKO_H3K27me3/THORq30_
 ```
 
 
+
+
+
+# Pilot grant 20240204
+
+Patient1 has EZH1 GOF mutation + KMT2A (H3K4 methyltransferase) KO
+Hypothesis: Gene that gain H3K27me3 in patient1 are because loss of H3K4m3 so more room for H3K27me3 expansion
+
+Isolate bivalent genes in WT: 
+- Macs2 peak calling in the 2 pool replicate (qval 2.3) 
+- ChIPseeker gene peak assignment
+- Filter –in promoter/TSS peaks `annotation_macs2_H3K*me3_WT_pool_qval2.30103_promoterAnd5_geneSymbol`
+- Venn diagram of peak enriched genes
+
+
+**Metrics**:
+- WT_H3K27me3:
+    - 10,479 peaks
+    - 4,877 genes
+- WT_H3K4me3
+    - 12,248 peaks
+    - 11,013 genes
+--> 2,138 bivalent genes
+
+
+
+## Generate deeptool plots for the H3K4me3, H3K27me3 and bivalent genes
+
+
+```bash
+# Generate gtf file from gene list:
+.txt
+
+
+
+
+
+### create gtf from gene list
+#### Modify the .txt file that list all genes so that it match gtf structure
+## Modify the .txt file that list all genes so that it match gtf structure
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K4me3only.txt > output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K4me3only_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3only.txt > output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3only_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3andH3K4me3.txt > output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3andH3K4me3_as_gtf_geneSymbol.txt
+
+## Filter the gtf
+grep -Ff output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K4me3only_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_WT_H3K27me3H3K4me3__H3K4me3only.gtf
+grep -Ff output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3only_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3only.gtf
+grep -Ff output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3andH3K4me3_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3andH3K4me3.gtf
+
+
+# deeptool plots
+sbatch scripts/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3.sh # 17478801 xxx
+
+sbatch scripts/matrix_TSS_10kb_Venn_overlap_WT_H3K27me3H3K4me3.sh # 17478808 xxx
+
+
+```
+
+
+--> XXX The Venn overlap gene filtering worked great; H3K4me3/H3K27me3/bivalent genes are clearly identified XXX
+
+
+
