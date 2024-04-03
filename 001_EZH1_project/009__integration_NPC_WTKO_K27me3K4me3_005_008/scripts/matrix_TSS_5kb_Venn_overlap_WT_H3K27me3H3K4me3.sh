@@ -25,6 +25,23 @@ plotHeatmap -m output/deeptools/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3.g
     --heatmapHeight 10 \
     --heatmapWidth 2
 
+plotHeatmap -m output/deeptools/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3.gz \
+    -out output/deeptools/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3_heatmap_colorSmall2.pdf \
+    --samplesLabel "H3K4me3" "H3K27me3" \
+    --colorMap bwr \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --zMax 50 50
+
+plotHeatmap -m output/deeptools/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3.gz \
+    -out output/deeptools/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3_heatmap_colorSmall3.pdf \
+    --samplesLabel "H3K4me3" "H3K27me3" \
+    --colorMap bwr \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --zMax 30 30
 
 
 plotProfile -m output/deeptools/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3.gz \
@@ -32,9 +49,7 @@ plotProfile -m output/deeptools/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3.g
     --samplesLabel "H3K4me3" "H3K27me3" \
     --perGroup \
     --colors orange purple \
-    --refPointLabel "TSS" \
-    -T "Read density" \
-    -z ""
+    --refPointLabel "TSS"
 
 
 

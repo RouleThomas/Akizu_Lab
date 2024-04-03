@@ -2062,7 +2062,7 @@ Isolate bivalent genes in WT:
 - Venn diagram of peak enriched genes
 
 
-**Metrics**:
+**Metrics qval 2.3**:
 - WT_H3K27me3:
     - 10,479 peaks
     - 4,877 genes
@@ -2071,6 +2071,15 @@ Isolate bivalent genes in WT:
     - 11,013 genes
 --> 2,138 bivalent genes
 
+**Metrics qval 4**:
+- WT_H3K27me3:
+    - 5,016 peaks
+    - 3,433 genes
+- WT_H3K4me3
+    - 11,017 peaks
+    - 10,177 genes
+
+--> 1,016 bivalent genes
 
 
 ## Generate deeptool plots for the H3K4me3, H3K27me3 and bivalent genes
@@ -2078,35 +2087,48 @@ Isolate bivalent genes in WT:
 
 ```bash
 # Generate gtf file from gene list:
-.txt
-
-
-
-
 
 ### create gtf from gene list
 #### Modify the .txt file that list all genes so that it match gtf structure
-## Modify the .txt file that list all genes so that it match gtf structure
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K4me3only.txt > output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K4me3only_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3only.txt > output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3only_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3andH3K4me3.txt > output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3andH3K4me3_as_gtf_geneSymbol.txt
+
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4__H3K4me3only.txt > output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4__H3K4me3only_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4__H3K27me3only.txt > output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4__H3K27me3only_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4__H3K27me3andH3K4me3.txt > output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4__H3K27me3andH3K4me3_as_gtf_geneSymbol.txt
 
 ## Filter the gtf
 grep -Ff output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K4me3only_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_WT_H3K27me3H3K4me3__H3K4me3only.gtf
 grep -Ff output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3only_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3only.gtf
 grep -Ff output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3andH3K4me3_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3andH3K4me3.gtf
 
+grep -Ff output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4__H3K4me3only_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4__H3K4me3only.gtf
+grep -Ff output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4__H3K27me3only_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4__H3K27me3only.gtf
+grep -Ff output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4__H3K27me3andH3K4me3_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4__H3K27me3andH3K4me3.gtf
+
+
 
 # deeptool plots
-sbatch scripts/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3.sh # 17478801 xxx
-
-sbatch scripts/matrix_TSS_10kb_Venn_overlap_WT_H3K27me3H3K4me3.sh # 17478808 xxx
+## qval 2.3
+sbatch scripts/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3.sh # 17478801 ok
+sbatch scripts/matrix_TSS_10kb_Venn_overlap_WT_H3K27me3H3K4me3.sh # 17478808 ok
+## qval 4
+sbatch scripts/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4.sh # 17486297 xxx
 
 
 ```
 
 
---> XXX The Venn overlap gene filtering worked great; H3K4me3/H3K27me3/bivalent genes are clearly identified XXX
+--> The Venn overlap gene filtering worked great; H3K4me3/H3K27me3/bivalent genes are clearly identified at q2.3. But some genes show no signal, even when decreasing the zMax scale; let's try more stringeant qvalues
+----> XXX With more stringeat qvalues XXX
+
+--> Optimal qvalue is XXX
+
+
+
+
+
 
 
 
