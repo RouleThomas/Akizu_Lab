@@ -26,6 +26,25 @@ plotHeatmap -m output/deeptools/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3_m
     --heatmapWidth 2
 
 
+plotHeatmap -m output/deeptools/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4.gz \
+    -out output/deeptools/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4_heatmap_colorSmall2.pdf \
+    --samplesLabel "H3K4me3" "H3K27me3" \
+    --colorMap bwr \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --zMax 30 30
+
+plotHeatmap -m output/deeptools/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4.gz \
+    -out output/deeptools/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4_heatmap_colorSmall1.pdf \
+    --samplesLabel "H3K4me3" "H3K27me3" \
+    --colorMap bwr \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --zMax 10 10
+
+
 plotProfile -m output/deeptools/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4.gz \
     -out output/deeptools/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4_profile.pdf \
     --samplesLabel "H3K4me3" "H3K27me3" \
