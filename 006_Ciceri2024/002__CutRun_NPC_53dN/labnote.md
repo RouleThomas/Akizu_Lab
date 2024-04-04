@@ -134,13 +134,15 @@ sbatch --dependency=afterany:15275393 scripts/bamtobigwig_unique_NPC_2.sh # 1527
 ```
 
 
-
 - NPC
 PASS: H3K4m3 (rep very diff.), H3K9me3 (a bit noisy), H3K27me3
 FAIL: H3K27ac (very low signal and noisy, seems R2 work better)
 - 53dN
 PASS: H3K4me3, H3K9me3 (a bit noisy), H3K27ac, H3K27me3
 FAIL: *H3K9me3* could be there
+
+
+
 
 
 --> The failed one, are also failed in the bigwig Ciceri files...
@@ -173,6 +175,19 @@ NOTE: hg19 chrom size copy from [ucsc](https://hgdownload.cse.ucsc.edu/goldenpat
 
 
 
+
+
+Generate median tracks:
+```bash
+conda activate BedToBigwig
+# raw unique bigwig
+sbatch scripts/bigwigmerge_unique_NPC.sh # 17509895 ok
+sbatch scripts/bigwigmerge_unique_53dN.sh # 17509979 ok
+```
+
+*NOTE: merging raw bigiwg probably not super smart; not seq depth normalized, so to take with caution! But to show presence of signal in our case, that's ok!*
+
+
 ## Pearson correlation heatmap on bigwig signals
 
 
@@ -191,6 +206,7 @@ sbatch scripts/multiBigwigSummary_53dN_Ciceri.sh # 15281092 ok
 
 # Akizu with Ciceri _ NPC
 sbatch scripts/multiBigwigSummary_NPC_CutRun001008_Ciceri.sh # 15290030 ok
+
 
 
 ```
@@ -227,8 +243,8 @@ sbatch scripts/macs2_broad_NPC.sh # 15401308 ok
 sbatch scripts/macs2_broad_53dN_noIGG.sh # 15401429 ok
 
 # pool
-sbatch scripts/macs2_broad_53dN_pool.sh # 17503351 xxx
-sbatch scripts/macs2_broad_NPC_pool.sh # 17503352 xxx
+sbatch scripts/macs2_broad_53dN_pool.sh # 17503351 ok
+sbatch scripts/macs2_broad_NPC_pool.sh # 17503352 ok
 
 
 ```
@@ -259,11 +275,145 @@ Then keep only the significant peaks (re-run the script to test different qvalue
 
 
 **Optimal qvalue** according to IGV:
-- 50dN_KOEF1aEZH1_H3K27me3: 1.30103 (2.3 more true peaks)
-- 50dN_KO_H3K27me3: 1.30103 (2.3 more true peaks)
-- 50dN_WTQ731E_H3K27me3: 1.30103 (2.3 more true peaks)
+- 50dN_WT_H3K4me3: 2.30103 (4 more true peaks)
+- 50dN_WT_H3K27me3: 2.30103 (4 more true peaks); data is of poor quality...
+- *other samples not checked*
 
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+
+
+# ChIPseeker peak gene assignment
+
+## From optimal qval bed files peaks
+Let's assign **peak to genes from MACS2 peak**:
+
+**Optimal qvalue** according to IGV:
+- 50dN_WT_H3K4me3: 2.30103 (4 more true peaks)
+- 50dN_WT_H3K27me3: 2.30103 (4 more true peaks); data is of poor quality...
+- *other samples not checked*
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import macs2 peaks
+## H3K27me3 53dN
+H3K27me3_53dN_pool_qval2 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/53dN_WT_H3K27me3_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+H3K4me3_53dN_pool_qval2 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/53dN_WT_H3K4me3_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+H3K27me3_53dN_pool_qval4 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval4/53dN_WT_H3K27me3_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+H3K4me3_53dN_pool_qval4 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval4/53dN_WT_H3K4me3_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+
+# Tidy peaks 
+## H3K27me3
+H3K27me3_53dN_pool_qval2_gr = makeGRangesFromDataFrame(H3K27me3_53dN_pool_qval2,keep.extra.columns=TRUE)
+H3K4me3_53dN_pool_qval2_gr = makeGRangesFromDataFrame(H3K4me3_53dN_pool_qval2,keep.extra.columns=TRUE)
+H3K27me3_53dN_pool_qval4_gr = makeGRangesFromDataFrame(H3K27me3_53dN_pool_qval4,keep.extra.columns=TRUE)
+H3K4me3_53dN_pool_qval4_gr = makeGRangesFromDataFrame(H3K4me3_53dN_pool_qval4,keep.extra.columns=TRUE)
+gr_list <- list(H3K27me3_53dN_pool_qval2=H3K27me3_53dN_pool_qval2_gr, H3K4me3_53dN_pool_qval2=H3K4me3_53dN_pool_qval2_gr,  H3K27me3_53dN_pool_qval4=H3K27me3_53dN_pool_qval4_gr, H3K4me3_53dN_pool_qval4=H3K4me3_53dN_pool_qval4_gr)
+
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## plots
+pdf("output/ChIPseeker/plotAnnoBar_53dN_bivalent_pool.pdf", width = 8, height = 3)
+plotAnnoBar(peakAnnoList)
+dev.off()
+pdf("output/ChIPseeker/plotDistToTSS_53dN_bivalent_pool.pdf", width = 8, height = 3)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
+
+## Get annotation data frame
+H3K27me3_53dN_pool_qval2_annot <- as.data.frame(peakAnnoList[["H3K27me3_53dN_pool_qval2"]]@anno)
+H3K4me3_53dN_pool_qval2_annot <- as.data.frame(peakAnnoList[["H3K4me3_53dN_pool_qval2"]]@anno)
+H3K27me3_53dN_pool_qval4_annot <- as.data.frame(peakAnnoList[["H3K27me3_53dN_pool_qval4"]]@anno)
+H3K4me3_53dN_pool_qval4_annot <- as.data.frame(peakAnnoList[["H3K4me3_53dN_pool_qval4"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+H3K27me3_53dN_pool_qval2_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_53dN_pool_qval2_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+H3K27me3_53dN_pool_qval2_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_53dN_pool_qval2_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+H3K4me3_53dN_pool_qval2_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K4me3_53dN_pool_qval2_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+H3K4me3_53dN_pool_qval2_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K4me3_53dN_pool_qval2_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+H3K27me3_53dN_pool_qval4_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_53dN_pool_qval4_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+H3K27me3_53dN_pool_qval4_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_53dN_pool_qval4_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+H3K4me3_53dN_pool_qval4_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K4me3_53dN_pool_qval4_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+H3K4me3_53dN_pool_qval4_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K4me3_53dN_pool_qval4_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+
+## Save output table
+write.table(H3K27me3_53dN_pool_qval2_annot, file="output/ChIPseeker/annotation_macs2_H3K27me3_53dN_pool_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K4me3_53dN_pool_qval2_annot, file="output/ChIPseeker/annotation_macs2_H3K4me3_53dN_pool_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K27me3_53dN_pool_qval4_annot, file="output/ChIPseeker/annotation_macs2_H3K27me3_53dN_pool_qval4.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(H3K4me3_53dN_pool_qval4_annot, file="output/ChIPseeker/annotation_macs2_H3K4me3_53dN_pool_qval4.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+H3K27me3_53dN_pool_qval2_annot_promoterAnd5 = tibble(H3K27me3_53dN_pool_qval2_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+H3K4me3_53dN_pool_qval2_annot_promoterAnd5 = tibble(H3K4me3_53dN_pool_qval2_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+H3K27me3_53dN_pool_qval4_annot_promoterAnd5 = tibble(H3K27me3_53dN_pool_qval4_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+H3K4me3_53dN_pool_qval4_annot_promoterAnd5 = tibble(H3K4me3_53dN_pool_qval4_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+
+### Save output gene lists
+H3K27me3_53dN_pool_qval2_annot_promoterAnd5_geneSymbol = H3K27me3_53dN_pool_qval2_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+H3K4me3_53dN_pool_qval2_annot_promoterAnd5_geneSymbol = H3K4me3_53dN_pool_qval2_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+H3K27me3_53dN_pool_qval4_annot_promoterAnd5_geneSymbol = H3K27me3_53dN_pool_qval4_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+H3K4me3_53dN_pool_qval4_annot_promoterAnd5_geneSymbol = H3K4me3_53dN_pool_qval4_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+write.table(H3K27me3_53dN_pool_qval2_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_H3K27me3_53dN_pool_qval2.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(H3K4me3_53dN_pool_qval2_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_H3K4me3_53dN_pool_qval2.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(H3K27me3_53dN_pool_qval4_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_H3K27me3_53dN_pool_qval4_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(H3K4me3_53dN_pool_qval4_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_H3K4me3_53dN_pool_qval4_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+```
 
 
 
@@ -298,6 +448,269 @@ sbatch scripts/matrix_TSS_10kb_H3K27me3_H3K4me3_CutRun001008_Ciceri_raw_allGenes
 
 --> signal is very poor for H3K27ac in NPC as compared to 53dN, notably for R1, almost like IGG...
 
+
+
+
+
+
+
+
+# Pilot grant 20240204
+
+Patient1 has EZH1 GOF mutation + KMT2A (H3K4 methyltransferase) KO
+Hypothesis: Gene that gain H3K27me3 in patient1 are because loss of H3K4m3 so more room for H3K27me3 expansion
+
+Isolate bivalent genes in WT: 
+- Macs2 peak calling in the 2 pool replicate (qval 2.3 and 4) 
+- ChIPseeker gene peak assignment
+- Filter –in promoter/TSS peaks `annotation_macs2_H3K*me3_WT_pool_qval2.30103_promoterAnd5_geneSymbol`
+- Venn diagram of peak enriched genes
+
+
+**Metrics qval 2.3**:
+- WT_H3K27me3:
+    - 10,259 peaks
+    - 4,055 genes
+- WT_H3K4me3
+    - 18,711 peaks
+    - 12,726 genes
+--> 2,560 bivalent genes
+
+**Metrics qval 4**:
+- WT_H3K27me3:
+    - 958 peaks
+    - 747 genes
+- WT_H3K4me3
+    - 7,248 peaks
+    - 6,313 genes
+--> 379 bivalent genes
+
+
+## Generate deeptool plots for the H3K4me3, H3K27me3 and bivalent genes
+
+
+```bash
+# Generate gtf file from gene list:
+
+### create gtf from gene list
+#### Modify the .txt file that list all genes so that it match gtf structure
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K4me3onlyqval4.txt > output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K4me3onlyqval4_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3onlyqval4.txt > output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3onlyqval4_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3andH3K4me3qval4.txt > output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3andH3K4me3qval4_as_gtf_geneSymbol.txt
+
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3onlyqval2.txt > output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3onlyqval2_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K4me3onlyqval2.txt > output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K4me3onlyqval2_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3andH3K4me3qval2.txt > output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3andH3K4me3qval2_as_gtf_geneSymbol.txt
+
+
+
+
+## Filter the gtf
+grep -Ff output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K4me3onlyqval4_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_WT_H3K27me3H3K4me3__H3K4me3onlyqval4.gtf
+grep -Ff output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3onlyqval4_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3onlyqval4.gtf
+grep -Ff output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3andH3K4me3qval4_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3andH3K4me3qval4.gtf
+
+grep -Ff output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K4me3onlyqval2_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_WT_H3K27me3H3K4me3__H3K4me3onlyqval2.gtf
+grep -Ff output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3onlyqval2_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3onlyqval2.gtf
+grep -Ff output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3andH3K4me3qval2_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3andH3K4me3qval2.gtf
+
+# deeptool plots
+## qval 2.3
+sbatch scripts/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3_macs2qval2.sh # 17512685 xxx
+
+## qval 4
+sbatch scripts/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4.sh # 17512702 xxx
+```
+
+
+
+
+XXXXXX BELOW NOT MOD !!!! XXXXXXXX
+
+
+--> The Venn overlap gene filtering worked great; H3K4me3/H3K27me3/bivalent genes are clearly identified at q2.3. But some genes show no signal, even when decreasing the zMax scale; let's try more stringeant qvalues
+----> XXX With more stringeat qvalues XXX
+
+--> Optimal qvalue is XXX
+
+
+
+
+## enrichR functional analysis
+
+On the **bivalent** - H3K4me3 and H3K27me3 (NPC) at qval 2.3 and 4 with the g**enes that gain H3K27me3 in GOF/HET** (`003__CutRun`)
+
+
+
+
+--> Below code modified to show only 1 set of genes (no up and down, only 1 set)
+
+
+```R
+# packages
+library("tidyverse")
+library("enrichR")
+
+
+# Define databases for enrichment
+dbs <- c("GO_Biological_Process_2023") # 
+
+### GeneSymbol list of DEGs per tissue
+output/ChIPseeker/Venn_overlap_WTbivalent_003GainHETTHORq15__bivalentOnly.txt
+output/ChIPseeker/Venn_overlap_WTbivalentmacs2qval4_003GainHETTHORq15__bivalentOnly.txt
+
+
+# IF starting with geneSymbol
+
+## Read and preprocess data for DEGs genes
+gene_names_up <- read.csv("output/ChIPseeker/Venn_overlap_WTbivalentmacs2qval4_003GainHETTHORq15__bivalentOnly.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+
+
+
+# Extracting KEGG data and assigning types
+up <- eup$GO_Biological_Process_2023
+up$type <- "up"
+
+# Get top enriched terms and sort by Combined.Score 
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 50) ##  Adjust if you don't want the top 5
+
+
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- up
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+new_order <- up_pathways
+gos$Term <- factor(gos$Term, levels = new_order)
+
+
+# extract the top 5 rows (p adj ordered)
+## gos <- head(gos, n = 5)
+
+# Plotting with enhanced aesthetics
+pdf("output/GO/enrichR_GO_Biological_Process_2023_Venn_overlap_WTbivalent_003GainHETTHORq15__bivalentOnly.pdf", width=20, height=12)
+pdf("output/GO/enrichR_GO_Biological_Process_2023_Venn_overlap_WTbivalentmacs2qval4_003GainHETTHORq15__bivalentOnly.pdf", width=20, height=10)
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.8) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 12, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="Sky Blue", "up"="Purple")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for GO BP") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 30)
+  )
+dev.off()
+
+
+## save output
+write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_Venn_overlap_WTbivalent_003GainHETTHORq15__bivalentOnly.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_Venn_overlap_WTbivalentmacs2qval4_003GainHETTHORq15__bivalentOnly.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+# Define databases for enrichment
+dbs <- c("KEGG_2021_Human") # 
+
+### GeneSymbol list of DEGs per tissue
+output/ChIPseeker/Venn_overlap_WTbivalent_003GainHETTHORq15__bivalentOnly.txt
+output/ChIPseeker/Venn_overlap_WTbivalentmacs2qval4_003GainHETTHORq15__bivalentOnly.txt
+
+
+# IF starting with geneSymbol
+
+## Read and preprocess data for DEGs genes
+gene_names_up <- read.csv("output/ChIPseeker/Venn_overlap_WTbivalentmacs2qval4_003GainHETTHORq15__bivalentOnly.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+
+
+
+# Extracting KEGG data and assigning types
+up <- eup$KEGG_2021_Human
+up$type <- "up"
+
+# Get top enriched terms and sort by Combined.Score 
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 50) ##  Adjust if you don't want the top 5
+
+
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- up
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+new_order <- up_pathways
+gos$Term <- factor(gos$Term, levels = new_order)
+
+
+# extract the top 5 rows (p adj ordered)
+## gos <- head(gos, n = 5)
+
+# Plotting with enhanced aesthetics
+pdf("output/GO/enrichR_KEGG_2021_Human_Venn_overlap_WTbivalent_003GainHETTHORq15__bivalentOnly.pdf", width=20, height=12)
+pdf("output/GO/enrichR_KEGG_2021_Human_Venn_overlap_WTbivalentmacs2qval4_003GainHETTHORq15__bivalentOnly.pdf", width=20, height=10)
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.8) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 12, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="Expression", 
+                    labels = c("Down regulated", "Up regulated"), 
+                    values = c("down"="Sky Blue", "up"="Purple")) + 
+  labs(title= "Diverging bars of -log10 Adjusted P-value for GO BP") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 30)
+  )
+dev.off()
+
+
+## save output
+write.table(gos, "output/GO/enrichR_KEGG_2021_Human_Venn_overlap_WTbivalent_003GainHETTHORq15__bivalentOnly.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_KEGG_2021_Human_Venn_overlap_WTbivalentmacs2qval4_003GainHETTHORq15__bivalentOnly.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+```
 
 
 

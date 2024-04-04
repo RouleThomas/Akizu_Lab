@@ -8,7 +8,7 @@ macs2_out="output/macs2/broad"
 blacklist="../../Master/meta/hg38-blacklist.v2.bed"
 
 # average basepair q-value threshold (log5)
-q=10
+q=5
 
 # make output directory
 mkdir -p ${macs2_out}/broad_noMask_qval${q}
@@ -17,12 +17,15 @@ mkdir -p ${macs2_out}/broad_blacklist_qval${q}
   
 
 x=(
-    "NPC_WT_H3K4me3_pool"
-    "NPC_KO_H3K4me3_pool"
     "NPC_WT_H3K27me3_pool"
-    "NPC_KO_H3K27me3_pool"
+    "NPC_WT_H3K4me3_pool"
+    "NPC_WT_H3K9me3_pool"
+    "NPC_WT_H3K27ac_pool"
+    "53dN_WT_H3K27me3_pool"
+    "53dN_WT_H3K4me3_pool"
+    "53dN_WT_H3K9me3_pool"
+    "53dN_WT_H3K27ac_pool"
 )
-
 
 
 for x in "${x[@]}"; do
@@ -32,3 +35,7 @@ for x in "${x[@]}"; do
         -a ${macs2_out}/broad_noMask_qval${q}/${x}_peaks.broadPeak \
         -b ${blacklist} > ${macs2_out}/broad_blacklist_qval${q}/${x}_peaks.broadPeak   
 done
+
+
+
+
