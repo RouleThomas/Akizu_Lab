@@ -225,6 +225,12 @@ sbatch scripts/macs2_broad_53dN.sh # 15401244 ok
 sbatch scripts/macs2_broad_NPC.sh # 15401308 ok
 
 sbatch scripts/macs2_broad_53dN_noIGG.sh # 15401429 ok
+
+# pool
+sbatch scripts/macs2_broad_53dN_pool.sh # 17503351 xxx
+sbatch scripts/macs2_broad_NPC_pool.sh # 17503352 xxx
+
+
 ```
 
 --> H3K27ac in NPC show 3 peak in R1! And a ~7k peaks in R2. R2 is better, but still very ugly and noisy!
@@ -233,14 +239,9 @@ sbatch scripts/macs2_broad_53dN_noIGG.sh # 15401429 ok
 
 
 
-
-
-
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX below not mod
-
 ```bash
 conda activate bowtie2 # for bedtools
-sbatch scripts/macs2_raw_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
+# sbatch scripts/macs2_raw_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
 sbatch scripts/macs2_raw_peak_signif_pool.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
 
 
