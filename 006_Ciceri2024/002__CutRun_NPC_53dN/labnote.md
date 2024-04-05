@@ -516,29 +516,24 @@ grep -Ff output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3andH3K4me3qv
 
 # deeptool plots
 ## qval 2.3
-sbatch scripts/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3_macs2qval2.sh # 17512685 xxx
+sbatch scripts/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3_macs2qval2.sh # 17512685 ok
 
 ## qval 4
-sbatch scripts/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4.sh # 17512702 xxx
+sbatch scripts/matrix_TSS_5kb_Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4.sh # 17512702 ok
 ```
 
 
-
-
-XXXXXX BELOW NOT MOD !!!! XXXXXXXX
-
-
 --> The Venn overlap gene filtering worked great; H3K4me3/H3K27me3/bivalent genes are clearly identified at q2.3. But some genes show no signal, even when decreasing the zMax scale; let's try more stringeant qvalues
-----> XXX With more stringeat qvalues XXX
+---->  With more stringeat qvalues less good
 
---> Optimal qvalue is XXX
+--> Optimal qvalue is 2.3 
 
 
 
 
 ## enrichR functional analysis
 
-On the **bivalent** - H3K4me3 and H3K27me3 (NPC) at qval 2.3 and 4 with the g**enes that gain H3K27me3 in GOF/HET** (`003__CutRun`)
+On the **bivalent** - H3K4me3 and H3K27me3 (53dN) at qval 2.3 with the **genes that gain H3K27me3 in GOF/HET** (`003__CutRun`)
 
 
 
@@ -557,13 +552,13 @@ dbs <- c("GO_Biological_Process_2023") #
 
 ### GeneSymbol list of DEGs per tissue
 output/ChIPseeker/Venn_overlap_WTbivalent_003GainHETTHORq15__bivalentOnly.txt
-output/ChIPseeker/Venn_overlap_WTbivalentmacs2qval4_003GainHETTHORq15__bivalentOnly.txt
+
 
 
 # IF starting with geneSymbol
 
 ## Read and preprocess data for DEGs genes
-gene_names_up <- read.csv("output/ChIPseeker/Venn_overlap_WTbivalentmacs2qval4_003GainHETTHORq15__bivalentOnly.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/ChIPseeker/Venn_overlap_WTbivalent_003GainHETTHORq15__bivalentOnly.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -600,8 +595,8 @@ gos$Term <- factor(gos$Term, levels = new_order)
 ## gos <- head(gos, n = 5)
 
 # Plotting with enhanced aesthetics
-pdf("output/GO/enrichR_GO_Biological_Process_2023_Venn_overlap_WTbivalent_003GainHETTHORq15__bivalentOnly.pdf", width=20, height=12)
-pdf("output/GO/enrichR_GO_Biological_Process_2023_Venn_overlap_WTbivalentmacs2qval4_003GainHETTHORq15__bivalentOnly.pdf", width=20, height=10)
+pdf("output/GO/enrichR_GO_Biological_Process_2023_Venn_overlap_WTbivalent_003GainHETTHORq15__bivalentOnly.pdf", width=20, height=13)
+
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.8) +
   # Adjusted label position based on the type of gene (up/down) and increased separation
@@ -627,7 +622,8 @@ dev.off()
 
 ## save output
 write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_Venn_overlap_WTbivalent_003GainHETTHORq15__bivalentOnly.txt", sep="\t", row.names=FALSE, quote=FALSE)
-write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_Venn_overlap_WTbivalentmacs2qval4_003GainHETTHORq15__bivalentOnly.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
 
 
 
@@ -636,13 +632,12 @@ dbs <- c("KEGG_2021_Human") #
 
 ### GeneSymbol list of DEGs per tissue
 output/ChIPseeker/Venn_overlap_WTbivalent_003GainHETTHORq15__bivalentOnly.txt
-output/ChIPseeker/Venn_overlap_WTbivalentmacs2qval4_003GainHETTHORq15__bivalentOnly.txt
 
 
 # IF starting with geneSymbol
 
 ## Read and preprocess data for DEGs genes
-gene_names_up <- read.csv("output/ChIPseeker/Venn_overlap_WTbivalentmacs2qval4_003GainHETTHORq15__bivalentOnly.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/ChIPseeker/Venn_overlap_WTbivalent_003GainHETTHORq15__bivalentOnly.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -680,7 +675,8 @@ gos$Term <- factor(gos$Term, levels = new_order)
 
 # Plotting with enhanced aesthetics
 pdf("output/GO/enrichR_KEGG_2021_Human_Venn_overlap_WTbivalent_003GainHETTHORq15__bivalentOnly.pdf", width=20, height=12)
-pdf("output/GO/enrichR_KEGG_2021_Human_Venn_overlap_WTbivalentmacs2qval4_003GainHETTHORq15__bivalentOnly.pdf", width=20, height=10)
+
+
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.8) +
   # Adjusted label position based on the type of gene (up/down) and increased separation
@@ -706,9 +702,6 @@ dev.off()
 
 ## save output
 write.table(gos, "output/GO/enrichR_KEGG_2021_Human_Venn_overlap_WTbivalent_003GainHETTHORq15__bivalentOnly.txt", sep="\t", row.names=FALSE, quote=FALSE)
-write.table(gos, "output/GO/enrichR_KEGG_2021_Human_Venn_overlap_WTbivalentmacs2qval4_003GainHETTHORq15__bivalentOnly.txt", sep="\t", row.names=FALSE, quote=FALSE)
-
-
 
 ```
 
