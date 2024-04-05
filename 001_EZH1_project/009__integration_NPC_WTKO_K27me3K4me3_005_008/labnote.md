@@ -2310,9 +2310,199 @@ write.table(gos, "output/GO/enrichR_KEGG_2021_Human_Venn_overlap_WTbivalentmacs2
 
 
 
+## Expression of bivalent genes
 
 
 
+Collect all bivalent genes (qval2.3 and qval4) and check their log2FC expression level in WT vs GOF in NPC (`001*/001__RNAseq`)+ Highlight in red the bivalent and that gain H3K27me3 in HET
+
+
+
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("EnhancedVolcano")
+library("apeglm")
+library("org.Hs.eg.db")
+library("biomaRt")
+
+library("RColorBrewer")
+library("pheatmap")
+library("AnnotationDbi")
+
+# import RNAseq data WT vs HET NPC (001) #############################################################
+
+# import featurecounts output and keep only gene ID and counts
+## collect all samples ID
+samples <- c("NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+   "NPC_HET_R1", "NPC_HET_R2", "NPC_HET_R3")
+
+## Make a loop for importing all featurecounts data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("../001__RNAseq/output/featurecounts_hg38/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    dplyr::select(Geneid, starts_with("output/STAR_hg38/")) %>%
+    rename(!!sample := starts_with("output/STAR_hg38/"))
+}
+
+# Merge all dataframe into a single one
+counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+# Remove X and Y chromosome genes
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
+                   filters = "chromosome_name",
+                   values = c("X", "Y"),
+                   mart = ensembl)
+counts_all$stripped_geneid <- sub("\\..*", "", counts_all$Geneid)
+counts_all_filtered <- counts_all %>%
+  filter(!stripped_geneid %in% genes_X_Y$ensembl_gene_id)
+counts_all_filtered$stripped_geneid <- NULL
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pull(counts_all_filtered, Geneid)) 
+
+## Create colData file that describe all our samples
+### Not including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  dplyr::select(-replicate) %>%
+  bind_cols(data.frame(samples))
+### Including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  bind_cols(data.frame(samples))
+
+## transform df into matrix
+coldata = make_matrix(dplyr::select(coldata_raw, -samples), pull(coldata_raw, samples))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design= ~ genotype)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 5
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+res <- lfcShrink(dds, coef="genotype_HET_vs_WT", type="apeglm")
+
+
+## Plot-volcano
+### GeneSymbol ID
+gene_ids <- rownames(res)
+stripped_gene_ids <- sub("\\..*", "", gene_ids)
+gene_symbols <- mapIds(org.Hs.eg.db, keys = stripped_gene_ids,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+res$GeneSymbol <- gene_symbols
+
+
+
+
+# import bivalent genes ############################################
+## gain H3K27me3 in HET 8wN
+output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15_gain_Promoter5_geneSymbol.txt
+## bivalent only
+output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3andH3K4me3.txt
+output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4__H3K27me3andH3K4me3.txt
+## bivalent and that gain H3K27me3
+output/ChIPseeker/Venn_overlap_WTbivalent_003GainHETTHORq15__WTbivalentand003GainHETTHORq15.txt
+output/ChIPseeker/Venn_overlap_WTbivalentmacs2qval4_003GainHETTHORq15__WTbivalentmacs2qval4and003GainHETTHORq15.txt
+
+
+
+bivalent_qval2 = read.table("output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3__H3K27me3andH3K4me3.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+bivalent_qval4 = read.table("output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3_macs2qval4__H3K27me3andH3K4me3.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+
+## isolate from res (all DEGs genes) the bivalent genes ###############################################
+bivalent_qval2
+
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene")
+
+res_bivalent_qval2 = bivalent_qval2 %>% 
+  inner_join(res_tibble)
+
+### highlight genes that gain H3K27me3 in HET ###############################################
+gain_H3K27me3_HET = read.table("../003__CutRun/output/ChIPseeker/annotation_WTvsHET_unique_Keepdup_qval15_gain_Promoter5_geneSymbol.txt", 
+                                           header = TRUE) %>%
+                               as_tibble() %>%
+    dplyr::select(GeneSymbol) %>%
+    unique()
+
+highlight_genes <- gain_H3K27me3_HET$GeneSymbol # gain H3K27me3 in HET 8wN (003__CutRun)
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_bivalent_qval2$log2FoldChange < -0.5 & res_bivalent_qval2$padj < 5e-2, 'Sky Blue',
+    ifelse(res_bivalent_qval2$log2FoldChange > 0.5 & res_bivalent_qval2$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+
+
+
+
+
+pdf("../001__RNAseq/output/deseq2_hg38/plotVolcano_res_bivalent_qval2", width=8, height=8)  
+EnhancedVolcano(res_bivalent_qval2,
+  lab = NA,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'HET vs WT, NPC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 1.5,
+  labSize = 4.5,
+  shape = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+XXXXXXXXXXXXX here try highlight the genes that gain H3K27me3 XXX do the other macs4 and gene candidate
+
+
+```
 
 
 
