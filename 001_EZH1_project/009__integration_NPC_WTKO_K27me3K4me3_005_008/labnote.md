@@ -2442,15 +2442,33 @@ bivalent_qval4 = read.table("output/ChIPseeker/Venn_overlap_WT_H3K27me3H3K4me3_m
                                            col.names = "GeneSymbol") %>%
                                as_tibble()
 
+bivalent_qval2_gainH3K27me3HET = read.table("output/ChIPseeker/Venn_overlap_WTbivalent_003GainHETTHORq15__WTbivalentand003GainHETTHORq15.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+bivalent_qval4_gainH3K27me3HET = read.table("output/ChIPseeker/Venn_overlap_WTbivalentmacs2qval4_003GainHETTHORq15__WTbivalentmacs2qval4and003GainHETTHORq15.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+
+
 ## isolate from res (all DEGs genes) the bivalent genes ###############################################
 bivalent_qval2
-
+bivalent_qval4
+bivalent_qval2_gainH3K27me3HET
+bivalent_qval4_gainH3K27me3HET
 #### Remove gene version on the res and compil with THOR diff genes
 rownames(res) <- gsub("\\..*", "", rownames(res))
 res_tibble <- res %>% 
   as_tibble(rownames = "gene")
 
 res_bivalent_qval2 = bivalent_qval2 %>% 
+  inner_join(res_tibble)
+res_bivalent_qval4 = bivalent_qval4 %>% 
+  inner_join(res_tibble)
+res_bivalent_qval2_gainH3K27me3HET = bivalent_qval2_gainH3K27me3HET %>% 
+  inner_join(res_tibble)
+res_bivalent_qval4_gainH3K27me3HET = bivalent_qval4_gainH3K27me3HET %>% 
   inner_join(res_tibble)
 
 ### highlight genes that gain H3K27me3 in HET ###############################################
@@ -2464,8 +2482,8 @@ highlight_genes <- gain_H3K27me3_HET$GeneSymbol # gain H3K27me3 in HET 8wN (003_
 
 # FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
 keyvals <- ifelse(
-  res_bivalent_qval2$log2FoldChange < -0.5 & res_bivalent_qval2$padj < 5e-2, 'Sky Blue',
-    ifelse(res_bivalent_qval2$log2FoldChange > 0.5 & res_bivalent_qval2$padj < 5e-2, 'Orange',
+  res_bivalent_qval2_gainH3K27me3HET$log2FoldChange < -0.5 & res_bivalent_qval2_gainH3K27me3HET$padj < 5e-2, 'Sky Blue',     ######### CAHNGE NAME HERE
+    ifelse(res_bivalent_qval2_gainH3K27me3HET$log2FoldChange > 0.5 & res_bivalent_qval2_gainH3K27me3HET$padj < 5e-2, 'Orange',   ######### CAHNGE NAME HERE
       'grey'))
 
 keyvals[is.na(keyvals)] <- 'black'
@@ -2478,15 +2496,18 @@ names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC <
 
 
 
-pdf("../001__RNAseq/output/deseq2_hg38/plotVolcano_res_bivalent_qval2", width=8, height=8)  
-EnhancedVolcano(res_bivalent_qval2,
+pdf("../001__RNAseq/output/deseq2_hg38/plotVolcano_res_bivalent_qval2.pdf", width=8, height=8)  
+pdf("../001__RNAseq/output/deseq2_hg38/plotVolcano_res_bivalent_qval4.pdf", width=8, height=8)  
+pdf("../001__RNAseq/output/deseq2_hg38/plotVolcano_res_bivalent_qval2_gainH3K27me3HET.pdf", width=8, height=8)  
+
+EnhancedVolcano(res_bivalent_qval2_gainH3K27me3HET,            ######### CAHNGE NAME HERE
   lab = NA,
   x = 'log2FoldChange',
   y = 'padj',
   title = 'HET vs WT, NPC',
   pCutoff = 5e-2,         #
   FCcutoff = 0.5,
-  pointSize = 1.5,
+  pointSize = 3,
   labSize = 4.5,
   shape = 20,
   colCustom = keyvals,
@@ -2499,10 +2520,12 @@ EnhancedVolcano(res_bivalent_qval2,
   theme(legend.position = "none")
 dev.off()
 
-XXXXXXXXXXXXX here try highlight the genes that gain H3K27me3 XXX do the other macs4 and gene candidate
+
 
 
 ```
+
+--> The code seems bugy, too many genes are shown! They should be around 1k bivalent genes and the plot mention there is 10k genes. The gene name converions may lead to the issue!
 
 
 
