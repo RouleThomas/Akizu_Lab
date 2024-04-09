@@ -1638,16 +1638,17 @@ output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Vennd
 output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt
 output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt
 
-
+output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt
+output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt
 
 
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -1682,7 +1683,8 @@ pdf("output/GO/enrichR_GO_Biological_Process_2023_THOR_H3K4me3_q30.pdf", width=8
 
 pdf("output/GO/enrichR_GO_Biological_Process_2023_THOR_H3K27me3_q40.pdf", width=8, height=6)
 
-pdf("output/GO/enrichR_GO_Biological_Process_2023_THOR_H3K27me3_q30_q05FC05_NPC_KO_vs_NPC_WT.pdf", width=8, height=6)
+pdf("output/GO/enrichR_GO_Biological_Process_2023_THOR_H3K27me3_q30_Lost_q05FC05_NPC_KO_vs_NPC_WT.pdf", width=8, height=6)
+pdf("output/GO/enrichR_GO_Biological_Process_2023_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT.pdf", width=8, height=6)
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
@@ -1707,7 +1709,7 @@ dev.off()
 
 
 ## save output
-write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_THOR_H3K27me3_q30_q05FC05_NPC_KO_vs_NPC_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 
@@ -1734,15 +1736,16 @@ output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Vennd
 output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt
 output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt
 
-
+output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt
+output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt
 
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 # Extracting KEGG data and assigning types
@@ -1774,7 +1777,8 @@ pdf("output/GO/enrichR_GO_Molecular_Function_2023_THOR_H3K4me3_q20.pdf", width=8
 pdf("output/GO/enrichR_GO_Molecular_Function_2023_THOR_H3K27me3_q30.pdf", width=8, height=6)
 
 pdf("output/GO/enrichR_GO_Molecular_Function_2023_THOR_H3K27me3_q40.pdf", width=8, height=5)
-pdf("output/GO/enrichR_GO_Molecular_Function_2023_THOR_H3K27me3_q30_q05FC05_NPC_KO_vs_NPC_WT.pdf", width=8, height=8)
+pdf("output/GO/enrichR_GO_Molecular_Function_2023_THOR_H3K27me3_q30_Lost_q05FC05_NPC_KO_vs_NPC_WT.pdf", width=8, height=8)
+pdf("output/GO/enrichR_GO_Molecular_Function_2023_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT.pdf", width=8, height=5)
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
@@ -1798,7 +1802,7 @@ ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) +
 dev.off()
 
 ## save output
-write.table(gos, "output/GO/enrichR_GO_Molecular_Function_2023_THOR_H3K27me3_q30_q05FC05_NPC_KO_vs_NPC_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_GO_Molecular_Function_2023_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 
@@ -1825,14 +1829,17 @@ output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Vennd
 output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt
 output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt
 
+output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt
+output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt
+
 
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -1875,6 +1882,9 @@ pdf("output/GO/enrichR_GO_Cellular_Component_2023_THOR_H3K4me3_q30.pdf", width=8
 
 pdf("output/GO/enrichR_GO_Cellular_Component_2023_THOR_H3K27me3_q40.pdf", width=8, height=4)
 
+pdf("output/GO/enrichR_GO_Cellular_Component_2023_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT.pdf", width=8, height=4)
+
+
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
   # Adjusted label position based on the type of gene (up/down) and increased separation
@@ -1898,7 +1908,7 @@ dev.off()
 
 
 ## save output
-write.table(gos, "output/GO/enrichR_GO_Cellular_Component_2023_THOR_H3K27me3_q40.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_GO_Cellular_Component_2023_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 
@@ -1927,15 +1937,16 @@ output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Vennd
 output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt
 output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt
 
-
+output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt
+output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt
 
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -1971,7 +1982,8 @@ pdf("output/GO/enrichR_KEGG_2021_Human_THOR_H3K27me3_q30.pdf", width=8, height=3
 
 pdf("output/GO/enrichR_KEGG_2021_Human_THOR_H3K27me3_q40.pdf", width=8, height=2)
 
-pdf("output/GO/enrichR_KEGG_2021_Human_THOR_H3K27me3_q30_q05FC05_NPC_KO_vs_NPC_WT.pdf", width=8, height=2)
+pdf("output/GO/enrichR_KEGG_2021_Human_THOR_H3K27me3_q30_Lost_q05FC05_NPC_KO_vs_NPC_WT.pdf", width=8, height=2)
+pdf("output/GO/enrichR_KEGG_2021_Human_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT.pdf", width=8, height=3)
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
@@ -1996,7 +2008,102 @@ dev.off()
 
 
 ## save output
-write.table(gos, "output/GO/enrichR_KEGG_2021_Human_THOR_H3K27me3_q30_q05FC05_NPC_KO_vs_NPC_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_KEGG_2021_Human_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X") # 
+
+### GeneSymbol list of signif up/down genes in each genotypes
+output/ChIPseeker/annotation_THOR_H3K4me3_q30_neg_promoterAnd5_geneSymbol_Venndiagram194.txt
+output/ChIPseeker/annotation_THOR_H3K4me3_q30_pos_promoterAnd5_geneSymbol_Venndiagram355.txt
+
+output/ChIPseeker/annotation_THOR_H3K4me3_q20_neg_promoterAnd5_geneSymbol_Venndiagram462.txt
+output/ChIPseeker/annotation_THOR_H3K4me3_q20_pos_promoterAnd5_geneSymbol_Venndiagram636.txt
+
+
+output/ChIPseeker/annotation_THOR_H3K27me3_q40_neg_promoterAnd5_geneSymbol_Venndiagram145.txt
+output/ChIPseeker/annotation_THOR_H3K27me3_q40_pos_promoterAnd5_geneSymbol_Venndiagram554.txt
+
+output/ChIPseeker/annotation_THOR_H3K27me3_q30_neg_promoterAnd5_geneSymbol_Venndiagram220.txt
+output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Venndiagram836.txt
+
+### GeneSymbol list of signif gain/lost H3K27me3 in each genotypes and DEGs (Carolina RNAseq)
+output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt
+output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt
+
+output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt
+output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt
+
+# IF starting with geneSymbol
+## Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+## Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$`ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X`
+down <- edown$`ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X`
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 20)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 20)
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+
+
+pdf("output/GO/enrichR_ENCODE_and_ChEA_Consensus_TFs_from_ChIP_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT.pdf", width=8, height=3)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="H3K4me3",   # H3K27me3  H3K4me3
+                    labels = c("Lost", "Gain"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+
+
+## save output
+write.table(gos, "output/GO/enrichR_ENCODE_and_ChEA_Consensus_TFs_from_ChIP_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
 
 
 ```
