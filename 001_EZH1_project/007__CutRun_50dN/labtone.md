@@ -2251,3 +2251,13 @@ write.table(THOR_chipseeker, file="output/THOR/THOR_50dN_H3K27me3_WTvsKO/THORq20
 ```
 
 
+
+
+
+
+
+
+
+
+
+

@@ -1620,7 +1620,7 @@ library("enrichR")
 # Define databases for enrichment
 dbs <- c("GO_Biological_Process_2023") # 
 
-### GeneSymbol list of signif up/down genes in each genotypes
+### GeneSymbol list of signif gain/lost H3K27me3 in each genotypes
 output/ChIPseeker/annotation_THOR_H3K4me3_q30_neg_promoterAnd5_geneSymbol_Venndiagram194.txt
 output/ChIPseeker/annotation_THOR_H3K4me3_q30_pos_promoterAnd5_geneSymbol_Venndiagram355.txt
 
@@ -1633,13 +1633,21 @@ output/ChIPseeker/annotation_THOR_H3K27me3_q40_pos_promoterAnd5_geneSymbol_Vennd
 output/ChIPseeker/annotation_THOR_H3K27me3_q30_neg_promoterAnd5_geneSymbol_Venndiagram220.txt
 output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Venndiagram836.txt
 
+
+### GeneSymbol list of signif gain/lost H3K27me3 in each genotypes and DEGs (Carolina RNAseq)
+output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt
+output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt
+
+
+
+
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/ChIPseeker/annotation_THOR_H3K27me3_q40_neg_promoterAnd5_geneSymbol_Venndiagram145.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/ChIPseeker/annotation_THOR_H3K27me3_q40_pos_promoterAnd5_geneSymbol_Venndiagram554.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -1674,13 +1682,15 @@ pdf("output/GO/enrichR_GO_Biological_Process_2023_THOR_H3K4me3_q30.pdf", width=8
 
 pdf("output/GO/enrichR_GO_Biological_Process_2023_THOR_H3K27me3_q40.pdf", width=8, height=6)
 
+pdf("output/GO/enrichR_GO_Biological_Process_2023_THOR_H3K27me3_q30_q05FC05_NPC_KO_vs_NPC_WT.pdf", width=8, height=6)
+
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
   # Adjusted label position based on the type of gene (up/down) and increased separation
   geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
   geom_hline(yintercept = 0, linetype="solid", color = "black") +
-  scale_fill_manual(name="H3K4me3",   # H3K27me3  H3K4me3
-                    labels = c("Lost", "Gain"), 
+  scale_fill_manual(name="DEGs and H3K27me3",   # H3K27me3  H3K4me3
+                    labels = c("down-reg and Gain", "up-reg and Lost"), 
                     values = c("down"="Sky Blue", "up"="Orange")) + 
   labs(title= "GO_Biological_Process_2023") + 
   coord_flip() + 
@@ -1697,7 +1707,7 @@ dev.off()
 
 
 ## save output
-write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_THOR_H3K27me3_q40.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_THOR_H3K27me3_q30_q05FC05_NPC_KO_vs_NPC_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 
@@ -1719,13 +1729,20 @@ output/ChIPseeker/annotation_THOR_H3K27me3_q40_pos_promoterAnd5_geneSymbol_Vennd
 output/ChIPseeker/annotation_THOR_H3K27me3_q30_neg_promoterAnd5_geneSymbol_Venndiagram220.txt
 output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Venndiagram836.txt
 
+
+### GeneSymbol list of signif gain/lost H3K27me3 in each genotypes and DEGs (Carolina RNAseq)
+output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt
+output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt
+
+
+
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/ChIPseeker/annotation_THOR_H3K27me3_q40_neg_promoterAnd5_geneSymbol_Venndiagram145.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/ChIPseeker/annotation_THOR_H3K27me3_q40_pos_promoterAnd5_geneSymbol_Venndiagram554.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 # Extracting KEGG data and assigning types
@@ -1757,6 +1774,7 @@ pdf("output/GO/enrichR_GO_Molecular_Function_2023_THOR_H3K4me3_q20.pdf", width=8
 pdf("output/GO/enrichR_GO_Molecular_Function_2023_THOR_H3K27me3_q30.pdf", width=8, height=6)
 
 pdf("output/GO/enrichR_GO_Molecular_Function_2023_THOR_H3K27me3_q40.pdf", width=8, height=5)
+pdf("output/GO/enrichR_GO_Molecular_Function_2023_THOR_H3K27me3_q30_q05FC05_NPC_KO_vs_NPC_WT.pdf", width=8, height=8)
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
@@ -1780,7 +1798,7 @@ ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) +
 dev.off()
 
 ## save output
-write.table(gos, "output/GO/enrichR_GO_Molecular_Function_2023_THOR_H3K27me3_q40.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_GO_Molecular_Function_2023_THOR_H3K27me3_q30_q05FC05_NPC_KO_vs_NPC_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 
@@ -1803,13 +1821,18 @@ output/ChIPseeker/annotation_THOR_H3K27me3_q40_pos_promoterAnd5_geneSymbol_Vennd
 output/ChIPseeker/annotation_THOR_H3K27me3_q30_neg_promoterAnd5_geneSymbol_Venndiagram220.txt
 output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Venndiagram836.txt
 
+### GeneSymbol list of signif gain/lost H3K27me3 in each genotypes and DEGs (Carolina RNAseq)
+output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt
+output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt
+
+
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/ChIPseeker/annotation_THOR_H3K27me3_q40_neg_promoterAnd5_geneSymbol_Venndiagram145.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/ChIPseeker/annotation_THOR_H3K27me3_q40_pos_promoterAnd5_geneSymbol_Venndiagram554.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -1900,13 +1923,19 @@ output/ChIPseeker/annotation_THOR_H3K27me3_q40_pos_promoterAnd5_geneSymbol_Vennd
 output/ChIPseeker/annotation_THOR_H3K27me3_q30_neg_promoterAnd5_geneSymbol_Venndiagram220.txt
 output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Venndiagram836.txt
 
+### GeneSymbol list of signif gain/lost H3K27me3 in each genotypes and DEGs (Carolina RNAseq)
+output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt
+output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt
+
+
+
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/ChIPseeker/annotation_THOR_H3K27me3_q40_neg_promoterAnd5_geneSymbol_Venndiagram145.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/ChIPseeker/annotation_THOR_H3K27me3_q40_pos_promoterAnd5_geneSymbol_Venndiagram554.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -1942,6 +1971,8 @@ pdf("output/GO/enrichR_KEGG_2021_Human_THOR_H3K27me3_q30.pdf", width=8, height=3
 
 pdf("output/GO/enrichR_KEGG_2021_Human_THOR_H3K27me3_q40.pdf", width=8, height=2)
 
+pdf("output/GO/enrichR_KEGG_2021_Human_THOR_H3K27me3_q30_q05FC05_NPC_KO_vs_NPC_WT.pdf", width=8, height=2)
+
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
   # Adjusted label position based on the type of gene (up/down) and increased separation
@@ -1965,7 +1996,7 @@ dev.off()
 
 
 ## save output
-write.table(gos, "output/GO/enrichR_KEGG_2021_Human_THOR_H3K27me3_q40.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_KEGG_2021_Human_THOR_H3K27me3_q30_q05FC05_NPC_KO_vs_NPC_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 ```
@@ -2531,5 +2562,280 @@ dev.off()
 
 
 
+# RNAseq integration 
+
+**IMPORTANT NOTE: Here it is advisable to REMOVE all genes from chromosome X and Y BEFORE doing the DEGs analysis (X chromosome re-activation occurs in some samples, notably these with more cell passage; in our case, the HET and KO)**
+--> It is good to do this on the count matrix see [here](https://support.bioconductor.org/p/119932/)
+### 'one-by-one' comparison
+Comparison WT vs mutant (KO or HET) for each time-points:
+- NPC KO vs WT
+
+--> DEGs is redo as in `001__RNAseq`
+
+
+### NPC KO vs WT
+Take ressource
+```bash
+srun --mem=100g --pty bash -l
+R
+```
+Go in R
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("EnhancedVolcano")
+library("apeglm")
+library("org.Hs.eg.db")
+library("biomaRt")
+
+library("RColorBrewer")
+library("pheatmap")
+library("AnnotationDbi")
+
+# import featurecounts output and keep only gene ID and counts
+## collect all samples ID
+samples <- c("NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+   "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3")
+
+## Make a loop for importing all featurecounts data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("../001__RNAseq/output/featurecounts_hg38/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    dplyr::select(Geneid, starts_with("output/STAR_hg38/")) %>%
+    rename(!!sample := starts_with("output/STAR_hg38/"))
+}
+
+# Merge all dataframe into a single one
+counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+# Remove X and Y chromosome genes
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
+                   filters = "chromosome_name",
+                   values = c("X", "Y"),
+                   mart = ensembl)
+counts_all$stripped_geneid <- sub("\\..*", "", counts_all$Geneid)
+counts_all_filtered <- counts_all %>%
+  filter(!stripped_geneid %in% genes_X_Y$ensembl_gene_id)
+counts_all_filtered$stripped_geneid <- NULL
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pull(counts_all_filtered, Geneid)) 
+
+## Create colData file that describe all our samples
+### Not including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  dplyr::select(-replicate) %>%
+  bind_cols(data.frame(samples))
+### Including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  bind_cols(data.frame(samples))
+
+## transform df into matrix
+coldata = make_matrix(dplyr::select(coldata_raw, -samples), pull(coldata_raw, samples))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design= ~ genotype)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 5
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm")
+
+
+## Plot-volcano
+### GeneSymbol ID
+gene_ids <- rownames(res)
+stripped_gene_ids <- sub("\\..*", "", gene_ids)
+gene_symbols <- mapIds(org.Hs.eg.db, keys = stripped_gene_ids,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+res$GeneSymbol <- gene_symbols
+
+
+
+## import gene list gain / lost H3K27me3
+
+# H3K27me3
+### GAIN
+
+H3K27me3_qval30_Gain = read.table("../009__integration_NPC_WTKO_K27me3K4me3_005_008/output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+
+
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene") %>%
+  drop_na()   # ADDING THIS AVOID THE BUG WITH DUPPLCIATED NAME 
+
+res_Gain = H3K27me3_qval30_Gain %>% 
+  left_join(res_tibble) 
+
+
+### LOST
+H3K27me3_qval30_Lost = read.table("../009__integration_NPC_WTKO_K27me3K4me3_005_008/output/ChIPseeker/annotation_THOR_H3K27me3_q30_neg_promoterAnd5_geneSymbol.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+
+
+
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene") %>%
+  drop_na()   # ADDING THIS AVOID THE BUG WITH DUPPLCIATED NAME 
+
+res_Lost = H3K27me3_qval30_Lost %>% 
+  left_join(res_tibble)
+
+## PLOT
+### GAIN
+highlight_genes <- c("") # 
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, 'Sky Blue',
+    ifelse(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+pdf("output/deseq2/plotVolcano_res_001009_Gain_H3K27me3_qval30_NPC_KO_vs_NPC_WT.pdf", width=8, height=8)  
+EnhancedVolcano(res_Gain,
+  lab = res_Gain$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, NPC',
+  pCutoff = 1e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 5,
+  labSize = 9,   # gene highlight size
+  shape = 20,
+  axisLabSize = 25,
+  captionLabSize = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.75,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+
+upregulated_genes <- sum(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, na.rm = TRUE) # 202
+downregulated_genes <- sum(res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, na.rm = TRUE) # 73
+
+# Save as gene list for GO analysis:
+
+upregulated <- res_Gain[res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, ]
+upregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res_Gain[res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, ]
+downregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+### LOST
+highlight_genes <- c("") # NA
+
+# FILTER ON QVALUE 0.01 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, 'Sky Blue',
+    ifelse(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.5)'
+
+pdf("output/deseq2/plotVolcano_res_001009_Lost_H3K27me3_qval30_NPC_KO_vs_NPC_WT.pdf", width=8, height=8)  
+EnhancedVolcano(res_Lost,
+  lab = res_Lost$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, NPC',
+  pCutoff = 1e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 5,
+  labSize = 9,   # gene highlight size
+  shape = 20,
+  axisLabSize = 25,
+  captionLabSize = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.75,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+upregulated_genes <- sum(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+
+upregulated <- res_Lost[res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 5e-2, ]
+upregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res_Lost[res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, ]
+downregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+```
+
+
+--> Functional analysis of Gain/Lost and DEGs done at `# Functional analysis with enrichR`
 
 
