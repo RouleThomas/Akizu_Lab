@@ -723,6 +723,7 @@ conda activate deeptools
 # generate bed file from the gtf
 cat /scr1/users/roulet/Akizu_Lab/Master/meta/ENCFF159KBI.gtf |  awk 'OFS="\t" {if ($3=="gene") {print $1,$4-1,$5,$10,$7}}' | tr -d '";' > /scr1/users/roulet/Akizu_Lab/Master/meta/ENCFF159KBI_gene.bed
 
+cat /scr1/users/roulet/Akizu_Lab/Master/meta/ENCFF159KBI.gtf |  awk 'OFS="\t" {if ($3=="gene") {print $1,$4-1,$5,$14,$7}}' | tr -d '";' > /scr1/users/roulet/Akizu_Lab/Master/meta/ENCFF159KBI_geneSymbol.bed
 
 # pearson corr plots - gene body
 sbatch scripts/multiBigwigSummary_H3K27me3_raw_BEDgene.sh # 14551329 fail; 14555735 ok
@@ -1616,6 +1617,7 @@ Functional analysis **enrichR with THOR diff bound genes**; using webtool Venn d
 # library
 library("tidyverse")
 library("enrichR")
+library("ggrepel")
 
 # Define databases for enrichment
 dbs <- c("GO_Biological_Process_2023") # 
@@ -2103,16 +2105,66 @@ dev.off()
 write.table(gos, "output/GO/enrichR_ENCODE_and_ChEA_Consensus_TFs_from_ChIP_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
+### TF plot like JC paper
+#### import all TF genes
+TF = read.csv("output/GO/ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X_TFonly.txt") %>%
+                               as_tibble()
+
+#### re do gos without filtering for pvalue
+up <- eup$`ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X`
+down <- edown$`ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X`
+up$type <- "up"
+down$type <- "down"
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+gos <- rbind(down, up)
+
+### combine TF with gos
+gos_TF = TF %>%
+  left_join(as_tibble(gos) ) %>%
+  filter(type == "down") 
+
+gos_TF_tidy = gos_TF %>%
+  separate(Term, into = c("TF", "db"))
+
+
+### plot
+
+
+pdf("output/GO/VolcanoPlotTF_ENCODE_and_ChEA_Consensus_TFs_from_ChIP_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT_down.pdf", width=5, height=4)
+ggplot(gos_TF_tidy, aes(x = Odds.Ratio, y = -logAdjP, color = db)) +
+  geom_point(aes(color = ifelse(-logAdjP < 1.3, "not signif.", db))) +
+  scale_color_manual(values = c("lightgreen", "darkgreen", "grey")) + # Replace with your actual colors
+  theme_bw() +
+  labs(x = "Odds Ratio", y = "-log10(adjusted p-value)") +
+  geom_text_repel(data = subset(gos_TF_tidy, logAdjP < 1.3),
+                  aes(label = TF),
+                  nudge_x = 0.2,  # Adjust this value to nudge labels to the right
+                  size = 3,
+                  max.overlaps = 25)  +
+  guides(color = guide_legend(override.aes = list(label = ""))) # just to remove the "a" added in fig legend
+dev.off()
 
 
 
 ```
 
+--> `ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X` db identified *EZH2* and *SUZ12* as genes upreg in KO
+----> plot `x = odd.ratio` and `y = logadjPval` like JC done after.
+
+
+
 
 
 # Does the peak that gain H3K27me3 in KO is because of EZH2 binding in NPC?
 
-
+## Check EZH2 binding profile in NPC (from 005__CutRun)
 Check bigwig files of H3K27me3 (`009__CutRun`; THOR q30) and EZH2 (`005__CutRun`; THOR qval10) in WT and KO for the peaks that gain and lost H3K27me3 (2 separate bed). If EZH2 binding increase in the peak that gain H3K27me3 then it strenghten EZH2 compensation in EZH1 KO.
 
 ```bash
@@ -2142,6 +2194,44 @@ sbatch scripts/matrix_TSS_10kb_H3K27me3_EZH2_SUZ12_median_THOR_gainLost_gene.sh 
 --> Showing gene or peaks lead to same result (EZH2, SUZ12, barely follow H3K27me3 WTvsKO pattern)
 
 --> `*THORLIBspikein*` norm is weird as show always gain of EZH2/SUZ12, even in regions that lose H3K27me3...
+
+
+## Collect promoter sequence and run MEME
+
+Collect fasta of promoter regions 1kb upstream and 250bp downstream TSS of genes that gain H3K27me3 and are downregulated in KO:
+- convert all genes gtf to bed (already done here: `/scr1/users/roulet/Akizu_Lab/Master/meta/ENCFF159KBI_geneSymbol.bed`)
+- change size of each genes to -1kb to +250bp around TSS
+- convert bed to fasta
+- go in MEME-suite to do MEME motif discovery and TOMTOM (check if motif ressemble known TF)
+
+```bash
+# collect promoter region of each genes (-1kb to +250bp)
+awk 'BEGIN{OFS="\t"} {
+  if($5 == "+") {
+    start = ($2 - 1000 < 0) ? 0 : $2 - 1000; # Prevent negative start for forward strand
+    end = $2 + 250;
+  } else {
+    start = $3 - 250;
+    end = $3 + 1000;
+  }
+  print $1, start, end, $4, $5;
+}' /scr1/users/roulet/Akizu_Lab/Master/meta/ENCFF159KBI_geneSymbol.bed > /scr1/users/roulet/Akizu_Lab/Master/meta/ENCFF159KBI_geneSymbol_prom1kb250bp.bed
+
+# filter the ENCFF159KBI_geneSymbol_prom1kb250bp.bed to only keep the genes that gain H3K27me3 in KO and are downregulated
+grep -Fwf output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt /scr1/users/roulet/Akizu_Lab/Master/meta/ENCFF159KBI_geneSymbol_prom1kb250bp.bed > output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30_prom1kb250bp.bed
+
+# convert bed to fasta
+conda activate BedToBigwig
+
+bedtools getfasta [OPTIONS] -fi <input FASTA> -bed <BED/GFF/VCF>
+
+bedtools getfasta -fi /scr1/users/roulet/Akizu_Lab/Master/meta/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta -bed output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30_prom1kb250bp.bed -fo output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30_prom1kb250bp.fasta 
+```
+
+
+--> `downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30_prom1kb250bp.fasta` run into [MEME](https://meme-suite.org/meme/tools/meme); in `Classic/ANR`
+
+
 
 
 
