@@ -4,6 +4,15 @@
     - Collect all CR genes
         - Identify the brain express ones (`GTEx`, `BrainSpan Atlas`)
         - Collect their allele frequency score (`gnomAD`)
+    - Filter in the one known as invovled in NDD, cehck db:
+        - SFARI
+            lists 1,231 genes implicated in autism, with annotations and links to published papers.
+        - ARCCUS at CHOP
+        - PennMedecineBioBank
+        - UK Biobank
+        - Decipher
+        - GeneMatcher
+        - Matchmaker Exchange
     - Find individuals with CR mutations and NDD
         - Enter genes and check if NDD phenotype (`PennMedecineBioBank`, `Decipher`, `GeneMatcher`, `Matchmaker Exchange`)
             - For individual with phenotype, check whether other CR genes is mutated
@@ -160,6 +169,13 @@ geneList_CR_Ensembl_V1 %>% inner_join(GTEx_brain_tpm5)
 ----> 823 unique `ensembl_gene_id` have GTEx expression data
 ------> 694 unique `ensembl_gene_id` show tpm >1 in at least one brain tissue
 ------> 630 unique `ensembl_gene_id` show tpm >1 in at least one brain tissue
+
+
+
+# described as NDD related
+
+Let's filter my list of candidate CR genes by keeping only the one already defined as NDD related (autism, or other neurolodevlopmental issue):
+- [SFARI](https://gene.sfari.org/database/human-gene/): provide a lsit of genes implicated in autism, with annotations and links to published papers
 
 
 
