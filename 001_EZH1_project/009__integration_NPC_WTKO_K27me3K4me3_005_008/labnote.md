@@ -2040,13 +2040,37 @@ output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30
 output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt
 output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt
 
+### negative control 202 random genes
+meta/ENCFF159KBI_geneSymbol_202random_1.bed
+meta/ENCFF159KBI_geneSymbol_202random_2.bed
+meta/ENCFF159KBI_geneSymbol_202random_3.bed
+meta/ENCFF159KBI_geneSymbol_202random_4.bed
+meta/ENCFF159KBI_geneSymbol_202random_5.bed
+meta/ENCFF159KBI_geneSymbol_202random_6.bed
+meta/ENCFF159KBI_geneSymbol_202random_7.bed
+meta/ENCFF159KBI_geneSymbol_202random_8.bed
+meta/ENCFF159KBI_geneSymbol_202random_9.bed
+meta/ENCFF159KBI_geneSymbol_202random_10.bed
+
+meta/ENCFF159KBI_geneSymbol_500random_1.bed
+meta/ENCFF159KBI_geneSymbol_500random_2.bed
+meta/ENCFF159KBI_geneSymbol_500random_3.bed
+meta/ENCFF159KBI_geneSymbol_500random_4.bed
+meta/ENCFF159KBI_geneSymbol_500random_5.bed
+meta/ENCFF159KBI_geneSymbol_500random_6.bed
+meta/ENCFF159KBI_geneSymbol_500random_7.bed
+meta/ENCFF159KBI_geneSymbol_500random_8.bed
+meta/ENCFF159KBI_geneSymbol_500random_9.bed
+meta/ENCFF159KBI_geneSymbol_500random_10.bed
+
+
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("meta/ENCFF159KBI_geneSymbol_500random_9.bed", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("meta/ENCFF159KBI_geneSymbol_500random_10.bed", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -2159,6 +2183,33 @@ dev.off()
 ----> plot `x = odd.ratio` and `y = logadjPval` like JC done after.
 
 
+Let's add a negative control for ENCODE_ChEA analysis; by selecting 202 random genes and see if we find EZH2 SUZ12 too:
+
+```bash
+
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 202 > meta/ENCFF159KBI_geneSymbol_202random_1.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 202 > meta/ENCFF159KBI_geneSymbol_202random_2.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 202 > meta/ENCFF159KBI_geneSymbol_202random_3.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 202 > meta/ENCFF159KBI_geneSymbol_202random_4.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 202 > meta/ENCFF159KBI_geneSymbol_202random_5.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 202 > meta/ENCFF159KBI_geneSymbol_202random_6.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 202 > meta/ENCFF159KBI_geneSymbol_202random_7.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 202 > meta/ENCFF159KBI_geneSymbol_202random_8.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 202 > meta/ENCFF159KBI_geneSymbol_202random_9.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 202 > meta/ENCFF159KBI_geneSymbol_202random_10.bed
+
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_1.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_2.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_3.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_4.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_5.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_6.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_7.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_8.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_9.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_10.bed
+
+```
 
 
 

@@ -175,7 +175,46 @@ geneList_CR_Ensembl_V1 %>% inner_join(GTEx_brain_tpm5)
 # described as NDD related
 
 Let's filter my list of candidate CR genes by keeping only the one already defined as NDD related (autism, or other neurolodevlopmental issue):
+- OMIM: Provide disease associated with the genes.
 - [SFARI](https://gene.sfari.org/database/human-gene/): provide a lsit of genes implicated in autism, with annotations and links to published papers
+
+
+## Select OMIM genes related to NDD
+
+
+
+
+
+```R
+library("tidyverse")
+library("readxl")
+
+# import OMIM genes + disease
+genemap2 = read_excel("input/OMIM/genemap2.xlsx", sheet = 1) %>%
+    dplyr::select("Approved Gene Symbol","MIM Number",  "Comments", "Phenotypes", "Mouse Gene Symbol/ID") %>%
+    rename("geneSymbol" = "Approved Gene Symbol")
+
+
+
+# join with gene CR gene list express in brain
+geneList_CR_Ensembl_V1 = read_tsv("output/GTEx/geneList_CR_Ensembl_V1_tpm1.txt")
+
+geneList_CR_Ensembl_V1_genemap2 = geneList_CR_Ensembl_V1 %>%
+    inner_join(genemap2) %>%
+    filter(Phenotypes != "NA")
+
+
+### save output: write.table(geneList_CR_Ensembl_V1_genemap2, "output/OMIM/geneList_CR_Ensembl_V1_genemap2.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+### load: geneList_CR_Ensembl_V1 = read_tsv("output/OMIM/geneList_CR_Ensembl_V1_genemap2.txt")
+
+
+```
+
+
+--> Among the 842 CR genes, 218 has OMIM phenotypes; among them 103 are linked to NDD (detail in GoogleDrive `output/OMIM/CR_OMIM.xlsx`)
+
+
+Putting together CR_brain express `output/GTEx/geneList_CR_Ensembl_V1_tpm1.txt` with OMIM_NDD `output/OMIM/CR_OMIM.xlsx` and SFARI genes; we end up with 160 unique CR genes realted to NDD
 
 
 
