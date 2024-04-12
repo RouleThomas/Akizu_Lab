@@ -17161,7 +17161,7 @@ library("org.Mm.eg.db")
 library("enrichplot") # for gseaplot2()
 library("pheatmap")
 
-# import DEGs
+# import DEGs 8wN
 ## filtered_8wN_KO_vs_8wN_WT
 ## filtered_8wN_HET_vs_8wN_WT
 KO <- read.table("output/deseq2_hg38/filtered_8wN_KO_vs_8wN_WT.txt", header = TRUE, sep = "\t", row.names = 1) %>%
@@ -17242,6 +17242,92 @@ enrichplot::gseaplot2(
   title = "NSC_earlyLateNeurons"
 )
 dev.off()
+
+
+
+# import DEGs NPC
+## filtered_NPC_KO_vs_8wN_WT
+## filtered_NPC_HET_vs_8wN_WT
+KO <- read.table("output/deseq2_hg38/filtered_NPC_KO_vs_NPC_WT.txt", header = TRUE, sep = "\t", row.names = 1) %>%
+  rownames_to_column(var = "gene") %>%
+  as_tibble() 
+KO_geneSymbol = KO %>%
+  filter(!is.na(GeneSymbol)) # filter to keep only the geneSymbol gene
+
+HET <- read.table("output/deseq2_hg38/filtered_NPC_HET_vs_NPC_WT.txt", header = TRUE, sep = "\t", row.names = 1) %>%
+  rownames_to_column(var = "gene") %>%
+  as_tibble()
+HET_geneSymbol = HET %>%
+  filter(!is.na(GeneSymbol)) # filter to keep only the geneSymbol gene
+
+
+# import gene set
+NSC = read.table("output/gsea/aRG_NSC_gseaGeneList.txt", header = FALSE, sep = "\t") %>%
+  as_tibble() %>%
+  dplyr::rename("gene" = "V1") %>%
+  add_column(cellName = "NSC")
+early_born = read.table("output/gsea/CFuPN_earlyBorn_gseaGeneList.txt", header = FALSE, sep = "\t") %>%
+  as_tibble() %>%
+  dplyr::rename("gene" = "V1") %>%
+  add_column(cellName = "early_born")
+late_born = read.table("output/gsea/CPN_lateBorn_gseaGeneList.txt", header = FALSE, sep = "\t") %>%
+  as_tibble() %>%
+  dplyr::rename("gene" = "V1") %>%
+  add_column(cellName = "late_born")
+
+all_data <- NSC %>%
+  bind_rows(early_born) %>%
+  bind_rows(late_born)
+
+
+# Order our DEG
+## Let's create a named vector ranked based on the log2 fold change values
+lfc_vector <- HET_geneSymbol$log2FoldChange  ### CHAGNE HERE DATA!!!!!!!
+names(lfc_vector) <- HET_geneSymbol$GeneSymbol ### CHAGNE HERE DATA!!!!!!!
+## We need to sort the log2 fold change values in descending order here
+lfc_vector <- sort(lfc_vector, decreasing = TRUE)
+### Set the seed so our results are reproducible:
+set.seed(42)
+
+
+# run GSEA
+## without pvalue
+gsea_results <- GSEA(
+  geneList = lfc_vector,
+  minGSSize = 1,
+  maxGSSize = 5000,
+  pvalueCutoff = 1,
+  eps = 0,
+  seed = TRUE,
+  pAdjustMethod = "BH",
+  TERM2GENE = all_data %>% dplyr::select(cellName,gene), # Need to be in that order...
+)
+
+
+
+gsea_result_df <- data.frame(gsea_results@result)
+# Save output
+readr::write_tsv(
+  gsea_result_df,
+  file.path("output/gsea/gsea_results__NSC_earlyLateNeurons_complete_WTvsHET_NPC.tsv"
+  )
+)
+
+# plots
+c("NSC", "early_born", "late_born")
+
+
+pdf("output/gsea/NSC_earlyLateNeurons_WTvsKO_NPC.pdf", width=7, height=8)
+pdf("output/gsea/NSC_earlyLateNeurons_WTvsHET_NPC.pdf", width=7, height=8)
+
+enrichplot::gseaplot2(
+  gsea_results,
+  geneSetID = c("NSC", "early_born", "late_born"),
+  title = "NSC_earlyLateNeurons"
+)
+dev.off()
+
+
 
 ```
 
