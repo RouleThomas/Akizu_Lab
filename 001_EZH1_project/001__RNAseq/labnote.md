@@ -17282,8 +17282,8 @@ all_data <- NSC %>%
 
 # Order our DEG
 ## Let's create a named vector ranked based on the log2 fold change values
-lfc_vector <- HET_geneSymbol$log2FoldChange  ### CHAGNE HERE DATA!!!!!!!
-names(lfc_vector) <- HET_geneSymbol$GeneSymbol ### CHAGNE HERE DATA!!!!!!!
+lfc_vector <- KO_geneSymbol$log2FoldChange  ### CHAGNE HERE DATA!!!!!!!
+names(lfc_vector) <- KO_geneSymbol$GeneSymbol ### CHAGNE HERE DATA!!!!!!!
 ## We need to sort the log2 fold change values in descending order here
 lfc_vector <- sort(lfc_vector, decreasing = TRUE)
 ### Set the seed so our results are reproducible:
@@ -17316,14 +17316,15 @@ readr::write_tsv(
 # plots
 c("NSC", "early_born", "late_born")
 
-
 pdf("output/gsea/NSC_earlyLateNeurons_WTvsKO_NPC.pdf", width=7, height=8)
 pdf("output/gsea/NSC_earlyLateNeurons_WTvsHET_NPC.pdf", width=7, height=8)
+pdf("output/gsea/NSC_earlyLateNeurons_WTvsKO_NPC_v1.pdf", width=10, height=8)
 
 enrichplot::gseaplot2(
   gsea_results,
   geneSetID = c("NSC", "early_born", "late_born"),
-  title = "NSC_earlyLateNeurons"
+  title = "NSC_earlyLateNeurons",
+  base_size = 20
 )
 dev.off()
 

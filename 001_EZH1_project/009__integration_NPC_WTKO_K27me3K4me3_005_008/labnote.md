@@ -2066,11 +2066,11 @@ meta/ENCFF159KBI_geneSymbol_500random_10.bed
 
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("meta/ENCFF159KBI_geneSymbol_500random_9.bed", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("meta/ENCFF159KBI_geneSymbol_500random_10.bed", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -2176,6 +2176,19 @@ ggplot(gos_TF_tidy, aes(x = Odds.Ratio, y = -logAdjP, color = db)) +
 dev.off()
 
 
+pdf("output/GO/VolcanoPlotTF_ENCODE_and_ChEA_Consensus_TFs_from_ChIP_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT_down_posterCHOP1.pdf", width=5, height=4)
+ggplot(gos_TF_tidy, aes(x = Odds.Ratio, y = -logAdjP, color = db)) +
+  geom_point(aes(color = ifelse(-logAdjP < 1.3, "not signif.", db))) +
+  scale_color_manual(values = c("blue", "lightblue", "grey")) + # Replace with your actual colors
+  theme_bw() +
+  labs(x = "Odds Ratio", y = "-log10(adjusted p-value)") +
+  geom_text_repel(data = subset(gos_TF_tidy, logAdjP < 1.3),
+                  aes(label = TF),
+                  nudge_x = 0.2,  # Adjust this value to nudge labels to the right
+                  size = 6,
+                  max.overlaps = 30)  +
+  guides(color = guide_legend(override.aes = list(label = ""))) # just to remove the "a" added in fig legend
+dev.off()
 
 ```
 
@@ -2210,6 +2223,72 @@ awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > met
 awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_10.bed
 
 ```
+
+# Functional analysis with enrichGO (single list of genes dotplot)
+
+
+We will use clusterProfile package. Tutorial [here](https://hbctraining.github.io/DGE_workshop_salmon/lessons/functional_analysis_2019.html).
+
+Let's do a test of the pipeline with genes from cluster4 amd cluster14 from the rlog counts. Our background list will be all genes tested for differential expression.
+
+**IMPORTANT NOTE: When doing GO, do NOT set a universe (background list of genes) it perform better!**
+
+```R
+# packages
+library("clusterProfiler")
+library("pathview")
+library("DOSE")
+library("org.Hs.eg.db")
+library("enrichplot")
+library("rtracklayer")
+library("tidyverse")
+
+## Read GTF file
+gtf_file <- "../../Master/meta/ENCFF159KBI.gtf"
+gtf_data <- import(gtf_file)
+
+## Extract gene_id and gene_name
+gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
+gene_id <- elementMetadata(gene_data)$gene_id
+gene_name <- elementMetadata(gene_data)$gene_name
+
+## Combine gene_id and gene_name into a data frame
+gene_id_name <- data.frame(gene_id, gene_name) %>%
+  unique() %>%
+  as_tibble()
+
+
+# Genes that gain H3K27me3 in NPC (009)
+## Files
+output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Venndiagram836.txt
+
+### WT HET
+gain_H3K27me3_KO = read_csv("output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Venndiagram836.txt", col_names = "gene_name")
+  
+
+ego <- enrichGO(gene = as.character(gain_H3K27me3_KO$gene_name), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+                
+pdf("output/GO/dotplot_BP_annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Venndiagram836_top20.pdf", width=7, height=7)
+dotplot(ego, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_BP_annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Venndiagram836_top5.pdf", width=7, height=3)
+dotplot(ego, showCategory=5) 
+dev.off()
+
+pdf("output/GO/dotplot_BP_annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Venndiagram836_top5v2.pdf", width=10, height=10)
+dotplot(ego, showCategory=5) 
+dev.off()
+```
+
+
+
 
 
 
