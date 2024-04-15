@@ -56,12 +56,25 @@ Concatenate fastq discuss [here](https://www.biostars.org/p/317385/): `cat strin
 ----> input sample: `input_raw_Novogene/` output to `input/`
 
 ```bash
-sbatch scripts/concatenate_CE56.sh # 
-sbatch scripts/concatenate_CE78.sh # 
-sbatch scripts/concatenate_CE910.sh # 
+sbatch scripts/concatenate_CE56.sh # 17683162 ok
+sbatch scripts/concatenate_CE78.sh # 17683171 ok
+sbatch scripts/concatenate_CE910.sh # 17683182 ok
 
 ```
 
 --> Only the Read1 file has been rename; like they were SE!
 
 
+
+**make sure to convert the `rename_map2.txt` into unix tab sep  format with `dos2unix`!!**
+
+```bash
+cd input_raw
+
+while IFS=$'\t' read -r old_name new_name
+do
+    mv "$old_name" "$new_name"
+done < rename_map2.txt
+```
+
+--> All good 
