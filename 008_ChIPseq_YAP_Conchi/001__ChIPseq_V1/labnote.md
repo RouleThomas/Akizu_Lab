@@ -78,3 +78,54 @@ done < rename_map2.txt
 ```
 
 --> All good 
+
+
+
+
+
+
+# Fastp cleaning
+
+```bash
+sbatch scripts/fastp_CPC.sh # 17691945 xxx
+sbatch scripts/fastp_hESC.sh # 17691956 xxx
+```
+
+
+# FastQC
+
+
+**raw**
+```bash
+sbatch scripts/fastqc_CPC_raw.sh # 17691968 xxx
+sbatch scripts/fastqc_hESC_raw.sh # 17691973 xxx
+```
+
+
+**Fastp-cleaned:**
+```bash
+sbatch --dependency=afterany:17691945 scripts/fastqc_CPC_fastp.sh # 17691992 xxx
+sbatch --dependency=afterany:17691956 scripts/fastqc_hESC_fastp.sh # 17691996 xxx
+```
+
+--> XXX all good XXX 
+
+
+# Mapping
+
+Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal --no-mixed --dovetail`)
+
+```bash
+conda activate bowtie2
+
+sbatch --dependency=afterany:17691945 scripts/bowtie2_CPC.sh # 17692156 xxx
+sbatch scripts/bowtie2_hESC.sh # 17692160 xxx
+
+
+```
+
+- *NOTE: I removed `--no-mixed --dovetail` and `-U` (instead of `-r`) for the fastq path as PE options* 
+
+--> Looks good
+
+
