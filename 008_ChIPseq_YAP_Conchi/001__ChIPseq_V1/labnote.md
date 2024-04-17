@@ -81,14 +81,11 @@ done < rename_map2.txt
 
 
 
-
-
-
 # Fastp cleaning
 
 ```bash
-sbatch scripts/fastp_CPC.sh # 17691945 xxx
-sbatch scripts/fastp_hESC.sh # 17691956 xxx
+sbatch scripts/fastp_CPC.sh # 17691945 ok
+sbatch scripts/fastp_hESC.sh # 17691956 ok
 ```
 
 
@@ -97,35 +94,170 @@ sbatch scripts/fastp_hESC.sh # 17691956 xxx
 
 **raw**
 ```bash
-sbatch scripts/fastqc_CPC_raw.sh # 17691968 xxx
-sbatch scripts/fastqc_hESC_raw.sh # 17691973 xxx
+sbatch scripts/fastqc_CPC_raw.sh # 17691968 ok
+sbatch scripts/fastqc_hESC_raw.sh # 17691973 ok
 ```
 
 
 **Fastp-cleaned:**
 ```bash
-sbatch --dependency=afterany:17691945 scripts/fastqc_CPC_fastp.sh # 17691992 xxx
-sbatch --dependency=afterany:17691956 scripts/fastqc_hESC_fastp.sh # 17691996 xxx
+sbatch --dependency=afterany:17691945 scripts/fastqc_CPC_fastp.sh # 17691992 ok
+sbatch --dependency=afterany:17691956 scripts/fastqc_hESC_fastp.sh # 17691996 ok
 ```
 
---> XXX all good XXX 
+--> all good  
 
 
 # Mapping
 
 Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal --no-mixed --dovetail`)
+--> *NOTE: I removed `--no-mixed --dovetail` and `-U` (instead of `-r`) for the fastq path as PE options* 
+
 
 ```bash
 conda activate bowtie2
 
 sbatch --dependency=afterany:17691945 scripts/bowtie2_CPC.sh # 17692156 xxx
-sbatch scripts/bowtie2_hESC.sh # 17692160 xxx
+sbatch scripts/bowtie2_hESC.sh # 17692160 ok
+
+```
+
+
+
+--> Looks good; around 70% uniq aligned reads (95% total) for hESC XXX and CPC XXX
+
+
+
+
+## Quality control metrics
+Quality control plot (total read before trimming/ total read after trimming/ uniquely aligned reads)
+
+Collect nb of reads from the slurm bowtie2 jobs:
+```bash
+for file in slurm-17692160.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2/alignment_counts_17692160.txt
+
+XXXX TO RUN WHEN 17692156 FINISH XXX
+for file in slurm-17692156.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2/alignment_counts_17692156.txt
+
+```
+
+Add these values to `/home/roulet/008_ChIPseq_YAP_Conchi/001__ChIPseq_V1/samples_008001.xlsx`\
+Then in R; see `/home/roulet/008_ChIPseq_YAP_Conchi/ChIPseq_YAP.R`.
+
+--> Overall > XXX % input reads as been uniquely mapped to the genome (XXX % non uniq)
+
+
+
+
+
+## Removing dupplicates (only uniquely aligned reads)
+This is prefered for THOR bam input.
+
+```bash
+conda activate bowtie2
+
+sbatch scripts/samtools_unique_hESC.sh # 17725506 xxx
+sbatch --dependency=afterany:17692156 scripts/samtools_unique_CPC.sh # 17725583 xxx
+
+```
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+Let's do the same for E coli MG1655 spike in samples:
+
+```bash
+conda activate bowtie2
+
+sbatch scripts/samtools_MG1655_unique_1.sh # 9162457
+sbatch scripts/samtools_MG1655_unique_2.sh # 9162461
+sbatch scripts/samtools_MG1655_unique_3.sh # 9162467
+```
+
+--> More information on this step in the `005__CutRun` labnote
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+
+# Generate bigwig coverage files
+## Raw bigwig
+Paramaters:
+- `--binSize 1` for good resolution
+- `--scaleFactor 0.5` to obtain the exact number of reads respective to the bam, otherwise it count two instead of 1
+- `--extendReads` Reads extented taking into account mean fragment size of all mated reads.
+
+```bash
+conda activate deeptools
+
+sbatch --dependency=afterany:17725583 scripts/bamtobigwig_unique_CPC.sh # 17725898 xxx
+sbatch --dependency=afterany:17725506 scripts/bamtobigwig_unique_hESC.sh # 17725900 xxx
+```
+
+
+
+- KOEF1aEZH1
+*Pass*: H3K27me3
+*Failed*: EZH1cs, EZH2, SUZ12
+- KO
+*Pass*: H3K27me3
+*Failed*: EZH1cs, EZH2, SUZ12
+- WTQ731E
+*Pass*: H3K27me3
+*Failed*: EZH1cs, EZH2, SUZ12
+- WT (PSC)
+*Pass*: NA
+*Failed*: EZH1cs and H3K27me1
+
+
+
+
+## Pearson correlation heatmap on bigwig signals
+
+
+
+```bash
+conda activate deeptools
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_50dN.sh # 9064423 ok 
+
+
+
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_all.npz \
+    --transpose \
+    --ntop 0 \
+    --labels 50dN_KOEF1aEZH1_EZH1cs_R1 50dN_KOEF1aEZH1_EZH1cs_R2 50dN_KOEF1aEZH1_EZH2_R1 50dN_KOEF1aEZH1_EZH2_R2 50dN_KOEF1aEZH1_H3K27me3_R1 50dN_KOEF1aEZH1_H3K27me3_R2 50dN_KOEF1aEZH1_IGG_R1 50dN_KOEF1aEZH1_SUZ12_R1 50dN_KOEF1aEZH1_SUZ12_R2 50dN_KO_EZH1cs_R1 50dN_KO_EZH1cs_R2 50dN_KO_EZH2_R1 50dN_KO_EZH2_R2 50dN_KO_H3K27me3_R1 50dN_KO_H3K27me3_R2 50dN_KO_IGG_R1 50dN_KO_IGG_R2 50dN_KO_SUZ12_R1 50dN_KO_SUZ12_R2 50dN_WTQ731E_EZH1cs_R1 50dN_WTQ731E_EZH1cs_R2 50dN_WTQ731E_EZH2_R1 50dN_WTQ731E_EZH2_R2 50dN_WTQ731E_H3K27me3_R1 50dN_WTQ731E_H3K27me3_R2 50dN_WTQ731E_H3K27me3_R3 50dN_WTQ731E_IGG_R1 50dN_WTQ731E_IGG_R2 50dN_WTQ731E_SUZ12_R1 50dN_WTQ731E_SUZ12_R2 PSC_WT_EZH1cs_01FA PSC_WT_EZH1cs_1FA PSC_WT_H3K27me1_01FA PSC_WT_H3K27me1_1FA \
+    -o output/bigwig/multiBigwigSummary_all_plotPCA.pdf
+
+
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_all.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels 50dN_KOEF1aEZH1_EZH1cs_R1 50dN_KOEF1aEZH1_EZH1cs_R2 50dN_KOEF1aEZH1_EZH2_R1 50dN_KOEF1aEZH1_EZH2_R2 50dN_KOEF1aEZH1_H3K27me3_R1 50dN_KOEF1aEZH1_H3K27me3_R2 50dN_KOEF1aEZH1_IGG_R1 50dN_KOEF1aEZH1_SUZ12_R1 50dN_KOEF1aEZH1_SUZ12_R2 50dN_KO_EZH1cs_R1 50dN_KO_EZH1cs_R2 50dN_KO_EZH2_R1 50dN_KO_EZH2_R2 50dN_KO_H3K27me3_R1 50dN_KO_H3K27me3_R2 50dN_KO_IGG_R1 50dN_KO_IGG_R2 50dN_KO_SUZ12_R1 50dN_KO_SUZ12_R2 50dN_WTQ731E_EZH1cs_R1 50dN_WTQ731E_EZH1cs_R2 50dN_WTQ731E_EZH2_R1 50dN_WTQ731E_EZH2_R2 50dN_WTQ731E_H3K27me3_R1 50dN_WTQ731E_H3K27me3_R2 50dN_WTQ731E_H3K27me3_R3 50dN_WTQ731E_IGG_R1 50dN_WTQ731E_IGG_R2 50dN_WTQ731E_SUZ12_R1 50dN_WTQ731E_SUZ12_R2 PSC_WT_EZH1cs_01FA PSC_WT_EZH1cs_1FA PSC_WT_H3K27me1_01FA PSC_WT_H3K27me1_1FA \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_all_heatmap.pdf
 
 
 ```
 
-- *NOTE: I removed `--no-mixed --dovetail` and `-U` (instead of `-r`) for the fastq path as PE options* 
+--> two big groups: H3K27me3 IP versus the other
+----> Seems only H3K27me3 IP has worked here
 
---> Looks good
 
 
+
+# MACS2 peak calling on bam unique
