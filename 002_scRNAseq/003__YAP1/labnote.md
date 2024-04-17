@@ -10700,8 +10700,515 @@ dev.off()
 ```
 
 
+## Pursue E7 only analysis, meeting Liz 20240419 - paper E7 embryo
+
+Load data from where we stop, DEG has been done; RNA is scale and norm already!
+- GSEA
+- SCPA
+- heatmap
 
 
+```bash
+srun --mem=500g --pty bash -l
+conda activate scRNAseqV2
+```
+
+```R
+# packages 
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") 
+
+embryoE7.combined.sct <- readRDS(file = "output/seurat/embryoE7.combined.sct_19dim_V2.rds")
+
+# GSEA plot (code2)
+library("fgsea")
+## Re-calculate DEGs keeping ALL genes -- ALREADY DONE UP
+DefaultAssay(embryoE7.combined.sct) <- "RNA"
+
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("Blood_Progenitor", "Endoderm", "Exe_Ectoderm", "Primitive_Streak", "Nascent_Mesoderm", "Cardiac_Mesoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", "Epiblast")
+# Loop over each cluster type to read data and assign to a variable
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-cYAPKO_response_E7_19dim_allGenes_V2.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1)
+  assign(cluster, data)
+}
+
+
+## load list of genes to test
+Hippo = read_table(file = c("output/Pathway/Manual_geneList_hippo.txt"))
+Nodal_TGF = read_table(file = c("output/Pathway/Manual_geneList_Nodal_TGF.txt"))
+WNT = read_table(file = c("output/Pathway/Manual_geneList_WNT.txt"))
+Vitamin_A = read_table(file = c("output/Pathway/Manual_geneList_Vitamin_A.txt"))
+
+fgsea_sets <- list(
+  Hippo = read_table(file = "output/Pathway/Manual_geneList_hippo.txt")$Genes,
+  Nodal_TGF = read_table(file = "output/Pathway/Manual_geneList_Nodal_TGF.txt")$Genes,
+  WNT = read_table(file = "output/Pathway/Manual_geneList_WNT.txt")$Genes,
+  Vitamin_A = read_table(file = "output/Pathway/Manual_geneList_Vitamin_A.txt")$Genes
+)
+
+
+
+
+
+## Rank genes based on FC
+genes <- Epiblast %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+  rownames_to_column(var = "gene") %>%
+  arrange(desc(avg_log2FC)) %>% 
+  dplyr::select(gene, avg_log2FC)
+
+ranks <- deframe(genes)
+head(ranks)
+## Run GSEA
+
+fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 1000)
+fgseaResTidy <- fgseaRes %>%
+  as_tibble() %>%
+  arrange(desc(ES))
+fgseaResTidy %>% 
+  dplyr::select(-leadingEdge, -NES, -nMoreExtreme) %>% 
+  arrange(padj) %>% 
+  head()
+
+
+
+
+## plot GSEA
+pdf("output/Pathway/GSEA_E7_ManualGeneLists_Vitamin_A-Epiblast.pdf", width=5, height=3)
+
+plotEnrichment(fgsea_sets[["Vitamin_A"]],
+               ranks) + labs(title="Vitamin_A-Epiblast") +
+               theme_bw()
+dev.off()
+
+
+
+# Save output table for all pathway and cluster
+## Define the list of cluster types
+cluster_types <- c("Blood_Progenitor", "Endoderm", "Exe_Ectoderm", "Primitive_Streak", "Nascent_Mesoderm", "Cardiac_Mesoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", "Epiblast")
+
+## Initialize an empty list to store the results for each cluster type
+all_results <- list()
+## Loop over each cluster type
+for (cluster in cluster_types) {
+  
+  # Extract genes for the current cluster
+  genes <- get(cluster) %>% 
+    rownames_to_column(var = "gene") %>%
+    arrange(desc(avg_log2FC)) %>% 
+    dplyr::select(gene, avg_log2FC)
+  
+  ranks <- deframe(genes)
+  
+  # Run GSEA for the current cluster
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 1000)
+  fgseaResTidy <- fgseaRes %>%
+    as_tibble() %>%
+    arrange(desc(ES))
+  
+  # Extract summary table and add cluster column
+  fgseaResTidy_summary = fgseaResTidy %>% 
+    dplyr::select(pathway, pval, padj, ES, size, NES) %>%
+    mutate(cluster = cluster) %>%
+    arrange(padj) %>% 
+    head()
+  
+  # Store results in the list
+  all_results[[cluster]] <- fgseaResTidy_summary
+}
+## Combine results from all cluster types into one table
+final_results <- bind_rows(all_results, .id = "cluster")
+
+
+write.table(final_results, file = c("output/Pathway/gsea_output_E7_ManualGeneLists.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+
+
+# Heatmap all GSEA
+
+
+pdf("output/Pathway/heatmap_E7_gsea_padj.pdf", width=5, height=5)
+ggplot(final_results, aes(x=cluster, y=pathway, fill=ES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", ES)), 
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+
+pdf("output/Pathway/heatmap_E7_gsea_pval_greyTile.pdf", width=5, height=5)
+ggplot(final_results, aes(x=cluster, y=pathway)) + 
+  geom_tile(aes(fill = ifelse(pval <= 0.05, NES, NA)), color = "black") +  # Conditional fill based on significance
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Normalized Enrichment\nScore", na.value="grey") +
+  # geom_text(aes(label=sprintf("%.2f", ES)), 
+  #           color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change between pvalue, qvalue,p.adjust
+  #           size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+
+dev.off()
+
+
+
+# SCPA (code3)
+
+
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") 
+library("SCPA")
+library("circlize")
+library("magrittr")
+library("msigdb")
+library("msigdbr")
+library("ComplexHeatmap")
+library("ggrepel")
+library("ggpubr")
+
+DefaultAssay(embryoE7.combined.sct) <- "RNA" # Recommended 
+
+
+
+# Import manually curated gene list as a list
+#### Need to folllow this format
+pathways <- msigdbr("Mus musculus", "C2") %>%
+format_pathways()
+names(pathways) <- sapply(pathways, function(x) x$Pathway[1]) # just to name the list, so easier to visualise
+pathways$REACTOME_SIGNALING_BY_RETINOIC_ACID$Genes
+### Convert table to list of genes
+Hippo = read_table(file = c("output/Pathway/Manual_geneList_hippo.txt"))
+Nodal_TGF = read_table(file = c("output/Pathway/Manual_geneList_Nodal_TGF.txt"))
+WNT = read_table(file = c("output/Pathway/Manual_geneList_WNT.txt"))
+Vitamin_A = read_table(file = c("output/Pathway/Manual_geneList_Vitamin_A.txt"))
+
+pathways <- list(
+  Hippo = read_table(file = "output/Pathway/Manual_geneList_hippo.txt"),
+  Nodal_TGF = read_table(file = "output/Pathway/Manual_geneList_Nodal_TGF.txt"),
+  WNT = read_table(file = "output/Pathway/Manual_geneList_WNT.txt"),
+  Vitamin_A = read_table(file = "output/Pathway/Manual_geneList_Vitamin_A.txt")
+)
+
+pathways$Hippo$Genes
+
+
+# Compare pathway activity between condition within  
+cell_types <- unique(embryoE7.combined.sct$cluster.annot)
+embryoE7.combined.sct_split <- SplitObject(embryoE7.combined.sct, split.by = "condition")
+
+# SCPA comparison 
+## keep all columns
+scpa_out_all <- list()
+for (i in cell_types) {
+  
+  WT <- seurat_extract(embryoE7.combined.sct_split$WT, 
+                            meta1 = "cluster.annot", value_meta1 = i)
+  
+  cYAPKO <- seurat_extract(embryoE7.combined.sct_split$cYAPKO, 
+                          meta1 = "cluster.annot", value_meta1 = i)
+  
+  print(paste("comparing", i))
+  scpa_out_all[[i]] <- compare_pathways(list(WT, cYAPKO), pathways, parallel = TRUE, cores = 8) %>%
+    set_colnames(c("Pathway", paste(i, "qval", sep = "_")))
+# For faster analysis with parallel processing, use 'parallel = TRUE' and 'cores = x' arguments
+}
+## keep only PAthway and qval column (Best for heatmap qval representation)
+scpa_out <- list()
+for (i in cell_types) {
+  
+  WT <- seurat_extract(embryoE7.combined.sct_split$WT, 
+                            meta1 = "cluster.annot", value_meta1 = i)
+  
+  cYAPKO <- seurat_extract(embryoE7.combined.sct_split$cYAPKO, 
+                          meta1 = "cluster.annot", value_meta1 = i)
+  
+  print(paste("comparing", i))
+  scpa_out[[i]] <- compare_pathways(list(WT, cYAPKO), pathways, parallel = TRUE, cores = 8) %>%
+    select(Pathway, qval) %>%
+    set_colnames(c("Pathway", paste(i, "qval", sep = "_")))
+# For faster analysis with parallel processing, use 'parallel = TRUE' and 'cores = x' arguments
+}
+
+
+saveRDS(scpa_out_all, file = "output/Pathway/scpa_out_eachCellTypes_ManualGeneLists_E7.rds")
+
+console_output <- capture.output(print(scpa_out_all))
+writeLines(console_output, "output/Pathway/scpa_out_console_ManualGeneLists_E7.txt")
+
+## Save output as R object
+# saveRDS(scpa_out, file = "output/Pathway/scpa_out_eachCellTypes_E7.rds")
+# scpa_out_all <- readRDS("output/Pathway/scpa_out_all_eachCellTypes_E7.rds")
+
+
+# plot output
+
+# Code to save output for each cell type comparison
+clusters = c(
+"Blood_Progenitor", "Endoderm", "Exe_Ectoderm", "Primitive_Streak", "Nascent_Mesoderm", "Cardiac_Mesoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", "Epiblast"
+) # 
+
+### Loop through each value
+for (cluster in clusters) {
+  #### Extract data for WT and cYAPKO based on current value
+  WT <- seurat_extract(embryoE7.combined.sct,
+                       meta1 = "condition", value_meta1 = "WT_E7",
+                       meta2 = "cluster.annot", value_meta2 = cluster)
+
+  cYAPKO <- seurat_extract(embryoE7.combined.sct,
+                           meta1 = "condition", value_meta1 = "cYAPKO_E7",
+                           meta2 = "cluster.annot", value_meta2 = cluster)
+
+  ##### Compare pathways
+  WT_cYAPKO <- compare_pathways(samples = list(WT, cYAPKO),
+                                pathways = pathways,
+                                parallel = TRUE, cores = 8)
+
+  ##### Write to file using the current value in the filename
+  output_filename <- paste0("output/Pathway/SCPA_E7_ManualGeneLists_", cluster, ".txt")
+  write.table(WT_cYAPKO, file = output_filename, sep = "\t", quote = FALSE, row.names = FALSE)
+}
+
+
+
+# BALOW CLEAN CODE; dotplot>enrichplot>heatmap>violinplot
+# DOT PLOT pepresetnation
+## load all the comparison for each cell type (FC qval information)
+clusters = c(
+"Blood_Progenitor", "Endoderm", "Exe_Ectoderm", "Primitive_Streak", "Nascent_Mesoderm", "Cardiac_Mesoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", "Epiblast"
+) # 
+
+## import with a function
+### A function to read and add the cluster column
+read_and_add_cluster <- function(cluster) {
+  path <- paste0("output/Pathway/SCPA_E7_ManualGeneLists_", cluster, ".txt")
+  df <- read.delim(path, header = TRUE) %>%
+    add_column(cluster = cluster)
+  return(df)
+}
+### Use lapply to apply the function on each cluster and bind all data frames together
+all_data <- bind_rows(lapply(clusters, read_and_add_cluster))
+# --> import the gene pathways (used table from Conchi `Pathwyas of interest*.xlsx`)
+pathways = c("Hippo", "Nodal_TGF", "WNT", "Vitamin_A")
+all_data_pathways = as_tibble(all_data) %>% 
+  filter(Pathway %in% pathways)
+
+# tidy the df
+all_data_pathways_tidy <- all_data_pathways %>%
+  filter(qval >= 1.4) 
+
+
+
+# REFINE COLOR
+custom_color <- function(fc_value){
+  ifelse(fc_value >= 5, "strong_blue", 
+         ifelse(fc_value > 2, "light_blue",
+                ifelse(fc_value <= -5, "strong_red", 
+                       ifelse(fc_value < -2, "light_red", "grey"))))
+}
+
+# Add a column for this custom color
+all_data_pathways_tidy <- all_data_pathways_tidy %>%
+  mutate(custom_col = sapply(FC, custom_color))
+
+pdf("output/Pathway/dotplot_E7_ManualGeneLists_FCtresh.pdf", width=10, height=4)
+ggplot(all_data_pathways_tidy, aes(x = cluster, y = Pathway)) + 
+  geom_point(aes(size = qval, color = custom_col), pch=16, alpha=0.7) +   
+  scale_size_continuous(range = c(1, 8)) +
+  scale_color_manual(values = c("strong_blue" = "dodgerblue4",
+                                "light_blue" = "lightblue2",
+                                "grey" = "grey",
+                                "light_red" = "indianred1",
+                                "strong_red" = "red3")) +
+  theme_bw() +
+  labs(size = "q-value", color = "Fold Change") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+pdf("output/Pathway/dotplot_E7_ManualGeneLists_grey.pdf", width=10, height=4)
+ggplot(all_data_pathways_tidy, aes(x = cluster, y = Pathway)) + 
+  geom_point(aes(size = qval, fill = "black"), pch=16, alpha=0.7) +   
+  scale_size_continuous(range = c(1, 8)) +
+  theme_bw() +
+  labs(size = "q-value") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+# heatmap XXX to do if needed XXX (code1)
+
+XXXX Create new lsit of genes XXX
+
+Hippo = read_table(file = c("output/Pathway/Manual_geneList_hippo.txt"))
+Nodal_TGF = read_table(file = c("output/Pathway/Manual_geneList_Nodal_TGF.txt"))
+WNT = read_table(file = c("output/Pathway/Manual_geneList_WNT.txt"))
+Vitamin_A = read_table(file = c("output/Pathway/Manual_geneList_Vitamin_A.txt"))
+
+pathways <- list(
+  Hippo = read_table(file = "output/Pathway/Manual_geneList_hippo.txt"),
+  Nodal_TGF = read_table(file = "output/Pathway/Manual_geneList_Nodal_TGF.txt"),
+  WNT = read_table(file = "output/Pathway/Manual_geneList_WNT.txt"),
+  Vitamin_A = read_table(file = "output/Pathway/Manual_geneList_Vitamin_A.txt")
+)
+
+pathways$Hippo$Genes
+
+
+
+genes_of_interest <- pathways$Hippo$Genes
+genes_of_interest <- genes_of_interest[genes_of_interest %in% rownames(embryo.combined.sct@assays$RNA@data)]
+### extract WT and cYAPKO gene expression values from RNA assay
+WT_expression <- embryo.combined.sct@assays$RNA@data[genes_of_interest, colnames(embryo.combined.sct)[embryo.combined.sct$condition == "WT" & embryo.combined.sct$cluster.annot == "Unknown_1"]]
+cYAPKO_expression <- embryo.combined.sct@assays$RNA@data[genes_of_interest, colnames(embryo.combined.sct)[embryo.combined.sct$condition == "cYAPKO" & embryo.combined.sct$cluster.annot == "Unknown_1"]]
+### mean expression values for each gene
+WT_mean <- rowMeans(WT_expression)
+cYAPKO_mean <- rowMeans(cYAPKO_expression)
+data_for_plot <- data.frame(
+  Gene = genes_of_interest,
+  WT = WT_mean,
+  cYAPKO = cYAPKO_mean
+) %>% 
+pivot_longer(cols = c(WT, cYAPKO), names_to = "Condition", values_to = "Expression")
+## ORder from low to high express
+### Reordering the genes based on their mean expression in WT in ascending order
+ordered_genes <- names(sort(WT_mean))
+### Extracting unique gene names from the ordered list
+unique_ordered_genes <- unique(ordered_genes)
+### Filter out rows from data_for_plot that don't have their genes in unique_ordered_genes
+data_for_plot <- data_for_plot[data_for_plot$Gene %in% unique_ordered_genes, ]
+### Set the factor levels for 'Gene' according to the unique ordered list
+data_for_plot$Gene <- factor(data_for_plot$Gene, levels = unique_ordered_genes)
+
+
+# if few genes:
+pdf("output/Pathway/heatmap_embryo_RNAexpression_E7_ManualGeneLists_Nodal_TGF_Blood_Progenitor_1.pdf", width=6, height=2)
+
+
+library("viridis")
+ggplot(data_for_plot, aes(x=Gene, y=Condition, fill=Expression)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 8, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_viridis(direction = 1, option = "viridis", name="Expression") +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+# if many genesL
+pdf("output/Pathway/heatmap_embryo_RNAexpression_E7_ManualGeneLists_WNT_Blood_Progenitor_1.pdf", width=3, height=2)
+
+ggplot(data_for_plot, aes(x=Gene, y=Condition, fill=Expression)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 8, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_viridis(direction = 1, option = "viridis", name="Expression") 
+dev.off()
+
+
+
+# SCPA and GSEA 
+gsea_output = final_results %>% 
+  rename("pathway" = "Pathway") %>%
+  dplyr::select(Pathway, pval, padj, ES, cluster)
+scpa_output = all_data_pathways_tidy  %>%
+  dplyr::select(Pathway, qval, cluster)
+
+scpa_gsea = gsea_output %>%
+  left_join(scpa_output)
+
+## Filter data for GSEA padj < 0.05
+filtered_data <- scpa_gsea
+## Assign color based on your criteria
+filtered_data$is_significant <- filtered_data$padj < 0.05
+
+pdf("output/Pathway/dotplot_scpa_gsea_E7.pdf", width=10, height=4)
+
+ggplot(filtered_data, aes(x=cluster, y=Pathway, size=qval)) +
+  geom_point(aes(color=ifelse(is_significant, ES, NA), 
+                 shape=is_significant), alpha=0.7) +
+  scale_color_gradient2(low="blue", high="red", midpoint=0, na.value="black", name = "GSEA Enrichment score") +
+  scale_size_continuous(name="SCPA qval") +  # Title for size scale
+  scale_shape_manual(values=c(`TRUE`=16, `FALSE`=16)) + # Using circle shape for both
+  theme_light() +
+  labs(title="SCPA and GSEA", x="Cluster", y="Pathway") +
+  theme(legend.position="right")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+XXX
+
+```
 
 
 # human gastruloid 24hr (second sample) analysis in Seurat
