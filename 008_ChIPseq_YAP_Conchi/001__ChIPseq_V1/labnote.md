@@ -190,12 +190,8 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 # Generate bigwig coverage files
 ## Raw bigwig
-Paramaters:
-- `--binSize 1` for good resolution
-- `--scaleFactor 0.5` to obtain the exact number of reads respective to the bam, otherwise it count two instead of 1
-- `--extendReads` Reads extented taking into account mean fragment size of all mated reads. **HERE single end so need to estaimate fragment size!!**
 
-Let's use ChIPQC (as [greenscreen](https://github.com/sklasfeld/GreenscreenProject/blob/main/TUTORIAL.pdf) paper), to estimate fragment size and provide it to each respective sample.
+Let's use *ChIPQC* (as [greenscreen](https://github.com/sklasfeld/GreenscreenProject/blob/main/TUTORIAL.pdf) paper), to estimate fragment size and provide it to each respective sample. --> **NEEDED as we are in SE**
 
 
 Let's install it in a new conda env `deseq2V3` in R `BiocManager::install("ChIPQC")`
@@ -237,50 +233,10 @@ ChIPQCreport(resqc)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```bash
-
-
-
-Rscript scripts/ChIPQC.R \
-    --indivReports -g Araport11 \
-    -c Chr1 Chr2 Chr3 Chr4 Chr5 \
-    -a
-    meta/ArabidopsisGenome/Araport11_GFF3_genes_transposons.201606.gff
-    \
-    ↪→
-    ↪→
-    -s meta/ArabidopsisGenome/TAIR10_chr_count.txt \
-    meta/noMaskReads_Inputs_sampleSheet.csv \
-    data/ChIPQCreport/20inputs_noMask
-
-```
-
-
-
-
+Paramaters:
+- `--binSize 1` for good resolution
+- `--scaleFactor 0.5` to obtain the exact number of reads respective to the bam, otherwise it count two instead of 1
+- `--extendReads` Reads extented taking into account mean fragment size of all mated reads. **HERE single end so need to estaimate fragment size!!**
 
 
 
