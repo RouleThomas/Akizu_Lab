@@ -89,6 +89,11 @@ library("fgsea")
 
 Same as deseq2 with `apeglm` R package updated (see error from `005_SNX14/001/RNAseq`)
 
+### deseq2V3
+
+Same as deseq2V2 but with `ChIPQC` [R package installed](https://bioconductor.org/packages/release/bioc/html/ChIPQC.html)
+(see creation in  `008*/001/ # Generate bigwig coverage files`)
+
 
 ### ChIPseqSpikeInFree
 R/3.6.1 with **ChIPseqSpikeInFree** notably + following libraries:

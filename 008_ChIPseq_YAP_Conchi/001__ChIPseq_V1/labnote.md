@@ -166,7 +166,7 @@ This is prefered for THOR bam input.
 ```bash
 conda activate bowtie2
 
-sbatch scripts/samtools_unique_hESC.sh # 17725506 xxx
+sbatch scripts/samtools_unique_hESC.sh # 17725506 ok
 sbatch --dependency=afterany:17692156 scripts/samtools_unique_CPC.sh # 17725583 xxx
 
 ```
@@ -193,13 +193,111 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 Paramaters:
 - `--binSize 1` for good resolution
 - `--scaleFactor 0.5` to obtain the exact number of reads respective to the bam, otherwise it count two instead of 1
-- `--extendReads` Reads extented taking into account mean fragment size of all mated reads.
+- `--extendReads` Reads extented taking into account mean fragment size of all mated reads. **HERE single end so need to estaimate fragment size!!**
+
+Let's use ChIPQC (as [greenscreen](https://github.com/sklasfeld/GreenscreenProject/blob/main/TUTORIAL.pdf) paper), to estimate fragment size and provide it to each respective sample.
+
+
+Let's install it in a new conda env `deseq2V3` in R `BiocManager::install("ChIPQC")`
+- nano `scripts/ChIPQC.R` from [greenscreen github](https://github.com/sklasfeld/GreenscreenProject/blob/main/scripts/ChIPQC.R)
+- create csv table `meta/sampleSheet.csv` describing each sample; from [greenscreen github](https://github.com/sklasfeld/GreenscreenProject/blob/main/meta/noMaskReads_Inputs_sampleSheet.csv)
+
+Run in R; followed this [workshop](https://nbisweden.github.io/workshop-archive/workshop-ChIP-seq/2018-11-07/labs/lab-chipqc.html)
+
+
+```bash
+conda activate deseq2V3
+```
+
+```R
+library("DiffBind")
+library("ChIPQC")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+
+
+#	reading in the sample information (metadata)
+samples = read.csv("meta/sampleSheet_hESC.csv", sep="\t")
+
+#	inspecting the metadata
+samples
+
+#	creating an object containing data
+res=dba(sampleSheet=samples, config=data.frame(RunParallel=FALSE))
+
+# inspecting the object
+res
+
+#	performing quality control
+resqc = ChIPQC(res,annotation="hg38", config=data.frame(RunParallel=TRUE))
+
+#	creating the quality control report in html format
+ChIPQCreport(resqc)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```bash
+
+
+
+Rscript scripts/ChIPQC.R \
+    --indivReports -g Araport11 \
+    -c Chr1 Chr2 Chr3 Chr4 Chr5 \
+    -a
+    meta/ArabidopsisGenome/Araport11_GFF3_genes_transposons.201606.gff
+    \
+    ↪→
+    ↪→
+    -s meta/ArabidopsisGenome/TAIR10_chr_count.txt \
+    meta/noMaskReads_Inputs_sampleSheet.csv \
+    data/ChIPQCreport/20inputs_noMask
+
+```
+
+
+
+
+
+
+
 
 ```bash
 conda activate deeptools
 
-sbatch --dependency=afterany:17725583 scripts/bamtobigwig_unique_CPC.sh # 17725898 xxx
-sbatch --dependency=afterany:17725506 scripts/bamtobigwig_unique_hESC.sh # 17725900 xxx
+# bigwig with extendReads 50 (Default ~250bp fragment length  150bp reads +100 bp)
+sbatch --dependency=afterany:17725583 scripts/bamtobigwig_unique_extendReads100_CPC.sh # 17762131 xxx
+sbatch scripts/bamtobigwig_unique_extendReads100_hESC.sh # 17762114 xxx
+
+# bigwig with extendReads from CHIPQC
+XXX
+sbatch --dependency=afterany:17725583 scripts/bamtobigwig_unique_extendReads_CPC.sh #  xxx
+sbatch scripts/bamtobigwig_unique_extendReads_hESC.sh #  xxx
+XXX
+
 ```
 
 

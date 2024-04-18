@@ -11206,9 +11206,20 @@ dev.off()
 
 
 
-XXX
+# show some UMAP between conditions
+DefaultAssay(embryoE7.combined.sct) <- "SCT"
+## Primitive Streak (code4)
+
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_E7_T_19dim_V2.pdf", width=10, height=5)
+
+FeaturePlot(embryoE7.combined.sct, features = c("T"), split.by = "condition", max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+
 
 ```
+
+
+
 
 
 # human gastruloid 24hr (second sample) analysis in Seurat
