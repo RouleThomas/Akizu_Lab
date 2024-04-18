@@ -242,7 +242,7 @@ Then generate bigwig with the corresponding fragment size for each sample:
 Paramaters:
 - `--binSize 1` for good resolution
 - `--scaleFactor 0.5` to obtain the exact number of reads respective to the bam, otherwise it count two instead of 1
-- `--extendReads` Reads extented taking into account mean fragment size of all mated reads. **HERE single end so need to estaimate fragment size!! Extend to `FragL-ReadL`**
+- `--extendReads` Reads extented taking into account mean fragment size of all mated reads. **HERE single end so need to estimate fragment size!! Extend to `FragL-ReadL`**
 
 
 ```bash
@@ -254,11 +254,10 @@ sbatch scripts/bamtobigwig_unique_extendReads100_hESC.sh # 17762114 xxx
 
 # bigwig with extendReads from CHIPQC
 sbatch scripts/bamtobigwig_unique_extendReads_hESC.sh # 17770516 xxx
-sbatch scripts/bamtobigwig_unique_extendReads_CPC.sh #  xxx
-
-
-
+sbatch scripts/bamtobigwig_unique_extendReads_CPC.sh # 17775530 xxx
 ```
+
+
 
 XXXXXXXXXXXX
 
