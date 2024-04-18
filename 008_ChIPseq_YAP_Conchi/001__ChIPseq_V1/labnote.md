@@ -213,6 +213,7 @@ library("TxDb.Hsapiens.UCSC.hg38.knownGene")
 
 #	reading in the sample information (metadata)
 samples = read.csv("meta/sampleSheet_hESC.csv", sep="\t")
+samples = read.csv("meta/sampleSheet_CPC.csv", sep="\t")
 
 #	inspecting the metadata
 samples
@@ -231,14 +232,17 @@ ChIPQCreport(resqc)
 
 ```
 
+--> A `ChIPQCreport` folder is created in current wd; I moved it to `ouput`
+
+
+Then generate bigwig with the corresponding fragment size for each sample:
+
 
 
 Paramaters:
 - `--binSize 1` for good resolution
 - `--scaleFactor 0.5` to obtain the exact number of reads respective to the bam, otherwise it count two instead of 1
-- `--extendReads` Reads extented taking into account mean fragment size of all mated reads. **HERE single end so need to estaimate fragment size!!**
-
-
+- `--extendReads` Reads extented taking into account mean fragment size of all mated reads. **HERE single end so need to estaimate fragment size!! Extend to `FragL-ReadL`**
 
 
 ```bash
@@ -249,14 +253,14 @@ sbatch --dependency=afterany:17725583 scripts/bamtobigwig_unique_extendReads100_
 sbatch scripts/bamtobigwig_unique_extendReads100_hESC.sh # 17762114 xxx
 
 # bigwig with extendReads from CHIPQC
-XXX
-sbatch --dependency=afterany:17725583 scripts/bamtobigwig_unique_extendReads_CPC.sh #  xxx
-sbatch scripts/bamtobigwig_unique_extendReads_hESC.sh #  xxx
-XXX
+sbatch scripts/bamtobigwig_unique_extendReads_hESC.sh # 17770516 xxx
+sbatch scripts/bamtobigwig_unique_extendReads_CPC.sh #  xxx
+
+
 
 ```
 
-
+XXXXXXXXXXXX
 
 - KOEF1aEZH1
 *Pass*: H3K27me3
