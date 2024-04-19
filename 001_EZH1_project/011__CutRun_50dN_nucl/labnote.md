@@ -69,7 +69,7 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:17775901 scripts/bowtie2.sh # 17775970 xxx
+sbatch --dependency=afterany:17775901 scripts/bowtie2.sh # 17775970 ok
 ```
 
 --> XXX Looks good; overall ~75% uniquely aligned reads XXX
@@ -96,15 +96,15 @@ Quality control plot (total read before trimming/ total read after trimming/ uni
 
 Collect nb of reads from the slurm bowtie2 jobs:
 ```bash
-for file in slurm-17775901.out; do
+for file in slurm-17775970.out; do
     total_reads=$(grep "reads; of these" $file | awk '{print $1}')
     aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
     aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
     echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
-done > output/bowtie2/alignment_counts_17775901.txt
+done > output/bowtie2/alignment_counts_17775970.txt
 ```
 
-Add these values to `/home/roulet/001_EZH1_project/010__CutRun_PSC_50dN_native/samples_010.xlsx`\
+Add these values to `/home/roulet/001_EZH1_project/011__CutRun_50dN_nucl/samples_011.xlsx`\
 Then in R; see `/home/roulet/001_EZH1_project/001_EZH1_project.R`.
 
 --> Overall >75% input reads as been uniquely mapped to the genome (90% non uniq) 
@@ -209,4 +209,60 @@ plotCorrelation \
 
 # MACS2 peak calling on bam unique
 
-XXX
+
+--> The **peaks are called on the uniquely aligned reads** (it performed better on our previous CutRun)
+
+**PEAK CALLING  in `broad`**
+
+
+```bash
+conda activate macs2
+# genotype per genotype
+sbatch --dependency=afterany:17776169 scripts/macs2_broad.sh # 17795289 ok
+
+```
+
+--> All fail, except *H3K27me3; barely with 5,5324 peaks*
+
+
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX below not mod
+
+
+
+--> OEF1aEZH1 in 50-day neurons: too noisy for EZH1, EZH2, and H3K27me3
+
+--> NPC histone marks: OK for H3K4me3, H3K27ac, and H3K27me3; sharp and clear peaks.
+
+--> NPC PRC2 components: too noisy...
+
+*- NOTE: peak calling has been run 2 times adding the missing samples!*
+
+
+
+```bash
+conda activate bowtie2 # for bedtools
+sbatch scripts/macs2_raw_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
+sbatch scripts/macs2_raw_peak_signif_pool.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
+
+
+# quick command to print median size of peak within a bed
+awk '{print $3-$2}' your_bed_file.bed | sort -n | awk 'BEGIN {c=0; sum=0;} {a[c++]=$1; sum+=$1;} END {if (c%2) print a[int(c/2)]; else print (a[c/2-1]+a[c/2])/2;}'
+```
+
+Then keep only the significant peaks (re-run the script to test different qvalue cutoff) and remove peaks overlapping with blacklist regions. MACS2 column9 output is -log10(qvalue) format so if we want 0.05; 
+- q0.05: `q value = -log10(0.05) = 1.30103`
+- q0.01 = 2
+- q0.005 = 2.30103
+- q0.001 = 3
+- q0.0001 = 4
+- q0.00001 = 5
+
+
+**Optimal qvalue** according to IGV:
+- 50dN_KOEF1aEZH1_H3K27me3: 1.30103 (2.3 more true peaks)
+- 50dN_KO_H3K27me3: 1.30103 (2.3 more true peaks)
+- 50dN_WTQ731E_H3K27me3: 1.30103 (2.3 more true peaks)
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+

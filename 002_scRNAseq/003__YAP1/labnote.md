@@ -11219,7 +11219,7 @@ dev.off()
 DefaultAssay(embryoE7.combined.sct) <- "SCT" # SCT is OK https://github.com/jackbibby1/SCPA/issues/67
 
 ## import Pathways
-pathways <- msigdbr("Mus musculus", "C2") %>%
+pathways <- msigdbr("Mus musculus", "C5") %>%  # C2
 format_pathways()
 names(pathways) <- sapply(pathways, function(x) x$Pathway[1]) # just to name the list, so easier to visualise
 
@@ -11227,7 +11227,9 @@ names(pathways) <- sapply(pathways, function(x) x$Pathway[1]) # just to name the
 clusters = c(
 "Blood_Progenitor", "Endoderm", "Exe_Ectoderm", "Primitive_Streak", "Nascent_Mesoderm", "Cardiac_Mesoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", "Epiblast"
 )
-
+clusters = c(
+"Epiblast"
+)
 
 ### Loop through each value
 for (cluster in clusters) {
@@ -11241,24 +11243,23 @@ for (cluster in clusters) {
                            meta2 = "cluster.annot", value_meta2 = cluster)
 
   ##### Compare pathways
-  WT_cYAPKO <- compare_pathways(samples = list(WT, cYAPKO),
+  WT_cYAPKO <- compare_pathways(samples = list(cYAPKO, WT),   # list(WT, cYAPKO) = wrong direction for fc
                                 pathways = pathways,
                                 parallel = TRUE, cores = 8)
 
   ##### Write to file using the current value in the filename
-  output_filename <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C2_", cluster, ".txt")       # CHANGE HERE PATHWAYS !!!!!!
+  output_filename <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C5_", cluster, ".txt")       # CHANGE HERE PATHWAYS !!!!!!
   write.table(WT_cYAPKO, file = output_filename, sep = "\t", quote = FALSE, row.names = FALSE)
 }
+### --> WATCH OUT HERE list(WT, cYAPKO) lead to FC in wrong direction!!! for C2 file are shit (used instead the one that end with -cYPAKO_WT), for C5 that is good
 
-
-XXX HERE code up has just been run XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 ### Plot to count how many pos/neg FC
 SCT_SCPA_C2 <- list()
 for (cluster in clusters) {
   # Create the filename based on the cluster name
-  input_filename <- paste0("output/Pathway/SCT_SCPA_C2_", cluster, ".txt")
+  input_filename <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C2_", cluster, ".txt")
   
   # Import the data
   current_data <- read.delim(input_filename, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
@@ -11285,7 +11286,7 @@ tidy_SCT_C2 <- map2_df(SCT_SCPA_C2, names(SCT_SCPA_C2), ~ {
   ))
 
 # Plot
-pdf("output/Pathway/Count_Pathway_FC_direction_SCT_C2.pdf", width=6, height=3)
+pdf("output/Pathway/Count_Pathway_FC_direction_SCT_E7_19dim_V2_SCPA_C2.pdf", width=6, height=3)
 tidy_SCT_C2 %>%
   filter(qval > 1.4) %>%
   group_by(cluster, db, FC_direction) %>%
@@ -11299,23 +11300,27 @@ tidy_SCT_C2 %>%
 dev.off()
 
 
-# inverse pop1 and pop2:
 
+
+
+
+# inverse pop1 and pop2 to have FC in good direction:
+"Blood_Progenitor", "Endoderm", "Exe_Ectoderm", "Primitive_Streak", "Nascent_Mesoderm", "Cardiac_Mesoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", "Epiblast"
 #### Extract data for WT and cYAPKO based on current value
-WT <- seurat_extract(embryo.combined.sct,
-                      meta1 = "condition", value_meta1 = "WT",
-                      meta2 = "cluster.annot", value_meta2 = "Blood_Progenitor_1")
+WT <- seurat_extract(embryoE7.combined.sct,
+                      meta1 = "condition", value_meta1 = "WT_E7",
+                      meta2 = "cluster.annot", value_meta2 = "Primitive_Streak")
 
-cYAPKO <- seurat_extract(embryo.combined.sct,
-                          meta1 = "condition", value_meta1 = "cYAPKO",
-                          meta2 = "cluster.annot", value_meta2 = "Blood_Progenitor_1")
+cYAPKO <- seurat_extract(embryoE7.combined.sct,
+                          meta1 = "condition", value_meta1 = "cYAPKO_E7",
+                          meta2 = "cluster.annot", value_meta2 = "Primitive_Streak")
 
 ##### Compare pathways
 cYAPKO_WT <- compare_pathways(samples = list(cYAPKO, WT),    # initially WT, cYPAKO
                               pathways = pathways,
                               parallel = TRUE, cores = 8)
 
-write.table(cYAPKO_WT, file = "output/Pathway/SCPA_Blood_Progenitor_1_cYAPKO_WT", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(cYAPKO_WT, file = "output/Pathway/SCPA_Primitive_Streak_SCT_E7_19dim_V2_SCPA_C2-cYAPKO_WT", sep = "\t", quote = FALSE, row.names = FALSE)
 
 
 
@@ -11325,12 +11330,12 @@ cYAPKO_WT_filter <- cYAPKO_WT %>%
                            FC < -5 & adjPval < 0.01 ~ 'mediumseagreen',
                            FC < 5 & FC > -5 & adjPval > 0.01 ~ 'black'))
 
-pdf("output/Pathway/plot_embryo_msigdb_Blood_Progenitor_1_cYAPKO_WT.pdf", width=5, height=5)
+pdf("output/Pathway/plot_embryo_msigdb_Primitive_Streak_SCT_E7_19dim_V2_SCPA_C2-cYAPKO_WT.pdf", width=5, height=5)
 ggplot(cYAPKO_WT_filter, aes(-FC, qval)) +
   geom_vline(xintercept = c(-5, 5), linetype = "dashed", col = 'black', lwd = 0.3) +
   geom_point(cex = 2.6, shape = 21, fill = cYAPKO_WT_filter$color, stroke = 0.3) +
-  xlim(-20, 80) +
-  ylim(0, 11) +
+  xlim(-10, 10) +
+  ylim(0, 5) +
   xlab("Enrichment") +
   ylab("Qval") +
   theme(panel.background = element_blank(),
@@ -11339,46 +11344,6 @@ ggplot(cYAPKO_WT_filter, aes(-FC, qval)) +
 dev.off()
 
 
-
-# change downsample on Blood_Progenitor_2 to 30 cells
-
-#### Extract data for WT and cYAPKO based on current value
-WT <- seurat_extract(embryo.combined.sct,
-                      meta1 = "condition", value_meta1 = "WT",
-                      meta2 = "cluster.annot", value_meta2 = "Blood_Progenitor_2")
-
-cYAPKO <- seurat_extract(embryo.combined.sct,
-                          meta1 = "condition", value_meta1 = "cYAPKO",
-                          meta2 = "cluster.annot", value_meta2 = "Blood_Progenitor_2")
-
-##### Compare pathways
-WT_cYAPKO <- compare_pathways(samples = list(WT, cYAPKO),    # initially WT, cYPAKO
-                              pathways = pathways,
-                              downsample = 30,
-                              parallel = TRUE, cores = 8)
-
-write.table(WT_cYAPKO, file = "output/Pathway/SCPA_Blood_Progenitor_2_downsample30", sep = "\t", quote = FALSE, row.names = FALSE)
-
-
-
-WT_cYAPKO_filter <- WT_cYAPKO %>%
-  mutate(color = case_when(FC > 5 & adjPval < 0.01 ~ '#6dbf88',
-                           FC < 5 & FC > -5 & adjPval < 0.01 ~ '#84b0f0',
-                           FC < -5 & adjPval < 0.01 ~ 'mediumseagreen',
-                           FC < 5 & FC > -5 & adjPval > 0.01 ~ 'black'))
-
-pdf("output/Pathway/plot_embryo_msigdb_Blood_Progenitor_2_downsample30.pdf", width=5, height=5)
-ggplot(WT_cYAPKO_filter, aes(-FC, qval)) +
-  geom_vline(xintercept = c(-5, 5), linetype = "dashed", col = 'black', lwd = 0.3) +
-  geom_point(cex = 2.6, shape = 21, fill = WT_cYAPKO_filter$color, stroke = 0.3) +
-  xlim(-20, 80) +
-  ylim(0, 11) +
-  xlab("Enrichment") +
-  ylab("Qval") +
-  theme(panel.background = element_blank(),
-        panel.border = element_rect(fill = NA),
-        aspect.ratio = 1)
-dev.off()
 
 
 # Rank and color FC with treshold 5
@@ -11387,7 +11352,7 @@ dev.off()
 SCPA_C2 <- list()
 for (cluster in clusters) {
   # Create the filename based on the cluster name
-  input_filename <- paste0("output/Pathway/SCPA_", cluster, ".txt")
+  input_filename <- paste0("output/Pathway/SCPA_", cluster, "_SCT_E7_19dim_V2_SCPA_C2-cYAPKO_WT")
   
   # Import the data
   current_data <- read.delim(input_filename, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
@@ -11409,9 +11374,9 @@ tidy_SCT_C2 <- map2_df(SCPA_C2, names(SCPA_C2), ~ {
     TRUE ~ "neutral"  # for values between -1 and 1
   ))
 
-tidy_SCT_C2_Blood_Progenitor_1 = 
+tidy_SCT_C2_Epiblast = 
   tidy_SCT_C2 %>%
-  filter(cluster == "Epiblast_PrimStreak", qval > 1.4) %>%
+  filter(cluster == "Epiblast", qval > 1.4) %>%
   arrange(qval) %>%
   mutate(rank = (row_number() - 1) / (n() - 1) * 100)
 
@@ -11419,8 +11384,8 @@ tidy_SCT_C2_Blood_Progenitor_1 =
 
 
 #### color scale
-pdf("output/Pathway/plot_rank-Epiblast_PrimStreak.pdf", width=5, height=5)
-tidy_SCT_C2_Blood_Progenitor_1 %>%
+pdf("output/Pathway/plot_rank-Epiblast_E7_19dim_V2_SCPA_C2.pdf", width=5, height=5)
+tidy_SCT_C2_Epiblast %>%
   ggplot(., aes(x = qval, y = rank)) +
   geom_jitter(aes(color = -FC, alpha = FC_direction), size=0.1, width = 0.2, height = 2) +
   scale_color_gradient2(low = "blue", mid = "grey", high = "red", midpoint = 0, guide = "colourbar") +
@@ -11433,44 +11398,13 @@ dev.off()
 
 
 
-#### color
-color_palette <- c(
-  "positive" = "red",
-  "negative" = "blue",
-  "neutral"  = "grey50"
-)
-alpha_values <- c(
-  "positive" = 1,
-  "negative" = 1,
-  "neutral"  = 0.5
-)
-
-pdf("output/Pathway/plot_rank_Blood_Progenitor_1.pdf", width=5, height=5)
-tidy_SCT_C2_Blood_Progenitor_1 %>%
-  ggplot(., aes(qval, rank)) +
-  geom_jitter(aes(color = FC_direction, alpha = FC_direction), size = 0.1,width = 0.2, height = 2) +
-  scale_color_manual(values = color_palette) + 
-  scale_alpha_manual(values = alpha_values) +
-  labs(x = "Qval", y = "Pathway rank") +
-  theme_bw() +
-  theme(legend.position = "bottom") +
-  geom_hline(yintercept =95)
-dev.off()
-
-
-
-
-
-
-
-
 
 
 
 
 ```
 
-
+--> SCPA FC negative = less express in KO!; use file that finish with `-cYAPKO_WT`
 
 
 
