@@ -249,30 +249,24 @@ Paramaters:
 conda activate deeptools
 
 # bigwig with extendReads 50 (Default ~250bp fragment length  150bp reads +100 bp)
-sbatch --dependency=afterany:17725583 scripts/bamtobigwig_unique_extendReads100_CPC.sh # 17762131 xxx
-sbatch scripts/bamtobigwig_unique_extendReads100_hESC.sh # 17762114 xxx
+sbatch --dependency=afterany:17725583 scripts/bamtobigwig_unique_extendReads100_CPC.sh # 17762131 ok
+sbatch scripts/bamtobigwig_unique_extendReads100_hESC.sh # 17762114 ok
 
 # bigwig with extendReads from CHIPQC
-sbatch scripts/bamtobigwig_unique_extendReads_hESC.sh # 17770516 xxx
+sbatch scripts/bamtobigwig_unique_extendReads_hESC.sh # 17770516 ok
 sbatch scripts/bamtobigwig_unique_extendReads_CPC.sh # 17775530 xxx
+
+
+# bigwig with extendReads from CHIPQC and RPGC normalized (seq depth comparison)
+sbatch scripts/bamtobigwig_unique_extendReads_RPGC_hESC.sh # 17786752 xxx
+sbatch scripts/bamtobigwig_unique_extendReads_RPGC_CPC.sh # 17786754 xxx
+
 ```
 
 
+--> All work in hESC
 
-XXXXXXXXXXXX
-
-- KOEF1aEZH1
-*Pass*: H3K27me3
-*Failed*: EZH1cs, EZH2, SUZ12
-- KO
-*Pass*: H3K27me3
-*Failed*: EZH1cs, EZH2, SUZ12
-- WTQ731E
-*Pass*: H3K27me3
-*Failed*: EZH1cs, EZH2, SUZ12
-- WT (PSC)
-*Pass*: NA
-*Failed*: EZH1cs and H3K27me1
+--> CPC; YAP1 and TEAD4 only R3 work (thats ok it is their control sample! And they already have YAP1 sequenced), NR2F2 R1 and R2 work (not R3), 
 
 
 
