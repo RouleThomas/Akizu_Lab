@@ -202,7 +202,7 @@ plotCorrelation \
 
 --> The **peaks are called on the uniquely aligned reads** (it performed better on our previous CutRun)
 
-**PEAK CALLING  in `broad`**
+**PEAK CALLING  in `broad` and `narrow` **
 
 
 ```bash
@@ -210,9 +210,34 @@ conda activate macs2
 # genotype per genotype
 sbatch --dependency=afterany:17776169 scripts/macs2_broad.sh # 17795289 ok
 
+# genotype per genotype
+sbatch scripts/macs2_narrow.sh # 17867455 xxx
+
 ```
 
 --> All fail, except *H3K27me3; barely with 5,324 peaks*
+
+**broad**:
+- 50dN_WT_EZH1; n(peaks)= 2
+- 50dN_WT_EZH2; n(peaks)= 1
+- 50dN_WT_H3K27ac; n(peaks)= 3
+- 50dN_WT_H3K27me1AM; n(peaks)= 2
+- 50dN_WT_H3K27me1OR; n(peaks)= 2
+- 50dN_WT_H3K27me3; n(peaks)= 5,324
+- 50dN_WT_SUZ12= n(peaks)= 0
+
+**narrow**:
+- 50dN_WT_EZH1; n(peaks)= 2
+- 50dN_WT_EZH2; n(peaks)= 1
+- 50dN_WT_H3K27ac; n(peaks)= 3
+- 50dN_WT_H3K27me1AM; n(peaks)= 2
+- 50dN_WT_H3K27me1OR; n(peaks)= 1
+- 50dN_WT_H3K27me3; n(peaks)= 3,830
+- 50dN_WT_SUZ12= n(peaks)= 0
+
+--> *narrow* -mode does not help....
+
+
 
 
 

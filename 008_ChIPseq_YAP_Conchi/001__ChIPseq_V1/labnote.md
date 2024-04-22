@@ -278,10 +278,8 @@ sbatch scripts/bamtobigwig_unique_extendReads_RPGC_CPC.sh # 17786754 ok
 ```bash
 conda activate deeptools
 # Generate compile bigwig (.npz) files
-sbatch scripts/multiBigwigSummary_extendReads_hESC.sh # 17863824 xxx
-sbatch scripts/multiBigwigSummary_CPC.sh # 17863829 xxx
-
-
+sbatch scripts/multiBigwigSummary_extendReads_hESC.sh # 17863824 ok
+sbatch scripts/multiBigwigSummary_CPC.sh # 17863829 ok
 
 
 # Plot
@@ -327,5 +325,142 @@ plotCorrelation \
 
 XXX
 
+
+
+# THOR diff peaks
+
+Let's use THOR, notably to have IGG scaled bigwig...!
+
+Comparison to do:
+- CPC = untreated vs RA; YAP1/TEAD4 (use R3), NR2F2 (use R1 and R2)
+- hESC = WT vs YAPKO; DVL2 (only 1 bio rep R1), EZH2, QSER1 (use R1 and R2)
+
+
+--> Configs file created manually as:
+- `output/THOR/CPC_YAP1_untreatedvsRA.config`, `output/THOR/CPC_TEAD4_untreatedvsRA.config`, `output/THOR/CPC_NR2F2_untreatedvsRA.config` 
+- `output/THOR/hESC_DVL2_WTvsYAPKO.config`, `output/THOR/hESC_EZH2_WTvsYAPKO.config`, `output/THOR/hESC_QSER1_WTvsYAPKO.config` 
+
+
+*NOTE: Default TMM normalization applied, as no Spike in*
+
+## Run THOR
+
+*THOR is very buggy to make it work I need to temporaly change where to look for libraries lol.. So cannot use nano anymore for example...*
+
+*Follow these parameters: `WTvsHET_unique_Keepdup` (perform best in previous CutRun)*
+
+```bash
+# Needed step to change where THOR look for libraries
+conda activate RGT
+export LD_LIBRARY_PATH=~/anaconda3/envs/RGT/lib:$LD_LIBRARY_PATH
+bigWigMerge
+
+# AB per AB (Default TMM norm)
+sbatch scripts/THOR_CPC_YAP1_untreatedvsRA.sh # 17867547 ok
+sbatch scripts/THOR_CPC_TEAD4_untreatedvsRA.sh # 17867550 ok
+sbatch scripts/THOR_CPC_NR2F2_untreatedvsRA.sh # 17867553 ok
+
+sbatch scripts/THOR_hESC_DVL2_WTvsYAPKO.sh # 17867580 fail; 17869560 xxx
+sbatch scripts/THOR_hESC_EZH2_WTvsYAPKO.sh # 17867582 ok
+sbatch scripts/THOR_hESC_QSER1_WTvsYAPKO.sh # 17867584 ok
+```
+--> NODAL signif lost EZH2 in KO !!! YEAH!
+
+
+
+Generate median tracks:
+```bash
+conda activate BedToBigwig
+
+sbatch scripts/bigwigmerge_THOR_CPC.sh # 17869306 ok
+sbatch --dependency=afterany:17869560 scripts/bigwigmerge_THOR_hESC.sh # 17869572 xxx
+
+```
+
+XXXXXXXXXXXXXXXXXXXXXXXX below not mod XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+--> THOR bigwig tracks looks good! Prevous finding from `003__CutRun` (NEUROG2, GRIK3, GRIN1, EFNA5) found here too!!
+
+
+
+## Filter THOR peaks (qvalue)
+
+Let's find the optimal qvalue for THOR diff peaks
+
+
+```R
+
+# load the file using the tidyverse
+library("readr")
+library("dplyr")
+library("ggplot2")
+library("tidyr")
+
+# WTvsKO
+diffpeaks <- read_tsv("output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2) / (count_WT_1+count_WT_2))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_50dN_H3K27me3_WTvsKO/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("50dN_WT vs KO") +
+  theme_bw()
+dev.off()
+
+pdf("output/THOR/THOR_50dN_H3K27me3_WTvsKO/log2FC_qval25.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 25) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("NPC_WT vs KO_qval25") +
+  theme_bw()
+dev.off()
+
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 100) %>%
+  write_tsv("output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval100.bed", col_names = FALSE)
+
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 25) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
+
+```
+
+- *NOTE: FC positive = less in KO; negative = more in KO*
+
+**Optimal qvalue:**
+--> *H3K27me3*; qval 10 looks great!
+
+--> In agreement with `003__CutRun`; in KO overall same number of gain and lost regions; and in KOEF1aEZH1 much more gain of H3K27me3 (act like the HET)
+
+Isolate positive and negative THOR peaks to display deepTool plots
+
+```bash
+# positive negative peaks
+## qval 10
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval10.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval10_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval10.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval10_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10_negative.bed
+
+
+```
 
 
