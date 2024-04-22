@@ -120,7 +120,7 @@ This is prefered for THOR bam input.
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:17775970 scripts/samtools_unique.sh # 17776169 xxx
+sbatch --dependency=afterany:17775970 scripts/samtools_unique.sh # 17776169 ok
 ```
 
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -147,22 +147,14 @@ Paramaters:
 ```bash
 conda activate deeptools
 
-sbatch --dependency=afterany:17776169 scripts/bamtobigwig_unique.sh # 17776280 xxx
+sbatch --dependency=afterany:17776169 scripts/bamtobigwig_unique.sh # 17776280 ok
 
 
 ```
 
-XXXXXXXXXXXXXXXXXXXXX below not mnod XXXXXXXXXXXXXXXXXXXXX
-
-
-
-- PSC native
-*Pass*: PSC_H3K27me3, PSC_EZH2
-*Failed*: PSC_H3K27me1
-- 50dN native
-*Pass*: NA
-*Failed*: 50dN_H3K27me3, 50dN_EZH2, 50dN_H3K27me1
-
+- 50dN
+*Pass*: 50dN_WT_H3K27me3, 50dN_WT_IGG
+*Failed*: 50dN_WT_EZH1, 50dN_WT_EZH2, 50dN_WT_H3K27ac, 50dN_WT_H3K27me1AM, 50dN_WT_H3K27me1OR, 50dN_WT_SUZ12
 
 
 
@@ -174,8 +166,7 @@ XXXXXXXXXXXXXXXXXXXXX below not mnod XXXXXXXXXXXXXXXXXXXXX
 ```bash
 conda activate deeptools
 # Generate compile bigwig (.npz) files
-sbatch --dependency=afterany:16520886:16520889 scripts/multiBigwigSummary_all.sh # 16521108 ok
-
+sbatch scripts/multiBigwigSummary_all.sh # 17863696 xxx
 
 
 # Plot
@@ -183,7 +174,7 @@ sbatch --dependency=afterany:16520886:16520889 scripts/multiBigwigSummary_all.sh
 plotPCA -in output/bigwig/multiBigwigSummary_all.npz \
     --transpose \
     --ntop 0 \
-    --labels PSC_WT_EZH2 PSC_WT_H3K27me1 PSC_WT_H3K27me3 PSC_WT_IGG 50dN_WT_EZH2 50dN_WT_H3K27me1 50dN_WT_H3K27me3 50dN_WT_IGG \
+    --labels 50dN_WT_EZH1 50dN_WT_EZH2 50dN_WT_H3K27ac 50dN_WT_H3K27me1AM 50dN_WT_H3K27me1OR 50dN_WT_H3K27me3 50dN_WT_IGG 50dN_WT_SUZ12 \
     -o output/bigwig/multiBigwigSummary_all_plotPCA.pdf
 
 ## Heatmap
@@ -192,17 +183,16 @@ plotCorrelation \
     --corMethod pearson --skipZeros \
     --plotTitle "Pearson Correlation" \
     --removeOutliers \
-    --labels PSC_WT_EZH2 PSC_WT_H3K27me1 PSC_WT_H3K27me3 PSC_WT_IGG 50dN_WT_EZH2 50dN_WT_H3K27me1 50dN_WT_H3K27me3 50dN_WT_IGG \
+    --labels 50dN_WT_EZH1 50dN_WT_EZH2 50dN_WT_H3K27ac 50dN_WT_H3K27me1AM 50dN_WT_H3K27me1OR 50dN_WT_H3K27me3 50dN_WT_IGG 50dN_WT_SUZ12 \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
     -o output/bigwig/multiBigwigSummary_all_heatmap.pdf
 
 
 ```
 
---> 50dN form a group, with IGG PSC; confirming fail
+--> H3K27me3 which works, form a group appart.. All the other cluster together. 
 
---> H3K27me1 is apart, which show it may have work. Compare with ENCODE data, no ENCODE data.. Nor available data!! I only found [cancer cell lines HCT116 with H3K27me1 ChIP](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE75217)
-
+--> As `010__CutRun_PSC_50dN_native` H3K27me1 form group apart... Which may indicate they barely kind of work but with a completely useless signal... Not sure what to conclude... But look a bit more different than a completely failed sample that is similar to IGG.
 
 
 
@@ -222,7 +212,7 @@ sbatch --dependency=afterany:17776169 scripts/macs2_broad.sh # 17795289 ok
 
 ```
 
---> All fail, except *H3K27me3; barely with 5,5324 peaks*
+--> All fail, except *H3K27me3; barely with 5,324 peaks*
 
 
 

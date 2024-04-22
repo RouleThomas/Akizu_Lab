@@ -254,12 +254,12 @@ sbatch scripts/bamtobigwig_unique_extendReads100_hESC.sh # 17762114 ok
 
 # bigwig with extendReads from CHIPQC
 sbatch scripts/bamtobigwig_unique_extendReads_hESC.sh # 17770516 ok
-sbatch scripts/bamtobigwig_unique_extendReads_CPC.sh # 17775530 xxx
+sbatch scripts/bamtobigwig_unique_extendReads_CPC.sh # 17775530 ok
 
 
 # bigwig with extendReads from CHIPQC and RPGC normalized (seq depth comparison)
-sbatch scripts/bamtobigwig_unique_extendReads_RPGC_hESC.sh # 17786752 xxx
-sbatch scripts/bamtobigwig_unique_extendReads_RPGC_CPC.sh # 17786754 xxx
+sbatch scripts/bamtobigwig_unique_extendReads_RPGC_hESC.sh # 17786752 ok
+sbatch scripts/bamtobigwig_unique_extendReads_RPGC_CPC.sh # 17786754 ok
 
 ```
 
@@ -268,7 +268,7 @@ sbatch scripts/bamtobigwig_unique_extendReads_RPGC_CPC.sh # 17786754 xxx
 
 --> CPC; YAP1 and TEAD4 only R3 work (thats ok it is their control sample! And they already have YAP1 sequenced), NR2F2 R1 and R2 work (not R3), 
 
-
+--> *RPGC* bigwig make replicate very heterogeneous... = *BAD*; Use instead the **extendReads** = **GOOD**
 
 
 ## Pearson correlation heatmap on bigwig signals
@@ -278,30 +278,42 @@ sbatch scripts/bamtobigwig_unique_extendReads_RPGC_CPC.sh # 17786754 xxx
 ```bash
 conda activate deeptools
 # Generate compile bigwig (.npz) files
-sbatch scripts/multiBigwigSummary_50dN.sh # 9064423 ok 
+sbatch scripts/multiBigwigSummary_extendReads_hESC.sh # 17863824 xxx
+sbatch scripts/multiBigwigSummary_CPC.sh # 17863829 xxx
+
 
 
 
 # Plot
 ## PCA
-plotPCA -in output/bigwig/multiBigwigSummary_all.npz \
+plotPCA -in output/bigwig/multiBigwigSummary_extendReads_hESC.npz \
     --transpose \
     --ntop 0 \
-    --labels 50dN_KOEF1aEZH1_EZH1cs_R1 50dN_KOEF1aEZH1_EZH1cs_R2 50dN_KOEF1aEZH1_EZH2_R1 50dN_KOEF1aEZH1_EZH2_R2 50dN_KOEF1aEZH1_H3K27me3_R1 50dN_KOEF1aEZH1_H3K27me3_R2 50dN_KOEF1aEZH1_IGG_R1 50dN_KOEF1aEZH1_SUZ12_R1 50dN_KOEF1aEZH1_SUZ12_R2 50dN_KO_EZH1cs_R1 50dN_KO_EZH1cs_R2 50dN_KO_EZH2_R1 50dN_KO_EZH2_R2 50dN_KO_H3K27me3_R1 50dN_KO_H3K27me3_R2 50dN_KO_IGG_R1 50dN_KO_IGG_R2 50dN_KO_SUZ12_R1 50dN_KO_SUZ12_R2 50dN_WTQ731E_EZH1cs_R1 50dN_WTQ731E_EZH1cs_R2 50dN_WTQ731E_EZH2_R1 50dN_WTQ731E_EZH2_R2 50dN_WTQ731E_H3K27me3_R1 50dN_WTQ731E_H3K27me3_R2 50dN_WTQ731E_H3K27me3_R3 50dN_WTQ731E_IGG_R1 50dN_WTQ731E_IGG_R2 50dN_WTQ731E_SUZ12_R1 50dN_WTQ731E_SUZ12_R2 PSC_WT_EZH1cs_01FA PSC_WT_EZH1cs_1FA PSC_WT_H3K27me1_01FA PSC_WT_H3K27me1_1FA \
-    -o output/bigwig/multiBigwigSummary_all_plotPCA.pdf
-
-
+    --labels hESC_WT_DVL2_R1 hESC_YAPKO_DVL2_R1 hESC_WT_EZH2_R1 hESC_YAPKO_EZH2_R1 hESC_WT_EZH2_R2 hESC_YAPKO_EZH2_R2 hESC_WT_QSER1_R1 hESC_YAPKO_QSER1_R1 hESC_WT_QSER1_R2 hESC_YAPKO_QSER1_R2 hESC_WT_input_R1 \
+    -o output/bigwig/multiBigwigSummary_extendReads_hESC_plotPCA.pdf
+plotPCA -in output/bigwig/multiBigwigSummary_extendReads_CPC.npz \
+    --transpose \
+    --ntop 0 \
+    --labels CPC_untreated_YAP1_R1 CPC_RA_YAP1_R1 CPC_untreated_YAP1_R2 CPC_RA_YAP1_R2 CPC_untreated_TEAD4_R1 CPC_RA_TEAD4_R1 CPC_untreated_TEAD4_R2 CPC_RA_TEAD4_R2 CPC_untreated_NR2F2_R1 CPC_RA_NR2F2_R1 CPC_untreated_NR2F2_R2 CPC_RA_NR2F2_R2 CPC_RA_NR2F2_R3 CPC_untreated_NR2F2_R3 CPC_untreated_input_R3 CPC_RA_input_R3 CPC_untreated_YAP1_R3 CPC_RA_YAP1_R3 CPC_untreated_TEAD4_R3 CPC_RA_TEAD4_R3 \
+    -o output/bigwig/multiBigwigSummary_extendReads_CPC_plotPCA.pdf
 
 ## Heatmap
 plotCorrelation \
-    -in output/bigwig/multiBigwigSummary_all.npz \
+    -in output/bigwig/multiBigwigSummary_extendReads_hESC.npz \
     --corMethod pearson --skipZeros \
     --plotTitle "Pearson Correlation" \
     --removeOutliers \
-    --labels 50dN_KOEF1aEZH1_EZH1cs_R1 50dN_KOEF1aEZH1_EZH1cs_R2 50dN_KOEF1aEZH1_EZH2_R1 50dN_KOEF1aEZH1_EZH2_R2 50dN_KOEF1aEZH1_H3K27me3_R1 50dN_KOEF1aEZH1_H3K27me3_R2 50dN_KOEF1aEZH1_IGG_R1 50dN_KOEF1aEZH1_SUZ12_R1 50dN_KOEF1aEZH1_SUZ12_R2 50dN_KO_EZH1cs_R1 50dN_KO_EZH1cs_R2 50dN_KO_EZH2_R1 50dN_KO_EZH2_R2 50dN_KO_H3K27me3_R1 50dN_KO_H3K27me3_R2 50dN_KO_IGG_R1 50dN_KO_IGG_R2 50dN_KO_SUZ12_R1 50dN_KO_SUZ12_R2 50dN_WTQ731E_EZH1cs_R1 50dN_WTQ731E_EZH1cs_R2 50dN_WTQ731E_EZH2_R1 50dN_WTQ731E_EZH2_R2 50dN_WTQ731E_H3K27me3_R1 50dN_WTQ731E_H3K27me3_R2 50dN_WTQ731E_H3K27me3_R3 50dN_WTQ731E_IGG_R1 50dN_WTQ731E_IGG_R2 50dN_WTQ731E_SUZ12_R1 50dN_WTQ731E_SUZ12_R2 PSC_WT_EZH1cs_01FA PSC_WT_EZH1cs_1FA PSC_WT_H3K27me1_01FA PSC_WT_H3K27me1_1FA \
+    --labels hESC_WT_DVL2_R1 hESC_YAPKO_DVL2_R1 hESC_WT_EZH2_R1 hESC_YAPKO_EZH2_R1 hESC_WT_EZH2_R2 hESC_YAPKO_EZH2_R2 hESC_WT_QSER1_R1 hESC_YAPKO_QSER1_R1 hESC_WT_QSER1_R2 hESC_YAPKO_QSER1_R2 hESC_WT_input_R1 \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig/multiBigwigSummary_all_heatmap.pdf
-
+    -o output/bigwig/multiBigwigSummary_extendReads_hESC_heatmap.pdf
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_extendReads_CPC.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels CPC_untreated_YAP1_R1 CPC_RA_YAP1_R1 CPC_untreated_YAP1_R2 CPC_RA_YAP1_R2 CPC_untreated_TEAD4_R1 CPC_RA_TEAD4_R1 CPC_untreated_TEAD4_R2 CPC_RA_TEAD4_R2 CPC_untreated_NR2F2_R1 CPC_RA_NR2F2_R1 CPC_untreated_NR2F2_R2 CPC_RA_NR2F2_R2 CPC_RA_NR2F2_R3 CPC_untreated_NR2F2_R3 CPC_untreated_input_R3 CPC_RA_input_R3 CPC_untreated_YAP1_R3 CPC_RA_YAP1_R3 CPC_untreated_TEAD4_R3 CPC_RA_TEAD4_R3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_extendReads_CPC_heatmap.pdf
 
 ```
 
@@ -312,3 +324,8 @@ plotCorrelation \
 
 
 # MACS2 peak calling on bam unique
+
+XXX
+
+
+
