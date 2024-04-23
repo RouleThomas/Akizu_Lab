@@ -10697,6 +10697,20 @@ FeaturePlot(embryoE7.combined.sct, features = c("Axin2", "Sp5"), split.by = "con
 dev.off()
 
 
+
+## Ridge plot
+
+embryoE7.combined.sct_Epiblast <- subset(embryoE7.combined.sct, idents = "Epiblast")
+
+pdf("output/seurat/RidgePlot_SCT_control_cYAPKO_E7_NODAL_Epiblast.pdf", width=10, height=5)
+RidgePlot(embryoE7.combined.sct_Epiblast, features = c('Nodal'), cols = c("blue","red"), group.by = 'condition', ncol =1)
+dev.off()
+
+pdf("output/seurat/RidgePlot_SCT_control_cYAPKO_E7_NODAL_Epiblast_V2.pdf", width=5, height=2)
+RidgePlot(embryoE7.combined.sct_Epiblast, features = c('Nodal'), cols = c("blue","red"), group.by = 'condition', ncol =1)
+dev.off()
+
+
 ```
 
 
