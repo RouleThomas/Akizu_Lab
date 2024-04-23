@@ -5827,8 +5827,8 @@ upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldC
 downregulated <- res[res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
 downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
 #### Save
-write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05_NPC_KO_vs_NPC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
-write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05_NPC_KO_vs_NPC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05FC05_NPC_KO_vs_NPC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05FC05_NPC_KO_vs_NPC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
 
 # FILTER ON QVALUE 0.01 GOOD !!!! ###############################################
@@ -12728,7 +12728,6 @@ output/deseq2_hg38/upregulated_8wN_KO_vs_8wN_WT.txt
 output/deseq2_hg38/downregulated_8wN_HET_vs_8wN_WT.txt
 output/deseq2_hg38/upregulated_8wN_HET_vs_8wN_WT.txt
 
-
 # IF starting with EnesbmlID
 ### Ensembl ID; list of signif up/down with H3K27me3 changes in each genotypes
 output/ChIPseeker/THOR_qval15_HET_Gain_DEG_Up.txt
@@ -12752,7 +12751,6 @@ gene_names_down <- getBM(attributes = c("ensembl_gene_id", "external_gene_name")
 list_down <- unique(as.character(gene_names_down$external_gene_name))
 edown <- enrichr(list_down, dbs)
 
-
 gene_up = read.table("../003__CutRun/output/ChIPseeker/THOR_qval15_HET_Lost_DEG_Up.txt", header = FALSE, stringsAsFactors = FALSE)
 gene_up = read.table("../003__CutRun/output/ChIPseeker/THOR_qval15_KO_Lost_DEG_Up.txt", header = FALSE, stringsAsFactors = FALSE)
 
@@ -12766,25 +12764,28 @@ eup <- enrichr(list_up, dbs)
 
 
 
+
 # IF starting with geneSymbol
 output/deseq2_hg38/downregulated_q01FC05_8wN_KO_vs_8wN_WT.txt
 output/deseq2_hg38/upregulated_q01FC05_8wN_KO_vs_8wN_WT.txt
 output/deseq2_hg38/downregulated_q01FC05_8wN_HET_vs_8wN_WT.txt
 output/deseq2_hg38/upregulated_q01FC05_8wN_HET_vs_8wN_WT.txt
+### Gene list symbol for qval 0.05 and FC 0.5 _ NPC
+output/deseq2_hg38/downregulated_q05FC05_NPC_KO_vs_NPC_WT.txt
+output/deseq2_hg38/upregulated_q05FC05_NPC_KO_vs_NPC_WT.txt
+output/deseq2_hg38/downregulated_q05FC05_NPC_HET_vs_NPC_WT.txt
+output/deseq2_hg38/upregulated_q05FC05_NPC_HET_vs_NPC_WT.txt
+
 
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/deseq2_hg38/downregulated_q01FC05_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
-gene_names_down <- read.csv("output/deseq2_hg38/downregulated_q01FC05_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_q05FC05_NPC_KO_vs_NPC_WT.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/deseq2_hg38/upregulated_q01FC05_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
-gene_names_up <- read.csv("output/deseq2_hg38/upregulated_q01FC05_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_q05FC05_NPC_KO_vs_NPC_WT.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
-
-
 
 
 # Extracting KEGG data and assigning types
@@ -12807,6 +12808,15 @@ gos <- gos %>% arrange(logAdjP)
 
 # Filter out rows where absolute logAdjP 1.3 = 0.05
 gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos <- gos %>% filter(abs(logAdjP) > 2.6)
+## FAIL as dupplicates:
+up_pathways_suffixed <- paste0(up_pathways, "_up")
+down_pathways_suffixed <- paste0(down_pathways, "_down")
+new_order <- c(down_pathways_suffixed, up_pathways_suffixed)
+gos$Term <- ifelse(gos$type == "up", paste0(gos$Term, "_up"), paste0(gos$Term, "_down"))
+gos$Term <- factor(gos$Term, levels = new_order)
+
+
 
 # Create the order based on the approach given
 up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
@@ -12819,12 +12829,15 @@ pdf("output/GO_hg38/enrichR_KEGG_2021_8wN_KO_vs_8wN_WT_q01F05.pdf", width=12, he
 pdf("output/GO_hg38/enrichR_KEGG_2021_8wN_HET_vs_8wN_WT_q01F05.pdf", width=12, height=8)
 pdf("output/GO_hg38/enrichR_KEGG_2021_8wN_HET_vs_8wN_WT__H3K27me3_DEG.pdf", width=12, height=6)
 pdf("output/GO_hg38/enrichR_KEGG_2021_8wN_KO_vs_8wN_WT__H3K27me3_DEG.pdf", width=12, height=6) # qvalue at 1.1!
+pdf("output/GO_hg38/enrichR_KEGG_2021_NPC_KO_vs_NPC_WT_q05F05.pdf", width=12, height=6) # qvalue at 1.1!
+
+pdf("output/GO_hg38/enrichR_KEGG_2021_NPC_KO_vs_NPC_WT_q05F05_logAdjP2.6.pdf", width=12, height=6) # qvalue at 1.1!
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
   
   # Adjusted label position based on the type of gene (up/down) and increased separation
-  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 9, color = "gray28") +
   
   geom_hline(yintercept = 0, linetype="solid", color = "black") +
   
@@ -12840,14 +12853,12 @@ ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) +
     panel.border = element_blank(),
     axis.ticks = element_blank(),
     axis.text.y = element_blank(),
-    axis.text.x = element_text(size = 15)
+    axis.text.x = element_text(size = 25)
   )
 dev.off()
 ## save output
-write.table(gos, "output/GO_hg38/enrichR_KEGG_2021_8wN_KO_vs_8wN_WT_q01F05.txt", sep="\t", row.names=FALSE, quote=FALSE)
-write.table(gos, "output/GO_hg38/enrichR_KEGG_2021_8wN_HET_vs_8wN_WT_q01F05.txt", sep="\t", row.names=FALSE, quote=FALSE)
-write.table(gos, "output/GO_hg38/enrichR_KEGG_2021_8wN_HET_vs_8wN_WT__H3K27me3_DEG.txt", sep="\t", row.names=FALSE, quote=FALSE)
-write.table(gos, "output/GO_hg38/enrichR_KEGG_2021_8wN_KO_vs_8wN_WT__H3K27me3_DEG.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO_hg38/enrichR_KEGG_2021_NPC_KO_vs_NPC_WT_q05F05.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
 
 
 
@@ -14279,26 +14290,33 @@ write.table(gos, "output/GO_hg38/enrichR_Genome_Browser_PWMs_8wN_HET_vs_8wN_WT.t
 # Define databases for enrichment
 dbs <- c("GO_Biological_Process_2023")
 
-### Gene list symbol for qval 0.05 and FC 0.5
+### Gene list symbol for qval 0.05 and FC 0.5 _ 8wN
 output/deseq2_hg38/downregulated_q05_8wN_KO_vs_8wN_WT.txt
 output/deseq2_hg38/upregulated_q05_8wN_KO_vs_8wN_WT.txt
 output/deseq2_hg38/downregulated_q05_8wN_HET_vs_8wN_WT.txt
 output/deseq2_hg38/upregulated_q05_8wN_HET_vs_8wN_WT.txt
-### Gene list symbol for qval 0.05 and FC 0.5
+### Gene list symbol for qval 0.01 and FC 0.5 _ 8wN
 output/deseq2_hg38/downregulated_q01FC05_8wN_KO_vs_8wN_WT.txt
 output/deseq2_hg38/upregulated_q01FC05_8wN_KO_vs_8wN_WT.txt
 output/deseq2_hg38/downregulated_q01FC05_8wN_HET_vs_8wN_WT.txt
 output/deseq2_hg38/upregulated_q01FC05_8wN_HET_vs_8wN_WT.txt
 
+
+### Gene list symbol for qval 0.05 and FC 0.5 _ NPC
+output/deseq2_hg38/downregulated_q05FC05_NPC_KO_vs_NPC_WT.txt
+output/deseq2_hg38/upregulated_q05FC05_NPC_KO_vs_NPC_WT.txt
+output/deseq2_hg38/downregulated_q05FC05_NPC_HET_vs_NPC_WT.txt
+output/deseq2_hg38/upregulated_q05FC05_NPC_HET_vs_NPC_WT.txt
+xxxxxxxxxxxxxxxxxxxx
+
+
 # Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/deseq2_hg38/downregulated_q01FC05_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
-gene_names_down <- read.csv("output/deseq2_hg38/downregulated_q01FC05_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/deseq2_hg38/downregulated_q05FC05_NPC_HET_vs_NPC_WT.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 
 # Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/deseq2_hg38/upregulated_q01FC05_8wN_KO_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
-gene_names_up <- read.csv("output/deseq2_hg38/upregulated_q01FC05_8wN_HET_vs_8wN_WT.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/deseq2_hg38/upregulated_q05FC05_NPC_HET_vs_NPC_WT.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -14344,6 +14362,10 @@ pdf("output/GO_hg38/enrichR_GO_Biological_Process_2023_8wN_HET_vs_8wN_WT.pdf", w
 pdf("output/GO_hg38/enrichR_GO_Biological_Process_2023_8wN_KO_vs_8wN_WT_q01FC05.pdf", width=14, height=5)
 pdf("output/GO_hg38/enrichR_GO_Biological_Process_2023_8wN_HET_vs_8wN_WT_q01FC05.pdf", width=14, height=8)
 
+pdf("output/GO_hg38/enrichR_GO_Biological_Process_2023_NPC_KO_vs_NPC_WT_q05FC05.pdf", width=14, height=8)
+pdf("output/GO_hg38/enrichR_GO_Biological_Process_2023_NPC_HET_vs_NPC_WT_q05FC05.pdf", width=14, height=8)
+
+
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
   
@@ -14368,8 +14390,8 @@ ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) +
   )
 dev.off()
 ## save output
-write.table(gos, "output/GO_hg38/enrichR_GO_Biological_Process_2023_8wN_KO_vs_8wN_WT_q01FC05.txt", sep="\t", row.names=FALSE, quote=FALSE)
-write.table(gos, "output/GO_hg38/enrichR_GO_Biological_Process_2023_8wN_HET_vs_8wN_WT_q01FC05.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO_hg38/enrichR_GO_Biological_Process_2023_NPC_HET_vs_NPC_WT_q05FC05.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
 
 
 
