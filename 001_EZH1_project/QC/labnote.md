@@ -87,11 +87,64 @@ QC_file_filt %>%
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 dev.off()
 
+```
+
+
+# comparison raw spike in count (Ecoli vs histone)
+
+In `metrics/RawCounts_SpikeIn_Ecoli_histone.xlsx` I collected the raw E coli (from `output/spikein/SpikeIn_MG1655*.xlsx`) and histone (from `output/spikein/SpikeIn_QC_fastp*.xlsx`; sum of Read1A+Read1B+Read2A+Read2B) counts.
+
+Let's generate plot E coli vs nucleosome spike in controls
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+library("readxl")
+library("ggpubr")
+
+# import count file
+count_spikein <- read_excel("input/RawCounts_SpikeIn_Ecoli_histone.xlsx", sheet = 1)
+
+
+# tidy QC file
+count_spikein_tidy = count_spikein  %>%
+  pivot_longer(
+    cols = c(counts_Ecoli, counts_histone_barcode_all),
+    names_to = "spikein_type",
+    values_to = "spikein_value"
+  ) 
 
 
 
 
 
+## plot
 
+pdf("output/count_spikein_all.pdf", width=9, height=5)
+
+ggplot(count_spikein_tidy, aes(x = sample_ID, y = spikein_value, fill = spikein_type)) +
+  geom_bar(stat = "identity", position = "dodge") + 
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(y = "Value", x = "Sample ID", fill = "Type")
+
+dev.off()
+
+pdf("output/count_spikein_all_typeSep.pdf", width=9, height=5)
+
+ggplot(count_spikein_tidy, aes(x = sample_ID, y = spikein_value, fill = spikein_type)) +
+  geom_bar(stat = "identity", position = "dodge") + 
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(y = "Value", x = "Sample ID", fill = "Type") +
+  facet_wrap(~spikein_type)
+
+dev.off()
 
 ```
+
+--> Raw read number of Ecoli vs histone spike in is overall comparable
