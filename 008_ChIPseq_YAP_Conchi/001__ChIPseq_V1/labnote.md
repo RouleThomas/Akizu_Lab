@@ -360,7 +360,7 @@ sbatch scripts/THOR_CPC_YAP1_untreatedvsRA.sh # 17867547 ok
 sbatch scripts/THOR_CPC_TEAD4_untreatedvsRA.sh # 17867550 ok
 sbatch scripts/THOR_CPC_NR2F2_untreatedvsRA.sh # 17867553 ok
 
-sbatch scripts/THOR_hESC_DVL2_WTvsYAPKO.sh # 17867580 fail; 17869560 xxx
+sbatch scripts/THOR_hESC_DVL2_WTvsYAPKO.sh # 17867580 fail; 17869560 ok
 sbatch scripts/THOR_hESC_EZH2_WTvsYAPKO.sh # 17867582 ok
 sbatch scripts/THOR_hESC_QSER1_WTvsYAPKO.sh # 17867584 ok
 ```
