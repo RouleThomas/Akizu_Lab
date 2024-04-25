@@ -1229,9 +1229,22 @@ console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScal
 writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_PSC_H3K27me3.txt")
 
 
+
+## PSC_EZH1
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_PSC_EZH1cs.txt", header = TRUE, sep = "\t"))
+
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+
+## --> Fail cannot as no peak
+
 ```
 
 --> WT and KOEFaEZH1 cluster more together, KO is apart
+
+--> EZH1 DiffBind TMM norm did not work as no macs2 peak are available...
+
 
 
 # THOR
@@ -1248,7 +1261,7 @@ Comparison to do; PSC WT vs KO and WT vs KOEF1aEZH1:
 
 --> Lets also try to use the DiffBind spike in BAM method (similarly use the reciprocal from diffBind)
 
-
+--> Lets also try to use **regular TMM normalization method from THOR** (no Ecoli spike in scaling factor)
 
 
 *THOR is very buggy to make it work I need to temporaly change where to look for libraries lol.. So cannot use nano anymore for example...*
@@ -1261,12 +1274,25 @@ conda activate RGT
 export LD_LIBRARY_PATH=~/anaconda3/envs/RGT/lib:$LD_LIBRARY_PATH
 bigWigMerge
 
-# AB per AB
+# E coli DiffBind TMM scaling factor
 sbatch scripts/THOR_PSC_WTvsKO_H3K27me3.sh # 15945828 ok
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3.sh # 15945937 ok
 
 
+# Default THOR TMM normalization (no E coli spike in norm)
+sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_TMM.sh # 18083826 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_TMM.sh # 18084031 xxx
+sbatch scripts/THOR_PSC_WTvsKO_EZH1cs_TMM.sh # 18084234 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1cs_TMM.sh # 18084235 xxx
+sbatch scripts/THOR_PSC_WTvsKO_EZH2_TMM.sh # 18084400 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_TMM.sh # 18084676 xxx
+sbatch scripts/THOR_PSC_WTvsKO_SUZ12_TMM.sh # 18084680 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_TMM.sh # 18084683 xxx
 ```
+
+--> XXX
+
+
 
 
 
