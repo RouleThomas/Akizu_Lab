@@ -303,7 +303,8 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 ```bash
-sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp.sh # 17961302 xxx
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp.sh # 17961302 ok
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_IGG.sh # 18046054 ok
 
 
 ```
@@ -311,9 +312,9 @@ sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp.sh # 17961302 xxx
 
 --> It output the nb of reads found for each histone; then simply copy paste to the excell file `output/spikein/SpikeIn_QC_fastp_011.xlsx` in GoogleDrive
 
-- `50dN_WT_H3K27me1AM`: xxx no enrichment!
-- `50dN_WT_H3K27me1OR`: xxx no enrichment!
-- `50dN_WT_H3K27me3`: xxx enriched in H3K27me3
+- `50dN_WT_H3K27me1AM`: enriched in H3K27me1
+- `50dN_WT_H3K27me1OR`: enriched in H3K27me1
+- `50dN_WT_H3K27me3`:  enriched in H3K27me3
 
 
 
@@ -403,7 +404,7 @@ Then look at the xlsx file from [EpiCypher](https://www.epicypher.com/products/n
 library("tidyverse")
 library("readxl")
 # import df adn tidy to remove AB used in sample_ID
-spikein <- read_excel("output/spikein/SpikeIn_QC_fastp_010.xlsx") %>%
+spikein <- read_excel("output/spikein/SpikeIn_QC_fastp_011.xlsx") %>%
   separate(sample_ID, into = c("type", "condition", "tag"), sep = "_") %>%
   mutate(sample_ID = paste(type, condition, sep = "_")) %>%
   select(-type, -condition, -tag)
@@ -440,7 +441,7 @@ spikein_all_scale = spikein_all %>%
   # Ungroup the data
   ungroup()
 # Plot
-pdf("output/spikein/QC_histone_spike_in_H3K27me3.pdf", width = 10, height = 4)
+pdf("output/spikein/QC_histone_spike_in_H3K27me3.pdf", width = 6, height = 4)
 spikein_all_scale %>%
     filter(
            AB %in% c("H3K27me3", "IGG")) %>%
@@ -453,11 +454,11 @@ spikein_all_scale %>%
 dev.off()
 
 
-## Histone scaling for H3K27me1
+## Histone scaling for H3K27me1AM
 spikein_all_scale = spikein_all %>%
   group_by(sample_ID) %>%
   # Find the target_norm value when Target is H3K27me1 and AB is H3K27me1
-  mutate(scaling_factor = ifelse(Target == "H3K27me1" & AB == "H3K27me1", target_norm, NA)) %>%
+  mutate(scaling_factor = ifelse(Target == "H3K27me1" & AB == "H3K27me1AM", target_norm, NA)) %>%
   # Fill the scaling_factor column with the appropriate value within each group
   fill(scaling_factor, .direction = "downup") %>%
   # Scale the target_norm values
@@ -467,23 +468,51 @@ spikein_all_scale = spikein_all %>%
   # Ungroup the data
   ungroup()
 # Plot
-pdf("output/spikein/QC_histone_spike_in_H3K27me1.pdf", width = 10, height = 4)
+pdf("output/spikein/QC_histone_spike_in_H3K27me1AM.pdf", width = 6, height = 4)
 spikein_all_scale %>%
     filter(
-           AB %in% c("H3K27me1", "IGG")) %>%
+           AB %in% c("H3K27me1AM", "IGG")) %>%
         ggplot(aes(x = Target, y = scaled_target_norm, fill = AB)) +
         geom_col(position = "dodge") +
         facet_wrap(~sample_ID, nrow=1) +
         geom_hline(yintercept = 20, color = "red", linetype = "longdash") +
         theme_bw() +
-        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+        facet_wrap(~sample_ID)
 dev.off()
 
 
+
+## Histone scaling for H3K27me1OR
+spikein_all_scale = spikein_all %>%
+  group_by(sample_ID) %>%
+  # Find the target_norm value when Target is H3K27me1 and AB is H3K27me1
+  mutate(scaling_factor = ifelse(Target == "H3K27me1" & AB == "H3K27me1OR", target_norm, NA)) %>%
+  # Fill the scaling_factor column with the appropriate value within each group
+  fill(scaling_factor, .direction = "downup") %>%
+  # Scale the target_norm values
+  mutate(scaled_target_norm = target_norm / scaling_factor * 100) %>%
+  # Remove the scaling_factor column
+  select(-scaling_factor) %>%
+  # Ungroup the data
+  ungroup()
+# Plot
+pdf("output/spikein/QC_histone_spike_in_H3K27me1OR.pdf", width = 6, height = 4)
+spikein_all_scale %>%
+    filter(
+           AB %in% c("H3K27me1OR", "IGG")) %>%
+        ggplot(aes(x = Target, y = scaled_target_norm, fill = AB)) +
+        geom_col(position = "dodge") +
+        facet_wrap(~sample_ID, nrow=1) +
+        geom_hline(yintercept = 20, color = "red", linetype = "longdash") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+        facet_wrap(~sample_ID)
+dev.off()
 ```
 
 
---> H3K27me3 is enriched; but 50dN has few number of barcode reads
+--> H3K27me3 is enriched
 
 --> H3K27me1 do not work, not enriched! New AB was testeed, that is a bad one, as previous one show enrichment (see `007__CutRun`)
 

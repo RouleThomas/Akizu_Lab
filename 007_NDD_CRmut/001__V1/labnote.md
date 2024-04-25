@@ -168,7 +168,7 @@ geneList_CR_Ensembl_V1 %>% inner_join(GTEx_brain_tpm5)
 --> 842 unique `geneSymbol` corresponding to 938 unique `ensembl_gene_id`
 ----> 823 unique `ensembl_gene_id` have GTEx expression data
 ------> 694 unique `ensembl_gene_id` show tpm >1 in at least one brain tissue
-------> 630 unique `ensembl_gene_id` show tpm >1 in at least one brain tissue
+------> 630 unique `ensembl_gene_id` show tpm >5 in at least one brain tissue
 
 
 
@@ -215,6 +215,17 @@ geneList_CR_Ensembl_V1_genemap2 = geneList_CR_Ensembl_V1 %>%
 
 
 Putting together CR_brain express `output/GTEx/geneList_CR_Ensembl_V1_tpm1.txt` with OMIM_NDD `output/OMIM/CR_OMIM.xlsx` and SFARI genes; we end up with 160 unique CR genes realted to NDD
+
+
+
+
+# PennMedecineBioBank
+- electronic heatlh record with WGS!
+
+Let's check whether our 160 CR-brain-NDD genes are present in the PennMedecineBioBank.
+
+
+
 
 
 
