@@ -225,7 +225,13 @@ Putting together CR_brain express `output/GTEx/geneList_CR_Ensembl_V1_tpm1.txt` 
 Let's check whether our 160 CR-brain-NDD genes are present in the PennMedecineBioBank.
 
 
+```bash
+gunzip output/pmbb_whole_exome.vcf.gz
+```
 
+--> Not clear, I cannot find gene information
+
+--> As only 160 genes, lets check one by one if present in the db using the PMBB genome browser
 
 
 
