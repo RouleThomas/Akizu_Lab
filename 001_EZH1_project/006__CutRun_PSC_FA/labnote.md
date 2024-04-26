@@ -579,9 +579,12 @@ sbatch scripts/matrix_TSS_2kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT00
 
 ## EZH1 peaks
 sbatch scripts/matrix_TSS_10kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_EZH1csPeaks_macs2q1.30103.sh # 16347554 ok
-sbatch scripts/matrix_TSS_5kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_EZH1csPeaks_macs2q1.30103.sh # 16347591 fail; 16380981
-sbatch scripts/matrix_TSS_2kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_EZH1csPeaks_macs2q1.30103.sh # 16347612 fail; 16381048
+sbatch scripts/matrix_TSS_5kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_EZH1csPeaks_macs2q1.30103.sh # 16347591 fail; 16380981 ok
+sbatch scripts/matrix_TSS_2kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT005_raw_EZH1csPeaks_macs2q1.30103.sh # 16347612 fail; 16381048 ok
 
+
+# Comparison KOEF1aEZH1 with WT (from 006__CutRun this CutRun) _ THOR (TMM; no spike in)
+sbatch scripts/matrix_TSS_5kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT006_THOR_TMM_EZH1csPeaks_macs2q1.30103.sh # 18177870 ok
 
 
 ```
@@ -1194,37 +1197,25 @@ library("DiffBind")
 ## PSC_H3K27me3
 ### Generate the sample metadata (in ods/copy paste to a .csv file)
 sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_PSC_H3K27me3.txt", header = TRUE, sep = "\t"))
-
 ### Batch effect investigation; heatmaps and PCA plots
 sample_count = dba.count(sample_dba)
-
-
 ## This take time, here is checkpoint command to save/load:
 save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_PSC_H3K27me3.RData")
 load("output/DiffBind/sample_count_macs2raw_unique_PSC_H3K27me3.RData")
-
 ### plot
 pdf("output/DiffBind/clustering_sample_macs2raw_unique_PSC_H3K27me3.pdf", width=14, height=20)  
 plot(sample_count)
 dev.off()
-
 pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_H3K27me3.pdf", width=14, height=20) 
 dba.plotPCA(sample_count,DBA_REPLICATE, label=DBA_TREATMENT)
 dev.off()
-
 ### Blacklist/Greylist generation
 sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
-
 sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
-
 ### TMM 
-
 sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(37338241,7794352,38565592), normalize = DBA_NORM_TMM) 
-
 #### Here is to retrieve the scaling factor value
 sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
-
-
 console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
 writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_PSC_H3K27me3.txt")
 
@@ -1233,11 +1224,72 @@ writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHiston
 ## PSC_EZH1
 ### Generate the sample metadata (in ods/copy paste to a .csv file)
 sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_PSC_EZH1cs.txt", header = TRUE, sep = "\t"))
-
 ### Batch effect investigation; heatmaps and PCA plots
 sample_count = dba.count(sample_dba)
-
 ## --> Fail cannot as no peak
+
+
+## PSC_EZH1 WT vs KOEF1aEZH1
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_PSC_EZH1cs_WTvsKOEF1aEZH1.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## --> Fail cannot as no peak
+
+
+
+## PSC_EZH2 WT vs KOEF1aEZH1
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_PSC_EZH2_WTvsKOEF1aEZH1.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_PSC_EZH2_WTvsKOEF1aEZH1.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_PSC_EZH2_WTvsKOEF1aEZH1.RData")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_PSC_EZH2_WTvsKOEF1aEZH1.pdf", width=14, height=20)  
+plot(sample_count)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_EZH2_WTvsKOEF1aEZH1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### TMM 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(22168042,34263744), normalize = DBA_NORM_TMM) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_PSC_EZH2_WTvsKOEF1aEZH1.txt")
+
+
+
+
+## PSC_SUZ12 WT vs KOEF1aEZH1
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_PSC_SUZ12_WTvsKOEF1aEZH1.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_PSC_SUZ12_WTvsKOEF1aEZH1.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_PSC_SUZ12_WTvsKOEF1aEZH1.RData")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_PSC_SUZ12_WTvsKOEF1aEZH1.pdf", width=14, height=20)  
+plot(sample_count)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_SUZ12_WTvsKOEF1aEZH1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### TMM 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(56199091,108075686), normalize = DBA_NORM_TMM) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_PSC_SUZ12_WTvsKOEF1aEZH1.txt")
 
 ```
 
@@ -1280,17 +1332,19 @@ sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3.sh # 15945937 ok
 
 
 # Default THOR TMM normalization (no E coli spike in norm)
-sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_TMM.sh # 18083826 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_TMM.sh # 18084031 xxx
-sbatch scripts/THOR_PSC_WTvsKO_EZH1cs_TMM.sh # 18084234 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1cs_TMM.sh # 18084235 xxx
-sbatch scripts/THOR_PSC_WTvsKO_EZH2_TMM.sh # 18084400 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_TMM.sh # 18084676 xxx
-sbatch scripts/THOR_PSC_WTvsKO_SUZ12_TMM.sh # 18084680 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_TMM.sh # 18084683 xxx
+sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_TMM.sh # 18083826 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_TMM.sh # 18084031 ok
+sbatch scripts/THOR_PSC_WTvsKO_EZH1cs_TMM.sh # 18084234 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1cs_TMM.sh # 18084235 ok
+sbatch scripts/THOR_PSC_WTvsKO_EZH2_TMM.sh # 18084400; 18177095 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_TMM.sh # 18084676 ok
+sbatch scripts/THOR_PSC_WTvsKO_SUZ12_TMM.sh # 18084680 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_TMM.sh # 18084683 ok
 ```
 
---> XXX
+--> the KO samples for EZH2, EZH1?, SUZ12 are too shitty so the WT vs KO comparison CANNOT be used.
+
+--> WT vs KOEF1aEZH1 are good to use
 
 
 
