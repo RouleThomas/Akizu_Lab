@@ -586,6 +586,9 @@ sbatch scripts/matrix_TSS_2kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT00
 # Comparison KOEF1aEZH1 with WT (from 006__CutRun this CutRun) _ THOR (TMM; no spike in)
 sbatch scripts/matrix_TSS_5kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT006_THOR_TMM_EZH1csPeaks_macs2q1.30103.sh # 18177870 ok
 
+# Comparison KOEF1aEZH1 with WT (from 006__CutRun this CutRun) _ THOR (spike in TMM for EZH2, SUZ12, H3K27me3; for EZH1; TMM solely)
+sbatch scripts/matrix_TSS_5kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT006_THORandTHORTMM_EZH1csPeaks_macs2q1.30103.sh # 18255674 xxx
+
 
 ```
 
@@ -1329,7 +1332,8 @@ bigWigMerge
 # E coli DiffBind TMM scaling factor
 sbatch scripts/THOR_PSC_WTvsKO_H3K27me3.sh # 15945828 ok
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3.sh # 15945937 ok
-
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2.sh # 18253957 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12.sh # 18253958 ok
 
 # Default THOR TMM normalization (no E coli spike in norm)
 sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_TMM.sh # 18083826 ok
