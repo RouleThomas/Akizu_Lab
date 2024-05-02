@@ -36,7 +36,7 @@ YAP_hESC_S30_L003_R1_001.fastq.gz = hESC_WT_YAP1_R1.fq.gz
 # Fastp cleaning
 
 ```bash
-sbatch scripts/fastp_raw.sh # 18442302 xxx
+sbatch scripts/fastp_raw.sh # 18442302 ok
 ```
 
 
@@ -50,12 +50,12 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:18442302 scripts/bowtie2_raw.sh # 18442369 xxx
+sbatch --dependency=afterany:18442302 scripts/bowtie2_raw.sh # 18442369 ok
 ```
 
 
 
---> XXX Looks good; around 70% uniq aligned reads (95% total) for hESC XXX and CPC XXX
+--> Looks good; around 75% uniq aligned reads (95% total) for TEAD4 and YAP1
 
 
 
@@ -88,7 +88,7 @@ This is prefered for THOR bam input.
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:18442369 scripts/samtools_unique_raw.sh # 18442478 xxx
+sbatch --dependency=afterany:18442369 scripts/samtools_unique_raw.sh # 18442478 ok
 
 ```
 
@@ -123,8 +123,6 @@ Run in R; followed this [workshop](https://nbisweden.github.io/workshop-archive/
 
 
 
-XXX HERE !! run stuff below, meta file has been generated XXXXXXXXXXXX
-
 
 ```bash
 conda activate deseq2V3
@@ -157,7 +155,7 @@ ChIPQCreport(resqc)
 
 ```
 
---> A `ChIPQCreport` folder is created in current wd; I moved it to `ouput`
+--> A `ChIPQCreport` folder is created in current wd; I moved it to `output`
 
 
 Then generate bigwig with the corresponding fragment size for each sample:
@@ -173,24 +171,16 @@ Paramaters:
 ```bash
 conda activate deeptools
 
-# bigwig with extendReads 50 (Default ~250bp fragment length  150bp reads +100 bp)
-sbatch --dependency=afterany:17725583 scripts/bamtobigwig_unique_extendReads100_CPC.sh # 17762131 ok
-sbatch scripts/bamtobigwig_unique_extendReads100_hESC.sh # 17762114 ok
-
 # bigwig with extendReads from CHIPQC
-sbatch scripts/bamtobigwig_unique_extendReads_hESC.sh # 17770516 ok
-sbatch scripts/bamtobigwig_unique_extendReads_CPC.sh # 17775530 ok
-
-
-# bigwig with extendReads from CHIPQC and RPGC normalized (seq depth comparison)
-sbatch scripts/bamtobigwig_unique_extendReads_RPGC_hESC.sh # 17786752 ok
-sbatch scripts/bamtobigwig_unique_extendReads_RPGC_CPC.sh # 17786754 ok
-
+sbatch scripts/bamtobigwig_unique_extendReads_raw.sh # 18481263 xxx
 ```
 
 
---> All work in hESC
 
---> CPC; YAP1 and TEAD4 only R3 work (thats ok it is their control sample! And they already have YAP1 sequenced), NR2F2 R1 and R2 work (not R3), 
 
---> *RPGC* bigwig make replicate very heterogeneous... = *BAD*; Use instead the **extendReads** = **GOOD**
+
+
+
+
+
+

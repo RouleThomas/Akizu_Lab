@@ -1397,8 +1397,10 @@ dasatinib_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters))
 colnames(untreated_clusters_counts) <- unique_clusters
 colnames(dasatinib_clusters_counts) <- unique_clusters
 
+
+######## THIS CODE IS NOT GOOD, check the one after  ########
 ### Loop through 100 iterations
-for (i in 1:10) {
+for (i in 1:100) {
   # Downsampling
   humangastruloid.combined.sct_DASATINIB72hr_downsample <- sample(humangastruloid.combined.sct_DASATINIB72hr, 5713)
   humangastruloid.combined.sct_integrated_downsample <- humangastruloid.combined.sct[,c(humangastruloid.combined.sct_UNTREATED72hr, humangastruloid.combined.sct_DASATINIB72hr_downsample)]
@@ -1422,7 +1424,7 @@ rownames(cluster_counts) <- c("UNTREATED72hr", "DASATINIB72hr")
 pdf("output/seurat/Cluster_cell_counts_BootstrapDownsampling10_V2.pdf", width=10, height=6)
 barplot(as.matrix(cluster_counts), beside=TRUE, legend.text=rownames(cluster_counts))
 dev.off()
-
+################
 
 ### V2
 # I think correct code to subset:
@@ -11823,6 +11825,14 @@ UNTREATED24hr_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters
 DASATINIB24hr_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters))
 colnames(UNTREATED24hr_clusters_counts) <- unique_clusters
 colnames(DASATINIB24hr_clusters_counts) <- unique_clusters
+
+# count nb of cells in each cluster
+untreated_clusters <- table(Idents(humangastruloid24hr.combined.sct)[humangastruloid24hr.combined.sct$condition == "UNTREATED24hr"])
+print(untreated_clusters)
+dasatinib_clusters <- table(Idents(humangastruloid24hr.combined.sct)[humangastruloid24hr.combined.sct$condition == "DASATINIB24hr"])
+print(dasatinib_clusters)
+
+
 
 ### Loop through 100 iterations
 humangastruloid24hr.combined.sct_UNTREATED24hr <- which(humangastruloid24hr.combined.sct$orig.ident == 'UNTREATED24hr') # 7331 cells

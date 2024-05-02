@@ -41,8 +41,18 @@ for ((i=0; i<${#samples_and_controls[@]}; i+=2)); do
 done
 
 
+## run in interactive
 
+  
+macs2 callpeak -t output/bowtie2/CPC_RA_YAP1_R3.unique.dupmark.sorted.bam \
+    -c output/bowtie2/CPC_RA_input_R3.unique.dupmark.sorted.bam \
+    --keep-dup auto \
+    --nomodel -g hs \
+    --outdir output/macs2/narrow -n CPC_RA_YAP1_R3
 
-
-
+macs2 callpeak -t output/bowtie2/CPC_RA_TEAD4_R3.unique.dupmark.sorted.bam \
+    -c output/bowtie2/CPC_RA_input_R3.unique.dupmark.sorted.bam \
+    --keep-dup auto \
+    --nomodel -g hs \
+    --outdir output/macs2/narrow -n CPC_RA_TEAD4_R3
 

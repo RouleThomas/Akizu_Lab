@@ -342,9 +342,28 @@ sbatch scripts/macs2_broad_CPC.sh # 18365107 ok
 sbatch scripts/macs2_narrow_hESC.sh # 18365200 ok
 sbatch scripts/macs2_narrow_CPC.sh # 18365397 ok
 
+# pool
+sbatch scripts/macs2_broad_hESC_pool.sh # 18482872 ok
+sbatch scripts/macs2_broad_CPC_pool.sh # 18482945 ok
+
+sbatch scripts/macs2_narrow_hESC_pool.sh # 18482993 ok
+sbatch scripts/macs2_narrow_CPC_pool.sh # 18483025 ok
+
+
+
 ```
 
-XXXXXXXXXXX BELOW
+
+--> For pool, only done on samples that worked: 
+- For the YAP1, Rep3 work (but not Rep1 and Rep2)
+- For TEAD4, Rep3 work (but not Rep1 and Rep2)
+- For NR2F2, Rep1 and Rep2 work (but not Rep3)
+- For EZH2, Rep1 and Rep2 work
+- For QSER1, Rep1 and Rep2 work
+- For DVL2, Rep1 work (only 1 Rep for this sample)
+
+
+
 
 
 Then keep only the significant peaks (re-run the script to test different qvalue cutoff) and remove peaks overlapping with blacklist regions. MACS2 column9 output is -log10(qvalue) format so if we want 0.05; 
@@ -364,22 +383,17 @@ awk '{print $3-$2}' your_bed_file.bed | sort -n | awk 'BEGIN {c=0; sum=0;} {a[c+
 ```
 
 **Optimal qvalue** according to IGV:
-- PSC_KOEF1aEZH1_SUZ12: 1.30103 (2.3 more true peak)
-- PSC_KOEF1aEZH1_EZH2: 1.30103
-- PSC_KOEF1aEZH1_EZH1cs: 1.30103
-- PSC_KOEF1aEZH1_H3K27me3: 3
-- PSC_WT_SUZ12: 1.30103 (2.3 more true peak)
-- PSC_WT_EZH2: 1.30103
-- PSC_WT_EZH1cs: FAIL
-- PSC_WT_H3K27me3: 1.30103 (many true peak surprinsgly!)
-- PSC_KO_SUZ12: FAIL
-- PSC_KO_EZH2: FAIL
-- PSC_KO_EZH1cs: FAIL
-- PSC_KO_H3K27me3: 1.30103 (many true peak surprinsgly!)
+- CPC_YAP1, untreated and RA (Rep3 only): qval 1.30103 #9526  and #19659
+- CPC_TEAD4, untreated and RA (Rep3 only): qval 1.30103 (more false positive maybe 2.3 if too many peaks) #12478  and #24804
+- CPC_NR2F2, untreated and RA, (use pool; Rep1 and Rep2): qval 2.30103 #33501  and #48276
+- hESC_EZH2, WT and KO (use pool; Rep1 and Rep2): qval 1.30103 #4288  and #4599
+- hESC_QSER1 WT and KO (use pool; Rep1 and Rep2): qval 1.30103 #14170  and #14978
+- hESC_DVL2 WT and KO (Rep1 only): qval 1.30103 (YAPKO work badly!) #232 and #2
 
 
+--> broad identified more peaks! So let's use broad (broad simply combine [several narrow peaks into 1](https://www.biostars.org/p/245407/))
 
-## Assign peak to genes for NPC and PSC - raw macs2
+# ChIPseeker - macs2
 
 
 ```bash
@@ -399,87 +413,157 @@ library("VennDiagram")
 
 
 # Import macs2 peaks
-## KOEF
-SUZ12 = as_tibble(read.table('output/macs2/broad_blacklist_qval1.30103/PSC_KOEF1aEZH1_SUZ12_peaks.broadPeak') ) %>%
+## CPC qval optimal
+CPC_untreated_NR2F2 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/CPC_untreated_NR2F2_pool_peaks.broadPeak') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
-EZH2 = as_tibble(read.table('output/macs2/broad_blacklist_qval1.30103/PSC_KOEF1aEZH1_EZH2_peaks.broadPeak') ) %>%
-    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
-EZH1 = as_tibble(read.table('output/macs2/broad_blacklist_qval1.30103/PSC_KOEF1aEZH1_EZH1cs_peaks.broadPeak') ) %>%
-    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
-H3K27me3 = as_tibble(read.table('output/macs2/broad_blacklist_qval3/PSC_KOEF1aEZH1_H3K27me3_peaks.broadPeak') ) %>%
+CPC_RA_NR2F2 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/CPC_RA_NR2F2_pool_peaks.broadPeak') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
 
+CPC_untreated_TEAD4 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval1.30103/CPC_untreated_TEAD4_R3_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+CPC_RA_TEAD4 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval1.30103/CPC_RA_TEAD4_R3_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)    
+    
+CPC_untreated_YAP1 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval1.30103/CPC_untreated_YAP1_R3_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+CPC_RA_YAP1 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval1.30103/CPC_RA_YAP1_R3_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)    
+
+## CPC qval3
+CPC_untreated_NR2F2 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval3/CPC_untreated_NR2F2_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+CPC_RA_NR2F2 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval3/CPC_RA_NR2F2_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+
+CPC_untreated_TEAD4 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval3/CPC_untreated_TEAD4_R3_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+CPC_RA_TEAD4 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval3/CPC_RA_TEAD4_R3_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)    
+    
+CPC_untreated_YAP1 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval3/CPC_untreated_YAP1_R3_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+CPC_RA_YAP1 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval3/CPC_RA_YAP1_R3_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)    
 
 ## Tidy peaks #-->> Re-Run from here with different qvalue!!
-SUZ12_gr = makeGRangesFromDataFrame(SUZ12,keep.extra.columns=TRUE)
-EZH2_gr = makeGRangesFromDataFrame(EZH2,keep.extra.columns=TRUE)
-EZH1_gr = makeGRangesFromDataFrame(EZH1,keep.extra.columns=TRUE)
-H3K27me3_gr = makeGRangesFromDataFrame(H3K27me3,keep.extra.columns=TRUE)
-gr_list <- list(SUZ12=SUZ12_gr, EZH2=EZH2_gr, EZH1=EZH1_gr,  H3K27me3=H3K27me3_gr)
+CPC_untreated_NR2F2_gr = makeGRangesFromDataFrame(CPC_untreated_NR2F2,keep.extra.columns=TRUE)
+CPC_RA_NR2F2_gr = makeGRangesFromDataFrame(CPC_RA_NR2F2,keep.extra.columns=TRUE)
+CPC_untreated_TEAD4_gr = makeGRangesFromDataFrame(CPC_untreated_TEAD4,keep.extra.columns=TRUE)
+CPC_RA_TEAD4_gr = makeGRangesFromDataFrame(CPC_RA_TEAD4,keep.extra.columns=TRUE)
+CPC_untreated_YAP1_gr = makeGRangesFromDataFrame(CPC_untreated_YAP1,keep.extra.columns=TRUE)
+CPC_RA_YAP1_gr = makeGRangesFromDataFrame(CPC_RA_YAP1,keep.extra.columns=TRUE)
+
+gr_list <- list(CPC_untreated_NR2F2=CPC_untreated_NR2F2_gr, CPC_RA_NR2F2=CPC_RA_NR2F2_gr, CPC_untreated_TEAD4=CPC_untreated_TEAD4_gr,  CPC_RA_TEAD4=CPC_RA_TEAD4_gr, CPC_untreated_YAP1= CPC_untreated_YAP1_gr,CPC_RA_YAP1= CPC_RA_YAP1_gr)
+
+
+
 ## Export Gene peak assignemnt
 peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
                        tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+
+                       
+### Barplot
+pdf("output/ChIPseeker/annotation_barplot_CPC.pdf", width=14, height=5)
+pdf("output/ChIPseeker/annotation_barplot_CPC_qval3.pdf", width=14, height=5)
+plotAnnoBar(peakAnnoList)
+dev.off()
+
+
+
 ## Get annotation data frame
-SUZ12_annot <- as.data.frame(peakAnnoList[["SUZ12"]]@anno)
-EZH2_annot <- as.data.frame(peakAnnoList[["EZH2"]]@anno)
-EZH1_annot <- as.data.frame(peakAnnoList[["EZH1"]]@anno)
-H3K27me3_annot <- as.data.frame(peakAnnoList[["H3K27me3"]]@anno)
+CPC_untreated_NR2F2_annot <- as.data.frame(peakAnnoList[["CPC_untreated_NR2F2"]]@anno)
+CPC_RA_NR2F2_annot <- as.data.frame(peakAnnoList[["CPC_RA_NR2F2"]]@anno)
+CPC_untreated_TEAD4_annot <- as.data.frame(peakAnnoList[["CPC_untreated_TEAD4"]]@anno)
+CPC_RA_TEAD4_annot <- as.data.frame(peakAnnoList[["CPC_RA_TEAD4"]]@anno)
+CPC_untreated_YAP1_annot <- as.data.frame(peakAnnoList[["CPC_untreated_YAP1"]]@anno)
+CPC_RA_YAP1_annot <- as.data.frame(peakAnnoList[["CPC_RA_YAP1"]]@anno)
+
 ## Convert entrez gene IDs to gene symbols
-SUZ12_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = SUZ12_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-SUZ12_annot$gene <- mapIds(org.Hs.eg.db, keys = SUZ12_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-EZH2_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = EZH2_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-EZH2_annot$gene <- mapIds(org.Hs.eg.db, keys = EZH2_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-EZH1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = EZH1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-EZH1_annot$gene <- mapIds(org.Hs.eg.db, keys = EZH1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-H3K27me3_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-H3K27me3_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+CPC_untreated_NR2F2_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = CPC_untreated_NR2F2_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+CPC_untreated_NR2F2_annot$gene <- mapIds(org.Hs.eg.db, keys = CPC_untreated_NR2F2_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+CPC_RA_NR2F2_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = CPC_RA_NR2F2_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+CPC_RA_NR2F2_annot$gene <- mapIds(org.Hs.eg.db, keys = CPC_RA_NR2F2_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+CPC_untreated_TEAD4_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = CPC_untreated_TEAD4_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+CPC_untreated_TEAD4_annot$gene <- mapIds(org.Hs.eg.db, keys = CPC_untreated_TEAD4_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+CPC_RA_TEAD4_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = CPC_RA_TEAD4_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+CPC_RA_TEAD4_annot$gene <- mapIds(org.Hs.eg.db, keys = CPC_RA_TEAD4_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+CPC_untreated_YAP1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = CPC_untreated_YAP1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+CPC_untreated_YAP1_annot$gene <- mapIds(org.Hs.eg.db, keys = CPC_untreated_YAP1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+CPC_RA_YAP1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = CPC_RA_YAP1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+CPC_RA_YAP1_annot$gene <- mapIds(org.Hs.eg.db, keys = CPC_RA_YAP1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
 
 ## Save output table
-write.table(SUZ12_annot, file="output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1_SUZ12_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(EZH2_annot, file="output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1_EZH2_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(EZH1_annot, file="output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1_EZH1_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(H3K27me3_annot, file="output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1_H3K27me3_qval3.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(CPC_untreated_NR2F2_annot, file="output/ChIPseeker/annotation_macs2_CPC_untreated_NR2F2_annot_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(CPC_RA_NR2F2_annot, file="output/ChIPseeker/annotation_macs2_CPC_RA_NR2F2_annot_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(CPC_untreated_TEAD4_annot, file="output/ChIPseeker/annotation_macs2_CPC_untreated_TEAD4_annot_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(CPC_RA_TEAD4_annot, file="output/ChIPseeker/annotation_macs2_CPC_RA_TEAD4_annot_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(CPC_untreated_YAP1_annot, file="output/ChIPseeker/annotation_macs2_CPC_untreated_YAP1_annot_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(CPC_RA_YAP1_annot, file="output/ChIPseeker/annotation_macs2_CPC_RA_YAP1_annot_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
 
 ## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
-SUZ12_annot_promoterAnd5 = tibble(SUZ12_annot) %>%
+CPC_untreated_NR2F2_annot_promoterAnd5 = tibble(CPC_untreated_NR2F2_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-EZH2_annot_promoterAnd5 = tibble(EZH2_annot) %>%
+CPC_RA_NR2F2_annot_promoterAnd5 = tibble(CPC_RA_NR2F2_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-EZH1_annot_promoterAnd5 = tibble(EZH1_annot) %>%
+CPC_untreated_TEAD4_annot_promoterAnd5 = tibble(CPC_untreated_TEAD4_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-H3K27me3_annot_promoterAnd5 = tibble(H3K27me3_annot) %>%
+CPC_RA_TEAD4_annot_promoterAnd5 = tibble(CPC_RA_TEAD4_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))    
+CPC_untreated_YAP1_annot_promoterAnd5 = tibble(CPC_untreated_YAP1_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+CPC_RA_YAP1_annot_promoterAnd5 = tibble(CPC_RA_YAP1_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) 
 
 ### Save output gene lists
-SUZ12_annot_promoterAnd5_geneSymbol = SUZ12_annot_promoterAnd5 %>%
+CPC_untreated_NR2F2_annot_promoterAnd5_geneSymbol = CPC_untreated_NR2F2_annot_promoterAnd5 %>%
     dplyr::select(geneSymbol) %>%
     unique()
-EZH2_annot_promoterAnd5_geneSymbol = EZH2_annot_promoterAnd5 %>%
+CPC_RA_NR2F2_annot_promoterAnd5_geneSymbol = CPC_RA_NR2F2_annot_promoterAnd5 %>%
     dplyr::select(geneSymbol) %>%
     unique()
-EZH1_annot_promoterAnd5_geneSymbol = EZH1_annot_promoterAnd5 %>%
+CPC_untreated_TEAD4_annot_promoterAnd5_geneSymbol = CPC_untreated_TEAD4_annot_promoterAnd5 %>%
     dplyr::select(geneSymbol) %>%
     unique()
-H3K27me3_annot_promoterAnd5_geneSymbol = H3K27me3_annot_promoterAnd5 %>%
+CPC_RA_TEAD4_annot_promoterAnd5_geneSymbol = CPC_RA_TEAD4_annot_promoterAnd5 %>%
     dplyr::select(geneSymbol) %>%
     unique()   
+CPC_untreated_YAP1_annot_promoterAnd5_geneSymbol = CPC_untreated_YAP1_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+CPC_RA_YAP1_annot_promoterAnd5_geneSymbol = CPC_RA_YAP1_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique() 
 
-write.table(SUZ12_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1_SUZ12_qval1.30103_promoterAnd5_geneSymbol.txt",
+
+write.table(CPC_untreated_NR2F2_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_untreated_NR2F2_qval2.30103_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(EZH2_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1_EZH2_qval1.30103_promoterAnd5_geneSymbol.txt",
+write.table(CPC_RA_NR2F2_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_RA_NR2F2_qval2.30103_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(EZH1_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1_EZH1_qval1.30103_promoterAnd5_geneSymbol.txt",
+write.table(CPC_untreated_TEAD4_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_untreated_TEAD4_qval1.30103_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(H3K27me3_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_PSC_KOEF1aEZH1_H3K27me3_qval3_promoterAnd5_geneSymbol.txt",
+write.table(CPC_RA_TEAD4_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_RA_TEAD4_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)    
+
+write.table(CPC_untreated_YAP1_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_untreated_YAP1_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(CPC_RA_YAP1_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_RA_YAP1_qval1.30103_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
@@ -487,9 +571,279 @@ write.table(H3K27me3_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/an
 
 
 
+
+
+## Keep only signals in non intergenic region ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+CPC_untreated_NR2F2_annot_noIntergenic = tibble(CPC_untreated_NR2F2_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+CPC_RA_NR2F2_annot_noIntergenic = tibble(CPC_RA_NR2F2_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+CPC_untreated_TEAD4_annot_noIntergenic = tibble(CPC_untreated_TEAD4_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+CPC_RA_TEAD4_annot_noIntergenic = tibble(CPC_RA_TEAD4_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+CPC_untreated_YAP1_annot_noIntergenic = tibble(CPC_untreated_YAP1_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+CPC_RA_YAP1_annot_noIntergenic = tibble(CPC_RA_YAP1_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+
+### Save output gene lists
+CPC_untreated_NR2F2_annot_noIntergenic_geneSymbol = CPC_untreated_NR2F2_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+CPC_RA_NR2F2_annot_noIntergenic_geneSymbol = CPC_RA_NR2F2_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+CPC_untreated_TEAD4_annot_noIntergenic_geneSymbol = CPC_untreated_TEAD4_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+CPC_RA_TEAD4_annot_noIntergenic_geneSymbol = CPC_RA_TEAD4_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()   
+CPC_untreated_YAP1_annot_noIntergenic_geneSymbol = CPC_untreated_YAP1_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+CPC_RA_YAP1_annot_noIntergenic_geneSymbol = CPC_RA_YAP1_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique() 
+
+
+write.table(CPC_untreated_NR2F2_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_untreated_NR2F2_qval2.30103_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(CPC_RA_NR2F2_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_RA_NR2F2_qval2.30103_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(CPC_untreated_TEAD4_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_untreated_TEAD4_qval1.30103_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(CPC_RA_TEAD4_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_RA_TEAD4_qval1.30103_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)    
+
+write.table(CPC_untreated_YAP1_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_untreated_YAP1_qval1.30103_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(CPC_RA_YAP1_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_RA_YAP1_qval1.30103_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)    
+
+
+
+
+
+
+
+
+## hESC
+hESC_WT_EZH2 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval1.30103/hESC_WT_EZH2_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_YAPKO_EZH2 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval1.30103/hESC_YAPKO_EZH2_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+
+hESC_WT_QSER1 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval1.30103/hESC_WT_QSER1_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_YAPKO_QSER1 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval1.30103/hESC_YAPKO_QSER1_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+
+hESC_WT_DVL2 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval1.30103/hESC_WT_DVL2_R1_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_YAPKO_DVL2 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval1.30103/hESC_YAPKO_DVL2_R1_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+
+
+
+## Tidy peaks #-->> Re-Run from here with different qvalue!!
+hESC_WT_EZH2_gr = makeGRangesFromDataFrame(hESC_WT_EZH2,keep.extra.columns=TRUE)
+hESC_YAPKO_EZH2_gr = makeGRangesFromDataFrame(hESC_YAPKO_EZH2,keep.extra.columns=TRUE)
+hESC_WT_QSER1_gr = makeGRangesFromDataFrame(hESC_WT_QSER1,keep.extra.columns=TRUE)
+hESC_YAPKO_QSER1_gr = makeGRangesFromDataFrame(hESC_YAPKO_QSER1,keep.extra.columns=TRUE)
+hESC_WT_DVL2_gr = makeGRangesFromDataFrame(hESC_WT_DVL2,keep.extra.columns=TRUE)
+hESC_YAPKO_DVL2_gr = makeGRangesFromDataFrame(hESC_YAPKO_DVL2,keep.extra.columns=TRUE)
+
+gr_list <- list(hESC_WT_EZH2=hESC_WT_EZH2_gr, hESC_YAPKO_EZH2=hESC_YAPKO_EZH2_gr, hESC_WT_QSER1=hESC_WT_QSER1_gr,  hESC_YAPKO_QSER1=hESC_YAPKO_QSER1_gr, hESC_WT_DVL2= hESC_WT_DVL2_gr) # hESC_YAPKO_DVL2_gr removed as only 2 peak
+
+
+
+## Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+
+                       
+### Barplot
+pdf("output/ChIPseeker/annotation_barplot_hESC.pdf", width=14, height=5)
+plotAnnoBar(peakAnnoList)
+dev.off()
+
+
+
+## Get annotation data frame
+hESC_WT_EZH2_annot <- as.data.frame(peakAnnoList[["hESC_WT_EZH2"]]@anno)
+hESC_YAPKO_EZH2_annot <- as.data.frame(peakAnnoList[["hESC_YAPKO_EZH2"]]@anno)
+hESC_WT_QSER1_annot <- as.data.frame(peakAnnoList[["hESC_WT_QSER1"]]@anno)
+hESC_YAPKO_QSER1_annot <- as.data.frame(peakAnnoList[["hESC_YAPKO_QSER1"]]@anno)
+hESC_WT_DVL2_annot <- as.data.frame(peakAnnoList[["hESC_WT_DVL2"]]@anno)
+
+## Convert entrez gene IDs to gene symbols
+hESC_WT_EZH2_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_EZH2_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_WT_EZH2_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_EZH2_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+hESC_YAPKO_EZH2_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_YAPKO_EZH2_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_YAPKO_EZH2_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_YAPKO_EZH2_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+hESC_WT_QSER1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_WT_QSER1_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+hESC_YAPKO_QSER1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_YAPKO_QSER1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_YAPKO_QSER1_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_YAPKO_QSER1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+hESC_WT_DVL2_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_DVL2_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_WT_DVL2_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_DVL2_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+## Save output table
+write.table(hESC_WT_EZH2_annot, file="output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_annot_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(hESC_YAPKO_EZH2_annot, file="output/ChIPseeker/annotation_macs2_hESC_YAPKO_EZH2_annot_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(hESC_WT_QSER1_annot, file="output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(hESC_YAPKO_QSER1_annot, file="output/ChIPseeker/annotation_macs2_hESC_YAPKO_QSER1_annot_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(hESC_WT_DVL2_annot, file="output/ChIPseeker/annotation_macs2_hESC_WT_DVL2_annot_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+hESC_WT_EZH2_annot_promoterAnd5 = tibble(hESC_WT_EZH2_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+hESC_YAPKO_EZH2_annot_promoterAnd5 = tibble(hESC_YAPKO_EZH2_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+hESC_WT_QSER1_annot_promoterAnd5 = tibble(hESC_WT_QSER1_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+hESC_YAPKO_QSER1_annot_promoterAnd5 = tibble(hESC_YAPKO_QSER1_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))    
+hESC_WT_DVL2_annot_promoterAnd5 = tibble(hESC_WT_DVL2_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+
+### Save output gene lists
+hESC_WT_EZH2_annot_promoterAnd5_geneSymbol = hESC_WT_EZH2_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_YAPKO_EZH2_annot_promoterAnd5_geneSymbol = hESC_YAPKO_EZH2_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_QSER1_annot_promoterAnd5_geneSymbol = hESC_WT_QSER1_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_YAPKO_QSER1_annot_promoterAnd5_geneSymbol = hESC_YAPKO_QSER1_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()   
+hESC_WT_DVL2_annot_promoterAnd5_geneSymbol = hESC_WT_DVL2_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+
+write.table(hESC_WT_EZH2_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_YAPKO_EZH2_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_YAPKO_EZH2_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_WT_QSER1_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_YAPKO_QSER1_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_YAPKO_QSER1_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)    
+write.table(hESC_WT_DVL2_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_DVL2_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+            
+
+
+
+## Keep only signals in non intergenic region ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+hESC_WT_EZH2_annot_noIntergenic = tibble(hESC_WT_EZH2_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+hESC_YAPKO_EZH2_annot_noIntergenic = tibble(hESC_YAPKO_EZH2_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+hESC_WT_QSER1_annot_noIntergenic = tibble(hESC_WT_QSER1_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+hESC_YAPKO_QSER1_annot_noIntergenic = tibble(hESC_YAPKO_QSER1_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+hESC_WT_DVL2_annot_noIntergenic = tibble(hESC_WT_DVL2_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+
+
+### Save output gene lists
+hESC_WT_EZH2_annot_noIntergenic_geneSymbol = hESC_WT_EZH2_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_YAPKO_EZH2_annot_noIntergenic_geneSymbol = hESC_YAPKO_EZH2_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_QSER1_annot_noIntergenic_geneSymbol = hESC_WT_QSER1_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_YAPKO_QSER1_annot_noIntergenic_geneSymbol = hESC_YAPKO_QSER1_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()   
+hESC_WT_DVL2_annot_noIntergenic_geneSymbol = hESC_WT_DVL2_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+
+write.table(hESC_WT_EZH2_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_qval1.30103_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_YAPKO_EZH2_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_YAPKO_EZH2_qval1.30103_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_WT_QSER1_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_qval1.30103_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_YAPKO_QSER1_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_YAPKO_QSER1_qval1.30103_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)    
+write.table(hESC_WT_DVL2_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_DVL2_qval1.30103_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+            
+
+
+
 ```
 
+--> CPC is a bit weird; as untreated vs RA as different binding profile; not clear whether it is technical issue or not. But higher qval (1.3 to 3) give same results
 
+--> hESC is all good.
 
 
 
