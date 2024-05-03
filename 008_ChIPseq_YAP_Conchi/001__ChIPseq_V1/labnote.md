@@ -998,13 +998,21 @@ Venn diagram of peak-genes TED4, QSER1 and EZH2 has been generated.
 --> use THOR bigwig for QSER1 and EZH2 and use raw unique bigwig for TEAD4 (from `008003`)
 
 
-XXXX BELOW !!! 
 
 
 Generate gtf file from gene list; start with gene with peak in promoter (qval macs2 2.3):
 
 ```bash
-# isolate all the genes bound with H3K27me3 in WT and or KO
+# isolate all the genes bound with QSER1, TEAD4, EZH2 in WT
+xxx
+# isolate all the genes bound with QSER1, EZH2 in WT
+
+
+# isolate all the genes bound with QSER1, EZH2 in WT
+
+
+
+
 cat output/ChIPseeker/annotation_macs2_PSC_WT_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt output/ChIPseeker/annotation_macs2_PSC_KO_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt | sort | uniq > output/ChIPseeker/annotation_macs2_PSC_WTKO_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt
 cat output/ChIPseeker/annotation_macs2_PSC_WT_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt output/ChIPseeker/annotation_macs2_PSC_KO_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt | sort | uniq > output/ChIPseeker/annotation_macs2_PSC_WTKO_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt
 ### create gtf from gene list
