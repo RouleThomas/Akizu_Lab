@@ -18,7 +18,7 @@ Analysis:
 
 
 Objective:
-- XXX
+- integrate with hESC 008001, check overlap EZH2, QSER1 and TEAD4 (eg. the non-overlapping profile), QSER1 prevent histone methylation (work together with TET1)
 
 
 # Data renaming
@@ -172,14 +172,185 @@ Paramaters:
 conda activate deeptools
 
 # bigwig with extendReads from CHIPQC
-sbatch scripts/bamtobigwig_unique_extendReads_raw.sh # 18481263 xxx
+sbatch scripts/bamtobigwig_unique_extendReads_raw.sh # 18481263 ok
 ```
 
 
 
 
 
+# MACS2 peak calling on bam unique
 
+--> input samples used as control
+
+--> The **peaks are called on the uniquely aligned reads** (it performed better on our previous CutRun)
+
+**PEAK CALLING  in `broad` and `narrow`**
+
+- *NOTE: as SE; I removed `-f BAMPE` option*
+
+```bash
+conda activate macs2
+
+sbatch scripts/macs2_broad_raw.sh # 18502057 ok
+
+sbatch scripts/macs2_narrow_raw.sh # 18502059 ok
+```
+
+
+
+Then keep only the significant peaks (re-run the script to test different qvalue cutoff) and remove peaks overlapping with blacklist regions. MACS2 column9 output is -log10(qvalue) format so if we want 0.05; 
+- q0.05: `q value = -log10(0.05) = 1.30103`
+- q0.01 = 2
+- q0.005 = 2.30103
+- q0.001 = 3
+- q0.0001 = 4
+- q0.00001 = 5
+
+```bash
+conda activate bowtie2 # for bedtools
+sbatch scripts/macs2_raw_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
+
+# quick command to print median size of peak within a bed
+awk '{print $3-$2}' your_bed_file.bed | sort -n | awk 'BEGIN {c=0; sum=0;} {a[c++]=$1; sum+=$1;} END {if (c%2) print a[int(c/2)]; else print (a[c/2-1]+a[c/2])/2;}'
+```
+
+**Optimal qvalue** according to IGV:
+- hESC_YAP1, WT (Rep1 only): qval 1.30103 #1807
+- hESC_TEAD4, WT (Rep1 only): qval 1.30103 #3998
+
+
+
+--> broad identified more peaks! So let's use broad (broad simply combine [several narrow peaks into 1](https://www.biostars.org/p/245407/))
+
+# ChIPseeker - macs2
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import macs2 peaks
+## hESC qval optimal
+hESC_WT_YAP1 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/hESC_WT_YAP1_R1_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_WT_TEAD4 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/hESC_WT_TEAD4_R1_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+
+
+
+## Tidy peaks #-->> Re-Run from here with different qvalue!!
+hESC_WT_YAP1_gr = makeGRangesFromDataFrame(hESC_WT_YAP1,keep.extra.columns=TRUE)
+hESC_WT_TEAD4_gr = makeGRangesFromDataFrame(hESC_WT_TEAD4,keep.extra.columns=TRUE)
+
+gr_list <- list(hESC_WT_YAP1=hESC_WT_YAP1_gr, hESC_WT_TEAD4=hESC_WT_TEAD4_gr)
+
+
+
+## Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+
+                       
+### Barplot
+pdf("output/ChIPseeker/annotation_barplot_hESC.pdf", width=14, height=2)
+plotAnnoBar(peakAnnoList)
+dev.off()
+
+
+
+## Get annotation data frame
+hESC_WT_YAP1_annot <- as.data.frame(peakAnnoList[["hESC_WT_YAP1"]]@anno)
+hESC_WT_TEAD4_annot <- as.data.frame(peakAnnoList[["hESC_WT_TEAD4"]]@anno)
+
+## Convert entrez gene IDs to gene symbols
+hESC_WT_YAP1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_YAP1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_WT_YAP1_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_YAP1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+hESC_WT_TEAD4_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_TEAD4_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_WT_TEAD4_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_TEAD4_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+## Save output table
+write.table(hESC_WT_YAP1_annot, file="output/ChIPseeker/annotation_macs2_hESC_WT_YAP1_annot_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(hESC_WT_TEAD4_annot, file="output/ChIPseeker/annotation_macs2_hESC_WT_TEAD4_annot_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+hESC_WT_YAP1_annot_promoterAnd5 = tibble(hESC_WT_YAP1_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+hESC_WT_TEAD4_annot_promoterAnd5 = tibble(hESC_WT_TEAD4_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+    
+### Save output gene lists
+hESC_WT_YAP1_annot_promoterAnd5_geneSymbol = hESC_WT_YAP1_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_TEAD4_annot_promoterAnd5_geneSymbol = hESC_WT_TEAD4_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+    
+
+write.table(hESC_WT_YAP1_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_YAP1_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_WT_TEAD4_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_TEAD4_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+            
+
+
+
+
+
+## Keep only signals in non intergenic region ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+hESC_WT_YAP1_annot_noIntergenic = tibble(hESC_WT_YAP1_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+hESC_WT_TEAD4_annot_noIntergenic = tibble(hESC_WT_TEAD4_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+    
+
+### Save output gene lists
+hESC_WT_YAP1_annot_noIntergenic_geneSymbol = hESC_WT_YAP1_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_TEAD4_annot_noIntergenic_geneSymbol = hESC_WT_TEAD4_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+write.table(hESC_WT_YAP1_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_YAP1_qval1.30103_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_WT_TEAD4_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_TEAD4_qval1.30103_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+            
+
+```
+
+--> gene feature barplot show YAP1 and TEAD4 mostly in gene body
+
+--> Export gene list and perform Venn diagram
 
 
 

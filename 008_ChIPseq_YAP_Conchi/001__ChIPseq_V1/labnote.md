@@ -323,8 +323,6 @@ plotCorrelation \
 
 # MACS2 peak calling on bam unique
 
-
-
 --> input samples used as control
 
 --> The **peaks are called on the uniquely aligned reads** (it performed better on our previous CutRun)
@@ -985,5 +983,47 @@ awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10.b
 
 
 ```
+
+
+
+
+# deepTool plots
+
+
+Venn diagram of peak-genes TED4, QSER1 and EZH2 has been generated.
+
+- Check whether QSER1 flank EZH2 (confirm [Dixon2021 paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8185639/))
+- Check TED4 vs QSER1 (and EZH2)
+
+--> use THOR bigwig for QSER1 and EZH2 and use raw unique bigwig for TEAD4 (from `008003`)
+
+
+XXXX BELOW !!! 
+
+
+Generate gtf file from gene list; start with gene with peak in promoter (qval macs2 2.3):
+
+```bash
+# isolate all the genes bound with H3K27me3 in WT and or KO
+cat output/ChIPseeker/annotation_macs2_PSC_WT_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt output/ChIPseeker/annotation_macs2_PSC_KO_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt | sort | uniq > output/ChIPseeker/annotation_macs2_PSC_WTKO_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt
+cat output/ChIPseeker/annotation_macs2_PSC_WT_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt output/ChIPseeker/annotation_macs2_PSC_KO_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt | sort | uniq > output/ChIPseeker/annotation_macs2_PSC_WTKO_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt
+### create gtf from gene list
+#### Modify the .txt file that list all genes so that it match gtf structure
+## Modify the .txt file that list all genes so that it match gtf structure
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_macs2_PSC_WTKO_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_WTKO_H3K27me3_qval2.30103_Promoter_5_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_macs2_PSC_WTKO_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_WTKO_H3K27me3_qval1.30103_Promoter_5_as_gtf_geneSymbol.txt
+## Filter the gtf
+grep -Ff output/ChIPseeker/annotation_WTKO_H3K27me3_qval2.30103_Promoter_5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_macs2_H3K27me3_WTKO_qval2.30103_Promoter_5.gtf
+grep -Ff output/ChIPseeker/annotation_WTKO_H3K27me3_qval1.30103_Promoter_5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_macs2_H3K27me3_WTKO_qval1.30103_Promoter_5.gtf
+
+
+# deeptool plots
+sbatch scripts/matrix_TSS_10kb_H3K27me3_THOR_genePeaks_macs2q1.30103.sh # 15963978 ok
+sbatch scripts/matrix_TSS_10kb_H3K27me3_THOR_genePeaks_macs2q2.30103.sh # 15964044 ok
+
+
+
+```
+
 
 
