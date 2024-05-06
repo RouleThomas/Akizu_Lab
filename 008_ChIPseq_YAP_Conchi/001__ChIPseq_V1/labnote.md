@@ -847,6 +847,450 @@ write.table(hESC_WT_DVL2_annot_noIntergenic_geneSymbol, file = "output/ChIPseeke
 
 
 
+# ChIPseeker - THOR peaks
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import THOR peaks
+
+## EZH2 hESC WT vs YAPKO
+EZH2_pos = as_tibble(read.table('output/THOR/THOR_hESC_EZH2_WTvsYAPKO/THOR_qval5_positive.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+EZH2_neg = as_tibble(read.table('output/THOR/THOR_hESC_EZH2_WTvsYAPKO/THOR_qval5_negative.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+
+ 
+
+## Tidy peaks #-->> Re-Run from here with different qvalue!!
+EZH2_pos_gr = makeGRangesFromDataFrame(EZH2_pos,keep.extra.columns=TRUE)
+EZH2_neg_gr = makeGRangesFromDataFrame(EZH2_neg,keep.extra.columns=TRUE)
+
+
+gr_list <- list(EZH2_pos=EZH2_pos_gr, EZH2_neg=EZH2_neg_gr)
+
+
+
+## Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+
+
+### Barplot
+pdf("output/ChIPseeker/annotation_barplot_THORq5_EZH2.pdf", width=14, height=5)
+plotAnnoBar(peakAnnoList)
+dev.off()
+
+
+
+## Get annotation data frame
+EZH2_pos_annot <- as.data.frame(peakAnnoList[["EZH2_pos"]]@anno)
+EZH2_neg_annot <- as.data.frame(peakAnnoList[["EZH2_neg"]]@anno)
+
+
+
+## Convert entrez gene IDs to gene symbols
+EZH2_pos_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = EZH2_pos_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+EZH2_pos_annot$gene <- mapIds(org.Hs.eg.db, keys = EZH2_pos_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+EZH2_neg_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = EZH2_neg_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+EZH2_neg_annot$gene <- mapIds(org.Hs.eg.db, keys = EZH2_neg_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+
+## Save output table
+write.table(EZH2_pos_annot, file="output/ChIPseeker/annotation_THORq5_EZH2_pos_annot.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(EZH2_neg_annot, file="output/ChIPseeker/annotation_THORq5_EZH2_neg_annot.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+EZH2_pos_annot_promoterAnd5 = tibble(EZH2_pos_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+EZH2_neg_annot_promoterAnd5 = tibble(EZH2_neg_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+
+### Save output gene lists
+EZH2_pos_annot_promoterAnd5_geneSymbol = EZH2_pos_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+EZH2_neg_annot_promoterAnd5_geneSymbol = EZH2_neg_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+write.table(EZH2_pos_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_THORq5_EZH2_pos_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(EZH2_neg_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_THORq5_EZH2_neg_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+
+```
+
+--> *EZH2*; THORq5, 325/156 gene gain/lost
+
+
+
+# Functional analysis with enrichR
+
+Functional analysis **enrichR with THOR diff bound genes**
+
+- NOTE: I did NOT using webtool Venn diagram I isolated the specific genes that gain / lost H3K*me3 (eg.; like: `output/ChIPseeker/annotation_THOR_H3K*me3_q*_pos_promoterAnd5_geneSymbol_Venndiagram*.txt`)
+
+
+**IMPOPRTANT NOTE: Run the reading and processing ONE BY ONE !!! Otherwise, lead to bug!!!!**
+
+```R
+# library
+library("tidyverse")
+library("enrichR")
+library("ggrepel")
+
+# Define databases for enrichment
+dbs <- c("GO_Biological_Process_2023") # 
+
+### GeneSymbol list of signif gain/lost EZH2 in WT vs KO
+output/ChIPseeker/annotation_THORq5_EZH2_neg_annot_promoterAnd5_geneSymbol.txt
+output/ChIPseeker/annotation_THORq5_EZH2_pos_annot_promoterAnd5_geneSymbol.txt
+
+
+
+# IF starting with geneSymbol
+## Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/ChIPseeker/annotation_THORq5_EZH2_neg_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+## Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/ChIPseeker/annotation_THORq5_EZH2_pos_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$GO_Biological_Process_2023
+down <- edown$GO_Biological_Process_2023
+up$type <- "up"
+down$type <- "down"
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 20)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 20)
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+
+## FAIL as dupplicates:
+up_pathways_suffixed <- paste0(up_pathways, "_up")
+down_pathways_suffixed <- paste0(down_pathways, "_down")
+new_order <- c(down_pathways_suffixed, up_pathways_suffixed)
+gos$Term <- ifelse(gos$type == "up", paste0(gos$Term, "_up"), paste0(gos$Term, "_down"))
+gos$Term <- factor(gos$Term, levels = new_order)
+
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics 
+
+pdf("output/GO/enrichR_GO_Biological_Process_2023_THORq5_EZH2.pdf", width=8, height=10)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="EZH2",   # H3K27me3  H3K4me3
+                    labels = c("Lost", "Gain"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "GO_Biological_Process_2023") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+
+
+## save output
+write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_THORq5_EZH2.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("GO_Molecular_Function_2023") # 
+
+### GeneSymbol list of signif gain/lost EZH2 in WT vs KO
+output/ChIPseeker/annotation_THORq5_EZH2_neg_annot_promoterAnd5_geneSymbol.txt
+output/ChIPseeker/annotation_THORq5_EZH2_pos_annot_promoterAnd5_geneSymbol.txt
+
+
+
+# IF starting with geneSymbol
+## Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/ChIPseeker/annotation_THORq5_EZH2_neg_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+## Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/ChIPseeker/annotation_THORq5_EZH2_pos_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+# Extracting KEGG data and assigning types
+up <- eup$GO_Molecular_Function_2023
+down <- edown$GO_Molecular_Function_2023
+up$type <- "up"
+down$type <- "down"
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 20)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 20)
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+## FAIL as dupplicates:
+up_pathways_suffixed <- paste0(up_pathways, "_up")
+down_pathways_suffixed <- paste0(down_pathways, "_down")
+new_order <- c(down_pathways_suffixed, up_pathways_suffixed)
+gos$Term <- ifelse(gos$type == "up", paste0(gos$Term, "_up"), paste0(gos$Term, "_down"))
+gos$Term <- factor(gos$Term, levels = new_order)
+
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+pdf("output/GO/enrichR_GO_Molecular_Function_2023_THORq5_EZH2.pdf", width=8, height=6)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="EZH2",   # H3K27me3  H3K4me3
+                    labels = c("Lost", "Gain"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "GO_Molecular_Function_2023") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+
+## save output
+write.table(gos, "output/GO/enrichR_GO_Molecular_Function_2023_THORq5_EZH2.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("GO_Cellular_Component_2023") # 
+
+### GeneSymbol list of signif gain/lost EZH2 in WT vs KO
+output/ChIPseeker/annotation_THORq5_EZH2_neg_annot_promoterAnd5_geneSymbol.txt
+output/ChIPseeker/annotation_THORq5_EZH2_pos_annot_promoterAnd5_geneSymbol.txt
+
+
+
+# IF starting with geneSymbol
+## Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/ChIPseeker/annotation_THORq5_EZH2_neg_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+## Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/ChIPseeker/annotation_THORq5_EZH2_pos_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$GO_Cellular_Component_2023
+down <- edown$GO_Cellular_Component_2023
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 20)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 20)
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+
+
+# Plotting with enhanced aesthetics
+
+pdf("output/GO/enrichR_GO_Cellular_Component_2023_THORq5_EZH2.pdf", width=8, height=1)
+
+
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="EZH2",   # H3K27me3  H3K4me3
+                    labels = c("Lost", "Gain"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "GO_Cellular_Component_2023") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+
+
+## save output
+write.table(gos, "output/GO/enrichR_GO_Cellular_Component_2023_THORq5_EZH2.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+# Define databases for enrichment
+dbs <- c("KEGG_2021_Human") # 
+
+### GeneSymbol list of signif gain/lost EZH2 in WT vs KO
+output/ChIPseeker/annotation_THORq5_EZH2_neg_annot_promoterAnd5_geneSymbol.txt
+output/ChIPseeker/annotation_THORq5_EZH2_pos_annot_promoterAnd5_geneSymbol.txt
+
+
+# IF starting with geneSymbol
+## Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/ChIPseeker/annotation_THORq5_EZH2_neg_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+## Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/ChIPseeker/annotation_THORq5_EZH2_pos_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$KEGG_2021_Human
+down <- edown$KEGG_2021_Human
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 20)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 20)
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+
+pdf("output/GO/enrichR_KEGG_2021_Human_THORq5_EZH2.pdf", width=8, height=3)
+
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="EZH2",   # H3K27me3  H3K4me3
+                    labels = c("Lost", "Gain"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "KEGG_2021_Human") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+
+
+## save output
+write.table(gos, "output/GO/enrichR_KEGG_2021_Human_THORq5_EZH2.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+```
+
+
+
 
 
 # THOR diff peaks
@@ -895,7 +1339,7 @@ Generate median tracks:
 conda activate BedToBigwig
 
 sbatch scripts/bigwigmerge_THOR_CPC.sh # 17869306 ok
-sbatch --dependency=afterany:17869560 scripts/bigwigmerge_THOR_hESC.sh # 17869572 xxx
+sbatch --dependency=afterany:17869560 scripts/bigwigmerge_THOR_hESC.sh # 17869572 ok
 
 ```
 
@@ -917,8 +1361,8 @@ library("dplyr")
 library("ggplot2")
 library("tidyr")
 
-# WTvsKO
-diffpeaks <- read_tsv("output/THOR/THOR_50dN_H3K27me3_WTvsKO/50dNH3K27me3WTvsKO-diffpeaks.bed",
+# WTvsKO QSER1
+diffpeaks <- read_tsv("output/THOR/THOR_hESC_QSER1_WTvsYAPKO/hESCQSER1WTvsYAPKO-diffpeaks.bed",
                       col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
 ## split the last field and calculate FC
 thor_splitted = diffpeaks %>%
@@ -928,60 +1372,77 @@ thor_splitted = diffpeaks %>%
   mutate(FC = (count_KO_1+count_KO_2) / (count_WT_1+count_WT_2))
   
 ## plot the histogram of the fold-change computed above, count second condition / count 1st condition
-pdf("output/THOR/THOR_50dN_H3K27me3_WTvsKO/log2FC.pdf", width=14, height=14)
+pdf("output/THOR/THOR_hESC_QSER1_WTvsYAPKO/log2FC.pdf", width=14, height=14)
 thor_splitted %>%
   ggplot(aes(x = log2(FC))) +
   geom_histogram() +
   scale_x_continuous(breaks = seq(-5, 3, 1)) +
-  ggtitle("50dN_WT vs KO") +
+  ggtitle("WT vs KO") +
   theme_bw()
 dev.off()
 
-pdf("output/THOR/THOR_50dN_H3K27me3_WTvsKO/log2FC_qval25.pdf", width=14, height=14)
+## --> Very few diff peaks!
+
+
+# WTvsKO EZH2
+diffpeaks <- read_tsv("output/THOR/THOR_hESC_EZH2_WTvsYAPKO/hESCEZH2WTvsYAPKO-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2) / (count_WT_1+count_WT_2))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_hESC_EZH2_WTvsYAPKO/log2FC.pdf", width=14, height=14)
 thor_splitted %>%
-  filter(qval > 25) %>%
   ggplot(aes(x = log2(FC))) +
   geom_histogram() +
   scale_x_continuous(breaks = seq(-5, 3, 1)) +
-  ggtitle("NPC_WT vs KO_qval25") +
+  ggtitle("WT vs KO") +
+  theme_bw()
+dev.off()
+
+
+pdf("output/THOR/THOR_hESC_EZH2_WTvsYAPKO/log2FC_qval5.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 5) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("WT vs KO_qval5") +
   theme_bw()
 dev.off()
 
 ## create a bed file, append chr to chromosome names and write down the file
 thor_splitted %>%
-  filter(qval > 100) %>%
-  write_tsv("output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval100.bed", col_names = FALSE)
+  filter(qval > 1) %>%
+  write_tsv("output/THOR/THOR_hESC_EZH2_WTvsYAPKO/THOR_qval1.bed", col_names = FALSE)
 
 ## how many minus / plus
 thor_splitted %>%
-  filter(qval > 25) %>%
+  filter(qval > 5) %>%
   group_by(X6) %>%
   summarise(n = n())
-
-
-
-
 ```
 
 - *NOTE: FC positive = less in KO; negative = more in KO*
 
 **Optimal qvalue:**
---> *H3K27me3*; qval 10 looks great!
+--> *EZH2*; qval 5 looks great!
 
---> In agreement with `003__CutRun`; in KO overall same number of gain and lost regions; and in KOEF1aEZH1 much more gain of H3K27me3 (act like the HET)
+
+
+
 
 Isolate positive and negative THOR peaks to display deepTool plots
 
 ```bash
 # positive negative peaks
 ## qval 10
-awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval10.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval10_positive.bed
-awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval10.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval10_negative.bed
-
-awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10_positive.bed
-awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10_negative.bed
-
-
+awk -F'\t' '$16 > 1' output/THOR/THOR_hESC_EZH2_WTvsYAPKO/THOR_qval5.bed > output/THOR/THOR_hESC_EZH2_WTvsYAPKO/THOR_qval5_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_hESC_EZH2_WTvsYAPKO/THOR_qval5.bed > output/THOR/THOR_hESC_EZH2_WTvsYAPKO/THOR_qval5_negative.bed
 ```
 
 
@@ -989,49 +1450,58 @@ awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10.b
 
 # deepTool plots
 
+## Non overlaping config
 
 Venn diagram of peak-genes TED4, QSER1 and EZH2 has been generated.
 
 - Check whether QSER1 flank EZH2 (confirm [Dixon2021 paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8185639/))
 - Check TED4 vs QSER1 (and EZH2)
-
---> use THOR bigwig for QSER1 and EZH2 and use raw unique bigwig for TEAD4 (from `008003`)
-
+--> Venn diagram generated online and gene list exported manually (`ChIPseeker/Venn_overlap_hESC_WT_*.txt`)
 
 
+**--> use THOR bigwig for QSER1 and EZH2 and use raw unique bigwig for TEAD4 (from `008003`)**
 
 Generate gtf file from gene list; start with gene with peak in promoter (qval macs2 2.3):
 
 ```bash
-# isolate all the genes bound with QSER1, TEAD4, EZH2 in WT
-xxx
-# isolate all the genes bound with QSER1, EZH2 in WT
-
-
-# isolate all the genes bound with QSER1, EZH2 in WT
-
-
-
-
-cat output/ChIPseeker/annotation_macs2_PSC_WT_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt output/ChIPseeker/annotation_macs2_PSC_KO_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt | sort | uniq > output/ChIPseeker/annotation_macs2_PSC_WTKO_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt
-cat output/ChIPseeker/annotation_macs2_PSC_WT_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt output/ChIPseeker/annotation_macs2_PSC_KO_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt | sort | uniq > output/ChIPseeker/annotation_macs2_PSC_WTKO_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt
 ### create gtf from gene list
 #### Modify the .txt file that list all genes so that it match gtf structure
 ## Modify the .txt file that list all genes so that it match gtf structure
-sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_macs2_PSC_WTKO_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_WTKO_H3K27me3_qval2.30103_Promoter_5_as_gtf_geneSymbol.txt
-sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_macs2_PSC_WTKO_H3K27me3_qval1.30103_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_WTKO_H3K27me3_qval1.30103_Promoter_5_as_gtf_geneSymbol.txt
-## Filter the gtf
-grep -Ff output/ChIPseeker/annotation_WTKO_H3K27me3_qval2.30103_Promoter_5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_macs2_H3K27me3_WTKO_qval2.30103_Promoter_5.gtf
-grep -Ff output/ChIPseeker/annotation_WTKO_H3K27me3_qval1.30103_Promoter_5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_macs2_H3K27me3_WTKO_qval1.30103_Promoter_5.gtf
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_hESC_WT_QSER1TEAD4.txt > output/ChIPseeker/Venn_overlap_hESC_WT_QSER1TEAD4_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2TEAD4.txt > output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2TEAD4_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2.txt > output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2_as_gtf_geneSymbol.txt
 
+## Filter the gtf
+grep -Ff output/ChIPseeker/Venn_overlap_hESC_WT_QSER1TEAD4_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_hESC_WT_QSER1TEAD4.gtf
+grep -Ff output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_hESC_WT_QSER1EZH2.gtf
+grep -Ff output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2TEAD4_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_hESC_WT_QSER1EZH2TEAD4.gtf
 
 # deeptool plots
-sbatch scripts/matrix_TSS_10kb_H3K27me3_THOR_genePeaks_macs2q1.30103.sh # 15963978 ok
-sbatch scripts/matrix_TSS_10kb_H3K27me3_THOR_genePeaks_macs2q2.30103.sh # 15964044 ok
+sbatch scripts/matrix_TSS_5kb_THORQSER1EZH2UniqueTEAD4_Venn_overlap_hESC_WT_QSER1TEAD4.sh # 18526196 ok
+sbatch scripts/matrix_TSS_5kb_THORQSER1EZH2UniqueTEAD4_Venn_overlap_hESC_WT_QSER1EZH2.sh # 18526206 ok
+sbatch scripts/matrix_TSS_5kb_THORQSER1EZH2UniqueTEAD4_Venn_overlap_hESC_WT_QSER1EZH2TEAD4.sh # 18526209 ok
+```
+
+--> QSER1 before TSS; EZH2 right after TSS
 
 
+
+## EZH2 gain lost WT vs KO
+
+```bash
+# deeptool plots
+sbatch scripts/matrix_TSS_5kb_THOREZH2_hESCWTvsYAPKO_positiveNegative_peak.sh # 18526815 xxx
 
 ```
+
+
+
+
+
+
+
+
+
 
 
 
