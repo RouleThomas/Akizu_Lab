@@ -21,7 +21,8 @@ plotHeatmap -m output/deeptools/matrix_TSS_5kb_THORQSER1EZH2UniqueTEAD4_Venn_ove
     --whatToShow 'heatmap and colorbar' \
     --heatmapHeight 10 \
     --heatmapWidth 2 \
-    --colorMap bwr
+    --colorMap bwr \
+    --zMax 16 15 4
 
 
 plotHeatmap -m output/deeptools/matrix_TSS_5kb_THORQSER1EZH2UniqueTEAD4_Venn_overlap_hESC_WT_QSER1TEAD4.gz \

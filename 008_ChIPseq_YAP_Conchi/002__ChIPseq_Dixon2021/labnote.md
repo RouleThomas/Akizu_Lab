@@ -2,7 +2,7 @@
 
 Re-analysis of CutRun dataset from (Dixon et al)[10.1126/science.abd0875].
 
-- Focus on H3K4me3, H3K27me3 and DNMT3 (check if co-localization with EZH2 and H3K27me3 from `008*/001*`)
+- Focus on H3K4me3, H3K27me3 and DNMT3 (check if co-localization with EZH2 and H3K27me3 from `008*/001*`), and QSER1-FLAG (check if FLAG same as our QSER1 native ChIPseq from `008*/001*`)
 --> 2 rep WT H1 hESC
 
 
@@ -14,17 +14,18 @@ Re-analysis of CutRun dataset from (Dixon et al)[10.1126/science.abd0875].
 - Add to collections and select `Bash script for downloading FastQ files` --> copy into `scripts/download_urls.sh`
 
 ```bash
-sbatch scripts/download_urls.sh # 18384845 xxx
-
+sbatch scripts/download_urls.sh # 18384845 ok
+sbatch scripts/download_urls_QSER1.sh # 18544120 xxx
 ```
 
+--> Not clear what are the inputs with QSER1 files, so let's use the 2 rep of H9 inputs for all samples
 
 
 ## Rename files
 
 Let's rename file with our classic nomenclature
 
-**make sure to convert the `rename_008002.txt` into unix tab sep  format with `dos2unix`!!**
+**make sure to convert the `rename_008002.txt` and `rename_008002_QSER1.txt` into unix tab sep  format with `dos2unix`!!**
 
 ```bash
 cd input
@@ -33,6 +34,11 @@ while IFS=$'\t' read -r old_name new_name
 do
     mv "$old_name" "$new_name"
 done < rename_008002.txt
+
+while IFS=$'\t' read -r old_name new_name
+do
+    mv "$old_name" "$new_name"
+done < rename_008002_QSER1.txt
 ```
 
 --> All good 
@@ -45,7 +51,8 @@ done < rename_008002.txt
 Run fastp
 ```bash
 # run rep per rep
-sbatch scripts/fastp_raw.sh # 18390922 xxx
+sbatch scripts/fastp_raw.sh # 18390922 ok
+sbatch scripts/fastp_QSER1.sh # 18544351 xxx
 ```
 
 
@@ -57,7 +64,9 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:18390922 scripts/bowtie2_raw.sh # 18391156 xxx
+sbatch --dependency=afterany:18390922 scripts/bowtie2_raw.sh # 18391156 ok
+sbatch --dependency=afterany:18544351 scripts/bowtie2_QSER1.sh # 18544412 xxx
+
 ```
 
 XXXXXXXXXXXXXXXXXXXXXXX BELOw XXXXXXXXXXXXXXXXXXX
@@ -76,13 +85,21 @@ for file in slurm-18391156.out; do
     aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
     aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
     echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+
+XXX RUN BKLOW
 done > output/bowtie2/alignment_counts_18391156.txt
+for file in slurm-18544412.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2/alignment_counts_18544412.txt
 ```
 
 Add these values to `/home/roulet/008_ChIPseq_YAP_Conchi/002__ChIPseq_Dixon2021/samples_002.xlsx`\
 Then in R; see `/home/roulet/008_ChIPseq_YAP_Conchi/008_ChIPseq_YAP_Conchi.R`.
 
---> Overall >60% input reads as been uniquely mapped to the genome (90% non uniq)
+--> Overall >70% input reads as been uniquely mapped to the genome (90% non uniq)
 
 
 
@@ -95,7 +112,8 @@ This is prefered for THOR bam input.
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:18391156 scripts/samtools_unique_raw.sh # 18391579 xxx
+sbatch --dependency=afterany:18391156 scripts/samtools_unique_raw.sh # 18391579 ok
+sbatch --dependency=afterany:18544412 scripts/samtools_unique_QSER1.sh # 18544524 xxx
 ```
 
 
@@ -109,64 +127,22 @@ Paramaters:
 ```bash
 conda activate deeptools
 
-sbatch --dependency=afterany:18391579 scripts/bamtobigwig_unique_raw.sh # 18392081 xxx
+sbatch --dependency=afterany:18391579 scripts/bamtobigwig_unique_raw.sh # 18392081 ok
+sbatch --dependency=afterany:18544524 scripts/bamtobigwig_unique_QSER1.sh # 18544590 xxx
 
 ```
 
-XXXXXXXXXXXXXXXXXXXXXXX BELOw  ALL XXXXXXXXXXXXXXXXXXX
 
-
-
-
-- NPC
-PASS: H3K4m3 (rep very diff.), H3K9me3 (a bit noisy), H3K27me3
-FAIL: H3K27ac (very low signal and noisy, seems R2 work better)
-- 53dN
-PASS: H3K4me3, H3K9me3 (a bit noisy), H3K27ac, H3K27me3
-FAIL: *H3K9me3* could be there
-
-
-
-
-
---> The failed one, are also failed in the bigwig Ciceri files...
-
---> Compare with H3K27ac from (ENCODE)[https://www.encodeproject.org/experiments/ENCSR799SRL/]
-
-
-```bash
-# gunzip the file
-
-# Convert wig to bigwig
-srun --mem=500g --pty bash -l
-
-## install wigtobigwig
-conda activate BedToBigwig
-conda install bioconda::ucsc-wigtobigwig # fail
-conda install bioconda/label/cf201901::ucsc-wigtobigwig  # fail
-#### --> fail create a new conda env
-conda create -n wigtobigwig -c bioconda ucsc-wigtobigwig
-conda activate wigtobigwig
-
-## convert wig to bigwig
-wigToBigWig output/bigwig_hg19/GSM767343_UCSD.H1_Derived_Neuronal_Progenitor_Cultured_Cells.H3K27ac.SK504.wig ../../Master/meta/hg19.chrom.sizes output/bigwig_hg19/GSM767343_UCSD.H1_Derived_Neuronal_Progenitor_Cultured_Cells.H3K27ac.SK504.bw
-wigToBigWig output/bigwig_hg19/GSM818031_UCSD.H1_Derived_Neuronal_Progenitor_Cultured_Cells.H3K27ac.AK220.wig ../../Master/meta/hg19.chrom.sizes output/bigwig_hg19/GSM818031_UCSD.H1_Derived_Neuronal_Progenitor_Cultured_Cells.H3K27ac.AK220.bw
-wigToBigWig output/bigwig_hg19/GSM896162_UCSD.H1_Derived_Neuronal_Progenitor_Cultured_Cells.H3K27ac.AK319.wig ../../Master/meta/hg19.chrom.sizes output/bigwig_hg19/GSM896162_UCSD.H1_Derived_Neuronal_Progenitor_Cultured_Cells.H3K27ac.AK319.bw
-
-
-```
-NOTE: hg19 chrom size copy from [ucsc](https://hgdownload.cse.ucsc.edu/goldenpath/hg19/bigZips/)
-
-
-
+PASS: H3K27me3, H3K4me3; DNMT3A and B a bit messy
 
 
 Generate median tracks:
 ```bash
 conda activate BedToBigwig
 # raw unique bigwig
-sbatch scripts/bigwigmerge_unique_NPC.sh # 17509895 ok
-sbatch scripts/bigwigmerge_unique_53dN.sh # 17509979 ok
+sbatch scripts/bigwigmerge_unique_raw.sh # 18543995 ok
+sbatch --dependency=afterany:18544590 scripts/bigwigmerge_unique_QSER1.sh # 18544696 xxx
+
 ```
 
 *NOTE: merging raw bigiwg probably not super smart; not seq depth normalized, so to take with caution! But to show presence of signal in our case, that's ok!*
@@ -174,6 +150,7 @@ sbatch scripts/bigwigmerge_unique_53dN.sh # 17509979 ok
 
 ## Pearson correlation heatmap on bigwig signals
 
+XXX HERE !!!!!!!!!!!! bwlo not mod, wait QSER1 CHIP...
 
 
 ```bash
