@@ -15,7 +15,7 @@ Re-analysis of CutRun dataset from (Dixon et al)[10.1126/science.abd0875].
 
 ```bash
 sbatch scripts/download_urls.sh # 18384845 ok
-sbatch scripts/download_urls_QSER1.sh # 18544120 xxx
+sbatch scripts/download_urls_QSER1.sh # 18544120 ok
 ```
 
 --> Not clear what are the inputs with QSER1 files, so let's use the 2 rep of H9 inputs for all samples
@@ -52,7 +52,7 @@ Run fastp
 ```bash
 # run rep per rep
 sbatch scripts/fastp_raw.sh # 18390922 ok
-sbatch scripts/fastp_QSER1.sh # 18544351 xxx
+sbatch scripts/fastp_QSER1.sh # 18544351 ok
 ```
 
 
@@ -65,7 +65,7 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 conda activate bowtie2
 
 sbatch --dependency=afterany:18390922 scripts/bowtie2_raw.sh # 18391156 ok
-sbatch --dependency=afterany:18544351 scripts/bowtie2_QSER1.sh # 18544412 xxx
+sbatch --dependency=afterany:18544351 scripts/bowtie2_QSER1.sh # 18544412 ok
 
 ```
 
@@ -85,8 +85,6 @@ for file in slurm-18391156.out; do
     aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
     aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
     echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
-
-XXX RUN BKLOW
 done > output/bowtie2/alignment_counts_18391156.txt
 for file in slurm-18544412.out; do
     total_reads=$(grep "reads; of these" $file | awk '{print $1}')
@@ -113,7 +111,7 @@ This is prefered for THOR bam input.
 conda activate bowtie2
 
 sbatch --dependency=afterany:18391156 scripts/samtools_unique_raw.sh # 18391579 ok
-sbatch --dependency=afterany:18544412 scripts/samtools_unique_QSER1.sh # 18544524 xxx
+sbatch --dependency=afterany:18544412 scripts/samtools_unique_QSER1.sh # 18544524 ok
 ```
 
 
@@ -128,12 +126,12 @@ Paramaters:
 conda activate deeptools
 
 sbatch --dependency=afterany:18391579 scripts/bamtobigwig_unique_raw.sh # 18392081 ok
-sbatch --dependency=afterany:18544524 scripts/bamtobigwig_unique_QSER1.sh # 18544590 xxx
+sbatch --dependency=afterany:18544524 scripts/bamtobigwig_unique_QSER1.sh # 18544590 ok
 
 ```
 
 
-PASS: H3K27me3, H3K4me3; DNMT3A and B a bit messy
+PASS: H3K27me3, H3K4me3, QSER1FLAG; DNMT3A and B a bit messy
 
 
 Generate median tracks:
@@ -141,7 +139,7 @@ Generate median tracks:
 conda activate BedToBigwig
 # raw unique bigwig
 sbatch scripts/bigwigmerge_unique_raw.sh # 18543995 ok
-sbatch --dependency=afterany:18544590 scripts/bigwigmerge_unique_QSER1.sh # 18544696 xxx
+sbatch --dependency=afterany:18544590 scripts/bigwigmerge_unique_QSER1.sh # 18544696 ok
 
 ```
 
@@ -150,39 +148,37 @@ sbatch --dependency=afterany:18544590 scripts/bigwigmerge_unique_QSER1.sh # 1854
 
 ## Pearson correlation heatmap on bigwig signals
 
-XXX HERE !!!!!!!!!!!! bwlo not mod, wait QSER1 CHIP...
-
 
 ```bash
 conda activate deeptools
 
-# Generate compile bigwig (.npz) files _ hg38 Akizu analysis
-sbatch scripts/multiBigwigSummary_NPC.sh # 15280856 ok
-sbatch scripts/multiBigwigSummary_53dN.sh # 15280864 ok
-
-# Generate compile bigwig (.npz) files _ hg19 Ciceri analysis
-sbatch scripts/multiBigwigSummary_NPC_Ciceri.sh # 15280901 ok
-sbatch scripts/multiBigwigSummary_53dN_Ciceri.sh # 15281092 ok
+# Generate compile bigwig (.npz) files _ all raw bigwig
+sbatch scripts/multiBigwigSummary_all.sh # 
 
 
-# Akizu with Ciceri _ NPC
-sbatch scripts/multiBigwigSummary_NPC_CutRun001008_Ciceri.sh # 15290030 ok
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_all.npz \
+    --transpose \
+    --ntop 0 \
+    --labels hESC_WT_QSER1FLAG_R1 hESC_WT_QSER1FLAG_R2 hESC_WT_DNMT3A_R1 hESC_WT_DNMT3A_R2 hESC_WT_DNMT3B_R1 hESC_WT_DNMT3B_R2 hESC_WT_H3K27me3_R1 hESC_WT_H3K27me3_R2 hESC_WT_H3K4me3_R1 hESC_WT_H3K4me3_R2 hESC_WT_input_R1 hESC_WT_input_R2 \
+    -o output/bigwig/multiBigwigSummary_all_plotPCA.pdf
 
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_all.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels hESC_WT_QSER1FLAG_R1 hESC_WT_QSER1FLAG_R2 hESC_WT_DNMT3A_R1 hESC_WT_DNMT3A_R2 hESC_WT_DNMT3B_R1 hESC_WT_DNMT3B_R2 hESC_WT_H3K27me3_R1 hESC_WT_H3K27me3_R2 hESC_WT_H3K4me3_R1 hESC_WT_H3K4me3_R2 hESC_WT_input_R1 hESC_WT_input_R2 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_all_heatmap.pdf
 
 
 ```
 
-**Good to use**:
-- *NPC*: H3K27me3, H3K4me3, H3K9me3, IGG
-- *53dN*: H3K27me3, H3K9me3
-
-**Bad to use**:
-- *NPC*: H3K27ac: no signal! Like IGG
-- *53dN*: AB mix between IGG, H3K4me3, H3K27ac
-
---> Same observation between Akizu and Ciceri analysis(hg38 hg19)
-
---> The *good to use* ones nicely correlate with our data in NPC WT `CutRun__005008` (`CutRun__009`)
+--> Replicates/samples are very clean; cluster well together as expected
 
 
 
@@ -198,28 +194,20 @@ sbatch scripts/multiBigwigSummary_NPC_CutRun001008_Ciceri.sh # 15290030 ok
 ```bash
 conda activate macs2
 # genotype per genotype
-sbatch scripts/macs2_broad_53dN.sh # 15401244 ok
-sbatch scripts/macs2_broad_NPC.sh # 15401308 ok
-
-sbatch scripts/macs2_broad_53dN_noIGG.sh # 15401429 ok
+sbatch scripts/macs2_broad_all.sh # 18601898 ok
 
 # pool
-sbatch scripts/macs2_broad_53dN_pool.sh # 17503351 ok
-sbatch scripts/macs2_broad_NPC_pool.sh # 17503352 ok
-
-
+sbatch scripts/macs2_broad_all_pool.sh # 18601982 fail; rerun 18603726 xxx 
 ```
 
---> H3K27ac in NPC show 3 peak in R1! And a ~7k peaks in R2. R2 is better, but still very ugly and noisy!
-
---> 53dN IGG vs not using IGG: almost the same, so let's better use IGG
+- *NOTE: I forget added `*pool` suffix at the name file at job-18601982, and forget to run in broad; rerun.*
 
 
 
 ```bash
 conda activate bowtie2 # for bedtools
 # sbatch scripts/macs2_raw_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
-sbatch scripts/macs2_raw_peak_signif_pool.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
+sbatch scripts/macs2_raw_peak_signif.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
 
 
 # quick command to print median size of peak within a bed
@@ -236,10 +224,11 @@ Then keep only the significant peaks (re-run the script to test different qvalue
 
 
 **Optimal qvalue** according to IGV:
-- 50dN_WT_H3K4me3: 2.30103 (4 more true peaks)
-- 50dN_WT_H3K27me3: 2.30103 (4 more true peaks); data is of poor quality...
-- *other samples not checked*
-
+- hESC_WT_DNMT3A: 2.30103
+- hESC_WT_DNMT3B: 2.30103 
+- hESC_WT_H3K27me3: 2.30103
+- hESC_WT_H3K4me3: 2.30103 
+- hESC_WT_QSER1FLAG: 2.30103 
 
 
 
@@ -249,9 +238,11 @@ Then keep only the significant peaks (re-run the script to test different qvalue
 Let's assign **peak to genes from MACS2 peak**:
 
 **Optimal qvalue** according to IGV:
-- 50dN_WT_H3K4me3: 2.30103 (4 more true peaks)
-- 50dN_WT_H3K27me3: 2.30103 (4 more true peaks); data is of poor quality...
-- *other samples not checked*
+- hESC_WT_DNMT3A: 2.30103
+- hESC_WT_DNMT3B: 2.30103 
+- hESC_WT_H3K27me3: 2.30103
+- hESC_WT_H3K4me3: 2.30103 
+- hESC_WT_QSER1FLAG: 2.30103 
 
 
 
