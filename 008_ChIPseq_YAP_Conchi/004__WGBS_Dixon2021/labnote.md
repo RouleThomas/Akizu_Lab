@@ -32,7 +32,7 @@ cd input
 while IFS=$'\t' read -r old_name new_name
 do
     mv "$old_name" "$new_name"
-done < rename008004.txt
+done < rename_008004.txt
 ```
 
 --> All good 
