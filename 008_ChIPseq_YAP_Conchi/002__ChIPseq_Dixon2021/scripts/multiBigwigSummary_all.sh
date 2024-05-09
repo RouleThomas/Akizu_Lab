@@ -15,6 +15,7 @@ output/bigwig/hESC_WT_H3K27me3_R1.unique.dupmark.sorted.bw \
 output/bigwig/hESC_WT_H3K27me3_R2.unique.dupmark.sorted.bw \
 output/bigwig/hESC_WT_H3K4me3_R1.unique.dupmark.sorted.bw \
 output/bigwig/hESC_WT_H3K4me3_R2.unique.dupmark.sorted.bw \
+output/bigwig/hESC_WT_EZH2_R1.unique.dupmark.sorted.bw \
 output/bigwig/hESC_WT_input_R1.unique.dupmark.sorted.bw \
 output/bigwig/hESC_WT_input_R2.unique.dupmark.sorted.bw -o output/bigwig/multiBigwigSummary_all.npz -p max
 

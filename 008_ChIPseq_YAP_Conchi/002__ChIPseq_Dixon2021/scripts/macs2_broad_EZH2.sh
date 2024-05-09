@@ -8,16 +8,7 @@ blacklist="../../Master/meta/hg38-blacklist.v2.bed"
 
 
 samples_and_controls=(
-    "hESC_WT_DNMT3A_R1" "hESC_WT_input_R1"
-    "hESC_WT_DNMT3A_R2" "hESC_WT_input_R2"
-    "hESC_WT_DNMT3B_R1" "hESC_WT_input_R1"
-    "hESC_WT_DNMT3B_R2" "hESC_WT_input_R2"
-    "hESC_WT_H3K27me3_R1" "hESC_WT_input_R1"
-    "hESC_WT_H3K27me3_R2" "hESC_WT_input_R2"
-    "hESC_WT_H3K4me3_R1" "hESC_WT_input_R1"
-    "hESC_WT_H3K4me3_R2" "hESC_WT_input_R2"
-    "hESC_WT_QSER1FLAG_R1" "hESC_WT_input_R1"
-    "hESC_WT_QSER1FLAG_R2" "hESC_WT_input_R2"
+    "hESC_WT_EZH2_R1" "hESC_WT_input_R1"
 )
 
 

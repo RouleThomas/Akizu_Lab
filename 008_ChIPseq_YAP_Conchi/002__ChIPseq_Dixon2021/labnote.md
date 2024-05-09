@@ -2,8 +2,8 @@
 
 Re-analysis of CutRun dataset from (Dixon et al)[10.1126/science.abd0875].
 
-- Focus on H3K4me3, H3K27me3 and DNMT3 (check if co-localization with EZH2 and H3K27me3 from `008*/001*`), and QSER1-FLAG (check if FLAG same as our QSER1 native ChIPseq from `008*/001*`)
---> 2 rep WT H1 hESC
+- Focus on H3K4me3, H3K27me3 and DNMT3 (check if co-localization with EZH2 and H3K27me3 from `008*/001*`), and QSER1-FLAG (check if FLAG same as our QSER1 native ChIPseq from `008*/001*`), and EZH2.
+--> 2 rep WT H1 hESC; except EZH2 with 1 Rep!
 
 
 # Download data
@@ -16,6 +16,7 @@ Re-analysis of CutRun dataset from (Dixon et al)[10.1126/science.abd0875].
 ```bash
 sbatch scripts/download_urls.sh # 18384845 ok
 sbatch scripts/download_urls_QSER1.sh # 18544120 ok
+sbatch scripts/download_urls_EZH2.sh # 18659742 xxx
 ```
 
 --> Not clear what are the inputs with QSER1 files, so let's use the 2 rep of H9 inputs for all samples
@@ -25,7 +26,7 @@ sbatch scripts/download_urls_QSER1.sh # 18544120 ok
 
 Let's rename file with our classic nomenclature
 
-**make sure to convert the `rename_008002.txt` and `rename_008002_QSER1.txt` into unix tab sep  format with `dos2unix`!!**
+**make sure to convert the `rename_008002.txt`, `rename_008002_QSER1.txt` and `rename_008002_EZH2.txt` into unix tab sep  format with `dos2unix`!!**
 
 ```bash
 cd input
@@ -39,6 +40,11 @@ while IFS=$'\t' read -r old_name new_name
 do
     mv "$old_name" "$new_name"
 done < rename_008002_QSER1.txt
+
+while IFS=$'\t' read -r old_name new_name
+do
+    mv "$old_name" "$new_name"
+done < rename_008002_EZH2.txt
 ```
 
 --> All good 
@@ -53,6 +59,7 @@ Run fastp
 # run rep per rep
 sbatch scripts/fastp_raw.sh # 18390922 ok
 sbatch scripts/fastp_QSER1.sh # 18544351 ok
+sbatch scripts/fastp_EZH2.sh # 18660122 xxx
 ```
 
 
@@ -66,12 +73,12 @@ conda activate bowtie2
 
 sbatch --dependency=afterany:18390922 scripts/bowtie2_raw.sh # 18391156 ok
 sbatch --dependency=afterany:18544351 scripts/bowtie2_QSER1.sh # 18544412 ok
+sbatch --dependency=afterany:18660122 scripts/bowtie2_EZH2.sh # 18660130 xxx
 
 ```
 
-XXXXXXXXXXXXXXXXXXXXXXX BELOw XXXXXXXXXXXXXXXXXXX
 
---> Looks good; overall ~30-80% uniquely aligned reads
+--> Looks good; overall ~70% uniquely aligned reads
 ----> Seems less uniquel mapped reads than us but they sequence FAR more depth (~20m reads vs 5 for us)
 
 
@@ -92,6 +99,13 @@ for file in slurm-18544412.out; do
     aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
     echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
 done > output/bowtie2/alignment_counts_18544412.txt
+
+for file in slurm-18660130.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2/alignment_counts_18660130.txt
 ```
 
 Add these values to `/home/roulet/008_ChIPseq_YAP_Conchi/002__ChIPseq_Dixon2021/samples_002.xlsx`\
@@ -100,8 +114,6 @@ Then in R; see `/home/roulet/008_ChIPseq_YAP_Conchi/008_ChIPseq_YAP_Conchi.R`.
 --> Overall >70% input reads as been uniquely mapped to the genome (90% non uniq)
 
 
-
-XXXXXXXXXXXXXXXXXXXXXXX Up XXXXXXXXXXXXXXXXXXX
 
 ## Removing dupplicates (only uniquely aligned reads)
 This is prefered for THOR bam input.
@@ -112,6 +124,8 @@ conda activate bowtie2
 
 sbatch --dependency=afterany:18391156 scripts/samtools_unique_raw.sh # 18391579 ok
 sbatch --dependency=afterany:18544412 scripts/samtools_unique_QSER1.sh # 18544524 ok
+sbatch --dependency=afterany:18660130 scripts/samtools_unique_EZH2.sh # 18660179 xxx
+
 ```
 
 
@@ -127,19 +141,21 @@ conda activate deeptools
 
 sbatch --dependency=afterany:18391579 scripts/bamtobigwig_unique_raw.sh # 18392081 ok
 sbatch --dependency=afterany:18544524 scripts/bamtobigwig_unique_QSER1.sh # 18544590 ok
+sbatch --dependency=afterany:18660179 scripts/bamtobigwig_unique_EZH2.sh # 18660185 ok
+
 
 ```
 
 
-PASS: H3K27me3, H3K4me3, QSER1FLAG; DNMT3A and B a bit messy
+PASS: H3K27me3, H3K4me3, EZH2, QSER1FLAG; DNMT3A and B a bit messy
 
 
 Generate median tracks:
 ```bash
 conda activate BedToBigwig
 # raw unique bigwig
-sbatch scripts/bigwigmerge_unique_raw.sh # 18543995 ok
-sbatch --dependency=afterany:18544590 scripts/bigwigmerge_unique_QSER1.sh # 18544696 ok
+sbatch scripts/bigwigmerge_unique_raw.sh # 18543995 fail
+sbatch --dependency=afterany:18544590 scripts/bigwigmerge_unique_QSER1.sh # 18544696 fail
 
 ```
 
@@ -153,7 +169,7 @@ sbatch --dependency=afterany:18544590 scripts/bigwigmerge_unique_QSER1.sh # 1854
 conda activate deeptools
 
 # Generate compile bigwig (.npz) files _ all raw bigwig
-sbatch scripts/multiBigwigSummary_all.sh # 
+sbatch scripts/multiBigwigSummary_all.sh # 18661462 xxx
 
 
 # Plot
@@ -161,7 +177,7 @@ sbatch scripts/multiBigwigSummary_all.sh #
 plotPCA -in output/bigwig/multiBigwigSummary_all.npz \
     --transpose \
     --ntop 0 \
-    --labels hESC_WT_QSER1FLAG_R1 hESC_WT_QSER1FLAG_R2 hESC_WT_DNMT3A_R1 hESC_WT_DNMT3A_R2 hESC_WT_DNMT3B_R1 hESC_WT_DNMT3B_R2 hESC_WT_H3K27me3_R1 hESC_WT_H3K27me3_R2 hESC_WT_H3K4me3_R1 hESC_WT_H3K4me3_R2 hESC_WT_input_R1 hESC_WT_input_R2 \
+    --labels hESC_WT_QSER1FLAG_R1 hESC_WT_QSER1FLAG_R2 hESC_WT_DNMT3A_R1 hESC_WT_DNMT3A_R2 hESC_WT_DNMT3B_R1 hESC_WT_DNMT3B_R2 hESC_WT_H3K27me3_R1 hESC_WT_H3K27me3_R2 hESC_WT_H3K4me3_R1 hESC_WT_H3K4me3_R2 hESC_WT_EZH2_R1 hESC_WT_input_R1 hESC_WT_input_R2 \
     -o output/bigwig/multiBigwigSummary_all_plotPCA.pdf
 
 
@@ -171,11 +187,9 @@ plotCorrelation \
     --corMethod pearson --skipZeros \
     --plotTitle "Pearson Correlation" \
     --removeOutliers \
-    --labels hESC_WT_QSER1FLAG_R1 hESC_WT_QSER1FLAG_R2 hESC_WT_DNMT3A_R1 hESC_WT_DNMT3A_R2 hESC_WT_DNMT3B_R1 hESC_WT_DNMT3B_R2 hESC_WT_H3K27me3_R1 hESC_WT_H3K27me3_R2 hESC_WT_H3K4me3_R1 hESC_WT_H3K4me3_R2 hESC_WT_input_R1 hESC_WT_input_R2 \
+    --labels hESC_WT_QSER1FLAG_R1 hESC_WT_QSER1FLAG_R2 hESC_WT_DNMT3A_R1 hESC_WT_DNMT3A_R2 hESC_WT_DNMT3B_R1 hESC_WT_DNMT3B_R2 hESC_WT_H3K27me3_R1 hESC_WT_H3K27me3_R2 hESC_WT_H3K4me3_R1 hESC_WT_H3K4me3_R2 hESC_WT_EZH2_R1 hESC_WT_input_R1 hESC_WT_input_R2 \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
     -o output/bigwig/multiBigwigSummary_all_heatmap.pdf
-
-
 ```
 
 --> Replicates/samples are very clean; cluster well together as expected
@@ -193,11 +207,11 @@ plotCorrelation \
 
 ```bash
 conda activate macs2
-# genotype per genotype
 sbatch scripts/macs2_broad_all.sh # 18601898 ok
+sbatch scripts/macs2_broad_EZH2.sh # 18661592 ok
 
 # pool
-sbatch scripts/macs2_broad_all_pool.sh # 18601982 fail; rerun 18603726 xxx 
+sbatch scripts/macs2_broad_all_pool.sh # 18601982 fail; rerun 18603726 ok 
 ```
 
 - *NOTE: I forget added `*pool` suffix at the name file at job-18601982, and forget to run in broad; rerun.*
@@ -224,11 +238,12 @@ Then keep only the significant peaks (re-run the script to test different qvalue
 
 
 **Optimal qvalue** according to IGV:
-- hESC_WT_DNMT3A: 2.30103
-- hESC_WT_DNMT3B: 2.30103 
-- hESC_WT_H3K27me3: 2.30103
-- hESC_WT_H3K4me3: 2.30103 
-- hESC_WT_QSER1FLAG: 2.30103 
+- hESC_WT_DNMT3A: 3 noisy (4 even better)
+- hESC_WT_DNMT3B: 3 noisy (4 even better)
+- hESC_WT_H3K27me3: 2.30103 
+- hESC_WT_H3K4me3:  2.30103 
+- hESC_WT_QSER1FLAG: 3
+- hESC_WT_EZH2: 1.30103
 
 
 
@@ -238,13 +253,15 @@ Then keep only the significant peaks (re-run the script to test different qvalue
 Let's assign **peak to genes from MACS2 peak**:
 
 **Optimal qvalue** according to IGV:
-- hESC_WT_DNMT3A: 2.30103
-- hESC_WT_DNMT3B: 2.30103 
-- hESC_WT_H3K27me3: 2.30103
-- hESC_WT_H3K4me3: 2.30103 
-- hESC_WT_QSER1FLAG: 2.30103 
+- hESC_WT_DNMT3A: 3 noisy (4 even better)
+- hESC_WT_DNMT3B: 3 noisy (4 even better)
+- hESC_WT_H3K27me3: 2.30103 
+- hESC_WT_H3K4me3:  2.30103 
+- hESC_WT_QSER1FLAG: 3
+- hESC_WT_EZH2: 1.30103
 
 
+XXX HERE !!!!!!!!!!!!!!! 
 
 ```bash
 conda activate deseq2
@@ -366,4 +383,25 @@ write.table(H3K4me3_53dN_pool_qval4_annot_promoterAnd5_geneSymbol, file = "outpu
             col.names = FALSE, 
             row.names = FALSE)
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
