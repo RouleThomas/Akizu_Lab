@@ -273,13 +273,17 @@ sbatch scripts/bamtobigwig_unique_extendReads_RPGC_CPC.sh # 17786754 ok
 
 ## Pearson correlation heatmap on bigwig signals
 
-
+- `008002` current samples
+- `008002` with `008001` for QSER1 sample comparison
 
 ```bash
 conda activate deeptools
 # Generate compile bigwig (.npz) files
 sbatch scripts/multiBigwigSummary_extendReads_hESC.sh # 17863824 ok
 sbatch scripts/multiBigwigSummary_CPC.sh # 17863829 ok
+
+sbatch scripts/multiBigwigSummary_008001008002_QSER1.sh # 18718911 ok
+sbatch scripts/multiBigwigSummary_008001008002_QSER1_geneOnly.sh # 18719262 ok
 
 
 # Plot
@@ -294,6 +298,23 @@ plotPCA -in output/bigwig/multiBigwigSummary_extendReads_CPC.npz \
     --ntop 0 \
     --labels CPC_untreated_YAP1_R1 CPC_RA_YAP1_R1 CPC_untreated_YAP1_R2 CPC_RA_YAP1_R2 CPC_untreated_TEAD4_R1 CPC_RA_TEAD4_R1 CPC_untreated_TEAD4_R2 CPC_RA_TEAD4_R2 CPC_untreated_NR2F2_R1 CPC_RA_NR2F2_R1 CPC_untreated_NR2F2_R2 CPC_RA_NR2F2_R2 CPC_RA_NR2F2_R3 CPC_untreated_NR2F2_R3 CPC_untreated_input_R3 CPC_RA_input_R3 CPC_untreated_YAP1_R3 CPC_RA_YAP1_R3 CPC_untreated_TEAD4_R3 CPC_RA_TEAD4_R3 \
     -o output/bigwig/multiBigwigSummary_extendReads_CPC_plotPCA.pdf
+
+plotPCA -in output/bigwig/multiBigwigSummary_008001008002_QSER1.npz \
+    --transpose \
+    --ntop 0 \
+    --labels hESC_WT_QSER1FLAG_R1 hESC_WT_QSER1FLAG_R2 hESC_WT_inputFLAG_R1 hESC_WT_inputFLAG_R2 hESC_WT_QSER1_R1 hESC_WT_QSER1_R2 hESC_WT_input_R1 \
+    --markers o o x x o o x \
+    --colors "black" "black" "grey" "grey" "darkblue" "darkblue" "grey" \
+    -o output/bigwig/multiBigwigSummary_008001008002_QSER1_plotPCA.pdf
+
+plotPCA -in output/bigwig/multiBigwigSummary_008001008002_QSER1_geneOnly.npz \
+    --transpose \
+    --ntop 0 \
+    --labels hESC_WT_QSER1FLAG_R1 hESC_WT_QSER1FLAG_R2 hESC_WT_inputFLAG_R1 hESC_WT_inputFLAG_R2 hESC_WT_QSER1_R1 hESC_WT_QSER1_R2 hESC_WT_input_R1 \
+    --markers o o x x o o x \
+    --colors "black" "black" "grey" "grey" "darkblue" "darkblue" "grey" \
+    -o output/bigwig/multiBigwigSummary_008001008002_QSER1_geneOnly_plotPCA.pdf
+
 
 ## Heatmap
 plotCorrelation \
@@ -312,6 +333,25 @@ plotCorrelation \
     --labels CPC_untreated_YAP1_R1 CPC_RA_YAP1_R1 CPC_untreated_YAP1_R2 CPC_RA_YAP1_R2 CPC_untreated_TEAD4_R1 CPC_RA_TEAD4_R1 CPC_untreated_TEAD4_R2 CPC_RA_TEAD4_R2 CPC_untreated_NR2F2_R1 CPC_RA_NR2F2_R1 CPC_untreated_NR2F2_R2 CPC_RA_NR2F2_R2 CPC_RA_NR2F2_R3 CPC_untreated_NR2F2_R3 CPC_untreated_input_R3 CPC_RA_input_R3 CPC_untreated_YAP1_R3 CPC_RA_YAP1_R3 CPC_untreated_TEAD4_R3 CPC_RA_TEAD4_R3 \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
     -o output/bigwig/multiBigwigSummary_extendReads_CPC_heatmap.pdf
+
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_008001008002_QSER1.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels hESC_WT_QSER1FLAG_R1 hESC_WT_QSER1FLAG_R2 hESC_WT_inputFLAG_R1 hESC_WT_inputFLAG_R2 hESC_WT_QSER1_R1 hESC_WT_QSER1_R2 hESC_WT_input_R1 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_008001008002_QSER1_heatmap.pdf
+
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_008001008002_QSER1_geneOnly.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels hESC_WT_QSER1FLAG_R1 hESC_WT_QSER1FLAG_R2 hESC_WT_inputFLAG_R1 hESC_WT_inputFLAG_R2 hESC_WT_QSER1_R1 hESC_WT_QSER1_R2 hESC_WT_input_R1 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_008001008002_QSER1_geneOnly_heatmap.pdf
+
 
 ```
 
@@ -637,11 +677,6 @@ write.table(CPC_RA_YAP1_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)    
-
-
-
-
-
 
 
 
@@ -1355,8 +1390,15 @@ Generate median tracks:
 ```bash
 conda activate BedToBigwig
 
+# THOR
 sbatch scripts/bigwigmerge_THOR_CPC.sh # 17869306 ok
 sbatch --dependency=afterany:17869560 scripts/bigwigmerge_THOR_hESC.sh # 17869572 ok
+
+
+# raw bigwig
+sbatch scripts/bigwigmerge_raw_CPC.sh # 18717584 ok
+sbatch scripts/bigwigmerge_raw_hESC.sh # 18717671 xxx
+
 
 ```
 
@@ -1482,7 +1524,9 @@ Venn diagram of peak-genes TED4, QSER1 and EZH2 has been generated.
 
 **--> use THOR bigwig for QSER1 and EZH2 and use raw unique bigwig for TEAD4 (from `008003`)**
 
-Generate gtf file from gene list; start with gene with peak in promoter (qval macs2 2.3):
+Generate gtf file from gene list; 
+- gene with peak in promoter (qval macs2 2.3)
+- QSER1 comparison Conchi vs Dixon (`008002`)
 
 ```bash
 ### create gtf from gene list
@@ -1492,19 +1536,42 @@ sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_hESC_WT_QSER1T
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2TEAD4.txt > output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2TEAD4_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2.txt > output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2_as_gtf_geneSymbol.txt
 
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_qval1.30103_noIntergenic_geneSymbol.txt > output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_qval1.30103_noIntergenic_as_gtf_geneSymbol.txt
+
+sed 's/\r$//; s/.*/gene_name "&"/' ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval10_noIntergenic_geneSymbol.txt > ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval10_noIntergenic_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval15_noIntergenic_geneSymbol.txt > ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval15_noIntergenic_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval20_noIntergenic_geneSymbol.txt > ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval20_noIntergenic_as_gtf_geneSymbol.txt
+
 ## Filter the gtf
 grep -Ff output/ChIPseeker/Venn_overlap_hESC_WT_QSER1TEAD4_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_hESC_WT_QSER1TEAD4.gtf
 grep -Ff output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_hESC_WT_QSER1EZH2.gtf
 grep -Ff output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2TEAD4_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_hESC_WT_QSER1EZH2TEAD4.gtf
 
+grep -Ff output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_qval1.30103_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_macs2_hESC_WT_QSER1_qval1.30103_noIntergenic.gtf
+
+grep -Ff ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval10_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > ../002__ChIPseq_Dixon2021/meta/ENCFF159KBI_macs2_hESC_WT_QSER1FLAG_pool_qval10_noIntergenic.gtf
+grep -Ff ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval15_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > ../002__ChIPseq_Dixon2021/meta/ENCFF159KBI_macs2_hESC_WT_QSER1FLAG_pool_qval15_noIntergenic.gtf
+grep -Ff ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval20_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > ../002__ChIPseq_Dixon2021/meta/ENCFF159KBI_macs2_hESC_WT_QSER1FLAG_pool_qval20_noIntergenic.gtf
+
 # deeptool plots
+## macs2 008001
 sbatch scripts/matrix_TSS_5kb_THORQSER1EZH2UniqueTEAD4_Venn_overlap_hESC_WT_QSER1TEAD4.sh # 18526196 ok
 sbatch scripts/matrix_TSS_5kb_THORQSER1EZH2UniqueTEAD4_Venn_overlap_hESC_WT_QSER1EZH2.sh # 18526206 ok
 sbatch scripts/matrix_TSS_5kb_THORQSER1EZH2UniqueTEAD4_Venn_overlap_hESC_WT_QSER1EZH2TEAD4.sh # 18526209 ok
+
+## macss2 QSER1 008001 vs 008002 with output/bigwig raw files
+sbatch scripts/matrix_TSS_5kb_rawBigwig_hESC_WT_QSER1_008001vs008002_008001noIntergenic.sh # 18718029 ok
+sbatch scripts/matrix_TSS_5kb_rawBigwig_hESC_WT_QSER1_008001vs008002_008002noIntergenicqval10.sh # 18718073 ok
+sbatch scripts/matrix_TSS_5kb_rawBigwig_hESC_WT_QSER1_008001vs008002_008002noIntergenicqval15.sh # 18718096 ok
+sbatch scripts/matrix_TSS_5kb_rawBigwig_hESC_WT_QSER1_008001vs008002_008002noIntergenicqval20.sh # 18718131 ok
+
+
+
 ```
 
 --> QSER1 before TSS; EZH2 right after TSS
 
+--> QSER1 and QSER1FLAG (`008002`) seems to well co-localize; same signal whatever list of gene used...
 
 
 ## EZH2 gain lost WT vs KO

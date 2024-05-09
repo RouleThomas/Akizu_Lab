@@ -157,6 +157,8 @@ conda activate BedToBigwig
 sbatch scripts/bigwigmerge_unique_raw.sh # 18543995 fail
 sbatch --dependency=afterany:18544590 scripts/bigwigmerge_unique_QSER1.sh # 18544696 fail
 
+# rerun unique and QSER1 together
+sbatch scripts/bigwigmerge_unique_raw.sh # 18717741 ok
 ```
 
 *NOTE: merging raw bigiwg probably not super smart; not seq depth normalized, so to take with caution! But to show presence of signal in our case, that's ok!*
@@ -168,8 +170,8 @@ sbatch --dependency=afterany:18544590 scripts/bigwigmerge_unique_QSER1.sh # 1854
 ```bash
 conda activate deeptools
 
-# Generate compile bigwig (.npz) files _ all raw bigwig
-sbatch scripts/multiBigwigSummary_all.sh # 18661462 xxx
+### Generate compile bigwig (.npz) files _ all raw bigwig
+sbatch scripts/multiBigwigSummary_all.sh # 18661462 ok
 
 
 # Plot
@@ -261,7 +263,6 @@ Let's assign **peak to genes from MACS2 peak**:
 - hESC_WT_EZH2: 1.30103
 
 
-XXX HERE !!!!!!!!!!!!!!! 
 
 ```bash
 conda activate deseq2
@@ -280,113 +281,491 @@ library("VennDiagram")
 
 
 # Import macs2 peaks
-## H3K27me3 53dN
-H3K27me3_53dN_pool_qval2 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/53dN_WT_H3K27me3_pool_peaks.broadPeak') ) %>%
+## optimal qval
+hESC_WT_DNMT3A = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval3/hESC_WT_DNMT3A_pool_peaks.broadPeak') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
-H3K4me3_53dN_pool_qval2 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/53dN_WT_H3K4me3_pool_peaks.broadPeak') ) %>%
+hESC_WT_DNMT3B = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval3/hESC_WT_DNMT3B_pool_peaks.broadPeak') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
-H3K27me3_53dN_pool_qval4 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval4/53dN_WT_H3K27me3_pool_peaks.broadPeak') ) %>%
+hESC_WT_H3K27me3 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/hESC_WT_H3K27me3_pool_peaks.broadPeak') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
-H3K4me3_53dN_pool_qval4 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval4/53dN_WT_H3K4me3_pool_peaks.broadPeak') ) %>%
+hESC_WT_H3K4me3 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/hESC_WT_H3K4me3_pool_peaks.broadPeak') ) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_WT_QSER1FLAG = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval3/hESC_WT_QSER1FLAG_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_WT_EZH2 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval1.30103/hESC_WT_EZH2_R1_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+
+
+
 
 # Tidy peaks 
 ## H3K27me3
-H3K27me3_53dN_pool_qval2_gr = makeGRangesFromDataFrame(H3K27me3_53dN_pool_qval2,keep.extra.columns=TRUE)
-H3K4me3_53dN_pool_qval2_gr = makeGRangesFromDataFrame(H3K4me3_53dN_pool_qval2,keep.extra.columns=TRUE)
-H3K27me3_53dN_pool_qval4_gr = makeGRangesFromDataFrame(H3K27me3_53dN_pool_qval4,keep.extra.columns=TRUE)
-H3K4me3_53dN_pool_qval4_gr = makeGRangesFromDataFrame(H3K4me3_53dN_pool_qval4,keep.extra.columns=TRUE)
-gr_list <- list(H3K27me3_53dN_pool_qval2=H3K27me3_53dN_pool_qval2_gr, H3K4me3_53dN_pool_qval2=H3K4me3_53dN_pool_qval2_gr,  H3K27me3_53dN_pool_qval4=H3K27me3_53dN_pool_qval4_gr, H3K4me3_53dN_pool_qval4=H3K4me3_53dN_pool_qval4_gr)
+hESC_WT_DNMT3A_gr = makeGRangesFromDataFrame(hESC_WT_DNMT3A,keep.extra.columns=TRUE)
+hESC_WT_DNMT3B_gr = makeGRangesFromDataFrame(hESC_WT_DNMT3B,keep.extra.columns=TRUE)
+hESC_WT_H3K27me3_gr = makeGRangesFromDataFrame(hESC_WT_H3K27me3,keep.extra.columns=TRUE)
+hESC_WT_H3K4me3_gr = makeGRangesFromDataFrame(hESC_WT_H3K4me3,keep.extra.columns=TRUE)
+hESC_WT_QSER1FLAG_gr = makeGRangesFromDataFrame(hESC_WT_QSER1FLAG,keep.extra.columns=TRUE)
+hESC_WT_EZH2_gr = makeGRangesFromDataFrame(hESC_WT_EZH2,keep.extra.columns=TRUE)
+
+gr_list <- list(hESC_WT_DNMT3A=hESC_WT_DNMT3A_gr, hESC_WT_DNMT3B=hESC_WT_DNMT3B_gr,  hESC_WT_H3K27me3=hESC_WT_H3K27me3_gr, hESC_WT_H3K4me3=hESC_WT_H3K4me3_gr,hESC_WT_QSER1FLAG=hESC_WT_QSER1FLAG_gr, hESC_WT_EZH2=hESC_WT_EZH2_gr)
 
 
 # Export Gene peak assignemnt
 peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
                        tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
 ## plots
-pdf("output/ChIPseeker/plotAnnoBar_53dN_bivalent_pool.pdf", width = 8, height = 3)
+pdf("output/ChIPseeker/plotAnnoBar_hESC_WT_qvalOPtimal.pdf", width = 8, height = 3)
 plotAnnoBar(peakAnnoList)
 dev.off()
-pdf("output/ChIPseeker/plotDistToTSS_53dN_bivalent_pool.pdf", width = 8, height = 3)
+pdf("output/ChIPseeker/plotDistToTSS_hESC_WT_qvalOPtimal.pdf", width = 8, height = 3)
 plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
 dev.off()
 
 ## Get annotation data frame
-H3K27me3_53dN_pool_qval2_annot <- as.data.frame(peakAnnoList[["H3K27me3_53dN_pool_qval2"]]@anno)
-H3K4me3_53dN_pool_qval2_annot <- as.data.frame(peakAnnoList[["H3K4me3_53dN_pool_qval2"]]@anno)
-H3K27me3_53dN_pool_qval4_annot <- as.data.frame(peakAnnoList[["H3K27me3_53dN_pool_qval4"]]@anno)
-H3K4me3_53dN_pool_qval4_annot <- as.data.frame(peakAnnoList[["H3K4me3_53dN_pool_qval4"]]@anno)
-
+hESC_WT_DNMT3A_annot <- as.data.frame(peakAnnoList[["hESC_WT_DNMT3A"]]@anno)
+hESC_WT_DNMT3B_annot <- as.data.frame(peakAnnoList[["hESC_WT_DNMT3B"]]@anno)
+hESC_WT_H3K27me3_annot <- as.data.frame(peakAnnoList[["hESC_WT_H3K27me3"]]@anno)
+hESC_WT_H3K4me3_annot <- as.data.frame(peakAnnoList[["hESC_WT_H3K4me3"]]@anno)
+hESC_WT_QSER1FLAG_annot <- as.data.frame(peakAnnoList[["hESC_WT_QSER1FLAG"]]@anno)
+hESC_WT_EZH2_annot <- as.data.frame(peakAnnoList[["hESC_WT_EZH2"]]@anno)
 
 ## Convert entrez gene IDs to gene symbols
-H3K27me3_53dN_pool_qval2_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_53dN_pool_qval2_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-H3K27me3_53dN_pool_qval2_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_53dN_pool_qval2_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-H3K4me3_53dN_pool_qval2_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K4me3_53dN_pool_qval2_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-H3K4me3_53dN_pool_qval2_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K4me3_53dN_pool_qval2_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-H3K27me3_53dN_pool_qval4_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K27me3_53dN_pool_qval4_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-H3K27me3_53dN_pool_qval4_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K27me3_53dN_pool_qval4_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-H3K4me3_53dN_pool_qval4_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = H3K4me3_53dN_pool_qval4_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-H3K4me3_53dN_pool_qval4_annot$gene <- mapIds(org.Hs.eg.db, keys = H3K4me3_53dN_pool_qval4_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-
-
+hESC_WT_DNMT3A_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_DNMT3A_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_WT_DNMT3A_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_DNMT3A_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+hESC_WT_DNMT3B_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_DNMT3B_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_WT_DNMT3B_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_DNMT3B_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+hESC_WT_H3K27me3_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_H3K27me3_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_WT_H3K27me3_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_H3K27me3_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+hESC_WT_H3K4me3_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_H3K4me3_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_WT_H3K4me3_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_H3K4me3_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+hESC_WT_QSER1FLAG_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1FLAG_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_WT_QSER1FLAG_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1FLAG_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+hESC_WT_EZH2_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_EZH2_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_WT_EZH2_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_EZH2_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
 
 ## Save output table
-write.table(H3K27me3_53dN_pool_qval2_annot, file="output/ChIPseeker/annotation_macs2_H3K27me3_53dN_pool_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(H3K4me3_53dN_pool_qval2_annot, file="output/ChIPseeker/annotation_macs2_H3K4me3_53dN_pool_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(H3K27me3_53dN_pool_qval4_annot, file="output/ChIPseeker/annotation_macs2_H3K27me3_53dN_pool_qval4.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
-write.table(H3K4me3_53dN_pool_qval4_annot, file="output/ChIPseeker/annotation_macs2_H3K4me3_53dN_pool_qval4.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(hESC_WT_DNMT3A_annot, file="output/ChIPseeker/annotation_macs2_hESC_WT_DNMT3A_pool_qval3.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(hESC_WT_DNMT3B_annot, file="output/ChIPseeker/annotation_macs2_hESC_WT_DNMT3B_pool_qval3.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(hESC_WT_H3K27me3_annot, file="output/ChIPseeker/annotation_macs2_hESC_WT_H3K27me3_pool_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(hESC_WT_H3K4me3_annot, file="output/ChIPseeker/annotation_macs2_hESC_WT_H3K4me3_pool_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(hESC_WT_QSER1FLAG_annot, file="output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval3.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(hESC_WT_EZH2_annot, file="output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_R1_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
+
 
 
 ## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
-H3K27me3_53dN_pool_qval2_annot_promoterAnd5 = tibble(H3K27me3_53dN_pool_qval2_annot) %>%
+hESC_WT_DNMT3A_annot_promoterAnd5 = tibble(hESC_WT_DNMT3A_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-H3K4me3_53dN_pool_qval2_annot_promoterAnd5 = tibble(H3K4me3_53dN_pool_qval2_annot) %>%
+hESC_WT_DNMT3B_annot_promoterAnd5 = tibble(hESC_WT_DNMT3B_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-H3K27me3_53dN_pool_qval4_annot_promoterAnd5 = tibble(H3K27me3_53dN_pool_qval4_annot) %>%
+hESC_WT_H3K27me3_annot_promoterAnd5 = tibble(hESC_WT_H3K27me3_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-H3K4me3_53dN_pool_qval4_annot_promoterAnd5 = tibble(H3K4me3_53dN_pool_qval4_annot) %>%
+hESC_WT_H3K4me3_annot_promoterAnd5 = tibble(hESC_WT_H3K4me3_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+hESC_WT_QSER1FLAG_annot_promoterAnd5 = tibble(hESC_WT_QSER1FLAG_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+hESC_WT_EZH2_annot_promoterAnd5 = tibble(hESC_WT_EZH2_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
 
 
 ### Save output gene lists
-H3K27me3_53dN_pool_qval2_annot_promoterAnd5_geneSymbol = H3K27me3_53dN_pool_qval2_annot_promoterAnd5 %>%
+hESC_WT_DNMT3A_annot_promoterAnd5_geneSymbol = hESC_WT_DNMT3A_annot_promoterAnd5 %>%
     dplyr::select(geneSymbol) %>%
     unique()
-H3K4me3_53dN_pool_qval2_annot_promoterAnd5_geneSymbol = H3K4me3_53dN_pool_qval2_annot_promoterAnd5 %>%
+hESC_WT_DNMT3B_annot_promoterAnd5_geneSymbol = hESC_WT_DNMT3B_annot_promoterAnd5 %>%
     dplyr::select(geneSymbol) %>%
     unique()
-H3K27me3_53dN_pool_qval4_annot_promoterAnd5_geneSymbol = H3K27me3_53dN_pool_qval4_annot_promoterAnd5 %>%
+hESC_WT_H3K27me3_annot_promoterAnd5_geneSymbol = hESC_WT_H3K27me3_annot_promoterAnd5 %>%
     dplyr::select(geneSymbol) %>%
     unique()
-H3K4me3_53dN_pool_qval4_annot_promoterAnd5_geneSymbol = H3K4me3_53dN_pool_qval4_annot_promoterAnd5 %>%
+hESC_WT_H3K4me3_annot_promoterAnd5_geneSymbol = hESC_WT_H3K4me3_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_QSER1FLAG_annot_promoterAnd5_geneSymbol = hESC_WT_QSER1FLAG_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_EZH2_annot_promoterAnd5_geneSymbol = hESC_WT_EZH2_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+write.table(hESC_WT_DNMT3A_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_DNMT3A_pool_qval3_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_WT_DNMT3B_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_DNMT3B_pool_qval3_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_WT_H3K27me3_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_H3K27me3_pool_qval2.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_WT_H3K4me3_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_H3K4me3_pool_qval2.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_WT_QSER1FLAG_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval3_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_WT_EZH2_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_R1_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+
+## Keep only signals in non intergenic region ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+hESC_WT_DNMT3A_annot_noIntergenic = tibble(hESC_WT_DNMT3A_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+hESC_WT_DNMT3B_annot_noIntergenic = tibble(hESC_WT_DNMT3B_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+hESC_WT_H3K27me3_annot_noIntergenic = tibble(hESC_WT_H3K27me3_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+hESC_WT_H3K4me3_annot_noIntergenic = tibble(hESC_WT_H3K4me3_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+hESC_WT_QSER1FLAG_annot_noIntergenic = tibble(hESC_WT_QSER1FLAG_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+hESC_WT_EZH2_annot_noIntergenic = tibble(hESC_WT_EZH2_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+
+
+### Save output gene lists
+hESC_WT_DNMT3A_annot_noIntergenic_geneSymbol = hESC_WT_DNMT3A_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_DNMT3B_annot_noIntergenic_geneSymbol = hESC_WT_DNMT3B_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_H3K27me3_annot_noIntergenic_geneSymbol = hESC_WT_H3K27me3_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_H3K4me3_annot_noIntergenic_geneSymbol = hESC_WT_H3K4me3_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_QSER1FLAG_annot_noIntergenic_geneSymbol = hESC_WT_QSER1FLAG_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_EZH2_annot_noIntergenic_geneSymbol = hESC_WT_EZH2_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+write.table(hESC_WT_DNMT3A_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_DNMT3A_pool_qval3_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_WT_DNMT3B_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_DNMT3B_pool_qval3_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_WT_H3K27me3_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_H3K27me3_pool_qval2.30103_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_WT_H3K4me3_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_H3K4me3_pool_qval2.30103_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_WT_QSER1FLAG_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval3_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_WT_EZH2_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_R1_qval1.30103_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+
+
+
+## QSER1FLAG qvalue testing
+hESC_WT_QSER1FLAG_qval4 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval4/hESC_WT_QSER1FLAG_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_WT_QSER1FLAG_qval5 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval5/hESC_WT_QSER1FLAG_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_WT_QSER1FLAG_qval6 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval6/hESC_WT_QSER1FLAG_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_WT_QSER1FLAG_qval7 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval7/hESC_WT_QSER1FLAG_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_WT_QSER1FLAG_qval10 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval10/hESC_WT_QSER1FLAG_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_WT_QSER1FLAG_qval12 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval12/hESC_WT_QSER1FLAG_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_WT_QSER1FLAG_qval15 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval15/hESC_WT_QSER1FLAG_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_WT_QSER1FLAG_qval20 = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval20/hESC_WT_QSER1FLAG_pool_peaks.broadPeak') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+
+
+# Tidy peaks 
+hESC_WT_QSER1FLAG_qval4_gr = makeGRangesFromDataFrame(hESC_WT_QSER1FLAG_qval4,keep.extra.columns=TRUE)
+hESC_WT_QSER1FLAG_qval5_gr = makeGRangesFromDataFrame(hESC_WT_QSER1FLAG_qval5,keep.extra.columns=TRUE)
+hESC_WT_QSER1FLAG_qval6_gr = makeGRangesFromDataFrame(hESC_WT_QSER1FLAG_qval6,keep.extra.columns=TRUE)
+hESC_WT_QSER1FLAG_qval7_gr = makeGRangesFromDataFrame(hESC_WT_QSER1FLAG_qval7,keep.extra.columns=TRUE)
+hESC_WT_QSER1FLAG_qval10_gr = makeGRangesFromDataFrame(hESC_WT_QSER1FLAG_qval10,keep.extra.columns=TRUE)
+hESC_WT_QSER1FLAG_qval12_gr = makeGRangesFromDataFrame(hESC_WT_QSER1FLAG_qval12,keep.extra.columns=TRUE)
+hESC_WT_QSER1FLAG_qval15_gr = makeGRangesFromDataFrame(hESC_WT_QSER1FLAG_qval15,keep.extra.columns=TRUE)
+hESC_WT_QSER1FLAG_qval20_gr = makeGRangesFromDataFrame(hESC_WT_QSER1FLAG_qval20,keep.extra.columns=TRUE)
+
+gr_list <- list(hESC_WT_QSER1FLAG_qval4=hESC_WT_QSER1FLAG_qval4_gr, hESC_WT_QSER1FLAG_qval5=hESC_WT_QSER1FLAG_qval5_gr,  hESC_WT_QSER1FLAG_qval6=hESC_WT_QSER1FLAG_qval6_gr, hESC_WT_QSER1FLAG_qval7=hESC_WT_QSER1FLAG_qval7_gr,hESC_WT_QSER1FLAG_qval10=hESC_WT_QSER1FLAG_qval10_gr,hESC_WT_QSER1FLAG_qval12=hESC_WT_QSER1FLAG_qval12_gr,hESC_WT_QSER1FLAG_qval15=hESC_WT_QSER1FLAG_qval15_gr,hESC_WT_QSER1FLAG_qval20=hESC_WT_QSER1FLAG_qval20_gr)
+
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## plots
+#pdf("output/ChIPseeker/plotAnnoBar_hESC_WT_qvalOPtimal.pdf", width = 8, height = 3)
+pdf("output/ChIPseeker/plotAnnoBar_hESC_WT_QSER1FLAG_qvalTest.pdf", width = 8, height = 3)
+plotAnnoBar(peakAnnoList)
+dev.off()
+#pdf("output/ChIPseeker/plotDistToTSS_hESC_WT_qvalOPtimal.pdf", width = 8, height = 3)
+pdf("output/ChIPseeker/plotDistToTSS_hESC_WT_QSER1FLAG_qvalTest.pdf", width = 8, height = 3)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
+
+## Get annotation data frame
+hESC_WT_QSER1FLAG_qval4_annot <- as.data.frame(peakAnnoList[["hESC_WT_QSER1FLAG_qval4"]]@anno)
+hESC_WT_QSER1FLAG_qval5_annot <- as.data.frame(peakAnnoList[["hESC_WT_QSER1FLAG_qval5"]]@anno)
+hESC_WT_QSER1FLAG_qval6_annot <- as.data.frame(peakAnnoList[["hESC_WT_QSER1FLAG_qval6"]]@anno)
+hESC_WT_QSER1FLAG_qval7_annot <- as.data.frame(peakAnnoList[["hESC_WT_QSER1FLAG_qval7"]]@anno)
+hESC_WT_QSER1FLAG_qval10_annot <- as.data.frame(peakAnnoList[["hESC_WT_QSER1FLAG_qval10"]]@anno)
+hESC_WT_QSER1FLAG_qval12_annot <- as.data.frame(peakAnnoList[["hESC_WT_QSER1FLAG_qval12"]]@anno)
+hESC_WT_QSER1FLAG_qval15_annot <- as.data.frame(peakAnnoList[["hESC_WT_QSER1FLAG_qval15"]]@anno)
+hESC_WT_QSER1FLAG_qval20_annot <- as.data.frame(peakAnnoList[["hESC_WT_QSER1FLAG_qval20"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+hESC_WT_QSER1FLAG_qval4_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1FLAG_qval4_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_WT_QSER1FLAG_qval4_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1FLAG_qval4_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+hESC_WT_QSER1FLAG_qval5_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1FLAG_qval5_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_WT_QSER1FLAG_qval5_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1FLAG_qval5_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+hESC_WT_QSER1FLAG_qval6_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1FLAG_qval6_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_WT_QSER1FLAG_qval6_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1FLAG_qval6_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+hESC_WT_QSER1FLAG_qval7_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1FLAG_qval7_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_WT_QSER1FLAG_qval7_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1FLAG_qval7_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+hESC_WT_QSER1FLAG_qval10_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1FLAG_qval10_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_WT_QSER1FLAG_qval10_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1FLAG_qval10_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+hESC_WT_QSER1FLAG_qval12_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1FLAG_qval12_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_WT_QSER1FLAG_qval12_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1FLAG_qval12_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+hESC_WT_QSER1FLAG_qval15_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1FLAG_qval15_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_WT_QSER1FLAG_qval15_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1FLAG_qval15_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+hESC_WT_QSER1FLAG_qval20_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1FLAG_qval20_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_WT_QSER1FLAG_qval20_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1FLAG_qval20_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+## Save output table
+write.table(hESC_WT_QSER1FLAG_qval4_annot, file="output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval4.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(hESC_WT_QSER1FLAG_qval5_annot, file="output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval5.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(hESC_WT_QSER1FLAG_qval6_annot, file="output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval6.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(hESC_WT_QSER1FLAG_qval7_annot, file="output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval7.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(hESC_WT_QSER1FLAG_qval10_annot, file="output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval10.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(hESC_WT_QSER1FLAG_qval12_annot, file="output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval12.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(hESC_WT_QSER1FLAG_qval15_annot, file="output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval15.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(hESC_WT_QSER1FLAG_qval20_annot, file="output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval20.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+hESC_WT_QSER1FLAG_qval4_annot_promoterAnd5 = tibble(hESC_WT_QSER1FLAG_qval4_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+hESC_WT_QSER1FLAG_qval5_annot_promoterAnd5 = tibble(hESC_WT_QSER1FLAG_qval5_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+hESC_WT_QSER1FLAG_qval6_annot_promoterAnd5 = tibble(hESC_WT_QSER1FLAG_qval6_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+hESC_WT_QSER1FLAG_qval7_annot_promoterAnd5 = tibble(hESC_WT_QSER1FLAG_qval7_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+hESC_WT_QSER1FLAG_qval10_annot_promoterAnd5 = tibble(hESC_WT_QSER1FLAG_qval10_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+hESC_WT_QSER1FLAG_qval12_annot_promoterAnd5 = tibble(hESC_WT_QSER1FLAG_qval12_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+hESC_WT_QSER1FLAG_qval15_annot_promoterAnd5 = tibble(hESC_WT_QSER1FLAG_qval15_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+hESC_WT_QSER1FLAG_qval20_annot_promoterAnd5 = tibble(hESC_WT_QSER1FLAG_qval20_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+
+
+### Save output gene lists
+hESC_WT_QSER1FLAG_qval4_annot_promoterAnd5_geneSymbol = hESC_WT_QSER1FLAG_qval4_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_QSER1FLAG_qval5_annot_promoterAnd5_geneSymbol = hESC_WT_QSER1FLAG_qval5_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_QSER1FLAG_qval6_annot_promoterAnd5_geneSymbol = hESC_WT_QSER1FLAG_qval6_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_QSER1FLAG_qval7_annot_promoterAnd5_geneSymbol = hESC_WT_QSER1FLAG_qval7_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_QSER1FLAG_qval10_annot_promoterAnd5_geneSymbol = hESC_WT_QSER1FLAG_qval10_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_QSER1FLAG_qval12_annot_promoterAnd5_geneSymbol = hESC_WT_QSER1FLAG_qval12_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_QSER1FLAG_qval15_annot_promoterAnd5_geneSymbol = hESC_WT_QSER1FLAG_qval15_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_QSER1FLAG_qval20_annot_promoterAnd5_geneSymbol = hESC_WT_QSER1FLAG_qval20_annot_promoterAnd5 %>%
     dplyr::select(geneSymbol) %>%
     unique()
 
 
-write.table(H3K27me3_53dN_pool_qval2_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_H3K27me3_53dN_pool_qval2.30103_promoterAnd5_geneSymbol.txt",
+write.table(hESC_WT_QSER1FLAG_qval4_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval4_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(H3K4me3_53dN_pool_qval2_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_H3K4me3_53dN_pool_qval2.30103_promoterAnd5_geneSymbol.txt",
+write.table(hESC_WT_QSER1FLAG_qval5_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval5_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)           
+write.table(hESC_WT_QSER1FLAG_qval6_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval6_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)      
+write.table(hESC_WT_QSER1FLAG_qval7_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval7_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)   
+write.table(hESC_WT_QSER1FLAG_qval10_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval10_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)   
+write.table(hESC_WT_QSER1FLAG_qval12_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval12_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)   
+write.table(hESC_WT_QSER1FLAG_qval15_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval15_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)   
+write.table(hESC_WT_QSER1FLAG_qval20_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval20_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)   
+
+
+## Keep only signals in non intergenic region ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+hESC_WT_QSER1FLAG_qval4_annot_noIntergenic = tibble(hESC_WT_QSER1FLAG_qval4_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+hESC_WT_QSER1FLAG_qval5_annot_noIntergenic = tibble(hESC_WT_QSER1FLAG_qval5_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+hESC_WT_QSER1FLAG_qval6_annot_noIntergenic = tibble(hESC_WT_QSER1FLAG_qval6_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+hESC_WT_QSER1FLAG_qval7_annot_noIntergenic = tibble(hESC_WT_QSER1FLAG_qval7_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+hESC_WT_QSER1FLAG_qval10_annot_noIntergenic = tibble(hESC_WT_QSER1FLAG_qval10_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+hESC_WT_QSER1FLAG_qval12_annot_noIntergenic = tibble(hESC_WT_QSER1FLAG_qval12_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+hESC_WT_QSER1FLAG_qval15_annot_noIntergenic = tibble(hESC_WT_QSER1FLAG_qval15_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+hESC_WT_QSER1FLAG_qval20_annot_noIntergenic = tibble(hESC_WT_QSER1FLAG_qval20_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+
+
+
+### Save output gene lists
+hESC_WT_QSER1FLAG_qval4_annot_noIntergenic_geneSymbol = hESC_WT_QSER1FLAG_qval4_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_QSER1FLAG_qval5_annot_noIntergenic_geneSymbol = hESC_WT_QSER1FLAG_qval5_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_QSER1FLAG_qval6_annot_noIntergenic_geneSymbol = hESC_WT_QSER1FLAG_qval6_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_QSER1FLAG_qval7_annot_noIntergenic_geneSymbol = hESC_WT_QSER1FLAG_qval7_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_QSER1FLAG_qval10_annot_noIntergenic_geneSymbol = hESC_WT_QSER1FLAG_qval10_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_QSER1FLAG_qval12_annot_noIntergenic_geneSymbol = hESC_WT_QSER1FLAG_qval12_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_QSER1FLAG_qval15_annot_noIntergenic_geneSymbol = hESC_WT_QSER1FLAG_qval15_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_QSER1FLAG_qval20_annot_noIntergenic_geneSymbol = hESC_WT_QSER1FLAG_qval20_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+write.table(hESC_WT_QSER1FLAG_qval4_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval4_noIntergenic_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(H3K27me3_53dN_pool_qval4_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_H3K27me3_53dN_pool_qval4_promoterAnd5_geneSymbol.txt",
+write.table(hESC_WT_QSER1FLAG_qval5_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval5_noIntergenic_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
-            row.names = FALSE)
-write.table(H3K4me3_53dN_pool_qval4_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_H3K4me3_53dN_pool_qval4_promoterAnd5_geneSymbol.txt",
+            row.names = FALSE)           
+write.table(hESC_WT_QSER1FLAG_qval6_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval6_noIntergenic_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
-            row.names = FALSE)
+            row.names = FALSE)      
+write.table(hESC_WT_QSER1FLAG_qval7_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval7_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)   
+write.table(hESC_WT_QSER1FLAG_qval10_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval10_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)   
+write.table(hESC_WT_QSER1FLAG_qval12_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval12_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)   
+write.table(hESC_WT_QSER1FLAG_qval15_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval15_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)   
+write.table(hESC_WT_QSER1FLAG_qval20_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval20_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)   
+
+
 ```
 
 
+--> So many genes for QSER1FLAG! ~20k, and there is ~30k total genes in human... Tested more stringeant qval.
+----> qval 15-20 show good peak-gene feature profile; similar to what we have in `008001` with endogeneous QSER1; also ~10k genes, as we have in `008001`
 
+--> Overlap pretty good with our `008001`, notably using QSERFLAG qval10-20!
 
+--> Make deepTool plot of genes QSER1 bound in Conchi `008001` vs Dixon `008002`: Done in `008001` labnote
 
 
 

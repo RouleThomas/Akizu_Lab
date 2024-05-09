@@ -48,10 +48,6 @@ Let's try [msPIPE](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/
 
 ### Run through Docker
 
-#### Install Docker
-
-Need to do sudo but I do not have privilege...
-
 
 #### Install in a conda env
 
@@ -88,16 +84,78 @@ conda activate msPIPE
 conda install -c bioconda -c conda-forge -c anacond trim-galore # fail
 conda install trim-galore 
 
+```
 
-FAIL AGAIN!!! XXXXXXXXXXX HERE
+--> Nightmare...
+
+
+
+
+#### Install with Docker through singularity
+
+Need to do sudo but I do not have privilege... but instead we can use `singularity` which can handle Docker container!!
+
+--> Docker/singularity create a .sif file where all software and dependecies are installed (nothing related to a conda env).
+To run the software; simply use `singularity run /DockerSoftareLocation/Docker.sif` and it will run the program!
+
+```bash
+module load singularity/3.11.1
+
+cd /scr1/users/roulet/Akizu_Lab/Master/software
+
+# Clone the repository if needed to examine files or use local resources
+git clone https://github.com/jkimlab/msPIPE.git
+cd msPIPE
+
+# Build Singularity image from Docker Hub
+singularity build mspipe.sif docker://jkimlab/mspipe:latest
+# --> Fail no space left on device (space issue, not RAM related); re-direct temporary directory for installation 
+export SINGULARITY_TMPDIR=/scr1/users/roulet/Akizu_Lab/Master/software/msPIPE
+
+# Re-build, now using temporary directory for installation in /scr1
+singularity build mspipe.sif docker://jkimlab/mspipe:latest
+
+```
+
+--> SUCCESS!!!
+
+## Run msPIPE
+
+
+```bash
+srun --mem=500g --pty bash -l
+cd /scr1/users/roulet/Akizu_Lab/008_ChIPseq_YAP_Conchi/004__WGBS_Dixon2021
+
+singularity run /scr1/users/roulet/Akizu_Lab/Master/software/msPIPE/mspipe.sif
+
+# Create meta file
+nano scripts/params_docker.conf
+
+# msPIPE docker vs singularity (! Keep `:ro`, means read only)
+docker run -v /PATH/TO/INPUT/DATA:/msPIPE/data:ro -v /PATH/TO/REUSABLE/REFERENCE:/msPIPE/reference -v /PATH/TO/OUTDIR:/work_dir/ jkimlab/mspipe:latest msPIPE.py -p params_docker.conf -o result
+singularity exec --bind /PATH/TO/INPUT/DATA:/msPIPE/data:ro --bind /PATH/TO/REUSABLE/REFERENCE:/msPIPE/reference --bind /PATH/TO/OUTDIR:/work_dir mspipe.sif msPIPE.py -p params_docker.conf -o result
+## --> This is the same command in Docker vs singularity: Ask ChatGPT for tranlsation
+
+# Run msPIPE
+singularity exec \
+  --bind /scr1/users/roulet/Akizu_Lab/008_ChIPseq_YAP_Conchi/004__WGBS_Dixon2021/input:/scr1/users/roulet/Akizu_Lab/008_ChIPseq_YAP_Conchi/004__WGBS_Dixon2021/input:ro \
+  --bind /scr1/users/roulet/Akizu_Lab/008_ChIPseq_YAP_Conchi/004__WGBS_Dixon2021/output:/scr1/users/roulet/Akizu_Lab/008_ChIPseq_YAP_Conchi/004__WGBS_Dixon2021/output \
+  /scr1/users/roulet/Akizu_Lab/Master/software/msPIPE/mspipe.sif \
+  msPIPE.py -p /scr1/users/roulet/Akizu_Lab/008_ChIPseq_YAP_Conchi/004__WGBS_Dixon2021/scripts/params_docker.conf -o /scr1/users/roulet/Akizu_Lab/008_ChIPseq_YAP_Conchi/004__WGBS_Dixon2021/output
+
 
 ```
 
 
+--> Something weird with Rep2 from timGalore error at line 41188 lenght sequence and quality differ! rep1 worked great
+----> Appeared that the R2 file is completely corrupted as I cannot `gunzip` it
+
+--> File re-download in `input_R2Corr` and rename as previously; file in input replaced and msPIPE re run: 
 
 
-
-
+```bash
+sbatch scripts/msPIPE.sh # 18718424 xxx
+```
 
 
 
