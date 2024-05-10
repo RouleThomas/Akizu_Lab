@@ -154,8 +154,19 @@ singularity exec \
 
 
 ```bash
-sbatch scripts/msPIPE.sh # 18718424 xxx
+sbatch scripts/msPIPE.sh # 18718424 fail; re-run with added --bind /scr1/users/roulet/Akizu_Lab/Master/meta:/msPIPE/reference 18748956 fail as bismark genome for CT conversion not prepared... Let's try to NOT mention fasta files to let the software prepare the genome 18757219 ok
 ```
+
+--> The R2 is no more corrupted. BUT, Fail at bismark; cannot find genome file.
+----> Need to specify in the command, where to look for the genome file (Even if it is indicated in `params_docker.conf` file)
+
+
+
+
+
+
+
+
 
 
 

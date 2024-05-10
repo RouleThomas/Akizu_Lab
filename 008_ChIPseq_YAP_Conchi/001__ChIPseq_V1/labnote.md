@@ -189,7 +189,7 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 # Generate bigwig coverage files
-## Raw bigwig
+## Raw and DiffBindTMM bigwig
 
 Let's use *ChIPQC* (as [greenscreen](https://github.com/sklasfeld/GreenscreenProject/blob/main/TUTORIAL.pdf) paper), to estimate fragment size and provide it to each respective sample. --> **NEEDED as we are in SE**
 
@@ -260,6 +260,10 @@ sbatch scripts/bamtobigwig_unique_extendReads_CPC.sh # 17775530 ok
 # bigwig with extendReads from CHIPQC and RPGC normalized (seq depth comparison)
 sbatch scripts/bamtobigwig_unique_extendReads_RPGC_hESC.sh # 17786752 ok
 sbatch scripts/bamtobigwig_unique_extendReads_RPGC_CPC.sh # 17786754 ok
+
+
+# Bigwig with DiffBind TMM scaling factor
+sbatch scripts/bamtobigwig_unique_extendReads_hESC_QSER1_EZH2.sh # 18757417 xxx
 
 ```
 
@@ -1583,6 +1587,134 @@ sbatch scripts/matrix_TSS_5kb_THOREZH2_hESCWTvsYAPKO_positiveNegativeTHORq4_peak
 
 ```
 
+
+
+
+
+# DiffBind TMM normalization (for sample without spikein)
+
+
+Generate DiffBind TMM scaling factor and apply them to the bam. That will generate clean seq + complexity depth normalized bigwigs. --> **Exact same process as E coli spike in norm, just no library size correction!**
+
+--> Apply Reciprocal SF to bamtobgiwg!! (see `001003` for detail at `### Histone-spike-in and TMM-norm scaled-bigwig OR DiffBind-ScaleFactor`)
+
+
+- hESC QSER1 WT and YAPKO
+- hESC EZH2 WT and YAPKO
+
+
+```bash
+srun --mem=500g --pty bash -l
+conda activate DiffBind
+```
+```R
+library("DiffBind") 
+
+
+## hESC QSER1 and EZH2 for WT and YAPKO (NOT GOOD!!)
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_hESC_QSER1EZH2.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/meta_sample_macs2raw_unique_hESC_QSER1EZH2.RData")
+load("output/DiffBind/meta_sample_macs2raw_unique_hESC_QSER1EZH2.RData")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_hESC_QSER1EZH2.pdf", width=14, height=20)  
+plot(sample_count)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_hESC_QSER1EZH2.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### TMM 
+sample_count_blackgreylist_TMM = dba.normalize(sample_count_blackgreylist, normalize = DBA_NORM_TMM) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_TMM_SF = dba.normalize(sample_count_blackgreylist_TMM, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_TMM_unique_SF_hESC_QSER1EZH2.txt")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_hESC_QSER1EZH2_blackgreylist_TMM.pdf", width=14, height=20)  
+plot(sample_count_blackgreylist_TMM)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_hESC_QSER1EZH2_blackgreylist_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+
+
+## hESC QSER1 for WT and YAPKO
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_hESC_QSER1.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/meta_sample_macs2raw_unique_hESC_QSER1.RData")
+load("output/DiffBind/meta_sample_macs2raw_unique_hESC_QSER1.RData")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_hESC_QSER1.pdf", width=14, height=20)  
+plot(sample_count)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_hESC_QSER1.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### TMM 
+sample_count_blackgreylist_TMM = dba.normalize(sample_count_blackgreylist, normalize = DBA_NORM_TMM) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_TMM_SF = dba.normalize(sample_count_blackgreylist_TMM, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_TMM_unique_SF_hESC_QSER1.txt")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_hESC_QSER1_blackgreylist_TMM.pdf", width=14, height=20)  
+plot(sample_count_blackgreylist_TMM)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_hESC_QSER1_blackgreylist_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+
+
+## hESC EZH2 for WT and YAPKO
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_hESC_EZH2.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/meta_sample_macs2raw_unique_hESC_EZH2.RData")
+load("output/DiffBind/meta_sample_macs2raw_unique_hESC_EZH2.RData")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_hESC_EZH2.pdf", width=14, height=20)  
+plot(sample_count)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_hESC_EZH2.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### TMM 
+sample_count_blackgreylist_TMM = dba.normalize(sample_count_blackgreylist, normalize = DBA_NORM_TMM) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_TMM_SF = dba.normalize(sample_count_blackgreylist_TMM, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_TMM_unique_SF_hESC_EZH2.txt")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_hESC_EZH2_blackgreylist_TMM.pdf", width=14, height=20)  
+plot(sample_count_blackgreylist_TMM)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_hESC_EZH2_blackgreylist_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+```
+
+Can we **use different AB in the same DiffBind correction??** Will the SF provided be the same as AB per AB??
+--> NOT the same number; need to be run AB per AB!!
 
 
 
