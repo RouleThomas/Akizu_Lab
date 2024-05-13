@@ -263,7 +263,7 @@ sbatch scripts/bamtobigwig_unique_extendReads_RPGC_CPC.sh # 17786754 ok
 
 
 # Bigwig with DiffBind TMM scaling factor
-sbatch scripts/bamtobigwig_unique_extendReads_hESC_QSER1_EZH2.sh # 18757417 xxx
+sbatch scripts/bamtobigwig_unique_extendReads_hESC_QSER1_EZH2.sh # 18757417 ok
 
 ```
 
@@ -274,11 +274,15 @@ sbatch scripts/bamtobigwig_unique_extendReads_hESC_QSER1_EZH2.sh # 18757417 xxx
 
 --> *RPGC* bigwig make replicate very heterogeneous... = *BAD*; Use instead the **extendReads** = **GOOD**
 
+--> For QSER1/EZH2 WT, seems **THOR and DiffBind_TMM are very similar**
+
 
 ## Pearson correlation heatmap on bigwig signals
 
 - `008002` current samples
-- `008002` with `008001` for QSER1 sample comparison
+- `008002` with `008001` for QSER1 sample comparison (raw and DiffBind_TMM bigwigs)
+- `008002` with `008001` for QSER1 sample comparison (raw and DiffBind_TMM bigwigs) with QSER1 and EZH2
+
 
 ```bash
 conda activate deeptools
@@ -288,6 +292,11 @@ sbatch scripts/multiBigwigSummary_CPC.sh # 17863829 ok
 
 sbatch scripts/multiBigwigSummary_008001008002_QSER1.sh # 18718911 ok
 sbatch scripts/multiBigwigSummary_008001008002_QSER1_geneOnly.sh # 18719262 ok
+
+sbatch scripts/multiBigwigSummary_008001008002_QSER1_DiffBindTMM.sh # 18868031 ok
+sbatch scripts/multiBigwigSummary_008001008002_QSER1_DiffBindTMM_bin2kb.sh # 18868238 xxx
+
+sbatch scripts/multiBigwigSummary_008001008002_QSER1EZH2_DiffBindTMM_bin2kb.sh # 18868395 xxx
 
 
 # Plot
@@ -310,7 +319,6 @@ plotPCA -in output/bigwig/multiBigwigSummary_008001008002_QSER1.npz \
     --markers o o x x o o x \
     --colors "black" "black" "grey" "grey" "darkblue" "darkblue" "grey" \
     -o output/bigwig/multiBigwigSummary_008001008002_QSER1_plotPCA.pdf
-
 plotPCA -in output/bigwig/multiBigwigSummary_008001008002_QSER1_geneOnly.npz \
     --transpose \
     --ntop 0 \
@@ -318,6 +326,38 @@ plotPCA -in output/bigwig/multiBigwigSummary_008001008002_QSER1_geneOnly.npz \
     --markers o o x x o o x \
     --colors "black" "black" "grey" "grey" "darkblue" "darkblue" "grey" \
     -o output/bigwig/multiBigwigSummary_008001008002_QSER1_geneOnly_plotPCA.pdf
+plotPCA -in output/bigwig_DiffBindTMM/multiBigwigSummary_008001008002_QSER1_DiffBindTMM.npz \
+    --transpose \
+    --ntop 0 \
+    --labels hESC_WT_QSER1FLAG_R1 hESC_WT_QSER1FLAG_R2 hESC_WT_inputFLAG_R1 hESC_WT_inputFLAG_R2 hESC_WT_QSER1_R1 hESC_WT_QSER1_R2 hESC_WT_input_R1 \
+    --markers o o x x o o x \
+    --colors "black" "black" "grey" "grey" "darkblue" "darkblue" "grey" \
+    -o output/bigwig_DiffBindTMM/multiBigwigSummary_008001008002_QSER1_DiffBindTMM_plotPCA.pdf
+plotPCA -in output/bigwig_DiffBindTMM/multiBigwigSummary_008001008002_QSER1_DiffBindTMM_bin2kb.npz \
+    --transpose \
+    --ntop 0 \
+    --labels hESC_WT_QSER1FLAG_R1 hESC_WT_QSER1FLAG_R2 hESC_WT_inputFLAG_R1 hESC_WT_inputFLAG_R2 hESC_WT_QSER1_R1 hESC_WT_QSER1_R2 hESC_WT_input_R1 \
+    --markers o o x x o o x \
+    --colors "black" "black" "grey" "grey" "darkblue" "darkblue" "grey" \
+    -o output/bigwig_DiffBindTMM/multiBigwigSummary_008001008002_QSER1_DiffBindTMM_bin2kb_plotPCA.pdf
+
+plotPCA -in output/bigwig_DiffBindTMM/multiBigwigSummary_008001008002_QSER1_DiffBindTMM_bin2kb.npz \
+    --transpose \
+    --ntop 0 \
+    --labels hESC_WT_QSER1FLAG_R1 hESC_WT_QSER1FLAG_R2 hESC_WT_inputFLAG_R1 hESC_WT_inputFLAG_R2 hESC_WT_QSER1_R1 hESC_WT_QSER1_R2 hESC_WT_input_R1 \
+    --markers o o x x o o x \
+    --colors "black" "black" "grey" "grey" "darkblue" "darkblue" "grey" \
+    --log2 \
+    -o output/bigwig_DiffBindTMM/multiBigwigSummary_008001008002_QSER1_DiffBindTMM_bin2kb_plotPCAlog2.pdf
+
+plotPCA -in output/bigwig_DiffBindTMM/multiBigwigSummary_008001008002_QSER1EZH2_DiffBindTMM_bin2kb.npz \
+    --transpose \
+    --ntop 0 \
+    --labels hESC_WT_QSER1FLAG_R1 hESC_WT_QSER1FLAG_R2 hESC_WT_inputFLAG_R1 hESC_WT_inputFLAG_R2 hESC_WT_EZH2_R1 hESC_WT_QSER1_R1 hESC_WT_QSER1_R2 hESC_WT_input_R1 hESC_WT_EZH2_R1 hESC_WT_EZH2_R2 \
+    --markers o o x x o o o x o o \
+    --colors "black" "black" "grey" "grey" "red" "darkblue" "darkblue" "grey" "darkred" "darkred" \
+    -o output/bigwig_DiffBindTMM/multiBigwigSummary_008001008002_QSER1EZH2_DiffBindTMM_bin2kb_plotPCA.pdf
+
 
 
 ## Heatmap
@@ -337,7 +377,6 @@ plotCorrelation \
     --labels CPC_untreated_YAP1_R1 CPC_RA_YAP1_R1 CPC_untreated_YAP1_R2 CPC_RA_YAP1_R2 CPC_untreated_TEAD4_R1 CPC_RA_TEAD4_R1 CPC_untreated_TEAD4_R2 CPC_RA_TEAD4_R2 CPC_untreated_NR2F2_R1 CPC_RA_NR2F2_R1 CPC_untreated_NR2F2_R2 CPC_RA_NR2F2_R2 CPC_RA_NR2F2_R3 CPC_untreated_NR2F2_R3 CPC_untreated_input_R3 CPC_RA_input_R3 CPC_untreated_YAP1_R3 CPC_RA_YAP1_R3 CPC_untreated_TEAD4_R3 CPC_RA_TEAD4_R3 \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
     -o output/bigwig/multiBigwigSummary_extendReads_CPC_heatmap.pdf
-
 plotCorrelation \
     -in output/bigwig/multiBigwigSummary_008001008002_QSER1.npz \
     --corMethod pearson --skipZeros \
@@ -346,7 +385,6 @@ plotCorrelation \
     --labels hESC_WT_QSER1FLAG_R1 hESC_WT_QSER1FLAG_R2 hESC_WT_inputFLAG_R1 hESC_WT_inputFLAG_R2 hESC_WT_QSER1_R1 hESC_WT_QSER1_R2 hESC_WT_input_R1 \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
     -o output/bigwig/multiBigwigSummary_008001008002_QSER1_heatmap.pdf
-
 plotCorrelation \
     -in output/bigwig/multiBigwigSummary_008001008002_QSER1_geneOnly.npz \
     --corMethod pearson --skipZeros \
@@ -355,6 +393,31 @@ plotCorrelation \
     --labels hESC_WT_QSER1FLAG_R1 hESC_WT_QSER1FLAG_R2 hESC_WT_inputFLAG_R1 hESC_WT_inputFLAG_R2 hESC_WT_QSER1_R1 hESC_WT_QSER1_R2 hESC_WT_input_R1 \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
     -o output/bigwig/multiBigwigSummary_008001008002_QSER1_geneOnly_heatmap.pdf
+plotCorrelation \
+    -in output/bigwig_DiffBindTMM/multiBigwigSummary_008001008002_QSER1_DiffBindTMM.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels hESC_WT_QSER1FLAG_R1 hESC_WT_QSER1FLAG_R2 hESC_WT_inputFLAG_R1 hESC_WT_inputFLAG_R2 hESC_WT_QSER1_R1 hESC_WT_QSER1_R2 hESC_WT_input_R1 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig_DiffBindTMM/multiBigwigSummary_008001008002_QSER1_DiffBindTMM_heatmap.pdf
+plotCorrelation \
+    -in output/bigwig_DiffBindTMM/multiBigwigSummary_008001008002_QSER1_DiffBindTMM_bin2kb.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels hESC_WT_QSER1FLAG_R1 hESC_WT_QSER1FLAG_R2 hESC_WT_inputFLAG_R1 hESC_WT_inputFLAG_R2 hESC_WT_QSER1_R1 hESC_WT_QSER1_R2 hESC_WT_input_R1 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig_DiffBindTMM/multiBigwigSummary_008001008002_QSER1_DiffBindTMM_bin2kb_heatmap.pdf
+
+plotCorrelation \
+    -in output/bigwig_DiffBindTMM/multiBigwigSummary_008001008002_QSER1EZH2_DiffBindTMM_bin2kb.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels hESC_WT_QSER1FLAG_R1 hESC_WT_QSER1FLAG_R2 hESC_WT_inputFLAG_R1 hESC_WT_inputFLAG_R2 hESC_WT_EZH2_R1 hESC_WT_QSER1_R1 hESC_WT_QSER1_R2 hESC_WT_input_R1 hESC_WT_EZH2_R1 hESC_WT_EZH2_R2 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig_DiffBindTMM/multiBigwigSummary_008001008002_QSER1EZH2_DiffBindTMM_bin2kb_heatmap.pdf
 
 
 ```
@@ -362,7 +425,7 @@ plotCorrelation \
 --> two big groups: H3K27me3 IP versus the other
 ----> Seems only H3K27me3 IP has worked here
 
-
+--> `*_bin2kb` include the following modifications at the `multiBigwigSummary`: `--blackListFileName /scr1/users/roulet/Akizu_Lab/Master/meta/hg38-blacklist.v2.bed --chromosomesToSkip chrX chrY chrM --binSize 2000`
 
 
 # MACS2 peak calling on bam unique
@@ -1531,6 +1594,8 @@ Venn diagram of peak-genes TED4, QSER1 and EZH2 has been generated.
 Generate gtf file from gene list; 
 - gene with peak in promoter (qval macs2 2.3)
 - QSER1 comparison Conchi vs Dixon (`008002`)
+- EZH2 comparison Conchi vs Dixon (`008002`)
+
 
 ```bash
 ### create gtf from gene list
@@ -1541,10 +1606,15 @@ sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_hESC_WT_QSER1E
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2.txt > output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2_as_gtf_geneSymbol.txt
 
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_qval1.30103_noIntergenic_geneSymbol.txt > output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_qval1.30103_noIntergenic_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_qval1.30103_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_qval1.30103_promoterAnd5_as_gtf_geneSymbol.txt
 
 sed 's/\r$//; s/.*/gene_name "&"/' ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval10_noIntergenic_geneSymbol.txt > ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval10_noIntergenic_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval15_noIntergenic_geneSymbol.txt > ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval15_noIntergenic_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval20_noIntergenic_geneSymbol.txt > ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval20_noIntergenic_as_gtf_geneSymbol.txt
+
+sed 's/\r$//; s/.*/gene_name "&"/' ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_R1_qval1.30103_promoterAnd5_geneSymbol.txt > ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_R1_qval1.30103_promoterAnd5_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_R1_qval3_promoterAnd5_geneSymbol.txt > ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_R1_qval3_promoterAnd5_as_gtf_geneSymbol.txt
+
 
 ## Filter the gtf
 grep -Ff output/ChIPseeker/Venn_overlap_hESC_WT_QSER1TEAD4_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_hESC_WT_QSER1TEAD4.gtf
@@ -1552,10 +1622,14 @@ grep -Ff output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2_as_gtf_geneSymbol.txt 
 grep -Ff output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2TEAD4_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_hESC_WT_QSER1EZH2TEAD4.gtf
 
 grep -Ff output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_qval1.30103_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_macs2_hESC_WT_QSER1_qval1.30103_noIntergenic.gtf
+grep -Ff output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_qval1.30103_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_macs2_hESC_WT_EZH2_qval1.30103_promoterAnd5.gtf
 
 grep -Ff ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval10_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > ../002__ChIPseq_Dixon2021/meta/ENCFF159KBI_macs2_hESC_WT_QSER1FLAG_pool_qval10_noIntergenic.gtf
 grep -Ff ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval15_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > ../002__ChIPseq_Dixon2021/meta/ENCFF159KBI_macs2_hESC_WT_QSER1FLAG_pool_qval15_noIntergenic.gtf
 grep -Ff ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_QSER1FLAG_pool_qval20_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > ../002__ChIPseq_Dixon2021/meta/ENCFF159KBI_macs2_hESC_WT_QSER1FLAG_pool_qval20_noIntergenic.gtf
+
+grep -Ff ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_R1_qval1.30103_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > ../002__ChIPseq_Dixon2021/meta/ENCFF159KBI_macs2_hESC_WT_EZH2_R1_qval1.30103_promoterAnd5.gtf
+grep -Ff ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_R1_qval3_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > ../002__ChIPseq_Dixon2021/meta/ENCFF159KBI_macs2_hESC_WT_EZH2_R1_qval3_promoterAnd5.gtf
 
 # deeptool plots
 ## macs2 008001
@@ -1570,12 +1644,21 @@ sbatch scripts/matrix_TSS_5kb_rawBigwig_hESC_WT_QSER1_008001vs008002_008002noInt
 sbatch scripts/matrix_TSS_5kb_rawBigwig_hESC_WT_QSER1_008001vs008002_008002noIntergenicqval20.sh # 18718131 ok
 
 
+## macss2 EZH2 008001 vs 008002 with output/bigwig raw files
+sbatch scripts/matrix_TSS_5kb_rawBigwig_hESC_WT_EZH2_008001vs008002_008001promoterAnd5.sh # 18869271 ok
+sbatch scripts/matrix_TSS_5kb_rawBigwig_hESC_WT_EZH2_008001vs008002_008002promoterAnd5qval1.30103.sh # 18869286 ok
+sbatch scripts/matrix_TSS_5kb_rawBigwig_hESC_WT_EZH2_008001vs008002_008002promoterAnd5qval3.sh # 18869293 ok
+
+
 
 ```
 
 --> QSER1 before TSS; EZH2 right after TSS
 
 --> QSER1 and QSER1FLAG (`008002`) seems to well co-localize; same signal whatever list of gene used...
+
+--> EZH1 Conchi and Dixon (`008002`) seems to well co-localize; same signal whatever list of gene used...
+
 
 
 ## EZH2 gain lost WT vs KO
