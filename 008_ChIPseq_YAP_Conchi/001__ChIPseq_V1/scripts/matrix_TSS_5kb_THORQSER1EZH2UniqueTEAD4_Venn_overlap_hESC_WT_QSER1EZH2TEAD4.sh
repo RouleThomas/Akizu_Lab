@@ -57,7 +57,7 @@ plotProfile -m output/deeptools/matrix_TSS_5kb_THORQSER1EZH2UniqueTEAD4_Venn_ove
     -out output/deeptools/matrix_TSS_5kb_THORQSER1EZH2UniqueTEAD4_Venn_overlap_hESC_WT_QSER1EZH2TEAD4_profile.pdf \
     --samplesLabel "QSER1" "EZH2" "TEAD4" \
     --perGroup \
-    --colors green red blue \
+    --colors blue red green \
     --refPointLabel "TSS" \
     -T "Read density" \
     -z ""
@@ -73,3 +73,9 @@ plotHeatmap -m output/deeptools/matrix_TSS_5kb_THORQSER1EZH2UniqueTEAD4_Venn_ove
 
 
 
+plotProfile -m output/deeptools/matrix_TSS_5kb_THORQSER1EZH2UniqueTEAD4_Venn_overlap_hESC_WT_QSER1EZH2TEAD4.gz \
+      --perGroup \
+      --plotType heatmap \
+      -out output/deeptools/matrix_TSS_5kb_THORQSER1EZH2UniqueTEAD4_Venn_overlap_hESC_WT_QSER1EZH2TEAD4_profileHeatmap.pdf \
+      --plotHeight 5 \
+      --plotWidth 15

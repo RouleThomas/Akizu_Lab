@@ -1592,10 +1592,11 @@ Venn diagram of peak-genes TED4, QSER1 and EZH2 has been generated.
 **--> use THOR bigwig for QSER1 and EZH2 and use raw unique bigwig for TEAD4 (from `008003`)**
 
 Generate gtf file from gene list; 
+- all genes
 - gene with peak in promoter (qval macs2 2.3)
 - QSER1 comparison Conchi vs Dixon (`008002`)
 - EZH2 comparison Conchi vs Dixon (`008002`)
-
+- QSER1, EZH2, YAP1 
 
 ```bash
 ### create gtf from gene list
@@ -1616,6 +1617,10 @@ sed 's/\r$//; s/.*/gene_name "&"/' ../002__ChIPseq_Dixon2021/output/ChIPseeker/a
 sed 's/\r$//; s/.*/gene_name "&"/' ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_R1_qval3_promoterAnd5_geneSymbol.txt > ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_R1_qval3_promoterAnd5_as_gtf_geneSymbol.txt
 
 
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt > output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1_as_gtf_geneSymbol.txt
+
+
+
 ## Filter the gtf
 grep -Ff output/ChIPseeker/Venn_overlap_hESC_WT_QSER1TEAD4_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_hESC_WT_QSER1TEAD4.gtf
 grep -Ff output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_hESC_WT_QSER1EZH2.gtf
@@ -1631,11 +1636,27 @@ grep -Ff ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_QS
 grep -Ff ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_R1_qval1.30103_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > ../002__ChIPseq_Dixon2021/meta/ENCFF159KBI_macs2_hESC_WT_EZH2_R1_qval1.30103_promoterAnd5.gtf
 grep -Ff ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_R1_qval3_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > ../002__ChIPseq_Dixon2021/meta/ENCFF159KBI_macs2_hESC_WT_EZH2_R1_qval3_promoterAnd5.gtf
 
+grep -Ff output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_hESC_WT_QSER1EZH2YAP1.gtf
+
+
+
+
+
+
 # deeptool plots
+## all genes
+sbatch scripts/matrix_TSS_5kb_rawBigwig_QSER1EZH2YAP1TEAD4DVL2_WT_allGenes.sh # 18879644 xxx
+
+
+
 ## macs2 008001
 sbatch scripts/matrix_TSS_5kb_THORQSER1EZH2UniqueTEAD4_Venn_overlap_hESC_WT_QSER1TEAD4.sh # 18526196 ok
 sbatch scripts/matrix_TSS_5kb_THORQSER1EZH2UniqueTEAD4_Venn_overlap_hESC_WT_QSER1EZH2.sh # 18526206 ok
 sbatch scripts/matrix_TSS_5kb_THORQSER1EZH2UniqueTEAD4_Venn_overlap_hESC_WT_QSER1EZH2TEAD4.sh # 18526209 ok
+sbatch scripts/matrix_TSS_5kb_THORQSER1EZH2UniqueTEAD4_Venn_overlap_hESC_WT_QSER1EZH2only.sh # 18877131 ok
+sbatch scripts/matrix_TSS_5kb_THORQSER1EZH2UniqueTEAD4_Venn_overlap_hESC_WT_QSER1EZH2YAP1.sh # 18879428 ok
+
+
 
 ## macss2 QSER1 008001 vs 008002 with output/bigwig raw files
 sbatch scripts/matrix_TSS_5kb_rawBigwig_hESC_WT_QSER1_008001vs008002_008001noIntergenic.sh # 18718029 ok
