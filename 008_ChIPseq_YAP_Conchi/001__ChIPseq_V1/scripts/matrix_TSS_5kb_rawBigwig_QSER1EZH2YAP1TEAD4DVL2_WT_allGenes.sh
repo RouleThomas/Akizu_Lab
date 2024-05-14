@@ -21,7 +21,8 @@ plotHeatmap -m output/deeptools/matrix_TSS_5kb_rawBigwig_QSER1EZH2YAP1TEAD4DVL2_
     --whatToShow 'heatmap and colorbar' \
     --heatmapHeight 10 \
     --heatmapWidth 2 \
-    --colorMap bwr
+    --colorMap bwr \
+    --zMax 2 1.25 1 1.25 1.25
 
 
 plotHeatmap -m output/deeptools/matrix_TSS_5kb_rawBigwig_QSER1EZH2YAP1TEAD4DVL2_WT_allGenes.gz \
