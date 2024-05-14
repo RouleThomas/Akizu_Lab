@@ -1058,7 +1058,8 @@ write.table(EZH2_neg_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/an
 
 # Functional analysis with enrichR
 
-Functional analysis **enrichR with THOR diff bound genes**
+- **Up and down reg genes**: THOR diff bound genes 
+- **Unique list of genes**: QSER1, EZH2 (YAP1, TEAD4) bound genes in WT (macs2)
 
 - NOTE: I did NOT using webtool Venn diagram I isolated the specific genes that gain / lost H3K*me3 (eg.; like: `output/ChIPseeker/annotation_THOR_H3K*me3_q*_pos_promoterAnd5_geneSymbol_Venndiagram*.txt`)
 
@@ -1081,13 +1082,18 @@ output/ChIPseeker/annotation_THORq5_EZH2_pos_annot_promoterAnd5_geneSymbol.txt
 output/ChIPseeker/annotation_THORq4_EZH2_neg_annot_promoterAnd5_geneSymbol.txt
 output/ChIPseeker/annotation_THORq4_EZH2_pos_annot_promoterAnd5_geneSymbol.txt
 
+output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2.txt
+output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2TEAD4.txt
+output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt
+output/ChIPseeker/none.txt
+
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/ChIPseeker/annotation_THORq4_EZH2_neg_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/ChIPseeker/none.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/ChIPseeker/annotation_THORq4_EZH2_pos_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -1129,6 +1135,9 @@ gos$Term <- factor(gos$Term, levels = new_order)
 pdf("output/GO/enrichR_GO_Biological_Process_2023_THORq5_EZH2.pdf", width=8, height=10)
 pdf("output/GO/enrichR_GO_Biological_Process_2023_THORq4_EZH2.pdf", width=8, height=10)
 
+pdf("output/GO/enrichR_GO_Biological_Process_2023_Venn_overlap_hESC_WT_QSER1EZH2.pdf", width=8, height=7)
+pdf("output/GO/enrichR_GO_Biological_Process_2023_Venn_overlap_hESC_WT_QSER1EZH2YAP1.pdf", width=8, height=7)
+
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
   # Adjusted label position based on the type of gene (up/down) and increased separation
@@ -1152,7 +1161,7 @@ dev.off()
 
 
 ## save output
-write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_THORq4_EZH2.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 
@@ -1169,13 +1178,18 @@ output/ChIPseeker/annotation_THORq4_EZH2_neg_annot_promoterAnd5_geneSymbol.txt
 output/ChIPseeker/annotation_THORq4_EZH2_pos_annot_promoterAnd5_geneSymbol.txt
 
 
+output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2.txt
+output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2TEAD4.txt
+output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt
+output/ChIPseeker/none.txt
+
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/ChIPseeker/annotation_THORq4_EZH2_neg_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/ChIPseeker/none.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/ChIPseeker/annotation_THORq4_EZH2_pos_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 # Extracting KEGG data and assigning types
@@ -1214,6 +1228,8 @@ gos$Term <- factor(gos$Term, levels = new_order)
 # Plotting with enhanced aesthetics
 
 pdf("output/GO/enrichR_GO_Molecular_Function_2023_THORq4_EZH2.pdf", width=8, height=6)
+pdf("output/GO/enrichR_GO_Molecular_Function_2023_Venn_overlap_hESC_WT_QSER1EZH2YAP1.pdf", width=8, height=3)
+
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
@@ -1237,7 +1253,7 @@ ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) +
 dev.off()
 
 ## save output
-write.table(gos, "output/GO/enrichR_GO_Molecular_Function_2023_THORq4_EZH2.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_GO_Molecular_Function_2023_Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 
@@ -1253,13 +1269,18 @@ output/ChIPseeker/annotation_THORq5_EZH2_pos_annot_promoterAnd5_geneSymbol.txt
 output/ChIPseeker/annotation_THORq4_EZH2_neg_annot_promoterAnd5_geneSymbol.txt
 output/ChIPseeker/annotation_THORq4_EZH2_pos_annot_promoterAnd5_geneSymbol.txt
 
+output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2.txt
+output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2TEAD4.txt
+output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt
+
+
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/ChIPseeker/annotation_THORq4_EZH2_neg_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/ChIPseeker/none.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/ChIPseeker/annotation_THORq4_EZH2_pos_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -1296,6 +1317,10 @@ gos$Term <- factor(gos$Term, levels = new_order)
 # Plotting with enhanced aesthetics
 
 pdf("output/GO/enrichR_GO_Cellular_Component_2023_THORq4_EZH2.pdf", width=8, height=2)
+pdf("output/GO/enrichR_GO_Cellular_Component_2023_Venn_overlap_hESC_WT_QSER1EZH2YAP1.pdf", width=8, height=3)
+
+
+
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
   # Adjusted label position based on the type of gene (up/down) and increased separation
@@ -1319,7 +1344,7 @@ dev.off()
 
 
 ## save output
-write.table(gos, "output/GO/enrichR_GO_Cellular_Component_2023_THORq4_EZH2.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_GO_Cellular_Component_2023_Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 
@@ -1333,13 +1358,19 @@ output/ChIPseeker/annotation_THORq5_EZH2_pos_annot_promoterAnd5_geneSymbol.txt
 output/ChIPseeker/annotation_THORq4_EZH2_neg_annot_promoterAnd5_geneSymbol.txt
 output/ChIPseeker/annotation_THORq4_EZH2_pos_annot_promoterAnd5_geneSymbol.txt
 
+output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2.txt
+output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2TEAD4.txt
+output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt
+
+
+
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/ChIPseeker/annotation_THORq4_EZH2_neg_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/ChIPseeker/none.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/ChIPseeker/annotation_THORq4_EZH2_pos_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -1379,6 +1410,7 @@ gos$Term <- factor(gos$Term, levels = new_order)
 # Plotting with enhanced aesthetics
 
 pdf("output/GO/enrichR_KEGG_2021_Human_THORq4_EZH2.pdf", width=8, height=3)
+pdf("output/GO/enrichR_KEGG_2021_Human_Venn_overlap_hESC_WT_QSER1EZH2TEAD4.pdf", width=8, height=3)
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
@@ -1403,10 +1435,64 @@ dev.off()
 
 
 ## save output
-write.table(gos, "output/GO/enrichR_KEGG_2021_Human_THORq4_EZH2.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_KEGG_2021_Human_Venn_overlap_hESC_WT_QSER1EZH2TEAD4.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 ```
+
+
+
+# Functional analysis with enrichGO (single list of genes dotplot)
+
+
+We will use clusterProfile package. Tutorial [here](https://hbctraining.github.io/DGE_workshop_salmon/lessons/functional_analysis_2019.html).
+
+Let's do a test of the pipeline with genes from cluster4 amd cluster14 from the rlog counts. Our background list will be all genes tested for differential expression.
+
+**IMPORTANT NOTE: When doing GO, do NOT set a universe (background list of genes) it perform better!**
+
+```R
+# packages
+library("clusterProfiler")
+library("pathview")
+library("DOSE")
+library("org.Hs.eg.db")
+library("enrichplot")
+library("rtracklayer")
+library("tidyverse")
+
+# GO
+
+
+# Genes that gain H3K27me3 in NPC (009)
+## Files
+output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2.txt
+output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2TEAD4.txt
+output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt
+
+list = read_csv("output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt", col_names = "gene_name") # CHANGE HERE!!!!!!!!
+  
+ego <- enrichGO(gene = as.character(list$gene_name), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "CC",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+                
+# pdf("output/GO/dotplot_CC_Venn_overlap_hESC_WT_QSER1EZH2_top20.pdf", width=7, height=7) # CHANGE HERE!!!!!!!!
+# pdf("output/GO/dotplot_CC_Venn_overlap_hESC_WT_QSER1EZH2TEAD4_top20.pdf", width=7, height=7) # CHANGE HERE!!!!!!!!
+pdf("output/GO/dotplot_CC_Venn_overlap_hESC_WT_QSER1EZH2YAP1_top20.pdf", width=7, height=7) # CHANGE HERE!!!!!!!!
+
+dotplot(ego, showCategory=20)
+dev.off()
+
+write.csv(data.frame(ego) , file = "output/GO/dotplot_CC_Venn_overlap_hESC_WT_QSER1EZH2YAP1_top20.txt", row.names=FALSE)
+
+```
+
+
+
 
 
 
