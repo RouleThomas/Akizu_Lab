@@ -8892,6 +8892,7 @@ res_Lost = THOR_qval15_KO_Lost %>%
 ## PLOT
 ### GAIN
 highlight_genes <- c("GRIN1", "ADCY1", "GRM8", "GRIK3", "ADCY5") # Glutamatergic genes
+highlight_genes <- c("") # none
 
 # FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
 keyvals <- ifelse(
@@ -8927,6 +8928,8 @@ EnhancedVolcano(res_Gain,
 dev.off()
 
 pdf("output/deseq2_hg38/plotVolcano_res_Gain_8wN_KO_vs_8wN_WT_glutamatergicSynapse_prettyV1.pdf", width=8, height=8)  
+pdf("output/deseq2_hg38/plotVolcano_res_Gain_8wN_KO_vs_8wN_WT_prettyV1.pdf", width=8, height=8)  
+
 EnhancedVolcano(res_Gain,
   lab = res_Gain$GeneSymbol,
   x = 'log2FoldChange',

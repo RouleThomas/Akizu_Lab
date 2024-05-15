@@ -8215,7 +8215,7 @@ XXXXXXX
 
 
 
-### Functional analyses for the expected gene list
+### Functional analyses for the expected gene list (unique list of genes, test of enrichGO enrichKEGG enrichDO...)
 
 Let's see what are the genes where H3K27me3 goes Up in HET and/or Down in KO; in agreement with expression changes.
 
@@ -8428,6 +8428,96 @@ dev.off()
 
 
 --> DEGs solely (`meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Down_KO_Up_unique.gtf` and `meta/ENCFF159KBI_peak_noIntergenic_DEGs_8wN_HET_Up_KO_Down_unique.gtf`) not so much few interesting relateod to neurons activity but not in GO_BP or KEGG; only HO_MF/CC and neurons activity/development, respectively
+
+
+
+
+
+
+# Functional analysis with enrichGO (single list of genes dotplot)
+
+
+We will use clusterProfile package. Tutorial [here](https://hbctraining.github.io/DGE_workshop_salmon/lessons/functional_analysis_2019.html).
+
+
+
+**IMPORTANT NOTE: When doing GO, do NOT set a universe (background list of genes) it perform better!**
+
+```R
+# packages
+library("clusterProfiler")
+library("pathview")
+library("DOSE")
+library("org.Hs.eg.db")
+library("enrichplot")
+library("rtracklayer")
+library("tidyverse")
+
+# Genes that gain H3K27me3 in neurons (003)
+## Files
+output/ChIPseeker/annot_THOR_KO_gain_qval15_promoterAnd5_geneSymbol.txt # 814 genes
+
+### WT KO GAIN
+gain_H3K27me3_KO = read_csv("output/ChIPseeker/annot_THOR_KO_gain_qval15_promoterAnd5_geneSymbol.txt", col_names = "gene_name")
+
+ego <- enrichGO(gene = as.character(gain_H3K27me3_KO$gene_name), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+                
+pdf("output/GO/dotplot_BP_annotation_THOR_H3K27me3_q15_pos_promoterAnd5_geneSymbol_top20.pdf", width=7, height=7)
+dotplot(ego, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_BP_annotation_THOR_H3K27me3_q15_pos_promoterAnd5_geneSymbol_top10.pdf", width=6, height=5)
+dotplot(ego, showCategory=10, font.size = 15)
+dev.off()
+
+pdf("output/GO/dotplot_BP_annotation_THOR_H3K27me3_q15_pos_promoterAnd5_geneSymbol_top5.pdf", width=7, height=3)
+dotplot(ego, showCategory=5) 
+dev.off()
+
+pdf("output/GO/dotplot_BP_annotation_THOR_H3K27me3_q15_pos_promoterAnd5_geneSymbol_top5v2.pdf", width=10, height=10)
+dotplot(ego, showCategory=5) 
+dev.off()
+
+
+### WT KO LOST
+lost_H3K27me3_KO = read_csv("output/ChIPseeker/annot_THOR_KO_lost_qval15_promoterAnd5_geneSymbol.txt", col_names = "gene_name")
+
+
+
+ego <- enrichGO(gene = as.character(lost_H3K27me3_KO$gene_name), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+                
+pdf("output/GO/dotplot_BP_annotation_THOR_H3K27me3_q15_neg_promoterAnd5_geneSymbol_top20.pdf", width=7, height=7)
+dotplot(ego, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_BP_annotation_THOR_H3K27me3_q15_neg_promoterAnd5_geneSymbol_top10.pdf", width=6, height=5)
+dotplot(ego, showCategory=10, font.size = 15)
+dev.off()
+
+pdf("output/GO/dotplot_BP_annotation_THOR_H3K27me3_q15_neg_promoterAnd5_geneSymbol_top5.pdf", width=7, height=3)
+dotplot(ego, showCategory=5) 
+dev.off()
+
+pdf("output/GO/dotplot_BP_annotation_THOR_H3K27me3_q15_neg_promoterAnd5_geneSymbol_top5v2.pdf", width=10, height=10)
+dotplot(ego, showCategory=5) 
+dev.off()
+
+
+```
+
+
 
 
 

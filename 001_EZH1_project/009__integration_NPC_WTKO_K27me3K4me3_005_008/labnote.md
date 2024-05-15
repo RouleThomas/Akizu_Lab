@@ -2278,6 +2278,10 @@ pdf("output/GO/dotplot_BP_annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymb
 dotplot(ego, showCategory=20)
 dev.off()
 
+pdf("output/GO/dotplot_BP_annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Venndiagram836_top10.pdf", width=6, height=5)
+dotplot(ego, showCategory=10, font.size = 15)
+dev.off()
+
 pdf("output/GO/dotplot_BP_annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Venndiagram836_top5.pdf", width=7, height=3)
 dotplot(ego, showCategory=5) 
 dev.off()

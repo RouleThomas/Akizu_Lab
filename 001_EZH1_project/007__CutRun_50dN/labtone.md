@@ -2312,6 +2312,10 @@ pdf("output/GO/dotplot_BP_annotation_THOR_H3K27me3_q20_pos_promoterAnd5_geneSymb
 dotplot(ego, showCategory=20)
 dev.off()
 
+pdf("output/GO/dotplot_BP_annotation_THOR_H3K27me3_q20_pos_promoterAnd5_geneSymbol_Venndiagram1631_top10.pdf", width=6, height=5)
+dotplot(ego, showCategory=10, font.size = 15)
+dev.off()
+
 pdf("output/GO/dotplot_BP_annotation_THOR_H3K27me3_q20_pos_promoterAnd5_geneSymbol_Venndiagram1631_top5.pdf", width=7, height=3)
 dotplot(ego, showCategory=5) 
 dev.off()
@@ -2321,6 +2325,104 @@ dotplot(ego, showCategory=5)
 dev.off()
 ```
 
+
+
+
+# enrichR functional analysis
+
+- Check whether genes that gain H3K27me3 are target of EZH2 (like in NPC `001009`)
+
+
+```R
+
+library("enrichR")
+library("tidyverse")
+library("ggrepel")
+
+
+
+ 
+# Define databases for enrichment
+dbs <- c("ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X") # 
+
+### GeneSymbol list of genes that gain H3K27me3
+output/ChIPseeker/annot_THOR_KO_gain_qval30_promoterAnd5_geneSymbol.txt
+output/ChIPseeker/annot_THOR_KO_lost_qval30_promoterAnd5_geneSymbol.txt
+
+
+# IF starting with geneSymbol
+## Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/ChIPseeker/annot_THOR_KO_lost_qval20_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+## Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/ChIPseeker/annot_THOR_KO_gain_qval20_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+
+### TF plot like JC paper
+#### import all TF genes
+TF = read.csv("output/GO/ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X_TFonly.txt") %>%
+                               as_tibble()
+
+#### re do gos without filtering for pvalue
+up <- eup$`ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X`
+down <- edown$`ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X`
+up$type <- "up"
+down$type <- "down"
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+gos <- rbind(down, up)
+
+### combine TF with gos
+gos_TF = TF %>%
+  left_join(as_tibble(gos) ) %>%
+  filter(type == "up") 
+
+gos_TF_tidy = gos_TF %>%
+  separate(Term, into = c("TF", "db"))
+
+
+### plot
+
+
+pdf("output/GO/VolcanoPlotTF_ENCODE_and_ChEA_Consensus_TFs_from_ChIP_THOR_H3K27me3_q20_Gain.pdf", width=5, height=4)
+ggplot(gos_TF_tidy, aes(x = Odds.Ratio, y = logAdjP, color = db)) +
+  geom_point(aes(color = ifelse(logAdjP < 1.3, "not signif.", db))) +
+  scale_color_manual(values = c("lightgreen", "darkgreen", "grey")) + # Replace with your actual colors
+  theme_bw() +
+  labs(x = "Odds Ratio", y = "-log10(adjusted p-value)") +
+  geom_text_repel(data = subset(gos_TF_tidy, logAdjP > 1.3),
+                  aes(label = TF),
+                  nudge_x = 0.2,  # Adjust this value to nudge labels to the right
+                  size = 3,
+                  max.overlaps = 25)  +
+  guides(color = guide_legend(override.aes = list(label = ""))) # just to remove the "a" added in fig legend
+dev.off()
+
+
+pdf("output/GO/VolcanoPlotTF_ENCODE_and_ChEA_Consensus_TFs_from_ChIP_THOR_H3K27me3_q20_Gain_CCMTmeeting.pdf", width=5, height=4)
+ggplot(gos_TF_tidy, aes(x = Odds.Ratio, y = logAdjP, color = db)) +
+  geom_point(aes(color = ifelse(logAdjP < 1.3, "not signif.", db))) +
+  scale_color_manual(values = c("blue", "lightblue", "grey")) + # Replace with your actual colors
+  theme_bw() +
+  labs(x = "Odds Ratio", y = "-log10(adjusted p-value)") +
+  geom_text_repel(data = subset(gos_TF_tidy, logAdjP > 1.3),
+                  aes(label = TF),
+                  nudge_x = 0.2,  # Adjust this value to nudge labels to the right
+                  size = 6,
+                  max.overlaps = 30)  +
+  guides(color = guide_legend(override.aes = list(label = ""))) # just to remove the "a" added in fig legend
+dev.off()
+
+```
 
 
 
