@@ -585,10 +585,10 @@ sbatch scripts/matrix_TSS_2kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT00
 
 # Comparison KOEF1aEZH1 with WT (from 006__CutRun this CutRun) _ THOR (TMM; no spike in)
 sbatch scripts/matrix_TSS_5kb_EZH1cs_EZH2_SUZ12_H3K27me3_IGG_KOEF1aEZH1006vsWT006_THOR_TMM_EZH1csPeaks_macs2q1.30103.sh # 18177870 ok
-sbatch scripts/matrix_TSS_5kb_EZH1cs_KOEF1aEZH1006vsWT006_THOR_TMM_EZH1csPeaks_macs2q1.30103.sh # 19041320 xxx
-sbatch scripts/matrix_TSS_5kb_EZH2_KOEF1aEZH1006vsWT006_THOR_TMM_EZH1csPeaks_macs2q1.30103.sh # 19041369 xxx
-sbatch scripts/matrix_TSS_5kb_SUZ12_KOEF1aEZH1006vsWT006_THOR_TMM_EZH1csPeaks_macs2q1.30103.sh # 19041458 xxx
-sbatch scripts/matrix_TSS_5kb_H3K27me3_KOEF1aEZH1006vsWT006_THOR_TMM_EZH1csPeaks_macs2q1.30103.sh # 19041477 xxx
+sbatch scripts/matrix_TSS_5kb_EZH1cs_KOEF1aEZH1006vsWT006_THOR_TMM_EZH1csPeaks_macs2q1.30103.sh # 19041320 ok
+sbatch scripts/matrix_TSS_5kb_EZH2_KOEF1aEZH1006vsWT006_THOR_TMM_EZH1csPeaks_macs2q1.30103.sh # 19041369 ok
+sbatch scripts/matrix_TSS_5kb_SUZ12_KOEF1aEZH1006vsWT006_THOR_TMM_EZH1csPeaks_macs2q1.30103.sh # 19041458 ok
+sbatch scripts/matrix_TSS_5kb_H3K27me3_KOEF1aEZH1006vsWT006_THOR_TMM_EZH1csPeaks_macs2q1.30103.sh # 19041477 ok
 
 
 # Comparison KOEF1aEZH1 with WT (from 006__CutRun this CutRun) _ THOR (spike in TMM for EZH2, SUZ12, H3K27me3; for EZH1; TMM solely)

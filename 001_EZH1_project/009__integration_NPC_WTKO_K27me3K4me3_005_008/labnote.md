@@ -2262,7 +2262,6 @@ gene_id_name <- data.frame(gene_id, gene_name) %>%
 ## Files
 output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Venndiagram836.txt
 
-### WT HET
 gain_H3K27me3_KO = read_csv("output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Venndiagram836.txt", col_names = "gene_name")
   
 
@@ -2289,6 +2288,41 @@ dev.off()
 pdf("output/GO/dotplot_BP_annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol_Venndiagram836_top5v2.pdf", width=10, height=10)
 dotplot(ego, showCategory=5) 
 dev.off()
+
+
+
+# Genes that gain H3K27me3 in NPC (009) and that are downregulated RNAseq (001)
+## Files
+output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt # 202 genes
+
+gain_H3K27me3_downreg_KO = read_csv("output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", col_names = "gene_name")
+  
+
+ego <- enrichGO(gene = as.character(gain_H3K27me3_downreg_KO$gene_name), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+                
+pdf("output/GO/dotplot_BP_downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30_top20.pdf", width=7, height=7)
+dotplot(ego, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_BP_downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30_top10.pdf", width=6, height=5)
+dotplot(ego, showCategory=10, font.size = 15)
+dev.off()
+
+pdf("output/GO/dotplot_BP_downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30_top5.pdf", width=7, height=3)
+dotplot(ego, showCategory=5) 
+dev.off()
+
+pdf("output/GO/dotplot_BP_downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30_top5v2.pdf", width=6, height=3)
+dotplot(ego, showCategory=5, font.size = 15) 
+dev.off()
+
+
 ```
 
 

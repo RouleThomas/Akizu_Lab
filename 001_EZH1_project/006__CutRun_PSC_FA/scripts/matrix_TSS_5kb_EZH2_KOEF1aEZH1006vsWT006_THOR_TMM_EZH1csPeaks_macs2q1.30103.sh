@@ -44,8 +44,8 @@ plotProfile -m output/deeptools/matrix_TSS_5kb_EZH2_KOEF1aEZH1006vsWT006_THOR_TM
     --colors black blue \
     --refPointLabel "TSS" \
     -T "H3K27me3 read density" \
-    -z ""
-
+    -z "" \
+    --plotWidth 10
 
 
 plotHeatmap -m output/deeptools/matrix_TSS_5kb_EZH2_KOEF1aEZH1006vsWT006_THOR_TMM_EZH1csPeaks_macs2q1.30103.gz \

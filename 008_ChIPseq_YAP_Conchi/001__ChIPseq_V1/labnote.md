@@ -950,6 +950,11 @@ write.table(hESC_WT_DVL2_annot_noIntergenic_geneSymbol, file = "output/ChIPseeke
 
 
 # ChIPseeker - THOR peaks
+
+- Annotate EZH2 diff bound peaks + Check whether these genes are bound with YAP1 (in `001003`)
+
+
+
 ```bash
 conda activate deseq2
 ```
@@ -1049,12 +1054,47 @@ write.table(EZH2_neg_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/an
             row.names = FALSE)
 
 
+# Check wether EZH2 diff bound genes are YAP1 bound 001003
+## import EZH2 diff bound genes
+EZH2_pos_annot_promoterAnd5_geneSymbol = read.table("output/ChIPseeker/annotation_THORq4_EZH2_pos_annot_promoterAnd5_geneSymbol.txt", header = FALSE, sep = "\t") %>%
+    add_column(EZH2 = "gain") %>%
+    dplyr::rename("geneSymbol" ="V1")
 
+EZH2_neg_annot_promoterAnd5_geneSymbol = read.table("output/ChIPseeker/annotation_THORq4_EZH2_neg_annot_promoterAnd5_geneSymbol.txt", header = FALSE, sep = "\t") %>%
+    add_column(EZH2 = "lost") %>%
+    dplyr::rename("geneSymbol" ="V1")
+
+
+EZH2_posNeg_annot_promoterAnd5_geneSymbol = EZH2_pos_annot_promoterAnd5_geneSymbol %>%
+    bind_rows(EZH2_neg_annot_promoterAnd5_geneSymbol) %>%
+    as_tibble()
+
+## import YAP1 bound genes in WT 008003
+YAP1_annot_noIntergenic_geneSymbol = read.table("../003__ChIPseq_pluripotency/output/ChIPseeker/annotation_macs2_hESC_WT_YAP1_qval1.30103_noIntergenic_geneSymbol.txt", header = FALSE, sep = "\t") %>%
+    dplyr::rename("geneSymbol" ="V1") %>%
+    as_tibble()
+
+
+
+## Add a column YAP1, yes (YAP1 is binding) or no (YAP1 is not binding)
+EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1binding = EZH2_posNeg_annot_promoterAnd5_geneSymbol %>%
+  mutate(YAP1 = ifelse(geneSymbol %in% YAP1_annot_noIntergenic_geneSymbol$geneSymbol, "yes", "no"))
+
+
+write.table(EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1binding, file = "output/ChIPseeker/EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1binding.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = TRUE, 
+            row.names = FALSE)
 ```
 
 --> *EZH2*; THORq5, 325/156 gene gain/lost
 
 --> *EZH2*; THORq4, 406/216 gene gain/lost
+
+--> Very few genes with differential EZH2 binding upon YAP1KO are bound with YAP1!!
+
+
 
 # Functional analysis with enrichR
 

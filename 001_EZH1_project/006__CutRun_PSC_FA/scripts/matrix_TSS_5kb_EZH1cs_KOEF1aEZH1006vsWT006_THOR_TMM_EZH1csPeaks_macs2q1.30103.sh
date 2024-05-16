@@ -44,7 +44,8 @@ plotProfile -m output/deeptools/matrix_TSS_5kb_EZH1cs_KOEF1aEZH1006vsWT006_THOR_
     --colors black blue \
     --refPointLabel "TSS" \
     -T "Read density" \
-    -z ""
+    -z "" \
+    --plotWidth 10
 
 
 
