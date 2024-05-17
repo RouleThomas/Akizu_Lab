@@ -1804,6 +1804,16 @@ sbatch scripts/THOR_NPC_H3K27me3_LIB_spikein.sh # 6552666 ok
 sbatch scripts/THOR_NPC_H3K4me3_LIB_spikein.sh # 6552713 ok
 
 sbatch scripts/THOR_NPC_H3K27me3_LIB_spikein_NotReciprocal.sh # 6625785 ok
+
+
+# TMM from THOR soleley (THOR default)
+sbatch scripts/THOR_NPC_EZH2_TMM.sh # 19142166 ok
+sbatch scripts/THOR_NPC_SUZ12_TMM.sh # 19142169 ok
+sbatch scripts/THOR_NPC_H3K27me3_TMM.sh # 19142172 ok
+sbatch scripts/THOR_NPC_H3K4me3_TMM.sh # 19142175 ok
+
+
+
 ```
 
 --> (Using Recirpocl DiffBind TMM initial method) By eye we seems to still see the higher EZH2 enrichment in WT / KO... 

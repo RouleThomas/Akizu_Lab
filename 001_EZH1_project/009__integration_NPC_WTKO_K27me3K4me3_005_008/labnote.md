@@ -452,6 +452,11 @@ bigWigMerge
 sbatch scripts/THOR_NPC_H3K27me3.sh # 14462899 ok
 sbatch scripts/THOR_NPC_H3K4me3.sh # 14462901 ok
 
+
+# TMM from THOR soleley (THOR default)
+sbatch scripts/THOR_NPC_H3K27me3_TMM.sh # 19142097 xxx
+
+
 # LIB_spikein_SF method (bam spike in)
 sbatch scripts/THOR_NPC_H3K27me3_LIB_spikein.sh # 16224494 ok
 
@@ -2339,7 +2344,6 @@ Check bigwig files of H3K27me3 (`009__CutRun`; THOR q30) and EZH2 (`005__CutRun`
 conda activate deeptools
 
 # PEAKS
-
 ## Using classic Recirpocl DiffBind TMM method
 sbatch scripts/matrix_TSS_10kb_H3K27me3_EZH2_median_THOR_gainLost.sh # 16222103 ok
 sbatch scripts/matrix_TSS_10kb_H3K27me3_EZH2_SUZ12_median_THOR_gainLost.sh # 16222113 ok
@@ -2347,6 +2351,14 @@ sbatch scripts/matrix_TSS_10kb_H3K27me3_EZH2_SUZ12_median_THOR_gainLost.sh # 162
 ## Using DiffBind MG1655 bam scaling factor (see 005); use bam MG1655 in DiffBind and Library seq normalization
 sbatch scripts/matrix_TSS_10kb_H3K27me3_THORDiffBindTMM_EZH2SUZ12_THORLIBspikein_gainLost.sh # 16223845 ok FAIL because H3K27me3 data with TMM (classic) and PRC2 subunits with LIB norm.
 sbatch scripts/matrix_TSS_10kb_H3K27me3_THORDiffBindTMM_EZH2SUZ12_THORLIBspikein_gainLost_corr.sh # 17139835 ok
+
+## Using Default THOR TMM norm for EZH2 and SUZ12, but DiffBindTMM reciprocal THOR for H3K27me3
+sbatch scripts/matrix_TSS_10kb_H3K27me3_EZH2_median_THORTMM_gainLost.sh # 19142544 ok
+sbatch scripts/matrix_TSS_10kb_H3K27me3_EZH2_SUZ12_median_THORTMM_gainLost.sh # 19142545 ok
+
+
+
+
 
 # GENES
 ## Using classic Recirpocl DiffBind TMM method
