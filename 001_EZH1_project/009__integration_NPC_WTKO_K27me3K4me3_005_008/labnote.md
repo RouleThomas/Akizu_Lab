@@ -454,7 +454,7 @@ sbatch scripts/THOR_NPC_H3K4me3.sh # 14462901 ok
 
 
 # TMM from THOR soleley (THOR default)
-sbatch scripts/THOR_NPC_H3K27me3_TMM.sh # 19142097 xxx
+sbatch scripts/THOR_NPC_H3K27me3_TMM.sh # 19142097 ok
 
 
 # LIB_spikein_SF method (bam spike in)
@@ -2356,8 +2356,8 @@ sbatch scripts/matrix_TSS_10kb_H3K27me3_THORDiffBindTMM_EZH2SUZ12_THORLIBspikein
 sbatch scripts/matrix_TSS_10kb_H3K27me3_EZH2_median_THORTMM_gainLost.sh # 19142544 ok
 sbatch scripts/matrix_TSS_10kb_H3K27me3_EZH2_SUZ12_median_THORTMM_gainLost.sh # 19142545 ok
 
-sbatch scripts/matrix_TSS_25kb_H3K27me3_EZH2_SUZ12_median_THORTMM_gainLost.sh # 19383876 xxx
-sbatch scripts/matrix_TSS_50kb_H3K27me3_EZH2_SUZ12_median_THORTMM_gainLost.sh # 19383961 xxx
+sbatch scripts/matrix_TSS_25kb_H3K27me3_EZH2_SUZ12_median_THORTMM_gainLost.sh # 19383876 ok
+sbatch scripts/matrix_TSS_50kb_H3K27me3_EZH2_SUZ12_median_THORTMM_gainLost.sh # 19383961 ok
 
 
 
@@ -2377,7 +2377,7 @@ sbatch scripts/matrix_TSS_10kb_H3K27me3_EZH2_SUZ12_median_THOR_gainLost_gene.sh 
 
 --> `*THORLIBspikein*` norm is weird as show always gain of EZH2/SUZ12, even in regions that lose H3K27me3...
 
---> Seems KO lead to more H3K27me3 sharp peak; maybe less H3K27me3 spreading in KO, or just less noise/bakground --> increase window to 25/50kb to see if signal disapear: 
+--> Seems KO lead to more H3K27me3 sharp peak; maybe less H3K27me3 spreading in KO, or just less noise/bakground --> increase window to 25/50kb to see if signal disapear: still signal; so likely **more noise in WT vs KO**
 
 
 
