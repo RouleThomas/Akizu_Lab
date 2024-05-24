@@ -155,6 +155,12 @@ library("ensembldb")
 
 
 
+### binBw_v2
+copy of scRNAseq; with R [PopSV](https://rdrr.io/github/jmonlong/PopSV/) installed
+--> To use bin.bw R function (count bigwig reads in specific bed regions or bins)
+
+WORK great!
+
 ### scRNAseqV2
 
 --> Same scRNAseq but also allow Shiny app creation!
