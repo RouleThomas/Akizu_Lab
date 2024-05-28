@@ -23,9 +23,11 @@ cp -r * /scr1/users/roulet/Akizu_Lab/002_scRNAseq/005__Goldberg/input_raw/
 
 ```
 
---> XXX
+--> ALL GOOD
 
 # Project
+
+
 
 
 
