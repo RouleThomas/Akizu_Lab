@@ -3524,8 +3524,6 @@ KO_EZH2_tidy_ratio_upstream = KO_EZH2 %>%
   mutate(bc_norm = bc / length) %>%
   filter(direction %in% c("peak", "upstream")) %>%
   select(name, bc_norm, direction) %>%
-  group_by(name, direction) %>%   # have to add this as bug with dupplicated lines... Just 3 weird
-  summarise(bc_norm = mean(bc_norm, na.rm = TRUE), .groups = "drop") %>%
   pivot_wider(names_from = direction, values_from = bc_norm, names_prefix = "bc_norm_") %>%
   mutate(ratio = bc_norm_upstream / bc_norm_peak) %>%
   add_column(genotype = "KO")
