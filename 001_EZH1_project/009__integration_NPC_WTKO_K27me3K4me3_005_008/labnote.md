@@ -3343,28 +3343,27 @@ regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1
 counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_EZH2")
 # WT EZH2_in flank Peaks _ 1kb
 bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s1_median.bw"
-regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank1kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end")  # CHANGE NAME HERE !!!!!!!!!
+regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank1kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() # CHANGE NAME HERE !!!!!!!!!
 counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_EZH2flank1kb") # CHANGE NAME HERE !!!!!!!!!
 # WT EZH2_in flank Peaks _ 2kb
 bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s1_median.bw"
-regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank2kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end")  # CHANGE NAME HERE !!!!!!!!!
+regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank2kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() # CHANGE NAME HERE !!!!!!!!!
 counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_EZH2flank2kb") # CHANGE NAME HERE !!!!!!!!!
 
 
 
 ## KO EZH2_in Peaks
-bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s1_median.bw"
+bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s2_median.bw"
 regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_overlap_001009_NPC_KO_H3K27me3_broad2.3.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%
-  dplyr::select("chr", "start", "end")
+  dplyr::select("chr", "start", "end") %>% unique()
 counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/KO_EZH2")
 ## KO EZH2_in flank Peaks _ 1kb
-bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s1_median.bw"
-regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank1kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end")  # CHANGE NAME HERE !!!!!!!!!
+bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s2_median.bw"
+regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank1kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() # CHANGE NAME HERE !!!!!!!!!
 counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/KO_EZH2flank1kb") # CHANGE NAME HERE !!!!!!!!!
-
 ## KO EZH2_in flank Peaks _ 2kb
-bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s1_median.bw"
-regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank2kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end")  # CHANGE NAME HERE !!!!!!!!!
+bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s2_median.bw"
+regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank2kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() # CHANGE NAME HERE !!!!!!!!!
 counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/KO_EZH2flank2kb") # CHANGE NAME HERE !!!!!!!!!
 
 
@@ -3423,6 +3422,13 @@ dev.off()
 
 
 ### KO_EZH2
+############### slight test
+# KO_EZH2_with_direction = as_tibble(fread(cmd = "gunzip -c output/binBw/KO_EZH2.bgz") ) %>%
+#  add_column(direction = "peak") 
+# write.table(KO_EZH2_with_direction, file = "output/binBw/KO_EZH2_with_direction.txt", sep = "\t", row.names = FALSE, quote = FALSE)
+################
+
+
 KO_EZH2 <- as_tibble(fread(cmd = "gunzip -c output/binBw/KO_EZH2.bgz") ) %>%
  add_column(direction = "peak") %>%
  left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_overlap_001009_NPC_KO_H3K27me3_broad2.3.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2"))) %>%
@@ -3512,18 +3518,26 @@ WT_EZH2_tidy_ratio_upstream = WT_EZH2 %>%
   add_column(genotype = "WT")
 
 
+############### slight test
+KO_EZH2flank1kb_with_direction = as_tibble(fread(cmd = "gunzip -c output/binBw/KO_EZH2flank1kb.bgz") ) %>%
+  mutate(direction = ifelse(row_number() %% 2 == 1, "upstream", "downstream"))
+write.table(KO_EZH2flank1kb_with_direction, file = "output/binBw/KO_EZH2flank1kb_with_direction.txt", sep = "\t", row.names = FALSE, quote = FALSE)
+################
+
+
+XXXX HERE BUG fuckin KO WTF line 112 peak two values...
+
 KO_EZH2flank1kb <- fread(cmd = "gunzip -c output/binBw/KO_EZH2flank1kb.bgz") %>% as_tibble()  %>%
   mutate(direction = ifelse(row_number() %% 2 == 1, "upstream", "downstream")) %>%
- left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank1kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
+ left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank1kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>% unique() )  %>%
  mutate(length = end - start ) %>%
- dplyr::select("name", "length", "direction", "bc") %>%
- unique()
+ dplyr::select("name", "length", "direction", "bc")
 
 KO_EZH2_tidy_ratio_upstream = KO_EZH2 %>%
   bind_rows(KO_EZH2flank1kb) %>%
   mutate(bc_norm = bc / length) %>%
   filter(direction %in% c("peak", "upstream")) %>%
-  select(name, bc_norm, direction) %>%
+  dplyr::select(name,bc_norm,direction) %>%
   pivot_wider(names_from = direction, values_from = bc_norm, names_prefix = "bc_norm_") %>%
   mutate(ratio = bc_norm_upstream / bc_norm_peak) %>%
   add_column(genotype = "KO")
