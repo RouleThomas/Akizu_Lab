@@ -3268,6 +3268,17 @@ bedtools flank -i ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.3010
 
 
 
+## collect flanking regions - separating upstream / downstream (see NOTE at the end) (-l upstream -r downstream)
+bedtools flank -i ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_overlap_001009_NPC_WT_H3K27me3_broad2.3.broadPeak -g ../../Master/meta/GRCh38_chrom_sizes.tab -l 1000 -r 0 > ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank1kbupstream.broadPeak
+bedtools flank -i ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_overlap_001009_NPC_WT_H3K27me3_broad2.3.broadPeak -g ../../Master/meta/GRCh38_chrom_sizes.tab -l 0 -r 1000 > ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank1kbdownstream.broadPeak
+
+bedtools flank -i ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_overlap_001009_NPC_KO_H3K27me3_broad2.3.broadPeak -g ../../Master/meta/GRCh38_chrom_sizes.tab -l 2000 -r 0 > ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank2kbupstream.broadPeak
+bedtools flank -i ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_overlap_001009_NPC_KO_H3K27me3_broad2.3.broadPeak -g ../../Master/meta/GRCh38_chrom_sizes.tab -l 0 -r 2000 > ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank2kbdownstream.broadPeak
+
+
+
+
+
 
 # macs2 SUZ12 peaks
 
@@ -3291,7 +3302,12 @@ bedtools flank -i ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.3010
 bedtools flank -i ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_SUZ12_peaks_overlap_001009_NPC_KO_H3K27me3_broad2.3.broadPeak -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 1000 > ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_SUZ12_peaks_flank1kb.broadPeak
 bedtools flank -i ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_SUZ12_peaks_overlap_001009_NPC_KO_H3K27me3_broad2.3.broadPeak -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 1200 > ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_SUZ12_peaks_flank1.2kb.broadPeak
 
+## collect flanking regions - separating upstream / downstream (see NOTE at the end) (-l upstream -r downstream)
+bedtools flank -i ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_SUZ12_peaks_overlap_001009_NPC_WT_H3K27me3_broad2.3.broadPeak -g ../../Master/meta/GRCh38_chrom_sizes.tab -l 2000 -r 0 > ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_SUZ12_peaks_flank2kbupstream.broadPeak
+bedtools flank -i ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_SUZ12_peaks_overlap_001009_NPC_WT_H3K27me3_broad2.3.broadPeak -g ../../Master/meta/GRCh38_chrom_sizes.tab -l 0 -r 2000 > ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_SUZ12_peaks_flank2kbdownstream.broadPeak
 
+bedtools flank -i ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_SUZ12_peaks_overlap_001009_NPC_KO_H3K27me3_broad2.3.broadPeak -g ../../Master/meta/GRCh38_chrom_sizes.tab -l 1000 -r 0 > ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_SUZ12_peaks_flank1kbupstream.broadPeak
+bedtools flank -i ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_SUZ12_peaks_overlap_001009_NPC_KO_H3K27me3_broad2.3.broadPeak -g ../../Master/meta/GRCh38_chrom_sizes.tab -l 0 -r 1000 > ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_SUZ12_peaks_flank1kbdownstream.broadPeak
 
 
 
@@ -3322,6 +3338,10 @@ devtools::install_github("jmonlong/PopSV")
 --> WORK!!
 
 ## Use bin.bw
+
+
+XXX RED O AND USE THE upstream and downstram file !!! XXX
+
 
 ```bash
 conda activate binBw_v2
@@ -3522,10 +3542,16 @@ WT_EZH2_tidy_ratio_upstream = WT_EZH2 %>%
 KO_EZH2flank1kb_with_direction = as_tibble(fread(cmd = "gunzip -c output/binBw/KO_EZH2flank1kb.bgz") ) %>%
   mutate(direction = ifelse(row_number() %% 2 == 1, "upstream", "downstream"))
 write.table(KO_EZH2flank1kb_with_direction, file = "output/binBw/KO_EZH2flank1kb_with_direction.txt", sep = "\t", row.names = FALSE, quote = FALSE)
+
+KO_EZH2flank1kb_bgz = fread(cmd = "gunzip -c output/binBw/KO_EZH2flank1kb.bgz") %>% as_tibble()  %>%
+  mutate(direction = ifelse(row_number() %% 2 == 1, "upstream", "downstream"))
+write.table(KO_EZH2flank1kb_bgz, file = "output/binBw/KO_EZH2flank1kb_bgz.txt", sep = "\t", row.names = FALSE, quote = FALSE)
+
 ################
 
 
-XXXX HERE BUG fuckin KO WTF line 112 peak two values...
+
+
 
 KO_EZH2flank1kb <- fread(cmd = "gunzip -c output/binBw/KO_EZH2flank1kb.bgz") %>% as_tibble()  %>%
   mutate(direction = ifelse(row_number() %% 2 == 1, "upstream", "downstream")) %>%
@@ -3833,5 +3859,15 @@ dev.off()
 
 ```
 
-- NOTE: for `output/binBw/WT_EZH2flank1kb.bgz` I indicated whether upstream and downstream the peak with `direction`
+- *NOTE: for `output/binBw/WT_EZH2flank1kb.bgz` I indicated whether upstream and downstream the peak with `direction`; the method I used was to say row 1 = upstream and row 2 = downstream, etc... BUT that lead to issue when peaks are close together!!!! Let's better generate two separate file; one for downstream; one for upstream*
+
+
+
+
+
+
+
+
+
+
 
