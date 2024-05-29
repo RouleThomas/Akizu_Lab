@@ -2392,6 +2392,182 @@ ggplot(plot_data, aes(x = sample, y = external_gene_name, fill = mean_log2tpm)) 
 dev.off()
 
 
+
+## meeting 20240529
+### add pvalue / log2fc information (file to use are `deseq2/filtered*res05`)
+
+HP_deseq2 <- as_tibble(read.table("output/deseq2/filtered_HP_KO_vs_HP_Het_res05.txt", header = TRUE, sep = "\t")) %>%
+  rename("external_gene_name" = "GeneSymbol") %>%
+  inner_join(plot_data) %>%
+  dplyr::select(external_gene_name,log2FoldChange,padj) %>%
+  unique() %>%
+  mutate(sample = list(c("Het_HP", "KO_HP"))) %>%
+  unnest(sample)
+CT_deseq2 <- as_tibble(read.table("output/deseq2/filtered_CT_KO_vs_CT_Het_res05.txt", header = TRUE, sep = "\t")) %>%
+  rename("external_gene_name" = "GeneSymbol") %>%
+  inner_join(plot_data) %>%
+  dplyr::select(external_gene_name,log2FoldChange,padj) %>%
+  unique() %>%
+  mutate(sample = list(c("Het_CT", "KO_CT"))) %>%
+  unnest(sample)
+CB_deseq2 <- as_tibble(read.table("output/deseq2/filtered_CB_KO_vs_CB_Het_res05.txt", header = TRUE, sep = "\t")) %>%
+  rename("external_gene_name" = "GeneSymbol") %>%
+  inner_join(plot_data) %>%
+  dplyr::select(external_gene_name,log2FoldChange,padj) %>%
+  unique() %>%
+  mutate(sample = list(c("Het_CB", "KO_CB"))) %>%
+  unnest(sample)
+
+deseq2 = HP_deseq2 %>%
+  bind_rows(CT_deseq2) %>%
+  bind_rows(CB_deseq2)
+
+### combine tpm and log2fc
+## version1
+plot_data_deseq2 = plot_data %>%
+  left_join(deseq2) %>%
+  mutate(
+    log2FoldChange = replace_na(log2FoldChange, 0),
+    padj = replace_na(padj, 1),
+    neg_log10_padj = -log10(padj) # -log10 padj comonly used; so that high number bigger dot
+  )
+## version2 - small dot for non signif (Preferred)
+plot_data_deseq2 <- plot_data %>%
+  left_join(deseq2) %>%
+  mutate(
+    log2FoldChange = replace_na(log2FoldChange, 0),
+    padj = replace_na(padj, 1),
+    neg_log10_padj = ifelse(padj > 0.05, 0.1, -log10(padj)) # Set very small size for non-significant padj
+  )
+
+
+## Re-order based on sample
+plot_data_deseq2$sample <-
+  factor(plot_data_deseq2$sample,
+         c("Het_HP", "KO_HP", "Het_CT", "KO_CT", "Het_CB", "KO_CB"))
+
+## Re-order based on Het_HP expr
+### Calculate the mean expression for Het_HP sample
+Het_HP_expression <- plot_data %>%
+  filter(sample == "Het_HP") %>%
+  arrange(mean_log2tpm) %>%
+  pull(external_gene_name)
+
+plot_data_deseq2$external_gene_name <- factor(plot_data_deseq2$external_gene_name, levels = Het_HP_expression)
+
+
+
+
+# Generate the dot plot
+pdf("output/tpm/dotplot_microgliaGenes_V3.pdf", width = 5, height = 4)
+
+ggplot(plot_data_deseq2, aes(x = sample, y = external_gene_name)) +
+  geom_point(aes(size = neg_log10_padj, color = mean_log2tpm)) +
+  scale_color_gradient2(low = "blue", mid = "white", high = "red", midpoint = 4) +
+  labs(x = "Sample", y = "Gene", color = "Expression (log2 TPM)", size = "-log10(padj)") + # Change to a minimal theme
+  theme(
+    panel.grid.major = element_blank(),  # Remove major grid lines
+    panel.grid.minor = element_blank(),  # Remove minor grid lines
+    panel.background = element_blank(),  # Remove background
+    axis.line = element_line(color = "black"),  # Add axis lines
+    axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.background = element_blank(),  # Remove legend background
+    legend.key = element_blank()  # Remove legend key background
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+dev.off()
+
+
+# Custom function to format the size legend
+custom_size_scale <- scale_size_continuous(name = "-log10(padj)", 
+                                           breaks = c(0.1, 2, 3, 4), 
+                                           labels = c("<1.30103", "2", "3", "4"),
+                                           range = c(0.5, 4))  # Adjust the minimum size to make it visible
+
+pdf("output/tpm/dotplot_microgliaGenes_V4.pdf", width=5, height=4)
+ggplot(plot_data_deseq2, aes(x = sample, y = external_gene_name)) +
+  geom_point(aes(size = neg_log10_padj, color = mean_log2tpm)) +
+  scale_color_gradient2(low = "blue", mid = "white", high = "red", midpoint = 4) +
+  custom_size_scale + # Apply the custom size scale
+  labs(x = "Sample", y = "Gene", color = "Expression (log2 TPM)", size = "-log10(padj)")  +
+  theme_minimal() + # Change to a minimal theme
+  theme(
+    panel.grid.major = element_blank(),  # Remove major grid lines
+    panel.grid.minor = element_blank(),  # Remove minor grid lines
+    panel.background = element_blank(),  # Remove background
+    axis.line = element_line(color = "black"),  # Add axis lines
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+pdf("output/tpm/dotplot_microgliaGenes_V5.pdf", width=5, height=4)
+ggplot(plot_data_deseq2, aes(x = sample, y = external_gene_name)) +
+  geom_point(aes(size = neg_log10_padj, color = mean_log2tpm)) +
+  scale_color_gradientn(colors = c("white", "#FFCCCC", "#FF6666", "#FF3333", "#990000", "#660000"),  # Enhanced red gradient ending with dark red
+                        values = scales::rescale(c(0, 3, 4, 4.5, 7, 8)),   # Adjust values to ensure gradient coverage
+                        name = "Expression (log2 TPM)") +
+  custom_size_scale + # Apply the custom size scale
+  labs(x = "Sample", y = "Gene", size = "-log10(padj)") +
+  theme_minimal() + # Change to a minimal theme
+  theme(
+    panel.grid.major = element_blank(),  # Remove major grid lines
+    panel.grid.minor = element_blank(),  # Remove minor grid lines
+    panel.background = element_blank(),  # Remove background
+    axis.line = element_line(color = "black"),  # Add axis lines
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.background = element_blank(),  # Remove legend background
+    legend.key = element_blank()  # Remove legend key background
+  )
+dev.off()
+
+pdf("output/tpm/dotplot_microgliaGenes_V6.pdf", width=5, height=4)
+ggplot(plot_data_deseq2, aes(x = sample, y = external_gene_name)) +
+  geom_point(aes(size = neg_log10_padj, color = mean_log2tpm)) +
+  scale_color_gradientn(colors = c("white", "#D3D3D3", "#A9A9A9", "#696969", "#4d4d4d", "#333333"),  # White to dark grey gradient
+                        values = scales::rescale(c(0, 3, 4, 4.5, 7, 8)),  # Adjust values to ensure gradient coverage
+                        name = "Expression (log2 TPM)") +
+  custom_size_scale + # Apply the custom size scale
+  labs(x = "Sample", y = "Gene", size = "-log10(padj)") +
+  theme_minimal() + # Change to a minimal theme
+  theme(
+    panel.grid.major = element_blank(),  # Remove major grid lines
+    panel.grid.minor = element_blank(),  # Remove minor grid lines
+    panel.background = element_blank(),  # Remove background
+    axis.line = element_line(color = "black"),  # Add axis lines
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.background = element_blank(),  # Remove legend background
+    legend.key = element_blank()  # Remove legend key background
+  )
+dev.off()
+
+
+
+
+
+
+pdf("output/tpm/dotplot_microgliaGenes_V7.pdf", width=5, height=4)
+ggplot(plot_data_deseq2, aes(x = sample, y = external_gene_name)) +
+  geom_point(aes(size = neg_log10_padj, color = mean_log2tpm)) +
+  scale_color_viridis(name = "Expression (log2 TPM)", option = "inferno") +  # Using magma palette
+  custom_size_scale + # Apply the custom size scale
+  labs(x = "Sample", y = "Gene", size = "-log10(padj)") +
+  theme_minimal() + # Change to a minimal theme
+  theme(
+    panel.grid.major = element_blank(),  # Remove major grid lines
+    panel.grid.minor = element_blank(),  # Remove minor grid lines
+    panel.background = element_blank(),  # Remove background
+    axis.line = element_line(color = "black"),  # Add axis lines
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.background = element_blank(),  # Remove legend background
+    legend.key = element_blank()  # Remove legend key background
+  )
+dev.off()
+
+
+
 ## boxplot
 ### all points!
 
