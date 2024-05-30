@@ -3269,7 +3269,7 @@ bedtools flank -i ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.3010
 
 
 ## collect flanking regions - separating upstream / downstream (see NOTE at the end) (-l upstream -r downstream)
-bedtools flank -i ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_overlap_001009_NPC_WT_H3K27me3_broad2.3.broadPeak -g ../../Master/meta/GRCh38_chrom_sizes.tab -l 1000 -r 0 > ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank1kbupstream.broadPeak
+bedtools flank -i ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_overlap_001009_NPC_WT_H3K27me3_broad2.3.broadPeak -g ../../Master/meta/GRCh38_chrom_sizes.tab -l 2000 -r 0 > ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank2kbupstream.broadPeak
 bedtools flank -i ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_overlap_001009_NPC_WT_H3K27me3_broad2.3.broadPeak -g ../../Master/meta/GRCh38_chrom_sizes.tab -l 0 -r 1000 > ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank1kbdownstream.broadPeak
 
 bedtools flank -i ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_overlap_001009_NPC_KO_H3K27me3_broad2.3.broadPeak -g ../../Master/meta/GRCh38_chrom_sizes.tab -l 2000 -r 0 > ../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank2kbupstream.broadPeak
@@ -3340,8 +3340,6 @@ devtools::install_github("jmonlong/PopSV")
 ## Use bin.bw
 
 
-XXX RED O AND USE THE upstream and downstram file !!! XXX
-
 
 ```bash
 conda activate binBw_v2
@@ -3354,21 +3352,32 @@ library("Rsamtools")
 library("ggpubr")
 library("data.table")
 
-# EZH2
+# EZH2 #####################################################
 
 ## WT EZH2_in Peaks
 bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s1_median.bw"
 regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_overlap_001009_NPC_WT_H3K27me3_broad2.3.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%
   dplyr::select("chr", "start", "end")
 counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_EZH2")
-# WT EZH2_in flank Peaks _ 1kb
+# WT EZH2_ upstream / downtream - 1kb
 bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s1_median.bw"
-regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank1kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() # CHANGE NAME HERE !!!!!!!!!
-counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_EZH2flank1kb") # CHANGE NAME HERE !!!!!!!!!
-# WT EZH2_in flank Peaks _ 2kb
+regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank1kbupstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() #
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_EZH2upstream1kb") # 
+
 bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s1_median.bw"
-regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank2kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() # CHANGE NAME HERE !!!!!!!!!
-counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_EZH2flank2kb") # CHANGE NAME HERE !!!!!!!!!
+regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank1kbdownstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() # 
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_EZH2downstream1kb") #
+
+
+# WT EZH2_ upstream / downtream - 2kb
+bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s1_median.bw"
+regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank2kbupstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() #
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_EZH2upstream2kb") # 
+
+bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s1_median.bw"
+regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank2kbdownstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() # 
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_EZH2downstream2kb") #
+
 
 
 
@@ -3377,38 +3386,56 @@ bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s2_median.bw"
 regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_overlap_001009_NPC_KO_H3K27me3_broad2.3.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%
   dplyr::select("chr", "start", "end") %>% unique()
 counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/KO_EZH2")
-## KO EZH2_in flank Peaks _ 1kb
+## KO EZH2_ upstream / downtream - 1kb
 bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s2_median.bw"
-regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank1kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() # CHANGE NAME HERE !!!!!!!!!
-counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/KO_EZH2flank1kb") # CHANGE NAME HERE !!!!!!!!!
-## KO EZH2_in flank Peaks _ 2kb
+regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank1kbupstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() #
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/KO_EZH2upstream1kb") # 
+
 bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s2_median.bw"
-regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank2kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() # CHANGE NAME HERE !!!!!!!!!
-counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/KO_EZH2flank2kb") # CHANGE NAME HERE !!!!!!!!!
+regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank1kbdownstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() #
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/KO_EZH2downstream1kb") # 
+
+
+## KO EZH2_ upstream / downtream - 2kb
+bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s2_median.bw"
+regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank2kbupstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() #
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/KO_EZH2upstream2kb") # 
+
+bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s2_median.bw"
+regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank2kbdownstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() #
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/KO_EZH2downstream2kb") # 
 
 
 
 ## Boxplot - downstream peak upstream
-### WT_EZH2
+# WT 1 kb EZH2
+### WT_EZH2 peak
 WT_EZH2 <- as_tibble(fread(cmd = "gunzip -c output/binBw/WT_EZH2.bgz") ) %>%
  add_column(direction = "peak") %>%
  left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_overlap_001009_NPC_WT_H3K27me3_broad2.3.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2"))) %>%
  mutate(length = end - start ) %>%
  dplyr::select("name", "length", "direction", "bc") 
 
-## 1kb
-WT_EZH2flank1kb <- fread(cmd = "gunzip -c output/binBw/WT_EZH2flank1kb.bgz") %>% as_tibble()  %>%
-  mutate(direction = ifelse(row_number() %% 2 == 1, "upstream", "downstream")) %>%
- left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank1kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
+##  WT_EZH2 upstream / downstream 1kb
+WT_EZH2upstream1kb <- fread(cmd = "gunzip -c output/binBw/WT_EZH2upstream1kb.bgz") %>% as_tibble()  %>%
+ add_column(direction = "upstream") %>%
+ left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank1kbupstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
+ mutate(length = end - start ) %>%
+ dplyr::select("name", "length", "direction", "bc") 
+WT_EZH2downstream1kb <- fread(cmd = "gunzip -c output/binBw/WT_EZH2downstream1kb.bgz") %>% as_tibble()  %>%
+ add_column(direction = "downstream") %>%
+ left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank1kbdownstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
  mutate(length = end - start ) %>%
  dplyr::select("name", "length", "direction", "bc") 
 
-WT_EZH2_tidy = WT_EZH2 %>%
-  bind_rows(WT_EZH2flank1kb) %>%
+
+WT_EZH2_tidy_1kb = WT_EZH2 %>%
+  bind_rows(WT_EZH2upstream1kb) %>%
+  bind_rows(WT_EZH2downstream1kb) %>%
   mutate(bc_norm = bc / length) 
 
 pdf("output/binBw/WT_EZH2flank1kb.pdf", width=4, height=4)  
-ggplot(WT_EZH2_tidy, aes(x = direction, y = bc_norm, fill = direction)) +
+ggplot(WT_EZH2_tidy_1kb, aes(x = direction, y = bc_norm, fill = direction)) +
   geom_boxplot(outlier.shape = NA) +  # Hide outliers
   geom_jitter(width = 0.15, size = 0.3, alpha = 0.1) +
   theme_bw() +
@@ -3418,19 +3445,26 @@ ggplot(WT_EZH2_tidy, aes(x = direction, y = bc_norm, fill = direction)) +
                                     comparisons = list(c("peak", "upstream"), c("peak", "downstream")))
 dev.off()
 
-## 2kb
-WT_EZH2flank2kb <- fread(cmd = "gunzip -c output/binBw/WT_EZH2flank2kb.bgz") %>% as_tibble()  %>%
-  mutate(direction = ifelse(row_number() %% 2 == 1, "upstream", "downstream")) %>%
- left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank2kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
+##  WT_EZH2 upstream / downstream 2kb
+WT_EZH2upstream2kb <- fread(cmd = "gunzip -c output/binBw/WT_EZH2upstream2kb.bgz") %>% as_tibble()  %>%
+ add_column(direction = "upstream") %>%
+ left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank2kbupstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
+ mutate(length = end - start ) %>%
+ dplyr::select("name", "length", "direction", "bc") 
+WT_EZH2downstream2kb <- fread(cmd = "gunzip -c output/binBw/WT_EZH2downstream2kb.bgz") %>% as_tibble()  %>%
+ add_column(direction = "downstream") %>%
+ left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank2kbdownstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
  mutate(length = end - start ) %>%
  dplyr::select("name", "length", "direction", "bc") 
 
-WT_EZH2_tidy = WT_EZH2 %>%
-  bind_rows(WT_EZH2flank2kb) %>%
+
+WT_EZH2_tidy_2kb = WT_EZH2 %>%
+  bind_rows(WT_EZH2upstream2kb) %>%
+  bind_rows(WT_EZH2downstream2kb) %>%
   mutate(bc_norm = bc / length) 
 
 pdf("output/binBw/WT_EZH2flank2kb.pdf", width=4, height=4)  
-ggplot(WT_EZH2_tidy, aes(x = direction, y = bc_norm, fill = direction)) +
+ggplot(WT_EZH2_tidy_2kb, aes(x = direction, y = bc_norm, fill = direction)) +
   geom_boxplot(outlier.shape = NA) +  # Hide outliers
   geom_jitter(width = 0.15, size = 0.3, alpha = 0.1) +
   theme_bw() +
@@ -3448,56 +3482,70 @@ dev.off()
 # write.table(KO_EZH2_with_direction, file = "output/binBw/KO_EZH2_with_direction.txt", sep = "\t", row.names = FALSE, quote = FALSE)
 ################
 
-
+# KO 1 kb EZH2
+### KO_EZH2 peak
 KO_EZH2 <- as_tibble(fread(cmd = "gunzip -c output/binBw/KO_EZH2.bgz") ) %>%
  add_column(direction = "peak") %>%
  left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_overlap_001009_NPC_KO_H3K27me3_broad2.3.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2"))) %>%
  mutate(length = end - start ) %>%
- dplyr::select("name", "length", "direction", "bc") %>%
- unique()
+ dplyr::select("name", "length", "direction", "bc") 
 
-## 1kb
-KO_EZH2flank1kb <- fread(cmd = "gunzip -c output/binBw/KO_EZH2flank1kb.bgz") %>% as_tibble()  %>%
-  mutate(direction = ifelse(row_number() %% 2 == 1, "upstream", "downstream")) %>%
- left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank1kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
+##  KO_EZH2 upstream / downstream 1kb
+KO_EZH2upstream1kb <- fread(cmd = "gunzip -c output/binBw/KO_EZH2upstream1kb.bgz") %>% as_tibble()  %>%
+ add_column(direction = "upstream") %>%
+ left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank1kbupstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
+ mutate(length = end - start ) %>%
+ dplyr::select("name", "length", "direction", "bc") 
+KO_EZH2downstream1kb <- fread(cmd = "gunzip -c output/binBw/KO_EZH2downstream1kb.bgz") %>% as_tibble()  %>%
+ add_column(direction = "downstream") %>%
+ left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank1kbdownstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
  mutate(length = end - start ) %>%
  dplyr::select("name", "length", "direction", "bc") 
 
-KO_EZH2_tidy = KO_EZH2 %>%
-  bind_rows(KO_EZH2flank1kb) %>%
-  mutate(bc_norm = bc / length) 
+
+KO_EZH2_tidy_1kb = KO_EZH2 %>%
+  bind_rows(KO_EZH2upstream1kb) %>%
+  bind_rows(KO_EZH2downstream1kb) %>%
+  mutate(bc_norm = bc / length)  %>%
+  unique()
 
 pdf("output/binBw/KO_EZH2flank1kb.pdf", width=4, height=4)  
-ggplot(KO_EZH2_tidy, aes(x = direction, y = bc_norm, fill = direction)) +
+ggplot(KO_EZH2_tidy_1kb, aes(x = direction, y = bc_norm, fill = direction)) +
   geom_boxplot(outlier.shape = NA) +  # Hide outliers
-  geom_jitter(width = 0.15, size = 0.3, alpha = 0.1) +
+  geom_jitter(width = 0.15, size = 0.3, alpha = 0.1, color = "red4") +
   theme_bw() +
   labs(x = NULL, y = "H3K27me3 density") +
-  scale_fill_manual(values = c("lightgrey", "darkgrey", "lightgrey")) +
+  scale_fill_manual(values = c("red2", "red3", "red2")) +
   ggpubr::stat_compare_means(aes(group = direction), label = "p.format",
                                     comparisons = list(c("peak", "upstream"), c("peak", "downstream")))
 dev.off()
 
-
-## 2kb
-KO_EZH2flank2kb <- fread(cmd = "gunzip -c output/binBw/KO_EZH2flank2kb.bgz") %>% as_tibble()  %>%
-  mutate(direction = ifelse(row_number() %% 2 == 1, "upstream", "downstream")) %>%
- left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank2kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
+##  KO_EZH2 upstream / downstream 2kb
+KO_EZH2upstream2kb <- fread(cmd = "gunzip -c output/binBw/KO_EZH2upstream2kb.bgz") %>% as_tibble()  %>%
+ add_column(direction = "upstream") %>%
+ left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank2kbupstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
  mutate(length = end - start ) %>%
- dplyr::select("name", "length", "direction", "bc") %>%
- unique()
+ dplyr::select("name", "length", "direction", "bc") 
+KO_EZH2downstream2kb <- fread(cmd = "gunzip -c output/binBw/KO_EZH2downstream2kb.bgz") %>% as_tibble()  %>%
+ add_column(direction = "downstream") %>%
+ left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank2kbdownstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
+ mutate(length = end - start ) %>%
+ dplyr::select("name", "length", "direction", "bc") 
 
-KO_EZH2_tidy = KO_EZH2 %>%
-  bind_rows(KO_EZH2flank2kb) %>%
-  mutate(bc_norm = bc / length) 
+
+KO_EZH2_tidy_2kb = KO_EZH2 %>%
+  bind_rows(KO_EZH2upstream2kb) %>%
+  bind_rows(KO_EZH2downstream2kb) %>%
+  mutate(bc_norm = bc / length)  %>%
+  unique()
 
 pdf("output/binBw/KO_EZH2flank2kb.pdf", width=4, height=4)  
-ggplot(KO_EZH2_tidy, aes(x = direction, y = bc_norm, fill = direction)) +
+ggplot(KO_EZH2_tidy_2kb, aes(x = direction, y = bc_norm, fill = direction)) +
   geom_boxplot(outlier.shape = NA) +  # Hide outliers
-  geom_jitter(width = 0.15, size = 0.3, alpha = 0.1) +
+  geom_jitter(width = 0.15, size = 0.3, alpha = 0.1, color = "red4") +
   theme_bw() +
   labs(x = NULL, y = "H3K27me3 density") +
-  scale_fill_manual(values = c("lightgrey", "darkgrey", "lightgrey")) +
+  scale_fill_manual(values = c("red2", "red3", "red2")) +
   ggpubr::stat_compare_means(aes(group = direction), label = "p.format",
                                     comparisons = list(c("peak", "upstream"), c("peak", "downstream")))
 dev.off()
@@ -3505,76 +3553,43 @@ dev.off()
 
 
 ## Boxplot - ratio Inside (peak) vs Outside (5 or 3')
-## peak
-WT_EZH2 <- as_tibble(fread(cmd = "gunzip -c output/binBw/WT_EZH2.bgz") ) %>%
- add_column(direction = "peak") %>%
- left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_overlap_001009_NPC_WT_H3K27me3_broad2.3.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2"))) %>%
- mutate(length = end - start ) %>%
- dplyr::select("name", "length", "direction", "bc") %>%
- unique()
-
-KO_EZH2 <- as_tibble(fread(cmd = "gunzip -c output/binBw/KO_EZH2.bgz") ) %>%
- add_column(direction = "peak") %>%
- left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_overlap_001009_NPC_KO_H3K27me3_broad2.3.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2"))) %>%
- mutate(length = end - start ) %>%
- dplyr::select("name", "length", "direction", "bc") %>%
- unique()
-
-## 1kb
-WT_EZH2flank1kb <- fread(cmd = "gunzip -c output/binBw/WT_EZH2flank1kb.bgz") %>% as_tibble()  %>%
-  mutate(direction = ifelse(row_number() %% 2 == 1, "upstream", "downstream")) %>%
- left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank1kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
- mutate(length = end - start ) %>%
- dplyr::select("name", "length", "direction", "bc") %>%
- unique()
-
-WT_EZH2_tidy_ratio_upstream = WT_EZH2 %>%
-  bind_rows(WT_EZH2flank1kb) %>%
-  mutate(bc_norm = bc / length) %>%
-  filter(direction %in% c("peak", "upstream")) %>%
+## 1kb WT vs KO
+WT_EZH2_tidy_1kb_ratio = WT_EZH2_tidy_1kb %>%
   dplyr::select(name,bc_norm,direction) %>%
   pivot_wider(names_from = direction, values_from = bc_norm, names_prefix = "bc_norm_") %>%
-  mutate(ratio = bc_norm_upstream / bc_norm_peak) %>%
+  mutate(ratio_upstream = bc_norm_upstream / bc_norm_peak,
+         ratio_downstream = bc_norm_downstream / bc_norm_peak) %>%
   add_column(genotype = "WT")
 
-
-############### slight test
-KO_EZH2flank1kb_with_direction = as_tibble(fread(cmd = "gunzip -c output/binBw/KO_EZH2flank1kb.bgz") ) %>%
-  mutate(direction = ifelse(row_number() %% 2 == 1, "upstream", "downstream"))
-write.table(KO_EZH2flank1kb_with_direction, file = "output/binBw/KO_EZH2flank1kb_with_direction.txt", sep = "\t", row.names = FALSE, quote = FALSE)
-
-KO_EZH2flank1kb_bgz = fread(cmd = "gunzip -c output/binBw/KO_EZH2flank1kb.bgz") %>% as_tibble()  %>%
-  mutate(direction = ifelse(row_number() %% 2 == 1, "upstream", "downstream"))
-write.table(KO_EZH2flank1kb_bgz, file = "output/binBw/KO_EZH2flank1kb_bgz.txt", sep = "\t", row.names = FALSE, quote = FALSE)
-
-################
-
-
-
-
-
-KO_EZH2flank1kb <- fread(cmd = "gunzip -c output/binBw/KO_EZH2flank1kb.bgz") %>% as_tibble()  %>%
-  mutate(direction = ifelse(row_number() %% 2 == 1, "upstream", "downstream")) %>%
- left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank1kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>% unique() )  %>%
- mutate(length = end - start ) %>%
- dplyr::select("name", "length", "direction", "bc")
-
-KO_EZH2_tidy_ratio_upstream = KO_EZH2 %>%
-  bind_rows(KO_EZH2flank1kb) %>%
-  mutate(bc_norm = bc / length) %>%
-  filter(direction %in% c("peak", "upstream")) %>%
+KO_EZH2_tidy_1kb_ratio = KO_EZH2_tidy_1kb %>%
   dplyr::select(name,bc_norm,direction) %>%
   pivot_wider(names_from = direction, values_from = bc_norm, names_prefix = "bc_norm_") %>%
-  mutate(ratio = bc_norm_upstream / bc_norm_peak) %>%
+  mutate(ratio_upstream = bc_norm_upstream / bc_norm_peak,
+         ratio_downstream = bc_norm_downstream / bc_norm_peak) %>%
   add_column(genotype = "KO")
 
+EZH2_tidy_1kb_ratio = WT_EZH2_tidy_1kb_ratio %>%
+  bind_rows(KO_EZH2_tidy_1kb_ratio) %>%
+  mutate(genotype = factor(genotype, levels = c("WT", "KO")))
 
 
-pdf("output/binBw/WTvsKO_EZH2flank1kb_ratio.pdf", width=4, height=4)  
-WT_EZH2_tidy_ratio_upstream %>%
-  bind_rows(KO_EZH2_tidy_ratio_upstream)  %>%
-  mutate(genotype = factor(genotype, levels = c("WT", "KO"))) %>%
-ggplot(., aes(x = genotype, y = ratio, fill = genotype)) +
+
+pdf("output/binBw/WTvsKO_EZH2upstream1kb_ratio.pdf", width=3, height=3)  
+ggplot(EZH2_tidy_1kb_ratio, aes(x = genotype, y = ratio_upstream, fill = genotype)) +
+  geom_boxplot(outlier.shape = NA) +  # Hide outliers
+ # geom_jitter(width = 0.15, size = 0.3, alpha = 0.1) +
+  theme_bw() +
+  labs(x = NULL, y = "Out/In H3K27me3 ratio") +
+  scale_fill_manual(values = c("darkgrey", "darkred")) +
+  ggpubr::stat_compare_means(aes(group = genotype), label = "p.format",
+                                    comparisons = list(c("WT", "KO")),
+                                    label.y = 2 ) +
+  ylim(0,2.5)
+dev.off()
+
+
+pdf("output/binBw/WTvsKO_EZH2downstream1kb_ratio.pdf", width=3, height=3)  
+ggplot(EZH2_tidy_1kb_ratio, aes(x = genotype, y = ratio_downstream, fill = genotype)) +
   geom_boxplot(outlier.shape = NA) +  # Hide outliers
  # geom_jitter(width = 0.15, size = 0.3, alpha = 0.1) +
   theme_bw() +
@@ -3590,180 +3605,142 @@ dev.off()
 
 
 
+## 2kb WT vs KO
+WT_EZH2_tidy_2kb_ratio = WT_EZH2_tidy_2kb %>%
+  dplyr::select(name,bc_norm,direction) %>%
+  pivot_wider(names_from = direction, values_from = bc_norm, names_prefix = "bc_norm_") %>%
+  mutate(ratio_upstream = bc_norm_upstream / bc_norm_peak,
+         ratio_downstream = bc_norm_downstream / bc_norm_peak) %>%
+  add_column(genotype = "WT")
+
+KO_EZH2_tidy_2kb_ratio = KO_EZH2_tidy_2kb %>%
+  dplyr::select(name,bc_norm,direction) %>%
+  pivot_wider(names_from = direction, values_from = bc_norm, names_prefix = "bc_norm_") %>%
+  mutate(ratio_upstream = bc_norm_upstream / bc_norm_peak,
+         ratio_downstream = bc_norm_downstream / bc_norm_peak) %>%
+  add_column(genotype = "KO")
+
+EZH2_tidy_2kb_ratio = WT_EZH2_tidy_2kb_ratio %>%
+  bind_rows(KO_EZH2_tidy_2kb_ratio) %>%
+  mutate(genotype = factor(genotype, levels = c("WT", "KO")))
 
 
 
-
-
-
-
-
-
-
-
-
-
-## 2kb
-WT_EZH2flank2kb <- fread(cmd = "gunzip -c output/binBw/WT_EZH2flank2kb.bgz") %>% as_tibble()  %>%
-  mutate(direction = ifelse(row_number() %% 2 == 1, "upstream", "downstream")) %>%
- left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_flank2kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
- mutate(length = end - start ) %>%
- dplyr::select("name", "length", "direction", "bc") 
-
-WT_EZH2_tidy = WT_EZH2 %>%
-  bind_rows(WT_EZH2flank2kb) %>%
-  mutate(bc_norm = bc / length) 
-
-pdf("output/binBw/WT_EZH2flank2kb.pdf", width=4, height=4)  
-ggplot(WT_EZH2_tidy, aes(x = direction, y = bc_norm, fill = direction)) +
+pdf("output/binBw/WTvsKO_EZH2upstream2kb_ratio.pdf", width=3, height=3)  
+ggplot(EZH2_tidy_2kb_ratio, aes(x = genotype, y = ratio_upstream, fill = genotype)) +
   geom_boxplot(outlier.shape = NA) +  # Hide outliers
-  geom_jitter(width = 0.15, size = 0.3, alpha = 0.1) +
+ # geom_jitter(width = 0.15, size = 0.3, alpha = 0.1) +
   theme_bw() +
-  labs(x = NULL, y = "H3K27me3 density") +
-  scale_fill_manual(values = c("lightgrey", "darkgrey", "lightgrey")) +
-  ggpubr::stat_compare_means(aes(group = direction), label = "p.format",
-                                    comparisons = list(c("peak", "upstream"), c("peak", "downstream")))
+  labs(x = NULL, y = "Out/In H3K27me3 ratio") +
+  scale_fill_manual(values = c("darkgrey", "darkred")) +
+  ggpubr::stat_compare_means(aes(group = genotype), label = "p.format",
+                                    comparisons = list(c("WT", "KO")),
+                                    label.y = 2 ) +
+  ylim(0,2.5)
 dev.off()
 
 
-### KO_EZH2
-KO_EZH2 <- as_tibble(fread(cmd = "gunzip -c output/binBw/KO_EZH2.bgz") ) %>%
- add_column(direction = "peak") %>%
- left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_overlap_001009_NPC_KO_H3K27me3_broad2.3.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2"))) %>%
- mutate(length = end - start ) %>%
- dplyr::select("name", "length", "direction", "bc") 
 
-## 1kb
-KO_EZH2flank1kb <- fread(cmd = "gunzip -c output/binBw/KO_EZH2flank1kb.bgz") %>% as_tibble()  %>%
-  mutate(direction = ifelse(row_number() %% 2 == 1, "upstream", "downstream")) %>%
- left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank1kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
- mutate(length = end - start ) %>%
- dplyr::select("name", "length", "direction", "bc") 
-
-KO_EZH2_tidy = KO_EZH2 %>%
-  bind_rows(KO_EZH2flank1kb) %>%
-  mutate(bc_norm = bc / length) 
-
-pdf("output/binBw/KO_EZH2flank1kb.pdf", width=4, height=4)  
-ggplot(KO_EZH2_tidy, aes(x = direction, y = bc_norm, fill = direction)) +
+pdf("output/binBw/WTvsKO_EZH2downstream2kb_ratio.pdf", width=3, height=3)  
+ggplot(EZH2_tidy_2kb_ratio, aes(x = genotype, y = ratio_downstream, fill = genotype)) +
   geom_boxplot(outlier.shape = NA) +  # Hide outliers
-  geom_jitter(width = 0.15, size = 0.3, alpha = 0.1) +
+ # geom_jitter(width = 0.15, size = 0.3, alpha = 0.1) +
   theme_bw() +
-  labs(x = NULL, y = "H3K27me3 density") +
-  scale_fill_manual(values = c("lightgrey", "darkgrey", "lightgrey")) +
-  ggpubr::stat_compare_means(aes(group = direction), label = "p.format",
-                                    comparisons = list(c("peak", "upstream"), c("peak", "downstream")))
-dev.off()
-
-
-## 2kb
-KO_EZH2flank2kb <- fread(cmd = "gunzip -c output/binBw/KO_EZH2flank2kb.bgz") %>% as_tibble()  %>%
-  mutate(direction = ifelse(row_number() %% 2 == 1, "upstream", "downstream")) %>%
- left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_EZH2_peaks_flank2kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
- mutate(length = end - start ) %>%
- dplyr::select("name", "length", "direction", "bc") 
-
-KO_EZH2_tidy = KO_EZH2 %>%
-  bind_rows(KO_EZH2flank2kb) %>%
-  mutate(bc_norm = bc / length) 
-
-pdf("output/binBw/KO_EZH2flank2kb.pdf", width=4, height=4)  
-ggplot(KO_EZH2_tidy, aes(x = direction, y = bc_norm, fill = direction)) +
-  geom_boxplot(outlier.shape = NA) +  # Hide outliers
-  geom_jitter(width = 0.15, size = 0.3, alpha = 0.1) +
-  theme_bw() +
-  labs(x = NULL, y = "H3K27me3 density") +
-  scale_fill_manual(values = c("lightgrey", "darkgrey", "lightgrey")) +
-  ggpubr::stat_compare_means(aes(group = direction), label = "p.format",
-                                    comparisons = list(c("peak", "upstream"), c("peak", "downstream")))
+  labs(x = NULL, y = "Out/In H3K27me3 ratio") +
+  scale_fill_manual(values = c("darkgrey", "darkred")) +
+  ggpubr::stat_compare_means(aes(group = genotype), label = "p.format",
+                                    comparisons = list(c("WT", "KO")),
+                                    label.y = 2 ) +
+  ylim(0,2.5)
 dev.off()
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# SUZ12
+# SUZ12 #####################################################
 
 ## WT SUZ12_in Peaks
 bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s1_median.bw"
 regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_SUZ12_peaks_overlap_001009_NPC_WT_H3K27me3_broad2.3.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%
   dplyr::select("chr", "start", "end")
 counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_SUZ12")
-# WT SUZ12_in flank Peaks _ 1kb
+# WT SUZ12_ upstream / downtream - 1kb
 bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s1_median.bw"
-regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_SUZ12_peaks_flank1kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end")  # CHANGE NAME HERE !!!!!!!!!
-counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_SUZ12flank1kb") # CHANGE NAME HERE !!!!!!!!!
-# WT SUZ12_in flank Peaks _ 2kb
+regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_SUZ12_peaks_flank1kbupstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() #
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_SUZ12upstream1kb") # 
+
 bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s1_median.bw"
-regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_SUZ12_peaks_flank2kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end")  # CHANGE NAME HERE !!!!!!!!!
-counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_SUZ12flank2kb") # CHANGE NAME HERE !!!!!!!!!
+regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_SUZ12_peaks_flank1kbdownstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() # 
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_SUZ12downstream1kb") #
+
+
+# WT SUZ12_ upstream / downtream - 2kb
+bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s1_median.bw"
+regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_SUZ12_peaks_flank2kbupstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() #
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_SUZ12upstream2kb") # 
+
+bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s1_median.bw"
+regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_SUZ12_peaks_flank2kbdownstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() # 
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_SUZ12downstream2kb") #
+
 
 
 
 ## KO SUZ12_in Peaks
-bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s1_median.bw"
+bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s2_median.bw"
 regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_SUZ12_peaks_overlap_001009_NPC_KO_H3K27me3_broad2.3.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%
-  dplyr::select("chr", "start", "end")
+  dplyr::select("chr", "start", "end") %>% unique()
 counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/KO_SUZ12")
-## KO SUZ12_in flank Peaks _ 1kb
-bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s1_median.bw"
-regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_SUZ12_peaks_flank1kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end")  # CHANGE NAME HERE !!!!!!!!!
-counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/KO_SUZ12flank1kb") # CHANGE NAME HERE !!!!!!!!!
+## KO SUZ12_ upstream / downtream - 1kb
+bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s2_median.bw"
+regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_SUZ12_peaks_flank1kbupstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() #
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/KO_SUZ12upstream1kb") # 
 
-## KO SUZ12_in flank Peaks _ 2kb
-bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s1_median.bw"
-regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_SUZ12_peaks_flank2kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end")  # CHANGE NAME HERE !!!!!!!!!
-counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/KO_SUZ12flank2kb") # CHANGE NAME HERE !!!!!!!!!
+bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s2_median.bw"
+regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_SUZ12_peaks_flank1kbdownstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() #
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/KO_SUZ12downstream1kb") # 
+
+
+## KO SUZ12_ upstream / downtream - 2kb
+bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s2_median.bw"
+regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_SUZ12_peaks_flank2kbupstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() #
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/KO_SUZ12upstream2kb") # 
+
+bwFile <- "output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s2_median.bw"
+regions <- read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_SUZ12_peaks_flank2kbdownstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%   dplyr::select("chr", "start", "end") %>% unique() #
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/KO_SUZ12downstream2kb") # 
+
 
 
 ## Boxplot - downstream peak upstream
-### WT_SUZ12
+# WT 1 kb SUZ12
+### WT_SUZ12 peak
 WT_SUZ12 <- as_tibble(fread(cmd = "gunzip -c output/binBw/WT_SUZ12.bgz") ) %>%
  add_column(direction = "peak") %>%
  left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_SUZ12_peaks_overlap_001009_NPC_WT_H3K27me3_broad2.3.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2"))) %>%
  mutate(length = end - start ) %>%
  dplyr::select("name", "length", "direction", "bc") 
 
-## 1kb
-WT_SUZ12flank1kb <- fread(cmd = "gunzip -c output/binBw/WT_SUZ12flank1kb.bgz") %>% as_tibble()  %>%
-  mutate(direction = ifelse(row_number() %% 2 == 1, "upstream", "downstream")) %>%
- left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_SUZ12_peaks_flank1kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
+##  WT_SUZ12 upstream / downstream 1kb
+WT_SUZ12upstream1kb <- fread(cmd = "gunzip -c output/binBw/WT_SUZ12upstream1kb.bgz") %>% as_tibble()  %>%
+ add_column(direction = "upstream") %>%
+ left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_SUZ12_peaks_flank1kbupstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
+ mutate(length = end - start ) %>%
+ dplyr::select("name", "length", "direction", "bc") 
+WT_SUZ12downstream1kb <- fread(cmd = "gunzip -c output/binBw/WT_SUZ12downstream1kb.bgz") %>% as_tibble()  %>%
+ add_column(direction = "downstream") %>%
+ left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_SUZ12_peaks_flank1kbdownstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
  mutate(length = end - start ) %>%
  dplyr::select("name", "length", "direction", "bc") 
 
-WT_SUZ12_tidy = WT_SUZ12 %>%
-  bind_rows(WT_SUZ12flank1kb) %>%
+
+WT_SUZ12_tidy_1kb = WT_SUZ12 %>%
+  bind_rows(WT_SUZ12upstream1kb) %>%
+  bind_rows(WT_SUZ12downstream1kb) %>%
   mutate(bc_norm = bc / length) 
 
 pdf("output/binBw/WT_SUZ12flank1kb.pdf", width=4, height=4)  
-ggplot(WT_SUZ12_tidy, aes(x = direction, y = bc_norm, fill = direction)) +
+ggplot(WT_SUZ12_tidy_1kb, aes(x = direction, y = bc_norm, fill = direction)) +
   geom_boxplot(outlier.shape = NA) +  # Hide outliers
   geom_jitter(width = 0.15, size = 0.3, alpha = 0.1) +
   theme_bw() +
@@ -3773,20 +3750,26 @@ ggplot(WT_SUZ12_tidy, aes(x = direction, y = bc_norm, fill = direction)) +
                                     comparisons = list(c("peak", "upstream"), c("peak", "downstream")))
 dev.off()
 
-
-## 2kb
-WT_SUZ12flank2kb <- fread(cmd = "gunzip -c output/binBw/WT_SUZ12flank2kb.bgz") %>% as_tibble()  %>%
-  mutate(direction = ifelse(row_number() %% 2 == 1, "upstream", "downstream")) %>%
- left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_SUZ12_peaks_flank2kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
+##  WT_SUZ12 upstream / downstream 2kb
+WT_SUZ12upstream2kb <- fread(cmd = "gunzip -c output/binBw/WT_SUZ12upstream2kb.bgz") %>% as_tibble()  %>%
+ add_column(direction = "upstream") %>%
+ left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_SUZ12_peaks_flank2kbupstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
+ mutate(length = end - start ) %>%
+ dplyr::select("name", "length", "direction", "bc") 
+WT_SUZ12downstream2kb <- fread(cmd = "gunzip -c output/binBw/WT_SUZ12downstream2kb.bgz") %>% as_tibble()  %>%
+ add_column(direction = "downstream") %>%
+ left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_SUZ12_peaks_flank2kbdownstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
  mutate(length = end - start ) %>%
  dplyr::select("name", "length", "direction", "bc") 
 
-WT_SUZ12_tidy = WT_SUZ12 %>%
-  bind_rows(WT_SUZ12flank2kb) %>%
+
+WT_SUZ12_tidy_2kb = WT_SUZ12 %>%
+  bind_rows(WT_SUZ12upstream2kb) %>%
+  bind_rows(WT_SUZ12downstream2kb) %>%
   mutate(bc_norm = bc / length) 
 
 pdf("output/binBw/WT_SUZ12flank2kb.pdf", width=4, height=4)  
-ggplot(WT_SUZ12_tidy, aes(x = direction, y = bc_norm, fill = direction)) +
+ggplot(WT_SUZ12_tidy_2kb, aes(x = direction, y = bc_norm, fill = direction)) +
   geom_boxplot(outlier.shape = NA) +  # Hide outliers
   geom_jitter(width = 0.15, size = 0.3, alpha = 0.1) +
   theme_bw() +
@@ -3798,59 +3781,185 @@ dev.off()
 
 
 ### KO_SUZ12
+############### slight test
+# KO_SUZ12_with_direction = as_tibble(fread(cmd = "gunzip -c output/binBw/KO_SUZ12.bgz") ) %>%
+#  add_column(direction = "peak") 
+# write.table(KO_SUZ12_with_direction, file = "output/binBw/KO_SUZ12_with_direction.txt", sep = "\t", row.names = FALSE, quote = FALSE)
+################
 
+# KO 1 kb SUZ12
+### KO_SUZ12 peak
 KO_SUZ12 <- as_tibble(fread(cmd = "gunzip -c output/binBw/KO_SUZ12.bgz") ) %>%
  add_column(direction = "peak") %>%
  left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_SUZ12_peaks_overlap_001009_NPC_KO_H3K27me3_broad2.3.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2"))) %>%
  mutate(length = end - start ) %>%
  dplyr::select("name", "length", "direction", "bc") 
 
-
-## 1kb
-KO_SUZ12flank1kb <- fread(cmd = "gunzip -c output/binBw/KO_SUZ12flank1kb.bgz") %>% as_tibble()  %>%
-  mutate(direction = ifelse(row_number() %% 2 == 1, "upstream", "downstream")) %>%
- left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_SUZ12_peaks_flank1kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
+##  KO_SUZ12 upstream / downstream 1kb
+KO_SUZ12upstream1kb <- fread(cmd = "gunzip -c output/binBw/KO_SUZ12upstream1kb.bgz") %>% as_tibble()  %>%
+ add_column(direction = "upstream") %>%
+ left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_SUZ12_peaks_flank1kbupstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
+ mutate(length = end - start ) %>%
+ dplyr::select("name", "length", "direction", "bc") 
+KO_SUZ12downstream1kb <- fread(cmd = "gunzip -c output/binBw/KO_SUZ12downstream1kb.bgz") %>% as_tibble()  %>%
+ add_column(direction = "downstream") %>%
+ left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_SUZ12_peaks_flank1kbdownstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
  mutate(length = end - start ) %>%
  dplyr::select("name", "length", "direction", "bc") 
 
-KO_SUZ12_tidy = KO_SUZ12 %>%
-  bind_rows(KO_SUZ12flank1kb) %>%
-  mutate(bc_norm = bc / length) 
+
+KO_SUZ12_tidy_1kb = KO_SUZ12 %>%
+  bind_rows(KO_SUZ12upstream1kb) %>%
+  bind_rows(KO_SUZ12downstream1kb) %>%
+  mutate(bc_norm = bc / length)  %>%
+  unique()
 
 pdf("output/binBw/KO_SUZ12flank1kb.pdf", width=4, height=4)  
-ggplot(KO_SUZ12_tidy, aes(x = direction, y = bc_norm, fill = direction)) +
+ggplot(KO_SUZ12_tidy_1kb, aes(x = direction, y = bc_norm, fill = direction)) +
   geom_boxplot(outlier.shape = NA) +  # Hide outliers
-  geom_jitter(width = 0.15, size = 0.3, alpha = 0.1) +
+  geom_jitter(width = 0.15, size = 0.3, alpha = 0.1, color = "red4") +
   theme_bw() +
   labs(x = NULL, y = "H3K27me3 density") +
-  scale_fill_manual(values = c("lightgrey", "darkgrey", "lightgrey")) +
+  scale_fill_manual(values = c("red2", "red3", "red2")) +
   ggpubr::stat_compare_means(aes(group = direction), label = "p.format",
                                     comparisons = list(c("peak", "upstream"), c("peak", "downstream")))
 dev.off()
 
-
-
-## 2kb
-KO_SUZ12flank2kb <- fread(cmd = "gunzip -c output/binBw/KO_SUZ12flank2kb.bgz") %>% as_tibble()  %>%
-  mutate(direction = ifelse(row_number() %% 2 == 1, "upstream", "downstream")) %>%
- left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_SUZ12_peaks_flank2kb.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
+##  KO_SUZ12 upstream / downstream 2kb
+KO_SUZ12upstream2kb <- fread(cmd = "gunzip -c output/binBw/KO_SUZ12upstream2kb.bgz") %>% as_tibble()  %>%
+ add_column(direction = "upstream") %>%
+ left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_SUZ12_peaks_flank2kbupstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
+ mutate(length = end - start ) %>%
+ dplyr::select("name", "length", "direction", "bc") 
+KO_SUZ12downstream2kb <- fread(cmd = "gunzip -c output/binBw/KO_SUZ12downstream2kb.bgz") %>% as_tibble()  %>%
+ add_column(direction = "downstream") %>%
+ left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_KO_SUZ12_peaks_flank2kbdownstream.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")))  %>%
  mutate(length = end - start ) %>%
  dplyr::select("name", "length", "direction", "bc") 
 
-KO_SUZ12_tidy = KO_SUZ12 %>%
-  bind_rows(KO_SUZ12flank2kb) %>%
-  mutate(bc_norm = bc / length) 
+
+KO_SUZ12_tidy_2kb = KO_SUZ12 %>%
+  bind_rows(KO_SUZ12upstream2kb) %>%
+  bind_rows(KO_SUZ12downstream2kb) %>%
+  mutate(bc_norm = bc / length)  %>%
+  unique()
 
 pdf("output/binBw/KO_SUZ12flank2kb.pdf", width=4, height=4)  
-ggplot(KO_SUZ12_tidy, aes(x = direction, y = bc_norm, fill = direction)) +
+ggplot(KO_SUZ12_tidy_2kb, aes(x = direction, y = bc_norm, fill = direction)) +
   geom_boxplot(outlier.shape = NA) +  # Hide outliers
-  geom_jitter(width = 0.15, size = 0.3, alpha = 0.1) +
+  geom_jitter(width = 0.15, size = 0.3, alpha = 0.1, color = "red4") +
   theme_bw() +
   labs(x = NULL, y = "H3K27me3 density") +
-  scale_fill_manual(values = c("lightgrey", "darkgrey", "lightgrey")) +
+  scale_fill_manual(values = c("red2", "red3", "red2")) +
   ggpubr::stat_compare_means(aes(group = direction), label = "p.format",
                                     comparisons = list(c("peak", "upstream"), c("peak", "downstream")))
 dev.off()
+
+
+
+## Boxplot - ratio Inside (peak) vs Outside (5 or 3')
+## 1kb WT vs KO
+WT_SUZ12_tidy_1kb_ratio = WT_SUZ12_tidy_1kb %>%
+  dplyr::select(name,bc_norm,direction) %>%
+  pivot_wider(names_from = direction, values_from = bc_norm, names_prefix = "bc_norm_") %>%
+  mutate(ratio_upstream = bc_norm_upstream / bc_norm_peak,
+         ratio_downstream = bc_norm_downstream / bc_norm_peak) %>%
+  add_column(genotype = "WT")
+
+KO_SUZ12_tidy_1kb_ratio = KO_SUZ12_tidy_1kb %>%
+  dplyr::select(name,bc_norm,direction) %>%
+  pivot_wider(names_from = direction, values_from = bc_norm, names_prefix = "bc_norm_") %>%
+  mutate(ratio_upstream = bc_norm_upstream / bc_norm_peak,
+         ratio_downstream = bc_norm_downstream / bc_norm_peak) %>%
+  add_column(genotype = "KO")
+
+SUZ12_tidy_1kb_ratio = WT_SUZ12_tidy_1kb_ratio %>%
+  bind_rows(KO_SUZ12_tidy_1kb_ratio) %>%
+  mutate(genotype = factor(genotype, levels = c("WT", "KO")))
+
+
+
+pdf("output/binBw/WTvsKO_SUZ12upstream1kb_ratio.pdf", width=3, height=3)  
+ggplot(SUZ12_tidy_1kb_ratio, aes(x = genotype, y = ratio_upstream, fill = genotype)) +
+  geom_boxplot(outlier.shape = NA) +  # Hide outliers
+ # geom_jitter(width = 0.15, size = 0.3, alpha = 0.1) +
+  theme_bw() +
+  labs(x = NULL, y = "Out/In H3K27me3 ratio") +
+  scale_fill_manual(values = c("darkgrey", "red3")) +
+  ggpubr::stat_compare_means(aes(group = genotype), label = "p.format",
+                                    comparisons = list(c("WT", "KO")),
+                                    label.y = 2 ) +
+  ylim(0,2.5)
+dev.off()
+
+
+pdf("output/binBw/WTvsKO_SUZ12downstream1kb_ratio.pdf", width=3, height=3)  
+ggplot(SUZ12_tidy_1kb_ratio, aes(x = genotype, y = ratio_downstream, fill = genotype)) +
+  geom_boxplot(outlier.shape = NA) +  # Hide outliers
+ # geom_jitter(width = 0.15, size = 0.3, alpha = 0.1) +
+  theme_bw() +
+  labs(x = NULL, y = "Out/In H3K27me3 ratio") +
+  scale_fill_manual(values = c("darkgrey", "red3")) +
+  ggpubr::stat_compare_means(aes(group = genotype), label = "p.format",
+                                    comparisons = list(c("WT", "KO")),
+                                    label.y = 2 ) +
+  ylim(0,2.5)
+dev.off()
+
+
+
+
+
+## 2kb WT vs KO
+WT_SUZ12_tidy_2kb_ratio = WT_SUZ12_tidy_2kb %>%
+  dplyr::select(name,bc_norm,direction) %>%
+  pivot_wider(names_from = direction, values_from = bc_norm, names_prefix = "bc_norm_") %>%
+  mutate(ratio_upstream = bc_norm_upstream / bc_norm_peak,
+         ratio_downstream = bc_norm_downstream / bc_norm_peak) %>%
+  add_column(genotype = "WT")
+
+KO_SUZ12_tidy_2kb_ratio = KO_SUZ12_tidy_2kb %>%
+  dplyr::select(name,bc_norm,direction) %>%
+  pivot_wider(names_from = direction, values_from = bc_norm, names_prefix = "bc_norm_") %>%
+  mutate(ratio_upstream = bc_norm_upstream / bc_norm_peak,
+         ratio_downstream = bc_norm_downstream / bc_norm_peak) %>%
+  add_column(genotype = "KO")
+
+SUZ12_tidy_2kb_ratio = WT_SUZ12_tidy_2kb_ratio %>%
+  bind_rows(KO_SUZ12_tidy_2kb_ratio) %>%
+  mutate(genotype = factor(genotype, levels = c("WT", "KO")))
+
+
+
+pdf("output/binBw/WTvsKO_SUZ12upstream2kb_ratio.pdf", width=3, height=3)  
+ggplot(SUZ12_tidy_2kb_ratio, aes(x = genotype, y = ratio_upstream, fill = genotype)) +
+  geom_boxplot(outlier.shape = NA) +  # Hide outliers
+ # geom_jitter(width = 0.15, size = 0.3, alpha = 0.1) +
+  theme_bw() +
+  labs(x = NULL, y = "Out/In H3K27me3 ratio") +
+  scale_fill_manual(values = c("darkgrey", "red3")) +
+  ggpubr::stat_compare_means(aes(group = genotype), label = "p.format",
+                                    comparisons = list(c("WT", "KO")),
+                                    label.y = 2 ) +
+  ylim(0,2.5)
+dev.off()
+
+
+
+pdf("output/binBw/WTvsKO_SUZ12downstream2kb_ratio.pdf", width=3, height=3)  
+ggplot(SUZ12_tidy_2kb_ratio, aes(x = genotype, y = ratio_downstream, fill = genotype)) +
+  geom_boxplot(outlier.shape = NA) +  # Hide outliers
+ # geom_jitter(width = 0.15, size = 0.3, alpha = 0.1) +
+  theme_bw() +
+  labs(x = NULL, y = "Out/In H3K27me3 ratio") +
+  scale_fill_manual(values = c("darkgrey", "red3")) +
+  ggpubr::stat_compare_means(aes(group = genotype), label = "p.format",
+                                    comparisons = list(c("WT", "KO")),
+                                    label.y = 2 ) +
+  ylim(0,2.5)
+dev.off()
+
+
 
 
 
@@ -3859,7 +3968,7 @@ dev.off()
 
 ```
 
-- *NOTE: for `output/binBw/WT_EZH2flank1kb.bgz` I indicated whether upstream and downstream the peak with `direction`; the method I used was to say row 1 = upstream and row 2 = downstream, etc... BUT that lead to issue when peaks are close together!!!! Let's better generate two separate file; one for downstream; one for upstream*
+- *NOTE: for `output/binBw/WT_EZH2flank1kb.bgz` I initially indicated whether upstream and downstream the peak with `direction`; the method I used was to say row 1 = upstream and row 2 = downstream, etc... BUT that lead to issue when peaks are close together!!!! Let's better generate two separate file; one for downstream; one for upstream*
 
 
 

@@ -346,12 +346,47 @@ write.table(hESC_WT_TEAD4_annot_noIntergenic_geneSymbol, file = "output/ChIPseek
             row.names = FALSE)
             
 
+
+
+## Keep signal everywhere !!!!!!!!!!!!!!!!!!!
+hESC_WT_YAP1_annot_all = tibble(hESC_WT_YAP1_annot) 
+hESC_WT_TEAD4_annot_all = tibble(hESC_WT_TEAD4_annot)
+    
+### Save output gene lists
+hESC_WT_YAP1_annot_all_geneSymbol = hESC_WT_YAP1_annot_all %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_TEAD4_annot_all_geneSymbol = hESC_WT_TEAD4_annot_all %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+    
+
+write.table(hESC_WT_YAP1_annot_all_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_YAP1_qval1.30103_all_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_WT_TEAD4_annot_all_geneSymbol, file = "output/ChIPseeker/annotation_macs2_hESC_WT_TEAD4_qval1.30103_all_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+            
+
+
+
+
+
+
+
+
+
 ```
 
 --> gene feature barplot show YAP1 and TEAD4 mostly in gene body
 
 --> Export gene list and perform Venn diagram
 
-
+--> Found that very few EZH2 diff bound genes are bound with YAP1. Maybe because YAP1 in intergenic/gene body region. So instead; assing all peak to the nearest TSS; whatever their distance and see if improve colocalization.
 
 

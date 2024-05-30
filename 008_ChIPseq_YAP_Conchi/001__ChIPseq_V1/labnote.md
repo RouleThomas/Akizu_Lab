@@ -1073,15 +1073,19 @@ EZH2_posNeg_annot_promoterAnd5_geneSymbol = EZH2_pos_annot_promoterAnd5_geneSymb
 YAP1_annot_noIntergenic_geneSymbol = read.table("../003__ChIPseq_pluripotency/output/ChIPseeker/annotation_macs2_hESC_WT_YAP1_qval1.30103_noIntergenic_geneSymbol.txt", header = FALSE, sep = "\t") %>%
     dplyr::rename("geneSymbol" ="V1") %>%
     as_tibble()
-
+YAP1_annot_all_geneSymbol = read.table("../003__ChIPseq_pluripotency/output/ChIPseeker/annotation_macs2_hESC_WT_YAP1_qval1.30103_all_geneSymbol.txt", header = FALSE, sep = "\t") %>%
+    dplyr::rename("geneSymbol" ="V1") %>%
+    as_tibble()
 
 
 ## Add a column YAP1, yes (YAP1 is binding) or no (YAP1 is not binding)
 EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1binding = EZH2_posNeg_annot_promoterAnd5_geneSymbol %>%
   mutate(YAP1 = ifelse(geneSymbol %in% YAP1_annot_noIntergenic_geneSymbol$geneSymbol, "yes", "no"))
 
+EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1binding_all = EZH2_posNeg_annot_promoterAnd5_geneSymbol %>%
+  mutate(YAP1 = ifelse(geneSymbol %in% YAP1_annot_all_geneSymbol$geneSymbol, "yes", "no"))
 
-write.table(EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1binding, file = "output/ChIPseeker/EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1binding.txt",
+write.table(EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1binding_all, file = "output/ChIPseeker/EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1binding_all.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = TRUE, 
@@ -1092,7 +1096,10 @@ write.table(EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1binding, file = "outpu
 
 --> *EZH2*; THORq4, 406/216 gene gain/lost
 
---> Very few genes with differential EZH2 binding upon YAP1KO are bound with YAP1!!
+--> Very few genes with differential EZH2 binding upon YAP1KO are bound with YAP1 when using YAP1 in promoter or 5.
+
+
+
 
 
 
