@@ -1791,14 +1791,14 @@ sbatch scripts/matrix_TSS_5kb_THORQSER1EZH2UniqueTEAD4_Venn_overlap_hESC_WT_QSER
 
 
 
-## macss2 QSER1 008001 vs 008002 with output/bigwig raw files
+## macs2 QSER1 008001 vs 008002 with output/bigwig raw files
 sbatch scripts/matrix_TSS_5kb_rawBigwig_hESC_WT_QSER1_008001vs008002_008001noIntergenic.sh # 18718029 ok
 sbatch scripts/matrix_TSS_5kb_rawBigwig_hESC_WT_QSER1_008001vs008002_008002noIntergenicqval10.sh # 18718073 ok
 sbatch scripts/matrix_TSS_5kb_rawBigwig_hESC_WT_QSER1_008001vs008002_008002noIntergenicqval15.sh # 18718096 ok
 sbatch scripts/matrix_TSS_5kb_rawBigwig_hESC_WT_QSER1_008001vs008002_008002noIntergenicqval20.sh # 18718131 ok
 
 
-## macss2 EZH2 008001 vs 008002 with output/bigwig raw files
+## macs2 EZH2 008001 vs 008002 with output/bigwig raw files
 sbatch scripts/matrix_TSS_5kb_rawBigwig_hESC_WT_EZH2_008001vs008002_008001promoterAnd5.sh # 18869271 ok
 sbatch scripts/matrix_TSS_5kb_rawBigwig_hESC_WT_EZH2_008001vs008002_008002promoterAnd5qval1.30103.sh # 18869286 ok
 sbatch scripts/matrix_TSS_5kb_rawBigwig_hESC_WT_EZH2_008001vs008002_008002promoterAnd5qval3.sh # 18869293 ok
