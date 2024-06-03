@@ -47,7 +47,7 @@ plotProfile -m output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_SUZ12Peaks0
     -out output/deeptools/matrix_TSS_10kb_H3K27me3_median_THOR_SUZ12Peaks001005OverlapH3K27me3_WTKOwithinWTpeaks_profile.pdf \
     --samplesLabel "WT" "KO" \
     --perGroup \
-    --colors black \
+    --colors black red \
     --refPointLabel "center" \
     -T "H3K27me3 read density" \
     -z ""

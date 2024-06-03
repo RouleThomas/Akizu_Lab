@@ -723,8 +723,8 @@ sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_SUZ12Peaks001005OverlapH3K27
 sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_SUZ12Peaks001005OverlapH3K27me3_KO.sh # 19610248 ok
 
 ### WT KO together within WT peaks
-sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_EZH2Peaks001005OverlapH3K27me3_WTKOwithinWTpeaks.sh # 19615119 xxx
-sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_SUZ12Peaks001005OverlapH3K27me3_WTKOwithinWTpeaks.sh # 19615129 xxx
+sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_EZH2Peaks001005OverlapH3K27me3_WTKOwithinWTpeaks.sh # 19615119 ok
+sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_SUZ12Peaks001005OverlapH3K27me3_WTKOwithinWTpeaks.sh # 19615129 ok
 
 
 ### WT KO together within their respective genotype peaks FAIL
@@ -4328,6 +4328,110 @@ dev.off()
 
 
 
+## pearson corr ratio
+### 1kb
+#### upstream
+EZH2_tidy_1kb_ratio_WTpeaks
+
+EZH2_tidy_1kb_ratio_WTpeaks_upstream <- EZH2_tidy_1kb_ratio_WTpeaks %>%
+  filter(genotype %in% c("WT", "KO")) %>%
+  select(name, genotype, ratio_upstream) %>%
+  spread(key = genotype, value = ratio_upstream)
+
+# Calculate Pearson correlation
+correlation <- cor(EZH2_tidy_1kb_ratio_WTpeaks_upstream$WT, EZH2_tidy_1kb_ratio_WTpeaks_upstream$KO)
+
+# Plot
+pdf("output/binBw/scatter_plot_EZH2_1kb_upstream.pdf", width=5, height=5)
+ggplot(EZH2_tidy_1kb_ratio_WTpeaks_upstream, aes(x = WT, y = KO)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "blue", fill = "blue", alpha = 0.2) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +  # Add diagonal line
+  labs(x = "Wild type IN/OUT H3K27me3 ratio",
+       y = "Ezh1 KO IN/OUT H3K27me3 ratio") +
+  theme_bw() +
+  annotate("text", x = 4, y = 6, label = paste("r =", round(correlation, 2)), size = 5, hjust = 0) +
+  annotate("text", x = 4, y = 5, label = paste("r² =", round(correlation^2, 2)), size = 5, hjust = 0)
+dev.off()
+
+#### downstream
+
+EZH2_tidy_1kb_ratio_WTpeaks_downstream <- EZH2_tidy_1kb_ratio_WTpeaks %>%
+  filter(genotype %in% c("WT", "KO")) %>%
+  select(name, genotype, ratio_downstream) %>%
+  spread(key = genotype, value = ratio_downstream)
+
+# Calculate Pearson correlation
+correlation <- cor(EZH2_tidy_1kb_ratio_WTpeaks_downstream$WT, EZH2_tidy_1kb_ratio_WTpeaks_downstream$KO)
+
+# Plot
+pdf("output/binBw/scatter_plot_EZH2_1kb_downstream.pdf", width=5, height=5)
+ggplot(EZH2_tidy_1kb_ratio_WTpeaks_downstream, aes(x = WT, y = KO)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "blue", fill = "blue", alpha = 0.2) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +  # Add diagonal line
+  labs(x = "Wild type IN/OUT H3K27me3 ratio",
+       y = "Ezh1 KO IN/OUT H3K27me3 ratio") +
+  theme_bw() +
+  annotate("text", x = 4, y = 6, label = paste("r =", round(correlation, 2)), size = 5, hjust = 0) +
+  annotate("text", x = 4, y = 5, label = paste("r² =", round(correlation^2, 2)), size = 5, hjust = 0)
+dev.off()
+
+
+
+### 2kb
+#### upstream
+EZH2_tidy_2kb_ratio_WTpeaks
+
+EZH2_tidy_2kb_ratio_WTpeaks_upstream <- EZH2_tidy_2kb_ratio_WTpeaks %>%
+  filter(genotype %in% c("WT", "KO")) %>%
+  select(name, genotype, ratio_upstream) %>%
+  spread(key = genotype, value = ratio_upstream)
+
+# Calculate Pearson correlation
+correlation <- cor(EZH2_tidy_2kb_ratio_WTpeaks_upstream$WT, EZH2_tidy_2kb_ratio_WTpeaks_upstream$KO)
+
+# Plot
+pdf("output/binBw/scatter_plot_EZH2_2kb_upstream.pdf", width=5, height=5)
+ggplot(EZH2_tidy_2kb_ratio_WTpeaks_upstream, aes(x = WT, y = KO)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "blue", fill = "blue", alpha = 0.2) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +  # Add diagonal line
+  labs(x = "Wild type IN/OUT H3K27me3 ratio",
+       y = "Ezh1 KO IN/OUT H3K27me3 ratio") +
+  theme_bw() +
+  annotate("text", x = 4, y = 6, label = paste("r =", round(correlation, 2)), size = 5, hjust = 0) +
+  annotate("text", x = 4, y = 5, label = paste("r² =", round(correlation^2, 2)), size = 5, hjust = 0)
+dev.off()
+
+#### downstream
+
+EZH2_tidy_2kb_ratio_WTpeaks_downstream <- EZH2_tidy_2kb_ratio_WTpeaks %>%
+  filter(genotype %in% c("WT", "KO")) %>%
+  select(name, genotype, ratio_downstream) %>%
+  spread(key = genotype, value = ratio_downstream)
+
+# Calculate Pearson correlation
+correlation <- cor(EZH2_tidy_2kb_ratio_WTpeaks_downstream$WT, EZH2_tidy_2kb_ratio_WTpeaks_downstream$KO)
+
+# Plot
+pdf("output/binBw/scatter_plot_EZH2_2kb_downstream.pdf", width=5, height=5)
+ggplot(EZH2_tidy_2kb_ratio_WTpeaks_downstream, aes(x = WT, y = KO)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "blue", fill = "blue", alpha = 0.2) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +  # Add diagonal line
+  labs(x = "Wild type IN/OUT H3K27me3 ratio",
+       y = "Ezh1 KO IN/OUT H3K27me3 ratio") +
+  theme_bw() +
+  annotate("text", x = 4, y = 6, label = paste("r =", round(correlation, 2)), size = 5, hjust = 0) +
+  annotate("text", x = 4, y = 5, label = paste("r² =", round(correlation^2, 2)), size = 5, hjust = 0)
+dev.off()
+
+
+
+
+
+
 
 # SUZ12 #####################################################
 
@@ -4639,7 +4743,125 @@ ggplot(SUZ12_tidy_2kb_ratio_WTpeaks, aes(x = genotype, y = ratio_downstream, fil
   ylim(0,2.5)
 dev.off()
 
+
+
+## pearson corr ratio
+### 1kb
+#### upstream
+SUZ12_tidy_1kb_ratio_WTpeaks
+
+SUZ12_tidy_1kb_ratio_WTpeaks_upstream <- SUZ12_tidy_1kb_ratio_WTpeaks %>%
+  filter(genotype %in% c("WT", "KO")) %>%
+  select(name, genotype, ratio_upstream) %>%
+  spread(key = genotype, value = ratio_upstream) %>%
+  filter(!is.na(WT), !is.na(KO), is.finite(WT), is.finite(KO))  # Ensure there are no NA or infinite values
+
+
+# Calculate Pearson correlation
+correlation <- cor(SUZ12_tidy_1kb_ratio_WTpeaks_upstream$WT, SUZ12_tidy_1kb_ratio_WTpeaks_upstream$KO)
+
+# Plot
+pdf("output/binBw/scatter_plot_SUZ12_1kb_upstream.pdf", width=5, height=5)
+ggplot(SUZ12_tidy_1kb_ratio_WTpeaks_upstream, aes(x = WT, y = KO)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "blue", fill = "blue", alpha = 0.2) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +  # Add diagonal line
+  labs(x = "Wild type IN/OUT H3K27me3 ratio",
+       y = "Ezh1 KO IN/OUT H3K27me3 ratio") +
+  theme_bw() +
+  annotate("text", x = 2, y = 6, label = paste("r =", round(correlation, 2)), size = 5, hjust = 0) +
+  annotate("text", x = 2, y = 5, label = paste("r² =", round(correlation^2, 2)), size = 5, hjust = 0)
+dev.off()
+
+#### downstream
+
+SUZ12_tidy_1kb_ratio_WTpeaks_downstream <- SUZ12_tidy_1kb_ratio_WTpeaks %>%
+  filter(genotype %in% c("WT", "KO")) %>%
+  select(name, genotype, ratio_downstream) %>%
+  spread(key = genotype, value = ratio_downstream)%>%
+  filter(!is.na(WT), !is.na(KO), is.finite(WT), is.finite(KO))  # Ensure there are no NA or infinite values
+
+# Calculate Pearson correlation
+correlation <- cor(SUZ12_tidy_1kb_ratio_WTpeaks_downstream$WT, SUZ12_tidy_1kb_ratio_WTpeaks_downstream$KO)
+
+# Plot
+pdf("output/binBw/scatter_plot_SUZ12_1kb_downstream.pdf", width=5, height=5)
+ggplot(SUZ12_tidy_1kb_ratio_WTpeaks_downstream, aes(x = WT, y = KO)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "blue", fill = "blue", alpha = 0.2) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +  # Add diagonal line
+  labs(x = "Wild type IN/OUT H3K27me3 ratio",
+       y = "Ezh1 KO IN/OUT H3K27me3 ratio") +
+  theme_bw() +
+  annotate("text", x = 2, y = 6, label = paste("r =", round(correlation, 2)), size = 5, hjust = 0) +
+  annotate("text", x = 2, y = 5, label = paste("r² =", round(correlation^2, 2)), size = 5, hjust = 0)
+dev.off()
+
+
+
+### 2kb
+#### upstream
+SUZ12_tidy_2kb_ratio_WTpeaks
+
+SUZ12_tidy_2kb_ratio_WTpeaks_upstream <- SUZ12_tidy_2kb_ratio_WTpeaks %>%
+  filter(genotype %in% c("WT", "KO")) %>%
+  select(name, genotype, ratio_upstream) %>%
+  spread(key = genotype, value = ratio_upstream)%>%
+  filter(!is.na(WT), !is.na(KO), is.finite(WT), is.finite(KO))  # Ensure there are no NA or infinite values
+
+# Calculate Pearson correlation
+correlation <- cor(SUZ12_tidy_2kb_ratio_WTpeaks_upstream$WT, SUZ12_tidy_2kb_ratio_WTpeaks_upstream$KO)
+
+# Plot
+pdf("output/binBw/scatter_plot_SUZ12_2kb_upstream.pdf", width=5, height=5)
+ggplot(SUZ12_tidy_2kb_ratio_WTpeaks_upstream, aes(x = WT, y = KO)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "blue", fill = "blue", alpha = 0.2) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +  # Add diagonal line
+  labs(x = "Wild type IN/OUT H3K27me3 ratio",
+       y = "Ezh1 KO IN/OUT H3K27me3 ratio") +
+  theme_bw() +
+  annotate("text", x = 3, y = 6, label = paste("r =", round(correlation, 2)), size = 5, hjust = 0) +
+  annotate("text", x = 3, y = 5, label = paste("r² =", round(correlation^2, 2)), size = 5, hjust = 0)
+dev.off()
+
+#### downstream
+
+SUZ12_tidy_2kb_ratio_WTpeaks_downstream <- SUZ12_tidy_2kb_ratio_WTpeaks %>%
+  filter(genotype %in% c("WT", "KO")) %>%
+  select(name, genotype, ratio_downstream) %>%
+  spread(key = genotype, value = ratio_downstream)%>%
+  filter(!is.na(WT), !is.na(KO), is.finite(WT), is.finite(KO))  # Ensure there are no NA or infinite values
+
+# Calculate Pearson correlation
+correlation <- cor(SUZ12_tidy_2kb_ratio_WTpeaks_downstream$WT, SUZ12_tidy_2kb_ratio_WTpeaks_downstream$KO)
+
+# Plot
+pdf("output/binBw/scatter_plot_SUZ12_2kb_downstream.pdf", width=5, height=5)
+ggplot(SUZ12_tidy_2kb_ratio_WTpeaks_downstream, aes(x = WT, y = KO)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "blue", fill = "blue", alpha = 0.2) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +  # Add diagonal line
+  labs(x = "Wild type IN/OUT H3K27me3 ratio",
+       y = "Ezh1 KO IN/OUT H3K27me3 ratio") +
+  theme_bw() +
+  annotate("text", x = 3, y = 6, label = paste("r =", round(correlation, 2)), size = 5, hjust = 0) +
+  annotate("text", x = 3, y = 5, label = paste("r² =", round(correlation^2, 2)), size = 5, hjust = 0)
+dev.off()
+
+
+
+
+
+
 ```
+
+
+
+
+--> H3K27me3 spreading is affected upon EZH1 KO. Not as much as EZH2 KO as shown in mice, but still a significant decrease of spreading around PRC2 sites (EZH2, SUZ12; in a 1-2kb window)
+
+
 
 
 
