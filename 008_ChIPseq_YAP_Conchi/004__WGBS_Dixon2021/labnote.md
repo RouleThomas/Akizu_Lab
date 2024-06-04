@@ -161,18 +161,27 @@ sbatch scripts/msPIPE.sh # 18718424 fail; re-run with added --bind /scr1/users/r
 ----> Need to specify in the command, where to look for the genome file (Even if it is indicated in `params_docker.conf` file)
 
 
+--> Bug at bismark because bam file are not correctly sorted... FUCK msPIPE we cannot control each step; FUCK IT!!!
 
 
 
+# Use pre-process file
+
+- Collect in ENCODE other WGBS in H9 PSC/ESC. 
+
+--> Found [here](https://www.encodeproject.org/search/?type=Experiment&control_type!=*&status=released&perturbed=false&assay_title=WGBS&replicates.library.biosample.donor.organism.scientific_name=Homo+sapiens&biosample_ontology.term_name=H1) 2 experiments with 2 bio rep; with Hg38 wig available.
 
 
+Joe Ecker, Salk (ENCAN623MFB); ENCFF969PDB_R1 and ENCFF423PGW_R2
+Richard Myers, HAIB (ENCAN508QJC); CpG sites coverage; ENCFF725YJG_R1 and ENCFF040LKO_R2
+
+- Download bigwig (`output/ENCODE`)
+- Check m5C profile in regions that gain/lost EZH2 in WT vs YAPKO
+
+--> Plot done in `008001` labnote `## EZH2 gain lost WT vs KO`
 
 
-
-
-
-
-
+--> Ecker bad quality; Myers looks good
 
 
 

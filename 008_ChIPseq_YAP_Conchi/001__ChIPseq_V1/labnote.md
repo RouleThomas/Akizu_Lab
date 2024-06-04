@@ -1779,8 +1779,11 @@ grep -Ff output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1_as_gtf_geneSymbol.
 # deeptool plots
 ## all genes
 sbatch scripts/matrix_TSS_5kb_rawBigwig_QSER1EZH2YAP1TEAD4DVL2_WT_allGenes.sh # 18879644 ok
-sbatch scripts/matrix_gene_1kb_rawBigwig_QSER1EZH2YAP1TEAD4DVL2_WT_allGenes.sh # 19802287 xxx
+sbatch scripts/matrix_gene_1kb_rawBigwig_QSER1EZH2YAP1TEAD4DVL2_WT_allGenes.sh # 19802287 ok
+sbatch scripts/matrix_gene_500bp_rawBigwig_QSER1EZH2YAP1TEAD4DVL2_WT_allGenes.sh # 19823389 ok
 
+## all genes EZH2, 5mC 008004
+sbatch scripts/matrix_TSS_5kb_rawBigwig_EZH2_5mCMyers_WT_allGenes.sh # 19836877 xxx
 
 
 ## macs2 008001
@@ -1820,12 +1823,23 @@ sbatch scripts/matrix_TSS_5kb_rawBigwig_hESC_WT_EZH2_008001vs008002_008002promot
 
 ```bash
 # deeptool plots
+## WT vs YAPKO; EZH2 signal
 sbatch scripts/matrix_TSS_5kb_THOREZH2_hESCWTvsYAPKO_positiveNegative_peak.sh # 18526815 ok
 sbatch scripts/matrix_TSS_5kb_THOREZH2_hESCWTvsYAPKO_positiveNegativeTHORq4_peak.sh # 18542691 ok
 
+## WT vs YAPKO; EZH2 gain lost with EZH2 and QSER1 signal in WT vs YAPKO
+sbatch scripts/matrix_TSS_5kb_THOREZH2QSER1_hESCWTvsYAPKO_positiveNegativeTHORq4_EZH2peak.sh # 19826509 ok
+
+## WT vs YAPKO; EZH2 gain lost with EZH2 and m5C signal in WT (`008004`)
+sbatch scripts/matrix_TSS_5kb_THOREZH25mCENCODE_hESCWTvsYAPKO_positiveNegativeTHORq4_EZH2peak.sh # 19831082 xxx
+sbatch scripts/matrix_TSS_5kb_THOREZH25mCENCODEMyers_hESCWTvsYAPKO_positiveNegativeTHORq4_EZH2peak.sh # 19835895 xxx
+
+
 ```
 
+- *NOTE: qval4 include NODAL*
 
+--> gain lost EZH2 regions are all bound with QSER1. No correlation with QSER1 binding changes. 
 
 
 
