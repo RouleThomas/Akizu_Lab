@@ -1730,6 +1730,7 @@ Generate gtf file from gene list;
 - QSER1 comparison Conchi vs Dixon (`008002`)
 - EZH2 comparison Conchi vs Dixon (`008002`)
 - QSER1, EZH2, YAP1 
+- gene with differential EZH2 binding (THORq4)
 
 ```bash
 ### create gtf from gene list
@@ -1752,6 +1753,10 @@ sed 's/\r$//; s/.*/gene_name "&"/' ../002__ChIPseq_Dixon2021/output/ChIPseeker/a
 
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt > output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1_as_gtf_geneSymbol.txt
 
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_THORq4_EZH2_pos_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_THORq4_EZH2_pos_annot_promoterAnd5_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_THORq4_EZH2_neg_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_THORq4_EZH2_neg_annot_promoterAnd5_as_gtf_geneSymbol.txt
+cat output/ChIPseeker/annotation_THORq4_EZH2_pos_annot_promoterAnd5_geneSymbol.txt output/ChIPseeker/annotation_THORq4_EZH2_neg_annot_promoterAnd5_geneSymbol.txt | sort | uniq | sed 's/\r$//; s/.*/gene_name "&"/' > output/ChIPseeker/annotation_THORq4_EZH2_posneg_annot_promoterAnd5_as_gtf_geneSymbol.txt # put together pos and neg
+
 
 
 ## Filter the gtf
@@ -1772,6 +1777,9 @@ grep -Ff ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_macs2_hESC_WT_EZ
 grep -Ff output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_hESC_WT_QSER1EZH2YAP1.gtf
 
 
+grep -Ff output/ChIPseeker/annotation_THORq4_EZH2_pos_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_THORq4_EZH2_pos_annot_promoterAnd5.gtf
+grep -Ff output/ChIPseeker/annotation_THORq4_EZH2_neg_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_THORq4_EZH2_neg_annot_promoterAnd5.gtf
+grep -Ff output/ChIPseeker/annotation_THORq4_EZH2_posneg_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_THORq4_EZH2_posneg_annot_promoterAnd5.gtf
 
 
 
@@ -1781,9 +1789,12 @@ grep -Ff output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1_as_gtf_geneSymbol.
 sbatch scripts/matrix_TSS_5kb_rawBigwig_QSER1EZH2YAP1TEAD4DVL2_WT_allGenes.sh # 18879644 ok
 sbatch scripts/matrix_gene_1kb_rawBigwig_QSER1EZH2YAP1TEAD4DVL2_WT_allGenes.sh # 19802287 ok
 sbatch scripts/matrix_gene_500bp_rawBigwig_QSER1EZH2YAP1TEAD4DVL2_WT_allGenes.sh # 19823389 ok
+sbatch scripts/matrix_gene_500bp_rawBigwig_QSER1EZH2YAP1TEAD4DVL2input_WT_allGenes.sh # 19956770 xxx
+
+
 
 ## all genes EZH2, 5mC 008004
-sbatch scripts/matrix_TSS_5kb_rawBigwig_EZH2_5mCMyers_WT_allGenes.sh # 19836877 xxx
+sbatch scripts/matrix_TSS_5kb_rawBigwig_EZH2_5mCMyers_WT_allGenes.sh # 19836877 ok
 
 
 ## macs2 008001
@@ -1829,17 +1840,191 @@ sbatch scripts/matrix_TSS_5kb_THOREZH2_hESCWTvsYAPKO_positiveNegativeTHORq4_peak
 
 ## WT vs YAPKO; EZH2 gain lost with EZH2 and QSER1 signal in WT vs YAPKO
 sbatch scripts/matrix_TSS_5kb_THOREZH2QSER1_hESCWTvsYAPKO_positiveNegativeTHORq4_EZH2peak.sh # 19826509 ok
+sbatch scripts/matrix_TSS_5kb_THOREZH2QSER1_hESCWTvsYAPKO_positiveNegativeTHORq4_EZH2gene.sh # 19943017 ok
+
 
 ## WT vs YAPKO; EZH2 gain lost with EZH2 and m5C signal in WT (`008004`)
-sbatch scripts/matrix_TSS_5kb_THOREZH25mCENCODE_hESCWTvsYAPKO_positiveNegativeTHORq4_EZH2peak.sh # 19831082 xxx
-sbatch scripts/matrix_TSS_5kb_THOREZH25mCENCODEMyers_hESCWTvsYAPKO_positiveNegativeTHORq4_EZH2peak.sh # 19835895 xxx
+sbatch scripts/matrix_TSS_5kb_THOREZH25mCENCODE_hESCWTvsYAPKO_positiveNegativeTHORq4_EZH2peak.sh # 19831082 ok
+sbatch scripts/matrix_TSS_5kb_THOREZH25mCENCODEMyers_hESCWTvsYAPKO_positiveNegativeTHORq4_EZH2peak.sh # 19835895 ok
 
+
+
+## Genes with EZH2 binding changes; EZH2, 5mC 008004
+sbatch scripts/matrix_TSS_5kb_THOREZH25mCENCODEMyers_hESCWTvsYAPKO_positiveNegativeTHORq4Together_EZH2gene.sh # 19942671 ok
+sbatch scripts/matrix_TSS_5kb_THOREZH25mCENCODEMyers_hESCWTvsYAPKO_positiveNegativeTHORq4Separated_EZH2gene.sh # 19942690 ok
 
 ```
 
 - *NOTE: qval4 include NODAL*
 
 --> gain lost EZH2 regions are all bound with QSER1. No correlation with QSER1 binding changes. 
+
+
+## enhancer
+
+Let's look at ChIPseq signal in the enhancer regions from *GeneHancer data*:
+- Heatmap / profile; WT ChIPseq signal (hopefully YAP1 will be bound to some enhancer)
+- Collect YAP1 bound regions (macs2) directly overlapping with enhancer regions
+    - Collect enhancer ID and all associated target genes
+    - Check whether these genes are EZH2 diff bound
+
+
+**Heatmap / profile; WT ChIPseq signal (hopefully YAP1 will be bound to some enhancer)**
+
+```bash
+
+sbatch scripts/matrix_TSS_5kb_rawBigwig_YAP1EZH2QSER1TEAD4DVL2_WT_GeneHancer.sh # 19945005 xxx
+sbatch scripts/matrix_TSS_5kb_rawBigwig_YAP1EZH2IGG_WT_GeneHancer.sh # 19944996 xxx
+
+
+
+
+
+
+```
+
+**Collect YAP1 bound regions (macs2) directly overlapping with enhancer regions**
+
+
+```bash
+bedtools intersect -wa -a meta/GeneHancer_v5.20.bed -b ../003__ChIPseq_pluripotency/output/macs2/broad/broad_blacklist_qval1.30103/hESC_WT_YAP1_R1_peaks.broadPeak > meta/GeneHancer_v5_hESC_WT_YAP1_R1_peaks.bed
+
+bedtools intersect -wa -a meta/GeneHancer_v5.20.bed -b output/macs2/broad/broad_blacklist_qval1.30103/hESC_WT_EZH2_pool_peaks.broadPeak > meta/GeneHancer_v5_hESC_WT_EZH2_pool_peaks.bed
+
+# To check how many YAP1 (or other) peak overlap with enhancer
+bedtools intersect -wa -a ../003__ChIPseq_pluripotency/output/macs2/broad/broad_blacklist_qval1.30103/hESC_WT_YAP1_R1_peaks.broadPeak -b meta/GeneHancer_v5.20.bed  > meta/hESC_WT_YAP1_R1_peaks_GeneHancer_v5.bed 
+
+bedtools intersect -wa -a output/macs2/broad/broad_blacklist_qval1.30103/hESC_WT_EZH2_pool_peaks.broadPeak -b meta/GeneHancer_v5.20.bed > meta/hESC_WT_EZH2_pool_peaks_GeneHancer_v5.bed 
+
+bedtools intersect -wa -a output/macs2/broad/broad_blacklist_qval1.30103/hESC_WT_QSER1_pool_peaks.broadPeak -b meta/GeneHancer_v5.20.bed > meta/hESC_WT_QSER1_pool_peaks_GeneHancer_v5.bed 
+
+```
+--> Work, `meta/GeneHancer_v5_hESC_WT_YAP1_R1_peaks.bed` contains enhancer that overlap with YAP1 peak; 1,746 unique enhancers 
+----> Nearly all YAP1 peaks overlap with enhancer (1,772/1,798 YAP1 peak overlap with enhancer!)
+----> EZH2, a bit less (3,918/4,288 EZH2 peak overlap with enhancer)
+----> QSER1, a bit less (13,416/14,170 EZH2 peak overlap with enhancer)
+
+
+
+Let's now modify the `meta/GeneHancer_v5.20.gff` to create a file with column enhancer_id and corresponding target gene with scores.
+
+
+
+
+```bash
+awk -F'\t' '{
+    # Extract the attributes column
+    attr = $9;
+    # Initialize variables
+    genehancer_id = "";
+    connected_gene = "";
+    score = "";
+    
+    # Split attributes by semicolon
+    n = split(attr, attrs, ";");
+    for (i = 1; i <= n; i++) {
+        # Trim leading and trailing whitespace
+        gsub(/^ +| +$/, "", attrs[i]);
+        # Extract genehancer_id
+        if (attrs[i] ~ /genehancer_id=/) {
+            genehancer_id = substr(attrs[i], index(attrs[i], "=") + 1);
+        }
+        # Extract connected_gene
+        if (attrs[i] ~ /connected_gene=/) {
+            connected_gene = substr(attrs[i], index(attrs[i], "=") + 1);
+        }
+        # Extract score
+        if (attrs[i] ~ /score=/) {
+            score = substr(attrs[i], index(attrs[i], "=") + 1);
+        }
+    }
+    # Print the extracted values
+    if (genehancer_id != "" && connected_gene != "" && score != "") {
+        print genehancer_id "\t" connected_gene "\t" score;
+    }
+}' meta/GeneHancer_v5.20.gff > meta/GeneHancer_v5.20_tidy.txt
+```
+
+Let's now go in R to check our YAP1 target enhacner gene and whether these genes experienced EZH2 binding changes.
+
+```R
+# packages
+library("tidyverse")
+
+# Files
+meta/GeneHancer_v5.20_tidy.txt # enhancer gene target
+meta/GeneHancer_v5_hESC_WT_YAP1_R1_peaks.bed # enhancer bound with YAP1
+EZH2_pos_annot_promoterAnd5_geneSymbol # gene gain EZH2
+EZH2_neg_annot_promoterAnd5_geneSymbol # gene lost EZH2
+
+# import
+## EZH2 gain lost
+EZH2_pos_annot_promoterAnd5_geneSymbol = read.table("output/ChIPseeker/annotation_THORq4_EZH2_pos_annot_promoterAnd5_geneSymbol.txt", header = FALSE, sep = "\t") %>%
+    add_column(EZH2 = "gain") %>%
+    dplyr::rename("geneSymbol" ="V1")
+EZH2_neg_annot_promoterAnd5_geneSymbol = read.table("output/ChIPseeker/annotation_THORq4_EZH2_neg_annot_promoterAnd5_geneSymbol.txt", header = FALSE, sep = "\t") %>%
+    add_column(EZH2 = "lost") %>%
+    dplyr::rename("geneSymbol" ="V1")
+
+EZH2_posNeg_annot_promoterAnd5_geneSymbol = EZH2_pos_annot_promoterAnd5_geneSymbol %>%
+    bind_rows(EZH2_neg_annot_promoterAnd5_geneSymbol) %>%
+    as_tibble()
+
+## enhancer
+GeneHancer_v5 = as_tibble(read.table("meta/GeneHancer_v5.20_tidy.txt", header = FALSE, sep = "\t") )  %>%
+    dplyr::rename("genehancer_id" ="V1", "geneSymbol" = "V2", "score" = "V3")
+
+GeneHancer_v5_hESC_WT_YAP1_R1_peaks = as_tibble(read.table("meta/GeneHancer_v5_hESC_WT_YAP1_R1_peaks.bed", header = FALSE, sep = "\t") )  %>%
+    dplyr::rename("genehancer_id" = "V4") %>%
+    dplyr::select(genehancer_id) %>%
+    unique()
+
+
+## isolate gene target by enhacner where YAP1 is bound
+GeneHancer_v5_hESC_WT_YAP1_R1_peaks_geneSymbol = GeneHancer_v5_hESC_WT_YAP1_R1_peaks %>% 
+    left_join(GeneHancer_v5) %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+
+## Check wether these genes are among the EZH2 diff bound genes
+
+## Add a column YAP1, yes (YAP1 is binding) or no (YAP1 is not binding)
+EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1Enhancerbinding = EZH2_posNeg_annot_promoterAnd5_geneSymbol %>%
+  mutate(YAP1_enhancer = ifelse(geneSymbol %in% GeneHancer_v5_hESC_WT_YAP1_R1_peaks_geneSymbol$geneSymbol, "yes", "no"))
+
+## also add the column for regular binding in promoter
+YAP1_annot_noIntergenic_geneSymbol = read.table("../003__ChIPseq_pluripotency/output/ChIPseeker/annotation_macs2_hESC_WT_YAP1_qval1.30103_noIntergenic_geneSymbol.txt", header = FALSE, sep = "\t") %>%
+    dplyr::rename("geneSymbol" ="V1") %>%
+    as_tibble()
+
+EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1binding = EZH2_posNeg_annot_promoterAnd5_geneSymbol %>%
+  mutate(YAP1_promoter = ifelse(geneSymbol %in% YAP1_annot_noIntergenic_geneSymbol$geneSymbol, "yes", "no"))
+
+EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1EnhancerPromoterbinding = EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1Enhancerbinding %>%
+    left_join(EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1binding)
+
+
+write.table(EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1EnhancerPromoterbinding, file = "output/ChIPseeker/EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1EnhancerPromoterbinding.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = TRUE, 
+            row.names = FALSE)
+
+
+# count genes with YAP1 binding in enhancer or promoter and EZH2 changes
+EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1EnhancerPromoterbinding %>%
+  filter(YAP1_promoter == "yes" | YAP1_enhancer == "yes")
+
+```
+
+--> Not much genes with EZH2 binding changes and bound with enhancer where YAP1 is binding
+
+
+
+
+
 
 
 
