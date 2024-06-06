@@ -1107,6 +1107,8 @@ write.table(EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1binding_all, file = "o
 
 - **Up and down reg genes**: THOR diff bound genes 
 - **Unique list of genes**: QSER1, EZH2 (YAP1, TEAD4) bound genes in WT (macs2)
+- **Up and down reg genes**: THOR diff bound genes for EZH2 and bound with YAP1 in WT
+
 
 - NOTE: I did NOT using webtool Venn diagram I isolated the specific genes that gain / lost H3K*me3 (eg.; like: `output/ChIPseeker/annotation_THOR_H3K*me3_q*_pos_promoterAnd5_geneSymbol_Venndiagram*.txt`)
 
@@ -1134,13 +1136,19 @@ output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2TEAD4.txt
 output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt
 output/ChIPseeker/none.txt
 
+output/ChIPseeker/EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding.txt
+output/ChIPseeker/EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding.txt
+
+output/ChIPseeker/EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt
+output/ChIPseeker/EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt
+
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/ChIPseeker/none.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/ChIPseeker/EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/ChIPseeker/EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -1185,6 +1193,9 @@ pdf("output/GO/enrichR_GO_Biological_Process_2023_THORq4_EZH2.pdf", width=8, hei
 pdf("output/GO/enrichR_GO_Biological_Process_2023_Venn_overlap_hESC_WT_QSER1EZH2.pdf", width=8, height=7)
 pdf("output/GO/enrichR_GO_Biological_Process_2023_Venn_overlap_hESC_WT_QSER1EZH2YAP1.pdf", width=8, height=7)
 
+pdf("output/GO/enrichR_GO_Biological_Process_2023_EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding.pdf", width=10, height=8)
+
+
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
   # Adjusted label position based on the type of gene (up/down) and increased separation
@@ -1208,7 +1219,7 @@ dev.off()
 
 
 ## save output
-write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 
@@ -1230,13 +1241,19 @@ output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2TEAD4.txt
 output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt
 output/ChIPseeker/none.txt
 
+output/ChIPseeker/EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding.txt
+output/ChIPseeker/EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding.txt
+
+output/ChIPseeker/EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt
+output/ChIPseeker/EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt
+
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/ChIPseeker/none.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/ChIPseeker/EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/ChIPseeker/EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 # Extracting KEGG data and assigning types
@@ -1277,6 +1294,9 @@ gos$Term <- factor(gos$Term, levels = new_order)
 pdf("output/GO/enrichR_GO_Molecular_Function_2023_THORq4_EZH2.pdf", width=8, height=6)
 pdf("output/GO/enrichR_GO_Molecular_Function_2023_Venn_overlap_hESC_WT_QSER1EZH2YAP1.pdf", width=8, height=3)
 
+pdf("output/GO/enrichR_GO_Molecular_Function_2023_EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding.pdf", width=10, height=6)
+
+pdf("output/GO/enrichR_GO_Molecular_Function_2023_EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.pdf", width=10, height=6)
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
@@ -1300,7 +1320,7 @@ ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) +
 dev.off()
 
 ## save output
-write.table(gos, "output/GO/enrichR_GO_Molecular_Function_2023_Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_GO_Molecular_Function_2023_EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 
@@ -1320,14 +1340,19 @@ output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2.txt
 output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2TEAD4.txt
 output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt
 
+output/ChIPseeker/EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding.txt
+output/ChIPseeker/EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding.txt
+
+output/ChIPseeker/EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt
+output/ChIPseeker/EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt
 
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/ChIPseeker/none.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/ChIPseeker/EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/ChIPseeker/EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -1353,6 +1378,14 @@ gos <- gos %>% arrange(logAdjP)
 gos <- gos %>% filter(abs(logAdjP) > 1.3)
 gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
 
+## FAIL as dupplicates:
+up_pathways_suffixed <- paste0(up_pathways, "_up")
+down_pathways_suffixed <- paste0(down_pathways, "_down")
+new_order <- c(down_pathways_suffixed, up_pathways_suffixed)
+gos$Term <- ifelse(gos$type == "up", paste0(gos$Term, "_up"), paste0(gos$Term, "_down"))
+gos$Term <- factor(gos$Term, levels = new_order)
+
+
 # Create the order based on the approach given
 up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
 down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
@@ -1366,6 +1399,8 @@ gos$Term <- factor(gos$Term, levels = new_order)
 pdf("output/GO/enrichR_GO_Cellular_Component_2023_THORq4_EZH2.pdf", width=8, height=2)
 pdf("output/GO/enrichR_GO_Cellular_Component_2023_Venn_overlap_hESC_WT_QSER1EZH2YAP1.pdf", width=8, height=3)
 
+pdf("output/GO/enrichR_GO_Cellular_Component_2023_EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding.pdf", width=8, height=3)
+pdf("output/GO/enrichR_GO_Cellular_Component_2023_EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.pdf", width=8, height=3)
 
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
@@ -1391,7 +1426,7 @@ dev.off()
 
 
 ## save output
-write.table(gos, "output/GO/enrichR_GO_Cellular_Component_2023_Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_GO_Cellular_Component_2023_EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 
@@ -1409,15 +1444,19 @@ output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2.txt
 output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2TEAD4.txt
 output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt
 
+output/ChIPseeker/EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding.txt
+output/ChIPseeker/EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding.txt
 
+output/ChIPseeker/EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt
+output/ChIPseeker/EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt
 
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/ChIPseeker/none.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/ChIPseeker/EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/ChIPseeker/EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -1458,6 +1497,10 @@ gos$Term <- factor(gos$Term, levels = new_order)
 
 pdf("output/GO/enrichR_KEGG_2021_Human_THORq4_EZH2.pdf", width=8, height=3)
 pdf("output/GO/enrichR_KEGG_2021_Human_Venn_overlap_hESC_WT_QSER1EZH2TEAD4.pdf", width=8, height=3)
+pdf("output/GO/enrichR_KEGG_2021_Human_EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding.pdf", width=8, height=2)
+
+pdf("output/GO/enrichR_KEGG_2021_Human_EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.pdf", width=8, height=2)
+
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
@@ -1482,7 +1525,7 @@ dev.off()
 
 
 ## save output
-write.table(gos, "output/GO/enrichR_KEGG_2021_Human_Venn_overlap_hESC_WT_QSER1EZH2TEAD4.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_KEGG_2021_Human_EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 ```
@@ -1789,7 +1832,7 @@ grep -Ff output/ChIPseeker/annotation_THORq4_EZH2_posneg_annot_promoterAnd5_as_g
 sbatch scripts/matrix_TSS_5kb_rawBigwig_QSER1EZH2YAP1TEAD4DVL2_WT_allGenes.sh # 18879644 ok
 sbatch scripts/matrix_gene_1kb_rawBigwig_QSER1EZH2YAP1TEAD4DVL2_WT_allGenes.sh # 19802287 ok
 sbatch scripts/matrix_gene_500bp_rawBigwig_QSER1EZH2YAP1TEAD4DVL2_WT_allGenes.sh # 19823389 ok
-sbatch scripts/matrix_gene_500bp_rawBigwig_QSER1EZH2YAP1TEAD4DVL2input_WT_allGenes.sh # 19956770 xxx
+sbatch scripts/matrix_gene_500bp_rawBigwig_QSER1EZH2YAP1TEAD4DVL2input_WT_allGenes.sh # 19956770 ok
 
 
 
@@ -1860,7 +1903,7 @@ sbatch scripts/matrix_TSS_5kb_THOREZH25mCENCODEMyers_hESCWTvsYAPKO_positiveNegat
 --> gain lost EZH2 regions are all bound with QSER1. No correlation with QSER1 binding changes. 
 
 
-## enhancer
+# enhancer (with deeptool plot)
 
 Let's look at ChIPseq signal in the enhancer regions from *GeneHancer data*:
 - Heatmap / profile; WT ChIPseq signal (hopefully YAP1 will be bound to some enhancer)
@@ -1873,15 +1916,13 @@ Let's look at ChIPseq signal in the enhancer regions from *GeneHancer data*:
 
 ```bash
 
-sbatch scripts/matrix_TSS_5kb_rawBigwig_YAP1EZH2QSER1TEAD4DVL2_WT_GeneHancer.sh # 19945005 xxx
-sbatch scripts/matrix_TSS_5kb_rawBigwig_YAP1EZH2IGG_WT_GeneHancer.sh # 19944996 xxx
-
-
-
-
-
+sbatch scripts/matrix_TSS_5kb_rawBigwig_YAP1EZH2QSER1TEAD4DVL2_WT_GeneHancer.sh # 19945005 ok
+sbatch scripts/matrix_TSS_5kb_rawBigwig_YAP1EZH2IGG_WT_GeneHancer.sh # 19944996 ok
 
 ```
+
+--> YAP1 and other mark not specifically bound to enhancer; seems random, input signal is similar
+
 
 **Collect YAP1 bound regions (macs2) directly overlapping with enhancer regions**
 
@@ -2014,8 +2055,76 @@ write.table(EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1EnhancerPromoterbindin
 
 
 # count genes with YAP1 binding in enhancer or promoter and EZH2 changes
+
+EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1EnhancerPromoterbinding = as_tibble(read.table("output/ChIPseeker/EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1EnhancerPromoterbinding.txt", 
+                        header = TRUE, 
+                        sep = "\t", 
+                        stringsAsFactors = FALSE) )
+
+
 EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1EnhancerPromoterbinding %>%
   filter(YAP1_promoter == "yes" | YAP1_enhancer == "yes")
+
+EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding = 
+EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1EnhancerPromoterbinding %>%
+  filter(YAP1_promoter == "yes" | YAP1_enhancer == "yes",
+         EZH2 == "gain") %>%
+  dplyr::select(geneSymbol)
+
+EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding = 
+EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1EnhancerPromoterbinding %>%
+  filter(YAP1_promoter == "yes" | YAP1_enhancer == "yes",
+         EZH2 == "lost")%>%
+  dplyr::select(geneSymbol)
+
+## save output list of genes for functional analysis
+write.table(EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding, file = "output/ChIPseeker/EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = TRUE, 
+            row.names = FALSE)
+
+write.table(EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding, file = "output/ChIPseeker/EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = TRUE, 
+            row.names = FALSE)
+
+
+
+EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding = 
+EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1EnhancerPromoterbinding %>%
+  filter(YAP1_promoter == "yes" | YAP1_enhancer == "yes",
+         EZH2 == "lost")%>%
+  dplyr::select(geneSymbol)
+
+## save output list of genes for functional analysis
+
+EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding = 
+EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1EnhancerPromoterbinding %>%
+  filter(YAP1_promoter == "yes",
+         EZH2 == "gain") %>%
+  dplyr::select(geneSymbol)
+
+EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding = 
+EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1EnhancerPromoterbinding %>%
+  filter(YAP1_promoter == "yes",
+         EZH2 == "lost")%>%
+  dplyr::select(geneSymbol)
+
+  
+write.table(EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding, file = "output/ChIPseeker/EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = TRUE, 
+            row.names = FALSE)
+
+write.table(EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding, file = "output/ChIPseeker/EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = TRUE, 
+            row.names = FALSE)
+
 
 ```
 
