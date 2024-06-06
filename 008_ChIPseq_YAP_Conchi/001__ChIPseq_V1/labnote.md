@@ -2126,6 +2126,8 @@ write.table(EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding, file = 
             row.names = FALSE)
 
 
+
+
 ```
 
 --> Not much genes with EZH2 binding changes and bound with enhancer where YAP1 is binding
