@@ -2126,6 +2126,13 @@ write.table(EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding, file = 
             row.names = FALSE)
 
 
+## command to find out which enhancer-YAP1 bound target which genes 
+
+GeneHancer_v5_gene = GeneHancer_v5 %>%
+    filter(geneSymbol == "SIX2") # !!!!!!!!!!!!!  CHANGE GENE OF INTEREST HERE  !!!!!!!!!!!!!!!!!
+
+GeneHancer_v5_gene %>%
+    inner_join(GeneHancer_v5_hESC_WT_YAP1_R1_peaks)
 
 
 ```
