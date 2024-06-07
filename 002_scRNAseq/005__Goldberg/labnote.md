@@ -53,11 +53,144 @@ cp -r * /scr1/users/roulet/Akizu_Lab/002_scRNAseq/005__Goldberg/input_raw/
 
 --> ALL GOOD
 
+File used in `/snRNAseq_Kcnc1_R320H/snRNAseq_Kcnc1_reorganized/*`
 
-# XXX
+For the analysis I will follow the YAP1 scRNAseq in `002003`
+
+
+## Counting with cellranger count
+
+Within each folder in `/snRNAseq_Kcnc1_R320H/snRNAseq_Kcnc1_reorganized/*` I have two lanes L001 and L002 with I1/I2 and R1/R2 fastq. 
 
 
 
+
+
+
+
+
+```bash 
+conda activate scRNAseq
+which cellranger
+
+# Run count using mice genome
+## p14 _ Kcnc1 _ CB and CX
+sbatch scripts/cellranger_count_Kcnc1_p14_CB_Rep1.sh # 20177866 FAIL corrupted; 20178043 xxx
+sbatch scripts/cellranger_count_Kcnc1_p14_CB_Rep2.sh # 20177913 FAIL corrupted; 20178032 xxx
+sbatch scripts/cellranger_count_Kcnc1_p14_CB_Rep3.sh # 20177921 xxx
+sbatch scripts/cellranger_count_Kcnc1_p14_CX_Rep1.sh # 20177943 FAIL corrupted; 20178594 xxx
+sbatch scripts/cellranger_count_Kcnc1_p14_CX_Rep2.sh # 20177952 xxx
+sbatch scripts/cellranger_count_Kcnc1_p14_CX_Rep3.sh # 20177959 xxx
+
+
+## p14 _ WT _ CB and CX
+sbatch scripts/cellranger_count_WT_p14_CB_Rep1.sh # 20178099 xxx
+sbatch scripts/cellranger_count_WT_p14_CB_Rep2.sh # 20178116 xxx
+sbatch scripts/cellranger_count_WT_p14_CB_Rep3.sh # 20178127 xxx
+sbatch scripts/cellranger_count_WT_p14_CX_Rep1.sh # 20178154 xxx 
+sbatch scripts/cellranger_count_WT_p14_CX_Rep2.sh # 20178162 xxx
+sbatch scripts/cellranger_count_WT_p14_CX_Rep3.sh # 20178170 xxx
+
+
+## p35 _ Kcnc1 _ CB and CX
+sbatch scripts/cellranger_count_Kcnc1_p35_CB_Rep1.sh # 20178221 xxx
+sbatch scripts/cellranger_count_Kcnc1_p35_CB_Rep2.sh # 20178240 xxx
+sbatch scripts/cellranger_count_Kcnc1_p35_CB_Rep3.sh # 20178250 xxx
+sbatch scripts/cellranger_count_Kcnc1_p35_CX_Rep1.sh # 20178258 xxx 
+sbatch scripts/cellranger_count_Kcnc1_p35_CX_Rep2.sh # 20178280 xxx
+sbatch scripts/cellranger_count_Kcnc1_p35_CX_Rep3.sh # 20178344 xxx
+
+
+## p35 _ WT _ CB and CX
+sbatch scripts/cellranger_count_WT_p35_CB_Rep1.sh # 20178351 xxx
+sbatch scripts/cellranger_count_WT_p35_CB_Rep2.sh # 20178354 xxx
+sbatch scripts/cellranger_count_WT_p35_CB_Rep3.sh # 20178357 xxx
+sbatch scripts/cellranger_count_WT_p35_CX_Rep1.sh # 20178372 xxx 
+sbatch scripts/cellranger_count_WT_p35_CX_Rep2.sh # 20178379 xxx
+sbatch scripts/cellranger_count_WT_p35_CX_Rep3.sh # 20178386 xxx
+
+
+
+## p180 _ Kcnc1 _ CB and CX
+sbatch scripts/cellranger_count_Kcnc1_p180_CB_Rep1.sh # 20178463 xxx
+sbatch scripts/cellranger_count_Kcnc1_p180_CB_Rep2.sh # 20178466 xxx
+sbatch scripts/cellranger_count_Kcnc1_p180_CB_Rep3.sh # 20178471 xxx
+sbatch scripts/cellranger_count_Kcnc1_p180_CX_Rep1.sh # 20178478 xxx 
+sbatch scripts/cellranger_count_Kcnc1_p180_CX_Rep2.sh # 20178481 xxx
+sbatch scripts/cellranger_count_Kcnc1_p180_CX_Rep3.sh # 20178485 xxx
+
+
+## p180 _ WT _ CB and CX
+sbatch scripts/cellranger_count_WT_p180_CB_Rep1.sh # 20178494 xxx
+sbatch scripts/cellranger_count_WT_p180_CB_Rep2.sh # 20178497 xxx
+sbatch scripts/cellranger_count_WT_p180_CB_Rep3.sh # 20178501 xxx
+sbatch scripts/cellranger_count_WT_p180_CX_Rep1.sh # 20178518 xxx 
+sbatch scripts/cellranger_count_WT_p180_CX_Rep2.sh # 20178525 xxx
+sbatch scripts/cellranger_count_WT_p180_CX_Rep3.sh # 20178587 xxx
+```
+
+
+--> Bug for:
+- `cellranger_count_Kcnc1_p14_CB_Rep1`: `Sequence and quality length mismatch: file: "/scr1/users/roulet/Akizu_Lab/002_scRNAseq/003__YAP1/input/24hgastruloidhumanUN/24hgastruloidhumanUN_S1_L001_R2_001.fastq.gz", line: 292599520`
+    - Another file available in `8_31_23 core reanalyzed corrupted files`
+
+-----> To avoid error, let's directly use the reanalyzed one for the concerned samples: 
+- Kcnc1_p14_CB_Rep1
+- Kcnc1_p14_CB_Rep2
+- Kcnc1_p14_CX_Rep1
+- WT_p35_CX_Rep1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## RNA contamination and doublet detection
+- doublet detection using [scrublet](https://github.com/swolock/scrublet) **on the filtered matrix**
+- ambient RNA correction using `soupX` in R before generating the Seurat object
+
+```bash
+srun --mem=500g --pty bash -l
+conda deactivate # base environment needed
+python3 scrublet.py [input_path] [output_path]
+# Run doublet detection/scrublet sample per sample
+python3 scripts/scrublet_doublets.py E7mousecontrolQCNOTfail/outs/filtered_feature_bc_matrix output/doublets/embryo_E7_control.tsv
+python3 scripts/scrublet_doublets.py E7mousecYAPKO/outs/filtered_feature_bc_matrix output/doublets/embryo_E7_cYAPKO.tsv
+
+python3 scripts/scrublet_doublets.py 24hgastruloidhumanUNQCNOTfail/outs/filtered_feature_bc_matrix output/doublets/humangastruloid_UNTREATED24hr.tsv
+python3 scripts/scrublet_doublets.py 24hgastruloidhumanDASA/outs/filtered_feature_bc_matrix output/doublets/humangastruloid_DASATINIB24hr.tsv
+
+```
+Doublet detection score:
+- humangastruloid_UNTREATED24hr: 42% (previous time: 0% doublet)
+- humangastruloid_DASATINIB24hr: 0.2% (previous time: 34.2% doublet)
+- embryo_E7_control: 7.2% (previous time: 0.1% doublet)
+- embryo_E7_cYAPKO: 6.2% (previous time: 3.6%)
+--> Successfully assigned doublet
+
+
+
+
+
+# embryo E7 (second sample) analysis in Seurat
 
 
 
