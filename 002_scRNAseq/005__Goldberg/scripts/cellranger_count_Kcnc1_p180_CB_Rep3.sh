@@ -4,7 +4,7 @@
 
 cellranger count --id=Kcnc1_p180_CB_Rep3 \
                    --transcriptome=/scr1/users/roulet/Akizu_Lab/002_scRNAseq/meta/refdata-gex-mm10-2020-A \
-                   --fastqs=/scr1/users/roulet/Akizu_Lab/002_scRNAseq/005__Goldberg/input_raw/snRNAseq_Kcnc1_R320H/snRNAseq_Kcnc1_reorganized/Kcnc1_P14/Kcnc1_P180_CERE_Sample3 \
+                   --fastqs=/scr1/users/roulet/Akizu_Lab/002_scRNAseq/005__Goldberg/input_raw/snRNAseq_Kcnc1_R320H/snRNAseq_Kcnc1_reorganized/Kcnc1_P180/Kcnc1_P180_CERE_Sample3 \
                    --sample=EthanGoldberg-3292023-KCNC1-SN-P180-M3-CERE  # all strings before the `S*_L00*`
 
 
