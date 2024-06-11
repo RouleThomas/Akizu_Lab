@@ -13,7 +13,7 @@ Integration of **scRNAseq/ATACseq** tutorial [here](https://nbis-workshop-epigen
 
 
 --> Start with some QC about ATACseq and RNAseq and get back to you
---> Provide to me gene marker for expected cell types (which cell type we expect?)
+--> Provide to me gene marker for expected cell types (which cell type we expect?). Can use automatic annotation but guided with cell marker known always better
 
 What I could do 1st:
 --> Use scRNASeq data to annotate cell types and then integrate ATACseq information
