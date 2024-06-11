@@ -177,7 +177,7 @@ sbatch --dependency=afterany:20250949 scripts/scrublet_Kcnc1_p180.sh # 20255974 
 
 ```
 Doublet detection score (YAP1scRNAseq ranged between 0.1 to 42%): now range from 0 to 30% (median ~10%)
---> Table in `output/doublets/doublets_all.xlsx`
+--> Table in `QC/QC_metrics_all.xlsx`
 
 
 --> Successfully assigned doublet
