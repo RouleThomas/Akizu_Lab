@@ -1889,12 +1889,13 @@ sbatch scripts/matrix_TSS_5kb_THOREZH2QSER1_hESCWTvsYAPKO_positiveNegativeTHORq4
 ## WT vs YAPKO; EZH2 gain lost with EZH2 and m5C signal in WT (`008004`)
 sbatch scripts/matrix_TSS_5kb_THOREZH25mCENCODE_hESCWTvsYAPKO_positiveNegativeTHORq4_EZH2peak.sh # 19831082 ok
 sbatch scripts/matrix_TSS_5kb_THOREZH25mCENCODEMyers_hESCWTvsYAPKO_positiveNegativeTHORq4_EZH2peak.sh # 19835895 ok
+sbatch scripts/matrix_TSS_5kb_THOREZH25mCENCODEMyers_hESCWTvsYAPKO_positiveNegativeTHORq4_EZH2peak.sh # 19835895 ok
 
 
 
 ## Genes with EZH2 binding changes; EZH2, 5mC 008004
 sbatch scripts/matrix_TSS_5kb_THOREZH25mCENCODEMyers_hESCWTvsYAPKO_positiveNegativeTHORq4Together_EZH2gene.sh # 19942671 ok
-sbatch scripts/matrix_TSS_5kb_THOREZH25mCENCODEMyers_hESCWTvsYAPKO_positiveNegativeTHORq4Separated_EZH2gene.sh # 19942690 ok
+sbatch scripts/matrix_TSS_5kb_THOREZH25mCENCSR744UGB_hESCWTvsYAPKO_positiveNegativeTHORq4Separated_EZH2gene.sh # 20253104 ok
 
 ```
 

@@ -169,11 +169,12 @@ sbatch scripts/msPIPE.sh # 18718424 fail; re-run with added --bind /scr1/users/r
 
 - Collect in ENCODE other WGBS in H9 PSC/ESC. 
 
---> Found [here](https://www.encodeproject.org/search/?type=Experiment&control_type!=*&status=released&perturbed=false&assay_title=WGBS&replicates.library.biosample.donor.organism.scientific_name=Homo+sapiens&biosample_ontology.term_name=H1) 2 experiments with 2 bio rep; with Hg38 wig available.
+--> Found [here](https://www.encodeproject.org/search/?type=Experiment&control_type!=*&status=released&perturbed=false&assay_title=WGBS&replicates.library.biosample.donor.organism.scientific_name=Homo+sapiens&biosample_ontology.term_name=H1)and this [one](https://www.encodeproject.org/experiments/ENCSR744UGB/):  2 experiments with 2 bio rep; with Hg38 wig available 
 
 
 Joe Ecker, Salk (ENCAN623MFB); ENCFF969PDB_R1 and ENCFF423PGW_R2
 Richard Myers, HAIB (ENCAN508QJC); CpG sites coverage; ENCFF725YJG_R1 and ENCFF040LKO_R2
+Joe Ecker, Salk (ENCSR744UGB); ENCFF895EIX_R1 and ENCFF459RZT_R2
 
 - Download bigwig (`output/ENCODE`)
 - Check m5C profile in regions that gain/lost EZH2 in WT vs YAPKO
@@ -181,13 +182,7 @@ Richard Myers, HAIB (ENCAN508QJC); CpG sites coverage; ENCFF725YJG_R1 and ENCFF0
 --> Plot done in `008001` labnote `## EZH2 gain lost WT vs KO`
 
 
---> Ecker bad quality; Myers looks good
-
-
-
-
-
-
+--> Ecker/= (ENCAN623MFB and ENCSR744UGB) bad quality; Myers looks good
 
 
 
