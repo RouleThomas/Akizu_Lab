@@ -142,7 +142,7 @@ sbatch scripts/cellranger_count_WT_p180_CX_Rep3.sh # 20178587 fail fastq path; 2
 
 
 
-
+test
 
 
 
