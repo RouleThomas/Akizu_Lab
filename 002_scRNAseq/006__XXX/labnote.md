@@ -27,3 +27,20 @@ Next:
 - Check if any TF binding sites are active in different cell types and conditions?
 - Are some genes primed for expression, (e.g. the promoters show an open chromatin state, but the gene is not expressed yet)?
 
+
+
+# file
+
+Data: Kim_Multiomics
+A1B1_A2B2
+
+A = RNA
+B = ATAC
+
+1/2 = conditions
+
+F001 = fastq
+F002 = fastq
+
+email...
+
