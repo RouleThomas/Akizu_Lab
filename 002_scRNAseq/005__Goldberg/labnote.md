@@ -356,13 +356,14 @@ for (sample_name in names(seurat_objects)) {
 }
 assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
 
-######## Kcnc1_p180_CB_Rep3 Done separately as doublet treshold set manually
+### Kcnc1_p180_CB_Rep3 Done separately as doublet treshold set manually
 doublets <- read.table("output/doublets/Kcnc1_p180_CB_Rep3_tresh025.tsv",header = F,row.names = 1)
 colnames(doublets) <- c("Doublet_score","Is_doublet")
 Kcnc1_p180_CB_Rep3 <- AddMetaData(Kcnc1_p180_CB_Rep3,doublets)
 Kcnc1_p180_CB_Rep3$Doublet_score <- as.numeric(Kcnc1_p180_CB_Rep3$Doublet_score) # make score as numeric
+## Re include  Kcnc1_p180_CB_Rep3 in our list
 
-
+seurat_objects[["Kcnc1_p180_CB_Rep3"]] <- Kcnc1_p180_CB_Rep3
 
 
 ##################### Doublet testing for sample Kcnc1_p180_CB_Rep3 with manual treshold for doublet detection #########
