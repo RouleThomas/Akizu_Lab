@@ -172,12 +172,23 @@ sbatch scripts/scrublet_Kcnc1_p14.sh # 20255755 fail miss cp script; 20259651 ok
 sbatch --dependency=afterany:20250639 scripts/scrublet_WT_p35.sh # 20255864 ok
 sbatch scripts/scrublet_Kcnc1_p35.sh # 20255900 fail miss cp script; 20259652 ok
 sbatch --dependency=afterany:20251147 scripts/scrublet_WT_p180.sh # 20255934 ok
-sbatch --dependency=afterany:20250949 scripts/scrublet_Kcnc1_p180.sh # 20255974 Kcnc1_p180_CB_Rep3 fail in predicted but it output file; RAS ok
+sbatch --dependency=afterany:20250949 scripts/scrublet_Kcnc1_p180.sh # 20255974 Kcnc1_p180_CB_Rep3 fail in predicting but it output file; RAS ok
+
+# Run manual treshold doublet identification for Kcnc1_p180_CB_Rep3 sample
+## Run scripts that include histogram to define treshold value
+python3 scripts/scrublet_doublets_histogram.py Kcnc1_p180_CB_Rep3/outs/filtered_feature_bc_matrix output/doublets/Kcnc1_p180_CB_Rep3.tsv
+## Run scripts with manual treshold, test 2 just to see
+python3 scripts/scrublet_doublets_manualTresh.py Kcnc1_p180_CB_Rep3/outs/filtered_feature_bc_matrix output/doublets/Kcnc1_p180_CB_Rep3_tresh02.tsv 0.2
+python3 scripts/scrublet_doublets_manualTresh.py Kcnc1_p180_CB_Rep3/outs/filtered_feature_bc_matrix output/doublets/Kcnc1_p180_CB_Rep3_tresh025.tsv 0.25
+python3 scripts/scrublet_doublets_manualTresh.py Kcnc1_p180_CB_Rep3/outs/filtered_feature_bc_matrix output/doublets/Kcnc1_p180_CB_Rep3_tresh04.tsv 0.4
 
 
 ```
 Doublet detection score (YAP1scRNAseq ranged between 0.1 to 42%): now range from 0 to 30% (median ~10%)
 --> Table in `QC/QC_metrics_all.xlsx`
+
+- IMPORTANT NOTE: sample `Kcnc1_p180_CB_Rep3` "failed to automatically identify doublet score threshold". From [this](https://www.biostars.org/p/9572647/), let's assign trehsold to XXX + a new script as been created to handle manual treshold setting `scripts/scrublet_doublets_manualTresh.py` + generate a script that generate histogram `scripts/scrublet_doublets_histogram.py`
+-----> Treshold of 0.2, 0.25 and 0.4 have been tested
 
 
 --> Successfully assigned doublet
@@ -227,13 +238,32 @@ save(out, file = "output/soupX/WT_p14_CB_Rep1.RData") # CHANGE FILE NAME HERE
 --> sample `Kcnc1_p35_CB_Rep2` is highly contaminated, add to add `forceAccept = TRUE` in `sc = autoEstCont(sc, forceAccept = TRUE)`; all other sampels are <30% (median 10%)
 
 
-# integration 
+# Data integration 
 
-XXXX bnelow nto mod
+**Step1_General Trend**: 
+Investigate *genotype effect for each brain regions*
+- Integrate all time points and genotype together within the same UMAP:
+  - **1 UMAP per brain regions** --> highlight genotype/time
+
+**Step2_Time specific**:
+Investigate *genotype effect at each time point for each brain regions*
+- Integrate genotype together for each time points
+  - **1 UMAP per time and per brain regions** --> highlight genotype
 
 
+How to deal with the Bio Rep for data integration is discuss [here](https://github.com/satijalab/seurat/issues/4753). Author mentioned to "run integration for all samples together, but set the control replicates as reference". Not clear... I read [here](https://github.com/satijalab/seurat/issues/2059) that integrating replicate together first, then integrating the condition works best:
+- Step1: Integrate the 3 Bio rep for WT and for Mt separately for each time point > integrate the 3 time points together.
+- Step2: Inegrate the 3 Bio Rep for WT and for Mt separately and integrate at each time point.
 
-Then `conda activate scRNAseq` and go into R and filtered out **RNA contamination and start with SEURAT**.
+--> Follow [this](https://github.com/satijalab/seurat/issues/6003) or this [Workflow2](https://github.com/satijalab/seurat/discussions/5702):
+- normalize all samples/replicate individually (eg. WT_p14_CB_R1 + WT_p14_CB_R1 + WT_p14_CB_R3 = WT_p14_CB and same for Kcnc1 at each time points)
+- integrate then the other genotype (WT_p14_CB + Kcnc1_p14_CB = WT-Kcnc1_p14_CB) = **Step1_General Trend=2 step data integration**
+- integrate then the time points (WT-Kcnc1_p14_CB + WT-Kcnc1_p35_CB + WT-Kcnc1_p180_CB = WT-Kcnc1_CB) = **Step2_Time specific=3 step data integration**
+
+
+## General trend
+
+Then `conda activate scRNAseqV2` and go into R and filtered out **RNA contamination and start with SEURAT**.
 
 Tuto seurat [here](https://satijalab.org/seurat/articles/sctransform_v2_vignette.html)
 
@@ -242,9 +272,7 @@ Tuto seurat [here](https://satijalab.org/seurat/articles/sctransform_v2_vignette
 conda activate scRNAseqV2
 ```
 
-Let's 1st try to **perform clustering that look like the E775 time-point** (use same marker); display some genes and generate a **shiny app for Conchi** --> Shared to Conchi and discuss; then see if we put both exp together
-
-
+For the sample `Kcnc1_p180_CB_Rep3`; I pick the scrublet Treshold showing the better corr. score for RNAfeature-doublet in the `FeatureScatter_*` plot. They all have the same score... So I pick 0.25 which look good regarding the histogram.
 
 ```R
 # install.packages('SoupX')
@@ -261,63 +289,146 @@ library("SingleR")
 library("gprofiler2") # for human mouse gene conversion for cell cycle genes
 
 ## Load the matrix and Create SEURAT object
-load("output/soupX/out_E7mousecontrol.RData")
-srat_WT_E7 <- CreateSeuratObject(counts = out, project = "WT_E7") # 32,285 features across 1,829 samples
+samples <- list(
+  WT_p14_CB_Rep1 = "output/soupX/WT_p14_CB_Rep1.RData",
+  WT_p14_CB_Rep2 = "output/soupX/WT_p14_CB_Rep2.RData",
+  WT_p14_CB_Rep3 = "output/soupX/WT_p14_CB_Rep3.RData",
+  Kcnc1_p14_CB_Rep1 = "output/soupX/Kcnc1_p14_CB_Rep1.RData",
+  Kcnc1_p14_CB_Rep2 = "output/soupX/Kcnc1_p14_CB_Rep2.RData",
+  Kcnc1_p14_CB_Rep3 = "output/soupX/Kcnc1_p14_CB_Rep3.RData",
 
-load("output/soupX/out_E7mousecYAPKO.RData")
-srat_cYAPKO_E7 <- CreateSeuratObject(counts = out, project = "cYAPKO_E7") # 32,285 features across 1,897 samples
+  WT_p35_CB_Rep1 = "output/soupX/WT_p35_CB_Rep1.RData",
+  WT_p35_CB_Rep2 = "output/soupX/WT_p35_CB_Rep2.RData",
+  WT_p35_CB_Rep3 = "output/soupX/WT_p35_CB_Rep3.RData",
+  Kcnc1_p35_CB_Rep1 = "output/soupX/Kcnc1_p35_CB_Rep1.RData",
+  Kcnc1_p35_CB_Rep2 = "output/soupX/Kcnc1_p35_CB_Rep2.RData",
+  Kcnc1_p35_CB_Rep3 = "output/soupX/Kcnc1_p35_CB_Rep3.RData",
+
+  WT_p180_CB_Rep1 = "output/soupX/WT_p180_CB_Rep1.RData",
+  WT_p180_CB_Rep2 = "output/soupX/WT_p180_CB_Rep2.RData",
+  WT_p180_CB_Rep3 = "output/soupX/WT_p180_CB_Rep3.RData",
+  Kcnc1_p180_CB_Rep1 = "output/soupX/Kcnc1_p180_CB_Rep1.RData",
+  Kcnc1_p180_CB_Rep2 = "output/soupX/Kcnc1_p180_CB_Rep2.RData",
+  Kcnc1_p180_CB_Rep3 = "output/soupX/Kcnc1_p180_CB_Rep3.RData"
+)
+
+seurat_objects <- list()
+
+for (sample_name in names(samples)) {
+  load(samples[[sample_name]])
+  seurat_objects[[sample_name]] <- CreateSeuratObject(counts = out, project = sample_name)
+}
+
+## Function to assign Seurat objects to variables (unlist the list)
+assign_seurat_objects <- function(seurat_objects_list) {
+  for (sample_name in names(seurat_objects_list)) {
+    assign(sample_name, seurat_objects_list[[sample_name]], envir = .GlobalEnv)
+  }
+}
+assign_seurat_objects(seurat_objects) # This apply the function
 
 
 # QUALITY CONTROL
-## add mitochondrial and Ribosomal conta 
-srat_WT_E7[["percent.mt"]] <- PercentageFeatureSet(srat_WT_E7, pattern = "^mt-")
-srat_WT_E7[["percent.rb"]] <- PercentageFeatureSet(srat_WT_E7, pattern = "^Rp[sl]")
+# Function to add mitochondrial and ribosomal content
+add_quality_control <- function(seurat_object) {
+  seurat_object[["percent.mt"]] <- PercentageFeatureSet(seurat_object, pattern = "^mt-")
+  seurat_object[["percent.rb"]] <- PercentageFeatureSet(seurat_object, pattern = "^Rp[sl]")
+  return(seurat_object)
+}
+seurat_objects <- lapply(seurat_objects, add_quality_control) # This apply the function
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
 
-srat_cYAPKO_E7[["percent.mt"]] <- PercentageFeatureSet(srat_cYAPKO_E7, pattern = "^mt-")
-srat_cYAPKO_E7[["percent.rb"]] <- PercentageFeatureSet(srat_cYAPKO_E7, pattern = "^Rp[sl]")
 
-## add doublet information (scrublet)
-doublets <- read.table("output/doublets/embryo_E7_control.tsv",header = F,row.names = 1)
+# Function to add doublet information
+add_doublet_information <- function(sample_name, seurat_object) {
+  doublet_file <- paste0("output/doublets/", sample_name, ".tsv")
+  doublets <- read.table(doublet_file, header = FALSE, row.names = 1)
+  colnames(doublets) <- c("Doublet_score", "Is_doublet")
+  seurat_object <- AddMetaData(seurat_object, doublets)
+  seurat_object$Doublet_score <- as.numeric(seurat_object$Doublet_score)
+  return(seurat_object)
+}
+## Apply the function to each Seurat object in the list
+for (sample_name in names(seurat_objects)) {
+  if (sample_name != "Kcnc1_p180_CB_Rep3") {
+    seurat_objects[[sample_name]] <- add_doublet_information(sample_name, seurat_objects[[sample_name]])
+  }
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+######## Kcnc1_p180_CB_Rep3 Done separately as doublet treshold set manually
+doublets <- read.table("output/doublets/Kcnc1_p180_CB_Rep3_tresh025.tsv",header = F,row.names = 1)
 colnames(doublets) <- c("Doublet_score","Is_doublet")
-srat_WT_E7 <- AddMetaData(srat_WT_E7,doublets)
-srat_WT_E7$Doublet_score <- as.numeric(srat_WT_E7$Doublet_score) # make score as numeric
-head(srat_WT_E7[[]])
+Kcnc1_p180_CB_Rep3 <- AddMetaData(Kcnc1_p180_CB_Rep3,doublets)
+Kcnc1_p180_CB_Rep3$Doublet_score <- as.numeric(Kcnc1_p180_CB_Rep3$Doublet_score) # make score as numeric
 
-doublets <- read.table("output/doublets/embryo_E7_cYAPKO.tsv",header = F,row.names = 1)
+
+
+
+##################### Doublet testing for sample Kcnc1_p180_CB_Rep3 with manual treshold for doublet detection #########
+Kcnc1_p180_CB_Rep3[["percent.mt"]] <- PercentageFeatureSet(Kcnc1_p180_CB_Rep3, pattern = "^mt-")
+Kcnc1_p180_CB_Rep3[["percent.rb"]] <- PercentageFeatureSet(Kcnc1_p180_CB_Rep3, pattern = "^Rp[sl]")
+
+doublets <- read.table("output/doublets/Kcnc1_p180_CB_Rep3_tresh04.tsv",header = F,row.names = 1)
 colnames(doublets) <- c("Doublet_score","Is_doublet")
-srat_cYAPKO_E7 <- AddMetaData(srat_cYAPKO_E7,doublets)
-srat_cYAPKO_E7$Doublet_score <- as.numeric(srat_cYAPKO_E7$Doublet_score) # make score as numeric
-head(srat_cYAPKO_E7[[]])
+Kcnc1_p180_CB_Rep3 <- AddMetaData(Kcnc1_p180_CB_Rep3,doublets)
+Kcnc1_p180_CB_Rep3$Doublet_score <- as.numeric(Kcnc1_p180_CB_Rep3$Doublet_score) # make score as numeric
+head(Kcnc1_p180_CB_Rep3[[]])
+
+pdf("output/seurat/FeatureScatter_QC_mt_doublet_Kcnc1_p180_CB_Rep3_tresh04.pdf", width=5, height=5)
+FeatureScatter(Kcnc1_p180_CB_Rep3, feature1 = "percent.mt", feature2 = "Doublet_score")
+dev.off()
+pdf("output/seurat/FeatureScatter_QC_RNAfeature_doublet_Kcnc1_p180_CB_Rep3_tresh04.pdf", width=5, height=5)
+FeatureScatter(Kcnc1_p180_CB_Rep3, feature1 = "nFeature_RNA", feature2 = "Doublet_score")
+dev.off()
+########################################################################################################################
+
+
+# Loop to generate QC plots for each sample
+# Define the output directory
+output_dir <- "output/seurat/"
+
+# Loop through each Seurat object to generate the plots
+for (sample_name in names(seurat_objects)) {
+  seurat_object <- seurat_objects[[sample_name]]
+  
+  # Violin plot
+  pdf(paste0(output_dir, "VlnPlot_QC_", sample_name, ".pdf"), width = 10, height = 6)
+  print(VlnPlot(seurat_object, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1) & 
+    theme(plot.title = element_text(size = 10)))
+  dev.off()
+  
+  # Scatter plots
+  pdf(paste0(output_dir, "FeatureScatter_QC_RNAcount_mt_", sample_name, ".pdf"), width = 5, height = 5)
+  print(FeatureScatter(seurat_object, feature1 = "nCount_RNA", feature2 = "percent.mt"))
+  dev.off()
+  
+  pdf(paste0(output_dir, "FeatureScatter_QC_RNAcount_RNAfeature_", sample_name, ".pdf"), width = 5, height = 5)
+  print(FeatureScatter(seurat_object, feature1 = "nCount_RNA", feature2 = "nFeature_RNA"))
+  dev.off()
+  
+  pdf(paste0(output_dir, "FeatureScatter_QC_rb_mt_", sample_name, ".pdf"), width = 5, height = 5)
+  print(FeatureScatter(seurat_object, feature1 = "percent.rb", feature2 = "percent.mt"))
+  dev.off()
+  
+  pdf(paste0(output_dir, "FeatureScatter_QC_mt_doublet_", sample_name, ".pdf"), width = 5, height = 5)
+  print(FeatureScatter(seurat_object, feature1 = "percent.mt", feature2 = "Doublet_score"))
+  dev.off()
+  
+  pdf(paste0(output_dir, "FeatureScatter_QC_RNAfeature_doublet_", sample_name, ".pdf"), width = 5, height = 5)
+  print(FeatureScatter(seurat_object, feature1 = "nFeature_RNA", feature2 = "Doublet_score"))
+  dev.off()
+}
+
+
+# save rds 
+
+XXX
 
 
 
-## Plot
-pdf("output/seurat/VlnPlot_QC_embryo_control_E7.pdf", width=10, height=6)
-pdf("output/seurat/VlnPlot_QC_embryo_cYAPKO_E7.pdf", width=10, height=6)
-VlnPlot(srat_cYAPKO_E7, features = c("nFeature_RNA","nCount_RNA","percent.mt","percent.rb"),ncol = 4,pt.size = 0.1) & 
-  theme(plot.title = element_text(size=10))
-dev.off()
 
-pdf("output/seurat/FeatureScatter_QC_RNAcount_mt_cYAPKO_E7.pdf", width=5, height=5)
-pdf("output/seurat/FeatureScatter_QC_RNAcount_mt_control_E7.pdf", width=5, height=5)
-FeatureScatter(srat_cYAPKO_E7, feature1 = "nCount_RNA", feature2 = "percent.mt")
-dev.off()
-pdf("output/seurat/FeatureScatter_QC_RNAcount_RNAfeature_cYAPKO_E7.pdf", width=5, height=5)
-pdf("output/seurat/FeatureScatter_QC_RNAcount_RNAfeature_control_E7.pdf", width=5, height=5)
-FeatureScatter(srat_cYAPKO_E7, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
-dev.off()
-pdf("output/seurat/FeatureScatter_QC_rb_mt_cYAPKO_E7.pdf", width=5, height=5)
-pdf("output/seurat/FeatureScatter_QC_rb_mt_control_E7.pdf", width=5, height=5)
-FeatureScatter(srat_cYAPKO_E7, feature1 = "percent.rb", feature2 = "percent.mt")
-dev.off()
-pdf("output/seurat/FeatureScatter_QC_mt_doublet_cYAPKO_E7.pdf", width=5, height=5)
-pdf("output/seurat/FeatureScatter_QC_mt_doublet_control_E7.pdf", width=5, height=5)
-FeatureScatter(srat_cYAPKO_E7, feature1 = "percent.mt", feature2 = "Doublet_score")
-dev.off()
-pdf("output/seurat/FeatureScatter_QC_RNAfeature_doublet_cYAPKO_E7.pdf", width=5, height=5)
-pdf("output/seurat/FeatureScatter_QC_RNAfeature_doublet_control_E7.pdf", width=5, height=5)
-FeatureScatter(srat_cYAPKO_E7, feature1 = "nFeature_RNA", feature2 = "Doublet_score")
-dev.off()
+
 
 
 
@@ -337,23 +448,6 @@ srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 500 & s
 srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$percent.mt > 10 & srat_cYAPKO_E7@meta.data$QC == 'Pass','High_MT',srat_cYAPKO_E7@meta.data$QC)
 srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 500 & srat_cYAPKO_E7@meta.data$QC != 'Pass' & srat_cYAPKO_E7@meta.data$QC != 'High_MT',paste('High_MT',srat_cYAPKO_E7@meta.data$QC,sep = ','),srat_cYAPKO_E7@meta.data$QC)
 table(srat_cYAPKO_E7[['QC']])
-
-
-### V2 more stringeant
-srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$Is_doublet == 'True','Doublet','Pass')
-srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$nFeature_RNA < 5000 & srat_WT_E7@meta.data$QC == 'Pass','Low_nFeature',srat_WT_E7@meta.data$QC)
-srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$nFeature_RNA < 5000 & srat_WT_E7@meta.data$QC != 'Pass' & srat_WT_E7@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_WT_E7@meta.data$QC,sep = ','),srat_WT_E7@meta.data$QC)
-srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$percent.mt > 10 & srat_WT_E7@meta.data$QC == 'Pass','High_MT',srat_WT_E7@meta.data$QC)
-srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$nFeature_RNA < 5000 & srat_WT_E7@meta.data$QC != 'Pass' & srat_WT_E7@meta.data$QC != 'High_MT',paste('High_MT',srat_WT_E7@meta.data$QC,sep = ','),srat_WT_E7@meta.data$QC)
-table(srat_WT_E7[['QC']])
-## 
-srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$Is_doublet == 'True','Doublet','Pass')
-srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 5000 & srat_cYAPKO_E7@meta.data$QC == 'Pass','Low_nFeature',srat_cYAPKO_E7@meta.data$QC)
-srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 5000 & srat_cYAPKO_E7@meta.data$QC != 'Pass' & srat_cYAPKO_E7@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_cYAPKO_E7@meta.data$QC,sep = ','),srat_cYAPKO_E7@meta.data$QC)
-srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$percent.mt > 10 & srat_cYAPKO_E7@meta.data$QC == 'Pass','High_MT',srat_cYAPKO_E7@meta.data$QC)
-srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 5000 & srat_cYAPKO_E7@meta.data$QC != 'Pass' & srat_cYAPKO_E7@meta.data$QC != 'High_MT',paste('High_MT',srat_cYAPKO_E7@meta.data$QC,sep = ','),srat_cYAPKO_E7@meta.data$QC)
-table(srat_cYAPKO_E7[['QC']])
-
 
 
 
@@ -412,6 +506,20 @@ set.seed(42)
 pdf("output/seurat/Elbow_srat_WT_E7QCV2.pdf", width=10, height=10)
 ElbowPlot(srat_WT_E7_elbow) # 10 or 15 or 19
 dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ```
 

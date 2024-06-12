@@ -31,16 +31,8 @@ Next:
 
 # file
 
-Data: Kim_Multiomics
-A1B1_A2B2
+- Transfer data from Hard drive to Google Drive then to HPC Cluster (transfer the aggregated cellranger counts output (`input_raw/A1B1_A2B2`) and the raw fastq (`input_raw/F001 and F002`))
+- A = RNA, B = ATAC; 1,2 = genotypes
 
-A = RNA
-B = ATAC
 
-1/2 = conditions
-
-F001 = fastq
-F002 = fastq
-
-email...
 
