@@ -25,6 +25,7 @@ KCNC1 express day12 in mice neuron (important for fast-spike interneuron (inhibi
 # Paper for cell type annotation
 
 - CB: [paper](https://pubmed.ncbi.nlm.nih.gov/34616064/); cell types here should be found at p35-p180
+  supp file in `docs/41586_2021_3220_MOESM4_ESM.xlsx` with marker genes.
 - Ctx: XXX
 
 
@@ -422,9 +423,82 @@ for (sample_name in names(seurat_objects)) {
 }
 
 
-# save rds 
+# QC filtering _ V1
 
-XXX
+### V1 not super stringeant; mit > 20 and RNAfeaure 100
+apply_qc <- function(seurat_object) {
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$Is_doublet == 'True', 'Doublet', 'Pass')
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$nFeature_RNA < 100 & seurat_object@meta.data$QC == 'Pass', 'Low_nFeature', seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$nFeature_RNA < 100 & seurat_object@meta.data$QC != 'Pass' & seurat_object@meta.data$QC != 'Low_nFeature', paste('Low_nFeature', seurat_object@meta.data$QC, sep = ','), seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.mt > 20 & seurat_object@meta.data$QC == 'Pass', 'High_MT', seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$nFeature_RNA < 100 & seurat_object@meta.data$QC != 'Pass' & seurat_object@meta.data$QC != 'High_MT', paste('High_MT', seurat_object@meta.data$QC, sep = ','), seurat_object@meta.data$QC)
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+#### Write QC summary
+qc_summary_list <- list()
+
+# Collect QC summary for each sample
+for (sample_name in names(seurat_objects)) {
+  qc_summary <- table(seurat_objects[[sample_name]][['QC']])
+  qc_summary_df <- as.data.frame(qc_summary)
+  qc_summary_df$Sample <- sample_name
+  qc_summary_list[[sample_name]] <- qc_summary_df
+}
+
+qc_summary_combined <- do.call(rbind, qc_summary_list)
+
+# Write the data frame to a tab-separated text file
+write.table(qc_summary_combined, file = "output/seurat/QC_summary_V1.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+## subset seurat object to keep cells that pass the QC
+subset_qc <- function(seurat_object) {
+  seurat_object <- subset(seurat_object, subset = QC == 'Pass')
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- subset_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# Normalize and scale data, then run cell cycle sorting
+set.seed(42)
+## Load gene marker of cell type
+mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+
+# Function to normalize, scale data, and perform cell cycle scoring
+process_seurat_object <- function(seurat_object, mmus_s, mmus_g2m) {
+  seurat_object <- NormalizeData(seurat_object, normalization.method = "LogNormalize", scale.factor = 10000)
+  all.genes <- rownames(seurat_object)
+  seurat_object <- ScaleData(seurat_object, features = all.genes)  # zero-centres and scales it
+  seurat_object <- CellCycleScoring(seurat_object, s.features = mmus_s, g2m.features = mmus_g2m)  # cell cycle sorting
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- process_seurat_object(seurat_objects[[sample_name]], mmus_s, mmus_g2m)
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# write output summary phase
+phase_summary_list <- list()
+# Collect QC phase summary for each sample
+for (sample_name in names(seurat_objects)) {
+  phase_summary <- table(seurat_objects[[sample_name]][[]]$Phase)
+  phase_summary_df <- as.data.frame(phase_summary)
+  phase_summary_df$Sample <- sample_name
+  phase_summary_list[[sample_name]] <- phase_summary_df
+}
+# Combine all summaries into one data frame
+phase_summary_combined <- do.call(rbind, phase_summary_list)
+write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_V1.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+# Cell type annotation
+## Work on the cleanest WT sample for each time point; WT_p14_CB_Rep2, WT_p35_CB_Rep3, WT_p180_CB_Rep3
 
 
 
@@ -434,35 +508,87 @@ XXX
 
 
 
-## After seeing the plot; add QC information in our seurat object
-### V1 not super stringeant
-srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$Is_doublet == 'True','Doublet','Pass')
-srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$nFeature_RNA < 500 & srat_WT_E7@meta.data$QC == 'Pass','Low_nFeature',srat_WT_E7@meta.data$QC)
-srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$nFeature_RNA < 500 & srat_WT_E7@meta.data$QC != 'Pass' & srat_WT_E7@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_WT_E7@meta.data$QC,sep = ','),srat_WT_E7@meta.data$QC)
-srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$percent.mt > 10 & srat_WT_E7@meta.data$QC == 'Pass','High_MT',srat_WT_E7@meta.data$QC)
-srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$nFeature_RNA < 500 & srat_WT_E7@meta.data$QC != 'Pass' & srat_WT_E7@meta.data$QC != 'High_MT',paste('High_MT',srat_WT_E7@meta.data$QC,sep = ','),srat_WT_E7@meta.data$QC)
-table(srat_WT_E7[['QC']])
-## 
-srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$Is_doublet == 'True','Doublet','Pass')
-srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 500 & srat_cYAPKO_E7@meta.data$QC == 'Pass','Low_nFeature',srat_cYAPKO_E7@meta.data$QC)
-srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 500 & srat_cYAPKO_E7@meta.data$QC != 'Pass' & srat_cYAPKO_E7@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_cYAPKO_E7@meta.data$QC,sep = ','),srat_cYAPKO_E7@meta.data$QC)
-srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$percent.mt > 10 & srat_cYAPKO_E7@meta.data$QC == 'Pass','High_MT',srat_cYAPKO_E7@meta.data$QC)
-srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 500 & srat_cYAPKO_E7@meta.data$QC != 'Pass' & srat_cYAPKO_E7@meta.data$QC != 'High_MT',paste('High_MT',srat_cYAPKO_E7@meta.data$QC,sep = ','),srat_cYAPKO_E7@meta.data$QC)
-table(srat_cYAPKO_E7[['QC']])
 
 
 
 
 
-# Quality check after QC filtering
-pdf("output/seurat/VlnPlot_QCPass_embryo_control_E7.pdf", width=10, height=6)
-pdf("output/seurat/VlnPlot_QCPass_embryo_cYAPKO_E7.pdf", width=10, height=6)
-pdf("output/seurat/VlnPlot_QCPassV2_embryo_control_E7.pdf", width=10, height=6)
-pdf("output/seurat/VlnPlot_QCPassV2_embryo_cYAPKO_E7.pdf", width=10, height=6)
 
-VlnPlot(subset(srat_cYAPKO_E7, subset = QC == 'Pass'), 
-        features = c("nFeature_RNA", "nCount_RNA", "percent.mt","percent.rb"), ncol = 4, pt.size = 0.1) & 
-  theme(plot.title = element_text(size=10))
+
+
+
+
+
+
+
+
+
+
+# Integrate the Bio Rep
+
+# clustering
+## Optimal parameter 50 dim
+WT_p14_CB_Rep1 <- SCTransform(WT_p14_CB_Rep1, method = "glmGamPoi", ncells = 12877, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 50, verbose = FALSE)
+WT_p14_CB_Rep2 <- SCTransform(WT_p14_CB_Rep2, method = "glmGamPoi", ncells = 13576, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
+    RunPCA(npcs = 50, verbose = FALSE)
+WT_p14_CB_Rep3 <- SCTransform(WT_p14_CB_Rep3, method = "glmGamPoi", ncells = 13420, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
+    RunPCA(npcs = 50, verbose = FALSE)
+
+# Data integration (check active assay is 'SCT')
+srat.list <- list(WT_p14_CB_Rep1 = WT_p14_CB_Rep1, WT_p14_CB_Rep2 = WT_p14_CB_Rep2, WT_p14_CB_Rep3 = WT_p14_CB_Rep3)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+WT_p14_CB.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+WT_p14_CB.sct <- IntegrateData(anchorset = WT_p14_CB.anchors, normalization.method = "SCT")
+set.seed(42)
+DefaultAssay(WT_p14_CB.sct) <- "integrated"
+WT_p14_CB.sct <- RunPCA(WT_p14_CB.sct, verbose = FALSE, npcs = 50)
+WT_p14_CB.sct <- RunUMAP(WT_p14_CB.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
+WT_p14_CB.sct <- FindNeighbors(WT_p14_CB.sct, reduction = "pca", k.param = 15, dims = 1:50)
+WT_p14_CB.sct <- FindClusters(WT_p14_CB.sct, resolution = 0.4, verbose = FALSE, algorithm = 4)
+
+
+pdf("output/seurat/UMAP_WT_p14_CB_splitOrigIdent.pdf", width=12, height=4)
+DimPlot(WT_p14_CB.sct, reduction = "umap", split.by = "orig.ident", label=TRUE)
+dev.off()
+
+
+# Check some genes
+
+
+
+DefaultAssay(WT_p14_CB.sct) <- "SCT" # For vizualization either use SCT or norm RNA
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-Kcnc1.pdf", width=5, height=5)
+FeaturePlot(WT_p14_CB.sct, features = c("Kcnc1"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-Kozareva2021_Purkinje.pdf", width=5, height=5)
+FeaturePlot(WT_p14_CB.sct, features = c("Ppp1r17"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-Kozareva2021_Granular.pdf", width=5, height=5)
+FeaturePlot(WT_p14_CB.sct, features = c("Gabra6"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-Kozareva2021_Golgi.pdf", width=7, height=5)
+FeaturePlot(WT_p14_CB.sct, features = c("Slc6a5", "Grm2", "Sst"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-Kozareva2021_MLI1.pdf", width=7, height=5)
+FeaturePlot(WT_p14_CB.sct, features = c("Prkcd", "Sorcs3", "Ptprk"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-Kozareva2021_MLI2.pdf", width=7, height=5)
+FeaturePlot(WT_p14_CB.sct, features = c("Prkcd", "Nxph1", "Cdh22"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-Kozareva2021_PLI_3.pdf", width=7, height=5)
+FeaturePlot(WT_p14_CB.sct, features = c("Htr2a", "Edil3"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-Kozareva2021_PLI_1PLI_2.pdf", width=7, height=5)
+FeaturePlot(WT_p14_CB.sct, features = c("Aldh1a3", "Slc6a5"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-Kozareva2021_UnipolarBrush.pdf", width=5, height=5)
+FeaturePlot(WT_p14_CB.sct, features = c("Eomes"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-Kozareva2021_Bergmann.pdf", width=5, height=5)
+FeaturePlot(WT_p14_CB.sct, features = c("Gdf10"), max.cutoff = 5, cols = c("grey", "red"))
 dev.off()
 
 
@@ -471,37 +597,33 @@ dev.off()
 
 
 
-## subset my seurat object to only analyze the cells that pass the QC
-srat_WT_E7 <- subset(srat_WT_E7, subset = QC == 'Pass')
-srat_cYAPKO_E7 <- subset(srat_cYAPKO_E7, subset = QC == 'Pass')
-srat_WT_E7$condition <- "WT_E7"
-srat_cYAPKO_E7$condition <- "cYAPKO_E7"
 
 
 
-mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
-mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
 
 
-## NORMALIZE AND SCALE DATA BEFORE RUNNING CELLCYCLESORTING
-srat_WT_E7 <- NormalizeData(srat_WT_E7, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
-all.genes <- rownames(srat_WT_E7)
-srat_WT_E7 <- ScaleData(srat_WT_E7, features = all.genes) # zero-centres and scales it
 
-srat_cYAPKO_E7 <- NormalizeData(srat_cYAPKO_E7, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
-all.genes <- rownames(srat_cYAPKO_E7)
-srat_cYAPKO_E7 <- ScaleData(srat_cYAPKO_E7, features = all.genes) # zero-centres and scales it
 
-### CELLCYCLESORTING
-srat_WT_E7 <- CellCycleScoring(srat_WT_E7, s.features = mmus_s, g2m.features = mmus_g2m)
-table(srat_WT_E7[[]]$Phase)
-srat_cYAPKO_E7 <- CellCycleScoring(srat_cYAPKO_E7, s.features = mmus_s, g2m.features = mmus_g2m)
-table(srat_cYAPKO_E7[[]]$Phase)
 
-set.seed(42)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # elbow
-## srat_WT_E7_elbow = SCTransform(srat_WT_E7, method = "glmGamPoi", ncells = 1624, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% RunPCA(npcs = 50, verbose = FALSE)
+srat_WT_E7_elbow = SCTransform(srat_WT_E7, method = "glmGamPoi", ncells = 1624, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% RunPCA(npcs = 50, verbose = FALSE)
 
 
 pdf("output/seurat/Elbow_srat_WT_E7QCV2.pdf", width=10, height=10)
