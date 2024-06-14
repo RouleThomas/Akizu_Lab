@@ -7,6 +7,9 @@ During dentate gyrus development, Pax6 > Tbr2 > Prox1 gene expression switch (ex
 
 # Project
 
+Casey Lim, MD/PhD student did the experiment.
+Lab of Seon-Hee Kim 
+
 WT vs *Bap1KO* mouse scRNA/ATACseq
 
 BAP1 involved in NDD

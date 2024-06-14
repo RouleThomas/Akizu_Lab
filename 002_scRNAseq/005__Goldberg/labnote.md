@@ -499,14 +499,14 @@ write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_V1.txt"
 # Cell type annotation
 
 ############ SAVE workspace #################################################################
-# save.image(file = "CB_QC_V1.RData")
-load("CB_QC_V1.RData")
+# save.image(file = "CB_QC_V1.RData") # NOT GOOD IDEA, TOO BIG! 100Go!!! Too long to load...
+# load("CB_QC_V1.RData")
 #############################################################################################
 
 
-
 ## Work on the cleanest WT sample for each time point; WT_p14_CB_Rep2, WT_p35_CB_Rep3, WT_p180_CB_Rep3
-# elbow
+
+################### WT_p14_CB_Rep2
 WT_p14_CB_Rep2 <- SCTransform(WT_p14_CB_Rep2, method = "glmGamPoi", ncells = 13576, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000)
 WT_p14_CB_Rep2 <- RunPCA(WT_p14_CB_Rep2, npcs = 50, verbose = FALSE)
 
@@ -517,7 +517,6 @@ dev.off()
 ########################################################################### USELESS...
 
 
-WT_p14_CB_Rep2 <- RunPCA(WT_p14_CB_Rep2, npcs = 10, verbose = FALSE)
 WT_p14_CB_Rep2 <- RunPCA(WT_p14_CB_Rep2, npcs = 10, verbose = FALSE)
 WT_p14_CB_Rep2 <- RunUMAP(WT_p14_CB_Rep2, reduction = "pca", dims = 1:10, verbose = FALSE)
 WT_p14_CB_Rep2 <- FindNeighbors(WT_p14_CB_Rep2, reduction = "pca", k.param = 15, dims = 1:10)
@@ -572,11 +571,163 @@ pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-Kozareva2021_Bergmann.pdf", wi
 FeaturePlot(WT_p14_CB_Rep2, features = c("Gdf10"), max.cutoff = 5, cols = c("grey", "red"))
 dev.off()
 
+# --> OPTIMAL PARAMETERS NOT FOUND YET for WT_p14_CB_Rep2 !!!
+
+## Automatic cell type annotation
 
 
 
 
 
+
+
+
+
+
+
+
+
+################### WT_p35_CB_Rep3
+WT_p35_CB_Rep3 <- SCTransform(WT_p35_CB_Rep3, method = "glmGamPoi", ncells = 14582, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000)
+WT_p35_CB_Rep3 <- RunPCA(WT_p35_CB_Rep3, npcs = 50, verbose = FALSE)
+
+## ELBOW ###########################################################################
+pdf("output/seurat/Elbow_WT_p35_CB_Rep3.pdf", width=10, height=10)
+ElbowPlot(WT_p35_CB_Rep3) # 5 or 10
+dev.off()
+########################################################################### USELESS...
+
+
+WT_p35_CB_Rep3 <- RunPCA(WT_p35_CB_Rep3, npcs = 10, verbose = FALSE)
+WT_p35_CB_Rep3 <- RunPCA(WT_p35_CB_Rep3, npcs = 10, verbose = FALSE)
+WT_p35_CB_Rep3 <- RunUMAP(WT_p35_CB_Rep3, reduction = "pca", dims = 1:10, verbose = FALSE)
+WT_p35_CB_Rep3 <- FindNeighbors(WT_p35_CB_Rep3, reduction = "pca", k.param = 15, dims = 1:10)
+WT_p35_CB_Rep3 <- FindClusters(WT_p35_CB_Rep3, resolution = 0.4, verbose = FALSE, algorithm = 4)
+
+
+pdf("output/seurat/UMAP_WT_p35_CB_Rep3-dim10kparam15res04.pdf", width=5, height=5)
+DimPlot(WT_p35_CB_Rep3, reduction = "umap", label=TRUE)
+dev.off()
+
+
+# Check QC metrics
+
+pdf("output/seurat/VlnPlot_QCmetrics_WT_p35_CB_Rep3.pdf", width=20, height=5)
+VlnPlot(WT_p35_CB_Rep3,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+
+
+
+# Check some genes
+
+DefaultAssay(WT_p35_CB_Rep3) <- "SCT" # For vizualization either use SCT or norm RNA
+pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB_Rep3-Kcnc1.pdf", width=5, height=5)
+FeaturePlot(WT_p35_CB_Rep3, features = c("Kcnc1"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB_Rep3-Kozareva2021_Purkinje.pdf", width=5, height=5)
+FeaturePlot(WT_p35_CB_Rep3, features = c("Ppp1r17"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB_Rep3-Kozareva2021_Granular.pdf", width=5, height=5)
+FeaturePlot(WT_p35_CB_Rep3, features = c("Gabra6"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB_Rep3-Kozareva2021_Golgi.pdf", width=7, height=5)
+FeaturePlot(WT_p35_CB_Rep3, features = c("Slc6a5", "Grm2", "Sst"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB_Rep3-Kozareva2021_MLI1.pdf", width=7, height=5)
+FeaturePlot(WT_p35_CB_Rep3, features = c("Prkcd", "Sorcs3", "Ptprk"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB_Rep3-Kozareva2021_MLI2.pdf", width=7, height=5)
+FeaturePlot(WT_p35_CB_Rep3, features = c("Prkcd", "Nxph1", "Cdh22"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB_Rep3-Kozareva2021_PLI_3.pdf", width=10, height=5)
+FeaturePlot(WT_p35_CB_Rep3, features = c("Htr2a", "Edil3"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB_Rep3-Kozareva2021_PLI_1PLI_2.pdf", width=10, height=5)
+FeaturePlot(WT_p35_CB_Rep3, features = c("Aldh1a3", "Slc6a5"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB_Rep3-Kozareva2021_UnipolarBrush.pdf", width=5, height=5)
+FeaturePlot(WT_p35_CB_Rep3, features = c("Eomes"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB_Rep3-Kozareva2021_Bergmann.pdf", width=5, height=5)
+FeaturePlot(WT_p35_CB_Rep3, features = c("Gdf10"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+################### WT_p180_CB_Rep3
+WT_p180_CB_Rep3 <- SCTransform(WT_p180_CB_Rep3, method = "glmGamPoi", ncells = 14582, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000)
+WT_p180_CB_Rep3 <- RunPCA(WT_p180_CB_Rep3, npcs = 50, verbose = FALSE)
+
+## ELBOW ###########################################################################
+pdf("output/seurat/Elbow_WT_p180_CB_Rep3.pdf", width=10, height=10)
+ElbowPlot(WT_p180_CB_Rep3) # 5 8 or 10
+dev.off()
+########################################################################### USELESS...
+
+
+WT_p180_CB_Rep3 <- RunPCA(WT_p180_CB_Rep3, npcs = 10, verbose = FALSE)
+WT_p180_CB_Rep3 <- RunPCA(WT_p180_CB_Rep3, npcs = 10, verbose = FALSE)
+WT_p180_CB_Rep3 <- RunUMAP(WT_p180_CB_Rep3, reduction = "pca", dims = 1:10, verbose = FALSE)
+WT_p180_CB_Rep3 <- FindNeighbors(WT_p180_CB_Rep3, reduction = "pca", k.param = 15, dims = 1:10)
+WT_p180_CB_Rep3 <- FindClusters(WT_p180_CB_Rep3, resolution = 0.4, verbose = FALSE, algorithm = 4)
+
+
+pdf("output/seurat/UMAP_WT_p180_CB_Rep3-dim10kparam15res04.pdf", width=5, height=5)
+DimPlot(WT_p180_CB_Rep3, reduction = "umap", label=TRUE)
+dev.off()
+
+
+# Check QC metrics
+
+pdf("output/seurat/VlnPlot_QCmetrics_WT_p180_CB_Rep3.pdf", width=20, height=5)
+VlnPlot(WT_p180_CB_Rep3,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+
+
+
+# Check some genes
+
+DefaultAssay(WT_p180_CB_Rep3) <- "SCT" # For vizualization either use SCT or norm RNA
+pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB_Rep3-Kcnc1.pdf", width=5, height=5)
+FeaturePlot(WT_p180_CB_Rep3, features = c("Kcnc1"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB_Rep3-Kozareva2021_Purkinje.pdf", width=5, height=5)
+FeaturePlot(WT_p180_CB_Rep3, features = c("Ppp1r17"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB_Rep3-Kozareva2021_Granular.pdf", width=5, height=5)
+FeaturePlot(WT_p180_CB_Rep3, features = c("Gabra6"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB_Rep3-Kozareva2021_Golgi.pdf", width=7, height=5)
+FeaturePlot(WT_p180_CB_Rep3, features = c("Slc6a5", "Grm2", "Sst"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB_Rep3-Kozareva2021_MLI1.pdf", width=7, height=5)
+FeaturePlot(WT_p180_CB_Rep3, features = c("Prkcd", "Sorcs3", "Ptprk"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB_Rep3-Kozareva2021_MLI2.pdf", width=7, height=5)
+FeaturePlot(WT_p180_CB_Rep3, features = c("Prkcd", "Nxph1", "Cdh22"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB_Rep3-Kozareva2021_PLI_3.pdf", width=10, height=5)
+FeaturePlot(WT_p180_CB_Rep3, features = c("Htr2a", "Edil3"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB_Rep3-Kozareva2021_PLI_1PLI_2.pdf", width=10, height=5)
+FeaturePlot(WT_p180_CB_Rep3, features = c("Aldh1a3", "Slc6a5"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB_Rep3-Kozareva2021_UnipolarBrush.pdf", width=5, height=5)
+FeaturePlot(WT_p180_CB_Rep3, features = c("Eomes"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB_Rep3-Kozareva2021_Bergmann.pdf", width=5, height=5)
+FeaturePlot(WT_p180_CB_Rep3, features = c("Gdf10"), max.cutoff = 5, cols = c("grey", "red"))
+dev.off()
 
 
 
