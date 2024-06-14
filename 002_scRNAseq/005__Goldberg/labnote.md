@@ -9,7 +9,6 @@ KCNC1 express day12 in mice neuron (important for fast-spike interneuron (inhibi
 2 genotype (WT, KCNC1-mutant); 2 brain regions (Ctx, CB); 3 ages (p14,35,180 = 14 is when KCNC1 start being express in intenreunon; p35= 1st phenotype very mild; p180= degeneration)
 
 
-
 # Objectives
 
 - Check cell population changes in WT vs mutant; of Ctx and CB. Then DEGs analysis
