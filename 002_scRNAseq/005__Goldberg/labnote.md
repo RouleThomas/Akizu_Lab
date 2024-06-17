@@ -63,12 +63,6 @@ For the analysis I will follow the YAP1 scRNAseq in `002003`
 Within each folder in `/snRNAseq_Kcnc1_R320H/snRNAseq_Kcnc1_reorganized/*` I have two lanes L001 and L002 with I1/I2 and R1/R2 fastq. 
 
 
-
-
-
-
-
-
 ```bash 
 conda activate scRNAseq
 which cellranger
