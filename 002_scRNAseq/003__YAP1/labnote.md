@@ -7376,116 +7376,10 @@ library("celldex")
 library("SingleR")
 library("gprofiler2") # for human mouse gene conversion for cell cycle genes
 
-## Load the matrix and Create SEURAT object
-load("output/soupX/out_embryo_control_e775_mice.RData")
-srat_WT <- CreateSeuratObject(counts = out, project = "WT") # 32,285 features across 5,568 samples
+# LOAD previous backup to keep same UMAP shape
+embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct_V2clust.rds")
 
-load("output/soupX/out_embryo_cYAPKO_e775_mice.RData")
-srat_cYAPKO <- CreateSeuratObject(counts = out, project = "cYAPKO") # 32,285 features across 4,504 samples
-
-
-# QUALITY CONTROL
-## add mitochondrial and Ribosomal conta 
-srat_WT[["percent.mt"]] <- PercentageFeatureSet(srat_WT, pattern = "^mt-")
-srat_WT[["percent.rb"]] <- PercentageFeatureSet(srat_WT, pattern = "^Rp[sl]")
-
-srat_cYAPKO[["percent.mt"]] <- PercentageFeatureSet(srat_cYAPKO, pattern = "^mt-")
-srat_cYAPKO[["percent.rb"]] <- PercentageFeatureSet(srat_cYAPKO, pattern = "^Rp[sl]")
-
-## add doublet information (scrublet)
-doublets <- read.table("output/doublets/embryo_control.tsv",header = F,row.names = 1)
-colnames(doublets) <- c("Doublet_score","Is_doublet")
-srat_WT <- AddMetaData(srat_WT,doublets)
-srat_WT$Doublet_score <- as.numeric(srat_WT$Doublet_score) # make score as numeric
-head(srat_WT[[]])
-
-doublets <- read.table("output/doublets/embryo_cYAPKO.tsv",header = F,row.names = 1)
-colnames(doublets) <- c("Doublet_score","Is_doublet")
-srat_cYAPKO <- AddMetaData(srat_cYAPKO,doublets)
-srat_cYAPKO$Doublet_score <- as.numeric(srat_cYAPKO$Doublet_score) # make score as numeric
-head(srat_cYAPKO[[]])
-
-
-## After seeing the plot; add QC information in our seurat object
-## V1 QC; optimal with vst V1; dim 19 k param 70 es 0.9 --> THE WINNER pro winner
-srat_WT[['QC']] <- ifelse(srat_WT@meta.data$Is_doublet == 'True','Doublet','Pass')
-srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 2000 & srat_WT@meta.data$QC == 'Pass','Low_nFeature',srat_WT@meta.data$QC)
-srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 2000 & srat_WT@meta.data$QC != 'Pass' & srat_WT@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_WT@meta.data$QC,sep = ','),srat_WT@meta.data$QC)
-srat_WT[['QC']] <- ifelse(srat_WT@meta.data$percent.mt > 25 & srat_WT@meta.data$QC == 'Pass','High_MT',srat_WT@meta.data$QC)
-srat_WT[['QC']] <- ifelse(srat_WT@meta.data$nFeature_RNA < 2000 & srat_WT@meta.data$QC != 'Pass' & srat_WT@meta.data$QC != 'High_MT',paste('High_MT',srat_WT@meta.data$QC,sep = ','),srat_WT@meta.data$QC)
-table(srat_WT[['QC']])
-## 
-srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$Is_doublet == 'True','Doublet','Pass')
-srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 2000 & srat_cYAPKO@meta.data$QC == 'Pass','Low_nFeature',srat_cYAPKO@meta.data$QC)
-srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 2000 & srat_cYAPKO@meta.data$QC != 'Pass' & srat_cYAPKO@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_cYAPKO@meta.data$QC,sep = ','),srat_cYAPKO@meta.data$QC)
-srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$percent.mt > 25 & srat_cYAPKO@meta.data$QC == 'Pass','High_MT',srat_cYAPKO@meta.data$QC)
-srat_cYAPKO[['QC']] <- ifelse(srat_cYAPKO@meta.data$nFeature_RNA < 2000 & srat_cYAPKO@meta.data$QC != 'Pass' & srat_cYAPKO@meta.data$QC != 'High_MT',paste('High_MT',srat_cYAPKO@meta.data$QC,sep = ','),srat_cYAPKO@meta.data$QC)
-table(srat_cYAPKO[['QC']])
-
-
-
-
-## subset my seurat object to only analyze the cells that pass the QC
-srat_WT <- subset(srat_WT, subset = QC == 'Pass')
-srat_cYAPKO <- subset(srat_cYAPKO, subset = QC == 'Pass')
-srat_WT$condition <- "WT"
-srat_cYAPKO$condition <- "cYAPKO"
-
-
-
-mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
-mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
-
-
-## NORMALIZE AND SCALE DATA BEFORE RUNNING CELLCYCLESORTING
-srat_WT <- NormalizeData(srat_WT, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
-all.genes <- rownames(srat_WT)
-srat_WT <- ScaleData(srat_WT, features = all.genes) # zero-centres and scales it
-
-srat_cYAPKO <- NormalizeData(srat_cYAPKO, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
-all.genes <- rownames(srat_cYAPKO)
-srat_cYAPKO <- ScaleData(srat_cYAPKO, features = all.genes) # zero-centres and scales it
-
-### CELLCYCLESORTING
-srat_WT <- CellCycleScoring(srat_WT, s.features = mmus_s, g2m.features = mmus_g2m)
-table(srat_WT[[]]$Phase)
-srat_cYAPKO <- CellCycleScoring(srat_cYAPKO, s.features = mmus_s, g2m.features = mmus_g2m)
-table(srat_cYAPKO[[]]$Phase)
-
-set.seed(42)
-
-
-
-set.seed(42)
-
-## TEST RNA regression  --> THE WINNER PRO WINNER !!! RNA regression 
-srat_WT <- SCTransform(srat_WT, method = "glmGamPoi", ncells = 4812, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
-    RunPCA(npcs = 19, verbose = FALSE)
-srat_cYAPKO <- SCTransform(srat_cYAPKO, method = "glmGamPoi", ncells = 3621, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
-    RunPCA(npcs = 19, verbose = FALSE)
-# Data integration (check active assay is 'SCT')
-srat.list <- list(srat_WT = srat_WT, srat_cYAPKO = srat_cYAPKO)
-features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
-srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
-
-embryo.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
-    anchor.features = features)
-embryo.combined.sct <- IntegrateData(anchorset = embryo.anchors, normalization.method = "SCT")
-
-set.seed(42)
-
-## PLAY WITH RESOLUTION AFTER CONCHI MEETING 20231005
-## individualize germ cells; but fail at separating  
-DefaultAssay(embryo.combined.sct) <- "integrated"
-
-embryo.combined.sct <- RunPCA(embryo.combined.sct, verbose = FALSE, npcs = 19)
-embryo.combined.sct <- RunUMAP(embryo.combined.sct, reduction = "pca", dims = 1:19, verbose = FALSE)
-embryo.combined.sct <- FindNeighbors(embryo.combined.sct, reduction = "pca", k.param = 5, dims = 1:19)
-embryo.combined.sct <- FindClusters(embryo.combined.sct, resolution = 0.3, verbose = FALSE, algorithm = 4)
-
-embryo.combined.sct$condition <- factor(embryo.combined.sct$condition, levels = c("WT", "cYAPKO")) # Reorder untreated 1st
-
-pdf("output/seurat/UMAP_control_cYAPKO_V2clust__.pdf", width=10, height=6)
+pdf("output/seurat/UMAP_control_cYAPKO_V3.pdf", width=10, height=6)
 DimPlot(embryo.combined.sct, reduction = "umap", split.by = "condition", label=TRUE)
 dev.off()
 
@@ -7546,23 +7440,22 @@ Primordial_Germ_Cells = Dppa3
 
 Neural_Ectoderm = c("Pax2", "Six3", "Hesx1", "Otx2", "Otx1", "Otx2os1")
 ExE_Ectoderm = c("Elf5", "Wnt7b", "Dnmt3l", "Tex19.1")
-Presomitic_Mesoderm = c("Meox1", "Dll1", "aldh1a2") # Removed Tbx6
-Somitic_Mesoderm = c("Hes7", "Tbx6", "Fgf17") # Removed aldh1a2 and Dll1
+Presomitic_Mesoderm = c("Meox1", "Dll1", "Aldh1a2", "Tbx6")  
+Somitic_Mesoderm = c("Hes7", "Fgf17") # Removed aldh1a2, Tbx6 and Dll1
 Neuromesodermal_Progenitors = c("Nkx1-2", "T", "Apln", "Wnt3a", "Rxrg") # NMP
-Second_Heart_Field  = c("Tbx1", "Nr2f2", "cyp26a1", "Ebf2", "Ptgfr", "Ebf3", "Col23a1")
+Second_Heart_Field  = c("Tbx1", "Nr2f2", "Cyp26a1", "Ebf2", "Ptgfr", "Ebf3", "Col23a1")
 First_Heart_Field = c("Tbx5", "Nkx2-5", "Myocd")
 Cardiac_Mesoderm = c("Col9a1", "Mesp1", "Osr1", "Cited1")
 Posterior_Lateral_Plate_Mesoderm = c("Hoxa9", "Hoxa10", "Tbx4", "Pitx1")
 Juxta_Cardiac_Field = c("Tagln2", "Postn", "Hand1", "Acta2", "Snai2", "Mab21l2")
-Hemangioblasts = c("Tal1", "sox18", "etv2", "Esam", "Rhoj", "Flt4")
+Hemangioblasts = c("Tal1", "Sox18", "Etv2", "Esam", "Rhoj", "Flt4")
 Hematopoietic_Stem_Cells = c("Runx1", "Gypa", "Gata1", "Cited4", "Gfi1b") # HSC
 Notochord = c("Shh", "Noto", "Vtn", "Fgg")
-Endoderm = c("Sox17", "Grem2", "Pga5", "Hs3cst1", "Wfdc1", "Islr2") # Removed Sox7 and Foxa2
-Visceral_Endoderm = c("Slc39a8", "Amot", "Apoa4", "Sox7", "Foxa2", "Gata4") # Removed Sox17
+Endoderm = c("Sox17", "Grem2", "Pga5", "Hs3st1", "Wfdc1", "Islr2", "Sox7", "Foxa2", "Sox17") 
+Visceral_Endoderm = c("Slc39a8", "Amot", "Apoa4", "Gata4") # Removed , Sox7, Foxa2 and Sox17
 Surface_Ectoderm = c("Tfap2a", "Npnt", "Wnt4", "Id4")
 Ectoderm_undefined = c("Six3") # Otx2 and tfap2a removed
-Primordial_Germ_Cells = c("Dppa3v")
-
+Primordial_Germ_Cells = c("Dppa3")
 
 
 
@@ -7571,9 +7464,63 @@ Primordial_Germ_Cells = c("Dppa3v")
 
 
 DefaultAssay(embryo.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Epiblast_PrimStreak_V3.pdf", width=10, height=10)
-FeaturePlot(embryo.combined.sct, features = Epiblast_PrimStreak, max.cutoff = 3, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Neural_Ectoderm_V3.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Neural_Ectoderm, max.cutoff = 3, cols = c("grey", "red"))
 dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_ExE_Ectoderm_V3.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = ExE_Ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Presomitic_Mesoderm_V3.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Presomitic_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Somitic_Mesoderm_V3.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Somitic_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Neuromesodermal_Progenitors_V3.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Neuromesodermal_Progenitors, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Second_Heart_Field_V3.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Second_Heart_Field, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_First_Heart_Field_V3.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = First_Heart_Field, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Cardiac_Mesoderm_V3.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Cardiac_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Posterior_Lateral_Plate_Mesoderm_V3.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Posterior_Lateral_Plate_Mesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Juxta_Cardiac_Field_V3.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Juxta_Cardiac_Field, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Hemangioblasts_V3.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Hemangioblasts, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Hematopoietic_Stem_Cells_V3.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Hematopoietic_Stem_Cells, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Notochord_V3.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Notochord, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Endoderm_V3.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Endoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Visceral_Endoderm_V3.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Visceral_Endoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Surface_Ectoderm_V3.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Surface_Ectoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Ectoderm_undefined_V3.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Ectoderm_undefined, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Primordial_Germ_Cells_V3.pdf", width=10, height=10)
+FeaturePlot(embryo.combined.sct, features = Primordial_Germ_Cells, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+
+
 
 
 
@@ -7603,24 +7550,44 @@ ExE_Ectoderm_2 # cluster_19
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+embryo.combined.sct <- SetIdent(embryo.combined.sct, value = "seurat_clusters") # reverse back identiy to cluster number
+
+
+pdf("output/seurat/UMAP_control_cYAPKO_noLabel_V3noSplit.pdf", width=6, height=6)
+DimPlot(embryo.combined.sct, reduction = "umap", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 4)
+dev.off()
+
+
+
 new.cluster.ids <- c(
-  "Epiblast_PrimStreak", 
+  "Neural_Ectoderm", 
   "ExE_Ectoderm_1", 
-  "Nascent_Mesoderm", 
+  "Cardiac_Mesoderm", 
+  "Presomitic_Mesoderm", 
+  "Neuromesodermal_Progenitors", 
+  "Second_Heart_Field", 
+  "First_Heart_Field", 
+  "Posterior_Lateral_Plate_Mesoderm", 
+  "Juxta_Cardiac_Field", 
+  "Hemangioblasts", 
   "Somitic_Mesoderm", 
-  "Caudal_Mesoderm", 
-  "Paraxial_Mesoderm", 
-  "Pharyngeal_Mesoderm", 
-  "Haematodenothelial_progenitors", 
-  "Mesenchyme", 
-  "Blood_Progenitor_1", 
-  "Mixed_Mesoderm", 
-  "Blood_Progenitor_2", 
+  "Hematopoietic_Stem_Cells", 
   "Surface_Ectoderm", 
-  "Gut", 
-  "Unknown_1", 
-  "Notocord", 
-  "Unknown_2", 
+  "Endoderm", 
+  "Ectoderm_undefined", 
+  "Notochord", 
+  "Visceral_Endoderm", 
   "Primordial_Germ_Cells", 
   "ExE_Ectoderm_2"
 )
@@ -7631,85 +7598,162 @@ embryo.combined.sct <- RenameIdents(embryo.combined.sct, new.cluster.ids)
 embryo.combined.sct$cluster.annot <- Idents(embryo.combined.sct) # create a new slot in my seurat object
 
 
-pdf("output/seurat/UMAP_control_cYAPKO_label_V2clust.pdf", width=12, height=6)
+pdf("output/seurat/UMAP_control_cYAPKO_label_V3.pdf", width=12, height=6)
 DimPlot(embryo.combined.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
 dev.off()
 
+pdf("output/seurat/UMAP_control_cYAPKO_label_V3noSplit.pdf", width=8, height=6)
+DimPlot(embryo.combined.sct, reduction = "umap", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3.5)
+dev.off()
+
 #overlapping condition
-pdf("output/seurat/UMAP_control_cYAPKO_label_overlap_V2clust.pdf", width=6, height=5)
+pdf("output/seurat/UMAP_control_cYAPKO_label_overlap_V3.pdf", width=6, height=5)
 DimPlot(embryo.combined.sct, reduction = "umap", group.by = "condition", pt.size = 0.000001, cols = c("blue","red"))
 dev.off()
 
+embryo.combined.sct <- SetIdent(embryo.combined.sct, value = "seurat_clusters") # reverse back identiy to cluster number
 
-# All in dotplot
+
+# Heatmap with marker genes
 DefaultAssay(embryo.combined.sct) <- "SCT"
 
-Epiblast_PrimStreak = c("Hesx1","Otx2","Pax2","Otx2os1") # cluster_1
-ExE_Ectoderm_1 = c("Tex19.1","Elf5","Wnt7b","Dnmt3l") # cluster_2
-Somitic_Mesoderm = c("Meox1","Aldh1a2","Synm","Pcdh8") # cluster_3
-Caudal_Mesoderm = c("Wnt3a","Nkx1-2","Apln","Rxrg") # cluster_4
-Paraxial_Mesoderm = c("Ebf2","Ptgfr","Ebf3","Col23a1") # cluster_5
-Pharyngeal_Mesoderm = c("Nkx2-5","Tbx5","Mef2c","Myocd") # cluster_6
-Nascent_Mesoderm = c("Col9a1","Mesp1","Osr1") # cluster_7
-Haematodenothelial_progenitors = c("Hoxa9","Hoxa10","Tbx4","Pitx1") # cluster_8
-Mesenchyme = c("Tdo2","Adamts2","Colec11","Snai2") # cluster_9
-Mixed_Mesoderm = c("Tbx6","Dll1","Hes7","Fgf17") # cluster_10 (and 3)
-Blood_Progenitor_1 = c("Sox18","Esam","Rhoj","Flt4") # cluster_11
-Blood_Progenitor_2 = c("Gypa","Gata1","Cited4","Gfi1b") # cluster_12
-Surface_Ectoderm = c("Tfap2a","Npnt","Wnt4","Id4") # cluster_13
-Notocord = c("Shh","Noto","Vtn","Fgg") #  cluster_14
-Gut = c("Pga5","Hs3cst1","Wfdc1","Islr2") # cluster_15
-Primordial_Germ_Cells = c("Dppa3","Sprr2a3","Irf1","Ifitm3")  # cluster_18
+
+as.character(1) = c("Pax2", "Six3", "Hesx1", "Otx2", "Otx1", "Otx2os1")
+as.character(2) = c("Elf5", "Wnt7b", "Dnmt3l", "Tex19.1")
+as.character(3) = c("Col9a1", "Mesp1", "Osr1", "Cited1")
+as.character(4) = c("Meox1", "Dll1", "Aldh1a2", "Tbx6")  
+as.character(5) = c("Nkx1-2", "T", "Apln", "Wnt3a", "Rxrg") # NMP
+as.character(6)  = c("Tbx1", "Nr2f2", "Cyp26a1", "Ebf2", "Ptgfr", "Ebf3", "Col23a1")
+as.character(7) = c("Tbx5", "Nkx2-5", "Myocd")
+as.character(8) = c("Hoxa9", "Hoxa10", "Tbx4", "Pitx1")
+as.character(9) = c("Tagln2", "Postn", "Hand1", "Acta2", "Snai2", "Mab21l2")
+as.character(10) = c("Tal1", "Sox18", "Etv2", "Esam", "Rhoj", "Flt4")
+as.character(11) = c("Hes7", "Fgf17") # Removed aldh1a2, Tbx6 and Dll1
+as.character(12) = c("Runx1", "Gypa", "Gata1", "Cited4", "Gfi1b") # HSC
+as.character(13) = c("Tfap2a", "Npnt", "Wnt4", "Id4")
+as.character(14) = c("Sox17", "Grem2", "Pga5", "Hs3st1", "Wfdc1", "Islr2", "Sox7", "Foxa2", "Sox17") 
+as.character(15) = c("Six3") # Otx2 and tfap2a removed
+as.character(16) = c("Shh", "Noto", "Vtn", "Fgg")
+as.character(17) = c("Slc39a8", "Amot", "Apoa4", "Gata4") # Removed , Sox7, Foxa2 and Sox17
+as.character(18) = c("Dppa3")
 
 
 all_markers <- c(
-  "Hesx1", "Otx2", "Pax2", "Otx2os1",
-  "Tex19.1", "Elf5", "Wnt7b", "Dnmt3l",
-  "Meox1", "Aldh1a2", "Synm", "Pcdh8",
-  "Wnt3a", "Nkx1-2", "Apln", "Rxrg",
-  "Ebf2", "Ptgfr", "Ebf3", "Col23a1",
-  "Nkx2-5", "Tbx5", "Mef2c", "Myocd",
-  "Col9a1", "Mesp1", "Osr1",
+  "Pax2", "Six3", "Hesx1", "Otx2", "Otx1", "Otx2os1",
+  "Elf5", "Wnt7b", "Dnmt3l", "Tex19.1",
+  "Col9a1", "Mesp1", "Osr1", "Cited1",
+  "Meox1", "Dll1", "Aldh1a2", "Tbx6",
+  "Nkx1-2", "T", "Apln", "Wnt3a", "Rxrg",
+  "Tbx1", "Nr2f2", "Cyp26a1", "Ebf2", "Ptgfr", "Ebf3", "Col23a1",
+  "Tbx5", "Nkx2-5", "Myocd",
   "Hoxa9", "Hoxa10", "Tbx4", "Pitx1",
-  "Tdo2", "Adamts2", "Colec11", "Snai2",
-  "Tbx6", "Dll1", "Hes7", "Fgf17",
-  "Sox18", "Esam", "Rhoj", "Flt4",
-  "Gypa", "Gata1", "Cited4", "Gfi1b",
+  "Tagln2", "Postn", "Hand1", "Acta2", "Snai2", "Mab21l2",
+  "Tal1", "Sox18", "Etv2", "Esam", "Rhoj", "Flt4",
+  "Hes7", "Fgf17",
+  "Runx1", "Gypa", "Gata1", "Cited4", "Gfi1b",
   "Tfap2a", "Npnt", "Wnt4", "Id4",
+  "Sox17", "Grem2", "Pga5", "Hs3st1", "Wfdc1", "Islr2", "Sox7", "Foxa2", "Sox17", 
+  "Six3",
   "Shh", "Noto", "Vtn", "Fgg",
-  "Pga5", "Hs3cst1", "Wfdc1", "Islr2",
-  "Dppa3", "Sprr2a3", "Irf1", "Ifitm3"
+  "Slc39a8", "Amot", "Apoa4", "Gata4",
+  "Dppa3"
+)
+
+pdf("output/seurat/DoHeatmap_SCT_control_cYAPKO_ident_V3sct.pdf", width=8, height=9)
+DoHeatmap(embryo.combined.sct, assay = "SCT", features = all_markers,angle = 0, hjust = 0.5)
+dev.off()
+
+pdf("output/seurat/DoHeatmap_SCT_control_cYAPKO_ident_V3.pdf", width=8, height=9)
+DoHeatmap(embryo.combined.sct, assay = "RNA", features = all_markers,angle = 0, hjust = 0.5)
+dev.off()
+pdf("output/seurat/DoHeatmap_SCT_control_cYAPKO_ident_V3large.pdf", width=12, height=9)
+DoHeatmap(embryo.combined.sct, assay = "RNA", features = all_markers,angle = 0, hjust = 0.5)
+dev.off()
+
+# All in dotplot
+
+
+
+all_markers <- c(
+  "Pax2", "Six3", "Hesx1", "Otx2", "Otx1", "Otx2os1",
+  "Elf5", "Wnt7b", "Dnmt3l", "Tex19.1",
+  "Col9a1", "Mesp1", "Osr1", "Cited1",
+  "Meox1", "Dll1", "Aldh1a2", "Tbx6",
+  "Nkx1-2", "T", "Apln", "Wnt3a", "Rxrg",
+  "Tbx1", "Nr2f2", "Cyp26a1", "Ebf2", "Ptgfr", "Ebf3", "Col23a1",
+  "Tbx5", "Nkx2-5", "Myocd",
+  "Hoxa9", "Hoxa10", "Tbx4", "Pitx1",
+  "Tagln2", "Postn", "Hand1", "Acta2", "Snai2", "Mab21l2",
+  "Tal1", "Sox18", "Etv2", "Esam", "Rhoj", "Flt4",
+  "Hes7", "Fgf17",
+  "Runx1", "Gypa", "Gata1", "Cited4", "Gfi1b",
+  "Tfap2a", "Npnt", "Wnt4", "Id4",
+  "Sox17", "Grem2", "Pga5", "Hs3st1", "Wfdc1", "Islr2", "Sox7", "Foxa2", 
+  "Shh", "Noto", "Vtn", "Fgg",
+  "Slc39a8", "Amot", "Apoa4", "Gata4",
+  "Dppa3"
 )
 
 
-levels(embryo.combined.sct) <- c(
-  "ExE_Ectoderm_2",
-  "Primordial_Germ_Cells",
-  "Unknown_2",
-  "Notocord",
-  "Unknown_1",
-  "Gut",
-  "Surface_Ectoderm",
-  "Blood_Progenitor_2",
-  "Mixed_Mesoderm",
-  "Blood_Progenitor_1",
-  "Mesenchyme",
-  "Haematodenothelial_progenitors",
-  "Pharyngeal_Mesoderm",
-  "Paraxial_Mesoderm",
-  "Caudal_Mesoderm",
-  "Somitic_Mesoderm",
-  "Nascent_Mesoderm",
-  "ExE_Ectoderm_1",
-  "Epiblast_PrimStreak"
-)
-pdf("output/seurat/DotPlot_SCT_control_cYAPKO_ident_V2clust.pdf", width=16.5, height=4.5)
+levels(embryo.combined.sct) <- c("19",
+  "18",
+  "17",
+  "16",
+  "15",
+  "14",
+  "13",
+  "12",
+  "11",
+  "10",
+  "9",
+  "8",
+  "7",
+  "6",
+  "5",
+  "4",
+  "3",
+  "2",
+  "1")
+
+pdf("output/seurat/DotPlot_SCT_control_cYAPKO_ident_V3.pdf", width=16.5, height=4.5)
 DotPlot(embryo.combined.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
 dev.off()
 
+pdf("output/seurat/DotPlot_SCT_control_cYAPKO_ident_V3green.pdf", width=16.5, height=4.5)
+DotPlot(embryo.combined.sct, assay = "SCT", features = all_markers, cols = c("grey95", "green")) + RotatedAxis()
+dev.off()
 
+## dotplot vetical orientation
+levels(embryo.combined.sct) <- c("1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16",
+  "17",
+  "18",
+  "19")
 
-
+pdf("output/seurat/DotPlot_SCT_control_cYAPKO_ident_V3vertical.pdf", width=16.5, height=5)
+DotPlot(embryo.combined.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 90, hjust = 0.5, vjust = 0.5))
+dev.off()
+pdf("output/seurat/DotPlot_SCT_control_cYAPKO_ident_V3verticalgreen.pdf", width=16.5, height=5)
+DotPlot(embryo.combined.sct, assay = "SCT", features = all_markers, cols = c("grey95", "green")) + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 90, hjust = 0.5, vjust = 0.5))
+dev.off()
 
 ## Downsampling with bootstrap to compare the nb of cell per cell types
 
@@ -7742,7 +7786,7 @@ for (i in 1:100) { # Change this to 100 for the final run
   cYAPKO_clusters_counts[i, names(cYAPKO_clusters)] <- as.numeric(cYAPKO_clusters)
 }
 
-
+XXXXX here 
 
 ### Calculate mean and standard error
 mean_control_clusters <- colMeans(control_clusters_counts)
