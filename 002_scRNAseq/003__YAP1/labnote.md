@@ -7608,7 +7608,7 @@ dev.off()
 
 #overlapping condition
 pdf("output/seurat/UMAP_control_cYAPKO_label_overlap_V3.pdf", width=6, height=5)
-DimPlot(embryo.combined.sct, reduction = "umap", group.by = "condition", pt.size = 0.000001, cols = c("blue","red"))
+DimPlot(embryo.combined.sct, reduction = "umap", group.by = "condition", pt.size = 0.000001, cols = c("#4365AE","#981E33"))
 dev.off()
 
 embryo.combined.sct <- SetIdent(embryo.combined.sct, value = "condition") # reverse back identiy to cluster number
@@ -7844,6 +7844,7 @@ plot_data <- data.frame(
   )
 
 plot_data$condition <- factor(plot_data$condition, levels = c("WT", "cYAPKO")) # Reorder untreated 1st
+plot_data$cluster <- factor(plot_data$cluster, levels = c("1", "2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19")) 
 
 
 
@@ -8019,10 +8020,6 @@ cluster18.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", 
 cluster19.conserved <- FindConservedMarkers(embryo.combined.sct, assay = "RNA", ident.1 = "19", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "cluster19")
 
 
-xxx
-
-
-
 ## Combine all conserved markers into one data frame
 all_conserved <- bind_rows(cluster1.conserved,cluster2.conserved,cluster3.conserved,cluster4.conserved,cluster5.conserved,cluster6.conserved,cluster7.conserved,cluster8.conserved,cluster9.conserved,cluster10.conserved,cluster11.conserved,cluster12.conserved,cluster13.conserved,cluster14.conserved,cluster15.conserved,cluster16.conserved,cluster17.conserved,cluster18.conserved,cluster19.conserved)
 
@@ -8156,11 +8153,8 @@ dev.off()
 ## saveRDS(embryo.combined.sct, file = "output/seurat/embryo.combined.sct_V3.rds") sct_V2clust
 
 
-XXXX HERE !!!
-
-
-
 embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct_V3.rds")
+
 
 
 
@@ -8170,15 +8164,9 @@ embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct_V3.rds"
 DefaultAssay(embryo.combined.sct) <- "SCT" # For vizualization either use SCT or norm RNA
 
 ## post 20231005 Conchi meeting
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Aldh1a2_Cyp26a1_V2clust.pdf", width=10, height=13)
-FeaturePlot(embryo.combined.sct, features = c("Aldh1a2", "Cyp26a1"), max.cutoff = 10, cols = c("grey", "red"), split.by = "condition")
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Tbx1_Me2fc_Nr2f2_V3.pdf", width=10, height=13)
+FeaturePlot(embryo.combined.sct, features = c("Tbx1", "Mef2c", "Nr2f2"), split.by = "condition",max.cutoff = 1.25, cols = c("grey85", "#4CAF50"))  & theme(legend.position = c(0.9,0.9))
 dev.off()
-
-## post 20240110 Conchi email
-pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_20240110geneList_V2clust.pdf", width=10, height=75)
-FeaturePlot(embryo.combined.sct, features = c("Crabp2", "Hand1", "Rbp1", "Aldh1a2", "Cyp26a1", "Hoxa1", "Fgf8", "Nr2f2", "Tnnt2", "Actc1", "Myl6", "Myl7", "Myl3", "Tbx1", "Tbx5", "Mab21l2", "Lbh"), max.cutoff = 10, cols = c("grey", "red"), split.by = "condition")
-dev.off()
-
 
 
 # Compare WT and cYAPKO using SCPA ##########################################
@@ -8208,78 +8196,92 @@ library("msigdbr")
 library("ComplexHeatmap")
 library("ggrepel")
 library("ggpubr")
-embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct_V2clust.rds")
+embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct_V3.rds")
 DefaultAssay(embryo.combined.sct) <- "RNA" # Recommended 
 
 
 
 # Import manually curated gene list as a list
-#### Need to folllow this format
-pathways <- msigdbr("Mus musculus", "C2") %>%
-format_pathways()
-names(pathways) <- sapply(pathways, function(x) x$Pathway[1]) # just to name the list, so easier to visualise
-pathways$REACTOME_SIGNALING_BY_RETINOIC_ACID$Genes
-### Convert table to list of genes
-Hippo = read_table(file = c("output/Pathway/Manual_geneList_hippo.txt"))
-Nodal_TGF = read_table(file = c("output/Pathway/Manual_geneList_Nodal_TGF.txt"))
-WNT = read_table(file = c("output/Pathway/Manual_geneList_WNT.txt"))
-Vitamin_A = read_table(file = c("output/Pathway/Manual_geneList_Vitamin_A.txt"))
+# Fetch pathways from MSigDB for Mus musculus and category C2
+pathways <- msigdbr(species = "Mus musculus", category = "C2") %>%
+  as.data.frame()
 
-pathways <- list(
-  Hippo = read_table(file = "output/Pathway/Manual_geneList_hippo.txt"),
-  Nodal_TGF = read_table(file = "output/Pathway/Manual_geneList_Nodal_TGF.txt"),
-  WNT = read_table(file = "output/Pathway/Manual_geneList_WNT.txt"),
-  Vitamin_A = read_table(file = "output/Pathway/Manual_geneList_Vitamin_A.txt")
+# Define the specific pathway terms you want to use; pathway from the ppt cardiac paper
+pathway_terms <- c(
+  "REACTOME_TCF_DEPENDENT_SIGNALING_IN_RESPONSE_TO_WNT",
+  "REACTOME_SIGNALING_BY_WNT",
+  "REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS",
+  "REACTOME_SIGNALING_BY_TGF_BETA_RECEPTOR_COMPLEX",
+  "REACTOME_SIGNALING_BY_NOTCH1",
+  "REACTOME_SIGNALING_BY_NOTCH",
+  "WP_MECHANOREGULATION_AND_PATHOLOGY_OF_YAPTAZ_VIA_HIPPO_AND_NONHIPPO_MECHANISMS",
+  "WP_HIPPOYAP_SIGNALING_PATHWAY",
+  "WP_HIPPO_SIGNALING_REGULATION_PATHWAYS",
+  "WP_BMP_SIGNALING_IN_EYELID_DEVELOPMENT",
+  "REACTOME_SIGNALING_BY_BMP",
+  "PID_BMP_PATHWAY",
+  "REACTOME_SIGNALING_BY_RETINOIC_ACID",
+  "PID_RETINOIC_ACID_PATHWAY"
 )
 
-pathways$Hippo$Genes
-
-
-# Compare pathway activity between condition within  
-cell_types <- unique(embryo.combined.sct$cluster.annot)
-embryo.combined.sct_split <- SplitObject(embryo.combined.sct, split.by = "condition")
+# Filter the pathways to include only the specified terms
+filtered_pathways <- pathways %>%
+  filter(gs_name %in% pathway_terms) %>%
+  group_by(gs_name) %>%
+  summarise(Genes = list(gene_symbol)) %>%
+  ungroup() %>%
+  mutate(Pathway = gs_name) %>%
+  select(Pathway, Genes) %>%
+  split(.$Pathway) %>%
+  map(~ tibble(Pathway = .x$Pathway, Genes = unlist(.x$Genes)))
 
 # SCPA comparison
-## keep all columns
+
+## Compare pathway activity between condition within each cell types
+cell_types <- unique(embryo.combined.sct$seurat_clusters)
+embryo.combined.sct_split <- SplitObject(embryo.combined.sct, split.by = "condition")
+
 scpa_out_all <- list()
 for (i in cell_types) {
   
   WT <- seurat_extract(embryo.combined.sct_split$WT, 
-                            meta1 = "cluster.annot", value_meta1 = i)
+                            meta1 = "seurat_clusters", value_meta1 = i)
   
   cYAPKO <- seurat_extract(embryo.combined.sct_split$cYAPKO, 
-                          meta1 = "cluster.annot", value_meta1 = i)
+                          meta1 = "seurat_clusters", value_meta1 = i)
   
   print(paste("comparing", i))
-  scpa_out_all[[i]] <- compare_pathways(list(WT, cYAPKO), pathways, parallel = TRUE, cores = 8) %>%
+  scpa_out_all[[i]] <- compare_pathways(list(WT, cYAPKO), filtered_pathways, parallel = TRUE, cores = 8) %>%
     set_colnames(c("Pathway", paste(i, "qval", sep = "_")))
 # For faster analysis with parallel processing, use 'parallel = TRUE' and 'cores = x' arguments
 }
+
+
+saveRDS(scpa_out_all, file = "output/Pathway/scpa_out_eachCellTypes_V3.rds")
+
+console_output <- capture.output(print(scpa_out_all))
+writeLines(console_output, "output/Pathway/scpa_out_console_V3.txt")
+
 ## keep only PAthway and qval column (Best for heatmap qval representation)
 scpa_out <- list()
 for (i in cell_types) {
   
   WT <- seurat_extract(embryo.combined.sct_split$WT, 
-                            meta1 = "cluster.annot", value_meta1 = i)
+                            meta1 = "seurat_clusters", value_meta1 = i)
   
   cYAPKO <- seurat_extract(embryo.combined.sct_split$cYAPKO, 
-                          meta1 = "cluster.annot", value_meta1 = i)
+                          meta1 = "seurat_clusters", value_meta1 = i)
   
   print(paste("comparing", i))
-  scpa_out[[i]] <- compare_pathways(list(WT, cYAPKO), pathways, parallel = TRUE, cores = 8) %>%
+  scpa_out[[i]] <- compare_pathways(list(WT, cYAPKO), filtered_pathways, parallel = TRUE, cores = 8) %>%
     select(Pathway, qval) %>%
     set_colnames(c("Pathway", paste(i, "qval", sep = "_")))
 # For faster analysis with parallel processing, use 'parallel = TRUE' and 'cores = x' arguments
 }
 
 
-saveRDS(scpa_out_all, file = "output/Pathway/scpa_out_eachCellTypes_ManualGeneLists.rds")
-
-console_output <- capture.output(print(scpa_out_all))
-writeLines(console_output, "output/Pathway/scpa_out_console_ManualGeneLists.txt")
-
 ## Save output as R object
-# saveRDS(scpa_out, file = "output/Pathway/scpa_out_eachCellTypes.rds")
+saveRDS(scpa_out, file = "output/Pathway/scpa_out_eachCellTypes_V3.rds")
 # scpa_out_all <- readRDS("output/Pathway/scpa_out_all_eachCellTypes.rds")
 
 
@@ -8287,44 +8289,44 @@ writeLines(console_output, "output/Pathway/scpa_out_console_ManualGeneLists.txt"
 
 # Code to save output for each cell type comparison
 clusters = c(
-  "Epiblast_PrimStreak", 
-  "ExE_Ectoderm_1", 
-  "Nascent_Mesoderm", 
-  "Somitic_Mesoderm", 
-  "Caudal_Mesoderm", 
-  "Paraxial_Mesoderm", 
-  "Pharyngeal_Mesoderm", 
-  "Haematodenothelial_progenitors", 
-  "Mesenchyme", 
-  "Blood_Progenitor_1", 
-  "Mixed_Mesoderm", 
-  "Blood_Progenitor_2", 
-  "Surface_Ectoderm", 
-  "Gut", 
-  "Unknown_1", 
-  "Notocord", 
-  "Unknown_2", 
-  "Primordial_Germ_Cells", 
-  "ExE_Ectoderm_2"
+  "1", 
+  "2", 
+  "3", 
+  "4", 
+  "5", 
+  "6", 
+  "7", 
+  "8", 
+  "9", 
+  "10", 
+  "11", 
+  "12", 
+  "13", 
+  "14", 
+  "15", 
+  "16", 
+  "17", 
+  "18", 
+  "19"
 )
 ### Loop through each value
 for (cluster in clusters) {
   #### Extract data for WT and cYAPKO based on current value
   WT <- seurat_extract(embryo.combined.sct,
                        meta1 = "condition", value_meta1 = "WT",
-                       meta2 = "cluster.annot", value_meta2 = cluster)
+                       meta2 = "seurat_clusters", value_meta2 = cluster)
 
   cYAPKO <- seurat_extract(embryo.combined.sct,
                            meta1 = "condition", value_meta1 = "cYAPKO",
-                           meta2 = "cluster.annot", value_meta2 = cluster)
+                           meta2 = "seurat_clusters", value_meta2 = cluster)
 
   ##### Compare pathways
   WT_cYAPKO <- compare_pathways(samples = list(WT, cYAPKO),
-                                pathways = pathways,
+                                pathways = filtered_pathways,
                                 parallel = TRUE, cores = 8)
 
   ##### Write to file using the current value in the filename
-  output_filename <- paste0("output/Pathway/SCPA_V2clust_ManualGeneLists_", cluster, ".txt")
+  output_filename <- paste0("output/Pathway/SCPA_V3_", cluster, ".txt")
   write.table(WT_cYAPKO, file = output_filename, sep = "\t", quote = FALSE, row.names = FALSE)
 }
 
@@ -8334,82 +8336,111 @@ for (cluster in clusters) {
 # DOT PLOT pepresetnation
 ## load all the comparison for each cell type (FC qval information)
 clusters = c(
-  "Epiblast_PrimStreak", 
-  "ExE_Ectoderm_1", 
-  "Nascent_Mesoderm", 
-  "Somitic_Mesoderm", 
-  "Caudal_Mesoderm", 
-  "Paraxial_Mesoderm", 
-  "Pharyngeal_Mesoderm", 
-  "Haematodenothelial_progenitors", 
-  "Mesenchyme", 
-  "Blood_Progenitor_1", 
-  "Mixed_Mesoderm", 
-  "Blood_Progenitor_2", 
-  "Surface_Ectoderm", 
-  "Gut", 
-  "Unknown_1", 
-  "Notocord", 
-  "Unknown_2", 
-  "Primordial_Germ_Cells"
+  "1", 
+  "2", 
+  "3", 
+  "4", 
+  "5", 
+  "6", 
+  "7", 
+  "8", 
+  "9", 
+  "10", 
+  "11", 
+  "12", 
+  "13", 
+  "14", 
+  "15", 
+  "16", 
+  "17", 
+  "18"
 )
 ## import with a function
 ### A function to read and add the cluster column
 read_and_add_cluster <- function(cluster) {
-  path <- paste0("output/Pathway/SCPA_V2clust_ManualGeneLists_", cluster, ".txt")
+  path <- paste0("output/Pathway/SCPA_V3_", cluster, ".txt")
   df <- read.delim(path, header = TRUE) %>%
     add_column(cluster = cluster)
   return(df)
 }
 ### Use lapply to apply the function on each cluster and bind all data frames together
 all_data <- bind_rows(lapply(clusters, read_and_add_cluster))
-# --> import the gene pathways (used table from Conchi `Pathwyas of interest*.xlsx`)
-pathways = c("Hippo", "Nodal_TGF", "WNT", "Vitamin_A")
-all_data_pathways = as_tibble(all_data) %>% 
-  filter(Pathway %in% pathways)
 
-# tidy the df
-all_data_pathways_tidy <- all_data_pathways %>%
+# Add cluster 19
+
+unique_pathways <- unique(all_data$Pathway)
+# Create a new tibble with cluster 19 values
+cluster19 <- tibble(
+  Pathway = unique_pathways,
+  Pval = 1,
+  adjPval = 1,
+  qval = 0,
+  FC = 0,
+  cluster = as.character(19)
+)
+
+# Bind the new tibble to the existing tibble and filter qval
+all_data <- all_data %>%
+  bind_rows(cluster19) %>%
   filter(qval >= 1.4) 
 
 
 
 # REFINE COLOR
 custom_color <- function(fc_value){
-  ifelse(fc_value >= 5, "strong_blue", 
-         ifelse(fc_value > 2, "light_blue",
-                ifelse(fc_value <= -5, "strong_red", 
-                       ifelse(fc_value < -2, "light_red", "grey"))))
+ifelse(fc_value >= 5, "dodgerblue4",
+ifelse(fc_value > 2, "lightblue2",
+ifelse(fc_value <= -5, "red3",
+ifelse(fc_value < -2, "indianred1", "grey"))))
 }
 
 # Add a column for this custom color
-all_data_pathways_tidy <- all_data_pathways_tidy %>%
+all_data_pathways_tidy <- all_data %>%
   mutate(custom_col = sapply(FC, custom_color))
 
-pdf("output/Pathway/dotplot_V2clust_ManualGeneLists_Hippo_FCtresh.pdf", width=10, height=4)
+# Define custom labels for the legend
+custom_labels <- c(
+  "dodgerblue4" = "FC < -5",
+  "lightblue2" = "-5 < FC < -2",
+  "red3" = "FC > 5",
+  "indianred1" = "2 > FC > 5",
+  "grey" = "-2 < FC < 2"
+)
+
+all_data_pathways_tidy$cluster <- factor(all_data_pathways_tidy$cluster, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19")) 
+all_data_pathways_tidy$Pathway <- factor(all_data_pathways_tidy$Pathway, levels = c("PID_RETINOIC_ACID_PATHWAY",
+                    "REACTOME_SIGNALING_BY_RETINOIC_ACID",
+                    "PID_BMP_PATHWAY",
+                    "REACTOME_SIGNALING_BY_BMP",
+                    "WP_BMP_SIGNALING_IN_EYELID_DEVELOPMENT",
+                    "WP_HIPPO_SIGNALING_REGULATION_PATHWAYS",
+                    "WP_HIPPOYAP_SIGNALING_PATHWAY",
+                    "WP_MECHANOREGULATION_AND_PATHOLOGY_OF_YAPTAZ_VIA_HIPPO_AND_NONHIPPO_MECHANISMS",
+                    "REACTOME_SIGNALING_BY_NOTCH",
+                    "REACTOME_SIGNALING_BY_NOTCH1",
+                    "REACTOME_SIGNALING_BY_TGF_BETA_RECEPTOR_COMPLEX",
+                    "REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS",
+                    "REACTOME_SIGNALING_BY_WNT",
+                    "REACTOME_TCF_DEPENDENT_SIGNALING_IN_RESPONSE_TO_WNT"))
+
+pdf("output/Pathway/dotplot_V3_SCPA_FCtresh.pdf", width=12, height=4)
 ggplot(all_data_pathways_tidy, aes(x = cluster, y = Pathway)) + 
   geom_point(aes(size = qval, color = custom_col), pch=16, alpha=0.7) +   
   scale_size_continuous(range = c(1, 8)) +
-  scale_color_manual(values = c("strong_blue" = "dodgerblue4",
-                                "light_blue" = "lightblue2",
-                                "grey" = "grey",
-                                "light_red" = "indianred1",
-                                "strong_red" = "red3")) +
+  scale_color_manual(
+    values = c("grey", "indianred1", "red3", "lightblue2", "dodgerblue4"),
+    labels = custom_labels
+  ) +
   theme_bw() +
   labs(size = "q-value", color = "Fold Change") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5))
 dev.off()
 
 
 
-pdf("output/Pathway/dotplot_V2clust_ManualGeneLists_grey.pdf", width=10, height=4)
-ggplot(all_data_pathways_tidy, aes(x = cluster, y = Pathway)) + 
-  geom_point(aes(size = qval, fill = "black"), pch=16, alpha=0.7) +   
-  scale_size_continuous(range = c(1, 8)) +
-  theme_bw() +
-  labs(size = "q-value") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-dev.off()
+XXX HERE !!!! 
+
+
 
 
 # heatmap
