@@ -7993,9 +7993,7 @@ dev.off()
 
 
 # HEATMAP OF DEGs - Figure6F (cluster6 = Second Heart Field)
-
-XXX HERE to troubleshoot heatmap
-
+library("ggrepel")
 # Load the DEGs data
 DEG_cluster6 <- as_tibble(read.table("output/seurat/6-cYAPKO_response_V3.txt", sep = "\t", header = TRUE, row.names = 1)  %>%
   rownames_to_column(var = "geneSymbol"))
@@ -8017,8 +8015,13 @@ down_genes <- DEG_cluster6_downUp %>%
 
 # Combine the upregulated and downregulated genes
 all_genes <- c(up_genes, down_genes)
+all_genes <- intersect(all_genes, rownames(embryo.combined.sct@assays$SCT@scale.data))
 
-all_genes <- intersect(all_genes, rownames(embryo.combined.sct@assays$SCT@data))
+# Genes to label
+genes_to_label <- c("Nr2f2", "Foxc1" ,"Rbp1", "Fabp5", "Gata6", "Sox4", "Zic3", "Smarcd3", "Mef2c", "Cyp26a1", "Acvr2b", "Myl7", "Robo1", "Chd7", "Snw1", "Mesp1", "Smarcd4", "Cited2", "Ctnnb1", "Six1", "Robo2", "Mest", "Apoe")
+labels <- rep("transparent", length(all_genes))
+labels[match(genes_to_label, all_genes, nomatch = 0)] <- "black"
+
 # Subset the Seurat object by condition
 seurat_wt <- subset(embryo.combined.sct, condition == "WT")
 seurat_ko <- subset(embryo.combined.sct, condition == "cYAPKO")
@@ -8028,12 +8031,91 @@ seurat_ko_cl6 <- subset(seurat_ko, seurat_clusters == "6")
 
 # Combine the subsets into one object for plotting
 seurat_combined <- merge(seurat_wt_cl6, y = seurat_ko_cl6)
+seurat_combined$condition <- factor(seurat_combined$condition, levels = c("WT", "cYAPKO")) # Reorder untreated 1st
+
+DefaultAssay(seurat_combined) <- "SCT"
 
 # Generate the heatmap
-pdf("output/seurat/heatmap_DEG_cluster6.pdf", width = 8, height = 6)
-DoHeatmap(seurat_combined, features = all_genes, group.by = "ident", cells = Cells(seurat_combined)) +
-  scale_fill_gradientn(colors = c("blue", "white", "red"))
+pdf("output/seurat/heatmap_DEG_cluster6.pdf", width = 6, height = 5)
+DoHeatmap(seurat_combined, features = all_genes, group.by = "condition", cells = Cells(seurat_combined), lines.width = 5, angle = 0, group.colors = c("#4365AE","#981E33"), assay = "SCT", slot = "scale.data", hjust = 0.5, group.bar.height = 0.01) + 
+  scale_fill_gradientn(colors = c("blue", "white", "white", "red"), values = c(0, 0.45, 0.55, 1), na.value = "white") + 
+  theme(axis.text.y = element_blank()) +
+  geom_text_repel(
+    data = data.frame(genes = all_genes, position = 1:length(all_genes)),
+    aes(label = ifelse(genes %in% genes_to_label, genes, ""), x = 0, y = position),
+    size = 3, 
+    color = "black", 
+    nudge_x = -100, # to move label toward the left
+    direction = "y",
+    hjust = 0,
+    segment.color = "black",
+    max.overlaps = 100,
+    segment.size = 0.25
+  ) # WORK GREAT ALSO: scale_fill_gradientn(colors = c("#00008B", "#87CEEB", "white", "white", "#FF7F7F", "#8B0000"), values = c(0, 0.25, 0.45, 0.55, 0.75, 1), na.value =  "white")
 dev.off()
+
+
+
+## Alternative with pheatmap
+library("pheatmap")
+
+DEG_cluster6 <- as_tibble(read.table("output/seurat/6-cYAPKO_response_V3.txt", sep = "\t", header = TRUE, row.names = 1)  %>%
+  rownames_to_column(var = "geneSymbol"))
+
+# Filter for significant DEGs
+DEG_cluster6_downUp <- DEG_cluster6 %>%
+  filter(p_val_adj <= 0.05) %>%
+  dplyr::select(geneSymbol, avg_log2FC) %>%
+  unique()
+
+# Separate upregulated and downregulated genes
+up_genes <- DEG_cluster6_downUp %>%
+  filter(avg_log2FC > 0.25) %>%
+  pull(geneSymbol)
+
+down_genes <- DEG_cluster6_downUp %>%
+  filter(avg_log2FC < -0.25) %>%
+  pull(geneSymbol)
+
+# Combine the upregulated and downregulated genes
+all_genes <- c(up_genes, down_genes)
+
+# Ensure all_genes are in the data
+all_genes <- intersect(all_genes, rownames(embryo.combined.sct@assays$SCT@scale.data))
+
+# Extract the data matrix for the genes of interest
+data_matrix <- embryo.combined.sct@assays$SCT@scale.data[all_genes, ]
+
+# Add a row of NA values to separate upregulated and downregulated genes
+separator <- matrix(NA, nrow = 1, ncol = ncol(data_matrix))
+rownames(separator) <- "sep_row"
+colnames(separator) <- colnames(data_matrix)
+data_matrix <- rbind(data_matrix[up_genes, ], separator, data_matrix[down_genes, ])
+
+# Create a condition annotation
+condition_annotation <- data.frame(
+  Condition = embryo.combined.sct$condition,
+  row.names = colnames(data_matrix)
+)
+
+# Generate the heatmap using pheatmap
+pdf("output/seurat/pheatmap_DEG_cluster6.pdf", width = 6, height = 5)
+pheatmap(data_matrix,
+         annotation_col = condition_annotation,
+         annotation_colors = list(Condition = c(WT = "#4365AE", cYAPKO = "#981E33") ),
+         cluster_cols = FALSE,
+         cluster_rows = FALSE,
+         show_rownames = FALSE,
+         show_colnames = FALSE,
+         color = colorRampPalette(c("blue", "white", "red"))(100),
+         na_col = "white",
+         gaps_row = nrow(data_matrix) - length(down_genes),
+         gaps_col = which(diff(as.numeric(factor(embryo.combined.sct$condition))) != 0),
+         breaks = seq(-1, 1, length.out = 101)
+)
+dev.off()
+
+#--> pheatmap SUCK
 
 
 
