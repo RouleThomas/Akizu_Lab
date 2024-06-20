@@ -24,7 +24,9 @@ KCNC1 express day12 in mice neuron (important for fast-spike interneuron (inhibi
 # Paper for cell type annotation
 
 - CB: [paper](https://pubmed.ncbi.nlm.nih.gov/34616064/); cell types here should be found at p35-p180
-  supp file in `docs/41586_2021_3220_MOESM4_ESM.xlsx` with marker genes.
+  supp file in `docs/41586_2021_3220_MOESM4_ESM.xlsx` with marker genes + Fig1C
+
+
 - Ctx: XXX
 
 

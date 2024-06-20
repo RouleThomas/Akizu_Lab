@@ -7621,7 +7621,7 @@ embryo.combined.sct <- SetIdent(embryo.combined.sct, value = "seurat_clusters") 
 
 
 # Heatmap with marker genes
-DefaultAssay(embryo.combined.sct) <- "SCT"
+DefaultAssay(embryo.combined.sct) <- "RNA" # or SCT
 
 
 as.character(1) = c("Pax2", "Six3", "Hesx1", "Otx2", "Otx1", "Otx2os1")
@@ -7669,9 +7669,11 @@ pdf("output/seurat/DoHeatmap_SCT_control_cYAPKO_ident_V3sct.pdf", width=8, heigh
 DoHeatmap(embryo.combined.sct, assay = "SCT", features = all_markers,angle = 0, hjust = 0.5)
 dev.off()
 
-pdf("output/seurat/DoHeatmap_SCT_control_cYAPKO_ident_V3.pdf", width=8, height=9)
-DoHeatmap(embryo.combined.sct, assay = "RNA", features = all_markers,angle = 0, hjust = 0.5)
+pdf("output/seurat/DoHeatmap_SCT_control_cYAPKO_ident_V3rna.pdf", width=8, height=9)
+DoHeatmap(embryo.combined.sct, assay = "RNA", slot = "scale.data", features = all_markers,angle = 0, hjust = 0.5)+
+  scale_fill_gradientn(colors = c("#00008B", "dodgerblue3", "white", "white", "#FF7F7F", "#8B0000"), values = c(0, 0.25, 0.45, 0.55, 0.75, 1), na.value =  "white")
 dev.off()
+
 pdf("output/seurat/DoHeatmap_SCT_control_cYAPKO_ident_V3large.pdf", width=12, height=9)
 DoHeatmap(embryo.combined.sct, assay = "RNA", features = all_markers,angle = 0, hjust = 0.5)
 dev.off()
@@ -8038,7 +8040,7 @@ DefaultAssay(seurat_combined) <- "SCT"
 # Generate the heatmap
 pdf("output/seurat/heatmap_DEG_cluster6.pdf", width = 6, height = 5)
 DoHeatmap(seurat_combined, features = all_genes, group.by = "condition", cells = Cells(seurat_combined), lines.width = 5, angle = 0, group.colors = c("#4365AE","#981E33"), assay = "SCT", slot = "scale.data", hjust = 0.5, group.bar.height = 0.01) + 
-  scale_fill_gradientn(colors = c("blue", "white", "white", "red"), values = c(0, 0.45, 0.55, 1), na.value = "white") + 
+  scale_fill_gradientn(colors = c("#00008B", "dodgerblue3", "white", "white", "#FF7F7F", "#8B0000"), values = c(0, 0.25, 0.45, 0.55, 0.75, 1), na.value =  "white") + 
   theme(axis.text.y = element_blank()) +
   geom_text_repel(
     data = data.frame(genes = all_genes, position = 1:length(all_genes)),
@@ -8051,8 +8053,60 @@ DoHeatmap(seurat_combined, features = all_genes, group.by = "condition", cells =
     segment.color = "black",
     max.overlaps = 100,
     segment.size = 0.25
-  ) # WORK GREAT ALSO: scale_fill_gradientn(colors = c("#00008B", "#87CEEB", "white", "white", "#FF7F7F", "#8B0000"), values = c(0, 0.25, 0.45, 0.55, 0.75, 1), na.value =  "white")
+  ) 
 dev.off()
+# WORK GREAT ALSO: scale_fill_gradientn(colors = c("#00008B", "#87CEEB", "white", "white", "#FF7F7F", "#8B0000"), values = c(0, 0.25, 0.45, 0.55, 0.75, 1), na.value =  "white")
+#   scale_fill_gradientn(colors = c("blue", "white", "white", "red"), values = c(0, 0.45, 0.55, 1), na.value = "white") + 
+
+
+
+
+## RNA assay
+
+
+# Combine the upregulated and downregulated genes
+all_genes <- c(up_genes, down_genes)
+all_genes <- intersect(all_genes, rownames(embryo.combined.sct@assays$RNA@scale.data))
+
+# Genes to label
+genes_to_label <- c("Nr2f2", "Foxc1" ,"Rbp1", "Fabp5", "Gata6", "Sox4", "Zic3", "Smarcd3", "Mef2c", "Cyp26a1", "Acvr2b", "Myl7", "Robo1", "Chd7", "Snw1", "Mesp1", "Smarcd4", "Cited2", "Ctnnb1", "Six1", "Robo2", "Mest", "Apoe")
+labels <- rep("transparent", length(all_genes))
+labels[match(genes_to_label, all_genes, nomatch = 0)] <- "black"
+
+# Subset the Seurat object by condition
+seurat_wt <- subset(embryo.combined.sct, condition == "WT")
+seurat_ko <- subset(embryo.combined.sct, condition == "cYAPKO")
+
+seurat_wt_cl6 <- subset(seurat_wt, seurat_clusters == "6")
+seurat_ko_cl6 <- subset(seurat_ko, seurat_clusters == "6")
+
+# Combine the subsets into one object for plotting
+seurat_combined <- merge(seurat_wt_cl6, y = seurat_ko_cl6)
+seurat_combined$condition <- factor(seurat_combined$condition, levels = c("WT", "cYAPKO")) # Reorder untreated 1st
+
+DefaultAssay(seurat_combined) <- "RNA"
+
+# Generate the heatmap
+pdf("output/seurat/heatmap_DEG_cluster6_assayRNA.pdf", width = 6, height = 5)
+DoHeatmap(seurat_combined, features = all_genes, group.by = "condition", cells = Cells(seurat_combined), lines.width = 5, angle = 0, group.colors = c("#4365AE","#981E33"), assay = "RNA", slot = "scale.data", hjust = 0.5, group.bar.height = 0.01) + 
+  scale_fill_gradientn(colors = c("#00008B", "dodgerblue3", "white", "white", "#FF7F7F", "#8B0000"), values = c(0, 0.25, 0.45, 0.55, 0.75, 1), na.value =  "white") + 
+  theme(axis.text.y = element_blank()) +
+  geom_text_repel(
+    data = data.frame(genes = all_genes, position = 1:length(all_genes)),
+    aes(label = ifelse(genes %in% genes_to_label, genes, ""), x = 0, y = position),
+    size = 3, 
+    color = "black", 
+    nudge_x = -100, # to move label toward the left
+    direction = "y",
+    hjust = 0,
+    segment.color = "black",
+    max.overlaps = 100,
+    segment.size = 0.25
+  ) 
+dev.off()
+
+#--> Using RNA scaled assay is MUCH better than SCT assay!
+
 
 
 
