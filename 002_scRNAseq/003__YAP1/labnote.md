@@ -7523,6 +7523,10 @@ pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Yap1_V3.pdf", width=10, height
 FeaturePlot(embryo.combined.sct, features = c("Yap1"), split.by = "condition",max.cutoff = 1, cols = c("grey85", "#4CAF50"))  & theme(legend.position = c(0.9,0.9))
 dev.off()
 
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_Hand1_V3.pdf", width=10, height=5)
+FeaturePlot(embryo.combined.sct, features = c("Hand1"), split.by = "condition",max.cutoff = 1, cols = c("grey85", "#4CAF50"))  & theme(legend.position = c(0.9,0.9))
+dev.off()
+
 
 
 
@@ -8632,9 +8636,9 @@ ggplot(all_data_pathways_tidy, aes(x = cluster, y = Pathway)) +
 dev.off()
 
 
-
-XXX HERE !!!! 
-
+###################################################
+################# HERE below !!!!  NOT MODIFY  ###################################################
+###################################################
 
 
 
@@ -8779,6 +8783,9 @@ dev.off()
 
 
 
+###################################################
+################# HERE up !!!!  NOT MODIFY  ###################################################
+###################################################
 
 
 
@@ -8787,130 +8794,130 @@ dev.off()
 # GSEA plot
 library("fgsea")
 ## Re-calculate DEGs keeping ALL genes
-embryo.combined.sct$celltype.stim <- paste(embryo.combined.sct$cluster.annot, embryo.combined.sct$condition,
+embryo.combined.sct$celltype.stim <- paste(embryo.combined.sct$seurat_clusters, embryo.combined.sct$condition,
     sep = "-")
 Idents(embryo.combined.sct) <- "celltype.stim"
 
-Paraxial_Mesoderm <- FindMarkers(embryo.combined.sct, ident.1 = "Paraxial_Mesoderm-cYAPKO", ident.2 = "Paraxial_Mesoderm-WT",
+cluster1 <- FindMarkers(embryo.combined.sct, ident.1 = "1-cYAPKO", ident.2 = "1-WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA") 
-Nascent_Mesoderm <- FindMarkers(embryo.combined.sct, ident.1 = "Nascent_Mesoderm-cYAPKO", ident.2 = "Nascent_Mesoderm-WT",
+cluster2 <- FindMarkers(embryo.combined.sct, ident.1 = "2-cYAPKO", ident.2 = "2-WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA") 
-Pharyngeal_Mesoderm <- FindMarkers(embryo.combined.sct, ident.1 = "Pharyngeal_Mesoderm-cYAPKO", ident.2 = "Pharyngeal_Mesoderm-WT",
+cluster3 <- FindMarkers(embryo.combined.sct, ident.1 = "3-cYAPKO", ident.2 = "3-WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA") 
-Mesenchyme <- FindMarkers(embryo.combined.sct, ident.1 = "Mesenchyme-cYAPKO", ident.2 = "Mesenchyme-WT",
+cluster4 <- FindMarkers(embryo.combined.sct, ident.1 = "4-cYAPKO", ident.2 = "4-WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")    
-Mixed_Mesoderm <- FindMarkers(embryo.combined.sct, ident.1 = "Mixed_Mesoderm-cYAPKO", ident.2 = "Mixed_Mesoderm-WT",
+cluster5 <- FindMarkers(embryo.combined.sct, ident.1 = "5-cYAPKO", ident.2 = "5-WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")    
-Blood_Progenitor_1 <- FindMarkers(embryo.combined.sct, ident.1 = "Blood_Progenitor_1-cYAPKO", ident.2 = "Blood_Progenitor_1-WT",
+cluster6 <- FindMarkers(embryo.combined.sct, ident.1 = "6-cYAPKO", ident.2 = "6-WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-Epiblast_PrimStreak <- FindMarkers(embryo.combined.sct, ident.1 = "Epiblast_PrimStreak-cYAPKO", ident.2 = "Epiblast_PrimStreak-WT",
+cluster7 <- FindMarkers(embryo.combined.sct, ident.1 = "7-cYAPKO", ident.2 = "7-WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-ExE_Ectoderm_1 <- FindMarkers(embryo.combined.sct, ident.1 = "ExE_Ectoderm_1-cYAPKO", ident.2 = "ExE_Ectoderm_1-WT",
+cluster8 <- FindMarkers(embryo.combined.sct, ident.1 = "8-cYAPKO", ident.2 = "8-WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-Somitic_Mesoderm <- FindMarkers(embryo.combined.sct, ident.1 = "Somitic_Mesoderm-cYAPKO", ident.2 = "Somitic_Mesoderm-WT",
+cluster9 <- FindMarkers(embryo.combined.sct, ident.1 = "9-cYAPKO", ident.2 = "9-WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-Caudal_Mesoderm <- FindMarkers(embryo.combined.sct, ident.1 = "Caudal_Mesoderm-cYAPKO", ident.2 = "Caudal_Mesoderm-WT",
+cluster10 <- FindMarkers(embryo.combined.sct, ident.1 = "10-cYAPKO", ident.2 = "10-WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-Haematodenothelial_progenitors <- FindMarkers(embryo.combined.sct, ident.1 = "Haematodenothelial_progenitors-cYAPKO", ident.2 = "Haematodenothelial_progenitors-WT",
+cluster11 <- FindMarkers(embryo.combined.sct, ident.1 = "11-cYAPKO", ident.2 = "11-WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-Blood_Progenitor_2 <- FindMarkers(embryo.combined.sct, ident.1 = "Blood_Progenitor_2-cYAPKO", ident.2 = "Blood_Progenitor_2-WT",
+cluster12 <- FindMarkers(embryo.combined.sct, ident.1 = "12-cYAPKO", ident.2 = "12-WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-Surface_Ectoderm <- FindMarkers(embryo.combined.sct, ident.1 = "Surface_Ectoderm-cYAPKO", ident.2 = "Surface_Ectoderm-WT",
+cluster13 <- FindMarkers(embryo.combined.sct, ident.1 = "13-cYAPKO", ident.2 = "13-WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-Gut <- FindMarkers(embryo.combined.sct, ident.1 = "Gut-cYAPKO", ident.2 = "Gut-WT",
+cluster14 <- FindMarkers(embryo.combined.sct, ident.1 = "14-cYAPKO", ident.2 = "14-WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-Unknown_1 <- FindMarkers(embryo.combined.sct, ident.1 = "Unknown_1-cYAPKO", ident.2 = "Unknown_1-WT",
+cluster15 <- FindMarkers(embryo.combined.sct, ident.1 = "15-cYAPKO", ident.2 = "15-WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-Unknown_2 <- FindMarkers(embryo.combined.sct, ident.1 = "Unknown_2-cYAPKO", ident.2 = "Unknown_2-WT",
+cluster16 <- FindMarkers(embryo.combined.sct, ident.1 = "16-cYAPKO", ident.2 = "16-WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-Notocord <- FindMarkers(embryo.combined.sct, ident.1 = "Notocord-cYAPKO", ident.2 = "Notocord-WT",
+cluster17 <- FindMarkers(embryo.combined.sct, ident.1 = "17-cYAPKO", ident.2 = "17-WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-Primordial_Germ_Cells <- FindMarkers(embryo.combined.sct, ident.1 = "Primordial_Germ_Cells-cYAPKO", ident.2 = "Primordial_Germ_Cells-WT",
+cluster18 <- FindMarkers(embryo.combined.sct, ident.1 = "18-cYAPKO", ident.2 = "18-WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
