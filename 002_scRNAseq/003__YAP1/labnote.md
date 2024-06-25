@@ -9544,6 +9544,415 @@ dev.off()
 write.table(gos, "output/GO/enrichR_KEGG_2021_Human_DEG_cluster6_dotplot.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
+
+
+
+# Define databases for enrichment
+dbs <- c("WikiPathway_2023_Human") # 
+
+### GeneSymbol list of signif gain/lost H3K27me3 in each genotypes
+DEG_cluster6 <- as_tibble(read.table("output/seurat/6-cYAPKO_response_V3.txt", sep = "\t", header = TRUE, row.names = 1)  %>%
+  rownames_to_column(var = "geneSymbol") )
+
+DEG_cluster6_downUp = DEG_cluster6 %>%
+  filter(p_val_adj <= 0.05) %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+
+noGene = DEG_cluster6 %>%
+  filter(p_val_adj > 10) %>%
+  add_row(geneSymbol = "gene1") %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+
+
+DEG_cluster6_down = DEG_cluster6 %>%
+  filter(p_val_adj <= 0.05,
+         avg_log2FC < 0) %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+DEG_cluster6_up = DEG_cluster6 %>%
+  filter(p_val_adj <= 0.05,
+         avg_log2FC > 0) %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+
+
+# IF starting with geneSymbol
+## Read and preprocess data for downregulated genes
+gene_names_down <- noGene
+list_down <- unique(as.character(gene_names_down$geneSymbol))
+edown <- enrichr(list_down, dbs)
+## Read and preprocess data for upregulated genes
+gene_names_up <- DEG_cluster6_downUp
+list_up <- unique(as.character(gene_names_up$geneSymbol))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$WikiPathway_2023_Human
+down <- edown$WikiPathway_2023_Human
+up$type <- "up"
+down$type <- "down"
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 20)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 20)
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("WP[0-9]+", "", gos$Term)  # Regular expression to match the pattern "MP: [number]" and replace it with an empty string
+
+## FAIL as dupplicates:
+up_pathways_suffixed <- paste0(up_pathways, "_up")
+down_pathways_suffixed <- paste0(down_pathways, "_down")
+new_order <- c(down_pathways_suffixed, up_pathways_suffixed)
+gos$Term <- ifelse(gos$type == "up", paste0(gos$Term, "_up"), paste0(gos$Term, "_down"))
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+
+pdf("output/GO/enrichR_WikiPathway_2023_Human_DEG_cluster6.pdf", width=12, height=10)
+pdf("output/GO/enrichR_WikiPathway_2023_Human_DEG_cluster6_downUp.pdf", width=12, height=10)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="DEGs in cluster6",   # H3K27me3  H3K4me3
+                    labels = c("down-reg", "up-reg"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "KEGG_2021_Human") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+
+# Plotting dotplot enrichR
+
+gos_dotplot = gos %>%
+  separate(Overlap, into = c("Count", "Total"), sep = "/") %>%
+  mutate(geneProp = as.numeric(Count)/as.numeric(Total) ) %>%
+  mutate(Term = fct_rev(Term))
+
+  
+
+
+
+# Plotting with enhanced aesthetics
+pdf("output/GO/enrichR_WikiPathway_2023_Human_DEG_cluster6_dotplot.pdf", width=8, height=5)
+pdf("output/GO/enrichR_WikiPathway_2023_Human_DEG_cluster6_downUp_dotplot.pdf", width=7, height=4)
+
+ggplot(gos_dotplot, aes(x = abs(logAdjP), y = Term)) +
+  geom_point(aes(size = geneProp, color = type), pch = 16, alpha = 0.7) +
+  scale_color_manual(values = c("down" = "blue", "up" = "red")) +
+  theme_bw() +
+  labs(x = "log- Adjusted p-value", y = "Term", size = "Gene proportion") +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5))
+dev.off()
+
+
+
+
+## save output
+write.table(gos, "output/GO/enrichR_WikiPathway_2023_Human_DEG_cluster6_downUp_dotplot.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("WikiPathways_2019_Mouse") # 
+
+### GeneSymbol list of signif gain/lost H3K27me3 in each genotypes
+DEG_cluster6 <- as_tibble(read.table("output/seurat/6-cYAPKO_response_V3.txt", sep = "\t", header = TRUE, row.names = 1)  %>%
+  rownames_to_column(var = "geneSymbol") )
+
+DEG_cluster6_downUp = DEG_cluster6 %>%
+  filter(p_val_adj <= 0.05) %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+
+noGene = DEG_cluster6 %>%
+  filter(p_val_adj > 10) %>%
+  add_row(geneSymbol = "gene1") %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+
+
+DEG_cluster6_down = DEG_cluster6 %>%
+  filter(p_val_adj <= 0.05,
+         avg_log2FC < 0) %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+DEG_cluster6_up = DEG_cluster6 %>%
+  filter(p_val_adj <= 0.05,
+         avg_log2FC > 0) %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+
+
+# IF starting with geneSymbol
+## Read and preprocess data for downregulated genes
+gene_names_down <- DEG_cluster6_down
+list_down <- unique(as.character(gene_names_down$geneSymbol))
+edown <- enrichr(list_down, dbs)
+## Read and preprocess data for upregulated genes
+gene_names_up <- DEG_cluster6_up
+list_up <- unique(as.character(gene_names_up$geneSymbol))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$WikiPathways_2019_Mouse
+down <- edown$WikiPathways_2019_Mouse
+up$type <- "up"
+down$type <- "down"
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 20)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 20)
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("WP[0-9]+", "", gos$Term)  # Regular expression to match the pattern "MP: [number]" and replace it with an empty string
+
+## FAIL as dupplicates:
+up_pathways_suffixed <- paste0(up_pathways, "_up")
+down_pathways_suffixed <- paste0(down_pathways, "_down")
+new_order <- c(down_pathways_suffixed, up_pathways_suffixed)
+gos$Term <- ifelse(gos$type == "up", paste0(gos$Term, "_up"), paste0(gos$Term, "_down"))
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+
+pdf("output/GO/enrichR_WikiPathways_2019_Mouse_DEG_cluster6_downUp.pdf", width=12, height=10)
+pdf("output/GO/enrichR_WikiPathways_2019_Mouse_DEG_cluster6.pdf", width=12, height=10)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="DEGs in cluster6",   # H3K27me3  H3K4me3
+                    labels = c("down-reg", "up-reg"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "KEGG_2021_Human") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+
+# Plotting dotplot enrichR
+
+gos_dotplot = gos %>%
+  separate(Overlap, into = c("Count", "Total"), sep = "/") %>%
+  mutate(geneProp = as.numeric(Count)/as.numeric(Total) ) %>%
+  mutate(Term = fct_rev(Term))
+
+  
+
+
+
+# Plotting with enhanced aesthetics
+pdf("output/GO/enrichR_WikiPathways_2019_Mouse_DEG_cluster6_downUp_dotplot.pdf", width=6, height=3)
+pdf("output/GO/enrichR_WikiPathways_2019_Mouse_DEG_cluster6_dotplot.pdf", width=6, height=5)
+
+ggplot(gos_dotplot, aes(x = abs(logAdjP), y = Term)) +
+  geom_point(aes(size = geneProp, color = type), pch = 16, alpha = 0.7) +
+  scale_color_manual(values = c("down" = "blue", "up" = "red")) +
+  theme_bw() +
+  labs(x = "log- Adjusted p-value", y = "Term", size = "Gene proportion") +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5))
+dev.off()
+
+
+
+
+## save output
+write.table(gos, "output/GO/enrichR_WikiPathways_2019_Mouse_DEG_cluster6_dotplot.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("Reactome_2022") # 
+
+### GeneSymbol list of signif gain/lost H3K27me3 in each genotypes
+DEG_cluster6 <- as_tibble(read.table("output/seurat/6-cYAPKO_response_V3.txt", sep = "\t", header = TRUE, row.names = 1)  %>%
+  rownames_to_column(var = "geneSymbol") )
+
+DEG_cluster6_downUp = DEG_cluster6 %>%
+  filter(p_val_adj <= 0.05) %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+
+noGene = DEG_cluster6 %>%
+  filter(p_val_adj > 10) %>%
+  add_row(geneSymbol = "gene1") %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+
+
+DEG_cluster6_down = DEG_cluster6 %>%
+  filter(p_val_adj <= 0.05,
+         avg_log2FC < 0) %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+DEG_cluster6_up = DEG_cluster6 %>%
+  filter(p_val_adj <= 0.05,
+         avg_log2FC > 0) %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+
+
+# IF starting with geneSymbol
+## Read and preprocess data for downregulated genes
+gene_names_down <- noGene
+list_down <- unique(as.character(gene_names_down$geneSymbol))
+edown <- enrichr(list_down, dbs)
+## Read and preprocess data for upregulated genes
+gene_names_up <- DEG_cluster6_downUp
+list_up <- unique(as.character(gene_names_up$geneSymbol))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$Reactome_2022
+down <- edown$Reactome_2022
+up$type <- "up"
+down$type <- "down"
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 20)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 20)
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("R-HSA-[0-9]+$", "", gos$Term)  # Regular expression to match the pattern "R-HSA-[number]" at the end of the string and replace it with an empty string
+
+## FAIL as dupplicates:
+up_pathways_suffixed <- paste0(up_pathways, "_up")
+down_pathways_suffixed <- paste0(down_pathways, "_down")
+new_order <- c(down_pathways_suffixed, up_pathways_suffixed)
+gos$Term <- ifelse(gos$type == "up", paste0(gos$Term, "_up"), paste0(gos$Term, "_down"))
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+
+pdf("output/GO/enrichR_Reactome_2022_DEG_cluster6.pdf", width=12, height=10)
+pdf("output/GO/enrichR_Reactome_2022_DEG_cluster6_downUp.pdf", width=12, height=10)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="DEGs in cluster6",   # H3K27me3  H3K4me3
+                    labels = c("down-reg", "up-reg"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "KEGG_2021_Human") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+
+# Plotting dotplot enrichR
+
+gos_dotplot = gos %>%
+  separate(Overlap, into = c("Count", "Total"), sep = "/") %>%
+  mutate(geneProp = as.numeric(Count)/as.numeric(Total) ) %>%
+  mutate(Term = fct_rev(Term))
+
+  
+
+
+
+# Plotting with enhanced aesthetics
+pdf("output/GO/enrichR_Reactome_2022_DEG_cluster6_dotplot.pdf", width=9, height=5)
+pdf("output/GO/enrichR_Reactome_2022_DEG_cluster6_downUp_dotplot.pdf", width=8, height=3)
+
+ggplot(gos_dotplot, aes(x = abs(logAdjP), y = Term)) +
+  geom_point(aes(size = geneProp, color = type), pch = 16, alpha = 0.7) +
+  scale_color_manual(values = c("down" = "blue", "up" = "red")) +
+  theme_bw() +
+  labs(x = "log- Adjusted p-value", y = "Term", size = "Gene proportion") +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5))
+dev.off()
+
+
+
+
+## save output
+write.table(gos, "output/GO/enrichR_Reactome_2022_DEG_cluster6_downUp_dotplot.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
 ```
 
 
