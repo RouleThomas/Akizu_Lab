@@ -7528,7 +7528,12 @@ FeaturePlot(embryo.combined.sct, features = c("Hand1"), split.by = "condition",m
 dev.off()
 
 
-
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_SHFlog2FCpos_V3.pdf", width=10, height=40)
+FeaturePlot(embryo.combined.sct, features = c("Smarcd3", "Acvr2b", "Zic3", "Myl7", "Gata6","Mesp1", "Robo1","Ctnnb1","Chd7","Sox4","Cyp26a1","Mef2c","Cited2"), split.by = "condition",max.cutoff = 1, cols = c("grey85", "#4CAF50"))  & theme(legend.position = c(0.9,0.9))
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_SHFlog2FCneg_V3.pdf", width=10, height=30)
+FeaturePlot(embryo.combined.sct, features = c("Mest","Nr2f2","Six1","Fabp5","Foxc1","Robo2","Apoe","Rbp1"), split.by = "condition",max.cutoff = 1, cols = c("grey85", "#4CAF50"))  & theme(legend.position = c(0.9,0.9))
+dev.off()
 
 
 # Rename cluster
@@ -8013,10 +8018,12 @@ DEG_cluster6_downUp <- DEG_cluster6 %>%
 # Separate upregulated and downregulated genes
 up_genes <- DEG_cluster6_downUp %>%
   filter(avg_log2FC > 0.25) %>%
+  arrange(desc(avg_log2FC)) %>%
   pull(geneSymbol)
 
 down_genes <- DEG_cluster6_downUp %>%
   filter(avg_log2FC < -0.25) %>%
+  arrange(avg_log2FC) %>%
   pull(geneSymbol)
 
 # Combine the upregulated and downregulated genes
@@ -8069,7 +8076,7 @@ dev.off()
 
 
 # Combine the upregulated and downregulated genes
-all_genes <- c(up_genes, down_genes)
+all_genes <- c(up_genes,down_genes)
 all_genes <- intersect(all_genes, rownames(embryo.combined.sct@assays$RNA@scale.data))
 
 # Genes to label
@@ -8089,6 +8096,7 @@ seurat_combined <- merge(seurat_wt_cl6, y = seurat_ko_cl6)
 seurat_combined$condition <- factor(seurat_combined$condition, levels = c("WT", "cYAPKO")) # Reorder untreated 1st
 
 DefaultAssay(seurat_combined) <- "RNA"
+seurat_combined <- ScaleData(seurat_combined, features = all_genes)
 
 # Generate the heatmap
 pdf("output/seurat/heatmap_DEG_cluster6_assayRNA.pdf", width = 6, height = 5)
@@ -8096,8 +8104,8 @@ DoHeatmap(seurat_combined, features = all_genes, group.by = "condition", cells =
   scale_fill_gradientn(colors = c("#00008B", "dodgerblue3", "white", "white", "#FF7F7F", "#8B0000"), values = c(0, 0.25, 0.45, 0.55, 0.75, 1), na.value =  "white") + 
   theme(axis.text.y = element_blank()) +
   geom_text_repel(
-    data = data.frame(genes = all_genes, position = 1:length(all_genes)),
-    aes(label = ifelse(genes %in% genes_to_label, genes, ""), x = 0, y = position),
+    data = data.frame(genes = all_genes, position = rev(1:length(all_genes)) ), # NOT clear why but I add to revert this order so that it fit gene labelling, I think because of genotype reordering
+    aes(label = ifelse(all_genes %in% genes_to_label, all_genes, ""), x = 0, y = position),
     size = 3, 
     color = "black", 
     nudge_x = -100, # to move label toward the left
