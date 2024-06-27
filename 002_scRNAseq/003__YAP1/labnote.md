@@ -8591,7 +8591,7 @@ all_data <- all_data %>%
   bind_rows(cluster19) %>%
   filter(qval >= 1.4) 
 
-
+##### Figure All term of interest  
 
 # REFINE COLOR
 custom_color <- function(fc_value){
@@ -8642,6 +8642,65 @@ ggplot(all_data_pathways_tidy, aes(x = cluster, y = Pathway)) +
   labs(size = "q-value", color = "Fold Change") +
   theme(axis.text.x = element_text(angle = 0, hjust = 0.5))
 dev.off()
+
+
+
+
+##### Figure RA terms only
+all_data = all_data %>%
+  filter(Pathway %in% c("PID_RETINOIC_ACID_PATHWAY",
+                        "REACTOME_SIGNALING_BY_RETINOIC_ACID"))
+                    
+XXXXX
+
+
+
+
+# REFINE COLOR
+custom_color <- function(fc_value){
+ifelse(fc_value >= 5, "dodgerblue4",
+ifelse(fc_value > 2, "lightblue2",
+ifelse(fc_value <= -5, "red3",
+ifelse(fc_value < -2, "indianred1", "grey"))))
+}
+
+# Add a column for this custom color
+all_data_pathways_tidy <- all_data %>%
+  mutate(custom_col = sapply(FC, custom_color))
+
+
+all_data_pathways_tidy$cluster <- factor(all_data_pathways_tidy$cluster, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19")) 
+all_data_pathways_tidy$Pathway <- factor(all_data_pathways_tidy$Pathway, levels = c("PID_RETINOIC_ACID_PATHWAY",
+                    "REACTOME_SIGNALING_BY_RETINOIC_ACID",
+                    "PID_BMP_PATHWAY",
+                    "REACTOME_SIGNALING_BY_BMP",
+                    "WP_BMP_SIGNALING_IN_EYELID_DEVELOPMENT",
+                    "WP_HIPPO_SIGNALING_REGULATION_PATHWAYS",
+                    "WP_HIPPOYAP_SIGNALING_PATHWAY",
+                    "WP_MECHANOREGULATION_AND_PATHOLOGY_OF_YAPTAZ_VIA_HIPPO_AND_NONHIPPO_MECHANISMS",
+                    "REACTOME_SIGNALING_BY_NOTCH",
+                    "REACTOME_SIGNALING_BY_NOTCH1",
+                    "REACTOME_SIGNALING_BY_TGF_BETA_RECEPTOR_COMPLEX",
+                    "REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS",
+                    "REACTOME_SIGNALING_BY_WNT",
+                    "REACTOME_TCF_DEPENDENT_SIGNALING_IN_RESPONSE_TO_WNT"))
+
+pdf("output/Pathway/dotplot_V3_SCPA_RA_FCtresh.pdf", width=6, height=1)
+ggplot(all_data_pathways_tidy, aes(x = cluster, y = Pathway)) + 
+  geom_point(aes(size = qval, color = custom_col), pch=16, alpha=0.7) +   
+  scale_size_continuous(range = c(1, 8)) +
+  scale_color_manual(
+    values = c("grey", "indianred1", "red3", "lightblue2", "dodgerblue4"),
+    labels = custom_labels
+  ) +
+  theme_bw() +
+  labs(size = "q-value", color = "Fold Change") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 0.5))
+dev.off()
+
+
+
+
 
 
 ###################################################
@@ -9978,9 +10037,6 @@ Go [here](https://www.ncbi.nlm.nih.gov/geo/info/seq.html); and follow instructio
 # do file integrity check with md5
 md5sum * | awk '{print $2 "\t" $1}' > md5sums.txt
 
-XXX
-
-
 module load lftp
 
 # connect to ftp
@@ -9988,8 +10044,10 @@ lftp -u geoftp,inAlwokhodAbnib5 ftp-private.ncbi.nlm.nih.gov # geoftp = username
 cd uploads/thomasroule@orcid_A787EGG4
 
 mirror -R GEO_cardiacPaper/
-
 ```
+
+--> Done succesfully; release data: 2025-06-27
+
 
 
 
