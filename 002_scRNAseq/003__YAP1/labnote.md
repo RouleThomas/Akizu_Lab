@@ -8789,13 +8789,9 @@ ggplot(data_for_plot, aes(x=Gene, y=Condition, fill=Expression)) +
   scale_fill_viridis(direction = 1, option = "viridis", name="Expression") 
 dev.off()
 
-
-
 ###################################################
 ################# HERE up !!!!  NOT MODIFY  ###################################################
 ###################################################
-
-
 
 
 
@@ -8938,20 +8934,25 @@ cluster18 <- FindMarkers(embryo.combined.sct, ident.1 = "18-cYAPKO", ident.2 = "
 
 
 ### save output
-#### write.table(Primordial_Germ_Cells, file = "output/seurat/Primordial_Germ_Cells-cYAPKO_response_V2clust_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+## write.table(cluster1, file = "output/seurat/cluster1-cYAPKO_response_V3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 #### import all clsuter DEGs output :
-cluster_types <- c("Epiblast_PrimStreak", "ExE_Ectoderm_1", "Nascent_Mesoderm", 
-                   "Somitic_Mesoderm", "Caudal_Mesoderm", "Paraxial_Mesoderm", 
-                   "Pharyngeal_Mesoderm", "Haematodenothelial_progenitors", 
-                   "Mesenchyme", "Blood_Progenitor_1", "Mixed_Mesoderm", 
-                   "Blood_Progenitor_2", "Surface_Ectoderm", "Gut", "Unknown_1", 
-                   "Notocord", "Unknown_2", "Primordial_Germ_Cells")
+cluster_types <- c("cluster1", "cluster2", "cluster3", 
+                   "cluster4", "cluster5", "cluster6", 
+                   "cluster7", "cluster8", 
+                   "cluster9", "cluster10", "cluster11", 
+                   "cluster12", "cluster13", "cluster14", "cluster15", 
+                   "cluster16", "cluster17", "cluster18")
 # Loop over each cluster type to read data and assign to a variable
 for (cluster in cluster_types) {
-  file_path <- paste0("output/seurat/", cluster, "-cYAPKO_response_V2clust_allGenes.txt")
+  file_path <- paste0("output/seurat/", cluster, "-cYAPKO_response_V3_allGenes.txt")
   data <- read.delim(file_path, header = TRUE, row.names = 1)
   assign(cluster, data)
 }
+
+
+
+################## BELOW NOT MOD ##################################
+####################################################################
 
 
 ## load list of genes to test
@@ -9963,6 +9964,32 @@ write.table(gos, "output/GO/enrichR_Reactome_2022_DEG_cluster6_downUp_dotplot.tx
 
 ```
 
+
+# Upload files to GEO - cardiac paper E7
+
+Go [here](https://www.ncbi.nlm.nih.gov/geo/info/seq.html); and follow instructions in `Transfer Files`. Connect to my personal space (`uploads/thomasroule@orcid_A787EGG4`) and transfer files.
+
+- Create a clean `GEO_cardiacPaper` folder with all `*fq.gz` and `*bigwig` (re-name file so that they have same prefix; only extension differ)
+--> I copy and rename the counts (`embryo_WT_e775_mice/outs/filtered_feature_bc_matrix`) adding prefix for genotype; and simply copy the fastq from the `input/` folder
+- Fill in the `seq_template.xlsx` (`Metada` and `MD5` sheet notably)
+- submit files
+
+```bash
+# do file integrity check with md5
+md5sum * | awk '{print $2 "\t" $1}' > md5sums.txt
+
+XXX
+
+
+module load lftp
+
+# connect to ftp
+lftp -u geoftp,inAlwokhodAbnib5 ftp-private.ncbi.nlm.nih.gov # geoftp = username; inAlwokhodAbnib5 = pwd
+cd uploads/thomasroule@orcid_A787EGG4
+
+mirror -R GEO_cardiacPaper/
+
+```
 
 
 
