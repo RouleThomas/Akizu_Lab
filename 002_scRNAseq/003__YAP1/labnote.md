@@ -8647,26 +8647,9 @@ dev.off()
 
 
 ##### Figure RA terms only
-all_data = all_data %>%
+all_data_pathways_tidy = all_data %>%
   filter(Pathway %in% c("PID_RETINOIC_ACID_PATHWAY",
                         "REACTOME_SIGNALING_BY_RETINOIC_ACID"))
-                    
-XXXXX
-
-
-
-
-# REFINE COLOR
-custom_color <- function(fc_value){
-ifelse(fc_value >= 5, "dodgerblue4",
-ifelse(fc_value > 2, "lightblue2",
-ifelse(fc_value <= -5, "red3",
-ifelse(fc_value < -2, "indianred1", "grey"))))
-}
-
-# Add a column for this custom color
-all_data_pathways_tidy <- all_data %>%
-  mutate(custom_col = sapply(FC, custom_color))
 
 
 all_data_pathways_tidy$cluster <- factor(all_data_pathways_tidy$cluster, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19")) 
@@ -8687,16 +8670,117 @@ all_data_pathways_tidy$Pathway <- factor(all_data_pathways_tidy$Pathway, levels 
 
 pdf("output/Pathway/dotplot_V3_SCPA_RA_FCtresh.pdf", width=6, height=1)
 ggplot(all_data_pathways_tidy, aes(x = cluster, y = Pathway)) + 
-  geom_point(aes(size = qval, color = custom_col), pch=16, alpha=0.7) +   
-  scale_size_continuous(range = c(1, 8)) +
-  scale_color_manual(
-    values = c("grey", "indianred1", "red3", "lightblue2", "dodgerblue4"),
-    labels = custom_labels
-  ) +
+  geom_point(aes(size = qval, color = col), pch=16, alpha=0.9) +
+  scale_color_manual( values = c("dark orange", "orange") ) +  
+  scale_size_continuous(range = c(0.5, 6)) +
   theme_bw() +
-  labs(size = "q-value", color = "Fold Change") +
+  labs(size = "q-value") +
   theme(axis.text.x = element_text(angle = 90, hjust = 0.5))
 dev.off()
+
+
+pdf("output/Pathway/dotplot_V3_SCPA_RA_FCtresh_corr.pdf", width=6, height=1)
+ggplot(all_data_pathways_tidy_allClusters %>% filter(cluster %in% c("1","3","4","5","6","7","9","10")), aes(x = cluster, y = Pathway)) + 
+  geom_point(aes(size = qval, color = col), pch=16, alpha=0.9) +
+  scale_color_manual( values = c("dark orange", "orange") ) +  
+  scale_size_continuous(range = c(0.3, 6)) +
+  theme_bw() +
+  labs(size = "q-value") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 0.5))
+dev.off()
+
+
+
+
+## Add all clusters with a qval of 0
+
+additional_data <- expand.grid(
+  cluster = 1:19,
+  Pathway = c("REACTOME_SIGNALING_BY_RETINOIC_ACID", "PID_RETINOIC_ACID_PATHWAY")
+) %>%
+  mutate(
+    Pval = 1,
+    adjPval = 1,
+    qval = 0,
+    col = ifelse(Pathway == "REACTOME_SIGNALING_BY_RETINOIC_ACID", "dark orange", "orange"),
+    cluster = as.character(cluster)
+  )
+# Bind the new rows to the existing data
+all_data_pathways_tidy_allClusters <- bind_rows(all_data_pathways_tidy, additional_data)
+# --> This method is very bad as it make duplicate... I manually corrected when generated the plot; but to correct in the future..
+
+
+all_data_pathways_tidy_allClusters$cluster <- factor(all_data_pathways_tidy_allClusters$cluster, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19")) 
+
+
+pdf("output/Pathway/dotplot_V3_SCPA_RA_FCtresh_allClusters.pdf", width=8, height=1)
+ggplot(all_data_pathways_tidy_allClusters, aes(x = cluster, y = Pathway)) + 
+  geom_point(aes(size = qval, color = col), pch=16, alpha=0.9) +
+  scale_color_manual(values = c("dark orange", "orange")) +  
+  scale_size_continuous(range = c(0.3, 6)) +
+  theme_bw() +
+  labs(size = "q-value") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 0.5))
+dev.off()
+
+
+
+
+
+## Color UMAP based on qval values
+REACTOME_SIGNALING_BY_RETINOIC_ACID_qval = all_data_pathways_tidy_allClusters %>%
+  filter(Pathway == "REACTOME_SIGNALING_BY_RETINOIC_ACID") %>%
+  dplyr::select(cluster, qval) %>%
+  arrange(cluster, desc(qval)) %>%  #$$ Sort by cluster and qval in descending order
+  distinct(cluster, .keep_all = TRUE)  #$$ Keep only the first occurrence of each cluster
+
+## $$--> This part is not elegant, when adding all cluster with value of 0 for qval it create duplicate, I thus had to remove the duplicated ones...
+
+
+PID_RETINOIC_ACID_PATHWAY_qval = all_data_pathways_tidy_allClusters %>%
+  filter(Pathway == "PID_RETINOIC_ACID_PATHWAY") %>%
+  dplyr::select(cluster, qval) %>%
+  arrange(cluster, desc(qval)) %>%  #$$ Sort by cluster and qval in descending order
+  distinct(cluster, .keep_all = TRUE)  #$$ Keep only the first occurrence of each cluster
+
+
+# Add qval information to my seurat object - REACTOME_SIGNALING_BY_RETINOIC_ACID_qval
+
+cell_clusters <- embryo.combined.sct@meta.data$seurat_clusters
+names(cell_clusters) <- rownames(embryo.combined.sct@meta.data)
+
+qval_named_vector <- REACTOME_SIGNALING_BY_RETINOIC_ACID_qval$qval[match(cell_clusters, REACTOME_SIGNALING_BY_RETINOIC_ACID_qval$cluster)]
+names(qval_named_vector) <- names(cell_clusters)
+
+# Integrate qval values into the Seurat object
+embryo.combined.sct <- AddMetaData(embryo.combined.sct, metadata = qval_named_vector, col.name = "REACTOME_SIGNALING_BY_RETINOIC_ACID")
+
+# Create a UMAP plot colored by qval values
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_qval_REACTOME_SIGNALING_BY_RETINOIC_ACID_qval.pdf", width=6, height=6)
+FeaturePlot(embryo.combined.sct, features = "REACTOME_SIGNALING_BY_RETINOIC_ACID", cols = c("grey85", "dark orange"), pt.size = 0.5) & 
+  theme(legend.position = c(0.9, 0.9))
+dev.off()
+
+
+
+
+# Add qval information to my seurat object - PID_RETINOIC_ACID_PATHWAY
+
+cell_clusters <- embryo.combined.sct@meta.data$seurat_clusters
+names(cell_clusters) <- rownames(embryo.combined.sct@meta.data)
+
+qval_named_vector <- PID_RETINOIC_ACID_PATHWAY_qval$qval[match(cell_clusters, PID_RETINOIC_ACID_PATHWAY_qval$cluster)]
+names(qval_named_vector) <- names(cell_clusters)
+
+# Integrate qval values into the Seurat object
+embryo.combined.sct <- AddMetaData(embryo.combined.sct, metadata = qval_named_vector, col.name = "PID_RETINOIC_ACID_PATHWAY")
+
+# Create a UMAP plot colored by qval values
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_qval_PID_RETINOIC_ACID_PATHWAY_qval.pdf", width=6, height=6)
+FeaturePlot(embryo.combined.sct, features = "PID_RETINOIC_ACID_PATHWAY", cols = c("grey85", "orange"), pt.size = 0.5) & 
+  theme(legend.position = c(0.9, 0.9))
+dev.off()
+
 
 
 
