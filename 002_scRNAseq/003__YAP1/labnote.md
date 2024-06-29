@@ -8374,6 +8374,21 @@ pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_test_V3.pdf", width=10, height
 FeaturePlot(embryo.combined.sct, features = c("Eef1a1"), split.by = "condition",max.cutoff = 5, cols = c("grey85", "#4CAF50"))  & theme(legend.position = c(0.9,0.9))
 dev.off()
 
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_RAgenes_scale1.5_V3.pdf", width=9, height=28)
+FeaturePlot(embryo.combined.sct, features = c("Hotairm1", "Crabp2", "Rbp1", "Cyp26a1", "Aldh1a2", "Hdac1" , "Ncoa2"), split.by = "condition",max.cutoff = 1.5, cols = c("grey85", "#4CAF50"))  & theme(legend.position = c(0.9,0.9))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_RAgenes_scale2_V3.pdf", width=9, height=28)
+FeaturePlot(embryo.combined.sct, features = c("Hotairm1", "Crabp2", "Rbp1", "Cyp26a1", "Aldh1a2", "Hdac1" , "Ncoa2"), split.by = "condition",max.cutoff = 2, cols = c("grey85", "#4CAF50"))  & theme(legend.position = c(0.9,0.9))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_RAgenes_scale1_V3.pdf", width=9, height=28)
+FeaturePlot(embryo.combined.sct, features = c("Hotairm1", "Crabp2", "Rbp1", "Cyp26a1", "Aldh1a2", "Hdac1" , "Ncoa2"), split.by = "condition",max.cutoff = 1, cols = c("grey85", "#4CAF50"))  & theme(legend.position = c(0.9,0.9))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_control_cYAPKO_RAgenes_V3.pdf", width=9, height=28)
+FeaturePlot(embryo.combined.sct, features = c("Hotairm1", "Crabp2", "Rbp1", "Cyp26a1", "Aldh1a2", "Hdac1" , "Ncoa2"), split.by = "condition", cols = c("grey85", "#4CAF50"))  & theme(legend.position = c(0.9,0.9))
+dev.off()
 
 
 # Compare WT and cYAPKO using SCPA ##########################################
