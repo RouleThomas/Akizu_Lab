@@ -64,7 +64,7 @@ done < sample_name.txt
 # Fastp cleaning
 
 ```bash
-sbatch scripts/fastp_1.sh # 21520625 xxx
+sbatch scripts/fastp_1.sh # 21520625 ok
 ```
 
 
@@ -73,13 +73,13 @@ sbatch scripts/fastp_1.sh # 21520625 xxx
 
 **raw**
 ```bash
-sbatch scripts/fastqc_1_raw.sh # 21520628 xxx
+sbatch scripts/fastqc_1_raw.sh # 21520628 ok
 ```
 
 
 **Fastp-cleaned:**
 ```bash
-sbatch --dependency=afterany:21520625 scripts/fastqc_1_fastp.sh # 21520631 xxx
+sbatch --dependency=afterany:21520625 scripts/fastqc_1_fastp.sh # 21520631 ok
 ```
 
 --> all good 
@@ -94,12 +94,12 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:21520625 scripts/bowtie2_1.sh # 21520634 xxx
+sbatch --dependency=afterany:21520625 scripts/bowtie2_1.sh # 21520634 ok
 ```
 
 
  
---> XXX Looks ok; around 50-70% uniq aligned reads (70-90% total)  XXX
+--> Looks ok; around 50-70% uniq aligned reads (70-90% total) 
 
 
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX BELO NOT XXXXXXXXXXX
