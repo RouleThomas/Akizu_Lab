@@ -240,7 +240,7 @@ Let's analyse the RNA samples 1st:
 conda activate scRNAseqV2
 ```
 
-
+ 
 ```R
 # install.packages('SoupX')
 library("SoupX")
