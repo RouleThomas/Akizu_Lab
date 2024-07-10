@@ -79,7 +79,18 @@ sbatch scripts/fastqc_1_raw.sh # 21503336 ok
 sbatch --dependency=afterany:21503292 scripts/fastqc_1_fastp.sh # 21503337 ok
 ```
 
---> all good 
+--> Weird (below conclusion for IP and input):
+- Low yield (<1M vs. ~10M)
+- Sequencing issue or sample problem
+- High Ns in reads: possible degraded/low-quality DNA, low input
+- Quality drop at read ends: potential degraded DNA
+- Per tile sequence quality issues: possible flow cell overloading or dirt
+- Consider re-sequencing or consulting Illumina? Or check bioanalyzer
+
+
+Doc for (Interpretation of per tile sequence quality)[https://sequencing.qcfail.com/articles/position-specific-failures-of-flowcells/]
+
+
 
 
 # Mapping
