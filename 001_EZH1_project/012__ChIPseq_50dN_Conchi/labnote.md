@@ -80,7 +80,7 @@ sbatch --dependency=afterany:21503292 scripts/fastqc_1_fastp.sh # 21503337 ok
 ```
 
 --> Weird (below conclusion for IP and input):
-- Low yield (<1M vs. ~10M)
+- Low yield (<1M vs ~10M)
 - Sequencing issue or sample problem
 - High Ns in reads: possible degraded/low-quality DNA, low input
 - Quality drop at read ends: potential degraded DNA
