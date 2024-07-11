@@ -365,6 +365,36 @@ for (sample_name in names(seurat_objects)) {
 }
 assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
 
+
+
+
+# QC filtering _ V2
+
+### V2 not super stringeant; mit > 5 and RNAfeature 50; rb >10
+apply_qc <- function(seurat_object) {
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$Is_doublet == 'True', 'Doublet', 'Pass')
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$nFeature_RNA < 50 & seurat_object@meta.data$QC == 'Pass', 
+                                  'Low_nFeature', seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$nFeature_RNA < 50 & seurat_object@meta.data$QC != 'Pass' & seurat_object@meta.data$QC != 'Low_nFeature', 
+                                  paste('Low_nFeature', seurat_object@meta.data$QC, sep = ','), seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.mt > 5 & seurat_object@meta.data$QC == 'Pass', 
+                                  'High_MT', seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.mt > 5 & seurat_object@meta.data$QC != 'Pass' & seurat_object@meta.data$QC != 'High_MT', 
+                                  paste('High_MT', seurat_object@meta.data$QC, sep = ','), seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.rb > 10 & seurat_object@meta.data$QC == 'Pass', 
+                                  'High_RB', seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.rb > 10 & seurat_object@meta.data$QC != 'Pass' & seurat_object@meta.data$QC != 'High_RB', 
+                                  paste('High_RB', seurat_object@meta.data$QC, sep = ','), seurat_object@meta.data$QC)
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+
+
+
 #### Write QC summary
 qc_summary_list <- list()
 
@@ -379,7 +409,7 @@ for (sample_name in names(seurat_objects)) {
 qc_summary_combined <- do.call(rbind, qc_summary_list)
 
 # Write the data frame to a tab-separated text file
-write.table(qc_summary_combined, file = "output/seurat/QC_summary_V1.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+write.table(qc_summary_combined, file = "output/seurat/QC_summary_V2.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
 
 ## subset seurat object to keep cells that pass the QC
 subset_qc <- function(seurat_object) {
@@ -423,7 +453,7 @@ assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the pre
 
 # Combine all summaries into one data frame
 phase_summary_combined <- do.call(rbind, phase_summary_list)
-write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_V1.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_V2.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
 
 ## plot cell cycle
 # Calculate proportions
@@ -435,7 +465,7 @@ phase_summary_combined_tidy$Sample <- factor(phase_summary_combined_tidy$Sample,
 
 
 # Plot
-pdf("output/seurat/barPlot_CellCyclePhase_V1.pdf", width=5, height=6)
+pdf("output/seurat/barPlot_CellCyclePhase_V2.pdf", width=5, height=6)
 ggplot(phase_summary_combined_tidy, aes(x = Sample, y = Prop, fill = Var1)) +
   geom_bar(stat = "identity", position = "stack") +
   labs(x = "Genotype", y = "Proportion (%)", fill = "Cell Cycle Phase") +
@@ -472,10 +502,13 @@ RNA_WT <- SCTransform(RNA_WT, method = "glmGamPoi", ncells = 6650, vars.to.regre
 RNA_WT <- SCTransform(RNA_WT, method = "glmGamPoi", ncells = 6650, vars.to.regress = c("percent.mt","nCount_RNA"), verbose = TRUE, variable.features.n = 3000)
 
 
-RNA_WT <- RunPCA(RNA_WT, npcs = 30, verbose = FALSE)
-RNA_WT <- RunUMAP(RNA_WT, reduction = "pca", dims = 1:30, verbose = FALSE)
-RNA_WT <- FindNeighbors(RNA_WT, reduction = "pca", k.param = 15, dims = 1:30)
-RNA_WT <- FindClusters(RNA_WT, resolution = 0.4, verbose = FALSE, algorithm = 4)
+RNA_WT <- SCTransform(RNA_WT, method = "glmGamPoi", ncells = 6637, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 3000)
+
+
+RNA_WT <- RunPCA(RNA_WT, npcs = 50, verbose = FALSE)
+RNA_WT <- RunUMAP(RNA_WT, reduction = "pca", dims = 1:50, verbose = FALSE)
+RNA_WT <- FindNeighbors(RNA_WT, reduction = "pca", k.param = 60, dims = 1:50)
+RNA_WT <- FindClusters(RNA_WT, resolution = 1.2, verbose = FALSE, algorithm = 3)
 
 
 
@@ -484,26 +517,41 @@ RNA_WT <- FindClusters(RNA_WT, resolution = 0.4, verbose = FALSE, algorithm = 4)
 # pdf("output/seurat/UMAP_RNA_WT-dim30kparam15res04_allRegression_vstv2.pdf", width=8, height=5)
 # pdf("output/seurat/UMAP_RNA_WT-dim18kparam15res04_allRegression.pdf", width=8, height=5)
 # pdf("output/seurat/UMAP_RNA_WT-dim18kparam15res04_noCellCycleRegression.pdf", width=8, height=5)
+# pdf("output/seurat/UMAP_RNA_WT-dim30kparam15res04_noCellCycleNoRiboRegression.pdf", width=8, height=5)
 
-pdf("output/seurat/UMAP_RNA_WT-dim30kparam15res04_noCellCycleNoRiboRegression.pdf", width=8, height=5)
-
-
+pdf("output/seurat/UMAP_RNA_WT-QCV2_dim50kparam60res12algo3_noCellCycleRegression.pdf", width=8, height=5)
 DimPlot(RNA_WT, reduction = "umap", label=TRUE)
 dev.off()
 
 
 # Check QC metrics
 
-pdf("output/seurat/VlnPlot_QCmetrics_RNA_WT-dim18kparam15res04_noRegression.pdf", width=20, height=5)
+pdf("output/seurat/VlnPlot_QCmetrics_RNA_WT-dim50kparam30res07_noCellCycleRegression.pdf", width=20, height=5)
 VlnPlot(RNA_WT,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
   theme(plot.title = element_text(size=10))
 dev.off()
 
-pdf("output/seurat/FeaturePlot_QCmetrics_RNA_WT_Phase-dim18kparam15res04_noRegression.pdf", width=8, height=5)
+pdf("output/seurat/FeaturePlot_QCmetrics_RNA_WT_Phase-dim50kparam30res07_noCellCycleRegression.pdf", width=8, height=5)
 DimPlot(RNA_WT, group.by= "Phase") & 
   theme(plot.title = element_text(size=10))
 dev.off()  
 
+pdf("output/seurat/FeaturePlot_QCmetrics_RNA_WT_mt-allMarkersList4-dim50kparam30res07_noCellCycleRegression.pdf", width=15, height=10)
+FeaturePlot(RNA_WT, features = c("percent.mt"), cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_QCmetrics_RNA_WT_rb-allMarkersList4-dim50kparam30res07_noCellCycleRegression.pdf", width=15, height=10)
+FeaturePlot(RNA_WT, features = c("percent.rb"), cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_QCmetrics_RNA_WT_RNAfeat-allMarkersList4-dim50kparam30res07_noCellCycleRegression.pdf", width=15, height=10)
+FeaturePlot(RNA_WT, features = c("nFeature_RNA"), cols = c("grey", "red"), min.cutoff = 4000)
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_QCmetrics_RNA_WT_RNAcount-allMarkersList4-dim50kparam30res07_noCellCycleRegression.pdf", width=15, height=10)
+FeaturePlot(RNA_WT, features = c("nCount_RNA"), cols = c("grey", "red"), min.cutoff = 100)
+dev.off()
 
 # Check some genes
 
@@ -518,7 +566,7 @@ DefaultAssay(RNA_WT) <- "SCT" # For vizualization either use SCT or norm RNA
 # pdf("output/seurat/FeaturePlot_SCT_RNA_WT-allMarkersList3-dim18kparam15res04_noCellCycleRegression.pdf", width=15, height=30)
 
 
-pdf("output/seurat/FeaturePlot_SCT_RNA_WT-allMarkersList4-dim30kparam15res04_noCellCycleNoRiboRegression.pdf", width=15, height=10)
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT-allMarkersList4-QCV2_dim50kparam40res11algo3_noCellCycleRegression.pdf", width=15, height=10)
 FeaturePlot(RNA_WT, features = c("Pax6", "Eomes", "Prox1", "Neurod1", "Cck", "Crym", "Snca", "Tac2", "Pantr1", "Satb2", "Gad1", "Lhx1", "Nts"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
