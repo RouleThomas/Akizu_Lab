@@ -634,9 +634,9 @@ dev.off()
 
 ## TEST RNA regression  --> THE WINNER PRO WINNER !!! RNA regression 
 RNA_WT <- SCTransform(RNA_WT, method = "glmGamPoi", ncells = 6637, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 3000) %>% 
-    RunPCA(npcs = 50, verbose = FALSE)
+    RunPCA(npcs = 27, verbose = FALSE)
 RNA_Bap1KO <- SCTransform(RNA_Bap1KO, method = "glmGamPoi", ncells = 6938, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 3000) %>% 
-    RunPCA(npcs = 50, verbose = FALSE)
+    RunPCA(npcs = 27, verbose = FALSE)
 # Data integration (check active assay is 'SCT')
 srat.list <- list(RNA_WT = RNA_WT, RNA_Bap1KO = RNA_Bap1KO)
 features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
@@ -650,14 +650,14 @@ set.seed(42)
 
 DefaultAssay(RNA_WT_Bap1KO.sct) <- "integrated"
 
-RNA_WT_Bap1KO.sct <- RunPCA(RNA_WT_Bap1KO.sct, verbose = FALSE, npcs = 50)
-RNA_WT_Bap1KO.sct <- RunUMAP(RNA_WT_Bap1KO.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
-RNA_WT_Bap1KO.sct <- FindNeighbors(RNA_WT_Bap1KO.sct, reduction = "pca", k.param = 30, dims = 1:50)
+RNA_WT_Bap1KO.sct <- RunPCA(RNA_WT_Bap1KO.sct, verbose = FALSE, npcs = 27)
+RNA_WT_Bap1KO.sct <- RunUMAP(RNA_WT_Bap1KO.sct, reduction = "pca", dims = 1:27, verbose = FALSE)
+RNA_WT_Bap1KO.sct <- FindNeighbors(RNA_WT_Bap1KO.sct, reduction = "pca", k.param = 30, dims = 1:27)
 RNA_WT_Bap1KO.sct <- FindClusters(RNA_WT_Bap1KO.sct, resolution = 0.7, verbose = FALSE, algorithm = 4)
 
 RNA_WT_Bap1KO.sct$orig.ident <- factor(RNA_WT_Bap1KO.sct$orig.ident, levels = c("RNA_WT", "RNA_Bap1KO")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Bap1KO_noSplit-QCV2_dim50kparam30res07algo4_noCellCycleRegression.pdf", width=8, height=5)
+pdf("output/seurat/UMAP_WT_Bap1KO_noSplit-QCV2_dim27kparam30res07algo4_noCellCycleRegression.pdf", width=8, height=5)
 DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap", label=TRUE)
 dev.off()
 
@@ -666,7 +666,7 @@ dev.off()
 DefaultAssay(RNA_WT_Bap1KO.sct) <- "SCT" # For vizualization either use SCT or norm RNA
 
 
-pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-allMarkersList4-QCV2_dim50kparam30res07algo4_noCellCycleRegression
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-allMarkersList4-QCV2_dim27kparam30res07algo4_noCellCycleRegression
 .pdf", width=15, height=10)
 FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Pax6", "Eomes", "Prox1", "Neurod1", "Cck", "Crym", "Snca", "Tac2", "Pantr1", "Satb2", "Gad1", "Lhx1", "Nts"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
