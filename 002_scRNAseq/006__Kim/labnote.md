@@ -397,7 +397,6 @@ assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the pre
 
 #### Write QC summary
 qc_summary_list <- list()
-
 # Collect QC summary for each sample
 for (sample_name in names(seurat_objects)) {
   qc_summary <- table(seurat_objects[[sample_name]][['QC']])
@@ -405,11 +404,11 @@ for (sample_name in names(seurat_objects)) {
   qc_summary_df$Sample <- sample_name
   qc_summary_list[[sample_name]] <- qc_summary_df
 }
-
 qc_summary_combined <- do.call(rbind, qc_summary_list)
-
 # Write the data frame to a tab-separated text file
 write.table(qc_summary_combined, file = "output/seurat/QC_summary_V2.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+
 
 ## subset seurat object to keep cells that pass the QC
 subset_qc <- function(seurat_object) {
@@ -502,16 +501,13 @@ RNA_WT <- SCTransform(RNA_WT, method = "glmGamPoi", ncells = 6650, vars.to.regre
 RNA_WT <- SCTransform(RNA_WT, method = "glmGamPoi", ncells = 6650, vars.to.regress = c("percent.mt","nCount_RNA"), verbose = TRUE, variable.features.n = 3000)
 
 
+## Best parameter V1 (with) QCV2_ QCV2_dim50kparam70res14algo3_noCellCycleRegression)
 RNA_WT <- SCTransform(RNA_WT, method = "glmGamPoi", ncells = 6637, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 3000)
-
 
 RNA_WT <- RunPCA(RNA_WT, npcs = 50, verbose = FALSE)
 RNA_WT <- RunUMAP(RNA_WT, reduction = "pca", dims = 1:50, verbose = FALSE)
-RNA_WT <- FindNeighbors(RNA_WT, reduction = "pca", k.param = 60, dims = 1:50)
-RNA_WT <- FindClusters(RNA_WT, resolution = 1.2, verbose = FALSE, algorithm = 3)
-
-
-
+RNA_WT <- FindNeighbors(RNA_WT, reduction = "pca", k.param = 70, dims = 1:50)
+RNA_WT <- FindClusters(RNA_WT, resolution = 1.4, verbose = FALSE, algorithm = 3)
 
 # pdf("output/seurat/UMAP_RNA_WT-dim10kparam15res04_noRegression.pdf", width=8, height=5)
 # pdf("output/seurat/UMAP_RNA_WT-dim30kparam15res04_allRegression_vstv2.pdf", width=8, height=5)
@@ -519,7 +515,7 @@ RNA_WT <- FindClusters(RNA_WT, resolution = 1.2, verbose = FALSE, algorithm = 3)
 # pdf("output/seurat/UMAP_RNA_WT-dim18kparam15res04_noCellCycleRegression.pdf", width=8, height=5)
 # pdf("output/seurat/UMAP_RNA_WT-dim30kparam15res04_noCellCycleNoRiboRegression.pdf", width=8, height=5)
 
-pdf("output/seurat/UMAP_RNA_WT-QCV2_dim50kparam60res12algo3_noCellCycleRegression.pdf", width=8, height=5)
+pdf("output/seurat/UMAP_RNA_WT-QCV2_dim50kparam70res14algo3_noCellCycleRegression.pdf", width=8, height=5)
 DimPlot(RNA_WT, reduction = "umap", label=TRUE)
 dev.off()
 
@@ -566,7 +562,8 @@ DefaultAssay(RNA_WT) <- "SCT" # For vizualization either use SCT or norm RNA
 # pdf("output/seurat/FeaturePlot_SCT_RNA_WT-allMarkersList3-dim18kparam15res04_noCellCycleRegression.pdf", width=15, height=30)
 
 
-pdf("output/seurat/FeaturePlot_SCT_RNA_WT-allMarkersList4-QCV2_dim50kparam40res11algo3_noCellCycleRegression.pdf", width=15, height=10)
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT-allMarkersList4-QCV2_dim50kparam70res14algo3_noCellCycleRegression
+.pdf", width=15, height=10)
 FeaturePlot(RNA_WT, features = c("Pax6", "Eomes", "Prox1", "Neurod1", "Cck", "Crym", "Snca", "Tac2", "Pantr1", "Satb2", "Gad1", "Lhx1", "Nts"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
@@ -632,291 +629,56 @@ dev.off()
 
 
 
+# Data integration WT and Bap1KO
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# --> OPTIMAL PARAMETERS NOT FOUND YET for WT_p14_CB_Rep2 !!!
-
-## Automatic cell type annotation
-
-
-
-
-
-
-
-
-
-
-
-
-
-################### WT_p35_CB_Rep3
-WT_p35_CB_Rep3 <- SCTransform(WT_p35_CB_Rep3, method = "glmGamPoi", ncells = 14582, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000)
-WT_p35_CB_Rep3 <- RunPCA(WT_p35_CB_Rep3, npcs = 50, verbose = FALSE)
-
-## ELBOW ###########################################################################
-pdf("output/seurat/Elbow_WT_p35_CB_Rep3.pdf", width=10, height=10)
-ElbowPlot(WT_p35_CB_Rep3) # 5 or 10
-dev.off()
-########################################################################### USELESS...
-
-
-WT_p35_CB_Rep3 <- RunPCA(WT_p35_CB_Rep3, npcs = 10, verbose = FALSE)
-WT_p35_CB_Rep3 <- RunPCA(WT_p35_CB_Rep3, npcs = 10, verbose = FALSE)
-WT_p35_CB_Rep3 <- RunUMAP(WT_p35_CB_Rep3, reduction = "pca", dims = 1:10, verbose = FALSE)
-WT_p35_CB_Rep3 <- FindNeighbors(WT_p35_CB_Rep3, reduction = "pca", k.param = 15, dims = 1:10)
-WT_p35_CB_Rep3 <- FindClusters(WT_p35_CB_Rep3, resolution = 0.4, verbose = FALSE, algorithm = 4)
-
-
-pdf("output/seurat/UMAP_WT_p35_CB_Rep3-dim10kparam15res04.pdf", width=5, height=5)
-DimPlot(WT_p35_CB_Rep3, reduction = "umap", label=TRUE)
-dev.off()
-
-
-# Check QC metrics
-
-pdf("output/seurat/VlnPlot_QCmetrics_WT_p35_CB_Rep3.pdf", width=20, height=5)
-VlnPlot(WT_p35_CB_Rep3,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
-  theme(plot.title = element_text(size=10))
-dev.off()
-
-
-
-# Check some genes
-
-DefaultAssay(WT_p35_CB_Rep3) <- "SCT" # For vizualization either use SCT or norm RNA
-pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB_Rep3-Kcnc1.pdf", width=5, height=5)
-FeaturePlot(WT_p35_CB_Rep3, features = c("Kcnc1"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB_Rep3-Kozareva2021_Purkinje.pdf", width=5, height=5)
-FeaturePlot(WT_p35_CB_Rep3, features = c("Ppp1r17"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB_Rep3-Kozareva2021_Granular.pdf", width=5, height=5)
-FeaturePlot(WT_p35_CB_Rep3, features = c("Gabra6"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB_Rep3-Kozareva2021_Golgi.pdf", width=7, height=5)
-FeaturePlot(WT_p35_CB_Rep3, features = c("Slc6a5", "Grm2", "Sst"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB_Rep3-Kozareva2021_MLI1.pdf", width=7, height=5)
-FeaturePlot(WT_p35_CB_Rep3, features = c("Prkcd", "Sorcs3", "Ptprk"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB_Rep3-Kozareva2021_MLI2.pdf", width=7, height=5)
-FeaturePlot(WT_p35_CB_Rep3, features = c("Prkcd", "Nxph1", "Cdh22"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB_Rep3-Kozareva2021_PLI_3.pdf", width=10, height=5)
-FeaturePlot(WT_p35_CB_Rep3, features = c("Htr2a", "Edil3"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB_Rep3-Kozareva2021_PLI_1PLI_2.pdf", width=10, height=5)
-FeaturePlot(WT_p35_CB_Rep3, features = c("Aldh1a3", "Slc6a5"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB_Rep3-Kozareva2021_UnipolarBrush.pdf", width=5, height=5)
-FeaturePlot(WT_p35_CB_Rep3, features = c("Eomes"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB_Rep3-Kozareva2021_Bergmann.pdf", width=5, height=5)
-FeaturePlot(WT_p35_CB_Rep3, features = c("Gdf10"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-
-
-
-
-
-
-
-
-
-
-
-################### WT_p180_CB_Rep3
-WT_p180_CB_Rep3 <- SCTransform(WT_p180_CB_Rep3, method = "glmGamPoi", ncells = 14582, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000)
-WT_p180_CB_Rep3 <- RunPCA(WT_p180_CB_Rep3, npcs = 50, verbose = FALSE)
-
-## ELBOW ###########################################################################
-pdf("output/seurat/Elbow_WT_p180_CB_Rep3.pdf", width=10, height=10)
-ElbowPlot(WT_p180_CB_Rep3) # 5 8 or 10
-dev.off()
-########################################################################### USELESS...
-
-
-WT_p180_CB_Rep3 <- RunPCA(WT_p180_CB_Rep3, npcs = 10, verbose = FALSE)
-WT_p180_CB_Rep3 <- RunPCA(WT_p180_CB_Rep3, npcs = 10, verbose = FALSE)
-WT_p180_CB_Rep3 <- RunUMAP(WT_p180_CB_Rep3, reduction = "pca", dims = 1:10, verbose = FALSE)
-WT_p180_CB_Rep3 <- FindNeighbors(WT_p180_CB_Rep3, reduction = "pca", k.param = 15, dims = 1:10)
-WT_p180_CB_Rep3 <- FindClusters(WT_p180_CB_Rep3, resolution = 0.4, verbose = FALSE, algorithm = 4)
-
-
-pdf("output/seurat/UMAP_WT_p180_CB_Rep3-dim10kparam15res04.pdf", width=5, height=5)
-DimPlot(WT_p180_CB_Rep3, reduction = "umap", label=TRUE)
-dev.off()
-
-
-# Check QC metrics
-
-pdf("output/seurat/VlnPlot_QCmetrics_WT_p180_CB_Rep3.pdf", width=20, height=5)
-VlnPlot(WT_p180_CB_Rep3,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
-  theme(plot.title = element_text(size=10))
-dev.off()
-
-
-
-# Check some genes
-
-DefaultAssay(WT_p180_CB_Rep3) <- "SCT" # For vizualization either use SCT or norm RNA
-pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB_Rep3-Kcnc1.pdf", width=5, height=5)
-FeaturePlot(WT_p180_CB_Rep3, features = c("Kcnc1"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB_Rep3-Kozareva2021_Purkinje.pdf", width=5, height=5)
-FeaturePlot(WT_p180_CB_Rep3, features = c("Ppp1r17"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB_Rep3-Kozareva2021_Granular.pdf", width=5, height=5)
-FeaturePlot(WT_p180_CB_Rep3, features = c("Gabra6"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB_Rep3-Kozareva2021_Golgi.pdf", width=7, height=5)
-FeaturePlot(WT_p180_CB_Rep3, features = c("Slc6a5", "Grm2", "Sst"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB_Rep3-Kozareva2021_MLI1.pdf", width=7, height=5)
-FeaturePlot(WT_p180_CB_Rep3, features = c("Prkcd", "Sorcs3", "Ptprk"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB_Rep3-Kozareva2021_MLI2.pdf", width=7, height=5)
-FeaturePlot(WT_p180_CB_Rep3, features = c("Prkcd", "Nxph1", "Cdh22"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB_Rep3-Kozareva2021_PLI_3.pdf", width=10, height=5)
-FeaturePlot(WT_p180_CB_Rep3, features = c("Htr2a", "Edil3"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB_Rep3-Kozareva2021_PLI_1PLI_2.pdf", width=10, height=5)
-FeaturePlot(WT_p180_CB_Rep3, features = c("Aldh1a3", "Slc6a5"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB_Rep3-Kozareva2021_UnipolarBrush.pdf", width=5, height=5)
-FeaturePlot(WT_p180_CB_Rep3, features = c("Eomes"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB_Rep3-Kozareva2021_Bergmann.pdf", width=5, height=5)
-FeaturePlot(WT_p180_CB_Rep3, features = c("Gdf10"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Integrate the Bio Rep
-
-# clustering
-## Optimal parameter 50 dim
-WT_p14_CB_Rep1 <- SCTransform(WT_p14_CB_Rep1, method = "glmGamPoi", ncells = 12877, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+## TEST RNA regression  --> THE WINNER PRO WINNER !!! RNA regression 
+RNA_WT <- SCTransform(RNA_WT, method = "glmGamPoi", ncells = 6637, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 3000) %>% 
     RunPCA(npcs = 50, verbose = FALSE)
-WT_p14_CB_Rep2 <- SCTransform(WT_p14_CB_Rep2, method = "glmGamPoi", ncells = 13576, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
+RNA_Bap1KO <- SCTransform(RNA_Bap1KO, method = "glmGamPoi", ncells = 6938, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 3000) %>% 
     RunPCA(npcs = 50, verbose = FALSE)
-WT_p14_CB_Rep3 <- SCTransform(WT_p14_CB_Rep3, method = "glmGamPoi", ncells = 13420, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
-    RunPCA(npcs = 50, verbose = FALSE)
-
 # Data integration (check active assay is 'SCT')
-srat.list <- list(WT_p14_CB_Rep1 = WT_p14_CB_Rep1, WT_p14_CB_Rep2 = WT_p14_CB_Rep2, WT_p14_CB_Rep3 = WT_p14_CB_Rep3)
+srat.list <- list(RNA_WT = RNA_WT, RNA_Bap1KO = RNA_Bap1KO)
 features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
 srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
-WT_p14_CB.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+
+embryo.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
     anchor.features = features)
-WT_p14_CB.sct <- IntegrateData(anchorset = WT_p14_CB.anchors, normalization.method = "SCT")
+RNA_WT_Bap1KO.sct <- IntegrateData(anchorset = embryo.anchors, normalization.method = "SCT")
+
 set.seed(42)
-DefaultAssay(WT_p14_CB.sct) <- "integrated"
-WT_p14_CB.sct <- RunPCA(WT_p14_CB.sct, verbose = FALSE, npcs = 50)
-WT_p14_CB.sct <- RunUMAP(WT_p14_CB.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
-WT_p14_CB.sct <- FindNeighbors(WT_p14_CB.sct, reduction = "pca", k.param = 15, dims = 1:50)
-WT_p14_CB.sct <- FindClusters(WT_p14_CB.sct, resolution = 0.4, verbose = FALSE, algorithm = 4)
 
+DefaultAssay(RNA_WT_Bap1KO.sct) <- "integrated"
 
-pdf("output/seurat/UMAP_WT_p14_CB_splitOrigIdent.pdf", width=12, height=4)
-DimPlot(WT_p14_CB.sct, reduction = "umap", split.by = "orig.ident", label=TRUE)
-dev.off()
-pdf("output/seurat/UMAP_WT_p14_CB.pdf", width=12, height=4)
-DimPlot(WT_p14_CB.sct, reduction = "umap", label=TRUE)
-dev.off()
-pdf("output/seurat/UMAP_WT_p14_CB_groupOrigIdent.pdf", width=12, height=4)
-DimPlot(WT_p14_CB.sct, reduction = "umap", group.by = "orig.ident" , label=TRUE)
-dev.off()
+RNA_WT_Bap1KO.sct <- RunPCA(RNA_WT_Bap1KO.sct, verbose = FALSE, npcs = 50)
+RNA_WT_Bap1KO.sct <- RunUMAP(RNA_WT_Bap1KO.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
+RNA_WT_Bap1KO.sct <- FindNeighbors(RNA_WT_Bap1KO.sct, reduction = "pca", k.param = 30, dims = 1:50)
+RNA_WT_Bap1KO.sct <- FindClusters(RNA_WT_Bap1KO.sct, resolution = 0.7, verbose = FALSE, algorithm = 4)
 
-# Check QC metrics
+RNA_WT_Bap1KO.sct$orig.ident <- factor(RNA_WT_Bap1KO.sct$orig.ident, levels = c("RNA_WT", "RNA_Bap1KO")) # Reorder untreated 1st
 
-pdf("output/seurat/VlnPlot_QCmetrics_WT_p14_CB.pdf", width=25, height=5)
-VlnPlot(srat_WT,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
-  theme(plot.title = element_text(size=10))
+pdf("output/seurat/UMAP_WT_Bap1KO_noSplit-QCV2_dim50kparam30res07algo4_noCellCycleRegression.pdf", width=8, height=5)
+DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap", label=TRUE)
 dev.off()
 
 
 
+DefaultAssay(RNA_WT_Bap1KO.sct) <- "SCT" # For vizualization either use SCT or norm RNA
 
 
-
-
-
-
-# Check some genes
-
-DefaultAssay(WT_p14_CB.sct) <- "SCT" # For vizualization either use SCT or norm RNA
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-Kcnc1.pdf", width=5, height=5)
-FeaturePlot(WT_p14_CB.sct, features = c("Kcnc1"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-Kozareva2021_Purkinje.pdf", width=5, height=5)
-FeaturePlot(WT_p14_CB.sct, features = c("Ppp1r17"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-Kozareva2021_Granular.pdf", width=5, height=5)
-FeaturePlot(WT_p14_CB.sct, features = c("Gabra6"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-Kozareva2021_Golgi.pdf", width=7, height=5)
-FeaturePlot(WT_p14_CB.sct, features = c("Slc6a5", "Grm2", "Sst"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-Kozareva2021_MLI1.pdf", width=7, height=5)
-FeaturePlot(WT_p14_CB.sct, features = c("Prkcd", "Sorcs3", "Ptprk"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-Kozareva2021_MLI2.pdf", width=7, height=5)
-FeaturePlot(WT_p14_CB.sct, features = c("Prkcd", "Nxph1", "Cdh22"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-Kozareva2021_PLI_3.pdf", width=7, height=5)
-FeaturePlot(WT_p14_CB.sct, features = c("Htr2a", "Edil3"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-Kozareva2021_PLI_1PLI_2.pdf", width=7, height=5)
-FeaturePlot(WT_p14_CB.sct, features = c("Aldh1a3", "Slc6a5"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-Kozareva2021_UnipolarBrush.pdf", width=5, height=5)
-FeaturePlot(WT_p14_CB.sct, features = c("Eomes"), max.cutoff = 5, cols = c("grey", "red"))
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-Kozareva2021_Bergmann.pdf", width=5, height=5)
-FeaturePlot(WT_p14_CB.sct, features = c("Gdf10"), max.cutoff = 5, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-allMarkersList4-QCV2_dim50kparam30res07algo4_noCellCycleRegression
+.pdf", width=15, height=10)
+FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Pax6", "Eomes", "Prox1", "Neurod1", "Cck", "Crym", "Snca", "Tac2", "Pantr1", "Satb2", "Gad1", "Lhx1", "Nts"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
 
 
+
+
+
+pdf("output/seurat/UMAP_WT_Bap1KO_split_V1.pdf", width=8, height=6)
+DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap", split.by = "orig.ident", label=TRUE)
+dev.off()
 
 
 
