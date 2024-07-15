@@ -632,14 +632,13 @@ dev.off()
 # Data integration WT and Bap1KO
 
 
-## TEST RNA regression  --> THE WINNER PRO WINNER !!! RNA regression 
-RNA_WT <- SCTransform(RNA_WT, method = "glmGamPoi", ncells = 6637, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 3000) %>% 
-    RunPCA(npcs = 27, verbose = FALSE)
-RNA_Bap1KO <- SCTransform(RNA_Bap1KO, method = "glmGamPoi", ncells = 6938, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 3000) %>% 
-    RunPCA(npcs = 27, verbose = FALSE)
+RNA_WT <- SCTransform(RNA_WT, method = "glmGamPoi", ncells = 6637, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 2000) %>% 
+    RunPCA(npcs = 20, verbose = FALSE)
+RNA_Bap1KO <- SCTransform(RNA_Bap1KO, method = "glmGamPoi", ncells = 6938, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 2000) %>% 
+    RunPCA(npcs = 20, verbose = FALSE)
 # Data integration (check active assay is 'SCT')
 srat.list <- list(RNA_WT = RNA_WT, RNA_Bap1KO = RNA_Bap1KO)
-features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 2000)
 srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
 
 embryo.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
@@ -650,14 +649,14 @@ set.seed(42)
 
 DefaultAssay(RNA_WT_Bap1KO.sct) <- "integrated"
 
-RNA_WT_Bap1KO.sct <- RunPCA(RNA_WT_Bap1KO.sct, verbose = FALSE, npcs = 27)
-RNA_WT_Bap1KO.sct <- RunUMAP(RNA_WT_Bap1KO.sct, reduction = "pca", dims = 1:27, verbose = FALSE)
-RNA_WT_Bap1KO.sct <- FindNeighbors(RNA_WT_Bap1KO.sct, reduction = "pca", k.param = 30, dims = 1:27)
-RNA_WT_Bap1KO.sct <- FindClusters(RNA_WT_Bap1KO.sct, resolution = 0.7, verbose = FALSE, algorithm = 4)
+RNA_WT_Bap1KO.sct <- RunPCA(RNA_WT_Bap1KO.sct, verbose = FALSE, npcs = 20)
+RNA_WT_Bap1KO.sct <- RunUMAP(RNA_WT_Bap1KO.sct, reduction = "pca", dims = 1:20, verbose = FALSE)
+RNA_WT_Bap1KO.sct <- FindNeighbors(RNA_WT_Bap1KO.sct, reduction = "pca", k.param = 70, dims = 1:20)
+RNA_WT_Bap1KO.sct <- FindClusters(RNA_WT_Bap1KO.sct, resolution = 0.9, verbose = FALSE, algorithm = 4)
 
 RNA_WT_Bap1KO.sct$orig.ident <- factor(RNA_WT_Bap1KO.sct$orig.ident, levels = c("RNA_WT", "RNA_Bap1KO")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Bap1KO_noSplit-QCV2_dim27kparam30res07algo4_noCellCycleRegression.pdf", width=8, height=5)
+pdf("output/seurat/UMAP_WT_Bap1KO_noSplit-QCV2_dim20kparam70res09algo4feat2500_noCellCycleRegression.pdf", width=8, height=5)
 DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap", label=TRUE)
 dev.off()
 
@@ -666,7 +665,7 @@ dev.off()
 DefaultAssay(RNA_WT_Bap1KO.sct) <- "SCT" # For vizualization either use SCT or norm RNA
 
 
-pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-allMarkersList4-QCV2_dim27kparam30res07algo4_noCellCycleRegression
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-allMarkersList4-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
 .pdf", width=15, height=10)
 FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Pax6", "Eomes", "Prox1", "Neurod1", "Cck", "Crym", "Snca", "Tac2", "Pantr1", "Satb2", "Gad1", "Lhx1", "Nts"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
@@ -680,6 +679,139 @@ pdf("output/seurat/UMAP_WT_Bap1KO_split_V1.pdf", width=8, height=6)
 DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap", split.by = "orig.ident", label=TRUE)
 dev.off()
 
+
+
+
+
+## V1 naming
+
+Cluster1 = PyNs_SubC_CA1 (subiculum PyNs)
+Cluster2 = PyNs_SubC_CA23_1 (subiculum PyNs)
+Cluster3 = PyNs_RSC_ML (Retrosplenial Cortical Pyramidal neurons, middle layer)
+Cluster4 = IN_1 (interneuron)
+Cluster5 = PyNs_RSC_UL (Retrosplenial Cortical Pyramidal neurons, upper layer)
+Cluster6 = PyNs_SubC_CA23_2 (subiculum PyNs)
+Cluster7 = DG_GC (Dentate Gyrus granule cells)
+Cluster8 = NSC_1 (Neural Stem Cells)
+Cluster9 = IN_2 (interneuron)
+Cluster10 = SubC_1 (subiculum)
+Cluster11 = NSC_2 (Neural Stem Cells)
+Cluster12 = IP (Intermediate Progenitors)
+Cluster13 = NSC_3 (Neural Stem Cells)
+Cluster14 = Unknown_1
+Cluster15 = SubC_2 (subiculum)
+Cluster16 = CR (Cajal Retzius)
+Cluster17 = PyNs_RSC_DL (Retrosplenial Cortical Pyramidal neurons, deep layer)
+Cluster18 = Unknown_2
+Cluster19 = Unknown_3
+
+
+
+
+
+new.cluster.ids <- c(
+  "PyNs_SubC_CA1" ,
+  "PyNs_SubC_CA23_1" ,
+  "PyNs_RSC_ML" ,
+  "IN_1" ,
+  "PyNs_RSC_UL" ,
+  "PyNs_SubC_CA23_2" ,
+  "DG_GC" ,
+  "NSC_1" ,
+  "IN_2" ,
+  "SubC_1" ,
+  "NSC_2" ,
+  "IP" ,
+  "NSC_3" ,
+  "Unknown_1" ,
+  "SubC_2" ,
+  "CR" ,
+  "PyNs_RSC_DL" ,
+  "Unknown_2",
+  "Unknown_3" 
+)
+
+names(new.cluster.ids) <- levels(RNA_WT_Bap1KO.sct)
+RNA_WT_Bap1KO.sct <- RenameIdents(RNA_WT_Bap1KO.sct, new.cluster.ids)
+
+RNA_WT_Bap1KO.sct$cluster.annot <- Idents(RNA_WT_Bap1KO.sct) # create a new slot in my seurat object
+
+
+pdf("output/seurat/UMAP_WT_Bap1KO_label_V1.pdf", width=12, height=6)
+DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap", split.by = "orig.ident", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+dev.off()
+
+
+pdf("output/seurat/UMAP_WT_Bap1KO_noSplit_label_V1.pdf", width=7, height=5)
+DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 4)
+dev.off()
+
+
+
+#overlapping orig.ident
+pdf("output/seurat/UMAP_WT_Bap1KO_label_overlap_V1.pdf", width=6, height=5)
+DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap", group.by = "orig.ident", pt.size = 0.000001, cols = c("blue","red"))
+dev.off()
+
+
+# All in dotplot
+DefaultAssay(RNA_WT_Bap1KO.sct) <- "SCT"
+
+CA1 = Cck
+CA3 = Crym, Snca
+Pyramidal neurons middle layer (ML) = Pantr1
+Interneurons (IN) = Gad1
+Pyramidal neurons upper layer (UL) = Satb2
+Dentate Gyrus Granule Cells (DG) = Prox1, Neurod1
+Neural Stem Cells (NSC) = Pax6 (should have more cell types)
+Subiculum (SubC) = Nts
+Intermediate Progenitors (IP) = Eomes
+Cajal Retzius (CR) = Lhx1
+Pyramidal neurons deep layer (DL) = Tac2
+
+all_markers <- c(
+  "Pax6" ,
+  "Eomes",
+  "Prox1", "Neurod1",
+  "Tac2",
+  "Pantr1",
+  "Satb2",
+  "Nts",
+  "Cck",
+  "Crym", "Snca",
+  "Gad1",
+  "Lhx1"
+)
+
+
+
+levels(RNA_WT_Bap1KO.sct) <- c(
+  "NSC_1" ,
+  "NSC_2" ,
+  "NSC_3" ,
+  "IP" ,
+  "DG_GC" ,
+  "PyNs_RSC_DL" ,
+  "PyNs_RSC_ML" ,
+  "PyNs_RSC_UL" ,
+  "SubC_1" ,
+  "SubC_2" ,
+  "PyNs_SubC_CA1" ,
+  "PyNs_SubC_CA23_1" ,
+  "PyNs_SubC_CA23_2" ,
+  "IN_1" ,
+  "IN_2" ,
+  "CR" ,
+  "Unknown_1" ,
+  "Unknown_2",
+  "Unknown_3" 
+)
+
+
+
+pdf("output/seurat/DotPlot_SCT_WT_Bap1KO_label_V1.pdf", width=7, height=4.5)
+DotPlot(RNA_WT_Bap1KO.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
 
 
 
