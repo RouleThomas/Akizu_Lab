@@ -719,6 +719,48 @@ pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-glutaminergicMarkers-QCV2_dim16
 FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Slc17a7", "Slc17a6", "Slc17a8", "Slc1a1", "Gls", "Meis2", "Slc1a6", "Grin1", "Grin2b"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-OPCMarkers-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
+.pdf", width=15, height=10)
+FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Pdgfra", "Aldoc", "Olig1", "Epn2", "Neu4", "Nkx6-2", "Fyn", "Tnr", "Pcdh15"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-oligodendrocyteMarkers-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
+.pdf", width=15, height=10)
+FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Mog", "Mbp", "Mag", "Cldn14", "Klk6", "Eml1", "Nipal4", "Plp1", "Ermn"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-mossyCellsMarkers-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
+.pdf", width=15, height=10)
+FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Calb1", "Reln", "Gad1", "Slc17a6", "Npy", "Gria2", "Gria3"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-interneuronMarkers-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
+.pdf", width=15, height=10)
+FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Pvalb", "Cck", "Npy", "Nos1", "Sst", "Vip", "Fgf12", "Nxph11", "Kcnc2", "Calb2", "Calb1"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-interneuron1Markers-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
+.pdf", width=15, height=10)
+FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Vsx2", "En1", "Etv1", "Evx1", "Gad1", "Isl1", "Lhx1", "Lhx5", "Lhx3", "Lhx6", "Grm1", "Grin2d"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-Pax6Tbr2Prox1-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
+.pdf", width=15, height=10)
+FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Pax6", "Eomes", "Prox1"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-Bap1Pax6Eomes-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
+.pdf", width=10, height=10)
+FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Bap1", "Pax6", "Eomes"), max.cutoff = 1, cols = c("grey", "red"), split.by = "orig.ident")
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-Bap1complex-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
+.pdf", width=10, height=35)
+FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Ogt", "Hcfc1", "Foxk1", "Foxk2", "Yy1", "Bap1", "Mbd5", "Mbd6", "Asxl1", "Asxl2", "Asxl3"),cols = c("grey", "red"), split.by = "orig.ident", max.cutoff = 2 )
+dev.off()
 
 
 pdf("output/seurat/UMAP_WT_Bap1KO_numeric_V1.pdf", width=12, height=6)
@@ -1100,7 +1142,7 @@ cluster17 <- FindMarkers(RNA_WT_Bap1KO.sct, ident.1 = "17-RNA_Bap1KO", ident.2 =
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-cluster18 <- FindMarkers(embryo.combined.sct, ident.1 = "18-RNA_Bap1KO", ident.2 = "18-RNA_WT",
+cluster18 <- FindMarkers(RNA_WT_Bap1KO.sct, ident.1 = "18-RNA_Bap1KO", ident.2 = "18-RNA_WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
@@ -1115,8 +1157,6 @@ cluster19 <- FindMarkers(RNA_WT_Bap1KO.sct, ident.1 = "19-RNA_Bap1KO", ident.2 =
     min.diff.pct = -Inf, # 
     assay = "RNA")  
 
-
-XXX 
 
 ### save output
 ## write.table(cluster1, file = "output/seurat/cluster1-Bap1KO_response_V1_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
@@ -1166,7 +1206,7 @@ for (cluster in cluster_types) {
 DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
 
 ## List of cell types
-cell_types <- c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19")
+cell_types <- c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19")
 
 ## Loop through each cell type to count the number of significant DEGs
 for (cell_type in cell_types) {
@@ -1176,43 +1216,28 @@ for (cell_type in cell_types) {
   DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
 }
 
-## Display the summary table
-DEG_count =   rbind(DEG_count, data.frame(Cell_Type = 19, Num_DEGs = 0))
+
+DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19")) 
+
+DEG_count$Cluster_Number <- as.numeric(sub("cluster", "", DEG_count$Cell_Type))
+
+DEG_count$Cluster_Number <- factor(DEG_count$Cluster_Number, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19")) 
+
 
 ## Dotplot
-DEG_count= DEG_count %>%
-  mutate(Cell_Type = factor(Cell_Type, levels = c("1",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-  "10",
-  "11",
-  "12",
-  "13",
-  "14",
-  "15",
-  "16",
-  "17",
-  "18",
-  "19") ) ) 
 
 cell_type_colors <- c(
-  "1" = "#FFB6C1", "2" = "#FFA07A", "3" = "#FFD700", "4" = "#ADFF2F", 
-  "5" = "#7FFF00", "6" = "#32CD32", "7" = "#3CB371", "8" = "#00FA9A", 
-  "9" = "#00CED1", "10" = "#4682B4", "11" = "#1E90FF", "12" = "#6495ED", 
-  "13" = "#4169E1", "14" = "#BA55D3", "15" = "#DA70D6", "16" = "#EE82EE", 
-  "17" = "#FF69B4", "18" = "#FF1493", "19" = "#DB7093"
+  "cluster1" = "#FFB6C1", "cluster2" = "#FFA07A", "cluster3" = "#FFD700", "cluster4" = "#ADFF2F", 
+  "cluster5" = "#7FFF00", "cluster6" = "#32CD32", "cluster7" = "#3CB371", "cluster8" = "#00FA9A", 
+  "cluster9" = "#00CED1", "cluster10" = "#4682B4", "cluster11" = "#1E90FF", "cluster12" = "#6495ED", 
+  "cluster13" = "#4169E1", "cluster14" = "#BA55D3", "cluster15" = "#DA70D6", "cluster16" = "#EE82EE", 
+  "cluster17" = "#FF69B4", "cluster18" = "#FF1493", "cluster19" = "#DB7093"
 )
 
 # Generate the dot plot
-pdf("output/seurat/Dotplot_DEG_count_V1.pdf", width=9, height=4)
-ggplot(DEG_count, aes(x = Cell_Type, y = 1)) +
-  geom_point(aes(size = ifelse(Num_DEGs == 0, 1, Num_DEGs), fill = Cell_Type), shape = 21, color = "black") +
+pdf("output/seurat/Dotplot_Bap1KO_DEG_count_V1.pdf", width=9, height=4)
+ggplot(DEG_count, aes(x = Cluster_Number, y = 1) )+
+  geom_point(aes(size = ifelse(Num_DEGs == 0, 1, Num_DEGs), fill = Cell_Type) , shape = 21, color = "black") +
   scale_size_continuous(range = c(1, 15)) +
   scale_fill_manual(values = cell_type_colors, guide = "none") +  # Remove the legend for cell types
   theme_void() +
@@ -1233,31 +1258,32 @@ dev.off()
 
 ### Find all markers 
 all_markers <- FindAllMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
-write.table(all_markers, file = "output/seurat/srat_WT_cYAPKO_all_markers_V3.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+write.table(all_markers, file = "output/seurat/srat_WT_Bap1KO_all_markers_V1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 # Display the top 10 CONSERVED marker genes of each cluster
 Idents(RNA_WT_Bap1KO.sct) <- "seurat_clusters"
 
 ## DEGs cluster versus all other
-cluster1.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "1", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "cluster1")
-cluster2.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "2", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "cluster2")
-cluster3.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "3", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "cluster3")
-cluster4.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "4", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "cluster4")
-cluster5.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "5", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "cluster5")
-cluster6.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "6", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "cluster6")
-cluster7.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "7", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "cluster7")
-cluster8.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "8", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "cluster8")
-cluster9.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "9", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "cluster9")
-cluster10.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "10", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "cluster10")
-cluster11.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "11", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "cluster11")
-cluster12.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "12", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "cluster12")
-cluster13.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "13", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "cluster13")
-cluster14.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "14", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "cluster14")
-cluster15.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "15", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "cluster15")
-cluster16.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "16", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "cluster16")
-cluster17.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "17", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "cluster17")
-cluster18.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "18", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "cluster18")
-cluster19.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "19", grouping.var = "condition", verbose = TRUE) %>% mutate(cluster = "cluster19")
+cluster1.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "1", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster1")
+cluster2.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "2", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster2")
+cluster3.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "3", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster3")
+cluster4.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "4", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster4")
+cluster5.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "5", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster5")
+cluster6.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "6", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster6")
+cluster7.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "7", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster7")
+cluster8.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "8", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster8")
+cluster9.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "9", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster9")
+cluster10.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "10", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster10")
+cluster11.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "11", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster11")
+cluster12.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "12", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster12")
+cluster13.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "13", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster13")
+cluster14.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "14", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster14")
+cluster15.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "15", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster15")
+cluster16.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "16", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster16")
+cluster17.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "17", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster17")
+cluster18.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "18", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster18")
+cluster19.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "19", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster19")
 
 
 ## Combine all conserved markers into one data frame
@@ -1265,103 +1291,20 @@ all_conserved <- bind_rows(cluster1.conserved,cluster2.conserved,cluster3.conser
 
 all_conserved$gene <- rownames(all_conserved)
 ## Write all conserved markers to a file
-write.table(all_conserved, file = "output/seurat/srat_all_conserved_markers_embryo_V3.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-## Find the top 10 conserved markers for each cluster
+write.table(all_conserved, file = "output/seurat/srat_all_conserved_markers_WT_Bap1KO_V1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+## Find the top 5 conserved markers for each cluster
 top10_conserved <- all_conserved %>%
-  mutate(cluster = factor(cluster, levels = c("1",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-  "10",
-  "11",
-  "12",
-  "13",
-  "14",
-  "15",
-  "16",
-  "17",
-  "18",
-  "19"))) %>% 
+  mutate(cluster = factor(cluster, levels = c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19"))) %>% 
   separate(gene, into = c("gene", "suffix"), sep = "\\.\\.\\.", remove = TRUE, extra = "drop", fill = "right") %>% 
   group_by(cluster) %>% 
   arrange((max_pval)) %>% 
-  slice_head(n = 10) %>% 
+  slice_head(n = 5) %>% 
   ungroup() %>% 
-  arrange(match(cluster, c("1",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-  "10",
-  "11",
-  "12",
-  "13",
-  "14",
-  "15",
-  "16",
-  "17",
-  "18",
-  "19")))
-
-## Find the top 3 conserved markers for each cluster
-top10_conserved <- all_conserved %>%
-  mutate(cluster = factor(cluster, levels = c("1",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-  "10",
-  "11",
-  "12",
-  "13",
-  "14",
-  "15",
-  "16",
-  "17",
-  "18",
-  "19"))) %>% 
-  separate(gene, into = c("gene", "suffix"), sep = "\\.\\.\\.", remove = TRUE, extra = "drop", fill = "right") %>% 
-  group_by(cluster) %>% 
-  arrange((max_pval)) %>% 
-  slice_head(n = 3) %>% 
-  ungroup() %>% 
-  arrange(match(cluster, c("1",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-  "10",
-  "11",
-  "12",
-  "13",
-  "14",
-  "15",
-  "16",
-  "17",
-  "18",
-  "19")))
-
+  arrange(match(cluster, c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19")))
 
 
 ## Write the top 10 conserved markers for each cluster to a file
-write.table(top10_conserved, file = "output/seurat/srat_top10_conserved_markers_embryo_V3.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
 ## Visualize the top 10/3 conserved markers for each cluster
 marker_genes_conserved <- unique(top10_conserved$gene)
 levels(RNA_WT_Bap1KO.sct) <- c("1",
@@ -1384,25 +1327,17 @@ levels(RNA_WT_Bap1KO.sct) <- c("1",
   "18",
   "19")
 
-pdf("output/seurat/DotPlot_SCT_top3_conserved_embryo_V3.pdf", width=18, height=5)
+pdf("output/seurat/DotPlot_SCT_top5_conserved_WT_Bap1KO_V1.pdf", width=19, height=5)
 DotPlot(RNA_WT_Bap1KO.sct, features = marker_genes_conserved, cols = c("grey", "red")) + RotatedAxis()
 dev.off()
 
 
 # save
-## saveRDS(RNA_WT_Bap1KO.sct, file = "output/seurat/RNA_WT_Bap1KO.sct_V3.rds") sct_V2clust
-
-
-RNA_WT_Bap1KO.sct <- readRDS(file = "output/seurat/RNA_WT_Bap1KO.sct_V3.rds")
+## saveRDS(RNA_WT_Bap1KO.sct, file = "output/seurat/RNA_WT_Bap1KO.sct_V1_numeric.rds") 
 
 
 
-
-
-
-
-
-
+RNA_WT_Bap1KO.sct <- readRDS(file = "output/seurat/RNA_WT_Bap1KO.sct_V1_numeric.rds")
 
 
 
@@ -1415,10 +1350,10 @@ library("org.Mm.eg.db")
 library("AnnotationDbi")
 
 ## load marker
-all_markers <- read.delim("output/seurat/srat_WT_cYAPKO_all_markers.txt", header = TRUE, row.names = 1)
+all_markers <- read.delim("output/seurat/srat_WT_Bap1KO_all_markers_V1.txt", header = TRUE, row.names = 1)
 ### Filter either WT or cYAPKO
-all_markers <- all_markers[grepl("WT$", all_markers$cluster), ]
-all_markers <- all_markers[grepl("cYAPKO$", all_markers$cluster), ]
+all_markers <- all_markers[grepl("RNA_WT$", all_markers$cluster), ]
+all_markers <- all_markers[grepl("RNA_Bap1KO$", all_markers$cluster), ]
 
 ## Convert geneSymbol to EntrezID
 all_markers$entrezid <- mapIds(org.Mm.eg.db,
@@ -1438,44 +1373,35 @@ all_markers_sort <- data.frame(gene=all_markers$entrezid, cluster=all_markers$cl
 input.d <- as.data.frame(all_markers_sort[, 1:3])
 
 ## Run the enrihcment analysis
-annot.GSEA <- easyct(input.d, db="cellmarker", # cellmarker or Panglaodb or Clustermole
+annot.GSEA <- easyct(input.d, db="panglao", # cellmarker or panglao or clustermole
                     species="Mouse", #  Human or Mouse
-                    tissue=c("Embryo"), p_cut=0.3,   # many other tissue available
-                    test="GSEA")    # GSEA or Fisher?
+                    tissue=NULL, p_cut=0.5,   # to see: data(cellmarker_tissue), data(clustermole_tissue), data(panglao_tissue)
+                    test="GSEA")    # GSEA or fisher?
 
 
-annot.GSEA <- easyct(input.d, db="cellmarker", # cellmarker or Panglaodb or Clustermole
+annot.GSEA <- easyct(input.d, db="cellmarker", # cellmarker or panglao or clustermole
                     species="Mouse", #  Human or Mouse
-                    tissue=c("Embryo", "Embryoid body", "Embryonic stem cell", "Embryonic heart"), p_cut=0.3,   # many other tissue available
-                    test="GSEA")    # GSEA or Fisher?
+                    tissue=c("Brain", "Cerebellum", "Hippocampus"), p_cut=0.5,   # to see: data(cellmarker_tissue), data(clustermole_tissue), data(panglao_tissue)
+                    test="GSEA")    # GSEA or fisher?
 
+
+
+annot.GSEA <- easyct(input.d, db="clustermole", # cellmarker or panglao or clustermole
+                    species="Mouse", #  Human or Mouse
+                    tissue=c("Brain"), p_cut=0.5,   # to see: data(cellmarker_tissue), data(clustermole_tissue), data(panglao_tissue)
+                    test="GSEA")    # GSEA or fisher?
 
 ## plots
-pdf("output/seurat/EasyCellType_dotplot_SCT_cYAPKO.pdf", width=10, height=5)
-pdf("output/seurat/EasyCellType_dotplot_SCT_control.pdf", width=6, height=5)
-pdf("output/seurat/EasyCellType_dotplot_SCT_control_noTissue.pdf", width=6, height=8)
-pdf("output/seurat/EasyCellType_dotplot_SCT_control_clustermole.pdf", width=6, height=8)
-pdf("output/seurat/EasyCellType_dotplot_SCT_control_allEmbryoTissue.pdf", width=6, height=5)
+
+pdf("output/seurat/EasyCellType_dotplot_SCT_WT-cellmarker_brainCerebellumHippocampus.pdf", width=6, height=8)
+pdf("output/seurat/EasyCellType_dotplot_SCT_WT-clustermole_brain.pdf", width=6, height=8)
+
 plot_dot(test="GSEA", annot.GSEA) + 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 dev.off()
 
 
-annot.GSEA <- easyct(input.d, db="cellmarker", # cellmarker or Panglaodb or Clustermole
-                    species="Mouse", #  Human or Mouse
-                    tissue=c("Embryo"),   # many other tissue available
-                    test="fisher")    # GSEA or fisher
 
-pdf("output/seurat/EasyCellType_dotplot_SCT_control_fisher.pdf", width=6, height=8)
-plot_dot(test="fisher", annot.GSEA) + 
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-dev.off()
-
-
-
-pdf("output/seurat/EasyCellType_barplot_SCT_control_cYAPKO.pdf", width=10, height=5)
-plot_bar(test="GSEA", annot.GSEA)
-dev.off()
 
 
 ##########################################################################################
@@ -1484,5 +1410,192 @@ dev.off()
 
 
 
+############ V2 naming
+
+Cluster1 = PyNs_SubC_CA1 (subiculum PyNs)
+Cluster2 = PyNs_SubC_CA23_1 (subiculum PyNs)
+Cluster3 = PyNs_RSC_ML (Retrosplenial Cortical Pyramidal neurons, middle layer)
+Cluster4 = IN_1 (interneuron)
+Cluster5 = PyNs_RSC_UL (Retrosplenial Cortical Pyramidal neurons, upper layer)
+Cluster6 = PyNs_SubC_CA23_2 (subiculum PyNs)
+Cluster7 = DG_GC (Dentate Gyrus granule cells)
+Cluster8 = NSC_1 (Neural Stem Cells)
+Cluster9 = IN_2 (interneuron)
+Cluster10 = SubC_1 (subiculum)
+Cluster11 = NSC_2 (Neural Stem Cells)
+Cluster12 = IP (Intermediate Progenitors)
+Cluster13 = NSC_3 (Neural Stem Cells)
+Cluster14 = OPC (Oligodendrocyte progenitor cells)
+Cluster15 = SubC_2 (subiculum)
+Cluster16 = CR (Cajal Retzius)
+Cluster17 = PyNs_RSC_DL (Retrosplenial Cortical Pyramidal neurons, deep layer)
+Cluster18 = Microglia
+Cluster19 = Unknown
+
+
+new.cluster.ids <- c(
+  "PyNs_SubC_CA1" ,
+  "PyNs_SubC_CA23_1" ,
+  "PyNs_RSC_ML" ,
+  "IN_1" ,
+  "PyNs_RSC_UL" ,
+  "PyNs_SubC_CA23_2" ,
+  "DG_GC" ,
+  "NSC_1" ,
+  "IN_2" ,
+  "SubC_1" ,
+  "NSC_2" ,
+  "IP" ,
+  "NSC_3" ,
+  "OPC" ,
+  "SubC_2" ,
+  "CR" ,
+  "PyNs_RSC_DL" ,
+  "Microglia",
+  "Unknown" 
+)
+
+names(new.cluster.ids) <- levels(RNA_WT_Bap1KO.sct)
+RNA_WT_Bap1KO.sct <- RenameIdents(RNA_WT_Bap1KO.sct, new.cluster.ids)
+
+RNA_WT_Bap1KO.sct$cluster.annot <- Idents(RNA_WT_Bap1KO.sct) # create a new slot in my seurat object
+
+
+pdf("output/seurat/UMAP_WT_Bap1KO_label_V2.pdf", width=12, height=6)
+DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap", split.by = "orig.ident", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+dev.off()
+
+
+pdf("output/seurat/UMAP_WT_Bap1KO_noSplit_label_V2.pdf", width=7, height=5)
+DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 4)
+dev.off()
+
+#overlapping orig.ident
+pdf("output/seurat/UMAP_WT_Bap1KO_label_overlap_V1.pdf", width=6, height=5)
+DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap", group.by = "orig.ident", pt.size = 0.000001, cols = c("blue","red"))
+dev.off()
+
+
+# All in dotplot
+DefaultAssay(RNA_WT_Bap1KO.sct) <- "SCT"
+
+Neural Stem Cells (NSC) = Pax6 (should have more cell types)
+Intermediate Progenitors (IP) = Eomes
+Dentate Gyrus Granucle Cells (DG) = Prox1, Neurod1, Sema5a
+CA1 = Cck, Insm1
+CA3 = Crym, Snca, Nrp2
+Pyramidal neurons deep layer (DL) = Tac2, Hs3st1, Nrn1
+Pyramidal neurons middle layer (ML) = Pantr1, Igfbpl1, Frmd4b
+Pyramidal neurons upper layer (UL) = Satb2, Itpr1
+Interneurons (IN) = Gad1, Grin2d, Reln, Calb1, Npy, Gria3, Lhx6
+Cajal Retzius (CR) = Lhx1
+Subiculum (SubC) = Nts, Nr4a2, Lmo3, B3gat1
+Microglia = Csf1r, Gpr34, Gpr183, Cx3cr1
+OPC = Pdgfra, Olig1
+
+
+all_markers <- c(
+  "Pax6" ,
+  "Eomes",
+  "Prox1", "Neurod1", "Sema5a",
+  "Tac2", "Hs3st1", "Nrn1",
+  "Pantr1", "Igfbpl1", "Frmd4b",
+  "Satb2", "Itpr1",
+  "Nts", "Nr4a2", "Lmo3", "B3gat1",
+  "Cck", "Insm1",
+  "Crym", "Snca", "Nrp2",
+  "Gad1", "Grin2d", "Calb1", "Npy", "Gria3", "Lhx6", # Reln removed
+  "Lhx1",
+  "Pdgfra", "Olig1",
+  "Csf1r", "Gpr34", "Gpr183", "Cx3cr1"
+)
+
+
+
+levels(RNA_WT_Bap1KO.sct) <- c(
+  "NSC_1" ,
+  "NSC_2" ,
+  "NSC_3" ,
+  "IP" ,
+  "DG_GC" ,
+  "PyNs_RSC_DL" ,
+  "PyNs_RSC_ML" ,
+  "PyNs_RSC_UL" ,
+  "SubC_1" ,
+  "SubC_2" ,
+  "PyNs_SubC_CA1" ,
+  "PyNs_SubC_CA23_1" ,
+  "PyNs_SubC_CA23_2" ,
+  "IN_1" ,
+  "IN_2" ,
+  "CR" ,
+  "OPC" ,
+  "Microglia",
+  "Unknown" 
+)
+
+
+
+pdf("output/seurat/DotPlot_SCT_WT_Bap1KO_label_V2.pdf", width=11, height=4.5)
+DotPlot(RNA_WT_Bap1KO.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
+
+
+########################################################
+
 
 ```
+
+
+
+
+
+
+
+# Shinny app
+
+
+Created with [ShinyCell](https://github.com/SGDDNB/ShinyCell); and follow [shinyapps](https://www.shinyapps.io/) to put it online 
+
+```bash
+conda activate scRNAseqV2
+# conda install -c anaconda hdf5
+```
+
+```R
+# installation
+## devtools::install_github("SGDDNB/ShinyCell")
+## install.packages('rsconnect')
+
+
+# Packages
+library("Seurat")
+library("ShinyCell")
+library("rsconnect")
+
+# Data import EMBRYO
+RNA_WT_Bap1KO.sct <- readRDS(file = "output/seurat/embryo.combined.sct.rds")
+DefaultAssay(RNA_WT_Bap1KO.sct) <- "RNA" # 
+
+# Generate Shiny app V1
+scConf = createConfig(RNA_WT_Bap1KO.sct)
+
+makeShinyApp(RNA_WT_Bap1KO.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "RNA_QCV2_clusterV2",
+             shiny.dir = "shinyApp_RNA_QCV2_clusterV2/") 
+
+rsconnect::deployApp('shinyApp_RNA_QCV2_clusterV2')
+
+
+
+
+
+```
+
+
+
+--> https://roulethomas.shinyapps.io/shinyapp_rna_qcv2_clusterv2/ 
+
+
+
+
