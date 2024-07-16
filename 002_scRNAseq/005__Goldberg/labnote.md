@@ -29,7 +29,7 @@ KCNC1 express day12 in mice neuron (important for fast-spike interneuron (inhibi
 
 - Ctx: XXX
 
-
+--> Cool [db](https://www.panglaodb.se/markers.html) for cell type marker genes!  
 
 # Data acess
 
