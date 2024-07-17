@@ -663,6 +663,13 @@ dev.off()
 DefaultAssay(RNA_WT_Bap1KO.sct) <- "SCT" # For vizualization either use SCT or norm RNA
 
 
+pdf("output/seurat/FeaturePlot_QCmetrics_RNA_WT_Phase-QCV2_dim20kparam70res09algo4feat2500_noCellCycleRegression.pdf", width=6, height=5)
+DimPlot(RNA_WT_Bap1KO.sct, group.by= "Phase") & 
+  theme(plot.title = element_text(size=10))
+dev.off()  
+
+
+
 pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-allMarkersList4-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
 .pdf", width=15, height=10)
 FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Pax6", "Eomes", "Prox1", "Neurod1", "Cck", "Crym", "Snca", "Tac2", "Pantr1", "Satb2", "Gad1", "Lhx1", "Nts"), max.cutoff = 1, cols = c("grey", "red"))
@@ -746,6 +753,11 @@ pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-interneuron1Markers-QCV2_dim16k
 FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Vsx2", "En1", "Etv1", "Evx1", "Gad1", "Isl1", "Lhx1", "Lhx5", "Lhx3", "Lhx6", "Grm1", "Grin2d"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-top1Markers-QCV2_dim20kparam70res09algo4feat2500_noCellCycleRegression
+.pdf", width=13, height=10)
+FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Pax6", "Eomes", "Sema5a", "Hs3st1", "Igfbpl1", "Satb2", "Nts", "Cck", "Snca", "Gad1", "Lhx1", "Pdgfra", "Csf1r"), cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
+
 
 pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-Pax6Tbr2Prox1-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
 .pdf", width=15, height=10)
@@ -765,7 +777,9 @@ pdf("output/seurat/VlnPlot_SCT_RNA_WT_Bap1KO-Bap1Pax6Eomes-QCV2_dim16kparam30res
 VlnPlot(RNA_WT_Bap1KO.sct, features = c("Bap1", "Pax6", "Eomes"), cols = c("blue","red"), group.by = 'orig.ident', ncol =1, assay = "RNA")
 dev.off()
 
-
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-interneuronGenes-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression.pdf", width=10, height=10)
+FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Gad1", "Grin2d", "Calb1", "Npy", "Gria3", "Lhx6"),cols = c("grey", "red"), max.cutoff = 1 )
+dev.off()
 
 
 pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-Bap1complex-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
@@ -774,9 +788,15 @@ FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Ogt", "Hcfc1", "Foxk1", "Foxk2", "Y
 dev.off()
 
 pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-Bap1-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
-.pdf", width=7, height=5)
-FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Bap1"),cols = c("grey", "red"), split.by = "orig.ident", max.cutoff = 2 )
+.pdf", width=10, height=5)
+FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Bap1"),cols = c("grey", "red"), split.by = "orig.ident", max.cutoff = 1 )
 dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-DentateGyrusDev-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
+.pdf", width=10, height=15)
+FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Pax6", "Eomes", "Prox1"),cols = c("grey", "red"), split.by = "orig.ident")
+dev.off()
+
 
 pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-Phf7-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
 .pdf", width=7, height=5)
@@ -1579,15 +1599,40 @@ pdf("output/seurat/DotPlot_SCT_WT_Bap1KO_label_V2.pdf", width=11, height=4.5)
 DotPlot(RNA_WT_Bap1KO.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
 dev.off()
 
+pdf("output/seurat/DotPlot_SCT_WT_Bap1KO_label_V2vertical.pdf", width=11, height=4.5)
+DotPlot(RNA_WT_Bap1KO.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
+dev.off()
+
 
 ########################################################
 
 
+# Cell type proportion
+
+
+pt <- table(Idents(RNA_WT_Bap1KO.sct), RNA_WT_Bap1KO.sct$orig.ident)
+pt <- as.data.frame(pt)
+pt <- pt %>%
+  group_by(Var2) %>%
+  mutate(Proportion = Freq / sum(Freq))
+
+pt$Var1 <- as.character(pt$Var1)
+
+pdf("output/seurat/cellTypeProp_SCT_WT_Bap1KO_V2.pdf", width=5, height=5)
+ggplot(pt, aes(x = Var2, y = Proportion, fill = Var1)) +
+  theme_bw(base_size = 15) +
+  geom_col(position = "fill", width = 0.5) +
+  xlab("Sample") +
+  ylab("Proportion") +
+  geom_text(aes(label = scales::percent(Proportion, accuracy = 0.1)), 
+            position = position_fill(vjust = 0.5), size = 3) +
+  theme_bw()
+dev.off()
+
+
 ```
-
-
-
-
 
 
 
@@ -1649,12 +1694,238 @@ Generate coverage bigwig files to check for Bap1 exon7 deletion in Bap1KO.
 ```bash
 conda activate deeptools
 
-sbatch scripts/bamtobigwig_RNA_WT.sh # 21960401 xxx
-sbatch scripts/bamtobigwig_RNA_Bap1KO.sh # 21960405 xxx
+# raw
+sbatch scripts/bamtobigwig_RNA_WT.sh # 21960401 ok
+sbatch scripts/bamtobigwig_RNA_Bap1KO.sh # 21960405 ok
+
+
+# BPM norm (=TPM)
+sbatch scripts/bamtobigwig_BPMnorm_RNA_WT.sh # 21963563 xxx
+sbatch scripts/bamtobigwig_BPMnorm_RNA_Bap1KO.sh # 21963630 xxx
+
 
 ```
 
---> Looking at the bam, we indeed see Bap1 goes down in the KO
+--> Looking at the bam, Bap1 level is same WT and Bap1KO
+
+--> Looking at the raw bigwig, Bap1 is NOT decrease...
+
+
+
+
+# Seurat analysis on all cells
+
+To decipher the Bap1 expression issue (eg. no clear decrease of Bap1 in the KO)
+
+- Check Bap1 expression in all cells (including the one filtered out) = doublet.
+- check expression in non RNA contamination corrected files
+
+
+
+```bash
+conda activate scRNAseqV2
+```
+
+ 
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+
+## Load the matrix and Create SEURAT object
+samples <- list(
+  RNA_WT = "output/soupX/RNA_WT.RData",
+  RNA_Bap1KO = "output/soupX/RNA_Bap1KO.RData"
+)
+
+seurat_objects <- list()
+
+for (sample_name in names(samples)) {
+  load(samples[[sample_name]])
+  seurat_objects[[sample_name]] <- CreateSeuratObject(counts = out, project = sample_name)
+}
+
+## Function to assign Seurat objects to variables (unlist the list)
+assign_seurat_objects <- function(seurat_objects_list) {
+  for (sample_name in names(seurat_objects_list)) {
+    assign(sample_name, seurat_objects_list[[sample_name]], envir = .GlobalEnv)
+  }
+}
+assign_seurat_objects(seurat_objects) # This apply the function
+
+
+# QUALITY CONTROL
+# Function to add mitochondrial and ribosomal content
+add_quality_control <- function(seurat_object) {
+  seurat_object[["percent.mt"]] <- PercentageFeatureSet(seurat_object, pattern = "^mt-")
+  seurat_object[["percent.rb"]] <- PercentageFeatureSet(seurat_object, pattern = "^Rp[sl]")
+  return(seurat_object)
+}
+seurat_objects <- lapply(seurat_objects, add_quality_control) # This apply the function
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+
+# Function to add doublet information
+add_doublet_information <- function(sample_name, seurat_object) {
+  doublet_file <- paste0("output/doublets/", sample_name, ".tsv")
+  doublets <- read.table(doublet_file, header = FALSE, row.names = 1)
+  colnames(doublets) <- c("Doublet_score", "Is_doublet")
+  seurat_object <- AddMetaData(seurat_object, doublets)
+  seurat_object$Doublet_score <- as.numeric(seurat_object$Doublet_score)
+  return(seurat_object)
+}
+## Apply the function to each Seurat object in the list
+for (sample_name in names(seurat_objects)) {
+    seurat_objects[[sample_name]] <- add_doublet_information(sample_name, seurat_objects[[sample_name]])
+  }
+
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+
+
+
+
+
+# QC filtering _ V2
+## NOT APPLY !!!
+
+
+
+# Normalize and scale data, then run cell cycle sorting
+set.seed(42)
+## Load gene marker of cell type
+mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+
+# Function to normalize, scale data, and perform cell cycle scoring
+process_seurat_object <- function(seurat_object, mmus_s, mmus_g2m) {
+  seurat_object <- NormalizeData(seurat_object, normalization.method = "LogNormalize", scale.factor = 10000)
+  all.genes <- rownames(seurat_object)
+  seurat_object <- ScaleData(seurat_object, features = all.genes)  # zero-centres and scales it
+  seurat_object <- CellCycleScoring(seurat_object, s.features = mmus_s, g2m.features = mmus_g2m)  # cell cycle sorting
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- process_seurat_object(seurat_objects[[sample_name]], mmus_s, mmus_g2m)
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# write output summary phase
+phase_summary_list <- list()
+# Collect QC phase summary for each sample
+for (sample_name in names(seurat_objects)) {
+  phase_summary <- table(seurat_objects[[sample_name]][[]]$Phase)
+  phase_summary_df <- as.data.frame(phase_summary)
+  phase_summary_df$Sample <- sample_name
+  phase_summary_list[[sample_name]] <- phase_summary_df
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# Combine all summaries into one data frame
+phase_summary_combined <- do.call(rbind, phase_summary_list)
+write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_V2_noQC.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+## plot cell cycle
+# Calculate proportions
+phase_summary_combined_tidy <- phase_summary_combined %>%
+  group_by(Sample) %>%
+  mutate(Prop = Freq / sum(Freq) * 100)
+
+phase_summary_combined_tidy$Sample <- factor(phase_summary_combined_tidy$Sample, levels = c("RNA_WT", "RNA_Bap1KO")) # Reorder untreated 1st
+
+
+# Plot
+pdf("output/seurat/barPlot_CellCyclePhase_V2_noQC.pdf", width=5, height=6)
+ggplot(phase_summary_combined_tidy, aes(x = Sample, y = Prop, fill = Var1)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(x = "Genotype", y = "Proportion (%)", fill = "Cell Cycle Phase") +
+  theme_bw() +
+  scale_fill_manual(values = c("G1" = "#1f77b4", "G2M" = "#ff7f0e", "S" = "#2ca02c")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+##
+
+
+
+
+# Data integration WT and Bap1KO
+
+
+RNA_WT <- SCTransform(RNA_WT, method = "glmGamPoi", ncells = 8698, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 2500) %>% 
+    RunPCA(npcs = 20, verbose = FALSE)
+RNA_Bap1KO <- SCTransform(RNA_Bap1KO, method = "glmGamPoi", ncells = 8904, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 2500) %>% 
+    RunPCA(npcs = 20, verbose = FALSE)
+# Data integration (check active assay is 'SCT')
+srat.list <- list(RNA_WT = RNA_WT, RNA_Bap1KO = RNA_Bap1KO)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 2500)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+
+embryo.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+RNA_WT_Bap1KO.sct <- IntegrateData(anchorset = embryo.anchors, normalization.method = "SCT")
+
+set.seed(42)
+
+DefaultAssay(RNA_WT_Bap1KO.sct) <- "integrated"
+
+RNA_WT_Bap1KO.sct <- RunPCA(RNA_WT_Bap1KO.sct, verbose = FALSE, npcs = 20)
+RNA_WT_Bap1KO.sct <- RunUMAP(RNA_WT_Bap1KO.sct, reduction = "pca", dims = 1:20, verbose = FALSE)
+RNA_WT_Bap1KO.sct <- FindNeighbors(RNA_WT_Bap1KO.sct, reduction = "pca", k.param = 70, dims = 1:20)
+RNA_WT_Bap1KO.sct <- FindClusters(RNA_WT_Bap1KO.sct, resolution = 0.9, verbose = FALSE, algorithm = 4)
+
+RNA_WT_Bap1KO.sct$orig.ident <- factor(RNA_WT_Bap1KO.sct$orig.ident, levels = c("RNA_WT", "RNA_Bap1KO")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_WT_Bap1KO_noSplit-noQC_dim20kparam70res09algo4feat2500_noCellCycleRegression.pdf", width=8, height=5)
+DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap", label=TRUE)
+dev.off()
+
+
+
+DefaultAssay(RNA_WT_Bap1KO.sct) <- "SCT" # For vizualization either use SCT or norm RNA
+
+
+
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-Bap1Pax6Eomes-noQC_dim16kparam30res07algo4feat2000_noCellCycleRegression
+.pdf", width=10, height=10)
+FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Bap1", "Pax6", "Eomes"), max.cutoff = 1, cols = c("grey", "red"), split.by = "orig.ident")
+dev.off()
+
+pdf("output/seurat/RidgePlot_SCT_RNA_WT_Bap1KO-Bap1Pax6Eomes-noQC_dim16kparam30res07algo4feat2000_noCellCycleRegression.pdf", width=5, height=5)
+RidgePlot(RNA_WT_Bap1KO.sct, features = c("Bap1", "Pax6", "Eomes"), cols = c("blue","red"), group.by = 'orig.ident', ncol =1, assay = "SCT")
+dev.off()
+
+pdf("output/seurat/VlnPlot_SCT_RNA_WT_Bap1KO-Bap1Pax6Eomes-noQC_dim16kparam30res07algo4feat2000_noCellCycleRegression.pdf", width=3, height=10)
+VlnPlot(RNA_WT_Bap1KO.sct, features = c("Bap1", "Pax6", "Eomes"), cols = c("blue","red"), group.by = 'orig.ident', ncol =1, assay = "RNA")
+dev.off()
+
+
+
+#### Check raw/norm Bap1 count #####################
+RNA_WT_Bap1KO.sct_WT <- subset(RNA_WT_Bap1KO.sct, subset = orig.ident == 'RNA_WT')
+RNA_WT_Bap1KO.sct_Bap1KO <- subset(RNA_WT_Bap1KO.sct, subset = orig.ident == 'RNA_Bap1KO')
+
+
+AverageExpression(RNA_WT_Bap1KO.sct, features = "Bap1", group.by = "orig.ident")
+
+
+AverageExpression(RNA_WT_Bap1KO.sct, features = "Bap1", group.by = "seurat_clusters")
+
+
+AverageExpression(RNA_WT_Bap1KO.sct_WT , features = "Bap1", group.by = "seurat_clusters")
+AverageExpression(RNA_WT_Bap1KO.sct_Bap1KO , features = "Bap1", group.by = "seurat_clusters")
+
+####################################
+
+```
 
 
 
