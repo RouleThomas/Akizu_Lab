@@ -757,11 +757,31 @@ pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-Bap1Pax6Eomes-QCV2_dim16kparam3
 FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Bap1", "Pax6", "Eomes"), max.cutoff = 1, cols = c("grey", "red"), split.by = "orig.ident")
 dev.off()
 
+pdf("output/seurat/RidgePlot_SCT_RNA_WT_Bap1KO-Bap1Pax6Eomes-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression.pdf", width=5, height=5)
+RidgePlot(RNA_WT_Bap1KO.sct, features = c("Bap1", "Pax6", "Eomes"), cols = c("blue","red"), group.by = 'orig.ident', ncol =1, assay = "SCT")
+dev.off()
+
+pdf("output/seurat/VlnPlot_SCT_RNA_WT_Bap1KO-Bap1Pax6Eomes-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression.pdf", width=3, height=10)
+VlnPlot(RNA_WT_Bap1KO.sct, features = c("Bap1", "Pax6", "Eomes"), cols = c("blue","red"), group.by = 'orig.ident', ncol =1, assay = "RNA")
+dev.off()
+
+
+
+
 pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-Bap1complex-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
 .pdf", width=10, height=35)
 FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Ogt", "Hcfc1", "Foxk1", "Foxk2", "Yy1", "Bap1", "Mbd5", "Mbd6", "Asxl1", "Asxl2", "Asxl3"),cols = c("grey", "red"), split.by = "orig.ident", max.cutoff = 2 )
 dev.off()
 
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-Bap1-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
+.pdf", width=7, height=5)
+FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Bap1"),cols = c("grey", "red"), split.by = "orig.ident", max.cutoff = 2 )
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-Phf7-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
+.pdf", width=7, height=5)
+FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Phf7"),cols = c("grey", "red"), split.by = "orig.ident")
+dev.off()
 
 pdf("output/seurat/UMAP_WT_Bap1KO_numeric_V1.pdf", width=12, height=6)
 DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap", split.by = "orig.ident", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 6)
@@ -776,6 +796,25 @@ dev.off()
 pdf("output/seurat/UMAP_WT_Bap1KO_numeric_overlap_V1.pdf", width=6, height=5)
 DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap", group.by = "orig.ident", pt.size = 0.000001, cols = c("blue","red"))
 dev.off()
+
+
+
+#### Check raw/norm Bap1 count #####################
+RNA_WT_Bap1KO.sct_WT <- subset(RNA_WT_Bap1KO.sct, subset = orig.ident == 'RNA_WT')
+RNA_WT_Bap1KO.sct_Bap1KO <- subset(RNA_WT_Bap1KO.sct, subset = orig.ident == 'RNA_Bap1KO')
+
+
+AverageExpression(RNA_WT_Bap1KO.sct, features = "Bap1", group.by = "orig.ident")
+
+
+AverageExpression(RNA_WT_Bap1KO.sct, features = "Bap1", group.by = "seurat_clusters")
+
+
+AverageExpression(RNA_WT_Bap1KO.sct_WT , features = "Bap1", group.by = "seurat_clusters")
+AverageExpression(RNA_WT_Bap1KO.sct_Bap1KO , features = "Bap1", group.by = "seurat_clusters")
+
+####################################
+
 
 ############ V1 naming
 
@@ -1615,7 +1654,7 @@ sbatch scripts/bamtobigwig_RNA_Bap1KO.sh # 21960405 xxx
 
 ```
 
-
+--> Looking at the bam, we indeed see Bap1 goes down in the KO
 
 
 
