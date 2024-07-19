@@ -531,6 +531,7 @@ seurat_objects <- load_seurat_objects(file_paths)
 ## Work on the cleanest WT sample for each time point; WT_p14_CB_Rep2, WT_p35_CB_Rep3, WT_p180_CB_Rep3
 
 ################### WT_p14_CB_Rep2
+set.seed(42)
 WT_p14_CB_Rep2 <- SCTransform(WT_p14_CB_Rep2, method = "glmGamPoi", ncells = 13576, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb"), verbose = TRUE, variable.features.n = 3000)
 WT_p14_CB_Rep2 <- RunPCA(WT_p14_CB_Rep2, npcs = 30, verbose = FALSE)
 
@@ -539,6 +540,7 @@ pdf("output/seurat/Elbow_WT_p14_CB_Rep2.pdf", width=10, height=10)
 ElbowPlot(WT_p14_CB_Rep2) # 6 or 10
 dev.off()
 ########################################################################### USELESS...
+
 
 
 WT_p14_CB_Rep2 <- RunPCA(WT_p14_CB_Rep2, npcs = 30, verbose = FALSE)
@@ -567,6 +569,9 @@ dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-dim30kparam40res07-countMtRbRegression-purkinje1.pdf", width=25, height=25)
 FeaturePlot(WT_p14_CB_Rep2, features = c("Calb1", "Gad2", "Grid2", "Gad1", "Slc1a6", "Pcp4", "Car8", "Camk2a", "Hcn1", "Gria3","Slc32a1", "Slc12a5"), max.cutoff = 2, cols = c("grey", "red"))
 dev.off()
+
+
+
 
 pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-dim30kparam40res07-countMtRbRegression-bergmann1.pdf", width=25, height=25)
 FeaturePlot(WT_p14_CB_Rep2, features = c("Fabp7", "Ntsr2", "Egfr", "Ttc21b", "Hepacam", "Zeb2", "Ufl1", "Nrxn3", "Atp7a", "Bicd2", "Gja1", "Metrn"), max.cutoff = 2, cols = c("grey", "red"))
@@ -654,12 +659,66 @@ pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-dim30kparam40res07-countMtRbRe
 FeaturePlot(WT_p14_CB_Rep2, features = c("Ntng1", "Dcx", "Dlx2", "Neurog1", "Ncam1", "Neurod1", "Dab1", "Cnr1", "Cckbr", "Grm5", "Ezh2", "Pros1", "Mark2"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-dim30kparam40res07-countMtRbRegression-panglaoNeuroblast.pdf", width=15, height=15)
-FeaturePlot(WT_p14_CB_Rep2, features = c("Ntng1", "Dcx", "Dlx2", "Neurog1", "Ncam1", "Neurod1", "Dab1", "Cnr1", "Cckbr", "Grm5", "Ezh2", "Pros1", "Mark2"), max.cutoff = 1, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-dim30kparam40res07-countMtRbRegression-panglaoNeuroendocrineCells.pdf", width=15, height=15)
+FeaturePlot(WT_p14_CB_Rep2, features = c("Nkx2-2", "Npy", "Gpr88", "Ccdc85c", "Tac1", "Penk", "Dpf1", "Prss12", "Serpini1", "Cck", "Arhgig", "Dusp26", "Negr1", "Spock1"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-dim30kparam40res07-countMtRbRegression-panglaoNeurons.pdf", width=15, height=15)
+FeaturePlot(WT_p14_CB_Rep2, features = c("Prph", "Disp2", "Tubb3", "Rbfox3", "Chat", "Isl1", "Nefm", "Nrgn", "Sgip1", "Eno2", "Th", "Calb1", "Epo", "Csf3"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
 
-XXX
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-dim30kparam40res07-countMtRbRegression-panglaoNoradr.pdf", width=15, height=15)
+FeaturePlot(WT_p14_CB_Rep2, features = c("Th", "Slc18a2", "Ddc", "Dbh", "Slc6a2", "Slc39a11", "Slc9b2"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-dim30kparam40res07-countMtRbRegression-panglaoOPC.pdf", width=15, height=15)
+FeaturePlot(WT_p14_CB_Rep2, features = c("Pdgfra", "Aldoc", "Olig1", "Epn2", "Neu4", "Nkx6-2", "Fyn", "Tnr", "Pcdh15", "Cspg5", "Nnat", "Etv5", "Slc25a47"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-dim30kparam40res07-countMtRbRegression-panglaoOligodendrocyte.pdf", width=15, height=15)
+FeaturePlot(WT_p14_CB_Rep2, features = c("Mog", "Mbp", "Mag", "Cldn14", "Klk6", "Eml1", "Nipal4", "Plp1", "Ermn", "Plekhh1", "Il33", "Cntf", "Pde8a", "Myo1d", "Itgb4"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-dim30kparam40res07-countMtRbRegression-panglaoPinealocyte.pdf", width=15, height=15)
+FeaturePlot(WT_p14_CB_Rep2, features = c("Sag", "Gngt2", "Rom1", "Adra1b", "Pmepa1", "Pde10a", "Crem", "Aanat", "Gng13", "Cacna1f", "Pde6b", "Neurod1", "Chrnb4", "Chrna3"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-dim30kparam40res07-countMtRbRegression-panglaoPurkinjeNeurons.pdf", width=15, height=15)
+FeaturePlot(WT_p14_CB_Rep2, features = c("Calb1", "Gad2", "Grid2", "Gad1", "Slc1a6", "Pcp4", "Car8", "Camk2a", "Hcn1", "Gria3","Slc32a1", "Slc12a5","Cnpy1", "Dlg4", "Slc24a3", "Clstn3", "Gabra1", "Slc24a2", "Kcnma1", "Penk", "Hivep2", "Nrip3", "Tshz1", "Pcbp3", "Gpsm1"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-dim30kparam40res07-countMtRbRegression-panglaoPyramidalCells.pdf", width=15, height=15)
+FeaturePlot(WT_p14_CB_Rep2, features = c("Nrgn", "Dab1", "Dlg4", "Ccm2", "Map2", "Calb1", "Adrb2", "Rtn4", "Pde2a", "Kcnb1","Kcnb2", "Kcnq2", "Kcnq3", "Satb2"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-dim30kparam40res07-countMtRbRegression-panglaoRadialGliaCells.pdf", width=15, height=15)
+FeaturePlot(WT_p14_CB_Rep2, features = c("Pax6", "Slc1a3", "Pdgfd", "Gli3", "Notch3", "Vcam1", "Hes5", "Olig2", "Gfap", "Emx2", "Cdh4", "Spry1", "Axin2"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-dim30kparam40res07-countMtRbRegression-panglaoRetinalGanglionCells.pdf", width=15, height=15)
+FeaturePlot(WT_p14_CB_Rep2, features = c("Pou4f2", "Rbpms", "Pou4f1", "Isl1", "Grip1", "Cpne4", "Kctd8", "Mab21l2", "Dtx1", "Barhl2", "Narf", "Tox2", "Zfp580"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-dim30kparam40res07-countMtRbRegression-panglaoSatelliteGliaCells.pdf", width=15, height=15)
+FeaturePlot(WT_p14_CB_Rep2, features = c("Ptgds", "Il17a", "Sox2", "Glul", "Slc1a3", "P2rx7", "P2ry12", "Tlr4", "Cnga3", "Aqp4", "Kcnj10", "Cxcl8", "Cdh1", "Ednrb", "Gfap", "Slc6a1"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-dim30kparam40res07-countMtRbRegression-panglaoSchwannCells.pdf", width=15, height=15)
+FeaturePlot(WT_p14_CB_Rep2, features = c("Mpz", "Sox10", "S100b", "Nov", "Cryab", "Matn2", "Aldoc", "Nf2", "Plp1", "Pmp22", "Cnp", "Nrn1", "Cadm4", "Kcna1", "Rxrg", "Apod"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-dim30kparam40res07-countMtRbRegression-panglaoSerotonergicNeurons.pdf", width=15, height=15)
+FeaturePlot(WT_p14_CB_Rep2, features = c("Fev", "Slc6a4", "Tph2", "Ddc", "Slc18a2", "Esm1", "Slc22a3", "Tph1"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-dim30kparam40res07-countMtRbRegression-panglaoTanycytes.pdf", width=15, height=15)
+FeaturePlot(WT_p14_CB_Rep2, features = c("Dio2", "Scn7a", "Rax", "Adm", "Crym", "Gpr50", "Vcan", "Tgfb2", "Ctgf", "Rgs7bp", "Rgcc", "Igfbp5", "Fndc3"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-dim30kparam40res07-countMtRbRegression-panglaoTrigeminalneurons.pdf", width=15, height=15)
+FeaturePlot(WT_p14_CB_Rep2, features = c(XXX), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
 
 
 # Selected marker genes:
@@ -680,6 +739,7 @@ PyNs_RSC_UL (Retrosplenial Cortical Pyramidal neurons, upper layer)= Itpr1
 
 From Pangeo:
 Astrocyte= Slc1a2, Apoe, Aqp4, Slc39a12
+Astrocyte(but identfy wit hsatellite glia cell marker)= Glul, Slc1a3, Ednrb
 Choroid plexus cells= Ttr, Clic6, Slc13a4, Kl # very small
 Ependymal cells= Cfap54, Ccdc153, Cfap44, Tmem212 # very small
 GABAergic neurons (to put with IN from Kim)= Gad2, Slc6a1
@@ -687,6 +747,15 @@ Interneurons= Nxph1
 Meningeal cells= Ptgds, Dcn, 
 Microglia= Colec12
 Neuroblast= Ntng1, Grm5
+Noradrenergic neurons= Slc18a2, Ddc # very small
+OPC= Aldoc, Nnat #
+Oligodendrocyte= Mbp, Mag, Plp1
+Radial Glia Cells= Slc1a3, Pdgfd, Gli3
+RetinalGanglionCells (not thiscell type but very specific)= Rbpms
+Schwann Cells= S100b, Aldoc, Cnp
+Serotonergic neurons= Slc6a4, Tph2, Ddc, Slc18a2 # very small
+
+
 
 # Check QC metrics
 
