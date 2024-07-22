@@ -742,6 +742,30 @@ pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-mossyCellsMarkers-QCV2_dim16kpa
 FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Calb1", "Reln", "Gad1", "Slc17a6", "Npy", "Gria2", "Gria3"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-MeningealCellsMarkers-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
+.pdf", width=15, height=10)
+FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Cldn11", "Fn1", "Fbn1", "Col1a1", "Col3a1", "Pdgfrb", "Igf2", "Vtn", "Gjb6", "Aldh1a2" ), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-MeningealCellsPangloa-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
+.pdf", width=15, height=10)
+FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Igfbp2", "Slc47a1", "Nov", "Nnat", "Ptgds", "Il33", "Pdgfra", "Lum", "Dc", "Foxc1", "Vtn", "Igf2", "Alx4", "Aldh1a2"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-MeningealCellsPangloaTop-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
+.pdf", width=10, height=10)
+FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Lum", "Foxc1", "Vtn", "Igf2", "Aldh1a2"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-NSCQuiescActivChatGPT-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
+.pdf", width=10, height=10)
+FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Id1", "Hes1", "Mki67", "Pcna", "Vim" ), max.cutoff = 2, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-INChatGPT-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
+.pdf", width=10, height=10)
+FeaturePlot(RNA_WT_Bap1KO.sct, features = c("Gad1", "Grin2d", "Sst", "Tac1", "Calb1", "Npy", "Gria3", "Lhx6", "Vip" ), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
 
 pdf("output/seurat/FeaturePlot_SCT_RNA_WT_Bap1KO-interneuronMarkers-QCV2_dim16kparam30res07algo4feat2000_noCellCycleRegression
 .pdf", width=15, height=10)
