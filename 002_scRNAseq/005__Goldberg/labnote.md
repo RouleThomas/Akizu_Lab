@@ -963,6 +963,8 @@ XXX DimPlot(WT_Kcnc1_p14_CB.sct, reduction = "umap", split.by = "condition", lab
 
 
 # save ##################
+## saveRDS(WT_p14_CB.sct, file = "output/seurat/WT_p14_CB.sct_V1_numeric.rds") 
+## saveRDS(Kcnc1_p14_CB.sct, file = "output/seurat/Kcnc1_p14_CB.sct_V1_numeric.rds") 
 ## saveRDS(WT_Kcnc1_p14_CB.sct, file = "output/seurat/WT_Kcnc1_p14_CB.sct_V1_numeric.rds") 
 ## WT_Kcnc1_p14_CB.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB.sct_V1_numeric.rds")
 ##########
