@@ -2396,3 +2396,47 @@ Can we **use different AB in the same DiffBind correction??** Will the SF provid
 
 
 
+# Quantify signal around TSS 
+
+XXX TO START
+
+
+
+- Generate a bed file around TSS of each gene (250bp, 500bp, 1kb up/downstream); file already generated at `001_*/003__*/meta/*gene_1kbTSS.bed` XXX TO GENERATE XXX
+- Quantify H3K27me3 or EZH2 read density around the TSS with [bin.bw](https://rdrr.io/github/jmonlong/PopSV/man/bin.bw.html) 
+- Represent data in R `ggplot`
+
+
+**Option1: Do same in KO and compare**
+
+
+
+```bash
+conda activate binBw_v2
+```
+
+```R
+library("PopSV")
+library("tidyverse")
+library("Rsamtools")
+library("ggpubr")
+library("data.table")
+
+# EZH2 #####################################################
+
+## WT EZH2_in Peaks 250bp
+bwFile <- "output/THOR/THOR_hESC_EZH2_WTvsYAPKO/hESCEZH2WTvsYAPKO-s1_median.bw"
+regions <- read.table("../003__CutRun/output/meta/xxx.bed", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2")) %>%
+  dplyr::select("chr", "start", "end")
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_EZH2")
+
+## Collect output
+WT_EZH2 <- as_tibble(fread(cmd = "gunzip -c output/binBw/WT_EZH2.bgz") ) %>%
+ add_column(direction = "peak") %>%
+ left_join(read.table("../005__CutRun_NPC_PSC/output/macs2/broad_blacklist_qval1.30103/NPC_WT_EZH2_peaks_overlap_001009_NPC_WT_H3K27me3_broad2.3.broadPeak", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "name", "score", "strand", "trash", "trash1", "trash2"))) %>%
+ mutate(length = end - start ) %>%
+ dplyr::select("name", "length", "direction", "bc") 
+
+
+
+```

@@ -11973,6 +11973,615 @@ to check:
 
 
 
+
+
+
+
+
+
+
+
+
+## Condiments workflow to compare condition - human gastruloid untreated vs dasatinib
+
+
+XXX TO START
+
+```bash
+conda activate condiments_V6
+```
+
+```R
+# package installation 
+## install.packages("remotes")
+## remotes::install_github("cran/spatstat.core")
+## remotes::install_version("Seurat", "4.0.3")
+## install.packages("magrittr")
+## install.packages("magrittr")
+## install.packages("dplyr")
+## BiocManager::install("DelayedMatrixStats")
+## BiocManager::install("tradeSeq")
+
+
+# packages
+library("condiments")
+library("Seurat")
+library("magrittr") # to use pipe
+library("dplyr") # to use bind_cols and sample_frac
+library("SingleCellExperiment") # for reducedDims
+library("ggplot2")
+library("slingshot")
+library("DelayedMatrixStats")
+library("tidyr")
+library("tradeSeq")
+library("cowplot")
+library("scales")
+library("pheatmap")
+
+# Data import EMBRYO
+humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid.combined.sct_V2.rds")
+
+DefaultAssay(humangastruloid.combined.sct) <- "RNA" # According to condiments workflow
+
+# convert to SingleCellExperiment
+humangastruloid72hrs <- as.SingleCellExperiment(humangastruloid.combined.sct, assay = "RNA")
+
+
+# tidy
+
+df <- bind_cols(
+  as.data.frame(reducedDims(humangastruloid72hrs)$UMAP),
+  as.data.frame(colData(humangastruloid72hrs)[, -3])
+  ) %>%
+  sample_frac(1)
+
+# PLOT
+## genotype overlap
+pdf("output/condiments/UMAP_condition_humangastruloid72hrs.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7) +
+  scale_color_manual(values = c("blue", "red")) + # Specify colors here
+  labs(col = "Condition") +
+  theme_classic()
+dev.off()
+
+## imbalance score
+scores <- condiments::imbalance_score(
+  Object = df %>% select(UMAP_1, UMAP_2) %>% as.matrix(), 
+  conditions = df$condition,
+  k = 20, smooth = 40)
+df$scores <- scores$scaled_scores
+
+pdf("output/condiments/UMAP_imbalance_score_humangastruloid72hrs.pdf", width=5, height=5)
+
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
+  geom_point(size = .7) +
+  scale_color_viridis_c(option = "C") +
+  labs(col = "Scores") +
+  theme_classic()
+dev.off()
+
+
+#  Trajectory Inference and Differential Topology
+set.seed(42)
+
+## PLOT with Separate trajectories
+humangastruloid72hrs <- slingshot(humangastruloid72hrs, reducedDim = 'UMAP',
+                 clusterLabels = colData(humangastruloid72hrs)$cluster.annot,
+                 start.clus = 'Mesoderm_2', approx_points = 100)
+
+### fine tune nb of trajectories
+#### end.clusV1
+humangastruloid72hrs <- slingshot(humangastruloid72hrs, reducedDim = 'UMAP',
+                 clusterLabels = colData(humangastruloid72hrs)$cluster.annot,
+                 start.clus = 'Mesoderm_2',
+                 end.clus = c("Blood_Progenitor_2", "ExE_Ectoderm_2", "Endoderm", "Notocord", "Paraxial_Mesoderm", "Pharyngeal_Mesoderm", "Mesenchyme" ),
+                 approx_points = 100)
+###
+
+
+set.seed(42)
+topologyTest(SlingshotDataSet(humangastruloid72hrs), humangastruloid72hrs$condition) # KS_mean / 0.01 / 0.007581268 / 0.7581611
+
+
+sdss <- slingshot_conditions(SlingshotDataSet(humangastruloid72hrs), humangastruloid72hrs$condition)
+curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
+                    .id = "condition")
+
+#  pdf("output/condiments/UMAP_trajectory_separated_humangastruloid72hrs_end.clusV1.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_trajectory_separated_humangastruloid72hrs.pdf", width=5, height=5)
+
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(condition, Lineage, Order),
+            aes(group = interaction(Lineage, condition)), size = 1.5) +
+  theme_classic()
+dev.off()
+
+##### NEED TO MODIFY THE CODE BELOW TO ANNOTATE THE DIFFERENT TRAJECTORIES
+pdf("output/condiments/UMAP_trajectory_separated_trajAnnotated_humangastruloid72hrs.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_trajectory_separated_trajAnnotated_humangastruloid72hrs_V2clust.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(condition, Lineage, Order),
+            aes(group = interaction(Lineage, condition)), size = 1.5) +
+  annotate("text", x = -10, y = 6, label = "Lineage1", size = 5) +
+  annotate("text", x = -7, y = -2.7, label = "Lineage2", size = 5) +
+  theme(legend.position = c(.15, .35),
+        legend.background = element_blank()) +
+  NULL
+dev.off()
+####### 
+
+
+
+
+
+
+## PLOT with common trajectories
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(humangastruloid72hrs, "UMAP")),
+  slingPseudotime(humangastruloid72hrs) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(humangastruloid72hrs) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+         pst = if_else(Lineage1 > Lineage2, Lineage1_pst, Lineage2_pst),
+        # pst = max(pst) - pst)
+)
+curves <- slingCurves(humangastruloid72hrs, as.df = TRUE)
+
+pdf("output/condiments/UMAP_trajectory_common_humangastruloid72hrs.pdf", width=5, height=5)
+
+ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
+  geom_point(size = .7, aes(col = pst)) +
+  scale_color_viridis_c() +
+  labs(col = "Pseudotime") +
+  geom_path(data = curves %>% arrange(Order),
+            aes(group = Lineage), col = "black", size = 1.5) +
+  theme_classic()
+dev.off()
+
+
+### With label
+#### Calculate midpoint for each trajectory to place the label
+curves_midpoints <- curves %>%
+  group_by(Lineage) %>%
+  summarise(UMAP_1 = mean(UMAP_1),
+            UMAP_2 = mean(UMAP_2))
+
+pdf("output/condiments/UMAP_trajectory_common_label_humangastruloid72hrs.pdf", width=5, height=5)
+ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
+  geom_point(size = .7, aes(col = pst)) +
+  scale_color_viridis_c() +
+  labs(col = "Pseudotime") +
+  geom_path(data = curves %>% arrange(Order),
+            aes(group = Lineage), col = "black", size = 1) +
+  geom_text(data = curves_midpoints, aes(label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Add labels
+  theme_classic()
+dev.off()
+
+
+curves_endpoints <- curves %>%
+  group_by(Lineage) %>%
+  arrange(Order) %>%
+  top_n(1, Order) # Get the top/last ordered point for each group
+pdf("output/condiments/UMAP_trajectory_common_label_humangastruloid72hrs_V2clust.pdf", width=5, height=5)
+ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
+  geom_point(size = .7, aes(col = pst)) +
+  scale_color_viridis_c() +
+  labs(col = "Pseudotime") +
+  geom_path(data = curves %>% arrange(Order),
+            aes(group = Lineage), col = "black", size = 1) +
+  geom_text(data = curves_endpoints, aes(label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+  theme_classic()
+dev.off()
+
+
+# Differential Progression
+progressionTest(humangastruloid72hrs, conditions = humangastruloid72hrs$condition, lineages = TRUE)
+
+prog_res <- progressionTest(humangastruloid72hrs, conditions = humangastruloid72hrs$condition, lineages = TRUE)
+
+
+df_3 <-  slingPseudotime(humangastruloid72hrs) %>% as.data.frame() 
+
+df_3$condition <- humangastruloid72hrs$condition
+df_3 <- df_3 %>% 
+  pivot_longer(-condition, names_to = "Lineage",
+               values_to = "pst") %>%
+  filter(!is.na(pst))
+
+pdf("output/condiments/densityPlot_trajectory_lineages_humangastruloid72hrs.pdf", width=10, height=5)
+pdf("output/condiments/densityPlot_trajectory_lineages_humangastruloid72hrs_V2clust.pdf", width=10, height=5)
+
+ggplot(df_3, aes(x = pst)) +
+  geom_density(alpha = .8, aes(fill = condition), col = "transparent") +
+  geom_density(aes(col = condition), fill = "transparent", size = 1.5) +
+  labs(x = "Pseudotime", fill = "condition") +
+  facet_wrap(~Lineage, scales = "free", nrow=2) +
+  guides(col = "none", fill = guide_legend(
+    override.aes = list(size = 1.5, col = c("blue", "red"))
+  )) +
+  scale_fill_manual(values = c("blue", "red")) +
+  scale_color_manual(values = c("blue", "red")) +
+  theme_bw()
+dev.off()
+
+
+#### ->  save.image(file="output/condiments/condiments_humangastruloid72hrs_V2clust.RData")
+### load("output/condiments/condiments_humangastruloid72hrs_V2clust.RData")
+set.seed(42)
+
+#  Differential expression
+
+## Identify the needed number of knots 
+
+BPPARAM <- BiocParallel::bpparam()
+BPPARAM$workers <- 8
+icMat <- evaluateK(counts = humangastruloid72hrs, sds = SlingshotDataSet(humangastruloid72hrs), 
+                   conditions = factor(humangastruloid72hrs$condition),
+                   nGenes = 300, parallel = FALSE, BPPARAM = BPPARAM, k = 3:7) # set parallel = FALSE otherwise the code never end!
+icMat
+### !!! --> EXAMINE icMat to determine the optimal nb of knots for the GAM  !!! TOO LONG FUCK IT, use 6
+## Fit GAM with the indicated nb of knots (4 to 7 works for most data according to developers) https://github.com/statOmics/tradeSeq/issues/54
+
+
+# THE fitGAM() CODE IS TOO LONG TO RUN, SO HAS BEEN INTRODUCED INTO A RSCRIPT INSTEAD AND IMAGE AS BEEN SAVED AS condiments_humangastruloid72hrs_V2.RData. But it fail too...
+
+
+# Try running the DEGs trajectory per trajectory
+### FROM THIS https://github.com/statOmics/tradeSeq/issues/64 :
+
+#### Let's try to run the DEGs trajectory per trajectory
+counts <- humangastruloid72hrs.combined.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(humangastruloid72hrs.combined.sct$orig.ident) # identify conditions
+#### Extract the pseudotimes and cell weights for the first lineage
+pseudotimes <- slingPseudotime(humangastruloid72hrs, na = FALSE) [,1]
+cellweights <- slingCurveWeights(humangastruloid72hrs) [,1]
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+
+traj1 <- fitGAM(
+     counts = sub_counts, 
+     pseudotime = sub_pseudotimes,
+     cellWeights = sub_weights,
+     conditions = sub_cond, 
+     nknots = 6,
+     sce = TRUE
+   )
+### IT WORK!!! Estimated run 24hours which is OK !!! Let's run this in slurm job traj per traj
+
+
+###### --------------
+# Try running the DEGs on the top 10k features (the 10k most variable genes) and trajectory per trajectory; This does not reduce a lot the time... With 10 featuers = 5hours; versus 24hours for all...
+
+## Isolate the top 10k
+humangastruloid72hrs.combined.sct.10k <- FindVariableFeatures(humangastruloid72hrs.combined.sct, selection.method = "vst", nfeatures = 10)
+
+#### Let's try to run the DEGs trajectory per trajectory
+counts <- humangastruloid72hrs.combined.sct.10k[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(humangastruloid72hrs.combined.sct.10k$orig.ident) # identify conditions
+#### Extract the pseudotimes and cell weights for the first lineage
+pseudotimes <- slingPseudotime(humangastruloid72hrs, na = FALSE) [,1]
+cellweights <- slingCurveWeights(humangastruloid72hrs) [,1]
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+
+traj1 <- fitGAM(
+     counts = sub_counts, 
+     pseudotime = sub_pseudotimes,
+     cellWeights = sub_weights,
+     conditions = sub_cond, 
+     nknots = 6,
+     sce = TRUE
+   )
+
+###### --------------
+
+
+### Once slurm jobs finished for each trajectory; load traj1 <- readRDS("output/condiments/traj1.rds") OK
+
+traj1 <- readRDS("output/condiments/traj1.rds")
+traj2 <- readRDS("output/condiments/traj2.rds")
+traj3 <- readRDS("output/condiments/traj3.rds")
+traj4 <- readRDS("output/condiments/traj4.rds")
+traj5 <- readRDS("output/condiments/traj5.rds")
+traj6 <- readRDS("output/condiments/traj6.rds")
+traj7 <- readRDS("output/condiments/traj7.rds")
+traj8 <- readRDS("output/condiments/traj8.rds")
+
+## DEGs between condition
+condRes_traj5 <- conditionTest(traj5)
+condRes_traj8_l2fc2 <- conditionTest(traj8, l2fc = log2(2)) # 
+
+condRes_traj1_l2fc4 <- conditionTest(traj1, l2fc = log2(4)) # let s prefer to use this one
+condRes_traj2_l2fc4 <- conditionTest(traj2, l2fc = log2(4)) # let s prefer to use this one
+
+
+
+
+# Correct the pvalue with fdr
+
+condRes_traj2_l2fc4$padj <- p.adjust(condRes_traj2_l2fc4$pvalue, "fdr")
+
+
+
+### Save output tables
+condRes_traj2_l2fc4$gene <- rownames(condRes_traj2_l2fc4) # create new column l;abel gene; as matrix before
+condRes_traj2_l2fc4 <- condRes_traj2_l2fc4[, c(ncol(condRes_traj2_l2fc4), 1:(ncol(condRes_traj2_l2fc4)-1))] # just to put gene column 1st
+write.table(condRes_traj2_l2fc4, file = c("output/condiments/condRes_traj2_l2fc4.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+
+
+
+
+# Heatmap clutering DEGs per traj _ REVISED METHOD
+## import DEGs
+condRes_traj1 <- read.table("output/condiments/condRes_traj1_l2fc4.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE)
+condRes_traj1 <- read.table("output/condiments/condRes_traj1_l2fc2.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE)
+
+## Isolate significant DEGs and transform into a vector
+conditionGenes_traj1_vector <- condRes_traj1 %>% 
+  filter(padj <= 0.05) %>%
+  pull(gene)
+  
+# Predict smoothed values
+yhatSmooth <- 
+  predictSmooth(traj1, gene = conditionGenes_traj1_vector, nPoints = 50, tidy = FALSE) %>%
+  log1p()
+
+yhatSmoothScaled <- t(apply(yhatSmooth, 1, scales::rescale))
+combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
+# Generate heatmap with clustering
+# Perform hierarchical clustering
+hc <- hclust(dist(combinedData))
+clusters <- cutree(hc, k=10)
+# Create an annotation data frame for the rows based on cluster assignments
+annotation_row <- data.frame(Cluster = factor(clusters))
+# Define colors for each cluster
+# 20
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "grey", "darkred", "darkblue", "gold", "darkgray", "lightblue", "lightgreen", "lightcoral", "lightpink", "lightcyan"))(20),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 10
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen" ))(10),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 8
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown" ))(8),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 7
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink" ))(7),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 6
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange"))(6),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 5
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple"))(5),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 4
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow" ))(4),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# Generate the heatmap
+pdf("output/condiments/clustered_heatmap_traj1.pdf", width=8, height=10)
+pdf("output/condiments/clustered_heatmap_traj1_cl10.pdf", width=8, height=10)
+pdf("output/condiments/clustered_heatmap_traj1_l2fc4_cl10.pdf", width=8, height=10)
+
+pdf("output/condiments/clustered_heatmap_traj4_l2fc2_cl10.pdf", width=8, height=10)
+pdf("output/condiments/clustered_heatmap_traj5_l2fc2_cl10.pdf", width=8, height=10)
+pdf("output/condiments/clustered_heatmap_traj3_l2fc2_cl7.pdf", width=8, height=10)
+pdf("output/condiments/clustered_heatmap_traj1_l2fc2_cl10.pdf", width=8, height=10)
+
+pheatmap(combinedData,
+  cluster_cols = FALSE,
+  show_rownames = FALSE,
+  show_colnames = FALSE,
+  main = "Trajectory 1 - Hierarchical Clustering",
+  legend = TRUE,
+  cutree_rows = 10,
+  annotation_row = annotation_row,
+  annotation_colors = annotation_colors
+)
+dev.off()
+
+
+# Line plots
+library("reshape2")
+library("stringr")
+# Assuming yhatSmoothScaled contains your smoothed gene expression data
+# Convert the yhatSmoothScaled data to a dataframe
+df <- as.data.frame(yhatSmoothScaled)
+df$Gene <- rownames(df)
+# Transform the data into a long format
+df_long <- melt(df, id.vars = "Gene", variable.name = "Pseudotime", value.name = "Expression")
+# Attach the cluster information to the data frame
+df$Cluster <- factor(clusters[df$Gene])
+df_long$Cluster <- df$Cluster[match(df_long$Gene, df$Gene)]
+
+# Extract condition column
+df_long$Condition <- str_extract(df_long$Pseudotime, "condition[[:alnum:]]+")
+df_long$Condition <- ifelse(str_detect(df_long$Condition, "WT"), "WT", "KO")
+
+# Extract the point value and convert it to numeric
+df_long$Updated_Pseudotime <- as.numeric(str_extract(df_long$Pseudotime, "(?<=point)\\d+"))
+
+# Define colors for the conditions
+color_map <- c("WT" = "blue", "KO" = "red")
+
+# Plot using ggplot
+pdf("output/condiments/clustered_linePlot_traj1_l2fc4_cl10.pdf", width=10, height=5)
+
+pdf("output/condiments/clustered_linePlot_traj4_l2fc2_cl4.pdf", width=10, height=5)
+
+ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
+  geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
+  geom_line(data = subset(df_long, Condition == "KO"), aes(color = Condition), alpha = 0.5) +
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~Cluster, scales = "free_y", nrow=2) +
+  theme_bw() +
+  labs(title = "Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+
+dev.off()
+
+# Plot using ggplot
+pdf("output/condiments/smoothed_linePlot_traj1_l2fc4_cl10_smooth.pdf", width=10, height=5)
+pdf("output/condiments/smoothed_linePlot_traj2_l2fc2_cl10_smooth.pdf", width=10, height=5)
+
+pdf("output/condiments/smoothed_linePlot_traj4_l2fc2_cl4_smooth.pdf", width=10, height=5)
+
+ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
+  geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~Cluster, scales = "free_y", nrow=2) +
+  theme_bw() +
+  labs(title = "Smoothed Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+
+
+
+### Export gene list from each cluster
+## Create a data frame with gene names and their respective cluster assignments
+output_df <- data.frame(
+  gene = rownames(combinedData),
+  cluster = clusters
+)
+
+# Write the data frame to a .txt file
+write.table(output_df, 
+            file = "output/condiments/gene_clusters_traj1_l2fc2_cl10.txt", 
+            sep = "\t", 
+            quote = FALSE, 
+            row.names = FALSE, 
+            col.names = TRUE)
+
+# Check some genes individually
+## FOR LINEAGE 1
+counts <- humangastruloid72hrs.combined.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(humangastruloid72hrs.combined.sct$orig.ident) # identify conditions
+pseudotimes <- slingPseudotime(humangastruloid72hrs, na = FALSE) [,1]
+cellweights <- slingCurveWeights(humangastruloid72hrs) [,1]
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+pdf("output/condiments/plotSmoothers_traj1_Aff3.pdf", width=8, height=4)
+plotSmoothers(traj1, sub_counts, gene = "Aff3", curvesCol = c("red","blue") ) +
+scale_color_manual(values =c("red","blue"))
+dev.off()
+
+
+## FOR LINEAGE 2
+counts <- humangastruloid72hrs.combined.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(humangastruloid72hrs.combined.sct$orig.ident) # identify conditions
+pseudotimes <- slingPseudotime(humangastruloid72hrs, na = FALSE) [,2]
+cellweights <- slingCurveWeights(humangastruloid72hrs) [,2]
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+pdf("output/condiments/plotSmoothers_traj2_Gm28376.pdf", width=8, height=4)
+plotSmoothers(traj2, sub_counts, gene = "Gm28376", curvesCol = c("red","blue") ) +
+scale_color_manual(values =c("red","blue"))
+dev.off()
+
+## FOR LINEAGE 3
+counts <- humangastruloid72hrs.combined.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(humangastruloid72hrs.combined.sct$orig.ident) # identify conditions
+pseudotimes <- slingPseudotime(humangastruloid72hrs, na = FALSE) [,3]
+cellweights <- slingCurveWeights(humangastruloid72hrs) [,3]
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+pdf("output/condiments/plotSmoothers_traj3_Fcrla.pdf", width=8, height=4)
+plotSmoothers(traj3, sub_counts, gene = "Fcrla", curvesCol = c("red","blue") ) +
+scale_color_manual(values =c("red","blue"))
+dev.off()
+
+## FOR LINEAGE 4
+counts <- humangastruloid72hrs.combined.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(humangastruloid72hrs.combined.sct$orig.ident) # identify conditions
+pseudotimes <- slingPseudotime(humangastruloid72hrs, na = FALSE) [,4]
+cellweights <- slingCurveWeights(humangastruloid72hrs) [,4]
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+pdf("output/condiments/plotSmoothers_traj4_Hist2h2ac.pdf", width=8, height=4)
+plotSmoothers(traj4, sub_counts, gene = "Hist2h2ac", curvesCol = c("red","blue") ) +
+scale_color_manual(values =c("red","blue"))
+dev.off()
+
+
+
+```
+
+--> I did all the tutorial from [here](https://hectorrdb.github.io/condimentsPaper/articles/Fibrosis.html) 
+----> This part Differential fate selection FAIL; but not sure it is usefull
+
+--> prog_res? Lineage all pvalue signif! (paste in the ppt Conchi 20231005)
+
+--> The icMAt is too long! I gave up running it. Author recommend using 6 knots (https://github.com/statOmics/tradeSeq/issues/121). Other discussion about [time](https://github.com/statOmics/tradeSeq/issues/41)
+
+--> Same for the fitGAM, too long, so I run it into a Rscript as follow:
+----> In the end; **what worked is to run trajectory per trajectory; it should last around 24-72hours per trajectory. Using the top 10k features do not reduce time significantly.**
+----> Parrelization can be stuck sometime so I ll run it without...
+
+--> The pseudotime diff looks weirk so let s use log2fc files anmd not the raw not log2fc filtered
+
+
+```bash
+conda activate condiments_V5
+
+# trajectory per trajectory (all features, no parralelization)
+sbatch scripts/fitGAM_6knots_traj1.sh # 6110340 ok
+sbatch scripts/fitGAM_6knots_traj2.sh # 6110351 ok
+sbatch scripts/fitGAM_6knots_traj3.sh # 6110359 ok
+sbatch scripts/fitGAM_6knots_traj4.sh # 6110363 ok
+sbatch scripts/fitGAM_6knots_traj5.sh # 6110370 ok
+sbatch scripts/fitGAM_6knots_traj6.sh # 6110374 ok
+sbatch scripts/fitGAM_6knots_traj7.sh # 6110376 ok
+sbatch scripts/fitGAM_6knots_traj8.sh # 6110378 ok
+
+```
+
+--> Without parralell processing trajectory per traj works great!! 24-72hrs to run
+
+
+
+
+
+
 ## Fuicntional analysis on pseudotime clustered genes
 
 This analysis is done in conda activate deseq2 to use fgsea packages
