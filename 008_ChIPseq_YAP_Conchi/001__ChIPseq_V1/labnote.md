@@ -1964,7 +1964,65 @@ dev.off()
 ```
 --> Work, but heatmap look very bad.. Deeptool plot heatmap are much better. Let's troubleshoot to add gene on the current heatmap
 
+--> Let's just collect row number of each gene; or simply which one is the more gain/lost (FC value of THOR peak)
 
+
+```R
+# packages
+library("tidyverse")
+library("tidyverse")
+
+
+# import
+## peak to gene
+output/ChIPseeker/annotation_THORq4_EZH2_pos_annot.txt
+output/ChIPseeker/annotation_THORq4_EZH2_neg_annot.txt
+
+## THOR peak FC value
+output/THOR/THOR_hESC_EZH2_WTvsYAPKO/THOR_qval4_positive.bed
+output/THOR/THOR_hESC_EZH2_WTvsYAPKO/THOR_qval4_negative.bed
+
+# POSITIVE
+# isolate genes / peak
+genes_of_interest <- c("PAX7", "PAX3", "NEUROG2-AS1", "CYP26A1", "IRX3", "OTX2", "LHX8", "NEUROD1", "NKX2-4", "ZIC1", "ZIC4")
+annotation_THORq4_EZH2_pos_annot = as_tibble( read_tsv("output/ChIPseeker/annotation_THORq4_EZH2_pos_annot.txt") ) %>%
+    filter(geneSymbol %in% c("PAX7", "PAX3", "NEUROG2-AS1", "CYP26A1", "IRX3", "OTX2", "LHX8", "NEUROD1", "NKX2-4", "ZIC1", "ZIC4") ) %>%
+    dplyr::select(geneSymbol, annotation, distanceToTSS, name)
+## Keep the peak closest to the TSS for each gene
+annotation_THORq4_EZH2_pos_annot_peakTSS = annotation_THORq4_EZH2_pos_annot %>%
+  group_by(geneSymbol) %>%
+  filter(abs(distanceToTSS) == min(abs(distanceToTSS))) %>%
+  ungroup()
+## Collect FC information of the selected peaks
+THOR_qval4_positive = as_tibble(read_tsv("output/THOR/THOR_hESC_EZH2_WTvsYAPKO/THOR_qval4_positive.bed", col_names = FALSE)) %>%
+    dplyr::rename( "name"= "X4",  "FC" = "X16") %>%
+    dplyr::select(name, FC) %>%
+    inner_join(annotation_THORq4_EZH2_pos_annot_peakTSS) %>%
+    arrange(desc(FC))
+
+
+# NEGATIVE
+# isolate genes / peak
+genes_of_interest <- c("HES2", "WLS", "GDF7", "FOXA2", "TBX1", "SOX17", "FGF4", "KLF4", "WNT3", "NODAL", "CDX2", "GATA5")
+annotation_THORq4_EZH2_neg_annot = as_tibble( read_tsv("output/ChIPseeker/annotation_THORq4_EZH2_neg_annot.txt") ) %>%
+    filter(geneSymbol %in% c("HES2", "WLS", "GDF7", "FOXA2", "TBX1", "SOX17", "FGF4", "KLF4", "WNT3", "NODAL", "CDX2", "GATA5") ) %>%
+    dplyr::select(geneSymbol, annotation, distanceToTSS, name)
+## Keep the peak closest to the TSS for each gene
+annotation_THORq4_EZH2_neg_annot_peakTSS = annotation_THORq4_EZH2_neg_annot %>%
+  group_by(geneSymbol) %>%
+  filter(abs(distanceToTSS) == min(abs(distanceToTSS))) %>%
+  ungroup()
+## Collect FC information of the selected peaks
+THOR_qval4_negative = as_tibble(read_tsv("output/THOR/THOR_hESC_EZH2_WTvsYAPKO/THOR_qval4_negative.bed", col_names = FALSE)) %>%
+    dplyr::rename( "name"= "X4",  "FC" = "X16") %>%
+    dplyr::select(name, FC) %>%
+    inner_join(annotation_THORq4_EZH2_neg_annot_peakTSS) %>%
+    arrange((FC))
+
+
+
+
+```
 
 
 # enhancer (with deeptool plot)

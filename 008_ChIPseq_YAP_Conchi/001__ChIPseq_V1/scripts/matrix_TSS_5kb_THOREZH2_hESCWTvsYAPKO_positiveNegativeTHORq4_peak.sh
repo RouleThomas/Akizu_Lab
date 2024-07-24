@@ -23,6 +23,20 @@ plotHeatmap -m output/deeptools/matrix_TSS_5kb_THOREZH2_hESCWTvsYAPKO_positiveNe
     --heatmapWidth 2 \
     --colorMap bwr
 
+plotHeatmap -m output/deeptools/matrix_TSS_5kb_THOREZH2_hESCWTvsYAPKO_positiveNegativeTHORq4_peak.gz \
+    -out output/deeptools/matrix_TSS_5kb_THOREZH2_hESCWTvsYAPKO_positiveNegativeTHORq4_peak_heatmap_colorSmall2.pdf \
+    --samplesLabel "WT_EZH2" "YAPKO_EZH2" \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --colorList white,blue 
+
+
+
+
+
+
+
 
 plotHeatmap -m output/deeptools/matrix_TSS_5kb_THOREZH2_hESCWTvsYAPKO_positiveNegativeTHORq4_peak.gz \
     -out output/deeptools/matrix_TSS_5kb_THOREZH2_hESCWTvsYAPKO_positiveNegativeTHORq4_peak_heatmap_colorSmall.pdf \
