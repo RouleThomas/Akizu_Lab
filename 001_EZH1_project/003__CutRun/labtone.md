@@ -8640,6 +8640,19 @@ awk '$5 == "-" {print $1"\t"($3-1000)"\t"($3+1000)"\t"$4"\t"$5}' meta/ENCFF159KB
 cat meta/ENCFF159KBI_gene_1kbTSS_plusStrand.bed meta/ENCFF159KBI_gene_1kbTSS_minusStrand.bed > meta/ENCFF159KBI_gene_1kbTSS.bed
 sort -k1,1 -k2,2n meta/ENCFF159KBI_gene_1kbTSS.bed > meta/ENCFF159KBI_gene_1kbTSS_sorted.bed
 
+# add + - 500bb around the TSS of eachg gene (watchout + - strand genes!)
+awk '$5 == "+" {print $1"\t"($2-500)"\t"($2+500)"\t"$4"\t"$5}' meta/ENCFF159KBI_gene.bed > meta/ENCFF159KBI_gene_500bpbTSS_plusStrand.bed
+awk '$5 == "-" {print $1"\t"($3-500)"\t"($3+500)"\t"$4"\t"$5}' meta/ENCFF159KBI_gene.bed > meta/ENCFF159KBI_gene_500bpTSS_minusStrand.bed
+cat meta/ENCFF159KBI_gene_500bpbTSS_plusStrand.bed meta/ENCFF159KBI_gene_500bpTSS_minusStrand.bed > meta/ENCFF159KBI_gene_500bpTSS.bed
+sort -k1,1 -k2,2n meta/ENCFF159KBI_gene_500bpTSS.bed > meta/ENCFF159KBI_gene_500bpTSS_sorted.bed
+
+# add + - 250bb around the TSS of eachg gene (watchout + - strand genes!)
+awk '$5 == "+" {print $1"\t"($2-250)"\t"($2+250)"\t"$4"\t"$5}' meta/ENCFF159KBI_gene.bed > meta/ENCFF159KBI_gene_250bpbTSS_plusStrand.bed
+awk '$5 == "-" {print $1"\t"($3-250)"\t"($3+250)"\t"$4"\t"$5}' meta/ENCFF159KBI_gene.bed > meta/ENCFF159KBI_gene_250bpTSS_minusStrand.bed
+cat meta/ENCFF159KBI_gene_250bpbTSS_plusStrand.bed meta/ENCFF159KBI_gene_250bpTSS_minusStrand.bed > meta/ENCFF159KBI_gene_250bpTSS.bed
+sort -k1,1 -k2,2n meta/ENCFF159KBI_gene_250bpTSS.bed > meta/ENCFF159KBI_gene_250bpTSS_sorted.bed
+
+
 # count bedgraph
 ## with -counts option
 bedtools coverage -counts -a meta/ENCFF159KBI_gene_1kbTSS_sorted.bed -b output/THOR/THOR_WTvsHET_unique_Keepdup/WTvsHETuniqueKeepdup-s1_median.bedGraph > meta/ENCFF159KBI_gene_1kbTSS_sorted-WTvsHETuniqueKeepdup_bedtoolsCoverageCounts.bed
