@@ -1080,40 +1080,48 @@ WT_Kcnc1_p14_CB_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p14_CB_1step.anc
 #### UMAP
 DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "integrated"
 
-WT_Kcnc1_p14_CB_1step.sct <- RunPCA(WT_Kcnc1_p14_CB_1step.sct, verbose = FALSE, npcs = 30)
-WT_Kcnc1_p14_CB_1step.sct <- RunUMAP(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
-WT_Kcnc1_p14_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", k.param = 40, dims = 1:30)
+WT_Kcnc1_p14_CB_1step.sct <- RunPCA(WT_Kcnc1_p14_CB_1step.sct, verbose = FALSE, npcs = 40)
+WT_Kcnc1_p14_CB_1step.sct <- RunUMAP(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
+WT_Kcnc1_p14_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", k.param = 40, dims = 1:40)
 WT_Kcnc1_p14_CB_1step.sct <- FindClusters(WT_Kcnc1_p14_CB_1step.sct, resolution = 0.7, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
 WT_Kcnc1_p14_CB_1step.sct$condition <- factor(WT_Kcnc1_p14_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1-1stepIntegrationRegressNotRepeated-dim30kparam40res07.pdf", width=10, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1-1stepIntegrationRegressNotRepeated-dim40kparam40res07.pdf", width=10, height=6)
 DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
-pdf("output/seurat/UMAP_WT_Kcnc1_splitCondition-1stepIntegrationRegressNotRepeated-dim30kparam40res07.pdf", width=13, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_splitCondition-1stepIntegrationRegressNotRepeated-dim40kparam40res07.pdf", width=13, height=6)
 DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE, split.by = "condition")
 dev.off()
-pdf("output/seurat/UMAP_WT_Kcnc1_splitReplicate-1stepIntegrationRegressNotRepeated-dim30kparam40res07.pdf", width=15, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_splitReplicate-1stepIntegrationRegressNotRepeated-dim40kparam40res07.pdf", width=15, height=6)
 DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE, split.by = "replicate")
 dev.off()
 
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_Phase-1stepIntegrationRegressNotRepeated-dim30kparam40res07.pdf", width=10, height=6)
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_Phase-1stepIntegrationRegressNotRepeated-dim40kparam40res07.pdf", width=10, height=6)
 DimPlot(WT_Kcnc1_p14_CB_1step.sct, group.by= "Phase") & 
   theme(plot.title = element_text(size=10))
 dev.off()  
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_nFeature_RNA-1stepIntegrationRegressNotRepeated-dim30kparam40res07.pdf", width=10, height=6)
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_nFeature_RNA-1stepIntegrationRegressNotRepeated-dim40kparam40res07.pdf", width=10, height=6)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "nFeature_RNA")
 dev.off()  
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_percentmt-1stepIntegrationRegressNotRepeated-dim30kparam40res07.pdf", width=10, height=6)
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_percentmt-1stepIntegrationRegressNotRepeated-dim40kparam40res07.pdf", width=10, height=6)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.mt")
 dev.off()  
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_percentrb-1stepIntegrationRegressNotRepeated-dim30kparam40res07.pdf", width=10, height=6)
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_percentrb-1stepIntegrationRegressNotRepeated-dim40kparam40res07.pdf", width=10, height=6)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.rb")
 dev.off()  
 
+# genes
 
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
+
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-1stepIntegrationRegressNotRepeated-dim40kparam40res07-countMtRbRegression-List2.pdf", width=30, height=70)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Calb1", "Slc1a6", "Car8","Gabra6","Sorcs3", "Ptprk","Nxph1", "Cdh22","Edil3","Fabp7", "Zeb2", "Hepacam","Pax6","Gad1", "Gria3","Itpr1","Slc1a2", "Apoe", "Aqp4", "Slc39a12","Glul", "Slc1a3", "Ednrb","Ttr", "Clic6", "Slc13a4", "Kl","Cfap54", "Ccdc153", "Cfap44", "Tmem212","Gad2", "Slc6a1","Ptgds", "Dcn", "Colec12","Ntng1", "Grm5","Slc18a2", "Ddc","Aldoc", "Nnat" ,"Mbp", "Mag", "Plp1", "Pdgfd", "Gli3","Rbpms","S100b", "Cnp","Slc6a4", "Tph2" ), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
 
 
 
@@ -1121,11 +1129,12 @@ dev.off()
 ## saveRDS(WT_p14_CB.sct, file = "output/seurat/WT_p14_CB.sct_V1_numeric.rds") 
 ## saveRDS(Kcnc1_p14_CB.sct, file = "output/seurat/Kcnc1_p14_CB.sct_V1_numeric.rds") 
 ## saveRDS(WT_Kcnc1_p14_CB.sct, file = "output/seurat/WT_Kcnc1_p14_CB.sct_V1_numeric.rds") 
+## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V1_numeric.rds") 
 ## WT_p14_CB.sct <- readRDS(file = "output/seurat/WT_p14_CB.sct_V1_numeric.rds")
 ##########
 
 
-
+## Let's work with 1step integration
 
 
 

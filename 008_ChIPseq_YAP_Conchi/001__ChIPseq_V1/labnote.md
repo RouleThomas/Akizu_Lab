@@ -2400,7 +2400,7 @@ Can we **use different AB in the same DiffBind correction??** Will the SF provid
 
 
 - Generate a bed file around TSS of each gene (250bp, 500bp, 1kb up/downstream); file already generated at `001_*/003__*/meta/ENCFF159KBI_gene_1kbTSS_sorted.bed` 
-- Quantify H3K27me3 or EZH2 read density around the TSS with [bin.bw](https://rdrr.io/github/jmonlong/PopSV/man/bin.bw.html) 
+- Quantify EZH2 read density around the TSS with [bin.bw](https://rdrr.io/github/jmonlong/PopSV/man/bin.bw.html) 
 - Represent data in R `ggplot`
 
 --> I need to generate a file with geneSymbol names and signal quantification. If several signal value per gene, take the highest one; because there could be transcript not express; so better to take the higher value; which should show the regulated one? **Let's generate median value of all transcript per gene; and maximum value of all transcript per gene.**
@@ -2416,26 +2416,176 @@ library("tidyverse")
 library("Rsamtools")
 library("ggpubr")
 library("data.table")
+library("biomaRt")
 
 # EZH2 #####################################################
 
-## WT EZH2_in Peaks 250bp
+## WT EZH2_in Peaks 1kb
 bwFile <- "output/THOR/THOR_hESC_EZH2_WTvsYAPKO/hESCEZH2WTvsYAPKO-s1_median.bw"
 regions <- read.table("../../001_EZH1_Project/003__CutRun/meta/ENCFF159KBI_gene_1kbTSS_sorted.bed", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "gene", "strand")) 
-counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_EZH2")
-#### Collect output
-WT_EZH2 <- as_tibble(fread(cmd = "gunzip -c output/binBw/WT_EZH2.bgz") ) %>%
- left_join(regions)
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_EZH2_1kb")
+#### Collect output and gene information
+WT_EZH2 <- as_tibble(fread(cmd = "gunzip -c output/binBw/WT_EZH2_1kb.bgz") ) %>%
+ left_join(regions) %>%
+ separate(gene, into = c("gene", "version"), sep = "\\.") %>%
+ dplyr::select(gene, bc) %>%
+ unique()
+
+ensembl <- useEnsembl(biomart = "genes", dataset = "hsapiens_gene_ensembl")
+gene_ids <- unique(WT_EZH2$gene)
+gene_info <- getBM(attributes = c('ensembl_gene_id', 'hgnc_symbol'),
+                   filters = 'ensembl_gene_id',
+                   values = gene_ids,
+                   mart = ensembl)
+
+WT_EZH2_geneSymbol = WT_EZH2 %>%
+    left_join(gene_info %>% dplyr::rename("gene" = "ensembl_gene_id",  "geneSymbol" = "hgnc_symbol")) %>%
+    dplyr::select(geneSymbol, bc) %>%
+    unique() %>%
+    group_by(geneSymbol) %>%
+    mutate(bc_max = max(bc),
+           bc_median = median(bc)) %>%
+    filter(geneSymbol != "NA") %>%
+    dplyr::select(geneSymbol, bc_median, bc_max) %>%
+    unique()
+
+write.table(WT_EZH2_geneSymbol, file = "output/binBw/WT_EZH2_1kbTSS_geneSymbol.txt", sep = "\t", row.names = FALSE, quote = FALSE)
+
+
+
+## YAPKO EZH2_in Peaks 1kb
+bwFile <- "output/THOR/THOR_hESC_EZH2_WTvsYAPKO/hESCEZH2WTvsYAPKO-s2_median.bw"
+regions <- read.table("../../001_EZH1_Project/003__CutRun/meta/ENCFF159KBI_gene_1kbTSS_sorted.bed", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "gene", "strand")) 
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/YAPKO_EZH2")
+#### Collect output and gene information
+YAPKO_EZH2 <- as_tibble(fread(cmd = "gunzip -c output/binBw/YAPKO_EZH2.bgz") ) %>%
+ left_join(regions) %>%
+ separate(gene, into = c("gene", "version"), sep = "\\.") %>%
+ dplyr::select(gene, bc) %>%
+ unique()
+YAPKO_EZH2_geneSymbol = YAPKO_EZH2 %>%
+    left_join(gene_info %>% dplyr::rename("gene" = "ensembl_gene_id",  "geneSymbol" = "hgnc_symbol")) %>%
+    dplyr::select(geneSymbol, bc) %>%
+    unique() %>%
+    group_by(geneSymbol) %>%
+    mutate(bc_max = max(bc),
+           bc_median = median(bc)) %>%
+    filter(geneSymbol != "NA") %>%
+    dplyr::select(geneSymbol, bc_median, bc_max) %>%
+    unique()
+write.table(YAPKO_EZH2_geneSymbol, file = "output/binBw/YAPKO_EZH2_1kbTSS_geneSymbol.txt", sep = "\t", row.names = FALSE, quote = FALSE)
 
 
 
 
-XXX add gene information XXX
 
-XXX meidan and max value per gene XXX
+
+## WT EZH2_in Peaks 500bp
+bwFile <- "output/THOR/THOR_hESC_EZH2_WTvsYAPKO/hESCEZH2WTvsYAPKO-s1_median.bw"
+regions <- read.table("../../001_EZH1_Project/003__CutRun/meta/ENCFF159KBI_gene_500bpTSS_sorted.bed", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "gene", "strand")) 
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_EZH2_500bp")
+#### Collect output and gene information
+WT_EZH2 <- as_tibble(fread(cmd = "gunzip -c output/binBw/WT_EZH2_500bp.bgz") ) %>%
+ left_join(regions) %>%
+ separate(gene, into = c("gene", "version"), sep = "\\.") %>%
+ dplyr::select(gene, bc) %>%
+ unique()
+WT_EZH2_geneSymbol = WT_EZH2 %>%
+    left_join(gene_info %>% dplyr::rename("gene" = "ensembl_gene_id",  "geneSymbol" = "hgnc_symbol")) %>%
+    dplyr::select(geneSymbol, bc) %>%
+    unique() %>%
+    group_by(geneSymbol) %>%
+    mutate(bc_max = max(bc),
+           bc_median = median(bc)) %>%
+    filter(geneSymbol != "NA") %>%
+    dplyr::select(geneSymbol, bc_median, bc_max) %>%
+    unique()
+write.table(WT_EZH2_geneSymbol, file = "output/binBw/WT_EZH2_500bpTSS_geneSymbol.txt", sep = "\t", row.names = FALSE, quote = FALSE)
+
+
+
+## YAPKO EZH2_in Peaks 500bp
+bwFile <- "output/THOR/THOR_hESC_EZH2_WTvsYAPKO/hESCEZH2WTvsYAPKO-s2_median.bw"
+regions <- read.table("../../001_EZH1_Project/003__CutRun/meta/ENCFF159KBI_gene_500bpTSS_sorted.bed", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "gene", "strand")) 
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/YAPKO_EZH2_500bp")
+#### Collect output and gene information
+YAPKO_EZH2 <- as_tibble(fread(cmd = "gunzip -c output/binBw/YAPKO_EZH2_500bp.bgz") ) %>%
+ left_join(regions) %>%
+ separate(gene, into = c("gene", "version"), sep = "\\.") %>%
+ dplyr::select(gene, bc) %>%
+ unique()
+YAPKO_EZH2_geneSymbol = YAPKO_EZH2 %>%
+    left_join(gene_info %>% dplyr::rename("gene" = "ensembl_gene_id",  "geneSymbol" = "hgnc_symbol")) %>%
+    dplyr::select(geneSymbol, bc) %>%
+    unique() %>%
+    group_by(geneSymbol) %>%
+    mutate(bc_max = max(bc),
+           bc_median = median(bc)) %>%
+    filter(geneSymbol != "NA") %>%
+    dplyr::select(geneSymbol, bc_median, bc_max) %>%
+    unique()
+write.table(YAPKO_EZH2_geneSymbol, file = "output/binBw/YAPKO_EZH2_500bpTSS_geneSymbol.txt", sep = "\t", row.names = FALSE, quote = FALSE)
+
+
+
+
+
+
+
+
+## WT EZH2_in Peaks 250bp
+bwFile <- "output/THOR/THOR_hESC_EZH2_WTvsYAPKO/hESCEZH2WTvsYAPKO-s1_median.bw"
+regions <- read.table("../../001_EZH1_Project/003__CutRun/meta/ENCFF159KBI_gene_250bpTSS_sorted.bed", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "gene", "strand")) 
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_EZH2_250bp")
+#### Collect output and gene information
+WT_EZH2 <- as_tibble(fread(cmd = "gunzip -c output/binBw/WT_EZH2_250bp.bgz") ) %>%
+ left_join(regions) %>%
+ separate(gene, into = c("gene", "version"), sep = "\\.") %>%
+ dplyr::select(gene, bc) %>%
+ unique()
+WT_EZH2_geneSymbol = WT_EZH2 %>%
+    left_join(gene_info %>% dplyr::rename("gene" = "ensembl_gene_id",  "geneSymbol" = "hgnc_symbol")) %>%
+    dplyr::select(geneSymbol, bc) %>%
+    unique() %>%
+    group_by(geneSymbol) %>%
+    mutate(bc_max = max(bc),
+           bc_median = median(bc)) %>%
+    filter(geneSymbol != "NA") %>%
+    dplyr::select(geneSymbol, bc_median, bc_max) %>%
+    unique()
+write.table(WT_EZH2_geneSymbol, file = "output/binBw/WT_EZH2_250bpTSS_geneSymbol.txt", sep = "\t", row.names = FALSE, quote = FALSE)
+
+
+
+## YAPKO EZH2_in Peaks 250bp
+bwFile <- "output/THOR/THOR_hESC_EZH2_WTvsYAPKO/hESCEZH2WTvsYAPKO-s2_median.bw"
+regions <- read.table("../../001_EZH1_Project/003__CutRun/meta/ENCFF159KBI_gene_250bpTSS_sorted.bed", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "gene", "strand")) 
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/YAPKO_EZH2_250bp")
+#### Collect output and gene information
+YAPKO_EZH2 <- as_tibble(fread(cmd = "gunzip -c output/binBw/YAPKO_EZH2_250bp.bgz") ) %>%
+ left_join(regions) %>%
+ separate(gene, into = c("gene", "version"), sep = "\\.") %>%
+ dplyr::select(gene, bc) %>%
+ unique()
+YAPKO_EZH2_geneSymbol = YAPKO_EZH2 %>%
+    left_join(gene_info %>% dplyr::rename("gene" = "ensembl_gene_id",  "geneSymbol" = "hgnc_symbol")) %>%
+    dplyr::select(geneSymbol, bc) %>%
+    unique() %>%
+    group_by(geneSymbol) %>%
+    mutate(bc_max = max(bc),
+           bc_median = median(bc)) %>%
+    filter(geneSymbol != "NA") %>%
+    dplyr::select(geneSymbol, bc_median, bc_max) %>%
+    unique()
+write.table(YAPKO_EZH2_geneSymbol, file = "output/binBw/YAPKO_EZH2_250bpTSS_geneSymbol.txt", sep = "\t", row.names = FALSE, quote = FALSE)
+
+
 
 
 
 ```
+
+--> Works well. File generated `output/binBw/YAPKO_EZH2_250bpTSS_geneSymbol.txt` containing max and median EZH2 signal for all genes.
+
 
 
