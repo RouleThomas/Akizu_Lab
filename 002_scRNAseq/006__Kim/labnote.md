@@ -2093,11 +2093,11 @@ RNA_WT_Bap1KO <- slingshot(RNA_WT_Bap1KO, reducedDim = 'UMAP',
                  start.clus = "8",
                  end.clus = c("7", "5", "10", "4", "2"),
                  approx_points = NULL)
-RNA_WT_Bap1KO <- slingshot(RNA_WT_Bap1KO, reducedDim = 'UMAP',
-                 clusterLabels = colData(RNA_WT_Bap1KO)$seurat_clusters,
+RNA_WT_Bap1KO_subPseudotime <- slingshot(RNA_WT_Bap1KO_subPseudotime, reducedDim = 'UMAP',
+                 clusterLabels = colData(RNA_WT_Bap1KO_subPseudotime)$seurat_clusters,
                  start.clus = "8",
-                 end.clus = c("7", "5", "10", "4", "2"),
-                 approx_points = NULL,
+                 end.clus = c("7", "5", "10","2"),
+                 approx_points = 200,
                  extend = 'n')
 ##########################################
 
@@ -2115,8 +2115,9 @@ curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
 # pdf("output/condiments/UMAP_trajectory_separated_RNA_WT_Bap1KO_endApproxNULLextendn.pdf", width=5, height=5)
 # pdf("output/condiments/UMAP_trajectory_separated_RNA_WT_Bap1KO.pdf", width=6, height=5)
 # pdf("output/condiments/UMAP_trajectory_separated_RNA_WT_Bap1KO_endApproxNULLextendn.pdf", width=5, height=5)
+# pdf("output/condiments/UMAP_trajectory_separated_RNA_WT_Bap1KO_subPseudotime_endApproxNULLextendn.pdf", width=5, height=5)
 
-pdf("output/condiments/UMAP_trajectory_separated_RNA_WT_Bap1KO_subPseudotime_endApproxNULLextendn.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_trajectory_separated_RNA_WT_Bap1KO_subPseudotime_endApprox200extendn.pdf", width=5, height=5)
 
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = orig.ident)) +
   geom_point(size = .7, alpha = .2) +

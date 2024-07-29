@@ -12281,33 +12281,30 @@ traj1 <- fitGAM(
 
 ### Once slurm jobs finished for each trajectory; load traj1 <- readRDS("output/condiments/traj1.rds") OK
 
-XXX
-
-traj1 <- readRDS("output/condiments/traj1_humangastruloid72hrs.rds.rds")
-traj2 <- readRDS("output/condiments/traj2_humangastruloid72hrs.rds.rds")
-traj3 <- readRDS("output/condiments/traj3_humangastruloid72hrs.rds.rds")
+traj1 <- readRDS("output/condiments/traj1_humangastruloid72hrs.rds")
+traj2 <- readRDS("output/condiments/traj2_humangastruloid72hrs.rds") # --> trajectory of interest humangastru72hrs
+traj3 <- readRDS("output/condiments/traj3_humangastruloid72hrs.rds")
 
 
 ## DEGs between condition
-condRes_traj5 <- conditionTest(traj5)
-condRes_traj8_l2fc2 <- conditionTest(traj8, l2fc = log2(2)) # 
+# condRes_traj5 <- conditionTest(traj5)
 
-condRes_traj1_l2fc4 <- conditionTest(traj1, l2fc = log2(4)) # let s prefer to use this one
-condRes_traj2_l2fc4 <- conditionTest(traj2, l2fc = log2(4)) # let s prefer to use this one
+# condRes_traj2_l2fc4 <- conditionTest(traj2, l2fc = log2(4)) # 67 DEG with  log2(4)
 
+condRes_traj2_l2fc3 <- conditionTest(traj2, l2fc = log2(3)) # 
 
 
 
 # Correct the pvalue with fdr
 
-condRes_traj2_l2fc4$padj <- p.adjust(condRes_traj2_l2fc4$pvalue, "fdr")
+condRes_traj2_l2fc3$padj <- p.adjust(condRes_traj2_l2fc3$pvalue, "fdr")
 
 
 
 ### Save output tables
-condRes_traj2_l2fc4$gene <- rownames(condRes_traj2_l2fc4) # create new column l;abel gene; as matrix before
-condRes_traj2_l2fc4 <- condRes_traj2_l2fc4[, c(ncol(condRes_traj2_l2fc4), 1:(ncol(condRes_traj2_l2fc4)-1))] # just to put gene column 1st
-write.table(condRes_traj2_l2fc4, file = c("output/condiments/condRes_traj2_l2fc4.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+condRes_traj2_l2fc3$gene <- rownames(condRes_traj2_l2fc3) # create new column label gene; as matrix before
+condRes_traj2_l2fc3 <- condRes_traj2_l2fc3[, c(ncol(condRes_traj2_l2fc3), 1:(ncol(condRes_traj2_l2fc3)-1))] # just to put gene column 1st
+write.table(condRes_traj2_l2fc3, file = c("output/condiments/condRes_traj2_humangastruloid72hrs_l2fc3.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
 
 
@@ -12315,17 +12312,17 @@ write.table(condRes_traj2_l2fc4, file = c("output/condiments/condRes_traj2_l2fc4
 
 # Heatmap clutering DEGs per traj _ REVISED METHOD
 ## import DEGs
-condRes_traj1 <- read.table("output/condiments/condRes_traj1_l2fc4.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE)
-condRes_traj1 <- read.table("output/condiments/condRes_traj1_l2fc2.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE)
+condRes_traj2 <- read.table("output/condiments/condRes_traj2_humangastruloid72hrs_l2fc2.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE)
+
 
 ## Isolate significant DEGs and transform into a vector
-conditionGenes_traj1_vector <- condRes_traj1 %>% 
+conditionGenes_traj2_vector <- condRes_traj2 %>% 
   filter(padj <= 0.05) %>%
   pull(gene)
   
 # Predict smoothed values
 yhatSmooth <- 
-  predictSmooth(traj1, gene = conditionGenes_traj1_vector, nPoints = 50, tidy = FALSE) %>%
+  predictSmooth(traj2, gene = conditionGenes_traj2_vector, nPoints = 50, tidy = FALSE) %>%
   log1p()
 
 yhatSmoothScaled <- t(apply(yhatSmooth, 1, scales::rescale))
@@ -12333,14 +12330,26 @@ combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
 # Generate heatmap with clustering
 # Perform hierarchical clustering
 hc <- hclust(dist(combinedData))
-clusters <- cutree(hc, k=10)
+clusters <- cutree(hc, k=6)  # CHANGE CLUSTER NUMB HERE
 # Create an annotation data frame for the rows based on cluster assignments
 annotation_row <- data.frame(Cluster = factor(clusters))
+
+
 # Define colors for each cluster
 # 20
 cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "grey", "darkred", "darkblue", "gold", "darkgray", "lightblue", "lightgreen", "lightcoral", "lightpink", "lightcyan"))(20),
                            unique(annotation_row$Cluster))
 annotation_colors <- list(Cluster = cluster_colors)
+# 15
+cluster_colors <- setNames(colorRampPalette(c(  "red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "magenta", "lightblue", "grey", "lightgreen", "turquoise"))(15),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+
+# 12
+cluster_colors <- setNames(colorRampPalette(c(  "red", "blue", "green", "yellow", "purple", "orange", "pink", "brown",   "cyan", "darkgreen", "magenta", "lightblue"))(12),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+
 # 10
 cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen" ))(10),
                            unique(annotation_row$Cluster))
@@ -12366,26 +12375,27 @@ cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow" )
                            unique(annotation_row$Cluster))
 annotation_colors <- list(Cluster = cluster_colors)
 # Generate the heatmap
-pdf("output/condiments/clustered_heatmap_traj1.pdf", width=8, height=10)
-pdf("output/condiments/clustered_heatmap_traj1_cl10.pdf", width=8, height=10)
-pdf("output/condiments/clustered_heatmap_traj1_l2fc4_cl10.pdf", width=8, height=10)
 
-pdf("output/condiments/clustered_heatmap_traj4_l2fc2_cl10.pdf", width=8, height=10)
-pdf("output/condiments/clustered_heatmap_traj5_l2fc2_cl10.pdf", width=8, height=10)
-pdf("output/condiments/clustered_heatmap_traj3_l2fc2_cl7.pdf", width=8, height=10)
-pdf("output/condiments/clustered_heatmap_traj1_l2fc2_cl10.pdf", width=8, height=10)
+
+pdf("output/condiments/clustered_heatmap_traj2_humangastruloid72hrs_l2fc2_cl6.pdf", width=8, height=10)
 
 pheatmap(combinedData,
   cluster_cols = FALSE,
   show_rownames = FALSE,
   show_colnames = FALSE,
-  main = "Trajectory 1 - Hierarchical Clustering",
+  main = "Trajectory 2 - Hierarchical Clustering",
   legend = TRUE,
-  cutree_rows = 10,
+  cutree_rows = 6,
   annotation_row = annotation_row,
   annotation_colors = annotation_colors
 )
 dev.off()
+
+
+XXX Below not modified XXX
+
+
+
 
 
 # Line plots
@@ -12550,9 +12560,9 @@ dev.off()
 conda activate condiments_V5
 
 # trajectory per trajectory (all features, no parralelization)
-sbatch scripts/fitGAM_6knots_traj1_humangastruloid72hrs.sh # 22452979 xxx
-sbatch scripts/fitGAM_6knots_traj2_humangastruloid72hrs.sh # 22452981 xxx
-sbatch scripts/fitGAM_6knots_traj3_humangastruloid72hrs.sh # 22452982 xxx
+sbatch scripts/fitGAM_6knots_traj1_humangastruloid72hrs.sh # 22452979 ok
+sbatch scripts/fitGAM_6knots_traj2_humangastruloid72hrs.sh # 22452981 ok
+sbatch scripts/fitGAM_6knots_traj3_humangastruloid72hrs.sh # 22452982 ok
 ```
 
 --> Without parralell processing trajectory per traj works great!! 24-72hrs to run
