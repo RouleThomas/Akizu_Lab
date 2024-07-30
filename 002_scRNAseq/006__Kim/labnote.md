@@ -2302,18 +2302,18 @@ traj1 <- fitGAM(
 ### Worked, Estimated run 3hours which is OK !!! Let's run this in slurm job partition per partition
 
 
-XXX DO SECOND PART !!!
 
-### Part_DG_GC #############################################
+
+### Part_PyNs_RSC_UL #############################################
 # tidy
 df <- bind_cols(
-  as.data.frame(reducedDims(Part_DG_GC)$UMAP),
-  as.data.frame(colData(Part_DG_GC)[, -3])
+  as.data.frame(reducedDims(Part_PyNs_RSC_UL)$UMAP),
+  as.data.frame(colData(Part_PyNs_RSC_UL)[, -3])
   ) %>%
   sample_frac(1)
 
 # PLOT
-pdf("output/condiments/UMAP_RNA_WT_Bap1KO_Part_DG_GC.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_RNA_WT_Bap1KO_Part_PyNs_RSC_UL.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
   geom_point(size = .7) +
   labs(col = "seurat_clusters") +
@@ -2323,7 +2323,7 @@ dev.off()
 
 ## genotype overlap
 
-pdf("output/condiments/UMAP_condition_RNA_WT_Bap1KO_Part_DG_GC.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_condition_RNA_WT_Bap1KO_Part_PyNs_RSC_UL.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = orig.ident)) +
   geom_point(size = .7) +
   scale_color_manual(values = c("blue", "red")) + # Specify colors here
@@ -2338,7 +2338,7 @@ scores <- condiments::imbalance_score(
   k = 20, smooth = 40)
 df$scores <- scores$scaled_scores
 
-pdf("output/condiments/UMAP_imbalance_score_RNA_WT_Bap1KO_Part_DG_GC.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_imbalance_score_RNA_WT_Bap1KO_Part_PyNs_RSC_UL.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
   geom_point(size = .7) +
   scale_color_viridis_c(option = "C") +
@@ -2352,37 +2352,37 @@ set.seed(42)
 
 ## PLOT with Separate trajectories
 ################ Paramater testing ########################## 
-Part_DG_GC <- slingshot(Part_DG_GC, reducedDim = 'UMAP',
-                 clusterLabels = colData(Part_DG_GC)$seurat_clusters,
+Part_PyNs_RSC_UL <- slingshot(Part_PyNs_RSC_UL, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_PyNs_RSC_UL)$seurat_clusters,
                  start.clus = '8', approx_points = 100)
-Part_DG_GC <- slingshot(Part_DG_GC, reducedDim = 'UMAP',
-                 clusterLabels = colData(Part_DG_GC)$seurat_clusters,
+Part_PyNs_RSC_UL <- slingshot(Part_PyNs_RSC_UL, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_PyNs_RSC_UL)$seurat_clusters,
                  start.clus = "8",
-                 end.clus = c("7"),
+                 end.clus = c("5"),
                  approx_points = 200,
                  extend = 'n')
 ##########################################
 
-Part_DG_GC <- slingshot(Part_DG_GC, reducedDim = 'UMAP',
-                 clusterLabels = colData(Part_DG_GC)$seurat_clusters,
+Part_PyNs_RSC_UL <- slingshot(Part_PyNs_RSC_UL, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_PyNs_RSC_UL)$seurat_clusters,
                  start.clus = "8",
-                 end.clus = c("7"),
+                 end.clus = c("5"),
                  approx_points = 100,
                  extend = 'n')
 
 
 set.seed(42)
-topologyTest(SlingshotDataSet(Part_DG_GC), Part_DG_GC$orig.ident) # KS_mean / 0.01 / 0.007581268 / 0.7581611
+topologyTest(SlingshotDataSet(Part_PyNs_RSC_UL), Part_PyNs_RSC_UL$orig.ident) # KS_mean / 0.01 / 0.007581268 / 0.7581611
 
 
-sdss <- slingshot_conditions(SlingshotDataSet(Part_DG_GC), Part_DG_GC$orig.ident)
+sdss <- slingshot_conditions(SlingshotDataSet(Part_PyNs_RSC_UL), Part_PyNs_RSC_UL$orig.ident)
 curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
                     .id = "orig.ident")
 
 
-# pdf("output/condiments/UMAP_trajectory_separated_RNA_WT_Bap1KO_Part_DG_GC_endApprox200extendn.pdf", width=5, height=5)
+# pdf("output/condiments/UMAP_trajectory_separated_RNA_WT_Bap1KO_Part_PyNs_RSC_UL_endApprox200extendn.pdf", width=5, height=5)
 
-pdf("output/condiments/UMAP_trajectory_separated_RNA_WT_Bap1KO_Part_DG_GC_endApprox100extendnpdf", width=5, height=5)
+pdf("output/condiments/UMAP_trajectory_separated_RNA_WT_Bap1KO_Part_PyNs_RSC_UL_endApprox100extendnpdf", width=5, height=5)
 
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = orig.ident)) +
   geom_point(size = .7, alpha = .2) +
@@ -2433,19 +2433,19 @@ dev.off()
 
 ## PLOT with common trajectories
 df_2 <- bind_cols(
-  as.data.frame(reducedDim(Part_DG_GC, "UMAP")),
-  slingPseudotime(Part_DG_GC) %>% as.data.frame() %>%
+  as.data.frame(reducedDim(Part_PyNs_RSC_UL, "UMAP")),
+  slingPseudotime(Part_PyNs_RSC_UL) %>% as.data.frame() %>%
     dplyr::rename_with(paste0, "_pst", .cols = everything()),
-  slingCurveWeights(Part_DG_GC) %>% as.data.frame(),
+  slingCurveWeights(Part_PyNs_RSC_UL) %>% as.data.frame(),
   ) %>%
   mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
        #  Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
        #  pst = if_else(Lineage1 > Lineage2, Lineage1_pst, Lineage2_pst),
         # pst = max(pst) - pst)
 )
-curves <- slingCurves(Part_DG_GC, as.df = TRUE)
+curves <- slingCurves(Part_PyNs_RSC_UL, as.df = TRUE)
 
-pdf("output/condiments/UMAP_trajectory_common_RNA_WT_Bap1KO_Part_DG_GC.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_trajectory_common_RNA_WT_Bap1KO_Part_PyNs_RSC_UL.pdf", width=5, height=5)
 
 ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
   geom_point(size = .7, aes(col = Lineage1_pst)) +
@@ -2491,20 +2491,20 @@ dev.off()
 
 
 # Differential Progression
-progressionTest(Part_DG_GC, conditions = Part_DG_GC$orig.ident, lineages = TRUE)
+progressionTest(Part_PyNs_RSC_UL, conditions = Part_PyNs_RSC_UL$orig.ident, lineages = TRUE)
 
-prog_res <- progressionTest(Part_DG_GC, conditions = Part_DG_GC$orig.ident, lineages = TRUE)
+prog_res <- progressionTest(Part_PyNs_RSC_UL, conditions = Part_PyNs_RSC_UL$orig.ident, lineages = TRUE)
 
 
-df_3 <-  slingPseudotime(Part_DG_GC) %>% as.data.frame() 
+df_3 <-  slingPseudotime(Part_PyNs_RSC_UL) %>% as.data.frame() 
 
-df_3$orig.ident <- Part_DG_GC$orig.ident
+df_3$orig.ident <- Part_PyNs_RSC_UL$orig.ident
 df_3 <- df_3 %>% 
   pivot_longer(-(orig.ident), names_to = "Lineage",
                values_to = "pst") %>%
   filter(!is.na(pst))
 
-pdf("output/condiments/densityPlot_trajectory_lineages_RNA_WT_Bap1KO_Part_DG_GC.pdf", width=10, height=5)
+pdf("output/condiments/densityPlot_trajectory_lineages_RNA_WT_Bap1KO_Part_PyNs_RSC_UL.pdf", width=10, height=5)
 
 ggplot(df_3, aes(x = pst)) +
   geom_density(alpha = .8, aes(fill = orig.ident), col = "transparent") +
@@ -2520,7 +2520,7 @@ ggplot(df_3, aes(x = pst)) +
 dev.off()
 
 
-#### ->  save.image(file="output/condiments/condiments_RNA_WT_Bap1KO_Part_DG_GC.RData")
+#### ->  save.image(file="output/condiments/condiments_RNA_WT_Bap1KO_Part_PyNs_RSC_UL.RData")
 ### load("output/condiments/condiments_RNA_WT_Bap1KO.RData")
 set.seed(42)
 
@@ -2534,10 +2534,10 @@ set.seed(42)
 
 #### Let's try to run the DEGs trajectory per trajectory
 counts <- RNA_WT_Bap1KO.sct[["RNA"]]@counts # Collect the counts from seurat
-cond <- factor(Part_DG_GC$orig.ident) # identify conditions
+cond <- factor(Part_PyNs_RSC_UL$orig.ident) # identify conditions
 #### Extract the pseudotimes and cell weights for the first lineage
-pseudotimes <- slingPseudotime(Part_DG_GC, na = FALSE) [,1]
-cellweights <- slingCurveWeights(Part_DG_GC) [,1]
+pseudotimes <- slingPseudotime(Part_PyNs_RSC_UL, na = FALSE) [,1]
+cellweights <- slingCurveWeights(Part_PyNs_RSC_UL) [,1]
 #### Subset the counts, pseudotimes, and cell weights for non-zero weights:
 sub_weights <- cellweights[cellweights != 0]
 sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
@@ -2558,56 +2558,269 @@ traj1 <- fitGAM(
 
 
 
+xxx  
+
+
+
+
+### Part_SubC1 #############################################
+# tidy
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_SubC1)$UMAP),
+  as.data.frame(colData(Part_SubC1)[, -3])
+  ) %>%
+  sample_frac(1)
+
+# PLOT
+pdf("output/condiments/UMAP_RNA_WT_Bap1KO_Part_SubC1.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
+  geom_point(size = .7) +
+  labs(col = "seurat_clusters") +
+  theme_classic()
+dev.off()
+
+
+## genotype overlap
+
+pdf("output/condiments/UMAP_condition_RNA_WT_Bap1KO_Part_SubC1.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = orig.ident)) +
+  geom_point(size = .7) +
+  scale_color_manual(values = c("blue", "red")) + # Specify colors here
+  labs(col = "Condition") +
+  theme_classic()
+dev.off()
+
+## imbalance score
+scores <- condiments::imbalance_score(
+  Object = df %>% select(UMAP_1, UMAP_2) %>% as.matrix(), 
+  conditions = df$orig.ident,
+  k = 20, smooth = 40)
+df$scores <- scores$scaled_scores
+
+pdf("output/condiments/UMAP_imbalance_score_RNA_WT_Bap1KO_Part_SubC1.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
+  geom_point(size = .7) +
+  scale_color_viridis_c(option = "C") +
+  labs(col = "Scores") +
+  theme_classic()
+dev.off()
+
+
+#  Trajectory Inference and Differential Topology
+set.seed(42)
+
+## PLOT with Separate trajectories
+################ Paramater testing ########################## 
+Part_SubC1 <- slingshot(Part_SubC1, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_SubC1)$seurat_clusters,
+                 start.clus = '8', approx_points = 100)
+Part_SubC1 <- slingshot(Part_SubC1, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_SubC1)$seurat_clusters,
+                 start.clus = "8",
+                 end.clus = c("10"),
+                 approx_points = 200,
+                 extend = 'n')
+##########################################
+
+Part_SubC1 <- slingshot(Part_SubC1, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_SubC1)$seurat_clusters,
+                 start.clus = "8",
+                 end.clus = c("10"),
+                 approx_points = 100,
+                 extend = 'n')
+
+
+set.seed(42)
+topologyTest(SlingshotDataSet(Part_SubC1), Part_SubC1$orig.ident) # KS_mean / 0.01 / 0.007581268 / 0.7581611
+
+
+sdss <- slingshot_conditions(SlingshotDataSet(Part_SubC1), Part_SubC1$orig.ident)
+curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
+                    .id = "orig.ident")
+
+
+# pdf("output/condiments/UMAP_trajectory_separated_RNA_WT_Bap1KO_Part_SubC1_endApprox200extendn.pdf", width=5, height=5)
+
+pdf("output/condiments/UMAP_trajectory_separated_RNA_WT_Bap1KO_Part_SubC1_endApprox100extendnpdf", width=5, height=5)
+
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = orig.ident)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(orig.ident, Lineage, Order),
+            aes(group = interaction(Lineage, orig.ident)), size = 1.5) +
+  theme_bw()
+dev.off()
 
 
 
 
 
 
+########## Code to label lineages if more than 1 #####################
+# Add custom labels for each trajectory based on the Lineage
+curves$label <- with(curves, ifelse(Lineage == 1, "Trajectory 1",
+                               ifelse(Lineage == 2, "Trajectory 2", "Trajectory 3")))
+
+pdf("output/condiments/UMAP_trajectory_separated_RNA_WT_Bap1KO_trajLabel.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(condition, Lineage, Order),
+            aes(group = interaction(Lineage, condition)), size = 1.5) +
+  geom_text(data = curves %>% group_by(Lineage) %>% top_n(1, Order),
+            aes(label = label, x = UMAP_1, y = UMAP_2, group = Lineage),
+            size = 4, vjust = -1, hjust = 0.5) +
+  theme_classic()
+dev.off()
+
+############### NEED TO MODIFY THE CODE BELOW TO ANNOTATE THE DIFFERENT TRAJECTORIES ###############
+pdf("output/condiments/UMAP_trajectory_separated_trajAnnotated_RNA_WT_Bap1KO.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(condition, Lineage, Order),
+            aes(group = interaction(Lineage, condition)), size = 1.5) +
+  annotate("text", x = -10, y = 6, label = "Lineage1", size = 5) +
+  annotate("text", x = -7, y = -2.7, label = "Lineage2", size = 5) +
+  theme(legend.position = c(.15, .35),
+        legend.background = element_blank()) +
+  NULL
+dev.off()
+####### ################################################################################
+
+
+
+## PLOT with common trajectories
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(Part_SubC1, "UMAP")),
+  slingPseudotime(Part_SubC1) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(Part_SubC1) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+       #  Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+       #  pst = if_else(Lineage1 > Lineage2, Lineage1_pst, Lineage2_pst),
+        # pst = max(pst) - pst)
+)
+curves <- slingCurves(Part_SubC1, as.df = TRUE)
+
+pdf("output/condiments/UMAP_trajectory_common_RNA_WT_Bap1KO_Part_SubC1.pdf", width=5, height=5)
+
+ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
+  geom_point(size = .7, aes(col = Lineage1_pst)) +
+  scale_color_viridis_c() +
+  labs(col = "Pseudotime") +
+  geom_path(data = curves %>% arrange(Order),
+            aes(group = Lineage), col = "black", size = 1.5) +
+  theme_classic()
+dev.off()
+
+########## Code to label lineages if more than 1 #####################
+### With label
+#### Calculate midpoint for each trajectory to place the label
+curves_midpoints <- curves %>%
+  group_by(Lineage) %>%
+  summarise(UMAP_1 = mean(UMAP_1),
+            UMAP_2 = mean(UMAP_2))
+pdf("output/condiments/UMAP_trajectory_common_label_RNA_WT_Bap1KO.pdf", width=5, height=5)
+ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
+  geom_point(size = .7, aes(col = pst)) +
+  scale_color_viridis_c() +
+  labs(col = "Pseudotime") +
+  geom_path(data = curves %>% arrange(Order),
+            aes(group = Lineage), col = "black", size = 1) +
+  geom_text(data = curves_midpoints, aes(label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Add labels
+  theme_classic()
+dev.off()
+curves_endpoints <- curves %>%
+  group_by(Lineage) %>%
+  arrange(Order) %>%
+  top_n(1, Order) # Get the top/last ordered point for each group
+pdf("output/condiments/UMAP_trajectory_common_label_RNA_WT_Bap1KO2.pdf", width=5, height=5)
+ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
+  geom_point(size = .7, aes(col = pst)) +
+  scale_color_viridis_c() +
+  labs(col = "Pseudotime") +
+  geom_path(data = curves %>% arrange(Order),
+            aes(group = Lineage), col = "black", size = 1) +
+  geom_text(data = curves_endpoints, aes(label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+  theme_classic()
+dev.off()
+######################################################################
+
+
+# Differential Progression
+progressionTest(Part_SubC1, conditions = Part_SubC1$orig.ident, lineages = TRUE)
+
+prog_res <- progressionTest(Part_SubC1, conditions = Part_SubC1$orig.ident, lineages = TRUE)
+
+
+df_3 <-  slingPseudotime(Part_SubC1) %>% as.data.frame() 
+
+df_3$orig.ident <- Part_SubC1$orig.ident
+df_3 <- df_3 %>% 
+  pivot_longer(-(orig.ident), names_to = "Lineage",
+               values_to = "pst") %>%
+  filter(!is.na(pst))
+
+pdf("output/condiments/densityPlot_trajectory_lineages_RNA_WT_Bap1KO_Part_SubC1.pdf", width=10, height=5)
+
+ggplot(df_3, aes(x = pst)) +
+  geom_density(alpha = .8, aes(fill = orig.ident), col = "transparent") +
+  geom_density(aes(col = orig.ident), fill = "transparent", size = 1.5) +
+  labs(x = "Pseudotime", fill = "orig.ident") +
+  facet_wrap(~Lineage, scales = "free", nrow=2) +
+  guides(col = "none", fill = guide_legend(
+    override.aes = list(size = 1.5, col = c("blue", "red"))
+  )) +
+  scale_fill_manual(values = c("blue", "red")) +
+  scale_color_manual(values = c("blue", "red")) +
+  theme_bw()
+dev.off()
+
+
+#### ->  save.image(file="output/condiments/condiments_RNA_WT_Bap1KO_Part_SubC1.RData")
+### load("output/condiments/condiments_RNA_WT_Bap1KO_Part_SubC1.RData")
+set.seed(42)
+
+#  Differential expression
+
+## Identify the needed number of knots 
+
+
+# Run the DEGs trajectory per trajectory
+### FROM THIS https://github.com/statOmics/tradeSeq/issues/64 :
+
+#### Let's try to run the DEGs trajectory per trajectory
+counts <- RNA_WT_Bap1KO.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(Part_SubC1$orig.ident) # identify conditions
+#### Extract the pseudotimes and cell weights for the first lineage
+pseudotimes <- slingPseudotime(Part_SubC1, na = FALSE) [,1]
+cellweights <- slingCurveWeights(Part_SubC1) [,1]
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+
+traj1 <- fitGAM(
+     counts = sub_counts, 
+     pseudotime = sub_pseudotimes,
+     cellWeights = sub_weights,
+     conditions = sub_cond, 
+     nknots = 6,
+     sce = TRUE
+   )
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+XXXXXXXXXXXX HERE !
 
 ### Once slurm jobs finished for each trajectory; load traj1 <- readRDS("output/condiments/traj1.rds") OK
 
-XXX
+
 
 traj1 <- readRDS("output/condiments/traj1_RNA_WT_Bap1KO.rds.rds")
 traj2 <- readRDS("output/condiments/traj2_RNA_WT_Bap1KO.rds.rds")
@@ -2876,12 +3089,26 @@ dev.off()
 conda activate condiments_V5
 
 # trajectory per trajectory (all features, no parralelization)
-sbatch scripts/fitGAM_6knots_traj1_RNA_WT_Bap1KO.sh # 22452979 xxx
-sbatch scripts/fitGAM_6knots_traj2_RNA_WT_Bap1KO.sh # 22452981 xxx
-sbatch scripts/fitGAM_6knots_traj3_RNA_WT_Bap1KO.sh # 22452982 xxx
+sbatch scripts/fitGAM_6knots_Part_DG_GC_RNA_WT_Bap1KO.sh # 22716098 xxx
+sbatch scripts/fitGAM_6knots_Part_PyNs_RSC_UL_RNA_WT_Bap1KO.sh # 22716161 xxx
+sbatch scripts/fitGAM_6knots_Part_PyNs_SubC1_RNA_WT_Bap1KO.sh # 22716165 xxx
 ```
 
 --> Without parralell processing trajectory per traj works great!! 24-72hrs to run
+
+
+## Pseudotime DEG with slingshot
+
+Let's load R image for each of the part and do DEG trajectory per trajectory
+
+XXX below to pay
+
+load("output/condiments/condiments_RNA_WT_Bap1KO_Part_SubC1.RData")
+set.seed(42)
+
+
+
+
 
 
 

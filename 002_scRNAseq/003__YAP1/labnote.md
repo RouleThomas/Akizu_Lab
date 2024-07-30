@@ -1681,8 +1681,17 @@ pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_top10downBulk_V2.
 FeaturePlot(humangastruloid.combined.sct, features = c('LINC02693','NXPH2','TEK','LHX8','LHFPL6','TNNT2','LINC00458','RGS5','VEPH1','MYL7'), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_list20240730.pdf", width=10, height=20)
+FeaturePlot(humangastruloid.combined.sct, features = c("TBXT", "FST", "FGF8", "KDR"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
 
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_list20240730_2.pdf", width=10, height=20)
+FeaturePlot(humangastruloid.combined.sct, features = c("TBXT", "FST", "FGF8", "KDR"), max.cutoff = 2, cols = c("grey", "red"), split.by = "condition")
+dev.off()
 
+pdf("output/seurat/FeaturePlot_SCT_UNTREATED72hr_DASATINIB72hr_list20240730_1.pdf", width=10, height=20)
+FeaturePlot(humangastruloid.combined.sct, features = c("TBXT", "FST", "FGF8", "KDR"), cols = c("grey", "red"), split.by = "condition")
+dev.off()
 
 ### Check top 10 upredulated genes in YAP1KO bulk-regulated genes (table shared after 0801 meeting):
 ## intitial list top 1-10: c('LOC100134868','EIF1AY','DPYS','ZNF662','FAM228A','PAX8-AS1','RFPL2','LOXHD1','RBM46','EBF2')
