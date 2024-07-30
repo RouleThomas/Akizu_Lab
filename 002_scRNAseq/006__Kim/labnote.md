@@ -3089,9 +3089,9 @@ dev.off()
 conda activate condiments_V5
 
 # trajectory per trajectory (all features, no parralelization)
-sbatch scripts/fitGAM_6knots_Part_DG_GC_RNA_WT_Bap1KO.sh # 22716098 xxx
-sbatch scripts/fitGAM_6knots_Part_PyNs_RSC_UL_RNA_WT_Bap1KO.sh # 22716161 xxx
-sbatch scripts/fitGAM_6knots_Part_PyNs_SubC1_RNA_WT_Bap1KO.sh # 22716165 xxx
+sbatch scripts/fitGAM_6knots_Part_DG_GC_RNA_WT_Bap1KO.sh # 22719043 xxx
+sbatch scripts/fitGAM_6knots_Part_PyNs_RSC_UL_RNA_WT_Bap1KO.sh # 22719116 xxx
+sbatch scripts/fitGAM_6knots_Part_PyNs_SubC1_RNA_WT_Bap1KO.sh # 22719143 xxx
 ```
 
 --> Without parralell processing trajectory per traj works great!! 24-72hrs to run

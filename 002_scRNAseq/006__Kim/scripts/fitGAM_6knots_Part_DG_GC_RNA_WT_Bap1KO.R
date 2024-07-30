@@ -23,8 +23,8 @@ set.seed(42)
 counts <- RNA_WT_Bap1KO.sct[["RNA"]]@counts # Collect the counts from seurat
 cond <- factor(RNA_WT_Bap1KO.sct$orig.ident) # identify conditions
 #### Extract the pseudotimes and cell weights for the first lineage
-pseudotimes <- slingPseudotime(Part_DG_GC, na = FALSE) [,3]
-cellweights <- slingCurveWeights(Part_DG_GC) [,3]
+pseudotimes <- slingPseudotime(Part_DG_GC, na = FALSE) [,1]
+cellweights <- slingCurveWeights(Part_DG_GC) [,1]
 #### Subset the counts, pseudotimes, and cell weights for non-zero weights:
 sub_weights <- cellweights[cellweights != 0]
 sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
