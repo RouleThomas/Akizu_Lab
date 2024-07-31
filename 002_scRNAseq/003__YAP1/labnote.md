@@ -12565,13 +12565,25 @@ dev.off()
 --> The pseudotime diff looks weirk so let s use log2fc files anmd not the raw not log2fc filtered
 
 
+
+Let's run **fitGAM** to identify :
+- Genes that show differential expression along the pseudotime trajectory (pseudotime-dependent DEGs).
+- Genes that show significant differential expression between genotypes along the pseudotime trajectory (genotype-dependent DEGs).
+
+
+
 ```bash
 conda activate condiments_V5
 
-# trajectory per trajectory (all features, no parralelization)
+# trajectory per trajectory (all features, no parralelization) - genotype-dependent DEGs
 sbatch scripts/fitGAM_6knots_traj1_humangastruloid72hrs.sh # 22452979 ok
 sbatch scripts/fitGAM_6knots_traj2_humangastruloid72hrs.sh # 22452981 ok
 sbatch scripts/fitGAM_6knots_traj3_humangastruloid72hrs.sh # 22452982 ok
+
+
+# trajectory per trajectory (all features, no parralelization) - pseudotime-dependent DEGs
+sbatch scripts/fitGAM_6knots_traj2_humangastruloid72hrs_noCondition.sh # 22835367 xxx
+
 ```
 
 --> Without parralell processing trajectory per traj works great!! 24-72hrs to run
@@ -14818,9 +14830,19 @@ tidy_SCT_C2_Epiblast %>%
 dev.off()
 
 
+# plot some genes
+
+DefaultAssay(embryoE7.combined.sct) <- "SCT" # SCT is OK https://github.com/jackbibby1/SCPA/issues/67
 
 
 
+pdf("output/seurat/FeaturePlot_SCT_embryo_E7_list20240730_2.pdf", width=10, height=20)
+FeaturePlot(embryoE7.combined.sct, features = c("T", "Fst", "Fgf8", "Kdr"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_embryo_E7_list20240730_3.pdf", width=10, height=20)
+FeaturePlot(embryoE7.combined.sct, features = c("T", "Fst", "Fgf8", "Kdr"), cols = c("grey", "red"), split.by = "condition")
+dev.off()
 
 
 ```

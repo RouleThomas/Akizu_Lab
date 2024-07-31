@@ -2266,7 +2266,7 @@ dev.off()
 
 
 #### ->  save.image(file="output/condiments/condiments_RNA_WT_Bap1KO_Part_DG_GC.RData")
-### load("output/condiments/condiments_RNA_WT_Bap1KO.RData")
+### load("output/condiments/condiments_RNA_WT_Bap1KO_Part_DG_GC.RData")
 set.seed(42)
 
 #  Differential expression
@@ -2289,15 +2289,26 @@ sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
 sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
 sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
 
-
-traj1 <- fitGAM(
+## Genotype DEG time course
+Part_DG_GC <- fitGAM(
      counts = sub_counts, 
      pseudotime = sub_pseudotimes,
      cellWeights = sub_weights,
-     conditions = sub_cond, 
+     conditions = sub_cond, # part for DEG between genotype
      nknots = 6,
      sce = TRUE
    )
+
+## DEG time course genotype together
+Part_DG_GC_noConditions <- fitGAM(
+     counts = sub_counts, 
+     pseudotime = sub_pseudotimes,
+     cellWeights = sub_weights,
+     conditions = NULL, # part for DEG between genotype
+     nknots = 6,
+     sce = TRUE
+   )
+
 
 ### Worked, Estimated run 3hours which is OK !!! Let's run this in slurm job partition per partition
 
@@ -3071,42 +3082,29 @@ dev.off()
 
 ```
 
---> I did all the tutorial from [here](https://hectorrdb.github.io/condimentsPaper/articles/Fibrosis.html) 
-----> This part Differential fate selection FAIL; but not sure it is usefull
-
---> prog_res? Lineage all pvalue signif! (paste in the ppt Conchi 20231005)
-
---> The icMAt is too long! I gave up running it. Author recommend using 6 knots (https://github.com/statOmics/tradeSeq/issues/121). Other discussion about [time](https://github.com/statOmics/tradeSeq/issues/41)
-
---> Same for the fitGAM, too long, so I run it into a Rscript as follow:
-----> In the end; **what worked is to run trajectory per trajectory; it should last around 24-72hours per trajectory. Using the top 10k features do not reduce time significantly.**
-----> Parrelization can be stuck sometime so I ll run it without...
-
---> The pseudotime diff looks weirk so let s use log2fc files anmd not the raw not log2fc filtered
+Let's run **fitGAM** to identify :
+- Genes that show differential expression along the pseudotime trajectory (pseudotime-dependent DEGs).
+- Genes that show significant differential expression between genotypes along the pseudotime trajectory (genotype-dependent DEGs).
 
 
 ```bash
 conda activate condiments_V5
 
-# trajectory per trajectory (all features, no parralelization)
+# trajectory per trajectory (all features, no parralelization) - genotype-dependent DEGs
 sbatch scripts/fitGAM_6knots_Part_DG_GC_RNA_WT_Bap1KO.sh # 22719043 xxx
 sbatch scripts/fitGAM_6knots_Part_PyNs_RSC_UL_RNA_WT_Bap1KO.sh # 22719116 xxx
 sbatch scripts/fitGAM_6knots_Part_PyNs_SubC1_RNA_WT_Bap1KO.sh # 22719143 xxx
+
+# trajectory per trajectory (all features, no parralelization) - pseudotime-dependent DEGs
+sbatch scripts/fitGAM_6knots_Part_DG_GC_RNA_WT_Bap1KO_noCondition.sh # 22832785 xxx
+sbatch scripts/fitGAM_6knots_Part_PyNs_RSC_UL_RNA_WT_Bap1KO_noCondition.sh # 22833306 xxx
+sbatch scripts/fitGAM_6knots_Part_PyNs_SubC1_RNA_WT_Bap1KO_noCondition.sh # 22833684 xxx
 ```
 
---> Without parralell processing trajectory per traj works great!! 24-72hrs to run
+--> To remove genotype effect, specify `conditions = NULL` to `fitGam()`
 
-
-## Pseudotime DEG with slingshot
-
-Let's load R image for each of the part and do DEG trajectory per trajectory
-
-XXX below to pay
-
-load("output/condiments/condiments_RNA_WT_Bap1KO_Part_SubC1.RData")
-set.seed(42)
-
-
+- [Workshop](https://nbisweden.github.io/workshop-archive/workshop-scRNAseq/2020-01-27/labs/compiled/slingshot/slingshot.html) to identify DEG time-course: .
+  - Many options but let's look 1st at *Genes that change between two pseudotime points*
 
 
 
