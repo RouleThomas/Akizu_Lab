@@ -3280,3 +3280,109 @@ dev.off()
 
 
 
+
+# ATACseq integration
+
+
+Let's use the [WNN](https://satijalab.org/seurat/articles/weighted_nearest_neighbor_analysis#wnn-analysis-of-10x-multiome-rna-atac) integration method from seurat
+
+
+## Install Signac for ATACseq
+
+Create a new conda env as scRNAseqV3 to install *Signac*: `conda create --name scRNAseqV4 --clone scRNAseqV2`
+
+```bash
+conda activate scRNAseqV4
+```
+
+
+```R
+install.packages("Signac")
+# Fail
+
+
+```
+
+Try installing through Conda:
+
+```bash
+conda activate scRNAseqV4
+conda install bioconda::r-signac 
+
+```
+
+--> Also fail... Env deleted `conda env remove --name scRNAseqV4`
+
+Let's create a new conda environment specifically for using Signac. Follow recommendation from [Signac](https://stuartlab.org/signac/articles/install#current-release). Let's use R v4.0.3 as in the [paper](https://www.nature.com/articles/s41592-021-01282-5#Sec9)
+
+
+```bash
+conda create --name Signac r-base=4.0.3
+conda activate Signac
+```
+
+```R
+setRepositories(ind=1:3) # needed to automatically install Bioconductor dependencies
+install.packages("Signac")
+#--> many errors... of package dependendy, let's isntall them 1by1
+
+install.packages("Matrix") #  Fail tried anaconda and work!
+
+
+```
+
+--> Matrix R package need R>4.4... So let's install it thorugh conda as it should use an older verison of Matrix: `conda install conda-forge::r-matrix`
+  --> Give another try on R Signac; Fail again... Need SeuratObject
+  --> Let's tyr installing Seurat through conda `conda install bioconda::r-seurat`
+  --> Fail again: Env deleted `conda env remove --name Signac`
+
+
+Let's give another try with starting from the most recent version of R...
+ 
+
+ 
+```bash
+conda create --name SignacV1 r-base=4.4.1
+conda activate SignacV1
+```
+
+```R
+setRepositories(ind=1:3) # needed to automatically install Bioconductor dependencies
+install.packages("Signac")
+#--> work!!!
+```
+
+
+
+## Run Signac
+
+
+Step:
+- Import RNA seurat object
+- Import ATAC
+- Clean ATACseq with [Signac](https://stuartlab.org/signac/articles/pbmc_vignette.html#pre-processing-workflow)
+- Add in the ATAC-seq data as a second assay usnig [WWN](https://satijalab.org/seurat/articles/weighted_nearest_neighbor_analysis#wnn-analysis-of-10x-multiome-rna-atac)
+
+
+```bash
+conda activate SignacV1
+```
+
+
+```R
+# library
+XXX
+
+
+# Import RNA 
+RNA_WT_Bap1KO.sct <- readRDS(file = "output/seurat/RNA_WT_Bap1KO.sct_V1_numeric.rds")
+
+
+# Import ATAC
+inputdata.10x <- Read10X_h5("../data/pbmc_granulocyte_sorted_10k_filtered_feature_bc_matrix.h5")
+
+
+
+```
+
+

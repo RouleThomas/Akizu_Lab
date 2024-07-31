@@ -169,6 +169,12 @@ WORK great!
 
 --> Same `scRNAseqV2` but with MuSic2 and bisque
 
+### Signac
+
+Env for scRNAseq and scATACseq integration. Installed in `002*/006*` *labnote.md*
+
+
+
 ### monocle3
 Only `monocle3` and `Seurat_v_5`
 
