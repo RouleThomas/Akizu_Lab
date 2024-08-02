@@ -41,6 +41,6 @@ traj_Part_SubC1_noCondition <- fitGAM(
      sce = TRUE
    )
 
-saveRDS(traj_Part_SubC1, file = "output/condiments/traj_Part_SubC1_noCondition.rds")
+saveRDS(traj_Part_SubC1_noCondition, file = "output/condiments/traj_Part_SubC1_noCondition.rds")
 
 

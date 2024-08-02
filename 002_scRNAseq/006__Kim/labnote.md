@@ -3096,9 +3096,9 @@ sbatch scripts/fitGAM_6knots_Part_PyNs_RSC_UL_RNA_WT_Bap1KO.sh # 22719116 xxx
 sbatch scripts/fitGAM_6knots_Part_PyNs_SubC1_RNA_WT_Bap1KO.sh # 22719143 xxx
 
 # trajectory per trajectory (all features, no parralelization) - pseudotime-dependent DEGs
-sbatch scripts/fitGAM_6knots_Part_DG_GC_RNA_WT_Bap1KO_noCondition.sh # 22832785 xxx
-sbatch scripts/fitGAM_6knots_Part_PyNs_RSC_UL_RNA_WT_Bap1KO_noCondition.sh # 22833306 xxx
-sbatch scripts/fitGAM_6knots_Part_PyNs_SubC1_RNA_WT_Bap1KO_noCondition.sh # 22833684 xxx
+sbatch scripts/fitGAM_6knots_Part_DG_GC_RNA_WT_Bap1KO_noCondition.sh # 22832785 ok
+sbatch scripts/fitGAM_6knots_Part_PyNs_RSC_UL_RNA_WT_Bap1KO_noCondition.sh # 22833306 ok
+sbatch scripts/fitGAM_6knots_Part_PyNs_SubC1_RNA_WT_Bap1KO_noCondition.sh # 22833684 fail; 22938128 xxx
 ```
 
 --> To remove genotype effect, specify `conditions = NULL` to `fitGam()`
@@ -3308,7 +3308,6 @@ Try installing through Conda:
 ```bash
 conda activate scRNAseqV4
 conda install bioconda::r-signac 
-
 ```
 
 --> Also fail... Env deleted `conda env remove --name scRNAseqV4`
@@ -3349,8 +3348,95 @@ conda activate SignacV1
 ```R
 setRepositories(ind=1:3) # needed to automatically install Bioconductor dependencies
 install.packages("Signac")
-#--> work!!!
+#--> work!!! But need igraph and leiden to use isntall Seurat...
+
+install.packages('Seurat')
+#--> fail for igraph and leiden dependencies
+
+install.packages('igraph')
+#--> fail...
+
+install.packages("remotes") # work
+remotes::install_github("satijalab/seurat", "seurat5", quiet = TRUE)
+#--> Fail, try a previous Seurat version
+remotes::install_version("Seurat", version = "4.3.0")
+#--> Fail, same with igraph and leiden dependencies
+
 ```
+
+--> Let's try install Seurat through conda `conda install bioconda::r-seurat`
+  --> Fail... Let's try install igraph with conda  `conda install conda-forge::r-igraph`
+  --> Fail... 
+
+
+
+Let's give another try installing Seurat and Signac together with remotes, from [here](https://satijalab.org/seurat/articles/install.html). Maybe Seurat 1st then Signac
+
+
+ 
+```bash
+conda create --name SignacV2 r-base=4.4.1
+conda activate SignacV2
+```
+
+```R
+install.packages("remotes")
+remotes::install_github("stuart-lab/signac", "seurat4", quiet = TRUE) 
+#--> Fail, try install Seurat then Signac
+remotes::install_github("satijalab/seurat", "seurat5", quiet = TRUE)
+#--> Fail, same igraph and leiden...
+install.packages("Seurat")
+```
+--> Fail again....
+
+
+Let's give another try installing Signac from anaconda, discuss [here](https://github.com/stuart-lab/signac/issues/637)
+```bash
+conda activate SignacV2
+conda install bioconda::r-signac 
+```
+--> Fail again....
+
+Let's try clone my deseq2 env and install Signac, then Seurat (eg. cloning deseq2 env, is what unlock me to install Seurat initially...)
+
+```bash
+conda create --name SignacV3 --clone deseq2
+
+conda activate SignacV3
+```
+
+```R
+install.packages("devtools")
+install.packages("Seurat")
+# --> Fail, SeuratObject not avail
+install.packages("SeuratObject")
+# --> Fail, Matrix version..., lets try install seurat object trought Anaconda... `conda install conda-forge::r-seuratobject`: FAIL
+
+
+```
+
+
+Let's try clone `scRNAseq` and install Signac: 
+
+
+```bash
+conda create --name SignacV4 --clone scRNAseq
+conda activate SignacV4
+```
+
+
+```R
+install.packages("Signac")
+```
+
+Fail.... Remvoe all previous env
+
+--> Try install Signac and Seurat together at same time with Conda
+
+```bash
+conda create -n SignacV5 -c conda-forge -c bioconda r-base r-signac r-seurat
+```
+--> WORK!!!!
 
 
 
@@ -3365,13 +3451,14 @@ Step:
 
 
 ```bash
-conda activate SignacV1
+conda activate SignacV5
 ```
 
 
 ```R
 # library
-XXX
+library("Signac")
+library("Seurat")
 
 
 # Import RNA 
@@ -3379,8 +3466,28 @@ RNA_WT_Bap1KO.sct <- readRDS(file = "output/seurat/RNA_WT_Bap1KO.sct_V1_numeric.
 
 
 # Import ATAC
-inputdata.10x <- Read10X_h5("../data/pbmc_granulocyte_sorted_10k_filtered_feature_bc_matrix.h5")
+ATAC_WT <- Read10X_h5("ATAC_WT/filtered_peak_bc_matrix.h5")
+ATAC_WT_metada = read.csv(
+  file = "ATAC_WT/singlecell.csv",
+  header = TRUE,
+  row.names = 1
+)
 
+
+
+chrom_assay <- CreateChromatinAssay(
+  counts = counts,
+  sep = c(":", "-"),
+  fragments = '../vignette_data/atac_v1_pbmc_10k_fragments.tsv.gz',
+  min.cells = 10,
+  min.features = 200
+)
+
+pbmc <- CreateSeuratObject(
+  counts = chrom_assay,
+  assay = "peaks",
+  meta.data = metadata
+)
 
 
 ```

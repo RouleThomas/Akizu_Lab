@@ -2588,4 +2588,266 @@ write.table(YAPKO_EZH2_geneSymbol, file = "output/binBw/YAPKO_EZH2_250bpTSS_gene
 --> Works well. File generated `output/binBw/YAPKO_EZH2_250bpTSS_geneSymbol.txt` containing max and median EZH2 signal for all genes.
 
 
+# Correlation EZH2 signal with Pseudotime 002*/003*
+
+## Test pseudotime_start_end_association() - FAIL
+
+
+Related to *20240720_meeting* Let's check whether correlation between:
+- EZH2 signal in TSS (this labnote), 1kb/500bp/250bp
+- Pseudotime of trajectory2 (`002*/003*` at `### Time Course effect ##`)
+- If correlation, compare WT vs KO
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+library("ggpubr")
+
+
+# import files
+pseudotime_traj2 <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_traj2_noCondition_humangastruloid72hrs.txt") %>%
+    dplyr::rename("geneSymbol" = "gene") 
+
+# WT #########################
+WT_EZH2_1kbTSS_geneSymbol <- read_tsv("output/binBw/WT_EZH2_1kbTSS_geneSymbol.txt")
+WT_EZH2_500bpTSS_geneSymbol <- read_tsv("output/binBw/WT_EZH2_500bpTSS_geneSymbol.txt")
+WT_EZH2_250bpTSS_geneSymbol <- read_tsv("output/binBw/WT_EZH2_250bpTSS_geneSymbol.txt")
+pseudotime_traj2_WT_EZH2_1kbTSS_geneSymbol = pseudotime_traj2 %>%
+    left_join(WT_EZH2_1kbTSS_geneSymbol)
+pseudotime_traj2_WT_EZH2_500bpTSS_geneSymbol = pseudotime_traj2 %>%
+    left_join(WT_EZH2_500bpTSS_geneSymbol)
+pseudotime_traj2_WT_EZH2_250bpTSS_geneSymbol = pseudotime_traj2 %>%
+    left_join(WT_EZH2_250bpTSS_geneSymbol)
+
+# correlation scale values to -1 +1 
+scale_to_range <- function(x) {
+  return((x - min(x)) / (max(x) - min(x)) * 2 - 1)
+}
+# correlation raw
+pseudotime_traj2fdr005__WT_EZH2_1kbTSS_geneSymbol = pseudotime_traj2_WT_EZH2_1kbTSS_geneSymbol %>%
+    filter(fdr<0.05, logFClineage1>0, !is.na(logFClineage1), !is.na(bc_median))  %>%
+  mutate(logFClineage1_scaled = scale_to_range(logFClineage1),
+         bc_median_scaled = scale_to_range(bc_median))
+pseudotime_traj2fdr001__WT_EZH2_1kbTSS_geneSymbol = pseudotime_traj2_WT_EZH2_1kbTSS_geneSymbol %>%
+    filter(fdr<0.01, logFClineage1>0, !is.na(logFClineage1), !is.na(bc_median))  %>%
+  mutate(logFClineage1_scaled = scale_to_range(logFClineage1),
+         bc_median_scaled = scale_to_range(bc_median))
+pseudotime_traj2fdr005__WT_EZH2_500bpTSS_geneSymbol = pseudotime_traj2_WT_EZH2_500bpTSS_geneSymbol %>%
+    filter(fdr<0.05, logFClineage1>0, !is.na(logFClineage1), !is.na(bc_median))  %>%
+  mutate(logFClineage1_scaled = scale_to_range(logFClineage1),
+         bc_median_scaled = scale_to_range(bc_median))
+pseudotime_traj2fdr001__WT_EZH2_500bpTSS_geneSymbol = pseudotime_traj2_WT_EZH2_500bpTSS_geneSymbol %>%
+    filter(fdr<0.01, logFClineage1>0, !is.na(logFClineage1), !is.na(bc_median)) %>%
+  mutate(logFClineage1_scaled = scale_to_range(logFClineage1),
+         bc_median_scaled = scale_to_range(bc_median))
+
+pseudotime_traj2fdr005__WT_EZH2_250bpTSS_geneSymbol = pseudotime_traj2_WT_EZH2_250bpTSS_geneSymbol %>%
+    filter(fdr<0.05, logFClineage1>0, !is.na(logFClineage1), !is.na(bc_median))  %>%
+  mutate(logFClineage1_scaled = scale_to_range(logFClineage1),
+         bc_median_scaled = scale_to_range(bc_median))
+pseudotime_traj2fdr001__WT_EZH2_250bpTSS_geneSymbol = pseudotime_traj2_WT_EZH2_250bpTSS_geneSymbol %>%
+    filter(fdr<0.01, logFClineage1>0, !is.na(logFClineage1), !is.na(bc_median)) %>%
+  mutate(logFClineage1_scaled = scale_to_range(logFClineage1),
+         bc_median_scaled = scale_to_range(bc_median))
+
+# pdf("output/binBw/corr_pseudotime_traj2fdr001__WT_EZH2_1kbTSS_geneSymbol_bc_median.pdf", width=5, height=4)
+# pdf("output/binBw/corr_pseudotime_traj2fdr001__WT_EZH2_500bpTSS_geneSymbol_bc_median.pdf", width=5, height=4)
+# pdf("output/binBw/corr_pseudotime_traj2fdr001__WT_EZH2_250bpTSS_geneSymbol_bc_median.pdf", width=5, height=4)
+
+pdf("output/binBw/corr_pseudotime_traj2fdr005__WT_EZH2_1kbTSS_geneSymbol_bc_median_scaled.pdf", width=5, height=4)
+ggplot(pseudotime_traj2fdr005__WT_EZH2_1kbTSS_geneSymbol, aes(x = logFClineage1_scaled, y = bc_median_scaled)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  stat_cor(method = "pearson", label.x = 0, label.y = 1, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+
+
+
+
+# YAPKO ###################
+
+
+YAPKO_EZH2_1kbTSS_geneSymbol <- read_tsv("output/binBw/YAPKO_EZH2_1kbTSS_geneSymbol.txt")
+YAPKO_EZH2_500bpTSS_geneSymbol <- read_tsv("output/binBw/YAPKO_EZH2_500bpTSS_geneSymbol.txt")
+YAPKO_EZH2_250bpTSS_geneSymbol <- read_tsv("output/binBw/YAPKO_EZH2_250bpTSS_geneSymbol.txt")
+pseudotime_traj2_YAPKO_EZH2_1kbTSS_geneSymbol = pseudotime_traj2 %>%
+    left_join(YAPKO_EZH2_1kbTSS_geneSymbol)
+pseudotime_traj2_YAPKO_EZH2_500bpTSS_geneSymbol = pseudotime_traj2 %>%
+    left_join(YAPKO_EZH2_500bpTSS_geneSymbol)
+pseudotime_traj2_YAPKO_EZH2_250bpTSS_geneSymbol = pseudotime_traj2 %>%
+    left_join(YAPKO_EZH2_250bpTSS_geneSymbol)
+
+
+## correlation scale values to -1 +1 
+scale_to_range <- function(x) {
+  return((x - min(x)) / (max(x) - min(x)) * 2 - 1)
+}
+## correlation raw
+pseudotime_traj2fdr005__YAPKO_EZH2_1kbTSS_geneSymbol = pseudotime_traj2_YAPKO_EZH2_1kbTSS_geneSymbol %>%
+    filter(fdr<0.05, logFClineage1>0, !is.na(logFClineage1), !is.na(bc_median))  %>%
+  mutate(logFClineage1_scaled = scale_to_range(logFClineage1),
+         bc_median_scaled = scale_to_range(bc_median))
+pseudotime_traj2fdr001__YAPKO_EZH2_1kbTSS_geneSymbol = pseudotime_traj2_YAPKO_EZH2_1kbTSS_geneSymbol %>%
+    filter(fdr<0.01, logFClineage1>0, !is.na(logFClineage1), !is.na(bc_median))  %>%
+  mutate(logFClineage1_scaled = scale_to_range(logFClineage1),
+         bc_median_scaled = scale_to_range(bc_median))
+pseudotime_traj2fdr005__YAPKO_EZH2_500bpTSS_geneSymbol = pseudotime_traj2_YAPKO_EZH2_500bpTSS_geneSymbol %>%
+    filter(fdr<0.05, logFClineage1>0, !is.na(logFClineage1), !is.na(bc_median))  %>%
+  mutate(logFClineage1_scaled = scale_to_range(logFClineage1),
+         bc_median_scaled = scale_to_range(bc_median))
+pseudotime_traj2fdr001__YAPKO_EZH2_500bpTSS_geneSymbol = pseudotime_traj2_YAPKO_EZH2_500bpTSS_geneSymbol %>%
+    filter(fdr<0.01, logFClineage1>0, !is.na(logFClineage1), !is.na(bc_median)) %>%
+  mutate(logFClineage1_scaled = scale_to_range(logFClineage1),
+         bc_median_scaled = scale_to_range(bc_median))
+
+pseudotime_traj2fdr005__YAPKO_EZH2_250bpTSS_geneSymbol = pseudotime_traj2_YAPKO_EZH2_250bpTSS_geneSymbol %>%
+    filter(fdr<0.05, logFClineage1>0, !is.na(logFClineage1), !is.na(bc_median))  %>%
+  mutate(logFClineage1_scaled = scale_to_range(logFClineage1),
+         bc_median_scaled = scale_to_range(bc_median))
+pseudotime_traj2fdr001__YAPKO_EZH2_250bpTSS_geneSymbol = pseudotime_traj2_YAPKO_EZH2_250bpTSS_geneSymbol %>%
+    filter(fdr<0.01, logFClineage1>0, !is.na(logFClineage1), !is.na(bc_median)) %>%
+  mutate(logFClineage1_scaled = scale_to_range(logFClineage1),
+         bc_median_scaled = scale_to_range(bc_median))
+
+# pdf("output/binBw/corr_pseudotime_traj2fdr001__YAPKO_EZH2_1kbTSS_geneSymbol_bc_median.pdf", width=5, height=4)
+# pdf("output/binBw/corr_pseudotime_traj2fdr001__YAPKO_EZH2_500bpTSS_geneSymbol_bc_median.pdf", width=5, height=4)
+# pdf("output/binBw/corr_pseudotime_traj2fdr001__YAPKO_EZH2_250bpTSS_geneSymbol_bc_median.pdf", width=5, height=4)
+
+pdf("output/binBw/corr_pseudotime_traj2fdr005__YAPKO_EZH2_1kbTSS_geneSymbol_bc_max.pdf", width=5, height=4)
+ggplot(pseudotime_traj2fdr005__YAPKO_EZH2_1kbTSS_geneSymbol, aes(x = logFClineage1_scaled, y = bc_max)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  stat_cor(method = "pearson", label.x = 0, label.y = 1, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+
+
+
+
+
+
+pdf("output/binBw/corr_pseudotime_test.pdf", width=5, height=4)
+ggplot(pseudotime_traj2fdr005__WT_EZH2_1kbTSS_geneSymbol %>% filter(logFClineage1 > 0), aes(x = logFClineage1, y = bc_median)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  stat_cor(method = "pearson", label.x = 1, label.y = 0, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+
+
+
+```
+
+
+--> Scaling the values between -1 +1 does not change corr profile...
+
+--> Using Start vs End `pseudotime_start_end_association()` is not working, poor correlation. Likely because the logFC from pseudotime_start_end_association() does not reflect activation time point... Rather difference between Start and End of the trajectory....
+
+
+
+
+
+## Test Activation point - xxx
+
+
+
+Related to *20240720_meeting* Let's check whether correlation between:
+- EZH2 signal in TSS (this labnote), 1kb/500bp/250bp
+- Pseudotime Activation point of trajectory2 (`002*/003*` at `## Identify Activation point`) or `pseudotime_start_end_association()`
+- If correlation, compare WT vs KO
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+library("ggpubr")
+
+
+# import files
+pseudotime_traj2_peak <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/traj2_noCondition_humangastruloid72hrs_ActivationPoint.txt") %>%
+    dplyr::rename("geneSymbol" = "gene") 
+pseudotime_traj2_DEG = read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_association_traj2_noCondition_humangastruloid72hrs.txt") %>%
+    dplyr::rename("geneSymbol" = "gene",
+                  "fdr_DEG" = "fdr") %>% 
+    dplyr::select(geneSymbol, meanLogFC, fdr_DEG)
+pseudotime_traj2_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_traj2_noCondition_humangastruloid72hrs.txt") %>%
+    dplyr::rename("geneSymbol" = "gene",
+                  "fdr_StartEnd" = "fdr")  %>% 
+    dplyr::select(geneSymbol, fdr_StartEnd, logFClineage1)
+
+pseudotime_traj2_peak_DEG_StartEnd = pseudotime_traj2_peak %>%
+    left_join(pseudotime_traj2_DEG) %>%
+    left_join(pseudotime_traj2_StartEnd)
+
+# WT #########################
+WT_EZH2_1kbTSS_geneSymbol <- read_tsv("output/binBw/WT_EZH2_1kbTSS_geneSymbol.txt")
+WT_EZH2_500bpTSS_geneSymbol <- read_tsv("output/binBw/WT_EZH2_500bpTSS_geneSymbol.txt")
+WT_EZH2_250bpTSS_geneSymbol <- read_tsv("output/binBw/WT_EZH2_250bpTSS_geneSymbol.txt")
+pseudotime_traj2_peak_WT_EZH2_1kbTSS_geneSymbol = pseudotime_traj2_peak_DEG_StartEnd %>%
+    left_join(WT_EZH2_1kbTSS_geneSymbol) %>%
+  filter(!is.na(bc_median))
+pseudotime_traj2_peak_WT_EZH2_500bpTSS_geneSymbol = pseudotime_traj2_peak_DEG_StartEnd %>%
+    left_join(WT_EZH2_500bpTSS_geneSymbol)  %>%
+  filter(!is.na(bc_median))
+pseudotime_traj2_peak_WT_EZH2_250bpTSS_geneSymbol = pseudotime_traj2_peak_DEG_StartEnd %>%
+    left_join(WT_EZH2_250bpTSS_geneSymbol) %>%
+  filter(!is.na(bc_median))
+
+
+# pdf("output/binBw/corr_pseudotime_traj2_peakSmooth_fdr0__WT_EZH2_1kbTSS_geneSymbol_bc_max.pdf", width=5, height=4)
+pdf("output/binBw/corr_pseudotime_traj2_peakSmooth_DEGstartEndfdr0001__WT_EZH2_1kbTSS_geneSymbol_bc_median.pdf", width=5, height=4)
+
+pdf("output/binBw/corr_pseudotime_test.pdf", width=5, height=4)
+pseudotime_traj2_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    filter(fdr_StartEnd <0.05,
+           logFClineage1 > 0,
+           smooth_peak_pseudotime>-1,
+           bc_max>0) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  stat_cor(method = "pearson", label.x = 0, label.y = 1000, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+
+pdf("output/binBw/corr_pseudotime_test.pdf", width=5, height=4)
+pseudotime_traj2_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    filter(fdr_DEG <0.05,
+           logFClineage1 > 0,
+           smooth_peak_pseudotime>-1,
+           bc_max>0) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  stat_cor(method = "pearson", label.x = 0, label.y = 1000, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+
+```
+
+--> No correlation observed, despite many filtering tested (only DEG, only TC-DEG, only StartEnd positive, only H3K27me3 signal, combined...)...
+
+--> smooth_peak and H3K27me3 signal metrics seems correct. Now need to select on which gene perform the correlation
+    --> Try to use the cell type marker genes (top cell type marker genes of each of our cluster)
+    --> XXX
+
+
 
