@@ -1661,3 +1661,326 @@ write.table(THOR_chipseeker, file="output/THOR/THOR_PSC_WTvsKO_H3K27me3/THORq50_
 
 
 
+# Quantify signal around TSS 
+
+--> This is to be used for Conchi project gastrulation paper `008*/001*` at `## Test Activation point with H3K27me3 (from 001*/009*) - xxx`
+
+
+- Generate a bed file around TSS of each gene (250bp, 500bp, 1kb up/downstream); file already generated at `001_*/003__*/meta/ENCFF159KBI_gene_1kbTSS_sorted.bed` 
+- Quantify EZH2 read density around the TSS with [bin.bw](https://rdrr.io/github/jmonlong/PopSV/man/bin.bw.html) 
+- Represent data in R `ggplot`
+
+--> I need to generate a file with geneSymbol names and signal quantification. If several signal value per gene, take the highest one; because there could be transcript not express; so better to take the higher value; which should show the regulated one? **Let's generate median value of all transcript per gene; and maximum value of all transcript per gene.**
+
+
+```bash
+conda activate binBw_v2
+```
+
+```R
+library("PopSV")
+library("tidyverse")
+library("Rsamtools")
+library("ggpubr")
+library("data.table")
+library("biomaRt")
+
+# H3K27me3 #####################################################
+
+
+## WT H3K27me3_in Peaks 1kb
+bwFile <- "output/THOR/THOR_PSC_WTvsKO_H3K27me3/PSCWTvsKOH3K27me3-s1-rep0.bw"
+regions <- read.table("../../001_EZH1_Project/003__CutRun/meta/ENCFF159KBI_gene_1kbTSS_sorted.bed", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "gene", "strand")) 
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_H3K27me3_1kb")
+#### Collect output and gene information
+WT_H3K27me3 <- as_tibble(fread(cmd = "gunzip -c output/binBw/WT_H3K27me3_1kb.bgz") ) %>%
+ left_join(regions) %>%
+ separate(gene, into = c("gene", "version"), sep = "\\.") %>%
+ dplyr::select(gene, bc) %>%
+ unique()
+
+ensembl <- useEnsembl(biomart = "genes", dataset = "hsapiens_gene_ensembl")
+gene_ids <- unique(WT_H3K27me3$gene)
+gene_info <- getBM(attributes = c('ensembl_gene_id', 'hgnc_symbol'),
+                   filters = 'ensembl_gene_id',
+                   values = gene_ids,
+                   mart = ensembl)
+
+WT_H3K27me3_geneSymbol = WT_H3K27me3 %>%
+    left_join(gene_info %>% dplyr::rename("gene" = "ensembl_gene_id",  "geneSymbol" = "hgnc_symbol")) %>%
+    dplyr::select(geneSymbol, bc) %>%
+    unique() %>%
+    group_by(geneSymbol) %>%
+    mutate(bc_max = max(bc),
+           bc_median = median(bc)) %>%
+    filter(geneSymbol != "NA") %>%
+    dplyr::select(geneSymbol, bc_median, bc_max) %>%
+    unique()
+
+write.table(WT_H3K27me3_geneSymbol, file = "output/binBw/WT_H3K27me3_1kbTSS_geneSymbol.txt", sep = "\t", row.names = FALSE, quote = FALSE)
+
+
+
+
+## WT H3K27me3_in Peaks 500bp
+bwFile <- "output/THOR/THOR_PSC_WTvsKO_H3K27me3/PSCWTvsKOH3K27me3-s1-rep0.bw"
+regions <- read.table("../../001_EZH1_Project/003__CutRun/meta/ENCFF159KBI_gene_500bpTSS_sorted.bed", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "gene", "strand")) 
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_H3K27me3_500bp")
+#### Collect output and gene information
+WT_H3K27me3 <- as_tibble(fread(cmd = "gunzip -c output/binBw/WT_H3K27me3_500bp.bgz") ) %>%
+ left_join(regions) %>%
+ separate(gene, into = c("gene", "version"), sep = "\\.") %>%
+ dplyr::select(gene, bc) %>%
+ unique()
+
+ensembl <- useEnsembl(biomart = "genes", dataset = "hsapiens_gene_ensembl")
+gene_ids <- unique(WT_H3K27me3$gene)
+gene_info <- getBM(attributes = c('ensembl_gene_id', 'hgnc_symbol'),
+                   filters = 'ensembl_gene_id',
+                   values = gene_ids,
+                   mart = ensembl)
+
+WT_H3K27me3_geneSymbol = WT_H3K27me3 %>%
+    left_join(gene_info %>% dplyr::rename("gene" = "ensembl_gene_id",  "geneSymbol" = "hgnc_symbol")) %>%
+    dplyr::select(geneSymbol, bc) %>%
+    unique() %>%
+    group_by(geneSymbol) %>%
+    mutate(bc_max = max(bc),
+           bc_median = median(bc)) %>%
+    filter(geneSymbol != "NA") %>%
+    dplyr::select(geneSymbol, bc_median, bc_max) %>%
+    unique()
+
+write.table(WT_H3K27me3_geneSymbol, file = "output/binBw/WT_H3K27me3_500bpTSS_geneSymbol.txt", sep = "\t", row.names = FALSE, quote = FALSE)
+
+
+
+
+## WT H3K27me3_in Peaks 250bp
+bwFile <- "output/THOR/THOR_PSC_WTvsKO_H3K27me3/PSCWTvsKOH3K27me3-s1-rep0.bw"
+regions <- read.table("../../001_EZH1_Project/003__CutRun/meta/ENCFF159KBI_gene_250bpTSS_sorted.bed", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "gene", "strand")) 
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_H3K27me3_250bp")
+#### Collect output and gene information
+WT_H3K27me3 <- as_tibble(fread(cmd = "gunzip -c output/binBw/WT_H3K27me3_250bp.bgz") ) %>%
+ left_join(regions) %>%
+ separate(gene, into = c("gene", "version"), sep = "\\.") %>%
+ dplyr::select(gene, bc) %>%
+ unique()
+
+ensembl <- useEnsembl(biomart = "genes", dataset = "hsapiens_gene_ensembl")
+gene_ids <- unique(WT_H3K27me3$gene)
+gene_info <- getBM(attributes = c('ensembl_gene_id', 'hgnc_symbol'),
+                   filters = 'ensembl_gene_id',
+                   values = gene_ids,
+                   mart = ensembl)
+
+WT_H3K27me3_geneSymbol = WT_H3K27me3 %>%
+    left_join(gene_info %>% dplyr::rename("gene" = "ensembl_gene_id",  "geneSymbol" = "hgnc_symbol")) %>%
+    dplyr::select(geneSymbol, bc) %>%
+    unique() %>%
+    group_by(geneSymbol) %>%
+    mutate(bc_max = max(bc),
+           bc_median = median(bc)) %>%
+    filter(geneSymbol != "NA") %>%
+    dplyr::select(geneSymbol, bc_median, bc_max) %>%
+    unique()
+
+write.table(WT_H3K27me3_geneSymbol, file = "output/binBw/WT_H3K27me3_250bpTSS_geneSymbol.txt", sep = "\t", row.names = FALSE, quote = FALSE)
+
+
+
+```
+
+--> Works well. File generated `output/binBw/YAPKO_EZH2_250bpTSS_geneSymbol.txt` containing max and median EZH2 signal for all genes.
+
+
+
+
+# Correlation signal H3K27me3 signal TSS with RNA
+
+Let's verify that our quantification of H3K27me3 is in agreement with gene expression.
+
+```bash
+conda activate deseq2
+```
+
+
+
+```R
+# packages
+library("tidyverse")
+library("ggpubr")
+library("pheatmap")
+library("scales")
+library("RColorBrewer")
+library("corrplot")
+
+
+# import files
+## H3K27me3
+WT_H3K27me3_1kbTSS_geneSymbol <- read_tsv("../../001_EZH1_Project/006__CutRun_PSC_FA/output/binBw/WT_H3K27me3_1kbTSS_geneSymbol.txt")
+WT_H3K27me3_500bpTSS_geneSymbol <- read_tsv("../../001_EZH1_Project/006__CutRun_PSC_FA/output/binBw/WT_H3K27me3_500bpTSS_geneSymbol.txt")
+WT_H3K27me3_250bpTSS_geneSymbol <- read_tsv("../../001_EZH1_Project/006__CutRun_PSC_FA/output/binBw/WT_H3K27me3_250bpTSS_geneSymbol.txt")
+## gene with H3K27me3 peaks
+gene_H3K27me3 = read_tsv("../../001_EZH1_Project/006__CutRun_PSC_FA/output/ChIPseeker/annotation_macs2_PSC_WT_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt", col_name = FALSE) %>%
+    dplyr::rename("geneSymbol"="X1")
+
+
+## RNA 
+tpm = read_tsv("../../001_EZH1_Project/001__RNAseq/output/tpm_hg38/tpm_all_sample_geneSymbol.txt") %>%
+    dplyr::select("external_gene_name", "ESC_WT_R1","ESC_WT_R2","ESC_WT_R3")  %>%
+    rowwise() %>%
+    mutate(median_tpm = median(c_across(starts_with("ESC_WT_")))) %>%
+    ungroup() %>%
+    select(external_gene_name, median_tpm) %>%
+    dplyr::rename("geneSymbol"="external_gene_name")
+
+
+WT_H3K27me3_1kbTSS_geneSymbol_tpm = WT_H3K27me3_1kbTSS_geneSymbol %>%
+    left_join(tpm) %>%
+    drop_na() %>%
+    unique()
+
+# correlation scatterplot
+pdf("output/binBw/corr_H3K27me3_RNA_WT.pdf", width=5, height=4)
+WT_H3K27me3_1kbTSS_geneSymbol_tpm %>%
+    mutate(median_tpm = log2(median_tpm+1),
+           bc_max = log2(bc_max+1)) %>%
+    filter(  ) %>%  # bc_max>0 , median_tpm <5000
+ggplot(., aes(x = median_tpm, y = bc_max)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  stat_cor(method = "pearson", label.x = 0, label.y = 9000, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+
+# heatmap RNA 1st column
+## All express genes
+heatmap_data <- WT_H3K27me3_1kbTSS_geneSymbol_tpm %>%
+    mutate(median_tpm = log2(median_tpm+1),
+           bc_max = log2(bc_max)) %>%
+    filter( median_tpm > 0) %>%
+    select(median_tpm, bc_max) %>%
+    arrange(desc(median_tpm))
+heatmap_data_scaled <- heatmap_data %>%
+    mutate(
+        median_tpm = rescale(median_tpm, to = c(0, 1)),
+        bc_max = rescale(bc_max, to = c(0, 1))
+    )
+## Convert to matrix for pheatmap
+pdf("output/binBw/heatmap_RNA_H3K27me3_WT.pdf", width=1, height=4)
+pheatmap(
+  as.matrix(heatmap_data_scaled),
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  show_rownames = FALSE,
+  scale = "none",
+  color = colorRampPalette(c("blue", "white", "red"))(100),
+  breaks = c(seq(0, 0.45, length.out = 40), seq(0.46, 0.54, length.out = 20), seq(0.55, 1, length.out = 40))
+)
+dev.off()
+
+## All genes with H3K27me3
+heatmap_data <- gene_H3K27me3 %>%
+    left_join(WT_H3K27me3_1kbTSS_geneSymbol_tpm) %>%
+    drop_na() %>%
+    mutate(median_tpm = log2(median_tpm+1),
+           bc_max = log2(bc_max)) %>%
+    filter( median_tpm > 0) %>%
+    select(median_tpm, bc_max) %>%
+    arrange(desc(median_tpm))
+heatmap_data_scaled <- heatmap_data %>%
+    mutate(
+        median_tpm = rescale(median_tpm, to = c(0, 1)),
+        bc_max = rescale(bc_max, to = c(0, 1))
+    )
+## Convert to matrix for pheatmap
+pdf("output/binBw/heatmap_RNA_H3K27me3_WT_gene_H3K27me3.pdf", width=1, height=4)
+pheatmap(
+  as.matrix(heatmap_data_scaled),
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  show_rownames = FALSE,
+  scale = "none",
+  color = colorRampPalette(c("blue", "white", "red"))(100),
+  breaks = c(seq(0, 0.65, length.out = 40), seq(0.66, 0.74, length.out = 20), seq(0.75, 1, length.out = 40))
+)
+dev.off()
+
+
+
+
+# heatmap H3K27me3 1st column
+
+heatmap_data <- WT_H3K27me3_1kbTSS_geneSymbol_tpm %>%
+    mutate(median_tpm = log2(median_tpm+1),
+           bc_max = log2(bc_max+1)) %>%
+    filter( median_tpm > 0) %>%
+    select(bc_max, median_tpm ) %>%
+    arrange(desc(bc_max))
+
+heatmap_data_scaled <- heatmap_data %>%
+    mutate(
+        median_tpm = rescale(median_tpm, to = c(0, 1)),
+        bc_max = rescale(bc_max, to = c(0, 1))
+    )
+
+## Convert to matrix for pheatmap
+
+pdf("output/binBw/heatmap_H3K27me3_RNA_WT.pdf", width=1, height=4)
+pheatmap(
+  as.matrix(heatmap_data_scaled),
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  show_rownames = FALSE,
+  scale = "none",
+  color = colorRampPalette(c("blue", "white", "red"))(100),
+  breaks = c(seq(0, 0.45, length.out = 40), seq(0.46, 0.54, length.out = 20), seq(0.55, 1, length.out = 40))
+)
+dev.off()
+
+
+
+## Scatter plot with regression line
+pdf("output/binBw/scatter_H3K27me3_RNA_WT.pdf", width = 5, height = 4)
+WT_H3K27me3_1kbTSS_geneSymbol_tpm %>%
+    filter( median_tpm > 0) %>%
+ggplot(., aes(x = median_tpm, y = bc_max)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", color = "blue") +
+  scale_x_log10() +  # Use log scale for x-axis if needed
+  scale_y_log10() +  # Use log scale for y-axis if needed
+  theme_bw() +
+  labs(x = "log2(tpm+1)", y = "log2(bc_max)")
+dev.off()
+
+
+## Correlation matrix
+
+# Compute correlation matrix
+corrMatrix_data = WT_H3K27me3_1kbTSS_geneSymbol_tpm %>%
+    mutate(median_tpm = log2(median_tpm+1),
+           bc_max = log2(bc_max+1)) %>%
+    filter( median_tpm > 0)
+
+
+cor_matrix <- cor(corrMatrix_data %>% select(median_tpm, bc_max))
+
+# Correlation matrix heatmap
+pdf("output/binBw/correlation_matrix_H3K27me3_RNA_WT.pdf", width = 4, height = 4)
+corrplot(cor_matrix, method = "color", col = colorRampPalette(brewer.pal(11, "RdBu"))(200), 
+ mar = c(0, 0, 1, 0), addCoef.col = "black")
+dev.off()
+
+
+```
+
+
+--> Slight anticorrelation, seems it is working, but not extremely striking...
+    --> Better when keeping only gene express (tpm >0)
+    --> Selecting only genes with peak in WT is
+
+
+
