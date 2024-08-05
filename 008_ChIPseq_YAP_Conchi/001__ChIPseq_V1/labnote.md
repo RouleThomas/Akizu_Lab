@@ -2835,12 +2835,10 @@ pseudotime_traj2_peak_YAPKO_EZH2_250bpTSS_geneSymbol = pseudotime_traj2_peak_DEG
 ## signal EZH2 vs DEG timecourse
 
 # pdf("output/binBw/corr_pseudotime_traj2_peakSmooth_fdr0__WT_EZH2_1kbTSS_geneSymbol_bc_max.pdf", width=5, height=4)
-pdf("output/binBw/corr_pseudotime_traj2_peakSmooth_DEGstartEndfdr0001__WT_EZH2_1kbTSS_geneSymbol_bc_median.pdf", width=5, height=4)
-pseudotime_traj2_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
-    filter(fdr_StartEnd <0.05,
-           logFClineage1 > 0,
-           smooth_peak_pseudotime>-1,
-           bc_max>0) %>%
+pdf("output/binBw/corr_pseudotime_traj2_peakSmooth_logFClineageOver1__WT_EZH2_1kbTSS_geneSymbol_bc_max.pdf", width=5, height=4)
+pseudotime_traj2_peak_WT_EZH2_1kbTSS_geneSymbol %>% 
+    filter(
+           logFClineage1 > 1) %>%
 ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE, color = "blue") +
@@ -2849,31 +2847,87 @@ ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
   theme_bw()
 dev.off()
 
-pdf("output/binBw/corr_pseudotime_traj2_peakSmooth_logFClineage1Over5___WT_EZH2_1kbTSS_geneSymbol_bc_max.pdf", width=5, height=4)
+pdf("output/binBw/corr_pseudotime_traj2_peakSmooth_logFClineageOver05fdrdeg05__WT_EZH2_1kbTSS_geneSymbol_bc_max.pdf", width=5, height=4)
 pseudotime_traj2_peak_WT_EZH2_1kbTSS_geneSymbol %>% 
-    filter(
-           logFClineage1 > 5) %>%
-ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE, color = "blue") +
-  stat_cor(method = "pearson", label.x = 0, label.y = 1000, 
-           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
-  theme_bw()
-dev.off()
-
-#pdf("output/binBw/corr_pseudotime_traj2_peakSmooth_fdrStartEnd05logFClineage1Over05___WT_EZH2_1kbTSS_geneSymbol_bc_max.pdf", width=5, height=4)
-pdf("output/binBw/corr_pseudotime_traj2_peakSmooth_fdrDEG05logFClineage1Over1___WT_EZH2_1kbTSS_geneSymbol_bc_max.pdf", width=5, height=4)
-pseudotime_traj2_peak_WT_EZH2_1kbTSS_geneSymbol %>% 
-    filter(
-           logFClineage1 > 1, 
+    filter(logFClineage1 > 0.5,
            fdr_DEG <0.05) %>%
 ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE, color = "blue") +
-  stat_cor(method = "pearson", label.x = 0, label.y = 500, 
+  stat_cor(method = "pearson", label.x = 0, label.y = 1000, 
            aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
   theme_bw()
 dev.off()
+
+
+## THIS plot is good looking, BTU it's biased because density considers the number of genes at each location in addition to the bc_max values.
+#pdf("output/binBw/cov_pseudotime_traj2_peakSmooth_logFClineageOver1fdrdeg05__WT_EZH2_1kbTSS_geneSymbol_bc_max.pdf", width=5, height=2)
+pdf("output/binBw/cov_pseudotime_traj2_peakSmooth_fdrdeg05__WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max.pdf", width=5, height=2)
+pseudotime_traj2_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj2_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+    filter( 
+           fdr_DEG <0.05) %>%
+    ggplot(aes(x = smooth_peak_pseudotime, weight = bc_max, fill = genotype, color = genotype)) +
+    geom_density(alpha = 0.5, bw = 2, position = "identity") + 
+    scale_fill_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+    scale_color_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+    theme_bw()
+dev.off()
+########
+
+pdf("output/binBw/histbin4_pseudotime_traj2_peakSmooth_logFClineageOver1fdrdeg05__WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max.pdf", width=5, height=2)
+pseudotime_traj2_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj2_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+    filter(logFClineage1 > 1, fdr_DEG < 0.05) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = seq(0, max(smooth_peak_pseudotime), by =4), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(median_bc_max = median(bc_max), .groups = 'drop') %>%
+        ggplot(., aes(x = pseudotime_bin, y = median_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        scale_fill_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+        labs(title = "Histogram of Median bc_max by Pseudotime Bin",
+            x = "Pseudotime Bin",
+            y = "Median bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+#pdf("output/binBw/histBinCluster_pseudotime_traj2_peakSmooth_logFClineageOver05fdrdeg05__WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max.pdf", width=5, height=2)
+pdf("output/binBw/histBinCluster_pseudotime_traj2_peakSmooth_logFClineageOver1__WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max.pdf", width=5, height=2)
+pseudotime_traj2_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj2_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+    filter(logFClineage1 > 1, fdr_DEG <0.05) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(0, 5.05, 12.5, 13.2, max(smooth_peak_pseudotime)), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(median_bc_max = median(bc_max), .groups = 'drop') %>%
+        ggplot(., aes(x = pseudotime_bin, y = median_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        scale_fill_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+
+
+
+
+#pdf("output/binBw/corr_pseudotime_traj2_peakSmooth_fdrStartEnd05logFClineage1Over05___WT_EZH2_1kbTSS_geneSymbol_bc_max.pdf", width=5, height=4)
+pdf("output/binBw/corr_pseudotime_traj2_peakSmooth_logFClineage1Over1___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max.pdf", width=5, height=4)
+pseudotime_traj2_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj2_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+    filter(logFClineage1 > 1) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = genotype)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  stat_cor(method = "pearson", label.x = 0, label.y = 300, aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  scale_color_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+  theme_bw()
+dev.off()
+
 
 pdf("output/binBw/corr_pseudotime_traj2_peakSmooth_fdrDEG05logFClineage1Over1___YAPKO_EZH2_1kbTSS_geneSymbol_bc_max.pdf", width=5, height=4)
 pseudotime_traj2_peak_YAPKO_EZH2_1kbTSS_geneSymbol %>% 
@@ -3443,7 +3497,84 @@ dev.off()
 ```
 
 
---> No correlation... Except when `logFClineage1 > 1`; increase even more when filtering `bc_max > 100`
+--> No correlation... Except when `logFClineage1 > 1`; even better associated with `fdr_DRG<0.05`, but only 92 genes
+
+
+
+## Test TC-genotype diff with H3K27me3
+
+In `002*/003*` at `# Heatmap clutering DEGs per traj _ REVISED METHOD` we identified TC-genotype DEG, l2fc2 is good treshold with 516 DEGs. We performed clustering and identified cluster induced early and lately upon DASA treatment.
+
+--> Check the level of EZH2 in hESC in these cluster induced earlier and later. (We expect cluster induced earlier in DASA to have lower level of EZH2 in YAPKO, and cluster induced later in DASA to have higher level of EZH2 in YAPKO)
+
+
+```R
+# packages
+library("tidyverse")
+library("ggpubr")
+
+# import files
+
+l2fc2_clusterGeneSymbol <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/condRes_traj2_humangastruloid72hrs_l2fc2_clusterGeneSymbold.txt",
+                      col_names = TRUE, trim_ws = TRUE)
+
+
+# WT #########################
+WT_EZH2_1kbTSS_geneSymbol <- read_tsv("output/binBw/WT_EZH2_1kbTSS_geneSymbol.txt")
+WT_EZH2_500bpTSS_geneSymbol <- read_tsv("output/binBw/WT_EZH2_500bpTSS_geneSymbol.txt")
+WT_EZH2_250bpTSS_geneSymbol <- read_tsv("output/binBw/WT_EZH2_250bpTSS_geneSymbol.txt")
+l2fc2_clusterGeneSymbol_WT_EZH2_1kbTSS_geneSymbol = l2fc2_clusterGeneSymbol %>%
+    left_join(WT_EZH2_1kbTSS_geneSymbol) %>%
+  filter(!is.na(bc_median))
+pseudotime_traj2_peak_WT_EZH2_500bpTSS_geneSymbol = l2fc2_clusterGeneSymbol %>%
+    left_join(WT_EZH2_500bpTSS_geneSymbol)  %>%
+  filter(!is.na(bc_median))
+pseudotime_traj2_peak_WT_EZH2_250bpTSS_geneSymbol = l2fc2_clusterGeneSymbol %>%
+    left_join(WT_EZH2_250bpTSS_geneSymbol) %>%
+  filter(!is.na(bc_median))
+# YAPKO #########################
+YAPKO_EZH2_1kbTSS_geneSymbol <- read_tsv("output/binBw/YAPKO_EZH2_1kbTSS_geneSymbol.txt")
+YAPKO_EZH2_500bpTSS_geneSymbol <- read_tsv("output/binBw/YAPKO_EZH2_500bpTSS_geneSymbol.txt")
+YAPKO_EZH2_250bpTSS_geneSymbol <- read_tsv("output/binBw/YAPKO_EZH2_250bpTSS_geneSymbol.txt")
+pseudotime_traj2_peak_YAPKO_EZH2_1kbTSS_geneSymbol = l2fc2_clusterGeneSymbol %>%
+    left_join(YAPKO_EZH2_1kbTSS_geneSymbol) %>%
+  filter(!is.na(bc_median))
+pseudotime_traj2_peak_YAPKO_EZH2_500bpTSS_geneSymbol = l2fc2_clusterGeneSymbol %>%
+    left_join(YAPKO_EZH2_500bpTSS_geneSymbol)  %>%
+  filter(!is.na(bc_median))
+pseudotime_traj2_peak_YAPKO_EZH2_250bpTSS_geneSymbol = l2fc2_clusterGeneSymbol %>%
+    left_join(YAPKO_EZH2_250bpTSS_geneSymbol) %>%
+  filter(!is.na(bc_median))
+
+
+# plot WT and YPAKO
+
+
+
+
+pdf("output/binBw/boxplot_condRes_traj2_humangastruloid72hrs_l2fc2_clusterGeneSymbol.pdf", width=10, height=8)
+pseudotime_traj2_peak_WT_EZH2_500bpTSS_geneSymbol %>%
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj2_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+ggplot(., aes(x = genotype, y = bc_max, fill = genotype)) +
+    geom_boxplot() +
+    facet_wrap(~ cluster, scales = "free_y") +
+    scale_fill_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+    theme_bw() +
+    theme(strip.text = element_text(size = 12), 
+          axis.text.x = element_text(angle = 45, hjust = 1)) +
+    stat_compare_means(aes(group = genotype), method = "t.test", label = "p.format", label.y = -0.5)
+dev.off()
+
+```
+
+--> All cluster tested show same level of H3K27me3 between WT and YAPKO
+
+
+
+
+
+
 
 
 

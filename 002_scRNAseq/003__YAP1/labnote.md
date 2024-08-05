@@ -12396,6 +12396,89 @@ peak_df <- data.frame(
 # save output: write.table(peak_df, file = c("output/condiments/traj2_noCondition_humangastruloid72hrs_ActivationPoint.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
 
+## heatmap activate/induced genes along pseudotime
+### DEG Start End
+pseudotime_start_end_association # filter log2fc >0 >1
+pseudotime_start_end_association = read_tsv("output/condiments/pseudotime_start_end_association_traj2_noCondition_humangastruloid72hrs.txt")
+pseudotime_start_end_association_logFC0 = pseudotime_start_end_association %>% 
+  filter(logFClineage1 > 1) %>%
+  dplyr::select(gene) %>%
+  unique()
+
+#pdf("output/condiments/heatmap_pseudotime_start_end_association_logFClineageOver0.pdf", width=8, height=10)
+pdf("output/condiments/heatmap_pseudotime_start_end_association_logFClineageOver0fdr05.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj2_noCondition_humangastruloid72hrs, gene = pseudotime_start_end_association_logFC0$gene, nPoints = 25, tidy = FALSE)
+yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
+heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
+                       cluster_cols = FALSE,
+                       cluster_rows = FALSE,
+                       show_rownames = FALSE, 
+                       show_colnames = FALSE)
+dev.off()
+
+### DEG time course
+pseudotime_association = read_tsv("output/condiments/pseudotime_association_traj2_noCondition_humangastruloid72hrs.txt")
+pseudotime_association_deg = pseudotime_association %>%
+  filter(fdr == 0)%>%
+  dplyr::select(gene) %>%
+  unique()
+
+
+pdf("output/condiments/heatmap_pseudotime_association_deg0pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj2_noCondition_humangastruloid72hrs, gene = pseudotime_association_deg$gene, nPoints = 25, tidy = FALSE)
+yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
+heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
+                       cluster_cols = FALSE,
+                       cluster_rows = FALSE,
+                       show_rownames = FALSE, 
+                       show_colnames = FALSE)
+dev.off()
+
+### DEG Start End & time course
+pseudotime_start_end_association_logFC0TCdeg05 = pseudotime_start_end_association %>% 
+  filter(logFClineage1 > 0.5) %>%
+  dplyr::select(gene) %>%
+  unique() %>%
+  left_join(pseudotime_association) %>%
+  filter(fdr <0.05)
+
+
+pdf("output/condiments/heatmap_pseudotime_start_end_association_logFClineageOver05_DEG05.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj2_noCondition_humangastruloid72hrs, gene = pseudotime_start_end_association_logFC0TCdeg05$gene, nPoints = 25, tidy = FALSE)
+yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
+heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
+                       cluster_cols = FALSE,
+                       cluster_rows = FALSE,
+                       show_rownames = FALSE, 
+                       show_colnames = FALSE)
+dev.off()
+
+
+## Identify which pseudotime value corespond to which cluster ################
+pseudotime <- colData(traj2_noCondition_humangastruloid72hrs)$crv$pseudotime
+sce_cells <- colnames(traj2_noCondition_humangastruloid72hrs)
+subset_seurat <- subset(humangastruloid.combined.sct, cells = sce_cells) # Subset cell from traj2
+clusters <- subset_seurat$cluster.annot # Extract cluster information
+### Combine pseudotime and cluster information into a data frame
+pseudotime_cluster_df <- data.frame(
+  cell = colnames(traj2_noCondition_humangastruloid72hrs),
+  pseudotime = pseudotime,
+  cluster = clusters
+)  %>%
+  arrange(pseudotime)
+
+switch_points <- which(diff(as.numeric(factor(pseudotime_cluster_df$cluster))) != 0) # Find the indices where the cluster changes
+switch_pseudotimes <- pseudotime_cluster_df$pseudotime[switch_points] # Extract the pseudotime values at these switch points
+switch_clusters_from <- pseudotime_cluster_df$cluster[switch_points]
+switch_clusters_to <- pseudotime_cluster_df$cluster[switch_points + 1]
+switch_df <- data.frame(
+  switch_pseudotime = switch_pseudotimes,
+  cluster_from = switch_clusters_from,
+  cluster_to = switch_clusters_to 
+) %>%
+  group_by(cluster_from, cluster_to) %>%
+  summarize(median_switch_pseudotime = median(switch_pseudotime), .groups = 'drop')
+##################################
 
 
 ################### Genotype effect ######################################################
@@ -12451,7 +12534,7 @@ combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
 # Generate heatmap with clustering
 # Perform hierarchical clustering
 hc <- hclust(dist(combinedData))
-clusters <- cutree(hc, k=6)  # CHANGE CLUSTER NUMB HERE
+clusters <- cutree(hc, k=12)  # CHANGE CLUSTER NUMB HERE
 # Create an annotation data frame for the rows based on cluster assignments
 annotation_row <- data.frame(Cluster = factor(clusters))
 
@@ -12498,7 +12581,7 @@ annotation_colors <- list(Cluster = cluster_colors)
 # Generate the heatmap
 
 
-pdf("output/condiments/clustered_heatmap_traj2_humangastruloid72hrs_l2fc2_cl6.pdf", width=8, height=10)
+pdf("output/condiments/clustered_heatmap_traj2_humangastruloid72hrs_l2fc2_cl12.pdf", width=8, height=10)
 
 pheatmap(combinedData,
   cluster_cols = FALSE,
@@ -12506,12 +12589,18 @@ pheatmap(combinedData,
   show_colnames = FALSE,
   main = "Trajectory 2 - Hierarchical Clustering",
   legend = TRUE,
-  cutree_rows = 6,
+  cutree_rows = 12,
   annotation_row = annotation_row,
   annotation_colors = annotation_colors
 )
 dev.off()
 
+# save gene name in cluster 
+
+write.table(tibble(
+  geneSymbol = names(clusters),
+  cluster = as.vector(clusters)
+), file = c("output/condiments/condRes_traj2_humangastruloid72hrs_l2fc2_clusterGeneSymbold.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
 XXX Below not modified XXX
 
