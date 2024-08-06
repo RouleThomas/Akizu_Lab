@@ -2049,7 +2049,273 @@ Part_SubC1 <- RNA_WT_Bap1KO[, RNA_WT_Bap1KO$seurat_clusters %in% c(8,11,13,12,2,
 table(Part_PyNs_RSC_UL$seurat_clusters) # to double check
 
 
-### Part_DG_GC #############################################
+
+#############################################################################################
+################### Time course effect, trajectory per trajectory ##############################
+#############################################################################################
+
+##$ Part_DG_GC ##$###########################################
+#############################################################################################
+
+
+
+scripts/fitGAM_6knots_Part_DG_GC_RNA_WT_Bap1KO_noCondition.sh 
+
+set.seed(42)
+traj_Part_DG_GC_noCondition <- readRDS("output/condiments/traj_Part_DG_GC_noCondition.rds")
+
+
+## Genes that change with pseudotime
+
+pseudotime_association <- associationTest(traj_Part_DG_GC_noCondition) # statistical test to check whether gene expression is constant across pseudotime within a lineage
+pseudotime_association$fdr <- p.adjust(pseudotime_association$pvalue, method = "fdr")
+pseudotime_association <- pseudotime_association[order(pseudotime_association$fdr), ]
+pseudotime_association$gene <- rownames(pseudotime_association)
+
+pseudotime_association = as_tibble(pseudotime_association) # 14,503 pval 0.05 DEG
+
+XXXY here
+
+# save output: write.table(pseudotime_association, file = c("output/condiments/pseudotime_association_traj_Part_DG_GC_noCondition.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+#--> Can do clustering on these genes if needed
+
+
+## Genes that change between two pseudotime points (start vs end)
+pseudotime_start_end_association <- startVsEndTest(traj2_noCondition_humangastruloid72hrs, pseudotimeValues = c(0, 1))
+pseudotime_start_end_association$gene <- rownames(pseudotime_start_end_association)
+pseudotime_start_end_association$fdr <- p.adjust(pseudotime_start_end_association$pvalue, method = "fdr")
+pseudotime_start_end_association <- pseudotime_start_end_association[order(pseudotime_start_end_association$fdr), ]
+##--> log2FC = end - start: negative log2fc means start point higher average expr than end point
+# save output: write.table(pseudotime_start_end_association, file = c("output/condiments/pseudotime_start_end_association_traj2_noCondition_humangastruloid72hrs.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+sce_cells <- colnames(traj2_noCondition_humangastruloid72hrs) # collect cells of traj2
+subset_traj2_noCondition_humangastruloid72hrs_humangastruloid.combined.sct <- subset(humangastruloid.combined.sct, cells = sce_cells) # Create a seurat object with only cells from traj2
+
+### plot gene per gene
+
+top1_posFC = pseudotime_start_end_association %>% filter(fdr < 0.05, logFClineage1>0) %>% top_n(1, waldStat) %>% pull(gene)
+top1_negFC = pseudotime_start_end_association %>% filter(fdr < 0.05, logFClineage1<0) %>% top_n(1, waldStat) %>% pull(gene)
+
+pdf("output/condiments/plotSmoothers-top1_posFC.pdf", width=5, height=4)
+plotSmoothers(traj2_noCondition_humangastruloid72hrs, subset_traj2_noCondition_humangastruloid72hrs_humangastruloid.combined.sct[["RNA"]]@counts, gene = top1_posFC )
+dev.off()
+
+pdf("output/condiments/plotSmoothers-top1_negFC.pdf",  width=5, height=4)
+plotSmoothers(traj2_noCondition_humangastruloid72hrs, subset_traj2_noCondition_humangastruloid72hrs_humangastruloid.combined.sct[["RNA"]]@counts, gene = top1_negFC )
+dev.off()
+
+
+### plot top 25 genes
+#### Select the top 25 genes with positive logFC and the top 25 with negative logFC
+top25_posFC_genes <- pseudotime_start_end_association %>%
+  filter(fdr < 0.05, logFClineage1 > 0) %>%
+  top_n(25, waldStat) %>%
+  arrange(desc(waldStat)) %>%
+  select(gene, logFClineage1)
+
+top25_negFC_genes <- pseudotime_start_end_association %>%
+  filter(fdr < 0.05, logFClineage1 < 0) %>%
+  top_n(25, waldStat) %>%
+  arrange(desc(waldStat)) %>%
+  select(gene, logFClineage1)
+
+## Function to plot and save in PDF
+plot_and_save <- function(genes_df, file_name) {
+  pdf(file_name, width=5, height=4)
+  for (i in 1:nrow(genes_df)) {
+    gene <- genes_df$gene[i]
+    logFC <- genes_df$logFClineage1[i]
+    plot_title <- paste0(gene, " (logFC: ", round(logFC, 2), ")")
+    p <- plotSmoothers(traj2_noCondition_humangastruloid72hrs, subset_traj2_noCondition_humangastruloid72hrs_humangastruloid.combined.sct[["RNA"]]@counts, gene = gene)
+    p <- p + ggtitle(plot_title)
+    print(p)
+  }
+  dev.off()
+}
+
+# Generate PDFs
+plot_and_save(top25_posFC_genes, "output/condiments/plotSmoothers-top25_posFC_traj2_noCondition_humangastruloid72hrs.pdf")
+plot_and_save(top25_negFC_genes, "output/condiments/plotSmoothers-top25_negFC_traj2_noCondition_humangastruloid72hrs.pdf")
+
+
+## Identify Activation point = peak (maximum expression) of each gene along the pseudotime trajectory
+### Identify peak of expression (max expr) of these Time-course DEG
+traj2_noCondition_humangastruloid72hrs
+#### Extract pseudotime values
+pseudotime <- colData(traj2_noCondition_humangastruloid72hrs)$crv$pseudotime
+#### Extract the expression matrix
+expr_matrix <- assays(traj2_noCondition_humangastruloid72hrs)$counts
+#### Ensure the pseudotime values are named with the same cell names as the expression matrix columns
+names(pseudotime) <- colnames(expr_matrix)
+#### Function to find the peak pseudotime for each gene (raw and smoothed)
+find_max_pseudotime <- function(gene_expr, pseudotime) {
+  # Raw peak pseudotime
+  raw_peak_pseudotime <- pseudotime[which.max(gene_expr)]
+  # Smooth gene expression using loess
+  smooth_model <- loess(gene_expr ~ pseudotime)
+  smooth_expr <- predict(smooth_model)
+  # Smooth peak pseudotime
+  smooth_peak_pseudotime <- pseudotime[which.max(smooth_expr)]
+  return(list(raw_peak_pseudotime = raw_peak_pseudotime, 
+              smooth_peak_pseudotime = smooth_peak_pseudotime))
+}
+#### Apply the function to all genes
+peak_values <- apply(expr_matrix, 1, function(x) find_max_pseudotime(as.numeric(x), pseudotime))
+#### Convert the results to a data frame
+peak_df <- data.frame(
+  gene = rownames(expr_matrix),
+  raw_peak_pseudotime = sapply(peak_values, `[[`, "raw_peak_pseudotime"),
+  smooth_peak_pseudotime = sapply(peak_values, `[[`, "smooth_peak_pseudotime")
+) %>% as_tibble()
+
+# save output: write.table(peak_df, file = c("output/condiments/traj2_noCondition_humangastruloid72hrs_ActivationPoint.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+
+## heatmap activate/induced genes along pseudotime
+### DEG Start End
+pseudotime_start_end_association # filter log2fc >0 >1
+pseudotime_start_end_association = read_tsv("output/condiments/pseudotime_start_end_association_traj2_noCondition_humangastruloid72hrs.txt")
+pseudotime_start_end_association_logFC0 = pseudotime_start_end_association %>% 
+  filter(logFClineage1 > 1) %>%
+  dplyr::select(gene) %>%
+  unique()
+
+#pdf("output/condiments/heatmap_pseudotime_start_end_association_logFClineageOver0.pdf", width=8, height=10)
+pdf("output/condiments/heatmap_pseudotime_start_end_association_logFClineageOver0fdr05.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj2_noCondition_humangastruloid72hrs, gene = pseudotime_start_end_association_logFC0$gene, nPoints = 25, tidy = FALSE)
+yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
+heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
+                       cluster_cols = FALSE,
+                       cluster_rows = FALSE,
+                       show_rownames = FALSE, 
+                       show_colnames = FALSE)
+dev.off()
+
+### DEG time course
+pseudotime_association = read_tsv("output/condiments/pseudotime_association_traj2_noCondition_humangastruloid72hrs.txt")
+pseudotime_association_deg = pseudotime_association %>%
+  filter(fdr == 0)%>%
+  dplyr::select(gene) %>%
+  unique()
+
+
+pdf("output/condiments/heatmap_pseudotime_association_deg0pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj2_noCondition_humangastruloid72hrs, gene = pseudotime_association_deg$gene, nPoints = 25, tidy = FALSE)
+yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
+heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
+                       cluster_cols = FALSE,
+                       cluster_rows = FALSE,
+                       show_rownames = FALSE, 
+                       show_colnames = FALSE)
+dev.off()
+
+### DEG Start End & time course
+pseudotime_start_end_association_logFC0TCdeg05 = pseudotime_start_end_association %>% 
+  filter(logFClineage1 > 0.5) %>%
+  dplyr::select(gene) %>%
+  unique() %>%
+  left_join(pseudotime_association) %>%
+  filter(fdr <0.05)
+
+
+pdf("output/condiments/heatmap_pseudotime_start_end_association_logFClineageOver05_DEG05.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj2_noCondition_humangastruloid72hrs, gene = pseudotime_start_end_association_logFC0TCdeg05$gene, nPoints = 25, tidy = FALSE)
+yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
+heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
+                       cluster_cols = FALSE,
+                       cluster_rows = FALSE,
+                       show_rownames = FALSE, 
+                       show_colnames = FALSE)
+dev.off()
+
+
+## Identify which pseudotime value corespond to which cluster ################
+pseudotime <- colData(traj2_noCondition_humangastruloid72hrs)$crv$pseudotime
+sce_cells <- colnames(traj2_noCondition_humangastruloid72hrs)
+subset_seurat <- subset(humangastruloid.combined.sct, cells = sce_cells) # Subset cell from traj2
+clusters <- subset_seurat$cluster.annot # Extract cluster information
+### Combine pseudotime and cluster information into a data frame
+pseudotime_cluster_df <- data.frame(
+  cell = colnames(traj2_noCondition_humangastruloid72hrs),
+  pseudotime = pseudotime,
+  cluster = clusters
+)  %>%
+  arrange(pseudotime)
+
+switch_points <- which(diff(as.numeric(factor(pseudotime_cluster_df$cluster))) != 0) # Find the indices where the cluster changes
+switch_pseudotimes <- pseudotime_cluster_df$pseudotime[switch_points] # Extract the pseudotime values at these switch points
+switch_clusters_from <- pseudotime_cluster_df$cluster[switch_points]
+switch_clusters_to <- pseudotime_cluster_df$cluster[switch_points + 1]
+switch_df <- data.frame(
+  switch_pseudotime = switch_pseudotimes,
+  cluster_from = switch_clusters_from,
+  cluster_to = switch_clusters_to 
+) %>%
+  group_by(cluster_from, cluster_to) %>%
+  summarize(median_switch_pseudotime = median(switch_pseudotime), .groups = 'drop')
+##################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#############################################################################################
+################### Genotype effect, trajectory per trajectory ##############################
+#############################################################################################
+
+##$ Part_DG_GC ##$###########################################
+#############################################################################################
 # tidy
 df <- bind_cols(
   as.data.frame(reducedDims(Part_DG_GC)$UMAP),
@@ -2315,7 +2581,7 @@ Part_DG_GC_noConditions <- fitGAM(
 
 
 
-### Part_PyNs_RSC_UL #############################################
+##$ Part_PyNs_RSC_UL #############################################
 # tidy
 df <- bind_cols(
   as.data.frame(reducedDims(Part_PyNs_RSC_UL)$UMAP),
@@ -2567,14 +2833,7 @@ traj1 <- fitGAM(
 
 
 
-
-
-xxx  
-
-
-
-
-### Part_SubC1 #############################################
+##$ Part_SubC1 #############################################
 # tidy
 df <- bind_cols(
   as.data.frame(reducedDims(Part_SubC1)$UMAP),
@@ -2827,7 +3086,7 @@ traj1 <- fitGAM(
 
 
 
-XXXXXXXXXXXX HERE !
+XXXXXXXXXXXX HERE BELOW NOT MODIFIED --> MODIFIED IF WANT CHECK GENOTYPE EFFECT ALONG PSEUDOTIME !
 
 ### Once slurm jobs finished for each trajectory; load traj1 <- readRDS("output/condiments/traj1.rds") OK
 
@@ -3098,7 +3357,7 @@ sbatch scripts/fitGAM_6knots_Part_PyNs_SubC1_RNA_WT_Bap1KO.sh # 22719143 xxx
 # trajectory per trajectory (all features, no parralelization) - pseudotime-dependent DEGs
 sbatch scripts/fitGAM_6knots_Part_DG_GC_RNA_WT_Bap1KO_noCondition.sh # 22832785 ok
 sbatch scripts/fitGAM_6knots_Part_PyNs_RSC_UL_RNA_WT_Bap1KO_noCondition.sh # 22833306 ok
-sbatch scripts/fitGAM_6knots_Part_PyNs_SubC1_RNA_WT_Bap1KO_noCondition.sh # 22833684 fail; 22938128 xxx
+sbatch scripts/fitGAM_6knots_Part_PyNs_SubC1_RNA_WT_Bap1KO_noCondition.sh # 22833684 fail; 22938128 ok
 ```
 
 --> To remove genotype effect, specify `conditions = NULL` to `fitGam()`

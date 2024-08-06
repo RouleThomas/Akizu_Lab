@@ -2758,7 +2758,7 @@ dev.off()
 
 
 
-## Test Activation point with EZH2 - FAIL
+## Test Activation point with EZH2 - OK
 
 
 
@@ -3197,7 +3197,7 @@ dev.off()
 
 
 
-## Test Activation point with H3K27me3 (from 001*/009*) - xxx
+## Test Activation point with H3K27me3 (from 001*/009*) - OK
 
 The level of H3K27me3 around TSS has been calculated in `001*/006*` at `# Quantify signal around TSS`. Only 1 Bio Rep for 1st slight test. (`output/binBw/WT_H3K27me3_250bpTSS_geneSymbol.txt`)
 
@@ -3300,6 +3300,31 @@ ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
   stat_cor(method = "pearson", label.x = 0, label.y = 9000, 
            aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
   theme_bw()
+dev.off()
+
+
+
+pdf("output/binBw/corr_pseudotime_traj2_peakSmooth_logFClineage1Over1fdrDEG05___WT_H3K27me3_500bpTSS_geneSymbol_bc_max.pdf", width=5, height=4)
+pseudotime_traj2_peak_WT_H3K27me3_500bpTSS_geneSymbol %>%
+    filter(logFClineage1 > 1, fdr_DEG <0.05) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max), color = "blue") +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  stat_cor(method = "pearson", label.x = 0, label.y = 3000, aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+
+pdf("output/binBw/histBinCluster_pseudotime_traj2_peakSmooth_logFClineageOver1__WT_H3K27me3_500bpTSS_geneSymbol_bc_max.pdf", width=5, height=2)
+pseudotime_traj2_peak_WT_H3K27me3_500bpTSS_geneSymbol %>%
+    filter(logFClineage1 > 1) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(0, 5.05, 12.5, 13.2, max(smooth_peak_pseudotime)), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(pseudotime_bin) %>%
+    summarize(median_bc_max = median(bc_max), .groups = 'drop') %>%
+        ggplot(., aes(x = pseudotime_bin, y = median_bc_max)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
 dev.off()
 
 
