@@ -2072,24 +2072,27 @@ pseudotime_association$fdr <- p.adjust(pseudotime_association$pvalue, method = "
 pseudotime_association <- pseudotime_association[order(pseudotime_association$fdr), ]
 pseudotime_association$gene <- rownames(pseudotime_association)
 
-pseudotime_association = as_tibble(pseudotime_association) # 14,503 pval 0.05 DEG
+pseudotime_association = as_tibble(pseudotime_association) # 9,587 fdr 0.05 DEG
 
-XXXY here
+
 
 # save output: write.table(pseudotime_association, file = c("output/condiments/pseudotime_association_traj_Part_DG_GC_noCondition.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 #--> Can do clustering on these genes if needed
 
 
 ## Genes that change between two pseudotime points (start vs end)
-pseudotime_start_end_association <- startVsEndTest(traj2_noCondition_humangastruloid72hrs, pseudotimeValues = c(0, 1))
+pseudotime_start_end_association <- startVsEndTest(traj_Part_DG_GC_noCondition, pseudotimeValues = c(0, 1))
 pseudotime_start_end_association$gene <- rownames(pseudotime_start_end_association)
 pseudotime_start_end_association$fdr <- p.adjust(pseudotime_start_end_association$pvalue, method = "fdr")
 pseudotime_start_end_association <- pseudotime_start_end_association[order(pseudotime_start_end_association$fdr), ]
-##--> log2FC = end - start: negative log2fc means start point higher average expr than end point
-# save output: write.table(pseudotime_start_end_association, file = c("output/condiments/pseudotime_start_end_association_traj2_noCondition_humangastruloid72hrs.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
-sce_cells <- colnames(traj2_noCondition_humangastruloid72hrs) # collect cells of traj2
-subset_traj2_noCondition_humangastruloid72hrs_humangastruloid.combined.sct <- subset(humangastruloid.combined.sct, cells = sce_cells) # Create a seurat object with only cells from traj2
+XXXY HERE 
+
+##--> log2FC = end - start: negative log2fc means start point higher average expr than end point
+# save output: write.table(pseudotime_start_end_association, file = c("output/condiments/pseudotime_start_end_association_traj_Part_DG_GC_noCondition.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+sce_cells <- colnames(traj_Part_DG_GC_noCondition) # collect cells of traj2
+subset_traj_Part_DG_GC_noCondition_humangastruloid.combined.sct <- subset(humangastruloid.combined.sct, cells = sce_cells) # Create a seurat object with only cells from traj2
 
 ### plot gene per gene
 
@@ -2097,11 +2100,11 @@ top1_posFC = pseudotime_start_end_association %>% filter(fdr < 0.05, logFClineag
 top1_negFC = pseudotime_start_end_association %>% filter(fdr < 0.05, logFClineage1<0) %>% top_n(1, waldStat) %>% pull(gene)
 
 pdf("output/condiments/plotSmoothers-top1_posFC.pdf", width=5, height=4)
-plotSmoothers(traj2_noCondition_humangastruloid72hrs, subset_traj2_noCondition_humangastruloid72hrs_humangastruloid.combined.sct[["RNA"]]@counts, gene = top1_posFC )
+plotSmoothers(traj_Part_DG_GC_noCondition, subset_traj_Part_DG_GC_noCondition_humangastruloid.combined.sct[["RNA"]]@counts, gene = top1_posFC )
 dev.off()
 
 pdf("output/condiments/plotSmoothers-top1_negFC.pdf",  width=5, height=4)
-plotSmoothers(traj2_noCondition_humangastruloid72hrs, subset_traj2_noCondition_humangastruloid72hrs_humangastruloid.combined.sct[["RNA"]]@counts, gene = top1_negFC )
+plotSmoothers(traj_Part_DG_GC_noCondition, subset_traj_Part_DG_GC_noCondition_humangastruloid.combined.sct[["RNA"]]@counts, gene = top1_negFC )
 dev.off()
 
 
