@@ -4156,7 +4156,7 @@ genome(annotations) <- "mm10"
 # Import RNA 
 RNA_WT_Bap1KO.sct <- readRDS(file = "output/seurat/RNA_WT_Bap1KO.sct_V1_numeric.rds")
 
-
+## WT QC cleaning ##
 # Import ATAC
 ATAC_WT_counts <- Read10X_h5("ATAC_WT/outs/filtered_peak_bc_matrix.h5")
 ATAC_WT_metada = read.csv(
@@ -4238,15 +4238,119 @@ ATAC_WT_QCV1 <- subset(
 )
 
 ATAC_WT_QCV1
+ATAC_WT_QCV1$orig.ident <- "ATAC_WT"
 
 
-XXX
+## Bap1ko QC cleaning ##
+# Import ATAC
+ATAC_Bap1KO_counts <- Read10X_h5("ATAC_Bap1KO/outs/filtered_peak_bc_matrix.h5")
+ATAC_Bap1KO_metada = read.csv(
+  file = "ATAC_Bap1KO/outs/singlecell.csv",
+  header = TRUE,
+  row.names = 1
+)
+
+# Create seurat chromatin assay
+chrom_assay_Bap1KO <- CreateChromatinAssay(
+   counts = ATAC_Bap1KO_counts,
+   sep = c(":", "-"),
+   genome = 'mm10',
+   fragments = "ATAC_Bap1KO/outs/fragments.tsv.gz",
+   min.cells = 10,
+   annotation = annotations
+ )
+
+ATAC_Bap1KO <- CreateSeuratObject(
+  counts = chrom_assay_Bap1KO,
+  assay = "peaks",
+  meta.data = ATAC_Bap1KO_metada
+)
+
+
+# QC metrics
+## compute nucleosome signal score per cell
+ATAC_Bap1KO <- NucleosomeSignal(object = ATAC_Bap1KO)
+## compute TSS enrichment score per cell
+ATAC_Bap1KO <- TSSEnrichment(object = ATAC_Bap1KO, fast = FALSE)
+## add blacklist ratio and fraction of reads in peaks
+ATAC_Bap1KO$pct_reads_in_peaks <- ATAC_Bap1KO$peak_region_fragments / ATAC_Bap1KO$passed_filters * 100
+ATAC_Bap1KO$blacklist_ratio <- ATAC_Bap1KO$blacklist_region_fragments / ATAC_Bap1KO$peak_region_fragments
+
+
+### QC plots
+pdf("output/Signac/DensityScatter_ATAC_Bap1KO.pdf", width=5, height=5)
+DensityScatter(ATAC_Bap1KO, x = 'nCount_peaks', y = 'TSS.enrichment', log_x = TRUE, quantiles = TRUE)
+dev.off()
+
+pdf("output/Signac/VlnPlot_QC_ATAC_Bap1KO.pdf", width=12, height=6)
+VlnPlot(
+  object = ATAC_Bap1KO,
+  features = c('nCount_peaks', 'TSS.enrichment', 'blacklist_ratio', 'nucleosome_signal', 'pct_reads_in_peaks'),
+  pt.size = 0.1,
+  ncol = 5 )
+dev.off()
+
+
+ATAC_Bap1KO$high.tss <- ifelse(ATAC_Bap1KO$TSS.enrichment > 2, 'High', 'Low') # 3 is coonly used but could be adjusted; based on violin and below plot
+pdf("output/Signac/TSSPlot_QC_ATAC_Bap1KO.pdf", width=12, height=6)
+TSSPlot(ATAC_Bap1KO, group.by = 'high.tss') + NoLegend()
+dev.off()
+#--> Here aim to have a clean sharp peak for High, flatter one for Low TSS.enrichment
+
+ATAC_Bap1KO$nucleosome_group <- ifelse(ATAC_Bap1KO$nucleosome_signal > 1.2, 'NS > 1.2', 'NS < 1.2') # Adjust value based on nucleosome_signal VlnPlot
+pdf("output/Signac/FragmentHistogram_QC_ATAC_Bap1KO.pdf", width=12, height=6)
+FragmentHistogram(object = ATAC_Bap1KO, group.by = 'nucleosome_group', region = "chr1-1-20000000") # region = "chr1-1-20000000" this need to be added to avoid bug discuss here: https://github.com/stuart-lab/signac/issues/199
+dev.off()
+#--> Here aim to have strong nucleosome-free region peak (around 50 bp), mono-nucleosome peak (around 200 bp), and sometimes di-nucleosome peak (around 400 bp).
+
+pdf("output/Signac/VlnPlot_QC_ATAC_Bap1KO_nCount_peaks.pdf", width=12, height=6)
+VlnPlot(
+  object = ATAC_Bap1KO,
+  features = c('nCount_peaks'),
+  pt.size = 0.1,
+  ncol = 5 ) +
+  ylim(0, 50000)
+dev.off()
+
+## subset cells that pass QC
+ATAC_Bap1KO_QCV1 <- subset(
+  x = ATAC_Bap1KO,
+  subset = nCount_peaks > 1000 &
+    nCount_peaks < 50000 &
+    pct_reads_in_peaks > 20 &
+    nucleosome_signal < 1.2 &
+    TSS.enrichment > 2
+)
+
+ATAC_Bap1KO_QCV1
+ATAC_Bap1KO_QCV1$orig.ident <- "ATAC_Bap1KO"
+
+############## saveRDS #################################################################
+# saveRDS(ATAC_Bap1KO_QCV1, file = "output/Signac/ATAC_Bap1KO_QCV1.rds") 
+# saveRDS(ATAC_WT_QCV1, file = "output/Signac/ATAC_WT_QCV1.rds") 
+##############################################################################
+
+# Combine WT and Bap1KO
+XXXXX
+XXX see whether we just merge them or we integrate them as for RNA XXX
 
 
 
 
+# Data integration RNA ATAC
 
+## ATAC analysis
+
+DefaultAssay(ATAC_Bap1KO_QCV1) <- "peaks"
+ATAC_Bap1KO_QCV1 <- RunTFIDF(ATAC_Bap1KO_QCV1)
+ATAC_Bap1KO_QCV1 <- FindTopFeatures(ATAC_Bap1KO_QCV1, min.cutoff = 'q0')
+ATAC_Bap1KO_QCV1 <- RunSVD(ATAC_Bap1KO_QCV1)
+ATAC_Bap1KO_QCV1 <- RunUMAP(ATAC_Bap1KO_QCV1, reduction = 'lsi', dims = 2:50, reduction.name = "umap.atac", reduction.key = "atacUMAP_") # We exclude the first dimension as this is typically correlated with sequencing depth
+
+pdf("output/Signac/DepthCor_QC_ATAC_Bap1KO.pdf", width=12, height=6)
+DepthCor(ATAC_Bap1KO_QCV1)
+dev.off()
 
 ```
 
-
+- *NOTE: RunTFIDF normalizes across cells to correct for differences in cellular sequencing depth, and across peaks to give higher values to more rare peaks.*
