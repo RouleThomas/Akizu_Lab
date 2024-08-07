@@ -4106,8 +4106,21 @@ Fail.... Remvoe all previous env
 ```bash
 conda create -n SignacV5 -c conda-forge -c bioconda r-base r-signac r-seurat
 ```
---> WORK!!!!
+--> WORK!!!! But need tidyverse and biocmanager for genome annotations...
 
+```R
+install.packages("hdf5r") # to read `.h5` files
+install.packages("tidyverse") # fail, ragg dependency
+install.packages("ragg") # fail, try thorugh conda  `conda install conda-forge::r-ragg`
+install.packages("tidyverse") #  OK
+
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("EnsDb.Hsapiens.v86")
+BiocManager::install("EnsDb.Mmusculus.v79")
+BiocManager::install("biovizBase")
+```
+--> WORK!!!! 
 
 
 ## Run Signac
@@ -4122,6 +4135,7 @@ Step:
 
 ```bash
 conda activate SignacV5
+module load hdf5_18/1.8.20 # to read `.h5` files
 ```
 
 
@@ -4129,35 +4143,108 @@ conda activate SignacV5
 # library
 library("Signac")
 library("Seurat")
+library("hdf5r")
+library("tidyverse")
+library("EnsDb.Hsapiens.v86") # hg38
+library("EnsDb.Mmusculus.v79") # mm10
 
+# PRepare genome annotation
+annotations <- GetGRangesFromEnsDb(ensdb = EnsDb.Mmusculus.v79)
+seqlevelsStyle(annotations) <- 'UCSC'
+genome(annotations) <- "mm10"
 
 # Import RNA 
 RNA_WT_Bap1KO.sct <- readRDS(file = "output/seurat/RNA_WT_Bap1KO.sct_V1_numeric.rds")
 
 
 # Import ATAC
-ATAC_WT <- Read10X_h5("ATAC_WT/filtered_peak_bc_matrix.h5")
+ATAC_WT_counts <- Read10X_h5("ATAC_WT/outs/filtered_peak_bc_matrix.h5")
 ATAC_WT_metada = read.csv(
-  file = "ATAC_WT/singlecell.csv",
+  file = "ATAC_WT/outs/singlecell.csv",
   header = TRUE,
   row.names = 1
 )
 
+# Create seurat chromatin assay
+chrom_assay_WT <- CreateChromatinAssay(
+   counts = ATAC_WT_counts,
+   sep = c(":", "-"),
+   genome = 'mm10',
+   fragments = "ATAC_WT/outs/fragments.tsv.gz",
+   min.cells = 10,
+   annotation = annotations
+ )
 
-
-chrom_assay <- CreateChromatinAssay(
-  counts = counts,
-  sep = c(":", "-"),
-  fragments = '../vignette_data/atac_v1_pbmc_10k_fragments.tsv.gz',
-  min.cells = 10,
-  min.features = 200
-)
-
-pbmc <- CreateSeuratObject(
-  counts = chrom_assay,
+ATAC_WT <- CreateSeuratObject(
+  counts = chrom_assay_WT,
   assay = "peaks",
-  meta.data = metadata
+  meta.data = ATAC_WT_metada
 )
+
+
+# QC metrics
+## compute nucleosome signal score per cell
+ATAC_WT <- NucleosomeSignal(object = ATAC_WT)
+## compute TSS enrichment score per cell
+ATAC_WT <- TSSEnrichment(object = ATAC_WT, fast = FALSE)
+## add blacklist ratio and fraction of reads in peaks
+ATAC_WT$pct_reads_in_peaks <- ATAC_WT$peak_region_fragments / ATAC_WT$passed_filters * 100
+ATAC_WT$blacklist_ratio <- ATAC_WT$blacklist_region_fragments / ATAC_WT$peak_region_fragments
+
+
+### QC plots
+pdf("output/Signac/DensityScatter_ATAC_WT.pdf", width=5, height=5)
+DensityScatter(ATAC_WT, x = 'nCount_peaks', y = 'TSS.enrichment', log_x = TRUE, quantiles = TRUE)
+dev.off()
+
+pdf("output/Signac/VlnPlot_QC_ATAC_WT.pdf", width=12, height=6)
+VlnPlot(
+  object = ATAC_WT,
+  features = c('nCount_peaks', 'TSS.enrichment', 'blacklist_ratio', 'nucleosome_signal', 'pct_reads_in_peaks'),
+  pt.size = 0.1,
+  ncol = 5 )
+dev.off()
+
+
+ATAC_WT$high.tss <- ifelse(ATAC_WT$TSS.enrichment > 2, 'High', 'Low') # 3 is coonly used but could be adjusted; based on violin and below plot
+pdf("output/Signac/TSSPlot_QC_ATAC_WT.pdf", width=12, height=6)
+TSSPlot(ATAC_WT, group.by = 'high.tss') + NoLegend()
+dev.off()
+#--> Here aim to have a clean sharp peak for High, flatter one for Low TSS.enrichment
+
+ATAC_WT$nucleosome_group <- ifelse(ATAC_WT$nucleosome_signal > 1.2, 'NS > 1.2', 'NS < 1.2') # Adjust value based on nucleosome_signal VlnPlot
+pdf("output/Signac/FragmentHistogram_QC_ATAC_WT.pdf", width=12, height=6)
+FragmentHistogram(object = ATAC_WT, group.by = 'nucleosome_group', region = "chr1-1-20000000") # region = "chr1-1-20000000" this need to be added to avoid bug discuss here: https://github.com/stuart-lab/signac/issues/199
+dev.off()
+#--> Here aim to have strong nucleosome-free region peak (around 50 bp), mono-nucleosome peak (around 200 bp), and sometimes di-nucleosome peak (around 400 bp).
+
+pdf("output/Signac/VlnPlot_QC_ATAC_WT_nCount_peaks.pdf", width=12, height=6)
+VlnPlot(
+  object = ATAC_WT,
+  features = c('nCount_peaks'),
+  pt.size = 0.1,
+  ncol = 5 ) +
+  ylim(0, 50000)
+dev.off()
+
+## subset cells that pass QC
+ATAC_WT_QCV1 <- subset(
+  x = ATAC_WT,
+  subset = nCount_peaks > 1000 &
+    nCount_peaks < 50000 &
+    pct_reads_in_peaks > 20 &
+    nucleosome_signal < 1.2 &
+    TSS.enrichment > 2
+)
+
+ATAC_WT_QCV1
+
+
+XXX
+
+
+
+
 
 
 ```

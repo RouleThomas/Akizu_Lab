@@ -169,9 +169,11 @@ WORK great!
 
 --> Same `scRNAseqV2` but with MuSic2 and bisque
 
-### Signac
+### SignacV5
 
 Env for scRNAseq and scATACseq integration. Installed in `002*/006*` *labnote.md*
+Also R: BiocManager, tidyverse, EnsDb.Hsapiens.v86
+
 
 
 
