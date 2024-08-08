@@ -2588,9 +2588,11 @@ write.table(YAPKO_EZH2_geneSymbol, file = "output/binBw/YAPKO_EZH2_250bpTSS_gene
 --> Works well. File generated `output/binBw/YAPKO_EZH2_250bpTSS_geneSymbol.txt` containing max and median EZH2 signal for all genes.
 
 
-# Correlation EZH2 signal with Pseudotime 002*/003*
+# FAIL WRONG TRAJ  Correlation EZH2 signal with Pseudotime 002*/003*
 
-## Test pseudotime_start_end_association() - FAIL
+!! The wrong trajectory as been studied! It should start with Ectorderm, not end by it... !!
+
+## FAIL WRONG TRAJ Test pseudotime_start_end_association() - FAIL
 
 
 Related to *20240720_meeting* Let's check whether correlation between:
@@ -2758,7 +2760,7 @@ dev.off()
 
 
 
-## Test Activation point with EZH2 - OK
+## FAIL WRONG TRAJ  Test Activation point with EZH2 - OK
 
 
 
@@ -3197,7 +3199,7 @@ dev.off()
 
 
 
-## Test Activation point with H3K27me3 (from 001*/009*) - OK
+## FAIL WRONG TRAJ  Test Activation point with H3K27me3 (from 001*/009*) - OK
 
 The level of H3K27me3 around TSS has been calculated in `001*/006*` at `# Quantify signal around TSS`. Only 1 Bio Rep for 1st slight test. (`output/binBw/WT_H3K27me3_250bpTSS_geneSymbol.txt`)
 
@@ -3526,7 +3528,7 @@ dev.off()
 
 
 
-## Test TC-genotype diff with H3K27me3
+## FAIL WRONG TRAJ  Test TC-genotype diff with H3K27me3
 
 In `002*/003*` at `# Heatmap clutering DEGs per traj _ REVISED METHOD` we identified TC-genotype DEG, l2fc2 is good treshold with 516 DEGs. We performed clustering and identified cluster induced early and lately upon DASA treatment.
 
@@ -3601,7 +3603,7 @@ dev.off()
 
 
 
-## Test Activation point condition specific with H3K27me3 (from 001*/009*) - OK
+## FAIL WRONG TRAJ  Test Activation point condition specific with H3K27me3 (from 001*/009*) - OK
 
 The level of H3K27me3 around TSS has been calculated in `001*/006*` at `# Quantify signal around TSS`. Only 1 Bio Rep for 1st slight test. (`output/binBw/WT_H3K27me3_250bpTSS_geneSymbol.txt`)
 
@@ -3784,7 +3786,7 @@ dev.off()
 
 
 
-## Test Activation point condition specific with EZH2 - OK
+## FAIL WRONG TRAJ  Test Activation point condition specific with EZH2 - OK
 
 
 Here is the method Conchi proposed. Define pseudotime activation point separately for each condition (done at `### Condiments humangastru72hrs - pseudotime WT and DASA separated` in `002/003`); and check H3K27me3 level. Check whether DASA accelerate H3K27me3-target gene activation (eg. genes activated later in CONTROL will be activated earlier in DASA (higher postiive correlation)); because likely less H3K27me3 in YAPKO at hESC (*true for EZH2, when using logFCLineage > 1*)
