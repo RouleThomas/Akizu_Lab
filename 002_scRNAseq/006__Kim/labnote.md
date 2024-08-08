@@ -4135,7 +4135,7 @@ Step:
 
 ```bash
 conda activate SignacV5
-module load hdf5_18/1.8.20 # to read `.h5` files
+module load hdf5_18/1.8.21 # to read `.h5` files
 ```
 
 
@@ -4326,9 +4326,13 @@ ATAC_Bap1KO_QCV1
 ATAC_Bap1KO_QCV1$orig.ident <- "ATAC_Bap1KO"
 
 ############## saveRDS #################################################################
-# saveRDS(ATAC_Bap1KO_QCV1, file = "output/Signac/ATAC_Bap1KO_QCV1.rds") 
 # saveRDS(ATAC_WT_QCV1, file = "output/Signac/ATAC_WT_QCV1.rds") 
+# saveRDS(ATAC_Bap1KO_QCV1, file = "output/Signac/ATAC_Bap1KO_QCV1.rds") 
 ##############################################################################
+
+ATAC_WT_QCV1 = readRDS(file = "output/Signac/ATAC_WT_QCV1.rds")
+ATAC_Bap1KO_QCV1 = readRDS(file = "output/Signac/ATAC_Bap1KO_QCV1.rds")
+
 
 # Combine WT and Bap1KO
 XXXXX
