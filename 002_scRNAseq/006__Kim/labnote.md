@@ -4329,21 +4329,91 @@ ATAC_Bap1KO_QCV1$orig.ident <- "ATAC_Bap1KO"
 # saveRDS(ATAC_WT_QCV1, file = "output/Signac/ATAC_WT_QCV1.rds") 
 # saveRDS(ATAC_Bap1KO_QCV1, file = "output/Signac/ATAC_Bap1KO_QCV1.rds") 
 ##############################################################################
+set.seed(42)
 
 ATAC_WT_QCV1 = readRDS(file = "output/Signac/ATAC_WT_QCV1.rds")
 ATAC_Bap1KO_QCV1 = readRDS(file = "output/Signac/ATAC_Bap1KO_QCV1.rds")
 
 
-# Combine WT and Bap1KO
-XXXXX
-XXX see whether we just merge them or we integrate them as for RNA XXX
-
-
-
-
 # Data integration RNA ATAC
 
-## ATAC analysis
+
+
+# Method1: Combine WT and Bap1KO using the shared DNA accessibility assay
+## compute LSI
+ATAC_WT_QCV1 <- FindTopFeatures(ATAC_WT_QCV1, min.cutoff = 10)
+ATAC_WT_QCV1 <- RunTFIDF(ATAC_WT_QCV1)
+ATAC_WT_QCV1 <- RunSVD(ATAC_WT_QCV1)
+ATAC_Bap1KO_QCV1 <- FindTopFeatures(ATAC_Bap1KO_QCV1, min.cutoff = 10)
+ATAC_Bap1KO_QCV1 <- RunTFIDF(ATAC_Bap1KO_QCV1)
+ATAC_Bap1KO_QCV1 <- RunSVD(ATAC_Bap1KO_QCV1)
+## merge/combined dataset
+ATAC_WT_Bap1KO_combined.method1 <- merge(ATAC_WT_QCV1, ATAC_Bap1KO_QCV1) # merge dataset
+## process the combined dataset
+ATAC_WT_Bap1KO_combined.method1 <- FindTopFeatures(ATAC_WT_Bap1KO_combined.method1, min.cutoff = 10)
+ATAC_WT_Bap1KO_combined.method1 <- RunTFIDF(ATAC_WT_Bap1KO_combined.method1)
+ATAC_WT_Bap1KO_combined.method1 <- RunSVD(ATAC_WT_Bap1KO_combined.method1)
+ATAC_WT_Bap1KO_combined.method1 <- RunUMAP(ATAC_WT_Bap1KO_combined.method1, reduction = "lsi", dims = 2:30)
+p1 <- DimPlot(ATAC_WT_Bap1KO_combined.method1, group.by = "orig.ident")
+## integration WT Bap1KO
+### find integration anchors
+integration.anchors <- FindIntegrationAnchors(
+  object.list = list(ATAC_WT_QCV1, ATAC_Bap1KO_QCV1),
+  anchor.features = rownames(ATAC_WT_QCV1),
+  reduction = "rlsi",
+  dims = 2:30
+)
+### integrate LSI embeddings
+ATAC_WT_Bap1KO_integrated.method1 <- IntegrateEmbeddings(
+  anchorset = integration.anchors,
+  reductions = ATAC_WT_Bap1KO_combined.method1[["lsi"]],
+  new.reduction.name = "integrated_lsi",
+  dims.to.integrate = 1:30,
+  k.weight = 32    # Default 100; Added after an error message that recommended me to reduce below 33
+)
+
+### create a new UMAP using the integrated embeddings
+ATAC_WT_Bap1KO_integrated.method1 <- RunUMAP(ATAC_WT_Bap1KO_integrated.method1, reduction = "integrated_lsi", dims = 2:30)
+p2 <- DimPlot(ATAC_WT_Bap1KO_integrated.method1, group.by = "orig.ident")
+
+pdf("output/Signac/ATAC_WT_Bap1KO_mergedVsintegrated.method1.pdf", width=12, height=6)
+(p1 + ggtitle("Merged")) | (p2 + ggtitle("Integrated"))
+dev.off()
+
+############## saveRDS #################################################################
+# saveRDS(ATAC_WT_Bap1KO_integrated.method1, file = "output/Signac/ATAC_WT_Bap1KO_integrated.method1.rds")
+##############################################################################
+
+
+
+# RNA integration
+## Make sure activate assay to RNA and Peaks respectively for RNA and ATAC
+DefaultAssay(RNA_WT_Bap1KO.sct) <- "RNA"
+DefaultAssay(ATAC_WT_Bap1KO_integrated.method1) <- "peaks"
+
+
+RNA_ATAC_WT_Bap1KO <- FindMultiModalNeighbors(reduction.list = list(RNA_WT_Bap1KO.sct, ATAC_WT_Bap1KO_integrated.method1), dims.list = list(1:20, 2:30)) # Indicate nb dims to use (for RNA we used 20; 30 for ATAC)
+# --> Too long to run in interactive. Let's run a slurm job FindMultiModalNeighbors_RNA_ATAC_WT_Bap1KO_V1.sh
+
+
+# Load rds objet
+XXX HERE slurm job XXX
+
+RNA_ATAC_WT_Bap1KO = readRDS(file = "output/Signac/FindMultiModalNeighbors_RNA_ATAC_WT_Bap1KO_V1.rds")
+
+#
+RNA_ATAC_WT_Bap1KO <- RunUMAP(RNA_ATAC_WT_Bap1KO, nn.name = "weighted.nn", reduction.name = "wnn.umap", reduction.key = "wnnUMAP_")
+RNA_ATAC_WT_Bap1KO <- FindClusters(RNA_ATAC_WT_Bap1KO, graph.name = "wsnn", algorithm = 3, verbose = TRUE)
+
+
+
+
+
+
+
+
+
+## Testing Area ########
 
 DefaultAssay(ATAC_Bap1KO_QCV1) <- "peaks"
 ATAC_Bap1KO_QCV1 <- RunTFIDF(ATAC_Bap1KO_QCV1)
@@ -4354,7 +4424,37 @@ ATAC_Bap1KO_QCV1 <- RunUMAP(ATAC_Bap1KO_QCV1, reduction = 'lsi', dims = 2:50, re
 pdf("output/Signac/DepthCor_QC_ATAC_Bap1KO.pdf", width=12, height=6)
 DepthCor(ATAC_Bap1KO_QCV1)
 dev.off()
+####################
+
+
+
 
 ```
 
 - *NOTE: RunTFIDF normalizes across cells to correct for differences in cellular sequencing depth, and across peaks to give higher values to more rare peaks.*
+
+
+Integration of scATACseq conditions:
+  - Method1: using the shared DNA accessibility assay. Discuss [here](https://stuartlab.org/signac/articles/integrate_atac.html)
+  - Method2: simply merge using  `merge(x = ATAC_Bap1KO_QCV1, y = ATAC_WT_QCV1, add.cell.ids = c("Bap1KO", "WT"))` and process the combined dataset and put with RNA
+https://stuartlab.org/signac/articles/integrate_atac.html
+
+--> Test show that Method1 is better
+
+
+
+
+Slurm job for `FindMultiModalNeighbors()`
+
+```bash
+
+conda activate SignacV5
+module load hdf5_18/1.8.21 # to read `.h5` files
+
+
+sbatch scripts/FindMultiModalNeighbors_RNA_ATAC_WT_Bap1KO_V1.sh # 23485732 xxx
+
+```
+
+
+
