@@ -52,7 +52,7 @@ B2 is Bap1 cKO snRNAseq = RNA_Bap1KO
 
 
 
-## Counting with cellranger count
+# Counting with cellranger count
 
 Within each folder in `/snRNAseq_Kcnc1_R320H/snRNAseq_Kcnc1_reorganized/*` I have two lanes L001 and L002 with I1/I2 and R1/R2 fastq. 
 
@@ -62,7 +62,7 @@ Within each folder in `/snRNAseq_Kcnc1_R320H/snRNAseq_Kcnc1_reorganized/*` I hav
 --> Prefer option1
 
 
-### Install cellranger-atac and -arc
+## Install cellranger-atac and -arc
 
 For both options, need to install [cellranger-arc](https://kb.10xgenomics.com/hc/en-us/articles/360059656912-Can-I-analyze-only-the-Gene-Expression-data-from-my-single-cell-multiome-experiment) and [cellranger-atac](https://support.10xgenomics.com/single-cell-atac/software/downloads/latest) 
 
@@ -117,9 +117,10 @@ tar -zxvf refdata-cellranger-arc-mm10-2020-A-2.0.0.tar.gz
 
 
 
-### Count
+## Count
 
---> Decide later with Seurat, which option is better to use. 
+- **Option1**: Count RNA and ATAC separately
+- **Option2**: Count RNA and ATAC together with [cell ranger arc](https://www.10xgenomics.com/support/software/cell-ranger-arc/latest/analysis/single-library-analysis)
 
 ```bash 
 conda activate scRNAseq
@@ -136,9 +137,10 @@ sbatch scripts/cellranger_count_ATAC_WT.sh # 20409600 fail chemistry; 20409818 f
 sbatch scripts/cellranger_count_ATAC_Bap1KO.sh # 20409604 fail chemistry; 20409822 fail need cellranger-atac; 20414466 too long; re run more ressource 20631095 ok
 
 ## For option2
-# --> To do if option1 fail
-#XXX sbatch scripts/cellranger_count_RNA_ATAC_WT.sh # 
-#XXX sbatch scripts/cellranger_count_RNA_ATAC_Bap1KO.sh #  
+# --> To do if option1 fail; option1 is not good as it make cell name different between RNA and ATAC
+### Run cellranger arc count
+sbatch scripts/cellranger_count_multiome_WT.sh #  23546723 xxx
+sbatch scripts/cellranger_count_multiome_Bap1KO.sh # 23546793 xxx 
 
 ```
 
@@ -153,8 +155,39 @@ sbatch scripts/cellranger_count_ATAC_Bap1KO.sh # 20409604 fail chemistry; 204098
 
 --> ATAC samples very long to count (>3 days wit 400Go mem)
 
+--> **If multiome10x, use option2: cellcount-arc (to maintain cellname identity)!!!**
+- Need run cellranger [mkfastq](https://www.10xgenomics.com/support/software/cell-ranger-arc/latest/analysis/generating-fastqs-mkfastq). Need generate CSV samplesheet to indicate fastq metrics.
+  NOTE: check the L00*, if same number we are running on a single lane, so `1` need to be used.
+  NOTE: *SI-TT-A1* code for *RNA*; *SI-NA-A1* code for *ATAC*
 
+```bash
+# sample information
+RNA_WT (input_raw/F001/B1/)
+Lane,Sample,Index
+5,B1_CKDL230036293-1A_22FCTTLT3,SI-TT-A1
 
+RNA_Bap1KO (input_raw/F001/B2/)
+Lane,Sample,Index
+5,B2_CKDL230036294-1A_22FCTTLT3_S2,SI-TT-A1
+
+ATAC_WT (input_raw/F002/A1/)
+Lane,Sample,Index
+8,A1SubLib_CKDL230036285-1A_22FF27LT3_S1,SI-NA-A1
+
+ATAC_Bap1KO (input_raw/F002/A2/)
+Lane,Sample,Index
+8,A2SubLib_CKDL230036286-1A_22FF27LT3_S2,SI-NA-A1
+
+# csv file:
+##WT /006__Kim/libraries_WT.csv
+fastqs,sample,library_type
+/scr1/users/roulet/Akizu_Lab/002_scRNAseq/006__Kim/input_raw/F002/A1/,A1SubLib_CKDL230036285-1A_22FF27LT3,Chromatin Accessibility
+/scr1/users/roulet/Akizu_Lab/002_scRNAseq/006__Kim/input_raw/F001/B1/,B1_CKDL230036293-1A_22FCTTLT3,Gene Expression
+##Bap1KO /006__Kim/libraries_Bap1KO.csv
+fastqs,sample,library_type
+/scr1/users/roulet/Akizu_Lab/002_scRNAseq/006__Kim/input_raw/F002/A2/,A2SubLib_CKDL230036286-1A_22FF27LT3,Chromatin Accessibility
+/scr1/users/roulet/Akizu_Lab/002_scRNAseq/006__Kim/input_raw/F001/B2/,B2_CKDL230036294-1A_22FCTTLT3,Gene Expression
+```
 
 
 
@@ -162,17 +195,12 @@ sbatch scripts/cellranger_count_ATAC_Bap1KO.sh # 20409604 fail chemistry; 204098
 - doublet detection using [scrublet](https://github.com/swolock/scrublet) **on the filtered matrix**
 - ambient RNA correction using `soupX` in R before generating the Seurat object
 
-Too many samples so let's run scrublet in 6 separate bash jobs
 
 ```bash
 conda deactivate # base environment needed
 
-# Run doublet detection/scrublet genotype/time tissue (CB/CX) together
-
-sbatch scripts/scrublet_RNA_WT.sh # 20606254 xxx
-sbatch scripts/scrublet_RNA_Bap1KO.sh # 20606261 xxx
-
-
+sbatch scripts/scrublet_RNA_WT.sh # 20606254 ok
+sbatch scripts/scrublet_RNA_Bap1KO.sh # 20606261 ok
 
 ```
 
@@ -474,9 +502,12 @@ ggplot(phase_summary_combined_tidy, aes(x = Sample, y = Prop, fill = Var1)) +
 dev.off()
 ##
 
+###########################################################################
+# saveRDS(RNA_WT, file = "output/seurat/RNA_WT_QCV2.rds") 
+# saveRDS(RNA_Bap1KO, file = "output/seurat/RNA_Bap1KO_QCV2.rds") 
+###########################################################################
 
 # Cell type annotation
-
 
 ## Work on the WT sample 1st
 
@@ -4133,6 +4164,9 @@ Step:
 - Add in the ATAC-seq data as a second assay usnig [WWN](https://satijalab.org/seurat/articles/weighted_nearest_neighbor_analysis#wnn-analysis-of-10x-multiome-rna-atac)
 
 
+Great discussion on data integration [here](https://github.com/satijalab/seurat/issues/5346)
+
+
 ```bash
 conda activate SignacV5
 module load hdf5_18/1.8.21 # to read `.h5` files
@@ -4143,7 +4177,7 @@ module load hdf5_18/1.8.21 # to read `.h5` files
 # library
 library("Signac")
 library("Seurat")
-library("hdf5r")
+#library("hdf5r")
 library("tidyverse")
 library("EnsDb.Hsapiens.v86") # hg38
 library("EnsDb.Mmusculus.v79") # mm10
@@ -4382,11 +4416,13 @@ dev.off()
 
 ############## saveRDS #################################################################
 # saveRDS(ATAC_WT_Bap1KO_integrated.method1, file = "output/Signac/ATAC_WT_Bap1KO_integrated.method1.rds")
+# saveRDS(ATAC_WT_Bap1KO_combined.method1, file = "output/Signac/ATAC_WT_Bap1KO_combined.method1.rds")
 ##############################################################################
+ATAC_WT_Bap1KO_integrated.method1 = readRDS(file = "output/Signac/ATAC_WT_Bap1KO_integrated.method1.rds")
+ATAC_WT_Bap1KO_combined.method1 = readRDS(file = "output/Signac/ATAC_WT_Bap1KO_combined.method1.rds")
 
 
-
-# RNA integration
+# RNA integration_method1 #####
 ## Make sure activate assay to RNA and Peaks respectively for RNA and ATAC
 DefaultAssay(RNA_WT_Bap1KO.sct) <- "RNA"
 DefaultAssay(ATAC_WT_Bap1KO_integrated.method1) <- "peaks"
@@ -4404,8 +4440,6 @@ RNA_ATAC_WT_Bap1KO = readRDS(file = "output/Signac/FindMultiModalNeighbors_RNA_A
 #
 RNA_ATAC_WT_Bap1KO <- RunUMAP(RNA_ATAC_WT_Bap1KO, nn.name = "weighted.nn", reduction.name = "wnn.umap", reduction.key = "wnnUMAP_")
 RNA_ATAC_WT_Bap1KO <- FindClusters(RNA_ATAC_WT_Bap1KO, graph.name = "wsnn", algorithm = 3, verbose = TRUE)
-
-
 
 
 
@@ -4443,7 +4477,6 @@ https://stuartlab.org/signac/articles/integrate_atac.html
 
 
 
-
 Slurm job for `FindMultiModalNeighbors()`
 
 ```bash
@@ -4455,6 +4488,128 @@ module load hdf5_18/1.8.21 # to read `.h5` files
 sbatch scripts/FindMultiModalNeighbors_RNA_ATAC_WT_Bap1KO_V1.sh # 23485732 xxx
 
 ```
+
+
+--> I should put *RNA and ATAC assay in the same Seurat object*, using cell name. I cannot do it now, as I perform condition integration and data pre-processing separately on RNA and ATAC assay. Some of the step rename the cells, thus no more common cell name...
+  --> I thus need to *re-perform all pre-processing by immediatly putting together RNA and ATAC* assay. I need to use the same clustering parameter as I used earlier.
+  --> As reccomended in Seurat [WWN pipeline](https://satijalab.org/seurat/articles/weighted_nearest_neighbor_analysis#wnn-analysis-of-10x-multiome-rna-atac)
+
+
+
+
+# RNA and ATAC integration - Start from preprocess files
+
+Treat RNA and ATAC assay into the same Seurat object; pre-process individually RNA and ATAC by indicating the DefaultAssay to use.
+
+- Import RNA (import all parts from previous code at `# Seurat analysis` from data soupX import to Cell cycle normalization)
+- Import ATAC
+- Combine into same Seurat object
+- Filter cell that pass ATAC QC (use same parameter as defined earlier)
+- Integrate RNA data and perform clustering step
+- Integrate ATAC data and perform clustering step
+- Put together RNA and ATAC
+
+
+Follow the [WNN Seurat vignette](https://satijalab.org/seurat/articles/weighted_nearest_neighbor_analysis#wnn-analysis-of-10x-multiome-rna-atac)
+
+
+
+
+```bash
+conda activate SignacV5
+```
+
+
+```R
+set.seed(42)
+
+# library
+library("Signac")
+library("Seurat")
+#library("hdf5r") # need to reinstall it at each session...
+library("tidyverse")
+library("EnsDb.Hsapiens.v86") # hg38
+library("EnsDb.Mmusculus.v79") # mm10
+
+
+
+
+# PRepare genome annotation
+annotations <- GetGRangesFromEnsDb(ensdb = EnsDb.Mmusculus.v79)
+seqlevelsStyle(annotations) <- 'UCSC'
+genome(annotations) <- "mm10"
+
+
+################################################
+############# Import ATAC ########################
+################################################
+## WT
+ATAC_WT_counts <- Read10X_h5("ATAC_WT/outs/filtered_peak_bc_matrix.h5")
+ATAC_WT_metada = read.csv(
+  file = "ATAC_WT/outs/singlecell.csv",
+  header = TRUE,
+  row.names = 1
+)
+chrom_assay_WT <- CreateChromatinAssay(
+   counts = ATAC_WT_counts,
+   sep = c(":", "-"),
+   genome = 'mm10',
+   fragments = "ATAC_WT/outs/fragments.tsv.gz",
+   min.cells = 10,
+   annotation = annotations
+ )
+ATAC_WT <- CreateSeuratObject(
+  counts = chrom_assay_WT,
+  assay = "peaks",
+  meta.data = ATAC_WT_metada
+)
+## Bap1KO
+
+
+
+########################################################################
+############# Import RNA (from `# Seurat analysis`) ############
+########################################################################
+RNA_WT <- readRDS(file = "output/seurat/RNA_WT_QCV2.rds")
+RNA_Bap1KO <- readRDS(file = "output/seurat/RNA_Bap1KO_QCV2.rds")
+
+atac_wt_names = colnames(ATAC_WT)
+rna_wt_names = colnames(RNA_WT)
+
+
+intersect(atac_wt_names, rna_wt_names)
+
+
+```
+
+
+--> Fail... Cell names are different from the begining!! Need to use cellranger-arc to maintain cell name...
+
+
+
+
+# RNA and ATAC integration _ Start from counting
+
+Follow the great discussion on data integration [here](https://github.com/satijalab/seurat/issues/5346).
+
+To maintain cell name identity. We need to re-perform the counting using `cellranger-arc count`
+- Count individually for each sample --> `### Count`
+- Run doublet and soupX on multiome output
+- Import RNA and ATAC and create a single Seurat object
+- Confirm that cell name are identical between RNA and ATAC
+- For RNA, Perform QC step and genotype integration as in `# Seurat analysis` 
+- For ATAC, Perform QC step and genotype integration as in `## Run Signac` 
+- Follow the WWN integration method to put together ATAC and RNA and generate WNN map
+
+
+## RNA contamination and doublet detection
+
+XXX
+
+## Seurat/Signac analysis
+
+XXX
+
 
 
 
