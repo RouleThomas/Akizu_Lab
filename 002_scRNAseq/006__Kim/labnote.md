@@ -139,8 +139,8 @@ sbatch scripts/cellranger_count_ATAC_Bap1KO.sh # 20409604 fail chemistry; 204098
 ## For option2
 # --> To do if option1 fail; option1 is not good as it make cell name different between RNA and ATAC
 ### Run cellranger arc count
-sbatch scripts/cellranger_count_multiome_WT.sh #  23546723 xxx
-sbatch scripts/cellranger_count_multiome_Bap1KO.sh # 23546793 xxx 
+sbatch scripts/cellranger_count_multiome_WT.sh #  23546723 ok
+sbatch scripts/cellranger_count_multiome_Bap1KO.sh # 23546793 ok 
 
 ```
 
@@ -4604,11 +4604,546 @@ To maintain cell name identity. We need to re-perform the counting using `cellra
 
 ## RNA contamination and doublet detection
 
-XXX
+**doublet detection**
+- doublet detection using [scrublet](https://github.com/swolock/scrublet) **on the filtered matrix**
+- ambient RNA correction using `soupX` in R before generating the Seurat object
+
+
+```bash
+conda deactivate # base environment needed
+
+sbatch scripts/scrublet_multiome_WT.sh # 23918901 ok
+sbatch scripts/scrublet_multiome_Bap1KO.sh # 23918922 ok
+```
+
+
+Doublet detection score (YAP1scRNAseq ranged between 0.1 to 42%); here ~27%
+--> Table in `006__Kim/QC_metrics_all.xlsx`
+
+--> Successfully assigned doublet, but weird very few doublet for WT this time... Not normal.. Lets change the treshold. For homogeneity let's change it manually for both WT and Bap1KO, cheking at the histogram plot; 0.15 look best, clear decline for both samples.
+
+
+```bash
+conda deactivate # base environment needed
+
+sbatch scripts/scrublet_multiome_WT_tresh015.sh # 23932232 ok
+sbatch scripts/scrublet_multiome_Bap1KO_tresh015.sh # 23932250 ok
+
+awk '$3 == "True"' output/doublets/multiome_WT_tresh015.tsv | head
+```
+
+
+
+
+
+Now ambiant RNA contamination correction with soupX
+
+
+
+**SoupX RNA cleaning**
+
+
+```bash
+conda activate scRNAseq
+```
+
+
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+
+# soupX decontamination
+## Decontaminate one channel of 10X data mapped with cellranger
+sc = load10X('multiome_Bap1KO/outs')   # CHANGE FILE NAME HERE
+
+## Assess % of conta
+pdf("output/soupX/autoEstCont_multiome_Bap1KO.pdf", width=10, height=10)   # CHANGE FILE NAME HEREs
+sc = autoEstCont(sc) 
+dev.off()
+## Generate the corrected matrix
+out = adjustCounts(sc)
+## Save the matrix
+save(out, file = "output/soupX/multiome_Bap1KO.RData") # CHANGE FILE NAME HERE
+
+```
+
+--> 0.01% conta
+
+
 
 ## Seurat/Signac analysis
 
-XXX
+**Option1**:
+- Import RNA and perform QC, work in `scRNAseqV2` conda env
+- Import ATAC and put with RNA in same seurat object, work in `SignacV5` conda env
+
+
+
+```bash
+conda activate scRNAseqV2
+```
+
+
+
+```R
+set.seed(42)
+
+# packages
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2")
+
+
+################################################
+############# Import RNA ########################
+################################################
+
+## Load the matrix and Create SEURAT object
+samples <- list(
+  multiome_WT = "output/soupX/multiome_WT.RData",
+  multiome_Bap1KO = "output/soupX/multiome_Bap1KO.RData"
+)
+
+seurat_objects <- list()
+
+for (sample_name in names(samples)) {
+  load(samples[[sample_name]])
+  seurat_objects[[sample_name]] <- CreateSeuratObject(counts = out, project = sample_name)
+}
+
+## Function to assign Seurat objects to variables (unlist the list)
+assign_seurat_objects <- function(seurat_objects_list) {
+  for (sample_name in names(seurat_objects_list)) {
+    assign(sample_name, seurat_objects_list[[sample_name]], envir = .GlobalEnv)
+  }
+}
+assign_seurat_objects(seurat_objects) # This apply the function
+
+
+# QUALITY CONTROL
+# Function to add mitochondrial and ribosomal content
+add_quality_control <- function(seurat_object) {
+  seurat_object[["percent.mt"]] <- PercentageFeatureSet(seurat_object, pattern = "^mt-")
+  seurat_object[["percent.rb"]] <- PercentageFeatureSet(seurat_object, pattern = "^Rp[sl]")
+  return(seurat_object)
+}
+seurat_objects <- lapply(seurat_objects, add_quality_control) # This apply the function
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+
+# Function to add doublet information
+add_doublet_information <- function(sample_name, seurat_object) {
+  doublet_file <- paste0("output/doublets/", sample_name,"_tresh015", ".tsv")
+  doublets <- read.table(doublet_file, header = FALSE, row.names = 1)
+  colnames(doublets) <- c("Doublet_score", "Is_doublet")
+  seurat_object <- AddMetaData(seurat_object, doublets)
+  seurat_object$Doublet_score <- as.numeric(seurat_object$Doublet_score)
+  return(seurat_object)
+}
+## Apply the function to each Seurat object in the list
+for (sample_name in names(seurat_objects)) {
+    seurat_objects[[sample_name]] <- add_doublet_information(sample_name, seurat_objects[[sample_name]])
+  }
+
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+
+
+# QC filtering _ V2
+
+### V2 not super stringeant; mit > 5 and RNAfeature 50; rb >10
+apply_qc <- function(seurat_object) {
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$Is_doublet == 'True', 'Doublet', 'Pass')
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$nFeature_RNA < 50 & seurat_object@meta.data$QC == 'Pass', 
+                                  'Low_nFeature', seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$nFeature_RNA < 50 & seurat_object@meta.data$QC != 'Pass' & seurat_object@meta.data$QC != 'Low_nFeature', 
+                                  paste('Low_nFeature', seurat_object@meta.data$QC, sep = ','), seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.mt > 5 & seurat_object@meta.data$QC == 'Pass', 
+                                  'High_MT', seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.mt > 5 & seurat_object@meta.data$QC != 'Pass' & seurat_object@meta.data$QC != 'High_MT', 
+                                  paste('High_MT', seurat_object@meta.data$QC, sep = ','), seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.rb > 10 & seurat_object@meta.data$QC == 'Pass', 
+                                  'High_RB', seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.rb > 10 & seurat_object@meta.data$QC != 'Pass' & seurat_object@meta.data$QC != 'High_RB', 
+                                  paste('High_RB', seurat_object@meta.data$QC, sep = ','), seurat_object@meta.data$QC)
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+
+
+
+
+
+#### Write QC summary
+qc_summary_list <- list()
+# Collect QC summary for each sample
+for (sample_name in names(seurat_objects)) {
+  qc_summary <- table(seurat_objects[[sample_name]][['QC']])
+  qc_summary_df <- as.data.frame(qc_summary)
+  qc_summary_df$Sample <- sample_name
+  qc_summary_list[[sample_name]] <- qc_summary_df
+}
+qc_summary_combined <- do.call(rbind, qc_summary_list)
+# Write the data frame to a tab-separated text file
+write.table(qc_summary_combined, file = "output/seurat/QC_summary_V2_multiomeOption1tresh015.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+
+
+## subset seurat object to keep cells that pass the QC
+subset_qc <- function(seurat_object) {
+  seurat_object <- subset(seurat_object, subset = QC == 'Pass')
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- subset_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# Normalize and scale data, then run cell cycle sorting
+set.seed(42)
+## Load gene marker of cell type
+
+mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+
+# Function to normalize, scale data, and perform cell cycle scoring
+process_seurat_object <- function(seurat_object, mmus_s, mmus_g2m) {
+  seurat_object <- NormalizeData(seurat_object, normalization.method = "LogNormalize", scale.factor = 10000)
+  all.genes <- rownames(seurat_object)
+  seurat_object <- ScaleData(seurat_object, features = all.genes)  # zero-centres and scales it
+  seurat_object <- CellCycleScoring(seurat_object, s.features = mmus_s, g2m.features = mmus_g2m)  # cell cycle sorting
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- process_seurat_object(seurat_objects[[sample_name]], mmus_s, mmus_g2m)
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# write output summary phase
+phase_summary_list <- list()
+# Collect QC phase summary for each sample
+for (sample_name in names(seurat_objects)) {
+  phase_summary <- table(seurat_objects[[sample_name]][[]]$Phase)
+  phase_summary_df <- as.data.frame(phase_summary)
+  phase_summary_df$Sample <- sample_name
+  phase_summary_list[[sample_name]] <- phase_summary_df
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# Combine all summaries into one data frame
+phase_summary_combined <- do.call(rbind, phase_summary_list)
+write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_V2_multiomeOption1.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+## plot cell cycle
+# Calculate proportions
+phase_summary_combined_tidy <- phase_summary_combined %>%
+  group_by(Sample) %>%
+  mutate(Prop = Freq / sum(Freq) * 100)
+
+phase_summary_combined_tidy$Sample <- factor(phase_summary_combined_tidy$Sample, levels = c("multiome_WT", "multiome_Bap1KO")) # Reorder untreated 1st
+
+
+# Plot
+pdf("output/seurat/barPlot_CellCyclePhase_V2_multiomeOPtion1.pdf", width=5, height=6)
+ggplot(phase_summary_combined_tidy, aes(x = Sample, y = Prop, fill = Var1)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(x = "Genotype", y = "Proportion (%)", fill = "Cell Cycle Phase") +
+  theme_bw() +
+  scale_fill_manual(values = c("G1" = "#1f77b4", "G2M" = "#ff7f0e", "S" = "#2ca02c")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+##
+
+
+###########################################################################
+# saveRDS(multiome_WT, file = "output/seurat/multiome_WT_QCV2_Option1.rds") 
+# saveRDS(multiome_Bap1KO, file = "output/seurat/multiome_Bap1KO_QCV2_Option1.rds") 
+###########################################################################
+
+```
+
+Now let's change conda env to import ATAC file onto our RNA seurat object
+
+
+```bash
+conda activate SignacV5
+module load hdf5
+```
+
+```R
+
+set.seed(42)
+
+# library
+library("Signac")
+library("Seurat")
+#library("hdf5r") # need to reinstall it at each session... with install.packages("hdf5r")
+library("tidyverse")
+library("EnsDb.Mmusculus.v79") # mm10
+
+# Load RNA seurat object
+multiome_WT <- readRDS("output/seurat/multiome_WT_QCV2_Option1.rds")
+multiome_Bap1KO <- readRDS("output/seurat/multiome_Bap1KO_QCV2_Option1.rds")
+
+
+########################
+#### Add ATAC ######
+########################
+
+
+
+# WT #######################
+
+
+multiome_WT_h5 <- Read10X_h5("multiome_WT/outs/filtered_feature_bc_matrix.h5") # the 10x hdf5 file contains both data types. 
+
+
+# extract RNA and ATAC data and keep only the cells found in both assay
+rna_counts <- multiome_WT$RNA # Here we load the soupX scrublet corrected seurat
+atac_counts <- multiome_WT_h5$Peaks # Here we load the h5 file
+
+rna_names<-colnames(multiome_WT$RNA)
+atac_names<-colnames(multiome_WT_h5$Peaks)
+
+intersect <- intersect(atac_names, rna_names)
+
+intersect_atac_counts <- atac_counts[, intersect]
+
+# Now add in the ATAC-seq data
+# we'll only use peaks in standard chromosomes
+grange.counts <- StringToGRanges(rownames(intersect_atac_counts), sep = c(":", "-"))
+grange.use <- seqnames(grange.counts) %in% standardChromosomes(grange.counts)
+intersect_atac_counts <- intersect_atac_counts[as.vector(grange.use), ]
+annotations <- GetGRangesFromEnsDb(ensdb = EnsDb.Mmusculus.v79)
+seqlevelsStyle(annotations) <- 'UCSC'
+genome(annotations) <- "mm10"
+
+frag.file <- "multiome_WT/outs/atac_fragments.tsv.gz"
+chrom_assay <- CreateChromatinAssay(
+   counts = intersect_atac_counts,
+   sep = c(":", "-"),
+   genome = 'mm10',
+   fragments = frag.file,
+   min.cells = 10,
+   annotation = annotations
+ )
+multiome_WT[["ATAC"]] <- chrom_assay
+
+
+
+
+# Bap1KO #######################
+
+
+multiome_Bap1KO_h5 <- Read10X_h5("multiome_Bap1KO/outs/filtered_feature_bc_matrix.h5") # the 10x hdf5 file contains both data types. 
+
+
+# extract RNA and ATAC data and keep only the cells found in both assay
+rna_counts <- multiome_Bap1KO$RNA # Here we load the soupX scrublet corrected seurat
+atac_counts <- multiome_Bap1KO_h5$Peaks # Here we load the h5 file
+
+rna_names<-colnames(multiome_Bap1KO$RNA)
+atac_names<-colnames(multiome_Bap1KO_h5$Peaks)
+
+intersect <- intersect(atac_names, rna_names)
+
+intersect_atac_counts <- atac_counts[, intersect]
+
+# Now add in the ATAC-seq data
+# we'll only use peaks in standard chromosomes
+grange.counts <- StringToGRanges(rownames(intersect_atac_counts), sep = c(":", "-"))
+grange.use <- seqnames(grange.counts) %in% standardChromosomes(grange.counts)
+intersect_atac_counts <- intersect_atac_counts[as.vector(grange.use), ]
+annotations <- GetGRangesFromEnsDb(ensdb = EnsDb.Mmusculus.v79)
+seqlevelsStyle(annotations) <- 'UCSC'
+genome(annotations) <- "mm10"
+
+frag.file <- "multiome_Bap1KO/outs/atac_fragments.tsv.gz"
+chrom_assay <- CreateChromatinAssay(
+   counts = intersect_atac_counts,
+   sep = c(":", "-"),
+   genome = 'mm10',
+   fragments = frag.file,
+   min.cells = 10,
+   annotation = annotations
+ )
+multiome_Bap1KO[["ATAC"]] <- chrom_assay
+
+
+
+##################
+## QC ATAC #########
+##################
+
+DefaultAssay(multiome_WT) <- "ATAC" # 
+DefaultAssay(multiome_Bap1KO) <- "ATAC" #
+
+# WT ############
+
+# QC metrics
+## compute nucleosome signal score per cell
+multiome_WT <- NucleosomeSignal(object = multiome_WT)
+## compute TSS enrichment score per cell
+multiome_WT <- TSSEnrichment(object = multiome_WT, fast = FALSE)
+
+
+### QC plots
+pdf("output/Signac/DensityScatter_multiome_WT_Option1.pdf", width=5, height=5)
+DensityScatter(multiome_WT, x = 'nCount_ATAC', y = 'TSS.enrichment', log_x = TRUE, quantiles = TRUE)
+dev.off()
+
+pdf("output/Signac/VlnPlot_QC_multiome_WT_Option1.pdf", width=12, height=6)
+VlnPlot(
+  object = multiome_WT,
+  features = c('nCount_ATAC', 'TSS.enrichment', 'nucleosome_signal'),
+  pt.size = 0.1,
+  ncol = 5 )
+dev.off()
+
+
+multiome_WT$high.tss <- ifelse(multiome_WT$TSS.enrichment > 2, 'High', 'Low') # 3 is coonly used but could be adjusted; based on violin and below plot
+pdf("output/Signac/TSSPlot_QC_multiome_WT_Option1.pdf", width=12, height=6)
+TSSPlot(multiome_WT, group.by = 'high.tss') + NoLegend()
+dev.off()
+#--> Here aim to have a clean sharp peak for High, flatter one for Low TSS.enrichment
+
+multiome_WT$nucleosome_group <- ifelse(multiome_WT$nucleosome_signal > 1.25, 'NS > 1.25', 'NS < 1.25') # Adjust value based on nucleosome_signal VlnPlot
+pdf("output/Signac/FragmentHistogram_QC_multiome_WT_Option.pdf", width=12, height=6)
+FragmentHistogram(object = multiome_WT, group.by = 'nucleosome_group', region = "chr1-1-20000000") # region = "chr1-1-20000000" this need to be added to avoid bug discuss here: https://github.com/stuart-lab/signac/issues/199
+dev.off()
+#--> Here aim to have strong nucleosome-free region peak (around 50 bp), mono-nucleosome peak (around 200 bp), and sometimes di-nucleosome peak (around 400 bp).
+
+pdf("output/Signac/VlnPlot_QC_multiome_WT_Option_nCount_ATAC.pdf", width=12, height=6)
+VlnPlot(
+  object = multiome_WT,
+  features = c('nCount_ATAC'),
+  pt.size = 0.1,
+  ncol = 5 ) +
+  ylim(0, 50000)
+dev.off()
+
+## subset cells that pass QC
+multiome_WT_QCV1 <- subset(
+  x = multiome_WT,
+  subset = nCount_ATAC > 1000 &
+    nCount_ATAC < 50000 &
+    nucleosome_signal < 1.25 &
+    TSS.enrichment > 2
+)
+
+multiome_WT_QCV1
+
+
+
+
+# Bap1KO ############
+
+# QC metrics
+## compute nucleosome signal score per cell
+multiome_Bap1KO <- NucleosomeSignal(object = multiome_Bap1KO)
+## compute TSS enrichment score per cell
+multiome_Bap1KO <- TSSEnrichment(object = multiome_Bap1KO, fast = FALSE)
+## add blacklist ratio and fraction of reads in peaks
+
+
+### QC plots
+pdf("output/Signac/DensityScatter_multiome_Bap1KO_Option1.pdf", width=5, height=5)
+DensityScatter(multiome_Bap1KO, x = 'nCount_ATAC', y = 'TSS.enrichment', log_x = TRUE, quantiles = TRUE)
+dev.off()
+
+pdf("output/Signac/VlnPlot_QC_multiome_Bap1KO_Option1.pdf", width=12, height=6)
+VlnPlot(
+  object = multiome_Bap1KO,
+  features = c('nCount_ATAC', 'TSS.enrichment', 'nucleosome_signal'),
+  pt.size = 0.1,
+  ncol = 5 )
+dev.off()
+
+
+multiome_Bap1KO$high.tss <- ifelse(multiome_Bap1KO$TSS.enrichment > 2, 'High', 'Low') # 3 is coonly used but could be adjusted; based on violin and below plot
+pdf("output/Signac/TSSPlot_QC_multiome_Bap1KO_Option1.pdf", width=12, height=6)
+TSSPlot(multiome_Bap1KO, group.by = 'high.tss') + NoLegend()
+dev.off()
+#--> Here aim to have a clean sharp peak for High, flatter one for Low TSS.enrichment
+
+multiome_Bap1KO$nucleosome_group <- ifelse(multiome_Bap1KO$nucleosome_signal > 1.25, 'NS > 1.25', 'NS < 1.25') # Adjust value based on nucleosome_signal VlnPlot
+pdf("output/Signac/FragmentHistogram_QC_multiome_Bap1KO_Option.pdf", width=12, height=6)
+FragmentHistogram(object = multiome_Bap1KO, group.by = 'nucleosome_group', region = "chr1-1-20000000") # region = "chr1-1-20000000" this need to be added to avoid bug discuss here: https://github.com/stuart-lab/signac/issues/199
+dev.off()
+#--> Here aim to have strong nucleosome-free region peak (around 50 bp), mono-nucleosome peak (around 200 bp), and sometimes di-nucleosome peak (around 400 bp).
+
+pdf("output/Signac/VlnPlot_QC_multiome_Bap1KO_Option_nCount_ATAC.pdf", width=12, height=6)
+VlnPlot(
+  object = multiome_Bap1KO,
+  features = c('nCount_ATAC'),
+  pt.size = 0.1,
+  ncol = 5 ) +
+  ylim(0, 50000)
+dev.off()
+
+## subset cells that pass QC
+multiome_Bap1KO_QCV1 <- subset(
+  x = multiome_Bap1KO,
+  subset = nCount_ATAC > 1000 &
+    nCount_ATAC < 50000 &
+    nucleosome_signal < 1.25 &
+    TSS.enrichment > 2
+)
+
+multiome_Bap1KO_QCV1
+
+
+
+
+
+###########################################################################
+# saveRDS(multiome_WT_QCV1, file = "output/seurat/multiome_WT_QCV1.rds") 
+# saveRDS(multiome_Bap1KO_QCV1, file = "output/seurat/multiome_Bap1KO_QCV1.rds") 
+###########################################################################
+
+
+# Integrate WT and Bap1KO
+
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
 
 
 
