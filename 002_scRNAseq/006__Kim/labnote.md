@@ -4136,6 +4136,9 @@ Fail.... Remvoe all previous env
 
 ```bash
 conda create -n SignacV5 -c conda-forge -c bioconda r-base r-signac r-seurat
+conda install conda-forge::r-reticulate # needed for RNA clustering
+
+conda install -c conda-forge leidenalg python-igraph pandas umap-learn # to use algorithm4 Leiden/Louvain clustering
 ```
 --> WORK!!!! But need tidyverse and biocmanager for genome annotations...
 
@@ -4796,6 +4799,44 @@ assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the pre
 
 
 
+### V3 more  stringeant; mit > 3 and RNAfeature 400; rb >5; nCount 400
+apply_qc <- function(seurat_object) {
+  # Mark doublets
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$Is_doublet == 'True', 'Doublet', 'Pass')
+  # Mark low nFeature_RNA
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$nFeature_RNA < 400 & seurat_object@meta.data$QC == 'Pass', 
+                                  'Low_nFeature', seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$nFeature_RNA < 400 & seurat_object@meta.data$QC != 'Pass' & seurat_object@meta.data$QC != 'Low_nFeature', 
+                                  paste('Low_nFeature', seurat_object@meta.data$QC, sep = ','), seurat_object@meta.data$QC)
+  # Mark high nCount_RNA
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$nCount_RNA < 400 & seurat_object@meta.data$QC == 'Pass', 
+                                  'Low_nCount_RNA', seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$nCount_RNA < 400 & seurat_object@meta.data$QC != 'Pass' & seurat_object@meta.data$QC != 'Low_nCount_RNA', 
+                                  paste('Low_nCount_RNA', seurat_object@meta.data$QC, sep = ','), seurat_object@meta.data$QC)
+  # Mark high mitochondrial percentage
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.mt > 3 & seurat_object@meta.data$QC == 'Pass', 
+                                  'High_MT', seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.mt > 3 & seurat_object@meta.data$QC != 'Pass' & seurat_object@meta.data$QC != 'High_MT', 
+                                  paste('High_MT', seurat_object@meta.data$QC, sep = ','), seurat_object@meta.data$QC)
+  # Mark high ribosomal percentage
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.rb > 5 & seurat_object@meta.data$QC == 'Pass', 
+                                  'High_RB', seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.rb > 5 & seurat_object@meta.data$QC != 'Pass' & seurat_object@meta.data$QC != 'High_RB', 
+                                  paste('High_RB', seurat_object@meta.data$QC, sep = ','), seurat_object@meta.data$QC)
+  return(seurat_object)
+}
+
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+
+
+
+
+
+
 
 #### Write QC summary
 qc_summary_list <- list()
@@ -4903,6 +4944,8 @@ library("Seurat")
 #library("hdf5r") # need to reinstall it at each session... with install.packages("hdf5r")
 library("tidyverse")
 library("EnsDb.Mmusculus.v79") # mm10
+library("reticulate") # needed to use FindClusters()
+use_python("~/anaconda3/envs/SignacV5/bin/python") # to specify which python to use... Needed for FindClusters()
 
 # Load RNA seurat object
 multiome_WT <- readRDS("output/seurat/multiome_WT_QCV2_Option1.rds")
@@ -5123,9 +5166,117 @@ multiome_Bap1KO_QCV1
 # saveRDS(multiome_WT_QCV1, file = "output/seurat/multiome_WT_QCV1.rds") 
 # saveRDS(multiome_Bap1KO_QCV1, file = "output/seurat/multiome_Bap1KO_QCV1.rds") 
 ###########################################################################
+multiome_WT_QCV1 <- readRDS(file = "output/seurat/multiome_WT_QCV1.rds")
+multiome_Bap1KO_QCV1 <- readRDS(file = "output/seurat/multiome_Bap1KO_QCV1.rds")
 
 
 # Integrate WT and Bap1KO
+## Pre-processing
+# RNA analysis
+
+DefaultAssay(multiome_WT_QCV1) <- "RNA"
+DefaultAssay(multiome_Bap1KO_QCV1) <- "RNA"
+
+
+
+multiome_WT_QCV1 <- SCTransform(multiome_WT_QCV1, method = "glmGamPoi", ncells = 6041, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 2000)
+multiome_Bap1KO_QCV1 <- SCTransform(multiome_Bap1KO_QCV1, method = "glmGamPoi", ncells = 6630, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 2000)
+
+
+# Data integration (check active assay is 'SCT')
+srat.list <- list(multiome_WT_QCV1 = multiome_WT_QCV1, multiome_Bap1KO_QCV1 = multiome_Bap1KO_QCV1)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 2000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+
+srat.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+multiome_WT_Bap1KO_QCV1.sct <- IntegrateData(anchorset = srat.anchors, normalization.method = "SCT")
+
+set.seed(42)
+
+###########################################################################
+# saveRDS(multiome_WT_Bap1KO_QCV1.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV1.sct.rds") 
+###########################################################################
+multiome_WT_Bap1KO_QCV1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV1.sct.rds")
+
+
+
+
+
+DefaultAssay(multiome_WT_Bap1KO_QCV1.sct) <- "integrated"
+
+multiome_WT_Bap1KO_QCV1.sct <- RunPCA(multiome_WT_Bap1KO_QCV1.sct, verbose = FALSE, npcs = 28)
+multiome_WT_Bap1KO_QCV1.sct <- RunUMAP(multiome_WT_Bap1KO_QCV1.sct, reduction = "pca", dims = 1:28, verbose = FALSE)
+multiome_WT_Bap1KO_QCV1.sct <- FindNeighbors(multiome_WT_Bap1KO_QCV1.sct, reduction = "pca", k.param = 15, dims = 1:28)
+multiome_WT_Bap1KO_QCV1.sct <- FindClusters(multiome_WT_Bap1KO_QCV1.sct, resolution = 0.2, verbose = FALSE, algorithm = 4) # 
+
+multiome_WT_Bap1KO_QCV1.sct$orig.ident <- factor(multiome_WT_Bap1KO_QCV1.sct$orig.ident, levels = c("multiome_WT", "multiome_Bap1KO")) # Reorder untreated 1st
+
+pdf("output/Signac/UMAP_multiome_WT_Bap1KO_QCV1-QCV2_dim28kparam15res02algo4feat2000_noCellCycleRegression-numeric_V1.pdf", width=6, height=6)
+DimPlot(multiome_WT_Bap1KO_QCV1.sct, reduction = "umap", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 6)
+dev.off()
+
+DefaultAssay(multiome_WT_Bap1KO_QCV1.sct) <- "SCT"
+
+
+pdf("output/Signac/FeaturePlot_SCT_RNA_WT_Bap1KO-allMarkersList4-QCV2_dim28kparam70res09algo4feat2000_noCellCycleRegression
+.pdf", width=15, height=30)
+FeaturePlot(multiome_WT_Bap1KO_QCV1.sct, features = c(  "Pax6" ,  "Eomes",  "Prox1", "Neurod1", "Sema5a",  "Tac2", "Hs3st1", "Nrn1",  "Pantr1", "Igfbpl1", "Frmd4b",  "Satb2", "Itpr1",  "Nts", "Nr4a2", "Lmo3", "B3gat1",  "Cck", "Insm1",  "Crym", "Snca", "Nrp2",  "Gad1", "Grin2d", "Calb1", "Npy", "Gria3", "Lhx6",  "Lhx1",  "Pdgfra", "Olig1",  "Csf1r", "Gpr34", "Gpr183", "Cx3cr1", "Aldh1a2", "Vtn", "Foxc1", "Id1", "Hes1", "Mki67", "Pcna", "Vim"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+
+
+pdf("output/Signac/VlnPlot_QCmetrics_RNA_WT-QCV2_dim28kparam15res02algo4feat2000_noCellCycleRegression.pdf", width=20, height=5)
+VlnPlot(multiome_WT_Bap1KO_QCV1.sct,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+
+
+#### QC metrics investigation ####################################
+pdf("output/Signac/VlnPlot_QCmetrics_RNA_WT_nFeature_RNA-QCV2_dim28kparam15res02algo4feat2000_noCellCycleRegression.pdf", width=5, height=5)
+VlnPlot(multiome_WT_Bap1KO_QCV1.sct,features = c("nFeature_RNA")) +
+  ylim(0,2000)
+dev.off()
+pdf("output/Signac/VlnPlot_QCmetrics_RNA_WT_nCount_RNA-QCV2_dim28kparam15res02algo4feat2000_noCellCycleRegression.pdf", width=5, height=5)
+VlnPlot(multiome_WT_Bap1KO_QCV1.sct,features = c("nCount_RNA")) +
+  ylim(0,5000)
+dev.off()
+############################################################
+
+
+
+pdf("output/Signac/UMAP_multiome_WT_Bap1KO_QCV1_numeric_V1.pdf", width=12, height=6)
+DimPlot(multiome_WT_Bap1KO_QCV1.sct, reduction = "umap", split.by = "orig.ident", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 6)
+dev.off()
+
+
+pdf("output/Signac/UMAP_WT_Bap1KO_noSplit_numeric_V1.pdf", width=7, height=5)
+DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 6)
+dev.off()
+
+pdf("output/Signac/UMAP_WT_Bap1KO_numeric_overlap_V1.pdf", width=6, height=5)
+DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap", group.by = "orig.ident", pt.size = 0.000001, cols = c("blue","red"))
+dev.off()
+
+
+
+
+all_markers <- c(
+  "Pax6" ,
+  "Eomes",
+  "Prox1", "Neurod1", "Sema5a",
+  "Tac2", "Hs3st1", "Nrn1",
+  "Pantr1", "Igfbpl1", "Frmd4b",
+  "Satb2", "Itpr1",
+  "Nts", "Nr4a2", "Lmo3", "B3gat1",
+  "Cck", "Insm1",
+  "Crym", "Snca", "Nrp2",
+  "Gad1", "Grin2d", "Calb1", "Npy", "Gria3", "Lhx6", # Reln removed
+  "Lhx1",
+  "Pdgfra", "Olig1",
+  "Csf1r", "Gpr34", "Gpr183", "Cx3cr1"
+)
 
 
 
