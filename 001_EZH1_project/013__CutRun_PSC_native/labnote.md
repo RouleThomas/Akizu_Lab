@@ -49,7 +49,7 @@ wget -r -b -c --user=X202SC24076724-Z01-F001 --password=jxc30ah4 ftp://usftp21.n
 --> All good, files created in `usftp21.novogene.com/`
 
 
-XXX HERE !!! many scripts written!
+
 
 # Rename file
 
@@ -78,8 +78,8 @@ done < rename_map.txt
 # Fastp cleaning
 
 ```bash
-sbatch scripts/fastp_1.sh #  xxx
-sbatch scripts/fastp_2.sh #  xxx
+sbatch scripts/fastp_1.sh # 24136634 xxx
+sbatch scripts/fastp_2.sh # 24136758 xxx
 
 ```
 
@@ -91,8 +91,8 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:xxx scripts/bowtie2_1.sh #  xxx
-sbatch --dependency=afterany:xxx scripts/bowtie2_2.sh #  xxx
+sbatch --dependency=afterany:24136634 scripts/bowtie2_1.sh # 24137045 xxx
+sbatch --dependency=afterany:24136758 scripts/bowtie2_2.sh # 24137877 xxx
 
 ```
 
@@ -144,8 +144,8 @@ This is prefered for THOR bam input.
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:xxx scripts/samtools_unique_1.sh #  xxx
-sbatch --dependency=afterany:xxx scripts/samtools_unique_2.sh #  xxx
+sbatch --dependency=afterany:24137045 scripts/samtools_unique_1.sh # 24137245 xxx
+sbatch --dependency=afterany:24137877 scripts/samtools_unique_2.sh # 24137923 xxx
 
 ```
 
@@ -173,8 +173,8 @@ Paramaters:
 ```bash
 conda activate deeptools
 
-sbatch --dependency=afterany:xxx scripts/bamtobigwig_unique_1.sh #  xxx
-sbatch --dependency=afterany:xxx scripts/bamtobigwig_unique_2.sh #  xxx
+sbatch --dependency=afterany:24137245 scripts/bamtobigwig_unique_1.sh # 24137373 xxx
+sbatch --dependency=afterany:24137923 scripts/bamtobigwig_unique_2.sh # 24138000 xxx
 
 
 ```
@@ -182,6 +182,9 @@ sbatch --dependency=afterany:xxx scripts/bamtobigwig_unique_2.sh #  xxx
 - 50dN
 *Pass*: 50dN_WT_H3K27me3, 50dN_WT_IGG
 *Failed*: 50dN_WT_EZH1, 50dN_WT_EZH2, 50dN_WT_H3K27ac, 50dN_WT_H3K27me1AM, 50dN_WT_H3K27me1OR, 50dN_WT_SUZ12
+
+
+XXX HERE 
 
 
 
