@@ -4849,7 +4849,7 @@ for (sample_name in names(seurat_objects)) {
 }
 qc_summary_combined <- do.call(rbind, qc_summary_list)
 # Write the data frame to a tab-separated text file
-write.table(qc_summary_combined, file = "output/seurat/QC_summary_V2_multiomeOption1tresh015.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+write.table(qc_summary_combined, file = "output/seurat/QC_summary_V2_multiomeOption1tresh015_QCV3.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
 
 
 
@@ -4896,7 +4896,7 @@ assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the pre
 
 # Combine all summaries into one data frame
 phase_summary_combined <- do.call(rbind, phase_summary_list)
-write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_V2_multiomeOption1.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_V2_multiomeOption1_QCV3.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
 
 ## plot cell cycle
 # Calculate proportions
@@ -4908,7 +4908,7 @@ phase_summary_combined_tidy$Sample <- factor(phase_summary_combined_tidy$Sample,
 
 
 # Plot
-pdf("output/seurat/barPlot_CellCyclePhase_V2_multiomeOPtion1.pdf", width=5, height=6)
+pdf("output/seurat/barPlot_CellCyclePhase_V2_multiomeOPtion1_QCV3.pdf", width=5, height=6)
 ggplot(phase_summary_combined_tidy, aes(x = Sample, y = Prop, fill = Var1)) +
   geom_bar(stat = "identity", position = "stack") +
   labs(x = "Genotype", y = "Proportion (%)", fill = "Cell Cycle Phase") +
@@ -4920,8 +4920,8 @@ dev.off()
 
 
 ###########################################################################
-# saveRDS(multiome_WT, file = "output/seurat/multiome_WT_QCV2_Option1.rds") 
-# saveRDS(multiome_Bap1KO, file = "output/seurat/multiome_Bap1KO_QCV2_Option1.rds") 
+# saveRDS(multiome_WT, file = "output/seurat/multiome_WT_QCV3_Option1.rds") 
+# saveRDS(multiome_Bap1KO, file = "output/seurat/multiome_Bap1KO_QCV3_Option1.rds") 
 ###########################################################################
 
 ```
@@ -4948,8 +4948,8 @@ library("reticulate") # needed to use FindClusters()
 use_python("~/anaconda3/envs/SignacV5/bin/python") # to specify which python to use... Needed for FindClusters()
 
 # Load RNA seurat object
-multiome_WT <- readRDS("output/seurat/multiome_WT_QCV2_Option1.rds")
-multiome_Bap1KO <- readRDS("output/seurat/multiome_Bap1KO_QCV2_Option1.rds")
+multiome_WT <- readRDS("output/seurat/multiome_WT_QCV3_Option1.rds")
+multiome_Bap1KO <- readRDS("output/seurat/multiome_Bap1KO_QCV3_Option1.rds")
 
 
 ########################
@@ -5089,7 +5089,7 @@ VlnPlot(
 dev.off()
 
 ## subset cells that pass QC
-multiome_WT_QCV1 <- subset(
+multiome_WT_QCV2 <- subset(
   x = multiome_WT,
   subset = nCount_ATAC > 1000 &
     nCount_ATAC < 50000 &
@@ -5097,7 +5097,7 @@ multiome_WT_QCV1 <- subset(
     TSS.enrichment > 2
 )
 
-multiome_WT_QCV1
+multiome_WT_QCV2
 
 
 
@@ -5148,7 +5148,7 @@ VlnPlot(
 dev.off()
 
 ## subset cells that pass QC
-multiome_Bap1KO_QCV1 <- subset(
+multiome_Bap1KO_QCV2 <- subset(
   x = multiome_Bap1KO,
   subset = nCount_ATAC > 1000 &
     nCount_ATAC < 50000 &
@@ -5156,79 +5156,79 @@ multiome_Bap1KO_QCV1 <- subset(
     TSS.enrichment > 2
 )
 
-multiome_Bap1KO_QCV1
+multiome_Bap1KO_QCV2
 
 
 
 
 
 ###########################################################################
-# saveRDS(multiome_WT_QCV1, file = "output/seurat/multiome_WT_QCV1.rds") 
-# saveRDS(multiome_Bap1KO_QCV1, file = "output/seurat/multiome_Bap1KO_QCV1.rds") 
+# saveRDS(multiome_WT_QCV1, file = "output/seurat/multiome_WT_QCV2.rds") 
+# saveRDS(multiome_Bap1KO_QCV1, file = "output/seurat/multiome_Bap1KO_QCV2.rds") 
 ###########################################################################
-multiome_WT_QCV1 <- readRDS(file = "output/seurat/multiome_WT_QCV1.rds")
-multiome_Bap1KO_QCV1 <- readRDS(file = "output/seurat/multiome_Bap1KO_QCV1.rds")
+multiome_WT_QCV2 <- readRDS(file = "output/seurat/multiome_WT_QCV2.rds")
+multiome_Bap1KO_QCV2 <- readRDS(file = "output/seurat/multiome_Bap1KO_QCV2.rds")
 
 
 # Integrate WT and Bap1KO
 ## Pre-processing
 # RNA analysis
 
-DefaultAssay(multiome_WT_QCV1) <- "RNA"
-DefaultAssay(multiome_Bap1KO_QCV1) <- "RNA"
+DefaultAssay(multiome_WT_QCV2) <- "RNA"
+DefaultAssay(multiome_Bap1KO_QCV2) <- "RNA"
 
 
 
-multiome_WT_QCV1 <- SCTransform(multiome_WT_QCV1, method = "glmGamPoi", ncells = 6041, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 2000)
-multiome_Bap1KO_QCV1 <- SCTransform(multiome_Bap1KO_QCV1, method = "glmGamPoi", ncells = 6630, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 2000)
+multiome_WT_QCV2 <- SCTransform(multiome_WT_QCV2, method = "glmGamPoi", ncells = 5949, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 2000)
+multiome_Bap1KO_QCV2 <- SCTransform(multiome_Bap1KO_QCV2, method = "glmGamPoi", ncells = 6517, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 2000)
 
 
 # Data integration (check active assay is 'SCT')
-srat.list <- list(multiome_WT_QCV1 = multiome_WT_QCV1, multiome_Bap1KO_QCV1 = multiome_Bap1KO_QCV1)
+srat.list <- list(multiome_WT_QCV2 = multiome_WT_QCV2, multiome_Bap1KO_QCV2 = multiome_Bap1KO_QCV2)
 features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 2000)
 srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
 
 srat.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
     anchor.features = features)
-multiome_WT_Bap1KO_QCV1.sct <- IntegrateData(anchorset = srat.anchors, normalization.method = "SCT")
+multiome_WT_Bap1KO_QCV2.sct <- IntegrateData(anchorset = srat.anchors, normalization.method = "SCT")
 
 set.seed(42)
 
 ###########################################################################
-# saveRDS(multiome_WT_Bap1KO_QCV1.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV1.sct.rds") 
+# saveRDS(multiome_WT_Bap1KO_QCV2.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2.sct.rds") 
 ###########################################################################
-multiome_WT_Bap1KO_QCV1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV1.sct.rds")
+multiome_WT_Bap1KO_QCV2.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV1.sct.rds")
 
 
 
 
 
-DefaultAssay(multiome_WT_Bap1KO_QCV1.sct) <- "integrated"
+DefaultAssay(multiome_WT_Bap1KO_QCV2.sct) <- "integrated"
 
-multiome_WT_Bap1KO_QCV1.sct <- RunPCA(multiome_WT_Bap1KO_QCV1.sct, verbose = FALSE, npcs = 28)
-multiome_WT_Bap1KO_QCV1.sct <- RunUMAP(multiome_WT_Bap1KO_QCV1.sct, reduction = "pca", dims = 1:28, verbose = FALSE)
-multiome_WT_Bap1KO_QCV1.sct <- FindNeighbors(multiome_WT_Bap1KO_QCV1.sct, reduction = "pca", k.param = 15, dims = 1:28)
-multiome_WT_Bap1KO_QCV1.sct <- FindClusters(multiome_WT_Bap1KO_QCV1.sct, resolution = 0.2, verbose = FALSE, algorithm = 4) # 
+multiome_WT_Bap1KO_QCV2.sct <- RunPCA(multiome_WT_Bap1KO_QCV2.sct, verbose = FALSE, npcs = 40)
+multiome_WT_Bap1KO_QCV2.sct <- RunUMAP(multiome_WT_Bap1KO_QCV2.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
+multiome_WT_Bap1KO_QCV2.sct <- FindNeighbors(multiome_WT_Bap1KO_QCV2.sct, reduction = "pca", k.param = 30, dims = 1:40)
+multiome_WT_Bap1KO_QCV2.sct <- FindClusters(multiome_WT_Bap1KO_QCV2.sct, resolution = 0.6, verbose = FALSE, algorithm = 4) # 
 
-multiome_WT_Bap1KO_QCV1.sct$orig.ident <- factor(multiome_WT_Bap1KO_QCV1.sct$orig.ident, levels = c("multiome_WT", "multiome_Bap1KO")) # Reorder untreated 1st
+multiome_WT_Bap1KO_QCV2.sct$orig.ident <- factor(multiome_WT_Bap1KO_QCV2.sct$orig.ident, levels = c("multiome_WT", "multiome_Bap1KO")) # Reorder untreated 1st
 
-pdf("output/Signac/UMAP_multiome_WT_Bap1KO_QCV1-QCV2_dim28kparam15res02algo4feat2000_noCellCycleRegression-numeric_V1.pdf", width=6, height=6)
-DimPlot(multiome_WT_Bap1KO_QCV1.sct, reduction = "umap", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 6)
+pdf("output/Signac/UMAP_multiome_WT_Bap1KO-QCV3_dim40kparam30res06algo4feat2000_noCellCycleRegression-numeric_V1.pdf", width=6, height=6)
+DimPlot(multiome_WT_Bap1KO_QCV2.sct, reduction = "umap", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 6)
 dev.off()
 
-DefaultAssay(multiome_WT_Bap1KO_QCV1.sct) <- "SCT"
+DefaultAssay(multiome_WT_Bap1KO_QCV2.sct) <- "SCT"
 
 
-pdf("output/Signac/FeaturePlot_SCT_RNA_WT_Bap1KO-allMarkersList4-QCV2_dim28kparam70res09algo4feat2000_noCellCycleRegression
+pdf("output/Signac/FeaturePlot_SCT_RNA_WT_Bap1KO-allMarkersList4-QCV3_dim40kparam30res06algo4feat2000_noCellCycleRegression
 .pdf", width=15, height=30)
-FeaturePlot(multiome_WT_Bap1KO_QCV1.sct, features = c(  "Pax6" ,  "Eomes",  "Prox1", "Neurod1", "Sema5a",  "Tac2", "Hs3st1", "Nrn1",  "Pantr1", "Igfbpl1", "Frmd4b",  "Satb2", "Itpr1",  "Nts", "Nr4a2", "Lmo3", "B3gat1",  "Cck", "Insm1",  "Crym", "Snca", "Nrp2",  "Gad1", "Grin2d", "Calb1", "Npy", "Gria3", "Lhx6",  "Lhx1",  "Pdgfra", "Olig1",  "Csf1r", "Gpr34", "Gpr183", "Cx3cr1", "Aldh1a2", "Vtn", "Foxc1", "Id1", "Hes1", "Mki67", "Pcna", "Vim"), max.cutoff = 1, cols = c("grey", "red"))
+FeaturePlot(multiome_WT_Bap1KO_QCV2.sct, features = c(  "Pax6" ,  "Eomes",  "Prox1", "Neurod1", "Sema5a",  "Tac2", "Hs3st1", "Nrn1",  "Pantr1", "Igfbpl1", "Frmd4b",  "Satb2", "Itpr1",  "Nts", "Nr4a2", "Lmo3", "B3gat1",  "Cck", "Insm1",  "Crym", "Snca", "Nrp2",  "Gad1", "Grin2d", "Calb1", "Npy", "Gria3", "Lhx6",  "Lhx1",  "Pdgfra", "Olig1",  "Csf1r", "Gpr34", "Gpr183", "Cx3cr1", "Aldh1a2", "Vtn", "Foxc1", "Id1", "Hes1", "Mki67", "Pcna", "Vim"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
 
 
 
-pdf("output/Signac/VlnPlot_QCmetrics_RNA_WT-QCV2_dim28kparam15res02algo4feat2000_noCellCycleRegression.pdf", width=20, height=5)
-VlnPlot(multiome_WT_Bap1KO_QCV1.sct,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
+pdf("output/Signac/VlnPlot_QCmetrics_RNA_WT-QCV3_dim30kparam30res06algo4feat2000_noCellCycleRegression.pdf", width=20, height=5)
+VlnPlot(multiome_WT_Bap1KO_QCV2.sct,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
   theme(plot.title = element_text(size=10))
 dev.off()
 

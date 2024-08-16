@@ -14181,6 +14181,199 @@ write.table(switch_df, file = c("output/condiments/switch_df_traj2_noCondition_h
 
 
 
+## TRAJECTORY1 ##################
+set.seed(42)
+traj1_noCondition_humangastruloid72hrs_V2 <- readRDS("output/condiments/traj1_noCondition_humangastruloid72hrs_V2.rds")
+
+
+
+
+## Genes that change with pseudotime
+
+pseudotime_association <- associationTest(traj1_noCondition_humangastruloid72hrs_V2) # statistical test to check whether gene expression is constant across pseudotime within a lineage
+pseudotime_association$fdr <- p.adjust(pseudotime_association$pvalue, method = "fdr")
+pseudotime_association <- pseudotime_association[order(pseudotime_association$fdr), ]
+pseudotime_association$gene <- rownames(pseudotime_association)
+
+pseudotime_association = as_tibble(pseudotime_association) # 5,728 pval 0.05 DEG
+
+# save output: write.table(pseudotime_association, file = c("output/condiments/pseudotime_association_traj1_noCondition_humangastruloid72hrs_V2.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+#--> Can do clustering on these genes if needed
+
+
+## Genes that change between two pseudotime points (start vs end)
+pseudotime_start_end_association <- startVsEndTest(traj1_noCondition_humangastruloid72hrs_V2, pseudotimeValues = c(0, 1))
+pseudotime_start_end_association$gene <- rownames(pseudotime_start_end_association)
+pseudotime_start_end_association$fdr <- p.adjust(pseudotime_start_end_association$pvalue, method = "fdr")
+pseudotime_start_end_association <- pseudotime_start_end_association[order(pseudotime_start_end_association$fdr), ]
+pseudotime_start_end_association = as_tibble(pseudotime_start_end_association) # 5,306 pval 0.05 DEG
+
+##--> log2FC = end - start: negative log2fc means start point higher average expr than end point
+# save output: write.table(pseudotime_start_end_association, file = c("output/condiments/pseudotime_start_end_association_traj1_noCondition_humangastruloid72hrs_V2.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+sce_cells <- colnames(traj1_noCondition_humangastruloid72hrs_V2) # collect cells of traj3
+subset_traj1_noCondition_humangastruloid72hrs_V2_humangastruloid.combined.sct <- subset(humangastruloid.combined.sct, cells = sce_cells) # Create a seurat object with only cells from traj3
+
+### plot gene per gene
+
+
+
+### plot top 25 genes
+#### Select the top 25 genes with positive logFC and the top 25 with negative logFC
+top25_posFC_genes <- pseudotime_start_end_association %>%
+  filter(fdr < 0.05, logFClineage1 > 0) %>%
+  top_n(25, waldStat) %>%
+  arrange(desc(waldStat)) %>%
+  select(gene, logFClineage1)
+
+top25_negFC_genes <- pseudotime_start_end_association %>%
+  filter(fdr < 0.05, logFClineage1 < 0) %>%
+  top_n(25, waldStat) %>%
+  arrange(desc(waldStat)) %>%
+  select(gene, logFClineage1)
+
+## Function to plot and save in PDF
+plot_and_save <- function(genes_df, file_name) {
+  pdf(file_name, width=5, height=4)
+  for (i in 1:nrow(genes_df)) {
+    gene <- genes_df$gene[i]
+    logFC <- genes_df$logFClineage1[i]
+    plot_title <- paste0(gene, " (logFC: ", round(logFC, 2), ")")
+    p <- plotSmoothers(traj1_noCondition_humangastruloid72hrs_V2, subset_traj1_noCondition_humangastruloid72hrs_V2_humangastruloid.combined.sct[["RNA"]]@counts, gene = gene)
+    p <- p + ggtitle(plot_title)
+    print(p)
+  }
+  dev.off()
+}
+
+# Generate PDFs
+plot_and_save(top25_posFC_genes, "output/condiments/plotSmoothers-top25_posFC_traj1_noCondition_humangastruloid72hrs_V2.pdf")
+plot_and_save(top25_negFC_genes, "output/condiments/plotSmoothers-top25_negFC_traj1_noCondition_humangastruloid72hrs_V2.pdf")
+
+
+
+### plot unique genes
+pdf("output/condiments/plotSmoothers-EZH2-traj1_noCondition_humangastruloid72hrs_V2.pdf",  width=5, height=4)
+plotSmoothers(traj1_noCondition_humangastruloid72hrs_V2, subset_traj1_noCondition_humangastruloid72hrs_V2_humangastruloid.combined.sct[["RNA"]]@counts, gene = "EZH2" )
+dev.off()
+
+
+
+
+## Identify Activation point = peak (maximum expression) of each gene along the pseudotime trajectory
+### Identify peak of expression (max expr) of these Time-course DEG
+traj1_noCondition_humangastruloid72hrs_V2
+#### Extract pseudotime values
+pseudotime <- colData(traj1_noCondition_humangastruloid72hrs_V2)$crv$pseudotime
+#### Extract the expression matrix
+expr_matrix <- assays(traj1_noCondition_humangastruloid72hrs_V2)$counts
+#### Ensure the pseudotime values are named with the same cell names as the expression matrix columns
+names(pseudotime) <- colnames(expr_matrix)
+#### Function to find the peak pseudotime for each gene (raw and smoothed)
+find_max_pseudotime <- function(gene_expr, pseudotime) {
+  # Raw peak pseudotime
+  raw_peak_pseudotime <- pseudotime[which.max(gene_expr)]
+  # Smooth gene expression using loess
+  smooth_model <- loess(gene_expr ~ pseudotime)
+  smooth_expr <- predict(smooth_model)
+  # Smooth peak pseudotime
+  smooth_peak_pseudotime <- pseudotime[which.max(smooth_expr)]
+  return(list(raw_peak_pseudotime = raw_peak_pseudotime, 
+              smooth_peak_pseudotime = smooth_peak_pseudotime))
+}
+#### Apply the function to all genes
+peak_values <- apply(expr_matrix, 1, function(x) find_max_pseudotime(as.numeric(x), pseudotime))
+#### Convert the results to a data frame
+peak_df <- data.frame(
+  gene = rownames(expr_matrix),
+  raw_peak_pseudotime = sapply(peak_values, `[[`, "raw_peak_pseudotime"),
+  smooth_peak_pseudotime = sapply(peak_values, `[[`, "smooth_peak_pseudotime")
+) %>% as_tibble()
+
+# save output: write.table(peak_df, file = c("output/condiments/traj1_noCondition_humangastruloid72hrs_V2_ActivationPoint.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+
+## heatmap activate/induced genes along pseudotime
+### DEG Start End
+pseudotime_start_end_association # filter log2fc >0 >1
+pseudotime_start_end_association = read_tsv("output/condiments/pseudotime_start_end_association_traj1_noCondition_humangastruloid72hrs_V2.txt")
+pseudotime_start_end_association_logFC0 = pseudotime_start_end_association %>% 
+  filter(logFClineage1 > 1) %>%
+  dplyr::select(gene) %>%
+  unique()
+
+pdf("output/condiments/heatmap_pseudotime_start_end_association_logFClineageOver1_traj1_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj1_noCondition_humangastruloid72hrs_V2, gene = pseudotime_start_end_association_logFC0$gene, nPoints = 25, tidy = FALSE)
+yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
+heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
+                       cluster_cols = FALSE,
+                       cluster_rows = FALSE,
+                       show_rownames = FALSE, 
+                       show_colnames = FALSE)
+dev.off()
+
+### DEG time course
+pseudotime_association = read_tsv("output/condiments/pseudotime_association_traj1_noCondition_humangastruloid72hrs_V2.txt")
+pseudotime_association_deg = pseudotime_association %>%
+  filter(fdr == 0)%>%
+  dplyr::select(gene) %>%
+  unique()
+
+
+pdf("output/condiments/heatmap_pseudotime_association_deg0_traj1_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj1_noCondition_humangastruloid72hrs_V2, gene = pseudotime_association_deg$gene, nPoints = 25, tidy = FALSE)
+yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
+heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
+                       cluster_cols = FALSE,
+                       cluster_rows = FALSE,
+                       show_rownames = FALSE, 
+                       show_colnames = FALSE)
+dev.off()
+
+### DEG Start End & time course
+pseudotime_start_end_association_logFC0TCdeg05 = pseudotime_start_end_association %>% 
+  filter(logFClineage1 > 0.5) %>%
+  dplyr::select(gene) %>%
+  unique() %>%
+  left_join(pseudotime_association) %>%
+  filter(fdr <0.05)
+
+
+
+
+## Identify which pseudotime value corespond to which cluster ################
+pseudotime <- colData(traj1_noCondition_humangastruloid72hrs_V2)$crv$pseudotime
+sce_cells <- colnames(traj1_noCondition_humangastruloid72hrs_V2)
+subset_seurat <- subset(humangastruloid.combined.sct, cells = sce_cells) # Subset cell from traj2
+clusters <- subset_seurat$cluster.annot # Extract cluster information
+### Combine pseudotime and cluster information into a data frame
+pseudotime_cluster_df <- data.frame(
+  cell = colnames(traj1_noCondition_humangastruloid72hrs_V2),
+  pseudotime = pseudotime,
+  cluster = clusters
+)  %>%
+  arrange(pseudotime)
+
+switch_points <- which(diff(as.numeric(factor(pseudotime_cluster_df$cluster))) != 0) # Find the indices where the cluster changes
+switch_pseudotimes <- pseudotime_cluster_df$pseudotime[switch_points] # Extract the pseudotime values at these switch points
+switch_clusters_from <- pseudotime_cluster_df$cluster[switch_points]
+switch_clusters_to <- pseudotime_cluster_df$cluster[switch_points + 1]
+switch_df <- data.frame(
+  switch_pseudotime = switch_pseudotimes,
+  cluster_from = switch_clusters_from,
+  cluster_to = switch_clusters_to 
+) %>%
+  group_by(cluster_from, cluster_to) %>%
+  summarize(median_switch_pseudotime = median(switch_pseudotime), .groups = 'drop')
+
+write.table(switch_df, file = c("output/condiments/switch_df_traj1_noCondition_humangastruloid72hrs_V2.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+##################################
+
+
+
+
+
+
 
 
 
@@ -15027,6 +15220,203 @@ write.table(switch_df, file = c("output/condiments/switch_df_traj3_humangastrulo
 
 
 
+################### Time Course effect (UNTREATED CONDITION) - TRAJECTORY 1- ##############################################
+set.seed(42)
+traj1_humangastruloidUNTREATED72hrs_V2 <- readRDS("output/condiments/traj1_humangastruloidUNTREATED72hrs_V2.rds")
+
+
+## Genes that change with pseudotime
+
+pseudotime_association <- associationTest(traj1_humangastruloidUNTREATED72hrs_V2) # statistical test to check whether gene expression is constant across pseudotime within a lineage
+pseudotime_association$fdr <- p.adjust(pseudotime_association$pvalue, method = "fdr")
+pseudotime_association <- pseudotime_association[order(pseudotime_association$fdr), ]
+pseudotime_association$gene <- rownames(pseudotime_association)
+
+pseudotime_association = as_tibble(pseudotime_association) # 8,913 pval 0.05 DEG
+
+# save output: write.table(pseudotime_association, file = c("output/condiments/pseudotime_association_traj1_humangastruloidUNTREATED72hrs_V2.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+#--> Can do clustering on these genes if needed
+
+
+## Genes that change between two pseudotime points (start vs end)
+pseudotime_start_end_association <- startVsEndTest(traj1_humangastruloidUNTREATED72hrs_V2, pseudotimeValues = c(0, 1))
+pseudotime_start_end_association$gene <- rownames(pseudotime_start_end_association)
+pseudotime_start_end_association$fdr <- p.adjust(pseudotime_start_end_association$pvalue, method = "fdr")
+pseudotime_start_end_association <- pseudotime_start_end_association[order(pseudotime_start_end_association$fdr), ]
+##--> log2FC = end - start: negative log2fc means start point higher average expr than end point
+# save output: write.table(pseudotime_start_end_association, file = c("output/condiments/pseudotime_start_end_association_traj1_humangastruloidUNTREATED72hrs_V2.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+
+sce_cells <- colnames(traj1_humangastruloidUNTREATED72hrs_V2) # collect cells of traj2
+subset_traj1_humangastruloidUNTREATED72hrs_V2_humangastruloid.combined.sct <- subset(humangastruloid.combined.sct, cells = sce_cells) # Create a seurat object with only cells from traj2
+
+
+
+### plot top 25 genes
+#### Select the top 25 genes with positive logFC and the top 25 with negative logFC
+top25_posFC_genes <- pseudotime_start_end_association %>%
+  filter(fdr < 0.05, logFClineage1 > 0) %>%
+  top_n(25, waldStat) %>%
+  arrange(desc(waldStat)) %>%
+  select(gene, logFClineage1)
+
+top25_negFC_genes <- pseudotime_start_end_association %>%
+  filter(fdr < 0.05, logFClineage1 < 0) %>%
+  top_n(25, waldStat) %>%
+  arrange(desc(waldStat)) %>%
+  select(gene, logFClineage1)
+
+## Function to plot and save in PDF
+plot_and_save <- function(genes_df, file_name) {
+  pdf(file_name, width=5, height=4)
+  for (i in 1:nrow(genes_df)) {
+    gene <- genes_df$gene[i]
+    logFC <- genes_df$logFClineage1[i]
+    plot_title <- paste0(gene, " (logFC: ", round(logFC, 2), ")")
+    p <- plotSmoothers(traj1_humangastruloidUNTREATED72hrs_V2, subset_traj1_humangastruloidUNTREATED72hrs_V2_humangastruloid.combined.sct[["RNA"]]@counts, gene = gene)
+    p <- p + ggtitle(plot_title)
+    print(p)
+  }
+  dev.off()
+}
+
+# Generate PDFs
+plot_and_save(top25_posFC_genes, "output/condiments/plotSmoothers-top25_posFC_traj1_humangastruloidUNTREATED72hrs_V2.pdf")
+plot_and_save(top25_negFC_genes, "output/condiments/plotSmoothers-top25_negFC_traj1_humangastruloidUNTREATED72hrs_V2.pdf")
+
+
+### plot unique genes
+pdf("output/condiments/plotSmoothers-KDM6B-traj1_humangastruloidUNTREATED72hrs_V2.pdf",  width=5, height=4)
+plotSmoothers(traj1_humangastruloidUNTREATED72hrs_V2, subset_traj1_humangastruloidUNTREATED72hrs_V2_humangastruloid.combined.sct[["RNA"]]@counts, gene = "KDM6B" )
+dev.off()
+
+
+
+
+
+
+## Identify Activation point = peak (maximum expression) of each gene along the pseudotime trajectory
+### Identify peak of expression (max expr) of these Time-course DEG
+traj1_humangastruloidUNTREATED72hrs_V2
+#### Extract pseudotime values
+pseudotime <- colData(traj1_humangastruloidUNTREATED72hrs_V2)$crv$pseudotime
+#### Extract the expression matrix
+expr_matrix <- assays(traj1_humangastruloidUNTREATED72hrs_V2)$counts
+#### Ensure the pseudotime values are named with the same cell names as the expression matrix columns
+names(pseudotime) <- colnames(expr_matrix)
+#### Function to find the peak pseudotime for each gene (raw and smoothed)
+find_max_pseudotime <- function(gene_expr, pseudotime) {
+  # Raw peak pseudotime
+  raw_peak_pseudotime <- pseudotime[which.max(gene_expr)]
+  # Smooth gene expression using loess
+  smooth_model <- loess(gene_expr ~ pseudotime)
+  smooth_expr <- predict(smooth_model)
+  # Smooth peak pseudotime
+  smooth_peak_pseudotime <- pseudotime[which.max(smooth_expr)]
+  return(list(raw_peak_pseudotime = raw_peak_pseudotime, 
+              smooth_peak_pseudotime = smooth_peak_pseudotime))
+}
+#### Apply the function to all genes
+peak_values <- apply(expr_matrix, 1, function(x) find_max_pseudotime(as.numeric(x), pseudotime))
+#### Convert the results to a data frame
+peak_df <- data.frame(
+  gene = rownames(expr_matrix),
+  raw_peak_pseudotime = sapply(peak_values, `[[`, "raw_peak_pseudotime"),
+  smooth_peak_pseudotime = sapply(peak_values, `[[`, "smooth_peak_pseudotime")
+) %>% as_tibble()
+
+
+# save output: write.table(peak_df, file = c("output/condiments/traj1_humangastruloidUNTREATED72hrs_V2_ActivationPoint.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+
+## heatmap activate/induced genes along pseudotime
+### DEG Start End
+pseudotime_start_end_association # filter log2fc >0 >1
+pseudotime_start_end_association = read_tsv("output/condiments/pseudotime_start_end_association_traj1_humangastruloidUNTREATED72hrs_V2.txt")
+pseudotime_start_end_association_logFC0 = pseudotime_start_end_association %>% 
+  filter(logFClineage1 > 1) %>%
+  dplyr::select(gene) %>%
+  unique()
+
+pdf("output/condiments/heatmap_pseudotime_start_end_association_humangastruloidUNTREATED72hrs_logFClineageOver0_V2.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj1_humangastruloidUNTREATED72hrs_V2, gene = pseudotime_start_end_association_logFC0$gene, nPoints = 25, tidy = FALSE)
+yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
+heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
+                       cluster_cols = FALSE,
+                       cluster_rows = FALSE,
+                       show_rownames = FALSE, 
+                       show_colnames = FALSE)
+dev.off()
+
+### DEG time course
+pseudotime_association = read_tsv("output/condiments/pseudotime_association_traj1_humangastruloidUNTREATED72hrs_V2.txt")
+pseudotime_association_deg = pseudotime_association %>%
+  filter(fdr == 0)%>%
+  dplyr::select(gene) %>%
+  unique()
+
+
+pdf("output/condiments/heatmap_pseudotime_association_humangastruloidUNTREATED72hrs_deg0_V2.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj1_humangastruloidUNTREATED72hrs_V2, gene = pseudotime_association_deg$gene, nPoints = 25, tidy = FALSE)
+yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
+heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
+                       cluster_cols = FALSE,
+                       cluster_rows = FALSE,
+                       show_rownames = FALSE, 
+                       show_colnames = FALSE)
+dev.off()
+
+### DEG Start End & time course
+pseudotime_start_end_association_logFC0TCdeg05 = pseudotime_start_end_association %>% 
+  filter(logFClineage1 > 0.5) %>%
+  dplyr::select(gene) %>%
+  unique() %>%
+  left_join(pseudotime_association) %>%
+  filter(fdr <0.05)
+
+
+pdf("output/condiments/heatmap_pseudotime_start_end_association_humangastruloidUNTREATED72hrs_logFClineageOver05_DEG05_V2.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj1_humangastruloidUNTREATED72hrs_V2, gene = pseudotime_start_end_association_logFC0TCdeg05$gene, nPoints = 25, tidy = FALSE)
+yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
+heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
+                       cluster_cols = FALSE,
+                       cluster_rows = FALSE,
+                       show_rownames = FALSE, 
+                       show_colnames = FALSE)
+dev.off()
+
+
+## Identify which pseudotime value corespond to which cluster ################
+pseudotime <- colData(traj1_humangastruloidUNTREATED72hrs_V2)$crv$pseudotime
+sce_cells <- colnames(traj1_humangastruloidUNTREATED72hrs_V2)
+subset_seurat <- subset(humangastruloid.combined.sct, cells = sce_cells) # Subset cell from traj2
+clusters <- subset_seurat$cluster.annot # Extract cluster information
+### Combine pseudotime and cluster information into a data frame
+pseudotime_cluster_df <- data.frame(
+  cell = colnames(traj1_humangastruloidUNTREATED72hrs_V2),
+  pseudotime = pseudotime,
+  cluster = clusters
+)  %>%
+  arrange(pseudotime)
+
+switch_points <- which(diff(as.numeric(factor(pseudotime_cluster_df$cluster))) != 0) # Find the indices where the cluster changes
+switch_pseudotimes <- pseudotime_cluster_df$pseudotime[switch_points] # Extract the pseudotime values at these switch points
+switch_clusters_from <- pseudotime_cluster_df$cluster[switch_points]
+switch_clusters_to <- pseudotime_cluster_df$cluster[switch_points + 1]
+switch_df <- data.frame(
+  switch_pseudotime = switch_pseudotimes,
+  cluster_from = switch_clusters_from,
+  cluster_to = switch_clusters_to 
+) %>%
+  group_by(cluster_from, cluster_to) %>%
+  summarize(median_switch_pseudotime = median(switch_pseudotime), .groups = 'drop')
+write.table(switch_df, file = c("output/condiments/switch_df_traj1_humangastruloidUNTREATED72hrs_V2.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+##################################
+
+
+
+
+
 
 
 
@@ -15545,6 +15935,199 @@ write.table(switch_df, file = c("output/condiments/switch_df_traj1_humangastrulo
 
 
 
+
+################### Time Course effect (DASATINIB CONDITION) - Lineage2 -###########################################
+set.seed(42)
+traj2_humangastruloidDASATINIB72hrs_V2 <- readRDS("output/condiments/traj2_humangastruloidDASATINIB72hrs_V2.rds")
+
+
+## Genes that change with pseudotime
+
+pseudotime_association <- associationTest(traj2_humangastruloidDASATINIB72hrs_V2) # statistical test to check whether gene expression is constant across pseudotime within a lineage
+pseudotime_association$fdr <- p.adjust(pseudotime_association$pvalue, method = "fdr")
+pseudotime_association <- pseudotime_association[order(pseudotime_association$fdr), ]
+pseudotime_association$gene <- rownames(pseudotime_association)
+
+pseudotime_association = as_tibble(pseudotime_association) # 10,651 pval 0.05 DEG
+
+# save output: write.table(pseudotime_association, file = c("output/condiments/pseudotime_association_traj2_humangastruloidDASATINIB72hrs_V2.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+#--> Can do clustering on these genes if needed
+
+
+## Genes that change between two pseudotime points (start vs end)
+pseudotime_start_end_association <- startVsEndTest(traj2_humangastruloidDASATINIB72hrs_V2, pseudotimeValues = c(0, 1))
+pseudotime_start_end_association$gene <- rownames(pseudotime_start_end_association)
+pseudotime_start_end_association$fdr <- p.adjust(pseudotime_start_end_association$pvalue, method = "fdr")
+pseudotime_start_end_association <- pseudotime_start_end_association[order(pseudotime_start_end_association$fdr), ]
+##--> log2FC = end - start: negative log2fc means start point higher average expr than end point
+# save output: write.table(pseudotime_start_end_association, file = c("output/condiments/pseudotime_start_end_association_traj2_humangastruloidDASATINIB72hrs_V2.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+sce_cells <- colnames(traj2_humangastruloidDASATINIB72hrs_V2) # collect cells of traj2
+subset_traj2_humangastruloidDASATINIB72hrs_V2_humangastruloid.combined.sct <- subset(humangastruloid.combined.sct, cells = sce_cells) # Create a seurat object with only cells from traj2
+
+
+### plot top 25 genes
+#### Select the top 25 genes with positive logFC and the top 25 with negative logFC
+top25_posFC_genes <- pseudotime_start_end_association %>%
+  filter(fdr < 0.05, logFClineage1 > 0) %>%
+  top_n(25, waldStat) %>%
+  arrange(desc(waldStat)) %>%
+  select(gene, logFClineage1)
+
+top25_negFC_genes <- pseudotime_start_end_association %>%
+  filter(fdr < 0.05, logFClineage1 < 0) %>%
+  top_n(25, waldStat) %>%
+  arrange(desc(waldStat)) %>%
+  select(gene, logFClineage1)
+
+## Function to plot and save in PDF
+plot_and_save <- function(genes_df, file_name) {
+  pdf(file_name, width=5, height=4)
+  for (i in 1:nrow(genes_df)) {
+    gene <- genes_df$gene[i]
+    logFC <- genes_df$logFClineage1[i]
+    plot_title <- paste0(gene, " (logFC: ", round(logFC, 2), ")")
+    p <- plotSmoothers(traj2_humangastruloidDASATINIB72hrs_V2, subset_traj2_humangastruloidDASATINIB72hrs_V2_humangastruloid.combined.sct[["RNA"]]@counts, gene = gene)
+    p <- p + ggtitle(plot_title)
+    print(p)
+  }
+  dev.off()
+}
+
+# Generate PDFs
+plot_and_save(top25_posFC_genes, "output/condiments/plotSmoothers-top25_posFC_traj2_humangastruloidDASATINIB72hrs_V2.pdf")
+plot_and_save(top25_negFC_genes, "output/condiments/plotSmoothers-top25_negFC_traj2_humangastruloidDASATINIB72hrs_V2.pdf")
+
+
+
+
+### plot unique genes
+pdf("output/condiments/plotSmoothers-KDM6B-traj2_humangastruloidDASATINIB72hrs_V2.pdf",  width=5, height=4)
+plotSmoothers(traj2_humangastruloidDASATINIB72hrs_V2, subset_traj2_humangastruloidDASATINIB72hrs_V2_humangastruloid.combined.sct[["RNA"]]@counts, gene = "KDM6B" )
+dev.off()
+
+
+
+## Identify Activation point = peak (maximum expression) of each gene along the pseudotime trajectory
+### Identify peak of expression (max expr) of these Time-course DEG
+traj2_humangastruloidDASATINIB72hrs_V2
+#### Extract pseudotime values
+pseudotime <- colData(traj2_humangastruloidDASATINIB72hrs_V2)$crv$pseudotime
+#### Extract the expression matrix
+expr_matrix <- assays(traj2_humangastruloidDASATINIB72hrs_V2)$counts
+#### Ensure the pseudotime values are named with the same cell names as the expression matrix columns
+names(pseudotime) <- colnames(expr_matrix)
+#### Function to find the peak pseudotime for each gene (raw and smoothed)
+find_max_pseudotime <- function(gene_expr, pseudotime) {
+  # Raw peak pseudotime
+  raw_peak_pseudotime <- pseudotime[which.max(gene_expr)]
+  # Smooth gene expression using loess
+  smooth_model <- loess(gene_expr ~ pseudotime)
+  smooth_expr <- predict(smooth_model)
+  # Smooth peak pseudotime
+  smooth_peak_pseudotime <- pseudotime[which.max(smooth_expr)]
+  return(list(raw_peak_pseudotime = raw_peak_pseudotime, 
+              smooth_peak_pseudotime = smooth_peak_pseudotime))
+}
+#### Apply the function to all genes
+peak_values <- apply(expr_matrix, 1, function(x) find_max_pseudotime(as.numeric(x), pseudotime))
+#### Convert the results to a data frame
+peak_df <- data.frame(
+  gene = rownames(expr_matrix),
+  raw_peak_pseudotime = sapply(peak_values, `[[`, "raw_peak_pseudotime"),
+  smooth_peak_pseudotime = sapply(peak_values, `[[`, "smooth_peak_pseudotime")
+) %>% as_tibble()
+
+
+# save output: write.table(peak_df, file = c("output/condiments/traj2_humangastruloidDASATINIB72hrs_V2_ActivationPoint.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+
+## heatmap activate/induced genes along pseudotime
+### DEG Start End
+pseudotime_start_end_association # filter log2fc >0 >1
+pseudotime_start_end_association = read_tsv("output/condiments/pseudotime_start_end_association_traj2_humangastruloidDASATINIB72hrs_V2.txt")
+pseudotime_start_end_association_logFC0 = pseudotime_start_end_association %>% 
+  filter(logFClineage1 > 1) %>%
+  dplyr::select(gene) %>%
+  unique()
+
+pdf("output/condiments/heatmap_pseudotime_start_end_association_humangastruloidDASATINIB72hrs_logFClineageOver0_V2.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj2_humangastruloidDASATINIB72hrs_V2, gene = pseudotime_start_end_association_logFC0$gene, nPoints = 25, tidy = FALSE)
+yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
+heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
+                       cluster_cols = FALSE,
+                       cluster_rows = FALSE,
+                       show_rownames = FALSE, 
+                       show_colnames = FALSE)
+dev.off()
+
+### DEG time course
+pseudotime_association = read_tsv("output/condiments/pseudotime_association_traj2_humangastruloidDASATINIB72hrs_V2.txt")
+pseudotime_association_deg = pseudotime_association %>%
+  filter(fdr == 0)%>%
+  dplyr::select(gene) %>%
+  unique()
+
+
+pdf("output/condiments/heatmap_pseudotime_association_humangastruloidDASATINIB72hrs_deg0_V2.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj2_humangastruloidDASATINIB72hrs_V2, gene = pseudotime_association_deg$gene, nPoints = 25, tidy = FALSE)
+yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
+heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
+                       cluster_cols = FALSE,
+                       cluster_rows = FALSE,
+                       show_rownames = FALSE, 
+                       show_colnames = FALSE)
+dev.off()
+
+### DEG Start End & time course
+pseudotime_start_end_association_logFC0TCdeg05 = pseudotime_start_end_association %>% 
+  filter(logFClineage1 > 0.5) %>%
+  dplyr::select(gene) %>%
+  unique() %>%
+  left_join(pseudotime_association) %>%
+  filter(fdr <0.05)
+
+
+pdf("output/condiments/heatmap_pseudotime_start_end_association_humangastruloidDASATINIB72hrs_logFClineageOver05_DEG05_V2.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj2_humangastruloidDASATINIB72hrs_V2, gene = pseudotime_start_end_association_logFC0TCdeg05$gene, nPoints = 25, tidy = FALSE)
+yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
+heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
+                       cluster_cols = FALSE,
+                       cluster_rows = FALSE,
+                       show_rownames = FALSE, 
+                       show_colnames = FALSE)
+dev.off()
+
+
+## Identify which pseudotime value corespond to which cluster ################
+pseudotime <- colData(traj2_humangastruloidDASATINIB72hrs_V2)$crv$pseudotime
+sce_cells <- colnames(traj2_humangastruloidDASATINIB72hrs_V2)
+subset_seurat <- subset(humangastruloid.combined.sct, cells = sce_cells) # Subset cell from traj2
+clusters <- subset_seurat$cluster.annot # Extract cluster information
+### Combine pseudotime and cluster information into a data frame
+pseudotime_cluster_df <- data.frame(
+  cell = colnames(traj2_humangastruloidDASATINIB72hrs_V2),
+  pseudotime = pseudotime,
+  cluster = clusters
+)  %>%
+  arrange(pseudotime)
+
+switch_points <- which(diff(as.numeric(factor(pseudotime_cluster_df$cluster))) != 0) # Find the indices where the cluster changes
+switch_pseudotimes <- pseudotime_cluster_df$pseudotime[switch_points] # Extract the pseudotime values at these switch points
+switch_clusters_from <- pseudotime_cluster_df$cluster[switch_points]
+switch_clusters_to <- pseudotime_cluster_df$cluster[switch_points + 1]
+switch_df <- data.frame(
+  switch_pseudotime = switch_pseudotimes,
+  cluster_from = switch_clusters_from,
+  cluster_to = switch_clusters_to 
+) %>%
+  group_by(cluster_from, cluster_to) %>%
+  summarize(median_switch_pseudotime = median(switch_pseudotime), .groups = 'drop')
+write.table(switch_df, file = c("output/condiments/switch_df_traj2_humangastruloidDASATINIB72hrs_V2.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+##################################
+
+
+
 ```
 
 
@@ -15581,8 +16164,8 @@ sbatch scripts/fitGAM_6knots_traj3_humangastruloidUNTREATED72hrs_V2.sh # 2415313
 sbatch scripts/fitGAM_6knots_traj1_humangastruloidDASATINIB72hrs_V2.sh # 24153438 ok
 
 ## traj of interest UNTREATED=traj1; DASATINIB=traj2
-sbatch scripts/fitGAM_6knots_traj1_humangastruloidUNTREATED72hrs_V2.sh # 24153187 xxx
-sbatch scripts/fitGAM_6knots_traj2_humangastruloidDASATINIB72hrs_V2.sh # 24153665 xxx
+sbatch scripts/fitGAM_6knots_traj1_humangastruloidUNTREATED72hrs_V2.sh # 24153187 ok
+sbatch scripts/fitGAM_6knots_traj2_humangastruloidDASATINIB72hrs_V2.sh # 24153665 ok
 
 
 ```

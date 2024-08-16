@@ -78,8 +78,8 @@ done < rename_map.txt
 # Fastp cleaning
 
 ```bash
-sbatch scripts/fastp_1.sh # 24136634 xxx
-sbatch scripts/fastp_2.sh # 24136758 xxx
+sbatch scripts/fastp_1.sh # 24136634 ok
+sbatch scripts/fastp_2.sh # 24136758 ok
 
 ```
 
@@ -91,9 +91,9 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:24136634 scripts/bowtie2_1.sh # 24137045 xxx
-sbatch --dependency=afterany:24136758 scripts/bowtie2_2.sh # 24137877 xxx
-
+sbatch --dependency=afterany:24136634 scripts/bowtie2_1.sh # 24137045 ok
+sbatch --dependency=afterany:24136758 scripts/bowtie2_2.sh # 24137877 partial fail
+sbatch scripts/bowtie2_missing1.sh # 24306442 xxx
 ```
 
 --> XXX Looks good; overall ~75% uniquely aligned reads XXX
@@ -144,8 +144,10 @@ This is prefered for THOR bam input.
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:24137045 scripts/samtools_unique_1.sh # 24137245 xxx
-sbatch --dependency=afterany:24137877 scripts/samtools_unique_2.sh # 24137923 xxx
+sbatch --dependency=afterany:24137045 scripts/samtools_unique_1.sh # 24137245 ok
+sbatch --dependency=afterany:24137877 scripts/samtools_unique_2.sh # 24137923 partial fail
+
+sbatch --dependency=afterany:24306442 scripts/samtools_missing1.sh # 24306518 xxx
 
 ```
 
@@ -173,8 +175,10 @@ Paramaters:
 ```bash
 conda activate deeptools
 
-sbatch --dependency=afterany:24137245 scripts/bamtobigwig_unique_1.sh # 24137373 xxx
-sbatch --dependency=afterany:24137923 scripts/bamtobigwig_unique_2.sh # 24138000 xxx
+sbatch --dependency=afterany:24137245 scripts/bamtobigwig_unique_1.sh # 24137373 ok
+sbatch --dependency=afterany:24137923 scripts/bamtobigwig_unique_2.sh # 24138000 partial fail
+
+sbatch --dependency=afterany:24306518 scripts/bamtobigwig_missing1.sh # 24306726 xxx
 
 
 ```
