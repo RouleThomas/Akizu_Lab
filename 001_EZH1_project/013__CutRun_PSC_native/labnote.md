@@ -93,25 +93,25 @@ conda activate bowtie2
 
 sbatch --dependency=afterany:24136634 scripts/bowtie2_1.sh # 24137045 ok
 sbatch --dependency=afterany:24136758 scripts/bowtie2_2.sh # 24137877 partial fail
-sbatch scripts/bowtie2_missing1.sh # 24306442 xxx
+sbatch scripts/bowtie2_missing1.sh # 24306442 ok
 ```
 
 --> XXX Looks good; overall ~75% uniquely aligned reads XXX
 
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-Mapping on E coli --> TO DO LATER! 
+**Mapping on E coli**
 
 ```bash
 conda activate bowtie2
 
-sbatch scripts/bowtie2_MG1655_1.sh # 13345349 ok
+sbatch scripts/bowtie2_MG1655_1.sh # 24385988 xxx
+sbatch scripts/bowtie2_MG1655_2.sh # 24386097 xxx
+
 ```
 
 --> between 0.5 - 2% uniquely aligned reads (not a lot..; previously `005__CutRun` 10% (in `003__CutRun` was less than 1%) )
 
 
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 
@@ -120,12 +120,26 @@ Quality control plot (total read before trimming/ total read after trimming/ uni
 
 Collect nb of reads from the slurm bowtie2 jobs:
 ```bash
-for file in slurm-xxx.out; do
+for file in slurm-24137045.out; do
     total_reads=$(grep "reads; of these" $file | awk '{print $1}')
     aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
     aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
     echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
-done > output/bowtie2/alignment_counts_xxx.txt
+done > output/bowtie2/alignment_counts_24137045.txt
+
+for file in slurm-24306442.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2/alignment_counts_24306442.txt
+
+for file in slurm-24137877.out; do
+    total_reads=$(grep "reads; of these" $file | awk '{print $1}')
+    aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
+    aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
+    echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
+done > output/bowtie2/alignment_counts_24137877.txt
 ```
 
 Add these values to `/home/roulet/001_EZH1_project/013__CutRun_PSC_native/samples_001013.xlsx`\
@@ -147,23 +161,26 @@ conda activate bowtie2
 sbatch --dependency=afterany:24137045 scripts/samtools_unique_1.sh # 24137245 ok
 sbatch --dependency=afterany:24137877 scripts/samtools_unique_2.sh # 24137923 partial fail
 
-sbatch --dependency=afterany:24306442 scripts/samtools_missing1.sh # 24306518 xxx
+sbatch --dependency=afterany:24306442 scripts/samtools_missing1.sh # 24306518 ok
 
 ```
 
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 
 Let's do the same for E coli MG1655 spike in samples:
 
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:13345349:scripts/samtools_MG1655_unique_1.sh # 13345712 xxx
+sbatch --dependency=afterany:24385988 scripts/samtools_MG1655_unique_1.sh # 24387652 xxx
+sbatch --dependency=afterany:24386097 scripts/samtools_MG1655_unique_2.sh # 24387686 xxx
+
 ```
 
 --> More information on this step in the `005__CutRun` labnote
 
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+
 
 # Generate bigwig coverage files
 ## Raw bigwig
@@ -178,29 +195,39 @@ conda activate deeptools
 sbatch --dependency=afterany:24137245 scripts/bamtobigwig_unique_1.sh # 24137373 ok
 sbatch --dependency=afterany:24137923 scripts/bamtobigwig_unique_2.sh # 24138000 partial fail
 
-sbatch --dependency=afterany:24306518 scripts/bamtobigwig_missing1.sh # 24306726 xxx
+sbatch --dependency=afterany:24306518 scripts/bamtobigwig_missing1.sh # 24306726 ok
 
 
 ```
 
-- 50dN
-*Pass*: 50dN_WT_H3K27me3, 50dN_WT_IGG
-*Failed*: 50dN_WT_EZH1, 50dN_WT_EZH2, 50dN_WT_H3K27ac, 50dN_WT_H3K27me1AM, 50dN_WT_H3K27me1OR, 50dN_WT_SUZ12
+- **NEU**
+*Pass*: none
+*Failed*: H3K27me3, SUZ12
 
+- **ESC _ WT**
+*Pass*: H3K27me3, SUZ12, EZH2
+*Failed*: EZH1
 
-XXX HERE 
+- **ESC _ KOEF1aEZH1**
+*Pass*: H3K27me3, SUZ12, EZH, EZH1
+*Failed*: none
 
+- **ESC _ WTEF1aEZH1**
+*Pass*: H3K27me3, SUZ12, EZH, EZH1
+*Failed*: none
 
+--> Replicate 2 perform less well for ESC
 
 
 ## Pearson correlation heatmap on bigwig signals
 
 
 
+
 ```bash
 conda activate deeptools
 # Generate compile bigwig (.npz) files
-sbatch scripts/multiBigwigSummary_all.sh #  xxx
+sbatch scripts/multiBigwigSummary_all.sh # 24387938 ok
 
 
 # Plot
@@ -208,7 +235,7 @@ sbatch scripts/multiBigwigSummary_all.sh #  xxx
 plotPCA -in output/bigwig/multiBigwigSummary_all.npz \
     --transpose \
     --ntop 0 \
-    --labels 50dN_WT_EZH1 50dN_WT_EZH2 50dN_WT_H3K27ac 50dN_WT_H3K27me1AM 50dN_WT_H3K27me1OR 50dN_WT_H3K27me3 50dN_WT_IGG 50dN_WT_SUZ12 \
+    --labels NEU_WT_H3K27me3_R1 NEU_WT_IGG_R1 NEU_WT_SUZ12_R1 PSC_KO_EZH1_R1 PSC_KO_EZH1_R2 PSC_KO_EZH2_R1 PSC_KO_EZH2_R2 PSC_KO_H3K27me3_R1 PSC_KO_H3K27me3_R2 PSC_KO_IGG_R1 PSC_KO_IGG_R2 PSC_KO_SUZ12_R1 PSC_KO_SUZ12_R2 PSC_KOEF1aEZH1_EZH1_R1 PSC_KOEF1aEZH1_EZH1_R2 PSC_KOEF1aEZH1_EZH2_R1 PSC_KOEF1aEZH1_EZH2_R2 PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 PSC_KOEF1aEZH1_IGG_R1 PSC_KOEF1aEZH1_IGG_R2 PSC_KOEF1aEZH1_SUZ12_R1 PSC_KOEF1aEZH1_SUZ12_R2 PSC_WT_EZH1_R1 PSC_WT_EZH1_R2 PSC_WT_EZH2_R1 PSC_WT_EZH2_R2 PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_WT_IGG_R1 PSC_WT_IGG_R2 PSC_WT_SUZ12_R1 PSC_WT_SUZ12_R2 PSC_WTEF1aEZH1_EZH1_R1 PSC_WTEF1aEZH1_EZH1_R2 PSC_WTEF1aEZH1_EZH2_R1 PSC_WTEF1aEZH1_EZH2_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 PSC_WTEF1aEZH1_IGG_R1 PSC_WTEF1aEZH1_IGG_R2 PSC_WTEF1aEZH1_SUZ12_R1 PSC_WTEF1aEZH1_SUZ12_R2 \
     -o output/bigwig/multiBigwigSummary_all_plotPCA.pdf
 
 ## Heatmap
@@ -217,17 +244,143 @@ plotCorrelation \
     --corMethod pearson --skipZeros \
     --plotTitle "Pearson Correlation" \
     --removeOutliers \
-    --labels 50dN_WT_EZH1 50dN_WT_EZH2 50dN_WT_H3K27ac 50dN_WT_H3K27me1AM 50dN_WT_H3K27me1OR 50dN_WT_H3K27me3 50dN_WT_IGG 50dN_WT_SUZ12 \
+    --labels NEU_WT_H3K27me3_R1 NEU_WT_IGG_R1 NEU_WT_SUZ12_R1 PSC_KO_EZH1_R1 PSC_KO_EZH1_R2 PSC_KO_EZH2_R1 PSC_KO_EZH2_R2 PSC_KO_H3K27me3_R1 PSC_KO_H3K27me3_R2 PSC_KO_IGG_R1 PSC_KO_IGG_R2 PSC_KO_SUZ12_R1 PSC_KO_SUZ12_R2 PSC_KOEF1aEZH1_EZH1_R1 PSC_KOEF1aEZH1_EZH1_R2 PSC_KOEF1aEZH1_EZH2_R1 PSC_KOEF1aEZH1_EZH2_R2 PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 PSC_KOEF1aEZH1_IGG_R1 PSC_KOEF1aEZH1_IGG_R2 PSC_KOEF1aEZH1_SUZ12_R1 PSC_KOEF1aEZH1_SUZ12_R2 PSC_WT_EZH1_R1 PSC_WT_EZH1_R2 PSC_WT_EZH2_R1 PSC_WT_EZH2_R2 PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_WT_IGG_R1 PSC_WT_IGG_R2 PSC_WT_SUZ12_R1 PSC_WT_SUZ12_R2 PSC_WTEF1aEZH1_EZH1_R1 PSC_WTEF1aEZH1_EZH1_R2 PSC_WTEF1aEZH1_EZH2_R1 PSC_WTEF1aEZH1_EZH2_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 PSC_WTEF1aEZH1_IGG_R1 PSC_WTEF1aEZH1_IGG_R2 PSC_WTEF1aEZH1_SUZ12_R1 PSC_WTEF1aEZH1_SUZ12_R2 \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
     -o output/bigwig/multiBigwigSummary_all_heatmap.pdf
 
 
+
+
+
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_PSC.sh # 24388068 ok
+
+
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_PSC.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_KO_EZH1_R1 PSC_KO_EZH1_R2 PSC_KO_EZH2_R1 PSC_KO_EZH2_R2 PSC_KO_H3K27me3_R1 PSC_KO_H3K27me3_R2 PSC_KO_IGG_R1 PSC_KO_IGG_R2 PSC_KO_SUZ12_R1 PSC_KO_SUZ12_R2 PSC_KOEF1aEZH1_EZH1_R1 PSC_KOEF1aEZH1_EZH1_R2 PSC_KOEF1aEZH1_EZH2_R1 PSC_KOEF1aEZH1_EZH2_R2 PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 PSC_KOEF1aEZH1_IGG_R1 PSC_KOEF1aEZH1_IGG_R2 PSC_KOEF1aEZH1_SUZ12_R1 PSC_KOEF1aEZH1_SUZ12_R2 PSC_WT_EZH1_R1 PSC_WT_EZH1_R2 PSC_WT_EZH2_R1 PSC_WT_EZH2_R2 PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_WT_IGG_R1 PSC_WT_IGG_R2 PSC_WT_SUZ12_R1 PSC_WT_SUZ12_R2 PSC_WTEF1aEZH1_EZH1_R1 PSC_WTEF1aEZH1_EZH1_R2 PSC_WTEF1aEZH1_EZH2_R1 PSC_WTEF1aEZH1_EZH2_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 PSC_WTEF1aEZH1_IGG_R1 PSC_WTEF1aEZH1_IGG_R2 PSC_WTEF1aEZH1_SUZ12_R1 PSC_WTEF1aEZH1_SUZ12_R2 \
+    -o output/bigwig/multiBigwigSummary_PSC_plotPCA.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_PSC.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels PSC_KO_EZH1_R1 PSC_KO_EZH1_R2 PSC_KO_EZH2_R1 PSC_KO_EZH2_R2 PSC_KO_H3K27me3_R1 PSC_KO_H3K27me3_R2 PSC_KO_IGG_R1 PSC_KO_IGG_R2 PSC_KO_SUZ12_R1 PSC_KO_SUZ12_R2 PSC_KOEF1aEZH1_EZH1_R1 PSC_KOEF1aEZH1_EZH1_R2 PSC_KOEF1aEZH1_EZH2_R1 PSC_KOEF1aEZH1_EZH2_R2 PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 PSC_KOEF1aEZH1_IGG_R1 PSC_KOEF1aEZH1_IGG_R2 PSC_KOEF1aEZH1_SUZ12_R1 PSC_KOEF1aEZH1_SUZ12_R2 PSC_WT_EZH1_R1 PSC_WT_EZH1_R2 PSC_WT_EZH2_R1 PSC_WT_EZH2_R2 PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_WT_IGG_R1 PSC_WT_IGG_R2 PSC_WT_SUZ12_R1 PSC_WT_SUZ12_R2 PSC_WTEF1aEZH1_EZH1_R1 PSC_WTEF1aEZH1_EZH1_R2 PSC_WTEF1aEZH1_EZH2_R1 PSC_WTEF1aEZH1_EZH2_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 PSC_WTEF1aEZH1_IGG_R1 PSC_WTEF1aEZH1_IGG_R2 PSC_WTEF1aEZH1_SUZ12_R1 PSC_WTEF1aEZH1_SUZ12_R2 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_PSC_heatmap.pdf
+
+
+
+
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_PSC_WT.sh # 24388133 ok
+
+
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_PSC_WT.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_WT_EZH1_R1 PSC_WT_EZH1_R2 PSC_WT_EZH2_R1 PSC_WT_EZH2_R2 PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_WT_IGG_R1 PSC_WT_IGG_R2 PSC_WT_SUZ12_R1 PSC_WT_SUZ12_R2 \
+    -o output/bigwig/multiBigwigSummary_PSC_WT_plotPCA.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_PSC_WT.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels PSC_WT_EZH1_R1 PSC_WT_EZH1_R2 PSC_WT_EZH2_R1 PSC_WT_EZH2_R2 PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_WT_IGG_R1 PSC_WT_IGG_R2 PSC_WT_SUZ12_R1 PSC_WT_SUZ12_R2 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_PSC_WT_heatmap.pdf
+
+
+
+
+
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_PSC_KO.sh # 24388181 ok
+
+
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_PSC_KO.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_KO_EZH1_R1 PSC_KO_EZH1_R2 PSC_KO_EZH2_R1 PSC_KO_EZH2_R2 PSC_KO_H3K27me3_R1 PSC_KO_H3K27me3_R2 PSC_KO_IGG_R1 PSC_KO_IGG_R2 PSC_KO_SUZ12_R1 PSC_KO_SUZ12_R2 \
+    -o output/bigwig/multiBigwigSummary_PSC_KO_plotPCA.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_PSC_KO.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels PSC_KO_EZH1_R1 PSC_KO_EZH1_R2 PSC_KO_EZH2_R1 PSC_KO_EZH2_R2 PSC_KO_H3K27me3_R1 PSC_KO_H3K27me3_R2 PSC_KO_IGG_R1 PSC_KO_IGG_R2 PSC_KO_SUZ12_R1 PSC_KO_SUZ12_R2 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_PSC_KO_heatmap.pdf
+
+
+
+
+
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_PSC_KOEF1aEZH1.sh # 24388236 ok
+
+
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_PSC_KOEF1aEZH1.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_KOEF1aEZH1_EZH1_R1 PSC_KOEF1aEZH1_EZH1_R2 PSC_KOEF1aEZH1_EZH2_R1 PSC_KOEF1aEZH1_EZH2_R2 PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 PSC_KOEF1aEZH1_IGG_R1 PSC_KOEF1aEZH1_IGG_R2 PSC_KOEF1aEZH1_SUZ12_R1 PSC_KOEF1aEZH1_SUZ12_R2 \
+    -o output/bigwig/multiBigwigSummary_PSC_KOEF1aEZH1_plotPCA.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_PSC_KOEF1aEZH1.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels PSC_KOEF1aEZH1_EZH1_R1 PSC_KOEF1aEZH1_EZH1_R2 PSC_KOEF1aEZH1_EZH2_R1 PSC_KOEF1aEZH1_EZH2_R2 PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 PSC_KOEF1aEZH1_IGG_R1 PSC_KOEF1aEZH1_IGG_R2 PSC_KOEF1aEZH1_SUZ12_R1 PSC_KOEF1aEZH1_SUZ12_R2 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_PSC_KOEF1aEZH1_heatmap.pdf
+
+
+
+
+
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_PSC_WTEF1aEZH1.sh # 24388291 ok
+
+
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_PSC_WTEF1aEZH1.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_WTEF1aEZH1_EZH1_R1 PSC_WTEF1aEZH1_EZH1_R2 PSC_WTEF1aEZH1_EZH2_R1 PSC_WTEF1aEZH1_EZH2_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 PSC_WTEF1aEZH1_IGG_R1 PSC_WTEF1aEZH1_IGG_R2 PSC_WTEF1aEZH1_SUZ12_R1 PSC_WTEF1aEZH1_SUZ12_R2 \
+    -o output/bigwig/multiBigwigSummary_PSC_WTEF1aEZH1_plotPCA.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_PSC_WTEF1aEZH1.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels PSC_WTEF1aEZH1_EZH1_R1 PSC_WTEF1aEZH1_EZH1_R2 PSC_WTEF1aEZH1_EZH2_R1 PSC_WTEF1aEZH1_EZH2_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 PSC_WTEF1aEZH1_IGG_R1 PSC_WTEF1aEZH1_IGG_R2 PSC_WTEF1aEZH1_SUZ12_R1 PSC_WTEF1aEZH1_SUZ12_R2 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_PSC_WTEF1aEZH1_heatmap.pdf
+
 ```
 
---> H3K27me3 which works, form a group appart.. All the other cluster together. 
-
---> As `010__CutRun_PSC_50dN_native` H3K27me1 form group apart... Which may indicate they barely kind of work but with a completely useless signal... Not sure what to conclude... But look a bit more different than a completely failed sample that is similar to IGG.
-
+--> Very noisy, not informative. 
+    --> H3K27me3 cluster well together, then that is a mixed of samples/IP, even when checking per genotype
 
 
 
@@ -241,13 +394,21 @@ plotCorrelation \
 
 ```bash
 conda activate macs2
-# genotype per genotype
-sbatch --dependency=afterany:17776169 scripts/macs2_broad.sh # 17795289 ok
+# broad
+sbatch scripts/macs2_broad_1.sh # 24400532 xxx
+sbatch scripts/macs2_broad_2.sh # 24400534 xxx
 
-# genotype per genotype
-sbatch scripts/macs2_narrow.sh # 17867455 ok
+# narrow
+#--> NOT NEEDED
+
 
 ```
+
+
+XXX HERE
+
+
+
 
 --> All fail, except *H3K27me3; barely with 5,324 peaks*
 
@@ -260,16 +421,13 @@ sbatch scripts/macs2_narrow.sh # 17867455 ok
 - 50dN_WT_H3K27me3; n(peaks)= 5,324
 - 50dN_WT_SUZ12= n(peaks)= 0
 
-**narrow**:
-- 50dN_WT_EZH1; n(peaks)= 2
-- 50dN_WT_EZH2; n(peaks)= 1
-- 50dN_WT_H3K27ac; n(peaks)= 3
-- 50dN_WT_H3K27me1AM; n(peaks)= 2
-- 50dN_WT_H3K27me1OR; n(peaks)= 1
-- 50dN_WT_H3K27me3; n(peaks)= 3,830
-- 50dN_WT_SUZ12= n(peaks)= 0
 
---> *narrow* -mode does not help....
+
+
+
+
+
+
 
 
 
