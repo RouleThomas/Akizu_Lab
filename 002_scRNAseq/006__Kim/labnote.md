@@ -5246,16 +5246,16 @@ dev.off()
 
 
 
-pdf("output/Signac/UMAP_multiome_WT_Bap1KO_QCV1_numeric_V1.pdf", width=12, height=6)
+pdf("output/Signac/UMAP_multiome_WT_Bap1KO_QCV3_numeric_V1.pdf", width=12, height=6)
 DimPlot(multiome_WT_Bap1KO_QCV1.sct, reduction = "umap", split.by = "orig.ident", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 6)
 dev.off()
 
 
-pdf("output/Signac/UMAP_WT_Bap1KO_noSplit_numeric_V1.pdf", width=7, height=5)
+pdf("output/Signac/UMAP_WT_Bap1KO_QCV3_noSplit_numeric_V1.pdf", width=7, height=5)
 DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 6)
 dev.off()
 
-pdf("output/Signac/UMAP_WT_Bap1KO_numeric_overlap_V1.pdf", width=6, height=5)
+pdf("output/Signac/UMAP_WT_Bap1KO_QCV3_numeric_overlap_V1.pdf", width=6, height=5)
 DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap", group.by = "orig.ident", pt.size = 0.000001, cols = c("blue","red"))
 dev.off()
 
@@ -5280,7 +5280,719 @@ all_markers <- c(
 
 
 
-xxx 
+xxxy
+
+
+
+
+
+
+
+
+
+
+########################################################
+
+
+
+## Downsampling with bootstrap to compare the nb of cell per cell types
+
+library("tidyverse")
+
+### Identify the unique clusters
+unique_clusters <- unique(Idents(RNA_WT_Bap1KO.sct))
+
+### Create empty matrices to store cell counts
+control_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters))
+Bap1KO_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters))
+colnames(control_clusters_counts) <- unique_clusters
+colnames(Bap1KO_clusters_counts) <- unique_clusters
+
+### Loop through 100 iterations
+RNA_WT_Bap1KO.sct_WT <- which(RNA_WT_Bap1KO.sct$orig.ident == 'RNA_WT')
+RNA_WT_Bap1KO.sct_Bap1KO <- which(RNA_WT_Bap1KO.sct$orig.ident == 'RNA_Bap1KO')
+
+for (i in 1:100) { # Change this to 100 for the final run
+  # Downsampling
+  RNA_WT_Bap1KO.sct_Bap1KO_downsample <- sample(RNA_WT_Bap1KO.sct_Bap1KO, 6637)
+  RNA_WT_Bap1KO.sct_integrated_downsample <- RNA_WT_Bap1KO.sct[,c(RNA_WT_Bap1KO.sct_Bap1KO_downsample, RNA_WT_Bap1KO.sct_WT)]
+
+  # Count nb of cells in each cluster
+  control_clusters <- table(Idents(RNA_WT_Bap1KO.sct_integrated_downsample)[RNA_WT_Bap1KO.sct_integrated_downsample$orig.ident == "RNA_WT"])
+  Bap1KO_clusters <- table(Idents(RNA_WT_Bap1KO.sct_integrated_downsample)[RNA_WT_Bap1KO.sct_integrated_downsample$orig.ident == "RNA_Bap1KO"])
+
+  # Align the counts with the unique clusters
+  control_clusters_counts[i, names(control_clusters)] <- as.numeric(control_clusters)
+  Bap1KO_clusters_counts[i, names(Bap1KO_clusters)] <- as.numeric(Bap1KO_clusters)
+}
+
+
+### Calculate mean and standard error
+mean_control_clusters <- colMeans(control_clusters_counts)
+mean_Bap1KO_clusters <- colMeans(Bap1KO_clusters_counts)
+std_error_WT_clusters <- apply(control_clusters_counts, 2, sd) / sqrt(100)
+
+# Chi-squared test
+p_values <- numeric(length(unique_clusters))
+
+for (i in 1:length(unique_clusters)) {
+  # Create a matrix to store the counts for the chi-squared test
+  contingency_table <- matrix(0, nrow=2, ncol=2)
+  colnames(contingency_table) <- c("WT", "Bap1KO")
+  rownames(contingency_table) <- c("Cluster", "NotCluster")
+  
+  for (j in 1:100) { # Number of bootstrap iterations
+    contingency_table[1,1] <- control_clusters_counts[j,i]
+    contingency_table[1,2] <- Bap1KO_clusters_counts[j,i]
+    contingency_table[2,1] <- sum(control_clusters_counts[j,-i])
+    contingency_table[2,2] <- sum(Bap1KO_clusters_counts[j,-i])
+    
+    # Perform the chi-squared test on the contingency table
+    chi_test <- chisq.test(contingency_table)
+    
+    # Store the p-value
+    p_values[i] <- p_values[i] + chi_test$p.value
+  }
+  
+  # Average the p-values across all bootstrap iterations
+  p_values[i] <- p_values[i] / 100
+}
+
+# Adjust the p-values
+adjusted_p_values <- p.adjust(p_values, method = "bonferroni")
+
+# Create a tidy data frame for plotting
+plot_data <- data.frame(
+  cluster = names(mean_control_clusters),
+  untreated = mean_control_clusters,
+  dasatinib = mean_Bap1KO_clusters,
+  std_error_WT = std_error_WT_clusters,
+  p_value = adjusted_p_values
+) %>%
+  gather(key = "condition", value = "value", -cluster, -std_error_WT, -p_value) %>%
+  mutate(
+    condition = if_else(condition == "untreated", "WT", "Bap1KO"),
+    significance = ifelse(p_value < 0.0001, "***",
+                       ifelse(p_value < 0.001, "**",
+                              ifelse(p_value < 0.05, "*", "")))
+  )
+
+plot_data$condition <- factor(plot_data$condition, levels = c("WT", "Bap1KO")) # Reorder untreated 1st
+plot_data$cluster <- factor(plot_data$cluster, levels = c("1", "2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19")) 
+
+
+
+# Plotting using ggplot2
+pdf("output/seurat/Cluster_cell_counts_BootstrapDownsampling100_WT_Bap1KO_numeric.pdf", width=9, height=4)
+ggplot(plot_data, aes(x = cluster, y = value, fill = condition)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(
+    data = filter(plot_data, condition == "Bap1KO"),
+    aes(label = significance, y = value + std_error_WT_clusters),
+    vjust = -0.8,
+    position = position_dodge(0.9), size = 5
+  ) +
+  scale_fill_manual(values = c("WT" = "#4365AE", "Bap1KO" = "#981E33")) +
+  labs(x = "Cluster", y = "Number of Cells") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5, size = 13)) +
+  theme(axis.text.y = element_text(size = 13)) +
+  ylim(0,900)
+dev.off()
+
+
+
+
+# differential expressed genes across conditions
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+
+## DEGs keeping ALL genes
+RNA_WT_Bap1KO.sct$celltype.stim <- paste(RNA_WT_Bap1KO.sct$seurat_clusters, RNA_WT_Bap1KO.sct$orig.ident,
+    sep = "-")
+Idents(RNA_WT_Bap1KO.sct) <- "celltype.stim"
+
+cluster1 <- FindMarkers(RNA_WT_Bap1KO.sct, ident.1 = "1-RNA_Bap1KO", ident.2 = "1-RNA_WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+cluster2 <- FindMarkers(RNA_WT_Bap1KO.sct, ident.1 = "2-RNA_Bap1KO", ident.2 = "2-RNA_WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+cluster3 <- FindMarkers(RNA_WT_Bap1KO.sct, ident.1 = "3-RNA_Bap1KO", ident.2 = "3-RNA_WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+cluster4 <- FindMarkers(RNA_WT_Bap1KO.sct, ident.1 = "4-RNA_Bap1KO", ident.2 = "4-RNA_WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")    
+cluster5 <- FindMarkers(RNA_WT_Bap1KO.sct, ident.1 = "5-RNA_Bap1KO", ident.2 = "5-RNA_WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")    
+cluster6 <- FindMarkers(RNA_WT_Bap1KO.sct, ident.1 = "6-RNA_Bap1KO", ident.2 = "6-RNA_WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+cluster7 <- FindMarkers(RNA_WT_Bap1KO.sct, ident.1 = "7-RNA_Bap1KO", ident.2 = "7-RNA_WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+cluster8 <- FindMarkers(RNA_WT_Bap1KO.sct, ident.1 = "8-RNA_Bap1KO", ident.2 = "8-RNA_WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+cluster9 <- FindMarkers(RNA_WT_Bap1KO.sct, ident.1 = "9-RNA_Bap1KO", ident.2 = "9-RNA_WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+cluster10 <- FindMarkers(RNA_WT_Bap1KO.sct, ident.1 = "10-RNA_Bap1KO", ident.2 = "10-RNA_WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+cluster11 <- FindMarkers(RNA_WT_Bap1KO.sct, ident.1 = "11-RNA_Bap1KO", ident.2 = "11-RNA_WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+cluster12 <- FindMarkers(RNA_WT_Bap1KO.sct, ident.1 = "12-RNA_Bap1KO", ident.2 = "12-RNA_WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+cluster13 <- FindMarkers(RNA_WT_Bap1KO.sct, ident.1 = "13-RNA_Bap1KO", ident.2 = "13-RNA_WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+cluster14 <- FindMarkers(RNA_WT_Bap1KO.sct, ident.1 = "14-RNA_Bap1KO", ident.2 = "14-RNA_WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+cluster15 <- FindMarkers(RNA_WT_Bap1KO.sct, ident.1 = "15-RNA_Bap1KO", ident.2 = "15-RNA_WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+cluster16 <- FindMarkers(RNA_WT_Bap1KO.sct, ident.1 = "16-RNA_Bap1KO", ident.2 = "16-RNA_WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+cluster17 <- FindMarkers(RNA_WT_Bap1KO.sct, ident.1 = "17-RNA_Bap1KO", ident.2 = "17-RNA_WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+cluster18 <- FindMarkers(RNA_WT_Bap1KO.sct, ident.1 = "18-RNA_Bap1KO", ident.2 = "18-RNA_WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+cluster19 <- FindMarkers(RNA_WT_Bap1KO.sct, ident.1 = "19-RNA_Bap1KO", ident.2 = "19-RNA_WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA")  
+
+
+### save output
+## write.table(cluster1, file = "output/seurat/cluster1-Bap1KO_response_V1_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster1, file = "output/seurat/cluster1-Bap1KO_response_V1_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster2, file = "output/seurat/cluster2-Bap1KO_response_V1_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster3, file = "output/seurat/cluster3-Bap1KO_response_V1_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster4, file = "output/seurat/cluster4-Bap1KO_response_V1_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster5, file = "output/seurat/cluster5-Bap1KO_response_V1_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster6, file = "output/seurat/cluster6-Bap1KO_response_V1_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster7, file = "output/seurat/cluster7-Bap1KO_response_V1_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster8, file = "output/seurat/cluster8-Bap1KO_response_V1_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster9, file = "output/seurat/cluster9-Bap1KO_response_V1_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster10, file = "output/seurat/cluster10-Bap1KO_response_V1_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster11, file = "output/seurat/cluster11-Bap1KO_response_V1_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster12, file = "output/seurat/cluster12-Bap1KO_response_V1_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster13, file = "output/seurat/cluster13-Bap1KO_response_V1_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster14, file = "output/seurat/cluster14-Bap1KO_response_V1_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster15, file = "output/seurat/cluster15-Bap1KO_response_V1_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster16, file = "output/seurat/cluster16-Bap1KO_response_V1_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster17, file = "output/seurat/cluster17-Bap1KO_response_V1_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster18, file = "output/seurat/cluster18-Bap1KO_response_V1_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster19, file = "output/seurat/cluster19-Bap1KO_response_V1_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("cluster1", "cluster2", "cluster3", 
+                   "cluster4", "cluster5", "cluster6", 
+                   "cluster7", "cluster8", 
+                   "cluster9", "cluster10", "cluster11", 
+                   "cluster12", "cluster13", "cluster14", "cluster15", 
+                   "cluster16", "cluster17", "cluster18", "cluster19")
+# Loop over each cluster type to read data and assign to a variable
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-Bap1KO_response_V1_allGenes.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1)
+  assign(cluster, data)
+}
+
+
+
+
+
+
+
+# DEGs nb dotplot
+## Initialize an empty data frame to store the summary
+DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
+
+## List of cell types
+cell_types <- c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19")
+
+## Loop through each cell type to count the number of significant DEGs
+for (cell_type in cell_types) {
+  file_name <- paste("output/seurat/", cell_type, "-Bap1KO_response_V1_allGenes.txt", sep = "")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
+  num_degs <- sum(deg_data$p_val_adj < 0.05) ## Count the number of significant DEGs
+  DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
+}
+
+
+DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19")) 
+
+DEG_count$Cluster_Number <- as.numeric(sub("cluster", "", DEG_count$Cell_Type))
+
+DEG_count$Cluster_Number <- factor(DEG_count$Cluster_Number, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19")) 
+
+
+## Dotplot
+
+cell_type_colors <- c(
+  "cluster1" = "#FFB6C1", "cluster2" = "#FFA07A", "cluster3" = "#FFD700", "cluster4" = "#ADFF2F", 
+  "cluster5" = "#7FFF00", "cluster6" = "#32CD32", "cluster7" = "#3CB371", "cluster8" = "#00FA9A", 
+  "cluster9" = "#00CED1", "cluster10" = "#4682B4", "cluster11" = "#1E90FF", "cluster12" = "#6495ED", 
+  "cluster13" = "#4169E1", "cluster14" = "#BA55D3", "cluster15" = "#DA70D6", "cluster16" = "#EE82EE", 
+  "cluster17" = "#FF69B4", "cluster18" = "#FF1493", "cluster19" = "#DB7093"
+)
+
+# Generate the dot plot
+pdf("output/seurat/Dotplot_Bap1KO_DEG_count_V1.pdf", width=9, height=4)
+ggplot(DEG_count, aes(x = Cluster_Number, y = 1) )+
+  geom_point(aes(size = ifelse(Num_DEGs == 0, 1, Num_DEGs), fill = Cell_Type) , shape = 21, color = "black") +
+  scale_size_continuous(range = c(1, 15)) +
+  scale_fill_manual(values = cell_type_colors, guide = "none") +  # Remove the legend for cell types
+  theme_void() +
+  labs(title = "Number of DEGs per Cell Type", x = "Cell Type", y = "", size = "Number of DEGs") +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5, vjust = 50, size = 15),  # Adjust the position of x-axis labels
+    axis.text.y = element_blank(), 
+    axis.ticks.y = element_blank(), 
+    axis.title.y = element_blank(),
+    legend.position = "right"
+  ) +
+  guides(size = guide_legend(title = "Number of DEGs", title.position = "top", title.hjust = 0.5))  # Keep only the size legend
+dev.off()
+
+
+
+
+
+### Find all markers 
+all_markers <- FindAllMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+
+write.table(all_markers, file = "output/seurat/srat_WT_Bap1KO_all_markers_V1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+# Display the top 10 CONSERVED marker genes of each cluster
+Idents(RNA_WT_Bap1KO.sct) <- "seurat_clusters"
+
+## DEGs cluster versus all other
+cluster1.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "1", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster1")
+cluster2.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "2", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster2")
+cluster3.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "3", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster3")
+cluster4.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "4", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster4")
+cluster5.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "5", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster5")
+cluster6.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "6", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster6")
+cluster7.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "7", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster7")
+cluster8.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "8", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster8")
+cluster9.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "9", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster9")
+cluster10.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "10", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster10")
+cluster11.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "11", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster11")
+cluster12.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "12", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster12")
+cluster13.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "13", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster13")
+cluster14.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "14", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster14")
+cluster15.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "15", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster15")
+cluster16.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "16", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster16")
+cluster17.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "17", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster17")
+cluster18.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "18", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster18")
+cluster19.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "19", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster19")
+
+
+## Combine all conserved markers into one data frame
+all_conserved <- bind_rows(cluster1.conserved,cluster2.conserved,cluster3.conserved,cluster4.conserved,cluster5.conserved,cluster6.conserved,cluster7.conserved,cluster8.conserved,cluster9.conserved,cluster10.conserved,cluster11.conserved,cluster12.conserved,cluster13.conserved,cluster14.conserved,cluster15.conserved,cluster16.conserved,cluster17.conserved,cluster18.conserved,cluster19.conserved)
+
+all_conserved$gene <- rownames(all_conserved)
+## Write all conserved markers to a file
+write.table(all_conserved, file = "output/seurat/srat_all_conserved_markers_WT_Bap1KO_V1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+## Find the top 5 conserved markers for each cluster
+top10_conserved <- all_conserved %>%
+  mutate(cluster = factor(cluster, levels = c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19"))) %>% 
+  separate(gene, into = c("gene", "suffix"), sep = "\\.\\.\\.", remove = TRUE, extra = "drop", fill = "right") %>% 
+  group_by(cluster) %>% 
+  arrange((max_pval)) %>% 
+  slice_head(n = 5) %>% 
+  ungroup() %>% 
+  arrange(match(cluster, c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19")))
+
+
+## Write the top 10 conserved markers for each cluster to a file
+
+## Visualize the top 10/3 conserved markers for each cluster
+marker_genes_conserved <- unique(top10_conserved$gene)
+levels(RNA_WT_Bap1KO.sct) <- c("1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16",
+  "17",
+  "18",
+  "19")
+
+pdf("output/seurat/DotPlot_SCT_top5_conserved_WT_Bap1KO_V1.pdf", width=19, height=5)
+DotPlot(RNA_WT_Bap1KO.sct, features = marker_genes_conserved, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
+
+
+# save
+## saveRDS(RNA_WT_Bap1KO.sct, file = "output/seurat/RNA_WT_Bap1KO.sct_V1_numeric.rds") 
+
+
+
+RNA_WT_Bap1KO.sct <- readRDS(file = "output/seurat/RNA_WT_Bap1KO.sct_V1_numeric.rds")
+
+
+
+
+
+
+############################ EasyCellType automatic annotation ##########################################
+# BiocManager::install("EasyCellType")
+library("EasyCellType")
+library("org.Mm.eg.db")
+library("AnnotationDbi")
+
+## load marker
+all_markers <- read.delim("output/seurat/srat_WT_Bap1KO_all_markers_V1.txt", header = TRUE, row.names = 1)
+### Filter either WT or cYAPKO
+all_markers <- all_markers[grepl("RNA_WT$", all_markers$cluster), ]
+all_markers <- all_markers[grepl("RNA_Bap1KO$", all_markers$cluster), ]
+
+## Convert geneSymbol to EntrezID
+all_markers$entrezid <- mapIds(org.Mm.eg.db,
+                           keys=all_markers$gene, #Column containing Ensembl gene ids
+                           column="ENTREZID",
+                           keytype="SYMBOL",
+                           multiVals="first")
+all_markers <- na.omit(all_markers)
+
+## Sort the datafram (data frame containing Entrez IDs, clusters and expression scores)
+
+all_markers_sort <- data.frame(gene=all_markers$entrezid, cluster=all_markers$cluster, 
+                      score=all_markers$avg_log2FC) %>% 
+  group_by(cluster) %>% 
+  mutate(rank = rank(score),  ties.method = "random") %>% 
+  arrange(desc(rank)) 
+input.d <- as.data.frame(all_markers_sort[, 1:3])
+
+## Run the enrihcment analysis
+annot.GSEA <- easyct(input.d, db="panglao", # cellmarker or panglao or clustermole
+                    species="Mouse", #  Human or Mouse
+                    tissue=NULL, p_cut=0.5,   # to see: data(cellmarker_tissue), data(clustermole_tissue), data(panglao_tissue)
+                    test="GSEA")    # GSEA or fisher?
+
+
+annot.GSEA <- easyct(input.d, db="cellmarker", # cellmarker or panglao or clustermole
+                    species="Mouse", #  Human or Mouse
+                    tissue=c("Brain", "Cerebellum", "Hippocampus"), p_cut=0.5,   # to see: data(cellmarker_tissue), data(clustermole_tissue), data(panglao_tissue)
+                    test="GSEA")    # GSEA or fisher?
+
+
+
+annot.GSEA <- easyct(input.d, db="clustermole", # cellmarker or panglao or clustermole
+                    species="Mouse", #  Human or Mouse
+                    tissue=c("Brain"), p_cut=0.5,   # to see: data(cellmarker_tissue), data(clustermole_tissue), data(panglao_tissue)
+                    test="GSEA")    # GSEA or fisher?
+
+## plots
+
+pdf("output/seurat/EasyCellType_dotplot_SCT_WT-cellmarker_brainCerebellumHippocampus.pdf", width=6, height=8)
+pdf("output/seurat/EasyCellType_dotplot_SCT_WT-clustermole_brain.pdf", width=6, height=8)
+
+plot_dot(test="GSEA", annot.GSEA) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+dev.off()
+
+
+
+
+
+##########################################################################################
+
+
+
+
+
+############ V2 naming
+
+Cluster1 = PyNs_SubC_CA1 (subiculum PyNs)
+Cluster2 = PyNs_SubC_CA23_1 (subiculum PyNs)
+Cluster3 = PyNs_RSC_ML (Retrosplenial Cortical Pyramidal neurons, middle layer)
+Cluster4 = IN_1 (interneuron)
+Cluster5 = PyNs_RSC_UL (Retrosplenial Cortical Pyramidal neurons, upper layer)
+Cluster6 = PyNs_SubC_CA23_2 (subiculum PyNs)
+Cluster7 = DG_GC (Dentate Gyrus granule cells)
+Cluster8 = NSC_1 (Neural Stem Cells)
+Cluster9 = IN_2 (interneuron)
+Cluster10 = SubC_1 (subiculum)
+Cluster11 = NSC_2 (Neural Stem Cells)
+Cluster12 = IP (Intermediate Progenitors)
+Cluster13 = NSC_3 (Neural Stem Cells)
+Cluster14 = OPC (Oligodendrocyte progenitor cells)
+Cluster15 = SubC_2 (subiculum)
+Cluster16 = CR (Cajal Retzius)
+Cluster17 = PyNs_RSC_DL (Retrosplenial Cortical Pyramidal neurons, deep layer)
+Cluster18 = Microglia
+Cluster19 = Unknown
+
+
+new.cluster.ids <- c(
+  "PyNs_SubC_CA1" ,
+  "PyNs_SubC_CA23_1" ,
+  "PyNs_RSC_ML" ,
+  "IN_1" ,
+  "PyNs_RSC_UL" ,
+  "PyNs_SubC_CA23_2" ,
+  "DG_GC" ,
+  "NSC_1" ,
+  "IN_2" ,
+  "SubC_1" ,
+  "NSC_2" ,
+  "IP" ,
+  "NSC_3" ,
+  "OPC" ,
+  "SubC_2" ,
+  "CR" ,
+  "PyNs_RSC_DL" ,
+  "Microglia",
+  "Unknown" 
+)
+
+names(new.cluster.ids) <- levels(RNA_WT_Bap1KO.sct)
+RNA_WT_Bap1KO.sct <- RenameIdents(RNA_WT_Bap1KO.sct, new.cluster.ids)
+
+RNA_WT_Bap1KO.sct$cluster.annot <- Idents(RNA_WT_Bap1KO.sct) # create a new slot in my seurat object
+
+
+pdf("output/seurat/UMAP_WT_Bap1KO_label_V2.pdf", width=12, height=6)
+DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap", split.by = "orig.ident", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+dev.off()
+
+
+pdf("output/seurat/UMAP_WT_Bap1KO_noSplit_label_V2.pdf", width=7, height=5)
+DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 4)
+dev.off()
+
+#overlapping orig.ident
+pdf("output/seurat/UMAP_WT_Bap1KO_label_overlap_V1.pdf", width=6, height=5)
+DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap", group.by = "orig.ident", pt.size = 0.000001, cols = c("blue","red"))
+dev.off()
+
+
+# All in dotplot
+DefaultAssay(RNA_WT_Bap1KO.sct) <- "SCT"
+
+Neural Stem Cells (NSC) = Pax6 (should have more cell types)
+Intermediate Progenitors (IP) = Eomes
+Dentate Gyrus Granucle Cells (DG) = Prox1, Neurod1, Sema5a
+CA1 = Cck, Insm1
+CA3 = Crym, Snca, Nrp2
+Pyramidal neurons deep layer (DL) = Tac2, Hs3st1, Nrn1
+Pyramidal neurons middle layer (ML) = Pantr1, Igfbpl1, Frmd4b
+Pyramidal neurons upper layer (UL) = Satb2, Itpr1
+Interneurons (IN) = Gad1, Grin2d, Reln, Calb1, Npy, Gria3, Lhx6
+Cajal Retzius (CR) = Lhx1
+Subiculum (SubC) = Nts, Nr4a2, Lmo3, B3gat1
+Microglia = Csf1r, Gpr34, Gpr183, Cx3cr1
+OPC = Pdgfra, Olig1
+
+
+all_markers <- c(
+  "Pax6" ,
+  "Eomes",
+  "Prox1", "Neurod1", "Sema5a",
+  "Tac2", "Hs3st1", "Nrn1",
+  "Pantr1", "Igfbpl1", "Frmd4b",
+  "Satb2", "Itpr1",
+  "Nts", "Nr4a2", "Lmo3", "B3gat1",
+  "Cck", "Insm1",
+  "Crym", "Snca", "Nrp2",
+  "Gad1", "Grin2d", "Calb1", "Npy", "Gria3", "Lhx6", # Reln removed
+  "Lhx1",
+  "Pdgfra", "Olig1",
+  "Csf1r", "Gpr34", "Gpr183", "Cx3cr1"
+)
+
+
+
+levels(RNA_WT_Bap1KO.sct) <- c(
+  "NSC_1" ,
+  "NSC_2" ,
+  "NSC_3" ,
+  "IP" ,
+  "DG_GC" ,
+  "PyNs_RSC_DL" ,
+  "PyNs_RSC_ML" ,
+  "PyNs_RSC_UL" ,
+  "SubC_1" ,
+  "SubC_2" ,
+  "PyNs_SubC_CA1" ,
+  "PyNs_SubC_CA23_1" ,
+  "PyNs_SubC_CA23_2" ,
+  "IN_1" ,
+  "IN_2" ,
+  "CR" ,
+  "OPC" ,
+  "Microglia",
+  "Unknown" 
+)
+
+
+
+pdf("output/seurat/DotPlot_SCT_WT_Bap1KO_label_V2.pdf", width=11, height=4.5)
+DotPlot(RNA_WT_Bap1KO.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
+
+pdf("output/seurat/DotPlot_SCT_WT_Bap1KO_label_V2vertical.pdf", width=11, height=4.5)
+DotPlot(RNA_WT_Bap1KO.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
+dev.off()
+
+
+########################################################
+
+
+# Cell type proportion
+
+
+pt <- table(Idents(RNA_WT_Bap1KO.sct), RNA_WT_Bap1KO.sct$orig.ident)
+pt <- as.data.frame(pt)
+pt <- pt %>%
+  group_by(Var2) %>%
+  mutate(Proportion = Freq / sum(Freq))
+
+pt$Var1 <- as.character(pt$Var1)
+
+pdf("output/seurat/cellTypeProp_SCT_WT_Bap1KO_V2.pdf", width=5, height=5)
+ggplot(pt, aes(x = Var2, y = Proportion, fill = Var1)) +
+  theme_bw(base_size = 15) +
+  geom_col(position = "fill", width = 0.5) +
+  xlab("Sample") +
+  ylab("Proportion") +
+  geom_text(aes(label = scales::percent(Proportion, accuracy = 0.1)), 
+            position = position_fill(vjust = 0.5), size = 3) +
+  theme_bw()
+dev.off()
+
+
+# Cell cycle proportion per cluster
+## Using numeric cluster annotation
+
+plot_cell_cycle_per_cluster <- function(RNA_WT_Bap1KO.sct, output_dir) {
+  clusters <- unique(RNA_WT_Bap1KO.sct$seurat_clusters)
+  for (cluster in clusters) {
+    data <- RNA_WT_Bap1KO.sct@meta.data %>%
+      filter(seurat_clusters == cluster) %>%
+      group_by(orig.ident, Phase) %>%
+      summarise(count = n()) %>%
+      ungroup() %>%
+      group_by(orig.ident) %>%
+      mutate(proportion = count / sum(count)) %>%
+      ungroup()
+    plot <- ggplot(data, aes(x = orig.ident, y = proportion, fill = Phase)) +
+      geom_bar(stat = "identity", position = "fill") +
+      scale_y_continuous(labels = scales::percent) +
+      labs(title = paste("Cluster", cluster), x = "Genotype", y = "Proportion (%)") +
+      theme_bw() +
+      scale_fill_manual(values = c("G1" = "#1f77b4", "G2M" = "#ff7f0e", "S" = "#2ca02c"))
+    # Save plot to PDF
+    pdf(paste0(output_dir, "cellCycle_Cluster_", cluster, ".pdf"), width = 5, height = 6)
+    print(plot)
+    dev.off()
+  }
+}
+plot_cell_cycle_per_cluster(RNA_WT_Bap1KO.sct, output_dir = "output/seurat/")
+
+
+
+
 
 
 
