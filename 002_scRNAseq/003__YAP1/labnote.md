@@ -13813,11 +13813,13 @@ pseudotime_association = as_tibble(pseudotime_association) # 9,707 pval 0.05 DEG
 
 ## Genes that change between two pseudotime points (start vs end)
 pseudotime_start_end_association <- startVsEndTest(traj3_noCondition_humangastruloid72hrs_V2, pseudotimeValues = c(0, 1))
+pseudotime_start_end_association <- startVsEndTest(traj3_noCondition_humangastruloid72hrs_V2, pseudotimeValues = NULL)
 pseudotime_start_end_association$gene <- rownames(pseudotime_start_end_association)
 pseudotime_start_end_association$fdr <- p.adjust(pseudotime_start_end_association$pvalue, method = "fdr")
 pseudotime_start_end_association <- pseudotime_start_end_association[order(pseudotime_start_end_association$fdr), ]
+pseudotime_start_end_association = as_tibble(pseudotime_start_end_association)
 ##--> log2FC = end - start: negative log2fc means start point higher average expr than end point
-# save output: write.table(pseudotime_start_end_association, file = c("output/condiments/pseudotime_start_end_association_traj3_noCondition_humangastruloid72hrs_V2.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+# save output: write.table(pseudotime_start_end_association, file = c("output/condiments/pseudotime_start_end_association_NULL_traj3_noCondition_humangastruloid72hrs_V2.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
 sce_cells <- colnames(traj3_noCondition_humangastruloid72hrs_V2) # collect cells of traj3
 subset_traj3_noCondition_humangastruloid72hrs_V2_humangastruloid.combined.sct <- subset(humangastruloid.combined.sct, cells = sce_cells) # Create a seurat object with only cells from traj3
@@ -13906,11 +13908,11 @@ peak_df <- data.frame(
 pseudotime_start_end_association # filter log2fc >0 >1
 pseudotime_start_end_association = read_tsv("output/condiments/pseudotime_start_end_association_traj3_noCondition_humangastruloid72hrs_V2.txt")
 pseudotime_start_end_association_logFC0 = pseudotime_start_end_association %>% 
-  filter(logFClineage1 > 1) %>%
+  filter(fdr<0.05) %>%
   dplyr::select(gene) %>%
   unique()
-
-pdf("output/condiments/heatmap_pseudotime_start_end_association_logFClineageOver1_traj3_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
+#heatmap_pseudotime_start_end_association_NULL_logFClineageOver0_traj3_noCondition_humangastruloid72hrs_V2
+pdf("output/condiments/heatmap_pseudotime_start_end_association_NULL_fdr05_traj3_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
 yhatSmooth <- predictSmooth(traj3_noCondition_humangastruloid72hrs_V2, gene = pseudotime_start_end_association_logFC0$gene, nPoints = 25, tidy = FALSE)
 yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
 heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
@@ -13920,15 +13922,16 @@ heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
                        show_colnames = FALSE)
 dev.off()
 
+
 ### DEG time course
 pseudotime_association = read_tsv("output/condiments/pseudotime_association_traj3_noCondition_humangastruloid72hrs_V2.txt")
 pseudotime_association_deg = pseudotime_association %>%
-  filter(fdr == 0)%>%
+  filter(fdr < 0.05)%>%
   dplyr::select(gene) %>%
   unique()
 
 
-pdf("output/condiments/heatmap_pseudotime_association_deg0_traj3_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
+pdf("output/condiments/heatmap_pseudotime_association_deg05_traj3_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
 yhatSmooth <- predictSmooth(traj3_noCondition_humangastruloid72hrs_V2, gene = pseudotime_association_deg$gene, nPoints = 25, tidy = FALSE)
 yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
 heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
@@ -14012,13 +14015,14 @@ pseudotime_association = as_tibble(pseudotime_association) # 13,138 pval 0.05 DE
 
 ## Genes that change between two pseudotime points (start vs end)
 pseudotime_start_end_association <- startVsEndTest(traj2_noCondition_humangastruloid72hrs_V2, pseudotimeValues = c(0, 1))
+pseudotime_start_end_association <- startVsEndTest(traj2_noCondition_humangastruloid72hrs_V2, pseudotimeValues = NULL)
 pseudotime_start_end_association$gene <- rownames(pseudotime_start_end_association)
 pseudotime_start_end_association$fdr <- p.adjust(pseudotime_start_end_association$pvalue, method = "fdr")
 pseudotime_start_end_association <- pseudotime_start_end_association[order(pseudotime_start_end_association$fdr), ]
 pseudotime_start_end_association = as_tibble(pseudotime_start_end_association) # 5,523 pval 0.05 DEG
 
 ##--> log2FC = end - start: negative log2fc means start point higher average expr than end point
-# save output: write.table(pseudotime_start_end_association, file = c("output/condiments/pseudotime_start_end_association_traj2_noCondition_humangastruloid72hrs_V2.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+# save output: write.table(pseudotime_start_end_association, file = c("output/condiments/pseudotime_start_end_association_NULL_traj2_noCondition_humangastruloid72hrs_V2.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
 sce_cells <- colnames(traj2_noCondition_humangastruloid72hrs_V2) # collect cells of traj3
 subset_traj2_noCondition_humangastruloid72hrs_V2_humangastruloid.combined.sct <- subset(humangastruloid.combined.sct, cells = sce_cells) # Create a seurat object with only cells from traj3
@@ -14107,11 +14111,11 @@ peak_df <- data.frame(
 pseudotime_start_end_association # filter log2fc >0 >1
 pseudotime_start_end_association = read_tsv("output/condiments/pseudotime_start_end_association_traj2_noCondition_humangastruloid72hrs_V2.txt")
 pseudotime_start_end_association_logFC0 = pseudotime_start_end_association %>% 
-  filter(logFClineage1 > 1) %>%
+  filter(fdr<0.05 ) %>%
   dplyr::select(gene) %>%
   unique()
 
-pdf("output/condiments/heatmap_pseudotime_start_end_association_logFClineageOver1_traj2_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
+pdf("output/condiments/heatmap_pseudotime_start_end_association_NULL_fdr05_traj2_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
 yhatSmooth <- predictSmooth(traj2_noCondition_humangastruloid72hrs_V2, gene = pseudotime_start_end_association_logFC0$gene, nPoints = 25, tidy = FALSE)
 yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
 heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
@@ -14124,12 +14128,12 @@ dev.off()
 ### DEG time course
 pseudotime_association = read_tsv("output/condiments/pseudotime_association_traj2_noCondition_humangastruloid72hrs_V2.txt")
 pseudotime_association_deg = pseudotime_association %>%
-  filter(fdr == 0)%>%
+  filter(fdr<0.05)%>%
   dplyr::select(gene) %>%
   unique()
 
 
-pdf("output/condiments/heatmap_pseudotime_association_deg0_traj2_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
+pdf("output/condiments/heatmap_pseudotime_association_deg05_traj2_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
 yhatSmooth <- predictSmooth(traj2_noCondition_humangastruloid72hrs_V2, gene = pseudotime_association_deg$gene, nPoints = 25, tidy = FALSE)
 yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
 heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
@@ -14203,13 +14207,15 @@ pseudotime_association = as_tibble(pseudotime_association) # 5,728 pval 0.05 DEG
 
 ## Genes that change between two pseudotime points (start vs end)
 pseudotime_start_end_association <- startVsEndTest(traj1_noCondition_humangastruloid72hrs_V2, pseudotimeValues = c(0, 1))
+pseudotime_start_end_association <- startVsEndTest(traj1_noCondition_humangastruloid72hrs_V2, pseudotimeValues = NULL)
+
 pseudotime_start_end_association$gene <- rownames(pseudotime_start_end_association)
 pseudotime_start_end_association$fdr <- p.adjust(pseudotime_start_end_association$pvalue, method = "fdr")
 pseudotime_start_end_association <- pseudotime_start_end_association[order(pseudotime_start_end_association$fdr), ]
 pseudotime_start_end_association = as_tibble(pseudotime_start_end_association) # 5,306 pval 0.05 DEG
 
 ##--> log2FC = end - start: negative log2fc means start point higher average expr than end point
-# save output: write.table(pseudotime_start_end_association, file = c("output/condiments/pseudotime_start_end_association_traj1_noCondition_humangastruloid72hrs_V2.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+# save output: write.table(pseudotime_start_end_association, file = c("output/condiments/pseudotime_start_end_association_NULL_traj1_noCondition_humangastruloid72hrs_V2.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
 sce_cells <- colnames(traj1_noCondition_humangastruloid72hrs_V2) # collect cells of traj3
 subset_traj1_noCondition_humangastruloid72hrs_V2_humangastruloid.combined.sct <- subset(humangastruloid.combined.sct, cells = sce_cells) # Create a seurat object with only cells from traj3
@@ -14298,11 +14304,11 @@ peak_df <- data.frame(
 pseudotime_start_end_association # filter log2fc >0 >1
 pseudotime_start_end_association = read_tsv("output/condiments/pseudotime_start_end_association_traj1_noCondition_humangastruloid72hrs_V2.txt")
 pseudotime_start_end_association_logFC0 = pseudotime_start_end_association %>% 
-  filter(logFClineage1 > 1) %>%
+  filter(fdr <0.05) %>%
   dplyr::select(gene) %>%
   unique()
 
-pdf("output/condiments/heatmap_pseudotime_start_end_association_logFClineageOver1_traj1_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
+pdf("output/condiments/heatmap_pseudotime_start_end_association_NULL_fdr05_traj1_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
 yhatSmooth <- predictSmooth(traj1_noCondition_humangastruloid72hrs_V2, gene = pseudotime_start_end_association_logFC0$gene, nPoints = 25, tidy = FALSE)
 yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
 heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
