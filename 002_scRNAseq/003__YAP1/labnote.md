@@ -13906,13 +13906,13 @@ peak_df <- data.frame(
 ## heatmap activate/induced genes along pseudotime
 ### DEG Start End
 pseudotime_start_end_association # filter log2fc >0 >1
-pseudotime_start_end_association = read_tsv("output/condiments/pseudotime_start_end_association_traj3_noCondition_humangastruloid72hrs_V2.txt")
+pseudotime_start_end_association = read_tsv("output/condiments/pseudotime_start_end_association_NULL_traj3_noCondition_humangastruloid72hrs_V2.txt") # NULL
 pseudotime_start_end_association_logFC0 = pseudotime_start_end_association %>% 
-  filter(fdr<0.05) %>%
+  filter(fdr<0.05, logFClineage1>0) %>%
   dplyr::select(gene) %>%
   unique()
 #heatmap_pseudotime_start_end_association_NULL_logFClineageOver0_traj3_noCondition_humangastruloid72hrs_V2
-pdf("output/condiments/heatmap_pseudotime_start_end_association_NULL_fdr05_traj3_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
+pdf("output/condiments/heatmap_pseudotime_start_end_association_NULL_logFClineage1Over0fdr05_traj3_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
 yhatSmooth <- predictSmooth(traj3_noCondition_humangastruloid72hrs_V2, gene = pseudotime_start_end_association_logFC0$gene, nPoints = 25, tidy = FALSE)
 yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
 heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
@@ -13926,7 +13926,7 @@ dev.off()
 ### DEG time course
 pseudotime_association = read_tsv("output/condiments/pseudotime_association_traj3_noCondition_humangastruloid72hrs_V2.txt")
 pseudotime_association_deg = pseudotime_association %>%
-  filter(fdr < 0.05)%>%
+  filter(fdr == 0)%>%
   dplyr::select(gene) %>%
   unique()
 
@@ -13943,14 +13943,14 @@ dev.off()
 
 ### DEG Start End & time course
 pseudotime_start_end_association_logFC0TCdeg05 = pseudotime_start_end_association %>% 
-  filter(logFClineage1 > 0.5) %>%
+  filter(logFClineage1 > 0) %>%
   dplyr::select(gene) %>%
   unique() %>%
   left_join(pseudotime_association) %>%
   filter(fdr <0.05)
 
 
-pdf("output/condiments/heatmap_pseudotime_start_end_association_logFClineageOver05_DEG05_traj3_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
+pdf("output/condiments/heatmap_pseudotime_start_end_association_logFClineageOver0fdrDEG05_traj3_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
 yhatSmooth <- predictSmooth(traj3_noCondition_humangastruloid72hrs_V2, gene = pseudotime_start_end_association_logFC0TCdeg05$gene, nPoints = 25, tidy = FALSE)
 yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
 heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
@@ -14109,13 +14109,13 @@ peak_df <- data.frame(
 ## heatmap activate/induced genes along pseudotime
 ### DEG Start End
 pseudotime_start_end_association # filter log2fc >0 >1
-pseudotime_start_end_association = read_tsv("output/condiments/pseudotime_start_end_association_traj2_noCondition_humangastruloid72hrs_V2.txt")
+pseudotime_start_end_association = read_tsv("output/condiments/pseudotime_start_end_association_NULL_traj2_noCondition_humangastruloid72hrs_V2.txt")
 pseudotime_start_end_association_logFC0 = pseudotime_start_end_association %>% 
-  filter(fdr<0.05 ) %>%
+  filter(fdr<0.05 , logFClineage1>0) %>%
   dplyr::select(gene) %>%
   unique()
 
-pdf("output/condiments/heatmap_pseudotime_start_end_association_NULL_fdr05_traj2_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
+pdf("output/condiments/heatmap_pseudotime_start_end_association_NULL_logFClineage1Over0fdr05_traj2_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
 yhatSmooth <- predictSmooth(traj2_noCondition_humangastruloid72hrs_V2, gene = pseudotime_start_end_association_logFC0$gene, nPoints = 25, tidy = FALSE)
 yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
 heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
@@ -14145,11 +14145,21 @@ dev.off()
 
 ### DEG Start End & time course
 pseudotime_start_end_association_logFC0TCdeg05 = pseudotime_start_end_association %>% 
-  filter(logFClineage1 > 0.5) %>%
+  filter(logFClineage1 > 0) %>%
   dplyr::select(gene) %>%
   unique() %>%
   left_join(pseudotime_association) %>%
   filter(fdr <0.05)
+
+pdf("output/condiments/heatmap_pseudotime_start_end_association_NULL_logFClineage1Over0fdrDEG05_traj2_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj2_noCondition_humangastruloid72hrs_V2, gene = pseudotime_start_end_association_logFC0TCdeg05$gene, nPoints = 25, tidy = FALSE)
+yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
+heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
+                       cluster_cols = FALSE,
+                       cluster_rows = FALSE,
+                       show_rownames = FALSE, 
+                       show_colnames = FALSE)
+dev.off()
 
 
 
@@ -14302,13 +14312,13 @@ peak_df <- data.frame(
 ## heatmap activate/induced genes along pseudotime
 ### DEG Start End
 pseudotime_start_end_association # filter log2fc >0 >1
-pseudotime_start_end_association = read_tsv("output/condiments/pseudotime_start_end_association_traj1_noCondition_humangastruloid72hrs_V2.txt")
+pseudotime_start_end_association = read_tsv("output/condiments/pseudotime_start_end_association_NULL_traj1_noCondition_humangastruloid72hrs_V2.txt")
 pseudotime_start_end_association_logFC0 = pseudotime_start_end_association %>% 
-  filter(fdr <0.05) %>%
+  filter(fdr <0.05, logFClineage1>0) %>%
   dplyr::select(gene) %>%
   unique()
 
-pdf("output/condiments/heatmap_pseudotime_start_end_association_NULL_fdr05_traj1_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
+pdf("output/condiments/heatmap_pseudotime_start_end_association_NULL_fdr05logFClineage1over0_traj1_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
 yhatSmooth <- predictSmooth(traj1_noCondition_humangastruloid72hrs_V2, gene = pseudotime_start_end_association_logFC0$gene, nPoints = 25, tidy = FALSE)
 yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
 heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
@@ -14338,11 +14348,21 @@ dev.off()
 
 ### DEG Start End & time course
 pseudotime_start_end_association_logFC0TCdeg05 = pseudotime_start_end_association %>% 
-  filter(logFClineage1 > 0.5) %>%
+  filter(logFClineage1 > 0) %>%
   dplyr::select(gene) %>%
   unique() %>%
   left_join(pseudotime_association) %>%
   filter(fdr <0.05)
+
+pdf("output/condiments/heatmap_pseudotime_start_end_association_NULL_logFClineage1over0fdrDEG05_traj1_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj1_noCondition_humangastruloid72hrs_V2, gene = pseudotime_start_end_association_logFC0TCdeg05$gene, nPoints = 25, tidy = FALSE)
+yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
+heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
+                       cluster_cols = FALSE,
+                       cluster_rows = FALSE,
+                       show_rownames = FALSE, 
+                       show_colnames = FALSE)
+dev.off()
 
 
 

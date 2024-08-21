@@ -3992,7 +3992,7 @@ pseudotime_traj3_DEG = read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/
     dplyr::rename("geneSymbol" = "gene",
                   "fdr_DEG" = "fdr") %>% 
     dplyr::select(geneSymbol, meanLogFC, fdr_DEG)
-pseudotime_traj3_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_traj3_noCondition_humangastruloid72hrs_V2.txt") %>%
+pseudotime_traj3_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_NULL_traj3_noCondition_humangastruloid72hrs_V2.txt") %>% # NULL
     dplyr::rename("geneSymbol" = "gene",
                   "fdr_StartEnd" = "fdr")  %>% 
     dplyr::select(geneSymbol, fdr_StartEnd, logFClineage1)
@@ -4041,11 +4041,10 @@ pseudotime_traj3_peak_YAPKO_EZH2_250bpTSS_geneSymbol = pseudotime_traj3_peak_DEG
 ## signal EZH2 vs DEG timecourse
 
 # pdf("output/binBw/corr_pseudotime_traj2_peakSmooth_fdr0__WT_EZH2_1kbTSS_geneSymbol_bc_max.pdf", width=5, height=4)
-pdf("output/binBw/corr_pseudotime_traj3_peakSmooth_logFClineageOver0fdrDEG05__WT_EZH2_1kbTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+pdf("output/binBw/corr_pseudotime_traj3_peakSmooth_fdrDEG0__WT_EZH2_1kbTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
 pseudotime_traj3_peak_WT_EZH2_1kbTSS_geneSymbol %>% 
     filter(
-           logFClineage1 > 0,
-           fdr_DEG <0.05) %>%
+           fdr_DEG == 0) %>%
 ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE, color = "blue") +
@@ -4061,11 +4060,11 @@ dev.off()
 
 
 # corr_pseudotime_traj3_peakSmooth_logFClineage1Over0fdrStartEnd05___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2
-pdf("output/binBw/corr_pseudotime_traj3_peakSmooth_fdrDEG0meanLogFC1___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+pdf("output/binBw/corr_pseudotime_traj3_peakSmooth_fdrDEG0___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
 pseudotime_traj3_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
     add_column(genotype = "WT") %>%
     bind_rows(pseudotime_traj3_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
-    filter(fdr_DEG == 0, meanLogFC > 1) %>%
+    filter(fdr_DEG == 0) %>%
 ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = genotype)) +
   geom_point(alpha = 0.7) +
   geom_smooth(method = "lm", se = FALSE) +
@@ -4073,6 +4072,39 @@ ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = genotype)) +
   scale_color_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
   theme_bw()
 dev.off()
+
+
+
+pdf("output/binBw/corr_pseudotime_traj3_peakSmooth_logFClineage1Over0fdrDEG05___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+pseudotime_traj3_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj3_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+    filter(fdr_DEG<0.05, logFClineage1>0) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = genotype)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = genotype)) +
+  scale_color_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+  theme_bw()
+dev.off()
+
+
+
+
+pdf("output/binBw/corr_pseudotime_traj3_peakSmooth_logFClineage1Over0fdrDEG05EZH2peaks___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4) 
+pseudotime_traj3_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj3_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+    filter(fdr_DEG<0.05, logFClineage1>0) %>%
+    inner_join(EZH2_peaks) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = genotype)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = genotype)) +
+  scale_color_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+  theme_bw()
+dev.off()
+
 
 
 
@@ -4270,7 +4302,7 @@ pseudotime_traj3_DEG = read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/
     dplyr::rename("geneSymbol" = "gene",
                   "fdr_DEG" = "fdr") %>% 
     dplyr::select(geneSymbol, meanLogFC, fdr_DEG)
-pseudotime_traj3_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_traj3_noCondition_humangastruloid72hrs_V2.txt") %>%
+pseudotime_traj3_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_NULL_traj3_noCondition_humangastruloid72hrs_V2.txt") %>%
     dplyr::rename("geneSymbol" = "gene",
                   "fdr_StartEnd" = "fdr")  %>% 
     dplyr::select(geneSymbol, fdr_StartEnd, logFClineage1)
@@ -4310,9 +4342,9 @@ pseudotime_traj3_peak_WT_H3K27me3_250bpTSS_geneSymbol = pseudotime_traj3_peak_DE
 # pdf("output/binBw/corr_pseudotime_traj3_peakSmooth_logFClineageOVer1__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
 
 
-pdf("output/binBw/corr_pseudotime_traj3_peakSmooth_logFClineageOVer0fdrStartEnd05__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+pdf("output/binBw/corr_pseudotime_traj3_peakSmooth_logFClineageOVer0fdrDEG05__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=4)
 pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
-    filter(logFClineage1 > 0, fdr_StartEnd <0.05 ) %>%
+    filter(logFClineage1 > 0, fdr_DEG <0.05 ) %>%
 ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE, color = "blue") +
@@ -4322,7 +4354,7 @@ ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
 dev.off()
 
 
-pdf("output/binBw/corr_pseudotime_traj3_peakSmooth_fdrDEG0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+pdf("output/binBw/corr_pseudotime_traj3_peakSmooth_fdrDEG0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=4)
 pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
     filter(fdr_DEG == 0 ) %>%
 ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
@@ -4516,7 +4548,7 @@ pseudotime_traj2_DEG = read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/
     dplyr::rename("geneSymbol" = "gene",
                   "fdr_DEG" = "fdr") %>% 
     dplyr::select(geneSymbol, meanLogFC, fdr_DEG)
-pseudotime_traj2_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_traj2_noCondition_humangastruloid72hrs_V2.txt") %>%
+pseudotime_traj2_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_NULL_traj2_noCondition_humangastruloid72hrs_V2.txt") %>%
     dplyr::rename("geneSymbol" = "gene",
                   "fdr_StartEnd" = "fdr")  %>% 
     dplyr::select(geneSymbol, fdr_StartEnd, logFClineage1)
@@ -4568,6 +4600,17 @@ ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
 dev.off()
 
 
+
+pdf("output/binBw/corr_pseudotime_traj2_peakSmooth_fdrStartEnd05logFClineage1OVer0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=4)
+pseudotime_traj2_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter(fdr_StartEnd <0.05, logFClineage1>0 ) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  stat_cor(method = "pearson", label.x = 0, label.y = 3000, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
 
 
 
@@ -4691,6 +4734,349 @@ dev.off()
 
 
 
+## V2 CORRECT TRAJ -Lineage2-  Test Activation point with EZH2 - xxx
+
+Related to *20240720_meeting* Let's check whether correlation between:
+- EZH2 signal in TSS (this labnote), 1kb/500bp/250bp
+- Pseudotime Activation point of trajectory2 (`002*/003*` at `## Identify Activation point`) or `pseudotime_start_end_association()`
+    - Also check only conserved cell type marker genes (top50, top100, top500, signif only..) (`002*/003*`-->`output/seurat/srat_all_conserved_markers_V2corr.txt`) *_corr is just removing of 1st column name*
+    - Also check only genes with EZH2 peak in WT (`output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_qval1.30103_promoterAnd5_geneSymbol.txt`)
+- If correlation, compare WT vs KO
+
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+library("ggpubr")
+
+
+# import files
+pseudotime_traj2_peak <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/traj2_noCondition_humangastruloid72hrs_V2_ActivationPoint.txt") %>%
+    dplyr::rename("geneSymbol" = "gene") 
+pseudotime_traj2_DEG = read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_association_traj2_noCondition_humangastruloid72hrs_V2.txt") %>%
+    dplyr::rename("geneSymbol" = "gene",
+                  "fdr_DEG" = "fdr") %>% 
+    dplyr::select(geneSymbol, meanLogFC, fdr_DEG)
+pseudotime_traj2_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_NULL_traj2_noCondition_humangastruloid72hrs_V2.txt") %>% # NULL
+    dplyr::rename("geneSymbol" = "gene",
+                  "fdr_StartEnd" = "fdr")  %>% 
+    dplyr::select(geneSymbol, fdr_StartEnd, logFClineage1)
+EZH2_peaks = read_tsv("output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_qval1.30103_promoterAnd5_geneSymbol.txt", col_names = FALSE) %>%
+    dplyr::rename("geneSymbol" = "X1")
+
+## cell type marker genes (very badly formated)
+cellType_marker = read_tsv("../../002_scRNAseq/003__YAP1/output/seurat/srat_all_conserved_markers_V2corr.txt") %>%
+    tidyr::separate(gene, into = c("gene", "trash"), sep = "\\.\\.\\.") %>%
+    dplyr::rename("geneSymbol" = "gene") %>%
+    dplyr::select(cluster, geneSymbol, max_pval)
+###
+
+
+
+pseudotime_traj2_peak_DEG_StartEnd = pseudotime_traj2_peak %>%
+    left_join(pseudotime_traj2_DEG) %>%
+    left_join(pseudotime_traj2_StartEnd)
+
+# WT #########################
+WT_EZH2_1kbTSS_geneSymbol <- read_tsv("output/binBw/WT_EZH2_1kbTSS_geneSymbol.txt")
+WT_EZH2_500bpTSS_geneSymbol <- read_tsv("output/binBw/WT_EZH2_500bpTSS_geneSymbol.txt")
+WT_EZH2_250bpTSS_geneSymbol <- read_tsv("output/binBw/WT_EZH2_250bpTSS_geneSymbol.txt")
+pseudotime_traj2_peak_WT_EZH2_1kbTSS_geneSymbol = pseudotime_traj2_peak_DEG_StartEnd %>%
+    left_join(WT_EZH2_1kbTSS_geneSymbol) %>%
+  filter(!is.na(bc_median))
+pseudotime_traj2_peak_WT_EZH2_500bpTSS_geneSymbol = pseudotime_traj2_peak_DEG_StartEnd %>%
+    left_join(WT_EZH2_500bpTSS_geneSymbol)  %>%
+  filter(!is.na(bc_median))
+pseudotime_traj2_peak_WT_EZH2_250bpTSS_geneSymbol = pseudotime_traj2_peak_DEG_StartEnd %>%
+    left_join(WT_EZH2_250bpTSS_geneSymbol) %>%
+  filter(!is.na(bc_median))
+# YAPKO #########################
+YAPKO_EZH2_1kbTSS_geneSymbol <- read_tsv("output/binBw/YAPKO_EZH2_1kbTSS_geneSymbol.txt")
+YAPKO_EZH2_500bpTSS_geneSymbol <- read_tsv("output/binBw/YAPKO_EZH2_500bpTSS_geneSymbol.txt")
+YAPKO_EZH2_250bpTSS_geneSymbol <- read_tsv("output/binBw/YAPKO_EZH2_250bpTSS_geneSymbol.txt")
+pseudotime_traj2_peak_YAPKO_EZH2_1kbTSS_geneSymbol = pseudotime_traj2_peak_DEG_StartEnd %>%
+    left_join(YAPKO_EZH2_1kbTSS_geneSymbol) %>%
+  filter(!is.na(bc_median))
+pseudotime_traj2_peak_YAPKO_EZH2_500bpTSS_geneSymbol = pseudotime_traj2_peak_DEG_StartEnd %>%
+    left_join(YAPKO_EZH2_500bpTSS_geneSymbol)  %>%
+  filter(!is.na(bc_median))
+pseudotime_traj2_peak_YAPKO_EZH2_250bpTSS_geneSymbol = pseudotime_traj2_peak_DEG_StartEnd %>%
+    left_join(YAPKO_EZH2_250bpTSS_geneSymbol) %>%
+  filter(!is.na(bc_median))
+
+# 
+
+pdf("output/binBw/corr_pseudotime_traj2_peakSmooth_fdrDEG0___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+pseudotime_traj2_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj2_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+    filter(fdr_DEG == 0) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = genotype)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = genotype)) +
+  scale_color_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+  theme_bw()
+dev.off()
+
+
+
+pdf("output/binBw/corr_pseudotime_traj2_peakSmooth_fdrStartEnd05logFClineage1Over0___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+pseudotime_traj2_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj2_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+    filter(fdr_StartEnd <0.05, logFClineage1>0) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = genotype)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = genotype)) +
+  scale_color_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+  theme_bw()
+dev.off()
+
+
+
+
+
+```
+
+
+
+
+
+
+
+## V2 CORRECT TRAJ -Lineage1-  Test Activation point with EZH2 - xxx
+
+Related to *20240720_meeting* Let's check whether correlation between:
+- EZH2 signal in TSS (this labnote), 1kb/500bp/250bp
+- Pseudotime Activation point of trajectory2 (`002*/003*` at `## Identify Activation point`) or `pseudotime_start_end_association()`
+    - Also check only conserved cell type marker genes (top50, top100, top500, signif only..) (`002*/003*`-->`output/seurat/srat_all_conserved_markers_V2corr.txt`) *_corr is just removing of 1st column name*
+    - Also check only genes with EZH2 peak in WT (`output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_qval1.30103_promoterAnd5_geneSymbol.txt`)
+- If correlation, compare WT vs KO
+
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+library("ggpubr")
+
+
+# import files
+pseudotime_traj1_peak <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/traj1_noCondition_humangastruloid72hrs_V2_ActivationPoint.txt") %>%
+    dplyr::rename("geneSymbol" = "gene") 
+pseudotime_traj1_DEG = read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_association_traj1_noCondition_humangastruloid72hrs_V2.txt") %>%
+    dplyr::rename("geneSymbol" = "gene",
+                  "fdr_DEG" = "fdr") %>% 
+    dplyr::select(geneSymbol, meanLogFC, fdr_DEG)
+pseudotime_traj1_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_NULL_traj1_noCondition_humangastruloid72hrs_V2.txt") %>% # NULL
+    dplyr::rename("geneSymbol" = "gene",
+                  "fdr_StartEnd" = "fdr")  %>% 
+    dplyr::select(geneSymbol, fdr_StartEnd, logFClineage1)
+EZH2_peaks = read_tsv("output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_qval1.30103_promoterAnd5_geneSymbol.txt", col_names = FALSE) %>%
+    dplyr::rename("geneSymbol" = "X1")
+
+## cell type marker genes (very badly formated)
+cellType_marker = read_tsv("../../002_scRNAseq/003__YAP1/output/seurat/srat_all_conserved_markers_V2corr.txt") %>%
+    tidyr::separate(gene, into = c("gene", "trash"), sep = "\\.\\.\\.") %>%
+    dplyr::rename("geneSymbol" = "gene") %>%
+    dplyr::select(cluster, geneSymbol, max_pval)
+###
+
+
+
+pseudotime_traj1_peak_DEG_StartEnd = pseudotime_traj1_peak %>%
+    left_join(pseudotime_traj1_DEG) %>%
+    left_join(pseudotime_traj1_StartEnd)
+
+# WT #########################
+WT_EZH2_1kbTSS_geneSymbol <- read_tsv("output/binBw/WT_EZH2_1kbTSS_geneSymbol.txt")
+WT_EZH2_500bpTSS_geneSymbol <- read_tsv("output/binBw/WT_EZH2_500bpTSS_geneSymbol.txt")
+WT_EZH2_250bpTSS_geneSymbol <- read_tsv("output/binBw/WT_EZH2_250bpTSS_geneSymbol.txt")
+pseudotime_traj1_peak_WT_EZH2_1kbTSS_geneSymbol = pseudotime_traj1_peak_DEG_StartEnd %>%
+    left_join(WT_EZH2_1kbTSS_geneSymbol) %>%
+  filter(!is.na(bc_median))
+pseudotime_traj1_peak_WT_EZH2_500bpTSS_geneSymbol = pseudotime_traj1_peak_DEG_StartEnd %>%
+    left_join(WT_EZH2_500bpTSS_geneSymbol)  %>%
+  filter(!is.na(bc_median))
+pseudotime_traj1_peak_WT_EZH2_250bpTSS_geneSymbol = pseudotime_traj1_peak_DEG_StartEnd %>%
+    left_join(WT_EZH2_250bpTSS_geneSymbol) %>%
+  filter(!is.na(bc_median))
+# YAPKO #########################
+YAPKO_EZH2_1kbTSS_geneSymbol <- read_tsv("output/binBw/YAPKO_EZH2_1kbTSS_geneSymbol.txt")
+YAPKO_EZH2_500bpTSS_geneSymbol <- read_tsv("output/binBw/YAPKO_EZH2_500bpTSS_geneSymbol.txt")
+YAPKO_EZH2_250bpTSS_geneSymbol <- read_tsv("output/binBw/YAPKO_EZH2_250bpTSS_geneSymbol.txt")
+pseudotime_traj1_peak_YAPKO_EZH2_1kbTSS_geneSymbol = pseudotime_traj1_peak_DEG_StartEnd %>%
+    left_join(YAPKO_EZH2_1kbTSS_geneSymbol) %>%
+  filter(!is.na(bc_median))
+pseudotime_traj1_peak_YAPKO_EZH2_500bpTSS_geneSymbol = pseudotime_traj1_peak_DEG_StartEnd %>%
+    left_join(YAPKO_EZH2_500bpTSS_geneSymbol)  %>%
+  filter(!is.na(bc_median))
+pseudotime_traj1_peak_YAPKO_EZH2_250bpTSS_geneSymbol = pseudotime_traj1_peak_DEG_StartEnd %>%
+    left_join(YAPKO_EZH2_250bpTSS_geneSymbol) %>%
+  filter(!is.na(bc_median))
+
+# 
+
+pdf("output/binBw/corr_pseudotime_traj1_peakSmooth_fdrDEG0___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+pseudotime_traj1_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj1_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+    filter(fdr_DEG == 0) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = genotype)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = genotype)) +
+  scale_color_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+  theme_bw()
+dev.off()
+
+
+
+pdf("output/binBw/corr_pseudotime_traj1_peakSmooth_logFClineage1Over0fdrDEG05___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+pseudotime_traj1_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj1_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+    filter(fdr_DEG<0.05, logFClineage1>0) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = genotype)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = genotype)) +
+  scale_color_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+  theme_bw()
+dev.off()
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+## V2 CORRECT TRAJ -Lineage1-  Test Activation point with H3K27me3 - xxx
+
+
+The level of H3K27me3 around TSS has been calculated in `001*/006*` at `# Quantify signal around TSS`. Only 1 Bio Rep for 1st slight test. (`output/binBw/WT_H3K27me3_250bpTSS_geneSymbol.txt`)
+
+--> If encouraging, could get another Rep from `001*/005*`
+
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+library("ggpubr")
+
+
+# import files
+pseudotime_traj1_peak <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/traj1_noCondition_humangastruloid72hrs_V2_ActivationPoint.txt") %>%
+    dplyr::rename("geneSymbol" = "gene") 
+pseudotime_traj1_DEG = read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_association_traj1_noCondition_humangastruloid72hrs_V2.txt") %>%
+    dplyr::rename("geneSymbol" = "gene",
+                  "fdr_DEG" = "fdr") %>% 
+    dplyr::select(geneSymbol, meanLogFC, fdr_DEG)
+pseudotime_traj1_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_NULL_traj1_noCondition_humangastruloid72hrs_V2.txt") %>% # NULL
+    dplyr::rename("geneSymbol" = "gene",
+                  "fdr_StartEnd" = "fdr")  %>% 
+    dplyr::select(geneSymbol, fdr_StartEnd, logFClineage1)
+H3K27me3_peaks = read_tsv("../../001_EZH1_Project/006__CutRun_PSC_FA/output/ChIPseeker/annotation_macs2_PSC_WT_H3K27me3_qval2.30103_promoterAnd5_geneSymbol.txt", col_names = FALSE) %>%
+    dplyr::rename("geneSymbol" = "X1")
+
+
+## cell type marker genes (very badly formated)
+cellType_marker = read_tsv("../../002_scRNAseq/003__YAP1/output/seurat/srat_all_conserved_markers_V2corr.txt") %>%
+    tidyr::separate(gene, into = c("gene", "trash"), sep = "\\.\\.\\.") %>%
+    dplyr::rename("geneSymbol" = "gene") %>%
+    dplyr::select(cluster, geneSymbol, max_pval)
+###
+
+
+
+pseudotime_traj1_peak_DEG_StartEnd = pseudotime_traj1_peak %>%
+    left_join(pseudotime_traj1_DEG) %>%
+    left_join(pseudotime_traj1_StartEnd)
+
+
+
+
+# WT #########################
+WT_H3K27me3_1kbTSS_geneSymbol <- read_tsv("../../001_EZH1_Project/006__CutRun_PSC_FA/output/binBw/WT_H3K27me3_1kbTSS_geneSymbol.txt")
+WT_H3K27me3_500bpTSS_geneSymbol <- read_tsv("../../001_EZH1_Project/006__CutRun_PSC_FA/output/binBw/WT_H3K27me3_500bpTSS_geneSymbol.txt")
+WT_H3K27me3_250bpTSS_geneSymbol <- read_tsv("../../001_EZH1_Project/006__CutRun_PSC_FA/output/binBw/WT_H3K27me3_250bpTSS_geneSymbol.txt")
+pseudotime_traj1_peak_WT_H3K27me3_1kbTSS_geneSymbol = pseudotime_traj1_peak_DEG_StartEnd %>%
+    left_join(WT_H3K27me3_1kbTSS_geneSymbol) %>%
+  filter(!is.na(bc_median))
+pseudotime_traj1_peak_WT_H3K27me3_500bpTSS_geneSymbol = pseudotime_traj1_peak_DEG_StartEnd %>%
+    left_join(WT_H3K27me3_500bpTSS_geneSymbol)  %>%
+  filter(!is.na(bc_median))
+pseudotime_traj1_peak_WT_H3K27me3_250bpTSS_geneSymbol = pseudotime_traj1_peak_DEG_StartEnd %>%
+    left_join(WT_H3K27me3_250bpTSS_geneSymbol) %>%
+  filter(!is.na(bc_median))
+
+
+
+
+# 
+pdf("output/binBw/corr_pseudotime_traj1_peakSmooth_fdrDEG0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=4)
+pseudotime_traj1_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter(fdr_DEG == 0 ) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  stat_cor(method = "pearson", label.x = 0, label.y = 3000, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+
+# 
+pdf("output/binBw/corr_pseudotime_traj1_peakSmooth_fdrStartEnd05logFClineage1Over0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=4)
+pseudotime_traj1_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter(fdr_StartEnd <0.05, logFClineage1>0 ) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  stat_cor(method = "pearson", label.x = 0, label.y = 3000, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+
+
+
+
+
+```
+
+
+
+
+
 
 
 
@@ -4733,7 +5119,7 @@ pseudotime_traj3_DEG = read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/
     dplyr::rename("geneSymbol" = "gene",
                   "fdr_DEG" = "fdr") %>% 
     dplyr::select(geneSymbol, meanLogFC, fdr_DEG)
-pseudotime_traj3_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_traj3_noCondition_humangastruloid72hrs_V2.txt") %>%
+pseudotime_traj3_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_NULL_traj3_noCondition_humangastruloid72hrs_V2.txt") %>% # NULL
     dplyr::rename("geneSymbol" = "gene",
                   "fdr_StartEnd" = "fdr")  %>% 
     dplyr::select(geneSymbol, fdr_StartEnd, logFClineage1)
@@ -4783,23 +5169,16 @@ pseudotime_traj23_peak_WT_H3K27me3_500bpTSS_geneSymbol %>%
 dev.off()
 
 
-
-
-
-pdf("output/binBw/histBinCluster_pseudotime_traj23_UNTREATEDDASATINIB_peakSmooth_logFClineageOver0fdrStartEnd05__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=2)
-pseudotime_traj23_peak_WT_H3K27me3_500bpTSS_geneSymbol %>%
-    filter( logFClineage1 > 0, fdr_StartEnd <0.05) %>%
-    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(0, 5.05, 12.5, 13.2, max(smooth_peak_pseudotime)), include.lowest = TRUE, right = FALSE)) %>%
-    group_by(condition, pseudotime_bin) %>%
-    summarize(median_bc_max = median(bc_max), .groups = 'drop') %>%
-        ggplot(., aes(x = pseudotime_bin, y = median_bc_max, fill = condition)) +
-        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
-        scale_fill_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
-        theme_bw() +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+pdf("output/binBw/corr_pseudotime_traj23_UNTREATEDDASATINIB_peakSmooth_fdrStartEnd05logFClineage1Over0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+pseudotime_traj23_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter(fdr_StartEnd < 0.05, logFClineage1>0) %>%
+    ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = condition)) +
+    geom_point(alpha = 0.7) +
+    geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = condition)) + 
+    scale_color_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
+    theme_bw()
 dev.off()
-
-
 
 
 
@@ -4962,7 +5341,7 @@ pseudotime_traj2_DEG = read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/
     dplyr::rename("geneSymbol" = "gene",
                   "fdr_DEG" = "fdr") %>% 
     dplyr::select(geneSymbol, meanLogFC, fdr_DEG)
-pseudotime_traj2_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_traj2_noCondition_humangastruloid72hrs_V2.txt") %>%
+pseudotime_traj2_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_NULL_traj2_noCondition_humangastruloid72hrs_V2.txt") %>%   # NULL
     dplyr::rename("geneSymbol" = "gene",
                   "fdr_StartEnd" = "fdr")  %>% 
     dplyr::select(geneSymbol, fdr_StartEnd, logFClineage1)
@@ -5001,9 +5380,9 @@ pseudotime_traj31_peak_WT_H3K27me3_250bpTSS_geneSymbol = pseudotime_traj31_peak_
 
 #corr_pseudotime_traj31_UNTREATEDDASATINIB_peakSmooth_logFClineage1Over0fdrStartEnd00001__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2
 
-pdf("output/binBw/corr_pseudotime_traj31_UNTREATEDDASATINIB_peakSmooth_logFClineage1Over0fdrStartEnd00001__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+pdf("output/binBw/corr_pseudotime_traj31_UNTREATEDDASATINIB_peakSmooth_logFClineage1Over0fdrStartEnd05__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
 pseudotime_traj31_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
-    filter(logFClineage1 > 0 , fdr_StartEnd<0.00001) %>%
+    filter( fdr_StartEnd < 0.05, logFClineage1 > 0) %>%
     ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = condition)) +
     geom_point(alpha = 0.7) +
     geom_smooth(method = "lm", se = FALSE) +
@@ -5012,6 +5391,17 @@ pseudotime_traj31_peak_WT_H3K27me3_500bpTSS_geneSymbol %>%
     theme_bw()
 dev.off()
 
+
+pdf("output/binBw/corr_pseudotime_traj31_UNTREATEDDASATINIB_peakSmooth_fdrDEG0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+pseudotime_traj31_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter( fdr_DEG == 0) %>%
+    ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = condition)) +
+    geom_point(alpha = 0.7) +
+    geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = condition)) + 
+    scale_color_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
+    theme_bw()
+dev.off()
 
 
 
@@ -5050,9 +5440,9 @@ pseudotime_traj31_peak_WT_H3K27me3_500bpTSS_geneSymbol_cellType_marker_n = cellT
 
 
 
-pdf("output/binBw/corr_pseudotime_traj31_UNTREATEDDASATINIB_peakSmooth_cellType_marker_250_logFClineageOver0fdrStartEnd05__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+pdf("output/binBw/corr_pseudotime_traj31_UNTREATEDDASATINIB_peakSmooth_cellType_marker_500_fdrStartEnd05__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
 pseudotime_traj31_peak_WT_H3K27me3_500bpTSS_geneSymbol_cellType_marker_n %>% 
-    filter(  logFClineage1 > 0 , fdr_StartEnd <0.05) %>%
+    filter(   fdr_DEG <0.05) %>%
 ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max,  color = condition)) +
   geom_point(alpha = 0.7) +
   geom_smooth(method = "lm", se = FALSE) +
@@ -5187,11 +5577,11 @@ pseudotime_traj2_peak_DASATINIB <- read_tsv("../../002_scRNAseq/003__YAP1/output
     dplyr::rename("geneSymbol" = "gene")%>%
     add_column(condition = "DASATINIB72hrs")
 
-pseudotime_traj1_DEG = read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_association_traj2_noCondition_humangastruloid72hrs_V2.txt") %>%
+pseudotime_traj1_DEG = read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_association_traj1_noCondition_humangastruloid72hrs_V2.txt") %>%
     dplyr::rename("geneSymbol" = "gene",
                   "fdr_DEG" = "fdr") %>% 
     dplyr::select(geneSymbol, meanLogFC, fdr_DEG)
-pseudotime_traj1_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_traj2_noCondition_humangastruloid72hrs_V2.txt") %>%
+pseudotime_traj1_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_NULL_traj1_noCondition_humangastruloid72hrs_V2.txt") %>% # NULL added !!!!!
     dplyr::rename("geneSymbol" = "gene",
                   "fdr_StartEnd" = "fdr")  %>% 
     dplyr::select(geneSymbol, fdr_StartEnd, logFClineage1)
@@ -5230,9 +5620,21 @@ pseudotime_traj12_peak_WT_H3K27me3_250bpTSS_geneSymbol = pseudotime_traj12_peak_
 
 #corr_pseudotime_traj12_UNTREATEDDASATINIB_peakSmooth_logFClineage1Over0fdrStartEnd05__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2
 
-pdf("output/binBw/corr_pseudotime_traj12_UNTREATEDDASATINIB_peakSmooth_logFClineage1Over0fdrStartEnd00001__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+pdf("output/binBw/corr_pseudotime_traj12_UNTREATEDDASATINIB_peakSmooth_fdrDEG0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
 pseudotime_traj12_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
-    filter(logFClineage1 > 0 , fdr_StartEnd<0.00001) %>%
+    filter( fdr_DEG==0 ) %>%
+    ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = condition)) +
+    geom_point(alpha = 0.7) +
+    geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = condition)) + 
+    scale_color_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
+    theme_bw()
+dev.off()
+
+
+pdf("output/binBw/corr_pseudotime_traj12_UNTREATEDDASATINIB_peakSmooth_fdr_DEG05logFClineage1Over0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+pseudotime_traj12_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter( fdr_DEG<0.05 , logFClineage1 > 0) %>%
     ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = condition)) +
     geom_point(alpha = 0.7) +
     geom_smooth(method = "lm", se = FALSE) +
@@ -5244,11 +5646,27 @@ dev.off()
 
 
 
+pdf("output/binBw/corr_pseudotime_traj12_UNTREATEDDASATINIB_peakSmooth_H3K27me3_peaks_fdrDEG0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+H3K27me3_peaks %>%
+  left_join(pseudotime_traj12_peak_WT_H3K27me3_500bpTSS_geneSymbol) %>% 
+    filter(fdr_DEG==0) %>%
+    ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = condition)) +
+    geom_point(alpha = 0.7) +
+    geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = condition)) + 
+    scale_color_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
+    theme_bw()
+dev.off()
+
+
+
+
+
 # Ectoderm/Mesoderm_1/Mesoderm_2
-pdf("output/binBw/histBinCluster_pseudotime_traj12_UNTREATEDDASATINIB_peakSmooth_logFClineageOver0fdrStartEnd05__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=2)
+pdf("output/binBw/histBin3_pseudotime_traj12_UNTREATEDDASATINIB_peakSmooth_fdrDEG0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=2)
 pseudotime_traj12_peak_WT_H3K27me3_500bpTSS_geneSymbol %>%
-    filter( logFClineage1 > 0, fdr_StartEnd <0.05) %>%
-    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(0,1.04, 11.1, max(smooth_peak_pseudotime)), include.lowest = TRUE, right = FALSE)) %>%
+    filter( fdr_DEG==0) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = seq(0, max(smooth_peak_pseudotime), by =3), include.lowest = TRUE, right = FALSE)) %>%
     group_by(condition, pseudotime_bin) %>%
     summarize(median_bc_max = median(bc_max), .groups = 'drop') %>%
         ggplot(., aes(x = pseudotime_bin, y = median_bc_max, fill = condition)) +
@@ -5269,7 +5687,7 @@ cellType_marker_n = cellType_marker %>%
   filter(cluster %in% c("Mesoderm_2", "Mesoderm_1", "Ectoderm")) %>%  # HERE MARKER CHANGED ACCORDINGLY
   group_by(cluster) %>%
   arrange(max_pval) %>%
-  slice_head(n = 500) %>%
+  slice_head(n = 1000) %>%
   ungroup()
 pseudotime_traj12_peak_WT_H3K27me3_500bpTSS_geneSymbol_cellType_marker_n = cellType_marker_n %>%
     dplyr::select(geneSymbol) %>%
@@ -5279,9 +5697,9 @@ pseudotime_traj12_peak_WT_H3K27me3_500bpTSS_geneSymbol_cellType_marker_n = cellT
 
 
 
-pdf("output/binBw/corr_pseudotime_traj12_UNTREATEDDASATINIB_peakSmooth_cellType_marker_500_logFClineageOver0fdrStartEnd00001__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+pdf("output/binBw/corr_pseudotime_traj12_UNTREATEDDASATINIB_peakSmooth_cellType_marker_1000_fdrDEG0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
 pseudotime_traj12_peak_WT_H3K27me3_500bpTSS_geneSymbol_cellType_marker_n %>% 
-    filter(  logFClineage1 > 0 , fdr_StartEnd <0.05) %>%
+    filter(  fdr_DEG == 0) %>%
 ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max,  color = condition)) +
   geom_point(alpha = 0.7) +
   geom_smooth(method = "lm", se = FALSE) +
@@ -5318,7 +5736,7 @@ dev.off()
 #### 500bp
 cellType_marker_signif = cellType_marker %>%
   filter(cluster %in% c("Mesoderm_2", "Mesoderm_1", "Ectoderm")) %>%  # HERE MARKER CHANGED ACCORDINGLY
-  filter(max_pval<0.05)
+  filter(max_pval<0.001)
 pseudotime_traj12_peak_WT_H3K27me3_500bpTSS_geneSymbol_cellType_marker_signif = cellType_marker_signif %>%
     dplyr::select(geneSymbol) %>%
     unique() %>%
@@ -5326,10 +5744,10 @@ pseudotime_traj12_peak_WT_H3K27me3_500bpTSS_geneSymbol_cellType_marker_signif = 
     filter(!is.na(smooth_peak_pseudotime)) 
 
 
-pdf("output/binBw/corr_pseudotime_traj12_UNTREATEDDASATINIB_peakSmooth_cellType_marker_signif05_logFClineage1Over0fdrStartEnd05__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+pdf("output/binBw/corr_pseudotime_traj12_UNTREATEDDASATINIB_peakSmooth_cellType_marker_signif001_fdrDEG0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
 pseudotime_traj12_peak_WT_H3K27me3_500bpTSS_geneSymbol_cellType_marker_signif %>% 
     filter( 
-           logFClineage1 > 0 , fdr_StartEnd <0.05 ) %>%
+           fdr_DEG == 0 ) %>%
 ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max,  color = condition)) +
   geom_point(alpha = 0.7) +
   geom_smooth(method = "lm", se = FALSE) +
@@ -5404,7 +5822,7 @@ pseudotime_traj3_DEG = read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/
     dplyr::rename("geneSymbol" = "gene",
                   "fdr_DEG" = "fdr") %>% 
     dplyr::select(geneSymbol, meanLogFC, fdr_DEG)
-pseudotime_traj3_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_traj3_noCondition_humangastruloid72hrs_V2.txt") %>%
+pseudotime_traj3_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_NULL_traj3_noCondition_humangastruloid72hrs_V2.txt") %>%
     dplyr::rename("geneSymbol" = "gene",
                   "fdr_StartEnd" = "fdr")  %>% 
     dplyr::select(geneSymbol, fdr_StartEnd, logFClineage1)
@@ -5458,9 +5876,21 @@ pseudotime_traj23_peak_YAPKO_EZH2_250bpTSS_geneSymbol = pseudotime_traj23_peak_D
 ## signal H3K27me3 vs DEG timecourse
 
 
-pdf("output/binBw/corr_pseudotime_traj23_UNTREATEDDASATINIB_peakSmooth_logFClineage1Over0fdrStartEnd00001__WT_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+pdf("output/binBw/corr_pseudotime_traj23_UNTREATEDDASATINIB_peakSmooth_fdrDEG0__WT_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
 pseudotime_traj23_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
-    filter(logFClineage1 > 0 , fdr_StartEnd<0.00001) %>%
+    filter(fdr_DEG == 0) %>%
+    ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = condition)) +
+    geom_point(alpha = 0.7) +
+    geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = condition)) + 
+    scale_color_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
+    theme_bw()
+dev.off()
+
+
+pdf("output/binBw/corr_pseudotime_traj23_UNTREATEDDASATINIB_peakSmooth_logFClineage1Over0fdrDEG05__WT_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+pseudotime_traj23_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    filter(logFClineage1 > 0 , fdr_DEG<0.05) %>%
     ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = condition)) +
     geom_point(alpha = 0.7) +
     geom_smooth(method = "lm", se = FALSE) +
@@ -5471,20 +5901,6 @@ dev.off()
 
 
 
-
-
-pdf("output/binBw/histBinCluster_pseudotime_traj23_UNTREATEDDASATINIB_peakSmooth_logFClineageOver0fdrStartEnd05__WT_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=2)
-pseudotime_traj23_peak_WT_EZH2_500bpTSS_geneSymbol %>%
-    filter( logFClineage1 > 0, fdr_StartEnd <0.05) %>%
-    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(0, 5.05, 12.5, 13.2, max(smooth_peak_pseudotime)), include.lowest = TRUE, right = FALSE)) %>%
-    group_by(condition, pseudotime_bin) %>%
-    summarize(median_bc_max = median(bc_max), .groups = 'drop') %>%
-        ggplot(., aes(x = pseudotime_bin, y = median_bc_max, fill = condition)) +
-        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
-        scale_fill_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
-        theme_bw() +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
-dev.off()
 
 
 
@@ -5646,7 +6062,7 @@ pseudotime_traj2_DEG = read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/
     dplyr::rename("geneSymbol" = "gene",
                   "fdr_DEG" = "fdr") %>% 
     dplyr::select(geneSymbol, meanLogFC, fdr_DEG)
-pseudotime_traj2_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_traj2_noCondition_humangastruloid72hrs_V2.txt") %>%
+pseudotime_traj2_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_NULL_traj2_noCondition_humangastruloid72hrs_V2.txt") %>% # NULL
     dplyr::rename("geneSymbol" = "gene",
                   "fdr_StartEnd" = "fdr")  %>% 
     dplyr::select(geneSymbol, fdr_StartEnd, logFClineage1)
@@ -5700,9 +6116,9 @@ pseudotime_traj31_peak_YAPKO_EZH2_250bpTSS_geneSymbol = pseudotime_traj31_peak_D
 ## signal H3K27me3 vs DEG timecourse
 
 
-pdf("output/binBw/corr_pseudotime_traj31_UNTREATEDDASATINIB_peakSmooth_logFClineage1Over0fdrStartEnd05__WT_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+pdf("output/binBw/corr_pseudotime_traj31_UNTREATEDDASATINIB_peakSmooth_logFClineage1Over0fdrDEG05__WT_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
 pseudotime_traj31_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
-    filter(logFClineage1 > 0 , fdr_StartEnd<0.05) %>%
+    filter(fdr_DEG <0.05, logFClineage1>0) %>%
     ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = condition)) +
     geom_point(alpha = 0.7) +
     geom_smooth(method = "lm", se = FALSE) +
@@ -5872,12 +6288,12 @@ pseudotime_traj2_peak_DASATINIB <- read_tsv("../../002_scRNAseq/003__YAP1/output
     dplyr::rename("geneSymbol" = "gene")%>%
     add_column(condition = "DASATINIB72hrs")
 
-pseudotime_traj1_DEG = read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_association_traj1_noCondition_humangastruloid72hrs_V2.txt") %>%
+pseudotime_traj1_DEG = read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_association_traj1_noCondition_humangastruloid72hrs_V2.txt") %>% 
     dplyr::rename("geneSymbol" = "gene",
                   "fdr_DEG" = "fdr") %>% 
     dplyr::select(geneSymbol, meanLogFC, fdr_DEG)
-pseudotime_traj1_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_traj1_noCondition_humangastruloid72hrs_V2.txt") %>%
-    dplyr::rename("geneSymbol" = "gene",
+pseudotime_traj1_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_NULL_traj1_noCondition_humangastruloid72hrs_V2.txt") %>%  # NULL
+    dplyr::rename("geneSymbol" = "gene", 
                   "fdr_StartEnd" = "fdr")  %>% 
     dplyr::select(geneSymbol, fdr_StartEnd, logFClineage1)
 EZH2_peaks = read_tsv("output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_qval1.30103_promoterAnd5_geneSymbol.txt", col_names = FALSE) %>%
@@ -5930,9 +6346,21 @@ pseudotime_traj12_peak_YAPKO_EZH2_250bpTSS_geneSymbol = pseudotime_traj12_peak_D
 ## signal H3K27me3 vs DEG timecourse
 
 
-pdf("output/binBw/corr_pseudotime_traj12_UNTREATEDDASATINIB_peakSmooth_logFClineage1Over0fdrStartEnd00001__WT_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+pdf("output/binBw/corr_pseudotime_traj12_UNTREATEDDASATINIB_peakSmooth_fdrDEG0__WT_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
 pseudotime_traj12_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
-    filter(logFClineage1 > 0 , fdr_StartEnd<0.00001) %>%
+    filter(fdr_DEG==0) %>%
+    ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = condition)) +
+    geom_point(alpha = 0.7) +
+    geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = condition)) + 
+    scale_color_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
+    theme_bw()
+dev.off()
+
+
+pdf("output/binBw/corr_pseudotime_traj12_UNTREATEDDASATINIB_peakSmooth_logFClineage1Over0fdrDEG05__WT_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+pseudotime_traj12_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    filter(logFClineage1>0, fdr_DEG< 0.05) %>%
     ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = condition)) +
     geom_point(alpha = 0.7) +
     geom_smooth(method = "lm", se = FALSE) +
