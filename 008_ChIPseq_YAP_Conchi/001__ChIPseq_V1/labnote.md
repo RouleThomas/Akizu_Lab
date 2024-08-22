@@ -4568,13 +4568,13 @@ dev.off()
 
 
 
-pdf("output/binBw/histbin3_pseudotime_traj3_peakSmooth_fdrDEG0___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pdf("output/binBw/histbin3_pseudotime_traj3_peakSmooth_fdrDEG0median___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
 pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
     add_column(genotype = "WT") %>%
     filter(fdr_DEG == 0) %>%
     mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
     group_by(genotype, pseudotime_bin) %>%
-    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    summarize(mean_bc_max = median(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
     ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
         geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
         geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
@@ -4589,13 +4589,13 @@ dev.off()
 
 
 
-pdf("output/binBw/histbin3_pseudotime_traj3_peakSmooth_fdrDEG05logFClineage1Over0___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pdf("output/binBw/histbin3_pseudotime_traj3_peakSmooth_fdrDEG05logFClineage1Over0median___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
 pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
     add_column(genotype = "WT") %>%
     filter(fdr_DEG < 0.05, logFClineage1>0) %>%
     mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
     group_by(genotype, pseudotime_bin) %>%
-    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    summarize(mean_bc_max = median(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
     ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
         geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
         geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
@@ -4825,13 +4825,13 @@ dev.off()
 
 
 
-pdf("output/binBw/histbin3_pseudotime_traj2_peakSmooth_fdrDEG0___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pdf("output/binBw/histbin3_pseudotime_traj2_peakSmooth_fdrDEG0median___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
 pseudotime_traj2_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
     add_column(genotype = "WT") %>%
     filter(fdr_DEG == 0) %>%
     mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
     group_by(genotype, pseudotime_bin) %>%
-    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    summarize(mean_bc_max = median(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
     ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
         geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
         geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
@@ -4846,13 +4846,13 @@ dev.off()
 
 
 
-pdf("output/binBw/histbin3_pseudotime_traj2_peakSmooth_fdrDEG05logFClineage1Over0___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pdf("output/binBw/histbin3_pseudotime_traj2_peakSmooth_fdrDEG05logFClineage1Over0median___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
 pseudotime_traj2_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
     add_column(genotype = "WT") %>%
     filter(fdr_DEG < 0.05, logFClineage1>0) %>%
     mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
     group_by(genotype, pseudotime_bin) %>%
-    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    summarize(mean_bc_max = median(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
     ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
         geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
         geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
@@ -4993,14 +4993,14 @@ dev.off()
 
 
 
-pdf("output/binBw/histbin3_pseudotime_traj2_peakSmooth_fdrDEG0___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pdf("output/binBw/histbin3_pseudotime_traj2_peakSmooth_fdrDEG0median___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
 pseudotime_traj2_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
     add_column(genotype = "WT") %>%
     bind_rows(pseudotime_traj2_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
     filter(fdr_DEG == 0) %>%
     mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
     group_by(genotype, pseudotime_bin) %>%
-    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    summarize(mean_bc_max = median(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
     ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
         geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
         geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
@@ -5018,14 +5018,14 @@ dev.off()
 
 
 
-pdf("output/binBw/histbin3_pseudotime_traj2_peakSmooth_fdrDEG05logFClineage1Over0___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pdf("output/binBw/histbin3_pseudotime_traj2_peakSmooth_fdrDEG05logFClineage1Over0median___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
 pseudotime_traj2_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
     add_column(genotype = "WT") %>%
     bind_rows(pseudotime_traj2_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
     filter(fdr_DEG < 0.05, logFClineage1>0) %>%
     mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
     group_by(genotype, pseudotime_bin) %>%
-    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    summarize(mean_bc_max = median(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
     ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
         geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
         geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
@@ -5164,14 +5164,14 @@ dev.off()
 
 
 
-pdf("output/binBw/histbin3_pseudotime_traj1_peakSmooth_fdrDEG0___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pdf("output/binBw/histbin3_pseudotime_traj1_peakSmooth_fdrDEG0median___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
 pseudotime_traj1_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
     add_column(genotype = "WT") %>%
     bind_rows(pseudotime_traj1_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
     filter(fdr_DEG == 0) %>%
     mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
     group_by(genotype, pseudotime_bin) %>%
-    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    summarize(mean_bc_max = median(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
     ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
         geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
         geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
@@ -5186,14 +5186,14 @@ dev.off()
 
 
 
-pdf("output/binBw/histbin3_pseudotime_traj1_peakSmooth_fdrDEG05logFClineage1Over0___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pdf("output/binBw/histbin3_pseudotime_traj1_peakSmooth_fdrDEG05logFClineage1Over0median___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
 pseudotime_traj1_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
     add_column(genotype = "WT") %>%
     bind_rows(pseudotime_traj1_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
     filter(fdr_DEG < 0.05, logFClineage1>0) %>%
     mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
     group_by(genotype, pseudotime_bin) %>%
-    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    summarize(mean_bc_max = median(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
     ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
         geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
         geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
@@ -5317,13 +5317,13 @@ dev.off()
 
 
 
-pdf("output/binBw/histbin3_pseudotime_traj1_peakSmooth_fdrDEG0___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pdf("output/binBw/histbin3_pseudotime_traj1_peakSmooth_fdrDEG0median___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
 pseudotime_traj1_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
     add_column(genotype = "WT") %>%
     filter(fdr_DEG == 0) %>%
     mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
     group_by(genotype, pseudotime_bin) %>%
-    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    summarize(mean_bc_max = median(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
     ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
         geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
         geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
@@ -5338,13 +5338,13 @@ dev.off()
 
 
 
-pdf("output/binBw/histbin3_pseudotime_traj1_peakSmooth_fdrDEG05logFClineage1Over0___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pdf("output/binBw/histbin3_pseudotime_traj1_peakSmooth_fdrDEG05logFClineage1Over0median___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
 pseudotime_traj1_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
     add_column(genotype = "WT") %>%
     filter(fdr_DEG < 0.05, logFClineage1>0) %>%
     mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
     group_by(genotype, pseudotime_bin) %>%
-    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    summarize(mean_bc_max = median(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
     ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
         geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
         geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
