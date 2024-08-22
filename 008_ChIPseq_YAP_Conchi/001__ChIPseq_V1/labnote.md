@@ -4271,6 +4271,56 @@ ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
 dev.off()
 
 
+
+
+pdf("output/binBw/histbin3_pseudotime_traj3_peakSmooth_fdrDEG0___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pseudotime_traj3_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj3_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+    filter(fdr_DEG == 0) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+
+
+
+
+
+pdf("output/binBw/histbin3_pseudotime_traj3_peakSmooth_fdrDEG05logFClineage1Over0___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pseudotime_traj3_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj3_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+    filter(fdr_DEG < 0.05, logFClineage1>0) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+
+
+
 ```
 
 
@@ -4513,6 +4563,54 @@ ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
 dev.off()
 
 
+
+
+
+
+
+pdf("output/binBw/histbin3_pseudotime_traj3_peakSmooth_fdrDEG0___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    filter(fdr_DEG == 0) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+
+
+pdf("output/binBw/histbin3_pseudotime_traj3_peakSmooth_fdrDEG05logFClineage1Over0___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    filter(fdr_DEG < 0.05, logFClineage1>0) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+
+
+
 ```
 
 
@@ -4724,6 +4822,54 @@ dev.off()
 
 
 
+
+
+
+pdf("output/binBw/histbin3_pseudotime_traj2_peakSmooth_fdrDEG0___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pseudotime_traj2_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    filter(fdr_DEG == 0) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+
+
+pdf("output/binBw/histbin3_pseudotime_traj2_peakSmooth_fdrDEG05logFClineage1Over0___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pseudotime_traj2_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    filter(fdr_DEG < 0.05, logFClineage1>0) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+
+
+
+
+
 ```
 
 
@@ -4839,6 +4985,59 @@ ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = genotype)) +
   scale_color_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
   theme_bw()
 dev.off()
+
+
+
+
+
+
+
+
+pdf("output/binBw/histbin3_pseudotime_traj2_peakSmooth_fdrDEG0___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pseudotime_traj2_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj2_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+    filter(fdr_DEG == 0) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+
+
+
+
+
+pdf("output/binBw/histbin3_pseudotime_traj2_peakSmooth_fdrDEG05logFClineage1Over0___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pseudotime_traj2_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj2_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+    filter(fdr_DEG < 0.05, logFClineage1>0) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
 
 
 
@@ -4962,6 +5161,54 @@ dev.off()
 
 
 
+
+
+
+pdf("output/binBw/histbin3_pseudotime_traj1_peakSmooth_fdrDEG0___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pseudotime_traj1_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj1_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+    filter(fdr_DEG == 0) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+
+
+pdf("output/binBw/histbin3_pseudotime_traj1_peakSmooth_fdrDEG05logFClineage1Over0___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pseudotime_traj1_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj1_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+    filter(fdr_DEG < 0.05, logFClineage1>0) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+
+
+
 ```
 
 
@@ -5064,6 +5311,50 @@ ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
   stat_cor(method = "pearson", label.x = 0, label.y = 3000, 
            aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
   theme_bw()
+dev.off()
+
+
+
+
+
+pdf("output/binBw/histbin3_pseudotime_traj1_peakSmooth_fdrDEG0___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pseudotime_traj1_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    filter(fdr_DEG == 0) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+
+
+pdf("output/binBw/histbin3_pseudotime_traj1_peakSmooth_fdrDEG05logFClineage1Over0___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pseudotime_traj1_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    filter(fdr_DEG < 0.05, logFClineage1>0) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
 dev.off()
 
 
