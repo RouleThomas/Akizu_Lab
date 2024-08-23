@@ -5512,7 +5512,7 @@ cluster19 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "19-multiome_Bap
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-cluster20 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "19-multiome_Bap1KO", ident.2 = "19-multiome_WT",
+cluster20 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "20-multiome_Bap1KO", ident.2 = "20-multiome_WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
@@ -5542,7 +5542,7 @@ write.table(cluster18, file = "output/Signac/cluster18-Bap1KO_response_multiomeQ
 write.table(cluster19, file = "output/Signac/cluster19-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 write.table(cluster20, file = "output/Signac/cluster20-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
-XXXX here XXX
+
 
 #### import all clsuter DEGs output :
 cluster_types <- c("cluster1", "cluster2", "cluster3", 
@@ -5550,13 +5550,23 @@ cluster_types <- c("cluster1", "cluster2", "cluster3",
                    "cluster7", "cluster8", 
                    "cluster9", "cluster10", "cluster11", 
                    "cluster12", "cluster13", "cluster14", "cluster15", 
-                   "cluster16", "cluster17", "cluster18", "cluster19")
+                   "cluster16", "cluster17", "cluster18", "cluster19", "cluster20")
 # Loop over each cluster type to read data and assign to a variable
 for (cluster in cluster_types) {
-  file_path <- paste0("output/seurat/", cluster, "-Bap1KO_response_V1_allGenes.txt")
+  file_path <- paste0("output/Signac/", cluster, "-Bap1KO_response_multiomeQCV3_allGenes.txt")
   data <- read.delim(file_path, header = TRUE, row.names = 1)
   assign(cluster, data)
 }
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -5569,22 +5579,34 @@ for (cluster in cluster_types) {
 DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
 
 ## List of cell types
-cell_types <- c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19")
+cell_types <- c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19", "cluster20")
 
 ## Loop through each cell type to count the number of significant DEGs
 for (cell_type in cell_types) {
-  file_name <- paste("output/seurat/", cell_type, "-Bap1KO_response_V1_allGenes.txt", sep = "")
-  deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
-  num_degs <- sum(deg_data$p_val_adj < 0.05) ## Count the number of significant DEGs
-  DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
+  file_name <- paste("output/Signac/", cell_type, "-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "")
+  # Check if file exists
+  if (!file.exists(file_name)) {
+    print(paste("File not found:", file_name))
+    next
+  }
+  # Read the DEGs data
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Count the number of significant DEGs, defaulting to 0 if none are found
+  num_degs <- sum(deg_data$p_val_adj < 0.05, na.rm = TRUE)
+  # Ensure num_degs is not NA
+  if (is.na(num_degs)) {
+    num_degs <- 0
+  }
+  # Append to the summary table
+  DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))
 }
 
 
-DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19")) 
+DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19", "cluster20")) 
 
 DEG_count$Cluster_Number <- as.numeric(sub("cluster", "", DEG_count$Cell_Type))
 
-DEG_count$Cluster_Number <- factor(DEG_count$Cluster_Number, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19")) 
+DEG_count$Cluster_Number <- factor(DEG_count$Cluster_Number, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20")) 
 
 
 ## Dotplot
@@ -5594,11 +5616,11 @@ cell_type_colors <- c(
   "cluster5" = "#7FFF00", "cluster6" = "#32CD32", "cluster7" = "#3CB371", "cluster8" = "#00FA9A", 
   "cluster9" = "#00CED1", "cluster10" = "#4682B4", "cluster11" = "#1E90FF", "cluster12" = "#6495ED", 
   "cluster13" = "#4169E1", "cluster14" = "#BA55D3", "cluster15" = "#DA70D6", "cluster16" = "#EE82EE", 
-  "cluster17" = "#FF69B4", "cluster18" = "#FF1493", "cluster19" = "#DB7093"
+  "cluster17" = "#FF69B4", "cluster18" = "#FF1493", "cluster19" = "#DB7093", "cluster20" = "#FF4500"
 )
 
 # Generate the dot plot
-pdf("output/seurat/Dotplot_Bap1KO_DEG_count_V1.pdf", width=9, height=4)
+pdf("output/Signac/Dotplot_Bap1KO_DEG_count_multiomeQCV3.pdf", width=9, height=4)
 ggplot(DEG_count, aes(x = Cluster_Number, y = 1) )+
   geom_point(aes(size = ifelse(Num_DEGs == 0, 1, Num_DEGs), fill = Cell_Type) , shape = 21, color = "black") +
   scale_size_continuous(range = c(1, 15)) +
@@ -5620,50 +5642,53 @@ dev.off()
 
 
 ### Find all markers 
-all_markers <- FindAllMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+all_markers <- FindAllMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
 
-write.table(all_markers, file = "output/seurat/srat_WT_Bap1KO_all_markers_V1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(all_markers, file = "output/Signac/srat_multiome_WT_Bap1KO_QCV3_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+XXX HERE install package metap fail XXX 
 
 # Display the top 10 CONSERVED marker genes of each cluster
-Idents(RNA_WT_Bap1KO.sct) <- "seurat_clusters"
+Idents(multiome_WT_Bap1KO_QCV2.sct) <- "seurat_clusters"
 
 ## DEGs cluster versus all other
-cluster1.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "1", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster1")
-cluster2.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "2", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster2")
-cluster3.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "3", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster3")
-cluster4.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "4", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster4")
-cluster5.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "5", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster5")
-cluster6.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "6", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster6")
-cluster7.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "7", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster7")
-cluster8.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "8", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster8")
-cluster9.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "9", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster9")
-cluster10.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "10", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster10")
-cluster11.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "11", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster11")
-cluster12.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "12", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster12")
-cluster13.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "13", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster13")
-cluster14.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "14", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster14")
-cluster15.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "15", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster15")
-cluster16.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "16", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster16")
-cluster17.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "17", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster17")
-cluster18.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "18", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster18")
-cluster19.conserved <- FindConservedMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", ident.1 = "19", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster19")
-
+cluster1.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", ident.1 = "1", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster1")
+cluster2.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", ident.1 = "2", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster2")
+cluster3.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", ident.1 = "3", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster3")
+cluster4.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", ident.1 = "4", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster4")
+cluster5.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", ident.1 = "5", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster5")
+cluster6.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", ident.1 = "6", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster6")
+cluster7.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", ident.1 = "7", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster7")
+cluster8.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", ident.1 = "8", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster8")
+cluster9.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", ident.1 = "9", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster9")
+cluster10.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", ident.1 = "10", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster10")
+cluster11.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", ident.1 = "11", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster11")
+cluster12.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", ident.1 = "12", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster12")
+cluster13.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", ident.1 = "13", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster13")
+cluster14.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", ident.1 = "14", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster14")
+cluster15.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", ident.1 = "15", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster15")
+cluster16.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", ident.1 = "16", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster16")
+cluster17.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", ident.1 = "17", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster17")
+cluster18.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", ident.1 = "18", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster18")
+cluster19.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", ident.1 = "19", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster19")
+cluster20.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", ident.1 = "20", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster20")
 
 ## Combine all conserved markers into one data frame
-all_conserved <- bind_rows(cluster1.conserved,cluster2.conserved,cluster3.conserved,cluster4.conserved,cluster5.conserved,cluster6.conserved,cluster7.conserved,cluster8.conserved,cluster9.conserved,cluster10.conserved,cluster11.conserved,cluster12.conserved,cluster13.conserved,cluster14.conserved,cluster15.conserved,cluster16.conserved,cluster17.conserved,cluster18.conserved,cluster19.conserved)
+all_conserved <- bind_rows(cluster1.conserved,cluster2.conserved,cluster3.conserved,cluster4.conserved,cluster5.conserved,cluster6.conserved,cluster7.conserved,cluster8.conserved,cluster9.conserved,cluster10.conserved,cluster11.conserved,cluster12.conserved,cluster13.conserved,cluster14.conserved,cluster15.conserved,cluster16.conserved,cluster17.conserved,cluster18.conserved,cluster19.conserved,cluster20.conserved)
 
 all_conserved$gene <- rownames(all_conserved)
 ## Write all conserved markers to a file
-write.table(all_conserved, file = "output/seurat/srat_all_conserved_markers_WT_Bap1KO_V1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(all_conserved, file = "output/Signac/srat_all_conserved_markers_multiome_WT_Bap1KO_QCV3.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 ## Find the top 5 conserved markers for each cluster
 top10_conserved <- all_conserved %>%
-  mutate(cluster = factor(cluster, levels = c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19"))) %>% 
+  mutate(cluster = factor(cluster, levels = c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19", "cluster20"))) %>% 
   separate(gene, into = c("gene", "suffix"), sep = "\\.\\.\\.", remove = TRUE, extra = "drop", fill = "right") %>% 
   group_by(cluster) %>% 
   arrange((max_pval)) %>% 
   slice_head(n = 5) %>% 
   ungroup() %>% 
-  arrange(match(cluster, c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19")))
+  arrange(match(cluster, c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19", "cluster20")))
 
 
 ## Write the top 10 conserved markers for each cluster to a file
@@ -5688,19 +5713,19 @@ levels(RNA_WT_Bap1KO.sct) <- c("1",
   "16",
   "17",
   "18",
-  "19")
+  "19",
+  "20")
 
-pdf("output/seurat/DotPlot_SCT_top5_conserved_WT_Bap1KO_V1.pdf", width=19, height=5)
-DotPlot(RNA_WT_Bap1KO.sct, features = marker_genes_conserved, cols = c("grey", "red")) + RotatedAxis()
+pdf("output/Signac/DotPlot_SCT_top5_conserved_multiome_WT_Bap1KO_QCV3.pdf", width=19, height=5)
+DotPlot(multiome_WT_Bap1KO_QCV2.sct, features = marker_genes_conserved, cols = c("grey", "red")) + RotatedAxis()
 dev.off()
 
 
 # save
-## saveRDS(RNA_WT_Bap1KO.sct, file = "output/seurat/RNA_WT_Bap1KO.sct_V1_numeric.rds") 
+## saveRDS(multiome_WT_Bap1KO_QCV2.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV3.sct_numeric.rds") 
+# I used multiome_WT_Bap1KO_QCV2 but was already multiome_WT_Bap1KO_QCV3... So here I update the file name
 
-
-
-RNA_WT_Bap1KO.sct <- readRDS(file = "output/seurat/RNA_WT_Bap1KO.sct_V1_numeric.rds")
+multiome_WT_Bap1KO_QCV3.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV3.sct_numeric.rds")
 
 
 
