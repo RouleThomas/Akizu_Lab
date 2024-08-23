@@ -4319,6 +4319,55 @@ pseudotime_traj3_peak_WT_EZH2_500bpTSS_geneSymbol %>%
 dev.off()
 
 
+# remove smooth_peak 0 if present in one genotype
+genesToRemove = pseudotime_traj3_peak_WT_EZH2_500bpTSS_geneSymbol %>%
+  filter(smooth_peak_pseudotime ==0) %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+
+
+
+pdf("output/binBw/corr_pseudotime_traj3_peakSmooth_smoothOver0fdrDEG0__WT_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+
+pseudotime_traj3_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj3_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+    anti_join(genesToRemove) %>%
+    filter( fdr_DEG == 0) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max,  color = genotype)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = genotype)) + 
+    scale_color_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+  theme_bw()
+dev.off()
+
+
+
+pdf("output/binBw/histbin3_pseudotime_traj3_peakSmooth_smoothOver0fdrDEG0___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pseudotime_traj3_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj3_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+    anti_join(genesToRemove) %>%
+    filter( fdr_DEG == 0)  %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+
+
+
 
 
 ```
@@ -4609,6 +4658,56 @@ pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol %>%
 dev.off()
 
 
+
+# remove smooth_peak 0 if present in one genotype
+genesToRemove = pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol %>%
+  filter(smooth_peak_pseudotime ==0) %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+
+
+
+pdf("output/binBw/corr_pseudotime_traj3_peakSmooth_smoothOver0fdrDEG0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=4)
+
+pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    anti_join(genesToRemove) %>%
+    filter( fdr_DEG == 0) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x = 0, label.y = 3000, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+
+
+
+pdf("output/binBw/histbin3_pseudotime_traj3_peakSmooth_smoothOver0fdrDEG0___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+
+pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol %>%
+    add_column(genotype = "WT") %>%
+    anti_join(genesToRemove) %>%
+    filter( fdr_DEG == 0)  %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+
+
+
  
 
 ```
@@ -4868,6 +4967,57 @@ dev.off()
 
 
 
+# remove smooth_peak 0 if present in one genotype
+genesToRemove = pseudotime_traj2_peak_WT_H3K27me3_500bpTSS_geneSymbol %>%
+  filter(smooth_peak_pseudotime ==0) %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+
+
+
+pdf("output/binBw/corr_pseudotime_traj2_peakSmooth_smoothOver0fdrDEG0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=4)
+
+pseudotime_traj2_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    anti_join(genesToRemove) %>%
+    filter( fdr_DEG == 0) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x = 0, label.y = 3000, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+
+
+
+
+
+pdf("output/binBw/histbin3_pseudotime_traj2_peakSmooth_smoothOver0fdrDEG0___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+
+pseudotime_traj2_peak_WT_H3K27me3_500bpTSS_geneSymbol %>%
+    add_column(genotype = "WT") %>%
+    anti_join(genesToRemove) %>%
+    filter( fdr_DEG == 0)  %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+
+
+
 
 
 ```
@@ -5041,6 +5191,55 @@ dev.off()
 
 
 
+# remove smooth_peak 0 if present in one genotype
+genesToRemove = pseudotime_traj2_peak_WT_EZH2_500bpTSS_geneSymbol %>%
+  filter(smooth_peak_pseudotime ==0) %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+
+
+
+pdf("output/binBw/corr_pseudotime_traj2_peakSmooth_smoothOver0fdrDEG0__WT_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+
+pseudotime_traj2_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj2_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+    anti_join(genesToRemove) %>%
+    filter( fdr_DEG == 0) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max,  color = genotype)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = genotype)) + 
+    scale_color_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+  theme_bw()
+dev.off()
+
+
+
+
+pdf("output/binBw/histbin3_pseudotime_traj2_peakSmooth_smoothOver0fdrDEG0___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pseudotime_traj2_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj2_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+    anti_join(genesToRemove) %>%
+    filter( fdr_DEG == 0)  %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+
+
 
 
 ```
@@ -5208,6 +5407,56 @@ dev.off()
 
 
 
+# remove smooth_peak 0 if present in one genotype
+genesToRemove = pseudotime_traj1_peak_WT_EZH2_500bpTSS_geneSymbol %>%
+  filter(smooth_peak_pseudotime ==0) %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+
+
+
+pdf("output/binBw/corr_pseudotime_traj1_peakSmooth_smoothOver0fdrDEG0__WT_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+
+pseudotime_traj1_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj1_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+    anti_join(genesToRemove) %>%
+    filter( fdr_DEG == 0) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max,  color = genotype)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = genotype)) + 
+    scale_color_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+  theme_bw()
+dev.off()
+
+
+
+
+
+pdf("output/binBw/histbin3_pseudotime_traj1_peakSmooth_smoothOver0fdrDEG0___WTYAPKO_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+pseudotime_traj1_peak_WT_EZH2_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    bind_rows(pseudotime_traj1_peak_YAPKO_EZH2_500bpTSS_geneSymbol %>% add_column(genotype = "YAPKO")) %>%
+    anti_join(genesToRemove) %>%
+    filter( fdr_DEG == 0)  %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue", "YAPKO" = "red")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+
+
 
 ```
 
@@ -5357,6 +5606,52 @@ pseudotime_traj1_peak_WT_H3K27me3_500bpTSS_geneSymbol %>%
         theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
 dev.off()
 
+
+
+# remove smooth_peak 0 if present in one genotype
+genesToRemove = pseudotime_traj1_peak_WT_H3K27me3_500bpTSS_geneSymbol %>%
+  filter(smooth_peak_pseudotime ==0) %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+
+
+
+
+pdf("output/binBw/corr_pseudotime_traj1_peakSmooth_smoothOver0fdrDEG0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=4)
+
+pseudotime_traj1_peak_WT_H3K27me3_500bpTSS_geneSymbol %>%
+    anti_join(genesToRemove) %>%
+    filter( fdr_DEG == 0) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x = 0, label.y = 3000, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+
+
+pdf("output/binBw/histbin3_pseudotime_traj1_peakSmooth_smoothOver0fdrDEG0___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=3, height=2)
+
+pseudotime_traj1_peak_WT_H3K27me3_500bpTSS_geneSymbol %>%
+    add_column(genotype = "WT") %>%
+    anti_join(genesToRemove) %>%
+    filter( fdr_DEG == 0)  %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = mean(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
 
 
 
@@ -5587,6 +5882,27 @@ H3K27me3_peaks %>%
 dev.off()
 
 
+
+# remove smooth_peak 0 if present in one genotype
+genesToRemove = pseudotime_traj23_peak_WT_H3K27me3_500bpTSS_geneSymbol %>%
+  filter(smooth_peak_pseudotime ==0) %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+
+
+
+pdf("output/binBw/corr_pseudotime_traj23_UNTREATEDDASATINIB_peakSmooth_smoothOver0fdrDEG0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+
+pseudotime_traj23_peak_WT_H3K27me3_500bpTSS_geneSymbol %>%
+    anti_join(genesToRemove) %>%
+    filter( fdr_DEG == 0) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max,  color = condition)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = condition)) + 
+    scale_color_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
+  theme_bw()
+dev.off()
 
 
 
@@ -5825,6 +6141,30 @@ H3K27me3_peaks %>%
     stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = condition)) + 
     scale_color_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
     theme_bw()
+dev.off()
+
+
+
+
+# remove smooth_peak 0 if present in one genotype
+genesToRemove = pseudotime_traj31_peak_WT_H3K27me3_500bpTSS_geneSymbol %>%
+  filter(smooth_peak_pseudotime ==0) %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+
+
+
+pdf("output/binBw/corr_pseudotime_traj31_UNTREATEDDASATINIB_peakSmooth_smoothOver0fdrDEG0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+
+pseudotime_traj31_peak_WT_H3K27me3_500bpTSS_geneSymbol %>%
+    anti_join(genesToRemove) %>%
+    filter( fdr_DEG == 0) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max,  color = condition)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = condition)) + 
+    scale_color_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
+  theme_bw()
 dev.off()
 
 
@@ -6069,6 +6409,28 @@ dev.off()
 
 
 
+# remove smooth_peak 0 if present in one genotype
+genesToRemove = pseudotime_traj12_peak_WT_H3K27me3_500bpTSS_geneSymbol %>%
+  filter(smooth_peak_pseudotime ==0) %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+
+
+
+pdf("output/binBw/corr_pseudotime_traj12_UNTREATEDDASATINIB_peakSmooth_smoothOver0fdrDEG0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+
+pseudotime_traj12_peak_WT_H3K27me3_500bpTSS_geneSymbol %>%
+    anti_join(genesToRemove) %>%
+    filter( fdr_DEG == 0) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max,  color = condition)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = condition)) + 
+    scale_color_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
+  theme_bw()
+dev.off()
+
+
 
 
 ```
@@ -6311,6 +6673,31 @@ H3K27me3_peaks %>%
 dev.off()
 
 
+
+# remove smooth_peak 0 if present in one genotype
+genesToRemove = pseudotime_traj23_peak_WT_EZH2_500bpTSS_geneSymbol %>%
+  filter(smooth_peak_pseudotime ==0) %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+
+
+
+pdf("output/binBw/corr_pseudotime_traj23_UNTREATEDDASATINIB_peakSmooth_smoothOver0fdrDEG0__WT_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+
+pseudotime_traj23_peak_WT_EZH2_500bpTSS_geneSymbol %>%
+    anti_join(genesToRemove) %>%
+    filter( fdr_DEG == 0) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max,  color = condition)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = condition)) + 
+    scale_color_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
+  theme_bw()
+dev.off()
+
+
+
+
 ```
 
 
@@ -6533,6 +6920,27 @@ pseudotime_traj31_peak_WT_EZH2_500bpTSS_geneSymbol_cellType_marker_signif %>%
         theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
 dev.off()
 
+
+# remove smooth_peak 0 if present in one genotype
+genesToRemove = pseudotime_traj31_peak_WT_EZH2_500bpTSS_geneSymbol %>%
+  filter(smooth_peak_pseudotime ==0) %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+
+
+
+pdf("output/binBw/corr_pseudotime_traj31_UNTREATEDDASATINIB_peakSmooth_smoothOver0fdrDEG0__WT_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+
+pseudotime_traj31_peak_WT_EZH2_500bpTSS_geneSymbol %>%
+    anti_join(genesToRemove) %>%
+    filter( fdr_DEG == 0) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max,  color = condition)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = condition)) + 
+    scale_color_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
+  theme_bw()
+dev.off()
 
 
 
@@ -6775,6 +7183,33 @@ pseudotime_traj12_peak_WT_EZH2_500bpTSS_geneSymbol_cellType_marker_signif %>%
         theme_bw() +
         theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
 dev.off()
+
+
+
+
+
+# remove smooth_peak 0 if present in one genotype
+genesToRemove = pseudotime_traj12_peak_WT_EZH2_500bpTSS_geneSymbol %>%
+  filter(smooth_peak_pseudotime ==0) %>%
+  dplyr::select(geneSymbol) %>%
+  unique()
+
+
+
+pdf("output/binBw/corr_pseudotime_traj12_UNTREATEDDASATINIB_peakSmooth_smoothOver0fdrDEG0__WT_EZH2_500bpTSS_geneSymbol_bc_max_V2.pdf", width=5, height=4)
+
+pseudotime_traj12_peak_WT_EZH2_500bpTSS_geneSymbol %>%
+    anti_join(genesToRemove) %>%
+    filter( fdr_DEG == 0) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max,  color = condition)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = condition)) + 
+    scale_color_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
+  theme_bw()
+dev.off()
+
+
 
 
 
