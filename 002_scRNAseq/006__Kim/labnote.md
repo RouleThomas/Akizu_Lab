@@ -4139,6 +4139,8 @@ conda create -n SignacV5 -c conda-forge -c bioconda r-base r-signac r-seurat
 conda install conda-forge::r-reticulate # needed for RNA clustering
 
 conda install -c conda-forge leidenalg python-igraph pandas umap-learn # to use algorithm4 Leiden/Louvain clustering
+
+conda install conda-forge::r-metap # to run FindConservedMarkers()
 ```
 --> WORK!!!! But need tidyverse and biocmanager for genome annotations...
 
@@ -4945,6 +4947,7 @@ library("Seurat")
 library("tidyverse")
 library("EnsDb.Mmusculus.v79") # mm10
 library("reticulate") # needed to use FindClusters()
+library("metap") # needed to use FindConservedMarkers()
 use_python("~/anaconda3/envs/SignacV5/bin/python") # to specify which python to use... Needed for FindClusters()
 
 # Load RNA seurat object
@@ -5560,20 +5563,6 @@ for (cluster in cluster_types) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # DEGs nb dotplot
 ## Initialize an empty data frame to store the summary
 DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
@@ -5647,7 +5636,8 @@ all_markers <- FindAllMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", only.p
 write.table(all_markers, file = "output/Signac/srat_multiome_WT_Bap1KO_QCV3_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 
-XXX HERE install package metap fail XXX 
+
+
 
 # Display the top 10 CONSERVED marker genes of each cluster
 Idents(multiome_WT_Bap1KO_QCV2.sct) <- "seurat_clusters"

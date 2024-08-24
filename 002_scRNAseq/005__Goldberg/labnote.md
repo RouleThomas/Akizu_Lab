@@ -544,6 +544,10 @@ output_dir <- "output/seurat/"
 file_paths <- list.files(output_dir, pattern = "_V1_numeric.rds$", full.names = TRUE)
 # Call the function to load the Seurat objects
 seurat_objects <- load_seurat_objects(file_paths)
+# Loop through the list and assign each Seurat object to a variable with the same name
+for (sample_name in names(seurat_objects)) {
+  assign(sample_name, seurat_objects[[sample_name]])
+}
 # 1 sample: WT_p14_CB_Rep2 <- readRDS(file = "output/seurat/WT_p14_CB_Rep2_V1_numeric.rds")
 ## Kcnc1_p14_CB_Rep1 <- readRDS(file = "output/seurat/Kcnc1_p14_CB_Rep1_V1_numeric.rds")
 ################################################################################################
@@ -1087,12 +1091,22 @@ dev.off()
 
 # Test Replicate and Genotype integration (1 step integration)
 ## WT Rep
+### Reg 1
 WT_p14_CB_Rep1 <- SCTransform(WT_p14_CB_Rep1, method = "glmGamPoi", ncells = 12520, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
 WT_p14_CB_Rep2 <- SCTransform(WT_p14_CB_Rep2, method = "glmGamPoi", ncells = 13474, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
 WT_p14_CB_Rep3 <- SCTransform(WT_p14_CB_Rep3, method = "glmGamPoi", ncells = 13231, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
 Kcnc1_p14_CB_Rep1 <- SCTransform(Kcnc1_p14_CB_Rep1, method = "glmGamPoi", ncells = 10410, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
 Kcnc1_p14_CB_Rep2 <- SCTransform(Kcnc1_p14_CB_Rep2, method = "glmGamPoi", ncells = 11053, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
 Kcnc1_p14_CB_Rep3 <- SCTransform(Kcnc1_p14_CB_Rep3, method = "glmGamPoi", ncells = 15827, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+
+
+### Reg2 
+WT_p14_CB_Rep1 <- SCTransform(WT_p14_CB_Rep1, method = "glmGamPoi", ncells = 12520, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+WT_p14_CB_Rep2 <- SCTransform(WT_p14_CB_Rep2, method = "glmGamPoi", ncells = 13474, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+WT_p14_CB_Rep3 <- SCTransform(WT_p14_CB_Rep3, method = "glmGamPoi", ncells = 13231, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+Kcnc1_p14_CB_Rep1 <- SCTransform(Kcnc1_p14_CB_Rep1, method = "glmGamPoi", ncells = 10410, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+Kcnc1_p14_CB_Rep2 <- SCTransform(Kcnc1_p14_CB_Rep2, method = "glmGamPoi", ncells = 11053, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+Kcnc1_p14_CB_Rep3 <- SCTransform(Kcnc1_p14_CB_Rep3, method = "glmGamPoi", ncells = 15827, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
 
 srat.list <- list(WT_p14_CB_Rep1 = WT_p14_CB_Rep1, WT_p14_CB_Rep2 = WT_p14_CB_Rep2, WT_p14_CB_Rep3 = WT_p14_CB_Rep3, Kcnc1_p14_CB_Rep1 = Kcnc1_p14_CB_Rep1, Kcnc1_p14_CB_Rep2 = Kcnc1_p14_CB_Rep2, Kcnc1_p14_CB_Rep3 = Kcnc1_p14_CB_Rep3)
 features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
@@ -1105,17 +1119,61 @@ WT_Kcnc1_p14_CB_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p14_CB_1step.anc
 #### UMAP
 DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "integrated"
 
-WT_Kcnc1_p14_CB_1step.sct <- RunPCA(WT_Kcnc1_p14_CB_1step.sct, verbose = FALSE, npcs = 13)
-WT_Kcnc1_p14_CB_1step.sct <- RunUMAP(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", dims = 1:13, verbose = FALSE)
-WT_Kcnc1_p14_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", k.param = 30, dims = 1:13)
+WT_Kcnc1_p14_CB_1step.sct <- RunPCA(WT_Kcnc1_p14_CB_1step.sct, verbose = FALSE, npcs = 30)
+WT_Kcnc1_p14_CB_1step.sct <- RunUMAP(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
+WT_Kcnc1_p14_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", k.param = 30, dims = 1:30)
 WT_Kcnc1_p14_CB_1step.sct <- FindClusters(WT_Kcnc1_p14_CB_1step.sct, resolution = 0.5, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
 WT_Kcnc1_p14_CB_1step.sct$condition <- factor(WT_Kcnc1_p14_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1-1stepIntegrationRegressNotRepeated-QCV2dim13kparam30res05.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1-1stepIntegrationRegressNotRepeatedregMtRbFeaCou-QCV2dim30kparam30res05.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
+
+
+# genes
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-1stepIntegrationRegressNotRepeated-QCV2dim30kparam20res05-countMtRbRegression-List3.pdf", width=30, height=70)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Calb1", "Slc1a6", "Car8", "Gabra6", "Pax6", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Zeb2", "Hepacam", "Aqp4", "Slc39a12", "Kl", "Clic6", "Slc13a4", "Ttr", "Cfap54", "Ccdc153", "Cfap44", "Tmem212", "Ptgds", "Dcn", "Ntng1", "Grm5","Aldoc", "Cnp", "Mbp", "Mag", "Plp1", "Slc18a2", "Ddc", "Slc6a4", "Tph2"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+
+#### QC metrics investigation ####################################
+pdf("output/seurat/VlnPlot_QCmetrics_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-QCV2dim30kparam20res05-countMtRbRegression.pdf", width=20, height=5)
+VlnPlot(WT_Kcnc1_p14_CB_1step.sct,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+
+pdf("output/seurat/VlnPlot_QCmetrics_nFeature_RNA_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-QCV2dim30kparam20res05-countMtRbRegression.pdf", width=5, height=5)
+VlnPlot(WT_Kcnc1_p14_CB_1step.sct,features = c("nFeature_RNA")) +
+  ylim(0,2000)
+dev.off()
+
+pdf("output/seurat/VlnPlot_QCmetrics_nCount_RNA_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-QCV2dim30kparam20res05-countMtRbRegression.pdf", width=5, height=5)
+VlnPlot(WT_Kcnc1_p14_CB_1step.sct,features = c("nCount_RNA")) +
+  ylim(0,10000)
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_nFeature_RNA-1stepIntegrationRegressNotRepeated-QCV2dim30kparam20res05.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "nFeature_RNA")
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_percentmt-1stepIntegrationRegressNotRepeated-QCV2dim30kparam20res05.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.mt")
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_percentrb-1stepIntegrationRegressNotRepeated-QCV2dim30kparam20res05.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.rb")
+dev.off()  
+############################################################
+
+
+
+
+
 
 
 
@@ -1131,21 +1189,13 @@ pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_Phase-1stepIntegrationRegressN
 DimPlot(WT_Kcnc1_p14_CB_1step.sct, group.by= "Phase") & 
   theme(plot.title = element_text(size=10))
 dev.off()  
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_nFeature_RNA-1stepIntegrationRegressNotRepeated-QCV2dim13kparam30res05.pdf", width=10, height=6)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "nFeature_RNA")
-dev.off()  
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_percentmt-1stepIntegrationRegressNotRepeated-QCV2dim13kparam30res05.pdf", width=10, height=6)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.mt")
-dev.off()  
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_percentrb-1stepIntegrationRegressNotRepeated-QCV2dim13kparam30res05.pdf", width=10, height=6)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.rb")
-dev.off()  
+
 
 # genes
 
 DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-1stepIntegrationRegressNotRepeated-QCV2dim13kparam30res05-countMtRbRegression-List3.pdf", width=30, height=70)
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-1stepIntegrationRegressNotRepeated-QCV2dim30kparam20res05-countMtRbRegression-List3.pdf", width=30, height=70)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Calb1", "Slc1a6", "Car8", "Gabra6", "Pax6", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Zeb2", "Hepacam", "Aqp4", "Slc39a12", "Kl", "Clic6", "Slc13a4", "Ttr", "Cfap54", "Ccdc153", "Cfap44", "Tmem212", "Ptgds", "Dcn", "Ntng1", "Grm5","Aldoc", "Cnp", "Mbp", "Mag", "Plp1", "Slc18a2", "Ddc", "Slc6a4", "Tph2"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
@@ -1203,6 +1253,7 @@ dev.off()
 ## saveRDS(WT_Kcnc1_p14_CB.sct, file = "output/seurat/WT_Kcnc1_p14_CB.sct_V1_numeric.rds") 
 ## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V1_numeric.rds") 
 ## WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V1_numeric.rds")
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V1_numeric.rds")
 set.seed(42)
 ##########
 
