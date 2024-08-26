@@ -172,7 +172,7 @@ WORK great!
 ### SignacV5
 
 Env for scRNAseq and scATACseq integration. Installed in `002*/006*` *labnote.md*
-Also R: BiocManager, tidyverse, EnsDb.Hsapiens.v86
+Also R: BiocManager, tidyverse, EnsDb.Hsapiens.v86, devtools, ShinyCell, rsconnect (shiny App)
 
 
 

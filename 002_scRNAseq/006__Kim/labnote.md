@@ -1726,6 +1726,7 @@ plot_cell_cycle_per_cluster(RNA_WT_Bap1KO.sct, output_dir = "output/seurat/")
 
 # Shinny app
 
+## RNA only
 
 Created with [ShinyCell](https://github.com/SGDDNB/ShinyCell); and follow [shinyapps](https://www.shinyapps.io/) to put it online 
 
@@ -1768,6 +1769,50 @@ rsconnect::deployApp('shinyApp_RNA_QCV2_clusterV2')
 
 --> https://roulethomas.shinyapps.io/shinyapp_rna_qcv2_clusterv2/ 
 
+
+
+
+
+## RNA and ATAC 
+
+Created with [ShinyCell](https://github.com/SGDDNB/ShinyCell); and follow [shinyapps](https://www.shinyapps.io/) to put it online 
+
+```bash
+conda activate SignacV5
+```
+
+```R
+# installation
+## install.packages("devtools")
+## devtools::install_github("SGDDNB/ShinyCell")
+## install.packages('rsconnect')
+## install.packages("DT")
+## install.packages("ggdendro")
+## install.packages("shinyhelper")
+
+# Packages
+library("Seurat")
+library("ShinyCell")
+library("rsconnect")
+
+# Data import EMBRYO
+multiome_WT_Bap1KO_QCV3.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV3.sct_numeric_label.rds")
+DefaultAssay(multiome_WT_Bap1KO_QCV3.sct) <- "RNA" # 
+
+# Generate Shiny app V1
+scConf = createConfig(multiome_WT_Bap1KO_QCV3.sct)
+
+makeShinyApp(multiome_WT_Bap1KO_QCV3.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "multiome_WT_Bap1KO_QCV3",
+             shiny.dir = "shinyApp_multiome_WT_Bap1KO_QCV3/") 
+
+rsconnect::deployApp('shinyApp_multiome_WT_Bap1KO_QCV3')
+
+
+
+
+
+```
 
 
 
@@ -5174,8 +5219,10 @@ multiome_Bap1KO_QCV2 <- readRDS(file = "output/seurat/multiome_Bap1KO_QCV2.rds")
 
 
 # Integrate WT and Bap1KO
-## Pre-processing
-# RNA analysis
+
+######################################################################################################
+## Pre-processing RNA  ####################################################################
+######################################################################################################
 
 DefaultAssay(multiome_WT_QCV2) <- "RNA"
 DefaultAssay(multiome_Bap1KO_QCV2) <- "RNA"
@@ -5670,6 +5717,10 @@ all_conserved <- bind_rows(cluster1.conserved,cluster2.conserved,cluster3.conser
 all_conserved$gene <- rownames(all_conserved)
 ## Write all conserved markers to a file
 write.table(all_conserved, file = "output/Signac/srat_all_conserved_markers_multiome_WT_Bap1KO_QCV3.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+all_conserved <- read_delim("output/Signac/srat_all_conserved_markers_multiome_WT_Bap1KO_QCV3.txt", delim = "\t", col_names = TRUE)
+colnames(all_conserved) <- c("gene", colnames(all_conserved)[-ncol(all_conserved)]) # shift all column name to the right
+
 ## Find the top 5 conserved markers for each cluster
 top10_conserved <- all_conserved %>%
   mutate(cluster = factor(cluster, levels = c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19", "cluster20"))) %>% 
@@ -5685,7 +5736,7 @@ top10_conserved <- all_conserved %>%
 
 ## Visualize the top 10/3 conserved markers for each cluster
 marker_genes_conserved <- unique(top10_conserved$gene)
-levels(RNA_WT_Bap1KO.sct) <- c("1",
+levels(multiome_WT_Bap1KO_QCV2.sct) <- c("1",
   "2",
   "3",
   "4",
@@ -5706,14 +5757,19 @@ levels(RNA_WT_Bap1KO.sct) <- c("1",
   "19",
   "20")
 
+DefaultAssay(multiome_WT_Bap1KO_QCV2.sct) <- "SCT"
+
+
 pdf("output/Signac/DotPlot_SCT_top5_conserved_multiome_WT_Bap1KO_QCV3.pdf", width=19, height=5)
 DotPlot(multiome_WT_Bap1KO_QCV2.sct, features = marker_genes_conserved, cols = c("grey", "red")) + RotatedAxis()
 dev.off()
 
 
-# save
+# SAVE #########################################################################################
 ## saveRDS(multiome_WT_Bap1KO_QCV2.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV3.sct_numeric.rds") 
 # I used multiome_WT_Bap1KO_QCV2 but was already multiome_WT_Bap1KO_QCV3... So here I update the file name
+################################################################################################
+multiome_WT_Bap1KO_QCV3.sct = multiome_WT_Bap1KO_QCV2.sct
 
 multiome_WT_Bap1KO_QCV3.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV3.sct_numeric.rds")
 
@@ -5729,10 +5785,10 @@ library("org.Mm.eg.db")
 library("AnnotationDbi")
 
 ## load marker
-all_markers <- read.delim("output/seurat/srat_WT_Bap1KO_all_markers_V1.txt", header = TRUE, row.names = 1)
+all_markers <- read.delim("output/Signac/srat_multiome_WT_Bap1KO_QCV3_all_markers.txt", header = TRUE, row.names = 1)
 ### Filter either WT or cYAPKO
-all_markers <- all_markers[grepl("RNA_WT$", all_markers$cluster), ]
-all_markers <- all_markers[grepl("RNA_Bap1KO$", all_markers$cluster), ]
+all_markers <- all_markers[grepl("multiome_WT$", all_markers$cluster), ]
+all_markers <- all_markers[grepl("multiome_Bap1KO$", all_markers$cluster), ]
 
 ## Convert geneSymbol to EntrezID
 all_markers$entrezid <- mapIds(org.Mm.eg.db,
@@ -5772,91 +5828,138 @@ annot.GSEA <- easyct(input.d, db="clustermole", # cellmarker or panglao or clust
 
 ## plots
 
-pdf("output/seurat/EasyCellType_dotplot_SCT_WT-cellmarker_brainCerebellumHippocampus.pdf", width=6, height=8)
-pdf("output/seurat/EasyCellType_dotplot_SCT_WT-clustermole_brain.pdf", width=6, height=8)
 
+pdf("output/Signac/EasyCellType_dotplot_SCT_WT-cellmarker_brainCerebellumHippocampus.pdf", width=6, height=8)
+pdf("output/Signac/EasyCellType_dotplot_SCT_WT-clustermole_brain.pdf", width=6, height=8)
 plot_dot(test="GSEA", annot.GSEA) + 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 dev.off()
 
 
+## check some genes
 
+
+pdf("output/Signac/FeaturePlot_SCT_RNA_WT_Bap1KO-EpendymalCell-QCV3_dim40kparam35res05algo4feat2000_noCellCycleRegression
+.pdf", width=15, height=15)
+FeaturePlot(multiome_WT_Bap1KO_QCV2.sct, features = c(  "Rabl2", "Cfap54", "Ccdc153", "Foxj1", "Pifo", "Dynlrb2", "Rsph1", "Cfap44"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+pdf("output/Signac/FeaturePlot_SCT_RNA_WT_Bap1KO-RadialGliaCell-QCV3_dim40kparam35res05algo4feat2000_noCellCycleRegression
+.pdf", width=15, height=15)
+FeaturePlot(multiome_WT_Bap1KO_QCV2.sct, features = c(  "Pax6", "Slc1a3", "Pdgfd", "Gli3", "Notch3", "Vcam1", "Hes5", "Olig2", "Gfap", "Emx2", "Cdh4", "Spry1", "Axin2", "Riiad1"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/Signac/FeaturePlot_SCT_RNA_WT_Bap1KO-RadialGliaCell2-QCV3_dim40kparam35res05algo4feat2000_noCellCycleRegression
+.pdf", width=15, height=15)
+FeaturePlot(multiome_WT_Bap1KO_QCV2.sct, features = c(  ), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+
+pdf("output/Signac/FeaturePlot_SCT_RNA_WT_Bap1KO-Astrocytes-QCV3_dim40kparam35res05algo4feat2000_noCellCycleRegression
+.pdf", width=15, height=15)
+FeaturePlot(multiome_WT_Bap1KO_QCV2.sct, features = c( "Gfap", "Slc1a2", "Acsl6", "Agt", "Aqp4", "Apoe", "S100b", "Sox9", "Gsta4", "Srr", "Aldh1l1", "Slc39a12"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/Signac/FeaturePlot_SCT_RNA_WT_Bap1KO-ChoroidPlexusCells-QCV3_dim40kparam35res05algo4feat2000_noCellCycleRegression
+.pdf", width=15, height=15)
+FeaturePlot(multiome_WT_Bap1KO_QCV2.sct, features = c( "Ttr", "Kl", "Clic6", "Prlr", "Chmp1a", "Slc26a11", "Slc23a2", "Wfikkn2", "Slc2a12", "Cldn1"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/Signac/FeaturePlot_SCT_RNA_WT_Bap1KO-BasketCellChatGPT-QCV3_dim40kparam35res05algo4feat2000_noCellCycleRegression
+.pdf", width=15, height=15)
+FeaturePlot(multiome_WT_Bap1KO_QCV2.sct, features = c( "Pvalb", "Gad1", "Gad2", "Cnr1", "Nkx2-1", "Syt2"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/Signac/FeaturePlot_SCT_RNA_WT_Bap1KO-ChandelierCell-QCV3_dim40kparam35res05algo4feat2000_noCellCycleRegression
+.pdf", width=15, height=15)
+FeaturePlot(multiome_WT_Bap1KO_QCV2.sct, features = c( "Ntf3" , "Sntb1", "Unc5b", "Rasgrp1", "Prkg1", "Vipr2" ), cols = c("grey", "red"))
+dev.off()
+
+pdf("output/Signac/FeaturePlot_SCT_RNA_WT_Bap1KO-ChandelierCellChatGPT-QCV3_dim40kparam35res05algo4feat2000_noCellCycleRegression
+.pdf", width=10, height=10)
+FeaturePlot(multiome_WT_Bap1KO_QCV2.sct, features = c( "Gad1", "Gad2","Pvalb", "Slc12a5" , "Ank3", "Syt2" ), cols = c("grey", "red"))
+dev.off()
+
+
+
+pdf("output/Signac/FeaturePlot_SCT_RNA_WT_Bap1KO-TopMarkerGenes-QCV3_dim40kparam35res05algo4feat2000_noCellCycleRegression
+.pdf", width=15, height=15)
+FeaturePlot(multiome_WT_Bap1KO_QCV3.sct, features = c( "Pax6", "Eomes", "Sema5a", "Hs3st1", "Igfbpl1", "Satb2", "Nts", "Cck", "Snca", "Gad1", "Lhx1", "Pdgfra", "Csf1r", "Foxj1", "Aqp4", "Pdgfd", "Slc12a5", "Aldh1a2"), cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
 
 
 ##########################################################################################
 
 
-
-
-
 ############ V2 naming
 
 Cluster1 = PyNs_SubC_CA1 (subiculum PyNs)
-Cluster2 = PyNs_SubC_CA23_1 (subiculum PyNs)
-Cluster3 = PyNs_RSC_ML (Retrosplenial Cortical Pyramidal neurons, middle layer)
-Cluster4 = IN_1 (interneuron)
-Cluster5 = PyNs_RSC_UL (Retrosplenial Cortical Pyramidal neurons, upper layer)
-Cluster6 = PyNs_SubC_CA23_2 (subiculum PyNs)
-Cluster7 = DG_GC (Dentate Gyrus granule cells)
-Cluster8 = NSC_1 (Neural Stem Cells)
+Cluster2 = PyNs_SubC_CA23 (subiculum PyNs)
+Cluster3 = IN_1 (interneuron)
+Cluster4 = PyNs_RSC_UL (Retrosplenial Cortical Pyramidal neurons, upper layer)
+Cluster5 = SubC_1 (subiculum)
+Cluster6 = DG_GC (Dentate Gyrus granule cells)
+Cluster7 = Astrocyte
+Cluster8 = SubC_2 (subiculum)
 Cluster9 = IN_2 (interneuron)
-Cluster10 = SubC_1 (subiculum)
-Cluster11 = NSC_2 (Neural Stem Cells)
-Cluster12 = IP (Intermediate Progenitors)
-Cluster13 = NSC_3 (Neural Stem Cells)
-Cluster14 = OPC (Oligodendrocyte progenitor cells)
-Cluster15 = SubC_2 (subiculum)
-Cluster16 = CR (Cajal Retzius)
-Cluster17 = PyNs_RSC_DL (Retrosplenial Cortical Pyramidal neurons, deep layer)
+Cluster10 = NSC (Neural Stem Cells)
+Cluster11 = IP (Intermediate Progenitors)
+Cluster12 = PyNs_RSC_ML (Retrosplenial Cortical Pyramidal neurons, middle layer)
+Cluster13 = CR (Cajal Retzius)
+Cluster14 = PyNs_RSC_DL (Retrosplenial Cortical Pyramidal neurons, deep layer)
+Cluster15 = OPC (Oligodendrocyte progenitor cells)
+Cluster16 = Chandelier_Cells
+Cluster17 = Meningeal_Cells
 Cluster18 = Microglia
-Cluster19 = Unknown
+Cluster19 = Radial_Glia_Cells
+Cluster20 = Ependymal_Cells
+
 
 
 new.cluster.ids <- c(
   "PyNs_SubC_CA1" ,
-  "PyNs_SubC_CA23_1" ,
-  "PyNs_RSC_ML" ,
-  "IN_1" ,
-  "PyNs_RSC_UL" ,
-  "PyNs_SubC_CA23_2" ,
-  "DG_GC" ,
-  "NSC_1" ,
-  "IN_2" ,
-  "SubC_1" ,
-  "NSC_2" ,
-  "IP" ,
-  "NSC_3" ,
-  "OPC" ,
-  "SubC_2" ,
-  "CR" ,
-  "PyNs_RSC_DL" ,
+  "PyNs_SubC_CA23" ,
+  "IN_1",
+  "PyNs_RSC_UL",
+  "SubC_1",
+  "DG_GC",
+  "Astrocyte",
+  "SubC_2",
+  "IN_2",
+  "NSC",
+  "IP",
+  "PyNs_RSC_ML",
+  "CR",
+  "PyNs_RSC_DL",
+  "OPC",
+  "Chandelier_Cells",
+  "Meningeal_Cells",
   "Microglia",
-  "Unknown" 
+  "Radial_Glia_Cells",
+  "Ependymal_Cells"
 )
 
-names(new.cluster.ids) <- levels(RNA_WT_Bap1KO.sct)
-RNA_WT_Bap1KO.sct <- RenameIdents(RNA_WT_Bap1KO.sct, new.cluster.ids)
+names(new.cluster.ids) <- levels(multiome_WT_Bap1KO_QCV3.sct)
+multiome_WT_Bap1KO_QCV3.sct <- RenameIdents(multiome_WT_Bap1KO_QCV3.sct, new.cluster.ids)
 
-RNA_WT_Bap1KO.sct$cluster.annot <- Idents(RNA_WT_Bap1KO.sct) # create a new slot in my seurat object
+multiome_WT_Bap1KO_QCV3.sct$cluster.annot <- Idents(multiome_WT_Bap1KO_QCV3.sct) # create a new slot in my seurat object
 
 
-pdf("output/seurat/UMAP_WT_Bap1KO_label_V2.pdf", width=12, height=6)
-DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap", split.by = "orig.ident", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+pdf("output/Signac/UMAP_multiome_WT_Bap1KO_QCV3_label.pdf", width=12, height=6)
+DimPlot(multiome_WT_Bap1KO_QCV3.sct, reduction = "umap", split.by = "orig.ident", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
 dev.off()
 
 
-pdf("output/seurat/UMAP_WT_Bap1KO_noSplit_label_V2.pdf", width=7, height=5)
-DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 4)
+pdf("output/Signac/UMAP_multiome_WT_Bap1KO_QCV3_noSplit_label.pdf", width=7, height=5)
+DimPlot(multiome_WT_Bap1KO_QCV3.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 4)
 dev.off()
 
-#overlapping orig.ident
-pdf("output/seurat/UMAP_WT_Bap1KO_label_overlap_V1.pdf", width=6, height=5)
-DimPlot(RNA_WT_Bap1KO.sct, reduction = "umap", group.by = "orig.ident", pt.size = 0.000001, cols = c("blue","red"))
-dev.off()
 
 
 # All in dotplot
-DefaultAssay(RNA_WT_Bap1KO.sct) <- "SCT"
+DefaultAssay(multiome_WT_Bap1KO_QCV3.sct) <- "SCT"
 
 Neural Stem Cells (NSC) = Pax6 (should have more cell types)
 Intermediate Progenitors (IP) = Eomes
@@ -5871,56 +5974,66 @@ Cajal Retzius (CR) = Lhx1
 Subiculum (SubC) = Nts, Nr4a2, Lmo3, B3gat1
 Microglia = Csf1r, Gpr34, Gpr183, Cx3cr1
 OPC = Pdgfra, Olig1
-
+Ependymal_Cells = Foxj1, Cfap44, Dynlrb2
+Astrocyte = Aqp4, Gfap
+Radial Glia Cells = Gli3, Pdgfd
+Chandellier cell = Ntf3, Prkg1, Slc12a5
+Meningeal cells = Aldh1a2, Vtn, Lum, Foxc1, Igf2
 
 all_markers <- c(
-  "Pax6" ,
-  "Eomes",
-  "Prox1", "Neurod1", "Sema5a",
-  "Tac2", "Hs3st1", "Nrn1",
-  "Pantr1", "Igfbpl1", "Frmd4b",
-  "Satb2", "Itpr1",
-  "Nts", "Nr4a2", "Lmo3", "B3gat1",
-  "Cck", "Insm1",
-  "Crym", "Snca", "Nrp2",
-  "Gad1", "Grin2d", "Calb1", "Npy", "Gria3", "Lhx6", # Reln removed
-  "Lhx1",
-  "Pdgfra", "Olig1",
-  "Csf1r", "Gpr34", "Gpr183", "Cx3cr1"
+"Pax6",
+"Eomes",
+"Gli3", "Pdgfd",
+"Pdgfra", "Olig1",
+"Aqp4", "Gfap",
+"Foxj1", "Cfap44", "Dynlrb2",
+"Csf1r", "Gpr34", "Gpr183", "Cx3cr1",
+"Aldh1a2", "Vtn", "Lum", "Foxc1", "Igf2",
+"Lhx1",
+"Prox1", "Neurod1", "Sema5a",
+"Cck", "Insm1",
+"Crym", "Snca", "Nrp2",
+"Satb2", "Itpr1",
+"Pantr1", "Igfbpl1", "Frmd4b",
+"Tac2", "Hs3st1", "Nrn1",
+"Nts", "Nr4a2", "Lmo3", "B3gat1",
+"Gad1", "Grin2d", "Reln", "Calb1", "Npy", "Gria3", "Lhx6",
+ "Ntf3", "Prkg1", "Slc12a5"
 )
 
 
 
-levels(RNA_WT_Bap1KO.sct) <- c(
-  "NSC_1" ,
-  "NSC_2" ,
-  "NSC_3" ,
-  "IP" ,
-  "DG_GC" ,
-  "PyNs_RSC_DL" ,
-  "PyNs_RSC_ML" ,
-  "PyNs_RSC_UL" ,
-  "SubC_1" ,
-  "SubC_2" ,
-  "PyNs_SubC_CA1" ,
-  "PyNs_SubC_CA23_1" ,
-  "PyNs_SubC_CA23_2" ,
-  "IN_1" ,
-  "IN_2" ,
-  "CR" ,
-  "OPC" ,
-  "Microglia",
-  "Unknown" 
+levels(multiome_WT_Bap1KO_QCV3.sct) <- c(
+"NSC",
+"IP",
+"Radial_Glia_Cells",
+"OPC",
+"Astrocyte",
+"Ependymal_Cells",
+"Microglia",
+"Meningeal_Cells",
+"CR",
+"DG_GC",
+"PyNs_SubC_CA1",
+"PyNs_SubC_CA23",
+"PyNs_RSC_UL",
+"PyNs_RSC_ML",
+"PyNs_RSC_DL",
+"SubC_1",
+"SubC_2",
+"IN_1",
+"IN_2",
+"Chandelier_Cells"
 )
 
 
 
-pdf("output/seurat/DotPlot_SCT_WT_Bap1KO_label_V2.pdf", width=11, height=4.5)
-DotPlot(RNA_WT_Bap1KO.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
+pdf("output/Signac/DotPlot_SCT_multiome_WT_Bap1KO_QCV3_label.pdf", width=11, height=4.5)
+DotPlot(multiome_WT_Bap1KO_QCV3.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
 dev.off()
 
-pdf("output/seurat/DotPlot_SCT_WT_Bap1KO_label_V2vertical.pdf", width=11, height=4.5)
-DotPlot(RNA_WT_Bap1KO.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
+pdf("output/Signac/DotPlot_SCT_multiome_WT_Bap1KO_QCV3_label_vertical.pdf", width=11, height=4.5)
+DotPlot(multiome_WT_Bap1KO_QCV3.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
         axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
 dev.off()
@@ -5932,7 +6045,7 @@ dev.off()
 # Cell type proportion
 
 
-pt <- table(Idents(RNA_WT_Bap1KO.sct), RNA_WT_Bap1KO.sct$orig.ident)
+pt <- table(Idents(multiome_WT_Bap1KO_QCV3.sct), multiome_WT_Bap1KO_QCV3.sct$orig.ident)
 pt <- as.data.frame(pt)
 pt <- pt %>%
   group_by(Var2) %>%
@@ -5940,7 +6053,7 @@ pt <- pt %>%
 
 pt$Var1 <- as.character(pt$Var1)
 
-pdf("output/seurat/cellTypeProp_SCT_WT_Bap1KO_V2.pdf", width=5, height=5)
+pdf("output/Signac/cellTypeProp_SCT_multiome_WT_Bap1KO_QCV3.pdf", width=5, height=5)
 ggplot(pt, aes(x = Var2, y = Proportion, fill = Var1)) +
   theme_bw(base_size = 15) +
   geom_col(position = "fill", width = 0.5) +
@@ -5955,34 +6068,106 @@ dev.off()
 # Cell cycle proportion per cluster
 ## Using numeric cluster annotation
 
-plot_cell_cycle_per_cluster <- function(RNA_WT_Bap1KO.sct, output_dir) {
-  clusters <- unique(RNA_WT_Bap1KO.sct$seurat_clusters)
+plot_cell_cycle_per_cluster <- function(multiome_WT_Bap1KO_QCV3.sct, output_dir) {
+  clusters <- unique(multiome_WT_Bap1KO_QCV3.sct$seurat_clusters)
   for (cluster in clusters) {
-    data <- RNA_WT_Bap1KO.sct@meta.data %>%
-      filter(seurat_clusters == cluster) %>%
+    data <- multiome_WT_Bap1KO_QCV3.sct@meta.data %>%
+      dplyr::filter(seurat_clusters == cluster) %>%
       group_by(orig.ident, Phase) %>%
       summarise(count = n()) %>%
       ungroup() %>%
       group_by(orig.ident) %>%
       mutate(proportion = count / sum(count)) %>%
       ungroup()
+
     plot <- ggplot(data, aes(x = orig.ident, y = proportion, fill = Phase)) +
       geom_bar(stat = "identity", position = "fill") +
       scale_y_continuous(labels = scales::percent) +
       labs(title = paste("Cluster", cluster), x = "Genotype", y = "Proportion (%)") +
       theme_bw() +
-      scale_fill_manual(values = c("G1" = "#1f77b4", "G2M" = "#ff7f0e", "S" = "#2ca02c"))
+      scale_fill_manual(values = c("G1" = "#1f77b4", "G2M" = "#ff7f0e", "S" = "#2ca02c")) +
+      geom_text(aes(label = scales::percent(proportion, accuracy = 0.1)), 
+                position = position_fill(vjust = 0.5), size = 5)
+
     # Save plot to PDF
     pdf(paste0(output_dir, "cellCycle_Cluster_", cluster, ".pdf"), width = 5, height = 6)
     print(plot)
     dev.off()
   }
 }
-plot_cell_cycle_per_cluster(RNA_WT_Bap1KO.sct, output_dir = "output/seurat/")
+plot_cell_cycle_per_cluster(multiome_WT_Bap1KO_QCV3.sct, output_dir = "output/Signac/")
 
 
 
 
+# SAVE #########################################################################################
+## saveRDS(multiome_WT_Bap1KO_QCV3.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV3.sct_numeric_label.rds") 
+################################################################################################
+
+
+#overlapping orig.ident
+pdf("output/Signac/UMAP_multiome_WT_Bap1KO_QCV3_numeric_overlap.pdf", width=6, height=5)
+DimPlot(multiome_WT_Bap1KO_QCV3.sct, reduction = "umap", group.by = "orig.ident", pt.size = 0.000001, cols = c("blue","red"))
+dev.off()
+
+
+
+######################################################################################################
+## Pre-processing ATAC  ####################################################################
+######################################################################################################
+
+multiome_WT_Bap1KO_QCV3.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV3.sct_numeric_label.rds")
+
+###  pre-processing and dimensional reductio
+DefaultAssay(multiome_WT_Bap1KO_QCV3.sct) <- "ATAC"
+multiome_WT_Bap1KO_QCV3.sct <- RunTFIDF(multiome_WT_Bap1KO_QCV3.sct)
+multiome_WT_Bap1KO_QCV3.sct <- FindTopFeatures(multiome_WT_Bap1KO_QCV3.sct, min.cutoff = 'q0')
+multiome_WT_Bap1KO_QCV3.sct <- RunSVD(multiome_WT_Bap1KO_QCV3.sct)
+multiome_WT_Bap1KO_QCV3.sct <- RunUMAP(multiome_WT_Bap1KO_QCV3.sct, reduction = 'lsi', dims = 2:50, reduction.name = "umap.atac", reduction.key = "atacUMAP_") # We exclude the first dimension as this is typically correlated with sequencing depth
+
+
+### WNN graph, representing a weighted combination of RNA and ATAC-seq modalities
+
+multiome_WT_Bap1KO_QCV3.sct <- FindMultiModalNeighbors(multiome_WT_Bap1KO_QCV3.sct, reduction.list = list("pca", "lsi"), dims.list = list(1:40, 2:50))
+multiome_WT_Bap1KO_QCV3.sct <- RunUMAP(multiome_WT_Bap1KO_QCV3.sct, nn.name = "weighted.nn", reduction.name = "wnn.umap", reduction.key = "wnnUMAP_")
+multiome_WT_Bap1KO_QCV3.sct <- FindClusters(multiome_WT_Bap1KO_QCV3.sct, graph.name = "wsnn", algorithm = 3, verbose = TRUE)
+
+# plot gene expression, ATAC-seq, or WNN analysis
+p1 <- DimPlot(multiome_WT_Bap1KO_QCV3.sct, reduction = "umap", group.by = "cluster.annot", label = TRUE, label.size = 2.5, repel = TRUE) + ggtitle("RNA")
+p2 <- DimPlot(multiome_WT_Bap1KO_QCV3.sct, reduction = "umap.atac", group.by = "cluster.annot", label = TRUE, label.size = 2.5, repel = TRUE) + ggtitle("ATAC")
+p3 <- DimPlot(multiome_WT_Bap1KO_QCV3.sct, reduction = "wnn.umap", group.by = "cluster.annot", label = TRUE, label.size = 2.5, repel = TRUE) + ggtitle("WNN")
+
+pdf("output/Signac/UMAP_multiome_WT_Bap1KO_QCV3_RNAATACWNN.pdf", width=12, height=5)
+p1 + p2 + p3 & NoLegend() & theme(plot.title = element_text(hjust = 0.5))
+dev.off()
+
+
+
+# some plots
+
+
+
+pdf("output/Signac/CoveragePlot-Pdgfra.pdf", width=5, height=5)
+CoveragePlot(multiome_WT_Bap1KO_QCV3.sct, region = 'Pdgfra', features = 'Pdgfra', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, group.by = "cluster.annot" )
+dev.off()
+
+
+pdf("output/Signac/CoveragePlot-Gad1.pdf", width=5, height=5)
+CoveragePlot(multiome_WT_Bap1KO_QCV3.sct, region = 'Gad1', features = 'Gad1', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, group.by = "cluster.annot" )
+dev.off()
+
+pdf("output/Signac/CoveragePlot-Lhx1.pdf", width=5, height=5)
+CoveragePlot(multiome_WT_Bap1KO_QCV3.sct, region = 'Lhx1', features = 'Lhx1', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, group.by = "cluster.annot" )
+dev.off()
+
+pdf("output/Signac/CoveragePlot-Grin2a.pdf", width=5, height=5)
+CoveragePlot(multiome_WT_Bap1KO_QCV3.sct, region = 'Grin2a', features = 'Grin2a', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, group.by = "cluster.annot" )
+dev.off()
+
+
+pdf("output/Signac/CoveragePlot-Trhde.pdf", width=5, height=5)
+CoveragePlot(multiome_WT_Bap1KO_QCV3.sct, region = 'Trhde', features = 'Trhde', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, group.by = "cluster.annot" )
+dev.off()
 
 
 
