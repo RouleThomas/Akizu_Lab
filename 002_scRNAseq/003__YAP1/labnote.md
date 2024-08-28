@@ -2503,6 +2503,300 @@ I now use the same number of dimensions for SCTransform and data integration ste
 --> Share to Conchi the Conserved Marker list (`srat_all_conserved_markers_V2.xlsx`). To avoid confusion, I did some filtering: For each cell type; I only keep log2FC positive (= correspond to gene more highly express in this cell types) and I told her to filter per pvalue which is the max_pvalue. Like this, she will only see the highly express genes in each cluster
 
 
+# humangastruloid 24hr 72hr integration
+
+Let's try to integrate 24 - 72hr time point. Obj to identify true ectoderm cells; true pionner cells. And do pseudotime and check H3K27me3
+
+--> Keep the QC I did
+
+```bash
+conda activate scRNAseqV2
+```
+
+```R
+# packages
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+
+## Load the matrix and Create SEURAT object
+load("output/soupX/out_24hgastruloidhumanUN.RData")
+srat_UNTREATED24hr <- CreateSeuratObject(counts = out, project = "UNTREATED24hr") # 32,285 features across 1,829 samples
+
+load("output/soupX/out_24hgastruloidhumanDASA.RData")
+srat_DASATINIB24hr <- CreateSeuratObject(counts = out, project = "DASATINIB24hr") # 32,285 features across 1,897 samples
+
+load("output/soupX/out_humangastruloid_UNTREATED72hr.RData")
+srat_UNTREATED72hr <- CreateSeuratObject(counts = out, project = "UNTREATED72hr") # 36,601 features across 6,080 samples
+
+load("output/soupX/out_humangastruloid_DASATINIB72hr.RData")
+srat_DASATINIB72hr <- CreateSeuratObject(counts = out, project = "DASATINIB72hr") # 36,601 features across 9,938 samples
+
+
+
+
+# QUALITY CONTROL
+## add mitochondrial and Ribosomal conta 
+srat_UNTREATED24hr[["percent.mt"]] <- PercentageFeatureSet(srat_UNTREATED24hr, pattern = "^MT-")
+srat_UNTREATED24hr[["percent.rb"]] <- PercentageFeatureSet(srat_UNTREATED24hr, pattern = "^RP[SL]")
+
+srat_DASATINIB24hr[["percent.mt"]] <- PercentageFeatureSet(srat_DASATINIB24hr, pattern = "^MT-")
+srat_DASATINIB24hr[["percent.rb"]] <- PercentageFeatureSet(srat_DASATINIB24hr, pattern = "^RP[SL]")
+
+srat_UNTREATED72hr[["percent.mt"]] <- PercentageFeatureSet(srat_UNTREATED72hr, pattern = "^MT-")
+srat_UNTREATED72hr[["percent.rb"]] <- PercentageFeatureSet(srat_UNTREATED72hr, pattern = "^RP[SL]")
+
+srat_DASATINIB72hr[["percent.mt"]] <- PercentageFeatureSet(srat_DASATINIB72hr, pattern = "^MT-")
+srat_DASATINIB72hr[["percent.rb"]] <- PercentageFeatureSet(srat_DASATINIB72hr, pattern = "^RP[SL]")
+
+
+
+## add doublet information (scrublet)
+doublets <- read.table("output/doublets/humangastruloid_UNTREATED24hr.tsv",header = F,row.names = 1)
+colnames(doublets) <- c("Doublet_score","Is_doublet")
+srat_UNTREATED24hr <- AddMetaData(srat_UNTREATED24hr,doublets)
+srat_UNTREATED24hr$Doublet_score <- as.numeric(srat_UNTREATED24hr$Doublet_score) # make score as numeric
+head(srat_UNTREATED24hr[[]])
+
+doublets <- read.table("output/doublets/humangastruloid_DASATINIB24hr.tsv",header = F,row.names = 1)
+colnames(doublets) <- c("Doublet_score","Is_doublet")
+srat_DASATINIB24hr <- AddMetaData(srat_DASATINIB24hr,doublets)
+srat_DASATINIB24hr$Doublet_score <- as.numeric(srat_DASATINIB24hr$Doublet_score) # make score as numeric
+head(srat_DASATINIB24hr[[]])
+
+
+
+doublets <- read.table("output/doublets/humangastruloid_UNTREATED72hr.tsv",header = F,row.names = 1)
+colnames(doublets) <- c("Doublet_score","Is_doublet")
+srat_UNTREATED72hr <- AddMetaData(srat_UNTREATED72hr,doublets)
+srat_UNTREATED72hr$Doublet_score <- as.numeric(srat_UNTREATED72hr$Doublet_score) # make score as numeric
+head(srat_UNTREATED72hr[[]])
+
+doublets <- read.table("output/doublets/humangastruloid_DASATINIB72hr.tsv",header = F,row.names = 1)
+colnames(doublets) <- c("Doublet_score","Is_doublet")
+srat_DASATINIB72hr <- AddMetaData(srat_DASATINIB72hr,doublets)
+srat_DASATINIB72hr$Doublet_score <- as.numeric(srat_DASATINIB72hr$Doublet_score) # make score as numeric
+head(srat_DASATINIB72hr[[]])
+
+
+
+
+
+
+
+
+### 24h (from 'V2 more stringent')
+srat_UNTREATED24hr[['QC']] <- ifelse(srat_UNTREATED24hr@meta.data$Is_doublet == 'True','Doublet','Pass')
+srat_UNTREATED24hr[['QC']] <- ifelse(srat_UNTREATED24hr@meta.data$nFeature_RNA < 3000 & srat_UNTREATED24hr@meta.data$QC == 'Pass','Low_nFeature',srat_UNTREATED24hr@meta.data$QC)
+srat_UNTREATED24hr[['QC']] <- ifelse(srat_UNTREATED24hr@meta.data$nFeature_RNA < 3000 & srat_UNTREATED24hr@meta.data$QC != 'Pass' & srat_UNTREATED24hr@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_UNTREATED24hr@meta.data$QC,sep = ','),srat_UNTREATED24hr@meta.data$QC)
+srat_UNTREATED24hr[['QC']] <- ifelse(srat_UNTREATED24hr@meta.data$percent.mt > 15 & srat_UNTREATED24hr@meta.data$QC == 'Pass','High_MT',srat_UNTREATED24hr@meta.data$QC)
+srat_UNTREATED24hr[['QC']] <- ifelse(srat_UNTREATED24hr@meta.data$nFeature_RNA < 3000 & srat_UNTREATED24hr@meta.data$QC != 'Pass' & srat_UNTREATED24hr@meta.data$QC != 'High_MT',paste('High_MT',srat_UNTREATED24hr@meta.data$QC,sep = ','),srat_UNTREATED24hr@meta.data$QC)
+table(srat_UNTREATED24hr[['QC']])
+## 
+srat_DASATINIB24hr[['QC']] <- ifelse(srat_DASATINIB24hr@meta.data$Is_doublet == 'True','Doublet','Pass')
+srat_DASATINIB24hr[['QC']] <- ifelse(srat_DASATINIB24hr@meta.data$nFeature_RNA < 3000 & srat_DASATINIB24hr@meta.data$QC == 'Pass','Low_nFeature',srat_DASATINIB24hr@meta.data$QC)
+srat_DASATINIB24hr[['QC']] <- ifelse(srat_DASATINIB24hr@meta.data$nFeature_RNA < 3000 & srat_DASATINIB24hr@meta.data$QC != 'Pass' & srat_DASATINIB24hr@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_DASATINIB24hr@meta.data$QC,sep = ','),srat_DASATINIB24hr@meta.data$QC)
+srat_DASATINIB24hr[['QC']] <- ifelse(srat_DASATINIB24hr@meta.data$percent.mt > 15 & srat_DASATINIB24hr@meta.data$QC == 'Pass','High_MT',srat_DASATINIB24hr@meta.data$QC)
+srat_DASATINIB24hr[['QC']] <- ifelse(srat_DASATINIB24hr@meta.data$nFeature_RNA < 3000 & srat_DASATINIB24hr@meta.data$QC != 'Pass' & srat_DASATINIB24hr@meta.data$QC != 'High_MT',paste('High_MT',srat_DASATINIB24hr@meta.data$QC,sep = ','),srat_DASATINIB24hr@meta.data$QC)
+table(srat_DASATINIB24hr[['QC']])
+
+
+
+
+
+## 72hr (from 'After seeing the plot; add QC information in our seurat object')
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$Is_doublet == 'True','Doublet','Pass')
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 2000 & srat_UNTREATED72hr@meta.data$QC == 'Pass','Low_nFeature',srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 2000 & srat_UNTREATED72hr@meta.data$QC != 'Pass' & srat_UNTREATED72hr@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_UNTREATED72hr@meta.data$QC,sep = ','),srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$percent.mt > 15 & srat_UNTREATED72hr@meta.data$QC == 'Pass','High_MT',srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 2000 & srat_UNTREATED72hr@meta.data$QC != 'Pass' & srat_UNTREATED72hr@meta.data$QC != 'High_MT',paste('High_MT',srat_UNTREATED72hr@meta.data$QC,sep = ','),srat_UNTREATED72hr@meta.data$QC)
+table(srat_UNTREATED72hr[['QC']])
+## 
+
+
+
+srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$Is_doublet == 'True','Doublet','Pass')
+srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$nFeature_RNA < 2000 & srat_DASATINIB72hr@meta.data$QC == 'Pass','Low_nFeature',srat_DASATINIB72hr@meta.data$QC)
+srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$nFeature_RNA < 2000 & srat_DASATINIB72hr@meta.data$QC != 'Pass' & srat_DASATINIB72hr@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_DASATINIB72hr@meta.data$QC,sep = ','),srat_DASATINIB72hr@meta.data$QC)
+srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$percent.mt > 15 & srat_DASATINIB72hr@meta.data$QC == 'Pass','High_MT',srat_DASATINIB72hr@meta.data$QC)
+srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$nFeature_RNA < 2000 & srat_DASATINIB72hr@meta.data$QC != 'Pass' & srat_DASATINIB72hr@meta.data$QC != 'High_MT',paste('High_MT',srat_DASATINIB72hr@meta.data$QC,sep = ','),srat_DASATINIB72hr@meta.data$QC)
+table(srat_DASATINIB72hr[['QC']])
+
+
+
+
+
+## subset my seurat object to only analyze the cells that pass the QC
+srat_UNTREATED24hr <- subset(srat_UNTREATED24hr, subset = QC == 'Pass')
+srat_DASATINIB24hr <- subset(srat_DASATINIB24hr, subset = QC == 'Pass')
+srat_UNTREATED24hr$condition <- "UNTREATED24hr"
+srat_DASATINIB24hr$condition <- "DASATINIB24hr"
+
+
+srat_UNTREATED72hr <- subset(srat_UNTREATED72hr, subset = QC == 'Pass')
+srat_DASATINIB72hr <- subset(srat_DASATINIB72hr, subset = QC == 'Pass')
+srat_UNTREATED72hr$condition <- "UNTREATED72hr"
+srat_DASATINIB72hr$condition <- "DASATINIB72hr"
+
+s.genes <- cc.genes.updated.2019$s.genes
+g2m.genes <- cc.genes.updated.2019$g2m.genes
+
+
+## NORMALIZE AND SCALE DATA BEFORE RUNNING CELLCYCLESORTING
+srat_UNTREATED24hr <- NormalizeData(srat_UNTREATED24hr, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(srat_UNTREATED24hr)
+srat_UNTREATED24hr <- ScaleData(srat_UNTREATED24hr, features = all.genes) # zero-centres and scales it
+
+srat_DASATINIB24hr <- NormalizeData(srat_DASATINIB24hr, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(srat_DASATINIB24hr)
+srat_DASATINIB24hr <- ScaleData(srat_DASATINIB24hr, features = all.genes) # zero-centres and scales it
+
+
+srat_UNTREATED72hr <- NormalizeData(srat_UNTREATED72hr, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(srat_UNTREATED72hr)
+srat_UNTREATED72hr <- ScaleData(srat_UNTREATED72hr, features = all.genes) # zero-centres and scales it
+
+srat_DASATINIB72hr <- NormalizeData(srat_DASATINIB72hr, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(srat_DASATINIB72hr)
+srat_DASATINIB72hr <- ScaleData(srat_DASATINIB72hr, features = all.genes) # zero-centres and scales it
+
+
+
+### CELLCYCLESORTING
+srat_UNTREATED24hr <- CellCycleScoring(srat_UNTREATED24hr, s.features = s.genes, g2m.features = g2m.genes)
+table(srat_UNTREATED24hr[[]]$Phase)
+srat_DASATINIB24hr <- CellCycleScoring(srat_DASATINIB24hr, s.features = s.genes, g2m.features = g2m.genes)
+table(srat_DASATINIB24hr[[]]$Phase)
+
+
+
+srat_UNTREATED72hr <- CellCycleScoring(srat_UNTREATED72hr, s.features = s.genes, g2m.features = g2m.genes)
+table(srat_UNTREATED72hr[[]]$Phase)
+srat_DASATINIB72hr <- CellCycleScoring(srat_DASATINIB72hr, s.features = s.genes, g2m.features = g2m.genes)
+table(srat_DASATINIB72hr[[]]$Phase)
+
+set.seed(42)
+
+
+
+
+
+# Run SCTransform
+
+srat_UNTREATED24hr$time <- "24hr"
+srat_DASATINIB24hr$time <- "24hr"
+srat_UNTREATED72hr$time <- "72hr"
+srat_DASATINIB72hr$time <- "72hr"
+
+srat_UNTREATED24hr$condition <- "UNTREATED24hr"
+srat_DASATINIB24hr$condition <- "DASATINIB24hr"
+srat_UNTREATED72hr$condition <- "UNTREATED72hr"
+srat_DASATINIB72hr$condition <- "DASATINIB72hr"
+
+srat_UNTREATED24hr$treatment <- "UNTREATED"
+srat_DASATINIB24hr$treatment <- "DASATINIB"
+srat_UNTREATED72hr$treatment <- "UNTREATED"
+srat_DASATINIB72hr$treatment <- "DASATINIB"
+
+set.seed(42)
+
+
+## Version OK with 2000 treshold RNA
+srat_UNTREATED24hr <- SCTransform(srat_UNTREATED24hr, method = "glmGamPoi", ncells = 7331, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) 
+
+srat_DASATINIB24hr <- SCTransform(srat_DASATINIB24hr, method = "glmGamPoi", ncells = 6613, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000)
+
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncells = 5713, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) 
+
+srat_DASATINIB72hr <- SCTransform(srat_DASATINIB72hr, method = "glmGamPoi", ncells = 7148, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000)
+
+
+# Data integration (check active assay is 'SCT')
+srat.list <- list(srat_UNTREATED24hr = srat_UNTREATED24hr, srat_DASATINIB24hr = srat_DASATINIB24hr, srat_UNTREATED72hr = srat_UNTREATED72hr, srat_DASATINIB72hr = srat_DASATINIB72hr)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+
+humangastruloid.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+humangastruloid.combined.sct <- IntegrateData(anchorset = humangastruloid.anchors, normalization.method = "SCT")
+
+
+
+# Perform integrated analysis (check active assay is 'integrated')
+## RE FINE A BIT BUT ALMOST PERFECT !!! tested 0.6 not good; play with k.param!! was 40 dim at sctransform
+
+DefaultAssay(humangastruloid.combined.sct) <- "integrated"
+
+humangastruloid.combined.sct <- RunPCA(humangastruloid.combined.sct, verbose = FALSE, npcs = 30)
+humangastruloid.combined.sct <- RunUMAP(humangastruloid.combined.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
+humangastruloid.combined.sct <- FindNeighbors(humangastruloid.combined.sct, reduction = "pca", k.param = 15, dims = 1:30)
+humangastruloid.combined.sct <- FindClusters(humangastruloid.combined.sct, resolution = 0.2, verbose = FALSE, algorithm = 4)
+
+
+
+#RAW: humangastruloid.combined.sct <- FindClusters(humangastruloid.combined.sct, resolution = 0.3, verbose = FALSE, algorithm = 4)
+
+humangastruloid.combined.sct$condition <- factor(humangastruloid.combined.sct$condition, levels = c("UNTREATED24hr", "DASATINIB24hr", "UNTREATED72hr", "DASATINIB72hr")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_humangastruloid2472hr_V1-dim30kparam15res02.pdf", width=10, height=6)
+DimPlot(humangastruloid.combined.sct, reduction = "umap", split.by = "time", label=TRUE)
+dev.off()
+
+
+xxx here xxx
+
+
+# save ######################################################
+saveRDS(srat_UNTREATED24hr, file = "output/seurat/srat_UNTREATED24hr_V1.rds")
+saveRDS(srat_DASATINIB24hr, file = "output/seurat/srat_DASATINIB24hr_V1.rds")
+saveRDS(srat_UNTREATED72hr, file = "output/seurat/srat_UNTREATED72hr_V1.rds")
+saveRDS(srat_DASATINIB72hr, file = "output/seurat/srat_DASATINIB72hr_V1.rds")
+## saveRDS(humangastruloid.combined.sct, file = "output/seurat/humangastruloid2472hr_V1.sct_V1_numeric.rds") # integration all samples
+#############################################################
+
+```
+
+
+--> Integration 24 and 72hr is weird as it is able to find exactly common cluster for both conditions, with is likely not the case? Maybe I should merge instead?
+
+
+
+# humangastruloid 24 72hr + hESC WT
+
+
+wget --content-disposition -i fileUrls.txt --user YOUREMAIL --password YOURPASS
+
+- Download files from  cirmdcm.soe.ucsc.edu, check email for credentials
+- I isolated the 24 fastq files (samples separated in multiple lanes) and select `Name files as submitted, one single directory`
+- I obtain link and can now download files in Unix in folder `H1_hESC`
+
+```bash
+nano fileUrls.txt # copy the urls
+wget --content-disposition -i fileUrls.txt --user YOUREMAIL --password YOURPASS
+
+```
+
+--> Done
+
+The files have been sequenced over multiple lane so we need to pull them. 
+
+XXX
+
+
+
+
+
+
+
+
 
 
 
