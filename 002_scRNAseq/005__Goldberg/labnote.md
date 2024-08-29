@@ -1152,13 +1152,13 @@ DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "integrated"
 
 WT_Kcnc1_p14_CB_1step.sct <- RunPCA(WT_Kcnc1_p14_CB_1step.sct, verbose = FALSE, npcs = 30)
 WT_Kcnc1_p14_CB_1step.sct <- RunUMAP(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
-WT_Kcnc1_p14_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", k.param = 30, dims = 1:30)
-WT_Kcnc1_p14_CB_1step.sct <- FindClusters(WT_Kcnc1_p14_CB_1step.sct, resolution = 0.5, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+WT_Kcnc1_p14_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", k.param = 20, dims = 1:30)
+WT_Kcnc1_p14_CB_1step.sct <- FindClusters(WT_Kcnc1_p14_CB_1step.sct, resolution = 0.4, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
 WT_Kcnc1_p14_CB_1step.sct$condition <- factor(WT_Kcnc1_p14_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim30kparam30res05.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim30kparam20res04.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
@@ -1168,47 +1168,41 @@ dev.off()
 DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim30kparam20res05-countMtRbRegression-List4.pdf", width=30, height=70)
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim40kparam30res05-countMtRbRegression-List4.pdf", width=30, height=70)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Calb1", "Slc1a6", "Car8", "Gabra6", "Pax6", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Zeb2", "Hepacam", "Aqp4", "Slc39a12", "Kl", "Clic6", "Slc13a4", "Ttr", "Cfap54", "Ccdc153", "Cfap44", "Tmem212", "Ptgds", "Dcn", "Ntng1", "Grm5", "Aldoc", "Cnp", "Cspg5", "Mbp", "Mag", "Plp1", "Slc18a2", "Ddc", "Slc6a4", "Tph2", "Lef1", "Notum", "Apcdd1", "Nxph1", "Dynlt1c", "Otx1", "Rnd3", "Pvalb", "Cck", "Sst", "Myh11"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim30kparam20res05-countMtRbRegression-List3.pdf", width=30, height=70)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Calb1", "Slc1a6", "Car8", "Gabra6", "Pax6", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Zeb2", "Hepacam", "Aqp4", "Slc39a12", "Kl", "Clic6", "Slc13a4", "Ttr", "Cfap54", "Ccdc153", "Cfap44", "Tmem212", "Ptgds", "Dcn", "Ntng1", "Grm5","Aldoc", "Cnp", "Mbp", "Mag", "Plp1", "Slc18a2", "Ddc", "Slc6a4", "Tph2"), max.cutoff = 1, cols = c("grey", "red"))
-dev.off()
 
-
-
-XXX here
 
 
 
 
 
 #### QC metrics investigation ####################################
-pdf("output/seurat/VlnPlot_QCmetrics_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-QCV2dim30kparam20res05-countMtRbRegression.pdf", width=20, height=5)
+pdf("output/seurat/VlnPlot_QCmetrics_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-QCV3dim30kparam20res04-countMtRbRegression.pdf", width=20, height=5)
 VlnPlot(WT_Kcnc1_p14_CB_1step.sct,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
   theme(plot.title = element_text(size=10))
 dev.off()
 
-pdf("output/seurat/VlnPlot_QCmetrics_nFeature_RNA_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-QCV2dim30kparam20res05-countMtRbRegression.pdf", width=5, height=5)
+pdf("output/seurat/VlnPlot_QCmetrics_nFeature_RNA_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-QCV3dim30kparam20res04-countMtRbRegression.pdf", width=5, height=5)
 VlnPlot(WT_Kcnc1_p14_CB_1step.sct,features = c("nFeature_RNA")) +
   ylim(0,2000)
 dev.off()
 
-pdf("output/seurat/VlnPlot_QCmetrics_nCount_RNA_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-QCV2dim30kparam20res05-countMtRbRegression.pdf", width=5, height=5)
+pdf("output/seurat/VlnPlot_QCmetrics_nCount_RNA_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-QCV3dim30kparam20res04-countMtRbRegression.pdf", width=5, height=5)
 VlnPlot(WT_Kcnc1_p14_CB_1step.sct,features = c("nCount_RNA")) +
   ylim(0,10000)
 dev.off()
 
 
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_nFeature_RNA-1stepIntegrationRegressNotRepeated-QCV2dim30kparam20res05.pdf", width=5, height=5)
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_nFeature_RNA-1stepIntegrationRegressNotRepeated-QCV3dim30kparam20res04.pdf", width=5, height=5)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "nFeature_RNA")
 dev.off()  
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_percentmt-1stepIntegrationRegressNotRepeated-QCV2dim30kparam20res05.pdf", width=5, height=5)
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_percentmt-1stepIntegrationRegressNotRepeated-QCV3dim30kparam20res04.pdf", width=5, height=5)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.mt")
 dev.off()  
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_percentrb-1stepIntegrationRegressNotRepeated-QCV2dim30kparam20res05.pdf", width=5, height=5)
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_percentrb-1stepIntegrationRegressNotRepeated-QCV3dim30kparam20res04.pdf", width=5, height=5)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.rb")
 dev.off()  
 ############################################################
@@ -1298,7 +1292,7 @@ dev.off()
 ## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V2_numeric.rds") # regMtRbFeaCount
 ## WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V1_numeric.rds") # regMtRbCount
 ## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V3_numeric.rds") # regMtRbCount with QC_V3
-WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V1_numeric.rds")
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V3_numeric.rds")
 set.seed(42)
 ##########
 
@@ -1314,7 +1308,9 @@ WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step
 ### Find all markers 
 all_markers <- FindAllMarkers(WT_Kcnc1_p14_CB_1step.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
 
-write.table(all_markers, file = "output/seurat/srat_WT_Kcnc1_p14_CB_1step_V1_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(all_markers, file = "output/seurat/srat_WT_Kcnc1_p14_CB_1step_QCV3_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+## V1 = QCV1
+## QCV3
 
 
 # BiocManager::install("EasyCellType")
@@ -1323,7 +1319,7 @@ library("org.Mm.eg.db")
 library("AnnotationDbi")
 
 ## load marker
-all_markers <- read.delim("output/seurat/srat_WT_Kcnc1_p14_CB_1step_V1_all_markers.txt", header = TRUE, row.names = 1)
+all_markers <- read.delim("output/seurat/srat_WT_Kcnc1_p14_CB_1step_QCV3_all_markers.txt", header = TRUE, row.names = 1)
 
 
 
@@ -1367,19 +1363,12 @@ annot.GSEA <- easyct(input.d, db="clustermole", # cellmarker or panglao or clust
 
 
 #pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p14_CB_1step_V1-cellmarker_CerebellumBrainHippocampus.pdf", width=6, height=8)
-pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p14_CB_1step_V1-clustermole_Brain.pdf", width=6, height=8)
+#pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p14_CB_1step_V1-clustermole_Brain.pdf", width=6, height=8)
 
+pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p14_CB_1step_QCV3-clustermole_Brain.pdf", width=6, height=8)
 plot_dot(test="GSEA", annot.GSEA) + 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 dev.off()
-
-
-pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p14_CB_1step_V1-panglao_Brain.pdf", width=6, height=8)
-
-plot_dot(test="GSEA", annot.GSEA) + 
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-dev.off()
-
 
 
 
@@ -1399,16 +1388,6 @@ pdf("output/Signac/FeaturePlot_SCT_RNA_WT_Bap1KO-EpendymalCell-QCV3_dim40kparam3
 .pdf", width=15, height=15)
 FeaturePlot(multiome_WT_Bap1KO_QCV2.sct, features = c(  "Rabl2", "Cfap54", "Ccdc153", "Foxj1", "Pifo", "Dynlrb2", "Rsph1", "Cfap44"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1468,6 +1447,18 @@ makeShinyApp(WT_Kcnc1_p14_CB_1step.sct, scConf, gene.mapping = TRUE,
 
 rsconnect::deployApp('shinyApp_WT_Kcnc1_p14_CB_1step_V1')
 
+
+
+# Generate Shiny app QCV3
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA" # 
+
+scConf = createConfig(WT_Kcnc1_p14_CB_1step.sct)
+
+makeShinyApp(WT_Kcnc1_p14_CB_1step.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "WT_Kcnc1_p14_CB_1step_QCV3",
+             shiny.dir = "shinyApp_WT_Kcnc1_p14_CB_1step_QCV3/") 
+
+rsconnect::deployApp('shinyApp_WT_Kcnc1_p14_CB_1step_QCV3')
 
 
 

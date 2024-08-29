@@ -2599,6 +2599,9 @@ srat_UNTREATED24hr[['QC']] <- ifelse(srat_UNTREATED24hr@meta.data$nFeature_RNA <
 srat_UNTREATED24hr[['QC']] <- ifelse(srat_UNTREATED24hr@meta.data$nFeature_RNA < 3000 & srat_UNTREATED24hr@meta.data$QC != 'Pass' & srat_UNTREATED24hr@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_UNTREATED24hr@meta.data$QC,sep = ','),srat_UNTREATED24hr@meta.data$QC)
 srat_UNTREATED24hr[['QC']] <- ifelse(srat_UNTREATED24hr@meta.data$percent.mt > 15 & srat_UNTREATED24hr@meta.data$QC == 'Pass','High_MT',srat_UNTREATED24hr@meta.data$QC)
 srat_UNTREATED24hr[['QC']] <- ifelse(srat_UNTREATED24hr@meta.data$nFeature_RNA < 3000 & srat_UNTREATED24hr@meta.data$QC != 'Pass' & srat_UNTREATED24hr@meta.data$QC != 'High_MT',paste('High_MT',srat_UNTREATED24hr@meta.data$QC,sep = ','),srat_UNTREATED24hr@meta.data$QC)
+srat_UNTREATED24hr[['QC']] <- ifelse(srat_UNTREATED24hr@meta.data$percent.rb > 33 & srat_UNTREATED24hr@meta.data$QC == 'Pass','High_RB',srat_UNTREATED24hr@meta.data$QC)
+srat_UNTREATED24hr[['QC']] <- ifelse(srat_UNTREATED24hr@meta.data$percent.rb > 33 & srat_UNTREATED24hr@meta.data$QC != 'Pass' & srat_UNTREATED24hr@meta.data$QC != 'High_RB',paste('High_RB',srat_UNTREATED24hr@meta.data$QC,sep = ','),srat_UNTREATED24hr@meta.data$QC)
+
 table(srat_UNTREATED24hr[['QC']])
 ## 
 srat_DASATINIB24hr[['QC']] <- ifelse(srat_DASATINIB24hr@meta.data$Is_doublet == 'True','Doublet','Pass')
@@ -2606,6 +2609,9 @@ srat_DASATINIB24hr[['QC']] <- ifelse(srat_DASATINIB24hr@meta.data$nFeature_RNA <
 srat_DASATINIB24hr[['QC']] <- ifelse(srat_DASATINIB24hr@meta.data$nFeature_RNA < 3000 & srat_DASATINIB24hr@meta.data$QC != 'Pass' & srat_DASATINIB24hr@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_DASATINIB24hr@meta.data$QC,sep = ','),srat_DASATINIB24hr@meta.data$QC)
 srat_DASATINIB24hr[['QC']] <- ifelse(srat_DASATINIB24hr@meta.data$percent.mt > 15 & srat_DASATINIB24hr@meta.data$QC == 'Pass','High_MT',srat_DASATINIB24hr@meta.data$QC)
 srat_DASATINIB24hr[['QC']] <- ifelse(srat_DASATINIB24hr@meta.data$nFeature_RNA < 3000 & srat_DASATINIB24hr@meta.data$QC != 'Pass' & srat_DASATINIB24hr@meta.data$QC != 'High_MT',paste('High_MT',srat_DASATINIB24hr@meta.data$QC,sep = ','),srat_DASATINIB24hr@meta.data$QC)
+srat_DASATINIB24hr[['QC']] <- ifelse(srat_DASATINIB24hr@meta.data$percent.rb > 33 & srat_DASATINIB24hr@meta.data$QC == 'Pass','High_RB',srat_DASATINIB24hr@meta.data$QC)
+srat_DASATINIB24hr[['QC']] <- ifelse(srat_DASATINIB24hr@meta.data$percent.rb > 33 & srat_DASATINIB24hr@meta.data$QC != 'Pass' & srat_DASATINIB24hr@meta.data$QC != 'High_RB',paste('High_RB',srat_DASATINIB24hr@meta.data$QC,sep = ','),srat_DASATINIB24hr@meta.data$QC)
+
 table(srat_DASATINIB24hr[['QC']])
 
 
@@ -2618,17 +2624,43 @@ srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA <
 srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 2000 & srat_UNTREATED72hr@meta.data$QC != 'Pass' & srat_UNTREATED72hr@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_UNTREATED72hr@meta.data$QC,sep = ','),srat_UNTREATED72hr@meta.data$QC)
 srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$percent.mt > 15 & srat_UNTREATED72hr@meta.data$QC == 'Pass','High_MT',srat_UNTREATED72hr@meta.data$QC)
 srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$nFeature_RNA < 2000 & srat_UNTREATED72hr@meta.data$QC != 'Pass' & srat_UNTREATED72hr@meta.data$QC != 'High_MT',paste('High_MT',srat_UNTREATED72hr@meta.data$QC,sep = ','),srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$percent.rb > 33 & srat_UNTREATED72hr@meta.data$QC == 'Pass','High_RB',srat_UNTREATED72hr@meta.data$QC)
+srat_UNTREATED72hr[['QC']] <- ifelse(srat_UNTREATED72hr@meta.data$percent.rb > 33 & srat_UNTREATED72hr@meta.data$QC != 'Pass' & srat_UNTREATED72hr@meta.data$QC != 'High_RB',paste('High_RB',srat_UNTREATED72hr@meta.data$QC,sep = ','),srat_UNTREATED72hr@meta.data$QC)
 table(srat_UNTREATED72hr[['QC']])
 ## 
-
-
 
 srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$Is_doublet == 'True','Doublet','Pass')
 srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$nFeature_RNA < 2000 & srat_DASATINIB72hr@meta.data$QC == 'Pass','Low_nFeature',srat_DASATINIB72hr@meta.data$QC)
 srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$nFeature_RNA < 2000 & srat_DASATINIB72hr@meta.data$QC != 'Pass' & srat_DASATINIB72hr@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_DASATINIB72hr@meta.data$QC,sep = ','),srat_DASATINIB72hr@meta.data$QC)
 srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$percent.mt > 15 & srat_DASATINIB72hr@meta.data$QC == 'Pass','High_MT',srat_DASATINIB72hr@meta.data$QC)
 srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$nFeature_RNA < 2000 & srat_DASATINIB72hr@meta.data$QC != 'Pass' & srat_DASATINIB72hr@meta.data$QC != 'High_MT',paste('High_MT',srat_DASATINIB72hr@meta.data$QC,sep = ','),srat_DASATINIB72hr@meta.data$QC)
+srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$percent.rb > 33 & srat_DASATINIB72hr@meta.data$QC == 'Pass','High_RB',srat_DASATINIB72hr@meta.data$QC)
+srat_DASATINIB72hr[['QC']] <- ifelse(srat_DASATINIB72hr@meta.data$percent.rb > 33 & srat_DASATINIB72hr@meta.data$QC != 'Pass' & srat_DASATINIB72hr@meta.data$QC != 'High_RB',paste('High_RB',srat_DASATINIB72hr@meta.data$QC,sep = ','),srat_DASATINIB72hr@meta.data$QC)
 table(srat_DASATINIB72hr[['QC']])
+
+
+
+
+
+# New QC after initial clustering
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2708,15 +2740,15 @@ srat_DASATINIB72hr$treatment <- "DASATINIB"
 
 set.seed(42)
 
-
+# METHOD1: Integrate everything #################
 ## Version OK with 2000 treshold RNA
-srat_UNTREATED24hr <- SCTransform(srat_UNTREATED24hr, method = "glmGamPoi", ncells = 7331, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) 
+srat_UNTREATED24hr <- SCTransform(srat_UNTREATED24hr, method = "glmGamPoi", ncells = 7325, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) 
 
-srat_DASATINIB24hr <- SCTransform(srat_DASATINIB24hr, method = "glmGamPoi", ncells = 6613, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000)
+srat_DASATINIB24hr <- SCTransform(srat_DASATINIB24hr, method = "glmGamPoi", ncells = 6606, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000)
 
-srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncells = 5713, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) 
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncells = 5710, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) 
 
-srat_DASATINIB72hr <- SCTransform(srat_DASATINIB72hr, method = "glmGamPoi", ncells = 7148, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000)
+srat_DASATINIB72hr <- SCTransform(srat_DASATINIB72hr, method = "glmGamPoi", ncells = 7139, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000)
 
 
 # Data integration (check active assay is 'SCT')
@@ -2738,7 +2770,7 @@ DefaultAssay(humangastruloid.combined.sct) <- "integrated"
 humangastruloid.combined.sct <- RunPCA(humangastruloid.combined.sct, verbose = FALSE, npcs = 30)
 humangastruloid.combined.sct <- RunUMAP(humangastruloid.combined.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
 humangastruloid.combined.sct <- FindNeighbors(humangastruloid.combined.sct, reduction = "pca", k.param = 15, dims = 1:30)
-humangastruloid.combined.sct <- FindClusters(humangastruloid.combined.sct, resolution = 0.2, verbose = FALSE, algorithm = 4)
+humangastruloid.combined.sct <- FindClusters(humangastruloid.combined.sct, resolution = 0.3, verbose = FALSE, algorithm = 4)
 
 
 
@@ -2746,12 +2778,157 @@ humangastruloid.combined.sct <- FindClusters(humangastruloid.combined.sct, resol
 
 humangastruloid.combined.sct$condition <- factor(humangastruloid.combined.sct$condition, levels = c("UNTREATED24hr", "DASATINIB24hr", "UNTREATED72hr", "DASATINIB72hr")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_humangastruloid2472hr_V1-dim30kparam15res02.pdf", width=10, height=6)
+pdf("output/seurat/UMAP_humangastruloid2472hr_QCV2-dim30kparam15res03.pdf", width=10, height=6)
 DimPlot(humangastruloid.combined.sct, reduction = "umap", split.by = "time", label=TRUE)
 dev.off()
 
+pdf("output/seurat/UMAP_humangastruloid2472hr_QCV2-dim30kparam15res03_groupTime.pdf", width=6, height=6)
+DimPlot(humangastruloid.combined.sct, reduction = "umap", group.by = "time", label=TRUE)
+dev.off()
 
-xxx here xxx
+
+DefaultAssay(humangastruloid.combined.sct) <- "SCT"
+
+
+pdf("output/seurat/FeaturePlot_SCT_humangastruloid2472hr_QCV2-dim30kparam15res03-List2.pdf", width=45, height=90)
+FeaturePlot(humangastruloid.combined.sct, features = c("IL1RAPL2", "MEIS1", "AC092078.2", "LGR5", "NRG2", "RNF220", "DYNC1I1", "RELN","COL1A1","COL3A1", "GUCY1A1", "ACTC1", "BMP5", "LINC01440" , "LRP1B" , "RGS13" , "TNNI1" , "SLIT2" , "WNT8A" , "NKAIN2" , "MSGN1" , "TBX6" , "KIT", "PRDM1", "TTR", "SOX17", "FOXA2" , "INA", "POU5F1", "NANOG", "SOX2", "CDH1", "NODAL", "TERF1", "HIST1H1B" , "HIST1H1D" , "HIST1H4C" , "HIST1H1E" , "HIST1H1C" , "DIAPH3" , "RRM2" , "HIST2H2AC","HIST1H2AH" , "TYMS" , "MELK" , "CDC25C" , "BRIP1" , "CENPK" , "CCNB1" , "CDC20" , "ASPM" , "HMMR" , "HMGB2" , "CCNB2" , "PTTG1" , "CCNA2" , "ARL6IP1" , "KIF20A" , "TOMM5" , "ATP5F1E" , "UQCR10" , "C19orf53" , "NDUFB2"  ), cols = c("grey", "red"))
+dev.off()
+
+
+
+
+pdf("output/seurat/FeaturePlot_SCT_humangastruloid2472hr_V1-dim30kparam15res02-List1_groupTime.pdf", width=30, height=30)
+FeaturePlot(humangastruloid.combined.sct, features = c("POU5F1", "NANOG", "SOX2", "CDH1", "NODAL", "TBXT", "EOMES", "MIXL1", "MESP1", "NES", "TFAP2A", "IRX2", "KIT", "PRDM1", "TTR", "SOX17", "FOXA2"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+# markers:
+## List1
+Epiblast = POU5F1, NANOG, SOX2, CDH1, NODAL, TBXT 
+Primitive_Streak = EOMES, MIXL1,
+Nascent_Mesoderm = MESP1
+Ectoderm = NES, TFAP2A, IRX2
+Endoderm = KIT, PRDM1, TTR, SOX17, FOXA2
+
+
+
+
+
+
+
+
+# METHOD2: Integrate conditions then merge time-points #################
+
+srat_UNTREATED24hr <- SCTransform(srat_UNTREATED24hr, method = "glmGamPoi", ncells = 7331, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) 
+
+srat_DASATINIB24hr <- SCTransform(srat_DASATINIB24hr, method = "glmGamPoi", ncells = 6613, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000)
+
+srat_UNTREATED72hr <- SCTransform(srat_UNTREATED72hr, method = "glmGamPoi", ncells = 5713, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) 
+
+srat_DASATINIB72hr <- SCTransform(srat_DASATINIB72hr, method = "glmGamPoi", ncells = 7148, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000)
+
+
+# Data integration (check active assay is 'SCT')
+## Humangastruloid 24hr
+srat.list <- list(srat_UNTREATED24hr = srat_UNTREATED24hr, srat_DASATINIB24hr = srat_DASATINIB24hr)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+
+humangastruloid.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+humangastruloid24hr.combined.sct <- IntegrateData(anchorset = humangastruloid.anchors, normalization.method = "SCT")
+## Humangastruloid 72hr
+
+srat.list <- list(srat_UNTREATED72hr = srat_UNTREATED72hr, srat_DASATINIB72hr = srat_DASATINIB72hr)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+
+humangastruloid.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+humangastruloid72hr.combined.sct <- IntegrateData(anchorset = humangastruloid.anchors, normalization.method = "SCT")
+
+## Merge 24 and 72hr
+humangastruloid2472hr.merged = merge(
+  x = humangastruloid24hr.combined.sct,
+  y = humangastruloid72hr.combined.sct,
+  add.cell.ids = NULL,
+  merge.data = TRUE, # recommended if the same normalization approach was applied to all objects
+  na.rm = TRUE
+)
+
+## Find variable features
+humangastruloid2472hr.merged = FindVariableFeatures(humangastruloid2472hr.merged, nfeatures = 3000)
+
+
+
+
+# Perform integrated analysis (check active assay is 'integrated')
+## RE FINE A BIT BUT ALMOST PERFECT !!! tested 0.6 not good; play with k.param!! was 40 dim at sctransform
+
+DefaultAssay(humangastruloid2472hr.merged) <- "integrated"
+
+humangastruloid2472hr.merged <- RunPCA(humangastruloid2472hr.merged, verbose = FALSE, npcs = 30)
+humangastruloid2472hr.merged <- RunUMAP(humangastruloid2472hr.merged, reduction = "pca", dims = 1:30, verbose = FALSE)
+humangastruloid2472hr.merged <- FindNeighbors(humangastruloid2472hr.merged, reduction = "pca", k.param = 15, dims = 1:30)
+humangastruloid2472hr.merged <- FindClusters(humangastruloid2472hr.merged, resolution = 0.2, verbose = FALSE, algorithm = 4)
+
+
+
+
+humangastruloid2472hr.merged$condition <- factor(humangastruloid2472hr.merged$condition, levels = c("UNTREATED24hr", "DASATINIB24hr", "UNTREATED72hr", "DASATINIB72hr")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_humangastruloid2472hr.merged_V1-dim30kparam15res02.pdf", width=10, height=6)
+DimPlot(humangastruloid2472hr.merged, reduction = "umap", split.by = "time", label=TRUE)
+dev.off()
+
+
+# --> Method not working; probably need to 1st merge time; then integrated conditions
+
+
+
+# METHOD3: merge time-points then ntegrate conditions #################
+### merge
+srat_UNTREATED24hr72hr <- merge(srat_UNTREATED24hr, y = srat_UNTREATED72hr, add.cell.ids = c("UNTREATED24hr", "UNTREATED72hr"))
+srat_DASATINIB24hr72hr <- merge(srat_DASATINIB24hr, y = srat_DASATINIB72hr, add.cell.ids = c("DASATINIB24hr", "DASATINIB72hr"))
+
+srat_UNTREATED24hr72hr <- SCTransform(srat_UNTREATED24hr72hr, method = "glmGamPoi", ncells = 13044, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) 
+srat_DASATINIB24hr72hr <- SCTransform(srat_DASATINIB24hr72hr, method = "glmGamPoi", ncells = 13761, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000)
+
+
+### Data integration (check active assay is 'SCT')
+srat.list <- list(srat_UNTREATED24hr72hr = srat_UNTREATED24hr72hr, srat_DASATINIB24hr72hr = srat_DASATINIB24hr72hr)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+
+humangastruloid.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+humangastruloid2472hr.merged <- IntegrateData(anchorset = humangastruloid.anchors, normalization.method = "SCT")
+
+
+
+# Perform integrated analysis (check active assay is 'integrated')
+
+DefaultAssay(humangastruloid2472hr.merged) <- "integrated"
+
+humangastruloid2472hr.merged <- RunPCA(humangastruloid2472hr.merged, verbose = FALSE, npcs = 30)
+humangastruloid2472hr.merged <- RunUMAP(humangastruloid2472hr.merged, reduction = "pca", dims = 1:30, verbose = FALSE)
+humangastruloid2472hr.merged <- FindNeighbors(humangastruloid2472hr.merged, reduction = "pca", k.param = 15, dims = 1:30)
+humangastruloid2472hr.merged <- FindClusters(humangastruloid2472hr.merged, resolution = 0.2, verbose = FALSE, algorithm = 4)
+
+
+
+
+humangastruloid2472hr.merged$condition <- factor(humangastruloid2472hr.merged$condition, levels = c("UNTREATED24hr", "DASATINIB24hr", "UNTREATED72hr", "DASATINIB72hr")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_humangastruloid2472hr.merged_V1-dim30kparam15res02.pdf", width=10, height=6)
+DimPlot(humangastruloid2472hr.merged, reduction = "umap", split.by = "time", label=TRUE)
+dev.off()
+pdf("output/seurat/UMAP_humangastruloid2472hr.merged_V1-dim30kparam15res02_groupTime.pdf", width=6, height=6)
+DimPlot(humangastruloid2472hr.merged, reduction = "umap", group.by = "time", label=TRUE)
+dev.off()
+
+
+
 
 
 # save ######################################################
@@ -2759,8 +2936,124 @@ saveRDS(srat_UNTREATED24hr, file = "output/seurat/srat_UNTREATED24hr_V1.rds")
 saveRDS(srat_DASATINIB24hr, file = "output/seurat/srat_DASATINIB24hr_V1.rds")
 saveRDS(srat_UNTREATED72hr, file = "output/seurat/srat_UNTREATED72hr_V1.rds")
 saveRDS(srat_DASATINIB72hr, file = "output/seurat/srat_DASATINIB72hr_V1.rds")
+
+srat_UNTREATED24hr <- readRDS(file = "output/seurat/srat_UNTREATED24hr_V1.rds")
+srat_DASATINIB24hr <- readRDS(file = "output/seurat/srat_DASATINIB24hr_V1.rds")
+srat_UNTREATED72hr <- readRDS(file = "output/seurat/srat_UNTREATED72hr_V1.rds")
+srat_DASATINIB72hr <- readRDS(file = "output/seurat/srat_DASATINIB72hr_V1.rds")
+
+humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid2472hr_V1.sct_V1_numeric.rds")
+
 ## saveRDS(humangastruloid.combined.sct, file = "output/seurat/humangastruloid2472hr_V1.sct_V1_numeric.rds") # integration all samples
+## saveRDS(humangastruloid.combined.sct, file = "output/seurat/humangastruloid2472hr_QCV2.sct_V1_numeric.rds") # QCV2
 #############################################################
+
+
+
+
+
+############################ EasyCellType automatic annotation ##########################################
+# Method1 used
+### Find all markers 
+all_markers <- FindAllMarkers(humangastruloid.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+
+write.table(all_markers, file = "output/seurat/srat_humangastruloid.combined.sct-dim30kparam30res03-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+# BiocManager::install("EasyCellType")
+library("EasyCellType")
+library("org.Hs.eg.db")
+library("AnnotationDbi")
+
+
+## load marker
+all_markers <- read.delim("output/seurat/srat_humangastruloid.combined.sct-dim30kparam30res03-all_markers.txt", header = TRUE, row.names = 1)
+
+
+
+## Convert geneSymbol to EntrezID
+all_markers$entrezid <- mapIds(org.Hs.eg.db,
+                           keys=all_markers$gene, #Column containing Ensembl gene ids
+                           column="ENTREZID",
+                           keytype="SYMBOL",
+                           multiVals="first")
+all_markers <- na.omit(all_markers)
+
+## Sort the datafram (data frame containing Entrez IDs, clusters and expression scores)
+
+all_markers_sort <- data.frame(gene=all_markers$entrezid, cluster=all_markers$cluster, 
+                      score=all_markers$avg_log2FC) %>% 
+  group_by(cluster) %>% 
+  mutate(rank = rank(score),  ties.method = "random") %>% 
+  arrange(desc(rank)) 
+input.d <- as.data.frame(all_markers_sort[, 1:3])
+
+## Run the enrihcment analysis
+
+
+annot.GSEA <- easyct(input.d, db="cellmarker", # cellmarker or panglao or clustermole
+                    species="Human", #  Human or Mouse
+                    p_cut=0.5,   # to see: data(cellmarker_tissue), data(clustermole_tissue), data(panglao_tissue)
+                    test="GSEA")    # GSEA or fisher?
+
+
+annot.GSEA <- easyct(input.d, db="clustermole", # cellmarker or panglao or clustermole
+                    species="Human", #  Human or Mouse
+                    p_cut=0.5,   # to see: data(cellmarker_tissue), data(clustermole_tissue), data(panglao_tissue)
+                    test="GSEA")    # GSEA or fisher?
+
+
+
+
+
+## plots
+
+#pdf("output/seurat/EasyCellType_dotplot_humangastruloid.combined.sct-dim30kparam30res03-cellmarker.pdf", width=6, height=8)
+
+pdf("output/seurat/EasyCellType_dotplot_humangastruloid.combined.sct-dim30kparam30res03-clustermole.pdf", width=12, height=8)
+plot_dot(test="GSEA", annot.GSEA) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+dev.off()
+
+
+
+
+
+
+
+
+
+
+# panglao --> NOT working... 'subscript out of bounds' error... I tried gene as ENSEMBL, entrezID and geneSymbo, human/mic, everything...
+
+
+#
+
+
+
+
+## check some genes
+
+
+pdf("output/Signac/FeaturePlot_SCT_RNA_WT_Bap1KO-EpendymalCell-QCV3_dim40kparam35res05algo4feat2000_noCellCycleRegression
+.pdf", width=15, height=15)
+FeaturePlot(multiome_WT_Bap1KO_QCV2.sct, features = c(  "Rabl2", "Cfap54", "Ccdc153", "Foxj1", "Pifo", "Dynlrb2", "Rsph1", "Cfap44"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+
+
+
+
+# save ######################################################
+## humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid2472hr.dim30kparam30res03.rds")
+## saveRDS(humangastruloid.combined.sct, file = "output/seurat/humangastruloid2472hr.dim30kparam30res03.rds") # integration all samples
+#############################################################
+
+
+
+
+
 
 ```
 
@@ -10525,6 +10818,22 @@ makeShinyApp(humangastruloid.combined.sct, scConf, gene.mapping = TRUE,
 
 rsconnect::deployApp('shinyApp_humangastruloid_V1')
 
+
+
+
+# Data import HUMAN 24 and 72hr integrated
+humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid2472hr.dim30kparam30res03.rds")
+DefaultAssay(humangastruloid.combined.sct) <- "RNA" # Recommended 
+
+
+# Generate Shiny app
+scConf = createConfig(humangastruloid.combined.sct)
+
+makeShinyApp(humangastruloid.combined.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "Humangastruloid2472hr_dim30kparam30res03",
+             shiny.dir = "shinyApp_Humangastruloid2472hr_dim30kparam30res03/") 
+
+rsconnect::deployApp('shinyApp_Humangastruloid2472hr_dim30kparam30res03')
 
 
 
