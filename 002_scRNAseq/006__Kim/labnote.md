@@ -1833,8 +1833,8 @@ sbatch scripts/bamtobigwig_RNA_Bap1KO.sh # 21960405 ok
 
 
 # BPM norm (=TPM)
-sbatch scripts/bamtobigwig_BPMnorm_RNA_WT.sh # 21963563 xxx
-sbatch scripts/bamtobigwig_BPMnorm_RNA_Bap1KO.sh # 21963630 xxx
+sbatch scripts/bamtobigwig_BPMnorm_RNA_WT.sh # 21963563 ok
+sbatch scripts/bamtobigwig_BPMnorm_RNA_Bap1KO.sh # 21963630 ok
 
 
 ```
@@ -5289,13 +5289,13 @@ DefaultAssay(multiome_Bap1KO_QCV2) <- "RNA"
 
 
 
-multiome_WT_QCV2 <- SCTransform(multiome_WT_QCV2, method = "glmGamPoi", ncells = 5949, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 3000)
-multiome_Bap1KO_QCV2 <- SCTransform(multiome_Bap1KO_QCV2, method = "glmGamPoi", ncells = 6517, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 3000)
+multiome_WT_QCV2 <- SCTransform(multiome_WT_QCV2, method = "glmGamPoi", ncells = 5949, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 2000)
+multiome_Bap1KO_QCV2 <- SCTransform(multiome_Bap1KO_QCV2, method = "glmGamPoi", ncells = 6517, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 2000)
 
 
 # Data integration (check active assay is 'SCT')
 srat.list <- list(multiome_WT_QCV2 = multiome_WT_QCV2, multiome_Bap1KO_QCV2 = multiome_Bap1KO_QCV2)
-features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 2000)
 srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
 
 srat.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
@@ -5308,6 +5308,8 @@ set.seed(42)
 # saveRDS(multiome_WT_Bap1KO_QCV2.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1.sct.rds") 
 ###########################################################################
 
+multiome_WT_Bap1KO_QCV2.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2.sct.rds")
+multiome_WT_Bap1KO_QCV2vC1.sct = multiome_WT_Bap1KO_QCV2.sct
 multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1.sct.rds")
 
 
@@ -5315,12 +5317,12 @@ DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "integrated"
 
 multiome_WT_Bap1KO_QCV2vC1.sct <- RunPCA(multiome_WT_Bap1KO_QCV2vC1.sct, verbose = FALSE, npcs = 40)
 multiome_WT_Bap1KO_QCV2vC1.sct <- RunUMAP(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
-multiome_WT_Bap1KO_QCV2vC1.sct <- FindNeighbors(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "pca", k.param = 35, dims = 1:40)
-multiome_WT_Bap1KO_QCV2vC1.sct <- FindClusters(multiome_WT_Bap1KO_QCV2vC1.sct, resolution = 0.5, verbose = FALSE, algorithm = 4) # 
+multiome_WT_Bap1KO_QCV2vC1.sct <- FindNeighbors(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "pca", k.param = 33, dims = 1:40)
+multiome_WT_Bap1KO_QCV2vC1.sct <- FindClusters(multiome_WT_Bap1KO_QCV2vC1.sct, resolution = 0.9, verbose = FALSE, algorithm = 4) # 
 
 multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident <- factor(multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident, levels = c("multiome_WT", "multiome_Bap1KO")) # Reorder untreated 1st
 
-pdf("output/Signac/UMAP_multiome_WT_Bap1KO-QCV2vC1_dim40kparam35res05algo4feat2000_noCellCycleRegression-numeric_V1.pdf", width=6, height=6)
+pdf("output/Signac/UMAP_multiome_WT_Bap1KO-QCV2vC1_dim40kparam33es09algo4feat2000_noCellCycleRegression-numeric_V1.pdf", width=6, height=6)
 DimPlot(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "umap", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 6)
 dev.off()
 
