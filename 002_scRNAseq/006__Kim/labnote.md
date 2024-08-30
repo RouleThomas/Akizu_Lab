@@ -5221,7 +5221,7 @@ multiome_Bap1KO_QCV2 <- readRDS(file = "output/seurat/multiome_Bap1KO_QCV2.rds")
 # Integrate WT and Bap1KO
 
 ######################################################################################################
-## Pre-processing RNA  ####################################################################
+## Pre-processing RNA  - QCV2 parameters ####################################################################
 ######################################################################################################
 
 DefaultAssay(multiome_WT_QCV2) <- "RNA"
@@ -5250,9 +5250,6 @@ set.seed(42)
 multiome_WT_Bap1KO_QCV2.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2.sct.rds")
 
 
-
-
-
 DefaultAssay(multiome_WT_Bap1KO_QCV2.sct) <- "integrated"
 
 multiome_WT_Bap1KO_QCV2.sct <- RunPCA(multiome_WT_Bap1KO_QCV2.sct, verbose = FALSE, npcs = 40)
@@ -5274,6 +5271,72 @@ pdf("output/Signac/FeaturePlot_SCT_RNA_WT_Bap1KO-allMarkersList4-QCV3_dim40kpara
 FeaturePlot(multiome_WT_Bap1KO_QCV2.sct, features = c(  "Pax6" ,  "Eomes",  "Prox1", "Neurod1", "Sema5a",  "Tac2", "Hs3st1", "Nrn1",  "Pantr1", "Igfbpl1", "Frmd4b",  "Satb2", "Itpr1",  "Nts", "Nr4a2", "Lmo3", "B3gat1",  "Cck", "Insm1",  "Crym", "Snca", "Nrp2",  "Gad1", "Grin2d", "Calb1", "Npy", "Gria3", "Lhx6",  "Lhx1",  "Pdgfra", "Olig1",  "Csf1r", "Gpr34", "Gpr183", "Cx3cr1", "Aldh1a2", "Vtn", "Foxc1", "Id1", "Hes1", "Mki67", "Pcna", "Vim"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
+
+
+
+
+
+
+
+######################################################################################################
+######################################################################################################
+######################################################################################################
+## Pre-processing RNA  - QCV2 parameters (after 20240830 Casey (C) meeting) = QCV2vC1 ##############################
+######################################################################################################
+
+DefaultAssay(multiome_WT_QCV2) <- "RNA"
+DefaultAssay(multiome_Bap1KO_QCV2) <- "RNA"
+
+
+
+multiome_WT_QCV2 <- SCTransform(multiome_WT_QCV2, method = "glmGamPoi", ncells = 5949, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 3000)
+multiome_Bap1KO_QCV2 <- SCTransform(multiome_Bap1KO_QCV2, method = "glmGamPoi", ncells = 6517, vars.to.regress = c("percent.mt","nCount_RNA","percent.rb"), verbose = TRUE, variable.features.n = 3000)
+
+
+# Data integration (check active assay is 'SCT')
+srat.list <- list(multiome_WT_QCV2 = multiome_WT_QCV2, multiome_Bap1KO_QCV2 = multiome_Bap1KO_QCV2)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+
+srat.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+multiome_WT_Bap1KO_QCV2vC1.sct <- IntegrateData(anchorset = srat.anchors, normalization.method = "SCT")
+
+set.seed(42)
+
+###########################################################################
+# saveRDS(multiome_WT_Bap1KO_QCV2.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1.sct.rds") 
+###########################################################################
+
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1.sct.rds")
+
+
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "integrated"
+
+multiome_WT_Bap1KO_QCV2vC1.sct <- RunPCA(multiome_WT_Bap1KO_QCV2vC1.sct, verbose = FALSE, npcs = 40)
+multiome_WT_Bap1KO_QCV2vC1.sct <- RunUMAP(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
+multiome_WT_Bap1KO_QCV2vC1.sct <- FindNeighbors(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "pca", k.param = 35, dims = 1:40)
+multiome_WT_Bap1KO_QCV2vC1.sct <- FindClusters(multiome_WT_Bap1KO_QCV2vC1.sct, resolution = 0.5, verbose = FALSE, algorithm = 4) # 
+
+multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident <- factor(multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident, levels = c("multiome_WT", "multiome_Bap1KO")) # Reorder untreated 1st
+
+pdf("output/Signac/UMAP_multiome_WT_Bap1KO-QCV2vC1_dim40kparam35res05algo4feat2000_noCellCycleRegression-numeric_V1.pdf", width=6, height=6)
+DimPlot(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "umap", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 6)
+dev.off()
+
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "SCT"
+
+
+pdf("output/Signac/FeaturePlot_SCT_RNA_WT_Bap1KO-allMarkersList4-QCV2vC1_dim40kparam35res05algo4feat2000_noCellCycleRegression
+.pdf", width=15, height=30)
+FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = c(  "Pax6" ,  "Eomes",  "Prox1", "Neurod1", "Sema5a",  "Tac2", "Hs3st1", "Nrn1",  "Pantr1", "Igfbpl1", "Frmd4b",  "Satb2", "Itpr1",  "Nts", "Nr4a2", "Lmo3", "B3gat1",  "Cck", "Insm1",  "Crym", "Snca", "Nrp2",  "Gad1", "Grin2d", "Calb1", "Npy", "Gria3", "Lhx6",  "Lhx1",  "Pdgfra", "Olig1",  "Csf1r", "Gpr34", "Gpr183", "Cx3cr1", "Aldh1a2", "Vtn", "Foxc1", "Id1", "Hes1", "Mki67", "Pcna", "Vim"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+xxxy HERE play!!
+
+######################################################################################################
+######################################################################################################
+######################################################################################################
 
 
 

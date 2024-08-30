@@ -33,13 +33,22 @@ sbatch scripts/cellranger_count_humangastruloid_UNTREATED72hr.sh # 2367676 ok (~
 sbatch scripts/cellranger_count_humangastruloid_DASATINIB72hr.sh # 2367686 ok (~12hrs with 500g)
 sbatch scripts/cellranger_count_embryo_control.sh # 2368763 ok (~24hrs with 300g)
 sbatch scripts/cellranger_count_embryo_cYAPKO.sh # 2368769 ok (~24hrs with 300g)
+
 # Re-run count for embryo using mice genome
 cd ../meta
 wget https://cf.10xgenomics.com/supp/cell-exp/refdata-gex-mm10-2020-A.tar.gz
 sbatch scripts/cellranger_count_embryo_control_mice.sh # 2982903 ok
 sbatch scripts/cellranger_count_embryo_cYAPKO_mice.sh # 2982920 ok
+
+# hESC Conchi postdoc exp (Jones lab)
+sbatch scripts/cellranger_count_hESC.sh # 25932788 xxx
 ```
+
 --> Run succesfullly; re-run embryo with mice genome... (same folder but label as `*_mice`)
+
+--> Sample sequence on multiple lanes for `scripts/cellranger_count_hESC.sh`
+
+
 
 ## RNA contamination and doublet detection
 - doublet detection using [scrublet](https://github.com/swolock/scrublet) **on the filtered matrix**
@@ -2942,7 +2951,7 @@ srat_DASATINIB24hr <- readRDS(file = "output/seurat/srat_DASATINIB24hr_V1.rds")
 srat_UNTREATED72hr <- readRDS(file = "output/seurat/srat_UNTREATED72hr_V1.rds")
 srat_DASATINIB72hr <- readRDS(file = "output/seurat/srat_DASATINIB72hr_V1.rds")
 
-humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid2472hr_V1.sct_V1_numeric.rds")
+humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid2472hr_QCV2.sct_V1_numeric.rds")
 
 ## saveRDS(humangastruloid.combined.sct, file = "output/seurat/humangastruloid2472hr_V1.sct_V1_numeric.rds") # integration all samples
 ## saveRDS(humangastruloid.combined.sct, file = "output/seurat/humangastruloid2472hr_QCV2.sct_V1_numeric.rds") # QCV2
@@ -2957,7 +2966,7 @@ humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid247
 ### Find all markers 
 all_markers <- FindAllMarkers(humangastruloid.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
 
-write.table(all_markers, file = "output/seurat/srat_humangastruloid.combined.sct-dim30kparam30res03-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(all_markers, file = "output/seurat/srat_humangastruloid.combined.sct-dim30kparam30res03_QCV2-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE) #  srat_humangastruloid.combined.sct-dim30kparam30res03-all_markers.txt
 
 
 # BiocManager::install("EasyCellType")
@@ -2967,7 +2976,7 @@ library("AnnotationDbi")
 
 
 ## load marker
-all_markers <- read.delim("output/seurat/srat_humangastruloid.combined.sct-dim30kparam30res03-all_markers.txt", header = TRUE, row.names = 1)
+all_markers <- read.delim("output/seurat/srat_humangastruloid.combined.sct-dim30kparam30res03_QCV2-all_markers.txt", header = TRUE, row.names = 1)
 
 
 
@@ -3010,7 +3019,7 @@ annot.GSEA <- easyct(input.d, db="clustermole", # cellmarker or panglao or clust
 
 #pdf("output/seurat/EasyCellType_dotplot_humangastruloid.combined.sct-dim30kparam30res03-cellmarker.pdf", width=6, height=8)
 
-pdf("output/seurat/EasyCellType_dotplot_humangastruloid.combined.sct-dim30kparam30res03-clustermole.pdf", width=12, height=8)
+pdf("output/seurat/EasyCellType_dotplot_humangastruloid.combined.sct-dim30kparam30res03_QCV2-clustermole.pdf", width=12, height=8)
 plot_dot(test="GSEA", annot.GSEA) + 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 dev.off()
@@ -3077,11 +3086,18 @@ wget --content-disposition -i fileUrls.txt --user YOUREMAIL --password YOURPASS
 
 ```
 
---> Done
+--> Done, succesfully
 
-The files have been sequenced over multiple lane so we need to pull them. 
+- *NOTE: The files have been sequenced over multiple lane so we need to pull them.* 
+
+--> Counting and QC steps (RNA conta, doublet) done at `# Quick 1st analysis; data per data`
+
+
 
 XXX
+
+
+
 
 
 
@@ -10821,7 +10837,7 @@ rsconnect::deployApp('shinyApp_humangastruloid_V1')
 
 
 
-# Data import HUMAN 24 and 72hr integrated
+# Data import HUMAN 24 and 72hr integrated V1
 humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid2472hr.dim30kparam30res03.rds")
 DefaultAssay(humangastruloid.combined.sct) <- "RNA" # Recommended 
 
@@ -10834,6 +10850,25 @@ makeShinyApp(humangastruloid.combined.sct, scConf, gene.mapping = TRUE,
              shiny.dir = "shinyApp_Humangastruloid2472hr_dim30kparam30res03/") 
 
 rsconnect::deployApp('shinyApp_Humangastruloid2472hr_dim30kparam30res03')
+
+
+
+
+
+# Data import HUMAN 24 and 72hr integrated QCV2
+humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid2472hr.dim30kparam30res03_QCV2.rds")
+DefaultAssay(humangastruloid.combined.sct) <- "RNA" # Recommended 
+
+
+# Generate Shiny app
+scConf = createConfig(humangastruloid.combined.sct)
+
+makeShinyApp(humangastruloid.combined.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "Humangastruloid2472hr_dim30kparam30res03_QCV2",
+             shiny.dir = "shinyApp_Humangastruloid2472hr_dim30kparam30res03_QCV2/") 
+
+rsconnect::deployApp('shinyApp_Humangastruloid2472hr_dim30kparam30res03_QCV2')
+
 
 
 
