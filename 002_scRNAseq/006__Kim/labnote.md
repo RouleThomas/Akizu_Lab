@@ -4995,6 +4995,9 @@ library("reticulate") # needed to use FindClusters()
 library("metap") # needed to use FindConservedMarkers()
 use_python("~/anaconda3/envs/SignacV5/bin/python") # to specify which python to use... Needed for FindClusters()
 
+# remotes::install_github('immunogenomics/presto')
+
+
 # Load RNA seurat object
 multiome_WT <- readRDS("output/seurat/multiome_WT_QCV3_Option1.rds")
 multiome_Bap1KO <- readRDS("output/seurat/multiome_Bap1KO_QCV3_Option1.rds")
@@ -6235,16 +6238,75 @@ pdf("output/Signac/CoveragePlot-Trhde.pdf", width=5, height=5)
 CoveragePlot(multiome_WT_Bap1KO_QCV3.sct, region = 'Trhde', features = 'Trhde', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, group.by = "cluster.annot" )
 dev.off()
 
+pdf("output/Signac/CoveragePlot-Bap1.pdf", width=5, height=5)
+CoveragePlot(multiome_WT_Bap1KO_QCV3.sct, region = 'Bap1', features = 'Bap1', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, group.by = "cluster.annot" )
+dev.off()
 
 
-XXXY DO PLOTS !!!!!
+pdf("output/Signac/CoveragePlot-Bap1.pdf", width=5, height=5)
+CoveragePlot(multiome_WT_Bap1KO_QCV3.sct, region = 'Bap1', features = 'Bap1', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, group.by = "cluster.annot" )
+dev.off()
 
+
+# WT vs Bap1KO
+## Reorder metrics
+multiome_WT_Bap1KO_QCV3.sct$combined_ident <- paste(multiome_WT_Bap1KO_QCV3.sct$orig.ident, multiome_WT_Bap1KO_QCV3.sct$cluster.annot, sep = "_")
+
+Idents(multiome_WT_Bap1KO_QCV3.sct) <- "combined_ident"
+
+multiome_WT_Bap1KO_QCV3.sct$combined_ident <- factor(multiome_WT_Bap1KO_QCV3.sct$combined_ident, 
+                                                     levels = c("multiome_WT_Astrocyte", "multiome_Bap1KO_Astrocyte",
+                                                                "multiome_WT_Chandelier_Cells" ,"multiome_Bap1KO_Chandelier_Cells",
+                                                                "multiome_WT_CR" , "multiome_Bap1KO_CR",
+                                                                "multiome_WT_DG_GC" ,"multiome_Bap1KO_DG_GC",
+                                                                "multiome_WT_Ependymal_Cells" , "multiome_Bap1KO_Ependymal_Cells",
+                                                                "multiome_WT_IN_1", "multiome_Bap1KO_IN_1",
+                                                                "multiome_WT_IN_2", "multiome_Bap1KO_IN_2",
+                                                                "multiome_WT_IP", "multiome_Bap1KO_IP",
+                                                                "multiome_WT_Meningeal_Cells", "multiome_Bap1KO_Meningeal_Cells",
+                                                                "multiome_WT_Microglia", "multiome_Bap1KO_Microglia",
+                                                                "multiome_WT_NSC" ,"multiome_Bap1KO_NSC",
+                                                                "multiome_WT_OPC" ,"multiome_Bap1KO_OPC",
+                                                                "multiome_WT_PyNs_RSC_DL", "multiome_Bap1KO_PyNs_RSC_DL",
+                                                                "multiome_WT_PyNs_RSC_ML", "multiome_Bap1KO_PyNs_RSC_ML",
+                                                                "multiome_WT_PyNs_RSC_UL", "multiome_Bap1KO_PyNs_RSC_UL",
+                                                                "multiome_WT_PyNs_SubC_CA1", "multiome_Bap1KO_PyNs_SubC_CA1",
+                                                                "multiome_WT_PyNs_SubC_CA23" ,"multiome_Bap1KO_PyNs_SubC_CA23",
+                                                                "multiome_WT_Radial_Glia_Cells", "multiome_Bap1KO_Radial_Glia_Cells",
+                                                                "multiome_WT_SubC_1", "multiome_Bap1KO_SubC_1",
+                                                                "multiome_WT_SubC_2", "multiome_Bap1KO_SubC_2"))
+
+
+pdf("output/Signac/CoveragePlot_condition-Epha3.pdf", width=6, height=9)
+CoveragePlot(multiome_WT_Bap1KO_QCV3.sct, region = 'Epha3', features = 'Epha3', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, group.by = "combined_ident")
+dev.off()
+
+
+
+
+
+# Identify diff access regions
+DefaultAssay(multiome_WT_Bap1KO_QCV3.sct) <- 'ATAC'
+
+# wilcox is the default option for test.use
+Astrocyte_WTvsBap1KO <- FindMarkers(
+  object = multiome_WT_Bap1KO_QCV3.sct,
+  ident.1 = "multiome_WT_Astrocyte",
+  ident.2 = "multiome_Bap1KO_Astrocyte",
+  test.use = 'wilcox',
+  min.pct = 0.1
+)
+
+head(Astrocyte_WTvsBap1KO)
+
+XXX DO THIS FOR ALL CLUSTER XXX
 
 ```
 
 
-
-
+**Usefull tutorial:**
+- *Diff. access. identification*: https://stuartlab.org/signac/articles/pbmc_vignette#find-differentially-accessible-peaks-between-cell-types
+- *Motif enrichment*: https://satijalab.org/seurat/articles/weighted_nearest_neighbor_analysis#wnn-analysis-of-10x-multiome-rna-atac
 
 
 
