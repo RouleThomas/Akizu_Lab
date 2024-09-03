@@ -5305,10 +5305,11 @@ multiome_WT_Bap1KO_QCV2vC1.sct <- IntegrateData(anchorset = srat.anchors, normal
 set.seed(42)
 
 ###########################################################################
-# saveRDS(multiome_WT_Bap1KO_QCV2.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1.sct.rds") 
+# saveRDS(multiome_WT_Bap1KO_QCV2.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1.sct.rds")
+# multiome_WT_Bap1KO_QCV2.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2.sct.rds") 
 ###########################################################################
 
-multiome_WT_Bap1KO_QCV2.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2.sct.rds")
+
 multiome_WT_Bap1KO_QCV2vC1.sct = multiome_WT_Bap1KO_QCV2.sct
 multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1.sct.rds")
 
@@ -5317,14 +5318,15 @@ DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "integrated"
 
 multiome_WT_Bap1KO_QCV2vC1.sct <- RunPCA(multiome_WT_Bap1KO_QCV2vC1.sct, verbose = FALSE, npcs = 40)
 multiome_WT_Bap1KO_QCV2vC1.sct <- RunUMAP(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
-multiome_WT_Bap1KO_QCV2vC1.sct <- FindNeighbors(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "pca", k.param = 33, dims = 1:40)
-multiome_WT_Bap1KO_QCV2vC1.sct <- FindClusters(multiome_WT_Bap1KO_QCV2vC1.sct, resolution = 0.9, verbose = FALSE, algorithm = 4) # 
+multiome_WT_Bap1KO_QCV2vC1.sct <- FindNeighbors(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "pca", k.param = 36, dims = 1:40)
+multiome_WT_Bap1KO_QCV2vC1.sct <- FindClusters(multiome_WT_Bap1KO_QCV2vC1.sct, resolution = 0.8, verbose = FALSE, algorithm = 4) # 
 
 multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident <- factor(multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident, levels = c("multiome_WT", "multiome_Bap1KO")) # Reorder untreated 1st
 
-pdf("output/Signac/UMAP_multiome_WT_Bap1KO-QCV2vC1_dim40kparam33es09algo4feat2000_noCellCycleRegression-numeric_V1.pdf", width=6, height=6)
+pdf("output/Signac/UMAP_multiome_WT_Bap1KO-QCV2vC1_dim40kparam36res08algo4feat2000_noCellCycleRegression-numeric_V1.pdf", width=6, height=6)
 DimPlot(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "umap", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 6)
 dev.off()
+
 
 DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "SCT"
 
@@ -5334,7 +5336,6 @@ pdf("output/Signac/FeaturePlot_SCT_RNA_WT_Bap1KO-allMarkersList4-QCV2vC1_dim40kp
 FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = c(  "Pax6" ,  "Eomes",  "Prox1", "Neurod1", "Sema5a",  "Tac2", "Hs3st1", "Nrn1",  "Pantr1", "Igfbpl1", "Frmd4b",  "Satb2", "Itpr1",  "Nts", "Nr4a2", "Lmo3", "B3gat1",  "Cck", "Insm1",  "Crym", "Snca", "Nrp2",  "Gad1", "Grin2d", "Calb1", "Npy", "Gria3", "Lhx6",  "Lhx1",  "Pdgfra", "Olig1",  "Csf1r", "Gpr34", "Gpr183", "Cx3cr1", "Aldh1a2", "Vtn", "Foxc1", "Id1", "Hes1", "Mki67", "Pcna", "Vim"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
-xxxy HERE play!!
 
 ######################################################################################################
 ######################################################################################################
@@ -6234,6 +6235,9 @@ pdf("output/Signac/CoveragePlot-Trhde.pdf", width=5, height=5)
 CoveragePlot(multiome_WT_Bap1KO_QCV3.sct, region = 'Trhde', features = 'Trhde', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, group.by = "cluster.annot" )
 dev.off()
 
+
+
+XXXY DO PLOTS !!!!!
 
 
 ```

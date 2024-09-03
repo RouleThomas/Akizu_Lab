@@ -41,7 +41,7 @@ sbatch scripts/cellranger_count_embryo_control_mice.sh # 2982903 ok
 sbatch scripts/cellranger_count_embryo_cYAPKO_mice.sh # 2982920 ok
 
 # hESC Conchi postdoc exp (Jones lab)
-sbatch scripts/cellranger_count_hESC.sh # 25932788 xxx
+sbatch scripts/cellranger_count_hESC.sh # 25932788 ok
 ```
 
 --> Run succesfullly; re-run embryo with mice genome... (same folder but label as `*_mice`)
@@ -63,12 +63,16 @@ python3 scripts/scrublet_doublets.py humangastruloid_UNTREATED72hr/outs/filtered
 python3 scripts/scrublet_doublets.py humangastruloid_DASATINIB72hr/outs/filtered_feature_bc_matrix output/doublets/humangastruloid_DASATINIB72hr.tsv
 python3 scripts/scrublet_doublets.py embryo_control_e775_mice/outs/filtered_feature_bc_matrix output/doublets/embryo_control.tsv
 python3 scripts/scrublet_doublets.py embryo_cYAPKO_e775_mice/outs/filtered_feature_bc_matrix output/doublets/embryo_cYAPKO.tsv
+
+python3 scripts/scrublet_doublets.py H1_hESC_cellranger/outs/filtered_feature_bc_matrix output/doublets/H1_hESC.tsv
+
 ```
-Doublet detection score:
+Doublet detection score (*Estimated Doublet*):
 - humangastruloid_UNTREATED72hr: 0% doublet
 - humangastruloid_DASATINIB72hr: 34.2% doublet
 - embryo_control: 0.1% doublet
 - embryo_cYAPKO: 3.6%
+- H1_hESC: 40.9%
 --> Successfully assigned doublet
 
 # humangastruloid analysis in Seurat
@@ -3073,8 +3077,11 @@ dev.off()
 
 # humangastruloid 24 72hr + hESC WT
 
+Let's try the following:
+- **Option1**: Perform transcriptomic signature projection of hESC into our human gastruloid to identify the closest cluster
+- **Option2**: Integrate H1 hESC with human gastruloid 24+72hrs
 
-wget --content-disposition -i fileUrls.txt --user YOUREMAIL --password YOURPASS
+
 
 - Download files from  cirmdcm.soe.ucsc.edu, check email for credentials
 - I isolated the 24 fastq files (samples separated in multiple lanes) and select `Name files as submitted, one single directory`
@@ -3090,12 +3097,143 @@ wget --content-disposition -i fileUrls.txt --user YOUREMAIL --password YOURPASS
 
 - *NOTE: The files have been sequenced over multiple lane so we need to pull them.* 
 
---> Counting and QC steps (RNA conta, doublet) done at `# Quick 1st analysis; data per data`
+--> Counting and doublet detection done succesfully at `# Quick 1st analysis; data per data`
+
+
+Then `conda activate scRNAseq` and go into R and filtered out **RNA contamination and start with SEURAT; generate clean seurat object for H1 hESC, then integrate with human embry 24+72hrs**.
+
+
+## Option1: Perform transcriptomic signature projection of hESC into our human gastruloid to identify the closest cluster
+
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+
+
+# soupX decontamination
+## Decontaminate one channel of 10X data mapped with cellranger
+sc = load10X('H1_hESC_cellranger/outs') 
+
+## Assess % of conta
+pdf("output/soupX/autoEstCont_H1_hESC.pdf", width=10, height=10)
+sc = autoEstCont(sc)
+dev.off()
+
+#--> Fail, not enough complexity
+
+
+data <- Read10X(data.dir = 'H1_hESC_cellranger/outs/filtered_feature_bc_matrix/')
+H1_hESC = CreateSeuratObject(counts = data)
 
 
 
-XXX
+# QUALITY CONTROL
+## add mitochondrial and Ribosomal conta 
+H1_hESC[["percent.mt"]] <- PercentageFeatureSet(H1_hESC, pattern = "^MT-")
+H1_hESC[["percent.rb"]] <- PercentageFeatureSet(H1_hESC, pattern = "^RP[SL]")
 
+
+## add doublet information (scrublet)
+doublets <- read.table("output/doublets/H1_hESC.tsv",header = F,row.names = 1)
+colnames(doublets) <- c("Doublet_score","Is_doublet")
+H1_hESC <- AddMetaData(H1_hESC,doublets)
+H1_hESC$Doublet_score <- as.numeric(H1_hESC$Doublet_score) # make score as numeric
+head(H1_hESC[[]])
+
+
+
+pdf("output/seurat/VlnPlot_QC_H1_hESC.pdf", width = 10, height = 6)
+VlnPlot(H1_hESC, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1) & 
+  theme(plot.title = element_text(size = 10))
+dev.off()
+
+
+
+# QCV1
+H1_hESC[['QC']] <- ifelse(H1_hESC@meta.data$Is_doublet == 'True','Doublet','Pass')
+H1_hESC[['QC']] <- ifelse(H1_hESC@meta.data$nFeature_RNA < 1000 & H1_hESC@meta.data$QC == 'Pass','Low_nFeature',H1_hESC@meta.data$QC)
+H1_hESC[['QC']] <- ifelse(H1_hESC@meta.data$nFeature_RNA < 1000 & H1_hESC@meta.data$QC != 'Pass' & H1_hESC@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',H1_hESC@meta.data$QC,sep = ','),H1_hESC@meta.data$QC)
+H1_hESC[['QC']] <- ifelse(H1_hESC@meta.data$percent.mt > 12 & H1_hESC@meta.data$QC == 'Pass','High_MT',H1_hESC@meta.data$QC)
+H1_hESC[['QC']] <- ifelse(H1_hESC@meta.data$nFeature_RNA < 1000 & H1_hESC@meta.data$QC != 'Pass' & H1_hESC@meta.data$QC != 'High_MT',paste('High_MT',H1_hESC@meta.data$QC,sep = ','),H1_hESC@meta.data$QC)
+H1_hESC[['QC']] <- ifelse(H1_hESC@meta.data$percent.rb < 15 & H1_hESC@meta.data$QC == 'Pass','Low_RB',H1_hESC@meta.data$QC)
+H1_hESC[['QC']] <- ifelse(H1_hESC@meta.data$percent.rb < 15 & H1_hESC@meta.data$QC != 'Pass' & H1_hESC@meta.data$QC != 'Low_RB',paste('Low_RB',H1_hESC@meta.data$QC,sep = ','),H1_hESC@meta.data$QC)
+H1_hESC[['QC']] <- ifelse(H1_hESC@meta.data$nCount_RNA < 250 & H1_hESC@meta.data$QC == 'Pass', 'Low_nCount_RNA', H1_hESC@meta.data$QC)
+H1_hESC[['QC']] <- ifelse(H1_hESC@meta.data$nCount_RNA < 250 & H1_hESC@meta.data$QC != 'Pass' & H1_hESC@meta.data$QC != 'Low_nCount_RNA', paste('Low_nCount_RNA', H1_hESC@meta.data$QC, sep = ','), H1_hESC@meta.data$QC)
+table(H1_hESC[['QC']])
+
+
+
+## subset my seurat object to only analyze the cells that pass the QC
+H1_hESC <- subset(H1_hESC, subset = QC == 'Pass')
+H1_hESC$H1_hESC <- "hESC"
+
+
+
+s.genes <- cc.genes.updated.2019$s.genes
+g2m.genes <- cc.genes.updated.2019$g2m.genes
+
+
+## NORMALIZE AND SCALE DATA BEFORE RUNNING CELLCYCLESORTING
+H1_hESC <- NormalizeData(H1_hESC, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(H1_hESC)
+H1_hESC <- ScaleData(H1_hESC, features = all.genes) # zero-centres and scales it
+
+
+
+### CELLCYCLESORTING
+H1_hESC <- CellCycleScoring(H1_hESC, s.features = s.genes, g2m.features = g2m.genes)
+table(H1_hESC[[]]$Phase)
+
+set.seed(42)
+
+H1_hESC <- SCTransform(H1_hESC, method = "glmGamPoi", ncells = 5862, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) 
+
+
+H1_hESC <- RunPCA(H1_hESC, verbose = FALSE, npcs = 30)
+H1_hESC <- RunUMAP(H1_hESC, reduction = "pca", dims = 1:30, verbose = FALSE)
+H1_hESC <- FindNeighbors(H1_hESC, reduction = "pca", k.param = 15, dims = 1:30)
+H1_hESC <- FindClusters(H1_hESC, resolution = 0.2, verbose = FALSE, algorithm = 4)
+
+
+
+#RAW: H1_hESC <- FindClusters(H1_hESC, resolution = 0.3, verbose = FALSE, algorithm = 4)
+
+
+pdf("output/seurat/UMAP_H1_hESC_QCV1-dim30kparam15res02.pdf", width=10, height=6)
+DimPlot(H1_hESC, reduction = "umap", label=TRUE, pt.size = 0.3, label.size = 4)
+dev.off()
+
+
+
+
+
+### Find all markers 
+DefaultAssay(H1_hESC) <- "RNA"
+
+all_markers <- FindAllMarkers(H1_hESC, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+
+write.table(all_markers, file = "output/seurat/srat_H1_hESC_dim30kparam15res02_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+
+
+# SAVE #########################################################################################
+## saveRDS(H1_hESC, file = "output/seurat/H1_hESC_QCV1.sct_numeric.rds") 
+################################################################################################
+
+```
+
+--> SoupX Fail as sample if very low complexity (very few clsuter as homogeneous H1 hESC cell population)
 
 
 
