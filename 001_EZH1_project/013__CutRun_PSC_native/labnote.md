@@ -8,7 +8,7 @@
     - WTEF1aEZH1: SUZ12, EZH2, EZH1, H3K27me3
 --> All in 2 Bio Rep
 
-- ~XXXdays Neurons;
+- ~34days Neurons;
     - WT: SUZ12, H3K27me3
 
 
@@ -96,7 +96,7 @@ sbatch --dependency=afterany:24136758 scripts/bowtie2_2.sh # 24137877 partial fa
 sbatch scripts/bowtie2_missing1.sh # 24306442 ok
 ```
 
---> XXX Looks good; overall ~75% uniquely aligned reads XXX
+--> Looks good; overall ~75% uniquely aligned reads 
 
 
 **Mapping on E coli**
@@ -109,7 +109,7 @@ sbatch scripts/bowtie2_MG1655_2.sh # 24386097 xxx
 
 ```
 
---> between 0.5 - 2% uniquely aligned reads (not a lot..; previously `005__CutRun` 10% (in `003__CutRun` was less than 1%) )
+--> between 0.1 - 2% uniquely aligned reads (not a lot..; previously `005__CutRun` 10% (in `003__CutRun` was less than 1%) )
 
 
 
@@ -172,8 +172,8 @@ Let's do the same for E coli MG1655 spike in samples:
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:24385988 scripts/samtools_MG1655_unique_1.sh # 24387652 xxx
-sbatch --dependency=afterany:24386097 scripts/samtools_MG1655_unique_2.sh # 24387686 xxx
+sbatch --dependency=afterany:24385988 scripts/samtools_MG1655_unique_1.sh # 24387652 ok
+sbatch --dependency=afterany:24386097 scripts/samtools_MG1655_unique_2.sh # 24387686 ok
 
 ```
 
@@ -395,8 +395,8 @@ plotCorrelation \
 ```bash
 conda activate macs2
 # broad
-sbatch scripts/macs2_broad_1.sh # 24400532 xxx
-sbatch scripts/macs2_broad_2.sh # 24400534 xxx
+sbatch scripts/macs2_broad_1.sh # 24400532 ok
+sbatch scripts/macs2_broad_2.sh # 24400534 ok
 
 # narrow
 #--> NOT NEEDED
@@ -492,24 +492,21 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 ## Count the histone barcode on the clean reads
 
+Only for all H3K27me3 samples
 
 
 ```bash
-sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp.sh # 17961302 ok
-sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_IGG.sh # 18046054 ok
-
-
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_1.sh # 26196898 ok
+sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_2.sh # 26197353 ok
 ```
 
+--> It output the nb of reads found for each histone; then simply copy paste to the excell file `output/spikein/SpikeIn_QC_fastp_001013.xlsx` in GoogleDrive
 
---> It output the nb of reads found for each histone; then simply copy paste to the excell file `output/spikein/SpikeIn_QC_fastp_011.xlsx` in GoogleDrive
-
-- `50dN_WT_H3K27me1AM`: enriched in H3K27me1
-- `50dN_WT_H3K27me1OR`: enriched in H3K27me1
-- `50dN_WT_H3K27me3`:  enriched in H3K27me3
+- **PSC H3K27me3**: All enriched
+- **NEU H3K27me3**: Not enriched (very lowly slightly for Reads2, not at all for Reads1)
 
 
-
+XXX here add xls to stuff XXX
 
 
 ## histone spike in factor
@@ -646,67 +643,82 @@ spikein_all_scale %>%
 dev.off()
 
 
-## Histone scaling for H3K27me1AM
-spikein_all_scale = spikein_all %>%
-  group_by(sample_ID) %>%
-  # Find the target_norm value when Target is H3K27me1 and AB is H3K27me1
-  mutate(scaling_factor = ifelse(Target == "H3K27me1" & AB == "H3K27me1AM", target_norm, NA)) %>%
-  # Fill the scaling_factor column with the appropriate value within each group
-  fill(scaling_factor, .direction = "downup") %>%
-  # Scale the target_norm values
-  mutate(scaled_target_norm = target_norm / scaling_factor * 100) %>%
-  # Remove the scaling_factor column
-  select(-scaling_factor) %>%
-  # Ungroup the data
-  ungroup()
-# Plot
-pdf("output/spikein/QC_histone_spike_in_H3K27me1AM.pdf", width = 6, height = 4)
-spikein_all_scale %>%
-    filter(
-           AB %in% c("H3K27me1AM", "IGG")) %>%
-        ggplot(aes(x = Target, y = scaled_target_norm, fill = AB)) +
-        geom_col(position = "dodge") +
-        facet_wrap(~sample_ID, nrow=1) +
-        geom_hline(yintercept = 20, color = "red", linetype = "longdash") +
-        theme_bw() +
-        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
-        facet_wrap(~sample_ID)
-dev.off()
-
-
-
-## Histone scaling for H3K27me1OR
-spikein_all_scale = spikein_all %>%
-  group_by(sample_ID) %>%
-  # Find the target_norm value when Target is H3K27me1 and AB is H3K27me1
-  mutate(scaling_factor = ifelse(Target == "H3K27me1" & AB == "H3K27me1OR", target_norm, NA)) %>%
-  # Fill the scaling_factor column with the appropriate value within each group
-  fill(scaling_factor, .direction = "downup") %>%
-  # Scale the target_norm values
-  mutate(scaled_target_norm = target_norm / scaling_factor * 100) %>%
-  # Remove the scaling_factor column
-  select(-scaling_factor) %>%
-  # Ungroup the data
-  ungroup()
-# Plot
-pdf("output/spikein/QC_histone_spike_in_H3K27me1OR.pdf", width = 6, height = 4)
-spikein_all_scale %>%
-    filter(
-           AB %in% c("H3K27me1OR", "IGG")) %>%
-        ggplot(aes(x = Target, y = scaled_target_norm, fill = AB)) +
-        geom_col(position = "dodge") +
-        facet_wrap(~sample_ID, nrow=1) +
-        geom_hline(yintercept = 20, color = "red", linetype = "longdash") +
-        theme_bw() +
-        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
-        facet_wrap(~sample_ID)
-dev.off()
 ```
 
 
 --> H3K27me3 is enriched
 
 --> H3K27me1 do not work, not enriched! New AB was testeed, that is a bad one, as previous one show enrichment (see `007__CutRun`)
+
+
+
+
+# Ecoli scaling factor
+## Mapping E coli
+- Map our reads to the E. coli genome using same parameters as for human.
+- Count the number of aligned reads to the spike-in control sequences for each sample `samtools view -S -F 4 -c sample_h3k27me3_rep1_spikein.sam > sample_h3k27me3_rep1_spikein_count.txt` (code in `bowtie2_MG1655.sh`)
+- Do the math for scaling factor, same method as when using histone spike-in
+
+
+
+```R
+# package
+library("tidyverse")
+library("readxl")
+library("ggpubr")
+
+# import df
+spikein <- read_excel("output/spikein/SpikeIn_MG1655_001013.xlsx") 
+
+## NPC
+spikein <- read_table("output/spikein/SpikeIn_MG1655_001013.txt") %>%
+    filter(tissue == "NPC") %>%
+    dplyr::select(-tissue)
+# Total reads per IP
+spikein_H3K27me3_total = spikein %>%
+    group_by(AB) %>%
+    mutate(total = sum(counts)) %>%
+    ungroup() %>%
+    distinct(AB, .keep_all = TRUE) %>%
+    select(AB,total)
+# Read proportion
+spikein_read_prop = spikein %>%
+    left_join(spikein_H3K27me3_total) %>%
+    mutate(read_prop = counts / total)
+spikein_read_prop_min = spikein_read_prop %>%
+    group_by(AB) %>%
+    summarise(min_prop=min(read_prop))
+# Scaling factor
+spikein_scaling_factor = spikein_read_prop %>%
+    left_join(spikein_read_prop_min) %>%
+    mutate(scaling_factor = read_prop/min_prop)
+write.table(spikein_scaling_factor, file="output/spikein/spikein_MG1655_NPC_scaling_factor.txt", sep="\t", quote=FALSE, row.names=FALSE)
+
+
+## PSC
+spikein <- read_table("output/spikein/SpikeIn_MG1655.txt") %>%
+    filter(tissue == "PSC") %>%
+    dplyr::select(-tissue)
+# Total reads per IP
+spikein_H3K27me3_total = spikein %>%
+    group_by(AB) %>%
+    mutate(total = sum(counts)) %>%
+    ungroup() %>%
+    distinct(AB, .keep_all = TRUE) %>%
+    select(AB,total)
+# Read proportion
+spikein_read_prop = spikein %>%
+    left_join(spikein_H3K27me3_total) %>%
+    mutate(read_prop = counts / total)
+spikein_read_prop_min = spikein_read_prop %>%
+    group_by(AB) %>%
+    summarise(min_prop=min(read_prop))
+# Scaling factor
+spikein_scaling_factor = spikein_read_prop %>%
+    left_join(spikein_read_prop_min) %>%
+    mutate(scaling_factor = read_prop/min_prop)
+write.table(spikein_scaling_factor, file="output/spikein/spikein_MG1655_PSC_scaling_factor.txt", sep="\t", quote=FALSE, row.names=FALSE)
+```
 
 
 
