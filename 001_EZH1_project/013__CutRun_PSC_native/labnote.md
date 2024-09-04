@@ -506,12 +506,9 @@ sbatch scripts/SNAP-CUTANA_K-MetStat_Panle_ShellScript_fastp_2.sh # 26197353 ok
 - **NEU H3K27me3**: Not enriched (very lowly slightly for Reads2, not at all for Reads1)
 
 
-XXX here add xls to stuff XXX
-
 
 ## histone spike in factor
 
-XXXXXXXXX below not modified XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 --> SF only calculating on WT and KO as KOEF1aEZH1 is NOT overexpressing..
 
@@ -520,12 +517,12 @@ XXXXXXXXX below not modified XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 library("tidyverse")
 library("readxl")
 # import df
-spikein <- read_excel("output/spikein/SpikeIn_QC_fastp_008.xlsx") 
+spikein <- read_excel("output/spikein/SpikeIn_QC_fastp_001013.xlsx") 
 
-## H3K27me3 with only WT and KO
+## H3K27me3 with only WTEF1aEZH1 and KOEF1aEZH1
 spikein_H3K27me3 = spikein %>%
     filter(Target == "H3K27me3",
-    sample_ID %in% c("NPC_WT_H3K27me3", "NPC_KO_H3K27me3")) %>%
+    sample_ID %in% c("PSC_WTEF1aEZH1_H3K27me3_R1","PSC_WTEF1aEZH1_H3K27me3_R2", "PSC_KOEF1aEZH1_H3K27me3_R1", "PSC_KOEF1aEZH1_H3K27me3_R2")) %>%
     group_by(sample_ID, AB) %>%
     summarise(aligned=sum(counts))
 # Total reads per IP
@@ -547,40 +544,22 @@ spikein_H3K27me3_read_prop_min = spikein_H3K27me3_read_prop %>%
 spikein_H3K27me3_scaling_factor = spikein_H3K27me3_read_prop %>%
     left_join(spikein_H3K27me3_read_prop_min) %>%
     mutate(scaling_factor = read_prop/min_prop)
-write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_histone_H3K27me3_scaling_factor_fastp.txt", sep="\t", quote=FALSE, row.names=FALSE)
+write.table(spikein_H3K27me3_scaling_factor, file="output/spikein/spikein_histone_H3K27me3_scaling_factor_fastp-WTEF1aEZH1_KOEF1aEZH1.txt", sep="\t", quote=FALSE, row.names=FALSE)
 
 
-## H3K4me3
-spikein_H3K4me3 = spikein %>%
-    filter(Target == "H3K4me3",
-    sample_ID %in% c("NPC_WT_H3K4me3", "NPC_KO_H3K4me3")) %>%
+
+## Collect total nb of spikein H3K27me3 reads
+spikein_H3K27me3 = spikein %>%
+    filter(Target == "H3K27me3") %>%
     group_by(sample_ID, AB) %>%
     summarise(aligned=sum(counts))
-# Total reads per IP
-spikein_H3K4me3_total = spikein_H3K4me3 %>%
-    ungroup() %>%
-    group_by(AB) %>%
-    mutate(total = sum(aligned)) %>%
-    ungroup() %>%
-    distinct(AB, .keep_all = TRUE) %>%
-    select(AB,total)
-# Read proportion
-spikein_H3K4me3_read_prop = spikein_H3K4me3 %>%
-    left_join(spikein_H3K4me3_total) %>%
-    mutate(read_prop = aligned / total)
-spikein_H3K4me3_read_prop_min = spikein_H3K4me3_read_prop %>%
-    group_by(AB) %>%
-    summarise(min_prop=min(read_prop))
-# Scaling factor
-spikein_H3K4me3_scaling_factor = spikein_H3K4me3_read_prop %>%
-    left_join(spikein_H3K4me3_read_prop_min) %>%
-    mutate(scaling_factor = read_prop/min_prop)
-write.table(spikein_H3K4me3_scaling_factor, file="output/spikein/spikein_histone_H3K4me3_scaling_factor_fastp.txt", sep="\t", quote=FALSE, row.names=FALSE)
 
 
 ```
 
---> All good; in KO higher SF for H3K27me3
+--> All good; higher SF for WTEF1aEZH2 as compared to KOEF1aEZH1
+
+XXX here do qc plot 
 
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
