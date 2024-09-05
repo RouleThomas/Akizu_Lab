@@ -5322,11 +5322,13 @@ DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "integrated"
 multiome_WT_Bap1KO_QCV2vC1.sct <- RunPCA(multiome_WT_Bap1KO_QCV2vC1.sct, verbose = FALSE, npcs = 40)
 multiome_WT_Bap1KO_QCV2vC1.sct <- RunUMAP(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
 multiome_WT_Bap1KO_QCV2vC1.sct <- FindNeighbors(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "pca", k.param = 36, dims = 1:40)
-multiome_WT_Bap1KO_QCV2vC1.sct <- FindClusters(multiome_WT_Bap1KO_QCV2vC1.sct, resolution = 0.8, verbose = FALSE, algorithm = 4) # 
+multiome_WT_Bap1KO_QCV2vC1.sct <- FindClusters(multiome_WT_Bap1KO_QCV2vC1.sct, resolution = 0.9, verbose = FALSE, algorithm = 4) # 
 
 multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident <- factor(multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident, levels = c("multiome_WT", "multiome_Bap1KO")) # Reorder untreated 1st
 
-pdf("output/Signac/UMAP_multiome_WT_Bap1KO-QCV2vC1_dim40kparam36res08algo4feat2000_noCellCycleRegression-numeric_V1.pdf", width=6, height=6)
+pdf("output/Signac/UMAP_multiome_WT_Bap1KO-QCV2vC1_dim40kparam42res065algo4feat2000_noCellCycleRegression-numeric_V1.pdf", width=6, height=6)
+
+pdf("output/Signac/UMAP_test.pdf", width=6, height=6)
 DimPlot(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "umap", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 6)
 dev.off()
 
@@ -5747,9 +5749,10 @@ dev.off()
 
 
 ### Find all markers 
-all_markers <- FindAllMarkers(multiome_WT_Bap1KO_QCV2.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+all_markers <- FindAllMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+# write.table(all_markers, file = "output/Signac/srat_multiome_WT_Bap1KO_QCV3_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(all_markers, file = "output/Signac/srat_multiome_WT_Bap1KO-QCV2vC1_dim40kparam42res065algo4feat2000_noCellCycleRegression-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
-write.table(all_markers, file = "output/Signac/srat_multiome_WT_Bap1KO_QCV3_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 
 

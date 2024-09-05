@@ -175,9 +175,16 @@ conda activate bowtie2
 sbatch --dependency=afterany:24385988 scripts/samtools_MG1655_unique_1.sh # 24387652 ok
 sbatch --dependency=afterany:24386097 scripts/samtools_MG1655_unique_2.sh # 24387686 ok
 
+# count the nb of uniq aligned reads
+sbatch scripts/samtools_MG1655_unique_Count_1.sh # 26299778 ok
+sbatch scripts/samtools_MG1655_unique_Count_2.sh # 26299851 ok
+
+
+
+
 ```
 
---> More information on this step in the `005__CutRun` labnote
+--> **IMPORTANT NOTE!!! I should use the MG1655 scaling factor by calculating uniq. aligned MG1655 / uniq. aligned human!! Before I was using non uniq. aligned reads for MG1655 scaling factor...**
 
 
 
@@ -377,11 +384,59 @@ plotCorrelation \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
     -o output/bigwig/multiBigwigSummary_PSC_WTEF1aEZH1_heatmap.pdf
 
+
+
+
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_WTEF1aEZH1vsKOEF1aEZH1_all.sh # 26305457 ok
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_WTEF1aEZH1vsKOEF1aEZH1_all.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_KOEF1aEZH1_EZH1_R1 PSC_KOEF1aEZH1_EZH1_R2 PSC_KOEF1aEZH1_EZH2_R1 PSC_KOEF1aEZH1_EZH2_R2 PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 PSC_KOEF1aEZH1_IGG_R1 PSC_KOEF1aEZH1_IGG_R2 PSC_KOEF1aEZH1_SUZ12_R1 PSC_KOEF1aEZH1_SUZ12_R2 PSC_WTEF1aEZH1_EZH1_R1 PSC_WTEF1aEZH1_EZH1_R2 PSC_WTEF1aEZH1_EZH2_R1 PSC_WTEF1aEZH1_EZH2_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 PSC_WTEF1aEZH1_IGG_R1 PSC_WTEF1aEZH1_IGG_R2 PSC_WTEF1aEZH1_SUZ12_R1 PSC_WTEF1aEZH1_SUZ12_R2 \
+    -o output/bigwig/multiBigwigSummary_WTEF1aEZH1vsKOEF1aEZH1_all_plotPCA.pdf
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_WTEF1aEZH1vsKOEF1aEZH1_all.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels PSC_KOEF1aEZH1_EZH1_R1 PSC_KOEF1aEZH1_EZH1_R2 PSC_KOEF1aEZH1_EZH2_R1 PSC_KOEF1aEZH1_EZH2_R2 PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 PSC_KOEF1aEZH1_IGG_R1 PSC_KOEF1aEZH1_IGG_R2 PSC_KOEF1aEZH1_SUZ12_R1 PSC_KOEF1aEZH1_SUZ12_R2 PSC_WTEF1aEZH1_EZH1_R1 PSC_WTEF1aEZH1_EZH1_R2 PSC_WTEF1aEZH1_EZH2_R1 PSC_WTEF1aEZH1_EZH2_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 PSC_WTEF1aEZH1_IGG_R1 PSC_WTEF1aEZH1_IGG_R2 PSC_WTEF1aEZH1_SUZ12_R1 PSC_WTEF1aEZH1_SUZ12_R2 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_WTEF1aEZH1vsKOEF1aEZH1_all_heatmap.pdf
+
+
+
+
+
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_WTEF1aEZH1vsKOEF1aEZH1_H3K27me3.sh # 26305500 ok
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_WTEF1aEZH1vsKOEF1aEZH1_H3K27me3.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 PSC_KOEF1aEZH1_IGG_R1 PSC_KOEF1aEZH1_IGG_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 PSC_WTEF1aEZH1_IGG_R1 PSC_WTEF1aEZH1_IGG_R2 \
+    -o output/bigwig/multiBigwigSummary_WTEF1aEZH1vsKOEF1aEZH1_H3K27me3_plotPCA.pdf
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_WTEF1aEZH1vsKOEF1aEZH1_H3K27me3.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 PSC_KOEF1aEZH1_IGG_R1 PSC_KOEF1aEZH1_IGG_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 PSC_WTEF1aEZH1_IGG_R1 PSC_WTEF1aEZH1_IGG_R2 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_WTEF1aEZH1vsKOEF1aEZH1_H3K27me3_heatmap.pdf
+
+
+
 ```
 
 --> Very noisy, not informative. 
     --> H3K27me3 cluster well together, then that is a mixed of samples/IP, even when checking per genotype
 
+--> WTEF1aEZH1 and KOEF1aEZH1 look to cluster well together
 
 
 # MACS2 peak calling on bam unique
@@ -405,23 +460,15 @@ sbatch scripts/macs2_broad_2.sh # 24400534 ok
 ```
 
 
-XXX HERE
 
 
 
 
---> All fail, except *H3K27me3; barely with 5,324 peaks*
+--> NEU no peak
 
-**broad**:
-- 50dN_WT_EZH1; n(peaks)= 2
-- 50dN_WT_EZH2; n(peaks)= 1
-- 50dN_WT_H3K27ac; n(peaks)= 3
-- 50dN_WT_H3K27me1AM; n(peaks)= 2
-- 50dN_WT_H3K27me1OR; n(peaks)= 2
-- 50dN_WT_H3K27me3; n(peaks)= 5,324
-- 50dN_WT_SUZ12= n(peaks)= 0
+--> PSC Rep1 work better than Rep2 (because less input material in Rep2)
 
-
+**broad**: Check ppt for nb of peaks
 
 
 
@@ -559,9 +606,7 @@ spikein_H3K27me3 = spikein %>%
 
 --> All good; higher SF for WTEF1aEZH2 as compared to KOEF1aEZH1
 
-XXX here do qc plot 
 
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 ### Quality control plot
@@ -572,7 +617,7 @@ Then look at the xlsx file from [EpiCypher](https://www.epicypher.com/products/n
 library("tidyverse")
 library("readxl")
 # import df adn tidy to remove AB used in sample_ID
-spikein <- read_excel("output/spikein/SpikeIn_QC_fastp_011.xlsx") %>%
+spikein <- read_excel("output/spikein/SpikeIn_QC_fastp_001013.xlsx") %>%
   separate(sample_ID, into = c("type", "condition", "tag"), sep = "_") %>%
   mutate(sample_ID = paste(type, condition, sep = "_")) %>%
   select(-type, -condition, -tag)
@@ -609,7 +654,7 @@ spikein_all_scale = spikein_all %>%
   # Ungroup the data
   ungroup()
 # Plot
-pdf("output/spikein/QC_histone_spike_in_H3K27me3.pdf", width = 6, height = 4)
+pdf("output/spikein/QC_histone_spike_in_H3K27me3.pdf", width = 10, height = 3)
 spikein_all_scale %>%
     filter(
            AB %in% c("H3K27me3", "IGG")) %>%
@@ -625,9 +670,9 @@ dev.off()
 ```
 
 
---> H3K27me3 is enriched
+--> H3K27me3 is enriched for PSC. For NEU, very lowly...
 
---> H3K27me1 do not work, not enriched! New AB was testeed, that is a bad one, as previous one show enrichment (see `007__CutRun`)
+
 
 
 
@@ -638,6 +683,7 @@ dev.off()
 - Count the number of aligned reads to the spike-in control sequences for each sample `samtools view -S -F 4 -c sample_h3k27me3_rep1_spikein.sam > sample_h3k27me3_rep1_spikein_count.txt` (code in `bowtie2_MG1655.sh`)
 - Do the math for scaling factor, same method as when using histone spike-in
 
+--> **IMPORTANT NOTE: NEED to use the uniq. aligned reads for both MG1655 and hg38!!!**
 
 
 ```R
@@ -646,36 +692,14 @@ library("tidyverse")
 library("readxl")
 library("ggpubr")
 
+# all samples
+
+
 # import df
-spikein <- read_excel("output/spikein/SpikeIn_MG1655_001013.xlsx") 
-
-## NPC
-spikein <- read_table("output/spikein/SpikeIn_MG1655_001013.txt") %>%
-    filter(tissue == "NPC") %>%
-    dplyr::select(-tissue)
-# Total reads per IP
-spikein_H3K27me3_total = spikein %>%
-    group_by(AB) %>%
-    mutate(total = sum(counts)) %>%
-    ungroup() %>%
-    distinct(AB, .keep_all = TRUE) %>%
-    select(AB,total)
-# Read proportion
-spikein_read_prop = spikein %>%
-    left_join(spikein_H3K27me3_total) %>%
-    mutate(read_prop = counts / total)
-spikein_read_prop_min = spikein_read_prop %>%
-    group_by(AB) %>%
-    summarise(min_prop=min(read_prop))
-# Scaling factor
-spikein_scaling_factor = spikein_read_prop %>%
-    left_join(spikein_read_prop_min) %>%
-    mutate(scaling_factor = read_prop/min_prop)
-write.table(spikein_scaling_factor, file="output/spikein/spikein_MG1655_NPC_scaling_factor.txt", sep="\t", quote=FALSE, row.names=FALSE)
-
+spikein <- read_excel("output/spikein/SpikeIn_MG1655unique_001013.xlsx") 
 
 ## PSC
-spikein <- read_table("output/spikein/SpikeIn_MG1655.txt") %>%
+spikein <- read_excel("output/spikein/SpikeIn_MG1655unique_001013.xlsx") %>%
     filter(tissue == "PSC") %>%
     dplyr::select(-tissue)
 # Total reads per IP
@@ -696,8 +720,370 @@ spikein_read_prop_min = spikein_read_prop %>%
 spikein_scaling_factor = spikein_read_prop %>%
     left_join(spikein_read_prop_min) %>%
     mutate(scaling_factor = read_prop/min_prop)
-write.table(spikein_scaling_factor, file="output/spikein/spikein_MG1655_PSC_scaling_factor.txt", sep="\t", quote=FALSE, row.names=FALSE)
+write.table(spikein_scaling_factor, file="output/spikein/spikein_MG1655unique_PSC_scaling_factor.txt", sep="\t", quote=FALSE, row.names=FALSE)
+
+
+
+# WTEF1aEZH1 and KOEF1aEZH1 H3K27me3 only
+spikein <- read_excel("output/spikein/SpikeIn_MG1655unique_001013.xlsx") %>%
+    filter(sample_ID %in% c(
+    "PSC_WTEF1aEZH1_H3K27me3_R1", "PSC_WTEF1aEZH1_H3K27me3_R2", "PSC_KOEF1aEZH1_H3K27me3_R1" ,"PSC_KOEF1aEZH1_H3K27me3_R2" ,"PSC_WTEF1aEZH1_IGG_R1",  "PSC_WTEF1aEZH1_IGG_R2", "PSC_KOEF1aEZH1_IGG_R1", "PSC_KOEF1aEZH1_IGG_R2"
+    )) %>%
+    dplyr::select(-tissue)
+# Total reads per IP
+spikein_H3K27me3_total = spikein %>%
+    group_by(AB) %>%
+    mutate(total = sum(counts)) %>%
+    ungroup() %>%
+    distinct(AB, .keep_all = TRUE) %>%
+    select(AB,total)
+# Read proportion
+spikein_read_prop = spikein %>%
+    left_join(spikein_H3K27me3_total) %>%
+    mutate(read_prop = counts / total)
+spikein_read_prop_min = spikein_read_prop %>%
+    group_by(AB) %>%
+    summarise(min_prop=min(read_prop))
+# Scaling factor
+spikein_scaling_factor = spikein_read_prop %>%
+    left_join(spikein_read_prop_min) %>%
+    mutate(scaling_factor = read_prop/min_prop)
+write.table(spikein_scaling_factor, file="output/spikein/spikein_MG1655unique_PSC_scaling_factor_WTEF1aEZH1andKOEF1aEZH1.txt", sep="\t", quote=FALSE, row.names=FALSE)
+
 ```
+
+--> No need to calculate SF separately here! We obtain same values.
+
+
+
+## Spike in Diffbind calcluation
+### Histone spike in
+
+
+XXX here !!! XXX
+
+**Using our scaling factor, let's estimate the 'new' library size** and provide it to `dba.normalize(library = c(1000, 12000))` = Like that our library size will be change taking into account our scaling factor! **Then we can normalize with library-size, RLE or TMM**... (issue discussed [here](https://support.bioconductor.org/p/9147040/)) 
+
+
+### Adjust library size with histone scaling factor and apply normalization
+Total number of reads is our library size (used samtools flagstat to double check) :
+
+`samtools flagstat output/bowtie2/*unique.dupmark.sorted.bam` used to obtain library size (first value=library size)
+--> Values save in GoogleDrive `007__*/sample_007.xlsx`. Histone-norm-library-size = library-size * SF. Using the non-reciprocal scaling factor, we increase the library-size; the more histone enriched, the more library size is increased, thus the more signal will decrease.
+
+Now let's use these new histone-scaled library size and normalize with library-size,TMM or RLE. Let's use the **unique bam files** together with the **unique bam MACS2 raw files (xlsx, not the bed with pre-filtered qvalue)**
+
+***Key points:***
+- **Let's do 1 DiffBind per AB (H3K27me3) and tissue (50dN); otherwise the TMM normalization may take all, unrelated, samples into account!** --> Files are `meta_sample_macs2raw_unique*.txt`
+- For **50dN_WTQ731E_H3K27me3_R3 I take 50dN_WTQ731E_H3K27me3_R1 IGG as control!**
+
+```bash
+srun --mem=500g --pty bash -l
+conda activate DiffBind
+```
+```R
+library("DiffBind") 
+
+# All 50dN H3K27me3
+## 50dN_H3K27me3
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_50dN_H3K27me3_histoneSF.txt", header = TRUE, sep = "\t"))
+
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+
+
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_50dN_H3K27me3_histoneSF.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_50dN_H3K27me3_histoneSF.RData")
+
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_50dN_H3K27me3.pdf", width=14, height=20)  
+plot(sample_count)
+dev.off()
+
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_50dN_H3K27me3.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+
+### TMM 
+
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(8533246,15652994,47009725,51026263,26083225,27542538,30204595), normalize = DBA_NORM_TMM) 
+
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+
+
+console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_50dN_H3K27me3.txt")
+
+
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_50dN_H3K27me3_histoneSF.pdf", width=14, height=20)  
+plot(sample_count_blackgreylist_LibHistoneScaled_TMM)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_50dN_H3K27me3_histoneSF.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+```
+
+
+
+Now let's do the same method but using the **MG1655_library_scaled information and collect new MG1655_DiffBind_TMM_SF**:
+
+
+```bash
+srun --mem=500g --pty bash -l
+conda activate DiffBind
+```
+```R
+library("DiffBind") 
+
+
+
+load("output/DiffBind/sample_count_macs2raw_unique_50dN_H3K27me3_histoneSF.RData")
+
+
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### TMM 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(8533246,10079430,32469281,25669150,15181711,18083570,13174869), normalize = DBA_NORM_TMM) 
+
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+
+console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibMG1655Scaled_TMM_unique_SF_50dN_H3K27me3.txt")
+
+
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_50dN_H3K27me3_MG1655SF.pdf", width=14, height=20)  
+plot(sample_count_blackgreylist_LibHistoneScaled_TMM)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_50dN_H3K27me3_MG1655SF.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+```
+
+
+
+--> SF from histone and MG1655 are very comparable
+
+--> No striking difference in histone SF between H3K27me3 R1 and R3
+
+
+
+
+# THOR diff peaks
+
+Let's use THOR, notably to have IGG scaled bigwig...!
+
+Comparison to do:
+- H3K27me3 in WTEF1aEZH1 vs KOEF1aEZH1 --> Check whether they could be considered similar; if yes we will have 3 replicate for EZH1 overexpression (let's do without SF)
+
+
+--> SF to use in THOR are the **reciprocal of MG1655_DiffBind_TMM** (histone are the same, so lets use the MG1655 ones)
+--> Configs file created manually as `output/THOR/50dN_H3K27me3_WTvsKO.config` and `output/THOR/50dN_H3K27me3_WTvsKOEF1aEZH1.config` 
+
+
+
+## Run THOR
+
+*THOR is very buggy to make it work I need to temporaly change where to look for libraries lol.. So cannot use nano anymore for example...*
+
+*Follow these parameters: `WTvsHET_unique_Keepdup` (perform best in previous CutRun)*
+
+```bash
+# Needed step to change where THOR look for libraries
+conda activate RGT
+export LD_LIBRARY_PATH=~/anaconda3/envs/RGT/lib:$LD_LIBRARY_PATH
+bigWigMerge
+
+# AB per AB (TMM normalization from THOR)
+sbatch scripts/THOR_PSC_H3K27me3_WTEF1aEZH1vsKOEF1aEZH1_TMM.sh # 26305339 ok
+
+```
+
+
+
+Generate median tracks:
+```bash
+conda activate BedToBigwig
+
+sbatch scripts/bigwigmerge_THOR_PSC_H3K27me3_WTEF1aEZH1vsKOEF1aEZH1_TMM.sh # 26308902 xxx
+```
+
+
+## Filter THOR peaks (qvalue)
+
+Let's find the optimal qvalue for THOR diff peaks
+
+
+```R
+
+# load the file using the tidyverse
+library("readr")
+library("dplyr")
+library("ggplot2")
+library("tidyr")
+
+# WTEF1aEZH1vsKOEF1aEZH1
+diffpeaks <- read_tsv("output/THOR/THOR_PSC_H3K27me3_WTEF1aEZH1vsKOEF1aEZH1/PSCH3K27me3WTEF1aEZH1vsKOEF1aEZH1-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WTEF1aEZH1", "count_KOEF1aEZH1", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WTEF1aEZH1, into = c("count_WTEF1aEZH1_1","count_WTEF1aEZH1_2"), sep = ":", convert = TRUE) %>%
+  separate(count_KOEF1aEZH1, into = c("count_KOEF1aEZH1_1","count_KOEF1aEZH1_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KOEF1aEZH1_1+count_KOEF1aEZH1_2) / (count_WTEF1aEZH1_1+count_WTEF1aEZH1_2))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_PSC_H3K27me3_WTEF1aEZH1vsKOEF1aEZH1/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WTEF1aEZH1 vs KOEF1aEZH1") +
+  theme_bw()
+dev.off()
+
+pdf("output/THOR/THOR_PSC_H3K27me3_WTEF1aEZH1vsKOEF1aEZH1/log2FC_qval30.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 30) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WTEF1aEZH1 vs KOEF1aEZH1") +
+  theme_bw()
+dev.off()
+
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 50) %>%
+  write_tsv("output/THOR/THOR_PSC_H3K27me3_WTEF1aEZH1vsKOEF1aEZH1/THOR_qval50.bed", col_names = FALSE)
+
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 30) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
+
+```
+
+- *NOTE: FC positive = less in KO; negative = more in KO*
+
+**Optimal qvalue:**
+--> *PSC_WTEF1aEZH1 vs KOEF1aEZH1*; qval 20-30 look optimal
+
+
+
+
+
+--> In agreement with `003__CutRun`; in KO overall same number of gain and lost regions; and in KOEF1aEZH1 much more gain of H3K27me3 (act like the HET)
+
+Isolate positive and negative THOR peaks to display deepTool plots
+
+```bash
+# positive negative peaks
+## qval 10
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval10.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval10_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval10.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval10_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval10_negative.bed
+
+## qval 15
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval15.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval15_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval15.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval15_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval15.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval15_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval15.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval15_negative.bed
+
+## qval 20
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval20.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval20_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval20.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval20_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval20.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval20_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval20.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval20_negative.bed
+
+## qval 30
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval30.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval30_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval30.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval30_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval30.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval30_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval30.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval30_negative.bed
+
+## qval 40
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval40.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval40_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval40.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval40_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval40.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval40_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval40.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval40_negative.bed
+
+## qval 50
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval50.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval50_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval50.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval50_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval50.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval50_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval50.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval50_negative.bed
+
+## qval 60
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval60.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval60_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval60.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval60_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval60.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval60_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval60.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval60_negative.bed
+
+## qval 70
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval70.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval70_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval70.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval70_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval70.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval70_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval70.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval70_negative.bed
+
+## qval 80
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval80.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval80_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval80.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval80_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval80.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval80_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval80.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval80_negative.bed
+
+## qval 90
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval90.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval90_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval90.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval90_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval90.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval90_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval90.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval90_negative.bed
+
+## qval 100
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval100.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval100_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval100.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKO/THOR_qval100_negative.bed
+
+awk -F'\t' '$16 > 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval100.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval100_positive.bed
+awk -F'\t' '$16 < 1' output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval100.bed > output/THOR/THOR_50dN_H3K27me3_WTvsKOEF1aEZH1/THOR_qval100_negative.bed
+```
+
+
+
+
+
+
+
+
+
+
 
 
 
