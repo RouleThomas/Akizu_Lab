@@ -431,6 +431,60 @@ plotCorrelation \
 
 
 
+
+
+
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_all_H3K27me3.sh # 26329533 ok
+
+
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_all_H3K27me3.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_KO_H3K27me3_R1 PSC_KO_H3K27me3_R2 PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 \
+    -o output/bigwig/multiBigwigSummary_all_H3K27me3_plotPCA.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_all_H3K27me3.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels PSC_KO_H3K27me3_R1 PSC_KO_H3K27me3_R2 PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_all_H3K27me3_heatmap.pdf
+
+
+
+
+
+
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_all_H3K27me3_DiffBindMG1655TMM.sh # xxx
+
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_all_H3K27me3_DiffBindMG1655TMM.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_KO_H3K27me3_R1 PSC_KO_H3K27me3_R2 PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 \
+    -o output/bigwig/multiBigwigSummary_all_H3K27me3_DiffBindMG1655TMM_plotPCA.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_all_H3K27me3_DiffBindMG1655TMM.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels PSC_KO_H3K27me3_R1 PSC_KO_H3K27me3_R2 PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_all_H3K27me3_DiffBindMG1655TMM_heatmap.pdf
+
+
+
+
 ```
 
 --> Very noisy, not informative. 
@@ -760,8 +814,6 @@ write.table(spikein_scaling_factor, file="output/spikein/spikein_MG1655unique_PS
 ### Histone spike in
 
 
-XXX here !!! XXX
-
 **Using our scaling factor, let's estimate the 'new' library size** and provide it to `dba.normalize(library = c(1000, 12000))` = Like that our library size will be change taking into account our scaling factor! **Then we can normalize with library-size, RLE or TMM**... (issue discussed [here](https://support.bioconductor.org/p/9147040/)) 
 
 
@@ -774,8 +826,8 @@ Total number of reads is our library size (used samtools flagstat to double chec
 Now let's use these new histone-scaled library size and normalize with library-size,TMM or RLE. Let's use the **unique bam files** together with the **unique bam MACS2 raw files (xlsx, not the bed with pre-filtered qvalue)**
 
 ***Key points:***
-- **Let's do 1 DiffBind per AB (H3K27me3) and tissue (50dN); otherwise the TMM normalization may take all, unrelated, samples into account!** --> Files are `meta_sample_macs2raw_unique*.txt`
-- For **50dN_WTQ731E_H3K27me3_R3 I take 50dN_WTQ731E_H3K27me3_R1 IGG as control!**
+- **Let's do 1 DiffBind per AB and tissue; otherwise the TMM normalization may take all, unrelated, samples into account!** --> Files are `meta_sample_macs2raw_unique*.txt`
+
 
 ```bash
 srun --mem=500g --pty bash -l
@@ -784,25 +836,23 @@ conda activate DiffBind
 ```R
 library("DiffBind") 
 
-# All 50dN H3K27me3
-## 50dN_H3K27me3
+# PSC WTEF1aEZH1 and KOEF1aEZH1 H3K27me3
 ### Generate the sample metadata (in ods/copy paste to a .csv file)
-sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_50dN_H3K27me3_histoneSF.txt", header = TRUE, sep = "\t"))
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_PSC_WTEF1aEZH1KOEF1aEZH1_H3K27me3_histoneSF.txt", header = TRUE, sep = "\t"))
 
 ### Batch effect investigation; heatmaps and PCA plots
 sample_count = dba.count(sample_dba)
 
-
 ## This take time, here is checkpoint command to save/load:
-save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_50dN_H3K27me3_histoneSF.RData")
-load("output/DiffBind/sample_count_macs2raw_unique_50dN_H3K27me3_histoneSF.RData")
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_PSC_WTEF1aEZH1KOEF1aEZH1_H3K27me3.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_PSC_WTEF1aEZH1KOEF1aEZH1_H3K27me3.RData")
 
 ### plot
-pdf("output/DiffBind/clustering_sample_macs2raw_unique_50dN_H3K27me3.pdf", width=14, height=20)  
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_PSC_WTEF1aEZH1KOEF1aEZH1_H3K27me3.pdf", width=14, height=20)  
 plot(sample_count)
 dev.off()
 
-pdf("output/DiffBind/PCA_sample_macs2raw_unique_50dN_H3K27me3.pdf", width=14, height=20) 
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_WTEF1aEZH1KOEF1aEZH1_H3K27me3.pdf", width=14, height=20) 
 dba.plotPCA(sample_count,DBA_REPLICATE, label=DBA_TREATMENT)
 dev.off()
 
@@ -813,23 +863,25 @@ sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
 
 ### TMM 
 
-sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(8533246,15652994,47009725,51026263,26083225,27542538,30204595), normalize = DBA_NORM_TMM) 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(19509878, 21885102, 13598489,8632686), normalize = DBA_NORM_TMM) 
 
 #### Here is to retrieve the scaling factor value
 sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
-
-
 console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
-writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_50dN_H3K27me3.txt")
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_PSC_WTEF1aEZH1KOEF1aEZH1_H3K27me3.txt")
 
 
 ### plot
-pdf("output/DiffBind/clustering_sample_macs2raw_unique_50dN_H3K27me3_histoneSF.pdf", width=14, height=20)  
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_PSC_WTEF1aEZH1KOEF1aEZH1_H3K27me3_histoneSF.pdf", width=14, height=20)  
 plot(sample_count_blackgreylist_LibHistoneScaled_TMM)
 dev.off()
-pdf("output/DiffBind/PCA_sample_macs2raw_unique_50dN_H3K27me3_histoneSF.pdf", width=14, height=20) 
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_WTEF1aEZH1KOEF1aEZH1_H3K27me3_histoneSF.pdf", width=14, height=20) 
 dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
 dev.off()
+
+
+
+
 
 ```
 
@@ -847,7 +899,7 @@ library("DiffBind")
 
 
 
-load("output/DiffBind/sample_count_macs2raw_unique_50dN_H3K27me3_histoneSF.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_PSC_WTEF1aEZH1KOEF1aEZH1_H3K27me3.RData")
 
 
 ### Blacklist/Greylist generation
@@ -855,21 +907,115 @@ sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=
 
 sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
 ### TMM 
-sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(8533246,10079430,32469281,25669150,15181711,18083570,13174869), normalize = DBA_NORM_TMM) 
+sample_count_blackgreylist_LibMG1655Scaled_TMM = dba.normalize(sample_count_blackgreylist, library = c( 13815063,18098857,12434028,15306766), normalize = DBA_NORM_TMM) 
 
 #### Here is to retrieve the scaling factor value
-sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+sample_count_blackgreylist_LibMG1655Scaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibMG1655Scaled_TMM, bRetrieve=TRUE)
 
-console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
-writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibMG1655Scaled_TMM_unique_SF_50dN_H3K27me3.txt")
+console_output <- capture.output(print(sample_count_blackgreylist_LibMG1655Scaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibMG1655Scaled_TMM_unique_SF_PSC_WTEF1aEZH1KOEF1aEZH1_H3K27me3.txt")
 
 
 ### plot
-pdf("output/DiffBind/clustering_sample_macs2raw_unique_50dN_H3K27me3_MG1655SF.pdf", width=14, height=20)  
-plot(sample_count_blackgreylist_LibHistoneScaled_TMM)
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_PSC_WTEF1aEZH1KOEF1aEZH1_H3K27me3_MG1655SF.pdf", width=14, height=20)  
+plot(sample_count_blackgreylist_LibMG1655Scaled_TMM)
 dev.off()
-pdf("output/DiffBind/PCA_sample_macs2raw_unique_50dN_H3K27me3_MG1655SF.pdf", width=14, height=20) 
-dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_WTEF1aEZH1KOEF1aEZH1_H3K27me3_MG1655SF.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibMG1655Scaled_TMM,DBA_REPLICATE, label=DBA_TREATMENT)
+dev.off()
+
+
+
+
+
+
+# WT and KO
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_PSC_WTKO_H3K27me3.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_PSC_WTKO_H3K27me3.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_PSC_WTKO_H3K27me3.RData")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_PSC_WTKO_H3K27me3.pdf", width=14, height=20)  
+plot(sample_count)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_WTKO_H3K27me3.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_TREATMENT, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_WTKO_H3K27me3_rep.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_TREATMENT, label=DBA_REPLICATE)
+dev.off()
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+
+### TMM 
+sample_count_blackgreylist_LibMG1655Scaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(13124625,14587838,13765544,9093591), normalize = DBA_NORM_TMM) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibMG1655Scaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibMG1655Scaled_TMM, bRetrieve=TRUE)
+
+console_output <- capture.output(print(sample_count_blackgreylist_LibMG1655Scaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibMG1655Scaled_TMM_unique_SF_PSC_WTKO_H3K27me3.txt")
+
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_PSC_WTKO_H3K27me3_MG1655SF.pdf", width=14, height=20)  
+plot(sample_count_blackgreylist_LibMG1655Scaled_TMM)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_WTKO_H3K27me3_MG1655SF.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibMG1655Scaled_TMM,DBA_TREATMENT, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_WTKO_H3K27me3_MG1655SF_rep.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibMG1655Scaled_TMM,DBA_TREATMENT, label=DBA_REPLICATE)
+dev.off()
+
+
+
+
+
+
+
+
+# all H3K27me3 samples (just to check whether how OEEZH1 genotypes cluster with the other samples)
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_PSC_all_H3K27me3.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_PSC_all_H3K27me3.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_PSC_all_H3K27me3.RData")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_PSC_all_H3K27me3.pdf", width=14, height=20)  
+plot(sample_count)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_all_H3K27me3.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_TREATMENT, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_all_H3K27me3_rep.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_TREATMENT, label=DBA_REPLICATE)
+dev.off()
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+
+### TMM 
+sample_count_blackgreylist_LibMG1655Scaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(13815063,18098857,12434028,15306766,13124625,14587838,13765544,9093591), normalize = DBA_NORM_TMM) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibMG1655Scaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibMG1655Scaled_TMM, bRetrieve=TRUE)
+
+console_output <- capture.output(print(sample_count_blackgreylist_LibMG1655Scaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibMG1655Scaled_TMM_unique_SF_PSC_all_H3K27me3.txt")
+
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_PSC_all_H3K27me3_MG1655SF.pdf", width=14, height=20)  
+plot(sample_count_blackgreylist_LibMG1655Scaled_TMM)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_all_H3K27me3_MG1655SF.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibMG1655Scaled_TMM,DBA_TREATMENT, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_all_H3K27me3_MG1655SF_rep.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibMG1655Scaled_TMM,DBA_TREATMENT, label=DBA_REPLICATE)
 dev.off()
 
 ```
@@ -878,7 +1024,7 @@ dev.off()
 
 --> SF from histone and MG1655 are very comparable
 
---> No striking difference in histone SF between H3K27me3 R1 and R3
+
 
 
 
@@ -910,6 +1056,13 @@ bigWigMerge
 
 # AB per AB (TMM normalization from THOR)
 sbatch scripts/THOR_PSC_H3K27me3_WTEF1aEZH1vsKOEF1aEZH1_TMM.sh # 26305339 ok
+sbatch scripts/THOR_PSC_H3K27me3_WTvsKO_TMM.sh # 26331297 xxx
+
+
+# AB per AB (DiffBind SF TMM)
+sbatch scripts/THOR_PSC_H3K27me3_WTEF1aEZH1vsKOEF1aEZH1_DiffBindMG1655TMM.sh # 26328774 ok
+sbatch scripts/THOR_PSC_H3K27me3_WTEF1aEZH1vsKOEF1aEZH1_DiffBindhistoneTMM.sh # 26328776 ok
+sbatch scripts/THOR_PSC_H3K27me3_WTvsKO_DiffBindMG1655TMM.sh # 26331379 xxx
 
 ```
 
@@ -919,7 +1072,7 @@ Generate median tracks:
 ```bash
 conda activate BedToBigwig
 
-sbatch scripts/bigwigmerge_THOR_PSC_H3K27me3_WTEF1aEZH1vsKOEF1aEZH1_TMM.sh # 26308902 xxx
+sbatch scripts/bigwigmerge_THOR_PSC_H3K27me3_WTEF1aEZH1vsKOEF1aEZH1_TMM.sh # 26308902 ok
 ```
 
 
@@ -936,7 +1089,7 @@ library("dplyr")
 library("ggplot2")
 library("tidyr")
 
-# WTEF1aEZH1vsKOEF1aEZH1
+# WTEF1aEZH1vsKOEF1aEZH1 TMM THOR
 diffpeaks <- read_tsv("output/THOR/THOR_PSC_H3K27me3_WTEF1aEZH1vsKOEF1aEZH1/PSCH3K27me3WTEF1aEZH1vsKOEF1aEZH1-diffpeaks.bed",
                       col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
 ## split the last field and calculate FC
@@ -980,12 +1133,55 @@ thor_splitted %>%
 
 
 
+# WTEF1aEZH1vsKOEF1aEZH1 DiffBindMG1655TMM 
+diffpeaks <- read_tsv("output/THOR/THOR_PSC_H3K27me3_WTEF1aEZH1vsKOEF1aEZH1_DiffBindMG1655TMM/PSCH3K27me3WTEF1aEZH1vsKOEF1aEZH1DiffBindMG1655TMM-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WTEF1aEZH1", "count_KOEF1aEZH1", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WTEF1aEZH1, into = c("count_WTEF1aEZH1_1","count_WTEF1aEZH1_2"), sep = ":", convert = TRUE) %>%
+  separate(count_KOEF1aEZH1, into = c("count_KOEF1aEZH1_1","count_KOEF1aEZH1_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KOEF1aEZH1_1+count_KOEF1aEZH1_2) / (count_WTEF1aEZH1_1+count_WTEF1aEZH1_2))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_PSC_H3K27me3_WTEF1aEZH1vsKOEF1aEZH1_DiffBindMG1655TMM/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WTEF1aEZH1 vs KOEF1aEZH1") +
+  theme_bw()
+dev.off()
+
+pdf("output/THOR/THOR_PSC_H3K27me3_WTEF1aEZH1vsKOEF1aEZH1_DiffBindMG1655TMM/log2FC_qval30.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 30) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WTEF1aEZH1 vs KOEF1aEZH1") +
+  theme_bw()
+dev.off()
+
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 50) %>%
+  write_tsv("output/THOR/THOR_PSC_H3K27me3_WTEF1aEZH1vsKOEF1aEZH1_DiffBindMG1655TMM/THOR_qval50.bed", col_names = FALSE)
+
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 30) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
 ```
 
 - *NOTE: FC positive = less in KO; negative = more in KO*
 
 **Optimal qvalue:**
---> *PSC_WTEF1aEZH1 vs KOEF1aEZH1*; qval 20-30 look optimal
+--> *PSC_WTEF1aEZH1 vs KOEF1aEZH1*; qval 20-30 look optimal for TMM and DiffBindMG1655TMM
 
 
 

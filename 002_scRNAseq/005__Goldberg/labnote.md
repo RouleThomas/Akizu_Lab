@@ -935,8 +935,13 @@ dev.off()
 
 
 
+
+
+##########################################
 ## integration WT Kcnc1 p14 all replicates (1st replicate, then genotype) ######
- 
+ ##########################################
+
+
 WT_p14_CB_Rep1$replicate <- "Rep1"
 WT_p14_CB_Rep2$replicate <- "Rep2"
 WT_p14_CB_Rep3$replicate <- "Rep3"
@@ -1118,7 +1123,7 @@ dev.off()
 # Test Replicate and Genotype integration (1 step integration)
 ## WT Rep
 
-### Reg2 
+### Regv2 
 WT_p14_CB_Rep1 <- SCTransform(WT_p14_CB_Rep1, method = "glmGamPoi", ncells = 12520, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
 WT_p14_CB_Rep2 <- SCTransform(WT_p14_CB_Rep2, method = "glmGamPoi", ncells = 13474, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
 WT_p14_CB_Rep3 <- SCTransform(WT_p14_CB_Rep3, method = "glmGamPoi", ncells = 13231, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
@@ -1128,7 +1133,7 @@ Kcnc1_p14_CB_Rep3 <- SCTransform(Kcnc1_p14_CB_Rep3, method = "glmGamPoi", ncells
 
 
 
-### Reg 1 _ better than Reg2
+### Reg v1 _ better than Regv2
 WT_p14_CB_Rep1 <- SCTransform(WT_p14_CB_Rep1, method = "glmGamPoi", ncells = 12369, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
 WT_p14_CB_Rep2 <- SCTransform(WT_p14_CB_Rep2, method = "glmGamPoi", ncells = 13414, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
 WT_p14_CB_Rep3 <- SCTransform(WT_p14_CB_Rep3, method = "glmGamPoi", ncells = 13181, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
@@ -1366,6 +1371,240 @@ annot.GSEA <- easyct(input.d, db="clustermole", # cellmarker or panglao or clust
 #pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p14_CB_1step_V1-clustermole_Brain.pdf", width=6, height=8)
 
 pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p14_CB_1step_QCV3-clustermole_Brain.pdf", width=6, height=8)
+plot_dot(test="GSEA", annot.GSEA) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+dev.off()
+
+
+
+
+# panglao --> NOT working... 'subscript out of bounds' error... I tried gene as ENSEMBL, entrezID and geneSymbo, human/mic, everything...
+
+
+#
+
+
+
+
+## check some genes
+
+
+pdf("output/Signac/FeaturePlot_SCT_RNA_WT_Bap1KO-EpendymalCell-QCV3_dim40kparam35res05algo4feat2000_noCellCycleRegression
+.pdf", width=15, height=15)
+FeaturePlot(multiome_WT_Bap1KO_QCV2.sct, features = c(  "Rabl2", "Cfap54", "Ccdc153", "Foxj1", "Pifo", "Dynlrb2", "Rsph1", "Cfap44"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+
+
+
+
+
+
+
+##########################################
+## integration WT Kcnc1 p35 all replicates (1st replicate, then genotype) ######
+ ##########################################
+
+
+WT_p35_CB_Rep1$replicate <- "Rep1"
+WT_p35_CB_Rep2$replicate <- "Rep2"
+WT_p35_CB_Rep3$replicate <- "Rep3"
+
+WT_p35_CB_Rep1$condition <- "WT"
+WT_p35_CB_Rep2$condition <- "WT"
+WT_p35_CB_Rep3$condition <- "WT"
+
+Kcnc1_p35_CB_Rep1$replicate <- "Rep1"
+Kcnc1_p35_CB_Rep2$replicate <- "Rep2"
+Kcnc1_p35_CB_Rep3$replicate <- "Rep3"
+
+Kcnc1_p35_CB_Rep1$condition <- "Kcnc1"
+Kcnc1_p35_CB_Rep2$condition <- "Kcnc1"
+Kcnc1_p35_CB_Rep3$condition <- "Kcnc1"
+
+set.seed(42)
+
+
+# Replicate and Genotype integration (1 step integration)
+## WT Rep
+
+### Reg v1 _ better than Regv2
+WT_p35_CB_Rep1 <- SCTransform(WT_p35_CB_Rep1, method = "glmGamPoi", ncells = 8496, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+WT_p35_CB_Rep2 <- SCTransform(WT_p35_CB_Rep2, method = "glmGamPoi", ncells = 11577, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+WT_p35_CB_Rep3 <- SCTransform(WT_p35_CB_Rep3, method = "glmGamPoi", ncells = 14582, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p35_CB_Rep1 <- SCTransform(Kcnc1_p35_CB_Rep1, method = "glmGamPoi", ncells = 11642, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p35_CB_Rep2 <- SCTransform(Kcnc1_p35_CB_Rep2, method = "glmGamPoi", ncells = 33698, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p35_CB_Rep3 <- SCTransform(Kcnc1_p35_CB_Rep3, method = "glmGamPoi", ncells = 18205, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+
+
+
+
+srat.list <- list(WT_p35_CB_Rep1 = WT_p35_CB_Rep1, WT_p35_CB_Rep2 = WT_p35_CB_Rep2, WT_p35_CB_Rep3 = WT_p35_CB_Rep3, Kcnc1_p35_CB_Rep1 = Kcnc1_p35_CB_Rep1, Kcnc1_p35_CB_Rep2 = Kcnc1_p35_CB_Rep2, Kcnc1_p35_CB_Rep3 = Kcnc1_p35_CB_Rep3)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+WT_Kcnc1_p35_CB_1step.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+WT_Kcnc1_p35_CB_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p35_CB_1step.anchors, normalization.method = "SCT")
+
+
+#### UMAP
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "integrated"
+
+WT_Kcnc1_p35_CB_1step.sct <- RunPCA(WT_Kcnc1_p35_CB_1step.sct, verbose = FALSE, npcs = 50)
+WT_Kcnc1_p35_CB_1step.sct <- RunUMAP(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
+WT_Kcnc1_p35_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", k.param = 20, dims = 1:50)
+WT_Kcnc1_p35_CB_1step.sct <- FindClusters(WT_Kcnc1_p35_CB_1step.sct, resolution = 0.4, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+
+WT_Kcnc1_p35_CB_1step.sct$condition <- factor(WT_Kcnc1_p35_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim50kparam20res04.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=TRUE)
+dev.off()
+
+
+# genes
+
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "SCT"
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim50-List4.pdf", width=30, height=70)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Calb1", "Slc1a6", "Car8", "Gabra6", "Pax6", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Zeb2", "Hepacam", "Aqp4", "Slc39a12", "Kl", "Clic6", "Slc13a4", "Ttr", "Cfap54", "Ccdc153", "Cfap44", "Tmem212", "Ptgds", "Dcn", "Ntng1", "Grm5", "Aldoc", "Cnp", "Cspg5", "Mbp", "Mag", "Plp1", "Slc18a2", "Ddc", "Slc6a4", "Tph2", "Lef1", "Notum", "Apcdd1", "Nxph1", "Dynlt1c", "Otx1", "Rnd3", "Pvalb", "Cck", "Sst", "Myh11"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+XXXY here clu to finetune XXX
+
+
+
+
+
+#### QC metrics investigation ####################################
+pdf("output/seurat/VlnPlot_QCmetrics_SCT_WT_Kcnc1_p35_CB_1step-1stepIntegrationRegressNotRepeated-QCV3dim30kparam20res04-countMtRbRegression.pdf", width=20, height=5)
+VlnPlot(WT_Kcnc1_p35_CB_1step.sct,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+
+pdf("output/seurat/VlnPlot_QCmetrics_nFeature_RNA_SCT_WT_Kcnc1_p35_CB_1step-1stepIntegrationRegressNotRepeated-QCV3dim30kparam20res04-countMtRbRegression.pdf", width=5, height=5)
+VlnPlot(WT_Kcnc1_p35_CB_1step.sct,features = c("nFeature_RNA")) +
+  ylim(0,2000)
+dev.off()
+
+pdf("output/seurat/VlnPlot_QCmetrics_nCount_RNA_SCT_WT_Kcnc1_p35_CB_1step-1stepIntegrationRegressNotRepeated-QCV3dim30kparam20res04-countMtRbRegression.pdf", width=5, height=5)
+VlnPlot(WT_Kcnc1_p35_CB_1step.sct,features = c("nCount_RNA")) +
+  ylim(0,10000)
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p35_CB_nFeature_RNA-1stepIntegrationRegressNotRepeated-QCV3dim30kparam20res04.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=FALSE, features = "nFeature_RNA")
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p35_CB_percentmt-1stepIntegrationRegressNotRepeated-QCV3dim30kparam20res04.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.mt")
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p35_CB_percentrb-1stepIntegrationRegressNotRepeated-QCV3dim30kparam20res04.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.rb")
+dev.off()  
+############################################################
+
+
+
+
+
+
+
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_splitCondition-1stepIntegrationRegressNotRepeated-QCV2dim13kparam30res05.pdf", width=13, height=6)
+DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=TRUE, split.by = "condition")
+dev.off()
+pdf("output/seurat/UMAP_WT_Kcnc1_splitReplicate-1stepIntegrationRegressNotRepeated-QCV2dim13kparam30res05.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=TRUE, split.by = "replicate")
+dev.off()
+
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_Phase-1stepIntegrationRegressNotRepeated-QCV2dim13kparam30res05.pdf", width=10, height=6)
+DimPlot(WT_Kcnc1_p35_CB_1step.sct, group.by= "Phase") & 
+  theme(plot.title = element_text(size=10))
+dev.off()  
+
+
+# save ##################
+## saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step.sct_V1_numeric.rds") # regMtRbCount with QC_V3
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step.sct_V1_numeric.rds")
+set.seed(42)
+##########
+
+
+## Let's work with 1step integration: 
+# --> 1stepIntegrationRegressNotRepeatedregMtRbCou-QCV2dim30kparam30res05 = WT_Kcnc1_p35_CB_1step_V1
+
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step.sct_V1_numeric.rds")
+
+
+############################ EasyCellType automatic annotation ##########################################
+
+### Find all markers 
+all_markers <- FindAllMarkers(WT_Kcnc1_p35_CB_1step.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+
+write.table(all_markers, file = "output/seurat/srat_WT_Kcnc1_p35_CB_1step_QCV3_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+## V1 = QCV1
+## QCV3
+
+
+# BiocManager::install("EasyCellType")
+library("EasyCellType")
+library("org.Mm.eg.db")
+library("AnnotationDbi")
+
+## load marker
+all_markers <- read.delim("output/seurat/srat_WT_Kcnc1_p35_CB_1step_QCV3_all_markers.txt", header = TRUE, row.names = 1)
+
+
+
+## Convert geneSymbol to EntrezID
+all_markers$entrezid <- mapIds(org.Mm.eg.db,
+                           keys=all_markers$gene, #Column containing Ensembl gene ids
+                           column="ENTREZID",
+                           keytype="SYMBOL",
+                           multiVals="first")
+all_markers <- na.omit(all_markers)
+
+## Sort the datafram (data frame containing Entrez IDs, clusters and expression scores)
+
+all_markers_sort <- data.frame(gene=all_markers$entrezid, cluster=all_markers$cluster, 
+                      score=all_markers$avg_log2FC) %>% 
+  group_by(cluster) %>% 
+  mutate(rank = rank(score),  ties.method = "random") %>% 
+  arrange(desc(rank)) 
+input.d <- as.data.frame(all_markers_sort[, 1:3])
+
+## Run the enrihcment analysis
+
+
+annot.GSEA <- easyct(input.d, db="cellmarker", # cellmarker or panglao or clustermole
+                    species="Mouse", #  Human or Mouse
+                    tissue=c("Brain", "Cerebellum", "Hippocampus"), p_cut=0.5,   # to see: data(cellmarker_tissue), data(clustermole_tissue), data(panglao_tissue)
+                    test="GSEA")    # GSEA or fisher?
+
+
+annot.GSEA <- easyct(input.d, db="clustermole", # cellmarker or panglao or clustermole
+                    species="Mouse", #  Human or Mouse
+                    tissue=c("Brain"), p_cut=0.5,   # to see: data(cellmarker_tissue), data(clustermole_tissue), data(panglao_tissue)
+                    test="GSEA")    # GSEA or fisher?
+
+
+
+
+
+## plots
+
+
+
+#pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p35_CB_1step_V1-cellmarker_CerebellumBrainHippocampus.pdf", width=6, height=8)
+#pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p35_CB_1step_V1-clustermole_Brain.pdf", width=6, height=8)
+
+pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p35_CB_1step_QCV3-clustermole_Brain.pdf", width=6, height=8)
 plot_dot(test="GSEA", annot.GSEA) + 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 dev.off()
