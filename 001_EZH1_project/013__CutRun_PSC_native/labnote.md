@@ -444,6 +444,8 @@ plotPCA -in output/bigwig/multiBigwigSummary_all_H3K27me3.npz \
     --transpose \
     --ntop 0 \
     --labels PSC_KO_H3K27me3_R1 PSC_KO_H3K27me3_R2 PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 \
+    --colors red red blue blue black black darkblue darkblue \
+    --markers o o x x o o x x \
     -o output/bigwig/multiBigwigSummary_all_H3K27me3_plotPCA.pdf
 
 ## Heatmap
@@ -462,7 +464,7 @@ plotCorrelation \
 
 
 # Generate compile bigwig (.npz) files
-sbatch scripts/multiBigwigSummary_all_H3K27me3_DiffBindMG1655TMM.sh # xxx
+sbatch scripts/multiBigwigSummary_all_H3K27me3_DiffBindMG1655TMM.sh # 26396479 ok
 
 # Plot
 ## PCA
@@ -470,7 +472,18 @@ plotPCA -in output/bigwig/multiBigwigSummary_all_H3K27me3_DiffBindMG1655TMM.npz 
     --transpose \
     --ntop 0 \
     --labels PSC_KO_H3K27me3_R1 PSC_KO_H3K27me3_R2 PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 \
+    --colors red red blue blue black black darkblue darkblue \
+    --markers o o x x o o x x \
     -o output/bigwig/multiBigwigSummary_all_H3K27me3_DiffBindMG1655TMM_plotPCA.pdf
+
+plotPCA -in output/bigwig/multiBigwigSummary_all_H3K27me3_DiffBindMG1655TMM.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_KO_H3K27me3_R1 PSC_KO_H3K27me3_R2 PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 \
+    --colors red red blue blue black black darkblue darkblue \
+    --markers o x o x o x o x \
+    -o output/bigwig/multiBigwigSummary_all_H3K27me3_DiffBindMG1655TMM_plotPCA_2.pdf
+
 
 ## Heatmap
 plotCorrelation \
@@ -482,6 +495,33 @@ plotCorrelation \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
     -o output/bigwig/multiBigwigSummary_all_H3K27me3_DiffBindMG1655TMM_heatmap.pdf
 
+
+
+
+
+
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_all_H3K27me3_TMM.sh # 26406742 ok
+
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_all_H3K27me3_TMM.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_KO_H3K27me3_R1 PSC_KO_H3K27me3_R2 PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 \
+    --colors red red blue blue black black darkblue darkblue \
+    --markers o o x x o o x x \
+    -o output/bigwig/multiBigwigSummary_all_H3K27me3_TMM_plotPCA.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_all_H3K27me3_TMM.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels PSC_KO_H3K27me3_R1 PSC_KO_H3K27me3_R2 PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_all_H3K27me3_TMM_heatmap.pdf
 
 
 
@@ -1056,15 +1096,21 @@ bigWigMerge
 
 # AB per AB (TMM normalization from THOR)
 sbatch scripts/THOR_PSC_H3K27me3_WTEF1aEZH1vsKOEF1aEZH1_TMM.sh # 26305339 ok
-sbatch scripts/THOR_PSC_H3K27me3_WTvsKO_TMM.sh # 26331297 xxx
+sbatch scripts/THOR_PSC_H3K27me3_WTvsKO_TMM.sh # 26331297 ok
 
 
 # AB per AB (DiffBind SF TMM)
 sbatch scripts/THOR_PSC_H3K27me3_WTEF1aEZH1vsKOEF1aEZH1_DiffBindMG1655TMM.sh # 26328774 ok
 sbatch scripts/THOR_PSC_H3K27me3_WTEF1aEZH1vsKOEF1aEZH1_DiffBindhistoneTMM.sh # 26328776 ok
-sbatch scripts/THOR_PSC_H3K27me3_WTvsKO_DiffBindMG1655TMM.sh # 26331379 xxx
+sbatch scripts/THOR_PSC_H3K27me3_WTvsKO_DiffBindMG1655TMM.sh # 26331379 ok
 
 ```
+
+
+--> **WT vs KO; almost no diff peaks!** Could be true, as in KO only EZH2 is active, no compensation, EZH2 is already there working; EZH1 is NOT the main catalytic subunit in ESC, thus KO it do nothing
+
+
+
 
 
 
