@@ -17056,6 +17056,9 @@ humangastruloid2472hrs <- slingshot(humangastruloid2472hrs, reducedDim = 'UMAP',
                  clusterLabels = colData(humangastruloid2472hrs)$seurat_clusters,
                  start.clus = '3', approx_points = 100)
 
+humangastruloid2472hrs <- slingshot(humangastruloid2472hrs, reducedDim = 'UMAP',
+                 clusterLabels = colData(humangastruloid2472hrs)$seurat_clusters,
+                 start.clus = '3', end.clus = c("8","1","4") ,approx_points = 100)
 
 #                 extend = 'n', stretch = 0)
 
@@ -17080,8 +17083,9 @@ curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
                     .id = "treatment")
 
 #  
-# 
-pdf("output/condiments/UMAP_trajectory_separated_humangastruloid2472hrs_start3.pdf", width=6, height=5)
+# pdf("output/condiments/UMAP_trajectory_separated_humangastruloid2472hrs_start3.pdf", width=6, height=5)
+
+pdf("output/condiments/UMAP_trajectory_separated_humangastruloid2472hrs_start3end814.pdf", width=6, height=5)
 
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = treatment)) +
   geom_point(size = .7, alpha = .2) +
