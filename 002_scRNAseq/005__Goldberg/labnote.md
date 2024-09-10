@@ -1300,8 +1300,6 @@ dev.off()
 ## WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V1_numeric.rds") # regMtRbCount
 ## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V3_numeric.rds") # regMtRbCount with QC_V3
 
-XXXY HERE : SAVE AGAIN the  saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V3_numeric.rds") if the UMAP test is correct.... Then pursue the cell type annotation XXX
-
 WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V3_numeric.rds")
 set.seed(42)
 ##########
@@ -1378,7 +1376,6 @@ dev.off()
 
 # panglao --> NOT working... 'subscript out of bounds' error... I tried gene as ENSEMBL, entrezID and geneSymbo, human/mic, everything...
 
-XXXY
 
 ############ V1 naming
 
@@ -1440,93 +1437,79 @@ WT_Kcnc1_p14_CB_1step.sct <- RenameIdents(WT_Kcnc1_p14_CB_1step.sct, new.cluster
 WT_Kcnc1_p14_CB_1step.sct$cluster.annot <- Idents(WT_Kcnc1_p14_CB_1step.sct) # create a new slot in my seurat object
 
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB_1step_QCV3dim30kparam20res04_label.pdf", width=12, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB_1step_QCV3dim30kparam20res04_label.pdf", width=15, height=6)
 DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
 dev.off()
 
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB_1step_QCV3dim30kparam20res04_noSplit_label.pdf", width=7, height=5)
-DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 4)
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB_1step_QCV3dim30kparam20res04_noSplit_label.pdf", width=10, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5)
 dev.off()
 
 
 
 # All in dotplot
-DefaultAssay(multiome_WT_Bap1KO_QCV3.sct) <- "SCT"
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
 
-Neural Stem Cells (NSC) = Pax6 (should have more cell types)
-Intermediate Progenitors (IP) = Eomes
-Dentate Gyrus Granucle Cells (DG) = Prox1, Neurod1, Sema5a
-CA1 = Cck, Insm1
-CA3 = Crym, Snca, Nrp2
-Pyramidal neurons deep layer (DL) = Tac2, Hs3st1, Nrn1
-Pyramidal neurons middle layer (ML) = Pantr1, Igfbpl1, Frmd4b
-Pyramidal neurons upper layer (UL) = Satb2, Itpr1
-Interneurons (IN) = Gad1, Grin2d, Reln, Calb1, Npy, Gria3, Lhx6
-Cajal Retzius (CR) = Lhx1
-Subiculum (SubC) = Nts, Nr4a2, Lmo3, B3gat1
-Microglia = Csf1r, Gpr34, Gpr183, Cx3cr1
-OPC = Pdgfra, Olig1
-Ependymal_Cells = Foxj1, Cfap44, Dynlrb2
-Astrocyte = Aqp4, Gfap
-Radial Glia Cells = Gli3, Pdgfd
-Chandellier cell = Ntf3, Prkg1, Slc12a5
-Meningeal cells = Aldh1a2, Vtn, Lum, Foxc1, Igf2
+List5:
+1,4,5,6,7,9,11- Granular = Gabra6, Pax6
+3,21- Neuroblast= Ntng1, Grm5
+2- MLI1 = Sorcs3, Ptprk
+8- MLI2 = Nxph1, Cdh22
+10- Endothelial_Cells= Lef1, Notum, Apcdd1
+12- Astrocyte = Zeb2, Hepacam
+12- Astrocyte_2 = Aqp4, Slc39a12
+13- OPC = Aldoc, Cnp, Cspg5
+14- Interneuron= Rgs6, Kcnc2
+17- Oligodendrocyte= Mbp, Mag, Plp1
+18- Ependymal cells= Cfap54, Ccdc153, Cfap44, Tmem212
+18- Meningeal cell = Ptgds, Dcn
+19- Muscle= Dlc1, Pdgfrb
+20- Purkinje cells = Calb1, Slc1a6, Car8
+22- NPC= Lmx1a, Adcy2, Mdga1, Eomes
+23- Choroid plexus cells = Kl, Clic6, Slc13a4, Ttr
+
 
 all_markers <- c(
-"Pax6",
-"Eomes",
-"Gli3", "Pdgfd",
-"Pdgfra", "Olig1",
-"Aqp4", "Gfap",
-"Foxj1", "Cfap44", "Dynlrb2",
-"Csf1r", "Gpr34", "Gpr183", "Cx3cr1",
-"Aldh1a2", "Vtn", "Lum", "Foxc1", "Igf2",
-"Lhx1",
-"Prox1", "Neurod1", "Sema5a",
-"Cck", "Insm1",
-"Crym", "Snca", "Nrp2",
-"Satb2", "Itpr1",
-"Pantr1", "Igfbpl1", "Frmd4b",
-"Tac2", "Hs3st1", "Nrn1",
-"Nts", "Nr4a2", "Lmo3", "B3gat1",
-"Gad1", "Grin2d", "Reln", "Calb1", "Npy", "Gria3", "Lhx6",
- "Ntf3", "Prkg1", "Slc12a5"
+"Gabra6", "Pax6", "Ntng1", "Grm5", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Lef1", "Notum", "Apcdd1", "Zeb2", "Hepacam", "Aqp4", "Slc39a12", "Aldoc", "Cnp", "Cspg5", "Rgs6", "Kcnc2", "Mbp", "Mag", "Plp1", "Cfap54", "Ccdc153", "Cfap44", "Tmem212", "Ptgds", "Dcn", "Dlc1", "Pdgfrb", "Calb1", "Slc1a6", "Car8", "Lmx1a", "Adcy2", "Mdga1", "Eomes", "Kl", "Clic6", "Slc13a4", "Ttr"
 )
 
 
 
-levels(multiome_WT_Bap1KO_QCV3.sct) <- c(
-"NSC",
-"IP",
-"Radial_Glia_Cells",
-"OPC",
+levels(WT_Kcnc1_p14_CB_1step.sct) <- c(
+"Granular_1",
+"Granular_2",
+"Granular_3",
+"Granular_4",
+"Granular_5",
+"Granular_6",
+"Granular_7",
+"Neuroblast_1",
+"Neuroblast_2",
+"MLI1",
+"MLI2",
+"Endothelial_Cells",
 "Astrocyte",
-"Ependymal_Cells",
-"Microglia",
-"Meningeal_Cells",
-"CR",
-"DG_GC",
-"PyNs_SubC_CA1",
-"PyNs_SubC_CA23",
-"PyNs_RSC_UL",
-"PyNs_RSC_ML",
-"PyNs_RSC_DL",
-"SubC_1",
-"SubC_2",
-"IN_1",
-"IN_2",
-"Chandelier_Cells"
+"Bergmann_Glia",
+"OPC",
+"Interneuron_1",
+"Interneuron_2",
+"Oligodendrocyte",
+"EpendymalMeningeal_Cells",
+"Muscle_Cells",
+"Purkinje_Cells",
+"NPC",
+"Choroid_Plexus_Cells"
 )
 
 
 
-pdf("output/Signac/DotPlot_SCT_multiome_WT_Bap1KO_QCV3_label.pdf", width=11, height=4.5)
-DotPlot(multiome_WT_Bap1KO_QCV3.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CB_1step_QCV3dim30kparam20res04_label.pdf", width=11, height=4.5)
+DotPlot(WT_Kcnc1_p14_CB_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
 dev.off()
 
-pdf("output/Signac/DotPlot_SCT_multiome_WT_Bap1KO_QCV3_label_vertical.pdf", width=11, height=4.5)
-DotPlot(multiome_WT_Bap1KO_QCV3.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CB_1step_QCV3dim30kparam20res04_label_vertical.pdf", width=11, height=4.5)
+DotPlot(WT_Kcnc1_p14_CB_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
         axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
 dev.off()
@@ -1535,6 +1518,9 @@ dev.off()
 
 
 
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-QCV3dim30kparam20res04-List5.pdf", width=30, height=70)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gabra6", "Pax6", "Ntng1", "Grm5", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Lef1", "Notum", "Apcdd1", "Zeb2", "Hepacam", "Aqp4", "Slc39a12", "Aldoc", "Cnp", "Cspg5", "Rgs6", "Kcnc2", "Mbp", "Mag", "Plp1", "Cfap54", "Ccdc153", "Cfap44", "Tmem212", "Ptgds", "Dcn", "Dlc1", "Pdgfrb", "Calb1", "Slc1a6", "Car8", "Lmx1a", "Adcy2", "Mdga1", "Eomes", "Kl", "Clic6", "Slc13a4", "Ttr"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
 
 
 
@@ -1597,15 +1583,15 @@ WT_Kcnc1_p35_CB_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p35_CB_1step.anc
 #### UMAP
 DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "integrated"
 
-WT_Kcnc1_p35_CB_1step.sct <- RunPCA(WT_Kcnc1_p35_CB_1step.sct, verbose = FALSE, npcs = 40)
-WT_Kcnc1_p35_CB_1step.sct <- RunUMAP(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
-WT_Kcnc1_p35_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", k.param = 70, dims = 1:40)
-WT_Kcnc1_p35_CB_1step.sct <- FindClusters(WT_Kcnc1_p35_CB_1step.sct, resolution = 0.9, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+WT_Kcnc1_p35_CB_1step.sct <- RunPCA(WT_Kcnc1_p35_CB_1step.sct, verbose = FALSE, npcs = 50)
+WT_Kcnc1_p35_CB_1step.sct <- RunUMAP(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
+WT_Kcnc1_p35_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", k.param = 100, dims = 1:50)
+WT_Kcnc1_p35_CB_1step.sct <- FindClusters(WT_Kcnc1_p35_CB_1step.sct, resolution = 1.1, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
 WT_Kcnc1_p35_CB_1step.sct$condition <- factor(WT_Kcnc1_p35_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim40kparam70res09.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim50kparam100res11.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
@@ -1615,8 +1601,8 @@ dev.off()
 DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "SCT"
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim50-List4.pdf", width=30, height=70)
-FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Calb1", "Slc1a6", "Car8", "Gabra6", "Pax6", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Zeb2", "Hepacam", "Aqp4", "Slc39a12", "Kl", "Clic6", "Slc13a4", "Ttr", "Cfap54", "Ccdc153", "Cfap44", "Tmem212", "Ptgds", "Dcn", "Ntng1", "Grm5", "Aldoc", "Cnp", "Cspg5", "Mbp", "Mag", "Plp1", "Slc18a2", "Ddc", "Slc6a4", "Tph2", "Lef1", "Notum", "Apcdd1", "Nxph1", "Dynlt1c", "Otx1", "Rnd3", "Pvalb", "Cck", "Sst", "Myh11"), max.cutoff = 1, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim50-List5.pdf", width=30, height=70)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Gabra6", "Pax6", "Ntng1", "Grm5", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Lef1", "Notum", "Apcdd1", "Zeb2", "Hepacam", "Aqp4", "Slc39a12", "Aldoc", "Cnp", "Cspg5", "Rgs6", "Kcnc2", "Mbp", "Mag", "Plp1", "Cfap54", "Ccdc153", "Cfap44", "Tmem212", "Ptgds", "Dcn", "Dlc1", "Pdgfrb", "Calb1", "Slc1a6", "Car8", "Lmx1a", "Adcy2", "Mdga1", "Eomes", "Kl", "Clic6", "Slc13a4", "Ttr"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
 
