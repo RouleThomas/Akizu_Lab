@@ -1164,6 +1164,8 @@ WT_Kcnc1_p14_CB_1step.sct <- FindClusters(WT_Kcnc1_p14_CB_1step.sct, resolution 
 WT_Kcnc1_p14_CB_1step.sct$condition <- factor(WT_Kcnc1_p14_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
 pdf("output/seurat/UMAP_WT_Kcnc1-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim30kparam20res04.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1-test.pdf", width=7, height=6)
+
 DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
@@ -1297,6 +1299,9 @@ dev.off()
 ## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V2_numeric.rds") # regMtRbFeaCount
 ## WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V1_numeric.rds") # regMtRbCount
 ## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V3_numeric.rds") # regMtRbCount with QC_V3
+
+XXXY HERE : SAVE AGAIN the  saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V3_numeric.rds") if the UMAP test is correct.... Then pursue the cell type annotation XXX
+
 WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V3_numeric.rds")
 set.seed(42)
 ##########
@@ -1360,12 +1365,7 @@ annot.GSEA <- easyct(input.d, db="clustermole", # cellmarker or panglao or clust
                     test="GSEA")    # GSEA or fisher?
 
 
-
-
-
 ## plots
-
-
 
 #pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p14_CB_1step_V1-cellmarker_CerebellumBrainHippocampus.pdf", width=6, height=8)
 #pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p14_CB_1step_V1-clustermole_Brain.pdf", width=6, height=8)
@@ -1376,23 +1376,169 @@ plot_dot(test="GSEA", annot.GSEA) +
 dev.off()
 
 
-
-
 # panglao --> NOT working... 'subscript out of bounds' error... I tried gene as ENSEMBL, entrezID and geneSymbo, human/mic, everything...
 
+XXXY
 
-#
+############ V1 naming
+
+Cluster1: Granular_1
+Cluster2: MLI1
+Cluster3: Neuroblast_1
+Cluster4: Granular_2
+Cluster5: Granular_3
+Cluster6: Granular_4
+Cluster7: Granular_5
+Cluster8: MLI2
+Cluster9: Granular_6
+Cluster10: Endothelial_Cells
+Cluster11: Granular_7
+Cluster12: Astrocyte
+Cluster13: OPC
+Cluster14: Interneuron_1 (mature?)
+Cluster15: Bergmann_Glia
+Cluster16: Interneuron_2
+Cluster17: Oligodendrocyte
+Cluster18: EpendymalMeningeal_Cells
+Cluster19: Muscle_Cells
+Cluster20: Purkinje_Cells
+Cluster21: Neuroblast_2 (late?)
+Cluster22: NPC
+Cluster23: Choroid_Plexus_Cells
 
 
 
+new.cluster.ids <- c(
+"Granular_1",
+"MLI1",
+"Neuroblast_1",
+"Granular_2",
+"Granular_3",
+"Granular_4",
+"Granular_5",
+"MLI2",
+"Granular_6",
+"Endothelial_Cells",
+"Granular_7",
+"Astrocyte",
+"OPC",
+"Interneuron_1",
+"Bergmann_Glia",
+"Interneuron_2",
+"Oligodendrocyte",
+"EpendymalMeningeal_Cells",
+"Muscle_Cells",
+"Purkinje_Cells",
+"Neuroblast_2" ,
+"NPC",
+"Choroid_Plexus_Cells"
+)
 
-## check some genes
+names(new.cluster.ids) <- levels(WT_Kcnc1_p14_CB_1step.sct)
+WT_Kcnc1_p14_CB_1step.sct <- RenameIdents(WT_Kcnc1_p14_CB_1step.sct, new.cluster.ids)
+
+WT_Kcnc1_p14_CB_1step.sct$cluster.annot <- Idents(WT_Kcnc1_p14_CB_1step.sct) # create a new slot in my seurat object
 
 
-pdf("output/Signac/FeaturePlot_SCT_RNA_WT_Bap1KO-EpendymalCell-QCV3_dim40kparam35res05algo4feat2000_noCellCycleRegression
-.pdf", width=15, height=15)
-FeaturePlot(multiome_WT_Bap1KO_QCV2.sct, features = c(  "Rabl2", "Cfap54", "Ccdc153", "Foxj1", "Pifo", "Dynlrb2", "Rsph1", "Cfap44"), max.cutoff = 1, cols = c("grey", "red"))
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB_1step_QCV3dim30kparam20res04_label.pdf", width=12, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
 dev.off()
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB_1step_QCV3dim30kparam20res04_noSplit_label.pdf", width=7, height=5)
+DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 4)
+dev.off()
+
+
+
+# All in dotplot
+DefaultAssay(multiome_WT_Bap1KO_QCV3.sct) <- "SCT"
+
+Neural Stem Cells (NSC) = Pax6 (should have more cell types)
+Intermediate Progenitors (IP) = Eomes
+Dentate Gyrus Granucle Cells (DG) = Prox1, Neurod1, Sema5a
+CA1 = Cck, Insm1
+CA3 = Crym, Snca, Nrp2
+Pyramidal neurons deep layer (DL) = Tac2, Hs3st1, Nrn1
+Pyramidal neurons middle layer (ML) = Pantr1, Igfbpl1, Frmd4b
+Pyramidal neurons upper layer (UL) = Satb2, Itpr1
+Interneurons (IN) = Gad1, Grin2d, Reln, Calb1, Npy, Gria3, Lhx6
+Cajal Retzius (CR) = Lhx1
+Subiculum (SubC) = Nts, Nr4a2, Lmo3, B3gat1
+Microglia = Csf1r, Gpr34, Gpr183, Cx3cr1
+OPC = Pdgfra, Olig1
+Ependymal_Cells = Foxj1, Cfap44, Dynlrb2
+Astrocyte = Aqp4, Gfap
+Radial Glia Cells = Gli3, Pdgfd
+Chandellier cell = Ntf3, Prkg1, Slc12a5
+Meningeal cells = Aldh1a2, Vtn, Lum, Foxc1, Igf2
+
+all_markers <- c(
+"Pax6",
+"Eomes",
+"Gli3", "Pdgfd",
+"Pdgfra", "Olig1",
+"Aqp4", "Gfap",
+"Foxj1", "Cfap44", "Dynlrb2",
+"Csf1r", "Gpr34", "Gpr183", "Cx3cr1",
+"Aldh1a2", "Vtn", "Lum", "Foxc1", "Igf2",
+"Lhx1",
+"Prox1", "Neurod1", "Sema5a",
+"Cck", "Insm1",
+"Crym", "Snca", "Nrp2",
+"Satb2", "Itpr1",
+"Pantr1", "Igfbpl1", "Frmd4b",
+"Tac2", "Hs3st1", "Nrn1",
+"Nts", "Nr4a2", "Lmo3", "B3gat1",
+"Gad1", "Grin2d", "Reln", "Calb1", "Npy", "Gria3", "Lhx6",
+ "Ntf3", "Prkg1", "Slc12a5"
+)
+
+
+
+levels(multiome_WT_Bap1KO_QCV3.sct) <- c(
+"NSC",
+"IP",
+"Radial_Glia_Cells",
+"OPC",
+"Astrocyte",
+"Ependymal_Cells",
+"Microglia",
+"Meningeal_Cells",
+"CR",
+"DG_GC",
+"PyNs_SubC_CA1",
+"PyNs_SubC_CA23",
+"PyNs_RSC_UL",
+"PyNs_RSC_ML",
+"PyNs_RSC_DL",
+"SubC_1",
+"SubC_2",
+"IN_1",
+"IN_2",
+"Chandelier_Cells"
+)
+
+
+
+pdf("output/Signac/DotPlot_SCT_multiome_WT_Bap1KO_QCV3_label.pdf", width=11, height=4.5)
+DotPlot(multiome_WT_Bap1KO_QCV3.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
+
+pdf("output/Signac/DotPlot_SCT_multiome_WT_Bap1KO_QCV3_label_vertical.pdf", width=11, height=4.5)
+DotPlot(multiome_WT_Bap1KO_QCV3.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
+dev.off()
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1673,7 +1819,6 @@ library("Seurat")
 library("ShinyCell")
 library("rsconnect")
 
-# Data import EMBRYO
 WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V1_numeric.rds")
 DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA" # 
 

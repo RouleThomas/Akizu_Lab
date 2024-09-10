@@ -16934,7 +16934,7 @@ conda activate condiments_V5
 # trajectory per trajectory CONDITION COMMON ((all features, no parralelization) - pseudotime-dependent DEGs
 sbatch scripts/fitGAM_6knots_traj2_humangastruloid72hrs_noCondition_V2.sh # 23485526 ok
 sbatch scripts/fitGAM_6knots_traj3_humangastruloid72hrs_noCondition_V2.sh # 23485626 ok
-sbatch scripts/fitGAM_6knots_traj1_humangastruloid72hrs_noCondition_V2.sh # 24127848 xxx
+sbatch scripts/fitGAM_6knots_traj1_humangastruloid72hrs_noCondition_V2.sh # 24127848 ok
 
 
 # trajectory per trajectory CONDITION SEP (all features, no parralelization) - pseudotime-dependent DEGs
@@ -17065,11 +17065,8 @@ humangastruloid2472hrs <- slingshot(humangastruloid2472hrs, reducedDim = 'UMAP',
 
 ##########################################
 humangastruloid2472hrs <- slingshot(humangastruloid2472hrs, reducedDim = 'UMAP',
-                 clusterLabels = colData(humangastruloid2472hrs)$cluster.annot,
-                 start.clus = 'Ectoderm', end.clus = c("Mesoderm_1","Mesoderm_2","Mesoderm_3" )
-                 )
-
-
+                 clusterLabels = colData(humangastruloid2472hrs)$seurat_clusters,
+                 start.clus = '3', end.clus = c("8","1","4") ,approx_points = 100, extend = 'n')
 
 
 #test reduceDim PCA or subset endoderm
@@ -17084,8 +17081,9 @@ curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
 
 #  
 # pdf("output/condiments/UMAP_trajectory_separated_humangastruloid2472hrs_start3.pdf", width=6, height=5)
+# pdf("output/condiments/UMAP_trajectory_separated_humangastruloid2472hrs_start3end814.pdf", width=6, height=5)
 
-pdf("output/condiments/UMAP_trajectory_separated_humangastruloid2472hrs_start3end814.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_trajectory_separated_humangastruloid2472hrs_start3end814extendN.pdf", width=6, height=5)
 
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = treatment)) +
   geom_point(size = .7, alpha = .2) +
@@ -17099,15 +17097,18 @@ dev.off()
 
 # Add custom labels for each trajectory based on the Lineage
 curves$label <- with(curves, ifelse(Lineage == 1, "Trajectory 1",
-                               ifelse(Lineage == 2, "Trajectory 2", "Trajectory 3")))
+                               ifelse(Lineage == 2, "Trajectory 2",
+                               ifelse(Lineage == 3, "Trajectory 3",
+                               ifelse(Lineage == 4, "Trajectory 4", "Trajectory 5")))))
 
-# pdf("output/condiments/UMAP_trajectory_separated_humangastruloid72hrs_trajLabel_V2.pdf", width=6, height=5)
-pdf("output/condiments/UMAP_trajectory_separated_humangastruloid72hrs_startEctoEndMeso123_trajLabel_V2.pdf", width=6, height=5)
-ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+
+# 
+pdf("output/condiments/UMAP_trajectory_separated_humangastruloid2472hrs_start3end814extendN_trajLabel.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = treatment)) +
   geom_point(size = .7, alpha = .2) +
   scale_color_brewer(palette = "Accent") +
-  geom_path(data = curves %>% arrange(condition, Lineage, Order),
-            aes(group = interaction(Lineage, condition)), size = 1.5) +
+  geom_path(data = curves %>% arrange(treatment, Lineage, Order),
+            aes(group = interaction(Lineage, treatment)), size = 1.5) +
   geom_text(data = curves %>% group_by(Lineage) %>% top_n(1, Order),
             aes(label = label, x = UMAP_1, y = UMAP_2, group = Lineage),
             size = 4, vjust = -1, hjust = 0.5) +
@@ -17139,17 +17140,17 @@ dev.off()
 
 ## PLOT with common trajectories - ALL lineages
 df_2 <- bind_cols(
-  as.data.frame(reducedDim(humangastruloid72hrs, "UMAP")),
-  slingPseudotime(humangastruloid72hrs) %>% as.data.frame() %>%
+  as.data.frame(reducedDim(humangastruloid2472hrs, "UMAP")),
+  slingPseudotime(humangastruloid2472hrs) %>% as.data.frame() %>%
     dplyr::rename_with(paste0, "_pst", .cols = everything()),
-  slingCurveWeights(humangastruloid72hrs) %>% as.data.frame(),
+  slingCurveWeights(humangastruloid2472hrs) %>% as.data.frame(),
   ) %>%
   mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
          Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
          pst = if_else(Lineage1 > Lineage2, Lineage1_pst, Lineage2_pst),
         # pst = max(pst) - pst)
 )
-curves <- slingCurves(humangastruloid72hrs, as.df = TRUE)
+curves <- slingCurves(humangastruloid2472hrs, as.df = TRUE)
 
 
 
@@ -17157,7 +17158,7 @@ curves_endpoints <- curves %>%
   group_by(Lineage) %>%
   arrange(Order) %>%
   top_n(1, Order) # Get the top/last ordered point for each group
-pdf("output/condiments/UMAP_trajectory_common_label_humangastruloid72hrs2_startEctoEndMeso123_V2.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_trajectory_common_label_humangastruloid2472hrs_start3end814extendN.pdf", width=5, height=5)
 ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
   geom_point(size = .7, aes(col = pst)) +
   scale_color_viridis_c() +
@@ -17173,15 +17174,17 @@ dev.off()
 
 ## PLOT with common trajectories - Individually
 df_2 <- bind_cols(
-  as.data.frame(reducedDim(humangastruloid72hrs, "UMAP")),
-  slingPseudotime(humangastruloid72hrs) %>% as.data.frame() %>%
+  as.data.frame(reducedDim(humangastruloid2472hrs, "UMAP")),
+  slingPseudotime(humangastruloid2472hrs) %>% as.data.frame() %>%
     dplyr::rename_with(paste0, "_pst", .cols = everything()),
-  slingCurveWeights(humangastruloid72hrs) %>% as.data.frame(),
+  slingCurveWeights(humangastruloid2472hrs) %>% as.data.frame(),
   ) %>%
   mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
          Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
-         Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst))
-curves <- slingCurves(humangastruloid72hrs, as.df = TRUE)
+         Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst),
+         Lineage4_pst = if_else(is.na(Lineage4_pst), 0, Lineage4_pst),
+         Lineage5_pst = if_else(is.na(Lineage5_pst), 0, Lineage5_pst))
+curves <- slingCurves(humangastruloid2472hrs, as.df = TRUE)
 ### Function to create the plot for each lineage
 create_plot <- function(lineage_number) {
   df_2 <- df_2 %>%
@@ -17210,31 +17213,31 @@ create_plot <- function(lineage_number) {
 }
 ### Generate the plots for each lineage
 plots <- list()
-for (i in 1:3) {
+for (i in 1:5) {
   plots[[i]] <- create_plot(i)
 }
-pdf("output/condiments/UMAP_trajectory_common_label_humangastruloid72hrs2_startEctoEndMeso123_Lineage123_V2.pdf", width=15, height=5)
-gridExtra::grid.arrange(grobs = plots, ncol = 3)
+pdf("output/condiments/UMAP_trajectory_common_label_humangastruloid2472hrs_start3end814extendN_Lineage12345_V2.pdf", width=25, height=5)
+gridExtra::grid.arrange(grobs = plots, ncol = 5)
 dev.off()
 
 
 
 
 # Differential Progression
-progressionTest(humangastruloid72hrs, conditions = humangastruloid72hrs$condition, lineages = TRUE)
+progressionTest(humangastruloid2472hrs, conditions = humangastruloid2472hrs$treatment, lineages = TRUE)
 
-prog_res <- progressionTest(humangastruloid72hrs, conditions = humangastruloid72hrs$condition, lineages = TRUE)
+prog_res <- progressionTest(humangastruloid2472hrs, conditions = humangastruloid2472hrs$treatment, lineages = TRUE)
 
 
-df_3 <-  slingPseudotime(humangastruloid72hrs) %>% as.data.frame() 
+df_3 <-  slingPseudotime(humangastruloid2472hrs) %>% as.data.frame() 
 
-df_3$condition <- humangastruloid72hrs$condition
+df_3$condition <- humangastruloid2472hrs$treatment
 df_3 <- df_3 %>% 
   pivot_longer(-condition, names_to = "Lineage",
                values_to = "pst") %>%
   filter(!is.na(pst))
 
-pdf("output/condiments/densityPlot_trajectory_lineages_humangastruloid72hrs_startEctoEndMeso123_V2.pdf", width=10, height=5)
+pdf("output/condiments/densityPlot_trajectory_lineages_humangastruloid2472hrs_start3end814extendN.pdf", width=10, height=5)
 
 ggplot(df_3, aes(x = pst)) +
   geom_density(alpha = .8, aes(fill = condition), col = "transparent") +
@@ -17250,11 +17253,14 @@ ggplot(df_3, aes(x = pst)) +
 dev.off()
 
 
-#### ->  save.image(file="output/condiments/condiments_humangastruloid72hrs_V2.RData")
-### load("output/condiments/condiments_humangastruloid72hrs_V2.RData")
+#### ->  save.image(file="output/condiments/condiments_humangastruloid2472hrs_V1.RData")
+### load("output/condiments/condiments_humangastruloid2472hrs_V1.RData")
 set.seed(42)
 
 #  Differential expression
+
+XXX HERE XXX !!!
+
 # --> Run fitGam() through Slurm
 
 
@@ -18162,6 +18168,8 @@ dev.off()
 
 - Conchi method: Identify pseudotime traj for WT and DASA independently. Then put in `008/001` to compare EZH2/H3K27me3 level of these trajectory.
 
+
+XXXY HER E!!
 
 
 
@@ -19644,6 +19652,13 @@ conda activate condiments_V5
 
 
 # trajectory per trajectory CONDITION COMMON ((all features, no parralelization) - pseudotime-dependent DEGs
+################# THIS ONE TO USE : ##################################
+### load("output/condiments/condiments_humangastruloid2472hrs_V1.RData")
+set.seed(42)
+###################################################
+
+
+
 sbatch scripts/fitGAM_6knots_traj2_humangastruloid72hrs_noCondition_V2.sh # 23485526 ok
 sbatch scripts/fitGAM_6knots_traj3_humangastruloid72hrs_noCondition_V2.sh # 23485626 ok
 sbatch scripts/fitGAM_6knots_traj1_humangastruloid72hrs_noCondition_V2.sh # 24127848 xxx
