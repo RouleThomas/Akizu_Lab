@@ -7222,3 +7222,43 @@ dev.off()
 
 
 
+
+
+# 2472hrs human gastruloid integration; correlation H3K27me3 with pseudotime 002*/003*
+
+## ENCODE H3K27me3 file selection
+
+Different H3K27me3 in H9 in ENCODE
+
+- [ENCODE H9 H3K27me3](https://www.encodeproject.org/search/?type=Experiment&replicates.library.biosample.donor.organism.scientific_name=Homo+sapiens&assay_title=Histone+ChIP-seq&assay_title=Mint-ChIP-seq&status=released&target.label=H3K27me3&biosample_ontology.classification=cell+line&biosample_ontology.term_name=H9)
+  - Mint-ChIP-seq from Bernstein lab; three different, sequenced with different machine:
+    - [Illumina HiSeq 2500 with 3 Bio Rep](https://www.encodeproject.org/experiments/ENCSR725YWL/); done in 2021
+    - [Illumina HiSeq 2500 with 2 Bio Rep](https://www.encodeproject.org/experiments/ENCSR016RFN/); done in 2021
+    - [Illumina NextSeq 500 with 2 Bio Rep](https://www.encodeproject.org/experiments/ENCSR373TMA/); done in 2021
+  - [Histone-ChIP-seq from Bernstein lab](https://www.encodeproject.org/experiments/ENCSR792GCH/); done in 2013
+
+
+--> Let's prefer Mint-ChIP-seq. Let's see which bigwig file the best to use: *signal p-value* or *foldchange over control*?
+  --> ENCODE bigwig files downloaded into `output/bigwig_ENCODE`
+
+ENCFF043GTQ_signalpvalue123	
+ENCFF201SJZ_fcovercontrol123
+
+ENCFF850HXT_signalpvalue12
+ENCFF130PLP_fcovercontrol12
+
+ENCFF140RHC_signalpvalue12
+ENCFF077DRH_fcovercontrol12
+
+
+--> fcovercontrol look more homogeneous, signalpvalue show sharp very high peaks... Let's test fcovercontrol 1st but may be worth trying both...
+
+
+
+
+
+
+
+
+
+
