@@ -525,6 +525,193 @@ plotCorrelation \
 
 
 
+
+
+
+
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_WTvsKO_H3K27me3_DiffBindMG1655TMM.sh # 26453139 ok
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_WTvsKO_H3K27me3_DiffBindMG1655TMM.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_KO_H3K27me3_R1 PSC_KO_H3K27me3_R2 \
+    --colors black black red red \
+    --markers o x o x \
+    -o output/bigwig/multiBigwigSummary_WTvsKO_H3K27me3_DiffBindMG1655TMM_plotPCA.pdf
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_WTvsKO_H3K27me3_DiffBindMG1655TMM.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_KO_H3K27me3_R1 PSC_KO_H3K27me3_R2 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_WTvsKO_H3K27me3_DiffBindMG1655TMM_heatmap.pdf
+
+
+
+
+
+
+
+
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_WTvsKO_H3K27me3_TMM.sh # 26453962 ok
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_WTvsKO_H3K27me3_TMM.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_KO_H3K27me3_R1 PSC_KO_H3K27me3_R2 \
+    --colors black black red red \
+    --markers o x o x \
+    -o output/bigwig/multiBigwigSummary_WTvsKO_H3K27me3_TMM_plotPCA.pdf
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_WTvsKO_H3K27me3_TMM.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_KO_H3K27me3_R1 PSC_KO_H3K27me3_R2 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_WTvsKO_H3K27me3_TMM_heatmap.pdf
+
+
+
+
+
+
+
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_WTvsKO_H3K27me3.sh # 26454994 ok
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_WTvsKO_H3K27me3.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_KO_H3K27me3_R1 PSC_KO_H3K27me3_R2 \
+    --colors black black red red \
+    --markers o x o x \
+    -o output/bigwig/multiBigwigSummary_WTvsKO_H3K27me3_plotPCA.pdf
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_WTvsKO_H3K27me3.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_KO_H3K27me3_R1 PSC_KO_H3K27me3_R2 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_WTvsKO_H3K27me3_heatmap.pdf
+
+
+
+
+
+
+
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_WTvsKOEF1aEZH1_H3K27me3_DiffBindMG1655TMM.sh # 26456110 ok
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_WTvsKOEF1aEZH1_H3K27me3_DiffBindMG1655TMM.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 \
+    --colors black black blue blue \
+    --markers o x o x \
+    -o output/bigwig/multiBigwigSummary_WTvsKOEF1aEZH1_H3K27me3_DiffBindMG1655TMM_plotPCA.pdf
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_WTvsKOEF1aEZH1_H3K27me3_DiffBindMG1655TMM.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_WTvsKOEF1aEZH1_H3K27me3_DiffBindMG1655TMM_heatmap.pdf
+
+
+
+
+
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_WTvsKOEF1aEZH1_H3K27me3.sh # 26456111 ok
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_WTvsKOEF1aEZH1_H3K27me3.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 \
+    --colors black black blue blue \
+    --markers o x o x \
+    -o output/bigwig/multiBigwigSummary_WTvsKOEF1aEZH1_H3K27me3_plotPCA.pdf
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_WTvsKOEF1aEZH1_H3K27me3.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_KOEF1aEZH1_H3K27me3_R1 PSC_KOEF1aEZH1_H3K27me3_R2 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_WTvsKOEF1aEZH1_H3K27me3_heatmap.pdf
+
+
+
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_WTvsWTEF1aEZH1_H3K27me3.sh # 26456157 ok
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_WTvsWTEF1aEZH1_H3K27me3.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 \
+    --colors black black darkblue darkblue \
+    --markers o x o x \
+    -o output/bigwig/multiBigwigSummary_WTvsWTEF1aEZH1_H3K27me3_plotPCA.pdf
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_WTvsWTEF1aEZH1_H3K27me3.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_WTvsWTEF1aEZH1_H3K27me3_heatmap.pdf
+
+
+
+
+
+
+
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_WTvsWTEF1aEZH1_H3K27me3_DiffBindMG1655TMM.sh # 26456168 xxx
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_WTvsWTEF1aEZH1_H3K27me3_DiffBindMG1655TMM.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 \
+    --colors black black darkblue darkblue \
+    --markers o x o x \
+    -o output/bigwig/multiBigwigSummary_WTvsWTEF1aEZH1_H3K27me3_DiffBindMG1655TMM_plotPCA.pdf
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_WTvsWTEF1aEZH1_H3K27me3_DiffBindMG1655TMM.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels PSC_WT_H3K27me3_R1 PSC_WT_H3K27me3_R2 PSC_WTEF1aEZH1_H3K27me3_R1 PSC_WTEF1aEZH1_H3K27me3_R2 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_WTvsWTEF1aEZH1_H3K27me3_DiffBindMG1655TMM_heatmap.pdf
+
+
+
+
+
+
 ```
 
 --> Very noisy, not informative. 
@@ -1015,6 +1202,95 @@ dev.off()
 
 
 
+# WT and KOEF1aEZH1
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_PSC_WTKOEF1aEZH1_H3K27me3.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_PSC_WTKOEF1aEZH1_H3K27me3.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_PSC_WTKOEF1aEZH1_H3K27me3.RData")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_PSC_WTKOEF1aEZH1_H3K27me3.pdf", width=14, height=20)  
+plot(sample_count)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_WTKOEF1aEZH1_H3K27me3.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_TREATMENT, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_WTKOEF1aEZH1_H3K27me3_rep.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_TREATMENT, label=DBA_REPLICATE)
+dev.off()
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+
+### TMM 
+sample_count_blackgreylist_LibMG1655Scaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(13124625,14587838,12434028,15306766), normalize = DBA_NORM_TMM) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibMG1655Scaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibMG1655Scaled_TMM, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_LibMG1655Scaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibMG1655Scaled_TMM_unique_SF_PSC_WTKOEF1aEZH1_H3K27me3.txt")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_PSC_WTKOEF1aEZH1_H3K27me3_MG1655SF.pdf", width=14, height=20)  
+plot(sample_count_blackgreylist_LibMG1655Scaled_TMM)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_WTKOEF1aEZH1_H3K27me3_MG1655SF.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibMG1655Scaled_TMM,DBA_TREATMENT, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_WTKOEF1aEZH1_H3K27me3_MG1655SF_rep.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibMG1655Scaled_TMM,DBA_TREATMENT, label=DBA_REPLICATE)
+dev.off()
+
+
+
+
+
+
+
+# WT and WTEF1aEZH1
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_PSC_WTWTEF1aEZH1_H3K27me3.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_PSC_WTWTEF1aEZH1_H3K27me3.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_PSC_WTWTEF1aEZH1_H3K27me3.RData")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_PSC_WTWTEF1aEZH1_H3K27me3.pdf", width=14, height=20)  
+plot(sample_count)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_WTWTEF1aEZH1_H3K27me3.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_TREATMENT, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_WTWTEF1aEZH1_H3K27me3_rep.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_TREATMENT, label=DBA_REPLICATE)
+dev.off()
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### TMM 
+sample_count_blackgreylist_LibMG1655Scaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(13124625,14587838,13815063,18098857), normalize = DBA_NORM_TMM) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibMG1655Scaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibMG1655Scaled_TMM, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_LibMG1655Scaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibMG1655Scaled_TMM_unique_SF_PSC_WTWTEF1aEZH1_H3K27me3.txt")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_PSC_WTWTEF1aEZH1_H3K27me3_MG1655SF.pdf", width=14, height=20)  
+plot(sample_count_blackgreylist_LibMG1655Scaled_TMM)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_WTWTEF1aEZH1_H3K27me3_MG1655SF.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibMG1655Scaled_TMM,DBA_TREATMENT, label=DBA_TREATMENT)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_PSC_WTWTEF1aEZH1_H3K27me3_MG1655SF_rep.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibMG1655Scaled_TMM,DBA_TREATMENT, label=DBA_REPLICATE)
+dev.off()
+
+
+
+
+
+
+
 
 
 # all H3K27me3 samples (just to check whether how OEEZH1 genotypes cluster with the other samples)
@@ -1098,12 +1374,16 @@ bigWigMerge
 sbatch scripts/THOR_PSC_H3K27me3_WTEF1aEZH1vsKOEF1aEZH1_TMM.sh # 26305339 ok
 sbatch scripts/THOR_PSC_H3K27me3_WTvsKO_TMM.sh # 26331297 ok
 
+sbatch scripts/THOR_PSC_H3K27me3_WTvsKOEF1aEZH1_TMM.sh # 26456158 xxx
+sbatch scripts/THOR_PSC_H3K27me3_WTvsWTEF1aEZH1_TMM.sh # 26456159 xxx
 
 # AB per AB (DiffBind SF TMM)
 sbatch scripts/THOR_PSC_H3K27me3_WTEF1aEZH1vsKOEF1aEZH1_DiffBindMG1655TMM.sh # 26328774 ok
 sbatch scripts/THOR_PSC_H3K27me3_WTEF1aEZH1vsKOEF1aEZH1_DiffBindhistoneTMM.sh # 26328776 ok
 sbatch scripts/THOR_PSC_H3K27me3_WTvsKO_DiffBindMG1655TMM.sh # 26331379 ok
 
+sbatch scripts/THOR_PSC_H3K27me3_WTvsKOEF1aEZH1_DiffBindMG1655TMM.sh # 26455943 ok
+sbatch scripts/THOR_PSC_H3K27me3_WTvsWTEF1aEZH1_DiffBindMG1655TMM.sh # 26455947 ok
 ```
 
 
@@ -1222,13 +1502,178 @@ thor_splitted %>%
 
 
 
+
+# WTvsKO TMM 
+diffpeaks <- read_tsv("output/THOR/THOR_PSC_H3K27me3_WTvsKO/PSCH3K27me3WTvsKO-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2) / (count_WT_1+count_WT_2))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_PSC_H3K27me3_WTvsKO/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KO") +
+  theme_bw()
+dev.off()
+
+pdf("output/THOR/THOR_PSC_H3K27me3_WTvsKO/log2FC_qval30.pdf", width=10, height=8)
+thor_splitted %>%
+  filter(qval > 30) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KO") +
+  theme_bw() +
+  theme(
+    plot.title = element_text(size = 20),
+    axis.title.x = element_text(size = 16),
+    axis.title.y = element_text(size = 16),
+    axis.text.x = element_text(size = 14),
+    axis.text.y = element_text(size = 14)
+  )
+dev.off()
+
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 50) %>%
+  write_tsv("output/THOR/THOR_PSC_H3K27me3_WTvsKO/THOR_qval50.bed", col_names = FALSE)
+
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 30) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
+
+
+
+# WTvsKOEF1aEZH1 DiffBindMG1655_TMM 
+diffpeaks <- read_tsv("output/THOR/THOR_PSC_H3K27me3_WTvsKOEF1aEZH1_DiffBindMG1655TMM/PSCH3K27me3WTvsKOEF1aEZH1DiffBindMG1655TMM-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KOEF1aEZH1", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2"), sep = ":", convert = TRUE) %>%
+  separate(count_KOEF1aEZH1, into = c("count_KOEF1aEZH1_1","count_KOEF1aEZH1_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KOEF1aEZH1_1+count_KOEF1aEZH1_2) / (count_WT_1+count_WT_2))
+
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_PSC_H3K27me3_WTvsKOEF1aEZH1_DiffBindMG1655TMM/log2FC.pdf", width=10, height=8)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KO")  +
+  theme(
+    plot.title = element_text(size = 20),
+    axis.title.x = element_text(size = 16),
+    axis.title.y = element_text(size = 16),
+    axis.text.x = element_text(size = 14),
+    axis.text.y = element_text(size = 14)
+  ) +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_PSC_H3K27me3_WTvsKOEF1aEZH1_DiffBindMG1655TMM/log2FC_qval20.pdf", width=10, height=8)
+thor_splitted %>%
+  filter(qval > 20) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KOEF1aEZH1") +
+  theme_bw() +
+  theme(
+    plot.title = element_text(size = 20),
+    axis.title.x = element_text(size = 16),
+    axis.title.y = element_text(size = 16),
+    axis.text.x = element_text(size = 14),
+    axis.text.y = element_text(size = 14)
+  )
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 30) %>%
+  write_tsv("output/THOR/THOR_PSC_H3K27me3_WTvsKOEF1aEZH1_DiffBindMG1655TMM/THOR_qval30.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 20) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
+
+
+
+
+# WTvsWTEF1aEZH1 DiffBindMG1655_TMM 
+diffpeaks <- read_tsv("output/THOR/THOR_PSC_H3K27me3_WTvsWTEF1aEZH1_DiffBindMG1655TMM/PSCH3K27me3WTvsWTEF1aEZH1DiffBindMG1655TMM-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_WTEF1aEZH1", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2"), sep = ":", convert = TRUE) %>%
+  separate(count_WTEF1aEZH1, into = c("count_WTEF1aEZH1_1","count_WTEF1aEZH1_2"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_WTEF1aEZH1_1+count_WTEF1aEZH1_2) / (count_WT_1+count_WT_2))
+
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_PSC_H3K27me3_WTvsWTEF1aEZH1_DiffBindMG1655TMM/log2FC.pdf", width=10, height=8)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KO")  +
+  theme(
+    plot.title = element_text(size = 20),
+    axis.title.x = element_text(size = 16),
+    axis.title.y = element_text(size = 16),
+    axis.text.x = element_text(size = 14),
+    axis.text.y = element_text(size = 14)
+  ) +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_PSC_H3K27me3_WTvsWTEF1aEZH1_DiffBindMG1655TMM/log2FC_qval20.pdf", width=10, height=8)
+thor_splitted %>%
+  filter(qval > 20) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs WTEF1aEZH1") +
+  theme_bw() +
+  theme(
+    plot.title = element_text(size = 20),
+    axis.title.x = element_text(size = 16),
+    axis.title.y = element_text(size = 16),
+    axis.text.x = element_text(size = 14),
+    axis.text.y = element_text(size = 14)
+  )
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 30) %>%
+  write_tsv("output/THOR/THOR_PSC_H3K27me3_WTvsWTEF1aEZH1_DiffBindMG1655TMM/THOR_qval30.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 20) %>%
+  group_by(X6) %>%
+  summarise(n = n())
 ```
 
 - *NOTE: FC positive = less in KO; negative = more in KO*
 
 **Optimal qvalue:**
 --> *PSC_WTEF1aEZH1 vs KOEF1aEZH1*; qval 20-30 look optimal for TMM and DiffBindMG1655TMM
-
+--> *WT vs KO*; qval 30 look optimal for TMM
+--> *PSC_WT vs KOEF1aEZH1*; qval 20 look optimal for DiffBindMG1655TMM
+--> *PSC_WT vs WTEF1aEZH1*; qval 20 look optimal for DiffBindMG1655TMM
 
 
 

@@ -1583,15 +1583,15 @@ WT_Kcnc1_p35_CB_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p35_CB_1step.anc
 #### UMAP
 DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "integrated"
 
-WT_Kcnc1_p35_CB_1step.sct <- RunPCA(WT_Kcnc1_p35_CB_1step.sct, verbose = FALSE, npcs = 40)
-WT_Kcnc1_p35_CB_1step.sct <- RunUMAP(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
-WT_Kcnc1_p35_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", k.param = 15, dims = 1:40)
-WT_Kcnc1_p35_CB_1step.sct <- FindClusters(WT_Kcnc1_p35_CB_1step.sct, resolution = 0.4, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+WT_Kcnc1_p35_CB_1step.sct <- RunPCA(WT_Kcnc1_p35_CB_1step.sct, verbose = FALSE, npcs = 50)
+WT_Kcnc1_p35_CB_1step.sct <- RunUMAP(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
+WT_Kcnc1_p35_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", k.param = 10, dims = 1:50)
+WT_Kcnc1_p35_CB_1step.sct <- FindClusters(WT_Kcnc1_p35_CB_1step.sct, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
 WT_Kcnc1_p35_CB_1step.sct$condition <- factor(WT_Kcnc1_p35_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim40kparam15res04.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim50kparam10res03.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
@@ -1607,7 +1607,6 @@ FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Gabra6", "Pax6", "Ntng1", "
 dev.off()
 
 
-XXXY here clu to finetune XXX
 
 
 
@@ -1665,14 +1664,17 @@ dev.off()
 # save ##################
 ## saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step.sct_V1_numeric.rds") # regMtRbCount with QC_V3
 WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step.sct_V1_numeric.rds")
+## saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV3dim50kparam10res03.sct_V1_numeric.rds") # regMtRbCount with QC_V3
+
+
+
 set.seed(42)
 ##########
 
 
 ## Let's work with 1step integration: 
-# --> 1stepIntegrationRegressNotRepeatedregMtRbCou-QCV2dim30kparam30res05 = WT_Kcnc1_p35_CB_1step_V1
-
-WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step.sct_V1_numeric.rds")
+# --> 1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim50kparam10res03 = WT_Kcnc1_p35_CB_1step_V1
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV3dim50kparam10res03.sct_V1_numeric.rds")
 
 
 ############################ EasyCellType automatic annotation ##########################################
@@ -1680,9 +1682,7 @@ WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step
 ### Find all markers 
 all_markers <- FindAllMarkers(WT_Kcnc1_p35_CB_1step.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
 
-write.table(all_markers, file = "output/seurat/srat_WT_Kcnc1_p35_CB_1step_QCV3_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-## V1 = QCV1
-## QCV3
+write.table(all_markers, file = "output/seurat/srat_WT_Kcnc1_p35_CB_1step_QCV3dim50kparam10res03_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 
 # BiocManager::install("EasyCellType")
@@ -1691,7 +1691,7 @@ library("org.Mm.eg.db")
 library("AnnotationDbi")
 
 ## load marker
-all_markers <- read.delim("output/seurat/srat_WT_Kcnc1_p35_CB_1step_QCV3_all_markers.txt", header = TRUE, row.names = 1)
+all_markers <- read.delim("output/seurat/srat_WT_Kcnc1_p35_CB_1step_QCV3dim50kparam10res03_all_markers.txt", header = TRUE, row.names = 1)
 
 
 
@@ -1737,7 +1737,7 @@ annot.GSEA <- easyct(input.d, db="clustermole", # cellmarker or panglao or clust
 #pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p35_CB_1step_V1-cellmarker_CerebellumBrainHippocampus.pdf", width=6, height=8)
 #pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p35_CB_1step_V1-clustermole_Brain.pdf", width=6, height=8)
 
-pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p35_CB_1step_QCV3-clustermole_Brain.pdf", width=6, height=8)
+pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p35_CB_1step_QCV3dim50kparam10res03-clustermole_Brain.pdf", width=6, height=8)
 plot_dot(test="GSEA", annot.GSEA) + 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 dev.off()

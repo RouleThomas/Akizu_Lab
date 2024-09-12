@@ -1,0 +1,21 @@
+#!/bin/bash
+#SBATCH --mem=500G
+#SBATCH --time=200:00:00
+
+
+rgt-THOR --name PSCH3K27me3WTvsWTEF1aEZH1DiffBindMG1655TMM --merge --output-dir output/THOR/THOR_PSC_H3K27me3_WTvsWTEF1aEZH1_DiffBindMG1655TMM --deadzones ../../Master/meta/hg38-blacklist.v2.bed --scaling-factors 0.878989205,1.489470782,0.667144208,1.180855591 output/THOR/PSC_H3K27me3_WTvsWTEF1aEZH1.config
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
