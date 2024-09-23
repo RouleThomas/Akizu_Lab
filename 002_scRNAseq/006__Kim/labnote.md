@@ -5321,8 +5321,8 @@ DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "integrated"
 
 multiome_WT_Bap1KO_QCV2vC1.sct <- RunPCA(multiome_WT_Bap1KO_QCV2vC1.sct, verbose = FALSE, npcs = 40)
 multiome_WT_Bap1KO_QCV2vC1.sct <- RunUMAP(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
-multiome_WT_Bap1KO_QCV2vC1.sct <- FindNeighbors(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "pca", k.param = 36, dims = 1:40)
-multiome_WT_Bap1KO_QCV2vC1.sct <- FindClusters(multiome_WT_Bap1KO_QCV2vC1.sct, resolution = 0.9, verbose = FALSE, algorithm = 4) # 
+multiome_WT_Bap1KO_QCV2vC1.sct <- FindNeighbors(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "pca", k.param = 42, dims = 1:40)
+multiome_WT_Bap1KO_QCV2vC1.sct <- FindClusters(multiome_WT_Bap1KO_QCV2vC1.sct, resolution = 0.65, verbose = FALSE, algorithm = 4) # 
 
 multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident <- factor(multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident, levels = c("multiome_WT", "multiome_Bap1KO")) # Reorder untreated 1st
 
@@ -5336,11 +5336,16 @@ dev.off()
 DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "SCT"
 
 
-pdf("output/Signac/FeaturePlot_SCT_RNA_WT_Bap1KO-allMarkersList4-QCV2vC1_dim40kparam35res05algo4feat2000_noCellCycleRegression
+pdf("output/Signac/FeaturePlot_SCT_RNA_WT_Bap1KO-allMarkersList4-QCV2vC1_dim40kparam42res065algo4feat2000_noCellCycleRegression
 .pdf", width=15, height=30)
 FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = c(  "Pax6" ,  "Eomes",  "Prox1", "Neurod1", "Sema5a",  "Tac2", "Hs3st1", "Nrn1",  "Pantr1", "Igfbpl1", "Frmd4b",  "Satb2", "Itpr1",  "Nts", "Nr4a2", "Lmo3", "B3gat1",  "Cck", "Insm1",  "Crym", "Snca", "Nrp2",  "Gad1", "Grin2d", "Calb1", "Npy", "Gria3", "Lhx6",  "Lhx1",  "Pdgfra", "Olig1",  "Csf1r", "Gpr34", "Gpr183", "Cx3cr1", "Aldh1a2", "Vtn", "Foxc1", "Id1", "Hes1", "Mki67", "Pcna", "Vim"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
+
+pdf("output/Signac/FeaturePlot_SCT_RNA_WT_Bap1KO-NSCtypesmarkers-QCV2vC1_dim40kparam42res065algo4feat2000_noCellCycleRegression
+.pdf", width=10, height=10)
+FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = c( "Id1", "Hes1" , "Mki67", "Pcna", "Vim" ), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
 
 ######################################################################################################
 ######################################################################################################
@@ -5366,17 +5371,17 @@ dev.off()
 ############################################################
 
 
-pdf("output/Signac/UMAP_multiome_WT_Bap1KO_QCV3_numeric_V1.pdf", width=12, height=6)
-DimPlot(multiome_WT_Bap1KO_QCV2.sct, reduction = "umap", split.by = "orig.ident", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 6)
+pdf("output/Signac/UMAP_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000_numeric_V1.pdf", width=12, height=6)
+DimPlot(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "umap", split.by = "orig.ident", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 6)
 dev.off()
 
 
-pdf("output/Signac/UMAP_WT_Bap1KO_QCV3_noSplit_numeric_V1.pdf", width=7, height=5)
-DimPlot(multiome_WT_Bap1KO_QCV2.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 6)
+pdf("output/Signac/UMAP_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000_noSplit_numeric_V1.pdf", width=5, height=5)
+DimPlot(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 6)
 dev.off()
 
-pdf("output/Signac/UMAP_WT_Bap1KO_QCV3_numeric_overlap_V1.pdf", width=6, height=5)
-DimPlot(multiome_WT_Bap1KO_QCV2.sct, reduction = "umap", group.by = "orig.ident", pt.size = 0.000001, cols = c("blue","red"))
+pdf("output/Signac/UMAP_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000_numeric_overlap_V1.pdf", width=6, height=5)
+DimPlot(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "umap", group.by = "orig.ident", pt.size = 0.000001, cols = c("blue","red"))
 dev.off()
 
 
@@ -5388,7 +5393,7 @@ dev.off()
 library("tidyverse")
 
 ### Identify the unique clusters
-unique_clusters <- unique(Idents(multiome_WT_Bap1KO_QCV2.sct))
+unique_clusters <- unique(Idents(multiome_WT_Bap1KO_QCV2vC1.sct))
 
 ### Create empty matrices to store cell counts
 control_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters))
@@ -5397,17 +5402,17 @@ colnames(control_clusters_counts) <- unique_clusters
 colnames(Bap1KO_clusters_counts) <- unique_clusters
 
 ### Loop through 100 iterations
-multiome_WT_Bap1KO_QCV2.sct_WT <- which(multiome_WT_Bap1KO_QCV2.sct$orig.ident == 'multiome_WT')
-multiome_WT_Bap1KO_QCV2.sct_Bap1KO <- which(multiome_WT_Bap1KO_QCV2.sct$orig.ident == 'multiome_Bap1KO')
+multiome_WT_Bap1KO_QCV2vC1.sct_WT <- which(multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident == 'multiome_WT')
+multiome_WT_Bap1KO_QCV2vC1.sct_Bap1KO <- which(multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident == 'multiome_Bap1KO')
 
 for (i in 1:100) { # Change this to 100 for the final run
   # Downsampling
-  multiome_WT_Bap1KO_QCV2.sct_Bap1KO_downsample <- sample(multiome_WT_Bap1KO_QCV2.sct_Bap1KO, 5949)
-  multiome_WT_Bap1KO_QCV2.sct_integrated_downsample <- multiome_WT_Bap1KO_QCV2.sct[,c(multiome_WT_Bap1KO_QCV2.sct_Bap1KO_downsample, multiome_WT_Bap1KO_QCV2.sct_WT)]
+  multiome_WT_Bap1KO_QCV2vC1.sct_Bap1KO_downsample <- sample(multiome_WT_Bap1KO_QCV2vC1.sct_Bap1KO, 5949)
+  multiome_WT_Bap1KO_QCV2vC1.sct_integrated_downsample <- multiome_WT_Bap1KO_QCV2vC1.sct[,c(multiome_WT_Bap1KO_QCV2vC1.sct_Bap1KO_downsample, multiome_WT_Bap1KO_QCV2vC1.sct_WT)]
 
   # Count nb of cells in each cluster
-  control_clusters <- table(Idents(multiome_WT_Bap1KO_QCV2.sct_integrated_downsample)[multiome_WT_Bap1KO_QCV2.sct_integrated_downsample$orig.ident == "multiome_WT"])
-  Bap1KO_clusters <- table(Idents(multiome_WT_Bap1KO_QCV2.sct_integrated_downsample)[multiome_WT_Bap1KO_QCV2.sct_integrated_downsample$orig.ident == "multiome_Bap1KO"])
+  control_clusters <- table(Idents(multiome_WT_Bap1KO_QCV2vC1.sct_integrated_downsample)[multiome_WT_Bap1KO_QCV2vC1.sct_integrated_downsample$orig.ident == "multiome_WT"])
+  Bap1KO_clusters <- table(Idents(multiome_WT_Bap1KO_QCV2vC1.sct_integrated_downsample)[multiome_WT_Bap1KO_QCV2vC1.sct_integrated_downsample$orig.ident == "multiome_Bap1KO"])
 
   # Align the counts with the unique clusters
   control_clusters_counts[i, names(control_clusters)] <- as.numeric(control_clusters)
@@ -5466,12 +5471,12 @@ plot_data <- data.frame(
   )
 
 plot_data$condition <- factor(plot_data$condition, levels = c("WT", "Bap1KO")) # Reorder untreated 1st
-plot_data$cluster <- factor(plot_data$cluster, levels = c("1", "2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19", "20")) 
+plot_data$cluster <- factor(plot_data$cluster, levels = c("1", "2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19")) 
 
 
 
 # Plotting using ggplot2
-pdf("output/Signac/Cluster_cell_counts_BootstrapDownsampling100_multiome_WT_Bap1KO_QCV3_numeric.pdf", width=9, height=4)
+pdf("output/Signac/Cluster_cell_counts_BootstrapDownsampling100_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000_numeric.pdf", width=9, height=4)
 ggplot(plot_data, aes(x = cluster, y = value, fill = condition)) +
   geom_bar(stat = "identity", position = "dodge") +
   geom_text(
@@ -5493,175 +5498,169 @@ dev.off()
 
 # differential expressed genes across conditions
 ## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
-DefaultAssay(multiome_WT_Bap1KO_QCV2.sct) <- "RNA"
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "RNA"
 
 ## DEGs keeping ALL genes
-multiome_WT_Bap1KO_QCV2.sct$celltype.stim <- paste(multiome_WT_Bap1KO_QCV2.sct$seurat_clusters, multiome_WT_Bap1KO_QCV2.sct$orig.ident,
+multiome_WT_Bap1KO_QCV2vC1.sct$celltype.stim <- paste(multiome_WT_Bap1KO_QCV2vC1.sct$seurat_clusters, multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident,
     sep = "-")
-Idents(multiome_WT_Bap1KO_QCV2.sct) <- "celltype.stim"
+Idents(multiome_WT_Bap1KO_QCV2vC1.sct) <- "celltype.stim"
 
-cluster1 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "1-multiome_Bap1KO", ident.2 = "1-multiome_WT",
+cluster1 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "1-multiome_Bap1KO", ident.2 = "1-multiome_WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA") 
-cluster2 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "2-multiome_Bap1KO", ident.2 = "2-multiome_WT",
+cluster2 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "2-multiome_Bap1KO", ident.2 = "2-multiome_WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA") 
-cluster3 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "3-multiome_Bap1KO", ident.2 = "3-multiome_WT",
+cluster3 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "3-multiome_Bap1KO", ident.2 = "3-multiome_WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA") 
-cluster4 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "4-multiome_Bap1KO", ident.2 = "4-multiome_WT",
+cluster4 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "4-multiome_Bap1KO", ident.2 = "4-multiome_WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")    
-cluster5 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "5-multiome_Bap1KO", ident.2 = "5-multiome_WT",
+cluster5 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "5-multiome_Bap1KO", ident.2 = "5-multiome_WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")    
-cluster6 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "6-multiome_Bap1KO", ident.2 = "6-multiome_WT",
+cluster6 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "6-multiome_Bap1KO", ident.2 = "6-multiome_WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-cluster7 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "7-multiome_Bap1KO", ident.2 = "7-multiome_WT",
+cluster7 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "7-multiome_Bap1KO", ident.2 = "7-multiome_WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-cluster8 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "8-multiome_Bap1KO", ident.2 = "8-multiome_WT",
+cluster8 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "8-multiome_Bap1KO", ident.2 = "8-multiome_WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-cluster9 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "9-multiome_Bap1KO", ident.2 = "9-multiome_WT",
+cluster9 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "9-multiome_Bap1KO", ident.2 = "9-multiome_WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-cluster10 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "10-multiome_Bap1KO", ident.2 = "10-multiome_WT",
+cluster10 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "10-multiome_Bap1KO", ident.2 = "10-multiome_WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-cluster11 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "11-multiome_Bap1KO", ident.2 = "11-multiome_WT",
+cluster11 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "11-multiome_Bap1KO", ident.2 = "11-multiome_WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-cluster12 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "12-multiome_Bap1KO", ident.2 = "12-multiome_WT",
+cluster12 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "12-multiome_Bap1KO", ident.2 = "12-multiome_WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-cluster13 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "13-multiome_Bap1KO", ident.2 = "13-multiome_WT",
+cluster13 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "13-multiome_Bap1KO", ident.2 = "13-multiome_WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-cluster14 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "14-multiome_Bap1KO", ident.2 = "14-multiome_WT",
+cluster14 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "14-multiome_Bap1KO", ident.2 = "14-multiome_WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-cluster15 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "15-multiome_Bap1KO", ident.2 = "15-multiome_WT",
+cluster15 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "15-multiome_Bap1KO", ident.2 = "15-multiome_WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-cluster16 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "16-multiome_Bap1KO", ident.2 = "16-multiome_WT",
+cluster16 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "16-multiome_Bap1KO", ident.2 = "16-multiome_WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-cluster17 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "17-multiome_Bap1KO", ident.2 = "17-multiome_WT",
+cluster17 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "17-multiome_Bap1KO", ident.2 = "17-multiome_WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-cluster18 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "18-multiome_Bap1KO", ident.2 = "18-multiome_WT",
+cluster18 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "18-multiome_Bap1KO", ident.2 = "18-multiome_WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-cluster19 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "19-multiome_Bap1KO", ident.2 = "19-multiome_WT",
+cluster19 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "19-multiome_Bap1KO", ident.2 = "19-multiome_WT",
     verbose = TRUE,
     test.use = "wilcox",
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
     assay = "RNA")  
-cluster20 <- FindMarkers(multiome_WT_Bap1KO_QCV2.sct, ident.1 = "20-multiome_Bap1KO", ident.2 = "20-multiome_WT",
-    verbose = TRUE,
-    test.use = "wilcox",
-    logfc.threshold = -Inf,
-    min.pct = -Inf,
-    min.diff.pct = -Inf, # 
-    assay = "RNA")  
+    
 
 ### save output
-write.table(cluster1, file = "output/Signac/cluster1-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster2, file = "output/Signac/cluster2-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster3, file = "output/Signac/cluster3-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster4, file = "output/Signac/cluster4-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster5, file = "output/Signac/cluster5-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster6, file = "output/Signac/cluster6-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster7, file = "output/Signac/cluster7-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster8, file = "output/Signac/cluster8-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster9, file = "output/Signac/cluster9-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster10, file = "output/Signac/cluster10-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster11, file = "output/Signac/cluster11-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster12, file = "output/Signac/cluster12-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster13, file = "output/Signac/cluster13-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster14, file = "output/Signac/cluster14-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster15, file = "output/Signac/cluster15-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster16, file = "output/Signac/cluster16-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster17, file = "output/Signac/cluster17-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster18, file = "output/Signac/cluster18-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster19, file = "output/Signac/cluster19-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster20, file = "output/Signac/cluster20-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster1, file = "output/Signac/cluster1-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster2, file = "output/Signac/cluster2-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster3, file = "output/Signac/cluster3-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster4, file = "output/Signac/cluster4-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster5, file = "output/Signac/cluster5-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster6, file = "output/Signac/cluster6-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster7, file = "output/Signac/cluster7-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster8, file = "output/Signac/cluster8-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster9, file = "output/Signac/cluster9-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster10, file = "output/Signac/cluster10-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster11, file = "output/Signac/cluster11-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster12, file = "output/Signac/cluster12-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster13, file = "output/Signac/cluster13-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster14, file = "output/Signac/cluster14-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster15, file = "output/Signac/cluster15-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster16, file = "output/Signac/cluster16-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster17, file = "output/Signac/cluster17-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster18, file = "output/Signac/cluster18-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster19, file = "output/Signac/cluster19-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
 
 
 
@@ -5671,10 +5670,10 @@ cluster_types <- c("cluster1", "cluster2", "cluster3",
                    "cluster7", "cluster8", 
                    "cluster9", "cluster10", "cluster11", 
                    "cluster12", "cluster13", "cluster14", "cluster15", 
-                   "cluster16", "cluster17", "cluster18", "cluster19", "cluster20")
+                   "cluster16", "cluster17", "cluster18", "cluster19")
 # Loop over each cluster type to read data and assign to a variable
 for (cluster in cluster_types) {
-  file_path <- paste0("output/Signac/", cluster, "-Bap1KO_response_multiomeQCV3_allGenes.txt")
+  file_path <- paste0("output/Signac/", cluster, "-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt")
   data <- read.delim(file_path, header = TRUE, row.names = 1)
   assign(cluster, data)
 }
@@ -5686,11 +5685,11 @@ for (cluster in cluster_types) {
 DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
 
 ## List of cell types
-cell_types <- c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19", "cluster20")
+cell_types <- c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19")
 
 ## Loop through each cell type to count the number of significant DEGs
 for (cell_type in cell_types) {
-  file_name <- paste("output/Signac/", cell_type, "-Bap1KO_response_multiomeQCV3_allGenes.txt", sep = "")
+  file_name <- paste("output/Signac/", cell_type, "-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "")
   # Check if file exists
   if (!file.exists(file_name)) {
     print(paste("File not found:", file_name))
@@ -5709,11 +5708,11 @@ for (cell_type in cell_types) {
 }
 
 
-DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19", "cluster20")) 
+DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19")) 
 
 DEG_count$Cluster_Number <- as.numeric(sub("cluster", "", DEG_count$Cell_Type))
 
-DEG_count$Cluster_Number <- factor(DEG_count$Cluster_Number, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20")) 
+DEG_count$Cluster_Number <- factor(DEG_count$Cluster_Number, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19")) 
 
 
 ## Dotplot
@@ -5723,11 +5722,11 @@ cell_type_colors <- c(
   "cluster5" = "#7FFF00", "cluster6" = "#32CD32", "cluster7" = "#3CB371", "cluster8" = "#00FA9A", 
   "cluster9" = "#00CED1", "cluster10" = "#4682B4", "cluster11" = "#1E90FF", "cluster12" = "#6495ED", 
   "cluster13" = "#4169E1", "cluster14" = "#BA55D3", "cluster15" = "#DA70D6", "cluster16" = "#EE82EE", 
-  "cluster17" = "#FF69B4", "cluster18" = "#FF1493", "cluster19" = "#DB7093", "cluster20" = "#FF4500"
+  "cluster17" = "#FF69B4", "cluster18" = "#FF1493", "cluster19" = "#DB7093"
 )
 
 # Generate the dot plot
-pdf("output/Signac/Dotplot_Bap1KO_DEG_count_multiomeQCV3.pdf", width=9, height=4)
+pdf("output/Signac/Dotplot_Bap1KO_DEG_count_multiome_QCV2vC1_dim40kparam42res065algo4feat2000.pdf", width=9, height=4)
 ggplot(DEG_count, aes(x = Cluster_Number, y = 1) )+
   geom_point(aes(size = ifelse(Num_DEGs == 0, 1, Num_DEGs), fill = Cell_Type) , shape = 21, color = "black") +
   scale_size_continuous(range = c(1, 15)) +
@@ -5839,6 +5838,7 @@ dev.off()
 
 # SAVE #########################################################################################
 ## saveRDS(multiome_WT_Bap1KO_QCV2.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV3.sct_numeric.rds") 
+## saveRDS(multiome_WT_Bap1KO_QCV2vC1.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000.sct_numeric.rds") 
 # I used multiome_WT_Bap1KO_QCV2 but was already multiome_WT_Bap1KO_QCV3... So here I update the file name
 ################################################################################################
 multiome_WT_Bap1KO_QCV3.sct = multiome_WT_Bap1KO_QCV2.sct
@@ -6111,13 +6111,168 @@ DotPlot(multiome_WT_Bap1KO_QCV3.sct, assay = "SCT", features = all_markers, cols
 dev.off()
 
 
+
+
+############ V3 naming
+
+Cluster1 = PyNs_SubC_CA23 (subiculum PyNs)
+Cluster2 = IN_1 (interneuron)
+Cluster3 = SubC_1 (subiculum)
+Cluster4 = PyNs_SubC_CA1 (subiculum PyNs)
+Cluster5 = PyNs_RSC_UL (Retrosplenial Cortical Pyramidal neurons, upper layer)
+Cluster6 = DG_GC D(entate Gyrus granule cells)
+Cluster7 = PyNs_RSC_MDL (Retrosplenial Cortical Pyramidal neurons, middle/deep layer)
+Cluster8 = NSC_proliferative_1 (Neural Stem Cells)
+Cluster9 = SubC_2 (subiculum)
+Cluster10 = IN_2 (interneuron)
+Cluster11 = NSC_quiescent (Neural Stem Cells)
+Cluster12 = IN_SubC (subiculum interneurons) ???
+Cluster13 = IP (Intermediate Progenitors)
+Cluster14 = NSC_proliferative_2 (Neural Stem Cells)
+Cluster15 = CR (Cajal Retzius)
+Cluster16 = OPC (Oligodendrocyte progenitor cells)
+Cluster17 = Meningeal_Cells
+Cluster18 = Radial_Glia_Cells
+Cluster19 = Microglia
+
+
+
+
+new.cluster.ids <- c(
+  "PyNs_SubC_CA23",
+  "IN_1",
+  "SubC_1",
+  "PyNs_SubC_CA1",
+  "PyNs_RSC_UL",
+  "DG_GC",
+  "PyNs_RSC_MDL",
+  "NSC_proliferative_1",
+  "SubC_2",
+  "IN_2",
+  "NSC_quiescent",
+  "IN_SubC",
+  "IP",
+  "NSC_proliferative_2",
+  "CR",
+  "OPC",
+  "Meningeal_Cells",
+  "Radial_Glia_Cells",
+  "Microglia"
+)
+
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "RNA"
+
+# put the level of my seurat object as the seurat cluster nb
+new_levels <- unique(multiome_WT_Bap1KO_QCV2vC1.sct$seurat_clusters)
+Idents(multiome_WT_Bap1KO_QCV2vC1.sct) <- multiome_WT_Bap1KO_QCV2vC1.sct$seurat_clusters
+
+
+# rename clsuter
+names(new.cluster.ids) <- levels(multiome_WT_Bap1KO_QCV2vC1.sct)
+multiome_WT_Bap1KO_QCV2vC1.sct <- RenameIdents(multiome_WT_Bap1KO_QCV2vC1.sct, new.cluster.ids)
+
+multiome_WT_Bap1KO_QCV2vC1.sct$cluster.annot <- Idents(multiome_WT_Bap1KO_QCV2vC1.sct) # create a new slot in my seurat object
+
+
+pdf("output/Signac/UMAP_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000_label.pdf", width=12, height=6)
+DimPlot(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "umap", split.by = "orig.ident", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+dev.off()
+
+
+pdf("output/Signac/UMAP_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000_noSplit_label.pdf", width=7, height=5)
+DimPlot(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "umap", label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 4)
+dev.off()
+
+
+
+# All in dotplot
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "SCT"
+
+Neural Stem Cells (NSC) = Pax6 (should have more cell types)
+Intermediate Progenitors (IP) = Eomes
+Dentate Gyrus Granucle Cells (DG) = Prox1, Neurod1, Sema5a
+CA1 = Cck, Insm1
+CA3 = Crym, Snca, Nrp2
+Pyramidal neurons deep layer (DL) = Tac2, Hs3st1, Nrn1
+Pyramidal neurons middle layer (ML) = Pantr1, Igfbpl1, Frmd4b
+Pyramidal neurons upper layer (UL) = Satb2, Itpr1
+Interneurons (IN) = Gad1, Grin2d, Reln, Calb1, Npy, Gria3, Lhx6
+Cajal Retzius (CR) = Lhx1
+Subiculum (SubC) = Nts, Nr4a2, Lmo3, B3gat1
+Microglia = Csf1r, Gpr34, Gpr183, Cx3cr1
+OPC = Pdgfra, Olig1
+Ependymal_Cells = Foxj1, Cfap44, Dynlrb2
+Astrocyte = Aqp4, Gfap
+Radial Glia Cells = Gli3, Pdgfd
+Chandellier cell = Ntf3, Prkg1, Slc12a5
+Meningeal cells = Aldh1a2, Vtn, Lum, Foxc1, Igf2
+
+all_markers <- c(
+"Pax6",
+"Eomes",
+"Gli3", "Pdgfd",
+"Pdgfra", "Olig1",
+"Foxj1", "Cfap44", "Dynlrb2",
+"Csf1r", "Gpr34", "Gpr183", "Cx3cr1",
+"Aldh1a2", "Vtn", "Lum", "Foxc1", "Igf2",
+"Lhx1",
+"Prox1", "Neurod1", "Sema5a",
+"Cck", "Insm1",
+"Crym", "Snca", "Nrp2",
+"Satb2", "Itpr1",
+"Pantr1", "Igfbpl1", "Frmd4b",
+"Tac2", "Hs3st1", "Nrn1",
+"Nts", "Nr4a2", "Lmo3", "B3gat1",
+"Gad1", "Grin2d", "Reln", "Calb1", "Npy", "Gria3", "Lhx6",
+ "Ntf3", "Prkg1", "Slc12a5"
+)
+
+
+
+
+
+levels(multiome_WT_Bap1KO_QCV2vC1.sct) <- c(
+"NSC_quiescent",
+"NSC_proliferative_1",
+"NSC_proliferative_2",
+"IP",
+"Radial_Glia_Cells",
+"OPC",
+"Microglia",
+"Meningeal_Cells",
+"CR",
+"DG_GC",
+"PyNs_SubC_CA1",
+"PyNs_SubC_CA23",
+"PyNs_RSC_UL",
+"PyNs_RSC_MDL",
+"SubC_1",
+"SubC_2",
+"IN_1",
+"IN_2",
+"IN_SubC"
+)
+
+
+
+pdf("output/Signac/DotPlot_SCT_multiome_WT_Bap1KO_QCV2vC1_label.pdf", width=11, height=4.5)
+DotPlot(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
+
+pdf("output/Signac/DotPlot_SCT_multiome_WT_Bap1KO_QCV2vC1_label_vertical.pdf", width=11, height=4.5)
+DotPlot(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
+dev.off()
+
+
 ########################################################
 
 
 # Cell type proportion
 
 
-pt <- table(Idents(multiome_WT_Bap1KO_QCV3.sct), multiome_WT_Bap1KO_QCV3.sct$orig.ident)
+pt <- table(Idents(multiome_WT_Bap1KO_QCV2vC1.sct), multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident)
 pt <- as.data.frame(pt)
 pt <- pt %>%
   group_by(Var2) %>%
@@ -6125,7 +6280,7 @@ pt <- pt %>%
 
 pt$Var1 <- as.character(pt$Var1)
 
-pdf("output/Signac/cellTypeProp_SCT_multiome_WT_Bap1KO_QCV3.pdf", width=5, height=5)
+pdf("output/Signac/cellTypeProp_SCT_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000.pdf", width=5, height=5)
 ggplot(pt, aes(x = Var2, y = Proportion, fill = Var1)) +
   theme_bw(base_size = 15) +
   geom_col(position = "fill", width = 0.5) +
@@ -6140,10 +6295,10 @@ dev.off()
 # Cell cycle proportion per cluster
 ## Using numeric cluster annotation
 
-plot_cell_cycle_per_cluster <- function(multiome_WT_Bap1KO_QCV3.sct, output_dir) {
-  clusters <- unique(multiome_WT_Bap1KO_QCV3.sct$seurat_clusters)
+plot_cell_cycle_per_cluster <- function(multiome_WT_Bap1KO_QCV2vC1.sct, output_dir) {
+  clusters <- unique(multiome_WT_Bap1KO_QCV2vC1.sct$seurat_clusters)
   for (cluster in clusters) {
-    data <- multiome_WT_Bap1KO_QCV3.sct@meta.data %>%
+    data <- multiome_WT_Bap1KO_QCV2vC1.sct@meta.data %>%
       dplyr::filter(seurat_clusters == cluster) %>%
       group_by(orig.ident, Phase) %>%
       summarise(count = n()) %>%
@@ -6162,12 +6317,12 @@ plot_cell_cycle_per_cluster <- function(multiome_WT_Bap1KO_QCV3.sct, output_dir)
                 position = position_fill(vjust = 0.5), size = 5)
 
     # Save plot to PDF
-    pdf(paste0(output_dir, "cellCycle_Cluster_", cluster, ".pdf"), width = 5, height = 6)
+    pdf(paste0(output_dir, "cellCycle_Cluster_QCV2vC1_dim40kparam42res065algo4feat2000_", cluster, ".pdf"), width = 5, height = 6)
     print(plot)
     dev.off()
   }
 }
-plot_cell_cycle_per_cluster(multiome_WT_Bap1KO_QCV3.sct, output_dir = "output/Signac/")
+plot_cell_cycle_per_cluster(multiome_WT_Bap1KO_QCV2vC1.sct, output_dir = "output/Signac/")
 
 
 
