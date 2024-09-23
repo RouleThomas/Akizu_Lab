@@ -1795,7 +1795,7 @@ library("Seurat")
 library("ShinyCell")
 library("rsconnect")
 
-# Data import EMBRYO
+# Data import 1st version integration ATAC RNA
 multiome_WT_Bap1KO_QCV3.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV3.sct_numeric_label.rds")
 DefaultAssay(multiome_WT_Bap1KO_QCV3.sct) <- "RNA" # 
 
@@ -1809,7 +1809,20 @@ makeShinyApp(multiome_WT_Bap1KO_QCV3.sct, scConf, gene.mapping = TRUE,
 rsconnect::deployApp('shinyApp_multiome_WT_Bap1KO_QCV3')
 
 
+# DAta import 2nd version ATAC RNA
+## saveRDS(multiome_WT_Bap1KO_QCV2vC1.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000.sct_numeric_label.rds") ##
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000.sct_numeric_label.rds")
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "RNA" # 
 
+
+# Generate Shiny app V2
+scConf = createConfig(multiome_WT_Bap1KO_QCV2vC1.sct)
+
+makeShinyApp(multiome_WT_Bap1KO_QCV2vC1.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000",
+             shiny.dir = "shinyApp_multiome_WT_Bap1KO_QCV2vC1/") 
+
+rsconnect::deployApp('shinyApp_multiome_WT_Bap1KO_QCV2vC1')
 
 
 ```
@@ -6184,6 +6197,13 @@ DimPlot(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "umap", label = TRUE, repel 
 dev.off()
 
 
+multiome_WT_Bap1KO_QCV2vC1.sct$seurat_clusters <- Idents(multiome_WT_Bap1KO_QCV2vC1.sct) # create a new slot in my seurat object
+
+pdf("output/Signac/UMAP_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000_noSplit_labelNumeric.pdf", width=7, height=5)
+DimPlot(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "umap", label = FALSE, repel = TRUE, pt.size = 0.3, label.size = 4)
+dev.off()
+
+
 
 # All in dotplot
 DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "SCT"
@@ -6329,6 +6349,7 @@ plot_cell_cycle_per_cluster(multiome_WT_Bap1KO_QCV2vC1.sct, output_dir = "output
 
 # SAVE #########################################################################################
 ## saveRDS(multiome_WT_Bap1KO_QCV3.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV3.sct_numeric_label.rds") 
+## saveRDS(multiome_WT_Bap1KO_QCV2vC1.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000.sct_numeric_label.rds") 
 ################################################################################################
 
 
