@@ -7256,6 +7256,47 @@ ENCFF077DRH_fcovercontrol12
 
 
 
+# Overlapping peaks EZH2, QSER1, YAP (`008003*/`), TEAD4 (`008003*/`)
+
+
+Task from Conchi email 20240917:
+- collect nb of peaks of EZH2, YAP, QSER1 and TEAD4 (Use ChIPseeker file so that we have gene information) *--> All optimal qval defined as 1.3*
+- Identify peak that overlap (+/-200bp)
+- Generate venn diagram of overlapping peaks
+
+
+
+```bash
+# Collect the nb of peaks qval 1.3
+wc -l output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_annot_qval1.30103.txt # 4284
+wc -l output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103.txt # 14166
+
+wc -l ../003__ChIPseq_pluripotency/output/ChIPseeker/annotation_macs2_hESC_WT_YAP1_annot_qval1.30103.txt # 1650
+wc -l ../003__ChIPseq_pluripotency/output/ChIPseeker/annotation_macs2_hESC_WT_TEAD4_annot_qval1.30103.txt # 3351
+
+# extend the peak of 200bp up and down
+tail -n +2 output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_annot_qval1.30103.txt | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 200 > output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_annot_qval1.30103_extend200bp.txt # tail used top skip the header (1st line)
+tail -n +2 output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103.txt | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 200 > output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103_extend200bp.txt # tail used top skip the header (1st line)
+tail -n +2 ../003__ChIPseq_pluripotency/output/ChIPseeker/annotation_macs2_hESC_WT_YAP1_annot_qval1.30103.txt | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 200 > ../003__ChIPseq_pluripotency/output/ChIPseeker/annotation_macs2_hESC_WT_YAP1_annot_qval1.30103_extend200bp.txt # tail used top skip the header (1st line)
+tail -n +2 ../003__ChIPseq_pluripotency/output/ChIPseeker/annotation_macs2_hESC_WT_TEAD4_annot_qval1.30103.txt | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 200 > ../003__ChIPseq_pluripotency/output/ChIPseeker/annotation_macs2_hESC_WT_TEAD4_annot_qval1.30103_extend200bp.txt # tail used top skip the header (1st line)
+
+
+
+# extend the peak of 500bp up and down
+tail -n +2 output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_annot_qval1.30103.txt | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 500 > output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_annot_qval1.30103_extend500bp.txt # tail used top skip the header (1st line)
+tail -n +2 output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103.txt | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 500 > output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103_extend500bp.txt # tail used top skip the header (1st line)
+tail -n +2 ../003__ChIPseq_pluripotency/output/ChIPseeker/annotation_macs2_hESC_WT_YAP1_annot_qval1.30103.txt | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 500 > ../003__ChIPseq_pluripotency/output/ChIPseeker/annotation_macs2_hESC_WT_YAP1_annot_qval1.30103_extend500bp.txt # tail used top skip the header (1st line)
+tail -n +2 ../003__ChIPseq_pluripotency/output/ChIPseeker/annotation_macs2_hESC_WT_TEAD4_annot_qval1.30103.txt | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 500 > ../003__ChIPseq_pluripotency/output/ChIPseeker/annotation_macs2_hESC_WT_TEAD4_annot_qval1.30103_extend500bp.txt # tail used top skip the header (1st line)
+
+```
+
+--> Venn diagram of peak made using [Intervene webtool](https://www.bioinformatics.com.cn/plot_basic_genomic_regions_overlap_venn_diagram_026_en) From this [paper](https://www.bioinformatics.com.cn/static/papers/026_fig2A.pdf).
+  --> See `002*/003*/gastrulation paper/GastrulationPaper_peakOverlap_V1.ppt` for detail  
+  --> See `002*/003*/gastrulation paper/output/peakOverlap` for output files  
+
+
+
+
 
 
 
