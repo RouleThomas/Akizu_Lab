@@ -7611,7 +7611,8 @@ tail -n +2 ../003__ChIPseq_pluripotency/output/ChIPseeker/annotation_macs2_hESC_
 bedtools intersect -wa -a output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103.bed -b ../003__ChIPseq_pluripotency/output/ChIPseeker/annotation_macs2_hESC_WT_YAP1_annot_qval1.30103.bed > output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103-overlapYAP1_annot_qval1.30103.bed # 136
 ## Overlap QSER1 with EZH2
 bedtools intersect -wa -a output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103.bed -b output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_annot_qval1.30103.bed > output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103-overlapEZH2_annot_qval1.30103.bed # 2861
-
+## Overlap QSER1 with TEAD4
+bedtools intersect -wa -a output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103.bed -b ../003__ChIPseq_pluripotency/output/ChIPseeker/annotation_macs2_hESC_WT_TEAD4_annot_qval1.30103.bed > output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103-overlapTEAD4_annot_qval1.30103.bed # 335
 
 ## Overlap with CpG islands
 ### Overlap QSER1 (14165) with CpG islands
@@ -7659,10 +7660,47 @@ bedtools intersect -wa -a output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot
 
 --> QSER1 ~60% overlap with CpG islands seems correct (ie. also happened with changes param.)
 
+--> Let's confirm QSER1:YAP1 show very low CpG islands binding (~22.79%) by checking the 463 genes co-bound (not overlaping!) by YAP1 and QSER1.
+  --> The genes have been copied to file `nano output/ChIPseeker/QSER1_YAP1_463genes.txt` from the Google drive file `gastrulation paper/output/ChIPseeker008001008003/VennDiagramGenes_QSER1EZH2TEAD4YAP1.xlsx`.
+
+
+```R
+# packages
+library("tidyverse")
+
+# import files
+## import the 463 QSER1:YAP1 co-bound genes 
+QSER1_YAP1 = read_tsv("output/ChIPseeker/QSER1_YAP1_463genes.txt", col_names = FALSE) %>% 
+  dplyr::rename( "geneSymbol"= "X1")
+
+## import the QSER1 ChIPseeker output to collect peak coordinates
+ChIPseeker_QSER1 = read_tsv("output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103.txt") %>% 
+  dplyr::select(seqnames, start, end, name, annotation, distanceToTSS, geneSymbol, gene) %>%
+  add_column(ChIPseeker = "QSER1")
+
+# join files and save
+ChIPseeker_QSER1 %>% inner_join(QSER1_YAP1) %>%
+write.table(., file = "output/ChIPseeker/QSER1_YAP1_463genes_ChIPseeker.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+```
+
+
+--> 463 genes bound by both YAP1 and QSER1 (not overlapping)
+  --> 955 peaks from QSER1 (>463 as multiple peaks bound the same genes); proportion of these peaks overlapping with CpG islands
 
 
 
 
+```bash
+## Transform .txt ChIPseeker file into bed file (remove header)
+tail -n +2 output/ChIPseeker/QSER1_YAP1_463genes_ChIPseeker.txt > output/ChIPseeker/QSER1_YAP1_463genes_ChIPseeker.bed
+
+
+### Overlap (955) with CpG islands
+bedtools intersect -wa -a output/ChIPseeker/QSER1_YAP1_463genes_ChIPseeker.bed -b ../../Master/meta/cpgIslandExt.hg38.bed > output/ChIPseeker/QSER1_YAP1_463genes_ChIPseeker-overlapcpgIslandExt.bed # 501
+```
+
+- *QSER1 peaks assign to a gene also bound with YAP1 (peaks not overlapping)*; 955 peaks: 501 overlapping with CpG islands (52.46%)
 
 
 

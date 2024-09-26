@@ -1157,14 +1157,13 @@ DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "integrated"
 
 WT_Kcnc1_p14_CB_1step.sct <- RunPCA(WT_Kcnc1_p14_CB_1step.sct, verbose = FALSE, npcs = 30)
 WT_Kcnc1_p14_CB_1step.sct <- RunUMAP(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
-WT_Kcnc1_p14_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", k.param = 50, dims = 1:30)
-WT_Kcnc1_p14_CB_1step.sct <- FindClusters(WT_Kcnc1_p14_CB_1step.sct, resolution = 0.4, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+WT_Kcnc1_p14_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", k.param = 20, dims = 1:30)
+WT_Kcnc1_p14_CB_1step.sct <- FindClusters(WT_Kcnc1_p14_CB_1step.sct, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
 WT_Kcnc1_p14_CB_1step.sct$condition <- factor(WT_Kcnc1_p14_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim30kparam50res04.pdf", width=7, height=6)
-
+pdf("output/seurat/UMAP_WT_Kcnc1-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim30kparam20res03.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
@@ -1298,6 +1297,7 @@ dev.off()
 ## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V2_numeric.rds") # regMtRbFeaCount
 ## WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V1_numeric.rds") # regMtRbCount
 ## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V3_numeric.rds") # regMtRbCount with QC_V3
+## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V4_numeric.rds") # regMtRbCount with QC_V3; after Naiara review Goldberg_V2.pptx; QCV3dim30kparam20res03
 
 WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V3_numeric.rds") # Review per Naiara Goldberg_V2.pptx
 set.seed(42)
@@ -1523,6 +1523,146 @@ dev.off()
 
 
 
+
+
+
+
+
+############ V2 naming (WT_Kcnc1_p14_CB_1step.sct_V4_numeric.rds = QCV3dim30kparam20res03)
+
+Cluster1: Granular
+Cluster2: Interneuron
+Cluster3: MLI1
+Cluster4: Granular
+Cluster5: Granular
+Cluster6: Granular
+Cluster7: MLI2
+Cluster8: Endothelial_Cells
+Cluster9: Granular
+Cluster10: Astrocyte
+Cluster11: Bergmann_Glia
+Cluster12: PLI
+Cluster13: Oligodendrocyte
+Cluster14: Microglia_Ependymal_Meningeal_Cells
+Cluster15: Endothelial_Mural_Cells 
+Cluster16: Purkinje_Cells
+Cluster17: Golgi_Cells
+Cluster18: Unipolar_brush
+Cluster19: Choroid_Plexus_Cells
+
+
+XXXY here !!
+
+new.cluster.ids <- c(
+  "Granular_1"
+  "Interneuron",
+  "MLI1",
+  "Granular_2",
+  "Granular_3",
+  "Granular_4",
+  "MLI2",
+  "Endothelial",
+  "Granular_5",
+  "Astrocyte",
+  "Bergmann_Glia",
+  "PLI",
+  "Oligodendrocyte",
+  "Microglia_Ependymal_Meningeal"
+  "Endothelial_Mural" ,
+  "Purkinje",
+  "Golgi"
+  "Unipolar_brush"
+  "Choroid_Plexus"
+)
+
+names(new.cluster.ids) <- levels(WT_Kcnc1_p14_CB_1step.sct)
+WT_Kcnc1_p14_CB_1step.sct <- RenameIdents(WT_Kcnc1_p14_CB_1step.sct, new.cluster.ids)
+WT_Kcnc1_p14_CB_1step.sct$cluster.annot <- Idents(WT_Kcnc1_p14_CB_1step.sct) # create a new slot in my seurat object
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB_1step_QCV3dim30kparam20res03_label.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+dev.off()
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB_1step_QCV3dim30kparam20res03_noSplit_label.pdf", width=10, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5)
+dev.off()
+
+
+
+# All in dotplot
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
+
+List5:
+1,4,5,6,7,9,11- Granular = Gabra6, Pax6
+3,21- Neuroblast= Ntng1, Grm5
+2- MLI1 = Sorcs3, Ptprk
+8- MLI2 = Nxph1, Cdh22
+10- Endothelial_Cells= Lef1, Notum, Apcdd1
+12- Astrocyte = Zeb2, Hepacam
+12- Astrocyte_2 = Aqp4, Slc39a12
+13- OPC = Aldoc, Cnp, Cspg5
+14- Interneuron= Rgs6, Kcnc2
+17- Oligodendrocyte= Mbp, Mag, Plp1
+18- Ependymal cells= Cfap54, Ccdc153, Cfap44, Tmem212
+18- Meningeal cell = Ptgds, Dcn
+19- Muscle= Dlc1, Pdgfrb
+20- Purkinje cells = Calb1, Slc1a6, Car8
+22- NPC= Lmx1a, Adcy2, Mdga1, Eomes
+23- Choroid plexus cells = Kl, Clic6, Slc13a4, Ttr
+
+
+all_markers <- c(
+"Gabra6", "Pax6", "Ntng1", "Grm5", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Lef1", "Notum", "Apcdd1", "Zeb2", "Hepacam", "Aqp4", "Slc39a12", "Aldoc", "Cnp", "Cspg5", "Rgs6", "Kcnc2", "Mbp", "Mag", "Plp1", "Cfap54", "Ccdc153", "Cfap44", "Tmem212", "Ptgds", "Dcn", "Dlc1", "Pdgfrb", "Calb1", "Slc1a6", "Car8", "Lmx1a", "Adcy2", "Mdga1", "Eomes", "Kl", "Clic6", "Slc13a4", "Ttr"
+)
+
+
+
+levels(WT_Kcnc1_p14_CB_1step.sct) <- c(
+"Granular_1",
+"Granular_2",
+"Granular_3",
+"Granular_4",
+"Granular_5",
+"Granular_6",
+"Granular_7",
+"Neuroblast_1",
+"Neuroblast_2",
+"MLI1",
+"MLI2",
+"Endothelial_Cells",
+"Astrocyte",
+"Bergmann_Glia",
+"OPC",
+"Interneuron_1",
+"Interneuron_2",
+"Oligodendrocyte",
+"EpendymalMeningeal_Cells",
+"Muscle_Cells",
+"Purkinje_Cells",
+"NPC",
+"Choroid_Plexus_Cells"
+)
+
+
+
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CB_1step_QCV3dim30kparam20res04_label.pdf", width=11, height=4.5)
+DotPlot(WT_Kcnc1_p14_CB_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
+
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CB_1step_QCV3dim30kparam20res04_label_vertical.pdf", width=11, height=4.5)
+DotPlot(WT_Kcnc1_p14_CB_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
+dev.off()
+
+
+
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-QCV3dim30kparam20res04-List5.pdf", width=30, height=70)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gabra6", "Pax6", "Ntng1", "Grm5", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Lef1", "Notum", "Apcdd1", "Zeb2", "Hepacam", "Aqp4", "Slc39a12", "Aldoc", "Cnp", "Cspg5", "Rgs6", "Kcnc2", "Mbp", "Mag", "Plp1", "Cfap54", "Ccdc153", "Cfap44", "Tmem212", "Ptgds", "Dcn", "Dlc1", "Pdgfrb", "Calb1", "Slc1a6", "Car8", "Lmx1a", "Adcy2", "Mdga1", "Eomes", "Kl", "Clic6", "Slc13a4", "Ttr"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
 
 
 
