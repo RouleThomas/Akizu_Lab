@@ -1157,13 +1157,13 @@ DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "integrated"
 
 WT_Kcnc1_p14_CB_1step.sct <- RunPCA(WT_Kcnc1_p14_CB_1step.sct, verbose = FALSE, npcs = 30)
 WT_Kcnc1_p14_CB_1step.sct <- RunUMAP(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
-WT_Kcnc1_p14_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", k.param = 20, dims = 1:30)
-WT_Kcnc1_p14_CB_1step.sct <- FindClusters(WT_Kcnc1_p14_CB_1step.sct, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+WT_Kcnc1_p14_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", k.param = 50, dims = 1:30)
+WT_Kcnc1_p14_CB_1step.sct <- FindClusters(WT_Kcnc1_p14_CB_1step.sct, resolution = 0.35, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
 WT_Kcnc1_p14_CB_1step.sct$condition <- factor(WT_Kcnc1_p14_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim30kparam20res03.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim30kparam50res035.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
@@ -1297,7 +1297,8 @@ dev.off()
 ## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V2_numeric.rds") # regMtRbFeaCount
 ## WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V1_numeric.rds") # regMtRbCount
 ## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V3_numeric.rds") # regMtRbCount with QC_V3
-## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V4_numeric.rds") # regMtRbCount with QC_V3; after Naiara review Goldberg_V2.pptx; QCV3dim30kparam20res03
+## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V4_numeric.rds") # regMtRbCount with QC_V3; after Naiara review Goldberg_V2.pptx; QCV3dim30kparam50res035
+## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V5_numeric.rds") # regMtRbCount with QC_V3; after Naiara review Goldberg_V2.pptx; QCV3dim30kparam50res035 with name V2
 
 WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V3_numeric.rds") # Review per Naiara Goldberg_V2.pptx
 set.seed(42)
@@ -1528,34 +1529,32 @@ dev.off()
 
 
 
-############ V2 naming (WT_Kcnc1_p14_CB_1step.sct_V4_numeric.rds = QCV3dim30kparam20res03)
+############ V2 naming (WT_Kcnc1_p14_CB_1step.sct_V4_numeric.rds = QCV3dim30kparam50res035)
 
-Cluster1: Granular
-Cluster2: Interneuron
+Cluster1: Interneuron
+Cluster2: Granular
 Cluster3: MLI1
 Cluster4: Granular
 Cluster5: Granular
 Cluster6: Granular
 Cluster7: MLI2
-Cluster8: Endothelial_Cells
+Cluster8: Endothelial
 Cluster9: Granular
 Cluster10: Astrocyte
-Cluster11: Bergmann_Glia
-Cluster12: PLI
-Cluster13: Oligodendrocyte
-Cluster14: Microglia_Ependymal_Meningeal_Cells
-Cluster15: Endothelial_Mural_Cells 
-Cluster16: Purkinje_Cells
-Cluster17: Golgi_Cells
-Cluster18: Unipolar_brush
-Cluster19: Choroid_Plexus_Cells
-
-
-XXXY here !!
+Cluster11: OPC
+Cluster12: Bergmann_Glia
+Cluster13: PLI
+Cluster14: Oligodendrocyte
+Cluster15: Mix_Microglia_Meningeal
+Cluster16: Endothelial_Mural 
+Cluster17: Purkinje
+Cluster18: Golgi
+Cluster19: Unipolar_Brush
+Cluster20: Choroid_Plexus
 
 new.cluster.ids <- c(
-  "Granular_1"
   "Interneuron",
+  "Granular_1",
   "MLI1",
   "Granular_2",
   "Granular_3",
@@ -1564,14 +1563,15 @@ new.cluster.ids <- c(
   "Endothelial",
   "Granular_5",
   "Astrocyte",
+  "OPC",
   "Bergmann_Glia",
   "PLI",
   "Oligodendrocyte",
-  "Microglia_Ependymal_Meningeal"
+  "Mix_Microglia_Meningeal",
   "Endothelial_Mural" ,
   "Purkinje",
-  "Golgi"
-  "Unipolar_brush"
+  "Golgi",
+  "Unipolar_Brush",
   "Choroid_Plexus"
 )
 
@@ -1580,11 +1580,11 @@ WT_Kcnc1_p14_CB_1step.sct <- RenameIdents(WT_Kcnc1_p14_CB_1step.sct, new.cluster
 WT_Kcnc1_p14_CB_1step.sct$cluster.annot <- Idents(WT_Kcnc1_p14_CB_1step.sct) # create a new slot in my seurat object
 
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB_1step_QCV3dim30kparam20res03_label.pdf", width=15, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB_1step_QCV3dim30kparam50res035_label.pdf", width=15, height=6)
 DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
 dev.off()
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB_1step_QCV3dim30kparam20res03_noSplit_label.pdf", width=10, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB_1step_QCV3dim30kparam50res035_noSplit_label.pdf", width=9, height=6)
 DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5)
 dev.off()
 
@@ -1593,64 +1593,99 @@ dev.off()
 # All in dotplot
 DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
 
-List5:
-1,4,5,6,7,9,11- Granular = Gabra6, Pax6
-3,21- Neuroblast= Ntng1, Grm5
-2- MLI1 = Sorcs3, Ptprk
-8- MLI2 = Nxph1, Cdh22
-10- Endothelial_Cells= Lef1, Notum, Apcdd1
-12- Astrocyte = Zeb2, Hepacam
-12- Astrocyte_2 = Aqp4, Slc39a12
-13- OPC = Aldoc, Cnp, Cspg5
-14- Interneuron= Rgs6, Kcnc2
-17- Oligodendrocyte= Mbp, Mag, Plp1
-18- Ependymal cells= Cfap54, Ccdc153, Cfap44, Tmem212
-18- Meningeal cell = Ptgds, Dcn
-19- Muscle= Dlc1, Pdgfrb
-20- Purkinje cells = Calb1, Slc1a6, Car8
-22- NPC= Lmx1a, Adcy2, Mdga1, Eomes
-23- Choroid plexus cells = Kl, Clic6, Slc13a4, Ttr
+List6:
+Granular_1
+Granular_2
+Granular_3
+Granular_4
+Interneuron
+MLI1 (Molecular Layer Interneuron)
+MLI2 (Molecular Layer Interneuron)
+PLI 
+Golgi
+Unipolar_Brush
+Purkinje
+Astrocyte
+Bergmann_Glia
+Oligodendrocyte
+OPC (Oligodendrocyte Progenitor Cells)
+Mix_Microglia_Meningeal
+Endothelial
+Endothelial_Mural
+Choroid_Plexus
+
+
+Granular = Gabra6, Pax6
+Interneuron = Kcnc2
+MLI1 = Sorcs3, Ptprk
+MLI2 = Nxph1, Cdh22
+PLI = Aldh1a3
+Golgi = Pax2
+Unipolar_Brush = Eomes
+Purkinje = Calb1, Slc1a6, Car8
+Astrocyte = Zeb2
+Bergman_Glia = Aqp4, Slc39a12
+Oligodendrocyte= Mbp, Mag, Plp1
+OPC = Aldoc, Cnp
+Microglia = Itgam, Cx3cr1
+Meningeal = Ptgds, Dcn
+Endothelial = Lef1, Notum, Apcdd1
+Endothelial_Mural =  Dlc1, Pdgfrb
+Choroid plexus cells = Kl,  Ttr
 
 
 all_markers <- c(
-"Gabra6", "Pax6", "Ntng1", "Grm5", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Lef1", "Notum", "Apcdd1", "Zeb2", "Hepacam", "Aqp4", "Slc39a12", "Aldoc", "Cnp", "Cspg5", "Rgs6", "Kcnc2", "Mbp", "Mag", "Plp1", "Cfap54", "Ccdc153", "Cfap44", "Tmem212", "Ptgds", "Dcn", "Dlc1", "Pdgfrb", "Calb1", "Slc1a6", "Car8", "Lmx1a", "Adcy2", "Mdga1", "Eomes", "Kl", "Clic6", "Slc13a4", "Ttr"
+  "Gabra6","Pax6",
+  "Kcnc2",
+  "Sorcs3", "Ptprk",
+  "Nxph1", "Cdh22",
+  "Aldh1a3",
+  "Pax2",
+  "Eomes",
+  "Calb1", "Slc1a6", "Car8",
+  "Zeb2",
+  "Aqp4", "Slc39a12",
+  "Mbp", "Mag", "Plp1",
+  "Aldoc", "Cnp",
+  "Itgam", "Cx3cr1",
+  "Ptgds", "Dcn",
+  "Lef1", "Notum", "Apcdd1",
+  "Dlc1", "Pdgfrb",
+  "Kl",  "Ttr"
 )
 
 
 
 levels(WT_Kcnc1_p14_CB_1step.sct) <- c(
-"Granular_1",
-"Granular_2",
-"Granular_3",
-"Granular_4",
-"Granular_5",
-"Granular_6",
-"Granular_7",
-"Neuroblast_1",
-"Neuroblast_2",
-"MLI1",
-"MLI2",
-"Endothelial_Cells",
-"Astrocyte",
-"Bergmann_Glia",
-"OPC",
-"Interneuron_1",
-"Interneuron_2",
-"Oligodendrocyte",
-"EpendymalMeningeal_Cells",
-"Muscle_Cells",
-"Purkinje_Cells",
-"NPC",
-"Choroid_Plexus_Cells"
+  "Granular_1",
+  "Granular_2",
+  "Granular_3",
+  "Granular_4",
+  "Granular_5",
+  "Interneuron",
+  "MLI1" ,
+  "MLI2" ,
+  "PLI" ,
+  "Golgi",
+  "Unipolar_Brush",
+  "Purkinje",
+  "Astrocyte",
+  "Bergmann_Glia",
+  "Oligodendrocyte",
+  "OPC" ,
+  "Mix_Microglia_Meningeal",
+  "Endothelial",
+  "Endothelial_Mural",
+  "Choroid_Plexus"
 )
 
 
 
-pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CB_1step_QCV3dim30kparam20res04_label.pdf", width=11, height=4.5)
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CB_1step_QCV3dim30kparam50res035_label.pdf", width=11, height=4.5)
 DotPlot(WT_Kcnc1_p14_CB_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
 dev.off()
 
-pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CB_1step_QCV3dim30kparam20res04_label_vertical.pdf", width=11, height=4.5)
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CB_1step_QCV3dim30kparam50res035_label_vertical.pdf", width=11, height=4.5)
 DotPlot(WT_Kcnc1_p14_CB_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
         axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
@@ -1659,9 +1694,8 @@ dev.off()
 
 
 
-
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-QCV3dim30kparam20res04-List5.pdf", width=30, height=70)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gabra6", "Pax6", "Ntng1", "Grm5", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Lef1", "Notum", "Apcdd1", "Zeb2", "Hepacam", "Aqp4", "Slc39a12", "Aldoc", "Cnp", "Cspg5", "Rgs6", "Kcnc2", "Mbp", "Mag", "Plp1", "Cfap54", "Ccdc153", "Cfap44", "Tmem212", "Ptgds", "Dcn", "Dlc1", "Pdgfrb", "Calb1", "Slc1a6", "Car8", "Lmx1a", "Adcy2", "Mdga1", "Eomes", "Kl", "Clic6", "Slc13a4", "Ttr"), max.cutoff = 1, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-QCV3dim30kparam50res035-List6.pdf", width=30, height=70)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = all_markers, max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
 
@@ -1969,6 +2003,18 @@ makeShinyApp(WT_Kcnc1_p14_CB_1step.sct, scConf, gene.mapping = TRUE,
              shiny.dir = "shinyApp_WT_Kcnc1_p14_CB_1step_QCV3/") 
 
 rsconnect::deployApp('shinyApp_WT_Kcnc1_p14_CB_1step_QCV3')
+
+
+# Generate Shiny app QCV3 with name V2;  QCV3dim30kparam50res035 ; output/seurat/WT_Kcnc1_p14_CB_1step.sct_V5_numeric.rds
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA" # 
+
+scConf = createConfig(WT_Kcnc1_p14_CB_1step.sct)
+
+makeShinyApp(WT_Kcnc1_p14_CB_1step.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "WT_Kcnc1_p14_CB_1step_QCV3dim30kparam50res035",
+             shiny.dir = "shinyApp_WT_Kcnc1_p14_CB_1step_QCV3dim30kparam50res035/") 
+
+rsconnect::deployApp('shinyApp_WT_Kcnc1_p14_CB_1step_QCV3dim30kparam50res035')
 
 
 
