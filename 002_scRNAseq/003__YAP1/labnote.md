@@ -19664,22 +19664,21 @@ conda activate condiments_V6
 
 
 # trajectory per trajectory CONDITION COMMON ((all features, no parralelization) - pseudotime-dependent DEGs
-sbatch scripts/ActivationPoint_traj3_humangastruloid2472hrs_noCondition.sh # 26482593 xxx
-sbatch scripts/ActivationPoint_traj5_humangastruloid2472hrs_noCondition.sh # 26482603 xxx
+sbatch scripts/ActivationPoint_traj3_humangastruloid2472hrs_noCondition.sh # 26482593 ok
+sbatch scripts/ActivationPoint_traj5_humangastruloid2472hrs_noCondition.sh # 26482603 ok
 
 
 # trajectory per trajectory CONDITION SEP (all features, no parralelization) - pseudotime-dependent DEGs
 ## traj of interest COMMON=3 UNTREATED=traj3; DASATINIB=traj2
-sbatch scripts/ActivationPoint_traj3_humangastruloidUNTREATED2472hrs.sh # 26484139 xxx
-sbatch scripts/ActivationPoint_traj2_humangastruloidDASATINIB2472hrs.sh # 26486052 xxx
+sbatch scripts/ActivationPoint_traj3_humangastruloidUNTREATED2472hrs.sh # 26484139 ok
+sbatch scripts/ActivationPoint_traj2_humangastruloidDASATINIB2472hrs.sh # 26486052 ok
 
 ## traj of interest COMMON=5 UNTREATED=traj5; DASATINIB=traj5
-sbatch scripts/ActivationPoint_traj5_humangastruloidUNTREATED2472hrs.sh # 26484627 xxx
-sbatch scripts/ActivationPoint_traj5_humangastruloidDASATINIB2472hrs.sh # 26488361 xxx
-
+sbatch scripts/ActivationPoint_traj5_humangastruloidUNTREATED2472hrs.sh # 26484627 ok
+sbatch scripts/ActivationPoint_traj5_humangastruloidDASATINIB2472hrs.sh # 26488361 ok
 ```
 
-
+--> All good
 
 
 

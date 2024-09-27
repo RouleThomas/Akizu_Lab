@@ -7253,6 +7253,105 @@ ENCFF077DRH_fcovercontrol12
 
 --> fcovercontrol look more homogeneous, signalpvalue show sharp very high peaks... Let's test fcovercontrol 1st but may be worth trying both...
 
+--> Use: Mint-ChIP-seq fcovercontrol with 3 Bio Rep = `output/bigwig_ENCODE/ENCFF201SJZ_fcovercontrol123`
+
+
+### Count signal around TSS ENCODE H3K27me3
+
+
+
+
+```bash
+conda activate binBw_v2
+```
+
+```R
+library("PopSV")
+library("tidyverse")
+library("Rsamtools")
+library("ggpubr")
+library("data.table")
+library("biomaRt")
+
+# H3K27me3 250bp #####################################################
+
+## Mint-ChIP-seq fcovercontrol with 3 Bio Rep = `output/bigwig_ENCODE/ENCFF201SJZ_fcovercontrol123`
+bwFile <- "output/bigwig_ENCODE/ENCFF201SJZ.bigWig"
+regions <- read.table("../../001_EZH1_Project/003__CutRun/meta/ENCFF159KBI_gene_250bpTSS_sorted.bed", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "gene", "strand")) 
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_H3K27me3_250bp_ENCFF201SJZ")
+#### Collect output and gene information
+WT_H3K27me3_250bp_ENCFF201SJZ <- as_tibble(fread(cmd = "gunzip -c output/binBw/WT_H3K27me3_250bp_ENCFF201SJZ.bgz") ) %>%
+ left_join(regions) %>%
+ separate(gene, into = c("gene", "version"), sep = "\\.") %>%
+ dplyr::select(gene, bc) %>%
+ unique()
+
+ensembl <- useEnsembl(biomart = "genes", dataset = "hsapiens_gene_ensembl")
+gene_ids <- unique(WT_H3K27me3_250bp_ENCFF201SJZ$gene)
+gene_info <- getBM(attributes = c('ensembl_gene_id', 'hgnc_symbol'),
+                   filters = 'ensembl_gene_id',
+                   values = gene_ids,
+                   mart = ensembl)
+
+WT_H3K27me3_250bp_ENCFF201SJZ_geneSymbol = WT_H3K27me3_250bp_ENCFF201SJZ %>%
+    left_join(gene_info %>% dplyr::rename("gene" = "ensembl_gene_id",  "geneSymbol" = "hgnc_symbol")) %>%
+    dplyr::select(geneSymbol, bc) %>%
+    unique() %>%
+    group_by(geneSymbol) %>%
+    filter(geneSymbol != "") %>%
+    mutate(bc_max = max(bc)) %>%
+    filter(geneSymbol != "NA") %>%
+    dplyr::select(geneSymbol, bc_max) %>%
+    unique()
+
+write.table(WT_H3K27me3_250bp_ENCFF201SJZ_geneSymbol, file = "output/binBw/WT_H3K27me3_250bp_ENCFF201SJZ_geneSymbol.txt", sep = "\t", row.names = FALSE, quote = FALSE)
+
+
+# H3K27me3 500bp #####################################################
+
+
+
+## Mint-ChIP-seq fcovercontrol with 3 Bio Rep = `output/bigwig_ENCODE/ENCFF201SJZ_fcovercontrol123`
+bwFile <- "output/bigwig_ENCODE/ENCFF201SJZ.bigWig"
+regions <- read.table("../../001_EZH1_Project/003__CutRun/meta/ENCFF159KBI_gene_500bpTSS_sorted.bed", header = FALSE, sep = "\t", col.names = c("chr", "start", "end", "gene", "strand")) 
+counts <- bin.bw(bwFile, regions, outfile.prefix = "output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ")
+#### Collect output and gene information
+WT_H3K27me3_500bp_ENCFF201SJZ <- as_tibble(fread(cmd = "gunzip -c output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ.bgz") ) %>%
+ left_join(regions) %>%
+ separate(gene, into = c("gene", "version"), sep = "\\.") %>%
+ dplyr::select(gene, bc) %>%
+ unique()
+
+ensembl <- useEnsembl(biomart = "genes", dataset = "hsapiens_gene_ensembl")
+gene_ids <- unique(WT_H3K27me3_500bp_ENCFF201SJZ$gene)
+gene_info <- getBM(attributes = c('ensembl_gene_id', 'hgnc_symbol'),
+                   filters = 'ensembl_gene_id',
+                   values = gene_ids,
+                   mart = ensembl)
+
+WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol = WT_H3K27me3_500bp_ENCFF201SJZ %>%
+    left_join(gene_info %>% dplyr::rename("gene" = "ensembl_gene_id",  "geneSymbol" = "hgnc_symbol")) %>%
+    dplyr::select(geneSymbol, bc) %>%
+    unique() %>%
+    group_by(geneSymbol) %>%
+    mutate(bc_max = max(bc)) %>%
+    filter(geneSymbol != "NA") %>%
+    dplyr::select(geneSymbol, bc_max) %>%
+    unique()
+
+write.table(WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol, file = "output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol.txt", sep = "\t", row.names = FALSE, quote = FALSE)
+
+
+```
+
+--> Looks good, only bc_max generated
+
+
+
+
+
+
+
 
 
 
