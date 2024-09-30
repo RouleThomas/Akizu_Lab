@@ -1791,9 +1791,6 @@ ggbarplot(p14_CB_filt_prop, x = "cluster", y = "proportion", fill = "genotype",
 dev.off()
 
 
-XXXY test other test ? XXX
-
-
 
 
 
