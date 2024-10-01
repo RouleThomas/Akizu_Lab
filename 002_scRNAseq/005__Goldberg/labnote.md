@@ -460,7 +460,7 @@ assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the pre
 
 ##### QC filtering _ V3 ############################################
 
-### V1 not super stringeant; mit > 15, rb > 10 and RNAfeaure 400 #############################################
+###  mit > 15, rb > 10 and RNAfeaure 400 #############################################
 apply_qc <- function(seurat_object) {
   seurat_object[['QC']] <- ifelse(seurat_object@meta.data$Is_doublet == 'True', 'Doublet', 'Pass')
   seurat_object[['QC']] <- ifelse(seurat_object@meta.data$nFeature_RNA < 400 & seurat_object@meta.data$QC == 'Pass', 'Low_nFeature', seurat_object@meta.data$QC)
@@ -552,18 +552,18 @@ output_dir <- "output/seurat/"
 ## Call the function to save the Seurat objects
 save_seurat_objects(seurat_objects, output_dir)
 ###############################################################################################
-############# READ samples  ################################################
+############# READ samples  (QC V1 V2 or V3 = V1_numeric...)################################################
 # Function to load Seurat objects
 load_seurat_objects <- function(file_paths) {
   seurat_objects <- list()
   for (file_path in file_paths) {
-    sample_name <- gsub("_V1_numeric.rds", "", basename(file_path))
+    sample_name <- gsub("_V3_numeric.rds", "", basename(file_path))
     seurat_objects[[sample_name]] <- readRDS(file_path)
   }
   return(seurat_objects)
 }
 output_dir <- "output/seurat/"
-file_paths <- list.files(output_dir, pattern = "_V1_numeric.rds$", full.names = TRUE)
+file_paths <- list.files(output_dir, pattern = "_V3_numeric.rds$", full.names = TRUE)
 # Call the function to load the Seurat objects
 seurat_objects <- load_seurat_objects(file_paths)
 # Loop through the list and assign each Seurat object to a variable with the same name
@@ -1678,7 +1678,6 @@ pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-QCV3dim30kparam50res035
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = all_markers, max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
-xxxyy
 
 ## p14 cell type proportion ###############################
 ### count nb of cells in each cluster
@@ -2172,7 +2171,602 @@ dev.off()
 
 
 
+## p35 cell type proportion ###############################
+### count nb of cells in each cluster
+WT_p35_CB_Rep1 = table(Idents(WT_Kcnc1_p35_CB_1step.sct)[WT_Kcnc1_p35_CB_1step.sct$orig.ident == "WT_p35_CB_Rep1"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p35",
+             replicate= "Rep1")
+WT_p35_CB_Rep2 = table(Idents(WT_Kcnc1_p35_CB_1step.sct)[WT_Kcnc1_p35_CB_1step.sct$orig.ident == "WT_p35_CB_Rep2"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p35",
+             replicate= "Rep2")
+WT_p35_CB_Rep3 = table(Idents(WT_Kcnc1_p35_CB_1step.sct)[WT_Kcnc1_p35_CB_1step.sct$orig.ident == "WT_p35_CB_Rep3"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p35",
+             replicate= "Rep3")
 
+Kcnc1_p35_CB_Rep1 = table(Idents(WT_Kcnc1_p35_CB_1step.sct)[WT_Kcnc1_p35_CB_1step.sct$orig.ident == "Kcnc1_p35_CB_Rep1"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p35",
+             replicate= "Rep1")
+Kcnc1_p35_CB_Rep2 = table(Idents(WT_Kcnc1_p35_CB_1step.sct)[WT_Kcnc1_p35_CB_1step.sct$orig.ident == "Kcnc1_p35_CB_Rep2"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p35",
+             replicate= "Rep2")
+Kcnc1_p35_CB_Rep3 = table(Idents(WT_Kcnc1_p35_CB_1step.sct)[WT_Kcnc1_p35_CB_1step.sct$orig.ident == "Kcnc1_p35_CB_Rep3"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p35",
+             replicate= "Rep3")
+
+
+p35_CB = WT_p35_CB_Rep1 %>%
+  bind_rows(WT_p35_CB_Rep2) %>%
+  bind_rows(WT_p35_CB_Rep3) %>%
+  bind_rows(Kcnc1_p35_CB_Rep1) %>%
+  bind_rows(Kcnc1_p35_CB_Rep2) %>%
+  bind_rows(Kcnc1_p35_CB_Rep3) %>%
+  as_tibble()
+  
+
+
+
+### Keeping all replicates
+p35_CB_prop = p35_CB %>%
+  group_by(replicate, genotype) %>%
+  mutate(total_count = sum(count)) %>%
+  ungroup() %>%
+  mutate(proportion = (count / total_count) * 100)
+
+p35_CB_prop$genotype <-
+  factor(p35_CB_prop$genotype,
+         c("WT", "Kcnc1"))
+
+pdf("output/seurat/histogramProp_WT_Kcnc1_p35_CB_1step_QCV3dim50kparam50res03.pdf", width=7, height=4)
+ggbarplot(p35_CB_prop, x = "cluster", y = "proportion", fill = "genotype",
+                  color = "genotype", palette = c("black", "blue"),
+                  position = position_dodge(0.8), # Separate bars by genotype
+                  add = "mean_se", # Add error bars
+                  lab.pos = "out", lab.size = 3) +
+  stat_compare_means(aes(group = genotype), method = "t.test", label = "p.signif") +
+  theme_bw() +
+  labs(x = "Cell Type (Cluster)", y = "Cell Proportion (%)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+### Outlier removed (WT and Kcnc1_Rep2)
+
+p35_CB_filt = WT_p35_CB_Rep1 %>%
+  bind_rows(WT_p35_CB_Rep3) %>%
+  bind_rows(Kcnc1_p35_CB_Rep1) %>%
+  bind_rows(Kcnc1_p35_CB_Rep3) %>%
+  as_tibble()
+  
+
+
+p35_CB_filt_prop = p35_CB_filt %>%
+  group_by(replicate, genotype) %>%
+  mutate(total_count = sum(count)) %>%
+  ungroup() %>%
+  mutate(proportion = (count / total_count) * 100)
+
+p35_CB_filt_prop$genotype <-
+  factor(p35_CB_filt_prop$genotype,
+         c("WT", "Kcnc1"))
+
+pdf("output/seurat/histogramProp_WT_Kcnc1_p35_CB_1step_filtOutlier_QCV3dim50kparam50res03.pdf", width=7, height=4)
+ggbarplot(p35_CB_filt_prop, x = "cluster", y = "proportion", fill = "genotype",
+                  color = "genotype", palette = c("black", "blue"),
+                  position = position_dodge(0.8), # Separate bars by genotype
+                  add = "mean_se", # Add error bars
+                  lab.pos = "out", lab.size = 3) +
+  stat_compare_means(aes(group = genotype), method = "t.test", label = "p.signif") + # or p.format
+  theme_bw() +
+  labs(x = "Cell Type (Cluster)", y = "Cell Proportion (%)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+##########################################
+## integration WT Kcnc1 p180 all replicates (1st replicate, then genotype) ######
+ ##########################################
+
+
+XXXY HERE !!! XXXY
+
+
+
+WT_p180_CB_Rep1$replicate <- "Rep1"
+WT_p180_CB_Rep2$replicate <- "Rep2"
+WT_p180_CB_Rep3$replicate <- "Rep3"
+
+WT_p180_CB_Rep1$condition <- "WT"
+WT_p180_CB_Rep2$condition <- "WT"
+WT_p180_CB_Rep3$condition <- "WT"
+
+Kcnc1_p180_CB_Rep1$replicate <- "Rep1"
+Kcnc1_p180_CB_Rep2$replicate <- "Rep2"
+Kcnc1_p180_CB_Rep3$replicate <- "Rep3"
+
+Kcnc1_p180_CB_Rep1$condition <- "Kcnc1"
+Kcnc1_p180_CB_Rep2$condition <- "Kcnc1"
+Kcnc1_p180_CB_Rep3$condition <- "Kcnc1"
+
+set.seed(42)
+
+
+# Replicate and Genotype integration (1 step integration)
+## WT Rep
+
+### Reg v1 _ better than Regv2
+WT_p180_CB_Rep1 <- SCTransform(WT_p180_CB_Rep1, method = "glmGamPoi", ncells = 8496, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+WT_p180_CB_Rep2 <- SCTransform(WT_p180_CB_Rep2, method = "glmGamPoi", ncells = 11577, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+WT_p180_CB_Rep3 <- SCTransform(WT_p180_CB_Rep3, method = "glmGamPoi", ncells = 14582, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p180_CB_Rep1 <- SCTransform(Kcnc1_p180_CB_Rep1, method = "glmGamPoi", ncells = 11642, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p180_CB_Rep2 <- SCTransform(Kcnc1_p180_CB_Rep2, method = "glmGamPoi", ncells = 33698, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p180_CB_Rep3 <- SCTransform(Kcnc1_p180_CB_Rep3, method = "glmGamPoi", ncells = 18205, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+
+
+
+
+srat.list <- list(WT_p180_CB_Rep1 = WT_p180_CB_Rep1, WT_p180_CB_Rep2 = WT_p180_CB_Rep2, WT_p180_CB_Rep3 = WT_p180_CB_Rep3, Kcnc1_p180_CB_Rep1 = Kcnc1_p180_CB_Rep1, Kcnc1_p180_CB_Rep2 = Kcnc1_p180_CB_Rep2, Kcnc1_p180_CB_Rep3 = Kcnc1_p180_CB_Rep3)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+WT_Kcnc1_p180_CB_1step.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+WT_Kcnc1_p180_CB_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p180_CB_1step.anchors, normalization.method = "SCT")
+
+
+#### UMAP
+DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "integrated"
+
+WT_Kcnc1_p180_CB_1step.sct <- RunPCA(WT_Kcnc1_p180_CB_1step.sct, verbose = FALSE, npcs = 50)
+WT_Kcnc1_p180_CB_1step.sct <- RunUMAP(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
+WT_Kcnc1_p180_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", k.param = 50, dims = 1:50)
+WT_Kcnc1_p180_CB_1step.sct <- FindClusters(WT_Kcnc1_p180_CB_1step.sct, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+
+WT_Kcnc1_p180_CB_1step.sct$condition <- factor(WT_Kcnc1_p180_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim50kparam50res03.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=TRUE)
+dev.off()
+
+
+
+# genes
+
+DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "SCT"
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim50-List6.pdf", width=30, height=60)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Gabra6", "Pax6", "Kcnc2", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Aldh1a3", "Pax2", "Eomes", "Calb1", "Slc1a6", "Car8", "Zeb2", "Aqp4", "Slc39a12", "Mbp", "Mag", "Plp1", "Aldoc", "Cnp", "Itgam", "Cx3cr1", "Ptgds", "Dcn", "Lef1", "Notum", "Apcdd1", "Dlc1", "Pdgfrb", "Kl",  "Ttr"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+
+
+
+
+
+#### QC metrics investigation ####################################
+pdf("output/seurat/VlnPlot_QCmetrics_SCT_WT_Kcnc1_p180_CB_1step-1stepIntegrationRegressNotRepeated-QCV3dim50kparam50res03-countMtRbRegression.pdf", width=20, height=5)
+VlnPlot(WT_Kcnc1_p180_CB_1step.sct,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+
+pdf("output/seurat/VlnPlot_QCmetrics_nFeature_RNA_SCT_WT_Kcnc1_p180_CB_1step-1stepIntegrationRegressNotRepeated-QCV3dim50kparam50res03-countMtRbRegression.pdf", width=5, height=5)
+VlnPlot(WT_Kcnc1_p180_CB_1step.sct,features = c("nFeature_RNA")) +
+  ylim(0,2000)
+dev.off()
+
+pdf("output/seurat/VlnPlot_QCmetrics_nCount_RNA_SCT_WT_Kcnc1_p180_CB_1step-1stepIntegrationRegressNotRepeated-QCV3dim50kparam50res03-countMtRbRegression.pdf", width=5, height=5)
+VlnPlot(WT_Kcnc1_p180_CB_1step.sct,features = c("nCount_RNA")) +
+  ylim(0,10000)
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p180_CB_nFeature_RNA-1stepIntegrationRegressNotRepeated-QCV3dim50kparam50res03.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=FALSE, features = "nFeature_RNA")
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p180_CB_percentmt-1stepIntegrationRegressNotRepeated-QCV3dim50kparam50res03.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.mt")
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p180_CB_percentrb-1stepIntegrationRegressNotRepeated-QCV3dim50kparam50res03.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.rb")
+dev.off()  
+############################################################
+
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB_splitCondition-1stepIntegrationRegressNotRepeated-QCV3dim50kparam50res03.pdf", width=13, height=6)
+DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=TRUE, split.by = "condition")
+dev.off()
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB_splitReplicate-1stepIntegrationRegressNotRepeated-QCV3dim50kparam50res03.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=TRUE, split.by = "replicate")
+dev.off()
+
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_p180_CB_Kcnc1_Phase-1stepIntegrationRegressNotRepeated-QCV3dim50kparam50res03.pdf", width=10, height=6)
+DimPlot(WT_Kcnc1_p180_CB_1step.sct, group.by= "Phase") & 
+  theme(plot.title = element_text(size=10))
+dev.off()  
+
+
+# save ##################
+## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step.sct_V1_numeric.rds") # regMtRbCount with QC_V3
+WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step.sct_V1_numeric.rds")
+## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV3dim50kparam50res03.sct_V1_numeric.rds") # regMtRbCount with QC_V3
+## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV3dim50kparam50res03.sct_V1_label.rds") # regMtRbCount with QC_V3
+
+
+set.seed(42)
+##########
+
+
+## Let's work with 1step integration: 
+# --> 1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim50kparam50res03 = WT_Kcnc1_p180_CB_1step_V1
+WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV3dim50kparam50res03.sct_V1_numeric.rds")
+
+
+############################ EasyCellType automatic annotation ##########################################
+
+### Find all markers 
+all_markers <- FindAllMarkers(WT_Kcnc1_p180_CB_1step.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+
+write.table(all_markers, file = "output/seurat/srat_WT_Kcnc1_p180_CB_1step_QCV3dim50kparam50res03_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+# BiocManager::install("EasyCellType")
+library("EasyCellType")
+library("org.Mm.eg.db")
+library("AnnotationDbi")
+
+## load marker
+all_markers <- read.delim("output/seurat/srat_WT_Kcnc1_p180_CB_1step_QCV3dim50kparam50res03_all_markers.txt", header = TRUE, row.names = 1)
+
+
+
+## Convert geneSymbol to EntrezID
+all_markers$entrezid <- mapIds(org.Mm.eg.db,
+                           keys=all_markers$gene, #Column containing Ensembl gene ids
+                           column="ENTREZID",
+                           keytype="SYMBOL",
+                           multiVals="first")
+all_markers <- na.omit(all_markers)
+
+## Sort the datafram (data frame containing Entrez IDs, clusters and expression scores)
+
+all_markers_sort <- data.frame(gene=all_markers$entrezid, cluster=all_markers$cluster, 
+                      score=all_markers$avg_log2FC) %>% 
+  group_by(cluster) %>% 
+  mutate(rank = rank(score),  ties.method = "random") %>% 
+  arrange(desc(rank)) 
+input.d <- as.data.frame(all_markers_sort[, 1:3])
+
+## Run the enrihcment analysis
+
+
+annot.GSEA <- easyct(input.d, db="cellmarker", # cellmarker or panglao or clustermole
+                    species="Mouse", #  Human or Mouse
+                    tissue=c("Brain", "Cerebellum", "Hippocampus"), p_cut=0.5,   # to see: data(cellmarker_tissue), data(clustermole_tissue), data(panglao_tissue)
+                    test="GSEA")    # GSEA or fisher?
+
+
+annot.GSEA <- easyct(input.d, db="clustermole", # cellmarker or panglao or clustermole
+                    species="Mouse", #  Human or Mouse
+                    tissue=c("Brain"), p_cut=0.5,   # to see: data(cellmarker_tissue), data(clustermole_tissue), data(panglao_tissue)
+                    test="GSEA")    # GSEA or fisher?
+
+
+
+
+
+## plots
+
+
+
+#pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p180_CB_1step_V1-cellmarker_CerebellumBrainHippocampus.pdf", width=6, height=8)
+#pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p180_CB_1step_V1-clustermole_Brain.pdf", width=6, height=8)
+
+pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p180_CB_1step_QCV3dim50kparam50res03-clustermole_Brain.pdf", width=6, height=8)
+plot_dot(test="GSEA", annot.GSEA) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+dev.off()
+
+
+
+
+# panglao --> NOT working... 'subscript out of bounds' error... I tried gene as ENSEMBL, entrezID and geneSymbo, human/mic, everything...
+
+
+#
+
+
+
+
+## check some genes
+
+
+
+DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "SCT"
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim50-SuppTab1Marker.pdf", width=30, height=40)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c( "Ppp1r17", "Gabra6", "Grm2", "Sst","Prkcd", "Sorcs3", "Ptprk", "Nxph1", "Cdh22","Htr2a", "Edil3","Aldh1a3", "Slc6a5","Eomes","Gdf10"
+), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+
+
+
+
+############ V1 naming (output/seurat/WT_Kcnc1_p180_CB_1step-QCV3dim50kparam50res03.sct_V1_numeric.rds = QCV3dim50kparam50res03)
+
+Cluster1: Granular
+Cluster2: MLI1
+Cluster3: Interneuron
+Cluster4: Endothelial_Stalk
+Cluster5: MLI2_1
+Cluster6: Astrocyte
+Cluster7: MLI2_2
+Cluster8: Golgi
+Cluster9: Bergman_Glia
+Cluster10: UBC
+Cluster11: Endothelial
+Cluster12: Choroid_Plexus
+Cluster13: Purkinje
+Cluster14: Meningeal
+Cluster15: OPC
+
+
+new.cluster.ids <- c(
+  "Granular",
+  "MLI1",
+  "Interneuron",
+  "Endothelial_Stalk",
+  "MLI2_1",
+  "Astrocyte",
+  "MLI2_2",
+  "Golgi",
+  "Bergman_Glia",
+  "Unipolar_Brush",
+  "Endothelial",
+  "Choroid_Plexus",
+  "Purkinje",
+  "Meningeal",
+  "OPC"
+)
+
+names(new.cluster.ids) <- levels(WT_Kcnc1_p180_CB_1step.sct)
+WT_Kcnc1_p180_CB_1step.sct <- RenameIdents(WT_Kcnc1_p180_CB_1step.sct, new.cluster.ids)
+WT_Kcnc1_p180_CB_1step.sct$cluster.annot <- Idents(WT_Kcnc1_p180_CB_1step.sct) # create a new slot in my seurat object
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB_1step_QCV3dim50kparam50res03_label.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+dev.off()
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB_1step_QCV3dim50kparam50res03_noSplit_label.pdf", width=9, height=6)
+DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5)
+dev.off()
+
+
+
+# All in dotplot
+DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "SCT"
+
+
+List7:
+Granular = Gabra6, Pax6
+Interneuron = Kcnc2
+MLI1 = Sorcs3, Ptprk
+MLI2 = Nxph1, Cdh22
+Golgi = Pax2
+Unipolar_Brush = Eomes, Rgs6, Tafa2
+Purkinje = Calb1, Slc1a6, Car8
+Astrocyte = Zeb2
+Bergman_Glia = Aqp4, Slc39a12
+OPC = Vcan, Sox6
+Meningeal = Ptgds, Dcn
+Endothelial = Lef1, Notum, Apcdd1
+Choroid plexus cells = Kl,  Ttr
+Endothelial_Stalk = Actb, Tmsb4x
+
+
+
+all_markers <- c(
+  "Gabra6", "Pax6",
+  "Kcnc2",
+  "Sorcs3", "Ptprk",
+  "Nxph1", "Cdh22",
+  "Pax2",
+  "Eomes", "Rgs6", "Tafa2",
+  "Calb1", "Slc1a6", "Car8",
+  "Zeb2",
+  "Aqp4", "Slc39a12",
+  "Vcan", "Sox6",
+  "Ptgds", "Dcn",
+  "Lef1", "Notum", "Apcdd1",
+  "Kl",  "Ttr",
+  "Actb", "Tmsb4x"
+)
+
+
+
+levels(WT_Kcnc1_p180_CB_1step.sct) <- c(
+  "Granular",
+  "Interneuron",
+  "MLI1",
+  "MLI2_1",
+  "MLI2_2",
+  "Golgi",
+  "Unipolar_Brush",
+  "Purkinje",
+  "Astrocyte",
+  "Bergman_Glia",
+  "OPC",
+  "Meningeal",
+  "Endothelial",
+  "Choroid_Plexus",
+  "Endothelial_Stalk"
+)
+
+
+
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p180_CB_1step_QCV3dim50kparam50res03_label.pdf", width=11, height=4.5)
+DotPlot(WT_Kcnc1_p180_CB_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
+
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p180_CB_1step_QCV3dim50kparam50res03_label_vertical.pdf", width=11, height=4.5)
+DotPlot(WT_Kcnc1_p180_CB_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
+dev.off()
+
+
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-QCV3dim50kparam50res03-List7.pdf", width=30, height=70)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = all_markers, max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+
+
+
+
+## p180 cell type proportion ###############################
+### count nb of cells in each cluster
+WT_p180_CB_Rep1 = table(Idents(WT_Kcnc1_p180_CB_1step.sct)[WT_Kcnc1_p180_CB_1step.sct$orig.ident == "WT_p180_CB_Rep1"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p180",
+             replicate= "Rep1")
+WT_p180_CB_Rep2 = table(Idents(WT_Kcnc1_p180_CB_1step.sct)[WT_Kcnc1_p180_CB_1step.sct$orig.ident == "WT_p180_CB_Rep2"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p180",
+             replicate= "Rep2")
+WT_p180_CB_Rep3 = table(Idents(WT_Kcnc1_p180_CB_1step.sct)[WT_Kcnc1_p180_CB_1step.sct$orig.ident == "WT_p180_CB_Rep3"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p180",
+             replicate= "Rep3")
+
+Kcnc1_p180_CB_Rep1 = table(Idents(WT_Kcnc1_p180_CB_1step.sct)[WT_Kcnc1_p180_CB_1step.sct$orig.ident == "Kcnc1_p180_CB_Rep1"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p180",
+             replicate= "Rep1")
+Kcnc1_p180_CB_Rep2 = table(Idents(WT_Kcnc1_p180_CB_1step.sct)[WT_Kcnc1_p180_CB_1step.sct$orig.ident == "Kcnc1_p180_CB_Rep2"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p180",
+             replicate= "Rep2")
+Kcnc1_p180_CB_Rep3 = table(Idents(WT_Kcnc1_p180_CB_1step.sct)[WT_Kcnc1_p180_CB_1step.sct$orig.ident == "Kcnc1_p180_CB_Rep3"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p180",
+             replicate= "Rep3")
+
+
+p180_CB = WT_p180_CB_Rep1 %>%
+  bind_rows(WT_p180_CB_Rep2) %>%
+  bind_rows(WT_p180_CB_Rep3) %>%
+  bind_rows(Kcnc1_p180_CB_Rep1) %>%
+  bind_rows(Kcnc1_p180_CB_Rep2) %>%
+  bind_rows(Kcnc1_p180_CB_Rep3) %>%
+  as_tibble()
+  
+
+
+
+### Keeping all replicates
+p180_CB_prop = p180_CB %>%
+  group_by(replicate, genotype) %>%
+  mutate(total_count = sum(count)) %>%
+  ungroup() %>%
+  mutate(proportion = (count / total_count) * 100)
+
+p180_CB_prop$genotype <-
+  factor(p180_CB_prop$genotype,
+         c("WT", "Kcnc1"))
+
+pdf("output/seurat/histogramProp_WT_Kcnc1_p180_CB_1step_QCV3dim50kparam50res03.pdf", width=7, height=4)
+ggbarplot(p180_CB_prop, x = "cluster", y = "proportion", fill = "genotype",
+                  color = "genotype", palette = c("black", "blue"),
+                  position = position_dodge(0.8), # Separate bars by genotype
+                  add = "mean_se", # Add error bars
+                  lab.pos = "out", lab.size = 3) +
+  stat_compare_means(aes(group = genotype), method = "t.test", label = "p.signif") +
+  theme_bw() +
+  labs(x = "Cell Type (Cluster)", y = "Cell Proportion (%)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+### Outlier removed (WT and Kcnc1_Rep2)
+
+p180_CB_filt = WT_p180_CB_Rep1 %>%
+  bind_rows(WT_p180_CB_Rep3) %>%
+  bind_rows(Kcnc1_p180_CB_Rep1) %>%
+  bind_rows(Kcnc1_p180_CB_Rep3) %>%
+  as_tibble()
+  
+
+
+p180_CB_filt_prop = p180_CB_filt %>%
+  group_by(replicate, genotype) %>%
+  mutate(total_count = sum(count)) %>%
+  ungroup() %>%
+  mutate(proportion = (count / total_count) * 100)
+
+p180_CB_filt_prop$genotype <-
+  factor(p180_CB_filt_prop$genotype,
+         c("WT", "Kcnc1"))
+
+pdf("output/seurat/histogramProp_WT_Kcnc1_p180_CB_1step_filtOutlier_QCV3dim50kparam50res03.pdf", width=7, height=4)
+ggbarplot(p180_CB_filt_prop, x = "cluster", y = "proportion", fill = "genotype",
+                  color = "genotype", palette = c("black", "blue"),
+                  position = position_dodge(0.8), # Separate bars by genotype
+                  add = "mean_se", # Add error bars
+                  lab.pos = "out", lab.size = 3) +
+  stat_compare_means(aes(group = genotype), method = "t.test", label = "p.signif") + # or p.format
+  theme_bw() +
+  labs(x = "Cell Type (Cluster)", y = "Cell Proportion (%)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
 
 
 
