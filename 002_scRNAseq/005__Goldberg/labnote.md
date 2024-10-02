@@ -2339,31 +2339,67 @@ WT_Kcnc1_p180_CB_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p180_CB_1step.a
 #### UMAP
 DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "integrated"
 
-WT_Kcnc1_p180_CB_1step.sct <- RunPCA(WT_Kcnc1_p180_CB_1step.sct, verbose = FALSE, npcs = 50)
-WT_Kcnc1_p180_CB_1step.sct <- RunUMAP(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
-WT_Kcnc1_p180_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", k.param = 50, dims = 1:50)
-WT_Kcnc1_p180_CB_1step.sct <- FindClusters(WT_Kcnc1_p180_CB_1step.sct, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+WT_Kcnc1_p180_CB_1step.sct <- RunPCA(WT_Kcnc1_p180_CB_1step.sct, verbose = FALSE, npcs = 30)
+WT_Kcnc1_p180_CB_1step.sct <- RunUMAP(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
+WT_Kcnc1_p180_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", k.param = 50, dims = 1:30)
+WT_Kcnc1_p180_CB_1step.sct <- FindClusters(WT_Kcnc1_p180_CB_1step.sct, resolution = 0.2, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
 WT_Kcnc1_p180_CB_1step.sct$condition <- factor(WT_Kcnc1_p180_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim50kparam50res03.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim30kparam50res02.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
-XXXY here !!! XXXY
+XXXY here !!! RE RUN THGE dim 30 and troubleshoot XXXY
 
 # genes
 
 DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "SCT"
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim50-List6.pdf", width=30, height=60)
-FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Gabra6", "Pax6", "Kcnc2", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Aldh1a3", "Pax2", "Eomes", "Calb1", "Slc1a6", "Car8", "Zeb2", "Aqp4", "Slc39a12", "Mbp", "Mag", "Plp1", "Aldoc", "Cnp", "Itgam", "Cx3cr1", "Ptgds", "Dcn", "Lef1", "Notum", "Apcdd1", "Dlc1", "Pdgfrb", "Kl",  "Ttr"), max.cutoff = 1, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim30-List6_7.pdf", width=30, height=60)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Gabra6", "Pax6", "Kcnc2", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Aldh1a3", "Pax2", "Eomes", "Rgs6", "Tafa2", "Calb1", "Slc1a6", "Car8", "Zeb2", "Aqp4", "Slc39a12", "Vcan", "Sox6", "Mbp", "Mag", "Plp1", "Aldoc", "Cnp", "Itgam", "Cx3cr1", "Ptgds", "Dcn", "Lef1", "Notum", "Apcdd1", "Dlc1", "Pdgfrb", "Kl",  "Ttr", "Actb", "Tmsb4x"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
 
 
+
+
+List6:
+Granular = Gabra6, Pax6
+Interneuron = Kcnc2
+MLI1 = Sorcs3, Ptprk
+MLI2 = Nxph1, Cdh22
+PLI = Aldh1a3
+Golgi = Pax2
+Unipolar_Brush = Eomes
+Purkinje = Calb1, Slc1a6, Car8
+Astrocyte = Zeb2
+Bergman_Glia = Aqp4, Slc39a12
+Oligodendrocyte= Mbp, Mag, Plp1
+OPC = Aldoc, Cnp
+Microglia = Itgam, Cx3cr1
+Meningeal = Ptgds, Dcn
+Endothelial = Lef1, Notum, Apcdd1
+Endothelial_Mural =  Dlc1, Pdgfrb
+Choroid plexus cells = Kl,  Ttr
+
+List7:
+Granular = Gabra6, Pax6
+Interneuron = Kcnc2
+MLI1 = Sorcs3, Ptprk
+MLI2 = Nxph1, Cdh22
+Golgi = Pax2
+Unipolar_Brush = Eomes, Rgs6, Tafa2
+Purkinje = Calb1, Slc1a6, Car8
+Astrocyte = Zeb2
+Bergman_Glia = Aqp4, Slc39a12
+OPC = Vcan, Sox6
+Meningeal = Ptgds, Dcn
+Endothelial = Lef1, Notum, Apcdd1
+Choroid plexus cells = Kl,  Ttr
+Endothelial_Stalk = Actb, Tmsb4x
 
 
 
@@ -2891,25 +2927,131 @@ Generate coverage bigwig files to then generate PCA with deeptools; maybe it wil
 conda activate deeptools
 
 # raw
-sbatch scripts/bamtobigwig_p14_CB_WT.sh # 27211952 xxx
-sbatch scripts/bamtobigwig_p14_CB_Kcnc1.sh # 27211957 xxx
+sbatch scripts/bamtobigwig_p14_CB_WT.sh # 27211952 ok
+sbatch scripts/bamtobigwig_p14_CB_Kcnc1.sh # 27211957 ok
 
-sbatch scripts/bamtobigwig_p35_CB_WT.sh # 27211960 xxx
-sbatch scripts/bamtobigwig_p35_CB_Kcnc1.sh # 27211962 xxx
+sbatch scripts/bamtobigwig_p35_CB_WT.sh # 27211960 ok
+sbatch scripts/bamtobigwig_p35_CB_Kcnc1.sh # 27211962 ok
 
+sbatch scripts/bamtobigwig_p180_CB_WT.sh # 27242635 xxx
+sbatch scripts/bamtobigwig_p180_CB_Kcnc1.sh # 27242642 xxx
 
 # BPM norm (=TPM)
-sbatch scripts/bamtobigwig_BPMnorm_p14_CB_WT.sh # 27211977 xxx
-sbatch scripts/bamtobigwig_BPMnorm_p14_CB_Kcnc1.sh # 27211988 xxx
+sbatch scripts/bamtobigwig_BPMnorm_p14_CB_WT.sh # 27211977 ok
+sbatch scripts/bamtobigwig_BPMnorm_p14_CB_Kcnc1.sh # 27211988 ok
 
-sbatch scripts/bamtobigwig_BPMnorm_p35_CB_WT.sh # 27211986 xxx
-sbatch scripts/bamtobigwig_BPMnorm_p35_CB_Kcnc1.sh # 27212007 xxx
+sbatch scripts/bamtobigwig_BPMnorm_p35_CB_WT.sh # 27211986 ok
+sbatch scripts/bamtobigwig_BPMnorm_p35_CB_Kcnc1.sh # 27212007 ok
+
+sbatch scripts/bamtobigwig_BPMnorm_p180_CB_WT.sh # 27242775 xxx
+sbatch scripts/bamtobigwig_BPMnorm_p180_CB_Kcnc1.sh # 27242783 xxx
+
 ```
 
---> xxx
+
+Generate PCA plots
+
+
+```bash
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_BPMnorm_p14.sh # 27241818 ok
+
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_BPMnorm_p14.npz \
+    --transpose \
+    --ntop 0 \
+    --labels WT_p14_CB_Rep1 WT_p14_CB_Rep2 WT_p14_CB_Rep3 Kcnc1_p14_CB_Rep1 Kcnc1_p14_CB_Rep2 Kcnc1_p14_CB_Rep3 \
+    --colors black black black blue blue blue \
+    --markers o x s o x s \
+    -o output/bigwig/multiBigwigSummary_BPMnorm_p14_plotPCA.pdf
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_BPMnorm_p14.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels WT_p14_CB_Rep1 WT_p14_CB_Rep2 WT_p14_CB_Rep3 Kcnc1_p14_CB_Rep1 Kcnc1_p14_CB_Rep2 Kcnc1_p14_CB_Rep3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_BPMnorm_p14_heatmap.pdf
+
+
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_BPMnorm_p35.sh # 27241898 ok
+
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_BPMnorm_p35.npz \
+    --transpose \
+    --ntop 0 \
+    --labels WT_p35_CB_Rep1 WT_p35_CB_Rep2 WT_p35_CB_Rep3 Kcnc1_p35_CB_Rep1 Kcnc1_p35_CB_Rep2 Kcnc1_p35_CB_Rep3 \
+    --colors black black black blue blue blue \
+    --markers o x s o x s \
+    -o output/bigwig/multiBigwigSummary_BPMnorm_p35_plotPCA.pdf
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_BPMnorm_p35.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels WT_p35_CB_Rep1 WT_p35_CB_Rep2 WT_p35_CB_Rep3 Kcnc1_p35_CB_Rep1 Kcnc1_p35_CB_Rep2 Kcnc1_p35_CB_Rep3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_BPMnorm_p35_heatmap.pdf
 
 
 
+
+
+
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_raw_p14.sh # 27241962 xxx
+
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_raw_p14.npz \
+    --transpose \
+    --ntop 0 \
+    --labels WT_p14_CB_Rep1 WT_p14_CB_Rep2 WT_p14_CB_Rep3 Kcnc1_p14_CB_Rep1 Kcnc1_p14_CB_Rep2 Kcnc1_p14_CB_Rep3 \
+    --colors black black black blue blue blue \
+    --markers o x s o x s \
+    -o output/bigwig/multiBigwigSummary_raw_p14_plotPCA.pdf
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_raw_p14.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels WT_p14_CB_Rep1 WT_p14_CB_Rep2 WT_p14_CB_Rep3 Kcnc1_p14_CB_Rep1 Kcnc1_p14_CB_Rep2 Kcnc1_p14_CB_Rep3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_raw_p14_heatmap.pdf
+
+
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_raw_p35.sh # 27242034 xxx
+
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_raw_p35.npz \
+    --transpose \
+    --ntop 0 \
+    --labels WT_p14_CB_Rep1 WT_p14_CB_Rep2 WT_p14_CB_Rep3 Kcnc1_p14_CB_Rep1 Kcnc1_p14_CB_Rep2 Kcnc1_p14_CB_Rep3 \
+    --colors black black black blue blue blue \
+    --markers o x s o x s \
+    -o output/bigwig/multiBigwigSummary_raw_p35_plotPCA.pdf
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_raw_p35.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels WT_p14_CB_Rep1 WT_p14_CB_Rep2 WT_p14_CB_Rep3 Kcnc1_p14_CB_Rep1 Kcnc1_p14_CB_Rep2 Kcnc1_p14_CB_Rep3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_raw_p35_heatmap.pdf
+
+
+
+
+```
 
 
 

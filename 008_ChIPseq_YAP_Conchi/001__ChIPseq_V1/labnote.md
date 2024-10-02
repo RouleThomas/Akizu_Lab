@@ -7349,10 +7349,660 @@ write.table(WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol, file = "output/binBw/WT_H3
 
 
 
+## Lineage3-  Test Activation point with H3K27me3 (from ENCODE) - correlation
+
+The level of H3K27me3 around TSS has been calculated here at `### Count signal around TSS ENCODE H3K27me3`. 
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+library("ggpubr")
+
+
+# import files
+pseudotime_traj3_peak <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/traj3_noCondition_humangastruloid2472hrs_ActivationPoint.txt") %>%
+    dplyr::rename("geneSymbol" = "gene") 
+pseudotime_traj3_DEG = read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_association_traj3_noCondition_humangastruloid2472hrs.txt") %>%
+    dplyr::rename("geneSymbol" = "gene",
+                  "fdr_DEG" = "fdr") %>% 
+    dplyr::select(geneSymbol, meanLogFC, fdr_DEG)
+pseudotime_traj3_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_NULL_traj3_noCondition_humangastruloid2472hrs.txt") %>%
+    dplyr::rename("geneSymbol" = "gene",
+                  "fdr_StartEnd" = "fdr")  %>% 
+    dplyr::select(geneSymbol, fdr_StartEnd, logFClineage1)
 
 
 
 
+
+pseudotime_traj3_peak_DEG_StartEnd = pseudotime_traj3_peak %>%
+    left_join(pseudotime_traj3_DEG) %>%
+    left_join(pseudotime_traj3_StartEnd)
+
+# H3K27me3 ENCODE #########################
+
+WT_H3K27me3_500bpTSS_geneSymbol <- read_tsv("output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol.txt")
+WT_H3K27me3_250bpTSS_geneSymbol <- read_tsv("output/binBw/WT_H3K27me3_250bp_ENCFF201SJZ_geneSymbol.txt")
+
+pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol = pseudotime_traj3_peak_DEG_StartEnd %>%
+    left_join(WT_H3K27me3_500bpTSS_geneSymbol)  %>%
+  filter(!is.na(bc_max))
+pseudotime_traj3_peak_WT_H3K27me3_250bpTSS_geneSymbol = pseudotime_traj3_peak_DEG_StartEnd %>%
+    left_join(WT_H3K27me3_250bpTSS_geneSymbol) %>%
+  filter(!is.na(bc_max))
+
+
+## signal H3K27me3 vs DEG timecourse
+
+# DEG
+pdf("output/binBw/corr_pseudotime_traj3_peakSmooth_fdrDEG05__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=3, height=4)
+pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter(fdr_DEG <0.05 ) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  stat_cor(method = "pearson", label.x = 0, label.y = 750, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+pdf("output/binBw/corr_pseudotime_traj3_peakSmooth_frdStartEnd0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=3, height=4)
+pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter(fdr_StartEnd == 0 ) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  stat_cor(method = "pearson", label.x = 0, label.y = 750, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+
+
+
+# DEG and smoothpeak >0
+pdf("output/binBw/corr_pseudotime_traj3_peakSmoothOver0fdrDEG0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=3, height=4)
+pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter(fdr_DEG == 0,
+           smooth_peak_pseudotime > 0 ) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  stat_cor(method = "pearson", label.x = 0, label.y = 750, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+pdf("output/binBw/corr_pseudotime_traj3_peakSmooth_peakSmoothOver0frdStartEnd05__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=3, height=4)
+pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter(fdr_StartEnd <0.05 ,
+           smooth_peak_pseudotime > 0 ) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  stat_cor(method = "pearson", label.x = 0, label.y = 750, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+
+
+# bin
+## DEG
+pdf("output/binBw/histbin3_pseudotime_traj3_peakSmooth_fdrDEG05median___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=3, height=2)
+pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    filter(fdr_DEG <0.05) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = median(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+## StartEnd
+pdf("output/binBw/histbin3_pseudotime_traj3_peakSmooth_fdrStartEnd0median___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=3, height=2)
+pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    filter(fdr_StartEnd == 0 ) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = median(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+
+```
+
+
+--> no correlation; not even when filtering smoothpeak>0
+
+
+## Lineage5-  Test Activation point with H3K27me3 (from ENCODE) - correlation
+
+The level of H3K27me3 around TSS has been calculated here at `### Count signal around TSS ENCODE H3K27me3`. 
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+library("ggpubr")
+
+
+# import files
+pseudotime_traj5_peak <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/traj5_noCondition_humangastruloid2472hrs_ActivationPoint.txt") %>%
+    dplyr::rename("geneSymbol" = "gene") 
+pseudotime_traj5_DEG = read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_association_traj5_noCondition_humangastruloid2472hrs.txt") %>%
+    dplyr::rename("geneSymbol" = "gene",
+                  "fdr_DEG" = "fdr") %>% 
+    dplyr::select(geneSymbol, meanLogFC, fdr_DEG)
+pseudotime_traj5_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_NULL_traj5_noCondition_humangastruloid2472hrs.txt") %>%
+    dplyr::rename("geneSymbol" = "gene",
+                  "fdr_StartEnd" = "fdr")  %>% 
+    dplyr::select(geneSymbol, fdr_StartEnd, logFClineage1)
+
+
+
+
+
+pseudotime_traj5_peak_DEG_StartEnd = pseudotime_traj5_peak %>%
+    left_join(pseudotime_traj5_DEG) %>%
+    left_join(pseudotime_traj5_StartEnd)
+
+# H3K27me3 ENCODE #########################
+
+WT_H3K27me3_500bpTSS_geneSymbol <- read_tsv("output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol.txt")
+WT_H3K27me3_250bpTSS_geneSymbol <- read_tsv("output/binBw/WT_H3K27me3_250bp_ENCFF201SJZ_geneSymbol.txt")
+
+pseudotime_traj5_peak_WT_H3K27me3_500bpTSS_geneSymbol = pseudotime_traj5_peak_DEG_StartEnd %>%
+    left_join(WT_H3K27me3_500bpTSS_geneSymbol)  %>%
+  filter(!is.na(bc_max))
+pseudotime_traj5_peak_WT_H3K27me3_250bpTSS_geneSymbol = pseudotime_traj5_peak_DEG_StartEnd %>%
+    left_join(WT_H3K27me3_250bpTSS_geneSymbol) %>%
+  filter(!is.na(bc_max))
+
+
+## signal H3K27me3 vs DEG timecourse
+### DEG
+pdf("output/binBw/corr_pseudotime_traj5_peakSmooth_fdrDEG0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=3, height=4)
+pseudotime_traj5_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter(fdr_DEG == 0 ) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  stat_cor(method = "pearson", label.x = 0, label.y = 500, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+### StartEnd
+pdf("output/binBw/corr_pseudotime_traj5_peakSmooth_frdStartEnd05__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=3, height=4)
+pseudotime_traj5_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter(fdr_StartEnd <0.05 ) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  stat_cor(method = "pearson", label.x = 0, label.y = 400, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+
+
+
+# DEG and smoothpeak >0
+pdf("output/binBw/corr_pseudotime_traj5_peakSmoothOver0fdrDEG05__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=3, height=4)
+pseudotime_traj5_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter(fdr_DEG <0.05,
+           smooth_peak_pseudotime > 0 ) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  stat_cor(method = "pearson", label.x = 0, label.y = 750, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+pdf("output/binBw/corr_pseudotime_traj5_peakSmooth_peakSmoothOver0frdStartEnd0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=3, height=4)
+pseudotime_traj5_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter(fdr_StartEnd == 0 ,
+           smooth_peak_pseudotime > 0 ) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  stat_cor(method = "pearson", label.x = 0, label.y = 750, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+
+
+# bin
+## DEG
+pdf("output/binBw/histbin3_pseudotime_traj5_peakSmooth_fdrDEG0median___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=3, height=2)
+pseudotime_traj5_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    filter(fdr_DEG == 0) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = median(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+## StartEnd
+pdf("output/binBw/histbin3_pseudotime_traj5_peakSmooth_fdrStartEnd05median___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=3, height=2)
+pseudotime_traj5_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    filter(fdr_StartEnd <0.05 ) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = median(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+
+```
+
+
+--> no correlation; not even when filtering smoothpeak>0
+
+
+
+## UNT_Lineage3-DAS_Lineage2 (Common3) -  Test Activation point with H3K27me3 (from ENCODE) - correlation
+
+traj of interest COMMON=3 UNTREATED=traj3; DASATINIB=traj2
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+library("ggpubr")
+
+
+
+# import files
+pseudotime_traj3_peak_UNTREATED <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/traj3_humangastruloidUNTREATED2472hrs_ActivationPoint.txt") %>%
+    dplyr::rename("geneSymbol" = "gene") %>%
+    add_column(condition = "UNTREATED72hrs")
+pseudotime_traj2_peak_DASATINIB <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/traj2_humangastruloidDASATINIB2472hrs_ActivationPoint.txt") %>%
+    dplyr::rename("geneSymbol" = "gene")%>%
+    add_column(condition = "DASATINIB72hrs")
+
+pseudotime_traj3_DEG = read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_association_traj3_noCondition_humangastruloid2472hrs.txt") %>%
+    dplyr::rename("geneSymbol" = "gene",
+                  "fdr_DEG" = "fdr") %>% 
+    dplyr::select(geneSymbol, meanLogFC, fdr_DEG)
+pseudotime_traj3_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_NULL_traj3_noCondition_humangastruloid2472hrs.txt") %>% # NULL added !!!!!
+    dplyr::rename("geneSymbol" = "gene",
+                  "fdr_StartEnd" = "fdr")  %>% 
+    dplyr::select(geneSymbol, fdr_StartEnd, logFClineage1)
+
+
+
+pseudotime_traj32_peak_DEG_StartEnd = pseudotime_traj3_peak_UNTREATED %>%
+    bind_rows(pseudotime_traj2_peak_DASATINIB) %>%
+    left_join(pseudotime_traj3_DEG) %>%
+    left_join(pseudotime_traj3_StartEnd)
+
+# H3K27me3 ENCODE #########################
+
+WT_H3K27me3_500bpTSS_geneSymbol <- read_tsv("output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol.txt")
+WT_H3K27me3_250bpTSS_geneSymbol <- read_tsv("output/binBw/WT_H3K27me3_250bp_ENCFF201SJZ_geneSymbol.txt")
+
+pseudotime_traj32_peak_WT_H3K27me3_500bpTSS_geneSymbol = pseudotime_traj32_peak_DEG_StartEnd %>%
+    left_join(WT_H3K27me3_500bpTSS_geneSymbol)  %>%
+  filter(!is.na(bc_max))
+pseudotime_traj32_peak_WT_H3K27me3_250bpTSS_geneSymbol = pseudotime_traj32_peak_DEG_StartEnd %>%
+    left_join(WT_H3K27me3_250bpTSS_geneSymbol) %>%
+  filter(!is.na(bc_max))
+
+
+
+
+## signal H3K27me3 vs DEG timecourse
+### DEG
+
+pdf("output/binBw/corr_pseudotime_traj32_UNTREATEDDASATINIB_peakSmooth_fdrDEG05__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=5, height=4)
+pseudotime_traj32_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter( fdr_DEG <0.05 ) %>%
+    ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = condition)) +
+    geom_point(alpha = 0.7) +
+    geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = condition)) + 
+    scale_color_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
+    theme_bw()
+dev.off()
+
+
+
+### StartEnd
+
+pdf("output/binBw/corr_pseudotime_traj32_UNTREATEDDASATINIB_peakSmooth_fdrStartEnd0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=5, height=4)
+pseudotime_traj32_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter( fdr_StartEnd ==0 ) %>%
+    ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = condition)) +
+    geom_point(alpha = 0.7) +
+    geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = condition)) + 
+    scale_color_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
+    theme_bw()
+dev.off()
+
+
+
+
+
+
+# DEG and smoothpeak >0
+
+pdf("output/binBw/corr_pseudotime_traj32_UNTREATEDDASATINIB_peakSmooth_peakSmoothOver0fdrDEG0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=5, height=4)
+pseudotime_traj32_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter( fdr_DEG == 0 ,
+            smooth_peak_pseudotime > 0) %>%
+    ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = condition)) +
+    geom_point(alpha = 0.7) +
+    geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = condition)) + 
+    scale_color_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
+    theme_bw()
+dev.off()
+
+
+
+### StartEnd and smoothpeak >0
+
+pdf("output/binBw/corr_pseudotime_traj32_UNTREATEDDASATINIB_peakSmooth_peakSmoothOver0fdrStartEnd05__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=5, height=4)
+pseudotime_traj32_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter( fdr_StartEnd <0.05 ,
+            smooth_peak_pseudotime > 0) %>%
+    ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = condition)) +
+    geom_point(alpha = 0.7) +
+    geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = condition)) + 
+    scale_color_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
+    theme_bw()
+dev.off()
+
+
+
+
+
+
+# bin
+## DEG
+pdf("output/binBw/histbin3_pseudotime_traj32_UNTREATEDDASATINIB_peakSmooth_fdrDEG05median___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=6, height=4)
+pseudotime_traj32_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter(fdr_DEG < 0.05) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(condition, pseudotime_bin) %>%
+    summarize(mean_bc_max = median(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = condition)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("UNTREATED72hrs" = "blue","DASATINIB72hrs" = "red")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+
+
+## StartEnd
+pdf("output/binBw/histbin3_pseudotime_traj32_UNTREATEDDASATINIB_peakSmooth_fdrStartEnd0median___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=6, height=4)
+pseudotime_traj32_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter(fdr_StartEnd == 0) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(condition, pseudotime_bin) %>%
+    summarize(mean_bc_max = median(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = condition)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("UNTREATED72hrs" = "blue","DASATINIB72hrs" = "red")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+
+
+```
+
+
+--> no correlation; not even when filtering smoothpeak>0
+
+
+
+
+
+## UNT_Lineage5-DAS_Lineage5 (Common5) -  Test Activation point with H3K27me3 (from ENCODE) - correlation
+
+traj of interest COMMON=5 UNTREATED=traj5; DASATINIB=traj5
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+library("ggpubr")
+
+
+
+# import files
+pseudotime_traj5_peak_UNTREATED <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/traj5_humangastruloidUNTREATED2472hrs_ActivationPoint.txt") %>%
+    dplyr::rename("geneSymbol" = "gene") %>%
+    add_column(condition = "UNTREATED72hrs")
+pseudotime_traj5_peak_DASATINIB <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/traj5_humangastruloidDASATINIB2472hrs_ActivationPoint.txt") %>%
+    dplyr::rename("geneSymbol" = "gene")%>%
+    add_column(condition = "DASATINIB72hrs")
+
+pseudotime_traj5_DEG = read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_association_traj5_noCondition_humangastruloid2472hrs.txt") %>%
+    dplyr::rename("geneSymbol" = "gene",
+                  "fdr_DEG" = "fdr") %>% 
+    dplyr::select(geneSymbol, meanLogFC, fdr_DEG)
+pseudotime_traj5_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_NULL_traj5_noCondition_humangastruloid2472hrs.txt") %>% # NULL added !!!!!
+    dplyr::rename("geneSymbol" = "gene",
+                  "fdr_StartEnd" = "fdr")  %>% 
+    dplyr::select(geneSymbol, fdr_StartEnd, logFClineage1)
+
+
+
+pseudotime_traj55_peak_DEG_StartEnd = pseudotime_traj5_peak_UNTREATED %>%
+    bind_rows(pseudotime_traj5_peak_DASATINIB) %>%
+    left_join(pseudotime_traj5_DEG) %>%
+    left_join(pseudotime_traj5_StartEnd)
+
+# H3K27me3 ENCODE #########################
+
+WT_H3K27me3_500bpTSS_geneSymbol <- read_tsv("output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol.txt")
+WT_H3K27me3_250bpTSS_geneSymbol <- read_tsv("output/binBw/WT_H3K27me3_250bp_ENCFF201SJZ_geneSymbol.txt")
+
+pseudotime_traj55_peak_WT_H3K27me3_500bpTSS_geneSymbol = pseudotime_traj55_peak_DEG_StartEnd %>%
+    left_join(WT_H3K27me3_500bpTSS_geneSymbol)  %>%
+  filter(!is.na(bc_max))
+pseudotime_traj55_peak_WT_H3K27me3_250bpTSS_geneSymbol = pseudotime_traj55_peak_DEG_StartEnd %>%
+    left_join(WT_H3K27me3_250bpTSS_geneSymbol) %>%
+  filter(!is.na(bc_max))
+
+
+
+
+## signal H3K27me3 vs DEG timecourse
+### DEG
+
+pdf("output/binBw/corr_pseudotime_traj55_UNTREATEDDASATINIB_peakSmooth_fdrDEG0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=5, height=4)
+pseudotime_traj55_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter( fdr_DEG == 0 ) %>%
+    ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = condition)) +
+    geom_point(alpha = 0.7) +
+    geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = condition)) + 
+    scale_color_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
+    theme_bw()
+dev.off()
+
+
+
+### StartEnd
+
+pdf("output/binBw/corr_pseudotime_traj55_UNTREATEDDASATINIB_peakSmooth_fdrStartEnd05__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=5, height=4)
+pseudotime_traj55_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter( fdr_StartEnd <0.05 ) %>%
+    ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = condition)) +
+    geom_point(alpha = 0.7) +
+    geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = condition)) + 
+    scale_color_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
+    theme_bw()
+dev.off()
+
+
+
+
+
+
+# DEG and smoothpeak >0
+
+pdf("output/binBw/corr_pseudotime_traj55_UNTREATEDDASATINIB_peakSmooth_peakSmoothOver0fdrDEG05__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=5, height=4)
+pseudotime_traj55_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter( fdr_DEG <0.05 ,
+            smooth_peak_pseudotime > 0) %>%
+    ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = condition)) +
+    geom_point(alpha = 0.7) +
+    geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = condition)) + 
+    scale_color_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
+    theme_bw()
+dev.off()
+
+
+
+### StartEnd and smoothpeak >0
+
+pdf("output/binBw/corr_pseudotime_traj55_UNTREATEDDASATINIB_peakSmooth_peakSmoothOver0fdrStartEnd0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=5, height=4)
+pseudotime_traj55_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter( fdr_StartEnd == 0 ,
+            smooth_peak_pseudotime > 0) %>%
+    ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max, color = condition)) +
+    geom_point(alpha = 0.7) +
+    geom_smooth(method = "lm", se = FALSE) +
+    stat_cor(method = "pearson", label.x.npc = c(0.1, 0.1), label.y.npc = c(0.9, 0.8), aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), color = condition)) + 
+    scale_color_manual(values = c("UNTREATED72hrs" = "blue", "DASATINIB72hrs" = "red")) +
+    theme_bw()
+dev.off()
+
+
+
+
+
+
+# bin
+## DEG
+pdf("output/binBw/histbin3_pseudotime_traj55_UNTREATEDDASATINIB_peakSmooth_fdrDEG0median___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=6, height=4)
+pseudotime_traj55_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter(fdr_DEG == 0) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(condition, pseudotime_bin) %>%
+    summarize(mean_bc_max = median(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = condition)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("UNTREATED72hrs" = "blue","DASATINIB72hrs" = "red")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+
+
+## StartEnd
+pdf("output/binBw/histbin3_pseudotime_traj55_UNTREATEDDASATINIB_peakSmooth_fdrStartEnd05median___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=6, height=4)
+pseudotime_traj55_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter(fdr_StartEnd <0.05) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(condition, pseudotime_bin) %>%
+    summarize(mean_bc_max = median(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = condition)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("UNTREATED72hrs" = "blue","DASATINIB72hrs" = "red")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+
+
+```
+
+
+--> no / weak correlation
 
 
 # Overlapping peaks EZH2, QSER1, YAP (`008003*/`), TEAD4 (`008003*/`)
