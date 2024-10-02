@@ -3045,6 +3045,52 @@ dev.off()
 
 
 
+############ V1 naming (output/seurat/humangastruloid2472hr.dim30kparam15res03.rds = QCV2dim30kparam15res03)
+
+Cluster1: Neurogenic_Progenitors 
+Cluster2: Muscle_Progenitors 
+Cluster3: Epiblast_ESC
+Cluster4: Endoderm
+Cluster5: Progenitor_Cell_Undefined
+Cluster6: Nascent_Mesoderm 
+Cluster7: Progenitor_Cell_Mitotic
+Cluster8: Cardiac_Progenitors
+
+
+
+new.cluster.ids <- c(
+  "Neurogenic_Progenitors",
+  "Muscle_Progenitors",
+  "Epiblast_ESC",
+  "Endoderm",
+  "Progenitor_Cell_Undefined",
+  "Nascent_Mesoderm",
+  "Progenitor_Cell_Mitotic",
+  "Cardiac_Progenitors"
+)
+
+names(new.cluster.ids) <- levels(humangastruloid.combined.sct)
+humangastruloid.combined.sct <- RenameIdents(humangastruloid.combined.sct, new.cluster.ids)
+humangastruloid.combined.sct$cluster.annot <- Idents(humangastruloid.combined.sct) # create a new slot in my seurat object
+
+
+pdf("output/seurat/UMAP_humangastruloid2472hrs_dim30kparam15res03_label.pdf", width=15, height=6)
+DimPlot(humangastruloid.combined.sct, reduction = "umap", split.by = "time", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+dev.off()
+
+pdf("output/seurat/UMAP_humangastruloid2472hrs_dim30kparam15res03_noSplit_label.pdf", width=9, height=6)
+DimPlot(humangastruloid.combined.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5)
+dev.off()
+
+
+
+
+
+
+
+
+
+
 ```
 
 
@@ -17400,7 +17446,7 @@ pseudotime_association_deg = pseudotime_association %>%
   unique()
 
 
-pdf("output/condiments/heatmap_pseudotime_association_deg05_traj3_noCondition_humangastruloid2472hrs.pdf", width=8, height=10)
+pdf("output/condiments/heatmap_pseudotime_association_deg0_traj3_noCondition_humangastruloid2472hrs.pdf", width=8, height=10)
 yhatSmooth <- predictSmooth(traj3_noCondition_humangastruloid2472hrs, gene = pseudotime_association_deg$gene, nPoints = 25, tidy = FALSE)
 yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
 heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
@@ -17566,15 +17612,15 @@ heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
 dev.off()
 
 ### DEG time course
-pseudotime_association = read_tsv("output/condiments/pseudotime_association_traj2_noCondition_humangastruloid72hrs_V2.txt")
+pseudotime_association = read_tsv("output/condiments/pseudotime_association_traj5_noCondition_humangastruloid2472hrs.txt")
 pseudotime_association_deg = pseudotime_association %>%
-  filter(fdr<0.05)%>%
+  filter(fdr == 0)%>%
   dplyr::select(gene) %>%
   unique()
 
 
-pdf("output/condiments/heatmap_pseudotime_association_deg05_traj2_noCondition_humangastruloid72hrs_V2.pdf", width=8, height=10)
-yhatSmooth <- predictSmooth(traj2_noCondition_humangastruloid72hrs_V2, gene = pseudotime_association_deg$gene, nPoints = 25, tidy = FALSE)
+pdf("output/condiments/heatmap_pseudotime_association_deg0_traj5_noCondition_humangastruloid2472hrs.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj5_noCondition_humangastruloid2472hrs, gene = pseudotime_association_deg$gene, nPoints = 25, tidy = FALSE)
 yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
 heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
                        cluster_cols = FALSE,
