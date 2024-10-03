@@ -2341,13 +2341,13 @@ DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "integrated"
 
 WT_Kcnc1_p180_CB_1step.sct <- RunPCA(WT_Kcnc1_p180_CB_1step.sct, verbose = FALSE, npcs = 45)
 WT_Kcnc1_p180_CB_1step.sct <- RunUMAP(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", dims = 1:45, verbose = FALSE)
-WT_Kcnc1_p180_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", k.param = 30, dims = 1:45)
-WT_Kcnc1_p180_CB_1step.sct <- FindClusters(WT_Kcnc1_p180_CB_1step.sct, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+WT_Kcnc1_p180_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", k.param = 10, dims = 1:45)
+WT_Kcnc1_p180_CB_1step.sct <- FindClusters(WT_Kcnc1_p180_CB_1step.sct, resolution = 0.25, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
 WT_Kcnc1_p180_CB_1step.sct$condition <- factor(WT_Kcnc1_p180_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim45kparam30res03.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim45kparam10res025.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
@@ -2450,8 +2450,8 @@ dev.off()
 # save ##################
 ## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step.sct_V1_numeric.rds") # regMtRbCount with QC_V3
 WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step.sct_V1_numeric.rds")
-## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV3dim50kparam50res03.sct_V1_numeric.rds") # regMtRbCount with QC_V3
-## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV3dim50kparam50res03.sct_V1_label.rds") # regMtRbCount with QC_V3
+## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV3xxxx.sct_V1_numeric.rds") # regMtRbCount with QC_V3
+## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV3xxxx.sct_V1_label.rds") # regMtRbCount with QC_V3
 
 
 set.seed(42)

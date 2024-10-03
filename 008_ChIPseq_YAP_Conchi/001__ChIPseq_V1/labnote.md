@@ -8453,3 +8453,49 @@ bedtools intersect -wa -a output/ChIPseeker/QSER1_YAP1_463genes_ChIPseeker.bed -
 
 
 
+
+
+# GSEA humangastruloid2472hrs cluster on H3K27me3-enriched genes
+
+
+- Take top 50-500 H3K27me3-enriched genes in hESC = GSEA input genes
+- GSEA using method from `002*/003*` = fgsea() in R 
+- Compare GSEA outputs cluster per cluster 
+
+
+
+
+## Collect the top H3K27me3-enriched genes
+
+--> Collect them from ENCODE (Mint-ChIP-seq fcovercontrol with 3 Bio Rep = `output/bigwig_ENCODE/ENCFF201SJZ_fcovercontrol123`)
+
+```R
+# packages
+library("tidyverse")
+
+# import H3K27me3 gene list
+WT_H3K27me3_500bpTSS_geneSymbol <- read_tsv("output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol.txt") %>% filter(geneSymbol != "NA")
+WT_H3K27me3_250bpTSS_geneSymbol <- read_tsv("output/binBw/WT_H3K27me3_250bp_ENCFF201SJZ_geneSymbol.txt") %>% filter(geneSymbol != "NA")
+
+# Order and export top enriched genes
+
+WT_H3K27me3_500bpTSS_geneSymbol %>%
+  arrange(desc(bc_max)) %>%
+  slice_head(n=200) %>%   ############ CHANGE HERE !!!!!!!!!!!!!!! #########
+  dplyr::select(geneSymbol) %>%
+write.table(., file = "output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol_topEnriched200.txt", sep = "\t", row.names = FALSE, quote = FALSE) ### CHANGE HERE !!!!!!!!!!!!!!! ####
+
+
+WT_H3K27me3_250bpTSS_geneSymbol %>%
+  arrange(desc(bc_max)) %>%
+  slice_head(n=1000) %>%   ############ CHANGE HERE !!!!!!!!!!!!!!! #########
+  dplyr::select(geneSymbol) %>%
+write.table(., file = "output/binBw/WT_H3K27me3_250bp_ENCFF201SJZ_geneSymbol_topEnriched1000.txt", sep = "\t", row.names = FALSE, quote = FALSE) ### CHANGE HERE !!!!!!!!!!!!!!! ####
+
+```
+- *NOTE: 15-500 genes recommended for GSEA*
+
+--> GSEA analysis done in `002*/003*` at xxx
+
+
+

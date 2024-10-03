@@ -3085,6 +3085,192 @@ dev.off()
 
 
 
+XXXY hre troubleshoot many bug...
+
+# GSEA on H3K27me3-enriched genes (collected from 008*/001*)
+library("fgsea")
+### import marker genes
+all_markers <- read.delim("output/seurat/srat_humangastruloid.combined.sct-dim30kparam30res03_QCV2-all_markers.txt", header = TRUE, row.names = NULL) %>%
+  as_tibble()
+
+### annotate cell types
+cluster_data <- tibble(
+  cluster = 1:8,
+  clusterName = c("Neurogenic_Progenitors", "Muscle_Progenitors", "Epiblast_ESC", 
+                  "Endoderm", "Progenitor_Cell_Undefined", "Nascent_Mesoderm", 
+                  "Progenitor_Cell_Mitotic", "Cardiac_Progenitors")
+)
+
+all_markers_annot = all_markers %>%
+  left_join(cluster_data) %>%
+  dplyr::select(gene, avg_log2FC, clusterName)
+
+
+
+
+
+
+## load list of genes to test
+### 500bp TSS signal
+
+H3K27me3_500bp_50 = read_table(file = c("../../008_ChIPseq_YAP_Conchi/001__ChIPseq_V1/output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol_topEnriched50.txt"))
+H3K27me3_500bp_100 = read_table(file = c("../../008_ChIPseq_YAP_Conchi/001__ChIPseq_V1/output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol_topEnriched100.txt"))
+H3K27me3_500bp_200 = read_table(file = c("../../008_ChIPseq_YAP_Conchi/001__ChIPseq_V1/output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol_topEnriched200.txt"))
+H3K27me3_500bp_250 = read_table(file = c("../../008_ChIPseq_YAP_Conchi/001__ChIPseq_V1/output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol_topEnriched250.txt"))
+H3K27me3_500bp_500 = read_table(file = c("../../008_ChIPseq_YAP_Conchi/001__ChIPseq_V1/output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol_topEnriched500.txt"))
+H3K27me3_500bp_1000 = read_table(file = c("../../008_ChIPseq_YAP_Conchi/001__ChIPseq_V1/output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol_topEnriched1000.txt"))
+
+
+
+
+fgsea_sets <- list(
+  H3K27me3_500bp_50 = read_table(file = c("../../008_ChIPseq_YAP_Conchi/001__ChIPseq_V1/output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol_topEnriched50.txt"))$geneSymbol,
+  H3K27me3_500bp_100 = read_table(file = c("../../008_ChIPseq_YAP_Conchi/001__ChIPseq_V1/output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol_topEnriched100.txt"))$geneSymbol,
+  H3K27me3_500bp_200 = read_table(file = c("../../008_ChIPseq_YAP_Conchi/001__ChIPseq_V1/output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol_topEnriched200.txt"))$geneSymbol,
+  H3K27me3_500bp_250 = read_table(file = c("../../008_ChIPseq_YAP_Conchi/001__ChIPseq_V1/output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol_topEnriched250.txt"))$geneSymbol,
+  H3K27me3_500bp_500 = read_table(file = c("../../008_ChIPseq_YAP_Conchi/001__ChIPseq_V1/output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol_topEnriched500.txt"))$geneSymbol,
+  H3K27me3_500bp_1000 = read_table(file = c("../../008_ChIPseq_YAP_Conchi/001__ChIPseq_V1/output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol_topEnriched1000.txt"))$geneSymbol
+)
+
+
+
+
+
+## Rank genes based on FC
+genes <- all_markers_annot %>%  
+  filter(clusterName == "Epiblast_ESC") %>% ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+  arrange(desc(avg_log2FC)) %>% 
+  dplyr::select(gene, avg_log2FC)
+
+ranks <- deframe(genes)
+head(ranks)
+## Run GSEA
+
+fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 1000)
+fgseaResTidy <- fgseaRes %>%
+  as_tibble() %>%
+  arrange(desc(ES))
+fgseaResTidy %>% 
+  dplyr::select(-leadingEdge, -NES, -nMoreExtreme) %>% 
+  arrange(padj) %>% 
+  head()
+
+
+
+
+## plot GSEA
+pdf("output/Pathway/GSEA_humangastruloid2472hrs_H3K27me3_500bp_500-Epiblast_ESC.pdf", width=5, height=3)
+
+plotEnrichment(fgsea_sets[["H3K27me3_500bp_500"]],
+               ranks) + labs(title="humangastruloid2472hrs_H3K27me3_500bp_500-Epiblast_ESC") +
+               theme_bw()
+dev.off()
+
+
+
+
+
+
+# Save output table for all pathway and cluster
+## Define the list of cluster types
+cluster_types <- c("Neurogenic_Progenitors", "Muscle_Progenitors", "Epiblast_ESC", 
+                  "Endoderm", "Progenitor_Cell_Undefined", "Nascent_Mesoderm", 
+                  "Progenitor_Cell_Mitotic", "Cardiac_Progenitors")
+
+## Initialize an empty list to store the results for each cluster type
+all_results <- list()
+## Loop over each cluster type
+for (cluster in cluster_types) {
+  
+  # Extract genes for the current cluster
+  genes <- get(cluster) %>% 
+    arrange(desc(avg_log2FC)) %>% 
+    dplyr::select(gene, avg_log2FC)
+  
+  ranks <- deframe(genes)
+  
+  # Run GSEA for the current cluster
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 1000)
+  fgseaResTidy <- fgseaRes %>%
+    as_tibble() %>%
+    arrange(desc(ES))
+  
+  # Extract summary table and add cluster column
+  fgseaResTidy_summary = fgseaResTidy %>% 
+    dplyr::select(pathway, pval, padj, ES, size, NES) %>%
+    mutate(cluster = cluster) %>%
+    arrange(padj) %>% 
+    head()
+  
+  # Store results in the list
+  all_results[[cluster]] <- fgseaResTidy_summary
+}
+## Combine results from all cluster types into one table
+final_results <- bind_rows(all_results, .id = "cluster")
+
+
+write.table(final_results, file = c("output/Pathway/gsea_output_E7E775_ManualGeneLists.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+
+
+# Heatmap all GSEA
+
+
+pdf("output/Pathway/heatmap_E7E775_gsea_padj.pdf", width=5, height=5)
+ggplot(final_results, aes(x=cluster, y=pathway, fill=ES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", ES)), 
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+
+pdf("output/Pathway/heatmap_E7E775_gsea_pval_greyTile.pdf", width=5, height=5)
+ggplot(final_results, aes(x=cluster, y=pathway)) + 
+  geom_tile(aes(fill = ifelse(pval <= 0.05, NES, NA)), color = "black") +  # Conditional fill based on significance
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Normalized Enrichment\nScore", na.value="grey") +
+  # geom_text(aes(label=sprintf("%.2f", ES)), 
+  #           color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change between pvalue, qvalue,p.adjust
+  #           size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+
+dev.off()
+
+
+
+
+
+
+
 
 
 
