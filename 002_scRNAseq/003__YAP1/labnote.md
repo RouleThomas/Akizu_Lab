@@ -2953,6 +2953,16 @@ all_markers <- FindAllMarkers(humangastruloid.combined.sct, assay = "RNA", only.
 write.table(all_markers, file = "output/seurat/srat_humangastruloid.combined.sct-dim30kparam30res03_QCV2-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE) #  srat_humangastruloid.combined.sct-dim30kparam30res03-all_markers.txt
 
 
+
+all_markers_allGenes <- FindAllMarkers(humangastruloid.combined.sct, assay = "RNA", ,
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf)
+write.table(all_markers_allGenes, file = "output/seurat/srat_humangastruloid.combined.sct-dim30kparam30res03_QCV2-all_markers_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
 # BiocManager::install("EasyCellType")
 library("EasyCellType")
 library("org.Hs.eg.db")
@@ -3085,7 +3095,6 @@ dev.off()
 
 
 
-XXXY hre troubleshoot many bug...
 
 # GSEA on H3K27me3-enriched genes (collected from 008*/001*)
 library("fgsea")

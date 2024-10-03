@@ -4747,6 +4747,9 @@ save(out, file = "output/soupX/multiome_Bap1KO.RData") # CHANGE FILE NAME HERE
 
 ## Seurat/Signac analysis
 
+### Seurat part
+
+
 **Option1**:
 - Import RNA and perform QC, work in `scRNAseqV2` conda env
 - Import ATAC and put with RNA in same seurat object, work in `SignacV5` conda env
@@ -4985,6 +4988,9 @@ dev.off()
 ###########################################################################
 
 ```
+
+### Signac part
+
 
 Now let's change conda env to import ATAC file onto our RNA seurat object
 
