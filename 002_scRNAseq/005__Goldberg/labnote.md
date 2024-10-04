@@ -2900,6 +2900,22 @@ rsconnect::deployApp('shinyApp_WT_Kcnc1_p35_CB_1step_QCV3dim50kparam50res03')
 
 
 
+# Generate Shiny app QCV3 without name;  QCV3dim40kparam10res03 ; output/seurat/WT_Kcnc1_p180_CB_1step-QCV3dim40kparam10res03.sct_V1_numeric.rds
+WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV3dim40kparam10res03.sct_V1_numeric.rds")
+
+
+DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "RNA" # 
+
+scConf = createConfig(WT_Kcnc1_p180_CB_1step.sct)
+
+makeShinyApp(WT_Kcnc1_p180_CB_1step.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "WT_Kcnc1_p180_CB_1step_QCV3dim40kparam10res03",
+             shiny.dir = "shinyApp_WT_Kcnc1_p180_CB_1step_QCV3dim40kparam10res03/") 
+
+rsconnect::deployApp('shinyApp_WT_Kcnc1_p180_CB_1step_QCV3dim40kparam10res03')
+
+
+
 
 ```
 
