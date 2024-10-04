@@ -8452,6 +8452,61 @@ bedtools intersect -wa -a output/ChIPseeker/QSER1_YAP1_463genes_ChIPseeker.bed -
 - *QSER1 peaks assign to a gene also bound with YAP1 (peaks not overlapping)*; 955 peaks: 501 overlapping with CpG islands (52.46%)
 
 
+# GO humangastruloid2472hrs cluster on H3K27me3-enriched genes
+
+- Collect top 50-500 marker genes (findAllMarker() done in` 002*/003*`), separatly for UNTREATED and DASATINIB
+- Run enrichR and output the ENCODE and ChEA Consensus TFs from ChIP-X; SUZ12 CHEA
+  - done in the [web tool app](https://maayanlab.cloud/Enrichr/enrich)
+- Create a tidy xls with output result, column of interest: `Overlap, Adjusted P-value, treatment, cluster`
+
+--> The 1st version here is with the top 100 genes; however some cluster does not have 100genes... So I re-run in slurm job the `allGenes` version to have 100 genes
+
+
+```R
+# packages
+library("tidyverse")
+
+# TOP 100
+## Import output enrichR
+top100 <- read_tsv("output/enrichR/PrelimVersion_Top100Genes.txt") %>%
+  mutate(prop = (count/totalGene)*100)
+
+top100$cluster <- factor(top100$cluster, levels = c("Endoderm", "Cardiac_Progenitors" ,"Neurogenic_Progenitors", "Muscle_Progenitors", "Progenitor_Cell_Undefined", "Progenitor_Cell_Mitotic", "Nascent_Mesoderm","Epiblast_ESC")) # Reorder untreated 1st
+
+## dotplot
+pdf("output/enrichR/dotplot_PrelimVersion_Top100Genes.pdf", width=5, height=2)
+ggplot(top100, aes(x = -log10(adjPval), y = cluster, size = prop, fill = treatment)) +
+  geom_point(shape = 21) +  # Use shape 21 for filled points
+  scale_fill_manual(values = c("UNTREATED" = "blue", "DASATINIB" = "red")) +  # Fill color
+  labs(x = "-log 10 Adjusted P-value", y = "Cluster", size = "Proportion") +  # Labels
+  geom_vline(xintercept = 1.30103, linetype = "dotted", color = "black") +  # Add dotted black vertical line at x = 1.3
+  theme_bw()  # Clean theme
+dev.off()
+
+
+
+# TOP 50
+## Import output enrichR
+top50 <- read_tsv("output/enrichR/PrelimVersion_Top50Genes.txt") %>%
+  mutate(prop = (count/totalGene)*100)
+
+top50$cluster <- factor(top50$cluster, levels = c("Endoderm", "Cardiac_Progenitors" ,"Neurogenic_Progenitors", "Muscle_Progenitors", "Progenitor_Cell_Undefined", "Progenitor_Cell_Mitotic", "Nascent_Mesoderm","Epiblast_ESC")) # Reorder untreated 1st
+
+## dotplot
+pdf("output/enrichR/dotplot_PrelimVersion_Top50Genes.pdf", width=5, height=2)
+ggplot(top50, aes(x = -log10(adjPval), y = cluster, size = prop, fill = treatment)) +
+  geom_point(shape = 21) +  # Use shape 21 for filled points
+  scale_fill_manual(values = c("UNTREATED" = "blue", "DASATINIB" = "red")) +  # Fill color
+  labs(x = "-log 10 Adjusted P-value", y = "Cluster", size = "Proportion") +  # Labels
+  geom_vline(xintercept = 1.30103, linetype = "dotted", color = "black") +  # Add dotted black vertical line at x = 1.3
+  theme_bw()  # Clean theme
+dev.off()
+```
+
+--> Some sample does not include 100 genes, however I am showing proportion and not gene count, so that is not a problem
+
+
+
 
 
 

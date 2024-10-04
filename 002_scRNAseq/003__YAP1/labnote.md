@@ -2950,17 +2950,26 @@ humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid247
 ### Find all markers 
 all_markers <- FindAllMarkers(humangastruloid.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
 
-write.table(all_markers, file = "output/seurat/srat_humangastruloid.combined.sct-dim30kparam30res03_QCV2-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE) #  srat_humangastruloid.combined.sct-dim30kparam30res03-all_markers.txt
+write.table(all_markers, file = "output/seurat/srat_humangastruloid.combined.sct-dim30kparam30res03_QCV2-all_markers_clusterName.txt", sep = "\t", quote = FALSE, row.names = TRUE) #  srat_humangastruloid.combined.sct-dim30kparam30res03-all_markers.txt
 
 
+##########################################################################################
+### Find all markers separated UNTREATED and DASATINIB
+humangastruloid_UNTREATED.combined.sct <- subset(humangastruloid.combined.sct, treatment == "UNTREATED")
+humangastruloid_DASATINIB.combined.sct <- subset(humangastruloid.combined.sct, treatment == "DASATINIB")
 
-all_markers_allGenes <- FindAllMarkers(humangastruloid.combined.sct, assay = "RNA", ,
-    verbose = TRUE,
-    test.use = "wilcox",
-    logfc.threshold = -Inf,
-    min.pct = -Inf,
-    min.diff.pct = -Inf)
-write.table(all_markers_allGenes, file = "output/seurat/srat_humangastruloid.combined.sct-dim30kparam30res03_QCV2-all_markers_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+all_markers_UNTREATED <- FindAllMarkers(humangastruloid_UNTREATED.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all_markers_UNTREATED, file = "output/seurat/srat_humangastruloid.combined.sct-dim30kparam30res03_QCV2-all_markers_UNTREATED.txt", sep = "\t", quote = FALSE, row.names = TRUE) #  
+
+all_markers_DASATINIB <- FindAllMarkers(humangastruloid_DASATINIB.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all_markers_DASATINIB, file = "output/seurat/srat_humangastruloid.combined.sct-dim30kparam30res03_QCV2-all_markers_DASATINIB.txt", sep = "\t", quote = FALSE, row.names = TRUE) # 
+# --> TOO LONG, run in slurm job
+
+##########################################################################################
+
+
+xxxy 
 
 
 # BiocManager::install("EasyCellType")
@@ -3091,6 +3100,53 @@ dev.off()
 pdf("output/seurat/UMAP_humangastruloid2472hrs_dim30kparam15res03_noSplit_label.pdf", width=9, height=6)
 DimPlot(humangastruloid.combined.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5)
 dev.off()
+
+humangastruloid.combined.sct$treatment <- factor(humangastruloid.combined.sct$treatment, levels = c("UNTREATED", "DASATINIB")) # Reorder untreated 1st
+
+
+pdf("output/seurat/UMAP_humangastruloid2472hrs_dim30kparam15res03_splitTreatment_label.pdf", width=15, height=6)
+DimPlot(humangastruloid.combined.sct, reduction = "umap", split.by = "treatment", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+dev.off()
+
+
+
+## Cell type proportion ###############################
+### count nb of cells in each cluster
+UNTREATED = table(Idents(humangastruloid.combined.sct)[humangastruloid.combined.sct$treatment == "UNTREATED"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(treatment= "UNTREATED")
+DASATINIB = table(Idents(humangastruloid.combined.sct)[humangastruloid.combined.sct$treatment == "DASATINIB"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(treatment= "DASATINIB")           
+
+UNTREATED_DASATINIB = UNTREATED %>%
+  bind_rows(DASATINIB) %>%
+  as_tibble()
+  
+UNTREATED_DASATINIB_prop = UNTREATED_DASATINIB %>%
+  group_by(treatment) %>%
+  mutate(total_count = sum(count)) %>%
+  ungroup() %>%
+  mutate(proportion = (count / total_count) * 100)
+
+UNTREATED_DASATINIB_prop$treatment <-
+  factor(UNTREATED_DASATINIB_prop$treatment,
+         c("UNTREATED", "DASATINIB"))
+
+pdf("output/seurat/histogramProp_UNTREATED_DASATINIB_2472hrs_dim30kparam15res03.pdf", width=4, height=4)
+ggbarplot(UNTREATED_DASATINIB_prop, x = "cluster", y = "proportion", fill = "treatment",
+                  color = "treatment", palette = c("black", "blue"),
+                  position = position_dodge(0.8), # Separate bars by treatment
+                  add = "mean_se", # Add error bars
+                  lab.pos = "out", lab.size = 3) +
+  stat_compare_means(aes(group = treatment), method = "t.test", label = "p.signif") +
+  theme_bw() +
+  labs(x = "Cell Type (Cluster)", y = "Cell Proportion (%)") +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+dev.off()
+
 
 
 
@@ -3292,6 +3348,31 @@ dev.off()
 --> Integration 24 and 72hr match well together, but there is a shift toward more developed/diff. cell types!
 
 Next, do pseudotime analysis
+
+
+## Identification of cluster marker genes (all genes)
+
+Let's run a slurm job for unbiased marker genes identification (`*allGenes*`) for all cluster, separating UNTREATED and DASATINIB treatment. 
+
+--> Information needed to perform GO and GSEA method to identify H3K27me3 enriched genes ***see email Conchi 20241004***
+
+
+
+```bash
+conda activate scRNAseqV2
+
+# job
+sbatch scripts/FindAllMarkers_humangastruloid2472hrs.sh # 27403599 xxx
+sbatch scripts/FindAllMarkers_humangastruloid2472hrs_UNTREATED_DASATINIB.sh # 27403608 xxx
+```
+
+--> xxx Output succesfully at `output/seurat/srat_humangastruloid.combined.sct-dim30kparam30res03_QCV2-all_markers[]_allGenes`
+
+
+
+
+
+
 
 
 
