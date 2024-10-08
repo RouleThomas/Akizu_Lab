@@ -204,6 +204,18 @@ Only `monocle3` and `Seurat_v_5`
 R4.3.1 with `granulator` and `tidyverse`
 
 
+
+### homer
+
+-->  `homer` only; can be used for peak calling or motif... (used in `008*/001*`)
+
+
+### condiments_Signac
+
+--> condiments with Signac!!! (and Seurat)
+
+--> Use to do pseudotime analysis with Signac-dependent seurat object
+
 # cool random command
 
 

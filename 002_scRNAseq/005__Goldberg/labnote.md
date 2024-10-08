@@ -481,15 +481,15 @@ assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the pre
 
 ##### QC filtering _ V4 (used for p180) ############################################
 
-###  mit > 7.5, rb > 6 and RNAfeaure 400 #############################################
+###  mit > 7, rb > 5 and RNAfeaure 400 #############################################
 apply_qc <- function(seurat_object) {
   seurat_object[['QC']] <- ifelse(seurat_object@meta.data$Is_doublet == 'True', 'Doublet', 'Pass')
   seurat_object[['QC']] <- ifelse(seurat_object@meta.data$nFeature_RNA < 400 & seurat_object@meta.data$QC == 'Pass', 'Low_nFeature', seurat_object@meta.data$QC)
   seurat_object[['QC']] <- ifelse(seurat_object@meta.data$nFeature_RNA < 400 & seurat_object@meta.data$QC != 'Pass' & seurat_object@meta.data$QC != 'Low_nFeature', paste('Low_nFeature', seurat_object@meta.data$QC, sep = ','), seurat_object@meta.data$QC)
-  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.mt > 7.5 & seurat_object@meta.data$QC == 'Pass', 'High_MT', seurat_object@meta.data$QC)
-  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.mt > 7.5 & seurat_object@meta.data$QC != 'Pass' & seurat_object@meta.data$QC != 'High_MT', paste('High_MT', seurat_object@meta.data$QC, sep = ','), seurat_object@meta.data$QC)
-  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.rb > 6 & seurat_object@meta.data$QC == 'Pass', 'High_RB', seurat_object@meta.data$QC)
-  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.rb > 6 & seurat_object@meta.data$QC != 'Pass' & seurat_object@meta.data$QC != 'High_RB', paste('High_RB', seurat_object@meta.data$QC, sep = ','), seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.mt > 7 & seurat_object@meta.data$QC == 'Pass', 'High_MT', seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.mt > 7 & seurat_object@meta.data$QC != 'Pass' & seurat_object@meta.data$QC != 'High_MT', paste('High_MT', seurat_object@meta.data$QC, sep = ','), seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.rb > 5 & seurat_object@meta.data$QC == 'Pass', 'High_RB', seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.rb > 5 & seurat_object@meta.data$QC != 'Pass' & seurat_object@meta.data$QC != 'High_RB', paste('High_RB', seurat_object@meta.data$QC, sep = ','), seurat_object@meta.data$QC)
   return(seurat_object)
 }
 for (sample_name in names(seurat_objects)) {
@@ -2340,12 +2340,12 @@ set.seed(42)
 ## WT Rep
 
 ### Reg v1 _ better than Regv2
-WT_p180_CB_Rep1 <- SCTransform(WT_p180_CB_Rep1, method = "glmGamPoi", ncells = 10504, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
-WT_p180_CB_Rep2 <- SCTransform(WT_p180_CB_Rep2, method = "glmGamPoi", ncells = 10557, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
-WT_p180_CB_Rep3 <- SCTransform(WT_p180_CB_Rep3, method = "glmGamPoi", ncells = 11724, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
-Kcnc1_p180_CB_Rep1 <- SCTransform(Kcnc1_p180_CB_Rep1, method = "glmGamPoi", ncells = 11063, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
-Kcnc1_p180_CB_Rep2 <- SCTransform(Kcnc1_p180_CB_Rep2, method = "glmGamPoi", ncells = 12107, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
-Kcnc1_p180_CB_Rep3 <- SCTransform(Kcnc1_p180_CB_Rep3, method = "glmGamPoi", ncells = 13044, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+WT_p180_CB_Rep1 <- SCTransform(WT_p180_CB_Rep1, method = "glmGamPoi", ncells = 10375, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+WT_p180_CB_Rep2 <- SCTransform(WT_p180_CB_Rep2, method = "glmGamPoi", ncells = 10468, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+WT_p180_CB_Rep3 <- SCTransform(WT_p180_CB_Rep3, method = "glmGamPoi", ncells = 11641, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p180_CB_Rep1 <- SCTransform(Kcnc1_p180_CB_Rep1, method = "glmGamPoi", ncells = 10864, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p180_CB_Rep2 <- SCTransform(Kcnc1_p180_CB_Rep2, method = "glmGamPoi", ncells = 11931, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p180_CB_Rep3 <- SCTransform(Kcnc1_p180_CB_Rep3, method = "glmGamPoi", ncells = 12882, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
 
 
 
@@ -2363,27 +2363,27 @@ DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "integrated"
 
 WT_Kcnc1_p180_CB_1step.sct <- RunPCA(WT_Kcnc1_p180_CB_1step.sct, verbose = FALSE, npcs = 50)
 WT_Kcnc1_p180_CB_1step.sct <- RunUMAP(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
-WT_Kcnc1_p180_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", k.param = 30, dims = 1:50)
-WT_Kcnc1_p180_CB_1step.sct <- FindClusters(WT_Kcnc1_p180_CB_1step.sct, resolution = 0.4, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+WT_Kcnc1_p180_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", k.param = 20, dims = 1:50)
+WT_Kcnc1_p180_CB_1step.sct <- FindClusters(WT_Kcnc1_p180_CB_1step.sct, resolution = 0.2, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
 WT_Kcnc1_p180_CB_1step.sct$condition <- factor(WT_Kcnc1_p180_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV4dim50kparam30res04.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV4dim50kparam20res02.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
-xxx HERE; now qcv4 xxxy
 
 # genes
 
 DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "SCT"
 
-
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV4dim40-List6_7.pdf", width=30, height=60)
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV4dim30-List6_7.pdf", width=30, height=60)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Gabra6", "Pax6", "Kcnc2", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Aldh1a3", "Pax2", "Eomes", "Rgs6", "Tafa2", "Calb1", "Slc1a6", "Car8", "Zeb2", "Aqp4", "Slc39a12", "Vcan", "Sox6", "Mbp", "Mag", "Plp1", "Aldoc", "Cnp", "Itgam", "Cx3cr1", "Ptgds", "Dcn", "Lef1", "Notum", "Apcdd1", "Dlc1", "Pdgfrb", "Kl",  "Ttr", "Actb", "Tmsb4x"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
+
+xxx HERE; now qcv4 xxxy
 
 
 
@@ -2427,29 +2427,29 @@ Endothelial_Stalk = Actb, Tmsb4x
 
 
 #### QC metrics investigation ####################################
-pdf("output/seurat/VlnPlot_QCmetrics_SCT_WT_Kcnc1_p180_CB_1step-1stepIntegrationRegressNotRepeated-QCV4dim40kparam10res03-countMtRbRegression.pdf", width=20, height=5)
+pdf("output/seurat/VlnPlot_QCmetrics_SCT_WT_Kcnc1_p180_CB_1step-1stepIntegrationRegressNotRepeated-QCV4dim50kparam30res04-countMtRbRegression.pdf", width=20, height=5)
 VlnPlot(WT_Kcnc1_p180_CB_1step.sct,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
   theme(plot.title = element_text(size=10))
 dev.off()
 
-pdf("output/seurat/VlnPlot_QCmetrics_nFeature_RNA_SCT_WT_Kcnc1_p180_CB_1step-1stepIntegrationRegressNotRepeated-QCV4dim40kparam10res03-countMtRbRegression.pdf", width=5, height=5)
+pdf("output/seurat/VlnPlot_QCmetrics_nFeature_RNA_SCT_WT_Kcnc1_p180_CB_1step-1stepIntegrationRegressNotRepeated-QCV4dim50kparam30res04-countMtRbRegression.pdf", width=5, height=5)
 VlnPlot(WT_Kcnc1_p180_CB_1step.sct,features = c("nFeature_RNA")) +
   ylim(0,2000)
 dev.off()
 
-pdf("output/seurat/VlnPlot_QCmetrics_nCount_RNA_SCT_WT_Kcnc1_p180_CB_1step-1stepIntegrationRegressNotRepeated-QCV4dim40kparam10res03-countMtRbRegression.pdf", width=5, height=5)
+pdf("output/seurat/VlnPlot_QCmetrics_nCount_RNA_SCT_WT_Kcnc1_p180_CB_1step-1stepIntegrationRegressNotRepeated-QCV4dim50kparam30res04-countMtRbRegression.pdf", width=5, height=5)
 VlnPlot(WT_Kcnc1_p180_CB_1step.sct,features = c("nCount_RNA")) +
   ylim(0,10000)
 dev.off()
 
 
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p180_CB_nFeature_RNA-1stepIntegrationRegressNotRepeated-QCV4dim40kparam10res03.pdf", width=5, height=5)
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p180_CB_nFeature_RNA-1stepIntegrationRegressNotRepeated-QCV4dim50kparam30res04.pdf", width=5, height=5)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=FALSE, features = "nFeature_RNA")
 dev.off()  
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p180_CB_percentmt-1stepIntegrationRegressNotRepeated-QCV4dim40kparam10res03.pdf", width=5, height=5)
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p180_CB_percentmt-1stepIntegrationRegressNotRepeated-QCV4dim50kparam30res04.pdf", width=5, height=5)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.mt")
 dev.off()  
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p180_CB_percentrb-1stepIntegrationRegressNotRepeated-QCV4dim40kparam10res03.pdf", width=5, height=5)
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p180_CB_percentrb-1stepIntegrationRegressNotRepeated-QCV4dim50kparam30res04.pdf", width=5, height=5)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.rb")
 dev.off()  
 ############################################################

@@ -521,23 +521,63 @@ From method; use HOMER findPeaks command with input control; Option `-style fact
 
 
 
+
+
 ```bash
 conda activate homer
+module load SAMtools/1.16.1-GCC-11.3.0
+
+# Create tagDirectory to be used by homer (FAST, so run in interactive)
+makeTagDirectory output/homer/hESC_WT_EZH2_R1 output/bowtie2/hESC_WT_EZH2_R1.unique.dupmark.sorted.bam 
+makeTagDirectory output/homer/hESC_WT_EZH2_R2 output/bowtie2/hESC_WT_EZH2_R2.unique.dupmark.sorted.bam 
+makeTagDirectory output/homer/hESC_WT_input_R1 output/bowtie2/hESC_WT_input_R1.unique.dupmark.sorted.bam 
+makeTagDirectory output/homer/hESC_WT_QSER1_R1 output/bowtie2/hESC_WT_QSER1_R1.unique.dupmark.sorted.bam 
+makeTagDirectory output/homer/hESC_WT_QSER1_R2 output/bowtie2/hESC_WT_QSER1_R2.unique.dupmark.sorted.bam 
+makeTagDirectory output/homer/hESC_YAPKO_EZH2_R1 output/bowtie2/hESC_YAPKO_EZH2_R1.unique.dupmark.sorted.bam 
+makeTagDirectory output/homer/hESC_YAPKO_EZH2_R2 output/bowtie2/hESC_YAPKO_EZH2_R2.unique.dupmark.sorted.bam 
+makeTagDirectory output/homer/hESC_YAPKO_QSER1_R1 output/bowtie2/hESC_YAPKO_QSER1_R1.unique.dupmark.sorted.bam 
+makeTagDirectory output/homer/hESC_YAPKO_QSER1_R2 output/bowtie2/hESC_YAPKO_QSER1_R2.unique.dupmark.sorted.bam 
+
+## 008*/003*
+makeTagDirectory ../003__ChIPseq_pluripotency/output/homer/hESC_WT_input_R1 ../003__ChIPseq_pluripotency/output/bowtie2/hESC_WT_input_R1.unique.dupmark.sorted.bam 
+makeTagDirectory ../003__ChIPseq_pluripotency/output/homer/hESC_WT_TEAD4_R1 ../003__ChIPseq_pluripotency/output/bowtie2/hESC_WT_TEAD4_R1.unique.dupmark.sorted.bam 
+makeTagDirectory ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1 ../003__ChIPseq_pluripotency/output/bowtie2/hESC_WT_YAP1_R1.unique.dupmark.sorted.bam 
+
+#--> By default homer run in singleend
+
+# Call peaks
+findPeaks output/homer/hESC_WT_EZH2_R1 -style factor -o auto -i output/homer/hESC_WT_input_R1
+findPeaks output/homer/hESC_WT_EZH2_R2 -style factor -o auto -i output/homer/hESC_WT_input_R1
+findPeaks output/homer/hESC_WT_QSER1_R1 -style factor -o auto -i output/homer/hESC_WT_input_R1
+findPeaks output/homer/hESC_WT_QSER1_R2 -style factor -o auto -i output/homer/hESC_WT_input_R1
+findPeaks output/homer/hESC_YAPKO_EZH2_R1 -style factor -o auto -i output/homer/hESC_WT_input_R1
+findPeaks output/homer/hESC_YAPKO_EZH2_R2 -style factor -o auto -i output/homer/hESC_WT_input_R1
+findPeaks output/homer/hESC_YAPKO_QSER1_R1 -style factor -o auto -i output/homer/hESC_WT_input_R1
+findPeaks output/homer/hESC_YAPKO_QSER1_R2 -style factor -o auto -i output/homer/hESC_WT_input_R1
+## 008*/003*
+findPeaks ../003__ChIPseq_pluripotency/output/homer/hESC_WT_TEAD4_R1 -style factor -o auto -i ../003__ChIPseq_pluripotency/output/homer/hESC_WT_input_R1
+findPeaks ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1 -style factor -o auto -i ../003__ChIPseq_pluripotency/output/homer/hESC_WT_input_R1
+
+# Convert .txt to .bed
+pos2bed.pl output/homer/hESC_WT_EZH2_R1/peaks.txt > output/homer/hESC_WT_EZH2_R1/peaks.bed
+pos2bed.pl output/homer/hESC_WT_EZH2_R2/peaks.txt > output/homer/hESC_WT_EZH2_R2/peaks.bed
+pos2bed.pl output/homer/hESC_WT_QSER1_R1/peaks.txt > output/homer/hESC_WT_QSER1_R1/peaks.bed
+pos2bed.pl output/homer/hESC_WT_QSER1_R2/peaks.txt > output/homer/hESC_WT_QSER1_R2/peaks.bed
+pos2bed.pl output/homer/hESC_YAPKO_EZH2_R1/peaks.txt > output/homer/hESC_YAPKO_EZH2_R1/peaks.bed
+pos2bed.pl output/homer/hESC_YAPKO_EZH2_R2/peaks.txt > output/homer/hESC_YAPKO_EZH2_R2/peaks.bed
+pos2bed.pl output/homer/hESC_YAPKO_QSER1_R1/peaks.txt > output/homer/hESC_YAPKO_QSER1_R1/peaks.bed
+pos2bed.pl output/homer/hESC_YAPKO_QSER1_R2/peaks.txt > output/homer/hESC_YAPKO_QSER1_R2/peaks.bed
+## 008*/003*
+pos2bed.pl ../003__ChIPseq_pluripotency/output/homer/hESC_WT_TEAD4_R1/peaks.txt > ../003__ChIPseq_pluripotency/output/homer/hESC_WT_TEAD4_R1/peaks.bed
+pos2bed.pl ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks.txt > ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks.bed
 
 
-# Create tagDirectory to be used by homer
-
-
-
-# Yap1
-
-findPeaks output/homer/YAP1 -style factor -o auto -i <control tag directory>
 
 ```
 
 
 
-
+--> XXX All good
 
 
 
@@ -1144,6 +1184,261 @@ write.table(EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1binding_all, file = "o
 
 --> Very few genes with differential EZH2 binding upon YAP1KO are bound with YAP1 when using YAP1 in promoter or 5.
 
+
+# ChIPseeker - homer
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import homer peaks
+
+
+# Convert .txt to .bed
+
+hESC_WT_EZH2_R1 = as_tibble(read.table("output/homer/hESC_WT_EZH2_R1/peaks.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_WT_EZH2_R2 = as_tibble(read.table("output/homer/hESC_WT_EZH2_R2/peaks.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_WT_QSER1_R1 = as_tibble(read.table("output/homer/hESC_WT_QSER1_R1/peaks.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_WT_QSER1_R2 = as_tibble(read.table("output/homer/hESC_WT_QSER1_R2/peaks.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_YAPKO_EZH2_R1 = as_tibble(read.table("output/homer/hESC_YAPKO_EZH2_R1/peaks.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_YAPKO_EZH2_R2 = as_tibble(read.table("output/homer/hESC_YAPKO_EZH2_R2/peaks.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_YAPKO_QSER1_R1 = as_tibble(read.table("output/homer/hESC_YAPKO_QSER1_R1/peaks.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_YAPKO_QSER1_R2 = as_tibble(read.table("output/homer/hESC_YAPKO_QSER1_R2/peaks.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_WT_TEAD4_R1 = as_tibble(read.table("../003__ChIPseq_pluripotency/output/homer/hESC_WT_TEAD4_R1/peaks.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_WT_YAP1_R1 = as_tibble(read.table("../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+
+
+## 008*/003*
+
+
+
+
+
+
+
+
+
+
+
+
+## Tidy peaks #-->> Re-Run from here with different qvalue!!
+CPC_untreated_NR2F2_gr = makeGRangesFromDataFrame(CPC_untreated_NR2F2,keep.extra.columns=TRUE)
+CPC_RA_NR2F2_gr = makeGRangesFromDataFrame(CPC_RA_NR2F2,keep.extra.columns=TRUE)
+CPC_untreated_TEAD4_gr = makeGRangesFromDataFrame(CPC_untreated_TEAD4,keep.extra.columns=TRUE)
+CPC_RA_TEAD4_gr = makeGRangesFromDataFrame(CPC_RA_TEAD4,keep.extra.columns=TRUE)
+CPC_untreated_YAP1_gr = makeGRangesFromDataFrame(CPC_untreated_YAP1,keep.extra.columns=TRUE)
+CPC_RA_YAP1_gr = makeGRangesFromDataFrame(CPC_RA_YAP1,keep.extra.columns=TRUE)
+
+gr_list <- list(CPC_untreated_NR2F2=CPC_untreated_NR2F2_gr, CPC_RA_NR2F2=CPC_RA_NR2F2_gr, CPC_untreated_TEAD4=CPC_untreated_TEAD4_gr,  CPC_RA_TEAD4=CPC_RA_TEAD4_gr, CPC_untreated_YAP1= CPC_untreated_YAP1_gr,CPC_RA_YAP1= CPC_RA_YAP1_gr)
+
+
+
+## Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+
+                       
+### Barplot
+pdf("output/ChIPseeker/annotation_barplot_CPC.pdf", width=14, height=5)
+pdf("output/ChIPseeker/annotation_barplot_CPC_qval3.pdf", width=14, height=5)
+plotAnnoBar(peakAnnoList)
+dev.off()
+
+
+
+## Get annotation data frame
+CPC_untreated_NR2F2_annot <- as.data.frame(peakAnnoList[["CPC_untreated_NR2F2"]]@anno)
+CPC_RA_NR2F2_annot <- as.data.frame(peakAnnoList[["CPC_RA_NR2F2"]]@anno)
+CPC_untreated_TEAD4_annot <- as.data.frame(peakAnnoList[["CPC_untreated_TEAD4"]]@anno)
+CPC_RA_TEAD4_annot <- as.data.frame(peakAnnoList[["CPC_RA_TEAD4"]]@anno)
+CPC_untreated_YAP1_annot <- as.data.frame(peakAnnoList[["CPC_untreated_YAP1"]]@anno)
+CPC_RA_YAP1_annot <- as.data.frame(peakAnnoList[["CPC_RA_YAP1"]]@anno)
+
+## Convert entrez gene IDs to gene symbols
+CPC_untreated_NR2F2_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = CPC_untreated_NR2F2_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+CPC_untreated_NR2F2_annot$gene <- mapIds(org.Hs.eg.db, keys = CPC_untreated_NR2F2_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+CPC_RA_NR2F2_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = CPC_RA_NR2F2_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+CPC_RA_NR2F2_annot$gene <- mapIds(org.Hs.eg.db, keys = CPC_RA_NR2F2_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+CPC_untreated_TEAD4_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = CPC_untreated_TEAD4_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+CPC_untreated_TEAD4_annot$gene <- mapIds(org.Hs.eg.db, keys = CPC_untreated_TEAD4_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+CPC_RA_TEAD4_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = CPC_RA_TEAD4_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+CPC_RA_TEAD4_annot$gene <- mapIds(org.Hs.eg.db, keys = CPC_RA_TEAD4_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+CPC_untreated_YAP1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = CPC_untreated_YAP1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+CPC_untreated_YAP1_annot$gene <- mapIds(org.Hs.eg.db, keys = CPC_untreated_YAP1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+CPC_RA_YAP1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = CPC_RA_YAP1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+CPC_RA_YAP1_annot$gene <- mapIds(org.Hs.eg.db, keys = CPC_RA_YAP1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+## Save output table
+write.table(CPC_untreated_NR2F2_annot, file="output/ChIPseeker/annotation_macs2_CPC_untreated_NR2F2_annot_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(CPC_RA_NR2F2_annot, file="output/ChIPseeker/annotation_macs2_CPC_RA_NR2F2_annot_qval2.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(CPC_untreated_TEAD4_annot, file="output/ChIPseeker/annotation_macs2_CPC_untreated_TEAD4_annot_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(CPC_RA_TEAD4_annot, file="output/ChIPseeker/annotation_macs2_CPC_RA_TEAD4_annot_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(CPC_untreated_YAP1_annot, file="output/ChIPseeker/annotation_macs2_CPC_untreated_YAP1_annot_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+write.table(CPC_RA_YAP1_annot, file="output/ChIPseeker/annotation_macs2_CPC_RA_YAP1_annot_qval1.30103.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+CPC_untreated_NR2F2_annot_promoterAnd5 = tibble(CPC_untreated_NR2F2_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+CPC_RA_NR2F2_annot_promoterAnd5 = tibble(CPC_RA_NR2F2_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+CPC_untreated_TEAD4_annot_promoterAnd5 = tibble(CPC_untreated_TEAD4_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+CPC_RA_TEAD4_annot_promoterAnd5 = tibble(CPC_RA_TEAD4_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))    
+CPC_untreated_YAP1_annot_promoterAnd5 = tibble(CPC_untreated_YAP1_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+CPC_RA_YAP1_annot_promoterAnd5 = tibble(CPC_RA_YAP1_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) 
+
+### Save output gene lists
+CPC_untreated_NR2F2_annot_promoterAnd5_geneSymbol = CPC_untreated_NR2F2_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+CPC_RA_NR2F2_annot_promoterAnd5_geneSymbol = CPC_RA_NR2F2_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+CPC_untreated_TEAD4_annot_promoterAnd5_geneSymbol = CPC_untreated_TEAD4_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+CPC_RA_TEAD4_annot_promoterAnd5_geneSymbol = CPC_RA_TEAD4_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()   
+CPC_untreated_YAP1_annot_promoterAnd5_geneSymbol = CPC_untreated_YAP1_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+CPC_RA_YAP1_annot_promoterAnd5_geneSymbol = CPC_RA_YAP1_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique() 
+
+
+write.table(CPC_untreated_NR2F2_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_untreated_NR2F2_qval2.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(CPC_RA_NR2F2_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_RA_NR2F2_qval2.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(CPC_untreated_TEAD4_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_untreated_TEAD4_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(CPC_RA_TEAD4_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_RA_TEAD4_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)    
+
+write.table(CPC_untreated_YAP1_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_untreated_YAP1_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(CPC_RA_YAP1_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_RA_YAP1_qval1.30103_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)    
+
+
+
+
+
+## Keep only signals in non intergenic region ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+CPC_untreated_NR2F2_annot_noIntergenic = tibble(CPC_untreated_NR2F2_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+CPC_RA_NR2F2_annot_noIntergenic = tibble(CPC_RA_NR2F2_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+CPC_untreated_TEAD4_annot_noIntergenic = tibble(CPC_untreated_TEAD4_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+CPC_RA_TEAD4_annot_noIntergenic = tibble(CPC_RA_TEAD4_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+CPC_untreated_YAP1_annot_noIntergenic = tibble(CPC_untreated_YAP1_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+CPC_RA_YAP1_annot_noIntergenic = tibble(CPC_RA_YAP1_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+
+### Save output gene lists
+CPC_untreated_NR2F2_annot_noIntergenic_geneSymbol = CPC_untreated_NR2F2_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+CPC_RA_NR2F2_annot_noIntergenic_geneSymbol = CPC_RA_NR2F2_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+CPC_untreated_TEAD4_annot_noIntergenic_geneSymbol = CPC_untreated_TEAD4_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+CPC_RA_TEAD4_annot_noIntergenic_geneSymbol = CPC_RA_TEAD4_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()   
+CPC_untreated_YAP1_annot_noIntergenic_geneSymbol = CPC_untreated_YAP1_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+CPC_RA_YAP1_annot_noIntergenic_geneSymbol = CPC_RA_YAP1_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique() 
+
+
+write.table(CPC_untreated_NR2F2_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_untreated_NR2F2_qval2.30103_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(CPC_RA_NR2F2_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_RA_NR2F2_qval2.30103_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(CPC_untreated_TEAD4_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_untreated_TEAD4_qval1.30103_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(CPC_RA_TEAD4_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_RA_TEAD4_qval1.30103_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)    
+
+write.table(CPC_untreated_YAP1_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_untreated_YAP1_qval1.30103_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(CPC_RA_YAP1_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_macs2_CPC_RA_YAP1_qval1.30103_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)    
 
 
 
