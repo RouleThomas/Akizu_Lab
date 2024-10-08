@@ -498,6 +498,52 @@ awk '{print $3-$2}' your_bed_file.bed | sort -n | awk 'BEGIN {c=0; sum=0;} {a[c+
 
 --> broad identified more peaks! So let's use broad (broad simply combine [several narrow peaks into 1](https://www.biostars.org/p/245407/))
 
+
+
+
+
+# HOMER peak caller
+
+Let's use the same method as [Conchi previously used](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM2635694) to call for peak (notably to identify the enhancer of NODAL for YAP1 ChIPseq)
+
+## Install HOMER 4.11
+
+```bash
+conda create -n homer -c bioconda homer # command can be launch from anywhere (directory and node)
+```
+
+## Run HOMER peak caller
+
+From method; use HOMER findPeaks command with input control; Option `-style factor` (for TF; otherwise `-style histone` was used)
+
+- Convert .bam to tagDirectory for [homer](http://homer.ucsd.edu/homer/ngs/peaks.html). Method said only uniquely aligned reads where used, so let's use our `*unique.dupmark.sorted.bam` files
+- Call peaks
+
+
+
+```bash
+conda activate homer
+
+
+# Create tagDirectory to be used by homer
+
+
+
+# Yap1
+
+findPeaks output/homer/YAP1 -style factor -o auto -i <control tag directory>
+
+```
+
+
+
+
+
+
+
+
+
+
 # ChIPseeker - macs2
 
 

@@ -3362,13 +3362,13 @@ Let's run a slurm job for unbiased marker genes identification (`*allGenes*`) fo
 conda activate scRNAseqV2
 
 # job
-sbatch scripts/FindAllMarkers_humangastruloid2472hrs.sh # 27403599 xxx
-sbatch scripts/FindAllMarkers_humangastruloid2472hrs_UNTREATED_DASATINIB.sh # 27403608 xxx
+sbatch scripts/FindAllMarkers_humangastruloid2472hrs.sh # 27403599 ok
+sbatch scripts/FindAllMarkers_humangastruloid2472hrs_UNTREATED_DASATINIB.sh # 27403608 ok
 ```
 
---> xxx Output succesfully at `output/seurat/srat_humangastruloid.combined.sct-dim30kparam30res03_QCV2-all_markers[]_allGenes`
+--> Output succesfully at `output/seurat/srat_humangastruloid.combined.sct-dim30kparam30res03_QCV2-all_markers[]_allGenes`
 
-
+--> Useless in the end, as we focus on 72hrs sample only (see meeting notes `gastrulation paper/meetingConchi_20241007.txt` and `gastrulation paper//GastrulationPaper_humanGastruloid2472hr_V2.pptx`)
 
 
 
