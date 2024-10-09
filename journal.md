@@ -209,6 +209,10 @@ R4.3.1 with `granulator` and `tidyverse`
 
 -->  `homer` only; can be used for peak calling or motif... (used in `008*/001*`)
 
+### homer_deseq2_V1
+
+--> `homer` with `deseq2` in R v4.3.3  (used in `008*/001*`)
+
 
 ### condiments_Signac
 

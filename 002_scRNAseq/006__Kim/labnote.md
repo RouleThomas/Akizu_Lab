@@ -6378,12 +6378,12 @@ DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "ATAC"
 multiome_WT_Bap1KO_QCV2vC1.sct <- RunTFIDF(multiome_WT_Bap1KO_QCV2vC1.sct)
 multiome_WT_Bap1KO_QCV2vC1.sct <- FindTopFeatures(multiome_WT_Bap1KO_QCV2vC1.sct, min.cutoff = 'q0')
 multiome_WT_Bap1KO_QCV2vC1.sct <- RunSVD(multiome_WT_Bap1KO_QCV2vC1.sct)
-multiome_WT_Bap1KO_QCV2vC1.sct <- RunUMAP(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = 'lsi', dims = 2:50, reduction.name = "umap.atac", reduction.key = "atacUMAP_") # We exclude the first dimension as this is typically correlated with sequencing depth
+multiome_WT_Bap1KO_QCV2vC1.sct <- RunUMAP(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = 'lsi', dims = 2:40, reduction.name = "umap.atac", reduction.key = "atacUMAP_") # We exclude the first dimension as this is typically correlated with sequencing depth
 
 
 ### WNN graph, representing a weighted combination of RNA and ATAC-seq modalities
 
-multiome_WT_Bap1KO_QCV2vC1.sct <- FindMultiModalNeighbors(multiome_WT_Bap1KO_QCV2vC1.sct, reduction.list = list("pca", "lsi"), dims.list = list(1:40, 2:50))
+multiome_WT_Bap1KO_QCV2vC1.sct <- FindMultiModalNeighbors(multiome_WT_Bap1KO_QCV2vC1.sct, reduction.list = list("pca", "lsi"), dims.list = list(1:40, 2:40))
 multiome_WT_Bap1KO_QCV2vC1.sct <- RunUMAP(multiome_WT_Bap1KO_QCV2vC1.sct, nn.name = "weighted.nn", reduction.name = "wnn.umap", reduction.key = "wnnUMAP_")
 multiome_WT_Bap1KO_QCV2vC1.sct <- FindClusters(multiome_WT_Bap1KO_QCV2vC1.sct, graph.name = "wsnn", algorithm = 3, verbose = TRUE)
 
@@ -6392,9 +6392,137 @@ p1 <- DimPlot(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "umap", group.by = "cl
 p2 <- DimPlot(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "umap.atac", group.by = "cluster.annot", label = TRUE, label.size = 2.5, repel = TRUE) + ggtitle("ATAC")
 p3 <- DimPlot(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "wnn.umap", group.by = "cluster.annot", label = TRUE, label.size = 2.5, repel = TRUE) + ggtitle("WNN")
 
-pdf("output/Signac/UMAP_multiome_WT_Bap1KO_QCV2vC1_RNAATACWNN.pdf", width=12, height=5)
+pdf("output/Signac/UMAP_multiome_WT_Bap1KO_QCV2vC1_RNAATACWNN_ATACdim240.pdf", width=12, height=5)
 p1 + p2 + p3 & NoLegend() & theme(plot.title = element_text(hjust = 0.5))
 dev.off()
+
+multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident <- factor(multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident, levels = c("multiome_WT", "multiome_Bap1KO")) # Reorder untreated 1st
+
+pdf("output/Signac/UMAP_multiome_WT_Bap1KO_QCV2vC1_WNN_ATACdim240.pdf", width=5, height=5)
+p = DimPlot(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "wnn.umap", group.by = "cluster.annot", label = FALSE, label.size = 3, repel = TRUE) + ggtitle("Cell type") + NoLegend()
+LabelClusters(p, id = "cluster.annot", fontface = "bold", color = "black", size = 3)
+dev.off()
+pdf("output/Signac/UMAP_multiome_WT_Bap1KO_QCV2vC1_WNN_ATACdim240_genotype.pdf", width=5, height=5)
+DimPlot(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "wnn.umap", group.by = "orig.ident", label = FALSE, cols = c("blue", "red")) + ggtitle("Genotype")  + NoLegend()
+dev.off()
+
+
+
+
+#--> Different dim for ATAC tested; 2:40 best
+
+
+# Calculate gene activity (count ATAC peak within gene and promoter)
+GeneActivity = GeneActivity(
+  multiome_WT_Bap1KO_QCV2vC1.sct,
+  assay = "ATAC",
+  features = NULL,
+  extend.upstream = 2000,
+  extend.downstream = 0,
+  biotypes = NULL,
+  max.width = NULL,
+  process_n = 2000,
+  gene.id = FALSE,
+  verbose = TRUE
+)
+## Add gene activity as new assay
+
+multiome_WT_Bap1KO_QCV2vC1.sct[["GeneActivity"]] <- CreateAssayObject(counts = GeneActivity)
+
+# SAVE ##########################################################################################
+## saveRDS(multiome_WT_Bap1KO_QCV2vC1.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivity.sct_numeric_label.rds") 
+##########################################################################################
+
+
+## Plot genes RNA ATAC
+
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "SCT"
+p1 <- FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = "Eomes", reduction = "wnn.umap", max.cutoff = 1, cols = c("grey", "red")) + 
+  ggtitle("RNA: Eomes") + theme(plot.title = element_text(hjust = 0.5))
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "GeneActivity"
+p2 <- FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = "Eomes", reduction = "wnn.umap", max.cutoff = 100, cols = c("grey", "red")) + 
+  ggtitle("ATAC: Pax6") + theme(plot.title = element_text(hjust = 0.5))
+pdf("output/Signac/FeaturePlot_WNNreduction_WT_Bap1KO_Eomes.pdf", width=10, height=5)
+(p1 | p2) & NoLegend()  # The | operator ensures the plots are in the same rowdev.off()
+dev.off()
+
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "SCT"
+p1 <- FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = "Eomes", reduction = "umap", max.cutoff = 1, cols = c("grey", "red")) + 
+  ggtitle("RNA: Eomes") + theme(plot.title = element_text(hjust = 0.5))
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "GeneActivity"
+p2 <- FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = "Eomes", reduction = "umap", max.cutoff = 100, cols = c("grey", "red")) + 
+  ggtitle("ATAC: Eomes") + theme(plot.title = element_text(hjust = 0.5))
+pdf("output/Signac/FeaturePlot_UMAPreduction_WT_Bap1KO_Eomes.pdf", width=10, height=5)
+(p1 | p2) & NoLegend()  # The | operator ensures the plots are in the same rowdev.off()
+dev.off()
+
+
+
+# All in dotplot
+
+XXXY HERE BUG AT ORDERING...
+
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "SCT"
+
+Idents(multiome_WT_Bap1KO_QCV2vC1.sct) <- multiome_WT_Bap1KO_QCV2vC1.sct$cluster.annot
+
+levels(multiome_WT_Bap1KO_QCV2vC1.sct$cluster.annot) <- c(
+"NSC_quiescent",
+"NSC_proliferative_1",
+"NSC_proliferative_2",
+"IP",
+"Radial_Glia_Cells",
+"OPC",
+"Microglia",
+"Meningeal_Cells",
+"CR",
+"DG_GC",
+"PyNs_SubC_CA1",
+"PyNs_SubC_CA23",
+"PyNs_RSC_UL",
+"PyNs_RSC_MDL",
+"SubC_1",
+"SubC_2",
+"IN_1",
+"IN_2",
+"IN_SubC"
+)
+
+Idents(multiome_WT_Bap1KO_QCV2vC1.sct) <- multiome_WT_Bap1KO_QCV2vC1.sct$cluster.annot
+
+
+all_markers <- c(
+  "Slco1c1", "Gli3","Gm29260", # cl11 NSC_quiescent remove "Tnc", "8030451A03Rik"
+  "Tnc", "8030451A03Rik","Egfr","Bcan", "Lrig1", # cl8 NSC_proliferative_1
+  "Adamts19", "Gm29521","Adgrv1","Gm47520","Lef1", # cl14 NSC_proliferative_2
+  "Eomes","Mfap4","Rmst","Chd7","Gm11266", # cl13 IP
+  "Lmx1a","Ttc21a","Ccdc170","Gm19301","Wdr63", # cl18 Radial Glia Cells
+  "Pdgfra","Olig2","Sox10","Bcas1","Smoc1","Gm10863", #cl16 OPC
+  "Fli1","Mir142hg","Csf1r","Fyb","Inpp5d", # cl19 microglia
+  "Arhgap29","Cped1","Slc6a20a","Col3a1","Col1a2", # cl17 Meningeal cells
+  "Ndnf","Ebf3","Cacna2d2","Plekha7","Tmem163", # cl15 CR
+  "Prox1","Sema5a","Adamts18","Cntnap5a","Ptpro",  # cl6 DG_GC
+  "Fam189a1","Grin2a","Cck","Gm20754","Hcn1", # cl4 PyNs_SubC_CA1
+  "Gm32647","6530403H02Rik","Rgs6","Zfp385b","Trpc7", # cl1 PyNs_SubC_CA23
+  "Satb2","Tshz2","9130024F11Rik","Itpr1","Tshz3", # cl5 PyNs_RSC_UL
+  "Sema3c","Meis2","Adgrb3","Auts2","Kcnq3", # cl7 PyNs_RSC_MDL
+  "Ntng1","Cntn3","Ldb2","Schip1","A230006K03Rik", # cl3 SubC_1 
+  "Hs3st4","Cobll1","Lrrtm3","Ctnna3","Grm8", # cl9 SubC_2
+  "Nxph1","Maf","Gad2","Kcnc2","Erbb4", # cl2 IN_1
+  "Adarb2","Dlx6os1","Igf1","Sorcs3", # cl10 IN_2 remove Erbb4
+  "Camk2a","Cpne4","St18","Cpne7","Htr2c" # cl12 IN_SubC
+)
+
+
+
+
+pdf("output/Signac/DotPlot_SCT_multiome_WT_Bap1KO_QCV2vC1_label_vertical_top5.pdf", width=11, height=4.5)
+DotPlot(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
+dev.off()
+
+
 
 
 
