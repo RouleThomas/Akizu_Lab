@@ -6809,7 +6809,7 @@ multiome_WT_Bap1KO_QCV2vC1.sct <- RegionStats(
 )
 
 ## Run  LinkPeaks
-LinkPeaks = LinkPeaks(
+multiome_WT_Bap1KO_QCV2vC1.sct = LinkPeaks(
   multiome_WT_Bap1KO_QCV2vC1.sct,
   peak.assay = "ATAC",
   expression.assay = "RNA",
@@ -6828,20 +6828,20 @@ LinkPeaks = LinkPeaks(
   verbose = TRUE
 )
 
-XXXY HERE  LinkPeaks running
-
-
-
-## Add LinkPeaks as new assay
-
-?? multiome_WT_Bap1KO_QCV2vC1.sct[["LinkPeaks"]] <- CreateAssayObject(counts = LinkPeaks)
 
 # SAVE ##########################################################################################
-## saveRDS(multiome_WT_Bap1KO_QCV2vC1.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.sct_numeric_label.rds") 
+## saveRDS(LinkPeaks, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.sct_numeric_label.rds") 
 multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.sct_numeric_label.rds")
 ##########################################################################################
 
+as_tibble(Links(multiome_WT_Bap1KO_QCV2vC1.sct))
 
+#write.table(as_tibble(Links(multiome_WT_Bap1KO_QCV2vC1.sct)), file = c("output/Signac/LinkPeaks_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+# plot the top 
+
+
+xxxy
 
 
 ```

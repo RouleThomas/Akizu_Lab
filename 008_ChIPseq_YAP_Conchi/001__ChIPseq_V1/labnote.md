@@ -1347,6 +1347,101 @@ write.table(hESC_WT_YAP1_R1_annot, file="output/ChIPseeker/annotation_homer_hESC
 
 
 
+
+## Keep all ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+
+hESC_WT_EZH2_R1_annot_geneSymbol = hESC_WT_EZH2_R1_annot %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_EZH2_R2_annot_geneSymbol = hESC_WT_EZH2_R2_annot %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_YAPKO_EZH2_R1_annot_geneSymbol = hESC_YAPKO_EZH2_R1_annot %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_YAPKO_EZH2_R2_annot_geneSymbol = hESC_YAPKO_EZH2_R2_annot %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_QSER1_R1_annot_geneSymbol = hESC_WT_QSER1_R1_annot %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_QSER1_R2_annot_geneSymbol = hESC_WT_QSER1_R2_annot %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_YAPKO_QSER1_R1_annot_geneSymbol = hESC_YAPKO_QSER1_R1_annot %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_YAPKO_QSER1_R2_annot_geneSymbol = hESC_YAPKO_QSER1_R2_annot %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_TEAD4_R1_annot_geneSymbol = hESC_WT_TEAD4_R1_annot %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_YAP1_R1_annot_geneSymbol = hESC_WT_YAP1_R1_annot %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+
+
+write.table(hESC_WT_EZH2_R1_annot_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_EZH2_R1_annot_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_WT_EZH2_R2_annot_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_EZH2_R2_annot_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_YAPKO_EZH2_R1_annot_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_YAPKO_EZH2_R1_annot_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_YAPKO_EZH2_R2_annot_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_YAPKO_EZH2_R2_annot_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_WT_QSER1_R1_annot_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_QSER1_R1_annot_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_WT_QSER1_R2_annot_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_QSER1_R2_annot_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_YAPKO_QSER1_R1_annot_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_YAPKO_QSER1_R1_annot_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_YAPKO_QSER1_R2_annot_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_YAPKO_QSER1_R2_annot_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_WT_TEAD4_R1_annot_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_TEAD4_R1_annot_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_WT_YAP1_R1_annot_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_YAP1_R1_annot_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+
+
+
+
+
+
 ## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
 hESC_WT_EZH2_R1_annot_promoterAnd5 = tibble(hESC_WT_EZH2_R1_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
@@ -1638,6 +1733,45 @@ write.table(hESC_WT_EZH2_pool_annot, file="output/ChIPseeker/annotation_homer_hE
 write.table(hESC_YAPKO_EZH2_pool_annot, file="output/ChIPseeker/annotation_homer_hESC_YAPKO_EZH2_pool_annot.txt", sep="\t", quote=F, row.names=F) 
 write.table(hESC_WT_QSER1_pool_annot, file="output/ChIPseeker/annotation_homer_hESC_WT_QSER1_pool_annot.txt", sep="\t", quote=F, row.names=F) 
 write.table(hESC_YAPKO_QSER1_pool_annot, file="output/ChIPseeker/annotation_homer_hESC_YAPKO_QSER1_pool_annot.txt", sep="\t", quote=F, row.names=F) 
+
+
+## Keep all ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+
+hESC_WT_EZH2_pool_annot_geneSymbol = hESC_WT_EZH2_pool_annot %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_YAPKO_EZH2_pool_annot_geneSymbol = hESC_YAPKO_EZH2_pool_annot %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_QSER1_pool_annot_geneSymbol = hESC_WT_QSER1_pool_annot %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_YAPKO_QSER1_pool_annot_geneSymbol = hESC_YAPKO_QSER1_pool_annot %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+write.table(hESC_WT_EZH2_pool_annot_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_EZH2_pool_annot_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_YAPKO_EZH2_pool_annot_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_YAPKO_EZH2_pool_annot_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_WT_QSER1_pool_annot_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_QSER1_pool_annot_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_YAPKO_QSER1_pool_annot_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_YAPKO_QSER1_pool_annot_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
 
 ## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
 hESC_WT_EZH2_pool_annot_promoterAnd5 = tibble(hESC_WT_EZH2_pool_annot) %>%
@@ -8684,7 +8818,7 @@ Task from Conchi email 20240917:
 - Identify peak that overlap (+/-200bp)
 - Generate venn diagram of overlapping peaks
 
-
+## macs2 overlapping peaks EZH2, QSER1, YAP (`008003*/`), TEAD4 (`008003*/`)
 
 ```bash
 # Collect the nb of peaks qval 1.3
@@ -8997,6 +9131,333 @@ write.table(ChIPseeker_VennDiagram_extend500bp, file = "output/peakOverlap/ChIPs
 ```
 
 --> File exported to Google Drive and converted to xcl `gastrulation paper/output/peakOverlap/ChIPseeker_VennDiagram.xlsx`
+
+
+
+
+## homer overlapping peaks EZH2, QSER1, YAP (`008003*/`), TEAD4 (`008003*/`)
+
+```bash
+# Collect the nb of peaks homer
+wc -l output/homer/hESC_WT_QSER1_outputPeaks.bed # 12462
+wc -l output/homer/hESC_WT_EZH2_outputPeaks.bed # 2671
+wc -l ../003__ChIPseq_pluripotency/output/homer/hESC_WT_TEAD4_R1/peaks.bed # 5597
+wc -l ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks.bed # 3062
+
+
+
+# extend the peak of 200bp up and down
+tail -n +2 output/homer/hESC_WT_QSER1_outputPeaks.bed | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 200 >  output/homer/hESC_WT_QSER1_outputPeaks_extend200bp.bed # tail used top skip the header (1st line)
+tail -n +2 output/homer/hESC_WT_EZH2_outputPeaks.bed | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 200 >  output/homer/hESC_WT_EZH2_outputPeaks_extend200bp.bed # tail used top skip the header (1st line)
+tail -n +2 ../003__ChIPseq_pluripotency/output/homer/hESC_WT_TEAD4_R1/peaks.bed | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 200 >  ../003__ChIPseq_pluripotency/output/homer/hESC_WT_TEAD4_R1/peaks_extend200bp.bed # tail used top skip the header (1st line)
+tail -n +2 ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks.bed | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 200 >  ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks_extend200bp.bed # tail used top skip the header (1st line)
+
+
+
+# extend the peak of 500bp up and down
+tail -n +2 output/homer/hESC_WT_QSER1_outputPeaks.bed | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 500 >  output/homer/hESC_WT_QSER1_outputPeaks_extend500bp.bed # tail used top skip the header (1st line)
+tail -n +2 output/homer/hESC_WT_EZH2_outputPeaks.bed | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 500 >  output/homer/hESC_WT_EZH2_outputPeaks_extend500bp.bed # tail used top skip the header (1st line)
+tail -n +2 ../003__ChIPseq_pluripotency/output/homer/hESC_WT_TEAD4_R1/peaks.bed | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 500 >  ../003__ChIPseq_pluripotency/output/homer/hESC_WT_TEAD4_R1/peaks_extend500bp.bed # tail used top skip the header (1st line)
+tail -n +2 ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks.bed | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 500 >  ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks_extend500bp.bed # tail used top skip the header (1st line)
+
+```
+
+--> Venn diagram of peak made using [Intervene webtool](https://www.bioinformatics.com.cn/plot_basic_genomic_regions_overlap_venn_diagram_026_en) From this [paper](https://www.bioinformatics.com.cn/static/papers/026_fig2A.pdf).
+  --> See `002*/003*/gastrulation paper/GastrulationPaper_peakOverlap_V2.ppt` for detail  
+  --> See `002*/003*/gastrulation paper/output/peakOverlap/homer_peakCoordinate` for output files  
+
+Let's use **R to add ChIPseeker output to VennDiagram output** (ie. to identify which gene/peak assocation); work in `output/peakOverlap`
+
+
+
+
+
+
+```R
+library("tidyverse")
+
+
+#########################################################
+# no Extension ##########################################
+#########################################################
+## import ChIPseeker output
+ChIPseeker_QSER1 = read_tsv("output/ChIPseeker/annotation_homer_hESC_WT_QSER1_pool_annot.txt") %>% 
+  dplyr::select(seqnames, start, end, name, annotation, distanceToTSS, geneSymbol, gene) %>%
+  add_column(ChIPseeker = "QSER1")
+ChIPseeker_EZH2 = read_tsv("output/ChIPseeker/annotation_homer_hESC_WT_EZH2_pool_annot.txt") %>% 
+  dplyr::select(seqnames, start, end, name, annotation, distanceToTSS, geneSymbol, gene) %>%
+  add_column(ChIPseeker = "EZH2")
+ChIPseeker_YAP1 = read_tsv("output/ChIPseeker/annotation_homer_hESC_WT_YAP1_R1_annot.txt") %>% 
+  dplyr::select(seqnames, start, end, name, annotation, distanceToTSS, geneSymbol, gene) %>%
+  add_column(ChIPseeker = "YAP1")
+ChIPseeker_TEAD4 = read_tsv("output/ChIPseeker/annotation_homer_hESC_WT_TEAD4_R1_annot.txt") %>% 
+  dplyr::select(seqnames, start, end, name, annotation, distanceToTSS, geneSymbol, gene) %>%
+  add_column(ChIPseeker = "TEAD4")
+
+ChIPseeker_noExtension = ChIPseeker_QSER1 %>%
+  bind_rows(ChIPseeker_EZH2) %>%
+  bind_rows(ChIPseeker_YAP1) %>%
+  bind_rows(ChIPseeker_TEAD4) 
+
+
+XXXY HERE COPY output peak stuuff to cluster XXX
+
+## import peak venn diagram output
+X0001_YAP1 = read_tsv("output/peakOverlap/noExtension/sets/0001_YAP1.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "0001_YAP1")
+X0010_TEAD4 = read_tsv("output/peakOverlap/noExtension/sets/0010_TEAD4.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "0010_TEAD4")
+X0011_TEAD4_YAP1 = read_tsv("output/peakOverlap/noExtension/sets/0011_TEAD4_YAP1.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "0011_TEAD4_YAP1")
+X0100_EZH2 = read_tsv("output/peakOverlap/noExtension/sets/0100_EZH2.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "0100_EZH2")
+X0110_EZH2_TEAD4 = read_tsv("output/peakOverlap/noExtension/sets/0110_EZH2_TEAD4.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "0110_EZH2_TEAD4")
+X1000_QSER1 = read_tsv("output/peakOverlap/noExtension/sets/1000_QSER1.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "1000_QSER1")
+X1001_QSER1_YAP1 = read_tsv("output/peakOverlap/noExtension/sets/1001_QSER1_YAP1.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "1001_QSER1_YAP1")
+X1010_QSER1_TEAD4 = read_tsv("output/peakOverlap/noExtension/sets/1010_QSER1_TEAD4.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "1010_QSER1_TEAD4")
+X1011_QSER1_TEAD4_YAP1 = read_tsv("output/peakOverlap/noExtension/sets/1011_QSER1_TEAD4_YAP1.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "1011_QSER1_TEAD4_YAP1")
+X1100_QSER1_EZH2 = read_tsv("output/peakOverlap/noExtension/sets/1100_QSER1_EZH2.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "1100_QSER1_EZH2")
+X1110_QSER1_EZH2_TEAD4 = read_tsv("output/peakOverlap/noExtension/sets/1110_QSER1_EZH2_TEAD4.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "1110_QSER1_EZH2_TEAD4")
+X1111_QSER1_EZH2_TEAD4_YAP1 = read_tsv("output/peakOverlap/noExtension/sets/1111_QSER1_EZH2_TEAD4_YAP1.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "1111_QSER1_EZH2_TEAD4_YAP1")
+
+VennDiagram_noExtension = X0001_YAP1 %>%
+  bind_rows(X0010_TEAD4) %>%
+  bind_rows(X0011_TEAD4_YAP1) %>%
+  bind_rows(X0100_EZH2) %>%
+  bind_rows(X0110_EZH2_TEAD4) %>%
+  bind_rows(X1000_QSER1) %>%
+  bind_rows(X1001_QSER1_YAP1) %>%
+  bind_rows(X1010_QSER1_TEAD4) %>%
+  bind_rows(X1011_QSER1_TEAD4_YAP1) %>%
+  bind_rows(X1100_QSER1_EZH2) %>%
+  bind_rows(X1110_QSER1_EZH2_TEAD4) %>%
+  bind_rows(X1111_QSER1_EZH2_TEAD4_YAP1) 
+  
+# combine ChIPseeker and VennDiagram outputs
+ChIPseeker_VennDiagram_noExtension = VennDiagram_noExtension %>%
+  left_join(ChIPseeker_noExtension) %>%
+  dplyr::select(VennDiagram, geneSymbol, gene, annotation, distanceToTSS, name, seqnames, start, end, ChIPseeker)
+
+# Save output 
+write.table(ChIPseeker_VennDiagram_noExtension, file = "output/peakOverlap/ChIPseeker_VennDiagram_noExtension.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+
+
+#########################################################
+# 200bp Extension ##########################################
+#########################################################
+## import ChIPseeker output
+ChIPseeker_QSER1 = read_tsv("output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103_extend200bp.txt", col_names = FALSE) %>% 
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3", "name" = "X6", "annotation" = "X12", "distanceToTSS" = "X20", "geneSymbol" = "X21", "gene" = "X22") %>%
+  dplyr::select(seqnames, start, end, name, annotation, distanceToTSS, geneSymbol, gene) %>%
+  add_column(ChIPseeker = "QSER1")
+ChIPseeker_EZH2 = read_tsv("output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_annot_qval1.30103_extend200bp.txt", col_names = FALSE) %>% 
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3", "name" = "X6", "annotation" = "X12", "distanceToTSS" = "X20", "geneSymbol" = "X21", "gene" = "X22") %>%
+  dplyr::select(seqnames, start, end, name, annotation, distanceToTSS, geneSymbol, gene) %>%
+  add_column(ChIPseeker = "EZH2")
+ChIPseeker_YAP1 = read_tsv("../003__ChIPseq_pluripotency/output/ChIPseeker/annotation_macs2_hESC_WT_YAP1_annot_qval1.30103_extend200bp.txt", col_names = FALSE) %>% 
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3", "name" = "X6", "annotation" = "X12", "distanceToTSS" = "X20", "geneSymbol" = "X21", "gene" = "X22") %>%
+  dplyr::select(seqnames, start, end, name, annotation, distanceToTSS, geneSymbol, gene) %>%
+  add_column(ChIPseeker = "YAP1")
+ChIPseeker_TEAD4 = read_tsv("../003__ChIPseq_pluripotency/output/ChIPseeker/annotation_macs2_hESC_WT_TEAD4_annot_qval1.30103_extend200bp.txt", col_names = FALSE) %>% 
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3", "name" = "X6", "annotation" = "X12", "distanceToTSS" = "X20", "geneSymbol" = "X21", "gene" = "X22") %>%
+  dplyr::select(seqnames, start, end, name, annotation, distanceToTSS, geneSymbol, gene) %>%
+  add_column(ChIPseeker = "TEAD4")
+
+ChIPseeker_extend200bp = ChIPseeker_QSER1 %>%
+  bind_rows(ChIPseeker_EZH2) %>%
+  bind_rows(ChIPseeker_YAP1) %>%
+  bind_rows(ChIPseeker_TEAD4) 
+
+## import peak venn diagram output
+X0001_YAP1 = read_tsv("output/peakOverlap/200npExtension/sets/0001_YAP1.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "0001_YAP1")
+X0010_TEAD4 = read_tsv("output/peakOverlap/200npExtension/sets/0010_TEAD4.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "0010_TEAD4")
+X0011_TEAD4_YAP1 = read_tsv("output/peakOverlap/200npExtension/sets/0011_TEAD4_YAP1.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "0011_TEAD4_YAP1")
+X0100_EZH2 = read_tsv("output/peakOverlap/200npExtension/sets/0100_EZH2.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "0100_EZH2")
+X0110_EZH2_TEAD4 = read_tsv("output/peakOverlap/200npExtension/sets/0110_EZH2_TEAD4.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "0110_EZH2_TEAD4")
+X1000_QSER1 = read_tsv("output/peakOverlap/200npExtension/sets/1000_QSER1.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "1000_QSER1")
+X1001_QSER1_YAP1 = read_tsv("output/peakOverlap/200npExtension/sets/1001_QSER1_YAP1.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "1001_QSER1_YAP1")
+X1010_QSER1_TEAD4 = read_tsv("output/peakOverlap/200npExtension/sets/1010_QSER1_TEAD4.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "1010_QSER1_TEAD4")
+X1011_QSER1_TEAD4_YAP1 = read_tsv("output/peakOverlap/200npExtension/sets/1011_QSER1_TEAD4_YAP1.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "1011_QSER1_TEAD4_YAP1")
+X1100_QSER1_EZH2 = read_tsv("output/peakOverlap/200npExtension/sets/1100_QSER1_EZH2.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "1100_QSER1_EZH2")
+X1110_QSER1_EZH2_TEAD4 = read_tsv("output/peakOverlap/200npExtension/sets/1110_QSER1_EZH2_TEAD4.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "1110_QSER1_EZH2_TEAD4")
+X1111_QSER1_EZH2_TEAD4_YAP1 = read_tsv("output/peakOverlap/200npExtension/sets/1111_QSER1_EZH2_TEAD4_YAP1.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "1111_QSER1_EZH2_TEAD4_YAP1")
+
+VennDiagram_200npExtension = X0001_YAP1 %>%
+  bind_rows(X0010_TEAD4) %>%
+  bind_rows(X0011_TEAD4_YAP1) %>%
+  bind_rows(X0100_EZH2) %>%
+  bind_rows(X0110_EZH2_TEAD4) %>%
+  bind_rows(X1000_QSER1) %>%
+  bind_rows(X1001_QSER1_YAP1) %>%
+  bind_rows(X1010_QSER1_TEAD4) %>%
+  bind_rows(X1011_QSER1_TEAD4_YAP1) %>%
+  bind_rows(X1100_QSER1_EZH2) %>%
+  bind_rows(X1110_QSER1_EZH2_TEAD4) %>%
+  bind_rows(X1111_QSER1_EZH2_TEAD4_YAP1) 
+  
+# combine ChIPseeker and VennDiagram outputs
+ChIPseeker_VennDiagram_extend200bp = VennDiagram_200npExtension %>%
+  left_join(ChIPseeker_extend200bp) %>%
+  dplyr::select(VennDiagram, geneSymbol, gene, annotation, distanceToTSS, name, seqnames, start, end, ChIPseeker)
+
+# Save output 
+write.table(ChIPseeker_VennDiagram_extend200bp, file = "output/peakOverlap/ChIPseeker_VennDiagram_extend200bp.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+
+
+
+
+
+
+
+#########################################################
+# 500bp Extension ##########################################
+#########################################################
+## import ChIPseeker output
+ChIPseeker_QSER1 = read_tsv("output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103_extend500bp.txt", col_names = FALSE) %>% 
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3", "name" = "X6", "annotation" = "X12", "distanceToTSS" = "X20", "geneSymbol" = "X21", "gene" = "X22") %>%
+  dplyr::select(seqnames, start, end, name, annotation, distanceToTSS, geneSymbol, gene) %>%
+  add_column(ChIPseeker = "QSER1")
+ChIPseeker_EZH2 = read_tsv("output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_annot_qval1.30103_extend500bp.txt", col_names = FALSE) %>% 
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3", "name" = "X6", "annotation" = "X12", "distanceToTSS" = "X20", "geneSymbol" = "X21", "gene" = "X22") %>%
+  dplyr::select(seqnames, start, end, name, annotation, distanceToTSS, geneSymbol, gene) %>%
+  add_column(ChIPseeker = "EZH2")
+ChIPseeker_YAP1 = read_tsv("../003__ChIPseq_pluripotency/output/ChIPseeker/annotation_macs2_hESC_WT_YAP1_annot_qval1.30103_extend500bp.txt", col_names = FALSE) %>% 
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3", "name" = "X6", "annotation" = "X12", "distanceToTSS" = "X20", "geneSymbol" = "X21", "gene" = "X22") %>%
+  dplyr::select(seqnames, start, end, name, annotation, distanceToTSS, geneSymbol, gene) %>%
+  add_column(ChIPseeker = "YAP1")
+ChIPseeker_TEAD4 = read_tsv("../003__ChIPseq_pluripotency/output/ChIPseeker/annotation_macs2_hESC_WT_TEAD4_annot_qval1.30103_extend500bp.txt", col_names = FALSE) %>% 
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3", "name" = "X6", "annotation" = "X12", "distanceToTSS" = "X20", "geneSymbol" = "X21", "gene" = "X22") %>%
+  dplyr::select(seqnames, start, end, name, annotation, distanceToTSS, geneSymbol, gene) %>%
+  add_column(ChIPseeker = "TEAD4")
+
+ChIPseeker_extend500bp = ChIPseeker_QSER1 %>%
+  bind_rows(ChIPseeker_EZH2) %>%
+  bind_rows(ChIPseeker_YAP1) %>%
+  bind_rows(ChIPseeker_TEAD4) 
+
+## import peak venn diagram output
+X0001_YAP1 = read_tsv("output/peakOverlap/500bpExtension/sets/0001_YAP1.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "0001_YAP1")
+X0010_TEAD4 = read_tsv("output/peakOverlap/500bpExtension/sets/0010_TEAD4.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "0010_TEAD4")
+X0011_TEAD4_YAP1 = read_tsv("output/peakOverlap/500bpExtension/sets/0011_TEAD4_YAP1.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "0011_TEAD4_YAP1")
+X0100_EZH2 = read_tsv("output/peakOverlap/500bpExtension/sets/0100_EZH2.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "0100_EZH2")
+X0110_EZH2_TEAD4 = read_tsv("output/peakOverlap/500bpExtension/sets/0110_EZH2_TEAD4.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "0110_EZH2_TEAD4")
+X0111_EZH2_TEAD4_YAP1 = read_tsv("output/peakOverlap/500bpExtension/sets/0111_EZH2_TEAD4_YAP1.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "0111_EZH2_TEAD4_YAP1")
+X1000_QSER1 = read_tsv("output/peakOverlap/500bpExtension/sets/1000_QSER1.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "1000_QSER1")
+X1001_QSER1_YAP1 = read_tsv("output/peakOverlap/500bpExtension/sets/1001_QSER1_YAP1.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "1001_QSER1_YAP1")
+X1010_QSER1_TEAD4 = read_tsv("output/peakOverlap/500bpExtension/sets/1010_QSER1_TEAD4.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "1010_QSER1_TEAD4")
+X1011_QSER1_TEAD4_YAP1 = read_tsv("output/peakOverlap/500bpExtension/sets/1011_QSER1_TEAD4_YAP1.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "1011_QSER1_TEAD4_YAP1")
+X1100_QSER1_EZH2 = read_tsv("output/peakOverlap/500bpExtension/sets/1100_QSER1_EZH2.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "1100_QSER1_EZH2")
+X1101_QSER1_EZH2_YAP1 = read_tsv("output/peakOverlap/500bpExtension/sets/1101_QSER1_EZH2_YAP1.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "1101_QSER1_EZH2_YAP1")
+X1110_QSER1_EZH2_TEAD4 = read_tsv("output/peakOverlap/500bpExtension/sets/1110_QSER1_EZH2_TEAD4.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "1110_QSER1_EZH2_TEAD4")
+X1111_QSER1_EZH2_TEAD4_YAP1 = read_tsv("output/peakOverlap/500bpExtension/sets/1111_QSER1_EZH2_TEAD4_YAP1.bed", col_names = FALSE) %>%
+  dplyr::rename( "seqnames"= "X1",  "start" = "X2",  "end" = "X3") %>%
+  add_column(VennDiagram = "1111_QSER1_EZH2_TEAD4_YAP1")
+
+VennDiagram_500bpExtension = X0001_YAP1 %>%
+  bind_rows(X0010_TEAD4) %>%
+  bind_rows(X0011_TEAD4_YAP1) %>%
+  bind_rows(X0100_EZH2) %>%
+  bind_rows(X0110_EZH2_TEAD4) %>%
+  bind_rows(X0111_EZH2_TEAD4_YAP1) %>%
+  bind_rows(X1000_QSER1) %>%
+  bind_rows(X1001_QSER1_YAP1) %>%
+  bind_rows(X1010_QSER1_TEAD4) %>%
+  bind_rows(X1011_QSER1_TEAD4_YAP1) %>%
+  bind_rows(X1100_QSER1_EZH2) %>%
+  bind_rows(X1101_QSER1_EZH2_YAP1) %>%
+  bind_rows(X1110_QSER1_EZH2_TEAD4) %>%
+  bind_rows(X1111_QSER1_EZH2_TEAD4_YAP1)
+
+# combine ChIPseeker and VennDiagram outputs
+ChIPseeker_VennDiagram_extend500bp = VennDiagram_500bpExtension %>%
+  left_join(ChIPseeker_extend500bp) %>%
+  dplyr::select(VennDiagram, geneSymbol, gene, annotation, distanceToTSS, name, seqnames, start, end, ChIPseeker)
+
+# Save output 
+write.table(ChIPseeker_VennDiagram_extend500bp, file = "output/peakOverlap/ChIPseeker_VennDiagram_extend500bp.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+```
+
+--> File exported to Google Drive and converted to xcl `gastrulation paper/output/peakOverlap/ChIPseeker_VennDiagram.xlsx`
+
+
+
+
+
+
+
 
 
 
