@@ -1586,47 +1586,174 @@ write.table(hESC_WT_YAP1_R1_annot_noIntergenic_noIntergenic_geneSymbol, file = "
 
 # BIO REP SAMPLE #####################
 
-XXXY HERE 
-
 # Import homer peaks
 # Convert .txt to .bed
+hESC_WT_EZH2_pool = as_tibble(read.table("output/homer/hESC_WT_EZH2_outputPeaks.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_YAPKO_EZH2_pool = as_tibble(read.table("output/homer/hESC_YAPKO_EZH2_outputPeaks.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_WT_QSER1_pool = as_tibble(read.table("output/homer/hESC_WT_QSER1_outputPeaks.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+hESC_YAPKO_QSER1_pool = as_tibble(read.table("output/homer/hESC_YAPKO_QSER1_outputPeaks.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
 
-hESC_WT_EZH2_R1 = as_tibble(read.table("output/homer/hESC_WT_EZH2_R1/peaks.bed")) %>%
+
+
+
+## Tidy peaks 
+hESC_WT_EZH2_pool_gr = makeGRangesFromDataFrame(hESC_WT_EZH2_pool,keep.extra.columns=TRUE)
+hESC_YAPKO_EZH2_pool_gr = makeGRangesFromDataFrame(hESC_YAPKO_EZH2_pool,keep.extra.columns=TRUE)
+hESC_WT_QSER1_pool_gr = makeGRangesFromDataFrame(hESC_WT_QSER1_pool,keep.extra.columns=TRUE)
+hESC_YAPKO_QSER1_pool_gr = makeGRangesFromDataFrame(hESC_YAPKO_QSER1_pool,keep.extra.columns=TRUE)
+
+gr_list <- list(hESC_WT_EZH2_pool=hESC_WT_EZH2_pool_gr, hESC_YAPKO_EZH2_pool=hESC_YAPKO_EZH2_pool_gr, hESC_WT_QSER1_pool=hESC_WT_QSER1_pool_gr,    hESC_YAPKO_QSER1_pool = hESC_YAPKO_QSER1_pool_gr)
+
+## Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+               
+### Barplot
+pdf("output/ChIPseeker/annotation_barplot_hESC_pool_homer.pdf", width=14, height=3)
+plotAnnoBar(peakAnnoList)
+dev.off()
+
+## Get annotation data frame
+hESC_WT_EZH2_pool_annot <- as.data.frame(peakAnnoList[["hESC_WT_EZH2_pool"]]@anno)
+hESC_YAPKO_EZH2_pool_annot <- as.data.frame(peakAnnoList[["hESC_YAPKO_EZH2_pool"]]@anno)
+hESC_WT_QSER1_pool_annot <- as.data.frame(peakAnnoList[["hESC_WT_QSER1_pool"]]@anno)
+hESC_YAPKO_QSER1_pool_annot <- as.data.frame(peakAnnoList[["hESC_YAPKO_QSER1_pool"]]@anno)
+
+## Convert entrez gene IDs to gene symbols
+hESC_WT_EZH2_pool_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_EZH2_pool_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_WT_EZH2_pool_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_EZH2_pool_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+hESC_YAPKO_EZH2_pool_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_YAPKO_EZH2_pool_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_YAPKO_EZH2_pool_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_YAPKO_EZH2_pool_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+hESC_WT_QSER1_pool_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1_pool_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_WT_QSER1_pool_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1_pool_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+hESC_YAPKO_QSER1_pool_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_YAPKO_QSER1_pool_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_YAPKO_QSER1_pool_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_YAPKO_QSER1_pool_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+## Save output table
+write.table(hESC_WT_EZH2_pool_annot, file="output/ChIPseeker/annotation_homer_hESC_WT_EZH2_pool_annot.txt", sep="\t", quote=F, row.names=F) 
+write.table(hESC_YAPKO_EZH2_pool_annot, file="output/ChIPseeker/annotation_homer_hESC_YAPKO_EZH2_pool_annot.txt", sep="\t", quote=F, row.names=F) 
+write.table(hESC_WT_QSER1_pool_annot, file="output/ChIPseeker/annotation_homer_hESC_WT_QSER1_pool_annot.txt", sep="\t", quote=F, row.names=F) 
+write.table(hESC_YAPKO_QSER1_pool_annot, file="output/ChIPseeker/annotation_homer_hESC_YAPKO_QSER1_pool_annot.txt", sep="\t", quote=F, row.names=F) 
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+hESC_WT_EZH2_pool_annot_promoterAnd5 = tibble(hESC_WT_EZH2_pool_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+hESC_YAPKO_EZH2_pool_annot_promoterAnd5 = tibble(hESC_YAPKO_EZH2_pool_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+hESC_WT_QSER1_pool_annot_promoterAnd5 = tibble(hESC_WT_QSER1_pool_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+hESC_YAPKO_QSER1_pool_annot_promoterAnd5 = tibble(hESC_YAPKO_QSER1_pool_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+    
+### Save output gene lists
+hESC_WT_EZH2_pool_annot_promoterAnd5_geneSymbol = hESC_WT_EZH2_pool_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_YAPKO_EZH2_pool_annot_promoterAnd5_geneSymbol = hESC_YAPKO_EZH2_pool_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_WT_QSER1_pool_annot_promoterAnd5_geneSymbol = hESC_WT_QSER1_pool_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_YAPKO_QSER1_pool_annot_promoterAnd5_geneSymbol = hESC_YAPKO_QSER1_pool_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+write.table(hESC_WT_EZH2_pool_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_EZH2_pool_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_YAPKO_EZH2_pool_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_YAPKO_EZH2_pool_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_WT_QSER1_pool_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_QSER1_pool_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_YAPKO_QSER1_pool_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_YAPKO_QSER1_pool_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+## Keep only signals in non intergenic region ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+hESC_WT_EZH2_pool_annot_noIntergenic = tibble(hESC_WT_EZH2_pool_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+hESC_YAPKO_EZH2_pool_annot_noIntergenic = tibble(hESC_YAPKO_EZH2_pool_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+hESC_WT_QSER1_pool_annot_noIntergenic = tibble(hESC_WT_QSER1_pool_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+hESC_YAPKO_QSER1_pool_annot_noIntergenic = tibble(hESC_YAPKO_QSER1_pool_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+
+### Save output gene lists
+hESC_WT_EZH2_pool_annot_noIntergenic_geneSymbol = hESC_WT_EZH2_pool_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+hESC_YAPKO_EZH2_pool_annot_noIntergenic_geneSymbol = hESC_YAPKO_EZH2_pool_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()    
+hESC_WT_QSER1_pool_annot_noIntergenic_geneSymbol = hESC_WT_QSER1_pool_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()  
+hESC_YAPKO_QSER1_pool_annot_noIntergenic_geneSymbol = hESC_YAPKO_QSER1_pool_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()  
+
+write.table(hESC_WT_EZH2_pool_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_EZH2_pool_annot_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(hESC_YAPKO_EZH2_pool_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_YAPKO_EZH2_pool_annot_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)        
+write.table(hESC_WT_QSER1_pool_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_QSER1_pool_annot_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)        
+write.table(hESC_YAPKO_QSER1_pool_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_YAPKO_QSER1_pool_annot_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)     
+            
+
+
+
+# Plot annot peak location with WT samples of interest
+
+# Convert .txt to .bed
+hESC_WT_QSER1_pool = as_tibble(read.table("output/homer/hESC_WT_QSER1_outputPeaks.bed")) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
-hESC_WT_EZH2_R2 = as_tibble(read.table("output/homer/hESC_WT_EZH2_R2/peaks.bed")) %>%
-    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
-hESC_YAPKO_EZH2_R1 = as_tibble(read.table("output/homer/hESC_YAPKO_EZH2_R1/peaks.bed")) %>%
-    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
-hESC_YAPKO_EZH2_R2 = as_tibble(read.table("output/homer/hESC_YAPKO_EZH2_R2/peaks.bed")) %>%
-    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
-hESC_WT_QSER1_R1 = as_tibble(read.table("output/homer/hESC_WT_QSER1_R1/peaks.bed")) %>%
-    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
-hESC_WT_QSER1_R2 = as_tibble(read.table("output/homer/hESC_WT_QSER1_R2/peaks.bed")) %>%
-    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
-hESC_YAPKO_QSER1_R1 = as_tibble(read.table("output/homer/hESC_YAPKO_QSER1_R1/peaks.bed")) %>%
-    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
-hESC_YAPKO_QSER1_R2 = as_tibble(read.table("output/homer/hESC_YAPKO_QSER1_R2/peaks.bed")) %>%
-    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
-## 008*/003*
+hESC_WT_EZH2_pool = as_tibble(read.table("output/homer/hESC_WT_EZH2_outputPeaks.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4)     
 hESC_WT_TEAD4_R1 = as_tibble(read.table("../003__ChIPseq_pluripotency/output/homer/hESC_WT_TEAD4_R1/peaks.bed")) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
 hESC_WT_YAP1_R1 = as_tibble(read.table("../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks.bed")) %>%
     dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+    
 
 
 ## Tidy peaks 
-hESC_WT_EZH2_R1_gr = makeGRangesFromDataFrame(hESC_WT_EZH2_R1,keep.extra.columns=TRUE)
-hESC_WT_EZH2_R2_gr = makeGRangesFromDataFrame(hESC_WT_EZH2_R2,keep.extra.columns=TRUE)
-hESC_YAPKO_EZH2_R1_gr = makeGRangesFromDataFrame(hESC_YAPKO_EZH2_R1,keep.extra.columns=TRUE)
-hESC_YAPKO_EZH2_R2_gr = makeGRangesFromDataFrame(hESC_YAPKO_EZH2_R2,keep.extra.columns=TRUE)
-hESC_WT_QSER1_R1_gr = makeGRangesFromDataFrame(hESC_WT_QSER1_R1,keep.extra.columns=TRUE)
-hESC_WT_QSER1_R2_gr = makeGRangesFromDataFrame(hESC_WT_QSER1_R2,keep.extra.columns=TRUE)
-hESC_YAPKO_QSER1_R1_gr = makeGRangesFromDataFrame(hESC_YAPKO_QSER1_R1,keep.extra.columns=TRUE)
-hESC_YAPKO_QSER1_R2_gr = makeGRangesFromDataFrame(hESC_YAPKO_QSER1_R2,keep.extra.columns=TRUE)
+hESC_WT_QSER1_pool_gr = makeGRangesFromDataFrame(hESC_WT_QSER1_pool,keep.extra.columns=TRUE)
+hESC_WT_EZH2_pool_gr = makeGRangesFromDataFrame(hESC_WT_EZH2_pool,keep.extra.columns=TRUE)
 hESC_WT_TEAD4_R1_gr = makeGRangesFromDataFrame(hESC_WT_TEAD4_R1,keep.extra.columns=TRUE)
 hESC_WT_YAP1_R1_gr = makeGRangesFromDataFrame(hESC_WT_YAP1_R1,keep.extra.columns=TRUE)
 
-gr_list <- list(hESC_WT_EZH2_R1=hESC_WT_EZH2_R1_gr, hESC_WT_EZH2_R2=hESC_WT_EZH2_R2_gr, hESC_YAPKO_EZH2_R1=hESC_YAPKO_EZH2_R1_gr,    hESC_YAPKO_EZH2_R2 = hESC_YAPKO_EZH2_R2_gr, hESC_WT_QSER1_R1 = hESC_WT_QSER1_R1_gr, hESC_WT_QSER1_R2 = hESC_WT_QSER1_R2_gr, hESC_YAPKO_QSER1_R1 = hESC_YAPKO_QSER1_R1_gr, hESC_YAPKO_QSER1_R2 = hESC_YAPKO_QSER1_R2_gr, hESC_WT_TEAD4_R1 = hESC_WT_TEAD4_R1_gr, hESC_WT_YAP1_R1 = hESC_WT_YAP1_R1_gr)
+
+gr_list <- list(hESC_WT_QSER1_pool=hESC_WT_QSER1_pool_gr, hESC_WT_EZH2_pool=hESC_WT_EZH2_pool_gr, hESC_WT_TEAD4_R1= hESC_WT_TEAD4_R1_gr, hESC_WT_YAP1_R1=hESC_WT_YAP1_R1_gr)
 
 ## Export Gene peak assignemnt
 peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
@@ -1634,294 +1761,9 @@ peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
 
                        
 ### Barplot
-pdf("output/ChIPseeker/annotation_barplot_hESC_homer.pdf", width=14, height=5)
+pdf("output/ChIPseeker/annotation_barplot_hESC_WT_homer.pdf", width=14, height=3)
 plotAnnoBar(peakAnnoList)
 dev.off()
-
-
-
-
-## Get annotation data frame
-hESC_WT_EZH2_R1_annot <- as.data.frame(peakAnnoList[["hESC_WT_EZH2_R1"]]@anno)
-hESC_WT_EZH2_R2_annot <- as.data.frame(peakAnnoList[["hESC_WT_EZH2_R2"]]@anno)
-hESC_YAPKO_EZH2_R1_annot <- as.data.frame(peakAnnoList[["hESC_YAPKO_EZH2_R1"]]@anno)
-hESC_YAPKO_EZH2_R2_annot <- as.data.frame(peakAnnoList[["hESC_YAPKO_EZH2_R2"]]@anno)
-hESC_WT_QSER1_R1_annot <- as.data.frame(peakAnnoList[["hESC_WT_QSER1_R1"]]@anno)
-hESC_WT_QSER1_R2_annot <- as.data.frame(peakAnnoList[["hESC_WT_QSER1_R2"]]@anno)
-hESC_YAPKO_QSER1_R1_annot <- as.data.frame(peakAnnoList[["hESC_YAPKO_QSER1_R1"]]@anno)
-hESC_YAPKO_QSER1_R2_annot <- as.data.frame(peakAnnoList[["hESC_YAPKO_QSER1_R2"]]@anno)
-hESC_WT_TEAD4_R1_annot <- as.data.frame(peakAnnoList[["hESC_WT_TEAD4_R1"]]@anno)
-hESC_WT_YAP1_R1_annot <- as.data.frame(peakAnnoList[["hESC_WT_YAP1_R1"]]@anno)
-
-
-## Convert entrez gene IDs to gene symbols
-hESC_WT_EZH2_R1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_EZH2_R1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-hESC_WT_EZH2_R1_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_EZH2_R1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-hESC_WT_EZH2_R2_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_EZH2_R2_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-hESC_WT_EZH2_R2_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_EZH2_R2_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-hESC_YAPKO_EZH2_R1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_YAPKO_EZH2_R1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-hESC_YAPKO_EZH2_R1_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_YAPKO_EZH2_R1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-hESC_YAPKO_EZH2_R2_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_YAPKO_EZH2_R2_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-hESC_YAPKO_EZH2_R2_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_YAPKO_EZH2_R2_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-hESC_WT_QSER1_R1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1_R1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-hESC_WT_QSER1_R1_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1_R1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-hESC_WT_QSER1_R2_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1_R2_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-hESC_WT_QSER1_R2_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1_R2_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-hESC_YAPKO_QSER1_R1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_YAPKO_QSER1_R1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-hESC_YAPKO_QSER1_R1_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_YAPKO_QSER1_R1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-hESC_YAPKO_QSER1_R2_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_YAPKO_QSER1_R2_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-hESC_YAPKO_QSER1_R2_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_YAPKO_QSER1_R2_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-hESC_WT_TEAD4_R1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_TEAD4_R1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-hESC_WT_TEAD4_R1_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_TEAD4_R1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-hESC_WT_YAP1_R1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_YAP1_R1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-hESC_WT_YAP1_R1_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_YAP1_R1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-
-
-
-## Save output table
-write.table(hESC_WT_EZH2_R1_annot, file="output/ChIPseeker/annotation_homer_hESC_WT_EZH2_R1_annot.txt", sep="\t", quote=F, row.names=F) 
-write.table(hESC_WT_EZH2_R2_annot, file="output/ChIPseeker/annotation_homer_hESC_WT_EZH2_R2_annot.txt", sep="\t", quote=F, row.names=F) 
-write.table(hESC_YAPKO_EZH2_R1_annot, file="output/ChIPseeker/annotation_homer_hESC_YAPKO_EZH2_R1_annot.txt", sep="\t", quote=F, row.names=F) 
-write.table(hESC_YAPKO_EZH2_R2_annot, file="output/ChIPseeker/annotation_homer_hESC_YAPKO_EZH2_R2_annot.txt", sep="\t", quote=F, row.names=F) 
-write.table(hESC_WT_QSER1_R1_annot, file="output/ChIPseeker/annotation_homer_hESC_WT_QSER1_R1_annot.txt", sep="\t", quote=F, row.names=F) 
-write.table(hESC_WT_QSER1_R2_annot, file="output/ChIPseeker/annotation_homer_hESC_WT_QSER1_R2_annot.txt", sep="\t", quote=F, row.names=F) 
-write.table(hESC_YAPKO_QSER1_R1_annot, file="output/ChIPseeker/annotation_homer_hESC_YAPKO_QSER1_R1_annot.txt", sep="\t", quote=F, row.names=F) 
-write.table(hESC_YAPKO_QSER1_R2_annot, file="output/ChIPseeker/annotation_homer_hESC_YAPKO_QSER1_R2_annot.txt", sep="\t", quote=F, row.names=F) 
-write.table(hESC_WT_TEAD4_R1_annot, file="output/ChIPseeker/annotation_homer_hESC_WT_TEAD4_R1_annot.txt", sep="\t", quote=F, row.names=F) 
-write.table(hESC_WT_YAP1_R1_annot, file="output/ChIPseeker/annotation_homer_hESC_WT_YAP1_R1_annot.txt", sep="\t", quote=F, row.names=F) 
-
-
-
-## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
-hESC_WT_EZH2_R1_annot_promoterAnd5 = tibble(hESC_WT_EZH2_R1_annot) %>%
-    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-hESC_WT_EZH2_R2_annot_promoterAnd5 = tibble(hESC_WT_EZH2_R2_annot) %>%
-    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-hESC_YAPKO_EZH2_R1_annot_promoterAnd5 = tibble(hESC_YAPKO_EZH2_R1_annot) %>%
-    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-hESC_YAPKO_EZH2_R2_annot_promoterAnd5 = tibble(hESC_YAPKO_EZH2_R2_annot) %>%
-    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-hESC_WT_QSER1_R1_annot_promoterAnd5 = tibble(hESC_WT_QSER1_R1_annot) %>%
-    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-hESC_WT_QSER1_R2_annot_promoterAnd5 = tibble(hESC_WT_QSER1_R2_annot) %>%
-    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-hESC_YAPKO_QSER1_R1_annot_promoterAnd5 = tibble(hESC_YAPKO_QSER1_R1_annot) %>%
-    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-hESC_YAPKO_QSER1_R2_annot_promoterAnd5 = tibble(hESC_YAPKO_QSER1_R2_annot) %>%
-    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-hESC_WT_TEAD4_R1_annot_promoterAnd5 = tibble(hESC_WT_TEAD4_R1_annot) %>%
-    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-hESC_WT_YAP1_R1_annot_promoterAnd5 = tibble(hESC_WT_YAP1_R1_annot) %>%
-    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-
-
-
-
-### Save output gene lists
-hESC_WT_EZH2_R1_annot_promoterAnd5_geneSymbol = hESC_WT_EZH2_R1_annot_promoterAnd5 %>%
-    dplyr::select(geneSymbol) %>%
-    unique()
-hESC_WT_EZH2_R2_annot_promoterAnd5_geneSymbol = hESC_WT_EZH2_R2_annot_promoterAnd5 %>%
-    dplyr::select(geneSymbol) %>%
-    unique()
-hESC_YAPKO_EZH2_R1_annot_promoterAnd5_geneSymbol = hESC_YAPKO_EZH2_R1_annot_promoterAnd5 %>%
-    dplyr::select(geneSymbol) %>%
-    unique()
-hESC_YAPKO_EZH2_R2_annot_promoterAnd5_geneSymbol = hESC_YAPKO_EZH2_R2_annot_promoterAnd5 %>%
-    dplyr::select(geneSymbol) %>%
-    unique()
-hESC_WT_QSER1_R1_annot_promoterAnd5_geneSymbol = hESC_WT_QSER1_R1_annot_promoterAnd5 %>%
-    dplyr::select(geneSymbol) %>%
-    unique()
-hESC_WT_QSER1_R2_annot_promoterAnd5_geneSymbol = hESC_WT_QSER1_R2_annot_promoterAnd5 %>%
-    dplyr::select(geneSymbol) %>%
-    unique()
-hESC_YAPKO_QSER1_R1_annot_promoterAnd5_geneSymbol = hESC_YAPKO_QSER1_R1_annot_promoterAnd5 %>%
-    dplyr::select(geneSymbol) %>%
-    unique()
-hESC_YAPKO_QSER1_R2_annot_promoterAnd5_geneSymbol = hESC_YAPKO_QSER1_R2_annot_promoterAnd5 %>%
-    dplyr::select(geneSymbol) %>%
-    unique()
-hESC_WT_TEAD4_R1_annot_promoterAnd5_geneSymbol = hESC_WT_TEAD4_R1_annot_promoterAnd5 %>%
-    dplyr::select(geneSymbol) %>%
-    unique()
-hESC_WT_YAP1_R1_annot_promoterAnd5_geneSymbol = hESC_WT_YAP1_R1_annot_promoterAnd5 %>%
-    dplyr::select(geneSymbol) %>%
-    unique()
-
-
-
-
-write.table(hESC_WT_EZH2_R1_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_EZH2_R1_annot_promoterAnd5_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)
-write.table(hESC_WT_EZH2_R2_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_EZH2_R2_annot_promoterAnd5_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)
-write.table(hESC_YAPKO_EZH2_R1_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_YAPKO_EZH2_R1_annot_promoterAnd5_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)
-write.table(hESC_YAPKO_EZH2_R2_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_YAPKO_EZH2_R2_annot_promoterAnd5_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)
-write.table(hESC_WT_QSER1_R1_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_QSER1_R1_annot_promoterAnd5_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)
-write.table(hESC_WT_QSER1_R2_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_QSER1_R2_annot_promoterAnd5_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)
-write.table(hESC_YAPKO_QSER1_R1_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_YAPKO_QSER1_R1_annot_promoterAnd5_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)
-write.table(hESC_YAPKO_QSER1_R2_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_YAPKO_QSER1_R2_annot_promoterAnd5_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)
-write.table(hESC_WT_TEAD4_R1_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_TEAD4_R1_annot_promoterAnd5_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)
-write.table(hESC_WT_YAP1_R1_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_YAP1_R1_annot_promoterAnd5_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)
-
-
-
-
-
-
-
-
-
-## Keep only signals in non intergenic region ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
-hESC_WT_EZH2_R1_annot_noIntergenic = tibble(hESC_WT_EZH2_R1_annot) %>%
-    filter(annotation != c("Distal Intergenic"))
-hESC_WT_EZH2_R2_annot_noIntergenic = tibble(hESC_WT_EZH2_R2_annot) %>%
-    filter(annotation != c("Distal Intergenic"))
-hESC_YAPKO_EZH2_R1_annot_noIntergenic = tibble(hESC_YAPKO_EZH2_R1_annot) %>%
-    filter(annotation != c("Distal Intergenic"))
-hESC_YAPKO_EZH2_R2_annot_noIntergenic = tibble(hESC_YAPKO_EZH2_R2_annot) %>%
-    filter(annotation != c("Distal Intergenic"))
-hESC_WT_QSER1_R1_annot_noIntergenic = tibble(hESC_WT_QSER1_R1_annot) %>%
-    filter(annotation != c("Distal Intergenic"))
-hESC_WT_QSER1_R2_annot_noIntergenic = tibble(hESC_WT_QSER1_R2_annot) %>%
-    filter(annotation != c("Distal Intergenic"))
-hESC_YAPKO_QSER1_R1_annot_noIntergenic = tibble(hESC_YAPKO_QSER1_R1_annot) %>%
-    filter(annotation != c("Distal Intergenic"))
-hESC_YAPKO_QSER1_R2_annot_noIntergenic = tibble(hESC_YAPKO_QSER1_R2_annot) %>%
-    filter(annotation != c("Distal Intergenic"))
-hESC_WT_TEAD4_R1_annot_noIntergenic = tibble(hESC_WT_TEAD4_R1_annot) %>%
-    filter(annotation != c("Distal Intergenic"))
-hESC_WT_YAP1_R1_annot_noIntergenic = tibble(hESC_WT_YAP1_R1_annot) %>%
-    filter(annotation != c("Distal Intergenic"))
-
-
-
-
-
-### Save output gene lists
-hESC_WT_EZH2_R1_annot_noIntergenic_geneSymbol = hESC_WT_EZH2_R1_annot_noIntergenic %>%
-    dplyr::select(geneSymbol) %>%
-    unique()
-hESC_WT_EZH2_R2_annot_noIntergenic_geneSymbol = hESC_WT_EZH2_R2_annot_noIntergenic %>%
-    dplyr::select(geneSymbol) %>%
-    unique()    
-hESC_YAPKO_EZH2_R1_annot_noIntergenic_geneSymbol = hESC_YAPKO_EZH2_R1_annot_noIntergenic %>%
-    dplyr::select(geneSymbol) %>%
-    unique()  
-hESC_YAPKO_EZH2_R2_annot_noIntergenic_noIntergenic_geneSymbol = hESC_YAPKO_EZH2_R2_annot_noIntergenic %>%
-    dplyr::select(geneSymbol) %>%
-    unique()  
-hESC_WT_QSER1_R1_annot_noIntergenic_noIntergenic_geneSymbol = hESC_WT_QSER1_R1_annot_noIntergenic %>%
-    dplyr::select(geneSymbol) %>%
-    unique()  
-hESC_WT_QSER1_R2_annot_noIntergenic_noIntergenic_geneSymbol = hESC_WT_QSER1_R2_annot_noIntergenic %>%
-    dplyr::select(geneSymbol) %>%
-    unique()  
-hESC_YAPKO_QSER1_R1_annot_noIntergenic_noIntergenic_geneSymbol = hESC_YAPKO_QSER1_R1_annot_noIntergenic %>%
-    dplyr::select(geneSymbol) %>%
-    unique()  
-hESC_YAPKO_QSER1_R2_annot_noIntergenic_noIntergenic_geneSymbol = hESC_YAPKO_QSER1_R2_annot_noIntergenic %>%
-    dplyr::select(geneSymbol) %>%
-    unique()  
-hESC_WT_TEAD4_R1_annot_noIntergenic_noIntergenic_geneSymbol = hESC_WT_TEAD4_R1_annot_noIntergenic %>%
-    dplyr::select(geneSymbol) %>%
-    unique()  
-hESC_WT_YAP1_R1_annot_noIntergenic_noIntergenic_geneSymbol = hESC_WT_YAP1_R1_annot_noIntergenic %>%
-    dplyr::select(geneSymbol) %>%
-    unique()  
-
-
-
-
-write.table(hESC_WT_EZH2_R1_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_EZH2_R1_annot_noIntergenic_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)
-write.table(hESC_WT_EZH2_R2_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_EZH2_R2_annot_noIntergenic_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)        
-write.table(hESC_YAPKO_EZH2_R1_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_YAPKO_EZH2_R1_annot_noIntergenic_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)        
-write.table(hESC_YAPKO_EZH2_R2_annot_noIntergenic_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_YAPKO_EZH2_R2_annot_noIntergenic_noIntergenic_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)     
-write.table(hESC_WT_QSER1_R1_annot_noIntergenic_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_QSER1_R1_annot_noIntergenic_noIntergenic_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)    
-write.table(hESC_WT_QSER1_R2_annot_noIntergenic_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_QSER1_R2_annot_noIntergenic_noIntergenic_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)  
-write.table(hESC_YAPKO_QSER1_R1_annot_noIntergenic_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_YAPKO_QSER1_R1_annot_noIntergenic_noIntergenic_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)  
-write.table(hESC_YAPKO_QSER1_R2_annot_noIntergenic_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_YAPKO_QSER1_R2_annot_noIntergenic_noIntergenic_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)  
-write.table(hESC_WT_TEAD4_R1_annot_noIntergenic_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_TEAD4_R1_annot_noIntergenic_noIntergenic_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)  
-write.table(hESC_WT_YAP1_R1_annot_noIntergenic_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_YAP1_R1_annot_noIntergenic_noIntergenic_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)  
 
 
 

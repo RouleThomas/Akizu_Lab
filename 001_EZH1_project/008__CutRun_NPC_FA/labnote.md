@@ -251,7 +251,6 @@ sbatch scripts/bamtobigwig_3.sh # 13164851 ok
 
 
 - 50dN native and FA
-*Pass*: 
 *Failed*: H3K27me3, EZH1cs, EZH2
 - NPC _ WT
 *Pass*: H3K27ac, H3K4me3

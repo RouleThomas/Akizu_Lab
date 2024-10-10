@@ -6431,6 +6431,7 @@ multiome_WT_Bap1KO_QCV2vC1.sct[["GeneActivity"]] <- CreateAssayObject(counts = G
 
 # SAVE ##########################################################################################
 ## saveRDS(multiome_WT_Bap1KO_QCV2vC1.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivity.sct_numeric_label.rds") 
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivity.sct_numeric_label.rds")
 ##########################################################################################
 
 
@@ -6460,35 +6461,9 @@ dev.off()
 
 # All in dotplot
 
-XXXY HERE BUG AT ORDERING...
-
+## RNA
+Idents(multiome_WT_Bap1KO_QCV2vC1.sct) <- multiome_WT_Bap1KO_QCV2vC1.sct$cluster.annot
 DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "SCT"
-
-Idents(multiome_WT_Bap1KO_QCV2vC1.sct) <- multiome_WT_Bap1KO_QCV2vC1.sct$cluster.annot
-
-levels(multiome_WT_Bap1KO_QCV2vC1.sct$cluster.annot) <- c(
-"NSC_quiescent",
-"NSC_proliferative_1",
-"NSC_proliferative_2",
-"IP",
-"Radial_Glia_Cells",
-"OPC",
-"Microglia",
-"Meningeal_Cells",
-"CR",
-"DG_GC",
-"PyNs_SubC_CA1",
-"PyNs_SubC_CA23",
-"PyNs_RSC_UL",
-"PyNs_RSC_MDL",
-"SubC_1",
-"SubC_2",
-"IN_1",
-"IN_2",
-"IN_SubC"
-)
-
-Idents(multiome_WT_Bap1KO_QCV2vC1.sct) <- multiome_WT_Bap1KO_QCV2vC1.sct$cluster.annot
 
 
 all_markers <- c(
@@ -6514,14 +6489,143 @@ all_markers <- c(
 )
 
 
+# --> Filter the top 3 
+all_markers <- c(
+  "Slco1c1", "Gli3","Gm29260", # cl11 NSC_quiescent remove "Tnc", "8030451A03Rik"
+  "Tnc", "8030451A03Rik","Egfr", # cl8 NSC_proliferative_1
+  "Adamts19", "Gm29521","Adgrv1", # cl14 NSC_proliferative_2
+  "Eomes","Mfap4","Rmst", # cl13 IP
+  "Lmx1a","Ttc21a","Ccdc170", # cl18 Radial Glia Cells
+  "Pdgfra","Olig2","Sox10", #cl16 OPC
+  "Fli1","Mir142hg","Csf1r", # cl19 microglia
+  "Arhgap29","Cped1","Slc6a20a", # cl17 Meningeal cells
+  "Ndnf","Ebf3","Cacna2d2", # cl15 CR
+  "Prox1","Sema5a","Adamts18",  # cl6 DG_GC
+  "Fam189a1","Grin2a","Cck", # cl4 PyNs_SubC_CA1
+  "Gm32647","6530403H02Rik","Rgs6", # cl1 PyNs_SubC_CA23
+  "Satb2","Tshz2","9130024F11Rik", # cl5 PyNs_RSC_UL
+  "Sema3c","Meis2","Kcnq3",# cl7 PyNs_RSC_MDL
+  "Ntng1","Cntn3","Ldb2", # cl3 SubC_1 
+  "Hs3st4","Cobll1","Lrrtm3", # cl9 SubC_2
+  "Nxph1","Maf","Gad2", # cl2 IN_1
+  "Adarb2","Dlx6os1","Igf1", # cl10 IN_2 remove Erbb4
+  "Camk2a","Cpne4","St18" # cl12 IN_SubC
+)
 
 
-pdf("output/Signac/DotPlot_SCT_multiome_WT_Bap1KO_QCV2vC1_label_vertical_top5.pdf", width=11, height=4.5)
+levels(multiome_WT_Bap1KO_QCV2vC1.sct) <- c(
+"NSC_quiescent",
+"NSC_proliferative_1",
+"NSC_proliferative_2",
+"IP",
+"Radial_Glia_Cells",
+"OPC",
+"Microglia",
+"Meningeal_Cells",
+"CR",
+"DG_GC",
+"PyNs_SubC_CA1",
+"PyNs_SubC_CA23",
+"PyNs_RSC_UL",
+"PyNs_RSC_MDL",
+"SubC_1",
+"SubC_2",
+"IN_1",
+"IN_2",
+"IN_SubC"
+)
+
+
+
+pdf("output/Signac/DotPlot_SCT_multiome_WT_Bap1KO_QCV2vC1_label_vertical_top3.pdf", width=12, height=4.5)
 DotPlot(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
         axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
 dev.off()
 
+
+## GeneActivity
+
+Idents(multiome_WT_Bap1KO_QCV2vC1.sct) <- multiome_WT_Bap1KO_QCV2vC1.sct$cluster.annot
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "SCT"
+
+
+all_markers <- c(
+  "Slco1c1", "Gli3","Gm29260", # cl11 NSC_quiescent remove "Tnc", "8030451A03Rik"
+  "Tnc", "8030451A03Rik","Egfr","Bcan", "Lrig1", # cl8 NSC_proliferative_1
+  "Adamts19", "Gm29521","Adgrv1","Gm47520","Lef1", # cl14 NSC_proliferative_2
+  "Eomes","Mfap4","Rmst","Chd7","Gm11266", # cl13 IP
+  "Lmx1a","Ttc21a","Ccdc170","Gm19301","Wdr63", # cl18 Radial Glia Cells
+  "Pdgfra","Olig2","Sox10","Bcas1","Smoc1","Gm10863", #cl16 OPC
+  "Fli1","Mir142hg","Csf1r","Fyb","Inpp5d", # cl19 microglia
+  "Arhgap29","Cped1","Slc6a20a","Col3a1","Col1a2", # cl17 Meningeal cells
+  "Ndnf","Ebf3","Cacna2d2","Plekha7","Tmem163", # cl15 CR
+  "Prox1","Sema5a","Adamts18","Cntnap5a","Ptpro",  # cl6 DG_GC
+  "Fam189a1","Grin2a","Cck","Gm20754","Hcn1", # cl4 PyNs_SubC_CA1
+  "Gm32647","6530403H02Rik","Rgs6","Zfp385b","Trpc7", # cl1 PyNs_SubC_CA23
+  "Satb2","Tshz2","9130024F11Rik","Itpr1","Tshz3", # cl5 PyNs_RSC_UL
+  "Sema3c","Meis2","Adgrb3","Auts2","Kcnq3", # cl7 PyNs_RSC_MDL
+  "Ntng1","Cntn3","Ldb2","Schip1","A230006K03Rik", # cl3 SubC_1 
+  "Hs3st4","Cobll1","Lrrtm3","Ctnna3","Grm8", # cl9 SubC_2
+  "Nxph1","Maf","Gad2","Kcnc2","Erbb4", # cl2 IN_1
+  "Adarb2","Dlx6os1","Igf1","Sorcs3", # cl10 IN_2 remove Erbb4
+  "Camk2a","Cpne4","St18","Cpne7","Htr2c" # cl12 IN_SubC
+)
+
+
+# --> Filter the top 3 
+all_markers <- c(
+  "Slco1c1", "Gli3","Gm29260", # cl11 NSC_quiescent remove "Tnc", "8030451A03Rik"
+  "Tnc", "8030451A03Rik","Egfr", # cl8 NSC_proliferative_1
+  "Adamts19", "Gm29521","Adgrv1", # cl14 NSC_proliferative_2
+  "Eomes","Mfap4","Rmst", # cl13 IP
+  "Lmx1a","Ttc21a","Ccdc170", # cl18 Radial Glia Cells
+  "Pdgfra","Olig2","Sox10", #cl16 OPC
+  "Fli1","Mir142hg","Csf1r", # cl19 microglia
+  "Arhgap29","Cped1","Slc6a20a", # cl17 Meningeal cells
+  "Ndnf","Ebf3","Cacna2d2", # cl15 CR
+  "Prox1","Sema5a","Adamts18",  # cl6 DG_GC
+  "Fam189a1","Grin2a","Cck", # cl4 PyNs_SubC_CA1
+  "Gm32647","6530403H02Rik","Rgs6", # cl1 PyNs_SubC_CA23
+  "Satb2","Tshz2","9130024F11Rik", # cl5 PyNs_RSC_UL
+  "Sema3c","Meis2","Kcnq3",# cl7 PyNs_RSC_MDL
+  "Ntng1","Cntn3","Ldb2", # cl3 SubC_1 
+  "Hs3st4","Cobll1","Lrrtm3", # cl9 SubC_2
+  "Nxph1","Maf","Gad2", # cl2 IN_1
+  "Adarb2","Dlx6os1","Igf1", # cl10 IN_2 remove Erbb4
+  "Camk2a","Cpne4","St18" # cl12 IN_SubC
+)
+
+
+levels(multiome_WT_Bap1KO_QCV2vC1.sct) <- c(
+"NSC_quiescent",
+"NSC_proliferative_1",
+"NSC_proliferative_2",
+"IP",
+"Radial_Glia_Cells",
+"OPC",
+"Microglia",
+"Meningeal_Cells",
+"CR",
+"DG_GC",
+"PyNs_SubC_CA1",
+"PyNs_SubC_CA23",
+"PyNs_RSC_UL",
+"PyNs_RSC_MDL",
+"SubC_1",
+"SubC_2",
+"IN_1",
+"IN_2",
+"IN_SubC"
+)
+
+
+
+pdf("output/Signac/DotPlot_GeneActivity_multiome_WT_Bap1KO_QCV2vC1_label_vertical_top3.pdf", width=12, height=4.5)
+DotPlot(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", features = all_markers, cols = c("grey", "red"))  + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
+dev.off()
 
 
 
@@ -6641,7 +6745,7 @@ cluster_pairs <- list(
   c("multiome_WT_IN_2", "multiome_Bap1KO_IN_2", "IN_2"),
   c("multiome_WT_IN_SubC", "multiome_Bap1KO_IN_SubC", "IN_SubC") )
 
-# Function to run FindMarkers and return a tibble with cluster and gene information
+## Function to run FindMarkers and return a tibble with cluster and gene information
 run_find_markers <- function(pair) {
   ident_1 <- pair[1]
   ident_2 <- pair[2]
@@ -6661,23 +6765,84 @@ run_find_markers <- function(pair) {
   return(markers)
 }
 
-# Combine all FindMarkers results into one tibble
+## Combine all FindMarkers results into one tibble
 all_markers_tibble <- map_dfr(cluster_pairs, run_find_markers) %>%
   as_tibble()
 
-
-
-# Find closest gene to DAR
+## Find closest gene to DAR
 DAR_closestGene <- ClosestFeature(multiome_WT_Bap1KO_QCV2vC1.sct, regions = all_markers_tibble$query_region)
-
 DAR_genes = all_markers_tibble %>% 
   left_join(DAR_closestGene) %>%
   as_tibble() %>%
   unique()
 
-# save output
-
+## save output
 write.table(DAR_genes, file = "output/Signac/DAR_genes_QCV2vC1_dim40kparam42res065algo4feat2000.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+
+
+# Link peaks to genes - Find peaks that are correlated with the expression of nearby genes
+## Install the BS genome (GC content, region lengths, and dinucleotide base frequencies for regions in the assay and add to the feature metadata)
+library("BSgenome.Mmusculus.UCSC.mm10") # BiocManager::install("BSgenome.Mmusculus.UCSC.mm10")
+
+## Add genomic information to Seurat object
+
+### Convert rownames of ATAC counts to GRanges
+grange.counts <- StringToGRanges(rownames(multiome_WT_Bap1KO_QCV2vC1.sct[["ATAC"]]), sep = c(":", "-"))
+### Filter for standard chromosomes
+grange.use <- seqnames(grange.counts) %in% standardChromosomes(grange.counts)
+atac_counts <- multiome_WT_Bap1KO_QCV2vC1.sct[as.vector(grange.use), ]
+### Get annotations for the mouse genome
+annotations <- GetGRangesFromEnsDb(ensdb = EnsDb.Mmusculus.v79)
+### Adjust chromosome naming style
+seqlevelsStyle(annotations) <- 'UCSC'
+### Set genome to mm10 (mouse)
+genome = 'mm10'
+
+## Run  RegionStats
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "ATAC"
+multiome_WT_Bap1KO_QCV2vC1.sct <- RegionStats(
+  object = multiome_WT_Bap1KO_QCV2vC1.sct,
+  genome = BSgenome.Mmusculus.UCSC.mm10,
+  assay = "ATAC",
+  verbose = TRUE
+)
+
+## Run  LinkPeaks
+LinkPeaks = LinkPeaks(
+  multiome_WT_Bap1KO_QCV2vC1.sct,
+  peak.assay = "ATAC",
+  expression.assay = "RNA",
+  peak.slot = "counts",
+  expression.slot = "data",
+  method = "pearson",
+  gene.coords = NULL,
+  distance = 5e+05,
+  min.distance = NULL,
+  min.cells = 10,
+  genes.use = NULL,
+  n_sample = 200,
+  pvalue_cutoff = 0.05,
+  score_cutoff = 0.05,
+  gene.id = FALSE,
+  verbose = TRUE
+)
+
+XXXY HERE  LinkPeaks running
+
+
+
+## Add LinkPeaks as new assay
+
+?? multiome_WT_Bap1KO_QCV2vC1.sct[["LinkPeaks"]] <- CreateAssayObject(counts = LinkPeaks)
+
+# SAVE ##########################################################################################
+## saveRDS(multiome_WT_Bap1KO_QCV2vC1.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.sct_numeric_label.rds") 
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.sct_numeric_label.rds")
+##########################################################################################
+
+
+
 
 ```
 
@@ -6685,7 +6850,7 @@ write.table(DAR_genes, file = "output/Signac/DAR_genes_QCV2vC1_dim40kparam42res0
 **Usefull tutorial:**
 - *Diff. access. identification*: https://stuartlab.org/signac/articles/pbmc_vignette#find-differentially-accessible-peaks-between-cell-types
 - *Motif enrichment*: https://satijalab.org/seurat/articles/weighted_nearest_neighbor_analysis#wnn-analysis-of-10x-multiome-rna-atac
-
+- *Find peaks that are correlated with the expression of nearby genes*: https://stuartlab.org/signac/reference/linkpeaks and need to compute genomic information: https://stuartlab.org/signac/reference/regionstats
 
 
 
