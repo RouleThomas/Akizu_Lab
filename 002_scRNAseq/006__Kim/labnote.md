@@ -6834,15 +6834,55 @@ multiome_WT_Bap1KO_QCV2vC1.sct = LinkPeaks(
 multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.sct_numeric_label.rds")
 ##########################################################################################
 
-as_tibble(Links(multiome_WT_Bap1KO_QCV2vC1.sct))
+Links = as_tibble(Links(multiome_WT_Bap1KO_QCV2vC1.sct))
 
 #write.table(as_tibble(Links(multiome_WT_Bap1KO_QCV2vC1.sct)), file = c("output/Signac/LinkPeaks_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
-# plot the top 
+### Adjust the pvalue and select positive corr as in the https://www.nature.com/articles/s41467-024-45199-x#Fig2 paper
+Links$adjusted_pvalue <- p.adjust(Links$pvalue, method = "BH")
+### Isolate signif genes
+Links_signif = Links %>%
+  dplyr::filter(adjusted_pvalue < 0.05, score >0) %>%
+  dplyr::select(gene) %>%
+  unique()
+### Reorder the gene based on their cluster max expression
 
 
-xxxy
+###### Find all markers 
+Idents(multiome_WT_Bap1KO_QCV2vC1.sct) <- "cluster.annot"
+Links_markers <- FindAllMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, features = Links_signif$gene, assay = "RNA", only.pos = TRUE, min.pct = 0.01, logfc.threshold = 0.1)
+###### Identify in which cluster the Links_markers gene is highly express
+Links_markers_pval= as_tibble(Links_markers) %>%
+  group_by(gene) %>%
+  dplyr::filter(p_val == min(p_val)) %>%
+  dplyr::select(gene, cluster)
+#write.table(Links_markers, file = "output/Signac/srat_multiome_WT_Bap1KO-QCV2vC1_dim40kparam42res065algo4feat2000_noCellCycleRegression-Links_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
+
+
+# plot heatmap
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_SCTscaledata.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "SCT", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5)
+dev.off()
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_SCTdata.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "SCT", slot= "data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5)
+dev.off()
+
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_RNAdata.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", slot= "data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5)
+dev.off()
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_RNArawdata.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", slot= "raw.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5)
+dev.off()
+
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_GeneActivitydata.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5)
+dev.off()
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_GeneActivityrawdata.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "raw.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5)
+dev.off()
+
+XXXY HERE , may need to scale the data...
 
 ```
 
