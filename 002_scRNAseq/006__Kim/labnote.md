@@ -6305,7 +6305,11 @@ pt <- pt %>%
 
 pt$Var1 <- as.character(pt$Var1)
 
-pdf("output/Signac/cellTypeProp_SCT_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000.pdf", width=5, height=5)
+
+
+#pdf("output/Signac/cellTypeProp_SCT_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000.pdf", width=5, height=5)
+pdf("output/Signac/cellTypeProp_SCT_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.pdf", width=5, height=5)
+
 ggplot(pt, aes(x = Var2, y = Proportion, fill = Var1)) +
   theme_bw(base_size = 15) +
   geom_col(position = "fill", width = 0.5) +
@@ -6835,16 +6839,6 @@ multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1
 ##########################################################################################
 
 
-## log norm and Scale GeneActivity assay
-
-
-DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "GeneActivity"
-
-multiome_WT_Bap1KO_QCV2vC1.sct <- NormalizeData(multiome_WT_Bap1KO_QCV2vC1.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
-all.genes <- rownames(multiome_WT_Bap1KO_QCV2vC1.sct)
-multiome_WT_Bap1KO_QCV2vC1.sct <- ScaleData(multiome_WT_Bap1KO_QCV2vC1.sct, features = all.genes) # zero-centres and scales it
-
-
 Links = as_tibble(Links(multiome_WT_Bap1KO_QCV2vC1.sct))
 
 #write.table(as_tibble(Links(multiome_WT_Bap1KO_QCV2vC1.sct)), file = c("output/Signac/LinkPeaks_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000.txt"),sep="\t", quote=FALSE, row.names=FALSE)
@@ -6859,8 +6853,21 @@ Links_signif = Links %>%
 ### Reorder the gene based on their cluster max expression
 
 
+## log norm and Scale GeneActivity assay
+
+
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "GeneActivity"
+
+multiome_WT_Bap1KO_QCV2vC1.sct <- NormalizeData(multiome_WT_Bap1KO_QCV2vC1.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(multiome_WT_Bap1KO_QCV2vC1.sct)
+multiome_WT_Bap1KO_QCV2vC1.sct <- ScaleData(multiome_WT_Bap1KO_QCV2vC1.sct, features = all.genes) # zero-centres and scales it
+
+
+
 ###### Find all markers 
 Idents(multiome_WT_Bap1KO_QCV2vC1.sct) <- "cluster.annot"
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "RNA"
+
 Links_markers <- FindAllMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, features = Links_signif$gene, assay = "RNA", only.pos = TRUE, min.pct = 0.01, logfc.threshold = 0.1)
 ###### Identify in which cluster the Links_markers gene is highly express
 Links_markers_pval= as_tibble(Links_markers) %>%
@@ -6902,6 +6909,10 @@ pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj0
 DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , disp.min = -1, disp.max = 1, angle = 0, hjust = 0.5)
 dev.off()
 
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_GeneActivityScaldata-dispmin25max05.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , disp.min = -2.5, disp.max = 0.5, angle = 0, hjust = 0.5)
+dev.off()
+
 pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_GeneActivityScaldata-bluewhitered.pdf", width=8, height=4)
 DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, 
           assay = "GeneActivity", 
@@ -6925,7 +6936,132 @@ DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct,
                        breaks = seq(-2, 2, by = 0.5))  # Modify breaks to increase color contrast
 dev.off()
 
-XXXY here
+
+
+
+
+# more stringeant filtering
+
+### Adjust the pvalue and select positive corr as in the https://www.nature.com/articles/s41467-024-45199-x#Fig2 paper
+Links$adjusted_pvalue <- p.adjust(Links$pvalue, method = "BH")
+### Isolate signif genes
+Links_signif = Links %>%
+  dplyr::filter(adjusted_pvalue < 0.05, score >0) %>%
+  dplyr::select(gene) %>%
+  unique()
+### Reorder the gene based on their cluster max expression
+
+
+###### Find all markers 
+Idents(multiome_WT_Bap1KO_QCV2vC1.sct) <- "cluster.annot"
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "RNA"
+Links_markers <- FindAllMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, features = Links_signif$gene, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25) # V1 min.pct = 0.01, logfc.threshold = 0.1; V2 min.pct = 0.25, logfc.threshold = 0.25
+###### Identify in which cluster the Links_markers gene is highly express
+Links_markers_pval= as_tibble(Links_markers) %>%
+  group_by(gene) %>%
+  dplyr::filter(p_val == min(p_val)) %>%
+  dplyr::select(gene, cluster)
+#V1: write.table(Links_markers, file = "output/Signac/srat_multiome_WT_Bap1KO-QCV2vC1_dim40kparam42res065algo4feat2000_noCellCycleRegression-Links_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+#V2: write.table(Links_markers, file = "output/Signac/srat_multiome_WT_Bap1KO-QCV2vC1_dim40kparam42res065algo4feat2000_noCellCycleRegression-Links_markersV2.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0FindAllMarkersminpct025logfc025_SCTscaledata.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "SCT", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5)
+dev.off()
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0FindAllMarkersminpct025logfc025_GeneActivityscaledata.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5)
+dev.off()
+
+
+
+
+
+
+
+# Select top 2-5 Link genes for each cluster in dotplot
+
+
+top_genes <- Links_markers %>%
+  group_by(cluster) %>%
+  arrange(p_val_adj, desc(avg_log2FC)) %>%
+  slice_head(n = 3) %>%
+  ungroup()
+
+# View the result
+top_genes
+
+
+
+
+all_markers <- c(
+  "Hgf", "Pdgfrb","Clu", # cl11 NSC_quiescent remove "Tnc", "8030451A03Rik"
+  "Aqp4", "Aldh1l1","Acsbg1", # cl8 NSC_proliferative_1
+  "Adamts19", "Gm29521","Slc2a9", # cl14 NSC_proliferative_2
+  "Eomes","Mfap4","Rmst", # cl13 IP
+  "Ccdc170","Stpg1","Dynlrb2", # cl18 Radial Glia Cells
+  "Sox10","Bcas1","Pdgfra", #cl16 OPC
+  "Vav1","Ikzf1","Mir142hg", # cl19 microglia
+  "Tbx18","Slc6a13","Foxd1", # cl17 Meningeal cells
+  "Lhx1","Lhx5","Lhx1os", # cl15 CR
+  "Sema5a","Prox1","Rarb",  # cl6 DG_GC
+  "Cck","Fam189a1","Grin2a", # cl4 PyNs_SubC_CA1
+  "Trpc7","6530403H02Rik","Tgfbr3", # cl1 PyNs_SubC_CA23
+  "9130024F11Rik","Satb2","Ntf3", # cl5 PyNs_RSC_UL
+  "Sema3c","Meis2","Kcnq3",# cl7 PyNs_RSC_MDL
+  "Cntn3","Nrgn","Ntng1", # cl3 SubC_1 
+  "Cobll1","Nr4a2","Grm8", # cl9 SubC_2
+  "Lhx6","Nxph2","Cntnap3", # cl2 IN_1
+  "Adarb2","Igf1","Npas1", # cl10 IN_2 remove Erbb4
+  "Cpne7","St18","Htr2c" # cl12 IN_SubC
+)
+
+
+levels(multiome_WT_Bap1KO_QCV2vC1.sct) <- c(
+"NSC_quiescent",
+"NSC_proliferative_1",
+"NSC_proliferative_2",
+"IP",
+"Radial_Glia_Cells",
+"OPC",
+"Microglia",
+"Meningeal_Cells",
+"CR",
+"DG_GC",
+"PyNs_SubC_CA1",
+"PyNs_SubC_CA23",
+"PyNs_RSC_UL",
+"PyNs_RSC_MDL",
+"SubC_1",
+"SubC_2",
+"IN_1",
+"IN_2",
+"IN_SubC"
+)
+
+
+
+pdf("output/Signac/DotPlot_GeneActivity_multiome_WT_Bap1KO_QCV2vC1_label_vertical_top3Links.pdf", width=12, height=4.5)
+DotPlot(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", features = all_markers)   +
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_viridis(option="magma") + # option="magma"
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white"))) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
+dev.off()
+
+
+
+
+pdf("output/Signac/DotPlot_SCT_multiome_WT_Bap1KO_QCV2vC1_label_vertical_top3Links.pdf", width=12, height=4.5)
+DotPlot(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "SCT", features = all_markers)    +
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_viridis() + # option="magma"
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white"))) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
+dev.off()
+
+
+
 
 ```
 
