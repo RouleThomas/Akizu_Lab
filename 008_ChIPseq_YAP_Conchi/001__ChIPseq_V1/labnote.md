@@ -1913,7 +1913,7 @@ dev.off()
 - **Up and down reg genes**: THOR diff bound genes 
 - **Unique list of genes**: QSER1, EZH2 (YAP1, TEAD4) bound genes in WT (macs2)
 - **Up and down reg genes**: THOR diff bound genes for EZH2 and bound with YAP1 in WT
-
+- **QSER1 and YAP1 co-bound genes _ homer**: 1192 genes co-bound by QSER1 and YAP1 (see `gastrulation paper/GastrulationPaper_peakOverlap_V4.pptx`)
 
 - NOTE: I did NOT using webtool Venn diagram I isolated the specific genes that gain / lost H3K*me3 (eg.; like: `output/ChIPseeker/annotation_THOR_H3K*me3_q*_pos_promoterAnd5_geneSymbol_Venndiagram*.txt`)
 
@@ -1947,13 +1947,15 @@ output/ChIPseeker/EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromot
 output/ChIPseeker/EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt
 output/ChIPseeker/EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt
 
+output/homer/QSER1_YAP1_1192genes.txt
+
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/ChIPseeker/EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/ChIPseeker/none.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/ChIPseeker/EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/homer/QSER1_YAP1_1192genes.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -2000,13 +2002,14 @@ pdf("output/GO/enrichR_GO_Biological_Process_2023_Venn_overlap_hESC_WT_QSER1EZH2
 
 pdf("output/GO/enrichR_GO_Biological_Process_2023_EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding.pdf", width=10, height=8)
 
+pdf("output/GO/enrichR_GO_Biological_Process_2023_QSER1_YAP1_1192genes.pdf", width=11, height=5)
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
   # Adjusted label position based on the type of gene (up/down) and increased separation
   geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
   geom_hline(yintercept = 0, linetype="solid", color = "black") +
-  scale_fill_manual(name="EZH2",   # H3K27me3  H3K4me3
+  scale_fill_manual(name=" ",   # H3K27me3  H3K4me3
                     labels = c("Lost", "Gain"), 
                     values = c("down"="Sky Blue", "up"="Orange")) + 
   labs(title= "GO_Biological_Process_2023") + 
@@ -2024,7 +2027,7 @@ dev.off()
 
 
 ## save output
-write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_QSER1_YAP1_1192genes.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 
@@ -2248,6 +2251,7 @@ output/ChIPseeker/annotation_THORq4_EZH2_pos_annot_promoterAnd5_geneSymbol.txt
 output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2.txt
 output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2TEAD4.txt
 output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1.txt
+output/ChIPseeker/none.txt
 
 output/ChIPseeker/EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding.txt
 output/ChIPseeker/EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromoterbinding.txt
@@ -2255,13 +2259,16 @@ output/ChIPseeker/EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1EnhancerANDORPromot
 output/ChIPseeker/EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt
 output/ChIPseeker/EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt
 
+output/homer/QSER1_YAP1_1192genes.txt
+
+
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/ChIPseeker/EZH2_lost_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/ChIPseeker/none.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/ChIPseeker/EZH2_pos_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/homer/QSER1_YAP1_1192genes.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -2306,6 +2313,7 @@ pdf("output/GO/enrichR_KEGG_2021_Human_EZH2_posNeg_annot_promoterAnd5_geneSymbol
 
 pdf("output/GO/enrichR_KEGG_2021_Human_EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.pdf", width=8, height=2)
 
+pdf("output/GO/enrichR_KEGG_2021_Human_QSER1_YAP1_1192genes.pdf", width=11, height=5)
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
@@ -2330,7 +2338,7 @@ dev.off()
 
 
 ## save output
-write.table(gos, "output/GO/enrichR_KEGG_2021_Human_EZH2_posNeg_annot_promoterAnd5_geneSymbol_YAP1Promoterbinding.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_KEGG_2021_Human_QSER1_YAP1_1192genes.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 ```
@@ -9475,14 +9483,88 @@ write.table(ChIPseeker_VennDiagram_500bpExtension, file = "output/peakOverlap/ho
 
 
 
+# homer YAP1:QSER1 1192 cobound genes with embryo E7 scRNAseq epiblast
+
+-->  How many of the 1,192 YAP:QSER1 bound genes are transcriptionally regulated by YAP in the epiblast? Use the DEGs of the epiblast in the emryo e7 scRNAseq--How many of them are activated and how many are repressed in the YAP KO vs control?---This is to see if YAP:QSER1 binding correlates with YAP-activated or YAP-repressed  genes.
+
+
+```R
+# packages
+library("tidyverse")
+library("biomaRt")
+
+# import input files
+## import DEG Epiblast embryo E7
+Epiblast_DEG = read.delim("../../002_scRNAseq/003__YAP1/output/seurat/Epiblast-cYAPKO_response_E7_19dim_allGenes_V2.txt", header = TRUE, row.names = 1) %>% as_tibble(rownames = "gene")
+## import the 1192 QSER1:YAP1 bound genes
+QSER1_YAP1_genes= read_tsv("output/homer/QSER1_YAP1_1192genes.txt", col_names = FALSE) %>% 
+  dplyr::rename( "gene"= "X1")
+
+
+
+## convert  human gene id to mice gene id
+### Initialize the biomaRt for human and mouse
+human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+# if previous fail: #######
+human <- useEnsembl("ensembl", dataset = "hsapiens_gene_ensembl", mirror="asia")
+mouse <- useEnsembl("ensembl", dataset = "mmusculus_gene_ensembl", mirror="asia")
+
+human <- useMart("ensembl", dataset = "hsapiens_gene_ensembl", host = "https://dec2021.archive.ensembl.org/") 
+mouse <- useMart("ensembl", dataset = "mmusculus_gene_ensembl", host = "https://dec2021.archive.ensembl.org/")
+############################
+
+### Human gene list 
+human_gene_list <- QSER1_YAP1_genes$gene #
+### Corresponding mouse orthologs
+human_to_mouse <- getLDS(attributes = c("hgnc_symbol"), 
+                         filters = "hgnc_symbol", 
+                         values = human_gene_list, 
+                         mart = human,
+                         attributesL = c("mgi_symbol"), 
+                         martL = mouse,
+                         uniqueRows = TRUE)
+
+
+# Merge DEG with mice genes
+QSER1_YAP1_genes_miceOrtholog = as_tibble(human_to_mouse) %>%
+  dplyr::select("MGI.symbol") %>%
+  dplyr::rename("gene" = "MGI.symbol" ) %>%
+  left_join(Epiblast_DEG)
+
+
+QSER1_YAP1_genes_miceOrtholog_signif = QSER1_YAP1_genes_miceOrtholog %>%
+  filter(p_val_adj <0.05) # 27
+
+sum(QSER1_YAP1_genes_miceOrtholog_signif$avg_log2FC < 0) # 24
+sum(QSER1_YAP1_genes_miceOrtholog_signif$avg_log2FC > 0) # 3
+
+Epiblast_DEG_signif = Epiblast_DEG %>%
+    filter(p_val_adj <0.05) # 293
+
+
+sum(Epiblast_DEG_signif$avg_log2FC < 0) # 142
+sum(Epiblast_DEG_signif$avg_log2FC > 0) # 151
+```
+
+
+**Metrics**:
+Among the 1,192 human genes bound by QSER1:YAP1:
+- 910 have mice orthologs
+Among the 32,285 mice genes:
+- 293 are DEG in the Epiblast (padj <0.05)
+ - 142 are downregulated (less express in YAPKO)
+   - 151 are upregulated (more express in YAPKO)
+Among the 910 mice orthologs:
+- 27 are DEGs in the Epiblast (padj <0.05)
+   - 24 are downregulated (less express in YAPKO)
+   - 3 are upregulated (more express in YAPKO)
 
 
 
 
 
-
-
-# Overlapping QSER1 peaks with CpG islands
+# Overlapping QSER1 peaks with CpG islands - macs2 and homer
 
 --> *QSER1 peaks,  QSER1:YAP peaks, and QSER1:EZH2 peaks*, that lie on CpG islands (regardless of methylation status--just by genomic annotation of the regions)
   --> Collect the nb and reprent as histogram proportion CpG island overlap (x peaks, y prop)
@@ -9501,6 +9583,7 @@ wget -qO- http://hgdownload.cse.ucsc.edu/goldenpath/hg38/database/cpgIslandExt.t
 ```
 
 ```bash
+# MACS2
 ## Transform .txt ChIPseeker file into bed file (remove header)
 tail -n +2 output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103.txt > output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103.bed
 tail -n +2 output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_annot_qval1.30103.txt > output/ChIPseeker/annotation_macs2_hESC_WT_EZH2_annot_qval1.30103.bed
@@ -9524,11 +9607,48 @@ bedtools intersect -wa -a output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot
 
 ### Overlap QSER1:EZH2 (2861) with CpG islands
 bedtools intersect -wa -a output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103-overlapEZH2_annot_qval1.30103.bed -b ../../Master/meta/cpgIslandExt.hg38.bed > output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103-overlapEZH2_annot_qval1.30103-overlapcpgIslandExt.bed # 2728
+
+
+
+
+# HOMER
+## Transform .txt ChIPseeker file into bed file (remove header)
+tail -n +2 output/homer/hESC_WT_QSER1_outputPeaks.bed > output/homer/hESC_WT_QSER1_outputPeaks_noHeader.bed
+tail -n +2 output/homer/hESC_WT_EZH2_outputPeaks.bed > output/homer/hESC_WT_EZH2_outputPeaks_noHeader.bed
+tail -n +41 ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks.bed > ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks_noHeader.bed
+tail -n +41 ../003__ChIPseq_pluripotency/output/homer/hESC_WT_TEAD4_R1/peaks.bed > ../003__ChIPseq_pluripotency/output/homer/hESC_WT_TEAD4_R1/peaks_noHeader.bed
+
+
+
+## Overlap QSER1 with YAP1
+bedtools intersect -wa -a output/homer/hESC_WT_QSER1_outputPeaks_noHeader.bed -b ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks_noHeader.bed > output/homer/hESC_WT_QSER1_outputPeaks_noHeader-overlapYAP1_peaks_noHeader.bed # 199
+## Overlap QSER1 with EZH2
+bedtools intersect -wa -a output/homer/hESC_WT_QSER1_outputPeaks_noHeader.bed -b output/homer/hESC_WT_EZH2_outputPeaks_noHeader.bed > output/homer/hESC_WT_QSER1_outputPeaks_noHeader-overlapEZH2_peaks_noHeader.bed # 446
+## Overlap QSER1 with TEAD4
+bedtools intersect -wa -a output/homer/hESC_WT_QSER1_outputPeaks_noHeader.bed -b ../003__ChIPseq_pluripotency/output/homer/hESC_WT_TEAD4_R1/peaks_noHeader.bed > output/homer/hESC_WT_QSER1_outputPeaks_noHeader-overlapTEAD4_peaks_noHeader.bed # 417
+
+## Overlap with CpG islands
+### Overlap QSER1 (12461) with CpG islands
+bedtools intersect -wa -a output/homer/hESC_WT_QSER1_outputPeaks_noHeader.bed -b ../../Master/meta/cpgIslandExt.hg38.bed > output/homer/hESC_WT_QSER1_outputPeaks_noHeader-overlapcpgIslandExt.bed # 6067
+
+### Overlap QSER1:YAP1 (199) with CpG islands
+bedtools intersect -wa -a output/homer/hESC_WT_QSER1_outputPeaks_noHeader-overlapYAP1_peaks_noHeader.bed -b ../../Master/meta/cpgIslandExt.hg38.bed > output/homer/hESC_WT_QSER1_outputPeaks_noHeader-overlapYAP1_peaks_noHeader-overlapcpgIslandExt.bed # 25
+
+### Overlap QSER1:EZH2 (446) with CpG islands
+bedtools intersect -wa -a output/homer/hESC_WT_QSER1_outputPeaks_noHeader-overlapEZH2_peaks_noHeader.bed -b ../../Master/meta/cpgIslandExt.hg38.bed > output/homer/hESC_WT_QSER1_outputPeaks_noHeader-overlapEZH2_peaks_noHeader-overlapcpgIslandExt.bed # 393
 ```
 
+**macs2 peak caller**
 - *QSER1*; 14,165 peaks: 8,506 overlapping with CpG islands (60.01%)
 - *QSER1:EZH2*; 2,861 peaks: 2,728 overlapping with CpG islands (95.35%)
 - *QSER1:YAP1*; 136 peaks: 31 overlapping with CpG islands (22.79%)
+
+**homer peak caller**
+- *QSER1*; 12,461 peaks: 6,067 overlapping with CpG islands (48.69%)
+- *QSER1:EZH2*; 446 peaks: 393 overlapping with CpG islands (88.12%)
+- *QSER1:YAP1*; 199 peaks: 25 overlapping with CpG islands (12.56%)
+
+--> homer and macs2 comparable results (same tendency)
 
 
 --> Hypothesis is that most QSER1 peaks lie on CpG islands regardless methylations status or association with EZH2, YAP1; let's increase QSER1 qvalue and check; and lets try using QSER1 region +/-200 and 500bp
@@ -9536,6 +9656,7 @@ bedtools intersect -wa -a output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot
 
 
 ```bash
+# MACS2
 ## Overlap with CpG islands - increasing qvalue
 ### Overlap QSER1 qval 2.3 (9571) with CpG islands
 bedtools intersect -wa -a output/macs2/broad/broad_blacklist_qval2.30103/hESC_WT_QSER1_pool_peaks.broadPeak -b ../../Master/meta/cpgIslandExt.hg38.bed > output/macs2/broad/broad_blacklist_qval2.30103/hESC_WT_QSER1_pool_peaks.broadPeak-overlapcpgIslandExt.bed # 5847
@@ -9550,17 +9671,37 @@ bedtools intersect -wa -a output/macs2/broad/broad_blacklist_qval3/hESC_WT_QSER1
 bedtools intersect -wa -a output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103_extend200bp.txt -b ../../Master/meta/cpgIslandExt.hg38.bed > output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103_extend200bp-overlapcpgIslandExt.bed # 8789
 ### Overlap QSER1 qval 1.3 extended 500bp (14165) with CpG islands
 bedtools intersect -wa -a output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103_extend500bp.txt -b ../../Master/meta/cpgIslandExt.hg38.bed > output/ChIPseeker/annotation_macs2_hESC_WT_QSER1_annot_qval1.30103_extend500bp-overlapcpgIslandExt.bed # 9130
+
+
+# HOMER
+## Overlap with CpG islands - using increased extended QSER1 region
+### Overlap QSER1 homer extended 200bp (12461) with CpG islands
+bedtools intersect -wa -a output/homer/hESC_WT_QSER1_outputPeaks_extend200bp.bed -b ../../Master/meta/cpgIslandExt.hg38.bed > output/homer/hESC_WT_QSER1_outputPeaks_extend200bp-overlapcpgIslandExt.bed # 6597
+### Overlap QSER1 homer extended 500bp (12461) with CpG islands
+bedtools intersect -wa -a output/homer/hESC_WT_QSER1_outputPeaks_extend500bp.bed -b ../../Master/meta/cpgIslandExt.hg38.bed > output/homer/hESC_WT_QSER1_outputPeaks_extend500bp-overlapcpgIslandExt.bed # 7024
+
+
 ```
 
-
+**macs2 peak caller**
 - *+/-200bp QSER1*; 14,165 peaks: 8,789 overlapping with CpG islands (62.05%)
 - *+/-500bp QSER1*; 14,165 peaks: 9,130 overlapping with CpG islands (64.45%)
 - *qval 2.3*; QSER1; 9,571 peaks: 5,847 overlapping with CpG islands (61.09%)
 - *qval3*; QSER1; 7,297 peaks: 4,614 overlapping with CpG islands (63.23%)
 
+**homer peak caller**
+- *+/-200bp QSER1*; 12,461 peaks: 6,597 overlapping with CpG islands (52.94%)
+- *+/-500bp QSER1*;  12,461 peaks: 7,024 overlapping with CpG islands (56.37%)
+
+
+
+
 
 --> QSER1 ~60% overlap with CpG islands seems correct (ie. also happened with changes param.)
 
+
+
+**macs2 peak caller**
 --> Let's confirm QSER1:YAP1 show very low CpG islands binding (~22.79%) by checking the 463 genes co-bound (not overlaping!) by YAP1 and QSER1.
   --> The genes have been copied to file `nano output/ChIPseeker/QSER1_YAP1_463genes.txt` from the Google drive file `gastrulation paper/output/ChIPseeker008001008003/VennDiagramGenes_QSER1EZH2TEAD4YAP1.xlsx`.
 
@@ -9604,6 +9745,53 @@ bedtools intersect -wa -a output/ChIPseeker/QSER1_YAP1_463genes_ChIPseeker.bed -
 - *QSER1 peaks assign to a gene also bound with YAP1 (peaks not overlapping)*; 955 peaks: 501 overlapping with CpG islands (52.46%)
 
 
+
+
+
+
+
+**homer peak caller**
+--> Let's confirm QSER1:YAP1 show very low CpG islands binding (~12.56%) by checking the 1192 genes co-bound (not overlaping!) by YAP1 and QSER1.
+  --> The genes have been copied to file `nano output/homer/QSER1_YAP1_1192genes.txt` from the Google drive file `gastrulation paper/output/ChIPseeker008001008003/VennDiagramGenes_QSER1EZH2TEAD4YAP1_all_homer.xlsx`.
+
+
+```R
+# packages
+library("tidyverse")
+
+# import files
+## import the 1192 QSER1:YAP1 co-bound genes 
+QSER1_YAP1 = read_tsv("output/homer/QSER1_YAP1_1192genes.txt", col_names = FALSE) %>% 
+  dplyr::rename( "geneSymbol"= "X1")
+
+## import the QSER1 ChIPseeker output to collect peak coordinates
+ChIPseeker_QSER1 = read_tsv("output/ChIPseeker/annotation_homer_hESC_WT_QSER1_pool_annot.txt") %>% 
+  dplyr::select(seqnames, start, end, name, annotation, distanceToTSS, geneSymbol, gene) %>%
+  add_column(ChIPseeker = "QSER1")
+
+# join files and save
+ChIPseeker_QSER1 %>% inner_join(QSER1_YAP1) %>%
+write.table(., file = "output/homer/QSER1_YAP1_1192genes_ChIPseeker.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+```
+
+
+--> 1192 genes bound by both YAP1 and QSER1 (not overlapping)
+  --> 2,073 peaks from QSER1 (>1192 as multiple peaks bound the same genes); proportion of these peaks overlapping with CpG islands
+
+
+
+
+```bash
+## Transform .txt ChIPseeker file into bed file (remove header)
+tail -n +2 output/homer/QSER1_YAP1_1192genes_ChIPseeker.txt > output/homer/QSER1_YAP1_1192genes_ChIPseeker.bed
+
+
+### Overlap (2,073) with CpG islands
+bedtools intersect -wa -a output/homer/QSER1_YAP1_1192genes_ChIPseeker.bed -b ../../Master/meta/cpgIslandExt.hg38.bed > output/homer/QSER1_YAP1_1192genes_ChIPseeker-overlapcpgIslandExt.bed # 763
+```
+
+- *QSER1 peaks assign to a gene also bound with YAP1 (peaks not overlapping)*; 2,073 peaks: 763 overlapping with CpG islands (36.81%)
 # GO humangastruloid2472hrs cluster on H3K27me3-enriched genes
 
 - Collect top 50-500 marker genes (findAllMarker() done in` 002*/003*`), separatly for UNTREATED and DASATINIB

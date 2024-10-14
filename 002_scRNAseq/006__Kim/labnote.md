@@ -6834,6 +6834,17 @@ multiome_WT_Bap1KO_QCV2vC1.sct = LinkPeaks(
 multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.sct_numeric_label.rds")
 ##########################################################################################
 
+
+## log norm and Scale GeneActivity assay
+
+
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "GeneActivity"
+
+multiome_WT_Bap1KO_QCV2vC1.sct <- NormalizeData(multiome_WT_Bap1KO_QCV2vC1.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(multiome_WT_Bap1KO_QCV2vC1.sct)
+multiome_WT_Bap1KO_QCV2vC1.sct <- ScaleData(multiome_WT_Bap1KO_QCV2vC1.sct, features = all.genes) # zero-centres and scales it
+
+
 Links = as_tibble(Links(multiome_WT_Bap1KO_QCV2vC1.sct))
 
 #write.table(as_tibble(Links(multiome_WT_Bap1KO_QCV2vC1.sct)), file = c("output/Signac/LinkPeaks_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000.txt"),sep="\t", quote=FALSE, row.names=FALSE)
@@ -6875,6 +6886,10 @@ pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj0
 DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", slot= "raw.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5)
 dev.off()
 
+
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_GeneActivityScaldata.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5)
+dev.off()
 pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_GeneActivitydata.pdf", width=8, height=4)
 DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5)
 dev.off()
@@ -6882,7 +6897,35 @@ pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj0
 DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "raw.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5)
 dev.off()
 
-XXXY HERE , may need to scale the data...
+# testing aesthetics
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_GeneActivityScaldata-dispminmax1.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , disp.min = -1, disp.max = 1, angle = 0, hjust = 0.5)
+dev.off()
+
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_GeneActivityScaldata-bluewhitered.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, 
+          assay = "GeneActivity", 
+          slot= "scale.data", 
+          features = Links_markers_pval$gene, 
+          group.by = "cluster.annot", 
+          angle = 0, 
+          hjust = 0.5) + 
+  scale_fill_gradientn(colors = c("blue", "white", "red"))  # Adjust colors for higher contrast
+dev.off()
+
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_GeneActivityScaldata-bluewhiteredBreaks.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, 
+          assay = "GeneActivity", 
+          slot= "scale.data", 
+          features = Links_markers_pval$gene, 
+          group.by = "cluster.annot", 
+          angle = 0, 
+          hjust = 0.5) + 
+  scale_fill_gradientn(colors = c("blue", "white", "red"), 
+                       breaks = seq(-2, 2, by = 0.5))  # Modify breaks to increase color contrast
+dev.off()
+
+XXXY here
 
 ```
 
