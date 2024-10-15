@@ -1372,7 +1372,6 @@ dev.off()
 
 
 
-
 ### Find all markers 
 all_markers <- FindAllMarkers(RNA_WT_Bap1KO.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
 
@@ -4987,6 +4986,10 @@ dev.off()
 # saveRDS(multiome_Bap1KO, file = "output/seurat/multiome_Bap1KO_QCV3_Option1.rds") 
 ###########################################################################
 
+
+
+
+
 ```
 
 ### Signac part
@@ -6296,6 +6299,7 @@ dev.off()
 
 # Cell type proportion
 
+Idents(multiome_WT_Bap1KO_QCV2vC1.sct) <- multiome_WT_Bap1KO_QCV2vC1.sct$cluster.annot
 
 pt <- table(Idents(multiome_WT_Bap1KO_QCV2vC1.sct), multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident)
 pt <- as.data.frame(pt)
@@ -6305,10 +6309,29 @@ pt <- pt %>%
 
 pt$Var1 <- as.character(pt$Var1)
 
+pt$Var1 <- factor(pt$Var1, levels = c("NSC_quiescent",
+"NSC_proliferative_1",
+"NSC_proliferative_2",
+"IP",
+"Radial_Glia_Cells",
+"OPC",
+"Microglia",
+"Meningeal_Cells",
+"CR",
+"DG_GC",
+"PyNs_SubC_CA1",
+"PyNs_SubC_CA23",
+"PyNs_RSC_UL",
+"PyNs_RSC_MDL",
+"SubC_1",
+"SubC_2",
+"IN_1",
+"IN_2",
+"IN_SubC")) 
 
 
 #pdf("output/Signac/cellTypeProp_SCT_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000.pdf", width=5, height=5)
-pdf("output/Signac/cellTypeProp_SCT_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.pdf", width=5, height=5)
+pdf("output/Signac/cellTypeProp_SCT_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.pdf", width=4, height=5)
 
 ggplot(pt, aes(x = Var2, y = Proportion, fill = Var1)) +
   theme_bw(base_size = 15) +
@@ -6316,7 +6339,7 @@ ggplot(pt, aes(x = Var2, y = Proportion, fill = Var1)) +
   xlab("Sample") +
   ylab("Proportion") +
   geom_text(aes(label = scales::percent(Proportion, accuracy = 0.1)), 
-            position = position_fill(vjust = 0.5), size = 3) +
+            position = position_fill(vjust = 0.5), size = 2.5) +
   theme_bw()
 dev.off()
 
@@ -6772,6 +6795,9 @@ run_find_markers <- function(pair) {
 ## Combine all FindMarkers results into one tibble
 all_markers_tibble <- map_dfr(cluster_pairs, run_find_markers) %>%
   as_tibble()
+## save output
+write.table(all_markers_tibble, file = "output/Signac/DAR_peaks_QCV2vC1_dim40kparam42res065algo4feat2000.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
 
 ## Find closest gene to DAR
 DAR_closestGene <- ClosestFeature(multiome_WT_Bap1KO_QCV2vC1.sct, regions = all_markers_tibble$query_region)
@@ -6937,6 +6963,21 @@ DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct,
 dev.off()
 
 
+# final aesthetics - pretty
+
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_SCTscaledata_pretty.pdf", width=6, height=3)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "SCT", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5, draw.lines = FALSE, label = FALSE)
+dev.off()
+
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_GeneActivtiyscaledata_pretty.pdf", width=6, height=3)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5, draw.lines = FALSE, label = FALSE)
+dev.off()
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_GeneActivtiyscaledata_pretty1.pdf", width=6, height=3)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5, draw.lines = FALSE, label = FALSE, disp.max = 2)
+dev.off()
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_GeneActivtiyscaledata_pretty2.pdf", width=6, height=3)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5, draw.lines = FALSE, label = FALSE, disp.max = 2, disp.min = -2)
+dev.off()
 
 
 
@@ -7063,6 +7104,129 @@ dev.off()
 
 
 
+
+# DEGs number colored in a UMAP
+Idents(multiome_WT_Bap1KO_QCV2vC1.sct) <- "cluster.annot"
+
+DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
+## List of cell types
+cell_types <- c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19")
+## Loop through each cell type to count the number of significant DEGs
+for (cell_type in cell_types) {
+  file_name <- paste("output/Signac/", cell_type, "-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
+  num_degs <- sum(deg_data$p_val_adj < 0.05) ## Count the number of significant DEGs
+  DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
+}
+DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19")) 
+DEG_count$Cluster_Number <- as.numeric(sub("cluster", "", DEG_count$Cell_Type))
+DEG_count$Cluster_Number <- factor(DEG_count$Cluster_Number, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19")) 
+
+cluster_to_cell_name <- c(
+  "cluster1" = "PyNs_SubC_CA23",
+  "cluster2" = "IN_1",
+  "cluster3" = "SubC_1",
+  "cluster4" = "PyNs_SubC_CA1",
+  "cluster5" = "PyNs_RSC_UL",
+  "cluster6" = "DG_GC",
+  "cluster7" = "PyNs_RSC_MDL",
+  "cluster8" = "NSC_proliferative_1",
+  "cluster9" = "SubC_2",
+  "cluster10" = "IN_2",
+  "cluster11" = "NSC_quiescent",
+  "cluster12" = "IN_SubC",
+  "cluster13" = "IP",
+  "cluster14" = "NSC_proliferative_2",
+  "cluster15" = "CR",
+  "cluster16" = "OPC",
+  "cluster17" = "Meningeal_Cells",
+  "cluster18" = "Radial_Glia_Cells",
+  "cluster19" = "Microglia"
+)
+
+# Add the new column by mapping the Cell_Type values
+DEG_count$Cell_Name <- cluster_to_cell_name[DEG_count$Cell_Type]
+
+
+
+
+
+
+# Add DEG information to my seurat object - DEG_count
+cell_clusters <- multiome_WT_Bap1KO_QCV2vC1.sct@meta.data$cluster.annot
+names(cell_clusters) <- rownames(multiome_WT_Bap1KO_QCV2vC1.sct@meta.data)
+DEG_named_vector <- DEG_count$Num_DEGs[match(cell_clusters, DEG_count$Cell_Name)]
+names(DEG_named_vector) <- names(cell_clusters)
+# Integrate DEG values into the Seurat object
+multiome_WT_Bap1KO_QCV2vC1.sct <- AddMetaData(multiome_WT_Bap1KO_QCV2vC1.sct, metadata = DEG_named_vector, col.name = "DEG")
+# Create a UMAP plot colored by qval values
+pdf("output/Signac/FeaturePlot_WNN_multiome_WT_Bap1KO_QCV2vC1_DEG.pdf", width=6, height=6)
+FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = "DEG", pt.size = 0.5, reduction = "wnn.umap") +
+  scale_colour_viridis(option="magma") # 
+dev.off()
+
+
+
+
+
+
+
+
+# DARs number colored in a UMAP - raw DARs
+Idents(multiome_WT_Bap1KO_QCV2vC1.sct) <- "cluster.annot"
+
+DAR_peaks_count <- read_tsv("output/Signac/DAR_peaks_QCV2vC1_dim40kparam42res065algo4feat2000.txt") %>%
+  dplyr::filter(p_val_adj < 0.05) %>%
+  group_by(cluster) %>%
+  summarise(Num_DARs=n())
+# Add DAR information to my seurat object - DAR_peaks_count
+cell_clusters <- multiome_WT_Bap1KO_QCV2vC1.sct@meta.data$cluster.annot
+names(cell_clusters) <- rownames(multiome_WT_Bap1KO_QCV2vC1.sct@meta.data)
+DAR_named_vector <- DAR_peaks_count$Num_DARs[match(cell_clusters, DAR_peaks_count$cluster)]
+names(DAR_named_vector) <- names(cell_clusters)
+# Integrate DAR values into the Seurat object
+multiome_WT_Bap1KO_QCV2vC1.sct <- AddMetaData(multiome_WT_Bap1KO_QCV2vC1.sct, metadata = DAR_named_vector, col.name = "DAR")
+# Create a UMAP plot colored by qval values
+pdf("output/Signac/FeaturePlot_WNN_multiome_WT_Bap1KO_QCV2vC1_DAR.pdf", width=6, height=6)
+FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = "DAR", pt.size = 0.5, reduction = "wnn.umap") +
+  scale_colour_viridis(option="magma") # 
+dev.off()
+
+
+
+# DARs number colored in a UMAP - gene with a DARs
+Idents(multiome_WT_Bap1KO_QCV2vC1.sct) <- "cluster.annot"
+
+DAR_gene_count <- read_tsv("output/Signac/DAR_genes_QCV2vC1_dim40kparam42res065algo4feat2000.txt") %>%
+  dplyr::filter(p_val_adj < 0.05) %>%
+  dplyr::select(gene_name, cluster) %>%
+  unique() %>%
+  group_by(cluster) %>%
+  summarise(Num_DARs=n())
+# Add DAR information to my seurat object - DAR_gene_count
+cell_clusters <- multiome_WT_Bap1KO_QCV2vC1.sct@meta.data$cluster.annot
+names(cell_clusters) <- rownames(multiome_WT_Bap1KO_QCV2vC1.sct@meta.data)
+DAR_named_vector <- DAR_gene_count$Num_DARs[match(cell_clusters, DAR_gene_count$cluster)]
+names(DAR_named_vector) <- names(cell_clusters)
+# Integrate DAR values into the Seurat object
+multiome_WT_Bap1KO_QCV2vC1.sct <- AddMetaData(multiome_WT_Bap1KO_QCV2vC1.sct, metadata = DAR_named_vector, col.name = "DARgene")
+# Create a UMAP plot colored by qval values
+pdf("output/Signac/FeaturePlot_WNN_multiome_WT_Bap1KO_QCV2vC1_DARgene.pdf", width=6, height=6)
+FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = "DARgene", pt.size = 0.5, reduction = "wnn.umap") +
+  scale_colour_viridis(option="magma") # 
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
 ```
 
 
@@ -7104,7 +7268,7 @@ module load cairo/1.17.4-GCCcore-11.3.0
 
 
 
-#### Run condiments
+#### Run condiments RNA assay
 
 ```bash
 conda activate condiments_Signac
@@ -7780,4 +7944,147 @@ switch_df <- data.frame(
   summarize(median_switch_pseudotime = median(switch_pseudotime), .groups = 'drop')
 write.table(switch_df, file = c("output/condiments/switch_df_traj_Part_DG_GC_noCondition.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 ##################################
+
+```
+
+
+
+
+
+#### Run condiments WNN reduction
+
+```bash
+conda activate condiments_Signac
+```
+
+
+
+```R
+# package installation 
+## install.packages("remotes")
+## remotes::install_github("cran/spatstat.core")
+## remotes::install_version("Seurat", "4.0.3")
+## install.packages("magrittr")
+## install.packages("magrittr")
+## install.packages("dplyr")
+## BiocManager::install("DelayedMatrixStats")
+## BiocManager::install("tradeSeq")
+
+
+# packages
+library("condiments")
+library("Seurat")
+library("magrittr") # to use pipe
+library("dplyr") # to use bind_cols and sample_frac
+library("SingleCellExperiment") # for reducedDims
+library("ggplot2")
+library("slingshot")
+library("DelayedMatrixStats")
+library("tidyr")
+# library("tradeSeq") # NOT INSTALL MAY NEED TO IF BUG!! I ddi not try yet
+library("cowplot")
+library("scales")
+library("pheatmap")
+
+# Data import
+
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.sct_numeric_label.rds")
+
+
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "RNA" # According to condiments workflow
+
+
+# convert to SingleCellExperiment
+RNA_WT_Bap1KO <- as.SingleCellExperiment(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA")
+
+
+# tidy
+df <- bind_cols(
+  as.data.frame(reducedDims(RNA_WT_Bap1KO)$WNN.UMAP),
+  as.data.frame(colData(RNA_WT_Bap1KO)[, -3])
+  ) %>%
+  sample_frac(1)
+
+# PLOT
+## genotype overlap
+pdf("output/condiments/UMAP_treatment_multiome_WT_Bap1KO_QCV2vC1_WNN.pdf", width=6, height=5)
+ggplot(df, aes(x = wnnUMAP_1, y = wnnUMAP_2, col = orig.ident)) +
+  geom_point(size = .7) +
+  scale_color_manual(values = c("blue", "red")) + # Specify colors here
+  labs(col = "Treatment") +
+  theme_classic()
+dev.off()
+
+## imbalance score
+scores <- condiments::imbalance_score(
+  Object = df %>% select(wnnUMAP_1, wnnUMAP_2) %>% as.matrix(), 
+  conditions = df$orig.ident,
+  k = 20, smooth = 40)
+df$scores <- scores$scaled_scores
+
+pdf("output/condiments/UMAP_imbalance_score_multiome_WT_Bap1KO_QCV2vC1_WNN.pdf", width=5, height=5)
+ggplot(df, aes(x = wnnUMAP_1, y = wnnUMAP_2, col = scores)) +
+  geom_point(size = .7) +
+  scale_color_viridis_c(option = "C") +
+  labs(col = "Scores") +
+  theme_classic()
+dev.off()
+
+
+#  Trajectory Inference and Differential Topology
+set.seed(42)
+
+## PLOT with Separate trajectories
+### Testing Area ############
+humangastruloid2472hrs <- slingshot(humangastruloid2472hrs, reducedDim = 'UMAP',
+                 clusterLabels = colData(humangastruloid2472hrs)$seurat_clusters,
+                 start.clus = '3', approx_points = 100)
+
+humangastruloid2472hrs <- slingshot(humangastruloid2472hrs, reducedDim = 'UMAP',
+                 clusterLabels = colData(humangastruloid2472hrs)$seurat_clusters,
+                 start.clus = '3', end.clus = c("8","1","4") ,approx_points = 100)
+
+#                 extend = 'n', stretch = 0)
+
+
+##########################################
+RNA_WT_Bap1KO <- slingshot(RNA_WT_Bap1KO, reducedDim = 'UMAP',
+                 clusterLabels = colData(RNA_WT_Bap1KO)$cluster.annot,
+                 start.clus = 'NSC_quiescent', end.clus = c("PyNs_RSC_UL","DG_GC") ,approx_points = 100, extend = 'n')
+
+
+
+
+#test reduceDim PCA or subset endoderm
+
+set.seed(42)
+topologyTest(SlingshotDataSet(RNA_WT_Bap1KO), RNA_WT_Bap1KO$orig.ident) #  
+
+
+sdss <- slingshot_conditions(SlingshotDataSet(RNA_WT_Bap1KO), RNA_WT_Bap1KO$orig.ident)
+curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
+                    .id = "orig.ident")
+# Rename columns in curves
+colnames(curves)[which(colnames(curves) == "umap_1")] <- "wnnUMAP_1"
+colnames(curves)[which(colnames(curves) == "umap_2")] <- "wnnUMAP_2"
+
+#  
+pdf("output/condiments/UMAP_trajectory_separated_multiome_WT_Bap1KO_QCV2vC1_STARTNSCquiescentENDPyNsRSCULDGGCextendN_WNN.pdf", width=6, height=5)
+ggplot(df, aes(x = wnnUMAP_1, y = wnnUMAP_2, col = orig.ident)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(orig.ident, Lineage, Order),
+            aes(group = interaction(Lineage, orig.ident)), size = 1.5) +
+  theme_classic()
+dev.off()
+
+
+```
+
+
+
+--> Not good to use WNN reduction for pseudotime. Pseudotime is temporal dynamics of gene expression. So focus on gene expression; so need top use the RNA UMAP version.
+
+
+
 
