@@ -7164,6 +7164,21 @@ pdf("output/Signac/FeaturePlot_WNN_multiome_WT_Bap1KO_QCV2vC1_DEG.pdf", width=6,
 FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = "DEG", pt.size = 0.5, reduction = "wnn.umap") +
   scale_colour_viridis(option="magma") # 
 dev.off()
+# Add values on the heatmap
+## Extract UMAP coordinates
+umap_coordinates <- as.data.frame(multiome_WT_Bap1KO_QCV2vC1.sct@reductions$wnn.umap@cell.embeddings)
+umap_coordinates$cluster <- multiome_WT_Bap1KO_QCV2vC1.sct@meta.data$cluster.annot
+## Calculate cluster centers
+cluster_centers <- aggregate(cbind(wnnUMAP_1, wnnUMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(DEG_count %>% dplyr::rename( "cluster"="Cell_Name"))
+## Create a UMAP plot colored by DEG values, with cluster DEG counts as text annotations
+pdf("output/Signac/FeaturePlot_WNN_multiome_WT_Bap1KO_QCV2vC1_DEG_numeric.pdf", width=6, height=6)
+FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = "DEG", pt.size = 0.5, reduction = "wnn.umap") +
+  scale_colour_viridis(option="mako") + # 
+  geom_text(data = cluster_centers, aes(x = wnnUMAP_1, y = wnnUMAP_2, label = Num_DEGs), 
+            size = 5, color = "red", fontface = "bold") 
+dev.off()
+
 
 
 
@@ -7191,6 +7206,22 @@ pdf("output/Signac/FeaturePlot_WNN_multiome_WT_Bap1KO_QCV2vC1_DAR.pdf", width=6,
 FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = "DAR", pt.size = 0.5, reduction = "wnn.umap") +
   scale_colour_viridis(option="magma") # 
 dev.off()
+
+# Add values on the heatmap
+## Extract UMAP coordinates
+umap_coordinates <- as.data.frame(multiome_WT_Bap1KO_QCV2vC1.sct@reductions$wnn.umap@cell.embeddings)
+umap_coordinates$cluster <- multiome_WT_Bap1KO_QCV2vC1.sct@meta.data$cluster.annot
+## Calculate cluster centers
+cluster_centers <- aggregate(cbind(wnnUMAP_1, wnnUMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(DAR_peaks_count)
+## Create a UMAP plot colored by DAR values, with cluster DEG counts as text annotations
+pdf("output/Signac/FeaturePlot_WNN_multiome_WT_Bap1KO_QCV2vC1_DAR_numeric.pdf", width=6, height=6)
+FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = "DAR", pt.size = 0.5, reduction = "wnn.umap") +
+  scale_colour_viridis(option="mako") + # 
+  geom_text(data = cluster_centers, aes(x = wnnUMAP_1, y = wnnUMAP_2, label = Num_DARs), 
+            size = 5, color = "red", fontface = "bold") 
+dev.off()
+
 
 
 
@@ -8085,6 +8116,109 @@ dev.off()
 
 --> Not good to use WNN reduction for pseudotime. Pseudotime is temporal dynamics of gene expression. So focus on gene expression; so need top use the RNA UMAP version.
 
+
+
+
+# GRN with Pando
+
+Gene regulatory network using chromatin accessibility and gene expression data. Follow Pando guideline [here](https://quadbio.github.io/Pando/index.html).
+
+## install Pando
+
+
+```bash
+# clone SignacV5 and install Pando in R
+conda create --name Signac_Pando --clone SignacV5 # devtools::install_github('quadbiolab/Pando')
+```
+
+
+
+--> Work!!!
+
+
+## Run Pando
+
+```bash
+conda activate Signac_Pando
+module load hdf5
+```
+
+
+
+```R
+set.seed(42)
+
+# library
+library("Signac")
+library("Seurat")
+#library("hdf5r") # need to reinstall it at each session... with install.packages("hdf5r")
+library("tidyverse")
+library("EnsDb.Mmusculus.v79") # mm10
+library("reticulate") # needed to use FindClusters()
+library("metap") # needed to use FindConservedMarkers()
+use_python("~/anaconda3/envs/SignacV5/bin/python") # to specify which python to use... Needed for FindClusters()
+library("Pando")
+
+
+
+# import and rename Seurat obj
+multiome_WT_Bap1KO_QCV2vC1_GRN.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.sct_numeric_label.rds")
+
+# Find variable features
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1_GRN.sct) <- "RNA" 
+multiome_WT_Bap1KO_QCV2vC1_GRN.sct <- FindVariableFeatures(multiome_WT_Bap1KO_QCV2vC1_GRN.sct, 
+                                                            selection.method = "vst", 
+                                                            nfeatures = 3000)
+                                                            
+# import the phastConsElements60way.mm10 bed file and convert it to GR range
+phastConsElements60way.mm10 = read_tsv("../meta/phastConsElements60way.mm10", col_names  = FALSE) %>%
+  dplyr::rename("chr" = "X1", "start" = "X2", "end" = "X3")
+## Convert to GRange object
+phastConsElements60way_GRanges =  GRanges(seqnames = phastConsElements60way.mm10$chr,
+                          ranges = IRanges(start = phastConsElements60way.mm10$start, 
+                                           end = phastConsElements60way.mm10$end),
+                          score = phastConsElements60way.mm10$X5)
+
+# create grn object
+multiome_WT_Bap1KO_QCV2vC1_GRN.sct <- initiate_grn(multiome_WT_Bap1KO_QCV2vC1_GRN.sct,
+  peak_assay = "ATAC",
+  rna_assay = "RNA",
+  regions = phastConsElements60way_GRanges  # Optional but recommended, see notes
+  )
+
+
+
+# Scan for TF motifs
+library(BSgenome.Mmusculus.UCSC.mm10)
+data(motifs)
+
+multiome_WT_Bap1KO_QCV2vC1_GRN.sct <- find_motifs(
+    multiome_WT_Bap1KO_QCV2vC1_GRN.sct,
+    pfm = motifs,
+    genome = BSgenome.Mmusculus.UCSC.mm10
+)
+# --> Long, 2hrs; shorter 30mnin if  using  phastConsElements60way_GRanges
+
+
+
+# Inferring the GRN
+multiome_WT_Bap1KO_QCV2vC1_GRN.sct <- infer_grn(
+    multiome_WT_Bap1KO_QCV2vC1_GRN.sct,
+    peak_to_gene_method = 'Signac', # or use 'GREAT' consider overlapping regulatory regions, lets keep Signac
+    method = 'glm' # other model can be tested: ('glmnet', 'cv.glmnet')
+)
+
+
+
+xxxy
+
+
+```
+
+*Notes:*
+- Make sure to run variableFeature on RNA assay prior running GRN code!! [Issue](https://github.com/quadbio/Pando/issues/29)
+- `initiate_grn()` optional but better to add `regions`.  --> constraining the set of peaks to more confident regions cuts down on runtime and makes the resulting GRN more robust; discuss [here](https://quadbio.github.io/Pando/articles/getting_started.html). Here is where I found the mice equivalent: https://support.bioconductor.org/p/96226/. Issue discuss [here](https://github.com/quadbio/Pando/issues/62):
+  - *phastConsElements60way* mice element data downloaded [here](https://genome.ucsc.edu/cgi-bin/hgTables). `60 Vert. El` selected; adn output format as bed: `phastConsElements60way.mm10` --> File transfer to `002*/meta/` folder
 
 
 

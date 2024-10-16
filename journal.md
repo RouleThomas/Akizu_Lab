@@ -176,6 +176,13 @@ Also R: BiocManager, tidyverse, EnsDb.Hsapiens.v86, devtools, ShinyCell, rsconne
 
 
 
+### Signac_Pando
+
+--> clone from `SignacV5`; added [Pando](https://quadbio.github.io/Pando/index.html) and [GenomicScores](https://www.bioconductor.org/packages/devel/bioc/vignettes/GenomicScores/inst/doc/GenomicScores.html)
+
+
+
+
 
 ### monocle3
 Only `monocle3` and `Seurat_v_5`
@@ -219,6 +226,7 @@ R4.3.1 with `granulator` and `tidyverse`
 --> condiments with Signac!!! (and Seurat)
 
 --> Use to do pseudotime analysis with Signac-dependent seurat object
+
 
 # cool random command
 
