@@ -2659,11 +2659,6 @@ for (cluster in clusters) {
 #--> Long ~2hrs
 
 
-XX Do p180 next
-
-
-
-
 
 
 
@@ -2747,9 +2742,6 @@ dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV4dim50-Kcnc1.pdf", width=10, height=10)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Kcnc1"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
-
-
-xxx HERE; now qcv4 xxxy
 
 
 
@@ -3302,6 +3294,84 @@ FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = "DEG", pt.size = 0.5, reducti
             size = 4, color = "red", fontface = "bold") 
 dev.off()
 
+
+
+
+# SCPA
+
+# Compare WT and cYAPKO using SCPA ##########################################
+
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") 
+library("SCPA")
+library("circlize")
+library("magrittr")
+library("msigdb")
+library("msigdbr")
+library("ComplexHeatmap")
+library("ggrepel")
+library("ggpubr")
+
+DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "RNA" # Recommended 
+
+
+
+# Test different Pathway collections and generate enrichment plot for each cell types (C2 = Pathway, C5 = ontology )
+## import Pathways
+pathways <- msigdbr("Mus musculus", "C5") %>%          # !!!!!! CHANGE HERE PATHWAYS !!!!!!
+format_pathways()
+names(pathways) <- sapply(pathways, function(x) x$Pathway[1]) # just to name the list, so easier to visualise
+
+# Code to save output for each cell type comparison
+clusters = c(
+  "Granular_1",
+  "Granular_2",
+  "Granular_3",
+  "MLI1",
+  "MLI2_1",
+  "MLI2_2",
+  "Interneuron",
+  "Astrocyte",
+  "Bergman_Glia",
+  "Unipolar_Brush",
+  "Mix_Endothelial_EndothelialMural",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Golgi",
+  "Purkinje",
+  "Unknown_Neuron_Subpop",
+  "Oligodendrocyte"
+)
+### Loop through each value
+for (cluster in clusters) {
+  #### Extract data for WT and cYAPKO based on current value
+  WT <- seurat_extract(WT_Kcnc1_p180_CB_1step.sct,
+                       meta1 = "condition", value_meta1 = "WT",
+                       meta2 = "cluster.annot", value_meta2 = cluster)
+
+  Kcnc1 <- seurat_extract(WT_Kcnc1_p180_CB_1step.sct,
+                           meta1 = "condition", value_meta1 = "Kcnc1",
+                           meta2 = "cluster.annot", value_meta2 = cluster)
+
+  ##### Compare pathways
+  WT_cYAPKO <- compare_pathways(samples = list(WT, Kcnc1),
+                                pathways = pathways,
+                                parallel = TRUE, cores = 8)
+
+  ##### Write to file using the current value in the filename
+  output_filename <- paste0("output/Pathway/SCPA_CB_p180_C5_", cluster, ".txt")       # !!!!!! CHANGE HERE PATHWAYS !!!!!!
+  write.table(WT_cYAPKO, file = output_filename, sep = "\t", quote = FALSE, row.names = FALSE)
+}
+#--> Long ~2hrs
 
 
 
