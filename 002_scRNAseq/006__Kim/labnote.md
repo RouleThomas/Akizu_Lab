@@ -8379,9 +8379,6 @@ Let's re-run Pando, but subset UMAP WT; Bap1KO. Do GRN for Bap1 and compare GRN 
 
 ### WT and Bap1KO separated
 
-
-XXXY HERE
-
 ```bash
 conda activate Signac_Pando
 module load hdf5
@@ -8415,16 +8412,121 @@ DefaultAssay(multiome_WT_Bap1KO_QCV2vC1_GRN.sct) <- "RNA"
 genes <- rownames(multiome_WT_Bap1KO_QCV2vC1_GRN.sct)
 genes_filtered <- genes[!grepl("Rik", genes)]
 
-# Find variable features
-DefaultAssay(multiome_WT_Bap1KO_QCV2vC1_GRN.sct) <- "RNA" 
-multiome_WT_Bap1KO_QCV2vC1_GRN.sct <- FindVariableFeatures(multiome_WT_Bap1KO_QCV2vC1_GRN.sct, 
-                                                            selection.method = "vst", 
-                                                            nfeatures = 3000)
+# Separate Seurat into WT and Bap1KO
 
-# Get variable features and filter out 'Rik' genes
-variable_genes <- multiome_WT_Bap1KO_QCV2vC1_GRN.sct[["RNA"]]@var.features
-variable_genes_filtered <- variable_genes[!grepl("Rik", variable_genes)]
-#--> 2859 genes instead of 3000
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct <- subset(multiome_WT_Bap1KO_QCV2vC1_GRN.sct, subset = orig.ident == "multiome_WT")
+multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO.sct <- subset(multiome_WT_Bap1KO_QCV2vC1_GRN.sct, subset = orig.ident == "multiome_Bap1KO")
+
+
+
+##################################################################################
+# WT ##################################################################################
+##################################################################################
+
+# import the phastConsElements60way.mm10 bed file and convert it to GR range
+phastConsElements60way.mm10 = read_tsv("../meta/phastConsElements60way.mm10", col_names  = FALSE) %>%
+  dplyr::rename("chr" = "X1", "start" = "X2", "end" = "X3")
+## Convert to GRange object
+phastConsElements60way_GRanges =  GRanges(seqnames = phastConsElements60way.mm10$chr,
+                          ranges = IRanges(start = phastConsElements60way.mm10$start, 
+                                           end = phastConsElements60way.mm10$end),
+                          score = phastConsElements60way.mm10$X5)
+
+# create grn object
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct <- initiate_grn(multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct,
+  peak_assay = "ATAC",
+  rna_assay = "RNA",
+  regions = phastConsElements60way_GRanges  # Optional but recommended, see notes
+  )
+
+
+
+# Scan for TF motifs
+
+## Prep mouse TF motifs database
+library(BSgenome.Mmusculus.UCSC.mm10)
+data("mouse_pwms_v2")
+x <- character()
+for(i in 1:length(mouse_pwms_v2@listData)){
+x[i] <- mouse_pwms_v2@listData[[i]]@name
+}
+motif2tf <- data.frame(motif = names(mouse_pwms_v2@listData), tf = x, origin = "CIS-BP", gene_id = gsub("_[[:alnum:][:punct:]]*", "", names(mouse_pwms_v2@listData)), family = NA, name = NA, symbol = NA, motif_tf = NA) %>%
+subset(gene_id != "XP" & gene_id != "NP")
+mouse_pwms_v3 <- subset(mouse_pwms_v2, names(mouse_pwms_v2@listData) %in% motif2tf$motif)
+
+## Find motifs
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct <- find_motifs(
+    multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct,
+    pfm = mouse_pwms_v3,
+    motif_tfs = motif2tf,
+    genome = BSgenome.Mmusculus.UCSC.mm10
+)
+
+######################################################################################################
+# Inferring the GRN - All genes ####################################################################
+
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct <- infer_grn(
+    multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct,
+    peak_to_gene_method = 'Signac', # or use 'GREAT' consider overlapping regulatory regions, lets keep Signac
+    method = 'glm', # other model can be tested: ('glmnet', 'cv.glmnet', 'xgb')
+    genes = genes_filtered 
+)
+
+XXXY HERE SAVE OUTPUT !!
+
+# Find modules = Genes regulated by each TF
+GetNetwork(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct)
+coef(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct)
+
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct <- find_modules(
+    multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct, 
+    p_thresh = 0.1,
+    nvar_thresh = 2, 
+    min_genes_per_module = 1, 
+    rsq_thresh = 0.05
+)
+
+# some QC plots
+pdf("output/Pando/plot_gof_allGenes_WT.pdf", width=7, height=6)
+plot_gof(multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct, point_size=3)
+dev.off()
+pdf("output/Pando/plot_module_metrics_allGenes_WT.pdf", width=7, height=4)
+plot_module_metrics(multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct)
+dev.off()
+
+# GRN plots
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct <- get_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct)
+
+pdf("output/Pando/plot_network_graph_allGenes_WT.pdf", width=10, height=10)
+plot_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct)
+dev.off()
+pdf("output/Pando/plot_network_graph_fr_allGenes_WT.pdf", width=10, height=10)
+plot_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct, layout='fr')
+dev.off()
+
+## 1 TF
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT.TF.sct <- get_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct, 
+    graph_name = 'full_graph', 
+    umap_method = 'none')
+
+
+
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT.Ezh2.sct <- get_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_WT.TF.sct, tf='Ezh2', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Ezh2-allGenes_WT.pdf", width=10, height=10)
+plot_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_WT.Ezh2.sct, tf='Ezh2')
+dev.off()
+
+
+
+
+
+
+
+##################################################################################
+# Bap1KO ##################################################################################
+##################################################################################
+
+
 
 # import the phastConsElements60way.mm10 bed file and convert it to GR range
 phastConsElements60way.mm10 = read_tsv("../meta/phastConsElements60way.mm10", col_names  = FALSE) %>%
@@ -8445,17 +8547,7 @@ multiome_WT_Bap1KO_QCV2vC1_GRN.sct <- initiate_grn(multiome_WT_Bap1KO_QCV2vC1_GR
 
 
 # Scan for TF motifs
-#################### FAIL ########################################
-data(motifs)
 
-multiome_WT_Bap1KO_QCV2vC1_GRN.sct <- find_motifs(
-    multiome_WT_Bap1KO_QCV2vC1_GRN.sct,
-    pfm = motifs,
-    genome = BSgenome.Mmusculus.UCSC.mm10
-)
-# --> Long, 2hrs; shorter 30mnin if  using  phastConsElements60way_GRanges
-# --> This fail as data(motifs) is for mouse!
-#####################################################################
 
 
 ## Prep mouse TF motifs database
@@ -8478,57 +8570,6 @@ multiome_WT_Bap1KO_QCV2vC1_GRN.sct <- find_motifs(
 )
 
 
-######################################################################################################
-# Inferring the GRN - Variable features only ####################################################################
-## Variable Feature
-multiome_WT_Bap1KO_QCV2vC1_GRN.sct <- infer_grn(
-    multiome_WT_Bap1KO_QCV2vC1_GRN.sct,
-    peak_to_gene_method = 'Signac', # or use 'GREAT' consider overlapping regulatory regions, lets keep Signac
-    method = 'glm', # other model can be tested: ('glmnet', 'cv.glmnet', 'xgb')
-    genes = variable_genes_filtered 
-)
-
-# Find modules = Genes regulated by each TF
-GetNetwork(multiome_WT_Bap1KO_QCV2vC1_GRN.sct)
-coef(multiome_WT_Bap1KO_QCV2vC1_GRN.sct)
-
-multiome_WT_Bap1KO_QCV2vC1_GRN.sct <- find_modules(
-    multiome_WT_Bap1KO_QCV2vC1_GRN.sct, 
-    p_thresh = 0.1,
-    nvar_thresh = 2, 
-    min_genes_per_module = 1, 
-    rsq_thresh = 0.05
-)
-
-# some QC plots
-pdf("output/Pando/plot_gof_VariableFeatures.pdf", width=7, height=6)
-plot_gof(multiome_WT_Bap1KO_QCV2vC1_GRN.sct, point_size=3)
-dev.off()
-pdf("output/Pando/plot_module_metrics_VariableFeatures.pdf", width=7, height=4)
-plot_module_metrics(multiome_WT_Bap1KO_QCV2vC1_GRN.sct)
-dev.off()
-
-# GRN plots
-multiome_WT_Bap1KO_QCV2vC1_GRN.sct <- get_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN.sct)
-
-pdf("output/Pando/plot_network_graph_VariableFeatures.pdf", width=10, height=10)
-plot_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN.sct)
-dev.off()
-pdf("output/Pando/plot_network_graph_fr_VariableFeatures.pdf", width=10, height=10)
-plot_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN.sct, layout='fr')
-dev.off()
-
-## 1 TF
-multiome_WT_Bap1KO_QCV2vC1_GRN.TF.sct <- get_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN.sct, 
-    graph_name = 'full_graph', 
-    umap_method = 'none')
-
-
-
-multiome_WT_Bap1KO_QCV2vC1_GRN.Ezh2.sct <- get_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN.TF.sct, tf='Ezh2', graph='full_graph')
-pdf("output/Pando/plot_tf_network-Ezh2-VariableFeatures.pdf", width=10, height=10)
-plot_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN.Ezh2.sct, tf='Ezh2')
-dev.off()
 
 
 
@@ -8585,9 +8626,6 @@ multiome_WT_Bap1KO_QCV2vC1_GRN.Ezh2.sct <- get_tf_network(multiome_WT_Bap1KO_QCV
 pdf("output/Pando/plot_tf_network-Ezh2-allGenes.pdf", width=10, height=10)
 plot_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN.Ezh2.sct, tf='Ezh2')
 dev.off()
-
-
-
 
 ```
 
