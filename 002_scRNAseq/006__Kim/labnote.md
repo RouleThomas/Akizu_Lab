@@ -9013,11 +9013,11 @@ multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct <- infer_grn(
 
 
 # Find modules = Genes regulated by each TF
-GetNetwork(multiome_WT_Bap1KO_QCV2vC1_GRN_allGenes.sct)
-coef(multiome_WT_Bap1KO_QCV2vC1_GRN_allGenes.sct)
+GetNetwork(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct)
+coef(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct)
 
-multiome_WT_Bap1KO_QCV2vC1_GRN_allGenes.sct <- find_modules(
-    multiome_WT_Bap1KO_QCV2vC1_GRN_allGenes.sct, 
+multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct <- find_modules(
+    multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct, 
     p_thresh = 0.1,
     nvar_thresh = 2, 
     min_genes_per_module = 1, 
@@ -9025,34 +9025,47 @@ multiome_WT_Bap1KO_QCV2vC1_GRN_allGenes.sct <- find_modules(
 )
 
 # some QC plots
-pdf("output/Pando/plot_gof_allGenes.pdf", width=7, height=6)
-plot_gof(multiome_WT_Bap1KO_QCV2vC1_GRN.sct, point_size=3)
+pdf("output/Pando/plot_gof_Bap1KO_allGenes.pdf", width=7, height=6)
+plot_gof(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct, point_size=3)
 dev.off()
-pdf("output/Pando/plot_module_metrics_allGenes.pdf", width=7, height=4)
-plot_module_metrics(multiome_WT_Bap1KO_QCV2vC1_GRN.sct)
+pdf("output/Pando/plot_module_metrics_Bap1KO_allGenes.pdf", width=7, height=4)
+plot_module_metrics(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct)
 dev.off()
 
 # GRN plots
-multiome_WT_Bap1KO_QCV2vC1_GRN.sct <- get_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN.sct)
+multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct <- get_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct)
 
-pdf("output/Pando/plot_network_graph_allGenes.pdf", width=10, height=10)
-plot_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN.sct)
+pdf("output/Pando/plot_network_graph_Bap1KO_allGenes.pdf", width=10, height=10)
+plot_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct)
 dev.off()
-pdf("output/Pando/plot_network_graph_fr_allGenes.pdf", width=10, height=10)
-plot_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN.sct, layout='fr')
+pdf("output/Pando/plot_network_graph_fr_Bap1KO_allGenes.pdf", width=10, height=10)
+plot_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct, layout='fr')
 dev.off()
+
 
 ## 1 TF
-multiome_WT_Bap1KO_QCV2vC1_GRN.TF.sct <- get_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN.sct, 
+multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.TF.sct <- get_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct, 
     graph_name = 'full_graph', 
     umap_method = 'none')
 
 
 
-multiome_WT_Bap1KO_QCV2vC1_GRN.Ezh2.sct <- get_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN.TF.sct, tf='Ezh2', graph='full_graph')
-pdf("output/Pando/plot_tf_network-Ezh2-allGenes.pdf", width=10, height=10)
-plot_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN.Ezh2.sct, tf='Ezh2')
+multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.Yy1.sct <- get_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.TF.sct, tf='Yy1', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Yy1-allGenes_Bap1_noRegions.pdf", width=5, height=2)
+plot_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.Yy1.sct, tf='Yy1', circular=F, label_nodes = "all")
 dev.off()
+
+multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.Foxk1.sct <- get_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.TF.sct, tf='Foxk1', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Foxk1-allGenes_Bap1_noRegions.pdf", width=15, height=10)
+plot_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.Foxk1.sct, tf='Foxk1', label_nodes = "tfs")
+dev.off()
+
+multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.Foxk2.sct <- get_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.TF.sct, tf='Foxk2', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Foxk2-allGenes_Bap1_noRegions.pdf", width=7, height=2)
+plot_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.Foxk2.sct, tf='Foxk2', circular=F, label_nodes = "all")
+dev.off()
+
+
 
 ```
 
