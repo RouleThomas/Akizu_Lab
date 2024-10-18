@@ -1978,6 +1978,110 @@ for (cluster in clusters) {
 
 
 
+## load all the comparison for each cell type (FC qval information)
+clusters = c(
+"Granular_1", "Granular_2", "Granular_3", "Granular_4", "Granular_5",
+  "Interneuron", "MLI1", "MLI2", "PLI", "Golgi", "Unipolar_Brush",
+  "Purkinje", "Astrocyte", "Bergmann_Glia", "Oligodendrocyte", "OPC",
+  "Mix_Microglia_Meningeal", "Endothelial", "Endothelial_Mural", "Choroid_Plexus"
+)
+## import with a function
+### A function to read and add the cluster column
+read_and_add_cluster <- function(cluster) {
+  path <- paste0("output/Pathway/SCPA_CB_p14_C2_", cluster, ".txt")
+  df <- read.delim(path, header = TRUE) %>%
+    add_column(cluster = cluster)
+  return(df)
+}
+### Use lapply to apply the function on each cluster and bind all data frames together
+all_data <- bind_rows(lapply(clusters, read_and_add_cluster)) %>% as_tibble()
+
+## Filter pathway of interest
+pathways <- c(
+  "WP_NEURODEGENERATION_WITH_BRAIN_IRON_ACCUMULATION_NBIA_SUBTYPES_PATHWAY",
+  "WP_NEUROINFLAMMATION_AND_GLUTAMATERGIC_SIGNALING",
+  "KEGG_ALZHEIMERS_DISEASE",
+  "WP_ALZHEIMERS_DISEASE",
+  "KEGG_PARKINSONS_DISEASE",
+  "WP_PARKINSONS_DISEASE_PATHWAY",
+  "KEGG_HUNTINGTONS_DISEASE",
+  "WP_ERK_PATHWAY_IN_HUNTINGTONS_DISEASE",
+  "KEGG_AMYOTROPHIC_LATERAL_SCLEROSIS_ALS",
+  "WP_AMYOTROPHIC_LATERAL_SCLEROSIS_ALS",
+  "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION",
+  "REACTOME_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "KEGG_NEUROACTIVE_LIGAND_RECEPTOR_INTERACTION",
+  "REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS",
+  "REACTOME_POTASSIUM_CHANNELS",
+  "REACTOME_ION_CHANNEL_TRANSPORT",
+  "KEGG_CALCIUM_SIGNALING_PATHWAY",
+  "REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS",
+  "REACTOME_ACETYLCHOLINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_DOPAMINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_GLUTAMATE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_NOREPINEPHRINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_SEROTONIN_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "ALCALA_APOPTOSIS",
+  "KEGG_APOPTOSIS",
+  "REACTOME_APOPTOSIS",
+  "REACTOME_INTRINSIC_PATHWAY_FOR_APOPTOSIS",
+  "WP_APOPTOSIS",
+  "WP_APOPTOSIS_MODULATION_AND_SIGNALING",
+  "REACTOME_DEATH_RECEPTOR_SIGNALLING",
+  "REACTOME_DISEASES_OF_PROGRAMMED_CELL_DEATH",
+  "REACTOME_FOXO_MEDIATED_TRANSCRIPTION_OF_CELL_DEATH_GENES",
+  "REACTOME_PROGRAMMED_CELL_DEATH",
+  "REACTOME_TP53_REGULATES_TRANSCRIPTION_OF_CELL_DEATH_GENES",
+  "BIOCARTA_DEATH_PATHWAY",
+  "REACTOME_DETOXIFICATION_OF_REACTIVE_OXYGEN_SPECIES",
+  "WP_PKCGAMMA_CALCIUM_SIGNALING_PATHWAY_IN_ATAXIA"
+)
+classes <- c(
+  rep("Neurodegeneration", 10),
+  rep("Neuronal_Activity", 13),
+  rep("Apoptosis", 12),
+  "ROS",
+  "Ataxia"
+)
+colors <- c(
+  rep("Purple", 10),
+  rep("Green", 13),
+  rep("Dark Orange", 12),
+  "Red",
+  "Blue"
+)
+pathway_tibble <- tibble(
+  Pathway = pathways,
+  Class = classes,
+  Color = colors
+)
+
+pathway_all_data = pathway_tibble %>%
+  left_join(all_data)
+
+pathway_all_data$Pathway <- factor(pathway_all_data$Pathway, levels = pathways)
+
+
+### dotplot
+pdf("output/Pathway/dotplot_SCPA_CB_p14_C2_selectedPathwayV1.pdf", width=12, height=8)
+ggplot(pathway_all_data, aes(x = cluster, y = Pathway)) +
+  geom_point(aes(size = ifelse(qval > 1.4, qval, NA), color = Color), na.rm = TRUE) +
+  scale_size_continuous(range = c(3, 10), breaks = c(1.5, 2, 3, 4), name = "qval") +
+  scale_color_identity() +
+  theme_bw() +
+  labs(x = "Cluster",
+       y = "Pathway",
+       color = "Class Color") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+        legend.position = "right") +
+  guides(color = guide_legend(title = "Class Color", override.aes = list(size = 5)),
+         size = guide_legend(title = "qval"))
+dev.off()
+
+
+
+
+
 
 ##########################################
 ## integration WT Kcnc1 p35 all replicates (1st replicate, then genotype) ######
@@ -2657,6 +2761,120 @@ for (cluster in clusters) {
   write.table(WT_cYAPKO, file = output_filename, sep = "\t", quote = FALSE, row.names = FALSE)
 }
 #--> Long ~2hrs
+
+
+
+## load all the comparison for each cell type (FC qval information)
+clusters = c(
+ "Granular",
+  "Interneuron",
+  "MLI1",
+  "MLI2_1",
+  "MLI2_2",
+  "Golgi",
+  "Unipolar_Brush",
+  "Purkinje",
+  "Astrocyte",
+  "Bergman_Glia",
+  "OPC",
+  "Meningeal",
+  "Endothelial",
+  "Choroid_Plexus",
+  "Endothelial_Stalk"
+)
+## import with a function
+### A function to read and add the cluster column
+read_and_add_cluster <- function(cluster) {
+  path <- paste0("output/Pathway/SCPA_CB_p35_C2_", cluster, ".txt")
+  df <- read.delim(path, header = TRUE) %>%
+    add_column(cluster = cluster)
+  return(df)
+}
+### Use lapply to apply the function on each cluster and bind all data frames together
+all_data <- bind_rows(lapply(clusters, read_and_add_cluster)) %>% as_tibble()
+
+## Filter pathway of interest
+pathways <- c(
+  "WP_NEURODEGENERATION_WITH_BRAIN_IRON_ACCUMULATION_NBIA_SUBTYPES_PATHWAY",
+  "WP_NEUROINFLAMMATION_AND_GLUTAMATERGIC_SIGNALING",
+  "KEGG_ALZHEIMERS_DISEASE",
+  "WP_ALZHEIMERS_DISEASE",
+  "KEGG_PARKINSONS_DISEASE",
+  "WP_PARKINSONS_DISEASE_PATHWAY",
+  "KEGG_HUNTINGTONS_DISEASE",
+  "WP_ERK_PATHWAY_IN_HUNTINGTONS_DISEASE",
+  "KEGG_AMYOTROPHIC_LATERAL_SCLEROSIS_ALS",
+  "WP_AMYOTROPHIC_LATERAL_SCLEROSIS_ALS",
+  "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION",
+  "REACTOME_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "KEGG_NEUROACTIVE_LIGAND_RECEPTOR_INTERACTION",
+  "REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS",
+  "REACTOME_POTASSIUM_CHANNELS",
+  "REACTOME_ION_CHANNEL_TRANSPORT",
+  "KEGG_CALCIUM_SIGNALING_PATHWAY",
+  "REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS",
+  "REACTOME_ACETYLCHOLINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_DOPAMINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_GLUTAMATE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_NOREPINEPHRINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_SEROTONIN_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "ALCALA_APOPTOSIS",
+  "KEGG_APOPTOSIS",
+  "REACTOME_APOPTOSIS",
+  "REACTOME_INTRINSIC_PATHWAY_FOR_APOPTOSIS",
+  "WP_APOPTOSIS",
+  "WP_APOPTOSIS_MODULATION_AND_SIGNALING",
+  "REACTOME_DEATH_RECEPTOR_SIGNALLING",
+  "REACTOME_DISEASES_OF_PROGRAMMED_CELL_DEATH",
+  "REACTOME_FOXO_MEDIATED_TRANSCRIPTION_OF_CELL_DEATH_GENES",
+  "REACTOME_PROGRAMMED_CELL_DEATH",
+  "REACTOME_TP53_REGULATES_TRANSCRIPTION_OF_CELL_DEATH_GENES",
+  "BIOCARTA_DEATH_PATHWAY",
+  "REACTOME_DETOXIFICATION_OF_REACTIVE_OXYGEN_SPECIES",
+  "WP_PKCGAMMA_CALCIUM_SIGNALING_PATHWAY_IN_ATAXIA"
+)
+classes <- c(
+  rep("Neurodegeneration", 10),
+  rep("Neuronal_Activity", 13),
+  rep("Apoptosis", 12),
+  "ROS",
+  "Ataxia"
+)
+colors <- c(
+  rep("Purple", 10),
+  rep("Green", 13),
+  rep("Dark Orange", 12),
+  "Red",
+  "Blue"
+)
+pathway_tibble <- tibble(
+  Pathway = pathways,
+  Class = classes,
+  Color = colors
+)
+
+pathway_all_data = pathway_tibble %>%
+  left_join(all_data)
+
+pathway_all_data$Pathway <- factor(pathway_all_data$Pathway, levels = pathways)
+
+
+### dotplot
+pdf("output/Pathway/dotplot_SCPA_CB_p35_C2_selectedPathwayV1.pdf", width=12, height=8)
+ggplot(pathway_all_data, aes(x = cluster, y = Pathway)) +
+  geom_point(aes(size = ifelse(qval > 1.4, qval, NA), color = Color), na.rm = TRUE) +
+  scale_size_continuous(range = c(3, 10), breaks = c(1.5, 2, 3, 4), name = "qval") +
+  scale_color_identity() +
+  theme_bw() +
+  labs(x = "Cluster",
+       y = "Pathway",
+       color = "Class Color") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+        legend.position = "right") +
+  guides(color = guide_legend(title = "Class Color", override.aes = list(size = 5)),
+         size = guide_legend(title = "qval"))
+dev.off()
+
 
 
 
@@ -3373,6 +3591,122 @@ for (cluster in clusters) {
 }
 #--> Long ~2hrs
 
+
+
+## load all the comparison for each cell type (FC qval information)
+clusters = c(
+  "Granular_1",
+  "Granular_2",
+  "Granular_3",
+  "MLI1",
+  "MLI2_1",
+  "MLI2_2",
+  "Interneuron",
+  "Astrocyte",
+  "Bergman_Glia",
+  "Unipolar_Brush",
+  "Mix_Endothelial_EndothelialMural",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Golgi",
+  "Purkinje",
+  "Unknown_Neuron_Subpop",
+  "Oligodendrocyte"
+)
+## import with a function
+### A function to read and add the cluster column
+read_and_add_cluster <- function(cluster) {
+  path <- paste0("output/Pathway/SCPA_CB_p180_C2_", cluster, ".txt")
+  df <- read.delim(path, header = TRUE) %>%
+    add_column(cluster = cluster)
+  return(df)
+}
+### Use lapply to apply the function on each cluster and bind all data frames together
+all_data <- bind_rows(lapply(clusters, read_and_add_cluster)) %>% as_tibble()
+
+## Filter pathway of interest
+pathways <- c(
+  "WP_NEURODEGENERATION_WITH_BRAIN_IRON_ACCUMULATION_NBIA_SUBTYPES_PATHWAY",
+  "WP_NEUROINFLAMMATION_AND_GLUTAMATERGIC_SIGNALING",
+  "KEGG_ALZHEIMERS_DISEASE",
+  "WP_ALZHEIMERS_DISEASE",
+  "KEGG_PARKINSONS_DISEASE",
+  "WP_PARKINSONS_DISEASE_PATHWAY",
+  "KEGG_HUNTINGTONS_DISEASE",
+  "WP_ERK_PATHWAY_IN_HUNTINGTONS_DISEASE",
+  "KEGG_AMYOTROPHIC_LATERAL_SCLEROSIS_ALS",
+  "WP_AMYOTROPHIC_LATERAL_SCLEROSIS_ALS",
+  "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION",
+  "REACTOME_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "KEGG_NEUROACTIVE_LIGAND_RECEPTOR_INTERACTION",
+  "REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS",
+  "REACTOME_POTASSIUM_CHANNELS",
+  "REACTOME_ION_CHANNEL_TRANSPORT",
+  "KEGG_CALCIUM_SIGNALING_PATHWAY",
+  "REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS",
+  "REACTOME_ACETYLCHOLINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_DOPAMINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_GLUTAMATE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_NOREPINEPHRINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_SEROTONIN_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "ALCALA_APOPTOSIS",
+  "KEGG_APOPTOSIS",
+  "REACTOME_APOPTOSIS",
+  "REACTOME_INTRINSIC_PATHWAY_FOR_APOPTOSIS",
+  "WP_APOPTOSIS",
+  "WP_APOPTOSIS_MODULATION_AND_SIGNALING",
+  "REACTOME_DEATH_RECEPTOR_SIGNALLING",
+  "REACTOME_DISEASES_OF_PROGRAMMED_CELL_DEATH",
+  "REACTOME_FOXO_MEDIATED_TRANSCRIPTION_OF_CELL_DEATH_GENES",
+  "REACTOME_PROGRAMMED_CELL_DEATH",
+  "REACTOME_TP53_REGULATES_TRANSCRIPTION_OF_CELL_DEATH_GENES",
+  "BIOCARTA_DEATH_PATHWAY",
+  "REACTOME_DETOXIFICATION_OF_REACTIVE_OXYGEN_SPECIES",
+  "WP_PKCGAMMA_CALCIUM_SIGNALING_PATHWAY_IN_ATAXIA"
+)
+classes <- c(
+  rep("Neurodegeneration", 10),
+  rep("Neuronal_Activity", 13),
+  rep("Apoptosis", 12),
+  "ROS",
+  "Ataxia"
+)
+colors <- c(
+  rep("Purple", 10),
+  rep("Green", 13),
+  rep("Dark Orange", 12),
+  "Red",
+  "Blue"
+)
+pathway_tibble <- tibble(
+  Pathway = pathways,
+  Class = classes,
+  Color = colors
+)
+
+pathway_all_data = pathway_tibble %>%
+  left_join(all_data)
+
+pathway_all_data$Pathway <- factor(pathway_all_data$Pathway, levels = pathways)
+
+
+### dotplot
+pdf("output/Pathway/dotplot_SCPA_CB_p180_C2_selectedPathwayV1.pdf", width=12, height=8)
+ggplot(pathway_all_data, aes(x = cluster, y = Pathway)) +
+  geom_point(aes(size = ifelse(qval > 1.4, qval, NA), color = Color), na.rm = TRUE) +
+  scale_size_continuous(range = c(3, 10), breaks = c(1.5, 2, 3, 4), name = "qval") +
+  scale_color_identity() +
+  theme_bw() +
+  labs(x = "Cluster",
+       y = "Pathway",
+       color = "Class Color") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+        legend.position = "right") +
+  guides(color = guide_legend(title = "Class Color", override.aes = list(size = 5)),
+         size = guide_legend(title = "qval"))
+dev.off()
+
+# --> NO SIGNIFICANT TERMS!
 
 
 
