@@ -8818,7 +8818,8 @@ multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct <- infer_grn(
     multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct,
     peak_to_gene_method = 'Signac', # or use 'GREAT' consider overlapping regulatory regions, lets keep Signac
     method = 'glm', # other model can be tested: ('glmnet', 'cv.glmnet', 'xgb')
-    genes = genes_filtered 
+    genes = genes_filtered,
+    parallel = T 
 )
 #--> No Foxk1, Foxk2, Yy1 -----> TRY OTHER PARAMETER IN infer)grn()
 #saveRDS(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct, file = "output/Pando/multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct.rds")

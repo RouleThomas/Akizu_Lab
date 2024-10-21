@@ -5487,6 +5487,11 @@ write.csv(tpm_all_sample, file="../001__RNAseq/output/tpm_hg38/tpm_all_sample.tx
 samples <- c("8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4",
                      "8wN_HET_R1", "8wN_HET_R2", "8wN_HET_R3", "8wN_HET_R4","8wN_KO_R1", "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4")
 
+samples <- c("ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3",
+                     "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+                     "2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
+                     "4wN_WT_R1", "4wN_WT_R2", "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4")
+
 ## Make a loop for importing all tpm data and keep only ID and count column
 sample_data <- list()
 
@@ -5531,8 +5536,8 @@ c("GABRA1", "GABRA4", "ADCY8", "CACNA1B", "GABRG2", "GABRB3", "CACNA1S", "GABRB1
 
 plot_data <- tpm_all_sample_tidy %>%
   unique() %>%
-  filter(external_gene_name %in% c("GABRA1", "GABRA4", "ADCY8", "CACNA1B", "GABRG2", "GABRB3", "CACNA1S", "GABRB1", "GABRA5", "GNG3", "GABRD", "ADCY5", "SLC38A2", "GABRA2")) %>%
-  group_by(gene, genotype,external_gene_name) %>%
+  filter(external_gene_name %in% c("EZH1")) %>%
+  group_by(gene, genotype,external_gene_name, time) %>%
   summarise(mean_log2tpm = mean(log2(tpm + 1)),
             se_log2tpm = sd(log2(tpm + 1)) / sqrt(n())) %>%
   ungroup()
@@ -5562,6 +5567,50 @@ ggplot(plot_data, aes(x = external_gene_name, y = mean_log2tpm, fill = genotype)
   xlab("Gene") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 dev.off()
+
+
+
+## PLOT line with statistic
+
+plot_data <- tpm_all_sample_tidy %>%
+  unique() %>%
+  filter(external_gene_name %in% c("EZH1"),
+         time != "4wN") %>%
+  mutate(log2tpm = log2(tpm+1))
+### Summarize data to calculate mean and standard deviation for each time point
+plot_data_summary <- plot_data %>%
+  group_by(time) %>%
+  summarize(
+    mean_log2tpm = mean(log2tpm),
+    sd_log2tpm = sd(log2tpm)
+  )
+### Perform pairwise comparisons for each time point compared to ESC
+comparisons <- list(
+  c("ESC", "NPC"),
+  c("ESC", "2dN"),
+  c("ESC", "8wN")
+)
+### Generate the line plot with error bars and statistical comparison
+pdf("output/tpm_hg38/linePlot_WT_EZH1.pdf", width=4, height=4)
+ggline(data = plot_data, x = "time", y = "log2tpm", 
+       add = "mean_se", color = "black") +
+  stat_compare_means(comparisons = comparisons, 
+                     label = "p.signif", 
+                     method = "t.test",
+                     ref.group = "ESC") +
+  labs(
+    x = "Time",
+    y = "Log2(TPM+1)",
+    title = "EZH1"
+  ) +
+  theme_bw()+
+  theme(
+    axis.text = element_text(size = 14)  # Increase the size of x and y axis tick labels
+  )
+dev.off()
+
+
+
 
 # Here is updated code to test; that may add staitsict:
 # Remove gene versions (e.g., ".5" from "ENSG000.5")

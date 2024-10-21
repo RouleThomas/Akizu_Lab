@@ -1270,6 +1270,17 @@ FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Calb1", "Slc1a6", "Car8","G
 dev.off()
 
 
+
+
+# WT vs Kcnc1 gene expr ############
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-QCV3dim30kparam50res035-PurkinjeDEGs.pdf", width=10, height=25)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Grid2", "Frmpd4", "Kcnab1", "Gria3", "Garnl3" ,"Dgkb"),  cols = c("grey", "red"), split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+
+
+
+###########################
+
 ## investigate to find optimal nb of dimension
 ### Vizualize the 1st 100 PC
 pdf("output/seurat/DimHeatmap_1stepIntegrationRegressNotRepeated.pdf", width=10, height=100)
@@ -2319,9 +2330,9 @@ Cluster1: Granular
 Cluster2: MLI1
 Cluster3: Interneuron
 Cluster4: Endothelial_Stalk
-Cluster5: MLI2_1
+Cluster5: MLI2
 Cluster6: Astrocyte
-Cluster7: MLI2_2
+Cluster7: PLI
 Cluster8: Golgi
 Cluster9: Bergman_Glia
 Cluster10: UBC
@@ -2337,9 +2348,9 @@ new.cluster.ids <- c(
   "MLI1",
   "Interneuron",
   "Endothelial_Stalk",
-  "MLI2_1",
+  "MLI2",
   "Astrocyte",
-  "MLI2_2",
+  "PLI",
   "Golgi",
   "Bergman_Glia",
   "Unipolar_Brush",
@@ -2374,6 +2385,7 @@ Granular = Gabra6, Pax6
 Interneuron = Kcnc2
 MLI1 = Sorcs3, Ptprk
 MLI2 = Nxph1, Cdh22
+PLI = Aldh1a3
 Golgi = Pax2
 Unipolar_Brush = Eomes, Rgs6, Tafa2
 Purkinje = Calb1, Slc1a6, Car8
@@ -2392,6 +2404,7 @@ all_markers <- c(
   "Kcnc2",
   "Sorcs3", "Ptprk",
   "Nxph1", "Cdh22",
+  "Aldh1a3",
   "Pax2",
   "Eomes", "Rgs6", "Tafa2",
   "Calb1", "Slc1a6", "Car8",
@@ -2410,8 +2423,8 @@ levels(WT_Kcnc1_p35_CB_1step.sct) <- c(
   "Granular",
   "Interneuron",
   "MLI1",
-  "MLI2_1",
-  "MLI2_2",
+  "MLI2",
+  "PLI",
   "Golgi",
   "Unipolar_Brush",
   "Purkinje",
@@ -2859,9 +2872,13 @@ pathway_all_data = pathway_tibble %>%
 pathway_all_data$Pathway <- factor(pathway_all_data$Pathway, levels = pathways)
 
 
+
 ### dotplot
 pdf("output/Pathway/dotplot_SCPA_CB_p35_C2_selectedPathwayV1.pdf", width=12, height=8)
-ggplot(pathway_all_data, aes(x = cluster, y = Pathway)) +
+ggplot(pathway_all_data %>%
+         mutate(cluster = ifelse(cluster == "MLI2_2", "PLI", cluster)) %>%
+         mutate(cluster = ifelse(cluster == "MLI2_1", "MLI2", cluster)),
+       aes(x = cluster, y = Pathway)) +
   geom_point(aes(size = ifelse(qval > 1.4, qval, NA), color = Color), na.rm = TRUE) +
   scale_size_continuous(range = c(3, 10), breaks = c(1.5, 2, 3, 4), name = "qval") +
   scale_color_identity() +
@@ -2872,7 +2889,7 @@ ggplot(pathway_all_data, aes(x = cluster, y = Pathway)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
         legend.position = "right") +
   guides(color = guide_legend(title = "Class Color", override.aes = list(size = 5)),
-         size = guide_legend(title = "qval"))
+         size = guide_legend(title = "qval")) 
 dev.off()
 
 
@@ -3184,10 +3201,10 @@ new.cluster.ids <- c(
   "Granular_2",
   "MLI1",
   "Granular_3",
-  "MLI2_1",
+  "MLI2",
   "Interneuron",
   "Astrocyte",
-  "MLI2_2",
+  "PLI",
   "Bergman_Glia",
   "Unipolar_Brush",
   "Mix_Endothelial_EndothelialMural",
@@ -3221,7 +3238,7 @@ DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "SCT"
 List8:
 Cluster1: Granular_1 (Gabra6, Pax6)
 Cluster3: MLI1 (Sorcs3, Ptprk)
-Cluster5: MLI2_1 (Nxph1, Cdh22)
+Cluster5: MLI2 (Nxph1, Cdh22)
 Cluster6: Interneuron (Kcnc2)
 Cluster7: Astrocyte (Zeb2)
 Cluster9: Bergman_Glia (Aqp4, Slc39a12)
@@ -3240,6 +3257,7 @@ all_markers <- c(
   "Gabra6", "Pax6",
   "Sorcs3", "Ptprk",
   "Nxph1", "Cdh22",
+  "Aldh1a3",
   "Kcnc2",
   "Zeb2",
   "Aqp4", "Slc39a12",
@@ -3260,8 +3278,8 @@ levels(WT_Kcnc1_p180_CB_1step.sct) <- c(
   "Granular_2",
   "Granular_3",
   "MLI1",
-  "MLI2_1",
-  "MLI2_2",
+  "MLI2",
+  "PLI",
   "Interneuron",
   "Astrocyte",
   "Bergman_Glia",
