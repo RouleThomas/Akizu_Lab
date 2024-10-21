@@ -9074,3 +9074,354 @@ dev.off()
 
 
 
+
+### WT and Bap1KO separated with regions LinkPeaks() - gene peak correlated
+
+As recommended [here](https://quadbio.github.io/Pando/articles/regions.html); let's use only peaks correlated with the expression of their nearby genes. --> Strict, but robust GRN
+
+```bash
+srun --mem=500g --cpus-per-task=8 --pty bash -l
+
+conda activate Signac_Pando
+module load hdf5
+```
+
+
+```R
+set.seed(42)
+
+# library
+library("Signac")
+library("Seurat")
+#library("hdf5r") # need to reinstall it at each session... with install.packages("hdf5r")
+library("tidyverse")
+library("EnsDb.Mmusculus.v79") # mm10
+library("reticulate") # needed to use FindClusters()
+library("metap") # needed to use FindConservedMarkers()
+use_python("~/anaconda3/envs/SignacV5/bin/python") # to specify which python to use... Needed for FindClusters()
+library("Pando")
+library("chromVARmotifs") # devtools::install_github("GreenleafLab/chromVARmotifs")
+
+# to run job in parrallel
+library(doParallel) # install.packages("doParallel")
+registerDoParallel(8) # update nb of core here!!
+
+
+# import and rename Seurat obj
+multiome_WT_Bap1KO_QCV2vC1_GRN.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.sct_numeric_label.rds")
+
+# Select LinkPeaks()
+Links = as_tibble(Links(multiome_WT_Bap1KO_QCV2vC1_GRN.sct))
+## Convert to GRange object
+Links_GRanges =  GRanges(Links)
+
+# Get gene names and filter out 'Rik' genes
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1_GRN.sct) <- "RNA" 
+genes <- rownames(multiome_WT_Bap1KO_QCV2vC1_GRN.sct)
+genes_filtered <- genes[!grepl("Rik", genes)]
+
+# Separate Seurat into WT and Bap1KO
+
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct <- subset(multiome_WT_Bap1KO_QCV2vC1_GRN.sct, subset = orig.ident == "multiome_WT")
+multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO.sct <- subset(multiome_WT_Bap1KO_QCV2vC1_GRN.sct, subset = orig.ident == "multiome_Bap1KO")
+
+
+
+##################################################################################
+# WT ##################################################################################
+##################################################################################
+
+# create grn object
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct <- initiate_grn(multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct,
+  peak_assay = "ATAC",
+  rna_assay = "RNA",
+  regions = Links_GRanges  # Optional but recommended, see notes
+  )
+
+
+
+# Scan for TF motifs
+
+## Prep mouse TF motifs database
+library(BSgenome.Mmusculus.UCSC.mm10)
+data("mouse_pwms_v2")
+x <- character()
+for(i in 1:length(mouse_pwms_v2@listData)){
+x[i] <- mouse_pwms_v2@listData[[i]]@name
+}
+motif2tf <- data.frame(motif = names(mouse_pwms_v2@listData), tf = x, origin = "CIS-BP", gene_id = gsub("_[[:alnum:][:punct:]]*", "", names(mouse_pwms_v2@listData)), family = NA, name = NA, symbol = NA, motif_tf = NA) %>%
+subset(gene_id != "XP" & gene_id != "NP")
+mouse_pwms_v3 <- subset(mouse_pwms_v2, names(mouse_pwms_v2@listData) %in% motif2tf$motif)
+
+## Find motifs
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct <- find_motifs(
+    multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct,
+    pfm = mouse_pwms_v3,
+    motif_tfs = motif2tf,
+    genome = BSgenome.Mmusculus.UCSC.mm10
+)
+
+######################################################################################################
+# Inferring the GRN - All genes ####################################################################
+
+# TESTING THE MODEL TO HAVE OUR TF of interest in the GRN ##################
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct <- infer_grn(
+    multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct,
+    peak_to_gene_method = 'Signac', # or use 'GREAT' consider overlapping regulatory regions, lets keep Signac
+    method = 'glm', # other model can be tested: ('glmnet', 'cv.glmnet', 'xgb')
+    genes = genes_filtered,
+    parallel = T 
+)
+#--> 508 TFs; No Foxk1, Foxk2, Yy1 -----> TRY OTHER PARAMETER IN infer)grn()
+#saveRDS(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct, file = "output/Pando/multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct.rds")
+#load: multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct <- readRDS(file = "multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct.rds")
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes_GREAT.sct <- infer_grn(
+    multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct,
+    peak_to_gene_method = 'GREAT', # or use 'GREAT' consider overlapping regulatory regions, lets keep Signac
+    method = 'glm', # other model can be tested: ('glmnet', 'cv.glmnet', 'xgb')
+    genes = genes_filtered 
+)
+#--> No Foxk1, Foxk2, Yy1 -----> TRY OTHER PARAMETER IN infer)grn(); only 14 TF
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes_Signac_glmnet.sct <- infer_grn(
+    multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct,
+    peak_to_gene_method = 'Signac', # or use 'GREAT' consider overlapping regulatory regions, lets keep Signac
+    method = 'glmnet', # other model can be tested: ('glmnet', 'cv.glmnet', 'xgb')
+    genes = genes_filtered,
+    parallel = T 
+)
+#--> No Foxk1, Foxk2, Yy1 -----> TRY OTHER PARAMETER IN infer)grn(); 415 Tfs
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes_Signac_cvglmnet.sct <- infer_grn(
+    multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct,
+    peak_to_gene_method = 'Signac', # or use 'GREAT' consider overlapping regulatory regions, lets keep Signac
+    method = 'cv.glmnet', # other model can be tested: ('glmnet', 'cv.glmnet', 'xgb')
+    genes = genes_filtered,
+    parallel = T 
+)
+#--> No Foxk1, Foxk2, Yy1 -----> TRY OTHER PARAMETER IN infer)grn(); 396 Tfs
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes_Signac_bagging_ridge.sct <- infer_grn(
+    multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct,
+    peak_to_gene_method = 'Signac', # or use 'GREAT' consider overlapping regulatory regions, lets keep Signac
+    method = 'bagging_ridge', # other model can be tested: ('glmnet', 'cv.glmnet', 'xgb')
+    genes = genes_filtered,
+    parallel = T 
+)
+#--> xxx No Foxk1, Foxk2, Yy1 -----> TRY OTHER PARAMETER IN infer)grn(); 0 Tfs
+# --> brms (library(brms) and xgb (library(xgboost) not install
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes_GREAT_bagging_ridge.sct <- infer_grn(
+    multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct,
+    peak_to_gene_method = 'GREAT', # or use 'GREAT' consider overlapping regulatory regions, lets keep Signac
+    method = 'bagging_ridge', # other model can be tested: ('glmnet', 'cv.glmnet', 'xgb')
+    genes = genes_filtered,
+    parallel = T 
+)
+#--> xxx No Foxk1, Foxk2, Yy1 -----> TRY OTHER PARAMETER IN infer)grn(); 0 Tfs
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes_GREAT_bagging_cv.glmnet.sct <- infer_grn(
+    multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct,
+    peak_to_gene_method = 'GREAT', # or use 'GREAT' consider overlapping regulatory regions, lets keep Signac
+    method = 'cv.glmnet', # other model can be tested: ('glmnet', 'cv.glmnet', 'xgb')
+    genes = genes_filtered,
+    parallel = T 
+)
+#--> xxx No Foxk1, Foxk2, Yy1 -----> TRY OTHER PARAMETER IN infer)grn(); 17 Tfs
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes_GREAT_glmnet.sct <- infer_grn(
+    multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct,
+    peak_to_gene_method = 'GREAT', # or use 'GREAT' consider overlapping regulatory regions, lets keep Signac
+    method = 'glmnet', # other model can be tested: ('glmnet', 'cv.glmnet', 'xgb')
+    genes = genes_filtered,
+    parallel = T 
+)
+#--> No Foxk1, Foxk2, Yy1 -----> TRY OTHER PARAMETER IN infer)grn(); 18 Tfs
+
+############################################################################################################
+
+## PARAMETER TO  USE:
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct <- infer_grn(
+    multiome_WT_Bap1KO_QCV2vC1_GRN_WT.sct,
+    peak_to_gene_method = 'Signac', # or use 'GREAT' consider overlapping regulatory regions, lets keep Signac
+    method = 'glm', # other model can be tested: ('glmnet', 'cv.glmnet', 'xgb')
+    genes = genes_filtered,
+    parallel = T,
+    tf_cor = 0.05 # default 0.1
+)
+#--> YES Foxk1, Foxk2, Yy1 ; 617 TFs
+#saveRDS(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct, file = "output/Pando/multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes_RegionsLinkPeaks.sct.rds")
+#load: multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct <- readRDS(file = "multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes_RegionsLinkPeaks.sct.rds")
+
+xxxy HEERE !!!! 
+
+# Find modules = Genes regulated by each TF
+GetNetwork(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct)
+coef(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct)
+
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct <- find_modules(
+    multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct, 
+    p_thresh = 0.1,
+    nvar_thresh = 2, 
+    min_genes_per_module = 1, 
+    rsq_thresh = 0.05
+)
+
+
+
+# some QC plots
+pdf("output/Pando/plot_gof_allGenes_WT_noRegions.pdf", width=7, height=6)
+plot_gof(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct, point_size=3)
+dev.off()
+pdf("output/Pando/plot_module_metrics_allGenes_WT_noRegions.pdf", width=7, height=4)
+plot_module_metrics(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct)
+dev.off()
+
+# GRN plots
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct <- get_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct)
+
+pdf("output/Pando/plot_network_graph_allGenes_WT_noRegions.pdf", width=10, height=10)
+plot_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct)
+dev.off()
+pdf("output/Pando/plot_network_graph_fr_allGenes_WT_noRegions.pdf", width=10, height=10)
+plot_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct, layout='fr')
+dev.off()
+
+## 1 TF
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.TF.sct <- get_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct, 
+    graph_name = 'full_graph', 
+    umap_method = 'none')
+
+
+
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.Yy1.sct <- get_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.TF.sct, tf='Yy1', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Yy1-allGenes_WT_noRegions.pdf", width=5, height=2)
+plot_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.Yy1.sct, tf='Yy1', circular=F, label_nodes = "all")
+dev.off()
+
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.Foxk1.sct <- get_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.TF.sct, tf='Foxk1', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Foxk1-allGenes_WT_noRegions.pdf", width=15, height=10)
+plot_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.Foxk1.sct, tf='Foxk1', label_nodes = "tfs")
+dev.off()
+
+multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.Foxk2.sct <- get_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.TF.sct, tf='Foxk2', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Foxk2-allGenes_WT_noRegions.pdf", width=7, height=2)
+plot_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.Foxk2.sct, tf='Foxk2', circular=F, label_nodes = "all")
+dev.off()
+
+
+
+
+##################################################################################
+# Bap1KO ##################################################################################
+##################################################################################
+
+
+
+
+# create grn object
+multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO.sct <- initiate_grn(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO.sct,
+  peak_assay = "ATAC",
+  rna_assay = "RNA"
+  )
+
+
+
+# Scan for TF motifs
+
+
+
+## Prep mouse TF motifs database
+library(BSgenome.Mmusculus.UCSC.mm10)
+data("mouse_pwms_v2")
+x <- character()
+for(i in 1:length(mouse_pwms_v2@listData)){
+x[i] <- mouse_pwms_v2@listData[[i]]@name
+}
+motif2tf <- data.frame(motif = names(mouse_pwms_v2@listData), tf = x, origin = "CIS-BP", gene_id = gsub("_[[:alnum:][:punct:]]*", "", names(mouse_pwms_v2@listData)), family = NA, name = NA, symbol = NA, motif_tf = NA) %>%
+subset(gene_id != "XP" & gene_id != "NP")
+mouse_pwms_v3 <- subset(mouse_pwms_v2, names(mouse_pwms_v2@listData) %in% motif2tf$motif)
+
+## Find motifs
+multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO.sct <- find_motifs(
+    multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO.sct,
+    pfm = mouse_pwms_v3,
+    motif_tfs = motif2tf,
+    genome = BSgenome.Mmusculus.UCSC.mm10
+)
+
+
+
+
+
+
+######################################################################################################
+# Inferring the GRN - All genes ####################################################################
+## 
+multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct <- infer_grn(
+    multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO.sct,
+    peak_to_gene_method = 'Signac', # or use 'GREAT' consider overlapping regulatory regions, lets keep Signac
+    method = 'glm', # other model can be tested: ('glmnet', 'cv.glmnet', 'xgb')
+    genes = genes_filtered,
+    parallel = T,
+    tf_cor = 0.05 # default 0.1
+)
+#saveRDS(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct, file = "output/Pando/multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes_noRegions.sct.rds")
+#load: multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct <- readRDS(file = "multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes_noRegions.sct.rds")
+
+
+
+# Find modules = Genes regulated by each TF
+GetNetwork(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct)
+coef(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct)
+
+multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct <- find_modules(
+    multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct, 
+    p_thresh = 0.1,
+    nvar_thresh = 2, 
+    min_genes_per_module = 1, 
+    rsq_thresh = 0.05
+)
+
+# some QC plots
+pdf("output/Pando/plot_gof_Bap1KO_allGenes.pdf", width=7, height=6)
+plot_gof(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct, point_size=3)
+dev.off()
+pdf("output/Pando/plot_module_metrics_Bap1KO_allGenes.pdf", width=7, height=4)
+plot_module_metrics(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct)
+dev.off()
+
+# GRN plots
+multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct <- get_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct)
+
+pdf("output/Pando/plot_network_graph_Bap1KO_allGenes.pdf", width=10, height=10)
+plot_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct)
+dev.off()
+pdf("output/Pando/plot_network_graph_fr_Bap1KO_allGenes.pdf", width=10, height=10)
+plot_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct, layout='fr')
+dev.off()
+
+
+## 1 TF
+multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.TF.sct <- get_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.sct, 
+    graph_name = 'full_graph', 
+    umap_method = 'none')
+
+
+
+multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.Yy1.sct <- get_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.TF.sct, tf='Yy1', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Yy1-allGenes_Bap1_noRegions.pdf", width=5, height=2)
+plot_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.Yy1.sct, tf='Yy1', circular=F, label_nodes = "all")
+dev.off()
+
+multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.Foxk1.sct <- get_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.TF.sct, tf='Foxk1', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Foxk1-allGenes_Bap1_noRegions.pdf", width=15, height=10)
+plot_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.Foxk1.sct, tf='Foxk1', label_nodes = "tfs")
+dev.off()
+
+multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.Foxk2.sct <- get_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.TF.sct, tf='Foxk2', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Foxk2-allGenes_Bap1_noRegions.pdf", width=7, height=2)
+plot_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_Bap1KO_allGenes.Foxk2.sct, tf='Foxk2', circular=F, label_nodes = "all")
+dev.off()
+
+
+
+```
+
+
+
+

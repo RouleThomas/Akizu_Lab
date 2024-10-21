@@ -22030,6 +22030,179 @@ FeaturePlot(embryoE7.combined.sct, features = c("T", "Fst", "Fgf8", "Kdr"), cols
 dev.off()
 
 
+# DEGs nb dotplot
+## Initialize an empty data frame to store the summary
+DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
+
+## List of cell types
+cell_types <- c("Blood_Progenitor", "Endoderm", "Exe_Ectoderm", "Primitive_Streak", "Nascent_Mesoderm", "Cardiac_Mesoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", "Epiblast")
+
+## Loop through each cell type to count the number of significant DEGs
+for (cell_type in cell_types) {
+  file_name <- paste("output/seurat/", cell_type, "-cYAPKO_response_E7_19dim_allGenes_V2.txt", sep = "")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
+  num_degs <- sum(deg_data$p_val_adj < 0.05) ## Count the number of significant DEGs
+  DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
+}
+
+
+## Dotplot
+DEG_count= DEG_count %>%
+  mutate(Cell_Type = factor(Cell_Type, levels = c("Exe_Endoderm_2", "Exe_Endoderm_1", "Exe_Ectoderm", "Endoderm", "Blood_Progenitor","Cardiac_Mesoderm", "Nascent_Mesoderm", "Primitive_Streak", "Epiblast") ) )
+
+cell_type_colors <- c(
+  "Epiblast" = "#E41A1C",            # Red for Epiblast
+  "Primitive_Streak" = "#FF7F00",    # Orange for Primitive Streak
+  "Nascent_Mesoderm" = "#1F78B4",    # Blue for Nascent Mesoderm
+  "Cardiac_Mesoderm" = "#00CED1",    # Teal for Cardiac Mesoderm
+  "Blood_Progenitor" = "#A0522D",    # Brown for Blood Progenitor
+  "Endoderm" = "#8B4513",            # Dark brown for Endoderm
+  "Exe_Ectoderm" = "#D3BEB1",        # Light brown/taupe for Exe Ectoderm
+  "Exe_Endoderm_1" = "#556B2F",      # Olive green for Exe Endoderm 1
+  "Exe_Endoderm_2" = "#2F4F4F"       # Dark slate gray for Exe Endoderm 2
+)
+
+# Generate the dot plot
+pdf("output/seurat/Dotplot_DEG_count_cYAPKO_response_E7_19dim_allGenes_V2.pdf", width=9, height=4)
+ggplot(DEG_count, aes(y = Cell_Type, x = 1)) +
+  geom_point(aes(size = ifelse(Num_DEGs == 0, 1, Num_DEGs), fill = Cell_Type), shape = 21, color = "black") +
+  scale_size_continuous(range = c(1, 15)) +
+  scale_fill_manual(values = cell_type_colors, guide = "none") +  # Remove the legend for cell types
+  theme_void() +
+  labs(title = "Number of DEGs per Cell Type", x = "", y = "Cell Type", size = "Number of DEGs") +
+  theme(
+    axis.text.y = element_text(size = 15, hjust = 1),  # Adjust hjust to bring labels closer
+    axis.text.x = element_blank(), 
+    axis.ticks.x = element_blank(), 
+    axis.title.x = element_blank(),
+    legend.position = "right"
+  ) +
+  guides(size = guide_legend(title = "Number of DEGs", title.position = "top", title.hjust = 0.5))  # Keep only the size legend
+dev.off()
+
+
+
+
+
+# HEATMAP OF DEGs - Figure6F (cluster6 = Second Heart Field)
+library("ggrepel")
+# Load the DEGs data
+DEG_cluster_Epiblast <- as_tibble(read.table("output/seurat/Epiblast-cYAPKO_response_E7_19dim_allGenes_V2.txt", sep = "\t", header = TRUE, row.names = 1)  %>%
+  rownames_to_column(var = "geneSymbol"))
+
+# Filter for significant DEGs
+DEG_cluster_Epiblast_downUp <- DEG_cluster_Epiblast %>%
+  filter(p_val_adj <= 0.05) %>%
+  dplyr::select(geneSymbol, avg_log2FC) %>%
+  unique()
+
+# Separate upregulated and downregulated genes
+up_genes <- DEG_cluster_Epiblast_downUp %>%
+  filter(avg_log2FC > 0) %>%
+  arrange(desc(avg_log2FC)) %>%
+  pull(geneSymbol)
+
+down_genes <- DEG_cluster_Epiblast_downUp %>%
+  filter(avg_log2FC < 0) %>%
+  arrange(avg_log2FC) %>%
+  pull(geneSymbol)
+
+# Combine the upregulated and downregulated genes
+all_genes <- c(up_genes, down_genes)
+all_genes <- intersect(all_genes, rownames(embryoE7.combined.sct@assays$SCT@scale.data))
+
+# Genes to label
+genes_to_label <- c("Fgf8","Id1","Fth1","Chchd2","Nodal","Nanog","Axin2","Wnt3","Apoe","Sp5","Otx2","Dnmt3b","Chd7","Lin28a","Jmjd1c","Lmnb1","Hmgb2","Pdzd4","Qser1","Smarcd1","Yap1")
+labels <- rep("transparent", length(all_genes))
+labels[match(genes_to_label, all_genes, nomatch = 0)] <- "black"
+
+# Subset the Seurat object by condition
+seurat_wt <- subset(embryoE7.combined.sct, condition == "WT_E7")
+seurat_ko <- subset(embryoE7.combined.sct, condition == "cYAPKO_E7")
+
+seurat_wt_clEpiblast <- subset(seurat_wt, cluster.annot == "Epiblast")
+seurat_ko_clEpiblast <- subset(seurat_ko, cluster.annot == "Epiblast")
+
+# Combine the subsets into one object for plotting
+seurat_combined <- merge(seurat_wt_clEpiblast, y = seurat_ko_clEpiblast)
+seurat_combined$condition <- factor(seurat_combined$condition, levels = c("WT_E7", "cYAPKO_E7")) # Reorder untreated 1st
+
+DefaultAssay(seurat_combined) <- "SCT"
+
+# Generate the heatmap
+pdf("output/seurat/heatmap_DEG_E7_19dim_V2_cluster_Epiblast.pdf", width = 6, height = 5)
+DoHeatmap(seurat_combined, features = all_genes, group.by = "condition", cells = Cells(seurat_combined), lines.width = 5, angle = 0, group.colors = c("#4365AE","#981E33"), assay = "SCT", slot = "scale.data", hjust = 0.5, group.bar.height = 0.01) + 
+  scale_fill_gradientn(colors = c("#00008B", "dodgerblue3", "white", "white", "#FF7F7F", "#8B0000"), values = c(0, 0.25, 0.45, 0.55, 0.75, 1), na.value =  "white") + 
+  theme(axis.text.y = element_blank()) +
+  geom_text_repel(
+    data = data.frame(genes = all_genes, position = 1:length(all_genes)),
+    aes(label = ifelse(genes %in% genes_to_label, genes, ""), x = 0, y = position),
+    size = 3, 
+    color = "black", 
+    nudge_x = -100, # to move label toward the left
+    direction = "y",
+    hjust = 0,
+    segment.color = "black",
+    max.overlaps = 100,
+    segment.size = 0.25
+  ) 
+dev.off()
+# WORK GREAT ALSO: scale_fill_gradientn(colors = c("#00008B", "#87CEEB", "white", "white", "#FF7F7F", "#8B0000"), values = c(0, 0.25, 0.45, 0.55, 0.75, 1), na.value =  "white")
+#   scale_fill_gradientn(colors = c("blue", "white", "white", "red"), values = c(0, 0.45, 0.55, 1), na.value = "white") + 
+
+
+
+
+## RNA assay
+
+
+# Combine the upregulated and downregulated genes
+all_genes <- c(up_genes,down_genes)
+all_genes <- intersect(all_genes, rownames(embryoE7.combined.sct@assays$RNA@scale.data))
+
+# Genes to label
+genes_to_label <- c("Fgf8","Id1","Fth1","Chchd2","Nodal","Nanog","Axin2","Wnt3","Apoe","Sp5","Otx2","Dnmt3b","Chd7","Lin28a","Jmjd1c","Lmnb1","Hmgb2","Pdzd4","Qser1","Smarcd1","Yap1")
+labels <- rep("transparent", length(all_genes))
+labels[match(genes_to_label, all_genes, nomatch = 0)] <- "black"
+
+# Subset the Seurat object by condition
+seurat_wt <- subset(embryoE7.combined.sct, condition == "WT_E7")
+seurat_ko <- subset(embryoE7.combined.sct, condition == "cYAPKO_E7")
+
+seurat_wt_clEpiblast <- subset(seurat_wt, cluster.annot == "Epiblast")
+seurat_ko_clEpiblast <- subset(seurat_ko, cluster.annot == "Epiblast")
+
+# Combine the subsets into one object for plotting
+seurat_combined <- merge(seurat_wt_clEpiblast, y = seurat_ko_clEpiblast)
+seurat_combined$condition <- factor(seurat_combined$condition, levels = c("WT_E7", "cYAPKO_E7")) # Reorder untreated 1st
+
+DefaultAssay(seurat_combined) <- "RNA"
+seurat_combined <- ScaleData(seurat_combined, features = all_genes)
+
+# Generate the heatmap
+pdf("output/seurat/heatmap_DEG_E7_19dim_V2_cluster_Epiblast_assayRNA.pdf", width = 6, height = 5)
+DoHeatmap(seurat_combined, features = all_genes, group.by = "condition", cells = Cells(seurat_combined), lines.width = 5, angle = 0, group.colors = c("#4365AE","#981E33"), assay = "RNA", slot = "scale.data", hjust = 0.5, group.bar.height = 0.01) + 
+  scale_fill_gradientn(colors = c("#00008B", "dodgerblue3", "white", "white", "#FF7F7F", "#8B0000"), values = c(0, 0.25, 0.45, 0.55, 0.75, 1), na.value =  "white") + 
+  theme(axis.text.y = element_blank()) +
+  geom_text_repel(
+    data = data.frame(genes = all_genes, position = rev(1:length(all_genes)) ), # NOT clear why but I add to revert this order so that it fit gene labelling, I think because of genotype reordering
+    aes(label = ifelse(all_genes %in% genes_to_label, all_genes, ""), x = 0, y = position),
+    size = 3, 
+    color = "black", 
+    nudge_x = -100, # to move label toward the left
+    direction = "y",
+    hjust = 0,
+    segment.color = "black",
+    max.overlaps = 200,
+    segment.size = 0.25
+  ) 
+dev.off()
+
+#--> Using RNA scaled assay is MUCH better than SCT assay!
+
+
+
+
 ```
 
 --> SCPA FC negative = less express in KO!; use file that finish with `-cYAPKO_WT`
