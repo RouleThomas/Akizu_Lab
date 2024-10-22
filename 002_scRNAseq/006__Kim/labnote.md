@@ -9245,9 +9245,9 @@ multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct <- infer_grn(
 )
 #--> YES Foxk1, Foxk2, Yy1 ; 617 TFs
 #saveRDS(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct, file = "output/Pando/multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes_RegionsLinkPeaks.sct.rds")
-#load: multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct <- readRDS(file = "multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes_RegionsLinkPeaks.sct.rds")
+#load: multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct <- readRDS(file = "output/Pando/multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes_RegionsLinkPeaks.sct.rds")
 
-xxxy HEERE !!!! 
+
 
 # Find modules = Genes regulated by each TF
 GetNetwork(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct)
@@ -9264,20 +9264,20 @@ multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct <- find_modules(
 
 
 # some QC plots
-pdf("output/Pando/plot_gof_allGenes_WT_noRegions.pdf", width=7, height=6)
+pdf("output/Pando/plot_gof_allGenes_WT_RegionsLinkPeaks.pdf", width=7, height=6)
 plot_gof(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct, point_size=3)
 dev.off()
-pdf("output/Pando/plot_module_metrics_allGenes_WT_noRegions.pdf", width=7, height=4)
+pdf("output/Pando/plot_module_metrics_allGenes_WT_RegionsLinkPeaks.pdf", width=7, height=4)
 plot_module_metrics(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct)
 dev.off()
 
 # GRN plots
 multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct <- get_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct)
 
-pdf("output/Pando/plot_network_graph_allGenes_WT_noRegions.pdf", width=10, height=10)
+pdf("output/Pando/plot_network_graph_allGenes_WT_RegionsLinkPeaks.pdf", width=10, height=10)
 plot_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct)
 dev.off()
-pdf("output/Pando/plot_network_graph_fr_allGenes_WT_noRegions.pdf", width=10, height=10)
+pdf("output/Pando/plot_network_graph_fr_allGenes_WT_RegionsLinkPeaks.pdf", width=10, height=10)
 plot_network_graph(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.sct, layout='fr')
 dev.off()
 
@@ -9289,17 +9289,17 @@ multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.TF.sct <- get_network_graph(multiome_
 
 
 multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.Yy1.sct <- get_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.TF.sct, tf='Yy1', graph='full_graph')
-pdf("output/Pando/plot_tf_network-Yy1-allGenes_WT_noRegions.pdf", width=5, height=2)
+pdf("output/Pando/plot_tf_network-Yy1-allGenes_WT_RegionsLinkPeaks.pdf", width=5, height=2)
 plot_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.Yy1.sct, tf='Yy1', circular=F, label_nodes = "all")
 dev.off()
 
 multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.Foxk1.sct <- get_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.TF.sct, tf='Foxk1', graph='full_graph')
-pdf("output/Pando/plot_tf_network-Foxk1-allGenes_WT_noRegions.pdf", width=15, height=10)
+pdf("output/Pando/plot_tf_network-Foxk1-allGenes_WT_RegionsLinkPeaks.pdf", width=15, height=10)
 plot_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.Foxk1.sct, tf='Foxk1', label_nodes = "tfs")
 dev.off()
 
 multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.Foxk2.sct <- get_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.TF.sct, tf='Foxk2', graph='full_graph')
-pdf("output/Pando/plot_tf_network-Foxk2-allGenes_WT_noRegions.pdf", width=7, height=2)
+pdf("output/Pando/plot_tf_network-Foxk2-allGenes_WT_RegionsLinkPeaks.pdf", width=7, height=2)
 plot_tf_network(multiome_WT_Bap1KO_QCV2vC1_GRN_WT_allGenes.Foxk2.sct, tf='Foxk2', circular=F, label_nodes = "all")
 dev.off()
 
@@ -9310,7 +9310,7 @@ dev.off()
 # Bap1KO ##################################################################################
 ##################################################################################
 
-
+XXX BELOW NOT MODIFIED
 
 
 # create grn object
@@ -9421,6 +9421,14 @@ dev.off()
 
 
 ```
+
+
+
+--> Not sure what to do with these GRN...
+
+
+
+
 
 
 
