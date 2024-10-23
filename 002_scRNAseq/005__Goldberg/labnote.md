@@ -578,13 +578,13 @@ save_seurat_objects(seurat_objects, output_dir)
 load_seurat_objects <- function(file_paths) {
   seurat_objects <- list()
   for (file_path in file_paths) {
-    sample_name <- gsub("_V3_numeric.rds", "", basename(file_path))
+    sample_name <- gsub("_V2_numeric.rds", "", basename(file_path))
     seurat_objects[[sample_name]] <- readRDS(file_path)
   }
   return(seurat_objects)
 }
 output_dir <- "output/seurat/"
-file_paths <- list.files(output_dir, pattern = "_V3_numeric.rds$", full.names = TRUE)
+file_paths <- list.files(output_dir, pattern = "_V2_numeric.rds$", full.names = TRUE)
 # Call the function to load the Seurat objects
 seurat_objects <- load_seurat_objects(file_paths)
 # Loop through the list and assign each Seurat object to a variable with the same name
@@ -2377,6 +2377,11 @@ dev.off()
 WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV3dim50kparam50res03.sct_V1_numeric.rds")
 
 WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV3dim50kparam50res03.sct_V1_label.rds")
+
+
+## BUG I cannot retrieve previous version... Lets compare QC_V2 vs V3 vs V4 with same parameters
+saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV3dim50kparam50res03.sct_V1_numeric_ReProcess.rds") # this is with QC_V3 all repeated from the start!!! --> NOT the one...
+
 
 set.seed(42)
 ##########
