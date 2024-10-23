@@ -10,8 +10,6 @@
 
 
 
-XXXY
-
 
 **Objectives:**
 - Some issues with previous CutRun, here is more a test with few samples, only WT.
@@ -45,19 +43,30 @@ This time, *no nuclear purification has been performed.*
 # Following email instructions
 wget -r -b -c --user=X202SC24100557-Z01-F001 --password=9f4ra2c1 ftp://usftp21.novogene.com:21/
 
+
+# Copy all .fz.gz data into input_raw/ folder
+rsync -av --include '*/' --include '*.fq.gz' --exclude '*' usftp21.novogene.com/01.RawData/ input_raw/ # copy from usftp21 folder to input_raw
+find input_raw/ -mindepth 2 -type f -exec mv -t input_raw/ {} + # mv files from their folder to input_raw/ folder
+find input_raw/ -type d -empty -delete # delete empty directory
 ```
 
 --> All good, files created in `usftp21.novogene.com/`
 
 
+
+
 # Rename file
 
-Renamed manually as only 8 samples
-
+I created a tab separated file with current (`sample_name.txt`) / new file names (keeping the .fq.gz sufix) with `nano rename_map.txt`
 
 
 ```bash
-cp input_raw_Novogene/*.gz input/
+cd input_raw
+
+while IFS=$'\t' read -r old_name new_name
+do
+    mv "$old_name" "$new_name"
+done < rename_map.txt
 ```
 
 --> All good 
@@ -67,7 +76,7 @@ cp input_raw_Novogene/*.gz input/
 # Fastp cleaning
 
 ```bash
-sbatch scripts/fastp.sh # 17775901 xxx
+sbatch scripts/fastp.sh # 28205563 xxx
 ```
 
 
@@ -78,7 +87,7 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:17775901 scripts/bowtie2.sh # 17775970 ok
+sbatch --dependency=afterany:28205563 scripts/bowtie2.sh # 28205600 xxx
 ```
 
 --> XXX Looks good; overall ~75% uniquely aligned reads XXX
@@ -105,15 +114,15 @@ Quality control plot (total read before trimming/ total read after trimming/ uni
 
 Collect nb of reads from the slurm bowtie2 jobs:
 ```bash
-for file in slurm-17775970.out; do
+for file in slurm-28205600.out; do
     total_reads=$(grep "reads; of these" $file | awk '{print $1}')
     aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
     aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
     echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
-done > output/bowtie2/alignment_counts_17775970.txt
+done > output/bowtie2/alignment_counts_28205600.txt
 ```
 
-Add these values to `/home/roulet/001_EZH1_project/011__CutRun_50dN_nucl/samples_011.xlsx`\
+Add these values to `/home/roulet/001_EZH1_project/014__CutRun_PSC_native/samples_001014.xlsx`\
 Then in R; see `/home/roulet/001_EZH1_project/001_EZH1_project.R`.
 
 --> Overall >75% input reads as been uniquely mapped to the genome (90% non uniq) 
@@ -129,7 +138,7 @@ This is prefered for THOR bam input.
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:17775970 scripts/samtools_unique.sh # 17776169 ok
+sbatch --dependency=afterany:28205600 scripts/samtools_unique.sh # 28205653 xxx
 ```
 
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -156,14 +165,21 @@ Paramaters:
 ```bash
 conda activate deeptools
 
-sbatch --dependency=afterany:17776169 scripts/bamtobigwig_unique.sh # 17776280 ok
+sbatch --dependency=afterany:28205653 scripts/bamtobigwig_unique.sh # 28205735 xxx
 
 
 ```
 
-- 50dN
-*Pass*: 50dN_WT_H3K27me3, 50dN_WT_IGG
-*Failed*: 50dN_WT_EZH1, 50dN_WT_EZH2, 50dN_WT_H3K27ac, 50dN_WT_H3K27me1AM, 50dN_WT_H3K27me1OR, 50dN_WT_SUZ12
+- PSC
+*Pass*: xxx
+*Failed*: xxx
+
+
+
+
+
+
+XXXY HERE !!!!!!!!!!
 
 
 
