@@ -76,7 +76,7 @@ done < rename_map.txt
 # Fastp cleaning
 
 ```bash
-sbatch scripts/fastp.sh # 28205563 xxx
+sbatch scripts/fastp.sh # 28205563 ok
 ```
 
 
@@ -87,7 +87,7 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:28205563 scripts/bowtie2.sh # 28205600 xxx
+sbatch --dependency=afterany:28205563 scripts/bowtie2.sh # 28205600 ok
 ```
 
 --> XXX Looks good; overall ~75% uniquely aligned reads XXX
@@ -138,7 +138,7 @@ This is prefered for THOR bam input.
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:28205600 scripts/samtools_unique.sh # 28205653 xxx
+sbatch --dependency=afterany:28205600 scripts/samtools_unique.sh # 28205653 ok
 ```
 
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -165,21 +165,16 @@ Paramaters:
 ```bash
 conda activate deeptools
 
-sbatch --dependency=afterany:28205653 scripts/bamtobigwig_unique.sh # 28205735 xxx
+sbatch --dependency=afterany:28205653 scripts/bamtobigwig_unique.sh # 28205735 ok
 
 
 ```
 
 - PSC
-*Pass*: xxx
-*Failed*: xxx
+*Pass*: PSC_WT_SUZ12_R1 PSC_WT_EZH2_R1 PSC_KOEF1aEZH1_EZH2_R1 PSC_KO_H3K27me3_R2 PSC_KO_SUZ12_R1 PSC_KO_SUZ12_R2 PSC_KO_SUZ12_R3 PSC_KO_EZH2_R1 PSC_KO_EZH1_R2 PSC_KO_EZH2_R2
+*Failed*: PSC_WT_EZH1_R1 (maybe very low signal, unlikely)
 
 
-
-
-
-
-XXXY HERE !!!!!!!!!!
 
 
 
@@ -191,15 +186,18 @@ XXXY HERE !!!!!!!!!!
 ```bash
 conda activate deeptools
 # Generate compile bigwig (.npz) files
-sbatch scripts/multiBigwigSummary_all.sh # 17863696 xxx
+sbatch scripts/multiBigwigSummary_all.sh # 28744326 ok
+sbatch scripts/multiBigwigSummary_WT.sh # 28744549 ok
+sbatch scripts/multiBigwigSummary_KO.sh # 28744586 ok
 
 
-# Plot
+# Plot all
 ## PCA
 plotPCA -in output/bigwig/multiBigwigSummary_all.npz \
     --transpose \
     --ntop 0 \
-    --labels 50dN_WT_EZH1 50dN_WT_EZH2 50dN_WT_H3K27ac 50dN_WT_H3K27me1AM 50dN_WT_H3K27me1OR 50dN_WT_H3K27me3 50dN_WT_IGG 50dN_WT_SUZ12 \
+    --labels PSC_WT_SUZ12_R1 PSC_WT_EZH2_R1 PSC_WT_EZH1_R1 PSC_WT_IGG_R1 PSC_KO_H3K27me3_R2 PSC_KO_SUZ12_R1 PSC_KO_SUZ12_R2 PSC_KO_SUZ12_R3 PSC_KO_EZH2_R1 PSC_KO_EZH2_R2 PSC_KO_EZH1_R2 PSC_KO_IGG_R1 PSC_KO_IGG_R2 PSC_KO_IGG_R3 PSC_KOEF1aEZH1_EZH2_R1 PSC_KOEF1aEZH1_IGG_R1 \
+    --colors black black PSC_WT_EZH1_R1 black red red red red red red red red red red blue blue \
     -o output/bigwig/multiBigwigSummary_all_plotPCA.pdf
 
 ## Heatmap
@@ -208,9 +206,50 @@ plotCorrelation \
     --corMethod pearson --skipZeros \
     --plotTitle "Pearson Correlation" \
     --removeOutliers \
-    --labels 50dN_WT_EZH1 50dN_WT_EZH2 50dN_WT_H3K27ac 50dN_WT_H3K27me1AM 50dN_WT_H3K27me1OR 50dN_WT_H3K27me3 50dN_WT_IGG 50dN_WT_SUZ12 \
+    --labels PSC_WT_SUZ12_R1 PSC_WT_EZH2_R1 PSC_WT_EZH1_R1 PSC_WT_IGG_R1 PSC_KO_H3K27me3_R2 PSC_KO_SUZ12_R1 PSC_KO_SUZ12_R2 PSC_KO_SUZ12_R3 PSC_KO_EZH2_R1 PSC_KO_EZH2_R2 PSC_KO_EZH1_R2 PSC_KO_IGG_R1 PSC_KO_IGG_R2 PSC_KO_IGG_R3 PSC_KOEF1aEZH1_EZH2_R1 PSC_KOEF1aEZH1_IGG_R1 \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
     -o output/bigwig/multiBigwigSummary_all_heatmap.pdf
+
+
+
+# Plot WT
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_WT.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_WT_SUZ12_R1 PSC_WT_EZH2_R1 PSC_WT_EZH1_R1 PSC_WT_IGG_R1 \
+    -o output/bigwig/multiBigwigSummary_WT_plotPCA.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_WT.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels PSC_WT_SUZ12_R1 PSC_WT_EZH2_R1 PSC_WT_EZH1_R1 PSC_WT_IGG_R1 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_WT_heatmap.pdf
+
+
+
+# Plot KO
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_KO.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_KO_H3K27me3_R2 PSC_KO_SUZ12_R1 PSC_KO_SUZ12_R2 PSC_KO_SUZ12_R3 PSC_KO_EZH2_R1 PSC_KO_EZH2_R2 PSC_KO_EZH1_R2 PSC_KO_IGG_R1 PSC_KO_IGG_R2 PSC_KO_IGG_R3 \
+    -o output/bigwig/multiBigwigSummary_KO_plotPCA.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_KO.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels PSC_KO_H3K27me3_R2 PSC_KO_SUZ12_R1 PSC_KO_SUZ12_R2 PSC_KO_SUZ12_R3 PSC_KO_EZH2_R1 PSC_KO_EZH2_R2 PSC_KO_EZH1_R2 PSC_KO_IGG_R1 PSC_KO_IGG_R2 PSC_KO_IGG_R3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_KO_heatmap.pdf
+
 
 
 ```

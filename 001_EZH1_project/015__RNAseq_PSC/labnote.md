@@ -72,7 +72,7 @@ cp input_raw_Novogene/*.gz input/
 # Fastp cleaning
 
 ```bash
-sbatch scripts/fastp.sh # 28206738 xxx
+sbatch scripts/fastp.sh # 28206738 ok
 ```
 
 
@@ -80,17 +80,49 @@ sbatch scripts/fastp.sh # 28206738 xxx
 ## mapping fastp trim
 
 ```bash
-sbatch --dependency=afterany:28206738 scripts/STAR_mapping_fastp.sh # 28206965 xxx
+sbatch --dependency=afterany:28206738 scripts/STAR_mapping_fastp.sh # 28206965 ok; except KO_R2 fail.
+
+# KO_R2 in interactive
+## Re-generate fastp file
+x=(
+    "PSC_KO_R2"
+    )
+
+for x in "${x[@]}"; do
+    fastp -i input_raw/${x}_1.fq.gz -I input_raw/${x}_2.fq.gz \
+    -o output/fastp/${x}_1.fq.gz -O output/fastp/${x}_2.fq.gz \
+    -j output/fastp/${x} -h output/fastp/${x}
+done
+
+## Re-Run STAR
+module load STAR/2.7.3a-GCC-9.3.0
+module load SAMtools/1.16.1-GCC-11.3.0
+
+x=(
+    "PSC_KO_R2"
+)
+
+for x in "${x[@]}"; do
+	STAR --genomeDir ../../Master/meta/STAR_hg38/ \
+		--runThreadN 6 \
+		--readFilesCommand zcat \
+		--readFilesIn output/fastp/${x}_1.fq.gz output/fastp/${x}_2.fq.gz \
+		--outSAMtype BAM SortedByCoordinate \
+		--outFileNamePrefix output/STAR/fastp/${x}_
+    samtools index output/STAR/fastp/${x}_Aligned.sortedByCoord.out.bam
+done
+# --> All good
 ```
 
---> XXX Around 80-90% uniq aligned reads
+--> Around 97% uniq aligned reads
+
+--> KO_R2 bug: After *started mapping*: `ReadAlignChunk_processChunks.cpp:177:processChunks EXITING because of FATAL ERROR in input reads: unknown file format: the read ID should start with @ or >` 
+  --> After inspection of the line with : `zcat output/fastp/PSC_KO_R2_1.fq.gz | awk 'NR % 4 == 1 && $0 !~ /^@/' > problematic_lines.txt` it also output : `gzip: invalid compressed data` indicating the **PSC_KO_R2_1.fq.gz** is corrupted: let's re-generate fastp files in interactive,.
+  --> All good, fastp bugged, re-run fastp and STAR and that worked!
 
 
 
 # Count with featureCounts
-
-
-XXXY WATCHE OUT DATA IS STRADNED!!!
 
 
 
@@ -100,25 +132,25 @@ Count on gene features with parameter
 ```bash
 conda activate featurecounts
 
-# all samples:
-sbatch --dependency=afterany:13367330 scripts/featurecounts.sh # 13368068 bad wrong gtf
-sbatch scripts/featurecounts.sh # 13504690 ok
-
-sbatch scripts/featurecounts_stranded.sh # 13522388 ok
-
-featureCounts -p -C -O -M --fraction \
+# slight test
+## -s for stranded
+featureCounts -p -C -O -M --fraction -s 2 \
 	-a /scr1/users/roulet/Akizu_Lab/Master/meta/ENCFF159KBI.gtf \
-	-o output/test/50dN_WT_R1.txt output/STAR/fastp/50dN_WT_R1_Aligned.sortedByCoord.out.bam
+	-o output/test/PSC_WT_R1.txt output/STAR/fastp/PSC_WT_R1_Aligned.sortedByCoord.out.bam
+
+
+
+# all samples:
+sbatch scripts/featurecounts.sh # 28754176 ok 
+
 
 
 ```
-test with `50dN_WT_R1`
---> Around 50% of succesfully assigned alignments with `-p -C -O` parameters...
---> data is stranded, so `-s 1` = 2% and `-s 2` = 58.1% ; same as the unstranded
---> counting multimapped reads with `-M --fraction` = 73%
-----> Let's use the default method; as in `001_EZH1*/001__RNAseq`
-------> So overall 50-75% alignment; that is OK
+test with `PSC_WT_R1`
+--> Around 902% of succesfully assigned alignments with `-p -C -O -M --fraction -s 2` parameters...
+--> all good!!
 
+--> All sampels ~90% uniq aligned reads
 
 ## Calculate TPM and RPKM
 
@@ -127,13 +159,13 @@ Use custom R script `RPKM_TPM_featurecounts.R` as follow:
 ```bash
 conda activate deseq2
 # Rscript scripts/RPKM_TPM_featurecounts.R INPUT OUTPUT_PREFIX
-sbatch scripts/featurecounts_TPM.sh # 13526347 ok
+sbatch scripts/featurecounts_TPM.sh # 28772752 xxx
 # mv all output to output/tpm or rpkm folder
 mv output/featurecounts/*tpm* output/tpm/
 mv output/featurecounts/*rpkm* output/rpkm/
 ```
 
-All good. 
+--> All good. 
 
 
 # Shiny app
@@ -143,13 +175,13 @@ generate the `tpm_all_sample.txt` file and then go into `001_EZH1*/001__RNAseq` 
 
 ```R
 library("tidyverse")
-
+library("biomaRt")
 
 # Display some genes in TPM: 
 # ---> The code below is not perfect; issue at the geneSymbol conversin; to troubleshoot later; but it work
 #### Generate TPM for ALL samples
 #### collect all samples ID
-samples <- c( "100dN_WT_R1", "75dN_WT_R1", "50dN_WT_R1", "25dN_WT_R1", "NPC_WT_R1", "ESC_WT_R1","100dN_WT_R2", "75dN_WT_R2",  "50dN_WT_R2",    "25dN_WT_R2","NPC_WT_R2", "ESC_WT_R2", "100dN_WT_R3",  "75dN_WT_R3", "50dN_WT_R3",  "25dN_WT_R3",  "NPC_WT_R3",  "ESC_WT_R3")
+samples <- c(  "PSC_WT_R1", "PSC_WT_R2", "PSC_WT_R3", "PSC_KO_R1", "PSC_KO_R2", "PSC_KO_R3", "PSC_KOEF1aEZH1_R1", "PSC_KOEF1aEZH1_R2",  "PSC_KOEF1aEZH1_R3")
 
 ## Make a loop for importing all tpm data and keep only ID and count column
 sample_data <- list()
@@ -162,8 +194,8 @@ for (sample in samples) {
 
 ## Merge all dataframe into a single one
 tpm_all_sample <- purrr::reduce(sample_data, full_join, by = "Geneid")
-write.csv(tpm_all_sample, file="output/tpm/tpm_all_sample_Ciceri.txt")
-### If need to import: tpm_all_sample <- read_csv("output/tpm/tpm_all_sample_Ciceri.txt") %>% dplyr::select(-"...1") #To import
+write.csv(tpm_all_sample, file="output/tpm/tpm_all_sample_Akoto.txt")
+### If need to import: tpm_all_sample <- read_csv("output/tpm/tpm_all_sample_Akoto.txt") %>% dplyr::select(-"...1") #To import
 
 
 
@@ -193,14 +225,13 @@ long_data <- tpm_all_withGenesymbols %>%
 long_data_log2tpm = long_data %>%
   mutate(log2tpm = log2(TPM + 1))
 ## Save
-write.table(long_data_log2tpm, file = c("output/tpm/long_data_log2tpm_Ciceri.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(long_data_log2tpm, file = c("output/tpm/long_data_log2tpm_Akoto.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 
 ```
 
 
---> Next here: `001_EZH1*/001__RNAseq` (`## Shiny app V2; including Ciceri RNAseq neuron diff dataset`)
-
+--> Next here: `001_EZH1*/001__RNAseq` (`## Shiny app V3; including Ciceri RNAseq neuron diff dataset + Akoto 001/015 RNAseq`)
 
 
 # Generate Bigwig coverage files
@@ -210,17 +241,19 @@ Let's generate **TPM coverage**:
 ```bash
 conda activate deeptools
 # run time-per-time:
-sbatch scripts/TPM_bw.sh # 15126648 ok
+sbatch scripts/TPM_bw.sh # 28775122 xxx
 ```
 
 
 Let's merge the bigwig into 1 file with wiggletools (will do average of bigwig signal and not sum, many options see [github](https://github.com/Ensembl/WiggleTools)):
 
 
+XXX HERE
+
 **Run wiggletools:**
 ```bash
 conda activate BedToBigwig
-sbatch --dependency=afterany:15126648 scripts/bigwigmerge_TPM.sh # 15127640 ok
+sbatch --dependency=afterany:15126648 scripts/bigwigmerge_TPM.sh #  xxx
 ```
 *NOTE: bigwig are merge into 1 bedgraph which is then converted into 1 bigwig (wiggletools cannot output bigwig directly so need to pass by bedgraph or wiggle in between)*
 

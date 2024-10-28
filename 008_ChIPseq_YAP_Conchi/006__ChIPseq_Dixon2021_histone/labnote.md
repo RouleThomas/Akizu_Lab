@@ -21,10 +21,11 @@ sbatch scripts/download_urls.sh #  xxx
 - H3K27me3 on H1 WT
 - H3K36me3 on H1 WT
 
-XXXY
+
+**Let's prefer to use ENCODE histone data; without re-analyzing them; just collect peaks and bigwig.**
 
 
-
+XXX BELOW not modified
 
 
 
