@@ -580,13 +580,13 @@ save_seurat_objects(seurat_objects, output_dir)
 load_seurat_objects <- function(file_paths) {
   seurat_objects <- list()
   for (file_path in file_paths) {
-    sample_name <- gsub("_V2_numeric.rds", "", basename(file_path))
+    sample_name <- gsub("_V2_ReProcess_numeric.rds", "", basename(file_path))
     seurat_objects[[sample_name]] <- readRDS(file_path)
   }
   return(seurat_objects)
 }
 output_dir <- "output/seurat/"
-file_paths <- list.files(output_dir, pattern = "_V2_numeric.rds$", full.names = TRUE)
+file_paths <- list.files(output_dir, pattern = "_V2_ReProcess_numeric.rds$", full.names = TRUE)
 # Call the function to load the Seurat objects
 seurat_objects <- load_seurat_objects(file_paths)
 # Loop through the list and assign each Seurat object to a variable with the same name
@@ -2252,11 +2252,11 @@ WT_p35_CB_Rep2$condition <- "WT"
 WT_p35_CB_Rep3$condition <- "WT"
 
 Kcnc1_p35_CB_Rep1$replicate <- "Rep1"
-Kcnc1_p35_CB_Rep2$replicate <- "Rep2"
+Kcnc1_p35_CB_Rep2_nCountRNA500$replicate <- "Rep2"   #  Kcnc1_p35_CB_Rep2
 Kcnc1_p35_CB_Rep3$replicate <- "Rep3"
 
 Kcnc1_p35_CB_Rep1$condition <- "Kcnc1"
-Kcnc1_p35_CB_Rep2$condition <- "Kcnc1"
+Kcnc1_p35_CB_Rep2_nCountRNA500$condition <- "Kcnc1" # Kcnc1_p35_CB_Rep2_nCountRNA500 Kcnc1_p35_CB_Rep2
 Kcnc1_p35_CB_Rep3$condition <- "Kcnc1"
 
 set.seed(42)
@@ -2299,8 +2299,17 @@ Kcnc1_p35_CB_Rep2_nCountRNA400 <- subset(Kcnc1_p35_CB_Rep2, subset = nCount_RNA 
 Kcnc1_p35_CB_Rep2_nCountRNA500 <- subset(Kcnc1_p35_CB_Rep2, subset = nCount_RNA > 500) # 6526 cells; lets use this one!!
 #--> Repeat SCTrnsform for that sample and reperfrorm integration
 
-XXXY HERE!!!
 
+### Reg v1 _ better than Regv2 - Correct for bug RNA quantity leading to downregulation of all genes _ QCV2 with Kcnc1 V2 filter
+DefaultAssay(Kcnc1_p35_CB_Rep2_nCountRNA500) <- "RNA"
+
+
+WT_p35_CB_Rep1 <- SCTransform(WT_p35_CB_Rep1, method = "glmGamPoi", ncells = 7299, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+WT_p35_CB_Rep2 <- SCTransform(WT_p35_CB_Rep2, method = "glmGamPoi", ncells = 10683, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+WT_p35_CB_Rep3 <- SCTransform(WT_p35_CB_Rep3, method = "glmGamPoi", ncells = 13664, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p35_CB_Rep1 <- SCTransform(Kcnc1_p35_CB_Rep1, method = "glmGamPoi", ncells = 10264, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p35_CB_Rep2 <- SCTransform(Kcnc1_p35_CB_Rep2_nCountRNA500, method = "glmGamPoi", ncells = 6526, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p35_CB_Rep3 <- SCTransform(Kcnc1_p35_CB_Rep3, method = "glmGamPoi", ncells = 16447, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
 
 
 
@@ -2330,7 +2339,7 @@ WT_Kcnc1_p35_CB_1step.sct$condition <- factor(WT_Kcnc1_p35_CB_1step.sct$conditio
 # pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim50kparam50res03.pdf", width=7, height=6)
 # pdf("output/seurat/UMAP_WT_Kcnc1_p35_CBtest.pdf", width=7, height=6)
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV2dim50kparam20res03.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou_Kcnc1Rep2nCountRNA500-QCV2dim50kparam20res03.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
@@ -2435,8 +2444,9 @@ WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step
 
 # Save the Kcnc1_p35_CB_Rep2 with additional QC filtering: too many cells with low nCount_RNA so I filtered to nCount_RNA > 500; and end up with 6526 cells instead of ~30k cells saveRDS(Kcnc1_p35_CB_Rep2_nCountRNA500, file = "output/seurat/Kcnc1_p35_CB_Rep2_nCountRNA500.rds")
 
+Kcnc1_p35_CB_Rep2_nCountRNA500 <- readRDS(file = "output/seurat/Kcnc1_p35_CB_Rep2_nCountRNA500.rds")
 
-
+# saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step_Kcnc1Rep2nCountRNA500-QCV2dim50kparam20res03.sct_V1_numeric_ReProcess.rds") #
 
 set.seed(42)
 ##########

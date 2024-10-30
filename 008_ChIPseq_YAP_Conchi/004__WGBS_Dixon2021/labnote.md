@@ -182,14 +182,14 @@ Joe Ecker, Salk (ENCSR744UGB); ENCFF895EIX_R1 and ENCFF459RZT_R2
 --> Plot done in `008001` labnote `## EZH2 gain lost WT vs KO`
 
 
---> Ecker/= (ENCAN623MFB and ENCSR744UGB) bad quality; Myers looks good
+--> Ecker= (ENCAN623MFB and ENCSR744UGB) bad quality; Myers looks good
 
 
 
 
 
 
-XXXXXXXX HERE
+XXX HERE
 
 
 

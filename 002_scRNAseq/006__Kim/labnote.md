@@ -7277,6 +7277,12 @@ Let's do some pathway analysis for *WNT signaling*. Pathway of interest collecte
   - WP_WNT_SIGNALING 
   - WP_WNT_SIGNALING_PATHWAY
   - WP_WNT_SIGNALING_PATHWAY_AND_PLURIPOTENCY
+  - GOBP_WNT_SIGNALING_PATHWAY
+  - GOBP_CANONICAL_WNT_SIGNALING_PATHWAY
+  - GOBP_NON_CANONICAL_WNT_SIGNALING_PATHWAY
+  - GOBP_REGULATION_OF_WNT_SIGNALING_PATHWAY
+  - BIOCARTA_SHH_PATHWAY
+
 
 Gene names downloaded and available at `output/Pathway/geneList_[PATHWAY].txt`.
 
@@ -7357,20 +7363,23 @@ Microglia = cluster19
 
 # GSEA plot one by one
 ## load list of genes to test
-BIOCARTA_WNT_PATHWAY = read_table(file = c("output/Pathway/geneList_BIOCARTA_WNT_PATHWAY.txt"))
-REACTOME_SIGNALING_BY_WNT = read_table(file = c("output/Pathway/geneList_REACTOME_SIGNALING_BY_WNT.txt"))
-REACTOME_WNT_LIGAND_BIOGENESIS_AND_TRAFFICKING = read_table(file = c("output/Pathway/geneList_REACTOME_WNT_LIGAND_BIOGENESIS_AND_TRAFFICKING.txt"))
-WP_WNT_SIGNALING = read_table(file = c("output/Pathway/geneList_WP_WNT_SIGNALING.txt"))
-WP_WNT_SIGNALING_PATHWAY = read_table(file = c("output/Pathway/geneList_WP_WNT_SIGNALING_PATHWAY.txt"))
-WP_WNT_SIGNALING_PATHWAY_AND_PLURIPOTENCY = read_table(file = c("output/Pathway/geneList_WP_WNT_SIGNALING_PATHWAY_AND_PLURIPOTENCY.txt"))
 fgsea_sets <- list(
   BIOCARTA_WNT_PATHWAY = read_table(file = c("output/Pathway/geneList_BIOCARTA_WNT_PATHWAY.txt"))$Genes,
   REACTOME_SIGNALING_BY_WNT = read_table(file = c("output/Pathway/geneList_REACTOME_SIGNALING_BY_WNT.txt"))$Genes,
   REACTOME_WNT_LIGAND_BIOGENESIS_AND_TRAFFICKING = read_table(file = c("output/Pathway/geneList_REACTOME_WNT_LIGAND_BIOGENESIS_AND_TRAFFICKING.txt"))$Genes,
   WP_WNT_SIGNALING = read_table(file = c("output/Pathway/geneList_WP_WNT_SIGNALING.txt"))$Genes,
   WP_WNT_SIGNALING_PATHWAY = read_table(file = c("output/Pathway/geneList_WP_WNT_SIGNALING_PATHWAY.txt"))$Genes,
-  WP_WNT_SIGNALING_PATHWAY_AND_PLURIPOTENCY = read_table(file = c("output/Pathway/geneList_WP_WNT_SIGNALING_PATHWAY_AND_PLURIPOTENCY.txt"))$Genes
+  WP_WNT_SIGNALING_PATHWAY_AND_PLURIPOTENCY = read_table(file = c("output/Pathway/geneList_WP_WNT_SIGNALING_PATHWAY_AND_PLURIPOTENCY.txt"))$Genes,
+  GOBP_WNT_SIGNALING_PATHWAY = read_table(file = c("output/Pathway/geneList_GOBP_WNT_SIGNALING_PATHWAY.txt"))$Genes,
+  GOBP_CANONICAL_WNT_SIGNALING_PATHWAY = read_table(file = c("output/Pathway/geneList_GOBP_CANONICAL_WNT_SIGNALING_PATHWAY.txt"))$Genes,
+  GOBP_NON_CANONICAL_WNT_SIGNALING_PATHWAY = read_table(file = c("output/Pathway/geneList_GOBP_NON_CANONICAL_WNT_SIGNALING_PATHWAY.txt"))$Genes,
+  GOBP_REGULATION_OF_WNT_SIGNALING_PATHWAY = read_table(file = c("output/Pathway/geneList_GOBP_REGULATION_OF_WNT_SIGNALING_PATHWAY.txt"))$Genes,
+  BIOCARTA_SHH_PATHWAY = read_table(file = c("output/Pathway/geneList_BIOCARTA_SHH_PATHWAY.txt"))$Genes
 )
+
+
+
+
 ## Rank genes based on FC
 genes <- DG_GC %>%  ## CHANGE HERE CLUSTER NAME LIST !!!!!!!!!!!!!!!! ##
   rownames_to_column(var = "gene") %>%
@@ -7493,7 +7502,7 @@ final_results <- bind_rows(all_results, .id = "cluster")
 write.table(final_results, file = c("output/Pathway/gsea_output_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes-WNT.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_pval-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes-WNT.pdf", width=8, height=3)
+pdf("output/Pathway/heatmap_gsea_pval-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes-WNT.pdf", width=8, height=4)
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
