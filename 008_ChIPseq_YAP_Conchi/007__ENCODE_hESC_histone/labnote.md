@@ -189,27 +189,27 @@ sbatch scripts/matrix_2kb_H3K4me3_QSER1YAP1peaks_Ren.sh # 29178677 ok
 sbatch scripts/matrix_5kb_H3K4me3_QSER1YAP1peaks_Ren.sh # 29178682 ok
 sbatch scripts/matrix_10kb_H3K4me3_QSER1YAP1peaks_Ren.sh # 29178686 ok
 
-sbatch scripts/matrix_2kb_H3K4me3_QSER1YAP1peaks_Bernstein.sh # 29178826 xxx
-sbatch scripts/matrix_5kb_H3K4me3_QSER1YAP1peaks_Bernstein.sh # 29178852 xxx
-sbatch scripts/matrix_10kb_H3K4me3_QSER1YAP1peaks_Bernstein.sh  # 29178862 xxx
+sbatch scripts/matrix_2kb_H3K4me3_QSER1YAP1peaks_Bernstein.sh # 29178826 ok
+sbatch scripts/matrix_5kb_H3K4me3_QSER1YAP1peaks_Bernstein.sh # 29178852 ok
+sbatch scripts/matrix_10kb_H3K4me3_QSER1YAP1peaks_Bernstein.sh  # 29178862 ok
 
 # YAP1 only peaks
-sbatch scripts/matrix_2kb_H3K4me3_YAP1peaks_Ren.sh # 29178940 xxx
-sbatch scripts/matrix_5kb_H3K4me3_YAP1peaks_Ren.sh # 29178972 xxx
-sbatch scripts/matrix_10kb_H3K4me3_YAP1peaks_Ren.sh # 29179019 xxx
+sbatch scripts/matrix_2kb_H3K4me3_YAP1peaks_Ren.sh # 29178940 ok
+sbatch scripts/matrix_5kb_H3K4me3_YAP1peaks_Ren.sh # 29178972 ok
+sbatch scripts/matrix_10kb_H3K4me3_YAP1peaks_Ren.sh # 29179019 ok
 
-sbatch scripts/matrix_2kb_H3K4me3_YAP1peaks_Bernstein.sh # 29179075 xxx
-sbatch scripts/matrix_5kb_H3K4me3_YAP1peaks_Bernstein.sh # 29179088 xxx
-sbatch scripts/matrix_10kb_H3K4me3_YAP1peaks_Bernstein.sh # 29179106 xxx
+sbatch scripts/matrix_2kb_H3K4me3_YAP1peaks_Bernstein.sh # 29179075 ok
+sbatch scripts/matrix_5kb_H3K4me3_YAP1peaks_Bernstein.sh # 29179088 ok
+sbatch scripts/matrix_10kb_H3K4me3_YAP1peaks_Bernstein.sh # 29179106 ok
 
 # QSER1 only peaks
-sbatch scripts/matrix_2kb_H3K4me3_QSER1peaks_Ren.sh # 29179264 xxx
-sbatch scripts/matrix_5kb_H3K4me3_QSER1peaks_Ren.sh # 29179285 xxx
-sbatch scripts/matrix_10kb_H3K4me3_QSER1peaks_Ren.sh # 29179334 xxx
+sbatch scripts/matrix_2kb_H3K4me3_QSER1peaks_Ren.sh # 29179264 ok
+sbatch scripts/matrix_5kb_H3K4me3_QSER1peaks_Ren.sh # 29179285 ok
+sbatch scripts/matrix_10kb_H3K4me3_QSER1peaks_Ren.sh # 29179334 ok
 
-sbatch scripts/matrix_2kb_H3K4me3_QSER1peaks_Bernstein.sh # 29179355 xxx
-sbatch scripts/matrix_5kb_H3K4me3_QSER1peaks_Bernstein.sh # 29179370 xxx
-sbatch scripts/matrix_10kb_H3K4me3_QSER1peaks_Bernstein.sh # 29179387 xxx
+sbatch scripts/matrix_2kb_H3K4me3_QSER1peaks_Bernstein.sh # 29179355 ok
+sbatch scripts/matrix_5kb_H3K4me3_QSER1peaks_Bernstein.sh # 29179370 ok
+sbatch scripts/matrix_10kb_H3K4me3_QSER1peaks_Bernstein.sh # 29179387 ok
 
 #--> naming `*_H3K4me3_*` make no sene, typo...
 

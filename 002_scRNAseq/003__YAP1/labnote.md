@@ -11174,11 +11174,11 @@ write.table(gos, "output/GO/enrichR_Reactome_2022_DEG_cluster6_downUp_dotplot.tx
 ```
 
 
-# Upload files to GEO - cardiac paper E7
+# Upload files to GEO - cardiac paper E775
 
 Go [here](https://www.ncbi.nlm.nih.gov/geo/info/seq.html); and follow instructions in `Transfer Files`. Connect to my personal space (`uploads/thomasroule@orcid_A787EGG4`) and transfer files.
 
-- Create a clean `GEO_cardiacPaper` folder with all `*fq.gz` and `*bigwig` (re-name file so that they have same prefix; only extension differ)
+- Create a clean `GEO_cardiacPaper` folder with cellranger files (barcode, features, matrix), and fq.gz files
 --> I copy and rename the counts (`embryo_WT_e775_mice/outs/filtered_feature_bc_matrix`) adding prefix for genotype; and simply copy the fastq from the `input/` folder
 - Fill in the `seq_template.xlsx` (`Metada` and `MD5` sheet notably)
 - submit files
@@ -11200,6 +11200,32 @@ mirror -R GEO_cardiacPaper/
 
 
 
+# Upload files to GEO - gastrulation paper E7
+
+Go [here](https://www.ncbi.nlm.nih.gov/geo/info/seq.html); and follow instructions in `Transfer Files`. Connect to my personal space (`uploads/thomasroule@orcid_A787EGG4`) and transfer files.
+
+- Create a clean `GEO_gastrulationPaper` folder with all cellranger files (barcode, features, matrix), and fq.gz files
+  - I copy `E7mousecontrolQCNOTfail/outs/filtered_feature_bc_matrix` and add manually prefix `embryo_control_e7`
+  - I copy `E7mousecYAPKO/outs/filtered_feature_bc_matrix` and add manually prefix `embryo_cYAPKO_e7`
+  - I copy `input/E7mousecontrolQCNOTfail/E7mousecontrol_S3_L001_R*`
+  - I copy `input/E7mousecYAPKO/E7mousecYAPKO_S4_L001_R**`
+- Fill in the `seq_template_TR_gastrulationPaper.xlsx` (`Metada` and `MD5` sheet notably)
+- submit files
+
+```bash
+# do file integrity check with md5
+md5sum * | awk '{print $2 "\t" $1}' > md5sums.txt
+
+module load lftp
+
+# connect to ftp
+lftp -u geoftp,inAlwokhodAbnib5 ftp-private.ncbi.nlm.nih.gov # geoftp = username; inAlwokhodAbnib5 = pwd
+cd uploads/thomasroule@orcid_A787EGG4
+
+mirror -R GEO_gastrulationPaper/
+```
+
+--> Done succesfully; release data: 2025-10-30
 
 
 

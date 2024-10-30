@@ -9894,3 +9894,35 @@ write.table(., file = "output/binBw/WT_H3K27me3_250bp_ENCFF201SJZ_geneSymbol_top
 
 
 
+
+# Upload files to GEO - gastrulation paper
+
+Go [here](https://www.ncbi.nlm.nih.gov/geo/info/seq.html); and follow instructions in `Transfer Files`. Connect to my personal space (`uploads/thomasroule@orcid_A787EGG4`) and transfer files.
+
+- Create a clean `GEO_gastrulationPaper_ChIP008001` folder with all cellranger files (barcode, features, matrix), and fq.gz files
+  - I copy `input/hESC*QSER1*`
+  - I copy `input/hESC*EZH2*`
+  - I copy `input/hESC*input*`
+  - I copy `output/THOR/THOR_hESC_QSER1_WTvsYAPKO/hESCQSER1WTvsYAPKO-s1-rep*` = WT QSER1 bigwig
+  - I copy `output/THOR/THOR_hESC_QSER1_WTvsYAPKO/hESCQSER1WTvsYAPKO-s2-rep*` = YAPKO QSER1 bigwig
+  - I copy `output/THOR/THOR_hESC_EZH2_WTvsYAPKO/hESCEZH2WTvsYAPKO-s1-rep*` = WT EZH2 bigwig
+  - I copy `output/THOR/THOR_hESC_EZH2_WTvsYAPKO/hESCEZH2WTvsYAPKO-s2-rep*` = YAPKO EZH2 bigwig
+- Fill in the `seq_template_TR_gastrulationPaper_ChIPseq.xlsx` (`Metada` and `MD5` sheet notably)
+- submit files
+
+```bash
+# do file integrity check with md5
+md5sum * | awk '{print $2 "\t" $1}' > md5sums.txt
+
+module load lftp
+
+# connect to ftp
+lftp -u geoftp,inAlwokhodAbnib5 ftp-private.ncbi.nlm.nih.gov # geoftp = username; inAlwokhodAbnib5 = pwd
+cd uploads/thomasroule@orcid_A787EGG4
+
+mirror -R GEO_gastrulationPaper_ChIP008001/
+```
+
+--> Done succesfully; release data: 2025-10-30
+
+--> Files in `gastrulation paper` folder
