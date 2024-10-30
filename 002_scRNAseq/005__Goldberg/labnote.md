@@ -437,9 +437,9 @@ assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the pre
 
 
 
-##### QC filtering _ V2 ############################################
+##### QC filtering _ V2 (used for p35) ############################################
 
-### V1 not super stringeant; mit > 15, rb > 22 and RNAfeaure 100 #############################################
+### mit > 15, rb > 22 and RNAfeaure 100 #############################################
 apply_qc <- function(seurat_object) {
   seurat_object[['QC']] <- ifelse(seurat_object@meta.data$Is_doublet == 'True', 'Doublet', 'Pass')
   seurat_object[['QC']] <- ifelse(seurat_object@meta.data$nFeature_RNA < 100 & seurat_object@meta.data$QC == 'Pass', 'Low_nFeature', seurat_object@meta.data$QC)
@@ -458,7 +458,7 @@ assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the pre
 
 
 
-##### QC filtering _ V3 (used for p14 and p35) ############################################
+##### QC filtering _ V3 (used for p14) ############################################
 
 ###  mit > 15, rb > 10 and RNAfeaure 400 #############################################
 apply_qc <- function(seurat_object) {
@@ -567,8 +567,8 @@ write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_V4.txt"
 ############ SAVE samples #################################################################
 save_seurat_objects <- function(seurat_objects_list, output_dir) {
   for (sample_name in names(seurat_objects_list)) {
-    file_name <- paste0(output_dir, sample_name, "_V4_numeric.rds") # V3 for p14 andp35; v4 for p180
-    saveRDS(seurat_objects_list[[sample_name]], file = file_name)
+    file_name <- paste0(output_dir, sample_name, "_V2_ReProcess_numeric.rds") # _V2_numeric _ V3 for p14 ; v4 for p180; V2 for p35
+    saveRDS(seurat_objects_list[[sample_name]], file = file_name) # V2 got a ReProcess for sample p35
   }
 }
 output_dir <- "output/seurat/"
@@ -2290,6 +2290,20 @@ WT_p35_CB_Rep3 <- SCTransform(WT_p35_CB_Rep3, method = "glmGamPoi", ncells = 136
 Kcnc1_p35_CB_Rep1 <- SCTransform(Kcnc1_p35_CB_Rep1, method = "glmGamPoi", ncells = 10264, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
 Kcnc1_p35_CB_Rep2 <- SCTransform(Kcnc1_p35_CB_Rep2, method = "glmGamPoi", ncells = 33623, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
 Kcnc1_p35_CB_Rep3 <- SCTransform(Kcnc1_p35_CB_Rep3, method = "glmGamPoi", ncells = 16447, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+#--> Kcnc1 Rep2 is problematic, many cells, but many with very low level of nCount_RNA, it disturb the normalization and integration... Let's try to subset this sample, to have approximately the same number of cells (increase QC filtering) with same nCount_RNA as the other for this specific sample.. (~7k cells is ideal)
+
+Kcnc1_p35_CB_Rep2_nCountRNA1000 <- subset(Kcnc1_p35_CB_Rep2, subset = nCount_RNA > 1000) # 1533 cells
+Kcnc1_p35_CB_Rep2_nCountRNA700 <- subset(Kcnc1_p35_CB_Rep2, subset = nCount_RNA > 700) # 3279 cells
+Kcnc1_p35_CB_Rep2_nCountRNA400 <- subset(Kcnc1_p35_CB_Rep2, subset = nCount_RNA > 400) # 11535 cells
+
+Kcnc1_p35_CB_Rep2_nCountRNA500 <- subset(Kcnc1_p35_CB_Rep2, subset = nCount_RNA > 500) # 6526 cells; lets use this one!!
+#--> Repeat SCTrnsform for that sample and reperfrorm integration
+
+XXXY HERE!!!
+
+
+
+
 
 
 
@@ -2317,8 +2331,6 @@ WT_Kcnc1_p35_CB_1step.sct$condition <- factor(WT_Kcnc1_p35_CB_1step.sct$conditio
 # pdf("output/seurat/UMAP_WT_Kcnc1_p35_CBtest.pdf", width=7, height=6)
 
 pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV2dim50kparam20res03.pdf", width=7, height=6)
-
-
 DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
@@ -2330,9 +2342,23 @@ DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "SCT"
 
 
 # pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim50-List6.pdf", width=30, height=60)
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV2dim50-List6.pdf", width=30, height=60)
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV2dim50-List7.pdf", width=30, height=60)
 
-FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Gabra6", "Pax6", "Kcnc2", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Aldh1a3", "Pax2", "Eomes", "Calb1", "Slc1a6", "Car8", "Zeb2", "Aqp4", "Slc39a12", "Mbp", "Mag", "Plp1", "Aldoc", "Cnp", "Itgam", "Cx3cr1", "Ptgds", "Dcn", "Lef1", "Notum", "Apcdd1", "Dlc1", "Pdgfrb", "Kl",  "Ttr"), max.cutoff = 1, cols = c("grey", "red"))
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c(  "Gabra6", "Pax6",
+  "Kcnc2",
+  "Sorcs3", "Ptprk",
+  "Nxph1", "Cdh22",
+  "Aldh1a3",
+  "Pax2",
+  "Eomes", "Rgs6", "Tafa2",
+  "Calb1", "Slc1a6", "Car8",
+  "Zeb2",
+  "Aqp4", "Slc39a12",
+  "Vcan", "Sox6",
+  "Ptgds", "Dcn",
+  "Lef1", "Notum", "Apcdd1",
+  "Kl",  "Ttr",
+  "Actb", "Tmsb4x"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
 
@@ -2392,21 +2418,30 @@ dev.off()
 WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV3dim50kparam50res03.sct_V1_numeric.rds")
 
 WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV3dim50kparam50res03.sct_V1_label.rds")
+## Let's work with 1step integration: 
+# --> 1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim50kparam50res03 = WT_Kcnc1_p35_CB_1step_V1
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV3dim50kparam50res03.sct_V1_label.rds")
+
 
 
 ## BUG I cannot retrieve previous version... Lets compare QC_V2 vs V3 vs V4 with same parameters
-saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV3dim50kparam50res03.sct_V1_numeric_ReProcess.rds") # this is with QC_V3 all repeated from the start!!! --> NOT the one...
-saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V1_numeric_ReProcess.rds") # this is with QC_V2 all repeated from the start!!! --> NOT the one...
+#saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV3dim50kparam50res03.sct_V1_numeric_ReProcess.rds") # this is with QC_V3 all repeated from the start!!! --> NOT the one...
+#saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V1_numeric_ReProcess.rds") # this is with QC_V2 all repeated from the start!!! --> NOT the one...
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V1_numeric_ReProcess.rds")
+#saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_label_ReProcess.rds") 
 
-XXY here upload
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_label_ReProcess.rds")
+
+
+# Save the Kcnc1_p35_CB_Rep2 with additional QC filtering: too many cells with low nCount_RNA so I filtered to nCount_RNA > 500; and end up with 6526 cells instead of ~30k cells saveRDS(Kcnc1_p35_CB_Rep2_nCountRNA500, file = "output/seurat/Kcnc1_p35_CB_Rep2_nCountRNA500.rds")
+
+
+
 
 set.seed(42)
 ##########
 
 
-## Let's work with 1step integration: 
-# --> 1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim50kparam50res03 = WT_Kcnc1_p35_CB_1step_V1
-WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV3dim50kparam50res03.sct_V1_label.rds")
 
 
 ############################ EasyCellType automatic annotation ##########################################
@@ -2414,7 +2449,7 @@ WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step
 ### Find all markers 
 all_markers <- FindAllMarkers(WT_Kcnc1_p35_CB_1step.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
 
-write.table(all_markers, file = "output/seurat/srat_WT_Kcnc1_p35_CB_1step_QCV3dim50kparam50res03_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(all_markers, file = "output/seurat/srat_WT_Kcnc1_p35_CB_1step_QCV2dim50kparam20res03_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 
 # BiocManager::install("EasyCellType")
@@ -2469,7 +2504,7 @@ annot.GSEA <- easyct(input.d, db="clustermole", # cellmarker or panglao or clust
 #pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p35_CB_1step_V1-cellmarker_CerebellumBrainHippocampus.pdf", width=6, height=8)
 #pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p35_CB_1step_V1-clustermole_Brain.pdf", width=6, height=8)
 
-pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p35_CB_1step_QCV3dim50kparam50res03-clustermole_Brain.pdf", width=6, height=8)
+pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p35_CB_1step_QCV2dim50kparam20res03-clustermole_Brain.pdf", width=6, height=8)
 plot_dot(test="GSEA", annot.GSEA) + 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 dev.off()
@@ -2492,12 +2527,19 @@ dev.off()
 DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "SCT"
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim50-SuppTab1Marker.pdf", width=30, height=40)
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV2dim50-SuppTab1Marker.pdf", width=30, height=40)
 FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c( "Ppp1r17", "Gabra6", "Grm2", "Sst","Prkcd", "Sorcs3", "Ptprk", "Nxph1", "Cdh22","Htr2a", "Edil3","Aldh1a3", "Slc6a5","Eomes","Gdf10"
 ), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV2dim50-oligodendrocyt.pdf", width=30, height=20)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c( "Mbp", "Mag", "Plp1"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
 
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV2dim50-PLImarkers.pdf", width=30, height=30)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Klhl1", "Nrp1", "Gfra2", "Slc16a12", "Aldh1a3", "Slc6a5", "Galntl6", "Scg2", "Fstl5", "Zeb2", "Kcnc2", "Htr2a"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
 
 
 
@@ -2645,7 +2687,152 @@ dev.off()
 
 
 
-## p35 cell type proportion ###############################
+############ V2 naming ("output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V1_numeric_ReProcess.rds = QCV2dim50kparam20res03))
+Cluster1= Granule (Gabra6 , Pax6)
+Cluster2= MLI1 (Sorcs3, Ptprk)
+Cluster3= PLI23 (Galntl6, Kcnc2)
+Cluster4= MLI2 (Nxph1, Cdh22)
+Cluster5= Endothelial_Stalk (Actb, Tmsb4x)
+Cluster6= Astrocyte (Zeb2)
+Cluster7= PLI12 (Klhl1, Gfra2, Aldh1a3)
+Cluster8= Golgi (Pax2)
+Cluster9= Unipolar_Brush (Eomes, Rgs6, Tafa2)
+Cluster10= Bergman_Glia (Aqp4, Slc39a12)
+Cluster11= Endothelial (Lef1, Notum, Apcdd1)
+Cluster12= Choroid_Plexus (Kl, Ttr)
+Cluster13= Purkinje (Calb1, Slc1a6, Car8)
+Cluster14= Meningeal (Ptgds, Dcn)
+Cluster15= Unknown_Neuron_Subpop
+Cluster16= OPC (Vcan, Sox6)
+
+
+new.cluster.ids <- c(
+  "Granule",
+  "MLI1",
+  "PLI23" ,
+  "MLI2" ,
+  "Endothelial_Stalk",
+  "Astrocyte" ,
+  "PLI12" ,
+  "Golgi" ,
+  "Unipolar_Brush" ,
+  "Bergman_Glia",
+  "Endothelial",
+  "Choroid_Plexus",
+  "Purkinje",
+  "Meningeal",
+  "Unknown_Neuron_Subpop",
+  "OPC" 
+)
+
+names(new.cluster.ids) <- levels(WT_Kcnc1_p35_CB_1step.sct)
+WT_Kcnc1_p35_CB_1step.sct <- RenameIdents(WT_Kcnc1_p35_CB_1step.sct, new.cluster.ids)
+WT_Kcnc1_p35_CB_1step.sct$cluster.annot <- Idents(WT_Kcnc1_p35_CB_1step.sct) # create a new slot in my seurat object
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB_1step_QCV2dim50kparam20res03_label.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+dev.off()
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB_1step_QCV2dim50kparam20res03_noSplit_label.pdf", width=8, height=6)
+DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5)
+dev.off()
+
+
+
+# All in dotplot
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "SCT"
+
+
+List10:
+Granule =Gabra6 , Pax6
+MLI1 =Sorcs3, Ptprk
+MLI2 =Nxph1, Cdh22
+PLI12 =Klhl1, Gfra2, Aldh1a3
+PLI23 =Galntl6, Kcnc2
+Golgi =Pax2
+Unipolar_Brush =Eomes, Rgs6, Tafa2
+Purkinje =Calb1, Slc1a6, Car8
+Astrocyte =Zeb2
+Bergman_Glia =Aqp4, Slc39a12
+OPC= Vcan, Sox6
+Meningeal =Ptgds, Dcn
+Choroid_Plexus =Kl, Ttr
+Endothelial =Lef1, Notum, Apcdd1
+Endothelial_Stalk =Actb, Tmsb4x
+Unknown_Neuron_Subpop
+
+
+all_markers <- c(
+  "Gabra6" , "Pax6",
+  "Sorcs3", "Ptprk",
+  "Nxph1", "Cdh22",
+  "Klhl1", "Gfra2", "Aldh1a3",
+  "Galntl6", "Kcnc2",
+  "Pax2",
+  "Eomes", "Rgs6", "Tafa2",
+  "Calb1", "Slc1a6", "Car8",
+  "Zeb2",
+  "Aqp4", "Slc39a12",
+  "Vcan", "Sox6",
+  "Ptgds", "Dcn",
+  "Kl", "Ttr",
+  "Lef1", "Notum", "Apcdd1",
+  "Actb", "Tmsb4x"
+)
+
+
+
+levels(WT_Kcnc1_p35_CB_1step.sct) <- c(
+  "Granule",
+  "MLI1",
+  "MLI2",
+  "PLI12",
+  "PLI23",
+  "Golgi",
+  "Unipolar_Brush",
+  "Purkinje",
+  "Astrocyte",
+  "Bergman_Glia",
+  "OPC",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Endothelial",
+  "Endothelial_Stalk",
+  "Unknown_Neuron_Subpop"
+)
+
+
+
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p35_CB_1step_QCV2dim50kparam20res03_label.pdf", width=11, height=4.5)
+DotPlot(WT_Kcnc1_p35_CB_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
+
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p35_CB_1step_QCV2dim50kparam20res03_label_vertical.pdf", width=11, height=4.5)
+DotPlot(WT_Kcnc1_p35_CB_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
+dev.off()
+
+
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03-List10.pdf", width=30, height=70)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = all_markers, max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03-Kcnc1.pdf", width=6, height=6)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = "Kcnc1", max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+
+
+
+
+## p35 cell type proportion ############################### DO NOT RUN THAT PRIOR GENERATING THE SHINY APP!!!! OR BUG nRNA count!!!!!!  ####
 ### count nb of cells in each cluster
 WT_p35_CB_Rep1 = table(Idents(WT_Kcnc1_p35_CB_1step.sct)[WT_Kcnc1_p35_CB_1step.sct$orig.ident == "WT_p35_CB_Rep1"]) %>%
   as.data.frame() %>%
@@ -2708,7 +2895,7 @@ p35_CB_prop$genotype <-
   factor(p35_CB_prop$genotype,
          c("WT", "Kcnc1"))
 
-pdf("output/seurat/histogramProp_WT_Kcnc1_p35_CB_1step_QCV3dim50kparam50res03.pdf", width=7, height=4)
+pdf("output/seurat/histogramProp_WT_Kcnc1_p35_CB_1step_QCV2dim50kparam20res03.pdf", width=7, height=4)
 ggbarplot(p35_CB_prop, x = "cluster", y = "proportion", fill = "genotype",
                   color = "genotype", palette = c("black", "blue"),
                   position = position_dodge(0.8), # Separate bars by genotype
@@ -2723,6 +2910,7 @@ dev.off()
 
 
 ### Outlier removed (WT and Kcnc1_Rep2)
+XXX NOT MODIFFED
 
 p35_CB_filt = WT_p35_CB_Rep1 %>%
   bind_rows(WT_p35_CB_Rep3) %>%
@@ -2753,6 +2941,11 @@ ggbarplot(p35_CB_filt_prop, x = "cluster", y = "proportion", fill = "genotype",
   labs(x = "Cell Type (Cluster)", y = "Cell Proportion (%)") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 dev.off()
+
+
+
+
+
 
 
 # differential expressed genes across conditions
@@ -4392,6 +4585,21 @@ makeShinyApp(WT_Kcnc1_p180_CB_1step.sct, scConf, gene.mapping = TRUE,
              shiny.dir = "shinyApp_WT_Kcnc1_p180_CB_1step_QCV4dim50kparam20res02/") 
 
 rsconnect::deployApp('shinyApp_WT_Kcnc1_p180_CB_1step_QCV4dim50kparam20res02')
+
+
+# Generate Shiny app QCV2 with name V2;  QCV2dim50kparam20res03 ; output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_label_ReProcess.rds
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_label_ReProcess.rds")
+
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "RNA" # 
+
+scConf = createConfig(WT_Kcnc1_p35_CB_1step.sct)
+
+makeShinyApp(WT_Kcnc1_p35_CB_1step.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "WT_Kcnc1_p35_CB_1step_QCV2dim50kparam20res03",
+             shiny.dir = "shinyApp_WT_Kcnc1_p35_CB_1step_QCV2dim50kparam20res03/") 
+
+rsconnect::deployApp('shinyApp_WT_Kcnc1_p35_CB_1step_QCV2dim50kparam20res03')
+
 
 
 ```

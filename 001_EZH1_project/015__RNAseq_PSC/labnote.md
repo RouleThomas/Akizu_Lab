@@ -234,30 +234,64 @@ write.table(long_data_log2tpm, file = c("output/tpm/long_data_log2tpm_Akoto.txt"
 --> Next here: `001_EZH1*/001__RNAseq` (`## Shiny app V3; including Ciceri RNAseq neuron diff dataset + Akoto 001/015 RNAseq`)
 
 
-# Generate Bigwig coverage files
+# bigwig 
+## Generate Bigwig coverage files
 
 Let's generate **TPM coverage**:
 
 ```bash
 conda activate deeptools
 # run time-per-time:
-sbatch scripts/TPM_bw.sh # 28775122 xxx
+sbatch scripts/TPM_bw.sh # 28775122 ok
 ```
 
 
 Let's merge the bigwig into 1 file with wiggletools (will do average of bigwig signal and not sum, many options see [github](https://github.com/Ensembl/WiggleTools)):
 
 
-XXX HERE
 
 **Run wiggletools:**
 ```bash
 conda activate BedToBigwig
-sbatch --dependency=afterany:15126648 scripts/bigwigmerge_TPM.sh #  xxx
+sbatch scripts/bigwigmerge_TPM.sh # 28990349 ok
 ```
 *NOTE: bigwig are merge into 1 bedgraph which is then converted into 1 bigwig (wiggletools cannot output bigwig directly so need to pass by bedgraph or wiggle in between)*
 
 
+
+
+
+
+
+## Pearson correlation heatmap on bigwig signals
+
+
+
+```bash
+conda activate deeptools
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_all.sh # 28990409 ok
+
+# Plot all
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_all.npz \
+    --transpose \
+    --ntop 0 \
+    --labels WT_R1 WT_R2 WT_R3 KO_R1 KO_R2 KO_R3 KOEF1aEZH1_R1 KOEF1aEZH1_R2 KOEF1aEZH1_R3 \
+    --colors black black black red red red blue blue blue \
+    -o output/bigwig/multiBigwigSummary_all_plotPCA.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_all.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels WT_R1 WT_R2 WT_R3 KO_R1 KO_R2 KO_R3 KOEF1aEZH1_R1 KOEF1aEZH1_R2 KOEF1aEZH1_R3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_all_heatmap.pdf
+
+```
 
 
 
