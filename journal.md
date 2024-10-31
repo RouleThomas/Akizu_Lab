@@ -164,6 +164,7 @@ WORK great!
 ### scRNAseqV2
 
 --> Same scRNAseq but also allow Shiny app creation!
+--> And with harmony
 
 ### scRNAseqV3
 

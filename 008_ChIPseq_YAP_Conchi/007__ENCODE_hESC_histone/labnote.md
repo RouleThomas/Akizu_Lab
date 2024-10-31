@@ -12,12 +12,12 @@ Pipeline:
 # Data download from ENCODE
 
 Prioritize most recent datasets, or all datasets from same lab:
-- **Bing Ren**, UCSD_Project ROADMAP; [2013 2 Bio Rep; processed 2020](https://www.encodeproject.org/experiments/ENCSR928HYM/):
+- **Bing Ren (GSE16256)**, UCSD_Project ROADMAP; [2013 2 Bio Rep; processed 2020](https://www.encodeproject.org/experiments/ENCSR928HYM/):
     - **H3K27me3**: *ENCFF395GVR* bigwig signal p-value; *ENCFF599KDF* bed
     - **H3K4me1**:  *ENCFF164XHJ* bigwig signal p-value; *ENCFF613QAB* bed
     - **H3K36me3**: *ENCFF483UMR* bigwig signal p-value; *ENCFF681CEO* bed
     - **H3K27ac**:  *ENCFF390JIZ* bigwig signal p-value; *ENCFF045CUG* bed
-- **Bradley Bernstein**, Broad_Project ENCODE; 2013
+- **Bradley Bernstein (GSE29611)**, Broad_Project ENCODE; 2013
     - **H3K27me3**: *ENCFF193PKI* bigwig signal p-value; *ENCFF305KNA* bed
     - **H3K4me1**:  *ENCFF706CHK* bigwig signal p-value; *ENCFF984DGO* bed
     - **H3K36me3**: *ENCFF985CVI* bigwig signal p-value; *ENCFF504KOV* bed

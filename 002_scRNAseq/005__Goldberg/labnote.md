@@ -567,7 +567,7 @@ write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_V4.txt"
 ############ SAVE samples #################################################################
 save_seurat_objects <- function(seurat_objects_list, output_dir) {
   for (sample_name in names(seurat_objects_list)) {
-    file_name <- paste0(output_dir, sample_name, "_V2_ReProcess_numeric.rds") # _V2_numeric _ V3 for p14 ; v4 for p180; V2 for p35
+    file_name <- paste0(output_dir, sample_name, "_V2_ReProcess_numeric.rds") # _V2_numeric \\\--> V3 for p14 ; v4 for p180; V2 for p35
     saveRDS(seurat_objects_list[[sample_name]], file = file_name) # V2 got a ReProcess for sample p35
   }
 }
@@ -2256,7 +2256,7 @@ Kcnc1_p35_CB_Rep2_nCountRNA500$replicate <- "Rep2"   #  Kcnc1_p35_CB_Rep2
 Kcnc1_p35_CB_Rep3$replicate <- "Rep3"
 
 Kcnc1_p35_CB_Rep1$condition <- "Kcnc1"
-Kcnc1_p35_CB_Rep2_nCountRNA500$condition <- "Kcnc1" # Kcnc1_p35_CB_Rep2_nCountRNA500 Kcnc1_p35_CB_Rep2
+Kcnc1_p35_CB_Rep2$condition <- "Kcnc1" # Kcnc1_p35_CB_Rep2_nCountRNA500 Kcnc1_p35_CB_Rep2
 Kcnc1_p35_CB_Rep3$condition <- "Kcnc1"
 
 set.seed(42)
@@ -2342,6 +2342,60 @@ WT_Kcnc1_p35_CB_1step.sct$condition <- factor(WT_Kcnc1_p35_CB_1step.sct$conditio
 pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou_Kcnc1Rep2nCountRNA500-QCV2dim50kparam20res03.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
+
+################################################################################
+## TRY HARMONY ########################################################################################
+# install.packages("harmony")
+library("harmony")
+### Reg v1 _ better than Regv2 - Correct for bug RNA quantity leading to downregulation of all genes _ QCV2
+WT_p35_CB_Rep1 <- SCTransform(WT_p35_CB_Rep1, method = "glmGamPoi", ncells = 7299, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+WT_p35_CB_Rep2 <- SCTransform(WT_p35_CB_Rep2, method = "glmGamPoi", ncells = 10683, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+WT_p35_CB_Rep3 <- SCTransform(WT_p35_CB_Rep3, method = "glmGamPoi", ncells = 13664, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p35_CB_Rep1 <- SCTransform(Kcnc1_p35_CB_Rep1, method = "glmGamPoi", ncells = 10264, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p35_CB_Rep2 <- SCTransform(Kcnc1_p35_CB_Rep2, method = "glmGamPoi", ncells = 33623, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p35_CB_Rep3 <- SCTransform(Kcnc1_p35_CB_Rep3, method = "glmGamPoi", ncells = 16447, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+
+srat.list <- list(WT_p35_CB_Rep1 = WT_p35_CB_Rep1, WT_p35_CB_Rep2 = WT_p35_CB_Rep2, WT_p35_CB_Rep3 = WT_p35_CB_Rep3, Kcnc1_p35_CB_Rep1 = Kcnc1_p35_CB_Rep1, Kcnc1_p35_CB_Rep2 = Kcnc1_p35_CB_Rep2, Kcnc1_p35_CB_Rep3 = Kcnc1_p35_CB_Rep3)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+
+
+srat.list <- list(WT_p35_CB_Rep1 = WT_p35_CB_Rep1, WT_p35_CB_Rep2 = WT_p35_CB_Rep2, WT_p35_CB_Rep3 = WT_p35_CB_Rep3, Kcnc1_p35_CB_Rep1 = Kcnc1_p35_CB_Rep1, Kcnc1_p35_CB_Rep3 = Kcnc1_p35_CB_Rep3)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+#-->Same shit downregulation all genes...
+srat.list <- list(WT_p35_CB_Rep1 = WT_p35_CB_Rep1, Kcnc1_p35_CB_Rep1 = Kcnc1_p35_CB_Rep1)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+#-->Same shit downregulation all genes...
+
+srat.list <- list(WT_p35_CB_Rep2 = WT_p35_CB_Rep2, WT_p35_CB_Rep3 = WT_p35_CB_Rep3, Kcnc1_p35_CB_Rep1 = Kcnc1_p35_CB_Rep1, Kcnc1_p35_CB_Rep3 = Kcnc1_p35_CB_Rep3)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+
+## Merge dataset, and not integrate!
+WT_Kcnc1_p35_CB_1step.sct <- merge(x = srat.list[[1]], y = srat.list[2:length(srat.list)], merge.data=TRUE)
+VariableFeatures(WT_Kcnc1_p35_CB_1step.sct) <- features
+
+WT_Kcnc1_p35_CB_1step.sct <- RunPCA(WT_Kcnc1_p35_CB_1step.sct, verbose = FALSE, npcs = 50)
+WT_Kcnc1_p35_CB_1step.sct <- RunHarmony(WT_Kcnc1_p35_CB_1step.sct, assay.use="SCT", group.by.vars = "condition") # group.by.vars is the experimental covariates to be corrected/harmonized by the algorithm.
+WT_Kcnc1_p35_CB_1step.sct <- RunUMAP(WT_Kcnc1_p35_CB_1step.sct, reduction = "harmony", dims = 1:50)
+WT_Kcnc1_p35_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p35_CB_1step.sct, reduction = "harmony", k.param = 20, dims = 1:50)
+WT_Kcnc1_p35_CB_1step.sct <- FindClusters(WT_Kcnc1_p35_CB_1step.sct, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+
+WT_Kcnc1_p35_CB_1step.sct$condition <- factor(WT_Kcnc1_p35_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV2dim50kparam20res03Harmony.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=TRUE)
+dev.off()
+# --> Same puttin orig.ident in RunHarmony(*, group.by.vars)... A lot of downreagulated genes for cluster1 (Granular)...
+########################################################################################################################
+########################################################################################################################
+
+
+
+
+
+
+
+
 
 
 
@@ -2447,6 +2501,8 @@ WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step
 Kcnc1_p35_CB_Rep2_nCountRNA500 <- readRDS(file = "output/seurat/Kcnc1_p35_CB_Rep2_nCountRNA500.rds")
 
 # saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step_Kcnc1Rep2nCountRNA500-QCV2dim50kparam20res03.sct_V1_numeric_ReProcess.rds") #
+
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step_Kcnc1Rep2nCountRNA500-QCV2dim50kparam20res03.sct_V1_numeric_ReProcess.rds")
 
 set.seed(42)
 ##########
@@ -2984,6 +3040,11 @@ clusters <- c(
   "Choroid_Plexus",
   "Endothelial_Stalk"
 )
+
+clusters <- c(
+  "Purkinje"
+)
+
 # Initialize an empty list to store the results for each cluster
 cluster_markers <- list()
 # Loop through each cluster and perform FindMarkers
@@ -3002,7 +3063,7 @@ for (cluster in clusters) {
   # Store the result in the list
   cluster_markers[[cluster]] <- markers
   # Save the result as a text file
-  output_filename <- paste0("output/seurat/", cluster, "-Kcnc1_response_p35_CB_QCV3dim50kparam50res03_allGenes.txt")
+  output_filename <- paste0("output/seurat/", cluster, "-Kcnc1_response_p35_CB_QCV3dim50kparam20res03Reprocess_allGenes.txt")
   write.table(markers, file = output_filename, sep = "\t", quote = FALSE, row.names = TRUE)
 }
 # --> Too long run in slurm job
@@ -4442,17 +4503,19 @@ ggplot(final_results, aes(x=cluster, y=pathway)) +
 dev.off()
 
 
-
-
-
-
-
-
-
-
 ```
 
 --> How many dims to use? Not clear, using Elbow and [quantification](https://hbctraining.github.io/scRNA-seq/lessons/elbow_plot_metric.html) say 13dims (but look very few!!). We do not observe significant changes of clustering by changes the numb of dims. Only small cluster are affected (Serotonergic neurons)
+
+--> p35 CB sample is problematic. Most genes in most cluster are downregulated, hinting at a technical issue... From all samples, Kcnc1_Rep2 seems oputlier with a lot of cells and very low nCount_RNA. I tried removing this sample but same issue occur. I also tried using [Harmony](https://github.com/immunogenomics/harmony) instead SCT-seurat pipleline for data sample integration without success, same bias is occuring. I also testing working on Rep1 of WT and Kcnc1 and XXX
+  - [Discussion on Harmony pipeline to integrate with SCTransform](https://github.com/satijalab/seurat/issues/4896): Pipeline I used
+  - [Discussion about Harmony and seurat](https://github.com/immunogenomics/harmony/issues/41)
+
+
+    --> Could try [MNN integration](https://github.com/satijalab/seurat-wrappers/blob/master/docs/fast_mnn.md) method? 
+
+
+
 
 
 ## Slurm jobs
