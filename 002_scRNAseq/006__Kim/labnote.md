@@ -7271,18 +7271,27 @@ dev.off()
 ### Pathway analysis
 
 Let's do some pathway analysis for *WNT signaling*. Pathway of interest collected from [msigdb](https://www.gsea-msigdb.org/gsea/msigdb/mouse/genesets.jsp?collection=M2):
+**List1:**
   - BIOCARTA_WNT_PATHWAY
   - REACTOME_SIGNALING_BY_WNT 
   - REACTOME_WNT_LIGAND_BIOGENESIS_AND_TRAFFICKING 
   - WP_WNT_SIGNALING 
   - WP_WNT_SIGNALING_PATHWAY
   - WP_WNT_SIGNALING_PATHWAY_AND_PLURIPOTENCY
+**List2:**
   - GOBP_WNT_SIGNALING_PATHWAY
   - GOBP_CANONICAL_WNT_SIGNALING_PATHWAY
   - GOBP_NON_CANONICAL_WNT_SIGNALING_PATHWAY
   - GOBP_REGULATION_OF_WNT_SIGNALING_PATHWAY
   - BIOCARTA_SHH_PATHWAY
-
+  - allCombined_WNT
+**List3:**
+  - WP_HEDGEHOG_SIGNALING_PATHWAY
+  - REACTOME_HEDGEHOG_ON_STATE
+  - REACTOME_HEDGEHOG_OFF_STATE
+  - REACTOME_HEDGEHOG_LIGAND_BIOGENESIS
+  - REACTOME_SIGNALING_BY_HEDGEHOG
+  - allCombined_SHH (154 genes)
 
 Gene names downloaded and available at `output/Pathway/geneList_[PATHWAY].txt`.
 
@@ -7374,7 +7383,6 @@ fgsea_sets <- list(
 )
 
 ### List2
-
 fgsea_sets <- list(
   GOBP_WNT_SIGNALING_PATHWAY = read_table(file = c("output/Pathway/geneList_GOBP_WNT_SIGNALING_PATHWAY.txt"))$Genes,
   GOBP_CANONICAL_WNT_SIGNALING_PATHWAY = read_table(file = c("output/Pathway/geneList_GOBP_CANONICAL_WNT_SIGNALING_PATHWAY.txt"))$Genes,
@@ -7383,6 +7391,18 @@ fgsea_sets <- list(
   BIOCARTA_SHH_PATHWAY = read_table(file = c("output/Pathway/geneList_BIOCARTA_SHH_PATHWAY.txt"))$Genes,
   allCombined_WNT = read_table(file = c("output/Pathway/geneList_allCombined_WNT.txt"))$Genes
 )
+
+### List3
+fgsea_sets <- list(
+  WP_HEDGEHOG_SIGNALING_PATHWAY = read_table(file = c("output/Pathway/geneList_WP_HEDGEHOG_SIGNALING_PATHWAY.txt"))$Genes,
+  REACTOME_HEDGEHOG_ON_STATE = read_table(file = c("output/Pathway/geneList_REACTOME_HEDGEHOG_ON_STATE.txt"))$Genes,
+  REACTOME_HEDGEHOG_OFF_STATE = read_table(file = c("output/Pathway/geneList_REACTOME_HEDGEHOG_OFF_STATE.txt"))$Genes,
+  REACTOME_HEDGEHOG_LIGAND_BIOGENESIS = read_table(file = c("output/Pathway/geneList_REACTOME_HEDGEHOG_LIGAND_BIOGENESIS.txt"))$Genes,
+  REACTOME_SIGNALING_BY_HEDGEHOG = read_table(file = c("output/Pathway/geneList_REACTOME_SIGNALING_BY_HEDGEHOG.txt"))$Genes,
+  allCombined_SHH = read_table(file = c("output/Pathway/geneList_allCombined_SHH.txt"))$Genes
+)
+
+
 
 
 ## Rank genes based on FC
@@ -7504,10 +7524,10 @@ for (cluster in cluster_types) {
 ## Combine results from all cluster types into one table
 final_results <- bind_rows(all_results, .id = "cluster")
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes-List2.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(final_results, file = c("output/Pathway/gsea_output_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes-List3.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_padj-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes-List2.pdf", width=8, height=4)
+pdf("output/Pathway/heatmap_gsea_pval-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes-List3.pdf", width=8, height=4)
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -7525,7 +7545,7 @@ ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) +
   ) +
   scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
   geom_text(aes(label=sprintf("%.2f", NES)), 
-            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            color = ifelse(final_results$pval <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
             size=2) +
   coord_fixed()  # Force aspect ratio of the plot to be 1:1
 dev.off()

@@ -3014,7 +3014,8 @@ dev.off()
 
 
 
-# differential expressed genes across conditions
+# differential expressed genes across conditions ##########################
+############## Default method ##########
 ## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
 DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "RNA"
 
@@ -3067,6 +3068,127 @@ for (cluster in clusters) {
   write.table(markers, file = output_filename, sep = "\t", quote = FALSE, row.names = TRUE)
 }
 # --> Too long run in slurm job
+
+
+## Slight test other DEG method (bimod, roc, t, negbinom, poisson, LR, MAST)
+Idents(WT_Kcnc1_p35_CB_1step.sct) <- "celltype.stim"
+
+Purkinje_bimod <- FindMarkers(object = WT_Kcnc1_p35_CB_1step.sct, 
+                         ident.1 = "Purkinje-Kcnc1", 
+                         ident.2 = "Purkinje-WT",
+                         test.use = "bimod")
+OPC_bimod <- FindMarkers(object = WT_Kcnc1_p35_CB_1step.sct, 
+                         ident.1 = "OPC-Kcnc1", 
+                         ident.2 = "OPC-WT",
+                         test.use = "bimod")
+Meningeal_bimod <- FindMarkers(object = WT_Kcnc1_p35_CB_1step.sct, 
+                         ident.1 = "Meningeal-Kcnc1", 
+                         ident.2 = "Meningeal-WT",
+                         test.use = "bimod")
+cat("Upregulated:", sum(Meningeal_bimod$p_val_adj < 0.05 & Meningeal_bimod$avg_log2FC > 0), 
+    "\nDownregulated:", sum(Meningeal_bimod$p_val_adj < 0.05 & Meningeal_bimod$avg_log2FC < 0), "\n")
+Purkinje_roc <- FindMarkers(object = WT_Kcnc1_p35_CB_1step.sct, 
+                         ident.1 = "Purkinje-Kcnc1", 
+                         ident.2 = "Purkinje-WT",
+                         test.use = "roc")
+cat("Upregulated:", sum(Purkinje_roc$p_val_adj < 0.05 & Purkinje_roc$avg_log2FC > 0), 
+    "\nDownregulated:", sum(Purkinje_roc$p_val_adj < 0.05 & Purkinje_roc$avg_log2FC < 0), "\n")
+Purkinje_t <- FindMarkers(object = WT_Kcnc1_p35_CB_1step.sct, 
+                         ident.1 = "Purkinje-Kcnc1", 
+                         ident.2 = "Purkinje-WT",
+                         test.use = "t")
+cat("Upregulated:", sum(Purkinje_t$p_val_adj < 0.05 & Purkinje_t$avg_log2FC > 0), 
+    "\nDownregulated:", sum(Purkinje_t$p_val_adj < 0.05 & Purkinje_t$avg_log2FC < 0), "\n")
+Purkinje_negbinom <- FindMarkers(object = WT_Kcnc1_p35_CB_1step.sct, 
+                         ident.1 = "Purkinje-Kcnc1", 
+                         ident.2 = "Purkinje-WT",
+                         test.use = "negbinom")
+cat("Upregulated:", sum(Purkinje_negbinom$p_val_adj < 0.05 & Purkinje_negbinom$avg_log2FC > 0), 
+    "\nDownregulated:", sum(Purkinje_negbinom$p_val_adj < 0.05 & Purkinje_negbinom$avg_log2FC < 0), "\n")
+Purkinje_poisson <- FindMarkers(object = WT_Kcnc1_p35_CB_1step.sct, 
+                         ident.1 = "Purkinje-Kcnc1", 
+                         ident.2 = "Purkinje-WT",
+                         test.use = "poisson")
+cat("Upregulated:", sum(Purkinje_poisson$p_val_adj < 0.05 & Purkinje_poisson$avg_log2FC > 0), 
+    "\nDownregulated:", sum(Purkinje_poisson$p_val_adj < 0.05 & Purkinje_poisson$avg_log2FC < 0), "\n")
+Purkinje_LR <- FindMarkers(object = WT_Kcnc1_p35_CB_1step.sct, 
+                         ident.1 = "Purkinje-Kcnc1", 
+                         ident.2 = "Purkinje-WT",
+                         test.use = "LR")
+cat("Upregulated:", sum(Purkinje_LR$p_val_adj < 0.05 & Purkinje_LR$avg_log2FC > 0), 
+    "\nDownregulated:", sum(Purkinje_LR$p_val_adj < 0.05 & Purkinje_LR$avg_log2FC < 0), "\n")
+Purkinje_MAST <- FindMarkers(object = WT_Kcnc1_p35_CB_1step.sct, 
+                         ident.1 = "Purkinje-Kcnc1", 
+                         ident.2 = "Purkinje-WT",
+                         test.use = "MAST")
+cat("Upregulated:", sum(Purkinje_MAST$p_val_adj < 0.05 & Purkinje_MAST$avg_log2FC > 0), 
+    "\nDownregulated:", sum(Purkinje_MAST$p_val_adj < 0.05 & Purkinje_MAST$avg_log2FC < 0), "\n")
+#--> Same.. all method give many downregulated genes..
+
+
+############## Perform DE analysis after pseudobulking ##########
+
+### Transform seurat to pseudobulk seurat
+pseudo_WT_Kcnc1_p35_CB_1step.sct <- AggregateExpression(WT_Kcnc1_p35_CB_1step.sct, assays = "RNA", return.seurat = T, group.by = c("condition", "orig.ident", "cluster.annot"))
+### each 'cell' is a genotype-condition-celltype pseudobulk profile
+tail(Cells(pseudo_WT_Kcnc1_p35_CB_1step.sct))
+head(Cells(pseudo_WT_Kcnc1_p35_CB_1step.sct))
+### Extract cell names and update the pseudo seurat with $informations
+#### Extract cell names
+cell_names <- Cells(pseudo_WT_Kcnc1_p35_CB_1step.sct)
+#### Split the cell names into parts
+#### The split pattern below splits into 3 parts: condition, orig.ident, and cluster.annot
+cell_parts <- strsplit(cell_names, "_", fixed = TRUE)
+#### Extract condition, orig.ident, and cluster.annot from each cell name
+condition <- sapply(cell_parts, function(x) x[1]) # The first part is the condition
+orig_ident <- sapply(cell_parts, function(x) paste(x[2:length(x) - 1], collapse = "_")) # Middle parts are orig.ident, which may contain underscores
+cluster_annot <- sapply(cell_parts, function(x) x[length(x)]) # The last part is the cluster annotation
+#### Add extracted data as metadata to the Seurat object
+pseudo_WT_Kcnc1_p35_CB_1step.sct$condition <- condition
+pseudo_WT_Kcnc1_p35_CB_1step.sct$orig.ident <- orig_ident
+pseudo_WT_Kcnc1_p35_CB_1step.sct$cluster.annot <- cluster_annot
+
+### Prepare and perform pseudobulk DEG
+pseudo_WT_Kcnc1_p35_CB_1step.sct$celltype.stim <- paste(pseudo_WT_Kcnc1_p35_CB_1step.sct$cluster.annot, pseudo_WT_Kcnc1_p35_CB_1step.sct$condition, sep = "_")
+
+Idents(pseudo_WT_Kcnc1_p35_CB_1step.sct) <- "celltype.stim"
+DefaultAssay(pseudo_WT_Kcnc1_p35_CB_1step.sct) <- "RNA"
+
+### round the counts to be used by deseq2 (require integer)
+#### Access the raw counts matrix in the RNA assay
+counts_matrix <- GetAssayData(pseudo_WT_Kcnc1_p35_CB_1step.sct, slot = "counts", assay = "RNA")
+#### Round the counts to the nearest integer
+rounded_counts_matrix <- round(counts_matrix)
+#### Replace the counts in the Seurat object with the rounded counts
+pseudo_WT_Kcnc1_p35_CB_1step.sct <- SetAssayData(pseudo_WT_Kcnc1_p35_CB_1step.sct, slot = "counts", new.data = rounded_counts_matrix, assay = "RNA")
+
+
+
+Purkinje_pseudobulk <- FindMarkers(object = pseudo_WT_Kcnc1_p35_CB_1step.sct, 
+                         ident.1 = "Purkinje_Kcnc1", 
+                         ident.2 = "Purkinje_WT",
+                         test.use = "DESeq2")
+Granule_pseudobulk <- FindMarkers(object = pseudo_WT_Kcnc1_p35_CB_1step.sct, 
+                         ident.1 = "Granule_Kcnc1", 
+                         ident.2 = "Granule_WT",
+                         test.use = "DESeq2")
+Astrocyte_pseudobulk <- FindMarkers(object = pseudo_WT_Kcnc1_p35_CB_1step.sct, 
+                         ident.1 = "Astrocyte_Kcnc1", 
+                         ident.2 = "Astrocyte_WT",
+                         test.use = "DESeq2")
+Meningeal_pseudobulk <- FindMarkers(object = pseudo_WT_Kcnc1_p35_CB_1step.sct, 
+                         ident.1 = "Meningeal_Kcnc1", 
+                         ident.2 = "Meningeal_WT",
+                         test.use = "DESeq2")
+cat("Upregulated:", sum(Meningeal_pseudobulk$p_val_adj < 0.05 & Meningeal_pseudobulk$avg_log2FC > 0), 
+    "\nDownregulated:", sum(Meningeal_pseudobulk$p_val_adj < 0.05 & Meningeal_pseudobulk$avg_log2FC < 0), "\n")
+#-=-> DESEQ2 to be run on the raw counts of RNA assay!                         
+#--> Few to no DEGs
+
+
+
+
+
 
 
 
@@ -4514,6 +4636,7 @@ dev.off()
 
     --> Could try [MNN integration](https://github.com/satijalab/seurat-wrappers/blob/master/docs/fast_mnn.md) method? 
 
+--> Let's try alternative DEG test; discuss [here](https://satijalab.org/seurat/articles/de_vignette)
 
 
 
