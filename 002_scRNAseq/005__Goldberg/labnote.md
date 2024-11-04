@@ -2252,7 +2252,7 @@ WT_p35_CB_Rep2$condition <- "WT"
 WT_p35_CB_Rep3$condition <- "WT"
 
 Kcnc1_p35_CB_Rep1$replicate <- "Rep1"
-Kcnc1_p35_CB_Rep2_nCountRNA500$replicate <- "Rep2"   #  Kcnc1_p35_CB_Rep2
+Kcnc1_p35_CB_Rep2$replicate <- "Rep2"   #   Kcnc1_p35_CB_Rep2_nCountRNA500
 Kcnc1_p35_CB_Rep3$replicate <- "Rep3"
 
 Kcnc1_p35_CB_Rep1$condition <- "Kcnc1"
@@ -2389,6 +2389,53 @@ dev.off()
 ########################################################################################################################
 ########################################################################################################################
 
+
+
+
+################################################################################
+## TRY LOGNORM WITH SCT ########################################################################################
+### Reg v1 _ better than Regv2 - Correct for bug RNA quantity leading to downregulation of all genes _ QCV2
+## NormalizeData
+WT_p35_CB_Rep1 <- NormalizeData(WT_p35_CB_Rep1, normalization.method = "LogNormalize", scale.factor = 10000) 
+WT_p35_CB_Rep2 <- NormalizeData(WT_p35_CB_Rep2, normalization.method = "LogNormalize", scale.factor = 10000) 
+WT_p35_CB_Rep3 <- NormalizeData(WT_p35_CB_Rep3, normalization.method = "LogNormalize", scale.factor = 10000) 
+Kcnc1_p35_CB_Rep1 <- NormalizeData(Kcnc1_p35_CB_Rep1, normalization.method = "LogNormalize", scale.factor = 10000) 
+Kcnc1_p35_CB_Rep2 <- NormalizeData(Kcnc1_p35_CB_Rep2, normalization.method = "LogNormalize", scale.factor = 10000) 
+Kcnc1_p35_CB_Rep3 <- NormalizeData(Kcnc1_p35_CB_Rep3, normalization.method = "LogNormalize", scale.factor = 10000) 
+
+## SCT
+WT_p35_CB_Rep1 <- SCTransform(WT_p35_CB_Rep1, method = "glmGamPoi", ncells = 7299, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+WT_p35_CB_Rep2 <- SCTransform(WT_p35_CB_Rep2, method = "glmGamPoi", ncells = 10683, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+WT_p35_CB_Rep3 <- SCTransform(WT_p35_CB_Rep3, method = "glmGamPoi", ncells = 13664, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p35_CB_Rep1 <- SCTransform(Kcnc1_p35_CB_Rep1, method = "glmGamPoi", ncells = 10264, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p35_CB_Rep2 <- SCTransform(Kcnc1_p35_CB_Rep2, method = "glmGamPoi", ncells = 33623, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p35_CB_Rep3 <- SCTransform(Kcnc1_p35_CB_Rep3, method = "glmGamPoi", ncells = 16447, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+
+srat.list <- list(WT_p35_CB_Rep1 = WT_p35_CB_Rep1, WT_p35_CB_Rep2 = WT_p35_CB_Rep2, WT_p35_CB_Rep3 = WT_p35_CB_Rep3, Kcnc1_p35_CB_Rep1 = Kcnc1_p35_CB_Rep1, Kcnc1_p35_CB_Rep2 = Kcnc1_p35_CB_Rep2, Kcnc1_p35_CB_Rep3 = Kcnc1_p35_CB_Rep3)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+WT_Kcnc1_p35_CB_1step.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+WT_Kcnc1_p35_CB_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p35_CB_1step.anchors, normalization.method = "SCT")
+
+
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "integrated"
+
+WT_Kcnc1_p35_CB_1step.sct <- RunPCA(WT_Kcnc1_p35_CB_1step.sct, verbose = FALSE, npcs = 50)
+WT_Kcnc1_p35_CB_1step.sct <- RunUMAP(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
+WT_Kcnc1_p35_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", k.param = 20, dims = 1:50)
+WT_Kcnc1_p35_CB_1step.sct <- FindClusters(WT_Kcnc1_p35_CB_1step.sct, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+
+WT_Kcnc1_p35_CB_1step.sct$condition <- factor(WT_Kcnc1_p35_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou_Kcnc1Rep2nCountRNA500-QCV2dim50kparam20res03.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=TRUE)
+dev.off()
+
+########################################################################################################################
+########################################################################################################################
 
 
 
