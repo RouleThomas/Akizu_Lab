@@ -7307,8 +7307,6 @@ dev.off()
 
 ### Pathway analysis
 
-XXXY HERE re do with _correct.txt
-
 Let's do some pathway analysis for *WNT signaling*. Pathway of interest collected from [msigdb](https://www.gsea-msigdb.org/gsea/msigdb/mouse/genesets.jsp?collection=M2):
 **List1:**
   - BIOCARTA_WNT_PATHWAY
@@ -7444,30 +7442,8 @@ fgsea_sets <- list(
 
 
 
-## Rank genes based on FC
-genes <- DG_GC %>%  ## CHANGE HERE CLUSTER NAME LIST !!!!!!!!!!!!!!!! ##
-  rownames_to_column(var = "gene") %>%
-  arrange(desc(avg_log2FC)) %>% 
-  dplyr::select(gene, avg_log2FC)
-ranks <- deframe(genes)
-head(ranks)
-## Run GSEA
-fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 1000)
-fgseaResTidy <- fgseaRes %>%
-  as_tibble() %>%
-  arrange(desc(ES))
-fgseaResTidy %>% 
-  dplyr::select(-leadingEdge, -NES, -nMoreExtreme) %>% 
-  arrange(padj) %>% 
-  head()
-## plot GSEA
-pdf("output/Pathway/GSEA_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes-WNT-DG_GC.pdf", width=5, height=3)
-plotEnrichment(fgsea_sets[["BIOCARTA_WNT_PATHWAY"]],   ## CHANGE PATHWAY LIST !!!!!!!!!!!!!!!! ##
-               ranks) + labs(title="BIOCARTA_WNT_PATHWAY-DG_GC") +  ## CHANGE HERE NAME PATHWAY-CLUSTER !!!!!!!!!!!!!!!! ##
-               theme_bw()
-dev.off()
 
-
+# FC only ##############################################
 # GSEA all together
 ## List of clusters to analyze
 clusters <- list("PyNs_SubC_CA23", "IN_1", "SubC_1", "PyNs_SubC_CA1", "PyNs_RSC_UL", "DG_GC", "PyNs_RSC_MDL",
@@ -7482,13 +7458,15 @@ for (cluster_name in clusters) {
     arrange(desc(avg_log2FC)) %>%
     dplyr::select(gene, avg_log2FC)
   ranks <- deframe(genes)
+
+
   # Run GSEA for each pathway
-  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 1000)
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 1000000)
   fgseaResTidy <- fgseaRes %>%
     as_tibble() %>%
     arrange(desc(ES))
   # Save results
-  write_tsv(fgseaResTidy, paste0("output/Pathway/GSEA_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_", cluster_name, ".tsv"))
+  write_tsv(fgseaResTidy, paste0("output/Pathway/GSEA_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct_", cluster_name, ".tsv"))
   # Generate plots for each pathway
   for (pathway in names(fgsea_sets)) {
     # Create the plot
@@ -7498,7 +7476,7 @@ for (cluster_name in clusters) {
     
     # Save the plot using ggsave
     ggsave(
-      filename = paste0("output/Pathway/GSEA_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_", pathway, "_", cluster_name, ".pdf"),
+      filename = paste0("output/Pathway/GSEA_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct_", pathway, "_", cluster_name, ".pdf"),
       plot = gsea_plot,
       width = 5, height = 3, device = "pdf"
     )
@@ -7545,7 +7523,7 @@ for (cluster in cluster_types) {
   ranks <- deframe(genes)
   
   # Run GSEA for the current cluster
-  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 1000)
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 1000000)
   fgseaResTidy <- fgseaRes %>%
     as_tibble() %>%
     arrange(desc(ES))
@@ -7563,10 +7541,10 @@ for (cluster in cluster_types) {
 ## Combine results from all cluster types into one table
 final_results <- bind_rows(all_results, .id = "cluster")
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes-List3.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(final_results, file = c("output/Pathway/gsea_output_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct-List1.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_pval-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes-List3.pdf", width=8, height=4)
+pdf("output/Pathway/heatmap_gsea_pval-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct-List1.pdf", width=8, height=4)
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -7589,9 +7567,117 @@ ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) +
   coord_fixed()  # Force aspect ratio of the plot to be 1:1
 dev.off()
 
-pdf("output/Pathway/heatmap_gsea_pval_greyTile-Kcnc1_response_p35_CB_QCV3dim50kparam50res03_allGenes-mmu05022s.pdf", width=5, height=5)
-ggplot(final_results, aes(x=cluster, y=pathway)) + 
-  geom_tile(aes(fill = ifelse(pval <= 0.05, ES, NA)), color = "black") +  # Conditional fill based on significance
+
+
+
+
+
+
+# rank_FCpval: sign(log2(FC))*-log(p value) ##############################################
+# GSEA all together
+## List of clusters to analyze
+clusters <- list("PyNs_SubC_CA23", "IN_1", "SubC_1", "PyNs_SubC_CA1", "PyNs_RSC_UL", "DG_GC", "PyNs_RSC_MDL",
+                 "NSC_proliferative_1", "SubC_2", "IN_2", "NSC_quiescent", "IN_SubC", "IP", 
+                 "NSC_proliferative_2", "CR", "OPC", "Meningeal_Cells", "Radial_Glia_Cells", "Microglia")
+
+## Automate the GSEA and plot generation
+for (cluster_name in clusters) {
+  # Rank genes based on avg_log2FC for the current cluster
+  genes <- get(cluster_name) %>%   # Ensure you have a list/dataframe for each cluster, e.g., PyNs_SubC_CA23, etc.
+    rownames_to_column(var = "gene") %>%
+    mutate(rank_FCpval = sign(avg_log2FC) * -log(p_val)) %>%  # Create rank column
+    arrange(desc(rank_FCpval)) %>%
+    dplyr::select(gene, rank_FCpval)
+  ranks <- deframe(genes)
+
+
+  # Run GSEA for each pathway
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks)
+  fgseaResTidy <- fgseaRes %>%
+    as_tibble() %>%
+    arrange(desc(ES))
+  # Save results
+  write_tsv(fgseaResTidy, paste0("output/Pathway/GSEA_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_rank_FCpval_correct_", cluster_name, ".tsv"))
+  # Generate plots for each pathway
+  for (pathway in names(fgsea_sets)) {
+    # Create the plot
+    gsea_plot <- plotEnrichment(fgsea_sets[[pathway]], ranks) +
+      labs(title = paste0(pathway, "-", cluster_name)) +
+      theme_bw()
+    
+    # Save the plot using ggsave
+    ggsave(
+      filename = paste0("output/Pathway/GSEA_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_rank_FCpval_correct_", pathway, "_", cluster_name, ".pdf"),
+      plot = gsea_plot,
+      width = 5, height = 3, device = "pdf"
+    )
+  }
+}
+
+
+
+
+
+# Save output table for all pathway and cluster
+## Define the list of cluster types
+cluster_types <- c( "PyNs_SubC_CA23" ,
+"IN_1" ,
+"SubC_1" ,
+"PyNs_SubC_CA1" ,
+"PyNs_RSC_UL" ,
+"DG_GC" ,
+"PyNs_RSC_MDL" ,
+"NSC_proliferative_1" ,
+"SubC_2" ,
+"IN_2" ,
+"NSC_quiescent" ,
+"IN_SubC" ,
+"IP" ,
+"NSC_proliferative_2" ,
+"CR" ,
+"OPC" ,
+"Meningeal_Cells" ,
+"Radial_Glia_Cells" ,
+"Microglia" )
+
+## Initialize an empty list to store the results for each cluster type
+all_results <- list()
+## Loop over each cluster type
+for (cluster in cluster_types) {
+  
+  # Extract genes for the current cluster
+  genes <- get(cluster) %>% 
+    rownames_to_column(var = "gene") %>%
+    arrange(desc(avg_log2FC)) %>% 
+    dplyr::select(gene, avg_log2FC)
+  
+  ranks <- deframe(genes)
+  
+  # Run GSEA for the current cluster
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks)
+  fgseaResTidy <- fgseaRes %>%
+    as_tibble() %>%
+    arrange(desc(ES))
+  
+  # Extract summary table and add cluster column
+  fgseaResTidy_summary = fgseaResTidy %>% 
+    dplyr::select(pathway, pval, padj, ES, size, NES) %>%
+    mutate(cluster = cluster) %>%
+    arrange(padj) %>% 
+    head()
+  
+  # Store results in the list
+  all_results[[cluster]] <- fgseaResTidy_summary
+}
+## Combine results from all cluster types into one table
+final_results <- bind_rows(all_results, .id = "cluster")
+
+write.table(final_results, file = c("output/Pathway/gsea_output_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct-List1.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+# Heatmap all GSEA
+pdf("output/Pathway/heatmap_gsea_pval-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct-List1.pdf", width=8, height=4)
+ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
   theme(
     axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
@@ -7605,10 +7691,10 @@ ggplot(final_results, aes(x=cluster, y=pathway)) +
     axis.line = element_blank(),
     legend.position = "bottom"
   ) +
-  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Enrichment\nScore", na.value="grey") +
-  # geom_text(aes(label=sprintf("%.2f", ES)), 
-  #           color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change between pvalue, qvalue,p.adjust
-  #           size=2) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(final_results$pval <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
   coord_fixed()  # Force aspect ratio of the plot to be 1:1
 dev.off()
 
