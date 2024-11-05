@@ -5522,6 +5522,12 @@ dev.off()
 ## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
 DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "RNA"
 
+
+multiome_WT_Bap1KO_QCV2vC1.sct <- NormalizeData(multiome_WT_Bap1KO_QCV2vC1.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(multiome_WT_Bap1KO_QCV2vC1.sct)
+multiome_WT_Bap1KO_QCV2vC1.sct <- ScaleData(multiome_WT_Bap1KO_QCV2vC1.sct, features = all.genes) # zero-centres and scales it
+
+
 ## DEGs keeping ALL genes
 multiome_WT_Bap1KO_QCV2vC1.sct$celltype.stim <- paste(multiome_WT_Bap1KO_QCV2vC1.sct$seurat_clusters, multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident,
     sep = "-")
@@ -5561,7 +5567,7 @@ cluster5 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "5-multiome_Ba
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
-    assay = "RNA")    
+    assay = "RNA") 
 cluster6 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "6-multiome_Bap1KO", ident.2 = "6-multiome_WT",
     verbose = TRUE,
     test.use = "wilcox",
@@ -5610,7 +5616,7 @@ cluster12 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "12-multiome_
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf, # 
-    assay = "RNA")  
+    assay = "RNA", min.cells.group = 2)   # min.cells.group = 2 added to avoid `error in validatecellgroups cell group 2 has fewer than 3 cells
 cluster13 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "13-multiome_Bap1KO", ident.2 = "13-multiome_WT",
     verbose = TRUE,
     test.use = "wilcox",
@@ -5663,26 +5669,26 @@ cluster19 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "19-multiome_
     
 
 ### save output
-write.table(cluster1, file = "output/Signac/cluster1-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster2, file = "output/Signac/cluster2-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster3, file = "output/Signac/cluster3-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster4, file = "output/Signac/cluster4-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster5, file = "output/Signac/cluster5-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster6, file = "output/Signac/cluster6-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster7, file = "output/Signac/cluster7-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster8, file = "output/Signac/cluster8-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster9, file = "output/Signac/cluster9-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster10, file = "output/Signac/cluster10-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster11, file = "output/Signac/cluster11-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster12, file = "output/Signac/cluster12-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster13, file = "output/Signac/cluster13-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster14, file = "output/Signac/cluster14-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster15, file = "output/Signac/cluster15-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster16, file = "output/Signac/cluster16-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster17, file = "output/Signac/cluster17-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster18, file = "output/Signac/cluster18-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster19, file = "output/Signac/cluster19-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-
+write.table(cluster1, file = "output/Signac/cluster1-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster2, file = "output/Signac/cluster2-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster3, file = "output/Signac/cluster3-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster4, file = "output/Signac/cluster4-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster5, file = "output/Signac/cluster5-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster6, file = "output/Signac/cluster6-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster7, file = "output/Signac/cluster7-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster8, file = "output/Signac/cluster8-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster9, file = "output/Signac/cluster9-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster10, file = "output/Signac/cluster10-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster11, file = "output/Signac/cluster11-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster12, file = "output/Signac/cluster12-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster13, file = "output/Signac/cluster13-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster14, file = "output/Signac/cluster14-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster15, file = "output/Signac/cluster15-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster16, file = "output/Signac/cluster16-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster17, file = "output/Signac/cluster17-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster18, file = "output/Signac/cluster18-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster19, file = "output/Signac/cluster19-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+#--> I added `*_correct` = the one I perfrom lognorm and scale prior DEG...
 
 
 
@@ -5695,7 +5701,7 @@ cluster_types <- c("cluster1", "cluster2", "cluster3",
                    "cluster16", "cluster17", "cluster18", "cluster19")
 # Loop over each cluster type to read data and assign to a variable
 for (cluster in cluster_types) {
-  file_path <- paste0("output/Signac/", cluster, "-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt")
+  file_path <- paste0("output/Signac/", cluster, "-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt")
   data <- read.delim(file_path, header = TRUE, row.names = 1)
   assign(cluster, data)
 }
@@ -5711,7 +5717,7 @@ cell_types <- c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "clu
 
 ## Loop through each cell type to count the number of significant DEGs
 for (cell_type in cell_types) {
-  file_name <- paste("output/Signac/", cell_type, "-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "")
+  file_name <- paste("output/Signac/", cell_type, "-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "")
   # Check if file exists
   if (!file.exists(file_name)) {
     print(paste("File not found:", file_name))
@@ -7114,7 +7120,7 @@ DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
 cell_types <- c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19")
 ## Loop through each cell type to count the number of significant DEGs
 for (cell_type in cell_types) {
-  file_name <- paste("output/Signac/", cell_type, "-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes.txt", sep = "")
+  file_name <- paste("output/Signac/", cell_type, "-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "")
   deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
   num_degs <- sum(deg_data$p_val_adj < 0.05) ## Count the number of significant DEGs
   DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
@@ -7165,6 +7171,8 @@ pdf("output/Signac/FeaturePlot_WNN_multiome_WT_Bap1KO_QCV2vC1_DEG.pdf", width=6,
 FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = "DEG", pt.size = 0.5, reduction = "wnn.umap") +
   scale_colour_viridis(option="magma") # 
 dev.off()
+
+# WNN REDUCTION ############
 # Add values on the heatmap
 ## Extract UMAP coordinates
 umap_coordinates <- as.data.frame(multiome_WT_Bap1KO_QCV2vC1.sct@reductions$wnn.umap@cell.embeddings)
@@ -7180,7 +7188,19 @@ FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = "DEG", pt.size = 0.5, red
             size = 5, color = "red", fontface = "bold") 
 dev.off()
 
-
+# RNA UMAP REDUCTION ############ 
+umap_coordinates <- as.data.frame(multiome_WT_Bap1KO_QCV2vC1.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- multiome_WT_Bap1KO_QCV2vC1.sct@meta.data$cluster.annot
+## Calculate cluster centers
+cluster_centers <- aggregate(cbind(umap_1, umap_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(DEG_count %>% dplyr::rename( "cluster"="Cell_Name"))
+## Create a UMAP plot colored by DEG values, with cluster DEG counts as text annotations
+pdf("output/Signac/FeaturePlot_RNAUMAP_multiome_WT_Bap1KO_QCV2vC1_DEG_numeric.pdf", width=6, height=6)
+FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = "DEG", pt.size = 0.5, reduction = "umap") +
+  scale_colour_viridis(option="mako") + # 
+  geom_text(data = cluster_centers, aes(x = umap_1, y = umap_2, label = Num_DEGs), 
+            size = 5, color = "red", fontface = "bold") 
+dev.off()
 
 
 
@@ -7208,6 +7228,7 @@ FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = "DAR", pt.size = 0.5, red
   scale_colour_viridis(option="magma") # 
 dev.off()
 
+# WNN REDUCTION ############
 # Add values on the heatmap
 ## Extract UMAP coordinates
 umap_coordinates <- as.data.frame(multiome_WT_Bap1KO_QCV2vC1.sct@reductions$wnn.umap@cell.embeddings)
@@ -7223,6 +7244,24 @@ FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = "DAR", pt.size = 0.5, red
             size = 5, color = "red", fontface = "bold") 
 dev.off()
 
+# RNA UMAP REDUCTION ############
+
+# Add values on the heatmap
+## Extract UMAP coordinates
+umap_coordinates <- as.data.frame(multiome_WT_Bap1KO_QCV2vC1.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- multiome_WT_Bap1KO_QCV2vC1.sct@meta.data$cluster.annot
+## Calculate cluster centers
+cluster_centers <- aggregate(cbind(umap_1, umap_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(DAR_peaks_count)
+## Create a UMAP plot colored by DAR values, with cluster DEG counts as text annotations
+pdf("output/Signac/FeaturePlot_RNAUMAP_multiome_WT_Bap1KO_QCV2vC1_DAR_numeric.pdf", width=6, height=6)
+FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = "DAR", pt.size = 0.5, reduction = "umap") +
+  scale_colour_viridis(option="mako") + # 
+  geom_text(data = cluster_centers, aes(x = umap_1, y = umap_2, label = Num_DARs), 
+            size = 5, color = "red", fontface = "bold") 
+dev.off()
+
+
 
 
 
@@ -7235,6 +7274,8 @@ DAR_gene_count <- read_tsv("output/Signac/DAR_genes_QCV2vC1_dim40kparam42res065a
   unique() %>%
   group_by(cluster) %>%
   summarise(Num_DARs=n())
+
+# WNN REDUCTION ############
 # Add DAR information to my seurat object - DAR_gene_count
 cell_clusters <- multiome_WT_Bap1KO_QCV2vC1.sct@meta.data$cluster.annot
 names(cell_clusters) <- rownames(multiome_WT_Bap1KO_QCV2vC1.sct@meta.data)
@@ -7255,10 +7296,6 @@ dev.off()
 
 
 
-
-
-
-
 ```
 
 
@@ -7269,6 +7306,8 @@ dev.off()
 
 
 ### Pathway analysis
+
+XXXY HERE re do with _correct.txt
 
 Let's do some pathway analysis for *WNT signaling*. Pathway of interest collected from [msigdb](https://www.gsea-msigdb.org/gsea/msigdb/mouse/genesets.jsp?collection=M2):
 **List1:**

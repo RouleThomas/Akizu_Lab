@@ -1332,9 +1332,10 @@ dev.off()
 ## WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V1_numeric.rds") # regMtRbCount
 ## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V3_numeric.rds") # regMtRbCount with QC_V3
 ## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V4_numeric.rds") # regMtRbCount with QC_V3; after Naiara review Goldberg_V2.pptx; QCV3dim30kparam50res035
-## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V5_numeric.rds") # regMtRbCount with QC_V3; after Naiara review Goldberg_V2.pptx; QCV3dim30kparam50res035 with name V2
+## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V5_numeric.rds") # regMtRbCount with QC_V3; after Naiara review Goldberg_V2.pptx; QCV3dim30kparam50res035 with name V2 (corr PLI12 PLI23 instead of interneuron)
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V4_numeric.rds") # regMtRbCount with QC_V3; after Naiara review Goldberg_V2.pptx; QCV3dim30kparam50res035 without name
 
-WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V5_numeric.rds") # regMtRbCount with QC_V3; after Naiara review Goldberg_V2.pptx; QCV3dim30kparam50res035 with name V2
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V5_numeric.rds") # regMtRbCount with QC_V3; after Naiara review Goldberg_V2.pptx; QCV3dim30kparam50res035 with name V2 (corr PLI12 PLI23 instead of interneuron)
 set.seed(42)
 ##########
 
@@ -1565,7 +1566,7 @@ dev.off()
 
 ############ V2 naming (WT_Kcnc1_p14_CB_1step.sct_V4_numeric.rds = QCV3dim30kparam50res035)
 
-Cluster1: Interneuron
+Cluster1: Interneuron is instead PLI23
 Cluster2: Granular
 Cluster3: MLI1
 Cluster4: Granular
@@ -1577,7 +1578,7 @@ Cluster9: Granular
 Cluster10: Astrocyte
 Cluster11: OPC
 Cluster12: Bergmann_Glia
-Cluster13: PLI
+Cluster13: PLI is instead PLI12
 Cluster14: Oligodendrocyte
 Cluster15: Mix_Microglia_Meningeal
 Cluster16: Endothelial_Mural 
@@ -1587,7 +1588,7 @@ Cluster19: Unipolar_Brush
 Cluster20: Choroid_Plexus
 
 new.cluster.ids <- c(
-  "Interneuron",
+  "PLI23",
   "Granular_1",
   "MLI1",
   "Granular_2",
@@ -1599,7 +1600,7 @@ new.cluster.ids <- c(
   "Astrocyte",
   "OPC",
   "Bergmann_Glia",
-  "PLI",
+  "PLI12",
   "Oligodendrocyte",
   "Mix_Microglia_Meningeal",
   "Endothelial_Mural" ,
@@ -1630,10 +1631,10 @@ DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
 
 List6:
 Granular = Gabra6, Pax6
-Interneuron = Kcnc2
 MLI1 = Sorcs3, Ptprk
 MLI2 = Nxph1, Cdh22
-PLI = Aldh1a3
+PLI12 = Klhl1, Gfra2, Aldh1a3
+PLI23 = Galntl6, Kcnc2
 Golgi = Pax2
 Unipolar_Brush = Eomes
 Purkinje = Calb1, Slc1a6, Car8
@@ -1650,10 +1651,10 @@ Choroid plexus cells = Kl,  Ttr
 
 all_markers <- c(
   "Gabra6","Pax6",
-  "Kcnc2",
   "Sorcs3", "Ptprk",
   "Nxph1", "Cdh22",
-  "Aldh1a3",
+  "Klhl1", "Gfra2", "Aldh1a3",
+  "Galntl6", "Kcnc2",
   "Pax2",
   "Eomes",
   "Calb1", "Slc1a6", "Car8",
@@ -1676,10 +1677,10 @@ levels(WT_Kcnc1_p14_CB_1step.sct) <- c(
   "Granular_3",
   "Granular_4",
   "Granular_5",
-  "Interneuron",
   "MLI1" ,
   "MLI2" ,
-  "PLI" ,
+  "PLI12" ,
+  "PLI23",
   "Golgi",
   "Unipolar_Brush",
   "Purkinje",
@@ -1832,42 +1833,6 @@ dev.off()
 
 # differential expressed genes across conditions
 ## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
-DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
-
-WT_Kcnc1_p14_CB_1step.sct$celltype.stim <- paste(WT_Kcnc1_p14_CB_1step.sct$cluster.annot, WT_Kcnc1_p14_CB_1step.sct$condition,
-    sep = "-")
-Idents(WT_Kcnc1_p14_CB_1step.sct) <- "celltype.stim"
-
-# Define the list of clusters for comparison
-clusters <- c(
-  "Granular_1", "Granular_2", "Granular_3", "Granular_4", "Granular_5",
-  "Interneuron", "MLI1", "MLI2", "PLI", "Golgi", "Unipolar_Brush",
-  "Purkinje", "Astrocyte", "Bergmann_Glia", "Oligodendrocyte", "OPC",
-  "Mix_Microglia_Meningeal", "Endothelial", "Endothelial_Mural", "Choroid_Plexus"
-)
-# Initialize an empty list to store the results for each cluster
-cluster_markers <- list()
-# Loop through each cluster and perform FindMarkers
-for (cluster in clusters) {
-  cat("Processing cluster:", cluster, "\n")
-  # Run FindMarkers for each cluster comparing Kcnc1 vs WT condition
-  markers <- FindMarkers(WT_Kcnc1_p14_CB_1step.sct, 
-                         ident.1 = paste(cluster, "Kcnc1", sep = "-"), 
-                         ident.2 = paste(cluster, "WT", sep = "-"), 
-                         verbose = TRUE, 
-                         test.use = "wilcox",
-                         logfc.threshold = -Inf,
-                         min.pct = -Inf,
-                         min.diff.pct = -Inf,
-                         assay = "RNA")
-  # Store the result in the list
-  cluster_markers[[cluster]] <- markers
-  # Save the result as a text file
-  output_filename <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes.txt")
-  write.table(markers, file = output_filename, sep = "\t", quote = FALSE, row.names = TRUE)
-}
-
-
 # --> This is very long and has been run in slurm job: XXX
 
 
@@ -3072,26 +3037,25 @@ Idents(WT_Kcnc1_p35_CB_1step.sct) <- "celltype.stim"
 
 # Define the list of clusters for comparison
 clusters <- c(
-  "Granular",
-  "Interneuron",
+  "Granule",
   "MLI1",
-  "MLI2_1",
-  "MLI2_2",
-  "Golgi",
-  "Unipolar_Brush",
-  "Purkinje",
-  "Astrocyte",
+  "PLI23" ,
+  "MLI2" ,
+  "Endothelial_Stalk",
+  "Astrocyte" ,
+  "PLI12" ,
+  "Golgi" ,
+  "Unipolar_Brush" ,
   "Bergman_Glia",
-  "OPC",
-  "Meningeal",
   "Endothelial",
   "Choroid_Plexus",
-  "Endothelial_Stalk"
+  "Purkinje",
+  "Meningeal",
+  "Unknown_Neuron_Subpop",
+  "OPC" 
 )
 
-clusters <- c(
-  "Purkinje"
-)
+
 
 # Initialize an empty list to store the results for each cluster
 cluster_markers <- list()
@@ -3841,8 +3805,10 @@ dev.off()
 ## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step.sct_V1_numeric.rds") # regMtRbCount with QC_V3
 ## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step.sct_V2_numeric.rds") # regMtRbCount with QC_V4
 ## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV4dim50kparam20res02.sct_V2_numeric.rds") # regMtRbCount with QC_V4
+WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV4dim50kparam20res02.sct_V2_numeric.rds") # QC_V4
+
 ## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV4dim50kparam20res02.sct_V1_label.rds") # regMtRbCount with QC_V4
-WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV4dim50kparam20res02.sct_V1_label.rds") # QC_V4
+WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV4dim50kparam20res02.sct_V1_label.rds") # QC_V4 with PLI12 PLI23
 ########################################################################
 
 
@@ -3956,9 +3922,9 @@ Cluster2: Granular_2 (Gabra6, Pax6)
 Cluster3: MLI1 (Sorcs3, Ptprk)
 Cluster4: Granular_3 (Gabra6, Pax6)
 Cluster5: MLI2_1 (Nxph1, Cdh22)
-Cluster6: Interneuron (Kcnc2)
+Cluster6: PLI23 (Galntl6, Kcnc2)
 Cluster7: Astrocyte (Zeb2)
-Cluster8: MLI2_2 (Nxph1, Cdh22)
+Cluster8: PLI12 (Klhl1, Gfra2, Aldh1a3)
 Cluster9: Bergman_Glia (Aqp4, Slc39a12)
 Cluster10: Unipolar_Brush (Eomes, Rgs6, Tafa2)
 Cluster11: Mix_Endothelial_EndothelialMural (Lef1, Notum, Apcdd1, Dlc1, Pdgfrb)
@@ -3977,9 +3943,9 @@ new.cluster.ids <- c(
   "MLI1",
   "Granular_3",
   "MLI2",
-  "Interneuron",
+  "PLI23",
   "Astrocyte",
-  "PLI",
+  "PLI12",
   "Bergman_Glia",
   "Unipolar_Brush",
   "Mix_Endothelial_EndothelialMural",
@@ -4014,7 +3980,7 @@ List8:
 Cluster1: Granular_1 (Gabra6, Pax6)
 Cluster3: MLI1 (Sorcs3, Ptprk)
 Cluster5: MLI2 (Nxph1, Cdh22)
-Cluster6: Interneuron (Kcnc2)
+Cluster6: PLI23 (Galntl6, Kcnc2)
 Cluster7: Astrocyte (Zeb2)
 Cluster9: Bergman_Glia (Aqp4, Slc39a12)
 Cluster10: Unipolar_Brush (Eomes, Rgs6, Tafa2)
@@ -4032,8 +3998,8 @@ all_markers <- c(
   "Gabra6", "Pax6",
   "Sorcs3", "Ptprk",
   "Nxph1", "Cdh22",
-  "Aldh1a3",
-  "Kcnc2",
+  "Klhl1", "Gfra2", "Aldh1a3",
+  "Galntl6", "Kcnc2",
   "Zeb2",
   "Aqp4", "Slc39a12",
   "Eomes", "Rgs6", "Tafa2",
@@ -4054,8 +4020,8 @@ levels(WT_Kcnc1_p180_CB_1step.sct) <- c(
   "Granular_3",
   "MLI1",
   "MLI2",
-  "PLI",
-  "Interneuron",
+  "PLI12",
+  "PLI23",
   "Astrocyte",
   "Bergman_Glia",
   "Unipolar_Brush",
@@ -4176,55 +4142,6 @@ dev.off()
 
 # differential expressed genes across conditions
 ## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
-DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "RNA"
-
-WT_Kcnc1_p180_CB_1step.sct$celltype.stim <- paste(WT_Kcnc1_p180_CB_1step.sct$cluster.annot, WT_Kcnc1_p180_CB_1step.sct$condition,
-    sep = "-")
-Idents(WT_Kcnc1_p180_CB_1step.sct) <- "celltype.stim"
-
-# Define the list of clusters for comparison
-clusters <- c(
-  "Granular_1",
-  "Granular_2",
-  "Granular_3",
-  "MLI1",
-  "MLI2_1",
-  "MLI2_2",
-  "Interneuron",
-  "Astrocyte",
-  "Bergman_Glia",
-  "Unipolar_Brush",
-  "Mix_Endothelial_EndothelialMural",
-  "Meningeal",
-  "Choroid_Plexus",
-  "Golgi",
-  "Purkinje",
-  "Unknown_Neuron_Subpop",
-  "Oligodendrocyte"
-)
-# Initialize an empty list to store the results for each cluster
-cluster_markers <- list()
-# Loop through each cluster and perform FindMarkers
-for (cluster in clusters) {
-  cat("Processing cluster:", cluster, "\n")
-  # Run FindMarkers for each cluster comparing Kcnc1 vs WT condition
-  markers <- FindMarkers(WT_Kcnc1_p180_CB_1step.sct, 
-                         ident.1 = paste(cluster, "Kcnc1", sep = "-"), 
-                         ident.2 = paste(cluster, "WT", sep = "-"), 
-                         verbose = TRUE, 
-                         test.use = "wilcox",
-                         logfc.threshold = -Inf,
-                         min.pct = -Inf,
-                         min.diff.pct = -Inf,
-                         assay = "RNA")
-  # Store the result in the list
-  cluster_markers[[cluster]] <- markers
-  # Save the result as a text file
-  output_filename <- paste0("output/seurat/", cluster, "-Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes.txt")
-  write.table(markers, file = output_filename, sep = "\t", quote = FALSE, row.names = TRUE)
-}
-
-
 # --> Too long run in slurm job
 
 
@@ -4698,16 +4615,20 @@ conda activate scRNAseqV2
 
 # p14 CB
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB.sh # 27801074 ok
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_correct.sh # 29330177 xxx
+
 # p35 CB
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB.sh # 27801335 ok
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_correct.sh # 29328955 xxx
+
 # p180 CB
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB.sh # 27801489 ok
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_correct.sh # 29330555 xxx
 ```
 
 
 
-
-
+- *NOTE: I forget to LogNorm and Scale prior doing DEG; the `*_correct` are corrected + updated cluster name notbably PLI12 and PLI23 instead of MLI_1 MLI_2; all good.*
 
 
 
@@ -4763,7 +4684,7 @@ makeShinyApp(WT_Kcnc1_p14_CB_1step.sct, scConf, gene.mapping = TRUE,
 rsconnect::deployApp('shinyApp_WT_Kcnc1_p14_CB_1step_QCV3')
 
 
-# Generate Shiny app QCV3 with name V2;  QCV3dim30kparam50res035 ; output/seurat/WT_Kcnc1_p14_CB_1step.sct_V5_numeric.rds
+# Generate Shiny app QCV3 with name V2 (PLI12 PLI23);  QCV3dim30kparam50res035 ; output/seurat/WT_Kcnc1_p14_CB_1step.sct_V5_numeric.rds
 DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA" # 
 
 scConf = createConfig(WT_Kcnc1_p14_CB_1step.sct)
@@ -4816,7 +4737,7 @@ makeShinyApp(WT_Kcnc1_p180_CB_1step.sct, scConf, gene.mapping = TRUE,
 rsconnect::deployApp('shinyApp_WT_Kcnc1_p180_CB_1step_QCV3dim40kparam10res03')
 
 
-# Generate Shiny app QCV4 with name V1;  QCV4dim50kparam20res02 ; output/seurat/WT_Kcnc1_p180_CB_1step-QCV4dim50kparam20res02.sct_V1_label.rds
+# Generate Shiny app QCV4 with name V1 (PLI12 PLI23);  QCV4dim50kparam20res02 ; output/seurat/WT_Kcnc1_p180_CB_1step-QCV4dim50kparam20res02.sct_V1_label.rds
 WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV4dim50kparam20res02.sct_V1_label.rds")
 
 DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "RNA" # 
@@ -4830,7 +4751,7 @@ makeShinyApp(WT_Kcnc1_p180_CB_1step.sct, scConf, gene.mapping = TRUE,
 rsconnect::deployApp('shinyApp_WT_Kcnc1_p180_CB_1step_QCV4dim50kparam20res02')
 
 
-# Generate Shiny app QCV2 with name V2;  QCV2dim50kparam20res03 ; output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_label_ReProcess.rds
+# Generate Shiny app QCV2 with name V2 (PLI12 PLI23);  QCV2dim50kparam20res03 ; output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_label_ReProcess.rds
 WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_label_ReProcess.rds")
 
 DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "RNA" # 
