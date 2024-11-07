@@ -7461,7 +7461,7 @@ for (cluster_name in clusters) {
 
 
   # Run GSEA for each pathway
-  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 1000000)
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 10000000)
   fgseaResTidy <- fgseaRes %>%
     as_tibble() %>%
     arrange(desc(ES))
@@ -7484,8 +7484,8 @@ for (cluster_name in clusters) {
 }
 
 
-
-
+# 1000000 = still warning; tested 10000000
+clusters # just totype smthign to deelte rows
 
 # Save output table for all pathway and cluster
 ## Define the list of cluster types
