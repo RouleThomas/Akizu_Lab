@@ -5522,10 +5522,11 @@ dev.off()
 ## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
 DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "RNA"
 
-
+# PART ADDED as *_correct ###########
 multiome_WT_Bap1KO_QCV2vC1.sct <- NormalizeData(multiome_WT_Bap1KO_QCV2vC1.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
 all.genes <- rownames(multiome_WT_Bap1KO_QCV2vC1.sct)
 multiome_WT_Bap1KO_QCV2vC1.sct <- ScaleData(multiome_WT_Bap1KO_QCV2vC1.sct, features = all.genes) # zero-centres and scales it
+#########
 
 
 ## DEGs keeping ALL genes
@@ -5669,25 +5670,25 @@ cluster19 <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "19-multiome_
     
 
 ### save output
-write.table(cluster1, file = "output/Signac/cluster1-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster2, file = "output/Signac/cluster2-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster3, file = "output/Signac/cluster3-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster4, file = "output/Signac/cluster4-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster5, file = "output/Signac/cluster5-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster6, file = "output/Signac/cluster6-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster7, file = "output/Signac/cluster7-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster8, file = "output/Signac/cluster8-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster9, file = "output/Signac/cluster9-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster10, file = "output/Signac/cluster10-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster11, file = "output/Signac/cluster11-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster12, file = "output/Signac/cluster12-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster13, file = "output/Signac/cluster13-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster14, file = "output/Signac/cluster14-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster15, file = "output/Signac/cluster15-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster16, file = "output/Signac/cluster16-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster17, file = "output/Signac/cluster17-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster18, file = "output/Signac/cluster18-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-write.table(cluster19, file = "output/Signac/cluster19-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster1, file = "output/Signac/cluster1-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster2, file = "output/Signac/cluster2-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster3, file = "output/Signac/cluster3-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster4, file = "output/Signac/cluster4-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster5, file = "output/Signac/cluster5-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster6, file = "output/Signac/cluster6-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster7, file = "output/Signac/cluster7-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster8, file = "output/Signac/cluster8-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster9, file = "output/Signac/cluster9-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster10, file = "output/Signac/cluster10-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster11, file = "output/Signac/cluster11-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster12, file = "output/Signac/cluster12-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster13, file = "output/Signac/cluster13-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster14, file = "output/Signac/cluster14-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster15, file = "output/Signac/cluster15-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster16, file = "output/Signac/cluster16-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster17, file = "output/Signac/cluster17-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster18, file = "output/Signac/cluster18-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(cluster19, file = "output/Signac/cluster19-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 #--> I added `*_correct` = the one I perfrom lognorm and scale prior DEG...
 
 
@@ -5701,7 +5702,7 @@ cluster_types <- c("cluster1", "cluster2", "cluster3",
                    "cluster16", "cluster17", "cluster18", "cluster19")
 # Loop over each cluster type to read data and assign to a variable
 for (cluster in cluster_types) {
-  file_path <- paste0("output/Signac/", cluster, "-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt")
+  file_path <- paste0("output/Signac/", cluster, "-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt")
   data <- read.delim(file_path, header = TRUE, row.names = 1)
   assign(cluster, data)
 }
@@ -5717,7 +5718,7 @@ cell_types <- c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "clu
 
 ## Loop through each cell type to count the number of significant DEGs
 for (cell_type in cell_types) {
-  file_name <- paste("output/Signac/", cell_type, "-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "")
+  file_name <- paste("output/Signac/", cell_type, "-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt", sep = "")
   # Check if file exists
   if (!file.exists(file_name)) {
     print(paste("File not found:", file_name))
@@ -5868,6 +5869,7 @@ dev.off()
 ## saveRDS(multiome_WT_Bap1KO_QCV2.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV3.sct_numeric.rds") 
 ## saveRDS(multiome_WT_Bap1KO_QCV2vC1.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000.sct_numeric.rds") 
 # I used multiome_WT_Bap1KO_QCV2 but was already multiome_WT_Bap1KO_QCV3... So here I update the file name
+## saveRDS(multiome_WT_Bap1KO_QCV2vC1.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_correct1.sct_numeric.rds")  # THIS ONE IS GOOD FOR THE DEG! logNorm/ScaleData
 ################################################################################################
 multiome_WT_Bap1KO_QCV3.sct = multiome_WT_Bap1KO_QCV2.sct
 
@@ -6398,6 +6400,7 @@ dev.off()
 
 
 
+
 ######################################################################################################
 ## Pre-processing ATAC  ####################################################################
 ######################################################################################################
@@ -6440,8 +6443,6 @@ DimPlot(multiome_WT_Bap1KO_QCV2vC1.sct, reduction = "wnn.umap", group.by = "orig
 dev.off()
 
 
-
-
 #--> Different dim for ATAC tested; 2:40 best
 
 
@@ -6465,7 +6466,11 @@ multiome_WT_Bap1KO_QCV2vC1.sct[["GeneActivity"]] <- CreateAssayObject(counts = G
 # SAVE ##########################################################################################
 ## saveRDS(multiome_WT_Bap1KO_QCV2vC1.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivity.sct_numeric_label.rds") 
 multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivity.sct_numeric_label.rds")
+# In case I re run with correct1 (logNorm/ScaleData DEGs)
+## saveRDS(multiome_WT_Bap1KO_QCV2vC1.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivity.sct_numeric_label.rds") 
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivity.sct_numeric_label.rds")
 ##########################################################################################
+
 
 
 ## Plot genes RNA ATAC
@@ -6815,7 +6820,32 @@ DAR_genes = all_markers_tibble %>%
 ## save output
 write.table(DAR_genes, file = "output/Signac/DAR_genes_QCV2vC1_dim40kparam42res065algo4feat2000.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
 
+########### COUNT UP DOWN PEAK PER CLUSTER ##################################################################
+all_markers_tibble = read_tsv("output/Signac/DAR_peaks_QCV2vC1_dim40kparam42res065algo4feat2000.txt")
 
+all_markers_tibble %>%
+  dplyr::filter(p_val_adj < 0.05) %>%
+  group_by(cluster) %>%
+  summarize(
+    nb_upregulated = sum(avg_log2FC > 0),
+    nb_downregulated = sum(avg_log2FC < 0)
+  )
+
+DAR_genes = read_tsv("output/Signac/DAR_genes_QCV2vC1_dim40kparam42res065algo4feat2000.txt")
+
+
+DAR_genes %>%
+  dplyr::filter(p_val_adj < 0.05) %>%
+  dplyr::select(gene_name, avg_log2FC, p_val_adj, cluster) %>%
+  unique() %>%
+  group_by(cluster) %>%
+  summarize(
+    nb_upregulated = sum(avg_log2FC > 0),
+    nb_downregulated = sum(avg_log2FC < 0)
+  )
+
+
+##############################################################################################################
 
 # Link peaks to genes - Find peaks that are correlated with the expression of nearby genes
 ## Install the BS genome (GC content, region lengths, and dinucleotide base frequencies for regions in the assay and add to the feature metadata)
@@ -6865,7 +6895,11 @@ multiome_WT_Bap1KO_QCV2vC1.sct = LinkPeaks(
 )
 
 
+XXXY HERE !!!
+
 # SAVE ##########################################################################################
+## saveRDS(multiome_WT_Bap1KO_QCV2vC1.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_XXXTOLOADANDRUNLINKPEAKS.rds") 
+# --> JUST A VERIFICATION THAT correct1 did not messedup linkpeaks; run this and check whether the Values are similar.
 ## saveRDS(LinkPeaks, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.sct_numeric_label.rds") 
 multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.sct_numeric_label.rds")
 ##########################################################################################
@@ -7120,7 +7154,7 @@ DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
 cell_types <- c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19")
 ## Loop through each cell type to count the number of significant DEGs
 for (cell_type in cell_types) {
-  file_name <- paste("output/Signac/", cell_type, "-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt", sep = "")
+  file_name <- paste("output/Signac/", cell_type, "-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt", sep = "")
   deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
   num_degs <- sum(deg_data$p_val_adj < 0.05) ## Count the number of significant DEGs
   DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
@@ -7195,7 +7229,7 @@ umap_coordinates$cluster <- multiome_WT_Bap1KO_QCV2vC1.sct@meta.data$cluster.ann
 cluster_centers <- aggregate(cbind(umap_1, umap_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
   left_join(DEG_count %>% dplyr::rename( "cluster"="Cell_Name"))
 ## Create a UMAP plot colored by DEG values, with cluster DEG counts as text annotations
-pdf("output/Signac/FeaturePlot_RNAUMAP_multiome_WT_Bap1KO_QCV2vC1_DEG_numeric.pdf", width=6, height=6)
+pdf("output/Signac/FeaturePlot_RNAUMAP_multiome_WT_Bap1KO_QCV2vC1_DEG_numeric_correct1.pdf", width=6, height=6)
 FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = "DEG", pt.size = 0.5, reduction = "umap") +
   scale_colour_viridis(option="mako") + # 
   geom_text(data = cluster_centers, aes(x = umap_1, y = umap_2, label = Num_DEGs), 
@@ -7291,6 +7325,68 @@ dev.off()
 
 
 
+# Count nb of up down reg genes
+
+cluster_types <- c("cluster1",
+"cluster2",
+"cluster3",
+"cluster4",
+"cluster5",
+"cluster6",
+"cluster7",
+"cluster8",
+"cluster9",
+"cluster10",
+"cluster11",
+"cluster12",
+"cluster13",
+"cluster14",
+"cluster15",
+"cluster16",
+"cluster17",
+"cluster18",
+"cluster19")
+## Loop over each cluster type to read data and assign to a variable
+for (cluster in cluster_types) {
+  file_path <- paste0("output/Signac/", cluster, "-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1)
+  assign(cluster, data)
+}
+## Define cluster names and corresponding data frames
+clusters <- list(
+  "PyNs_SubC_CA23" = cluster1,
+  "IN_1" = cluster2,
+  "SubC_1" = cluster3,
+  "PyNs_SubC_CA1" = cluster4,
+  "PyNs_RSC_UL" = cluster5,
+  "DG_GC" = cluster6,
+  "PyNs_RSC_MDL" = cluster7,
+  "NSC_proliferative_1" = cluster8,
+  "SubC_2" = cluster9,
+  "IN_2" = cluster10,
+  "NSC_quiescent" = cluster11,
+  "IN_SubC" = cluster12,
+  "IP" = cluster13,
+  "NSC_proliferative_2" = cluster14,
+  "CR" = cluster15,
+  "OPC" = cluster16,
+  "Meningeal_Cells" = cluster17,
+  "Radial_Glia_Cells" = cluster18,
+  "Microglia" = cluster19
+)
+
+## Function to count up- and down-regulated genes in each cluster
+count_up_down <- function(cluster_data) {
+  significant_genes <- cluster_data %>% dplyr::filter(p_val_adj < 0.05)
+  nb_upregulated <- sum(significant_genes$avg_log2FC > 0)
+  nb_downregulated <- sum(significant_genes$avg_log2FC < 0)
+  
+  return(data.frame(nb_upregulated = nb_upregulated, nb_downregulated = nb_downregulated))
+}
+results <- lapply(clusters, count_up_down)
+final_results <- do.call(rbind, results)
+row.names(final_results) <- names(clusters)
+print(final_results)
 
 
 
@@ -7380,13 +7476,55 @@ cluster_types <- c("cluster1",
 "cluster19")
 # Loop over each cluster type to read data and assign to a variable
 for (cluster in cluster_types) {
-  file_path <- paste0("output/Signac/", cluster, "-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct.txt")
+  file_path <- paste0("output/Signac/", cluster, "-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt")
   data <- read.delim(file_path, header = TRUE, row.names = 1)
   assign(cluster, data)
 }
+##############################################################################################
+################################# NB OF UP DOWN GENES ###############################################
+# Define cluster names and corresponding data frames
+clusters <- list(
+  "PyNs_SubC_CA23" = cluster1,
+  "IN_1" = cluster2,
+  "SubC_1" = cluster3,
+  "PyNs_SubC_CA1" = cluster4,
+  "PyNs_RSC_UL" = cluster5,
+  "DG_GC" = cluster6,
+  "PyNs_RSC_MDL" = cluster7,
+  "NSC_proliferative_1" = cluster8,
+  "SubC_2" = cluster9,
+  "IN_2" = cluster10,
+  "NSC_quiescent" = cluster11,
+  "IN_SubC" = cluster12,
+  "IP" = cluster13,
+  "NSC_proliferative_2" = cluster14,
+  "CR" = cluster15,
+  "OPC" = cluster16,
+  "Meningeal_Cells" = cluster17,
+  "Radial_Glia_Cells" = cluster18,
+  "Microglia" = cluster19
+)
+# Function to count up- and down-regulated genes in each cluster
+count_up_down <- function(cluster_data) {
+  significant_genes <- cluster_data %>% dplyr::filter(p_val_adj < 0.05)
+  nb_upregulated <- sum(significant_genes$avg_log2FC > 0)
+  nb_downregulated <- sum(significant_genes$avg_log2FC < 0)
+  return(data.frame(nb_upregulated = nb_upregulated, nb_downregulated = nb_downregulated))
+}
+# Iterate through each cluster and get the count of up- and down-regulated genes
+results <- lapply(clusters, count_up_down)
+# Combine results into a data frame
+final_results <- do.call(rbind, results)
+# Add cluster names as row names
+row.names(final_results) <- names(clusters)
+# Output the final results
+print(final_results)
+##############################################################################################
+##############################################################################################
+
 
 # Rename cluster with cluster name
-PyNs_SubC_CA23 = cluster1
+PyNs_SubC_CA23 = cluster1 
 IN_1 = cluster2
 SubC_1 = cluster3
 PyNs_SubC_CA1 = cluster4
@@ -7461,12 +7599,12 @@ for (cluster_name in clusters) {
 
 
   # Run GSEA for each pathway
-  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 10000000)
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 100000)
   fgseaResTidy <- fgseaRes %>%
     as_tibble() %>%
     arrange(desc(ES))
   # Save results
-  write_tsv(fgseaResTidy, paste0("output/Pathway/GSEA_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct_", cluster_name, ".tsv"))
+  write_tsv(fgseaResTidy, paste0("output/Pathway/GSEA_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1_", cluster_name, ".tsv"))
   # Generate plots for each pathway
   for (pathway in names(fgsea_sets)) {
     # Create the plot
@@ -7476,16 +7614,18 @@ for (cluster_name in clusters) {
     
     # Save the plot using ggsave
     ggsave(
-      filename = paste0("output/Pathway/GSEA_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct_", pathway, "_", cluster_name, ".pdf"),
+      filename = paste0("output/Pathway/GSEA_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1_", pathway, "_", cluster_name, ".pdf"),
       plot = gsea_plot,
       width = 5, height = 3, device = "pdf"
     )
   }
 }
 
+ 
 
-# 1000000 = still warning; tested 10000000
-clusters # just totype smthign to deelte rows
+#--> 100000 time is OK;  1000000 = still warning; tested 10000000; too long!
+
+
 
 # Save output table for all pathway and cluster
 ## Define the list of cluster types
@@ -7523,7 +7663,7 @@ for (cluster in cluster_types) {
   ranks <- deframe(genes)
   
   # Run GSEA for the current cluster
-  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 1000000)
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 100000)
   fgseaResTidy <- fgseaRes %>%
     as_tibble() %>%
     arrange(desc(ES))
@@ -7541,10 +7681,12 @@ for (cluster in cluster_types) {
 ## Combine results from all cluster types into one table
 final_results <- bind_rows(all_results, .id = "cluster")
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct-List1.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+
+write.table(final_results, file = c("output/Pathway/gsea_output_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1-List3.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_pval-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct-List1.pdf", width=8, height=4)
+pdf("output/Pathway/heatmap_gsea_padj-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1-List3.pdf", width=8, height=4)
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -7562,7 +7704,7 @@ ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) +
   ) +
   scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
   geom_text(aes(label=sprintf("%.2f", NES)), 
-            color = ifelse(final_results$pval <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
             size=2) +
   coord_fixed()  # Force aspect ratio of the plot to be 1:1
 dev.off()
@@ -7597,7 +7739,7 @@ for (cluster_name in clusters) {
     as_tibble() %>%
     arrange(desc(ES))
   # Save results
-  write_tsv(fgseaResTidy, paste0("output/Pathway/GSEA_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_rank_FCpval_correct_", cluster_name, ".tsv"))
+  write_tsv(fgseaResTidy, paste0("output/Pathway/GSEA_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_rank_FCpval_correct1_", cluster_name, ".tsv"))
   # Generate plots for each pathway
   for (pathway in names(fgsea_sets)) {
     # Create the plot
@@ -7607,13 +7749,12 @@ for (cluster_name in clusters) {
     
     # Save the plot using ggsave
     ggsave(
-      filename = paste0("output/Pathway/GSEA_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_rank_FCpval_correct_", pathway, "_", cluster_name, ".pdf"),
+      filename = paste0("output/Pathway/GSEA_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_rank_FCpval_correct1_", pathway, "_", cluster_name, ".pdf"),
       plot = gsea_plot,
       width = 5, height = 3, device = "pdf"
     )
   }
 }
-
 
 
 
@@ -7647,9 +7788,10 @@ for (cluster in cluster_types) {
   
   # Extract genes for the current cluster
   genes <- get(cluster) %>% 
-    rownames_to_column(var = "gene") %>%
-    arrange(desc(avg_log2FC)) %>% 
-    dplyr::select(gene, avg_log2FC)
+    rownames_to_column(var = "gene")  %>%
+    mutate(rank_FCpval = sign(avg_log2FC) * -log(p_val)) %>%  # Create rank column
+    arrange(desc(rank_FCpval)) %>%
+    dplyr::select(gene, rank_FCpval)
   
   ranks <- deframe(genes)
   
@@ -7672,10 +7814,10 @@ for (cluster in cluster_types) {
 ## Combine results from all cluster types into one table
 final_results <- bind_rows(all_results, .id = "cluster")
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct-List1.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(final_results, file = c("output/Pathway/gsea_output_Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_rank_FCpval_correct1-List3.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_pval-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct-List1.pdf", width=8, height=4)
+pdf("output/Pathway/heatmap_gsea_padj-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_rank_FCpval_correct1-List3.pdf", width=8, height=4)
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -7693,10 +7835,12 @@ ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) +
   ) +
   scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
   geom_text(aes(label=sprintf("%.2f", NES)), 
-            color = ifelse(final_results$pval <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
             size=2) +
   coord_fixed()  # Force aspect ratio of the plot to be 1:1
 dev.off()
+
+
 
 ```
 

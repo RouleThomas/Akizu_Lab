@@ -4632,6 +4632,305 @@ sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_correct.sh # 29330555 xxx
 
 
 
+## Comparison effect logNorm/ScaleData after integration
+
+I realized I did not apply logNorm/ScaleData normalization after data integration and prior doing the DGE. For p14 and p180, analysis showed a comparable number of DGEs up/down. However, all genes where downregulated in p35 sample, that's where I realized logNorm/ScaleData was not applied. Let's compare with and without logNorm/ScaleData how it affect the nb of DEGs and direction.
+
+
+
+```R
+# packages
+library("tidyverse")
+
+
+# import list of DEGs
+
+## p14 ########
+### without logNorm/ScaleData ################################
+cluster_types <- c(
+  "Granular_1", "Granular_2", "Granular_3", "Granular_4", "Granular_5",
+  "Interneuron", "MLI1", "MLI2", "PLI", "Golgi", "Unipolar_Brush",
+  "Purkinje", "Astrocyte", "Bergmann_Glia", "Oligodendrocyte", "OPC",
+  "Mix_Microglia_Meningeal", "Endothelial", "Endothelial_Mural", "Choroid_Plexus"
+)
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1) %>%
+    rownames_to_column(var = "gene") %>%
+    as_tibble()
+  data$cluster <- cluster
+  assign(cluster, data)
+}
+
+cluster_data_list <- mget(cluster_types)
+p14 <- bind_rows(cluster_data_list) # Bind all cluster data frames into a single data frame
+#### Function to count up- and down-regulated genes in each cluster
+count_up_down <- function(cluster_data) {
+  significant_genes <- cluster_data %>% filter(p_val_adj < 0.05)
+  nb_upregulated <- sum(significant_genes$avg_log2FC > 0)
+  nb_downregulated <- sum(significant_genes$avg_log2FC < 0)
+  return(data.frame(nb_upregulated = nb_upregulated, nb_downregulated = nb_downregulated))
+}
+
+clusters_split <- split(p14, p14$cluster)
+results <- lapply(clusters_split, count_up_down)
+final_results <- do.call(rbind, results)
+row.names(final_results) <- names(clusters_split)
+print(final_results)
+
+
+### with logNorm/ScaleData (*_correct)
+cluster_types <- c(
+  "PLI23",
+  "Granular_1",
+  "MLI1",
+  "Granular_2",
+  "Granular_3",
+  "Granular_4",
+  "MLI2",
+  "Endothelial",
+  "Granular_5",
+  "Astrocyte",
+  "OPC",
+  "Bergmann_Glia",
+  "PLI12",
+  "Oligodendrocyte",
+  "Mix_Microglia_Meningeal",
+  "Endothelial_Mural" ,
+  "Purkinje",
+  "Golgi",
+  "Unipolar_Brush",
+  "Choroid_Plexus"
+)
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_correct.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1) %>%
+    rownames_to_column(var = "gene") %>%
+    as_tibble()
+  data$cluster <- cluster
+  assign(cluster, data)
+}
+
+cluster_data_list <- mget(cluster_types)
+p14_correct <- bind_rows(cluster_data_list) # Bind all cluster data frames into a single data frame
+#### Function to count up- and down-regulated genes in each cluster
+count_up_down <- function(cluster_data) {
+  significant_genes <- cluster_data %>% filter(p_val_adj < 0.05)
+  nb_upregulated <- sum(significant_genes$avg_log2FC > 0)
+  nb_downregulated <- sum(significant_genes$avg_log2FC < 0)
+  return(data.frame(nb_upregulated = nb_upregulated, nb_downregulated = nb_downregulated))
+}
+
+clusters_split <- split(p14_correct, p14_correct$cluster)
+results <- lapply(clusters_split, count_up_down)
+final_results <- do.call(rbind, results)
+row.names(final_results) <- names(clusters_split)
+print(final_results)
+
+
+
+
+
+
+## p35 ########
+### without logNorm/ScaleData ################################
+cluster_types <- c(
+  "Granular",
+  "Interneuron",
+  "MLI1",
+  "MLI2_1",
+  "MLI2_2",
+  "Golgi",
+  "Unipolar_Brush",
+  "Purkinje",
+  "Astrocyte",
+  "Bergman_Glia",
+  "OPC",
+  "Meningeal",
+  "Endothelial",
+  "Choroid_Plexus",
+  "Endothelial_Stalk"
+)
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p35_CB_QCV3dim50kparam50res03_allGenes.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1) %>%
+    rownames_to_column(var = "gene") %>%
+    as_tibble()
+  data$cluster <- cluster
+  assign(cluster, data)
+}
+
+cluster_data_list <- mget(cluster_types)
+p35 <- bind_rows(cluster_data_list) # Bind all cluster data frames into a single data frame
+#### Function to count up- and down-regulated genes in each cluster
+count_up_down <- function(cluster_data) {
+  significant_genes <- cluster_data %>% filter(p_val_adj < 0.05)
+  nb_upregulated <- sum(significant_genes$avg_log2FC > 0)
+  nb_downregulated <- sum(significant_genes$avg_log2FC < 0)
+  return(data.frame(nb_upregulated = nb_upregulated, nb_downregulated = nb_downregulated))
+}
+
+clusters_split <- split(p35, p35$cluster)
+results <- lapply(clusters_split, count_up_down)
+final_results <- do.call(rbind, results)
+row.names(final_results) <- names(clusters_split)
+print(final_results)
+
+
+### with logNorm/ScaleData (*_correct)
+cluster_types <- c(
+  "Granule",
+  "MLI1",
+  "PLI23" ,
+  "MLI2" ,
+  "Endothelial_Stalk",
+  "Astrocyte" ,
+  "PLI12" ,
+  "Golgi" ,
+  "Unipolar_Brush" ,
+  "Bergman_Glia",
+  "Endothelial",
+  "Choroid_Plexus",
+  "Purkinje",
+  "Meningeal",
+  "Unknown_Neuron_Subpop",
+  "OPC" 
+)
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_correct.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1) %>%
+    rownames_to_column(var = "gene") %>%
+    as_tibble()
+  data$cluster <- cluster
+  assign(cluster, data)
+}
+
+cluster_data_list <- mget(cluster_types)
+p35_correct <- bind_rows(cluster_data_list) # Bind all cluster data frames into a single data frame
+#### Function to count up- and down-regulated genes in each cluster
+count_up_down <- function(cluster_data) {
+  significant_genes <- cluster_data %>% filter(p_val_adj < 0.05)
+  nb_upregulated <- sum(significant_genes$avg_log2FC > 0)
+  nb_downregulated <- sum(significant_genes$avg_log2FC < 0)
+  return(data.frame(nb_upregulated = nb_upregulated, nb_downregulated = nb_downregulated))
+}
+
+clusters_split <- split(p35_correct, p35_correct$cluster)
+results <- lapply(clusters_split, count_up_down)
+final_results <- do.call(rbind, results)
+row.names(final_results) <- names(clusters_split)
+print(final_results)
+
+
+
+
+
+
+
+
+
+
+## p180 ########
+### without logNorm/ScaleData ################################
+cluster_types <- c(
+  "Granular_1",
+  "Granular_2",
+  "Granular_3",
+  "MLI1",
+  "MLI2_1",
+  "MLI2_2",
+  "Interneuron",
+  "Astrocyte",
+  "Bergman_Glia",
+  "Unipolar_Brush",
+  "Mix_Endothelial_EndothelialMural",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Golgi",
+  "Purkinje",
+  "Unknown_Neuron_Subpop",
+  "Oligodendrocyte"
+)
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1) %>%
+    rownames_to_column(var = "gene") %>%
+    as_tibble()
+  data$cluster <- cluster
+  assign(cluster, data)
+}
+
+cluster_data_list <- mget(cluster_types)
+p180 <- bind_rows(cluster_data_list) # Bind all cluster data frames into a single data frame
+#### Function to count up- and down-regulated genes in each cluster
+count_up_down <- function(cluster_data) {
+  significant_genes <- cluster_data %>% filter(p_val_adj < 0.05)
+  nb_upregulated <- sum(significant_genes$avg_log2FC > 0)
+  nb_downregulated <- sum(significant_genes$avg_log2FC < 0)
+  return(data.frame(nb_upregulated = nb_upregulated, nb_downregulated = nb_downregulated))
+}
+
+clusters_split <- split(p180, p180$cluster)
+results <- lapply(clusters_split, count_up_down)
+final_results <- do.call(rbind, results)
+row.names(final_results) <- names(clusters_split)
+print(final_results)
+
+
+### with logNorm/ScaleData (*_correct)
+cluster_types <- c(
+  "Granular_1",
+  "Granular_2",
+  "MLI1",
+  "Granular_3",
+  "MLI2",
+  "PLI23",
+  "Astrocyte",
+  "PLI12",
+  "Bergman_Glia",
+  "Unipolar_Brush",
+  "Mix_Endothelial_EndothelialMural",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Golgi",
+  "Purkinje",
+  "Unknown_Neuron_Subpop",
+  "Oligodendrocyte"
+)
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_correct.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1) %>%
+    rownames_to_column(var = "gene") %>%
+    as_tibble()
+  data$cluster <- cluster
+  assign(cluster, data)
+}
+
+cluster_data_list <- mget(cluster_types)
+p180_correct <- bind_rows(cluster_data_list) # Bind all cluster data frames into a single data frame
+#### Function to count up- and down-regulated genes in each cluster
+count_up_down <- function(cluster_data) {
+  significant_genes <- cluster_data %>% filter(p_val_adj < 0.05)
+  nb_upregulated <- sum(significant_genes$avg_log2FC > 0)
+  nb_downregulated <- sum(significant_genes$avg_log2FC < 0)
+  return(data.frame(nb_upregulated = nb_upregulated, nb_downregulated = nb_downregulated))
+}
+
+clusters_split <- split(p180_correct, p180_correct$cluster)
+results <- lapply(clusters_split, count_up_down)
+final_results <- do.call(rbind, results)
+row.names(final_results) <- names(clusters_split)
+print(final_results)
+
+
+
+
+```
+
+
+
+
+
 
 # ShinyApp
 
