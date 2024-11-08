@@ -3349,6 +3349,170 @@ dev.off()
 
 Next, do pseudotime analysis
 
+## Refine clustering for 3D gastrulation paper
+
+Following `3D gastrulation paper/docs/Conchi October 8th follow up on integrated populations.pptx` refine the clustering
+
+
+
+```bash
+conda activate scRNAseqV2
+```
+
+```R
+# packages
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+
+
+humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid2472hr_QCV2.sct_V1_numeric.rds")
+# --> Past paperameters used was dims30, kparam 15, res 0.3; lets keep the dims but change res and kparam
+
+# Refine clustering for 3D Gastrulation paper
+DefaultAssay(humangastruloid.combined.sct) <- "integrated"
+
+humangastruloid.combined.sct <- RunPCA(humangastruloid.combined.sct, verbose = FALSE, npcs = 30)
+humangastruloid.combined.sct <- RunUMAP(humangastruloid.combined.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
+humangastruloid.combined.sct <- FindNeighbors(humangastruloid.combined.sct, reduction = "pca", k.param = 15, dims = 1:30)
+humangastruloid.combined.sct <- FindClusters(humangastruloid.combined.sct, resolution = 0.4, verbose = FALSE, algorithm = 4)
+
+humangastruloid.combined.sct$condition <- factor(humangastruloid.combined.sct$condition, levels = c("UNTREATED24hr", "DASATINIB24hr", "UNTREATED72hr", "DASATINIB72hr")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_humangastruloid2472hr_QCV2-dim30kparam15res04.pdf", width=10, height=6)
+DimPlot(humangastruloid.combined.sct, reduction = "umap", split.by = "time", label=TRUE)
+dev.off()
+
+pdf("output/seurat/UMAP_humangastruloid2472hr_QCV2-dim30kparam15res04_groupTime.pdf", width=6, height=6)
+DimPlot(humangastruloid.combined.sct, reduction = "umap", group.by = "time", label=TRUE)
+dev.off()
+
+
+# annotate 
+
+
+
+############ V2 naming (output/seurat/humangastruloid2472hr.dim30kparam15res03.rds = QCV2dim30kparam15res04)
+
+Cluster1: CPC1
+Cluster2: Epiblast_Ectoderm
+Cluster3: CPC2
+Cluster4: Endoderm
+Cluster5: CadiacMesoderm
+Cluster6: PrimitiveStreak
+Cluster7: ProliferatingCardiacMesoderm
+Cluster8: Epiblast
+Cluster9: Cardiomyocyte
+Cluster10: Unknown 
+
+
+
+new.cluster.ids <- c(
+  "CPC1",
+  "Mixed_Epiblast_Ectoderm_PrimitiveStreak",
+  "CPC2",
+  "Endoderm",
+  "CadiacMesoderm",
+  "PrimitiveStreak",
+  "ProliferatingCardiacMesoderm",
+  "Epiblast",
+  "Cardiomyocyte",
+  "Unknown" 
+)
+
+names(new.cluster.ids) <- levels(humangastruloid.combined.sct)
+humangastruloid.combined.sct <- RenameIdents(humangastruloid.combined.sct, new.cluster.ids)
+humangastruloid.combined.sct$cluster.annot <- Idents(humangastruloid.combined.sct) # create a new slot in my seurat object
+
+
+pdf("output/seurat/UMAP_humangastruloid2472hrs_dim30kparam15res04_label.pdf", width=15, height=6)
+DimPlot(humangastruloid.combined.sct, reduction = "umap", split.by = "time", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+dev.off()
+
+pdf("output/seurat/UMAP_humangastruloid2472hrs_dim30kparam15res04_noSplit_label.pdf", width=9, height=6)
+DimPlot(humangastruloid.combined.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5)
+dev.off()
+
+humangastruloid.combined.sct$treatment <- factor(humangastruloid.combined.sct$treatment, levels = c("UNTREATED", "DASATINIB")) # Reorder untreated 1st
+
+
+pdf("output/seurat/UMAP_humangastruloid2472hrs_dim30kparam15res04_splitTreatment_label.pdf", width=15, height=6)
+DimPlot(humangastruloid.combined.sct, reduction = "umap", split.by = "treatment", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 5)
+dev.off()
+
+
+
+## Cell type proportion ###############################
+### count nb of cells in each cluster
+UNTREATED = table(Idents(humangastruloid.combined.sct)[humangastruloid.combined.sct$treatment == "UNTREATED"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(treatment= "UNTREATED")
+DASATINIB = table(Idents(humangastruloid.combined.sct)[humangastruloid.combined.sct$treatment == "DASATINIB"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(treatment= "DASATINIB")           
+
+UNTREATED_DASATINIB = UNTREATED %>%
+  bind_rows(DASATINIB) %>%
+  as_tibble()
+  
+UNTREATED_DASATINIB_prop = UNTREATED_DASATINIB %>%
+  group_by(treatment) %>%
+  mutate(total_count = sum(count)) %>%
+  ungroup() %>%
+  mutate(proportion = (count / total_count) * 100)
+
+UNTREATED_DASATINIB_prop$treatment <-
+  factor(UNTREATED_DASATINIB_prop$treatment,
+         c("UNTREATED", "DASATINIB"))
+
+pdf("output/seurat/histogramProp_UNTREATED_DASATINIB_2472hrs_dim30kparam15res04.pdf", width=4, height=4)
+ggbarplot(UNTREATED_DASATINIB_prop, x = "cluster", y = "proportion", fill = "treatment",
+                  color = "treatment", palette = c("black", "blue"),
+                  position = position_dodge(0.8), # Separate bars by treatment
+                  add = "mean_se", # Add error bars
+                  lab.pos = "out", lab.size = 3) +
+  stat_compare_means(aes(group = treatment), method = "t.test", label = "p.signif") +
+  theme_bw() +
+  labs(x = "Cell Type (Cluster)", y = "Cell Proportion (%)") +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+dev.off()
+
+
+
+
+
+
+
+# save ######################################################
+## humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid2472hr.dim30kparam15res04.rds")
+## saveRDS(humangastruloid.combined.sct, file = "output/seurat/humangastruloid2472hr.dim30kparam15res04.rds") # integration all samples
+#############################################################
+
+
+
+
+XXXY 
+
+
+
+
+
+
+
+
+```
+
+
 
 ## Identification of cluster marker genes (all genes)
 

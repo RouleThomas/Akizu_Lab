@@ -7,30 +7,23 @@ Data integration PSC WT, KO and KOEF1aEZH1:
     - H3K27me3
 
 Detail of sample used:
-- WT_EZH1: 1 Bio Rep (`006__CutRun`)
-- WT_EZH2: 3 Bio Rep (`006__CutRun`, `010__CutRun`, `014__CutRun`)
-- WT_SUZ12: 3 Bio Rep (`006__CutRun`, `013__CutRun` --> 2 Rep, use the best one!, `014__CutRun`)
-- WT_H3K27me3: 3 Bio Rep (`006__CutRun`, `010__CutRun`, `013__CutRun` --> 2 Rep, use the best one!)
-- KO_EZH1: 3 Bio Rep (`006__CutRun`)
+- *WT_EZH1*: 1 Bio Rep (`006__CutRun`)
+- *WT_EZH2*: 3 Bio Rep (`006__CutRun`, `010__CutRun`, `014__CutRun`)
+- *WT_SUZ12*: 3 Bio Rep (`006__CutRun`, `013__CutRun` --> 2 Rep, use the best one!, `014__CutRun`)
+- *WT_H3K27me3*: 3 Bio Rep (`006__CutRun`, `010__CutRun`, `013__CutRun` --> 2 Rep, use the best one!)
+- *KO_EZH1*: 3 Bio Rep (`006__CutRun`, `013__CutRun` --> 2 Rep, use the best one!, `014__CutRun`)
+- *KO_EZH2*: 3 Bio Rep (`013__CutRun` --> 2 Rep, use the best one!, `014__CutRun` *2 Rep)
+- *KO_SUZ12*: 3 Bio Rep (`013__CutRun` --> 2 Rep, use the best one!, `014__CutRun` *2 Rep --> 3 Rep, use the best two ones!)
+- *KO_H3K27me3*: 3 Bio Rep (`006__CutRun`, `013__CutRun` --> 2 Rep, use the best one!, `014__CutRun`)
 
+XXX I AM HERE FOR FILE RENAIMING XXX re run 005 samtools XXX
 
+- *KOEF1aEZH1_EZH1*: 3 Bio Rep (`005__CutRun`, `006__CutRun`, `013__CutRun` --> 2 Rep, use the best one!)
+- *KOEF1aEZH1_EZH2*: 3 Bio Rep (`006__CutRun`, `013__CutRun` --> 2 Rep, use the best one!, `014__CutRun`)
+- *KOEF1aEZH1_SUZ12*: 3 Bio Rep (`005__CutRun`, `006__CutRun`,`013__CutRun` --> 2 Rep, use the best one!)
+- *KOEF1aEZH1_H3K27me3*: 3 Bio Rep (`005__CutRun`, `006__CutRun`,`013__CutRun` --> 2 Rep, use the best one!)
 
-
-
-
-
-
-
-
-
-Dataset integration of 3 biol rep:
-
-
-
-
-
-- `005__CutRun` NPC WT vs KO H3K27me3 and H3K4me3 (native)
-- `008__CutRun` NPC WT vs KO H3K27me3 and H3K4me3 (FA)
+--> *NOTE: for `013__CutRun` R1 is better and has been used; for `014__CutRun` KO_SUZ12, I used R1 and R2: they are more similar, R3 show a lot more signal, outlier as compare to R1 R2.*
 
 # Pipeline integration
 
@@ -44,9 +37,7 @@ Dataset integration of 3 biol rep:
 # Copy and rename files
 
 
---> Copy `*.unique.dupmark.sorted.bam` and `*.bai` files and manually added `_008` or `_005` respectively
-
-*NOTE: For 005 there was sample inversion for `NPC_KO_H3K4me3` (eg. NPC_KO_H3K27me1 is NPC_KO_H3K4me3); I made sure to cp the good file by checking the library size*
+--> Copy `*.unique.dupmark.sorted.bam` and `*.bai` files and manually rename them. File per file, not to make mistake, with their associated IGG! Use following nomenclature: [SAMPLENAME]_[005R1005R2008R3] for replicates.
 
 
 # macs2 peak calling

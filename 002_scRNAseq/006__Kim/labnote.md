@@ -6895,34 +6895,43 @@ multiome_WT_Bap1KO_QCV2vC1.sct = LinkPeaks(
 )
 
 
-XXXY HERE !!!
 
 # SAVE ##########################################################################################
 ## saveRDS(multiome_WT_Bap1KO_QCV2vC1.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_XXXTOLOADANDRUNLINKPEAKS.rds") 
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_XXXTOLOADANDRUNLINKPEAKS.rds")
 # --> JUST A VERIFICATION THAT correct1 did not messedup linkpeaks; run this and check whether the Values are similar.
 ## saveRDS(LinkPeaks, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.sct_numeric_label.rds") 
+# --> Value is not exactly, the same. Maybe because of random calculation, maybe not, as we don't know lets prefer use correct1 version.
+# PAST version:
 multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.sct_numeric_label.rds")
+# NEW correct1:
+#saveRDS(multiome_WT_Bap1KO_QCV2vC1.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.sct_numeric_label.rds") 
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.sct_numeric_label.rds")
 ##########################################################################################
 
 
 
 Links = as_tibble(Links(multiome_WT_Bap1KO_QCV2vC1.sct))
 
-#write.table(as_tibble(Links(multiome_WT_Bap1KO_QCV2vC1.sct)), file = c("output/Signac/LinkPeaks_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
 
 ### Adjust the pvalue and select positive corr as in the https://www.nature.com/articles/s41467-024-45199-x#Fig2 paper
 Links$adjusted_pvalue <- p.adjust(Links$pvalue, method = "BH")
+#write.table(Links, file = c("output/Signac/LinkPeaks_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
 ### Isolate signif genes
 Links_signif = Links %>%
-  dplyr::filter(adjusted_pvalue < 0.05, score >0) %>%
+  dplyr::filter(adjusted_pvalue < 0.05, score >0) %>%  # 28,201 Link Signif
   dplyr::select(gene) %>%
   unique()
 ### Reorder the gene based on their cluster max expression
 
+Links %>%
+  dplyr::filter(adjusted_pvalue < 0.05, score >0) %>%  
+  dplyr::select(peak) %>% # 22,747 Link peak Signif
+  unique()
 
 ## log norm and Scale GeneActivity assay
-
-
 DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "GeneActivity"
 
 multiome_WT_Bap1KO_QCV2vC1.sct <- NormalizeData(multiome_WT_Bap1KO_QCV2vC1.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
@@ -6941,7 +6950,7 @@ Links_markers_pval= as_tibble(Links_markers) %>%
   group_by(gene) %>%
   dplyr::filter(p_val == min(p_val)) %>%
   dplyr::select(gene, cluster)
-#write.table(Links_markers, file = "output/Signac/srat_multiome_WT_Bap1KO-QCV2vC1_dim40kparam42res065algo4feat2000_noCellCycleRegression-Links_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+#write.table(Links_markers, file = "output/Signac/srat_multiome_WT_Bap1KO-QCV2vC1_dim40kparam42res065algo4feat2000correct1_noCellCycleRegression-Links_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 
 
@@ -7006,17 +7015,17 @@ dev.off()
 
 # final aesthetics - pretty
 
-pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_SCTscaledata_pretty.pdf", width=6, height=3)
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000correct1_LinksPadj05Score0_SCTscaledata_pretty.pdf", width=6, height=3)
 DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "SCT", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5, draw.lines = FALSE, label = FALSE)
 dev.off()
 
-pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_GeneActivtiyscaledata_pretty.pdf", width=6, height=3)
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000correct1_LinksPadj05Score0_GeneActivtiyscaledata_pretty.pdf", width=6, height=3)
 DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5, draw.lines = FALSE, label = FALSE)
 dev.off()
-pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_GeneActivtiyscaledata_pretty1.pdf", width=6, height=3)
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000correct1_LinksPadj05Score0_GeneActivtiyscaledata_pretty1.pdf", width=6, height=3)
 DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5, draw.lines = FALSE, label = FALSE, disp.max = 2)
 dev.off()
-pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_GeneActivtiyscaledata_pretty2.pdf", width=6, height=3)
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000correct1_LinksPadj05Score0_GeneActivtiyscaledata_pretty2.pdf", width=6, height=3)
 DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5, draw.lines = FALSE, label = FALSE, disp.max = 2, disp.min = -2)
 dev.off()
 

@@ -465,6 +465,18 @@ samtools faidx ../003__CutRun/meta/MG1655_v2.fa
 
 --> E coli MG1655 alignemnt seems to have work can see reads on IGV !!
 
+
+While working on `016__integration_PSC_V1`, noticed that bam files are corrupted; transformed into `*.pgbam`; let's re-run samtools_unique for all files:
+
+```bash
+conda activate bowtie2
+
+sbatch scripts/samtools_unique_correct.sh # 29585672 xxx
+```
+
+--> XXX all good.
+
+
 # Generate bigwig coverage files
 ## Raw bigwig
 Paramaters:

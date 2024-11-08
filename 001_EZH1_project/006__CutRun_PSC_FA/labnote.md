@@ -178,9 +178,21 @@ sbatch --dependency=afterany:15829779 scripts/samtools_MG1655_unique_2.sh # 1582
 sbatch --dependency=afterany:15829786 scripts/samtools_MG1655_unique_3.sh # 15829891 ok
 ```
 
-
-
 --> More information on this step in the `005__CutRun` labnote
+
+
+While working on `016__integration_PSC_V1`, noticed that bam files are corrupted; transformed into `*.pgbam`; let's re-run samtools_unique for all files:
+
+
+```bash
+conda activate bowtie2
+
+sbatch scripts/samtools_unique_correct.sh # 29565424 ok
+```
+
+--> all good.
+
+
 
 # Generate bigwig coverage files
 ## Raw bigwig
