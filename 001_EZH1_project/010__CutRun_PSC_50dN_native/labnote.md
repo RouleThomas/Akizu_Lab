@@ -72,24 +72,18 @@ sbatch --dependency=afterany:16520721 scripts/bowtie2_2.sh # 16520752 ok
 
 --> Looks good; overall ~75% uniquely aligned reads
 
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-Mapping on E coli --> TO DO LATER! 
+Mapping on E coli 
 
 ```bash
 conda activate bowtie2
 
-sbatch scripts/bowtie2_MG1655_1.sh # 13345349 ok
-sbatch scripts/bowtie2_MG1655_2.sh # 13345352 ok
-sbatch scripts/bowtie2_MG1655_3.sh # 13345353 ok
-sbatch scripts/bowtie2_MG1655_missing.sh # 13345354 ok
-
+sbatch scripts/bowtie2_MG1655_1.sh # 29756367 ok
+sbatch scripts/bowtie2_MG1655_2.sh # 29756370 ok
 ```
 
---> between 0.5 - 2% uniquely aligned reads (not a lot..; previously `005__CutRun` 10% (in `003__CutRun` was less than 1%) )
+--> Between 0.05 - 2% uniquely aligned reads (not a lot..; previously `005__CutRun` 10% (in `003__CutRun` was less than 1%) )
 
-
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 
@@ -135,24 +129,18 @@ sbatch --dependency=afterany:16520752 scripts/samtools_unique_2.sh # 16520803 ok
 
 ```
 
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 Let's do the same for E coli MG1655 spike in samples:
 
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:13345349:13345352:13345353:13345354 scripts/samtools_MG1655_unique_1.sh # 13345712 xxx
-sbatch --dependency=afterany:13345349:13345352:13345353:13345354 scripts/samtools_MG1655_unique_2.sh # 13345713 xxx
-sbatch --dependency=afterany:13345349:13345352:13345353:13345354 scripts/samtools_MG1655_unique_3.sh # 13345715 xxx
-sbatch --dependency=afterany:13345349:13345352:13345353:13345354 scripts/samtools_MG1655_unique_missing.sh # 13345737 xxx
-
-
+sbatch scripts/samtools_MG1655_unique.sh # 29772327 xxx
 ```
 
 --> More information on this step in the `005__CutRun` labnote
 
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 
 # Generate bigwig coverage files
 ## Raw bigwig
@@ -300,6 +288,18 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 **Pipeline:**
 - Count the histone barcode on the clean reads
 - Calculate SF (group by sample (replicate) and AB and calculate the total nb of reads. Then proportion of reads = nb read in sample / total reads. SF = min(proportion) / sample proportion)
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ## Count the histone barcode on the clean reads

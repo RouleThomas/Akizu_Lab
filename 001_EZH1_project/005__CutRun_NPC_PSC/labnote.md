@@ -471,10 +471,12 @@ While working on `016__integration_PSC_V1`, noticed that bam files are corrupted
 ```bash
 conda activate bowtie2
 
-sbatch scripts/samtools_unique_correct.sh # 29585672 xxx
+sbatch scripts/samtools_unique_correct.sh # 29585672 ok
+
+sbatch scripts/samtools_MG1655_unique_correct.sh # 29771870 xxx
 ```
 
---> XXX all good.
+--> All good.
 
 
 # Generate bigwig coverage files

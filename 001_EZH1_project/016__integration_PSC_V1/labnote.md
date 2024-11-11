@@ -15,9 +15,6 @@ Detail of sample used:
 - *KO_EZH2*: 3 Bio Rep (`013__CutRun` --> 2 Rep, use the best one!, `014__CutRun` *2 Rep)
 - *KO_SUZ12*: 3 Bio Rep (`013__CutRun` --> 2 Rep, use the best one!, `014__CutRun` *2 Rep --> 3 Rep, use the best two ones!)
 - *KO_H3K27me3*: 3 Bio Rep (`006__CutRun`, `013__CutRun` --> 2 Rep, use the best one!, `014__CutRun`)
-
-XXX I AM HERE FOR FILE RENAIMING XXX re run 005 samtools XXX
-
 - *KOEF1aEZH1_EZH1*: 3 Bio Rep (`005__CutRun`, `006__CutRun`, `013__CutRun` --> 2 Rep, use the best one!)
 - *KOEF1aEZH1_EZH2*: 3 Bio Rep (`006__CutRun`, `013__CutRun` --> 2 Rep, use the best one!, `014__CutRun`)
 - *KOEF1aEZH1_SUZ12*: 3 Bio Rep (`005__CutRun`, `006__CutRun`,`013__CutRun` --> 2 Rep, use the best one!)
@@ -38,6 +35,338 @@ XXX I AM HERE FOR FILE RENAIMING XXX re run 005 samtools XXX
 
 
 --> Copy `*.unique.dupmark.sorted.bam` and `*.bai` files and manually rename them. File per file, not to make mistake, with their associated IGG! Use following nomenclature: [SAMPLENAME]_[005R1005R2008R3] for replicates.
+
+--> I keep replicate number from the experiment; if no number after `R`, means experiment has only 1 rep.
+
+
+# THOR
+## THOR TMM default method
+
+
+
+```bash
+# Needed step to change where THOR look for libraries
+conda activate RGT
+export LD_LIBRARY_PATH=~/anaconda3/envs/RGT/lib:$LD_LIBRARY_PATH
+bigWigMerge
+
+
+# Default THOR TMM normalization (no E coli spike in norm)
+sbatch scripts/THOR_PSC_WTvsKO_EZH1_TMM.sh # 29755426 fail; 29757697 fail
+sbatch scripts/THOR_PSC_WTvsKO_EZH2_TMM.sh # 29755604 ok
+sbatch scripts/THOR_PSC_WTvsKO_SUZ12_TMM.sh # 29755723 ok
+sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_TMM.sh # 29755816 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1_TMM.sh # 29755881 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_TMM.sh # 29755963 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_TMM.sh # 29756081 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_TMM.sh # 29756122 ok
+
+# Default THOR housekeeping genes normalization (no E coli spike in norm) - HK genes from THOR tutorial
+sbatch scripts/THOR_PSC_WTvsKO_EZH1_housekeep.sh # 29758500 ok
+sbatch scripts/THOR_PSC_WTvsKO_EZH2_housekeep.sh # 29758509 ok
+sbatch scripts/THOR_PSC_WTvsKO_SUZ12_housekeep.sh # 29758553 xxx
+sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_housekeep.sh # 29758588 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1_housekeep.sh # 29758609 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_housekeep.sh # 29758622 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_housekeep.sh # 29758674 ok 
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_housekeep.sh # 29758780 xxx  
+
+
+# Default THOR housekeeping genes normalization (no E coli spike in norm) - HOX genes used
+sbatch scripts/THOR_PSC_WTvsKO_EZH1_housekeepHOX.sh # 29760504 xxx
+sbatch scripts/THOR_PSC_WTvsKO_EZH2_housekeepHOX.sh # 29760650 xxx
+sbatch scripts/THOR_PSC_WTvsKO_SUZ12_housekeepHOX.sh # 29760682 xxx
+sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_housekeepHOX.sh # 29760701 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1_housekeepHOX.sh # 29760823 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_housekeepHOX.sh # 29760852 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_housekeepHOX.sh # 29761039 xxx 
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_housekeepHOX.sh # 29761092 xxx  
+```
+
+**Conclusion for replicate similarity**:
+- *Default THOR TMM normalization*: very bad, replicate very different (potential batch effect remaining, different signal noise ratio)
+- *Housekeeping gene normalization with HK genes*: very bad, replicate very different (fail likely because HK genes lowly H3K27me3)
+- *Housekeeping gene normalization with HOX genes*: XXX
+- *SpikeIn DiffBindTMM normalization*: XXX
+
+
+
+--> *Error* `IndexError: cannot do a non-empty take from an empty axes.` on `scripts/THOR_PSC_WTvsKO_EZH1_TMM.sh`. Probably because WT vs KO, and KO EZH1 as no signal at all... Weird comparison! That is a control...
+
+--> *Housekeeping genes* has been generated in `001*/002*` at `#### THOR with housekeeping genes normalization`. Collected from the [rgt-THOR tutorial](https://reg-gen.readthedocs.io/en/latest/thor/tool_usage.html)
+    --> Let's also try housekeeping gene normalization using the HOX genes. Generate in `meta/`
+
+
+
+
+
+```bash
+# Generate gtf file for the HOX genes
+nano meta/HOX_genes.txt
+HOXA1
+HOXA2
+HOXA3
+HOXA-AS3
+HOXA4
+HOXA5
+HOXA6
+HOXA7
+HOXA9
+HOXA10
+HOXA10-AS
+HOXA11
+HOXA11-AS
+HOXA13
+
+
+### create gtf from gene list
+#### Modify the .txt file that list all genes so that it match gtf structure
+sed 's/\r$//; s/.*/gene_name "&"/' meta/HOX_genes.txt > meta/HOX_genes_as_gtf_geneSymbol.txt
+
+## Filter the gtf
+grep -Ff meta/HOX_genes_as_gtf_geneSymbol.txt ../015__RNAseq_PSC/meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_HOX_genes.gtf
+
+## convert gtf to bed
+awk 'BEGIN {OFS="\t"} $3 == "gene" {print $1, $4-1, $5, $9, ".", $7}' meta/ENCFF159KBI_HOX_genes.gtf > meta/ENCFF159KBI_HOX_genes.bed
+
+
+```
+
+- *NOTE: HOX genes manually selected, identified from IGV*
+
+
+
+
+XXX BELOW NOT MOD:
+
+
+### Filter THOR peaks (qvalue)
+
+Let's find the optimal qvalue for THOR diff peaks
+
+
+```R
+
+# load the file using the tidyverse
+library("readr")
+library("dplyr")
+library("ggplot2")
+library("tidyr")
+
+# H3K27me3 WTvsKO
+diffpeaks <- read_tsv("output/THOR/THOR_PSC_WTvsKO_H3K27me3/PSCWTvsKOH3K27me3-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  mutate(FC = (count_KO) / (count_WT))
+  
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_PSC_WTvsKO_H3K27me3/log2FC.pdf", width=14, height=14)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KO") +
+  theme_bw()
+dev.off()
+
+pdf("output/THOR/THOR_PSC_WTvsKO_H3K27me3/log2FC_qval30.pdf", width=14, height=14)
+thor_splitted %>%
+  filter(qval > 30) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KO_qval30") +
+  theme_bw()
+dev.off()
+
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 100) %>%
+  write_tsv("output/THOR/THOR_PSC_WTvsKO_H3K27me3/THOR_qval100.bed", col_names = FALSE)
+
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 30) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+```
+
+
+
+**Optimal qvalue:**
+-->  XXX
+
+
+
+
+
+## THOR MG1655 DiffBind TMM method
+
+XXX
+
+
+# deepTool plots
+
+## THOR TMM with DEGs
+
+Let's generate deepTool plot with THOR Default TMM method (no spike in) on DEGs from `015__RNAseq`
+
+
+```bash
+# gtf file generated in 015:
+meta/ENCFF159KBI_upregulated_q05fc05_PSC_KO_vs_PSC_WT.gtf
+meta/ENCFF159KBI_downregulated_q05fc05_PSC_KO_vs_PSC_WT.gtf
+
+meta/ENCFF159KBI_upregulated_q05fc05_PSC_KOEF1aEZH1_vs_PSC_WT.gtf
+meta/ENCFF159KBI_downregulated_q05fc05_PSC_KOEF1aEZH1_vs_PSC_WT.gtf
+
+# WT vs KO ####################
+## Keeping rep individuals, 1 plot per IP
+sbatch scripts/matrix_TSS_5kb_PSC_EZH1_WTKO_DEGWTvsKOq05fc05_TMM.sh # 29756558 fail THOR fail before;
+sbatch scripts/matrix_TSS_5kb_PSC_EZH2_WTKO_DEGWTvsKOq05fc05_TMM.sh # 29756559 xxx
+sbatch scripts/matrix_TSS_5kb_PSC_SUZ12_WTKO_DEGWTvsKOq05fc05_TMM.sh # 29756560 xxx
+sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3_WTKO_DEGWTvsKOq05fc05_TMM.sh # 29756561 xxx
+## Pulling rep, all IP together
+sbatch scripts/matrix_TSS_5kb_PSC_EZH1EZH2SUZ12H3K27me3_WTKOmerge_DEGWTvsKOq05fc05_TMM.sh
+
+
+# WT vs KOEF1aEZH1 ###############
+## Keeping rep individuals, 1 plot per IP
+sbatch scripts/matrix_TSS_5kb_PSC_EZH1_WTKOEF1aEZH1_DEGWTvsKOEF1aEZH1q05fc05_TMM.sh # 29759887 xxx
+sbatch scripts/matrix_TSS_5kb_PSC_EZH2_WTKOEF1aEZH1_DEGWTvsKOEF1aEZH1q05fc05_TMM.sh # 29759890 xxx
+sbatch scripts/matrix_TSS_5kb_PSC_SUZ12_WTKOEF1aEZH1_DEGWTvsKOEF1aEZH1q05fc05_TMM.sh # 29759917 xxx
+sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3_WTKOEF1aEZH1_DEGWTvsKOEF1aEZH1q05fc05_TMM.sh # 29759919 xxx
+## Pulling rep, all IP together
+sbatch scripts/matrix_TSS_5kb_PSC_EZH1EZH2SUZ12H3K27me3_WTKOEF1aEZH1merge_DEGWTvsKOEF1aEZH1q05fc05_TMM.sh
+```
+
+--> *TMM Default normalization* leads to very different Replicate! It does not work well at all...
+
+
+
+
+
+# Bigwig
+## Generate raw bigwig from unique.dupmark.sorted
+
+
+Paramaters:
+- `--binSize 1` for good resolution
+- `--scaleFactor 0.5` to obtain the exact number of reads respective to the bam, otherwise it count two instead of 1
+- `--extendReads` Reads extented taking into account mean fragment size of all mated reads.
+
+```bash
+conda activate deeptools
+
+sbatch scripts/bamtobigwig_unique_1.sh # 29756540 ok
+sbatch scripts/bamtobigwig_unique_2.sh # 29756546 ok
+sbatch scripts/bamtobigwig_unique_3.sh # 29756550 ok
+```
+
+
+## Merge bigiwg files, replicate
+
+XXX
+
+
+
+# peak calling
+## MACS2 peak calling on bam unique
+
+
+--> The **peaks are called on the uniquely aligned reads** (it performed better on our previous CutRun)
+
+**PEAK CALLING  in `broad` and `narrow` **
+
+
+```bash
+conda activate macs2
+# genotype per genotype
+sbatch scripts/macs2_broad_1.sh # 29773632 xxx
+sbatch scripts/macs2_broad_2.sh # 29773633 xxx
+sbatch scripts/macs2_broad_3.sh # 29773661 xxx
+```
+
+--> XXX
+
+
+# Ecoli scaling factor
+
+From [EpiCypher](https://support.epicypher.com/docs/normalizing-to-e-coli-spike-in-dna), it seems uniquely aligned reads should be used, from both human, and E coli!
+
+## Count the nb of uniquely aligned reads
+
+Let's count the nb of uniquely aligned reads in our sample (human)
+
+```bash
+conda activate bowtie2
+
+sbatch scripts/samtools_unique_count.sh # 29775711 xxx
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+XXX below not mod
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # macs2 peak calling

@@ -90,22 +90,20 @@ conda activate bowtie2
 sbatch --dependency=afterany:28205563 scripts/bowtie2.sh # 28205600 ok
 ```
 
---> XXX Looks good; overall ~75% uniquely aligned reads XXX
+--> Looks good; overall ~75% uniquely aligned reads
 
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-Mapping on E coli --> TO DO LATER! 
+Mapping on E coli 
 
 ```bash
 conda activate bowtie2
 
-sbatch scripts/bowtie2_MG1655_1.sh # 13345349 ok
+sbatch scripts/bowtie2_MG1655.sh # 29756394 xxx
 ```
 
---> between 0.5 - 2% uniquely aligned reads (not a lot..; previously `005__CutRun` 10% (in `003__CutRun` was less than 1%) )
+--> Between 1 - 5% uniquely aligned reads (not a lot..; previously `005__CutRun` 10% (in `003__CutRun` was less than 1%) )
 
 
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 
@@ -141,19 +139,19 @@ conda activate bowtie2
 sbatch --dependency=afterany:28205600 scripts/samtools_unique.sh # 28205653 ok
 ```
 
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 
 Let's do the same for E coli MG1655 spike in samples:
 
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:13345349:scripts/samtools_MG1655_unique_1.sh # 13345712 xxx
+sbatch scripts/samtools_MG1655_unique.sh # 29772397 xxx
 ```
 
 --> More information on this step in the `005__CutRun` labnote
 
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 
 # Generate bigwig coverage files
 ## Raw bigwig

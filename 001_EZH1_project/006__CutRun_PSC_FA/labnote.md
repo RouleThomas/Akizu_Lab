@@ -176,6 +176,10 @@ conda activate bowtie2
 sbatch --dependency=afterany:15829778 scripts/samtools_MG1655_unique_1.sh # 15829889 ok
 sbatch --dependency=afterany:15829779 scripts/samtools_MG1655_unique_2.sh # 15829890 ok
 sbatch --dependency=afterany:15829786 scripts/samtools_MG1655_unique_3.sh # 15829891 ok
+
+# count the nb of unique reads
+sbatch scripts/samtools_MG1655_unique_count.sh # 29772149 xxx
+
 ```
 
 --> More information on this step in the `005__CutRun` labnote

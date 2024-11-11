@@ -764,8 +764,35 @@ write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05fc0
 
 
 
+## Generate GTF files of DEGs genes
 
 
+```bash
+# Generate gtf file from gene list:
+output/deseq2/upregulated_q05fc05_PSC_KO_vs_PSC_WT.txt
+output/deseq2/downregulated_q05fc05_PSC_KO_vs_PSC_WT.txt
+
+output/deseq2/upregulated_q05fc05_PSC_KOEF1aEZH1_vs_PSC_WT.txt
+output/deseq2/downregulated_q05fc05_PSC_KOEF1aEZH1_vs_PSC_WT.txt
+
+### create gtf from gene list
+#### Modify the .txt file that list all genes so that it match gtf structure
+sed 's/\r$//; s/.*/gene_name "&"/' output/deseq2/upregulated_q05fc05_PSC_KO_vs_PSC_WT.txt > output/deseq2/upregulated_q05fc05_PSC_KO_vs_PSC_WT_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/deseq2/downregulated_q05fc05_PSC_KO_vs_PSC_WT.txt > output/deseq2/downregulated_q05fc05_PSC_KO_vs_PSC_WT_as_gtf_geneSymbol.txt
+
+sed 's/\r$//; s/.*/gene_name "&"/' output/deseq2/upregulated_q05fc05_PSC_KOEF1aEZH1_vs_PSC_WT.txt > output/deseq2/upregulated_q05fc05_PSC_KOEF1aEZH1_vs_PSC_WT_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/deseq2/downregulated_q05fc05_PSC_KOEF1aEZH1_vs_PSC_WT.txt > output/deseq2/downregulated_q05fc05_PSC_KOEF1aEZH1_vs_PSC_WT_as_gtf_geneSymbol.txt
+
+## Filter the gtf
+grep -Ff output/deseq2/upregulated_q05fc05_PSC_KO_vs_PSC_WT_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_upregulated_q05fc05_PSC_KO_vs_PSC_WT.gtf
+grep -Ff output/deseq2/downregulated_q05fc05_PSC_KO_vs_PSC_WT_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_downregulated_q05fc05_PSC_KO_vs_PSC_WT.gtf
+
+grep -Ff output/deseq2/upregulated_q05fc05_PSC_KOEF1aEZH1_vs_PSC_WT_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_upregulated_q05fc05_PSC_KOEF1aEZH1_vs_PSC_WT.gtf
+grep -Ff output/deseq2/downregulated_q05fc05_PSC_KOEF1aEZH1_vs_PSC_WT_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_downregulated_q05fc05_PSC_KOEF1aEZH1_vs_PSC_WT.gtf
+
+```
+
+--> Will be used to generate deepTool plots at `001*/016*` integration to check RNA fit well with CutRun
 
 
 
