@@ -23,3 +23,12 @@ plotHeatmap -m output/deeptools/matrix_TSS_5kb_PSC_EZH1_WTKOEF1aEZH1_DEGWTvsKOEF
     --heatmapWidth 2
 
 
+plotProfile -m output/deeptools/matrix_TSS_5kb_PSC_EZH1_WTKOEF1aEZH1_DEGWTvsKOEF1aEZH1q05fc05_housekeepHOX.gz \
+    -out output/deeptools/matrix_TSS_5kb_PSC_EZH1_WTKOEF1aEZH1_DEGWTvsKOEF1aEZH1q05fc05_housekeepHOX_profile_colorSmall.pdf \
+    --perGroup \
+    --colors black blue blue blue \
+    --plotWidth 7 \
+    --regionsLabel Upregulated Downregulated
+
+
+

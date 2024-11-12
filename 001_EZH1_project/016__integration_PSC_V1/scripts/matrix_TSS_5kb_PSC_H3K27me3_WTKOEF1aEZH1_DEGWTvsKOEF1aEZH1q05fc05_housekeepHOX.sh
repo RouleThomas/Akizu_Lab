@@ -23,3 +23,24 @@ plotHeatmap -m output/deeptools/matrix_TSS_5kb_PSC_H3K27me3_WTKOEF1aEZH1_DEGWTvs
     --heatmapWidth 2
 
 
+
+
+plotHeatmap -m output/deeptools/matrix_TSS_5kb_PSC_H3K27me3_WTKOEF1aEZH1_DEGWTvsKOEF1aEZH1q05fc05_housekeepHOX.gz \
+    -out output/deeptools/matrix_TSS_5kb_PSC_H3K27me3_WTKOEF1aEZH1_DEGWTvsKOEF1aEZH1q05fc05_housekeepHOX_heatmap_colorSmall1.pdf \
+    --samplesLabel "WT_R1" "WT_R2" "WT_R3" "KOEF1aEZH1_R1" "KOEF1aEZH1_R2" "KOEF1aEZH1_R3" \
+    --regionsLabel Upregulated Downregulated \
+    --colorList 'black, yellow' \
+    --zMax 20 \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2
+
+
+
+
+plotProfile -m output/deeptools/matrix_TSS_5kb_PSC_H3K27me3_WTKOEF1aEZH1_DEGWTvsKOEF1aEZH1q05fc05_housekeepHOX.gz \
+    -out output/deeptools/matrix_TSS_5kb_PSC_H3K27me3_WTKOEF1aEZH1_DEGWTvsKOEF1aEZH1q05fc05_housekeepHOX_profile_colorSmall.pdf \
+    --perGroup \
+    --colors black black black blue blue blue \
+    --plotWidth 7 \
+    --regionsLabel Upregulated Downregulated
