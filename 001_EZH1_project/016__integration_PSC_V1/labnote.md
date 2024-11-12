@@ -74,12 +74,12 @@ sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_housekeep.sh # 29758780 xxx
 
 # Default THOR housekeeping genes normalization (no E coli spike in norm) - HOX genes used
 sbatch scripts/THOR_PSC_WTvsKO_EZH1_housekeepHOX.sh # 29760504 xxx
-sbatch scripts/THOR_PSC_WTvsKO_EZH2_housekeepHOX.sh # 29760650 xxx
+sbatch scripts/THOR_PSC_WTvsKO_EZH2_housekeepHOX.sh # 29760650 ok
 sbatch scripts/THOR_PSC_WTvsKO_SUZ12_housekeepHOX.sh # 29760682 xxx
 sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_housekeepHOX.sh # 29760701 xxx
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1_housekeepHOX.sh # 29760823 xxx
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_housekeepHOX.sh # 29760852 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_housekeepHOX.sh # 29761039 xxx 
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_housekeepHOX.sh # 29761039 ok 
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_housekeepHOX.sh # 29761092 xxx  
 ```
 
