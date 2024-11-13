@@ -83,34 +83,34 @@ sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_housekeepHOX.sh # 29761039 ok
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_housekeepHOX.sh # 29761092 ok  
 
 # Default THOR genes normalization (no E coli spike in norm) - HOX genes used without input
-sbatch scripts/THOR_PSC_WTvsKO_EZH1_housekeepHOXnoInput.sh # 29829147 xxx
-sbatch scripts/THOR_PSC_WTvsKO_EZH2_housekeepHOXoInput.sh # 29829152 xxx
-sbatch scripts/THOR_PSC_WTvsKO_SUZ12_housekeepHOXoInput.sh # 29829163 xxx
-sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_housekeepHOXoInput.sh # 29829179 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1_housekeepHOXoInput.sh # 29829181 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_housekeepHOXoInput.sh # 29829193 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_housekeepHOXoInput.sh # 29829206 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_housekeepHOXoInput.sh # 29829211 xxx 
+sbatch scripts/THOR_PSC_WTvsKO_EZH1_housekeepHOXnoInput.sh # 29829147 ok
+sbatch scripts/THOR_PSC_WTvsKO_EZH2_housekeepHOXoInput.sh # 29829152 ok
+sbatch scripts/THOR_PSC_WTvsKO_SUZ12_housekeepHOXoInput.sh # 29829163 ok
+sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_housekeepHOXoInput.sh # 29829179 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1_housekeepHOXoInput.sh # 29829181 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_housekeepHOXoInput.sh # 29829193 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_housekeepHOXoInput.sh # 29829206 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_housekeepHOXoInput.sh # 29829211 ok 
 
 # Default THOR genes normalization (no E coli spike in norm) - HOX + HK genes used
 sbatch scripts/THOR_PSC_WTvsKO_EZH1_housekeepHOXHK.sh # 29823147 ok
 sbatch scripts/THOR_PSC_WTvsKO_EZH2_housekeepHOXHK.sh # 29823148 ok
 sbatch scripts/THOR_PSC_WTvsKO_SUZ12_housekeepHOXHK.sh # 29823150 ok
-sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_housekeepHOXHK.sh # 29823152 xxx
+sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_housekeepHOXHK.sh # 29823152 ok
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1_housekeepHOXHK.sh # 29823155 ok
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_housekeepHOXHK.sh # 29823157 ok
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_housekeepHOXHK.sh # 29823160 ok
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_housekeepHOXHK.sh # 29823164 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_housekeepHOXHK.sh # 29823164 ok
 
 # Default THOR genes normalization (no E coli spike in norm) - HOX + HK genes used without input
-sbatch scripts/THOR_PSC_WTvsKO_EZH1_housekeepHOXHKnoInput.sh # 29829033 xxx
-sbatch scripts/THOR_PSC_WTvsKO_EZH2_housekeepHOXHKnoInput.sh # 29829038 xxx
-sbatch scripts/THOR_PSC_WTvsKO_SUZ12_housekeepHOXHKnoInput.sh # 29829040 xxx
-sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_housekeepHOXHKnoInput.sh # 29829049 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1_housekeepHOXHKnoInput.sh # 29829051 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_housekeepHOXHKnoInput.sh # 29829060 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_housekeepHOXHKnoInput.sh # 29829066 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_housekeepHOXHKnoInput.sh # 29829072 xxx
+sbatch scripts/THOR_PSC_WTvsKO_EZH1_housekeepHOXHKnoInput.sh # 29829033 ok
+sbatch scripts/THOR_PSC_WTvsKO_EZH2_housekeepHOXHKnoInput.sh # 29829038 ok
+sbatch scripts/THOR_PSC_WTvsKO_SUZ12_housekeepHOXHKnoInput.sh # 29829040 ok
+sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_housekeepHOXHKnoInput.sh # 29829049 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1_housekeepHOXHKnoInput.sh # 29829051 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_housekeepHOXHKnoInput.sh # 29829060 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_housekeepHOXHKnoInput.sh # 29829066 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_housekeepHOXHKnoInput.sh # 29829072 ok
 ```
 
 **Conclusion for replicate similarity**:
@@ -339,6 +339,243 @@ thor_splitted %>%
 
 
 
+# H3K27me3 WTvsKO housekeepHOX without input
+diffpeaks <- read_tsv("output/THOR/THOR_PSC_WTvsKO_H3K27me3_housekeepHOXnoInput/PSCWTvsKOH3K27me3housekeepHOXnoInput-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2", "count_WT_3"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2", "count_KO_3"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2+count_KO_3) / (count_WT_1+count_WT_2+count_WT_3))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_PSC_WTvsKO_H3K27me3_housekeepHOXnoInput/log2FC.pdf", width=5, height=5)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KO") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_PSC_WTvsKO_H3K27me3_housekeepHOXnoInput/log2FC_qval10.pdf", width=5, height=5)
+thor_splitted %>%
+  filter(qval > 10) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KO_qval10") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 15) %>%
+  write_tsv("output/THOR/THOR_PSC_WTvsKO_H3K27me3_housekeepHOXnoInput/THOR_qval15.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 15) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
+
+# SUZ12 WTvsKO housekeepHOX without input
+diffpeaks <- read_tsv("output/THOR/THOR_PSC_WTvsKO_SUZ12_housekeepHOXnoInput/PSCWTvsKOSUZ12housekeepHOXnoInput-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2", "count_WT_3"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2", "count_KO_3"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2+count_KO_3) / (count_WT_1+count_WT_2+count_WT_3))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_PSC_WTvsKO_SUZ12_housekeepHOXnoInput/log2FC.pdf", width=5, height=5)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KO") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_PSC_WTvsKO_SUZ12_housekeepHOXnoInput/log2FC_qval15.pdf", width=5, height=5)
+thor_splitted %>%
+  filter(qval > 15) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KO_qval15") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 15) %>%
+  write_tsv("output/THOR/THOR_PSC_WTvsKO_SUZ12_housekeepHOXnoInput/THOR_qval15.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 15) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
+
+
+
+# EZH2 WTvsKO housekeepHOX without input
+diffpeaks <- read_tsv("output/THOR/THOR_PSC_WTvsKO_EZH2_housekeepHOXnoInput/PSCWTvsKOEZH2housekeepHOXnoInput-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2", "count_WT_3"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2", "count_KO_3"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2+count_KO_3) / (count_WT_1+count_WT_2+count_WT_3))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_PSC_WTvsKO_EZH2_housekeepHOXnoInput/log2FC.pdf", width=5, height=5)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KO") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_PSC_WTvsKO_EZH2_housekeepHOXnoInput/log2FC_qval15.pdf", width=5, height=5)
+thor_splitted %>%
+  filter(qval > 15) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KO_qval15") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 30) %>%
+  write_tsv("output/THOR/THOR_PSC_WTvsKO_EZH2_housekeepHOXnoInput/THOR_qval30.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 15) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
+# H3K27me3 WTvsKOEF1aEZH1 housekeepHOX without input
+diffpeaks <- read_tsv("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_housekeepHOXnoInput/PSCWTvsKOEF1aEZH1H3K27me3housekeepHOXnoInput-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KOEF1aEZH1", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2", "count_WT_3"), sep = ":", convert = TRUE) %>%
+  separate(count_KOEF1aEZH1, into = c("count_KOEF1aEZH1_1","count_KOEF1aEZH1_2", "count_KOEF1aEZH1_3"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KOEF1aEZH1_1+count_KOEF1aEZH1_2+count_KOEF1aEZH1_3) / (count_WT_1+count_WT_2+count_WT_3))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_housekeepHOXnoInput/log2FC.pdf", width=5, height=5)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KOEF1aEZH1") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_housekeepHOXnoInput/log2FC_qval15.pdf", width=5, height=5)
+thor_splitted %>%
+  filter(qval > 15) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KOEF1aEZH1_qval15") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 20) %>%
+  write_tsv("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_housekeepHOXnoInput/THOR_qval20.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 15) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+# SUZ12 WTvsKOEF1aEZH1 housekeepHOX without input
+diffpeaks <- read_tsv("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_housekeepHOXnoInput/PSCWTvsKOEF1aEZH1SUZ12housekeepHOXnoInput-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KOEF1aEZH1", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2", "count_WT_3"), sep = ":", convert = TRUE) %>%
+  separate(count_KOEF1aEZH1, into = c("count_KOEF1aEZH1_1","count_KOEF1aEZH1_2", "count_KOEF1aEZH1_3"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KOEF1aEZH1_1+count_KOEF1aEZH1_2+count_KOEF1aEZH1_3) / (count_WT_1+count_WT_2+count_WT_3))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_housekeepHOXnoInput/log2FC.pdf", width=5, height=5)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KOEF1aEZH1") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_housekeepHOXnoInput/log2FC_qval15.pdf", width=5, height=5)
+thor_splitted %>%
+  filter(qval > 15) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KOEF1aEZH1_qval15") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 20) %>%
+  write_tsv("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_housekeepHOXnoInput/THOR_qval20.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 15) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
+
+# EZH2 WTvsKOEF1aEZH1 housekeepHOX without input
+diffpeaks <- read_tsv("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_EZH2_housekeepHOXnoInput/PSCWTvsKOEF1aEZH1EZH2housekeepHOXnoInput-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KOEF1aEZH1", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2", "count_WT_3"), sep = ":", convert = TRUE) %>%
+  separate(count_KOEF1aEZH1, into = c("count_KOEF1aEZH1_1","count_KOEF1aEZH1_2", "count_KOEF1aEZH1_3"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KOEF1aEZH1_1+count_KOEF1aEZH1_2+count_KOEF1aEZH1_3) / (count_WT_1+count_WT_2+count_WT_3))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_EZH2_housekeepHOXnoInput/log2FC.pdf", width=5, height=5)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KOEF1aEZH1") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_EZH2_housekeepHOXnoInput/log2FC_qval15.pdf", width=5, height=5)
+thor_splitted %>%
+  filter(qval > 15) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KOEF1aEZH1_qval15") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 20) %>%
+  write_tsv("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_EZH2_housekeepHOXnoInput/THOR_qval20.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 15) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
 ```
 
 
@@ -346,7 +583,12 @@ thor_splitted %>%
 **Optimal qvalue:**
 - WTvsKO_H3K27me3: qval20
 - WTvsKOEF1aEZH1_H3K27me3: qval20
-
+HousekeepHOXnoInput
+- WTvsKO_H3K27me3: qval10
+- WTvsKO_SUZ12: qval15 (SUZ12 R1 s1-rep0, very noisy)
+- WTvsKO_EZH2: qval15 
+- WTvsKOEF1aEZH1_H3K27me3: qval15
+- WTvsKOEF1aEZH1_SUZ12: qval15
 
 
 
