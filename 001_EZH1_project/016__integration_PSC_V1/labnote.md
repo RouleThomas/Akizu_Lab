@@ -40,7 +40,7 @@ Detail of sample used:
 
 
 # THOR
-## THOR TMM default method
+## Run THOR
 
 
 
@@ -82,24 +82,45 @@ sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_housekeepHOX.sh # 29760852 ok
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_housekeepHOX.sh # 29761039 ok 
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_housekeepHOX.sh # 29761092 ok  
 
+# Default THOR genes normalization (no E coli spike in norm) - HOX genes used without input
+sbatch scripts/THOR_PSC_WTvsKO_EZH1_housekeepHOXnoInput.sh # 29829147 xxx
+sbatch scripts/THOR_PSC_WTvsKO_EZH2_housekeepHOXoInput.sh # 29829152 xxx
+sbatch scripts/THOR_PSC_WTvsKO_SUZ12_housekeepHOXoInput.sh # 29829163 xxx
+sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_housekeepHOXoInput.sh # 29829179 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1_housekeepHOXoInput.sh # 29829181 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_housekeepHOXoInput.sh # 29829193 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_housekeepHOXoInput.sh # 29829206 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_housekeepHOXoInput.sh # 29829211 xxx 
+
 # Default THOR genes normalization (no E coli spike in norm) - HOX + HK genes used
-sbatch scripts/THOR_PSC_WTvsKO_EZH1_housekeepHOXHK.sh # 29823147 xxx
-sbatch scripts/THOR_PSC_WTvsKO_EZH2_housekeepHOXHK.sh # 29823148 xxx
-sbatch scripts/THOR_PSC_WTvsKO_SUZ12_housekeepHOXHK.sh # 29823150 xxx
+sbatch scripts/THOR_PSC_WTvsKO_EZH1_housekeepHOXHK.sh # 29823147 ok
+sbatch scripts/THOR_PSC_WTvsKO_EZH2_housekeepHOXHK.sh # 29823148 ok
+sbatch scripts/THOR_PSC_WTvsKO_SUZ12_housekeepHOXHK.sh # 29823150 ok
 sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_housekeepHOXHK.sh # 29823152 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1_housekeepHOXHK.sh # 29823155 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_housekeepHOXHK.sh # 29823157 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_housekeepHOXHK.sh # 29823160 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1_housekeepHOXHK.sh # 29823155 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_housekeepHOXHK.sh # 29823157 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_housekeepHOXHK.sh # 29823160 ok
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_housekeepHOXHK.sh # 29823164 xxx
 
-
+# Default THOR genes normalization (no E coli spike in norm) - HOX + HK genes used without input
+sbatch scripts/THOR_PSC_WTvsKO_EZH1_housekeepHOXHKnoInput.sh # 29829033 xxx
+sbatch scripts/THOR_PSC_WTvsKO_EZH2_housekeepHOXHKnoInput.sh # 29829038 xxx
+sbatch scripts/THOR_PSC_WTvsKO_SUZ12_housekeepHOXHKnoInput.sh # 29829040 xxx
+sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_housekeepHOXHKnoInput.sh # 29829049 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1_housekeepHOXHKnoInput.sh # 29829051 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_housekeepHOXHKnoInput.sh # 29829060 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_housekeepHOXHKnoInput.sh # 29829066 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_housekeepHOXHKnoInput.sh # 29829072 xxx
 ```
 
 **Conclusion for replicate similarity**:
 - *Default THOR TMM normalization*: very bad, replicate very different (potential batch effect remaining, different signal noise ratio)
 - *Housekeeping gene normalization with HK genes*: very bad, replicate very different (fail likely because HK genes lowly H3K27me3)
 - *Housekeeping gene normalization with HOX genes*: very good, replicate cluster very well together
-- *Housekeeping gene normalization with HK + HOX genes*: XXX
+- *Housekeeping gene normalization with HK + HOX genes*: bad, replicate very different (fail likely because HK genes lowly H3K27me3 again, add noises)
+- *Housekeeping gene normalization with HOX genes without input*: xxx
+- *Housekeeping gene normalization with HK + HOX genes without input*: xxx
+
 - *SpikeIn DiffBindTMM normalization*: XXX
 
 
@@ -441,13 +462,93 @@ Let's count the nb of uniquely aligned reads in our sample (human)
 ```bash
 conda activate bowtie2
 
-sbatch scripts/samtools_unique_count.sh # 29775711 xxx
+sbatch scripts/samtools_unique_count.sh # 29775711 ok
 ```
 
+--> Output of read counts for all samples in `samples_001016.xlsx`
+
+Let's check the nb and proportion of E coli vs human reads for each sample. Created file with output metrics in `output/QC/samples_001016_readCount.txt`
+
+```R
+# packages
+library("tidyverse")
+library("ggpubr")
 
 
+# import
+readCount = read_tsv("output/QC/samples_001016_readCount.txt") %>%
+  filter(uniqMappedReads >0 ) %>%
+  tidyr::pivot_longer(cols = c(uniqMappedReads, uniqMappedMG1655Reads), 
+                      names_to = "Read_Type", values_to = "Read_Count") %>%
+  group_by(new_sample_ID) %>%
+  mutate(Ecoli_prop = round((Read_Count[Read_Type == "uniqMappedMG1655Reads"] / 
+                             Read_Count[Read_Type == "uniqMappedReads"]) * 100 , 3)) %>%
+  tidyr::pivot_longer(cols = c(Read_Count), 
+                      names_to = "Read_Measure", values_to = "Count_Value") %>%
+  mutate(new_sample_ID = factor(new_sample_ID, levels = unique(new_sample_ID[order(exp)])))
+ 
+
+sample_order <- c(
+"PSC_KOEF1aEZH1_EZH1_005R",
+"PSC_KOEF1aEZH1_SUZ12_005R",
+"PSC_KOEF1aEZH1_H3K27me3_005R",
+
+"PSC_WT_EZH1_006R",
+"PSC_WT_EZH2_006R",
+"PSC_WT_SUZ12_006R",
+"PSC_WT_H3K27me3_006R",
+"PSC_KO_EZH1_006R",
+"PSC_KO_H3K27me3_006R",
+"PSC_KOEF1aEZH1_EZH1_006R",
+"PSC_KOEF1aEZH1_EZH2_006R",
+"PSC_KOEF1aEZH1_SUZ12_006R",
+"PSC_KOEF1aEZH1_H3K27me3_006R",
+
+"PSC_WT_EZH2_010R",
+"PSC_WT_H3K27me3_010R",
+"PSC_WT_SUZ12_013R1",
+"PSC_WT_H3K27me3_013R1",
+"PSC_KO_EZH1_013R1",
+"PSC_KO_EZH2_013R1",
+"PSC_KO_SUZ12_013R1",
+"PSC_KO_H3K27me3_013R1",
+"PSC_KOEF1aEZH1_EZH1_013R1",
+"PSC_KOEF1aEZH1_EZH2_013R1",
+"PSC_KOEF1aEZH1_SUZ12_013R1",
+"PSC_KOEF1aEZH1_H3K27me3_013R1",
+
+"PSC_WT_EZH2_014R1",
+"PSC_WT_SUZ12_014R1",
+"PSC_KO_EZH1_014R2",
+"PSC_KO_EZH2_014R1",
+"PSC_KO_EZH2_014R2",
+"PSC_KO_SUZ12_014R1",
+"PSC_KO_SUZ12_014R2",
+"PSC_KO_H3K27me3_014R2",
+"PSC_KOEF1aEZH1_EZH2_014R1"
+)
+
+# Set new_sample_ID as a factor with the specified order
+readCount <- readCount %>%
+  mutate(new_sample_ID = factor(new_sample_ID, levels = sample_order))
 
 
+# plot
+pdf("output/QC/histogram_ReadCount.pdf", width=12, height=6)  # Increase the width for better spacing
+ggplot(readCount, aes(x = new_sample_ID, y = Count_Value, fill = exp)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~ Read_Type, scales = "free_y") +  # Place facet_wrap before theme adjustments
+  geom_text(data = readCount, aes(x = new_sample_ID, y = 0, label = Ecoli_prop), 
+            angle = 90, vjust = 0.5, hjust = -0.5, size = 3, color = "blue") +  # Adjust hjust for alignment
+  labs(x = "Sample ID (Ecoli Proportion in Blue)", y = "Read Count", fill = "Experiment") +  # Label axes
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),  # Rotate x-axis labels
+    strip.text = element_text(size = 10)  # Adjust facet label size
+  )
+dev.off()
+
+```
 
 
 
