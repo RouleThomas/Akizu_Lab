@@ -3494,9 +3494,113 @@ dev.off()
 
 
 # save ######################################################
-## humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid2472hr.dim30kparam15res04.rds")
 ## saveRDS(humangastruloid.combined.sct, file = "output/seurat/humangastruloid2472hr.dim30kparam15res04.rds") # integration all samples
+humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid2472hr.dim30kparam15res04.rds")
 #############################################################
+
+
+
+# differential expressed genes across conditions
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+DefaultAssay(humangastruloid.combined.sct) <- "RNA"
+
+humangastruloid.combined.sct <- NormalizeData(humangastruloid.combined.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(humangastruloid.combined.sct)
+humangastruloid.combined.sct <- ScaleData(humangastruloid.combined.sct, features = all.genes) # zero-centres and scales it
+
+
+
+
+## DEGs keeping ALL genes
+humangastruloid.combined.sct$celltype.stim <- paste(humangastruloid.combined.sct$cluster.annot, humangastruloid.combined.sct$treatment,
+    sep = "-")
+Idents(humangastruloid.combined.sct) <- "celltype.stim"
+
+CPC1 <- FindMarkers(humangastruloid.combined.sct, ident.1 = "CPC1-DASATINIB", ident.2 = "CPC1-UNTREATED",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+Mixed_Epiblast_Ectoderm_PrimitiveStreak <- FindMarkers(humangastruloid.combined.sct, ident.1 = "Mixed_Epiblast_Ectoderm_PrimitiveStreak-DASATINIB", ident.2 = "Mixed_Epiblast_Ectoderm_PrimitiveStreak-UNTREATED",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+CPC2 <- FindMarkers(humangastruloid.combined.sct, ident.1 = "CPC2-DASATINIB", ident.2 = "CPC2-UNTREATED",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+Endoderm <- FindMarkers(humangastruloid.combined.sct, ident.1 = "Endoderm-DASATINIB", ident.2 = "Endoderm-UNTREATED",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+CadiacMesoderm <- FindMarkers(humangastruloid.combined.sct, ident.1 = "CadiacMesoderm-DASATINIB", ident.2 = "CadiacMesoderm-UNTREATED",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+PrimitiveStreak <- FindMarkers(humangastruloid.combined.sct, ident.1 = "PrimitiveStreak-DASATINIB", ident.2 = "PrimitiveStreak-UNTREATED",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+ProliferatingCardiacMesoderm <- FindMarkers(humangastruloid.combined.sct, ident.1 = "ProliferatingCardiacMesoderm-DASATINIB", ident.2 = "ProliferatingCardiacMesoderm-UNTREATED",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+Epiblast <- FindMarkers(humangastruloid.combined.sct, ident.1 = "Epiblast-DASATINIB", ident.2 = "Epiblast-UNTREATED",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+Cardiomyocyte <- FindMarkers(humangastruloid.combined.sct, ident.1 = "Cardiomyocyte-DASATINIB", ident.2 = "Cardiomyocyte-UNTREATED",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+Unknown <- FindMarkers(humangastruloid.combined.sct, ident.1 = "Unknown-DASATINIB", ident.2 = "Unknown-UNTREATED",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+
+
+
+
+### save output
+write.table(CPC1, file = "output/seurat/CPC1-DASATINIB2472hrs_response_dim30kparam15res04_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Mixed_Epiblast_Ectoderm_PrimitiveStreak, file = "output/seurat/Mixed_Epiblast_Ectoderm_PrimitiveStreak-DASATINIB2472hrs_response_dim30kparam15res04_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(CPC2, file = "output/seurat/CPC2-DASATINIB2472hrs_response_dim30kparam15res04_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Endoderm, file = "output/seurat/Endoderm-DASATINIB2472hrs_response_dim30kparam15res04_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(CadiacMesoderm, file = "output/seurat/CadiacMesoderm-DASATINIB2472hrs_response_dim30kparam15res04_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(PrimitiveStreak, file = "output/seurat/PrimitiveStreak-DASATINIB2472hrs_response_dim30kparam15res04_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(ProliferatingCardiacMesoderm, file = "output/seurat/ProliferatingCardiacMesoderm-DASATINIB2472hrs_response_dim30kparam15res04_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Epiblast, file = "output/seurat/Epiblast-DASATINIB2472hrs_response_dim30kparam15res04_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Cardiomyocyte, file = "output/seurat/Cardiomyocyte-DASATINIB2472hrs_response_dim30kparam15res04_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(Unknown, file = "output/seurat/Unknown-DASATINIB2472hrs_response_dim30kparam15res04_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 
 
@@ -19942,21 +20046,14 @@ set.seed(42)
 
 
 ##########################################
-humangastruloidUNTREATED <- slingshot(humangastruloidUNTREATED, reducedDim = 'UMAP',
-                 clusterLabels = colData(humangastruloidUNTREATED)$cluster.annot,
-                 start.clus = 'Epiblast', end.clus = c("Mixed_Epiblast_Ectoderm_PrimitiveStreak", "Endoderm", "Cardiomyocyte", "ProliferatingCardiacMesoderm", "CPC1", "CPC2") ,approx_points = 100)
-
+"Mixed_Epiblast_Ectoderm_PrimitiveStreak", "Endoderm", "Cardiomyocyte", "ProliferatingCardiacMesoderm", 
 
 humangastruloidUNTREATED <- slingshot(humangastruloidUNTREATED, reducedDim = 'UMAP',
                  clusterLabels = colData(humangastruloidUNTREATED)$cluster.annot,
-                 start.clus = 'Epiblast' , end.clus = c("Endoderm", "CPC2", "CPC1"),  approx_points = 100)
+                 start.clus = 'Epiblast', end.clus = c("CPC2", "CPC1", "Endoderm", "Cardiomyocyte"), approx_points = 200, extend = "n", stretch = 1.6)
 
 
 
-
-humangastruloidUNTREATED <- slingshot(humangastruloidUNTREATED, reducedDim = 'UMAP',
-                 clusterLabels = colData(humangastruloidUNTREATED)$cluster.annot,
-                 start.clus = 'Epiblast' , end.clus = c("CPC2", "CPC1"),  approx_points = 100, extend = 'n')
 
 
 df_2 <- bind_cols(
@@ -19973,11 +20070,9 @@ df_2 <- bind_cols(
 curves <- slingCurves(humangastruloidUNTREATED, as.df = TRUE)
 
 
-#pdf("output/condiments/UMAP_trajectory_common_humangastruloidUNTREATED_StartEpiblastEndMixed_Epiblast_Ectoderm_PrimitiveStreakEndodermCardiomyocyteProliferatingCardiacMesoderm.pdf", width=5, height=5)
-#pdf("output/condiments/UMAP_trajectory_common_humangastruloidUNTREATED_StartEpiblastEndCPC2CPC1.pdf", width=5, height=5)
 
 
-pdf("output/condiments/UMAP_trajectory_common_humangastruloidUNTREATED_StartEpiblastEndMixedEpiblastEctodermPrimitiveStreakEndodermCardiomyocyteProliferatingCardiacMesodermCPC1CPC2Extendn.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_trajectory_common_humangastruloidUNTREATED_StartEpiEndCPC12EndoCardioextendnstretch16approx200.pdf", width=5, height=5)
 ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
   geom_point(size = .7, aes(col = pst)) +
   scale_color_viridis_c() +
@@ -20001,7 +20096,8 @@ df_2 <- bind_cols(
          Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
          Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst),
          Lineage4_pst = if_else(is.na(Lineage4_pst), 0, Lineage4_pst),
-         Lineage5_pst = if_else(is.na(Lineage5_pst), 0, Lineage5_pst))
+         Lineage5_pst = if_else(is.na(Lineage5_pst), 0, Lineage5_pst),
+         Lineage6_pst = if_else(is.na(Lineage6_pst), 0, Lineage6_pst))
 curves <- slingCurves(humangastruloidUNTREATED, as.df = TRUE)
 ### Function to create the plot for each lineage
 create_plot <- function(lineage_number) {
@@ -20031,11 +20127,11 @@ create_plot <- function(lineage_number) {
 }
 ### Generate the plots for each lineage
 plots <- list()
-for (i in 1:5) {
+for (i in 1:6) {
   plots[[i]] <- create_plot(i)
 }
-pdf("output/condiments/UMAP_trajectory_common_label_humangastruloidUNTREATED_StartEpiblastEndCPC2CPC1Extendn_Lineage12345.pdf", width=25, height=5)
-gridExtra::grid.arrange(grobs = plots, ncol = 5)
+pdf("output/condiments/UMAP_trajectory_common_label_humangastruloidUNTREATED_StartEpiEndCPC12EndoCardioextendnstretch16approx200_Lineage123456.pdf", width=25, height=5)
+gridExtra::grid.arrange(grobs = plots, ncol = 6)
 dev.off()
 
 
@@ -20043,14 +20139,14 @@ dev.off()
 
 
 
-#### ->  save.image(file="output/condiments/condiments_humangastruloidUNTREATED2472hrs.RData")
-### load("output/condiments/condiments_humangastruloidUNTREATED2472hrs.RData")
+#### ->  save.image(file="output/condiments/condiments_humangastruloidUNTREATED2472hrs_StartEpiEndCPC12EndoCardioextendnstretch16approx200.RData")
+### load("output/condiments/condiments_humangastruloidUNTREATED2472hrs_StartEpiEndCPC12EndoCardioextendnstretch16approx200.RData")
 set.seed(42)
 ##
 # RUN fitGAM
 ##
 
-
+XXXY HERE!!! WAIT UPDATE CONCHI CONFIRMATION OR NOT OF TRAJ XXXY
 
 ################### Time Course effect (UNTREATED CONDITION) - TRAJECTORY 3- ##############################################
 set.seed(42)

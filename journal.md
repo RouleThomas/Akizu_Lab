@@ -16,7 +16,8 @@ Just copy/paste with cp from cluster to local computer Google Drive!
 
 ## IGV with ressource
 - Maybe try Mobaxterm with ssh and -X
-XXX ??
+
+
 
 
 ## Cluster-files folder-like interace

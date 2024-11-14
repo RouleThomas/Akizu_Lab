@@ -111,6 +111,26 @@ sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1_housekeepHOXHKnoInput.sh # 29829051 
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_housekeepHOXHKnoInput.sh # 29829060 ok
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_housekeepHOXHKnoInput.sh # 29829066 ok
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_housekeepHOXHKnoInput.sh # 29829072 ok
+
+# THOR scaling factor manually calculated following EpiCypher (E coli spike in norm) 
+sbatch scripts/THOR_PSC_WTvsKO_EZH1_EpiCypher.sh #  xxx
+sbatch scripts/THOR_PSC_WTvsKO_EZH2_EpiCypher.sh #  xxx
+sbatch scripts/THOR_PSC_WTvsKO_SUZ12_EpiCypher.sh #  xxx
+sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_EpiCypher.sh #  xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1_EpiCypher.sh #  xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_EpiCypher.sh # 29869761 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_EpiCypher.sh #  xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_EpiCypher.sh #  xxx
+
+# THOR scaling factor DiffBind_TMM_EpiCypher (E coli spike in norm) --> SF to use in THOR are the **reciprocal of MG1655_DiffBind_TMM**
+sbatch scripts/THOR_PSC_WTvsKO_EZH1_DiffBindTMMEpiCypher.sh #  xxx
+sbatch scripts/THOR_PSC_WTvsKO_EZH2_DiffBindTMMEpiCypher.sh #  xxx
+sbatch scripts/THOR_PSC_WTvsKO_SUZ12_DiffBindTMMEpiCypher.sh #  xxx
+sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_DiffBindTMMEpiCypher.sh # 29871946 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1_DiffBindTMMEpiCypher.sh #  xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_DiffBindTMMEpiCypher.sh #  xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_DiffBindTMMEpiCypher.sh #  xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher.sh # 29872019 xxx
 ```
 
 **Conclusion for replicate similarity**:
@@ -120,8 +140,8 @@ sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_housekeepHOXHKnoInput.sh # 29829
 - *Housekeeping gene normalization with HK + HOX genes*: bad, replicate very different (fail likely because HK genes lowly H3K27me3 again, add noises)
 - *Housekeeping gene normalization with HOX genes without input*: xxx
 - *Housekeeping gene normalization with HK + HOX genes without input*: xxx
-
-- *SpikeIn DiffBindTMM normalization*: XXX
+- *SpikeIn EpiCypher normalization*: very bad, replicate very different (potential over correction, SF are huge values)
+- *SpikeIn EpiCypher DiffBind TMM normalization*: XXX
 
 
 
@@ -672,7 +692,6 @@ sbatch scripts/bamtobigwig_unique_3.sh # 29756550 ok
 XXX
 
 
-
 # peak calling
 ## MACS2 peak calling on bam unique
 
@@ -685,12 +704,12 @@ XXX
 ```bash
 conda activate macs2
 # genotype per genotype
-sbatch scripts/macs2_broad_1.sh # 29773632 xxx
-sbatch scripts/macs2_broad_2.sh # 29773633 xxx
-sbatch scripts/macs2_broad_3.sh # 29773661 xxx
+sbatch scripts/macs2_broad_1.sh # 29773632 ok
+sbatch scripts/macs2_broad_2.sh # 29773633 ok
+sbatch scripts/macs2_broad_3.sh # 29773661 ok
 ```
 
---> XXX
+--> all good
 
 
 # Ecoli scaling factor
@@ -794,10 +813,63 @@ dev.off()
 
 
 
+## Calculate E Coli SF (scaling factor)
+
+--> I did it in `sample_001016.xlsx`. To adjust library size, I did:
+  - spike in proportion = (uniqMappedMG1655Reads / uniqMappedReads) *100
+  - adjustedLibSize = spike in proportion * uniqMappedReads
+  
 
 
+**Using our spike in proportion, let's estimate the 'new' library size** and provide it to `dba.normalize(library = c(1000, 12000))` = Like that our library size will be change taking into account our scaling factor! **Then we can normalize with library-size, RLE or TMM**... (issue discussed [here](https://support.bioconductor.org/p/9147040/)) 
 
 
+XXX BWLOW NOT MOD
+
+
+```bash
+srun --mem=500g --pty bash -l
+conda activate DiffBind
+```
+```R
+library("DiffBind") 
+
+# ONE PER ONE
+## H3K27me3
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_H3K27me3.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_H3K27me3.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_H3K27me3.RData")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_H3K27me3.pdf", width=14, height=20)  
+plot(sample_count)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_H3K27me3.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_TREATMENT, label=DBA_TREATMENT)
+dev.off()
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### TMM 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(9441400,4470000,1140000,4401600,1244000,2761200,5406400,9551400,1025200), normalize = DBA_NORM_TMM) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_H3K27me3.txt")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_H3K27me3_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20)  
+plot(sample_count_blackgreylist_LibHistoneScaled_TMM)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_H3K27me3_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM,DBA_TREATMENT, label=DBA_TREATMENT)
+dev.off()
+
+
+XXX WAIT THOR XXX
+```
 
 
 

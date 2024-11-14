@@ -220,3 +220,203 @@ sbatch scripts/matrix_10kb_H3K4me3_QSER1peaks_Bernstein.sh # 29179387 ok
 
 
 
+# ChIPseeker for histone ENCODE files
+
+
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+# SIMPLICATE SAMPLE #####################
+
+# Import homer peaks
+# Add header to bed
+Ren_H3K27ac = as_tibble(read.table("output/ENCODE/Ren_H3K27ac.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+Ren_H3K4me1 = as_tibble(read.table("output/ENCODE/Ren_H3K4me1.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+Ren_H3K27me3 = as_tibble(read.table("output/ENCODE/Ren_H3K27me3.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+Ren_H3K36me3 = as_tibble(read.table("output/ENCODE/Ren_H3K36me3.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+Bernstein_H3K27ac = as_tibble(read.table("output/ENCODE/Bernstein_H3K27ac.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+Bernstein_H3K4me1 = as_tibble(read.table("output/ENCODE/Bernstein_H3K4me1.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+Bernstein_H3K27me3 = as_tibble(read.table("output/ENCODE/Bernstein_H3K27me3.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+Bernstein_H3K36me3 = as_tibble(read.table("output/ENCODE/Bernstein_H3K36me3.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+
+
+
+## Tidy peaks 
+Ren_H3K27ac_gr = makeGRangesFromDataFrame(Ren_H3K27ac,keep.extra.columns=TRUE)
+Ren_H3K4me1_gr = makeGRangesFromDataFrame(Ren_H3K4me1,keep.extra.columns=TRUE)
+Ren_H3K27me3_gr = makeGRangesFromDataFrame(Ren_H3K27me3,keep.extra.columns=TRUE)
+Ren_H3K36me3_gr = makeGRangesFromDataFrame(Ren_H3K36me3,keep.extra.columns=TRUE)
+Bernstein_H3K27ac_gr = makeGRangesFromDataFrame(Bernstein_H3K27ac,keep.extra.columns=TRUE)
+Bernstein_H3K4me1_gr = makeGRangesFromDataFrame(Bernstein_H3K4me1,keep.extra.columns=TRUE)
+Bernstein_H3K27me3_gr = makeGRangesFromDataFrame(Bernstein_H3K27me3,keep.extra.columns=TRUE)
+Bernstein_H3K36me3_gr = makeGRangesFromDataFrame(Bernstein_H3K36me3,keep.extra.columns=TRUE)
+
+
+
+gr_list <- list(Ren_H3K27ac=Ren_H3K27ac_gr, Ren_H3K4me1=Ren_H3K4me1_gr, Ren_H3K27me3=Ren_H3K27me3_gr,    Ren_H3K36me3 = Ren_H3K36me3_gr, Bernstein_H3K27ac = Bernstein_H3K27ac_gr, Bernstein_H3K4me1 = Bernstein_H3K4me1_gr, Bernstein_H3K27me3 = Bernstein_H3K27me3_gr, Bernstein_H3K36me3 = Bernstein_H3K36me3_gr)
+
+## Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+
+                       
+### Barplot
+pdf("output/ChIPseeker/annotation_barplot_ENCODE.pdf", width=14, height=5)
+plotAnnoBar(peakAnnoList)
+dev.off()
+
+## Get annotation data frame
+Ren_H3K27ac_annot <- as.data.frame(peakAnnoList[["Ren_H3K27ac"]]@anno)
+Ren_H3K4me1_annot <- as.data.frame(peakAnnoList[["Ren_H3K4me1"]]@anno)
+Ren_H3K27me3_annot <- as.data.frame(peakAnnoList[["Ren_H3K27me3"]]@anno)
+Ren_H3K36me3_annot <- as.data.frame(peakAnnoList[["Ren_H3K36me3"]]@anno)
+Bernstein_H3K27ac_annot <- as.data.frame(peakAnnoList[["Bernstein_H3K27ac"]]@anno)
+Bernstein_H3K4me1_annot <- as.data.frame(peakAnnoList[["Bernstein_H3K4me1"]]@anno)
+Bernstein_H3K27me3_annot <- as.data.frame(peakAnnoList[["Bernstein_H3K27me3"]]@anno)
+Bernstein_H3K36me3_annot <- as.data.frame(peakAnnoList[["Bernstein_H3K36me3"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+Ren_H3K27ac_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = Ren_H3K27ac_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+Ren_H3K27ac_annot$gene <- mapIds(org.Hs.eg.db, keys = Ren_H3K27ac_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+Ren_H3K4me1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = Ren_H3K4me1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+Ren_H3K4me1_annot$gene <- mapIds(org.Hs.eg.db, keys = Ren_H3K4me1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+Ren_H3K27me3_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = Ren_H3K27me3_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+Ren_H3K27me3_annot$gene <- mapIds(org.Hs.eg.db, keys = Ren_H3K27me3_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+Ren_H3K36me3_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = Ren_H3K36me3_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+Ren_H3K36me3_annot$gene <- mapIds(org.Hs.eg.db, keys = Ren_H3K36me3_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+Bernstein_H3K27ac_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = Bernstein_H3K27ac_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+Bernstein_H3K27ac_annot$gene <- mapIds(org.Hs.eg.db, keys = Bernstein_H3K27ac_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+Bernstein_H3K4me1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = Bernstein_H3K4me1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+Bernstein_H3K4me1_annot$gene <- mapIds(org.Hs.eg.db, keys = Bernstein_H3K4me1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+Bernstein_H3K27me3_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = Bernstein_H3K27me3_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+Bernstein_H3K27me3_annot$gene <- mapIds(org.Hs.eg.db, keys = Bernstein_H3K27me3_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+Bernstein_H3K36me3_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = Bernstein_H3K36me3_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+Bernstein_H3K36me3_annot$gene <- mapIds(org.Hs.eg.db, keys = Bernstein_H3K36me3_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+
+## Save output table
+write.table(Ren_H3K27ac_annot, file="output/ChIPseeker/annotation_ENCODE_Ren_H3K27ac_annot.txt", sep="\t", quote=F, row.names=F) 
+write.table(Ren_H3K4me1_annot, file="output/ChIPseeker/annotation_ENCODE_Ren_H3K4me1_annot.txt", sep="\t", quote=F, row.names=F) 
+write.table(Ren_H3K27me3_annot, file="output/ChIPseeker/annotation_ENCODE_Ren_H3K27me3_annot.txt", sep="\t", quote=F, row.names=F) 
+write.table(Ren_H3K36me3_annot, file="output/ChIPseeker/annotation_ENCODE_Ren_H3K36me3_annot.txt", sep="\t", quote=F, row.names=F) 
+write.table(Bernstein_H3K27ac_annot, file="output/ChIPseeker/annotation_ENCODE_Bernstein_H3K27ac_annot.txt", sep="\t", quote=F, row.names=F) 
+write.table(Bernstein_H3K4me1_annot, file="output/ChIPseeker/annotation_ENCODE_Bernstein_H3K4me1_annot.txt", sep="\t", quote=F, row.names=F) 
+write.table(Bernstein_H3K27me3_annot, file="output/ChIPseeker/annotation_ENCODE_Bernstein_H3K27me3_annot.txt", sep="\t", quote=F, row.names=F) 
+write.table(Bernstein_H3K36me3_annot, file="output/ChIPseeker/annotation_ENCODE_Bernstein_H3K36me3_annot.txt", sep="\t", quote=F, row.names=F) 
+
+
+
+## Keep only signals in non intergenic region ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+Ren_H3K27ac_annot_noIntergenic = tibble(Ren_H3K27ac_annot) %>%
+    filter(annotation != c("Distal Intergenic"))%>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+Ren_H3K4me1_annot_noIntergenic = tibble(Ren_H3K4me1_annot) %>%
+    filter(annotation != c("Distal Intergenic"))%>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+Ren_H3K27me3_annot_noIntergenic = tibble(Ren_H3K27me3_annot) %>%
+    filter(annotation != c("Distal Intergenic"))%>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+Ren_H3K36me3_annot_noIntergenic = tibble(Ren_H3K36me3_annot) %>%
+    filter(annotation != c("Distal Intergenic"))%>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+Bernstein_H3K27ac_annot_noIntergenic = tibble(Bernstein_H3K27ac_annot) %>%
+    filter(annotation != c("Distal Intergenic"))%>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+Bernstein_H3K4me1_annot_noIntergenic = tibble(Bernstein_H3K4me1_annot) %>%
+    filter(annotation != c("Distal Intergenic"))%>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+Bernstein_H3K27me3_annot_noIntergenic = tibble(Bernstein_H3K27me3_annot) %>%
+    filter(annotation != c("Distal Intergenic"))%>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+Bernstein_H3K36me3_annot_noIntergenic = tibble(Bernstein_H3K36me3_annot) %>%
+    filter(annotation != c("Distal Intergenic"))%>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+
+
+write.table(Ren_H3K27ac_annot_noIntergenic, file = "output/ChIPseeker/annotation_ENCODE_Ren_H3K27ac_annot_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(Ren_H3K4me1_annot_noIntergenic, file = "output/ChIPseeker/annotation_ENCODE_Ren_H3K4me1_annot_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(Ren_H3K27me3_annot_noIntergenic, file = "output/ChIPseeker/annotation_ENCODE_Ren_H3K27me3_annot_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(Ren_H3K36me3_annot_noIntergenic, file = "output/ChIPseeker/annotation_ENCODE_Ren_H3K36me3_annot_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(Bernstein_H3K27ac_annot_noIntergenic, file = "output/ChIPseeker/annotation_ENCODE_Bernstein_H3K27ac_annot_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(Bernstein_H3K4me1_annot_noIntergenic, file = "output/ChIPseeker/annotation_ENCODE_Bernstein_H3K4me1_annot_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(Bernstein_H3K27me3_annot_noIntergenic, file = "output/ChIPseeker/annotation_ENCODE_Bernstein_H3K27me3_annot_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(Bernstein_H3K36me3_annot_noIntergenic, file = "output/ChIPseeker/annotation_ENCODE_Bernstein_H3K36me3_annot_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+```
+
+
+
+
+
+
+
+
+
