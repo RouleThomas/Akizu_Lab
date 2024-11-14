@@ -3502,8 +3502,6 @@ dev.off()
 
 ```
 
-## Pseudotime analysis for 3D gastrulation paper
-
 
 
 
@@ -19946,11 +19944,20 @@ set.seed(42)
 ##########################################
 humangastruloidUNTREATED <- slingshot(humangastruloidUNTREATED, reducedDim = 'UMAP',
                  clusterLabels = colData(humangastruloidUNTREATED)$cluster.annot,
-                 start.clus = 'Epiblast', end.clus = c("Mixed_Epiblast_Ectoderm_PrimitiveStreak", "Endoderm", "Cardiomyocyte", "ProliferatingCardiacMesoderm") ,approx_points = 100, extend = 'n')
+                 start.clus = 'Epiblast', end.clus = c("Mixed_Epiblast_Ectoderm_PrimitiveStreak", "Endoderm", "Cardiomyocyte", "ProliferatingCardiacMesoderm", "CPC1", "CPC2") ,approx_points = 100)
+
 
 humangastruloidUNTREATED <- slingshot(humangastruloidUNTREATED, reducedDim = 'UMAP',
                  clusterLabels = colData(humangastruloidUNTREATED)$cluster.annot,
-                 start.clus = 'Epiblast' ,approx_points = 100, extend = 'n')
+                 start.clus = 'Epiblast' , end.clus = c("Endoderm", "CPC2", "CPC1"),  approx_points = 100)
+
+
+
+
+humangastruloidUNTREATED <- slingshot(humangastruloidUNTREATED, reducedDim = 'UMAP',
+                 clusterLabels = colData(humangastruloidUNTREATED)$cluster.annot,
+                 start.clus = 'Epiblast' , end.clus = c("CPC2", "CPC1"),  approx_points = 100, extend = 'n')
+
 
 df_2 <- bind_cols(
   as.data.frame(reducedDim(humangastruloidUNTREATED, "UMAP")),
@@ -19965,10 +19972,12 @@ df_2 <- bind_cols(
 )
 curves <- slingCurves(humangastruloidUNTREATED, as.df = TRUE)
 
-XXX here
 
 #pdf("output/condiments/UMAP_trajectory_common_humangastruloidUNTREATED_StartEpiblastEndMixed_Epiblast_Ectoderm_PrimitiveStreakEndodermCardiomyocyteProliferatingCardiacMesoderm.pdf", width=5, height=5)
-pdf("output/condiments/UMAP_trajectory_common_humangastruloidUNTREATED_StartEpiblast.pdf", width=5, height=5)
+#pdf("output/condiments/UMAP_trajectory_common_humangastruloidUNTREATED_StartEpiblastEndCPC2CPC1.pdf", width=5, height=5)
+
+
+pdf("output/condiments/UMAP_trajectory_common_humangastruloidUNTREATED_StartEpiblastEndMixedEpiblastEctodermPrimitiveStreakEndodermCardiomyocyteProliferatingCardiacMesodermCPC1CPC2Extendn.pdf", width=5, height=5)
 ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
   geom_point(size = .7, aes(col = pst)) +
   scale_color_viridis_c() +
@@ -20025,7 +20034,7 @@ plots <- list()
 for (i in 1:5) {
   plots[[i]] <- create_plot(i)
 }
-pdf("output/condiments/UMAP_trajectory_common_label_humangastruloidUNTREATED_Start3End814_Lineage12345.pdf", width=25, height=5)
+pdf("output/condiments/UMAP_trajectory_common_label_humangastruloidUNTREATED_StartEpiblastEndCPC2CPC1Extendn_Lineage12345.pdf", width=25, height=5)
 gridExtra::grid.arrange(grobs = plots, ncol = 5)
 dev.off()
 
