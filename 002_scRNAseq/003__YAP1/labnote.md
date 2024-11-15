@@ -3490,6 +3490,104 @@ dev.off()
 
 
 
+## Downsampling with bootstrap to compare the nb of cell per cell types
+library("tidyverse")
+### Identify the unique clusters
+unique_clusters <- unique(Idents(humangastruloid.combined.sct))
+### Create empty matrices to store cell counts
+UNTREATED_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters))
+DASATINIB_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters))
+colnames(UNTREATED_clusters_counts) <- unique_clusters
+colnames(DASATINIB_clusters_counts) <- unique_clusters
+### Loop through 100 iterations
+humangastruloid.combined.sct_UNTREATED <- which(humangastruloid.combined.sct$treatment == 'UNTREATED')
+humangastruloid.combined.sct_DASATINIB <- which(humangastruloid.combined.sct$treatment == 'DASATINIB')
+for (i in 1:100) { # Change this to 100 for the final run
+  # Downsampling
+  humangastruloid.combined.sct_DASATINIB_downsample <- sample(humangastruloid.combined.sct_DASATINIB, 13035)
+  humangastruloid.combined.sct_integrated_downsample <- humangastruloid.combined.sct[,c(humangastruloid.combined.sct_DASATINIB_downsample, humangastruloid.combined.sct_UNTREATED)]
+  # Count nb of cells in each cluster
+  control_clusters <- table(Idents(humangastruloid.combined.sct_integrated_downsample)[humangastruloid.combined.sct_integrated_downsample$treatment == "UNTREATED"])
+  dasatinib_clusters <- table(Idents(humangastruloid.combined.sct_integrated_downsample)[humangastruloid.combined.sct_integrated_downsample$treatment == "DASATINIB"])
+  # Align the counts with the unique clusters
+  UNTREATED_clusters_counts[i, names(control_clusters)] <- as.numeric(control_clusters)
+  DASATINIB_clusters_counts[i, names(dasatinib_clusters)] <- as.numeric(dasatinib_clusters)
+}
+### Calculate mean and standard error
+mean_control_clusters <- colMeans(UNTREATED_clusters_counts)
+mean_dasatinib_clusters <- colMeans(DASATINIB_clusters_counts)
+std_error_WT_clusters <- apply(UNTREATED_clusters_counts, 2, sd) / sqrt(100)
+# Chi-squared test
+p_values <- numeric(length(unique_clusters))
+for (i in 1:length(unique_clusters)) {
+  # Create a matrix to store the counts for the chi-squared test
+  contingency_table <- matrix(0, nrow=2, ncol=2)
+  colnames(contingency_table) <- c("UNTREATED", "DASATINIB")
+  rownames(contingency_table) <- c("Cluster", "NotCluster")
+
+  for (j in 1:100) { # Number of bootstrap iterations
+    contingency_table[1,1] <- UNTREATED_clusters_counts[j,i]
+    contingency_table[1,2] <- DASATINIB_clusters_counts[j,i]
+    contingency_table[2,1] <- sum(UNTREATED_clusters_counts[j,-i])
+    contingency_table[2,2] <- sum(DASATINIB_clusters_counts[j,-i])
+    # Perform the chi-squared test on the contingency table
+    chi_test <- chisq.test(contingency_table)
+    # Store the p-value
+    p_values[i] <- p_values[i] + chi_test$p.value
+  }
+  # Average the p-values across all bootstrap iterations
+  p_values[i] <- p_values[i] / 100
+}
+# Adjust the p-values
+adjusted_p_values <- p.adjust(p_values, method = "bonferroni")
+# Create a tidy data frame for plotting
+plot_data <- data.frame(
+  cluster = names(mean_control_clusters),
+  untreated = mean_control_clusters,
+  dasatinib = mean_dasatinib_clusters,
+  std_error_WT = std_error_WT_clusters,
+  p_value = adjusted_p_values
+) %>%
+  gather(key = "condition", value = "value", -cluster, -std_error_WT, -p_value) %>%
+  mutate(
+    condition = if_else(condition == "untreated", "WT", "Bap1KO"),
+    significance = ifelse(p_value < 0.0001, "***",
+                       ifelse(p_value < 0.001, "**",
+                              ifelse(p_value < 0.05, "*", "")))
+  )
+plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED", "DASATINIB")) # Reorder untreated 1st
+
+
+
+# Plotting using ggplot2
+pdf("output/seurat/Cluster_cell_counts_BootstrapDownsampling100_UNTREATED_DASATINIB_2472hrs_numeric.pdf", width=9, height=4)
+ggplot(plot_data, aes(x = cluster, y = value, fill = condition)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(
+    data = filter(plot_data, condition == "Bap1KO"),
+    aes(label = significance, y = value + std_error_WT_clusters),
+    vjust = -0.8,
+    position = position_dodge(0.9), size = 5
+  ) +
+  scale_fill_manual(values = c("WT" = "#4365AE", "Bap1KO" = "#981E33")) +
+  labs(x = "Cluster", y = "Number of Cells") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5, size = 13)) +
+  theme(axis.text.y = element_text(size = 13)) +
+  ylim(0,900)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3624,14 +3722,20 @@ cell_types <- c(  "CPC1",
   "Cardiomyocyte",
   "Unknown" )
 ## Loop through each cell type to count the number of significant DEGs
+### padj <0.05
 for (cell_type in cell_types) {
   file_name <- paste("output/seurat/", cell_type, "-DASATINIB2472hrs_response_dim30kparam15res04_allGenes.txt", sep = "")
   deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
   num_degs <- sum(deg_data$p_val_adj < 0.05) ## Count the number of significant DEGs
   DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
 }
-
-
+### padj <0.05 and FC 0.25
+for (cell_type in cell_types) {
+  file_name <- paste("output/seurat/", cell_type, "-DASATINIB2472hrs_response_dim30kparam15res04_allGenes.txt", sep = "")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
+  num_degs <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.25 | deg_data$avg_log2FC < -0.25) ) ## Count the number of significant DEGs
+  DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
+}
 
 
 # Add DEG information to my seurat object - DEG_count
@@ -3650,6 +3754,7 @@ cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordi
   left_join(DEG_count %>% dplyr::rename( "cluster"="Cell_Type"))
 ## Create a UMAP plot colored by DEG values, with cluster DEG counts as text annotations
 pdf("output/seurat/FeaturePlot_RNAUMAP_humangastruloid2472hrs_dim30kparam15res04_DEG_numeric.pdf", width=6, height=6)
+pdf("output/seurat/FeaturePlot_RNAUMAP_humangastruloid2472hrs_dim30kparam15res04_DEGpadj05fc025_numeric.pdf", width=6, height=6)
 FeaturePlot(humangastruloid.combined.sct, features = "DEG", pt.size = 0.5, reduction = "umap") +
   scale_colour_viridis(option="mako") + # 
   geom_text(data = cluster_centers, aes(x = UMAP_1, y = UMAP_2, label = Num_DEGs), 
@@ -3657,9 +3762,65 @@ FeaturePlot(humangastruloid.combined.sct, features = "DEG", pt.size = 0.5, reduc
 dev.off()
 
 
+
+
+
+
+# Count nb of up down reg genes
+
+cluster_types <- c(  "CPC1",
+  "Mixed_Epiblast_Ectoderm_PrimitiveStreak",
+  "CPC2",
+  "Endoderm",
+  "CadiacMesoderm",
+  "PrimitiveStreak",
+  "ProliferatingCardiacMesoderm",
+  "Epiblast",
+  "Cardiomyocyte",
+  "Unknown" )
+## Loop over each cluster type to read data and assign to a variable
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-DASATINIB2472hrs_response_dim30kparam15res04_allGenes.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1)
+  assign(cluster, data)
+}
+
+clusters <- list(
+  CPC1,
+  Mixed_Epiblast_Ectoderm_PrimitiveStreak,
+  CPC2,
+  Endoderm,
+  CadiacMesoderm,
+  PrimitiveStreak,
+  ProliferatingCardiacMesoderm,
+  Epiblast,
+  Cardiomyocyte,
+  Unknown
+)
+
+## Function to count up- and down-regulated genes in each cluster
+count_up_down <- function(cluster_data) {
+  significant_genes <- cluster_data %>% dplyr::filter(p_val_adj < 0.05)
+  nb_upregulated <- sum(significant_genes$avg_log2FC > 0.25)
+  nb_downregulated <- sum(significant_genes$avg_log2FC < -0.25)
+  
+  return(data.frame(nb_upregulated = nb_upregulated, nb_downregulated = nb_downregulated))
+}
+results <- lapply(clusters, count_up_down)
+final_results <- do.call(rbind, results)
+row.names(final_results) <- names(clusters)
+print(final_results)
+
+
+
+
+
+
+
+
 ```
 
-
+--> There is no more down-regulated genes overall if appying a treshold for the FC; for ex Abs(0.25) tresh there is no more bias!
 
 
 
@@ -11651,6 +11812,25 @@ makeShinyApp(humangastruloid.combined.sct, scConf, gene.mapping = TRUE,
              shiny.dir = "shinyApp_Humangastruloid2472hr_dim30kparam30res03_QCV2/") 
 
 rsconnect::deployApp('shinyApp_Humangastruloid2472hr_dim30kparam30res03_QCV2')
+
+
+
+# Data import HUMAN 24 and 72hr integrated QCV2 with increased res  dim30kparam15res04 (3D gastru paper)
+humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid2472hr.dim30kparam15res04.rds")
+DefaultAssay(humangastruloid.combined.sct) <- "RNA" # Recommended 
+
+
+# Generate Shiny app
+scConf = createConfig(humangastruloid.combined.sct)
+
+makeShinyApp(humangastruloid.combined.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "Humangastruloid2472hr_dim30kparam15res04_QCV2",
+             shiny.dir = "shinyApp_Humangastruloid2472hr_dim30kparam15res04_QCV2/") 
+
+rsconnect::deployApp('shinyApp_Humangastruloid2472hr_dim30kparam15res04_QCV2')
+
+
+
 
 
 
