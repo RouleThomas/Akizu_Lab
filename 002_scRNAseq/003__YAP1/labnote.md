@@ -3604,6 +3604,59 @@ write.table(Unknown, file = "output/seurat/Unknown-DASATINIB2472hrs_response_dim
 
 
 
+
+
+
+
+# DEGs number colored in a UMAP
+Idents(humangastruloid.combined.sct) <- "cluster.annot"
+
+DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
+## List of cell types
+cell_types <- c(  "CPC1",
+  "Mixed_Epiblast_Ectoderm_PrimitiveStreak",
+  "CPC2",
+  "Endoderm",
+  "CadiacMesoderm",
+  "PrimitiveStreak",
+  "ProliferatingCardiacMesoderm",
+  "Epiblast",
+  "Cardiomyocyte",
+  "Unknown" )
+## Loop through each cell type to count the number of significant DEGs
+for (cell_type in cell_types) {
+  file_name <- paste("output/seurat/", cell_type, "-DASATINIB2472hrs_response_dim30kparam15res04_allGenes.txt", sep = "")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
+  num_degs <- sum(deg_data$p_val_adj < 0.05) ## Count the number of significant DEGs
+  DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
+}
+
+
+
+
+# Add DEG information to my seurat object - DEG_count
+cell_clusters <- humangastruloid.combined.sct@meta.data$cluster.annot
+names(cell_clusters) <- rownames(humangastruloid.combined.sct@meta.data)
+DEG_named_vector <- DEG_count$Num_DEGs[match(cell_clusters, DEG_count$Cell_Type)]
+names(DEG_named_vector) <- names(cell_clusters)
+# Integrate DEG values into the Seurat object
+humangastruloid.combined.sct <- AddMetaData(humangastruloid.combined.sct, metadata = DEG_named_vector, col.name = "DEG")
+
+# RNA UMAP REDUCTION ############ 
+umap_coordinates <- as.data.frame(humangastruloid.combined.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- humangastruloid.combined.sct@meta.data$cluster.annot
+## Calculate cluster centers
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(DEG_count %>% dplyr::rename( "cluster"="Cell_Type"))
+## Create a UMAP plot colored by DEG values, with cluster DEG counts as text annotations
+pdf("output/seurat/FeaturePlot_RNAUMAP_humangastruloid2472hrs_dim30kparam15res04_DEG_numeric.pdf", width=6, height=6)
+FeaturePlot(humangastruloid.combined.sct, features = "DEG", pt.size = 0.5, reduction = "umap") +
+  scale_colour_viridis(option="mako") + # 
+  geom_text(data = cluster_centers, aes(x = UMAP_1, y = UMAP_2, label = Num_DEGs), 
+            size = 5, color = "red", fontface = "bold") 
+dev.off()
+
+
 ```
 
 
