@@ -21002,14 +21002,21 @@ set.seed(42)
 ### Testing area ############
 
 
-
+# PRIOR PARAM:
+humangastruloidDASATINIB <- slingshot(humangastruloidDASATINIB, reducedDim = 'UMAP',
+                 clusterLabels = colData(humangastruloidDASATINIB)$cluster.annot,
+                 start.clus = 'Epiblast', end.clus = c("CPC2", "CPC1", "Endoderm", "Cardiomyocyte"), approx_points = 200, extend = "n", stretch = 1.6)
 ##########################################
 
+"Mixed_Epiblast_Ectoderm_PrimitiveStreak", "Endoderm", "Cardiomyocyte", "ProliferatingCardiacMesoderm", 
+
 humangastruloidDASATINIB <- slingshot(humangastruloidDASATINIB, reducedDim = 'UMAP',
-                 clusterLabels = colData(humangastruloidDASATINIB)$seurat_clusters,
-                 start.clus = '3', end.clus = c("8","1","4") ,approx_points = 100, extend = 'n')
+                 clusterLabels = colData(humangastruloidDASATINIB)$cluster.annot,
+                 start.clus = 'Epiblast', end.clus = c("CPC2", "CPC1", "Endoderm", "Cardiomyocyte", "Unknown"), approx_points = 200, extend = "n", stretch = 1.6)
+
+
                  
-                 
+
 
 df_2 <- bind_cols(
   as.data.frame(reducedDim(humangastruloidDASATINIB, "UMAP")),
@@ -21024,7 +21031,10 @@ df_2 <- bind_cols(
 )
 curves <- slingCurves(humangastruloidDASATINIB, as.df = TRUE)
 
-pdf("output/condiments/UMAP_trajectory_common_humangastruloidDASATINIB_Start3End814_Lineage12345.pdf", width=5, height=5)
+
+
+
+pdf("output/condiments/UMAP_trajectory_common_humangastruloidDASATINIB_StartEpiEndCPC12EndoCardioextendnstretch16approx200.pdf", width=5, height=5)
 ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
   geom_point(size = .7, aes(col = pst)) +
   scale_color_viridis_c() +
@@ -21081,13 +21091,18 @@ plots <- list()
 for (i in 1:5) {
   plots[[i]] <- create_plot(i)
 }
-pdf("output/condiments/UMAP_trajectory_common_label_humangastruloidDASATINIB_Start3End814_Lineage12345.pdf", width=25, height=5)
-gridExtra::grid.arrange(grobs = plots, ncol = 5)
+pdf("output/condiments/UMAP_trajectory_common_label_humangastruloidDASATINIB_StartEpiEndCPC12EndoCardioextendnstretch16approx200_Lineage12345.pdf", width=25, height=5)
+gridExtra::grid.arrange(grobs = plots, ncol = 6)
 dev.off()
 
 
-#### ->  save.image(file="output/condiments/condiments_humangastruloidDASATINIB2472hrs.RData")
-### load("output/condiments/condiments_humangastruloidDASATINIB2472hrs.RData")
+
+
+
+
+
+#### ->  save.image(file="output/condiments/condiments_humangastruloidDASATINIB2472hrs_StartEpiEndCPC12EndoCardioextendnstretch16approx200.RData")
+### load("output/condiments/condiments_humangastruloidDASATINIB2472hrs_StartEpiEndCPC12EndoCardioextendnstretch16approx200.RData")
 set.seed(42)
 ##
 # RUN fitGAM
@@ -21722,6 +21737,30 @@ sbatch scripts/fitGAM_6knots_traj2_humangastruloidDASATINIB2472hrs.sh # 26430649
 ## traj of interest COMMON=5 UNTREATED=traj5; DASATINIB=traj5
 sbatch scripts/fitGAM_6knots_traj5_humangastruloidUNTREATED2472hrs.sh # 26430650 ok
 sbatch scripts/fitGAM_6knots_traj5_humangastruloidDASATINIB2472hrs.sh # 26430652 ok
+
+
+
+
+###############################################################
+############ FOR THE 3D PAPER ###########################
+###############################################################
+
+################# THIS ONE TO USE : ##################################
+## load("output/condiments/condiments_humangastruloidUNTREATED2472hrs_StartEpiEndCPC12EndoCardioextendnstretch16approx200.RData")
+## load("output/condiments/condiments_humangastruloidDASATINIB2472hrs_StartEpiEndCPC12EndoCardioextendnstretch16approx200.RData")
+###################################################
+
+# trajectory per trajectory CONDITION SEP (all features, no parralelization) - pseudotime-dependent DEGs
+## traj of interest Epi --> Epi/Ecto: COMMON=XXX UNTREATED=traj4; DASATINIB=XXX
+sbatch scripts/fitGAM_6knots_traj4_humangastruloidUNTREATED2472hrs_3Dpaper.sh # 29966723 xxx
+## traj of interest Epi --> Endo: COMMON=XXX UNTREATED=traj5; DASATINIB=XXX
+sbatch scripts/fitGAM_6knots_traj5_humangastruloidUNTREATED2472hrs_3Dpaper.sh # 29966760 xxx
+## traj of interest Epi --> Cardiomyocyte: COMMON=XXX UNTREATED=traj2; DASATINIB=XXX
+sbatch scripts/fitGAM_6knots_traj2_humangastruloidUNTREATED2472hrs_3Dpaper.sh # 29966775 xxx
+## traj of interest Epi --> Blood: COMMON=XXX UNTREATED=traj1; DASATINIB=XXX
+sbatch scripts/fitGAM_6knots_traj1_humangastruloidUNTREATED2472hrs_3Dpaper.sh # 29966783 xxx
+
+
 ```
 
 --> All good

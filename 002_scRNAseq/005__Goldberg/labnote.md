@@ -2144,6 +2144,12 @@ fgsea_sets <- list(
   REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes,
   REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS.txt")$Genes
 )
+### List4
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes
+)
 
 
 ## Rank genes based on FC
@@ -2229,10 +2235,36 @@ for (cluster in cluster_types) {
 ## Combine results from all cluster types into one table
 final_results <- bind_rows(all_results, .id = "cluster")
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_correct-List3.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_correct-List4.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_correct-List3.pdf", width=15, height=3)
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_correct-List4.pdf", width=10, height=3)
+ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+### if need reorder terms
+final_results$pathway <- factor(final_results$pathway, levels = c("PathwaysOfNeurodegeneration", "GOBP_NEURONAL_ACTION_POTENTIAL", "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")) 
+
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_correct-List4.pdf", width=10, height=3)
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -2305,7 +2337,7 @@ Kcnc1_p35_CB_Rep2 <- SCTransform(Kcnc1_p35_CB_Rep2, method = "glmGamPoi", ncells
 Kcnc1_p35_CB_Rep3 <- SCTransform(Kcnc1_p35_CB_Rep3, method = "glmGamPoi", ncells = 16324, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
 
 
-### Reg v1 _ better than Regv2 - Correct for bug RNA quantity leading to downregulation of all genes _ QCV2
+### Reg v1 _ better than Regv2 - Correct for bug RNA quantity leading to downregulation of all genes _ QCV2 # GOOD ONE!!
 WT_p35_CB_Rep1 <- SCTransform(WT_p35_CB_Rep1, method = "glmGamPoi", ncells = 7299, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
 WT_p35_CB_Rep2 <- SCTransform(WT_p35_CB_Rep2, method = "glmGamPoi", ncells = 10683, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
 WT_p35_CB_Rep3 <- SCTransform(WT_p35_CB_Rep3, method = "glmGamPoi", ncells = 13664, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
@@ -2461,6 +2493,47 @@ dev.off()
 
 
 
+# CORRECT VERSION (issue found for the global downregulation)
+WT_p35_CB_Rep1 <- SCTransform(WT_p35_CB_Rep1, method = "glmGamPoi", ncells = 7299, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+WT_p35_CB_Rep2 <- SCTransform(WT_p35_CB_Rep2, method = "glmGamPoi", ncells = 10683, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+WT_p35_CB_Rep3 <- SCTransform(WT_p35_CB_Rep3, method = "glmGamPoi", ncells = 13664, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p35_CB_Rep1 <- SCTransform(Kcnc1_p35_CB_Rep1, method = "glmGamPoi", ncells = 10264, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p35_CB_Rep2 <- SCTransform(Kcnc1_p35_CB_Rep2, method = "glmGamPoi", ncells = 33623, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p35_CB_Rep3 <- SCTransform(Kcnc1_p35_CB_Rep3, method = "glmGamPoi", ncells = 16447, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+
+
+
+srat.list <- list(WT_p35_CB_Rep1 = WT_p35_CB_Rep1, WT_p35_CB_Rep2 = WT_p35_CB_Rep2, WT_p35_CB_Rep3 = WT_p35_CB_Rep3, Kcnc1_p35_CB_Rep1 = Kcnc1_p35_CB_Rep1, Kcnc1_p35_CB_Rep2 = Kcnc1_p35_CB_Rep2, Kcnc1_p35_CB_Rep3 = Kcnc1_p35_CB_Rep3)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+WT_Kcnc1_p35_CB_1step.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+WT_Kcnc1_p35_CB_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p35_CB_1step.anchors, normalization.method = "SCT")
+
+
+#### UMAP
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "integrated"
+
+WT_Kcnc1_p35_CB_1step.sct <- RunPCA(WT_Kcnc1_p35_CB_1step.sct, verbose = FALSE, npcs = 50)
+WT_Kcnc1_p35_CB_1step.sct <- RunUMAP(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
+WT_Kcnc1_p35_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", k.param = 20, dims = 1:50)
+WT_Kcnc1_p35_CB_1step.sct <- FindClusters(WT_Kcnc1_p35_CB_1step.sct, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+
+WT_Kcnc1_p35_CB_1step.sct$condition <- factor(WT_Kcnc1_p35_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+
+
+
+# pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV2dim50kparam20res03.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_test.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=TRUE)
+dev.off()
+
+
+## THIS VERSION HAS BEEN SAVED AS:  output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_label_ReProcess.rds
+
+
+
 
 
 
@@ -2554,17 +2627,6 @@ WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step
 # --> 1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim50kparam50res03 = WT_Kcnc1_p35_CB_1step_V1
 WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV3dim50kparam50res03.sct_V1_label.rds")
 
-
-
-## BUG I cannot retrieve previous version... Lets compare QC_V2 vs V3 vs V4 with same parameters
-#saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV3dim50kparam50res03.sct_V1_numeric_ReProcess.rds") # this is with QC_V3 all repeated from the start!!! --> NOT the one...
-#saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V1_numeric_ReProcess.rds") # this is with QC_V2 all repeated from the start!!! --> NOT the one...
-WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V1_numeric_ReProcess.rds")
-#saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_label_ReProcess.rds") 
-
-WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_label_ReProcess.rds")
-
-
 # Save the Kcnc1_p35_CB_Rep2 with additional QC filtering: too many cells with low nCount_RNA so I filtered to nCount_RNA > 500; and end up with 6526 cells instead of ~30k cells saveRDS(Kcnc1_p35_CB_Rep2_nCountRNA500, file = "output/seurat/Kcnc1_p35_CB_Rep2_nCountRNA500.rds")
 
 Kcnc1_p35_CB_Rep2_nCountRNA500 <- readRDS(file = "output/seurat/Kcnc1_p35_CB_Rep2_nCountRNA500.rds")
@@ -2574,6 +2636,17 @@ Kcnc1_p35_CB_Rep2_nCountRNA500 <- readRDS(file = "output/seurat/Kcnc1_p35_CB_Rep
 WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step_Kcnc1Rep2nCountRNA500-QCV2dim50kparam20res03.sct_V1_numeric_ReProcess.rds")
 
 set.seed(42)
+
+
+## BUG I cannot retrieve previous version... Lets compare QC_V2 vs V3 vs V4 with same parameters
+#saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV3dim50kparam50res03.sct_V1_numeric_ReProcess.rds") # this is with QC_V3 all repeated from the start!!! --> NOT the one...
+#saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V1_numeric_ReProcess.rds") # this is with QC_V2 all repeated from the start!!! --> NOT the one...
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V1_numeric_ReProcess.rds")
+#saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_label_ReProcess.rds") 
+
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_label_ReProcess.rds") # THIS IS THE LAST ONE!
+
+
 ##########
 
 
@@ -2813,7 +2886,7 @@ dev.off()
 
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-QCV3dim50kparam50res03-Kcnc1.pdf", width=6, height=6)
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03-Kcnc1.pdf", width=6, height=6)
 FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = "Kcnc1", max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
@@ -2967,7 +3040,7 @@ dev.off()
 
 
 
-## p35 cell type proportion ############################### DO NOT RUN THAT PRIOR GENERATING THE SHINY APP!!!! OR BUG nRNA count!!!!!!  ####
+## p35 cell type proportion ############################### 
 ### count nb of cells in each cluster
 WT_p35_CB_Rep1 = table(Idents(WT_Kcnc1_p35_CB_1step.sct)[WT_Kcnc1_p35_CB_1step.sct$orig.ident == "WT_p35_CB_Rep1"]) %>%
   as.data.frame() %>%
@@ -3558,22 +3631,8 @@ cluster_types <- c( "Granule",
   "Endothelial_Stalk",
   "Choroid_Plexus",
   "Unknown_Neuron_Subpop")
-DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = c(   "Granule",
-  "MLI1",
-  "MLI2" ,
-  "PLI12" ,
-  "PLI23" ,
-  "Golgi" ,
-  "Unipolar_Brush" ,
-  "Purkinje",
-  "Astrocyte" ,
-  "Bergman_Glia",
-  "OPC",
-  "Meningeal",
-  "Endothelial",
-  "Endothelial_Stalk",
-  "Choroid_Plexus",
-  "Unknown_Neuron_Subpop") )
+
+
 # Loop over each cluster type to read data and assign to a variable
 for (cluster in cluster_types) {
   file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_correct.txt")
@@ -3602,6 +3661,12 @@ fgsea_sets <- list(
   REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS = read_table(file = "output/Pathway/geneList_REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS.txt")$Genes,
   REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes,
   REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS.txt")$Genes
+)
+### List4
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes
 )
 
 
@@ -3685,10 +3750,10 @@ for (cluster in cluster_types) {
 ## Combine results from all cluster types into one table
 final_results <- bind_rows(all_results, .id = "cluster")
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_correct-List3.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_correct-List4.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_padj-Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_correct-List3.pdf", width=15, height=3)
+pdf("output/Pathway/heatmap_gsea_padj-Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_correct-List4.pdf", width=10, height=3)
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -3711,7 +3776,31 @@ ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) +
   coord_fixed()  # Force aspect ratio of the plot to be 1:1
 dev.off()
 
+### if need reorder terms
+final_results$pathway <- factor(final_results$pathway, levels = c("PathwaysOfNeurodegeneration", "GOBP_NEURONAL_ACTION_POTENTIAL", "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")) 
 
+pdf("output/Pathway/heatmap_gsea_padj-Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_correct-List4.pdf", width=10, height=3)
+ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
 
 
 
@@ -4548,6 +4637,12 @@ fgsea_sets <- list(
   REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes,
   REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS.txt")$Genes
 )
+### List4
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes
+)
 
 
 ## Rank genes based on FC
@@ -4631,10 +4726,10 @@ for (cluster in cluster_types) {
 ## Combine results from all cluster types into one table
 final_results <- bind_rows(all_results, .id = "cluster")
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_correct-List3.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_correct-List4.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_padj-Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_correct-List3.pdf", width=15, height=3)
+pdf("output/Pathway/heatmap_gsea_padj-Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_correct-List4.pdf", width=15, height=3)
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -4658,7 +4753,31 @@ ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) +
 dev.off()
 
 
+### if need reorder terms
+final_results$pathway <- factor(final_results$pathway, levels = c("PathwaysOfNeurodegeneration", "GOBP_NEURONAL_ACTION_POTENTIAL", "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")) 
 
+pdf("output/Pathway/heatmap_gsea_padj-Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_correct-List4.pdf", width=10, height=3)
+ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
 
 ```
 
@@ -4673,6 +4792,200 @@ dev.off()
 
 --> Let's try alternative DEG test; discuss [here](https://satijalab.org/seurat/articles/de_vignette)
 
+--> **FALSE ALERT!!! The issue was that I forgetted to normalize and scale data prior doing DEG....**
+
+
+## Pseudotime condiments
+
+Let's integrate the three time points together (SCT method, same as replicates/genotypes integration); and perform pseudotime analysis. Granules to focus on.
+
+### Data integration all samples
+
+Let's try:
+- *two step integration*: Load our WT_Kcnc1 integrated sample for each time points. And integrate them. Do not re-regress variables.
+- *one step integration*: Load all individual samples and integrate them in one step altogether.
+
+
+Let's run in an R script the 1/2 step integration
+
+```bash
+conda activate scRNAseqV2
+
+sbatch scripts/dataIntegration_CB_1step.sh # 29969813 xxx
+sbatch scripts/dataIntegration_CB_2step.sh # 29969881 xxx
+
+```
+
+
+
+xxxy
+
+
+
+
+
+
+
+
+
+### Pseudotime
+
+
+```bash
+conda activate condiments_V6
+```
+
+```R
+# package installation 
+## install.packages("remotes")
+## remotes::install_github("cran/spatstat.core")
+## remotes::install_version("Seurat", "4.0.3")
+## install.packages("magrittr")
+## install.packages("magrittr")
+## install.packages("dplyr")
+## BiocManager::install("DelayedMatrixStats")
+## BiocManager::install("tradeSeq")
+
+
+# packages
+library("condiments")
+library("Seurat")
+library("magrittr") # to use pipe
+library("dplyr") # to use bind_cols and sample_frac
+library("SingleCellExperiment") # for reducedDims
+library("ggplot2")
+library("slingshot")
+library("DelayedMatrixStats")
+library("tidyr")
+library("tradeSeq")
+library("cowplot")
+library("scales")
+library("pheatmap")
+library("readr")
+
+# Separate WT Kcnc1 genotypes
+humangastruloid_UNTREATED.combined.sct <- subset(humangastruloid.combined.sct, treatment == "UNTREATED")
+humangastruloid_DASATINIB.combined.sct <- subset(humangastruloid.combined.sct, treatment == "DASATINIB")
+
+
+################################################################################################
+### CONTROL/UNTREATED ################################################
+################################################################################################
+
+DefaultAssay(humangastruloid_UNTREATED.combined.sct) <- "RNA" # According to condiments workflow
+
+# convert to SingleCellExperiment
+humangastruloidUNTREATED <- as.SingleCellExperiment(humangastruloid_UNTREATED.combined.sct, assay = "RNA")
+
+#  Trajectory Inference and Differential Topology
+set.seed(42)
+
+
+### Testing area ############
+
+
+##########################################
+"Mixed_Epiblast_Ectoderm_PrimitiveStreak", "Endoderm", "Cardiomyocyte", "ProliferatingCardiacMesoderm", 
+
+humangastruloidUNTREATED <- slingshot(humangastruloidUNTREATED, reducedDim = 'UMAP',
+                 clusterLabels = colData(humangastruloidUNTREATED)$cluster.annot,
+                 start.clus = 'Epiblast', end.clus = c("CPC2", "CPC1", "Endoderm", "Cardiomyocyte"), approx_points = 200, extend = "n", stretch = 1.6)
+
+
+
+
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(humangastruloidUNTREATED, "UMAP")),
+  slingPseudotime(humangastruloidUNTREATED) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(humangastruloidUNTREATED) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+         pst = if_else(Lineage1 > Lineage2, Lineage1_pst, Lineage2_pst),
+        # pst = max(pst) - pst)
+)
+curves <- slingCurves(humangastruloidUNTREATED, as.df = TRUE)
+
+
+
+
+pdf("output/condiments/UMAP_trajectory_common_humangastruloidUNTREATED_StartEpiEndCPC12EndoCardioextendnstretch16approx200.pdf", width=5, height=5)
+ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
+  geom_point(size = .7, aes(col = pst)) +
+  scale_color_viridis_c() +
+  labs(col = "Pseudotime") +
+  geom_path(data = curves %>% arrange(Order),
+            aes(group = Lineage), col = "black", size = 1.5) +
+  theme_classic()
+dev.off()
+
+
+
+
+## PLOT with trajectories - Individually
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(humangastruloidUNTREATED, "UMAP")),
+  slingPseudotime(humangastruloidUNTREATED) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(humangastruloidUNTREATED) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+         Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst),
+         Lineage4_pst = if_else(is.na(Lineage4_pst), 0, Lineage4_pst),
+         Lineage5_pst = if_else(is.na(Lineage5_pst), 0, Lineage5_pst),
+         Lineage6_pst = if_else(is.na(Lineage6_pst), 0, Lineage6_pst))
+curves <- slingCurves(humangastruloidUNTREATED, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = UMAP_1, y = UMAP_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = UMAP_1, y = UMAP_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = UMAP_1, y = UMAP_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = UMAP_1, y = UMAP_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:6) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_humangastruloidUNTREATED_StartEpiEndCPC12EndoCardioextendnstretch16approx200_Lineage123456.pdf", width=25, height=5)
+gridExtra::grid.arrange(grobs = plots, ncol = 6)
+dev.off()
+
+
+
+
+
+
+#### ->  save.image(file="output/condiments/condiments_humangastruloidUNTREATED2472hrs_StartEpiEndCPC12EndoCardioextendnstretch16approx200.RData")
+### load("output/condiments/condiments_humangastruloidUNTREATED2472hrs_StartEpiEndCPC12EndoCardioextendnstretch16approx200.RData")
+set.seed(42)
+##
+# RUN fitGAM
+##
+
+```
 
 
 
