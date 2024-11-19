@@ -187,7 +187,8 @@ Also R: BiocManager, tidyverse, EnsDb.Hsapiens.v86, devtools, ShinyCell, rsconne
 
 
 ### monocle3
-Only `monocle3` and `Seurat_v_5`
+Only `monocle3`, `Seurat_v_5`, `BiocManager` and `glmGamPoi`
+(Can run SCTransform in seurat v5)
 
 ### monocle3_V1
 

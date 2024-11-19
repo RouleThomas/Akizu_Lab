@@ -8817,6 +8817,512 @@ dev.off()
 
 --> no / weak correlation
 
+# 2472hrs human gastruloid integration 3D paper; correlation H3K27me3 with pseudotime 002*/003*
+
+Use H3K27me3 ENCODE files generated at  `## ENCODE H3K27me3 file selection`
+
+## Lineage1 Epi/Blood -  Test Activation point with H3K27me3 (from ENCODE) - correlation - 3D paper
+
+The level of H3K27me3 around TSS has been calculated here at `### Count signal around TSS ENCODE H3K27me3`. 
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+library("ggpubr")
+
+
+XXXY HERE 
+
+# import files
+pseudotime_traj3_peak <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/traj3_noCondition_humangastruloid2472hrs_ActivationPoint.txt") %>%
+    dplyr::rename("geneSymbol" = "gene") 
+pseudotime_traj3_DEG = read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_association_traj3_noCondition_humangastruloid2472hrs.txt") %>%
+    dplyr::rename("geneSymbol" = "gene",
+                  "fdr_DEG" = "fdr") %>% 
+    dplyr::select(geneSymbol, meanLogFC, fdr_DEG)
+pseudotime_traj3_StartEnd <- read_tsv("../../002_scRNAseq/003__YAP1/output/condiments/pseudotime_start_end_association_NULL_traj3_noCondition_humangastruloid2472hrs.txt") %>%
+    dplyr::rename("geneSymbol" = "gene",
+                  "fdr_StartEnd" = "fdr")  %>% 
+    dplyr::select(geneSymbol, fdr_StartEnd, logFClineage1)
+
+
+
+
+
+pseudotime_traj3_peak_DEG_StartEnd = pseudotime_traj3_peak %>%
+    left_join(pseudotime_traj3_DEG) %>%
+    left_join(pseudotime_traj3_StartEnd)
+
+# H3K27me3 ENCODE #########################
+
+WT_H3K27me3_500bpTSS_geneSymbol <- read_tsv("output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol.txt")
+WT_H3K27me3_250bpTSS_geneSymbol <- read_tsv("output/binBw/WT_H3K27me3_250bp_ENCFF201SJZ_geneSymbol.txt")
+
+pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol = pseudotime_traj3_peak_DEG_StartEnd %>%
+    left_join(WT_H3K27me3_500bpTSS_geneSymbol)  %>%
+  filter(!is.na(bc_max))
+pseudotime_traj3_peak_WT_H3K27me3_250bpTSS_geneSymbol = pseudotime_traj3_peak_DEG_StartEnd %>%
+    left_join(WT_H3K27me3_250bpTSS_geneSymbol) %>%
+  filter(!is.na(bc_max))
+
+
+## signal H3K27me3 vs DEG timecourse
+
+# DEG
+pdf("output/binBw/corr_pseudotime_traj3_peakSmooth_fdrDEG05__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=3, height=4)
+pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter(fdr_DEG <0.05 ) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  stat_cor(method = "pearson", label.x = 0, label.y = 750, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+pdf("output/binBw/corr_pseudotime_traj3_peakSmooth_frdStartEnd0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=3, height=4)
+pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter(fdr_StartEnd == 0 ) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  stat_cor(method = "pearson", label.x = 0, label.y = 750, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+
+
+
+# DEG and smoothpeak >0
+pdf("output/binBw/corr_pseudotime_traj3_peakSmoothOver0fdrDEG0__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=3, height=4)
+pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter(fdr_DEG == 0,
+           smooth_peak_pseudotime > 0 ) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  stat_cor(method = "pearson", label.x = 0, label.y = 750, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+pdf("output/binBw/corr_pseudotime_traj3_peakSmooth_peakSmoothOver0frdStartEnd05__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=3, height=4)
+pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    filter(fdr_StartEnd <0.05 ,
+           smooth_peak_pseudotime > 0 ) %>%
+ggplot(., aes(x = smooth_peak_pseudotime, y = bc_max)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  stat_cor(method = "pearson", label.x = 0, label.y = 750, 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"))) +
+  theme_bw()
+dev.off()
+
+
+
+# bin
+## DEG
+pdf("output/binBw/histbin3_pseudotime_traj3_peakSmooth_fdrDEG05median___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=3, height=2)
+pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    filter(fdr_DEG <0.05) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = median(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+
+## StartEnd
+pdf("output/binBw/histbin3_pseudotime_traj3_peakSmooth_fdrStartEnd0median___WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs.pdf", width=3, height=2)
+pseudotime_traj3_peak_WT_H3K27me3_500bpTSS_geneSymbol %>% 
+    add_column(genotype = "WT") %>%
+    filter(fdr_StartEnd == 0 ) %>%
+    mutate(pseudotime_bin = cut(smooth_peak_pseudotime, breaks = c(seq(0, max(smooth_peak_pseudotime), by = 3), Inf), include.lowest = TRUE, right = FALSE)) %>%
+    group_by(genotype, pseudotime_bin) %>%
+    summarize(mean_bc_max = median(bc_max), se_bc_max = sd(bc_max) / sqrt(n()), .groups = 'drop') %>%
+    ggplot(., aes(x = pseudotime_bin, y = mean_bc_max, fill = genotype)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.7) +
+        geom_errorbar(aes(ymin = mean_bc_max - se_bc_max, ymax = mean_bc_max + se_bc_max),
+                      position = position_dodge(0.9), width = 0.2) +
+        scale_fill_manual(values = c("WT" = "blue")) +
+        labs(title = "Barplot of Mean bc_max by Pseudotime Bin with Error Bars",
+            x = "Pseudotime Bin",
+            y = "Mean bc_max") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust x-axis text for better readability
+dev.off()
+```
+
+# Level of H3K27me3 in cell type marker genes _ 3D paper _ Alternative method
+
+
+
+
+```R
+# packages
+library("tidyverse")
+library("ggpubr")
+
+# DATA IMPORT #######################
+## import cell type marker genes
+markers_UNTREATED <- read.delim("../../002_scRNAseq/003__YAP1/output/seurat/srat_humangastruloid2472hrs_UNTREATED_3Dpaper_all_markers.txt", header = TRUE, row.names = 1) %>% as_tibble() %>%
+dplyr::rename("geneSymbol" = "gene")
+markers_DASATINIB <- read.delim("../../002_scRNAseq/003__YAP1/output/seurat/srat_humangastruloid2472hrs_DASATINIB_3Dpaper_all_markers.txt", header = TRUE, row.names = 1)%>% as_tibble()%>%
+dplyr::rename("geneSymbol" = "gene")
+## import H3K27me3 level in hESC
+WT_H3K27me3_500bpTSS_geneSymbol <- read_tsv("output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol.txt")
+WT_H3K27me3_250bpTSS_geneSymbol <- read_tsv("output/binBw/WT_H3K27me3_250bp_ENCFF201SJZ_geneSymbol.txt")
+
+
+# Identify highly express genes in each cluster
+## Group by cluster and arrange by p_val_adj (ascending) and avg_log2FC (descending)
+marker_genes <- markers_UNTREATED %>% #  !!!!!!!!! CHANGE HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  group_by(cluster) %>%
+  arrange(p_val_adj, desc(avg_log2FC)) %>%
+  slice_head(n = 100) %>% #  !!!!!!!!! CHANGE HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ungroup()
+## Create a list to save each cluster's top 100 genes
+cluster_top_genes <- list()
+## Extract unique clusters
+clusters <- unique(marker_genes$cluster)
+## Loop through each cluster and save the data in the list
+for (cl in clusters) {
+  cluster_data <- marker_genes %>% filter(cluster == cl)
+  cluster_top_genes[[cl]] <- cluster_data
+}
+
+cluster_top_genes[["CPC2"]]
+
+# Lineage2 _ Epi / PS /ProlCardMeso / CPC1 / CPC2 / Cardiomyocyte #############################
+### 500bp TSS signal
+plot_data <- bind_rows(
+  cluster_top_genes[["Epiblast"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "Epiblast"),
+  cluster_top_genes[["PrimitiveStreak"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "PrimitiveStreak"),
+  cluster_top_genes[["ProliferatingCardiacMesoderm"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "ProliferatingCardiacMesoderm"),
+  cluster_top_genes[["CPC1"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "CPC1"),
+  cluster_top_genes[["CPC2"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "CPC2"),   
+  cluster_top_genes[["Cardiomyocyte"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "Cardiomyocyte")
+)
+
+# Plot the data
+plot_data$cluster <- factor(plot_data$cluster, levels = c("Epiblast", "PrimitiveStreak" ,"ProliferatingCardiacMesoderm", "CPC1", "CPC2", "Cardiomyocyte")) # Reorder untreated 1st
+
+comparisons <- list(
+  c("Epiblast", "PrimitiveStreak"),
+  c("Epiblast", "ProliferatingCardiacMesoderm"),
+  c("Epiblast", "CPC1"),
+  c("Epiblast", "CPC2"),
+  c("Epiblast", "Cardiomyocyte")
+)
+
+# Create the boxplot with statistical tests
+pdf("output/binBw/boxplot_traj2_top100_DASATINIB__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs_3Dpaper.pdf", width = 3, height = 3)
+ggboxplot(
+  plot_data, 
+  x = "cluster", 
+  y = "bc_max", 
+  outlier.shape = NA # Remove outliers from the boxplot
+) +
+  stat_compare_means(
+    comparisons = comparisons, 
+    method = "wilcox.test", # Use Wilcoxon test; you can change to "t.test" if needed
+    label = "p.format",
+    label.y = c(50, 75, 100, 125, 150)
+  ) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, hjust = 1) # Rotate x-axis labels
+  ) +
+  theme(legend.position = "none") +
+  labs(
+    x = "Cluster",
+    y = "H3K27me3 level\t 
+    in hESC"
+  ) +
+  ylim (0,200)
+dev.off()
+
+
+pdf("output/binBw/barplot_traj2_top100_DASATINIB__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs_3Dpaper.pdf", width = 3, height = 3)
+ggbarplot(
+  plot_data, 
+  x = "cluster", 
+  y = "bc_max", 
+  add = "mean_se"
+) +
+  stat_compare_means(
+    comparisons = comparisons,
+    method = "wilcox.test", # Use Wilcoxon test for statistical comparisons
+    label = "p.format"
+  ) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, hjust = 1) # Rotate x-axis labels
+  ) +
+  labs(
+    x = "Cluster",
+    y = "H3K27me3 Level in hESC (Mean ± SE)"
+  )
+dev.off()
+
+### 250bp TSS signal
+plot_data <- bind_rows(
+  cluster_top_genes[["Epiblast"]] %>% 
+    inner_join(WT_H3K27me3_250bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "Epiblast"),
+  cluster_top_genes[["PrimitiveStreak"]] %>% 
+    inner_join(WT_H3K27me3_250bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "PrimitiveStreak"),
+  cluster_top_genes[["ProliferatingCardiacMesoderm"]] %>% 
+    inner_join(WT_H3K27me3_250bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "ProliferatingCardiacMesoderm"),
+  cluster_top_genes[["CPC1"]] %>% 
+    inner_join(WT_H3K27me3_250bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "CPC1"),
+  cluster_top_genes[["CPC2"]] %>% 
+    inner_join(WT_H3K27me3_250bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "CPC2"),   
+  cluster_top_genes[["Cardiomyocyte"]] %>% 
+    inner_join(WT_H3K27me3_250bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "Cardiomyocyte")
+)
+
+# Plot the data
+plot_data$cluster <- factor(plot_data$cluster, levels = c("Epiblast", "PrimitiveStreak" ,"ProliferatingCardiacMesoderm", "CPC1", "CPC2", "Cardiomyocyte")) # Reorder untreated 1st
+
+comparisons <- list(
+  c("Epiblast", "PrimitiveStreak"),
+  c("Epiblast", "ProliferatingCardiacMesoderm"),
+  c("Epiblast", "CPC1"),
+  c("Epiblast", "CPC2"),
+  c("Epiblast", "Cardiomyocyte")
+)
+
+# Create the boxplot with statistical tests
+pdf("output/binBw/boxplot_traj2_top100_DASATINIB__WT_H3K27me3_250bpTSS_geneSymbol_bc_max_2472hrs_3Dpaper.pdf", width = 3, height = 3)
+ggboxplot(
+  plot_data, 
+  x = "cluster", 
+  y = "bc_max", 
+  outlier.shape = NA # Remove outliers from the boxplot
+) +
+  stat_compare_means(
+    comparisons = comparisons, 
+    method = "wilcox.test", # Use Wilcoxon test; you can change to "t.test" if needed
+    label = "p.format",
+    label.y = c(50, 75, 100, 125, 150)
+  ) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, hjust = 1) # Rotate x-axis labels
+  ) +
+  theme(legend.position = "none") +
+  labs(
+    x = "Cluster",
+    y = "H3K27me3 level\t 
+    in hESC"
+  ) +
+  ylim (0,200)
+dev.off()
+
+
+# Lineage1 _ Epi / PS / Blood ############################# 
+
+plot_data <- bind_rows(
+  cluster_top_genes[["Epiblast"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "Epiblast"),
+  cluster_top_genes[["PrimitiveStreak"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "PrimitiveStreak"),
+  cluster_top_genes[["CadiacMesoderm"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "CadiacMesoderm")
+)
+
+# Plot the data
+plot_data$cluster <- factor(plot_data$cluster, levels = c("Epiblast", "PrimitiveStreak" ,"CadiacMesoderm")) # Reorder untreated 1st
+
+comparisons <- list(
+  c("Epiblast", "PrimitiveStreak"),
+  c("Epiblast", "CadiacMesoderm")
+)
+
+# Create the boxplot with statistical tests
+pdf("output/binBw/boxplot_traj1_top100_UNTREATED__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs_3Dpaper.pdf", width = 3, height = 3)
+ggboxplot(
+  plot_data, 
+  x = "cluster", 
+  y = "bc_max", 
+  outlier.shape = NA # Remove outliers from the boxplot
+) +
+  stat_compare_means(
+    comparisons = comparisons, 
+    method = "wilcox.test", # Use Wilcoxon test; you can change to "t.test" if needed
+    label = "p.format",
+    label.y = c(50, 75)
+  ) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, hjust = 1) # Rotate x-axis labels
+  ) +
+  theme(legend.position = "none") +
+  labs(
+    x = "Cluster",
+    y = "H3K27me3 level\t 
+    in hESC"
+  ) +
+  ylim (0,150)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Plot all cluster for quick analysis
+plot_data <- bind_rows(
+  cluster_top_genes[["Epiblast"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "Epiblast"),
+  cluster_top_genes[["PrimitiveStreak"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "PrimitiveStreak"),
+  cluster_top_genes[["ProliferatingCardiacMesoderm"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "ProliferatingCardiacMesoderm"),
+  cluster_top_genes[["CPC1"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "CPC1"),
+  cluster_top_genes[["CPC2"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "CPC2"),   
+  cluster_top_genes[["Cardiomyocyte"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "Cardiomyocyte"),
+  cluster_top_genes[["CadiacMesoderm"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "CadiacMesoderm"),
+  cluster_top_genes[["Endoderm"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "Endoderm"),
+  cluster_top_genes[["Mixed_Epiblast_Ectoderm_PrimitiveStreak"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "Mixed_Epiblast_Ectoderm_PrimitiveStreak"),
+  cluster_top_genes[["Unknown"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "Unknown")
+)
+
+# Plot the data
+plot_data$cluster <- factor(plot_data$cluster, levels = c("Epiblast", "PrimitiveStreak" ,"ProliferatingCardiacMesoderm", "CPC1", "CPC2", "Cardiomyocyte", "CadiacMesoderm", "Endoderm", "Mixed_Epiblast_Ectoderm_PrimitiveStreak", "Unknown")) # Reorder untreated 1st
+
+comparisons <- list(
+  c("Epiblast", "PrimitiveStreak"),
+  c("Epiblast", "ProliferatingCardiacMesoderm"),
+  c("Epiblast", "CPC1"),
+  c("Epiblast", "CPC2"),
+  c("Epiblast", "Cardiomyocyte"),
+  c("Epiblast", "CadiacMesoderm"),
+  c("Epiblast", "Endoderm"),
+  c("Epiblast", "Mixed_Epiblast_Ectoderm_PrimitiveStreak"),
+  c("Epiblast", "Unknown")
+)
+
+# Create the boxplot with statistical tests
+pdf("output/binBw/barplot_all_top100_UNTREATED__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs_3Dpaper.pdf", width = 3, height = 3)
+
+ggbarplot(
+  plot_data, 
+  x = "cluster", 
+  y = "bc_max", 
+  add = "mean_se"
+) +
+  stat_compare_means(
+    comparisons = comparisons,
+    method = "wilcox.test", # Use Wilcoxon test for statistical comparisons
+    label = "p.format"
+  ) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, hjust = 1) # Rotate x-axis labels
+  ) +
+  labs(
+    x = "Cluster",
+    y = "H3K27me3 Level in hESC (Mean ± SE)"
+  )
+dev.off()
+
+
+
+
+
+```
+
+
+
+
+
+
+
 
 # Overlapping peaks EZH2, QSER1, YAP (`008003*/`), TEAD4 (`008003*/`)
 
