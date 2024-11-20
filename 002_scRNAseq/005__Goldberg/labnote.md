@@ -4804,6 +4804,7 @@ Let's integrate the three time points together (SCT method, same as replicates/g
 Let's try:
 - *two step integration*: Load our WT_Kcnc1 integrated sample for each time points. And integrate them. Do not re-regress variables.
 - *one step integration*: Load all individual samples and integrate them in one step altogether.
+- *two step integrateMerge: merge the 1step integrated dataset*: Load our WT_Kcnc1 integrated sample for each time points. Merge them; and then perform analysis. Recommended by Satijalab [here](https://github.com/satijalab/seurat/issues/2468). For the *variable features* I follow [this](https://github.com/satijalab/seurat/issues/5135) and [this](https://github.com/satijalab/seurat/issues/6185); so "set the VariableFeatures to the features in the scale.data slot of the merged SCT assay, which by default includes only the residuals from variable features."
 
 
 Let's run in an R script the 1/2 step integration
@@ -4819,7 +4820,12 @@ conda activate monocle3
 sbatch scripts/dataIntegration_CB_1step_monocle3Conda.sh # 30052867 fail 
 
 conda activate scRNAseqV2
-sbatch scripts/dataIntegration_CB_1step_reductionRPCA.sh # 30202253 xxx
+sbatch scripts/dataIntegration_CB_1step_reductionRPCA.sh # 30202253 error 'pca not found in this seurat object'; added an extra line from seurat tutorial
+sbatch scripts/dataIntegration_CB_1step_reductionRPCA.sh # 30223575 xxx
+
+
+
+sbatch scripts/dataIntegration_CB_2step_integrateMerge.sh # 
 
 ```
 
@@ -4918,11 +4924,6 @@ dev.off()
 
 
 
-
-
-
-
-
 ```
 
 
@@ -4930,6 +4931,63 @@ dev.off()
 
 
 
+Let's test **integrateMerge option**
+
+--> Not sure about working on SCT assay for the UMAP SCT... Before I used the integrated assay to generate UMAP. I do not think that is a big deal. 
+
+
+
+
+```R
+
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+
+
+# load seurat object
+WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_2step-WT_Kcnc1_CB_integrateMerge.sct.rds")
+
+# Load the variable features from the previous SCT individual objects
+VariableFeatures(WT_Kcnc1_CB_integrateMerge.sct[["SCT"]]) <- rownames(WT_Kcnc1_CB_integrateMerge.sct[["SCT"]]@scale.data)
+
+
+
+XXXY HERE !!!! 
+
+
+
+
+#### UMAP
+DefaultAssay(WT_Kcnc1_CB_integrateMerge.sct) <- "SCT"
+
+WT_Kcnc1_CB_integrateMerge.sct <- RunPCA(WT_Kcnc1_CB_integrateMerge.sct, verbose = FALSE, npcs = 50)
+WT_Kcnc1_CB_integrateMerge.sct <- RunUMAP(WT_Kcnc1_CB_integrateMerge.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
+WT_Kcnc1_CB_integrateMerge.sct <- FindNeighbors(WT_Kcnc1_CB_integrateMerge.sct, reduction = "pca", k.param = 20, dims = 1:50)
+WT_Kcnc1_CB_integrateMerge.sct <- FindClusters(WT_Kcnc1_CB_integrateMerge.sct, resolution = 0.2, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+
+WT_Kcnc1_CB_integrateMerge.sct$condition <- factor(WT_Kcnc1_CB_integrateMerge.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-2stepIntegrationRegressNotRepeatedregMtRbCou-dim50kparam20res02.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE)
+dev.off()
+
+
+
+
+
+
+```
 
 
 

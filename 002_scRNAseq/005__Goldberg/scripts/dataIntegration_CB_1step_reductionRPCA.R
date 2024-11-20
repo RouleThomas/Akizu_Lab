@@ -176,6 +176,7 @@ Kcnc1_p180_CB_Rep3_SCT <- SCTransform(Kcnc1_p180_CB_Rep3, method = "glmGamPoi", 
 srat.list <- list(WT_p14_CB_Rep1_SCT = WT_p14_CB_Rep1_SCT, WT_p14_CB_Rep2_SCT = WT_p14_CB_Rep2_SCT, WT_p14_CB_Rep3_SCT = WT_p14_CB_Rep3_SCT, Kcnc1_p14_CB_Rep1_SCT = Kcnc1_p14_CB_Rep1_SCT, Kcnc1_p14_CB_Rep2_SCT = Kcnc1_p14_CB_Rep2_SCT, Kcnc1_p14_CB_Rep3_SCT = Kcnc1_p14_CB_Rep3_SCT, WT_p35_CB_Rep1_SCT = WT_p35_CB_Rep1_SCT, WT_p35_CB_Rep2_SCT = WT_p35_CB_Rep2_SCT, WT_p35_CB_Rep3_SCT = WT_p35_CB_Rep3_SCT, Kcnc1_p35_CB_Rep1_SCT = Kcnc1_p35_CB_Rep1_SCT, Kcnc1_p35_CB_Rep2_SCT = Kcnc1_p35_CB_Rep2_SCT, Kcnc1_p35_CB_Rep3_SCT = Kcnc1_p35_CB_Rep3_SCT, WT_p180_CB_Rep1_SCT = WT_p180_CB_Rep1_SCT, WT_p180_CB_Rep2_SCT = WT_p180_CB_Rep2_SCT, WT_p180_CB_Rep3_SCT = WT_p180_CB_Rep3_SCT, Kcnc1_p180_CB_Rep1_SCT = Kcnc1_p180_CB_Rep1_SCT, Kcnc1_p180_CB_Rep2_SCT = Kcnc1_p180_CB_Rep2_SCT, Kcnc1_p180_CB_Rep3_SCT = Kcnc1_p180_CB_Rep3_SCT)
 features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
 srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+srat.list <- lapply(X = srat.list, FUN = RunPCA, features = features) # THIS LINE ADDED; we need to RunPCA before
 WT_Kcnc1_CB_1step.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
     anchor.features = features, reduction="rpca") # HERE ADDED  `reduction="rpca"`
 WT_Kcnc1_CB_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_CB_1step.anchors, normalization.method = "SCT")
