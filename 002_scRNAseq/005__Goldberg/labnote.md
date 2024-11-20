@@ -4816,14 +4816,17 @@ sbatch scripts/dataIntegration_CB_2step.sh # 29969881 ok
 
 conda activate monocle3
 # --> Remvoed some packages loaded; only include the necessary
-sbatch scripts/dataIntegration_CB_1step_monocle3Conda.sh # 30052867 xxx 
+sbatch scripts/dataIntegration_CB_1step_monocle3Conda.sh # 30052867 fail 
+
+conda activate scRNAseqV2
+sbatch scripts/dataIntegration_CB_1step_reductionRPCA.sh # 30202253 xxx
 
 ```
 
 --> Error `unable to coerce from TsparseMatrix to [CR]sparseMatrixwhen length of 'i' slot exceeds 2^31-1` discussed [here](https://github.com/satijalab/seurat/discussions/7311). Solution discussed:
   - merge replicates, then do integration
-  - test using `scRNA.anchors <- FindIntegrationAnchors(object.list = scRNAlist,anchor.features = features, reduction="rpca", dims = 1:30)`
-  - either test Seurat v5; use `conda activate monocle3` with seuratv5
+  - test using `scRNA.anchors <- FindIntegrationAnchors(object.list = scRNAlist,anchor.features = features, reduction="rpca", dims = 1:30)`. Also show in tutorial [here](https://satijalab.org/seurat/articles/integration_rpca.html)
+  - either test Seurat v5; use `conda activate monocle3` with seuratv5 --> FAIL
 
 
 
@@ -5101,15 +5104,15 @@ conda activate scRNAseqV2
 
 # p14 CB
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB.sh # 27801074 ok
-sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_correct.sh # 29330177 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_correct.sh # 29330177 ok
 
 # p35 CB
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB.sh # 27801335 ok
-sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_correct.sh # 29328955 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_correct.sh # 29328955 ok
 
 # p180 CB
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB.sh # 27801489 ok
-sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_correct.sh # 29330555 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_correct.sh # 29330555 ok
 ```
 
 

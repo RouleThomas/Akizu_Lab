@@ -1846,10 +1846,10 @@ DotPlot(humangastruloid.combined.sct, features = marker_genes_conserved, cols = 
 dev.off()
 
 
-# save
-saveRDS(humangastruloid.combined.sct, file = "output/seurat/humangastruloid.combined.sct_V2.rds")
+###### save ############################################################################################################################################################
+#saveRDS(humangastruloid.combined.sct, file = "output/seurat/humangastruloid.combined.sct_V2.rds")
 humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid.combined.sct_V2.rds")
-
+############################################################################################################################################################
 
 
 
@@ -2514,6 +2514,214 @@ I now use the same number of dimensions for SCTransform and data integration ste
 
 
 --> Share to Conchi the Conserved Marker list (`srat_all_conserved_markers_V2.xlsx`). To avoid confusion, I did some filtering: For each cell type; I only keep log2FC positive (= correspond to gene more highly express in this cell types) and I told her to filter per pvalue which is the max_pvalue. Like this, she will only see the highly express genes in each cluster
+
+
+
+
+
+## humangastruloid 72hr V2 _ 3D paper
+
+
+The 24/72hrs gastruloid did not show the expected EZH2/KDM6B expression pattern, coming back to 72hrs version:
+- Generate the marker genes for each cluster in UNTREATED and DASATINIB condition (test with over-clustering the sample too; to have more time points.)
+- XXX
+
+```bash
+conda activate scRNAseqV2
+
+```
+
+
+```R
+# packages
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+
+set.seed(42)
+
+# import last version of clustering
+humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid.combined.sct_V2.rds")
+
+#--> dim25kparam15res03 = GOOD, more cluster
+
+DefaultAssay(humangastruloid.combined.sct) <- "integrated"
+
+humangastruloid.combined.sct <- RunPCA(humangastruloid.combined.sct, verbose = FALSE, npcs = 25)
+humangastruloid.combined.sct <- RunUMAP(humangastruloid.combined.sct, reduction = "pca", dims = 1:25, verbose = FALSE)
+humangastruloid.combined.sct <- FindNeighbors(humangastruloid.combined.sct, reduction = "pca", k.param = 15, dims = 1:25)
+humangastruloid.combined.sct <- FindClusters(humangastruloid.combined.sct, resolution = 0.3, verbose = FALSE, algorithm = 4)
+
+humangastruloid.combined.sct$condition <- factor(humangastruloid.combined.sct$condition, levels = c("UNTREATED72hr", "DASATINIB72hr")) # Reorder untreated 1st
+
+
+
+pdf("output/seurat/UMAP_humangastruloid72hrs_V2-dim25kparam15res03.pdf", width=10, height=6)
+DimPlot(humangastruloid.combined.sct, reduction = "umap", split.by = "condition", label=TRUE)
+dev.off()
+
+
+new.cluster.ids <- c(
+  "CPC",
+  "Cardiomyocyte",
+  "CardiacMesoderm",
+  "ProliferatingCardiacMesoderm",
+  "Endoderm",
+  "Epiblast_Ectoderm"
+)
+
+names(new.cluster.ids) <- levels(humangastruloid.combined.sct)
+humangastruloid.combined.sct <- RenameIdents(humangastruloid.combined.sct, new.cluster.ids)
+humangastruloid.combined.sct$cluster.annot <- Idents(humangastruloid.combined.sct) # create a new slot in my seurat object
+
+pdf("output/seurat/UMAP_humangastruloid72hrs_V2-dim25kparam15res03_label.pdf", width=15, height=6)
+DimPlot(humangastruloid.combined.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 5)
+dev.off()
+
+pdf("output/seurat/UMAP_humangastruloid72hrs_V2-dim25kparam15res03_noSplit_label.pdf", width=9, height=6)
+DimPlot(humangastruloid.combined.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5)
+dev.off()
+
+
+# All in dotplot
+DefaultAssay(humangastruloid.combined.sct) <- "SCT"
+
+List1:
+ cluster1 "CPC"= MEIS2, GATA4
+ cluster2 "Cardiomyocyte"= TNNT2, TNNI1, ACTC1
+ cluster3 "CardiacMesoderm"= MESP1
+ cluster4 "ProliferatingCardiacMesoderm"= CCNB1
+ cluster5 "Endoderm"= FOXA2, SOX17
+ cluster6 "Epiblast_Ectoderm"= POU5F1, TFAP2A, SOX2
+
+
+
+all_markers <- c(
+  "POU5F1", "TFAP2A", "SOX2",
+  "MESP1",
+  "CCNB1",
+  "MEIS2", "GATA4",
+  "TNNT2", "TNNI1", "ACTC1",
+  "FOXA2", "SOX17"
+)
+
+
+
+levels(humangastruloid.combined.sct) <- c(
+  "Epiblast_Ectoderm",
+  "CardiacMesoderm",
+  "ProliferatingCardiacMesoderm",
+  "CPC",
+  "Cardiomyocyte",
+  "Endoderm"
+)
+
+
+
+pdf("output/seurat/DotPlot_SCT_WT_humangastruloid72hrs_V2_dim25kparam15res03_label_vertical.pdf", width=7, height=2)
+DotPlot(humangastruloid.combined.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
+dev.off()
+
+
+# marker genes for each cell type
+### Find all markers 
+humangastruloid_UNTREATED.combined.sct <- subset(humangastruloid.combined.sct, condition == "UNTREATED72hr")
+humangastruloid_DASATINIB.combined.sct <- subset(humangastruloid.combined.sct, condition == "DASATINIB72hr")
+
+Idents(humangastruloid_UNTREATED.combined.sct) <- "cluster.annot"
+Idents(humangastruloid_DASATINIB.combined.sct) <- "cluster.annot"
+
+all_markers_UNTREATED <- FindAllMarkers(humangastruloid_UNTREATED.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.1, logfc.threshold = 0.1)
+write.table(all_markers_UNTREATED, file = "output/seurat/srat_humangastruloid72hrs_UNTREATED_dim25kparam15res03_3Dpaper_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+all_markers_DASATINIB <- FindAllMarkers(humangastruloid_DASATINIB.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.1, logfc.threshold = 0.1)
+write.table(all_markers_DASATINIB, file = "output/seurat/srat_humangastruloid72hrs_DASATINIB_dim25kparam15res03_3Dpaper_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+# SAVE ############################################################################################################################################
+#saveRDS(humangastruloid.combined.sct, file = "output/seurat/humangastruloid.combined.sct_V2-dim25kparam15res03.rds")
+humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid.combined.sct_V2-dim25kparam15res03.rds")
+########################################################################################################################################################################
+
+
+
+
+
+#--> dim25kparam15res02 = OG
+
+DefaultAssay(humangastruloid.combined.sct) <- "integrated"
+
+humangastruloid.combined.sct <- RunPCA(humangastruloid.combined.sct, verbose = FALSE, npcs = 25)
+humangastruloid.combined.sct <- RunUMAP(humangastruloid.combined.sct, reduction = "pca", dims = 1:25, verbose = FALSE)
+humangastruloid.combined.sct <- FindNeighbors(humangastruloid.combined.sct, reduction = "pca", k.param = 15, dims = 1:25)
+humangastruloid.combined.sct <- FindClusters(humangastruloid.combined.sct, resolution = 0.2, verbose = FALSE, algorithm = 4)
+
+humangastruloid.combined.sct$condition <- factor(humangastruloid.combined.sct$condition, levels = c("UNTREATED72hr", "DASATINIB72hr")) # Reorder untreated 1st
+
+
+
+pdf("output/seurat/UMAP_humangastruloid72hrs_V2-dim25kparam15res02.pdf", width=10, height=6)
+DimPlot(humangastruloid.combined.sct, reduction = "umap", split.by = "condition", label=TRUE)
+dev.off()
+
+
+new.cluster.ids <- c(
+  "CardiacMesoderm",
+  "CardiacProgenitors",
+  "NascentMesoderm1",
+  "Endoderm",
+  "Ectoderm",
+  "NascentMesoderm2"
+)
+
+names(new.cluster.ids) <- levels(humangastruloid.combined.sct)
+humangastruloid.combined.sct <- RenameIdents(humangastruloid.combined.sct, new.cluster.ids)
+humangastruloid.combined.sct$cluster.annot <- Idents(humangastruloid.combined.sct) # create a new slot in my seurat object
+
+pdf("output/seurat/UMAP_humangastruloid72hrs_V2-dim25kparam15res02_label.pdf", width=15, height=6)
+DimPlot(humangastruloid.combined.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 5)
+dev.off()
+
+pdf("output/seurat/UMAP_humangastruloid72hrs_V2-dim25kparam15res02_noSplit_label.pdf", width=9, height=6)
+DimPlot(humangastruloid.combined.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5)
+dev.off()
+
+
+# marker genes for each cell type
+### Find all markers 
+
+humangastruloid_UNTREATED.combined.sct <- subset(humangastruloid.combined.sct, condition == "UNTREATED72hr")
+humangastruloid_DASATINIB.combined.sct <- subset(humangastruloid.combined.sct, condition == "DASATINIB72hr")
+
+Idents(humangastruloid_UNTREATED.combined.sct) <- "cluster.annot"
+Idents(humangastruloid_DASATINIB.combined.sct) <- "cluster.annot"
+
+all_markers_UNTREATED <- FindAllMarkers(humangastruloid_UNTREATED.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.1, logfc.threshold = 0.1)
+write.table(all_markers_UNTREATED, file = "output/seurat/srat_humangastruloid72hrs_UNTREATED_dim25kparam15res02_3Dpaper_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+all_markers_DASATINIB <- FindAllMarkers(humangastruloid_DASATINIB.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.1, logfc.threshold = 0.1)
+write.table(all_markers_DASATINIB, file = "output/seurat/srat_humangastruloid72hrs_DASATINIB_dim25kparam15res02_3Dpaper_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+# SAVE ############################################################################################################################################
+#saveRDS(humangastruloid.combined.sct, file = "output/seurat/humangastruloid.combined.sct_V2-dim25kparam15res02.rds")
+humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid.combined.sct_V2-dim25kparam15res02.rds")
+########################################################################################################################################################################
+
+
+```
+
+
+
 
 
 # humangastruloid 24hr 72hr integration
