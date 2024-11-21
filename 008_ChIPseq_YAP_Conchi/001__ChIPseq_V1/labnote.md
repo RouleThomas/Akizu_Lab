@@ -8973,6 +8973,7 @@ dev.off()
 
 ## 2472hrs human gastruloid
 
+XXXY HERE 
 
 ```R
 # packages
@@ -9008,6 +9009,13 @@ for (cl in clusters) {
 }
 
 cluster_top_genes[["CPC2"]]
+
+
+
+
+
+
+
 
 # Lineage2 _ Epi / PS /ProlCardMeso / CPC1 / CPC2 / Cardiomyocyte #############################
 ### 500bp TSS signal
@@ -9312,11 +9320,209 @@ ggbarplot(
 dev.off()
 
 
+```
 
 
+
+
+## 72hrs human gastruloid _ OG clustering
+
+
+```R
+# packages
+library("tidyverse")
+library("ggpubr")
+
+# DATA IMPORT #######################
+## import cell type marker genes
+markers_UNTREATED <- read.delim("../../002_scRNAseq/003__YAP1/output/seurat/srat_humangastruloid72hrs_UNTREATED_dim25kparam15res02_3Dpaper_all_markers.txt", header = TRUE, row.names = 1) %>% as_tibble() %>%
+dplyr::rename("geneSymbol" = "gene")
+markers_DASATINIB <- read.delim("../../002_scRNAseq/003__YAP1/output/seurat/srat_humangastruloid72hrs_DASATINIB_dim25kparam15res02_3Dpaper_all_markers.txt", header = TRUE, row.names = 1)%>% as_tibble()%>%
+dplyr::rename("geneSymbol" = "gene")
+## import H3K27me3 level in hESC
+WT_H3K27me3_500bpTSS_geneSymbol <- read_tsv("output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol.txt")
+WT_H3K27me3_250bpTSS_geneSymbol <- read_tsv("output/binBw/WT_H3K27me3_250bp_ENCFF201SJZ_geneSymbol.txt")
+
+
+# Identify highly express genes in each cluster
+## Group by cluster and arrange by p_val_adj (ascending) and avg_log2FC (descending)
+marker_genes <- markers_DASATINIB %>% #  !!!!!!!!! CHANGE HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  group_by(cluster) %>%
+  arrange(p_val_adj, desc(avg_log2FC)) %>%
+  slice_head(n = 100) %>% #  !!!!!!!!! CHANGE HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ungroup()
+## Create a list to save each cluster's top 100 genes
+cluster_top_genes <- list()
+## Extract unique clusters
+clusters <- unique(marker_genes$cluster)
+## Loop through each cluster and save the data in the list
+for (cl in clusters) {
+  cluster_data <- marker_genes %>% filter(cluster == cl)
+  cluster_top_genes[[cl]] <- cluster_data
+}
+
+cluster_top_genes[["CardiacMesoderm"]]
+
+# Plot all cluster for quick analysis
+plot_data <- bind_rows(
+  cluster_top_genes[["Ectoderm"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "Ectoderm"),
+  cluster_top_genes[["CardiacMesoderm"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "CardiacMesoderm"),
+  cluster_top_genes[["CardiacProgenitors"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "CardiacProgenitors"),
+  cluster_top_genes[["NascentMesoderm1"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "NascentMesoderm1"),
+  cluster_top_genes[["NascentMesoderm2"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "NascentMesoderm2"),   
+  cluster_top_genes[["Endoderm"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "Endoderm")
+)
+
+# Plot the data
+plot_data$cluster <- factor(plot_data$cluster, levels = c("Ectoderm", "CardiacMesoderm" ,"CardiacProgenitors", "NascentMesoderm1", "NascentMesoderm2", "Endoderm")) # Reorder untreated 1st
+
+comparisons <- list(
+  c("Ectoderm", "CardiacMesoderm"),
+  c("Ectoderm", "CardiacProgenitors"),
+  c("Ectoderm", "NascentMesoderm1"),
+  c("Ectoderm", "NascentMesoderm2"),
+  c("Ectoderm", "Endoderm")
+)
+
+# Create the boxplot with statistical tests
+pdf("output/binBw/barplot_all_top100_DASATINIB__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_72hrsOGclustering_3Dpaper.pdf", width = 3, height = 3)
+ggbarplot(
+  plot_data, 
+  x = "cluster", 
+  y = "bc_max", 
+  add = "mean_se"
+) +
+ # stat_compare_means(
+  #  comparisons = comparisons,
+  #  method = "wilcox.test", # Use Wilcoxon test for statistical comparisons
+  #  label = "p.format"
+  #) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, hjust = 1) # Rotate x-axis labels
+  ) +
+  labs(
+    x = "Cluster",
+    y = "H3K27me3 Level in hESC (Mean ± SE)"
+  )
+dev.off()
 
 ```
 
+--> *NascentMesoderm12* are the population clearly showing low level of H3K27me3.
+
+
+
+
+## 72hrs human gastruloid _ NEW clustering V1
+
+
+```R
+# packages
+library("tidyverse")
+library("ggpubr")
+
+# DATA IMPORT #######################
+## import cell type marker genes
+markers_UNTREATED <- read.delim("../../002_scRNAseq/003__YAP1/output/seurat/srat_humangastruloid72hrs_UNTREATED_dim25kparam15res03_3Dpaper_all_markers.txt", header = TRUE, row.names = 1) %>% as_tibble() %>%
+dplyr::rename("geneSymbol" = "gene")
+markers_DASATINIB <- read.delim("../../002_scRNAseq/003__YAP1/output/seurat/srat_humangastruloid72hrs_DASATINIB_dim25kparam15res03_3Dpaper_all_markers.txt", header = TRUE, row.names = 1)%>% as_tibble()%>%
+dplyr::rename("geneSymbol" = "gene")
+## import H3K27me3 level in hESC
+WT_H3K27me3_500bpTSS_geneSymbol <- read_tsv("output/binBw/WT_H3K27me3_500bp_ENCFF201SJZ_geneSymbol.txt")
+WT_H3K27me3_250bpTSS_geneSymbol <- read_tsv("output/binBw/WT_H3K27me3_250bp_ENCFF201SJZ_geneSymbol.txt")
+
+
+# Identify highly express genes in each cluster
+## Group by cluster and arrange by p_val_adj (ascending) and avg_log2FC (descending)
+marker_genes <- markers_DASATINIB %>% #  !!!!!!!!! CHANGE HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  group_by(cluster) %>%
+  arrange(p_val_adj, desc(avg_log2FC)) %>%
+  slice_head(n = 100) %>% #  !!!!!!!!! CHANGE HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ungroup()
+## Create a list to save each cluster's top 100 genes
+cluster_top_genes <- list()
+## Extract unique clusters
+clusters <- unique(marker_genes$cluster)
+## Loop through each cluster and save the data in the list
+for (cl in clusters) {
+  cluster_data <- marker_genes %>% filter(cluster == cl)
+  cluster_top_genes[[cl]] <- cluster_data
+}
+
+cluster_top_genes[["CPC"]]
+
+# Plot all cluster for quick analysis
+plot_data <- bind_rows(
+  cluster_top_genes[["Epiblast_Ectoderm"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "Epiblast_Ectoderm"),
+  cluster_top_genes[["ProliferatingCardiacMesoderm"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "ProliferatingCardiacMesoderm"),
+  cluster_top_genes[["CardiacMesoderm"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "CardiacMesoderm"),
+  cluster_top_genes[["CPC"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "CPC"),
+  cluster_top_genes[["Cardiomyocyte"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "Cardiomyocyte"),   
+  cluster_top_genes[["Endoderm"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "Endoderm")
+)
+
+# Plot the data
+plot_data$cluster <- factor(plot_data$cluster, levels = c("Epiblast_Ectoderm", "ProliferatingCardiacMesoderm" ,"CardiacMesoderm", "CPC", "Cardiomyocyte", "Endoderm")) # Reorder untreated 1st
+
+comparisons <- list(
+  c("Ectoderm", "CardiacMesoderm"),
+  c("Ectoderm", "CardiacProgenitors"),
+  c("Ectoderm", "NascentMesoderm1"),
+  c("Ectoderm", "NascentMesoderm2"),
+  c("Ectoderm", "Endoderm")
+)
+
+# Create the boxplot with statistical tests
+pdf("output/binBw/barplot_all_top100_DASATINIB__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_72hrsNEWv1clustering_3Dpaper.pdf", width = 3, height = 3)
+ggbarplot(
+  plot_data, 
+  x = "cluster", 
+  y = "bc_max", 
+  add = "mean_se"
+) +
+  #stat_compare_means(
+  #  comparisons = comparisons,
+  #  method = "wilcox.test", # Use Wilcoxon test for statistical comparisons
+  #  label = "p.format"
+  #) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, hjust = 1) # Rotate x-axis labels
+  ) +
+  labs(
+    x = "Cluster",
+    y = "H3K27me3 Level in hESC (Mean ± SE)"
+  )
+dev.off()
+
+```
 
 
 

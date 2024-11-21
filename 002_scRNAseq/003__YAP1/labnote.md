@@ -2528,7 +2528,6 @@ The 24/72hrs gastruloid did not show the expected EZH2/KDM6B expression pattern,
 
 ```bash
 conda activate scRNAseqV2
-
 ```
 
 
@@ -4032,7 +4031,6 @@ Idents(humangastruloid_DASATINIB.combined.sct) <- "cluster.annot"
 
 
 all_markers_UNTREATED <- FindAllMarkers(humangastruloid_UNTREATED.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.1, logfc.threshold = 0.1)
-
 write.table(all_markers_UNTREATED, file = "output/seurat/srat_humangastruloid2472hrs_UNTREATED_3Dpaper_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 
@@ -4040,10 +4038,9 @@ write.table(all_markers_UNTREATED, file = "output/seurat/srat_humangastruloid247
 
 all_markers_DASATINIB <- FindAllMarkers(humangastruloid_DASATINIB.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.1, logfc.threshold = 0.1)
 
+XXXY HERE
+
 write.table(all_markers_DASATINIB, file = "output/seurat/srat_humangastruloid2472hrs_DASATINIB_3Dpaper_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-
-
-
 
 ```
 
