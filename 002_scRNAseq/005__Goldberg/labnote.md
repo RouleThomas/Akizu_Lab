@@ -6138,7 +6138,8 @@ library("glmGamPoi")
 library("celldex")
 library("SingleR")
 library("gprofiler2") # for human mouse gene conversion for cell cycle genes
-
+library("RColorBrewer")
+set.seed(42)
 
 # load seurat object
 WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge.sct.rds")
@@ -6154,28 +6155,28 @@ VariableFeatures(WT_Kcnc1_CB_integrateMerge.sct[["SCT"]]) <- rownames(WT_Kcnc1_C
 #### UMAP
 DefaultAssay(WT_Kcnc1_CB_integrateMerge.sct) <- "SCT"
 
-WT_Kcnc1_CB_integrateMerge.sct <- RunPCA(WT_Kcnc1_CB_integrateMerge.sct, verbose = FALSE, npcs = 30)
-WT_Kcnc1_CB_integrateMerge.sct <- RunUMAP(WT_Kcnc1_CB_integrateMerge.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
-WT_Kcnc1_CB_integrateMerge.sct <- FindNeighbors(WT_Kcnc1_CB_integrateMerge.sct, reduction = "pca", k.param = 20, dims = 1:30)
-WT_Kcnc1_CB_integrateMerge.sct <- FindClusters(WT_Kcnc1_CB_integrateMerge.sct, resolution = 0.2, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+WT_Kcnc1_CB_integrateMerge.sct <- RunPCA(WT_Kcnc1_CB_integrateMerge.sct, verbose = FALSE, npcs = 40)
+WT_Kcnc1_CB_integrateMerge.sct <- RunUMAP(WT_Kcnc1_CB_integrateMerge.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
+WT_Kcnc1_CB_integrateMerge.sct <- FindNeighbors(WT_Kcnc1_CB_integrateMerge.sct, reduction = "pca", k.param = 15, dims = 1:40)
+WT_Kcnc1_CB_integrateMerge.sct <- FindClusters(WT_Kcnc1_CB_integrateMerge.sct, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
 WT_Kcnc1_CB_integrateMerge.sct$condition <- factor(WT_Kcnc1_CB_integrateMerge.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 WT_Kcnc1_CB_integrateMerge.sct$time <- factor(WT_Kcnc1_CB_integrateMerge.sct$time, levels = c("p14", "p35", "p180")) 
 
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim30kparam20res02.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE, raster = FALSE)
 dev.off()
 
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim30kparam20res02_splitOrig.pdf", width=60, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_splitOrig.pdf", width=60, height=6)
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE, raster = FALSE, split.by = "orig.ident") # add `raster = FALSE` when more than 100k cells in the plot
 dev.off()
 
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim30kparam20res02_splitTime.pdf", width=15, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_splitTime.pdf", width=15, height=6)
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE, raster = FALSE, split.by = "time") # add `raster = FALSE` when more than 100k cells in the plot
 dev.off()
 
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim30kparam20res02_groupTime.pdf", width=5, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_groupTime.pdf", width=7, height=6)
 my_cols = brewer.pal(3,"Dark2")
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE, raster = FALSE, group.by = "time", cols=alpha(my_cols,0.3)) # add `raster = FALSE` when more than 100k cells in the plot
 dev.off()
@@ -6205,10 +6206,87 @@ Choroid plexus cells = Kl,  Ttr
 
 DefaultAssay(WT_Kcnc1_CB_integrateMerge.sct) <- "SCT" # For vizualization either use SCT or norm RNA
 
-pdf("output/seurat/FeaturePlot_SCT_WT_CB-integrateMerge-dim30-List678.pdf", width=25, height=40)
+pdf("output/seurat/FeaturePlot_SCT_WT_CB-integrateMerge-dim40-List678.pdf", width=25, height=40)
 FeaturePlot(WT_Kcnc1_CB_integrateMerge.sct, features = c("Gabra6", "Pax6", "Sorcs3", "Ptprk", "Nxph1", "Cdh22",  "Klhl1", "Gfra2", "Aldh1a3", "Galntl6", "Kcnc2", "Pax2", "Eomes", "Rgs6", "Tafa2", "Calb1", "Slc1a6", "Car8", "Aqp4", "Slc39a12", "Zeb2", "Aldoc", "Cnp", "Vcan", "Sox6", "Mbp", "Mag", "Plp1", "Itgam", "Cx3cr1", "Ptgds", "Dcn", "Lef1", "Notum", "Apcdd1", "Dlc1", "Pdgfrb", "Actb", "Tmsb4x", "Kl",  "Ttr"), max.cutoff = 2, cols = c("grey", "red"), raster = FALSE)
 dev.off()
 
+
+
+# V1 naming
+cluster1: Granule_1
+cluster2: PLI
+cluster3: Granule_2
+cluster4: Mix
+cluster5: MLI1_1
+cluster6: MLI1_2
+cluster7: MLI2_1
+cluster8: MLI1_3
+cluster9: Granule_3
+cluster10: Astrocyte
+cluster11: Endothelial
+cluster12: MLI2_2
+cluster13: BergmanGlia
+cluster14: MLI2_3
+cluster15: UnipolarBrush
+cluster16: Meningeal
+cluster17: Golgi
+cluster18: Purkinje
+cluster19: ChoroidPlexusCells
+cluster20: OPC
+cluster21: Oligodendrocyte
+cluster22: Unknown
+
+
+new.cluster.ids <- c(
+  "Granule_1",
+  "PLI",
+  "Granule_2",
+  "Mix",
+  "MLI1_1",
+  "MLI1_2",
+  "MLI2_1",
+  "MLI1_3",
+  "Granule_3",
+  "Astrocyte",
+  "Endothelial",
+  "MLI2_2",
+  "BergmanGlia",
+  "MLI2_3",
+  "UnipolarBrush",
+  "Meningeal",
+  "Golgi",
+  "Purkinje",
+  "ChoroidPlexusCells",
+  "OPC",
+  "Oligodendrocyte",
+  "Unknown"
+)
+
+names(new.cluster.ids) <- levels(WT_Kcnc1_CB_integrateMerge.sct)
+WT_Kcnc1_CB_integrateMerge.sct <- RenameIdents(WT_Kcnc1_CB_integrateMerge.sct, new.cluster.ids)
+WT_Kcnc1_CB_integrateMerge.sct$cluster.annot <- Idents(WT_Kcnc1_CB_integrateMerge.sct) # create a new slot in my seurat object
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_label.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", split.by = "time", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3, raster = FALSE)
+dev.off()
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_noSplit_label.pdf", width=9, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5, raster = FALSE)
+dev.off()
+
+WT_Kcnc1_CB_integrateMerge.sct$condition <- factor(WT_Kcnc1_CB_integrateMerge.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_splitCondition_label.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3, raster = FALSE)
+dev.off()
+
+
+
+# save ######################################################
+## saveRDS(WT_Kcnc1_CB_integrateMerge.sct, file = "output/seurat/WT_Kcnc1_CB_integrateMerge-dim40kparam15res03-labelv1.rds") # 
+############################################################################################################
 
 ```
 
