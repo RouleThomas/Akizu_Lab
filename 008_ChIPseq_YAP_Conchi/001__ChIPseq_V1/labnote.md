@@ -8973,7 +8973,7 @@ dev.off()
 
 ## 2472hrs human gastruloid
 
-XXXY HERE 
+
 
 ```R
 # packages
@@ -8993,7 +8993,7 @@ WT_H3K27me3_250bpTSS_geneSymbol <- read_tsv("output/binBw/WT_H3K27me3_250bp_ENCF
 
 # Identify highly express genes in each cluster
 ## Group by cluster and arrange by p_val_adj (ascending) and avg_log2FC (descending)
-marker_genes <- markers_UNTREATED %>% #  !!!!!!!!! CHANGE HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+marker_genes <- markers_DASATINIB %>% #  !!!!!!!!! CHANGE HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   group_by(cluster) %>%
   arrange(p_val_adj, desc(avg_log2FC)) %>%
   slice_head(n = 100) %>% #  !!!!!!!!! CHANGE HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -9011,6 +9011,80 @@ for (cl in clusters) {
 cluster_top_genes[["CPC2"]]
 
 
+
+# Plot all cluster for quick analysis
+plot_data <- bind_rows(
+  cluster_top_genes[["Epiblast"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "Epiblast"),
+  cluster_top_genes[["PrimitiveStreak"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "PrimitiveStreak"),
+  cluster_top_genes[["ProliferatingCardiacMesoderm"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "ProliferatingCardiacMesoderm"),
+  cluster_top_genes[["CPC1"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "CPC1"),
+  cluster_top_genes[["CPC2"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "CPC2"),   
+  cluster_top_genes[["Cardiomyocyte"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "Cardiomyocyte"),
+  cluster_top_genes[["CadiacMesoderm"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "CadiacMesoderm"),
+  cluster_top_genes[["Endoderm"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "Endoderm"),
+  cluster_top_genes[["Mixed_Epiblast_Ectoderm_PrimitiveStreak"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "Mixed_Epiblast_Ectoderm_PrimitiveStreak"),
+  cluster_top_genes[["Unknown"]] %>% 
+    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
+    mutate(cluster = "Unknown")
+)
+
+# Plot the data
+plot_data$cluster <- factor(plot_data$cluster, levels = c("Epiblast", "PrimitiveStreak" ,"ProliferatingCardiacMesoderm", "CPC1", "CPC2", "Cardiomyocyte", "CadiacMesoderm", "Endoderm", "Mixed_Epiblast_Ectoderm_PrimitiveStreak", "Unknown")) # Reorder untreated 1st
+
+comparisons <- list(
+  c("Epiblast", "PrimitiveStreak"),
+  c("Epiblast", "ProliferatingCardiacMesoderm"),
+  c("Epiblast", "CPC1"),
+  c("Epiblast", "CPC2"),
+  c("Epiblast", "Cardiomyocyte"),
+  c("Epiblast", "CadiacMesoderm"),
+  c("Epiblast", "Endoderm"),
+  c("Epiblast", "Mixed_Epiblast_Ectoderm_PrimitiveStreak"),
+  c("Epiblast", "Unknown")
+)
+
+# Create the boxplot with statistical tests
+pdf("output/binBw/barplot_all_top100_DASATINIB__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs_3Dpaper.pdf", width = 3, height = 3)
+
+ggbarplot(
+  plot_data, 
+  x = "cluster", 
+  y = "bc_max", 
+  add = "mean_se"
+) +
+#  stat_compare_means(
+#    comparisons = comparisons,
+#    method = "wilcox.test", # Use Wilcoxon test for statistical comparisons
+#    label = "p.format"
+#  ) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, hjust = 1) # Rotate x-axis labels
+  ) +
+  labs(
+    x = "Cluster",
+    y = "H3K27me3 Level in hESC (Mean ± SE)"
+  )
+dev.off()
 
 
 
@@ -9217,107 +9291,6 @@ dev.off()
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Plot all cluster for quick analysis
-plot_data <- bind_rows(
-  cluster_top_genes[["Epiblast"]] %>% 
-    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
-    mutate(cluster = "Epiblast"),
-  cluster_top_genes[["PrimitiveStreak"]] %>% 
-    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
-    mutate(cluster = "PrimitiveStreak"),
-  cluster_top_genes[["ProliferatingCardiacMesoderm"]] %>% 
-    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
-    mutate(cluster = "ProliferatingCardiacMesoderm"),
-  cluster_top_genes[["CPC1"]] %>% 
-    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
-    mutate(cluster = "CPC1"),
-  cluster_top_genes[["CPC2"]] %>% 
-    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
-    mutate(cluster = "CPC2"),   
-  cluster_top_genes[["Cardiomyocyte"]] %>% 
-    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
-    mutate(cluster = "Cardiomyocyte"),
-  cluster_top_genes[["CadiacMesoderm"]] %>% 
-    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
-    mutate(cluster = "CadiacMesoderm"),
-  cluster_top_genes[["Endoderm"]] %>% 
-    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
-    mutate(cluster = "Endoderm"),
-  cluster_top_genes[["Mixed_Epiblast_Ectoderm_PrimitiveStreak"]] %>% 
-    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
-    mutate(cluster = "Mixed_Epiblast_Ectoderm_PrimitiveStreak"),
-  cluster_top_genes[["Unknown"]] %>% 
-    inner_join(WT_H3K27me3_500bpTSS_geneSymbol, by = c("geneSymbol" = "geneSymbol")) %>% 
-    mutate(cluster = "Unknown")
-)
-
-# Plot the data
-plot_data$cluster <- factor(plot_data$cluster, levels = c("Epiblast", "PrimitiveStreak" ,"ProliferatingCardiacMesoderm", "CPC1", "CPC2", "Cardiomyocyte", "CadiacMesoderm", "Endoderm", "Mixed_Epiblast_Ectoderm_PrimitiveStreak", "Unknown")) # Reorder untreated 1st
-
-comparisons <- list(
-  c("Epiblast", "PrimitiveStreak"),
-  c("Epiblast", "ProliferatingCardiacMesoderm"),
-  c("Epiblast", "CPC1"),
-  c("Epiblast", "CPC2"),
-  c("Epiblast", "Cardiomyocyte"),
-  c("Epiblast", "CadiacMesoderm"),
-  c("Epiblast", "Endoderm"),
-  c("Epiblast", "Mixed_Epiblast_Ectoderm_PrimitiveStreak"),
-  c("Epiblast", "Unknown")
-)
-
-# Create the boxplot with statistical tests
-pdf("output/binBw/barplot_all_top100_UNTREATED__WT_H3K27me3_500bpTSS_geneSymbol_bc_max_2472hrs_3Dpaper.pdf", width = 3, height = 3)
-
-ggbarplot(
-  plot_data, 
-  x = "cluster", 
-  y = "bc_max", 
-  add = "mean_se"
-) +
-  stat_compare_means(
-    comparisons = comparisons,
-    method = "wilcox.test", # Use Wilcoxon test for statistical comparisons
-    label = "p.format"
-  ) +
-  theme_bw() +
-  theme(
-    legend.position = "none",
-    axis.text.x = element_text(angle = 45, hjust = 1) # Rotate x-axis labels
-  ) +
-  labs(
-    x = "Cluster",
-    y = "H3K27me3 Level in hESC (Mean ± SE)"
-  )
-dev.off()
 
 
 ```
