@@ -7884,7 +7884,7 @@ module load cairo/1.17.4-GCCcore-11.3.0
 
 
 
-#### Run condiments RNA assay
+#### Run condiments RNA assay - V1 common condition
 
 ```bash
 conda activate condiments_Signac
@@ -8562,6 +8562,594 @@ write.table(switch_df, file = c("output/condiments/switch_df_traj_Part_DG_GC_noC
 ##################################
 
 ```
+
+
+#### Run condiments RNA assay - V2 separated condition
+
+Identify pseudotime traj for WT and Bap1KO independently; Focus on previous common trajectory 2 and 9 (DG_GC, CA123)
+
+
+
+```bash
+conda activate condiments_Signac
+```
+
+
+
+```R
+# package installation 
+## install.packages("remotes")
+## remotes::install_github("cran/spatstat.core")
+## remotes::install_version("Seurat", "4.0.3")
+## install.packages("magrittr")
+## install.packages("magrittr")
+## install.packages("dplyr")
+## BiocManager::install("DelayedMatrixStats")
+## BiocManager::install("tradeSeq")
+
+
+# packages
+library("condiments")
+library("Seurat")
+library("magrittr") # to use pipe
+library("dplyr") # to use bind_cols and sample_frac
+library("SingleCellExperiment") # for reducedDims
+library("ggplot2")
+library("slingshot")
+library("DelayedMatrixStats")
+library("tidyr")
+# library("tradeSeq") # NOT INSTALL MAY NEED TO IF BUG!! I ddi not try yet
+library("cowplot")
+library("scales")
+library("pheatmap")
+
+# Data import GASTRULOID and separate conditons
+
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000.sct_numeric_label.rds")
+
+
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "RNA" # According to condiments workflow
+
+
+multiome_WT_QCV2vC1.sct <- subset(multiome_WT_Bap1KO_QCV2vC1.sct, orig.ident == "multiome_WT")
+multiome_Bap1KO_QCV2vC1.sct <- subset(multiome_WT_Bap1KO_QCV2vC1.sct, orig.ident == "multiome_Bap1KO")
+
+
+################################################################################################
+### WT ################################################
+################################################################################################
+
+DefaultAssay(multiome_WT_QCV2vC1.sct) <- "RNA" # According to condiments workflow
+
+# convert to SingleCellExperiment
+RNA_WT <- as.SingleCellExperiment(multiome_WT_QCV2vC1.sct, assay = "RNA")
+
+#  Trajectory Inference and Differential Topology
+set.seed(42)
+
+
+### Testing area ############
+
+
+##########################################
+
+RNA_WT <- slingshot(RNA_WT, reducedDim = 'UMAP',
+                 clusterLabels = colData(RNA_WT)$cluster.annot,
+                 start.clus = 'NSC_quiescent', end.clus = c("PyNs_RSC_UL","DG_GC") ,approx_points = 100, extend = 'n')
+
+
+
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(RNA_WT, "UMAP")),
+  slingPseudotime(RNA_WT) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(RNA_WT) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+         pst = if_else(Lineage1 > Lineage2, Lineage1_pst, Lineage2_pst),
+        # pst = max(pst) - pst)
+)
+curves <- slingCurves(RNA_WT, as.df = TRUE)
+
+
+
+
+pdf("output/condiments/UMAP_trajectory_common_RNA_WT_StartNSCquiescentEndPyNsRSCULDGGCapprox100extendn.pdf", width=5, height=5)
+ggplot(df_2, aes(x = umap_1, y = umap_2)) +
+  geom_point(size = .7, aes(col = pst)) +
+  scale_color_viridis_c() +
+  labs(col = "Pseudotime") +
+  geom_path(data = curves %>% arrange(Order),
+            aes(group = Lineage), col = "black", size = 1.5) +
+  theme_classic()
+dev.off()
+
+
+
+
+## PLOT with trajectories - Individually
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(RNA_WT, "UMAP")),
+  slingPseudotime(RNA_WT) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(RNA_WT) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+         Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst),
+         Lineage4_pst = if_else(is.na(Lineage4_pst), 0, Lineage4_pst),
+         Lineage5_pst = if_else(is.na(Lineage5_pst), 0, Lineage5_pst),
+         Lineage6_pst = if_else(is.na(Lineage6_pst), 0, Lineage6_pst),
+         Lineage7_pst = if_else(is.na(Lineage7_pst), 0, Lineage7_pst),
+         Lineage8_pst = if_else(is.na(Lineage8_pst), 0, Lineage8_pst),
+         Lineage9_pst = if_else(is.na(Lineage9_pst), 0, Lineage9_pst))
+curves <- slingCurves(RNA_WT, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = umap_1, y = umap_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = umap_1, y = umap_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = umap_1, y = umap_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = umap_1, y = umap_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:9) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_RNA_WT_StartNSCquiescentEndPyNsRSCULDGGCapprox100extendn_Lineage123456789.pdf", width=25, height=7)
+gridExtra::grid.arrange(grobs = plots, ncol = 5)
+dev.off()
+
+
+
+
+#### ->  save.image(file="output/condiments/condiments_RNA_WT_StartNSCquiescentEndPyNsRSCULDGGCapprox100extendn.RData")
+### load("output/condiments/condiments_RNA_WT_StartNSCquiescentEndPyNsRSCULDGGCapprox100extendn.RData")
+set.seed(42)
+##
+# RUN fitGAM
+##
+
+XXX HERE BELOW NOT MOD XXX
+
+################### Time Course effect (UNTREATED CONDITION) - TRAJECTORY 1 - ##############################################
+set.seed(42)
+traj1_humangastruloidUNTREATED2472hrs <- readRDS("output/condiments/traj1_humangastruloidUNTREATED2472hrs_3Dpaper.rds")
+## Genes that change with pseudotime
+
+pseudotime_association <- associationTest(traj1_humangastruloidUNTREATED2472hrs) # statistical test to check whether gene expression is constant across pseudotime within a lineage
+pseudotime_association$fdr <- p.adjust(pseudotime_association$pvalue, method = "fdr")
+pseudotime_association <- pseudotime_association[order(pseudotime_association$fdr), ]
+pseudotime_association$gene <- rownames(pseudotime_association)
+
+pseudotime_association = as_tibble(pseudotime_association) 
+# save output: write.table(pseudotime_association, file = c("output/condiments/pseudotime_association_traj1_humangastruloidUNTREATED2472hrs_3Dpaper.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+#--> Can do clustering on these genes if needed
+
+
+## Genes that change between two pseudotime points (start vs end)
+pseudotime_start_end_association <- startVsEndTest(traj1_humangastruloidUNTREATED2472hrs, pseudotimeValues = NULL)
+pseudotime_start_end_association$gene <- rownames(pseudotime_start_end_association)
+pseudotime_start_end_association$fdr <- p.adjust(pseudotime_start_end_association$pvalue, method = "fdr")
+pseudotime_start_end_association <- pseudotime_start_end_association[order(pseudotime_start_end_association$fdr), ]
+##--> log2FC = end - start: negative log2fc means start point higher average expr than end point
+# save output: write.table(pseudotime_start_end_association, file = c("output/condiments/pseudotime_start_end_association_traj1_humangastruloidUNTREATED2472hrs_3Dpaper.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+
+sce_cells <- colnames(traj1_humangastruloidUNTREATED2472hrs) # collect cells of traj1
+subset_traj1_humangastruloidUNTREATED2472hrs_humangastruloid.combined.sct <- subset(humangastruloid.combined.sct, cells = sce_cells) # Create a seurat object with only cells from traj1
+
+
+
+### plot top 25 genes
+#### Select the top 25 genes with positive logFC and the top 25 with negative logFC
+top25_posFC_genes <- pseudotime_start_end_association %>%
+  filter(fdr < 0.05, logFClineage1 > 0) %>%
+  top_n(25, waldStat) %>%
+  arrange(desc(waldStat)) %>%
+  select(gene, logFClineage1)
+
+top25_negFC_genes <- pseudotime_start_end_association %>%
+  filter(fdr < 0.05, logFClineage1 < 0) %>%
+  top_n(25, waldStat) %>%
+  arrange(desc(waldStat)) %>%
+  select(gene, logFClineage1)
+
+## Function to plot and save in PDF
+plot_and_save <- function(genes_df, file_name) {
+  pdf(file_name, width=5, height=4)
+  for (i in 1:nrow(genes_df)) {
+    gene <- genes_df$gene[i]
+    logFC <- genes_df$logFClineage1[i]
+    plot_title <- paste0(gene, " (logFC: ", round(logFC, 2), ")")
+    p <- plotSmoothers(traj1_humangastruloidUNTREATED2472hrs, subset_traj1_humangastruloidUNTREATED2472hrs_humangastruloid.combined.sct[["RNA"]]@counts, gene = gene)
+    p <- p + ggtitle(plot_title)
+    print(p)
+  }
+  dev.off()
+}
+
+# Generate PDFs
+plot_and_save(top25_posFC_genes, "output/condiments/plotSmoothers-top25_posFC_traj1_humangastruloidUNTREATED2472hrs_3Dpaper.pdf")
+plot_and_save(top25_negFC_genes, "output/condiments/plotSmoothers-top25_negFC_traj1_humangastruloidUNTREATED2472hrs_3Dpaper.pdf")
+
+
+### plot unique genes
+pdf("output/condiments/plotSmoothers-EZH2-traj1_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
+plotSmoothers(traj1_humangastruloidUNTREATED2472hrs, subset_traj1_humangastruloidUNTREATED2472hrs_humangastruloid.combined.sct[["RNA"]]@counts, gene = "EZH2" )
+dev.off()
+
+
+
+### plot average of multiple genes - 1 gene list
+#### Define the gene list
+gene_list <- c("HIST1H1B","HIST1H1D","HIST1H4C","HIST1H1E","HIST1H1C","HIST2H2AC","HIST1H2AH","HIST1H3G","HIST1H3B","HIST1H3D","HIST1H2AI","RRM2","ORC6","FBXO5","MELK") 
+gene_list <- read_tsv("../../008_ChIPseq_YAP_Conchi/001__ChIPseq_V1/output/ChIPseeker/annotation_THORq4_EZH2_neg_annot_promoterAnd5_geneSymbol.txt", col_names = FALSE) %>% 
+  pull(1)
+gene_list <- read_tsv("../../008_ChIPseq_YAP_Conchi/001__ChIPseq_V1/output/ChIPseeker/annotation_THORq4_EZH2_pos_annot_promoterAnd5_geneSymbol.txt", col_names = FALSE) %>% 
+  pull(1)
+gene_list <- read_tsv("output/seurat/Epiblast-DASATINIB2472hrs_response_dim30kparam15res04_allGenes.txt", col_names = TRUE) %>% 
+  filter(p_val_adj < 0.05, avg_log2FC > 0.25)
+library("tibble")
+gene_list <- read.table(
+  "output/seurat/Epiblast-DASATINIB2472hrs_response_dim30kparam15res04_allGenes.txt",  # Replace with the actual file path
+  header = TRUE,           # Assumes the first row contains column names
+  sep = "\t",              # Assumes the file is tab-delimited. Change to "," for CSV.
+  row.names = 1            # Assumes the first column contains row names (gene names)
+)  %>% 
+  filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  dplyr::select(gene)  %>% 
+  pull(1)
+#### Extract the counts or scaled data for the genes of interest
+counts_matrix <- subset_traj1_humangastruloidUNTREATED2472hrs_humangastruloid.combined.sct[["RNA"]]@counts
+valid_genes <- gene_list[gene_list %in% rownames(counts_matrix)] # to filter to only keep the genes present in scRNAseq
+subset_data <- counts_matrix[valid_genes, , drop = FALSE]
+#### Calculate the average expression across the selected genes
+average_expression <- colMeans(subset_data)
+#### Create a data frame with pseudotime and average expression
+pseudotime_vector <- colData(traj1_humangastruloidUNTREATED2472hrs)$crv
+plot_data <- data.frame(Pseudotime = pseudotime_vector, AverageExpression = average_expression)
+#### Fit a smoothed trajectory using loess
+loess_fit <- loess(AverageExpression ~ Pseudotime.pseudotime, data = plot_data)
+#### Add smoothed values to the data frame
+plot_data$SmoothedExpression <- predict(loess_fit)
+#### Plot the smoothed trajectory
+pdf("output/condiments/plotSmoothers-EpiblastUpregpadj05fc025-traj1_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
+ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
+  geom_point(aes(y = AverageExpression), color = "lightblue", alpha = 0.5) +
+  geom_line(aes(y = SmoothedExpression), color = "darkblue", size = 1) +
+  labs(
+       x = "Pseudotime",
+       y = "Average Expression") +
+  theme_bw()
+dev.off()
+
+
+### plot average of multiple genes - 2 gene lists
+#### Define the gene list
+gene_list_1 <- c("AC022140.1","UPK1A","NDRG1","BARX1","NDUFA4L2","C4orf3","UPK1A-AS1","KRT19","WSB1","C4orf47","COL11A1","GP1BB","SLC2A3","ESPN","FAM162A")
+gene_list_2 <- c("HIST1H1B","HIST1H1D","HIST1H4C","HIST1H1E","HIST1H1C","HIST2H2AC","HIST1H2AH","HIST1H3G","HIST1H3B","HIST1H3D","HIST1H2AI","RRM2","ORC6","FBXO5","MELK")
+# Extract the counts for the genes of interest
+counts_matrix <- subset_traj1_humangastruloidUNTREATED2472hrs_humangastruloid.combined.sct[["RNA"]]@counts
+# Subset the data for each gene list and calculate the average expression
+subset_data_1 <- counts_matrix[gene_list_1, , drop = FALSE]
+average_expression_1 <- colMeans(subset_data_1)
+subset_data_2 <- counts_matrix[gene_list_2, , drop = FALSE]
+average_expression_2 <- colMeans(subset_data_2)
+# Extract pseudotime
+pseudotime_vector <- colData(traj1_humangastruloidUNTREATED2472hrs)$crv
+# Create data frames for plotting
+plot_data_1 <- data.frame(Pseudotime = pseudotime_vector, AverageExpression = average_expression_1, GeneList = "GeneList 1")
+plot_data_2 <- data.frame(Pseudotime = pseudotime_vector, AverageExpression = average_expression_2, GeneList = "GeneList 2")
+# Combine the data frames
+plot_data <- rbind(plot_data_1, plot_data_2)
+# Fit smoothed trajectories using loess
+loess_fit_1 <- loess(AverageExpression ~ Pseudotime.pseudotime, data = plot_data_1)
+plot_data_1$SmoothedExpression <- predict(loess_fit_1)
+loess_fit_2 <- loess(AverageExpression ~ Pseudotime.pseudotime, data = plot_data_2)
+plot_data_2$SmoothedExpression <- predict(loess_fit_2)
+# Combine the smoothed data frames for plotting
+smoothed_plot_data <- rbind(plot_data_1, plot_data_2)
+# Plot the smoothed trajectories
+pdf("output/condiments/plotSmoothers-twoGeneLists-traj1_humangastruloidUNTREATED2472hrs_3Dpaper.pdf", width = 5, height = 4)
+ggplot(smoothed_plot_data, aes(x = Pseudotime.pseudotime, y = AverageExpression, color = GeneList)) +
+  geom_point(alpha = 0.5) +
+  geom_point(data = plot_data_1, aes(x = Pseudotime.pseudotime, y = AverageExpression), color = "lightblue", alpha = 0.15) +
+  geom_line(data = plot_data_1, aes(x = Pseudotime.pseudotime, y = SmoothedExpression), color = "darkblue", size = 1) +
+  geom_point(data = plot_data_2, aes(x = Pseudotime.pseudotime, y = AverageExpression), color = "lightcoral", alpha = 0.15) +
+  geom_line(data = plot_data_2, aes(x = Pseudotime.pseudotime, y = SmoothedExpression), color = "darkred", size = 1) +
+  labs(
+    x = "Pseudotime",
+    y = "Average Expression",
+    color = "Gene List"
+  ) +
+  theme_bw()
+dev.off()
+
+
+
+
+## Identify Activation point = peak (maximum expression) of each gene along the pseudotime trajectory
+### Identify peak of expression (max expr) of these Time-course DEG
+traj1_humangastruloidUNTREATED2472hrs
+#### Extract pseudotime values
+pseudotime <- colData(traj1_humangastruloidUNTREATED2472hrs)$crv$pseudotime
+#### Extract the expression matrix
+expr_matrix <- assays(traj1_humangastruloidUNTREATED2472hrs)$counts
+#### Ensure the pseudotime values are named with the same cell names as the expression matrix columns
+names(pseudotime) <- colnames(expr_matrix)
+#### Function to find the peak pseudotime for each gene (raw and smoothed)
+find_max_pseudotime <- function(gene_expr, pseudotime) {
+  # Raw peak pseudotime
+  raw_peak_pseudotime <- pseudotime[which.max(gene_expr)]
+  # Smooth gene expression using loess
+  smooth_model <- loess(gene_expr ~ pseudotime)
+  smooth_expr <- predict(smooth_model)
+  # Smooth peak pseudotime
+  smooth_peak_pseudotime <- pseudotime[which.max(smooth_expr)]
+  return(list(raw_peak_pseudotime = raw_peak_pseudotime, 
+              smooth_peak_pseudotime = smooth_peak_pseudotime))
+}
+#### Apply the function to all genes
+peak_values <- apply(expr_matrix, 1, function(x) find_max_pseudotime(as.numeric(x), pseudotime))
+#### Convert the results to a data frame
+peak_df <- data.frame(
+  gene = rownames(expr_matrix),
+  raw_peak_pseudotime = sapply(peak_values, `[[`, "raw_peak_pseudotime"),
+  smooth_peak_pseudotime = sapply(peak_values, `[[`, "smooth_peak_pseudotime")
+) %>% as_tibble()
+
+
+# save output: write.table(peak_df, file = c("output/condiments/traj1_humangastruloidUNTREATED2472hrs_3Dpaper_ActivationPoint.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+
+## heatmap activate/induced genes along pseudotime
+### DEG Start End
+pseudotime_start_end_association # filter log2fc >0 >1
+pseudotime_start_end_association = read_tsv("output/condiments/pseudotime_start_end_association_traj1_humangastruloidUNTREATED2472hrs_3Dpaper.txt")
+pseudotime_start_end_association_logFC0 = pseudotime_start_end_association %>% 
+  filter(logFClineage1 > 0) %>%
+  dplyr::select(gene) %>%
+  unique()
+
+pdf("output/condiments/heatmap_pseudotime_start_end_association_traj1_humangastruloidUNTREATED2472hrs_logFClineageOver0_3Dpaper.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj1_humangastruloidUNTREATED2472hrs, gene = pseudotime_start_end_association_logFC0$gene, nPoints = 25, tidy = FALSE)
+yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
+heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
+                       cluster_cols = FALSE,
+                       cluster_rows = FALSE,
+                       show_rownames = FALSE, 
+                       show_colnames = FALSE)
+dev.off()
+
+### DEG time course
+pseudotime_association = read_tsv("output/condiments/pseudotime_association_traj1_humangastruloidUNTREATED2472hrs_3Dpaper.txt")
+pseudotime_association_deg = pseudotime_association %>%
+  filter(fdr == 0)%>%
+  dplyr::select(gene) %>%
+  unique()
+
+
+pdf("output/condiments/heatmap_pseudotime_association_traj1_humangastruloidUNTREATED2472hrs_deg0_3Dpaper.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj1_humangastruloidUNTREATED2472hrs, gene = pseudotime_association_deg$gene, nPoints = 25, tidy = FALSE)
+yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
+heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
+                       cluster_cols = FALSE,
+                       cluster_rows = FALSE,
+                       show_rownames = FALSE, 
+                       show_colnames = FALSE)
+dev.off()
+
+
+
+## Identify which pseudotime value corespond to which cluster ################
+pseudotime <- colData(traj1_humangastruloidUNTREATED2472hrs)$crv$pseudotime
+sce_cells <- colnames(traj1_humangastruloidUNTREATED2472hrs)
+subset_seurat <- subset(humangastruloid.combined.sct, cells = sce_cells) # Subset cell from traj2
+clusters <- subset_seurat$cluster.annot # Extract cluster information
+### Combine pseudotime and cluster information into a data frame
+pseudotime_cluster_df <- data.frame(
+  cell = colnames(traj1_humangastruloidUNTREATED2472hrs),
+  pseudotime = pseudotime,
+  cluster = clusters
+)  %>%
+  arrange(pseudotime)
+
+switch_points <- which(diff(as.numeric(factor(pseudotime_cluster_df$cluster))) != 0) # Find the indices where the cluster changes
+switch_pseudotimes <- pseudotime_cluster_df$pseudotime[switch_points] # Extract the pseudotime values at these switch points
+switch_clusters_from <- pseudotime_cluster_df$cluster[switch_points]
+switch_clusters_to <- pseudotime_cluster_df$cluster[switch_points + 1]
+switch_df <- data.frame(
+  switch_pseudotime = switch_pseudotimes,
+  cluster_from = switch_clusters_from,
+  cluster_to = switch_clusters_to 
+) %>%
+  group_by(cluster_from, cluster_to) %>%
+  summarize(median_switch_pseudotime = median(switch_pseudotime), .groups = 'drop')
+write.table(switch_df, file = c("output/condiments/switch_df_traj1_humangastruloidUNTREATED2472hrs_3Dpaper.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+##################################
+
+
+
+
+
+
+
+
+################################################################################################
+### Bap1KO ################################################
+################################################################################################
+
+DefaultAssay(multiome_Bap1KO_QCV2vC1.sct) <- "RNA" # According to condiments workflow
+
+# convert to SingleCellExperiment
+RNA_Bap1KO <- as.SingleCellExperiment(multiome_Bap1KO_QCV2vC1.sct, assay = "RNA")
+
+#  Trajectory Inference and Differential Topology
+set.seed(42)
+
+
+### Param used for WT ############
+RNA_Bap1KO <- slingshot(RNA_Bap1KO, reducedDim = 'UMAP',
+                 clusterLabels = colData(RNA_Bap1KO)$cluster.annot,
+                 start.clus = 'NSC_quiescent', end.clus = c("PyNs_RSC_UL","DG_GC") ,approx_points = 100, extend = 'n')
+
+##########################################
+
+RNA_Bap1KO <- slingshot(RNA_Bap1KO, reducedDim = 'UMAP',
+                 clusterLabels = colData(RNA_Bap1KO)$cluster.annot,
+                 start.clus = 'NSC_quiescent', end.clus = c("PyNs_RSC_UL","DG_GC") ,approx_points = 100, extend = 'n')
+
+
+
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(RNA_Bap1KO, "UMAP")),
+  slingPseudotime(RNA_Bap1KO) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(RNA_Bap1KO) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+         pst = if_else(Lineage1 > Lineage2, Lineage1_pst, Lineage2_pst),
+        # pst = max(pst) - pst)
+)
+curves <- slingCurves(RNA_Bap1KO, as.df = TRUE)
+
+
+
+
+pdf("output/condiments/UMAP_trajectory_common_RNA_Bap1KO_StartNSCquiescentEndPyNsRSCULDGGCapprox100extendn.pdf", width=5, height=5)
+ggplot(df_2, aes(x = umap_1, y = umap_2)) +
+  geom_point(size = .7, aes(col = pst)) +
+  scale_color_viridis_c() +
+  labs(col = "Pseudotime") +
+  geom_path(data = curves %>% arrange(Order),
+            aes(group = Lineage), col = "black", size = 1.5) +
+  theme_classic()
+dev.off()
+
+
+
+
+## PLOT with trajectories - Individually
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(RNA_Bap1KO, "UMAP")),
+  slingPseudotime(RNA_Bap1KO) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(RNA_Bap1KO) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+         Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst),
+         Lineage4_pst = if_else(is.na(Lineage4_pst), 0, Lineage4_pst),
+         Lineage5_pst = if_else(is.na(Lineage5_pst), 0, Lineage5_pst),
+         Lineage6_pst = if_else(is.na(Lineage6_pst), 0, Lineage6_pst),
+         Lineage7_pst = if_else(is.na(Lineage7_pst), 0, Lineage7_pst),
+         Lineage8_pst = if_else(is.na(Lineage8_pst), 0, Lineage8_pst),
+         Lineage9_pst = if_else(is.na(Lineage9_pst), 0, Lineage9_pst),
+         Lineage10_pst = if_else(is.na(Lineage10_pst), 0, Lineage10_pst))
+curves <- slingCurves(RNA_Bap1KO, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = umap_1, y = umap_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = umap_1, y = umap_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = umap_1, y = umap_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = umap_1, y = umap_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:10) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_RNA_Bap1KO_StartNSCquiescentEndPyNsRSCULDGGCapprox100extendn_Lineage12345678910.pdf", width=25, height=7)
+gridExtra::grid.arrange(grobs = plots, ncol = 5)
+dev.off()
+
+
+
+
+#### ->  save.image(file="output/condiments/condiments_RNA_Bap1KO_StartNSCquiescentEndPyNsRSCULDGGCapprox100extendn.RData")
+### load("output/condiments/condiments_RNA_Bap1KO_StartNSCquiescentEndPyNsRSCULDGGCapprox100extendn.RData")
+set.seed(42)
+##
+# RUN fitGAM
+##
+
+XXX HERE BELOW NOT MOD XXX
+
+
+
+```
+
+
+
+#### FitGam slurm jobs
+
+
+
+
+```bash
+conda activate condiments_Signac
+
+
+# trajectory per trajectory CONDITION SEP (all features, no parralelization) - pseudotime-dependent DEGs
+# Following parameters: *StartNSCquiescentEndPyNsRSCULDGGCapprox100extendn*
+
+## traj of interest NSC --> CA123: COMMON=XXX WT=traj2; Bap1KO=traj2
+sbatch scripts/fitGAM_6knots_traj2_RNA_WT.sh # 30439292 xxx
+sbatch scripts/fitGAM_6knots_traj2_RNA_Bap1KO.sh # 30439317 xxx
+
+## traj of interest NSC --> DG_GC: COMMON=XXX WT=traj9; Bap1KO=traj8
+sbatch scripts/fitGAM_6knots_traj9_RNA_WT.sh # 30439293 xxx
+sbatch scripts/fitGAM_6knots_traj8_RNA_Bap1KO.sh # 30439318 xxx
+```
+
+
+
+
 
 
 

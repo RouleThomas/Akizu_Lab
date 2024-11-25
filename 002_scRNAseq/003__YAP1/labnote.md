@@ -21648,6 +21648,7 @@ dev.off()
 
 #### ->  save.image(file="output/condiments/condiments_humangastruloidDASATINIB2472hrs_StartEpiEndCPC12EndoCardioextendnstretch16approx200.RData") # For all traj except Blood
 #### ->  save.image(file="output/condiments/condiments_humangastruloidDASATINIB2472hrs_StartEpiEndCPC1EndoCardioextendnstretch16approx200.RData") # For Blood traj
+
 ### load("output/condiments/condiments_humangastruloidDASATINIB2472hrs_StartEpiEndCPC12EndoCardioextendnstretch16approx200.RData") # For all traj except Blood
 ### load("output/condiments/condiments_humangastruloidDASATINIB2472hrs_StartEpiEndCPC1EndoCardioextendnstretch16approx200.RData") # For Blood traj
 
@@ -21656,36 +21657,37 @@ set.seed(42)
 # RUN fitGAM
 ##
 
-XXX! HERE XXX!
-
-################### Time Course effect (DASATINIB CONDITION) - Lineage1 -###########################################
+################### Time Course effect (DASATINIB CONDITION) - Lineage3 -###########################################
 set.seed(42)
-traj3_humangastruloidDASATINIB72hrs_V2 <- readRDS("output/condiments/traj1_humangastruloidDASATINIB72hrs_3Dpaper.rds")
+traj3_humangastruloidDASATINIB2472hrs <- readRDS("output/condiments/traj3_humangastruloidDASATINIB2472hrs_3Dpaper.rds")
 
 
 ## Genes that change with pseudotime
 
-pseudotime_association <- associationTest(traj3_humangastruloidDASATINIB72hrs_V2) # statistical test to check whether gene expression is constant across pseudotime within a lineage
+pseudotime_association <- associationTest(traj3_humangastruloidDASATINIB2472hrs) # statistical test to check whether gene expression is constant across pseudotime within a lineage
 pseudotime_association$fdr <- p.adjust(pseudotime_association$pvalue, method = "fdr")
 pseudotime_association <- pseudotime_association[order(pseudotime_association$fdr), ]
 pseudotime_association$gene <- rownames(pseudotime_association)
 
-pseudotime_association = as_tibble(pseudotime_association) # 10,705 pval 0.05 DEG
+pseudotime_association = as_tibble(pseudotime_association) #  
 
-# save output: write.table(pseudotime_association, file = c("output/condiments/pseudotime_association_traj3_humangastruloidDASATINIB72hrs_V2.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+# save output: write.table(pseudotime_association, file = c("output/condiments/pseudotime_association_traj3_humangastruloidDASATINIB2472hrs_3Dpaper.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 #--> Can do clustering on these genes if needed
 
 
 ## Genes that change between two pseudotime points (start vs end)
-pseudotime_start_end_association <- startVsEndTest(traj3_humangastruloidDASATINIB72hrs_V2, pseudotimeValues = c(0, 1))
+pseudotime_start_end_association <- startVsEndTest(traj3_humangastruloidDASATINIB2472hrs, pseudotimeValues = NULL)
 pseudotime_start_end_association$gene <- rownames(pseudotime_start_end_association)
 pseudotime_start_end_association$fdr <- p.adjust(pseudotime_start_end_association$pvalue, method = "fdr")
 pseudotime_start_end_association <- pseudotime_start_end_association[order(pseudotime_start_end_association$fdr), ]
-##--> log2FC = end - start: negative log2fc means start point higher average expr than end point
-# save output: write.table(pseudotime_start_end_association, file = c("output/condiments/pseudotime_start_end_association_traj3_humangastruloidDASATINIB72hrs_V2.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
-sce_cells <- colnames(traj3_humangastruloidDASATINIB72hrs_V2) # collect cells of traj2
-subset_traj3_humangastruloidDASATINIB72hrs_V2_humangastruloid.combined.sct <- subset(humangastruloid.combined.sct, cells = sce_cells) # Create a seurat object with only cells from traj2
+XXXY HERE !!!
+
+##--> log2FC = end - start: negative log2fc means start point higher average expr than end point
+# save output: write.table(pseudotime_start_end_association, file = c("output/condiments/pseudotime_start_end_association_traj3_humangastruloidDASATINIB2472hrs_3Dpaper.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+sce_cells <- colnames(traj3_humangastruloidDASATINIB2472hrs) # collect cells of traj2
+subset_traj3_humangastruloidDASATINIB2472hrs_humangastruloid.combined.sct <- subset(humangastruloid.combined.sct, cells = sce_cells) # Create a seurat object with only cells from traj2
 
 
 ### plot top 25 genes
@@ -22300,17 +22302,17 @@ sbatch scripts/fitGAM_6knots_traj5_humangastruloidDASATINIB2472hrs.sh # 26430652
 # trajectory per trajectory CONDITION SEP (all features, no parralelization) - pseudotime-dependent DEGs
 ## traj of interest Epi --> Epi/Ecto: COMMON=XXX UNTREATED=traj4; DASATINIB=3
 sbatch scripts/fitGAM_6knots_traj4_humangastruloidUNTREATED2472hrs_3Dpaper.sh # 29966723 ok
-sbatch scripts/fitGAM_6knots_traj3_humangastruloidDASATINIB2472hrs_3Dpaper.sh # 30283970 xxx
+sbatch scripts/fitGAM_6knots_traj3_humangastruloidDASATINIB2472hrs_3Dpaper.sh # 30283970 ok
 ## traj of interest Epi --> Endo: COMMON=XXX UNTREATED=traj5; DASATINIB=4
 sbatch scripts/fitGAM_6knots_traj5_humangastruloidUNTREATED2472hrs_3Dpaper.sh # 29966760 ok
-sbatch scripts/fitGAM_6knots_traj4_humangastruloidDASATINIB2472hrs_3Dpaper.sh # 30284207 xxx
+sbatch scripts/fitGAM_6knots_traj4_humangastruloidDASATINIB2472hrs_3Dpaper.sh # 30284207 ok
 ## traj of interest Epi --> Cardiomyocyte: COMMON=XXX UNTREATED=traj2; DASATINIB=1
 sbatch scripts/fitGAM_6knots_traj2_humangastruloidUNTREATED2472hrs_3Dpaper.sh # 29966775 ok
-sbatch scripts/fitGAM_6knots_traj1_humangastruloidDASATINIB2472hrs_3Dpaper.sh # 30284538 xxx
+sbatch scripts/fitGAM_6knots_traj1_humangastruloidDASATINIB2472hrs_3Dpaper.sh # 30284538 ok
 
 ## traj of interest Epi --> Blood: COMMON=XXX UNTREATED=traj1; DASATINIB=1(Run separately!)
 sbatch scripts/fitGAM_6knots_traj1_humangastruloidUNTREATED2472hrs_3Dpaper.sh # 29966783 ok
-sbatch scripts/fitGAM_6knots_traj1sep_humangastruloidDASATINIB2472hrs_3Dpaper.sh # 30284770 xxx
+sbatch scripts/fitGAM_6knots_traj1sep_humangastruloidDASATINIB2472hrs_3Dpaper.sh # 30284770 ok
 
 
 ```
