@@ -20671,7 +20671,7 @@ dev.off()
 
 ### plot average of multiple genes - 1 gene list
 #### Define the gene list
-gene_list <- c("HIST1H1B","HIST1H1D","HIST1H4C","HIST1H1E","HIST1H1C","HIST2H2AC","HIST1H2AH","HIST1H3G","HIST1H3B","HIST1H3D","HIST1H2AI","RRM2","ORC6","FBXO5","MELK") 
+gene_list <- c("EZH2") 
 gene_list <- read_tsv("../../008_ChIPseq_YAP_Conchi/001__ChIPseq_V1/output/ChIPseeker/annotation_THORq4_EZH2_neg_annot_promoterAnd5_geneSymbol.txt", col_names = FALSE) %>% 
   pull(1)
 gene_list <- read_tsv("../../008_ChIPseq_YAP_Conchi/001__ChIPseq_V1/output/ChIPseeker/annotation_THORq4_EZH2_pos_annot_promoterAnd5_geneSymbol.txt", col_names = FALSE) %>% 
@@ -20694,17 +20694,20 @@ gene_list <- read.table(
 counts_matrix <- subset_traj1_humangastruloidUNTREATED2472hrs_humangastruloid.combined.sct[["RNA"]]@counts
 valid_genes <- gene_list[gene_list %in% rownames(counts_matrix)] # to filter to only keep the genes present in scRNAseq
 subset_data <- counts_matrix[valid_genes, , drop = FALSE]
+subset_data <- log1p(subset_data) # Apply log+1
 #### Calculate the average expression across the selected genes
 average_expression <- colMeans(subset_data)
 #### Create a data frame with pseudotime and average expression
 pseudotime_vector <- colData(traj1_humangastruloidUNTREATED2472hrs)$crv
 plot_data <- data.frame(Pseudotime = pseudotime_vector, AverageExpression = average_expression)
 #### Fit a smoothed trajectory using loess
-loess_fit <- loess(AverageExpression ~ Pseudotime.pseudotime, data = plot_data)
+loess_fit <- loess(AverageExpression ~ Pseudotime.pseudotime, data = plot_data, span = 0.6)
 #### Add smoothed values to the data frame
 plot_data$SmoothedExpression <- predict(loess_fit)
 #### Plot the smoothed trajectory
-pdf("output/condiments/plotSmoothers-EpiblastUpregpadj05fc025-traj1_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
+#EpiblastUpregpadj05fc025
+#pdf("output/condiments/plotSmoothers-EpiblastUpregpadj05fc025-traj1_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
+pdf("output/condiments/plotSmoothersLOG1P-EpiblastUpregpadj05fc025-traj1_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
 ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
   geom_point(aes(y = AverageExpression), color = "lightblue", alpha = 0.5) +
   geom_line(aes(y = SmoothedExpression), color = "darkblue", size = 1) +
@@ -20713,6 +20716,13 @@ ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
        y = "Average Expression") +
   theme_bw()
 dev.off()
+
+
+
+
+
+plot_data_1 <- data.frame(Pseudotime = pseudotime_vector, Expression = log1p(as.numeric(subset_data_1)), GeneList = "GeneList 1")
+
 
 
 ### plot average of multiple genes - 2 gene lists
@@ -20755,6 +20765,7 @@ ggplot(smoothed_plot_data, aes(x = Pseudotime.pseudotime, y = AverageExpression,
   ) +
   theme_bw()
 dev.off()
+
 
 
 
@@ -20957,6 +20968,7 @@ gene_list <- read.table(
 counts_matrix <- subset_traj2_humangastruloidUNTREATED2472hrs_humangastruloid.combined.sct[["RNA"]]@counts
 valid_genes <- gene_list[gene_list %in% rownames(counts_matrix)] # to filter to only keep the genes present in scRNAseq
 subset_data <- counts_matrix[valid_genes, , drop = FALSE]
+subset_data <- log1p(subset_data) # Apply log+1
 #### Calculate the average expression across the selected genes
 average_expression <- colMeans(subset_data)
 #### Create a data frame with pseudotime and average expression
@@ -20967,7 +20979,8 @@ loess_fit <- loess(AverageExpression ~ Pseudotime.pseudotime, data = plot_data)
 #### Add smoothed values to the data frame
 plot_data$SmoothedExpression <- predict(loess_fit)
 #### Plot the smoothed trajectory
-pdf("output/condiments/plotSmoothers-EpiblastUpregpadj05fc025-traj2_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
+#EpiblastUpregpadj05fc025
+pdf("output/condiments/plotSmoothersLOG1P-EpiblastUpregpadj05fc025-traj2_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
 ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
   geom_point(aes(y = AverageExpression), color = "lightblue", alpha = 0.5) +
   geom_line(aes(y = SmoothedExpression), color = "darkblue", size = 1) +
@@ -21179,6 +21192,7 @@ gene_list <- read.table(
 counts_matrix <- subset_traj4_humangastruloidUNTREATED2472hrs_humangastruloid.combined.sct[["RNA"]]@counts
 valid_genes <- gene_list[gene_list %in% rownames(counts_matrix)] # to filter to only keep the genes present in scRNAseq
 subset_data <- counts_matrix[valid_genes, , drop = FALSE]
+subset_data <- log1p(subset_data) # Apply log+1
 #### Calculate the average expression across the selected genes
 average_expression <- colMeans(subset_data)
 #### Create a data frame with pseudotime and average expression
@@ -21190,7 +21204,7 @@ loess_fit <- loess(AverageExpression ~ Pseudotime.pseudotime, data = plot_data)
 plot_data$SmoothedExpression <- predict(loess_fit)
 #### Plot the smoothed trajectory
 #EpiblastUpregpadj05fc025
-pdf("output/condiments/plotSmoothers-EpiblastUpregpadj05fc025-traj4_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
+pdf("output/condiments/plotSmoothersLOG1P-EpiblastUpregpadj05fc025-traj4_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
 ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
   geom_point(aes(y = AverageExpression), color = "lightblue", alpha = 0.5) +
   geom_line(aes(y = SmoothedExpression), color = "darkblue", size = 1) +
@@ -21405,6 +21419,7 @@ gene_list <- read.table(
 counts_matrix <- subset_traj5_humangastruloidUNTREATED2472hrs_humangastruloid.combined.sct[["RNA"]]@counts
 valid_genes <- gene_list[gene_list %in% rownames(counts_matrix)] # to filter to only keep the genes present in scRNAseq
 subset_data <- counts_matrix[valid_genes, , drop = FALSE]
+subset_data <- log1p(subset_data) # Apply log+1
 #### Calculate the average expression across the selected genes
 average_expression <- colMeans(subset_data)
 #### Create a data frame with pseudotime and average expression
@@ -21416,7 +21431,7 @@ loess_fit <- loess(AverageExpression ~ Pseudotime.pseudotime, data = plot_data)
 plot_data$SmoothedExpression <- predict(loess_fit)
 #### Plot the smoothed trajectory
 #EpiblastUpregpadj05fc025
-pdf("output/condiments/plotSmoothers-EpiblastUpregpadj05fc025-traj5_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
+pdf("output/condiments/plotSmoothersLOG1P-EpiblastUpregpadj05fc025-traj5_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
 ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
   geom_point(aes(y = AverageExpression), color = "lightblue", alpha = 0.5) +
   geom_line(aes(y = SmoothedExpression), color = "darkblue", size = 1) +
@@ -22352,13 +22367,11 @@ pseudotime_start_end_association$gene <- rownames(pseudotime_start_end_associati
 pseudotime_start_end_association$fdr <- p.adjust(pseudotime_start_end_association$pvalue, method = "fdr")
 pseudotime_start_end_association <- pseudotime_start_end_association[order(pseudotime_start_end_association$fdr), ]
 
-XXXY HERE !!!!
-
 ##--> log2FC = end - start: negative log2fc means start point higher average expr than end point
 # save output: write.table(pseudotime_start_end_association, file = c("output/condiments/pseudotime_start_end_association_traj1sep_humangastruloidDASATINIB2472hrs_3Dpaper.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
-sce_cells <- colnames(traj4_humangastruloidDASATINIB2472hrs) # collect cells of traj2
-subset_traj4_humangastruloidDASATINIB2472hrs_humangastruloid.combined.sct <- subset(humangastruloid.combined.sct, cells = sce_cells) # Create a seurat object with only cells from traj2
+sce_cells <- colnames(traj1sep_humangastruloidDASATINIB2472hrs) # collect cells of traj2
+subset_traj1sep_humangastruloidDASATINIB2472hrs_humangastruloid.combined.sct <- subset(humangastruloid.combined.sct, cells = sce_cells) # Create a seurat object with only cells from traj2
 
 ### plot top 25 genes
 #### Select the top 25 genes with positive logFC and the top 25 with negative logFC
@@ -22381,7 +22394,7 @@ plot_and_save <- function(genes_df, file_name) {
     gene <- genes_df$gene[i]
     logFC <- genes_df$logFClineage1[i]
     plot_title <- paste0(gene, " (logFC: ", round(logFC, 2), ")")
-    p <- plotSmoothers(traj4_humangastruloidDASATINIB2472hrs, subset_traj4_humangastruloidDASATINIB2472hrs_humangastruloid.combined.sct[["RNA"]]@counts, gene = gene)
+    p <- plotSmoothers(traj1sep_humangastruloidDASATINIB2472hrs, subset_traj1sep_humangastruloidDASATINIB2472hrs_humangastruloid.combined.sct[["RNA"]]@counts, gene = gene)
     p <- p + ggtitle(plot_title)
     print(p)
   }
@@ -22389,15 +22402,15 @@ plot_and_save <- function(genes_df, file_name) {
 }
 
 # Generate PDFs
-plot_and_save(top25_posFC_genes, "output/condiments/plotSmoothers-top25_posFC_traj4_humangastruloidDASATINIB2472hrs_3Dpaper.pdf")
-plot_and_save(top25_negFC_genes, "output/condiments/plotSmoothers-top25_negFC_traj4_humangastruloidDASATINIB2472hrs_3Dpaper.pdf")
+plot_and_save(top25_posFC_genes, "output/condiments/plotSmoothers-top25_posFC_traj1sep_humangastruloidDASATINIB2472hrs_3Dpaper.pdf")
+plot_and_save(top25_negFC_genes, "output/condiments/plotSmoothers-top25_negFC_traj1sep_humangastruloidDASATINIB2472hrs_3Dpaper.pdf")
 
 
 
 
 ### plot unique genes
-pdf("output/condiments/plotSmoothers-KDM6B-traj2_humangastruloidDASATINIB72hrs_V2.pdf",  width=5, height=4)
-plotSmoothers(traj4_humangastruloidDASATINIB2472hrs, subset_traj4_humangastruloidDASATINIB2472hrs_humangastruloid.combined.sct[["RNA"]]@counts, gene = "KDM6B" )
+pdf("output/condiments/plotSmoothers-KDM6B-traj1sep_humangastruloidDASATINIB72hrs_3Dpaper.pdf",  width=5, height=4)
+plotSmoothers(traj1sep_humangastruloidDASATINIB2472hrs, subset_traj1sep_humangastruloidDASATINIB2472hrs_humangastruloid.combined.sct[["RNA"]]@counts, gene = "KDM6B" )
 dev.off()
 
 
@@ -22423,13 +22436,13 @@ gene_list <- read.table(
   dplyr::select(gene)  %>% 
   pull(1)
 #### Extract the counts or scaled data for the genes of interest
-counts_matrix <- subset_traj4_humangastruloidDASATINIB2472hrs_humangastruloid.combined.sct[["RNA"]]@counts
+counts_matrix <- subset_traj1sep_humangastruloidDASATINIB2472hrs_humangastruloid.combined.sct[["RNA"]]@counts
 valid_genes <- gene_list[gene_list %in% rownames(counts_matrix)] # to filter to only keep the genes present in scRNAseq
 subset_data <- counts_matrix[valid_genes, , drop = FALSE]
 #### Calculate the average expression across the selected genes
 average_expression <- colMeans(subset_data)
 #### Create a data frame with pseudotime and average expression
-pseudotime_vector <- colData(traj4_humangastruloidDASATINIB2472hrs)$crv
+pseudotime_vector <- colData(traj1sep_humangastruloidDASATINIB2472hrs)$crv
 plot_data <- data.frame(Pseudotime = pseudotime_vector, AverageExpression = average_expression)
 #### Fit a smoothed trajectory using loess
 loess_fit <- loess(AverageExpression ~ Pseudotime.pseudotime, data = plot_data)
@@ -22437,7 +22450,7 @@ loess_fit <- loess(AverageExpression ~ Pseudotime.pseudotime, data = plot_data)
 plot_data$SmoothedExpression <- predict(loess_fit)
 #### Plot the smoothed trajectory
 #EpiblastUpregpadj05fc025
-pdf("output/condiments/plotSmoothers-EpiblastUpregpadj05fc025-traj4_humangastruloidDASATINIB2472hrs_3Dpaper.pdf",  width=5, height=4)
+pdf("output/condiments/plotSmoothers-EpiblastUpregpadj05fc025-traj1sep_humangastruloidDASATINIB2472hrs_3Dpaper.pdf",  width=5, height=4)
 ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
   geom_point(aes(y = AverageExpression), color = "lightblue", alpha = 0.5) +
   geom_line(aes(y = SmoothedExpression), color = "darkblue", size = 1) +
@@ -22452,11 +22465,11 @@ dev.off()
 
 ## Identify Activation point = peak (maximum expression) of each gene along the pseudotime trajectory
 ### Identify peak of expression (max expr) of these Time-course DEG
-traj4_humangastruloidDASATINIB2472hrs
+traj1sep_humangastruloidDASATINIB2472hrs
 #### Extract pseudotime values
-pseudotime <- colData(traj4_humangastruloidDASATINIB2472hrs)$crv$pseudotime
+pseudotime <- colData(traj1sep_humangastruloidDASATINIB2472hrs)$crv$pseudotime
 #### Extract the expression matrix
-expr_matrix <- assays(traj4_humangastruloidDASATINIB2472hrs)$counts
+expr_matrix <- assays(traj1sep_humangastruloidDASATINIB2472hrs)$counts
 #### Ensure the pseudotime values are named with the same cell names as the expression matrix columns
 names(pseudotime) <- colnames(expr_matrix)
 #### Function to find the peak pseudotime for each gene (raw and smoothed)
@@ -22479,20 +22492,20 @@ peak_df <- data.frame(
   raw_peak_pseudotime = sapply(peak_values, `[[`, "raw_peak_pseudotime"),
   smooth_peak_pseudotime = sapply(peak_values, `[[`, "smooth_peak_pseudotime")
 ) %>% as_tibble()
-# save output: write.table(peak_df, file = c("output/condiments/traj4_humangastruloidDASATINIB2472hrs_3Dpaper_ActivationPoint.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+# save output: write.table(peak_df, file = c("output/condiments/traj1sep_humangastruloidDASATINIB2472hrs_3Dpaper_ActivationPoint.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
 
 ## heatmap activate/induced genes along pseudotime
 ### DEG Start End
 pseudotime_start_end_association # filter log2fc >0 >1
-pseudotime_start_end_association = read_tsv("output/condiments/pseudotime_start_end_association_traj2_humangastruloidDASATINIB72hrs_V2.txt")
+pseudotime_start_end_association = read_tsv("output/condiments/pseudotime_start_end_association_traj1sep_humangastruloidDASATINIB2472hrs_3Dpaper.txt")
 pseudotime_start_end_association_logFC0 = pseudotime_start_end_association %>% 
   filter(logFClineage1 > 0) %>%
   dplyr::select(gene) %>%
   unique()
 
-pdf("output/condiments/heatmap_pseudotime_start_end_association_traj4_humangastruloidDASATINIB2472hrs_logFClineageOver0_3Dpaper.pdf", width=8, height=10)
-yhatSmooth <- predictSmooth(traj4_humangastruloidDASATINIB2472hrs, gene = pseudotime_start_end_association_logFC0$gene, nPoints = 25, tidy = FALSE)
+pdf("output/condiments/heatmap_pseudotime_start_end_association_traj1sep_humangastruloidDASATINIB2472hrs_logFClineageOver0_3Dpaper.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj1sep_humangastruloidDASATINIB2472hrs, gene = pseudotime_start_end_association_logFC0$gene, nPoints = 25, tidy = FALSE)
 yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
 heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
                        cluster_cols = FALSE,
@@ -22502,15 +22515,15 @@ heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
 dev.off()
 
 ### DEG time course
-pseudotime_association = read_tsv("output/condiments/pseudotime_association_traj2_humangastruloidDASATINIB72hrs_V2.txt")
+pseudotime_association = read_tsv("output/condiments/pseudotime_association_traj1sep_humangastruloidDASATINIB2472hrs_3Dpaper.txt")
 pseudotime_association_deg = pseudotime_association %>%
   filter(fdr == 0)%>%
   dplyr::select(gene) %>%
   unique()
 
 
-pdf("output/condiments/heatmap_pseudotime_association_traj4_humangastruloidDASATINIB2472hrs_deg0_3Dpaper.pdf", width=8, height=10)
-yhatSmooth <- predictSmooth(traj4_humangastruloidDASATINIB2472hrs, gene = pseudotime_association_deg$gene, nPoints = 25, tidy = FALSE)
+pdf("output/condiments/heatmap_pseudotime_association_traj1sep_humangastruloidDASATINIB2472hrs_deg0_3Dpaper.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj1sep_humangastruloidDASATINIB2472hrs, gene = pseudotime_association_deg$gene, nPoints = 25, tidy = FALSE)
 yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
 heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
                        cluster_cols = FALSE,
@@ -22522,13 +22535,13 @@ dev.off()
 
 
 ## Identify which pseudotime value corespond to which cluster ################
-pseudotime <- colData(traj4_humangastruloidDASATINIB2472hrs)$crv$pseudotime
-sce_cells <- colnames(traj4_humangastruloidDASATINIB2472hrs)
+pseudotime <- colData(traj1sep_humangastruloidDASATINIB2472hrs)$crv$pseudotime
+sce_cells <- colnames(traj1sep_humangastruloidDASATINIB2472hrs)
 subset_seurat <- subset(humangastruloid.combined.sct, cells = sce_cells) # Subset cell from traj2
 clusters <- subset_seurat$cluster.annot # Extract cluster information
 ### Combine pseudotime and cluster information into a data frame
 pseudotime_cluster_df <- data.frame(
-  cell = colnames(traj4_humangastruloidDASATINIB2472hrs),
+  cell = colnames(traj1sep_humangastruloidDASATINIB2472hrs),
   pseudotime = pseudotime,
   cluster = clusters
 )  %>%
@@ -22545,16 +22558,8 @@ switch_df <- data.frame(
 ) %>%
   group_by(cluster_from, cluster_to) %>%
   summarize(median_switch_pseudotime = median(switch_pseudotime), .groups = 'drop')
-write.table(switch_df, file = c("output/condiments/switch_df_traj4_humangastruloidDASATINIB2472hrs_3Dpaper.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+write.table(switch_df, file = c("output/condiments/switch_df_traj1sep_humangastruloidDASATINIB2472hrs_3Dpaper.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 ##################################
-
-
-
-
-
-
-
-
 
 
 

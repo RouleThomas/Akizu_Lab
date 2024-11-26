@@ -9306,23 +9306,20 @@ pseudotime_association$fdr <- p.adjust(pseudotime_association$pvalue, method = "
 pseudotime_association <- pseudotime_association[order(pseudotime_association$fdr), ]
 pseudotime_association$gene <- rownames(pseudotime_association)
 pseudotime_association = as_tibble(pseudotime_association) 
-
-XXXY HERE !!!
-
 # save output: write.table(pseudotime_association, file = c("output/condiments/pseudotime_association_traj8_RNA_Bap1KO.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
 
 ## Genes that change between two pseudotime points (start vs end)
-pseudotime_start_end_association <- startVsEndTest(traj9_RNA_WT, pseudotimeValues = NULL)
+pseudotime_start_end_association <- startVsEndTest(traj8_RNA_Bap1KO, pseudotimeValues = NULL)
 pseudotime_start_end_association$gene <- rownames(pseudotime_start_end_association)
 pseudotime_start_end_association$fdr <- p.adjust(pseudotime_start_end_association$pvalue, method = "fdr")
 pseudotime_start_end_association <- pseudotime_start_end_association[order(pseudotime_start_end_association$fdr), ]
 ##--> log2FC = end - start: negative log2fc means start point higher average expr than end point
-# save output: write.table(pseudotime_start_end_association, file = c("output/condiments/pseudotime_start_end_association_traj9_RNA_WT.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+# save output: write.table(pseudotime_start_end_association, file = c("output/condiments/pseudotime_start_end_association_traj8_RNA_Bap1KO.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
 
-sce_cells <- colnames(traj9_RNA_WT) # collect cells of traj1
-subset_traj9_RNA_WT_multiome_WT_Bap1KO_QCV2vC1.sct <- subset(multiome_WT_Bap1KO_QCV2vC1.sct, cells = sce_cells) # Create a seurat object with only cells from traj1
+sce_cells <- colnames(traj8_RNA_Bap1KO) # collect cells of traj1
+subset_traj8_RNA_Bap1KO_multiome_WT_Bap1KO_QCV2vC1.sct <- subset(multiome_WT_Bap1KO_QCV2vC1.sct, cells = sce_cells) # Create a seurat object with only cells from traj1
 
 
 
@@ -9347,7 +9344,7 @@ plot_and_save <- function(genes_df, file_name) {
     gene <- genes_df$gene[i]
     logFC <- genes_df$logFClineage1[i]
     plot_title <- paste0(gene, " (logFC: ", round(logFC, 2), ")")
-    p <- plotSmoothers(traj9_RNA_WT, subset_traj9_RNA_WT_multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@counts, gene = gene)
+    p <- plotSmoothers(traj8_RNA_Bap1KO, subset_traj8_RNA_Bap1KO_multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@counts, gene = gene)
     p <- p + ggtitle(plot_title)
     print(p)
   }
@@ -9355,13 +9352,13 @@ plot_and_save <- function(genes_df, file_name) {
 }
 
 # Generate PDFs
-plot_and_save(top25_posFC_genes, "output/condiments/plotSmoothers-top25_posFC_traj9_RNA_WT.pdf")
-plot_and_save(top25_negFC_genes, "output/condiments/plotSmoothers-top25_negFC_traj9_RNA_WT.pdf")
+plot_and_save(top25_posFC_genes, "output/condiments/plotSmoothers-top25_posFC_traj8_RNA_Bap1KO.pdf")
+plot_and_save(top25_negFC_genes, "output/condiments/plotSmoothers-top25_negFC_traj8_RNA_Bap1KO.pdf")
 
 
 ### plot unique genes (Pax6, Tbr2/Eomes, Prox1)
-pdf("output/condiments/plotSmoothers-Prox1-traj9_RNA_WT.pdf",  width=5, height=4)
-plotSmoothers(traj9_RNA_WT, subset_traj9_RNA_WT_multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@counts, gene = "Prox1" )
+pdf("output/condiments/plotSmoothers-Eomes-traj8_RNA_Bap1KO.pdf",  width=5, height=4)
+plotSmoothers(traj8_RNA_Bap1KO, subset_traj8_RNA_Bap1KO_multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@counts, gene = "Eomes" )
 dev.off()
 
 
@@ -9371,13 +9368,13 @@ gene_list_1 <- c("Pax6")
 gene_list_2 <- c("Eomes")
 gene_list_3 <- c("Prox1")
 # Extract the counts for the genes of interest
-counts_matrix <- subset_traj9_RNA_WT_multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@counts
+counts_matrix <- subset_traj8_RNA_Bap1KO_multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@counts
 # Subset the data for each gene list and calculate the average expression
 subset_data_1 <- counts_matrix[gene_list_1, , drop = FALSE]
 subset_data_2 <- counts_matrix[gene_list_2, , drop = FALSE]
 subset_data_3 <- counts_matrix[gene_list_3, , drop = FALSE]
 # Extract pseudotime
-pseudotime_vector <- colData(traj9_RNA_WT)$crv
+pseudotime_vector <- colData(traj8_RNA_Bap1KO)$crv
 # Create data frames for plotting
 plot_data_1 <- data.frame(Pseudotime = pseudotime_vector, Expression = log1p(as.numeric(subset_data_1)), GeneList = "GeneList 1")
 plot_data_2 <- data.frame(Pseudotime = pseudotime_vector, Expression = log1p(as.numeric(subset_data_2)), GeneList = "GeneList 2")
@@ -9394,7 +9391,7 @@ plot_data <- plot_data %>%
 # Combine the smoothed data frames for plotting
 smoothed_plot_data <- rbind(plot_data_1, plot_data_2, plot_data_3)
 # Plot the smoothed trajectories
-pdf("output/condiments/plotSmoothers-Pax6EomesProx1-traj9_RNA_WT.pdf", width = 5, height = 4)
+pdf("output/condiments/plotSmoothers-Pax6EomesProx1-traj8_RNA_Bap1KO.pdf", width = 5, height = 4)
 ggplot(plot_data, aes(x = Pseudotime.pseudotime, y = Expression, color = GeneList)) +
   geom_point(alpha = 0.5) +
   geom_line(aes(y = SmoothedExpression), size = 1) +
@@ -9414,11 +9411,11 @@ dev.off()
 
 ## Identify Activation point = peak (maximum expression) of each gene along the pseudotime trajectory
 ### Identify peak of expression (max expr) of these Time-course DEG
-traj9_RNA_WT
+traj8_RNA_Bap1KO
 #### Extract pseudotime values
-pseudotime <- colData(traj9_RNA_WT)$crv$pseudotime
+pseudotime <- colData(traj8_RNA_Bap1KO)$crv$pseudotime
 #### Extract the expression matrix
-expr_matrix <- assays(traj9_RNA_WT)$counts
+expr_matrix <- assays(traj8_RNA_Bap1KO)$counts
 #### Ensure the pseudotime values are named with the same cell names as the expression matrix columns
 names(pseudotime) <- colnames(expr_matrix)
 #### Function to find the peak pseudotime for each gene (raw and smoothed)
@@ -9443,20 +9440,20 @@ peak_df <- data.frame(
 ) %>% as_tibble()
 
 
-# save output: write.table(peak_df, file = c("output/condiments/traj9_RNA_WT_ActivationPoint.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+# save output: write.table(peak_df, file = c("output/condiments/traj8_RNA_Bap1KO_ActivationPoint.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
 
 ## heatmap activate/induced genes along pseudotime
 ### DEG Start End
 pseudotime_start_end_association # filter log2fc >0 >1
-pseudotime_start_end_association = read_tsv("output/condiments/pseudotime_start_end_association_traj9_RNA_WT.txt")
+pseudotime_start_end_association = read_tsv("output/condiments/pseudotime_start_end_association_traj8_RNA_Bap1KO.txt")
 pseudotime_start_end_association_logFC0 = pseudotime_start_end_association %>% 
   filter(fdr <0.05) %>%
   dplyr::select(gene) %>%
   unique()
 
-pdf("output/condiments/heatmap_pseudotime_start_end_association_traj9_RNA_WT_fdr05.pdf", width=8, height=10)
-yhatSmooth <- predictSmooth(traj9_RNA_WT, gene = pseudotime_start_end_association_logFC0$gene, nPoints = 25, tidy = FALSE)
+pdf("output/condiments/heatmap_pseudotime_start_end_association_traj8_RNA_Bap1KO_fdr05.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj8_RNA_Bap1KO, gene = pseudotime_start_end_association_logFC0$gene, nPoints = 25, tidy = FALSE)
 yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
 heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
                        cluster_cols = FALSE,
@@ -9466,15 +9463,15 @@ heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
 dev.off()
 
 ### DEG time course
-pseudotime_association = read_tsv("output/condiments/pseudotime_association_traj9_RNA_WT.txt")
+pseudotime_association = read_tsv("output/condiments/pseudotime_association_traj8_RNA_Bap1KO.txt")
 pseudotime_association_deg = pseudotime_association %>%
   filter(fdr <0.05)%>%
   dplyr::select(gene) %>%
   unique()
 
 
-pdf("output/condiments/heatmap_pseudotime_association_traj9_RNA_WT_fdr05.pdf", width=8, height=10)
-yhatSmooth <- predictSmooth(traj9_RNA_WT, gene = pseudotime_association_deg$gene, nPoints = 25, tidy = FALSE)
+pdf("output/condiments/heatmap_pseudotime_association_traj8_RNA_Bap1KO_fdr05.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj8_RNA_Bap1KO, gene = pseudotime_association_deg$gene, nPoints = 25, tidy = FALSE)
 yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
 heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
                        cluster_cols = FALSE,
@@ -9486,13 +9483,13 @@ dev.off()
 
 
 ## Identify which pseudotime value corespond to which cluster ################
-pseudotime <- colData(traj9_RNA_WT)$crv$pseudotime
-sce_cells <- colnames(traj9_RNA_WT)
+pseudotime <- colData(traj8_RNA_Bap1KO)$crv$pseudotime
+sce_cells <- colnames(traj8_RNA_Bap1KO)
 subset_seurat <- subset(multiome_WT_Bap1KO_QCV2vC1.sct, cells = sce_cells) # Subset cell from traj2
 clusters <- subset_seurat$cluster.annot # Extract cluster information
 ### Combine pseudotime and cluster information into a data frame
 pseudotime_cluster_df <- data.frame(
-  cell = colnames(traj9_RNA_WT),
+  cell = colnames(traj8_RNA_Bap1KO),
   pseudotime = pseudotime,
   cluster = clusters
 )  %>%
@@ -9509,7 +9506,7 @@ switch_df <- data.frame(
 ) %>%
   group_by(cluster_from, cluster_to) %>%
   summarize(median_switch_pseudotime = median(switch_pseudotime), .groups = 'drop')
-write.table(switch_df, file = c("output/condiments/switch_df_traj9_RNA_WT.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+write.table(switch_df, file = c("output/condiments/switch_df_traj8_RNA_Bap1KO.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 ##################################
 
 
@@ -9526,7 +9523,225 @@ write.table(switch_df, file = c("output/condiments/switch_df_traj9_RNA_WT.txt"),
 
 
 
+
+
+################### Time Course effect (BAP1KO CONDITION) - TRAJECTORY 2 - ##############################################
+# NSC --> CA123
+set.seed(42)
+traj2_RNA_Bap1KO <- readRDS("output/condiments/traj2_RNA_Bap1KO.rds")
+## Genes that change with pseudotime
+
+pseudotime_association <- associationTest(traj2_RNA_Bap1KO) # statistical test to check whether gene expression is constant across pseudotime within a lineage
+pseudotime_association$fdr <- p.adjust(pseudotime_association$pvalue, method = "fdr")
+pseudotime_association <- pseudotime_association[order(pseudotime_association$fdr), ]
+pseudotime_association$gene <- rownames(pseudotime_association)
+pseudotime_association = as_tibble(pseudotime_association) 
+# save output: write.table(pseudotime_association, file = c("output/condiments/pseudotime_association_traj2_RNA_Bap1KO.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+
+## Genes that change between two pseudotime points (start vs end)
+pseudotime_start_end_association <- startVsEndTest(traj2_RNA_Bap1KO, pseudotimeValues = NULL)
+pseudotime_start_end_association$gene <- rownames(pseudotime_start_end_association)
+pseudotime_start_end_association$fdr <- p.adjust(pseudotime_start_end_association$pvalue, method = "fdr")
+pseudotime_start_end_association <- pseudotime_start_end_association[order(pseudotime_start_end_association$fdr), ]
+##--> log2FC = end - start: negative log2fc means start point higher average expr than end point
+# save output: write.table(pseudotime_start_end_association, file = c("output/condiments/pseudotime_start_end_association_traj2_RNA_Bap1KO.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+
+sce_cells <- colnames(traj2_RNA_Bap1KO) # collect cells of traj1
+subset_traj2_RNA_Bap1KO_multiome_WT_Bap1KO_QCV2vC1.sct <- subset(multiome_WT_Bap1KO_QCV2vC1.sct, cells = sce_cells) # Create a seurat object with only cells from traj1
+
+
+
+### plot top 25 genes
+#### Select the top 25 genes with positive logFC and the top 25 with negative logFC
+top25_posFC_genes <- pseudotime_start_end_association %>%
+  filter(fdr < 0.05, logFClineage1 > 0) %>%
+  top_n(25, waldStat) %>%
+  arrange(desc(waldStat)) %>%
+  select(gene, logFClineage1)
+
+top25_negFC_genes <- pseudotime_start_end_association %>%
+  filter(fdr < 0.05, logFClineage1 < 0) %>%
+  top_n(25, waldStat) %>%
+  arrange(desc(waldStat)) %>%
+  select(gene, logFClineage1)
+
+## Function to plot and save in PDF
+plot_and_save <- function(genes_df, file_name) {
+  pdf(file_name, width=5, height=4)
+  for (i in 1:nrow(genes_df)) {
+    gene <- genes_df$gene[i]
+    logFC <- genes_df$logFClineage1[i]
+    plot_title <- paste0(gene, " (logFC: ", round(logFC, 2), ")")
+    p <- plotSmoothers(traj2_RNA_Bap1KO, subset_traj2_RNA_Bap1KO_multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@counts, gene = gene)
+    p <- p + ggtitle(plot_title)
+    print(p)
+  }
+  dev.off()
+}
+
+# Generate PDFs
+plot_and_save(top25_posFC_genes, "output/condiments/plotSmoothers-top25_posFC_traj2_RNA_Bap1KO.pdf")
+plot_and_save(top25_negFC_genes, "output/condiments/plotSmoothers-top25_negFC_traj2_RNA_Bap1KO.pdf")
+
+
+### plot unique genes (Pax6, Tbr2/Eomes, Prox1)
+pdf("output/condiments/plotSmoothers-Eomes-traj2_RNA_Bap1KO.pdf",  width=5, height=4)
+plotSmoothers(traj2_RNA_Bap1KO, subset_traj2_RNA_Bap1KO_multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@counts, gene = "Eomes" )
+dev.off()
+
+
+### plot average of multiple genes - multiple gene lists
+#### Define the gene list
+gene_list_1 <- c("Pax6")
+gene_list_2 <- c("Eomes")
+gene_list_3 <- c("Prox1")
+# Extract the counts for the genes of interest
+counts_matrix <- subset_traj2_RNA_Bap1KO_multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@counts
+# Subset the data for each gene list and calculate the average expression
+subset_data_1 <- counts_matrix[gene_list_1, , drop = FALSE]
+subset_data_2 <- counts_matrix[gene_list_2, , drop = FALSE]
+subset_data_3 <- counts_matrix[gene_list_3, , drop = FALSE]
+# Extract pseudotime
+pseudotime_vector <- colData(traj2_RNA_Bap1KO)$crv
+# Create data frames for plotting
+plot_data_1 <- data.frame(Pseudotime = pseudotime_vector, Expression = log1p(as.numeric(subset_data_1)), GeneList = "GeneList 1")
+plot_data_2 <- data.frame(Pseudotime = pseudotime_vector, Expression = log1p(as.numeric(subset_data_2)), GeneList = "GeneList 2")
+plot_data_3 <- data.frame(Pseudotime = pseudotime_vector, Expression = log1p(as.numeric(subset_data_3)), GeneList = "GeneList 3")
+
+# Combine the data frames
+plot_data <- rbind(plot_data_1, plot_data_2, plot_data_3)
+
+plot_data <- plot_data %>%
+  group_by(GeneList) %>%
+  mutate(SmoothedExpression = predict(loess(Expression ~ Pseudotime.pseudotime, span = 0.5)))
+
+
+# Combine the smoothed data frames for plotting
+smoothed_plot_data <- rbind(plot_data_1, plot_data_2, plot_data_3)
+# Plot the smoothed trajectories
+pdf("output/condiments/plotSmoothers-Pax6EomesProx1-traj2_RNA_Bap1KO.pdf", width = 5, height = 4)
+ggplot(plot_data, aes(x = Pseudotime.pseudotime, y = Expression, color = GeneList)) +
+  geom_point(alpha = 0.5) +
+  geom_line(aes(y = SmoothedExpression), size = 1) +
+  scale_color_manual(values = c("GeneList 1" = "green", "GeneList 2" = "blue", "GeneList 3" = "purple")) + # Custom colors
+  labs(
+    x = "Pseudotime",
+    y = "Log(Expression + 1)",
+    color = "Gene List"
+  ) +
+  theme_bw()
+dev.off()
+
+
+
+
+
+
+## Identify Activation point = peak (maximum expression) of each gene along the pseudotime trajectory
+### Identify peak of expression (max expr) of these Time-course DEG
+traj2_RNA_Bap1KO
+#### Extract pseudotime values
+pseudotime <- colData(traj2_RNA_Bap1KO)$crv$pseudotime
+#### Extract the expression matrix
+expr_matrix <- assays(traj2_RNA_Bap1KO)$counts
+#### Ensure the pseudotime values are named with the same cell names as the expression matrix columns
+names(pseudotime) <- colnames(expr_matrix)
+#### Function to find the peak pseudotime for each gene (raw and smoothed)
+find_max_pseudotime <- function(gene_expr, pseudotime) {
+  # Raw peak pseudotime
+  raw_peak_pseudotime <- pseudotime[which.max(gene_expr)]
+  # Smooth gene expression using loess
+  smooth_model <- loess(gene_expr ~ pseudotime)
+  smooth_expr <- predict(smooth_model)
+  # Smooth peak pseudotime
+  smooth_peak_pseudotime <- pseudotime[which.max(smooth_expr)]
+  return(list(raw_peak_pseudotime = raw_peak_pseudotime, 
+              smooth_peak_pseudotime = smooth_peak_pseudotime))
+}
+#### Apply the function to all genes
+peak_values <- apply(expr_matrix, 1, function(x) find_max_pseudotime(as.numeric(x), pseudotime))
+#### Convert the results to a data frame
+peak_df <- data.frame(
+  gene = rownames(expr_matrix),
+  raw_peak_pseudotime = sapply(peak_values, `[[`, "raw_peak_pseudotime"),
+  smooth_peak_pseudotime = sapply(peak_values, `[[`, "smooth_peak_pseudotime")
+) %>% as_tibble()
+
+
+# save output: write.table(peak_df, file = c("output/condiments/traj2_RNA_Bap1KO_ActivationPoint.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+
+## heatmap activate/induced genes along pseudotime
+### DEG Start End
+pseudotime_start_end_association # filter log2fc >0 >1
+pseudotime_start_end_association = read_tsv("output/condiments/pseudotime_start_end_association_traj2_RNA_Bap1KO.txt")
+pseudotime_start_end_association_logFC0 = pseudotime_start_end_association %>% 
+  filter(fdr <0.05) %>%
+  dplyr::select(gene) %>%
+  unique()
+
+pdf("output/condiments/heatmap_pseudotime_start_end_association_traj2_RNA_Bap1KO_fdr05.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj2_RNA_Bap1KO, gene = pseudotime_start_end_association_logFC0$gene, nPoints = 25, tidy = FALSE)
+yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
+heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
+                       cluster_cols = FALSE,
+                       cluster_rows = FALSE,
+                       show_rownames = FALSE, 
+                       show_colnames = FALSE)
+dev.off()
+
+### DEG time course
+pseudotime_association = read_tsv("output/condiments/pseudotime_association_traj2_RNA_Bap1KO.txt")
+pseudotime_association_deg = pseudotime_association %>%
+  filter(fdr <0.05)%>%
+  dplyr::select(gene) %>%
+  unique()
+
+
+pdf("output/condiments/heatmap_pseudotime_association_traj2_RNA_Bap1KO_fdr05.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj2_RNA_Bap1KO, gene = pseudotime_association_deg$gene, nPoints = 25, tidy = FALSE)
+yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
+heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
+                       cluster_cols = FALSE,
+                       cluster_rows = FALSE,
+                       show_rownames = FALSE, 
+                       show_colnames = FALSE)
+dev.off()
+
+
+
+## Identify which pseudotime value corespond to which cluster ################
+pseudotime <- colData(traj2_RNA_Bap1KO)$crv$pseudotime
+sce_cells <- colnames(traj2_RNA_Bap1KO)
+subset_seurat <- subset(multiome_WT_Bap1KO_QCV2vC1.sct, cells = sce_cells) # Subset cell from traj2
+clusters <- subset_seurat$cluster.annot # Extract cluster information
+### Combine pseudotime and cluster information into a data frame
+pseudotime_cluster_df <- data.frame(
+  cell = colnames(traj2_RNA_Bap1KO),
+  pseudotime = pseudotime,
+  cluster = clusters
+)  %>%
+  arrange(pseudotime)
+
+switch_points <- which(diff(as.numeric(factor(pseudotime_cluster_df$cluster))) != 0) # Find the indices where the cluster changes
+switch_pseudotimes <- pseudotime_cluster_df$pseudotime[switch_points] # Extract the pseudotime values at these switch points
+switch_clusters_from <- pseudotime_cluster_df$cluster[switch_points]
+switch_clusters_to <- pseudotime_cluster_df$cluster[switch_points + 1]
+switch_df <- data.frame(
+  switch_pseudotime = switch_pseudotimes,
+  cluster_from = switch_clusters_from,
+  cluster_to = switch_clusters_to 
+) %>%
+  group_by(cluster_from, cluster_to) %>%
+  summarize(median_switch_pseudotime = median(switch_pseudotime), .groups = 'drop')
+write.table(switch_df, file = c("output/condiments/switch_df_traj2_RNA_Bap1KO.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+##################################
+
+
 ```
+
 
 
 
