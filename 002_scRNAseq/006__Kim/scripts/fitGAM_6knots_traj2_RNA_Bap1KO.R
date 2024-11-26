@@ -16,7 +16,7 @@ library("scales")
 library("pheatmap")
 
 
-load("output/condiments/condiments_RNA_Bap1KO_StartNSCquiescentEndPyNsRSCULDGGCapprox100extendn")
+load("output/condiments/condiments_RNA_Bap1KO_StartNSCquiescentEndPyNsRSCULDGGCapprox100extendn.RData")
 
 set.seed(42)
 

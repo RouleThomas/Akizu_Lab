@@ -9140,11 +9140,11 @@ conda activate condiments_Signac
 
 ## traj of interest NSC --> CA123: COMMON=XXX WT=traj2; Bap1KO=traj2
 sbatch scripts/fitGAM_6knots_traj2_RNA_WT.sh # 30439292 xxx
-sbatch scripts/fitGAM_6knots_traj2_RNA_Bap1KO.sh # 30439317 xxx
+sbatch scripts/fitGAM_6knots_traj2_RNA_Bap1KO.sh # 30458706 xxx
 
 ## traj of interest NSC --> DG_GC: COMMON=XXX WT=traj9; Bap1KO=traj8
 sbatch scripts/fitGAM_6knots_traj9_RNA_WT.sh # 30439293 xxx
-sbatch scripts/fitGAM_6knots_traj8_RNA_Bap1KO.sh # 30439318 xxx
+sbatch scripts/fitGAM_6knots_traj8_RNA_Bap1KO.sh # 30458721 xxx
 ```
 
 
