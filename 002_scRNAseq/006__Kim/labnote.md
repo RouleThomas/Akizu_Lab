@@ -7399,6 +7399,303 @@ print(final_results)
 
 
 
+# proportion of DEG genes also DAR - Overlap DAR DEG same cell type
+## import DAR genes
+DAR_genes = read_tsv("output/Signac/DAR_genes_QCV2vC1_dim40kparam42res065algo4feat2000.txt") %>%
+  dplyr::select(gene_name, p_val_adj, avg_log2FC, cluster)
+DAR_genes_signif = DAR_genes %>%
+  dplyr::filter(p_val_adj <0.05) %>%
+  dplyr::rename("gene" = "gene_name")
+
+
+## import DEG genes
+cluster_types <- c("cluster1",
+"cluster2",
+"cluster3",
+"cluster4",
+"cluster5",
+"cluster6",
+"cluster7",
+"cluster8",
+"cluster9",
+"cluster10",
+"cluster11",
+"cluster12",
+"cluster13",
+"cluster14",
+"cluster15",
+"cluster16",
+"cluster17",
+"cluster18",
+"cluster19")
+# Loop over each cluster type to read data and assign to a variable
+for (cluster in cluster_types) {
+  file_path <- paste0("output/Signac/", cluster, "-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1)
+  assign(cluster, data)
+}
+
+PyNs_SubC_CA23 = cluster1  %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "PyNs_SubC_CA23")
+IN_1 = cluster2 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "IN_1")
+SubC_1 = cluster3 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "SubC_1")
+PyNs_SubC_CA1 = cluster4 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "PyNs_SubC_CA1")
+PyNs_RSC_UL = cluster5 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble()  %>%
+  add_column(cluster= "PyNs_RSC_UL")
+DG_GC = cluster6 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "DG_GC")
+PyNs_RSC_MDL = cluster7 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "PyNs_RSC_MDL")
+NSC_proliferative_1 = cluster8 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "NSC_proliferative_1")
+SubC_2 = cluster9 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "SubC_2")
+IN_2 = cluster10 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "IN_2")
+NSC_quiescent = cluster11 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "NSC_quiescent")
+IN_SubC = cluster12 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "IN_SubC")
+IP = cluster13 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "IP")
+NSC_proliferative_2 = cluster14 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "NSC_proliferative_2")
+CR = cluster15 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "CR")
+OPC = cluster16 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "OPC")
+Meningeal_Cells = cluster17 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "Meningeal_Cells")
+Radial_Glia_Cells = cluster18 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "Radial_Glia_Cells")
+Microglia = cluster19 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "Microglia")
+
+
+DEG_genes = PyNs_SubC_CA23 %>%
+  bind_rows(IN_1) %>%
+  bind_rows(SubC_1) %>%
+  bind_rows(PyNs_SubC_CA1) %>%
+  bind_rows(PyNs_RSC_UL) %>%
+  bind_rows(DG_GC) %>%
+  bind_rows(PyNs_RSC_MDL) %>%
+  bind_rows(NSC_proliferative_1) %>%
+  bind_rows(SubC_2) %>%
+  bind_rows(IN_2) %>%
+  bind_rows(NSC_quiescent) %>%
+  bind_rows(IN_SubC) %>%
+  bind_rows(IP) %>%
+  bind_rows(NSC_proliferative_2) %>%
+  bind_rows(CR) %>%
+  bind_rows(OPC) %>%
+  bind_rows(Meningeal_Cells) %>%
+  bind_rows(Radial_Glia_Cells) %>%
+  bind_rows(Microglia) 
+
+
+DEG_genes_signif = DEG_genes %>%
+  dplyr::filter(p_val_adj < 0.05)
+   
+   
+# plot
+DEG_genes_signif
+DAR_genes_signif
+   
+DEG_DAR_genes_signif <- DEG_genes_signif %>%
+  mutate(overlap_with_DAR = ifelse(gene %in% DAR_genes_signif$gene, "Overlap", "No Overlap"))
+   
+   
+DEG_DAR_genes_signif$cluster <- factor(DEG_DAR_genes_signif$cluster, levels = c("NSC_quiescent",
+"NSC_proliferative_1",
+"NSC_proliferative_2",
+"IP",
+"Radial_Glia_Cells",
+"OPC",
+"Microglia",
+"Meningeal_Cells",
+"CR",
+"DG_GC",
+"PyNs_SubC_CA1",
+"PyNs_SubC_CA23",
+"PyNs_RSC_UL",
+"PyNs_RSC_MDL",
+"SubC_1",
+"SubC_2",
+"IN_1",
+"IN_2",
+"IN_SubC")) 
+
+pdf("output/Signac/barplot_DEG_DAR_prop.pdf", width=6, height=4)
+DEG_DAR_genes_signif %>%
+  group_by(cluster, overlap_with_DAR) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  group_by(cluster) %>%
+  mutate(proportion = count / sum(count) * 100) %>% # Calculate proportions
+ggplot(., aes(x = cluster, y = proportion, fill = overlap_with_DAR)) +
+  geom_bar(stat = "identity", position = "fill")  +
+  geom_text(aes(label = count), 
+            position = position_fill(vjust = 0.5), # Place text within the bar
+            size = 3, color = "white", fontface = "bold") +
+  labs(title = "Proportion of DEGs Overlapping with DARs by Cell Type",
+       x = "Cell Type",
+       y = "Proportion (%)",
+       fill = "Overlap Status") +
+  theme_bw() +
+  scale_fill_manual(values = c("Overlap" = "blue", "No Overlap" = "red")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off() 
+  
+   
+   
+### only up regulated genes with DAR opening
+
+
+DEG_genes_signif_pos = DEG_genes_signif %>% 
+  dplyr::filter(avg_log2FC >0)
+
+DAR_genes_signif_pos = DAR_genes_signif %>% 
+  dplyr::filter(avg_log2FC >0)
+   
+DEG_DAR_genes_signif_pos <- DEG_genes_signif_pos %>%
+  mutate(overlap_with_DAR = ifelse(gene %in% DAR_genes_signif_pos$gene, "Overlap", "No Overlap"))
+   
+   
+DEG_DAR_genes_signif_pos$cluster <- factor(DEG_DAR_genes_signif_pos$cluster, levels = c("NSC_quiescent",
+"NSC_proliferative_1",
+"NSC_proliferative_2",
+"IP",
+"Radial_Glia_Cells",
+"OPC",
+"Microglia",
+"Meningeal_Cells",
+"CR",
+"DG_GC",
+"PyNs_SubC_CA1",
+"PyNs_SubC_CA23",
+"PyNs_RSC_UL",
+"PyNs_RSC_MDL",
+"SubC_1",
+"SubC_2",
+"IN_1",
+"IN_2",
+"IN_SubC")) 
+
+pdf("output/Signac/barplot_DEG_DAR_pos_prop.pdf", width=6, height=4)
+DEG_DAR_genes_signif_pos %>%
+  group_by(cluster, overlap_with_DAR) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  group_by(cluster) %>%
+  mutate(proportion = count / sum(count) * 100) %>% # Calculate proportions
+ggplot(., aes(x = cluster, y = proportion, fill = overlap_with_DAR)) +
+  geom_bar(stat = "identity", position = "fill")  +
+  geom_text(aes(label = count), 
+            position = position_fill(vjust = 0.5), # Place text within the bar
+            size = 3, color = "white", fontface = "bold") +
+  labs(title = "Proportion of upregulated DEGs Overlapping with open DARs by Cell Type",
+       x = "Cell Type",
+       y = "Proportion (%)",
+       fill = "Overlap Status") +
+  theme_bw() +
+  scale_fill_manual(values = c("Overlap" = "blue", "No Overlap" = "red")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off() 
+  
+
+### only down regulated genes with DAR closing
+
+
+DEG_genes_signif_neg = DEG_genes_signif %>% 
+  dplyr::filter(avg_log2FC <0)
+
+DAR_genes_signif_neg = DAR_genes_signif %>% 
+  dplyr::filter(avg_log2FC <0)
+   
+DEG_DAR_genes_signif_neg <- DEG_genes_signif_neg %>%
+  mutate(overlap_with_DAR = ifelse(gene %in% DAR_genes_signif_neg$gene, "Overlap", "No Overlap"))
+   
+   
+DEG_DAR_genes_signif_neg$cluster <- factor(DEG_DAR_genes_signif_neg$cluster, levels = c("NSC_quiescent",
+"NSC_proliferative_1",
+"NSC_proliferative_2",
+"IP",
+"Radial_Glia_Cells",
+"OPC",
+"Microglia",
+"Meningeal_Cells",
+"CR",
+"DG_GC",
+"PyNs_SubC_CA1",
+"PyNs_SubC_CA23",
+"PyNs_RSC_UL",
+"PyNs_RSC_MDL",
+"SubC_1",
+"SubC_2",
+"IN_1",
+"IN_2",
+"IN_SubC")) 
+
+pdf("output/Signac/barplot_DEG_DAR_neg_prop.pdf", width=6, height=4)
+DEG_DAR_genes_signif_neg %>%
+  group_by(cluster, overlap_with_DAR) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  group_by(cluster) %>%
+  mutate(proportion = count / sum(count) * 100) %>% # Calculate proportions
+ggplot(., aes(x = cluster, y = proportion, fill = overlap_with_DAR)) +
+  geom_bar(stat = "identity", position = "fill")  +
+  geom_text(aes(label = count), 
+            position = position_fill(vjust = 0.5), # Place text within the bar
+            size = 3, color = "white", fontface = "bold") +
+  labs(title = "Proportion of downregulated DEGs Overlapping with closing DARs by Cell Type",
+       x = "Cell Type",
+       y = "Proportion (%)",
+       fill = "Overlap Status") +
+  theme_bw() +
+  scale_fill_manual(values = c("Overlap" = "blue", "No Overlap" = "red")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off() 
+  
+
 
 
 ```
@@ -8603,7 +8900,7 @@ library("cowplot")
 library("scales")
 library("pheatmap")
 
-# Data import GASTRULOID and separate conditons
+# Data import and separate conditons
 
 multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000.sct_numeric_label.rds")
 
@@ -8758,6 +9055,7 @@ pseudotime_start_end_association <- pseudotime_start_end_association[order(pseud
 
 sce_cells <- colnames(traj9_RNA_WT) # collect cells of traj1
 subset_traj9_RNA_WT_multiome_WT_Bap1KO_QCV2vC1.sct <- subset(multiome_WT_Bap1KO_QCV2vC1.sct, cells = sce_cells) # Create a seurat object with only cells from traj1
+subset_traj9_RNA_WT_multiome_WT_Bap1KO_QCV2vC1_GeneActivity.sct <- subset(multiome_WT_Bap1KO_QCV2vC1_GeneActivity.sct, cells = sce_cells) # Create a seurat object with only cells from traj1
 
 
 
@@ -8807,6 +9105,8 @@ gene_list_2 <- c("Eomes")
 gene_list_3 <- c("Prox1")
 # Extract the counts for the genes of interest
 counts_matrix <- subset_traj9_RNA_WT_multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@counts
+counts_matrix <- subset_traj9_RNA_WT_multiome_WT_Bap1KO_QCV2vC1_GeneActivity.sct[["GeneActivity"]]@counts
+
 # Subset the data for each gene list and calculate the average expression
 subset_data_1 <- counts_matrix[gene_list_1, , drop = FALSE]
 subset_data_2 <- counts_matrix[gene_list_2, , drop = FALSE]
@@ -8817,19 +9117,17 @@ pseudotime_vector <- colData(traj9_RNA_WT)$crv
 plot_data_1 <- data.frame(Pseudotime = pseudotime_vector, Expression = log1p(as.numeric(subset_data_1)), GeneList = "GeneList 1")
 plot_data_2 <- data.frame(Pseudotime = pseudotime_vector, Expression = log1p(as.numeric(subset_data_2)), GeneList = "GeneList 2")
 plot_data_3 <- data.frame(Pseudotime = pseudotime_vector, Expression = log1p(as.numeric(subset_data_3)), GeneList = "GeneList 3")
-
 # Combine the data frames
 plot_data <- rbind(plot_data_1, plot_data_2, plot_data_3)
-
 plot_data <- plot_data %>%
   group_by(GeneList) %>%
   mutate(SmoothedExpression = predict(loess(Expression ~ Pseudotime.pseudotime, span = 0.5)))
-
-
 # Combine the smoothed data frames for plotting
 smoothed_plot_data <- rbind(plot_data_1, plot_data_2, plot_data_3)
 # Plot the smoothed trajectories
 pdf("output/condiments/plotSmoothers-Pax6EomesProx1-traj9_RNA_WT.pdf", width = 5, height = 4)
+pdf("output/condiments/plotSmoothers-Pax6EomesProx1-traj9_ATAC_WT.pdf", width = 5, height = 4)
+
 ggplot(plot_data, aes(x = Pseudotime.pseudotime, y = Expression, color = GeneList)) +
   geom_point(alpha = 0.5) +
   geom_line(aes(y = SmoothedExpression), size = 1) +
@@ -8900,6 +9198,9 @@ heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
                        show_colnames = FALSE)
 dev.off()
 
+
+
+
 ### DEG time course
 pseudotime_association = read_tsv("output/condiments/pseudotime_association_traj9_RNA_WT.txt")
 pseudotime_association_deg = pseudotime_association %>%
@@ -8917,6 +9218,82 @@ heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
                        show_rownames = FALSE, 
                        show_colnames = FALSE)
 dev.off()
+
+#### Gene Activity (ATAC) pseudotime
+##### Load Seurat object with GeneActivity information
+multiome_WT_Bap1KO_QCV2vC1_GeneActivity.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.sct_numeric_label.rds")
+#### import LinkGenes
+Gene_LinkPeak_signif = read_tsv("output/Signac/LinkPeaks_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1.txt") %>%
+  dplyr::filter(adjusted_pvalue < 0.05, score >0) %>%
+  dplyr::select(gene) %>%
+  unique()
+#### Extract pseudotime and cell information
+pseudotime_data <- colData(traj9_RNA_WT)$crv
+pseudotime_values <- pseudotime_data$pseudotime
+names(pseudotime_values) <- rownames(pseudotime_data)
+cell_ids <- colnames(traj9_RNA_WT)
+#### Ensure matching cells between pseudotime and Seurat object
+common_cells <- intersect(cell_ids, colnames(multiome_WT_Bap1KO_QCV2vC1_GeneActivity.sct))
+#### Subset pseudotime and GeneActivity for the common cells
+pseudotime_values <- pseudotime_values[common_cells]
+#### Subset to only available genes
+valid_genes <- intersect(pseudotime_association_deg$gene, available_genes)
+
+# valid_genes <- intersect(valid_genes, Gene_LinkPeak_signif$gene) # HERE FILTER TO KEEP LINK PEAK ONLY
+
+gene_activity_data <- GetAssayData(multiome_WT_Bap1KO_QCV2vC1_GeneActivity.sct, 
+                                   assay = "GeneActivity", 
+                                   slot = "scale.data")[valid_genes, common_cells]
+cell_order <- order(pseudotime_values)
+gene_activity_ordered <- gene_activity_data[, cell_order]
+#### Order genes by their RNA expression peak
+#### Predict RNA expression smoothness for the genes
+yhatSmooth <- predictSmooth(traj9_RNA_WT, gene = valid_genes, nPoints = 25, tidy = FALSE)
+#### Order genes by maximum expression in pseudotime
+gene_order <- order(apply(yhatSmooth, 1, which.max))  # Order by RNA max along pseudotime
+gene_activity_final <- gene_activity_ordered[gene_order, ]  # Reorder ATAC signals to match RNA ordering
+#### Scale and plot the gene activity heatmap
+gene_activity_scaled <- t(scale(t(gene_activity_final)))
+
+n_bins <- 25
+# Generate 25 evenly spaced bins across pseudotime
+bin_edges <- seq(1, ncol(gene_activity_scaled), length.out = n_bins + 1)
+bin_centers <- round((bin_edges[-1] + bin_edges[-length(bin_edges)]) / 2)
+# Aggregate gene activity data into bins by averaging
+gene_activity_binned <- sapply(seq_along(bin_centers), function(i) {
+  cols_to_average <- seq(floor(bin_edges[i]), ceiling(bin_edges[i + 1]) - 1)
+  if (length(cols_to_average) > 1) {
+    rowMeans(gene_activity_scaled[, cols_to_average, drop = FALSE])
+  } else {
+    gene_activity_scaled[, cols_to_average, drop = FALSE]
+  }
+})
+
+gene_activity_binned_scaled <- t(scale(t(gene_activity_binned)))
+
+#_LinkPeaks
+pdf("output/condiments/heatmap_pseudotime_association_deg_traj9_ATAC_WT_fdr05.pdf", width = 8, height = 10)
+pheatmap(gene_activity_binned_scaled,
+         cluster_cols = FALSE,
+         cluster_rows = FALSE,
+         show_rownames = FALSE, 
+         show_colnames = FALSE,
+         breaks = seq(-1, 2, length.out = 101),
+         labels_col = paste0("Bin ", seq_len(n_bins))) # Add bin labels for clarity
+dev.off()
+
+
+pdf("output/condiments/heatmap_pseudotime_association_traj9_RNA_WT_fdr05_ATACgenes.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj9_RNA_WT, gene = valid_genes, nPoints = 25, tidy = FALSE)
+yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
+heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
+                       cluster_cols = FALSE,
+                       cluster_rows = FALSE,
+                       show_rownames = FALSE, 
+                       show_colnames = FALSE)
+dev.off()
+
+
 
 
 
@@ -8979,6 +9356,7 @@ pseudotime_start_end_association <- pseudotime_start_end_association[order(pseud
 
 sce_cells <- colnames(traj2_RNA_WT) # collect cells of traj1
 subset_traj2_RNA_WT_multiome_WT_Bap1KO_QCV2vC1.sct <- subset(multiome_WT_Bap1KO_QCV2vC1.sct, cells = sce_cells) # Create a seurat object with only cells from traj1
+subset_traj2_RNA_WT_multiome_WT_Bap1KO_QCV2vC1_GeneActivity.sct <- subset(multiome_WT_Bap1KO_QCV2vC1_GeneActivity.sct, cells = sce_cells) # Create a seurat object with only cells from traj1
 
 
 
@@ -9028,6 +9406,7 @@ gene_list_2 <- c("Eomes")
 gene_list_3 <- c("Prox1")
 # Extract the counts for the genes of interest
 counts_matrix <- subset_traj2_RNA_WT_multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@counts
+counts_matrix <- subset_traj2_RNA_WT_multiome_WT_Bap1KO_QCV2vC1_GeneActivity.sct[["GeneActivity"]]@counts
 # Subset the data for each gene list and calculate the average expression
 subset_data_1 <- counts_matrix[gene_list_1, , drop = FALSE]
 subset_data_2 <- counts_matrix[gene_list_2, , drop = FALSE]
@@ -9132,6 +9511,89 @@ heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
                        show_rownames = FALSE, 
                        show_colnames = FALSE)
 dev.off()
+
+
+#### Gene Activity (ATAC) pseudotime
+##### Load Seurat object with GeneActivity information
+multiome_WT_Bap1KO_QCV2vC1_GeneActivity.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.sct_numeric_label.rds")
+#### import LinkGenes
+Gene_LinkPeak_signif = read_tsv("output/Signac/LinkPeaks_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1.txt") %>%
+  dplyr::filter(adjusted_pvalue < 0.05, score >0) %>%
+  dplyr::select(gene) %>%
+  unique()
+#### Extract pseudotime and cell information
+pseudotime_data <- colData(traj2_RNA_WT)$crv
+pseudotime_values <- pseudotime_data$pseudotime
+names(pseudotime_values) <- rownames(pseudotime_data)
+cell_ids <- colnames(traj2_RNA_WT)
+#### Ensure matching cells between pseudotime and Seurat object
+common_cells <- intersect(cell_ids, colnames(multiome_WT_Bap1KO_QCV2vC1_GeneActivity.sct))
+#### Subset pseudotime and GeneActivity for the common cells
+pseudotime_values <- pseudotime_values[common_cells]
+#### Subset to only available genes
+valid_genes <- intersect(pseudotime_association_deg$gene, available_genes)
+
+# valid_genes <- intersect(valid_genes, Gene_LinkPeak_signif$gene) # HERE FILTER TO KEEP LINK PEAK ONLY
+
+gene_activity_data <- GetAssayData(multiome_WT_Bap1KO_QCV2vC1_GeneActivity.sct, 
+                                   assay = "GeneActivity", 
+                                   slot = "scale.data")[valid_genes, common_cells]
+cell_order <- order(pseudotime_values)
+gene_activity_ordered <- gene_activity_data[, cell_order]
+#### Order genes by their RNA expression peak
+#### Predict RNA expression smoothness for the genes
+yhatSmooth <- predictSmooth(traj2_RNA_WT, gene = valid_genes, nPoints = 25, tidy = FALSE)
+#### Order genes by maximum expression in pseudotime
+gene_order <- order(apply(yhatSmooth, 1, which.max))  # Order by RNA max along pseudotime
+gene_activity_final <- gene_activity_ordered[gene_order, ]  # Reorder ATAC signals to match RNA ordering
+#### Scale and plot the gene activity heatmap
+gene_activity_scaled <- t(scale(t(gene_activity_final)))
+
+n_bins <- 25
+# Generate 25 evenly spaced bins across pseudotime
+bin_edges <- seq(1, ncol(gene_activity_scaled), length.out = n_bins + 1)
+bin_centers <- round((bin_edges[-1] + bin_edges[-length(bin_edges)]) / 2)
+# Aggregate gene activity data into bins by averaging
+gene_activity_binned <- sapply(seq_along(bin_centers), function(i) {
+  cols_to_average <- seq(floor(bin_edges[i]), ceiling(bin_edges[i + 1]) - 1)
+  if (length(cols_to_average) > 1) {
+    rowMeans(gene_activity_scaled[, cols_to_average, drop = FALSE])
+  } else {
+    gene_activity_scaled[, cols_to_average, drop = FALSE]
+  }
+})
+
+gene_activity_binned_scaled <- t(scale(t(gene_activity_binned)))
+
+#_LinkPeaks
+pdf("output/condiments/heatmap_pseudotime_association_deg_traj2_ATAC_WT_fdr05.pdf", width = 8, height = 10)
+pheatmap(gene_activity_binned_scaled,
+         cluster_cols = FALSE,
+         cluster_rows = FALSE,
+         show_rownames = FALSE, 
+         show_colnames = FALSE,
+         breaks = seq(-1, 2, length.out = 101),
+         labels_col = paste0("Bin ", seq_len(n_bins))) # Add bin labels for clarity
+dev.off()
+
+
+pdf("output/condiments/heatmap_pseudotime_association_traj2_RNA_WT_fdr05_ATACgenes.pdf", width=8, height=10)
+yhatSmooth <- predictSmooth(traj2_RNA_WT, gene = valid_genes, nPoints = 25, tidy = FALSE)
+yhatSmooth <- yhatSmooth[order(apply(yhatSmooth,1,which.max)), ]
+heatSmooth <- pheatmap(t(scale(t(yhatSmooth[, 1:25]))),
+                       cluster_cols = FALSE,
+                       cluster_rows = FALSE,
+                       show_rownames = FALSE, 
+                       show_colnames = FALSE)
+dev.off()
+
+
+
+
+
+
+
+
 
 
 
