@@ -20690,6 +20690,12 @@ gene_list <- read.table(
   as_tibble() %>%
   dplyr::select(gene)  %>% 
   pull(1)
+
+gene_list <- read_tsv("../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Bernstein-UpRegulated_Epiblastpadj05fc025.txt", col_names = FALSE) %>% 
+  pull(1)
+gene_list <- read_tsv("../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Rein-UpRegulated_Epiblastpadj05fc025.txt", col_names = FALSE) %>% 
+  pull(1)
+
 #### Extract the counts or scaled data for the genes of interest
 counts_matrix <- subset_traj1_humangastruloidUNTREATED2472hrs_humangastruloid.combined.sct[["RNA"]]@counts
 valid_genes <- gene_list[gene_list %in% rownames(counts_matrix)] # to filter to only keep the genes present in scRNAseq
@@ -20706,8 +20712,8 @@ loess_fit <- loess(AverageExpression ~ Pseudotime.pseudotime, data = plot_data, 
 plot_data$SmoothedExpression <- predict(loess_fit)
 #### Plot the smoothed trajectory
 #EpiblastUpregpadj05fc025
-#pdf("output/condiments/plotSmoothers-EpiblastUpregpadj05fc025-traj1_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
-pdf("output/condiments/plotSmoothersLOG1P-EpiblastUpregpadj05fc025-traj1_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
+#pdf("output/condiments/plotSmoothers-EpiblastUpregpadj05fc025-traj1_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4) LOG1P
+pdf("output/condiments/plotSmoothersLOG1P-EpiblastUpregpadj05fc025_ReinH3K27me3-traj1_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
 ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
   geom_point(aes(y = AverageExpression), color = "lightblue", alpha = 0.5) +
   geom_line(aes(y = SmoothedExpression), color = "darkblue", size = 1) +
@@ -20964,6 +20970,12 @@ gene_list <- read.table(
   as_tibble() %>%
   dplyr::select(gene)  %>% 
   pull(1)
+
+gene_list <- read_tsv("../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Bernstein-UpRegulated_Epiblastpadj05fc025.txt", col_names = FALSE) %>% 
+  pull(1)
+gene_list <- read_tsv("../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Rein-UpRegulated_Epiblastpadj05fc025.txt", col_names = FALSE) %>% 
+  pull(1)
+
 #### Extract the counts or scaled data for the genes of interest
 counts_matrix <- subset_traj2_humangastruloidUNTREATED2472hrs_humangastruloid.combined.sct[["RNA"]]@counts
 valid_genes <- gene_list[gene_list %in% rownames(counts_matrix)] # to filter to only keep the genes present in scRNAseq
@@ -20980,7 +20992,7 @@ loess_fit <- loess(AverageExpression ~ Pseudotime.pseudotime, data = plot_data)
 plot_data$SmoothedExpression <- predict(loess_fit)
 #### Plot the smoothed trajectory
 #EpiblastUpregpadj05fc025
-pdf("output/condiments/plotSmoothersLOG1P-EpiblastUpregpadj05fc025-traj2_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
+pdf("output/condiments/plotSmoothersLOG1P-EpiblastUpregpadj05fc025_H3K27me3Rein-traj2_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
 ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
   geom_point(aes(y = AverageExpression), color = "lightblue", alpha = 0.5) +
   geom_line(aes(y = SmoothedExpression), color = "darkblue", size = 1) +
@@ -21188,6 +21200,10 @@ gene_list <- read.table(
   as_tibble() %>%
   dplyr::select(gene)  %>% 
   pull(1)
+gene_list <- read_tsv("../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Bernstein-UpRegulated_Epiblastpadj05fc025.txt", col_names = FALSE) %>% 
+  pull(1)
+gene_list <- read_tsv("../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Rein-UpRegulated_Epiblastpadj05fc025.txt", col_names = FALSE) %>% 
+  pull(1)
 #### Extract the counts or scaled data for the genes of interest
 counts_matrix <- subset_traj4_humangastruloidUNTREATED2472hrs_humangastruloid.combined.sct[["RNA"]]@counts
 valid_genes <- gene_list[gene_list %in% rownames(counts_matrix)] # to filter to only keep the genes present in scRNAseq
@@ -21204,7 +21220,7 @@ loess_fit <- loess(AverageExpression ~ Pseudotime.pseudotime, data = plot_data)
 plot_data$SmoothedExpression <- predict(loess_fit)
 #### Plot the smoothed trajectory
 #EpiblastUpregpadj05fc025
-pdf("output/condiments/plotSmoothersLOG1P-EpiblastUpregpadj05fc025-traj4_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
+pdf("output/condiments/plotSmoothersLOG1P-EpiblastUpregpadj05fc025_H3K27me3Rein-traj4_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
 ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
   geom_point(aes(y = AverageExpression), color = "lightblue", alpha = 0.5) +
   geom_line(aes(y = SmoothedExpression), color = "darkblue", size = 1) +
@@ -21415,6 +21431,11 @@ gene_list <- read.table(
   as_tibble() %>%
   dplyr::select(gene)  %>% 
   pull(1)
+gene_list <- read_tsv("../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Bernstein-UpRegulated_Epiblastpadj05fc025.txt", col_names = FALSE) %>% 
+  pull(1)
+gene_list <- read_tsv("../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Rein-UpRegulated_Epiblastpadj05fc025.txt", col_names = FALSE) %>% 
+  pull(1)
+
 #### Extract the counts or scaled data for the genes of interest
 counts_matrix <- subset_traj5_humangastruloidUNTREATED2472hrs_humangastruloid.combined.sct[["RNA"]]@counts
 valid_genes <- gene_list[gene_list %in% rownames(counts_matrix)] # to filter to only keep the genes present in scRNAseq
@@ -21431,7 +21452,7 @@ loess_fit <- loess(AverageExpression ~ Pseudotime.pseudotime, data = plot_data)
 plot_data$SmoothedExpression <- predict(loess_fit)
 #### Plot the smoothed trajectory
 #EpiblastUpregpadj05fc025
-pdf("output/condiments/plotSmoothersLOG1P-EpiblastUpregpadj05fc025-traj5_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
+pdf("output/condiments/plotSmoothersLOG1P-EpiblastUpregpadj05fc025_H3K27me3Rein-traj5_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
 ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
   geom_point(aes(y = AverageExpression), color = "lightblue", alpha = 0.5) +
   geom_line(aes(y = SmoothedExpression), color = "darkblue", size = 1) +
@@ -21764,6 +21785,11 @@ gene_list <- read.table(
   as_tibble() %>%
   dplyr::select(gene)  %>% 
   pull(1)
+gene_list <- read_tsv("../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Bernstein-UpRegulated_Epiblastpadj05fc025.txt", col_names = FALSE) %>% 
+  pull(1)
+gene_list <- read_tsv("../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Rein-UpRegulated_Epiblastpadj05fc025.txt", col_names = FALSE) %>% 
+  pull(1)
+
 #### Extract the counts or scaled data for the genes of interest
 counts_matrix <- subset_traj3_humangastruloidDASATINIB2472hrs_humangastruloid.combined.sct[["RNA"]]@counts
 valid_genes <- gene_list[gene_list %in% rownames(counts_matrix)] # to filter to only keep the genes present in scRNAseq
@@ -21780,7 +21806,7 @@ loess_fit <- loess(AverageExpression ~ Pseudotime.pseudotime, data = plot_data)
 plot_data$SmoothedExpression <- predict(loess_fit)
 #### Plot the smoothed trajectory
 #EpiblastUpregpadj05fc025
-pdf("output/condiments/plotSmoothersLOG1P-EpiblastUpregpadj05fc025-traj3_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
+pdf("output/condiments/plotSmoothersLOG1P-EpiblastUpregpadj05fc025_H3K27me3Rein-traj3_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
 ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
   geom_point(aes(y = AverageExpression), color = "lightblue", alpha = 0.5) +
   geom_line(aes(y = SmoothedExpression), color = "darkblue", size = 1) +
@@ -21989,6 +22015,11 @@ gene_list <- read.table(
   as_tibble() %>%
   dplyr::select(gene)  %>% 
   pull(1)
+gene_list <- read_tsv("../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Bernstein-UpRegulated_Epiblastpadj05fc025.txt", col_names = FALSE) %>% 
+  pull(1)
+gene_list <- read_tsv("../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Rein-UpRegulated_Epiblastpadj05fc025.txt", col_names = FALSE) %>% 
+  pull(1)
+
 #### Extract the counts or scaled data for the genes of interest
 counts_matrix <- subset_traj1_humangastruloidDASATINIB2472hrs_humangastruloid.combined.sct[["RNA"]]@counts
 valid_genes <- gene_list[gene_list %in% rownames(counts_matrix)] # to filter to only keep the genes present in scRNAseq
@@ -22005,7 +22036,7 @@ loess_fit <- loess(AverageExpression ~ Pseudotime.pseudotime, data = plot_data)
 plot_data$SmoothedExpression <- predict(loess_fit)
 #### Plot the smoothed trajectory
 #EpiblastUpregpadj05fc025
-pdf("output/condiments/plotSmoothersLOG1P-EpiblastUpregpadj05fc025-traj1_humangastruloidDASATINIB2472hrs_3Dpaper.pdf",  width=5, height=4)
+pdf("output/condiments/plotSmoothersLOG1P-EpiblastUpregpadj05fc025_H3K27me3Rein-traj1_humangastruloidDASATINIB2472hrs_3Dpaper.pdf",  width=5, height=4)
 ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
   geom_point(aes(y = AverageExpression), color = "lightblue", alpha = 0.5) +
   geom_line(aes(y = SmoothedExpression), color = "darkblue", size = 1) +
@@ -22209,6 +22240,10 @@ gene_list <- read.table(
   as_tibble() %>%
   dplyr::select(gene)  %>% 
   pull(1)
+gene_list <- read_tsv("../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Bernstein-UpRegulated_Epiblastpadj05fc025.txt", col_names = FALSE) %>% 
+  pull(1)
+gene_list <- read_tsv("../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Rein-UpRegulated_Epiblastpadj05fc025.txt", col_names = FALSE) %>% 
+  pull(1)
 #### Extract the counts or scaled data for the genes of interest
 counts_matrix <- subset_traj4_humangastruloidDASATINIB2472hrs_humangastruloid.combined.sct[["RNA"]]@counts
 valid_genes <- gene_list[gene_list %in% rownames(counts_matrix)] # to filter to only keep the genes present in scRNAseq
@@ -22225,7 +22260,7 @@ loess_fit <- loess(AverageExpression ~ Pseudotime.pseudotime, data = plot_data)
 plot_data$SmoothedExpression <- predict(loess_fit)
 #### Plot the smoothed trajectory
 #EpiblastUpregpadj05fc025
-pdf("output/condiments/plotSmoothersLOG1P-EpiblastUpregpadj05fc025-traj4_humangastruloidDASATINIB2472hrs_3Dpaper.pdf",  width=5, height=4)
+pdf("output/condiments/plotSmoothersLOG1P-EpiblastUpregpadj05fc025_H3K27me3Rein-traj4_humangastruloidDASATINIB2472hrs_3Dpaper.pdf",  width=5, height=4)
 ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
   geom_point(aes(y = AverageExpression), color = "lightblue", alpha = 0.5) +
   geom_line(aes(y = SmoothedExpression), color = "darkblue", size = 1) +
@@ -22341,9 +22376,6 @@ write.table(switch_df, file = c("output/condiments/switch_df_traj4_humangastrulo
 
 
 
-
-
-
 ################### Time Course effect (DASATINIB CONDITION) - Lineage1 BLOOD OTHER .RData TO USE!!! #########################
 # Blood
 # load("output/condiments/condiments_humangastruloidDASATINIB2472hrs_StartEpiEndCPC1EndoCardioextendnstretch16approx200.RData") BLOOD SPECIFIC FILE !!
@@ -22438,6 +22470,10 @@ gene_list <- read.table(
   as_tibble() %>%
   dplyr::select(gene)  %>% 
   pull(1)
+gene_list <- read_tsv("../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Bernstein-UpRegulated_Epiblastpadj05fc025.txt", col_names = FALSE) %>% 
+  pull(1)
+gene_list <- read_tsv("../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Rein-UpRegulated_Epiblastpadj05fc025.txt", col_names = FALSE) %>% 
+  pull(1)
 #### Extract the counts or scaled data for the genes of interest
 counts_matrix <- subset_traj1sep_humangastruloidDASATINIB2472hrs_humangastruloid.combined.sct[["RNA"]]@counts
 valid_genes <- gene_list[gene_list %in% rownames(counts_matrix)] # to filter to only keep the genes present in scRNAseq
@@ -22454,7 +22490,7 @@ loess_fit <- loess(AverageExpression ~ Pseudotime.pseudotime, data = plot_data)
 plot_data$SmoothedExpression <- predict(loess_fit)
 #### Plot the smoothed trajectory
 #EpiblastUpregpadj05fc025
-pdf("output/condiments/plotSmoothersLOG1P-EpiblastUpregpadj05fc025-traj1sep_humangastruloidDASATINIB2472hrs_3Dpaper.pdf",  width=5, height=4)
+pdf("output/condiments/plotSmoothersLOG1P_H3K27me3Rein-EpiblastUpregpadj05fc025-traj1sep_humangastruloidDASATINIB2472hrs_3Dpaper.pdf",  width=5, height=4)
 ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
   geom_point(aes(y = AverageExpression), color = "lightblue", alpha = 0.5) +
   geom_line(aes(y = SmoothedExpression), color = "darkblue", size = 1) +

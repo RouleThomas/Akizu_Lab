@@ -6736,6 +6736,91 @@ pdf("output/Signac/CoveragePlot_condition-Epha3.pdf", width=6, height=9)
 CoveragePlot(multiome_WT_Bap1KO_QCV2vC1.sct, region = 'Epha3', features = 'Epha3', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, group.by = "combined_ident")
 dev.off()
 
+# Mdga2
+pdf("output/Signac/CoveragePlot_condition-Mdga2-DG_GC.pdf", width=5, height=2)
+CoveragePlot(multiome_WT_Bap1KO_QCV2vC1.sct, region = 'Mdga2', features = 'Mdga2', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, links = FALSE, group.by = "combined_ident", idents = c("multiome_WT_DG_GC", "multiome_Bap1KO_DG_GC"),   extend.upstream = 1000)
+dev.off()
+pdf("output/Signac/CoveragePlot_condition-Mdga2_TSS-DG_GC.pdf", width=5, height=2)
+CoveragePlot(multiome_WT_Bap1KO_QCV2vC1.sct, region =  c("chr12-67217092-67224465"), features = 'Mdga2', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, links = FALSE, group.by = "combined_ident", idents = c("multiome_WT_DG_GC", "multiome_Bap1KO_DG_GC"),   extend.upstream = 1000)
+dev.off()
+
+# Lrrc7
+pdf("output/Signac/CoveragePlot_condition-Lrrc7-DG_GC.pdf", width=5, height=2)
+CoveragePlot(multiome_WT_Bap1KO_QCV2vC1.sct, region = 'Lrrc7', features = 'Lrrc7', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, links = FALSE, group.by = "combined_ident", idents = c("multiome_WT_DG_GC", "multiome_Bap1KO_DG_GC"),   extend.upstream = 1000)
+dev.off()
+pdf("output/Signac/CoveragePlot_condition-Lrrc7_TSS-DG_GC.pdf", width=5, height=2)
+CoveragePlot(multiome_WT_Bap1KO_QCV2vC1.sct, region =  c("chr3-158559019-158563930"), features = 'Lrrc7', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, links = FALSE, group.by = "combined_ident", idents = c("multiome_WT_DG_GC", "multiome_Bap1KO_DG_GC"),   extend.upstream = 1000)
+dev.off()
+
+# Tenm4
+pdf("output/Signac/CoveragePlot_condition-Tenm4-DG_GC.pdf", width=5, height=2)
+CoveragePlot(multiome_WT_Bap1KO_QCV2vC1.sct, region = 'Tenm4', features = 'Tenm4', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, links = FALSE, group.by = "combined_ident", idents = c("multiome_WT_DG_GC", "multiome_Bap1KO_DG_GC"),   extend.upstream = 1000)
+dev.off()
+pdf("output/Signac/CoveragePlot_condition-Tenm4_TSS-DG_GC.pdf", width=5, height=2)
+CoveragePlot(multiome_WT_Bap1KO_QCV2vC1.sct, region =  c("chr7-96208102-96217029"), features = 'Tenm4', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, links = FALSE, group.by = "combined_ident", idents = c("multiome_WT_DG_GC", "multiome_Bap1KO_DG_GC"),   extend.upstream = 1000)
+dev.off()
+pdf("output/Signac/CoveragePlot_condition-Tenm4_TSS2-DG_GC.pdf", width=5, height=2)
+CoveragePlot(multiome_WT_Bap1KO_QCV2vC1.sct, region =  c("chr7-96170754-96172985"), features = 'Tenm4', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, links = FALSE, group.by = "combined_ident", idents = c("multiome_WT_DG_GC", "multiome_Bap1KO_DG_GC"),   extend.upstream = 1000)
+dev.off()
+
+# Rmst
+pdf("output/Signac/CoveragePlot_condition-Rmst-DG_GC.pdf", width=5, height=2)
+CoveragePlot(multiome_WT_Bap1KO_QCV2vC1.sct, region = 'Rmst', features = 'Rmst', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, links = FALSE, group.by = "combined_ident", idents = c("multiome_WT_DG_GC", "multiome_Bap1KO_DG_GC"),   extend.upstream = 1000)
+dev.off()
+pdf("output/Signac/CoveragePlot_condition-Lrrc7_TSS-DG_GC.pdf", width=5, height=2)
+CoveragePlot(multiome_WT_Bap1KO_QCV2vC1.sct, region =  c("chr3-158559019-158563930"), features = 'Lrrc7', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, links = FALSE, group.by = "combined_ident", idents = c("multiome_WT_DG_GC", "multiome_Bap1KO_DG_GC"),   extend.upstream = 1000)
+dev.off()
+
+
+# Dscam
+pdf("output/Signac/CoveragePlot_condition-Dscam-DG_GC.pdf", width=5, height=2)
+CoveragePlot(multiome_WT_Bap1KO_QCV2vC1.sct, region = 'Dscam', features = 'Dscam', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, links = FALSE, group.by = "combined_ident", idents = c("multiome_WT_DG_GC", "multiome_Bap1KO_DG_GC"),   extend.upstream = 1000)
+dev.off()
+pdf("output/Signac/CoveragePlot_condition-Dscam_TSS-DG_GC.pdf", width=5, height=2)
+CoveragePlot(multiome_WT_Bap1KO_QCV2vC1.sct, region =  c("chr16-97169399-97172371"), features = 'Dscam', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, links = FALSE, group.by = "combined_ident", idents = c("multiome_WT_DG_GC", "multiome_Bap1KO_DG_GC"),   extend.upstream = 1000)
+dev.off()
+
+
+# Tenm2
+pdf("output/Signac/CoveragePlot_condition-Tenm2-DG_GC.pdf", width=5, height=2)
+CoveragePlot(multiome_WT_Bap1KO_QCV2vC1.sct, region = 'Tenm2', features = 'Tenm2', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, links = FALSE, group.by = "combined_ident", idents = c("multiome_WT_DG_GC", "multiome_Bap1KO_DG_GC"),   extend.upstream = 1000)
+dev.off()
+pdf("output/Signac/CoveragePlot_condition-Dscam_TSS-DG_GC.pdf", width=5, height=2)
+CoveragePlot(multiome_WT_Bap1KO_QCV2vC1.sct, region =  c("chr16-97169399-97172371"), features = 'Dscam', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, links = FALSE, group.by = "combined_ident", idents = c("multiome_WT_DG_GC", "multiome_Bap1KO_DG_GC"),   extend.upstream = 1000)
+dev.off()
+
+# Slc24a2
+pdf("output/Signac/CoveragePlot_condition-Slc24a2-DG_GC.pdf", width=5, height=2)
+CoveragePlot(multiome_WT_Bap1KO_QCV2vC1.sct, region = 'Slc24a2', features = 'Slc24a2', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, links = FALSE, group.by = "combined_ident", idents = c("multiome_WT_DG_GC", "multiome_Bap1KO_DG_GC"),   extend.upstream = 1000)
+dev.off()
+pdf("output/Signac/CoveragePlot_condition-Slc24a2_TSS-DG_GC.pdf", width=5, height=2)
+CoveragePlot(multiome_WT_Bap1KO_QCV2vC1.sct, region =  c("chr4-87226581-87231384"), features = 'Slc24a2', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, links = FALSE, group.by = "combined_ident", idents = c("multiome_WT_DG_GC", "multiome_Bap1KO_DG_GC"),   extend.upstream = 1000)
+dev.off()
+
+# Itpr1
+pdf("output/Signac/CoveragePlot_condition-Itpr1-DG_GC.pdf", width=5, height=2)
+CoveragePlot(multiome_WT_Bap1KO_QCV2vC1.sct, region = 'Itpr1', features = 'Itpr1', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, links = FALSE, group.by = "combined_ident", idents = c("multiome_WT_DG_GC", "multiome_Bap1KO_DG_GC"),   extend.upstream = 1000)
+dev.off()
+pdf("output/Signac/CoveragePlot_condition-Itpr1_TSS-DG_GC.pdf", width=5, height=2)
+CoveragePlot(multiome_WT_Bap1KO_QCV2vC1.sct, region =  c("chr6-108212957-108214105"), features = 'Itpr1', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, links = FALSE, group.by = "combined_ident", idents = c("multiome_WT_DG_GC", "multiome_Bap1KO_DG_GC"),   extend.upstream = 1000)
+dev.off()
+
+
+# Kirrel3
+pdf("output/Signac/CoveragePlot_condition-Kirrel3-DG_GC.pdf", width=5, height=2)
+CoveragePlot(multiome_WT_Bap1KO_QCV2vC1.sct, region = 'Kirrel3', features = 'Kirrel3', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, links = FALSE, group.by = "combined_ident", idents = c("multiome_WT_DG_GC", "multiome_Bap1KO_DG_GC"),   extend.upstream = 1000)
+dev.off()
+pdf("output/Signac/CoveragePlot_condition-Itpr1_TSS-DG_GC.pdf", width=5, height=2)
+CoveragePlot(multiome_WT_Bap1KO_QCV2vC1.sct, region =  c("chr6-108212957-108214105"), features = 'Kirrel3', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, links = FALSE, group.by = "combined_ident", idents = c("multiome_WT_DG_GC", "multiome_Bap1KO_DG_GC"),   extend.upstream = 1000)
+dev.off()
+
+# Sema6a
+pdf("output/Signac/CoveragePlot_condition-Sema6a-DG_GC.pdf", width=5, height=2)
+CoveragePlot(multiome_WT_Bap1KO_QCV2vC1.sct, region = 'Sema6a', features = 'Sema6a', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, links = FALSE, group.by = "combined_ident", idents = c("multiome_WT_DG_GC", "multiome_Bap1KO_DG_GC"),   extend.upstream = 1000)
+dev.off()
+pdf("output/Signac/CoveragePlot_condition-Sema6a_TSS-DG_GC.pdf", width=5, height=2)
+CoveragePlot(multiome_WT_Bap1KO_QCV2vC1.sct, region =  c("chr18-47364261-47369828"), features = 'Sema6a', assay = 'ATAC', expression.assay = 'SCT', peaks = FALSE, links = FALSE, group.by = "combined_ident", idents = c("multiome_WT_DG_GC", "multiome_Bap1KO_DG_GC"))
+dev.off()
 
 
 
@@ -7165,7 +7250,7 @@ cell_types <- c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "clu
 for (cell_type in cell_types) {
   file_name <- paste("output/Signac/", cell_type, "-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt", sep = "")
   deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
-  num_degs <- sum(deg_data$p_val_adj < 0.05) ## Count the number of significant DEGs
+  num_degs <- sum(deg_data$p_val_adj < 0.05 & abs(deg_data$avg_log2FC) > 0.5) ## Count the number of significant DEGs
   DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
 }
 DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = c("cluster1", "cluster2", "cluster3", "cluster4", "cluster5", "cluster6", "cluster7", "cluster8", "cluster9", "cluster10", "cluster11", "cluster12", "cluster13", "cluster14", "cluster15", "cluster16", "cluster17", "cluster18", "cluster19")) 
@@ -7238,7 +7323,7 @@ umap_coordinates$cluster <- multiome_WT_Bap1KO_QCV2vC1.sct@meta.data$cluster.ann
 cluster_centers <- aggregate(cbind(umap_1, umap_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
   left_join(DEG_count %>% dplyr::rename( "cluster"="Cell_Name"))
 ## Create a UMAP plot colored by DEG values, with cluster DEG counts as text annotations
-pdf("output/Signac/FeaturePlot_RNAUMAP_multiome_WT_Bap1KO_QCV2vC1_DEG_numeric_correct1.pdf", width=6, height=6)
+pdf("output/Signac/FeaturePlot_RNAUMAP_multiome_WT_Bap1KO_QCV2vC1_DEGpadj05fc05_numeric_correct1.pdf", width=6, height=6)
 FeaturePlot(multiome_WT_Bap1KO_QCV2vC1.sct, features = "DEG", pt.size = 0.5, reduction = "umap") +
   scale_colour_viridis(option="mako") + # 
   geom_text(data = cluster_centers, aes(x = umap_1, y = umap_2, label = Num_DEGs), 
@@ -7387,8 +7472,8 @@ clusters <- list(
 ## Function to count up- and down-regulated genes in each cluster
 count_up_down <- function(cluster_data) {
   significant_genes <- cluster_data %>% dplyr::filter(p_val_adj < 0.05)
-  nb_upregulated <- sum(significant_genes$avg_log2FC > 0)
-  nb_downregulated <- sum(significant_genes$avg_log2FC < 0)
+  nb_upregulated <- sum(significant_genes$avg_log2FC > 0.5)
+  nb_downregulated <- sum(significant_genes$avg_log2FC < -0.5)
   
   return(data.frame(nb_upregulated = nb_upregulated, nb_downregulated = nb_downregulated))
 }
@@ -7396,6 +7481,8 @@ results <- lapply(clusters, count_up_down)
 final_results <- do.call(rbind, results)
 row.names(final_results) <- names(clusters)
 print(final_results)
+
+
 
 
 
@@ -7535,13 +7622,25 @@ DEG_genes = PyNs_SubC_CA23 %>%
 
 
 DEG_genes_signif = DEG_genes %>%
-  dplyr::filter(p_val_adj < 0.05)
+  dplyr::filter(p_val_adj < 0.05 ) # & abs(avg_log2FC) > 0.5
    
    
 # plot
 DEG_genes_signif
 DAR_genes_signif
    
+### output save table DEG DAR ###
+DEG_genes_signif %>%
+  dplyr::rename("avg_log2FC_DEG" = "avg_log2FC", "p_val_adj_DEG" = "p_val_adj") %>%
+  dplyr::select(gene, avg_log2FC_DEG,p_val_adj_DEG) %>%
+  left_join(DAR_genes_signif) %>%
+  dplyr::rename("avg_log2FC_DAR" = "avg_log2FC", "p_val_adj_DAR" = "p_val_adj") %>%
+  dplyr::select(gene, avg_log2FC_DEG,p_val_adj_DEG, avg_log2FC_DAR, p_val_adj_DAR) %>%
+  unique() %>%
+  mutate(overlap_with_DAR = ifelse(gene %in% DAR_genes_signif$gene, "Overlap", "No Overlap")) %>%
+  write_tsv(., "output/Signac/DEG_genes_signif_DAR.tsv")
+###
+
 DEG_DAR_genes_signif <- DEG_genes_signif %>%
   mutate(overlap_with_DAR = ifelse(gene %in% DAR_genes_signif$gene, "Overlap", "No Overlap"))
    
@@ -7566,7 +7665,7 @@ DEG_DAR_genes_signif$cluster <- factor(DEG_DAR_genes_signif$cluster, levels = c(
 "IN_2",
 "IN_SubC")) 
 
-pdf("output/Signac/barplot_DEG_DAR_prop.pdf", width=6, height=4)
+pdf("output/Signac/barplot_DEGpadj05fc05_DAR_prop.pdf", width=6, height=4)
 DEG_DAR_genes_signif %>%
   group_by(cluster, overlap_with_DAR) %>%
   summarise(count = n(), .groups = "drop") %>%
@@ -7599,7 +7698,14 @@ DAR_genes_signif_pos = DAR_genes_signif %>%
    
 DEG_DAR_genes_signif_pos <- DEG_genes_signif_pos %>%
   mutate(overlap_with_DAR = ifelse(gene %in% DAR_genes_signif_pos$gene, "Overlap", "No Overlap"))
-   
+
+
+### output save table DEG DAR ###
+DEG_DAR_genes_signif_pos %>%
+  unique() %>%
+  write_tsv(., "output/Signac/DEG_DAR_genes_signif_pos.tsv")
+###
+
    
 DEG_DAR_genes_signif_pos$cluster <- factor(DEG_DAR_genes_signif_pos$cluster, levels = c("NSC_quiescent",
 "NSC_proliferative_1",
@@ -7621,7 +7727,7 @@ DEG_DAR_genes_signif_pos$cluster <- factor(DEG_DAR_genes_signif_pos$cluster, lev
 "IN_2",
 "IN_SubC")) 
 
-pdf("output/Signac/barplot_DEG_DAR_pos_prop.pdf", width=6, height=4)
+pdf("output/Signac/barplot_DEGpadj05fc05_DAR_pos_prop.pdf", width=6, height=4)
 DEG_DAR_genes_signif_pos %>%
   group_by(cluster, overlap_with_DAR) %>%
   summarise(count = n(), .groups = "drop") %>%
@@ -7654,6 +7760,12 @@ DAR_genes_signif_neg = DAR_genes_signif %>%
 DEG_DAR_genes_signif_neg <- DEG_genes_signif_neg %>%
   mutate(overlap_with_DAR = ifelse(gene %in% DAR_genes_signif_neg$gene, "Overlap", "No Overlap"))
    
+
+### output save table DEG DAR ###
+DEG_DAR_genes_signif_neg %>%
+  unique() %>%
+  write_tsv(., "output/Signac/DEG_DAR_genes_signif_neg.tsv")
+###
    
 DEG_DAR_genes_signif_neg$cluster <- factor(DEG_DAR_genes_signif_neg$cluster, levels = c("NSC_quiescent",
 "NSC_proliferative_1",
@@ -7675,7 +7787,7 @@ DEG_DAR_genes_signif_neg$cluster <- factor(DEG_DAR_genes_signif_neg$cluster, lev
 "IN_2",
 "IN_SubC")) 
 
-pdf("output/Signac/barplot_DEG_DAR_neg_prop.pdf", width=6, height=4)
+pdf("output/Signac/barplot_DEGpadj05fc05_DAR_neg_prop.pdf", width=6, height=4)
 DEG_DAR_genes_signif_neg %>%
   group_by(cluster, overlap_with_DAR) %>%
   summarise(count = n(), .groups = "drop") %>%
