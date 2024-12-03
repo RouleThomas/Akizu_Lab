@@ -20722,12 +20722,9 @@ ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
        y = "Average Expression") +
   theme_bw()
 dev.off()
+# save output
+save(plot_data, file = "LOG1P-EpiblastUpregpadj05fc025_ReinH3K27me3-traj1_humangastruloidUNTREATED2472hrs.RData")
 
-
-
-
-
-plot_data_1 <- data.frame(Pseudotime = pseudotime_vector, Expression = log1p(as.numeric(subset_data_1)), GeneList = "GeneList 1")
 
 
 
@@ -21001,6 +20998,8 @@ ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
        y = "Average Expression") +
   theme_bw()
 dev.off()
+# save output
+save(plot_data, file = "LOG1P-EpiblastUpregpadj05fc025_H3K27me3Rein-traj2_humangastruloidUNTREATED2472hrs.RData")
 
 
 
@@ -21229,7 +21228,8 @@ ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
        y = "Average Expression") +
   theme_bw()
 dev.off()
-
+# save output
+save(plot_data, file = "LOG1P-EpiblastUpregpadj05fc025_H3K27me3Rein-traj4_humangastruloidUNTREATED2472hrs.RData")
 
 
 
@@ -21366,8 +21366,8 @@ pseudotime_start_end_association <- pseudotime_start_end_association[order(pseud
 # save output: write.table(pseudotime_start_end_association, file = c("output/condiments/pseudotime_start_end_association_traj5_humangastruloidUNTREATED2472hrs_3Dpaper.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
 
-sce_cells <- colnames(traj5_humangastruloidUNTREATED2472hrs) # collect cells of traj2
-subset_traj5_humangastruloidUNTREATED2472hrs_humangastruloid.combined.sct <- subset(humangastruloid.combined.sct, cells = sce_cells) # Create a seurat object with only cells from traj2
+sce_cells <- colnames(traj5_humangastruloidUNTREATED2472hrs) # collect cells of traj
+subset_traj5_humangastruloidUNTREATED2472hrs_humangastruloid.combined.sct <- subset(humangastruloid.combined.sct, cells = sce_cells) # Create a seurat object with only cells from traj
 
 
 
@@ -21435,7 +21435,6 @@ gene_list <- read_tsv("../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/out
   pull(1)
 gene_list <- read_tsv("../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Rein-UpRegulated_Epiblastpadj05fc025.txt", col_names = FALSE) %>% 
   pull(1)
-
 #### Extract the counts or scaled data for the genes of interest
 counts_matrix <- subset_traj5_humangastruloidUNTREATED2472hrs_humangastruloid.combined.sct[["RNA"]]@counts
 valid_genes <- gene_list[gene_list %in% rownames(counts_matrix)] # to filter to only keep the genes present in scRNAseq
@@ -21461,7 +21460,8 @@ ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
        y = "Average Expression") +
   theme_bw()
 dev.off()
-
+# save output
+save(plot_data, file = "LOG1P-EpiblastUpregpadj05fc025_H3K27me3Rein-traj5_humangastruloidUNTREATED2472hrs.RData")
 
 
 ## Identify Activation point = peak (maximum expression) of each gene along the pseudotime trajectory
@@ -21806,7 +21806,7 @@ loess_fit <- loess(AverageExpression ~ Pseudotime.pseudotime, data = plot_data)
 plot_data$SmoothedExpression <- predict(loess_fit)
 #### Plot the smoothed trajectory
 #EpiblastUpregpadj05fc025
-pdf("output/condiments/plotSmoothersLOG1P-EpiblastUpregpadj05fc025_H3K27me3Rein-traj3_humangastruloidUNTREATED2472hrs_3Dpaper.pdf",  width=5, height=4)
+pdf("output/condiments/plotSmoothersLOG1P-EpiblastUpregpadj05fc025_H3K27me3Rein-traj3_humangastruloidDASATINIB2472hrs_3Dpaper.pdf",  width=5, height=4)
 ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
   geom_point(aes(y = AverageExpression), color = "lightblue", alpha = 0.5) +
   geom_line(aes(y = SmoothedExpression), color = "darkblue", size = 1) +
@@ -21815,7 +21815,8 @@ ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
        y = "Average Expression") +
   theme_bw()
 dev.off()
-
+# save output
+save(plot_data, file = "LOG1P-EpiblastUpregpadj05fc025_H3K27me3Rein-traj3_humangastruloidDASATINIB2472hrs.RData")
 
 
 
@@ -22045,7 +22046,8 @@ ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
        y = "Average Expression") +
   theme_bw()
 dev.off()
-
+# save output
+save(plot_data, file = "LOG1P-EpiblastUpregpadj05fc025_H3K27me3Rein-traj1_humangastruloidDASATINIB2472hrs.RData")
 
 
 
@@ -22269,7 +22271,8 @@ ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
        y = "Average Expression") +
   theme_bw()
 dev.off()
-
+# save output
+save(plot_data, file = "LOG1P-EpiblastUpregpadj05fc025_H3K27me3Rein-traj4_humangastruloidDASATINIB2472hrs.RData")
 
 
 
@@ -22490,7 +22493,7 @@ loess_fit <- loess(AverageExpression ~ Pseudotime.pseudotime, data = plot_data)
 plot_data$SmoothedExpression <- predict(loess_fit)
 #### Plot the smoothed trajectory
 #EpiblastUpregpadj05fc025
-pdf("output/condiments/plotSmoothersLOG1P_H3K27me3Rein-EpiblastUpregpadj05fc025-traj1sep_humangastruloidDASATINIB2472hrs_3Dpaper.pdf",  width=5, height=4)
+pdf("output/condiments/plotSmoothersLOG1P_H3K27me3Rein_EpiblastUpregpadj05fc025-traj1sep_humangastruloidDASATINIB2472hrs_3Dpaper.pdf",  width=5, height=4)
 ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
   geom_point(aes(y = AverageExpression), color = "lightblue", alpha = 0.5) +
   geom_line(aes(y = SmoothedExpression), color = "darkblue", size = 1) +
@@ -22499,7 +22502,8 @@ ggplot(plot_data, aes(x = Pseudotime.pseudotime)) +
        y = "Average Expression") +
   theme_bw()
 dev.off()
-
+# save output
+save(plot_data, file = "LOG1P-EpiblastUpregpadj05fc025_ReinH3K27me3-traj1sep_humangastruloidDASATINIB2472hrs.RData")
 
 
 
@@ -22605,12 +22609,622 @@ write.table(switch_df, file = c("output/condiments/switch_df_traj1sep_humangastr
 
 ```
 
+### bins of pseudotime plots - 3D gastrulation paper
+
+All plot_data included pseudotime and average gene expression level has been saved for each condition and trajectory as: `LOG1P-[geneSet]-traj[NUMERIC]_humangastruloid[condition]2472hrs.RData`
+
+Let's scale from 0-1 the pseudotime and perform below comparison:
+- *UNTREATED vs DASATINIB*: each trajectory for gene gain/lost EZH2; stat UNTREATED vs DASATINIB
+- *UNTREATED only*: each trajectory; stat early vs late pseudotime
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+library("ggpubr")
+
+##########################################################################
+## UNTREATED vs DASATINIB #####################################
+##########################################################################
+
+# Epi --> ... --> Cardiomyocyte | EZH2 lost
+load("output/condiments/LOG1P-THORq4_EZH2_neg-traj2_humangastruloidUNTREATED2472hrs.RData")
+THORq4_EZH2_neg_traj2_humangastruloidUNTREATED2472hrs = plot_data %>%
+  add_column(condition = "UNTREATED")
+load("output/condiments/LOG1P-THORq4_EZH2_neg-traj1_humangastruloidDASATINIB2472hrs.RData")
+THORq4_EZH2_neg_traj1_humangastruloidDASATINIB2472hrs = plot_data %>%
+  add_column(condition = "DASATINIB")
+
+plot_data = THORq4_EZH2_neg_traj2_humangastruloidUNTREATED2472hrs %>%
+  bind_rows(THORq4_EZH2_neg_traj1_humangastruloidDASATINIB2472hrs)
+
+### pseudotime bins
+#### scale pseudotime 0-1
+plot_data$Pseudotime.scale <- (plot_data$Pseudotime.pseudotime - min(plot_data$Pseudotime.pseudotime)) /
+                                   (max(plot_data$Pseudotime.pseudotime) - min(plot_data$Pseudotime.pseudotime))
+#### Cut the Pseudotime.scale column into bins of 0.2
+plot_data$bins <- cut(plot_data$Pseudotime.scale, 
+                      breaks = seq(0, 1, by = 0.2), 
+                      include.lowest = TRUE, 
+                      labels = c("0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1"))
+#### plot
+plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED", "DASATINIB")) # Reorder untreated 1st
+
+pdf("output/condiments/binsPseudotime_THORq4_EZH2_neg_traj21_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+anova_model <- aov(AverageExpression ~ bins * condition, data = plot_data)
+anova_summary <- summary(anova_model)
+pairwise_results <- plot_data %>%
+  group_by(bins) %>%
+  do({
+    data = .
+    test_result <- t.test(AverageExpression ~ condition, data = data)
+    data.frame(p_value = test_result$p.value)
+  }) %>%
+  ungroup() %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "fdr"))
+summary_data = plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_expression = mean(AverageExpression, na.rm = TRUE),
+            se_expression = sd(AverageExpression, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_expression, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_expression - se_expression, 
+                    ymax = mean_expression + se_expression), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
+            aes(x = bins, y = max(mean_expression + se_expression) + 0.01, 
+                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+            inherit.aes = FALSE, 
+            size = 2, 
+            color = "black") + # Annotate FDR-adjusted p-values
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Average Expression") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
+
+# Epi --> ... --> Cardiomyocyte | EZH2 gain
+load("output/condiments/LOG1P-THORq4_EZH2_pos-traj2_humangastruloidUNTREATED2472hrs.RData")
+THORq4_EZH2_pos_traj2_humangastruloidUNTREATED2472hrs = plot_data %>%
+  add_column(condition = "UNTREATED")
+load("output/condiments/LOG1P-THORq4_EZH2_pos-traj1_humangastruloidDASATINIB2472hrs.RData")
+THORq4_EZH2_pos_traj1_humangastruloidDASATINIB2472hrs = plot_data %>%
+  add_column(condition = "DASATINIB")
+
+plot_data = THORq4_EZH2_pos_traj2_humangastruloidUNTREATED2472hrs %>%
+  bind_rows(THORq4_EZH2_pos_traj1_humangastruloidDASATINIB2472hrs)
+
+### pseudotime bins
+#### scale pseudotime 0-1
+plot_data$Pseudotime.scale <- (plot_data$Pseudotime.pseudotime - min(plot_data$Pseudotime.pseudotime)) /
+                                   (max(plot_data$Pseudotime.pseudotime) - min(plot_data$Pseudotime.pseudotime))
+#### Cut the Pseudotime.scale column into bins of 0.2
+plot_data$bins <- cut(plot_data$Pseudotime.scale, 
+                      breaks = seq(0, 1, by = 0.2), 
+                      include.lowest = TRUE, 
+                      labels = c("0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1"))
+#### plot
+plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED", "DASATINIB")) # Reorder untreated 1st
+
+pdf("output/condiments/binsPseudotime_THORq4_EZH2_pos_traj21_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+anova_model <- aov(AverageExpression ~ bins * condition, data = plot_data)
+anova_summary <- summary(anova_model)
+pairwise_results <- plot_data %>%
+  group_by(bins) %>%
+  do({
+    data = .
+    test_result <- t.test(AverageExpression ~ condition, data = data)
+    data.frame(p_value = test_result$p.value)
+  }) %>%
+  ungroup() %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "fdr"))
+summary_data = plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_expression = mean(AverageExpression, na.rm = TRUE),
+            se_expression = sd(AverageExpression, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_expression, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_expression - se_expression, 
+                    ymax = mean_expression + se_expression), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
+            aes(x = bins, y = max(mean_expression + se_expression) + 0.01, 
+                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+            inherit.aes = FALSE, 
+            size = 2, 
+            color = "black") + # Annotate FDR-adjusted p-values
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Average Expression") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
+
+# Epi --> PS --> Blood | EZH2 lost
+load("output/condiments/LOG1P-THORq4_EZH2_neg-traj1_humangastruloidUNTREATED2472hrs.RData")
+THORq4_EZH2_neg_traj1_humangastruloidUNTREATED2472hrs = plot_data %>%
+  add_column(condition = "UNTREATED")
+load("output/condiments/LOG1P-THORq4_EZH2_neg-traj1sep_humangastruloidDASATINIB2472hrs.RData")
+THORq4_EZH2_neg_traj1sep_humangastruloidDASATINIB2472hrs = plot_data %>%
+  add_column(condition = "DASATINIB")
+
+plot_data = THORq4_EZH2_neg_traj1_humangastruloidUNTREATED2472hrs %>%
+  bind_rows(THORq4_EZH2_neg_traj1sep_humangastruloidDASATINIB2472hrs)
+
+### pseudotime bins
+#### scale pseudotime 0-1
+plot_data$Pseudotime.scale <- (plot_data$Pseudotime.pseudotime - min(plot_data$Pseudotime.pseudotime)) /
+                                   (max(plot_data$Pseudotime.pseudotime) - min(plot_data$Pseudotime.pseudotime))
+#### Cut the Pseudotime.scale column into bins of 0.2
+plot_data$bins <- cut(plot_data$Pseudotime.scale, 
+                      breaks = seq(0, 1, by = 0.2), 
+                      include.lowest = TRUE, 
+                      labels = c("0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1"))
+#### plot
+plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED", "DASATINIB")) # Reorder untreated 1st
+
+pdf("output/condiments/binsPseudotime_THORq4_EZH2_neg_traj11sep_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+anova_model <- aov(AverageExpression ~ bins * condition, data = plot_data)
+anova_summary <- summary(anova_model)
+pairwise_results <- plot_data %>%
+  group_by(bins) %>%
+  do({
+    data = .
+    test_result <- t.test(AverageExpression ~ condition, data = data)
+    data.frame(p_value = test_result$p.value)
+  }) %>%
+  ungroup() %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "fdr"))
+summary_data = plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_expression = mean(AverageExpression, na.rm = TRUE),
+            se_expression = sd(AverageExpression, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_expression, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_expression - se_expression, 
+                    ymax = mean_expression + se_expression), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
+            aes(x = bins, y = max(mean_expression + se_expression) + 0.01, 
+                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+            inherit.aes = FALSE, 
+            size = 2, 
+            color = "black") + # Annotate FDR-adjusted p-values
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Average Expression") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
+
+# Epi --> PS --> Blood | EZH2 gain
+load("output/condiments/LOG1P-THORq4_EZH2_pos-traj1_humangastruloidUNTREATED2472hrs.RData")
+THORq4_EZH2_pos_traj1_humangastruloidUNTREATED2472hrs = plot_data %>%
+  add_column(condition = "UNTREATED")
+load("output/condiments/LOG1P-THORq4_EZH2_pos-traj1sep_humangastruloidDASATINIB2472hrs.RData")
+THORq4_EZH2_pos_traj1sep_humangastruloidDASATINIB2472hrs = plot_data %>%
+  add_column(condition = "DASATINIB")
+
+plot_data = THORq4_EZH2_pos_traj1_humangastruloidUNTREATED2472hrs %>%
+  bind_rows(THORq4_EZH2_pos_traj1sep_humangastruloidDASATINIB2472hrs)
+
+### pseudotime bins
+#### scale pseudotime 0-1
+plot_data$Pseudotime.scale <- (plot_data$Pseudotime.pseudotime - min(plot_data$Pseudotime.pseudotime)) /
+                                   (max(plot_data$Pseudotime.pseudotime) - min(plot_data$Pseudotime.pseudotime))
+#### Cut the Pseudotime.scale column into bins of 0.2
+plot_data$bins <- cut(plot_data$Pseudotime.scale, 
+                      breaks = seq(0, 1, by = 0.2), 
+                      include.lowest = TRUE, 
+                      labels = c("0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1"))
+#### plot
+plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED", "DASATINIB")) # Reorder untreated 1st
+
+pdf("output/condiments/binsPseudotime_THORq4_EZH2_pos_traj11sep_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+anova_model <- aov(AverageExpression ~ bins * condition, data = plot_data)
+anova_summary <- summary(anova_model)
+pairwise_results <- plot_data %>%
+  group_by(bins) %>%
+  do({
+    data = .
+    test_result <- t.test(AverageExpression ~ condition, data = data)
+    data.frame(p_value = test_result$p.value)
+  }) %>%
+  ungroup() %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "fdr"))
+summary_data = plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_expression = mean(AverageExpression, na.rm = TRUE),
+            se_expression = sd(AverageExpression, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_expression, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_expression - se_expression, 
+                    ymax = mean_expression + se_expression), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
+            aes(x = bins, y = max(mean_expression + se_expression) + 0.01, 
+                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+            inherit.aes = FALSE, 
+            size = 2, 
+            color = "black") + # Annotate FDR-adjusted p-values
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Average Expression") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
 
 
 
 
 
 
+
+
+# Epi --> Epi/Ecto | EZH2 lost
+load("output/condiments/LOG1P-THORq4_EZH2_neg-traj4_humangastruloidUNTREATED2472hrs.RData")
+THORq4_EZH2_neg_traj4_humangastruloidUNTREATED2472hrs = plot_data %>%
+  add_column(condition = "UNTREATED")
+load("output/condiments/LOG1P-THORq4_EZH2_neg-traj3_humangastruloidDASATINIB2472hrs.RData")
+THORq4_EZH2_neg_traj3_humangastruloidDASATINIB2472hrs = plot_data %>%
+  add_column(condition = "DASATINIB")
+
+plot_data = THORq4_EZH2_neg_traj4_humangastruloidUNTREATED2472hrs %>%
+  bind_rows(THORq4_EZH2_neg_traj3_humangastruloidDASATINIB2472hrs)
+
+### pseudotime bins
+#### scale pseudotime 0-1
+plot_data$Pseudotime.scale <- (plot_data$Pseudotime.pseudotime - min(plot_data$Pseudotime.pseudotime)) /
+                                   (max(plot_data$Pseudotime.pseudotime) - min(plot_data$Pseudotime.pseudotime))
+#### Cut the Pseudotime.scale column into bins of 0.2
+plot_data$bins <- cut(plot_data$Pseudotime.scale, 
+                      breaks = seq(0, 1, by = 0.2), 
+                      include.lowest = TRUE, 
+                      labels = c("0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1"))
+#### plot
+plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED", "DASATINIB")) # Reorder untreated 1st
+
+pdf("output/condiments/binsPseudotime_THORq4_EZH2_neg_traj43_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+anova_model <- aov(AverageExpression ~ bins * condition, data = plot_data)
+anova_summary <- summary(anova_model)
+pairwise_results <- plot_data %>%
+  group_by(bins) %>%
+  do({
+    data = .
+    test_result <- t.test(AverageExpression ~ condition, data = data)
+    data.frame(p_value = test_result$p.value)
+  }) %>%
+  ungroup() %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "fdr"))
+summary_data = plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_expression = mean(AverageExpression, na.rm = TRUE),
+            se_expression = sd(AverageExpression, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_expression, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_expression - se_expression, 
+                    ymax = mean_expression + se_expression), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
+            aes(x = bins, y = max(mean_expression + se_expression) + 0.01, 
+                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+            inherit.aes = FALSE, 
+            size = 2, 
+            color = "black") + # Annotate FDR-adjusted p-values
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Average Expression") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
+
+
+
+
+
+# Epi --> Epi/Ecto | EZH2 gain
+load("output/condiments/LOG1P-THORq4_EZH2_pos-traj4_humangastruloidUNTREATED2472hrs.RData")
+THORq4_EZH2_pos_traj4_humangastruloidUNTREATED2472hrs = plot_data %>%
+  add_column(condition = "UNTREATED")
+load("output/condiments/LOG1P-THORq4_EZH2_pos-traj3_humangastruloidDASATINIB2472hrs.RData")
+THORq4_EZH2_pos_traj3_humangastruloidDASATINIB2472hrs = plot_data %>%
+  add_column(condition = "DASATINIB")
+
+plot_data = THORq4_EZH2_pos_traj4_humangastruloidUNTREATED2472hrs %>%
+  bind_rows(THORq4_EZH2_pos_traj3_humangastruloidDASATINIB2472hrs)
+
+### pseudotime bins
+#### scale pseudotime 0-1
+plot_data$Pseudotime.scale <- (plot_data$Pseudotime.pseudotime - min(plot_data$Pseudotime.pseudotime)) /
+                                   (max(plot_data$Pseudotime.pseudotime) - min(plot_data$Pseudotime.pseudotime))
+#### Cut the Pseudotime.scale column into bins of 0.2
+plot_data$bins <- cut(plot_data$Pseudotime.scale, 
+                      breaks = seq(0, 1, by = 0.2), 
+                      include.lowest = TRUE, 
+                      labels = c("0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1"))
+#### plot
+plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED", "DASATINIB")) # Reorder untreated 1st
+
+pdf("output/condiments/binsPseudotime_THORq4_EZH2_pos_traj43_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+anova_model <- aov(AverageExpression ~ bins * condition, data = plot_data)
+anova_summary <- summary(anova_model)
+pairwise_results <- plot_data %>%
+  group_by(bins) %>%
+  do({
+    data = .
+    test_result <- t.test(AverageExpression ~ condition, data = data)
+    data.frame(p_value = test_result$p.value)
+  }) %>%
+  ungroup() %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "fdr"))
+summary_data = plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_expression = mean(AverageExpression, na.rm = TRUE),
+            se_expression = sd(AverageExpression, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_expression, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_expression - se_expression, 
+                    ymax = mean_expression + se_expression), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
+            aes(x = bins, y = max(mean_expression + se_expression) + 0.01, 
+                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+            inherit.aes = FALSE, 
+            size = 2, 
+            color = "black") + # Annotate FDR-adjusted p-values
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Average Expression") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
+
+
+
+
+
+
+# Epi --> Endo | EZH2 lost
+load("output/condiments/LOG1P-THORq4_EZH2_neg-traj5_humangastruloidUNTREATED2472hrs.RData")
+THORq4_EZH2_neg_traj5_humangastruloidUNTREATED2472hrs = plot_data %>%
+  add_column(condition = "UNTREATED")
+load("output/condiments/LOG1P-THORq4_EZH2_neg-traj4_humangastruloidDASATINIB2472hrs.RData")
+THORq4_EZH2_neg_traj4_humangastruloidDASATINIB2472hrs = plot_data %>%
+  add_column(condition = "DASATINIB")
+
+plot_data = THORq4_EZH2_neg_traj5_humangastruloidUNTREATED2472hrs %>%
+  bind_rows(THORq4_EZH2_neg_traj4_humangastruloidDASATINIB2472hrs)
+### pseudotime bins
+#### scale pseudotime 0-1
+plot_data$Pseudotime.scale <- (plot_data$Pseudotime.pseudotime - min(plot_data$Pseudotime.pseudotime)) /
+                                   (max(plot_data$Pseudotime.pseudotime) - min(plot_data$Pseudotime.pseudotime))
+#### Cut the Pseudotime.scale column into bins of 0.2
+plot_data$bins <- cut(plot_data$Pseudotime.scale, 
+                      breaks = seq(0, 1, by = 0.2), 
+                      include.lowest = TRUE, 
+                      labels = c("0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1"))
+#### plot
+plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED", "DASATINIB")) # Reorder untreated 1st
+pdf("output/condiments/binsPseudotime_THORq4_EZH2_neg_traj54_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+anova_model <- aov(AverageExpression ~ bins * condition, data = plot_data)
+anova_summary <- summary(anova_model)
+pairwise_results <- plot_data %>%
+  group_by(bins) %>%
+  do({
+    data = .
+    test_result <- t.test(AverageExpression ~ condition, data = data)
+    data.frame(p_value = test_result$p.value)
+  }) %>%
+  ungroup() %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "fdr"))
+summary_data = plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_expression = mean(AverageExpression, na.rm = TRUE),
+            se_expression = sd(AverageExpression, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_expression, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_expression - se_expression, 
+                    ymax = mean_expression + se_expression), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
+            aes(x = bins, y = max(mean_expression + se_expression) + 0.01, 
+                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+            inherit.aes = FALSE, 
+            size = 2, 
+            color = "black") + # Annotate FDR-adjusted p-values
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Average Expression") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
+
+
+
+
+# Epi --> Endo | EZH2 gain
+load("output/condiments/LOG1P-THORq4_EZH2_pos-traj5_humangastruloidUNTREATED2472hrs.RData")
+THORq4_EZH2_pos_traj5_humangastruloidUNTREATED2472hrs = plot_data %>%
+  add_column(condition = "UNTREATED")
+load("output/condiments/LOG1P-THORq4_EZH2_pos-traj4_humangastruloidDASATINIB2472hrs.RData")
+THORq4_EZH2_pos_traj4_humangastruloidDASATINIB2472hrs = plot_data %>%
+  add_column(condition = "DASATINIB")
+
+plot_data = THORq4_EZH2_pos_traj5_humangastruloidUNTREATED2472hrs %>%
+  bind_rows(THORq4_EZH2_pos_traj4_humangastruloidDASATINIB2472hrs)
+### pseudotime bins
+#### scale pseudotime 0-1
+plot_data$Pseudotime.scale <- (plot_data$Pseudotime.pseudotime - min(plot_data$Pseudotime.pseudotime)) /
+                                   (max(plot_data$Pseudotime.pseudotime) - min(plot_data$Pseudotime.pseudotime))
+#### Cut the Pseudotime.scale column into bins of 0.2
+plot_data$bins <- cut(plot_data$Pseudotime.scale, 
+                      breaks = seq(0, 1, by = 0.2), 
+                      include.lowest = TRUE, 
+                      labels = c("0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1"))
+#### plot
+plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED", "DASATINIB")) # Reorder untreated 1st
+pdf("output/condiments/binsPseudotime_THORq4_EZH2_pos_traj54_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+anova_model <- aov(AverageExpression ~ bins * condition, data = plot_data)
+anova_summary <- summary(anova_model)
+pairwise_results <- plot_data %>%
+  group_by(bins) %>%
+  do({
+    data = .
+    test_result <- t.test(AverageExpression ~ condition, data = data)
+    data.frame(p_value = test_result$p.value)
+  }) %>%
+  ungroup() %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "fdr"))
+summary_data = plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_expression = mean(AverageExpression, na.rm = TRUE),
+            se_expression = sd(AverageExpression, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_expression, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_expression - se_expression, 
+                    ymax = mean_expression + se_expression), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
+            aes(x = bins, y = max(mean_expression + se_expression) + 0.01, 
+                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+            inherit.aes = FALSE, 
+            size = 2, 
+            color = "black") + # Annotate FDR-adjusted p-values
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Average Expression") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
+
+
+
+
+##########################################################################
+## UNTREATED - EARLY vs LATE pseudotime #####################################
+##########################################################################
+
+XXXY HERE !!!
+
+# Epi --> ... --> Cardiomyocyte | EZH2 lost
+load("output/condiments/LOG1P-THORq4_EZH2_neg-traj2_humangastruloidUNTREATED2472hrs.RData")
+THORq4_EZH2_neg_traj2_humangastruloidUNTREATED2472hrs = plot_data %>%
+  add_column(condition = "UNTREATED")
+load("output/condiments/LOG1P-THORq4_EZH2_neg-traj1_humangastruloidDASATINIB2472hrs.RData")
+THORq4_EZH2_neg_traj1_humangastruloidDASATINIB2472hrs = plot_data %>%
+  add_column(condition = "DASATINIB")
+
+plot_data = THORq4_EZH2_neg_traj2_humangastruloidUNTREATED2472hrs %>%
+  bind_rows(THORq4_EZH2_neg_traj1_humangastruloidDASATINIB2472hrs)
+
+### pseudotime bins
+#### scale pseudotime 0-1
+plot_data$Pseudotime.scale <- (plot_data$Pseudotime.pseudotime - min(plot_data$Pseudotime.pseudotime)) /
+                                   (max(plot_data$Pseudotime.pseudotime) - min(plot_data$Pseudotime.pseudotime))
+#### Cut the Pseudotime.scale column into bins of 0.2
+plot_data$bins <- cut(plot_data$Pseudotime.scale, 
+                      breaks = seq(0, 1, by = 0.2), 
+                      include.lowest = TRUE, 
+                      labels = c("0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1"))
+#### plot
+plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED", "DASATINIB")) # Reorder untreated 1st
+
+pdf("output/condiments/binsPseudotime_THORq4_EZH2_neg_traj21_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+anova_model <- aov(AverageExpression ~ bins * condition, data = plot_data)
+anova_summary <- summary(anova_model)
+pairwise_results <- plot_data %>%
+  group_by(bins) %>%
+  do({
+    data = .
+    test_result <- t.test(AverageExpression ~ condition, data = data)
+    data.frame(p_value = test_result$p.value)
+  }) %>%
+  ungroup() %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "fdr"))
+summary_data = plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_expression = mean(AverageExpression, na.rm = TRUE),
+            se_expression = sd(AverageExpression, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_expression, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_expression - se_expression, 
+                    ymax = mean_expression + se_expression), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
+            aes(x = bins, y = max(mean_expression + se_expression) + 0.01, 
+                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+            inherit.aes = FALSE, 
+            size = 2, 
+            color = "black") + # Annotate FDR-adjusted p-values
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Average Expression") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+```
 
 
 
