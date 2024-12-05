@@ -7472,13 +7472,15 @@ clusters <- list(
 ## Function to count up- and down-regulated genes in each cluster
 count_up_down <- function(cluster_data) {
   significant_genes <- cluster_data %>% dplyr::filter(p_val_adj < 0.05)
-  nb_upregulated <- sum(significant_genes$avg_log2FC > 0.5)
-  nb_downregulated <- sum(significant_genes$avg_log2FC < -0.5)
+  nb_upregulated <- sum(significant_genes$avg_log2FC > 0)
+  nb_downregulated <- sum(significant_genes$avg_log2FC < 0)
   
   return(data.frame(nb_upregulated = nb_upregulated, nb_downregulated = nb_downregulated))
 }
 results <- lapply(clusters, count_up_down)
-final_results <- do.call(rbind, results)
+final_results <- do.call(rbind, results) %>%
+  as_tibble(rownames = "cluster") %>%
+  arrange(cluster)
 row.names(final_results) <- names(clusters)
 print(final_results)
 
@@ -7493,6 +7495,19 @@ DAR_genes = read_tsv("output/Signac/DAR_genes_QCV2vC1_dim40kparam42res065algo4fe
 DAR_genes_signif = DAR_genes %>%
   dplyr::filter(p_val_adj <0.05) %>%
   dplyr::rename("gene" = "gene_name")
+## Function to count up- and down-DAR genes in each cluster
+count_up_down <- function(data) {
+  significant_genes <- data %>% dplyr::filter(p_val_adj < 0.05)
+  results <- significant_genes %>%
+    group_by(cluster) %>%
+    summarize(
+      nb_up = sum(avg_log2FC > 0),
+      nb_down = sum(avg_log2FC < 0)
+    )
+  return(results)
+}
+final_results <- count_up_down(DAR_genes_signif)
+print(final_results)
 
 
 ## import DEG genes
@@ -8266,6 +8281,286 @@ dev.off()
 
 
 
+### RNA and ATAC
+
+I check whether RNA DEG are associated with DAR; not so much; only 20-25% are, in the right direction (eg. induced RNA with open chromatin). Let's see whether looking at raw RNA and ATAC level improve this. Let's try to generate heatmap of RNA ATAC on the DEG genes
+
+
+
+
+```bash
+conda activate SignacV5
+module load hdf5
+```
+
+```R
+set.seed(42)
+
+# library
+library("Signac")
+library("Seurat")
+#library("hdf5r") # need to reinstall it at each session... with install.packages("hdf5r")
+library("tidyverse")
+library("EnsDb.Mmusculus.v79") # mm10
+library("reticulate") # needed to use FindClusters()
+library("metap") # needed to use FindConservedMarkers()
+library("ggbeeswarm")
+use_python("~/anaconda3/envs/SignacV5/bin/python") # to specify which python to use... Needed for FindClusters()
+# remotes::install_github('immunogenomics/presto')
+
+# import seurat object
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.sct_numeric_label.rds")
+
+# import DEGs
+cluster_types <- c("cluster1",
+"cluster2",
+"cluster3",
+"cluster4",
+"cluster5",
+"cluster6",
+"cluster7",
+"cluster8",
+"cluster9",
+"cluster10",
+"cluster11",
+"cluster12",
+"cluster13",
+"cluster14",
+"cluster15",
+"cluster16",
+"cluster17",
+"cluster18",
+"cluster19")
+# Loop over each cluster type to read data and assign to a variable
+for (cluster in cluster_types) {
+  file_path <- paste0("output/Signac/", cluster, "-Bap1KO_response_multiome_QCV2vC1_dim40kparam42res065algo4feat2000_allGenes_correct1.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1)
+  assign(cluster, data)
+}
+
+PyNs_SubC_CA23 = cluster1  %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "PyNs_SubC_CA23")
+IN_1 = cluster2 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "IN_1")
+SubC_1 = cluster3 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "SubC_1")
+PyNs_SubC_CA1 = cluster4 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "PyNs_SubC_CA1")
+PyNs_RSC_UL = cluster5 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble()  %>%
+  add_column(cluster= "PyNs_RSC_UL")
+DG_GC = cluster6 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "DG_GC")
+PyNs_RSC_MDL = cluster7 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "PyNs_RSC_MDL")
+NSC_proliferative_1 = cluster8 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "NSC_proliferative_1")
+SubC_2 = cluster9 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "SubC_2")
+IN_2 = cluster10 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "IN_2")
+NSC_quiescent = cluster11 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "NSC_quiescent")
+IN_SubC = cluster12 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "IN_SubC")
+IP = cluster13 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "IP")
+NSC_proliferative_2 = cluster14 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "NSC_proliferative_2")
+CR = cluster15 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "CR")
+OPC = cluster16 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "OPC")
+Meningeal_Cells = cluster17 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "Meningeal_Cells")
+Radial_Glia_Cells = cluster18 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "Radial_Glia_Cells")
+Microglia = cluster19 %>% 
+  rownames_to_column(var = "gene") %>%
+  as_tibble() %>%
+  add_column(cluster= "Microglia")
+
+DEG_genes = PyNs_SubC_CA23 %>%
+  bind_rows(IN_1) %>%
+  bind_rows(SubC_1) %>%
+  bind_rows(PyNs_SubC_CA1) %>%
+  bind_rows(PyNs_RSC_UL) %>%
+  bind_rows(DG_GC) %>%
+  bind_rows(PyNs_RSC_MDL) %>%
+  bind_rows(NSC_proliferative_1) %>%
+  bind_rows(SubC_2) %>%
+  bind_rows(IN_2) %>%
+  bind_rows(NSC_quiescent) %>%
+  bind_rows(IN_SubC) %>%
+  bind_rows(IP) %>%
+  bind_rows(NSC_proliferative_2) %>%
+  bind_rows(CR) %>%
+  bind_rows(OPC) %>%
+  bind_rows(Meningeal_Cells) %>%
+  bind_rows(Radial_Glia_Cells) %>%
+  bind_rows(Microglia) 
+
+DEG_genes_signif = DEG_genes %>%
+  dplyr::filter(p_val_adj < 0.05 ) # & abs(avg_log2FC) > 0.5
+
+DEG_genes_signif_pos = DEG_genes_signif %>% 
+  dplyr::filter(avg_log2FC >0)
+
+DEG_genes_signif_neg = DEG_genes_signif %>% 
+  dplyr::filter(avg_log2FC <0)
+
+
+   
+#### PLOT RNA
+
+genes_of_interest <- DEG_genes_signif_pos$gene
+genes_of_interest <- genes_of_interest[genes_of_interest %in% rownames(multiome_WT_Bap1KO_QCV2vC1.sct@assays$RNA@data)]
+### extract WT and cYAPKO gene expression values from RNA assay
+WT_expression <- multiome_WT_Bap1KO_QCV2vC1.sct@assays$RNA@data[genes_of_interest, colnames(multiome_WT_Bap1KO_QCV2vC1.sct)[multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident == "multiome_WT"]]
+Bap1KO_expression <- multiome_WT_Bap1KO_QCV2vC1.sct@assays$RNA@data[genes_of_interest, colnames(multiome_WT_Bap1KO_QCV2vC1.sct)[multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident == "multiome_Bap1KO"]]
+### mean expression values for each gene
+WT_mean <- rowMeans(WT_expression)
+Bap1KO_mean <- rowMeans(Bap1KO_expression)
+data_for_plot <- data.frame(
+  Gene = genes_of_interest,
+  WT = WT_mean,
+  Bap1KO = Bap1KO_mean
+) %>% 
+pivot_longer(cols = c(WT, Bap1KO), names_to = "Condition", values_to = "Expression")
+## ORder from low to high express
+### Reordering the genes based on their mean expression in WT in ascending order
+ordered_genes <- names(sort(WT_mean))
+### Extracting unique gene names from the ordered list
+unique_ordered_genes <- unique(ordered_genes)
+### Filter out rows from data_for_plot that don't have their genes in unique_ordered_genes
+data_for_plot <- data_for_plot[data_for_plot$Gene %in% unique_ordered_genes, ]
+### Set the factor levels for 'Gene' according to the unique ordered list
+data_for_plot$Gene <- factor(data_for_plot$Gene, levels = unique_ordered_genes)
+data_for_plot$Condition <- factor(data_for_plot$Condition, levels = c("WT", "Bap1KO")) 
+
+pdf("output/Signac/boxplot_RNAexpression_DEG_genes_signif_pos_multiome_WT_Bap1KO_QCV2vC1.pdf", width=2, height=4)
+ggplot(data = data_for_plot, aes(x = Condition, y = Expression, fill = Condition)) +
+  scale_fill_manual(values = c("WT" = "blue", "Bap1KO" = "red")) +
+  geom_violin(alpha = 0.5, position = position_dodge(width = 0.75), size = 1, color = NA) +
+  geom_boxplot(notch = TRUE, outlier.size = -1, color = "black", lwd = 1, alpha = 0.7, show.legend = FALSE) +
+  ggbeeswarm::geom_quasirandom(shape = 21, size = 2, dodge.width = 0.75, color = "black", alpha = 0.3, show.legend = FALSE) +
+  theme_bw() +
+  ylab("Expression") +
+  xlab("Genotype") +
+  theme(
+    legend.position = "none", # Remove legend
+    text = element_text(size = 15),
+    axis.title = element_text(size = 15),
+    axis.text = element_text(size = 15, color = "black")
+  )
+dev.off()
+
+
+
+pdf("output/Signac/heatmap_RNAexpression_DEG_genes_signif_pos_multiome_WT_Bap1KO_QCV2vC1.pdf", width=3, height=2)
+ggplot(data_for_plot, aes(x=Gene, y=Condition, fill=Expression)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 8, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_viridis(direction = 1, option = "viridis", name="Expression") 
+dev.off()
+
+
+
+#### PLOT ATAC
+
+genes_of_interest <- DEG_genes_signif_neg$gene   # CHANGE HERE neg pos
+genes_of_interest <- genes_of_interest[genes_of_interest %in% rownames(multiome_WT_Bap1KO_QCV2vC1.sct@assays$GeneActivity@data)]
+### extract WT and cYAPKO gene expression values from GeneActivity assay
+WT_expression <- multiome_WT_Bap1KO_QCV2vC1.sct@assays$GeneActivity@data[genes_of_interest, colnames(multiome_WT_Bap1KO_QCV2vC1.sct)[multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident == "multiome_WT"]]
+Bap1KO_expression <- multiome_WT_Bap1KO_QCV2vC1.sct@assays$GeneActivity@data[genes_of_interest, colnames(multiome_WT_Bap1KO_QCV2vC1.sct)[multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident == "multiome_Bap1KO"]]
+### mean expression values for each gene
+WT_mean <- rowMeans(WT_expression)
+Bap1KO_mean <- rowMeans(Bap1KO_expression)
+data_for_plot <- data.frame(
+  Gene = genes_of_interest,
+  WT = WT_mean,
+  Bap1KO = Bap1KO_mean
+) %>% 
+pivot_longer(cols = c(WT, Bap1KO), names_to = "Condition", values_to = "Expression")
+## ORder from low to high express
+### Reordering the genes based on their mean expression in WT in ascending order
+ordered_genes <- names(sort(WT_mean))
+### Extracting unique gene names from the ordered list
+unique_ordered_genes <- unique(ordered_genes)
+### Filter out rows from data_for_plot that don't have their genes in unique_ordered_genes
+data_for_plot <- data_for_plot[data_for_plot$Gene %in% unique_ordered_genes, ]
+### Set the factor levels for 'Gene' according to the unique ordered list
+data_for_plot$Gene <- factor(data_for_plot$Gene, levels = unique_ordered_genes)
+data_for_plot$Condition <- factor(data_for_plot$Condition, levels = c("WT", "Bap1KO")) 
+
+pdf("output/Signac/boxplot_GeneActivity_DEG_genes_signif_neg_multiome_WT_Bap1KO_QCV2vC1.pdf", width=2, height=4) # CHANGE HERE neg pos
+ggplot(data = data_for_plot, aes(x = Condition, y = Expression, fill = Condition)) +
+  scale_fill_manual(values = c("WT" = "blue", "Bap1KO" = "red")) +
+  geom_violin(alpha = 0.5, position = position_dodge(width = 0.75), size = 1, color = NA) +
+  geom_boxplot(notch = TRUE, outlier.size = -1, color = "black", lwd = 1, alpha = 0.7, show.legend = FALSE) +
+  ggbeeswarm::geom_quasirandom(shape = 21, size = 2, dodge.width = 0.75, color = "black", alpha = 0.3, show.legend = FALSE) +
+  theme_bw() +
+  ylab("Expression") +
+  xlab("Genotype") +
+  theme(
+    legend.position = "none", # Remove legend
+    text = element_text(size = 15),
+    axis.title = element_text(size = 15),
+    axis.text = element_text(size = 15, color = "black")
+  )
+dev.off()
+
+
+```
+
+
 ### Pseudotime condiments
 
 
@@ -8534,15 +8829,15 @@ set.seed(42)
 #  Differential expression
 # --> Run fitGam() through Slurm
 
-XXX HERE XXX BELOW NOT MOD XXX
 
 
 ################### Time Course effect COMMON CONDITIONS ######################################################
 
-## TRAJECTORY3 ##################
+## TRAJECTORY9 ##################
 set.seed(42)
-traj3_noCondition_humangastruloid2472hrs <- readRDS("output/condiments/traj3_noCondition_humangastruloid2472hrs.rds")
+traj9_RNA_common <- readRDS("output/condiments/traj9_RNA_common.rds")
 
+XXXY HERE XXX BELOW NOT MOD XXX
 
 
 ## Genes that change with pseudotime
@@ -10322,22 +10617,29 @@ write.table(switch_df, file = c("output/condiments/switch_df_traj2_RNA_Bap1KO.tx
 #### FitGam slurm jobs
 
 
-
+xxxy
 
 ```bash
 conda activate condiments_Signac
 
+# trajectory per ondition together (for DEG condition, condiments) - pseudotime-condition DEG
+### traj of interest NSC --> DG_GC traj9
+sbatch scripts/fitGAM_6knots_traj9_RNA_common.sh # 31299442 XXX
+### traj of interest NSC --> CA123 traj2
+sbatch scripts/fitGAM_6knots_traj2_RNA_common.sh # 31299487 XXX
 
-# trajectory per trajectory CONDITION SEP (all features, no parralelization) - pseudotime-dependent DEGs
-# Following parameters: *StartNSCquiescentEndPyNsRSCULDGGCapprox100extendn*
 
-## traj of interest NSC --> CA123: COMMON=XXX WT=traj2; Bap1KO=traj2
-sbatch scripts/fitGAM_6knots_traj2_RNA_WT.sh # 30439292 ok
-sbatch scripts/fitGAM_6knots_traj2_RNA_Bap1KO.sh # 30458706 ok
 
-## traj of interest NSC --> DG_GC: COMMON=XXX WT=traj9; Bap1KO=traj8
+# trajectory per CONDITION SEP (all features, no parralelization) - pseudotime-dependent DEGs
+## Following parameters: *StartNSCquiescentEndPyNsRSCULDGGCapprox100extendn*
+
+### traj of interest NSC --> DG_GC: COMMON=9 WT=traj9; Bap1KO=traj8
 sbatch scripts/fitGAM_6knots_traj9_RNA_WT.sh # 30439293 ok
 sbatch scripts/fitGAM_6knots_traj8_RNA_Bap1KO.sh # 30458721 ok
+
+### traj of interest NSC --> CA123: COMMON=2 WT=traj2; Bap1KO=traj2
+sbatch scripts/fitGAM_6knots_traj2_RNA_WT.sh # 30439292 ok
+sbatch scripts/fitGAM_6knots_traj2_RNA_Bap1KO.sh # 30458706 ok
 ```
 
 

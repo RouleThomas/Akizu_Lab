@@ -22644,17 +22644,24 @@ plot_data = THORq4_EZH2_neg_traj2_humangastruloidUNTREATED2472hrs %>%
 
 ### pseudotime bins
 #### scale pseudotime 0-1
-plot_data$Pseudotime.scale <- (plot_data$Pseudotime.pseudotime - min(plot_data$Pseudotime.pseudotime)) /
-                                   (max(plot_data$Pseudotime.pseudotime) - min(plot_data$Pseudotime.pseudotime))
+plot_data <- plot_data %>%
+  group_by(condition) %>%
+  mutate(Pseudotime.scale = (Pseudotime.pseudotime - min(Pseudotime.pseudotime)) /
+                             (max(Pseudotime.pseudotime) - min(Pseudotime.pseudotime))) %>%
+  ungroup()
 #### Cut the Pseudotime.scale column into bins of 0.2
 plot_data$bins <- cut(plot_data$Pseudotime.scale, 
-                      breaks = seq(0, 1, by = 0.2), 
+                      breaks = seq(0, 1, by = 0.2),   
                       include.lowest = TRUE, 
                       labels = c("0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1"))
+plot_data$bins <- cut(plot_data$Pseudotime.scale, 
+                      breaks = seq(0, 1, by = 0.1),   
+                      include.lowest = TRUE, 
+                      labels = c("0-0.1", "0.1-0.2", "0.2-0.3", "0.3-0.4", "0.4-0.5", "0.5-0.6", "0.6-0.7", "0.7-0.8", "0.8-0.9", "0.9-1") )                      
 #### plot
 plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED", "DASATINIB")) # Reorder untreated 1st
 
-pdf("output/condiments/binsPseudotime_THORq4_EZH2_neg_traj21_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+pdf("output/condiments/bins01Pseudotime_THORq4_EZH2_neg_traj21_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
 anova_model <- aov(AverageExpression ~ bins * condition, data = plot_data)
 anova_summary <- summary(anova_model)
 pairwise_results <- plot_data %>%
@@ -22680,11 +22687,13 @@ ggplot(summary_data, aes(x = bins, y = mean_expression, color = condition, group
   geom_point(size = 2) + # Large dots
   geom_line(size = 1) + # Line connecting the points
   geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
-            aes(x = bins, y = max(mean_expression + se_expression) + 0.01, 
-                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
-            inherit.aes = FALSE, 
-            size = 2, 
-            color = "black") + # Annotate FDR-adjusted p-values
+          aes(x = bins, 
+              y = mean_expression + se_expression + 0.001, # Offset slightly above the line
+              label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+          inherit.aes = FALSE, 
+          size = 2, 
+          color = "black", 
+          fontface = "bold") +
   scale_color_manual(values = c("blue", "red")) + # Dot and line colors
   labs(x = "Pseudotime Bins",
        y = "Average Expression") +
@@ -22702,6 +22711,58 @@ ggplot(plot_data, aes(x = bins, y = AverageExpression, fill = condition)) +
 dev.off()
 
 
+pdf("output/condiments/bins02FCPseudotime_THORq4_EZH2_neg_traj21_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+baseline_means <- plot_data %>%
+  group_by(condition) %>%
+  filter(bins == "0-0.2") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE), .groups = "drop")
+plot_data <- plot_data %>%
+  left_join(baseline_means, by = "condition") %>%
+  mutate(FC = AverageExpression / baseline_mean) # Normalize separately for each condition
+anova_model <- aov(FC ~ bins * condition, data = plot_data)
+anova_summary <- summary(anova_model)
+pairwise_results <- plot_data %>%
+  group_by(bins) %>%
+  do({
+    data = .
+    test_result <- t.test(FC ~ condition, data = data)
+    data.frame(p_value = test_result$p.value)
+  }) %>%
+  ungroup() %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "fdr"))
+summary_data <- plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_fc = mean(FC, na.rm = TRUE),
+            sd_fc = sd(FC, na.rm = TRUE),
+            se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
+            aes(x = bins, 
+                y = mean_fc + se_fc + 0.1, # Offset slightly above the line
+                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+            inherit.aes = FALSE, 
+            size = 1.5, 
+            color = "black", 
+            fontface = "bold") +
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
+
+
 
 # Epi --> ... --> Cardiomyocyte | EZH2 gain
 load("output/condiments/LOG1P-THORq4_EZH2_pos-traj2_humangastruloidUNTREATED2472hrs.RData")
@@ -22716,17 +22777,24 @@ plot_data = THORq4_EZH2_pos_traj2_humangastruloidUNTREATED2472hrs %>%
 
 ### pseudotime bins
 #### scale pseudotime 0-1
-plot_data$Pseudotime.scale <- (plot_data$Pseudotime.pseudotime - min(plot_data$Pseudotime.pseudotime)) /
-                                   (max(plot_data$Pseudotime.pseudotime) - min(plot_data$Pseudotime.pseudotime))
+plot_data <- plot_data %>%
+  group_by(condition) %>%
+  mutate(Pseudotime.scale = (Pseudotime.pseudotime - min(Pseudotime.pseudotime)) /
+                             (max(Pseudotime.pseudotime) - min(Pseudotime.pseudotime))) %>%
+  ungroup()
 #### Cut the Pseudotime.scale column into bins of 0.2
 plot_data$bins <- cut(plot_data$Pseudotime.scale, 
                       breaks = seq(0, 1, by = 0.2), 
                       include.lowest = TRUE, 
                       labels = c("0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1"))
+plot_data$bins <- cut(plot_data$Pseudotime.scale, 
+                      breaks = seq(0, 1, by = 0.1),   
+                      include.lowest = TRUE, 
+                      labels = c("0-0.1", "0.1-0.2", "0.2-0.3", "0.3-0.4", "0.4-0.5", "0.5-0.6", "0.6-0.7", "0.7-0.8", "0.8-0.9", "0.9-1")    )               
 #### plot
 plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED", "DASATINIB")) # Reorder untreated 1st
 
-pdf("output/condiments/binsPseudotime_THORq4_EZH2_pos_traj21_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+pdf("output/condiments/bins01Pseudotime_THORq4_EZH2_pos_traj21_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
 anova_model <- aov(AverageExpression ~ bins * condition, data = plot_data)
 anova_summary <- summary(anova_model)
 pairwise_results <- plot_data %>%
@@ -22751,17 +22819,81 @@ ggplot(summary_data, aes(x = bins, y = mean_expression, color = condition, group
   geom_point(size = 2) + # Large dots
   geom_line(size = 1) + # Line connecting the points
   geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
-            aes(x = bins, y = max(mean_expression + se_expression) + 0.01, 
-                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
-            inherit.aes = FALSE, 
-            size = 2, 
-            color = "black") + # Annotate FDR-adjusted p-values
+          aes(x = bins, 
+              y = mean_expression + se_expression + 0.001, # Offset slightly above the line
+              label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+          inherit.aes = FALSE, 
+          size = 1.5, 
+          color = "black", 
+          fontface = "bold") +
   scale_color_manual(values = c("blue", "red")) + # Dot and line colors
   labs(x = "Pseudotime Bins",
        y = "Average Expression") +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 dev.off()
+
+
+
+pdf("output/condiments/bins01FCPseudotime_THORq4_EZH2_pos_traj21_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+baseline_means <- plot_data %>%
+  group_by(condition) %>%
+  filter(bins == "0-0.1") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE), .groups = "drop")
+plot_data <- plot_data %>%
+  left_join(baseline_means, by = "condition") %>%
+  mutate(FC = AverageExpression / baseline_mean) # Normalize separately for each condition
+anova_model <- aov(FC ~ bins * condition, data = plot_data)
+anova_summary <- summary(anova_model)
+pairwise_results <- plot_data %>%
+  group_by(bins) %>%
+  do({
+    data = .
+    test_result <- t.test(FC ~ condition, data = data)
+    data.frame(p_value = test_result$p.value)
+  }) %>%
+  ungroup() %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "fdr"))
+summary_data <- plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_fc = mean(FC, na.rm = TRUE),
+            sd_fc = sd(FC, na.rm = TRUE),
+            se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
+            aes(x = bins, 
+                y = mean_fc + se_fc + 0.1, # Offset slightly above the line
+                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+            inherit.aes = FALSE, 
+            size = 1.5, 
+            color = "black", 
+            fontface = "bold") +
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -22780,17 +22912,24 @@ plot_data = THORq4_EZH2_neg_traj1_humangastruloidUNTREATED2472hrs %>%
 
 ### pseudotime bins
 #### scale pseudotime 0-1
-plot_data$Pseudotime.scale <- (plot_data$Pseudotime.pseudotime - min(plot_data$Pseudotime.pseudotime)) /
-                                   (max(plot_data$Pseudotime.pseudotime) - min(plot_data$Pseudotime.pseudotime))
+plot_data <- plot_data %>%
+  group_by(condition) %>%
+  mutate(Pseudotime.scale = (Pseudotime.pseudotime - min(Pseudotime.pseudotime)) /
+                             (max(Pseudotime.pseudotime) - min(Pseudotime.pseudotime))) %>%
+  ungroup()
 #### Cut the Pseudotime.scale column into bins of 0.2
 plot_data$bins <- cut(plot_data$Pseudotime.scale, 
                       breaks = seq(0, 1, by = 0.2), 
                       include.lowest = TRUE, 
                       labels = c("0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1"))
+plot_data$bins <- cut(plot_data$Pseudotime.scale, 
+                      breaks = seq(0, 1, by = 0.1),   
+                      include.lowest = TRUE, 
+                      labels = c("0-0.1", "0.1-0.2", "0.2-0.3", "0.3-0.4", "0.4-0.5", "0.5-0.6", "0.6-0.7", "0.7-0.8", "0.8-0.9", "0.9-1")    )     
 #### plot
 plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED", "DASATINIB")) # Reorder untreated 1st
 
-pdf("output/condiments/binsPseudotime_THORq4_EZH2_neg_traj11sep_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+pdf("output/condiments/bins01Pseudotime_THORq4_EZH2_neg_traj11sep_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
 anova_model <- aov(AverageExpression ~ bins * condition, data = plot_data)
 anova_summary <- summary(anova_model)
 pairwise_results <- plot_data %>%
@@ -22815,17 +22954,72 @@ ggplot(summary_data, aes(x = bins, y = mean_expression, color = condition, group
   geom_point(size = 2) + # Large dots
   geom_line(size = 1) + # Line connecting the points
   geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
-            aes(x = bins, y = max(mean_expression + se_expression) + 0.01, 
-                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
-            inherit.aes = FALSE, 
-            size = 2, 
-            color = "black") + # Annotate FDR-adjusted p-values
+          aes(x = bins, 
+              y = mean_expression + se_expression + 0.001, # Offset slightly above the line
+              label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+          inherit.aes = FALSE, 
+          size = 1.5, 
+          color = "black", 
+          fontface = "bold") +
   scale_color_manual(values = c("blue", "red")) + # Dot and line colors
   labs(x = "Pseudotime Bins",
        y = "Average Expression") +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 dev.off()
+
+pdf("output/condiments/bins01FCPseudotime_THORq4_EZH2_neg_traj11sep_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+baseline_means <- plot_data %>%
+  group_by(condition) %>%
+  filter(bins == "0-0.1") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE), .groups = "drop")
+plot_data <- plot_data %>%
+  left_join(baseline_means, by = "condition") %>%
+  mutate(FC = AverageExpression / baseline_mean) # Normalize separately for each condition
+anova_model <- aov(FC ~ bins * condition, data = plot_data)
+anova_summary <- summary(anova_model)
+pairwise_results <- plot_data %>%
+  group_by(bins) %>%
+  do({
+    data = .
+    test_result <- t.test(FC ~ condition, data = data)
+    data.frame(p_value = test_result$p.value)
+  }) %>%
+  ungroup() %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "fdr"))
+summary_data <- plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_fc = mean(FC, na.rm = TRUE),
+            sd_fc = sd(FC, na.rm = TRUE),
+            se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
+            aes(x = bins, 
+                y = mean_fc + se_fc + 0.1, # Offset slightly above the line
+                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+            inherit.aes = FALSE, 
+            size = 1.5, 
+            color = "black", 
+            fontface = "bold") +
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
+
+
 
 
 
@@ -22844,17 +23038,24 @@ plot_data = THORq4_EZH2_pos_traj1_humangastruloidUNTREATED2472hrs %>%
 
 ### pseudotime bins
 #### scale pseudotime 0-1
-plot_data$Pseudotime.scale <- (plot_data$Pseudotime.pseudotime - min(plot_data$Pseudotime.pseudotime)) /
-                                   (max(plot_data$Pseudotime.pseudotime) - min(plot_data$Pseudotime.pseudotime))
+plot_data <- plot_data %>%
+  group_by(condition) %>%
+  mutate(Pseudotime.scale = (Pseudotime.pseudotime - min(Pseudotime.pseudotime)) /
+                             (max(Pseudotime.pseudotime) - min(Pseudotime.pseudotime))) %>%
+  ungroup()
 #### Cut the Pseudotime.scale column into bins of 0.2
 plot_data$bins <- cut(plot_data$Pseudotime.scale, 
                       breaks = seq(0, 1, by = 0.2), 
                       include.lowest = TRUE, 
                       labels = c("0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1"))
+plot_data$bins <- cut(plot_data$Pseudotime.scale, 
+                      breaks = seq(0, 1, by = 0.1),   
+                      include.lowest = TRUE, 
+                      labels = c("0-0.1", "0.1-0.2", "0.2-0.3", "0.3-0.4", "0.4-0.5", "0.5-0.6", "0.6-0.7", "0.7-0.8", "0.8-0.9", "0.9-1")    )     
 #### plot
 plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED", "DASATINIB")) # Reorder untreated 1st
 
-pdf("output/condiments/binsPseudotime_THORq4_EZH2_pos_traj11sep_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+pdf("output/condiments/bins01Pseudotime_THORq4_EZH2_pos_traj11sep_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
 anova_model <- aov(AverageExpression ~ bins * condition, data = plot_data)
 anova_summary <- summary(anova_model)
 pairwise_results <- plot_data %>%
@@ -22879,17 +23080,73 @@ ggplot(summary_data, aes(x = bins, y = mean_expression, color = condition, group
   geom_point(size = 2) + # Large dots
   geom_line(size = 1) + # Line connecting the points
   geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
-            aes(x = bins, y = max(mean_expression + se_expression) + 0.01, 
-                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
-            inherit.aes = FALSE, 
-            size = 2, 
-            color = "black") + # Annotate FDR-adjusted p-values
+          aes(x = bins, 
+              y = mean_expression + se_expression + 0.001, # Offset slightly above the line
+              label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+          inherit.aes = FALSE, 
+          size = 1.5, 
+          color = "black", 
+          fontface = "bold") +
   scale_color_manual(values = c("blue", "red")) + # Dot and line colors
   labs(x = "Pseudotime Bins",
        y = "Average Expression") +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 dev.off()
+
+
+pdf("output/condiments/bins01FCPseudotime_THORq4_EZH2_pos_traj11sep_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+baseline_means <- plot_data %>%
+  group_by(condition) %>%
+  filter(bins == "0-0.1") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE), .groups = "drop")
+plot_data <- plot_data %>%
+  left_join(baseline_means, by = "condition") %>%
+  mutate(FC = AverageExpression / baseline_mean) # Normalize separately for each condition
+anova_model <- aov(FC ~ bins * condition, data = plot_data)
+anova_summary <- summary(anova_model)
+pairwise_results <- plot_data %>%
+  group_by(bins) %>%
+  do({
+    data = .
+    test_result <- t.test(FC ~ condition, data = data)
+    data.frame(p_value = test_result$p.value)
+  }) %>%
+  ungroup() %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "fdr"))
+summary_data <- plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_fc = mean(FC, na.rm = TRUE),
+            sd_fc = sd(FC, na.rm = TRUE),
+            se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
+            aes(x = bins, 
+                y = mean_fc + se_fc + 0.1, # Offset slightly above the line
+                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+            inherit.aes = FALSE, 
+            size = 1.5, 
+            color = "black", 
+            fontface = "bold") +
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
+
+
 
 
 
@@ -22911,17 +23168,24 @@ plot_data = THORq4_EZH2_neg_traj4_humangastruloidUNTREATED2472hrs %>%
 
 ### pseudotime bins
 #### scale pseudotime 0-1
-plot_data$Pseudotime.scale <- (plot_data$Pseudotime.pseudotime - min(plot_data$Pseudotime.pseudotime)) /
-                                   (max(plot_data$Pseudotime.pseudotime) - min(plot_data$Pseudotime.pseudotime))
+plot_data <- plot_data %>%
+  group_by(condition) %>%
+  mutate(Pseudotime.scale = (Pseudotime.pseudotime - min(Pseudotime.pseudotime)) /
+                             (max(Pseudotime.pseudotime) - min(Pseudotime.pseudotime))) %>%
+  ungroup()
 #### Cut the Pseudotime.scale column into bins of 0.2
 plot_data$bins <- cut(plot_data$Pseudotime.scale, 
                       breaks = seq(0, 1, by = 0.2), 
                       include.lowest = TRUE, 
                       labels = c("0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1"))
+plot_data$bins <- cut(plot_data$Pseudotime.scale, 
+                      breaks = seq(0, 1, by = 0.1),   
+                      include.lowest = TRUE, 
+                      labels = c("0-0.1", "0.1-0.2", "0.2-0.3", "0.3-0.4", "0.4-0.5", "0.5-0.6", "0.6-0.7", "0.7-0.8", "0.8-0.9", "0.9-1")    )     
 #### plot
 plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED", "DASATINIB")) # Reorder untreated 1st
 
-pdf("output/condiments/binsPseudotime_THORq4_EZH2_neg_traj43_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+pdf("output/condiments/bins01Pseudotime_THORq4_EZH2_neg_traj43_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
 anova_model <- aov(AverageExpression ~ bins * condition, data = plot_data)
 anova_summary <- summary(anova_model)
 pairwise_results <- plot_data %>%
@@ -22946,14 +23210,64 @@ ggplot(summary_data, aes(x = bins, y = mean_expression, color = condition, group
   geom_point(size = 2) + # Large dots
   geom_line(size = 1) + # Line connecting the points
   geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
-            aes(x = bins, y = max(mean_expression + se_expression) + 0.01, 
-                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
-            inherit.aes = FALSE, 
-            size = 2, 
-            color = "black") + # Annotate FDR-adjusted p-values
+          aes(x = bins, 
+              y = mean_expression + se_expression + 0.001, # Offset slightly above the line
+              label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+          inherit.aes = FALSE, 
+          size = 1.5, 
+          color = "black", 
+          fontface = "bold") +
   scale_color_manual(values = c("blue", "red")) + # Dot and line colors
   labs(x = "Pseudotime Bins",
        y = "Average Expression") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+pdf("output/condiments/bins01FCPseudotime_THORq4_EZH2_neg_traj43_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+baseline_means <- plot_data %>%
+  group_by(condition) %>%
+  filter(bins == "0-0.1") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE), .groups = "drop")
+plot_data <- plot_data %>%
+  left_join(baseline_means, by = "condition") %>%
+  mutate(FC = AverageExpression / baseline_mean) # Normalize separately for each condition
+anova_model <- aov(FC ~ bins * condition, data = plot_data)
+anova_summary <- summary(anova_model)
+pairwise_results <- plot_data %>%
+  group_by(bins) %>%
+  do({
+    data = .
+    test_result <- t.test(FC ~ condition, data = data)
+    data.frame(p_value = test_result$p.value)
+  }) %>%
+  ungroup() %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "fdr"))
+summary_data <- plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_fc = mean(FC, na.rm = TRUE),
+            sd_fc = sd(FC, na.rm = TRUE),
+            se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
+            aes(x = bins, 
+                y = mean_fc + se_fc + 0.1, # Offset slightly above the line
+                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+            inherit.aes = FALSE, 
+            size = 1.5, 
+            color = "black", 
+            fontface = "bold") +
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to starting Bin") +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 dev.off()
@@ -22979,17 +23293,24 @@ plot_data = THORq4_EZH2_pos_traj4_humangastruloidUNTREATED2472hrs %>%
 
 ### pseudotime bins
 #### scale pseudotime 0-1
-plot_data$Pseudotime.scale <- (plot_data$Pseudotime.pseudotime - min(plot_data$Pseudotime.pseudotime)) /
-                                   (max(plot_data$Pseudotime.pseudotime) - min(plot_data$Pseudotime.pseudotime))
+plot_data <- plot_data %>%
+  group_by(condition) %>%
+  mutate(Pseudotime.scale = (Pseudotime.pseudotime - min(Pseudotime.pseudotime)) /
+                             (max(Pseudotime.pseudotime) - min(Pseudotime.pseudotime))) %>%
+  ungroup()
 #### Cut the Pseudotime.scale column into bins of 0.2
 plot_data$bins <- cut(plot_data$Pseudotime.scale, 
                       breaks = seq(0, 1, by = 0.2), 
                       include.lowest = TRUE, 
                       labels = c("0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1"))
+plot_data$bins <- cut(plot_data$Pseudotime.scale, 
+                      breaks = seq(0, 1, by = 0.1),   
+                      include.lowest = TRUE, 
+                      labels = c("0-0.1", "0.1-0.2", "0.2-0.3", "0.3-0.4", "0.4-0.5", "0.5-0.6", "0.6-0.7", "0.7-0.8", "0.8-0.9", "0.9-1")    )   
 #### plot
 plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED", "DASATINIB")) # Reorder untreated 1st
 
-pdf("output/condiments/binsPseudotime_THORq4_EZH2_pos_traj43_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+pdf("output/condiments/bins01Pseudotime_THORq4_EZH2_pos_traj43_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
 anova_model <- aov(AverageExpression ~ bins * condition, data = plot_data)
 anova_summary <- summary(anova_model)
 pairwise_results <- plot_data %>%
@@ -23014,17 +23335,68 @@ ggplot(summary_data, aes(x = bins, y = mean_expression, color = condition, group
   geom_point(size = 2) + # Large dots
   geom_line(size = 1) + # Line connecting the points
   geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
-            aes(x = bins, y = max(mean_expression + se_expression) + 0.01, 
-                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
-            inherit.aes = FALSE, 
-            size = 2, 
-            color = "black") + # Annotate FDR-adjusted p-values
+          aes(x = bins, 
+              y = mean_expression + se_expression + 0.001, # Offset slightly above the line
+              label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+          inherit.aes = FALSE, 
+          size = 1.5, 
+          color = "black", 
+          fontface = "bold") +
   scale_color_manual(values = c("blue", "red")) + # Dot and line colors
   labs(x = "Pseudotime Bins",
        y = "Average Expression") +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 dev.off()
+
+
+pdf("output/condiments/bins01FCPseudotime_THORq4_EZH2_pos_traj43_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+baseline_means <- plot_data %>%
+  group_by(condition) %>%
+  filter(bins == "0-0.1") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE), .groups = "drop")
+plot_data <- plot_data %>%
+  left_join(baseline_means, by = "condition") %>%
+  mutate(FC = AverageExpression / baseline_mean) # Normalize separately for each condition
+anova_model <- aov(FC ~ bins * condition, data = plot_data)
+anova_summary <- summary(anova_model)
+pairwise_results <- plot_data %>%
+  group_by(bins) %>%
+  do({
+    data = .
+    test_result <- t.test(FC ~ condition, data = data)
+    data.frame(p_value = test_result$p.value)
+  }) %>%
+  ungroup() %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "fdr"))
+summary_data <- plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_fc = mean(FC, na.rm = TRUE),
+            sd_fc = sd(FC, na.rm = TRUE),
+            se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
+            aes(x = bins, 
+                y = mean_fc + se_fc + 0.1, # Offset slightly above the line
+                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+            inherit.aes = FALSE, 
+            size = 1.5, 
+            color = "black", 
+            fontface = "bold") +
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
 
 
 
@@ -23047,16 +23419,25 @@ plot_data = THORq4_EZH2_neg_traj5_humangastruloidUNTREATED2472hrs %>%
   bind_rows(THORq4_EZH2_neg_traj4_humangastruloidDASATINIB2472hrs)
 ### pseudotime bins
 #### scale pseudotime 0-1
-plot_data$Pseudotime.scale <- (plot_data$Pseudotime.pseudotime - min(plot_data$Pseudotime.pseudotime)) /
-                                   (max(plot_data$Pseudotime.pseudotime) - min(plot_data$Pseudotime.pseudotime))
+plot_data <- plot_data %>%
+  group_by(condition) %>%
+  mutate(Pseudotime.scale = (Pseudotime.pseudotime - min(Pseudotime.pseudotime)) /
+                             (max(Pseudotime.pseudotime) - min(Pseudotime.pseudotime))) %>%
+  ungroup()
 #### Cut the Pseudotime.scale column into bins of 0.2
 plot_data$bins <- cut(plot_data$Pseudotime.scale, 
                       breaks = seq(0, 1, by = 0.2), 
                       include.lowest = TRUE, 
                       labels = c("0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1"))
+plot_data$bins <- cut(plot_data$Pseudotime.scale, 
+                      breaks = seq(0, 1, by = 0.1),   
+                      include.lowest = TRUE, 
+                      labels = c("0-0.1", "0.1-0.2", "0.2-0.3", "0.3-0.4", "0.4-0.5", "0.5-0.6", "0.6-0.7", "0.7-0.8", "0.8-0.9", "0.9-1")    )     
+
 #### plot
 plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED", "DASATINIB")) # Reorder untreated 1st
-pdf("output/condiments/binsPseudotime_THORq4_EZH2_neg_traj54_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+
+pdf("output/condiments/bins01Pseudotime_THORq4_EZH2_neg_traj54_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
 anova_model <- aov(AverageExpression ~ bins * condition, data = plot_data)
 anova_summary <- summary(anova_model)
 pairwise_results <- plot_data %>%
@@ -23081,17 +23462,71 @@ ggplot(summary_data, aes(x = bins, y = mean_expression, color = condition, group
   geom_point(size = 2) + # Large dots
   geom_line(size = 1) + # Line connecting the points
   geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
-            aes(x = bins, y = max(mean_expression + se_expression) + 0.01, 
-                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
-            inherit.aes = FALSE, 
-            size = 2, 
-            color = "black") + # Annotate FDR-adjusted p-values
+          aes(x = bins, 
+              y = mean_expression + se_expression + 0.001, # Offset slightly above the line
+              label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+          inherit.aes = FALSE, 
+          size = 1.5, 
+          color = "black", 
+          fontface = "bold") +
   scale_color_manual(values = c("blue", "red")) + # Dot and line colors
   labs(x = "Pseudotime Bins",
        y = "Average Expression") +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 dev.off()
+
+
+pdf("output/condiments/bins01FCPseudotime_THORq4_EZH2_neg_traj54_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+baseline_means <- plot_data %>%
+  group_by(condition) %>%
+  filter(bins == "0-0.1") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE), .groups = "drop")
+plot_data <- plot_data %>%
+  left_join(baseline_means, by = "condition") %>%
+  mutate(FC = AverageExpression / baseline_mean) # Normalize separately for each condition
+anova_model <- aov(FC ~ bins * condition, data = plot_data)
+anova_summary <- summary(anova_model)
+pairwise_results <- plot_data %>%
+  group_by(bins) %>%
+  do({
+    data = .
+    test_result <- t.test(FC ~ condition, data = data)
+    data.frame(p_value = test_result$p.value)
+  }) %>%
+  ungroup() %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "fdr"))
+summary_data <- plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_fc = mean(FC, na.rm = TRUE),
+            sd_fc = sd(FC, na.rm = TRUE),
+            se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
+            aes(x = bins, 
+                y = mean_fc + se_fc + 0.1, # Offset slightly above the line
+                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+            inherit.aes = FALSE, 
+            size = 1.5, 
+            color = "black", 
+            fontface = "bold") +
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
 
 
 
@@ -23112,16 +23547,24 @@ plot_data = THORq4_EZH2_pos_traj5_humangastruloidUNTREATED2472hrs %>%
   bind_rows(THORq4_EZH2_pos_traj4_humangastruloidDASATINIB2472hrs)
 ### pseudotime bins
 #### scale pseudotime 0-1
-plot_data$Pseudotime.scale <- (plot_data$Pseudotime.pseudotime - min(plot_data$Pseudotime.pseudotime)) /
-                                   (max(plot_data$Pseudotime.pseudotime) - min(plot_data$Pseudotime.pseudotime))
+plot_data <- plot_data %>%
+  group_by(condition) %>%
+  mutate(Pseudotime.scale = (Pseudotime.pseudotime - min(Pseudotime.pseudotime)) /
+                             (max(Pseudotime.pseudotime) - min(Pseudotime.pseudotime))) %>%
+  ungroup()
 #### Cut the Pseudotime.scale column into bins of 0.2
 plot_data$bins <- cut(plot_data$Pseudotime.scale, 
                       breaks = seq(0, 1, by = 0.2), 
                       include.lowest = TRUE, 
                       labels = c("0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1"))
+plot_data$bins <- cut(plot_data$Pseudotime.scale, 
+                      breaks = seq(0, 1, by = 0.1),   
+                      include.lowest = TRUE, 
+                      labels = c("0-0.1", "0.1-0.2", "0.2-0.3", "0.3-0.4", "0.4-0.5", "0.5-0.6", "0.6-0.7", "0.7-0.8", "0.8-0.9", "0.9-1")    )     
 #### plot
 plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED", "DASATINIB")) # Reorder untreated 1st
-pdf("output/condiments/binsPseudotime_THORq4_EZH2_pos_traj54_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+
+pdf("output/condiments/bins01Pseudotime_THORq4_EZH2_pos_traj54_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
 anova_model <- aov(AverageExpression ~ bins * condition, data = plot_data)
 anova_summary <- summary(anova_model)
 pairwise_results <- plot_data %>%
@@ -23146,17 +23589,68 @@ ggplot(summary_data, aes(x = bins, y = mean_expression, color = condition, group
   geom_point(size = 2) + # Large dots
   geom_line(size = 1) + # Line connecting the points
   geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
-            aes(x = bins, y = max(mean_expression + se_expression) + 0.01, 
-                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
-            inherit.aes = FALSE, 
-            size = 2, 
-            color = "black") + # Annotate FDR-adjusted p-values
+          aes(x = bins, 
+              y = mean_expression + se_expression + 0.001, # Offset slightly above the line
+              label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+          inherit.aes = FALSE, 
+          size = 2, 
+          color = "black", 
+          fontface = "bold") +
   scale_color_manual(values = c("blue", "red")) + # Dot and line colors
   labs(x = "Pseudotime Bins",
        y = "Average Expression") +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 dev.off()
+
+
+pdf("output/condiments/bins01FCPseudotime_THORq4_EZH2_pos_traj54_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+baseline_means <- plot_data %>%
+  group_by(condition) %>%
+  filter(bins == "0-0.1") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE), .groups = "drop")
+plot_data <- plot_data %>%
+  left_join(baseline_means, by = "condition") %>%
+  mutate(FC = AverageExpression / baseline_mean) # Normalize separately for each condition
+anova_model <- aov(FC ~ bins * condition, data = plot_data)
+anova_summary <- summary(anova_model)
+pairwise_results <- plot_data %>%
+  group_by(bins) %>%
+  do({
+    data = .
+    test_result <- t.test(FC ~ condition, data = data)
+    data.frame(p_value = test_result$p.value)
+  }) %>%
+  ungroup() %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "fdr"))
+summary_data <- plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_fc = mean(FC, na.rm = TRUE),
+            sd_fc = sd(FC, na.rm = TRUE),
+            se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  geom_text(data = summary_data %>% filter(condition == "UNTREATED"), 
+            aes(x = bins, 
+                y = mean_fc + se_fc + 0.1, # Offset slightly above the line
+                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+            inherit.aes = FALSE, 
+            size = 1.5, 
+            color = "black", 
+            fontface = "bold") +
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
 
 
 
@@ -23181,12 +23675,16 @@ plot_data$bins <- cut(plot_data$Pseudotime.scale,
                       breaks = seq(0, 1, by = 0.2), 
                       include.lowest = TRUE, 
                       labels = c("0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1"))
+plot_data$bins <- cut(plot_data$Pseudotime.scale, 
+                      breaks = seq(0, 1, by = 0.1),   
+                      include.lowest = TRUE, 
+                      labels = c("0-0.1", "0.1-0.2", "0.2-0.3", "0.3-0.4", "0.4-0.5", "0.5-0.6", "0.6-0.7", "0.7-0.8", "0.8-0.9", "0.9-1")    )   
 #### plot
 
-pdf("output/condiments/binsPseudotime_EpiblastUpregpadj05fc025_H3K27me3Bernstein_traj2_UNTREATED_3Dpaper.pdf", width=4, height=3)
+pdf("output/condiments/bins01Pseudotime_EpiblastUpregpadj05fc025_H3K27me3Bernstein_traj2_UNTREATED_3Dpaper.pdf", width=4, height=3)
 anova_model <- aov(AverageExpression ~ bins, data = plot_data)
 anova_summary <- summary(anova_model)
-reference_bin <- "0-0.2" # Reference bin
+reference_bin <- "0-0.1" # Reference bin
 pairwise_results <- plot_data %>%
   group_by(bins) %>%
   filter(bins != reference_bin) %>%
@@ -23228,6 +23726,63 @@ ggplot(summary_data, aes(x = bins, y = mean_expression)) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 dev.off()
+
+
+pdf("output/condiments/bins02FCPseudotime_EpiblastUpregpadj05fc025_H3K27me3Bernstein_traj2_UNTREATED_3Dpaper.pdf", width=4, height=3)
+baseline_mean <- plot_data %>%
+  filter(bins == "0-0.2") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE)) %>%
+  pull(baseline_mean)
+plot_data <- plot_data %>%
+  mutate(FC = AverageExpression / baseline_mean)
+anova_model <- aov(FC ~ bins, data = plot_data)
+anova_summary <- summary(anova_model)
+reference_bin <- "0-0.2"
+pairwise_results <- plot_data %>%
+  group_by(bins) %>%
+  filter(bins != reference_bin) %>%
+  summarize(
+    p_value = tryCatch(
+      t.test(
+        x = plot_data$FC[plot_data$bins == reference_bin],
+        y = FC
+      )$p.value,
+      error = function(e) NA
+    ),
+    .groups = "drop"
+  ) %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "fdr"))
+summary_data <- plot_data %>%
+  group_by(bins) %>%
+  summarize(
+    mean_fc = mean(FC, na.rm = TRUE),
+    se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+    .groups = "drop"
+  ) %>%
+  left_join(pairwise_results, by = "bins")
+
+ggplot(summary_data, aes(x = bins, y = mean_fc)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8, color = "blue") + # Error bars
+  geom_point(size = 2, color = "blue") + # Large dots
+  geom_line(aes(group = 1), size = 1, color = "blue") + # Line connecting the points
+  geom_text(data = summary_data %>% filter(bins != reference_bin), 
+            aes(x = bins, 
+                y = mean_fc + se_fc + 0.01, 
+                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+            inherit.aes = FALSE, 
+            size = 2, 
+            color = "black") + 
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to Starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
 
 
 
@@ -23244,12 +23799,16 @@ plot_data$bins <- cut(plot_data$Pseudotime.scale,
                       breaks = seq(0, 1, by = 0.2), 
                       include.lowest = TRUE, 
                       labels = c("0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1"))
+plot_data$bins <- cut(plot_data$Pseudotime.scale, 
+                      breaks = seq(0, 1, by = 0.1),   
+                      include.lowest = TRUE, 
+                      labels = c("0-0.1", "0.1-0.2", "0.2-0.3", "0.3-0.4", "0.4-0.5", "0.5-0.6", "0.6-0.7", "0.7-0.8", "0.8-0.9", "0.9-1")    ) 
 #### plot
 
-pdf("output/condiments/binsPseudotime_EpiblastUpregpadj05fc025_H3K27me3Bernstein_traj1_UNTREATED_3Dpaper.pdf", width=4, height=3)
+pdf("output/condiments/bins01Pseudotime_EpiblastUpregpadj05fc025_H3K27me3Bernstein_traj1_UNTREATED_3Dpaper.pdf", width=4, height=3)
 anova_model <- aov(AverageExpression ~ bins, data = plot_data)
 anova_summary <- summary(anova_model)
-reference_bin <- "0-0.2" # Reference bin
+reference_bin <- "0-0.1" # Reference bin
 pairwise_results <- plot_data %>%
   group_by(bins) %>%
   filter(bins != reference_bin) %>%
@@ -23291,6 +23850,60 @@ ggplot(summary_data, aes(x = bins, y = mean_expression)) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 dev.off()
+
+
+pdf("output/condiments/bins01FCPseudotime_EpiblastUpregpadj05fc025_H3K27me3Bernstein_traj1_UNTREATED_3Dpaper.pdf", width=4, height=3)
+baseline_mean <- plot_data %>%
+  filter(bins == "0-0.1") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE)) %>%
+  pull(baseline_mean)
+plot_data <- plot_data %>%
+  mutate(FC = AverageExpression / baseline_mean)
+anova_model <- aov(FC ~ bins, data = plot_data)
+anova_summary <- summary(anova_model)
+reference_bin <- "0-0.1"
+pairwise_results <- plot_data %>%
+  group_by(bins) %>%
+  filter(bins != reference_bin) %>%
+  summarize(
+    p_value = tryCatch(
+      t.test(
+        x = plot_data$FC[plot_data$bins == reference_bin],
+        y = FC
+      )$p.value,
+      error = function(e) NA
+    ),
+    .groups = "drop"
+  ) %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "fdr"))
+summary_data <- plot_data %>%
+  group_by(bins) %>%
+  summarize(
+    mean_fc = mean(FC, na.rm = TRUE),
+    se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+    .groups = "drop"
+  ) %>%
+  left_join(pairwise_results, by = "bins")
+
+ggplot(summary_data, aes(x = bins, y = mean_fc)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8, color = "blue") + # Error bars
+  geom_point(size = 2, color = "blue") + # Large dots
+  geom_line(aes(group = 1), size = 1, color = "blue") + # Line connecting the points
+  geom_text(data = summary_data %>% filter(bins != reference_bin), 
+            aes(x = bins, 
+                y = mean_fc + se_fc + 0.01, 
+                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+            inherit.aes = FALSE, 
+            size = 2, 
+            color = "black") + 
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to Starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
 
 
 
@@ -23313,12 +23926,16 @@ plot_data$bins <- cut(plot_data$Pseudotime.scale,
                       breaks = seq(0, 1, by = 0.2), 
                       include.lowest = TRUE, 
                       labels = c("0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1"))
+plot_data$bins <- cut(plot_data$Pseudotime.scale, 
+                      breaks = seq(0, 1, by = 0.1),   
+                      include.lowest = TRUE, 
+                      labels = c("0-0.1", "0.1-0.2", "0.2-0.3", "0.3-0.4", "0.4-0.5", "0.5-0.6", "0.6-0.7", "0.7-0.8", "0.8-0.9", "0.9-1")    ) 
 #### plot
 
-pdf("output/condiments/binsPseudotime_EpiblastUpregpadj05fc025_H3K27me3Bernstein_traj4_UNTREATED_3Dpaper.pdf", width=4, height=3)
+pdf("output/condiments/bins01Pseudotime_EpiblastUpregpadj05fc025_H3K27me3Bernstein_traj4_UNTREATED_3Dpaper.pdf", width=4, height=3)
 anova_model <- aov(AverageExpression ~ bins, data = plot_data)
 anova_summary <- summary(anova_model)
-reference_bin <- "0-0.2" # Reference bin
+reference_bin <- "0-0.1" # Reference bin
 pairwise_results <- plot_data %>%
   group_by(bins) %>%
   filter(bins != reference_bin) %>%
@@ -23360,6 +23977,68 @@ ggplot(summary_data, aes(x = bins, y = mean_expression)) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 dev.off()
+
+
+pdf("output/condiments/bins02FCPseudotime_EpiblastUpregpadj05fc025_H3K27me3Bernstein_traj4_UNTREATED_3Dpaper.pdf", width=4, height=3)
+baseline_mean <- plot_data %>%
+  filter(bins == "0-0.2") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE)) %>%
+  pull(baseline_mean)
+plot_data <- plot_data %>%
+  mutate(FC = AverageExpression / baseline_mean)
+anova_model <- aov(FC ~ bins, data = plot_data)
+anova_summary <- summary(anova_model)
+reference_bin <- "0-0.2"
+pairwise_results <- plot_data %>%
+  group_by(bins) %>%
+  filter(bins != reference_bin) %>%
+  summarize(
+    p_value = tryCatch(
+      t.test(
+        x = plot_data$FC[plot_data$bins == reference_bin],
+        y = FC
+      )$p.value,
+      error = function(e) NA
+    ),
+    .groups = "drop"
+  ) %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "fdr"))
+summary_data <- plot_data %>%
+  group_by(bins) %>%
+  summarize(
+    mean_fc = mean(FC, na.rm = TRUE),
+    se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+    .groups = "drop"
+  ) %>%
+  left_join(pairwise_results, by = "bins")
+
+ggplot(summary_data, aes(x = bins, y = mean_fc)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8, color = "blue") + # Error bars
+  geom_point(size = 2, color = "blue") + # Large dots
+  geom_line(aes(group = 1), size = 1, color = "blue") + # Line connecting the points
+  geom_text(data = summary_data %>% filter(bins != reference_bin), 
+            aes(x = bins, 
+                y = mean_fc + se_fc + 0.01, 
+                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+            inherit.aes = FALSE, 
+            size = 2, 
+            color = "black") + 
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to Starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
+
+
+
+
+
 
 
 
@@ -23377,12 +24056,16 @@ plot_data$bins <- cut(plot_data$Pseudotime.scale,
                       breaks = seq(0, 1, by = 0.2), 
                       include.lowest = TRUE, 
                       labels = c("0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1"))
+plot_data$bins <- cut(plot_data$Pseudotime.scale, 
+                      breaks = seq(0, 1, by = 0.1),   
+                      include.lowest = TRUE, 
+                      labels = c("0-0.1", "0.1-0.2", "0.2-0.3", "0.3-0.4", "0.4-0.5", "0.5-0.6", "0.6-0.7", "0.7-0.8", "0.8-0.9", "0.9-1")    ) 
 #### plot
 
-pdf("output/condiments/binsPseudotime_EpiblastUpregpadj05fc025_H3K27me3Bernstein_traj5_UNTREATED_3Dpaper.pdf", width=4, height=3)
+pdf("output/condiments/bins01Pseudotime_EpiblastUpregpadj05fc025_H3K27me3Bernstein_traj5_UNTREATED_3Dpaper.pdf", width=4, height=3)
 anova_model <- aov(AverageExpression ~ bins, data = plot_data)
 anova_summary <- summary(anova_model)
-reference_bin <- "0-0.2" # Reference bin
+reference_bin <- "0-0.1" # Reference bin
 pairwise_results <- plot_data %>%
   group_by(bins) %>%
   filter(bins != reference_bin) %>%
@@ -23425,6 +24108,59 @@ ggplot(summary_data, aes(x = bins, y = mean_expression)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 dev.off()
 
+
+
+pdf("output/condiments/bins01FCPseudotime_EpiblastUpregpadj05fc025_H3K27me3Bernstein_traj5_UNTREATED_3Dpaper.pdf", width=4, height=3)
+baseline_mean <- plot_data %>%
+  filter(bins == "0-0.1") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE)) %>%
+  pull(baseline_mean)
+plot_data <- plot_data %>%
+  mutate(FC = AverageExpression / baseline_mean)
+anova_model <- aov(FC ~ bins, data = plot_data)
+anova_summary <- summary(anova_model)
+reference_bin <- "0-0.1"
+pairwise_results <- plot_data %>%
+  group_by(bins) %>%
+  filter(bins != reference_bin) %>%
+  summarize(
+    p_value = tryCatch(
+      t.test(
+        x = plot_data$FC[plot_data$bins == reference_bin],
+        y = FC
+      )$p.value,
+      error = function(e) NA
+    ),
+    .groups = "drop"
+  ) %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "fdr"))
+summary_data <- plot_data %>%
+  group_by(bins) %>%
+  summarize(
+    mean_fc = mean(FC, na.rm = TRUE),
+    se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+    .groups = "drop"
+  ) %>%
+  left_join(pairwise_results, by = "bins")
+
+ggplot(summary_data, aes(x = bins, y = mean_fc)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8, color = "blue") + # Error bars
+  geom_point(size = 2, color = "blue") + # Large dots
+  geom_line(aes(group = 1), size = 1, color = "blue") + # Line connecting the points
+  geom_text(data = summary_data %>% filter(bins != reference_bin), 
+            aes(x = bins, 
+                y = mean_fc + se_fc + 0.01, 
+                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+            inherit.aes = FALSE, 
+            size = 2, 
+            color = "black") + 
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to Starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
 
 
 ```
