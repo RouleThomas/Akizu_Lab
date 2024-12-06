@@ -4039,6 +4039,70 @@ write.table(all_markers_UNTREATED, file = "output/seurat/srat_humangastruloid247
 all_markers_DASATINIB <- FindAllMarkers(humangastruloid_DASATINIB.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.1, logfc.threshold = 0.1)
 write.table(all_markers_DASATINIB, file = "output/seurat/srat_humangastruloid2472hrs_DASATINIB_3Dpaper_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
+
+
+# Count number of GATA6+ and CDX2+ cells 
+
+humangastruloid_UNTREATED.combined.sct <- subset(humangastruloid.combined.sct, treatment == "UNTREATED") # 13035 cells
+humangastruloid_DASATINIB.combined.sct <- subset(humangastruloid.combined.sct, treatment == "DASATINIB") # 13745 cells
+
+DefaultAssay(humangastruloid_UNTREATED.combined.sct) <- "RNA"
+DefaultAssay(humangastruloid_DASATINIB.combined.sct) <- "RNA"
+
+
+
+sum(GetAssayData(object = humangastruloid_UNTREATED.combined.sct, slot = "data")["GATA6",]>0) # 10476 cells (80.37%)
+sum(GetAssayData(object = humangastruloid_UNTREATED.combined.sct, slot = "data")["GATA6",]>0)/nrow(humangastruloid_UNTREATED.combined.sct@meta.data)
+
+sum(GetAssayData(object = humangastruloid_UNTREATED.combined.sct, slot = "data")["CDX2",]>0) # 2552 cells (19.58%)
+sum(GetAssayData(object = humangastruloid_UNTREATED.combined.sct, slot = "data")["CDX2",]>0)/nrow(humangastruloid_UNTREATED.combined.sct@meta.data)
+
+
+sum(GetAssayData(object = humangastruloid_DASATINIB.combined.sct, slot = "data")["GATA6",]>0) # 11158 cells (81.18%)
+sum(GetAssayData(object = humangastruloid_DASATINIB.combined.sct, slot = "data")["GATA6",]>0)/nrow(humangastruloid_DASATINIB.combined.sct@meta.data)
+
+sum(GetAssayData(object = humangastruloid_DASATINIB.combined.sct, slot = "data")["CDX2",]>0) # 2894 cells (21.05%)
+sum(GetAssayData(object = humangastruloid_DASATINIB.combined.sct, slot = "data")["CDX2",]>0)/nrow(humangastruloid_DASATINIB.combined.sct@meta.data)
+
+
+
+
+humangastruloid_UNTREATED_24hr.combined.sct <- subset(humangastruloid_UNTREATED.combined.sct, time == "24hr") # 7325 cells
+humangastruloid_UNTREATED_72hr.combined.sct <- subset(humangastruloid_UNTREATED.combined.sct, time == "72hr") # 5710 cells
+
+humangastruloid_DASATINIB_24hr.combined.sct <- subset(humangastruloid_DASATINIB.combined.sct, time == "24hr") # 6606 cells
+humangastruloid_DASATINIB_72hr.combined.sct <- subset(humangastruloid_DASATINIB.combined.sct, time == "72hr") # 7139 cells
+
+
+sum(GetAssayData(object = humangastruloid_UNTREATED_24hr.combined.sct, slot = "data")["GATA6",]>0) # 5685 cells (77.61%)
+sum(GetAssayData(object = humangastruloid_UNTREATED_24hr.combined.sct, slot = "data")["GATA6",]>0)/nrow(humangastruloid_UNTREATED_24hr.combined.sct@meta.data)
+sum(GetAssayData(object = humangastruloid_UNTREATED_24hr.combined.sct, slot = "data")["CDX2",]>0) # 908 cells (12.40%)
+sum(GetAssayData(object = humangastruloid_UNTREATED_24hr.combined.sct, slot = "data")["CDX2",]>0)/nrow(humangastruloid_UNTREATED_24hr.combined.sct@meta.data)
+
+sum(GetAssayData(object = humangastruloid_DASATINIB_24hr.combined.sct, slot = "data")["GATA6",]>0) # 5781 cells (87.51%)
+sum(GetAssayData(object = humangastruloid_DASATINIB_24hr.combined.sct, slot = "data")["GATA6",]>0)/nrow(humangastruloid_DASATINIB_24hr.combined.sct@meta.data)
+sum(GetAssayData(object = humangastruloid_DASATINIB_24hr.combined.sct, slot = "data")["CDX2",]>0) # 847 cells (12.82%)
+sum(GetAssayData(object = humangastruloid_DASATINIB_24hr.combined.sct, slot = "data")["CDX2",]>0)/nrow(humangastruloid_DASATINIB_24hr.combined.sct@meta.data)
+
+
+sum(GetAssayData(object = humangastruloid_UNTREATED_72hr.combined.sct, slot = "data")["GATA6",]>0) # 4791 cells (83.90%)
+sum(GetAssayData(object = humangastruloid_UNTREATED_72hr.combined.sct, slot = "data")["GATA6",]>0)/nrow(humangastruloid_UNTREATED_72hr.combined.sct@meta.data)
+sum(GetAssayData(object = humangastruloid_UNTREATED_72hr.combined.sct, slot = "data")["CDX2",]>0) # 1644 cells (28.79%)
+sum(GetAssayData(object = humangastruloid_UNTREATED_72hr.combined.sct, slot = "data")["CDX2",]>0)/nrow(humangastruloid_UNTREATED_72hr.combined.sct@meta.data)
+
+sum(GetAssayData(object = humangastruloid_DASATINIB_72hr.combined.sct, slot = "data")["GATA6",]>0) # 5377 cells (75.32%)
+sum(GetAssayData(object = humangastruloid_DASATINIB_72hr.combined.sct, slot = "data")["GATA6",]>0)/nrow(humangastruloid_DASATINIB_72hr.combined.sct@meta.data)
+sum(GetAssayData(object = humangastruloid_DASATINIB_72hr.combined.sct, slot = "data")["CDX2",]>0) # 2047 cells (28.67%)
+sum(GetAssayData(object = humangastruloid_DASATINIB_72hr.combined.sct, slot = "data")["CDX2",]>0)/nrow(humangastruloid_DASATINIB_72hr.combined.sct@meta.data)
+
+
+
+
+
+
+
+
+
 ```
 
 --> There is no more down-regulated genes overall if appying a treshold for the FC; for ex Abs(0.25) tresh there is no more bias!
