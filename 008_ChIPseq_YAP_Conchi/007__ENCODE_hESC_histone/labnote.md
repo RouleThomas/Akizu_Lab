@@ -179,6 +179,7 @@ Generate heatmap showing bigwig signal of the histone marks and EZH2 for (window
 - YAP:QSER1 peaks
 - YAP1 only peaks
 - QSER1 only peaks
+- Show EZH2 and H3K27me3 signal (Bernstein) in all genes and in EZH2-bound genes (from `008*/001*`) - *3D paper*
 
 
 ```bash
@@ -211,9 +212,23 @@ sbatch scripts/matrix_2kb_H3K4me3_QSER1peaks_Bernstein.sh # 29179355 ok
 sbatch scripts/matrix_5kb_H3K4me3_QSER1peaks_Bernstein.sh # 29179370 ok
 sbatch scripts/matrix_10kb_H3K4me3_QSER1peaks_Bernstein.sh # 29179387 ok
 
-#--> naming `*_H3K4me3_*` make no sene, typo...
+
+# EZH2 and H3K27me3 signal - All genes
+sbatch scripts/matrix_5kb_H3K27me3_Bernstein_EZH2008001_allGenes.sh # 31762805 xxx
+sbatch scripts/matrix_10kb_H3K27me3_Bernstein_EZH2008001_allGenes.sh # 31762991 xxx
+
+# EZH2 and H3K27me3 signal - EZH2 target genes (008*/001*)
+sbatch scripts/matrix_5kb_H3K27me3_Bernstein_EZH2008001_EZH2target.sh # 31763984 xxx
+sbatch scripts/matrix_10kb_H3K27me3_Bernstein_EZH2008001_EZH2target.sh # 31764129 xxx
+
+
+
 
 ```
+
+- *NOTE: naming `*_H3K4me3_*` make no sense here...; typo...*
+- NOTE: EZH2 target gene list GTF generated below in `# Heatmap H3K27me3 signal in DEG Epiblast - *3D paper*`
+
 
 
 
@@ -411,6 +426,68 @@ write.table(Bernstein_H3K36me3_annot_noIntergenic, file = "output/ChIPseeker/ann
 
 
 ```
+
+
+
+
+# Heatmap H3K27me3 signal in DEG Epiblast - *3D paper*
+
+
+Let's generate heatmap of H3K27me3 signal (Bernstein) for DEGs (for H3K27me3- target genes, or not) in Epiblast (`002*/003*`):
+- Generate gene list manually with `nano` from `DASATINIB2472hrs_response_dim30kparam15res04_allGenes.xlsx` (see file names below) + VennDiagram
+- Generate gtf file of gene list
+- Generate heatmap
+
+
+```bash
+# Generate gtf file from gene list:
+../../002_scRNAseq/003__YAP1/output/seurat/Epiblast-DASATINIB2472hrs_response_dim30kparam15res04_upregulatedq05fc025.txt # DEG up
+../../002_scRNAseq/003__YAP1/output/seurat/Epiblast-DASATINIB2472hrs_response_dim30kparam15res04_downregulatedq05fc025.txt # DEG down
+../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Bernstein-UpRegulated_Epiblastpadj05fc025.txt # DEG up H3K27me3 target
+../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Bernstein-DownRegulated_Epiblastpadj05fc025.txt # DEG up H3K27me3 target
+../../008_ChIPseq_YAP_Conchi/001__ChIPseq_V1/output/ChIPseeker/annotation_homer_hESC_WT_EZH2_pool_annot_geneSymbol.txt # EZH2 target (from 008*/001*)
+
+
+
+### create gtf from gene list
+#### Modify the .txt file that list all genes so that it match gtf structure
+sed 's/\r$//; s/.*/gene_name "&"/' ../../002_scRNAseq/003__YAP1/output/seurat/Epiblast-DASATINIB2472hrs_response_dim30kparam15res04_upregulatedq05fc025.txt > ../../002_scRNAseq/003__YAP1/output/seurat/Epiblast-DASATINIB2472hrs_response_dim30kparam15res04_upregulatedq05fc025_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' ../../002_scRNAseq/003__YAP1/output/seurat/Epiblast-DASATINIB2472hrs_response_dim30kparam15res04_downregulatedq05fc025.txt > ../../002_scRNAseq/003__YAP1/output/seurat/Epiblast-DASATINIB2472hrs_response_dim30kparam15res04_downregulatedq05fc025_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' ../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Bernstein-UpRegulated_Epiblastpadj05fc025.txt > ../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Bernstein-UpRegulated_Epiblastpadj05fc025_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' ../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Bernstein-DownRegulated_Epiblastpadj05fc025.txt > ../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Bernstein-DownRegulated_Epiblastpadj05fc025_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' ../../008_ChIPseq_YAP_Conchi/001__ChIPseq_V1/output/ChIPseeker/annotation_homer_hESC_WT_EZH2_pool_annot_geneSymbol.txt > ../../008_ChIPseq_YAP_Conchi/001__ChIPseq_V1/output/ChIPseeker/annotation_homer_hESC_WT_EZH2_pool_annot_as_gtf_geneSymbol.txt
+
+
+## Filter the gtf
+grep -Ff ../../002_scRNAseq/003__YAP1/output/seurat/Epiblast-DASATINIB2472hrs_response_dim30kparam15res04_upregulatedq05fc025_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Epiblast-DASATINIB2472hrs_response_dim30kparam15res04_upregulatedq05fc025.gtf
+grep -Ff ../../002_scRNAseq/003__YAP1/output/seurat/Epiblast-DASATINIB2472hrs_response_dim30kparam15res04_downregulatedq05fc025_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Epiblast-DASATINIB2472hrs_response_dim30kparam15res04_downregulatedq05fc025.gtf
+grep -Ff ../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Bernstein-UpRegulated_Epiblastpadj05fc025_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_H3K27me3_hESC_Bernstein-UpRegulated_Epiblastpadj05fc025.gtf
+grep -Ff ../../008_ChIPseq_YAP_Conchi/007__ENCODE_hESC_histone/output/ChIPseeker/H3K27me3_hESC_Bernstein-DownRegulated_Epiblastpadj05fc025_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_H3K27me3_hESC_Bernstein-DownRegulated_Epiblastpadj05fc025.gtf
+grep -Ff ../../008_ChIPseq_YAP_Conchi/001__ChIPseq_V1/output/ChIPseeker/annotation_homer_hESC_WT_EZH2_pool_annot_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_homer_hESC_WT_EZH2_pool.gtf
+
+
+
+```
+
+Deeptools heatmap plots:
+
+```bash
+conda activate deeptools
+
+# DEGs
+sbatch scripts/matrix_5kb_H3K27me3_Bernstein-Epiblast-DASATINIB2472hrs_response_dim30kparam15res04_upDownRegulatedq05fc025.sh # 31742879 ok
+sbatch scripts/matrix_10kb_H3K27me3_Bernstein-Epiblast-DASATINIB2472hrs_response_dim30kparam15res04_upDownRegulatedq05fc025.sh # 31745396 ok
+
+# DEGs and H3K27me3 target
+sbatch scripts/matrix_5kb_H3K27me3_Bernstein-H3K27me3_hESC_Bernstein-UpDownRegulated_Epiblastpadj05fc025.sh # 31743158 ok
+sbatch scripts/matrix_10kb_H3K27me3_Bernstein-H3K27me3_hESC_Bernstein-UpDownRegulated_Epiblastpadj05fc025.sh # 31745403 ok
+```
+
+--> Upregulated genes in Epiblast show higher level of H3K27me3 (good; hypothesis confirm). 
+
+
+
+
 
 
 
