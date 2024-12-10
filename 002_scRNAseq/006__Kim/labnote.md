@@ -9319,7 +9319,10 @@ dev.off()
 ```
 
 
-Let's do GO/pathway analysis on clustered  pseudotime -DEG. 
+Let's do GO/pathway analysis on:
+- clustered pseudotime -DEG (traj9 and 2)
+- DAR NSC overlapping with pseudotime -DEG (traj9 and 2)
+
 
 ```bash
 conda activate deseq2
@@ -9332,11 +9335,21 @@ library("tidyverse")
 library("enrichR")
 library("ggrepel")
 
+
+
+# Code for quick overview; all cluster together; ie. multiple gene list at one ####################
+
+
 # Define the GO database to use
 dbs <- c("GO_Biological_Process_2023")
 
 # Read the gene cluster file
 clusters <- read_tsv("output/condiments/gene_clusters_traj9_RNA_common_l2fc0_cl10.txt")
+clusters <- read_tsv("output/condiments/gene_clusters_traj2_RNA_common_l2fc0_cl10.txt")
+clusters <- read_tsv("output/condiments/vennDiagram_DARNSC_DEGtraj9.txt") %>% # added a column cluster to make code work
+  add_column(cluster = "1")
+clusters <- read_tsv("output/condiments/vennDiagram_DARNSC_DEGtraj2.txt") %>% # added a column cluster to make code work
+  add_column(cluster = "1")
 
 # Iterate over each cluster, run enrichment analysis, and store results
 go_results_list <- list()
@@ -9373,11 +9386,14 @@ go_results <- bind_rows(go_results_list)
 
 # Simplify GO terms and prepare for visualization
 go_results <- go_results %>%
+  separate(Overlap, into = c("count", "total"), sep = "/", convert = TRUE) %>%
   mutate(
     Term = gsub("\\(GO:[0-9]+\\)", "", Term),  # Remove GO IDs from terms
     Term = str_trunc(Term, 50),  # Truncate long terms for readability
-    logAdjP = -log10(Adjusted.P.value)  # Convert adjusted p-value to -log10 scale
-  )
+    logAdjP = -log10(Adjusted.P.value),  # Convert adjusted p-value to -log10 scale
+    geneRatio = (count / total) * 100
+  ) 
+
 
 # Select the top terms per cluster for visualization
 top_go_results <- go_results %>%
@@ -9399,7 +9415,7 @@ cluster_colors <- setNames(
 )
 
 # Generate the plot
-pdf("output/condiments/enrichR_GO_Biological_Process_2023_traj9_RNA_common_l2fc0_cl10.pdf", width = 15, height = 5)
+pdf("output/condiments/enrichR_GO_Biological_Process_2023_traj2_RNA_common_l2fc0_cl10.pdf", width = 15, height = 5)
 ggplot(top_go_results, aes(x = logAdjP, y = Term, color = cluster, size = Combined.Score)) +
   geom_point(alpha = 0.8) +
   facet_wrap(~ cluster, scales = "free", nrow = 3) +
@@ -9420,6 +9436,31 @@ ggplot(top_go_results, aes(x = logAdjP, y = Term, color = cluster, size = Combin
 dev.off()
 
 
+# enrichR_GO_Biological_Process_2023_traj2_RNA_common_l2fc0_cl10_cluster1 
+pdf("output/condiments/enrichR_GO_Biological_Process_2023_vennDiagram_DARNSC_DEGtraj2.pdf", width = 5, height = 3)
+top_go_results %>%
+  dplyr::filter(cluster == "1") %>%
+ggplot(., aes(x = logAdjP, y = Term, color = cluster, size = geneRatio)) +
+  geom_point(alpha = 0.8) +
+  facet_wrap(~ cluster, scales = "free", nrow = 3) +
+  scale_color_manual(values = cluster_colors) +  # Use custom color mapping
+  labs(
+    title = "GO Biological Process Enrichment by Cluster",
+    x = "-log10(Adjusted P-value)",
+    y = "GO Biological Process",
+    size = "gene ratio",
+    color = "Cluster"
+  ) +
+  theme_bw() +
+  theme(
+    axis.text.y = element_text(size = 8),
+    axis.text.x = element_text(size = 10),
+    strip.text = element_text(size = 12, face = "bold")
+  )
+dev.off()
+
+
+
 
 
 
@@ -9428,6 +9469,7 @@ dbs <- c("KEGG_2019_Mouse")
 
 # Read the gene cluster file
 clusters <- read_tsv("output/condiments/gene_clusters_traj9_RNA_common_l2fc0_cl10.txt")
+clusters <- read_tsv("output/condiments/gene_clusters_traj2_RNA_common_l2fc0_cl10.txt")
 
 # Iterate over each cluster, run enrichment analysis, and store results
 go_results_list <- list()
@@ -9490,7 +9532,7 @@ cluster_colors <- setNames(
 )
 
 # Generate the plot
-pdf("output/condiments/enrichR_KEGG_2019_Mouse_traj9_RNA_common_l2fc0_cl10.pdf", width = 15, height = 5)
+pdf("output/condiments/enrichR_KEGG_2019_Mouse_traj2_RNA_common_l2fc0_cl10.pdf", width = 15, height = 5)
 ggplot(top_go_results, aes(x = logAdjP, y = Term, color = cluster, size = Combined.Score)) +
   geom_point(alpha = 0.8) +
   facet_wrap(~ cluster, scales = "free", nrow = 3) +
@@ -9509,6 +9551,10 @@ ggplot(top_go_results, aes(x = logAdjP, y = Term, color = cluster, size = Combin
     strip.text = element_text(size = 12, face = "bold")
   )
 dev.off()
+
+
+
+
 
 
 ```

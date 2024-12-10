@@ -20500,6 +20500,335 @@ write.table(switch_df, file = c("output/condiments/switch_df_traj2_humangastrulo
 ##################################
 ```
 
+## 2472hrsIntegrated Condiments humangastru72hrs - pseudotime untreated and DASA common for 3D gastrulation paper
+
+Identify pseudotime traj for WT and DASA together but mark condition (*condiments* method). Then put in `008/001` to compare EZH2/H3K27me3 level of these trajectory.
+
+
+
+
+```bash
+conda activate condiments_V6
+```
+
+```R
+# package installation 
+## install.packages("remotes")
+## remotes::install_github("cran/spatstat.core")
+## remotes::install_version("Seurat", "4.0.3")
+## install.packages("magrittr")
+## install.packages("magrittr")
+## install.packages("dplyr")
+## BiocManager::install("DelayedMatrixStats")
+## BiocManager::install("tradeSeq")
+
+
+# packages
+library("condiments")
+library("Seurat")
+library("magrittr") # to use pipe
+library("dplyr") # to use bind_cols and sample_frac
+library("SingleCellExperiment") # for reducedDims
+library("ggplot2")
+library("slingshot")
+library("DelayedMatrixStats")
+library("tidyr")
+library("tradeSeq")
+library("cowplot")
+library("scales")
+library("pheatmap")
+library("readr")
+
+
+# Data import GASTRULOID and separate conditons
+humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid2472hr.dim30kparam15res04.rds")
+
+
+DefaultAssay(humangastruloid.combined.sct) <- "RNA" # According to condiments workflow
+
+
+# convert to SingleCellExperiment
+humangastruloid <- as.SingleCellExperiment(humangastruloid.combined.sct, assay = "RNA")
+
+
+# tidy
+df <- bind_cols(
+  as.data.frame(reducedDims(humangastruloid)$UMAP),
+  as.data.frame(colData(humangastruloid)[, -3])
+  ) %>%
+  sample_frac(1)
+
+# PLOT
+## genotype overlap
+pdf("output/condiments/UMAP_genotype_humangastruloid2472hr_dim30kparam15res04.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = treatment)) +
+  geom_point(size = .7) +
+  scale_color_manual(values = c("blue", "red")) + # Specify colors here
+  labs(col = "treatment") +
+  theme_classic()
+dev.off()
+
+## imbalance score
+scores <- condiments::imbalance_score(
+  Object = df %>% select(UMAP_1, UMAP_2) %>% as.matrix(), 
+  conditions = df$orig.ident,
+  k = 20, smooth = 40)
+df$scores <- scores$scaled_scores
+
+pdf("output/condiments/UMAP_imbalance_score_humangastruloid2472hr_dim30kparam15res04.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
+  geom_point(size = .7) +
+  scale_color_viridis_c(option = "C") +
+  labs(col = "Scores") +
+  theme_classic()
+dev.off()
+
+
+#  Trajectory Inference and Differential Topology
+set.seed(42)
+
+## PLOT with Separate trajectories
+## parameter unique traj
+### Testing Area ############
+humangastruloid <- slingshot(humangastruloid, reducedDim = 'UMAP',
+                 clusterLabels = colData(humangastruloid)$cluster.annot,
+                 start.clus = 'Epiblast', end.clus = c("CPC2", "CPC1", "Endoderm", "Cardiomyocyte"), approx_points = 200, extend = "n", stretch = 1.6)
+
+
+#                 extend = 'n', stretch = 0)
+
+
+##########################################
+humangastruloid <- slingshot(humangastruloid, reducedDim = 'UMAP',
+                 clusterLabels = colData(humangastruloid)$cluster.annot,
+                 start.clus = 'Epiblast', end.clus = c("CPC2", "CPC1", "Endoderm", "Cardiomyocyte"), approx_points = 200, extend = "pc1", stretch = 1.6)
+
+# , extend = "n"
+
+#test reduceDim PCA or subset endoderm
+
+set.seed(42)
+topologyTest(SlingshotDataSet(humangastruloid), humangastruloid$treatment) #  
+
+
+sdss <- slingshot_conditions(SlingshotDataSet(humangastruloid), humangastruloid$treatment)
+curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
+                    .id = "treatment")
+
+#  UMAP_trajectory_common_humangastruloid_StartEpiEndCPC12EndoCardioextendnstretch16approx200
+pdf("output/condiments/UMAP_trajectory_common_humangastruloid_StartEpiEndCPC12EndoCardioextendpc1stretch16approx200.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = treatment)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(treatment, Lineage, Order),
+            aes(group = interaction(Lineage, treatment)), size = 1.5) +
+  theme_classic()
+dev.off()
+
+
+
+# Add custom labels for each trajectory based on the Lineage
+curves$label <- with(curves, ifelse(Lineage == 1, "Trajectory 1",
+                               ifelse(Lineage == 2, "Trajectory 2",
+                               ifelse(Lineage == 3, "Trajectory 3",
+                               ifelse(Lineage == 4, "Trajectory 4",
+                               ifelse(Lineage == 5, "Trajectory 5",
+                               ifelse(Lineage == 6, "Trajectory 6",
+                               ifelse(Lineage == 7, "Trajectory 7",
+                               ifelse(Lineage == 8, "Trajectory 8", "Trajectory 9" )))))))))
+                               
+
+# 
+pdf("output/condiments/UMAP_trajectory_separated_multiome_WT_Bap1KO_QCV2vC1_STARTNSCquiescentENDPyNsRSCULDGGCextendN_trajLabel.pdf", width=6, height=5)
+ggplot(df, aes(x = umap_1, y = umap_2, col = orig.ident)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(orig.ident, Lineage, Order),
+            aes(group = interaction(Lineage, orig.ident)), size = 1.5) +
+  geom_text(data = curves %>% group_by(Lineage) %>% top_n(1, Order),
+            aes(label = label, x = umap_1, y = umap_2, group = Lineage),
+            size = 4, vjust = -1, hjust = 0.5) +
+  theme_classic()
+dev.off()
+
+
+## PLOT with common trajectories - Individually
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(RNA_WT_Bap1KO, "UMAP")),
+  slingPseudotime(RNA_WT_Bap1KO) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(RNA_WT_Bap1KO) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+         Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst),
+         Lineage4_pst = if_else(is.na(Lineage4_pst), 0, Lineage4_pst),
+         Lineage5_pst = if_else(is.na(Lineage5_pst), 0, Lineage5_pst),
+         Lineage6_pst = if_else(is.na(Lineage6_pst), 0, Lineage6_pst),
+         Lineage7_pst = if_else(is.na(Lineage7_pst), 0, Lineage7_pst),
+         Lineage8_pst = if_else(is.na(Lineage8_pst), 0, Lineage8_pst),
+         Lineage9_pst = if_else(is.na(Lineage9_pst), 0, Lineage9_pst))
+curves <- slingCurves(RNA_WT_Bap1KO, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = umap_1, y = umap_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = umap_1, y = umap_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = umap_1, y = umap_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = umap_1, y = umap_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:9) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_multiome_WT_Bap1KO_QCV2vC1_STARTNSCquiescentENDPyNsRSCULDGGCextendN_Lineage123456789.pdf", width=25, height=10)
+gridExtra::grid.arrange(grobs = plots, ncol = 5)
+dev.off()
+
+
+
+## PLOT with separate trajectories - Individually
+### WT
+RNA_WT <- RNA_WT_Bap1KO[, RNA_WT_Bap1KO$orig.ident == "multiome_WT"]
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(RNA_WT, "UMAP")),
+  slingPseudotime(RNA_WT) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(RNA_WT) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+         Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst),
+         Lineage4_pst = if_else(is.na(Lineage4_pst), 0, Lineage4_pst),
+         Lineage5_pst = if_else(is.na(Lineage5_pst), 0, Lineage5_pst),
+         Lineage6_pst = if_else(is.na(Lineage6_pst), 0, Lineage6_pst),
+         Lineage7_pst = if_else(is.na(Lineage7_pst), 0, Lineage7_pst),
+         Lineage8_pst = if_else(is.na(Lineage8_pst), 0, Lineage8_pst),
+         Lineage9_pst = if_else(is.na(Lineage9_pst), 0, Lineage9_pst))
+curves <- slingCurves(RNA_WT, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = umap_1, y = umap_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = umap_1, y = umap_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = umap_1, y = umap_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = umap_1, y = umap_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:9) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_multiome_WT_Bap1KO_QCV2vC1_STARTNSCquiescentENDPyNsRSCULDGGCextendN_Lineage123456789_WTonly.pdf", width=25, height=10)
+gridExtra::grid.arrange(grobs = plots, ncol = 5)
+dev.off()
+
+
+### Bap1KO
+RNA_Bap1KO <- RNA_WT_Bap1KO[, RNA_WT_Bap1KO$orig.ident == "multiome_Bap1KO"]
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(RNA_Bap1KO, "UMAP")),
+  slingPseudotime(RNA_Bap1KO) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(RNA_Bap1KO) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+         Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst),
+         Lineage4_pst = if_else(is.na(Lineage4_pst), 0, Lineage4_pst),
+         Lineage5_pst = if_else(is.na(Lineage5_pst), 0, Lineage5_pst),
+         Lineage6_pst = if_else(is.na(Lineage6_pst), 0, Lineage6_pst),
+         Lineage7_pst = if_else(is.na(Lineage7_pst), 0, Lineage7_pst),
+         Lineage8_pst = if_else(is.na(Lineage8_pst), 0, Lineage8_pst),
+         Lineage9_pst = if_else(is.na(Lineage9_pst), 0, Lineage9_pst))
+curves <- slingCurves(RNA_Bap1KO, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = umap_1, y = umap_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = umap_1, y = umap_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = umap_1, y = umap_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = umap_1, y = umap_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:9) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_multiome_WT_Bap1KO_QCV2vC1_STARTNSCquiescentENDPyNsRSCULDGGCextendN_Lineage123456789_Bap1KOonly.pdf", width=25, height=10)
+gridExtra::grid.arrange(grobs = plots, ncol = 5)
+dev.off()
+
+
+
+
+
+
+
+
+
+```
+
+
+
+
 
 ## 2472hrsIntegrated Condiments humangastru72hrs - pseudotime untreated and DASA separated for 3D gastrulation paper
 
@@ -22673,6 +23002,70 @@ write.table(switch_df, file = c("output/condiments/switch_df_traj1sep_humangastr
 
 ```
 
+
+
+### Compare separated trajectory
+
+So I would like to compare UNTREATED vs DASATINIB, but I already separated and treated the trajectory individually. I am gonna try to extract the cell information from individual dataset and pull them together.
+
+xxxy
+
+
+```bash
+conda activate condiments_V6
+```
+
+```R
+# package installation 
+## install.packages("remotes")
+## remotes::install_github("cran/spatstat.core")
+## remotes::install_version("Seurat", "4.0.3")
+## install.packages("magrittr")
+## install.packages("magrittr")
+## install.packages("dplyr")
+## BiocManager::install("DelayedMatrixStats")
+## BiocManager::install("tradeSeq")
+
+
+# packages
+library("condiments")
+library("Seurat")
+library("magrittr") # to use pipe
+library("dplyr") # to use bind_cols and sample_frac
+library("SingleCellExperiment") # for reducedDims
+library("ggplot2")
+library("slingshot")
+library("DelayedMatrixStats")
+library("tidyr")
+library("tradeSeq")
+library("cowplot")
+library("scales")
+library("pheatmap")
+library("readr")
+
+
+# UNTREATED ALL TRAJ
+load("output/condiments/condiments_humangastruloidUNTREATED2472hrs_StartEpiEndCPC12EndoCardioextendnstretch16approx200.RData")
+
+# DASATINIB ALL TRAJ except Blood
+load("output/condiments/condiments_humangastruloidDASATINIB2472hrs_StartEpiEndCPC12EndoCardioextendnstretch16approx200.RData") 
+## DASATINIB Blood traj
+load("output/condiments/condiments_humangastruloidDASATINIB2472hrs_StartEpiEndCPC1EndoCardioextendnstretch16approx200.RData") 
+
+
+
+
+
+xxxy 
+
+```
+
+
+
+
+
+
+
 ### bins of pseudotime plots - 3D gastrulation paper
 
 All plot_data included pseudotime and average gene expression level has been saved for each condition and trajectory as: `LOG1P-[geneSet]-traj[NUMERIC]_humangastruloid[condition]2472hrs.RData`
@@ -22775,10 +23168,10 @@ ggplot(plot_data, aes(x = bins, y = AverageExpression, fill = condition)) +
 dev.off()
 
 
-pdf("output/condiments/bins02FCPseudotime_THORq4_EZH2_neg_traj21_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+pdf("output/condiments/bins01FCPseudotime_THORq4_EZH2_neg_traj21_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
 baseline_means <- plot_data %>%
   group_by(condition) %>%
-  filter(bins == "0-0.2") %>%
+  filter(bins == "0-0.1") %>%
   summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE), .groups = "drop")
 plot_data <- plot_data %>%
   left_join(baseline_means, by = "condition") %>%
@@ -22819,10 +23212,39 @@ ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condi
   labs(x = "Pseudotime Bins",
        y = "Fold Change Relative to starting Bin") +
   theme_bw() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ylim(0.75, 1.75)
 dev.off()
 
 
+
+pdf("output/condiments/bins01scaleFCPseudotime_THORq4_EZH2_neg_traj21_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+baseline_means <- plot_data %>%
+  group_by(condition) %>%
+  filter(bins == "0-0.1") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE), .groups = "drop")
+plot_data <- plot_data %>%
+  left_join(baseline_means, by = "condition") %>%
+  mutate(FC = AverageExpression / baseline_mean) # Normalize separately for each condition
+summary_data <- plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_fc = mean(FC, na.rm = TRUE),
+            sd_fc = sd(FC, na.rm = TRUE),
+            se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop")
+ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ylim(0.55, 1.8)
+dev.off()
 
 
 
@@ -22947,6 +23369,36 @@ ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condi
 dev.off()
 
 
+
+
+pdf("output/condiments/bins01scaleFCPseudotime_THORq4_EZH2_pos_traj21_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+baseline_means <- plot_data %>%
+  group_by(condition) %>%
+  filter(bins == "0-0.1") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE), .groups = "drop")
+plot_data <- plot_data %>%
+  left_join(baseline_means, by = "condition") %>%
+  mutate(FC = AverageExpression / baseline_mean) # Normalize separately for each condition
+summary_data <- plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_fc = mean(FC, na.rm = TRUE),
+            sd_fc = sd(FC, na.rm = TRUE),
+            se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ylim(0.55, 1.8)
+dev.off()
 
 
 
@@ -23080,6 +23532,39 @@ ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condi
 dev.off()
 
 
+pdf("output/condiments/bins01scaleFCPseudotime_THORq4_EZH2_neg_traj11sep_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+baseline_means <- plot_data %>%
+  group_by(condition) %>%
+  filter(bins == "0-0.1") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE), .groups = "drop")
+plot_data <- plot_data %>%
+  left_join(baseline_means, by = "condition") %>%
+  mutate(FC = AverageExpression / baseline_mean) # Normalize separately for each condition
+summary_data <- plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_fc = mean(FC, na.rm = TRUE),
+            sd_fc = sd(FC, na.rm = TRUE),
+            se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ylim(0.55, 1.8)
+dev.off()
+
+
+
+
+
 
 
 
@@ -23206,6 +23691,35 @@ ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condi
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 dev.off()
 
+
+pdf("output/condiments/bins01scaleFCPseudotime_THORq4_EZH2_pos_traj11sep_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+baseline_means <- plot_data %>%
+  group_by(condition) %>%
+  filter(bins == "0-0.1") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE), .groups = "drop")
+plot_data <- plot_data %>%
+  left_join(baseline_means, by = "condition") %>%
+  mutate(FC = AverageExpression / baseline_mean) # Normalize separately for each condition
+summary_data <- plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_fc = mean(FC, na.rm = TRUE),
+            sd_fc = sd(FC, na.rm = TRUE),
+            se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ylim(0.55, 1.8)
+dev.off()
 
 
 
@@ -23337,6 +23851,36 @@ ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condi
 dev.off()
 
 
+pdf("output/condiments/bins01scaleFCPseudotime_THORq4_EZH2_neg_traj43_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+baseline_means <- plot_data %>%
+  group_by(condition) %>%
+  filter(bins == "0-0.1") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE), .groups = "drop")
+plot_data <- plot_data %>%
+  left_join(baseline_means, by = "condition") %>%
+  mutate(FC = AverageExpression / baseline_mean) # Normalize separately for each condition
+summary_data <- plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_fc = mean(FC, na.rm = TRUE),
+            sd_fc = sd(FC, na.rm = TRUE),
+            se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ylim(0.55, 1.8)
+dev.off()
+
+
 
 
 
@@ -23463,6 +24007,35 @@ dev.off()
 
 
 
+pdf("output/condiments/bins01scaleFCPseudotime_THORq4_EZH2_pos_traj43_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+baseline_means <- plot_data %>%
+  group_by(condition) %>%
+  filter(bins == "0-0.1") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE), .groups = "drop")
+plot_data <- plot_data %>%
+  left_join(baseline_means, by = "condition") %>%
+  mutate(FC = AverageExpression / baseline_mean) # Normalize separately for each condition
+summary_data <- plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_fc = mean(FC, na.rm = TRUE),
+            sd_fc = sd(FC, na.rm = TRUE),
+            se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ylim(0.55, 1.8)
+dev.off()
+
 
 
 
@@ -23586,6 +24159,36 @@ ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condi
        y = "Fold Change Relative to starting Bin") +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+pdf("output/condiments/bins01scaleFCPseudotime_THORq4_EZH2_neg_traj54_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+baseline_means <- plot_data %>%
+  group_by(condition) %>%
+  filter(bins == "0-0.1") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE), .groups = "drop")
+plot_data <- plot_data %>%
+  left_join(baseline_means, by = "condition") %>%
+  mutate(FC = AverageExpression / baseline_mean) # Normalize separately for each condition
+summary_data <- plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_fc = mean(FC, na.rm = TRUE),
+            sd_fc = sd(FC, na.rm = TRUE),
+            se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ylim(0.55, 1.8)
 dev.off()
 
 
@@ -23715,6 +24318,37 @@ ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condi
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 dev.off()
 
+pdf("output/condiments/bins01scaleFCPseudotime_THORq4_EZH2_pos_traj54_UNTREATEDDASATINIB_3Dpaper.pdf", width=4, height=3)
+baseline_means <- plot_data %>%
+  group_by(condition) %>%
+  filter(bins == "0-0.1") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE), .groups = "drop")
+plot_data <- plot_data %>%
+  left_join(baseline_means, by = "condition") %>%
+  mutate(FC = AverageExpression / baseline_mean) # Normalize separately for each condition
+summary_data <- plot_data %>%
+  group_by(bins, condition) %>%
+  summarize(mean_fc = mean(FC, na.rm = TRUE),
+            sd_fc = sd(FC, na.rm = TRUE),
+            se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+            .groups = "drop") %>%
+  left_join(pairwise_results, by = "bins")
+ggplot(summary_data, aes(x = bins, y = mean_fc, color = condition, group = condition)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8) + # Error bars
+  geom_point(size = 2) + # Large dots
+  geom_line(size = 1) + # Line connecting the points
+  scale_color_manual(values = c("blue", "red")) + # Dot and line colors
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ylim(0.55, 1.8)
+dev.off()
+
+
+
 
 
 
@@ -23792,6 +24426,90 @@ ggplot(summary_data, aes(x = bins, y = mean_expression)) +
 dev.off()
 
 
+pdf("output/condiments/bins01FCPseudotime_EpiblastUpregpadj05fc025_H3K27me3Bernstein_traj2_UNTREATED_3Dpaper.pdf", width=4, height=3)
+baseline_mean <- plot_data %>%
+  filter(bins == "0-0.1") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE)) %>%
+  pull(baseline_mean)
+plot_data <- plot_data %>%
+  mutate(FC = AverageExpression / baseline_mean)
+anova_model <- aov(FC ~ bins, data = plot_data)
+anova_summary <- summary(anova_model)
+reference_bin <- "0-0.1"
+pairwise_results <- plot_data %>%
+  group_by(bins) %>%
+  filter(bins != reference_bin) %>%
+  summarize(
+    p_value = tryCatch(
+      t.test(
+        x = plot_data$FC[plot_data$bins == reference_bin],
+        y = FC
+      )$p.value,
+      error = function(e) NA
+    ),
+    .groups = "drop"
+  ) %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "fdr"))
+summary_data <- plot_data %>%
+  group_by(bins) %>%
+  summarize(
+    mean_fc = mean(FC, na.rm = TRUE),
+    se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+    .groups = "drop"
+  ) %>%
+  left_join(pairwise_results, by = "bins")
+
+ggplot(summary_data, aes(x = bins, y = mean_fc)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8, color = "blue") + # Error bars
+  geom_point(size = 2, color = "blue") + # Large dots
+  geom_line(aes(group = 1), size = 1, color = "blue") + # Line connecting the points
+  geom_text(data = summary_data %>% filter(bins != reference_bin), 
+            aes(x = bins, 
+                y = mean_fc + se_fc + 0.01, 
+                label = paste0(formatC(p_adjusted, format = "e", digits = 2))),
+            inherit.aes = FALSE, 
+            size = 2, 
+            color = "black") + 
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to Starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
+pdf("output/condiments/bins01scaleFCPseudotime_EpiblastUpregpadj05fc025_H3K27me3Bernstein_traj2_UNTREATED_3Dpaper.pdf", width=4, height=3)
+baseline_mean <- plot_data %>%
+  filter(bins == "0-0.1") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE)) %>%
+  pull(baseline_mean)
+plot_data <- plot_data %>%
+  mutate(FC = AverageExpression / baseline_mean)
+reference_bin <- "0-0.1"
+summary_data <- plot_data %>%
+  group_by(bins) %>%
+  summarize(
+    mean_fc = mean(FC, na.rm = TRUE),
+    se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+    .groups = "drop"
+  ) 
+ggplot(summary_data, aes(x = bins, y = mean_fc)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8, color = "blue") + # Error bars
+  geom_point(size = 2, color = "blue") + # Large dots
+  geom_line(aes(group = 1), size = 1, color = "blue") + # Line connecting the points
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to Starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ylim(0.55, 1.8)
+dev.off()
+
+
 pdf("output/condiments/bins02FCPseudotime_EpiblastUpregpadj05fc025_H3K27me3Bernstein_traj2_UNTREATED_3Dpaper.pdf", width=4, height=3)
 baseline_mean <- plot_data %>%
   filter(bins == "0-0.2") %>%
@@ -23843,9 +24561,6 @@ ggplot(summary_data, aes(x = bins, y = mean_fc)) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 dev.off()
-
-
-
 
 
 
@@ -23969,8 +24684,33 @@ ggplot(summary_data, aes(x = bins, y = mean_fc)) +
 dev.off()
 
 
-
-
+pdf("output/condiments/bins01scaleFCPseudotime_EpiblastUpregpadj05fc025_H3K27me3Bernstein_traj1_UNTREATED_3Dpaper.pdf", width=4, height=3)
+baseline_mean <- plot_data %>%
+  filter(bins == "0-0.1") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE)) %>%
+  pull(baseline_mean)
+plot_data <- plot_data %>%
+  mutate(FC = AverageExpression / baseline_mean)
+reference_bin <- "0-0.1"
+summary_data <- plot_data %>%
+  group_by(bins) %>%
+  summarize(
+    mean_fc = mean(FC, na.rm = TRUE),
+    se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+    .groups = "drop"
+  )
+ggplot(summary_data, aes(x = bins, y = mean_fc)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8, color = "blue") + # Error bars
+  geom_point(size = 2, color = "blue") + # Large dots
+  geom_line(aes(group = 1), size = 1, color = "blue") + # Line connecting the points
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to Starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ylim(0.55, 1.8)
+dev.off()
 
 
 
@@ -24096,8 +24836,33 @@ ggplot(summary_data, aes(x = bins, y = mean_fc)) +
 dev.off()
 
 
-
-
+pdf("output/condiments/bins01scaleFCPseudotime_EpiblastUpregpadj05fc025_H3K27me3Bernstein_traj4_UNTREATED_3Dpaper.pdf", width=4, height=3)
+baseline_mean <- plot_data %>%
+  filter(bins == "0-0.1") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE)) %>%
+  pull(baseline_mean)
+plot_data <- plot_data %>%
+  mutate(FC = AverageExpression / baseline_mean)
+reference_bin <- "0-0.1"
+summary_data <- plot_data %>%
+  group_by(bins) %>%
+  summarize(
+    mean_fc = mean(FC, na.rm = TRUE),
+    se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+    .groups = "drop"
+  )
+ggplot(summary_data, aes(x = bins, y = mean_fc)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8, color = "blue") + # Error bars
+  geom_point(size = 2, color = "blue") + # Large dots
+  geom_line(aes(group = 1), size = 1, color = "blue") + # Line connecting the points
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to Starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ylim(0.55, 1.8)
+dev.off()
 
 
 
@@ -24225,6 +24990,37 @@ ggplot(summary_data, aes(x = bins, y = mean_fc)) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 dev.off()
+
+
+pdf("output/condiments/bins01scaleFCPseudotime_EpiblastUpregpadj05fc025_H3K27me3Bernstein_traj5_UNTREATED_3Dpaper.pdf", width=4, height=3)
+baseline_mean <- plot_data %>%
+  filter(bins == "0-0.1") %>%
+  summarize(baseline_mean = mean(AverageExpression, na.rm = TRUE)) %>%
+  pull(baseline_mean)
+plot_data <- plot_data %>%
+  mutate(FC = AverageExpression / baseline_mean)
+reference_bin <- "0-0.1"
+summary_data <- plot_data %>%
+  group_by(bins) %>%
+  summarize(
+    mean_fc = mean(FC, na.rm = TRUE),
+    se_fc = sd(FC, na.rm = TRUE) / sqrt(n()), 
+    .groups = "drop"
+  )
+ggplot(summary_data, aes(x = bins, y = mean_fc)) +
+  geom_errorbar(aes(ymin = mean_fc - se_fc, 
+                    ymax = mean_fc + se_fc), 
+                width = 0.2, size = 0.8, color = "blue") + # Error bars
+  geom_point(size = 2, color = "blue") + # Large dots
+  geom_line(aes(group = 1), size = 1, color = "blue") + # Line connecting the points
+  labs(x = "Pseudotime Bins",
+       y = "Fold Change Relative to Starting Bin") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ylim(0.55, 1.8)
+dev.off()
+
+
 
 
 ```
