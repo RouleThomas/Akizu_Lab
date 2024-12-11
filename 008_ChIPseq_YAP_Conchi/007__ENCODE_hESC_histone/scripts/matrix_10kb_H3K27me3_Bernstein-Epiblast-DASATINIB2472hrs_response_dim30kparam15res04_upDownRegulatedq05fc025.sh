@@ -30,7 +30,7 @@ plotHeatmap -m output/deeptools/matrix_10kb-H3K27me3_hESC_Bernstein-UpDownRegula
 
 # interactive
 plotHeatmap -m output/deeptools/matrix_10kb-H3K27me3_hESC_Bernstein-UpDownRegulated_Epiblastpadj05fc025_H3K27me3_Bernstein-Epiblast-DASATINIB2472hrs_response_dim30kparam15res04_upDownRegulatedq05fc025.gz \
-    -out output/deeptools/matrix_10kb-H3K27me3_hESC_Bernstein-UpDownRegulated_Epiblastpadj05fc025_H3K27me3_Bernstein-Epiblast-DASATINIB2472hrs_response_dim30kparam15res04_upDownRegulatedq05fc025_heatmap1.pdf \
+    -out output/deeptools/matrix_10kb_H3K27me3_Bernstein-Epiblast-DASATINIB2472hrs_response_dim30kparam15res04_upDownRegulatedq05fc025_heatmap1.pdf \
     --samplesLabel "H3K27me3" \
     --colorList 'black, yellow' \
     --whatToShow 'heatmap and colorbar' \

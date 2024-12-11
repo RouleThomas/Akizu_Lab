@@ -2694,6 +2694,7 @@ sbatch scripts/matrix_TSS_5kb_rawBigwig_hESC_WT_EZH2_008001vs008002_008002promot
 sbatch scripts/matrix_TSS_5kb_THOREZH2_hESCWTvsYAPKO_positiveNegative_peak.sh # 18526815 ok
 sbatch scripts/matrix_TSS_5kb_THOREZH2_hESCWTvsYAPKO_positiveNegativeTHORq4_peak.sh # 18542691 ok
 sbatch scripts/matrix_TSS_5kb_THOREZH2_hESCWTvsYAPKO_positiveNegativeTHORq4_EZH2gene.sh # 22311569 ok
+sbatch scripts/matrix_TSS_10kb_THOREZH2_hESCWTvsYAPKO_positiveNegativeTHORq4_peak.sh # 31922267 ok
 
 
 

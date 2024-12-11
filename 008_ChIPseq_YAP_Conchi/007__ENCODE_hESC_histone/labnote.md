@@ -214,23 +214,19 @@ sbatch scripts/matrix_10kb_H3K4me3_QSER1peaks_Bernstein.sh # 29179387 ok
 
 
 # EZH2 and H3K27me3 signal - All genes
-sbatch scripts/matrix_5kb_H3K27me3_Bernstein_EZH2008001_allGenes.sh # 31762805 xxx
-sbatch scripts/matrix_10kb_H3K27me3_Bernstein_EZH2008001_allGenes.sh # 31762991 xxx
+sbatch scripts/matrix_5kb_H3K27me3_Bernstein_EZH2008001_allGenes.sh # 31762805 ok
+sbatch scripts/matrix_10kb_H3K27me3_Bernstein_EZH2008001_allGenes.sh # 31762991 ok
 
 # EZH2 and H3K27me3 signal - EZH2 target genes (008*/001*)
-sbatch scripts/matrix_5kb_H3K27me3_Bernstein_EZH2008001_EZH2target.sh # 31763984 xxx
-sbatch scripts/matrix_10kb_H3K27me3_Bernstein_EZH2008001_EZH2target.sh # 31764129 xxx
-
-
-
-
+sbatch scripts/matrix_5kb_H3K27me3_Bernstein_EZH2008001_EZH2target.sh # 31763984 ok
+sbatch scripts/matrix_10kb_H3K27me3_Bernstein_EZH2008001_EZH2target.sh # 31764129 ok
 ```
 
 - *NOTE: naming `*_H3K4me3_*` make no sense here...; typo...*
-- NOTE: EZH2 target gene list GTF generated below in `# Heatmap H3K27me3 signal in DEG Epiblast - *3D paper*`
+- *NOTE: EZH2 target gene list GTF generated below in `# Heatmap H3K27me3 signal in DEG Epiblast - *3D paper*`*
 
 
-
+--> EZH2 (`008*/001*`) and H3K27me3 (*ENCODE_Bernstein*) well correlate
 
 
 
