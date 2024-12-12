@@ -4163,6 +4163,224 @@ dev.off()
 
 
 
+
+# Display the top 10 CONSERVED marker genes of each cluster
+Idents(humangastruloid.combined.sct) <- "cluster.annot"
+## DEGs cluster versus all other - Vcorrected using FindAllMarkers
+all_markers = FindAllMarkers(humangastruloid.combined.sct, assay = "RNA", verbose = TRUE) 
+
+
+all_markers$gene <- rownames(all_markers)
+## Write all conserved markers to a file
+write.table(all_markers, file = "output/seurat/srat_all_markers_markers_humangastruloid2472hrs_3Dpaper.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+## Find the top 10 conserved markers for each cluster
+##--> complex code below as I had to separate the .[numeric] only for genes not starting with "AC"...
+top10_markers <- all_markers %>%
+  mutate(cluster = factor(cluster, levels = c("CPC1", "Mixed_Epiblast_Ectoderm_PrimitiveStreak", "CPC2", "Endoderm",  "CadiacMesoderm", "PrimitiveStreak", "ProliferatingCardiacMesoderm","Epiblast", "Cardiomyocyte", "Unknown"))) %>%
+  group_by(cluster) %>% 
+  filter(avg_log2FC > 0.25) %>%
+  arrange((p_val_adj)) %>% 
+  slice_head(n = 10) %>% 
+  ungroup() %>% 
+  arrange(match(cluster, c("CPC1", "Mixed_Epiblast_Ectoderm_PrimitiveStreak", "CPC2", "Endoderm",  "CadiacMesoderm", "PrimitiveStreak", "ProliferatingCardiacMesoderm","Epiblast", "Cardiomyocyte", "Unknown")))
+
+
+## Visualize the top 10 conserved markers for each cluster
+marker_genes_conserved <- unique(top10_markers$gene)
+levels(humangastruloid.combined.sct) <- c("Epiblast", "Mixed_Epiblast_Ectoderm_PrimitiveStreak", "PrimitiveStreak", "Unknown", "ProliferatingCardiacMesoderm",  "CadiacMesoderm", "CPC1", "CPC2", "Cardiomyocyte", "Endoderm")
+levels(humangastruloid.combined.sct) <- c("CPC1", "Mixed_Epiblast_Ectoderm_PrimitiveStreak", "CPC2", "Endoderm",  "CadiacMesoderm", "PrimitiveStreak", "ProliferatingCardiacMesoderm","Epiblast", "Cardiomyocyte", "Unknown")
+
+pdf("output/seurat/DotPlot_SCT_top10_markers_markers_humangastruloid2472hrs_3Dpaper_fc025.pdf", width=32, height=4)
+DotPlot(humangastruloid.combined.sct, assay = "SCT", features = marker_genes_conserved, cols = c("grey", "red")) + RotatedAxis() + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
+dev.off()
+
+pdf("output/seurat/DoHeatmap_RNA_top10_markers_markers_humangastruloid2472hrs_3Dpaper_fc025.pdf", width=10, height=10)
+DoHeatmap(humangastruloid.combined.sct, assay = "RNA", features = marker_genes_conserved, draw.lines = FALSE, label = FALSE, raster = FALSE)
+dev.off()
+pdf("output/seurat/DoHeatmap_RNA_top10_markers_markers_humangastruloid2472hrs_3Dpaper_fc025_compact.pdf", width=6, height=4)
+DoHeatmap(humangastruloid.combined.sct, assay = "RNA", features = marker_genes_conserved, draw.lines = FALSE, label = FALSE, raster = FALSE)
+dev.off()
+
+
+
+
+
+
+# Display the top 10 CONSERVED marker genes of each cluster
+Idents(humangastruloid.combined.sct) <- "cluster.annot"
+## DEGs cluster versus all other - Vcorrected using FindConservedMarkers GROUPING VAR QC
+CPC1.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "CPC1", verbose = TRUE, grouping.var = "QC") %>% mutate(cluster = "CPC1")
+Mixed_Epiblast_Ectoderm_PrimitiveStreak.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Mixed_Epiblast_Ectoderm_PrimitiveStreak", verbose = TRUE, grouping.var = "QC") %>% mutate(cluster = "Mixed_Epiblast_Ectoderm_PrimitiveStreak")
+CPC2.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "CPC2", verbose = TRUE, grouping.var = "QC") %>% mutate(cluster = "CPC2")
+Endoderm.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Endoderm", verbose = TRUE, grouping.var = "QC") %>% mutate(cluster = "Endoderm")
+CadiacMesoderm.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "CadiacMesoderm", verbose = TRUE, grouping.var = "QC") %>% mutate(cluster = "CadiacMesoderm")
+PrimitiveStreak.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "PrimitiveStreak", verbose = TRUE, grouping.var = "QC") %>% mutate(cluster = "PrimitiveStreak")
+ProliferatingCardiacMesoderm.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "ProliferatingCardiacMesoderm", verbose = TRUE, grouping.var = "QC") %>% mutate(cluster = "ProliferatingCardiacMesoderm")
+Epiblast.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Epiblast", verbose = TRUE, grouping.var = "QC") %>% mutate(cluster = "Epiblast")
+Cardiomyocyte.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Cardiomyocyte", verbose = TRUE, grouping.var = "QC") %>% mutate(cluster = "Cardiomyocyte")
+Unknown.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Unknown", verbose = TRUE, grouping.var = "QC") %>% mutate(cluster = "Unknown")
+
+## Combine all conserved markers into one data frame
+ConservedMarkers <- bind_rows(Epiblast.conserved, Mixed_Epiblast_Ectoderm_PrimitiveStreak.conserved, PrimitiveStreak.conserved, Unknown.conserved, ProliferatingCardiacMesoderm.conserved,  CadiacMesoderm.conserved, CPC1.conserved, CPC2.conserved, Cardiomyocyte.conserved, Endoderm.conserved)
+
+ConservedMarkers$gene <- rownames(ConservedMarkers)
+## Write all conserved markers to a file
+write.table(ConservedMarkers, file = "output/seurat/srat_ConservedMarkers_markers_humangastruloid2472hrs_3Dpaper.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+## Find the top 10 conserved markers for each cluster
+top10_markers <- ConservedMarkers %>%
+  mutate(cluster = factor(cluster, levels = c("CPC1", "Mixed_Epiblast_Ectoderm_PrimitiveStreak", "CPC2", "Endoderm",  "CadiacMesoderm", "PrimitiveStreak", "ProliferatingCardiacMesoderm","Epiblast", "Cardiomyocyte", "Unknown"))) %>%
+  separate(gene, into = c("gene", "suffix"), sep = "\\.\\.\\.", remove = TRUE, extra = "drop", fill = "right") %>% 
+  group_by(cluster) %>% 
+  filter(Pass_avg_log2FC > 0.25) %>%
+  arrange((Pass_p_val_adj)) %>% 
+  slice_head(n = 10) %>% 
+  ungroup() %>% 
+  arrange(match(cluster, c("CPC1", "Mixed_Epiblast_Ectoderm_PrimitiveStreak", "CPC2", "Endoderm",  "CadiacMesoderm", "PrimitiveStreak", "ProliferatingCardiacMesoderm","Epiblast", "Cardiomyocyte", "Unknown")))
+
+## Visualize the top 10 conserved markers for each cluster
+marker_genes_conserved <- unique(top10_markers$gene)
+levels(humangastruloid.combined.sct) <- c("CPC1", "Mixed_Epiblast_Ectoderm_PrimitiveStreak", "CPC2", "Endoderm",  "CadiacMesoderm", "PrimitiveStreak", "ProliferatingCardiacMesoderm","Epiblast", "Cardiomyocyte", "Unknown")
+
+pdf("output/seurat/DotPlot_SCT_top10_ConservedMarkers_markers_humangastruloid2472hrs_3Dpaper_fc025.pdf", width=32, height=4)
+DotPlot(humangastruloid.combined.sct, assay = "SCT", features = marker_genes_conserved, cols = c("grey", "red")) + RotatedAxis() + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
+dev.off()
+
+pdf("output/seurat/DoHeatmap_RNA_top10_ConservedMarkers_markers_humangastruloid2472hrs_3Dpaper_fc025.pdf", width=10, height=10)
+DoHeatmap(humangastruloid.combined.sct, assay = "RNA", features = marker_genes_conserved, draw.lines = FALSE, label = FALSE, raster = FALSE)
+dev.off()
+pdf("output/seurat/DoHeatmap_RNA_top10_ConservedMarkers_markers_humangastruloid2472hrs_3Dpaper_fc025_compact.pdf", width=6, height=4)
+DoHeatmap(humangastruloid.combined.sct, assay = "RNA", features = marker_genes_conserved, draw.lines = FALSE, label = FALSE, raster = FALSE)
+dev.off()
+
+pdf("output/seurat/DoHeatmap_SCT_top10_ConservedMarkers_markers_humangastruloid2472hrs_3Dpaper_fc025_compact.pdf", width=6, height=4)
+DoHeatmap(humangastruloid.combined.sct, assay = "SCT", features = marker_genes_conserved, draw.lines = FALSE, label = FALSE, raster = FALSE)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Display the top 10 CONSERVED marker genes of each cluster
+Idents(humangastruloid.combined.sct) <- "cluster.annot"
+## DEGs cluster versus all other - Vcorrected using FindConservedMarkers GROUPING VAR TREATMENT
+CPC1.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "CPC1", verbose = TRUE, grouping.var = "treatment") %>% mutate(cluster = "CPC1")
+Mixed_Epiblast_Ectoderm_PrimitiveStreak.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Mixed_Epiblast_Ectoderm_PrimitiveStreak", verbose = TRUE, grouping.var = "treatment") %>% mutate(cluster = "Mixed_Epiblast_Ectoderm_PrimitiveStreak")
+CPC2.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "CPC2", verbose = TRUE, grouping.var = "treatment") %>% mutate(cluster = "CPC2")
+Endoderm.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Endoderm", verbose = TRUE, grouping.var = "treatment") %>% mutate(cluster = "Endoderm")
+CadiacMesoderm.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "CadiacMesoderm", verbose = TRUE, grouping.var = "treatment") %>% mutate(cluster = "CadiacMesoderm")
+PrimitiveStreak.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "PrimitiveStreak", verbose = TRUE, grouping.var = "treatment") %>% mutate(cluster = "PrimitiveStreak")
+ProliferatingCardiacMesoderm.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "ProliferatingCardiacMesoderm", verbose = TRUE, grouping.var = "treatment") %>% mutate(cluster = "ProliferatingCardiacMesoderm")
+Epiblast.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Epiblast", verbose = TRUE, grouping.var = "treatment") %>% mutate(cluster = "Epiblast")
+Cardiomyocyte.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Cardiomyocyte", verbose = TRUE, grouping.var = "treatment") %>% mutate(cluster = "Cardiomyocyte")
+Unknown.conserved <- FindConservedMarkers(humangastruloid.combined.sct, assay = "RNA", ident.1 = "Unknown", verbose = TRUE, grouping.var = "treatment") %>% mutate(cluster = "Unknown")
+
+## Combine all conserved markers into one data frame
+ConservedMarkers <- bind_rows(Epiblast.conserved, Mixed_Epiblast_Ectoderm_PrimitiveStreak.conserved, PrimitiveStreak.conserved, Unknown.conserved, ProliferatingCardiacMesoderm.conserved,  CadiacMesoderm.conserved, CPC1.conserved, CPC2.conserved, Cardiomyocyte.conserved, Endoderm.conserved)
+
+ConservedMarkers$gene <- rownames(ConservedMarkers)
+## Write all conserved markers to a file
+write.table(ConservedMarkers, file = "output/seurat/srat_ConservedMarkersTreatment_markers_humangastruloid2472hrs_3Dpaper.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+ConservedMarkers <- read.table(
+  file = "output/seurat/srat_ConservedMarkersTreatment_markers_humangastruloid2472hrs_3Dpaper.txt",
+  sep = "\t",
+  header = TRUE,       # Set to TRUE if the file has a header
+  row.names = 1,       # Set the first column as row names
+  quote = ""           # Disable quoting to ensure no issues with special characters
+)
+## Find the top 10 conserved markers for each cluster
+top10_markers <- ConservedMarkers %>%
+  mutate(cluster = factor(cluster, levels = c("CPC1", "Mixed_Epiblast_Ectoderm_PrimitiveStreak", "CPC2", "Endoderm",  "CadiacMesoderm", "PrimitiveStreak", "ProliferatingCardiacMesoderm","Epiblast", "Cardiomyocyte", "Unknown"))) %>%
+  separate(gene, into = c("gene", "suffix"), sep = "\\.\\.\\.", remove = TRUE, extra = "drop", fill = "right") %>% 
+  group_by(cluster) %>% 
+  filter(UNTREATED_avg_log2FC > 0.25) %>%
+  arrange((max_pval)) %>% 
+  slice_head(n = 5) %>% 
+  ungroup() %>% 
+  arrange(match(cluster, c("CPC1", "Mixed_Epiblast_Ectoderm_PrimitiveStreak", "CPC2", "Endoderm",  "CadiacMesoderm", "PrimitiveStreak", "ProliferatingCardiacMesoderm","Epiblast", "Cardiomyocyte", "Unknown")))
+
+## Visualize the top 10 conserved markers for each cluster
+marker_genes_conserved <- unique(top10_markers$gene)
+levels(humangastruloid.combined.sct) <- c("CPC1", "Mixed_Epiblast_Ectoderm_PrimitiveStreak", "CPC2", "Endoderm",  "CadiacMesoderm", "PrimitiveStreak", "ProliferatingCardiacMesoderm","Epiblast", "Cardiomyocyte", "Unknown")
+
+
+pdf("output/seurat/test.pdf", width=6, height=4)
+DoHeatmap(humangastruloid.combined.sct, assay = "RNA", features = marker_genes_conserved, draw.lines = FALSE, label = FALSE, raster = FALSE, disp.min = -2, disp.max= 1.5)  + scale_fill_gradientn(colors = c("black", "black", "black", "black", "yellow"))
+dev.off()
+
+pdf("output/seurat/DoHeatmap_RNA_top10_ConservedMarkersTreatment_markers_humangastruloid2472hrs_3Dpaper_fc025_custom215bbbby.pdf", width=6, height=4)
+DoHeatmap(humangastruloid.combined.sct, assay = "RNA", features = marker_genes_conserved, draw.lines = FALSE, label = FALSE, raster = FALSE, disp.min = -2, disp.max= 1.5)  + scale_fill_gradientn(colors = c("black", "black", "black", "black", "yellow"))
+dev.off()
+pdf("output/seurat/DoHeatmap_RNA_top10_ConservedMarkersTreatment_markers_humangastruloid2472hrs_3Dpaper_fc025_custom215bbbby_compact.pdf", width=6, height=4)
+DoHeatmap(humangastruloid.combined.sct, assay = "RNA", features = marker_genes_conserved, draw.lines = FALSE, label = FALSE, raster = FALSE, disp.min = -2, disp.max= 1.5)  + scale_fill_gradientn(colors = c("black", "black", "black", "black", "yellow"))
+dev.off()
+pdf("output/seurat/DoHeatmap_RNA_top10_ConservedMarkersTreatment_markers_humangastruloid2472hrs_3Dpaper_fc025_custom215bbbby.pdf", width=10, height=10)
+DoHeatmap(humangastruloid.combined.sct, assay = "RNA", features = marker_genes_conserved, draw.lines = FALSE, label = FALSE, raster = FALSE, disp.min = -2, disp.max= 1.5)  + scale_fill_gradientn(colors = c("black", "black", "black", "black", "yellow"))
+dev.off()
+
+
+pdf("output/seurat/DoHeatmap_RNA_top10_ConservedMarkersTreatment_markers_humangastruloid2472hrs_3Dpaper_fc025.pdf", width=10, height=10)
+DoHeatmap(humangastruloid.combined.sct, assay = "RNA", features = marker_genes_conserved, draw.lines = FALSE, label = FALSE, raster = FALSE)
+dev.off()
+pdf("output/seurat/DoHeatmap_RNA_top10_ConservedMarkersTreatment_markers_humangastruloid2472hrs_3Dpaper_fc025_compact.pdf", width=6, height=4)
+DoHeatmap(humangastruloid.combined.sct, assay = "RNA", features = marker_genes_conserved, draw.lines = FALSE, label = FALSE, raster = FALSE)
+dev.off()
+
+
+pdf("output/seurat/DoHeatmap_RNA_top10_ConservedMarkersTreatment_markers_humangastruloid2472hrs_3Dpaper_fc025_custom215.pdf", width=10, height=10)
+DoHeatmap(humangastruloid.combined.sct, assay = "RNA", features = marker_genes_conserved, draw.lines = FALSE, label = FALSE, raster = FALSE, disp.min = -2, disp.max= 1.5)
+dev.off()
+pdf("output/seurat/DoHeatmap_RNA_top10_ConservedMarkersTreatment_markers_humangastruloid2472hrs_3Dpaper_fc025_compact_custom215.pdf", width=6, height=4)
+DoHeatmap(humangastruloid.combined.sct, assay = "RNA", features = marker_genes_conserved, draw.lines = FALSE, label = FALSE, raster = FALSE, disp.min = -2, disp.max= 1.5)
+dev.off()
+
+
+pdf("output/seurat/DotPlot_SCT_top10_ConservedMarkersTreatment_markers_humangastruloid2472hrs_3Dpaper_fc025.pdf", width=32, height=4)
+DotPlot(humangastruloid.combined.sct, assay = "SCT", features = marker_genes_conserved, cols = c("grey", "red")) + RotatedAxis() + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
+dev.off()
+
+pdf("output/seurat/DotPlot_RNA_top3_ConservedMarkersTreatment_markers_humangastruloid2472hrs_3Dpaper_fc025.pdf", width=10, height=3)
+DotPlot(humangastruloid.combined.sct, assay = "RNA", features = marker_genes_conserved, cols = c("black", "yellow")) + RotatedAxis() + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5)) 
+dev.off()
+pdf("output/seurat/DotPlot_RNA_top5_ConservedMarkersTreatment_markers_humangastruloid2472hrs_3Dpaper_fc025.pdf", width=13, height=3)
+DotPlot(humangastruloid.combined.sct, assay = "RNA", features = marker_genes_conserved, cols = c("black", "yellow")) + RotatedAxis() + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5)) 
+dev.off()
+
+
+pdf("output/seurat/DoHeatmap_RNA_top100_ConservedMarkersTreatment_markers_humangastruloid2472hrs_3Dpaper_fc025_compact.pdf", width=12, height=8)
+DoHeatmap(humangastruloid.combined.sct, assay = "RNA", features = marker_genes_conserved, draw.lines = FALSE, label = FALSE, raster = FALSE)
+dev.off()
+
+
+pdf("output/seurat/DotPlot_SCT_top10_ConservedMarkersTreatment_markers_humangastruloid2472hrs_3Dpaper_fc0.pdf", width=32, height=4)
+DotPlot(humangastruloid.combined.sct, assay = "SCT", features = marker_genes_conserved, cols = c("grey", "red")) + RotatedAxis() + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
+dev.off()
+
+pdf("output/seurat/DoHeatmap_SCT_top10_ConservedMarkersTreatment_markers_humangastruloid2472hrs_3Dpaper_fc025_compact.pdf", width=6, height=4)
+DoHeatmap(humangastruloid.combined.sct, assay = "SCT", features = marker_genes_conserved, draw.lines = FALSE, label = FALSE, raster = FALSE)
+dev.off()
 ```
 
 --> There is no more down-regulated genes overall if appying a treshold for the FC; for ex Abs(0.25) tresh there is no more bias!
