@@ -8671,6 +8671,26 @@ ggplot(data = data_for_plot, aes(x = Condition, y = Expression, fill = Condition
 dev.off()
 
 
+# Light testing
+## Verification that marker genes are good
+multiome_WT_Bap1KO_QCV2vC1.sct
+Idents(multiome_WT_Bap1KO_QCV2vC1.sct) <- "cluster.annot"
+
+all_markers <- FindAllMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+
+
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "RNA" # According to condiments workflow
+
+multiome_WT_Bap1KO_QCV2vC1.sct <- NormalizeData(multiome_WT_Bap1KO_QCV2vC1.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(multiome_WT_Bap1KO_QCV2vC1.sct)
+multiome_WT_Bap1KO_QCV2vC1.sct <- ScaleData(multiome_WT_Bap1KO_QCV2vC1.sct, features = all.genes) # zero-centres and scales it
+#########
+
+
+all_markers <- FindAllMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+
+#--> ALL GOODD!!!! But RNA needed to be logNorm and scale!
+
 ```
 
 
