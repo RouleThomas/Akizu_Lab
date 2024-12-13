@@ -5518,6 +5518,8 @@ dev.off()
 
 
 
+
+
 # differential expressed genes across conditions
 ## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
 DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "RNA"
@@ -5776,17 +5778,126 @@ dev.off()
 
 
 
+
+## DEGs keeping ALL genes for NSC subcluster
+#### in WT NSC vs NSC
+multiome_WT_Bap1KO_QCV2vC1.sct$celltype.stim <- paste(multiome_WT_Bap1KO_QCV2vC1.sct$cluster.annot, multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident,
+    sep = "-")
+Idents(multiome_WT_Bap1KO_QCV2vC1.sct) <- "celltype.stim"
+
+NSC_proliferative_2__NSC_proliferative_1_WTonly <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "NSC_proliferative_2-multiome_WT", ident.2 = "NSC_proliferative_1-multiome_WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+NSC_proliferative_2__NSC_quiescent_WTonly <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "NSC_proliferative_2-multiome_WT", ident.2 = "NSC_quiescent-multiome_WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+NSC_proliferative_1__NSC_quiescent_WTonly <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "NSC_proliferative_1-multiome_WT", ident.2 = "NSC_quiescent-multiome_WT",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+write.table(NSC_proliferative_2__NSC_proliferative_1_WTonly, file = "output/Signac/srat-QCV2vC1_dim40kparam42res065algo4feat2000_noCellCycleRegression-NSC_proliferative_2__NSC_proliferative_1_WTonly.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(NSC_proliferative_2__NSC_quiescent_WTonly, file = "output/Signac/srat-QCV2vC1_dim40kparam42res065algo4feat2000_noCellCycleRegression-NSC_proliferative_2__NSC_quiescent_WTonly.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(NSC_proliferative_1__NSC_quiescent_WTonly, file = "output/Signac/srat-QCV2vC1_dim40kparam42res065algo4feat2000_noCellCycleRegression-NSC_proliferative_1__NSC_quiescent_WTonly.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+#### in W and Bap1KO NSC vs NSC
+
+Idents(multiome_WT_Bap1KO_QCV2vC1.sct) <- "cluster.annot"
+
+NSC_proliferative_2__NSC_proliferative_1_WTBap1KO <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "NSC_proliferative_2", ident.2 = "NSC_proliferative_1",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+NSC_proliferative_2__NSC_quiescent_WTBap1KO <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "NSC_proliferative_2", ident.2 = "NSC_quiescent",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+NSC_proliferative_1__NSC_quiescent_WTBap1KO <- FindMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, ident.1 = "NSC_proliferative_1", ident.2 = "NSC_quiescent",
+    verbose = TRUE,
+    test.use = "wilcox",
+    logfc.threshold = -Inf,
+    min.pct = -Inf,
+    min.diff.pct = -Inf, # 
+    assay = "RNA") 
+write.table(NSC_proliferative_2__NSC_proliferative_1_WTBap1KO, file = "output/Signac/srat-QCV2vC1_dim40kparam42res065algo4feat2000_noCellCycleRegression-NSC_proliferative_2__NSC_proliferative_1_WTBap1KO.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(NSC_proliferative_2__NSC_quiescent_WTBap1KO, file = "output/Signac/srat-QCV2vC1_dim40kparam42res065algo4feat2000_noCellCycleRegression-NSC_proliferative_2__NSC_quiescent_WTBap1KO.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(NSC_proliferative_1__NSC_quiescent_WTBap1KO, file = "output/Signac/srat-QCV2vC1_dim40kparam42res065algo4feat2000_noCellCycleRegression-NSC_proliferative_1__NSC_quiescent_WTBap1KO.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+
+
+
+
+
+
+
+
 ### Find all markers 
+##### With FindAllMarkers()
 all_markers <- FindAllMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
 # write.table(all_markers, file = "output/Signac/srat_multiome_WT_Bap1KO_QCV3_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 write.table(all_markers, file = "output/Signac/srat_multiome_WT_Bap1KO-QCV2vC1_dim40kparam42res065algo4feat2000_noCellCycleRegression-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(all_markers, file = "output/Signac/srat_multiome_WT_Bap1KO-QCV2vC1_dim40kparam42res065algo4feat2000_noCellCycleRegression-all_markers_clusterName.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 
 
 
 
 
-# Display the top 10 CONSERVED marker genes of each cluster
+
+# Display the CONSERVED marker genes of each cluster
+
+## NEW version using multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000.sct_numeric_label.rds")  (correct1)
+Idents(multiome_WT_Bap1KO_QCV2vC1.sct) <- "cluster.annot"
+
+## DEGs cluster versus all other
+cluster1.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", ident.1 = "1", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster1")
+cluster2.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", ident.1 = "2", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster2")
+cluster3.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", ident.1 = "3", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster3")
+cluster4.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", ident.1 = "4", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster4")
+cluster5.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", ident.1 = "5", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster5")
+cluster6.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", ident.1 = "6", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster6")
+cluster7.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", ident.1 = "7", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster7")
+cluster8.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", ident.1 = "8", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster8")
+cluster9.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", ident.1 = "9", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster9")
+cluster10.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", ident.1 = "10", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster10")
+cluster11.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", ident.1 = "11", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster11")
+cluster12.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", ident.1 = "12", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster12")
+cluster13.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", ident.1 = "13", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster13")
+cluster14.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", ident.1 = "14", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster14")
+cluster15.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", ident.1 = "15", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster15")
+cluster16.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", ident.1 = "16", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster16")
+cluster17.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", ident.1 = "17", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster17")
+cluster18.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", ident.1 = "18", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster18")
+cluster19.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", ident.1 = "19", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster19")
+cluster20.conserved <- FindConservedMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", ident.1 = "20", grouping.var = "orig.ident", verbose = TRUE) %>% mutate(cluster = "cluster20")
+
+## Combine all conserved markers into one data frame
+all_conserved <- bind_rows(cluster1.conserved,cluster2.conserved,cluster3.conserved,cluster4.conserved,cluster5.conserved,cluster6.conserved,cluster7.conserved,cluster8.conserved,cluster9.conserved,cluster10.conserved,cluster11.conserved,cluster12.conserved,cluster13.conserved,cluster14.conserved,cluster15.conserved,cluster16.conserved,cluster17.conserved,cluster18.conserved,cluster19.conserved,cluster20.conserved)
+
+all_conserved$gene <- rownames(all_conserved)
+## Write all conserved markers to a file
+write.table(all_conserved, file = "output/Signac/srat_all_conserved_markers_multiome_WT_Bap1KO_QCV3.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+##########################
+
+
+## PAST version
 Idents(multiome_WT_Bap1KO_QCV2.sct) <- "seurat_clusters"
 
 ## DEGs cluster versus all other
@@ -6390,6 +6501,8 @@ plot_cell_cycle_per_cluster(multiome_WT_Bap1KO_QCV2vC1.sct, output_dir = "output
 # SAVE #########################################################################################
 ## saveRDS(multiome_WT_Bap1KO_QCV3.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV3.sct_numeric_label.rds") 
 ## saveRDS(multiome_WT_Bap1KO_QCV2vC1.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000.sct_numeric_label.rds") 
+##
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000.sct_numeric_label.rds") 
 ################################################################################################
 
 
@@ -8949,7 +9062,6 @@ set.seed(42)
 
 
 ################### Time Course effect COMMON CONDITIONS ######################################################
-
 ## TRAJECTORY9 ##################
 set.seed(42)
 traj9_RNA_common <- readRDS("output/condiments/traj9_RNA_common.rds")
@@ -9064,7 +9176,7 @@ write.table(output_df,
             row.names = FALSE, 
             col.names = TRUE)
 
-# Check some genes individually
+# Check some genes individually - RNA
 ## FOR LINEAGE 9
 counts <- multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@counts # Collect the counts from seurat
 cond <- factor(multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident) # identify conditions
@@ -9080,6 +9192,30 @@ pdf("output/condiments/plotSmoothers_traj9_RNA_common-Eomes.pdf", width=4, heigh
 plotSmoothers(traj9_RNA_common, sub_counts, gene = "Eomes", curvesCol = c("blue","red") ) +
 scale_color_manual(values =c("blue","red"))
 dev.off()
+
+
+# Check some genes individually - ATAC
+xxxxxx NOT WORKING xxxxxx
+multiome_WT_Bap1KO_QCV2vC1_GeneActivity.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.sct_numeric_label.rds")
+## FOR LINEAGE 9
+counts <- multiome_WT_Bap1KO_QCV2vC1_GeneActivity.sct[["GeneActivity"]]@counts # Collect the counts from seurat
+cond <- factor(multiome_WT_Bap1KO_QCV2vC1_GeneActivity.sct$orig.ident) # identify conditions
+pseudotimes <- slingPseudotime(RNA_WT_Bap1KO, na = FALSE) [,9] # HERE INDICATE TRAJ
+cellweights <- slingCurveWeights(RNA_WT_Bap1KO) [,9] # HERE INDICATE TRAJ
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+pdf("output/condiments/plotSmoothers_traj9_ATAC_common-Prox1.pdf", width=4, height=2)
+plotSmoothers(traj9_RNA_common, sub_counts, gene = "Prox1", curvesCol = c("blue","red") ) +
+scale_color_manual(values =c("blue","red"))
+dev.off()
+xxxxxxxxxxxxxxxxxxxxxxxx
+
+
+
 
 
 # Heatmap representation
