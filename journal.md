@@ -92,8 +92,11 @@ Same as deseq2 with `apeglm` R package updated (see error from `005_SNX14/001/RN
 
 ### deseq2V3
 
-Same as deseq2V2 but with `ChIPQC` [R package installed](https://bioconductor.org/packages/release/bioc/html/ChIPQC.html)
+Same as deseq2V2 but with:
+- `ChIPQC` [R package installed](https://bioconductor.org/packages/release/bioc/html/ChIPQC.html)
 (see creation in  `008*/001/ # Generate bigwig coverage files`)
+
+
 
 
 ### ChIPseqSpikeInFree
@@ -179,6 +182,7 @@ Also R: BiocManager, tidyverse, EnsDb.Hsapiens.v86, devtools, ShinyCell, rsconne
 
 
 ### Signac_Pando
+R4.3.3
 
 --> clone from `SignacV5`; added [Pando](https://quadbio.github.io/Pando/index.html) and [GenomicScores](https://www.bioconductor.org/packages/devel/bioc/vignettes/GenomicScores/inst/doc/GenomicScores.html)
 
@@ -232,10 +236,21 @@ R4.3.1 with `granulator` and `tidyverse`
 
 --> tradeseq installed (can do DEG pseudotime)
 
+
+
+### salmon1
+
+Salmon quantification tool.
+
+
+
 # cool random command
 
 
 *Copy all files within a folder, excluding a specific pattern/string*: `for file in *; do if [[ ! $file =~ \.fq\.gz$ ]]; then cp "$file" /path/to/destination/; fi; done`
 
 Count nb of unique genes in a gtf: `awk '$3 == "gene" {print $10}' your_file.gtf | sort | uniq | wc -l`
+
+
+
 

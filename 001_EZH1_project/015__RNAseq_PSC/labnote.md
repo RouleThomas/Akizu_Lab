@@ -167,6 +167,63 @@ mv output/featurecounts/*rpkm* output/rpkm/
 
 --> All good. 
 
+# Count with Salmon
+
+
+## install Salmon
+
+Let's follow [this](https://combine-lab.github.io/salmon/getting_started/)
+
+
+
+```bash
+conda create -n salmon salmon
+# --> bug salmon: error while loading shared libraries: libboost_thread.so.1.60.0: cannot open shared object file: No such file or directory 
+
+conda create -n salmon1 -c conda-forge -c bioconda salmon=1.3.0
+
+```
+
+- *NOTE: using conda, it bug 1st, issue discussed [here](https://github.com/COMBINE-lab/salmon/issues/565); installed v1.3.0 make it work!*
+
+--> all good
+
+
+## count with salmon
+
+
+
+Counting is perform on the transcriptome, 1st downlaod and import the transcriptome to `../../Master/meta/salmon` . Download frmop [ensembl](https://ftp.ensembl.org/pub/release-113/fasta/homo_sapiens/cdna/)
+
+
+```bash
+conda activate salmon1
+
+# build transcriptome index
+salmon index -t ../../Master/meta/salmon/Homo_sapiens.GRCh38.cdna.all.fa.gz -i ../../Master/meta/salmon/Homo_sapiens
+
+# perform counting
+## light testing
+salmon quant -i ../../Master/meta/salmon/Homo_sapiens -l A \
+         -1 output/fastp/PSC_WT_R1_1.fq.gz \
+         -2 output/fastp/PSC_WT_R1_2.fq.gz \
+         -p 8 --validateMappings -o salmon/PSC_WT_R1_quant
+
+## run in sbatch
+sbatch scripts/salmon_count_1.sh # 32405964 ok
+sbatch scripts/salmon_count_2.sh # 32406155 ok
+sbatch scripts/salmon_count_3.sh # 32406159 ok
+
+
+```
+- *NOTE: index adapted for 75bp or longer with default `-k 31`, good for us as 150bp*
+
+--> ~>90% mapping
+
+
+
+
+
 
 # Shiny app
 
@@ -793,6 +850,260 @@ grep -Ff output/deseq2/downregulated_q05fc05_PSC_KOEF1aEZH1_vs_PSC_WT_as_gtf_gen
 ```
 
 --> Will be used to generate deepTool plots at `001*/016*` integration to check RNA fit well with CutRun
+
+
+
+
+# Differential alternative mRNA splicing
+
+Let's follow method employed in [Jhanji et al 2024](https://www.biorxiv.org/content/10.1101/2024.12.02.625500v1.full.pdf); briefly:
+- Isoform switching between WT and KO with *DEXSeq* method implemented in the *IsoformSwitchAnalyzeR* package (identifies bins with differential isoform switching between conditions, quantified as the difference in isoform fraction (dIF), calculated as IF_mutant - IF_control)
+- Significant isoform switching was defined by a dIF > 0.05 and a false discovery rate (FDR) < 0.05
+
+
+## IsoformSwitchAnalyzeR installation in R
+
+```bash
+conda activate deseq2V3
+```
+
+
+```R
+BiocManager::install("IsoformSwitchAnalyzeR")
+if (!requireNamespace("devtools", quietly = TRUE)){
+    install.packages("devtools")
+}
+devtools::install_github("kvittingseerup/IsoformSwitchAnalyzeR", build_vignettes = TRUE)
+#--> Fail with pfamAnalyzerR after
+
+
+```
+--> Was good but then lead to a bug. Try reinstall dplyr or the dev version but fail; lets install R 4.3.0 and install the dev version from this
+
+Let's try to copy scRNAseq environment who is R4.3.0
+
+
+
+```bash
+conda create --name IsoformSwitchAnalyzeR --clone scRNAseq
+conda activate IsoformSwitchAnalyzeR
+```
+
+
+
+```R
+if (!requireNamespace("BiocManager", quietly = TRUE)){
+    install.packages("BiocManager")
+}
+BiocManager::install(version='devel')
+BiocManager::install("IsoformSwitchAnalyzeR")
+```
+--> Fail R 4.3.0 required
+
+
+```bash
+conda create -n IsoformSwitchAnalyzeRv1 -c conda-forge -c bioconda r-base=4.3.0
+conda activate IsoformSwitchAnalyzeRv1
+```
+
+
+```R
+
+if (!requireNamespace("devtools", quietly = TRUE)){
+    install.packages("devtools")
+}
+if (!requireNamespace("pfamAnalyzeR", quietly = TRUE)){
+    devtools::install_github("kvittingseerup/pfamAnalyzeR")
+}
+#--> textshaping configuration failed
+if (!requireNamespace("devtools", quietly = TRUE)){
+install.packages("devtools")
+}
+devtools::install_github("kvittingseerup/IsoformSwitchAnalyzeR", build_vignettes = TRUE)
+#--> pkgdown fail
+```
+--> Need R 4.5 devel..
+
+Try R 4.4.2 (last version)
+
+
+```bash
+conda create -n IsoformSwitchAnalyzeRv2 -c conda-forge -c bioconda r-base=4.4.2
+conda activate IsoformSwitchAnalyzeRv2
+```
+
+```R
+if (!requireNamespace("devtools", quietly = TRUE)){
+    install.packages("devtools")
+}
+if (!requireNamespace("pfamAnalyzeR", quietly = TRUE)){
+    devtools::install_github("kvittingseerup/pfamAnalyzeR")
+}
+#--> Error dependied miniUI, pkgdown, roxygen2, rversions, urlchecker
+install.packages("miniUI")
+#-->fail
+```
+
+Try install developer version of R, follow [this](https://cran.r-project.org/doc/manuals/r-devel/R-admin.html)
+
+
+```bash
+conda create -n IsoformSwitchAnalyzeRv3 
+conda activate IsoformSwitchAnalyzeRv3
+```
+
+Download [here](https://cran.r-project.org/src/base-prerelease/)  	`R-devel.tar.gz` and trasnfer to `/Master/software`
+
+```bash
+cd ../../Master/software
+#  Extract the Source File
+tar -xzvf R-devel.tar.gz
+cd R-devel
+
+./configure 
+#--> Error with X11
+./configure LIBnn=lib
+#--> Add no-X option
+./configure --prefix=/scr1/users/roulet/Akizu_Lab/Master/software/R-devel-install --with-x=no --enable-R-shlib LIBnn=lib
+#-->error libcurl
+conda install -c conda-forge libcurl
+./configure --prefix=/scr1/users/roulet/Akizu_Lab/Master/software/R-devel-install --with-x=no --enable-R-shlib LIBnn=lib
+#--> look good
+make
+# --> work!
+
+```
+
+Now switch to R, for that type: `/scr1/users/roulet/Akizu_Lab/Master/software/R-devel/bin/R` to run *R developer* version `R4.5.0`
+
+```R
+if (!requireNamespace("devtools", quietly = TRUE)){
+    install.packages("devtools")
+}
+if (!requireNamespace("pfamAnalyzeR", quietly = TRUE)){
+    devtools::install_github("kvittingseerup/pfamAnalyzeR")
+}
+#--> bug with pkgdown; lets try instlling 
+if (!requireNamespace("BiocManager", quietly = TRUE)){
+    install.packages("BiocManager")
+}
+BiocManager::install(version='devel')
+BiocManager::install("IsoformSwitchAnalyzeR")
+#--> IsoformSwitchAnalyzeR nota avail for Bioconductor 3.21
+if (!requireNamespace("devtools", quietly = TRUE)){
+    install.packages("devtools")
+}
+devtools::install_github("kvittingseerup/IsoformSwitchAnalyzeR", build_vignettes = TRUE)
+#--> error textshaping
+# Back to conda and install manually `conda install -c conda-forge harfbuzz fribidi cairo pango libpng libtiff freetype`
+install.packages("textshaping", dependencies = TRUE)
+install.packages("ragg", dependencies = TRUE)
+```
+--> Still fail...
+
+
+
+Let's try to copy `ChIPseqSpikeInFree conda env` which have devtools and R/3.6.1 installed...
+
+```bash
+conda create --name IsoformSwitchAnalyzeRv4 --clone ChIPseqSpikeInFree
+#--> Bug, conda env corrupted! 
+conda activate IsoformSwitchAnalyzeRv4
+```
+
+Let's try to copy  `Signac_Pando` which have devtools and R/4.3.3 installed... 
+
+```bash
+conda create --name IsoformSwitchAnalyzeRv5 --clone Signac_Pando
+
+XXX HERE 
+
+
+conda activate IsoformSwitchAnalyzeRv5
+```
+
+
+```R
+devtools::install_github("kvittingseerup/IsoformSwitchAnalyzeR", build_vignettes = TRUE)
+```
+
+If fail, try find conda env or docker to use IsoformSwitchAnalyzeR...
+
+
+
+
+
+
+Let's try install through [conda](https://anaconda.org/bioconda/bioconductor-isoformswitchanalyzer)
+
+
+
+```bash
+conda create -n IsoformSwitchAnalyzeRv6 -c bioconda -c conda-forge bioconductor-isoformswitchanalyzer
+
+XXX HERE
+
+```
+
+
+
+
+
+
+
+
+
+## IsoformSwitchAnalyzeR usage
+
+I follow tutorial from [here](https://bioconductor.org/packages/release/bioc/vignettes/IsoformSwitchAnalyzeR/inst/doc/IsoformSwitchAnalyzeR.html).
+
+We need to re-do the quantification, let's use Salmon or Kallisto. Also it seems doing transcript level quantification and afterwards summarizing to gene level is much better! so let's do this!
+
+
+
+
+
+```bash
+conda activate IsoformSwitchAnalyzeRv3
+```
+
+```R
+# packages
+library("IsoformSwitchAnalyzeR")
+
+
+# Importing the Data
+salmonQuant <- importIsoformExpression(
+    parentDir = "output/salmon/")
+
+# metadata file
+myDesign = data.frame(
+    sampleID = colnames(salmonQuant$abundance)[-1],
+    condition = gsub('.*_(WT|KO|KOEF1aEZH1)_.*', '\\1', colnames(salmonQuant$abundance)[-1])
+)
+
+
+# 
+aSwitchList <- importRdata(
+    isoformCountMatrix   = salmonQuant$counts,
+    isoformRepExpression = salmonQuant$abundance,
+    designMatrix         = myDesign,
+    isoformExonAnnoation = "../../Master/meta/ENCFF159KBI.gtf",
+    isoformNtFasta       = "../../Master/meta/salmon/Homo_sapiens.GRCh38.cdna.all.fa.gz",
+    fixStringTieAnnotationProblem = TRUE,
+    showProgress = FALSE
+)
+summary(aSwitchList)
+
+
+```
+
+
+
+- NOTE: Issue with importRdata(); error in dplyr::full_join(), seems need v 4.3.0 of R.... Issue discussed [here](https://github.com/kvittingseerup/IsoformSwitchAnalyzeR/issues/189). or install a more recent version of `IsoformSwitchAnalyzeR` discussed [here](https://github.com/kvittingseerup/IsoformSwitchAnalyzeR/issues/168); 
+  - also discuss to try re-installing dplyr, so I did `install.packages("dplyr")` and `library(dplyr)` and it fail
+  - version of my IsoformSwitchAnalyzeR is 1.20.0
+
 
 
 

@@ -138,8 +138,8 @@ sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher.sh # 298720
 - *Housekeeping gene normalization with HK genes*: very bad, replicate very different (fail likely because HK genes lowly H3K27me3)
 - *Housekeeping gene normalization with HOX genes*: very good, replicate cluster very well together
 - *Housekeeping gene normalization with HK + HOX genes*: bad, replicate very different (fail likely because HK genes lowly H3K27me3 again, add noises)
-- *Housekeeping gene normalization with HOX genes without input*: xxx
-- *Housekeeping gene normalization with HK + HOX genes without input*: xxx
+- *Housekeeping gene normalization with HOX genes without input*: very good, replicate cluster very well together
+- *Housekeeping gene normalization with HK + HOX genes without input*: bad, replicate very different
 - *SpikeIn EpiCypher normalization*: very bad, replicate very different (potential over correction, SF are huge values)
 - *SpikeIn EpiCypher DiffBind TMM normalization*: perform OK, less homogeneous than HOX normalization...
 
@@ -665,6 +665,52 @@ sbatch scripts/matrix_TSS_5kb_PSC_EZH1EZH2SUZ12H3K27me3_WTKOEF1aEZH1merge_DEGWTv
 
 --> *TMM Default normalization* leads to very different Replicate! It does not work well at all...
 
+
+
+
+## QC PCA plots
+
+Let's do PCA plots to compare the bigwig, how they perform to put same samples together.
+
+
+
+
+```bash
+conda activate deeptools
+
+# pearson corr plots - bigwig regions GTF as BED
+### All 3 genotypes
+sbatch scripts/multiBigwigSummary_H3K27me3_THOR_TMM_bed.sh # 32405260 ok
+sbatch scripts/multiBigwigSummary_H3K27me3_THOR_housekeepHOX_bed.sh # 32405464 ok
+sbatch scripts/multiBigwigSummary_H3K27me3_THOR_DiffBindTMMEpiCypher_bed.sh # 32405785 ok
+
+sbatch scripts/multiBigwigSummary_SUZ12_THOR_TMM_bed.sh # 32409383 ok
+sbatch scripts/multiBigwigSummary_SUZ12_THOR_housekeepHOX_bed.sh # 32409439 ok
+#sbatch scripts/multiBigwigSummary_SUZ12_THOR_DiffBindTMMEpiCypher_bed.sh # SUZ12_THOR_DiffBindTMMEpiCypher not generated
+
+sbatch scripts/multiBigwigSummary_EZH2_THOR_TMM_bed.sh # 32409934 ok
+sbatch scripts/multiBigwigSummary_EZH2_THOR_housekeepHOX_bed.sh # 32410183 ok
+ #sbatch scripts/multiBigwigSummary_EZH2_THOR_DiffBindTMMEpiCypher_bed.sh # EZH2_THOR_DiffBindTMMEpiCypher not generated
+
+
+# pearson corr plots - bigwig bins
+### All 3 genotypes
+sbatch scripts/multiBigwigSummary_H3K27me3_THOR_TMM.sh # 32396020 ok
+sbatch scripts/multiBigwigSummary_H3K27me3_THOR_housekeepHOX.sh # 32396689 ok
+sbatch scripts/multiBigwigSummary_H3K27me3_THOR_DiffBindTMMEpiCypher.sh # 32397002 ok
+
+### 2 genotypes only
+sbatch scripts/multiBigwigSummary_H3K27me3_WTvsKO_THOR_TMM.sh # 323400765 ok
+sbatch scripts/multiBigwigSummary_H3K27me3_WTvsKO_THOR_housekeepHOX.sh # 323400857 ok
+sbatch scripts/multiBigwigSummary_H3K27me3_WTvsKO_THOR_DiffBindTMMEpiCypher.sh # 323400961 ok
+
+sbatch scripts/multiBigwigSummary_H3K27me3_WTvsKOEF1aEZH1_THOR_TMM.sh # 323401491 ok
+sbatch scripts/multiBigwigSummary_H3K27me3_WTvsKOEF1aEZH1_THOR_housekeepHOX.sh # 323401667 ok
+sbatch scripts/multiBigwigSummary_H3K27me3_WTvsKOEF1aEZH1_THOR_DiffBindTMMEpiCypher.sh # 323401695 ok
+```
+
+--> None normalization show good clustering... (WT and KOEF1aEZH1 OK; but KO_R2 weird outlier). Same when treating only two genotype at a time.
+  --> Same result when using the bed-file (eg. clustering on gene only)...
 
 
 

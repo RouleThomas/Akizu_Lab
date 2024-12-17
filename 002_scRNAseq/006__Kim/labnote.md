@@ -7824,9 +7824,15 @@ DEG_genes_signif_pos = DEG_genes_signif %>%
 DAR_genes_signif_pos = DAR_genes_signif %>% 
   dplyr::filter(avg_log2FC >0)
    
-DEG_DAR_genes_signif_pos <- DEG_genes_signif_pos %>%
-  mutate(overlap_with_DAR = ifelse(gene %in% DAR_genes_signif_pos$gene, "Overlap", "No Overlap"))
 
+DEG_DAR_genes_signif_pos <- DEG_genes_signif_pos %>%
+  rowwise() %>%
+  mutate(overlap_with_DAR = ifelse(
+    any(gene == DAR_genes_signif_pos$gene & cluster == DAR_genes_signif_pos$cluster), 
+    "Overlap", 
+    "No Overlap"
+  )) %>%
+  ungroup()
 
 ### output save table DEG DAR ###
 DEG_DAR_genes_signif_pos %>%
@@ -7885,9 +7891,15 @@ DEG_genes_signif_neg = DEG_genes_signif %>%
 DAR_genes_signif_neg = DAR_genes_signif %>% 
   dplyr::filter(avg_log2FC <0)
    
+
 DEG_DAR_genes_signif_neg <- DEG_genes_signif_neg %>%
-  mutate(overlap_with_DAR = ifelse(gene %in% DAR_genes_signif_neg$gene, "Overlap", "No Overlap"))
-   
+  rowwise() %>%
+  mutate(overlap_with_DAR = ifelse(
+    any(gene == DAR_genes_signif_neg$gene & cluster == DAR_genes_signif_neg$cluster), 
+    "Overlap", 
+    "No Overlap"
+  )) %>%
+  ungroup()
 
 ### output save table DEG DAR ###
 DEG_DAR_genes_signif_neg %>%
@@ -8424,6 +8436,13 @@ use_python("~/anaconda3/envs/SignacV5/bin/python") # to specify which python to 
 # import seurat object
 multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.sct_numeric_label.rds")
 
+### Test with scaling data ###
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "RNA" # According to condiments workflow
+multiome_WT_Bap1KO_QCV2vC1.sct <- NormalizeData(multiome_WT_Bap1KO_QCV2vC1.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(multiome_WT_Bap1KO_QCV2vC1.sct)
+multiome_WT_Bap1KO_QCV2vC1.sct <- ScaleData(multiome_WT_Bap1KO_QCV2vC1.sct, features = all.genes) # zero-centres and scales it
+#########
+
 # import DEGs
 cluster_types <- c("cluster1",
 "cluster2",
@@ -8554,18 +8573,109 @@ DEG_genes_signif = DEG_genes %>%
 DEG_genes_signif_pos = DEG_genes_signif %>% 
   dplyr::filter(avg_log2FC >0)
 
+DEG_genes_signif_pos__PyNs_SubC_CA23 = DEG_genes_signif_pos %>%
+  dplyr::filter(cluster == "PyNs_SubC_CA23")
+DEG_genes_signif_pos__IN_1 = DEG_genes_signif_pos %>%
+  dplyr::filter(cluster == "IN_1")
+DEG_genes_signif_pos__SubC_1 = DEG_genes_signif_pos %>%
+  dplyr::filter(cluster == "SubC_1")
+DEG_genes_signif_pos__PyNs_SubC_CA1 = DEG_genes_signif_pos %>%
+  dplyr::filter(cluster == "PyNs_SubC_CA1")
+DEG_genes_signif_pos__PyNs_RSC_UL = DEG_genes_signif_pos %>%
+  dplyr::filter(cluster == "PyNs_RSC_UL")
+DEG_genes_signif_pos__DG_GC = DEG_genes_signif_pos %>%
+  dplyr::filter(cluster == "DG_GC")
+DEG_genes_signif_pos__PyNs_RSC_MDL = DEG_genes_signif_pos %>%
+  dplyr::filter(cluster == "PyNs_RSC_MDL")
+DEG_genes_signif_pos__NSC_proliferative_1 = DEG_genes_signif_pos %>%
+  dplyr::filter(cluster == "NSC_proliferative_1")
+DEG_genes_signif_pos__SubC_2 = DEG_genes_signif_pos %>%
+  dplyr::filter(cluster == "SubC_2")
+DEG_genes_signif_pos__IN_2 = DEG_genes_signif_pos %>%
+  dplyr::filter(cluster == "IN_2")
+DEG_genes_signif_pos__NSC_quiescent = DEG_genes_signif_pos %>%
+  dplyr::filter(cluster == "NSC_quiescent")
+DEG_genes_signif_pos__IN_SubC = DEG_genes_signif_pos %>%
+  dplyr::filter(cluster == "IN_SubC")
+DEG_genes_signif_pos__IP = DEG_genes_signif_pos %>%
+  dplyr::filter(cluster == "IP")
+DEG_genes_signif_pos__NSC_proliferative_2 = DEG_genes_signif_pos %>%
+  dplyr::filter(cluster == "NSC_proliferative_2")
+DEG_genes_signif_pos__CR = DEG_genes_signif_pos %>%
+  dplyr::filter(cluster == "CR")
+DEG_genes_signif_pos__OPC = DEG_genes_signif_pos %>%
+  dplyr::filter(cluster == "OPC")
+DEG_genes_signif_pos__Meningeal_Cells = DEG_genes_signif_pos %>%
+  dplyr::filter(cluster == "Meningeal_Cells")
+DEG_genes_signif_pos__Radial_Glia_Cells = DEG_genes_signif_pos %>%
+  dplyr::filter(cluster == "Radial_Glia_Cells")
+DEG_genes_signif_pos__Microglia = DEG_genes_signif_pos %>%
+  dplyr::filter(cluster == "Microglia")
+
+
+
+
 DEG_genes_signif_neg = DEG_genes_signif %>% 
   dplyr::filter(avg_log2FC <0)
 
+DEG_genes_signif_neg__PyNs_SubC_CA23 = DEG_genes_signif_neg %>%
+  dplyr::filter(cluster == "PyNs_SubC_CA23")
+DEG_genes_signif_neg__IN_1 = DEG_genes_signif_neg %>%
+  dplyr::filter(cluster == "IN_1")
+DEG_genes_signif_neg__SubC_1 = DEG_genes_signif_neg %>%
+  dplyr::filter(cluster == "SubC_1")
+DEG_genes_signif_neg__PyNs_SubC_CA1 = DEG_genes_signif_neg %>%
+  dplyr::filter(cluster == "PyNs_SubC_CA1")
+DEG_genes_signif_neg__PyNs_RSC_UL = DEG_genes_signif_neg %>%
+  dplyr::filter(cluster == "PyNs_RSC_UL")
+DEG_genes_signif_neg__DG_GC = DEG_genes_signif_neg %>%
+  dplyr::filter(cluster == "DG_GC")
+DEG_genes_signif_neg__PyNs_RSC_MDL = DEG_genes_signif_neg %>%
+  dplyr::filter(cluster == "PyNs_RSC_MDL")
+DEG_genes_signif_neg__NSC_proliferative_1 = DEG_genes_signif_neg %>%
+  dplyr::filter(cluster == "NSC_proliferative_1")
+DEG_genes_signif_neg__SubC_2 = DEG_genes_signif_neg %>%
+  dplyr::filter(cluster == "SubC_2")
+DEG_genes_signif_neg__IN_2 = DEG_genes_signif_neg %>%
+  dplyr::filter(cluster == "IN_2")
+DEG_genes_signif_neg__NSC_quiescent = DEG_genes_signif_neg %>%
+  dplyr::filter(cluster == "NSC_quiescent")
+DEG_genes_signif_neg__IN_SubC = DEG_genes_signif_neg %>%
+  dplyr::filter(cluster == "IN_SubC")
+DEG_genes_signif_neg__IP = DEG_genes_signif_neg %>%
+  dplyr::filter(cluster == "IP")
+DEG_genes_signif_neg__NSC_proliferative_2 = DEG_genes_signif_neg %>%
+  dplyr::filter(cluster == "NSC_proliferative_2")
+DEG_genes_signif_neg__CR = DEG_genes_signif_neg %>%
+  dplyr::filter(cluster == "CR")
+DEG_genes_signif_neg__OPC = DEG_genes_signif_neg %>%
+  dplyr::filter(cluster == "OPC")
+DEG_genes_signif_neg__Meningeal_Cells = DEG_genes_signif_neg %>%
+  dplyr::filter(cluster == "Meningeal_Cells")
+DEG_genes_signif_neg__Radial_Glia_Cells = DEG_genes_signif_neg %>%
+  dplyr::filter(cluster == "Radial_Glia_Cells")
+DEG_genes_signif_neg__Microglia = DEG_genes_signif_neg %>%
+  dplyr::filter(cluster == "Microglia")
 
-   
+
+
+
+
+
+
 #### PLOT RNA
 
 genes_of_interest <- DEG_genes_signif_pos$gene
+
+
+
+
+genes_of_interest <- DEG_genes_signif_neg__Microglia$gene
+
 genes_of_interest <- genes_of_interest[genes_of_interest %in% rownames(multiome_WT_Bap1KO_QCV2vC1.sct@assays$RNA@data)]
 ### extract WT and cYAPKO gene expression values from RNA assay
-WT_expression <- multiome_WT_Bap1KO_QCV2vC1.sct@assays$RNA@data[genes_of_interest, colnames(multiome_WT_Bap1KO_QCV2vC1.sct)[multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident == "multiome_WT"]]
-Bap1KO_expression <- multiome_WT_Bap1KO_QCV2vC1.sct@assays$RNA@data[genes_of_interest, colnames(multiome_WT_Bap1KO_QCV2vC1.sct)[multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident == "multiome_Bap1KO"]]
+WT_expression <- multiome_WT_Bap1KO_QCV2vC1.sct@assays$RNA@scale.data[genes_of_interest, colnames(multiome_WT_Bap1KO_QCV2vC1.sct)[multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident == "multiome_WT"]]
+Bap1KO_expression <- multiome_WT_Bap1KO_QCV2vC1.sct@assays$RNA@scale.data[genes_of_interest, colnames(multiome_WT_Bap1KO_QCV2vC1.sct)[multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident == "multiome_Bap1KO"]]
 ### mean expression values for each gene
 WT_mean <- rowMeans(WT_expression)
 Bap1KO_mean <- rowMeans(Bap1KO_expression)
@@ -8586,7 +8696,11 @@ data_for_plot <- data_for_plot[data_for_plot$Gene %in% unique_ordered_genes, ]
 data_for_plot$Gene <- factor(data_for_plot$Gene, levels = unique_ordered_genes)
 data_for_plot$Condition <- factor(data_for_plot$Condition, levels = c("WT", "Bap1KO")) 
 
-pdf("output/Signac/boxplot_RNAexpression_DEG_genes_signif_pos_multiome_WT_Bap1KO_QCV2vC1.pdf", width=2, height=4)
+# pdf("output/Signac/boxplot_RNAexpression_DEG_genes_signif_pos_multiome_WT_Bap1KO_QCV2vC1.pdf", width=2, height=4)
+# pdf("output/Signac/boxplot_RNAexpression_DEG_genes_signif_pos_multiome_WT_Bap1KO_QCV2vC1_scaleData.pdf", width=2, height=4)
+# pdf("output/Signac/boxplot_RNAexpression_multiome_WT_Bap1KO_QCV2vC1-DEG_genes_signif_neg__DG_GC.pdf", width=2, height=4)
+
+pdf("output/Signac/boxplot_RNAexpression_multiome_WT_Bap1KO_QCV2vC1_scaleData-DEG_genes_signif_neg__Microglia.pdf", width=2, height=4)
 ggplot(data = data_for_plot, aes(x = Condition, y = Expression, fill = Condition)) +
   scale_fill_manual(values = c("WT" = "blue", "Bap1KO" = "red")) +
   geom_violin(alpha = 0.5, position = position_dodge(width = 0.75), size = 1, color = NA) +
@@ -8628,11 +8742,17 @@ dev.off()
 
 #### PLOT ATAC
 
-genes_of_interest <- DEG_genes_signif_neg$gene   # CHANGE HERE neg pos
+genes_of_interest <- DEG_genes_signif_pos$gene   # CHANGE HERE neg pos
+
+
+
+
+genes_of_interest <- DEG_genes_signif_neg__Microglia$gene
+
 genes_of_interest <- genes_of_interest[genes_of_interest %in% rownames(multiome_WT_Bap1KO_QCV2vC1.sct@assays$GeneActivity@data)]
 ### extract WT and cYAPKO gene expression values from GeneActivity assay
-WT_expression <- multiome_WT_Bap1KO_QCV2vC1.sct@assays$GeneActivity@data[genes_of_interest, colnames(multiome_WT_Bap1KO_QCV2vC1.sct)[multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident == "multiome_WT"]]
-Bap1KO_expression <- multiome_WT_Bap1KO_QCV2vC1.sct@assays$GeneActivity@data[genes_of_interest, colnames(multiome_WT_Bap1KO_QCV2vC1.sct)[multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident == "multiome_Bap1KO"]]
+WT_expression <- multiome_WT_Bap1KO_QCV2vC1.sct@assays$GeneActivity@scale.data[genes_of_interest, colnames(multiome_WT_Bap1KO_QCV2vC1.sct)[multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident == "multiome_WT"]]
+Bap1KO_expression <- multiome_WT_Bap1KO_QCV2vC1.sct@assays$GeneActivity@scale.data[genes_of_interest, colnames(multiome_WT_Bap1KO_QCV2vC1.sct)[multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident == "multiome_Bap1KO"]]
 ### mean expression values for each gene
 WT_mean <- rowMeans(WT_expression)
 Bap1KO_mean <- rowMeans(Bap1KO_expression)
@@ -8653,7 +8773,10 @@ data_for_plot <- data_for_plot[data_for_plot$Gene %in% unique_ordered_genes, ]
 data_for_plot$Gene <- factor(data_for_plot$Gene, levels = unique_ordered_genes)
 data_for_plot$Condition <- factor(data_for_plot$Condition, levels = c("WT", "Bap1KO")) 
 
-pdf("output/Signac/boxplot_GeneActivity_DEG_genes_signif_neg_multiome_WT_Bap1KO_QCV2vC1.pdf", width=2, height=4) # CHANGE HERE neg pos
+#pdf("output/Signac/boxplot_GeneActivity_DEG_genes_signif_neg_multiome_WT_Bap1KO_QCV2vC1.pdf", width=2, height=4) # CHANGE HERE neg pos
+#pdf("output/Signac/boxplot_GeneActivity_multiome_WT_Bap1KO_QCV2vC1-DEG_genes_signif_neg__Microglia.pdf", width=2, height=4) # CHANGE HERE neg pos
+#pdf("output/Signac/boxplot_GeneActivity_DEG_genes_signif_pos_multiome_WT_Bap1KO_QCV2vC1_scaleData.pdf", width=2, height=4) 
+pdf("output/Signac/boxplot_GeneActivity_multiome_WT_Bap1KO_QCV2vC1_scaleData-DEG_genes_signif_neg__Microglia.pdf", width=2, height=4) 
 ggplot(data = data_for_plot, aes(x = Condition, y = Expression, fill = Condition)) +
   scale_fill_manual(values = c("WT" = "blue", "Bap1KO" = "red")) +
   geom_violin(alpha = 0.5, position = position_dodge(width = 0.75), size = 1, color = NA) +
@@ -8671,7 +8794,57 @@ ggplot(data = data_for_plot, aes(x = Condition, y = Expression, fill = Condition
 dev.off()
 
 
-# Light testing
+
+
+
+# Gene List:
+
+DEG_genes_signif_pos__PyNs_SubC_CA23 
+DEG_genes_signif_pos__IN_1
+DEG_genes_signif_pos__SubC_1 
+DEG_genes_signif_pos__PyNs_SubC_CA1 
+DEG_genes_signif_pos__PyNs_RSC_UL 
+DEG_genes_signif_pos__DG_GC 
+DEG_genes_signif_pos__PyNs_RSC_MDL
+DEG_genes_signif_pos__NSC_proliferative_1 
+DEG_genes_signif_pos__SubC_2 
+DEG_genes_signif_pos__IN_2 
+DEG_genes_signif_pos__NSC_quiescent 
+DEG_genes_signif_pos__IN_SubC
+DEG_genes_signif_pos__IP 
+DEG_genes_signif_pos__NSC_proliferative_2 
+DEG_genes_signif_pos__CR 
+DEG_genes_signif_pos__OPC 
+DEG_genes_signif_pos__Meningeal_Cells 
+DEG_genes_signif_pos__Radial_Glia_Cells
+DEG_genes_signif_pos__Microglia 
+
+
+
+DEG_genes_signif_neg__PyNs_SubC_CA23
+DEG_genes_signif_neg__IN_1 
+DEG_genes_signif_neg__SubC_1 
+DEG_genes_signif_neg__PyNs_SubC_CA1 
+DEG_genes_signif_neg__PyNs_RSC_UL
+DEG_genes_signif_neg__DG_GC 
+DEG_genes_signif_neg__PyNs_RSC_MDL 
+DEG_genes_signif_neg__NSC_proliferative_1 
+DEG_genes_signif_neg__SubC_2 
+DEG_genes_signif_neg__IN_2 
+DEG_genes_signif_neg__NSC_quiescent 
+DEG_genes_signif_neg__IN_SubC 
+DEG_genes_signif_neg__IP 
+DEG_genes_signif_neg__NSC_proliferative_2 
+DEG_genes_signif_neg__CR 
+DEG_genes_signif_neg__OPC 
+DEG_genes_signif_neg__Meningeal_Cells
+DEG_genes_signif_neg__Radial_Glia_Cells
+DEG_genes_signif_neg__Microglia 
+
+
+
+
+# Light testing - Random
 ## Verification that marker genes are good
 multiome_WT_Bap1KO_QCV2vC1.sct
 Idents(multiome_WT_Bap1KO_QCV2vC1.sct) <- "cluster.annot"
@@ -8692,6 +8865,14 @@ all_markers <- FindAllMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", onl
 #--> ALL GOODD!!!! But RNA needed to be logNorm and scale!
 
 ```
+
+
+--> RNA is good; it seems I am using counts, non scale.data, but result are good.
+
+--> ATAC is weird; always show more signal in Bap1; even for genes downregulated... I tried using scale.data; and it is even worst. Even more enriched toward Bap1KO.
+
+
+
 
 
 ### Pseudotime condiments
