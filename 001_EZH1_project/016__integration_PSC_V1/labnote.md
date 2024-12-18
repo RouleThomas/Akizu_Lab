@@ -118,18 +118,18 @@ sbatch scripts/THOR_PSC_WTvsKO_EZH2_EpiCypher.sh #  xxx
 sbatch scripts/THOR_PSC_WTvsKO_SUZ12_EpiCypher.sh #  xxx
 sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_EpiCypher.sh #  xxx
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1_EpiCypher.sh #  xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_EpiCypher.sh # 29869761 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_EpiCypher.sh # 29869761 ok; NO NEED to do the other as this one is so bad!
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_EpiCypher.sh #  xxx
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_EpiCypher.sh #  xxx
 
 # THOR scaling factor DiffBind_TMM_EpiCypher (E coli spike in norm) --> SF to use in THOR are the **reciprocal of MG1655_DiffBind_TMM**
 sbatch scripts/THOR_PSC_WTvsKO_EZH1_DiffBindTMMEpiCypher.sh #  xxx
-sbatch scripts/THOR_PSC_WTvsKO_EZH2_DiffBindTMMEpiCypher.sh #  xxx
-sbatch scripts/THOR_PSC_WTvsKO_SUZ12_DiffBindTMMEpiCypher.sh #  xxx
+sbatch scripts/THOR_PSC_WTvsKO_EZH2_DiffBindTMMEpiCypher.sh # 32559674 ok
+sbatch scripts/THOR_PSC_WTvsKO_SUZ12_DiffBindTMMEpiCypher.sh # 32560104 ok
 sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_DiffBindTMMEpiCypher.sh # 29871946 ok
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1_DiffBindTMMEpiCypher.sh #  xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_DiffBindTMMEpiCypher.sh #  xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_DiffBindTMMEpiCypher.sh #  xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_DiffBindTMMEpiCypher.sh # 32559686 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_DiffBindTMMEpiCypher.sh # 32560204 ok
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher.sh # 29872019 ok
 ```
 
@@ -596,11 +596,138 @@ thor_splitted %>%
   summarise(n = n())
 
 
+
+
+
+# H3K27me3 WTvsKO DiffBindTMMEpiCypher
+
+diffpeaks <- read_tsv("output/THOR/THOR_PSC_WTvsKO_H3K27me3_DiffBindTMMEpiCypher/PSCWTvsKOH3K27me3DiffBindTMMEpiCypher-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2", "count_WT_3"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2", "count_KO_3"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2+count_KO_3) / (count_WT_1+count_WT_2+count_WT_3))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_PSC_WTvsKO_H3K27me3_DiffBindTMMEpiCypher/log2FC.pdf", width=5, height=5)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KO") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_PSC_WTvsKO_H3K27me3_DiffBindTMMEpiCypher/log2FC_qval20.pdf", width=5, height=5)
+thor_splitted %>%
+  filter(qval > 20) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KO_qval20") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 30) %>%
+  write_tsv("output/THOR/THOR_PSC_WTvsKO_H3K27me3_DiffBindTMMEpiCypher/THOR_qval30.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 20) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
+
+# H3K27me3 WTvsKOEF1aEZH1 DiffBindTMMEpiCypher
+
+diffpeaks <- read_tsv("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher/PSCWTvsKOEF1aEZH1H3K27me3DiffBindTMMEpiCypher-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KOEF1aEZH1", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2", "count_WT_3"), sep = ":", convert = TRUE) %>%
+  separate(count_KOEF1aEZH1, into = c("count_KOEF1aEZH1_1","count_KOEF1aEZH1_2", "count_KOEF1aEZH1_3"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KOEF1aEZH1_1+count_KOEF1aEZH1_2+count_KOEF1aEZH1_3) / (count_WT_1+count_WT_2+count_WT_3))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher/log2FC.pdf", width=5, height=5)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KOEF1aEZH1") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher/log2FC_qval20.pdf", width=5, height=5)
+thor_splitted %>%
+  filter(qval > 20) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KOEF1aEZH1_qval20") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 30) %>%
+  write_tsv("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher/THOR_qval30.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 30) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
+
+
+# SUZ12 WTvsKO DiffBindTMMEpiCypher
+diffpeaks <- read_tsv("output/THOR/THOR_PSC_WTvsKO_SUZ12_DiffBindTMMEpiCypher/PSCWTvsKOSUZ12DiffBindTMMEpiCypher-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2", "count_WT_3"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2", "count_KO_3"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2+count_KO_3) / (count_WT_1+count_WT_2+count_WT_3))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_PSC_WTvsKO_SUZ12_DiffBindTMMEpiCypher/log2FC.pdf", width=5, height=5)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KO") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_PSC_WTvsKO_SUZ12_DiffBindTMMEpiCypher/log2FC_qval20.pdf", width=5, height=5)
+thor_splitted %>%
+  filter(qval > 20) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KO_qval20") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 30) %>%
+  write_tsv("output/THOR/THOR_PSC_WTvsKO_SUZ12_DiffBindTMMEpiCypher/THOR_qval30.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 30) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
+
 ```
 
 
 
 **Optimal qvalue:**
+HousekeepHOXInput
 - WTvsKO_H3K27me3: qval20
 - WTvsKOEF1aEZH1_H3K27me3: qval20
 HousekeepHOXnoInput
@@ -609,13 +736,12 @@ HousekeepHOXnoInput
 - WTvsKO_EZH2: qval15 
 - WTvsKOEF1aEZH1_H3K27me3: qval15
 - WTvsKOEF1aEZH1_SUZ12: qval15
+DiffBindTMMEpiCypher
+- WTvsKO_H3K27me3: qval20
+- WTvsKOEF1aEZH1_H3K27me3: qval20
 
 
 
-
-## THOR MG1655 DiffBind TMM method
-
-XXX
 
 
 # deepTool plots
@@ -758,6 +884,997 @@ sbatch scripts/macs2_broad_3.sh # 29773661 ok
 --> all good
 
 
+
+
+# ChIPseeker peak gene assignment
+
+## From THOR diff peaks
+
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import THOR peaks
+## H3K27me3
+WTvsKO_H3K27me3_housekeepHOX = as_tibble(read.table('output/THOR/THOR_PSC_WTvsKO_H3K27me3_housekeepHOX/THOR_qval20.bed')) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+WTvsKOEF1aEZH1_H3K27me3_housekeepHOX = as_tibble(read.table('output/THOR/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_housekeepHOX/THOR_qval20.bed')) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+
+WTvsKO_H3K27me3_DiffBindTMMEpiCypher = as_tibble(read.table('output/THOR/THOR_PSC_WTvsKO_H3K27me3_DiffBindTMMEpiCypher/THOR_qval20.bed')) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher = as_tibble(read.table('output/THOR/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher/THOR_qval20.bed')) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+
+
+
+
+# Tidy peaks 
+## H3K27me3
+WTvsKO_H3K27me3_housekeepHOX_gr = makeGRangesFromDataFrame(WTvsKO_H3K27me3_housekeepHOX,keep.extra.columns=TRUE)
+WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_gr = makeGRangesFromDataFrame(WTvsKOEF1aEZH1_H3K27me3_housekeepHOX,keep.extra.columns=TRUE)
+WTvsKO_H3K27me3_DiffBindTMMEpiCypher_gr = makeGRangesFromDataFrame(WTvsKO_H3K27me3_DiffBindTMMEpiCypher,keep.extra.columns=TRUE)
+WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_gr = makeGRangesFromDataFrame(WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher,keep.extra.columns=TRUE)
+gr_list <- list(WTvsKO_H3K27me3_housekeepHOX=WTvsKO_H3K27me3_housekeepHOX_gr, WTvsKOEF1aEZH1_H3K27me3_housekeepHOX=WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_gr,  WTvsKO_H3K27me3_DiffBindTMMEpiCypher=WTvsKO_H3K27me3_DiffBindTMMEpiCypher_gr, WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher=WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_gr)
+
+
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## plots
+pdf("output/ChIPseeker/plotAnnoBar_H3K27me3_housekeepHOX_DiffBindTMMEpiCypher.pdf", width = 8, height = 3)
+plotAnnoBar(peakAnnoList)
+dev.off()
+pdf("output/ChIPseeker/plotDistToTSS_H3K27me3_housekeepHOX_DiffBindTMMEpiCypher.pdf", width = 8, height = 3)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
+
+## Get annotation data frame
+WTvsKO_H3K27me3_housekeepHOX_annot <- as.data.frame(peakAnnoList[["WTvsKO_H3K27me3_housekeepHOX"]]@anno)
+WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_annot <- as.data.frame(peakAnnoList[["WTvsKOEF1aEZH1_H3K27me3_housekeepHOX"]]@anno)
+WTvsKO_H3K27me3_DiffBindTMMEpiCypher_annot <- as.data.frame(peakAnnoList[["WTvsKO_H3K27me3_DiffBindTMMEpiCypher"]]@anno)
+WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_annot <- as.data.frame(peakAnnoList[["WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher"]]@anno)
+
+## Convert entrez gene IDs to gene symbols
+WTvsKO_H3K27me3_housekeepHOX_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = WTvsKO_H3K27me3_housekeepHOX_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+WTvsKO_H3K27me3_housekeepHOX_annot$gene <- mapIds(org.Hs.eg.db, keys = WTvsKO_H3K27me3_housekeepHOX_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_annot$gene <- mapIds(org.Hs.eg.db, keys = WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+WTvsKO_H3K27me3_DiffBindTMMEpiCypher_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = WTvsKO_H3K27me3_DiffBindTMMEpiCypher_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+WTvsKO_H3K27me3_DiffBindTMMEpiCypher_annot$gene <- mapIds(org.Hs.eg.db, keys = WTvsKO_H3K27me3_DiffBindTMMEpiCypher_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_annot$gene <- mapIds(org.Hs.eg.db, keys = WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+## Save output table
+write.table(WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_annot, file="output/ChIPseeker/annotation_THORq20_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_annot.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+WTvsKO_H3K27me3_housekeepHOX_annot_promoterAnd5 = tibble(WTvsKO_H3K27me3_housekeepHOX_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_annot_promoterAnd5 = tibble(WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+WTvsKO_H3K27me3_DiffBindTMMEpiCypher_annot_promoterAnd5 = tibble(WTvsKO_H3K27me3_DiffBindTMMEpiCypher_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_annot_promoterAnd5 = tibble(WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+
+### Save output gene lists
+WTvsKO_H3K27me3_housekeepHOX_annot_promoterAnd5_geneSymbol = WTvsKO_H3K27me3_housekeepHOX_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_annot_promoterAnd5_geneSymbol = WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+WTvsKO_H3K27me3_DiffBindTMMEpiCypher_annot_promoterAnd5_geneSymbol = WTvsKO_H3K27me3_DiffBindTMMEpiCypher_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_annot_promoterAnd5_geneSymbol = WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+
+write.table(WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_THORq20_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+```
+
+
+
+# RNAseq integration 
+
+
+
+--> DEGs is redo as in `015__RNAseq`
+
+
+## PSC KO vs WT
+
+
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("EnhancedVolcano")
+library("apeglm")
+library("org.Hs.eg.db")
+library("biomaRt")
+
+library("RColorBrewer")
+library("pheatmap")
+library("AnnotationDbi")
+
+## collect all samples ID
+samples <- c("PSC_WT_R1", "PSC_WT_R2" ,"PSC_WT_R3" ,"PSC_KO_R1" ,"PSC_KO_R2", "PSC_KO_R3")
+
+## Make a loop for importing all featurecounts data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("../015__RNAseq_PSC/output/featurecounts/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    dplyr::select(Geneid, starts_with("output/STAR/")) %>%
+    rename(!!sample := starts_with("output/STAR/"))
+}
+
+# Merge all dataframe into a single one
+counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+# Remove X and Y chromosome genes
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
+                   filters = "chromosome_name",
+                   values = c("X", "Y"),
+                   mart = ensembl)
+counts_all$stripped_geneid <- sub("\\..*", "", counts_all$Geneid)
+counts_all_filtered <- counts_all %>%
+  filter(!stripped_geneid %in% genes_X_Y$ensembl_gene_id)
+counts_all_filtered$stripped_geneid <- NULL
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pull(counts_all_filtered, Geneid)) 
+
+## Create colData file that describe all our samples
+### Not including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  dplyr::select(-replicate) %>%
+  bind_cols(data.frame(samples))
+### Including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  bind_cols(data.frame(samples))
+
+## transform df into matrix
+coldata = make_matrix(dplyr::select(coldata_raw, -samples), pull(coldata_raw, samples))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = round(counts_all_matrix),
+                              colData = coldata,
+                              design= ~ genotype)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 5
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm")
+
+
+## Plot-volcano
+### GeneSymbol ID
+gene_ids <- rownames(res)
+stripped_gene_ids <- sub("\\..*", "", gene_ids)
+gene_symbols <- mapIds(org.Hs.eg.db, keys = stripped_gene_ids,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+res$geneSymbol <- gene_symbols
+
+
+
+## import gene list gain / lost H3K27me3
+
+# H3K27me3
+### housekeepHOX WT vs KO ###############################################################
+THORq20_WTvsKO_H3K27me3_housekeepHOX_gain = read.table("output/ChIPseeker/annotation_THORq20_WTvsKO_H3K27me3_housekeepHOX_annot.txt", header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE) %>%
+                               as_tibble() %>%
+                               filter(V18 > 1) %>% # FILTER FC positive here!!
+                               dplyr::select(geneSymbol) %>%
+                               unique()
+
+
+
+THORq20_WTvsKO_H3K27me3_housekeepHOX_gain_promoterAnd5 = read.table("output/ChIPseeker/annotation_THORq20_WTvsKO_H3K27me3_housekeepHOX_annot.txt", header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE) %>%
+                               as_tibble() %>%
+                               filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+                               filter(V18 > 1) %>% # FILTER FC positive here!!
+                               dplyr::select(geneSymbol) %>%
+                               unique() 
+
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene") %>%
+  drop_na()   # ADDING THIS AVOID THE BUG WITH DUPPLCIATED NAME 
+
+res_Gain = THORq20_WTvsKO_H3K27me3_housekeepHOX_gain_promoterAnd5 %>% 
+  left_join(res_tibble) 
+
+
+### LOST
+
+THORq20_WTvsKO_H3K27me3_housekeepHOX_lost = read.table("output/ChIPseeker/annotation_THORq20_WTvsKO_H3K27me3_housekeepHOX_annot.txt", header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE) %>%
+                               as_tibble() %>%
+                               filter(V18 < 1) %>% # FILTER FC positive here!!
+                               dplyr::select(geneSymbol) %>%
+                               unique()
+
+THORq20_WTvsKO_H3K27me3_housekeepHOX_lost_promoterAnd5 = read.table("output/ChIPseeker/annotation_THORq20_WTvsKO_H3K27me3_housekeepHOX_annot.txt", header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE) %>%
+                               as_tibble() %>%
+                               filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+                               filter(V18 < 1) %>% # FILTER FC positive here!!
+                               dplyr::select(geneSymbol) %>%
+                               unique()
+
+
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene") %>%
+  drop_na()   # ADDING THIS AVOID THE BUG WITH DUPPLCIATED NAME 
+
+res_Lost = THORq20_WTvsKO_H3K27me3_housekeepHOX_lost_promoterAnd5 %>% 
+  left_join(res_tibble)
+
+## PLOT
+### GAIN
+highlight_genes <- c("") # 
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, 'Sky Blue',
+    ifelse(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+
+#pdf("output/deseq2/plotVolcano_THORq20_WTvsKO_H3K27me3_housekeepHOX_gain__PSC_KO_vs_PSC_WT.pdf", width=8, height=8)  
+pdf("output/deseq2/plotVolcano_THORq20_WTvsKO_H3K27me3_housekeepHOX_gain_promoterAnd5__PSC_KO_vs_PSC_WT.pdf", width=8, height=8)  
+EnhancedVolcano(res_Gain,
+  lab = res_Gain$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, PSC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 5,
+  labSize = 9,   # gene highlight size
+  shape = 20,
+  axisLabSize = 25,
+  captionLabSize = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.75,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+
+upregulated_genes <- sum(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, na.rm = TRUE) # 10
+downregulated_genes <- sum(res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, na.rm = TRUE) # 13
+
+
+
+
+
+
+## PLOT
+### LOST
+highlight_genes <- c("") # 
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, 'Sky Blue',
+    ifelse(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+#pdf("output/deseq2/plotVolcano_THORq20_WTvsKO_H3K27me3_housekeepHOX_lost__PSC_KO_vs_PSC_WT.pdf", width=8, height=8)  
+pdf("output/deseq2/plotVolcano_THORq20_WTvsKO_H3K27me3_housekeepHOX_lost_promoterAnd5__PSC_KO_vs_PSC_WT.pdf", width=8, height=8)  
+EnhancedVolcano(res_Lost,
+  lab = res_Lost$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, PSC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 5,
+  labSize = 9,   # gene highlight size
+  shape = 20,
+  axisLabSize = 25,
+  captionLabSize = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.75,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+
+upregulated_genes <- sum(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 5e-2, na.rm = TRUE) # 22
+downregulated_genes <- sum(res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, na.rm = TRUE) # 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# H3K27me3
+### spikein WT vs KO ###############################################################
+THORq20_WTvsKO_H3K27me3_DiffBindTMMEpiCypher_gain = read.table("output/ChIPseeker/annotation_THORq20_WTvsKO_H3K27me3_DiffBindTMMEpiCypher_annot.txt", header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE) %>%
+                               as_tibble() %>%
+                               filter(V18 > 1) %>% # FILTER FC positive here!!
+                               dplyr::select(geneSymbol) %>%
+                               unique()
+
+THORq20_WTvsKO_H3K27me3_DiffBindTMMEpiCypher_gain_promoterAnd5 = read.table("output/ChIPseeker/annotation_THORq20_WTvsKO_H3K27me3_DiffBindTMMEpiCypher_annot.txt", header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE) %>%
+                               as_tibble() %>%
+                               filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+                               filter(V18 > 1) %>% # FILTER FC positive here!!
+                               dplyr::select(geneSymbol) %>%
+                               unique()
+
+
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene") %>%
+  drop_na()   # ADDING THIS AVOID THE BUG WITH DUPPLCIATED NAME 
+
+res_Gain = THORq20_WTvsKO_H3K27me3_DiffBindTMMEpiCypher_gain_promoterAnd5 %>% 
+  left_join(res_tibble) 
+
+
+### LOST
+
+THORq20_WTvsKO_H3K27me3_DiffBindTMMEpiCypher_lost = read.table("output/ChIPseeker/annotation_THORq20_WTvsKO_H3K27me3_DiffBindTMMEpiCypher_annot.txt", header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE) %>%
+                               as_tibble() %>%
+                               filter(V18 < 1) %>% # FILTER FC positive here!!
+                               dplyr::select(geneSymbol) %>%
+                               unique()
+
+THORq20_WTvsKO_H3K27me3_DiffBindTMMEpiCypher_lost_promoterAnd5 = read.table("output/ChIPseeker/annotation_THORq20_WTvsKO_H3K27me3_DiffBindTMMEpiCypher_annot.txt", header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE) %>%
+                               as_tibble() %>%
+                               filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+                               filter(V18 < 1) %>% # FILTER FC positive here!!
+                               dplyr::select(geneSymbol) %>%
+                               unique()
+
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene") %>%
+  drop_na()   # ADDING THIS AVOID THE BUG WITH DUPPLCIATED NAME 
+
+res_Lost = THORq20_WTvsKO_H3K27me3_DiffBindTMMEpiCypher_lost_promoterAnd5 %>% 
+  left_join(res_tibble)
+
+## PLOT
+### GAIN
+highlight_genes <- c("") # 
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, 'Sky Blue',
+    ifelse(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+#pdf("output/deseq2/plotVolcano_THORq20_WTvsKO_H3K27me3_DiffBindTMMEpiCypher_gain__PSC_KO_vs_PSC_WT.pdf", width=8, height=8)  
+pdf("output/deseq2/plotVolcano_THORq20_WTvsKO_H3K27me3_DiffBindTMMEpiCypher_gain_promoterAnd5__PSC_KO_vs_PSC_WT.pdf", width=8, height=8)  
+EnhancedVolcano(res_Gain,
+  lab = res_Gain$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, PSC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 5,
+  labSize = 9,   # gene highlight size
+  shape = 20,
+  axisLabSize = 25,
+  captionLabSize = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.75,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+
+upregulated_genes <- sum(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, na.rm = TRUE) # 2
+downregulated_genes <- sum(res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, na.rm = TRUE) # 7
+
+
+
+
+
+
+## PLOT
+### LOST
+highlight_genes <- c("") # 
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, 'Sky Blue',
+    ifelse(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+#pdf("output/deseq2/plotVolcano_THORq20_WTvsKO_H3K27me3_DiffBindTMMEpiCypher_lost__PSC_KO_vs_PSC_WT.pdf", width=8, height=8)  
+pdf("output/deseq2/plotVolcano_THORq20_WTvsKO_H3K27me3_DiffBindTMMEpiCypher_lost_promoterAnd5__PSC_KO_vs_PSC_WT.pdf", width=8, height=8)  
+EnhancedVolcano(res_Lost,
+  lab = res_Lost$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KO vs WT, PSC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 5,
+  labSize = 9,   # gene highlight size
+  shape = 20,
+  axisLabSize = 25,
+  captionLabSize = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.75,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+
+upregulated_genes <- sum(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 5e-2, na.rm = TRUE) # 22
+downregulated_genes <- sum(res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, na.rm = TRUE) # 0
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
+## PSC KOEF1aEZH1 vs WT
+
+
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("EnhancedVolcano")
+library("apeglm")
+library("org.Hs.eg.db")
+library("biomaRt")
+
+library("RColorBrewer")
+library("pheatmap")
+library("AnnotationDbi")
+
+## collect all samples ID
+samples <- c("PSC_WT_R1", "PSC_WT_R2" ,"PSC_WT_R3" ,"PSC_KOEF1aEZH1_R1" ,"PSC_KOEF1aEZH1_R2", "PSC_KOEF1aEZH1_R3")
+
+## Make a loop for importing all featurecounts data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("../015__RNAseq_PSC/output/featurecounts/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    dplyr::select(Geneid, starts_with("output/STAR/")) %>%
+    rename(!!sample := starts_with("output/STAR/"))
+}
+
+# Merge all dataframe into a single one
+counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+# Remove X and Y chromosome genes
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
+                   filters = "chromosome_name",
+                   values = c("X", "Y"),
+                   mart = ensembl)
+counts_all$stripped_geneid <- sub("\\..*", "", counts_all$Geneid)
+counts_all_filtered <- counts_all %>%
+  filter(!stripped_geneid %in% genes_X_Y$ensembl_gene_id)
+counts_all_filtered$stripped_geneid <- NULL
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pull(counts_all_filtered, Geneid)) 
+
+## Create colData file that describe all our samples
+### Not including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  dplyr::select(-replicate) %>%
+  bind_cols(data.frame(samples))
+### Including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  bind_cols(data.frame(samples))
+
+## transform df into matrix
+coldata = make_matrix(dplyr::select(coldata_raw, -samples), pull(coldata_raw, samples))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = round(counts_all_matrix),
+                              colData = coldata,
+                              design= ~ genotype)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 5
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+res <- lfcShrink(dds, coef="genotype_KOEF1aEZH1_vs_WT", type="apeglm")
+
+
+## Plot-volcano
+### GeneSymbol ID
+gene_ids <- rownames(res)
+stripped_gene_ids <- sub("\\..*", "", gene_ids)
+gene_symbols <- mapIds(org.Hs.eg.db, keys = stripped_gene_ids,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+res$geneSymbol <- gene_symbols
+
+
+
+## import gene list gain / lost H3K27me3
+
+# H3K27me3
+### housekeepHOX WT vs KOEF1aEZH1 ###############################################################
+THORq20_WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_gain = read.table("output/ChIPseeker/annotation_THORq20_WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_annot.txt", header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE) %>%
+                               as_tibble() %>%
+                               filter(V18 > 1) %>% # FILTER FC positive here!!
+                               dplyr::select(geneSymbol) %>%
+                               unique()
+
+THORq20_WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_gain_promoterAnd5 = read.table("output/ChIPseeker/annotation_THORq20_WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_annot.txt", header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE) %>%
+                               as_tibble() %>%
+                               filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+                               filter(V18 > 1) %>% # FILTER FC positive here!!
+                               dplyr::select(geneSymbol) %>%
+                               unique()
+
+
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene") %>%
+  drop_na()   # ADDING THIS AVOID THE BUG WITH DUPPLCIATED NAME 
+
+res_Gain = THORq20_WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_gain_promoterAnd5 %>% 
+  left_join(res_tibble) 
+
+
+### LOST
+
+THORq20_WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_lost = read.table("output/ChIPseeker/annotation_THORq20_WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_annot.txt", header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE) %>%
+                               as_tibble() %>%
+                               filter(V18 < 1) %>% # FILTER FC positive here!!
+                               dplyr::select(geneSymbol) %>%
+                               unique()
+
+THORq20_WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_lost_promoterAnd5 = read.table("output/ChIPseeker/annotation_THORq20_WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_annot.txt", header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE) %>%
+                               as_tibble() %>%
+                               filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+                               filter(V18 < 1) %>% # FILTER FC positive here!!
+                               dplyr::select(geneSymbol) %>%
+                               unique()
+
+
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene") %>%
+  drop_na()   # ADDING THIS AVOID THE BUG WITH DUPPLCIATED NAME 
+
+res_Lost = THORq20_WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_lost_promoterAnd5 %>% 
+  left_join(res_tibble)
+
+## PLOT
+### GAIN
+highlight_genes <- c("") # 
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, 'Sky Blue',
+    ifelse(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+#pdf("output/deseq2/plotVolcano_THORq20_WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_gain__PSC_KOEF1aEZH1_vs_PSC_WT.pdf", width=8, height=8)  
+pdf("output/deseq2/plotVolcano_THORq20_WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_gain_promoterAnd5__PSC_KOEF1aEZH1_vs_PSC_WT.pdf", width=8, height=8)  
+EnhancedVolcano(res_Gain,
+  lab = res_Gain$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KOEF1aEZH1 vs WT, PSC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 5,
+  labSize = 9,   # gene highlight size
+  shape = 20,
+  axisLabSize = 25,
+  captionLabSize = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.75,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+
+upregulated_genes <- sum(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, na.rm = TRUE) # 10
+downregulated_genes <- sum(res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, na.rm = TRUE) # 13
+
+
+
+
+
+
+## PLOT
+### LOST
+highlight_genes <- c("") # 
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, 'Sky Blue',
+    ifelse(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+#pdf("output/deseq2/plotVolcano_THORq20_WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_lost__PSC_KOEF1aEZH1_vs_PSC_WT.pdf", width=8, height=8)  
+pdf("output/deseq2/plotVolcano_THORq20_WTvsKOEF1aEZH1_H3K27me3_housekeepHOX_lost_promoterAnd5__PSC_KOEF1aEZH1_vs_PSC_WT.pdf", width=8, height=8)  
+EnhancedVolcano(res_Lost,
+  lab = res_Lost$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KOEF1aEZH1 vs WT, PSC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 5,
+  labSize = 9,   # gene highlight size
+  shape = 20,
+  axisLabSize = 25,
+  captionLabSize = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.75,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+
+upregulated_genes <- sum(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 5e-2, na.rm = TRUE) # 22
+downregulated_genes <- sum(res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, na.rm = TRUE) # 0
+
+
+
+
+
+
+
+
+
+
+# H3K27me3
+### spikein WT vs KOEF1aEZH1 ###############################################################
+THORq20_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_gain = read.table("output/ChIPseeker/annotation_THORq20_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_annot.txt", header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE) %>%
+                               as_tibble() %>%
+                               filter(V18 > 1) %>% # FILTER FC positive here!!
+                               dplyr::select(geneSymbol) %>%
+                               unique()
+
+THORq20_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_gain_promoterAnd5 = read.table("output/ChIPseeker/annotation_THORq20_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_annot.txt", header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE) %>%
+                               as_tibble() %>%
+                               filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+                               filter(V18 > 1) %>% # FILTER FC positive here!!
+                               dplyr::select(geneSymbol) %>%
+                               unique()
+
+
+
+
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene") %>%
+  drop_na()   # ADDING THIS AVOID THE BUG WITH DUPPLCIATED NAME 
+
+res_Gain = THORq20_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_gain_promoterAnd5 %>% 
+  left_join(res_tibble) 
+
+
+### LOST
+
+THORq20_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_lost = read.table("output/ChIPseeker/annotation_THORq20_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_annot.txt", header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE) %>%
+                               as_tibble() %>%
+                               filter(V18 < 1) %>% # FILTER FC positive here!!
+                               dplyr::select(geneSymbol) %>%
+                               unique()
+
+THORq20_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_lost_promoterAnd5 = read.table("output/ChIPseeker/annotation_THORq20_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_annot.txt", header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE) %>%
+                               as_tibble() %>%
+                               filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR")) %>%
+                               filter(V18 < 1) %>% # FILTER FC positive here!!
+                               dplyr::select(geneSymbol) %>%
+                               unique()
+
+
+
+#### Remove gene version on the res and compil with THOR diff genes
+rownames(res) <- gsub("\\..*", "", rownames(res))
+res_tibble <- res %>% 
+  as_tibble(rownames = "gene") %>%
+  drop_na()   # ADDING THIS AVOID THE BUG WITH DUPPLCIATED NAME 
+
+res_Lost = THORq20_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_lost_promoterAnd5 %>% 
+  left_join(res_tibble)
+
+## PLOT
+### GAIN
+highlight_genes <- c("") # 
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, 'Sky Blue',
+    ifelse(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+
+#pdf("output/deseq2/plotVolcano_THORq20_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_gain__PSC_KOEF1aEZH1_vs_PSC_WT.pdf", width=8, height=8)  
+pdf("output/deseq2/plotVolcano_THORq20_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_gain_promoterAnd5__PSC_KOEF1aEZH1_vs_PSC_WT.pdf", width=8, height=8)  
+EnhancedVolcano(res_Gain,
+  lab = res_Gain$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KOEF1aEZH1 vs WT, PSC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 5,
+  labSize = 9,   # gene highlight size
+  shape = 20,
+  axisLabSize = 25,
+  captionLabSize = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.75,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+
+upregulated_genes <- sum(res_Gain$log2FoldChange > 0.5 & res_Gain$padj < 5e-2, na.rm = TRUE) # 2
+downregulated_genes <- sum(res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, na.rm = TRUE) # 7
+
+
+
+
+
+
+## PLOT
+### LOST
+highlight_genes <- c("") # 
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, 'Sky Blue',
+    ifelse(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+#pdf("output/deseq2/plotVolcano_THORq20_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_lost__PSC_KOEF1aEZH1_vs_PSC_WT.pdf", width=8, height=8)  
+pdf("output/deseq2/plotVolcano_THORq20_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher_lost_promoterAnd5__PSC_KOEF1aEZH1_vs_PSC_WT.pdf", width=8, height=8)  
+EnhancedVolcano(res_Lost,
+  lab = res_Lost$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  selectLab = highlight_genes,
+  title = 'KOEF1aEZH1 vs WT, PSC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.5,
+  pointSize = 5,
+  labSize = 9,   # gene highlight size
+  shape = 20,
+  axisLabSize = 25,
+  captionLabSize = 20,
+  colCustom = keyvals,
+  drawConnectors = TRUE,
+  widthConnectors = 0.75,
+  colConnectors = 'black',
+  max.overlaps = 100,
+  arrowheads = FALSE)  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) )
+dev.off()
+
+
+upregulated_genes <- sum(res_Lost$log2FoldChange > 0.5 & res_Lost$padj < 5e-2, na.rm = TRUE) # 127
+downregulated_genes <- sum(res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, na.rm = TRUE) # 15
+
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Ecoli scaling factor
 
 From [EpiCypher](https://support.epicypher.com/docs/normalizing-to-e-coli-spike-in-dna), it seems uniquely aligned reads should be used, from both human, and E coli!
@@ -870,8 +1987,6 @@ dev.off()
 **Using our spike in proportion, let's estimate the 'new' library size** and provide it to `dba.normalize(library = c(1000, 12000))` = Like that our library size will be change taking into account our scaling factor! **Then we can normalize with library-size, RLE or TMM**... (issue discussed [here](https://support.bioconductor.org/p/9147040/)) 
 
 
-XXX BWLOW NOT MOD
-
 
 ```bash
 srun --mem=500g --pty bash -l
@@ -914,7 +2029,75 @@ dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM,DBA_TREATMENT, label
 dev.off()
 
 
-XXX WAIT THOR XXX
+
+
+# ONE PER ONE
+## EZH2
+
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_EZH2.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_EZH2.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_EZH2.RData")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_EZH2.pdf", width=14, height=20)  
+plot(sample_count)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_EZH2.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_TREATMENT, label=DBA_TREATMENT)
+dev.off()
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### TMM 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(15963200,5584400,4618000,1898400,4033200,3976200,18113200,1707800,4936300), normalize = DBA_NORM_TMM) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_EZH2.txt")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_EZH2_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20)  
+plot(sample_count_blackgreylist_LibHistoneScaled_TMM)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_EZH2_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM,DBA_TREATMENT, label=DBA_TREATMENT)
+dev.off()
+
+
+## SUZ12
+
+### Generate the sample metadata (in ods/copy paste to a .csv file)
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_SUZ12.txt", header = TRUE, sep = "\t"))
+### Batch effect investigation; heatmaps and PCA plots
+sample_count = dba.count(sample_dba)
+## This take time, here is checkpoint command to save/load:
+save(sample_count, file = "output/DiffBind/sample_count_macs2raw_unique_SUZ12.RData")
+load("output/DiffBind/sample_count_macs2raw_unique_SUZ12.RData")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_SUZ12.pdf", width=14, height=20)  
+plot(sample_count)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_SUZ12.pdf", width=14, height=20) 
+dba.plotPCA(sample_count,DBA_TREATMENT, label=DBA_TREATMENT)
+dev.off()
+### Blacklist/Greylist generation
+sample_dba_blackgreylist = dba.blacklist(sample_count, blacklist=TRUE, greylist=TRUE) # Here we apply blacklist and greylist
+sample_count_blackgreylist = dba.count(sample_dba_blackgreylist)
+### TMM 
+sample_count_blackgreylist_LibHistoneScaled_TMM = dba.normalize(sample_count_blackgreylist, library = c(19901200,1859800,4436600,1674200,4206000,4051800,11078200,27481600,1739600), normalize = DBA_NORM_TMM) 
+#### Here is to retrieve the scaling factor value
+sample_count_blackgreylist_LibHistoneScaled_TMM_SF = dba.normalize(sample_count_blackgreylist_LibHistoneScaled_TMM, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_count_blackgreylist_LibHistoneScaled_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_LibHistoneScaled_TMM_unique_SF_SUZ12.txt")
+### plot
+pdf("output/DiffBind/clustering_sample_macs2raw_unique_SUZ12_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20)  
+plot(sample_count_blackgreylist_LibHistoneScaled_TMM)
+dev.off()
+pdf("output/DiffBind/PCA_sample_macs2raw_unique_SUZ12_blackgreylist_LibHistoneScaled_TMM.pdf", width=14, height=20) 
+dba.plotPCA(sample_count_blackgreylist_LibHistoneScaled_TMM,DBA_TREATMENT, label=DBA_TREATMENT)
+dev.off()
 ```
 
 

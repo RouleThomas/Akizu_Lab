@@ -169,7 +169,6 @@ mv output/featurecounts/*rpkm* output/rpkm/
 
 # Count with Salmon
 
-
 ## install Salmon
 
 Let's follow [this](https://combine-lab.github.io/salmon/getting_started/)
@@ -214,14 +213,46 @@ sbatch scripts/salmon_count_1.sh # 32405964 ok
 sbatch scripts/salmon_count_2.sh # 32406155 ok
 sbatch scripts/salmon_count_3.sh # 32406159 ok
 
+## Run with gtf; recommended when using isoformSwitchAnalyzeR - Canonical chr
+sbatch scripts/salmon_count_gtf.sh # 32547743 ok
 
+## Run with gtf; recommended when using isoformSwitchAnalyzeR - All chr
+sbatch scripts/salmon_count_gtf_allchr.sh # 32551178 xxx
 ```
 - *NOTE: index adapted for 75bp or longer with default `-k 31`, good for us as 150bp*
 
---> ~>90% mapping
+--> ~>90% mapping; for gtf version too
 
 
+# Count with Kallisto
 
+Follow instruction [here](https://pachterlab.github.io/kallisto/download.html)
+
+## install Kallisto
+
+
+```bash
+conda create -n kallisto -c bioconda -c conda-forge kallisto
+```
+
+## count with Kallisto
+
+```bash
+conda activate kallisto
+
+# build transcriptome index
+kallisto index -i ../../Master/meta/kallisto/transcripts.idx ../../Master/meta/salmon/Homo_sapiens.GRCh38.cdna.all.fa.gz # seems it cannot use a gtf
+
+# perform counting
+## light testing
+kallisto quant -i ../../Master/meta/kallisto/transcripts.idx -o output/kallisto -b 100 output/fastp/PSC_WT_R1_1.fq.gz output/fastp/PSC_WT_R1_2.fq.gz -g ../../Master/meta/gencode.v47.annotation.gtf
+
+## run in sbatch
+sbatch scripts/kallisto_count_gtf_1.sh # 32559439 ok
+sbatch scripts/kallisto_count_gtf_2.sh # 32559511 ok
+sbatch scripts/kallisto_count_gtf_3.sh # 32559512 ok
+
+```
 
 
 
@@ -1016,16 +1047,17 @@ Let's try to copy  `Signac_Pando` which have devtools and R/4.3.3 installed...
 ```bash
 conda create --name IsoformSwitchAnalyzeRv5 --clone Signac_Pando
 
-XXX HERE 
-
-
 conda activate IsoformSwitchAnalyzeRv5
 ```
 
-
 ```R
 devtools::install_github("kvittingseerup/IsoformSwitchAnalyzeR", build_vignettes = TRUE)
+#--> fail
+
+BiocManager::install("IsoformSwitchAnalyzeR")
 ```
+--> Work!!
+
 
 If fail, try find conda env or docker to use IsoformSwitchAnalyzeR...
 
@@ -1040,8 +1072,9 @@ Let's try install through [conda](https://anaconda.org/bioconda/bioconductor-iso
 
 ```bash
 conda create -n IsoformSwitchAnalyzeRv6 -c bioconda -c conda-forge bioconductor-isoformswitchanalyzer
-
-XXX HERE
+#--> Fail, try another one
+conda create -n IsoformSwitchAnalyzeRv6 -c bioconda -c conda-forge bioconda/label/cf201901::bioconductor-isoformswitchanalyzer
+#-->
 
 ```
 
@@ -1064,7 +1097,7 @@ We need to re-do the quantification, let's use Salmon or Kallisto. Also it seems
 
 
 ```bash
-conda activate IsoformSwitchAnalyzeRv3
+conda activate IsoformSwitchAnalyzeRv5
 ```
 
 ```R
@@ -1072,9 +1105,12 @@ conda activate IsoformSwitchAnalyzeRv3
 library("IsoformSwitchAnalyzeR")
 
 
+# Salmon ####################################################
+
+
 # Importing the Data
 salmonQuant <- importIsoformExpression(
-    parentDir = "output/salmon/")
+    parentDir = "output/salmon_gtf_allchr/")
 
 # metadata file
 myDesign = data.frame(
@@ -1088,12 +1124,329 @@ aSwitchList <- importRdata(
     isoformCountMatrix   = salmonQuant$counts,
     isoformRepExpression = salmonQuant$abundance,
     designMatrix         = myDesign,
-    isoformExonAnnoation = "../../Master/meta/ENCFF159KBI.gtf",
+    isoformExonAnnoation = "../../Master/meta/gencode.v47.chr_patch_hapl_scaff.annotation.gtf", # gencode.v47.annotation.gtf gencode.v47.chr_patch_hapl_scaff.annotation.gtf
     isoformNtFasta       = "../../Master/meta/salmon/Homo_sapiens.GRCh38.cdna.all.fa.gz",
     fixStringTieAnnotationProblem = TRUE,
     showProgress = FALSE
 )
 summary(aSwitchList)
+
+
+SwitchList <- isoformSwitchAnalysisPart1(
+    switchAnalyzeRlist   = aSwitchList,
+    pathToOutput = 'output/IsoformSwitchAnalyzeR',
+    outputSequences      = TRUE, # change to TRUE whan analyzing your own data 
+    prepareForWebServers = TRUE  # change to TRUE if you will use webservers for external sequence analysis
+)
+
+#--> Run in WebServer the CPC2, PFAM, IUPRED2A, SIGNALP
+
+analysSwitchList <- isoformSwitchAnalysisPart2(
+  switchAnalyzeRlist        = SwitchList, 
+  n                         = 10,    # if plotting was enabled, it would only output the top 10 switches
+  removeNoncodinORFs        = TRUE,
+  pathToCPC2resultFile      = "output/IsoformSwitchAnalyzeR/result_cpc2.txt",
+  pathToPFAMresultFile      = "output/pfam/pfam_results_reformat.txt",
+  pathToIUPred2AresultFile  = "output/IsoformSwitchAnalyzeR/isoformSwitchAnalyzeR_isoform_AA_complete.result",
+  pathToSignalPresultFile   = "output/IsoformSwitchAnalyzeR/prediction_results_SignalIP6.txt",
+  outputPlots               = TRUE
+)
+
+## SAVE IMAGE R SESSION
+# save.image("IsoformSwitchAnalyzeR_v1.RData")
+# load("IsoformSwitchAnalyzeR_v1.RData")
+##
+
+
+## Generate plot for a gene
+
+pdf(file = '<outoutDirAndFileName>.pdf', onefile = FALSE, height=6, width = 9)
+switchPlot(switchAnalyzeRlist, gene='<gene_name>')
+dev.off()
+
+
+
+
+# Genome-wide Summaries
+pdf(file = 'output/IsoformSwitchAnalyzeR/extractSwitchOverlap.pdf', onefile = FALSE, height=6, width = 9)
+extractSwitchOverlap(
+    analysSwitchList,
+    filterForConsequences=TRUE,
+    plotIsoforms = FALSE
+)
+dev.off()
+
+
+pdf(file = 'output/IsoformSwitchAnalyzeR/extractConsequenceSummary.pdf', onefile = FALSE, height=6, width = 9)
+extractConsequenceSummary(
+    analysSwitchList,
+    consequencesToAnalyze='all',
+    plotGenes = FALSE,           # enables analysis of genes (instead of isoforms)
+    asFractionTotal = FALSE      # enables analysis of fraction of significant features
+)
+dev.off()
+
+# Consequence Enrichment Analysis
+pdf(file = 'output/IsoformSwitchAnalyzeR/extractConsequenceEnrichment.pdf', onefile = FALSE, height=6, width = 12)
+extractConsequenceEnrichment(
+    analysSwitchList,
+    consequencesToAnalyze='all',
+    analysisOppositeConsequence = TRUE,
+    localTheme = theme_bw(base_size = 14), # Increase font size in vignette
+    returnResult = TRUE # if TRUE returns a data.frame with the summary statistics
+)
+dev.off()
+
+
+
+# Splicing Enrichment Analysis
+
+pdf(file = 'output/IsoformSwitchAnalyzeR/extractSplicingEnrichment.pdf', onefile = FALSE, height=6, width = 12)
+extractSplicingEnrichment(
+    analysSwitchList,
+    returnResult = TRUE # if TRUE returns a data.frame with the summary statistics
+)
+dev.off()
+
+#Overview Plots
+## Volcano like plot
+
+pdf(file = 'output/IsoformSwitchAnalyzeR/Overview_Plots.pdf', onefile = FALSE, height=3, width = 6)
+ggplot(data=analysSwitchList$isoformFeatures, aes(x=dIF, y=-log10(isoform_switch_q_value))) +
+     geom_point(
+        aes( color=abs(dIF) > 0.1 & isoform_switch_q_value < 0.05 ), # default cutoff
+        size=1
+    ) +
+    geom_hline(yintercept = -log10(0.05), linetype='dashed') + # default cutoff
+    geom_vline(xintercept = c(-0.1, 0.1), linetype='dashed') + # default cutoff
+    facet_wrap( ~ condition_1) +
+    #facet_grid(condition_1 ~ condition_2) + # alternative to facet_wrap if you have overlapping conditions
+    scale_color_manual('Signficant\nIsoform Switch', values = c('black','red')) +
+    labs(x='dIF', y='-Log10 ( Isoform Switch Q Value )') +
+    theme_bw()
+dev.off()
+
+pdf(file = 'output/IsoformSwitchAnalyzeR/Overview_Plots3.pdf', onefile = FALSE, height=6, width = 6)
+ggplot(data=analysSwitchList$isoformFeatures, aes(x=dIF, y=-log10(isoform_switch_q_value))) +
+     geom_point(
+        aes( color=abs(dIF) > 0.1 & isoform_switch_q_value < 0.05 ), # default cutoff
+        size=1
+    ) +
+    geom_hline(yintercept = -log10(0.05), linetype='dashed') + # default cutoff
+    geom_vline(xintercept = c(-0.1, 0.1), linetype='dashed') + # default cutoff
+    facet_grid(condition_1 ~ condition_2) + # alternative to facet_wrap if you have overlapping conditions
+    scale_color_manual('Signficant\nIsoform Switch', values = c('black','red')) +
+    labs(x='dIF', y='-Log10 ( Isoform Switch Q Value )') +
+    theme_bw()
+dev.off()
+
+## count nb of isoforms:
+significant_isoforms <- analysSwitchList$isoformFeatures %>%
+  filter(abs(dIF) > 0.1 & isoform_switch_q_value < 0.05)
+###  Count for WT vs KO
+WT_vs_KO <- significant_isoforms %>%
+  filter(condition_1 == "KO" & condition_2 == "WT") %>%
+  nrow()
+### Count for WT vs KOEF1aEZH1
+WT_vs_KOEF1aEZH1 <- significant_isoforms %>%
+  filter(condition_1 == "KOEF1aEZH1" & condition_2 == "WT") %>%
+  nrow()
+### Print the counts
+cat("Number of significant isoform switches (WT vs KO):", WT_vs_KO, "\n")
+cat("Number of significant isoform switches (WT vs KOEF1aEZH1):", WT_vs_KOEF1aEZH1, "\n")
+
+
+### Switch vs Gene changes:
+pdf(file = 'output/IsoformSwitchAnalyzeR/Overview_Plots2.pdf', onefile = FALSE, height=3, width = 6)
+ggplot(data=analysSwitchList$isoformFeatures, aes(x=gene_log2_fold_change, y=dIF)) +
+    geom_point(
+        aes( color=abs(dIF) > 0.1 & isoform_switch_q_value < 0.05 ), # default cutoff
+        size=1
+    ) + 
+    facet_wrap(~ condition_1) +
+    #facet_grid(condition_1 ~ condition_2) + # alternative to facet_wrap if you have overlapping conditions
+    geom_hline(yintercept = 0, linetype='dashed') +
+    geom_vline(xintercept = 0, linetype='dashed') +
+    scale_color_manual('Signficant\nIsoform Switch', values = c('black','red')) +
+    labs(x='Gene log2 fold change', y='dIF') +
+    theme_bw()
+dev.off()
+
+
+
+
+
+
+
+
+
+# Kallisto ####################################################
+
+# Importing the Data
+salmonQuant <- importIsoformExpression(
+    parentDir = "output/kallisto/")
+
+# metadata file
+myDesign = data.frame(
+    sampleID = colnames(salmonQuant$abundance)[-1],
+    condition = gsub('.*_(WT|KO|KOEF1aEZH1)_.*', '\\1', colnames(salmonQuant$abundance)[-1])
+)
+
+
+# 
+aSwitchList <- importRdata(
+    isoformCountMatrix   = salmonQuant$counts,
+    isoformRepExpression = salmonQuant$abundance,
+    designMatrix         = myDesign,
+    isoformExonAnnoation = "../../Master/meta/gencode.v47.chr_patch_hapl_scaff.annotation.gtf", # gencode.v47.annotation.gtf gencode.v47.chr_patch_hapl_scaff.annotation.gtf
+    isoformNtFasta       = "../../Master/meta/salmon/Homo_sapiens.GRCh38.cdna.all.fa.gz",
+    fixStringTieAnnotationProblem = TRUE,
+    showProgress = FALSE
+)
+summary(aSwitchList)
+
+
+SwitchList <- isoformSwitchAnalysisPart1(
+    switchAnalyzeRlist   = aSwitchList,
+    pathToOutput = 'output/IsoformSwitchAnalyzeR_kallisto',
+    outputSequences      = TRUE, # change to TRUE whan analyzing your own data 
+    prepareForWebServers = TRUE  # change to TRUE if you will use webservers for external sequence analysis
+)
+
+
+#--> Run in WebServer the CPC2, PFAM, IUPRED2A, SIGNALP
+
+analysSwitchList <- isoformSwitchAnalysisPart2(
+  switchAnalyzeRlist        = SwitchList, 
+  n                         = 10,    # if plotting was enabled, it would only output the top 10 switches
+  removeNoncodinORFs        = TRUE,
+  pathToCPC2resultFile      = "output/IsoformSwitchAnalyzeR_kallisto/result_cpc2.txt",
+  pathToPFAMresultFile      = "output/pfam/pfam_results_kallisto_reformat.txt",
+  pathToIUPred2AresultFile  = "output/IsoformSwitchAnalyzeR_kallisto/isoformSwitchAnalyzeR_isoform_AA_complete.result",
+  pathToSignalPresultFile   = "output/IsoformSwitchAnalyzeR_kallisto/prediction_results_SignalIP6.txt",
+  outputPlots               = TRUE
+)
+
+## SAVE IMAGE R SESSION
+# save.image("IsoformSwitchAnalyzeR_v2_kallisto.RData")
+# load("IsoformSwitchAnalyzeR_v2_kallisto.RData")
+##
+
+
+## Generate plot for a gene
+
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/switchPlot_WTKO_CRBN.pdf', onefile = FALSE, height=6, width = 9)
+switchPlot(analysSwitchList, gene= "CRBN", condition1= "WT", condition2= "KOEF1aEZH1")
+dev.off()
+
+
+
+
+# Genome-wide Summaries
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/extractSwitchOverlap.pdf', onefile = FALSE, height=6, width = 9)
+extractSwitchOverlap(
+    analysSwitchList,
+    filterForConsequences=TRUE,
+    plotIsoforms = FALSE
+)
+dev.off()
+
+
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/extractConsequenceSummary.pdf', onefile = FALSE, height=6, width = 9)
+extractConsequenceSummary(
+    analysSwitchList,
+    consequencesToAnalyze='all',
+    plotGenes = FALSE,           # enables analysis of genes (instead of isoforms)
+    asFractionTotal = FALSE      # enables analysis of fraction of significant features
+)
+dev.off()
+
+# Consequence Enrichment Analysis
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/extractConsequenceEnrichment.pdf', onefile = FALSE, height=6, width = 12)
+extractConsequenceEnrichment(
+    analysSwitchList,
+    consequencesToAnalyze='all',
+    analysisOppositeConsequence = TRUE,
+    localTheme = theme_bw(base_size = 14), # Increase font size in vignette
+    returnResult = TRUE # if TRUE returns a data.frame with the summary statistics
+)
+dev.off()
+
+
+
+# Splicing Enrichment Analysis
+
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/extractSplicingEnrichment.pdf', onefile = FALSE, height=6, width = 12)
+extractSplicingEnrichment(
+    analysSwitchList,
+    returnResult = TRUE # if TRUE returns a data.frame with the summary statistics
+)
+dev.off()
+
+#Overview Plots
+## Volcano like plot
+
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/Overview_Plots.pdf', onefile = FALSE, height=3, width = 6)
+ggplot(data=analysSwitchList$isoformFeatures, aes(x=dIF, y=-log10(isoform_switch_q_value))) +
+     geom_point(
+        aes( color=abs(dIF) > 0.1 & isoform_switch_q_value < 0.05 ), # default cutoff
+        size=1
+    ) +
+    geom_hline(yintercept = -log10(0.05), linetype='dashed') + # default cutoff
+    geom_vline(xintercept = c(-0.1, 0.1), linetype='dashed') + # default cutoff
+    facet_wrap( ~ condition_1) +
+    #facet_grid(condition_1 ~ condition_2) + # alternative to facet_wrap if you have overlapping conditions
+    scale_color_manual('Signficant\nIsoform Switch', values = c('black','red')) +
+    labs(x='dIF', y='-Log10 ( Isoform Switch Q Value )') +
+    theme_bw()
+dev.off()
+
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/Overview_Plots3.pdf', onefile = FALSE, height=6, width = 6)
+ggplot(data=analysSwitchList$isoformFeatures, aes(x=dIF, y=-log10(isoform_switch_q_value))) +
+     geom_point(
+        aes( color=abs(dIF) > 0.1 & isoform_switch_q_value < 0.05 ), # default cutoff
+        size=1
+    ) +
+    geom_hline(yintercept = -log10(0.05), linetype='dashed') + # default cutoff
+    geom_vline(xintercept = c(-0.1, 0.1), linetype='dashed') + # default cutoff
+    facet_grid(condition_1 ~ condition_2) + # alternative to facet_wrap if you have overlapping conditions
+    scale_color_manual('Signficant\nIsoform Switch', values = c('black','red')) +
+    labs(x='dIF', y='-Log10 ( Isoform Switch Q Value )') +
+    theme_bw()
+dev.off()
+
+## count nb of isoforms:
+significant_isoforms <- analysSwitchList$isoformFeatures %>%
+  filter(abs(dIF) > 0.1 & isoform_switch_q_value < 0.05)
+###  Count for WT vs KO
+WT_vs_KO <- significant_isoforms %>%
+  filter(condition_1 == "KO" & condition_2 == "WT") %>%
+  nrow()
+### Count for WT vs KOEF1aEZH1
+WT_vs_KOEF1aEZH1 <- significant_isoforms %>%
+  filter(condition_1 == "KOEF1aEZH1" & condition_2 == "WT") %>%
+  nrow()
+### Print the counts
+cat("Number of significant isoform switches (WT vs KO):", WT_vs_KO, "\n")
+cat("Number of significant isoform switches (WT vs KOEF1aEZH1):", WT_vs_KOEF1aEZH1, "\n")
+
+
+### Switch vs Gene changes:
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/Overview_Plots2.pdf', onefile = FALSE, height=3, width = 6)
+ggplot(data=analysSwitchList$isoformFeatures, aes(x=gene_log2_fold_change, y=dIF)) +
+    geom_point(
+        aes( color=abs(dIF) > 0.1 & isoform_switch_q_value < 0.05 ), # default cutoff
+        size=1
+    ) + 
+    facet_wrap(~ condition_1) +
+    #facet_grid(condition_1 ~ condition_2) + # alternative to facet_wrap if you have overlapping conditions
+    geom_hline(yintercept = 0, linetype='dashed') +
+    geom_vline(xintercept = 0, linetype='dashed') +
+    scale_color_manual('Signficant\nIsoform Switch', values = c('black','red')) +
+    labs(x='Gene log2 fold change', y='dIF') +
+    theme_bw()
+dev.off()
+
 
 
 ```
@@ -1105,6 +1458,93 @@ summary(aSwitchList)
   - version of my IsoformSwitchAnalyzeR is 1.20.0
 
 
+- NOTE: For the gtf, they recommend using ENCODE (not Ensembl) and with haplotypes (all non canonical chr); I downloaded from [here](https://www.gencodegenes.org/human/); and transfer to Master/meta/ ; file to use= `gencode.v47.chr_patch_hapl_scaff.annotation.gtf.gz`
 
 
+- NOTE: Got a warning indicated5719 isoforms only found in the annotation and that could cause discrepancies; tested Salmon quantification using gtf (canonical chr, and all chr); and same Warning message. Let's ignore as they also say it could be trigger because I used Salmon
+  --> **Let's use Salmon quantification and IsoformSwitchAnalyzeR with the gtf with all chr (canonical and non canonical)**
+    --> **Kallisto do not show error message, better be sage than sorry so let's use kallisto!**
+
+
+
+--> FASTA Files at `output/IsoformSwitchAnalyzeR`, can be used *to perform the external analysis tools (Pfam (for prediction of protein domains), SignalP (for prediction of signal peptides), CPAT or CPC2 (for prediction of coding potential, since they perform similar analysis so it is only necessary to run one of them)), Prediction of sub-cellular location (DeepLoc2) and isoform toplogy (DeepTmHmm), IUPred2A or NetSurfP-2 (for prediction of Intrinsically Disordered Regions (IDR) )*
+
+
+Let's run these in Webserver :
+- coding potential with [CPC2](https://cpc2.gao-lab.org/), I put `output/IsoformSwitchAnalyzeR/isoformSwitchAnalyzeR_isoform_nt.fasta`;
+  - salmon: `IsoformSwitchAnalyzeR/result_cpc2.txt` --> LOOK GOOD
+  - kallisto: `IsoformSwitchAnalyzeR_kallisto/result_cpc2.txt`
+- protein domain with [PFAM](https://www.ebi.ac.uk/Tools/hmmer/search/hmmscan), run in code below at `### PFAM`;
+  - salmon: `pfam_results.txt` --> LOOK GOOD; but need reformat (see below custom python script)
+  - kallisto: `pfam_results_kallisto.txt` --> LOOK GOOD; but need reformat (see below custom python script)
+- Prediction of Intrinsically Unstructured Proteins with [IUPred2](https://iupred2a.elte.hu/); V3 do not support multi FASTA file;
+  - salmon: `IsoformSwitchAnalyzeR/isoformSwitchAnalyzeR_isoform_AA_complete.result` --> LOOK GOOD
+  - kallisto: `IsoformSwitchAnalyzeR_kallisto/isoformSwitchAnalyzeR_isoform_AA_complete.result`
+- Prediction of signal peptide with [SignalP 6.0](https://services.healthtech.dtu.dk/services/SignalP-6.0/) with option Eukarya/short output/fast; and save the *Prediction summary*
+  - salmon: `IsoformSwitchAnalyzeR/prediction_results_SignalIP6.txt` --> LOOK GOOD
+  - kallisto: `IsoformSwitchAnalyzeR_kallisto/prediction_results_SignalIP6.txt` --> LOOK GOOD
+
+
+
+### PFAM
+
+Follow instructions [here](https://github.com/aziele/pfam_scan).
+--> In the end I ran `pfam_scan.py` and reformat the output with a custom python script so that it match the output of the `pfam_scan.pl` command (which I couldn't use due to perl dependecies).
+
+```bash
+conda activate deseq2
+module load HMMER
+
+
+# download and prepare database
+wget http://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.dat.gz
+wget http://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz
+
+mkdir pfamdb
+gunzip -c Pfam-A.hmm.dat.gz > pfamdb/Pfam-A.hmm.dat
+gunzip -c Pfam-A.hmm.gz > pfamdb/Pfam-A.hmm
+rm Pfam-A.hmm.gz Pfam-A.hmm.dat.gz
+
+hmmpress pfamdb/Pfam-A.hmm
+
+# install PFAM
+cd ../../Master/software
+git clone https://github.com/aziele/pfam_scan
+cd pfam_scan
+./pfam_scan.py --help
+
+# run PFAM
+cd pfam_scan
+## salmon
+./pfam_scan.py ../../../001_EZH1_Project/015__RNAseq_PSC/output/IsoformSwitchAnalyzeR/isoformSwitchAnalyzeR_isoform_AA_complete.fasta ../pfamdb/ -out ../../../001_EZH1_Project/015__RNAseq_PSC/output/pfam/pfam_results.txt
+## kallisto
+./pfam_scan.py ../../../001_EZH1_Project/015__RNAseq_PSC/output/IsoformSwitchAnalyzeR_kallisto/isoformSwitchAnalyzeR_isoform_AA_complete.fasta ../pfamdb/ -out ../../../001_EZH1_Project/015__RNAseq_PSC/output/pfam/pfam_results_kallisto.txt
+```
+
+
+--> The output is weird, not as in the tutorial; lets try using the `pfam_scan.pl` [script](https://github.com/SMRUCC/GCModeller/blob/master/src/interops/scripts/PfamScan/PfamScan/pfam_scan.pl). Please see after, need reformating, a **custom python script has been created.**
+
+
+```bash
+cd ../../Master/software
+nano pfam_scan.pl
+
+# make script exectubale
+chmod +x pfam_scan.pl
+# run it
+./pfam_scan.pl -fasta ../../001_EZH1_Project/015__RNAseq_PSC/output/IsoformSwitchAnalyzeR/isoformSwitchAnalyzeR_isoform_AA_complete.fasta -dir pfamdb/ -outfile ../../001_EZH1_Project/015__RNAseq_PSC/output/pfam/pfam_results_script.txt
+
+```
+
+--> Issue running this, so instead let's use a **custom python script to reformat my `./pfam_scan.py`**
+
+```bash
+# salmon
+nano scripts/reformat_pfam.py
+python3 scripts/reformat_pfam.py
+# kallisto
+nano scripts/reformat_pfam_kallisto.py
+python3 scripts/reformat_pfam_kallisto.py
+```
+--> Works!
 
