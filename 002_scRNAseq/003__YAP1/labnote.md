@@ -4381,6 +4381,60 @@ dev.off()
 pdf("output/seurat/DoHeatmap_SCT_top10_ConservedMarkersTreatment_markers_humangastruloid2472hrs_3Dpaper_fc025_compact.pdf", width=6, height=4)
 DoHeatmap(humangastruloid.combined.sct, assay = "SCT", features = marker_genes_conserved, draw.lines = FALSE, label = FALSE, raster = FALSE)
 dev.off()
+
+
+# New genes email 12/12/2024
+
+Epi: Sox2, Pou5F1, DNMT3B
+ECTO: TFAP2A, PAX3
+ENDO: SOX17, FOXA2, CXCR4
+PS:TBXT, MIXL1, MSGN1
+CARDIAC MESODERM: MESP1, EOMES, PDFGRA
+CMeMit: CCNB1, CDC20, TPX2
+CPC1: MEIS1,  GATA4, KCNQ5
+CPC2: MEIS2, HAND1, VIM
+CMS: TNNT2, TNNI, ACTC1, PLAT
+
+Error to confirm: PDFGRA = PDGFRA and TNNI = TNNI1
+
+
+Idents(humangastruloid.combined.sct) <- "cluster.annot"
+levels(humangastruloid.combined.sct) <- c("Epiblast", "Mixed_Epiblast_Ectoderm_PrimitiveStreak", "Endoderm", "PrimitiveStreak",  "CadiacMesoderm", "ProliferatingCardiacMesoderm", "CPC1", "CPC2", "Cardiomyocyte", "Unknown")
+
+### dotplot
+pdf("output/seurat/DotPlot_RNA_manualMarkers_humangastruloid2472hrs_3Dpaper.pdf", width=11, height=3)
+DotPlot(humangastruloid.combined.sct, assay = "RNA", features = c("SOX2", "POU5F1", "DNMT3B", "TFAP2A", "PAX3", "SOX17", "FOXA2", "CXCR4", "TBXT", "MIXL1", "MSGN1", "MESP1", "EOMES", "PDGFRA", "CCNB1", "CDC20", "TPX2", "MEIS1",  "GATA4", "KCNQ5", "MEIS2", "HAND1", "VIM", "TNNT2", "TNNI1", "ACTC1", "PLAT"), cols = c("black", "yellow")) + RotatedAxis() + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5)) 
+dev.off()
+
+pdf("output/seurat/DotPlot_RNA_manualMarkersv2_humangastruloid2472hrs_3Dpaper.pdf", width=12, height=3)
+DotPlot(humangastruloid.combined.sct, assay = "RNA", features = c("SOX2", "POU5F1", "DNMT3B", "TFAP2A", "PAX3", "SOX17", "FOXA2", "CXCR4", "TBXT", "MIXL1", "MSGN1", "MESP1", "EOMES", "PDGFRA", "CCNB1", "CDC20", "TPX2", "MEIS1",  "GATA4", "KCNQ5", "MEIS2", "HAND1", "VIM", "TNNT2", "TNNI1", "ACTC1", "PLAT","SMARCD3","CDH2","CDH1","GATA6","CDX2","TBX5","TBX1"), cols = c("black", "yellow")) + RotatedAxis() + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5)) 
+dev.off()
+
+
+### heatmap
+pdf("output/seurat/DoHeatmap_RNA_manualMarkers_humangastruloid2472hrs_3Dpaper.pdf", width=6, height=4)
+DoHeatmap(humangastruloid.combined.sct, assay = "RNA", features = c("SOX2", "POU5F1", "DNMT3B", "TFAP2A", "PAX3", "SOX17", "FOXA2", "CXCR4", "TBXT", "MIXL1", "MSGN1", "MESP1", "EOMES", "PDGFRA", "CCNB1", "CDC20", "TPX2", "MEIS1",  "GATA4", "KCNQ5", "MEIS2", "HAND1", "VIM", "TNNT2", "TNNI1", "ACTC1", "PLAT"), draw.lines = FALSE, label = FALSE, raster = FALSE)
+dev.off()
+
+pdf("output/seurat/DoHeatmap_RNA_manualMarkers_humangastruloid2472hrs_3Dpaper_custom215bbbby.pdf", width=6, height=4)
+DoHeatmap(humangastruloid.combined.sct, assay = "RNA", features = c("SOX2", "POU5F1", "DNMT3B", "TFAP2A", "PAX3", "SOX17", "FOXA2", "CXCR4", "TBXT", "MIXL1", "MSGN1", "MESP1", "EOMES", "PDGFRA", "CCNB1", "CDC20", "TPX2", "MEIS1",  "GATA4", "KCNQ5", "MEIS2", "HAND1", "VIM", "TNNT2", "TNNI1", "ACTC1", "PLAT"), draw.lines = FALSE, label = FALSE, raster = FALSE, disp.min = -2, disp.max= 1.5)  + scale_fill_gradientn(colors = c("black", "black", "black", "black", "yellow"))
+dev.off()
+
+pdf("output/seurat/DoHeatmap_RNA_manualMarkersv2_humangastruloid2472hrs_3Dpaper.pdf", width=6, height=5)
+DoHeatmap(humangastruloid.combined.sct, assay = "RNA", features = c("SOX2", "POU5F1", "DNMT3B", "TFAP2A", "PAX3", "SOX17", "FOXA2", "CXCR4", "TBXT", "MIXL1", "MSGN1", "MESP1", "EOMES", "PDGFRA", "CCNB1", "CDC20", "TPX2", "MEIS1",  "GATA4", "KCNQ5", "MEIS2", "HAND1", "VIM", "TNNT2", "TNNI1", "ACTC1", "PLAT","SMARCD3","CDH2","CDH1","GATA6","CDX2","TBX5","TBX1"), draw.lines = FALSE, label = FALSE, raster = FALSE)
+dev.off()
+
+pdf("output/seurat/DoHeatmap_RNA_manualMarkersv2_humangastruloid2472hrs_3Dpaper_custom215bbbby.pdf", width=6, height=5)
+DoHeatmap(humangastruloid.combined.sct, assay = "RNA", features = c("SOX2", "POU5F1", "DNMT3B", "TFAP2A", "PAX3", "SOX17", "FOXA2", "CXCR4", "TBXT", "MIXL1", "MSGN1", "MESP1", "EOMES", "PDGFRA", "CCNB1", "CDC20", "TPX2", "MEIS1",  "GATA4", "KCNQ5", "MEIS2", "HAND1", "VIM", "TNNT2", "TNNI1", "ACTC1", "PLAT","SMARCD3","CDH2","CDH1","GATA6","CDX2","TBX5","TBX1"), draw.lines = FALSE, label = FALSE, raster = FALSE, disp.min = -2, disp.max= 1.5)  + scale_fill_gradientn(colors = c("black", "black", "black", "black", "yellow"))
+dev.off()
+
+
+
+
 ```
 
 --> There is no more down-regulated genes overall if appying a treshold for the FC; for ex Abs(0.25) tresh there is no more bias!
@@ -4406,6 +4460,9 @@ conda activate scRNAseqV2
 # job
 sbatch scripts/FindAllMarkers_humangastruloid2472hrs.sh # 27403599 ok
 sbatch scripts/FindAllMarkers_humangastruloid2472hrs_UNTREATED_DASATINIB.sh # 27403608 ok
+
+sbatch scripts/FindAllMarkers_humangastruloid2472hrs_3Dpaper.sh # 32581871 xxx
+
 ```
 
 --> Output succesfully at `output/seurat/srat_humangastruloid.combined.sct-dim30kparam30res03_QCV2-all_markers[]_allGenes`
