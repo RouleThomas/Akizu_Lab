@@ -47,6 +47,7 @@ all_markers_allGenes <- FindAllMarkers(humangastruloid.combined.sct, assay = "RN
     logfc.threshold = -Inf,
     min.pct = -Inf,
     min.diff.pct = -Inf)
+    
 write.table(all_markers_allGenes, file = "output/seurat/srat_humangastruloid.combined.sct-dim30kparam15res04-all_markers_allGenes.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 

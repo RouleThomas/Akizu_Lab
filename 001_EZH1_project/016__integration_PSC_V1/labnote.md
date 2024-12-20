@@ -39,7 +39,7 @@ Detail of sample used:
 --> I keep replicate number from the experiment; if no number after `R`, means experiment has only 1 rep.
 
 
-# THOR
+# THOR diff binding
 ## Run THOR
 
 
@@ -741,6 +741,103 @@ DiffBindTMMEpiCypher
 - WTvsKOEF1aEZH1_H3K27me3: qval20
 
 
+# DiffBind diff binding
+
+Follow recommendation [here](https://bioconductor.org/packages/devel/bioc/vignettes/DiffBind/inst/doc/DiffBind.pdf); let's try:
+- without using spike in normalization
+- using spike in normalization, same method as usual
+
+I modified the meta file and put the replicate in the Tissue column to be used with BLOCK after (eg. Replicate column is ignore in previous meta file); seems need to use [design instead](https://support.bioconductor.org/p/9138520/)
+
+--> Seems the order is: blacklist > count > normalize > contrast > analyze.
+
+--> For `dba.count()` I could put summit= 250 for H3K27me3 broad peaks; and keep default for the other mark. Used in this [paper](https://www.cell.com/developmental-cell/pdf/S1534-5807(20)30551-7.pdf) and discuss in DiffBind Bioconductor
+
+
+```bash
+srun --mem=500g --pty bash -l
+conda activate DiffBind
+```
+```R
+library("DiffBind") 
+
+# ONE PER ONE
+## H3K27me3
+### Load dba
+sample_dba = dba(sampleSheet=read.table("output/DiffBind/meta_sample_macs2raw_unique_H3K27me3_RepTissue.txt", header = TRUE, sep = "\t"))
+### Blacklist Greylist
+sample_dba_blackgreylist = dba.blacklist(sample_dba, blacklist=TRUE, greylist=TRUE)
+### Count
+
+sample_blackgreylist_count = dba.count(sample_dba_blackgreylist) 
+## This take time, here is checkpoint command to save/load:
+save(sample_blackgreylist_count, file = "output/DiffBind/sample_blackgreylist_count_macs2raw_unique_H3K27me3_RepTissue.RData")
+load("output/DiffBind/sample_blackgreylist_count_macs2raw_unique_H3K27me3_RepTissue.RData")
+
+
+### Data normalization
+
+
+#### TMM ################################################
+sample_blackgreylist_count_TMM = dba.normalize(sample_blackgreylist_count, normalize = DBA_NORM_TMM)
+##### Here is to retrieve the scaling factor value
+sample_blackgreylist_count_TMM_SF = dba.normalize(sample_blackgreylist_count_TMM, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_blackgreylist_count_TMM_SF))
+writeLines(console_output, "output/DiffBind/sample_blackgreylist_count_TMM_SF_SF_H3K27me3.txt")
+##### Contrast our Replicate (=Tissue)
+
+### contrast
+sample_blackgreylist_count_TMM_contrast = dba.contrast(sample_blackgreylist_count_TMM, categories=DBA_TREATMENT, design="~Tissue + Treatment")
+
+sample_blackgreylist_count_TMM_contrast = dba.contrast(sample_blackgreylist_count_TMM, categories=DBA_TREATMENT, design="~Treatment")
+
+# Diff bind. all method
+sample_blackgreylist_count_TMM_contrast_analyze <- dba.analyze(sample_blackgreylist_count_TMM_contrast, method= DBA_ALL_METHODS)
+# Diff bind.
+sample_blackgreylist_count_TMM_contrast_analyze <- dba.analyze(sample_blackgreylist_count_TMM_contrast, method= DBA_DESEQ2)
+
+pdf("output/DiffBind/plotPCA_DESEQ2_H3K27me3_contrast1.pdf", width=5, height=5)
+dba.plotPCA(sample_blackgreylist_count_TMM_contrast_analyze, contrast=1)
+dev.off()
+pdf("output/DiffBind/plotPCA_DESEQ2_H3K27me3_contrast2.pdf", width=5, height=5)
+dba.plotPCA(sample_blackgreylist_count_TMM_contrast_analyze, contrast=2)
+dev.off()
+## Retrieving the differentially bound sites
+sample_blackgreylist_count_TMM_contrast_analyze_DESEQ2= dba.report(sample_blackgreylist_count_TMM_contrast_analyze, contrast=2)
+sum(sample_blackgreylist_count_TMM_contrast_analyze_DESEQ2$Fold>0)
+
+### Export
+df= as.data.frame(sample_blackgreylist_count_TMM_contrast_analyze_DESEQ2)
+df$start <- df$start - 1
+write.table(df, file = "output/DiffBind/TMM_DESEQ2_H3K27me3_contrast2.bed", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+
+##### Here is to retrieve the scaling factor value
+
+sample_blackgreylist_count_TMM_contrast_analyze_SF = dba.normalize(sample_blackgreylist_count_TMM_contrast_analyze, bRetrieve=TRUE)
+console_output <- capture.output(print(sample_dba_blackgreylist_RLE_SF))
+writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_DBA_NORM_RLE_unique_SF_H3K27me3.txt")
+
+```
+
+--> The SF has been applied to bigwig but resutl in very different replicates.. Let's try [blocking factor to reduce batch effect between replicates](https://support.bioconductor.org/p/96441/)
+
+
+
+- NOTE: Using blacklist before or after count change output. Prefer using before count
+- NOTE: Very few DB when using design= ~Tissue + Treatment in dba.contrast(). Prefer using design= ~Treatment instead
+  - Fore H3K27me3, DESEQ2 show more DB than EDGER
+- NOTE: Big issue is that I can only collect SF after normalization; so it seems the Batch effect cannot be corrected with DiffBind, as the contrast is not taken into account in the SF collected! So cannot generate bigiwg...
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -857,6 +954,31 @@ sbatch scripts/bamtobigwig_unique_1.sh # 29756540 ok
 sbatch scripts/bamtobigwig_unique_2.sh # 29756546 ok
 sbatch scripts/bamtobigwig_unique_3.sh # 29756550 ok
 ```
+
+## Generate norm bigwig from DiffBind SF
+
+Let's use directly the SF from DiffBind (not the reciprocal).
+
+
+
+```bash
+conda activate deeptools
+
+# directly SF from DiffBind
+sbatch scripts/bamtobigwig-DBA_NORM_TMM_unique_SF_H3K27me3.sh # 32649115 xxx
+sbatch scripts/bamtobigwig-DBA_NORM_RLE_unique_SF_H3K27me3.sh # 32649206 xxx
+sbatch scripts/bamtobigwig-DBA_NORM_LIB_unique_SF_H3K27me3.sh # 32649234 xxx
+
+# Reciprocal SF (=1/SF) from DiffBind
+sbatch scripts/bamtobigwig-DBA_NORM_TMM_unique_reciprocalSF_H3K27me3.sh # 32650322 xxx
+
+```
+
+--> using SF directly from DiffBind is bad, very heterogeneous replicates, for each norm method...
+
+
+XXX If awful test reciprocal jut in case
+
 
 
 ## Merge bigiwg files, replicate

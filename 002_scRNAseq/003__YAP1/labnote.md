@@ -3695,6 +3695,21 @@ ggbarplot(UNTREATED_DASATINIB_prop, x = "cluster", y = "proportion", fill = "tre
 dev.off()
 
 
+pdf("output/seurat/histogramProp_UNTREATED_DASATINIB_2472hrs_dim30kparam15res04_v2.pdf", width=4, height=4)
+ggbarplot(UNTREATED_DASATINIB_prop, x = "cluster", y = "proportion", fill = "treatment",
+                  color = "treatment", palette = c("blue", "red"),
+                  position = position_dodge(0.85), # Separate bars by treatment
+                  add = "mean_se", # Add error bars
+                  lab.pos = "out", lab.size = 3) +
+  stat_compare_means(aes(group = treatment), method = "t.test", label = "p.signif") +
+  theme_bw() +
+  labs(x = "Cell Type (Cluster)", y = "Cell Proportion (%)") +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+dev.off()
+
+
+write.table(UNTREATED_DASATINIB_prop, file = "output/seurat/UNTREATED_DASATINIB_prop_dim30kparam15res04.tsv", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
 
 
 ## Downsampling with bootstrap to compare the nb of cell per cell types
@@ -3710,9 +3725,10 @@ colnames(DASATINIB_clusters_counts) <- unique_clusters
 humangastruloid.combined.sct_UNTREATED <- which(humangastruloid.combined.sct$treatment == 'UNTREATED')
 humangastruloid.combined.sct_DASATINIB <- which(humangastruloid.combined.sct$treatment == 'DASATINIB')
 for (i in 1:100) { # Change this to 100 for the final run
+  set.seed(i) # Set a unique seed for each iteration
   # Downsampling
   humangastruloid.combined.sct_DASATINIB_downsample <- sample(humangastruloid.combined.sct_DASATINIB, 13035)
-  humangastruloid.combined.sct_integrated_downsample <- humangastruloid.combined.sct[,c(humangastruloid.combined.sct_DASATINIB_downsample, humangastruloid.combined.sct_UNTREATED)]
+  humangastruloid.combined.sct_integrated_downsample <- humangastruloid.combined.sct[,c(humangastruloid.combined.sct_UNTREATED, humangastruloid.combined.sct_DASATINIB_downsample)]
   # Count nb of cells in each cluster
   control_clusters <- table(Idents(humangastruloid.combined.sct_integrated_downsample)[humangastruloid.combined.sct_integrated_downsample$treatment == "UNTREATED"])
   dasatinib_clusters <- table(Idents(humangastruloid.combined.sct_integrated_downsample)[humangastruloid.combined.sct_integrated_downsample$treatment == "DASATINIB"])
@@ -3723,7 +3739,7 @@ for (i in 1:100) { # Change this to 100 for the final run
 ### Calculate mean and standard error
 mean_control_clusters <- colMeans(UNTREATED_clusters_counts)
 mean_dasatinib_clusters <- colMeans(DASATINIB_clusters_counts)
-std_error_WT_clusters <- apply(UNTREATED_clusters_counts, 2, sd) / sqrt(100)
+std_error_dasatinib_clusters <- apply(DASATINIB_clusters_counts, 2, sd) / sqrt(100)
 # Chi-squared test
 p_values <- numeric(length(unique_clusters))
 for (i in 1:length(unique_clusters)) {
@@ -3752,17 +3768,17 @@ plot_data <- data.frame(
   cluster = names(mean_control_clusters),
   untreated = mean_control_clusters,
   dasatinib = mean_dasatinib_clusters,
-  std_error_WT = std_error_WT_clusters,
+  std_error_dasatinib = std_error_dasatinib_clusters,
   p_value = adjusted_p_values
 ) %>%
-  gather(key = "condition", value = "value", -cluster, -std_error_WT, -p_value) %>%
+  gather(key = "condition", value = "value", -cluster, -std_error_dasatinib, -p_value) %>%
   mutate(
-    condition = if_else(condition == "untreated", "WT", "Bap1KO"),
+    condition = if_else(condition == "untreated", "untreated", "dasatinib"),
     significance = ifelse(p_value < 0.0001, "***",
                        ifelse(p_value < 0.001, "**",
                               ifelse(p_value < 0.05, "*", "")))
   )
-plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED", "DASATINIB")) # Reorder untreated 1st
+plot_data$condition <- factor(plot_data$condition, levels = c("untreated", "dasatinib")) # Reorder untreated 1st
 
 
 
@@ -3771,17 +3787,16 @@ pdf("output/seurat/Cluster_cell_counts_BootstrapDownsampling100_UNTREATED_DASATI
 ggplot(plot_data, aes(x = cluster, y = value, fill = condition)) +
   geom_bar(stat = "identity", position = "dodge") +
   geom_text(
-    data = filter(plot_data, condition == "Bap1KO"),
-    aes(label = significance, y = value + std_error_WT_clusters),
+    data = filter(plot_data, condition == "untreated"),
+    aes(label = significance, y = value + std_error_dasatinib),
     vjust = -0.8,
     position = position_dodge(0.9), size = 5
   ) +
-  scale_fill_manual(values = c("WT" = "#4365AE", "Bap1KO" = "#981E33")) +
+  scale_fill_manual(values = c("untreated" = "#4365AE", "dasatinib" = "#981E33")) +
   labs(x = "Cluster", y = "Number of Cells") +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 0, hjust = 0.5, size = 13)) +
-  theme(axis.text.y = element_text(size = 13)) +
-  ylim(0,900)
+  theme(axis.text.y = element_text(size = 13))
 dev.off()
 
 
@@ -4433,6 +4448,43 @@ DoHeatmap(humangastruloid.combined.sct, assay = "RNA", features = c("SOX2", "POU
 dev.off()
 
 
+#### correction email 12/19/2024
+
+
+pdf("output/seurat/DotPlot_RNA_manualMarkersv3_humangastruloid2472hrs_3Dpaper.pdf", width=12, height=3)
+DotPlot(humangastruloid.combined.sct, assay = "RNA", features = c("SOX2", "POU5F1", "DNMT3B", "TFAP2A", "PAX3", "SOX17", "FOXA2", "CXCR4", "TBXT", "MIXL1", "MSGN1", "MESP1", "EOMES", "PDGFRA", "CCNB1", "CDC20", "TPX2", "MEIS1",  "GATA4", "KCNQ5", "MEIS2", "HAND1", "VIM", "TNNT2", "TNNI1", "ACTC1", "PLAT","GATA6","CDX2","TBX5","TBX1","CDH1","CDH2"), cols = c("red", "green3")) + RotatedAxis() + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5)) 
+dev.off()
+
+
+pdf("output/seurat/DotPlot_RNA_manualMarkersv4_humangastruloid2472hrs_3Dpaper.pdf", width=12, height=3)
+DotPlot(humangastruloid.combined.sct, assay = "RNA", features = c("SOX2", "POU5F1", "DNMT3B", "TFAP2A", "PAX3", "SOX17", "FOXA2", "CXCR4", "TBXT", "MIXL1", "MSGN1", "MESP1", "EOMES", "PDGFRA", "CCNB1", "CDC20", "TPX2", "MEIS1",  "GATA4", "KCNQ5", "MEIS2", "HAND1", "VIM", "TNNT2", "TNNI1", "ACTC1", "PLAT","GATA6","CDX2","TBX5","TBX1","CDH1","CDH2")) + RotatedAxis() + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5)) +
+  scale_colour_gradient2(low = "blue", mid = "white", high = "red")
+dev.off()
+
+
+pdf("output/seurat/DotPlot_RNA_manualMarkersv5_humangastruloid2472hrs_3Dpaper.pdf", width=12, height=3)
+DotPlot(humangastruloid.combined.sct, assay = "RNA", features = c("SOX2", "POU5F1", "DNMT3B", "TFAP2A", "PAX3", "SOX17", "FOXA2", "CXCR4", "TBXT", "MIXL1", "MSGN1", "MESP1", "EOMES", "PDGFRA", "CCNB1", "CDC20", "TPX2", "MEIS1",  "GATA4", "KCNQ5", "MEIS2", "HAND1", "VIM", "TNNT2", "TNNI1", "ACTC1", "PLAT","GATA6","CDX2","TBX5","TBX1","CDH1","CDH2")) + RotatedAxis() + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5)) +
+  scale_colour_gradient2(low = "red", mid = "white", high = "green3")
+dev.off()
+
+
+
+
+
+
+# cell type marker positive FC only with threshold
+
+all_markers_posfc01 <- FindAllMarkers(humangastruloid.combined.sct, assay = "RNA",
+    verbose = TRUE,
+    test.use = "wilcox", only.pos = TRUE, min.pct = 0.1, logfc.threshold = 0.1)
+    
+write.table(all_markers_posfc01, file = "output/seurat/srat_humangastruloid.combined.sct-dim30kparam15res04-all_markers_posfc01.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 
 ```
@@ -4461,7 +4513,7 @@ conda activate scRNAseqV2
 sbatch scripts/FindAllMarkers_humangastruloid2472hrs.sh # 27403599 ok
 sbatch scripts/FindAllMarkers_humangastruloid2472hrs_UNTREATED_DASATINIB.sh # 27403608 ok
 
-sbatch scripts/FindAllMarkers_humangastruloid2472hrs_3Dpaper.sh # 32581871 xxx
+sbatch scripts/FindAllMarkers_humangastruloid2472hrs_3Dpaper.sh # 32581871 ok
 
 ```
 
@@ -20897,7 +20949,7 @@ df <- bind_cols(
 ## genotype overlap
 pdf("output/condiments/UMAP_genotype_humangastruloid2472hr_dim30kparam15res04.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = treatment)) +
-  geom_point(size = .7) +
+  geom_point(size = 1) +
   scale_color_manual(values = c("blue", "red")) + # Specify colors here
   labs(col = "treatment") +
   theme_classic()
@@ -20915,6 +20967,17 @@ ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
   geom_point(size = .7) +
   scale_color_viridis_c(option = "C") +
   labs(col = "Scores") +
+  theme_classic()
+dev.off()
+
+
+pdf("output/condiments/UMAP_imbalance_score_humangastruloid2472hr_dim30kparam15res04_highlight.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2)) +
+  geom_point(aes(col = scores), size = .7) +
+  stat_density_2d(aes(fill = ..level..), geom = "polygon", alpha = 0.3) +
+  scale_fill_viridis_c(option = "C") +
+  scale_color_viridis_c(option = "C") +
+  labs(col = "Scores", fill = "Density") +
   theme_classic()
 dev.off()
 
@@ -21263,6 +21326,48 @@ ggplot(df_2, aes(x = UMAP_1, y = UMAP_2)) +
             aes(group = Lineage), col = "black", size = 1.5) +
   theme_classic()
 dev.off()
+
+
+
+## only for traj 1245
+
+
+df_1245 <- bind_cols(
+  as.data.frame(reducedDim(humangastruloidUNTREATED, "UMAP")),
+  slingPseudotime(humangastruloidUNTREATED) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(humangastruloidUNTREATED) %>% as.data.frame(),
+  )  %>%
+  mutate(
+    pst = pmax(Lineage1, Lineage2, Lineage4, Lineage5),
+    pst = (pst - min(pst)) / (max(pst) - min(pst)), # Normalize pst to range 0–1
+    Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+    Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst)
+  )
+
+
+curves_1245 <- slingCurves(humangastruloidUNTREATED, as.df = TRUE) %>%
+  dplyr::filter(Lineage %in% c("1", "2", "4", "5")) %>%
+  group_by(Lineage) %>%
+  mutate(pseudotime = seq(0, 1, length.out = n())) # Create a pseudotime gradient from 0 to 1
+
+
+pdf("output/condiments/UMAP_trajectory_common_humangastruloidUNTREATED_StartEpiEndCPC12EndoCardioextendnstretch16approx200_lineage1245.pdf", width=5, height=5)
+df_1245 %>%
+  ggplot(aes(x = UMAP_1, y = UMAP_2)) +
+  geom_point(size = 1, color = "grey") + # Background points in grey
+  geom_path(data = curves_1245 %>% arrange(Order),
+            aes(x = UMAP_1, y = UMAP_2, group = Lineage, color = pseudotime), # Gradient for the line
+            size = 2) + # Larger line size
+  scale_color_viridis_c() + # Apply a gradient color scale
+  labs(col = "") + # Label legend to reflect pseudotime range
+  theme_classic()
+dev.off()
+
+
+
+
+
 
 
 
