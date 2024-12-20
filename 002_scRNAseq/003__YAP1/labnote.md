@@ -12351,7 +12351,7 @@ mirror -R GEO_cardiacPaper/
 
 
 
-# Upload files to GEO - gastrulation paper E7
+# Upload files to GEO - QSER1 gastrulation paper E7
 
 Go [here](https://www.ncbi.nlm.nih.gov/geo/info/seq.html); and follow instructions in `Transfer Files`. Connect to my personal space (`uploads/thomasroule@orcid_A787EGG4`) and transfer files.
 
@@ -12380,7 +12380,37 @@ mirror -R GEO_gastrulationPaper/
 
 
 
+# Upload files to GEO - 3D gastrulation paper human gastruloids 24 72 hrs
 
+Go [here](https://www.ncbi.nlm.nih.gov/geo/info/seq.html); and follow instructions in `Transfer Files`. Connect to my personal space (`uploads/thomasroule@orcid_A787EGG4`) and transfer files.
+
+- Create a clean `GEO_3DPaper` folder with all cellranger files (barcode, features, matrix), and fq.gz files
+  - I copy `24hgastruloidhumanUNQCNOTfail/outs/filtered_feature_bc_matrix` and add manually prefix `humangastruloidUNT24hrs_`
+  - I copy `24hgastruloidhumanDASA/outs/filtered_feature_bc_matrix` and add manually prefix `humangastruloidDAS24hrs_`
+  - I copy `humangastruloid_UNTREATED72hr/outs/filtered_feature_bc_matrix` and add manually prefix `humangastruloidUNT72hrs_`
+  - I copy `humangastruloid_DASATINIB72hr/outs/filtered_feature_bc_matrix` and add manually prefix `humangastruloidDAS72hrs_`
+  - I copy `input/24hgastruloidhumanUNQCNOTfail/24hgastruloidhumanUN_S1_L001_*`
+  - I copy `input/24hgastruloidhumanDASA/24hgastruloidhumanDASA_S2_L001_*`
+  - I copy `input/ds.9c1b2e5bdcd04a02b36fc6bc84d54461/humangastruloid_UNTREATED72hr_S1_L001_*`
+  - I copy `input/ds.5ade69eb01db42bfa60310d0200a2d2d/humangastruloid_DASATINIB72hr_S2_L001_*`
+
+- Fill in the `seq_template_TR_3DPaper.xlsx` (`Metada` and `MD5` sheet notably)
+- submit files
+
+```bash
+# do file integrity check with md5
+md5sum * | awk '{print $2 "\t" $1}' > md5sums.txt
+
+module load lftp
+
+# connect to ftp
+lftp -u geoftp,inAlwokhodAbnib5 ftp-private.ncbi.nlm.nih.gov # geoftp = username; inAlwokhodAbnib5 = pwd
+cd uploads/thomasroule@orcid_A787EGG4
+
+mirror -R GEO_gastrulationPaper/
+```
+
+--> Done succesfully; release data: 2025-12-20
 
 
 
@@ -20926,6 +20956,7 @@ library("scales")
 library("pheatmap")
 library("readr")
 
+set.seed(42)
 
 # Data import GASTRULOID and separate conditons
 humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid2472hr.dim30kparam15res04.rds")
@@ -20962,7 +20993,9 @@ scores <- condiments::imbalance_score(
   k = 20, smooth = 40)
 df$scores <- scores$scaled_scores
 
-pdf("output/condiments/UMAP_imbalance_score_humangastruloid2472hr_dim30kparam15res04.pdf", width=5, height=5)
+#pdf("output/condiments/UMAP_imbalance_score_humangastruloid2472hr_dim30kparam15res04.pdf", width=5, height=5)
+pdf("output/condiments/test.pdf", width=5, height=5)
+
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
   geom_point(size = .7) +
   scale_color_viridis_c(option = "C") +
@@ -20970,17 +21003,39 @@ ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
   theme_classic()
 dev.off()
 
+## imbalance score with directionality (per condition)
+scores <- condiments::imbalance_score(
+  Object = df %>% select(UMAP_1, UMAP_2) %>% as.matrix(),
+  conditions = df$treatment,
+  k = 20,
+  smooth = 40
+)
 
-pdf("output/condiments/UMAP_imbalance_score_humangastruloid2472hr_dim30kparam15res04_highlight.pdf", width=5, height=5)
-ggplot(df, aes(x = UMAP_1, y = UMAP_2)) +
-  geom_point(aes(col = scores), size = .7) +
-  stat_density_2d(aes(fill = ..level..), geom = "polygon", alpha = 0.3) +
-  scale_fill_viridis_c(option = "C") +
-  scale_color_viridis_c(option = "C") +
-  labs(col = "Scores", fill = "Density") +
+# Assign directionality based on enrichment
+df$directional_scores <- scores$scores  # Use scores$raw_scores if applicable.
+
+# Ensure the directional_scores column exists before modifying
+if (!is.null(df$directional_scores)) {
+  # Apply the positive/negative transformation based on the score
+  df$directional_scores <- ifelse(df$directional_scores > 0, df$directional_scores, -df$directional_scores)
+} else {
+  stop("The scores object does not contain the required scores or raw_scores.")
+}
+
+# Calculate the midpoint for the gradient scale
+midpoint_value <- median(df$directional_scores, na.rm = TRUE)
+
+# Visualize with a directional color gradient
+pdf("output/condiments/UMAP_imbalance_score_directional_corrected.pdf", width = 5, height = 5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = directional_scores)) +
+  geom_point(size = 0.7) +
+  scale_color_gradient2(
+    low = "red", high = "blue", midpoint = 0.25,
+    name = "Directional Score"
+  ) +
+  labs(col = "Enrichment\n(Directional Score)") +
   theme_classic()
 dev.off()
-
 
 #  Trajectory Inference and Differential Topology
 set.seed(42)
