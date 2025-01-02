@@ -541,6 +541,33 @@ EnhancedVolcano(res,
            label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
 dev.off()
 
+  
+pdf("output/deseq2/plotVolcano_res_q05fc025_PSC_KO_vs_PSC_WT_EZH1.pdf", width=7, height=8)  
+EnhancedVolcano(res,
+  lab = res$GeneSymbol,
+  selectLab = "EZH1",
+  drawConnectors = TRUE,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, PSC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.25,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) ) +
+  annotate("text", x = 3, y = 140, 
+           label = paste(n_upregulated), hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140, 
+           label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+
 # Save as gene list for GO analysis:
 ### Complete table with GeneSymbol
 write.table(res, file = "output/deseq2/res_PSC_KO_vs_PSC_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
@@ -769,6 +796,33 @@ EnhancedVolcano(res,
   annotate("text", x = -3, y = 140, 
            label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
 dev.off()
+
+
+pdf("output/deseq2/plotVolcano_res_q05fc025_PSC_KOEF1aEZH1_vs_PSC_WT_EZH1.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = res$GeneSymbol,
+  selectLab = "EZH1",
+  drawConnectors = TRUE,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KOEF1aEZH1 vs WT, PSC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.25,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) ) +
+  annotate("text", x = 3, y = 140, 
+           label = paste(n_upregulated), hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140, 
+           label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
 
 # Save as gene list for GO analysis:
 ### Complete table with GeneSymbol

@@ -131,6 +131,21 @@ sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1_DiffBindTMMEpiCypher.sh #  xxx
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_DiffBindTMMEpiCypher.sh # 32559686 ok
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_DiffBindTMMEpiCypher.sh # 32560204 ok
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMMEpiCypher.sh # 29872019 ok
+
+
+
+# THOR scaling factor DiffBind_TMM (not Epicypher, not E coli spike in corrected) --> SF to use in THOR are the **reciprocal of DiffBind_TMM**
+sbatch scripts/THOR_PSC_WTvsKO_EZH1_DiffBindTMM.sh #  xxx
+sbatch scripts/THOR_PSC_WTvsKO_EZH2_DiffBindTMM.sh #  xxx
+sbatch scripts/THOR_PSC_WTvsKO_SUZ12_DiffBindTMM.sh #  xxx
+sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_DiffBindTMM.sh # 33908796 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH1_DiffBindTMM.sh #  xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_DiffBindTMM.sh #  xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_DiffBindTMM.sh #  xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMM.sh #  xxx
+
+XXX HERE !!! check 
+
 ```
 
 **Conclusion for replicate similarity**:
