@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --mail-user=roule@upenn.edu
-#SBATCH --mail-type=ALL
-#SBATCH --mem=50G
+#SBATCH --mem=500G
+#SBATCH --time=200:00:00
+#SBATCH --cpus-per-task=7
 
 
 

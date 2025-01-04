@@ -2304,9 +2304,9 @@ sbatch scripts/BedToBigwig_Norm_IGG_Ferguson.sh # 33984013 ok
 # Subtract Igg signal
 conda activate deeptools
 
-sbatch scripts/bigwigCompare_Norm_Ferguson_subtractIGG.sh # 33987057 xxx
+sbatch scripts/bigwigCompare_Norm_Ferguson_subtractIGG.sh # 33995282 xxx
 
-
+xxxy check subtract
 ```
 --> Replicates are very heterogeneous...
 
