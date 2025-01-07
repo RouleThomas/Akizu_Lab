@@ -2262,49 +2262,80 @@ sbatch scripts/bamtobigwig_Ferguson_3.sh # 33969581 ok
 
 # Convert bigwig to bedgraph
 conda activate BedToBigwig
-
+## Default bigwig bin50
 sbatch scripts/BedToBigwig_Ferguson.sh # 33973549 ok
+## IGG subtracted bigwig bin50
+sbatch scripts/BedToBigwig_Ferguson_subtractIGG.sh # 34123124 ok
 
 # Remove blacklist regions
-sbatch scripts/BedintersectBlacklist_Ferguson.sh # 33974981 xxx
+## Default bigwig bin50
+sbatch scripts/BedintersectBlacklist_Ferguson.sh # 33974981 ok
+## IGG subtracted bigwig bin50
+sbatch scripts/BedintersectBlacklist_Ferguson_subtractIGG.sh # 34124084 ok
 ```
 
-Use Python to identify local maxima, quantify the height fir the 99th percentile peak
+Use Python to identify local maxima, quantify the height for the 75-99th percentile peak
 
 ```bash
 srun --mem=250g --pty bash -l
 
 # Identify local maxima
+## Default bigwig bin50
 python scripts/LocalMaxima_Ferguson.py
+## IGG subtracted bigwig bin50
+python scripts/LocalMaxima_Ferguson_subtractIGG.py
+
+
 #  calculate the 99th percentile of the signal heights (score) in the local maxima files.
+## Default bigwig bin50
 python scripts/Percentile99_Ferguson.py
 python scripts/Percentile75_Ferguson.py
 python scripts/Percentile90_Ferguson.py
 python scripts/Percentile95_Ferguson.py
 python scripts/Percentile98_Ferguson.py
+## IGG subtracted bigwig bin50
+python scripts/Percentile99_Ferguson_subtractIGG.py
+python scripts/Percentile95_Ferguson_subtractIGG.py
+python scripts/Percentile90_Ferguson_subtractIGG.py
 
 
 # normalize AB per AB (using WT sample 1st replicate as reference)
-## default 99th percentile
+## Default bigwig bin50
+### default 99th percentile
 python scripts/norm_H3K27me3_Ferguson.py
 python scripts/norm_SUZ12_Ferguson.py
 python scripts/norm_EZH2_Ferguson.py
 python scripts/norm_IGG_Ferguson.py
-## 90th percentile
+### 90th percentile
 python scripts/norm_H3K27me3_Ferguson_Perc90.py
 python scripts/norm_SUZ12_Ferguson_Perc90.py
 python scripts/norm_EZH2_Ferguson_Perc90.py
 python scripts/norm_IGG_Ferguson_Perc90.py
-## 95th percentile
+### 95th percentile
 python scripts/norm_H3K27me3_Ferguson_Perc95.py
 python scripts/norm_SUZ12_Ferguson_Perc95.py
 python scripts/norm_EZH2_Ferguson_Perc95.py
 python scripts/norm_IGG_Ferguson_Perc95.py
-## 98th percentile
+### 98th percentile
 python scripts/norm_H3K27me3_Ferguson_Perc98.py
 python scripts/norm_SUZ12_Ferguson_Perc98.py
 python scripts/norm_EZH2_Ferguson_Perc98.py
 python scripts/norm_IGG_Ferguson_Perc98.py
+
+## IGG subtracted bigwig bin50
+### 90th percentile
+python scripts/norm_H3K27me3_Ferguson_Perc90_subtractIGG.py
+python scripts/norm_SUZ12_Ferguson_Perc90_subtractIGG.py
+python scripts/norm_EZH2_Ferguson_Perc90_subtractIGG.py
+### 95th percentile
+python scripts/norm_H3K27me3_Ferguson_Perc95_subtractIGG.py
+python scripts/norm_SUZ12_Ferguson_Perc95_subtractIGG.py
+python scripts/norm_EZH2_Ferguson_Perc95_subtractIGG.py
+### 99th percentile
+python scripts/norm_H3K27me3_Ferguson_Perc99_subtractIGG.py
+python scripts/norm_SUZ12_Ferguson_Perc99_subtractIGG.py
+python scripts/norm_EZH2_Ferguson_Perc99_subtractIGG.py
+
 
 
 #python scripts/norm_EZH1_Ferguson.py
@@ -2330,10 +2361,15 @@ conda activate BedToBigwig
 sbatch scripts/BedToBigwig_Norm_Ferguson.sh # 33980900 ok
 sbatch scripts/BedToBigwig_Norm_IGG_Ferguson.sh # 33984013 ok
 
+# default
 sbatch scripts/BedToBigwig_Normv2_Ferguson.sh # 34088401 ok
-sbatch scripts/BedToBigwig_Norm90_Ferguson.sh # 34091281 xxx
+sbatch scripts/BedToBigwig_Norm90_Ferguson.sh # 34115498 ok
 sbatch scripts/BedToBigwig_Norm95_Ferguson.sh # 34091046 ok
-sbatch scripts/BedToBigwig_Norm98_Ferguson.sh # 34091146 xxx
+sbatch scripts/BedToBigwig_Norm98_Ferguson.sh # 34115552 ok
+# subtract IGG signal in raw file
+sbatch scripts/BedToBigwig_Norm90_Ferguson_subtractIGG.sh # 34142015 xxx
+sbatch scripts/BedToBigwig_Norm95_Ferguson_subtractIGG.sh # 34142064 xxx
+sbatch scripts/BedToBigwig_Norm99_Ferguson_subtractIGG.sh # 34142137 xxx
 
 
 # Subtract Igg signal
@@ -2341,15 +2377,15 @@ conda activate deeptools
 
 sbatch scripts/bigwigCompare_Norm_Ferguson_subtractIGG.sh # 33995282 ok
 
-
 ```
---> Replicates are very heterogeneous... Subtracting Igg same...
+--> Replicates are very heterogeneous... Subtracting processed Igg same... Test with subtracting IGG from raw files after.
+
+--> Using 75 percentile give same SF; tried 90, 95, 98
+  --> 90 perform best! Almost identical replicate!!! Let's try subtracting IGG on raw before applying normalization see if improvement
 
 
 Let's try to use sample-specific blacklist regions, for that I will use [Greenscreen](https://github.com/sklasfeld/GreenscreenProject) to generate a blacklist for all our samples:
 - Call peaks in all Igg files
-
-XXY HERE CHECK 90 98 XXXY
 
 
 
@@ -2378,7 +2414,7 @@ conda activate deeptools
 
 
 # Subtract Igg signal from raw bedgraph file
-sbatch scripts/bigwigCompare_raw_subtractIGG.sh # 34088708 xxx
+sbatch scripts/bigwigCompare_raw_subtractIGG.sh # 34088708 ok
 ```
 
 
