@@ -1922,6 +1922,49 @@ FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "DEG", pt.size = 0.5, reductio
 dev.off()
 
 
+# GSEA output colored in a UMAP
+## Pathway of neurodegeneration
+p14_correct_List4_PathwaysOfNeurodegeneration <- read.table("output/Pathway/gsea_output_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_correct-List4.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "PathwaysOfNeurodegeneration")
+
+## Add NES and pval information to the Seurat object metadata
+WT_Kcnc1_p14_CB_1step.sct@meta.data$NES <- p14_correct_List4_PathwaysOfNeurodegeneration$NES[match(WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot, 
+                                                                       p14_correct_List4_PathwaysOfNeurodegeneration$cluster)]
+WT_Kcnc1_p14_CB_1step.sct@meta.data$pval <- p14_correct_List4_PathwaysOfNeurodegeneration$pval[match(WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot, 
+                                                                         p14_correct_List4_PathwaysOfNeurodegeneration$cluster)]
+
+## Prepare the NES values for visualization
+## Color clusters with pval < 0.05 as grey
+WT_Kcnc1_p14_CB_1step.sct@meta.data$NES_colored <- ifelse(WT_Kcnc1_p14_CB_1step.sct@meta.data$pval > 0.05, NA, 
+                                                          WT_Kcnc1_p14_CB_1step.sct@meta.data$NES)
+                                                          
+
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(WT_Kcnc1_p14_CB_1step.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(p14_correct_List4_PathwaysOfNeurodegeneration, by = c("cluster" = "cluster"))
+
+## Format NES values to two decimal places
+cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
+
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CB_1step_correct_List4_PathwaysOfNeurodegeneration.pdf", width = 6, height = 6)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
+  scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
+  geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
 
 # SCPA
 
@@ -2751,6 +2794,10 @@ FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Klhl1", "Nrp1", "Gfra2", "S
 dev.off()
 
 
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB-Gria4-QCV2dim50.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Gria4"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
 
 
 ############ V1 naming (output/seurat/WT_Kcnc1_p35_CB_1step-QCV3dim50kparam50res03.sct_V1_numeric.rds = QCV3dim50kparam50res03)
@@ -3322,8 +3369,8 @@ Meningeal_pseudobulk <- FindMarkers(object = pseudo_WT_Kcnc1_p35_CB_1step.sct,
                          ident.1 = "Meningeal_Kcnc1", 
                          ident.2 = "Meningeal_WT",
                          test.use = "DESeq2")
-cat("Upregulated:", sum(Meningeal_pseudobulk$p_val_adj < 0.05 & Meningeal_pseudobulk$avg_log2FC > 0), 
-    "\nDownregulated:", sum(Meningeal_pseudobulk$p_val_adj < 0.05 & Meningeal_pseudobulk$avg_log2FC < 0), "\n")
+cat("Upregulated:", sum(Purkinje_pseudobulk$p_val_adj < 0.05 & Purkinje_pseudobulk$avg_log2FC > 0), 
+    "\nDownregulated:", sum(Purkinje_pseudobulk$p_val_adj < 0.05 & Purkinje_pseudobulk$avg_log2FC < 0), "\n")
 #-=-> DESEQ2 to be run on the raw counts of RNA assay!                         
 #--> Few to no DEGs
 
@@ -3411,6 +3458,42 @@ FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = "DEG", pt.size = 0.5, reductio
   geom_text(data = cluster_centers, aes(x = UMAP_1, y = UMAP_2, label = Num_DEGs), 
             size = 4, color = "red", fontface = "bold") 
 dev.off()
+
+
+
+# GSEA output colored in a UMAP
+## Pathway of neurodegeneration
+p35_correct_List4_PathwaysOfNeurodegeneration <- read.table("output/Pathway/gsea_output_Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_correct-List4.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "PathwaysOfNeurodegeneration")
+
+## Add NES and pval information to the Seurat object metadata
+WT_Kcnc1_p35_CB_1step.sct@meta.data$NES <- p35_correct_List4_PathwaysOfNeurodegeneration$NES[match(WT_Kcnc1_p35_CB_1step.sct@meta.data$cluster.annot, 
+                                                                       p35_correct_List4_PathwaysOfNeurodegeneration$cluster)]
+WT_Kcnc1_p35_CB_1step.sct@meta.data$pval <- p35_correct_List4_PathwaysOfNeurodegeneration$pval[match(WT_Kcnc1_p35_CB_1step.sct@meta.data$cluster.annot, 
+                                                                         p35_correct_List4_PathwaysOfNeurodegeneration$cluster)]
+
+## Prepare the NES values for visualization
+## Color clusters with pval < 0.05 as grey
+WT_Kcnc1_p35_CB_1step.sct@meta.data$NES_colored <- ifelse(WT_Kcnc1_p35_CB_1step.sct@meta.data$pval > 0.05, NA, 
+                                                          WT_Kcnc1_p35_CB_1step.sct@meta.data$NES)
+                                                          
+
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(WT_Kcnc1_p35_CB_1step.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- WT_Kcnc1_p35_CB_1step.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(p35_correct_List4_PathwaysOfNeurodegeneration, by = c("cluster" = "cluster"))
+
+## Format NES values to two decimal places
+cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
+
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p35_CB_1step_correct_List4_PathwaysOfNeurodegeneration.pdf", width = 6, height = 6)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
+  scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
+  geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
 
 
 
@@ -4386,6 +4469,48 @@ FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = "DEG", pt.size = 0.5, reducti
   geom_text(data = cluster_centers, aes(x = UMAP_1, y = UMAP_2, label = Num_DEGs), 
             size = 4, color = "red", fontface = "bold") 
 dev.off()
+
+
+# GSEA output colored in a UMAP
+## Pathway of neurodegeneration
+p180_correct_List4_PathwaysOfNeurodegeneration <- read.table("output/Pathway/gsea_output_Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_correct-List4.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "PathwaysOfNeurodegeneration")
+
+## Add NES and pval information to the Seurat object metadata
+WT_Kcnc1_p180_CB_1step.sct@meta.data$NES <- p180_correct_List4_PathwaysOfNeurodegeneration$NES[match(WT_Kcnc1_p180_CB_1step.sct@meta.data$cluster.annot, 
+                                                                       p180_correct_List4_PathwaysOfNeurodegeneration$cluster)]
+WT_Kcnc1_p180_CB_1step.sct@meta.data$pval <- p180_correct_List4_PathwaysOfNeurodegeneration$pval[match(WT_Kcnc1_p180_CB_1step.sct@meta.data$cluster.annot, 
+                                                                         p180_correct_List4_PathwaysOfNeurodegeneration$cluster)]
+
+## Prepare the NES values for visualization
+## Color clusters with pval < 0.05 as grey
+WT_Kcnc1_p180_CB_1step.sct@meta.data$NES_colored <- ifelse(WT_Kcnc1_p180_CB_1step.sct@meta.data$pval > 0.05, NA, 
+                                                          WT_Kcnc1_p180_CB_1step.sct@meta.data$NES)
+                                                          
+
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(WT_Kcnc1_p180_CB_1step.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- WT_Kcnc1_p180_CB_1step.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(p180_correct_List4_PathwaysOfNeurodegeneration, by = c("cluster" = "cluster"))
+
+## Format NES values to two decimal places
+cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
+
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p180_CB_1step_correct_List4_PathwaysOfNeurodegeneration.pdf", width = 6, height = 6)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
+  scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
+  geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+
+
+
 
 
 
