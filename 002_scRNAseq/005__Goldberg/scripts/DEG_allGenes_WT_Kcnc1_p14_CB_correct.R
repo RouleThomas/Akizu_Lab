@@ -81,3 +81,72 @@ for (cluster in clusters) {
 
 
 
+# Light interactive testing
+
+
+Granular_4 <- FindMarkers(WT_Kcnc1_p14_CB_1step.sct, 
+                         ident.1 = "Granular_4-Kcnc1", 
+                         ident.2 = "Granular_4-WT", 
+                         verbose = TRUE, 
+                         test.use = "wilcox",
+                         logfc.threshold = 0,
+                         min.pct = 0,
+                         assay = "RNA")
+
+Purkinje <- FindMarkers(WT_Kcnc1_p14_CB_1step.sct, 
+                         ident.1 = "Purkinje-Kcnc1", 
+                         ident.2 = "Purkinje-WT", 
+                         verbose = TRUE, 
+                         test.use = "poisson",
+                         logfc.threshold = 0,
+                         min.pct = 0,
+                         assay = "RNA")  
+
+
+Purkinje <- FindMarkers(WT_Kcnc1_p14_CB_1step.sct, 
+                         ident.1 = "Purkinje-Kcnc1", 
+                         ident.2 = "Purkinje-WT", 
+                         verbose = TRUE, 
+                         test.use = "wilcox",
+                         logfc.threshold = 0,
+                         min.pct = 0,
+                         assay = "RNA",
+                         slot= "scale.data")                         
+
+
+
+Purkinje_poisson_p14 <- FindMarkers(WT_Kcnc1_p14_CB_1step.sct, 
+                         ident.1 = "Purkinje-Kcnc1", 
+                         ident.2 = "Purkinje-WT", 
+                         verbose = TRUE, 
+                         test.use = "poisson",
+                         logfc.threshold = 0,
+                         min.pct = 0,
+                         assay = "RNA", # Specify the RNA assay (default for raw counts)
+                         slot = "counts") # Use raw UMI counts
+
+
+MLI2_poisson_p14 <- FindMarkers(WT_Kcnc1_p14_CB_1step.sct, 
+                         ident.1 = "MLI2-Kcnc1", 
+                         ident.2 = "MLI2-WT", 
+                         verbose = TRUE, 
+                         test.use = "poisson",
+                         logfc.threshold = 0,
+                         min.pct = 0,
+                         assay = "RNA", # Specify the RNA assay (default for raw counts)
+                         slot = "counts") # Use raw UMI counts
+
+
+pdf("output/seurat/test_MLI2_poisson_p14.pdf", width = 8, height = 6)
+MLI2_poisson_p14$p_val_adj[MLI2_poisson_p14$p_val_adj == 0] <- 1e-300
+MLI2_poisson_p14$log10_pval_adj <- -log10(MLI2_poisson_p14$p_val_adj)
+ggplot(MLI2_poisson_p14, aes(x = avg_log2FC, y = log10_pval_adj)) +
+  geom_point(color = "black", size = 1) +
+  geom_hline(yintercept = -log10(0.05), color = "blue", linetype = "dashed", size = 0.5) +
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed", size = 0.5) +
+  labs(title = "Volcano Plot", x = "log2 Fold Change (avg_diff)", y = "-log10 Adjusted p-value") +
+  theme_minimal()
+dev.off()     
+
+
+

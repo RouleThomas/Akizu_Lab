@@ -80,3 +80,60 @@ for (cluster in clusters) {
 }
 
 
+
+# Light interactive testing
+
+
+Purkinje <- FindMarkers(WT_Kcnc1_p35_CB_1step.sct, 
+                         ident.1 = "Purkinje-Kcnc1", 
+                         ident.2 = "Purkinje-WT", 
+                         verbose = TRUE, 
+                         test.use = "wilcox",
+                         logfc.threshold = 0,
+                         min.pct = 0,
+                         assay = "RNA")
+
+Purkinje_scaldata <- FindMarkers(WT_Kcnc1_p35_CB_1step.sct, 
+                         ident.1 = "Purkinje-Kcnc1", 
+                         ident.2 = "Purkinje-WT", 
+                         verbose = TRUE, 
+                         test.use = "wilcox",
+                         logfc.threshold = 0,
+                         min.pct = 0,
+                         assay = "RNA",
+                         slot = "scale.data")
+pdf("output/seurat/test_Purkinje_scaldata.pdf", width = 8, height = 6)
+Purkinje_scaldata$log10_pval_adj <- -log10(Purkinje_scaldata$p_val_adj)
+ggplot(Purkinje_scaldata, aes(x = avg_diff, y = log10_pval_adj)) +
+  geom_point(color = "black", size = 1) +
+  geom_hline(yintercept = -log10(0.05), color = "blue", linetype = "dashed", size = 0.5) +
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed", size = 0.5) +
+  labs(title = "Volcano Plot", x = "log2 Fold Change (avg_diff)", y = "-log10 Adjusted p-value") +
+  theme_minimal()
+dev.off()
+
+
+Purkinje_poisson <- FindMarkers(WT_Kcnc1_p35_CB_1step.sct, 
+                         ident.1 = "Purkinje-Kcnc1", 
+                         ident.2 = "Purkinje-WT", 
+                         verbose = TRUE, 
+                         test.use = "poisson",
+                         logfc.threshold = 0,
+                         min.pct = 0,
+                         assay = "RNA", # Specify the RNA assay (default for raw counts)
+                         slot = "counts") # Use raw UMI counts
+pdf("output/seurat/test_Purkinje_poisson.pdf", width = 8, height = 6)
+Purkinje_poisson$p_val_adj[Purkinje_poisson$p_val_adj == 0] <- 1e-300
+Purkinje_poisson$log10_pval_adj <- -log10(Purkinje_poisson$p_val_adj) +0.0000000001
+ggplot(Purkinje_poisson, aes(x = avg_log2FC, y = log10_pval_adj)) +
+  geom_point(color = "black", size = 1) +
+  geom_hline(yintercept = -log10(0.05), color = "blue", linetype = "dashed", size = 0.5) +
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed", size = 0.5) +
+  labs(title = "Volcano Plot", x = "log2 Fold Change (avg_diff)", y = "-log10 Adjusted p-value") +
+  theme_minimal()
+dev.off()
+
+# Transform p-value for -log10(p-value)
+
+# Save the plot as a PDF
+

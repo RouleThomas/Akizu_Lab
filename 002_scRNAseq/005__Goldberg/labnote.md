@@ -594,10 +594,9 @@ seurat_objects <- load_seurat_objects(file_paths)
 for (sample_name in names(seurat_objects)) {
   assign(sample_name, seurat_objects[[sample_name]])
 }
-# 1 sample: WT_p14_CB_Rep2 <- readRDS(file = "output/seurat/WT_p14_CB_Rep2_V1_numeric.rds")
+# 1 sample: WT_p35_CB_Rep2 <- readRDS(file = "output/seurat/WT_p35_CB_Rep2_V2_ReProcess_numeric.rds")
 ## Kcnc1_p14_CB_Rep1 <- readRDS(file = "output/seurat/Kcnc1_p14_CB_Rep1_V1_numeric.rds")
 ################################################################################################
-
 
 
 
@@ -1719,6 +1718,12 @@ pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-QCV3dim30kparam50res035
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "Kcnc1", cols = c("grey", "red"), max.cutoff = 1)
 dev.off()
 
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-QCV3dim30kparam50res035-Trem2.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Trem2"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
 ## p14 cell type proportion ###############################
 ### count nb of cells in each cluster
 WT_p14_CB_Rep1 = table(Idents(WT_Kcnc1_p14_CB_1step.sct)[WT_Kcnc1_p14_CB_1step.sct$orig.ident == "WT_p14_CB_Rep1"]) %>%
@@ -2537,7 +2542,7 @@ dev.off()
 
 
 
-# CORRECT VERSION (issue found for the global downregulation)
+# CORRECT VERSION (issue found for the global downregulation due to lack logNorm and scaling)
 WT_p35_CB_Rep1 <- SCTransform(WT_p35_CB_Rep1, method = "glmGamPoi", ncells = 7299, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
 WT_p35_CB_Rep2 <- SCTransform(WT_p35_CB_Rep2, method = "glmGamPoi", ncells = 10683, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
 WT_p35_CB_Rep3 <- SCTransform(WT_p35_CB_Rep3, method = "glmGamPoi", ncells = 13664, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
@@ -2548,6 +2553,9 @@ Kcnc1_p35_CB_Rep3 <- SCTransform(Kcnc1_p35_CB_Rep3, method = "glmGamPoi", ncells
 
 
 srat.list <- list(WT_p35_CB_Rep1 = WT_p35_CB_Rep1, WT_p35_CB_Rep2 = WT_p35_CB_Rep2, WT_p35_CB_Rep3 = WT_p35_CB_Rep3, Kcnc1_p35_CB_Rep1 = Kcnc1_p35_CB_Rep1, Kcnc1_p35_CB_Rep2 = Kcnc1_p35_CB_Rep2, Kcnc1_p35_CB_Rep3 = Kcnc1_p35_CB_Rep3)
+# REMOVE OUTLIER SAMPLES (see Goldberg_V6.ppt; Outlier= WT_Rep1 and Kcnc_Rep2) ######
+srat.list <- list(WT_p35_CB_Rep2 = WT_p35_CB_Rep2, WT_p35_CB_Rep3 = WT_p35_CB_Rep3, Kcnc1_p35_CB_Rep1 = Kcnc1_p35_CB_Rep1, Kcnc1_p35_CB_Rep3 = Kcnc1_p35_CB_Rep3)
+##############
 features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
 srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
 WT_Kcnc1_p35_CB_1step.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
@@ -2574,7 +2582,7 @@ DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
 
-## THIS VERSION HAS BEEN SAVED AS:  output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_label_ReProcess.rds
+## THIS VERSION (keeping all samples, even outlier) HAS BEEN SAVED AS:  output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_label_ReProcess.rds
 
 
 
@@ -2688,9 +2696,12 @@ set.seed(42)
 WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V1_numeric_ReProcess.rds")
 #saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_label_ReProcess.rds") 
 
-WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_label_ReProcess.rds") # THIS IS THE LAST ONE!
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_label_ReProcess.rds") # THIS IS THE LAST ONE! (with all samples, imcluding outliers)
 
+#saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_ReProcess_noOutliers.rds") 
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_ReProcess_noOutliers.rds") # without including outliers sample, 2 bio rep per genotype.
 
+XXXY HERE TO LOAD 
 ##########
 
 
@@ -4306,7 +4317,9 @@ pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-QCV4dim50kparam20res02
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = "Kcnc1", max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
-
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-QCV4dim50kparam20res02-Calm1.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Calm1"), max.cutoff = 2, cols = c("grey", "red"), split.by = "condition")
+dev.off()
 
 
 
@@ -6512,6 +6525,73 @@ ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
 dev.off()
 
 
+## PLOT with Separate trajectories
+### Testing Area ############
+
+##########################################
+
+
+WT_Kcnc1_CB <- slingshot(WT_Kcnc1_CB, reducedDim = 'UMAP',
+                 clusterLabels = colData(WT_Kcnc1_CB)$cluster.annot,
+                 start.clus = 'Granule_3', end.clus = c("Granule_1") ,approx_points = 100, extend = 'n', stretch = 1)
+
+
+
+
+#test reduceDim PCA or subset endoderm
+topologyTest(SlingshotDataSet(Part_Granule), Part_Granule$condition) #  
+
+
+sdss <- slingshot_conditions(SlingshotDataSet(Part_Granule), Part_Granule$condition)
+curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
+                    .id = "condition")
+
+
+
+#  
+#pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-dim40kparam15res03-Part_Granule-STARTGranule_3ENDGranule_1points100extendn.pdf", width=6, height=5)
+#pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-dim40kparam15res03-Part_Granule-STARTGranule_3ENDGranule_1points100extendnstretch0.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-dim40kparam15res03-Part_Granule-STARTGranule_3ENDGranule_1points100extendnstretch1.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(condition, Lineage, Order),
+            aes(group = interaction(Lineage, condition)), size = 1.5) +
+  theme_classic()
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #  Trajectory Inference and Differential Topology
 
 ## SEPARATE CELLS for each trajectory ############################
@@ -6609,6 +6689,9 @@ ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
             aes(group = interaction(Lineage, condition)), size = 1.5) +
   theme_classic()
 dev.off()
+
+XXX BELOW NOT MOPD XXXXXXXXX
+XXXXXXXXXXXXXXXXXX
 
 
 
@@ -7498,21 +7581,30 @@ conda activate scRNAseqV2
 # p14 CB
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB.sh # 27801074 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_correct.sh # 29330177 ok
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_poissonUMI.sh # 34266328 xxx
+
+
+XXX sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_correct_pseudobulk.sh #  xxx
+
 
 # p35 CB
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB.sh # 27801335 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_correct.sh # 29328955 ok
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_correct_rerun.sh # xxxy
+
 
 # p180 CB
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB.sh # 27801489 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_correct.sh # 29330555 ok
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_poissonUMI.sh # 34266352 xxx
+
 ```
 
 
 
 - *NOTE: I forget to LogNorm and Scale prior doing DEG; the `*_correct` are corrected + updated cluster name notbably PLI12 and PLI23 instead of MLI_1 MLI_2; all good.*
 
-
+- *NOTE: for p35; very weird, abnormally high number of DEGs and weird Volcano plot profile. Let's redo it.*
 
 ## Comparison effect logNorm/ScaleData after integration
 
