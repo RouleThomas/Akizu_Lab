@@ -10618,4 +10618,30 @@ mirror -R GEO_gastrulationPaper_ChIP008001/
 
 
 
+# HOMER peak discovery
+
+From Conchi email 1/8/2025(EMBOR and Cell Reports revisions), we need *DNA sequences/motifs* enriched in some of these QSER1 peaks shown in Figure S3D:
+ 
+- QSER1 bound motifs on all ChIPseq peaks (~12K)
+- QSER1 bound motifs on QSER1:YAP-cobound genes (993)
+- QSER1 bound motifs on QSER1:YAP-perfectly aligned peaks (199)
+- QSER1 bound motifs on QSER1:EZH2 perfectly aligned peaks (445)
+
+```bash
+# bed files of peaks
+output/homer/hESC_WT_QSER1_outputPeaks.bed # all QSER1 peaks (~12k)
+xxxy # QSER1:YAP-cobound genes (993)
+output/homer/hESC_WT_QSER1_outputPeaks_noHeader-overlapYAP1_peaks_noHeader.bed  # QSER1:YAP-perfectly aligned peaks (199)
+output/homer/hESC_WT_QSER1_outputPeaks_noHeader-overlapEZH2_peaks_noHeader.bed # QSER1:EZH2 perfectly aligned peaks (445)
+
+
+
+
+
+```
+
+
+
+
+
 
