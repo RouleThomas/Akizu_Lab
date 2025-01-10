@@ -82,16 +82,58 @@ for (cluster in clusters) {
 
 
 # Light interactive testing
+## Count up and down
+cluster_markers <- list()
+
+# Loop through each cluster to load the saved files
+for (cluster in clusters) {
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_correct.txt")
+  
+  if (file.exists(file_path)) {
+    cat("Loading file for cluster:", cluster, "\n")
+    # Read the file and store it in the list
+    cluster_markers[[cluster]] <- read.table(file_path, header = TRUE, sep = "\t", row.names = 1)
+  } else {
+    cat("File not found for cluster:", cluster, "\n")
+  }
+}
+regulation_summary <- tibble(cluster = character(), up = numeric(), down = numeric())
+
+# Loop through the clusters and calculate up and downregulated genes
+for (cluster in names(cluster_markers)) {
+  markers <- cluster_markers[[cluster]]
+  
+  # Count upregulated genes
+  upregulated <- markers %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    nrow()
+  
+  # Count downregulated genes
+  downregulated <- markers %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    nrow()
+  
+  # Add the results to the tibble
+  regulation_summary <- regulation_summary %>%
+    add_row(cluster = cluster, up = upregulated, down = downregulated)
+}
+
+# Print the summary
+print(regulation_summary)
 
 
-Granular_4 <- FindMarkers(WT_Kcnc1_p14_CB_1step.sct, 
-                         ident.1 = "Granular_4-Kcnc1", 
-                         ident.2 = "Granular_4-WT", 
+
+WT_Kcnc1_p14_CB_1step.sct@assays$RNA@counts <- round(WT_Kcnc1_p14_CB_1step.sct@assays$RNA@counts)
+
+Purkinje <- FindMarkers(WT_Kcnc1_p14_CB_1step.sct, 
+                         ident.1 = "Purkinje-Kcnc1", 
+                         ident.2 = "Purkinje-WT", 
                          verbose = TRUE, 
-                         test.use = "wilcox",
+                         test.use = "MAST",
                          logfc.threshold = 0,
                          min.pct = 0,
-                         assay = "RNA")
+                         assay = "RNA", # Specify the RNA assay (default for raw counts)
+                         slot = "data") # Use data lognorm slot for MAST
 
 Purkinje <- FindMarkers(WT_Kcnc1_p14_CB_1step.sct, 
                          ident.1 = "Purkinje-Kcnc1", 
@@ -137,10 +179,10 @@ MLI2_poisson_p14 <- FindMarkers(WT_Kcnc1_p14_CB_1step.sct,
                          slot = "counts") # Use raw UMI counts
 
 
-pdf("output/seurat/test_MLI2_poisson_p14.pdf", width = 8, height = 6)
-MLI2_poisson_p14$p_val_adj[MLI2_poisson_p14$p_val_adj == 0] <- 1e-300
-MLI2_poisson_p14$log10_pval_adj <- -log10(MLI2_poisson_p14$p_val_adj)
-ggplot(MLI2_poisson_p14, aes(x = avg_log2FC, y = log10_pval_adj)) +
+pdf("output/seurat/test_Purkinje_DESEQ2_p14.pdf", width = 8, height = 6)
+Purkinje$p_val_adj[Purkinje$p_val_adj == 0] <- 1e-300
+Purkinje$log10_pval_adj <- -log10(Purkinje$p_val_adj)
+ggplot(Purkinje, aes(x = avg_log2FC, y = log10_pval_adj)) +
   geom_point(color = "black", size = 1) +
   geom_hline(yintercept = -log10(0.05), color = "blue", linetype = "dashed", size = 0.5) +
   geom_vline(xintercept = 0, color = "red", linetype = "dashed", size = 0.5) +
@@ -149,4 +191,15 @@ ggplot(MLI2_poisson_p14, aes(x = avg_log2FC, y = log10_pval_adj)) +
 dev.off()     
 
 
+
+
+pdf("output/seurat/test_Purkinje_DESEQ2_p14.pdf", width = 8, height = 6)
+Purkinje$log10_pval_adj <- -log10(Purkinje$p_val_adj)
+ggplot(Purkinje %>% filter(p_val_adj<0.05), aes(x = avg_log2FC, y = log10_pval_adj)) +
+  geom_point(color = "black", size = 1) +
+  geom_hline(yintercept = -log10(0.05), color = "blue", linetype = "dashed", size = 0.5) +
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed", size = 0.5) +
+  labs(title = "Volcano Plot", x = "log2 Fold Change (avg_diff)", y = "-log10 Adjusted p-value") +
+  theme_minimal()
+dev.off()     
 

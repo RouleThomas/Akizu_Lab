@@ -219,7 +219,7 @@ library("gprofiler2") # for human mouse gene conversion for cell cycle genes
 
 # soupX decontamination
 ## Decontaminate one channel of 10X data mapped with cellranger
-sc = load10X('WT_p14_CB_Rep1/outs')   # CHANGE FILE NAME HERE
+sc = load10X('WT_p14_CB_Rep2/outs')   # CHANGE FILE NAME HERE
 
 ## Assess % of conta
 pdf("output/soupX/autoEstCont_WT_p14_CB_Rep1.pdf", width=10, height=10)   # CHANGE FILE NAME HEREs
@@ -233,6 +233,9 @@ save(out, file = "output/soupX/WT_p14_CB_Rep1.RData") # CHANGE FILE NAME HERE
 ```
 
 --> sample `Kcnc1_p35_CB_Rep2` is highly contaminated, add to add `forceAccept = TRUE` in `sc = autoEstCont(sc, forceAccept = TRUE)`; all other sampels are <30% (median 10%)
+
+- *NOTE: Please note that SoupX modified my raw counts and generate non integer counts. Howvere, discuss here, I can just rounded the values. Discuss [here](https://www.biostars.org/p/9581918/)*  
+
 
 
 # Data integration 
@@ -7581,7 +7584,9 @@ conda activate scRNAseqV2
 # p14 CB
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB.sh # 27801074 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_correct.sh # 29330177 ok
-sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_poissonUMI.sh # 34266328 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_poissonUMI.sh # 34266328 ok
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_DESEQ2seurat.sh # 34358916 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_MAST.sh # 34363647 xxx
 
 
 XXX sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_correct_pseudobulk.sh #  xxx
@@ -7591,12 +7596,18 @@ XXX sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_correct_pseudobulk.sh #  xxx
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB.sh # 27801335 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_correct.sh # 29328955 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_correct_rerun.sh # xxxy
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_DESEQ2seurat.sh # 34368432 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_MAST.sh # 34368635 xxx
 
 
 # p180 CB
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB.sh # 27801489 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_correct.sh # 29330555 ok
-sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_poissonUMI.sh # 34266352 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_poissonUMI.sh # 34266352 ok
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_DESEQ2seurat.sh # 34359233 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_MAST.sh # 34364889 xxx
+
+
 
 ```
 
@@ -7605,6 +7616,11 @@ sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_poissonUMI.sh # 34266352 xxx
 - *NOTE: I forget to LogNorm and Scale prior doing DEG; the `*_correct` are corrected + updated cluster name notbably PLI12 and PLI23 instead of MLI_1 MLI_2; all good.*
 
 - *NOTE: for p35; very weird, abnormally high number of DEGs and weird Volcano plot profile. Let's redo it.*
+
+- *NOTE: DESEQ2seurat need integer so I round the RNA$counts slot as it is decimal because of the soupX normalization*
+
+--> Wilcox method give very different result to poisson method... Tested DESEQ2 and XXX
+
 
 ## Comparison effect logNorm/ScaleData after integration
 

@@ -34,6 +34,7 @@ WT_Kcnc1_p14_CB_1step.sct$celltype.stim <- paste(WT_Kcnc1_p14_CB_1step.sct$clust
     sep = "-")
 Idents(WT_Kcnc1_p14_CB_1step.sct) <- "celltype.stim"
 
+
 # Define the list of clusters for comparison
 clusters <- c(
   "PLI23",
@@ -67,16 +68,16 @@ for (cluster in clusters) {
                          ident.1 = paste(cluster, "Kcnc1", sep = "-"), 
                          ident.2 = paste(cluster, "WT", sep = "-"), 
                          verbose = TRUE, 
-                         test.use = "poisson",
+                         test.use = "MAST",
                          logfc.threshold = -Inf,
                          min.pct = -Inf,
                          min.diff.pct = -Inf,
                          assay = "RNA", # Specify the RNA assay (default for raw counts)
-                         slot = "counts") # Use raw UMI counts
+                         slot = "data") # Use lognorm data for MAST
   # Store the result in the list
   cluster_markers[[cluster]] <- markers
   # Save the result as a text file
-  output_filename <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_poissonUMI.txt")
+  output_filename <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST.txt")
   write.table(markers, file = output_filename, sep = "\t", quote = FALSE, row.names = TRUE)
 }
 
@@ -100,7 +101,7 @@ for (cluster in clusters) {
   cat("Generating volcano plot for cluster:", cluster, "\n")
   
   # Define the input file path
-  input_filename <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_poissonUMI.txt")
+  input_filename <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST.txt")
   
   # Check if the file exists
   if (file.exists(input_filename)) {
@@ -114,8 +115,8 @@ for (cluster in clusters) {
     # Create the volcano plot
     volcano_plot <- ggplot(markers, aes(x = avg_log2FC, y = log10_pval_adj)) +
       geom_point(color = "black", size = 1) +
-      geom_hline(yintercept = -log10(0.05), color = "blue", linetype = "dashed", size = 0.5) +
-      geom_vline(xintercept = 0, color = "red", linetype = "dashed", size = 0.5) +
+    geom_hline(yintercept = -log10(0.05), color = "blue", linetype = "dashed", size = 0.5) +
+    geom_vline(xintercept = c(-0.25, 0.25), color = "red", linetype = "dashed", size = 0.5) +
       labs(
         title = paste("Volcano Plot -", cluster),
         x = "log2 Fold Change (avg_log2FC)",
@@ -124,7 +125,7 @@ for (cluster in clusters) {
       theme_minimal()
     
     # Save the volcano plot as a PDF
-    pdf_filename <- paste0("output/seurat/VolcanoPlot_", cluster, "_p14_CB_QCV3dim30kparam50res035_allGenes_poissonUMI.pdf")
+    pdf_filename <- paste0("output/seurat/VolcanoPlot_", cluster, "_p14_CB_QCV3dim30kparam50res035_allGenes_MAST.pdf")
     pdf(pdf_filename, width = 7, height = 6)
     print(volcano_plot)
     dev.off()
@@ -146,7 +147,7 @@ cluster_markers <- list()
 
 # Loop through each cluster to load the saved files
 for (cluster in clusters) {
-  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_poissonUMI.txt")
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST.txt")
   
   if (file.exists(file_path)) {
     cat("Loading file for cluster:", cluster, "\n")

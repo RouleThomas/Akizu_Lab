@@ -38,6 +38,8 @@ WT_Kcnc1_p180_CB_1step.sct$celltype.stim <- paste(WT_Kcnc1_p180_CB_1step.sct$clu
     sep = "-")
 Idents(WT_Kcnc1_p180_CB_1step.sct) <- "celltype.stim"
 
+
+
 # Define the list of clusters for comparison
 clusters <- c(
   "Granular_1",
@@ -68,17 +70,87 @@ for (cluster in clusters) {
                          ident.1 = paste(cluster, "Kcnc1", sep = "-"), 
                          ident.2 = paste(cluster, "WT", sep = "-"), 
                          verbose = TRUE, 
-                         test.use = "wilcox",
+                         test.use = "MAST",
                          logfc.threshold = -Inf,
                          min.pct = -Inf,
                          min.diff.pct = -Inf,
-                         assay = "RNA")
+                         assay = "RNA", # Specify the RNA assay (default for raw counts)
+                         slot = "data") # Use lognorm data for MAST
   # Store the result in the list
   cluster_markers[[cluster]] <- markers
   # Save the result as a text file
-  output_filename <- paste0("output/seurat/", cluster, "-Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_correct.txt")
+  output_filename <- paste0("output/seurat/", cluster, "-Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_MAST.txt")
   write.table(markers, file = output_filename, sep = "\t", quote = FALSE, row.names = TRUE)
 }
+
+
+
+
+
+
+# Volcano Plot Generation
+
+library(ggplot2)
+
+# List of clusters (used to locate files)
+clusters <- c(
+  "Granular_1",
+  "Granular_2",
+  "MLI1",
+  "Granular_3",
+  "MLI2",
+  "PLI23",
+  "Astrocyte",
+  "PLI12",
+  "Bergman_Glia",
+  "Unipolar_Brush",
+  "Mix_Endothelial_EndothelialMural",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Golgi",
+  "Purkinje",
+  "Unknown_Neuron_Subpop",
+  "Oligodendrocyte"
+)
+
+# Generate volcano plots for each saved file
+for (cluster in clusters) {
+  cat("Generating volcano plot for cluster:", cluster, "\n")
+  
+  # Define the input file path
+  input_filename <- paste0("output/seurat/", cluster, "-Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_MAST.txt")
+  
+  # Check if the file exists
+  if (file.exists(input_filename)) {
+    # Load the DE results
+    markers <- read.table(input_filename, header = TRUE, sep = "\t", row.names = 1)
+    
+    # Adjust p-values to avoid Inf
+    markers$p_val_adj[markers$p_val_adj == 0] <- 1e-300
+    markers$log10_pval_adj <- -log10(markers$p_val_adj)
+    
+    # Create the volcano plot
+    volcano_plot <- ggplot(markers, aes(x = avg_log2FC, y = log10_pval_adj)) +
+      geom_point(color = "black", size = 1) +
+    geom_hline(yintercept = -log10(0.05), color = "blue", linetype = "dashed", size = 0.5) +
+    geom_vline(xintercept = c(-0.25, 0.25), color = "red", linetype = "dashed", size = 0.5) +
+      labs(
+        title = paste("Volcano Plot -", cluster),
+        x = "log2 Fold Change (avg_log2FC)",
+        y = "-log10 Adjusted p-value"
+      ) +
+      theme_minimal()
+    
+    # Save the volcano plot as a PDF
+    pdf_filename <- paste0("output/seurat/VolcanoPlot_", cluster, "_p180_CB_QCV4dim50kparam20res02_allGenes_MAST.pdf")
+    pdf(pdf_filename, width = 7, height = 6)
+    print(volcano_plot)
+    dev.off()
+  } else {
+    cat("File not found for cluster:", cluster, "\n")
+  }
+}
+
 
 
 
@@ -90,7 +162,7 @@ cluster_markers <- list()
 
 # Loop through each cluster to load the saved files
 for (cluster in clusters) {
-  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_correct.txt")
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_MAST.txt")
   
   if (file.exists(file_path)) {
     cat("Loading file for cluster:", cluster, "\n")
@@ -123,6 +195,7 @@ for (cluster in names(cluster_markers)) {
 
 # Print the summary
 print(regulation_summary)
+
 
 
 

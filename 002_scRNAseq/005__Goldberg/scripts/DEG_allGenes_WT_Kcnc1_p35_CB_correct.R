@@ -88,10 +88,24 @@ Purkinje <- FindMarkers(WT_Kcnc1_p35_CB_1step.sct,
                          ident.1 = "Purkinje-Kcnc1", 
                          ident.2 = "Purkinje-WT", 
                          verbose = TRUE, 
-                         test.use = "wilcox",
-                         logfc.threshold = 0,
-                         min.pct = 0,
-                         assay = "RNA")
+                         test.use = "MAST",
+                         logfc.threshold = -Inf,
+                         min.pct = -Inf,
+                         assay = "RNA", # Specify the RNA assay (default for raw counts)
+                         slot = "data") # Use lognorm data for MAST
+
+pdf("output/seurat/test_Purkinje_MAST.pdf", width = 8, height = 6)
+Purkinje$log10_pval_adj <- -log10(Purkinje$p_val_adj)
+ggplot(Purkinje, aes(x = avg_log2FC, y = log10_pval_adj)) +
+  geom_point(color = "black", size = 1) +
+  geom_hline(yintercept = -log10(0.05), color = "blue", linetype = "dashed", size = 0.5) +
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed", size = 0.5) +
+  labs(title = "Volcano Plot", x = "log2 Fold Change (avg_diff)", y = "-log10 Adjusted p-value") +
+  theme_minimal()
+dev.off()
+
+
+
 
 Purkinje_scaldata <- FindMarkers(WT_Kcnc1_p35_CB_1step.sct, 
                          ident.1 = "Purkinje-Kcnc1", 
