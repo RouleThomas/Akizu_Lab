@@ -7605,7 +7605,7 @@ sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB.sh # 27801489 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_correct.sh # 29330555 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_poissonUMI.sh # 34266352 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_DESEQ2seurat.sh # 34359233 xxx
-sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_MAST.sh # 34364889 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_MAST.sh # 34364889 ok
 
 
 
