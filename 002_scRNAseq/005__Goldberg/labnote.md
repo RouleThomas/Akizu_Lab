@@ -6806,11 +6806,45 @@ ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
   theme_classic()
 dev.off()
 
+########################################
+## PLOT keeping all cells ##########
+########################################
+# Testing
+WT_Kcnc1_CB <- slingshot(WT_Kcnc1_CB, reducedDim = 'UMAP',
+                 clusterLabels = colData(WT_Kcnc1_CB)$cluster.annot,
+                 start.clus = c('Granule_3', "MLI1_3", "MLI2_3"), end.clus = c("Granule_1","MLI1_1","MLI2_2") ,approx_points = 100, extend = 'n', stretch = 1)
 
-## PLOT with Separate trajectories
-### Testing Area ############
 
-##########################################
+
+#test reduceDim PCA or subset endoderm
+topologyTest(SlingshotDataSet(WT_Kcnc1_CB), WT_Kcnc1_CB$condition) #  
+sdss <- slingshot_conditions(SlingshotDataSet(WT_Kcnc1_CB), WT_Kcnc1_CB$condition)
+curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
+                    .id = "condition")
+
+
+
+#  
+#
+pdf("output/condiments/UMAP_trajectory_WT_Kcnc1_CB-dim40kparam15res03-START-Granule_3MLI1MLI2_3_3-END-Granule_1MLI1_1MLI2_2-points100extendnstretch1.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(condition, Lineage, Order),
+            aes(group = interaction(Lineage, condition)), size = 1.5) +
+  theme_classic()
+dev.off()
+
+
+XXXY
+
+
+
+
+########################################
+## PLOT NOT keeping all cells (with Separate trajectories)  ##########
+### Testing Area ######################
+
 
 
 WT_Kcnc1_CB <- slingshot(WT_Kcnc1_CB, reducedDim = 'UMAP',
