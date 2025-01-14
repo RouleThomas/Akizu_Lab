@@ -145,3 +145,45 @@ for (cluster in clusters) {
 
 
 
+
+# Light interactive testing
+## Count up and down
+cluster_markers <- list()
+
+# Loop through each cluster to load the saved files
+for (cluster in clusters) {
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_MAST.txt")
+  
+  if (file.exists(file_path)) {
+    cat("Loading file for cluster:", cluster, "\n")
+    # Read the file and store it in the list
+    cluster_markers[[cluster]] <- read.table(file_path, header = TRUE, sep = "\t", row.names = 1)
+  } else {
+    cat("File not found for cluster:", cluster, "\n")
+  }
+}
+regulation_summary <- tibble(cluster = character(), up = numeric(), down = numeric())
+
+# Loop through the clusters and calculate up and downregulated genes
+for (cluster in names(cluster_markers)) {
+  markers <- cluster_markers[[cluster]]
+  
+  # Count upregulated genes
+  upregulated <- markers %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    nrow()
+  
+  # Count downregulated genes
+  downregulated <- markers %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    nrow()
+  
+  # Add the results to the tibble
+  regulation_summary <- regulation_summary %>%
+    add_row(cluster = cluster, up = upregulated, down = downregulated)
+}
+
+# Print the summary
+print(regulation_summary)
+
+
