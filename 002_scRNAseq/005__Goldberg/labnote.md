@@ -6810,22 +6810,17 @@ dev.off()
 ## PLOT keeping all cells ##########
 ########################################
 # Testing
+
+#  TOO LONG RUN IN SLURM |||||||||
 WT_Kcnc1_CB <- slingshot(WT_Kcnc1_CB, reducedDim = 'UMAP',
                  clusterLabels = colData(WT_Kcnc1_CB)$cluster.annot,
                  start.clus = c('Granule_3', "MLI1_3", "MLI2_3"), end.clus = c("Granule_1","MLI1_1","MLI2_2") ,approx_points = 100, extend = 'n', stretch = 1)
-
-
 
 #test reduceDim PCA or subset endoderm
 topologyTest(SlingshotDataSet(WT_Kcnc1_CB), WT_Kcnc1_CB$condition) #  
 sdss <- slingshot_conditions(SlingshotDataSet(WT_Kcnc1_CB), WT_Kcnc1_CB$condition)
 curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
                     .id = "condition")
-
-
-
-#  
-#
 pdf("output/condiments/UMAP_trajectory_WT_Kcnc1_CB-dim40kparam15res03-START-Granule_3MLI1MLI2_3_3-END-Granule_1MLI1_1MLI2_2-points100extendnstretch1.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7, alpha = .2) +
@@ -6834,6 +6829,10 @@ ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
             aes(group = interaction(Lineage, condition)), size = 1.5) +
   theme_classic()
 dev.off()
+#  TOO LONG RUN IN SLURM |||||||||
+
+
+
 
 
 XXXY
@@ -7923,9 +7922,6 @@ sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_MAST.sh # 34364889 ok
 
 
 ```
-
-
-
 - *NOTE: I forget to LogNorm and Scale prior doing DEG; the `*_correct` are corrected + updated cluster name notbably PLI12 and PLI23 instead of MLI_1 MLI_2; all good.*
 
 - *NOTE: for p35; very weird, abnormally high number of DEGs and weird Volcano plot profile. Let's redo it.*
@@ -7933,6 +7929,25 @@ sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_MAST.sh # 34364889 ok
 - *NOTE: DESEQ2seurat need integer so I round the RNA$counts slot as it is decimal because of the soupX normalization*
 
 --> Wilcox method give very different result to poisson method... Tested DESEQ2 and XXX
+
+
+
+### Pseudotime
+
+
+```bash
+conda activate condiments_V6
+
+
+# Pseudotime all cells kept
+sbatch scripts/pseudotime_allCells_v1.sh # 34643632 xxx
+```
+
+--> *pseudotime_allCells_v1* with parameters: `start.clus = c('Granule_3', "MLI1_3", "MLI2_3"), end.clus = c("Granule_1","MLI1_1","MLI2_2") ,approx_points = 100, extend = 'n', stretch = 1` XXXY
+
+
+
+
 
 
 ## Comparison effect logNorm/ScaleData after integration
