@@ -6687,6 +6687,19 @@ pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_label.pdf"
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", split.by = "time", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3, raster = FALSE)
 dev.off()
 
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_splitConditionGroupTime_label.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", split.by = "condition", pt.size = 0.5, label.size = 3, raster = FALSE, group.by = "time")
+dev.off()
+# Keep only p14 and p180
+WT_Kcnc1_CB_integrateMerge_subset <- subset(
+  WT_Kcnc1_CB_integrateMerge.sct, 
+  subset = time %in% c("p14", "p180")
+)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_splitConditionGroupTime_label-p14p180.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge_subset, reduction = "umap", split.by = "condition", pt.size = 0.5, label.size = 3, raster = FALSE, group.by = "time")
+dev.off()
+
+
 pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_noSplit_label.pdf", width=9, height=6)
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5, raster = FALSE)
 dev.off()
@@ -6706,8 +6719,19 @@ dev.off()
 
 
 # save ######################################################
-## saveRDS(WT_Kcnc1_CB_integrateMerge.sct, file = "output/seurat/WT_Kcnc1_CB_integrateMerge-dim40kparam15res03-labelv1.rds") # 
+## saveRDS(WT_Kcnc1_CB_integrateMerge.sct, file = "output/seurat/WT_Kcnc1_CB_integrateMerge-dim40kparam15res03-labelv1.rds") #
+WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-dim40kparam15res03-labelv1.rds")
 ############################################################################################################
+
+
+# Downsample Kcnc1 to same number of cells than WT
+
+XXXY
+
+WT_Kcnc1_CB_integrateMerge.sct
+
+
+
 
 ```
 

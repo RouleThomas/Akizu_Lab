@@ -10623,24 +10623,64 @@ mirror -R GEO_gastrulationPaper_ChIP008001/
 From Conchi email 1/8/2025(EMBOR and Cell Reports revisions), we need *DNA sequences/motifs* enriched in some of these QSER1 peaks shown in Figure S3D:
  
 - QSER1 bound motifs on all ChIPseq peaks (~12K)
-- QSER1 bound motifs on QSER1:YAP-cobound genes (993)
+- QSER1 bound motifs on QSER1:YAP-cobound genes (993) --> From file Google Drive `002*/003*/gastrulation paper or QSER1 paper/output/ChIPseeker008001008003/VennDiagramGenes_QSER1EZH2TEAD4YAP1_all_homer.xlsx` there are 1192 genes QSER1 YAP1 bound; let's remove from that the 199 QSER1:YAP-perfectly aligned peak genes = 993 (= 1192 - 199). The 199 can be found at `002*/003*/gastrulation paper or QSER1 paper/output/peakOverlap/homer_peakCoordinate/noExtension/QSER1YAP1_199peaks.txt`. To generate bed file:
+  - Collect QSER1 peaks within the 1192 QSER1 YAP1 bound genes. And remove the peak with direct overlap with YAP1.
 - QSER1 bound motifs on QSER1:YAP-perfectly aligned peaks (199)
 - QSER1 bound motifs on QSER1:EZH2 perfectly aligned peaks (445)
 
+--> Follow [HOMER](http://homer.ucsd.edu/homer/motif/); recommend to use `findMotifs.pl, homer2` with FASTA file
+
 ```bash
 # bed files of peaks
+## Generate the QSER1:YAP-cobound genes (993)
+nano output/ChIPseeker/QSER1_YAP1_1192coBoundGenes.txt # copy 002*/003*/gastrulation paper or QSER1 paper/output/ChIPseeker008001008003/VennDiagramGenes_QSER1EZH2TEAD4YAP1_all_homer.xlsx
+
+### Extract the QSER1 peak coordinate of the QSER1_YAP1_1192coBoundGenes
+output/ChIPseeker/annotation_homer_hESC_WT_QSER1_pool_annot.txt
+awk -F'\t' 'NR==FNR {genes[$1]; next} $18 in genes' output/ChIPseeker/QSER1_YAP1_1192coBoundGenes.txt output/ChIPseeker/annotation_homer_hESC_WT_QSER1_pool_annot.txt > output/ChIPseeker/annotation_homer_hESC_WT_QSER1_pool_annot__1192QSER1YAP1coBoundGenes.txt
+#### Double check that it contain our 1192 genes
+cut -f18 output/ChIPseeker/annotation_homer_hESC_WT_QSER1_pool_annot__1192QSER1YAP1coBoundGenes.txt | sort | uniq | wc -l # 1192
+
+### Remove the QSER1_YAP1 peak that directly overlap (199)
+
+
+## Bed file locations
 output/homer/hESC_WT_QSER1_outputPeaks.bed # all QSER1 peaks (~12k)
-xxxy # QSER1:YAP-cobound genes (993)
 output/homer/hESC_WT_QSER1_outputPeaks_noHeader-overlapYAP1_peaks_noHeader.bed  # QSER1:YAP-perfectly aligned peaks (199)
 output/homer/hESC_WT_QSER1_outputPeaks_noHeader-overlapEZH2_peaks_noHeader.bed # QSER1:EZH2 perfectly aligned peaks (445)
 
 
 
+# Convert bed to FASTA
+conda activate bowtie2 
 
+bedtools getfasta -fi ../../Master/meta/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta -bed output/ChIPseeker/annotation_homer_hESC_WT_QSER1_pool_annot__1192QSER1YAP1coBoundGenes.txt > output/ChIPseeker/annotation_homer_hESC_WT_QSER1_pool_annot__1192QSER1YAP1coBoundGenes.fa
+bedtools getfasta -fi ../../Master/meta/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta -bed output/homer/hESC_WT_QSER1_outputPeaks.bed > output/homer/hESC_WT_QSER1_outputPeaks.fa
+bedtools getfasta -fi ../../Master/meta/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta -bed output/homer/hESC_WT_QSER1_outputPeaks_noHeader-overlapYAP1_peaks_noHeader.bed > output/homer/hESC_WT_QSER1_outputPeaks_noHeader-overlapYAP1_peaks_noHeader.fa
+bedtools getfasta -fi ../../Master/meta/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta -bed output/homer/hESC_WT_QSER1_outputPeaks_noHeader-overlapEZH2_peaks_noHeader.bed > output/homer/hESC_WT_QSER1_outputPeaks_noHeader-overlapEZH2_peaks_noHeader.fa
+
+
+# Identify motif from BED
+conda activate homer 
+
+findMotifsGenome.pl output/ChIPseeker/annotation_homer_hESC_WT_QSER1_pool_annot__1192QSER1YAP1coBoundGenes.txt hg38 output/motif -size 320
+findMotifsGenome.pl output/homer/hESC_WT_QSER1_outputPeaks_noHeader-overlapYAP1_peaks_noHeader.bed hg38 output/motif/hESC_WT_QSER1_outputPeaks_noHeader-overlapYAP1_peaks_noHeader -size 320
+
+findMotifsGenome.pl output/homer/hESC_WT_QSER1_outputPeaks.bed hg38 output/motif/hESC_WT_QSER1_outputPeaks -size 320
+findMotifsGenome.pl output/homer/hESC_WT_QSER1_outputPeaks_noHeader-overlapEZH2_peaks_noHeader.bed hg38 output/motif/hESC_WT_QSER1_outputPeaks_noHeader-overlapEZH2_peaks_noHeader -size 320
+
+
+# Identify motif from FASTA
+
+XXX not needed as bed worked XXX
+
+conda activate homer 
+
+findMotifs.pl output/ChIPseeker/annotation_homer_hESC_WT_QSER1_pool_annot__1192QSER1YAP1coBoundGenes.fa fasta output/ChIPseeker/ -fasta  -find motif1.motif > outputfile.txt
 
 ```
 
-
+- *NOTE: `awk -F'\t'` to indicate that file is tab separated!*
 
 
 
