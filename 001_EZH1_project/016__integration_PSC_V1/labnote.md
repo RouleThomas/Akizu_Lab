@@ -2266,12 +2266,18 @@ conda activate BedToBigwig
 sbatch scripts/BedToBigwig_Ferguson.sh # 33973549 ok
 ## IGG subtracted bigwig bin50
 sbatch scripts/BedToBigwig_Ferguson_subtractIGG.sh # 34123124 ok
+## Unique bigwig (1bp resolution)
+sbatch scripts/BedToBigwig_Ferguson_unique.sh # 35195181 ok
 
 # Remove blacklist regions
 ## Default bigwig bin50
 sbatch scripts/BedintersectBlacklist_Ferguson.sh # 33974981 ok
 ## IGG subtracted bigwig bin50
 sbatch scripts/BedintersectBlacklist_Ferguson_subtractIGG.sh # 34124084 ok
+## Unique bigwig (1bp resolution)
+sbatch scripts/BedintersectBlacklist_Ferguson_unique.sh # 35195293 ok
+
+
 ```
 
 Use Python to identify local maxima, quantify the height for the 75-99th percentile peak
@@ -2284,6 +2290,8 @@ srun --mem=250g --pty bash -l
 python scripts/LocalMaxima_Ferguson.py
 ## IGG subtracted bigwig bin50
 python scripts/LocalMaxima_Ferguson_subtractIGG.py
+## Unique bigwig (1bp resolution)
+python scripts/LocalMaxima_Ferguson_unique.py
 
 
 #  calculate the 99th percentile of the signal heights (score) in the local maxima files.
@@ -2297,6 +2305,12 @@ python scripts/Percentile98_Ferguson.py
 python scripts/Percentile99_Ferguson_subtractIGG.py
 python scripts/Percentile95_Ferguson_subtractIGG.py
 python scripts/Percentile90_Ferguson_subtractIGG.py
+## Unique bigwig (1bp resolution)
+python scripts/Percentile99_Ferguson_unique.py
+python scripts/Percentile95_Ferguson_unique.py
+python scripts/Percentile90_Ferguson_unique.py
+
+
 
 
 # normalize AB per AB (using WT sample 1st replicate as reference)
@@ -2336,6 +2350,19 @@ python scripts/norm_H3K27me3_Ferguson_Perc99_subtractIGG.py
 python scripts/norm_SUZ12_Ferguson_Perc99_subtractIGG.py
 python scripts/norm_EZH2_Ferguson_Perc99_subtractIGG.py
 
+## Unique bigwig (1bp resolution)
+### 90th percentile
+python scripts/norm_H3K27me3_Ferguson_Perc90_unique.py
+python scripts/norm_SUZ12_Ferguson_Perc90_unique.py
+python scripts/norm_EZH2_Ferguson_Perc90_unique.py
+### 95th percentile
+python scripts/norm_H3K27me3_Ferguson_Perc95_unique.py
+python scripts/norm_SUZ12_Ferguson_Perc95_unique.py
+python scripts/norm_EZH2_Ferguson_Perc95_unique.py
+### 99th percentile
+python scripts/norm_H3K27me3_Ferguson_Perc99_unique.py
+python scripts/norm_SUZ12_Ferguson_Perc99_unique.py
+python scripts/norm_EZH2_Ferguson_Perc99_unique.py
 
 
 #python scripts/norm_EZH1_Ferguson.py
@@ -2367,21 +2394,27 @@ sbatch scripts/BedToBigwig_Norm90_Ferguson.sh # 34115498 ok
 sbatch scripts/BedToBigwig_Norm95_Ferguson.sh # 34091046 ok
 sbatch scripts/BedToBigwig_Norm98_Ferguson.sh # 34115552 ok
 # subtract IGG signal in raw file
-sbatch scripts/BedToBigwig_Norm90_Ferguson_subtractIGG.sh # 34142015 xxx
-sbatch scripts/BedToBigwig_Norm95_Ferguson_subtractIGG.sh # 34142064 xxx
-sbatch scripts/BedToBigwig_Norm99_Ferguson_subtractIGG.sh # 34142137 xxx
-
+sbatch scripts/BedToBigwig_Norm90_Ferguson_subtractIGG.sh # 34142015 ok
+sbatch scripts/BedToBigwig_Norm95_Ferguson_subtractIGG.sh # 34142064 ok
+sbatch scripts/BedToBigwig_Norm99_Ferguson_subtractIGG.sh # 34142137 ok
+# Unique bigwig (1bp resolution)
+sbatch scripts/BedToBigwig_Norm90_Ferguson_unique.sh # 35196105 ok
+sbatch scripts/BedToBigwig_Norm95_Ferguson_unique.sh # 35196140 ok
+sbatch scripts/BedToBigwig_Norm99_Ferguson_uniqu.sh # 35196143 ok
 
 # Subtract Igg signal
 conda activate deeptools
 
 sbatch scripts/bigwigCompare_Norm_Ferguson_subtractIGG.sh # 33995282 ok
+sbatch scripts/bigwigCompare_Norm_Ferguson_subtractIGG_unique.sh # 35197178 xxx
 
 ```
 --> Replicates are very heterogeneous... Subtracting processed Igg same... Test with subtracting IGG from raw files after.
 
 --> Using 75 percentile give same SF; tried 90, 95, 98
   --> 90 perform best! Almost identical replicate!!! Let's try subtracting IGG on raw before applying normalization see if improvement
+
+--> Unique reads at 99percentile works GREAT! Replicate sure homogeneous
 
 
 Let's try to use sample-specific blacklist regions, for that I will use [Greenscreen](https://github.com/sklasfeld/GreenscreenProject) to generate a blacklist for all our samples:
