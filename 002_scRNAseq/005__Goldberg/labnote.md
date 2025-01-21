@@ -8269,6 +8269,256 @@ print(final_results)
 
 ```
 
+## Test DESEQ2 for DEG
+
+
+### Create deseq2_seurat conda env
+
+```bash
+# Packages needed:
+library(scater) bioconda::bioconductor-scater
+library(Seurat) bioconda::r-seurat
+library(tidyverse) conda-forge::r-tidyverse
+library(cowplot) conda-forge::r-cowplot
+library(Matrix.utils) conda-forge::r-matrix.utils
+library(edgeR) bioconda::bioconductor-edger
+library(dplyr) conda-forge::r-dplyr
+library(magrittr) conda-forge::r-magrittr
+library(Matrix) conda-forge::r-matrix
+library(purrr) conda-forge::r-purrr
+library(reshape2) conda-forge::r-reshape2
+library(S4Vectors) bioconda::bioconductor-s4vectors
+library(tibble) conda-forge::r-tibble
+library(SingleCellExperiment) bioconda::bioconductor-singlecellexperiment
+library(pheatmap) bioconda::r-pheatmap
+library(apeglm) bioconda::bioconductor-apeglm
+library(DESeq2) bioconda::bioconductor-deseq2
+library(RColorBrewer) conda install r::r-rcolorbrewer
+
+
+
+
+
+# Try create env and install all in conda at the same time
+conda create -n deseq2_seurat_v1 \
+  bioconda::bioconductor-scater \
+  bioconda::r-seurat \
+  conda-forge::r-tidyverse \
+  conda-forge::r-cowplot \
+  conda-forge::r-matrix.utils \
+  bioconda::bioconductor-edger \
+  conda-forge::r-dplyr \
+  conda-forge::r-magrittr \
+  conda-forge::r-matrix \
+  conda-forge::r-purrr \
+  conda-forge::r-reshape2 \
+  bioconda::bioconductor-s4vectors \
+  conda-forge::r-tibble \
+  bioconda::bioconductor-singlecellexperiment \
+  bioconda::r-pheatmap \
+  bioconda::bioconductor-apeglm \
+  bioconda::bioconductor-deseq2 \
+  conda-forge::r-rcolorbrewer \
+  -c conda-forge -c bioconda -y
+
+#--> FAIL, many mistake
+
+# Try create conda env with R and start with DESEQ2
+conda create -n deseq2_seurat_v1 r-base # R4.4.2
+conda activate deseq2_seurat_v1
+
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("DESeq2") #--> FAIL
+conda install bioconda::bioconductor-deseq2 #--> XXX
+BiocManager::install("scater")
+
+# Try create conda env with R and start with Seurat
+conda create -n deseq2_seurat r-base # R4.4.2
+conda activate deseq2_seurat
+
+install.packages('Seurat') #--> XXX
+
+
+XXXY HERE
+
+```
+
+
+
+
+
+
+
+
+Let's follow this [workshop](https://hbctraining.github.io/scRNA-seq/lessons/pseudobulk_DESeq2_scrnaseq.html)
+
+Also DESEQ2 need integer as matrix; so will need to round it.
+
+
+
+
+
+
+```bash
+conda activate scRNAseqV2
+conda activate SignacV5
+```
+
+```R
+
+library("SoupX") 
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+library("cowplot")
+library("edgeR")
+library("magrittr")
+library("Matrix")
+library("purrr")
+library("reshape2")
+library("S4Vectors")
+library("tibble")
+library("SingleCellExperiment")
+library("pheatmap")
+library("apeglm")
+library("png")
+library("DESeq2")
+library("RColorBrewer")
+library("scater") 
+
+set.seed(42)
+
+library(Matrix.utils)# NOT INSTALL 
+
+
+
+
+
+
+
+# import Seurat object and round the matrix
+
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V5_numeric.rds") # regMtRbCount with QC_V3; after Naiara review Goldberg_V2.pptx; QCV3dim30kparam50res035 with name V2 and intenreuron corrected
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
+### round the counts to be used by deseq2 (require integer)
+#### Access the raw counts matrix in the RNA assay
+counts_matrix <- GetAssayData(WT_Kcnc1_p14_CB_1step.sct, slot = "counts", assay = "RNA")
+#### Round the counts to the nearest integer
+rounded_counts_matrix <- round(counts_matrix)
+#### Replace the counts in the Seurat object with the rounded counts
+WT_Kcnc1_p14_CB_1step.sct <- SetAssayData(WT_Kcnc1_p14_CB_1step.sct, slot = "counts", new.data = rounded_counts_matrix, assay = "RNA")
+
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_label_ReProcess.rds")
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "RNA"
+### round the counts to be used by deseq2 (require integer)
+#### Access the raw counts matrix in the RNA assay
+counts_matrix <- GetAssayData(WT_Kcnc1_p35_CB_1step.sct, slot = "counts", assay = "RNA")
+#### Round the counts to the nearest integer
+rounded_counts_matrix <- round(counts_matrix)
+#### Replace the counts in the Seurat object with the rounded counts
+WT_Kcnc1_p35_CB_1step.sct <- SetAssayData(WT_Kcnc1_p35_CB_1step.sct, slot = "counts", new.data = rounded_counts_matrix, assay = "RNA")
+
+
+WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV4dim50kparam20res02.sct_V1_label.rds") # QC_V4 with PLI12 PLI23
+DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "RNA"
+### round the counts to be used by deseq2 (require integer)
+#### Access the raw counts matrix in the RNA assay
+counts_matrix <- GetAssayData(WT_Kcnc1_p180_CB_1step.sct, slot = "counts", assay = "RNA")
+#### Round the counts to the nearest integer
+rounded_counts_matrix <- round(counts_matrix)
+#### Replace the counts in the Seurat object with the rounded counts
+WT_Kcnc1_p180_CB_1step.sct <- SetAssayData(WT_Kcnc1_p180_CB_1step.sct, slot = "counts", new.data = rounded_counts_matrix, assay = "RNA")
+
+
+#################################################################################
+# DEG for p14 CEREBELLUM #################################################################################
+############################################################################################################
+
+WT_Kcnc1_p14_CB <- as.SingleCellExperiment(WT_Kcnc1_p14_CB_1step.sct, assay = "RNA")
+## Double check counts (raw) slot is use and counts in integer
+assays(WT_Kcnc1_p14_CB)
+dim(counts(WT_Kcnc1_p14_CB))
+counts(WT_Kcnc1_p14_CB)[1:6, 1:6]
+head(colData(WT_Kcnc1_p14_CB)) # check metadata available
+
+# Acquiring necessary metrics for aggregation across cells in a sample
+## Named vector of cluster names
+kids <- purrr::set_names(levels(WT_Kcnc1_p14_CB$cluster.annot))
+kids
+## Total number of clusters
+nk <- length(kids)
+nk
+## Named vector of sample names
+sids <- purrr::set_names(unique(WT_Kcnc1_p14_CB$orig.ident))
+## Total number of samples 
+ns <- length(sids)
+ns
+
+# Generate sample level metadata
+## Determine the number of cells per sample
+table(WT_Kcnc1_p14_CB$orig.ident)
+## Turn named vector into a numeric vector of number of cells per sample
+n_cells <- as.numeric(table(WT_Kcnc1_p14_CB$orig.ident))
+## Determine how to reoder the samples (rows) of the metadata to match the order of sample names in sids vector
+m <- match(sids, WT_Kcnc1_p14_CB$orig.ident)
+## Create the sample level metadata by combining the reordered metadata with the number of cells corresponding to each sample.
+ei <- data.frame(colData(WT_Kcnc1_p14_CB)[m, ], 
+                  n_cells, row.names = NULL) %>% 
+                select("orig.ident", "condition", "replicate", "n_cells")
+ei
+
+
+# Aditional QC filtering - remove count outliers and low count genes
+# Perform QC if not already performed
+dim(WT_Kcnc1_p14_CB)
+
+# Calculate quality control (QC) metrics
+sce <- calculateQCMetrics(WT_Kcnc1_p14_CB)
+
+# Get cells w/ few/many detected genes
+sce$is_outlier <- isOutlier(
+        metric = sce$total_features_by_counts,
+        nmads = 2, type = "both", log = TRUE)
+
+# Remove outlier cells
+sce <- sce[, !sce$is_outlier]
+dim(sce)
+
+## Remove lowly expressed genes which have less than 10 cells with any counts
+sce <- sce[rowSums(counts(sce) > 1) >= 10, ]
+
+dim(sce)
+
+
+
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -8278,7 +8528,6 @@ print(final_results)
 
 Let's create a shiny app to make gene search easier!
 - WT_Kcnc1_p14_CB_1step_V1 = 1stepIntegrationRegressNotRepeatedregMtRbCou-QCV2dim30kparam30res05
-
 
 
 Created with [ShinyCell](https://github.com/SGDDNB/ShinyCell); and follow [shinyapps](https://www.shinyapps.io/) to put it online 

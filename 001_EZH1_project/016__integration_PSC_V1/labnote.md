@@ -2268,6 +2268,11 @@ sbatch scripts/BedToBigwig_Ferguson.sh # 33973549 ok
 sbatch scripts/BedToBigwig_Ferguson_subtractIGG.sh # 34123124 ok
 ## Unique bigwig (1bp resolution)
 sbatch scripts/BedToBigwig_Ferguson_unique.sh # 35195181 ok
+## Unique bigwig (1bp resolution) - IGG subtracted
+sbatch scripts/BedToBigwig_Ferguson_subtractIGG_unique.sh # 35204218 ok
+
+
+
 
 # Remove blacklist regions
 ## Default bigwig bin50
@@ -2276,8 +2281,8 @@ sbatch scripts/BedintersectBlacklist_Ferguson.sh # 33974981 ok
 sbatch scripts/BedintersectBlacklist_Ferguson_subtractIGG.sh # 34124084 ok
 ## Unique bigwig (1bp resolution)
 sbatch scripts/BedintersectBlacklist_Ferguson_unique.sh # 35195293 ok
-
-
+## Unique bigwig (1bp resolution) - IGG subtracted
+sbatch scripts/BedintersectBlacklist_Ferguson_subtractIGG_unique.sh # 35204304 xxx
 ```
 
 Use Python to identify local maxima, quantify the height for the 75-99th percentile peak
@@ -2292,6 +2297,10 @@ python scripts/LocalMaxima_Ferguson.py
 python scripts/LocalMaxima_Ferguson_subtractIGG.py
 ## Unique bigwig (1bp resolution)
 python scripts/LocalMaxima_Ferguson_unique.py
+## Unique bigwig (1bp resolution) - IGG subtracted
+python scripts/LocalMaxima_Ferguson_subtractIGG_unique.py
+
+
 
 
 #  calculate the 99th percentile of the signal heights (score) in the local maxima files.
@@ -2309,8 +2318,10 @@ python scripts/Percentile90_Ferguson_subtractIGG.py
 python scripts/Percentile99_Ferguson_unique.py
 python scripts/Percentile95_Ferguson_unique.py
 python scripts/Percentile90_Ferguson_unique.py
-
-
+## Unique bigwig (1bp resolution) - IGG subtracted
+python scripts/Percentile99_Ferguson_subtractIGG_unique.py
+python scripts/Percentile95_Ferguson_subtractIGG_unique.py
+python scripts/Percentile90_Ferguson_subtractIGG_unique.py
 
 
 # normalize AB per AB (using WT sample 1st replicate as reference)
@@ -2364,6 +2375,23 @@ python scripts/norm_H3K27me3_Ferguson_Perc99_unique.py
 python scripts/norm_SUZ12_Ferguson_Perc99_unique.py
 python scripts/norm_EZH2_Ferguson_Perc99_unique.py
 
+## Unique bigwig (1bp resolution) - IGG subtracted
+### 90th percentile
+python scripts/norm_H3K27me3_Ferguson_Perc90_subtractIGG_unique.py
+python scripts/norm_SUZ12_Ferguson_Perc90_subtractIGG_unique.py
+python scripts/norm_EZH2_Ferguson_Perc90_subtractIGG_unique.py
+### 95th percentile
+python scripts/norm_H3K27me3_Ferguson_Perc95_subtractIGG_unique.py
+python scripts/norm_SUZ12_Ferguson_Perc95_subtractIGG_unique.py
+python scripts/norm_EZH2_Ferguson_Perc95_subtractIGG_unique.py
+### 99th percentile
+python scripts/norm_H3K27me3_Ferguson_Perc99_subtractIGG_unique.py
+python scripts/norm_SUZ12_Ferguson_Perc99_subtractIGG_unique.py
+python scripts/norm_EZH2_Ferguson_Perc99_subtractIGG_unique.py
+
+
+
+
 
 #python scripts/norm_EZH1_Ferguson.py
 
@@ -2401,12 +2429,18 @@ sbatch scripts/BedToBigwig_Norm99_Ferguson_subtractIGG.sh # 34142137 ok
 sbatch scripts/BedToBigwig_Norm90_Ferguson_unique.sh # 35196105 ok
 sbatch scripts/BedToBigwig_Norm95_Ferguson_unique.sh # 35196140 ok
 sbatch scripts/BedToBigwig_Norm99_Ferguson_uniqu.sh # 35196143 ok
+## Unique bigwig (1bp resolution) - IGG subtracted
+sbatch scripts/BedToBigwig_Norm90_Ferguson_subtractIGG_unique.sh # 35213761 xxx
+sbatch scripts/BedToBigwig_Norm95_Ferguson_subtractIGG_unique.sh # 35213763 xxx
+sbatch scripts/BedToBigwig_Norm99_Ferguson_subtractIGG_unique.sh # 35213766 xxx
 
-# Subtract Igg signal
+
+
+# Subtract Igg signal (after normalization - likely not recommended)
 conda activate deeptools
 
 sbatch scripts/bigwigCompare_Norm_Ferguson_subtractIGG.sh # 33995282 ok
-sbatch scripts/bigwigCompare_Norm_Ferguson_subtractIGG_unique.sh # 35197178 xxx
+sbatch scripts/bigwigCompare_Norm_Ferguson_subtractIGG_unique.sh # 35197178 ok
 
 ```
 --> Replicates are very heterogeneous... Subtracting processed Igg same... Test with subtracting IGG from raw files after.
