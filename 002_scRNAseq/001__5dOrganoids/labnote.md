@@ -147,7 +147,7 @@ Let's use Seurat comonly used after processing instead
 ### Setup the Seurat object
 
 ```bash
-conda activate scRNAseq`
+conda activate scRNAseq
 ```
 
 

@@ -8321,7 +8321,17 @@ conda create -n deseq2_seurat_v1 \
   conda-forge::r-rcolorbrewer \
   -c conda-forge -c bioconda -y
 
-#--> FAIL, many mistake
+#-->FAIL!! Dependencies error on R
+
+
+# Try create conda env with R and start with Seurat
+conda create -n deseq2_seurat r-base # R4.4.2
+conda activate deseq2_seurat
+
+install.packages('Seurat') #--> FAIL
+conda install bioconda::r-seurat #--> FAIL
+#-->FAIL!! Fail, impompatible packages on conda install
+
 
 # Try create conda env with R and start with DESEQ2
 conda create -n deseq2_seurat_v1 r-base # R4.4.2
@@ -8330,17 +8340,23 @@ conda activate deseq2_seurat_v1
 if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 BiocManager::install("DESeq2") #--> FAIL
-conda install bioconda::bioconductor-deseq2 #--> XXX
-BiocManager::install("scater")
-
-# Try create conda env with R and start with Seurat
-conda create -n deseq2_seurat r-base # R4.4.2
-conda activate deseq2_seurat
-
-install.packages('Seurat') #--> XXX
+conda install bioconda::bioconductor-deseq2 #--> WORK
+BiocManager::install("scater") #--> FAIL for Cairo, png, ragg, ggrastr
+install.packages('ggrastr') #--> FAIL
+install.packages('devtools') #--> FAIL for miniUI, pkgdown, roxygen2, rversions, devtools
+devtools::install_github('VPetukhov/ggrastr', build_vignettes = TRUE)
+conda install bioconda::bioconductor-scater
 
 
-XXXY HERE
+# Try install DEseq2 in monocle3 env
+conda activate monocle3
+
+conda install bioconda::bioconductor-deseq2 #--> WORK
+
+BiocManager::install("scater") #--> FAIL for Cairo, ragg, ggrastr
+conda install bioconda::bioconductor-scater #--> WORK
+conda install bioconda::bioconductor-edger #--> WORK
+
 
 ```
 
@@ -8357,12 +8373,11 @@ Also DESEQ2 need integer as matrix; so will need to round it.
 
 
 
-
+XXXY HERE!
 
 
 ```bash
-conda activate scRNAseqV2
-conda activate SignacV5
+conda activate monocle3
 ```
 
 ```R

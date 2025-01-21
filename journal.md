@@ -194,6 +194,10 @@ R4.3.3
 Only `monocle3`, `Seurat_v_5`, `BiocManager` and `glmGamPoi`
 (Can run SCTransform in seurat v5)
 
+Also added in R: deseq2, edgeR, scater
+
+--> Can be used for DESEQ2 deg of scRNAseq
+
 ### monocle3_V1
 
 --> Same but also with `SeuratWrappers`

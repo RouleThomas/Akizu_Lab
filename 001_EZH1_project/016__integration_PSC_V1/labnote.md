@@ -145,6 +145,26 @@ sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_DiffBindTMM.sh #  xxx
 sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMM.sh #  xxx
 
 
+# THOR scaling factor from Ferguson unique norm99 - without IGG (SF directly collected from python code and copied to xlsx)
+sbatch scripts/THOR_PSC_WTvsKO_EZH2_FergusonUniqueNorm99_noInput.sh # 35227285 xxx
+sbatch scripts/THOR_PSC_WTvsKO_SUZ12_FergusonUniqueNorm99_noInput.sh # 35227286 xxx
+sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_FergusonUniqueNorm99_noInput.sh # 35227288 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_FergusonUniqueNorm99_noInput.sh # 35227289 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_FergusonUniqueNorm99_noInput.sh # 35227291 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_FergusonUniqueNorm99_noInput.sh # 35227292 xxx
+
+
+# THOR scaling factor from Ferguson unique norm99 - with IGG (SF directly collected from python code and copied to xlsx)
+sbatch scripts/THOR_PSC_WTvsKO_EZH2_FergusonUniqueNorm99.sh # 35227426 xxx
+sbatch scripts/THOR_PSC_WTvsKO_SUZ12_FergusonUniqueNorm99.sh # 35227427 xxx
+sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_FergusonUniqueNorm99.sh # 35227428 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_FergusonUniqueNorm99.sh # 35227430 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_FergusonUniqueNorm99.sh # 35227431 xxx
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_FergusonUniqueNorm99.sh # 35227432 xxx
+
+
+
+
 ```
 
 **Conclusion for replicate similarity**:
@@ -980,19 +1000,58 @@ Let's use directly the SF from DiffBind (not the reciprocal).
 conda activate deeptools
 
 # directly SF from DiffBind
-sbatch scripts/bamtobigwig-DBA_NORM_TMM_unique_SF_H3K27me3.sh # 32649115 xxx
-sbatch scripts/bamtobigwig-DBA_NORM_RLE_unique_SF_H3K27me3.sh # 32649206 xxx
-sbatch scripts/bamtobigwig-DBA_NORM_LIB_unique_SF_H3K27me3.sh # 32649234 xxx
+sbatch scripts/bamtobigwig-DBA_NORM_TMM_unique_SF_H3K27me3.sh # 32649115 ok
+sbatch scripts/bamtobigwig-DBA_NORM_RLE_unique_SF_H3K27me3.sh # 32649206 ok
+sbatch scripts/bamtobigwig-DBA_NORM_LIB_unique_SF_H3K27me3.sh # 32649234 ok
 
 # Reciprocal SF (=1/SF) from DiffBind
-sbatch scripts/bamtobigwig-DBA_NORM_TMM_unique_reciprocalSF_H3K27me3.sh # 32650322 xxx
+sbatch scripts/bamtobigwig-DBA_NORM_TMM_unique_reciprocalSF_H3K27me3.sh # 32650322 ok
 
 ```
 
---> using SF directly from DiffBind is bad, very heterogeneous replicates, for each norm method...
+--> using SF directly from DiffBind is bad, very heterogeneous replicates, for each norm method... (Reciprocal also bad)
+
+## Pearson correlation heatmap on bigwig signals
+
+```bash
+conda activate deeptools
 
 
-XXX If awful test reciprocal jut in case
+# Generate compile bigwig (.npz) files
+## H3K27me3
+sbatch scripts/multiBigwigSummary_H3K27me3_unique_raw.sh # 35225590 ok
+sbatch scripts/multiBigwigSummary_H3K27me3_unique_norm99.sh # 35225604 ok
+## EZH2
+sbatch scripts/multiBigwigSummary_EZH2_unique_raw.sh # 35225618 ok
+sbatch scripts/multiBigwigSummary_EZH2_unique_norm99.sh # 35225652 ok
+## SUZ12
+sbatch scripts/multiBigwigSummary_SUZ12_unique_raw.sh # 35225673 ok
+sbatch scripts/multiBigwigSummary_SUZ12_unique_norm99.sh # 35225733 ok
+
+
+
+
+# Plot
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_H3K27me3_unique_raw.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_KOEF1aEZH1_H3K27me3_005R PSC_KOEF1aEZH1_H3K27me3_006R PSC_KOEF1aEZH1_H3K27me3_013R1 PSC_KO_H3K27me3_006R PSC_KO_H3K27me3_013R1 PSC_KO_H3K27me3_014R2 PSC_WT_H3K27me3_006R PSC_WT_H3K27me3_010R PSC_WT_H3K27me3_013R1 \
+    --markers o o o o o o o o o \
+    --colors blue blue blue red red red black black black \
+    -o output/bigwig/multiBigwigSummary_H3K27me3_unique_raw_plotPCA.pdf
+
+plotPCA -in output/bigwig_Ferguson/multiBigwigSummary_H3K27me3_unique_norm99.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_KOEF1aEZH1_H3K27me3_005R PSC_KOEF1aEZH1_H3K27me3_006R PSC_KOEF1aEZH1_H3K27me3_013R1 PSC_KO_H3K27me3_006R PSC_KO_H3K27me3_013R1 PSC_KO_H3K27me3_014R2 PSC_WT_H3K27me3_006R PSC_WT_H3K27me3_010R PSC_WT_H3K27me3_013R1 \
+    --markers o o o o o o o o o \
+    --colors blue blue blue red red red black black black \
+    -o output/bigwig_Ferguson/multiBigwigSummary_H3K27me3_unique_norm99_plotPCA.pdf
+```
+
+--> Unique norm 99 whose work great show quite bad correlation in PCA plot... Maybe that's not a big deal...
+
 
 
 
@@ -2430,9 +2489,9 @@ sbatch scripts/BedToBigwig_Norm90_Ferguson_unique.sh # 35196105 ok
 sbatch scripts/BedToBigwig_Norm95_Ferguson_unique.sh # 35196140 ok
 sbatch scripts/BedToBigwig_Norm99_Ferguson_uniqu.sh # 35196143 ok
 ## Unique bigwig (1bp resolution) - IGG subtracted
-sbatch scripts/BedToBigwig_Norm90_Ferguson_subtractIGG_unique.sh # 35213761 xxx
-sbatch scripts/BedToBigwig_Norm95_Ferguson_subtractIGG_unique.sh # 35213763 xxx
-sbatch scripts/BedToBigwig_Norm99_Ferguson_subtractIGG_unique.sh # 35213766 xxx
+sbatch scripts/BedToBigwig_Norm90_Ferguson_subtractIGG_unique.sh # 35213761 ok
+sbatch scripts/BedToBigwig_Norm95_Ferguson_subtractIGG_unique.sh # 35213763 ok
+sbatch scripts/BedToBigwig_Norm99_Ferguson_subtractIGG_unique.sh # 35213766 ok
 
 
 
@@ -2448,7 +2507,7 @@ sbatch scripts/bigwigCompare_Norm_Ferguson_subtractIGG_unique.sh # 35197178 ok
 --> Using 75 percentile give same SF; tried 90, 95, 98
   --> 90 perform best! Almost identical replicate!!! Let's try subtracting IGG on raw before applying normalization see if improvement
 
---> Unique reads at 99percentile works GREAT! Replicate sure homogeneous
+--> Unique reads at 99percentile works GREAT! Replicate homogeneous (subtract IGG perform badly)
 
 
 Let's try to use sample-specific blacklist regions, for that I will use [Greenscreen](https://github.com/sklasfeld/GreenscreenProject) to generate a blacklist for all our samples:
