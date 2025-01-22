@@ -146,21 +146,21 @@ sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_DiffBindTMM.sh #  xxx
 
 
 # THOR scaling factor from Ferguson unique norm99 - without IGG (SF directly collected from python code and copied to xlsx)
-sbatch scripts/THOR_PSC_WTvsKO_EZH2_FergusonUniqueNorm99_noInput.sh # 35227285 xxx
-sbatch scripts/THOR_PSC_WTvsKO_SUZ12_FergusonUniqueNorm99_noInput.sh # 35227286 xxx
-sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_FergusonUniqueNorm99_noInput.sh # 35227288 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_FergusonUniqueNorm99_noInput.sh # 35227289 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_FergusonUniqueNorm99_noInput.sh # 35227291 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_FergusonUniqueNorm99_noInput.sh # 35227292 xxx
+sbatch scripts/THOR_PSC_WTvsKO_EZH2_FergusonUniqueNorm99_noInput.sh # 35227285 ok
+sbatch scripts/THOR_PSC_WTvsKO_SUZ12_FergusonUniqueNorm99_noInput.sh # 35227286 ok
+sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_FergusonUniqueNorm99_noInput.sh # 35227288 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_FergusonUniqueNorm99_noInput.sh # 35227289 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_FergusonUniqueNorm99_noInput.sh # 35227291 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_FergusonUniqueNorm99_noInput.sh # 35227292 ok
 
 
 # THOR scaling factor from Ferguson unique norm99 - with IGG (SF directly collected from python code and copied to xlsx)
-sbatch scripts/THOR_PSC_WTvsKO_EZH2_FergusonUniqueNorm99.sh # 35227426 xxx
-sbatch scripts/THOR_PSC_WTvsKO_SUZ12_FergusonUniqueNorm99.sh # 35227427 xxx
-sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_FergusonUniqueNorm99.sh # 35227428 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_FergusonUniqueNorm99.sh # 35227430 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_FergusonUniqueNorm99.sh # 35227431 xxx
-sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_FergusonUniqueNorm99.sh # 35227432 xxx
+sbatch scripts/THOR_PSC_WTvsKO_EZH2_FergusonUniqueNorm99.sh # 35227426 ok
+sbatch scripts/THOR_PSC_WTvsKO_SUZ12_FergusonUniqueNorm99.sh # 35227427 ok
+sbatch scripts/THOR_PSC_WTvsKO_H3K27me3_FergusonUniqueNorm99.sh # 35227428 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_EZH2_FergusonUniqueNorm99.sh # 35227430 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_FergusonUniqueNorm99.sh # 35227431 ok
+sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_FergusonUniqueNorm99.sh # 35227432 ok
 
 
 
@@ -177,7 +177,7 @@ sbatch scripts/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_FergusonUniqueNorm99.sh # 352274
 - *SpikeIn EpiCypher normalization*: very bad, replicate very different (potential over correction, SF are huge values)
 - *SpikeIn EpiCypher DiffBind TMM normalization*: perform OK, less homogeneous than HOX normalization...
 - *DiffBindTMM*: perform OK bad, less homogeneous than HOX normalization...
-
+- *FergusonUniqueNorm99*: very good, replicate cluster very well together (*FergusonUniqueNorm99_noInput* perform similarly)
 
 
 --> *Error* `IndexError: cannot do a non-empty take from an empty axes.` on `scripts/THOR_PSC_WTvsKO_EZH1_TMM.sh`. Probably because WT vs KO, and KO EZH1 as no signal at all... Weird comparison! That is a control...

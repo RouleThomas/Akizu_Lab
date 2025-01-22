@@ -5686,6 +5686,8 @@ Take ressource
 module load R/4.2.2
 srun --mem=100g --pty bash -l
 R
+# if using new HPC cluster
+conda activate deseq2
 ```
 Go in R
 ```R
@@ -5804,6 +5806,8 @@ stripped_gene_ids <- sub("\\..*", "", gene_ids)
 gene_symbols <- mapIds(org.Hs.eg.db, keys = stripped_gene_ids,
                        column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
 res$GeneSymbol <- gene_symbols
+### Complete table with GeneSymbol
+write.table(res, file = "output/deseq2_hg38/res_NPC_KO_vs_NPC_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
 
 
 
@@ -7000,6 +7004,8 @@ Take ressource
 module load R/4.2.2
 srun --mem=50g --pty bash -l
 R
+# With new cluster
+conda activate deseq2
 ```
 Go in R
 ```R
@@ -7060,7 +7066,7 @@ counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pul
 ### Not including replicate
 coldata_raw <- data.frame(samples) %>%
   separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
-  select(-replicate) %>%
+  dplyr::select(-replicate) %>%
   bind_cols(data.frame(samples))
 ### Including replicate
 coldata_raw <- data.frame(samples) %>%
@@ -7119,6 +7125,8 @@ stripped_gene_ids <- sub("\\..*", "", gene_ids)
 gene_symbols <- mapIds(org.Hs.eg.db, keys = stripped_gene_ids,
                        column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
 res$GeneSymbol <- gene_symbols
+### Complete table with GeneSymbol
+write.table(res, file = "output/deseq2_hg38/res_ESC_KO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
 
 # FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
 keyvals <- ifelse(
@@ -7165,8 +7173,8 @@ upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldC
 downregulated <- res[res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
 downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
 #### Save
-write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05_ESC_KO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
-write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05_ESC_KO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05fc05_ESC_KO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05fc05_ESC_KO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
 
 
@@ -7233,6 +7241,8 @@ Take ressource
 module load R/4.2.2
 srun --mem=50g --pty bash -l
 R
+# with new HPC cluster
+conda activate deseq2
 ```
 Go in R
 ```R
@@ -7293,7 +7303,7 @@ counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pul
 ### Not including replicate
 coldata_raw <- data.frame(samples) %>%
   separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
-  select(-replicate) %>%
+  dplyr::select(-replicate) %>%
   bind_cols(data.frame(samples))
 ### Including replicate
 coldata_raw <- data.frame(samples) %>%
@@ -7350,6 +7360,8 @@ stripped_gene_ids <- sub("\\..*", "", gene_ids)
 gene_symbols <- mapIds(org.Hs.eg.db, keys = stripped_gene_ids,
                        column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
 res$GeneSymbol <- gene_symbols
+### Complete table with GeneSymbol
+write.table(res, file = "output/deseq2_hg38/res_ESC_HET_vs_ESC_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
 
 # FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
 keyvals <- ifelse(
@@ -7396,8 +7408,8 @@ upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldC
 downregulated <- res[res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
 downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.5 & res$padj < 5e-2, ]
 #### Save
-write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05_ESC_HET_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
-write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05_ESC_HET_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(upregulated$GeneSymbol, file = "output/deseq2_hg38/upregulated_q05fc05_ESC_HET_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2_hg38/downregulated_q05fc05_ESC_HET_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
 
 
