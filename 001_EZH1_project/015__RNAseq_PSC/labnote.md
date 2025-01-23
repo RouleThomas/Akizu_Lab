@@ -353,12 +353,16 @@ sbatch scripts/bigwigmerge_TPM.sh # 28990349 ok
 
 ## Pearson correlation heatmap on bigwig signals
 
+- Sample from this *015/Jasmine* experiment (`multiBigwigSummary_all`)
+- Sample between this *015/Jasmine* and *001/Carolina* experiment (multiBigwigSummary_001015)
 
 
 ```bash
 conda activate deeptools
 # Generate compile bigwig (.npz) files
 sbatch scripts/multiBigwigSummary_all.sh # 28990409 ok
+sbatch scripts/multiBigwigSummary_001015.sh # 35427778 xxx
+
 
 # Plot all
 ## PCA
@@ -368,6 +372,17 @@ plotPCA -in output/bigwig/multiBigwigSummary_all.npz \
     --labels WT_R1 WT_R2 WT_R3 KO_R1 KO_R2 KO_R3 KOEF1aEZH1_R1 KOEF1aEZH1_R2 KOEF1aEZH1_R3 \
     --colors black black black red red red blue blue blue \
     -o output/bigwig/multiBigwigSummary_all_plotPCA.pdf
+
+
+XXXY TO RUN XXX
+plotPCA -in output/bigwig/multiBigwigSummary_001015.npz \
+    --transpose \
+    --ntop 0 \
+    --labels WT_R1 WT_R2 WT_R3 KO_R1 KO_R2 KO_R3 KOEF1aEZH1_R1 KOEF1aEZH1_R2 KOEF1aEZH1_R3 WT_R1 WT_R2 WT_R3 KO_R1 KO_R2 KO_R3 \
+    --colors black black black red red red blue blue blue grey grey grey lightred lightred lightred \
+    -o output/bigwig/multiBigwigSummary_001015_plotPCA.pdf
+XXXXXXXXXXXXXX
+
 
 ## Heatmap
 plotCorrelation \
