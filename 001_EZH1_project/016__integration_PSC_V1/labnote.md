@@ -836,6 +836,170 @@ thor_splitted %>%
   summarise(n = n())
 
 
+
+
+# SUZ12 WTvsKOEF1aEZH1 Ferguson Unique Norm99 (no Input) THOR_PSC_WTvsKOEF1aEZH1_SUZ12_FergusonUniqueNorm99_noInput
+diffpeaks <- read_tsv("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_FergusonUniqueNorm99_noInput/PSCWTvsKOEF1aEZH1SUZ12FergusonUniqueNorm99noInput-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KOEF1aEZH1", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2", "count_WT_3"), sep = ":", convert = TRUE) %>%
+  separate(count_KOEF1aEZH1, into = c("count_KOEF1aEZH1_1","count_KOEF1aEZH1_2", "count_KOEF1aEZH1_3"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KOEF1aEZH1_1+count_KOEF1aEZH1_2+count_KOEF1aEZH1_3) / (count_WT_1+count_WT_2+count_WT_3))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_FergusonUniqueNorm99_noInput/log2FC.pdf", width=5, height=5)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KOEF1aEZH1") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_FergusonUniqueNorm99_noInput/log2FC_qval20.pdf", width=5, height=5)
+thor_splitted %>%
+  filter(qval > 20) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KOEF1aEZH1_qval20") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 30) %>%
+  write_tsv("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_SUZ12_FergusonUniqueNorm99_noInput/THOR_qval30.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 10) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
+
+# SUZ12 WTvsKO Ferguson Unique Norm99 (no Input) THOR_PSC_WTvsKO_SUZ12_FergusonUniqueNorm99_noInput
+diffpeaks <- read_tsv("output/THOR/THOR_PSC_WTvsKO_SUZ12_FergusonUniqueNorm99_noInput/PSCWTvsKOSUZ12FergusonUniqueNorm99noInput-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2", "count_WT_3"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2", "count_KO_3"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2+count_KO_3) / (count_WT_1+count_WT_2+count_WT_3))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_PSC_WTvsKO_SUZ12_FergusonUniqueNorm99_noInput/log2FC.pdf", width=5, height=5)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KO") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_PSC_WTvsKO_SUZ12_FergusonUniqueNorm99_noInput/log2FC_qval20.pdf", width=5, height=5)
+thor_splitted %>%
+  filter(qval > 20) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KO_qval20") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 20) %>%
+  write_tsv("output/THOR/THOR_PSC_WTvsKO_SUZ12_FergusonUniqueNorm99_noInput/THOR_qval20.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 20) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
+
+
+# EZH2 WTvsKOEF1aEZH1 Ferguson Unique Norm99 (no Input) THOR_PSC_WTvsKOEF1aEZH1_EZH2_FergusonUniqueNorm99_noInput
+diffpeaks <- read_tsv("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_EZH2_FergusonUniqueNorm99_noInput/PSCWTvsKOEF1aEZH1EZH2FergusonUniqueNorm99noInput-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KOEF1aEZH1", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2", "count_WT_3"), sep = ":", convert = TRUE) %>%
+  separate(count_KOEF1aEZH1, into = c("count_KOEF1aEZH1_1","count_KOEF1aEZH1_2", "count_KOEF1aEZH1_3"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KOEF1aEZH1_1+count_KOEF1aEZH1_2+count_KOEF1aEZH1_3) / (count_WT_1+count_WT_2+count_WT_3))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_EZH2_FergusonUniqueNorm99_noInput/log2FC.pdf", width=5, height=5)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KOEF1aEZH1") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_EZH2_FergusonUniqueNorm99_noInput/log2FC_qval20.pdf", width=5, height=5)
+thor_splitted %>%
+  filter(qval > 20) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KOEF1aEZH1_qval20") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 50) %>%
+  write_tsv("output/THOR/THOR_PSC_WTvsKOEF1aEZH1_EZH2_FergusonUniqueNorm99_noInput/THOR_qval50.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 20) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
+
+# EZH2 WTvsKO Ferguson Unique Norm99 (no Input) THOR_PSC_WTvsKO_EZH2_FergusonUniqueNorm99_noInput
+diffpeaks <- read_tsv("output/THOR/THOR_PSC_WTvsKO_EZH2_FergusonUniqueNorm99_noInput/PSCWTvsKOEZH2FergusonUniqueNorm99noInput-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2", "count_WT_3"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2", "count_KO_3"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2+count_KO_3) / (count_WT_1+count_WT_2+count_WT_3))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_PSC_WTvsKO_EZH2_FergusonUniqueNorm99_noInput/log2FC.pdf", width=5, height=5)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KO") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_PSC_WTvsKO_EZH2_FergusonUniqueNorm99_noInput/log2FC_qval10.pdf", width=5, height=5)
+thor_splitted %>%
+  filter(qval > 10) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("PSC_WT vs KO_qval10") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 30) %>%
+  write_tsv("output/THOR/THOR_PSC_WTvsKO_EZH2_FergusonUniqueNorm99_noInput/THOR_qval30.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 10) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+
+
+
+
+
 XXXY PURSUE FOR EZH2 and SUZ12 XXX
 
 ```
@@ -858,6 +1022,10 @@ DiffBindTMMEpiCypher
 FergusonUniqueNorm99_noInput
 - WTvsKO_H3K27me3: qval30
 - WTvsKOEF1aEZH1_H3K27me3: qval30
+- WTvsKO_SUZ12: qval20
+- WTvsKOEF1aEZH1_SUZ12: qval20
+- WTvsKOEF1aEZH1_EZH2: qval10
+
 
 
 # DiffBind diff binding
@@ -1007,6 +1175,98 @@ sbatch scripts/matrix_TSS_5kb_PSC_EZH1EZH2SUZ12H3K27me3_WTKOEF1aEZH1merge_DEGWTv
 
 --> *TMM Default normalization* leads to very different Replicate! It does not work well at all...
 
+
+
+## Bigwig Ferguson
+
+### Median tracks
+
+Let's generate median tracks for Ferguson and THOR_Ferguson bigwigs (Norm99 unique)
+
+**Run wiggletools:**
+```bash
+conda activate BedToBigwig
+
+# bigwig_Ferguson
+sbatch scripts/bigwigmerge_Norm99_Ferguson_unique-H3K27me3.sh # 35440488 ok
+sbatch scripts/bigwigmerge_Norm99_Ferguson_unique-EZH2.sh # 35440565 ok
+sbatch scripts/bigwigmerge_Norm99_Ferguson_unique-SUZ12.sh # 35440572 ok
+
+# bigwig_THOR_Ferguson
+sbatch scripts/bigwigmerge_THOR_FergusonUniqueNorm99-H3K27me3.sh # 35440624 ok
+sbatch scripts/bigwigmerge_THOR_FergusonUniqueNorm99-EZH2.sh # 35440625 ok
+sbatch scripts/bigwigmerge_THOR_FergusonUniqueNorm99-SUZ12.sh # 35440635 ok
+
+
+
+
+```
+*NOTE: bigwig are merge into 1 bedgraph which is then converted into 1 bigwig (wiggletools cannot output bigwig directly so need to pass by bedgraph or wiggle in between)*
+
+
+
+### deepTool plots
+
+Let's generate deepTool plot for all genes; peak/gene with changes of H3K27me3 levels.
+
+
+```bash
+conda activate deeptools
+# All genes
+## H3K27me3
+sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh # 35441130 xxx
+sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh # 354411422 xxx
+
+sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 354411514 xxx
+sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 354411517 xxx
+
+## SUZ12
+sbatch scripts/matrix_TSS_10kb_PSC_SUZ12_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh # 354411439 xxx
+sbatch scripts/matrix_TSS_5kb_PSC_SUZ12_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh # 354411452 xxx
+
+sbatch scripts/matrix_TSS_10kb_PSC_SUZ12_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 35441521 xxx
+sbatch scripts/matrix_TSS_5kb_PSC_SUZ12_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 35441525 xxx
+
+## EZH2
+sbatch scripts/matrix_TSS_10kb_PSC_EZH2_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh # 354411499 xxx
+sbatch scripts/matrix_TSS_5kb_PSC_EZH2_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh # 354411506 xxx
+
+sbatch scripts/matrix_TSS_10kb_PSC_EZH2_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 35441551 xxx
+sbatch scripts/matrix_TSS_5kb_PSC_EZH2_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 35441554 xxx
+
+
+# Peak with H3K27me3 changes
+## separate peak gain lost
+### WT vs KO
+awk -F'\t' '$18 > 1' output/THOR/THOR_PSC_WTvsKO_H3K27me3_FergusonUniqueNorm99_noInput/THOR_qval30.bed > output/THOR/THOR_PSC_WTvsKO_H3K27me3_FergusonUniqueNorm99_noInput/THOR_qval30_positive.bed
+awk -F'\t' '$18 < 1' output/THOR/THOR_PSC_WTvsKO_H3K27me3_FergusonUniqueNorm99_noInput/THOR_qval30.bed > output/THOR/THOR_PSC_WTvsKO_H3K27me3_FergusonUniqueNorm99_noInput/THOR_qval30_negative.bed
+### WT vs KOEF1aEZH1
+awk -F'\t' '$18 > 1' output/THOR/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_FergusonUniqueNorm99_noInput/THOR_qval30.bed > output/THOR/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_FergusonUniqueNorm99_noInput/THOR_qval30_positive.bed
+awk -F'\t' '$18 < 1' output/THOR/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_FergusonUniqueNorm99_noInput/THOR_qval30.bed > output/THOR/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_FergusonUniqueNorm99_noInput/THOR_qval30_negative.bed
+
+## Check signal in region/peak with H3K27me3 changes btwn WT vs KO
+sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3EZH2SUZ12_WTKOKOEF1aEZH1-H3K27me3_WTvsKO_THORq30_peak-THOR_FergusonUniqueNorm99.sh # 35441983 xxx
+sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3EZH2SUZ12_WTKOKOEF1aEZH1-H3K27me3_WTvsKO_THORq30_peak-THOR_FergusonUniqueNorm99.sh # 35441990 xxx
+
+sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3EZH2SUZ12_WTKOKOEF1aEZH1-H3K27me3_WTvsKO_THORq30_peak-FergusonUniqueNorm99.sh # 35442396 xxx
+sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3EZH2SUZ12_WTKOKOEF1aEZH1-H3K27me3_WTvsKO_THORq30_peak-FergusonUniqueNorm99.sh # 35442397 xxx
+
+## Check signal in region/peak with H3K27me3 changes btwn WT vs KOEF1aEZH1
+sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3EZH2SUZ12_WTKOEF1aEZH1KO-H3K27me3_WTvsKOEF1aEZH1_THORq30_peak-THOR_FergusonUniqueNorm99.sh # 35442072 xxx
+sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3EZH2SUZ12_WTKOEF1aEZH1KO-H3K27me3_WTvsKOEF1aEZH1_THORq30_peak-THOR_FergusonUniqueNorm99.sh # 35442074 xxx
+
+sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3EZH2SUZ12_WTKOEF1aEZH1KO-H3K27me3_WTvsKOEF1aEZH1_THORq30_peak-FergusonUniqueNorm99.sh # 35442504 xxx
+sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3EZH2SUZ12_WTKOEF1aEZH1KO-H3K27me3_WTvsKOEF1aEZH1_THORq30_peak-FergusonUniqueNorm99.sh # 35442538 xxx
+
+
+
+
+```
+
+
+--> Bigwig_Ferguson vs THOR_bigwig_Ferguson: XXX
+
+--> XXX
 
 
 
