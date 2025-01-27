@@ -23,3 +23,26 @@ plotHeatmap -m output/deeptools/matrix_TSS_5kb_PSC_EZH2_WTKOKOEF1aEZH1-FergusonU
     --heatmapWidth 2
 
 
+
+# interactive
+
+plotHeatmap -m output/deeptools/matrix_TSS_5kb_PSC_EZH2_WTKOKOEF1aEZH1-FergusonUniqueNorm99.gz \
+    -out output/deeptools/matrix_TSS_5kb_PSC_EZH2_WTKOKOEF1aEZH1-FergusonUniqueNorm99_heatmap_colorSmall2.pdf \
+    --samplesLabel "WT_EZH2" "KO_EZH2" "KOEF1aEZH1_EZH2" \
+    --colorMap bwr \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --zMax 0.5
+
+
+plotProfile -m output/deeptools/matrix_TSS_5kb_PSC_EZH2_WTKOKOEF1aEZH1-FergusonUniqueNorm99.gz \
+    -out output/deeptools/matrix_TSS_5kb_PSC_EZH2_WTKOKOEF1aEZH1-FergusonUniqueNorm99_plotProfile1.pdf \
+    --samplesLabel "WT_EZH2" "KO_EZH2" "KOEF1aEZH1_EZH2" \
+    --colors black red blue \
+    --perGroup
+
+
+
+
+

@@ -1188,9 +1188,17 @@ Let's generate median tracks for Ferguson and THOR_Ferguson bigwigs (Norm99 uniq
 conda activate BedToBigwig
 
 # bigwig_Ferguson
+## Calculate median
 sbatch scripts/bigwigmerge_Norm99_Ferguson_unique-H3K27me3.sh # 35440488 ok
 sbatch scripts/bigwigmerge_Norm99_Ferguson_unique-EZH2.sh # 35440565 ok
 sbatch scripts/bigwigmerge_Norm99_Ferguson_unique-SUZ12.sh # 35440572 ok
+## smooth bigwig
+conda activate deeptools
+
+sbatch scripts/bigwigsmooth_Norm99_Ferguson_unique.sh # 35640884 xxxy
+
+
+
 
 # bigwig_THOR_Ferguson
 sbatch scripts/bigwigmerge_THOR_FergusonUniqueNorm99-H3K27me3.sh # 35440624 ok
@@ -1203,6 +1211,7 @@ sbatch scripts/bigwigmerge_THOR_FergusonUniqueNorm99-SUZ12.sh # 35440635 ok
 ```
 *NOTE: bigwig are merge into 1 bedgraph which is then converted into 1 bigwig (wiggletools cannot output bigwig directly so need to pass by bedgraph or wiggle in between)*
 
+--> XXXY Smoothing bigwig using `multiBigwigSummary` work great! XXXY HERE !!!! TO CHANGE ?? XXX
 
 
 ### deepTool plots
@@ -1214,25 +1223,25 @@ Let's generate deepTool plot for all genes; peak/gene with changes of H3K27me3 l
 conda activate deeptools
 # All genes
 ## H3K27me3
-sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh # 35441130 xxx
-sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh # 354411422 xxx
+sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh # 35441130 ok
+sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh # 354411422 ok
 
-sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 354411514 xxx
-sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 354411517 xxx
+sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 354411514 ok
+sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 354411517 ok
 
 ## SUZ12
-sbatch scripts/matrix_TSS_10kb_PSC_SUZ12_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh # 354411439 xxx
-sbatch scripts/matrix_TSS_5kb_PSC_SUZ12_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh # 354411452 xxx
+sbatch scripts/matrix_TSS_10kb_PSC_SUZ12_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh # 354411439 ok
+sbatch scripts/matrix_TSS_5kb_PSC_SUZ12_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh # 354411452 ok
 
-sbatch scripts/matrix_TSS_10kb_PSC_SUZ12_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 35441521 xxx
-sbatch scripts/matrix_TSS_5kb_PSC_SUZ12_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 35441525 xxx
+sbatch scripts/matrix_TSS_10kb_PSC_SUZ12_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 35441521 ok
+sbatch scripts/matrix_TSS_5kb_PSC_SUZ12_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 35441525 ok
 
 ## EZH2
-sbatch scripts/matrix_TSS_10kb_PSC_EZH2_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh # 354411499 xxx
-sbatch scripts/matrix_TSS_5kb_PSC_EZH2_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh # 354411506 xxx
+sbatch scripts/matrix_TSS_10kb_PSC_EZH2_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh # 354411499 ok
+sbatch scripts/matrix_TSS_5kb_PSC_EZH2_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh # 354411506 ok
 
-sbatch scripts/matrix_TSS_10kb_PSC_EZH2_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 35441551 xxx
-sbatch scripts/matrix_TSS_5kb_PSC_EZH2_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 35441554 xxx
+sbatch scripts/matrix_TSS_10kb_PSC_EZH2_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 35441551 ok
+sbatch scripts/matrix_TSS_5kb_PSC_EZH2_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 35441554 ok
 
 
 # Peak with H3K27me3 changes
@@ -1245,28 +1254,29 @@ awk -F'\t' '$18 > 1' output/THOR/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_FergusonUnique
 awk -F'\t' '$18 < 1' output/THOR/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_FergusonUniqueNorm99_noInput/THOR_qval30.bed > output/THOR/THOR_PSC_WTvsKOEF1aEZH1_H3K27me3_FergusonUniqueNorm99_noInput/THOR_qval30_negative.bed
 
 ## Check signal in region/peak with H3K27me3 changes btwn WT vs KO
-sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3EZH2SUZ12_WTKOKOEF1aEZH1-H3K27me3_WTvsKO_THORq30_peak-THOR_FergusonUniqueNorm99.sh # 35441983 xxx
-sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3EZH2SUZ12_WTKOKOEF1aEZH1-H3K27me3_WTvsKO_THORq30_peak-THOR_FergusonUniqueNorm99.sh # 35441990 xxx
+sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3EZH2SUZ12_WTKOKOEF1aEZH1-H3K27me3_WTvsKO_THORq30_peak-THOR_FergusonUniqueNorm99.sh # 35441983 ok
+sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3EZH2SUZ12_WTKOKOEF1aEZH1-H3K27me3_WTvsKO_THORq30_peak-THOR_FergusonUniqueNorm99.sh # 35441990 ok
 
-sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3EZH2SUZ12_WTKOKOEF1aEZH1-H3K27me3_WTvsKO_THORq30_peak-FergusonUniqueNorm99.sh # 35442396 xxx
-sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3EZH2SUZ12_WTKOKOEF1aEZH1-H3K27me3_WTvsKO_THORq30_peak-FergusonUniqueNorm99.sh # 35442397 xxx
+sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3EZH2SUZ12_WTKOKOEF1aEZH1-H3K27me3_WTvsKO_THORq30_peak-FergusonUniqueNorm99.sh # 35442396 ok
+sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3EZH2SUZ12_WTKOKOEF1aEZH1-H3K27me3_WTvsKO_THORq30_peak-FergusonUniqueNorm99.sh # 35442397 ok
 
 ## Check signal in region/peak with H3K27me3 changes btwn WT vs KOEF1aEZH1
-sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3EZH2SUZ12_WTKOEF1aEZH1KO-H3K27me3_WTvsKOEF1aEZH1_THORq30_peak-THOR_FergusonUniqueNorm99.sh # 35442072 xxx
-sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3EZH2SUZ12_WTKOEF1aEZH1KO-H3K27me3_WTvsKOEF1aEZH1_THORq30_peak-THOR_FergusonUniqueNorm99.sh # 35442074 xxx
+sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3EZH2SUZ12_WTKOEF1aEZH1KO-H3K27me3_WTvsKOEF1aEZH1_THORq30_peak-THOR_FergusonUniqueNorm99.sh # 35442072 ok
+sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3EZH2SUZ12_WTKOEF1aEZH1KO-H3K27me3_WTvsKOEF1aEZH1_THORq30_peak-THOR_FergusonUniqueNorm99.sh # 35442074 ok
 
-sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3EZH2SUZ12_WTKOEF1aEZH1KO-H3K27me3_WTvsKOEF1aEZH1_THORq30_peak-FergusonUniqueNorm99.sh # 35442504 xxx
-sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3EZH2SUZ12_WTKOEF1aEZH1KO-H3K27me3_WTvsKOEF1aEZH1_THORq30_peak-FergusonUniqueNorm99.sh # 35442538 xxx
-
-
-
-
+sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3EZH2SUZ12_WTKOEF1aEZH1KO-H3K27me3_WTvsKOEF1aEZH1_THORq30_peak-FergusonUniqueNorm99.sh # 35442504 ok
+sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3EZH2SUZ12_WTKOEF1aEZH1KO-H3K27me3_WTvsKOEF1aEZH1_THORq30_peak-FergusonUniqueNorm99.sh # 35442538 ok
 ```
 
 
---> Bigwig_Ferguson vs THOR_bigwig_Ferguson: XXX
+--> Bigwig_Ferguson vs THOR_bigwig_Ferguson: Look mostly similar; but:
+  - THOR plot is more smoothed, cleaner to show than bigwig_Ferguson
+  - H3K27me3 and SUZ12 same
+  - EZH2 is different!! THOR show less EZH2 in mutants; Ferguson show more...
 
---> XXX
+  --> Lets prefer Ferguson method; conclusion more in agreement with our expectations. And we have more control on the normalization than THOR (not clear what THOR do). So generate smoothed Ferguson (bin 50 as in the paper)
+
+--> I did not check THOR plot q30 carefully as NOT sure I can 'trust' THOR normalization method.
 
 
 
@@ -3496,12 +3506,18 @@ Summary pipeline:
 
 
 ```bash
-# Convert bam to bigwig (keeping duplicate!)
 conda activate deeptools
 
+# Convert bam to bigwig (keeping duplicate!)
 sbatch scripts/bamtobigwig_Ferguson_1.sh # 33969577 ok
 sbatch scripts/bamtobigwig_Ferguson_2.sh # 33969578 ok
 sbatch scripts/bamtobigwig_Ferguson_3.sh # 33969581 ok
+
+
+# Convert bam to bigwig (unique! 50bp resolution)
+sbatch scripts/bamtobigwig_Ferguson50bp_1.sh # 35637227 ok
+sbatch scripts/bamtobigwig_Ferguson50bp_2.sh # 35637229 ok
+sbatch scripts/bamtobigwig_Ferguson50bp_3.sh # 35637230 ok 
 
 # Convert bigwig to bedgraph
 conda activate BedToBigwig
@@ -3513,11 +3529,14 @@ sbatch scripts/BedToBigwig_Ferguson_subtractIGG.sh # 34123124 ok
 sbatch scripts/BedToBigwig_Ferguson_unique.sh # 35195181 ok
 ## Unique bigwig (1bp resolution) - IGG subtracted
 sbatch scripts/BedToBigwig_Ferguson_subtractIGG_unique.sh # 35204218 ok
+## Unique bigwig (50bp resolution)
+sbatch scripts/BedToBigwig_Ferguson50bp_unique.sh # 35637290 ok
 
 
 
 
 # Remove blacklist regions
+conda activate BedToBigwig
 ## Default bigwig bin50
 sbatch scripts/BedintersectBlacklist_Ferguson.sh # 33974981 ok
 ## IGG subtracted bigwig bin50
@@ -3525,7 +3544,11 @@ sbatch scripts/BedintersectBlacklist_Ferguson_subtractIGG.sh # 34124084 ok
 ## Unique bigwig (1bp resolution)
 sbatch scripts/BedintersectBlacklist_Ferguson_unique.sh # 35195293 ok
 ## Unique bigwig (1bp resolution) - IGG subtracted
-sbatch scripts/BedintersectBlacklist_Ferguson_subtractIGG_unique.sh # 35204304 xxx
+sbatch scripts/BedintersectBlacklist_Ferguson_subtractIGG_unique.sh # 35204304 ok
+## Unique bigwig (50bp resolution)
+sbatch scripts/BedintersectBlacklist_Ferguson50bp_unique.sh # 35637868 ok
+
+
 ```
 
 Use Python to identify local maxima, quantify the height for the 75-99th percentile peak
@@ -3542,6 +3565,8 @@ python scripts/LocalMaxima_Ferguson_subtractIGG.py
 python scripts/LocalMaxima_Ferguson_unique.py
 ## Unique bigwig (1bp resolution) - IGG subtracted
 python scripts/LocalMaxima_Ferguson_subtractIGG_unique.py
+## Unique bigwig (50bp resolution)
+python scripts/LocalMaxima_Ferguson50bp_unique.py
 
 
 
@@ -3565,6 +3590,10 @@ python scripts/Percentile90_Ferguson_unique.py
 python scripts/Percentile99_Ferguson_subtractIGG_unique.py
 python scripts/Percentile95_Ferguson_subtractIGG_unique.py
 python scripts/Percentile90_Ferguson_subtractIGG_unique.py
+## Unique bigwig (50bp resolution)
+python scripts/Percentile99_Ferguson50bp_unique.py
+
+
 
 
 # normalize AB per AB (using WT sample 1st replicate as reference)
@@ -3633,7 +3662,11 @@ python scripts/norm_SUZ12_Ferguson_Perc99_subtractIGG_unique.py
 python scripts/norm_EZH2_Ferguson_Perc99_subtractIGG_unique.py
 
 
-
+## Unique bigwig (50bp resolution)
+### 99th percentile
+python scripts/norm_H3K27me3_Ferguson50bp_Perc99_unique.py
+python scripts/norm_SUZ12_Ferguson50bp_Perc99_unique.py
+python scripts/norm_EZH2_Ferguson50bp_Perc99_unique.py
 
 
 #python scripts/norm_EZH1_Ferguson.py
@@ -3649,7 +3682,7 @@ python scripts/norm_IGG_Ferguson_v2.py
 - *NOTE: **Local Maxima** = value is higher than its neighboring points. In the context of your CUT&RUN data (or other genomic data), local maxima refer to genomic positions where the signal intensity (e.g., read depth or coverage in the bedGraph file) is greater than the signal in the surrounding regions.*
 - *NOTE: **Percentile 99** = signal level that is greater than 99% of all other signal values in the dataset.*
 - *NOTE: in `norm_*_v2.py` I tested `scaling_factor = percentile_value / reference_value` instead of `scaling_factor = reference_value / percentile_value` and it is not good!! **V2 is NOT GOOD***
-
+- *NOTE:SF obtained from unique 1bp and unique 50bp are very different!*
 
 Convert normalized bedGraph back to bigwig
 
@@ -3676,6 +3709,8 @@ sbatch scripts/BedToBigwig_Norm99_Ferguson_uniqu.sh # 35196143 ok
 sbatch scripts/BedToBigwig_Norm90_Ferguson_subtractIGG_unique.sh # 35213761 ok
 sbatch scripts/BedToBigwig_Norm95_Ferguson_subtractIGG_unique.sh # 35213763 ok
 sbatch scripts/BedToBigwig_Norm99_Ferguson_subtractIGG_unique.sh # 35213766 ok
+# Unique bigwig (50bp resolution)
+sbatch scripts/BedToBigwig_Norm99_Ferguson50bp_unique.sh # 35639537 ok
 
 
 
@@ -3692,6 +3727,7 @@ sbatch scripts/bigwigCompare_Norm_Ferguson_subtractIGG_unique.sh # 35197178 ok
   --> 90 perform best! Almost identical replicate!!! Let's try subtracting IGG on raw before applying normalization see if improvement
 
 --> Unique reads at 99percentile works GREAT! Replicate homogeneous (subtract IGG perform badly)
+  --> 50bp perform badly! Let's try instead to smooth the 1bp version
 
 
 Let's try to use sample-specific blacklist regions, for that I will use [Greenscreen](https://github.com/sklasfeld/GreenscreenProject) to generate a blacklist for all our samples:

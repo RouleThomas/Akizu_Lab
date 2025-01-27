@@ -8373,8 +8373,6 @@ Also DESEQ2 need integer as matrix; so will need to round it.
 
 
 
-XXXY HERE!
-
 
 ```bash
 conda activate monocle3
@@ -8382,19 +8380,14 @@ conda activate monocle3
 
 ```R
 
-library("SoupX") 
-library("Seurat")
 library("tidyverse")
-library("dplyr")
+library("apeglm")
+library("scater")
 library("Seurat")
-library("patchwork")
-library("sctransform")
-library("glmGamPoi")
-library("celldex")
-library("SingleR")
-library("gprofiler2") # for human mouse gene conversion for cell cycle genes
 library("cowplot")
+library("Matrix.utils")
 library("edgeR")
+library("dplyr")
 library("magrittr")
 library("Matrix")
 library("purrr")
@@ -8403,15 +8396,13 @@ library("S4Vectors")
 library("tibble")
 library("SingleCellExperiment")
 library("pheatmap")
-library("apeglm")
 library("png")
 library("DESeq2")
 library("RColorBrewer")
-library("scater") 
+
 
 set.seed(42)
 
-library(Matrix.utils)# NOT INSTALL 
 
 
 
@@ -8457,35 +8448,36 @@ WT_Kcnc1_p180_CB_1step.sct <- SetAssayData(WT_Kcnc1_p180_CB_1step.sct, slot = "c
 # DEG for p14 CEREBELLUM #################################################################################
 ############################################################################################################
 
-WT_Kcnc1_p14_CB <- as.SingleCellExperiment(WT_Kcnc1_p14_CB_1step.sct, assay = "RNA")
+sce <- as.SingleCellExperiment(WT_Kcnc1_p14_CB_1step.sct, assay = "RNA")
 ## Double check counts (raw) slot is use and counts in integer
-assays(WT_Kcnc1_p14_CB)
-dim(counts(WT_Kcnc1_p14_CB))
-counts(WT_Kcnc1_p14_CB)[1:6, 1:6]
-head(colData(WT_Kcnc1_p14_CB)) # check metadata available
+assays(sce)
+dim(counts(sce))
+counts(sce)[1:6, 1:6]
+head(colData(sce)) # check metadata available
 
 # Acquiring necessary metrics for aggregation across cells in a sample
 ## Named vector of cluster names
-kids <- purrr::set_names(levels(WT_Kcnc1_p14_CB$cluster.annot))
+kids <- purrr::set_names(levels(sce$cluster.annot))
 kids
 ## Total number of clusters
 nk <- length(kids)
 nk
 ## Named vector of sample names
-sids <- purrr::set_names(unique(WT_Kcnc1_p14_CB$orig.ident))
+sids <- purrr::set_names(unique(sce$orig.ident))
 ## Total number of samples 
 ns <- length(sids)
 ns
 
 # Generate sample level metadata
 ## Determine the number of cells per sample
-table(WT_Kcnc1_p14_CB$orig.ident)
+table(sce$orig.ident)
 ## Turn named vector into a numeric vector of number of cells per sample
-n_cells <- as.numeric(table(WT_Kcnc1_p14_CB$orig.ident))
+n_cells <- as.numeric(table(sce$orig.ident))
 ## Determine how to reoder the samples (rows) of the metadata to match the order of sample names in sids vector
-m <- match(sids, WT_Kcnc1_p14_CB$orig.ident)
+m <- match(sids, sce$orig.ident)
+m <- match(names(table(sce$orig.ident)), sce$orig.ident)
 ## Create the sample level metadata by combining the reordered metadata with the number of cells corresponding to each sample.
-ei <- data.frame(colData(WT_Kcnc1_p14_CB)[m, ], 
+ei <- data.frame(colData(sce)[m, ], 
                   n_cells, row.names = NULL) %>% 
                 select("orig.ident", "condition", "replicate", "n_cells")
 ei
@@ -8493,30 +8485,73 @@ ei
 
 # Aditional QC filtering - remove count outliers and low count genes
 # Perform QC if not already performed
-dim(WT_Kcnc1_p14_CB)
+dim(sce)
 
 # Calculate quality control (QC) metrics
-sce <- calculateQCMetrics(WT_Kcnc1_p14_CB)
+sce <- addPerCellQC(sce) # calculateQCMetrics() bug "is defunct; so use addPerCellQC instead
+
 
 # Get cells w/ few/many detected genes
 sce$is_outlier <- isOutlier(
-        metric = sce$total_features_by_counts,
+        metric = sce$total,
         nmads = 2, type = "both", log = TRUE)
-
+        
 # Remove outlier cells
 sce <- sce[, !sce$is_outlier]
-dim(sce)
+dim(sce)  # 75857 --> 70231
 
 ## Remove lowly expressed genes which have less than 10 cells with any counts
 sce <- sce[rowSums(counts(sce) > 1) >= 10, ]
-
-dim(sce)
-
+dim(sce) # 70231 --> 70231
 
 
+# Count aggregation to sample level
+## Aggregate the counts per sample_id and cluster_id
+## Subset metadata to only include the cluster and sample IDs to aggregate across
+groups <- colData(sce)[, c("cluster.annot", "orig.ident")]
+
+## Aggregate across cluster-sample groups
+pb <- aggregate.Matrix(t(counts(sce)), 
+                       groupings = paste(groups$cluster.annot, groups$orig.ident, sep = "-"), fun = "sum") 
+
+class(pb)
+dim(pb)
+pb[1:6, 1:6]
+
+## Not every cluster is present in all samples; create a vector that represents how to split samples
+splitf <- sapply(stringr::str_split(rownames(pb), 
+                                    pattern = "-",  
+                                    n = 2), 
+                 `[`, 1)
+## Turn into a list and split the list into components for each cluster and transform, so rows are genes and columns are samples and make rownames as the sample IDs
+pb <- split.data.frame(pb, 
+                       factor(splitf)) %>%
+        lapply(function(u) 
+                set_colnames(t(u), 
+                             stringr::str_extract(rownames(u), "(?<=_)[:alnum:]+")))
+class(pb)
+## Explore the different components of list
+str(pb)
+## Print out the table of cells in each cluster-sample group
+options(width = 100)
+table(sce$cluster.annot, sce$orig.ident)
 
 
 
+
+# Differential gene expression with DESeq2
+## Sample-level metadata
+### Get sample names for each of the cell type clusters
+### prep. data.frame for plotting
+
+XXXY HERE !!!
+
+get_sample_ids <- function(x){
+        pb[[x]] %>%
+                colnames()
+}
+de_samples <- map(1:length(kids), get_sample_ids) %>%
+        unlist()
 
 
 

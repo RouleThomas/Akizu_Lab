@@ -26,3 +26,22 @@ plotHeatmap -m output/deeptools/matrix_TSS_5kb_PSC_SUZ12_WTKOKOEF1aEZH1-THOR_Fer
     --heatmapWidth 2
 
 
+
+# interactive
+plotHeatmap -m output/deeptools/matrix_TSS_5kb_PSC_SUZ12_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.gz \
+    -out output/deeptools/matrix_TSS_5kb_PSC_SUZ12_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99_heatmap_colorSmall1.pdf \
+    --samplesLabel "WT_SUZ12" "KO_SUZ12" "KOEF1aEZH1_SUZ12" \
+    --colorMap bwr \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --zMax 0.5
+
+
+plotProfile -m output/deeptools/matrix_TSS_5kb_PSC_SUZ12_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.gz \
+    -out output/deeptools/matrix_TSS_5kb_PSC_SUZ12_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99_plotProfile1.pdf \
+    --samplesLabel "WT_SUZ12" "KO_SUZ12" "KOEF1aEZH1_SUZ12" \
+    --colors black red blue \
+    --perGroup
+
+
