@@ -8364,7 +8364,7 @@ conda install bioconda::bioconductor-edger #--> WORK
 
 
 
-
+### Run DESEQ2 in seurat
 
 
 Let's follow this [workshop](https://hbctraining.github.io/scRNA-seq/lessons/pseudobulk_DESeq2_scrnaseq.html)
@@ -8399,7 +8399,7 @@ library("pheatmap")
 library("png")
 library("DESeq2")
 library("RColorBrewer")
-
+library("scran")
 
 set.seed(42)
 
@@ -8445,8 +8445,8 @@ WT_Kcnc1_p180_CB_1step.sct <- SetAssayData(WT_Kcnc1_p180_CB_1step.sct, slot = "c
 
 
 #################################################################################
-# DEG for p14 CEREBELLUM #################################################################################
-############################################################################################################
+# DEG for p14 CEREBELLUM ########################################################
+#################################################################################
 
 sce <- as.SingleCellExperiment(WT_Kcnc1_p14_CB_1step.sct, assay = "RNA")
 ## Double check counts (raw) slot is use and counts in integer
@@ -8528,7 +8528,9 @@ pb <- split.data.frame(pb,
                        factor(splitf)) %>%
         lapply(function(u) 
                 set_colnames(t(u), 
-                             stringr::str_extract(rownames(u), "(?<=_)[:alnum:]+")))
+                             stringr::str_extract(rownames(u), "(?<=-).*"))) # (?<=-).* = extract all after "-"
+
+
 class(pb)
 ## Explore the different components of list
 str(pb)
@@ -8543,23 +8545,383 @@ table(sce$cluster.annot, sce$orig.ident)
 ## Sample-level metadata
 ### Get sample names for each of the cell type clusters
 ### prep. data.frame for plotting
+metadata <- ei %>%
+  mutate(key = 1) %>%  # Add key column for joining
+  full_join(data.frame(cluster_id  = kids, key = 1), by = "key") %>%  # Expand clusters for each row
+  select(-key)  # Remove key column
 
-XXXY HERE !!!
+### Generate vector of cluster IDs
+clusters <- levels(as.factor(metadata$cluster_id ))
+clusters
 
-get_sample_ids <- function(x){
-        pb[[x]] %>%
-                colnames()
+
+### Subset the metadata to only the Astrocyte
+#cluster_metadata <- metadata[which(metadata$cluster_id == "Astrocyte"), ]
+cluster_metadata <- metadata[which(metadata$cluster_id == clusters[8]), ]
+head(cluster_metadata)
+### Assign the rownames of the metadata to be the sample IDs
+rownames(cluster_metadata) <- cluster_metadata$orig.ident
+head(cluster_metadata)
+### Subset the counts to only the Astrocyte
+counts <- pb[[clusters[8]]]
+cluster_counts <- data.frame(counts[, which(colnames(counts) %in% rownames(cluster_metadata))])
+### Check that all of the row names of the metadata are the same and in the same order as the column names of the counts in order to use as input to DESeq2
+all(rownames(cluster_metadata) == colnames(cluster_counts))   
+
+
+
+# Create DESeq2 object
+dds <- DESeqDataSetFromMatrix(cluster_counts, 
+                              colData = cluster_metadata, 
+                              design = ~ condition)
+
+# QC plots
+
+
+
+# Define the output PDF file (single file for all plots)
+pdf("output/deseq2/plotPCA_CB_p14.pdf", width=5, height=3)
+
+# Loop through all clusters in pb
+for (cluster_name in names(pb)) {
+  
+  # Subset metadata for the current cluster
+  cluster_metadata <- metadata[which(metadata$cluster_id == cluster_name), ]
+  
+  # Assign rownames of metadata to sample IDs
+  rownames(cluster_metadata) <- cluster_metadata$orig.ident
+  
+  # Subset the counts for the current cluster
+  cluster_counts <- data.frame(pb[[cluster_name]][, which(colnames(pb[[cluster_name]]) %in% rownames(cluster_metadata))])
+  
+  # Ensure row names of metadata match column names of counts
+  if (!all(rownames(cluster_metadata) == colnames(cluster_counts))) {
+    next  # Skip this cluster if there's a mismatch
+  }
+
+  # Create DESeq2 object
+  dds <- DESeqDataSetFromMatrix(cluster_counts, 
+                                colData = cluster_metadata, 
+                                design = ~ condition)
+
+  # Transform counts for data visualization
+  rld <- rlog(dds, blind=TRUE)
+
+  # Generate PCA plot
+  pca_data <- plotPCA(rld, intgroup = c("condition", "orig.ident"), returnData = TRUE)
+
+  # Generate PCA plot with color per condition and shape per sample
+  p <- ggplot(pca_data, aes(x = PC1, y = PC2, color = condition, shape = orig.ident)) +
+    geom_point(size = 4) +  # Adjust point size
+    theme_bw() +
+    ggtitle(cluster_name) +
+    theme(legend.position = "right")  # Place legend on the right
+  
+  print(p)  # Print to the open PDF file
+  
+  print(paste("Generated PCA plot for:", cluster_name))
 }
-de_samples <- map(1:length(kids), get_sample_ids) %>%
-        unlist()
+
+# Close the PDF after all plots are added
+dev.off()
+
+
+
+# Automated DEG and plots
+######################################################################################
+# RECOMMENDED METHOD; LRT without shrinkage ###########################################
+######################################################################################
+
+# Create directories if they don’t exist
+dir.create("output/deseq2/results_LRT_CB_p14", showWarnings = FALSE)
+dir.create("output/deseq2/plots_LRT_CB_p14", showWarnings = FALSE)
+
+
+# Open a single PDF to save all plots
+pdf("output/deseq2/plots_LRT_CB_p14/all_DEG_plots.pdf", width = 8, height = 10)
+
+# Loop through each cluster
+for (cluster_name in names(pb)) {
+  
+  cat("Processing:", cluster_name, "\n")
+  
+  # Subset metadata for the current cluster
+  cluster_metadata <- metadata[which(metadata$cluster_id == cluster_name), ]
+  
+  # Assign rownames of metadata to sample IDs
+  rownames(cluster_metadata) <- cluster_metadata$orig.ident
+  
+  # Subset the counts for the current cluster
+  cluster_counts <- data.frame(pb[[cluster_name]][, which(colnames(pb[[cluster_name]]) %in% rownames(cluster_metadata))])
+  
+  # Ensure row names of metadata match column names of counts
+  if (!all(rownames(cluster_metadata) == colnames(cluster_counts))) {
+    next  # Skip this cluster if there's a mismatch
+  }
+
+  # Compute size factors without clustering #### THAT PART WAS RECOMMENDED; not use default lib size
+  # Convert counts to SingleCellExperiment (SCE) object
+  sce <- SingleCellExperiment(assays = list(counts = as.matrix(cluster_counts)))
+
+  # Compute size factors
+  sce <- computeSumFactors(sce)  # This updates the SCE object with size factors
+
+  # Extract size factors as a numeric vector
+  size_factors <- sizeFactors(sce)  # Extract numeric size factors 
+
+  # Create DESeq2 object
+  dds <- DESeqDataSetFromMatrix(cluster_counts, 
+                                colData = cluster_metadata, 
+                                design = ~ condition)
+
+
+  # Assign scran-computed size factors to DESeq2 object
+  sizeFactors(dds) <- size_factors
+
+  # Perform differential expression analysis
+  dds <- DESeq(dds, test = "LRT", reduced = ~1, useT=TRUE, minmu=1e-6, minReplicatesForReplace=Inf)
+
+  # Get DEG results
+  res <- results(dds)
+
+  
+  # Convert results to a tibble
+  res_tbl <- res %>%
+    data.frame() %>%
+    rownames_to_column(var = "gene") %>%
+    as_tibble()
+
+  # Save DEG results
+  write.csv(res_tbl, paste0("output/deseq2/results_LRT_CB_p14/DEG_", cluster_name, "_all_genes.csv"),
+            quote = FALSE, row.names = FALSE)
+
+  # **Scatterplot of Top 20 Significant Genes**
+  normalized_counts <- counts(dds, normalized = TRUE)
+
+  # Order results by adjusted p-value & extract top 20 genes
+  top20_sig_genes <- res_tbl %>%
+    arrange(padj) %>%
+    pull(gene) %>%
+    head(n = 20)
+
+  # Extract normalized counts for top genes
+  top20_sig_norm <- data.frame(normalized_counts) %>%
+    rownames_to_column(var = "gene") %>%
+    filter(gene %in% top20_sig_genes)
+
+  gathered_top20_sig <- top20_sig_norm %>%
+    pivot_longer(cols = -gene, names_to = "sample_id", values_to = "normalized_counts") %>%
+    inner_join(cluster_metadata[, c("orig.ident", "condition")], by = c("sample_id" = "orig.ident"))
+
+  p_scatter <- ggplot(gathered_top20_sig, aes(x = gene, y = normalized_counts, color = condition)) +
+    geom_point(position = position_jitter(w = 0.1, h = 0)) +
+    scale_y_log10() +
+    xlab("Genes") +
+    ylab("log10 Normalized Counts") +
+    ggtitle(paste0("Top 20 Significant DE Genes - ", cluster_name)) +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  print(p_scatter) # Save to PDF
+
+  # **Heatmap of Significant Genes**
+  # Extract normalized counts for significant genes
+  sig_norm <- data.frame(normalized_counts) %>%
+    rownames_to_column(var = "gene") %>%
+    filter(gene %in% res_tbl$gene) %>%
+    column_to_rownames(var = "gene")  # Set rownames for heatmap
+
+  # Remove rows where all values are identical (zero variance issue)
+  sig_norm <- sig_norm[apply(sig_norm, 1, var, na.rm = TRUE) > 0, ]
+
+  # Replace Inf values with NA, then remove rows with NA
+  sig_norm[sig_norm == Inf] <- NA
+  sig_norm <- sig_norm[rowSums(is.na(sig_norm)) == 0, ]
+
+  # Check if there are still genes to plot
+  if (nrow(sig_norm) > 1) {
+    heat_colors <- brewer.pal(6, "YlOrRd")
+
+    pheatmap(as.matrix(sig_norm), 
+            color = heat_colors, 
+            cluster_rows = TRUE, 
+            show_rownames = FALSE,
+            annotation_col = cluster_metadata[, c("condition"), drop=FALSE], 
+            border_color = NA, 
+            fontsize = 10, 
+            scale = "row", 
+            fontsize_row = 10)
+  } else {
+    cat("Skipping Heatmap for", cluster_name, "- No valid genes after filtering NaNs\n")
+  }
+  
+  # **Volcano Plot**
+  res_table_thres <- res_tbl %>% 
+    mutate(threshold = padj < 0.05 & abs(log2FoldChange) >= 0.58)
+
+  p_volcano <- ggplot(res_table_thres, aes(x = log2FoldChange, y = -log10(padj), color = threshold)) +
+    geom_point() +
+    ggtitle(paste0("Volcano Plot - ", cluster_name)) +
+    xlab("log2 Fold Change") +
+    ylab("-log10 Adjusted P-Value") +
+    scale_y_continuous(limits = c(0, 50)) +
+    theme(legend.position = "none",
+          plot.title = element_text(size = rel(1.5), hjust = 0.5),
+          axis.title = element_text(size = rel(1.25)))
+  print(p_volcano) # Save to PDF
+}
+
+# Close the PDF after all plots
+dev.off()
+
+
+
+
+
+
+
+
+
+######################################################################################
+# DEFAULT METHOD; Wald with shrinkage ###########################################
+######################################################################################
+
+
+# Create directories if they don’t exist
+dir.create("output/deseq2/results_Wald_CB_p14", showWarnings = FALSE)
+dir.create("output/deseq2/plots_Wald_CB_p14", showWarnings = FALSE)
+
+
+# Open a single PDF to save all plots
+pdf("output/deseq2/plots_Wald_CB_p14/all_DEG_plots.pdf", width = 8, height = 10)
+
+# Loop through each cluster
+for (cluster_name in names(pb)) {
+  
+  cat("Processing:", cluster_name, "\n")
+  
+  # Subset metadata for the current cluster
+  cluster_metadata <- metadata[which(metadata$cluster_id == cluster_name), ]
+  
+  # Assign rownames of metadata to sample IDs
+  rownames(cluster_metadata) <- cluster_metadata$orig.ident
+  
+  # Subset the counts for the current cluster
+  cluster_counts <- data.frame(pb[[cluster_name]][, which(colnames(pb[[cluster_name]]) %in% rownames(cluster_metadata))])
+  
+  # Ensure row names of metadata match column names of counts
+  if (!all(rownames(cluster_metadata) == colnames(cluster_counts))) {
+    next  # Skip this cluster if there's a mismatch
+  }
+
+
+  # Create DESeq2 object
+  dds <- DESeqDataSetFromMatrix(cluster_counts, 
+                                colData = cluster_metadata, 
+                                design = ~ condition)
+
+  dds <- DESeq(dds, test = "Wald")  # Wald test (default)
+  res <- lfcShrink(dds, coef = "condition_Kcnc1_vs_WT", type = "apeglm")
+
+  # Convert results to a tibble
+  res_tbl <- res %>%
+    data.frame() %>%
+    rownames_to_column(var = "gene") %>%
+    as_tibble()
+
+  # Save DEG results
+  write.csv(res_tbl, paste0("output/deseq2/results_Wald_CB_p14/DEG_", cluster_name, "_all_genes.csv"),
+            quote = FALSE, row.names = FALSE)
+
+  # **Scatterplot of Top 20 Significant Genes**
+  normalized_counts <- counts(dds, normalized = TRUE)
+
+  # Order results by adjusted p-value & extract top 20 genes
+  top20_sig_genes <- res_tbl %>%
+    arrange(padj) %>%
+    pull(gene) %>%
+    head(n = 20)
+
+  # Extract normalized counts for top genes
+  top20_sig_norm <- data.frame(normalized_counts) %>%
+    rownames_to_column(var = "gene") %>%
+    filter(gene %in% top20_sig_genes)
+
+  gathered_top20_sig <- top20_sig_norm %>%
+    pivot_longer(cols = -gene, names_to = "sample_id", values_to = "normalized_counts") %>%
+    inner_join(cluster_metadata[, c("orig.ident", "condition")], by = c("sample_id" = "orig.ident"))
+
+  p_scatter <- ggplot(gathered_top20_sig, aes(x = gene, y = normalized_counts, color = condition)) +
+    geom_point(position = position_jitter(w = 0.1, h = 0)) +
+    scale_y_log10() +
+    xlab("Genes") +
+    ylab("log10 Normalized Counts") +
+    ggtitle(paste0("Top 20 Significant DE Genes - ", cluster_name)) +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  print(p_scatter) # Save to PDF
+
+  # **Heatmap of Significant Genes**
+  # Extract normalized counts for significant genes
+  sig_norm <- data.frame(normalized_counts) %>%
+    rownames_to_column(var = "gene") %>%
+    filter(gene %in% res_tbl$gene) %>%
+    column_to_rownames(var = "gene")  # Set rownames for heatmap
+
+  # Remove rows where all values are identical (zero variance issue)
+  sig_norm <- sig_norm[apply(sig_norm, 1, var, na.rm = TRUE) > 0, ]
+
+  # Replace Inf values with NA, then remove rows with NA
+  sig_norm[sig_norm == Inf] <- NA
+  sig_norm <- sig_norm[rowSums(is.na(sig_norm)) == 0, ]
+
+  # Check if there are still genes to plot
+  if (nrow(sig_norm) > 1) {
+    heat_colors <- brewer.pal(6, "YlOrRd")
+
+    pheatmap(as.matrix(sig_norm), 
+            color = heat_colors, 
+            cluster_rows = TRUE, 
+            show_rownames = FALSE,
+            annotation_col = cluster_metadata[, c("condition"), drop=FALSE], 
+            border_color = NA, 
+            fontsize = 10, 
+            scale = "row", 
+            fontsize_row = 10)
+  } else {
+    cat("Skipping Heatmap for", cluster_name, "- No valid genes after filtering NaNs\n")
+  }
+  
+  # **Volcano Plot**
+  res_table_thres <- res_tbl %>% 
+    mutate(threshold = padj < 0.05 & abs(log2FoldChange) >= 0.58)
+
+  p_volcano <- ggplot(res_table_thres, aes(x = log2FoldChange, y = -log10(padj), color = threshold)) +
+    geom_point() +
+    ggtitle(paste0("Volcano Plot - ", cluster_name)) +
+    xlab("log2 Fold Change") +
+    ylab("-log10 Adjusted P-Value") +
+    scale_y_continuous(limits = c(0, 50)) +
+    theme(legend.position = "none",
+          plot.title = element_text(size = rel(1.5), hjust = 0.5),
+          axis.title = element_text(size = rel(1.25)))
+  print(p_volcano) # Save to PDF
+}
+
+# Close the PDF after all plots
+dev.off()
 
 
 
 ```
 
 
+- NOTE: so at the log2FC shrinkage: `error "type='apeglm' shrinkage only for use with 'coef'"`; workshop say to use `res <- lfcShrink(dds, contrast = contrast, res=res)` but only this work: `res <- lfcShrink(dds, coef = "condition_Kcnc1_vs_WT", type = "apeglm")`:
+    - A coefficient (coef) for the comparison (preferred for apeglm).
+    - A contrast (contrast), but only when using type = "normal" or "ashr".
+  
+- NOTE: Some [recommendation from DESEQ2](https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#recommendations-for-single-cell-analysis) to use on scRNAseq; include using test LRT here `dds <- DESeq(dds, test = "LRT")` and `useT=TRUE, minmu=1e-6, and minReplicatesForReplace=Inf`. **With LRT no shrinkage; with wald test shrinkage is needed**
 
-
+--> LRT and Wald method give very few DEGs....
 
 
 

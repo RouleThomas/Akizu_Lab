@@ -1187,24 +1187,29 @@ Let's generate median tracks for Ferguson and THOR_Ferguson bigwigs (Norm99 uniq
 ```bash
 conda activate BedToBigwig
 
-# bigwig_Ferguson
-## Calculate median
+# Calculate median
+## bigwig_Ferguson
 sbatch scripts/bigwigmerge_Norm99_Ferguson_unique-H3K27me3.sh # 35440488 ok
 sbatch scripts/bigwigmerge_Norm99_Ferguson_unique-EZH2.sh # 35440565 ok
 sbatch scripts/bigwigmerge_Norm99_Ferguson_unique-SUZ12.sh # 35440572 ok
-## smooth bigwig
-conda activate deeptools
-
-sbatch scripts/bigwigsmooth_Norm99_Ferguson_unique.sh # 35640884 xxxy
-
-
-
-
-# bigwig_THOR_Ferguson
+## bigwig_THOR_Ferguson
 sbatch scripts/bigwigmerge_THOR_FergusonUniqueNorm99-H3K27me3.sh # 35440624 ok
 sbatch scripts/bigwigmerge_THOR_FergusonUniqueNorm99-EZH2.sh # 35440625 ok
 sbatch scripts/bigwigmerge_THOR_FergusonUniqueNorm99-SUZ12.sh # 35440635 ok
 
+
+
+
+
+## smooth bigwig
+### calculate bin signal with multiBigwigSummary
+conda activate deeptools
+
+sbatch scripts/bigwigsmooth_Norm99_Ferguson_unique.sh # 35640884 fail; miss some samples; rerun 35652328 xxx
+### Re-convert to bigwig
+conda activate BedToBigwig
+
+sbatch --dependency=afterany:35652328 scripts/bigwigsmooth_Norm99_Ferguson_unique_part2.sh # 35652519 xxx
 
 
 
