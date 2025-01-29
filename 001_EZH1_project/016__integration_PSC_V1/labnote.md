@@ -1120,12 +1120,65 @@ writeLines(console_output, "output/DiffBind/sample_count_blackgreylist_DBA_NORM_
 
 
 
+# Ferguson method Diff binding
+
+
+Ferguson method:
+- Call peaks with SEACR or MACS2
+  --> Done with macs2 (broad, default, no qvalue filtering)
+- Calculate length-normalize signal for each locus (computeMatrix –scale-regions (gene or peak) )
+  --> Not sure how to deal with the peak; so let's instead do per gene promoter (1kb up 250bp down); save in `output/edgeR`
+- Diff. log-normalize Counts using edgeR and limma on consensus peak or genes (consensus peak?)
+
+
+```bash
+# Calculate length-normalize signal for each gene promoters (1kb up 250bp down)
+conda activate deeptools
+sbatch scripts/LengthNormSignal_prom1kb250bp-FergusonUniqueNorm99smooth50bp.sh # 35725362 xxx
+
+
+```
+
+--> Look good, but some `nan` and `0`: `nan` is where there is no signal; better to put 0 at all the `nan` values.
+
+
+Let's load the count matrix for all genes into R and perform Diff Bind analysis with edgeR
+
+
+```bash
+conda activate monocle3
+```
 
 
 
 
+```R
+
+library("tidyverse")
+library("edgeR")
+library("DESeq2")
+
+set.seed(42)
 
 
+
+# import matrix
+
+matrix_data <- read.table("output/edgeR/LengthNormSignal_prom1kb250bp-FergusonUniqueNorm99smooth50bp.txt",  # Replace with actual filename
+                          header = TRUE, 
+                          sep = "\t", 
+                          skip = 3,  # Adjust if needed
+                          row.names = 1, 
+                          check.names = FALSE)
+
+
+
+xxxxy
+
+
+
+
+```
 
 
 # deepTool plots
@@ -1205,18 +1258,15 @@ sbatch scripts/bigwigmerge_THOR_FergusonUniqueNorm99-SUZ12.sh # 35440635 ok
 ### calculate bin signal with multiBigwigSummary
 conda activate deeptools
 
-sbatch scripts/bigwigsmooth_Norm99_Ferguson_unique.sh # 35640884 fail; miss some samples; rerun 35652328 xxx
+sbatch scripts/bigwigsmooth_Norm99_Ferguson_unique.sh # 35640884 fail; miss some samples; rerun 35652328 ok
 ### Re-convert to bigwig
 conda activate BedToBigwig
 
-sbatch --dependency=afterany:35652328 scripts/bigwigsmooth_Norm99_Ferguson_unique_part2.sh # 35652519 xxx
-
-
-
+sbatch --dependency=afterany:35652328 scripts/bigwigsmooth_Norm99_Ferguson_unique_part2.sh # 35652519 ok
 ```
 *NOTE: bigwig are merge into 1 bedgraph which is then converted into 1 bigwig (wiggletools cannot output bigwig directly so need to pass by bedgraph or wiggle in between)*
 
---> XXXY Smoothing bigwig using `multiBigwigSummary` work great! XXXY HERE !!!! TO CHANGE ?? XXX
+-->  Smoothing bigwig using `multiBigwigSummary` work great! 
 
 
 ### deepTool plots
@@ -1234,6 +1284,9 @@ sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3_WTKOKOEF1aEZH1-FergusonUniqueNorm99.s
 sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 354411514 ok
 sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 354411517 ok
 
+sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3_WTKOKOEF1aEZH1-FergusonUniqueNorm99smooth50bp.sh # 35683527 ok
+
+
 ## SUZ12
 sbatch scripts/matrix_TSS_10kb_PSC_SUZ12_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh # 354411439 ok
 sbatch scripts/matrix_TSS_5kb_PSC_SUZ12_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh # 354411452 ok
@@ -1241,12 +1294,17 @@ sbatch scripts/matrix_TSS_5kb_PSC_SUZ12_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh #
 sbatch scripts/matrix_TSS_10kb_PSC_SUZ12_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 35441521 ok
 sbatch scripts/matrix_TSS_5kb_PSC_SUZ12_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 35441525 ok
 
+sbatch scripts/matrix_TSS_5kb_PSC_SUZ12_WTKOKOEF1aEZH1-FergusonUniqueNorm99smooth50bp.sh # 35683918 ok
+
+
 ## EZH2
 sbatch scripts/matrix_TSS_10kb_PSC_EZH2_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh # 354411499 ok
 sbatch scripts/matrix_TSS_5kb_PSC_EZH2_WTKOKOEF1aEZH1-FergusonUniqueNorm99.sh # 354411506 ok
 
 sbatch scripts/matrix_TSS_10kb_PSC_EZH2_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 35441551 ok
 sbatch scripts/matrix_TSS_5kb_PSC_EZH2_WTKOKOEF1aEZH1-THOR_FergusonUniqueNorm99.sh # 35441554 ok
+
+sbatch scripts/matrix_TSS_5kb_PSC_EZH2_WTKOKOEF1aEZH1-FergusonUniqueNorm99smooth50bp.sh # 35684066 ok
 
 
 # Peak with H3K27me3 changes
@@ -1265,12 +1323,27 @@ sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3EZH2SUZ12_WTKOKOEF1aEZH1-H3K27me3_WTvs
 sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3EZH2SUZ12_WTKOKOEF1aEZH1-H3K27me3_WTvsKO_THORq30_peak-FergusonUniqueNorm99.sh # 35442396 ok
 sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3EZH2SUZ12_WTKOKOEF1aEZH1-H3K27me3_WTvsKO_THORq30_peak-FergusonUniqueNorm99.sh # 35442397 ok
 
+sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3EZH2SUZ12_WTKOKOEF1aEZH1-H3K27me3_WTvsKO_THORq30_peak-FergusonUniqueNorm99smooth50bp.sh # 35685990 ok
+
+
+
 ## Check signal in region/peak with H3K27me3 changes btwn WT vs KOEF1aEZH1
 sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3EZH2SUZ12_WTKOEF1aEZH1KO-H3K27me3_WTvsKOEF1aEZH1_THORq30_peak-THOR_FergusonUniqueNorm99.sh # 35442072 ok
 sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3EZH2SUZ12_WTKOEF1aEZH1KO-H3K27me3_WTvsKOEF1aEZH1_THORq30_peak-THOR_FergusonUniqueNorm99.sh # 35442074 ok
 
 sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3EZH2SUZ12_WTKOEF1aEZH1KO-H3K27me3_WTvsKOEF1aEZH1_THORq30_peak-FergusonUniqueNorm99.sh # 35442504 ok
 sbatch scripts/matrix_TSS_5kb_PSC_H3K27me3EZH2SUZ12_WTKOEF1aEZH1KO-H3K27me3_WTvsKOEF1aEZH1_THORq30_peak-FergusonUniqueNorm99.sh # 35442538 ok
+
+sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3EZH2SUZ12_WTKOEF1aEZH1KO-H3K27me3_WTvsKOEF1aEZH1_THORq30_peak-FergusonUniqueNorm99smooth50bp.sh # 35685802 ok
+
+
+
+# All macs2 WT H3K27me3 peaks (no trehsold)
+sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3EZH2SUZ12_WTKOKOEF1aEZH1-macs2_WT_H3K27me3_pool-THOR_FergusonUniqueNorm99smooth50bp.sh # 35696938 ok
+
+
+
+
 ```
 
 
@@ -1434,6 +1507,11 @@ conda activate macs2
 sbatch scripts/macs2_broad_1.sh # 29773632 ok
 sbatch scripts/macs2_broad_2.sh # 29773633 ok
 sbatch scripts/macs2_broad_3.sh # 29773661 ok
+
+# pool replicate
+sbatch scripts/macs2_broad_pool_1.sh # 35693862 xxx
+sbatch scripts/macs2_broad_pool_2.sh # 35693955 xxx
+sbatch scripts/macs2_broad_pool_3.sh # 35694072 xxx
 ```
 
 --> all good
