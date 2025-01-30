@@ -1194,6 +1194,28 @@ DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
 
+########################################################################################################################################
+######################################## CHANGE CLUSTER PARAMETER TO HAVE 1 CLUSTER FOR GRANULE ########################################
+#### UMAP
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "integrated"
+
+WT_Kcnc1_p14_CB_1step.sct <- RunPCA(WT_Kcnc1_p14_CB_1step.sct, verbose = FALSE, npcs = 30)
+WT_Kcnc1_p14_CB_1step.sct <- RunUMAP(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
+WT_Kcnc1_p14_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", k.param = 50, dims = 1:30)
+WT_Kcnc1_p14_CB_1step.sct <- FindClusters(WT_Kcnc1_p14_CB_1step.sct, resolution = 0.2, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+
+WT_Kcnc1_p14_CB_1step.sct$condition <- factor(WT_Kcnc1_p14_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_WT_Kcnc1-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim30kparam50res02.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE)
+dev.off()
+########################################################################################################################
+########################################################################################################################
+
+ 
+
+
 # genes
 
 DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
@@ -1341,9 +1363,13 @@ dev.off()
 ## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V3_numeric.rds") # regMtRbCount with QC_V3
 ## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V4_numeric.rds") # regMtRbCount with QC_V3; after Naiara review Goldberg_V2.pptx; QCV3dim30kparam50res035
 ## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V5_numeric.rds") # regMtRbCount with QC_V3; after Naiara review Goldberg_V2.pptx; QCV3dim30kparam50res035 with name V2 (corr PLI12 PLI23 instead of interneuron)
-WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V4_numeric.rds") # regMtRbCount with QC_V3; after Naiara review Goldberg_V2.pptx; QCV3dim30kparam50res035 without name
+#WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V4_numeric.rds") # regMtRbCount with QC_V3; after Naiara review Goldberg_V2.pptx; QCV3dim30kparam50res035 without name
 
+
+## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V5_numeric_GranuleCluster1.rds") # reduce resolution for cluster granule DEG QCV3dim30kparam50res02
+WT_Kcnc1_p14_CB_1step_GranuleCluster1.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V5_numeric_GranuleCluster1.rds") # reduce resolution for cluster granule DEG QCV3dim30kparam50res02
 WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V5_numeric.rds") # regMtRbCount with QC_V3; after Naiara review Goldberg_V2.pptx; QCV3dim30kparam50res035 with name V2 (corr PLI12 PLI23 instead of interneuron)
+
 set.seed(42)
 ##########
 
@@ -4118,6 +4144,33 @@ pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMt
 DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
+
+########################################################################################################################################
+######################################## CHANGE CLUSTER PARAMETER TO HAVE 1 CLUSTER FOR GRANULE ########################################
+#### UMAP
+
+DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "integrated"
+
+WT_Kcnc1_p180_CB_1step.sct <- RunPCA(WT_Kcnc1_p180_CB_1step.sct, verbose = FALSE, npcs = 50)
+WT_Kcnc1_p180_CB_1step.sct <- RunUMAP(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
+WT_Kcnc1_p180_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", k.param = 20, dims = 1:50)
+WT_Kcnc1_p180_CB_1step.sct <- FindClusters(WT_Kcnc1_p180_CB_1step.sct, resolution = 0.05, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+
+WT_Kcnc1_p180_CB_1step.sct$condition <- factor(WT_Kcnc1_p180_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV4dim50kparam20res005.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=TRUE)
+dev.off()
+########################################################################################################################
+########################################################################################################################
+
+
+
+
+
+
+
 # genes
 
 DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "SCT"
@@ -4219,7 +4272,10 @@ dev.off()
 ## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step.sct_V1_numeric.rds") # regMtRbCount with QC_V3
 ## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step.sct_V2_numeric.rds") # regMtRbCount with QC_V4
 ## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV4dim50kparam20res02.sct_V2_numeric.rds") # regMtRbCount with QC_V4
-WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV4dim50kparam20res02.sct_V2_numeric.rds") # QC_V4
+##WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV4dim50kparam20res02.sct_V2_numeric.rds") # QC_V4
+## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV4dim50kparam20res005.sct_V1_label.rds") # For Granule DEG, 1 cluster
+WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV4dim50kparam20res005.sct_V1_label.rds") # QC_V4 For Granule DEG, 1 cluster
+
 
 ## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV4dim50kparam20res02.sct_V1_label.rds") # regMtRbCount with QC_V4
 WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV4dim50kparam20res02.sct_V1_label.rds") # QC_V4 with PLI12 PLI23
@@ -7923,6 +7979,8 @@ sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_correct.sh # 29330177 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_poissonUMI.sh # 34266328 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_DESEQ2seurat.sh # 34358916 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_MAST.sh # 34363647 ok
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_MAST_GranuleCluster1.sh # 35842577 xxx
+
 
 
 XXX sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_correct_pseudobulk.sh #  xxx
@@ -7942,6 +8000,7 @@ sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_correct.sh # 29330555 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_poissonUMI.sh # 34266352 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_DESEQ2seurat.sh # 34359233 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_MAST.sh # 34364889 ok
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_MAST_GranuleCluster1.sh # 35842731 xxx
 
 
 

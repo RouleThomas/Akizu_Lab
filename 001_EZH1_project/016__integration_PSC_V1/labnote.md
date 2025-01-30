@@ -1131,15 +1131,81 @@ Ferguson method:
 - Diff. log-normalize Counts using edgeR and limma on consensus peak or genes (consensus peak?)
 
 
-```bash
-# Calculate length-normalize signal for each gene promoters (1kb up 250bp down)
-conda activate deeptools
-sbatch scripts/LengthNormSignal_prom1kb250bp-FergusonUniqueNorm99smooth50bp.sh # 35725362 xxx
+## Diff binding on consensus peak
 
+- Option1: Identify peak in WT and in KO, separately using MACS2, then merge overlapping peak = consensus peak. Then calculate signal in these regions
+- Option2: Identify peak in WT and KO sample together in MACS2. Like as input in MACS2 WT and KO samples. Automatically peak region should be adjusted
+  -->Issue is that if peak only present in one condition; region might be missed…
+
+Let's do option1 first, that look better overall; so let's simply bedtool intersect and keep the overlapping entire regions = consensus peak list (without pek extension, merging peak region if 100bp apart)
+
+```bash
+conda activate BedToBigwig
+
+# concatenate and sort bed files
+cat output/macs2/broad/PSC_WT_H3K27me3_pool_peaks.broadPeak output/macs2/broad/PSC_KO_H3K27me3_pool_peaks.broadPeak output/macs2/broad/PSC_KOEF1aEZH1_H3K27me3_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.broadPeak
+cat output/macs2/broad/PSC_WT_EZH2_pool_peaks.broadPeak output/macs2/broad/PSC_KO_EZH2_pool_peaks.broadPeak output/macs2/broad/PSC_KOEF1aEZH1_EZH2_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.broadPeak
+cat output/macs2/broad/PSC_WT_SUZ12_pool_peaks.broadPeak output/macs2/broad/PSC_KO_SUZ12_pool_peaks.broadPeak output/macs2/broad/PSC_KOEF1aEZH1_SUZ12_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.broadPeak
+
+
+
+# merge = consensus peak identification
+## no merge extension
+bedtools merge -i output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.broadPeak > output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge.bed
+bedtools merge -i output/macs2/broad/PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.broadPeak > output/macs2/broad/PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge.bed
+bedtools merge -i output/macs2/broad/PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.broadPeak > output/macs2/broad/PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.merge.bed
+
+## with 100bp peak merging
+bedtools merge -d 100 -i output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.broadPeak > output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge100bp.bed
+bedtools merge -d 100 -i output/macs2/broad/PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.broadPeak > output/macs2/broad/PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge100bp.bed
+bedtools merge -d 100 -i output/macs2/broad/PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.broadPeak > output/macs2/broad/PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.merge100bp.bed
+
+## with 500bp peak merging
+bedtools merge -d 500 -i output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.broadPeak > output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge500bp.bed
+bedtools merge -d 500 -i output/macs2/broad/PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.broadPeak > output/macs2/broad/PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge500bp.bed
+bedtools merge -d 500 -i output/macs2/broad/PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.broadPeak > output/macs2/broad/PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.merge500bp.bed
 
 ```
 
---> Look good, but some `nan` and `0`: `nan` is where there is no signal; better to put 0 at all the `nan` values.
+--> All good; consensus peak files are: `output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge[SIZE].bed`
+
+
+
+
+```bash
+# Calculate length-normalize signal for each gene promoters (1kb up 250bp down)
+conda activate deeptools
+## no merge extension
+sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-FergusonUniqueNorm99smooth50bp.sh # 35839533 ok
+sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.merge-FergusonUniqueNorm99smooth50bp.sh # 35839677 ok
+sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge-FergusonUniqueNorm99smooth50bp.sh # 35839774 ok
+
+## with 100bp peak merging
+sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge100bp-FergusonUniqueNorm99smooth50bp.sh # 35839846 ok
+sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.merge100bp-FergusonUniqueNorm99smooth50bp.sh # 35839893 ok
+sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge100bp-FergusonUniqueNorm99smooth50bp.sh # 35839944 ok
+
+## with 500bp peak merging
+sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge500bp-FergusonUniqueNorm99smooth50bp.sh # 35839996 ok
+sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.merge500bp-FergusonUniqueNorm99smooth50bp.sh # 35840048 ok
+sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge500bp-FergusonUniqueNorm99smooth50bp.sh # 35840149 ok
+
+```
+
+--> All good
+
+
+## Diff binding on all genes
+
+
+```bash
+# Calculate length-normalize signal for each gene promoters (1kb up 250bp down); here no lenght normalization as all region are same length
+conda activate deeptools
+sbatch scripts/LengthNormSignal_prom1kb250bp-FergusonUniqueNorm99smooth50bp.sh # 35838217 ok
+
+```
+
+--> Look good, file to use and import to R is the `--outFileSortedRegions` one (.bed file)
 
 
 Let's load the count matrix for all genes into R and perform Diff Bind analysis with edgeR
@@ -1149,7 +1215,7 @@ Let's load the count matrix for all genes into R and perform Diff Bind analysis 
 conda activate monocle3
 ```
 
-
+XXXY TRY IMPORT THE .bed XXXY
 
 
 ```R
@@ -1173,10 +1239,11 @@ matrix_data <- read.table("output/edgeR/LengthNormSignal_prom1kb250bp-FergusonUn
 
 
 
+
+matrix_data <- read.delim("output/edgeR/LengthNormSignal_prom1kb250bp-FergusonUniqueNorm99smooth50bp.txt", header=TRUE, sep="\t", skip=2)
+
+
 xxxxy
-
-
-
 
 ```
 
