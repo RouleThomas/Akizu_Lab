@@ -1203,9 +1203,23 @@ sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge500bp
 conda activate deeptools
 sbatch scripts/LengthNormSignal_prom1kb250bp-FergusonUniqueNorm99smooth50bp.sh # 35838217 ok
 
+# sample per sample
+sbatch scripts/LengthNormSignal_prom1kb250bp-WT_H3K27me3-FergusonUniqueNorm99smooth50bp.sh # 35849866 xxx
+sbatch scripts/LengthNormSignal_prom1kb250bp-KO_H3K27me3-FergusonUniqueNorm99smooth50bp.sh # 35849895 xxx
+sbatch scripts/LengthNormSignal_prom1kb250bp-KOEF1aEZH1_H3K27me3-FergusonUniqueNorm99smooth50bp.sh # 35849902 xxx
+
+sbatch scripts/LengthNormSignal_prom1kb250bp-WT_SUZ12-FergusonUniqueNorm99smooth50bp.sh # 35849929 xxx
+sbatch scripts/LengthNormSignal_prom1kb250bp-KO_SUZ12-FergusonUniqueNorm99smooth50bp.sh # 35849939 xxx
+sbatch scripts/LengthNormSignal_prom1kb250bp-KOEF1aEZH1_SUZ12-FergusonUniqueNorm99smooth50bp.sh # 35849944 xxx
+
+sbatch scripts/LengthNormSignal_prom1kb250bp-WT_EZH2-FergusonUniqueNorm99smooth50bp.sh # 35849953 xxx
+sbatch scripts/LengthNormSignal_prom1kb250bp-KO_EZH2-FergusonUniqueNorm99smooth50bp.sh # 35849959 xxx
+sbatch scripts/LengthNormSignal_prom1kb250bp-KOEF1aEZH1_EZH2-FergusonUniqueNorm99smooth50bp.sh # 35849971 xxx
+
+
 ```
 
---> Look good, file to use and import to R is the `--outFileSortedRegions` one (.bed file)
+--> Look good, file to use and import to R is the `--outFileNameMatrix` one (.txt file).  
 
 
 Let's load the count matrix for all genes into R and perform Diff Bind analysis with edgeR
@@ -1215,7 +1229,6 @@ Let's load the count matrix for all genes into R and perform Diff Bind analysis 
 conda activate monocle3
 ```
 
-XXXY TRY IMPORT THE .bed XXXY
 
 
 ```R
@@ -1230,20 +1243,13 @@ set.seed(42)
 
 # import matrix
 
-matrix_data <- read.table("output/edgeR/LengthNormSignal_prom1kb250bp-FergusonUniqueNorm99smooth50bp.txt",  # Replace with actual filename
-                          header = TRUE, 
-                          sep = "\t", 
-                          skip = 3,  # Adjust if needed
-                          row.names = 1, 
-                          check.names = FALSE)
-
-
+xxxxy import sample specific matrix XX
 
 
 matrix_data <- read.delim("output/edgeR/LengthNormSignal_prom1kb250bp-FergusonUniqueNorm99smooth50bp.txt", header=TRUE, sep="\t", skip=2)
 
 
-xxxxy
+
 
 ```
 
