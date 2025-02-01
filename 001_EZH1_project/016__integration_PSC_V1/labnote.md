@@ -1170,11 +1170,13 @@ bedtools merge -d 500 -i output/macs2/broad/PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks.
 --> All good; consensus peak files are: `output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge[SIZE].bed`
 
 
+Now calculate **signal in consensus peak**:
 
 
 ```bash
-# Calculate length-normalize signal for each gene promoters (1kb up 250bp down)
 conda activate deeptools
+
+# condition per condition (not optimal in the end, as I need replicate for stats)
 ## no merge extension
 sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-FergusonUniqueNorm99smooth50bp.sh # 35839533 ok
 sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.merge-FergusonUniqueNorm99smooth50bp.sh # 35839677 ok
@@ -1190,9 +1192,367 @@ sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge5
 sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.merge500bp-FergusonUniqueNorm99smooth50bp.sh # 35840048 ok
 sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge500bp-FergusonUniqueNorm99smooth50bp.sh # 35840149 ok
 
+
+# sample per sample (replicate per replicate)
+## no merge extension
+### H3K27me3
+#### WT
+sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_WT_H3K27me3_006R-FergusonUniqueNorm99.sh # 35902923 ok
+sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_WT_H3K27me3_010R-FergusonUniqueNorm99.sh # 35902926 ok
+sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_WT_H3K27me3_013R1-FergusonUniqueNorm99.sh # 35902928 ok
+#### KO
+sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KO_H3K27me3_006R-FergusonUniqueNorm99.sh # 35902932 ok
+sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KO_H3K27me3_013R1-FergusonUniqueNorm99.sh # 35902933 ok
+sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KO_H3K27me3_014R2-FergusonUniqueNorm99.sh # 35902936 ok
+#### KOEF1aEZH1
+sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_H3K27me3_005R-FergusonUniqueNorm99.sh # 35902941 ok
+sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_H3K27me3_006R-FergusonUniqueNorm99.sh # 35902943 ok
+sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_H3K27me3_013R1-FergusonUniqueNorm99.sh # 35902945 ok
 ```
 
---> All good
+--> I set here `--binSize 100 --regionBodyLength 100`; seems it give 1 value per row/peak. Look good.
+
+
+
+### H3K27me3, no extension - R DESEQ2
+
+
+
+
+```R
+library("tidyverse")
+library("DESeq2")
+library("edgeR")
+library("EnhancedVolcano")
+
+
+set.seed(42)
+
+# import bed reference to collect gene name
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot__noIntergenic <- read.delim("output/ChIPseeker/annotation_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot.txt", header=TRUE, sep="\t", skip=0) %>% 
+  as_tibble() %>%
+  dplyr::rename(chr = seqnames) %>%
+  filter(annotation != "Distal Intergenic") %>%
+  mutate(peakID = paste(chr, start, end, sep = "_")) %>%
+  dplyr::select(chr, start, end, annotation, geneSymbol, gene, peakID)
+
+
+# import SCORE 
+SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_WT_H3K27me3_006R-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_010R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_WT_H3K27me3_010R-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_WT_H3K27me3_013R1-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+
+SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KO_H3K27me3_006R-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KO_H3K27me3_013R1-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_014R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KO_H3K27me3_014R2-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+
+SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_005R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_H3K27me3_005R-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_H3K27me3_006R-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_H3K27me3_013R1-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+
+
+
+
+# import BED position from matrix
+BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_WT_H3K27me3_006R-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_010R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_WT_H3K27me3_010R-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_WT_H3K27me3_013R1-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+
+BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KO_H3K27me3_006R-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KO_H3K27me3_013R1-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_014R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KO_H3K27me3_014R2-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+  
+BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_005R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_H3K27me3_005R-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_H3K27me3_006R-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_H3K27me3_013R1-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+
+
+# Put together, gene name, scoer per row, coordinate and row
+
+XXXY HERE !!!! XXXY COMPLETE PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot__noIntergenic THINK ABOUT WHAT TO DO MAYBE WORK WITH peakID and thene refer to annot file to jknow which gfene is which! XXX
+
+SCORE_BED_geneSymbol__prom1kb250bp_WT_H3K27me3_006R = SCORE_prom1kb250bp_PSC_WT_H3K27me3_006R %>%
+  left_join(BED_prom1kb250bp_PSC_WT_H3K27me3_006R) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R1")
+SCORE_BED_geneSymbol__prom1kb250bp_WT_H3K27me3_010R = SCORE_prom1kb250bp_PSC_WT_H3K27me3_010R %>%
+  left_join(BED_prom1kb250bp_PSC_WT_H3K27me3_010R) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R2")
+SCORE_BED_geneSymbol__prom1kb250bp_WT_H3K27me3_013R1 = SCORE_prom1kb250bp_PSC_WT_H3K27me3_013R1 %>%
+  left_join(BED_prom1kb250bp_PSC_WT_H3K27me3_013R1) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R3")
+
+SCORE_BED_geneSymbol__prom1kb250bp_KO_H3K27me3_006R = SCORE_prom1kb250bp_PSC_KO_H3K27me3_006R  %>%
+  left_join(BED_prom1kb250bp_PSC_KO_H3K27me3_006R) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R1")
+SCORE_BED_geneSymbol__prom1kb250bp_KO_H3K27me3_013R1 = SCORE_prom1kb250bp_PSC_KO_H3K27me3_013R1  %>%
+  left_join(BED_prom1kb250bp_PSC_KO_H3K27me3_013R1) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R2")
+SCORE_BED_geneSymbol__prom1kb250bp_KO_H3K27me3_014R2 = SCORE_prom1kb250bp_PSC_KO_H3K27me3_014R2  %>%
+  left_join(BED_prom1kb250bp_PSC_KO_H3K27me3_014R2) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R3")
+
+SCORE_BED_geneSymbol__prom1kb250bp_KOEF1aEZH1_H3K27me3_005R = SCORE_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_005R  %>%
+  left_join(BED_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_005R) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KOEF1aEZH1", replicate = "R1")
+SCORE_BED_geneSymbol__prom1kb250bp_KOEF1aEZH1_H3K27me3_006R = SCORE_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_006R  %>%
+  left_join(BED_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_006R) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KOEF1aEZH1", replicate = "R2")
+SCORE_BED_geneSymbol__prom1kb250bp_KOEF1aEZH1_H3K27me3_013R1 = SCORE_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_013R1  %>%
+  left_join(BED_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_013R1) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KOEF1aEZH1", replicate = "R3")
+
+
+
+# Tidy into a single tibble
+SCORE_BED_geneSymbol__prom1kb250bp_H3K27me3 = SCORE_BED_geneSymbol__prom1kb250bp_WT_H3K27me3_006R %>%
+  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_WT_H3K27me3_010R) %>%
+  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_WT_H3K27me3_013R1) %>%
+  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_KO_H3K27me3_006R) %>%
+  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_KO_H3K27me3_013R1) %>%
+  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_KO_H3K27me3_014R2) %>%
+  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_KOEF1aEZH1_H3K27me3_005R) %>%
+  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_KOEF1aEZH1_H3K27me3_006R) %>%
+  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_KOEF1aEZH1_H3K27me3_013R1)
+
+
+
+######################################################
+### WT vs KO ####################################
+######################################################
+
+SCORE_BED_geneSymbol__prom1kb250bp_H3K27me3_WTvsKO = SCORE_BED_geneSymbol__prom1kb250bp_H3K27me3 %>%
+  filter(genotype %in% c("WT", "KO")) %>%
+  mutate(median_score = round(median_score))
+
+
+# Convert to wide format
+countData_WTvsKO <- SCORE_BED_geneSymbol__prom1kb250bp_H3K27me3_WTvsKO %>%
+  mutate(replicate = paste0(genotype, "_", replicate)) %>%  # Create unique column names
+  select(-genotype) %>%  # Remove genotype column (since it's now part of replicate)
+  pivot_wider(names_from = replicate, values_from = median_score, values_fill = 0)  
+  
+
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(countData_WTvsKO, -geneSymbol), pull(countData_WTvsKO, geneSymbol)) 
+
+
+## Create colData file that describe all our samples
+colData_WTvsKO_raw <- SCORE_BED_geneSymbol__prom1kb250bp_H3K27me3_WTvsKO %>%
+  distinct(replicate, genotype) %>%
+  mutate(sample = paste(genotype, replicate, sep = "_"))
+  
+  
+## transform df into matrix
+coldata = make_matrix(dplyr::select(colData_WTvsKO_raw, -sample), pull(colData_WTvsKO_raw, sample))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design= ~ genotype)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 100 # below 2000 look like noise on IGV
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+
+res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm")
+
+## Export result as 'raw_NPC_KO_vs_NPC_WT.txt'
+write.csv(res %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/edgeR/raw_PSC_KO_vs_PSC_WT_H3K27me3.txt")
+### If need to import: res <- read_csv("output/edgeR/raw_PSC_KO_vs_PSC_WT_H3K27me3.txt") #To import
+
+
+
+## Plot-volcano
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.1 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.1 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+
+res_tibble <- as_tibble(res, rownames = "geneSymbol")
+
+
+pdf("output/edgeR/plotVolcano_res_q05fc01_PSC_KO_vs_PSC_WT_H3K27me3.pdf", width=3, height=4)    
+EnhancedVolcano(res_tibble,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, PSC, H3K27me3',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.1,
+  pointSize = 1.0,
+  labSize = 2,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+
+upregulated_genes <- sum(res_tibble$log2FoldChange > 0.1 & res_tibble$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res_tibble$log2FoldChange < -0.1 & res_tibble$padj < 5e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.1 & res_tibble$padj < 5e-2, ]
+#### Filter for down-regulated genes
+downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.1 & res_tibble$padj < 5e-2, ]
+#### Save
+write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc01_PSC_KO_vs_PSC_WT_H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc01_PSC_KO_vs_PSC_WT_H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
 
 
 ## Diff binding on all genes
@@ -1203,55 +1563,766 @@ sbatch scripts/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge500bp
 conda activate deeptools
 sbatch scripts/LengthNormSignal_prom1kb250bp-FergusonUniqueNorm99smooth50bp.sh # 35838217 ok
 
-# sample per sample
-sbatch scripts/LengthNormSignal_prom1kb250bp-WT_H3K27me3-FergusonUniqueNorm99smooth50bp.sh # 35849866 xxx
-sbatch scripts/LengthNormSignal_prom1kb250bp-KO_H3K27me3-FergusonUniqueNorm99smooth50bp.sh # 35849895 xxx
-sbatch scripts/LengthNormSignal_prom1kb250bp-KOEF1aEZH1_H3K27me3-FergusonUniqueNorm99smooth50bp.sh # 35849902 xxx
+# condition per condition (not optimal in the end, as I need replicate for stats)
+sbatch scripts/LengthNormSignal_prom1kb250bp-WT_H3K27me3-FergusonUniqueNorm99smooth50bp.sh # 35849866 ok; fail need --missingDataAsZero 35891003; fail need --averageTypeBins sum  and --binSize 1250 (size promoter region!) 35893049 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-KO_H3K27me3-FergusonUniqueNorm99smooth50bp.sh # 35849895 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-KOEF1aEZH1_H3K27me3-FergusonUniqueNorm99smooth50bp.sh # 35849902 ok
 
-sbatch scripts/LengthNormSignal_prom1kb250bp-WT_SUZ12-FergusonUniqueNorm99smooth50bp.sh # 35849929 xxx
-sbatch scripts/LengthNormSignal_prom1kb250bp-KO_SUZ12-FergusonUniqueNorm99smooth50bp.sh # 35849939 xxx
-sbatch scripts/LengthNormSignal_prom1kb250bp-KOEF1aEZH1_SUZ12-FergusonUniqueNorm99smooth50bp.sh # 35849944 xxx
+sbatch scripts/LengthNormSignal_prom1kb250bp-WT_SUZ12-FergusonUniqueNorm99smooth50bp.sh # 35849929 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-KO_SUZ12-FergusonUniqueNorm99smooth50bp.sh # 35849939 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-KOEF1aEZH1_SUZ12-FergusonUniqueNorm99smooth50bp.sh # 35849944 ok
 
-sbatch scripts/LengthNormSignal_prom1kb250bp-WT_EZH2-FergusonUniqueNorm99smooth50bp.sh # 35849953 xxx
-sbatch scripts/LengthNormSignal_prom1kb250bp-KO_EZH2-FergusonUniqueNorm99smooth50bp.sh # 35849959 xxx
-sbatch scripts/LengthNormSignal_prom1kb250bp-KOEF1aEZH1_EZH2-FergusonUniqueNorm99smooth50bp.sh # 35849971 xxx
+sbatch scripts/LengthNormSignal_prom1kb250bp-WT_EZH2-FergusonUniqueNorm99smooth50bp.sh # 35849953 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-KO_EZH2-FergusonUniqueNorm99smooth50bp.sh # 35849959 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-KOEF1aEZH1_EZH2-FergusonUniqueNorm99smooth50bp.sh # 35849971 ok
+
+# sample per sample (replicate per replicate)
+## H3K27me3
+### WT
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_WT_H3K27me3_006R-FergusonUniqueNorm99smooth50bp.sh # 35894716 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_WT_H3K27me3_010R-FergusonUniqueNorm99smooth50bp.sh # 35894772 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_WT_H3K27me3_013R1-FergusonUniqueNorm99smooth50bp.sh # 35894791 ok
+### KO
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_KO_H3K27me3_006R-FergusonUniqueNorm99smooth50bp.sh # 35894808 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_KO_H3K27me3_013R1-FergusonUniqueNorm99smooth50bp.sh # 35894813 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_KO_H3K27me3_014R2-FergusonUniqueNorm99smooth50bp.sh # 35894816 ok
+### KOEF1aEZH1
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_KOEF1aEZH1_H3K27me3_005R-FergusonUniqueNorm99smooth50bp.sh # 35894822 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_KOEF1aEZH1_H3K27me3_006R-FergusonUniqueNorm99smooth50bp.sh # 35894834 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_KOEF1aEZH1_H3K27me3_013R1-FergusonUniqueNorm99smooth50bp.sh # 35894855 ok
+
+
+## SUZ12
+### WT
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_WT_SUZ12_006R-FergusonUniqueNorm99smooth50bp.sh # 35895792 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_WT_SUZ12_013R1-FergusonUniqueNorm99smooth50bp.sh # 35895818 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_WT_SUZ12_014R1-FergusonUniqueNorm99smooth50bp.sh # 35895823 ok
+### KO
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_KO_SUZ12_013R1-FergusonUniqueNorm99smooth50bp.sh # 35895847 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_KO_SUZ12_014R1-FergusonUniqueNorm99smooth50bp.sh # 35895855 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_KO_SUZ12_014R2-FergusonUniqueNorm99smooth50bp.sh # 35895870 ok
+### KOEF1aEZH1
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_KOEF1aEZH1_SUZ12_005R-FergusonUniqueNorm99smooth50bp.sh # 35895881 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_KOEF1aEZH1_SUZ12_006R-FergusonUniqueNorm99smooth50bp.sh # 35895893 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_KOEF1aEZH1_SUZ12_013R1-FergusonUniqueNorm99smooth50bp.sh # 35895913 ok
+
+
+## EZH2
+### WT
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_WT_EZH2_006R-FergusonUniqueNorm99smooth50bp.sh # 35896656 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_WT_EZH2_010R-FergusonUniqueNorm99smooth50bp.sh # 35896683 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_WT_EZH2_014R1-FergusonUniqueNorm99smooth50bp.sh # 35896690 ok
+### KO
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_KO_EZH2_013R1-FergusonUniqueNorm99smooth50bp.sh # 35896710 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_KO_EZH2_014R1-FergusonUniqueNorm99smooth50bp.sh # 35896727 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_KO_EZH2_014R2-FergusonUniqueNorm99smooth50bp.sh # 35896739 ok
+### KOEF1aEZH1
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_KOEF1aEZH1_EZH2_006R-FergusonUniqueNorm99smooth50bp.sh # 35896749 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_KOEF1aEZH1_EZH2_013R1-FergusonUniqueNorm99smooth50bp.sh # 35896760 ok
+sbatch scripts/LengthNormSignal_prom1kb250bp-PSC_KOEF1aEZH1_EZH2_014R1-FergusonUniqueNorm99smooth50bp.sh # 35896775 ok
+
+
+
+# Calculate length-normalize signal for each gene promoters (2.5kb up 2.5kb down); here no lenght normalization as all region are same length = 5kb
+## H3K27me3
+### WT
+sbatch scripts/LengthNormSignal_prom2500bp2500bp-PSC_WT_H3K27me3_006R-FergusonUniqueNorm99smooth50bp.sh # 35902595 ok
+sbatch scripts/LengthNormSignal_prom2500bp2500bp-PSC_WT_H3K27me3_010R-FergusonUniqueNorm99smooth50bp.sh # 35902601 ok
+sbatch scripts/LengthNormSignal_prom2500bp2500bp-PSC_WT_H3K27me3_013R1-FergusonUniqueNorm99smooth50bp.sh # 35902605 ok
+### KO
+sbatch scripts/LengthNormSignal_prom2500bp2500bp-PSC_KO_H3K27me3_006R-FergusonUniqueNorm99smooth50bp.sh # 35902609 ok
+sbatch scripts/LengthNormSignal_prom2500bp2500bp-PSC_KO_H3K27me3_013R1-FergusonUniqueNorm99smooth50bp.sh # 35902612 ok
+sbatch scripts/LengthNormSignal_prom2500bp2500bp-PSC_KO_H3K27me3_014R2-FergusonUniqueNorm99smooth50bp.sh # 35902621 ok
+### KOEF1aEZH1
+sbatch scripts/LengthNormSignal_prom2500bp2500bp-PSC_KOEF1aEZH1_H3K27me3_005R-FergusonUniqueNorm99smooth50bp.sh # 35902624 ok
+sbatch scripts/LengthNormSignal_prom2500bp2500bp-PSC_KOEF1aEZH1_H3K27me3_006R-FergusonUniqueNorm99smooth50bp.sh # 35902631 ok
+sbatch scripts/LengthNormSignal_prom2500bp2500bp-PSC_KOEF1aEZH1_H3K27me3_013R1-FergusonUniqueNorm99smooth50bp.sh # 35902638 ok
+
+## SUZ12
+XXX Maybe another region size is more adapted
+## EZH2
+XXX Maybe another region size is more adapted
+
 
 
 ```
 
---> Look good, file to use and import to R is the `--outFileNameMatrix` one (.txt file).  
+--> So I had to add the following parameters to make it work. Here all regions from my bed are around promoter and are 1250bp length:
+  -  `--missingDataAsZero` = replace NA per 0 when no data
+  -  `--averageTypeBins sum` = here the bigwig are normalized, so I want the sum per bin of all my signal (does not matter because I do have 1 bin)
+  -  `--binSize 1250` = Sets the bin size to exactly the length of each region (1250bp). This ensures that each gene is represented by only one bin, rather than being split into multiple bins.
+  -  `--regionBodyLength 1250` = Defines the length to which each region should be scaled. Since all regions in my BED file are already 1250bp, I use the exact same value here to prevent any artificial resizing.
 
+    --> Then, the `--outFileNameMatrix` contain one value per row = signal score per region. And `--outFileSortedRegions` contains the bed file region --> Usefull to group gene coordinate and signal 
+
+
+
+--> According to deepTool plot, **optiomal size to calculate signal around gene TSS**:
+  - *H3K27me3*: Most signal around -2.5 and +2.5kb; new bed file generated in `001*/009*`: `/scr1/users/roulet/Akizu_Lab/Master/meta/ENCFF159KBI_geneSymbol_prom2500bp2500bp.bed`
+  - *SUZ12*: XXX
+  - *EZH2*: XXX
 
 Let's load the count matrix for all genes into R and perform Diff Bind analysis with edgeR
 
+
+
+### H3K27me3
 
 ```bash
 conda activate monocle3
 ```
 
-
+#### H3K27me3 - 1kb upstream 250bp downstream TSS - R DESEQ2
 
 ```R
-
 library("tidyverse")
-library("edgeR")
 library("DESeq2")
+library("edgeR")
+library("EnhancedVolcano")
+
 
 set.seed(42)
 
+# import bed reference to collect gene name
+ENCFF159KBI_geneSymbol_prom1kb250bp <- read.delim("../../Master/meta/ENCFF159KBI_geneSymbol_prom1kb250bp.bed", header=FALSE, sep="\t", skip=0) %>% 
+  as_tibble() %>%
+  dplyr::rename(chr = V1, start =V2 , end = V3, geneSymbol= V4)
 
 
-# import matrix
+# import SCORE 
+SCORE_prom1kb250bp_PSC_WT_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_prom1kb250bp-PSC_WT_H3K27me3_006R-FergusonUniqueNorm99smooth50bp.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_prom1kb250bp_PSC_WT_H3K27me3_010R <- read.delim("output/edgeR/LengthNormSignal_prom1kb250bp-PSC_WT_H3K27me3_010R-FergusonUniqueNorm99smooth50bp.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_prom1kb250bp_PSC_WT_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_prom1kb250bp-PSC_WT_H3K27me3_013R1-FergusonUniqueNorm99smooth50bp.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_prom1kb250bp_PSC_KO_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_prom1kb250bp-PSC_KO_H3K27me3_006R-FergusonUniqueNorm99smooth50bp.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_prom1kb250bp_PSC_KO_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_prom1kb250bp-PSC_KO_H3K27me3_013R1-FergusonUniqueNorm99smooth50bp.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_prom1kb250bp_PSC_KO_H3K27me3_014R2 <- read.delim("output/edgeR/LengthNormSignal_prom1kb250bp-PSC_KO_H3K27me3_014R2-FergusonUniqueNorm99smooth50bp.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_005R <- read.delim("output/edgeR/LengthNormSignal_prom1kb250bp-PSC_KOEF1aEZH1_H3K27me3_005R-FergusonUniqueNorm99smooth50bp.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_prom1kb250bp-PSC_KOEF1aEZH1_H3K27me3_006R-FergusonUniqueNorm99smooth50bp.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_prom1kb250bp-PSC_KOEF1aEZH1_H3K27me3_013R1-FergusonUniqueNorm99smooth50bp.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
 
-xxxxy import sample specific matrix XX
+
+# import BED position from matrix
+BED_prom1kb250bp_PSC_WT_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_prom1kb250bp-PSC_WT_H3K27me3_006R-FergusonUniqueNorm99smooth50bp.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_prom1kb250bp_PSC_WT_H3K27me3_010R <- read.delim("output/edgeR/LengthNormSignal_prom1kb250bp-PSC_WT_H3K27me3_010R-FergusonUniqueNorm99smooth50bp.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_prom1kb250bp_PSC_WT_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_prom1kb250bp-PSC_WT_H3K27me3_013R1-FergusonUniqueNorm99smooth50bp.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_prom1kb250bp_PSC_KO_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_prom1kb250bp-PSC_KO_H3K27me3_006R-FergusonUniqueNorm99smooth50bp.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_prom1kb250bp_PSC_KO_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_prom1kb250bp-PSC_KO_H3K27me3_013R1-FergusonUniqueNorm99smooth50bp.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_prom1kb250bp_PSC_KO_H3K27me3_014R2 <- read.delim("output/edgeR/LengthNormSignal_prom1kb250bp-PSC_KO_H3K27me3_014R2-FergusonUniqueNorm99smooth50bp.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_005R <- read.delim("output/edgeR/LengthNormSignal_prom1kb250bp-PSC_KOEF1aEZH1_H3K27me3_005R-FergusonUniqueNorm99smooth50bp.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_prom1kb250bp-PSC_KOEF1aEZH1_H3K27me3_006R-FergusonUniqueNorm99smooth50bp.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_prom1kb250bp-PSC_KOEF1aEZH1_H3K27me3_013R1-FergusonUniqueNorm99smooth50bp.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
 
 
-matrix_data <- read.delim("output/edgeR/LengthNormSignal_prom1kb250bp-FergusonUniqueNorm99smooth50bp.txt", header=TRUE, sep="\t", skip=2)
+
+
+# Put together, gene name, scoer per row, coordinate and row
+
+SCORE_BED_geneSymbol__prom1kb250bp_WT_H3K27me3_006R = SCORE_prom1kb250bp_PSC_WT_H3K27me3_006R %>%
+  left_join(BED_prom1kb250bp_PSC_WT_H3K27me3_006R) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R1")
+SCORE_BED_geneSymbol__prom1kb250bp_WT_H3K27me3_010R = SCORE_prom1kb250bp_PSC_WT_H3K27me3_010R %>%
+  left_join(BED_prom1kb250bp_PSC_WT_H3K27me3_010R) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R2")
+SCORE_BED_geneSymbol__prom1kb250bp_WT_H3K27me3_013R1 = SCORE_prom1kb250bp_PSC_WT_H3K27me3_013R1 %>%
+  left_join(BED_prom1kb250bp_PSC_WT_H3K27me3_013R1) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R3")
+
+SCORE_BED_geneSymbol__prom1kb250bp_KO_H3K27me3_006R = SCORE_prom1kb250bp_PSC_KO_H3K27me3_006R  %>%
+  left_join(BED_prom1kb250bp_PSC_KO_H3K27me3_006R) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R1")
+SCORE_BED_geneSymbol__prom1kb250bp_KO_H3K27me3_013R1 = SCORE_prom1kb250bp_PSC_KO_H3K27me3_013R1  %>%
+  left_join(BED_prom1kb250bp_PSC_KO_H3K27me3_013R1) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R2")
+SCORE_BED_geneSymbol__prom1kb250bp_KO_H3K27me3_014R2 = SCORE_prom1kb250bp_PSC_KO_H3K27me3_014R2  %>%
+  left_join(BED_prom1kb250bp_PSC_KO_H3K27me3_014R2) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R3")
+
+SCORE_BED_geneSymbol__prom1kb250bp_KOEF1aEZH1_H3K27me3_005R = SCORE_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_005R  %>%
+  left_join(BED_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_005R) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KOEF1aEZH1", replicate = "R1")
+SCORE_BED_geneSymbol__prom1kb250bp_KOEF1aEZH1_H3K27me3_006R = SCORE_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_006R  %>%
+  left_join(BED_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_006R) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KOEF1aEZH1", replicate = "R2")
+SCORE_BED_geneSymbol__prom1kb250bp_KOEF1aEZH1_H3K27me3_013R1 = SCORE_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_013R1  %>%
+  left_join(BED_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_013R1) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KOEF1aEZH1", replicate = "R3")
+
+
+
+# Tidy into a single tibble
+SCORE_BED_geneSymbol__prom1kb250bp_H3K27me3 = SCORE_BED_geneSymbol__prom1kb250bp_WT_H3K27me3_006R %>%
+  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_WT_H3K27me3_010R) %>%
+  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_WT_H3K27me3_013R1) %>%
+  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_KO_H3K27me3_006R) %>%
+  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_KO_H3K27me3_013R1) %>%
+  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_KO_H3K27me3_014R2) %>%
+  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_KOEF1aEZH1_H3K27me3_005R) %>%
+  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_KOEF1aEZH1_H3K27me3_006R) %>%
+  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_KOEF1aEZH1_H3K27me3_013R1)
+
+
+
+######################################################
+### WT vs KO ####################################
+######################################################
+
+SCORE_BED_geneSymbol__prom1kb250bp_H3K27me3_WTvsKO = SCORE_BED_geneSymbol__prom1kb250bp_H3K27me3 %>%
+  filter(genotype %in% c("WT", "KO")) %>%
+  mutate(median_score = round(median_score))
+
+
+# Convert to wide format
+countData_WTvsKO <- SCORE_BED_geneSymbol__prom1kb250bp_H3K27me3_WTvsKO %>%
+  mutate(replicate = paste0(genotype, "_", replicate)) %>%  # Create unique column names
+  select(-genotype) %>%  # Remove genotype column (since it's now part of replicate)
+  pivot_wider(names_from = replicate, values_from = median_score, values_fill = 0)  
+  
+
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(countData_WTvsKO, -geneSymbol), pull(countData_WTvsKO, geneSymbol)) 
+
+
+## Create colData file that describe all our samples
+colData_WTvsKO_raw <- SCORE_BED_geneSymbol__prom1kb250bp_H3K27me3_WTvsKO %>%
+  distinct(replicate, genotype) %>%
+  mutate(sample = paste(genotype, replicate, sep = "_"))
+  
+  
+## transform df into matrix
+coldata = make_matrix(dplyr::select(colData_WTvsKO_raw, -sample), pull(colData_WTvsKO_raw, sample))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design= ~ genotype)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 100 # below 2000 look like noise on IGV
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+
+res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm")
+
+## Export result as 'raw_NPC_KO_vs_NPC_WT.txt'
+write.csv(res %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/edgeR/raw_PSC_KO_vs_PSC_WT_H3K27me3.txt")
+### If need to import: res <- read_csv("output/edgeR/raw_PSC_KO_vs_PSC_WT_H3K27me3.txt") #To import
+
+
+
+## Plot-volcano
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.1 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.1 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+
+res_tibble <- as_tibble(res, rownames = "geneSymbol")
+
+
+pdf("output/edgeR/plotVolcano_res_q05fc01_PSC_KO_vs_PSC_WT_H3K27me3.pdf", width=3, height=4)    
+EnhancedVolcano(res_tibble,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, PSC, H3K27me3',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.1,
+  pointSize = 1.0,
+  labSize = 2,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+
+upregulated_genes <- sum(res_tibble$log2FoldChange > 0.1 & res_tibble$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res_tibble$log2FoldChange < -0.1 & res_tibble$padj < 5e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.1 & res_tibble$padj < 5e-2, ]
+#### Filter for down-regulated genes
+downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.1 & res_tibble$padj < 5e-2, ]
+#### Save
+write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc01_PSC_KO_vs_PSC_WT_H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc01_PSC_KO_vs_PSC_WT_H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
 
 
 
 
 ```
+
+--> Some geneSymbol were duplicated (likely different isoforms), for these I took median signal at the step  `# Put together, gene name, scoer per row, coordinate and row`
+
+
+
+
+
+
+#### H3K27me3 - 2.5kb upstream 2.5kb downstream TSS - R DESEQ2
+
+```R
+library("tidyverse")
+library("DESeq2")
+library("edgeR")
+library("EnhancedVolcano")
+
+
+set.seed(42)
+
+# import bed reference to collect gene name
+ENCFF159KBI_geneSymbol_prom2500bp2500bp <- read.delim("../../Master/meta/ENCFF159KBI_geneSymbol_prom2500bp2500bp.bed", header=FALSE, sep="\t", skip=0) %>% 
+  as_tibble() %>%
+  dplyr::rename(chr = V1, start =V2 , end = V3, geneSymbol= V4)
+
+
+# import SCORE 
+SCORE_prom2500bp2500bp_PSC_WT_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_prom2500bp2500bp-PSC_WT_H3K27me3_006R-FergusonUniqueNorm99smooth50bp.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_prom2500bp2500bp_PSC_WT_H3K27me3_010R <- read.delim("output/edgeR/LengthNormSignal_prom2500bp2500bp-PSC_WT_H3K27me3_010R-FergusonUniqueNorm99smooth50bp.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_prom2500bp2500bp_PSC_WT_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_prom2500bp2500bp-PSC_WT_H3K27me3_013R1-FergusonUniqueNorm99smooth50bp.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_prom2500bp2500bp_PSC_KO_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_prom2500bp2500bp-PSC_KO_H3K27me3_006R-FergusonUniqueNorm99smooth50bp.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_prom2500bp2500bp_PSC_KO_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_prom2500bp2500bp-PSC_KO_H3K27me3_013R1-FergusonUniqueNorm99smooth50bp.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_prom2500bp2500bp_PSC_KO_H3K27me3_014R2 <- read.delim("output/edgeR/LengthNormSignal_prom2500bp2500bp-PSC_KO_H3K27me3_014R2-FergusonUniqueNorm99smooth50bp.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_prom2500bp2500bp_PSC_KOEF1aEZH1_H3K27me3_005R <- read.delim("output/edgeR/LengthNormSignal_prom2500bp2500bp-PSC_KOEF1aEZH1_H3K27me3_005R-FergusonUniqueNorm99smooth50bp.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_prom2500bp2500bp_PSC_KOEF1aEZH1_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_prom2500bp2500bp-PSC_KOEF1aEZH1_H3K27me3_006R-FergusonUniqueNorm99smooth50bp.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_prom2500bp2500bp_PSC_KOEF1aEZH1_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_prom2500bp2500bp-PSC_KOEF1aEZH1_H3K27me3_013R1-FergusonUniqueNorm99smooth50bp.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+
+
+# import BED position from matrix
+BED_prom2500bp2500bp_PSC_WT_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_prom2500bp2500bp-PSC_WT_H3K27me3_006R-FergusonUniqueNorm99smooth50bp.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_prom2500bp2500bp_PSC_WT_H3K27me3_010R <- read.delim("output/edgeR/LengthNormSignal_prom2500bp2500bp-PSC_WT_H3K27me3_010R-FergusonUniqueNorm99smooth50bp.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_prom2500bp2500bp_PSC_WT_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_prom2500bp2500bp-PSC_WT_H3K27me3_013R1-FergusonUniqueNorm99smooth50bp.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_prom2500bp2500bp_PSC_KO_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_prom2500bp2500bp-PSC_KO_H3K27me3_006R-FergusonUniqueNorm99smooth50bp.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_prom2500bp2500bp_PSC_KO_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_prom2500bp2500bp-PSC_KO_H3K27me3_013R1-FergusonUniqueNorm99smooth50bp.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_prom2500bp2500bp_PSC_KO_H3K27me3_014R2 <- read.delim("output/edgeR/LengthNormSignal_prom2500bp2500bp-PSC_KO_H3K27me3_014R2-FergusonUniqueNorm99smooth50bp.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_prom2500bp2500bp_PSC_KOEF1aEZH1_H3K27me3_005R <- read.delim("output/edgeR/LengthNormSignal_prom2500bp2500bp-PSC_KOEF1aEZH1_H3K27me3_005R-FergusonUniqueNorm99smooth50bp.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_prom2500bp2500bp_PSC_KOEF1aEZH1_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_prom2500bp2500bp-PSC_KOEF1aEZH1_H3K27me3_006R-FergusonUniqueNorm99smooth50bp.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_prom2500bp2500bp_PSC_KOEF1aEZH1_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_prom2500bp2500bp-PSC_KOEF1aEZH1_H3K27me3_013R1-FergusonUniqueNorm99smooth50bp.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+
+
+
+
+# Put together, gene name, scoer per row, coordinate and row
+
+SCORE_BED_geneSymbol__prom2500bp2500bp_WT_H3K27me3_006R = SCORE_prom2500bp2500bp_PSC_WT_H3K27me3_006R %>%
+  left_join(BED_prom2500bp2500bp_PSC_WT_H3K27me3_006R) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom2500bp2500bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R1")
+SCORE_BED_geneSymbol__prom2500bp2500bp_WT_H3K27me3_010R = SCORE_prom2500bp2500bp_PSC_WT_H3K27me3_010R %>%
+  left_join(BED_prom2500bp2500bp_PSC_WT_H3K27me3_010R) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom2500bp2500bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R2")
+SCORE_BED_geneSymbol__prom2500bp2500bp_WT_H3K27me3_013R1 = SCORE_prom2500bp2500bp_PSC_WT_H3K27me3_013R1 %>%
+  left_join(BED_prom2500bp2500bp_PSC_WT_H3K27me3_013R1) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom2500bp2500bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R3")
+
+SCORE_BED_geneSymbol__prom2500bp2500bp_KO_H3K27me3_006R = SCORE_prom2500bp2500bp_PSC_KO_H3K27me3_006R  %>%
+  left_join(BED_prom2500bp2500bp_PSC_KO_H3K27me3_006R) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom2500bp2500bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R1")
+SCORE_BED_geneSymbol__prom2500bp2500bp_KO_H3K27me3_013R1 = SCORE_prom2500bp2500bp_PSC_KO_H3K27me3_013R1  %>%
+  left_join(BED_prom2500bp2500bp_PSC_KO_H3K27me3_013R1) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom2500bp2500bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R2")
+SCORE_BED_geneSymbol__prom2500bp2500bp_KO_H3K27me3_014R2 = SCORE_prom2500bp2500bp_PSC_KO_H3K27me3_014R2  %>%
+  left_join(BED_prom2500bp2500bp_PSC_KO_H3K27me3_014R2) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom2500bp2500bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R3")
+
+SCORE_BED_geneSymbol__prom2500bp2500bp_KOEF1aEZH1_H3K27me3_005R = SCORE_prom2500bp2500bp_PSC_KOEF1aEZH1_H3K27me3_005R  %>%
+  left_join(BED_prom2500bp2500bp_PSC_KOEF1aEZH1_H3K27me3_005R) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom2500bp2500bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KOEF1aEZH1", replicate = "R1")
+SCORE_BED_geneSymbol__prom2500bp2500bp_KOEF1aEZH1_H3K27me3_006R = SCORE_prom2500bp2500bp_PSC_KOEF1aEZH1_H3K27me3_006R  %>%
+  left_join(BED_prom2500bp2500bp_PSC_KOEF1aEZH1_H3K27me3_006R) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom2500bp2500bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KOEF1aEZH1", replicate = "R2")
+SCORE_BED_geneSymbol__prom2500bp2500bp_KOEF1aEZH1_H3K27me3_013R1 = SCORE_prom2500bp2500bp_PSC_KOEF1aEZH1_H3K27me3_013R1  %>%
+  left_join(BED_prom2500bp2500bp_PSC_KOEF1aEZH1_H3K27me3_013R1) %>%
+  left_join(ENCFF159KBI_geneSymbol_prom2500bp2500bp) %>%
+  dplyr::select(geneSymbol, score) %>%
+  group_by(geneSymbol) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KOEF1aEZH1", replicate = "R3")
+
+
+
+# Tidy into a single tibble
+SCORE_BED_geneSymbol__prom2500bp2500bp_H3K27me3 = SCORE_BED_geneSymbol__prom2500bp2500bp_WT_H3K27me3_006R %>%
+  bind_rows(SCORE_BED_geneSymbol__prom2500bp2500bp_WT_H3K27me3_010R) %>%
+  bind_rows(SCORE_BED_geneSymbol__prom2500bp2500bp_WT_H3K27me3_013R1) %>%
+  bind_rows(SCORE_BED_geneSymbol__prom2500bp2500bp_KO_H3K27me3_006R) %>%
+  bind_rows(SCORE_BED_geneSymbol__prom2500bp2500bp_KO_H3K27me3_013R1) %>%
+  bind_rows(SCORE_BED_geneSymbol__prom2500bp2500bp_KO_H3K27me3_014R2) %>%
+  bind_rows(SCORE_BED_geneSymbol__prom2500bp2500bp_KOEF1aEZH1_H3K27me3_005R) %>%
+  bind_rows(SCORE_BED_geneSymbol__prom2500bp2500bp_KOEF1aEZH1_H3K27me3_006R) %>%
+  bind_rows(SCORE_BED_geneSymbol__prom2500bp2500bp_KOEF1aEZH1_H3K27me3_013R1)
+
+
+
+######################################################
+### WT vs KO ####################################
+######################################################
+
+SCORE_BED_geneSymbol__prom2500bp2500bp_H3K27me3_WTvsKO = SCORE_BED_geneSymbol__prom2500bp2500bp_H3K27me3 %>%
+  filter(genotype %in% c("WT", "KO")) %>%
+  mutate(median_score = round(median_score))
+
+
+# Convert to wide format
+countData_WTvsKO <- SCORE_BED_geneSymbol__prom2500bp2500bp_H3K27me3_WTvsKO %>%
+  mutate(replicate = paste0(genotype, "_", replicate)) %>%  # Create unique column names
+  select(-genotype) %>%  # Remove genotype column (since it's now part of replicate)
+  pivot_wider(names_from = replicate, values_from = median_score, values_fill = 0)  
+  
+
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(countData_WTvsKO, -geneSymbol), pull(countData_WTvsKO, geneSymbol)) 
+
+
+## Create colData file that describe all our samples
+colData_WTvsKO_raw <- SCORE_BED_geneSymbol__prom2500bp2500bp_H3K27me3_WTvsKO %>%
+  distinct(replicate, genotype) %>%
+  mutate(sample = paste(genotype, replicate, sep = "_"))
+  
+  
+## transform df into matrix
+coldata = make_matrix(dplyr::select(colData_WTvsKO_raw, -sample), pull(colData_WTvsKO_raw, sample))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design= ~ genotype)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 100 # below 2000 look like noise on IGV
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+
+res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm")
+
+## Export result as 'raw_NPC_KO_vs_NPC_WT.txt'
+write.csv(res %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/edgeR/raw_prom2500bp2500bp_PSC_KO_vs_PSC_WT_H3K27me3.txt")
+### If need to import: res <- read_csv("output/edgeR/raw_PSC_KO_vs_PSC_WT_H3K27me3.txt") #To import
+
+
+
+## Plot-volcano
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.1 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.1 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+
+res_tibble <- as_tibble(res, rownames = "geneSymbol")
+
+
+pdf("output/edgeR/plotVolcano_res_prom2500bp2500bp_q05fc01_PSC_KO_vs_PSC_WT_H3K27me3.pdf", width=3, height=4)    
+EnhancedVolcano(res_tibble,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, PSC, H3K27me3',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.1,
+  pointSize = 1.0,
+  labSize = 2,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+
+upregulated_genes <- sum(res_tibble$log2FoldChange > 0.1 & res_tibble$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res_tibble$log2FoldChange < -0.1 & res_tibble$padj < 5e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.1 & res_tibble$padj < 5e-2, ]
+#### Filter for down-regulated genes
+downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.1 & res_tibble$padj < 5e-2, ]
+#### Save
+write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_prom2500bp2500bp_q05fc01_PSC_KO_vs_PSC_WT_H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_prom2500bp2500bp_q05fc01_PSC_KO_vs_PSC_WT_H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
+
+```
+
+--> Some geneSymbol were duplicated (likely different isoforms), for these I took median signal at the step  `# Put together, gene name, scoer per row, coordinate and row`
+
+
+
+
+
 
 
 # deepTool plots
@@ -1596,9 +2667,6 @@ sbatch scripts/macs2_broad_pool_3.sh # 35694072 xxx
 
 ## From THOR diff peaks
 
-
-
-
 ```bash
 conda activate deseq2
 ```
@@ -1817,6 +2885,122 @@ write.table(WTvsKOEF1aEZH1_H3K27me3_FergusonUniqueNorm99_noInput_THORq50_annot_p
             col.names = FALSE, 
             row.names = FALSE)
 
+```
+
+
+
+
+
+## From consensus peak
+
+### Consensus peak H3K27me3 no extension/extension
+- consensus peak H3K27me3, WT KO KOEF1aEZH1, no extension: `output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge.bed`
+- consensus peak H3K27me3, WT KO KOEF1aEZH1, no extension: `output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge100bp.bed`
+- consensus peak H3K27me3, WT KO KOEF1aEZH1, no extension: `output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge500bp.bed`
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import consensus peak
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge = as_tibble(read.table('output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge.bed')) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3) 
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp = as_tibble(read.table('output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge100bp.bed')) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3) 
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp = as_tibble(read.table('output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge500bp.bed')) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3) 
+
+# Tidy peaks 
+## H3K27me3
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_gr = makeGRangesFromDataFrame(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge,keep.extra.columns=TRUE)
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_gr = makeGRangesFromDataFrame(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp,keep.extra.columns=TRUE)
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_gr = makeGRangesFromDataFrame(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp,keep.extra.columns=TRUE)
+
+gr_list <- list(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge=PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_gr, PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp=PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_gr, PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp=PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_gr)
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## plots
+pdf("output/ChIPseeker/plotAnnoBar_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge.pdf", width = 8, height = 3)
+plotAnnoBar(peakAnnoList)
+dev.off()
+pdf("output/ChIPseeker/plotDistToTSS_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge.pdf", width = 8, height = 3)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
+
+## Get annotation data frame
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot <- as.data.frame(peakAnnoList[["PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge"]]@anno)
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot <- as.data.frame(peakAnnoList[["PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp"]]@anno)
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot <- as.data.frame(peakAnnoList[["PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot$gene <- mapIds(org.Hs.eg.db, keys = PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot$gene <- mapIds(org.Hs.eg.db, keys = PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot$gene <- mapIds(org.Hs.eg.db, keys = PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+## Save output table
+write.table(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot, file="output/ChIPseeker/annotation_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot, file="output/ChIPseeker/annotation_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot, file="output/ChIPseeker/annotation_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot.txt", sep="\t", quote=F, row.names=F)  
+
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot_promoterAnd5 = tibble(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot_promoterAnd5 = tibble(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot_promoterAnd5 = tibble(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+
+### Save output gene lists
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot_promoterAnd5_geneSymbol = PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot_promoterAnd5_geneSymbol = PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot_promoterAnd5_geneSymbol = PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+write.table(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
 ```
 
 

@@ -2422,6 +2422,18 @@ awk 'BEGIN{OFS="\t"} {
   }
   print $1, start, end, $4, $5;
 }' /scr1/users/roulet/Akizu_Lab/Master/meta/ENCFF159KBI_geneSymbol.bed > /scr1/users/roulet/Akizu_Lab/Master/meta/ENCFF159KBI_geneSymbol_prom1kb250bp.bed
+# collect promoter region of each genes (-2.5kb to +2.5kb)
+awk 'BEGIN{OFS="\t"} {
+  if($5 == "+") {
+    start = ($2 - 2500 < 0) ? 0 : $2 - 2500; # Prevent negative start for forward strand
+    end = $2 + 2500;
+  } else {
+    start = $3 - 2500;
+    end = $3 + 2500;
+  }
+  print $1, start, end, $4, $5;
+}' /scr1/users/roulet/Akizu_Lab/Master/meta/ENCFF159KBI_geneSymbol.bed > /scr1/users/roulet/Akizu_Lab/Master/meta/ENCFF159KBI_geneSymbol_prom2500bp2500bp.bed
+
 
 # filter the ENCFF159KBI_geneSymbol_prom1kb250bp.bed to only keep the genes that gain H3K27me3 in KO and are downregulated
 grep -Fwf output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt /scr1/users/roulet/Akizu_Lab/Master/meta/ENCFF159KBI_geneSymbol_prom1kb250bp.bed > output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30_prom1kb250bp.bed
