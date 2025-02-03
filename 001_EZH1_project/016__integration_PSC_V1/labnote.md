@@ -1229,10 +1229,9 @@ library("EnhancedVolcano")
 set.seed(42)
 
 # import bed reference to collect gene name
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot__noIntergenic <- read.delim("output/ChIPseeker/annotation_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot.txt", header=TRUE, sep="\t", skip=0) %>% 
+PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot <- read.delim("output/ChIPseeker/annotation_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot.txt", header=TRUE, sep="\t", skip=0) %>% 
   as_tibble() %>%
   dplyr::rename(chr = seqnames) %>%
-  filter(annotation != "Distal Intergenic") %>%
   mutate(peakID = paste(chr, start, end, sep = "_")) %>%
   dplyr::select(chr, start, end, annotation, geneSymbol, gene, peakID)
 
@@ -1332,79 +1331,79 @@ BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_013R1 <- read.de
 
 # Put together, gene name, scoer per row, coordinate and row
 
-XXXY HERE !!!! XXXY COMPLETE PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot__noIntergenic THINK ABOUT WHAT TO DO MAYBE WORK WITH peakID and thene refer to annot file to jknow which gfene is which! XXX
 
-SCORE_BED_geneSymbol__prom1kb250bp_WT_H3K27me3_006R = SCORE_prom1kb250bp_PSC_WT_H3K27me3_006R %>%
-  left_join(BED_prom1kb250bp_PSC_WT_H3K27me3_006R) %>%
-  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
-  dplyr::select(geneSymbol, score) %>%
-  group_by(geneSymbol) %>%  # Group by gene
+SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_006R = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_006R %>%
+  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_006R ) %>%
+  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
   add_column(genotype = "WT", replicate = "R1")
-SCORE_BED_geneSymbol__prom1kb250bp_WT_H3K27me3_010R = SCORE_prom1kb250bp_PSC_WT_H3K27me3_010R %>%
-  left_join(BED_prom1kb250bp_PSC_WT_H3K27me3_010R) %>%
-  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
-  dplyr::select(geneSymbol, score) %>%
-  group_by(geneSymbol) %>%  # Group by gene
+SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_010R = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_010R %>%
+  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_010R) %>%
+  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
   add_column(genotype = "WT", replicate = "R2")
-SCORE_BED_geneSymbol__prom1kb250bp_WT_H3K27me3_013R1 = SCORE_prom1kb250bp_PSC_WT_H3K27me3_013R1 %>%
-  left_join(BED_prom1kb250bp_PSC_WT_H3K27me3_013R1) %>%
-  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
-  dplyr::select(geneSymbol, score) %>%
-  group_by(geneSymbol) %>%  # Group by gene
+SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_013R1 = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_013R1 %>%
+  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_013R1) %>%
+  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
   add_column(genotype = "WT", replicate = "R3")
 
-SCORE_BED_geneSymbol__prom1kb250bp_KO_H3K27me3_006R = SCORE_prom1kb250bp_PSC_KO_H3K27me3_006R  %>%
-  left_join(BED_prom1kb250bp_PSC_KO_H3K27me3_006R) %>%
-  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
-  dplyr::select(geneSymbol, score) %>%
-  group_by(geneSymbol) %>%  # Group by gene
+
+SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_006R = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_006R  %>%
+  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_006R) %>%
+  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
   add_column(genotype = "KO", replicate = "R1")
-SCORE_BED_geneSymbol__prom1kb250bp_KO_H3K27me3_013R1 = SCORE_prom1kb250bp_PSC_KO_H3K27me3_013R1  %>%
-  left_join(BED_prom1kb250bp_PSC_KO_H3K27me3_013R1) %>%
-  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
-  dplyr::select(geneSymbol, score) %>%
-  group_by(geneSymbol) %>%  # Group by gene
+SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_013R1 = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_013R1  %>%
+  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_013R1) %>%
+  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
   add_column(genotype = "KO", replicate = "R2")
-SCORE_BED_geneSymbol__prom1kb250bp_KO_H3K27me3_014R2 = SCORE_prom1kb250bp_PSC_KO_H3K27me3_014R2  %>%
-  left_join(BED_prom1kb250bp_PSC_KO_H3K27me3_014R2) %>%
-  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
-  dplyr::select(geneSymbol, score) %>%
-  group_by(geneSymbol) %>%  # Group by gene
+SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_014R2 = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_014R2  %>%
+  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_014R2) %>%
+  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
   add_column(genotype = "KO", replicate = "R3")
 
-SCORE_BED_geneSymbol__prom1kb250bp_KOEF1aEZH1_H3K27me3_005R = SCORE_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_005R  %>%
-  left_join(BED_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_005R) %>%
-  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
-  dplyr::select(geneSymbol, score) %>%
-  group_by(geneSymbol) %>%  # Group by gene
+SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_005R = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_005R  %>%
+  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_005R) %>%
+  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
   add_column(genotype = "KOEF1aEZH1", replicate = "R1")
-SCORE_BED_geneSymbol__prom1kb250bp_KOEF1aEZH1_H3K27me3_006R = SCORE_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_006R  %>%
-  left_join(BED_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_006R) %>%
-  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
-  dplyr::select(geneSymbol, score) %>%
-  group_by(geneSymbol) %>%  # Group by gene
+SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_006R = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_006R  %>%
+  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_006R) %>%
+  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
   add_column(genotype = "KOEF1aEZH1", replicate = "R2")
-SCORE_BED_geneSymbol__prom1kb250bp_KOEF1aEZH1_H3K27me3_013R1 = SCORE_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_013R1  %>%
-  left_join(BED_prom1kb250bp_PSC_KOEF1aEZH1_H3K27me3_013R1) %>%
-  left_join(ENCFF159KBI_geneSymbol_prom1kb250bp) %>%
-  dplyr::select(geneSymbol, score) %>%
-  group_by(geneSymbol) %>%  # Group by gene
+SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_013R1 = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_013R1  %>%
+  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_013R1) %>%
+  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
   add_column(genotype = "KOEF1aEZH1", replicate = "R3")
@@ -1412,15 +1411,15 @@ SCORE_BED_geneSymbol__prom1kb250bp_KOEF1aEZH1_H3K27me3_013R1 = SCORE_prom1kb250b
 
 
 # Tidy into a single tibble
-SCORE_BED_geneSymbol__prom1kb250bp_H3K27me3 = SCORE_BED_geneSymbol__prom1kb250bp_WT_H3K27me3_006R %>%
-  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_WT_H3K27me3_010R) %>%
-  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_WT_H3K27me3_013R1) %>%
-  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_KO_H3K27me3_006R) %>%
-  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_KO_H3K27me3_013R1) %>%
-  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_KO_H3K27me3_014R2) %>%
-  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_KOEF1aEZH1_H3K27me3_005R) %>%
-  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_KOEF1aEZH1_H3K27me3_006R) %>%
-  bind_rows(SCORE_BED_geneSymbol__prom1kb250bp_KOEF1aEZH1_H3K27me3_013R1)
+SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks = SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_006R %>%
+  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_010R) %>%
+  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_013R1) %>%
+  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_006R) %>%
+  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_013R1) %>%
+  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_014R2) %>%
+  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_005R) %>%
+  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_006R) %>%
+  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_013R1)
 
 
 
@@ -1428,13 +1427,14 @@ SCORE_BED_geneSymbol__prom1kb250bp_H3K27me3 = SCORE_BED_geneSymbol__prom1kb250bp
 ### WT vs KO ####################################
 ######################################################
 
-SCORE_BED_geneSymbol__prom1kb250bp_H3K27me3_WTvsKO = SCORE_BED_geneSymbol__prom1kb250bp_H3K27me3 %>%
-  filter(genotype %in% c("WT", "KO")) %>%
+SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_WTvsKO = SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks %>%
+  filter(genotype %in% c("WT", "KO"),
+         peakID != "NA") %>%
   mutate(median_score = round(median_score))
 
 
 # Convert to wide format
-countData_WTvsKO <- SCORE_BED_geneSymbol__prom1kb250bp_H3K27me3_WTvsKO %>%
+countData_WTvsKO <- SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_WTvsKO %>%
   mutate(replicate = paste0(genotype, "_", replicate)) %>%  # Create unique column names
   select(-genotype) %>%  # Remove genotype column (since it's now part of replicate)
   pivot_wider(names_from = replicate, values_from = median_score, values_fill = 0)  
@@ -1451,11 +1451,11 @@ make_matrix <- function(df,rownames = NULL){
   my_matrix
 }
 ### execute function
-counts_all_matrix = make_matrix(dplyr::select(countData_WTvsKO, -geneSymbol), pull(countData_WTvsKO, geneSymbol)) 
+counts_all_matrix = make_matrix(dplyr::select(countData_WTvsKO, -peakID), pull(countData_WTvsKO, peakID)) 
 
 
 ## Create colData file that describe all our samples
-colData_WTvsKO_raw <- SCORE_BED_geneSymbol__prom1kb250bp_H3K27me3_WTvsKO %>%
+colData_WTvsKO_raw <- SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_WTvsKO %>%
   distinct(replicate, genotype) %>%
   mutate(sample = paste(genotype, replicate, sep = "_"))
   
@@ -1486,11 +1486,6 @@ resultsNames(dds) # Here print value into coef below
 
 res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm")
 
-## Export result as 'raw_NPC_KO_vs_NPC_WT.txt'
-write.csv(res %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="output/edgeR/raw_PSC_KO_vs_PSC_WT_H3K27me3.txt")
-### If need to import: res <- read_csv("output/edgeR/raw_PSC_KO_vs_PSC_WT_H3K27me3.txt") #To import
-
-
 
 ## Plot-volcano
 # FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
@@ -1507,10 +1502,11 @@ names(keyvals)[keyvals == 'grey'] <- 'Not significant'
 names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
 
 
-res_tibble <- as_tibble(res, rownames = "geneSymbol")
+res_tibble <- as_tibble(res, rownames = "peakID") %>% left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot)
+# Export result
+write.table(res_tibble, file="output/edgeR/DESEQ2-WTKOKOEF1aEZH1_H3K27me3_pool_peaks-PSC_KO_vs_PSC_WT-H3K27me3.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
-
-pdf("output/edgeR/plotVolcano_res_q05fc01_PSC_KO_vs_PSC_WT_H3K27me3.pdf", width=3, height=4)    
+pdf("output/edgeR/plotVolcano_res_q05fc01-WTKOKOEF1aEZH1_H3K27me3_pool_peaks-PSC_KO_vs_PSC_WT-H3K27me3.pdf", width=3, height=4)    
 EnhancedVolcano(res_tibble,
   lab = res_tibble$geneSymbol,
   x = 'log2FoldChange',
@@ -1536,10 +1532,145 @@ upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$
 #### Filter for down-regulated genes
 downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.1 & res_tibble$padj < 5e-2, ]
 #### Save
-write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc01_PSC_KO_vs_PSC_WT_H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
-write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc01_PSC_KO_vs_PSC_WT_H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc01_WTKOKOEF1aEZH1_H3K27me3_pool_peaks-PSC_KO_vs_PSC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc01_WTKOKOEF1aEZH1_H3K27me3_pool_peaks-PSC_KO_vs_PSC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
 
+
+res_tibble %>% dplyr::select(peakID, geneSymbol, log2FoldChange, padj) %>%
+  filter(padj < 0.05, log2FoldChange > 0.1)
+
+
+res_tibble %>% dplyr::select(peakID, geneSymbol, log2FoldChange, padj) %>%
+  filter(padj < 0.05, log2FoldChange < -0.1)
+
+
+
+
+
+######################################################
+### WT vs KOEF1aEZH1 ####################################
+######################################################
+
+SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_WTvsKOEF1aEZH1 = SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks %>%
+  filter(genotype %in% c("WT", "KOEF1aEZH1"),
+         peakID != "NA") %>%
+  mutate(median_score = round(median_score))
+
+
+# Convert to wide format
+countData_WTvsKOEF1aEZH1 <- SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_WTvsKOEF1aEZH1 %>%
+  mutate(replicate = paste0(genotype, "_", replicate)) %>%  # Create unique column names
+  select(-genotype) %>%  # Remove genotype column (since it's now part of replicate)
+  pivot_wider(names_from = replicate, values_from = median_score, values_fill = 0)  
+  
+
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(countData_WTvsKOEF1aEZH1, -peakID), pull(countData_WTvsKOEF1aEZH1, peakID)) 
+
+
+## Create colData file that describe all our samples
+colData_WTvsKOEF1aEZH1_raw <- SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_WTvsKOEF1aEZH1 %>%
+  distinct(replicate, genotype) %>%
+  mutate(sample = paste(genotype, replicate, sep = "_"))
+  
+  
+## transform df into matrix
+coldata = make_matrix(dplyr::select(colData_WTvsKOEF1aEZH1_raw, -sample), pull(colData_WTvsKOEF1aEZH1_raw, sample))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design= ~ genotype)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 100 # below 2000 look like noise on IGV
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+
+res <- lfcShrink(dds, coef="genotype_KOEF1aEZH1_vs_WT", type="apeglm")
+
+
+
+## Plot-volcano
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.1 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.1 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+
+res_tibble <- as_tibble(res, rownames = "peakID") %>% left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot)
+#export result
+write.table(res_tibble, file="output/edgeR/DESEQ2-WTKOKOEF1aEZH1_H3K27me3_pool_peaks-PSC_KOEF1aEZH1_vs_PSC_WT-H3K27me3.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+pdf("output/edgeR/plotVolcano_res_q05fc01-WTKOKOEF1aEZH1_H3K27me3_pool_peaks-PSC_KOEF1aEZH1_vs_PSC_WT-H3K27me3.pdf", width=3, height=4)    
+EnhancedVolcano(res_tibble,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KOEF1aEZH1 vs WT, PSC, H3K27me3',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.1,
+  pointSize = 1.0,
+  labSize = 2,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+
+upregulated_genes <- sum(res_tibble$log2FoldChange > 0.1 & res_tibble$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res_tibble$log2FoldChange < -0.1 & res_tibble$padj < 5e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.1 & res_tibble$padj < 5e-2, ]
+#### Filter for down-regulated genes
+downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.1 & res_tibble$padj < 5e-2, ]
+#### Save
+write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc01_WTKOKOEF1aEZH1_H3K27me3_pool_peaks-PSC_KOEF1aEZH1_vs_PSC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc01_WTKOKOEF1aEZH1_H3K27me3_pool_peaks-PSC_KOEF1aEZH1_vs_PSC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+res_tibble %>% dplyr::select(peakID, geneSymbol, log2FoldChange, padj) %>%
+  filter(padj < 0.05, log2FoldChange > 0.1)
+
+
+res_tibble %>% dplyr::select(peakID, geneSymbol, log2FoldChange, padj) %>%
+  filter(padj < 0.05, log2FoldChange < -0.1)
 
 
 
@@ -2485,6 +2616,13 @@ sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3EZH2SUZ12_WTKOEF1aEZH1KO-H3K27me3_WTv
 # All macs2 WT H3K27me3 peaks (no trehsold)
 sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3EZH2SUZ12_WTKOKOEF1aEZH1-macs2_WT_H3K27me3_pool-THOR_FergusonUniqueNorm99smooth50bp.sh # 35696938 ok
 
+# All consensus WTKOKOEF1aEZH1 peaks
+## H3K27me3
+sbatch scripts/matrix_TSS_10kb_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks-FergusonUniqueNorm99smooth50bp_H3K27me3.sh # 36189289 ok
+## SUZ12
+XXX
+## EZH2
+XXX
 
 
 

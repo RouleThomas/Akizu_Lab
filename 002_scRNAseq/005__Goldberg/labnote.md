@@ -8023,13 +8023,20 @@ conda activate condiments_V6
 
 
 # Pseudotime all cells kept
-sbatch scripts/pseudotime_allCells_v1.sh # 34643632 xxx
+## Same parameter per trajectory
+sbatch scripts/pseudotime_allCells_v1.sh # 34643632 ok
+## Different parameter per trajectory
+sbatch scripts/pseudotime_allCells_v1_Granule.sh # 36200375 xxx
+sbatch scripts/pseudotime_allCells_v1_MLI1.sh # 36200584 xxx
+sbatch scripts/pseudotime_allCells_v1_MLI2.sh # 36201001 xxx
+
 ```
 
---> *pseudotime_allCells_v1* with parameters: `start.clus = c('Granule_3', "MLI1_3", "MLI2_3"), end.clus = c("Granule_1","MLI1_1","MLI2_2") ,approx_points = 100, extend = 'n', stretch = 1` XXXY
+--> *pseudotime_allCells_v1* with parameters: `start.clus = c('Granule_3', "MLI1_3", "MLI2_3"), end.clus = c("Granule_1","MLI1_1","MLI2_2") ,approx_points = 100, extend = 'n', stretch = 1`: All starting point at Granule. so could be used for Granule. Does not work in identifying different starting point...
+  --> Let's generate **3 pseudotime trajectory slurm job; one for Granule, one for MLI1, one for MLI2 trajectory**
 
 
-
+--> Different parameter per trajectory: XXXY 
 
 
 
