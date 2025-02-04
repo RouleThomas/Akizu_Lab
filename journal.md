@@ -86,6 +86,11 @@ library("VennDiagram")
 library("ggrepel")
 library("fgsea")
 
+library("UpSetR")
+
+
+
+
 ### deseq2V2
 
 Same as deseq2 with `apeglm` R package updated (see error from `005_SNX14/001/RNAseq`)

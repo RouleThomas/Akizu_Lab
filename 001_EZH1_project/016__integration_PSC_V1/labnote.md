@@ -2617,11 +2617,16 @@ sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3EZH2SUZ12_WTKOEF1aEZH1KO-H3K27me3_WTv
 sbatch scripts/matrix_TSS_10kb_PSC_H3K27me3EZH2SUZ12_WTKOKOEF1aEZH1-macs2_WT_H3K27me3_pool-THOR_FergusonUniqueNorm99smooth50bp.sh # 35696938 ok
 
 # All consensus WTKOKOEF1aEZH1 peaks
-## H3K27me3
+## H3K27me3 consensus peak
 sbatch scripts/matrix_TSS_10kb_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks-FergusonUniqueNorm99smooth50bp_H3K27me3.sh # 36189289 ok
-## SUZ12
+sbatch scripts/matrix_TSS_10kb_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks-FergusonUniqueNorm99smooth50bp_SUZ12.sh # 36391767 ok
+sbatch scripts/matrix_TSS_10kb_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks-FergusonUniqueNorm99smooth50bp_EZH2.sh # 36391796 ok
+sbatch scripts/matrix_TSS_5kb_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks-FergusonUniqueNorm99smooth50bp_SUZ12.sh # 36392530 ok
+sbatch scripts/matrix_TSS_5kb_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks-FergusonUniqueNorm99smooth50bp_EZH2.sh # 36392535 ok
+
+## SUZ12 consensus peak
 XXX
-## EZH2
+## EZH2 consensus peak
 XXX
 
 
@@ -3270,16 +3275,26 @@ THORq20_WTvsKO_H3K27me3_housekeepHOX_gain_promoterAnd5 = read.table("output/ChIP
                                dplyr::select(geneSymbol) %>%
                                unique() 
 
+### DESEQ2 WT vs KO ###############################################################
+DESEQ2_WTvsKO_H3K27me3_gain = read.table("output/edgeR/DESEQ2-WTKOKOEF1aEZH1_H3K27me3_pool_peaks-PSC_KO_vs_PSC_WT-H3K27me3.txt", header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE) %>%
+                               as_tibble() %>%
+                               filter(log2FoldChange > 0.1,
+                                      padj < 0.05,
+                                      annotation != "Distal intergenic") %>% # FILTER FC positive here!!
+                               dplyr::select(geneSymbol) %>%
+                               unique()
+
 #### Remove gene version on the res and compil with THOR diff genes
 rownames(res) <- gsub("\\..*", "", rownames(res))
 res_tibble <- res %>% 
   as_tibble(rownames = "gene") %>%
   drop_na()   # ADDING THIS AVOID THE BUG WITH DUPPLCIATED NAME 
 
-res_Gain = THORq20_WTvsKO_H3K27me3_housekeepHOX_gain_promoterAnd5 %>% 
+res_Gain = DESEQ2_WTvsKO_H3K27me3_gain %>% 
   left_join(res_tibble) 
 
 ### LOST
+### housekeepHOX WT vs KO ###############################################################
 THORq20_WTvsKO_H3K27me3_housekeepHOX_lost = read.table("output/ChIPseeker/annotation_THORq20_WTvsKO_H3K27me3_housekeepHOX_annot.txt", header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE) %>%
                                as_tibble() %>%
                                filter(V18 < 1) %>% # FILTER FC positive here!!
@@ -3293,6 +3308,14 @@ THORq20_WTvsKO_H3K27me3_housekeepHOX_lost_promoterAnd5 = read.table("output/ChIP
                                dplyr::select(geneSymbol) %>%
                                unique()
 
+### DESEQ2 WT vs KO ###############################################################
+DESEQ2_WTvsKO_H3K27me3_lost = read.table("output/edgeR/DESEQ2-WTKOKOEF1aEZH1_H3K27me3_pool_peaks-PSC_KO_vs_PSC_WT-H3K27me3.txt", header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE) %>%
+                               as_tibble() %>%
+                               filter(log2FoldChange < -0.1,
+                                      padj < 0.05,
+                                      annotation != "Distal intergenic") %>% # FILTER FC positive here!!
+                               dplyr::select(geneSymbol) %>%
+                               unique()
 
 #### Remove gene version on the res and compil with THOR diff genes
 rownames(res) <- gsub("\\..*", "", rownames(res))
@@ -3300,7 +3323,7 @@ res_tibble <- res %>%
   as_tibble(rownames = "gene") %>%
   drop_na()   # ADDING THIS AVOID THE BUG WITH DUPPLCIATED NAME 
 
-res_Lost = THORq20_WTvsKO_H3K27me3_housekeepHOX_lost_promoterAnd5 %>% 
+res_Lost = DESEQ2_WTvsKO_H3K27me3_lost %>% 
   left_join(res_tibble)
 
 ## PLOT
@@ -3320,7 +3343,9 @@ names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC <
 
 
 #pdf("output/deseq2/plotVolcano_THORq20_WTvsKO_H3K27me3_housekeepHOX_gain__PSC_KO_vs_PSC_WT.pdf", width=8, height=8)  
-pdf("output/deseq2/plotVolcano_THORq20_WTvsKO_H3K27me3_housekeepHOX_gain_promoterAnd5__PSC_KO_vs_PSC_WT.pdf", width=8, height=8)  
+#pdf("output/deseq2/plotVolcano_THORq20_WTvsKO_H3K27me3_housekeepHOX_gain_promoterAnd5__PSC_KO_vs_PSC_WT.pdf", width=8, height=8) 
+pdf("output/deseq2/plotVolcano_DESEQ2_WTvsKO_H3K27me3_gain_noIntergenic__PSC_KO_vs_PSC_WT.pdf", width=8, height=8)  
+
 EnhancedVolcano(res_Gain,
   lab = res_Gain$geneSymbol,
   x = 'log2FoldChange',
@@ -3367,7 +3392,9 @@ names(keyvals)[keyvals == 'grey'] <- 'Not significant'
 names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
 
 #pdf("output/deseq2/plotVolcano_THORq20_WTvsKO_H3K27me3_housekeepHOX_lost__PSC_KO_vs_PSC_WT.pdf", width=8, height=8)  
-pdf("output/deseq2/plotVolcano_THORq20_WTvsKO_H3K27me3_housekeepHOX_lost_promoterAnd5__PSC_KO_vs_PSC_WT.pdf", width=8, height=8)  
+#pdf("output/deseq2/plotVolcano_THORq20_WTvsKO_H3K27me3_housekeepHOX_lost_promoterAnd5__PSC_KO_vs_PSC_WT.pdf", width=8, height=8)
+pdf("output/deseq2/plotVolcano_DESEQ2_WTvsKO_H3K27me3_lost_noIntergenic__PSC_KO_vs_PSC_WT.pdf", width=8, height=8)  
+
 EnhancedVolcano(res_Lost,
   lab = res_Lost$geneSymbol,
   x = 'log2FoldChange',
@@ -4282,13 +4309,23 @@ THORq50_WTvsKO_H3K27me3_FergusonUniqueNorm99_noInput_gain_promoterAnd5 = read.ta
                                dplyr::select(geneSymbol) %>%
                                unique() 
 
+### DESEQ2 WT vs KO ###############################################################
+DESEQ2_WTvsKO_H3K27me3_gain = read.table("output/edgeR/DESEQ2-WTKOKOEF1aEZH1_H3K27me3_pool_peaks-PSC_KO_vs_PSC_WT-H3K27me3.txt", header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE) %>%
+                               as_tibble() %>%
+                               filter(log2FoldChange > 0.1,
+                                      padj < 0.05,
+                                      annotation != "Distal intergenic") %>% # FILTER FC positive here!!
+                               dplyr::select(geneSymbol) %>%
+                               unique()
+
+
 #### Remove gene version on the res and compil with THOR diff genes
 rownames(res) <- gsub("\\..*", "", rownames(res))
 res_tibble <- res %>% 
   as_tibble(rownames = "gene") %>%
   drop_na()   # ADDING THIS AVOID THE BUG WITH DUPPLCIATED NAME 
 
-res_Gain = THORq50_WTvsKO_H3K27me3_FergusonUniqueNorm99_noInput_gain_promoterAnd5 %>% 
+res_Gain = DESEQ2_WTvsKO_H3K27me3_gain %>% 
   left_join(res_tibble) 
 
 ### LOST
@@ -4318,7 +4355,14 @@ THORq50_WTvsKO_H3K27me3_FergusonUniqueNorm99_noInput_lost_promoterAnd5 = read.ta
                                dplyr::select(geneSymbol) %>%
                                unique()
 
-
+### DESEQ2 WT vs KO ###############################################################
+DESEQ2_WTvsKO_H3K27me3_lost = read.table("output/edgeR/DESEQ2-WTKOKOEF1aEZH1_H3K27me3_pool_peaks-PSC_KO_vs_PSC_WT-H3K27me3.txt", header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE) %>%
+                               as_tibble() %>%
+                               filter(log2FoldChange < -0.1,
+                                      padj < 0.05,
+                                      annotation != "Distal intergenic") %>% # FILTER FC positive here!!
+                               dplyr::select(geneSymbol) %>%
+                               unique()
 
 #### Remove gene version on the res and compil with THOR diff genes
 rownames(res) <- gsub("\\..*", "", rownames(res))
@@ -4326,7 +4370,7 @@ res_tibble <- res %>%
   as_tibble(rownames = "gene") %>%
   drop_na()   # ADDING THIS AVOID THE BUG WITH DUPPLCIATED NAME 
 
-res_Lost = THORq50_WTvsKO_H3K27me3_FergusonUniqueNorm99_noInput_lost_promoterAnd5 %>% 
+res_Lost = DESEQ2_WTvsKO_H3K27me3_lost %>% 
   left_join(res_tibble)
 
 ## PLOT
@@ -4347,7 +4391,8 @@ names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC <
 
 #pdf("output/deseq2/plotVolcano_THORq20_WTvsKO_H3K27me3_housekeepHOX_gain__PSC_KO_vs_PSC_WT.pdf", width=8, height=8)  
 #pdf("output/deseq2/plotVolcano_THORq20_WTvsKO_H3K27me3_housekeepHOX_gain_promoterAnd5__PSC_KO_vs_PSC_WT.pdf", width=8, height=8)  
-pdf("output/deseq2/plotVolcano_THORq50_WTvsKO_H3K27me3_FergusonUniqueNorm99_noInput_gain_promoterAnd5__ESC_KO_vs_ESC_WT_001001.pdf", width=8, height=8)  
+#pdf("output/deseq2/plotVolcano_THORq50_WTvsKO_H3K27me3_FergusonUniqueNorm99_noInput_gain_promoterAnd5__ESC_KO_vs_ESC_WT_001001.pdf", width=8, height=8)  
+pdf("output/deseq2/plotVolcano_DESEQ2_WTvsKO_H3K27me3__gain_noIntergenic__ESC_KO_vs_ESC_WT_001001.pdf", width=8, height=8)  
 
 EnhancedVolcano(res_Gain,
   lab = res_Gain$geneSymbol,
@@ -4396,7 +4441,8 @@ names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC <
 
 #pdf("output/deseq2/plotVolcano_THORq20_WTvsKO_H3K27me3_housekeepHOX_lost__PSC_KO_vs_PSC_WT.pdf", width=8, height=8)  
 #pdf("output/deseq2/plotVolcano_THORq20_WTvsKO_H3K27me3_housekeepHOX_lost_promoterAnd5__PSC_KO_vs_PSC_WT.pdf", width=8, height=8)  
-pdf("output/deseq2/plotVolcano_THORq50_WTvsKO_H3K27me3_FergusonUniqueNorm99_noInput_lost_promoterAnd5__ESC_KO_vs_ESC_WT_001001.pdf", width=8, height=8)  
+#pdf("output/deseq2/plotVolcano_THORq50_WTvsKO_H3K27me3_FergusonUniqueNorm99_noInput_lost_promoterAnd5__ESC_KO_vs_ESC_WT_001001.pdf", width=8, height=8)  
+pdf("output/deseq2/plotVolcano_DESEQ2_WTvsKO_H3K27me3__lost_noIntergenic__ESC_KO_vs_ESC_WT_001001.pdf", width=8, height=8)  
 
 EnhancedVolcano(res_Lost,
   lab = res_Lost$geneSymbol,
