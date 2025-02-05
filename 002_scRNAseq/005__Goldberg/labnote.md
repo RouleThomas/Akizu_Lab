@@ -5391,8 +5391,9 @@ dev.off()
 ### Investigate list of DEGs - MAST
 
 Let's do two [UpSet R plot](https://github.com/hms-dbmi/UpSetR) (ie. ~Venn diagram) to investigate our list of DEGs, obj. = identify key marker gene of the phenotype, time-point specific and cell type specific:
-- For the *same cell type*: Input list of *up/down regulated genes at each time point*
-- For the *same time point*: Input list of *up/down regulated genes in each cell type*
+- For the *same cell type*: Input list of *up/down regulated genes at each time point* --> Can show key/stable deregulated genes = likely key genes explaining the phenotype
+- For the *same time point*: Input list of *up/down regulated genes in each cell type* --> Can show transcriptomic relationship between cell type; compensatory transcriptional effect
+
 
 ```bash
 conda activate deseq2
@@ -5464,6 +5465,7 @@ for (cluster in clusters) {
   # Print confirmation
   cat("Loaded and converted to tibble:", new_var_name, "\n")
 }
+p14_Bergman_Glia = p14_Bergmann_Glia
 
 
 
@@ -6371,6 +6373,628 @@ extract_upset_genes(upset_data_binary, sets, output_dir)
 
 
 
+
+
+
+# Bergman_Glia ################
+
+p14_Bergman_Glia = p14_Bergmann_Glia
+p14_Bergman_Glia
+p35_Bergman_Glia
+p180_Bergman_Glia
+## Filter significant upregulated genes
+p14_up <- p14_Bergman_Glia %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p35_up <- p35_Bergman_Glia %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p180_up <- p180_Bergman_Glia %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+## Filter significant downregulated genes
+p14_down <- p14_Bergman_Glia %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p35_down <- p35_Bergman_Glia %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p180_down <- p180_Bergman_Glia %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+
+## Combine all genes into a unique set
+all_genes <- unique(c(p14_up, p35_up, p180_up, p14_down, p35_down, p180_down))
+## Create an empty binary matrix
+upset_data <- data.frame(geneSymbol = all_genes)
+## Populate the binary matrix with presence/absence (1/0) in each category
+upset_data$p14_up <- ifelse(upset_data$geneSymbol %in% p14_up, 1, 0)
+upset_data$p35_up <- ifelse(upset_data$geneSymbol %in% p35_up, 1, 0)
+upset_data$p180_up <- ifelse(upset_data$geneSymbol %in% p180_up, 1, 0)
+upset_data$p14_down <- ifelse(upset_data$geneSymbol %in% p14_down, 1, 0)
+upset_data$p35_down <- ifelse(upset_data$geneSymbol %in% p35_down, 1, 0)
+upset_data$p180_down <- ifelse(upset_data$geneSymbol %in% p180_down, 1, 0)
+## Remove geneSymbol column as UpSetR requires only binary data
+upset_data_binary <- upset_data %>% select(-geneSymbol)
+# Define the sets for the plot in correct mirrored order
+sets <- c("p180_down", "p35_down", "p14_down", "p180_up", "p35_up", "p14_up")
+# Open PDF device
+pdf("output/upset/upset_Bergman_Glia_p14p35p180.pdf", width = 6, height = 5)
+# Generate UpSet plot
+upset(
+  upset_data_binary,
+  sets = sets,
+  sets.bar.color = "black",
+  order.by = "freq", 
+  keep.order = TRUE,
+  set.metadata = list(
+    data = data.frame(
+      sets = sets,
+      category = ifelse(grepl("_up", sets), "up", "down")  # Automatically label up/down sets
+    ),
+    plots = list(
+      list(
+        type = "matrix_rows",
+        column = "category",
+        colors = c("up" = "red", "down" = "blue"),  # Background colors
+        alpha = 0.5  # Transparency for better readability
+      )
+    )
+  )
+)
+# Add title
+grid.text("Bergman_Glia", x = 0.1, y = 0.95, gp = gpar(fontsize = 14, fontface = "bold"))
+# Close PDF device
+dev.off()
+
+## Save output
+# Define output directory
+output_dir <- "output/upset/"
+# Ensure the directory exists
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+# Define the sets used in the UpSet plot
+sets <- c("p14_up", "p35_up", "p180_up", "p14_down", "p35_down", "p180_down")
+# Convert the binary matrix into a tibble for better filtering
+upset_data_binary <- as_tibble(upset_data_binary)
+upset_data_binary <- mutate(upset_data_binary, geneSymbol = upset_data$geneSymbol)  # Ensure genes are aligned
+# Function to extract genes for each combination
+extract_upset_genes <- function(upset_data_binary, sets, output_dir) {
+  # Generate all possible intersections
+  upset_combinations <- expand.grid(rep(list(0:1), length(sets)))
+  colnames(upset_combinations) <- sets
+  # Debug: Print structure of upset_data_binary
+  cat("Structure of upset_data_binary:\n")
+  print(str(upset_data_binary))
+  # Iterate through each combination
+  for (i in 1:nrow(upset_combinations)) {
+    comb <- upset_combinations[i, ]
+    # Skip the row if all values are 0 (empty set)
+    if (sum(comb) == 0) next
+    # Debug: Print the current combination
+    cat("\nProcessing Combination:", paste(names(comb)[which(comb == 1)], collapse = ", "), "\n")
+    # Convert comb into a named vector
+    comb_named <- setNames(as.list(comb), names(comb))
+    # Filter genes that match this combination
+    selected_genes <- upset_data_binary %>%
+      filter(across(all_of(sets), ~ . == comb_named[[cur_column()]])) %>%
+      pull(geneSymbol)
+    # Debug: Check how many matches are found
+    num_matching <- length(selected_genes)
+    cat("Genes found:", num_matching, "\n")
+    # Skip if no genes found
+    if (num_matching == 0) next
+    # Create a meaningful filename
+    active_sets <- names(comb)[which(comb == 1)]
+    filename <- paste0(output_dir, "upset_Bergman_Glia_p14p35p180-", paste(active_sets, collapse = "-"), "-", num_matching, ".txt")
+    # Save genes to the text file
+    write.table(selected_genes, file = filename, quote = FALSE, row.names = FALSE, col.names = FALSE)
+    # Print confirmation
+    cat("Saved:", filename, "\n")
+  }
+}
+# Run the function
+extract_upset_genes(upset_data_binary, sets, output_dir)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Golgi ################
+
+p14_Golgi
+p35_Golgi
+p180_Golgi
+## Filter significant upregulated genes
+p14_up <- p14_Golgi %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p35_up <- p35_Golgi %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p180_up <- p180_Golgi %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+## Filter significant downregulated genes
+p14_down <- p14_Golgi %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p35_down <- p35_Golgi %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p180_down <- p180_Golgi %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+
+## Combine all genes into a unique set
+all_genes <- unique(c(p14_up, p35_up, p180_up, p14_down, p35_down, p180_down))
+## Create an empty binary matrix
+upset_data <- data.frame(geneSymbol = all_genes)
+## Populate the binary matrix with presence/absence (1/0) in each category
+upset_data$p14_up <- ifelse(upset_data$geneSymbol %in% p14_up, 1, 0)
+upset_data$p35_up <- ifelse(upset_data$geneSymbol %in% p35_up, 1, 0)
+upset_data$p180_up <- ifelse(upset_data$geneSymbol %in% p180_up, 1, 0)
+upset_data$p14_down <- ifelse(upset_data$geneSymbol %in% p14_down, 1, 0)
+upset_data$p35_down <- ifelse(upset_data$geneSymbol %in% p35_down, 1, 0)
+upset_data$p180_down <- ifelse(upset_data$geneSymbol %in% p180_down, 1, 0)
+## Remove geneSymbol column as UpSetR requires only binary data
+upset_data_binary <- upset_data %>% select(-geneSymbol)
+# Define the sets for the plot in correct mirrored order
+sets <- c("p180_down", "p35_down", "p14_down", "p180_up", "p35_up", "p14_up")
+# Open PDF device
+pdf("output/upset/upset_Golgi_p14p35p180.pdf", width = 6, height = 5)
+# Generate UpSet plot
+upset(
+  upset_data_binary,
+  sets = sets,
+  sets.bar.color = "black",
+  order.by = "freq", 
+  keep.order = TRUE,
+  set.metadata = list(
+    data = data.frame(
+      sets = sets,
+      category = ifelse(grepl("_up", sets), "up", "down")  # Automatically label up/down sets
+    ),
+    plots = list(
+      list(
+        type = "matrix_rows",
+        column = "category",
+        colors = c("up" = "red", "down" = "blue"),  # Background colors
+        alpha = 0.5  # Transparency for better readability
+      )
+    )
+  )
+)
+# Add title
+grid.text("Golgi", x = 0.1, y = 0.95, gp = gpar(fontsize = 14, fontface = "bold"))
+# Close PDF device
+dev.off()
+
+## Save output
+# Define output directory
+output_dir <- "output/upset/"
+# Ensure the directory exists
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+# Define the sets used in the UpSet plot
+sets <- c("p14_up", "p35_up", "p180_up", "p14_down", "p35_down", "p180_down")
+# Convert the binary matrix into a tibble for better filtering
+upset_data_binary <- as_tibble(upset_data_binary)
+upset_data_binary <- mutate(upset_data_binary, geneSymbol = upset_data$geneSymbol)  # Ensure genes are aligned
+# Function to extract genes for each combination
+extract_upset_genes <- function(upset_data_binary, sets, output_dir) {
+  # Generate all possible intersections
+  upset_combinations <- expand.grid(rep(list(0:1), length(sets)))
+  colnames(upset_combinations) <- sets
+  # Debug: Print structure of upset_data_binary
+  cat("Structure of upset_data_binary:\n")
+  print(str(upset_data_binary))
+  # Iterate through each combination
+  for (i in 1:nrow(upset_combinations)) {
+    comb <- upset_combinations[i, ]
+    # Skip the row if all values are 0 (empty set)
+    if (sum(comb) == 0) next
+    # Debug: Print the current combination
+    cat("\nProcessing Combination:", paste(names(comb)[which(comb == 1)], collapse = ", "), "\n")
+    # Convert comb into a named vector
+    comb_named <- setNames(as.list(comb), names(comb))
+    # Filter genes that match this combination
+    selected_genes <- upset_data_binary %>%
+      filter(across(all_of(sets), ~ . == comb_named[[cur_column()]])) %>%
+      pull(geneSymbol)
+    # Debug: Check how many matches are found
+    num_matching <- length(selected_genes)
+    cat("Genes found:", num_matching, "\n")
+    # Skip if no genes found
+    if (num_matching == 0) next
+    # Create a meaningful filename
+    active_sets <- names(comb)[which(comb == 1)]
+    filename <- paste0(output_dir, "upset_Golgi_p14p35p180-", paste(active_sets, collapse = "-"), "-", num_matching, ".txt")
+    # Save genes to the text file
+    write.table(selected_genes, file = filename, quote = FALSE, row.names = FALSE, col.names = FALSE)
+    # Print confirmation
+    cat("Saved:", filename, "\n")
+  }
+}
+# Run the function
+extract_upset_genes(upset_data_binary, sets, output_dir)
+
+
+
+
+
+
+
+
+
+###############################
+# same time point ##################
+################################
+
+
+
+
+# p14 - All cell types ################
+
+p14_PLI23
+p14_MLI1
+p14_Granule
+p14_MLI2
+p14_Endothelial
+p14_Astrocyte
+p14_Bergman_Glia
+p14_PLI12
+p14_Oligodendrocyte
+p14_Mix_Microglia_Meningeal
+p14_Endothelial_Mural
+p14_Purkinje
+p14_Golgi
+p14_Unipolar_Brush
+p14_Choroid_Plexus
+p14_OPC
+
+## Filter significant upregulated genes
+p14_Granule_up <- p14_Granule %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_MLI1_up <- p14_MLI1 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_MLI2_up <- p14_MLI2 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_PLI12_up <- p14_PLI12 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_PLI23_up <- p14_PLI23 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_Purkinje_up <- p14_Purkinje %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_Golgi_up <- p14_Golgi %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_Unipolar_Brush_up <- p14_Unipolar_Brush %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_Astrocyte_up <- p14_Astrocyte %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_Endothelial_up <- p14_Endothelial %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_OPC_up <- p14_OPC %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_Oligodendrocyte_up <- p14_Oligodendrocyte %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_Bergman_Glia_up <- p14_Bergman_Glia %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_Mix_Microglia_Meningeal_up <- p14_Mix_Microglia_Meningeal %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_Endothelial_Mural_up <- p14_Endothelial_Mural %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_Choroid_Plexus_up <- p14_Choroid_Plexus %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+## Filter significant downregulated genes
+p14_Granule_down <- p14_Granule %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_MLI1_down <- p14_MLI1 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_MLI2_down <- p14_MLI2 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_PLI12_down <- p14_PLI12 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_PLI23_down <- p14_PLI23 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_Purkinje_down <- p14_Purkinje %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_Golgi_down <- p14_Golgi %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_Unipolar_Brush_down <- p14_Unipolar_Brush %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_Astrocyte_down <- p14_Astrocyte %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_Endothelial_down <- p14_Endothelial %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_OPC_down <- p14_OPC %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_Oligodendrocyte_down <- p14_Oligodendrocyte %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_Bergman_Glia_down <- p14_Bergman_Glia %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_Mix_Microglia_Meningeal_down <- p14_Mix_Microglia_Meningeal %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_Endothelial_Mural_down <- p14_Endothelial_Mural %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_Choroid_Plexus_down <- p14_Choroid_Plexus %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+
+## Combine all genes into a unique set
+all_genes <- unique(c(p14_Granule_up ,p14_MLI1_up ,p14_MLI2_up ,p14_PLI12_up ,p14_PLI23_up ,p14_Purkinje_up ,p14_Golgi_up ,p14_Unipolar_Brush_up ,p14_Astrocyte_up ,p14_Endothelial_up ,p14_OPC_up,p14_Oligodendrocyte_up ,p14_Bergman_Glia_up ,p14_Mix_Microglia_Meningeal_up ,p14_Endothelial_Mural_up ,p14_Choroid_Plexus_up ,p14_Granule_down ,p14_MLI1_down ,p14_MLI2_down ,p14_PLI12_down ,p14_PLI23_down ,p14_Purkinje_down ,p14_Golgi_down ,p14_Unipolar_Brush_down ,p14_Astrocyte_down ,p14_Endothelial_down ,p14_OPC_down,p14_Oligodendrocyte_down ,p14_Bergman_Glia_down ,p14_Mix_Microglia_Meningeal_down ,p14_Endothelial_Mural_down ,p14_Choroid_Plexus_down ))
+## Create an empty binary matrix
+upset_data <- data.frame(geneSymbol = all_genes)
+## Populate the binary matrix with presence/absence (1/0) in each category
+## Create a unique list of all genes
+all_genes <- unique(c(
+  p14_Granule_up, p14_MLI1_up, p14_MLI2_up, p14_PLI12_up, p14_PLI23_up, p14_Purkinje_up, p14_Golgi_up, p14_Unipolar_Brush_up, 
+  p14_Astrocyte_up, p14_Endothelial_up, p14_OPC_up, p14_Oligodendrocyte_up, p14_Bergman_Glia_up, p14_Mix_Microglia_Meningeal_up, 
+  p14_Endothelial_Mural_up, p14_Choroid_Plexus_up, p14_Granule_down, p14_MLI1_down, p14_MLI2_down, p14_PLI12_down, p14_PLI23_down, 
+  p14_Purkinje_down, p14_Golgi_down, p14_Unipolar_Brush_down, p14_Astrocyte_down, p14_Endothelial_down, p14_OPC_down, 
+  p14_Oligodendrocyte_down, p14_Bergman_Glia_down, p14_Mix_Microglia_Meningeal_down, p14_Endothelial_Mural_down, p14_Choroid_Plexus_down
+))
+
+## Create an empty binary matrix
+upset_data <- data.frame(geneSymbol = all_genes)
+## Populate the binary matrix with presence/absence (1/0) for each category
+upset_data$p14_Granule_up <- ifelse(upset_data$geneSymbol %in% p14_Granule_up, 1, 0)
+upset_data$p14_MLI1_up <- ifelse(upset_data$geneSymbol %in% p14_MLI1_up, 1, 0)
+upset_data$p14_MLI2_up <- ifelse(upset_data$geneSymbol %in% p14_MLI2_up, 1, 0)
+upset_data$p14_PLI12_up <- ifelse(upset_data$geneSymbol %in% p14_PLI12_up, 1, 0)
+upset_data$p14_PLI23_up <- ifelse(upset_data$geneSymbol %in% p14_PLI23_up, 1, 0)
+upset_data$p14_Purkinje_up <- ifelse(upset_data$geneSymbol %in% p14_Purkinje_up, 1, 0)
+upset_data$p14_Golgi_up <- ifelse(upset_data$geneSymbol %in% p14_Golgi_up, 1, 0)
+upset_data$p14_Unipolar_Brush_up <- ifelse(upset_data$geneSymbol %in% p14_Unipolar_Brush_up, 1, 0)
+upset_data$p14_Astrocyte_up <- ifelse(upset_data$geneSymbol %in% p14_Astrocyte_up, 1, 0)
+upset_data$p14_Endothelial_up <- ifelse(upset_data$geneSymbol %in% p14_Endothelial_up, 1, 0)
+upset_data$p14_OPC_up <- ifelse(upset_data$geneSymbol %in% p14_OPC_up, 1, 0)
+upset_data$p14_Oligodendrocyte_up <- ifelse(upset_data$geneSymbol %in% p14_Oligodendrocyte_up, 1, 0)
+upset_data$p14_Bergman_Glia_up <- ifelse(upset_data$geneSymbol %in% p14_Bergman_Glia_up, 1, 0)
+upset_data$p14_Mix_Microglia_Meningeal_up <- ifelse(upset_data$geneSymbol %in% p14_Mix_Microglia_Meningeal_up, 1, 0)
+upset_data$p14_Endothelial_Mural_up <- ifelse(upset_data$geneSymbol %in% p14_Endothelial_Mural_up, 1, 0)
+upset_data$p14_Choroid_Plexus_up <- ifelse(upset_data$geneSymbol %in% p14_Choroid_Plexus_up, 1, 0)
+upset_data$p14_Granule_down <- ifelse(upset_data$geneSymbol %in% p14_Granule_down, 1, 0)
+upset_data$p14_MLI1_down <- ifelse(upset_data$geneSymbol %in% p14_MLI1_down, 1, 0)
+upset_data$p14_MLI2_down <- ifelse(upset_data$geneSymbol %in% p14_MLI2_down, 1, 0)
+upset_data$p14_PLI12_down <- ifelse(upset_data$geneSymbol %in% p14_PLI12_down, 1, 0)
+upset_data$p14_PLI23_down <- ifelse(upset_data$geneSymbol %in% p14_PLI23_down, 1, 0)
+upset_data$p14_Purkinje_down <- ifelse(upset_data$geneSymbol %in% p14_Purkinje_down, 1, 0)
+upset_data$p14_Golgi_down <- ifelse(upset_data$geneSymbol %in% p14_Golgi_down, 1, 0)
+upset_data$p14_Unipolar_Brush_down <- ifelse(upset_data$geneSymbol %in% p14_Unipolar_Brush_down, 1, 0)
+upset_data$p14_Astrocyte_down <- ifelse(upset_data$geneSymbol %in% p14_Astrocyte_down, 1, 0)
+upset_data$p14_Endothelial_down <- ifelse(upset_data$geneSymbol %in% p14_Endothelial_down, 1, 0)
+upset_data$p14_OPC_down <- ifelse(upset_data$geneSymbol %in% p14_OPC_down, 1, 0)
+upset_data$p14_Oligodendrocyte_down <- ifelse(upset_data$geneSymbol %in% p14_Oligodendrocyte_down, 1, 0)
+upset_data$p14_Bergman_Glia_down <- ifelse(upset_data$geneSymbol %in% p14_Bergman_Glia_down, 1, 0)
+upset_data$p14_Mix_Microglia_Meningeal_down <- ifelse(upset_data$geneSymbol %in% p14_Mix_Microglia_Meningeal_down, 1, 0)
+upset_data$p14_Endothelial_Mural_down <- ifelse(upset_data$geneSymbol %in% p14_Endothelial_Mural_down, 1, 0)
+upset_data$p14_Choroid_Plexus_down <- ifelse(upset_data$geneSymbol %in% p14_Choroid_Plexus_down, 1, 0)
+
+## Remove geneSymbol column as UpSetR requires only binary data
+upset_data_binary <- upset_data %>% select(-geneSymbol)
+# Define the sets for the plot in correct mirrored order
+sets <- c("p14_Choroid_Plexus_down" ,"p14_Endothelial_Mural_down" ,"p14_Mix_Microglia_Meningeal_down" ,"p14_Bergman_Glia_down" ,"p14_Oligodendrocyte_down" ,"p14_OPC_down" ,"p14_Endothelial_down" ,"p14_Astrocyte_down" ,"p14_Unipolar_Brush_down" ,"p14_Golgi_down" ,"p14_Purkinje_down" ,"p14_PLI23_down" ,"p14_PLI12_down" ,"p14_MLI2_down" ,"p14_MLI1_down" ,"p14_Granule_down" ,"p14_Choroid_Plexus_up" ,"p14_Endothelial_Mural_up" ,"p14_Mix_Microglia_Meningeal_up" ,"p14_Bergman_Glia_up" ,"p14_Oligodendrocyte_up" ,"p14_OPC_up" ,"p14_Endothelial_up" ,"p14_Astrocyte_up" ,"p14_Unipolar_Brush_up" ,"p14_Golgi_up" ,"p14_Purkinje_up" ,"p14_PLI23_up" ,"p14_PLI12_up" ,"p14_MLI2_up" ,"p14_MLI1_up" ,"p14_Granule_up"
+)
+# Open PDF device
+pdf("output/upset/upset_p14_updown.pdf", width = 8, height = 10)
+# Generate UpSet plot
+upset(
+  upset_data_binary,
+  sets = sets,
+  sets.bar.color = "black",
+  order.by = "freq", 
+  keep.order = TRUE,
+  set.metadata = list(
+    data = data.frame(
+      sets = sets,
+      category = ifelse(grepl("_up", sets), "up", "down")  # Automatically label up/down sets
+    ),
+    plots = list(
+      list(
+        type = "matrix_rows",
+        column = "category",
+        colors = c("up" = "red", "down" = "blue"),  # Background colors
+        alpha = 0.5  # Transparency for better readability
+      )
+    )
+  )
+)
+# Add title
+grid.text("p14", x = 0.1, y = 0.95, gp = gpar(fontsize = 14, fontface = "bold"))
+# Close PDF device
+dev.off()
+
+## Save output
+
+XXXY
+
+
+
+# Define output directory
+output_dir <- "output/upset/"
+# Ensure the directory exists
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+# Define the sets used in the UpSet plot
+sets <- c("p14_Choroid_Plexus_down" ,"p14_Endothelial_Mural_down" ,"p14_Mix_Microglia_Meningeal_down" ,"p14_Bergman_Glia_down" ,"p14_Oligodendrocyte_down" ,"p14_OPC_down" ,"p14_Endothelial_down" ,"p14_Astrocyte_down" ,"p14_Unipolar_Brush_down" ,"p14_Golgi_down" ,"p14_Purkinje_down" ,"p14_PLI23_down" ,"p14_PLI12_down" ,"p14_MLI2_down" ,"p14_MLI1_down" ,"p14_Granule_down" ,"p14_Choroid_Plexus_up" ,"p14_Endothelial_Mural_up" ,"p14_Mix_Microglia_Meningeal_up" ,"p14_Bergman_Glia_up" ,"p14_Oligodendrocyte_up" ,"p14_OPC_up" ,"p14_Endothelial_up" ,"p14_Astrocyte_up" ,"p14_Unipolar_Brush_up" ,"p14_Golgi_up" ,"p14_Purkinje_up" ,"p14_PLI23_up" ,"p14_PLI12_up" ,"p14_MLI2_up" ,"p14_MLI1_up" ,"p14_Granule_up"
+)
+# Convert the binary matrix into a tibble for better filtering
+upset_data_binary <- as_tibble(upset_data_binary)
+upset_data_binary <- mutate(upset_data_binary, geneSymbol = upset_data$geneSymbol)  # Ensure genes are aligned
+# Function to extract genes for each combination
+extract_upset_genes <- function(upset_data_binary, sets, output_dir) {
+  # Generate all possible intersections
+  upset_combinations <- expand.grid(rep(list(0:1), length(sets)))
+  colnames(upset_combinations) <- sets
+  # Debug: Print structure of upset_data_binary
+  cat("Structure of upset_data_binary:\n")
+  print(str(upset_data_binary))
+  # Iterate through each combination
+  for (i in 1:nrow(upset_combinations)) {
+    comb <- upset_combinations[i, ]
+    # Skip the row if all values are 0 (empty set)
+    if (sum(comb) == 0) next
+    # Debug: Print the current combination
+    cat("\nProcessing Combination:", paste(names(comb)[which(comb == 1)], collapse = ", "), "\n")
+    # Convert comb into a named vector
+    comb_named <- setNames(as.list(comb), names(comb))
+    # Filter genes that match this combination
+    selected_genes <- upset_data_binary %>%
+      filter(across(all_of(sets), ~ . == comb_named[[cur_column()]])) %>%
+      pull(geneSymbol)
+    # Debug: Check how many matches are found
+    num_matching <- length(selected_genes)
+    cat("Genes found:", num_matching, "\n")
+    # Skip if no genes found
+    if (num_matching == 0) next
+    # Create a meaningful filename
+    active_sets <- names(comb)[which(comb == 1)]
+    filename <- paste0(output_dir, "upset_p14_updown-", paste(active_sets, collapse = "-"), "-", num_matching, ".txt")
+    # Save genes to the text file
+    write.table(selected_genes, file = filename, quote = FALSE, row.names = FALSE, col.names = FALSE)
+    # Print confirmation
+    cat("Saved:", filename, "\n")
+  }
+}
+# Run the function
+extract_upset_genes(upset_data_binary, sets, output_dir)
+
+
+
+
+
+
+
+
+
+
+
+# p14 - Filtered cell types ################
+p14_Granule
+p14_MLI1
+p14_MLI2
+p14_Astrocyte
+p14_Bergman_Glia
+p14_Purkinje
+
+
+## Filter significant upregulated genes
+p14_Granule_up <- p14_Granule %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_MLI1_up <- p14_MLI1 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_MLI2_up <- p14_MLI2 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_PLI12_up <- p14_PLI12 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_PLI23_up <- p14_PLI23 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_Purkinje_up <- p14_Purkinje %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_Golgi_up <- p14_Golgi %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_Unipolar_Brush_up <- p14_Unipolar_Brush %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_Astrocyte_up <- p14_Astrocyte %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_Endothelial_up <- p14_Endothelial %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_OPC_up <- p14_OPC %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_Oligodendrocyte_up <- p14_Oligodendrocyte %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_Bergman_Glia_up <- p14_Bergman_Glia %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_Mix_Microglia_Meningeal_up <- p14_Mix_Microglia_Meningeal %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_Endothelial_Mural_up <- p14_Endothelial_Mural %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_Choroid_Plexus_up <- p14_Choroid_Plexus %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+## Filter significant downregulated genes
+p14_Granule_down <- p14_Granule %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_MLI1_down <- p14_MLI1 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_MLI2_down <- p14_MLI2 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_PLI12_down <- p14_PLI12 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_PLI23_down <- p14_PLI23 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_Purkinje_down <- p14_Purkinje %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_Golgi_down <- p14_Golgi %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_Unipolar_Brush_down <- p14_Unipolar_Brush %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_Astrocyte_down <- p14_Astrocyte %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_Endothelial_down <- p14_Endothelial %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_OPC_down <- p14_OPC %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_Oligodendrocyte_down <- p14_Oligodendrocyte %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_Bergman_Glia_down <- p14_Bergman_Glia %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_Mix_Microglia_Meningeal_down <- p14_Mix_Microglia_Meningeal %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_Endothelial_Mural_down <- p14_Endothelial_Mural %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_Choroid_Plexus_down <- p14_Choroid_Plexus %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+
+## Combine all genes into a unique set
+all_genes <- unique(c(p14_Granule_up ,p14_MLI1_up ,p14_MLI2_up ,p14_PLI12_up ,p14_PLI23_up ,p14_Purkinje_up ,p14_Golgi_up ,p14_Unipolar_Brush_up ,p14_Astrocyte_up ,p14_Endothelial_up ,p14_OPC_up,p14_Oligodendrocyte_up ,p14_Bergman_Glia_up ,p14_Mix_Microglia_Meningeal_up ,p14_Endothelial_Mural_up ,p14_Choroid_Plexus_up ,p14_Granule_down ,p14_MLI1_down ,p14_MLI2_down ,p14_PLI12_down ,p14_PLI23_down ,p14_Purkinje_down ,p14_Golgi_down ,p14_Unipolar_Brush_down ,p14_Astrocyte_down ,p14_Endothelial_down ,p14_OPC_down,p14_Oligodendrocyte_down ,p14_Bergman_Glia_down ,p14_Mix_Microglia_Meningeal_down ,p14_Endothelial_Mural_down ,p14_Choroid_Plexus_down ))
+## Create an empty binary matrix
+upset_data <- data.frame(geneSymbol = all_genes)
+## Populate the binary matrix with presence/absence (1/0) in each category
+## Create a unique list of all genes
+all_genes <- unique(c(
+  p14_Granule_up, p14_MLI1_up, p14_MLI2_up, p14_PLI12_up, p14_PLI23_up, p14_Purkinje_up, p14_Golgi_up, p14_Unipolar_Brush_up, 
+  p14_Astrocyte_up, p14_Endothelial_up, p14_OPC_up, p14_Oligodendrocyte_up, p14_Bergman_Glia_up, p14_Mix_Microglia_Meningeal_up, 
+  p14_Endothelial_Mural_up, p14_Choroid_Plexus_up, p14_Granule_down, p14_MLI1_down, p14_MLI2_down, p14_PLI12_down, p14_PLI23_down, 
+  p14_Purkinje_down, p14_Golgi_down, p14_Unipolar_Brush_down, p14_Astrocyte_down, p14_Endothelial_down, p14_OPC_down, 
+  p14_Oligodendrocyte_down, p14_Bergman_Glia_down, p14_Mix_Microglia_Meningeal_down, p14_Endothelial_Mural_down, p14_Choroid_Plexus_down
+))
+
+## Create an empty binary matrix
+upset_data <- data.frame(geneSymbol = all_genes)
+## Populate the binary matrix with presence/absence (1/0) for each category
+upset_data$p14_Granule_up <- ifelse(upset_data$geneSymbol %in% p14_Granule_up, 1, 0)
+upset_data$p14_MLI1_up <- ifelse(upset_data$geneSymbol %in% p14_MLI1_up, 1, 0)
+upset_data$p14_MLI2_up <- ifelse(upset_data$geneSymbol %in% p14_MLI2_up, 1, 0)
+upset_data$p14_PLI12_up <- ifelse(upset_data$geneSymbol %in% p14_PLI12_up, 1, 0)
+upset_data$p14_PLI23_up <- ifelse(upset_data$geneSymbol %in% p14_PLI23_up, 1, 0)
+upset_data$p14_Purkinje_up <- ifelse(upset_data$geneSymbol %in% p14_Purkinje_up, 1, 0)
+upset_data$p14_Golgi_up <- ifelse(upset_data$geneSymbol %in% p14_Golgi_up, 1, 0)
+upset_data$p14_Unipolar_Brush_up <- ifelse(upset_data$geneSymbol %in% p14_Unipolar_Brush_up, 1, 0)
+upset_data$p14_Astrocyte_up <- ifelse(upset_data$geneSymbol %in% p14_Astrocyte_up, 1, 0)
+upset_data$p14_Endothelial_up <- ifelse(upset_data$geneSymbol %in% p14_Endothelial_up, 1, 0)
+upset_data$p14_OPC_up <- ifelse(upset_data$geneSymbol %in% p14_OPC_up, 1, 0)
+upset_data$p14_Oligodendrocyte_up <- ifelse(upset_data$geneSymbol %in% p14_Oligodendrocyte_up, 1, 0)
+upset_data$p14_Bergman_Glia_up <- ifelse(upset_data$geneSymbol %in% p14_Bergman_Glia_up, 1, 0)
+upset_data$p14_Mix_Microglia_Meningeal_up <- ifelse(upset_data$geneSymbol %in% p14_Mix_Microglia_Meningeal_up, 1, 0)
+upset_data$p14_Endothelial_Mural_up <- ifelse(upset_data$geneSymbol %in% p14_Endothelial_Mural_up, 1, 0)
+upset_data$p14_Choroid_Plexus_up <- ifelse(upset_data$geneSymbol %in% p14_Choroid_Plexus_up, 1, 0)
+upset_data$p14_Granule_down <- ifelse(upset_data$geneSymbol %in% p14_Granule_down, 1, 0)
+upset_data$p14_MLI1_down <- ifelse(upset_data$geneSymbol %in% p14_MLI1_down, 1, 0)
+upset_data$p14_MLI2_down <- ifelse(upset_data$geneSymbol %in% p14_MLI2_down, 1, 0)
+upset_data$p14_PLI12_down <- ifelse(upset_data$geneSymbol %in% p14_PLI12_down, 1, 0)
+upset_data$p14_PLI23_down <- ifelse(upset_data$geneSymbol %in% p14_PLI23_down, 1, 0)
+upset_data$p14_Purkinje_down <- ifelse(upset_data$geneSymbol %in% p14_Purkinje_down, 1, 0)
+upset_data$p14_Golgi_down <- ifelse(upset_data$geneSymbol %in% p14_Golgi_down, 1, 0)
+upset_data$p14_Unipolar_Brush_down <- ifelse(upset_data$geneSymbol %in% p14_Unipolar_Brush_down, 1, 0)
+upset_data$p14_Astrocyte_down <- ifelse(upset_data$geneSymbol %in% p14_Astrocyte_down, 1, 0)
+upset_data$p14_Endothelial_down <- ifelse(upset_data$geneSymbol %in% p14_Endothelial_down, 1, 0)
+upset_data$p14_OPC_down <- ifelse(upset_data$geneSymbol %in% p14_OPC_down, 1, 0)
+upset_data$p14_Oligodendrocyte_down <- ifelse(upset_data$geneSymbol %in% p14_Oligodendrocyte_down, 1, 0)
+upset_data$p14_Bergman_Glia_down <- ifelse(upset_data$geneSymbol %in% p14_Bergman_Glia_down, 1, 0)
+upset_data$p14_Mix_Microglia_Meningeal_down <- ifelse(upset_data$geneSymbol %in% p14_Mix_Microglia_Meningeal_down, 1, 0)
+upset_data$p14_Endothelial_Mural_down <- ifelse(upset_data$geneSymbol %in% p14_Endothelial_Mural_down, 1, 0)
+upset_data$p14_Choroid_Plexus_down <- ifelse(upset_data$geneSymbol %in% p14_Choroid_Plexus_down, 1, 0)
+
+## Remove geneSymbol column as UpSetR requires only binary data
+upset_data_binary <- upset_data %>% select(-geneSymbol)
+# Define the sets for the plot in correct mirrored order
+sets <- c("p14_Choroid_Plexus_down" ,"p14_Endothelial_Mural_down" ,"p14_Mix_Microglia_Meningeal_down" ,"p14_Bergman_Glia_down" ,"p14_Oligodendrocyte_down" ,"p14_OPC_down" ,"p14_Endothelial_down" ,"p14_Astrocyte_down" ,"p14_Unipolar_Brush_down" ,"p14_Golgi_down" ,"p14_Purkinje_down" ,"p14_PLI23_down" ,"p14_PLI12_down" ,"p14_MLI2_down" ,"p14_MLI1_down" ,"p14_Granule_down" ,"p14_Choroid_Plexus_up" ,"p14_Endothelial_Mural_up" ,"p14_Mix_Microglia_Meningeal_up" ,"p14_Bergman_Glia_up" ,"p14_Oligodendrocyte_up" ,"p14_OPC_up" ,"p14_Endothelial_up" ,"p14_Astrocyte_up" ,"p14_Unipolar_Brush_up" ,"p14_Golgi_up" ,"p14_Purkinje_up" ,"p14_PLI23_up" ,"p14_PLI12_up" ,"p14_MLI2_up" ,"p14_MLI1_up" ,"p14_Granule_up"
+)
+# Open PDF device
+pdf("output/upset/upset_p14_updown.pdf", width = 8, height = 10)
+# Generate UpSet plot
+upset(
+  upset_data_binary,
+  sets = sets,
+  sets.bar.color = "black",
+  order.by = "freq", 
+  keep.order = TRUE,
+  set.metadata = list(
+    data = data.frame(
+      sets = sets,
+      category = ifelse(grepl("_up", sets), "up", "down")  # Automatically label up/down sets
+    ),
+    plots = list(
+      list(
+        type = "matrix_rows",
+        column = "category",
+        colors = c("up" = "red", "down" = "blue"),  # Background colors
+        alpha = 0.5  # Transparency for better readability
+      )
+    )
+  )
+)
+# Add title
+grid.text("p14", x = 0.1, y = 0.95, gp = gpar(fontsize = 14, fontface = "bold"))
+# Close PDF device
+dev.off()
+
+## Save output
+# Define output directory
+output_dir <- "output/upset/"
+# Ensure the directory exists
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+# Define the sets used in the UpSet plot
+sets <- c("p14_Choroid_Plexus_down" ,"p14_Endothelial_Mural_down" ,"p14_Mix_Microglia_Meningeal_down" ,"p14_Bergman_Glia_down" ,"p14_Oligodendrocyte_down" ,"p14_OPC_down" ,"p14_Endothelial_down" ,"p14_Astrocyte_down" ,"p14_Unipolar_Brush_down" ,"p14_Golgi_down" ,"p14_Purkinje_down" ,"p14_PLI23_down" ,"p14_PLI12_down" ,"p14_MLI2_down" ,"p14_MLI1_down" ,"p14_Granule_down" ,"p14_Choroid_Plexus_up" ,"p14_Endothelial_Mural_up" ,"p14_Mix_Microglia_Meningeal_up" ,"p14_Bergman_Glia_up" ,"p14_Oligodendrocyte_up" ,"p14_OPC_up" ,"p14_Endothelial_up" ,"p14_Astrocyte_up" ,"p14_Unipolar_Brush_up" ,"p14_Golgi_up" ,"p14_Purkinje_up" ,"p14_PLI23_up" ,"p14_PLI12_up" ,"p14_MLI2_up" ,"p14_MLI1_up" ,"p14_Granule_up"
+)
+# Convert the binary matrix into a tibble for better filtering
+upset_data_binary <- as_tibble(upset_data_binary)
+upset_data_binary <- mutate(upset_data_binary, geneSymbol = upset_data$geneSymbol)  # Ensure genes are aligned
+# Function to extract genes for each combination
+extract_upset_genes <- function(upset_data_binary, sets, output_dir) {
+  # Generate all possible intersections
+  upset_combinations <- expand.grid(rep(list(0:1), length(sets)))
+  colnames(upset_combinations) <- sets
+  # Debug: Print structure of upset_data_binary
+  cat("Structure of upset_data_binary:\n")
+  print(str(upset_data_binary))
+  # Iterate through each combination
+  for (i in 1:nrow(upset_combinations)) {
+    comb <- upset_combinations[i, ]
+    # Skip the row if all values are 0 (empty set)
+    if (sum(comb) == 0) next
+    # Debug: Print the current combination
+    cat("\nProcessing Combination:", paste(names(comb)[which(comb == 1)], collapse = ", "), "\n")
+    # Convert comb into a named vector
+    comb_named <- setNames(as.list(comb), names(comb))
+    # Filter genes that match this combination
+    selected_genes <- upset_data_binary %>%
+      filter(across(all_of(sets), ~ . == comb_named[[cur_column()]])) %>%
+      pull(geneSymbol)
+    # Debug: Check how many matches are found
+    num_matching <- length(selected_genes)
+    cat("Genes found:", num_matching, "\n")
+    # Skip if no genes found
+    if (num_matching == 0) next
+    # Create a meaningful filename
+    active_sets <- names(comb)[which(comb == 1)]
+    filename <- paste0(output_dir, "upset_p14_updown-", paste(active_sets, collapse = "-"), "-", num_matching, ".txt")
+    # Save genes to the text file
+    write.table(selected_genes, file = filename, quote = FALSE, row.names = FALSE, col.names = FALSE)
+    # Print confirmation
+    cat("Saved:", filename, "\n")
+  }
+}
+# Run the function
+extract_upset_genes(upset_data_binary, sets, output_dir)
 
 
 
