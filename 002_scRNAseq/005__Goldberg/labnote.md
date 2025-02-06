@@ -10413,7 +10413,7 @@ sbatch scripts/pseudotime_allCells_v1.sh # 34643632 ok but not good
 ## Different parameter per trajectory
 sbatch scripts/pseudotime_allCells_v1_Granule.sh # 36200375 xxx
 sbatch scripts/pseudotime_allCells_v1_MLI1.sh # 36200584 ok but not good.
-sbatch scripts/pseudotime_allCells_v1_MLI2.sh # 36201001 xxx
+sbatch scripts/pseudotime_allCells_v1_MLI2.sh # 36201001 ok
 
 ```
 
