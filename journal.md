@@ -38,6 +38,7 @@ To allow cp/paste between Vitrual machine and computer:
 
 - Interactive `srun --mem=20g --pty bash -l`.
 - Interactive with multiple cores: `srun --mem=500g --cpus-per-task=10 --pty bash -l` (`nproc` to check nb of cores;)
+- Can do parrallel processing; asking mutliple core with unique memories: `srun --cpus-per-task=8 --mem-per-cpu=40g --pty bash -l` this is equivalent of 8*40 = 320g memory; but spread in 8 cpus (use `library(furrr)` in R)
 - Sbatch `sbatch job.sh` (edit script in VSC, then create it on the cluster with `touch script.sh` edit it with `nano script.sh` copy paste from VSC, and run it)
 - List jobs: `squeue -u roulet` (`scancel [JOBID]` to cancel)
 
@@ -86,8 +87,8 @@ library("VennDiagram")
 library("ggrepel")
 library("fgsea")
 
-library("UpSetR")
-
+library("UpSetR") # venn diagram like plot
+library("furrr") # parralel processing
 
 
 

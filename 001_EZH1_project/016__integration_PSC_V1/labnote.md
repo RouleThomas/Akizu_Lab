@@ -2625,11 +2625,14 @@ sbatch scripts/matrix_TSS_5kb_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks-FergusonUni
 sbatch scripts/matrix_TSS_5kb_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks-FergusonUniqueNorm99smooth50bp_EZH2.sh # 36392535 ok
 
 ## SUZ12 consensus peak
-XXX
+sbatch scripts/matrix_TSS_10kb_PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks-FergusonUniqueNorm99smooth50bp_H3K27me3.sh # 36635203 ok
+sbatch scripts/matrix_TSS_5kb_PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks-FergusonUniqueNorm99smooth50bp_SUZ12.sh # 36636059 ok
+sbatch scripts/matrix_TSS_5kb_PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks-FergusonUniqueNorm99smooth50bp_EZH2.sh # 36636660 ok
+
 ## EZH2 consensus peak
-XXX
-
-
+sbatch scripts/matrix_TSS_10kb_PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks-FergusonUniqueNorm99smooth50bp_H3K27me3.sh # 36637271 ok
+sbatch scripts/matrix_TSS_5kb_PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks-FergusonUniqueNorm99smooth50bp_SUZ12.sh # 36637940 ok
+sbatch scripts/matrix_TSS_5kb_PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks-FergusonUniqueNorm99smooth50bp_EZH2.sh # 36638223 ok
 
 ```
 
@@ -2643,6 +2646,10 @@ XXX
 
 --> I did not check THOR plot q30 carefully as NOT sure I can 'trust' THOR normalization method.
 
+
+Conclusion:
+- More H3K27me3 in KO and KOEF1aEZH1
+- A bit more EZH2 in KO
 
 
 ## QC PCA plots
