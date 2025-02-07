@@ -1741,54 +1741,41 @@ PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks_merge_annot <- read.delim("output/ChIPseeker/
 
 # import SCORE 
 
-XXXY HERE PUT SCORE !!! XXXY
-
-PSC_KO_EZH2_013R1
-PSC_KO_EZH2_014R1
-PSC_KO_EZH2_014R2
-PSC_KOEF1aEZH1_EZH2_006R
-PSC_KOEF1aEZH1_EZH2_013R1
-PSC_KOEF1aEZH1_EZH2_014R1
-PSC_WT_EZH2_006R
-PSC_WT_EZH2_010R
-PSC_WT_EZH2_014R1
-
-
-SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_peaks.sorted.merge-PSC_WT_EZH2_006R-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+SCORE_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_WT_EZH2_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge-PSC_WT_EZH2_006R-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
   as_tibble() %>%
   dplyr::rename(score = V1) %>%
   mutate(rowNumber = row_number())
-SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_010R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_WT_H3K27me3_010R-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+SCORE_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_WT_EZH2_010R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge-PSC_WT_EZH2_010R-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
   as_tibble() %>%
   dplyr::rename(score = V1) %>%
   mutate(rowNumber = row_number())
-SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_WT_H3K27me3_013R1-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+SCORE_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_WT_EZH2_014R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge-PSC_WT_EZH2_014R1-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
   as_tibble() %>%
   dplyr::rename(score = V1) %>%
   mutate(rowNumber = row_number())
 
-SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KO_H3K27me3_006R-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+SCORE_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KO_EZH2_013R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge-PSC_KO_EZH2_013R1-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
   as_tibble() %>%
   dplyr::rename(score = V1) %>%
   mutate(rowNumber = row_number())
-SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KO_H3K27me3_013R1-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+SCORE_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KO_EZH2_014R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge-PSC_KO_EZH2_014R1-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
   as_tibble() %>%
   dplyr::rename(score = V1) %>%
   mutate(rowNumber = row_number())
-SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_014R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KO_H3K27me3_014R2-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+SCORE_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KO_EZH2_014R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge-PSC_KO_EZH2_014R2-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
   as_tibble() %>%
   dplyr::rename(score = V1) %>%
   mutate(rowNumber = row_number())
 
-SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_005R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_H3K27me3_005R-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+SCORE_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KOEF1aEZH1_EZH2_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_EZH2_006R-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
   as_tibble() %>%
   dplyr::rename(score = V1) %>%
   mutate(rowNumber = row_number())
-SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_H3K27me3_006R-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+SCORE_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KOEF1aEZH1_EZH2_013R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_EZH2_013R1-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
   as_tibble() %>%
   dplyr::rename(score = V1) %>%
   mutate(rowNumber = row_number())
-SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_H3K27me3_013R1-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+SCORE_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KOEF1aEZH1_EZH2_014R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_EZH2_014R1-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
   as_tibble() %>%
   dplyr::rename(score = V1) %>%
   mutate(rowNumber = row_number())
@@ -1797,77 +1784,79 @@ SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_013R1 <- read.
 
 
 # import BED position from matrix
-BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_WT_H3K27me3_006R-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+
+BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_WT_EZH2_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge-PSC_WT_EZH2_006R-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
   as_tibble() %>%
   dplyr::rename(chr = "X.chrom") %>%
   dplyr::select(chr, start, end) %>%
   mutate(rowNumber = row_number())
-BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_010R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_WT_H3K27me3_010R-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_WT_EZH2_010R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge-PSC_WT_EZH2_010R-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
   as_tibble() %>%
   dplyr::rename(chr = "X.chrom") %>%
   dplyr::select(chr, start, end) %>%
   mutate(rowNumber = row_number())
-BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_WT_H3K27me3_013R1-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_WT_EZH2_014R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge-PSC_WT_EZH2_014R1-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
   as_tibble() %>%
   dplyr::rename(chr = "X.chrom") %>%
   dplyr::select(chr, start, end) %>%
   mutate(rowNumber = row_number())
 
-BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KO_H3K27me3_006R-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KO_EZH2_013R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge-PSC_KO_EZH2_013R1-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
   as_tibble() %>%
   dplyr::rename(chr = "X.chrom") %>%
   dplyr::select(chr, start, end) %>%
   mutate(rowNumber = row_number())
-BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KO_H3K27me3_013R1-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KO_EZH2_014R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge-PSC_KO_EZH2_014R1-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
   as_tibble() %>%
   dplyr::rename(chr = "X.chrom") %>%
   dplyr::select(chr, start, end) %>%
   mutate(rowNumber = row_number())
-BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_014R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KO_H3K27me3_014R2-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KO_EZH2_014R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge-PSC_KO_EZH2_014R2-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
   as_tibble() %>%
   dplyr::rename(chr = "X.chrom") %>%
   dplyr::select(chr, start, end) %>%
   mutate(rowNumber = row_number())
-  
-BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_005R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_H3K27me3_005R-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+
+BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KOEF1aEZH1_EZH2_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_EZH2_006R-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
   as_tibble() %>%
   dplyr::rename(chr = "X.chrom") %>%
   dplyr::select(chr, start, end) %>%
   mutate(rowNumber = row_number())
-BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_H3K27me3_006R-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KOEF1aEZH1_EZH2_013R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_EZH2_013R1-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
   as_tibble() %>%
   dplyr::rename(chr = "X.chrom") %>%
   dplyr::select(chr, start, end) %>%
   mutate(rowNumber = row_number())
-BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_H3K27me3_013R1-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KOEF1aEZH1_EZH2_014R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_EZH2_014R1-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
   as_tibble() %>%
   dplyr::rename(chr = "X.chrom") %>%
   dplyr::select(chr, start, end) %>%
   mutate(rowNumber = row_number())
+
 
 
 # Put together, gene name, scoer per row, coordinate and row
 
 
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_006R = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_006R %>%
-  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_006R ) %>%
-  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_WT_EZH2_006R = SCORE_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_WT_EZH2_006R %>%
+  left_join(BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_WT_EZH2_006R ) %>%
+  left_join(PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks_merge_annot) %>%
   dplyr::select(peakID, score) %>%
   group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
   add_column(genotype = "WT", replicate = "R1")
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_010R = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_010R %>%
-  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_010R) %>%
-  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_WT_EZH2_010R = SCORE_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_WT_EZH2_010R %>%
+  left_join(BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_WT_EZH2_010R) %>%
+  left_join(PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks_merge_annot) %>%
   dplyr::select(peakID, score) %>%
   group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
   add_column(genotype = "WT", replicate = "R2")
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_013R1 = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_013R1 %>%
-  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_013R1) %>%
-  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_WT_EZH2_014R1 = SCORE_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_WT_EZH2_014R1 %>%
+  left_join(BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_WT_EZH2_014R1) %>%
+  left_join(PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks_merge_annot) %>%
   dplyr::select(peakID, score) %>%
   group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
@@ -1875,50 +1864,50 @@ SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_013R1 = SCORE_WTKO
   add_column(genotype = "WT", replicate = "R3")
 
 
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_006R = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_006R  %>%
-  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_006R) %>%
-  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KO_EZH2_013R1 = SCORE_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KO_EZH2_013R1  %>%
+  left_join(BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KO_EZH2_013R1) %>%
+  left_join(PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks_merge_annot) %>%
   dplyr::select(peakID, score) %>%
   group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
   add_column(genotype = "KO", replicate = "R1")
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_013R1 = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_013R1  %>%
-  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_013R1) %>%
-  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KO_EZH2_014R1 = SCORE_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KO_EZH2_014R1  %>%
+  left_join(BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KO_EZH2_014R1) %>%
+  left_join(PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks_merge_annot) %>%
   dplyr::select(peakID, score) %>%
   group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
   add_column(genotype = "KO", replicate = "R2")
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_014R2 = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_014R2  %>%
-  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_014R2) %>%
-  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KO_EZH2_014R2 = SCORE_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KO_EZH2_014R2  %>%
+  left_join(BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KO_EZH2_014R2) %>%
+  left_join(PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks_merge_annot) %>%
   dplyr::select(peakID, score) %>%
   group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
   add_column(genotype = "KO", replicate = "R3")
 
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_005R = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_005R  %>%
-  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_005R) %>%
-  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KOEF1aEZH1_EZH2_006R = SCORE_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KOEF1aEZH1_EZH2_006R  %>%
+  left_join(BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KOEF1aEZH1_EZH2_006R) %>%
+  left_join(PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks_merge_annot) %>%
   dplyr::select(peakID, score) %>%
   group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
   add_column(genotype = "KOEF1aEZH1", replicate = "R1")
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_006R = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_006R  %>%
-  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_006R) %>%
-  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KOEF1aEZH1_EZH2_013R1 = SCORE_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KOEF1aEZH1_EZH2_013R1  %>%
+  left_join(BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KOEF1aEZH1_EZH2_013R1) %>%
+  left_join(PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks_merge_annot) %>%
   dplyr::select(peakID, score) %>%
   group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
   add_column(genotype = "KOEF1aEZH1", replicate = "R2")
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_013R1 = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_013R1  %>%
-  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_013R1) %>%
-  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KOEF1aEZH1_EZH2_014R1 = SCORE_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KOEF1aEZH1_EZH2_014R1  %>%
+  left_join(BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KOEF1aEZH1_EZH2_014R1) %>%
+  left_join(PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks_merge_annot) %>%
   dplyr::select(peakID, score) %>%
   group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
@@ -1928,15 +1917,16 @@ SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_013R1 = SC
 
 
 # Tidy into a single tibble
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks = SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_006R %>%
-  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_010R) %>%
-  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_013R1) %>%
-  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_006R) %>%
-  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_013R1) %>%
-  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_014R2) %>%
-  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_005R) %>%
-  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_006R) %>%
-  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_013R1)
+SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks = SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_WT_EZH2_006R %>%
+  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_WT_EZH2_010R) %>%
+  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_WT_EZH2_014R1) %>%
+  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KO_EZH2_013R1) %>%
+  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KO_EZH2_014R1) %>%
+  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KO_EZH2_014R2) %>%
+  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KOEF1aEZH1_EZH2_006R) %>%
+  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KOEF1aEZH1_EZH2_013R1) %>%
+  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks__PSC_KOEF1aEZH1_EZH2_014R1)
+
 
 
 
@@ -1944,14 +1934,14 @@ SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks = SCORE_BED_WTKOKOEF1aEZH1_H3K27me3
 ### WT vs KO ####################################
 ######################################################
 
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_WTvsKO = SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks %>%
+SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks_WTvsKO = SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks %>%
   filter(genotype %in% c("WT", "KO"),
          peakID != "NA") %>%
   mutate(median_score = round(median_score))
 
 
 # Convert to wide format
-countData_WTvsKO <- SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_WTvsKO %>%
+countData_WTvsKO <- SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks_WTvsKO %>%
   mutate(replicate = paste0(genotype, "_", replicate)) %>%  # Create unique column names
   select(-genotype) %>%  # Remove genotype column (since it's now part of replicate)
   pivot_wider(names_from = replicate, values_from = median_score, values_fill = 0)  
@@ -1972,7 +1962,7 @@ counts_all_matrix = make_matrix(dplyr::select(countData_WTvsKO, -peakID), pull(c
 
 
 ## Create colData file that describe all our samples
-colData_WTvsKO_raw <- SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_WTvsKO %>%
+colData_WTvsKO_raw <- SCORE_BED_WTKOKOEF1aEZH1_EZH2_pool_peaks_WTvsKO %>%
   distinct(replicate, genotype) %>%
   mutate(sample = paste(genotype, replicate, sep = "_"))
   
@@ -1990,7 +1980,7 @@ dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
 
 # DEGs
 ## Filter out gene with less than 5 reads
-keep <- rowSums(counts(dds)) >= 100 # below 2000 look like noise on IGV
+keep <- rowSums(counts(dds)) >= 1500 # below 2000 look like noise on IGV
 dds <- dds[keep,]
 
 ## Specify the control sample
@@ -2019,16 +2009,16 @@ names(keyvals)[keyvals == 'grey'] <- 'Not significant'
 names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
 
 
-res_tibble <- as_tibble(res, rownames = "peakID") %>% left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot)
+res_tibble <- as_tibble(res, rownames = "peakID") %>% left_join(PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks_merge_annot)
 # Export result
-write.table(res_tibble, file="output/edgeR/DESEQ2-WTKOKOEF1aEZH1_H3K27me3_pool_peaks-PSC_KO_vs_PSC_WT-H3K27me3.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(res_tibble, file="output/edgeR/DESEQ2-WTKOKOEF1aEZH1_EZH2_pool_peaks-PSC_KO_vs_PSC_WT-EZH2.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
-pdf("output/edgeR/plotVolcano_res_q05fc01-WTKOKOEF1aEZH1_H3K27me3_pool_peaks-PSC_KO_vs_PSC_WT-H3K27me3.pdf", width=3, height=4)    
+pdf("output/edgeR/plotVolcano_res_q05fc01-WTKOKOEF1aEZH1_EZH2_pool_peaks-PSC_KO_vs_PSC_WT-EZH2.pdf", width=3, height=4)    
 EnhancedVolcano(res_tibble,
   lab = res_tibble$geneSymbol,
   x = 'log2FoldChange',
   y = 'padj',
-  title = 'KO vs WT, PSC, H3K27me3',
+  title = 'KO vs WT, PSC, EZH2',
   pCutoff = 5e-2,         #
   FCcutoff = 0.1,
   pointSize = 1.0,
@@ -2039,6 +2029,10 @@ EnhancedVolcano(res_tibble,
   theme_bw() +
   theme(legend.position = "none")
 dev.off()
+
+
+XXXXXXXXX BELOW NOT MOPDIFIED XXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXX
 
 
 upregulated_genes <- sum(res_tibble$log2FoldChange > 0.1 & res_tibble$padj < 5e-2, na.rm = TRUE)
@@ -2193,7 +2187,7 @@ res_tibble %>% dplyr::select(peakID, geneSymbol, log2FoldChange, padj) %>%
 
 ```
 
-
+--> For EZH2, it seems the peak regions are sometime noise; add *noise to the DGB analysis, perform badly; we compare noise to noise*. Let's be more stringeant on peak identification. **Increase qvalue at MACS2**
 
 
 

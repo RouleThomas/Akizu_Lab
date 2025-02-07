@@ -503,6 +503,29 @@ assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the pre
 #####################################################################################################
 
 
+
+##### QC filtering _ V5 (used for p35) ############################################
+
+### mit > 15, rb > 22 and RNAfeaure 800 and RNAcount 1000 #############################################
+apply_qc <- function(seurat_object) {
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$Is_doublet == 'True', 'Doublet', 'Pass')
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$nFeature_RNA < 800 & seurat_object@meta.data$QC == 'Pass', 'Low_nFeature', seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$nFeature_RNA < 800 & seurat_object@meta.data$QC != 'Pass' & seurat_object@meta.data$QC != 'Low_nFeature', paste('Low_nFeature', seurat_object@meta.data$QC, sep = ','), seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.mt > 15 & seurat_object@meta.data$QC == 'Pass', 'High_MT', seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.mt > 15 & seurat_object@meta.data$QC != 'Pass' & seurat_object@meta.data$QC != 'High_MT', paste('High_MT', seurat_object@meta.data$QC, sep = ','), seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.rb > 22 & seurat_object@meta.data$QC == 'Pass', 'High_RB', seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$percent.rb > 22 & seurat_object@meta.data$QC != 'Pass' & seurat_object@meta.data$QC != 'High_RB', paste('High_RB', seurat_object@meta.data$QC, sep = ','), seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$nCount_RNA < 1000 & seurat_object@meta.data$QC == 'Pass', 'Low_nCountRNA', seurat_object@meta.data$QC)
+  seurat_object[['QC']] <- ifelse(seurat_object@meta.data$nCount_RNA < 1000 & seurat_object@meta.data$QC != 'Pass' & seurat_object@meta.data$QC != 'Low_nCountRNA', paste('Low_nCountRNA', seurat_object@meta.data$QC, sep = ','), seurat_object@meta.data$QC)
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+#####################################################################################################
+
+
 #### Write QC summary
 qc_summary_list <- list()
 
@@ -518,6 +541,7 @@ qc_summary_combined <- do.call(rbind, qc_summary_list)
 
 # Write the data frame to a tab-separated text file
 write.table(qc_summary_combined, file = "output/seurat/QC_summary_V2.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # for p35?
+write.table(qc_summary_combined, file = "output/seurat/QC_summary_V5.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # for p35, additional filtering!
 write.table(qc_summary_combined, file = "output/seurat/QC_summary_V3.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # for p14 and p35?
 write.table(qc_summary_combined, file = "output/seurat/QC_summary_V4.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # for p180
 
@@ -564,14 +588,14 @@ phase_summary_combined <- do.call(rbind, phase_summary_list)
 write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_V2.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # for p35?
 write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_V3.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # for p14 and p35?
 write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_V4.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # for p180
-
+write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_V5.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # for p35, additonal filtering!
 
 
 
 ############ SAVE samples #################################################################
 save_seurat_objects <- function(seurat_objects_list, output_dir) {
   for (sample_name in names(seurat_objects_list)) {
-    file_name <- paste0(output_dir, sample_name, "_V2_ReProcess_numeric.rds") # _V2_numeric \\\--> V3 for p14 ; v4 for p180; V2 for p35
+    file_name <- paste0(output_dir, sample_name, "_V5_numeric.rds") # _V2_numeric \\\--> V3 for p14 ; v4 for p180; V2 for p35 ; V5 for p35!
     saveRDS(seurat_objects_list[[sample_name]], file = file_name) # V2 got a ReProcess for sample p35
   }
 }
@@ -2763,13 +2787,60 @@ dev.off()
 
 
 
+
+
+
+
+# CORRECT VERSION WITH QCV5 !! (corrected the lowCount RNA and low Feature RNA cells)
+WT_p35_CB_Rep1 <- SCTransform(WT_p35_CB_Rep1, method = "glmGamPoi", ncells = 7174, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+WT_p35_CB_Rep2 <- SCTransform(WT_p35_CB_Rep2, method = "glmGamPoi", ncells = 10136, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+WT_p35_CB_Rep3 <- SCTransform(WT_p35_CB_Rep3, method = "glmGamPoi", ncells = 11325, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p35_CB_Rep1 <- SCTransform(Kcnc1_p35_CB_Rep1, method = "glmGamPoi", ncells = 7592, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p35_CB_Rep2 <- SCTransform(Kcnc1_p35_CB_Rep2, method = "glmGamPoi", ncells = 466, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p35_CB_Rep3 <- SCTransform(Kcnc1_p35_CB_Rep3, method = "glmGamPoi", ncells = 10490, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb")) 
+
+
+
+srat.list <- list(WT_p35_CB_Rep1 = WT_p35_CB_Rep1, WT_p35_CB_Rep2 = WT_p35_CB_Rep2, WT_p35_CB_Rep3 = WT_p35_CB_Rep3, Kcnc1_p35_CB_Rep1 = Kcnc1_p35_CB_Rep1, Kcnc1_p35_CB_Rep2 = Kcnc1_p35_CB_Rep2, Kcnc1_p35_CB_Rep3 = Kcnc1_p35_CB_Rep3)
+
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+WT_Kcnc1_p35_CB_1step.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+WT_Kcnc1_p35_CB_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p35_CB_1step.anchors, normalization.method = "SCT")
+
+
+#### UMAP
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "integrated"
+
+WT_Kcnc1_p35_CB_1step.sct <- RunPCA(WT_Kcnc1_p35_CB_1step.sct, verbose = FALSE, npcs = 35)
+WT_Kcnc1_p35_CB_1step.sct <- RunUMAP(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", dims = 1:35, verbose = FALSE)
+WT_Kcnc1_p35_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", k.param = 20, dims = 1:35)
+WT_Kcnc1_p35_CB_1step.sct <- FindClusters(WT_Kcnc1_p35_CB_1step.sct, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+
+WT_Kcnc1_p35_CB_1step.sct$condition <- factor(WT_Kcnc1_p35_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+
+
+
+# pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV2dim50kparam20res03.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV5dim35kparam20res03.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=TRUE)
+dev.off()
+
+
+## THIS VERSION (keeping all samples, even outlier) HAS BEEN SAVED AS:  output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_label_ReProcess.rds
+
+
+
+
 # genes
 
 DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "SCT"
 
 
 # pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV3dim50-List6.pdf", width=30, height=60)
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV2dim50-List7.pdf", width=30, height=60)
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-QCV5dim35-List7.pdf", width=30, height=60)
 
 FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c(  "Gabra6", "Pax6",
   "Kcnc2",
@@ -2837,6 +2908,28 @@ DimPlot(WT_Kcnc1_p35_CB_1step.sct, group.by= "Phase") &
 dev.off()  
 
 
+# QC plots to check what is the extra cluster closeby MLI1 
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p35_CB_1step-orig.ident-QCV5dim30kparam20res03.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_p35_CB_1step.sct, group.by= "orig.ident", raster = FALSE, split.by = "condition") & 
+  theme(plot.title = element_text(size=10))
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p35_CB_1step-Phase-QCV5dim30kparam20res03.pdf", width=10, height=6)
+DimPlot(WT_Kcnc1_p35_CB_1step.sct, group.by= "Phase", raster = FALSE) & 
+  theme(plot.title = element_text(size=10))
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p35_CB_1step-nFeature_RNA-QCV5dim30kparam20res03.pdf", width=10, height=6)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=FALSE, features = "nFeature_RNA", raster = FALSE) #, min.cutoff = 750, max.cutoff = 951
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p35_CB_1step-nCount_RNA-QCV5dim30kparam20res03.pdf", width=10, height=6)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=FALSE, features = "nCount_RNA", raster = FALSE, min.cutoff = 800, max.cutoff = 1001)
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p35_CB_1step-percent.mt-QCV5dim30kparam20res03.pdf", width=10, height=6)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.mt", raster = FALSE)
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p35_CB_1step-percent.rb-QCV5dim30kparam20res03.pdf", width=10, height=6)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.rb", raster = FALSE)
+dev.off()  
+
 # save ##################
 ## saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step.sct_V1_numeric.rds") # regMtRbCount with QC_V3
 # WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step.sct_V1_numeric.rds")
@@ -2870,6 +2963,11 @@ WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step
 
 #saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_ReProcess_noOutliers.rds") 
 WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_ReProcess_noOutliers.rds") # without including outliers sample, 2 bio rep per genotype.
+
+
+#saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV5dim35kparam20res03.sct_V1_numeric_ReProcess.rds") 
+ # TROUBLESHOOT CLUSTERING WITH QCV5 
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV5dim35kparam20res03.sct_V1_numeric_ReProcess.rds") # TROUBLESHOOT CLUSTERING WITH QCV5
 
 ##########
 
@@ -9157,6 +9255,25 @@ pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_splitCondi
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3, raster = FALSE)
 dev.off()
 
+
+# QC plots to check what is the extra cluster closeby MLI1 
+
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_CB_integrateMerge-Phase-dim40kparam15res03.pdf", width=10, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, group.by= "Phase", raster = FALSE) & 
+  theme(plot.title = element_text(size=10))
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_CB_integrateMerge-nFeature_RNA-dim40kparam15res03.pdf", width=10, height=6)
+FeaturePlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=FALSE, features = "nFeature_RNA", raster = FALSE, min.cutoff = 1000, max.cutoff = 2000)
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_CB_integrateMerge-nCount_RNA-dim40kparam15res03.pdf", width=10, height=6)
+FeaturePlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=FALSE, features = "nCount_RNA", raster = FALSE, min.cutoff = 1000, max.cutoff = 2500)
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_CB_integrateMerge-percent.mt-dim40kparam15res03.pdf", width=10, height=6)
+FeaturePlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=FALSE, features = "percent.mt", raster = FALSE)
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_CB_integrateMerge-percent.rb-dim40kparam15res03.pdf", width=10, height=6)
+FeaturePlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=FALSE, features = "percent.rb", raster = FALSE)
+dev.off()  
 
 
 # save ######################################################
