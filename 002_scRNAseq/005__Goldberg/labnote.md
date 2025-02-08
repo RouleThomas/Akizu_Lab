@@ -8419,8 +8419,6 @@ dev.off()
 
 
 
-XXXY BELOW NOT MOD
-
 
 
 # differential expressed genes across conditions
@@ -8431,84 +8429,52 @@ XXXY BELOW NOT MOD
 # DEGs number in dotplot
 DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
 ## List of cell types
-cell_types <- c( "PLI23",
-  "Granular_1",
-  "MLI1",
-  "Granular_2",
-  "Granular_3",
-  "Granular_4",
-  "MLI2",
-  "Endothelial",
-  "Granular_5",
-  "Astrocyte",
-  "OPC",
-  "Bergmann_Glia",
+cell_types <- c(   "Granule", 
+  "MLI1", 
+  "MLI2", 
   "PLI12",
-  "Oligodendrocyte",
-  "Mix_Microglia_Meningeal",
-  "Endothelial_Mural" ,
-  "Purkinje",
+  "PLI23", 
   "Golgi",
   "Unipolar_Brush",
-  "Choroid_Plexus")
+  "Purkinje",
+  "Astrocyte",
+  "Bergman_Glia", 
+  "Endothelial",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Oligodendrocyte",
+  "Unknown")
 ## Loop through each cell type to count the number of significant DEGs
 for (cell_type in cell_types) {
-  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST.txt", sep = "")
+  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST.txt", sep = "")
   deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
-  num_degs <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.25 | deg_data$avg_log2FC < -0.25)) ## Count the number of significant DEGs
+  num_degs <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.15 | deg_data$avg_log2FC < -0.15)) ## Count the number of significant DEGs
   DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
 }
 ## Dotplot
 DEG_count= DEG_count %>%
   mutate(Cell_Type = factor(Cell_Type, levels = c( 
-  "Granular_1",
-  "Granular_2",
-  "Granular_3",
-  "Granular_4",
-  "Granular_5",
-  "MLI1",
-  "MLI2",
+"Granule", 
+  "MLI1", 
+  "MLI2", 
   "PLI12",
-  "PLI23",
-  "Purkinje",
+  "PLI23", 
   "Golgi",
   "Unipolar_Brush",
+  "Purkinje",
   "Astrocyte",
+  "Bergman_Glia", 
   "Endothelial",
-  "OPC",
+  "Meningeal",
+  "Choroid_Plexus",
   "Oligodendrocyte",
-  "Bergmann_Glia",
-  "Mix_Microglia_Meningeal",
-  "Endothelial_Mural" ,
-  "Choroid_Plexus") ) ) 
+  "Unknown") ) ) 
 DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = rev(levels(DEG_count$Cell_Type)))
-cell_type_colors <- c(
-  "Granular_1" = "#FFD700",
-  "Granular_2" = "#FFA500",
-  "Granular_3" = "#ADFF2F",
-  "Granular_4" = "#32CD32",
-  "Granular_5" = "#7FFF00",
-  "MLI1" = "#FF6347",
-  "MLI2" = "#FF4500",
-  "PLI12" = "#6495ED",
-  "PLI23" = "#00BFFF",
-  "Purkinje" = "#4682B4",
-  "Golgi" = "#4169E1",
-  "Unipolar_Brush" = "#6A5ACD",
-  "Astrocyte" = "#800080",
-  "Endothelial" = "#9370DB",
-  "OPC" = "#8A2BE2",
-  "Oligodendrocyte" = "#9400D3",
-  "Bergmann_Glia" = "#BA55D3",
-  "Mix_Microglia_Meningeal" = "#DDA0DD",
-  "Endothelial_Mural" = "#EE82EE",
-  "Choroid_Plexus" = "#DA70D6"
-)
+
 # Generate the dot plot
-pdf("output/seurat/Dotplot_DEG_count_WT_Kcnc1_p14_CB_1step_DEG_MAST_padj05fc025_numeric.pdf", width=9, height=4)
+pdf("output/seurat/Dotplot_DEG_count_WT_Kcnc1_p14_CB_1step_DEG_MAST_padj05fc015_numeric_version2.pdf", width=9, height=4)
 ggplot(DEG_count, aes(x = 1, y = Cell_Type, color = Cell_Type)) +
   geom_point(aes(size = Num_DEGs), alpha = 0.8) +
-  scale_color_manual(values = cell_type_colors) +
   scale_size(range = c(2, 10)) +
   theme_void() + # Removes all gridlines, axes, and background elements
   theme(
@@ -8538,54 +8504,44 @@ Idents(WT_Kcnc1_p14_CB_1step.sct) <- "cluster.annot"
 
 DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
 ## List of cell types
-cell_types <- c(    "PLI23",
-  "Granular_1",
-  "MLI1",
-  "Granular_2",
-  "Granular_3",
-  "Granular_4",
-  "MLI2",
-  "Endothelial",
-  "Granular_5",
-  "Astrocyte",
-  "OPC",
-  "Bergmann_Glia",
+cell_types <- c(   "Granule", 
+  "MLI1", 
+  "MLI2", 
   "PLI12",
-  "Oligodendrocyte",
-  "Mix_Microglia_Meningeal",
-  "Endothelial_Mural" ,
-  "Purkinje",
+  "PLI23", 
   "Golgi",
   "Unipolar_Brush",
-  "Choroid_Plexus")
+  "Purkinje",
+  "Astrocyte",
+  "Bergman_Glia", 
+  "Endothelial",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Oligodendrocyte",
+  "Unknown")
 ## Loop through each cell type to count the number of significant DEGs
 for (cell_type in cell_types) {
-  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST.txt", sep = "") # CHANGE FILE HERE
+  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST.txt", sep = "") # CHANGE FILE HERE
   deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
   num_degs <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.25 | deg_data$avg_log2FC < -0.25)) ## Count the number of significant DEGs
   DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
 }
 
-DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = c(  "Granular_1",
-  "Granular_2",
-  "Granular_3",
-  "Granular_4",
-  "Granular_5",
-  "MLI1" ,
-  "MLI2" ,
-  "PLI12" ,
-  "PLI23",
+DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = c(    "Granule", 
+  "MLI1", 
+  "MLI2", 
+  "PLI12",
+  "PLI23", 
   "Golgi",
   "Unipolar_Brush",
   "Purkinje",
   "Astrocyte",
-  "Bergmann_Glia",
-  "Oligodendrocyte",
-  "OPC" ,
-  "Mix_Microglia_Meningeal",
+  "Bergman_Glia", 
   "Endothelial",
-  "Endothelial_Mural",
-  "Choroid_Plexus")) 
+  "Meningeal",
+  "Choroid_Plexus",
+  "Oligodendrocyte",
+  "Unknown")) 
   
   
 # Add DEG information to my seurat object - DEG_count
@@ -8595,11 +8551,7 @@ DEG_named_vector <- DEG_count$Num_DEGs[match(cell_clusters, DEG_count$Cell_Type)
 names(DEG_named_vector) <- names(cell_clusters)
 # Integrate DEG values into the Seurat object
 WT_Kcnc1_p14_CB_1step.sct <- AddMetaData(WT_Kcnc1_p14_CB_1step.sct, metadata = DEG_named_vector, col.name = "DEG")
-# Create a UMAP plot colored by qval values
-pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CB_1step_DEG.pdf", width=6, height=6)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "DEG", pt.size = 0.5, reduction = "umap", label = TRUE) +
-  scale_colour_viridis() #  option="magma"
-dev.off()
+
 # Add values on the heatmap
 ## Extract UMAP coordinates
 umap_coordinates <- as.data.frame(WT_Kcnc1_p14_CB_1step.sct@reductions$umap@cell.embeddings)
@@ -8608,8 +8560,7 @@ umap_coordinates$cluster <- WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot
 cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
   left_join(DEG_count %>% dplyr::rename( "cluster"="Cell_Type"))
 ## Create a UMAP plot colored by DEG values, with cluster DEG counts as text annotations
-#pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CB_1step_DEGpadj05fc025_numeric.pdf", width=6, height=6)
-pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CB_1step_DEG_MAST_padj05fc025_numeric.pdf", width=6, height=6)
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CB_1step_DEG_MAST_padj05fc025_numeric_version2.pdf", width=6, height=6)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "DEG", pt.size = 0.5, reduction = "umap") +
   scale_colour_viridis(option="magma") + # option="magma"
   geom_text(data = cluster_centers, aes(x = UMAP_1, y = UMAP_2, label = Num_DEGs), 
@@ -8619,12 +8570,11 @@ dev.off()
 
 
 
-
-
-
 # GSEA output colored in a UMAP
 ## Pathway of neurodegeneration
-p14_correct_List4_PathwaysOfNeurodegeneration <- read.table("output/Pathway/gsea_output_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST-List1.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "PathwaysOfNeurodegeneration")
+
+
+p14_correct_List4_PathwaysOfNeurodegeneration <- read.table("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST-List4.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "PathwaysOfNeurodegeneration")
 ## Add NES and pval information to the Seurat object metadata
 WT_Kcnc1_p14_CB_1step.sct@meta.data$NES <- p14_correct_List4_PathwaysOfNeurodegeneration$NES[match(WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot, 
                                                                        p14_correct_List4_PathwaysOfNeurodegeneration$cluster)]
@@ -8642,7 +8592,7 @@ cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordi
 ## Format NES values to two decimal places
 cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
 ## Generate the UMAP plot with FeaturePlot
-pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CB_1step_MAST_PathwaysOfNeurodegeneration.pdf", width = 6, height = 6)
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CB_1step_MAST_PathwaysOfNeurodegeneration_version2.pdf", width = 6, height = 6)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
   scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
   geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
@@ -8650,7 +8600,7 @@ FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "NES_colored", pt.size = 0.5, 
 dev.off()
 
 ## REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION
-p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION <- read.table("output/Pathway/gsea_output_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST-List3.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")
+p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION <- read.table("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST-List4.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")
 ## Add NES and pval information to the Seurat object metadata
 WT_Kcnc1_p14_CB_1step.sct@meta.data$NES <- p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$NES[match(WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot, 
                                                                        p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$cluster)]
@@ -8668,7 +8618,7 @@ cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordi
 ## Format NES values to two decimal places
 cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
 ## Generate the UMAP plot with FeaturePlot
-pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CB_1step_MAST_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.pdf", width = 6, height = 6)
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CB_1step_MAST_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION_version2.pdf", width = 6, height = 6)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
   scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
   geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
@@ -8677,11 +8627,8 @@ dev.off()
 
 
 
-
-
-
-
-
+XXXXXXXXXXXXXXXXXXXXXXX NOT DONE DOWN
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 # SCPA
@@ -8850,6 +8797,10 @@ ggplot(pathway_all_data, aes(x = cluster, y = Pathway)) +
 dev.off()
 
 
+XXXXXXXXXXXXXXXXXXXXXXX NOT DONE UP
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+
 
 
 # GSEA plot
@@ -8857,29 +8808,24 @@ library("fgsea")
 
 
 #### import all clsuter DEGs output :
-cluster_types <- c("Granular_1",
-  "Granular_2",
-  "Granular_3",
-  "Granular_4",
-  "Granular_5",
-  "MLI1" ,
-  "MLI2" ,
-  "PLI12" ,
-  "PLI23",
+cluster_types <- c("Granule", 
+  "MLI1", 
+  "MLI2", 
+  "PLI12",
+  "PLI23", 
   "Golgi",
   "Unipolar_Brush",
   "Purkinje",
   "Astrocyte",
-  "Bergmann_Glia",
-  "Oligodendrocyte",
-  "OPC" ,
-  "Mix_Microglia_Meningeal",
+  "Bergman_Glia", 
   "Endothelial",
-  "Endothelial_Mural",
-  "Choroid_Plexus")
+  "Meningeal",
+  "Choroid_Plexus",
+  "Oligodendrocyte",
+  "Unknown")
 # Loop over each cluster type to read data and assign to a variable
 for (cluster in cluster_types) {
-  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST.txt")
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST.txt")
   data <- read.delim(file_path, header = TRUE, row.names = 1)
   assign(cluster, data)
 }
@@ -8944,26 +8890,21 @@ dev.off()
 
 # Save output table for all pathway and cluster
 ## Define the list of cluster types
-cluster_types <- c("Granular_1",
-  "Granular_2",
-  "Granular_3",
-  "Granular_4",
-  "Granular_5",
-  "MLI1" ,
-  "MLI2" ,
-  "PLI12" ,
-  "PLI23",
+cluster_types <- c("Granule", 
+  "MLI1", 
+  "MLI2", 
+  "PLI12",
+  "PLI23", 
   "Golgi",
   "Unipolar_Brush",
   "Purkinje",
   "Astrocyte",
-  "Bergmann_Glia",
-  "Oligodendrocyte",
-  "OPC" ,
-  "Mix_Microglia_Meningeal",
+  "Bergman_Glia", 
   "Endothelial",
-  "Endothelial_Mural",
-  "Choroid_Plexus")
+  "Meningeal",
+  "Choroid_Plexus",
+  "Oligodendrocyte",
+  "Unknown")
 
 ## Initialize an empty list to store the results for each cluster type
 all_results <- list()
@@ -8997,10 +8938,10 @@ for (cluster in cluster_types) {
 ## Combine results from all cluster types into one table
 final_results <- bind_rows(all_results, .id = "cluster")
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST-List3.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST-List4.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST-List3.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST-List4.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -9026,7 +8967,7 @@ dev.off()
 ### if need reorder terms
 final_results$pathway <- factor(final_results$pathway, levels = c("PathwaysOfNeurodegeneration", "GOBP_NEURONAL_ACTION_POTENTIAL", "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")) 
 
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_correct-List4.pdf", width=10, height=3)
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST_ordered-List4.pdf", width=10, height=3)
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -9679,31 +9620,27 @@ ggbarplot(p35_CB_prop, x = "cluster", y = "proportion", fill = "genotype",
 dev.off()
 
 
-XXXY HERE BELOW NOT MOD 
 
 # DEGs number in dotplot
 DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
 ## List of cell types
 cell_types <- c(  
   "Granule",
-  "MLI1",
-  "PLI23" ,
+  "MLI1" ,
   "MLI2" ,
-  "Endothelial_Stalk",
-  "Astrocyte" ,
   "PLI12" ,
+  "PLI23" ,
   "Golgi" ,
   "Unipolar_Brush" ,
+  "Purkinje" ,
+  "Astrocyte" ,
   "Bergman_Glia",
-  "Endothelial",
-  "Choroid_Plexus",
-  "Purkinje",
-  "Meningeal",
-  "Unknown_Neuron_Subpop",
-  "OPC" )
+  "Meningeal_Endothelial",
+  "Choroid_Plexus" ,
+  "Unknown" )
 ## Loop through each cell type to count the number of significant DEGs
 for (cell_type in cell_types) {
-  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_MAST.txt", sep = "")
+  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p35_CB_Version2dim50kparam50res02_allGenes_MAST.txt", sep = "")
   deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
   num_degs <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.25 | deg_data$avg_log2FC < -0.25)) ## Count the number of significant DEGs
   DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
@@ -9712,26 +9649,23 @@ for (cell_type in cell_types) {
 DEG_count= DEG_count %>%
   mutate(Cell_Type = factor(Cell_Type, levels = c( 
   "Granule",
-  "MLI1",
+  "MLI1" ,
   "MLI2" ,
   "PLI12" ,
   "PLI23" ,
-  "Purkinje",
   "Golgi" ,
   "Unipolar_Brush" ,
+  "Purkinje" ,
   "Astrocyte" ,
-  "Endothelial_Stalk",
-  "Endothelial",
-  "OPC",
   "Bergman_Glia",
-  "Choroid_Plexus",
-  "Meningeal",
-  "Unknown_Neuron_Subpop"
+  "Meningeal_Endothelial",
+  "Choroid_Plexus" ,
+  "Unknown"
 ) ) ) 
 DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = rev(levels(DEG_count$Cell_Type)))
 
 # Generate the dot plot
-pdf("output/seurat/Dotplot_DEG_count_WT_Kcnc1_p35_CB_1step_DEG_MAST_padj05fc025_numeric.pdf", width=9, height=4)
+pdf("output/seurat/Dotplot_DEG_count_WT_Kcnc1_p35_CB_1step_DEG_MAST_padj05fc025_numeric_version2.pdf", width=9, height=4)
 ggplot(DEG_count, aes(x = 1, y = Cell_Type, color = Cell_Type)) +
   geom_point(aes(size = Num_DEGs), alpha = 0.8) +
   scale_size(range = c(2, 10)) +
@@ -9753,52 +9687,33 @@ ggplot(DEG_count, aes(x = 1, y = Cell_Type, color = Cell_Type)) +
   )
 dev.off()
 
-pdf("output/seurat/Dotplot_DEG_count_WT_Kcnc1_p35_CB_1step_DEG_MAST_padj05fc025_numeric_FORLEGEND.pdf", width=9, height=4)
-ggplot(DEG_count, aes(x = Cell_Type, y = 1)) +
-  geom_point(aes(size = ifelse(Num_DEGs == 0, 1, Num_DEGs), fill = Cell_Type), shape = 21, color = "black") +
-  scale_size_continuous(range = c(1, 15)) +
-  theme_void() +
-  labs(title = "Number of DEGs per Cell Type", x = "Cell Type", y = "", size = "Number of DEGs") +
-  theme(
-    axis.text.x = element_text(angle = 0, hjust = 0.5, vjust = 50, size = 15),  # Adjust the position of x-axis labels
-    axis.text.y = element_blank(), 
-    axis.ticks.y = element_blank(), 
-    axis.title.y = element_blank(),
-    legend.position = "right"
-  ) +
-  guides(size = guide_legend(title = "Number of DEGs", title.position = "top", title.hjust = 0.5))  # Keep only the size legend
-dev.off()
-
 
 
 
 
 # DEGs number colored in a UMAP
-WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_label_ReProcess.rds")
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-Version2dim50kparam50res02.sct_V1_label.rds")
 
 Idents(WT_Kcnc1_p35_CB_1step.sct) <- "cluster.annot"
 
 DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
 ## List of cell types
-cell_types <- c(     "Granule",
-  "MLI1",
-  "PLI23" ,
+cell_types <- c(    "Granule",
+  "MLI1" ,
   "MLI2" ,
-  "Endothelial_Stalk",
-  "Astrocyte" ,
   "PLI12" ,
+  "PLI23" ,
   "Golgi" ,
   "Unipolar_Brush" ,
+  "Purkinje" ,
+  "Astrocyte" ,
   "Bergman_Glia",
-  "Endothelial",
-  "Choroid_Plexus",
-  "Purkinje",
-  "Meningeal",
-  "Unknown_Neuron_Subpop",
-  "OPC" )
+  "Meningeal_Endothelial",
+  "Choroid_Plexus" ,
+  "Unknown" )
 ## Loop through each cell type to count the number of significant DEGs
 for (cell_type in cell_types) {
-  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_MAST.txt", sep = "")
+  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p35_CB_Version2dim50kparam50res02_allGenes_MAST.txt", sep = "")
   deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
   num_degs <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.25 | deg_data$avg_log2FC < -0.25) ) ## Count the number of significant DEGs
   DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
@@ -9808,21 +9723,18 @@ for (cell_type in cell_types) {
 
 
 DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = c(   "Granule",
-  "MLI1",
-  "PLI23" ,
+  "MLI1" ,
   "MLI2" ,
-  "Endothelial_Stalk",
-  "Astrocyte" ,
   "PLI12" ,
+  "PLI23" ,
   "Golgi" ,
   "Unipolar_Brush" ,
+  "Purkinje" ,
+  "Astrocyte" ,
   "Bergman_Glia",
-  "Endothelial",
-  "Choroid_Plexus",
-  "Purkinje",
-  "Meningeal",
-  "Unknown_Neuron_Subpop",
-  "OPC")) 
+  "Meningeal_Endothelial",
+  "Choroid_Plexus" ,
+  "Unknown" )) 
 # Add DEG information to my seurat object - DEG_count
 cell_clusters <- WT_Kcnc1_p35_CB_1step.sct@meta.data$cluster.annot
 names(cell_clusters) <- rownames(WT_Kcnc1_p35_CB_1step.sct@meta.data)
@@ -9831,10 +9743,6 @@ names(DEG_named_vector) <- names(cell_clusters)
 # Integrate DEG values into the Seurat object
 WT_Kcnc1_p35_CB_1step.sct <- AddMetaData(WT_Kcnc1_p35_CB_1step.sct, metadata = DEG_named_vector, col.name = "DEG")
 # Create a UMAP plot colored by qval values
-pdf("output/seurat/FeaturePlot_WT_Kcnc1_p35_CB_1step_DEG_correct.pdf", width=6, height=6)
-FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = "DEG", pt.size = 0.5, reduction = "umap", label = TRUE) +
-  scale_colour_viridis() #  option="magma"
-dev.off()
 # Add values on the heatmap
 ## Extract UMAP coordinates
 umap_coordinates <- as.data.frame(WT_Kcnc1_p35_CB_1step.sct@reductions$umap@cell.embeddings)
@@ -9843,8 +9751,7 @@ umap_coordinates$cluster <- WT_Kcnc1_p35_CB_1step.sct@meta.data$cluster.annot
 cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
   left_join(DEG_count %>% dplyr::rename( "cluster"="Cell_Type"))
 ## Create a UMAP plot colored by DEG values, with cluster DEG counts as text annotations
-#pdf("output/seurat/FeaturePlot_WT_Kcnc1_p35_CB_1step_DEGpadj05fc025_numeric.pdf", width=6, height=6)
-pdf("output/seurat/FeaturePlot_WT_Kcnc1_p35_CB_1step_DEG_MAST_padj05fc025_numeric.pdf", width=6, height=6)
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p35_CB_1step_DEG_MAST_padj05fc025_numeric_version2.pdf", width=6, height=6)
 FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = "DEG", pt.size = 0.5, reduction = "umap") +
   scale_colour_viridis(option="magma") + # option="magma"
   geom_text(data = cluster_centers, aes(x = UMAP_1, y = UMAP_2, label = Num_DEGs), 
@@ -9853,9 +9760,11 @@ dev.off()
 
 
 
+
+
 # GSEA output colored in a UMAP
 ## Pathway of neurodegeneration
-p35_correct_List4_PathwaysOfNeurodegeneration <- read.table("output/Pathway/gsea_output_Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_MAST-List1.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "PathwaysOfNeurodegeneration")
+p35_correct_List4_PathwaysOfNeurodegeneration <- read.table("output/Pathway/gsea_output_Kcnc1_response_p35_CB_Version2dim50kparam50res02_allGenes_MAST-List4.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "PathwaysOfNeurodegeneration")
 
 ## Add NES and pval information to the Seurat object metadata
 WT_Kcnc1_p35_CB_1step.sct@meta.data$NES <- p35_correct_List4_PathwaysOfNeurodegeneration$NES[match(WT_Kcnc1_p35_CB_1step.sct@meta.data$cluster.annot, 
@@ -9879,7 +9788,7 @@ cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordi
 cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
 
 ## Generate the UMAP plot with FeaturePlot
-pdf("output/seurat/FeaturePlot_WT_Kcnc1_p35_CB_1step_MAST_PathwaysOfNeurodegeneration.pdf", width = 6, height = 6)
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p35_CB_1step_MAST_PathwaysOfNeurodegeneration_Version2.pdf", width = 6, height = 6)
 FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
   scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
   geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
@@ -9889,7 +9798,7 @@ dev.off()
 
 
 ## REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION
-p35_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION <- read.table("output/Pathway/gsea_output_Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_MAST-List3.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")
+p35_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION <- read.table("output/Pathway/gsea_output_Kcnc1_response_p35_CB_Version2dim50kparam50res02_allGenes_MAST-List4.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")
 
 ## Add NES and pval information to the Seurat object metadata
 WT_Kcnc1_p35_CB_1step.sct@meta.data$NES <- p35_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$NES[match(WT_Kcnc1_p35_CB_1step.sct@meta.data$cluster.annot, 
@@ -9913,7 +9822,7 @@ cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordi
 cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
 
 ## Generate the UMAP plot with FeaturePlot
-pdf("output/seurat/FeaturePlot_WT_Kcnc1_p35_CB_1step_MAST_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.pdf", width = 6, height = 6)
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p35_CB_1step_MAST_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION_version2.pdf", width = 6, height = 6)
 FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
   scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
   geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
@@ -9922,6 +9831,8 @@ dev.off()
 
 
 
+XXXXX NOT MOD DOWN
+XXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 # SCPA
@@ -10116,6 +10027,8 @@ ggplot(pathway_all_data %>%
 dev.off()
 
 
+XXXXX NOT MOD UP
+XXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 
@@ -10125,27 +10038,24 @@ library("fgsea")
 
 
 #### import all clsuter DEGs output :
-cluster_types <- c( "Granule",
-  "MLI1",
+cluster_types <- c(  "Granule",
+  "MLI1" ,
   "MLI2" ,
   "PLI12" ,
   "PLI23" ,
   "Golgi" ,
   "Unipolar_Brush" ,
-  "Purkinje",
+  "Purkinje" ,
   "Astrocyte" ,
   "Bergman_Glia",
-  "OPC",
-  "Meningeal",
-  "Endothelial",
-  "Endothelial_Stalk",
-  "Choroid_Plexus",
-  "Unknown_Neuron_Subpop")
+  "Meningeal_Endothelial",
+  "Choroid_Plexus" ,
+  "Unknown")
 
 
 # Loop over each cluster type to read data and assign to a variable
 for (cluster in cluster_types) {
-  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_MAST.txt")
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p35_CB_Version2dim50kparam50res02_allGenes_MAST.txt")
   data <- read.delim(file_path, header = TRUE, row.names = 1)
   assign(cluster, data)
 }
@@ -10211,22 +10121,19 @@ dev.off()
 
 # Save output table for all pathway and cluster
 ## Define the list of cluster types
-cluster_types <- c( "Granule",
-  "MLI1",
+cluster_types <- c(  "Granule",
+  "MLI1" ,
   "MLI2" ,
   "PLI12" ,
   "PLI23" ,
   "Golgi" ,
   "Unipolar_Brush" ,
-  "Purkinje",
+  "Purkinje" ,
   "Astrocyte" ,
   "Bergman_Glia",
-  "OPC",
-  "Meningeal",
-  "Endothelial",
-  "Endothelial_Stalk",
-  "Choroid_Plexus",
-  "Unknown_Neuron_Subpop")
+  "Meningeal_Endothelial",
+  "Choroid_Plexus" ,
+  "Unknown")
 
 ## Initialize an empty list to store the results for each cluster type
 all_results <- list()
@@ -10260,10 +10167,10 @@ for (cluster in cluster_types) {
 ## Combine results from all cluster types into one table
 final_results <- bind_rows(all_results, .id = "cluster")
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_MAST-List3.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p35_CB_Version2dim50kparam50res02_allGenes_MAST-List4.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_padj-Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_MAST-List3.pdf", width=10, height=3)
+pdf("output/Pathway/heatmap_gsea_padj-Kcnc1_response_p35_CB_Version2dim50kparam50res02_allGenes_MAST-List4.pdf", width=10, height=3)
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -10289,7 +10196,7 @@ dev.off()
 ### if need reorder terms
 final_results$pathway <- factor(final_results$pathway, levels = c("PathwaysOfNeurodegeneration", "GOBP_NEURONAL_ACTION_POTENTIAL", "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")) 
 
-pdf("output/Pathway/heatmap_gsea_padj-Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_correct-List4.pdf", width=10, height=3)
+pdf("output/Pathway/heatmap_gsea_padj-Kcnc1_response_p35_CB_Version2dim50kparam50res02_allGenes_MAST_order-List4.pdf", width=10, height=3)
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -10960,33 +10867,28 @@ dev.off()
 # --> Too long run in slurm job
 
 
-XXXY BELOW NOT MOD
 
 
 # DEGs number in dotplot
 DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
 ## List of cell types
 cell_types <- c(  
-  "Granular_1",
-  "Granular_2",
-  "Granular_3",
+  "Granule",
   "MLI1",
   "MLI2",
   "PLI12",
   "PLI23",
-  "Purkinje",
   "Golgi",
   "Unipolar_Brush",
+  "Purkinje",
   "Astrocyte",
-  "Mix_Endothelial_EndothelialMural",
-  "Oligodendrocyte",
-  "Bergman_Glia",
+  "Bergman_Glia" ,
+  "Endothelial",
   "Meningeal",
-  "Choroid_Plexus",
-  "Unknown_Neuron_Subpop")
+  "Choroid_Plexus" )
 ## Loop through each cell type to count the number of significant DEGs
 for (cell_type in cell_types) {
-  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_MAST.txt", sep = "")
+  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p180_CB_version2dim30kparam10res01_allGenes_MAST.txt", sep = "")
   deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
   num_degs <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.25 | deg_data$avg_log2FC < -0.25)) ## Count the number of significant DEGs
   DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
@@ -10994,30 +10896,25 @@ for (cell_type in cell_types) {
 ## Dotplot
 DEG_count= DEG_count %>%
   mutate(Cell_Type = factor(Cell_Type, levels = c( 
-  "Granular_1",
-  "Granular_2",
-  "Granular_3",
+  "Granule",
   "MLI1",
   "MLI2",
   "PLI12",
   "PLI23",
-  "Purkinje",
   "Golgi",
   "Unipolar_Brush",
+  "Purkinje",
   "Astrocyte",
-  "Mix_Endothelial_EndothelialMural",
-  "Oligodendrocyte",
-  "Bergman_Glia",
+  "Bergman_Glia" ,
+  "Endothelial",
   "Meningeal",
-  "Choroid_Plexus",
-  "Unknown_Neuron_Subpop") ) ) 
+  "Choroid_Plexus" ) ) ) 
 DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = rev(levels(DEG_count$Cell_Type)))
 
 # Generate the dot plot
-pdf("output/seurat/Dotplot_DEG_count_WT_Kcnc1_p180_CB_1step_DEG_MAST_padj05fc025_numeric.pdf", width=9, height=4)
+pdf("output/seurat/Dotplot_DEG_count_WT_Kcnc1_p180_CB_1step_DEG_MAST_padj05fc025_numeric_version2.pdf", width=9, height=4)
 ggplot(DEG_count, aes(x = 1, y = Cell_Type, color = Cell_Type)) +
   geom_point(aes(size = Num_DEGs), alpha = 0.8) +
-  scale_color_manual(values = cell_type_colors) +
   scale_size(range = c(2, 10)) +
   theme_void() + # Removes all gridlines, axes, and background elements
   theme(
@@ -11037,23 +10934,6 @@ ggplot(DEG_count, aes(x = 1, y = Cell_Type, color = Cell_Type)) +
   )
 dev.off()
 
-pdf("output/seurat/Dotplot_DEG_count_WT_Kcnc1_p180_CB_1step_DEG_MAST_padj05fc025_numeric_FORLEGEND.pdf", width=9, height=4)
-ggplot(DEG_count, aes(x = Cell_Type, y = 1)) +
-  geom_point(aes(size = ifelse(Num_DEGs == 0, 1, Num_DEGs), fill = Cell_Type), shape = 21, color = "black") +
-  scale_size_continuous(range = c(1, 15)) +
-  scale_fill_manual(values = cell_type_colors, guide = "none") +  # Remove the legend for cell types
-  theme_void() +
-  labs(title = "Number of DEGs per Cell Type", x = "Cell Type", y = "", size = "Number of DEGs") +
-  theme(
-    axis.text.x = element_text(angle = 0, hjust = 0.5, vjust = 50, size = 15),  # Adjust the position of x-axis labels
-    axis.text.y = element_blank(), 
-    axis.ticks.y = element_blank(), 
-    axis.title.y = element_blank(),
-    legend.position = "right"
-  ) +
-  guides(size = guide_legend(title = "Number of DEGs", title.position = "top", title.hjust = 0.5))  # Keep only the size legend
-dev.off()
-
 
 
 # DEGs number colored in a UMAP
@@ -11061,48 +10941,40 @@ Idents(WT_Kcnc1_p180_CB_1step.sct) <- "cluster.annot"
 
 DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
 ## List of cell types
-cell_types <- c(      "Granular_1",
-  "Granular_2",
-  "Granular_3",
+cell_types <- c(       "Granule",
   "MLI1",
   "MLI2",
   "PLI12",
   "PLI23",
-  "Astrocyte",
-  "Bergman_Glia",
-  "Unipolar_Brush",
-  "Mix_Endothelial_EndothelialMural",
-  "Meningeal",
-  "Choroid_Plexus",
   "Golgi",
+  "Unipolar_Brush",
   "Purkinje",
-  "Unknown_Neuron_Subpop",
-  "Oligodendrocyte")
+  "Astrocyte",
+  "Bergman_Glia" ,
+  "Endothelial",
+  "Meningeal",
+  "Choroid_Plexus")
 ## Loop through each cell type to count the number of significant DEGs
 for (cell_type in cell_types) {
-  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_MAST.txt", sep = "")
+  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p180_CB_version2dim30kparam10res01_allGenes_MAST.txt", sep = "")
   deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
   num_degs <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.25 | deg_data$avg_log2FC < -0.25)) ## Count the number of significant DEGs
   DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
 }
 
-DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = c(  "Granular_1",
-  "Granular_2",
-  "Granular_3",
+DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = c(    "Granule",
   "MLI1",
   "MLI2",
   "PLI12",
   "PLI23",
-  "Astrocyte",
-  "Bergman_Glia",
-  "Unipolar_Brush",
-  "Mix_Endothelial_EndothelialMural",
-  "Meningeal",
-  "Choroid_Plexus",
   "Golgi",
+  "Unipolar_Brush",
   "Purkinje",
-  "Unknown_Neuron_Subpop",
-  "Oligodendrocyte")) 
+  "Astrocyte",
+  "Bergman_Glia" ,
+  "Endothelial",
+  "Meningeal",
+  "Choroid_Plexus")) 
   
   
 # Add DEG information to my seurat object - DEG_count
@@ -11113,10 +10985,6 @@ names(DEG_named_vector) <- names(cell_clusters)
 # Integrate DEG values into the Seurat object
 WT_Kcnc1_p180_CB_1step.sct <- AddMetaData(WT_Kcnc1_p180_CB_1step.sct, metadata = DEG_named_vector, col.name = "DEG")
 # Create a UMAP plot colored by qval values
-pdf("output/seurat/FeaturePlot_WT_Kcnc1_p180_CB_1step_DEG.pdf", width=6, height=6)
-FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = "DEG", pt.size = 0.5, reduction = "umap", label = TRUE) +
-  scale_colour_viridis() #  option="magma"
-dev.off()
 # Add values on the heatmap
 ## Extract UMAP coordinates
 umap_coordinates <- as.data.frame(WT_Kcnc1_p180_CB_1step.sct@reductions$umap@cell.embeddings)
@@ -11125,7 +10993,7 @@ umap_coordinates$cluster <- WT_Kcnc1_p180_CB_1step.sct@meta.data$cluster.annot
 cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
   left_join(DEG_count %>% dplyr::rename( "cluster"="Cell_Type"))
 ## Create a UMAP plot colored by DEG values, with cluster DEG counts as text annotations
-pdf("output/seurat/FeaturePlot_WT_Kcnc1_p180_CB_1step_DEG_MAST_padj05fc025_numeric.pdf", width=6, height=6)
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p180_CB_1step_DEG_MAST_padj05fc025_numeric_version2.pdf", width=6, height=6)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = "DEG", pt.size = 0.5, reduction = "umap") +
   scale_colour_viridis(option="magma") + # option="magma"
   geom_text(data = cluster_centers, aes(x = UMAP_1, y = UMAP_2, label = Num_DEGs), 
@@ -11133,9 +11001,10 @@ FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = "DEG", pt.size = 0.5, reducti
 dev.off()
 
 
+
 # GSEA output colored in a UMAP
 ## Pathway of neurodegeneration
-p180_correct_List4_PathwaysOfNeurodegeneration <- read.table("output/Pathway/gsea_output_Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_MAST-List1.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "PathwaysOfNeurodegeneration")
+p180_correct_List4_PathwaysOfNeurodegeneration <- read.table("output/Pathway/gsea_output_Kcnc1_response_p180_CB_version2dim30kparam10res01_allGenes_MAST-List4.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "PathwaysOfNeurodegeneration")
 ## Add NES and pval information to the Seurat object metadata
 WT_Kcnc1_p180_CB_1step.sct@meta.data$NES <- p180_correct_List4_PathwaysOfNeurodegeneration$NES[match(WT_Kcnc1_p180_CB_1step.sct@meta.data$cluster.annot, 
                                                                        p180_correct_List4_PathwaysOfNeurodegeneration$cluster)]
@@ -11153,7 +11022,7 @@ cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordi
 ## Format NES values to two decimal places
 cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
 ## Generate the UMAP plot with FeaturePlot
-pdf("output/seurat/FeaturePlot_WT_Kcnc1_p180_CB_1step_MAST_PathwaysOfNeurodegeneration.pdf", width = 6, height = 6)
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p180_CB_1step_MAST_PathwaysOfNeurodegeneration_version2.pdf", width = 6, height = 6)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
   scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
   geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
@@ -11161,7 +11030,7 @@ FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = "NES_colored", pt.size = 0.5,
 dev.off()
 
 ## NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION
-p180_correct_List3_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION <- read.table("output/Pathway/gsea_output_Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_MAST-List3.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")
+p180_correct_List3_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION <- read.table("output/Pathway/gsea_output_Kcnc1_response_p180_CB_version2dim30kparam10res01_allGenes_MAST-List4.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")
 ## Add NES and pval information to the Seurat object metadata
 WT_Kcnc1_p180_CB_1step.sct@meta.data$NES <- p180_correct_List3_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$NES[match(WT_Kcnc1_p180_CB_1step.sct@meta.data$cluster.annot, 
                                                                        p180_correct_List3_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$cluster)]
@@ -11179,7 +11048,7 @@ cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordi
 ## Format NES values to two decimal places
 cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
 ## Generate the UMAP plot with FeaturePlot
-pdf("output/seurat/FeaturePlot_WT_Kcnc1_p180_CB_1step_MAST_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.pdf", width = 6, height = 6)
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p180_CB_1step_MAST_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION_version2.pdf", width = 6, height = 6)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
   scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
   geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
@@ -11193,8 +11062,8 @@ dev.off()
 
 
 
-
-
+XXXX BELOW NOT MOD
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 # SCPA
 
@@ -11390,6 +11259,9 @@ dev.off()
 # --> NO SIGNIFICANT TERMS!
 
 
+XXXX UP NOT MOD
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 
 
 
@@ -11398,26 +11270,22 @@ library("fgsea")
 
 
 #### import all clsuter DEGs output :
-cluster_types <- c(     "Granular_1",
-  "Granular_2",
-  "Granular_3",
+cluster_types <- c(       "Granule",
   "MLI1",
   "MLI2",
-  "PLI12",
-  "PLI23",
   "Astrocyte",
+  "PLI23",
+  "PLI12",
   "Bergman_Glia",
   "Unipolar_Brush",
-  "Mix_Endothelial_EndothelialMural",
+  "Endothelial",
   "Meningeal",
   "Choroid_Plexus",
   "Golgi",
-  "Purkinje",
-  "Unknown_Neuron_Subpop",
-  "Oligodendrocyte")
+  "Purkinje")
 # Loop over each cluster type to read data and assign to a variable
 for (cluster in cluster_types) {
-  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_MAST.txt")
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p180_CB_version2dim30kparam10res01_allGenes_MAST.txt")
   data <- read.delim(file_path, header = TRUE, row.names = 1)
   assign(cluster, data)
 }
@@ -11483,23 +11351,19 @@ dev.off()
 
 # Save output table for all pathway and cluster
 ## Define the list of cluster types
-cluster_types <- c(    "Granular_1",
-  "Granular_2",
-  "Granular_3",
+cluster_types <- c(      "Granule",
   "MLI1",
   "MLI2",
-  "PLI12",
-  "PLI23",
   "Astrocyte",
+  "PLI23",
+  "PLI12",
   "Bergman_Glia",
   "Unipolar_Brush",
-  "Mix_Endothelial_EndothelialMural",
+  "Endothelial",
   "Meningeal",
   "Choroid_Plexus",
   "Golgi",
-  "Purkinje",
-  "Unknown_Neuron_Subpop",
-  "Oligodendrocyte")
+  "Purkinje")
 
 ## Initialize an empty list to store the results for each cluster type
 all_results <- list()
@@ -11533,10 +11397,10 @@ for (cluster in cluster_types) {
 ## Combine results from all cluster types into one table
 final_results <- bind_rows(all_results, .id = "cluster")
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_MAST-List3.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p180_CB_version2dim30kparam10res01_allGenes_MAST-List4.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_padj-Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_MAST-List3.pdf", width=15, height=3)
+pdf("output/Pathway/heatmap_gsea_padj-Kcnc1_response_p180_CB_version2dim30kparam10res01_allGenes_MAST-List4.pdf", width=15, height=3)
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -11563,7 +11427,7 @@ dev.off()
 ### if need reorder terms
 final_results$pathway <- factor(final_results$pathway, levels = c("PathwaysOfNeurodegeneration", "GOBP_NEURONAL_ACTION_POTENTIAL", "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")) 
 
-pdf("output/Pathway/heatmap_gsea_padj-Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_correct-List4.pdf", width=10, height=3)
+pdf("output/Pathway/heatmap_gsea_padj-Kcnc1_response_p180_CB_version2dim30kparam10res01_MAST_allGenes_correct-List4.pdf", width=10, height=3)
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -12713,7 +12577,7 @@ sbatch scripts/dataIntegration_CB_1step_reductionRPCA.sh # 30223575 ok
 sbatch scripts/dataIntegration_CB_2step_integrateMerge.sh # work great!!
 
 # lets repeat the integrate merge that worked great for version2
-sbatch scripts/dataIntegration_CB_2step_integrateMerge_Version2.sh # 36824743 xxx
+sbatch scripts/dataIntegration_CB_2step_integrateMerge_Version2.sh # 36824743 ok
 
 
 ```
@@ -13146,7 +13010,222 @@ WT_Kcnc1_CB_integrateMerge.sct
 ##### Version2
 
 
-XXXY PASTE CODE UP AND DO IT with VERSION2 !!!
+
+```bash
+conda activate scRNAseqV2
+```
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+library("RColorBrewer")
+set.seed(42)
+
+# load seurat object
+WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge_Version2.sct.rds")
+## Add the time information (p14, p35, p180) from orig.ident
+WT_Kcnc1_CB_integrateMerge.sct$time <- stringr::str_extract(WT_Kcnc1_CB_integrateMerge.sct$orig.ident, "p\\d+")
+# Load the variable features from the previous SCT individual objects
+VariableFeatures(WT_Kcnc1_CB_integrateMerge.sct[["SCT"]]) <- rownames(WT_Kcnc1_CB_integrateMerge.sct[["SCT"]]@scale.data)
+
+
+
+XXXY HERE CHECK OUTPUT DIFFERENT DIM HAS BEEN RUN XXX
+
+#### UMAP
+DefaultAssay(WT_Kcnc1_CB_integrateMerge.sct) <- "SCT"
+
+WT_Kcnc1_CB_integrateMerge.sct <- RunPCA(WT_Kcnc1_CB_integrateMerge.sct, verbose = FALSE, npcs = 30)
+WT_Kcnc1_CB_integrateMerge.sct <- RunUMAP(WT_Kcnc1_CB_integrateMerge.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
+WT_Kcnc1_CB_integrateMerge.sct <- FindNeighbors(WT_Kcnc1_CB_integrateMerge.sct, reduction = "pca", k.param = 15, dims = 1:30)
+WT_Kcnc1_CB_integrateMerge.sct <- FindClusters(WT_Kcnc1_CB_integrateMerge.sct, resolution = 0.2, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+
+WT_Kcnc1_CB_integrateMerge.sct$condition <- factor(WT_Kcnc1_CB_integrateMerge.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+WT_Kcnc1_CB_integrateMerge.sct$time <- factor(WT_Kcnc1_CB_integrateMerge.sct$time, levels = c("p14", "p35", "p180")) 
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim30kparam15res02-version2.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE, raster = FALSE)
+dev.off()
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim30kparam15res02_splitOrig-version2.pdf", width=60, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE, raster = FALSE, split.by = "orig.ident") # add `raster = FALSE` when more than 100k cells in the plot
+dev.off()
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim30kparam15res02_splitTime-version2.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE, raster = FALSE, split.by = "time") # add `raster = FALSE` when more than 100k cells in the plot
+dev.off()
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim30kparam15res02_groupTime-version2.pdf", width=7, height=6)
+my_cols = brewer.pal(3,"Dark2")
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE, raster = FALSE, group.by = "time", cols=alpha(my_cols,0.3)) # add `raster = FALSE` when more than 100k cells in the plot
+dev.off()
+
+
+
+# List678: (*combine list6 (p14), list7(p35), list8(p180)*)
+Granule = Gabra6, Pax6
+MLI1 = Sorcs3, Ptprk
+MLI2 = Nxph1, Cdh22
+PLI12 = Klhl1, Gfra2, Aldh1a3
+PLI23 = Galntl6, Kcnc2
+Golgi = Pax2
+Unipolar_Brush = Eomes, Rgs6, Tafa2
+Purkinje = Calb1, Slc1a6, Car8
+Bergman_Glia = Aqp4, Slc39a12
+Astrocyte = Zeb2
+OPC = Aldoc, Cnp,     Vcan, Sox6
+Oligodendrocyte= Mbp, Mag, Plp1
+Microglia = Itgam, Cx3cr1
+Meningeal = Ptgds, Dcn
+Endothelial = Lef1, Notum, Apcdd1
+Endothelial_Mural =  Dlc1, Pdgfrb
+Endothelial_Stalk = Actb, Tmsb4x
+Choroid plexus cells = Kl,  Ttr
+
+
+DefaultAssay(WT_Kcnc1_CB_integrateMerge.sct) <- "SCT" # For vizualization either use SCT or norm RNA
+
+pdf("output/seurat/FeaturePlot_SCT_WT_CB-integrateMerge-dim40-List678.pdf", width=25, height=40)
+FeaturePlot(WT_Kcnc1_CB_integrateMerge.sct, features = c("Gabra6", "Pax6", "Sorcs3", "Ptprk", "Nxph1", "Cdh22",  "Klhl1", "Gfra2", "Aldh1a3", "Galntl6", "Kcnc2", "Pax2", "Eomes", "Rgs6", "Tafa2", "Calb1", "Slc1a6", "Car8", "Aqp4", "Slc39a12", "Zeb2", "Aldoc", "Cnp", "Vcan", "Sox6", "Mbp", "Mag", "Plp1", "Itgam", "Cx3cr1", "Ptgds", "Dcn", "Lef1", "Notum", "Apcdd1", "Dlc1", "Pdgfrb", "Actb", "Tmsb4x", "Kl",  "Ttr"), max.cutoff = 2, cols = c("grey", "red"), raster = FALSE)
+dev.off()
+
+
+
+# V1 naming
+cluster1: Granule_1
+cluster2: PLI
+cluster3: Granule_2
+cluster4: Mix
+cluster5: MLI1_1
+cluster6: MLI1_2
+cluster7: MLI2_1
+cluster8: MLI1_3
+cluster9: Granule_3
+cluster10: Astrocyte
+cluster11: Endothelial
+cluster12: MLI2_2
+cluster13: BergmanGlia
+cluster14: MLI2_3
+cluster15: UnipolarBrush
+cluster16: Meningeal
+cluster17: Golgi
+cluster18: Purkinje
+cluster19: ChoroidPlexusCells
+cluster20: OPC
+cluster21: Oligodendrocyte
+cluster22: Unknown
+
+
+new.cluster.ids <- c(
+  "Granule_1",
+  "PLI",
+  "Granule_2",
+  "Mix",
+  "MLI1_1",
+  "MLI1_2",
+  "MLI2_1",
+  "MLI1_3",
+  "Granule_3",
+  "Astrocyte",
+  "Endothelial",
+  "MLI2_2",
+  "BergmanGlia",
+  "MLI2_3",
+  "UnipolarBrush",
+  "Meningeal",
+  "Golgi",
+  "Purkinje",
+  "ChoroidPlexusCells",
+  "OPC",
+  "Oligodendrocyte",
+  "Unknown"
+)
+
+names(new.cluster.ids) <- levels(WT_Kcnc1_CB_integrateMerge.sct)
+WT_Kcnc1_CB_integrateMerge.sct <- RenameIdents(WT_Kcnc1_CB_integrateMerge.sct, new.cluster.ids)
+WT_Kcnc1_CB_integrateMerge.sct$cluster.annot <- Idents(WT_Kcnc1_CB_integrateMerge.sct) # create a new slot in my seurat object
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_label.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", split.by = "time", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3, raster = FALSE)
+dev.off()
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_splitConditionGroupTime_label.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", split.by = "condition", pt.size = 0.5, label.size = 3, raster = FALSE, group.by = "time")
+dev.off()
+# Keep only p14 and p180
+WT_Kcnc1_CB_integrateMerge_subset <- subset(
+  WT_Kcnc1_CB_integrateMerge.sct, 
+  subset = time %in% c("p14", "p180")
+)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_splitConditionGroupTime_label-p14p180.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge_subset, reduction = "umap", split.by = "condition", pt.size = 0.5, label.size = 3, raster = FALSE, group.by = "time")
+dev.off()
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_noSplit_label.pdf", width=9, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5, raster = FALSE)
+dev.off()
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_noSplit_nolabel.pdf", width=9, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap",  label = FALSE, pt.size = 0.3, label.size = 5, raster = FALSE)
+dev.off()
+
+WT_Kcnc1_CB_integrateMerge.sct$condition <- factor(WT_Kcnc1_CB_integrateMerge.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_splitCondition_label.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3, raster = FALSE)
+dev.off()
+
+
+# QC plots to check what is the extra cluster closeby MLI1 
+
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_CB_integrateMerge-Phase-dim40kparam15res03.pdf", width=10, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, group.by= "Phase", raster = FALSE) & 
+  theme(plot.title = element_text(size=10))
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_CB_integrateMerge-nFeature_RNA-dim40kparam15res03.pdf", width=10, height=6)
+FeaturePlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=FALSE, features = "nFeature_RNA", raster = FALSE, min.cutoff = 1000, max.cutoff = 2000)
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_CB_integrateMerge-nCount_RNA-dim40kparam15res03.pdf", width=10, height=6)
+FeaturePlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=FALSE, features = "nCount_RNA", raster = FALSE, min.cutoff = 1000, max.cutoff = 2500)
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_CB_integrateMerge-percent.mt-dim40kparam15res03.pdf", width=10, height=6)
+FeaturePlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=FALSE, features = "percent.mt", raster = FALSE)
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_CB_integrateMerge-percent.rb-dim40kparam15res03.pdf", width=10, height=6)
+FeaturePlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=FALSE, features = "percent.rb", raster = FALSE)
+dev.off()  
+
+
+# save ######################################################
+## saveRDS(WT_Kcnc1_CB_integrateMerge.sct, file = "output/seurat/WT_Kcnc1_CB_integrateMerge-dim40kparam15res03-labelv1.rds") #
+WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-dim40kparam15res03-labelv1.rds")
+############################################################################################################
+
+
+# Downsample Kcnc1 to same number of cells than WT
+
+XXX
+
+WT_Kcnc1_CB_integrateMerge.sct
+
+
+```
+
 
 
 
@@ -14332,10 +14411,10 @@ sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_correct.sh # 29330177 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_poissonUMI.sh # 34266328 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_DESEQ2seurat.sh # 34358916 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_MAST.sh # 34363647 ok
-sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_MAST_GranuleCluster1.sh # 35842577 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_MAST_GranuleCluster1.sh # 35842577 ok
 
-sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_Version2_MAST.sh # 36821000 xxx
-sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_Version2_default.sh # 36821025 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_Version2_MAST.sh # 36821000 ok
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_Version2_default.sh # 36821025 ok
 
 
 
@@ -14346,8 +14425,8 @@ sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_correct_rerun.sh # ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_DESEQ2seurat.sh # 34368432 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_MAST.sh # 34368635 ok
 
-sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_Version2_MAST.sh # 36785431 xxx
-sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_Version2_default.sh # 36787127 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_Version2_MAST.sh # 36785431 ok
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_Version2_default.sh # 36787127 ok
 
 
 # p180 CB
@@ -14356,10 +14435,10 @@ sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_correct.sh # 29330555 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_poissonUMI.sh # 34266352 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_DESEQ2seurat.sh # 34359233 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_MAST.sh # 34364889 ok
-sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_MAST_GranuleCluster1.sh # 35842731 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_MAST_GranuleCluster1.sh # 35842731 ok
 
-sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_Version2_MAST.sh # 36792178 xxx
-sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_Version2_default.sh # 36792179 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_Version2_MAST.sh # 36792178 ok
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_Version2_default.sh # 36792179 ok
 
 ```
 - *NOTE: I forget to LogNorm and Scale prior doing DEG; the `*_correct` are corrected + updated cluster name notbably PLI12 and PLI23 instead of MLI_1 MLI_2; all good.*
@@ -14383,7 +14462,7 @@ conda activate condiments_V6
 ## Same parameter per trajectory
 sbatch scripts/pseudotime_allCells_v1.sh # 34643632 ok but not good
 ## Different parameter per trajectory
-sbatch scripts/pseudotime_allCells_v1_Granule.sh # 36200375 xxx
+sbatch scripts/pseudotime_allCells_v1_Granule.sh # 36200375 ok
 sbatch scripts/pseudotime_allCells_v1_MLI1.sh # 36200584 ok but not good.
 sbatch scripts/pseudotime_allCells_v1_MLI2.sh # 36201001 ok
 
