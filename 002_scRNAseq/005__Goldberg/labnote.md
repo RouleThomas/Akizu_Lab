@@ -263,6 +263,7 @@ How to deal with the Bio Rep for data integration is discuss [here](https://gith
 
 ## General trend Cerebellum (CB)
 
+### Version1 no filter on max nCount and nFeatureRNA
 Then `conda activate scRNAseqV2` and go into R and filtered out **RNA contamination and start with SEURAT**.
 
 Tuto seurat [here](https://satijalab.org/seurat/articles/sctransform_v2_vignette.html)
@@ -5486,7 +5487,7 @@ dev.off()
 --> **FALSE ALERT!!! The issue was that I forgetted to normalize and scale data prior doing DEG....**
 
 
-### Investigate list of DEGs - MAST
+#### Investigate list of DEGs - MAST
 
 Let's do two [UpSet R plot](https://github.com/hms-dbmi/UpSetR) (ie. ~Venn diagram) to investigate our list of DEGs, obj. = identify key marker gene of the phenotype, time-point specific and cell type specific:
 - For the *same cell type*: Input list of *up/down regulated genes at each time point* --> Can show key/stable deregulated genes = likely key genes explaining the phenotype
@@ -7748,6 +7749,3849 @@ extract_upset_genes(upset_data_binary, sets, output_dir)
   --> Then upset plot these 'persistent' up/down -regulated genes; and output them like this: `nano output/upset/persistent_up-Granule.txt` XXXY
 
 
+### Version2 - additional QC filtering
+
+Let's perform more stringeant QC filtering for each of our samples (notably max nCount_RNA and nFeature_RNA wich could be multidrop/doublet missed by scrublet!).
+
+--> Analysis done time point per time point
+
+
+
+#### p14 Cerebellum
+
+```bash
+conda activate scRNAseqV2
+```
+
+
+
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+
+## Load the matrix and Create SEURAT object
+samples <- list(
+  WT_p14_CB_Rep1 = "output/soupX/WT_p14_CB_Rep1.RData",
+  WT_p14_CB_Rep2 = "output/soupX/WT_p14_CB_Rep2.RData",
+  WT_p14_CB_Rep3 = "output/soupX/WT_p14_CB_Rep3.RData",
+  Kcnc1_p14_CB_Rep1 = "output/soupX/Kcnc1_p14_CB_Rep1.RData",
+  Kcnc1_p14_CB_Rep2 = "output/soupX/Kcnc1_p14_CB_Rep2.RData",
+  Kcnc1_p14_CB_Rep3 = "output/soupX/Kcnc1_p14_CB_Rep3.RData"
+)
+
+seurat_objects <- list()
+
+for (sample_name in names(samples)) {
+  load(samples[[sample_name]])
+  seurat_objects[[sample_name]] <- CreateSeuratObject(counts = out, project = sample_name)
+}
+
+## Function to assign Seurat objects to variables (unlist the list)
+assign_seurat_objects <- function(seurat_objects_list) {
+  for (sample_name in names(seurat_objects_list)) {
+    assign(sample_name, seurat_objects_list[[sample_name]], envir = .GlobalEnv)
+  }
+}
+assign_seurat_objects(seurat_objects) # This apply the function
+
+
+# QUALITY CONTROL
+# Function to add mitochondrial and ribosomal content
+add_quality_control <- function(seurat_object) {
+  seurat_object[["percent.mt"]] <- PercentageFeatureSet(seurat_object, pattern = "^mt-")
+  seurat_object[["percent.rb"]] <- PercentageFeatureSet(seurat_object, pattern = "^Rp[sl]")
+  return(seurat_object)
+}
+seurat_objects <- lapply(seurat_objects, add_quality_control) # This apply the function
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+
+# Function to add doublet information
+add_doublet_information <- function(sample_name, seurat_object) {
+  doublet_file <- paste0("output/doublets/", sample_name, ".tsv")
+  doublets <- read.table(doublet_file, header = FALSE, row.names = 1)
+  colnames(doublets) <- c("Doublet_score", "Is_doublet")
+  seurat_object <- AddMetaData(seurat_object, doublets)
+  seurat_object$Doublet_score <- as.numeric(seurat_object$Doublet_score)
+  return(seurat_object)
+}
+## Apply the function to each Seurat object in the list
+for (sample_name in names(seurat_objects)) {
+  if (sample_name != "Kcnc1_p180_CB_Rep3") {
+    seurat_objects[[sample_name]] <- add_doublet_information(sample_name, seurat_objects[[sample_name]])
+  }
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+
+
+# Loop to generate QC plots for each sample
+# Define the output directory
+output_dir <- "output/seurat/"
+
+# Loop through each Seurat object to generate the plots
+for (sample_name in names(seurat_objects)) {
+  seurat_object <- seurat_objects[[sample_name]]
+  
+  # Violin plot
+  pdf(paste0(output_dir, "VlnPlot_QC_", sample_name, ".pdf"), width = 10, height = 6)
+  print(VlnPlot(seurat_object, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1) & 
+    theme(plot.title = element_text(size = 10)))
+  dev.off()
+  
+  # Scatter plots
+  pdf(paste0(output_dir, "FeatureScatter_QC_RNAcount_mt_", sample_name, ".pdf"), width = 5, height = 5)
+  print(FeatureScatter(seurat_object, feature1 = "nCount_RNA", feature2 = "percent.mt"))
+  dev.off()
+  
+  pdf(paste0(output_dir, "FeatureScatter_QC_RNAcount_RNAfeature_", sample_name, ".pdf"), width = 5, height = 5)
+  print(FeatureScatter(seurat_object, feature1 = "nCount_RNA", feature2 = "nFeature_RNA"))
+  dev.off()
+  
+  pdf(paste0(output_dir, "FeatureScatter_QC_rb_mt_", sample_name, ".pdf"), width = 5, height = 5)
+  print(FeatureScatter(seurat_object, feature1 = "percent.rb", feature2 = "percent.mt"))
+  dev.off()
+  
+  pdf(paste0(output_dir, "FeatureScatter_QC_mt_doublet_", sample_name, ".pdf"), width = 5, height = 5)
+  print(FeatureScatter(seurat_object, feature1 = "percent.mt", feature2 = "Doublet_score"))
+  dev.off()
+  
+  pdf(paste0(output_dir, "FeatureScatter_QC_RNAfeature_doublet_", sample_name, ".pdf"), width = 5, height = 5)
+  print(FeatureScatter(seurat_object, feature1 = "nFeature_RNA", feature2 = "Doublet_score"))
+  dev.off()
+}
+
+
+
+##### QC filtering _ updated V3 from version1 (used for p14) ############################################
+
+###  Remove cells: percent.mt > 15, percent.rb > 10, nFeature_RNA < 700, nFeature_RNA > 4000, nCount_RNA < 1000, nCount_RNA > 10000
+
+apply_qc <- function(seurat_object) {
+  meta <- seurat_object@meta.data
+  # Initialize QC column with 'Pass'
+  meta$QC <- 'Pass'
+  # Identify failing QC conditions
+  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
+  meta$QC[meta$nFeature_RNA < 700] <- 'Low_nFeature'
+  meta$QC[meta$nFeature_RNA > 4000] <- 'High_nFeatureRNA'
+  meta$QC[meta$nCount_RNA < 1000] <- 'Low_nCountRNA'
+  meta$QC[meta$nCount_RNA > 10000] <- 'High_nCountRNA'
+  meta$QC[meta$percent.mt > 15] <- 'High_MT'
+  meta$QC[meta$percent.rb > 10] <- 'High_RB'
+  # Handle multiple failing conditions
+  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
+  # Assign back to Seurat object
+  seurat_object@meta.data <- meta
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # Reapply function to all individuals in the list
+#####################################################################################################
+
+
+#### Write QC summary
+qc_summary_list <- list()
+
+# Collect QC summary for each sample
+for (sample_name in names(seurat_objects)) {
+  qc_summary <- table(seurat_objects[[sample_name]][['QC']])
+  qc_summary_df <- as.data.frame(qc_summary)
+  qc_summary_df$Sample <- sample_name
+  qc_summary_list[[sample_name]] <- qc_summary_df
+}
+
+qc_summary_combined <- do.call(rbind, qc_summary_list)
+
+# Write the data frame to a tab-separated text file
+write.table(qc_summary_combined, file = "output/seurat/QC_summary_version2_p14.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
+
+
+## subset seurat object to keep cells that pass the QC
+subset_qc <- function(seurat_object) {
+  seurat_object <- subset(seurat_object, subset = QC == 'Pass')
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- subset_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# Normalize and scale data, then run cell cycle sorting
+set.seed(42)
+## Load gene marker of cell type
+mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+
+# Function to normalize, scale data, and perform cell cycle scoring
+process_seurat_object <- function(seurat_object, mmus_s, mmus_g2m) {
+  seurat_object <- NormalizeData(seurat_object, normalization.method = "LogNormalize", scale.factor = 10000)
+  all.genes <- rownames(seurat_object)
+  seurat_object <- ScaleData(seurat_object, features = all.genes)  # zero-centres and scales it
+  seurat_object <- CellCycleScoring(seurat_object, s.features = mmus_s, g2m.features = mmus_g2m)  # cell cycle sorting
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- process_seurat_object(seurat_objects[[sample_name]], mmus_s, mmus_g2m)
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# write output summary phase
+phase_summary_list <- list()
+# Collect QC phase summary for each sample
+for (sample_name in names(seurat_objects)) {
+  phase_summary <- table(seurat_objects[[sample_name]][[]]$Phase)
+  phase_summary_df <- as.data.frame(phase_summary)
+  phase_summary_df$Sample <- sample_name
+  phase_summary_list[[sample_name]] <- phase_summary_df
+}
+# Combine all summaries into one data frame
+phase_summary_combined <- do.call(rbind, phase_summary_list)
+write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version2_p14.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) #
+
+
+############ SAVE samples #################################################################
+save_seurat_objects <- function(seurat_objects_list, output_dir) {
+  for (sample_name in names(seurat_objects_list)) {
+    file_name <- paste0(output_dir, sample_name, "_version2_p14.rds") # 
+    saveRDS(seurat_objects_list[[sample_name]], file = file_name) # 
+  }
+}
+output_dir <- "output/seurat/"
+## Call the function to save the Seurat objects
+save_seurat_objects(seurat_objects, output_dir)
+###############################################################################################
+############# READ samples  (QC V1 V2 or V3 = V1_numeric...)################################################
+# Function to load Seurat objects
+load_seurat_objects <- function(file_paths) {
+  seurat_objects <- list()
+  for (file_path in file_paths) {
+    sample_name <- gsub("_version2_p14.rds", "", basename(file_path))
+    seurat_objects[[sample_name]] <- readRDS(file_path)
+  }
+  return(seurat_objects)
+}
+output_dir <- "output/seurat/"
+file_paths <- list.files(output_dir, pattern = "_version2_p14.rds$", full.names = TRUE)
+# Call the function to load the Seurat objects
+seurat_objects <- load_seurat_objects(file_paths)
+# Loop through the list and assign each Seurat object to a variable with the same name
+for (sample_name in names(seurat_objects)) {
+  assign(sample_name, seurat_objects[[sample_name]])
+}
+# 1 sample: WT_p35_CB_Rep2 <- readRDS(file = "output/seurat/WT_p35_CB_Rep2_V2_ReProcess_numeric.rds")
+## Kcnc1_p14_CB_Rep1 <- readRDS(file = "output/seurat/Kcnc1_p14_CB_Rep1_V1_numeric.rds")
+################################################################################################
+
+
+
+
+
+
+
+
+##########################################
+## integration WT Kcnc1 p14 all replicates (1st replicate, then genotype) ######
+ ##########################################
+
+
+WT_p14_CB_Rep1$replicate <- "Rep1"
+WT_p14_CB_Rep2$replicate <- "Rep2"
+WT_p14_CB_Rep3$replicate <- "Rep3"
+
+WT_p14_CB_Rep1$condition <- "WT"
+WT_p14_CB_Rep2$condition <- "WT"
+WT_p14_CB_Rep3$condition <- "WT"
+
+Kcnc1_p14_CB_Rep1$replicate <- "Rep1"
+Kcnc1_p14_CB_Rep2$replicate <- "Rep2"
+Kcnc1_p14_CB_Rep3$replicate <- "Rep3"
+
+Kcnc1_p14_CB_Rep1$condition <- "Kcnc1"
+Kcnc1_p14_CB_Rep2$condition <- "Kcnc1"
+Kcnc1_p14_CB_Rep3$condition <- "Kcnc1"
+
+set.seed(42)
+
+
+
+
+# Test Replicate and Genotype integration (1 step integration)
+## WT Rep
+
+WT_p14_CB_Rep1 <- SCTransform(WT_p14_CB_Rep1, method = "glmGamPoi", ncells = 11003, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+WT_p14_CB_Rep2 <- SCTransform(WT_p14_CB_Rep2, method = "glmGamPoi", ncells = 8385, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+WT_p14_CB_Rep3 <- SCTransform(WT_p14_CB_Rep3, method = "glmGamPoi", ncells = 11878, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+Kcnc1_p14_CB_Rep1 <- SCTransform(Kcnc1_p14_CB_Rep1, method = "glmGamPoi", ncells = 9800, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+Kcnc1_p14_CB_Rep2 <- SCTransform(Kcnc1_p14_CB_Rep2, method = "glmGamPoi", ncells = 10147, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+Kcnc1_p14_CB_Rep3 <- SCTransform(Kcnc1_p14_CB_Rep3, method = "glmGamPoi", ncells = 13847, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+
+
+
+
+srat.list <- list(WT_p14_CB_Rep1 = WT_p14_CB_Rep1, WT_p14_CB_Rep2 = WT_p14_CB_Rep2, WT_p14_CB_Rep3 = WT_p14_CB_Rep3, Kcnc1_p14_CB_Rep1 = Kcnc1_p14_CB_Rep1, Kcnc1_p14_CB_Rep2 = Kcnc1_p14_CB_Rep2, Kcnc1_p14_CB_Rep3 = Kcnc1_p14_CB_Rep3)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+WT_Kcnc1_p14_CB_1step.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+WT_Kcnc1_p14_CB_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p14_CB_1step.anchors, normalization.method = "SCT")
+
+
+#### UMAP
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "integrated"
+
+WT_Kcnc1_p14_CB_1step.sct <- RunPCA(WT_Kcnc1_p14_CB_1step.sct, verbose = FALSE, npcs = 45)
+WT_Kcnc1_p14_CB_1step.sct <- RunUMAP(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", dims = 1:45, verbose = FALSE)
+WT_Kcnc1_p14_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", k.param = 10, dims = 1:45)
+WT_Kcnc1_p14_CB_1step.sct <- FindClusters(WT_Kcnc1_p14_CB_1step.sct, resolution = 0.15, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+
+WT_Kcnc1_p14_CB_1step.sct$condition <- factor(WT_Kcnc1_p14_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_WT_Kcnc1-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version2dim45kparam10res015.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE)
+dev.off()
+
+
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-Version2dim45-ListdotPLot.pdf", width=30, height=60)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c(   "Gabra6","Pax6", # Granular_1
+  "Sorcs3", "Ptprk", # MLI1
+  "Nxph1", "Cdh22", # MLI2
+  "Klhl1", "Gfra2", "Aldh1a3", # PLI12
+  "Galntl6", "Kcnc2", # PLI23
+  "Pax2", # Golgi
+  "Eomes", # Unipolar_Brush
+  "Calb1", "Slc1a6", "Car8", # Purkinje
+  "Zeb2", # Astrocyte
+  "Aqp4", "Slc39a12", # Bergmann_Glia
+  "Mbp", "Mag", "Plp1", # Oligodendrocyte
+  "Aldoc", "Cnp", # OPC
+  "Itgam", "Cx3cr1", # Mix_Microglia_Meningeal
+  "Ptgds", "Dcn", # Endothelial
+  "Lef1", "Notum", "Apcdd1", # Endothelial_Mural
+  "Dlc1", "Pdgfrb", # Choroid_Plexus
+  "Kl",  "Ttr",
+  "Eomes", "Rgs6", "Tafa2"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+
+
+
+# genes
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB_Rep2-1stepIntegrationRegressNotRepeatedregMtRbCou-version2dim45kparam10res015-countMtRbRegression-List4.pdf", width=30, height=70)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Calb1", "Slc1a6", "Car8", "Gabra6", "Pax6", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Zeb2", "Hepacam", "Aqp4", "Slc39a12", "Kl", "Clic6", "Slc13a4", "Ttr", "Cfap54", "Ccdc153", "Cfap44", "Tmem212", "Ptgds", "Dcn", "Ntng1", "Grm5", "Aldoc", "Cnp", "Cspg5", "Mbp", "Mag", "Plp1", "Slc18a2", "Ddc", "Slc6a4", "Tph2", "Lef1", "Notum", "Apcdd1", "Nxph1", "Dynlt1c", "Otx1", "Rnd3", "Pvalb", "Cck", "Sst", "Myh11"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+
+
+
+
+
+
+#### QC metrics investigation ####################################
+pdf("output/seurat/VlnPlot_QCmetrics_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015-countMtRbRegression.pdf", width=20, height=5)
+VlnPlot(WT_Kcnc1_p14_CB_1step.sct,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+
+pdf("output/seurat/VlnPlot_QCmetrics_nFeature_RNA_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015-countMtRbRegression.pdf", width=5, height=5)
+VlnPlot(WT_Kcnc1_p14_CB_1step.sct,features = c("nFeature_RNA")) +
+  ylim(0,2000)
+dev.off()
+
+pdf("output/seurat/VlnPlot_QCmetrics_nCount_RNA_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015-countMtRbRegression.pdf", width=5, height=5)
+VlnPlot(WT_Kcnc1_p14_CB_1step.sct,features = c("nCount_RNA")) +
+  ylim(0,10000)
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_nFeature_RNA-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "nFeature_RNA")
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_percentmt-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.mt")
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_percentrb-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.rb")
+dev.off()  
+############################################################
+
+
+
+
+
+
+
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_splitCondition-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015.pdf", width=13, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE, split.by = "condition")
+dev.off()
+pdf("output/seurat/UMAP_WT_Kcnc1_splitReplicate-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE, split.by = "replicate")
+dev.off()
+
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_Phase-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015.pdf", width=10, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.sct, group.by= "Phase") & 
+  theme(plot.title = element_text(size=10))
+dev.off()  
+
+
+
+# WT vs Kcnc1 gene expr ############
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015-Kcnc1.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1"),  cols = c("grey", "red")) #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015-Kcnc1split.pdf", width=12, height=6)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1"),  cols = c("grey", "red"), split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+
+
+
+# save ##################
+## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015.sct_V1_numeric.rds") 
+#WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015.sct_V1_numeric.rds") # 
+
+## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015.sct_V1_label.rds") 
+
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015.sct_V1_label.rds") # 
+
+set.seed(42)
+##########
+
+
+
+
+############ V1 naming  version2dim45kparam10res015 (output/seurat/WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015.sct_V1_numeric.rds )
+
+1= Granule (Gabra6,Pax6, 
+2= MLI1 Sorcs3, Ptprk, 
+3= PLI23   Galntl6, Kcnc2, 
+4= Unknown
+5= MLI2 Nxph1, Cdh22, 
+6= Endothelial (Lef1, Notum, Apcdd1, Dlc1, Pdgfrb)
+7= Astrocyte  Zeb2, 
+8= Bergman_Glia Aqp4, Slc39a12, 
+9= PLI12 Klhl1, Gfra2, Aldh1a3, 
+10= Oligodendrocyte  Mbp, Mag, Plp1, 
+11= Meningeal Ptgds, Dcn, 
+12= Unipolar_Brush    Eomes, Rgs6, Tafa2, # Unipolar_Brush
+13= Golgi    Pax2, 
+14= Choroid_Plexus    Kl, Ttr, 
+15= Purkinje Calb1, Slc1a6, Car8, 
+
+
+
+
+new.cluster.ids <- c(
+  "Granule",
+  "MLI1",
+  "PLI23",
+  "Unknown",
+  "MLI2",
+  "Endothelial",
+  "Astrocyte",
+  "Bergman_Glia",
+  "PLI12", 
+  "Oligodendrocyte",
+  "Meningeal",
+  "Unipolar_Brush",
+  "Golgi",
+  "Choroid_Plexus",
+  "Purkinje"
+)
+
+names(new.cluster.ids) <- levels(WT_Kcnc1_p14_CB_1step.sct)
+WT_Kcnc1_p14_CB_1step.sct <- RenameIdents(WT_Kcnc1_p14_CB_1step.sct, new.cluster.ids)
+WT_Kcnc1_p14_CB_1step.sct$cluster.annot <- Idents(WT_Kcnc1_p14_CB_1step.sct) # create a new slot in my seurat object
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB_1step_version2dim45kparam10res015_label.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+dev.off()
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB_1step_version2dim45kparam10res015_noSplit_label.pdf", width=9, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5)
+dev.off()
+
+
+
+# All in dotplot
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
+
+
+
+1= Granule (Gabra6,Pax6, 
+2= MLI1 Sorcs3, Ptprk, 
+5= MLI2 Nxph1, Cdh22, 
+9= PLI12 Klhl1, Gfra2, Aldh1a3, 
+3= PLI23   Galntl6, Kcnc2, 
+13= Golgi    Pax2, 
+12= Unipolar_Brush    Eomes, Rgs6, Tafa2, # Unipolar_Brush
+15= Purkinje Calb1, Slc1a6, Car8, 
+7= Astrocyte  Zeb2, 
+8= Bergman_Glia Aqp4, Slc39a12, 
+6= Endothelial (Lef1, Notum, Apcdd1, Dlc1, Pdgfrb)
+11= Meningeal Ptgds, Dcn, 
+14= Choroid_Plexus    Kl, Ttr, 
+10= Oligodendrocyte  Mbp, Mag, Plp1, 
+4= Unknown
+
+
+
+
+all_markers <- c(
+  "Gabra6","Pax6", 
+  "Sorcs3", "Ptprk", 
+  "Nxph1", "Cdh22", 
+  "Klhl1", "Gfra2", "Aldh1a3", 
+  "Galntl6", "Kcnc2", 
+  "Pax2", 
+  "Eomes", "Rgs6", "Tafa2", 
+  "Calb1", "Slc1a6", "Car8",
+  "Zeb2", 
+  "Aqp4", "Slc39a12", 
+  "Lef1", "Notum", "Apcdd1", "Dlc1", "Pdgfrb",
+  "Ptgds", "Dcn", 
+  "Kl", "Ttr", 
+  "Mbp", "Mag", "Plp1"
+)
+
+
+
+levels(WT_Kcnc1_p14_CB_1step.sct) <- c(
+  "Granule", 
+  "MLI1", 
+  "MLI2", 
+  "PLI12",
+  "PLI23", 
+  "Golgi",
+  "Unipolar_Brush",
+  "Purkinje",
+  "Astrocyte",
+  "Bergman_Glia", 
+  "Endothelial",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Oligodendrocyte",
+  "Unknown"
+)
+
+
+
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CB_1step_version2dim45kparam10res015_label.pdf", width=11, height=4.5)
+DotPlot(WT_Kcnc1_p14_CB_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
+
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CB_1step_version2dim45kparam10res015_label_vertical.pdf", width=11, height=4.5)
+DotPlot(WT_Kcnc1_p14_CB_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
+dev.off()
+
+
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015-ListDotPlot.pdf", width=30, height=70)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = all_markers, max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015-Kcnc1.pdf", width=6, height=6)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "Kcnc1", cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015-Kcnc1-split.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1"), max.cutoff = 2, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015-mt-Nd4.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("mt-Nd4"), cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015-Slc1a2.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Slc1a2"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+
+## p14 cell type proportion ###############################
+### count nb of cells in each cluster
+WT_p14_CB_Rep1 = table(Idents(WT_Kcnc1_p14_CB_1step.sct)[WT_Kcnc1_p14_CB_1step.sct$orig.ident == "WT_p14_CB_Rep1"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p14",
+             replicate= "Rep1")
+WT_p14_CB_Rep2 = table(Idents(WT_Kcnc1_p14_CB_1step.sct)[WT_Kcnc1_p14_CB_1step.sct$orig.ident == "WT_p14_CB_Rep2"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p14",
+             replicate= "Rep2")
+WT_p14_CB_Rep3 = table(Idents(WT_Kcnc1_p14_CB_1step.sct)[WT_Kcnc1_p14_CB_1step.sct$orig.ident == "WT_p14_CB_Rep3"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p14",
+             replicate= "Rep3")
+
+Kcnc1_p14_CB_Rep1 = table(Idents(WT_Kcnc1_p14_CB_1step.sct)[WT_Kcnc1_p14_CB_1step.sct$orig.ident == "Kcnc1_p14_CB_Rep1"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p14",
+             replicate= "Rep1")
+Kcnc1_p14_CB_Rep2 = table(Idents(WT_Kcnc1_p14_CB_1step.sct)[WT_Kcnc1_p14_CB_1step.sct$orig.ident == "Kcnc1_p14_CB_Rep2"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p14",
+             replicate= "Rep2")
+Kcnc1_p14_CB_Rep3 = table(Idents(WT_Kcnc1_p14_CB_1step.sct)[WT_Kcnc1_p14_CB_1step.sct$orig.ident == "Kcnc1_p14_CB_Rep3"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p14",
+             replicate= "Rep3")
+
+
+p14_CB = WT_p14_CB_Rep1 %>%
+  bind_rows(WT_p14_CB_Rep2) %>%
+  bind_rows(WT_p14_CB_Rep3) %>%
+  bind_rows(Kcnc1_p14_CB_Rep1) %>%
+  bind_rows(Kcnc1_p14_CB_Rep2) %>%
+  bind_rows(Kcnc1_p14_CB_Rep3) %>%
+  as_tibble()
+  
+
+
+
+### Keeping all replicates
+p14_CB_prop = p14_CB %>%
+  group_by(replicate, genotype) %>%
+  mutate(total_count = sum(count)) %>%
+  ungroup() %>%
+  mutate(proportion = (count / total_count) * 100)
+
+p14_CB_prop$genotype <-
+  factor(p14_CB_prop$genotype,
+         c("WT", "Kcnc1"))
+
+pdf("output/seurat/histogramProp_WT_Kcnc1_p14_CB_1step_version2dim45kparam10res015.pdf", width=7, height=4)
+ggbarplot(p14_CB_prop, x = "cluster", y = "proportion", fill = "genotype",
+                  color = "genotype", palette = c("black", "blue"),
+                  position = position_dodge(0.8), # Separate bars by genotype
+                  add = "mean_se", # Add error bars
+                  lab.pos = "out", lab.size = 3) +
+  stat_compare_means(aes(group = genotype), method = "t.test", label = "p.signif") +
+  theme_bw() +
+  labs(x = "Cell Type (Cluster)", y = "Cell Proportion (%)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+XXXY BELOW NOT MOD
+
+
+
+# differential expressed genes across conditions
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+# --> This is very long and has been run in slurm job
+
+
+# DEGs number in dotplot
+DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
+## List of cell types
+cell_types <- c( "PLI23",
+  "Granular_1",
+  "MLI1",
+  "Granular_2",
+  "Granular_3",
+  "Granular_4",
+  "MLI2",
+  "Endothelial",
+  "Granular_5",
+  "Astrocyte",
+  "OPC",
+  "Bergmann_Glia",
+  "PLI12",
+  "Oligodendrocyte",
+  "Mix_Microglia_Meningeal",
+  "Endothelial_Mural" ,
+  "Purkinje",
+  "Golgi",
+  "Unipolar_Brush",
+  "Choroid_Plexus")
+## Loop through each cell type to count the number of significant DEGs
+for (cell_type in cell_types) {
+  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST.txt", sep = "")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
+  num_degs <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.25 | deg_data$avg_log2FC < -0.25)) ## Count the number of significant DEGs
+  DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
+}
+## Dotplot
+DEG_count= DEG_count %>%
+  mutate(Cell_Type = factor(Cell_Type, levels = c( 
+  "Granular_1",
+  "Granular_2",
+  "Granular_3",
+  "Granular_4",
+  "Granular_5",
+  "MLI1",
+  "MLI2",
+  "PLI12",
+  "PLI23",
+  "Purkinje",
+  "Golgi",
+  "Unipolar_Brush",
+  "Astrocyte",
+  "Endothelial",
+  "OPC",
+  "Oligodendrocyte",
+  "Bergmann_Glia",
+  "Mix_Microglia_Meningeal",
+  "Endothelial_Mural" ,
+  "Choroid_Plexus") ) ) 
+DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = rev(levels(DEG_count$Cell_Type)))
+cell_type_colors <- c(
+  "Granular_1" = "#FFD700",
+  "Granular_2" = "#FFA500",
+  "Granular_3" = "#ADFF2F",
+  "Granular_4" = "#32CD32",
+  "Granular_5" = "#7FFF00",
+  "MLI1" = "#FF6347",
+  "MLI2" = "#FF4500",
+  "PLI12" = "#6495ED",
+  "PLI23" = "#00BFFF",
+  "Purkinje" = "#4682B4",
+  "Golgi" = "#4169E1",
+  "Unipolar_Brush" = "#6A5ACD",
+  "Astrocyte" = "#800080",
+  "Endothelial" = "#9370DB",
+  "OPC" = "#8A2BE2",
+  "Oligodendrocyte" = "#9400D3",
+  "Bergmann_Glia" = "#BA55D3",
+  "Mix_Microglia_Meningeal" = "#DDA0DD",
+  "Endothelial_Mural" = "#EE82EE",
+  "Choroid_Plexus" = "#DA70D6"
+)
+# Generate the dot plot
+pdf("output/seurat/Dotplot_DEG_count_WT_Kcnc1_p14_CB_1step_DEG_MAST_padj05fc025_numeric.pdf", width=9, height=4)
+ggplot(DEG_count, aes(x = 1, y = Cell_Type, color = Cell_Type)) +
+  geom_point(aes(size = Num_DEGs), alpha = 0.8) +
+  scale_color_manual(values = cell_type_colors) +
+  scale_size(range = c(2, 10)) +
+  theme_void() + # Removes all gridlines, axes, and background elements
+  theme(
+    axis.text.x = element_blank(), # Removes x-axis labels
+    axis.ticks.x = element_blank(), # Removes x-axis ticks
+    axis.title.x = element_blank(), # Removes x-axis title
+    axis.text.y = element_text(size = 10, hjust = 0),
+    axis.title = element_text(size = 12, face = "bold"),
+    legend.position = "left", # Keeps the legend visible
+    legend.title = element_text(size = 12, face = "bold"), # Adjusts legend title style
+    legend.text = element_text(size = 10) # Adjusts legend text style
+  ) +
+  labs(
+    y = "Cell Type",
+    color = "Cell Type",
+    size = "Number of DEGs"
+  )
+dev.off()
+
+
+
+
+
+
+# DEGs number colored in a UMAP
+Idents(WT_Kcnc1_p14_CB_1step.sct) <- "cluster.annot"
+
+DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
+## List of cell types
+cell_types <- c(    "PLI23",
+  "Granular_1",
+  "MLI1",
+  "Granular_2",
+  "Granular_3",
+  "Granular_4",
+  "MLI2",
+  "Endothelial",
+  "Granular_5",
+  "Astrocyte",
+  "OPC",
+  "Bergmann_Glia",
+  "PLI12",
+  "Oligodendrocyte",
+  "Mix_Microglia_Meningeal",
+  "Endothelial_Mural" ,
+  "Purkinje",
+  "Golgi",
+  "Unipolar_Brush",
+  "Choroid_Plexus")
+## Loop through each cell type to count the number of significant DEGs
+for (cell_type in cell_types) {
+  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST.txt", sep = "") # CHANGE FILE HERE
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
+  num_degs <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.25 | deg_data$avg_log2FC < -0.25)) ## Count the number of significant DEGs
+  DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
+}
+
+DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = c(  "Granular_1",
+  "Granular_2",
+  "Granular_3",
+  "Granular_4",
+  "Granular_5",
+  "MLI1" ,
+  "MLI2" ,
+  "PLI12" ,
+  "PLI23",
+  "Golgi",
+  "Unipolar_Brush",
+  "Purkinje",
+  "Astrocyte",
+  "Bergmann_Glia",
+  "Oligodendrocyte",
+  "OPC" ,
+  "Mix_Microglia_Meningeal",
+  "Endothelial",
+  "Endothelial_Mural",
+  "Choroid_Plexus")) 
+  
+  
+# Add DEG information to my seurat object - DEG_count
+cell_clusters <- WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot
+names(cell_clusters) <- rownames(WT_Kcnc1_p14_CB_1step.sct@meta.data)
+DEG_named_vector <- DEG_count$Num_DEGs[match(cell_clusters, DEG_count$Cell_Type)]
+names(DEG_named_vector) <- names(cell_clusters)
+# Integrate DEG values into the Seurat object
+WT_Kcnc1_p14_CB_1step.sct <- AddMetaData(WT_Kcnc1_p14_CB_1step.sct, metadata = DEG_named_vector, col.name = "DEG")
+# Create a UMAP plot colored by qval values
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CB_1step_DEG.pdf", width=6, height=6)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "DEG", pt.size = 0.5, reduction = "umap", label = TRUE) +
+  scale_colour_viridis() #  option="magma"
+dev.off()
+# Add values on the heatmap
+## Extract UMAP coordinates
+umap_coordinates <- as.data.frame(WT_Kcnc1_p14_CB_1step.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot
+## Calculate cluster centers
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(DEG_count %>% dplyr::rename( "cluster"="Cell_Type"))
+## Create a UMAP plot colored by DEG values, with cluster DEG counts as text annotations
+#pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CB_1step_DEGpadj05fc025_numeric.pdf", width=6, height=6)
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CB_1step_DEG_MAST_padj05fc025_numeric.pdf", width=6, height=6)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "DEG", pt.size = 0.5, reduction = "umap") +
+  scale_colour_viridis(option="magma") + # option="magma"
+  geom_text(data = cluster_centers, aes(x = UMAP_1, y = UMAP_2, label = Num_DEGs), 
+            size = 4, color = "red", fontface = "bold") 
+dev.off()
+
+
+
+
+
+
+
+# GSEA output colored in a UMAP
+## Pathway of neurodegeneration
+p14_correct_List4_PathwaysOfNeurodegeneration <- read.table("output/Pathway/gsea_output_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST-List1.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "PathwaysOfNeurodegeneration")
+## Add NES and pval information to the Seurat object metadata
+WT_Kcnc1_p14_CB_1step.sct@meta.data$NES <- p14_correct_List4_PathwaysOfNeurodegeneration$NES[match(WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot, 
+                                                                       p14_correct_List4_PathwaysOfNeurodegeneration$cluster)]
+WT_Kcnc1_p14_CB_1step.sct@meta.data$pval <- p14_correct_List4_PathwaysOfNeurodegeneration$pval[match(WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot, 
+                                                                         p14_correct_List4_PathwaysOfNeurodegeneration$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with pval < 0.05 as grey
+WT_Kcnc1_p14_CB_1step.sct@meta.data$NES_colored <- ifelse(WT_Kcnc1_p14_CB_1step.sct@meta.data$pval > 0.05, NA, 
+                                                          WT_Kcnc1_p14_CB_1step.sct@meta.data$NES)                                                       
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(WT_Kcnc1_p14_CB_1step.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(p14_correct_List4_PathwaysOfNeurodegeneration, by = c("cluster" = "cluster"))
+## Format NES values to two decimal places
+cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CB_1step_MAST_PathwaysOfNeurodegeneration.pdf", width = 6, height = 6)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
+  scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
+  geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+## REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION
+p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION <- read.table("output/Pathway/gsea_output_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST-List3.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")
+## Add NES and pval information to the Seurat object metadata
+WT_Kcnc1_p14_CB_1step.sct@meta.data$NES <- p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$NES[match(WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot, 
+                                                                       p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$cluster)]
+WT_Kcnc1_p14_CB_1step.sct@meta.data$pval <- p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$pval[match(WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot, 
+                                                                         p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with pval < 0.05 as grey
+WT_Kcnc1_p14_CB_1step.sct@meta.data$NES_colored <- ifelse(WT_Kcnc1_p14_CB_1step.sct@meta.data$pval > 0.05, NA, 
+                                                          WT_Kcnc1_p14_CB_1step.sct@meta.data$NES)                                                       
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(WT_Kcnc1_p14_CB_1step.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION, by = c("cluster" = "cluster"))
+## Format NES values to two decimal places
+cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CB_1step_MAST_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.pdf", width = 6, height = 6)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
+  scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
+  geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+
+
+
+
+
+# SCPA
+
+# Compare WT and cYAPKO using SCPA ##########################################
+
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") 
+library("SCPA")
+library("circlize")
+library("magrittr")
+library("msigdb")
+library("msigdbr")
+library("ComplexHeatmap")
+library("ggrepel")
+library("ggpubr")
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA" # Recommended 
+
+
+
+# Test different Pathway collections and generate enrichment plot for each cell types (C2 = Pathway, C5 = ontology )
+## import Pathways
+pathways <- msigdbr("Mus musculus", "C5") %>%          # !!!!!! CHANGE HERE PATHWAYS !!!!!!
+format_pathways()
+names(pathways) <- sapply(pathways, function(x) x$Pathway[1]) # just to name the list, so easier to visualise
+
+# Code to save output for each cell type comparison
+clusters = c(
+"Granular_1", "Granular_2", "Granular_3", "Granular_4", "Granular_5",
+  "Interneuron", "MLI1", "MLI2", "PLI", "Golgi", "Unipolar_Brush",
+  "Purkinje", "Astrocyte", "Bergmann_Glia", "Oligodendrocyte", "OPC",
+  "Mix_Microglia_Meningeal", "Endothelial", "Endothelial_Mural", "Choroid_Plexus"
+)
+### Loop through each value
+for (cluster in clusters) {
+  #### Extract data for WT and cYAPKO based on current value
+  WT <- seurat_extract(WT_Kcnc1_p14_CB_1step.sct,
+                       meta1 = "condition", value_meta1 = "WT",
+                       meta2 = "cluster.annot", value_meta2 = cluster)
+
+  Kcnc1 <- seurat_extract(WT_Kcnc1_p14_CB_1step.sct,
+                           meta1 = "condition", value_meta1 = "Kcnc1",
+                           meta2 = "cluster.annot", value_meta2 = cluster)
+
+  ##### Compare pathways
+  WT_cYAPKO <- compare_pathways(samples = list(WT, Kcnc1),
+                                pathways = pathways,
+                                parallel = TRUE, cores = 8)
+
+  ##### Write to file using the current value in the filename
+  output_filename <- paste0("output/Pathway/SCPA_SB_p14_C5_", cluster, ".txt")       # !!!!!! CHANGE HERE PATHWAYS !!!!!!
+  write.table(WT_cYAPKO, file = output_filename, sep = "\t", quote = FALSE, row.names = FALSE)
+}
+#--> Long ~2hrs
+
+
+
+## load all the comparison for each cell type (FC qval information)
+clusters = c(
+"Granular_1", "Granular_2", "Granular_3", "Granular_4", "Granular_5",
+  "Interneuron", "MLI1", "MLI2", "PLI", "Golgi", "Unipolar_Brush",
+  "Purkinje", "Astrocyte", "Bergmann_Glia", "Oligodendrocyte", "OPC",
+  "Mix_Microglia_Meningeal", "Endothelial", "Endothelial_Mural", "Choroid_Plexus"
+)
+## import with a function
+### A function to read and add the cluster column
+read_and_add_cluster <- function(cluster) {
+  path <- paste0("output/Pathway/SCPA_CB_p14_C2_", cluster, ".txt")
+  df <- read.delim(path, header = TRUE) %>%
+    add_column(cluster = cluster)
+  return(df)
+}
+### Use lapply to apply the function on each cluster and bind all data frames together
+all_data <- bind_rows(lapply(clusters, read_and_add_cluster)) %>% as_tibble()
+
+## Filter pathway of interest
+pathways <- c(
+  "WP_NEURODEGENERATION_WITH_BRAIN_IRON_ACCUMULATION_NBIA_SUBTYPES_PATHWAY",
+  "WP_NEUROINFLAMMATION_AND_GLUTAMATERGIC_SIGNALING",
+  "KEGG_ALZHEIMERS_DISEASE",
+  "WP_ALZHEIMERS_DISEASE",
+  "KEGG_PARKINSONS_DISEASE",
+  "WP_PARKINSONS_DISEASE_PATHWAY",
+  "KEGG_HUNTINGTONS_DISEASE",
+  "WP_ERK_PATHWAY_IN_HUNTINGTONS_DISEASE",
+  "KEGG_AMYOTROPHIC_LATERAL_SCLEROSIS_ALS",
+  "WP_AMYOTROPHIC_LATERAL_SCLEROSIS_ALS",
+  "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION",
+  "REACTOME_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "KEGG_NEUROACTIVE_LIGAND_RECEPTOR_INTERACTION",
+  "REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS",
+  "REACTOME_POTASSIUM_CHANNELS",
+  "REACTOME_ION_CHANNEL_TRANSPORT",
+  "KEGG_CALCIUM_SIGNALING_PATHWAY",
+  "REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS",
+  "REACTOME_ACETYLCHOLINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_DOPAMINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_GLUTAMATE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_NOREPINEPHRINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_SEROTONIN_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "ALCALA_APOPTOSIS",
+  "KEGG_APOPTOSIS",
+  "REACTOME_APOPTOSIS",
+  "REACTOME_INTRINSIC_PATHWAY_FOR_APOPTOSIS",
+  "WP_APOPTOSIS",
+  "WP_APOPTOSIS_MODULATION_AND_SIGNALING",
+  "REACTOME_DEATH_RECEPTOR_SIGNALLING",
+  "REACTOME_DISEASES_OF_PROGRAMMED_CELL_DEATH",
+  "REACTOME_FOXO_MEDIATED_TRANSCRIPTION_OF_CELL_DEATH_GENES",
+  "REACTOME_PROGRAMMED_CELL_DEATH",
+  "REACTOME_TP53_REGULATES_TRANSCRIPTION_OF_CELL_DEATH_GENES",
+  "BIOCARTA_DEATH_PATHWAY",
+  "REACTOME_DETOXIFICATION_OF_REACTIVE_OXYGEN_SPECIES",
+  "WP_PKCGAMMA_CALCIUM_SIGNALING_PATHWAY_IN_ATAXIA"
+)
+classes <- c(
+  rep("Neurodegeneration", 10),
+  rep("Neuronal_Activity", 13),
+  rep("Apoptosis", 12),
+  "ROS",
+  "Ataxia"
+)
+colors <- c(
+  rep("Purple", 10),
+  rep("Green", 13),
+  rep("Dark Orange", 12),
+  "Red",
+  "Blue"
+)
+pathway_tibble <- tibble(
+  Pathway = pathways,
+  Class = classes,
+  Color = colors
+)
+
+pathway_all_data = pathway_tibble %>%
+  left_join(all_data)
+
+pathway_all_data$Pathway <- factor(pathway_all_data$Pathway, levels = pathways)
+
+
+### dotplot
+pdf("output/Pathway/dotplot_SCPA_CB_p14_C2_selectedPathwayV1.pdf", width=12, height=8)
+ggplot(pathway_all_data, aes(x = cluster, y = Pathway)) +
+  geom_point(aes(size = ifelse(qval > 1.4, qval, NA), color = Color), na.rm = TRUE) +
+  scale_size_continuous(range = c(3, 10), breaks = c(1.5, 2, 3, 4), name = "qval") +
+  scale_color_identity() +
+  theme_bw() +
+  labs(x = "Cluster",
+       y = "Pathway",
+       color = "Class Color") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+        legend.position = "right") +
+  guides(color = guide_legend(title = "Class Color", override.aes = list(size = 5)),
+         size = guide_legend(title = "qval"))
+dev.off()
+
+
+
+
+# GSEA plot
+library("fgsea")
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("Granular_1",
+  "Granular_2",
+  "Granular_3",
+  "Granular_4",
+  "Granular_5",
+  "MLI1" ,
+  "MLI2" ,
+  "PLI12" ,
+  "PLI23",
+  "Golgi",
+  "Unipolar_Brush",
+  "Purkinje",
+  "Astrocyte",
+  "Bergmann_Glia",
+  "Oligodendrocyte",
+  "OPC" ,
+  "Mix_Microglia_Meningeal",
+  "Endothelial",
+  "Endothelial_Mural",
+  "Choroid_Plexus")
+# Loop over each cluster type to read data and assign to a variable
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1)
+  assign(cluster, data)
+}
+
+## load list of genes to test
+### List1
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURON_INTRINSIC_APOPTOTIC_SIGNALING_PATHWAY_IN_RESPONSE_TO_OXIDATIVE_STRESS = read_table(file = "output/Pathway/geneList_GOBP_NEURON_INTRINSIC_APOPTOTIC.txt")$Genes,
+  GOBP_NEUROINFLAMMATORY_RESPONSE = read_table(file = "output/Pathway/geneList_GOBP_NEUROINFLAMMATORY_RESPONSE.txt")$Genes
+)
+### List2
+fgsea_sets <- list(
+  GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION = read_table(file = "output/Pathway/geneList_GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  GOBP_NEURONAL_SIGNAL_TRANSDUCTION = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_SIGNAL_TRANSDUCTION.txt")$Genes,
+  REACTOME_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_POTASSIUM_CHANNELS.txt")$Genes,
+  REACTOME_ION_CHANNEL_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_ION_CHANNEL_TRANSPORT.txt")$Genes
+)
+### List3
+fgsea_sets <- list(
+  REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING = read_table(file = "output/Pathway/geneList_REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING.txt")$Genes,
+  REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS = read_table(file = "output/Pathway/geneList_REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes,
+  REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS.txt")$Genes
+)
+### List4
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes
+)
+
+
+## Rank genes based on FC
+genes <- MLI2 %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+  rownames_to_column(var = "gene") %>%
+  arrange(desc(avg_log2FC)) %>% 
+  dplyr::select(gene, avg_log2FC)
+
+ranks <- deframe(genes)
+head(ranks)
+## Run GSEA
+
+fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 1000)
+fgseaResTidy <- fgseaRes %>%
+  as_tibble() %>%
+  arrange(desc(ES))
+fgseaResTidy %>% 
+  dplyr::select(-leadingEdge, -NES, -nMoreExtreme) %>% 
+  arrange(padj) %>% 
+  head()
+
+
+## plot GSEA
+pdf("output/Pathway/GSEA_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST-REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION-MLI2.pdf", width=5, height=3)
+plotEnrichment(fgsea_sets[["REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION"]],
+               ranks) + labs(title="REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION-MLI2") +
+               theme_bw()
+dev.off()
+
+
+# Save output table for all pathway and cluster
+## Define the list of cluster types
+cluster_types <- c("Granular_1",
+  "Granular_2",
+  "Granular_3",
+  "Granular_4",
+  "Granular_5",
+  "MLI1" ,
+  "MLI2" ,
+  "PLI12" ,
+  "PLI23",
+  "Golgi",
+  "Unipolar_Brush",
+  "Purkinje",
+  "Astrocyte",
+  "Bergmann_Glia",
+  "Oligodendrocyte",
+  "OPC" ,
+  "Mix_Microglia_Meningeal",
+  "Endothelial",
+  "Endothelial_Mural",
+  "Choroid_Plexus")
+
+## Initialize an empty list to store the results for each cluster type
+all_results <- list()
+## Loop over each cluster type
+for (cluster in cluster_types) {
+  
+  # Extract genes for the current cluster
+  genes <- get(cluster) %>% 
+    rownames_to_column(var = "gene") %>%
+    arrange(desc(avg_log2FC)) %>% 
+    dplyr::select(gene, avg_log2FC)
+  
+  ranks <- deframe(genes)
+  
+  # Run GSEA for the current cluster
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 10000)
+  fgseaResTidy <- fgseaRes %>%
+    as_tibble() %>%
+    arrange(desc(ES))
+  
+  # Extract summary table and add cluster column
+  fgseaResTidy_summary = fgseaResTidy %>% 
+    dplyr::select(pathway, pval, padj, ES, size, NES) %>%
+    mutate(cluster = cluster) %>%
+    arrange(padj) %>% 
+    head()
+  
+  # Store results in the list
+  all_results[[cluster]] <- fgseaResTidy_summary
+}
+## Combine results from all cluster types into one table
+final_results <- bind_rows(all_results, .id = "cluster")
+
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST-List3.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+
+# Heatmap all GSEA
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST-List3.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+### if need reorder terms
+final_results$pathway <- factor(final_results$pathway, levels = c("PathwaysOfNeurodegeneration", "GOBP_NEURONAL_ACTION_POTENTIAL", "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")) 
+
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_correct-List4.pdf", width=10, height=3)
+ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+```
+
+
+
+#### p35 Cerebellum
+
+```bash
+conda activate scRNAseqV2
+```
+
+
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+
+## Load the matrix and Create SEURAT object
+samples <- list(
+  WT_p35_CB_Rep1 = "output/soupX/WT_p35_CB_Rep1.RData",
+  WT_p35_CB_Rep2 = "output/soupX/WT_p35_CB_Rep2.RData",
+  WT_p35_CB_Rep3 = "output/soupX/WT_p35_CB_Rep3.RData",
+  Kcnc1_p35_CB_Rep1 = "output/soupX/Kcnc1_p35_CB_Rep1.RData",
+  Kcnc1_p35_CB_Rep2 = "output/soupX/Kcnc1_p35_CB_Rep2.RData",
+  Kcnc1_p35_CB_Rep3 = "output/soupX/Kcnc1_p35_CB_Rep3.RData"
+)
+
+seurat_objects <- list()
+
+for (sample_name in names(samples)) {
+  load(samples[[sample_name]])
+  seurat_objects[[sample_name]] <- CreateSeuratObject(counts = out, project = sample_name)
+}
+
+## Function to assign Seurat objects to variables (unlist the list)
+assign_seurat_objects <- function(seurat_objects_list) {
+  for (sample_name in names(seurat_objects_list)) {
+    assign(sample_name, seurat_objects_list[[sample_name]], envir = .GlobalEnv)
+  }
+}
+assign_seurat_objects(seurat_objects) # This apply the function
+
+
+# QUALITY CONTROL
+# Function to add mitochondrial and ribosomal content
+add_quality_control <- function(seurat_object) {
+  seurat_object[["percent.mt"]] <- PercentageFeatureSet(seurat_object, pattern = "^mt-")
+  seurat_object[["percent.rb"]] <- PercentageFeatureSet(seurat_object, pattern = "^Rp[sl]")
+  return(seurat_object)
+}
+seurat_objects <- lapply(seurat_objects, add_quality_control) # This apply the function
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+
+# Function to add doublet information
+add_doublet_information <- function(sample_name, seurat_object) {
+  doublet_file <- paste0("output/doublets/", sample_name, ".tsv")
+  doublets <- read.table(doublet_file, header = FALSE, row.names = 1)
+  colnames(doublets) <- c("Doublet_score", "Is_doublet")
+  seurat_object <- AddMetaData(seurat_object, doublets)
+  seurat_object$Doublet_score <- as.numeric(seurat_object$Doublet_score)
+  return(seurat_object)
+}
+## Apply the function to each Seurat object in the list
+for (sample_name in names(seurat_objects)) {
+  if (sample_name != "Kcnc1_p180_CB_Rep3") {
+    seurat_objects[[sample_name]] <- add_doublet_information(sample_name, seurat_objects[[sample_name]])
+  }
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+
+# Loop to generate QC plots for each sample
+# Define the output directory
+output_dir <- "output/seurat/"
+
+# Loop through each Seurat object to generate the plots
+for (sample_name in names(seurat_objects)) {
+  seurat_object <- seurat_objects[[sample_name]]
+  
+  # Violin plot
+  pdf(paste0(output_dir, "VlnPlot_QC_", sample_name, ".pdf"), width = 10, height = 6)
+  print(VlnPlot(seurat_object, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1) & 
+    theme(plot.title = element_text(size = 10)))
+  dev.off()
+  
+  # Scatter plots
+  pdf(paste0(output_dir, "FeatureScatter_QC_RNAcount_mt_", sample_name, ".pdf"), width = 5, height = 5)
+  print(FeatureScatter(seurat_object, feature1 = "nCount_RNA", feature2 = "percent.mt"))
+  dev.off()
+  
+  pdf(paste0(output_dir, "FeatureScatter_QC_RNAcount_RNAfeature_", sample_name, ".pdf"), width = 5, height = 5)
+  print(FeatureScatter(seurat_object, feature1 = "nCount_RNA", feature2 = "nFeature_RNA"))
+  dev.off()
+  
+  pdf(paste0(output_dir, "FeatureScatter_QC_rb_mt_", sample_name, ".pdf"), width = 5, height = 5)
+  print(FeatureScatter(seurat_object, feature1 = "percent.rb", feature2 = "percent.mt"))
+  dev.off()
+  
+  pdf(paste0(output_dir, "FeatureScatter_QC_mt_doublet_", sample_name, ".pdf"), width = 5, height = 5)
+  print(FeatureScatter(seurat_object, feature1 = "percent.mt", feature2 = "Doublet_score"))
+  dev.off()
+  
+  pdf(paste0(output_dir, "FeatureScatter_QC_RNAfeature_doublet_", sample_name, ".pdf"), width = 5, height = 5)
+  print(FeatureScatter(seurat_object, feature1 = "nFeature_RNA", feature2 = "Doublet_score"))
+  dev.off()
+}
+
+
+
+
+##### QC filtering _ updated V2 from version1 (used for p35) ############################################
+
+###  Remove cells: percent.mt > 15, percent.rb > 22, nFeature_RNA < 800, nFeature_RNA > 3000, nCount_RNA < 900, nCount_RNA > 6000
+
+apply_qc <- function(seurat_object) {
+  meta <- seurat_object@meta.data
+  # Initialize QC column with 'Pass'
+  meta$QC <- 'Pass'
+  # Identify failing QC conditions
+  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
+  meta$QC[meta$nFeature_RNA < 800] <- 'Low_nFeature'
+  meta$QC[meta$nFeature_RNA > 3000] <- 'High_nFeatureRNA'
+  meta$QC[meta$nCount_RNA < 900] <- 'Low_nCountRNA'
+  meta$QC[meta$nCount_RNA > 6000] <- 'High_nCountRNA'
+  meta$QC[meta$percent.mt > 15] <- 'High_MT'
+  meta$QC[meta$percent.rb > 22] <- 'High_RB'
+  # Handle multiple failing conditions
+  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
+  # Assign back to Seurat object
+  seurat_object@meta.data <- meta
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # Reapply function to all individuals in the list
+#####################################################################################################
+
+
+#### Write QC summary
+qc_summary_list <- list()
+
+# Collect QC summary for each sample
+for (sample_name in names(seurat_objects)) {
+  qc_summary <- table(seurat_objects[[sample_name]][['QC']])
+  qc_summary_df <- as.data.frame(qc_summary)
+  qc_summary_df$Sample <- sample_name
+  qc_summary_list[[sample_name]] <- qc_summary_df
+}
+
+qc_summary_combined <- do.call(rbind, qc_summary_list)
+
+# Write the data frame to a tab-separated text file
+write.table(qc_summary_combined, file = "output/seurat/QC_summary_version2_p35.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
+
+## subset seurat object to keep cells that pass the QC
+subset_qc <- function(seurat_object) {
+  seurat_object <- subset(seurat_object, subset = QC == 'Pass')
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- subset_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# Normalize and scale data, then run cell cycle sorting
+set.seed(42)
+## Load gene marker of cell type
+mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+
+# Function to normalize, scale data, and perform cell cycle scoring
+process_seurat_object <- function(seurat_object, mmus_s, mmus_g2m) {
+  seurat_object <- NormalizeData(seurat_object, normalization.method = "LogNormalize", scale.factor = 10000)
+  all.genes <- rownames(seurat_object)
+  seurat_object <- ScaleData(seurat_object, features = all.genes)  # zero-centres and scales it
+  seurat_object <- CellCycleScoring(seurat_object, s.features = mmus_s, g2m.features = mmus_g2m)  # cell cycle sorting
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- process_seurat_object(seurat_objects[[sample_name]], mmus_s, mmus_g2m)
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# write output summary phase
+phase_summary_list <- list()
+# Collect QC phase summary for each sample
+for (sample_name in names(seurat_objects)) {
+  phase_summary <- table(seurat_objects[[sample_name]][[]]$Phase)
+  phase_summary_df <- as.data.frame(phase_summary)
+  phase_summary_df$Sample <- sample_name
+  phase_summary_list[[sample_name]] <- phase_summary_df
+}
+# Combine all summaries into one data frame
+phase_summary_combined <- do.call(rbind, phase_summary_list)
+write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version2_p35.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) #
+
+
+############ SAVE samples #################################################################
+save_seurat_objects <- function(seurat_objects_list, output_dir) {
+  for (sample_name in names(seurat_objects_list)) {
+    file_name <- paste0(output_dir, sample_name, "_version2_p35.rds") #
+    saveRDS(seurat_objects_list[[sample_name]], file = file_name) # 
+  }
+}
+output_dir <- "output/seurat/"
+## Call the function to save the Seurat objects
+save_seurat_objects(seurat_objects, output_dir)
+###############################################################################################
+############# READ samples  (QC V1 V2 or V3 = V1_numeric...)################################################
+# Function to load Seurat objects
+load_seurat_objects <- function(file_paths) {
+  seurat_objects <- list()
+  for (file_path in file_paths) {
+    sample_name <- gsub("_version2_p35.rds", "", basename(file_path))
+    seurat_objects[[sample_name]] <- readRDS(file_path)
+  }
+  return(seurat_objects)
+}
+output_dir <- "output/seurat/"
+file_paths <- list.files(output_dir, pattern = "_version2_p35.rds$", full.names = TRUE)
+# Call the function to load the Seurat objects
+seurat_objects <- load_seurat_objects(file_paths)
+# Loop through the list and assign each Seurat object to a variable with the same name
+for (sample_name in names(seurat_objects)) {
+  assign(sample_name, seurat_objects[[sample_name]])
+}
+# 1 sample: WT_p35_CB_Rep2 <- readRDS(file = "output/seurat/WT_p35_CB_Rep2_V2_ReProcess_numeric.rds")
+## Kcnc1_p14_CB_Rep1 <- readRDS(file = "output/seurat/Kcnc1_p14_CB_Rep1_V1_numeric.rds")
+################################################################################################
+
+
+
+
+
+
+
+
+
+##########################################
+## integration WT Kcnc1 p35 all replicates (1st replicate, then genotype) ######
+ ##########################################
+
+
+WT_p35_CB_Rep1$replicate <- "Rep1"
+WT_p35_CB_Rep2$replicate <- "Rep2"
+WT_p35_CB_Rep3$replicate <- "Rep3"
+
+WT_p35_CB_Rep1$condition <- "WT"
+WT_p35_CB_Rep2$condition <- "WT"
+WT_p35_CB_Rep3$condition <- "WT"
+
+Kcnc1_p35_CB_Rep1$replicate <- "Rep1"
+Kcnc1_p35_CB_Rep2$replicate <- "Rep2"   # 
+Kcnc1_p35_CB_Rep3$replicate <- "Rep3"
+
+Kcnc1_p35_CB_Rep1$condition <- "Kcnc1"
+Kcnc1_p35_CB_Rep2$condition <- "Kcnc1" # 
+Kcnc1_p35_CB_Rep3$condition <- "Kcnc1"
+
+set.seed(42)
+
+
+# Replicate and Genotype integration (1 step integration)
+
+WT_p35_CB_Rep1 <- SCTransform(WT_p35_CB_Rep1, method = "glmGamPoi", ncells = 5031, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nFeature_RNA", "nCount_RNA", "percent.mt","percent.rb")) 
+WT_p35_CB_Rep2 <- SCTransform(WT_p35_CB_Rep2, method = "glmGamPoi", ncells = 9140, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nFeature_RNA","nCount_RNA", "percent.mt","percent.rb")) 
+WT_p35_CB_Rep3 <- SCTransform(WT_p35_CB_Rep3, method = "glmGamPoi", ncells = 10796, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nFeature_RNA","nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p35_CB_Rep1 <- SCTransform(Kcnc1_p35_CB_Rep1, method = "glmGamPoi", ncells = 7314, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nFeature_RNA","nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p35_CB_Rep2 <- SCTransform(Kcnc1_p35_CB_Rep2, method = "glmGamPoi", ncells = 530, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nFeature_RNA","nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p35_CB_Rep3 <- SCTransform(Kcnc1_p35_CB_Rep3, method = "glmGamPoi", ncells = 10243, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nFeature_RNA","nCount_RNA", "percent.mt","percent.rb")) 
+
+
+
+srat.list <- list(WT_p35_CB_Rep1 = WT_p35_CB_Rep1, WT_p35_CB_Rep2 = WT_p35_CB_Rep2, WT_p35_CB_Rep3 = WT_p35_CB_Rep3, Kcnc1_p35_CB_Rep1 = Kcnc1_p35_CB_Rep1, Kcnc1_p35_CB_Rep2 = Kcnc1_p35_CB_Rep2, Kcnc1_p35_CB_Rep3 = Kcnc1_p35_CB_Rep3)
+
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+WT_Kcnc1_p35_CB_1step.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+WT_Kcnc1_p35_CB_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p35_CB_1step.anchors, normalization.method = "SCT")
+
+
+#### UMAP
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "integrated"
+
+WT_Kcnc1_p35_CB_1step.sct <- RunPCA(WT_Kcnc1_p35_CB_1step.sct, verbose = FALSE, npcs = 50)
+WT_Kcnc1_p35_CB_1step.sct <- RunUMAP(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
+WT_Kcnc1_p35_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", k.param = 50, dims = 1:50)
+WT_Kcnc1_p35_CB_1step.sct <- FindClusters(WT_Kcnc1_p35_CB_1step.sct, resolution = 0.2, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+
+WT_Kcnc1_p35_CB_1step.sct$condition <- factor(WT_Kcnc1_p35_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-Version2dim50kparam50res02.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=TRUE)
+dev.off()
+
+
+# genes
+
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "SCT"
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-Version2dim50-ListdotPLot.pdf", width=30, height=60)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c(    "Gabra6" , "Pax6",
+  "Sorcs3", "Ptprk",
+  "Nxph1", "Cdh22",
+  "Klhl1", "Gfra2", "Aldh1a3",
+  "Galntl6", "Kcnc2",
+  "Pax2",
+  "Eomes", "Rgs6", "Tafa2",
+  "Calb1", "Slc1a6", "Car8",
+  "Zeb2",
+  "Aqp4", "Slc39a12",
+  "Vcan", "Sox6",
+  "Ptgds", "Dcn",
+  "Kl", "Ttr",
+  "Lef1", "Notum", "Apcdd1",
+  "Actb", "Tmsb4x"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+
+
+
+
+
+#### QC metrics investigation ####################################
+pdf("output/seurat/VlnPlot_QCmetrics_SCT_WT_Kcnc1_p35_CB_1step-1stepIntegrationRegressNotRepeated-Version2dim50kparam50res02-countMtRbRegression.pdf", width=20, height=5)
+VlnPlot(WT_Kcnc1_p35_CB_1step.sct,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+
+pdf("output/seurat/VlnPlot_QCmetrics_nFeature_RNA_SCT_WT_Kcnc1_p35_CB_1step-1stepIntegrationRegressNotRepeated-Version2dim50kparam50res02-countMtRbRegression.pdf", width=5, height=5)
+VlnPlot(WT_Kcnc1_p35_CB_1step.sct,features = c("nFeature_RNA")) +
+  ylim(0,2000)
+dev.off()
+
+pdf("output/seurat/VlnPlot_QCmetrics_nCount_RNA_SCT_WT_Kcnc1_p35_CB_1step-1stepIntegrationRegressNotRepeated-Version2dim50kparam50res02-countMtRbRegression.pdf", width=5, height=5)
+VlnPlot(WT_Kcnc1_p35_CB_1step.sct,features = c("nCount_RNA")) +
+  ylim(0,10000)
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p35_CB_nFeature_RNA-1stepIntegrationRegressNotRepeated-Version2dim50.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=FALSE, features = "nFeature_RNA")
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p35_CB_percentmt-1stepIntegrationRegressNotRepeated-Version2dim50.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.mt")
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p35_CB_percentrb-1stepIntegrationRegressNotRepeated-Version2dim50.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.rb")
+dev.off()  
+############################################################
+
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB_splitCondition-1stepIntegrationRegressNotRepeated-Version2dim50kparam50res02.pdf", width=13, height=6)
+DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=TRUE, split.by = "condition")
+dev.off()
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB_splitReplicate-1stepIntegrationRegressNotRepeated-Version2dim50kparam50res02.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=TRUE, split.by = "replicate")
+dev.off()
+
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_p35_CB_Kcnc1_Phase-1stepIntegrationRegressNotRepeated-Version2dim50kparam50res02.pdf", width=10, height=6)
+DimPlot(WT_Kcnc1_p35_CB_1step.sct, group.by= "Phase") & 
+  theme(plot.title = element_text(size=10))
+dev.off()  
+
+####################################
+# save ####################################
+#saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-Version2dim50kparam50res02.sct_V1_numeric.rds") #
+
+#WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-Version2dim50kparam50res02.sct_V1_numeric.rds")
+
+
+#saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-Version2dim50kparam50res02.sct_V1_label.rds") #
+
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-Version2dim50kparam50res02.sct_V1_label.rds")
+
+set.seed(42)
+######################################################
+####################################
+
+
+
+
+
+
+############ V1 naming Version2dim50kparam50res02 ("output/seurat/WT_Kcnc1_p35_CB_1step-Version2dim50kparam50res02.sct_V1_numeric.rds))
+
+1= Granule (Gabra6 , Pax6)
+2= MLI1 (Sorcs3, Ptprk)
+3= PLI23 (Galntl6, Kcnc2)
+4= MLI2 (Nxph1, Cdh22)
+5= Astrocyte (Zeb2)
+6= PLI12 (Klhl1, Gfra2, Aldh1a3)
+7= Unipolar_Brush  (Eomes, Rgs6, Tafa2)
+8= Bergman_Glia (Aqp4, Slc39a12)
+9= Meningeal_Endothelial (Ptgds, Dcn) (Lef1, Notum, Apcdd1) (Actb, Tmsb4x)
+10= Golgi (Pax2)
+11= Choroid_Plexus (Kl, Ttr)
+12= Unknown
+13= Purkinje (Calb1, Slc1a6, Car8)
+
+
+new.cluster.ids <- c(
+  "Granule",
+  "MLI1",
+  "PLI23" ,
+  "MLI2" ,
+  "Astrocyte" ,
+  "PLI12" ,
+  "Unipolar_Brush" ,
+  "Bergman_Glia",
+  "Meningeal_Endothelial",
+  "Golgi" ,
+  "Choroid_Plexus",
+  "Unknown",
+  "Purkinje"
+)
+
+names(new.cluster.ids) <- levels(WT_Kcnc1_p35_CB_1step.sct)
+WT_Kcnc1_p35_CB_1step.sct <- RenameIdents(WT_Kcnc1_p35_CB_1step.sct, new.cluster.ids)
+WT_Kcnc1_p35_CB_1step.sct$cluster.annot <- Idents(WT_Kcnc1_p35_CB_1step.sct) # create a new slot in my seurat object
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB_1step_Version2dim50kparam50res02_label.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+dev.off()
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB_1step_Version2dim50kparam50res02_noSplit_label.pdf", width=8, height=6)
+DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5)
+dev.off()
+
+
+
+# All in dotplot
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "SCT"
+
+List11:
+Granule =Gabra6 , Pax6
+MLI1 =Sorcs3, Ptprk
+MLI2 =Nxph1, Cdh22
+PLI12 =Klhl1, Gfra2, Aldh1a3
+PLI23 =Galntl6, Kcnc2
+Golgi =Pax2
+Unipolar_Brush =Eomes, Rgs6, Tafa2
+Purkinje =Calb1, Slc1a6, Car8
+Astrocyte =Zeb2
+Bergman_Glia =Aqp4, Slc39a12
+Meningeal_Endothelial =Ptgds, Dcn, Lef1, Notum, Apcdd1, Actb, Tmsb4x
+Choroid_Plexus =Kl, Ttr
+
+
+
+all_markers <- c(
+  "Gabra6" , "Pax6",
+  "Sorcs3", "Ptprk",
+  "Nxph1", "Cdh22",
+  "Klhl1", "Gfra2", "Aldh1a3",
+  "Galntl6", "Kcnc2",
+  "Pax2",
+  "Eomes", "Rgs6", "Tafa2",
+  "Calb1", "Slc1a6", "Car8",
+  "Zeb2",
+  "Aqp4", "Slc39a12",
+  "Ptgds", "Dcn", "Lef1", "Notum", "Apcdd1", "Actb", "Tmsb4x",
+  "Kl", "Ttr"
+)
+
+
+
+levels(WT_Kcnc1_p35_CB_1step.sct) <- c(
+  "Granule",
+  "MLI1" ,
+  "MLI2" ,
+  "PLI12" ,
+  "PLI23" ,
+  "Golgi" ,
+  "Unipolar_Brush" ,
+  "Purkinje" ,
+  "Astrocyte" ,
+  "Bergman_Glia",
+  "Meningeal_Endothelial",
+  "Choroid_Plexus" ,
+  "Unknown"
+)
+
+
+
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p35_CB_1step_Version2dim50kparam50res02_label.pdf", width=11, height=4.5)
+DotPlot(WT_Kcnc1_p35_CB_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
+
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p35_CB_1step_Version2dim50kparam50res02_label_vertical.pdf", width=11, height=4.5)
+DotPlot(WT_Kcnc1_p35_CB_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
+dev.off()
+
+
+
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "SCT"
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-Version2dim50kparam50res02-List10.pdf", width=30, height=70)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = all_markers, max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-Version2dim50kparam50res02-Kcnc1.pdf", width=6, height=6)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = "Kcnc1", max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+
+
+# WT vs Kcnc1 gene expr ############
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "SCT"
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB-1stepIntegrationRegressNotRepeated-Version2dim50kparam50res02-Kcnc1.pdf", width=12, height=6)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Kcnc1"),  cols = c("grey", "red"), split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB-1stepIntegrationRegressNotRepeated-Version2dim50kparam50res02-Smg1.pdf", width=12, height=6)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Smg1"),  cols = c("grey", "red"), split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off() 
+
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "SCT"
+
+pdf("output/seurat/VlnPlot_SCT_WT_p35_CB-1stepIntegrationRegressNotRepeated-Version2dim50kparam50res02-Srek1.pdf", width=12, height=6)
+VlnPlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Srek1"),  cols = c("grey", "red"), split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off() 
+
+
+## p35 cell type proportion ############################### 
+### count nb of cells in each cluster
+WT_p35_CB_Rep1 = table(Idents(WT_Kcnc1_p35_CB_1step.sct)[WT_Kcnc1_p35_CB_1step.sct$orig.ident == "WT_p35_CB_Rep1"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p35",
+             replicate= "Rep1")
+WT_p35_CB_Rep2 = table(Idents(WT_Kcnc1_p35_CB_1step.sct)[WT_Kcnc1_p35_CB_1step.sct$orig.ident == "WT_p35_CB_Rep2"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p35",
+             replicate= "Rep2")
+WT_p35_CB_Rep3 = table(Idents(WT_Kcnc1_p35_CB_1step.sct)[WT_Kcnc1_p35_CB_1step.sct$orig.ident == "WT_p35_CB_Rep3"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p35",
+             replicate= "Rep3")
+
+Kcnc1_p35_CB_Rep1 = table(Idents(WT_Kcnc1_p35_CB_1step.sct)[WT_Kcnc1_p35_CB_1step.sct$orig.ident == "Kcnc1_p35_CB_Rep1"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p35",
+             replicate= "Rep1")
+Kcnc1_p35_CB_Rep2 = table(Idents(WT_Kcnc1_p35_CB_1step.sct)[WT_Kcnc1_p35_CB_1step.sct$orig.ident == "Kcnc1_p35_CB_Rep2"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p35",
+             replicate= "Rep2")
+Kcnc1_p35_CB_Rep3 = table(Idents(WT_Kcnc1_p35_CB_1step.sct)[WT_Kcnc1_p35_CB_1step.sct$orig.ident == "Kcnc1_p35_CB_Rep3"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p35",
+             replicate= "Rep3")
+
+
+p35_CB = WT_p35_CB_Rep1 %>%
+  bind_rows(WT_p35_CB_Rep2) %>%
+  bind_rows(WT_p35_CB_Rep3) %>%
+  bind_rows(Kcnc1_p35_CB_Rep1) %>%
+  bind_rows(Kcnc1_p35_CB_Rep2) %>%
+  bind_rows(Kcnc1_p35_CB_Rep3) %>%
+  as_tibble()
+  
+p35_CB = WT_p35_CB_Rep1 %>%
+  bind_rows(WT_p35_CB_Rep2) %>%
+  bind_rows(WT_p35_CB_Rep3) %>%
+  bind_rows(Kcnc1_p35_CB_Rep1) %>%
+  bind_rows(Kcnc1_p35_CB_Rep3) %>%
+  as_tibble()
+
+
+### Keeping all replicates
+p35_CB_prop = p35_CB %>%
+  group_by(replicate, genotype) %>%
+  mutate(total_count = sum(count)) %>%
+  ungroup() %>%
+  mutate(proportion = (count / total_count) * 100)
+
+p35_CB_prop$genotype <-
+  factor(p35_CB_prop$genotype,
+         c("WT", "Kcnc1"))
+
+#pdf("output/seurat/histogramProp_WT_Kcnc1_p35_CB_1step_Version2dim50kparam50res02.pdf", width=7, height=4)
+pdf("output/seurat/histogramProp_WT_Kcnc1_p35_CB_1step_Version2dim50kparam50res02_withoutKcnc1Rep2.pdf", width=7, height=4)
+ggbarplot(p35_CB_prop, x = "cluster", y = "proportion", fill = "genotype",
+                  color = "genotype", palette = c("black", "blue"),
+                  position = position_dodge(0.8), # Separate bars by genotype
+                  add = "mean_se", # Add error bars
+                  lab.pos = "out", lab.size = 3) +
+  stat_compare_means(aes(group = genotype), method = "t.test", label = "p.signif") +
+  theme_bw() +
+  labs(x = "Cell Type (Cluster)", y = "Cell Proportion (%)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+XXXY HERE BELOW NOT MOD 
+
+# DEGs number in dotplot
+DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
+## List of cell types
+cell_types <- c(  
+  "Granule",
+  "MLI1",
+  "PLI23" ,
+  "MLI2" ,
+  "Endothelial_Stalk",
+  "Astrocyte" ,
+  "PLI12" ,
+  "Golgi" ,
+  "Unipolar_Brush" ,
+  "Bergman_Glia",
+  "Endothelial",
+  "Choroid_Plexus",
+  "Purkinje",
+  "Meningeal",
+  "Unknown_Neuron_Subpop",
+  "OPC" )
+## Loop through each cell type to count the number of significant DEGs
+for (cell_type in cell_types) {
+  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_MAST.txt", sep = "")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
+  num_degs <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.25 | deg_data$avg_log2FC < -0.25)) ## Count the number of significant DEGs
+  DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
+}
+## Dotplot
+DEG_count= DEG_count %>%
+  mutate(Cell_Type = factor(Cell_Type, levels = c( 
+  "Granule",
+  "MLI1",
+  "MLI2" ,
+  "PLI12" ,
+  "PLI23" ,
+  "Purkinje",
+  "Golgi" ,
+  "Unipolar_Brush" ,
+  "Astrocyte" ,
+  "Endothelial_Stalk",
+  "Endothelial",
+  "OPC",
+  "Bergman_Glia",
+  "Choroid_Plexus",
+  "Meningeal",
+  "Unknown_Neuron_Subpop"
+) ) ) 
+DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = rev(levels(DEG_count$Cell_Type)))
+
+# Generate the dot plot
+pdf("output/seurat/Dotplot_DEG_count_WT_Kcnc1_p35_CB_1step_DEG_MAST_padj05fc025_numeric.pdf", width=9, height=4)
+ggplot(DEG_count, aes(x = 1, y = Cell_Type, color = Cell_Type)) +
+  geom_point(aes(size = Num_DEGs), alpha = 0.8) +
+  scale_size(range = c(2, 10)) +
+  theme_void() + # Removes all gridlines, axes, and background elements
+  theme(
+    axis.text.x = element_blank(), # Removes x-axis labels
+    axis.ticks.x = element_blank(), # Removes x-axis ticks
+    axis.title.x = element_blank(), # Removes x-axis title
+    axis.text.y = element_text(size = 10, hjust = 0),
+    axis.title = element_text(size = 12, face = "bold"),
+    legend.position = "left", # Keeps the legend visible
+    legend.title = element_text(size = 12, face = "bold"), # Adjusts legend title style
+    legend.text = element_text(size = 10) # Adjusts legend text style
+  ) +
+  labs(
+    y = "Cell Type",
+    color = "Cell Type",
+    size = "Number of DEGs"
+  )
+dev.off()
+
+pdf("output/seurat/Dotplot_DEG_count_WT_Kcnc1_p35_CB_1step_DEG_MAST_padj05fc025_numeric_FORLEGEND.pdf", width=9, height=4)
+ggplot(DEG_count, aes(x = Cell_Type, y = 1)) +
+  geom_point(aes(size = ifelse(Num_DEGs == 0, 1, Num_DEGs), fill = Cell_Type), shape = 21, color = "black") +
+  scale_size_continuous(range = c(1, 15)) +
+  theme_void() +
+  labs(title = "Number of DEGs per Cell Type", x = "Cell Type", y = "", size = "Number of DEGs") +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5, vjust = 50, size = 15),  # Adjust the position of x-axis labels
+    axis.text.y = element_blank(), 
+    axis.ticks.y = element_blank(), 
+    axis.title.y = element_blank(),
+    legend.position = "right"
+  ) +
+  guides(size = guide_legend(title = "Number of DEGs", title.position = "top", title.hjust = 0.5))  # Keep only the size legend
+dev.off()
+
+
+
+
+
+# DEGs number colored in a UMAP
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_label_ReProcess.rds")
+
+Idents(WT_Kcnc1_p35_CB_1step.sct) <- "cluster.annot"
+
+DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
+## List of cell types
+cell_types <- c(     "Granule",
+  "MLI1",
+  "PLI23" ,
+  "MLI2" ,
+  "Endothelial_Stalk",
+  "Astrocyte" ,
+  "PLI12" ,
+  "Golgi" ,
+  "Unipolar_Brush" ,
+  "Bergman_Glia",
+  "Endothelial",
+  "Choroid_Plexus",
+  "Purkinje",
+  "Meningeal",
+  "Unknown_Neuron_Subpop",
+  "OPC" )
+## Loop through each cell type to count the number of significant DEGs
+for (cell_type in cell_types) {
+  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_MAST.txt", sep = "")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
+  num_degs <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.25 | deg_data$avg_log2FC < -0.25) ) ## Count the number of significant DEGs
+  DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
+}
+
+
+
+
+DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = c(   "Granule",
+  "MLI1",
+  "PLI23" ,
+  "MLI2" ,
+  "Endothelial_Stalk",
+  "Astrocyte" ,
+  "PLI12" ,
+  "Golgi" ,
+  "Unipolar_Brush" ,
+  "Bergman_Glia",
+  "Endothelial",
+  "Choroid_Plexus",
+  "Purkinje",
+  "Meningeal",
+  "Unknown_Neuron_Subpop",
+  "OPC")) 
+# Add DEG information to my seurat object - DEG_count
+cell_clusters <- WT_Kcnc1_p35_CB_1step.sct@meta.data$cluster.annot
+names(cell_clusters) <- rownames(WT_Kcnc1_p35_CB_1step.sct@meta.data)
+DEG_named_vector <- DEG_count$Num_DEGs[match(cell_clusters, DEG_count$Cell_Type)]
+names(DEG_named_vector) <- names(cell_clusters)
+# Integrate DEG values into the Seurat object
+WT_Kcnc1_p35_CB_1step.sct <- AddMetaData(WT_Kcnc1_p35_CB_1step.sct, metadata = DEG_named_vector, col.name = "DEG")
+# Create a UMAP plot colored by qval values
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p35_CB_1step_DEG_correct.pdf", width=6, height=6)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = "DEG", pt.size = 0.5, reduction = "umap", label = TRUE) +
+  scale_colour_viridis() #  option="magma"
+dev.off()
+# Add values on the heatmap
+## Extract UMAP coordinates
+umap_coordinates <- as.data.frame(WT_Kcnc1_p35_CB_1step.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- WT_Kcnc1_p35_CB_1step.sct@meta.data$cluster.annot
+## Calculate cluster centers
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(DEG_count %>% dplyr::rename( "cluster"="Cell_Type"))
+## Create a UMAP plot colored by DEG values, with cluster DEG counts as text annotations
+#pdf("output/seurat/FeaturePlot_WT_Kcnc1_p35_CB_1step_DEGpadj05fc025_numeric.pdf", width=6, height=6)
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p35_CB_1step_DEG_MAST_padj05fc025_numeric.pdf", width=6, height=6)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = "DEG", pt.size = 0.5, reduction = "umap") +
+  scale_colour_viridis(option="magma") + # option="magma"
+  geom_text(data = cluster_centers, aes(x = UMAP_1, y = UMAP_2, label = Num_DEGs), 
+            size = 4, color = "red", fontface = "bold") 
+dev.off()
+
+
+
+# GSEA output colored in a UMAP
+## Pathway of neurodegeneration
+p35_correct_List4_PathwaysOfNeurodegeneration <- read.table("output/Pathway/gsea_output_Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_MAST-List1.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "PathwaysOfNeurodegeneration")
+
+## Add NES and pval information to the Seurat object metadata
+WT_Kcnc1_p35_CB_1step.sct@meta.data$NES <- p35_correct_List4_PathwaysOfNeurodegeneration$NES[match(WT_Kcnc1_p35_CB_1step.sct@meta.data$cluster.annot, 
+                                                                       p35_correct_List4_PathwaysOfNeurodegeneration$cluster)]
+WT_Kcnc1_p35_CB_1step.sct@meta.data$pval <- p35_correct_List4_PathwaysOfNeurodegeneration$pval[match(WT_Kcnc1_p35_CB_1step.sct@meta.data$cluster.annot, 
+                                                                         p35_correct_List4_PathwaysOfNeurodegeneration$cluster)]
+
+## Prepare the NES values for visualization
+## Color clusters with pval < 0.05 as grey
+WT_Kcnc1_p35_CB_1step.sct@meta.data$NES_colored <- ifelse(WT_Kcnc1_p35_CB_1step.sct@meta.data$pval > 0.05, NA, 
+                                                          WT_Kcnc1_p35_CB_1step.sct@meta.data$NES)
+                                                          
+
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(WT_Kcnc1_p35_CB_1step.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- WT_Kcnc1_p35_CB_1step.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(p35_correct_List4_PathwaysOfNeurodegeneration, by = c("cluster" = "cluster"))
+
+## Format NES values to two decimal places
+cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
+
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p35_CB_1step_MAST_PathwaysOfNeurodegeneration.pdf", width = 6, height = 6)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
+  scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
+  geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+## REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION
+p35_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION <- read.table("output/Pathway/gsea_output_Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_MAST-List3.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")
+
+## Add NES and pval information to the Seurat object metadata
+WT_Kcnc1_p35_CB_1step.sct@meta.data$NES <- p35_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$NES[match(WT_Kcnc1_p35_CB_1step.sct@meta.data$cluster.annot, 
+                                                                       p35_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$cluster)]
+WT_Kcnc1_p35_CB_1step.sct@meta.data$pval <- p35_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$pval[match(WT_Kcnc1_p35_CB_1step.sct@meta.data$cluster.annot, 
+                                                                         p35_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$cluster)]
+
+## Prepare the NES values for visualization
+## Color clusters with pval < 0.05 as grey
+WT_Kcnc1_p35_CB_1step.sct@meta.data$NES_colored <- ifelse(WT_Kcnc1_p35_CB_1step.sct@meta.data$pval > 0.05, NA, 
+                                                          WT_Kcnc1_p35_CB_1step.sct@meta.data$NES)
+                                                          
+
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(WT_Kcnc1_p35_CB_1step.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- WT_Kcnc1_p35_CB_1step.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(p35_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION, by = c("cluster" = "cluster"))
+
+## Format NES values to two decimal places
+cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
+
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p35_CB_1step_MAST_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.pdf", width = 6, height = 6)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
+  scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
+  geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+# SCPA
+
+# Compare WT and cYAPKO using SCPA ##########################################
+
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") 
+library("SCPA")
+library("circlize")
+library("magrittr")
+library("msigdb")
+library("msigdbr")
+library("ComplexHeatmap")
+library("ggrepel")
+library("ggpubr")
+
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "RNA" # Recommended 
+
+
+
+# Test different Pathway collections and generate enrichment plot for each cell types (C2 = Pathway, C5 = ontology )
+## import Pathways
+pathways <- msigdbr("Mus musculus", "C5") %>%          # !!!!!! CHANGE HERE PATHWAYS !!!!!!
+format_pathways()
+names(pathways) <- sapply(pathways, function(x) x$Pathway[1]) # just to name the list, so easier to visualise
+
+# Code to save output for each cell type comparison
+clusters = c(
+ "Granular",
+  "Interneuron",
+  "MLI1",
+  "MLI2_1",
+  "MLI2_2",
+  "Golgi",
+  "Unipolar_Brush",
+  "Purkinje",
+  "Astrocyte",
+  "Bergman_Glia",
+  "OPC",
+  "Meningeal",
+  "Endothelial",
+  "Choroid_Plexus",
+  "Endothelial_Stalk"
+)
+### Loop through each value
+for (cluster in clusters) {
+  #### Extract data for WT and cYAPKO based on current value
+  WT <- seurat_extract(WT_Kcnc1_p35_CB_1step.sct,
+                       meta1 = "condition", value_meta1 = "WT",
+                       meta2 = "cluster.annot", value_meta2 = cluster)
+
+  Kcnc1 <- seurat_extract(WT_Kcnc1_p35_CB_1step.sct,
+                           meta1 = "condition", value_meta1 = "Kcnc1",
+                           meta2 = "cluster.annot", value_meta2 = cluster)
+
+  ##### Compare pathways
+  WT_cYAPKO <- compare_pathways(samples = list(WT, Kcnc1),
+                                pathways = pathways,
+                                parallel = TRUE, cores = 8)
+
+  ##### Write to file using the current value in the filename
+  output_filename <- paste0("output/Pathway/SCPA_CB_p35_C5_", cluster, ".txt")       # !!!!!! CHANGE HERE PATHWAYS !!!!!!
+  write.table(WT_cYAPKO, file = output_filename, sep = "\t", quote = FALSE, row.names = FALSE)
+}
+#--> Long ~2hrs
+
+
+
+## load all the comparison for each cell type (FC qval information)
+clusters = c(
+ "Granular",
+  "Interneuron",
+  "MLI1",
+  "MLI2_1",
+  "MLI2_2",
+  "Golgi",
+  "Unipolar_Brush",
+  "Purkinje",
+  "Astrocyte",
+  "Bergman_Glia",
+  "OPC",
+  "Meningeal",
+  "Endothelial",
+  "Choroid_Plexus",
+  "Endothelial_Stalk"
+)
+## import with a function
+### A function to read and add the cluster column
+read_and_add_cluster <- function(cluster) {
+  path <- paste0("output/Pathway/SCPA_CB_p35_C2_", cluster, ".txt")
+  df <- read.delim(path, header = TRUE) %>%
+    add_column(cluster = cluster)
+  return(df)
+}
+### Use lapply to apply the function on each cluster and bind all data frames together
+all_data <- bind_rows(lapply(clusters, read_and_add_cluster)) %>% as_tibble()
+
+## Filter pathway of interest
+pathways <- c(
+  "WP_NEURODEGENERATION_WITH_BRAIN_IRON_ACCUMULATION_NBIA_SUBTYPES_PATHWAY",
+  "WP_NEUROINFLAMMATION_AND_GLUTAMATERGIC_SIGNALING",
+  "KEGG_ALZHEIMERS_DISEASE",
+  "WP_ALZHEIMERS_DISEASE",
+  "KEGG_PARKINSONS_DISEASE",
+  "WP_PARKINSONS_DISEASE_PATHWAY",
+  "KEGG_HUNTINGTONS_DISEASE",
+  "WP_ERK_PATHWAY_IN_HUNTINGTONS_DISEASE",
+  "KEGG_AMYOTROPHIC_LATERAL_SCLEROSIS_ALS",
+  "WP_AMYOTROPHIC_LATERAL_SCLEROSIS_ALS",
+  "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION",
+  "REACTOME_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "KEGG_NEUROACTIVE_LIGAND_RECEPTOR_INTERACTION",
+  "REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS",
+  "REACTOME_POTASSIUM_CHANNELS",
+  "REACTOME_ION_CHANNEL_TRANSPORT",
+  "KEGG_CALCIUM_SIGNALING_PATHWAY",
+  "REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS",
+  "REACTOME_ACETYLCHOLINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_DOPAMINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_GLUTAMATE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_NOREPINEPHRINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_SEROTONIN_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "ALCALA_APOPTOSIS",
+  "KEGG_APOPTOSIS",
+  "REACTOME_APOPTOSIS",
+  "REACTOME_INTRINSIC_PATHWAY_FOR_APOPTOSIS",
+  "WP_APOPTOSIS",
+  "WP_APOPTOSIS_MODULATION_AND_SIGNALING",
+  "REACTOME_DEATH_RECEPTOR_SIGNALLING",
+  "REACTOME_DISEASES_OF_PROGRAMMED_CELL_DEATH",
+  "REACTOME_FOXO_MEDIATED_TRANSCRIPTION_OF_CELL_DEATH_GENES",
+  "REACTOME_PROGRAMMED_CELL_DEATH",
+  "REACTOME_TP53_REGULATES_TRANSCRIPTION_OF_CELL_DEATH_GENES",
+  "BIOCARTA_DEATH_PATHWAY",
+  "REACTOME_DETOXIFICATION_OF_REACTIVE_OXYGEN_SPECIES",
+  "WP_PKCGAMMA_CALCIUM_SIGNALING_PATHWAY_IN_ATAXIA"
+)
+classes <- c(
+  rep("Neurodegeneration", 10),
+  rep("Neuronal_Activity", 13),
+  rep("Apoptosis", 12),
+  "ROS",
+  "Ataxia"
+)
+colors <- c(
+  rep("Purple", 10),
+  rep("Green", 13),
+  rep("Dark Orange", 12),
+  "Red",
+  "Blue"
+)
+pathway_tibble <- tibble(
+  Pathway = pathways,
+  Class = classes,
+  Color = colors
+)
+
+pathway_all_data = pathway_tibble %>%
+  left_join(all_data)
+
+pathway_all_data$Pathway <- factor(pathway_all_data$Pathway, levels = pathways)
+
+
+
+### dotplot
+pdf("output/Pathway/dotplot_SCPA_CB_p35_C2_selectedPathwayV1.pdf", width=12, height=8)
+ggplot(pathway_all_data %>%
+         mutate(cluster = ifelse(cluster == "MLI2_2", "PLI", cluster)) %>%
+         mutate(cluster = ifelse(cluster == "MLI2_1", "MLI2", cluster)),
+       aes(x = cluster, y = Pathway)) +
+  geom_point(aes(size = ifelse(qval > 1.4, qval, NA), color = Color), na.rm = TRUE) +
+  scale_size_continuous(range = c(3, 10), breaks = c(1.5, 2, 3, 4), name = "qval") +
+  scale_color_identity() +
+  theme_bw() +
+  labs(x = "Cluster",
+       y = "Pathway",
+       color = "Class Color") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+        legend.position = "right") +
+  guides(color = guide_legend(title = "Class Color", override.aes = list(size = 5)),
+         size = guide_legend(title = "qval")) 
+dev.off()
+
+
+
+
+
+
+# GSEA plot
+library("fgsea")
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c( "Granule",
+  "MLI1",
+  "MLI2" ,
+  "PLI12" ,
+  "PLI23" ,
+  "Golgi" ,
+  "Unipolar_Brush" ,
+  "Purkinje",
+  "Astrocyte" ,
+  "Bergman_Glia",
+  "OPC",
+  "Meningeal",
+  "Endothelial",
+  "Endothelial_Stalk",
+  "Choroid_Plexus",
+  "Unknown_Neuron_Subpop")
+
+
+# Loop over each cluster type to read data and assign to a variable
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_MAST.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1)
+  assign(cluster, data)
+}
+
+## load list of genes to test
+### List1
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURON_INTRINSIC_APOPTOTIC_SIGNALING_PATHWAY_IN_RESPONSE_TO_OXIDATIVE_STRESS = read_table(file = "output/Pathway/geneList_GOBP_NEURON_INTRINSIC_APOPTOTIC.txt")$Genes,
+  GOBP_NEUROINFLAMMATORY_RESPONSE = read_table(file = "output/Pathway/geneList_GOBP_NEUROINFLAMMATORY_RESPONSE.txt")$Genes
+)
+### List2
+fgsea_sets <- list(
+  GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION = read_table(file = "output/Pathway/geneList_GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  GOBP_NEURONAL_SIGNAL_TRANSDUCTION = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_SIGNAL_TRANSDUCTION.txt")$Genes,
+  REACTOME_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_POTASSIUM_CHANNELS.txt")$Genes,
+  REACTOME_ION_CHANNEL_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_ION_CHANNEL_TRANSPORT.txt")$Genes
+)
+### List3
+fgsea_sets <- list(
+  REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING = read_table(file = "output/Pathway/geneList_REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING.txt")$Genes,
+  REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS = read_table(file = "output/Pathway/geneList_REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes,
+  REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS.txt")$Genes
+)
+### List4
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes
+)
+
+
+## Rank genes based on FC
+genes <- Purkinje %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+  rownames_to_column(var = "gene") %>%
+  arrange(desc(avg_log2FC)) %>% 
+  dplyr::select(gene, avg_log2FC)
+
+ranks <- deframe(genes)
+head(ranks)
+## Run GSEA
+
+fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 10000)
+fgseaResTidy <- fgseaRes %>%
+  as_tibble() %>%
+  arrange(desc(ES))
+fgseaResTidy %>% 
+  dplyr::select(-leadingEdge, -NES, -nMoreExtreme) %>% 
+  arrange(padj) %>% 
+  head()
+
+
+## plot GSEA
+pdf("output/Pathway/GSEA_Kcnc1_response_p35_CB_QCV3dim50kparam50res03_allGenes-mmu05022-Purkinje.pdf", width=5, height=3)
+
+plotEnrichment(fgsea_sets[["PathwaysOfNeurodegeneration"]],
+               ranks) + labs(title="PathwaysOfNeurodegeneration-Purkinje") +
+               theme_bw()
+dev.off()
+
+
+# Save output table for all pathway and cluster
+## Define the list of cluster types
+cluster_types <- c( "Granule",
+  "MLI1",
+  "MLI2" ,
+  "PLI12" ,
+  "PLI23" ,
+  "Golgi" ,
+  "Unipolar_Brush" ,
+  "Purkinje",
+  "Astrocyte" ,
+  "Bergman_Glia",
+  "OPC",
+  "Meningeal",
+  "Endothelial",
+  "Endothelial_Stalk",
+  "Choroid_Plexus",
+  "Unknown_Neuron_Subpop")
+
+## Initialize an empty list to store the results for each cluster type
+all_results <- list()
+## Loop over each cluster type
+for (cluster in cluster_types) {
+  
+  # Extract genes for the current cluster
+  genes <- get(cluster) %>% 
+    rownames_to_column(var = "gene") %>%
+    arrange(desc(avg_log2FC)) %>% 
+    dplyr::select(gene, avg_log2FC)
+  
+  ranks <- deframe(genes)
+  
+  # Run GSEA for the current cluster
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 10000)
+  fgseaResTidy <- fgseaRes %>%
+    as_tibble() %>%
+    arrange(desc(ES))
+  
+  # Extract summary table and add cluster column
+  fgseaResTidy_summary = fgseaResTidy %>% 
+    dplyr::select(pathway, pval, padj, ES, size, NES) %>%
+    mutate(cluster = cluster) %>%
+    arrange(padj) %>% 
+    head()
+  
+  # Store results in the list
+  all_results[[cluster]] <- fgseaResTidy_summary
+}
+## Combine results from all cluster types into one table
+final_results <- bind_rows(all_results, .id = "cluster")
+
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_MAST-List3.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+# Heatmap all GSEA
+pdf("output/Pathway/heatmap_gsea_padj-Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_MAST-List3.pdf", width=10, height=3)
+ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+### if need reorder terms
+final_results$pathway <- factor(final_results$pathway, levels = c("PathwaysOfNeurodegeneration", "GOBP_NEURONAL_ACTION_POTENTIAL", "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")) 
+
+pdf("output/Pathway/heatmap_gsea_padj-Kcnc1_response_p35_CB_QCV2dim50kparam20res03_allGenes_correct-List4.pdf", width=10, height=3)
+ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+
+
+
+
+
+```
+
+
+
+
+
+#### p180 Cerebellum
+
+```bash
+conda activate scRNAseqV2
+```
+
+
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+
+## Load the matrix and Create SEURAT object
+samples <- list(
+  WT_p180_CB_Rep1 = "output/soupX/WT_p180_CB_Rep1.RData",
+  WT_p180_CB_Rep2 = "output/soupX/WT_p180_CB_Rep2.RData",
+  WT_p180_CB_Rep3 = "output/soupX/WT_p180_CB_Rep3.RData",
+  Kcnc1_p180_CB_Rep1 = "output/soupX/Kcnc1_p180_CB_Rep1.RData",
+  Kcnc1_p180_CB_Rep2 = "output/soupX/Kcnc1_p180_CB_Rep2.RData",
+  Kcnc1_p180_CB_Rep3 = "output/soupX/Kcnc1_p180_CB_Rep3.RData"
+)
+
+seurat_objects <- list()
+
+for (sample_name in names(samples)) {
+  load(samples[[sample_name]])
+  seurat_objects[[sample_name]] <- CreateSeuratObject(counts = out, project = sample_name)
+}
+
+## Function to assign Seurat objects to variables (unlist the list)
+assign_seurat_objects <- function(seurat_objects_list) {
+  for (sample_name in names(seurat_objects_list)) {
+    assign(sample_name, seurat_objects_list[[sample_name]], envir = .GlobalEnv)
+  }
+}
+assign_seurat_objects(seurat_objects) # This apply the function
+
+
+# QUALITY CONTROL
+# Function to add mitochondrial and ribosomal content
+add_quality_control <- function(seurat_object) {
+  seurat_object[["percent.mt"]] <- PercentageFeatureSet(seurat_object, pattern = "^mt-")
+  seurat_object[["percent.rb"]] <- PercentageFeatureSet(seurat_object, pattern = "^Rp[sl]")
+  return(seurat_object)
+}
+seurat_objects <- lapply(seurat_objects, add_quality_control) # This apply the function
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+
+# Function to add doublet information
+add_doublet_information <- function(sample_name, seurat_object) {
+  doublet_file <- paste0("output/doublets/", sample_name, ".tsv")
+  doublets <- read.table(doublet_file, header = FALSE, row.names = 1)
+  colnames(doublets) <- c("Doublet_score", "Is_doublet")
+  seurat_object <- AddMetaData(seurat_object, doublets)
+  seurat_object$Doublet_score <- as.numeric(seurat_object$Doublet_score)
+  return(seurat_object)
+}
+## Apply the function to each Seurat object in the list
+for (sample_name in names(seurat_objects)) {
+  if (sample_name != "Kcnc1_p180_CB_Rep3") {
+    seurat_objects[[sample_name]] <- add_doublet_information(sample_name, seurat_objects[[sample_name]])
+  }
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+### Kcnc1_p180_CB_Rep3 Done separately as doublet treshold set manually
+doublets <- read.table("output/doublets/Kcnc1_p180_CB_Rep3_tresh025.tsv",header = F,row.names = 1)
+colnames(doublets) <- c("Doublet_score","Is_doublet")
+Kcnc1_p180_CB_Rep3 <- AddMetaData(Kcnc1_p180_CB_Rep3,doublets)
+Kcnc1_p180_CB_Rep3$Doublet_score <- as.numeric(Kcnc1_p180_CB_Rep3$Doublet_score) # make score as numeric
+## Re include  Kcnc1_p180_CB_Rep3 in our list
+
+seurat_objects[["Kcnc1_p180_CB_Rep3"]] <- Kcnc1_p180_CB_Rep3
+
+
+##################### Doublet testing for sample Kcnc1_p180_CB_Rep3 with manual treshold for doublet detection #########
+Kcnc1_p180_CB_Rep3[["percent.mt"]] <- PercentageFeatureSet(Kcnc1_p180_CB_Rep3, pattern = "^mt-")
+Kcnc1_p180_CB_Rep3[["percent.rb"]] <- PercentageFeatureSet(Kcnc1_p180_CB_Rep3, pattern = "^Rp[sl]")
+
+doublets <- read.table("output/doublets/Kcnc1_p180_CB_Rep3_tresh04.tsv",header = F,row.names = 1)
+colnames(doublets) <- c("Doublet_score","Is_doublet")
+Kcnc1_p180_CB_Rep3 <- AddMetaData(Kcnc1_p180_CB_Rep3,doublets)
+Kcnc1_p180_CB_Rep3$Doublet_score <- as.numeric(Kcnc1_p180_CB_Rep3$Doublet_score) # make score as numeric
+head(Kcnc1_p180_CB_Rep3[[]])
+
+pdf("output/seurat/FeatureScatter_QC_mt_doublet_Kcnc1_p180_CB_Rep3_tresh04.pdf", width=5, height=5)
+FeatureScatter(Kcnc1_p180_CB_Rep3, feature1 = "percent.mt", feature2 = "Doublet_score")
+dev.off()
+pdf("output/seurat/FeatureScatter_QC_RNAfeature_doublet_Kcnc1_p180_CB_Rep3_tresh04.pdf", width=5, height=5)
+FeatureScatter(Kcnc1_p180_CB_Rep3, feature1 = "nFeature_RNA", feature2 = "Doublet_score")
+dev.off()
+########################################################################################################################
+
+
+# Loop to generate QC plots for each sample
+# Define the output directory
+output_dir <- "output/seurat/"
+
+# Loop through each Seurat object to generate the plots
+for (sample_name in names(seurat_objects)) {
+  seurat_object <- seurat_objects[[sample_name]]
+  
+  # Violin plot
+  pdf(paste0(output_dir, "VlnPlot_QC_", sample_name, ".pdf"), width = 10, height = 6)
+  print(VlnPlot(seurat_object, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1) & 
+    theme(plot.title = element_text(size = 10)))
+  dev.off()
+  
+  # Scatter plots
+  pdf(paste0(output_dir, "FeatureScatter_QC_RNAcount_mt_", sample_name, ".pdf"), width = 5, height = 5)
+  print(FeatureScatter(seurat_object, feature1 = "nCount_RNA", feature2 = "percent.mt"))
+  dev.off()
+  
+  pdf(paste0(output_dir, "FeatureScatter_QC_RNAcount_RNAfeature_", sample_name, ".pdf"), width = 5, height = 5)
+  print(FeatureScatter(seurat_object, feature1 = "nCount_RNA", feature2 = "nFeature_RNA"))
+  dev.off()
+  
+  pdf(paste0(output_dir, "FeatureScatter_QC_rb_mt_", sample_name, ".pdf"), width = 5, height = 5)
+  print(FeatureScatter(seurat_object, feature1 = "percent.rb", feature2 = "percent.mt"))
+  dev.off()
+  
+  pdf(paste0(output_dir, "FeatureScatter_QC_mt_doublet_", sample_name, ".pdf"), width = 5, height = 5)
+  print(FeatureScatter(seurat_object, feature1 = "percent.mt", feature2 = "Doublet_score"))
+  dev.off()
+  
+  pdf(paste0(output_dir, "FeatureScatter_QC_RNAfeature_doublet_", sample_name, ".pdf"), width = 5, height = 5)
+  print(FeatureScatter(seurat_object, feature1 = "nFeature_RNA", feature2 = "Doublet_score"))
+  dev.off()
+}
+
+
+
+##### QC filtering _ V4 (used for p180) ############################################
+
+
+###  Remove cells: percent.mt > 7, percent.rb > 5, nFeature_RNA < 800, nFeature_RNA > 4000, nCount_RNA < 1000, nCount_RNA > 7000
+
+apply_qc <- function(seurat_object) {
+  meta <- seurat_object@meta.data
+  # Initialize QC column with 'Pass'
+  meta$QC <- 'Pass'
+  # Identify failing QC conditions
+  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
+  meta$QC[meta$nFeature_RNA < 800] <- 'Low_nFeature'
+  meta$QC[meta$nFeature_RNA > 4000] <- 'High_nFeatureRNA'
+  meta$QC[meta$nCount_RNA < 1000] <- 'Low_nCountRNA'
+  meta$QC[meta$nCount_RNA > 7000] <- 'High_nCountRNA'
+  meta$QC[meta$percent.mt > 7] <- 'High_MT'
+  meta$QC[meta$percent.rb > 5] <- 'High_RB'
+  # Handle multiple failing conditions
+  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
+  # Assign back to Seurat object
+  seurat_object@meta.data <- meta
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # Reapply function to all individuals in the list
+#####################################################################################################
+
+
+#### Write QC summary
+qc_summary_list <- list()
+
+# Collect QC summary for each sample
+for (sample_name in names(seurat_objects)) {
+  qc_summary <- table(seurat_objects[[sample_name]][['QC']])
+  qc_summary_df <- as.data.frame(qc_summary)
+  qc_summary_df$Sample <- sample_name
+  qc_summary_list[[sample_name]] <- qc_summary_df
+}
+
+qc_summary_combined <- do.call(rbind, qc_summary_list)
+
+# Write the data frame to a tab-separated text file
+write.table(qc_summary_combined, file = "output/seurat/QC_summary_version2_p180.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
+
+## subset seurat object to keep cells that pass the QC
+subset_qc <- function(seurat_object) {
+  seurat_object <- subset(seurat_object, subset = QC == 'Pass')
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- subset_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# Normalize and scale data, then run cell cycle sorting
+set.seed(42)
+## Load gene marker of cell type
+mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+
+# Function to normalize, scale data, and perform cell cycle scoring
+process_seurat_object <- function(seurat_object, mmus_s, mmus_g2m) {
+  seurat_object <- NormalizeData(seurat_object, normalization.method = "LogNormalize", scale.factor = 10000)
+  all.genes <- rownames(seurat_object)
+  seurat_object <- ScaleData(seurat_object, features = all.genes)  # zero-centres and scales it
+  seurat_object <- CellCycleScoring(seurat_object, s.features = mmus_s, g2m.features = mmus_g2m)  # cell cycle sorting
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- process_seurat_object(seurat_objects[[sample_name]], mmus_s, mmus_g2m)
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# write output summary phase
+phase_summary_list <- list()
+# Collect QC phase summary for each sample
+for (sample_name in names(seurat_objects)) {
+  phase_summary <- table(seurat_objects[[sample_name]][[]]$Phase)
+  phase_summary_df <- as.data.frame(phase_summary)
+  phase_summary_df$Sample <- sample_name
+  phase_summary_list[[sample_name]] <- phase_summary_df
+}
+# Combine all summaries into one data frame
+phase_summary_combined <- do.call(rbind, phase_summary_list)
+write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version2_p180.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
+
+
+
+############ SAVE samples #################################################################
+save_seurat_objects <- function(seurat_objects_list, output_dir) {
+  for (sample_name in names(seurat_objects_list)) {
+    file_name <- paste0(output_dir, sample_name, "_version2_p180.rds") # 
+    saveRDS(seurat_objects_list[[sample_name]], file = file_name) # 
+  }
+}
+output_dir <- "output/seurat/"
+## Call the function to save the Seurat objects
+save_seurat_objects(seurat_objects, output_dir)
+###############################################################################################
+############# READ samples  (QC V1 V2 or V3 = V1_numeric...)################################################
+# Function to load Seurat objects
+load_seurat_objects <- function(file_paths) {
+  seurat_objects <- list()
+  for (file_path in file_paths) {
+    sample_name <- gsub("_version2_p180.rds", "", basename(file_path))
+    seurat_objects[[sample_name]] <- readRDS(file_path)
+  }
+  return(seurat_objects)
+}
+output_dir <- "output/seurat/"
+file_paths <- list.files(output_dir, pattern = "_version2_p180.rds$", full.names = TRUE)
+# Call the function to load the Seurat objects
+seurat_objects <- load_seurat_objects(file_paths)
+# Loop through the list and assign each Seurat object to a variable with the same name
+for (sample_name in names(seurat_objects)) {
+  assign(sample_name, seurat_objects[[sample_name]])
+}
+# 1 sample: WT_p35_CB_Rep2 <- readRDS(file = "output/seurat/WT_p35_CB_Rep2_V2_ReProcess_numeric.rds")
+## Kcnc1_p14_CB_Rep1 <- readRDS(file = "output/seurat/Kcnc1_p14_CB_Rep1_V1_numeric.rds")
+################################################################################################
+
+
+
+
+##########################################
+## integration WT Kcnc1 p180 all replicates (1st replicate, then genotype) ######
+ ##########################################
+
+
+WT_p180_CB_Rep1$replicate <- "Rep1"
+WT_p180_CB_Rep2$replicate <- "Rep2"
+WT_p180_CB_Rep3$replicate <- "Rep3"
+
+WT_p180_CB_Rep1$condition <- "WT"
+WT_p180_CB_Rep2$condition <- "WT"
+WT_p180_CB_Rep3$condition <- "WT"
+
+Kcnc1_p180_CB_Rep1$replicate <- "Rep1"
+Kcnc1_p180_CB_Rep2$replicate <- "Rep2"
+Kcnc1_p180_CB_Rep3$replicate <- "Rep3"
+
+Kcnc1_p180_CB_Rep1$condition <- "Kcnc1"
+Kcnc1_p180_CB_Rep2$condition <- "Kcnc1"
+Kcnc1_p180_CB_Rep3$condition <- "Kcnc1"
+
+set.seed(42)
+
+
+# Replicate and Genotype integration (1 step integration)
+## 
+WT_p180_CB_Rep1 <- SCTransform(WT_p180_CB_Rep1, method = "glmGamPoi", ncells = 8684, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nFeature_RNA","nCount_RNA", "percent.mt","percent.rb")) 
+WT_p180_CB_Rep2 <- SCTransform(WT_p180_CB_Rep2, method = "glmGamPoi", ncells = 8196, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nFeature_RNA","nCount_RNA", "percent.mt","percent.rb")) 
+WT_p180_CB_Rep3 <- SCTransform(WT_p180_CB_Rep3, method = "glmGamPoi", ncells = 9031, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nFeature_RNA","nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p180_CB_Rep1 <- SCTransform(Kcnc1_p180_CB_Rep1, method = "glmGamPoi", ncells = 9332, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nFeature_RNA","nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p180_CB_Rep2 <- SCTransform(Kcnc1_p180_CB_Rep2, method = "glmGamPoi", ncells = 8639, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nFeature_RNA","nCount_RNA", "percent.mt","percent.rb")) 
+Kcnc1_p180_CB_Rep3 <- SCTransform(Kcnc1_p180_CB_Rep3, method = "glmGamPoi", ncells = 9997, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nFeature_RNA","nCount_RNA", "percent.mt","percent.rb")) 
+
+
+srat.list <- list(WT_p180_CB_Rep1 = WT_p180_CB_Rep1, WT_p180_CB_Rep2 = WT_p180_CB_Rep2, WT_p180_CB_Rep3 = WT_p180_CB_Rep3, Kcnc1_p180_CB_Rep1 = Kcnc1_p180_CB_Rep1, Kcnc1_p180_CB_Rep2 = Kcnc1_p180_CB_Rep2, Kcnc1_p180_CB_Rep3 = Kcnc1_p180_CB_Rep3)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+WT_Kcnc1_p180_CB_1step.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+WT_Kcnc1_p180_CB_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p180_CB_1step.anchors, normalization.method = "SCT")
+
+
+#### UMAP
+DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "integrated"
+
+WT_Kcnc1_p180_CB_1step.sct <- RunPCA(WT_Kcnc1_p180_CB_1step.sct, verbose = FALSE, npcs = 30)
+WT_Kcnc1_p180_CB_1step.sct <- RunUMAP(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
+WT_Kcnc1_p180_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", k.param = 10, dims = 1:30)
+WT_Kcnc1_p180_CB_1step.sct <- FindClusters(WT_Kcnc1_p180_CB_1step.sct, resolution = 0.1, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+
+WT_Kcnc1_p180_CB_1step.sct$condition <- factor(WT_Kcnc1_p180_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version2dim30kparam10res01.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=TRUE)
+dev.off()
+
+
+
+DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "SCT"
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-Version2dim30-ListdotPLot.pdf", width=30, height=60)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c(  "Gabra6", "Pax6", # Granular_1
+  "Sorcs3", "Ptprk", # MLI1
+  "Nxph1", "Cdh22", # MLI2
+  "Klhl1", "Gfra2", "Aldh1a3", # PLI12
+  "Galntl6", "Kcnc2", # PLI23
+  "Zeb2", #$ Astrocyte
+  "Aqp4", "Slc39a12", # Bergman_Glia
+  "Eomes", "Rgs6", "Tafa2", # Unipolar_Brush
+  "Lef1", "Notum", "Apcdd1", "Dlc1", "Pdgfrb", # Mix_Endothelial_EndothelialMural
+  "Ptgds", "Dcn", # Meningeal
+  "Kl", "Ttr", # Choroid_Plexus
+  "Pax2", # 
+  "Calb1", "Slc1a6", "Car8", ## Purkinje
+  "Gm42397","Hcrtr2", # Oligodendrocyte
+  "Mbp", "Mag", "Plp1"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+
+
+
+
+#### QC metrics investigation ####################################
+pdf("output/seurat/VlnPlot_QCmetrics_SCT_WT_Kcnc1_p180_CB_1step-1stepIntegrationRegressNotRepeated-version2dim30kparam10res01-countMtRbRegression.pdf", width=20, height=5)
+VlnPlot(WT_Kcnc1_p180_CB_1step.sct,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+
+pdf("output/seurat/VlnPlot_QCmetrics_nFeature_RNA_SCT_WT_Kcnc1_p180_CB_1step-1stepIntegrationRegressNotRepeated-version2dim30kparam10res01-countMtRbRegression.pdf", width=5, height=5)
+VlnPlot(WT_Kcnc1_p180_CB_1step.sct,features = c("nFeature_RNA")) +
+  ylim(0,2000)
+dev.off()
+
+pdf("output/seurat/VlnPlot_QCmetrics_nCount_RNA_SCT_WT_Kcnc1_p180_CB_1step-1stepIntegrationRegressNotRepeated-version2dim30kparam10res01-countMtRbRegression.pdf", width=5, height=5)
+VlnPlot(WT_Kcnc1_p180_CB_1step.sct,features = c("nCount_RNA")) +
+  ylim(0,10000)
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p180_CB_nFeature_RNA-1stepIntegrationRegressNotRepeated-version2dim30kparam10res01.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=FALSE, features = "nFeature_RNA")
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p180_CB_percentmt-1stepIntegrationRegressNotRepeated-version2dim30kparam10res01.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.mt")
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p180_CB_percentrb-1stepIntegrationRegressNotRepeated-version2dim30kparam10res01.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.rb")
+dev.off()  
+############################################################
+
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB_splitCondition-1stepIntegrationRegressNotRepeated-version2dim30kparam10res01.pdf", width=13, height=6)
+DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=TRUE, split.by = "condition")
+dev.off()
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB_splitReplicate-1stepIntegrationRegressNotRepeated-version2dim30kparam10res01.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=TRUE, split.by = "replicate")
+dev.off()
+
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_p180_CB_Kcnc1_Phase-1stepIntegrationRegressNotRepeated-version2dim30kparam10res01.pdf", width=10, height=6)
+DimPlot(WT_Kcnc1_p180_CB_1step.sct, group.by= "Phase") & 
+  theme(plot.title = element_text(size=10))
+dev.off()  
+
+
+# save ######################################################
+## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step-version2dim30kparam10res01.sct_V1_numeric.rds") # 
+
+#WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-version2dim30kparam10res01.sct_V1_numeric.rds") # 
+
+## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step-version2dim30kparam10res01.sct_V1_label.rds") # 
+
+WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-version2dim30kparam10res01.sct_V1_label.rds") # 
+########################################################################
+
+
+
+set.seed(42)
+##########
+
+
+
+############ V1 naming version2dim30kparam10res01 (output/seurat/WT_Kcnc1_p180_CB_1step-version2dim30kparam10res01.sct_V1_numeric.rds)
+
+1= Granule "Gabra6", "Pax6"
+2= MLI1   "Sorcs3", "Ptprk"
+3= MLI2   "Nxph1", "Cdh22",
+4= Astrocyte   "Zeb2",
+5= PLI23   "Galntl6", "Kcnc2",
+6= PLI12   "Klhl1", "Gfra2", "Aldh1a3",
+7= Bergman_Glia   "Aqp4", "Slc39a12",
+8= Unipolar_Brush   "Eomes", "Rgs6", "Tafa2",
+9= Endothelial   "Lef1", "Notum", "Apcdd1", "Dlc1", "Pdgfrb",
+10= Meningeal   "Ptgds", "Dcn",
+11= Choroid_Plexus   "Kl", "Ttr",
+12= Golgi   "Pax2",
+13= Purkinje   "Calb1", "Slc1a6", "Car8",
+
+
+new.cluster.ids <- c(
+  "Granule",
+  "MLI1",
+  "MLI2",
+  "Astrocyte",
+  "PLI23",
+  "PLI12",
+  "Bergman_Glia",
+  "Unipolar_Brush",
+  "Endothelial",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Golgi",
+  "Purkinje"
+)
+
+names(new.cluster.ids) <- levels(WT_Kcnc1_p180_CB_1step.sct)
+WT_Kcnc1_p180_CB_1step.sct <- RenameIdents(WT_Kcnc1_p180_CB_1step.sct, new.cluster.ids)
+WT_Kcnc1_p180_CB_1step.sct$cluster.annot <- Idents(WT_Kcnc1_p180_CB_1step.sct) # create a new slot in my seurat object
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB_1step_version2dim30kparam10res01_label.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+dev.off()
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB_1step_version2dim30kparam10res01_noSplit_label.pdf", width=9, height=6)
+DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5)
+dev.off()
+
+
+
+# All in dotplot
+DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "SCT"
+
+
+List11:
+1= Granule "Gabra6", "Pax6"
+2= MLI1   "Sorcs3", "Ptprk"
+3= MLI2   "Nxph1", "Cdh22",
+6= PLI12   "Klhl1", "Gfra2", "Aldh1a3",
+5= PLI23   "Galntl6", "Kcnc2",
+12= Golgi   "Pax2",
+8= Unipolar_Brush   "Eomes", "Rgs6", "Tafa2",
+13= Purkinje   "Calb1", "Slc1a6", "Car8",
+4= Astrocyte   "Zeb2",
+7= Bergman_Glia   "Aqp4", "Slc39a12",
+9= Endothelial   "Lef1", "Notum", "Apcdd1", "Dlc1", "Pdgfrb",
+10= Meningeal   "Ptgds", "Dcn",
+11= Choroid_Plexus   "Kl", "Ttr",
+
+
+
+all_markers <- c(
+  "Gabra6", "Pax6",
+  "Sorcs3", "Ptprk",
+  "Nxph1", "Cdh22",
+  "Klhl1", "Gfra2", "Aldh1a3",
+  "Galntl6", "Kcnc2",
+  "Pax2",
+  "Eomes", "Rgs6", "Tafa2",
+  "Calb1", "Slc1a6", "Car8",
+  "Zeb2",
+  "Aqp4", "Slc39a12",
+  "Lef1", "Notum", "Apcdd1", "Dlc1", "Pdgfrb",
+  "Ptgds", "Dcn",
+  "Kl", "Ttr"
+)
+
+
+
+levels(WT_Kcnc1_p180_CB_1step.sct) <- c(
+  "Granule",
+  "MLI1",
+  "MLI2",
+  "PLI12",
+  "PLI23",
+  "Golgi",
+  "Unipolar_Brush",
+  "Purkinje",
+  "Astrocyte",
+  "Bergman_Glia" ,
+  "Endothelial",
+  "Meningeal",
+  "Choroid_Plexus" 
+)
+
+
+
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p180_CB_1step_version2dim30kparam10res01_label.pdf", width=11, height=4.5)
+DotPlot(WT_Kcnc1_p180_CB_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
+
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p180_CB_1step_version2dim30kparam10res01_label_vertical.pdf", width=11, height=4.5)
+DotPlot(WT_Kcnc1_p180_CB_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
+dev.off()
+
+DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "SCT"
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version2dim30kparam10res01-ListDotPlot.pdf", width=30, height=70)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = all_markers, max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version2dim30kparam10res01-Kcnc1.pdf", width=6, height=6)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = "Kcnc1", max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version2dim30kparam10res01-Kcnc1_split.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Kcnc1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version2dim30kparam10res01-mt-Nd1.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("mt-Nd1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version2dim30kparam10res01-Kcnip4.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Kcnip4"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+
+## p180 cell type proportion ###############################
+### count nb of cells in each cluster
+WT_p180_CB_Rep1 = table(Idents(WT_Kcnc1_p180_CB_1step.sct)[WT_Kcnc1_p180_CB_1step.sct$orig.ident == "WT_p180_CB_Rep1"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p180",
+             replicate= "Rep1")
+WT_p180_CB_Rep2 = table(Idents(WT_Kcnc1_p180_CB_1step.sct)[WT_Kcnc1_p180_CB_1step.sct$orig.ident == "WT_p180_CB_Rep2"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p180",
+             replicate= "Rep2")
+WT_p180_CB_Rep3 = table(Idents(WT_Kcnc1_p180_CB_1step.sct)[WT_Kcnc1_p180_CB_1step.sct$orig.ident == "WT_p180_CB_Rep3"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p180",
+             replicate= "Rep3")
+
+Kcnc1_p180_CB_Rep1 = table(Idents(WT_Kcnc1_p180_CB_1step.sct)[WT_Kcnc1_p180_CB_1step.sct$orig.ident == "Kcnc1_p180_CB_Rep1"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p180",
+             replicate= "Rep1")
+Kcnc1_p180_CB_Rep2 = table(Idents(WT_Kcnc1_p180_CB_1step.sct)[WT_Kcnc1_p180_CB_1step.sct$orig.ident == "Kcnc1_p180_CB_Rep2"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p180",
+             replicate= "Rep2")
+Kcnc1_p180_CB_Rep3 = table(Idents(WT_Kcnc1_p180_CB_1step.sct)[WT_Kcnc1_p180_CB_1step.sct$orig.ident == "Kcnc1_p180_CB_Rep3"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p180",
+             replicate= "Rep3")
+
+
+p180_CB = WT_p180_CB_Rep1 %>%
+  bind_rows(WT_p180_CB_Rep2) %>%
+  bind_rows(WT_p180_CB_Rep3) %>%
+  bind_rows(Kcnc1_p180_CB_Rep1) %>%
+  bind_rows(Kcnc1_p180_CB_Rep2) %>%
+  bind_rows(Kcnc1_p180_CB_Rep3) %>%
+  as_tibble()
+  
+
+
+
+### Keeping all replicates
+p180_CB_prop = p180_CB %>%
+  group_by(replicate, genotype) %>%
+  mutate(total_count = sum(count)) %>%
+  ungroup() %>%
+  mutate(proportion = (count / total_count) * 100)
+
+p180_CB_prop$genotype <-
+  factor(p180_CB_prop$genotype,
+         c("WT", "Kcnc1"))
+
+pdf("output/seurat/histogramProp_WT_Kcnc1_p180_CB_1step_version2dim30kparam10res01.pdf", width=7, height=4)
+ggbarplot(p180_CB_prop, x = "cluster", y = "proportion", fill = "genotype",
+                  color = "genotype", palette = c("black", "blue"),
+                  position = position_dodge(0.8), # Separate bars by genotype
+                  add = "mean_se", # Add error bars
+                  lab.pos = "out", lab.size = 3) +
+  stat_compare_means(aes(group = genotype), method = "t.test", label = "p.signif") +
+  theme_bw() +
+  labs(x = "Cell Type (Cluster)", y = "Cell Proportion (%)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+# differential expressed genes across conditions
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+# --> Too long run in slurm job
+
+
+XXXY BELOW NOT MOD
+
+
+# DEGs number in dotplot
+DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
+## List of cell types
+cell_types <- c(  
+  "Granular_1",
+  "Granular_2",
+  "Granular_3",
+  "MLI1",
+  "MLI2",
+  "PLI12",
+  "PLI23",
+  "Purkinje",
+  "Golgi",
+  "Unipolar_Brush",
+  "Astrocyte",
+  "Mix_Endothelial_EndothelialMural",
+  "Oligodendrocyte",
+  "Bergman_Glia",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Unknown_Neuron_Subpop")
+## Loop through each cell type to count the number of significant DEGs
+for (cell_type in cell_types) {
+  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_MAST.txt", sep = "")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
+  num_degs <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.25 | deg_data$avg_log2FC < -0.25)) ## Count the number of significant DEGs
+  DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
+}
+## Dotplot
+DEG_count= DEG_count %>%
+  mutate(Cell_Type = factor(Cell_Type, levels = c( 
+  "Granular_1",
+  "Granular_2",
+  "Granular_3",
+  "MLI1",
+  "MLI2",
+  "PLI12",
+  "PLI23",
+  "Purkinje",
+  "Golgi",
+  "Unipolar_Brush",
+  "Astrocyte",
+  "Mix_Endothelial_EndothelialMural",
+  "Oligodendrocyte",
+  "Bergman_Glia",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Unknown_Neuron_Subpop") ) ) 
+DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = rev(levels(DEG_count$Cell_Type)))
+
+# Generate the dot plot
+pdf("output/seurat/Dotplot_DEG_count_WT_Kcnc1_p180_CB_1step_DEG_MAST_padj05fc025_numeric.pdf", width=9, height=4)
+ggplot(DEG_count, aes(x = 1, y = Cell_Type, color = Cell_Type)) +
+  geom_point(aes(size = Num_DEGs), alpha = 0.8) +
+  scale_color_manual(values = cell_type_colors) +
+  scale_size(range = c(2, 10)) +
+  theme_void() + # Removes all gridlines, axes, and background elements
+  theme(
+    axis.text.x = element_blank(), # Removes x-axis labels
+    axis.ticks.x = element_blank(), # Removes x-axis ticks
+    axis.title.x = element_blank(), # Removes x-axis title
+    axis.text.y = element_text(size = 10, hjust = 0),
+    axis.title = element_text(size = 12, face = "bold"),
+    legend.position = "left", # Keeps the legend visible
+    legend.title = element_text(size = 12, face = "bold"), # Adjusts legend title style
+    legend.text = element_text(size = 10) # Adjusts legend text style
+  ) +
+  labs(
+    y = "Cell Type",
+    color = "Cell Type",
+    size = "Number of DEGs"
+  )
+dev.off()
+
+pdf("output/seurat/Dotplot_DEG_count_WT_Kcnc1_p180_CB_1step_DEG_MAST_padj05fc025_numeric_FORLEGEND.pdf", width=9, height=4)
+ggplot(DEG_count, aes(x = Cell_Type, y = 1)) +
+  geom_point(aes(size = ifelse(Num_DEGs == 0, 1, Num_DEGs), fill = Cell_Type), shape = 21, color = "black") +
+  scale_size_continuous(range = c(1, 15)) +
+  scale_fill_manual(values = cell_type_colors, guide = "none") +  # Remove the legend for cell types
+  theme_void() +
+  labs(title = "Number of DEGs per Cell Type", x = "Cell Type", y = "", size = "Number of DEGs") +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5, vjust = 50, size = 15),  # Adjust the position of x-axis labels
+    axis.text.y = element_blank(), 
+    axis.ticks.y = element_blank(), 
+    axis.title.y = element_blank(),
+    legend.position = "right"
+  ) +
+  guides(size = guide_legend(title = "Number of DEGs", title.position = "top", title.hjust = 0.5))  # Keep only the size legend
+dev.off()
+
+
+
+# DEGs number colored in a UMAP
+Idents(WT_Kcnc1_p180_CB_1step.sct) <- "cluster.annot"
+
+DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
+## List of cell types
+cell_types <- c(      "Granular_1",
+  "Granular_2",
+  "Granular_3",
+  "MLI1",
+  "MLI2",
+  "PLI12",
+  "PLI23",
+  "Astrocyte",
+  "Bergman_Glia",
+  "Unipolar_Brush",
+  "Mix_Endothelial_EndothelialMural",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Golgi",
+  "Purkinje",
+  "Unknown_Neuron_Subpop",
+  "Oligodendrocyte")
+## Loop through each cell type to count the number of significant DEGs
+for (cell_type in cell_types) {
+  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_MAST.txt", sep = "")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
+  num_degs <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.25 | deg_data$avg_log2FC < -0.25)) ## Count the number of significant DEGs
+  DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
+}
+
+DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = c(  "Granular_1",
+  "Granular_2",
+  "Granular_3",
+  "MLI1",
+  "MLI2",
+  "PLI12",
+  "PLI23",
+  "Astrocyte",
+  "Bergman_Glia",
+  "Unipolar_Brush",
+  "Mix_Endothelial_EndothelialMural",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Golgi",
+  "Purkinje",
+  "Unknown_Neuron_Subpop",
+  "Oligodendrocyte")) 
+  
+  
+# Add DEG information to my seurat object - DEG_count
+cell_clusters <- WT_Kcnc1_p180_CB_1step.sct@meta.data$cluster.annot
+names(cell_clusters) <- rownames(WT_Kcnc1_p180_CB_1step.sct@meta.data)
+DEG_named_vector <- DEG_count$Num_DEGs[match(cell_clusters, DEG_count$Cell_Type)]
+names(DEG_named_vector) <- names(cell_clusters)
+# Integrate DEG values into the Seurat object
+WT_Kcnc1_p180_CB_1step.sct <- AddMetaData(WT_Kcnc1_p180_CB_1step.sct, metadata = DEG_named_vector, col.name = "DEG")
+# Create a UMAP plot colored by qval values
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p180_CB_1step_DEG.pdf", width=6, height=6)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = "DEG", pt.size = 0.5, reduction = "umap", label = TRUE) +
+  scale_colour_viridis() #  option="magma"
+dev.off()
+# Add values on the heatmap
+## Extract UMAP coordinates
+umap_coordinates <- as.data.frame(WT_Kcnc1_p180_CB_1step.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- WT_Kcnc1_p180_CB_1step.sct@meta.data$cluster.annot
+## Calculate cluster centers
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(DEG_count %>% dplyr::rename( "cluster"="Cell_Type"))
+## Create a UMAP plot colored by DEG values, with cluster DEG counts as text annotations
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p180_CB_1step_DEG_MAST_padj05fc025_numeric.pdf", width=6, height=6)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = "DEG", pt.size = 0.5, reduction = "umap") +
+  scale_colour_viridis(option="magma") + # option="magma"
+  geom_text(data = cluster_centers, aes(x = UMAP_1, y = UMAP_2, label = Num_DEGs), 
+            size = 4, color = "red", fontface = "bold") 
+dev.off()
+
+
+# GSEA output colored in a UMAP
+## Pathway of neurodegeneration
+p180_correct_List4_PathwaysOfNeurodegeneration <- read.table("output/Pathway/gsea_output_Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_MAST-List1.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "PathwaysOfNeurodegeneration")
+## Add NES and pval information to the Seurat object metadata
+WT_Kcnc1_p180_CB_1step.sct@meta.data$NES <- p180_correct_List4_PathwaysOfNeurodegeneration$NES[match(WT_Kcnc1_p180_CB_1step.sct@meta.data$cluster.annot, 
+                                                                       p180_correct_List4_PathwaysOfNeurodegeneration$cluster)]
+WT_Kcnc1_p180_CB_1step.sct@meta.data$pval <- p180_correct_List4_PathwaysOfNeurodegeneration$pval[match(WT_Kcnc1_p180_CB_1step.sct@meta.data$cluster.annot, 
+                                                                         p180_correct_List4_PathwaysOfNeurodegeneration$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with pval < 0.05 as grey
+WT_Kcnc1_p180_CB_1step.sct@meta.data$NES_colored <- ifelse(WT_Kcnc1_p180_CB_1step.sct@meta.data$pval > 0.05, NA, 
+                                                          WT_Kcnc1_p180_CB_1step.sct@meta.data$NES)                                                          
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(WT_Kcnc1_p180_CB_1step.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- WT_Kcnc1_p180_CB_1step.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(p180_correct_List4_PathwaysOfNeurodegeneration, by = c("cluster" = "cluster"))
+## Format NES values to two decimal places
+cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p180_CB_1step_MAST_PathwaysOfNeurodegeneration.pdf", width = 6, height = 6)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
+  scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
+  geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+## NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION
+p180_correct_List3_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION <- read.table("output/Pathway/gsea_output_Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_MAST-List3.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")
+## Add NES and pval information to the Seurat object metadata
+WT_Kcnc1_p180_CB_1step.sct@meta.data$NES <- p180_correct_List3_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$NES[match(WT_Kcnc1_p180_CB_1step.sct@meta.data$cluster.annot, 
+                                                                       p180_correct_List3_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$cluster)]
+WT_Kcnc1_p180_CB_1step.sct@meta.data$pval <- p180_correct_List3_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$pval[match(WT_Kcnc1_p180_CB_1step.sct@meta.data$cluster.annot, 
+                                                                         p180_correct_List3_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with pval < 0.05 as grey
+WT_Kcnc1_p180_CB_1step.sct@meta.data$NES_colored <- ifelse(WT_Kcnc1_p180_CB_1step.sct@meta.data$pval > 0.05, NA, 
+                                                          WT_Kcnc1_p180_CB_1step.sct@meta.data$NES)                                                          
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(WT_Kcnc1_p180_CB_1step.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- WT_Kcnc1_p180_CB_1step.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(p180_correct_List3_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION, by = c("cluster" = "cluster"))
+## Format NES values to two decimal places
+cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p180_CB_1step_MAST_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.pdf", width = 6, height = 6)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
+  scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
+  geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+# SCPA
+
+# Compare WT and cYAPKO using SCPA ##########################################
+
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") 
+library("SCPA")
+library("circlize")
+library("magrittr")
+library("msigdb")
+library("msigdbr")
+library("ComplexHeatmap")
+library("ggrepel")
+library("ggpubr")
+
+DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "RNA" # Recommended 
+
+
+
+# Test different Pathway collections and generate enrichment plot for each cell types (C2 = Pathway, C5 = ontology )
+## import Pathways
+pathways <- msigdbr("Mus musculus", "C5") %>%          # !!!!!! CHANGE HERE PATHWAYS !!!!!!
+format_pathways()
+names(pathways) <- sapply(pathways, function(x) x$Pathway[1]) # just to name the list, so easier to visualise
+
+# Code to save output for each cell type comparison
+clusters = c(
+  "Granular_1",
+  "Granular_2",
+  "Granular_3",
+  "MLI1",
+  "MLI2_1",
+  "MLI2_2",
+  "Interneuron",
+  "Astrocyte",
+  "Bergman_Glia",
+  "Unipolar_Brush",
+  "Mix_Endothelial_EndothelialMural",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Golgi",
+  "Purkinje",
+  "Unknown_Neuron_Subpop",
+  "Oligodendrocyte"
+)
+### Loop through each value
+for (cluster in clusters) {
+  #### Extract data for WT and cYAPKO based on current value
+  WT <- seurat_extract(WT_Kcnc1_p180_CB_1step.sct,
+                       meta1 = "condition", value_meta1 = "WT",
+                       meta2 = "cluster.annot", value_meta2 = cluster)
+
+  Kcnc1 <- seurat_extract(WT_Kcnc1_p180_CB_1step.sct,
+                           meta1 = "condition", value_meta1 = "Kcnc1",
+                           meta2 = "cluster.annot", value_meta2 = cluster)
+
+  ##### Compare pathways
+  WT_cYAPKO <- compare_pathways(samples = list(WT, Kcnc1),
+                                pathways = pathways,
+                                parallel = TRUE, cores = 8)
+
+  ##### Write to file using the current value in the filename
+  output_filename <- paste0("output/Pathway/SCPA_CB_p180_C5_", cluster, ".txt")       # !!!!!! CHANGE HERE PATHWAYS !!!!!!
+  write.table(WT_cYAPKO, file = output_filename, sep = "\t", quote = FALSE, row.names = FALSE)
+}
+#--> Long ~2hrs
+
+
+
+## load all the comparison for each cell type (FC qval information)
+clusters = c(
+  "Granular_1",
+  "Granular_2",
+  "Granular_3",
+  "MLI1",
+  "MLI2_1",
+  "MLI2_2",
+  "Interneuron",
+  "Astrocyte",
+  "Bergman_Glia",
+  "Unipolar_Brush",
+  "Mix_Endothelial_EndothelialMural",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Golgi",
+  "Purkinje",
+  "Unknown_Neuron_Subpop",
+  "Oligodendrocyte"
+)
+## import with a function
+### A function to read and add the cluster column
+read_and_add_cluster <- function(cluster) {
+  path <- paste0("output/Pathway/SCPA_CB_p180_C2_", cluster, ".txt")
+  df <- read.delim(path, header = TRUE) %>%
+    add_column(cluster = cluster)
+  return(df)
+}
+### Use lapply to apply the function on each cluster and bind all data frames together
+all_data <- bind_rows(lapply(clusters, read_and_add_cluster)) %>% as_tibble()
+
+## Filter pathway of interest
+pathways <- c(
+  "WP_NEURODEGENERATION_WITH_BRAIN_IRON_ACCUMULATION_NBIA_SUBTYPES_PATHWAY",
+  "WP_NEUROINFLAMMATION_AND_GLUTAMATERGIC_SIGNALING",
+  "KEGG_ALZHEIMERS_DISEASE",
+  "WP_ALZHEIMERS_DISEASE",
+  "KEGG_PARKINSONS_DISEASE",
+  "WP_PARKINSONS_DISEASE_PATHWAY",
+  "KEGG_HUNTINGTONS_DISEASE",
+  "WP_ERK_PATHWAY_IN_HUNTINGTONS_DISEASE",
+  "KEGG_AMYOTROPHIC_LATERAL_SCLEROSIS_ALS",
+  "WP_AMYOTROPHIC_LATERAL_SCLEROSIS_ALS",
+  "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION",
+  "REACTOME_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "KEGG_NEUROACTIVE_LIGAND_RECEPTOR_INTERACTION",
+  "REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS",
+  "REACTOME_POTASSIUM_CHANNELS",
+  "REACTOME_ION_CHANNEL_TRANSPORT",
+  "KEGG_CALCIUM_SIGNALING_PATHWAY",
+  "REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS",
+  "REACTOME_ACETYLCHOLINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_DOPAMINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_GLUTAMATE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_NOREPINEPHRINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_SEROTONIN_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "ALCALA_APOPTOSIS",
+  "KEGG_APOPTOSIS",
+  "REACTOME_APOPTOSIS",
+  "REACTOME_INTRINSIC_PATHWAY_FOR_APOPTOSIS",
+  "WP_APOPTOSIS",
+  "WP_APOPTOSIS_MODULATION_AND_SIGNALING",
+  "REACTOME_DEATH_RECEPTOR_SIGNALLING",
+  "REACTOME_DISEASES_OF_PROGRAMMED_CELL_DEATH",
+  "REACTOME_FOXO_MEDIATED_TRANSCRIPTION_OF_CELL_DEATH_GENES",
+  "REACTOME_PROGRAMMED_CELL_DEATH",
+  "REACTOME_TP53_REGULATES_TRANSCRIPTION_OF_CELL_DEATH_GENES",
+  "BIOCARTA_DEATH_PATHWAY",
+  "REACTOME_DETOXIFICATION_OF_REACTIVE_OXYGEN_SPECIES",
+  "WP_PKCGAMMA_CALCIUM_SIGNALING_PATHWAY_IN_ATAXIA"
+)
+classes <- c(
+  rep("Neurodegeneration", 10),
+  rep("Neuronal_Activity", 13),
+  rep("Apoptosis", 12),
+  "ROS",
+  "Ataxia"
+)
+colors <- c(
+  rep("Purple", 10),
+  rep("Green", 13),
+  rep("Dark Orange", 12),
+  "Red",
+  "Blue"
+)
+pathway_tibble <- tibble(
+  Pathway = pathways,
+  Class = classes,
+  Color = colors
+)
+
+pathway_all_data = pathway_tibble %>%
+  left_join(all_data)
+
+pathway_all_data$Pathway <- factor(pathway_all_data$Pathway, levels = pathways)
+
+
+### dotplot
+pdf("output/Pathway/dotplot_SCPA_CB_p180_C2_selectedPathwayV1.pdf", width=12, height=8)
+ggplot(pathway_all_data, aes(x = cluster, y = Pathway)) +
+  geom_point(aes(size = ifelse(qval > 1.4, qval, NA), color = Color), na.rm = TRUE) +
+  scale_size_continuous(range = c(3, 10), breaks = c(1.5, 2, 3, 4), name = "qval") +
+  scale_color_identity() +
+  theme_bw() +
+  labs(x = "Cluster",
+       y = "Pathway",
+       color = "Class Color") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+        legend.position = "right") +
+  guides(color = guide_legend(title = "Class Color", override.aes = list(size = 5)),
+         size = guide_legend(title = "qval"))
+dev.off()
+
+# --> NO SIGNIFICANT TERMS!
+
+
+
+
+
+# GSEA plot
+library("fgsea")
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c(     "Granular_1",
+  "Granular_2",
+  "Granular_3",
+  "MLI1",
+  "MLI2",
+  "PLI12",
+  "PLI23",
+  "Astrocyte",
+  "Bergman_Glia",
+  "Unipolar_Brush",
+  "Mix_Endothelial_EndothelialMural",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Golgi",
+  "Purkinje",
+  "Unknown_Neuron_Subpop",
+  "Oligodendrocyte")
+# Loop over each cluster type to read data and assign to a variable
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_MAST.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1)
+  assign(cluster, data)
+}
+
+## load list of genes to test
+### List1
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURON_INTRINSIC_APOPTOTIC_SIGNALING_PATHWAY_IN_RESPONSE_TO_OXIDATIVE_STRESS = read_table(file = "output/Pathway/geneList_GOBP_NEURON_INTRINSIC_APOPTOTIC.txt")$Genes,
+  GOBP_NEUROINFLAMMATORY_RESPONSE = read_table(file = "output/Pathway/geneList_GOBP_NEUROINFLAMMATORY_RESPONSE.txt")$Genes
+)
+### List2
+fgsea_sets <- list(
+  GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION = read_table(file = "output/Pathway/geneList_GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  GOBP_NEURONAL_SIGNAL_TRANSDUCTION = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_SIGNAL_TRANSDUCTION.txt")$Genes,
+  REACTOME_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_POTASSIUM_CHANNELS.txt")$Genes,
+  REACTOME_ION_CHANNEL_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_ION_CHANNEL_TRANSPORT.txt")$Genes
+)
+### List3
+fgsea_sets <- list(
+  REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING = read_table(file = "output/Pathway/geneList_REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING.txt")$Genes,
+  REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS = read_table(file = "output/Pathway/geneList_REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes,
+  REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS.txt")$Genes
+)
+### List4
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes
+)
+
+
+## Rank genes based on FC
+genes <- Purkinje %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+  rownames_to_column(var = "gene") %>%
+  arrange(desc(avg_log2FC)) %>% 
+  dplyr::select(gene, avg_log2FC)
+
+ranks <- deframe(genes)
+head(ranks)
+## Run GSEA
+
+fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 1000)
+fgseaResTidy <- fgseaRes %>%
+  as_tibble() %>%
+  arrange(desc(ES))
+fgseaResTidy %>% 
+  dplyr::select(-leadingEdge, -NES, -nMoreExtreme) %>% 
+  arrange(padj) %>% 
+  head()
+
+
+## plot GSEA
+pdf("output/Pathway/GSEA_Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes-mmu05022-Purkinje.pdf", width=5, height=3)
+
+plotEnrichment(fgsea_sets[["PathwaysOfNeurodegeneration"]],
+               ranks) + labs(title="PathwaysOfNeurodegeneration-Purkinje") +
+               theme_bw()
+dev.off()
+
+
+# Save output table for all pathway and cluster
+## Define the list of cluster types
+cluster_types <- c(    "Granular_1",
+  "Granular_2",
+  "Granular_3",
+  "MLI1",
+  "MLI2",
+  "PLI12",
+  "PLI23",
+  "Astrocyte",
+  "Bergman_Glia",
+  "Unipolar_Brush",
+  "Mix_Endothelial_EndothelialMural",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Golgi",
+  "Purkinje",
+  "Unknown_Neuron_Subpop",
+  "Oligodendrocyte")
+
+## Initialize an empty list to store the results for each cluster type
+all_results <- list()
+## Loop over each cluster type
+for (cluster in cluster_types) {
+  
+  # Extract genes for the current cluster
+  genes <- get(cluster) %>% 
+    rownames_to_column(var = "gene") %>%
+    arrange(desc(avg_log2FC)) %>% 
+    dplyr::select(gene, avg_log2FC)
+  
+  ranks <- deframe(genes)
+  
+  # Run GSEA for the current cluster
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 10000)
+  fgseaResTidy <- fgseaRes %>%
+    as_tibble() %>%
+    arrange(desc(ES))
+  
+  # Extract summary table and add cluster column
+  fgseaResTidy_summary = fgseaResTidy %>% 
+    dplyr::select(pathway, pval, padj, ES, size, NES) %>%
+    mutate(cluster = cluster) %>%
+    arrange(padj) %>% 
+    head()
+  
+  # Store results in the list
+  all_results[[cluster]] <- fgseaResTidy_summary
+}
+## Combine results from all cluster types into one table
+final_results <- bind_rows(all_results, .id = "cluster")
+
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_MAST-List3.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+# Heatmap all GSEA
+pdf("output/Pathway/heatmap_gsea_padj-Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_MAST-List3.pdf", width=15, height=3)
+ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+### if need reorder terms
+final_results$pathway <- factor(final_results$pathway, levels = c("PathwaysOfNeurodegeneration", "GOBP_NEURONAL_ACTION_POTENTIAL", "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")) 
+
+pdf("output/Pathway/heatmap_gsea_padj-Kcnc1_response_p180_CB_QCV4dim50kparam20res02_allGenes_correct-List4.pdf", width=10, height=3)
+ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+
+
+```
+
+
 
 
 
@@ -8866,7 +12710,11 @@ sbatch scripts/dataIntegration_CB_1step_reductionRPCA.sh # 30223575 ok
 
 
 
-sbatch scripts/dataIntegration_CB_2step_integrateMerge.sh # 
+sbatch scripts/dataIntegration_CB_2step_integrateMerge.sh # work great!!
+
+# lets repeat the integrate merge that worked great for version2
+sbatch scripts/dataIntegration_CB_2step_integrateMerge_Version2.sh # 36824743 xxx
+
 
 ```
 
@@ -9068,6 +12916,8 @@ dev.off()
 
 
 #### integrateMerge
+
+##### Version1
 
 
 Let's test **integrateMerge option**
@@ -9284,18 +13134,19 @@ WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_inte
 
 # Downsample Kcnc1 to same number of cells than WT
 
-XXXY
+XXX
 
 WT_Kcnc1_CB_integrateMerge.sct
-
-
 
 
 ```
 
 --> Very good! Clearly show pattern of cell types from>to p14>p35>p180; notably for Granule, MLI1, MLI2
 
+##### Version2
 
+
+XXXY PASTE CODE UP AND DO IT with VERSION2 !!!
 
 
 
@@ -10483,9 +14334,9 @@ sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_DESEQ2seurat.sh # 34358916 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_MAST.sh # 34363647 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_MAST_GranuleCluster1.sh # 35842577 xxx
 
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_Version2_MAST.sh # 36821000 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_Version2_default.sh # 36821025 xxx
 
-
-XXX sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CB_correct_pseudobulk.sh #  xxx
 
 
 # p35 CB
@@ -10494,6 +14345,9 @@ sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_correct.sh # 29328955 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_correct_rerun.sh # ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_DESEQ2seurat.sh # 34368432 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_MAST.sh # 34368635 ok
+
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_Version2_MAST.sh # 36785431 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_Version2_default.sh # 36787127 xxx
 
 
 # p180 CB
@@ -10504,7 +14358,8 @@ sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_DESEQ2seurat.sh # 34359233 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_MAST.sh # 34364889 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_MAST_GranuleCluster1.sh # 35842731 xxx
 
-
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_Version2_MAST.sh # 36792178 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_Version2_default.sh # 36792179 xxx
 
 ```
 - *NOTE: I forget to LogNorm and Scale prior doing DEG; the `*_correct` are corrected + updated cluster name notbably PLI12 and PLI23 instead of MLI_1 MLI_2; all good.*

@@ -15,12 +15,17 @@ library("celldex")
 library("SingleR")
 library("gprofiler2") # for human mouse gene conversion for cell cycle genes
 
+set.seed(42)
+
+
+
 
 
 ### Data import
-WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step.sct_V5_numeric.rds")
-WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-QCV2dim50kparam20res03.sct_V2_label_ReProcess.rds") # THIS IS THE LAST ONE!
-WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-QCV4dim50kparam20res02.sct_V1_label.rds") # QC_V4 with PLI12 PLI23
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015.sct_V1_label.rds") # 
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-Version2dim50kparam50res02.sct_V1_label.rds")
+WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-version2dim30kparam10res01.sct_V1_label.rds") # 
+
 
 DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
 DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "SCT"
@@ -37,7 +42,7 @@ WT_Kcnc1_CB_integrateMerge.sct = merge(
 )
 
 # SAVE OUTPUT
-saveRDS(WT_Kcnc1_CB_integrateMerge.sct, file = "output/seurat/WT_Kcnc1_CB_integrateMerge.sct.rds")
+saveRDS(WT_Kcnc1_CB_integrateMerge.sct, file = "output/seurat/WT_Kcnc1_CB_integrateMerge_Version2.sct.rds")
 
 
 
@@ -58,7 +63,7 @@ WT_Kcnc1_CB_integrateMerge.sct <- FindClusters(WT_Kcnc1_CB_integrateMerge.sct, r
 
 WT_Kcnc1_CB_integrateMerge.sct$condition <- factor(WT_Kcnc1_CB_integrateMerge.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-2stepIntegrationRegressNotRepeatedregMtRbCou-dim50kparam20res02.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB_Version2-dim50kparam20res02.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE)
 dev.off()
 
@@ -69,7 +74,7 @@ dev.off()
 
 WT_Kcnc1_CB_integrateMerge.sct$condition <- factor(WT_Kcnc1_CB_integrateMerge.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-2stepIntegrateMerge.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-2stepIntegrateMerge_Version2.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE)
 dev.off()
 
