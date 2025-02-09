@@ -13040,37 +13040,45 @@ VariableFeatures(WT_Kcnc1_CB_integrateMerge.sct[["SCT"]]) <- rownames(WT_Kcnc1_C
 
 
 
-XXXY HERE CHECK OUTPUT DIFFERENT DIM HAS BEEN RUN XXX
 
 #### UMAP
 DefaultAssay(WT_Kcnc1_CB_integrateMerge.sct) <- "SCT"
 
-WT_Kcnc1_CB_integrateMerge.sct <- RunPCA(WT_Kcnc1_CB_integrateMerge.sct, verbose = FALSE, npcs = 30)
-WT_Kcnc1_CB_integrateMerge.sct <- RunUMAP(WT_Kcnc1_CB_integrateMerge.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
-WT_Kcnc1_CB_integrateMerge.sct <- FindNeighbors(WT_Kcnc1_CB_integrateMerge.sct, reduction = "pca", k.param = 15, dims = 1:30)
+WT_Kcnc1_CB_integrateMerge.sct <- RunPCA(WT_Kcnc1_CB_integrateMerge.sct, verbose = FALSE, npcs = 50)
+WT_Kcnc1_CB_integrateMerge.sct <- RunUMAP(WT_Kcnc1_CB_integrateMerge.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
+WT_Kcnc1_CB_integrateMerge.sct <- FindNeighbors(WT_Kcnc1_CB_integrateMerge.sct, reduction = "pca", k.param = 30, dims = 1:50)
 WT_Kcnc1_CB_integrateMerge.sct <- FindClusters(WT_Kcnc1_CB_integrateMerge.sct, resolution = 0.2, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
 WT_Kcnc1_CB_integrateMerge.sct$condition <- factor(WT_Kcnc1_CB_integrateMerge.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 WT_Kcnc1_CB_integrateMerge.sct$time <- factor(WT_Kcnc1_CB_integrateMerge.sct$time, levels = c("p14", "p35", "p180")) 
 
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim30kparam15res02-version2.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res02-version2.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE, raster = FALSE)
 dev.off()
 
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim30kparam15res02_splitOrig-version2.pdf", width=60, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res02-version2-nolabel.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=FALSE, raster = FALSE)
+dev.off()
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res02_splitOrig-version2.pdf", width=60, height=6)
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE, raster = FALSE, split.by = "orig.ident") # add `raster = FALSE` when more than 100k cells in the plot
 dev.off()
 
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim30kparam15res02_splitTime-version2.pdf", width=15, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res02_splitTime-version2.pdf", width=15, height=6)
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE, raster = FALSE, split.by = "time") # add `raster = FALSE` when more than 100k cells in the plot
 dev.off()
 
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim30kparam15res02_groupTime-version2.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res02_groupTime-version2.pdf", width=7, height=6)
 my_cols = brewer.pal(3,"Dark2")
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE, raster = FALSE, group.by = "time", cols=alpha(my_cols,0.3)) # add `raster = FALSE` when more than 100k cells in the plot
 dev.off()
 
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res02_splitConditionGroupTime_label-version2.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", split.by = "condition", pt.size = 0.5, label.size = 3, raster = FALSE, group.by = "time")
+dev.off()
 
 
 # List678: (*combine list6 (p14), list7(p35), list8(p180)*)
@@ -13096,9 +13104,18 @@ Choroid plexus cells = Kl,  Ttr
 
 DefaultAssay(WT_Kcnc1_CB_integrateMerge.sct) <- "SCT" # For vizualization either use SCT or norm RNA
 
-pdf("output/seurat/FeaturePlot_SCT_WT_CB-integrateMerge-dim40-List678.pdf", width=25, height=40)
+pdf("output/seurat/FeaturePlot_SCT_WT_CB-integrateMerge-dim50Version2-List678.pdf", width=25, height=40)
 FeaturePlot(WT_Kcnc1_CB_integrateMerge.sct, features = c("Gabra6", "Pax6", "Sorcs3", "Ptprk", "Nxph1", "Cdh22",  "Klhl1", "Gfra2", "Aldh1a3", "Galntl6", "Kcnc2", "Pax2", "Eomes", "Rgs6", "Tafa2", "Calb1", "Slc1a6", "Car8", "Aqp4", "Slc39a12", "Zeb2", "Aldoc", "Cnp", "Vcan", "Sox6", "Mbp", "Mag", "Plp1", "Itgam", "Cx3cr1", "Ptgds", "Dcn", "Lef1", "Notum", "Apcdd1", "Dlc1", "Pdgfrb", "Actb", "Tmsb4x", "Kl",  "Ttr"), max.cutoff = 2, cols = c("grey", "red"), raster = FALSE)
 dev.off()
+
+
+
+
+# save ######################################################
+## saveRDS(WT_Kcnc1_CB_integrateMerge.sct, file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version2dim50kparam30res02-V1_numeric.rds") #
+WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version2dim50kparam30res02-V1_numeric.rds")
+############################################################################################################
+
 
 
 
@@ -13210,11 +13227,6 @@ pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_CB_integrateMerge-percent.rb-d
 FeaturePlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=FALSE, features = "percent.rb", raster = FALSE)
 dev.off()  
 
-
-# save ######################################################
-## saveRDS(WT_Kcnc1_CB_integrateMerge.sct, file = "output/seurat/WT_Kcnc1_CB_integrateMerge-dim40kparam15res03-labelv1.rds") #
-WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-dim40kparam15res03-labelv1.rds")
-############################################################################################################
 
 
 # Downsample Kcnc1 to same number of cells than WT
@@ -18214,14 +18226,96 @@ rsconnect::deployApp('shinyApp_WT_Kcnc1_p35_CB_1step_QCV2dim50kparam20res03')
 
 
 
+
+
+# Generate Shiny app Version2 p14 - version2dim45kparam10res015
+## import Seurat object
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015.sct_V1_label.rds") # 
+set.seed(42)
+# differential expressed genes across conditions
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
+WT_Kcnc1_p14_CB_1step.sct <- NormalizeData(WT_Kcnc1_p14_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p14_CB_1step.sct)
+WT_Kcnc1_p14_CB_1step.sct <- ScaleData(WT_Kcnc1_p14_CB_1step.sct, features = all.genes) # zero-centres and scales it
+WT_Kcnc1_p14_CB_1step.sct$celltype.stim <- paste(WT_Kcnc1_p14_CB_1step.sct$cluster.annot, WT_Kcnc1_p14_CB_1step.sct$condition,
+    sep = "-")
+Idents(WT_Kcnc1_p14_CB_1step.sct) <- "celltype.stim"
+
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA" # 
+scConf = createConfig(WT_Kcnc1_p14_CB_1step.sct)
+makeShinyApp(WT_Kcnc1_p14_CB_1step.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "WT_Kcnc1_p14_CB_1step_version2dim45kparam10res015",
+             shiny.dir = "shinyApp_WT_Kcnc1_p14_CB_1step_version2dim45kparam10res015/") 
+rsconnect::deployApp('shinyApp_WT_Kcnc1_p14_CB_1step_version2dim45kparam10res015')
+
+
+
+
+
+# Generate Shiny app Version2 p35 - Version2dim50kparam50res02
+## import Seurat object
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-Version2dim50kparam50res02.sct_V1_label.rds")
+set.seed(42)
+# differential expressed genes across conditions
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "RNA"
+WT_Kcnc1_p35_CB_1step.sct <- NormalizeData(WT_Kcnc1_p35_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p35_CB_1step.sct)
+WT_Kcnc1_p35_CB_1step.sct <- ScaleData(WT_Kcnc1_p35_CB_1step.sct, features = all.genes) # zero-centres and scales it
+WT_Kcnc1_p35_CB_1step.sct$celltype.stim <- paste(WT_Kcnc1_p35_CB_1step.sct$cluster.annot, WT_Kcnc1_p35_CB_1step.sct$condition,
+    sep = "-")
+Idents(WT_Kcnc1_p35_CB_1step.sct) <- "celltype.stim"
+
+
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "RNA" # 
+scConf = createConfig(WT_Kcnc1_p35_CB_1step.sct)
+makeShinyApp(WT_Kcnc1_p35_CB_1step.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "WT_Kcnc1_p35_CB_1step_Version2dim50kparam50res02",
+             shiny.dir = "shinyApp_WT_Kcnc1_p35_CB_1step_Version2dim50kparam50res02/") 
+rsconnect::deployApp('shinyApp_WT_Kcnc1_p35_CB_1step_Version2dim50kparam50res02')
+
+
+
+
+
+
+
+# Generate Shiny app Version2 p180 - version2dim30kparam10res01
+## import Seurat object
+WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-version2dim30kparam10res01.sct_V1_label.rds") # 
+set.seed(42)
+# differential expressed genes across conditions
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "RNA"
+WT_Kcnc1_p180_CB_1step.sct <- NormalizeData(WT_Kcnc1_p180_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p180_CB_1step.sct)
+WT_Kcnc1_p180_CB_1step.sct <- ScaleData(WT_Kcnc1_p180_CB_1step.sct, features = all.genes) # zero-centres and scales it
+WT_Kcnc1_p180_CB_1step.sct$celltype.stim <- paste(WT_Kcnc1_p180_CB_1step.sct$cluster.annot, WT_Kcnc1_p180_CB_1step.sct$condition,
+    sep = "-")
+Idents(WT_Kcnc1_p180_CB_1step.sct) <- "celltype.stim"
+
+
+DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "RNA" # 
+scConf = createConfig(WT_Kcnc1_p180_CB_1step.sct)
+makeShinyApp(WT_Kcnc1_p180_CB_1step.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "WT_Kcnc1_p180_CB_1step_version2dim30kparam10res01",
+             shiny.dir = "shinyApp_WT_Kcnc1_p180_CB_1step_version2dim30kparam10res01/") 
+rsconnect::deployApp('shinyApp_WT_Kcnc1_p180_CB_1step_version2dim30kparam10res01')
+
+
 ```
 
 
-
+Version1
 - [CB_p14](https://roulethomas.shinyapps.io/shinyapp_wt_kcnc1_p14_cb_1step_qcv3dim30kparam50res035/)
 - [CB_p35](https://roulethomas.shinyapps.io/shinyapp_wt_kcnc1_p35_cb_1step_qcv3dim50kparam50res03/)
 - [CB_p180](https://roulethomas.shinyapps.io/shinyapp_wt_kcnc1_p180_cb_1step_qcv4dim50kparam20res02/)
-
+Version2
+- [CB_p14](https://roulethomas.shinyapps.io/shinyapp_wt_kcnc1_p14_cb_1step_version2dim45kparam10res015/)
+- [CB_p35](https://roulethomas.shinyapps.io/shinyapp_wt_kcnc1_p35_cb_1step_version2dim50kparam50res02/)
+- [CB_p180](https://roulethomas.shinyapps.io/shinyapp_wt_kcnc1_p180_cb_1step_version2dim30kparam10res01/)
 
 
 
