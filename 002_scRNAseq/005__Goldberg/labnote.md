@@ -8190,7 +8190,7 @@ set.seed(42)
 
 ############ V1 naming  version2dim45kparam10res015 (output/seurat/WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015.sct_V1_numeric.rds )
 
-1= Granule (Gabra6,Pax6, 
+1= Granule (Gabra6,Pax6, )
 2= MLI1 Sorcs3, Ptprk, 
 3= PLI23   Galntl6, Kcnc2, 
 4= Unknown
@@ -8247,7 +8247,7 @@ DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
 
 
 
-1= Granule (Gabra6,Pax6, 
+1= Granule (Gabra6,Pax6, )
 2= MLI1 Sorcs3, Ptprk, 
 5= MLI2 Nxph1, Cdh22, 
 9= PLI12 Klhl1, Gfra2, Aldh1a3, 
@@ -8328,17 +8328,66 @@ FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "Kcnc1", cols = c("grey", "red
 dev.off()
 
 
+
+# WT vs Kcnc1
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
+WT_Kcnc1_p14_CB_1step.sct <- NormalizeData(WT_Kcnc1_p14_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p14_CB_1step.sct)
+WT_Kcnc1_p14_CB_1step.sct <- ScaleData(WT_Kcnc1_p14_CB_1step.sct, features = all.genes) # zero-centres and scales it
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
+
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015-Kcnc1-split.pdf", width=10, height=5)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1"), max.cutoff = 2, cols = c("grey", "red"), split.by = "condition")
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015-Gria1-split.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gria1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015-Slc1a2-split.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Slc1a2"), max.cutoff = 1,  cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015-mt-Nd4.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("mt-Nd4"), cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015-Slc1a2.pdf", width=10, height=5)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Slc1a2"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015-Apoe.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Apoe"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
 dev.off()
+
+
+
+# Vln Plot WT vs Kcnc1
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
+
+cell_types <- c(   "Granule", 
+  "MLI1", 
+  "MLI2", 
+  "PLI12",
+  "PLI23", 
+  "Golgi",
+  "Unipolar_Brush",
+  "Purkinje",
+  "Astrocyte",
+  "Bergman_Glia", 
+  "Endothelial",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Oligodendrocyte",
+  "Unknown")
+WT_Kcnc1_p14_CB_1step.sct$cluster.annot <- factor(
+  WT_Kcnc1_p14_CB_1step.sct$cluster.annot, 
+  levels = cell_types
+)
+
+
+pdf("output/seurat/VlnPlot_SCT_WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015-Kcnc1-split.pdf", width=8, height=4)
+VlnPlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1"),split.by = "condition", group.by = "cluster.annot")
+dev.off()
+
+
 
 
 
@@ -8927,7 +8976,7 @@ for (cluster in cluster_types) {
   
   # Extract summary table and add cluster column
   fgseaResTidy_summary = fgseaResTidy %>% 
-    dplyr::select(pathway, pval, padj, ES, size, NES) %>%
+    dplyr::select(pathway, pval, padj, ES, size, NES, leadingEdge) %>%
     mutate(cluster = cluster) %>%
     arrange(padj) %>% 
     head()
@@ -8936,9 +8985,10 @@ for (cluster in cluster_types) {
   all_results[[cluster]] <- fgseaResTidy_summary
 }
 ## Combine results from all cluster types into one table
-final_results <- bind_rows(all_results, .id = "cluster")
+final_results <- bind_rows(all_results, .id = "cluster") %>%
+  mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST-List4.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST-List4gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
 pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST-List4.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
@@ -9521,21 +9571,58 @@ dev.off()
 
 
 # WT vs Kcnc1 gene expr ############
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "RNA"
+WT_Kcnc1_p35_CB_1step.sct <- NormalizeData(WT_Kcnc1_p35_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p35_CB_1step.sct)
+WT_Kcnc1_p35_CB_1step.sct <- ScaleData(WT_Kcnc1_p35_CB_1step.sct, features = all.genes) # zero-centres and scales it
+
+
+
 DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "SCT"
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB-1stepIntegrationRegressNotRepeated-Version2dim50kparam50res02-Kcnc1.pdf", width=12, height=6)
-FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Kcnc1"),  cols = c("grey", "red"), split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB-1stepIntegrationRegressNotRepeated-Version2dim50kparam50res02-Kcnc1-split.pdf", width=12, height=6)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Kcnc1"),  cols = c("grey", "red"),max.cutoff = 1, split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
 dev.off()
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB-1stepIntegrationRegressNotRepeated-Version2dim50kparam50res02-Smg1.pdf", width=12, height=6)
-FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Smg1"),  cols = c("grey", "red"), split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
-dev.off() 
 
-DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "SCT"
+pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB-1stepIntegrationRegressNotRepeated-Version2dim50kparam50res02-Apoe-split.pdf", width=12, height=6)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Apoe"), min.cutoff = 1,  cols = c("grey", "red"), split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
 
-pdf("output/seurat/VlnPlot_SCT_WT_p35_CB-1stepIntegrationRegressNotRepeated-Version2dim50kparam50res02-Srek1.pdf", width=12, height=6)
-VlnPlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Srek1"),  cols = c("grey", "red"), split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
-dev.off() 
+
+
+# Vln Plot WT vs Kcnc1
+
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "RNA"
+
+cell_types <- c(     "Granule",
+  "MLI1" ,
+  "MLI2" ,
+  "PLI12" ,
+  "PLI23" ,
+  "Golgi" ,
+  "Unipolar_Brush" ,
+  "Purkinje" ,
+  "Astrocyte" ,
+  "Bergman_Glia",
+  "Meningeal_Endothelial",
+  "Choroid_Plexus" ,
+  "Unknown")
+WT_Kcnc1_p35_CB_1step.sct$cluster.annot <- factor(
+  WT_Kcnc1_p35_CB_1step.sct$cluster.annot, 
+  levels = cell_types
+)
+
+
+pdf("output/seurat/VlnPlot_SCT_WT_Kcnc1_p35_CB_1step-Version2dim50kparam50res02-Kcnc1-split.pdf", width=8, height=4)
+VlnPlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Kcnc1"),split.by = "condition", group.by = "cluster.annot")
+dev.off()
+
+
+
+
+
+
 
 
 ## p35 cell type proportion ############################### 
@@ -10156,7 +10243,7 @@ for (cluster in cluster_types) {
   
   # Extract summary table and add cluster column
   fgseaResTidy_summary = fgseaResTidy %>% 
-    dplyr::select(pathway, pval, padj, ES, size, NES) %>%
+    dplyr::select(pathway, pval, padj, ES, size, NES, leadingEdge) %>%
     mutate(cluster = cluster) %>%
     arrange(padj) %>% 
     head()
@@ -10165,9 +10252,11 @@ for (cluster in cluster_types) {
   all_results[[cluster]] <- fgseaResTidy_summary
 }
 ## Combine results from all cluster types into one table
-final_results <- bind_rows(all_results, .id = "cluster")
+final_results <- bind_rows(all_results, .id = "cluster") %>%
+  mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p35_CB_Version2dim50kparam50res02_allGenes_MAST-List4.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p35_CB_Version2dim50kparam50res02_allGenes_MAST-List4gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 # Heatmap all GSEA
 pdf("output/Pathway/heatmap_gsea_padj-Kcnc1_response_p35_CB_Version2dim50kparam50res02_allGenes_MAST-List4.pdf", width=10, height=3)
@@ -10759,6 +10848,9 @@ DotPlot(WT_Kcnc1_p180_CB_1step.sct, assay = "SCT", features = all_markers, cols 
         axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
 dev.off()
 
+
+
+
 DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "SCT"
 
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version2dim30kparam10res01-ListDotPlot.pdf", width=30, height=70)
@@ -10770,18 +10862,51 @@ pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version2dim30kparam10r
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = "Kcnc1", max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version2dim30kparam10res01-Kcnc1_split.pdf", width=10, height=5)
+
+# WT vs Kcnc1
+DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "RNA"
+WT_Kcnc1_p180_CB_1step.sct <- NormalizeData(WT_Kcnc1_p180_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p180_CB_1step.sct)
+WT_Kcnc1_p180_CB_1step.sct <- ScaleData(WT_Kcnc1_p180_CB_1step.sct, features = all.genes) # zero-centres and scales it
+
+
+DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "SCT"
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version2dim30kparam10res01-Kcnc1-split.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Kcnc1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version2dim30kparam10res01-mt-Nd1.pdf", width=10, height=5)
-FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("mt-Nd1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+
+
+# Vln Plot WT vs Kcnc1
+
+DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "RNA"
+
+cell_types <- c(     "Granule",
+  "MLI1",
+  "MLI2",
+  "PLI12",
+  "PLI23",
+  "Golgi",
+  "Unipolar_Brush",
+  "Purkinje",
+  "Astrocyte",
+  "Bergman_Glia" ,
+  "Endothelial",
+  "Meningeal",
+  "Choroid_Plexus")
+WT_Kcnc1_p180_CB_1step.sct$cluster.annot <- factor(
+  WT_Kcnc1_p180_CB_1step.sct$cluster.annot, 
+  levels = cell_types
+)
+
+
+pdf("output/seurat/VlnPlot_SCT_WT_Kcnc1_p180_CB_1step-version2dim30kparam10res01-Kcnc1-split.pdf", width=8, height=4)
+VlnPlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Kcnc1"),split.by = "condition", group.by = "cluster.annot")
 dev.off()
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version2dim30kparam10res01-Kcnip4.pdf", width=10, height=5)
-FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Kcnip4"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
-dev.off()
+
 
 
 
@@ -11386,7 +11511,7 @@ for (cluster in cluster_types) {
   
   # Extract summary table and add cluster column
   fgseaResTidy_summary = fgseaResTidy %>% 
-    dplyr::select(pathway, pval, padj, ES, size, NES) %>%
+    dplyr::select(pathway, pval, padj, ES, size, NES, leadingEdge) %>%
     mutate(cluster = cluster) %>%
     arrange(padj) %>% 
     head()
@@ -11395,9 +11520,11 @@ for (cluster in cluster_types) {
   all_results[[cluster]] <- fgseaResTidy_summary
 }
 ## Combine results from all cluster types into one table
-final_results <- bind_rows(all_results, .id = "cluster")
+final_results <- bind_rows(all_results, .id = "cluster") %>%
+  mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p180_CB_version2dim30kparam10res01_allGenes_MAST-List4.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p180_CB_version2dim30kparam10res01_allGenes_MAST-List4gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 # Heatmap all GSEA
 pdf("output/Pathway/heatmap_gsea_padj-Kcnc1_response_p180_CB_version2dim30kparam10res01_allGenes_MAST-List4.pdf", width=15, height=3)
@@ -11455,6 +11582,1764 @@ dev.off()
 
 ```
 
+
+
+#### Investigate list of DEGs - MAST
+
+Let's do two [UpSet R plot](https://github.com/hms-dbmi/UpSetR) (ie. ~Venn diagram) to investigate our list of DEGs, obj. = identify key marker gene of the phenotype, time-point specific and cell type specific:
+- For the *same cell type*: Input list of *up/down regulated genes at each time point* --> Can show key/stable deregulated genes = likely key genes explaining the phenotype
+- For the *same time point*: Input list of *up/down regulated genes in each cell type* --> Can show transcriptomic relationship between cell type; compensatory transcriptional effect
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+library("UpSetR")
+library("grid") # Required for adding a title
+
+
+
+# import DEG
+##p14
+clusters <- c(
+  "Granule", 
+  "MLI1", 
+  "MLI2", 
+  "PLI12",
+  "PLI23", 
+  "Golgi",
+  "Unipolar_Brush",
+  "Purkinje",
+  "Astrocyte",
+  "Bergman_Glia", 
+  "Endothelial",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Oligodendrocyte",
+  "Unknown"
+)
+input_dir <- "output/seurat/"
+# Loop through each cluster and read the corresponding file
+for (cluster in clusters) {
+  file_path <- paste0(input_dir, cluster, "-Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST.txt")
+  # Create new variable name as "p14_[cluster]"
+  new_var_name <- paste0("p14_", cluster)
+  # Read the table and convert to tibble
+  df <- read.table(file_path, sep = "\t", header = TRUE, row.names = 1, stringsAsFactors = FALSE) %>%
+    rownames_to_column(var = "geneSymbol") %>%
+    as_tibble()
+  # Assign the tibble to the newly created variable
+  assign(new_var_name, df)
+  # Print confirmation
+  cat("Loaded and converted to tibble:", new_var_name, "\n")
+}
+
+
+##p35
+clusters <- c(
+  "Granule",
+  "MLI1",
+  "PLI23" ,
+  "MLI2" ,
+  "Astrocyte" ,
+  "PLI12" ,
+  "Unipolar_Brush" ,
+  "Bergman_Glia",
+  "Meningeal_Endothelial",
+  "Golgi" ,
+  "Choroid_Plexus",
+  "Unknown",
+  "Purkinje"
+)
+input_dir <- "output/seurat/"
+# Loop through each cluster and read the corresponding file
+for (cluster in clusters) {
+  file_path <- paste0(input_dir, cluster, "-Kcnc1_response_p35_CB_Version2dim50kparam50res02_allGenes_MAST.txt")
+  # Create new variable name as "p14_[cluster]"
+  new_var_name <- paste0("p35_", cluster)
+  # Read the table and convert to tibble
+  df <- read.table(file_path, sep = "\t", header = TRUE, row.names = 1, stringsAsFactors = FALSE) %>%
+    rownames_to_column(var = "geneSymbol") %>%
+    as_tibble()
+  # Assign the tibble to the newly created variable
+  assign(new_var_name, df)
+  # Print confirmation
+  cat("Loaded and converted to tibble:", new_var_name, "\n")
+}
+
+
+##p180
+clusters <- c(
+  "Granule",
+  "MLI1",
+  "MLI2",
+  "Astrocyte",
+  "PLI23",
+  "PLI12",
+  "Bergman_Glia",
+  "Unipolar_Brush",
+  "Endothelial",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Golgi",
+  "Purkinje"
+)
+input_dir <- "output/seurat/"
+# Loop through each cluster and read the corresponding file
+for (cluster in clusters) {
+  file_path <- paste0(input_dir, cluster, "-Kcnc1_response_p180_CB_version2dim30kparam10res01_allGenes_MAST.txt")
+  # Create new variable name as "p14_[cluster]"
+  new_var_name <- paste0("p180_", cluster)
+  # Read the table and convert to tibble
+  df <- read.table(file_path, sep = "\t", header = TRUE, row.names = 1, stringsAsFactors = FALSE) %>%
+    rownames_to_column(var = "geneSymbol") %>%
+    as_tibble()
+  # Assign the tibble to the newly created variable
+  assign(new_var_name, df)
+  # Print confirmation
+  cat("Loaded and converted to tibble:", new_var_name, "\n")
+}
+
+
+
+
+
+###############################
+# same cell type ##################
+################################
+
+# Granule ################
+
+p14_Granule
+p35_Granule
+p180_Granule
+## Filter significant upregulated genes
+p14_up <- p14_Granule %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.15) %>% pull(geneSymbol)
+p35_up <- p35_Granule %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.15) %>% pull(geneSymbol)
+p180_up <- p180_Granule %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.15) %>% pull(geneSymbol)
+## Filter significant downregulated genes
+p14_down <- p14_Granule %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.15) %>% pull(geneSymbol)
+p35_down <- p35_Granule %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.15) %>% pull(geneSymbol)
+p180_down <- p180_Granule %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.15) %>% pull(geneSymbol)
+
+
+## Combine all genes into a unique set
+all_genes <- unique(c(p14_up, p35_up, p180_up, p14_down, p35_down, p180_down))
+## Create an empty binary matrix
+upset_data <- data.frame(geneSymbol = all_genes)
+## Populate the binary matrix with presence/absence (1/0) in each category
+upset_data$p14_up <- ifelse(upset_data$geneSymbol %in% p14_up, 1, 0)
+upset_data$p35_up <- ifelse(upset_data$geneSymbol %in% p35_up, 1, 0)
+upset_data$p180_up <- ifelse(upset_data$geneSymbol %in% p180_up, 1, 0)
+upset_data$p14_down <- ifelse(upset_data$geneSymbol %in% p14_down, 1, 0)
+upset_data$p35_down <- ifelse(upset_data$geneSymbol %in% p35_down, 1, 0)
+upset_data$p180_down <- ifelse(upset_data$geneSymbol %in% p180_down, 1, 0)
+## Remove geneSymbol column as UpSetR requires only binary data
+upset_data_binary <- upset_data %>% select(-geneSymbol)
+# Define the sets for the plot in correct mirrored order
+sets <- c("p180_down", "p35_down", "p14_down", "p180_up", "p35_up", "p14_up")
+# Open PDF device
+pdf("output/upset/upset_Granule_p14p35p180-version2padj05fc015.pdf", width = 6, height = 5)
+# Generate UpSet plot
+upset(
+  upset_data_binary,
+  sets = sets,
+  sets.bar.color = "black",
+  order.by = "freq", 
+  keep.order = TRUE,
+  set.metadata = list(
+    data = data.frame(
+      sets = sets,
+      category = ifelse(grepl("_up", sets), "up", "down")  # Automatically label up/down sets
+    ),
+    plots = list(
+      list(
+        type = "matrix_rows",
+        column = "category",
+        colors = c("up" = "red", "down" = "blue"),  # Background colors
+        alpha = 0.5  # Transparency for better readability
+      )
+    )
+  )
+)
+# Add title
+grid.text("Granule", x = 0.1, y = 0.95, gp = gpar(fontsize = 14, fontface = "bold"))
+# Close PDF device
+dev.off()
+
+
+## Save output
+# Define output directory
+output_dir <- "output/upset/"
+# Ensure the directory exists
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+# Define the sets used in the UpSet plot
+sets <- c("p14_up", "p35_up", "p180_up", "p14_down", "p35_down", "p180_down")
+# Convert the binary matrix into a tibble for better filtering
+upset_data_binary <- as_tibble(upset_data_binary)
+upset_data_binary <- mutate(upset_data_binary, geneSymbol = upset_data$geneSymbol)  # Ensure genes are aligned
+# Function to extract genes for each combination
+extract_upset_genes <- function(upset_data_binary, sets, output_dir) {
+  # Generate all possible intersections
+  upset_combinations <- expand.grid(rep(list(0:1), length(sets)))
+  colnames(upset_combinations) <- sets
+  # Debug: Print structure of upset_data_binary
+  cat("Structure of upset_data_binary:\n")
+  print(str(upset_data_binary))
+  # Iterate through each combination
+  for (i in 1:nrow(upset_combinations)) {
+    comb <- upset_combinations[i, ]
+    # Skip the row if all values are 0 (empty set)
+    if (sum(comb) == 0) next
+    # Debug: Print the current combination
+    cat("\nProcessing Combination:", paste(names(comb)[which(comb == 1)], collapse = ", "), "\n")
+    # Convert comb into a named vector
+    comb_named <- setNames(as.list(comb), names(comb))
+    # Filter genes that match this combination
+    selected_genes <- upset_data_binary %>%
+      filter(across(all_of(sets), ~ . == comb_named[[cur_column()]])) %>%
+      pull(geneSymbol)
+    # Debug: Check how many matches are found
+    num_matching <- length(selected_genes)
+    cat("Genes found:", num_matching, "\n")
+    # Skip if no genes found
+    if (num_matching == 0) next
+    # Create a meaningful filename
+    active_sets <- names(comb)[which(comb == 1)]
+    filename <- paste0(output_dir, "upset_Granule_p14p35p180-version2padj05fc015-", paste(active_sets, collapse = "-"), "-", num_matching, ".txt")
+    # Save genes to the text file
+    write.table(selected_genes, file = filename, quote = FALSE, row.names = FALSE, col.names = FALSE)
+    # Print confirmation
+    cat("Saved:", filename, "\n")
+  }
+}
+# Run the function
+extract_upset_genes(upset_data_binary, sets, output_dir)
+
+
+
+
+# MLI1 ################
+
+p14_MLI1
+p35_MLI1
+p180_MLI1
+## Filter significant upregulated genes
+p14_up <- p14_MLI1 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p35_up <- p35_MLI1 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p180_up <- p180_MLI1 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+## Filter significant downregulated genes
+p14_down <- p14_MLI1 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p35_down <- p35_MLI1 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p180_down <- p180_MLI1 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+
+
+## Combine all genes into a unique set
+all_genes <- unique(c(p14_up, p35_up, p180_up, p14_down, p35_down, p180_down))
+## Create an empty binary matrix
+upset_data <- data.frame(geneSymbol = all_genes)
+## Populate the binary matrix with presence/absence (1/0) in each category
+upset_data$p14_up <- ifelse(upset_data$geneSymbol %in% p14_up, 1, 0)
+upset_data$p35_up <- ifelse(upset_data$geneSymbol %in% p35_up, 1, 0)
+upset_data$p180_up <- ifelse(upset_data$geneSymbol %in% p180_up, 1, 0)
+upset_data$p14_down <- ifelse(upset_data$geneSymbol %in% p14_down, 1, 0)
+upset_data$p35_down <- ifelse(upset_data$geneSymbol %in% p35_down, 1, 0)
+upset_data$p180_down <- ifelse(upset_data$geneSymbol %in% p180_down, 1, 0)
+## Remove geneSymbol column as UpSetR requires only binary data
+upset_data_binary <- upset_data %>% select(-geneSymbol)
+# Define the sets for the plot in correct mirrored order
+sets <- c("p180_down", "p35_down", "p14_down", "p180_up", "p35_up", "p14_up")
+# Open PDF device
+pdf("output/upset/upset_MLI1_p14p35p180-version2padj05fc025.pdf", width = 6, height = 5)
+# Generate UpSet plot
+upset(
+  upset_data_binary,
+  sets = sets,
+  sets.bar.color = "black",
+  order.by = "freq", 
+  keep.order = TRUE,
+  set.metadata = list(
+    data = data.frame(
+      sets = sets,
+      category = ifelse(grepl("_up", sets), "up", "down")  # Automatically label up/down sets
+    ),
+    plots = list(
+      list(
+        type = "matrix_rows",
+        column = "category",
+        colors = c("up" = "red", "down" = "blue"),  # Background colors
+        alpha = 0.5  # Transparency for better readability
+      )
+    )
+  )
+)
+# Add title
+grid.text("MLI1", x = 0.1, y = 0.95, gp = gpar(fontsize = 14, fontface = "bold"))
+# Close PDF device
+dev.off()
+
+
+## Save output
+# Define output directory
+output_dir <- "output/upset/"
+# Ensure the directory exists
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+# Define the sets used in the UpSet plot
+sets <- c("p14_up", "p35_up", "p180_up", "p14_down", "p35_down", "p180_down")
+# Convert the binary matrix into a tibble for better filtering
+upset_data_binary <- as_tibble(upset_data_binary)
+upset_data_binary <- mutate(upset_data_binary, geneSymbol = upset_data$geneSymbol)  # Ensure genes are aligned
+# Function to extract genes for each combination
+extract_upset_genes <- function(upset_data_binary, sets, output_dir) {
+  # Generate all possible intersections
+  upset_combinations <- expand.grid(rep(list(0:1), length(sets)))
+  colnames(upset_combinations) <- sets
+  # Debug: Print structure of upset_data_binary
+  cat("Structure of upset_data_binary:\n")
+  print(str(upset_data_binary))
+  # Iterate through each combination
+  for (i in 1:nrow(upset_combinations)) {
+    comb <- upset_combinations[i, ]
+    # Skip the row if all values are 0 (empty set)
+    if (sum(comb) == 0) next
+    # Debug: Print the current combination
+    cat("\nProcessing Combination:", paste(names(comb)[which(comb == 1)], collapse = ", "), "\n")
+    # Convert comb into a named vector
+    comb_named <- setNames(as.list(comb), names(comb))
+    # Filter genes that match this combination
+    selected_genes <- upset_data_binary %>%
+      filter(across(all_of(sets), ~ . == comb_named[[cur_column()]])) %>%
+      pull(geneSymbol)
+    # Debug: Check how many matches are found
+    num_matching <- length(selected_genes)
+    cat("Genes found:", num_matching, "\n")
+    # Skip if no genes found
+    if (num_matching == 0) next
+    # Create a meaningful filename
+    active_sets <- names(comb)[which(comb == 1)]
+    filename <- paste0(output_dir, "upset_MLI1_p14p35p180-version2padj05fc025-", paste(active_sets, collapse = "-"), "-", num_matching, ".txt")
+    # Save genes to the text file
+    write.table(selected_genes, file = filename, quote = FALSE, row.names = FALSE, col.names = FALSE)
+    # Print confirmation
+    cat("Saved:", filename, "\n")
+  }
+}
+# Run the function
+extract_upset_genes(upset_data_binary, sets, output_dir)
+
+
+
+
+
+
+
+
+
+# MLI2 ################
+
+p14_MLI2
+p35_MLI2
+p180_MLI2
+## Filter significant upregulated genes
+p14_up <- p14_MLI2 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p35_up <- p35_MLI2 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p180_up <- p180_MLI2 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+## Filter significant downregulated genes
+p14_down <- p14_MLI2 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p35_down <- p35_MLI2 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p180_down <- p180_MLI2 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+
+
+## Combine all genes into a unique set
+all_genes <- unique(c(p14_up, p35_up, p180_up, p14_down, p35_down, p180_down))
+## Create an empty binary matrix
+upset_data <- data.frame(geneSymbol = all_genes)
+## Populate the binary matrix with presence/absence (1/0) in each category
+upset_data$p14_up <- ifelse(upset_data$geneSymbol %in% p14_up, 1, 0)
+upset_data$p35_up <- ifelse(upset_data$geneSymbol %in% p35_up, 1, 0)
+upset_data$p180_up <- ifelse(upset_data$geneSymbol %in% p180_up, 1, 0)
+upset_data$p14_down <- ifelse(upset_data$geneSymbol %in% p14_down, 1, 0)
+upset_data$p35_down <- ifelse(upset_data$geneSymbol %in% p35_down, 1, 0)
+upset_data$p180_down <- ifelse(upset_data$geneSymbol %in% p180_down, 1, 0)
+## Remove geneSymbol column as UpSetR requires only binary data
+upset_data_binary <- upset_data %>% select(-geneSymbol)
+# Define the sets for the plot in correct mirrored order
+sets <- c("p180_down", "p35_down", "p14_down", "p180_up", "p35_up", "p14_up")
+# Open PDF device
+pdf("output/upset/upset_MLI2_p14p35p180-version2padj05fc025.pdf", width = 6, height = 5)
+# Generate UpSet plot
+upset(
+  upset_data_binary,
+  sets = sets,
+  sets.bar.color = "black",
+  order.by = "freq", 
+  keep.order = TRUE,
+  set.metadata = list(
+    data = data.frame(
+      sets = sets,
+      category = ifelse(grepl("_up", sets), "up", "down")  # Automatically label up/down sets
+    ),
+    plots = list(
+      list(
+        type = "matrix_rows",
+        column = "category",
+        colors = c("up" = "red", "down" = "blue"),  # Background colors
+        alpha = 0.5  # Transparency for better readability
+      )
+    )
+  )
+)
+# Add title
+grid.text("MLI2", x = 0.1, y = 0.95, gp = gpar(fontsize = 14, fontface = "bold"))
+# Close PDF device
+dev.off()
+
+
+## Save output
+# Define output directory
+output_dir <- "output/upset/"
+# Ensure the directory exists
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+# Define the sets used in the UpSet plot
+sets <- c("p14_up", "p35_up", "p180_up", "p14_down", "p35_down", "p180_down")
+# Convert the binary matrix into a tibble for better filtering
+upset_data_binary <- as_tibble(upset_data_binary)
+upset_data_binary <- mutate(upset_data_binary, geneSymbol = upset_data$geneSymbol)  # Ensure genes are aligned
+# Function to extract genes for each combination
+extract_upset_genes <- function(upset_data_binary, sets, output_dir) {
+  # Generate all possible intersections
+  upset_combinations <- expand.grid(rep(list(0:1), length(sets)))
+  colnames(upset_combinations) <- sets
+  # Debug: Print structure of upset_data_binary
+  cat("Structure of upset_data_binary:\n")
+  print(str(upset_data_binary))
+  # Iterate through each combination
+  for (i in 1:nrow(upset_combinations)) {
+    comb <- upset_combinations[i, ]
+    # Skip the row if all values are 0 (empty set)
+    if (sum(comb) == 0) next
+    # Debug: Print the current combination
+    cat("\nProcessing Combination:", paste(names(comb)[which(comb == 1)], collapse = ", "), "\n")
+    # Convert comb into a named vector
+    comb_named <- setNames(as.list(comb), names(comb))
+    # Filter genes that match this combination
+    selected_genes <- upset_data_binary %>%
+      filter(across(all_of(sets), ~ . == comb_named[[cur_column()]])) %>%
+      pull(geneSymbol)
+    # Debug: Check how many matches are found
+    num_matching <- length(selected_genes)
+    cat("Genes found:", num_matching, "\n")
+    # Skip if no genes found
+    if (num_matching == 0) next
+    # Create a meaningful filename
+    active_sets <- names(comb)[which(comb == 1)]
+    filename <- paste0(output_dir, "upset_MLI2_p14p35p180-version2padj05fc025-", paste(active_sets, collapse = "-"), "-", num_matching, ".txt")
+    # Save genes to the text file
+    write.table(selected_genes, file = filename, quote = FALSE, row.names = FALSE, col.names = FALSE)
+    # Print confirmation
+    cat("Saved:", filename, "\n")
+  }
+}
+# Run the function
+extract_upset_genes(upset_data_binary, sets, output_dir)
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Purkinje ################
+
+p14_Purkinje
+p35_Purkinje
+p180_Purkinje
+## Filter significant upregulated genes
+p14_up <- p14_Purkinje %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p35_up <- p35_Purkinje %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p180_up <- p180_Purkinje %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+## Filter significant downregulated genes
+p14_down <- p14_Purkinje %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p35_down <- p35_Purkinje %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p180_down <- p180_Purkinje %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+
+
+## Combine all genes into a unique set
+all_genes <- unique(c(p14_up, p35_up, p180_up, p14_down, p35_down, p180_down))
+## Create an empty binary matrix
+upset_data <- data.frame(geneSymbol = all_genes)
+## Populate the binary matrix with presence/absence (1/0) in each category
+upset_data$p14_up <- ifelse(upset_data$geneSymbol %in% p14_up, 1, 0)
+upset_data$p35_up <- ifelse(upset_data$geneSymbol %in% p35_up, 1, 0)
+upset_data$p180_up <- ifelse(upset_data$geneSymbol %in% p180_up, 1, 0)
+upset_data$p14_down <- ifelse(upset_data$geneSymbol %in% p14_down, 1, 0)
+upset_data$p35_down <- ifelse(upset_data$geneSymbol %in% p35_down, 1, 0)
+upset_data$p180_down <- ifelse(upset_data$geneSymbol %in% p180_down, 1, 0)
+## Remove geneSymbol column as UpSetR requires only binary data
+upset_data_binary <- upset_data %>% select(-geneSymbol)
+# Define the sets for the plot in correct mirrored order
+sets <- c("p180_down", "p35_down", "p14_down", "p180_up", "p35_up", "p14_up")
+# Open PDF device
+pdf("output/upset/upset_Purkinje_p14p35p180-version2padj05fc025.pdf", width = 6, height = 5)
+# Generate UpSet plot
+upset(
+  upset_data_binary,
+  sets = sets,
+  sets.bar.color = "black",
+  order.by = "freq", 
+  keep.order = TRUE,
+  set.metadata = list(
+    data = data.frame(
+      sets = sets,
+      category = ifelse(grepl("_up", sets), "up", "down")  # Automatically label up/down sets
+    ),
+    plots = list(
+      list(
+        type = "matrix_rows",
+        column = "category",
+        colors = c("up" = "red", "down" = "blue"),  # Background colors
+        alpha = 0.5  # Transparency for better readability
+      )
+    )
+  )
+)
+# Add title
+grid.text("Purkinje", x = 0.1, y = 0.95, gp = gpar(fontsize = 14, fontface = "bold"))
+# Close PDF device
+dev.off()
+
+
+## Save output
+# Define output directory
+output_dir <- "output/upset/"
+# Ensure the directory exists
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+# Define the sets used in the UpSet plot
+sets <- c("p14_up", "p35_up", "p180_up", "p14_down", "p35_down", "p180_down")
+# Convert the binary matrix into a tibble for better filtering
+upset_data_binary <- as_tibble(upset_data_binary)
+upset_data_binary <- mutate(upset_data_binary, geneSymbol = upset_data$geneSymbol)  # Ensure genes are aligned
+# Function to extract genes for each combination
+extract_upset_genes <- function(upset_data_binary, sets, output_dir) {
+  # Generate all possible intersections
+  upset_combinations <- expand.grid(rep(list(0:1), length(sets)))
+  colnames(upset_combinations) <- sets
+  # Debug: Print structure of upset_data_binary
+  cat("Structure of upset_data_binary:\n")
+  print(str(upset_data_binary))
+  # Iterate through each combination
+  for (i in 1:nrow(upset_combinations)) {
+    comb <- upset_combinations[i, ]
+    # Skip the row if all values are 0 (empty set)
+    if (sum(comb) == 0) next
+    # Debug: Print the current combination
+    cat("\nProcessing Combination:", paste(names(comb)[which(comb == 1)], collapse = ", "), "\n")
+    # Convert comb into a named vector
+    comb_named <- setNames(as.list(comb), names(comb))
+    # Filter genes that match this combination
+    selected_genes <- upset_data_binary %>%
+      filter(across(all_of(sets), ~ . == comb_named[[cur_column()]])) %>%
+      pull(geneSymbol)
+    # Debug: Check how many matches are found
+    num_matching <- length(selected_genes)
+    cat("Genes found:", num_matching, "\n")
+    # Skip if no genes found
+    if (num_matching == 0) next
+    # Create a meaningful filename
+    active_sets <- names(comb)[which(comb == 1)]
+    filename <- paste0(output_dir, "upset_Purkinje_p14p35p180-version2padj05fc025-", paste(active_sets, collapse = "-"), "-", num_matching, ".txt")
+    # Save genes to the text file
+    write.table(selected_genes, file = filename, quote = FALSE, row.names = FALSE, col.names = FALSE)
+    # Print confirmation
+    cat("Saved:", filename, "\n")
+  }
+}
+# Run the function
+extract_upset_genes(upset_data_binary, sets, output_dir)
+
+
+
+
+
+
+
+
+# PLI12 ################
+
+p14_PLI12
+p35_PLI12
+p180_PLI12
+## Filter significant upregulated genes
+p14_up <- p14_PLI12 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p35_up <- p35_PLI12 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p180_up <- p180_PLI12 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+## Filter significant downregulated genes
+p14_down <- p14_PLI12 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p35_down <- p35_PLI12 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p180_down <- p180_PLI12 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+
+## Combine all genes into a unique set
+all_genes <- unique(c(p14_up, p35_up, p180_up, p14_down, p35_down, p180_down))
+## Create an empty binary matrix
+upset_data <- data.frame(geneSymbol = all_genes)
+## Populate the binary matrix with presence/absence (1/0) in each category
+upset_data$p14_up <- ifelse(upset_data$geneSymbol %in% p14_up, 1, 0)
+upset_data$p35_up <- ifelse(upset_data$geneSymbol %in% p35_up, 1, 0)
+upset_data$p180_up <- ifelse(upset_data$geneSymbol %in% p180_up, 1, 0)
+upset_data$p14_down <- ifelse(upset_data$geneSymbol %in% p14_down, 1, 0)
+upset_data$p35_down <- ifelse(upset_data$geneSymbol %in% p35_down, 1, 0)
+upset_data$p180_down <- ifelse(upset_data$geneSymbol %in% p180_down, 1, 0)
+## Remove geneSymbol column as UpSetR requires only binary data
+upset_data_binary <- upset_data %>% select(-geneSymbol)
+# Define the sets for the plot in correct mirrored order
+sets <- c("p180_down", "p35_down", "p14_down", "p180_up", "p35_up", "p14_up")
+# Open PDF device
+pdf("output/upset/upset_PLI12_p14p35p180-version2padj05fc025.pdf", width = 6, height = 5)
+# Generate UpSet plot
+upset(
+  upset_data_binary,
+  sets = sets,
+  sets.bar.color = "black",
+  order.by = "freq", 
+  keep.order = TRUE,
+  set.metadata = list(
+    data = data.frame(
+      sets = sets,
+      category = ifelse(grepl("_up", sets), "up", "down")  # Automatically label up/down sets
+    ),
+    plots = list(
+      list(
+        type = "matrix_rows",
+        column = "category",
+        colors = c("up" = "red", "down" = "blue"),  # Background colors
+        alpha = 0.5  # Transparency for better readability
+      )
+    )
+  )
+)
+# Add title
+grid.text("PLI12", x = 0.1, y = 0.95, gp = gpar(fontsize = 14, fontface = "bold"))
+# Close PDF device
+dev.off()
+
+## Save output
+# Define output directory
+output_dir <- "output/upset/"
+# Ensure the directory exists
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+# Define the sets used in the UpSet plot
+sets <- c("p14_up", "p35_up", "p180_up", "p14_down", "p35_down", "p180_down")
+# Convert the binary matrix into a tibble for better filtering
+upset_data_binary <- as_tibble(upset_data_binary)
+upset_data_binary <- mutate(upset_data_binary, geneSymbol = upset_data$geneSymbol)  # Ensure genes are aligned
+# Function to extract genes for each combination
+extract_upset_genes <- function(upset_data_binary, sets, output_dir) {
+  # Generate all possible intersections
+  upset_combinations <- expand.grid(rep(list(0:1), length(sets)))
+  colnames(upset_combinations) <- sets
+  # Debug: Print structure of upset_data_binary
+  cat("Structure of upset_data_binary:\n")
+  print(str(upset_data_binary))
+  # Iterate through each combination
+  for (i in 1:nrow(upset_combinations)) {
+    comb <- upset_combinations[i, ]
+    # Skip the row if all values are 0 (empty set)
+    if (sum(comb) == 0) next
+    # Debug: Print the current combination
+    cat("\nProcessing Combination:", paste(names(comb)[which(comb == 1)], collapse = ", "), "\n")
+    # Convert comb into a named vector
+    comb_named <- setNames(as.list(comb), names(comb))
+    # Filter genes that match this combination
+    selected_genes <- upset_data_binary %>%
+      filter(across(all_of(sets), ~ . == comb_named[[cur_column()]])) %>%
+      pull(geneSymbol)
+    # Debug: Check how many matches are found
+    num_matching <- length(selected_genes)
+    cat("Genes found:", num_matching, "\n")
+    # Skip if no genes found
+    if (num_matching == 0) next
+    # Create a meaningful filename
+    active_sets <- names(comb)[which(comb == 1)]
+    filename <- paste0(output_dir, "upset_PLI12_p14p35p180-version2padj05fc025-", paste(active_sets, collapse = "-"), "-", num_matching, ".txt")
+    # Save genes to the text file
+    write.table(selected_genes, file = filename, quote = FALSE, row.names = FALSE, col.names = FALSE)
+    # Print confirmation
+    cat("Saved:", filename, "\n")
+  }
+}
+# Run the function
+extract_upset_genes(upset_data_binary, sets, output_dir)
+
+
+
+
+
+
+
+
+# PLI23 ################
+
+p14_PLI23
+p35_PLI23
+p180_PLI23
+## Filter significant upregulated genes
+p14_up <- p14_PLI23 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p35_up <- p35_PLI23 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p180_up <- p180_PLI23 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+## Filter significant downregulated genes
+p14_down <- p14_PLI23 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p35_down <- p35_PLI23 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p180_down <- p180_PLI23 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+
+## Combine all genes into a unique set
+all_genes <- unique(c(p14_up, p35_up, p180_up, p14_down, p35_down, p180_down))
+## Create an empty binary matrix
+upset_data <- data.frame(geneSymbol = all_genes)
+## Populate the binary matrix with presence/absence (1/0) in each category
+upset_data$p14_up <- ifelse(upset_data$geneSymbol %in% p14_up, 1, 0)
+upset_data$p35_up <- ifelse(upset_data$geneSymbol %in% p35_up, 1, 0)
+upset_data$p180_up <- ifelse(upset_data$geneSymbol %in% p180_up, 1, 0)
+upset_data$p14_down <- ifelse(upset_data$geneSymbol %in% p14_down, 1, 0)
+upset_data$p35_down <- ifelse(upset_data$geneSymbol %in% p35_down, 1, 0)
+upset_data$p180_down <- ifelse(upset_data$geneSymbol %in% p180_down, 1, 0)
+## Remove geneSymbol column as UpSetR requires only binary data
+upset_data_binary <- upset_data %>% select(-geneSymbol)
+# Define the sets for the plot in correct mirrored order
+sets <- c("p180_down", "p35_down", "p14_down", "p180_up", "p35_up", "p14_up")
+# Open PDF device
+pdf("output/upset/upset_PLI23_p14p35p180-version2padj05fc025.pdf", width = 6, height = 5)
+# Generate UpSet plot
+upset(
+  upset_data_binary,
+  sets = sets,
+  sets.bar.color = "black",
+  order.by = "freq", 
+  keep.order = TRUE,
+  set.metadata = list(
+    data = data.frame(
+      sets = sets,
+      category = ifelse(grepl("_up", sets), "up", "down")  # Automatically label up/down sets
+    ),
+    plots = list(
+      list(
+        type = "matrix_rows",
+        column = "category",
+        colors = c("up" = "red", "down" = "blue"),  # Background colors
+        alpha = 0.5  # Transparency for better readability
+      )
+    )
+  )
+)
+# Add title
+grid.text("PLI23", x = 0.1, y = 0.95, gp = gpar(fontsize = 14, fontface = "bold"))
+# Close PDF device
+dev.off()
+
+## Save output
+# Define output directory
+output_dir <- "output/upset/"
+# Ensure the directory exists
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+# Define the sets used in the UpSet plot
+sets <- c("p14_up", "p35_up", "p180_up", "p14_down", "p35_down", "p180_down")
+# Convert the binary matrix into a tibble for better filtering
+upset_data_binary <- as_tibble(upset_data_binary)
+upset_data_binary <- mutate(upset_data_binary, geneSymbol = upset_data$geneSymbol)  # Ensure genes are aligned
+# Function to extract genes for each combination
+extract_upset_genes <- function(upset_data_binary, sets, output_dir) {
+  # Generate all possible intersections
+  upset_combinations <- expand.grid(rep(list(0:1), length(sets)))
+  colnames(upset_combinations) <- sets
+  # Debug: Print structure of upset_data_binary
+  cat("Structure of upset_data_binary:\n")
+  print(str(upset_data_binary))
+  # Iterate through each combination
+  for (i in 1:nrow(upset_combinations)) {
+    comb <- upset_combinations[i, ]
+    # Skip the row if all values are 0 (empty set)
+    if (sum(comb) == 0) next
+    # Debug: Print the current combination
+    cat("\nProcessing Combination:", paste(names(comb)[which(comb == 1)], collapse = ", "), "\n")
+    # Convert comb into a named vector
+    comb_named <- setNames(as.list(comb), names(comb))
+    # Filter genes that match this combination
+    selected_genes <- upset_data_binary %>%
+      filter(across(all_of(sets), ~ . == comb_named[[cur_column()]])) %>%
+      pull(geneSymbol)
+    # Debug: Check how many matches are found
+    num_matching <- length(selected_genes)
+    cat("Genes found:", num_matching, "\n")
+    # Skip if no genes found
+    if (num_matching == 0) next
+    # Create a meaningful filename
+    active_sets <- names(comb)[which(comb == 1)]
+    filename <- paste0(output_dir, "upset_PLI23_p14p35p180-version2padj05fc025-", paste(active_sets, collapse = "-"), "-", num_matching, ".txt")
+    # Save genes to the text file
+    write.table(selected_genes, file = filename, quote = FALSE, row.names = FALSE, col.names = FALSE)
+    # Print confirmation
+    cat("Saved:", filename, "\n")
+  }
+}
+# Run the function
+extract_upset_genes(upset_data_binary, sets, output_dir)
+
+
+
+
+
+
+
+
+# Astrocyte ################
+
+p14_Astrocyte
+p35_Astrocyte
+p180_Astrocyte
+## Filter significant upregulated genes
+p14_up <- p14_Astrocyte %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p35_up <- p35_Astrocyte %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p180_up <- p180_Astrocyte %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+## Filter significant downregulated genes
+p14_down <- p14_Astrocyte %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p35_down <- p35_Astrocyte %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p180_down <- p180_Astrocyte %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+
+## Combine all genes into a unique set
+all_genes <- unique(c(p14_up, p35_up, p180_up, p14_down, p35_down, p180_down))
+## Create an empty binary matrix
+upset_data <- data.frame(geneSymbol = all_genes)
+## Populate the binary matrix with presence/absence (1/0) in each category
+upset_data$p14_up <- ifelse(upset_data$geneSymbol %in% p14_up, 1, 0)
+upset_data$p35_up <- ifelse(upset_data$geneSymbol %in% p35_up, 1, 0)
+upset_data$p180_up <- ifelse(upset_data$geneSymbol %in% p180_up, 1, 0)
+upset_data$p14_down <- ifelse(upset_data$geneSymbol %in% p14_down, 1, 0)
+upset_data$p35_down <- ifelse(upset_data$geneSymbol %in% p35_down, 1, 0)
+upset_data$p180_down <- ifelse(upset_data$geneSymbol %in% p180_down, 1, 0)
+## Remove geneSymbol column as UpSetR requires only binary data
+upset_data_binary <- upset_data %>% select(-geneSymbol)
+# Define the sets for the plot in correct mirrored order
+sets <- c("p180_down", "p35_down", "p14_down", "p180_up", "p35_up", "p14_up")
+# Open PDF device
+pdf("output/upset/upset_Astrocyte_p14p35p180-version2padj05fc025.pdf", width = 6, height = 5)
+# Generate UpSet plot
+upset(
+  upset_data_binary,
+  sets = sets,
+  sets.bar.color = "black",
+  order.by = "freq", 
+  keep.order = TRUE,
+  set.metadata = list(
+    data = data.frame(
+      sets = sets,
+      category = ifelse(grepl("_up", sets), "up", "down")  # Automatically label up/down sets
+    ),
+    plots = list(
+      list(
+        type = "matrix_rows",
+        column = "category",
+        colors = c("up" = "red", "down" = "blue"),  # Background colors
+        alpha = 0.5  # Transparency for better readability
+      )
+    )
+  )
+)
+# Add title
+grid.text("Astrocyte", x = 0.1, y = 0.95, gp = gpar(fontsize = 14, fontface = "bold"))
+# Close PDF device
+dev.off()
+
+## Save output
+# Define output directory
+output_dir <- "output/upset/"
+# Ensure the directory exists
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+# Define the sets used in the UpSet plot
+sets <- c("p14_up", "p35_up", "p180_up", "p14_down", "p35_down", "p180_down")
+# Convert the binary matrix into a tibble for better filtering
+upset_data_binary <- as_tibble(upset_data_binary)
+upset_data_binary <- mutate(upset_data_binary, geneSymbol = upset_data$geneSymbol)  # Ensure genes are aligned
+# Function to extract genes for each combination
+extract_upset_genes <- function(upset_data_binary, sets, output_dir) {
+  # Generate all possible intersections
+  upset_combinations <- expand.grid(rep(list(0:1), length(sets)))
+  colnames(upset_combinations) <- sets
+  # Debug: Print structure of upset_data_binary
+  cat("Structure of upset_data_binary:\n")
+  print(str(upset_data_binary))
+  # Iterate through each combination
+  for (i in 1:nrow(upset_combinations)) {
+    comb <- upset_combinations[i, ]
+    # Skip the row if all values are 0 (empty set)
+    if (sum(comb) == 0) next
+    # Debug: Print the current combination
+    cat("\nProcessing Combination:", paste(names(comb)[which(comb == 1)], collapse = ", "), "\n")
+    # Convert comb into a named vector
+    comb_named <- setNames(as.list(comb), names(comb))
+    # Filter genes that match this combination
+    selected_genes <- upset_data_binary %>%
+      filter(across(all_of(sets), ~ . == comb_named[[cur_column()]])) %>%
+      pull(geneSymbol)
+    # Debug: Check how many matches are found
+    num_matching <- length(selected_genes)
+    cat("Genes found:", num_matching, "\n")
+    # Skip if no genes found
+    if (num_matching == 0) next
+    # Create a meaningful filename
+    active_sets <- names(comb)[which(comb == 1)]
+    filename <- paste0(output_dir, "upset_Astrocyte_p14p35p180-version2padj05fc025-", paste(active_sets, collapse = "-"), "-", num_matching, ".txt")
+    # Save genes to the text file
+    write.table(selected_genes, file = filename, quote = FALSE, row.names = FALSE, col.names = FALSE)
+    # Print confirmation
+    cat("Saved:", filename, "\n")
+  }
+}
+# Run the function
+extract_upset_genes(upset_data_binary, sets, output_dir)
+
+
+
+
+
+
+
+
+
+# Bergman_Glia ################
+
+p14_Bergman_Glia = p14_Bergmann_Glia
+p14_Bergman_Glia
+p35_Bergman_Glia
+p180_Bergman_Glia
+## Filter significant upregulated genes
+p14_up <- p14_Bergman_Glia %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p35_up <- p35_Bergman_Glia %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p180_up <- p180_Bergman_Glia %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+## Filter significant downregulated genes
+p14_down <- p14_Bergman_Glia %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p35_down <- p35_Bergman_Glia %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p180_down <- p180_Bergman_Glia %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+
+## Combine all genes into a unique set
+all_genes <- unique(c(p14_up, p35_up, p180_up, p14_down, p35_down, p180_down))
+## Create an empty binary matrix
+upset_data <- data.frame(geneSymbol = all_genes)
+## Populate the binary matrix with presence/absence (1/0) in each category
+upset_data$p14_up <- ifelse(upset_data$geneSymbol %in% p14_up, 1, 0)
+upset_data$p35_up <- ifelse(upset_data$geneSymbol %in% p35_up, 1, 0)
+upset_data$p180_up <- ifelse(upset_data$geneSymbol %in% p180_up, 1, 0)
+upset_data$p14_down <- ifelse(upset_data$geneSymbol %in% p14_down, 1, 0)
+upset_data$p35_down <- ifelse(upset_data$geneSymbol %in% p35_down, 1, 0)
+upset_data$p180_down <- ifelse(upset_data$geneSymbol %in% p180_down, 1, 0)
+## Remove geneSymbol column as UpSetR requires only binary data
+upset_data_binary <- upset_data %>% select(-geneSymbol)
+# Define the sets for the plot in correct mirrored order
+sets <- c("p180_down", "p35_down", "p14_down", "p180_up", "p35_up", "p14_up")
+# Open PDF device
+pdf("output/upset/upset_Bergman_Glia_p14p35p180-version2padj05fc025.pdf", width = 6, height = 5)
+# Generate UpSet plot
+upset(
+  upset_data_binary,
+  sets = sets,
+  sets.bar.color = "black",
+  order.by = "freq", 
+  keep.order = TRUE,
+  set.metadata = list(
+    data = data.frame(
+      sets = sets,
+      category = ifelse(grepl("_up", sets), "up", "down")  # Automatically label up/down sets
+    ),
+    plots = list(
+      list(
+        type = "matrix_rows",
+        column = "category",
+        colors = c("up" = "red", "down" = "blue"),  # Background colors
+        alpha = 0.5  # Transparency for better readability
+      )
+    )
+  )
+)
+# Add title
+grid.text("Bergman_Glia", x = 0.1, y = 0.95, gp = gpar(fontsize = 14, fontface = "bold"))
+# Close PDF device
+dev.off()
+
+## Save output
+# Define output directory
+output_dir <- "output/upset/"
+# Ensure the directory exists
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+# Define the sets used in the UpSet plot
+sets <- c("p14_up", "p35_up", "p180_up", "p14_down", "p35_down", "p180_down")
+# Convert the binary matrix into a tibble for better filtering
+upset_data_binary <- as_tibble(upset_data_binary)
+upset_data_binary <- mutate(upset_data_binary, geneSymbol = upset_data$geneSymbol)  # Ensure genes are aligned
+# Function to extract genes for each combination
+extract_upset_genes <- function(upset_data_binary, sets, output_dir) {
+  # Generate all possible intersections
+  upset_combinations <- expand.grid(rep(list(0:1), length(sets)))
+  colnames(upset_combinations) <- sets
+  # Debug: Print structure of upset_data_binary
+  cat("Structure of upset_data_binary:\n")
+  print(str(upset_data_binary))
+  # Iterate through each combination
+  for (i in 1:nrow(upset_combinations)) {
+    comb <- upset_combinations[i, ]
+    # Skip the row if all values are 0 (empty set)
+    if (sum(comb) == 0) next
+    # Debug: Print the current combination
+    cat("\nProcessing Combination:", paste(names(comb)[which(comb == 1)], collapse = ", "), "\n")
+    # Convert comb into a named vector
+    comb_named <- setNames(as.list(comb), names(comb))
+    # Filter genes that match this combination
+    selected_genes <- upset_data_binary %>%
+      filter(across(all_of(sets), ~ . == comb_named[[cur_column()]])) %>%
+      pull(geneSymbol)
+    # Debug: Check how many matches are found
+    num_matching <- length(selected_genes)
+    cat("Genes found:", num_matching, "\n")
+    # Skip if no genes found
+    if (num_matching == 0) next
+    # Create a meaningful filename
+    active_sets <- names(comb)[which(comb == 1)]
+    filename <- paste0(output_dir, "upset_Bergman_Glia_p14p35p180-version2padj05fc025-", paste(active_sets, collapse = "-"), "-", num_matching, ".txt")
+    # Save genes to the text file
+    write.table(selected_genes, file = filename, quote = FALSE, row.names = FALSE, col.names = FALSE)
+    # Print confirmation
+    cat("Saved:", filename, "\n")
+  }
+}
+# Run the function
+extract_upset_genes(upset_data_binary, sets, output_dir)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Golgi ################
+
+p14_Golgi
+p35_Golgi
+p180_Golgi
+## Filter significant upregulated genes
+p14_up <- p14_Golgi %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p35_up <- p35_Golgi %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p180_up <- p180_Golgi %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+## Filter significant downregulated genes
+p14_down <- p14_Golgi %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p35_down <- p35_Golgi %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p180_down <- p180_Golgi %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+
+## Combine all genes into a unique set
+all_genes <- unique(c(p14_up, p35_up, p180_up, p14_down, p35_down, p180_down))
+## Create an empty binary matrix
+upset_data <- data.frame(geneSymbol = all_genes)
+## Populate the binary matrix with presence/absence (1/0) in each category
+upset_data$p14_up <- ifelse(upset_data$geneSymbol %in% p14_up, 1, 0)
+upset_data$p35_up <- ifelse(upset_data$geneSymbol %in% p35_up, 1, 0)
+upset_data$p180_up <- ifelse(upset_data$geneSymbol %in% p180_up, 1, 0)
+upset_data$p14_down <- ifelse(upset_data$geneSymbol %in% p14_down, 1, 0)
+upset_data$p35_down <- ifelse(upset_data$geneSymbol %in% p35_down, 1, 0)
+upset_data$p180_down <- ifelse(upset_data$geneSymbol %in% p180_down, 1, 0)
+## Remove geneSymbol column as UpSetR requires only binary data
+upset_data_binary <- upset_data %>% select(-geneSymbol)
+# Define the sets for the plot in correct mirrored order
+sets <- c("p180_down", "p35_down", "p14_down", "p180_up", "p35_up", "p14_up")
+# Open PDF device
+pdf("output/upset/upset_Golgi_p14p35p180-version2padj05fc025.pdf", width = 6, height = 5)
+# Generate UpSet plot
+upset(
+  upset_data_binary,
+  sets = sets,
+  sets.bar.color = "black",
+  order.by = "freq", 
+  keep.order = TRUE,
+  set.metadata = list(
+    data = data.frame(
+      sets = sets,
+      category = ifelse(grepl("_up", sets), "up", "down")  # Automatically label up/down sets
+    ),
+    plots = list(
+      list(
+        type = "matrix_rows",
+        column = "category",
+        colors = c("up" = "red", "down" = "blue"),  # Background colors
+        alpha = 0.5  # Transparency for better readability
+      )
+    )
+  )
+)
+# Add title
+grid.text("Golgi", x = 0.1, y = 0.95, gp = gpar(fontsize = 14, fontface = "bold"))
+# Close PDF device
+dev.off()
+
+## Save output
+# Define output directory
+output_dir <- "output/upset/"
+# Ensure the directory exists
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+# Define the sets used in the UpSet plot
+sets <- c("p14_up", "p35_up", "p180_up", "p14_down", "p35_down", "p180_down")
+# Convert the binary matrix into a tibble for better filtering
+upset_data_binary <- as_tibble(upset_data_binary)
+upset_data_binary <- mutate(upset_data_binary, geneSymbol = upset_data$geneSymbol)  # Ensure genes are aligned
+# Function to extract genes for each combination
+extract_upset_genes <- function(upset_data_binary, sets, output_dir) {
+  # Generate all possible intersections
+  upset_combinations <- expand.grid(rep(list(0:1), length(sets)))
+  colnames(upset_combinations) <- sets
+  # Debug: Print structure of upset_data_binary
+  cat("Structure of upset_data_binary:\n")
+  print(str(upset_data_binary))
+  # Iterate through each combination
+  for (i in 1:nrow(upset_combinations)) {
+    comb <- upset_combinations[i, ]
+    # Skip the row if all values are 0 (empty set)
+    if (sum(comb) == 0) next
+    # Debug: Print the current combination
+    cat("\nProcessing Combination:", paste(names(comb)[which(comb == 1)], collapse = ", "), "\n")
+    # Convert comb into a named vector
+    comb_named <- setNames(as.list(comb), names(comb))
+    # Filter genes that match this combination
+    selected_genes <- upset_data_binary %>%
+      filter(across(all_of(sets), ~ . == comb_named[[cur_column()]])) %>%
+      pull(geneSymbol)
+    # Debug: Check how many matches are found
+    num_matching <- length(selected_genes)
+    cat("Genes found:", num_matching, "\n")
+    # Skip if no genes found
+    if (num_matching == 0) next
+    # Create a meaningful filename
+    active_sets <- names(comb)[which(comb == 1)]
+    filename <- paste0(output_dir, "upset_Golgi_p14p35p180-version2padj05fc025-", paste(active_sets, collapse = "-"), "-", num_matching, ".txt")
+    # Save genes to the text file
+    write.table(selected_genes, file = filename, quote = FALSE, row.names = FALSE, col.names = FALSE)
+    # Print confirmation
+    cat("Saved:", filename, "\n")
+  }
+}
+# Run the function
+extract_upset_genes(upset_data_binary, sets, output_dir)
+
+
+
+
+
+
+
+
+
+###############################
+# same time point ##################
+################################
+
+
+
+
+# p14 - Filtered cell types ################
+p14_Granule
+p14_MLI1
+p14_MLI2
+p14_Astrocyte
+p14_Purkinje
+
+
+## Filter significant upregulated genes
+p14_Granule_up <- p14_Granule %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_MLI1_up <- p14_MLI1 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_MLI2_up <- p14_MLI2 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_Purkinje_up <- p14_Purkinje %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p14_Astrocyte_up <- p14_Astrocyte %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+
+## Filter significant downregulated genes
+p14_Granule_down <- p14_Granule %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_MLI1_down <- p14_MLI1 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_MLI2_down <- p14_MLI2 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_Purkinje_down <- p14_Purkinje %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p14_Astrocyte_down <- p14_Astrocyte %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+
+
+## Combine all genes into a unique set
+all_genes <- unique(c(p14_Granule_up ,p14_MLI1_up ,p14_MLI2_up ,p14_Purkinje_up ,p14_Astrocyte_up ,p14_Granule_down ,p14_MLI1_down ,p14_MLI2_down  ,p14_Purkinje_down ,p14_Astrocyte_down ))
+## Create an empty binary matrix
+upset_data <- data.frame(geneSymbol = all_genes)
+## Populate the binary matrix with presence/absence (1/0) in each category
+## Create a unique list of all genes
+all_genes <- unique(c(
+p14_Granule_up ,p14_MLI1_up ,p14_MLI2_up ,p14_Purkinje_up ,p14_Astrocyte_up ,p14_Granule_down ,p14_MLI1_down ,p14_MLI2_down  ,p14_Purkinje_down ,p14_Astrocyte_down 
+))
+
+## Create an empty binary matrix
+upset_data <- data.frame(geneSymbol = all_genes)
+## Populate the binary matrix with presence/absence (1/0) for each category
+upset_data$p14_Granule_up <- ifelse(upset_data$geneSymbol %in% p14_Granule_up, 1, 0)
+upset_data$p14_MLI1_up <- ifelse(upset_data$geneSymbol %in% p14_MLI1_up, 1, 0)
+upset_data$p14_MLI2_up <- ifelse(upset_data$geneSymbol %in% p14_MLI2_up, 1, 0)
+upset_data$p14_Purkinje_up <- ifelse(upset_data$geneSymbol %in% p14_Purkinje_up, 1, 0)
+upset_data$p14_Astrocyte_up <- ifelse(upset_data$geneSymbol %in% p14_Astrocyte_up, 1, 0)
+upset_data$p14_Granule_down <- ifelse(upset_data$geneSymbol %in% p14_Granule_down, 1, 0)
+upset_data$p14_MLI1_down <- ifelse(upset_data$geneSymbol %in% p14_MLI1_down, 1, 0)
+upset_data$p14_MLI2_down <- ifelse(upset_data$geneSymbol %in% p14_MLI2_down, 1, 0)
+upset_data$p14_Purkinje_down <- ifelse(upset_data$geneSymbol %in% p14_Purkinje_down, 1, 0)
+upset_data$p14_Astrocyte_down <- ifelse(upset_data$geneSymbol %in% p14_Astrocyte_down, 1, 0)
+
+## Remove geneSymbol column as UpSetR requires only binary data
+upset_data_binary <- upset_data %>% select(-geneSymbol)
+# Define the sets for the plot in correct mirrored order
+sets <- c("p14_Astrocyte_down" ,"p14_Purkinje_down" ,"p14_MLI2_down" ,"p14_MLI1_down" ,"p14_Granule_down" ,"p14_Astrocyte_up" ,"p14_Purkinje_up" ,"p14_MLI2_up" ,"p14_MLI1_up" ,"p14_Granule_up"
+)
+# Open PDF device
+pdf("output/upset/upset_p14_updown_filter-version2padj05fc025.pdf", width = 8, height = 6)
+# Generate UpSet plot
+upset(
+  upset_data_binary,
+  sets = sets,
+  sets.bar.color = "black",
+  order.by = "freq", 
+  keep.order = TRUE,
+  nintersects = 20,
+  set.metadata = list(
+    data = data.frame(
+      sets = sets,
+      category = ifelse(grepl("_up", sets), "up", "down")  # Automatically label up/down sets
+    ),
+    plots = list(
+      list(
+        type = "matrix_rows",
+        column = "category",
+        colors = c("up" = "red", "down" = "blue"),  # Background colors
+        alpha = 0.5  # Transparency for better readability
+      )
+    )
+  )
+)
+# Add title
+grid.text("p14", x = 0.1, y = 0.95, gp = gpar(fontsize = 14, fontface = "bold"))
+# Close PDF device
+dev.off()
+
+## Save output
+# Define output directory
+output_dir <- "output/upset/"
+# Ensure the directory exists
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+# Define the sets used in the UpSet plot
+sets <- c("p14_Astrocyte_down" ,"p14_Purkinje_down" ,"p14_MLI2_down" ,"p14_MLI1_down" ,"p14_Granule_down" ,"p14_Astrocyte_up" ,"p14_Purkinje_up" ,"p14_MLI2_up" ,"p14_MLI1_up" ,"p14_Granule_up"
+)
+# Convert the binary matrix into a tibble for better filtering
+upset_data_binary <- as_tibble(upset_data_binary)
+upset_data_binary <- mutate(upset_data_binary, geneSymbol = upset_data$geneSymbol)  # Ensure genes are aligned
+# Function to extract genes for each combination
+extract_upset_genes <- function(upset_data_binary, sets, output_dir) {
+  # Generate all possible intersections
+  upset_combinations <- expand.grid(rep(list(0:1), length(sets)))
+  colnames(upset_combinations) <- sets
+  # Debug: Print structure of upset_data_binary
+  cat("Structure of upset_data_binary:\n")
+  print(str(upset_data_binary))
+  # Iterate through each combination
+  for (i in 1:nrow(upset_combinations)) {
+    comb <- upset_combinations[i, ]
+    # Skip the row if all values are 0 (empty set)
+    if (sum(comb) == 0) next
+    # Debug: Print the current combination
+    cat("\nProcessing Combination:", paste(names(comb)[which(comb == 1)], collapse = ", "), "\n")
+    # Convert comb into a named vector
+    comb_named <- setNames(as.list(comb), names(comb))
+    # Filter genes that match this combination
+    selected_genes <- upset_data_binary %>%
+      filter(across(all_of(sets), ~ . == comb_named[[cur_column()]])) %>%
+      pull(geneSymbol)
+    # Debug: Check how many matches are found
+    num_matching <- length(selected_genes)
+    cat("Genes found:", num_matching, "\n")
+    # Skip if no genes found
+    if (num_matching == 0) next
+    # Create a meaningful filename
+    active_sets <- names(comb)[which(comb == 1)]
+    filename <- paste0(output_dir, "upset_p14_updown_filter-version2padj05fc025-", paste(active_sets, collapse = "-"), "-", num_matching, ".txt")
+    # Save genes to the text file
+    write.table(selected_genes, file = filename, quote = FALSE, row.names = FALSE, col.names = FALSE)
+    # Print confirmation
+    cat("Saved:", filename, "\n")
+  }
+}
+# Run the function
+extract_upset_genes(upset_data_binary, sets, output_dir)
+
+
+
+
+
+
+
+
+
+
+
+
+# p35 - Filtered cell types ################
+p35_Granule
+p35_MLI1
+p35_MLI2
+p35_Astrocyte
+p35_Purkinje
+
+
+## Filter significant upregulated genes
+p35_Granule_up <- p35_Granule %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p35_MLI1_up <- p35_MLI1 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p35_MLI2_up <- p35_MLI2 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p35_Purkinje_up <- p35_Purkinje %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p35_Astrocyte_up <- p35_Astrocyte %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+
+## Filter significant downregulated genes
+p35_Granule_down <- p35_Granule %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p35_MLI1_down <- p35_MLI1 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p35_MLI2_down <- p35_MLI2 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p35_Purkinje_down <- p35_Purkinje %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p35_Astrocyte_down <- p35_Astrocyte %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+
+## Combine all genes into a unique set
+all_genes <- unique(c(p35_Granule_up, p35_MLI1_up, p35_MLI2_up, p35_Purkinje_up, p35_Astrocyte_up, p35_Granule_down, p35_MLI1_down, p35_MLI2_down, p35_Purkinje_down, p35_Astrocyte_down))
+
+## Create an empty binary matrix
+upset_data <- data.frame(geneSymbol = all_genes)
+## Populate the binary matrix with presence/absence (1/0) in each category
+## Create a unique list of all genes
+all_genes <- unique(c(
+p35_Granule_up, p35_MLI1_up, p35_MLI2_up, p35_Purkinje_up, p35_Astrocyte_up, p35_Granule_down, p35_MLI1_down, p35_MLI2_down, p35_Purkinje_down, p35_Astrocyte_down
+))
+
+## Create an empty binary matrix
+upset_data <- data.frame(geneSymbol = all_genes)
+## Populate the binary matrix with presence/absence (1/0) for each category
+upset_data$p35_Granule_up <- ifelse(upset_data$geneSymbol %in% p35_Granule_up, 1, 0)
+upset_data$p35_MLI1_up <- ifelse(upset_data$geneSymbol %in% p35_MLI1_up, 1, 0)
+upset_data$p35_MLI2_up <- ifelse(upset_data$geneSymbol %in% p35_MLI2_up, 1, 0)
+upset_data$p35_Purkinje_up <- ifelse(upset_data$geneSymbol %in% p35_Purkinje_up, 1, 0)
+upset_data$p35_Astrocyte_up <- ifelse(upset_data$geneSymbol %in% p35_Astrocyte_up, 1, 0)
+
+upset_data$p35_Granule_down <- ifelse(upset_data$geneSymbol %in% p35_Granule_down, 1, 0)
+upset_data$p35_MLI1_down <- ifelse(upset_data$geneSymbol %in% p35_MLI1_down, 1, 0)
+upset_data$p35_MLI2_down <- ifelse(upset_data$geneSymbol %in% p35_MLI2_down, 1, 0)
+upset_data$p35_Purkinje_down <- ifelse(upset_data$geneSymbol %in% p35_Purkinje_down, 1, 0)
+upset_data$p35_Astrocyte_down <- ifelse(upset_data$geneSymbol %in% p35_Astrocyte_down, 1, 0)
+
+
+## Remove geneSymbol column as UpSetR requires only binary data
+upset_data_binary <- upset_data %>% select(-geneSymbol)
+# Define the sets for the plot in correct mirrored order
+sets <- c("p35_Astrocyte_down", "p35_Purkinje_down", "p35_MLI2_down", "p35_MLI1_down", "p35_Granule_down", "p35_Astrocyte_up", "p35_Purkinje_up", "p35_MLI2_up", "p35_MLI1_up", "p35_Granule_up"
+)
+# Open PDF device
+pdf("output/upset/upset_p35_updown_filter-version2padj05fc025.pdf", width = 12, height = 6)
+# Generate UpSet plot
+upset(
+  upset_data_binary,
+  sets = sets,
+  sets.bar.color = "black",
+  order.by = "freq", 
+  keep.order = TRUE,
+  nintersects = 80,
+  set.metadata = list(
+    data = data.frame(
+      sets = sets,
+      category = ifelse(grepl("_up", sets), "up", "down")  # Automatically label up/down sets
+    ),
+    plots = list(
+      list(
+        type = "matrix_rows",
+        column = "category",
+        colors = c("up" = "red", "down" = "blue"),  # Background colors
+        alpha = 0.5  # Transparency for better readability
+      )
+    )
+  )
+)
+# Add title
+grid.text("p35", x = 0.1, y = 0.95, gp = gpar(fontsize = 14, fontface = "bold"))
+# Close PDF device
+dev.off()
+
+
+## Save output
+output_dir <- "output/upset/"
+# Ensure the directory exists
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+# Define the sets used in the UpSet plot
+sets <- c("p35_Astrocyte_down", "p35_Purkinje_down", "p35_MLI2_down", "p35_MLI1_down", "p35_Granule_down",  "p35_Astrocyte_up", "p35_Purkinje_up", "p35_MLI2_up", "p35_MLI1_up", "p35_Granule_up"
+)
+# Convert the binary matrix into a tibble for better filtering
+upset_data_binary <- as_tibble(upset_data_binary)
+upset_data_binary <- mutate(upset_data_binary, geneSymbol = upset_data$geneSymbol)  # Ensure genes are aligned
+# Function to extract genes for each combination
+extract_upset_genes <- function(upset_data_binary, sets, output_dir) {
+  # Generate all possible intersections
+  upset_combinations <- expand.grid(rep(list(0:1), length(sets)))
+  colnames(upset_combinations) <- sets
+  # Debug: Print structure of upset_data_binary
+  cat("Structure of upset_data_binary:\n")
+  print(str(upset_data_binary))
+  # Iterate through each combination
+  for (i in 1:nrow(upset_combinations)) {
+    comb <- upset_combinations[i, ]
+    # Skip the row if all values are 0 (empty set)
+    if (sum(comb) == 0) next
+    # Debug: Print the current combination
+    cat("\nProcessing Combination:", paste(names(comb)[which(comb == 1)], collapse = ", "), "\n")
+    # Convert comb into a named vector
+    comb_named <- setNames(as.list(comb), names(comb))
+    # Filter genes that match this combination
+    selected_genes <- upset_data_binary %>%
+      filter(across(all_of(sets), ~ . == comb_named[[cur_column()]])) %>%
+      pull(geneSymbol)
+    # Debug: Check how many matches are found
+    num_matching <- length(selected_genes)
+    cat("Genes found:", num_matching, "\n")
+    # Skip if no genes found
+    if (num_matching == 0) next
+    # Create a meaningful filename
+    active_sets <- names(comb)[which(comb == 1)]
+    filename <- paste0(output_dir, "upset_p35_updown_filter-version2padj05fc025-", paste(active_sets, collapse = "-"), "-", num_matching, ".txt")
+    # Save genes to the text file
+    write.table(selected_genes, file = filename, quote = FALSE, row.names = FALSE, col.names = FALSE)
+    # Print confirmation
+    cat("Saved:", filename, "\n")
+  }
+}
+# Run the function
+extract_upset_genes(upset_data_binary, sets, output_dir)
+
+
+
+
+
+
+
+
+
+
+# p180 - Filtered cell types ################
+
+p180_Granule
+p180_MLI1
+p180_MLI2
+p180_Astrocyte
+p180_Purkinje
+
+
+## Filter significant upregulated genes
+p180_Granule_up <- p180_Granule %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p180_MLI1_up <- p180_MLI1 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p180_MLI2_up <- p180_MLI2 %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p180_Astrocyte_up <- p180_Astrocyte %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+p180_Purkinje_up <- p180_Purkinje %>% filter(p_val_adj < 0.05 & avg_log2FC > 0.25) %>% pull(geneSymbol)
+
+
+## Filter significant downregulated genes
+p180_Granule_down <- p180_Granule %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p180_MLI1_down <- p180_MLI1 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p180_MLI2_down <- p180_MLI2 %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p180_Astrocyte_down <- p180_Astrocyte %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+p180_Purkinje_down <- p180_Purkinje %>% filter(p_val_adj < 0.05 & avg_log2FC < -0.25) %>% pull(geneSymbol)
+
+
+
+## Combine all genes into a unique set
+all_genes <- unique(c(p180_Granule_up,  p180_MLI1_up, p180_MLI2_up, p180_Astrocyte_up, p180_Purkinje_up, p180_Granule_down, p180_MLI1_down, p180_MLI2_down, p180_Astrocyte_down, p180_Purkinje_down))
+
+## Create an empty binary matrix
+upset_data <- data.frame(geneSymbol = all_genes)
+## Populate the binary matrix with presence/absence (1/0) in each category
+## Create a unique list of all genes
+all_genes <- unique(c(
+  p180_Granule_up,  p180_MLI1_up, p180_MLI2_up, p180_Astrocyte_up, p180_Purkinje_up, p180_Granule_down, p180_MLI1_down, p180_MLI2_down, p180_Astrocyte_down, p180_Purkinje_down
+))
+
+## Create an empty binary matrix
+upset_data <- data.frame(geneSymbol = all_genes)
+## Populate the binary matrix with presence/absence (1/0) for each category
+upset_data$p180_Granule_up <- ifelse(upset_data$geneSymbol %in% p180_Granule_up, 1, 0)
+upset_data$p180_MLI1_up <- ifelse(upset_data$geneSymbol %in% p180_MLI1_up, 1, 0)
+upset_data$p180_MLI2_up <- ifelse(upset_data$geneSymbol %in% p180_MLI2_up, 1, 0)
+upset_data$p180_Astrocyte_up <- ifelse(upset_data$geneSymbol %in% p180_Astrocyte_up, 1, 0)
+upset_data$p180_Purkinje_up <- ifelse(upset_data$geneSymbol %in% p180_Purkinje_up, 1, 0)
+
+upset_data$p180_Granule_down <- ifelse(upset_data$geneSymbol %in% p180_Granule_down, 1, 0)
+upset_data$p180_MLI1_down <- ifelse(upset_data$geneSymbol %in% p180_MLI1_down, 1, 0)
+upset_data$p180_MLI2_down <- ifelse(upset_data$geneSymbol %in% p180_MLI2_down, 1, 0)
+upset_data$p180_Astrocyte_down <- ifelse(upset_data$geneSymbol %in% p180_Astrocyte_down, 1, 0)
+upset_data$p180_Purkinje_down <- ifelse(upset_data$geneSymbol %in% p180_Purkinje_down, 1, 0)
+
+
+## Remove geneSymbol column as UpSetR requires only binary data
+upset_data_binary <- upset_data %>% select(-geneSymbol)
+# Define the sets for the plot in correct mirrored order
+
+sets <- c("p180_Astrocyte_down", "p180_Purkinje_down", "p180_MLI2_down", "p180_MLI1_down", "p180_Granule_down", "p180_Astrocyte_up", "p180_Purkinje_up", "p180_MLI2_up", "p180_MLI1_up", "p180_Granule_up"
+)
+# Open PDF device
+pdf("output/upset/upset_p180_updown_filter-version2padj05fc025.pdf", width = 6, height = 6)
+# Generate UpSet plot
+upset(
+  upset_data_binary,
+  sets = sets,
+  sets.bar.color = "black",
+  order.by = "freq", 
+  keep.order = TRUE,
+  set.metadata = list(
+    data = data.frame(
+      sets = sets,
+      category = ifelse(grepl("_up", sets), "up", "down")  # Automatically label up/down sets
+    ),
+    plots = list(
+      list(
+        type = "matrix_rows",
+        column = "category",
+        colors = c("up" = "red", "down" = "blue"),  # Background colors
+        alpha = 0.5  # Transparency for better readability
+      )
+    )
+  )
+)
+# Add title
+grid.text("p180", x = 0.1, y = 0.95, gp = gpar(fontsize = 14, fontface = "bold"))
+# Close PDF device
+dev.off()
+
+## Save output
+output_dir <- "output/upset/"
+# Ensure the directory exists
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+# Define the sets used in the UpSet plot
+sets <- c("p180_Astrocyte_down", "p180_Purkinje_down", "p180_MLI2_down", "p180_MLI1_down", "p180_Granule_down",  "p180_Astrocyte_up", "p180_Purkinje_up", "p180_MLI2_up", "p180_MLI1_up", "p180_Granule_up"
+)
+# Convert the binary matrix into a tibble for better filtering
+upset_data_binary <- as_tibble(upset_data_binary)
+upset_data_binary <- mutate(upset_data_binary, geneSymbol = upset_data$geneSymbol)  # Ensure genes are aligned
+# Function to extract genes for each combination
+extract_upset_genes <- function(upset_data_binary, sets, output_dir) {
+  # Generate all possible intersections
+  upset_combinations <- expand.grid(rep(list(0:1), length(sets)))
+  colnames(upset_combinations) <- sets
+  # Debug: Print structure of upset_data_binary
+  cat("Structure of upset_data_binary:\n")
+  print(str(upset_data_binary))
+  # Iterate through each combination
+  for (i in 1:nrow(upset_combinations)) {
+    comb <- upset_combinations[i, ]
+    # Skip the row if all values are 0 (empty set)
+    if (sum(comb) == 0) next
+    # Debug: Print the current combination
+    cat("\nProcessing Combination:", paste(names(comb)[which(comb == 1)], collapse = ", "), "\n")
+    # Convert comb into a named vector
+    comb_named <- setNames(as.list(comb), names(comb))
+    # Filter genes that match this combination
+    selected_genes <- upset_data_binary %>%
+      filter(across(all_of(sets), ~ . == comb_named[[cur_column()]])) %>%
+      pull(geneSymbol)
+    # Debug: Check how many matches are found
+    num_matching <- length(selected_genes)
+    cat("Genes found:", num_matching, "\n")
+    # Skip if no genes found
+    if (num_matching == 0) next
+    # Create a meaningful filename
+    active_sets <- names(comb)[which(comb == 1)]
+    filename <- paste0(output_dir, "upset_p180_updown_filter-version2padj05fc025-", paste(active_sets, collapse = "-"), "-", num_matching, ".txt")
+    # Save genes to the text file
+    write.table(selected_genes, file = filename, quote = FALSE, row.names = FALSE, col.names = FALSE)
+    # Print confirmation
+    cat("Saved:", filename, "\n")
+  }
+}
+# Run the function
+extract_upset_genes(upset_data_binary, sets, output_dir)
+
+
+
+
+```
+
+
+--> MAST DEGs looks good, many overlap of up/down regulated genes at least for Granule, ML1, MLI2, Purkinje and Astrocyte cell populations.
+ 
+ 
+
+
+
+
+#### NeuronChat
+
+--> [NeuronChat](https://github.com/Wei-BioMath/NeuronChatinfer), visualize and analyze neural-specific cell-cell communication from single cell transcriptomics.
+
+
+##### NeuronChat installation
+
+Lets try to copy env scRNAseq and install it:
+
+```bash
+conda create --name NeuronChat --clone scRNAseq
+conda activate NeuronChat
+```
+
+```R
+devtools::install_github("Wei-BioMath/NeuronChat") 
+#--> Fail, dependencies CellChat and ComplexHeatmap 
+devtools::install_github("sqjin/CellChat")
+#--> Fail, dependencies ComplexHeatmap 
+devtools::install_github("jokergoo/ComplexHeatmap")
+#--> WORK
+devtools::install_github("sqjin/CellChat")
+#--> WORK
+devtools::install_github("Wei-BioMath/NeuronChat") 
+```
+
+--> All good!
+
+
+
+##### NeuronChat testing
+
+```bash
+conda activate NeuronChat
+```
+
+Follow [Inference and analysis of neural-specific cell-cell communication using NeuronChat](https://htmlpreview.github.io/?https://github.com/Wei-BioMath/NeuronChat/blob/main/vignettes/NeuronChat-Tutorial.html)
+
+
+Lets do a first test with only **WT cells from p14**
+
+
+```R
+# packages
+library("NeuronChat")
+library("Seurat")
+library("ggalluvial")
+
+
+set.seed(42)
+
+# import seurat object
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015.sct_V1_label.rds") # 
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
+WT_Kcnc1_p14_CB_1step.sct <- NormalizeData(WT_Kcnc1_p14_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p14_CB_1step.sct)
+WT_Kcnc1_p14_CB_1step.sct <- ScaleData(WT_Kcnc1_p14_CB_1step.sct, features = all.genes) # zero-centres and scales it
+
+# Subset to keep WT cells only
+WT_p14 <- subset(WT_Kcnc1_p14_CB_1step.sct, cells = WhichCells(WT_Kcnc1_p14_CB_1step.sct, expression = condition == "WT"))
+
+# Part I: Create NeuronChat object
+expr_matrix <- as.matrix(GetAssayData(WT_p14, slot = "counts"))
+
+meta_data <- WT_p14@meta.data
+meta_data$cell_subclass <- Idents(WT_p14)  # Assuming cell subclass is stored in identities
+rownames(meta_data) <- colnames(expr_matrix) # Ensure row names match cell names
+NeuronChat_WT <- createNeuronChat(expr_matrix, DB = 'mouse', group.by = meta_data$cell_subclass)
+
+
+# Part II: Run NeuronChat to infer the neural-specific cell-cell communication networks
+NeuronChat_WT <- run_NeuronChat(NeuronChat_WT,M=100) # m=nb of permutation, 100 is good; ~5min with WT only)
+#--> the communication networks for individual interaction pairs are stored in slot 'net'
+net_aggregated_NeuronChat_WT <- net_aggregation(NeuronChat_WT@net,method = 'weight') # method can be 'weight', 'count' and so on
+
+## Set the cluster name = group
+df_group <- meta_data[!duplicated(meta_data$cell_subclass), c('cluster.annot')]
+df_group <- as.character(df_group)
+group <- structure(df_group, names = df_group)
+
+
+# Part III: Visualization of neural-specific cell-cell communication networks
+pdf("output/NeuronChat/netVisual_circle_chord_neuron-p14_CB_WT.pdf", width=15, height=15)
+par(mfrow=c(1,2))
+# Visualization, circle plot, for the aggregated network
+netVisual_circle_neuron(net_aggregated_NeuronChat_WT,group=group,vertex.label.cex = 1)
+# Visualization, chordDiagram, for the aggregated network; also using cellchat function netVisual_chord_cell_internal(net_aggregated_NeuronChat_WT, group = group,lab.cex=1)
+netVisual_chord_neuron(NeuronChat_WT,method = 'weight',group=group,lab.cex = 1)
+dev.off()
+
+
+pdf("output/NeuronChat/heatmap_aggregated-p14_CB_WT.pdf", width=6, height=6)
+# Visualization, heatmap for the aggregated network
+heatmap_aggregated(NeuronChat_WT, method='weight',group=group)
+dev.off()
+
+
+# for individual network
+pdf("output/NeuronChat/netVisual_circle_chord_neuron-p14_CB_WT-Glu_Gria2.pdf", width=15, height=15)
+par(mfrow=c(1,2))
+# Visualization for the single interaction pair, circle plot  
+netVisual_circle_neuron(NeuronChat_WT@net$Glu_Gria2,group=group,vertex.label.cex = 1)
+# Visualization for the single interaction pair, chord diagram 
+netVisual_chord_neuron(NeuronChat_WT,interaction_use='Glu_Gria2',group=group,lab.cex = 1)
+dev.off()
+
+
+# Visualization for the single interaction pair, heatmap 
+pdf("output/NeuronChat/heatmap_single-p14_CB_WT-Glu_Gria2.pdf", width=6, height=6)
+heatmap_single(NeuronChat_WT,interaction_name='Glu_Gria2',group=group)
+dev.off()
+
+
+# Visualization for the single interaction pair, heatmap with violin plots showing expression of genes realted to ligand and target
+pdf("output/NeuronChat/lig_tar_heatmap-p14_CB_WT-Glu_Gria2.pdf", width=15, height=4)
+lig_tar_heatmap(NeuronChat_WT,interaction_name='Glu_Gria2',width.vector=c(0.38,0.35,0.27))
+dev.off()
+
+
+
+
+# Part IV: Analysis of communication
+
+## barplot show the count of links or information flow for all interaction pair
+pdf("output/NeuronChat/rankNet_Neuron-p14_CB_WT.pdf", width=6, height=12)
+g1 <- rankNet_Neuron(NeuronChat_WT,slot.name = "net",measure = c("weight"),mode='single',font.size = 5) 
+g2 <- rankNet_Neuron(NeuronChat_WT,slot.name = "net",measure = c("count"),mode='single',font.size = 5)
+g1+g2
+dev.off()
+
+
+## outgoing/incoming pattern
+# selectK_Neuron(x,pattern = "outgoing")
+# selectK_Neuron(x,pattern = "incoming")
+NeuronChat_WT<- identifyCommunicationPatterns_Neuron(NeuronChat_WT, slot.name = "net", pattern = c("outgoing"), k=7,height = 18)
+NeuronChat_WT<- identifyCommunicationPatterns_Neuron(NeuronChat_WT, slot.name = "net", pattern = c("incoming"), k=7,height = 18)
+
+
+
+pdf("output/NeuronChat/netAnalysis_river_Neuron-p14_CB_WT-outgoing.pdf", width=6, height=6)
+netAnalysis_river_Neuron(NeuronChat_WT,slot.name = "net", pattern = c("outgoing"),font.size = 2.5,cutoff.1 = 0.5,cutoff.2=0.5)
+dev.off()
+
+
+pdf("output/NeuronChat/netAnalysis_river_Neuron-p14_CB_WT-incoming.pdf", width=6, height=6)
+netAnalysis_river_Neuron(NeuronChat_WT,slot.name = "net", pattern = c("incoming"),font.size = 2.5,cutoff.1 = 0.5,cutoff.2=0.5)
+dev.off()
+
+```
+
+- XXXY Check **which type of count** to use: Raw/data/scale.data ?
 
 
 
@@ -13054,6 +14939,8 @@ WT_Kcnc1_CB_integrateMerge.sct$condition <- factor(WT_Kcnc1_CB_integrateMerge.sc
 WT_Kcnc1_CB_integrateMerge.sct$time <- factor(WT_Kcnc1_CB_integrateMerge.sct$time, levels = c("p14", "p35", "p180")) 
 
 pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res02-version2.pdf", width=7, height=6)
+pdf("output/seurat/test.pdf", width=7, height=6)
+
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE, raster = FALSE)
 dev.off()
 
@@ -13114,58 +15001,58 @@ dev.off()
 # save ######################################################
 ## saveRDS(WT_Kcnc1_CB_integrateMerge.sct, file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version2dim50kparam30res02-V1_numeric.rds") #
 WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version2dim50kparam30res02-V1_numeric.rds")
+
+# ADD LABEL V1:
+
+## saveRDS(WT_Kcnc1_CB_integrateMerge.sct, file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version2dim50kparam30res02-V1_label.rds") #
+WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version2dim50kparam30res02-V1_label.rds")
 ############################################################################################################
 
 
 
 
 # V1 naming
-cluster1: Granule_1
-cluster2: PLI
-cluster3: Granule_2
-cluster4: Mix
-cluster5: MLI1_1
-cluster6: MLI1_2
-cluster7: MLI2_1
-cluster8: MLI1_3
-cluster9: Granule_3
-cluster10: Astrocyte
-cluster11: Endothelial
-cluster12: MLI2_2
-cluster13: BergmanGlia
-cluster14: MLI2_3
-cluster15: UnipolarBrush
-cluster16: Meningeal
-cluster17: Golgi
-cluster18: Purkinje
-cluster19: ChoroidPlexusCells
-cluster20: OPC
-cluster21: Oligodendrocyte
-cluster22: Unknown
+Cluster1= Granule_1
+Cluster2= Granule_2
+Cluster3= MLI1_1
+Cluster4= PLI23
+Cluster5= MLI1_2
+Cluster6= MLI2_1
+Cluster7= Astrocyte
+Cluster8= Endothelial
+Cluster9= Bergman_Glia
+Cluster10= MLI2_2
+Cluster11= MLI2_3
+Cluster12= Unipolar_Brush
+Cluster13= MLI1_3
+Cluster14= Golgi
+Cluster15= Choroid_Plexus
+Cluster16= Meningeal
+Cluster17= Oligodendrocyte
+Cluster18= Purkinje
+Cluster19= Unknown
+
 
 
 new.cluster.ids <- c(
   "Granule_1",
-  "PLI",
   "Granule_2",
-  "Mix",
   "MLI1_1",
+  "PLI23",
   "MLI1_2",
   "MLI2_1",
-  "MLI1_3",
-  "Granule_3",
   "Astrocyte",
   "Endothelial",
+  "Bergman_Glia",
   "MLI2_2",
-  "BergmanGlia",
   "MLI2_3",
-  "UnipolarBrush",
-  "Meningeal",
+  "Unipolar_Brush",
+  "MLI1_3",
   "Golgi",
-  "Purkinje",
-  "ChoroidPlexusCells",
-  "OPC",
+  "Choroid_Plexus",
+  "Meningeal",
   "Oligodendrocyte",
+  "Purkinje",
   "Unknown"
 )
 
@@ -13174,11 +15061,11 @@ WT_Kcnc1_CB_integrateMerge.sct <- RenameIdents(WT_Kcnc1_CB_integrateMerge.sct, n
 WT_Kcnc1_CB_integrateMerge.sct$cluster.annot <- Idents(WT_Kcnc1_CB_integrateMerge.sct) # create a new slot in my seurat object
 
 
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_label.pdf", width=15, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-version2dim50kparam30res02_label.pdf", width=15, height=6)
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", split.by = "time", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3, raster = FALSE)
 dev.off()
 
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_splitConditionGroupTime_label.pdf", width=15, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-version2dim50kparam30res02_splitConditionGroupTime_label.pdf", width=15, height=6)
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", split.by = "condition", pt.size = 0.5, label.size = 3, raster = FALSE, group.by = "time")
 dev.off()
 # Keep only p14 and p180
@@ -13186,54 +15073,27 @@ WT_Kcnc1_CB_integrateMerge_subset <- subset(
   WT_Kcnc1_CB_integrateMerge.sct, 
   subset = time %in% c("p14", "p180")
 )
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_splitConditionGroupTime_label-p14p180.pdf", width=15, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-version2dim50kparam30res02_splitConditionGroupTime_label-p14p180.pdf", width=15, height=6)
 DimPlot(WT_Kcnc1_CB_integrateMerge_subset, reduction = "umap", split.by = "condition", pt.size = 0.5, label.size = 3, raster = FALSE, group.by = "time")
 dev.off()
 
 
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_noSplit_label.pdf", width=9, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-version2dim50kparam30res02_noSplit_label.pdf", width=9, height=6)
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5, raster = FALSE)
 dev.off()
 
 
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_noSplit_nolabel.pdf", width=9, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-version2dim50kparam30res02_noSplit_nolabel.pdf", width=9, height=6)
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap",  label = FALSE, pt.size = 0.3, label.size = 5, raster = FALSE)
 dev.off()
 
 WT_Kcnc1_CB_integrateMerge.sct$condition <- factor(WT_Kcnc1_CB_integrateMerge.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
 
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim40kparam15res03_splitCondition_label.pdf", width=15, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-version2dim50kparam30res02_splitCondition_label.pdf", width=15, height=6)
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3, raster = FALSE)
 dev.off()
 
-
-# QC plots to check what is the extra cluster closeby MLI1 
-
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_CB_integrateMerge-Phase-dim40kparam15res03.pdf", width=10, height=6)
-DimPlot(WT_Kcnc1_CB_integrateMerge.sct, group.by= "Phase", raster = FALSE) & 
-  theme(plot.title = element_text(size=10))
-dev.off()  
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_CB_integrateMerge-nFeature_RNA-dim40kparam15res03.pdf", width=10, height=6)
-FeaturePlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=FALSE, features = "nFeature_RNA", raster = FALSE, min.cutoff = 1000, max.cutoff = 2000)
-dev.off()  
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_CB_integrateMerge-nCount_RNA-dim40kparam15res03.pdf", width=10, height=6)
-FeaturePlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=FALSE, features = "nCount_RNA", raster = FALSE, min.cutoff = 1000, max.cutoff = 2500)
-dev.off()  
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_CB_integrateMerge-percent.mt-dim40kparam15res03.pdf", width=10, height=6)
-FeaturePlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=FALSE, features = "percent.mt", raster = FALSE)
-dev.off()  
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_CB_integrateMerge-percent.rb-dim40kparam15res03.pdf", width=10, height=6)
-FeaturePlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=FALSE, features = "percent.rb", raster = FALSE)
-dev.off()  
-
-
-
-# Downsample Kcnc1 to same number of cells than WT
-
-XXX
-
-WT_Kcnc1_CB_integrateMerge.sct
 
 
 ```
@@ -14469,14 +16329,24 @@ sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_Version2_default.sh # 36792179 ok
 ```bash
 conda activate condiments_V6
 
-
-# Pseudotime all cells kept
-## Same parameter per trajectory
+# version1 
+## Pseudotime all cells kept
+### Same parameter per trajectory
 sbatch scripts/pseudotime_allCells_v1.sh # 34643632 ok but not good
-## Different parameter per trajectory
+### Different parameter per trajectory
 sbatch scripts/pseudotime_allCells_v1_Granule.sh # 36200375 ok
 sbatch scripts/pseudotime_allCells_v1_MLI1.sh # 36200584 ok but not good.
 sbatch scripts/pseudotime_allCells_v1_MLI2.sh # 36201001 ok
+
+ 
+# version2 _v1
+sbatch scripts/pseudotime_allCells_v1_Granule-version2.sh # 37207530 ok
+sbatch scripts/pseudotime_allCells_v1_MLI1-version2.sh # 37207543 xxx
+sbatch scripts/pseudotime_allCells_v1_MLI2-version2.sh # 37207550 xxx
+
+# version2 _v2 increased resolution
+
+XXXY
 
 ```
 
