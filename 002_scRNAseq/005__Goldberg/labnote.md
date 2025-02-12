@@ -14140,19 +14140,25 @@ saveRDS(WT_p14_CB_Rep2, file = "output/seurat/valiDrops-typeGenesFactor1alpha01-
 
 
 
-### Version 4 - sample specific QC
+### Version 4 
 
-Let's do QC sample per sample: do clustering and cell type identification sample per sample, and change QC accordingly!
+#### Identification of Purkinje and golgi cells
+--> Purkinje and Golgi cells show very high number of RNA and feature as compare to other cell types, lets use specific QC filtering for these cell types.
+
+- Let's **NOT do QC filtering and identify 'true' Purkinje and golgi cell**: .
+- Then check their QC profile and do a **VERY light QC filtering for them**
+- Mark them, **mark barcode; metadata `Purkinje = yes` `Golgi = yes`**
+- Then repeat QC on individual samples, keeping `Purkinje and Golig = yes`
 
 
-#### P14 - WT and Kcnc1
+
+##### WT_p14_CB_Rep1
 
 
 ```bash
 conda activate scRNAseqV2
 ```
 
-XXXY HEre CHeck QC specifically sample per sample...; write filtering used for each sample in my QC xcel
 
 ```R
 # install.packages('SoupX')
@@ -14167,6 +14173,8 @@ library("glmGamPoi")
 library("celldex")
 library("SingleR")
 library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+set.seed(42)
+
 
 ## Load the matrix and Create SEURAT object
 samples <- list(
@@ -14188,7 +14196,6 @@ assign_seurat_objects <- function(seurat_objects_list) {
 }
 assign_seurat_objects(seurat_objects) # This apply the function
 
-
 # QUALITY CONTROL
 # Function to add mitochondrial and ribosomal content
 add_quality_control <- function(seurat_object) {
@@ -14198,7 +14205,6 @@ add_quality_control <- function(seurat_object) {
 }
 seurat_objects <- lapply(seurat_objects, add_quality_control) # This apply the function
 assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
-
 
 # Function to add doublet information
 add_doublet_information <- function(sample_name, seurat_object) {
@@ -14217,101 +14223,12 @@ for (sample_name in names(seurat_objects)) {
 }
 assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
 
-
-
-# Loop to generate QC plots for each sample
-# Define the output directory
-output_dir <- "output/seurat/"
-
-# Loop through each Seurat object to generate the plots
-for (sample_name in names(seurat_objects)) {
-  seurat_object <- seurat_objects[[sample_name]]
-  
-  # Violin plot
-  pdf(paste0(output_dir, "VlnPlot_QC_", sample_name, ".pdf"), width = 10, height = 6)
-  print(VlnPlot(seurat_object, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1) & 
-    theme(plot.title = element_text(size = 10)))
-  dev.off()
-  
-  # Scatter plots
-  pdf(paste0(output_dir, "FeatureScatter_QC_RNAcount_mt_", sample_name, ".pdf"), width = 5, height = 5)
-  print(FeatureScatter(seurat_object, feature1 = "nCount_RNA", feature2 = "percent.mt"))
-  dev.off()
-  
-  pdf(paste0(output_dir, "FeatureScatter_QC_RNAcount_RNAfeature_", sample_name, ".pdf"), width = 5, height = 5)
-  print(FeatureScatter(seurat_object, feature1 = "nCount_RNA", feature2 = "nFeature_RNA"))
-  dev.off()
-  
-  pdf(paste0(output_dir, "FeatureScatter_QC_rb_mt_", sample_name, ".pdf"), width = 5, height = 5)
-  print(FeatureScatter(seurat_object, feature1 = "percent.rb", feature2 = "percent.mt"))
-  dev.off()
-  
-  pdf(paste0(output_dir, "FeatureScatter_QC_mt_doublet_", sample_name, ".pdf"), width = 5, height = 5)
-  print(FeatureScatter(seurat_object, feature1 = "percent.mt", feature2 = "Doublet_score"))
-  dev.off()
-  
-  pdf(paste0(output_dir, "FeatureScatter_QC_RNAfeature_doublet_", sample_name, ".pdf"), width = 5, height = 5)
-  print(FeatureScatter(seurat_object, feature1 = "nFeature_RNA", feature2 = "Doublet_score"))
-  dev.off()
-}
-
-
-
-##### QC filtering _ updated V3 from version1 (used for p14) ############################################
-
-###  Remove cells: percent.mt > 15, percent.rb > 10, nFeature_RNA < 700, nFeature_RNA > 4000, nCount_RNA < 1000, nCount_RNA > 10000
-
-apply_qc <- function(seurat_object) {
-  meta <- seurat_object@meta.data
-  # Initialize QC column with 'Pass'
-  meta$QC <- 'Pass'
-  # Identify failing QC conditions
-  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
-  meta$QC[meta$nFeature_RNA < 700] <- 'Low_nFeature'
-  meta$QC[meta$nFeature_RNA > 4000] <- 'High_nFeatureRNA'
-  meta$QC[meta$nCount_RNA < 1000] <- 'Low_nCountRNA'
-  meta$QC[meta$nCount_RNA > 10000] <- 'High_nCountRNA'
-  meta$QC[meta$percent.mt > 15] <- 'High_MT'
-  meta$QC[meta$percent.rb > 10] <- 'High_RB'
-  # Handle multiple failing conditions
-  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
-  # Assign back to Seurat object
-  seurat_object@meta.data <- meta
-  return(seurat_object)
-}
-for (sample_name in names(seurat_objects)) {
-  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
-}
-assign_seurat_objects(seurat_objects) # Reapply function to all individuals in the list
-#####################################################################################################
-
-
-#### Write QC summary
-qc_summary_list <- list()
-
-# Collect QC summary for each sample
-for (sample_name in names(seurat_objects)) {
-  qc_summary <- table(seurat_objects[[sample_name]][['QC']])
-  qc_summary_df <- as.data.frame(qc_summary)
-  qc_summary_df$Sample <- sample_name
-  qc_summary_list[[sample_name]] <- qc_summary_df
-}
-
-qc_summary_combined <- do.call(rbind, qc_summary_list)
-
-# Write the data frame to a tab-separated text file
-write.table(qc_summary_combined, file = "output/seurat/QC_summary_version2_p14.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
-
-
-## subset seurat object to keep cells that pass the QC
-subset_qc <- function(seurat_object) {
-  seurat_object <- subset(seurat_object, subset = QC == 'Pass')
-  return(seurat_object)
-}
-for (sample_name in names(seurat_objects)) {
-  seurat_objects[[sample_name]] <- subset_qc(seurat_objects[[sample_name]])
-}
-assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+pdf("output/seurat/VlnPlot_QC-nFeature_RNA-WT_p14_CB_Rep1.pdf", width = 10, height = 6)
+VlnPlot(WT_p14_CB_Rep1, features = c("nFeature_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,2000)
+dev.off()
+pdf("output/seurat/VlnPlot_QC-nCount_RNA-WT_p14_CB_Rep1.pdf", width = 10, height = 6)
+VlnPlot(WT_p14_CB_Rep1, features = c("nCount_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,10000)
+dev.off()
 
 # Normalize and scale data, then run cell cycle sorting
 set.seed(42)
@@ -14330,130 +14247,261 @@ process_seurat_object <- function(seurat_object, mmus_s, mmus_g2m) {
 for (sample_name in names(seurat_objects)) {
   seurat_objects[[sample_name]] <- process_seurat_object(seurat_objects[[sample_name]], mmus_s, mmus_g2m)
 }
-assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
-
-# write output summary phase
-phase_summary_list <- list()
-# Collect QC phase summary for each sample
-for (sample_name in names(seurat_objects)) {
-  phase_summary <- table(seurat_objects[[sample_name]][[]]$Phase)
-  phase_summary_df <- as.data.frame(phase_summary)
-  phase_summary_df$Sample <- sample_name
-  phase_summary_list[[sample_name]] <- phase_summary_df
-}
-# Combine all summaries into one data frame
-phase_summary_combined <- do.call(rbind, phase_summary_list)
-write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version2_p14.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) #
-
-
-############ SAVE samples #################################################################
-save_seurat_objects <- function(seurat_objects_list, output_dir) {
-  for (sample_name in names(seurat_objects_list)) {
-    file_name <- paste0(output_dir, sample_name, "_version2_p14.rds") # 
-    saveRDS(seurat_objects_list[[sample_name]], file = file_name) # 
-  }
-}
-output_dir <- "output/seurat/"
-## Call the function to save the Seurat objects
-save_seurat_objects(seurat_objects, output_dir)
-###############################################################################################
-############# READ samples  (QC V1 V2 or V3 = V1_numeric...)################################################
-# Function to load Seurat objects
-load_seurat_objects <- function(file_paths) {
-  seurat_objects <- list()
-  for (file_path in file_paths) {
-    sample_name <- gsub("_version2_p14.rds", "", basename(file_path))
-    seurat_objects[[sample_name]] <- readRDS(file_path)
-  }
-  return(seurat_objects)
-}
-output_dir <- "output/seurat/"
-file_paths <- list.files(output_dir, pattern = "_version2_p14.rds$", full.names = TRUE)
-# Call the function to load the Seurat objects
-seurat_objects <- load_seurat_objects(file_paths)
-# Loop through the list and assign each Seurat object to a variable with the same name
-for (sample_name in names(seurat_objects)) {
-  assign(sample_name, seurat_objects[[sample_name]])
-}
-# 1 sample: WT_p35_CB_Rep2 <- readRDS(file = "output/seurat/WT_p35_CB_Rep2_V2_ReProcess_numeric.rds")
-## Kcnc1_p14_CB_Rep1 <- readRDS(file = "output/seurat/Kcnc1_p14_CB_Rep1_V1_numeric.rds")
-################################################################################################
+WT_p14_CB_Rep1 <- process_seurat_object(WT_p14_CB_Rep1, mmus_s, mmus_g2m)
 
 
 
 
+################################################################
+# WT_p14_CB_Rep1 ################################
+################################################################
 
-
-
-
-##########################################
-## integration WT Kcnc1 p14 all replicates (1st replicate, then genotype) ######
- ##########################################
-
-
-WT_p14_CB_Rep1$replicate <- "Rep1"
-WT_p14_CB_Rep2$replicate <- "Rep2"
-WT_p14_CB_Rep3$replicate <- "Rep3"
-
-WT_p14_CB_Rep1$condition <- "WT"
-WT_p14_CB_Rep2$condition <- "WT"
-WT_p14_CB_Rep3$condition <- "WT"
-
-Kcnc1_p14_CB_Rep1$replicate <- "Rep1"
-Kcnc1_p14_CB_Rep2$replicate <- "Rep2"
-Kcnc1_p14_CB_Rep3$replicate <- "Rep3"
-
-Kcnc1_p14_CB_Rep1$condition <- "Kcnc1"
-Kcnc1_p14_CB_Rep2$condition <- "Kcnc1"
-Kcnc1_p14_CB_Rep3$condition <- "Kcnc1"
-
-set.seed(42)
-
-
-
-
-# Test Replicate and Genotype integration (1 step integration)
-## WT Rep
-
-WT_p14_CB_Rep1 <- SCTransform(WT_p14_CB_Rep1, method = "glmGamPoi", ncells = 11003, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
-WT_p14_CB_Rep2 <- SCTransform(WT_p14_CB_Rep2, method = "glmGamPoi", ncells = 8385, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
-WT_p14_CB_Rep3 <- SCTransform(WT_p14_CB_Rep3, method = "glmGamPoi", ncells = 11878, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
-Kcnc1_p14_CB_Rep1 <- SCTransform(Kcnc1_p14_CB_Rep1, method = "glmGamPoi", ncells = 9800, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
-Kcnc1_p14_CB_Rep2 <- SCTransform(Kcnc1_p14_CB_Rep2, method = "glmGamPoi", ncells = 10147, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
-Kcnc1_p14_CB_Rep3 <- SCTransform(Kcnc1_p14_CB_Rep3, method = "glmGamPoi", ncells = 13847, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
-
-
-
-
-srat.list <- list(WT_p14_CB_Rep1 = WT_p14_CB_Rep1, WT_p14_CB_Rep2 = WT_p14_CB_Rep2, WT_p14_CB_Rep3 = WT_p14_CB_Rep3, Kcnc1_p14_CB_Rep1 = Kcnc1_p14_CB_Rep1, Kcnc1_p14_CB_Rep2 = Kcnc1_p14_CB_Rep2, Kcnc1_p14_CB_Rep3 = Kcnc1_p14_CB_Rep3)
-features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
-srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
-WT_Kcnc1_p14_CB_1step.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
-    anchor.features = features)
-WT_Kcnc1_p14_CB_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p14_CB_1step.anchors, normalization.method = "SCT")
-
+WT_p14_CB_Rep1 <- SCTransform(WT_p14_CB_Rep1, vars.to.regress = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), verbose = FALSE)
+WT_p14_CB_Rep1 <- RunPCA(WT_p14_CB_Rep1, verbose = FALSE, npcs = 30)
+WT_p14_CB_Rep1 <- RunUMAP(WT_p14_CB_Rep1, reduction = "pca", dims = 1:30, verbose = FALSE)
+WT_p14_CB_Rep1 <- FindNeighbors(WT_p14_CB_Rep1, reduction = "pca", k.param = 30, dims = 1:30)
+WT_p14_CB_Rep1 <- FindClusters(WT_p14_CB_Rep1, resolution = 0.5, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 #### UMAP
-DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "integrated"
+DefaultAssay(WT_p14_CB_Rep1) <- "SCT"
 
-WT_Kcnc1_p14_CB_1step.sct <- RunPCA(WT_Kcnc1_p14_CB_1step.sct, verbose = FALSE, npcs = 45)
-WT_Kcnc1_p14_CB_1step.sct <- RunUMAP(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", dims = 1:45, verbose = FALSE)
-WT_Kcnc1_p14_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", k.param = 10, dims = 1:45)
-WT_Kcnc1_p14_CB_1step.sct <- FindClusters(WT_Kcnc1_p14_CB_1step.sct, resolution = 0.15, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+pdf("output/seurat/UMAP-WT_p14_CB_Rep1-version4dim30kparam30res05.pdf", width=7, height=6)
+DimPlot(WT_p14_CB_Rep1, reduction = "umap", label=TRUE)
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT-WT_p14_CB_Rep1-version4dim30-GolgiPurkinje.pdf", width=30, height=30)
+FeaturePlot(WT_p14_CB_Rep1, features = c(  
+  "Slc6a5", "Grm2", "Sst", # Golgi from paper signaure
+  WT_p14_CB_Rep2
+  "Calb1", "Slc1a6", "Car8" # Purkinje
+  ), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
 
 
-WT_Kcnc1_p14_CB_1step.sct$condition <- factor(WT_Kcnc1_p14_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
-
-pdf("output/seurat/UMAP_WT_Kcnc1-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version2dim45kparam10res015.pdf", width=7, height=6)
-DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE)
+pdf("output/seurat/VlnPlot_QC-WT_p14_CB_Rep1-version4dim30kparam30res02.pdf", width = 10, height = 6)
+VlnPlot(WT_p14_CB_Rep1, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1, group.by = "seurat_clusters")
 dev.off()
 
 
 
-DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-Version2dim45-ListdotPLot.pdf", width=30, height=60)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c(   "Gabra6","Pax6", # Granular_1
+###################################
+# cluster11 = Purkinje Cells ###########
+WT_p14_CB_Rep1_Purkinje <- subset(WT_p14_CB_Rep1, subset = seurat_clusters == '15')
+
+pdf("output/seurat/VlnPlot_QC-WT_p14_CB_Rep1_Purkinje-version4dim30kparam30res05.pdf", width = 10, height = 6)
+VlnPlot(WT_p14_CB_Rep1_Purkinje, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1, group.by = "seurat_clusters")
+dev.off()
+
+##### QC filtering Purkinje
+apply_qc <- function(seurat_object) {
+  meta <- seurat_object@meta.data
+  # Initialize QC column with 'Pass'
+  meta$QC <- 'Pass'
+  # Identify failing QC conditions
+  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
+  meta$QC[meta$nFeature_RNA < 2000] <- 'Low_nFeature'
+  meta$QC[meta$nFeature_RNA > 5000] <- 'High_nFeatureRNA'
+  meta$QC[meta$nCount_RNA < 100] <- 'Low_nCountRNA' # already filter
+  meta$QC[meta$nCount_RNA > 30000] <- 'High_nCountRNA'
+  meta$QC[meta$percent.mt > 20] <- 'High_MT'
+  meta$QC[meta$percent.rb > 5] <- 'High_RB'
+  # Handle multiple failing conditions
+  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
+  # Assign back to Seurat object
+  seurat_object@meta.data <- meta
+  return(seurat_object)
+}
+
+# Apply QC function
+WT_p14_CB_Rep1_Purkinje <- apply_qc(WT_p14_CB_Rep1_Purkinje)
+# Subset to keep only QC 'Pass' cells
+WT_p14_CB_Rep1_Purkinje_Pass <- subset(WT_p14_CB_Rep1_Purkinje, subset = QC == 'Pass')
+purkinje_barcodes <- colnames(WT_p14_CB_Rep1_Purkinje_Pass)
+# Add annotation to the original Seurat object (before filtering)
+WT_p14_CB_Rep1$Purkinje <- "No"  # Default all cells to "No"
+WT_p14_CB_Rep1$Purkinje[purkinje_barcodes] <- "Yes"  # Label Purkinje cells that passed QC
+# Check that metadata now contains the annotation
+table(WT_p14_CB_Rep1$Purkinje)
+# Save unfilterd seurat object with Purkinje cells annotated
+
+
+############################################################
+# cluster11 = Golgi Cells #############################
+WT_p14_CB_Rep1_Golgi <- subset(WT_p14_CB_Rep1, subset = seurat_clusters == '14')
+
+pdf("output/seurat/VlnPlot_QC-WT_p14_CB_Rep1_Golgi-version4dim30kparam30res05.pdf", width = 10, height = 6)
+VlnPlot(WT_p14_CB_Rep1_Golgi, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1, group.by = "seurat_clusters")
+dev.off()
+
+##### QC filtering Purkinje
+apply_qc <- function(seurat_object) {
+  meta <- seurat_object@meta.data
+  # Initialize QC column with 'Pass'
+  meta$QC <- 'Pass'
+  # Identify failing QC conditions
+  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
+  meta$QC[meta$nFeature_RNA < 2100] <- 'Low_nFeature'
+  meta$QC[meta$nFeature_RNA > 5600] <- 'High_nFeatureRNA'
+  meta$QC[meta$nCount_RNA < 500] <- 'Low_nCountRNA' # already filter
+  meta$QC[meta$nCount_RNA > 20000] <- 'High_nCountRNA'
+  meta$QC[meta$percent.mt > 20] <- 'High_MT'
+  meta$QC[meta$percent.rb > 10] <- 'High_RB'
+  # Handle multiple failing conditions
+  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
+  # Assign back to Seurat object
+  seurat_object@meta.data <- meta
+  return(seurat_object)
+}
+
+# Apply QC function
+WT_p14_CB_Rep1_Golgi <- apply_qc(WT_p14_CB_Rep1_Golgi)
+# Subset to keep only QC 'Pass' cells
+WT_p14_CB_Rep1_Golgi_Pass <- subset(WT_p14_CB_Rep1_Golgi, subset = QC == 'Pass')
+golgi_barcodes <- colnames(WT_p14_CB_Rep1_Golgi_Pass)
+# Add annotation to the original Seurat object (before filtering)
+WT_p14_CB_Rep1$Golgi <- "No"  # Default all cells to "No"
+WT_p14_CB_Rep1$Golgi[golgi_barcodes] <- "Yes"  # Label Golgi cells that passed QC
+# Check that metadata now contains the annotation
+table(WT_p14_CB_Rep1$Golgi)
+# Save unfilterd seurat object with Golgi cells annotated
+
+saveRDS(WT_p14_CB_Rep1, file = "output/seurat/WT_p14_CB_Rep1-PurkinjeGolgiAnnotated.rds") # 
+```
+
+
+
+
+
+
+##### WT_p14_CB_Rep2
+
+
+```bash
+conda activate scRNAseqV2
+```
+
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+set.seed(42)
+
+
+## Load the matrix and Create SEURAT object
+samples <- list(
+  WT_p14_CB_Rep2 = "output/soupX/WT_p14_CB_Rep2.RData"
+)
+
+seurat_objects <- list()
+
+for (sample_name in names(samples)) {
+  load(samples[[sample_name]])
+  seurat_objects[[sample_name]] <- CreateSeuratObject(counts = out, project = sample_name)
+}
+
+## Function to assign Seurat objects to variables (unlist the list)
+assign_seurat_objects <- function(seurat_objects_list) {
+  for (sample_name in names(seurat_objects_list)) {
+    assign(sample_name, seurat_objects_list[[sample_name]], envir = .GlobalEnv)
+  }
+}
+assign_seurat_objects(seurat_objects) # This apply the function
+
+# QUALITY CONTROL
+# Function to add mitochondrial and ribosomal content
+add_quality_control <- function(seurat_object) {
+  seurat_object[["percent.mt"]] <- PercentageFeatureSet(seurat_object, pattern = "^mt-")
+  seurat_object[["percent.rb"]] <- PercentageFeatureSet(seurat_object, pattern = "^Rp[sl]")
+  return(seurat_object)
+}
+seurat_objects <- lapply(seurat_objects, add_quality_control) # This apply the function
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# Function to add doublet information
+add_doublet_information <- function(sample_name, seurat_object) {
+  doublet_file <- paste0("output/doublets/", sample_name, ".tsv")
+  doublets <- read.table(doublet_file, header = FALSE, row.names = 1)
+  colnames(doublets) <- c("Doublet_score", "Is_doublet")
+  seurat_object <- AddMetaData(seurat_object, doublets)
+  seurat_object$Doublet_score <- as.numeric(seurat_object$Doublet_score)
+  return(seurat_object)
+}
+## Apply the function to each Seurat object in the list
+for (sample_name in names(seurat_objects)) {
+  if (sample_name != "Kcnc1_p180_CB_Rep3") {
+    seurat_objects[[sample_name]] <- add_doublet_information(sample_name, seurat_objects[[sample_name]])
+  }
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+pdf("output/seurat/VlnPlot_QC-nFeature_RNA-WT_p14_CB_Rep2.pdf", width = 10, height = 6)
+VlnPlot(WT_p14_CB_Rep2, features = c("nFeature_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,2000)
+dev.off()
+pdf("output/seurat/VlnPlot_QC-nCount_RNA-WT_p14_CB_Rep2.pdf", width = 10, height = 6)
+VlnPlot(WT_p14_CB_Rep2, features = c("nCount_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,10000)
+dev.off()
+
+# Normalize and scale data, then run cell cycle sorting
+set.seed(42)
+## Load gene marker of cell type
+mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+
+# Function to normalize, scale data, and perform cell cycle scoring
+process_seurat_object <- function(seurat_object, mmus_s, mmus_g2m) {
+  seurat_object <- NormalizeData(seurat_object, normalization.method = "LogNormalize", scale.factor = 10000)
+  all.genes <- rownames(seurat_object)
+  seurat_object <- ScaleData(seurat_object, features = all.genes)  # zero-centres and scales it
+  seurat_object <- CellCycleScoring(seurat_object, s.features = mmus_s, g2m.features = mmus_g2m)  # cell cycle sorting
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- process_seurat_object(seurat_objects[[sample_name]], mmus_s, mmus_g2m)
+}
+WT_p14_CB_Rep2 <- process_seurat_object(WT_p14_CB_Rep2, mmus_s, mmus_g2m)
+
+
+################################################################
+# WT_p14_CB_Rep2 ################################
+################################################################
+
+WT_p14_CB_Rep2 <- SCTransform(WT_p14_CB_Rep2, vars.to.regress = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), verbose = FALSE)
+WT_p14_CB_Rep2 <- RunPCA(WT_p14_CB_Rep2, verbose = FALSE, npcs = 20)
+WT_p14_CB_Rep2 <- RunUMAP(WT_p14_CB_Rep2, reduction = "pca", dims = 1:20, verbose = FALSE)
+WT_p14_CB_Rep2 <- FindNeighbors(WT_p14_CB_Rep2, reduction = "pca", k.param = 30, dims = 1:20)
+WT_p14_CB_Rep2 <- FindClusters(WT_p14_CB_Rep2, resolution = 0.7, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+#### UMAP
+DefaultAssay(WT_p14_CB_Rep2) <- "SCT"
+
+pdf("output/seurat/UMAP-WT_p14_CB_Rep2-version4dim20kparam30res07.pdf", width=7, height=6)
+DimPlot(WT_p14_CB_Rep2, reduction = "umap", label=TRUE)
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT-WT_p14_CB_Rep2-version4dim20-GolgiPurkinje.pdf", width=15, height=10)
+FeaturePlot(WT_p14_CB_Rep2, features = c( 
+    "Pax2", 
+  "Slc6a5", "Grm2", "Sst", # Golgi from paper signaure
+  "Calb1", "Slc1a6", "Car8" # Purkinje
+  ), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+
+pdf("output/seurat/FeaturePlot_SCT-WT_p14_CB_Rep2-version4dim20-ListdotPLot.pdf", width=30, height=60)
+FeaturePlot(WT_p14_CB_Rep2, features = c(  
+"Gabra6","Pax6", # Granular_1
   "Sorcs3", "Ptprk", # MLI1
   "Nxph1", "Cdh22", # MLI2
   "Klhl1", "Gfra2", "Aldh1a3", # PLI12
@@ -14474,13 +14522,291 @@ FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c(   "Gabra6","Pax6", # Granul
 dev.off()
 
 
+pdf("output/seurat/VlnPlot_QC-WT_p14_CB_Rep2-version4dim20kparam30res07.pdf", width = 10, height = 6)
+VlnPlot(WT_p14_CB_Rep2, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1, group.by = "seurat_clusters")
+dev.off()
 
+
+
+
+###################################
+# cluster11 = Purkinje Cells ###########
+WT_p14_CB_Rep2_Purkinje <- subset(WT_p14_CB_Rep2, subset = seurat_clusters == '15')
+
+pdf("output/seurat/VlnPlot_QC-WT_p14_CB_Rep2_Purkinje-version4dim20kparam30res07.pdf", width = 10, height = 6)
+VlnPlot(WT_p14_CB_Rep2_Purkinje, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1, group.by = "seurat_clusters")
+dev.off()
+pdf("output/seurat/VlnPlot_QC-nCount_RNA-WT_p14_CB_Rep2_Purkinje-version4dim20kparam30res07.pdf", width = 10, height = 6)
+VlnPlot(WT_p14_CB_Rep2_Purkinje, features = c("nCount_RNA"), ncol = 4, pt.size = 0.1, group.by = "seurat_clusters") +ylim(0,5000)
+dev.off()
+
+
+##### QC filtering Purkinje
+apply_qc <- function(seurat_object) {
+  meta <- seurat_object@meta.data
+  # Initialize QC column with 'Pass'
+  meta$QC <- 'Pass'
+  # Identify failing QC conditions
+  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
+  meta$QC[meta$nFeature_RNA < 200] <- 'Low_nFeature' # already filter
+  meta$QC[meta$nFeature_RNA > 1800] <- 'High_nFeatureRNA'
+  meta$QC[meta$nCount_RNA < 400] <- 'Low_nCountRNA' # already filter
+  meta$QC[meta$nCount_RNA > 2000] <- 'High_nCountRNA'
+  meta$QC[meta$percent.mt > 5] <- 'High_MT'
+  meta$QC[meta$percent.rb > 1.8] <- 'High_RB'
+  # Handle multiple failing conditions
+  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
+  # Assign back to Seurat object
+  seurat_object@meta.data <- meta
+  return(seurat_object)
+}
+
+# Apply QC function
+WT_p14_CB_Rep2_Purkinje <- apply_qc(WT_p14_CB_Rep2_Purkinje)
+# Subset to keep only QC 'Pass' cells
+WT_p14_CB_Rep2_Purkinje_Pass <- subset(WT_p14_CB_Rep2_Purkinje, subset = QC == 'Pass')
+purkinje_barcodes <- colnames(WT_p14_CB_Rep2_Purkinje_Pass)
+# Add annotation to the original Seurat object (before filtering)
+WT_p14_CB_Rep2$Purkinje <- "No"  # Default all cells to "No"
+WT_p14_CB_Rep2$Purkinje[purkinje_barcodes] <- "Yes"  # Label Purkinje cells that passed QC
+# Check that metadata now contains the annotation
+table(WT_p14_CB_Rep2$Purkinje)
+
+
+############################################################
+# cluster11 = Golgi Cells #############################
+# --> Not detected
+WT_p14_CB_Rep2$Golgi <- "No"  # Default all cells to "No"
+# Check that metadata now contains the annotation
+table(WT_p14_CB_Rep2$Golgi)
+# Save unfilterd seurat object with Golgi cells annotated
+
+saveRDS(WT_p14_CB_Rep2, file = "output/seurat/WT_p14_CB_Rep2-PurkinjeGolgiAnnotated.rds") # 
 ```
 
 
 
 
 
+##### WT_p14_CB_Rep3
+
+
+```bash
+conda activate scRNAseqV2
+```
+
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+set.seed(42)
+
+
+## Load the matrix and Create SEURAT object
+samples <- list(
+  WT_p14_CB_Rep3 = "output/soupX/WT_p14_CB_Rep3.RData"
+)
+
+seurat_objects <- list()
+
+for (sample_name in names(samples)) {
+  load(samples[[sample_name]])
+  seurat_objects[[sample_name]] <- CreateSeuratObject(counts = out, project = sample_name)
+}
+
+## Function to assign Seurat objects to variables (unlist the list)
+assign_seurat_objects <- function(seurat_objects_list) {
+  for (sample_name in names(seurat_objects_list)) {
+    assign(sample_name, seurat_objects_list[[sample_name]], envir = .GlobalEnv)
+  }
+}
+assign_seurat_objects(seurat_objects) # This apply the function
+
+# QUALITY CONTROL
+# Function to add mitochondrial and ribosomal content
+add_quality_control <- function(seurat_object) {
+  seurat_object[["percent.mt"]] <- PercentageFeatureSet(seurat_object, pattern = "^mt-")
+  seurat_object[["percent.rb"]] <- PercentageFeatureSet(seurat_object, pattern = "^Rp[sl]")
+  return(seurat_object)
+}
+seurat_objects <- lapply(seurat_objects, add_quality_control) # This apply the function
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# Function to add doublet information
+add_doublet_information <- function(sample_name, seurat_object) {
+  doublet_file <- paste0("output/doublets/", sample_name, ".tsv")
+  doublets <- read.table(doublet_file, header = FALSE, row.names = 1)
+  colnames(doublets) <- c("Doublet_score", "Is_doublet")
+  seurat_object <- AddMetaData(seurat_object, doublets)
+  seurat_object$Doublet_score <- as.numeric(seurat_object$Doublet_score)
+  return(seurat_object)
+}
+## Apply the function to each Seurat object in the list
+for (sample_name in names(seurat_objects)) {
+  if (sample_name != "Kcnc1_p180_CB_Rep3") {
+    seurat_objects[[sample_name]] <- add_doublet_information(sample_name, seurat_objects[[sample_name]])
+  }
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+pdf("output/seurat/VlnPlot_QC-nFeature_RNA-WT_p14_CB_Rep3.pdf", width = 10, height = 6)
+VlnPlot(WT_p14_CB_Rep3, features = c("nFeature_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,2000)
+dev.off()
+pdf("output/seurat/VlnPlot_QC-nCount_RNA-WT_p14_CB_Rep3.pdf", width = 10, height = 6)
+VlnPlot(WT_p14_CB_Rep3, features = c("nCount_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,10000)
+dev.off()
+
+# Normalize and scale data, then run cell cycle sorting
+set.seed(42)
+## Load gene marker of cell type
+mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+
+# Function to normalize, scale data, and perform cell cycle scoring
+process_seurat_object <- function(seurat_object, mmus_s, mmus_g2m) {
+  seurat_object <- NormalizeData(seurat_object, normalization.method = "LogNormalize", scale.factor = 10000)
+  all.genes <- rownames(seurat_object)
+  seurat_object <- ScaleData(seurat_object, features = all.genes)  # zero-centres and scales it
+  seurat_object <- CellCycleScoring(seurat_object, s.features = mmus_s, g2m.features = mmus_g2m)  # cell cycle sorting
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- process_seurat_object(seurat_objects[[sample_name]], mmus_s, mmus_g2m)
+}
+WT_p14_CB_Rep3 <- process_seurat_object(WT_p14_CB_Rep3, mmus_s, mmus_g2m)
+
+
+
+
+################################################################
+# WT_p14_CB_Rep3 ################################
+################################################################
+
+WT_p14_CB_Rep3 <- SCTransform(WT_p14_CB_Rep3, vars.to.regress = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), verbose = FALSE)
+WT_p14_CB_Rep3 <- RunPCA(WT_p14_CB_Rep3, verbose = FALSE, npcs = 30)
+WT_p14_CB_Rep3 <- RunUMAP(WT_p14_CB_Rep3, reduction = "pca", dims = 1:30, verbose = FALSE)
+WT_p14_CB_Rep3 <- FindNeighbors(WT_p14_CB_Rep3, reduction = "pca", k.param = 10, dims = 1:30)
+WT_p14_CB_Rep3 <- FindClusters(WT_p14_CB_Rep3, resolution = 1, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+#### UMAP
+DefaultAssay(WT_p14_CB_Rep3) <- "SCT"
+
+pdf("output/seurat/UMAP-WT_p14_CB_Rep3-version4dim30kparam10res1.pdf", width=7, height=6)
+DimPlot(WT_p14_CB_Rep3, reduction = "umap", label=TRUE)
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT-WT_p14_CB_Rep3-version4dim30-GolgiPurkinje.pdf", width=15, height=10)
+FeaturePlot(WT_p14_CB_Rep3, features = c(  
+  "Pax2",
+  "Slc6a5", "Grm2", "Sst", # Golgi from paper signaure
+  "Calb1", "Slc1a6", "Car8" # Purkinje
+  ), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+pdf("output/seurat/VlnPlot_QC-WT_p14_CB_Rep3-version4dim30kparam10res1.pdf", width = 10, height = 6)
+VlnPlot(WT_p14_CB_Rep3, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1, group.by = "seurat_clusters")
+dev.off()
+
+
+
+
+###################################
+# cluster11 = Purkinje Cells ###########
+WT_p14_CB_Rep3_Purkinje <- subset(WT_p14_CB_Rep3, subset = seurat_clusters == '28')
+
+pdf("output/seurat/VlnPlot_QC-WT_p14_CB_Rep3_Purkinje-version4dim30kparam10res1.pdf", width = 10, height = 6)
+VlnPlot(WT_p14_CB_Rep3_Purkinje, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1, group.by = "seurat_clusters")
+dev.off()
+
+##### QC filtering Purkinje
+apply_qc <- function(seurat_object) {
+  meta <- seurat_object@meta.data
+  # Initialize QC column with 'Pass'
+  meta$QC <- 'Pass'
+  # Identify failing QC conditions
+  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
+  meta$QC[meta$nFeature_RNA < 1000] <- 'Low_nFeature'
+  meta$QC[meta$nFeature_RNA > 5000] <- 'High_nFeatureRNA'
+  meta$QC[meta$nCount_RNA < 100] <- 'Low_nCountRNA' # already filter
+  meta$QC[meta$nCount_RNA > 20000] <- 'High_nCountRNA'
+  meta$QC[meta$percent.mt > 20] <- 'High_MT'
+  meta$QC[meta$percent.rb > 5] <- 'High_RB'
+  # Handle multiple failing conditions
+  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
+  # Assign back to Seurat object
+  seurat_object@meta.data <- meta
+  return(seurat_object)
+}
+
+# Apply QC function
+WT_p14_CB_Rep3_Purkinje <- apply_qc(WT_p14_CB_Rep3_Purkinje)
+# Subset to keep only QC 'Pass' cells
+WT_p14_CB_Rep3_Purkinje_Pass <- subset(WT_p14_CB_Rep3_Purkinje, subset = QC == 'Pass')
+purkinje_barcodes <- colnames(WT_p14_CB_Rep3_Purkinje_Pass)
+# Add annotation to the original Seurat object (before filtering)
+WT_p14_CB_Rep3$Purkinje <- "No"  # Default all cells to "No"
+WT_p14_CB_Rep3$Purkinje[purkinje_barcodes] <- "Yes"  # Label Purkinje cells that passed QC
+# Check that metadata now contains the annotation
+table(WT_p14_CB_Rep3$Purkinje)
+# Save unfilterd seurat object with Purkinje cells annotated
+
+
+############################################################
+# cluster11 = Golgi Cells #############################
+WT_p14_CB_Rep3_Golgi <- subset(WT_p14_CB_Rep3, subset = seurat_clusters == '25')
+
+pdf("output/seurat/VlnPlot_QC-WT_p14_CB_Rep3_Golgi-version4dim30kparam10res1.pdf", width = 10, height = 6)
+VlnPlot(WT_p14_CB_Rep3_Golgi, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1, group.by = "seurat_clusters")
+dev.off()
+
+##### QC filtering Purkinje
+apply_qc <- function(seurat_object) {
+  meta <- seurat_object@meta.data
+  # Initialize QC column with 'Pass'
+  meta$QC <- 'Pass'
+  # Identify failing QC conditions
+  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
+  meta$QC[meta$nFeature_RNA < 2000] <- 'Low_nFeature'
+  meta$QC[meta$nFeature_RNA > 5000] <- 'High_nFeatureRNA'
+  meta$QC[meta$nCount_RNA < 500] <- 'Low_nCountRNA' # already filter
+  meta$QC[meta$nCount_RNA > 15000] <- 'High_nCountRNA'
+  meta$QC[meta$percent.mt > 20] <- 'High_MT'
+  meta$QC[meta$percent.rb > 10] <- 'High_RB'
+  # Handle multiple failing conditions
+  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
+  # Assign back to Seurat object
+  seurat_object@meta.data <- meta
+  return(seurat_object)
+}
+
+# Apply QC function
+WT_p14_CB_Rep3_Golgi <- apply_qc(WT_p14_CB_Rep3_Golgi)
+# Subset to keep only QC 'Pass' cells
+WT_p14_CB_Rep3_Golgi_Pass <- subset(WT_p14_CB_Rep3_Golgi, subset = QC == 'Pass')
+golgi_barcodes <- colnames(WT_p14_CB_Rep3_Golgi_Pass)
+# Add annotation to the original Seurat object (before filtering)
+WT_p14_CB_Rep3$Golgi <- "No"  # Default all cells to "No"
+WT_p14_CB_Rep3$Golgi[golgi_barcodes] <- "Yes"  # Label Golgi cells that passed QC
+# Check that metadata now contains the annotation
+table(WT_p14_CB_Rep3$Golgi)
+# Save unfilterd seurat object with Golgi cells annotated
+
+saveRDS(WT_p14_CB_Rep3, file = "output/seurat/WT_p14_CB_Rep3-PurkinjeGolgiAnnotated.rds") # 
+```
+
+
+XXXY pursue cell identification
 
 
 
