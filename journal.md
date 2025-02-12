@@ -193,6 +193,18 @@ R4.3.3
 --> clone from `SignacV5`; added [Pando](https://quadbio.github.io/Pando/index.html) and [GenomicScores](https://www.bioconductor.org/packages/devel/bioc/vignettes/GenomicScores/inst/doc/GenomicScores.html)
 
 
+### valiDrops_v1
+
+clone of `scRNAseq` with R `valiDrops` and `presto` and `segments` v1.6.4
+
+
+
+### NeuronChat
+
+clone of `scRNAseq` with R `NeuronChat`, `CellChat` and `ComplexHeatmap`
+
+
+
 
 
 

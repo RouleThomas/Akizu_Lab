@@ -8172,6 +8172,9 @@ pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1"),  cols = c("grey", "red"), split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
 dev.off()
 
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015-Kcnc1234-split.pdf", width=12, height=20)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1","Kcnc2", "Kcnc3", "Kcnc4"),  cols = c("grey", "red"), split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
 
 
 # save ##################
@@ -13247,8 +13250,21 @@ WT_Kcnc1_p14_CB_1step.sct <- NormalizeData(WT_Kcnc1_p14_CB_1step.sct, normalizat
 all.genes <- rownames(WT_Kcnc1_p14_CB_1step.sct)
 WT_Kcnc1_p14_CB_1step.sct <- ScaleData(WT_Kcnc1_p14_CB_1step.sct, features = all.genes) # zero-centres and scales it
 
-# Subset to keep WT cells only
+# Subset to keep WT cells only and neural cells
 WT_p14 <- subset(WT_Kcnc1_p14_CB_1step.sct, cells = WhichCells(WT_Kcnc1_p14_CB_1step.sct, expression = condition == "WT"))
+WT_p14 <- subset(WT_p14, 
+                                    subset = cluster.annot %in% c("Granule", 
+                        "MLI1", 
+                        "MLI2", 
+                        "PLI12",
+                        "PLI23", 
+                        "Golgi",
+                        "Unipolar_Brush",
+                        "Purkinje",
+                        "Astrocyte",
+                        "Bergman_Glia",
+                        "Oligodendrocyte"))
+
 
 # Part I: Create NeuronChat object
 expr_matrix <- as.matrix(GetAssayData(WT_p14, slot = "counts"))
@@ -13323,23 +13339,804 @@ dev.off()
 ## outgoing/incoming pattern
 # selectK_Neuron(x,pattern = "outgoing")
 # selectK_Neuron(x,pattern = "incoming")
-NeuronChat_WT<- identifyCommunicationPatterns_Neuron(NeuronChat_WT, slot.name = "net", pattern = c("outgoing"), k=7,height = 18)
-NeuronChat_WT<- identifyCommunicationPatterns_Neuron(NeuronChat_WT, slot.name = "net", pattern = c("incoming"), k=7,height = 18)
-
 
 
 pdf("output/NeuronChat/netAnalysis_river_Neuron-p14_CB_WT-outgoing.pdf", width=6, height=6)
+NeuronChat_WT<- identifyCommunicationPatterns_Neuron(NeuronChat_WT, slot.name = "net", pattern = c("outgoing"), k=7,height = 18)
 netAnalysis_river_Neuron(NeuronChat_WT,slot.name = "net", pattern = c("outgoing"),font.size = 2.5,cutoff.1 = 0.5,cutoff.2=0.5)
 dev.off()
 
-
 pdf("output/NeuronChat/netAnalysis_river_Neuron-p14_CB_WT-incoming.pdf", width=6, height=6)
+NeuronChat_WT<- identifyCommunicationPatterns_Neuron(NeuronChat_WT, slot.name = "net", pattern = c("incoming"), k=7,height = 18)
 netAnalysis_river_Neuron(NeuronChat_WT,slot.name = "net", pattern = c("incoming"),font.size = 2.5,cutoff.1 = 0.5,cutoff.2=0.5)
 dev.off()
+
+
 
 ```
 
 - XXXY Check **which type of count** to use: Raw/data/scale.data ?
+
+
+### Version3 - valiDrops
+
+The QC cleaning in Version2 was too stringeant, notably for the high nRNA which remove many Purkinje cells. Let's try [valiDrops](https://github.com/madsen-lab/valiDrops) which should automatically detect cell that pass QC. 
+
+
+
+#### valiDrops installation
+
+
+Lets try to copy env scRNAseq and install it:
+
+```bash
+conda create --name valiDrops --clone scRNAseq
+conda activate valiDrops
+
+srun --cpus-per-task=8 --mem-per-cpu=60g --pty bash -l # 480Go total memory in parralel
+```
+
+```R
+devtools::install_github("madsen-lab/valiDrops") 
+# --> work
+
+# Downgrade segmented package
+remove.packages("segmented")
+install.packages("https://cran.r-project.org/src/contrib/Archive/segmented/segmented_1.6-4.tar.gz", repos = NULL, type = "source")
+packageVersion("segmented")
+```
+
+--> Bug on some sample because of package `segmented` that has been update; need to use version 1.6.4, but I do have v 2.1.3; so lets remove it and re-install it. Issue discussed [here](https://github.com/madsen-lab/valiDrops/issues/14)
+  --> Still using the previous version, instead lets try to install segmented v1.6.4 first and then the valiDrops
+
+
+Lets try to copy env scRNAseq and install it:
+
+```bash
+conda create --name valiDrops_v1 --clone scRNAseq
+conda activate valiDrops_v1
+
+srun --cpus-per-task=8 --mem-per-cpu=60g --pty bash -l # 480Go total memory in parralel
+```
+
+
+
+```R
+install.packages("https://cran.r-project.org/src/contrib/Archive/segmented/segmented_1.6-4.tar.gz", repos = NULL, type = "source")
+packageVersion("segmented")
+# --> work
+
+devtools::install_github("madsen-lab/valiDrops") 
+```
+
+--> All good, `valiDrops` installed with `segmented` v1.6.4
+  --> No more psi error
+
+
+
+Lets try to install the [Sandman version of validrop](https://github.com/Sandman-1/valiDrops) which include much more paramters that can be tweak!
+
+```bash
+conda create --name valiDrops_v2 --clone scRNAseq
+conda activate valiDrops_v2
+
+srun --cpus-per-task=8 --mem-per-cpu=60g --pty bash -l # 480Go total memory in parralel
+```
+
+
+
+```R
+install.packages("https://cran.r-project.org/src/contrib/Archive/segmented/segmented_1.6-4.tar.gz", repos = NULL, type = "source")
+packageVersion("segmented")
+# --> work
+
+
+devtools::install_github("Sandman-1/valiDrops@v1.1.5")
+packageVersion("valiDrops") # still show 0.1.0
+```
+
+--> All good! Explore [this](https://github.com/Sandman-1/valiDrops/blob/main/R/valiDrops.R) to better undesrtand tool usage: 
+
+
+#### valiDrops run
+
+Not clear whether I should ran soupX and scrublet too:
+- **soupX**: likely *not needed*, as it mention RNA contamination correction
+- **scrublet**: likely *needed*; can be loaded and I will see how many cells are removed
+
+
+##### Cerebellum CB samples - valiDrops cleaning - original
+
+
+```bash
+conda activate valiDrops_v1
+
+srun --cpus-per-task=4 --mem-per-cpu=100g --pty bash -l # 480Go total memory in parralel
+```
+
+
+```R
+## Packages
+library("Matrix")
+library("Seurat")
+library("valiDrops")
+library("segmented")
+
+
+############################################################################
+# WT_p14_CB_Rep1 ###########################################################
+############################################################################
+
+# Load CellRanger data
+data <- Matrix::readMM("WT_p14_CB_Rep1/outs/raw_feature_bc_matrix/matrix.mtx.gz")
+barcodes <- read.delim("WT_p14_CB_Rep1/outs/raw_feature_bc_matrix/barcodes.tsv.gz", header=FALSE)
+features <- read.delim("WT_p14_CB_Rep1/outs/raw_feature_bc_matrix/features.tsv.gz", header=FALSE)
+colnames(data) <- barcodes[,1]
+rownames(data) <- features[,1]
+
+# Run valiDrops with dead cell labelling
+pdf("output/valiDrops/WT_p14_CB_Rep1.pdf", width=6, height=6)
+valid <- valiDrops(data, label_dead = TRUE, bpparam = BiocParallel::MulticoreParam())
+dev.off()
+
+## ADVANCED: Create a Seurat object with the barcodes that pass quality control, import metadata calculated by valiDrops including live/dead labels
+# Setup data to import the metadata collected by valiDrops
+valid.subset <- valid[ valid$qc.pass == "pass",]
+rownames(valid.subset) <- valid.subset[,1]
+valid.subset <- valid.subset[, c(grep("fraction", colnames(valid.subset)),8)]
+data.subset <- data[,colnames(data) %in% rownames(valid.subset)]
+data.subset <- data.subset[,match(rownames(valid.subset), colnames(data.subset))]
+
+# Create a Seurat object
+WT_p14_CB_Rep1 <- CreateSeuratObject(data.subset, project = "WT_p14_CB_Rep1", meta.data = valid.subset, min.cells = 1, min.features = 1)
+
+# Save seurat object
+saveRDS(WT_p14_CB_Rep1, file = "output/seurat/valiDrops-WT_p14_CB_Rep1.rds") #
+
+
+
+############################################################################
+# WT_p14_CB_Rep2 ###########################################################
+############################################################################
+
+# Load CellRanger data
+data <- Matrix::readMM("WT_p14_CB_Rep2/outs/raw_feature_bc_matrix/matrix.mtx.gz")
+barcodes <- read.delim("WT_p14_CB_Rep2/outs/raw_feature_bc_matrix/barcodes.tsv.gz", header=FALSE)
+features <- read.delim("WT_p14_CB_Rep2/outs/raw_feature_bc_matrix/features.tsv.gz", header=FALSE)
+colnames(data) <- barcodes[,1]
+rownames(data) <- features[,1]
+
+# Run valiDrops with dead cell labelling
+pdf("output/valiDrops/WT_p14_CB_Rep2.pdf", width=6, height=6)
+valid <- valiDrops(data, label_dead = TRUE)
+dev.off()
+
+## ADVANCED: Create a Seurat object with the barcodes that pass quality control, import metadata calculated by valiDrops including live/dead labels
+# Setup data to import the metadata collected by valiDrops
+valid.subset <- valid[ valid$qc.pass == "pass",]
+rownames(valid.subset) <- valid.subset[,1]
+valid.subset <- valid.subset[, c(grep("fraction", colnames(valid.subset)),8)]
+data.subset <- data[,colnames(data) %in% rownames(valid.subset)]
+data.subset <- data.subset[,match(rownames(valid.subset), colnames(data.subset))]
+
+# Create a Seurat object
+WT_p14_CB_Rep2 <- CreateSeuratObject(data.subset, project = "WT_p14_CB_Rep2", meta.data = valid.subset, min.cells = 1, min.features = 1)
+
+# Save seurat object
+saveRDS(WT_p14_CB_Rep2, file = "output/seurat/valiDrops-WT_p14_CB_Rep2.rds") #
+
+
+
+############################################################################
+# WT_p14_CB_Rep3 ###########################################################
+############################################################################
+
+# Load CellRanger data
+data <- Matrix::readMM("WT_p14_CB_Rep3/outs/raw_feature_bc_matrix/matrix.mtx.gz")
+barcodes <- read.delim("WT_p14_CB_Rep3/outs/raw_feature_bc_matrix/barcodes.tsv.gz", header=FALSE)
+features <- read.delim("WT_p14_CB_Rep3/outs/raw_feature_bc_matrix/features.tsv.gz", header=FALSE)
+colnames(data) <- barcodes[,1]
+rownames(data) <- features[,1]
+
+# Run valiDrops with dead cell labelling
+pdf("output/valiDrops/WT_p14_CB_Rep3.pdf", width=6, height=6)
+valid <- valiDrops(data, label_dead = TRUE, bpparam = BiocParallel::MulticoreParam())
+dev.off()
+
+## ADVANCED: Create a Seurat object with the barcodes that pass quality control, import metadata calculated by valiDrops including live/dead labels
+# Setup data to import the metadata collected by valiDrops
+valid.subset <- valid[ valid$qc.pass == "pass",]
+rownames(valid.subset) <- valid.subset[,1]
+valid.subset <- valid.subset[, c(grep("fraction", colnames(valid.subset)),8)]
+data.subset <- data[,colnames(data) %in% rownames(valid.subset)]
+data.subset <- data.subset[,match(rownames(valid.subset), colnames(data.subset))]
+
+# Create a Seurat object
+WT_p14_CB_Rep3 <- CreateSeuratObject(data.subset, project = "WT_p14_CB_Rep3", meta.data = valid.subset, min.cells = 1, min.features = 1)
+
+# Save seurat object
+saveRDS(WT_p14_CB_Rep3, file = "output/seurat/valiDrops-WT_p14_CB_Rep3.rds") #
+
+
+
+
+############################################################################
+# Kcnc1_p14_CB_Rep1 ###########################################################
+############################################################################
+
+# Load CellRanger data
+data <- Matrix::readMM("Kcnc1_p14_CB_Rep1/outs/raw_feature_bc_matrix/matrix.mtx.gz")
+barcodes <- read.delim("Kcnc1_p14_CB_Rep1/outs/raw_feature_bc_matrix/barcodes.tsv.gz", header=FALSE)
+features <- read.delim("Kcnc1_p14_CB_Rep1/outs/raw_feature_bc_matrix/features.tsv.gz", header=FALSE)
+colnames(data) <- barcodes[,1]
+rownames(data) <- features[,1]
+
+# Run valiDrops with dead cell labelling
+pdf("output/valiDrops/Kcnc1_p14_CB_Rep1.pdf", width=6, height=6)
+valid <- valiDrops(data, label_dead = TRUE)
+dev.off()
+
+## ADVANCED: Create a Seurat object with the barcodes that pass quality control, import metadata calculated by valiDrops including live/dead labels
+# Setup data to import the metadata collected by valiDrops
+valid.subset <- valid[ valid$qc.pass == "pass",]
+rownames(valid.subset) <- valid.subset[,1]
+valid.subset <- valid.subset[, c(grep("fraction", colnames(valid.subset)),8)]
+data.subset <- data[,colnames(data) %in% rownames(valid.subset)]
+data.subset <- data.subset[,match(rownames(valid.subset), colnames(data.subset))]
+
+# Create a Seurat object
+Kcnc1_p14_CB_Rep1 <- CreateSeuratObject(data.subset, project = "Kcnc1_p14_CB_Rep1", meta.data = valid.subset, min.cells = 1, min.features = 1)
+
+# Save seurat object
+saveRDS(Kcnc1_p14_CB_Rep1, file = "output/seurat/valiDrops-Kcnc1_p14_CB_Rep1.rds") #
+
+
+
+
+
+
+############################################################################
+# Kcnc1_p14_CB_Rep2 ###########################################################
+############################################################################
+
+# Load CellRanger data
+data <- Matrix::readMM("Kcnc1_p14_CB_Rep2/outs/raw_feature_bc_matrix/matrix.mtx.gz")
+barcodes <- read.delim("Kcnc1_p14_CB_Rep2/outs/raw_feature_bc_matrix/barcodes.tsv.gz", header=FALSE)
+features <- read.delim("Kcnc1_p14_CB_Rep2/outs/raw_feature_bc_matrix/features.tsv.gz", header=FALSE)
+colnames(data) <- barcodes[,1]
+rownames(data) <- features[,1]
+
+# Run valiDrops with dead cell labelling
+pdf("output/valiDrops/Kcnc1_p14_CB_Rep2.pdf", width=6, height=6)
+valid <- valiDrops(data, label_dead = TRUE, bpparam = BiocParallel::MulticoreParam())
+dev.off()
+
+## ADVANCED: Create a Seurat object with the barcodes that pass quality control, import metadata calculated by valiDrops including live/dead labels
+# Setup data to import the metadata collected by valiDrops
+valid.subset <- valid[ valid$qc.pass == "pass",]
+rownames(valid.subset) <- valid.subset[,1]
+valid.subset <- valid.subset[, c(grep("fraction", colnames(valid.subset)),8)]
+data.subset <- data[,colnames(data) %in% rownames(valid.subset)]
+data.subset <- data.subset[,match(rownames(valid.subset), colnames(data.subset))]
+
+# Create a Seurat object
+Kcnc1_p14_CB_Rep2 <- CreateSeuratObject(data.subset, project = "Kcnc1_p14_CB_Rep2", meta.data = valid.subset, min.cells = 1, min.features = 1)
+
+# Save seurat object
+saveRDS(Kcnc1_p14_CB_Rep2, file = "output/seurat/valiDrops-Kcnc1_p14_CB_Rep2.rds") #
+
+
+
+############################################################################
+# Kcnc1_p14_CB_Rep3 ###########################################################
+############################################################################
+
+# Load CellRanger data
+data <- Matrix::readMM("Kcnc1_p14_CB_Rep3/outs/raw_feature_bc_matrix/matrix.mtx.gz")
+barcodes <- read.delim("Kcnc1_p14_CB_Rep3/outs/raw_feature_bc_matrix/barcodes.tsv.gz", header=FALSE)
+features <- read.delim("Kcnc1_p14_CB_Rep3/outs/raw_feature_bc_matrix/features.tsv.gz", header=FALSE)
+colnames(data) <- barcodes[,1]
+rownames(data) <- features[,1]
+
+# Run valiDrops with dead cell labelling
+pdf("output/valiDrops/Kcnc1_p14_CB_Rep3.pdf", width=6, height=6)
+valid <- valiDrops(data, label_dead = TRUE, bpparam = BiocParallel::MulticoreParam())
+dev.off()
+
+## ADVANCED: Create a Seurat object with the barcodes that pass quality control, import metadata calculated by valiDrops including live/dead labels
+# Setup data to import the metadata collected by valiDrops
+valid.subset <- valid[ valid$qc.pass == "pass",]
+rownames(valid.subset) <- valid.subset[,1]
+valid.subset <- valid.subset[, c(grep("fraction", colnames(valid.subset)),8)]
+data.subset <- data[,colnames(data) %in% rownames(valid.subset)]
+data.subset <- data.subset[,match(rownames(valid.subset), colnames(data.subset))]
+
+# Create a Seurat object
+Kcnc1_p14_CB_Rep3 <- CreateSeuratObject(data.subset, project = "Kcnc1_p14_CB_Rep3", meta.data = valid.subset, min.cells = 1, min.features = 1)
+
+# Save seurat object
+saveRDS(Kcnc1_p14_CB_Rep3, file = "output/seurat/valiDrops-Kcnc1_p14_CB_Rep3.rds") #
+
+
+
+
+
+
+############################################################################
+# WT_p35_CB_Rep1 ###########################################################
+############################################################################
+
+# Load CellRanger data
+data <- Matrix::readMM("WT_p35_CB_Rep1/outs/raw_feature_bc_matrix/matrix.mtx.gz")
+barcodes <- read.delim("WT_p35_CB_Rep1/outs/raw_feature_bc_matrix/barcodes.tsv.gz", header=FALSE)
+features <- read.delim("WT_p35_CB_Rep1/outs/raw_feature_bc_matrix/features.tsv.gz", header=FALSE)
+colnames(data) <- barcodes[,1]
+rownames(data) <- features[,1]
+
+# Run valiDrops with dead cell labelling
+pdf("output/valiDrops/WT_p35_CB_Rep1.pdf", width=6, height=6)
+valid <- valiDrops(data, label_dead = TRUE, bpparam = BiocParallel::MulticoreParam())
+dev.off()
+
+## ADVANCED: Create a Seurat object with the barcodes that pass quality control, import metadata calculated by valiDrops including live/dead labels
+# Setup data to import the metadata collected by valiDrops
+valid.subset <- valid[ valid$qc.pass == "pass",]
+rownames(valid.subset) <- valid.subset[,1]
+valid.subset <- valid.subset[, c(grep("fraction", colnames(valid.subset)),8)]
+data.subset <- data[,colnames(data) %in% rownames(valid.subset)]
+data.subset <- data.subset[,match(rownames(valid.subset), colnames(data.subset))]
+
+# Create a Seurat object
+WT_p35_CB_Rep1 <- CreateSeuratObject(data.subset, project = "WT_p35_CB_Rep1", meta.data = valid.subset, min.cells = 1, min.features = 1)
+
+# Save seurat object
+saveRDS(WT_p35_CB_Rep1, file = "output/seurat/valiDrops-WT_p35_CB_Rep1.rds") #
+
+
+
+############################################################################
+# WT_p35_CB_Rep2 ###########################################################
+############################################################################
+
+# Load CellRanger data
+data <- Matrix::readMM("WT_p35_CB_Rep2/outs/raw_feature_bc_matrix/matrix.mtx.gz")
+barcodes <- read.delim("WT_p35_CB_Rep2/outs/raw_feature_bc_matrix/barcodes.tsv.gz", header=FALSE)
+features <- read.delim("WT_p35_CB_Rep2/outs/raw_feature_bc_matrix/features.tsv.gz", header=FALSE)
+colnames(data) <- barcodes[,1]
+rownames(data) <- features[,1]
+
+# Run valiDrops with dead cell labelling
+pdf("output/valiDrops/WT_p35_CB_Rep2.pdf", width=6, height=6)
+valid <- valiDrops(data, label_dead = TRUE, bpparam = BiocParallel::MulticoreParam())
+dev.off()
+
+## ADVANCED: Create a Seurat object with the barcodes that pass quality control, import metadata calculated by valiDrops including live/dead labels
+# Setup data to import the metadata collected by valiDrops
+valid.subset <- valid[ valid$qc.pass == "pass",]
+rownames(valid.subset) <- valid.subset[,1]
+valid.subset <- valid.subset[, c(grep("fraction", colnames(valid.subset)),8)]
+data.subset <- data[,colnames(data) %in% rownames(valid.subset)]
+data.subset <- data.subset[,match(rownames(valid.subset), colnames(data.subset))]
+
+# Create a Seurat object
+WT_p35_CB_Rep2 <- CreateSeuratObject(data.subset, project = "WT_p35_CB_Rep2", meta.data = valid.subset, min.cells = 1, min.features = 1)
+
+# Save seurat object
+saveRDS(WT_p35_CB_Rep2, file = "output/seurat/valiDrops-WT_p35_CB_Rep2.rds") #
+
+
+############################################################################
+# WT_p35_CB_Rep3 ###########################################################
+############################################################################
+
+# Load CellRanger data
+data <- Matrix::readMM("WT_p35_CB_Rep3/outs/raw_feature_bc_matrix/matrix.mtx.gz")
+barcodes <- read.delim("WT_p35_CB_Rep3/outs/raw_feature_bc_matrix/barcodes.tsv.gz", header=FALSE)
+features <- read.delim("WT_p35_CB_Rep3/outs/raw_feature_bc_matrix/features.tsv.gz", header=FALSE)
+colnames(data) <- barcodes[,1]
+rownames(data) <- features[,1]
+
+# Run valiDrops with dead cell labelling
+pdf("output/valiDrops/WT_p35_CB_Rep3.pdf", width=6, height=6)
+valid <- valiDrops(data, label_dead = TRUE, bpparam = BiocParallel::MulticoreParam())
+dev.off()
+
+## ADVANCED: Create a Seurat object with the barcodes that pass quality control, import metadata calculated by valiDrops including live/dead labels
+# Setup data to import the metadata collected by valiDrops
+valid.subset <- valid[ valid$qc.pass == "pass",]
+rownames(valid.subset) <- valid.subset[,1]
+valid.subset <- valid.subset[, c(grep("fraction", colnames(valid.subset)),8)]
+data.subset <- data[,colnames(data) %in% rownames(valid.subset)]
+data.subset <- data.subset[,match(rownames(valid.subset), colnames(data.subset))]
+
+# Create a Seurat object
+WT_p35_CB_Rep3 <- CreateSeuratObject(data.subset, project = "WT_p35_CB_Rep3", meta.data = valid.subset, min.cells = 1, min.features = 1)
+
+# Save seurat object
+saveRDS(WT_p35_CB_Rep3, file = "output/seurat/valiDrops-WT_p35_CB_Rep3.rds") #
+
+
+
+
+
+############################################################################
+# Kcnc1_p35_CB_Rep1 ###########################################################
+############################################################################
+
+# Load CellRanger data
+data <- Matrix::readMM("Kcnc1_p35_CB_Rep1/outs/raw_feature_bc_matrix/matrix.mtx.gz")
+barcodes <- read.delim("Kcnc1_p35_CB_Rep1/outs/raw_feature_bc_matrix/barcodes.tsv.gz", header=FALSE)
+features <- read.delim("Kcnc1_p35_CB_Rep1/outs/raw_feature_bc_matrix/features.tsv.gz", header=FALSE)
+colnames(data) <- barcodes[,1]
+rownames(data) <- features[,1]
+
+# Run valiDrops with dead cell labelling
+pdf("output/valiDrops/Kcnc1_p35_CB_Rep1.pdf", width=6, height=6)
+valid <- valiDrops(data, label_dead = TRUE, bpparam = BiocParallel::MulticoreParam())
+dev.off()
+
+## ADVANCED: Create a Seurat object with the barcodes that pass quality control, import metadata calculated by valiDrops including live/dead labels
+# Setup data to import the metadata collected by valiDrops
+valid.subset <- valid[ valid$qc.pass == "pass",]
+rownames(valid.subset) <- valid.subset[,1]
+valid.subset <- valid.subset[, c(grep("fraction", colnames(valid.subset)),8)]
+data.subset <- data[,colnames(data) %in% rownames(valid.subset)]
+data.subset <- data.subset[,match(rownames(valid.subset), colnames(data.subset))]
+
+# Create a Seurat object
+Kcnc1_p35_CB_Rep1 <- CreateSeuratObject(data.subset, project = "Kcnc1_p35_CB_Rep1", meta.data = valid.subset, min.cells = 1, min.features = 1)
+
+# Save seurat object
+saveRDS(Kcnc1_p35_CB_Rep1, file = "output/seurat/valiDrops-Kcnc1_p35_CB_Rep1.rds") #
+
+
+
+
+
+############################################################################
+# Kcnc1_p35_CB_Rep2 ###########################################################
+############################################################################
+
+# Load CellRanger data
+data <- Matrix::readMM("Kcnc1_p35_CB_Rep2/outs/raw_feature_bc_matrix/matrix.mtx.gz")
+barcodes <- read.delim("Kcnc1_p35_CB_Rep2/outs/raw_feature_bc_matrix/barcodes.tsv.gz", header=FALSE)
+features <- read.delim("Kcnc1_p35_CB_Rep2/outs/raw_feature_bc_matrix/features.tsv.gz", header=FALSE)
+colnames(data) <- barcodes[,1]
+rownames(data) <- features[,1]
+
+# Run valiDrops with dead cell labelling
+pdf("output/valiDrops/Kcnc1_p35_CB_Rep2.pdf", width=6, height=6)
+valid <- valiDrops(data, label_dead = TRUE, bpparam = BiocParallel::MulticoreParam())
+dev.off()
+
+## ADVANCED: Create a Seurat object with the barcodes that pass quality control, import metadata calculated by valiDrops including live/dead labels
+# Setup data to import the metadata collected by valiDrops
+valid.subset <- valid[ valid$qc.pass == "pass",]
+rownames(valid.subset) <- valid.subset[,1]
+valid.subset <- valid.subset[, c(grep("fraction", colnames(valid.subset)),8)]
+data.subset <- data[,colnames(data) %in% rownames(valid.subset)]
+data.subset <- data.subset[,match(rownames(valid.subset), colnames(data.subset))]
+
+# Create a Seurat object
+Kcnc1_p35_CB_Rep2 <- CreateSeuratObject(data.subset, project = "Kcnc1_p35_CB_Rep2", meta.data = valid.subset, min.cells = 1, min.features = 1)
+
+# Save seurat object
+saveRDS(Kcnc1_p35_CB_Rep2, file = "output/seurat/valiDrops-Kcnc1_p35_CB_Rep2.rds") #
+
+
+
+
+############################################################################
+# Kcnc1_p35_CB_Rep3 ###########################################################
+############################################################################
+
+# Load CellRanger data
+data <- Matrix::readMM("Kcnc1_p35_CB_Rep3/outs/raw_feature_bc_matrix/matrix.mtx.gz")
+barcodes <- read.delim("Kcnc1_p35_CB_Rep3/outs/raw_feature_bc_matrix/barcodes.tsv.gz", header=FALSE)
+features <- read.delim("Kcnc1_p35_CB_Rep3/outs/raw_feature_bc_matrix/features.tsv.gz", header=FALSE)
+colnames(data) <- barcodes[,1]
+rownames(data) <- features[,1]
+
+# Run valiDrops with dead cell labelling
+pdf("output/valiDrops/Kcnc1_p35_CB_Rep3.pdf", width=6, height=6)
+valid <- valiDrops(data, label_dead = TRUE, bpparam = BiocParallel::MulticoreParam())
+dev.off()
+
+## ADVANCED: Create a Seurat object with the barcodes that pass quality control, import metadata calculated by valiDrops including live/dead labels
+# Setup data to import the metadata collected by valiDrops
+valid.subset <- valid[ valid$qc.pass == "pass",]
+rownames(valid.subset) <- valid.subset[,1]
+valid.subset <- valid.subset[, c(grep("fraction", colnames(valid.subset)),8)]
+data.subset <- data[,colnames(data) %in% rownames(valid.subset)]
+data.subset <- data.subset[,match(rownames(valid.subset), colnames(data.subset))]
+
+# Create a Seurat object
+Kcnc1_p35_CB_Rep3 <- CreateSeuratObject(data.subset, project = "Kcnc1_p35_CB_Rep3", meta.data = valid.subset, min.cells = 1, min.features = 1)
+
+# Save seurat object
+saveRDS(Kcnc1_p35_CB_Rep3, file = "output/seurat/valiDrops-Kcnc1_p35_CB_Rep3.rds") #
+
+##############################################
+# random testing area #######################
+
+WT_p14_CB_Rep1 <- readRDS(file = "output/seurat/valiDrops-WT_p14_CB_Rep1.rds")
+
+pdf("output/valiDrops/VlnPlot_WT_p14_CB_Rep1.pdf", width=10, height=4)
+VlnPlot(WT_p14_CB_Rep1, features = c("nFeature_RNA", "nCount_RNA", "mitochondrial_fraction", "ribosomal_fraction", "coding_fraction"), ncol = 5)
+dev.off()
+
+
+
+```
+
+--> It seems it is too stringeant! Too many cells are removed! Maybe setting `rank_barcodes = FALSE` in `valiDrops()` will help. Also very heterogneous, in some samples remove many cells, and very few in other...
+
+
+##### Cerebellum CB samples - valiDrops cleaning - Sandman version
+
+
+Let's try:
+- to **use the filtered matrix**, instead of the raw matrix from CellRanger
+  --> Very bad result in very few cells kept
+- tweak parameters with Sandman valiDrops version:
+  - Use  `rank_barcodes = FALSE` in `valiDrops()`: FAIL with Error in mixtools::normalmixEM(metrics$logFeatures) :  Too many tries ! XXX To investigate
+  - Discussed [here](https://github.com/madsen-lab/valiDrops/issues/8); Set `type = "Genes"`, If that's not enough, add `factor = 1`, If that's not enough, add `alpha = 0.1`
+    
+
+
+
+```R
+## Packages
+library("Matrix")
+library("Seurat")
+library("valiDrops")
+library("segmented")
+set.seed(42)
+
+
+############################################################################
+# WT_p14_CB_Rep1 - filtered matrix ###########################################################
+############################################################################
+
+# Load CellRanger data
+data <- Matrix::readMM("WT_p14_CB_Rep1/outs/filtered_feature_bc_matrix/matrix.mtx.gz")
+barcodes <- read.delim("WT_p14_CB_Rep1/outs/filtered_feature_bc_matrix/barcodes.tsv.gz", header=FALSE)
+features <- read.delim("WT_p14_CB_Rep1/outs/filtered_feature_bc_matrix/features.tsv.gz", header=FALSE)
+colnames(data) <- barcodes[,1]
+rownames(data) <- features[,1]
+
+# Run valiDrops with dead cell labelling
+pdf("output/valiDrops/WT_p14_CB_Rep1-filteredMatrix.pdf", width=6, height=6)
+valid <- valiDrops(data, label_dead = TRUE, bpparam = BiocParallel::MulticoreParam())
+dev.off()
+
+## ADVANCED: Create a Seurat object with the barcodes that pass quality control, import metadata calculated by valiDrops including live/dead labels
+# Setup data to import the metadata collected by valiDrops
+valid.subset <- valid[ valid$qc.pass == "pass",]
+rownames(valid.subset) <- valid.subset[,1]
+valid.subset <- valid.subset[, c(grep("fraction", colnames(valid.subset)),8)]
+data.subset <- data[,colnames(data) %in% rownames(valid.subset)]
+data.subset <- data.subset[,match(rownames(valid.subset), colnames(data.subset))]
+
+# Create a Seurat object
+WT_p14_CB_Rep1 <- CreateSeuratObject(data.subset, project = "WT_p14_CB_Rep1", meta.data = valid.subset, min.cells = 1, min.features = 1)
+
+# Save seurat object
+#saveRDS(WT_p14_CB_Rep1, file = "output/seurat/valiDrops-filteredMatrix-WT_p14_CB_Rep1.rds") #
+
+
+
+
+
+############################################################################
+# WT_p14_CB_Rep1 - rank_barcodes = FALSE ###########################################################
+############################################################################
+
+# Load CellRanger data
+data <- Matrix::readMM("WT_p14_CB_Rep1/outs/raw_feature_bc_matrix/matrix.mtx.gz")
+barcodes <- read.delim("WT_p14_CB_Rep1/outs/raw_feature_bc_matrix/barcodes.tsv.gz", header=FALSE)
+features <- read.delim("WT_p14_CB_Rep1/outs/raw_feature_bc_matrix/features.tsv.gz", header=FALSE)
+colnames(data) <- barcodes[,1]
+rownames(data) <- features[,1]
+
+# Run valiDrops with dead cell labelling
+pdf("output/valiDrops/WT_p14_CB_Rep1-rank_barcodesFalse.pdf", width=6, height=6)
+valid <- valiDrops(data, label_dead = TRUE, rank_barcodes = FALSE, bpparam = BiocParallel::MulticoreParam())
+dev.off()
+
+## ADVANCED: Create a Seurat object with the barcodes that pass quality control, import metadata calculated by valiDrops including live/dead labels
+# Setup data to import the metadata collected by valiDrops
+valid.subset <- valid[ valid$qc.pass == "pass",]
+rownames(valid.subset) <- valid.subset[,1]
+valid.subset <- valid.subset[, c(grep("fraction", colnames(valid.subset)),8)]
+data.subset <- data[,colnames(data) %in% rownames(valid.subset)]
+data.subset <- data.subset[,match(rownames(valid.subset), colnames(data.subset))]
+
+# Create a Seurat object
+WT_p14_CB_Rep1 <- CreateSeuratObject(data.subset, project = "WT_p14_CB_Rep1", meta.data = valid.subset, min.cells = 1, min.features = 1)
+
+# Save seurat object
+#saveRDS(WT_p14_CB_Rep1, file = "output/seurat/valiDrops-filteredMatrix-WT_p14_CB_Rep1.rds") #
+
+
+
+
+############################################################################
+# WT_p14_CB_Rep1 - type = "Genes" ###########################################################
+############################################################################
+
+# Load CellRanger data
+data <- Matrix::readMM("WT_p14_CB_Rep1/outs/raw_feature_bc_matrix/matrix.mtx.gz")
+barcodes <- read.delim("WT_p14_CB_Rep1/outs/raw_feature_bc_matrix/barcodes.tsv.gz", header=FALSE)
+features <- read.delim("WT_p14_CB_Rep1/outs/raw_feature_bc_matrix/features.tsv.gz", header=FALSE)
+colnames(data) <- barcodes[,1]
+rownames(data) <- features[,1]
+
+# Run valiDrops with dead cell labelling
+pdf("output/valiDrops/WT_p14_CB_Rep1-typeGenes.pdf", width=6, height=6)
+valid <- valiDrops(data, label_dead = TRUE, type = "Genes", bpparam = BiocParallel::MulticoreParam())
+dev.off()
+
+## ADVANCED: Create a Seurat object with the barcodes that pass quality control, import metadata calculated by valiDrops including live/dead labels
+# Setup data to import the metadata collected by valiDrops
+valid.subset <- valid[ valid$qc.pass == "pass",]
+rownames(valid.subset) <- valid.subset[,1]
+valid.subset <- valid.subset[, c(grep("fraction", colnames(valid.subset)),8)]
+data.subset <- data[,colnames(data) %in% rownames(valid.subset)]
+data.subset <- data.subset[,match(rownames(valid.subset), colnames(data.subset))]
+
+# Create a Seurat object
+WT_p14_CB_Rep1 <- CreateSeuratObject(data.subset, project = "WT_p14_CB_Rep1", meta.data = valid.subset, min.cells = 1, min.features = 1)
+
+# Save seurat object
+saveRDS(WT_p14_CB_Rep1, file = "output/seurat/valiDrops-typeGenes-WT_p14_CB_Rep1.rds") #
+
+
+
+
+############################################################################
+# WT_p14_CB_Rep1 - type = "Genes" factor = 1 ###########################################################
+############################################################################
+
+# Load CellRanger data
+data <- Matrix::readMM("WT_p14_CB_Rep1/outs/raw_feature_bc_matrix/matrix.mtx.gz")
+barcodes <- read.delim("WT_p14_CB_Rep1/outs/raw_feature_bc_matrix/barcodes.tsv.gz", header=FALSE)
+features <- read.delim("WT_p14_CB_Rep1/outs/raw_feature_bc_matrix/features.tsv.gz", header=FALSE)
+colnames(data) <- barcodes[,1]
+rownames(data) <- features[,1]
+
+# Run valiDrops with dead cell labelling
+pdf("output/valiDrops/WT_p14_CB_Rep1-typeGenesFactor1.pdf", width=6, height=6)
+valid <- valiDrops(data, label_dead = TRUE, type = "Genes", factor = 1, bpparam = BiocParallel::MulticoreParam())
+dev.off()
+
+## ADVANCED: Create a Seurat object with the barcodes that pass quality control, import metadata calculated by valiDrops including live/dead labels
+# Setup data to import the metadata collected by valiDrops
+valid.subset <- valid[ valid$qc.pass == "pass",]
+rownames(valid.subset) <- valid.subset[,1]
+valid.subset <- valid.subset[, c(grep("fraction", colnames(valid.subset)),8)]
+data.subset <- data[,colnames(data) %in% rownames(valid.subset)]
+data.subset <- data.subset[,match(rownames(valid.subset), colnames(data.subset))]
+
+# Create a Seurat object
+WT_p14_CB_Rep1 <- CreateSeuratObject(data.subset, project = "WT_p14_CB_Rep1", meta.data = valid.subset, min.cells = 1, min.features = 1)
+
+# Save seurat object
+saveRDS(WT_p14_CB_Rep1, file = "output/seurat/valiDrops-typeGenesFactor1-WT_p14_CB_Rep1.rds") #
+
+
+
+
+
+
+
+############################################################################
+# WT_p14_CB_Rep2 - type = "Genes" ###########################################################
+############################################################################
+
+# Load CellRanger data
+data <- Matrix::readMM("WT_p14_CB_Rep2/outs/raw_feature_bc_matrix/matrix.mtx.gz")
+barcodes <- read.delim("WT_p14_CB_Rep2/outs/raw_feature_bc_matrix/barcodes.tsv.gz", header=FALSE)
+features <- read.delim("WT_p14_CB_Rep2/outs/raw_feature_bc_matrix/features.tsv.gz", header=FALSE)
+colnames(data) <- barcodes[,1]
+rownames(data) <- features[,1]
+
+# Run valiDrops with dead cell labelling
+pdf("output/valiDrops/WT_p14_CB_Rep2-typeGenes.pdf", width=6, height=6)
+valid <- valiDrops(data, label_dead = TRUE, type = "Genes", bpparam = BiocParallel::MulticoreParam())
+dev.off()
+
+## ADVANCED: Create a Seurat object with the barcodes that pass quality control, import metadata calculated by valiDrops including live/dead labels
+# Setup data to import the metadata collected by valiDrops
+valid.subset <- valid[ valid$qc.pass == "pass",]
+rownames(valid.subset) <- valid.subset[,1]
+valid.subset <- valid.subset[, c(grep("fraction", colnames(valid.subset)),8)]
+data.subset <- data[,colnames(data) %in% rownames(valid.subset)]
+data.subset <- data.subset[,match(rownames(valid.subset), colnames(data.subset))]
+
+# Create a Seurat object
+WT_p14_CB_Rep2 <- CreateSeuratObject(data.subset, project = "WT_p14_CB_Rep2", meta.data = valid.subset, min.cells = 1, min.features = 1)
+
+# Save seurat object
+saveRDS(WT_p14_CB_Rep2, file = "output/seurat/valiDrops-typeGenes-WT_p14_CB_Rep2.rds") #
+
+
+
+
+
+############################################################################
+# WT_p14_CB_Rep2 - type = "Genes" factor = 1 ###########################################################
+############################################################################
+
+# Load CellRanger data
+data <- Matrix::readMM("WT_p14_CB_Rep2/outs/raw_feature_bc_matrix/matrix.mtx.gz")
+barcodes <- read.delim("WT_p14_CB_Rep2/outs/raw_feature_bc_matrix/barcodes.tsv.gz", header=FALSE)
+features <- read.delim("WT_p14_CB_Rep2/outs/raw_feature_bc_matrix/features.tsv.gz", header=FALSE)
+colnames(data) <- barcodes[,1]
+rownames(data) <- features[,1]
+
+# Run valiDrops with dead cell labelling
+pdf("output/valiDrops/WT_p14_CB_Rep2-typeGenesFactor1.pdf", width=6, height=6)
+valid <- valiDrops(data, label_dead = TRUE, type = "Genes", factor = 1, bpparam = BiocParallel::MulticoreParam())
+dev.off()
+
+## ADVANCED: Create a Seurat object with the barcodes that pass quality control, import metadata calculated by valiDrops including live/dead labels
+# Setup data to import the metadata collected by valiDrops
+valid.subset <- valid[ valid$qc.pass == "pass",]
+rownames(valid.subset) <- valid.subset[,1]
+valid.subset <- valid.subset[, c(grep("fraction", colnames(valid.subset)),8)]
+data.subset <- data[,colnames(data) %in% rownames(valid.subset)]
+data.subset <- data.subset[,match(rownames(valid.subset), colnames(data.subset))]
+
+# Create a Seurat object
+WT_p14_CB_Rep2 <- CreateSeuratObject(data.subset, project = "WT_p14_CB_Rep2", meta.data = valid.subset, min.cells = 1, min.features = 1)
+
+# Save seurat object
+saveRDS(WT_p14_CB_Rep2, file = "output/seurat/valiDrops-typeGenesFactor1-WT_p14_CB_Rep2.rds") #
+
+
+
+
+
+
+
+############################################################################
+# WT_p14_CB_Rep2 - type = "Genes" factor = 1 alpha = 0.1 ###########################################################
+############################################################################
+
+# Load CellRanger data
+data <- Matrix::readMM("WT_p14_CB_Rep2/outs/raw_feature_bc_matrix/matrix.mtx.gz")
+barcodes <- read.delim("WT_p14_CB_Rep2/outs/raw_feature_bc_matrix/barcodes.tsv.gz", header=FALSE)
+features <- read.delim("WT_p14_CB_Rep2/outs/raw_feature_bc_matrix/features.tsv.gz", header=FALSE)
+colnames(data) <- barcodes[,1]
+rownames(data) <- features[,1]
+
+# Run valiDrops with dead cell labelling
+pdf("output/valiDrops/WT_p14_CB_Rep2-typeGenesFactor1alpha01.pdf", width=6, height=6)
+valid <- valiDrops(data, label_dead = TRUE, type = "Genes", factor = 1, alpha = 0.1, bpparam = BiocParallel::MulticoreParam())
+dev.off()
+
+## ADVANCED: Create a Seurat object with the barcodes that pass quality control, import metadata calculated by valiDrops including live/dead labels
+# Setup data to import the metadata collected by valiDrops
+valid.subset <- valid[ valid$qc.pass == "pass",]
+rownames(valid.subset) <- valid.subset[,1]
+valid.subset <- valid.subset[, c(grep("fraction", colnames(valid.subset)),8)]
+data.subset <- data[,colnames(data) %in% rownames(valid.subset)]
+data.subset <- data.subset[,match(rownames(valid.subset), colnames(data.subset))]
+
+# Create a Seurat object
+WT_p14_CB_Rep2 <- CreateSeuratObject(data.subset, project = "WT_p14_CB_Rep2", meta.data = valid.subset, min.cells = 1, min.features = 1)
+
+# Save seurat object
+saveRDS(WT_p14_CB_Rep2, file = "output/seurat/valiDrops-typeGenesFactor1alpha01-WT_p14_CB_Rep2.rds") #
+
+
+
+
+```
+
+
+--> Not amazing, even with tweaking the parameters, I am loosing a LOT of cells.
 
 
 
