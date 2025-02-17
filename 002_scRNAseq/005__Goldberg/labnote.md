@@ -19672,23 +19672,23 @@ WT_Kcnc1_p35_CB_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p35_CB_1step.anc
 #### UMAP
 DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "integrated"
 
-WT_Kcnc1_p35_CB_1step.sct <- RunPCA(WT_Kcnc1_p35_CB_1step.sct, verbose = FALSE, npcs = 50)
-WT_Kcnc1_p35_CB_1step.sct <- RunUMAP(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
-WT_Kcnc1_p35_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", k.param = 30, dims = 1:50)
-WT_Kcnc1_p35_CB_1step.sct <- FindClusters(WT_Kcnc1_p35_CB_1step.sct, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+WT_Kcnc1_p35_CB_1step.sct <- RunPCA(WT_Kcnc1_p35_CB_1step.sct, verbose = FALSE, npcs = 30)
+WT_Kcnc1_p35_CB_1step.sct <- RunUMAP(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
+WT_Kcnc1_p35_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", k.param = 10, dims = 1:30)
+WT_Kcnc1_p35_CB_1step.sct <- FindClusters(WT_Kcnc1_p35_CB_1step.sct, resolution = 0.4, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
 WT_Kcnc1_p35_CB_1step.sct$condition <- factor(WT_Kcnc1_p35_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version4dim50kparam30res03.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version4dim30kparam10res04.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
-XXXY here play with roluton
+XXXY HERE SO PLAY
 
 DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "SCT"
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim50-ListdotPLot.pdf", width=30, height=60)
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim30-ListdotPLot.pdf", width=30, height=60)
 FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c(   "Gabra6","Pax6", # Granular_1
   "Sorcs3", "Ptprk", # MLI1
   "Nxph1", "Cdh22", # MLI2
@@ -19711,11 +19711,53 @@ dev.off()
 
 
 # genes
+Neuronal Cell Types
+    Granule: "Gabra6", "Pax6"
+    Purkinje: "Calb1", "Slc1a6", "Car8"
+    MLI1: "Sorcs3", "Ptprk"
+    MLI2: "Nxph1", "Cdh22"
+    PLI12: "Klhl1", "Gfra2", "Aldh1a3"
+    PLI23: "Galntl6", "Kcnc2"
+    Golgi: "Pax2"
+    Unipolar Brush: Eomes, "Rgs6", "Tafa2"
+    Noradrenergic Neurons: "Slc18a2", "Ddc"
+    Serotonergic Neurons: "Slc6a4", "Tph2", "Ddc", "Slc18a2"
+Glial & Supporting Cells
+    Astrocyte: Slc1a2, Apoe, "Zeb2"
+    Astrocyte (Satellite Glia Marker): Glul, "Slc1a3", Ednrb
+    Bergmann Glia: "Aqp4", "Slc39a12"
+    Microglia: Colec12
+    Radial Glia Cells: Slc1a3, Pdgfd, Gli3
+    OPC (Oligodendrocyte Precursor Cells): "Vcan", "Sox6", Aldoc, Nnat
+    Oligodendrocyte: "Mbp", "Mag", "Plp1"
+    Schwann Cells: S100b, Aldoc, Cnp
+Non-Neuronal Cell Types
+    Endothelial Cells: "Lef1", Notum, "Apcdd1"
+    Endothelial Stalk Cells: Actb, Tmsb4x
+    Endothelial Mural: Dlc1, Pdgfrb
+    Meningeal Cells: "Ptgds", "Dcn"
+    Choroid Plexus Cells: "Kl", "Ttr", "Clic6", "Slc13a4"
+    Ependymal Cells: "Cfap54", "Ccdc153", "Cfap44", "Tmem212"
 
 DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "SCT"
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB_Rep2-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim50-List4.pdf", width=30, height=70)
-FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Calb1", "Slc1a6", "Car8", "Gabra6", "Pax6", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Zeb2", "Hepacam", "Aqp4", "Slc39a12", "Kl", "Clic6", "Slc13a4", "Ttr", "Cfap54", "Ccdc153", "Cfap44", "Tmem212", "Ptgds", "Dcn", "Ntng1", "Grm5", "Aldoc", "Cnp", "Cspg5", "Mbp", "Mag", "Plp1", "Slc18a2", "Ddc", "Slc6a4", "Tph2", "Lef1", "Notum", "Apcdd1", "Nxph1", "Dynlt1c", "Otx1", "Rnd3", "Pvalb", "Cck", "Sst", "Myh11"), max.cutoff = 1, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim30-ListAllGenes.pdf", width=30, height=80)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Gabra6", "Pax6", "Calb1", "Slc1a6", "Car8", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", 
+"Klhl1", "Gfra2", "Aldh1a3", "Galntl6", "Kcnc2", "Pax2", "Eomes", "Rgs6", "Tafa2", 
+"Gad2", "Slc6a1", "Nxph1", "Gad1", "Gria3", "Slc18a2", "Ddc", "Slc6a4", "Tph2", 
+"Slc18a2", "Slc1a2", "Apoe", "Zeb2", "Glul", "Slc1a3", "Ednrb", "Aqp4", "Slc39a12", 
+"Colec12", "Slc1a3", "Pdgfd", "Gli3", "Vcan", "Sox6", "Aldoc", "Nnat", "Mbp", 
+"Mag", "Plp1", "S100b", "Aldoc", "Cnp", "Lef1", "Notum", "Apcdd1", "Actb", 
+"Tmsb4x", "Dlc1", "Pdgfrb", "Ptgds", "Dcn", "Kl", "Ttr", "Clic6", "Slc13a4", 
+"Cfap54", "Ccdc153", "Cfap44", "Tmem212"
+), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim30-ListAllGenesFILTER.pdf", width=30, height=70)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Gabra6", "Pax6","Calb1", "Slc1a6", "Car8","Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Klhl1", "Gfra2", "Aldh1a3", "Galntl6", "Kcnc2", "Pax2","Rgs6", "Tafa2","Slc18a2", "Ddc", "Slc6a4", "Tph2", "Ddc", "Slc18a2", "Zeb2", "Slc1a3","Aqp4", "Slc39a12", "Vcan", "Sox6", "Mbp", "Mag", "Plp1", "Lef1", "Apcdd1", "Ptgds", "Dcn", "Kl", "Ttr", "Clic6", "Slc13a4", "Cfap54", "Ccdc153", "Cfap44", "Tmem212"
+
+), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
 
@@ -19723,12 +19765,19 @@ dev.off()
 
 
 
-
-
-
-
-
 #### QC metrics investigation ####################################
+
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p35_CB_nFeature_RNA-1stepIntegrationRegressNotRepeated-version4dim30.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=FALSE, features = "nFeature_RNA")
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p35_CB_percentmt-1stepIntegrationRegressNotRepeated-version4dim30.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.mt")
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p35_CB_percentrb-1stepIntegrationRegressNotRepeated-version4dim30.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.rb")
+dev.off()  
+
+#
 pdf("output/seurat/VlnPlot_QCmetrics_SCT_WT_Kcnc1_p35_CB_1step-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015-countMtRbRegression.pdf", width=20, height=5)
 VlnPlot(WT_Kcnc1_p35_CB_1step.sct,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
   theme(plot.title = element_text(size=10))
@@ -19745,15 +19794,6 @@ VlnPlot(WT_Kcnc1_p35_CB_1step.sct,features = c("nCount_RNA")) +
 dev.off()
 
 
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p35_CB_nFeature_RNA-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015.pdf", width=5, height=5)
-FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=FALSE, features = "nFeature_RNA")
-dev.off()  
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p35_CB_percentmt-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015.pdf", width=5, height=5)
-FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.mt")
-dev.off()  
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p35_CB_percentrb-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015.pdf", width=5, height=5)
-FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.rb")
-dev.off()  
 ############################################################
 
 
