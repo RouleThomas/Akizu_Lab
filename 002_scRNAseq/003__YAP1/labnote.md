@@ -3091,8 +3091,8 @@ dev.off()
 srat_UNTREATED24hr72hr <- merge(srat_UNTREATED24hr, y = srat_UNTREATED72hr, add.cell.ids = c("UNTREATED24hr", "UNTREATED72hr"))
 srat_DASATINIB24hr72hr <- merge(srat_DASATINIB24hr, y = srat_DASATINIB72hr, add.cell.ids = c("DASATINIB24hr", "DASATINIB72hr"))
 
-srat_UNTREATED24hr72hr <- SCTransform(srat_UNTREATED24hr72hr, method = "glmGamPoi", ncells = 13044, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) 
-srat_DASATINIB24hr72hr <- SCTransform(srat_DASATINIB24hr72hr, method = "glmGamPoi", ncells = 13761, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000)
+srat_UNTREATED24hr72hr <- SCTransform(srat_UNTREATED24hr72hr, method = "glmGamPoi", ncells = 13035, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) 
+srat_DASATINIB24hr72hr <- SCTransform(srat_DASATINIB24hr72hr, method = "glmGamPoi", ncells = 13745, vars.to.regress = c("nCount_RNA","percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000)
 
 
 ### Data integration (check active assay is 'SCT')
@@ -3120,10 +3120,10 @@ humangastruloid2472hr.merged <- FindClusters(humangastruloid2472hr.merged, resol
 
 humangastruloid2472hr.merged$condition <- factor(humangastruloid2472hr.merged$condition, levels = c("UNTREATED24hr", "DASATINIB24hr", "UNTREATED72hr", "DASATINIB72hr")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_humangastruloid2472hr.merged_V1-dim30kparam15res03.pdf", width=10, height=6)
+pdf("output/seurat/UMAP_humangastruloid2472hr.METHOD3-dim30kparam15res03.pdf", width=10, height=6)
 DimPlot(humangastruloid2472hr.merged, reduction = "umap", split.by = "time", label=TRUE)
 dev.off()
-pdf("output/seurat/UMAP_humangastruloid2472hr.merged_V1-dim30kparam15res03_groupTime.pdf", width=6, height=6)
+pdf("output/seurat/UMAP_humangastruloid2472hr.METHOD3-dim30kparam15res03_groupTime.pdf", width=6, height=6)
 DimPlot(humangastruloid2472hr.merged, reduction = "umap", group.by = "time", label=TRUE)
 dev.off()
 
@@ -25751,6 +25751,159 @@ dotplot(compGO, showCategory = 15, title = "GO_Biological Process Enrichment Ana
 dev.off()
 
 ```
+
+
+## Revision1 Gastruloid paper - Pseudotime 24hr and 72hr separated
+--> Follow `002*/006__Kim` `#### Run condiments RNA assay - V1 common condition`
+
+### Revision1 Gastruloid paper - Pseudotime gastruloid 24hr
+
+
+```bash
+conda activate condiments_V6
+```
+
+
+
+
+```R
+
+# package installation 
+## install.packages("remotes")
+## remotes::install_github("cran/spatstat.core")
+## remotes::install_version("Seurat", "4.0.3")
+## install.packages("magrittr")
+## install.packages("magrittr")
+## install.packages("dplyr")
+## BiocManager::install("DelayedMatrixStats")
+## BiocManager::install("tradeSeq")
+
+
+# packages
+library("condiments")
+library("Seurat")
+library("magrittr") # to use pipe
+library("dplyr") # to use bind_cols and sample_frac
+library("SingleCellExperiment") # for reducedDims
+library("ggplot2")
+library("slingshot")
+library("DelayedMatrixStats")
+library("tidyr")
+library("tradeSeq")
+library("cowplot")
+library("scales")
+library("pheatmap")
+library("readr")
+set.seed(42)
+
+
+
+
+# Data import - all samples and genotype CB
+humangastruloid24hr.combined.sct <- readRDS(file = "output/seurat/humangastruloid24hr.combined.sct_25dim.rds")
+
+
+DefaultAssay(humangastruloid24hr.combined.sct) <- "RNA" # According to condiments workflow
+
+
+# convert to SingleCellExperiment
+UNT_DASA_24hr <- as.SingleCellExperiment(humangastruloid24hr.combined.sct, assay = "RNA")
+
+
+# tidy
+df <- bind_cols(
+  as.data.frame(reducedDims(UNT_DASA_24hr)$UMAP),
+  as.data.frame(colData(UNT_DASA_24hr)[, -3])
+  ) %>%
+  sample_frac(1)
+
+# PLOT
+## genotype overlap
+pdf("output/condiments/UMAP_condition_UNT_DASA_24hr-sct_25dim.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7) +
+  scale_color_manual(values = c("blue", "red")) + # Specify colors here
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+## imbalance score
+scores <- condiments::imbalance_score(
+  Object = df %>% select(UMAP_1, UMAP_2) %>% as.matrix(), 
+  conditions = df$condition,
+  k = 20, smooth = 40)
+df$scores <- scores$scaled_scores
+
+pdf("output/condiments/UMAP_imbalance_score_UNT_DASA_24hr-sct_25dim.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
+  geom_point(size = .7) +
+  scale_color_viridis_c(option = "C") +
+  labs(col = "Scores") +
+  theme_classic()
+dev.off()
+
+########################################
+## PLOT keeping all cells ##########
+########################################
+# Testing
+
+UNT_DASA_24hr <- slingshot(UNT_DASA_24hr, reducedDim = 'UMAP',
+                 clusterLabels = colData(UNT_DASA_24hr)$cluster.annot,
+                 start.clus = c("Epiblast"), end.clus = c("Nascent_Mesoderm", "Endoderm") ,approx_points = 100, extend = 'n', stretch = 0.2)
+
+#test reduceDim PCA or subset endoderm
+topologyTest(SlingshotDataSet(UNT_DASA_24hr), UNT_DASA_24hr$condition) #  
+sdss <- slingshot_conditions(SlingshotDataSet(UNT_DASA_24hr), UNT_DASA_24hr$condition)
+curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
+                    .id = "condition")
+pdf("output/condiments/UMAP_trajectory_UNT_DASA_24hr-sct_25dim-START-Epiblast-END-Nascent_MesodermEndoderm-points100extendnstretch02.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(condition, Lineage, Order),
+            aes(group = interaction(Lineage, condition)), size = 1.5) +
+  theme_classic()
+dev.off()
+#  TOO LONG RUN IN SLURM |||||||||
+
+
+
+
+
+XXXY TAB1
+
+
+
+
+
+
+```
+
+
+
+
+
+
+### Revision1 Gastruloid paper - Pseudotime gastruloid 72hr
+
+
+XXXY
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # New time point 20231206
