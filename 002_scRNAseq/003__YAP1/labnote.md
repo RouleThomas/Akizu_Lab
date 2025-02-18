@@ -25849,14 +25849,16 @@ dev.off()
 
 UNT_DASA_24hr <- slingshot(UNT_DASA_24hr, reducedDim = 'UMAP',
                  clusterLabels = colData(UNT_DASA_24hr)$cluster.annot,
-                 start.clus = c("Epiblast"), end.clus = c("Nascent_Mesoderm", "Endoderm") ,approx_points = 100, extend = 'n', stretch = 0.2)
+                 start.clus = c("Epiblast"), end.clus = c("Primitive_Streak") ,approx_points = 100, extend = 'n', stretch = 0.05) # extend y n pc1
+
+# Nascent_Mesoderm
 
 #test reduceDim PCA or subset endoderm
 topologyTest(SlingshotDataSet(UNT_DASA_24hr), UNT_DASA_24hr$condition) #  
 sdss <- slingshot_conditions(SlingshotDataSet(UNT_DASA_24hr), UNT_DASA_24hr$condition)
 curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
                     .id = "condition")
-pdf("output/condiments/UMAP_trajectory_UNT_DASA_24hr-sct_25dim-START-Epiblast-END-Nascent_MesodermEndoderm-points100extendnstretch02.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_trajectory_UNT_DASA_24hr-sct_25dim-START-Epiblast-END-Primitive_Streak-points100extendnstretch005.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7, alpha = .2) +
   scale_color_brewer(palette = "Accent") +

@@ -18972,23 +18972,22 @@ WT_Kcnc1_p14_CB_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p14_CB_1step.anc
 #### UMAP
 DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "integrated"
 
-WT_Kcnc1_p14_CB_1step.sct <- RunPCA(WT_Kcnc1_p14_CB_1step.sct, verbose = FALSE, npcs = 30)
-WT_Kcnc1_p14_CB_1step.sct <- RunUMAP(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
-WT_Kcnc1_p14_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", k.param = 30, dims = 1:30)
-WT_Kcnc1_p14_CB_1step.sct <- FindClusters(WT_Kcnc1_p14_CB_1step.sct, resolution = 0.4, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+WT_Kcnc1_p14_CB_1step.sct <- RunPCA(WT_Kcnc1_p14_CB_1step.sct, verbose = FALSE, npcs = 40)
+WT_Kcnc1_p14_CB_1step.sct <- RunUMAP(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
+WT_Kcnc1_p14_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", k.param = 30, dims = 1:40)
+WT_Kcnc1_p14_CB_1step.sct <- FindClusters(WT_Kcnc1_p14_CB_1step.sct, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
 WT_Kcnc1_p14_CB_1step.sct$condition <- factor(WT_Kcnc1_p14_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version4dim30kparam30res04.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version4dim40kparam30res03.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
-XXXY HERE SO PLAY TAB3 CLUSTER XXX
 
 DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim30-ListdotPLot.pdf", width=30, height=60)
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim40-ListdotPLot.pdf", width=30, height=60)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c(   "Gabra6","Pax6", # Granular_1
   "Sorcs3", "Ptprk", # MLI1
   "Nxph1", "Cdh22", # MLI2
@@ -19041,7 +19040,7 @@ Non-Neuronal Cell Types
 
 DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim30-ListAllGenes.pdf", width=30, height=80)
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim40-ListAllGenes.pdf", width=30, height=80)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gabra6", "Pax6", "Calb1", "Slc1a6", "Car8", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", 
 "Klhl1", "Gfra2", "Aldh1a3", "Galntl6", "Kcnc2", "Pax2", "Eomes", "Rgs6", "Tafa2", 
 "Gad2", "Slc6a1", "Nxph1", "Gad1", "Gria3", "Slc18a2", "Ddc", "Slc6a4", "Tph2", 
@@ -19054,7 +19053,16 @@ FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gabra6", "Pax6", "Calb1", "
 dev.off()
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim30-ListAllGenesFILTER.pdf", width=30, height=70)
+
+
+
+
+
+
+
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim40-ListAllGenesFILTER.pdf", width=30, height=70)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gabra6", "Pax6","Calb1", "Slc1a6", "Car8","Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Klhl1", "Gfra2", "Aldh1a3", "Galntl6", "Kcnc2", "Pax2","Rgs6", "Tafa2","Slc18a2", "Ddc", "Slc6a4", "Tph2", "Ddc", "Slc18a2", "Zeb2", "Slc1a3","Aqp4", "Slc39a12", "Vcan", "Sox6", "Mbp", "Mag", "Plp1", "Lef1", "Apcdd1", "Ptgds", "Dcn", "Kl", "Ttr", "Clic6", "Slc13a4", "Cfap54", "Ccdc153", "Cfap44", "Tmem212"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
@@ -19065,28 +19073,28 @@ dev.off()
 
 #### QC metrics investigation ####################################
 
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_nFeature_RNA-1stepIntegrationRegressNotRepeated-version4dim30.pdf", width=5, height=5)
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_nFeature_RNA-1stepIntegrationRegressNotRepeated-version4dim40.pdf", width=5, height=5)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "nFeature_RNA")
 dev.off()  
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_percentmt-1stepIntegrationRegressNotRepeated-version4dim30.pdf", width=5, height=5)
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_percentmt-1stepIntegrationRegressNotRepeated-version4dim40.pdf", width=5, height=5)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.mt")
 dev.off()  
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_percentrb-1stepIntegrationRegressNotRepeated-version4dim30.pdf", width=5, height=5)
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_percentrb-1stepIntegrationRegressNotRepeated-version4dim40.pdf", width=5, height=5)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.rb")
 dev.off()  
 
 #
-pdf("output/seurat/VlnPlot_QCmetrics_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015-countMtRbRegression.pdf", width=20, height=5)
+pdf("output/seurat/VlnPlot_QCmetrics_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-countMtRbRegression.pdf", width=20, height=5)
 VlnPlot(WT_Kcnc1_p14_CB_1step.sct,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
   theme(plot.title = element_text(size=10))
 dev.off()
 
-pdf("output/seurat/VlnPlot_QCmetrics_nFeature_RNA_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015-countMtRbRegression.pdf", width=5, height=5)
+pdf("output/seurat/VlnPlot_QCmetrics_nFeature_RNA_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-countMtRbRegression.pdf", width=5, height=5)
 VlnPlot(WT_Kcnc1_p14_CB_1step.sct,features = c("nFeature_RNA")) +
   ylim(0,2000)
 dev.off()
 
-pdf("output/seurat/VlnPlot_QCmetrics_nCount_RNA_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015-countMtRbRegression.pdf", width=5, height=5)
+pdf("output/seurat/VlnPlot_QCmetrics_nCount_RNA_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-countMtRbRegression.pdf", width=5, height=5)
 VlnPlot(WT_Kcnc1_p14_CB_1step.sct,features = c("nCount_RNA")) +
   ylim(0,10000)
 dev.off()
@@ -19095,21 +19103,14 @@ dev.off()
 ############################################################
 
 
-
-
-
-
-
-
-
-pdf("output/seurat/UMAP_WT_Kcnc1_splitCondition-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015.pdf", width=13, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_splitCondition-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03.pdf", width=13, height=6)
 DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE, split.by = "condition")
 dev.off()
-pdf("output/seurat/UMAP_WT_Kcnc1_splitReplicate-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015.pdf", width=15, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_splitReplicate-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03.pdf", width=15, height=6)
 DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE, split.by = "replicate")
 dev.off()
 
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_Phase-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015.pdf", width=10, height=6)
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_Phase-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03.pdf", width=6, height=5)
 DimPlot(WT_Kcnc1_p14_CB_1step.sct, group.by= "Phase") & 
   theme(plot.title = element_text(size=10))
 dev.off()  
@@ -19119,25 +19120,25 @@ dev.off()
 # WT vs Kcnc1 gene expr ############
 DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015-Kcnc1.pdf", width=5, height=5)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1"),  cols = c("grey", "red")) #  max.cutoff = 10, min.cutoff = 1
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-Kcnc1.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1"),  cols = c("grey", "red"), max.cutoff = 1) #  max.cutoff = 10, min.cutoff = 1
 dev.off()
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015-Kcnc1split.pdf", width=12, height=6)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1"),  cols = c("grey", "red"), split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-Kcnc1split.pdf", width=12, height=6)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1"),  cols = c("grey", "red"), split.by = "condition", max.cutoff = 1) #  max.cutoff = 10, min.cutoff = 1
 dev.off()
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version2dim45kparam10res015-Kcnc1234-split.pdf", width=12, height=20)
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-Kcnc1234-split.pdf", width=12, height=20)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1","Kcnc2", "Kcnc3", "Kcnc4"),  cols = c("grey", "red"), split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
 dev.off()
 
 
 # save ##################
 
-## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015.sct_V1_label.rds") 
+## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_label.rds") 
 
-WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015.sct_V1_label.rds") # 
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_label.rds") # 
 
 set.seed(42)
 ##########
@@ -20792,13 +20793,13 @@ DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "integrated"
 
 WT_Kcnc1_p35_CB_1step.sct <- RunPCA(WT_Kcnc1_p35_CB_1step.sct, verbose = FALSE, npcs = 30)
 WT_Kcnc1_p35_CB_1step.sct <- RunUMAP(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
-WT_Kcnc1_p35_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", k.param = 30, dims = 1:30)
-WT_Kcnc1_p35_CB_1step.sct <- FindClusters(WT_Kcnc1_p35_CB_1step.sct, resolution = 0.4, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+WT_Kcnc1_p35_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p35_CB_1step.sct, reduction = "pca", k.param = 10, dims = 1:30)
+WT_Kcnc1_p35_CB_1step.sct <- FindClusters(WT_Kcnc1_p35_CB_1step.sct, resolution = 0.2, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
 WT_Kcnc1_p35_CB_1step.sct$condition <- factor(WT_Kcnc1_p35_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version4dim30kparam30res04.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version4dim30kparam10res02.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
@@ -20910,17 +20911,17 @@ FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=FALSE, features
 dev.off()  
 
 #
-pdf("output/seurat/VlnPlot_QCmetrics_SCT_WT_Kcnc1_p35_CB_1step-1stepIntegrationRegressNotRepeated-version4dim30kparam30res04-countMtRbRegression.pdf", width=20, height=5)
+pdf("output/seurat/VlnPlot_QCmetrics_SCT_WT_Kcnc1_p35_CB_1step-1stepIntegrationRegressNotRepeated-version4dim30kparam10res02-countMtRbRegression.pdf", width=20, height=5)
 VlnPlot(WT_Kcnc1_p35_CB_1step.sct,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
   theme(plot.title = element_text(size=10))
 dev.off()
 
-pdf("output/seurat/VlnPlot_QCmetrics_nFeature_RNA_SCT_WT_Kcnc1_p35_CB_1step-1stepIntegrationRegressNotRepeated-version4dim30kparam30res04-countMtRbRegression.pdf", width=5, height=5)
+pdf("output/seurat/VlnPlot_QCmetrics_nFeature_RNA_SCT_WT_Kcnc1_p35_CB_1step-1stepIntegrationRegressNotRepeated-version4dim30kparam10res02-countMtRbRegression.pdf", width=5, height=5)
 VlnPlot(WT_Kcnc1_p35_CB_1step.sct,features = c("nFeature_RNA")) +
   ylim(0,2000)
 dev.off()
 
-pdf("output/seurat/VlnPlot_QCmetrics_nCount_RNA_SCT_WT_Kcnc1_p35_CB_1step-1stepIntegrationRegressNotRepeated-version4dim30kparam30res04-countMtRbRegression.pdf", width=5, height=5)
+pdf("output/seurat/VlnPlot_QCmetrics_nCount_RNA_SCT_WT_Kcnc1_p35_CB_1step-1stepIntegrationRegressNotRepeated-version4dim30kparam10res02-countMtRbRegression.pdf", width=5, height=5)
 VlnPlot(WT_Kcnc1_p35_CB_1step.sct,features = c("nCount_RNA")) +
   ylim(0,10000)
 dev.off()
@@ -20929,14 +20930,14 @@ dev.off()
 ############################################################
 
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB_splitCondition-1stepIntegrationRegressNotRepeated-version4dim30kparam30res04.pdf", width=13, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB_splitCondition-1stepIntegrationRegressNotRepeated-version4dim30kparam10res02.pdf", width=13, height=6)
 DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=TRUE, split.by = "condition")
 dev.off()
-pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB_splitReplicate-1stepIntegrationRegressNotRepeated-version4dim30kparam30res04.pdf", width=15, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB_splitReplicate-1stepIntegrationRegressNotRepeated-version4dim30kparam10res02.pdf", width=15, height=6)
 DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=TRUE, split.by = "replicate")
 dev.off()
 
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p35_CB_Phase-1stepIntegrationRegressNotRepeated-version4dim30kparam30res04.pdf", width=6, height=5)
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p35_CB_Phase-1stepIntegrationRegressNotRepeated-version4dim30kparam10res02.pdf", width=6, height=5)
 DimPlot(WT_Kcnc1_p35_CB_1step.sct, group.by= "Phase") & 
   theme(plot.title = element_text(size=10))
 dev.off()  
@@ -20946,16 +20947,16 @@ dev.off()
 # WT vs Kcnc1 gene expr ############
 DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "SCT"
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB-1stepIntegrationRegressNotRepeated-version4dim30kparam30res04-Kcnc1.pdf", width=5, height=5)
+pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB-1stepIntegrationRegressNotRepeated-version4dim30kparam10res02-Kcnc1.pdf", width=5, height=5)
 FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Kcnc1"),  cols = c("grey", "red"), max.cutoff = 1) #  max.cutoff = 10, min.cutoff = 1
 dev.off()
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB-1stepIntegrationRegressNotRepeated-version4dim30kparam30res04-Kcnc1split.pdf", width=12, height=6)
+pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB-1stepIntegrationRegressNotRepeated-version4dim30kparam10res02-Kcnc1split.pdf", width=12, height=6)
 FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Kcnc1"),  cols = c("grey", "red"), split.by = "condition",max.cutoff = 1) #  max.cutoff = 10, min.cutoff = 1
 dev.off()
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB-1stepIntegrationRegressNotRepeated-version4dim30kparam30res04-Kcnc1234-split.pdf", width=12, height=20)
+pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB-1stepIntegrationRegressNotRepeated-version4dim30kparam10res02-Kcnc1234-split.pdf", width=12, height=20)
 FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Kcnc1","Kcnc2", "Kcnc3", "Kcnc4"),  cols = c("grey", "red"), split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
 dev.off()
 
@@ -20963,9 +20964,11 @@ dev.off()
 # save ##################
 
 ## saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-version4dim30kparam30res04.sct_V1_numeric.rds") 
+## saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-version4dim30kparam10res02.sct_V1_numeric.rds") 
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-version4dim30kparam10res02.sct_V1_numeric.rds") # 
 
-WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-version4dim30kparam30res04.sct_V1_numeric.rds") # 
-
+## saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-version4dim30kparam10res02.sct_V1_label.rds") 
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-version4dim30kparam10res02.sct_V1_label.rds") # 
 set.seed(42)
 ##########
 
@@ -20979,51 +20982,37 @@ all.genes <- rownames(WT_Kcnc1_p35_CB_1step.sct)
 WT_Kcnc1_p35_CB_1step.sct <- ScaleData(WT_Kcnc1_p35_CB_1step.sct, features = all.genes) # zero-centres and scales it
 
 all_markers <- FindAllMarkers(WT_Kcnc1_p35_CB_1step.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
-write.table(all_markers, file = "output/seurat/srat_WT_Kcnc1_p35_CB_1step-version4dim30kparam30res04-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-
-
-xxxy TO EXPLORE T OANNTOATE CELL TYPE - TAB2
+write.table(all_markers, file = "output/seurat/srat_WT_Kcnc1_p35_CB_1step-version4dim30kparam10res02-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 
 
 
+############ V1 naming  version4dim30kparam10res02 (output/seurat/WT_Kcnc1_p35_CB_1step-version4dim30kparam10res02.sct_V1_numeric.rds )
+
+WT_Kcnc1_p35_CB_1step.sct$Purkinje <- NULL
+WT_Kcnc1_p35_CB_1step.sct$Golgi <- NULL
+Idents(WT_Kcnc1_p35_CB_1step.sct) <- "seurat_clusters"
 
 
 
+Cluster1= Granule = Gabra6, Pax6 maybe more Immature
+Cluster2= MLI1: Sorcs3, Ptprk
+Cluster3= PLI23: Galntl6, Kcnc2
+Cluster4= MLI2: Nxph1, Cdh22
+Cluster5= Bergman: Zeb2 Slc1a3, Gria4 
+Cluster6= PLI12: Klhl1, Gfra2, Aldh1a3
+Cluster7= Golgi: Pax2, Nrg1, Sgcd 
+Cluster8= UnipolarBrush: Rgs6, Tafa2, Trpc3
+Cluster9= Astrocyte: Aqp4, Slc39a12, Gpc5, Slc1a2
+Cluster10= Unknown_GranuleMature  Gabra6, Grik2 Mature
+Cluster11= ChoroidPlexus : Kl, Ttr, Clic6, Slc13a4
+Cluster12= Meningeal: Ptgds, Dcn, 
+Cluster13= Endothelial: Lef1, Apcdd1
+Cluster14= Purkinje: Calb1, Slc1a6, Car8
+Cluster15= Unknown_Granule
+Cluster16= Ependymal: Cfap54, Ccdc153, Cfap44, Tmem212
+Cluster17= Unknown_Stellate Kctd12, Npy, Slc1a2
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-XXXY HERE ANNOTATE CELL TYPES!
-
-
-############ V1 naming  version2dim45kparam10res015 (output/seurat/WT_Kcnc1_p35_CB_1step-version2dim45kparam10res015.sct_V1_numeric.rds )
-
-1= Granule (Gabra6,Pax6, )
-2= MLI1 Sorcs3, Ptprk, 
-3= PLI23   Galntl6, Kcnc2, 
-4= Unknown
-5= MLI2 Nxph1, Cdh22, 
-6= Endothelial (Lef1, Notum, Apcdd1, Dlc1, Pdgfrb)
-7= Astrocyte  Zeb2, 
-8= Bergman_Glia Aqp4, Slc39a12, 
-9= PLI12 Klhl1, Gfra2, Aldh1a3, 
-10= Oligodendrocyte  Mbp, Mag, Plp1, 
-11= Meningeal Ptgds, Dcn, 
-12= Unipolar_Brush    Eomes, Rgs6, Tafa2, # Unipolar_Brush
-13= Golgi    Pax2, 
-14= Choroid_Plexus    Kl, Ttr, 
-15= Purkinje Calb1, Slc1a6, Car8, 
 
 
 
@@ -21032,18 +21021,20 @@ new.cluster.ids <- c(
   "Granule",
   "MLI1",
   "PLI23",
-  "Unknown",
   "MLI2",
-  "Endothelial",
+  "Bergman", 
+  "PLI12",
+  "Golgi", 
+  "UnipolarBrush",
   "Astrocyte",
-  "Bergman_Glia",
-  "PLI12", 
-  "Oligodendrocyte",
+  "Unknown_GranuleMature",
+  "ChoroidPlexus",
   "Meningeal",
-  "Unipolar_Brush",
-  "Golgi",
-  "Choroid_Plexus",
-  "Purkinje"
+  "Endothelial",
+  "Purkinje",
+  "Unknown_Granule",
+  "Ependymal",
+  "Unknown_Stellate"
 )
 
 names(new.cluster.ids) <- levels(WT_Kcnc1_p35_CB_1step.sct)
@@ -21051,15 +21042,17 @@ WT_Kcnc1_p35_CB_1step.sct <- RenameIdents(WT_Kcnc1_p35_CB_1step.sct, new.cluster
 WT_Kcnc1_p35_CB_1step.sct$cluster.annot <- Idents(WT_Kcnc1_p35_CB_1step.sct) # create a new slot in my seurat object
 
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB_1step_version2dim45kparam10res015_label.pdf", width=15, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB_1step_version4dim30kparam10res02_label.pdf", width=15, height=6)
 DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
 dev.off()
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB_1step_version2dim45kparam10res015_noSplit_label.pdf", width=9, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB_1step_version4dim30kparam10res02_noSplit_label.pdf", width=9, height=6)
 DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5)
 dev.off()
 
 
+
+xxxy below not moD111
 
 # All in dotplot
 DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "SCT"
@@ -21866,6 +21859,138 @@ dev.off()
 
 
 
+###### NeuronChat Cell type verification
+
+Let's use NeuronChat to confirm our cell type annotation
+
+
+```bash
+conda activate NeuronChat
+```
+
+
+
+Follow [Inference and analysis of neural-specific cell-cell communication using NeuronChat](https://htmlpreview.github.io/?https://github.com/Wei-BioMath/NeuronChat/blob/main/vignettes/NeuronChat-Tutorial.html)
+
+
+Lets do a first test with only **WT cells from p35**
+
+
+```R
+# packages
+library("NeuronChat")
+library("Seurat")
+library("ggalluvial")
+
+
+set.seed(42)
+
+# import seurat object
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-version4dim30kparam10res02.sct_V1_numeric.rds")
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-version4dim30kparam10res02.sct_V1_label.rds")
+
+XXXY HERE 
+
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "RNA"
+WT_Kcnc1_p35_CB_1step.sct <- NormalizeData(WT_Kcnc1_p35_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p35_CB_1step.sct)
+WT_Kcnc1_p35_CB_1step.sct <- ScaleData(WT_Kcnc1_p35_CB_1step.sct, features = all.genes) # zero-centres and scales it
+
+# Subset to keep WT cells only 
+WT_p35 <- subset(WT_Kcnc1_p35_CB_1step.sct, cells = WhichCells(WT_Kcnc1_p35_CB_1step.sct, expression = condition == "WT"))
+
+
+# Part I: Create NeuronChat object
+expr_matrix <- as.matrix(GetAssayData(WT_p35, slot = "data")) # seems need data (log Norm, from CellChat paper)
+
+meta_data <- WT_p35@meta.data
+meta_data$cell_subclass <- Idents(WT_p35)  # Assuming cell subclass is stored in identities
+rownames(meta_data) <- colnames(expr_matrix) # Ensure row names match cell names
+NeuronChat_WT <- createNeuronChat(expr_matrix, DB = 'mouse', group.by = meta_data$cell_subclass)
+
+
+# Part II: Run NeuronChat to infer the neural-specific cell-cell communication networks
+NeuronChat_WT <- run_NeuronChat(NeuronChat_WT,M=100) # m=nb of permutation, 100 is good; ~5min with WT only)
+#--> the communication networks for individual interaction pairs are stored in slot 'net'
+net_aggregated_NeuronChat_WT <- net_aggregation(NeuronChat_WT@net,method = 'weight') # method can be 'weight', 'count' and so on
+
+## Set the cluster name = group
+df_group <- meta_data[!duplicated(meta_data$cell_subclass), c('seurat_clusters')]
+df_group <- as.character(df_group)
+group <- structure(df_group, names = df_group)
+
+
+# Part III: Visualization of neural-specific cell-cell communication networks
+pdf("output/NeuronChat/netVisual_circle_chord_neuron-p35_CB_WT-version4dim30kparam10res02.pdf", width=15, height=15)
+par(mfrow=c(1,2))
+# Visualization, circle plot, for the aggregated network
+netVisual_circle_neuron(net_aggregated_NeuronChat_WT,group=group,vertex.label.cex = 1)
+# Visualization, chordDiagram, for the aggregated network; also using cellchat function netVisual_chord_cell_internal(net_aggregated_NeuronChat_WT, group = group,lab.cex=1)
+netVisual_chord_neuron(NeuronChat_WT,method = 'weight',group=group,lab.cex = 1)
+dev.off()
+
+
+pdf("output/NeuronChat/heatmap_aggregated-p35_CB_WT-version4dim30kparam10res02.pdf", width=6, height=6)
+# Visualization, heatmap for the aggregated network
+heatmap_aggregated(NeuronChat_WT, method='weight',group=group)
+dev.off()
+
+
+# for individual network
+pdf("output/NeuronChat/netVisual_circle_chord_neuron-p35_CB_WT-version4dim30kparam10res02-Glu_Gria2.pdf", width=15, height=15)
+par(mfrow=c(1,2))
+# Visualization for the single interaction pair, circle plot  
+netVisual_circle_neuron(NeuronChat_WT@net$Glu_Gria2,group=group,vertex.label.cex = 1)
+# Visualization for the single interaction pair, chord diagram 
+netVisual_chord_neuron(NeuronChat_WT,interaction_use='Glu_Gria2',group=group,lab.cex = 1)
+dev.off()
+
+
+# Visualization for the single interaction pair, heatmap 
+pdf("output/NeuronChat/heatmap_single-p35_CB_WT-version4dim30kparam10res02-Glu_Gria2.pdf", width=6, height=6)
+heatmap_single(NeuronChat_WT,interaction_name='Glu_Gria2',group=group)
+dev.off()
+
+
+# Visualization for the single interaction pair, heatmap with violin plots showing expression of genes realted to ligand and target
+pdf("output/NeuronChat/lig_tar_heatmap-p35_CB_WT-version4dim30kparam10res02-Glu_Gria2.pdf", width=15, height=4)
+lig_tar_heatmap(NeuronChat_WT,interaction_name='Glu_Gria2',width.vector=c(0.38,0.35,0.27))
+dev.off()
+
+
+
+
+# Part IV: Analysis of communication
+
+## barplot show the count of links or information flow for all interaction pair
+pdf("output/NeuronChat/rankNet_Neuron-p35_CB_WT-version4dim30kparam10res02.pdf", width=6, height=12)
+g1 <- rankNet_Neuron(NeuronChat_WT,slot.name = "net",measure = c("weight"),mode='single',font.size = 5) 
+g2 <- rankNet_Neuron(NeuronChat_WT,slot.name = "net",measure = c("count"),mode='single',font.size = 5)
+g1+g2
+dev.off()
+
+
+## outgoing/incoming pattern
+# selectK_Neuron(x,pattern = "outgoing")
+# selectK_Neuron(x,pattern = "incoming")
+
+
+pdf("output/NeuronChat/netAnalysis_river_Neuron-p35_CB_WT-version4dim30kparam10res02-outgoing.pdf", width=6, height=6)
+NeuronChat_WT<- identifyCommunicationPatterns_Neuron(NeuronChat_WT, slot.name = "net", pattern = c("outgoing"), k=7,height = 18)
+netAnalysis_river_Neuron(NeuronChat_WT,slot.name = "net", pattern = c("outgoing"),font.size = 2.5,cutoff.1 = 0.5,cutoff.2=0.5)
+dev.off()
+
+pdf("output/NeuronChat/netAnalysis_river_Neuron-p35_CB_WT-version4dim30kparam10res02-incoming.pdf", width=6, height=6)
+NeuronChat_WT<- identifyCommunicationPatterns_Neuron(NeuronChat_WT, slot.name = "net", pattern = c("incoming"), k=7,height = 18)
+netAnalysis_river_Neuron(NeuronChat_WT,slot.name = "net", pattern = c("incoming"),font.size = 2.5,cutoff.1 = 0.5,cutoff.2=0.5)
+dev.off()
+
+
+
+```
+
+- Check **which type of count** to use: Raw/data/scale.data 
+  --> Seems it is [data](https://www.biorxiv.org/content/10.1101/2023.11.05.565674v1.full.pdf) to be used 
 
 
 
@@ -29578,7 +29703,62 @@ makeShinyApp(WT_Kcnc1_p35_CB_1step.sct, scConf, gene.mapping = TRUE,
              shiny.title = "WT_Kcnc1_p35_CB_1step_version4dim30kparam30res04",
              shiny.dir = "shinyApp_WT_Kcnc1_p35_CB_1step_version4dim30kparam30res04/") 
 rsconnect::deployApp('shinyApp_WT_Kcnc1_p35_CB_1step_version4dim30kparam30res04')
+#--> Not good, next one version4dim30kparam10res02 better more up to date
 
+
+
+
+
+# Generate Shiny app Version4 p35 - version4dim30kparam10res02
+## import Seurat object
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-version4dim30kparam10res02.sct_V1_numeric.rds") # 
+set.seed(42)
+# differential expressed genes across conditions
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "RNA"
+WT_Kcnc1_p35_CB_1step.sct <- NormalizeData(WT_Kcnc1_p35_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p35_CB_1step.sct)
+WT_Kcnc1_p35_CB_1step.sct <- ScaleData(WT_Kcnc1_p35_CB_1step.sct, features = all.genes) # zero-centres and scales it
+WT_Kcnc1_p35_CB_1step.sct$celltype.stim <- paste(WT_Kcnc1_p35_CB_1step.sct$seurat_clusters, WT_Kcnc1_p35_CB_1step.sct$condition,
+    sep = "-")
+Idents(WT_Kcnc1_p35_CB_1step.sct) <- "celltype.stim"
+
+
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "RNA" # 
+scConf = createConfig(WT_Kcnc1_p35_CB_1step.sct)
+makeShinyApp(WT_Kcnc1_p35_CB_1step.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "WT_Kcnc1_p35_CB_1step_version4dim30kparam10res02",
+             shiny.dir = "shinyApp_WT_Kcnc1_p35_CB_1step_version4dim30kparam10res02/") 
+rsconnect::deployApp('shinyApp_WT_Kcnc1_p35_CB_1step_version4dim30kparam10res02')
+
+
+
+
+
+
+
+
+# Generate Shiny app Version4 p14 - version4dim40kparam30res03
+## import Seurat object
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_label.rds") # 
+set.seed(42)
+# differential expressed genes across conditions
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
+WT_Kcnc1_p14_CB_1step.sct <- NormalizeData(WT_Kcnc1_p14_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p14_CB_1step.sct)
+WT_Kcnc1_p14_CB_1step.sct <- ScaleData(WT_Kcnc1_p14_CB_1step.sct, features = all.genes) # zero-centres and scales it
+WT_Kcnc1_p14_CB_1step.sct$celltype.stim <- paste(WT_Kcnc1_p14_CB_1step.sct$seurat_clusters, WT_Kcnc1_p14_CB_1step.sct$condition,
+    sep = "-")
+Idents(WT_Kcnc1_p14_CB_1step.sct) <- "celltype.stim"
+
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA" # 
+scConf = createConfig(WT_Kcnc1_p14_CB_1step.sct)
+makeShinyApp(WT_Kcnc1_p14_CB_1step.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "WT_Kcnc1_p14_CB_1step_version4dim40kparam30res03",
+             shiny.dir = "shinyApp_WT_Kcnc1_p14_CB_1step_version4dim40kparam30res03/") 
+rsconnect::deployApp('shinyApp_WT_Kcnc1_p14_CB_1step_version4dim40kparam30res03')
 
 
 
@@ -29594,8 +29774,8 @@ Version2
 - [CB_p35](https://roulethomas.shinyapps.io/shinyapp_wt_kcnc1_p35_cb_1step_version2dim50kparam50res02/)
 - [CB_p180](https://roulethomas.shinyapps.io/shinyapp_wt_kcnc1_p180_cb_1step_version2dim30kparam10res01/)
 Version4
-- [CB_p14](xxx)
-- [CB_p35](https://roulethomas.shinyapps.io/shinyApp_WT_Kcnc1_p35_CB_1step_version4dim30kparam30res04/)
+- [CB_p14](https://roulethomas.shinyapps.io/shinyApp_WT_Kcnc1_p14_CB_1step_version4dim40kparam30res03/)
+- [CB_p35](https://roulethomas.shinyapps.io/shinyApp_WT_Kcnc1_p35_CB_1step_version4dim30kparam10res02/)
 - [CB_p180](xxx)
 
 
