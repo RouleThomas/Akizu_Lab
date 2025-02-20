@@ -20048,6 +20048,299 @@ dev.off()
 
 
 
+###### CellChat Cell type verification
+
+Let's use CellChat to confirm our cell type annotation
+
+
+```bash
+conda activate CellChat
+```
+
+
+
+Follow [Full tutorial for CellChat analysis of a single dataset with detailed explanation of each function](https://htmlpreview.github.io/?https://github.com/jinworks/CellChat/blob/master/tutorial/CellChat-vignette.html)
+
+
+Lets do a first test with only **WT cells from p14**
+
+
+```R
+# packages
+library("Seurat")
+library("CellChat")
+library("patchwork")
+library("presto")
+library("NMF")
+library("ggalluvial")
+options(stringsAsFactors = FALSE)
+set.seed(42)
+
+
+# import seurat object
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_label.rds") # 
+
+
+
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
+WT_Kcnc1_p14_CB_1step.sct <- NormalizeData(WT_Kcnc1_p14_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p14_CB_1step.sct)
+WT_Kcnc1_p14_CB_1step.sct <- ScaleData(WT_Kcnc1_p14_CB_1step.sct, features = all.genes) # zero-centres and scales it
+
+# Subset to keep WT cells only 
+WT_p14 <- subset(WT_Kcnc1_p14_CB_1step.sct, cells = WhichCells(WT_Kcnc1_p14_CB_1step.sct, expression = condition == "WT"))
+# Subset to keep only cell type of interest
+cells_to_keep <- WhichCells(WT_p14, expression = cluster.annot %in% c(
+  "Granule_1" ,
+  "Granule_2" ,
+  "Granule_3" ,
+  "Granule_4" ,
+  "MLI1",
+  "MLI2",
+  "PLI12",
+  "PLI23",
+  "Purkinje",
+  "Golgi",
+  "UnipolarBrush",
+  "Oligodendrocyte",
+  "Astrocyte",
+  "Bergman"
+  #"Endothelial",
+  #"Meningeal", 
+  #"ChoroidPlexus"
+))
+WT_p14 <- subset(WT_p14, cells = cells_to_keep)
+WT_p14$cluster.annot <- droplevels(WT_p14$cluster.annot)
+table(WT_p14$cluster.annot)  # Should no longer show empty clusters
+
+# change order
+WT_p14$cluster.annot <- factor(x = WT_p14$cluster.annot, levels = c(  "Granule_1", "Granule_2", "Granule_3", "Granule_4" , "UnipolarBrush",
+  "MLI1",  "MLI2",  "PLI12",  "PLI23", "Golgi", "Purkinje",
+  "Oligodendrocyte", "Astrocyte", "Bergman"))
+
+
+
+# Create CellChat object
+data.input <- WT_p14[["RNA"]]@data # normalized data matrix
+# For Seurat version >= “5.0.0”, get the normalized data via `seurat_object[["RNA"]]$data`
+labels <- Idents(WT_p14)
+meta <- data.frame(labels = labels, row.names = names(labels)) # create a dataframe of the cell labels
+cellchat <- createCellChat(object = WT_p14, group.by = "cluster.annot", assay = "RNA")
+
+# import ligand receptor information
+CellChatDB <- CellChatDB.mouse
+dplyr::glimpse(CellChatDB$interaction) # Show the structure of the database
+
+#--> HERE WE CAN TRY DIFFERENT DATABASE! I pick the ChatGPT recommended on. But could try other!
+# use a subset of CellChatDB for cell-cell communication analysis
+#CellChatDB.use <- subsetDB(CellChatDB, search = "Secreted Signaling", key = "annotation") 
+#CellChatDB.use <- CellChatDB # use all CellChatDB for cell-cell communication analysis
+CellChatDB.use <- subsetDB(CellChatDB, search = "Non-protein Signaling", key = "annotation") # for neuron-neuron comm
+
+cellchat@DB <- CellChatDB.use # set the used database in the object
+
+# Preprocessing the expression data for cell-cell communication analysis
+## subset the expression data of signaling genes for saving computation cost
+cellchat <- subsetData(cellchat) # This step is necessary even if using the whole database
+#future::plan("multisession", workers = 4) # do parallel
+cellchat <- identifyOverExpressedGenes(cellchat)
+cellchat <- identifyOverExpressedInteractions(cellchat)
+#--> The number of highly variable ligand-receptor pairs used for signaling inference is 948
+
+
+# Part II: Inference of cell-cell communication network
+# --> IMPORTANT: We can reduce threshold with type = "truncatedMean" and trim = 0.1 = 10% = average gene expression is zero if the percent of expressed cells in one group is less than 10% (Default is 25%)
+
+cellchat <- computeCommunProb(cellchat, type = "triMean") # By default type = "triMean", producing fewer but stronger interactions
+#cellchat <- computeCommunProb(cellchat, type = "truncatedMean", trim = 0.1) # By default type = "triMean", producing fewer but stronger interactions
+
+cellchat <- filterCommunication(cellchat, min.cells = 10) # filter out the cell-cell communication if there are only few cells in certain cell groups. By default, the minimum number of cells required in each cell group for cell-cell communication is 10.
+# Extract the inferred cellular communication network as a data frame
+df.net <- subsetCommunication(cellchat)
+
+# Infer the cell-cell communication at a signaling pathway level
+cellchat <- computeCommunProbPathway(cellchat) # The inferred intercellular communication network of each ligand-receptor pair and each signaling pathway is stored in the slot ‘net’ and ‘netP’, respectively.
+
+# Calculate the aggregated cell-cell communication network
+cellchat <- aggregateNet(cellchat)
+
+pdf("output/CellChat/netVisual_circle-p14_CB_WT-version4dim40kparam30res03-default-NonproteinSignaling-filterCells.pdf", width=20, height=20)
+groupSize <- as.numeric(table(cellchat@idents))
+par(mfrow = c(1,2), xpd=TRUE)
+netVisual_circle(cellchat@net$count, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Number of interactions")
+netVisual_circle(cellchat@net$weight, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Interaction weights/strength")
+dev.off()
+
+
+pdf("output/CellChat/netVisual_circle-p14_CB_WT-version4dim40kparam30res03-cellType-default-NonproteinSignaling-filterCells.pdf", width=15, height=15)
+mat <- cellchat@net$weight
+par(mfrow = c(3,4), xpd=TRUE)
+for (i in 1:nrow(mat)) {
+  mat2 <- matrix(0, nrow = nrow(mat), ncol = ncol(mat), dimnames = dimnames(mat))
+  mat2[i, ] <- mat[i, ]
+  netVisual_circle(mat2, vertex.weight = groupSize, weight.scale = T, edge.weight.max = max(mat), title.name = rownames(mat)[i])
+}
+dev.off()
+
+
+
+
+# Specify group of interest 
+# Define the groups based on the cell type categorization
+# Define the groups based on the revised cell type categorization
+group.cellType <- rep(NA, length(levels(cellchat@idents)))
+names(group.cellType) <- levels(cellchat@idents)
+# Assign each cell type to a category
+group.cellType[c("Granule_1", "Granule_2", "Granule_3", "Granule_4" , "UnipolarBrush")] <- "Glutamatergic"
+group.cellType[c("MLI1",  "MLI2",  "PLI12",  "PLI23", "Golgi", "Purkinje")] <- "GABAergic"
+group.cellType[c("Oligodendrocyte", "Astrocyte", "Bergman")] <- "Non-neuronal"
+# Check if all assignments are done correctly
+print(group.cellType)
+names(group.cellType) <- levels(cellchat@idents)
+
+
+# Change order of cell type:
+# Reorder the levels of cellchat@idents according to the specified order
+cellchat@idents <- factor(cellchat@idents, levels = c(
+  "Granule_1", "Granule_2", "Granule_3", "Granule_4" , "UnipolarBrush",
+  "MLI1",  "MLI2",  "PLI12",  "PLI23", "Golgi", "Purkinje",
+  "Oligodendrocyte", "Astrocyte", "Bergman"
+)) # "ChoroidPlexus", "Ependymal", "Meningeal", "Endothelial"
+# Check if the levels are correctly ordered now
+print(levels(cellchat@idents))
+
+
+
+
+
+
+# Visualize each signaling pathway using Hierarchy plot, Circle plot or Chord diagram
+cellchat@netP$pathways # show pathway with signif interactions
+#--> FROM THIS PICK PATHWAY OF INTEREST
+
+pathways.show <- c("Glutamate") 
+pathways.show <- c("GABA-A") 
+pathways.show <- c("GABA-B") 
+pdf("output/CellChat/netVisual_aggregate-p14_CB_WT-version4dim40kparam30res03-GABAB-default-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+# Here we define `vertex.receive` so that the left portion of the hierarchy plot shows signaling to fibroblast and the right portion shows signaling to immune cells 
+vertex.receiver = seq(1,4) # a numeric vector. 
+netVisual_aggregate(cellchat, signaling = pathways.show,  vertex.receiver = vertex.receiver)
+# Circle plot
+par(mfrow=c(1,1))
+netVisual_aggregate(cellchat, signaling = pathways.show, layout = "circle")
+# Chord diagram
+par(mfrow=c(1,1))
+netVisual_aggregate(cellchat, signaling = pathways.show, layout = "chord")
+par(mfrow=c(1,1))
+netVisual_heatmap(cellchat, signaling = pathways.show, color.heatmap = "Reds")
+dev.off()
+
+
+
+# Chord diagram
+pathways.show <- c("Glutamate") 
+pathways.show <- c("GABA-A") 
+pathways.show <- c("GABA-B") 
+pdf("output/CellChat/netVisual_chord_cell-p14_CB_WT-version4dim40kparam30res03-GABAB-default-NonproteinSignaling-filterCells.pdf", width=10, height=10)
+# The cellchat function to visualize the chord diagram based on your defined groups
+netVisual_chord_cell(cellchat, signaling = pathways.show, group = group.cellType, title.name = paste0(pathways.show, " signaling network"))
+#> Plot the aggregated cell-cell communication network at the signaling pathway level
+dev.off()
+
+
+# Automatically save the plots of the all inferred network for quick exploration
+# Access all the signaling pathways showing significant communications
+pathways.show.all <- cellchat@netP$pathways
+# check the order of cell identity to set suitable vertex.receiver
+levels(cellchat@idents)
+vertex.receiver = seq(1,4)
+for (i in 1:length(pathways.show.all)) {
+  # Visualize communication network associated with both signaling pathway and individual L-R pairs
+  netVisual(cellchat, signaling = pathways.show.all[i], vertex.receiver = vertex.receiver, layout = "hierarchy")
+  # Compute and visualize the contribution of each ligand-receptor pair to the overall signaling pathway
+  gg <- netAnalysis_contribution(cellchat, signaling = pathways.show.all[i])
+  ggsave(filename=paste0("output/CellChat/",pathways.show.all[i], "_L-R_contribution.pdf"), plot=gg, width = 3, height = 2, units = 'in', dpi = 300)
+}
+# --> Not sure that was usefull...
+
+
+
+# Part IV: Systems analysis of cell-cell communication network
+## Compute and visualize the network centrality scores
+pathways.show <- c("Glutamate") 
+pathways.show <- c("GABA-A") 
+pathways.show <- c("GABA-B") 
+cellchat <- netAnalysis_computeCentrality(cellchat, slot.name = "netP") # the slot 'netP' means the inferred intercellular communication network of signaling pathways
+# Visualize the computed centrality scores using heatmap, allowing ready identification of major signaling roles of cell groups
+pdf("output/CellChat/netAnalysis_signalingRole_network-p14_CB_WT-version4dim40kparam30res03-GABAB-default-NonproteinSignaling-filterCells.pdf", width=10, height=10)
+netAnalysis_signalingRole_network(cellchat, signaling = pathways.show, width = 8, height = 2.5, font.size = 10) # , cluster.cols = TRUE
+dev.off()
+
+
+
+pdf("output/CellChat/netAnalysis_signalingRole_heatmap-p14_CB_WT-version4dim40kparam30res03-default-NonproteinSignaling-filterCells.pdf", width=10, height=6)
+# Signaling role analysis on the aggregated cell-cell communication network from all signaling pathways
+ht1 <- netAnalysis_signalingRole_heatmap(cellchat, pattern = "outgoing", height = 4,)
+ht2 <- netAnalysis_signalingRole_heatmap(cellchat, pattern = "incoming", height = 4)
+ht1 + ht2
+dev.off()
+
+
+# Identify global communication patterns to explore how multiple cell types and signaling pathways coordinate together
+##### outgoing #######
+## Here we run selectK to infer the number of patterns.
+pdf("output/CellChat/selectK-p14_CB_WT-version4dim40kparam30res03-default-outgoing-NonproteinSignaling.pdf", width=10, height=10)
+selectK(cellchat, pattern = "outgoing")
+dev.off()
+#--> Identify at which value the line drop down = 5 for `Secreted Signaling`; 5/7 for all DB=CellChatDB; 5 for NonproteinSignaling
+nPatterns = 4
+pdf("output/CellChat/netAnalysis_river-p14_CB_WT-version4dim40kparam30res03-default-outgoing-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+cellchat <- identifyCommunicationPatterns(cellchat, pattern = "outgoing", k = nPatterns)
+netAnalysis_river(cellchat, pattern = "outgoing")
+dev.off()
+pdf("output/CellChat/netAnalysis_dot-p14_CB_WT-version4dim40kparam30res03-default-outgoing-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+netAnalysis_dot(cellchat, pattern = "outgoing")
+dev.off()
+
+
+
+##### incoming #######
+## Here we run selectK to infer the number of patterns.
+pdf("output/CellChat/selectK-p14_CB_WT-version4dim40kparam30res03-default-incoming-NonproteinSignaling.pdf", width=10, height=10)
+selectK(cellchat, pattern = "incoming")
+dev.off()
+#--> Identify at which value the line drop down = 5 for `Secreted Signaling`; 5/7 for all DB=CellChatDB; 5 for NonproteinSignaling
+nPatterns = 5
+pdf("output/CellChat/netAnalysis_river-p14_CB_WT-version4dim40kparam30res03-default-incoming-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+cellchat <- identifyCommunicationPatterns(cellchat, pattern = "incoming", k = nPatterns)
+netAnalysis_river(cellchat, pattern = "incoming")
+dev.off()
+pdf("output/CellChat/netAnalysis_dot-p14_CB_WT-version4dim40kparam30res03-default-incoming-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+netAnalysis_dot(cellchat, pattern = "incoming")
+dev.off()
+
+
+
+
+# Identify signaling groups based on their functional similarity
+cellchat <- computeNetSimilarity(cellchat, type = "functional")
+cellchat <- netEmbedding(cellchat, type = "functional")
+cellchat <- netClustering(cellchat, type = "functional")
+# Visualization in 2D-space
+pdf("output/CellChat/netVisual_embedding-p14_CB_WT-version4dim40kparam30res03-default-functional-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+netVisual_embedding(cellchat, type = "functional", label.size = 3.5)
+dev.off()
+#--> High degree of functional similarity indicates major senders and receivers are similar, and it can be interpreted as the two signaling pathways or two ligand-receptor pairs exhibit similar and/or redundant roles
+
+# Part V: Save the CellChat object
+saveRDS(cellchat, file = "output/CellChat/p14_CB_WT-version4dim40kparam30res03-default-NonproteinSignaling-filterCells.rds")
+
+```
+
+--> Need to *use the NonproteinSignaling DB* to make it work (ie. show GABA for MLI12 and Glutamate for Granule)
+
+
 
 
 
@@ -22087,7 +22380,10 @@ WT_p35 <- subset(WT_p35, cells = cells_to_keep)
 WT_p35$cluster.annot <- droplevels(WT_p35$cluster.annot)
 table(WT_p35$cluster.annot)  # Should no longer show empty clusters
 
-
+# change order
+WT_p35$cluster.annot <- factor(x = WT_p35$cluster.annot, levels = c(  "Granule", "UnipolarBrush", "Unknown_Granule", "Unknown_GranuleMature",
+  "MLI1", "MLI2", "PLI12", "PLI23", "Golgi", "Purkinje", "Unknown_Stellate",
+  "Astrocyte", "Bergman"))
 
 
 
@@ -22191,7 +22487,7 @@ print(levels(cellchat@idents))
 cellchat@netP$pathways # show pathway with signif interactions
 #--> FROM THIS PICK PATHWAY OF INTEREST
 
-pdf("output/CellChat/netVisual_aggregate-p35_CB_WT-version4dim30kparam10res02-Glutamate-default-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+pdf("output/CellChat/netVisual_aggregate-p35_CB_WT-version4dim30kparam10res02-GABAB-default-NonproteinSignaling-filterCells.pdf", width=6, height=6)
 pathways.show <- c("Glutamate") 
 pathways.show <- c("GABA-A") 
 pathways.show <- c("GABA-B") 
@@ -22245,8 +22541,8 @@ pathways.show <- c("GABA-A")
 pathways.show <- c("GABA-B") 
 cellchat <- netAnalysis_computeCentrality(cellchat, slot.name = "netP") # the slot 'netP' means the inferred intercellular communication network of signaling pathways
 # Visualize the computed centrality scores using heatmap, allowing ready identification of major signaling roles of cell groups
-pdf("output/CellChat/netAnalysis_signalingRole_network-p35_CB_WT-version4dim30kparam10res02-Glutamate-default-NonproteinSignaling-filterCells.pdf", width=10, height=10)
-netAnalysis_signalingRole_network(cellchat, signaling = pathways.show, width = 8, height = 2.5, font.size = 10, cluster.cols = TRUE)
+pdf("output/CellChat/netAnalysis_signalingRole_network-p35_CB_WT-version4dim30kparam10res02-GABAB-default-NonproteinSignaling-filterCells.pdf", width=10, height=10)
+netAnalysis_signalingRole_network(cellchat, signaling = pathways.show, width = 8, height = 2.5, font.size = 10) #, cluster.cols = TRUE
 dev.off()
 
 
