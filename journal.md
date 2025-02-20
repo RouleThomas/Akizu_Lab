@@ -201,10 +201,12 @@ clone of `scRNAseq` with R `valiDrops` and `presto` and `segments` v1.6.4
 
 ### NeuronChat
 
-clone of `scRNAseq` with R `NeuronChat`, `CellChat` and `ComplexHeatmap`
+clone of `scRNAseq` with R `NeuronChat`, `CellChat` v1 and `ComplexHeatmap`
 
 
+### NeuronChat
 
+clone of `scRNAseq` with R  `CellChat`v2 and `ComplexHeatmap` and `presto`
 
 
 
