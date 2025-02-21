@@ -1,6 +1,8 @@
 Data from [Faustino Martins et al 2020; Self-Organizing 3D Human Trunk Neuromuscular Organoids](https://www.sciencedirect.com/science/article/pii/S1934590919305259)
 
 
+**--> TO MAKE SOME SPACE, ALL FILES AS BEEN DELETED, EXCEPT SCRIPTS and SLURMS**
+
 # Pipeline from the paper
 - Library prep: Chromium Single Cell Gene Expression system, Single Cell 3' Reagent v2/v3 kits (10X Genomics)
 - Sequencing: Illumina HiSeq 4000 for library sequencing
