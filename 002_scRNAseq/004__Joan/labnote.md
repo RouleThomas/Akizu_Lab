@@ -5,6 +5,10 @@ Provide Pipseeker output to Joan.
 - Run pipseeker
 
 
+**--> TO MAKE SOME SPACE, ALL FILES AS BEEN DELETED, EXCEPT SCRIPTS and SLURMS**
+
+
+
 # Pipseeker installation and novogene data download
 
 Pipseeker need to be installed in unix and [previous versions](https://www.fluentbio.com/pipseeker-release-notes-archives/)

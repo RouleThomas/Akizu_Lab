@@ -23531,22 +23531,22 @@ WT_Kcnc1_p180_CB_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p180_CB_1step.a
 #### UMAP
 DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "integrated"
 
-WT_Kcnc1_p180_CB_1step.sct <- RunPCA(WT_Kcnc1_p180_CB_1step.sct, verbose = FALSE, npcs = 40)
-WT_Kcnc1_p180_CB_1step.sct <- RunUMAP(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
-WT_Kcnc1_p180_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", k.param = 30, dims = 1:40)
+WT_Kcnc1_p180_CB_1step.sct <- RunPCA(WT_Kcnc1_p180_CB_1step.sct, verbose = FALSE, npcs = 30)
+WT_Kcnc1_p180_CB_1step.sct <- RunUMAP(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
+WT_Kcnc1_p180_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", k.param = 30, dims = 1:30)
 WT_Kcnc1_p180_CB_1step.sct <- FindClusters(WT_Kcnc1_p180_CB_1step.sct, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
 WT_Kcnc1_p180_CB_1step.sct$condition <- factor(WT_Kcnc1_p180_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version4dim40kparam30res03.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version4dim30kparam30res03.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
 
 DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "SCT"
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim40-ListdotPLot.pdf", width=30, height=60)
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim30-ListdotPLot.pdf", width=30, height=60)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c(   "Gabra6","Pax6", # Granular_1
   "Sorcs3", "Ptprk", # MLI1
   "Nxph1", "Cdh22", # MLI2
@@ -23567,7 +23567,7 @@ FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c(   "Gabra6","Pax6", # Granu
   "Eomes", "Rgs6", "Tafa2"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim40-ListAllGenes.pdf", width=30, height=80)
+pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim30-ListAllGenes.pdf", width=30, height=80)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Gabra6", "Pax6", "Calb1", "Slc1a6", "Car8", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", 
 "Klhl1", "Gfra2", "Aldh1a3", "Galntl6", "Kcnc2", "Pax2", "Eomes", "Rgs6", "Tafa2", 
 "Gad2", "Slc6a1", "Nxph1", "Gad1", "Gria3", "Slc18a2", "Ddc", "Slc6a4", "Tph2", 
@@ -23580,7 +23580,7 @@ FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Gabra6", "Pax6", "Calb1", 
 dev.off()
 
  
-XXXY HERE dim 40 run, RUN DIM 30 and 50
+XXXY HERE pick the best dims and change resoltuion
 
 # genes
 Neuronal Cell Types
@@ -23698,11 +23698,9 @@ dev.off()
 
 # save ##################
 
-## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step-version4dim40kparam30res03.sct_V1_numeric.rds") 
-#WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-version4dim40kparam30res03.sct_V1_numeric.rds") # 
+## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step-version4dim30kparam30res03.sct_V1_numeric.rds") 
 
-## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step-version4dim40kparam30res03.sct_V1_label.rds") 
-WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-version4dim40kparam30res03.sct_V1_label.rds") # 
+WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-version4dim30kparam30res03.sct_V1_numeric.rds") # 
 set.seed(42)
 ##########
 

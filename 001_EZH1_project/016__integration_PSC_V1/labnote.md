@@ -1143,27 +1143,34 @@ Let's do option1 first, that look better overall; so let's simply bedtool inters
 conda activate BedToBigwig
 
 # concatenate and sort bed files
+## Raw - non qvalue filtered ##############
 cat output/macs2/broad/PSC_WT_H3K27me3_pool_peaks.broadPeak output/macs2/broad/PSC_KO_H3K27me3_pool_peaks.broadPeak output/macs2/broad/PSC_KOEF1aEZH1_H3K27me3_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.broadPeak
 cat output/macs2/broad/PSC_WT_EZH2_pool_peaks.broadPeak output/macs2/broad/PSC_KO_EZH2_pool_peaks.broadPeak output/macs2/broad/PSC_KOEF1aEZH1_EZH2_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.broadPeak
 cat output/macs2/broad/PSC_WT_SUZ12_pool_peaks.broadPeak output/macs2/broad/PSC_KO_SUZ12_pool_peaks.broadPeak output/macs2/broad/PSC_KOEF1aEZH1_SUZ12_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.broadPeak
-
+## Optimal qvalue filtered ##############
+XXXY HERE !!!
 
 
 # merge = consensus peak identification
-## no merge extension
+## Raw - non qvalue filtered ##############
+### no merge extension
 bedtools merge -i output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.broadPeak > output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge.bed
 bedtools merge -i output/macs2/broad/PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.broadPeak > output/macs2/broad/PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge.bed
 bedtools merge -i output/macs2/broad/PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.broadPeak > output/macs2/broad/PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.merge.bed
 
-## with 100bp peak merging
+### with 100bp peak merging
 bedtools merge -d 100 -i output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.broadPeak > output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge100bp.bed
 bedtools merge -d 100 -i output/macs2/broad/PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.broadPeak > output/macs2/broad/PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge100bp.bed
 bedtools merge -d 100 -i output/macs2/broad/PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.broadPeak > output/macs2/broad/PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.merge100bp.bed
 
-## with 500bp peak merging
+### with 500bp peak merging
 bedtools merge -d 500 -i output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.broadPeak > output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge500bp.bed
 bedtools merge -d 500 -i output/macs2/broad/PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.broadPeak > output/macs2/broad/PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge500bp.bed
 bedtools merge -d 500 -i output/macs2/broad/PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.broadPeak > output/macs2/broad/PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.merge500bp.bed
+## Optimal qvalue filtered ##############
+
+
+
 
 ```
 
@@ -3343,12 +3350,55 @@ sbatch scripts/macs2_broad_2.sh # 29773633 ok
 sbatch scripts/macs2_broad_3.sh # 29773661 ok
 
 # pool replicate
-sbatch scripts/macs2_broad_pool_1.sh # 35693862 xxx
-sbatch scripts/macs2_broad_pool_2.sh # 35693955 xxx
-sbatch scripts/macs2_broad_pool_3.sh # 35694072 xxx
+sbatch scripts/macs2_broad_pool_1.sh # 35693862 ok
+sbatch scripts/macs2_broad_pool_2.sh # 35693955 ok
+sbatch scripts/macs2_broad_pool_3.sh # 35694072 ok
 ```
 
 --> all good
+
+
+
+## MACS2 peak qvalue filtering
+
+For **consensus peak** counting (ie Ferguson / local maxima method); I used the **pool peak** to generate the consensus peak file for the three genotype comparison
+
+```bash
+conda activate bowtie2 # for bedtools
+
+sbatch scripts/macs2_raw_peak_signif_pool.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
+
+
+# quick command to print median size of peak within a bed
+awk '{print $3-$2}' your_bed_file.bed | sort -n | awk 'BEGIN {c=0; sum=0;} {a[c++]=$1; sum+=$1;} END {if (c%2) print a[int(c/2)]; else print (a[c/2-1]+a[c/2])/2;}'
+```
+
+Then keep only the significant peaks (re-run the script to test different qvalue cutoff) and remove peaks overlapping with blacklist regions. MACS2 column9 output is -log10(qvalue) format so if we want 0.05; 
+- q0.05: `q value = -log10(0.05) = 1.30103`
+- q0.01 = 2
+- q0.005 = 2.30103
+- q0.001 = 3
+- q0.0001 = 4
+- q0.00001 = 5
+
+
+**Optimal qvalue** according to IGV:
+- WT_H3K27me3: 2.3 or 3
+- KO_H3K27me3: 2.3 or 3
+- KOEF1aEZH1_H3K27me3: 3
+--> Let's setup *optimal qvalue to 3 (look more true) for H3K27me3*
+- WT_EZH2: 2.3 or 3
+- KO_EZH2: 2.3 or 3
+- KOEF1aEZH1_EZH2: 2.3 or 3
+--> Let's setup *optimal qvalue to 3 (look more true) for EZH2*
+
+
+
+
+
+
+
+
 
 
 
