@@ -764,6 +764,10 @@ sbatch scripts/multiBigwigSummary_H3K4me3_THOR_BEDgene.sh # 14552400 fail; 14556
 --> using gene only or whole genome do NOT change anything..
 
 
+
+
+
+
 # deepTools plot on THOR diff peak genes
 
 
@@ -1172,6 +1176,241 @@ write.table(H3K4me3_KO_pool_annot_promoterAnd5_geneSymbol, file = "output/ChIPse
 **NPC**:
 
 --> Export gene list (`output/ChIPseeker/annotation_macs2_H3K*me3_*_00*_qval2.30103_promoterAnd5_geneSymbol.txt`) to Online Venn diagram to check replicate homonegeity between `CutRun__005` and `CutRun__008`
+
+
+
+
+## From consensus peak
+
+### Consensus peak H3K27me3 no extension/extension, qvalue 2.3
+- consensus peak H3K27me3, WT KO KOEF1aEZH1, no extension: `output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K27me3_pool_peaks.sorted.merge.bed`
+- consensus peak H3K27me3, WT KO KOEF1aEZH1, 100bp merge: `output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K27me3_pool_peaks.sorted.merge100bp.bed`
+- consensus peak H3K27me3, WT KO KOEF1aEZH1, 500bp merge: `output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K27me3_pool_peaks.sorted.merge500bp.bed`
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import consensus peak
+NPC_WTKO_H3K27me3_pool_peaks_merge = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K27me3_pool_peaks.sorted.merge.bed')) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3) 
+NPC_WTKO_H3K27me3_pool_peaks_merge100bp = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K27me3_pool_peaks.sorted.merge100bp.bed')) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3) 
+NPC_WTKO_H3K27me3_pool_peaks_merge500bp = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K27me3_pool_peaks.sorted.merge500bp.bed')) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3) 
+
+# Tidy peaks 
+## H3K27me3
+NPC_WTKO_H3K27me3_pool_peaks_merge_gr = makeGRangesFromDataFrame(NPC_WTKO_H3K27me3_pool_peaks_merge,keep.extra.columns=TRUE)
+NPC_WTKO_H3K27me3_pool_peaks_merge100bp_gr = makeGRangesFromDataFrame(NPC_WTKO_H3K27me3_pool_peaks_merge100bp,keep.extra.columns=TRUE)
+NPC_WTKO_H3K27me3_pool_peaks_merge500bp_gr = makeGRangesFromDataFrame(NPC_WTKO_H3K27me3_pool_peaks_merge500bp,keep.extra.columns=TRUE)
+
+gr_list <- list(NPC_WTKO_H3K27me3_pool_peaks_merge=NPC_WTKO_H3K27me3_pool_peaks_merge_gr, NPC_WTKO_H3K27me3_pool_peaks_merge100bp=NPC_WTKO_H3K27me3_pool_peaks_merge100bp_gr, NPC_WTKO_H3K27me3_pool_peaks_merge500bp=NPC_WTKO_H3K27me3_pool_peaks_merge500bp_gr)
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## plots
+pdf("output/ChIPseeker/plotAnnoBar_NPC_WTKO_H3K27me3_pool_peaks_merge.pdf", width = 8, height = 3)
+plotAnnoBar(peakAnnoList)
+dev.off()
+pdf("output/ChIPseeker/plotDistToTSS_NPC_WTKO_H3K27me3_pool_peaks_merge.pdf", width = 8, height = 3)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
+
+## Get annotation data frame
+NPC_WTKO_H3K27me3_pool_peaks_merge_annot <- as.data.frame(peakAnnoList[["NPC_WTKO_H3K27me3_pool_peaks_merge"]]@anno)
+NPC_WTKO_H3K27me3_pool_peaks_merge100bp_annot <- as.data.frame(peakAnnoList[["NPC_WTKO_H3K27me3_pool_peaks_merge100bp"]]@anno)
+NPC_WTKO_H3K27me3_pool_peaks_merge500bp_annot <- as.data.frame(peakAnnoList[["NPC_WTKO_H3K27me3_pool_peaks_merge500bp"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+NPC_WTKO_H3K27me3_pool_peaks_merge_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = NPC_WTKO_H3K27me3_pool_peaks_merge_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+NPC_WTKO_H3K27me3_pool_peaks_merge_annot$gene <- mapIds(org.Hs.eg.db, keys = NPC_WTKO_H3K27me3_pool_peaks_merge_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+NPC_WTKO_H3K27me3_pool_peaks_merge100bp_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = NPC_WTKO_H3K27me3_pool_peaks_merge100bp_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+NPC_WTKO_H3K27me3_pool_peaks_merge100bp_annot$gene <- mapIds(org.Hs.eg.db, keys = NPC_WTKO_H3K27me3_pool_peaks_merge100bp_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+NPC_WTKO_H3K27me3_pool_peaks_merge500bp_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = NPC_WTKO_H3K27me3_pool_peaks_merge500bp_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+NPC_WTKO_H3K27me3_pool_peaks_merge500bp_annot$gene <- mapIds(org.Hs.eg.db, keys = NPC_WTKO_H3K27me3_pool_peaks_merge500bp_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+## Save output table
+write.table(NPC_WTKO_H3K27me3_pool_peaks_merge_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_pool_peaks_merge_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(NPC_WTKO_H3K27me3_pool_peaks_merge100bp_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_pool_peaks_merge100bp_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(NPC_WTKO_H3K27me3_pool_peaks_merge500bp_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_pool_peaks_merge500bp_annot.txt", sep="\t", quote=F, row.names=F)  
+
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+NPC_WTKO_H3K27me3_pool_peaks_merge_annot_promoterAnd5 = tibble(NPC_WTKO_H3K27me3_pool_peaks_merge_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+NPC_WTKO_H3K27me3_pool_peaks_merge100bp_annot_promoterAnd5 = tibble(NPC_WTKO_H3K27me3_pool_peaks_merge100bp_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+NPC_WTKO_H3K27me3_pool_peaks_merge500bp_annot_promoterAnd5 = tibble(NPC_WTKO_H3K27me3_pool_peaks_merge500bp_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+
+### Save output gene lists
+NPC_WTKO_H3K27me3_pool_peaks_merge_annot_promoterAnd5_geneSymbol = NPC_WTKO_H3K27me3_pool_peaks_merge_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+NPC_WTKO_H3K27me3_pool_peaks_merge100bp_annot_promoterAnd5_geneSymbol = NPC_WTKO_H3K27me3_pool_peaks_merge100bp_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+NPC_WTKO_H3K27me3_pool_peaks_merge500bp_annot_promoterAnd5_geneSymbol = NPC_WTKO_H3K27me3_pool_peaks_merge500bp_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+write.table(NPC_WTKO_H3K27me3_pool_peaks_merge_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_pool_peaks_merge_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(NPC_WTKO_H3K27me3_pool_peaks_merge100bp_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_pool_peaks_merge100bp_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(NPC_WTKO_H3K27me3_pool_peaks_merge500bp_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_pool_peaks_merge500bp_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+```
+
+
+
+
+
+
+
+### Consensus peak H3K4me3 no extension/extension, qvalue 2.3
+- consensus peak H3K4me3, WT KO KOEF1aEZH1, no extension: `output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K4me3_pool_peaks.sorted.merge.bed`
+- consensus peak H3K4me3, WT KO KOEF1aEZH1, 100bp merge: `output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K4me3_pool_peaks.sorted.merge100bp.bed`
+- consensus peak H3K4me3, WT KO KOEF1aEZH1, 500bp merge: `output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K4me3_pool_peaks.sorted.merge500bp.bed`
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import consensus peak
+NPC_WTKO_H3K4me3_pool_peaks_merge = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K4me3_pool_peaks.sorted.merge.bed')) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3) 
+NPC_WTKO_H3K4me3_pool_peaks_merge100bp = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K4me3_pool_peaks.sorted.merge100bp.bed')) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3) 
+NPC_WTKO_H3K4me3_pool_peaks_merge500bp = as_tibble(read.table('output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K4me3_pool_peaks.sorted.merge500bp.bed')) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3) 
+
+# Tidy peaks 
+## H3K4me3
+NPC_WTKO_H3K4me3_pool_peaks_merge_gr = makeGRangesFromDataFrame(NPC_WTKO_H3K4me3_pool_peaks_merge,keep.extra.columns=TRUE)
+NPC_WTKO_H3K4me3_pool_peaks_merge100bp_gr = makeGRangesFromDataFrame(NPC_WTKO_H3K4me3_pool_peaks_merge100bp,keep.extra.columns=TRUE)
+NPC_WTKO_H3K4me3_pool_peaks_merge500bp_gr = makeGRangesFromDataFrame(NPC_WTKO_H3K4me3_pool_peaks_merge500bp,keep.extra.columns=TRUE)
+
+gr_list <- list(NPC_WTKO_H3K4me3_pool_peaks_merge=NPC_WTKO_H3K4me3_pool_peaks_merge_gr, NPC_WTKO_H3K4me3_pool_peaks_merge100bp=NPC_WTKO_H3K4me3_pool_peaks_merge100bp_gr, NPC_WTKO_H3K4me3_pool_peaks_merge500bp=NPC_WTKO_H3K4me3_pool_peaks_merge500bp_gr)
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## plots
+pdf("output/ChIPseeker/plotAnnoBar_NPC_WTKO_H3K4me3_pool_peaks_merge.pdf", width = 8, height = 3)
+plotAnnoBar(peakAnnoList)
+dev.off()
+pdf("output/ChIPseeker/plotDistToTSS_NPC_WTKO_H3K4me3_pool_peaks_merge.pdf", width = 8, height = 3)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
+
+## Get annotation data frame
+NPC_WTKO_H3K4me3_pool_peaks_merge_annot <- as.data.frame(peakAnnoList[["NPC_WTKO_H3K4me3_pool_peaks_merge"]]@anno)
+NPC_WTKO_H3K4me3_pool_peaks_merge100bp_annot <- as.data.frame(peakAnnoList[["NPC_WTKO_H3K4me3_pool_peaks_merge100bp"]]@anno)
+NPC_WTKO_H3K4me3_pool_peaks_merge500bp_annot <- as.data.frame(peakAnnoList[["NPC_WTKO_H3K4me3_pool_peaks_merge500bp"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+NPC_WTKO_H3K4me3_pool_peaks_merge_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = NPC_WTKO_H3K4me3_pool_peaks_merge_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+NPC_WTKO_H3K4me3_pool_peaks_merge_annot$gene <- mapIds(org.Hs.eg.db, keys = NPC_WTKO_H3K4me3_pool_peaks_merge_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+NPC_WTKO_H3K4me3_pool_peaks_merge100bp_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = NPC_WTKO_H3K4me3_pool_peaks_merge100bp_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+NPC_WTKO_H3K4me3_pool_peaks_merge100bp_annot$gene <- mapIds(org.Hs.eg.db, keys = NPC_WTKO_H3K4me3_pool_peaks_merge100bp_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+NPC_WTKO_H3K4me3_pool_peaks_merge500bp_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = NPC_WTKO_H3K4me3_pool_peaks_merge500bp_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+NPC_WTKO_H3K4me3_pool_peaks_merge500bp_annot$gene <- mapIds(org.Hs.eg.db, keys = NPC_WTKO_H3K4me3_pool_peaks_merge500bp_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+## Save output table
+write.table(NPC_WTKO_H3K4me3_pool_peaks_merge_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K4me3_pool_peaks_merge_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(NPC_WTKO_H3K4me3_pool_peaks_merge100bp_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K4me3_pool_peaks_merge100bp_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(NPC_WTKO_H3K4me3_pool_peaks_merge500bp_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K4me3_pool_peaks_merge500bp_annot.txt", sep="\t", quote=F, row.names=F)  
+
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+NPC_WTKO_H3K4me3_pool_peaks_merge_annot_promoterAnd5 = tibble(NPC_WTKO_H3K4me3_pool_peaks_merge_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+NPC_WTKO_H3K4me3_pool_peaks_merge100bp_annot_promoterAnd5 = tibble(NPC_WTKO_H3K4me3_pool_peaks_merge100bp_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+NPC_WTKO_H3K4me3_pool_peaks_merge500bp_annot_promoterAnd5 = tibble(NPC_WTKO_H3K4me3_pool_peaks_merge500bp_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+
+### Save output gene lists
+NPC_WTKO_H3K4me3_pool_peaks_merge_annot_promoterAnd5_geneSymbol = NPC_WTKO_H3K4me3_pool_peaks_merge_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+NPC_WTKO_H3K4me3_pool_peaks_merge100bp_annot_promoterAnd5_geneSymbol = NPC_WTKO_H3K4me3_pool_peaks_merge100bp_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+NPC_WTKO_H3K4me3_pool_peaks_merge500bp_annot_promoterAnd5_geneSymbol = NPC_WTKO_H3K4me3_pool_peaks_merge500bp_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+write.table(NPC_WTKO_H3K4me3_pool_peaks_merge_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K4me3_pool_peaks_merge_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(NPC_WTKO_H3K4me3_pool_peaks_merge100bp_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K4me3_pool_peaks_merge100bp_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(NPC_WTKO_H3K4me3_pool_peaks_merge500bp_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K4me3_pool_peaks_merge500bp_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+```
+
+
 
 
 # create gtf of gene with peak in WT and/or KO
@@ -4872,6 +5111,468 @@ dev.off()
 
 
 --> H3K27me3 spreading is affected upon EZH1 KO. Not as much as EZH2 KO as shown in mice, but still a significant decrease of spreading around PRC2 sites (EZH2, SUZ12; in a 1-2kb window)
+
+
+
+
+# Normalization method from Ferguson et al
+
+Summary pipeline, improved after troubleshooting `001*/016*`:
+- mapping Bowtie2 only keep uniquely aligned reads
+- Convert bam to bigwig with 1bp bins
+- Identify local maxima (norm99) and generate blacklist region from the bigiwg
+  - let's instead use ENCODE blacklist regions
+- Apply SF to bam to bigwig
+- smooth the bigiwg to 50bp bins for better vizualization
+
+
+
+
+```bash
+conda activate deeptools
+
+# Convert bam to bigwig 
+#--> Already done
+
+# Convert bigwig to bedgraph
+conda activate BedToBigwig
+## Unique bigwig (1bp resolution)
+sbatch scripts/BedToBigwig_Ferguson_unique.sh # 38030781 ok
+
+
+# Remove blacklist regions
+conda activate BedToBigwig
+## Unique bigwig (1bp resolution)
+sbatch scripts/BedintersectBlacklist_Ferguson_unique.sh # 38030863 ok
+```
+
+Use Python to identify local maxima, quantify the height for the 99th percentile peak
+
+```bash
+srun --mem=250g --pty bash -l
+
+# Identify local maxima
+## Unique bigwig (1bp resolution)
+python scripts/LocalMaxima_Ferguson_unique.py
+
+#  calculate the 99th percentile of the signal heights (score) in the local maxima files.
+## Unique bigwig (1bp resolution)
+python scripts/Percentile99_Ferguson_unique.py
+
+# normalize AB per AB (using WT sample 1st replicate as reference)
+## Unique bigwig (1bp resolution)
+### 99th percentile
+python scripts/norm_H3K27me3_Ferguson_Perc99_unique.py
+python scripts/norm_H3K4me3_Ferguson_Perc99_unique.py
+
+
+
+```
+--> Works!
+
+- *NOTE: **Local Maxima** = value is higher than its neighboring points. In the context of your CUT&RUN data (or other genomic data), local maxima refer to genomic positions where the signal intensity (e.g., read depth or coverage in the bedGraph file) is greater than the signal in the surrounding regions.*
+- *NOTE: **Percentile 99** = signal level that is greater than 99% of all other signal values in the dataset.*
+
+
+Convert normalized bedGraph back to bigwig
+
+```bash
+conda activate BedToBigwig
+
+# Unique bigwig (1bp resolution)
+sbatch scripts/BedToBigwig_Norm99_Ferguson_unique.sh # 38033297 ok
+
+
+```
+--> XXX
+
+
+
+
+
+## Bigwig Ferguson
+
+### Median tracks
+
+Let's generate median tracks for Ferguson and THOR_Ferguson bigwigs (Norm99 unique)
+
+**Run wiggletools:**
+```bash
+conda activate BedToBigwig
+
+# Calculate median
+## bigwig_Ferguson
+sbatch scripts/bigwigmerge_Norm99_Ferguson_unique-H3K27me3.sh # 38035621 ok
+sbatch scripts/bigwigmerge_Norm99_Ferguson_unique-H3K4me3.sh # 38035824 ok
+
+
+## smooth bigwig
+### calculate bin signal with multiBigwigSummary
+conda activate deeptools
+
+sbatch scripts/bigwigsmooth_Norm99_Ferguson_unique.sh # 38037234 ok
+### Re-convert to bigwig
+conda activate BedToBigwig
+
+sbatch --dependency=afterany:38037234 scripts/bigwigsmooth_Norm99_Ferguson_unique_part2.sh # 38040571 xxx
+```
+*NOTE: bigwig are merge into 1 bedgraph which is then converted into 1 bigwig (wiggletools cannot output bigwig directly so need to pass by bedgraph or wiggle in between)*
+
+-->  Smoothing bigwig using `multiBigwigSummary` work great! 
+
+
+
+
+
+
+
+# Ferguson method Diff binding
+
+
+Ferguson method:
+- Call peaks with SEACR or MACS2
+  --> Done with macs2 (broad, default, no qvalue filtering)
+- Calculate length-normalize signal for each locus (computeMatrix –scale-regions (gene or peak) )
+  --> Not sure how to deal with the peak; so let's instead do per gene promoter (1kb up 250bp down); save in `output/edgeR`
+- Diff. log-normalize Counts using edgeR and limma on consensus peak or genes (consensus peak?)
+
+
+## Diff binding on consensus peak
+
+--> `001*/016*` been copied; Here start directly with **optimal qvalue for macs2 consensus peak** --> 2.3 for both H3K27me3 and H3K4me3
+
+
+
+
+NPC_WT_H3K27me3_005
+NPC_WT_H3K27me3_008
+NPC_KO_H3K27me3_005
+NPC_KO_H3K27me3_008
+
+```bash
+conda activate BedToBigwig
+
+# concatenate and sort bed files
+## qvalue 2.3 ##############
+cat output/macs2/broad/broad_blacklist_qval2.30103/NPC_WT_H3K27me3_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/NPC_KO_H3K27me3_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K27me3_pool_peaks.sorted.broadPeak
+cat output/macs2/broad/broad_blacklist_qval2.30103/NPC_WT_H3K4me3_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/NPC_KO_H3K4me3_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K4me3_pool_peaks.sorted.broadPeak
+
+
+
+
+# merge = consensus peak identification
+## qvalue 2.3 ##############
+### no merge extension
+bedtools merge -i output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K27me3_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K27me3_pool_peaks.sorted.merge.bed
+bedtools merge -i output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K4me3_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K4me3_pool_peaks.sorted.merge.bed
+
+### with 100bp peak merging
+bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K27me3_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K27me3_pool_peaks.sorted.merge100bp.bed
+bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K4me3_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K4me3_pool_peaks.sorted.merge100bp.bed
+
+### with 500bp peak merging
+bedtools merge -d 500 -i output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K27me3_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K27me3_pool_peaks.sorted.merge500bp.bed
+bedtools merge -d 500 -i output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K4me3_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K4me3_pool_peaks.sorted.merge500bp.bed
+```
+
+--> All good; consensus peak files are: `output/macs2/broad/NPC_WTKO_H3K27me3_pool_peaks.sorted.merge[SIZE].bed`
+
+
+Now calculate **signal in consensus peak**:
+
+
+```bash
+conda activate deeptools
+
+### H3K27me3
+
+# sample per sample (replicate per replicate)
+## no merge extension
+## qvalue 2.3 ##############
+#### WT
+sbatch scripts/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.sh # 38043666 ok
+sbatch scripts/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_WT_H3K27me3_008-FergusonUniqueNorm99.sh # 38043672 ok
+
+#### KO
+sbatch scripts/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_KO_H3K27me3_005-FergusonUniqueNorm99.sh # 38043680 ok
+sbatch scripts/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_KO_H3K27me3_008-FergusonUniqueNorm99.sh # 38043689 ok
+
+
+
+
+
+### H3K4me3
+
+## qvalue 2.3 ##############
+#### WT
+sbatch scripts/LengthNormSignal_WTKO_H3K4me3_pool_peaks.sorted.merge-qval2.30103-NPC_WT_H3K4me3_005-FergusonUniqueNorm99.sh # 38043792 ok
+sbatch scripts/LengthNormSignal_WTKO_H3K4me3_pool_peaks.sorted.merge-qval2.30103-NPC_WT_H3K4me3_008-FergusonUniqueNorm99.sh # 38043797 ok
+
+#### KO
+sbatch scripts/LengthNormSignal_WTKO_H3K4me3_pool_peaks.sorted.merge-qval2.30103-NPC_KO_H3K4me3_005-FergusonUniqueNorm99.sh # 38043913 ok
+sbatch scripts/LengthNormSignal_WTKO_H3K4me3_pool_peaks.sorted.merge-qval2.30103-NPC_KO_H3K4me3_008-FergusonUniqueNorm99.sh # 38043933 ok
+
+
+```
+
+--> I set here `--binSize 100 --regionBodyLength 100`; seems it give 1 value per row/peak. Look good.
+
+
+
+### H3K27me3, no extension, qval 2.3 - R DESEQ2
+
+
+```R
+library("tidyverse")
+library("DESeq2")
+#library("edgeR")
+library("EnhancedVolcano")
+
+
+
+set.seed(42)
+
+# import bed reference to collect gene name
+NPC_WTKO_H3K27me3_pool_peaks_merge_annot <- read.delim("output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_pool_peaks_merge_annot.txt", header=TRUE, sep="\t", skip=0) %>% 
+  as_tibble() %>%
+  dplyr::rename(chr = seqnames) %>%
+  mutate(peakID = paste(chr, start, end, sep = "_")) %>%
+  dplyr::select(chr, start, end, annotation, geneSymbol, gene, peakID)
+
+
+# import SCORE 
+SCORE_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_WT_H3K27me3_008-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_KO_H3K27me3_005-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_KO_H3K27me3_008-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+
+
+
+
+
+# import BED position from matrix
+BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_WT_H3K27me3_008-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_KO_H3K27me3_005-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_KO_H3K27me3_008-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+
+
+# Put together, gene name, scoer per row, coordinate and row
+
+
+SCORE_BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 = SCORE_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 %>%
+  left_join(BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 ) %>%
+  left_join(NPC_WTKO_H3K27me3_pool_peaks_merge_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R1")
+SCORE_BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_008 = SCORE_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_008 %>%
+  left_join(BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_008 ) %>%
+  left_join(NPC_WTKO_H3K27me3_pool_peaks_merge_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R2")  
+
+SCORE_BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_005 = SCORE_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_005 %>%
+  left_join(BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_005 ) %>%
+  left_join(NPC_WTKO_H3K27me3_pool_peaks_merge_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R1")
+SCORE_BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008 = SCORE_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008 %>%
+  left_join(BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008 ) %>%
+  left_join(NPC_WTKO_H3K27me3_pool_peaks_merge_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R2")  
+
+
+
+# Tidy into a single tibble
+SCORE_BED_WTKO_H3K27me3_pool_peaks = SCORE_BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 %>%
+  bind_rows(SCORE_BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_008) %>%
+  bind_rows(SCORE_BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_005) %>%
+  bind_rows(SCORE_BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008)
+
+
+######################################################
+### WT vs KO ####################################
+######################################################
+
+SCORE_BED_WTKO_H3K27me3_pool_peaks_WTvsKO = SCORE_BED_WTKO_H3K27me3_pool_peaks %>%
+  filter(genotype %in% c("WT", "KO"),
+         peakID != "NA") %>%
+  mutate(median_score = round(median_score))
+
+
+# Convert to wide format
+countData_WTvsKO <- SCORE_BED_WTKO_H3K27me3_pool_peaks_WTvsKO %>%
+  mutate(replicate = paste0(genotype, "_", replicate)) %>%  # Create unique column names
+  select(-genotype) %>%  # Remove genotype column (since it's now part of replicate)
+  pivot_wider(names_from = replicate, values_from = median_score, values_fill = 0)  
+  
+
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(countData_WTvsKO, -peakID), pull(countData_WTvsKO, peakID)) 
+
+
+## Create colData file that describe all our samples
+colData_WTvsKO_raw <- SCORE_BED_WTKO_H3K27me3_pool_peaks_WTvsKO %>%
+  distinct(replicate, genotype) %>%
+  mutate(sample = paste(genotype, replicate, sep = "_"))
+  
+  
+## transform df into matrix
+coldata = make_matrix(dplyr::select(colData_WTvsKO_raw, -sample), pull(colData_WTvsKO_raw, sample))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design= ~ genotype)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 5 # below 2000 look like noise on IGV
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+
+res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm")
+
+
+## Plot-volcano
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.1 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.1 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+
+res_tibble <- as_tibble(res, rownames = "peakID") %>% left_join(NPC_WTKO_H3K27me3_pool_peaks_merge_annot)
+# Export result
+write.table(res_tibble, file="output/edgeR/DESEQ2-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+pdf("output/edgeR/plotVolcano_res_q05fc01-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3.pdf", width=3, height=4)    
+EnhancedVolcano(res_tibble,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, NPC, H3K27me3',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.1,
+  pointSize = 1.0,
+  labSize = 2,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+
+upregulated_genes <- sum(res_tibble$log2FoldChange > 0.1 & res_tibble$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res_tibble$log2FoldChange < -0.1 & res_tibble$padj < 5e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.1 & res_tibble$padj < 5e-2, ]
+#### Filter for down-regulated genes
+downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.1 & res_tibble$padj < 5e-2, ]
+#### Save
+write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+res_tibble %>% dplyr::select(peakID, geneSymbol, log2FoldChange, padj) %>%
+  filter(padj < 0.05, log2FoldChange > 0.1)
+
+
+res_tibble %>% dplyr::select(peakID, geneSymbol, log2FoldChange, padj) %>%
+  filter(padj < 0.05, log2FoldChange < -0.1)
+
+
+
+
+```
+
+--> Seems that there are fewer Diff. bound regions as compare to when using THOR; here; 40 lost 35 gain 
+
+Let's compare with Venn diagram the gene that gain/lost H3K27me3 with Ferguson and THOR method; files:
+- *Ferguson, Gain*: `output/edgeR/upregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3.txt` # 35 genes
+- *Ferguson, Lost*: `output/edgeR/downregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3.txt` # 40 genes
+- *THOR, Gain*: `output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol.txt` # 840 genes
+- *THOR, Lost*: `output/ChIPseeker/annotation_THOR_H3K27me3_q30_neg_promoterAnd5_geneSymbol.txt` # 224 genes
+
+
+Let's try edgeR for diff. binding
+
+
+### H3K27me3, no extension, qval 2.3 - R EDGER
+
+XXXY
+
 
 
 
