@@ -5571,9 +5571,485 @@ Let's try edgeR for diff. binding
 
 ### H3K27me3, no extension, qval 2.3 - R EDGER
 
-XXXY
+Let's use the [edgeR guide](https://bioconductor.org/packages/release/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf)
+
+```bash
+conda activate monocle3
+```
+
+
+```R
+# packages
+library('tidyverse')
+library('edgeR')
+library("EnhancedVolcano")
+
+
+
+set.seed(42)
+
+# import bed reference to collect gene name
+NPC_WTKO_H3K27me3_pool_peaks_merge_annot <- read.delim("output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_pool_peaks_merge_annot.txt", header=TRUE, sep="\t", skip=0) %>% 
+  as_tibble() %>%
+  dplyr::rename(chr = seqnames) %>%
+  mutate(peakID = paste(chr, start, end, sep = "_")) %>%
+  dplyr::select(chr, start, end, annotation, geneSymbol, gene, peakID)
+
+
+# import SCORE 
+SCORE_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_WT_H3K27me3_008-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_KO_H3K27me3_005-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_KO_H3K27me3_008-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
 
 
 
 
 
+# import BED position from matrix
+BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_WT_H3K27me3_008-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_KO_H3K27me3_005-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_KO_H3K27me3_008-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+
+
+# Put together, gene name, scoer per row, coordinate and row
+
+
+SCORE_BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 = SCORE_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 %>%
+  left_join(BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 ) %>%
+  left_join(NPC_WTKO_H3K27me3_pool_peaks_merge_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R1")
+SCORE_BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_008 = SCORE_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_008 %>%
+  left_join(BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_008 ) %>%
+  left_join(NPC_WTKO_H3K27me3_pool_peaks_merge_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R2")  
+
+SCORE_BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_005 = SCORE_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_005 %>%
+  left_join(BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_005 ) %>%
+  left_join(NPC_WTKO_H3K27me3_pool_peaks_merge_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R1")
+SCORE_BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008 = SCORE_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008 %>%
+  left_join(BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008 ) %>%
+  left_join(NPC_WTKO_H3K27me3_pool_peaks_merge_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R2")  
+
+
+
+# Tidy into a single tibble
+SCORE_BED_WTKO_H3K27me3_pool_peaks = SCORE_BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 %>%
+  bind_rows(SCORE_BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_008) %>%
+  bind_rows(SCORE_BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_005) %>%
+  bind_rows(SCORE_BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008)
+
+
+######################################################
+### WT vs KO ####################################
+######################################################
+
+SCORE_BED_WTKO_H3K27me3_pool_peaks_WTvsKO = SCORE_BED_WTKO_H3K27me3_pool_peaks %>%
+  filter(genotype %in% c("WT", "KO"),
+         peakID != "NA") %>%
+  mutate(median_score = round(median_score))
+
+
+# Convert to wide format
+countData_WTvsKO <- SCORE_BED_WTKO_H3K27me3_pool_peaks_WTvsKO %>%
+  mutate(replicate = paste0(genotype, "_", replicate)) %>%  # Create unique column names
+  select(-genotype) %>%  # Remove genotype column (since it's now part of replicate)
+  pivot_wider(names_from = replicate, values_from = median_score, values_fill = 0)  
+  
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(countData_WTvsKO, -peakID), pull(countData_WTvsKO, peakID)) 
+
+### Test with log2 normalize counts
+log2_counts <- log2(counts_all_matrix + 1)
+log2_counts_rounded <- round(log2_counts)
+head(log2_counts_rounded)
+############
+
+
+# CREATE DGEList object ####
+## Define sample groups (adjust based on your design)
+group <- factor(c("WT", "WT", "KO", "KO"))
+## Create DGEList
+y <- DGEList(counts=log2_counts_rounded, group=group) # CHANGE TO LOG COUNT OR NOT use: log2_counts_rounded OR counts_all_matrix
+## Check DGEList
+y # 13005 genes
+## fIlter out lowly express genes
+keep <- filterByExpr(y)
+y <- y[keep,,keep.lib.sizes=FALSE] # 12984 genes
+
+y <- normLibSizes(y) # TO RUN OR NOT !!!!!!!!!!!!!!!!!!!!!
+
+y <- estimateDisp(y)
+
+########### Diff binding with the Exact Test #########################
+et <- exactTest(y)
+topTags(et)
+######################################################################
+
+########### Diff binding with Glmfit limma --> PREFERRED OPTION !!!!!! #########################
+design <- model.matrix(~group)
+## quasi-likelihood (QL) F-test
+fit <- glmQLFit(y, design)
+qlf.2vs1 <- glmQLFTest(fit, coef=2) # KO vs WT
+topTags(qlf.2vs1)
+
+## likelihood ratio test ######--> PREFERRED OPTION !!!!!! 
+fit <- glmFit(y, design)
+lrt.2vs1 <- glmLRT(fit, coef=2)
+topTags(lrt.2vs1)
+######################################################################
+
+
+
+
+##############  TESTING    ###########################################################
+
+########################################
+## likelihood ratio test without TMM normalization, with raw count (NOT log2 norm) ########
+####################################
+topTags_all = as_tibble(topTags(lrt.2vs1, n = Inf)$table, rownames = "peakID") %>%
+  mutate(logFC = -logFC)
+
+
+## Plot-volcano
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  topTags_all$logFC < -0 & topTags_all$FDR < 5e-2, 'Sky Blue',
+    ifelse(topTags_all$logFC > 0 & topTags_all$FDR < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+
+topTags_all <- topTags_all %>% left_join(NPC_WTKO_H3K27me3_pool_peaks_merge_annot)
+# Export result
+write.table(topTags_all, file="output/edgeR/EDGER-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-GlmfitLikelihoodRatioRawCounts.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+pdf("output/edgeR/plotVolcano_q05fc0-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-GlmfitLikelihoodRatioRawCounts.pdf", width=3, height=4)    
+EnhancedVolcano(topTags_all,
+  lab = topTags_all$geneSymbol,
+  x = 'logFC',
+  y = 'FDR',
+  title = 'KO vs WT, NPC, H3K27me3',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0,
+  pointSize = 1.0,
+  labSize = 2,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+
+upregulated_genes <- sum(topTags_all$logFC > 0 & topTags_all$FDR < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(topTags_all$logFC < -0 & topTags_all$FDR < 5e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+upregulated <- topTags_all[!is.na(topTags_all$logFC) & !is.na(topTags_all$FDR) & topTags_all$logFC > 0.1 & topTags_all$FDR < 5e-2, ]
+#### Filter for down-regulated genes
+downregulated <- topTags_all[!is.na(topTags_all$logFC) & !is.na(topTags_all$FDR) & topTags_all$logFC < -0.1 & topTags_all$FDR < 5e-2, ]
+#### Save
+write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc0_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-GlmfitLikelihoodRatioRawCounts.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc0_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-GlmfitLikelihoodRatioRawCounts.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+topTags_all %>% dplyr::select(peakID, geneSymbol, logFC, FDR) %>%
+  filter(FDR < 0.05, logFC > 0)
+topTags_all %>% dplyr::select(peakID, geneSymbol, logFC, FDR) %>%
+  filter(FDR < 0.05, logFC < -0)
+
+
+
+
+
+
+
+
+
+########################################
+## Exact test, without TMM normalization, with raw counts (NOT log2 norm) ########
+####################################
+topTags_all = as_tibble(topTags(et, n = Inf)$table, rownames = "peakID") %>%
+  mutate(logFC = -logFC)
+
+
+## Plot-volcano
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  topTags_all$logFC < -0 & topTags_all$FDR < 5e-2, 'Sky Blue',
+    ifelse(topTags_all$logFC > 0 & topTags_all$FDR < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+
+topTags_all <- topTags_all %>% left_join(NPC_WTKO_H3K27me3_pool_peaks_merge_annot)
+# Export result
+write.table(topTags_all, file="output/edgeR/EDGER-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-ExactTestRawCounts.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+pdf("output/edgeR/plotVolcano_q05fc0-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-ExactTestRawCounts.pdf", width=3, height=4)    
+EnhancedVolcano(topTags_all,
+  lab = topTags_all$geneSymbol,
+  x = 'logFC',
+  y = 'FDR',
+  title = 'KO vs WT, NPC, H3K27me3',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0,
+  pointSize = 1.0,
+  labSize = 2,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+
+upregulated_genes <- sum(topTags_all$logFC > 0 & topTags_all$FDR < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(topTags_all$logFC < -0 & topTags_all$FDR < 5e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+upregulated <- topTags_all[!is.na(topTags_all$logFC) & !is.na(topTags_all$FDR) & topTags_all$logFC > 0.1 & topTags_all$FDR < 5e-2, ]
+#### Filter for down-regulated genes
+downregulated <- topTags_all[!is.na(topTags_all$logFC) & !is.na(topTags_all$FDR) & topTags_all$logFC < -0.1 & topTags_all$FDR < 5e-2, ]
+#### Save
+write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc0_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-ExactTestRawCounts.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc0_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-ExactTestRawCounts.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+topTags_all %>% dplyr::select(peakID, geneSymbol, logFC, FDR) %>%
+  filter(FDR < 0.05, logFC > 0)
+topTags_all %>% dplyr::select(peakID, geneSymbol, logFC, FDR) %>%
+  filter(FDR < 0.05, logFC < -0)
+
+
+
+
+
+
+########################################
+## Exact test, WITH TMM normalization, with raw counts (NOT log2 norm) ########
+####################################
+topTags_all = as_tibble(topTags(et, n = Inf)$table, rownames = "peakID") %>%
+  mutate(logFC = -logFC)
+
+
+## Plot-volcano
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  topTags_all$logFC < -0 & topTags_all$FDR < 5e-2, 'Sky Blue',
+    ifelse(topTags_all$logFC > 0 & topTags_all$FDR < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+
+topTags_all <- topTags_all %>% left_join(NPC_WTKO_H3K27me3_pool_peaks_merge_annot)
+# Export result
+write.table(topTags_all, file="output/edgeR/EDGER-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-ExactTestRawCountsTMM.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+pdf("output/edgeR/plotVolcano_q05fc0-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-ExactTestRawCountsTMM.pdf", width=3, height=4)    
+EnhancedVolcano(topTags_all,
+  lab = topTags_all$geneSymbol,
+  x = 'logFC',
+  y = 'FDR',
+  title = 'KO vs WT, NPC, H3K27me3',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0,
+  pointSize = 1.0,
+  labSize = 2,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+
+upregulated_genes <- sum(topTags_all$logFC > 0 & topTags_all$FDR < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(topTags_all$logFC < -0 & topTags_all$FDR < 5e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+upregulated <- topTags_all[!is.na(topTags_all$logFC) & !is.na(topTags_all$FDR) & topTags_all$logFC > 0.1 & topTags_all$FDR < 5e-2, ]
+#### Filter for down-regulated genes
+downregulated <- topTags_all[!is.na(topTags_all$logFC) & !is.na(topTags_all$FDR) & topTags_all$logFC < -0.1 & topTags_all$FDR < 5e-2, ]
+#### Save
+write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc0_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-ExactTestRawCountsTMM.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc0_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-ExactTestRawCountsTMM.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+topTags_all %>% dplyr::select(peakID, geneSymbol, logFC, FDR) %>%
+  filter(FDR < 0.05, logFC > 0)
+topTags_all %>% dplyr::select(peakID, geneSymbol, logFC, FDR) %>%
+  filter(FDR < 0.05, logFC < -0)
+
+
+
+
+########################################
+## likelihood ratio test, WITH TMM normalization, with raw counts (NOT log2 norm) ########
+####################################
+topTags_all = as_tibble(topTags(lrt.2vs1, n = Inf)$table, rownames = "peakID") %>%
+  mutate(logFC = -logFC)
+
+
+## Plot-volcano
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  topTags_all$logFC < -0 & topTags_all$FDR < 5e-2, 'Sky Blue',
+    ifelse(topTags_all$logFC > 0 & topTags_all$FDR < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+
+
+topTags_all <- topTags_all %>% left_join(NPC_WTKO_H3K27me3_pool_peaks_merge_annot)
+# Export result
+write.table(topTags_all, file="output/edgeR/EDGER-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-GlmfitLikelihoodRatioRawCountsRawCountsTMM.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+pdf("output/edgeR/plotVolcano_q05fc0-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-GlmfitLikelihoodRatioRawCountsRawCountsTMM.pdf", width=3, height=4)    
+EnhancedVolcano(topTags_all,
+  lab = topTags_all$geneSymbol,
+  x = 'logFC',
+  y = 'FDR',
+  title = 'KO vs WT, NPC, H3K27me3',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0,
+  pointSize = 1.0,
+  labSize = 2,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+
+upregulated_genes <- sum(topTags_all$logFC > 0 & topTags_all$FDR < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(topTags_all$logFC < -0 & topTags_all$FDR < 5e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+upregulated <- topTags_all[!is.na(topTags_all$logFC) & !is.na(topTags_all$FDR) & topTags_all$logFC > 0.1 & topTags_all$FDR < 5e-2, ]
+#### Filter for down-regulated genes
+downregulated <- topTags_all[!is.na(topTags_all$logFC) & !is.na(topTags_all$FDR) & topTags_all$logFC < -0.1 & topTags_all$FDR < 5e-2, ]
+#### Save
+write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc0_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-GlmfitLikelihoodRatioRawCountsRawCountsTMM.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc0_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-GlmfitLikelihoodRatioRawCountsRawCountsTMM.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+topTags_all %>% dplyr::select(peakID, geneSymbol, logFC, FDR) %>%
+  filter(FDR < 0.05, logFC > 0)
+topTags_all %>% dplyr::select(peakID, geneSymbol, logFC, FDR) %>%
+  filter(FDR < 0.05, logFC < -0)
+
+
+```
+
+
+Use log2 norm count or raw count?
+--> Not sure, test both; log2 norm count gave very few DEG, so **prefer raw count**
+
+Which diff binding test: **Exact test, or Glmfit limma**
+--> Ferguson used limma, so **focus on limma**
+
+With limma use QL test or likelihood test
+--> **Likelihood test** give more DEG, always, whatever test done
+
+
+*Testing*:
+- *likelihood ratio test, without TMM normalization, with raw counts (NOT log2 norm)*: 121 down / 40 up; looks good on IGV --> Look good
+- *Exact test, without TMM normalization, with raw counts (NOT log2 norm)*: 112 down / 31 up; looks good on IGV --> Look good, like likelihood ratio test
+- *likelihood ratio test, without TMM normalization, with log2 norm counts*: 1 up / 0 down --> Look bad
+- *Exact test, without TMM normalization, with log2 norm counts*: no DEGs
+
+- *Exact test, WITH TMM normalization, with raw counts (NOT log2 norm)*: 116 down / 33 up; looks good on IGV --> Look good
+- *likelihood ratio test, WITH TMM normalization, with raw counts (NOT log2 norm)*: 123 down / 42 up; looks good on IGV --> Look good
+
+
+
+--> Prefer **likelihood ratio test, without TMM normalization, with raw counts (NOT log2 norm)** = `GlmfitLikelihoodRatioRawCounts`; as I am not sure what the TMM is doing and that do not change much results. Let's export genes and check overlap with THOR:
+  --> *For Lost*: Very few overlap. Interestingly, method-specific genes seems true!! Seems THOR misses complete loss in mutant (like signal to complete absence); and EDGER misses slight differences but still visible.
+  --> *For gain*: XXX
+
+
+
+--> It may be worst changing pval trehsold or method for pvalue adjustment? XXX
