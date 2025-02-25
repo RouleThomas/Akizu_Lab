@@ -5727,14 +5727,14 @@ head(log2_counts_rounded)
 ## Define sample groups (adjust based on your design)
 group <- factor(c("WT", "WT", "KO", "KO"))
 ## Create DGEList
-y <- DGEList(counts=log2_counts_rounded, group=group) # CHANGE TO LOG COUNT OR NOT use: log2_counts_rounded OR counts_all_matrix
+y <- DGEList(counts=counts_all_matrix, group=group) # CHANGE TO LOG COUNT OR NOT use: log2_counts_rounded OR counts_all_matrix
 ## Check DGEList
 y # 13005 genes
 ## fIlter out lowly express genes
 keep <- filterByExpr(y)
 y <- y[keep,,keep.lib.sizes=FALSE] # 12984 genes
 
-y <- normLibSizes(y) # TO RUN OR NOT !!!!!!!!!!!!!!!!!!!!!
+# y <- normLibSizes(y) # TO RUN OR NOT !!!!!!!!!!!!!!!!!!!!!
 
 y <- estimateDisp(y)
 
@@ -5760,6 +5760,43 @@ topTags(lrt.2vs1)
 
 
 ##############  TESTING    ###########################################################
+
+
+
+
+
+########### Diff binding with the limma followed by the eBayes t-statistics #########################
+## Define sample groups
+group <- factor(c("WT", "WT", "KO", "KO"))
+## Create design matrix for limma
+design <- model.matrix(~ 0 + group)  # Avoids intercept
+colnames(design) <- levels(group)
+## Print the design matrix
+design
+
+## Fit linear model
+fit <- lmFit(log2_counts, design)      # CHANGE TO LOG COUNT OR NOT use: log2_counts_rounded OR counts_all_matrix
+## Define the contrast (KO vs WT)
+contrast_matrix <- makeContrasts(KO - WT, levels=design)
+## Apply the contrast
+fit2 <- contrasts.fit(fit, contrast_matrix)
+## Apply empirical Bayes moderation
+fit2 <- eBayes(fit2)
+## Extract results
+results <- topTable(fit2, adjust="fdr", number=Inf) # BH BY holm
+## Check the first few results
+head(results)
+
+results = as_tibble(results, rownames = "peakID")
+results %>% filter(adj.P.Val < 0.05)
+
+
+######################################################################
+
+
+
+
+
 
 ########################################
 ## likelihood ratio test without TMM normalization, with raw count (NOT log2 norm) ########
@@ -5824,6 +5861,10 @@ topTags_all %>% dplyr::select(peakID, geneSymbol, logFC, FDR) %>%
 
 
 
+topTags_all %>% dplyr::select(peakID, geneSymbol, logFC, PValue) %>%
+  filter(PValue < 0.05, logFC > 0)
+topTags_all %>% dplyr::select(peakID, geneSymbol, logFC, PValue) %>%
+  filter(PValue < 0.05, logFC < -0)
 
 
 
@@ -6043,11 +6084,11 @@ With limma use QL test or likelihood test
 
 - *Exact test, WITH TMM normalization, with raw counts (NOT log2 norm)*: 116 down / 33 up; looks good on IGV --> Look good
 - *likelihood ratio test, WITH TMM normalization, with raw counts (NOT log2 norm)*: 123 down / 42 up; looks good on IGV --> Look good
-
+- *Diff binding with the limma followed by the eBayes t-statistics* = Paper method: 50 down / 26 up 
 
 
 --> Prefer **likelihood ratio test, without TMM normalization, with raw counts (NOT log2 norm)** = `GlmfitLikelihoodRatioRawCounts`; as I am not sure what the TMM is doing and that do not change much results. Let's export genes and check overlap with THOR:
-  --> *For Lost*: Very few overlap. Interestingly, method-specific genes seems true!! Seems THOR misses complete loss in mutant (like signal to complete absence); and EDGER misses slight differences but still visible.
+  --> *For Lost*: Very few overlap. Interestingly, method-specific genes seems true!! Seems THOR misses complete loss in mutant (like signal to complete absence); and EDGER misses slight differences but still visible. For the ones detected in THOR, but not in edgeR, the pvalue is low but padj much higher...
   --> *For gain*: XXX
 
 
