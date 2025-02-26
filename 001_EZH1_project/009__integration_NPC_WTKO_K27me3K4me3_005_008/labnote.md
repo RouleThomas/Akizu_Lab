@@ -6515,8 +6515,80 @@ With limma use QL test or likelihood test
 
 --> Prefer **likelihood ratio test, without TMM normalization, with raw counts (NOT log2 norm)** = `GlmfitLikelihoodRatioRawCounts`; as I am not sure what the TMM is doing and that do not change much results. Let's export genes and check overlap with THOR:
   --> *For Lost*: Very few overlap. Interestingly, method-specific genes seems true!! Seems THOR misses complete loss in mutant (like signal to complete absence); and EDGER misses slight differences but still visible. For the ones detected in THOR, but not in edgeR, the pvalue is low but padj much higher...
-  --> *For gain*: XXX
+  --> *For gain*: same
 
 
 
---> It may be worst changing pval trehsold or method for pvalue adjustment? XXX
+--> It may be worst changing pval trehsold or method for pvalue adjustment? 
+  --> It did not help that much, detect more but still miss many from THOR...
+
+
+
+# CSAW sliding window - Ferguson/Local Maxima
+
+
+Let's use the [csaw/sliding window method](https://bioconductor.org/books/release/csawBook/counting-reads-into-windows.html) to check for diff binding. CSAW uses BAM as input, so we will need instead to use conmputeMatrix from 
+deeptools to generate matrix.
+
+Let's check which window size to set:
+- CSAW_H3K27me3: csaw guide recommend bin of 2000bp every 500 bp (overlapping window)
+- THOR_H3K27me3: THOR used per default bin of 100bp every 50 bp (overlapping window)
+
+From [this paper](https://www.nature.com/articles/s41467-018-03538-9): Window widths were set to reflect broad or more narrow distribution of the investigated histone modifications: width 1000 bp and a spacing interval of 100 bp were used for H3K27me3 and H3K9me3, whereas width 150 bp and spacing 50 bp were used for H3K4me3
+
+
+Lets try both:
+- 1000bp every 100bp = `bin1000space100`
+- 150bp every 50bp = `bin150space50`
+
+
+## Generate bed file that cover the whole genome = window bed
+
+```bash
+conda activate BedToBigwig
+
+bedtools makewindows -g ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -w 1000 -s 100 > ../../Master/meta/GRCh38_bin1000space100.bed
+bedtools makewindows -g ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -w 150 -s 50 > ../../Master/meta/GRCh38_bin150space50.bed
+
+```
+--> only chr 1-21 X,Y,M are included in `../../Master/meta/GRCh38_chrom_sizes_MAIN.tab`
+
+--> Looks good!
+
+
+## Calculate signal in the whole genome
+
+
+
+
+
+```bash
+conda activate deeptools
+
+#H3K27me3
+## sample per sample (replicate per replicate)
+#### WT
+sbatch scripts/LengthNormSignal-bin1000space100-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.sh # 38173952 xxx
+sbatch scripts/LengthNormSignal-bin1000space100-NPC_WT_H3K27me3_008-FergusonUniqueNorm99.sh # 38173981 xxx
+
+sbatch scripts/LengthNormSignal-bin150space50-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.sh # 38174112 xxx
+sbatch scripts/LengthNormSignal-bin150space50-NPC_WT_H3K27me3_008-FergusonUniqueNorm99.sh # 38174128 xxx
+
+
+#### KO
+sbatch scripts/LengthNormSignal-bin1000space100-NPC_KO_H3K27me3_005-FergusonUniqueNorm99.sh # 38174041 xxx
+sbatch scripts/LengthNormSignal-bin1000space100-NPC_KO_H3K27me3_008-FergusonUniqueNorm99.sh # 38174071 xxx
+
+sbatch scripts/LengthNormSignal-bin150space50-NPC_KO_H3K27me3_005-FergusonUniqueNorm99.sh # 38174151 xxx
+sbatch scripts/LengthNormSignal-bin150space50-NPC_KO_H3K27me3_008-FergusonUniqueNorm99.sh # 38174227 xxx
+```
+
+
+--> XXXY
+
+
+
+
+
+
+
