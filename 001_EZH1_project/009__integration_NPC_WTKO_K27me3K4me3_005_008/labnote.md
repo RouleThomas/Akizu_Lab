@@ -854,6 +854,79 @@ sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_q50_gene.sh # 15647306 ok
 
 
 
+# deepTools plot to compare bigwig Ferguson/Local maxima vs THOR
+
+Lets's compare THOR and Ferguson method (ie. the identified peaks, and how the bigwig behave). We notably found with THOR more region that gain than regions that lost H3K27me3, but the opposite is found with Ferguson DESEQ2/EDGER method...
+
+Isolate gain lost peaks
+```bash
+# PEAK
+# EDGER diff peaks (GlmfitLikelihoodRatioRawCounts) 121 / 40 = 
+output/edgeR/EDGER-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-GlmfitLikelihoodRatioRawCounts.txt
+## Extract all diff bound regions, in bed format
+awk 'NR>1 {print $7 "\t" $8 "\t" $9 "\t" $6 "\t" $2}' output/edgeR/EDGER-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-GlmfitLikelihoodRatioRawCounts.txt > output/edgeR/EDGER-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-GlmfitLikelihoodRatioRawCounts.bed
+
+awk '$4 < 0.05' output/edgeR/EDGER-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-GlmfitLikelihoodRatioRawCounts.bed > output/edgeR/EDGER-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-GlmfitLikelihoodRatioRawCounts.FDR05.bed
+awk '$5 > 0' output/edgeR/EDGER-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-GlmfitLikelihoodRatioRawCounts.FDR05.bed > output/edgeR/EDGER-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-GlmfitLikelihoodRatioRawCounts.FDR05FCpos.bed
+awk '$5 < 0' output/edgeR/EDGER-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-GlmfitLikelihoodRatioRawCounts.FDR05.bed > output/edgeR/EDGER-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-GlmfitLikelihoodRatioRawCounts.FDR05FCneg.bed
+
+
+# DESEQ2 diff peaks (lfcShrinkNORMAL) 132 / 45
+output/edgeR/DESEQ2-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL.txt
+## Extract all diff bound regions, in bed format
+awk 'NR>1 {print $8 "\t" $9 "\t" $10 "\t" $7 "\t" $3}' output/edgeR/DESEQ2-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL.txt > output/edgeR/DESEQ2-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL.bed
+
+awk '$4 < 0.05' output/edgeR/DESEQ2-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL.bed > output/edgeR/DESEQ2-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL.FDR05.bed
+awk '$5 > 0' output/edgeR/DESEQ2-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL.FDR05.bed > output/edgeR/DESEQ2-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL.FDR05FCpos.bed
+awk '$5 < 0' output/edgeR/DESEQ2-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL.FDR05.bed > output/edgeR/DESEQ2-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL.FDR05FCneg.bed
+
+
+#--> All files of interest below:
+# Regions
+## THOR gain lost
+output/THOR/THOR_NPC_WTvsKO_H3K27me3/THOR_qval30_gain.bed
+output/THOR/THOR_NPC_WTvsKO_H3K27me3/THOR_qval30_lost.bed
+## EDGER gain lost - GlmfitLikelihoodRatioRawCounts
+output/edgeR/EDGER-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-GlmfitLikelihoodRatioRawCounts.FDR05FCpos.bed
+output/edgeR/EDGER-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-GlmfitLikelihoodRatioRawCounts.FDR05FCneg.bed
+## DESEQ2 gain lost - lfcShrinkNORMAL
+output/edgeR/DESEQ2-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL.FDR05FCpos.bed
+output/edgeR/DESEQ2-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL.FDR05FCneg.bed
+
+#Bigwigs
+## THOR
+output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s1_median.bw # WT
+output/THOR/THOR_NPC_WTvsKO_H3K27me3/NPCWTvsKOH3K27me3-s1_median.bw # KO
+## Ferguson/Local Maxima
+output/bigwig_Ferguson/NPC_WT_H3K27me3_unique_norm99_median.bw # WT
+output/bigwig_Ferguson/NPC_KO_H3K27me3_unique_norm99_median.bw # KO
+
+```
+
+
+Lets do deepTools plot:
+
+```bash
+
+## deeptools plot
+sbatch scripts/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-THORq30PosNegPeaks.sh # 38161517 xxx
+sbatch scripts/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-EDGERGlmfitLikelihoodRatioRawCountsFDR05FCposNegPeaks.sh # 38161537 xxx
+sbatch scripts/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-DESEQ2lfcShrinkNORMALFDR05FCposNegPeaks.sh # 38161566 xxx
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
 # ChIPseeker peak gene assignment
 
 ## From optimal qval bed files peaks
