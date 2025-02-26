@@ -912,15 +912,15 @@ Lets do deepTools plot:
 sbatch scripts/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-THORq30PosNegPeaks.sh # 38161517 xxx
 sbatch scripts/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-EDGERGlmfitLikelihoodRatioRawCountsFDR05FCposNegPeaks.sh # 38161537 xxx
 sbatch scripts/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-DESEQ2lfcShrinkNORMALFDR05FCposNegPeaks.sh # 38161566 xxx
-
-
-
-
-
 ```
 
 
+--> THOR diff regions also look different in Ferguson/LocalMaxima bigwigs! Good news, we see many regions gaining H3K27me3 as before!!
 
+--> DESEQ2/EDGER diff regions are not detected looking at THOR bigwig!
+  --> THOR may miss these ones, they are usually smaller in size! But real!
+
+--> So sliding window method look cool for bigger regions, but DESEQ2 cool too, for smaller regions... Let's try another method (csaw?) to have the best of both worlds
 
 
 
