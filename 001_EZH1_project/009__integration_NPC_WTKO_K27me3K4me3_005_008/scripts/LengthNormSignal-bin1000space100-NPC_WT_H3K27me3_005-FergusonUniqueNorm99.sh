@@ -15,4 +15,3 @@ computeMatrix scale-regions -S output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique
     --regionBodyLength 1000
 
 
-

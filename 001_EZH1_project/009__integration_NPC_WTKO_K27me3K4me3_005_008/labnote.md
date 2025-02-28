@@ -6546,10 +6546,11 @@ Lets try both:
 
 ```bash
 conda activate BedToBigwig
-
+# To calculate signal
 bedtools makewindows -g ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -w 1000 -s 100 > ../../Master/meta/GRCh38_bin1000space100.bed
 bedtools makewindows -g ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -w 150 -s 50 > ../../Master/meta/GRCh38_bin150space50.bed
-
+# To filter out low abundance window
+bedtools makewindows -g ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -w 10000 -s 10000 > ../../Master/meta/GRCh38_bin10000space10000.bed
 ```
 --> only chr 1-21 X,Y,M are included in `../../Master/meta/GRCh38_chrom_sizes_MAIN.tab`
 
@@ -6558,8 +6559,11 @@ bedtools makewindows -g ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -w 150 -s 
 
 ## Calculate signal in the whole genome
 
+- 1000bp every 100bp = `bin1000space100`
+- 150bp every 50bp = `bin150space50`
 
 
+This correspond to that part of the code in *csaw*: `win.data <- windowCounts(h3k27me3data$Path, param=param, width=2000, spacing=500, ext=200)`
 
 
 ```bash
@@ -6568,27 +6572,332 @@ conda activate deeptools
 #H3K27me3
 ## sample per sample (replicate per replicate)
 #### WT
-sbatch scripts/LengthNormSignal-bin1000space100-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.sh # 38173952 xxx
-sbatch scripts/LengthNormSignal-bin1000space100-NPC_WT_H3K27me3_008-FergusonUniqueNorm99.sh # 38173981 xxx
+sbatch scripts/LengthNormSignal-bin1000space100-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.sh # 38173952 different rows from the other; 38316733
+sbatch scripts/LengthNormSignal-bin1000space100-NPC_WT_H3K27me3_008-FergusonUniqueNorm99.sh # 38173981 fail misname sample; 38239043 ok
 
-sbatch scripts/LengthNormSignal-bin150space50-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.sh # 38174112 xxx
-sbatch scripts/LengthNormSignal-bin150space50-NPC_WT_H3K27me3_008-FergusonUniqueNorm99.sh # 38174128 xxx
+sbatch scripts/LengthNormSignal-bin150space50-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.sh # 38174112 ok
+sbatch scripts/LengthNormSignal-bin150space50-NPC_WT_H3K27me3_008-FergusonUniqueNorm99.sh # 38174128 ok
 
 
 #### KO
-sbatch scripts/LengthNormSignal-bin1000space100-NPC_KO_H3K27me3_005-FergusonUniqueNorm99.sh # 38174041 xxx
-sbatch scripts/LengthNormSignal-bin1000space100-NPC_KO_H3K27me3_008-FergusonUniqueNorm99.sh # 38174071 xxx
+sbatch scripts/LengthNormSignal-bin1000space100-NPC_KO_H3K27me3_005-FergusonUniqueNorm99.sh # 38174041 ok
+sbatch scripts/LengthNormSignal-bin1000space100-NPC_KO_H3K27me3_008-FergusonUniqueNorm99.sh # 38174071 ok
 
-sbatch scripts/LengthNormSignal-bin150space50-NPC_KO_H3K27me3_005-FergusonUniqueNorm99.sh # 38174151 xxx
-sbatch scripts/LengthNormSignal-bin150space50-NPC_KO_H3K27me3_008-FergusonUniqueNorm99.sh # 38174227 xxx
+sbatch scripts/LengthNormSignal-bin150space50-NPC_KO_H3K27me3_005-FergusonUniqueNorm99.sh # 38174151 ok
+sbatch scripts/LengthNormSignal-bin150space50-NPC_KO_H3K27me3_008-FergusonUniqueNorm99.sh # 38174227 ok
+```
+--> All good
+
+
+Let's calculate *broad* signal; **to filter out low abundance window**. This corresp
+
+This correspond to that part of the code in *csaw*: `bins <- windowCounts(h3k27me3data$Path, bin=TRUE, width=10000, param=param)`. And it is basically:
+- 10000bp every 10000bp = `bin10000space10000` = NO OVERLAP OF THE WINDOW HERE
+  --> The ../../Master/meta/GRCh38_bin1000space100.bed as been updated to `../../Master/meta/GRCh38_bin10000space10000.bed` below
+
+
+```bash
+conda activate deeptools
+
+#H3K27me3
+## sample per sample (replicate per replicate)
+#### WT
+sbatch scripts/LengthNormSignal-bin10000space10000-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.sh # 38250761 ok
+sbatch scripts/LengthNormSignal-bin10000space10000-NPC_WT_H3K27me3_008-FergusonUniqueNorm99.sh # 38250811 ok
+
+#### KO
+sbatch scripts/LengthNormSignal-bin10000space10000-NPC_KO_H3K27me3_005-FergusonUniqueNorm99.sh # 38251323 ok
+sbatch scripts/LengthNormSignal-bin10000space10000-NPC_KO_H3K27me3_008-FergusonUniqueNorm99.sh # 38251502 ok
+```
+--> All good
+
+
+## Run csaw - bin150space50
+
+Let's follow the [csaw guide](https://bioconductor.org/books/release/csawBook/counting-reads-into-windows.html)
+
+```bash
+conda activate DiffBind
+```
+
+```R
+# packages
+library("tidyverse")
+library("csaw")
+library("edgeR")
+
+
+set.seed(42)
+
+
+##################################################################
+# import samples (bin150space50) ######################
+####################################################################
+
+
+# import SCORE 
+SCORE_NPC_WT_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal-bin150space50-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_NPC_WT_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal-bin150space50-NPC_WT_H3K27me3_008-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_NPC_KO_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal-bin150space50-NPC_KO_H3K27me3_005-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_NPC_KO_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal-bin150space50-NPC_KO_H3K27me3_008-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+
+
+
+
+# import BED position from matrix
+BED_NPC_WT_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal-bin150space50-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_NPC_WT_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal-bin150space50-NPC_WT_H3K27me3_008-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_NPC_KO_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal-bin150space50-NPC_KO_H3K27me3_005-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_NPC_KO_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal-bin150space50-NPC_KO_H3K27me3_008-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+
+
+
+# Put together, gene name, scoer per row, coordinate and row
+SCORE_BED_NPC_WT_H3K27me3_005 = SCORE_NPC_WT_H3K27me3_005 %>%
+  left_join(BED_NPC_WT_H3K27me3_005 ) %>%
+  dplyr::select(chr, start, end, score) %>%
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R1")
+
+SCORE_BED_NPC_WT_H3K27me3_008 = SCORE_NPC_WT_H3K27me3_008 %>%
+  left_join(BED_NPC_WT_H3K27me3_008 ) %>%
+  dplyr::select(chr, start, end, score) %>%
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R2")
+
+SCORE_BED_NPC_KO_H3K27me3_005 = SCORE_NPC_KO_H3K27me3_005 %>%
+  left_join(BED_NPC_KO_H3K27me3_005 ) %>%
+  dplyr::select(chr, start, end, score) %>%
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R1")
+SCORE_BED_NPC_KO_H3K27me3_008 = SCORE_NPC_KO_H3K27me3_008 %>%
+  left_join(BED_NPC_KO_H3K27me3_008 ) %>%
+  dplyr::select(chr, start, end, score) %>%
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R2")
+
+
+
+# Convert to RangedSummarizedExperiment Object
+## Convert to GRange
+samples <- list(
+  "WT_005" = SCORE_BED_NPC_WT_H3K27me3_005,
+  "WT_008" = SCORE_BED_NPC_WT_H3K27me3_008,
+  "KO_005" = SCORE_BED_NPC_KO_H3K27me3_005,
+  "KO_008" = SCORE_BED_NPC_KO_H3K27me3_008
+)
+## Ensure all samples have the same genomic windows (assuming identical structure)
+gr <- GRanges(
+  seqnames = samples$WT_005$chr, 
+  ranges = IRanges(start = samples$WT_005$start, end = samples$WT_005$end)
+)
+## Create a matrix of counts where each column corresponds to a sample
+counts_matrix <- do.call(cbind, lapply(samples, function(df) df$score))
+## Define colData (metadata for samples)
+col_data <- data.frame(
+  sample_name = names(samples),
+  genotype = c("WT", "WT", "KO", "KO"),
+  replicate = c("R1", "R2", "R1", "R2"),
+  totals = colSums(counts_matrix)  # Library size per sample
+)
+## Create SummarizedExperiment object
+RSE_SCORE_BED_NPC_H3K27me3 <- SummarizedExperiment(
+  assays = list(counts = counts_matrix),
+  rowRanges = gr,
+  colData = col_data
+)
+## Check object
+RSE_SCORE_BED_NPC_H3K27me3
+
+
+##################################################################
+# import background sample (bin10000space10000) ######################
+####################################################################
+
+# import SCORE 
+SCORE_NPC_WT_H3K27me3_005_background <- read.delim("output/edgeR/LengthNormSignal-bin10000space10000-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_NPC_WT_H3K27me3_008_background <- read.delim("output/edgeR/LengthNormSignal-bin10000space10000-NPC_WT_H3K27me3_008-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_NPC_KO_H3K27me3_005_background <- read.delim("output/edgeR/LengthNormSignal-bin10000space10000-NPC_KO_H3K27me3_005-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_NPC_KO_H3K27me3_008_background <- read.delim("output/edgeR/LengthNormSignal-bin10000space10000-NPC_KO_H3K27me3_008-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+
+
+
+
+# import BED position from matrix
+BED_NPC_WT_H3K27me3_005_background <- read.delim("output/edgeR/LengthNormSignal-bin10000space10000-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_NPC_WT_H3K27me3_008_background <- read.delim("output/edgeR/LengthNormSignal-bin10000space10000-NPC_WT_H3K27me3_008-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_NPC_KO_H3K27me3_005_background <- read.delim("output/edgeR/LengthNormSignal-bin10000space10000-NPC_KO_H3K27me3_005-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_NPC_KO_H3K27me3_008_background <- read.delim("output/edgeR/LengthNormSignal-bin10000space10000-NPC_KO_H3K27me3_008-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+
+
+
+# Put together, gene name, scoer per row, coordinate and row
+SCORE_BED_NPC_WT_H3K27me3_005_background = SCORE_NPC_WT_H3K27me3_005_background %>%
+  left_join(BED_NPC_WT_H3K27me3_005_background ) %>%
+  dplyr::select(chr, start, end, score) %>%
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R1")
+
+SCORE_BED_NPC_WT_H3K27me3_008_background = SCORE_NPC_WT_H3K27me3_008_background %>%
+  left_join(BED_NPC_WT_H3K27me3_008_background ) %>%
+  dplyr::select(chr, start, end, score) %>%
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R2")
+
+SCORE_BED_NPC_KO_H3K27me3_005_background = SCORE_NPC_KO_H3K27me3_005_background %>%
+  left_join(BED_NPC_KO_H3K27me3_005_background ) %>%
+  dplyr::select(chr, start, end, score) %>%
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R1")
+SCORE_BED_NPC_KO_H3K27me3_008_background = SCORE_NPC_KO_H3K27me3_008_background %>%
+  left_join(BED_NPC_KO_H3K27me3_008_background ) %>%
+  dplyr::select(chr, start, end, score) %>%
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R2")
+
+
+
+# Convert to RangedSummarizedExperiment Object
+## Convert to GRange
+samples <- list(
+  "WT_005" = SCORE_BED_NPC_WT_H3K27me3_005_background,
+  "WT_008" = SCORE_BED_NPC_WT_H3K27me3_008_background,
+  "KO_005" = SCORE_BED_NPC_KO_H3K27me3_005_background,
+  "KO_008" = SCORE_BED_NPC_KO_H3K27me3_008_background
+)
+## Ensure all samples have the same genomic windows (assuming identical structure)
+gr <- GRanges(
+  seqnames = samples$WT_005$chr, 
+  ranges = IRanges(start = samples$WT_005$start, end = samples$WT_005$end)
+)
+## Create a matrix of counts where each column corresponds to a sample
+counts_matrix <- do.call(cbind, lapply(samples, function(df) df$score))
+## Define colData (metadata for samples)
+col_data <- data.frame(
+  sample_name = names(samples),
+  genotype = c("WT", "WT", "KO", "KO"),
+  replicate = c("R1", "R2", "R1", "R2"),
+  totals = colSums(counts_matrix)  # Library size per sample
+)
+## Create SummarizedExperiment object
+RSE_SCORE_BED_NPC_H3K27me3_background <- SummarizedExperiment(
+  assays = list(counts = counts_matrix),
+  rowRanges = gr,
+  colData = col_data
+)
+## Check object
+RSE_SCORE_BED_NPC_H3K27me3_background
+
+
+
+HERE XXXY NOT CLEAR next it is buggy !!!!!
+
+
+
+
+
+# manually normalize library size between sample and background
+scaling_factor <- sum(RSE_SCORE_BED_NPC_H3K27me3_background$totals) / sum(RSE_SCORE_BED_NPC_H3K27me3$totals)
+assay(RSE_SCORE_BED_NPC_H3K27me3) <- assay(RSE_SCORE_BED_NPC_H3K27me3) * scaling_factor  # Adjust counts
+RSE_SCORE_BED_NPC_H3K27me3$totals <- RSE_SCORE_BED_NPC_H3K27me3_background$totals  # Force identical totals
+
+
+
+
+
+
+# Filtering of low-abundance windows
+##  Assign Each Foreground Window to a Background Bin
+### Extract genomic ranges
+win_ranges <- rowRanges(RSE_SCORE_BED_NPC_H3K27me3)  # Foreground
+bg_ranges <- rowRanges(RSE_SCORE_BED_NPC_H3K27me3_background)  # Background
+### Find nearest background bin for each foreground window
+nearest_bg_idx <- nearest(win_ranges, bg_ranges)
+### Match background counts to foreground
+aligned_bg_cpm <- bg_cpm[nearest_bg_idx, ]  # Align background CPM with foreground
+## Compute log2 Fold-Change After Aligning
+log2_fc <- win_cpm - aligned_bg_cpm
+##  Filter Low-Abundance Windows
+min_fc <- 1  # Log2(2) = 2x fold-change
+keep <- rowMeans(log2_fc) > min_fc
+### Keep only high-abundance windows
+RSE_SCORE_BED_NPC_H3K27me3_filtered <- RSE_SCORE_BED_NPC_H3K27me3[keep, ]
+
+
+
+
+hist(filter.stat$filter, main="", breaks=50,
+    xlab="Background abundance (log2-CPM)")
+abline(v=log2(min.fc), col="red")
+dev.off()
+
+
+
+
+```
+
+- NOTE: `SummarizedExperiment()` need same library size, otheriwse error. However my totals are different between background and my counts because in background the counts are counted without overlapping bins. Versus in my count samples, bins are overlapping so some reads are counted mutliple times, so we end up with a much higher library size! So I **manually normalize library size**: `win.data$totals`=`RSE_SCORE_BED_NPC_H3K27me3` to match `bins$totals`=`RSE_SCORE_BED_NPC_H3K27me3_background`
+  - Then error with `SummarizedExperiment()`:  `Error in if (prop.seen > 1 { : missing value where TRUE/FALSE needed`. Not sure why, there is no NA, and I try removing all the windowns with 0 but still same error. So let's instead **manually filtered low-abundance windows**
+
+--> So instead of using this: `filterWindowsGlobal(RSE_SCORE_BED_NPC_H3K27me3, RSE_SCORE_BED_NPC_H3K27me3_background)` I did this:
+
 ```
 
 
---> XXXY
-
-
-
-
-
-
-
+```

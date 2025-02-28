@@ -3969,4 +3969,4 @@ cd uploads/thomasroule@orcid_A787EGG4
 mirror -R ../001__RNAseq/geo_sub_RNAseq_AMPD2/
 ```
 
-
+--> **FOLDER `geo_sub_RNAseq_AMPD2` DELETED TO FREE SPACE.** 
