@@ -26820,7 +26820,8 @@ set.seed(42)
 
 
 # Data import - all samples and genotype CB
-humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid.combined.sct_V2-dim25kparam15res02.rds")
+humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid.combined.sct_V2-dim25kparam50res07.rds")
+humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid.combined.sct_V2-dim25kparam50res08.rds")
 
 DefaultAssay(humangastruloid.combined.sct) <- "RNA" # According to condiments workflow
 
@@ -26838,7 +26839,7 @@ df <- bind_cols(
 
 # PLOT
 ## genotype overlap
-pdf("output/condiments/UMAP_condition_UNT_DASA_72hr-dim25kparam15res02.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_condition_UNT_DASA_72hr-dim25kparam50res07.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7) +
   scale_color_manual(values = c("blue", "red")) + # Specify colors here
@@ -26853,7 +26854,7 @@ scores <- condiments::imbalance_score(
   k = 20, smooth = 40)
 df$scores <- scores$scaled_scores
 
-pdf("output/condiments/UMAP_imbalance_score_UNT_DASA_72hr-dim25kparam15res02.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_imbalance_score_UNT_DASA_72hr-dim25kparam50res07.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
   geom_point(size = .7) +
   scale_color_viridis_c(option = "C") +
@@ -26866,21 +26867,20 @@ dev.off()
 ########################################
 # Testing
 ## Option 1
+
+
 UNT_DASA_72hr <- slingshot(UNT_DASA_72hr, reducedDim = 'UMAP',
-                 clusterLabels = colData(UNT_DASA_72hr)$cluster.annot,
-                 start.clus = c("Ectoderm"), end.clus = c("CardiacProgenitors") ,approx_points = 100, extend = 'y', stretch = 0.2) # extend y n pc1
-## Option 2
-UNT_DASA_72hr <- slingshot(UNT_DASA_72hr, reducedDim = 'UMAP',
-                 clusterLabels = colData(UNT_DASA_72hr)$cluster.annot,
-                 start.clus = c("Ectoderm"), end.clus = c("CardiacProgenitors") ,approx_points = 100, extend = 'pc1', stretch = 0.2) # extend y n pc1
-# Nascent_Mesoderm
+                 clusterLabels = colData(UNT_DASA_72hr)$seurat_clusters,
+                 start.clus = c("5"), end.clus = c("1", "8") ,approx_points = 100, extend = 'n', stretch = 0.2) # extend y n pc1
+                 
+
 
 #test reduceDim PCA or subset endoderm
 topologyTest(SlingshotDataSet(UNT_DASA_72hr), UNT_DASA_72hr$condition) #  
 sdss <- slingshot_conditions(SlingshotDataSet(UNT_DASA_72hr), UNT_DASA_72hr$condition)
 curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
                     .id = "condition")
-pdf("output/condiments/UMAP_trajectory_UNT_DASA_72hr-dim25kparam15res02-START-Ectoderm-END-CardiacProgenitors-points100extendystretch02.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_trajectory_UNT_DASA_72hr-dim25kparam50res07-START-5-END-1_8-points100extendnstretch02.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7, alpha = .2) +
   scale_color_brewer(palette = "Accent") +
@@ -26890,12 +26890,10 @@ ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
 dev.off()
 
 
-#--> Option1= UMAP_trajectory_UNT_DASA_72hr-dim25kparam15res02-START-Ectoderm-END-CardiacProgenitors-points100extendystretch02
-#--> Option2= UMAP_trajectory_UNT_DASA_72hr-dim25kparam15res02-START-Ectoderm-END-CardiacProgenitors-points100extendpc1stretch02
+#--> points100extendpc1stretch02 is ok, but lets try disttinguish more blood and CPC, notablythe beginning
 
-########################
-# OPTION 1 #############
-########################
+XXXY HERE PCHANGE STUFF
+
 
 ## PLOT with common trajectories - Individually
 df_2 <- bind_cols(
@@ -26939,7 +26937,7 @@ plots <- list()
 for (i in 1:3) {
   plots[[i]] <- create_plot(i)
 }
-pdf("output/condiments/UMAP_trajectory_common_label_UNT_DASA_72hr-dim25kparam15res02-START-Ectoderm-END-CardiacProgenitors-points100extendystretch02_Lineage123.pdf", width=15, height=5)
+pdf("output/condiments/UMAP_trajectory_common_label_UNT_DASA_72hr-dim25kparam50res07-START-5-END-1_8-points100extendpc1stretch02_Lineage123.pdf", width=15, height=5)
 gridExtra::grid.arrange(grobs = plots, ncol = 3)
 dev.off()
 
@@ -26996,120 +26994,9 @@ for (cond in conditions) {
   }
 }
 ## Save the plots in a PDF
-pdf("output/condiments/UMAP_trajectory_separated_label_UNT_DASA_72hr-dim25kparam15res02-START-Ectoderm-END-CardiacProgenitors-points100extendystretch02_Lineage123.pdf", width=15, height=10)
+pdf("output/condiments/UMAP_trajectory_separated_label_UNT_DASA_72hr-dim25kparam50res07-START-5-END-1_8-points100extendpc1stretch02_Lineage123.pdf", width=15, height=10)
 gridExtra::grid.arrange(grobs = plots, ncol = 3)
 dev.off()
-
-
-
-
-########################
-# OPTION 2 #############
-########################
-
-## PLOT with common trajectories - Individually
-df_2 <- bind_cols(
-  as.data.frame(reducedDim(UNT_DASA_72hr, "UMAP")),
-  slingPseudotime(UNT_DASA_72hr) %>% as.data.frame() %>%
-    dplyr::rename_with(paste0, "_pst", .cols = everything()),
-  slingCurveWeights(UNT_DASA_72hr) %>% as.data.frame(),
-  ) %>%
-  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
-         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
-         Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst))
-curves <- slingCurves(UNT_DASA_72hr, as.df = TRUE)
-### Function to create the plot for each lineage
-create_plot <- function(lineage_number) {
-  df_2 <- df_2 %>%
-    mutate(pst = case_when(
-      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
-      TRUE ~ 0
-    ),
-    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
-  curves_filtered <- curves %>% filter(Lineage == lineage_number)
-  curves_endpoints <- curves_filtered %>%
-    group_by(Lineage) %>%
-    arrange(Order) %>%
-    top_n(1, Order) # Get the top/last ordered point for each group
-  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
-  df_2_other <- df_2 %>% filter(group == "other")
-  p <- ggplot() +
-    geom_point(data = df_2_other, aes(x = UMAP_1, y = UMAP_2), size = .7, color = "grey85") +
-    geom_point(data = df_2_lineage, aes(x = UMAP_1, y = UMAP_2, col = pst), size = .7) +
-    scale_color_viridis_c() +
-    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
-    geom_path(data = curves_filtered %>% arrange(Order),
-              aes(x = UMAP_1, y = UMAP_2, group = Lineage), col = "black", size = 1) +
-    geom_text(data = curves_endpoints, aes(x = UMAP_1, y = UMAP_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
-    theme_classic()
-  return(p)
-}
-### Generate the plots for each lineage
-plots <- list()
-for (i in 1:3) {
-  plots[[i]] <- create_plot(i)
-}
-pdf("output/condiments/UMAP_trajectory_common_label_UNT_DASA_72hr-dim25kparam15res02-START-Ectoderm-END-CardiacProgenitors-points100extendpc1stretch02_Lineage123.pdf", width=15, height=5)
-gridExtra::grid.arrange(grobs = plots, ncol = 3)
-dev.off()
-
-
-# Unique plot trajectory / condition
-## Prepare dataframe
-df_2 <- bind_cols(
-  as.data.frame(reducedDim(UNT_DASA_72hr, "UMAP")),
-  slingPseudotime(UNT_DASA_72hr) %>% as.data.frame() %>%
-    dplyr::rename_with(paste0, "_pst", .cols = everything()),
-  slingCurveWeights(UNT_DASA_72hr) %>% as.data.frame()
-) %>%
-  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
-         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
-         Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst),
-         condition = colData(UNT_DASA_72hr)$condition)  # Ensure condition is present
-## Get trajectory curves
-curves <- slingCurves(UNT_DASA_72hr, as.df = TRUE)
-### Function to create separate plots for each condition
-create_plot <- function(lineage_number, condition_filter) {
-  df_2_filtered <- df_2 %>%
-    filter(condition == condition_filter) %>%
-    mutate(pst = case_when(
-      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
-      TRUE ~ 0
-    ),
-    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
-  # Ensure that curves_filtered does not use condition if curves does not have it
-  curves_filtered <- curves %>% filter(Lineage == lineage_number)
-  # Filter endpoints correctly
-  curves_endpoints <- curves_filtered %>%
-    group_by(Lineage) %>%
-    arrange(Order) %>%
-    top_n(1, Order)  # Get the last point for labeling
-  df_2_lineage <- df_2_filtered %>% filter(group == paste0("lineage", lineage_number))
-  df_2_other <- df_2_filtered %>% filter(group == "other")
-  p <- ggplot() +
-    geom_point(data = df_2_other, aes(x = UMAP_1, y = UMAP_2), size = .7, color = "grey85") +
-    geom_point(data = df_2_lineage, aes(x = UMAP_1, y = UMAP_2, col = pst), size = .7) +
-    scale_color_viridis_c() +
-    labs(col = "Pseudotime", title = paste("Lineage", lineage_number, "-", condition_filter)) +
-    geom_path(data = curves_filtered %>% arrange(Order),
-              aes(x = UMAP_1, y = UMAP_2, group = Lineage), col = "black", size = 1) +
-    geom_text(data = curves_endpoints, aes(x = UMAP_1, y = UMAP_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Label endpoint
-    theme_classic()
-  return(p)
-}
-### Generate plots for each lineage and condition
-conditions <- c("UNTREATED72hr", "DASATINIB72hr")
-plots <- list()
-for (cond in conditions) {
-  for (i in 1:3) {
-    plots[[paste0("Lineage", i, "_", cond)]] <- create_plot(i, cond)
-  }
-}
-## Save the plots in a PDF
-pdf("output/condiments/UMAP_trajectory_separated_label_UNT_DASA_72hr-dim25kparam15res02-START-Ectoderm-END-CardiacProgenitors-points100extendpc1stretch02_Lineage123.pdf", width=15, height=10)
-gridExtra::grid.arrange(grobs = plots, ncol = 3)
-dev.off()
-
 
 
 
@@ -27119,7 +27006,6 @@ dev.off()
 
 
 # Differential Progression
-## Option1
 progressionTest(UNT_DASA_72hr, conditions = UNT_DASA_72hr$condition, lineages = TRUE)
 prog_res <- progressionTest(UNT_DASA_72hr, conditions = UNT_DASA_72hr$condition, lineages = TRUE)
 df_3 <-  slingPseudotime(UNT_DASA_72hr) %>% as.data.frame() 
@@ -27128,31 +27014,7 @@ df_3 <- df_3 %>%
   pivot_longer(-condition, names_to = "Lineage",
                values_to = "pst") %>%
   filter(!is.na(pst))
-pdf("output/condiments/densityPlot_trajectory_lineages_UNT_DASA_72hr-dim25kparam15res02-START-Ectoderm-END-CardiacProgenitors-points100extendystretch02.pdf", width=10, height=5)
-ggplot(df_3, aes(x = pst)) +
-  geom_density(alpha = .8, aes(fill = condition), col = "transparent") +
-  geom_density(aes(col = condition), fill = "transparent", size = 1.5) +
-  labs(x = "Pseudotime", fill = "condition") +
-  facet_wrap(~Lineage, scales = "free", nrow=2) +
-  guides(col = "none", fill = guide_legend(
-    override.aes = list(size = 1.5, col = c("blue", "red"))
-  )) +
-  scale_fill_manual(values = c("blue", "red")) +
-  scale_color_manual(values = c("blue", "red")) +
-  theme_bw()
-dev.off()
-
-
-## Option2
-progressionTest(UNT_DASA_72hr, conditions = UNT_DASA_72hr$condition, lineages = TRUE)
-prog_res <- progressionTest(UNT_DASA_72hr, conditions = UNT_DASA_72hr$condition, lineages = TRUE)
-df_3 <-  slingPseudotime(UNT_DASA_72hr) %>% as.data.frame() 
-df_3$condition <- UNT_DASA_72hr$condition
-df_3 <- df_3 %>% 
-  pivot_longer(-condition, names_to = "Lineage",
-               values_to = "pst") %>%
-  filter(!is.na(pst))
-pdf("output/condiments/densityPlot_trajectory_lineages_UNT_DASA_72hr-dim25kparam15res02-START-Ectoderm-END-CardiacProgenitors-points100extendpc1stretch02.pdf", width=10, height=5)
+pdf("output/condiments/densityPlot_trajectory_lineages_UNT_DASA_72hr-dim25kparam50res07-START-5-END-1_8-points100extendpc1stretch02_Lineage123.pdf", width=10, height=5)
 ggplot(df_3, aes(x = pst)) +
   geom_density(alpha = .8, aes(fill = condition), col = "transparent") +
   geom_density(aes(col = condition), fill = "transparent", size = 1.5) +
