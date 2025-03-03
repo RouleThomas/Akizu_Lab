@@ -12414,6 +12414,195 @@ write.table(gos, "output/GO/enrichR_Reactome_2022_DEG_cluster6_downUp_dotplot.tx
 ```
 
 
+
+## Revision1 - (email 3/2/2025 Cell Reports paper "urgent request")
+
+- Violin/Scatter plot WT vs cYAPKO for each cluster  (except the extraembryonic clusters), for: Crabp2, Crabp1, Rbp1, Aldh1a2, Ncoa2, HDAC1 and CYP26A1 = `7genes` --> Add statistic manually from DEG file
+- Cell cycle cluster per cluster WT vs cYPAKO 
+
+
+
+```bash
+conda activate scRNAseqV2
+```
+
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+set.seed(42)
+
+
+# Load cluster
+embryo.combined.sct <- readRDS(file = "output/seurat/embryo.combined.sct_V3.rds")
+
+embryo.combined.sct$condition <- factor(embryo.combined.sct$condition, levels = c("WT", "cYAPKO"))
+
+
+###############################################################
+# VLN PLOTS with STATISTICS #####################
+###############################################################
+
+
+# Check some genes
+DefaultAssay(embryo.combined.sct) <- "RNA" # For vizualization either use SCT or norm RNA
+
+## post 20231005 Conchi meeting
+
+#pdf("output/seurat/VlnPlot_SCT_control_cYAPKO_7genes_V3.pdf", width=10, height=20)
+pdf("output/seurat/VlnPlot_RNA_control_cYAPKO_8genes_V3.pdf", width=10, height=20)
+VlnPlot(embryo.combined.sct, 
+        features = c("Crabp2", "Crabp1", "Rbp1", "Aldh1a2", "Ncoa2", "Hdac1", "Cyp26a1","Hotairm1"), 
+        ncol = 1, pt.size = 0.1, split.by = "condition", cols = c("blue", "red")) & 
+  theme(plot.title = element_text(size=10),
+        axis.text.x = element_text(angle = 0, hjust = 0.5, vjust = 0.5)) 
+dev.off()
+
+# Add statistics from DEG directly on the plot
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("cluster1", "cluster2", "cluster3", 
+                   "cluster4", "cluster5", "cluster6", 
+                   "cluster7", "cluster8", 
+                   "cluster9", "cluster10", "cluster11", 
+                   "cluster12", "cluster13", "cluster14", "cluster15", 
+                   "cluster16", "cluster17", "cluster18")
+##### Initialize empty list to store data
+deg_list <- list()
+
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-cYAPKO_response_V3_allGenes.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- as.character(i)  # Convert cluster to match Seurat cluster IDs
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.0001 ~ "***",
+    p_val_adj < 0.001  ~ "**",
+    p_val_adj < 0.05   ~ "*",
+    TRUE               ~ ""
+  ))
+
+
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- c("Crabp2", "Crabp1", "Rbp1", "Aldh1a2", "Ncoa2", "Hdac1", "Cyp26a1","Hotairm1")
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(embryo.combined.sct, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(embryo.combined.sct))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+pdf("output/seurat/VlnPlot_RNA_control_cYAPKO_8genes_V3_STAT.pdf", width=10, height=3)
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(embryo.combined.sct, 
+               features = gene, 
+               pt.size = 0.1, 
+               split.by = "condition", cols = c("blue", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 0, hjust = 0.5, vjust = 0.5))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos, label = significance), 
+                     size = 6, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+
+
+
+###############################################################
+# CELL CYCLE CLUSTER PER CLUSTER #####################
+###############################################################
+
+# Cell cycle proportion per cluster
+## Using numeric cluster annotation
+
+plot_cell_cycle_per_cluster <- function(embryo.combined.sct, output_dir) {
+  clusters <- unique(embryo.combined.sct$seurat_clusters)
+  for (cluster in clusters) {
+    data <- embryo.combined.sct@meta.data %>%
+      filter(seurat_clusters == cluster) %>%
+      group_by(orig.ident, Phase) %>%
+      summarise(count = n()) %>%
+      ungroup() %>%
+      group_by(orig.ident) %>%
+      mutate(proportion = count / sum(count)) %>%
+      ungroup()
+
+    data$orig.ident <- factor(data$orig.ident, levels = c("WT", "cYAPKO"))
+
+    plot <- ggplot(data, aes(x = orig.ident, y = proportion, fill = Phase)) +
+      geom_bar(stat = "identity", position = "fill") +
+      scale_y_continuous(labels = scales::percent) +
+      labs(title = paste("Cluster", cluster), x = "Genotype", y = "Proportion (%)") +
+      theme_bw() +
+      scale_fill_manual(values = c("G1" = "#1f77b4", "G2M" = "#ff7f0e", "S" = "#2ca02c"))
+    # Save plot to PDF
+    pdf(paste0(output_dir, "cellCycle_Cluster_", cluster, ".pdf"), width = 3, height = 4)
+    print(plot)
+    dev.off()
+  }
+}
+plot_cell_cycle_per_cluster(embryo.combined.sct, output_dir = "output/seurat/")
+
+
+
+
+```
+
+--> Look great, code can be re-used to generate 1 *Vln plot with statistics from seurat DEG; directly with stars within the plot*!
+
+
+
+
+
+
+
+
 # Upload files to GEO - cardiac paper E775
 
 Go [here](https://www.ncbi.nlm.nih.gov/geo/info/seq.html); and follow instructions in `Transfer Files`. Connect to my personal space (`uploads/thomasroule@orcid_A787EGG4`) and transfer files.

@@ -6625,7 +6625,7 @@ conda activate DiffBind
 library("tidyverse")
 library("csaw")
 library("edgeR")
-
+library("statmod")
 
 set.seed(42)
 
@@ -6900,12 +6900,52 @@ plotMDS(cpm(y, log=TRUE), top=10000, labels=genotype,
 dev.off()
 
 
-# Save
-
+# Save - LOAD ####################################
 save.image(file = "output/csaw/bin1000space100_v1.RData")
+load("output/csaw/bin1000space100_v1.RData")
+##################################################
+
+# test for DB between conditions in each window using the QL F-test
+contrast <- makeContrasts(KO-WT, levels=design)
+res <- glmQLFTest(fit, contrast=contrast)
+
+# Grouping windows into regions
+merged <- mergeResultsList(list(filtered.data), 
+    tab.list=list(res$table),
+    equiweight=TRUE, tol=100, merge.args=list(max.width=30000))
+merged$regions
 
 
-XXXY HERE!!!
+tabcom <- merged$combined
+is.sig <- tabcom$FDR <= 0.05
+summary(is.sig)
+table(tabcom$direction[is.sig])
+tabbest <- merged$best
+is.sig.pos <- (tabbest$rep.logFC > 0)[is.sig]
+summary(is.sig.pos)
+
+# Save rds
+out.ranges <- merged$regions
+mcols(out.ranges) <- data.frame(tabcom, best.logFC=tabbest$rep.logFC)
+saveRDS(file="output/csaw/results_bin1000space100.rds", out.ranges)
+
+# Add annotation
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+library("org.Hs.eg.db")
+
+anno <- detailRanges(out.ranges, orgdb=org.Hs.eg.db,
+    txdb=TxDb.Hsapiens.UCSC.hg38.knownGene)
+mcols(out.ranges) <- cbind(mcols(out.ranges), anno)
+
+# SAVE OUTPUT
+out_tibble =  as_tibble(as.data.frame(out.ranges)) %>%
+  dplyr::rename(seqnames = seqnames, start = start, end = end, strand = strand)
+write_tsv(out_tibble , "output/csaw/results_bin1000space100.tsv")
+
+# Check some genes
+out_tibble %>%
+  dplyr::select(seqnames, start, end, rep.logFC, best.logFC, FDR, direction, overlap) %>%
+  filter(FDR < 0.05, best.logFC > 0)
 
 
 ```
@@ -6914,8 +6954,255 @@ XXXY HERE!!!
   - Then error with `SummarizedExperiment()`:  `Error in if (prop.seen > 1 { : missing value where TRUE/FALSE needed`. Not sure why, there is no NA, and I try removing all the windowns with 0 but still same error. So let's instead **manually filtered low-abundance windows**
 --> Lets forget about the background part for now and let's use another moethdo to filter out low quality windows. Instead, lets simply **Filter out low quality windows by count size**
 
+- NOTE: # `tol` at `mergeWindows()` or `mergeResultsList()` sets the minimum distance to merge binding sites: large values (500-1000 bp) reduce redundancy, while small values (<200 bp) resolve individual sites. max.width limits cluster size, splitting larger ones into equal subclusters.
 
 --> My bigiwgs are already normalized, so let's try to NOT apply any normalization
+
+
+
+
+
+
+## Run csaw - bin150space50
+
+Let's follow the [csaw guide](https://bioconductor.org/books/release/csawBook/counting-reads-into-windows.html)
+
+```bash
+conda activate DiffBind
+```
+
+```R
+# packages
+library("tidyverse")
+library("csaw")
+library("edgeR")
+library("statmod")
+
+set.seed(42)
+
+
+##################################################################
+# import samples (bin150space50) ######################
+####################################################################
+
+
+# import SCORE 
+SCORE_NPC_WT_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal-bin150space50-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_NPC_WT_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal-bin150space50-NPC_WT_H3K27me3_008-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_NPC_KO_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal-bin150space50-NPC_KO_H3K27me3_005-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_NPC_KO_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal-bin150space50-NPC_KO_H3K27me3_008-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+
+
+
+
+# import BED position from matrix
+BED_NPC_WT_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal-bin150space50-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_NPC_WT_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal-bin150space50-NPC_WT_H3K27me3_008-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_NPC_KO_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal-bin150space50-NPC_KO_H3K27me3_005-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_NPC_KO_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal-bin150space50-NPC_KO_H3K27me3_008-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+
+
+
+# Put together, gene name, scoer per row, coordinate and row
+SCORE_BED_NPC_WT_H3K27me3_005 = SCORE_NPC_WT_H3K27me3_005 %>%
+  left_join(BED_NPC_WT_H3K27me3_005 ) %>%
+  dplyr::select(chr, start, end, score) %>%
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R1")
+SCORE_BED_NPC_WT_H3K27me3_008 = SCORE_NPC_WT_H3K27me3_008 %>%
+  left_join(BED_NPC_WT_H3K27me3_008 ) %>%
+  dplyr::select(chr, start, end, score) %>%
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R2")
+
+SCORE_BED_NPC_KO_H3K27me3_005 = SCORE_NPC_KO_H3K27me3_005 %>%
+  left_join(BED_NPC_KO_H3K27me3_005 ) %>%
+  dplyr::select(chr, start, end, score) %>%
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R1")
+SCORE_BED_NPC_KO_H3K27me3_008 = SCORE_NPC_KO_H3K27me3_008 %>%
+  left_join(BED_NPC_KO_H3K27me3_008 ) %>%
+  dplyr::select(chr, start, end, score) %>%
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R2")
+
+
+
+# Convert to RangedSummarizedExperiment Object
+## Convert to GRange
+samples <- list(
+  "WT_005" = SCORE_BED_NPC_WT_H3K27me3_005,
+  "WT_008" = SCORE_BED_NPC_WT_H3K27me3_008,
+  "KO_005" = SCORE_BED_NPC_KO_H3K27me3_005,
+  "KO_008" = SCORE_BED_NPC_KO_H3K27me3_008
+)
+## Ensure all samples have the same genomic windows (assuming identical structure)
+gr <- GRanges(
+  seqnames = samples$WT_005$chr, 
+  ranges = IRanges(start = samples$WT_005$start, end = samples$WT_005$end)
+)
+## Create a matrix of counts where each column corresponds to a sample
+counts_matrix <- do.call(cbind, lapply(samples, function(df) df$score))
+## Define colData (metadata for samples)
+col_data <- data.frame(
+  sample_name = names(samples),
+  genotype = c("WT", "WT", "KO", "KO"),
+  replicate = c("R1", "R2", "R1", "R2"),
+  totals = colSums(counts_matrix)  # Library size per sample
+)
+## Create SummarizedExperiment object
+RSE_SCORE_BED_NPC_H3K27me3 <- SummarizedExperiment(
+  assays = list(counts = counts_matrix),
+  rowRanges = gr,
+  colData = col_data
+)
+## Check object
+RSE_SCORE_BED_NPC_H3K27me3
+
+
+
+# Filter out low quality windows by count size
+abundances <- aveLogCPM(asDGEList(RSE_SCORE_BED_NPC_H3K27me3))
+summary(abundances)
+
+
+## Convert to data frame for ggplot2
+abundance_df <- data.frame(logCPM = abundances)
+pdf("output/csaw/hist_aveLogCPM-bin150space50.pdf", width=6, height=5)
+ggplot(abundance_df, aes(x = logCPM)) +
+  geom_histogram(bins = 50, fill = "gray", color = "black") +
+  ggtitle("Distribution of Window Abundance (aveLogCPM)") +
+  xlab("Average Log CPM") +
+  ylab("Frequency")+
+  geom_vline(xintercept = -9, color = "red", linetype = "dashed", size = 1) +  
+  theme_bw()
+dev.off()
+
+
+
+keep <- abundances > -9 # Here treshold of 10 apply. CAN BE CHANGED!!!
+summary(keep)
+
+## Apply filtering
+filtered.data <- RSE_SCORE_BED_NPC_H3K27me3[keep,]
+
+# Normalization
+# --> LETS TRY WITHOUT NORMALIZATION, as theorcially already done...
+
+# Statistical modelling
+y <- asDGEList(filtered.data)
+str(y)
+
+genotype <- RSE_SCORE_BED_NPC_H3K27me3$genotype
+## Convert to factor
+genotype <- factor(genotype, levels = c("WT", "KO"))  # Ensures WT is first
+## Create design matrix
+design <- model.matrix(~0 + genotype)
+colnames(design) <- levels(genotype)
+design
+
+pdf("output/csaw/plotMDS-bin150space50.pdf", width=6, height=5)
+plotMDS(cpm(y, log=TRUE), top=10000, labels=genotype,
+    col=c("black", "red")[as.integer(genotype)])
+dev.off()
+
+# estimate the negative binomial (NB) and quasi-likelihood (QL) dispersions for each window
+y <- estimateDisp(y, design) # Model biological variability across replicates./Reduce technical noise and improve variance structure.
+summary(y$trended.dispersion)
+fit <- glmQLFit(y, design, robust=TRUE) # Shrink extreme dispersions, ensuring more accurate differential windows.
+summary(fit$df.prior)
+
+pdf("output/csaw/plotMDS_glmQLFit-bin150space50.pdf", width=6, height=5)
+plotMDS(cpm(y, log=TRUE), top=10000, labels=genotype,
+    col=c("black", "red")[as.integer(genotype)])
+dev.off()
+
+
+# Save - LOAD ####################################
+save.image(file = "output/csaw/bin150space50_v1.RData")
+load("output/csaw/bin150space50_v1.RData")
+##################################################
+
+
+# test for DB between conditions in each window using the QL F-test
+contrast <- makeContrasts(KO-WT, levels=design)
+res <- glmQLFTest(fit, contrast=contrast)
+
+# Grouping windows into regions
+merged <- mergeResultsList(list(filtered.data), 
+    tab.list=list(res$table),
+    equiweight=TRUE, tol=100, merge.args=list(max.width=30000))
+merged$regions
+
+
+tabcom <- merged$combined
+is.sig <- tabcom$FDR <= 0.05
+summary(is.sig)
+table(tabcom$direction[is.sig])
+tabbest <- merged$best
+is.sig.pos <- (tabbest$rep.logFC > 0)[is.sig]
+summary(is.sig.pos)
+
+# Save rds
+out.ranges <- merged$regions
+mcols(out.ranges) <- data.frame(tabcom, best.logFC=tabbest$rep.logFC)
+saveRDS(file="output/csaw/results_bin150space50.rds", out.ranges)
+
+# Add annotation
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+library("org.Hs.eg.db")
+
+anno <- detailRanges(out.ranges, orgdb=org.Hs.eg.db,
+    txdb=TxDb.Hsapiens.UCSC.hg38.knownGene)
+mcols(out.ranges) <- cbind(mcols(out.ranges), anno)
+
+# SAVE OUTPUT
+out_tibble =  as_tibble(as.data.frame(out.ranges)) %>%
+  dplyr::rename(seqnames = seqnames, start = start, end = end, strand = strand)
+write_tsv(out_tibble , "output/csaw/results_bin150space50.tsv")
+
+# Check some genes
+out_tibble %>%
+  dplyr::select(seqnames, start, end, rep.logFC, best.logFC, FDR, direction, overlap) %>%
+  filter(FDR < 0.05, best.logFC > 0)
+
+
+```
+
+--> Very few Diff. bound regions here
+
+--> Maybe the filtering of low quality window is to harsh? Or not enough?
+
+
+
 
 
 
