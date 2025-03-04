@@ -12460,9 +12460,9 @@ DefaultAssay(embryo.combined.sct) <- "RNA" # For vizualization either use SCT or
 ## post 20231005 Conchi meeting
 
 #pdf("output/seurat/VlnPlot_SCT_control_cYAPKO_7genes_V3.pdf", width=10, height=20)
-pdf("output/seurat/VlnPlot_RNA_control_cYAPKO_8genes_V3.pdf", width=10, height=20)
+pdf("output/seurat/VlnPlot_RNA_control_cYAPKO_10genes_V3.pdf", width=10, height=20)
 VlnPlot(embryo.combined.sct, 
-        features = c("Crabp2", "Crabp1", "Rbp1", "Aldh1a2", "Ncoa2", "Hdac1", "Cyp26a1","Hotairm1"), 
+        features = c("Crabp2", "Crabp1", "Rbp1", "Aldh1a2", "Ncoa2", "Hdac1", "Cyp26a1","Hotairm1","Nr2f2", "Mef2c"), 
         ncol = 1, pt.size = 0.1, split.by = "condition", cols = c("blue", "red")) & 
   theme(plot.title = element_text(size=10),
         axis.text.x = element_text(angle = 0, hjust = 0.5, vjust = 0.5)) 
@@ -12507,7 +12507,7 @@ combined_deg <- combined_deg %>%
 
 # Generate the violin plot
 ###### Define genes of interest
-genes_of_interest <- c("Crabp2", "Crabp1", "Rbp1", "Aldh1a2", "Ncoa2", "Hdac1", "Cyp26a1","Hotairm1")
+genes_of_interest <- c("Crabp2", "Crabp1", "Rbp1", "Aldh1a2", "Ncoa2", "Hdac1", "Cyp26a1","Hotairm1","Nr2f2", "Mef2c")
 ###### Extract the subset of significant DEGs
 sig_data <- combined_deg %>%
   filter(gene %in% genes_of_interest)
@@ -12529,7 +12529,7 @@ sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches c
 ###### Merge significance with computed max expression
 sig_data <- sig_data %>%
   left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
-pdf("output/seurat/VlnPlot_RNA_control_cYAPKO_8genes_V3_STAT.pdf", width=10, height=3)
+pdf("output/seurat/VlnPlot_RNA_control_cYAPKO_10genes_V3_STAT.pdf", width=10, height=3)
 ###### Generate separate plots per gene
 for (gene in genes_of_interest) {
   print(paste("Generating plot for:", gene))
@@ -12561,6 +12561,8 @@ dev.off()
 # Cell cycle proportion per cluster
 ## Using numeric cluster annotation
 
+### 1 CLUSTER PER PAGE ######
+
 plot_cell_cycle_per_cluster <- function(embryo.combined.sct, output_dir) {
   clusters <- unique(embryo.combined.sct$seurat_clusters)
   for (cluster in clusters) {
@@ -12589,6 +12591,46 @@ plot_cell_cycle_per_cluster <- function(embryo.combined.sct, output_dir) {
 }
 plot_cell_cycle_per_cluster(embryo.combined.sct, output_dir = "output/seurat/")
 
+
+### 1 PLOT WITH ALL CLUSTERS ######
+
+plot_cell_cycle_all_clusters <- function(embryo.combined.sct, output_file) {
+  # Aggregate data for all clusters
+  data <- embryo.combined.sct@meta.data %>%
+    group_by(seurat_clusters, orig.ident, Phase) %>%
+    summarise(count = n()) %>%
+    ungroup() %>%
+    group_by(seurat_clusters, orig.ident) %>%
+    mutate(proportion = count / sum(count)) %>%
+    ungroup()
+
+  # Ensure factors are in order
+  data$orig.ident <- factor(data$orig.ident, levels = c("WT", "cYAPKO"))
+  data$seurat_clusters <- as.factor(data$seurat_clusters)
+
+  # Create a new ordered factor for alternating WT and cYAPKO
+  data$cluster_ordered <- factor(paste0(data$seurat_clusters, "_", data$orig.ident),
+                                 levels = as.vector(rbind(paste0(levels(data$seurat_clusters), "_WT"),
+                                                          paste0(levels(data$seurat_clusters), "_cYAPKO"))))
+
+  # Create the plot with stacked phases and alternating WT/cYAPKO per cluster
+  plot <- ggplot(data, aes(x = cluster_ordered, y = proportion, fill = Phase)) +
+    geom_bar(stat = "identity", position = "stack") +
+    scale_y_continuous(labels = scales::percent) +
+    labs(title = "Cell Cycle Proportion Per Cluster", x = "Cluster", y = "Proportion (%)") +
+    theme_bw() +
+    scale_fill_manual(values = c("G1" = "#1f77b4", "G2M" = "#ff7f0e", "S" = "#2ca02c")) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) +
+    scale_x_discrete(labels = function(x) gsub("_", " ", x))  # Make x-axis labels readable
+
+  # Save plot to PDF
+  pdf(output_file, width = 8, height = 5)
+  print(plot)
+  dev.off()
+}
+
+# Call the function
+plot_cell_cycle_all_clusters(embryo.combined.sct, output_file = "output/seurat/cellCycle_all_singlePlot.pdf")
 
 
 
