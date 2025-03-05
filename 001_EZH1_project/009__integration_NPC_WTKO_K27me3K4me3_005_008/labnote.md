@@ -858,7 +858,7 @@ sbatch scripts/matrix_TSS_10kb_H3K27me3_median_THOR_q50_gene.sh # 15647306 ok
 
 Lets's compare THOR and Ferguson method (ie. the identified peaks, and how the bigwig behave). We notably found with THOR more region that gain than regions that lost H3K27me3, but the opposite is found with Ferguson DESEQ2/EDGER method...
 
-Isolate gain lost peaks
+**Isolate gain lost peaks**
 ```bash
 # PEAK
 # EDGER diff peaks (GlmfitLikelihoodRatioRawCounts) 121 / 40 = 
@@ -904,14 +904,28 @@ output/bigwig_Ferguson/NPC_KO_H3K27me3_unique_norm99_median.bw # KO
 ```
 
 
-Lets do deepTools plot:
+Lets do **deepTools plot**:
+- gain lost (THOR and DESEQ2)
+- all genes
+- consensus H3K27me3 peaks (q2.3)
+
 
 ```bash
+conda activate deeptools
+# deeptools plot
 
-## deeptools plot
-sbatch scripts/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-THORq30PosNegPeaks.sh # 38161517 xxx
-sbatch scripts/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-EDGERGlmfitLikelihoodRatioRawCountsFDR05FCposNegPeaks.sh # 38161537 xxx
-sbatch scripts/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-DESEQ2lfcShrinkNORMALFDR05FCposNegPeaks.sh # 38161566 xxx
+## gain lost (THOR and DESEQ2)
+sbatch scripts/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-THORq30PosNegPeaks.sh # 38161517 ok
+sbatch scripts/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-EDGERGlmfitLikelihoodRatioRawCountsFDR05FCposNegPeaks.sh # 38161537 ok
+sbatch scripts/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-DESEQ2lfcShrinkNORMALFDR05FCposNegPeaks.sh # 38161566 ok
+
+## all genes
+sbatch scripts/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-allGenes.sh # 38615466 xxx
+sbatch scripts/matrix_TSS_10kb_H3K27me3-LocalMaxima_THOR-allGenes.sh # 38616206 xxx
+
+## consensus H3K27me3 peaks
+sbatch scripts/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-consensusPeaks.sh # 38616352 xxx 
+sbatch scripts/matrix_TSS_10kb_H3K27me3-LocalMaxima_THOR-consensusPeaks.sh # 38616376 xxx
 ```
 
 
@@ -922,7 +936,7 @@ sbatch scripts/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-DESEQ2lfcShrinkNORMALFDR
 
 --> So sliding window method look cool for bigger regions, but DESEQ2 cool too, for smaller regions... Let's try another method (csaw?) to have the best of both worlds
 
-
+--> For all genes and consensus peaks, XXXY
 
 
 
@@ -1256,9 +1270,9 @@ write.table(H3K4me3_KO_pool_annot_promoterAnd5_geneSymbol, file = "output/ChIPse
 ## From consensus peak
 
 ### Consensus peak H3K27me3 no extension/extension, qvalue 2.3
-- consensus peak H3K27me3, WT KO KOEF1aEZH1, no extension: `output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K27me3_pool_peaks.sorted.merge.bed`
-- consensus peak H3K27me3, WT KO KOEF1aEZH1, 100bp merge: `output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K27me3_pool_peaks.sorted.merge100bp.bed`
-- consensus peak H3K27me3, WT KO KOEF1aEZH1, 500bp merge: `output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K27me3_pool_peaks.sorted.merge500bp.bed`
+- consensus peak H3K27me3, WT KO, no extension: `output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K27me3_pool_peaks.sorted.merge.bed`
+- consensus peak H3K27me3, WT KO, 100bp merge: `output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K27me3_pool_peaks.sorted.merge100bp.bed`
+- consensus peak H3K27me3, WT KO, 500bp merge: `output/macs2/broad/broad_blacklist_qval2.30103/NPC_WTKO_H3K27me3_pool_peaks.sorted.merge500bp.bed`
 
 
 
@@ -7651,6 +7665,37 @@ y_bin150space5 = y
 
 
 ```
+
+
+
+
+
+
+# diffreps - differential binding analysis
+
+[diffreps](https://github.com/shenlab-sinai/diffreps) uses sliding window method on bed file. 
+
+## Install diffreps
+
+XXXY
+
+## Run diffreps
+
+
+
+Input files needed:
+- 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
