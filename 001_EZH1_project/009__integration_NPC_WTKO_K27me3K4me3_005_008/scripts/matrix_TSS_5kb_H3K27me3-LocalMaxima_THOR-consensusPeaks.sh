@@ -28,3 +28,34 @@ plotHeatmap -m output/deeptools/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-consens
     --zMax 10 10 100 100
 
 
+
+
+plotHeatmap -m output/deeptools/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-consensusPeaks.gz \
+    -out output/deeptools/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-consensusPeaks_heatmap1.pdf \
+    --samplesLabel "WT_LocalMaxima" "KO_LocalMaxima" "WT_THOR" "KO_THOR" \
+    --colorMap bwr \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 8 \
+    --heatmapWidth 2 \
+    --zMax 5 5 100 100
+
+
+
+plotHeatmap -m output/deeptools/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-consensusPeaks.gz \
+    -out output/deeptools/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-consensusPeaks_heatmap1.pdf \
+    --samplesLabel "WT_LocalMaxima" "KO_LocalMaxima" "WT_THOR" "KO_THOR" \
+    --colorMap bwr \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 8 \
+    --heatmapWidth 2 \
+    --zMax 5 5 100 100
+
+plotProfile -m output/deeptools/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-consensusPeaks.gz \
+    -out output/deeptools/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-consensusPeaks_profile.pdf \
+    --samplesLabel "WT_LocalMaxima" "KO_LocalMaxima" "WT_THOR" "KO_THOR" \
+    --perGroup \
+    --colors black red black red \
+    --refPointLabel "TSS" \
+    -T "H3K27me3 read density" \
+    -z ""
+

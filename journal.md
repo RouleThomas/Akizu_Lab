@@ -113,6 +113,10 @@ library("ChIPseqSpikeInFree")
 library("devtools")
 
 
+PERL, CPAN, MCPAN installation
+
+
+
 ### DiffBind
 R/4.1.0 **DiffBind** notably + following libraries:
 
@@ -122,20 +126,20 @@ library("csaw")
 
 ### featurecounts
 
-**featurecounts**
+featurecounts
 
 ### BedToBigwig
 
-**bedtools**, **genomeCoverageBed**, **bedGraphToBigWig**, **wiggletools** 
+bedtools, genomeCoverageBed, bedGraphToBigWig, wiggletools 
 
 ### wigtobigwig
 
-**wigtobigwig**
+wigtobigwig
 
 
 
 ### scRNAseq
-R/4.3.0 with **deseq2** and **ChIPseeker** and **Seurat** notably + following libraries:
+R/4.3.0 with deseq2 and ChIPseeker and Seurat notably + following libraries:
 library("DESeq2")
 library("tidyverse") 
 library("RColorBrewer")

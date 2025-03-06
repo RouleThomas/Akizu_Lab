@@ -28,3 +28,14 @@ plotHeatmap -m output/deeptools/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-allGene
     --zMax 10 10 100 100
 
 
+plotHeatmap -m output/deeptools/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-allGenes.gz \
+    -out output/deeptools/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-allGenes_heatmap1.pdf \
+    --samplesLabel "WT_LocalMaxima" "KO_LocalMaxima" "WT_THOR" "KO_THOR" \
+    --colorMap bwr \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 8 \
+    --heatmapWidth 2 \
+    --zMax 4 4 60 60
+
+
+

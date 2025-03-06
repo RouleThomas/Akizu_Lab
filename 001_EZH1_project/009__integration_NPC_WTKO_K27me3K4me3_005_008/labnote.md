@@ -920,12 +920,12 @@ sbatch scripts/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-EDGERGlmfitLikelihoodRat
 sbatch scripts/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-DESEQ2lfcShrinkNORMALFDR05FCposNegPeaks.sh # 38161566 ok
 
 ## all genes
-sbatch scripts/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-allGenes.sh # 38615466 xxx
-sbatch scripts/matrix_TSS_10kb_H3K27me3-LocalMaxima_THOR-allGenes.sh # 38616206 xxx
+sbatch scripts/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-allGenes.sh # 38615466 ok
+sbatch scripts/matrix_TSS_10kb_H3K27me3-LocalMaxima_THOR-allGenes.sh # 38616206 ok
 
 ## consensus H3K27me3 peaks
-sbatch scripts/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-consensusPeaks.sh # 38616352 xxx 
-sbatch scripts/matrix_TSS_10kb_H3K27me3-LocalMaxima_THOR-consensusPeaks.sh # 38616376 xxx
+sbatch scripts/matrix_TSS_5kb_H3K27me3-LocalMaxima_THOR-consensusPeaks.sh # 38616352 ok 
+sbatch scripts/matrix_TSS_10kb_H3K27me3-LocalMaxima_THOR-consensusPeaks.sh # 38616376 ok
 ```
 
 
@@ -936,7 +936,7 @@ sbatch scripts/matrix_TSS_10kb_H3K27me3-LocalMaxima_THOR-consensusPeaks.sh # 386
 
 --> So sliding window method look cool for bigger regions, but DESEQ2 cool too, for smaller regions... Let's try another method (csaw?) to have the best of both worlds
 
---> For all genes and consensus peaks, XXXY
+--> For all genes and consensus peaks, WT and KO present same H3K27me3 levels, for both LocalMaxima and  THOR bigwigs (so it is only using the THOR diff sites that I see an increase of H3K27me3 level...)
 
 
 
@@ -7677,24 +7677,382 @@ y_bin150space5 = y
 
 ## Install diffreps
 
-XXXY
+
+```bash
+cd ../../Master/software
+
+# download repo
+git clone https://github.com/shenlab-sinai/diffreps.git
+cd diffreps
+
+# use useless conda env to install diffreps
+conda activate ChIPseqSpikeInFree
+conda install bioconda::perl-cpan-shell # to allow Perl CPAN installation
+
+# install the perl dependencies --> Will be installed in ChIPseqSpikeInFree conda env
+perl -MCPAN -e 'install Statistics::TTest'
+perl -MCPAN -e 'install Math::CDF'
+perl -MCPAN -e 'install Parallel::ForkManager'
+
+# install
+perl Makefile.PL (Optional, PREFIX=your_perl_directory)
+make
+make test
+make install
+```
+--> All good
+
+
+
 
 ## Run diffreps
 
 
-
 Input files needed:
-- 
+- output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.sorted.bedGraph
+- output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.sorted.bedGraph
+- output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.sorted.bedGraph
+- output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.sorted.bedGraph
+
+
+Troubleshoot [discussion](https://groups.google.com/forum/?fromgroups\#!forum/diffreps-discuss)
+--> diffreps required BED6 file (= A BED file where each feature is described by chrom, start, end, name, score, and strand.)
+
+
+
+```bash
+conda activate ChIPseqSpikeInFree
+
+# Modify our bedGraph into bed (score in the 5th column); add dummy column 4
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.sorted.bedGraph > output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.sorted.bedGraph > output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.sorted.bedGraph > output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.sorted.bedGraph > output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed
+
+
+
+########### 1000bp every 100bp #################################
+
+# 1000bp every 100bp (Default histone) - Negative binomial
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_nb-diff.nb.txt --window 1000 --step 100
+# --> 111 diff sites
+
+# 1000bp every 100bp (Default histone) - Negative binomial Pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_nb_pval05-diff.nb.txt --window 1000 --step 100 --pval 0.05
+# --> 111 diff sites (same as just pval cutoff is changed...)
+
+# 1000bp every 100bp (Default histone) - Negative binomial Pval 0.001
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_nb_pval001-diff.nb.txt --window 1000 --step 100 --pval 0.001
+# --> xxx diff sites (same as just pval cutoff is changed...)
+
+
+# 1000bp every 100bp (Default histone) - Negative binomial with nsd 10
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_nb_nsd10-diff.nb.txt --window 1000 --step 100 --nsd 10
+# --> 89 diff sites
+
+
+
+# 1000bp every 100bp (Default histone) - t test
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_tt-diff.nb.txt --window 1000 --step 100 --meth tt
+# --> 17 diff sites
+
+# 1000bp every 100bp (Default histone) - G test
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_gt-diff.nb.txt --window 1000 --step 100 --meth gt
+# --> 202 diff sites
+
+
+
+# 1000bp every 100bp (Default histone) - G test with pval 0.001
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_gt_pval001-diff.nb.txt --window 1000 --step 100 --meth gt --pval 0.001
+# --> xxx diff sites 
+
+# 1000bp every 100bp (Default histone) - G test with pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_gt_pval05-diff.nb.txt --window 1000 --step 100 --meth gt --pval 0.05
+# --> xxx diff sites 
+
+
+
+########### 500bp every 100bp #################################
+
+# 500bp every 100bp (Default histone) - Negative binomial
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin500space100_nb-diff.nb.txt --window 500 --step 100
+# --> 77 diff sites
+
+# 500bp every 100bp (Default histone) - Negative binomial with pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin500space100_nb_pval05-diff.nb.txt --window 500 --step 100 --pval 0.05
+# --> xxx diff sites
+
+# 500bp every 100bp (Default histone) - Negative binomial with pval 0.001
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin500space100_nb_pval001-diff.nb.txt --window 500 --step 100 --pval 0.001
+# --> xxx diff sites
+
+# 500bp every 100bp (Default histone) - G test with pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin500space100_gt_pval05-diff.nb.txt --window 500 --step 100 --meth gt --pval 0.05
+# --> xxx diff sites
+
+# 500bp every 100bp (Default histone) - G test with pval 0.001
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin500space100_gt_pval001-diff.nb.txt --window 500 --step 100 --meth gt --pval 0.001
+# --> xxx diff sites
+
+
+
+
+########### 250bp every 50bp #################################
+
+# 250bp every 50bp (Default histone) - Negative binomial
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin250space50_nb-diff.nb.txt --window 250 --step 50
+# --> 10 diff sites
+
+# 250bp every 50bp (Default histone) - Negative binomial with pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin250space50_nb_pval05-diff.nb.txt --window 250 --step 50 --pval 0.05
+
+# 250bp every 50bp (Default histone) - Negative binomial with pval 0.001
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin250space50_nb_pval001-diff.nb.txt --window 250 --step 50 --pval 0.001
+
+
+
+
+# 250bp every 50bp (Default histone) - G test with pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin250space50_gt_pval05-diff.nb.txt --window 250 --step 50 --meth gt --pval 0.05
+
+# 250bp every 50bp (Default histone) - G test with pval 0.001
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin250space50_gt_pval001-diff.nb.txt --window 250 --step 50 --meth gt --pval 0.001
+
+
+
+```
+
+
+--> *1000bp every 100bp looks optimal* (more diff site and recommended by the tool)
+
+--> Changing *Pval treshold to 0.001* looks good; then investigate in R more in detail; but it collect more diff sites. That look true for the most. = This correspond to the nb of windows kept!!
+
+--> *NB test looks ok* (and recommended to use). G-test looks more 'relax', could use it too!
+
+
+
+## Explore diffreps results in R
+
+These versions looks good:
+
+- 1000bp every 100bp (Default histone) - Negative binomial Pval 0.05: `output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_nb_pval05-diff.nb.txt`
+- 1000bp every 100bp (Default histone) - Negative binomial Pval 0.001: `output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_nb_pval001-diff.nb.txt`
+- 1000bp every 100bp (Default histone) - G test with pval 0.05: `output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_gt_pval05-diff.nb.txt`
+- 1000bp every 100bp (Default histone) - G test with pval 0.001: `output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_gt_pval001-diff.nb.txt`
+
+- 500bp every 100bp (Default histone) - Negative binomial Pval 0.05: `output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin500space100_nb_pval05-diff.nb.txt`
+- 500bp every 100bp (Default histone) - Negative binomial Pval 0.001: `output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin500space100_nb_pval001-diff.nb.txt`
+- 500bp every 100bp (Default histone) - G test with pval 0.05: `output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin500space100_gt_pval05-diff.nb.txt`
+- 500bp every 100bp (Default histone) - G test with pval 0.001: `output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin500space100_gt_pval001-diff.nb.txt`
+
+
+
+- 250bp every 50bp (Default histone) - Negative binomial Pval 0.05: `output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin250space50_nb_pval05-diff.nb.txt`
+- 250bp every 50bp (Default histone) - Negative binomial Pval 0.001: `output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin250space50_nb_pval001-diff.nb.txt`
+- 250bp every 50bp (Default histone) - G test with pval 0.05: `output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin250space50_gt_pval05-diff.nb.txt`
+- 250bp every 50bp (Default histone) - G test with pval 0.001: `output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin250space50_gt_pval001-diff.nb.txt`
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+
+
+# import files
+bin1000space100_nb_pval05 <- read.delim("output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_nb_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin1000space100_nb_pval001 <- read.delim("output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_nb_pval001-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin1000space100_gt_pval05 <- read.delim("output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin1000space100_gt_pval001 <- read.delim("output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_gt_pval001-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+
+bin500space100_nb_pval05 <- read.delim("output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin500space100_nb_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin500space100_nb_pval001 <- read.delim("output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin500space100_nb_pval001-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin500space100_gt_pval05 <- read.delim("output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin500space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin500space100_gt_pval001 <- read.delim("output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin500space100_gt_pval001-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+
+
+bin250space50_nb_pval05 <- read.delim("output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin250space50_nb_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin250space50_nb_pval001 <- read.delim("output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin250space50_nb_pval001-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin250space50_gt_pval05 <- read.delim("output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin250space50_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin250space50_gt_pval001 <- read.delim("output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin250space50_gt_pval001-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+
+# Replace Inf by min/max values
+
+bin1000space100_nb_pval05$log2FC[bin1000space100_nb_pval05$log2FC == Inf] <- max(bin1000space100_nb_pval05$log2FC[is.finite(bin1000space100_nb_pval05$log2FC)], na.rm = TRUE)
+bin1000space100_nb_pval05$log2FC[bin1000space100_nb_pval05$log2FC == -Inf] <- min(bin1000space100_nb_pval05$log2FC[is.finite(bin1000space100_nb_pval05$log2FC)], na.rm = TRUE)
+
+bin1000space100_nb_pval001$log2FC[bin1000space100_nb_pval001$log2FC == Inf] <- max(bin1000space100_nb_pval001$log2FC[is.finite(bin1000space100_nb_pval001$log2FC)], na.rm = TRUE)
+bin1000space100_nb_pval001$log2FC[bin1000space100_nb_pval001$log2FC == -Inf] <- min(bin1000space100_nb_pval001$log2FC[is.finite(bin1000space100_nb_pval001$log2FC)], na.rm = TRUE)
+
+bin1000space100_gt_pval05$log2FC[bin1000space100_gt_pval05$log2FC == Inf] <- max(bin1000space100_gt_pval05$log2FC[is.finite(bin1000space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin1000space100_gt_pval05$log2FC[bin1000space100_gt_pval05$log2FC == -Inf] <- min(bin1000space100_gt_pval05$log2FC[is.finite(bin1000space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin1000space100_gt_pval001$log2FC[bin1000space100_gt_pval001$log2FC == Inf] <- max(bin1000space100_gt_pval001$log2FC[is.finite(bin1000space100_gt_pval001$log2FC)], na.rm = TRUE)
+bin1000space100_gt_pval001$log2FC[bin1000space100_gt_pval001$log2FC == -Inf] <- min(bin1000space100_gt_pval001$log2FC[is.finite(bin1000space100_gt_pval001$log2FC)], na.rm = TRUE)
+
+
+bin500space100_nb_pval05$log2FC[bin500space100_nb_pval05$log2FC == Inf] <- max(bin500space100_nb_pval05$log2FC[is.finite(bin500space100_nb_pval05$log2FC)], na.rm = TRUE)
+bin500space100_nb_pval05$log2FC[bin500space100_nb_pval05$log2FC == -Inf] <- min(bin500space100_nb_pval05$log2FC[is.finite(bin500space100_nb_pval05$log2FC)], na.rm = TRUE)
+
+bin500space100_nb_pval001$log2FC[bin500space100_nb_pval001$log2FC == Inf] <- max(bin500space100_nb_pval001$log2FC[is.finite(bin500space100_nb_pval001$log2FC)], na.rm = TRUE)
+bin500space100_nb_pval001$log2FC[bin500space100_nb_pval001$log2FC == -Inf] <- min(bin500space100_nb_pval001$log2FC[is.finite(bin500space100_nb_pval001$log2FC)], na.rm = TRUE)
+
+bin500space100_gt_pval05$log2FC[bin500space100_gt_pval05$log2FC == Inf] <- max(bin500space100_gt_pval05$log2FC[is.finite(bin500space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin500space100_gt_pval05$log2FC[bin500space100_gt_pval05$log2FC == -Inf] <- min(bin500space100_gt_pval05$log2FC[is.finite(bin500space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin500space100_gt_pval001$log2FC[bin500space100_gt_pval001$log2FC == Inf] <- max(bin500space100_gt_pval001$log2FC[is.finite(bin500space100_gt_pval001$log2FC)], na.rm = TRUE)
+bin500space100_gt_pval001$log2FC[bin500space100_gt_pval001$log2FC == -Inf] <- min(bin500space100_gt_pval001$log2FC[is.finite(bin500space100_gt_pval001$log2FC)], na.rm = TRUE)
+
+
+bin250space50_nb_pval05$log2FC[bin250space50_nb_pval05$log2FC == Inf] <- max(bin250space50_nb_pval05$log2FC[is.finite(bin250space50_nb_pval05$log2FC)], na.rm = TRUE)
+bin250space50_nb_pval05$log2FC[bin250space50_nb_pval05$log2FC == -Inf] <- min(bin250space50_nb_pval05$log2FC[is.finite(bin250space50_nb_pval05$log2FC)], na.rm = TRUE)
+
+bin250space50_nb_pval001$log2FC[bin250space50_nb_pval001$log2FC == Inf] <- max(bin250space50_nb_pval001$log2FC[is.finite(bin250space50_nb_pval001$log2FC)], na.rm = TRUE)
+bin250space50_nb_pval001$log2FC[bin250space50_nb_pval001$log2FC == -Inf] <- min(bin250space50_nb_pval001$log2FC[is.finite(bin250space50_nb_pval001$log2FC)], na.rm = TRUE)
+
+bin250space50_gt_pval05$log2FC[bin250space50_gt_pval05$log2FC == Inf] <- max(bin250space50_gt_pval05$log2FC[is.finite(bin250space50_gt_pval05$log2FC)], na.rm = TRUE)
+bin250space50_gt_pval05$log2FC[bin250space50_gt_pval05$log2FC == -Inf] <- min(bin250space50_gt_pval05$log2FC[is.finite(bin250space50_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin250space50_gt_pval001$log2FC[bin250space50_gt_pval001$log2FC == Inf] <- max(bin250space50_gt_pval001$log2FC[is.finite(bin250space50_gt_pval001$log2FC)], na.rm = TRUE)
+bin250space50_gt_pval001$log2FC[bin250space50_gt_pval001$log2FC == -Inf] <- min(bin250space50_gt_pval001$log2FC[is.finite(bin250space50_gt_pval001$log2FC)], na.rm = TRUE)
+
+
+# List of dataset names
+file_names <- c("bin1000space100_nb_pval05", "bin1000space100_nb_pval001", 
+                "bin1000space100_gt_pval05", "bin1000space100_gt_pval001",
+                "bin500space100_nb_pval05", "bin500space100_nb_pval001",
+                "bin500space100_gt_pval05", "bin500space100_gt_pval001",
+                "bin250space50_nb_pval05", "bin250space50_nb_pval001",
+                "bin250space50_gt_pval05", "bin250space50_gt_pval001")
+
+## Function to read and format each file
+read_and_process <- function(file) {
+  df <- get(file)  # Load dataset from environment
+  df$dataset <- file  # Add dataset identifier
+  return(df)
+}
+
+## Combine all datasets into one
+combined_data <- bind_rows(lapply(file_names, read_and_process)) 
+
+combined_data_counts <- combined_data %>% 
+  filter(padj<0.05) %>%   ## !!!!!!!!!! CHANGE PVAL HERE !!!!!!!!!!!!!!!!!!!!!!
+  mutate(direction = ifelse(log2FC < 0, "Negative", "Positive")) %>%
+  group_by(dataset, direction) %>%
+  summarise(count = n(), .groups = "drop")
+
+## plot
+
+pdf("output/diffreps/hist-log2FC_distribution-padj05.pdf", width=7, height=4)
+combined_data %>% 
+  filter(padj<0.05) %>%   ## !!!!!!!!!! CHANGE PVAL HERE !!!!!!!!!!!!!!!!!!!!!!
+ggplot(., aes(x = log2FC)) +
+  geom_histogram(binwidth = 0.5, fill = "black", color = "black", alpha = 0.7) +
+  facet_wrap(~ dataset, scales = "free_y", nrow = 3) +  # Facet per dataset
+  labs(title = "Log2FC Distribution Across Datasets",
+       x = "Log2 Fold Change (log2FC)",
+       y = "Frequency") +
+  theme_bw() +
+  theme(strip.text = element_text(size = 7, face = "bold")) +
+  geom_text(data = combined_data_counts, 
+            aes(x = ifelse(direction == "Negative", -6, 4),  # Fixed x positions
+                y = Inf, 
+                label = paste0(count)), 
+            vjust = 1.5, 
+            hjust = ifelse(combined_data_counts$direction == "Negative", 0, 1), 
+            size = 3, fontface = "bold", color = "red")
+dev.off()
+
+
+# Focus bin1000space100_gt_pval05 and bin500space100_gt_pval05
+combined_data_counts_filt = combined_data_counts %>%  filter(dataset %in% c("bin1000space100_gt_pval05" , "bin500space100_gt_pval05"))
+
+
+pdf("output/diffreps/hist-log2FC_distribution-padj05_gt_pval05.pdf", width=7, height=4)
+combined_data %>% 
+  filter(padj<0.05) %>%   ## !!!!!!!!!! CHANGE PVAL HERE !!!!!!!!!!!!!!!!!!!!!! 
+  filter(dataset %in% c("bin1000space100_gt_pval05" , "bin500space100_gt_pval05")) %>% 
+ggplot(., aes(x = log2FC)) +
+  geom_histogram(binwidth = 0.5, fill = "black", color = "black", alpha = 0.7) +
+  facet_wrap(~ dataset, scales = "free_y", nrow = 1) +  # Facet per dataset
+  labs(title = "Log2FC Distribution Across Datasets",
+       x = "Log2 Fold Change (log2FC)",
+       y = "Frequency") +
+  theme_bw() +
+  theme(strip.text = element_text(size = 7, face = "bold")) +
+  geom_text(data = combined_data_counts_filt , 
+            aes(x = ifelse(direction == "Negative", -6, 4),  # Fixed x positions
+                y = Inf, 
+                label = paste0(count)), 
+            vjust = 1.5, 
+            hjust = ifelse(combined_data_counts_filt$direction == "Negative", 0, 1), 
+            size = 3, fontface = "bold", color = "red")
+dev.off()
+
+
+
+# Investigate some unique genes
+
+
+combined_data %>% 
+  filter(padj<0.05, log2FC > 0) %>%   
+  filter(dataset %in% c("bin1000space100_gt_pval05")) %>%
+  dplyr::select(-Length, -dataset) 
+
+
+combined_data %>% 
+  filter(padj<0.05, log2FC > 0) %>%   
+  filter(dataset %in% c("bin500space100_gt_pval05")) %>%
+  dplyr::select(-Length, -dataset) 
 
 
 
 
 
+```
 
 
+--> changing bin size gave different results:
+  - bin 1000 seems to give more diff bound regions, and overall lost
+  - bin 500 seems to give less diff bound regions, and overall gain
 
+--> The pvalur for window gave more site at 0.05 than 0.001 --> Prefer pval 0.05
 
+--> gt gave more diff. regions than nb 
 
+--> To maximize diff bound regions: pval05 gt = `bin1000space100_gt_pval05` and `bin500space100_gt_pval05`
+  --> These two seems good on IGV too. At padj 0.05. Lets try to find a way to integrate both into one file; to avoid overlap/duplicate
+    --> Check what csaw did?
+
+--> 
 
 
 
