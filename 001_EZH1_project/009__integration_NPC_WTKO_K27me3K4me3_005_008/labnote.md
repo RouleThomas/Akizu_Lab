@@ -7954,6 +7954,21 @@ awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Fergus
 
 
 
+
+########### 2000bp every 100bp #################################
+
+
+# 2000bp every 100bp - G test with pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin2000space100_gt_pval05-diff.nb.txt --window 2000 --step 100 --meth gt --pval 0.05
+
+# 2000bp every 100bp - G test with pval 0.1
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin2000space100_gt_pval1-diff.nb.txt --window 2000 --step 100 --meth gt --pval 0.1
+
+
+
+
+
+
 ########### 1000bp every 100bp #################################
 
 # 1000bp every 100bp (Default histone) - Negative binomial
@@ -7993,6 +8008,9 @@ diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed out
 diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_gt_pval05-diff.nb.txt --window 1000 --step 100 --meth gt --pval 0.05
 # --> xxx diff sites 
 
+# 1000bp every 100bp (Default histone) - G test with pval 0.1
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_gt_pval1-diff.nb.txt --window 1000 --step 100 --meth gt --pval 0.1
+
 
 
 ########### 500bp every 100bp #################################
@@ -8017,7 +8035,9 @@ diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed out
 diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin500space100_gt_pval001-diff.nb.txt --window 500 --step 100 --meth gt --pval 0.001
 # --> xxx diff sites
 
-
+# 500bp every 100bp (Default histone) - G test with pval 0.1 (same as THOR!)
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin500space100_gt_pval1-diff.nb.txt --window 500 --step 100 --meth gt --pval 0.1
+# --> xxx diff sites
 
 
 ########### 250bp every 50bp #################################
@@ -8041,6 +8061,17 @@ diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed out
 # 250bp every 50bp (Default histone) - G test with pval 0.001
 diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin250space50_gt_pval001-diff.nb.txt --window 250 --step 50 --meth gt --pval 0.001
 
+
+
+
+########### 100bp every 50bp (Default THOR) #################################
+
+
+# 100bp every 50bp  (Default THOR) - G test with pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin100space50_gt_pval05-diff.nb.txt --window 100 --step 50 --meth gt --pval 0.05
+
+# 100bp every 50bp  (Default THOR) - G test with pval 0.1
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin100space50_gt_pval1-diff.nb.txt --window 100 --step 50 --meth gt --pval 0.1
 
 
 ```
@@ -8256,10 +8287,6 @@ combined_data %>%
   filter(dataset %in% c("bin500space100_gt_pval05")) %>%
   dplyr::select(-Length, -dataset) 
 
-
-
-
-
 ```
 
 
@@ -8275,7 +8302,58 @@ combined_data %>%
   --> These two seems good on IGV too. At padj 0.05. Lets try to find a way to integrate both into one file; to avoid overlap/duplicate
     --> Check what csaw did?
 
---> 
+
+
+
+
+# SICER2 - differential binding analysis
+
+SICER2 is [here](https://zanglab.github.io/SICER2/#sicer2) and [github](https://github.com/zanglab/SICER2)
+
+## SICER2 installation
+
+Lets install through conda from [here](https://anaconda.org/bioconda/sicer2)
+
+```bash
+conda create -n sicer2 -c bioconda sicer2
+```
+
+
+## Run SICER2
+
+SICER2 *does NOT handle biological replicate*. The author recommended [here](https://github.com/zanglab/SICER2/issues/1) to "run SICER2 on each biological replicate separately".
+
+
+```bash
+conda activate sicer2
+
+
+# Default parameters Rep 005
+sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed -s hg38 --window_size 200 -fdr 0.01 --gap_size 600 --e_value 1000
+
+# Default parameters Rep 008
+sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed -s hg38 --window_size 200 -fdr 0.01 --gap_size 600 --e_value 1000
+
+
+
+
+
+
+
+
+```
+
+
+- NOTE: fdr could be change to 0.05 if not enough peaks. Also e_value could be change.
+
+
+
+
+
+
+
+
+
 
 
 
