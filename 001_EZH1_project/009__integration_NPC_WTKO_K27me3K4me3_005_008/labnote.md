@@ -941,6 +941,78 @@ sbatch scripts/matrix_TSS_10kb_H3K27me3-LocalMaxima_THOR-consensusPeaks.sh # 386
 
 
 
+
+# deepTools plot to compare DESEQ2 vs DIFFREPS vs THOR to identify diff. bound regions
+
+I assign peak to genes for each of the three method and perform venn diagram to check for overlap: A lot of genes identify as differential in a method -specific way! So let's check the profile of these method -specific genes, to see which method to believe (more detail in ppt `20250306`)
+
+
+First in the **Venn diagram webpage, collect the genes**, and organize them as one per row.
+
+```bash
+# Gain specific
+nano output/vennDiagram/DIFFREPS_Gain_45.txt
+nano output/vennDiagram/DESEQ2_Gain_29.txt
+nano output/vennDiagram/THOR_Gain_736.txt
+
+# Lost specific
+nano output/vennDiagram/DIFFREPS_Lost_41.txt
+nano output/vennDiagram/DESEQ2_Lost_89.txt
+nano output/vennDiagram/THOR_Lost_172.txt
+```
+
+**Generate GTF file from these geneSymbol list** of genes:
+
+
+```bash
+# Generate gtf file from gene list:
+
+### create gtf from gene list
+#### Modify the .txt file that list all genes so that it match gtf structure
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DIFFREPS_Gain_45.txt > output/vennDiagram/DIFFREPS_Gain_45_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DESEQ2_Gain_29.txt > output/vennDiagram/DESEQ2_Gain_29_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/THOR_Gain_736.txt > output/vennDiagram/THOR_Gain_736_as_gtf_geneSymbol.txt
+
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DIFFREPS_Lost_41.txt > output/vennDiagram/DIFFREPS_Lost_41_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DESEQ2_Lost_89.txt > output/vennDiagram/DESEQ2_Lost_89_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/THOR_Lost_172.txt > output/vennDiagram/THOR_Lost_172_as_gtf_geneSymbol.txt
+
+## Filter the gtf
+grep -Ff output/vennDiagram/DIFFREPS_Gain_45_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DIFFREPS_Gain_45.gtf
+grep -Ff output/vennDiagram/DESEQ2_Gain_29_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DESEQ2_Gain_29.gtf
+grep -Ff output/vennDiagram/THOR_Gain_736_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_THOR_Gain_736.gtf
+
+grep -Ff output/vennDiagram/DIFFREPS_Lost_41_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DIFFREPS_Lost_41.gtf
+grep -Ff output/vennDiagram/DESEQ2_Lost_89_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DESEQ2_Lost_89.gtf
+grep -Ff output/vennDiagram/THOR_Lost_172_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_THOR_Lost_172.gtf
+
+
+
+# deeptool plots
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-DIFFREPS_Gain_45.sh # 38761065 ok
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-DESEQ2_Gain_29.sh # 38761228 ok
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-THOR_Gain_736.sh # 38761489 ok
+
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-DIFFREPS_Lost_41.sh # 38761735 ok
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-DESEQ2_Lost_89.sh # 38762008 ok
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-THOR_Lost_172.sh # 38762279 ok
+
+```
+
+--> The method  specific genes identified looks real!! So each method got advantage lol!!! 
+  --> Let's relax statistics on DIFFREPS to be like THOR and have more sites....
+
+
+
+
+
+
+
+
+
+
+
+
 # ChIPseeker peak gene assignment
 
 ## From optimal qval bed files peaks
@@ -1496,6 +1568,157 @@ write.table(NPC_WTKO_H3K4me3_pool_peaks_merge500bp_annot_promoterAnd5_geneSymbol
             col.names = FALSE, 
             row.names = FALSE)
 ```
+
+
+## From diffreps
+
+Let's assign peak to genes on the two best windowns/parameters:
+- bin1000space100_gt_pval05 = 
+- bin500space100_gt_pval05
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import diff peaks
+bin1000space100_gt_pval05 <- read.delim("output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+
+bin1000space100_gt_pval05_Gain = bin1000space100_gt_pval05 %>%
+  filter(padj < 0.05, log2FC > 0)
+bin1000space100_gt_pval05_Lost = bin1000space100_gt_pval05 %>%
+  filter(padj < 0.05, log2FC < 0)
+
+bin500space100_gt_pval05 <- read.delim("output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin500space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+
+bin500space100_gt_pval05_Gain = bin500space100_gt_pval05 %>%
+  filter(padj < 0.05, log2FC > 0)
+bin500space100_gt_pval05_Lost = bin500space100_gt_pval05 %>%
+  filter(padj < 0.05, log2FC < 0)
+
+
+
+# Tidy peaks 
+## H3K4me3
+bin1000space100_gt_pval05_Gain_gr = makeGRangesFromDataFrame(bin1000space100_gt_pval05_Gain,keep.extra.columns=TRUE)
+bin1000space100_gt_pval05_Lost_gr = makeGRangesFromDataFrame(bin1000space100_gt_pval05_Lost,keep.extra.columns=TRUE)
+bin500space100_gt_pval05_Gain_gr = makeGRangesFromDataFrame(bin500space100_gt_pval05_Gain,keep.extra.columns=TRUE)
+bin500space100_gt_pval05_Lost_gr = makeGRangesFromDataFrame(bin500space100_gt_pval05_Lost,keep.extra.columns=TRUE)
+
+
+gr_list <- list(bin1000space100_gt_pval05_Gain=bin1000space100_gt_pval05_Gain_gr, bin1000space100_gt_pval05_Lost=bin1000space100_gt_pval05_Lost_gr, bin500space100_gt_pval05_Gain=bin500space100_gt_pval05_Gain_gr,
+bin500space100_gt_pval05_Lost=bin500space100_gt_pval05_Lost_gr)
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## plots
+pdf("output/ChIPseeker/plotAnnoBar_NPC_WTKO_H3K27me3_bin1000space100bin500space100_gt_pval05.pdf", width = 8, height = 3)
+plotAnnoBar(peakAnnoList)
+dev.off()
+pdf("output/ChIPseeker/plotDistToTSS_NPC_WTKO_H3K27me3_bin1000space100bin500space100_gt_pval05.pdf", width = 8, height = 3)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
+
+## Get annotation data frame
+bin1000space100_gt_pval05_Gain_annot <- as.data.frame(peakAnnoList[["bin1000space100_gt_pval05_Gain"]]@anno)
+bin1000space100_gt_pval05_Lost_annot <- as.data.frame(peakAnnoList[["bin1000space100_gt_pval05_Lost"]]@anno)
+bin500space100_gt_pval05_Gain_annot <- as.data.frame(peakAnnoList[["bin500space100_gt_pval05_Gain"]]@anno)
+bin500space100_gt_pval05_Lost_annot <- as.data.frame(peakAnnoList[["bin500space100_gt_pval05_Lost"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+bin1000space100_gt_pval05_Gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = bin1000space100_gt_pval05_Gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+bin1000space100_gt_pval05_Gain_annot$gene <- mapIds(org.Hs.eg.db, keys = bin1000space100_gt_pval05_Gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+bin1000space100_gt_pval05_Lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = bin1000space100_gt_pval05_Lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+bin1000space100_gt_pval05_Lost_annot$gene <- mapIds(org.Hs.eg.db, keys = bin1000space100_gt_pval05_Lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+bin500space100_gt_pval05_Gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = bin500space100_gt_pval05_Gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+bin500space100_gt_pval05_Gain_annot$gene <- mapIds(org.Hs.eg.db, keys = bin500space100_gt_pval05_Gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+bin500space100_gt_pval05_Lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = bin500space100_gt_pval05_Lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+bin500space100_gt_pval05_Lost_annot$gene <- mapIds(org.Hs.eg.db, keys = bin500space100_gt_pval05_Lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+## Save output table
+write.table(bin1000space100_gt_pval05_Gain_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_Gain_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(bin1000space100_gt_pval05_Lost_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_Lost_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(bin500space100_gt_pval05_Gain_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin500space100_gt_pval05_Gain_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(bin500space100_gt_pval05_Lost_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin500space100_gt_pval05_Lost_annot.txt", sep="\t", quote=F, row.names=F)  
+
+
+
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+bin1000space100_gt_pval05_Gain_annot_promoterAnd5 = tibble(bin1000space100_gt_pval05_Gain_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+bin1000space100_gt_pval05_Lost_annot_promoterAnd5 = tibble(bin1000space100_gt_pval05_Lost_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+bin500space100_gt_pval05_Gain_annot_promoterAnd5 = tibble(bin500space100_gt_pval05_Gain_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+bin500space100_gt_pval05_Lost_annot_promoterAnd5 = tibble(bin500space100_gt_pval05_Lost_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+### Save output gene lists
+bin1000space100_gt_pval05_Gain_annot_promoterAnd5_geneSymbol = bin1000space100_gt_pval05_Gain_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+bin1000space100_gt_pval05_Lost_annot_promoterAnd5_geneSymbol = bin1000space100_gt_pval05_Lost_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+bin500space100_gt_pval05_Gain_annot_promoterAnd5_geneSymbol = bin500space100_gt_pval05_Gain_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+bin500space100_gt_pval05_Lost_annot_promoterAnd5_geneSymbol = bin500space100_gt_pval05_Lost_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+write.table(bin1000space100_gt_pval05_Gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_Gain_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(bin1000space100_gt_pval05_Lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_Lost_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(bin500space100_gt_pval05_Gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin500space100_gt_pval05_Gain_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(bin500space100_gt_pval05_Lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin500space100_gt_pval05_Lost_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+```
+
+
+
+
+
 
 
 

@@ -115,7 +115,7 @@ library("devtools")
 
 PERL, CPAN, MCPAN installation
 
-
+diffreps
 
 ### DiffBind
 R/4.1.0 **DiffBind** notably + following libraries:
