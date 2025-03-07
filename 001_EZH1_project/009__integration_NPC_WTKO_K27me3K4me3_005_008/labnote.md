@@ -8057,7 +8057,8 @@ awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Fergus
 # 5000bp every 100bp - G test with pval 0.05
 diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin5000space100_gt_pval05-diff.nb.txt --window 5000 --step 100 --meth gt --pval 0.05
 
-
+# 5000bp every 100bp - G test with pval 0.1
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin5000space100_gt_pval1-diff.nb.txt --window 5000 --step 100 --meth gt --pval 0.1
 
 
 ########### 2000bp every 100bp #################################
@@ -8075,6 +8076,12 @@ diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed out
 
 
 ########### 1000bp every 100bp #################################
+# 1000bp every 100bp (Default histone) - Chi square test
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_cs-diff.nb.txt --window 1000 --step 100 --meth cs
+# -->  diff sites
+
+
+
 
 # 1000bp every 100bp (Default histone) - Negative binomial
 diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_nb-diff.nb.txt --window 1000 --step 100
@@ -8093,7 +8100,9 @@ diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed out
 diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_nb_nsd10-diff.nb.txt --window 1000 --step 100 --nsd 10
 # --> 89 diff sites
 
-
+# 1000bp every 100bp (Default histone) - Negative binomial with nsd 2
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_nb_nsd2-diff.nb.txt --window 1000 --step 100 --nsd 2
+# --> 145 diff sites
 
 # 1000bp every 100bp (Default histone) - t test
 diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin1000space100_tt-diff.nb.txt --window 1000 --step 100 --meth tt
@@ -8166,6 +8175,9 @@ diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed out
 # 250bp every 50bp (Default histone) - G test with pval 0.001
 diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin250space50_gt_pval001-diff.nb.txt --window 250 --step 50 --meth gt --pval 0.001
 
+
+# 250bp every 50bp (Default histone) - G test with pval 0.1
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin250space50_gt_pval1-diff.nb.txt --window 250 --step 50 --meth gt --pval 0.1
 
 
 
@@ -8240,6 +8252,9 @@ library("GenomicRanges")
 bin5000space100_gt_pval05 <- read.delim("output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin5000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
   as_tibble() %>%
   dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin5000space100_gt_pval1 <- read.delim("output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin5000space100_gt_pval1-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
 
 bin2000space100_gt_pval05 <- read.delim("output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin2000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
   as_tibble() %>%
@@ -8298,6 +8313,11 @@ bin250space50_gt_pval05 <- read.delim("output/diffreps/NPC_H3K27me3_unique_norm9
 bin250space50_gt_pval001 <- read.delim("output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin250space50_gt_pval001-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
   as_tibble() %>%
   dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin250space50_gt_pval1 <- read.delim("output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin250space50_gt_pval1-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+
+
 
 bin100space50_gt_pval05 <- read.delim("output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin100space50_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
   as_tibble() %>%
@@ -8312,6 +8332,10 @@ bin100space50_gt_pval1 <- read.delim("output/diffreps/NPC_H3K27me3_unique_norm99
 # Replace Inf by min/max values
 bin5000space100_gt_pval05$log2FC[bin5000space100_gt_pval05$log2FC == Inf] <- max(bin5000space100_gt_pval05$log2FC[is.finite(bin5000space100_gt_pval05$log2FC)], na.rm = TRUE)
 bin5000space100_gt_pval05$log2FC[bin5000space100_gt_pval05$log2FC == -Inf] <- min(bin5000space100_gt_pval05$log2FC[is.finite(bin5000space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+
+bin5000space100_gt_pval1$log2FC[bin5000space100_gt_pval1$log2FC == Inf] <- max(bin5000space100_gt_pval1$log2FC[is.finite(bin5000space100_gt_pval1$log2FC)], na.rm = TRUE)
+bin5000space100_gt_pval1$log2FC[bin5000space100_gt_pval1$log2FC == -Inf] <- min(bin5000space100_gt_pval1$log2FC[is.finite(bin5000space100_gt_pval1$log2FC)], na.rm = TRUE)
 
 
 bin2000space100_gt_pval05$log2FC[bin2000space100_gt_pval05$log2FC == Inf] <- max(bin2000space100_gt_pval05$log2FC[is.finite(bin2000space100_gt_pval05$log2FC)], na.rm = TRUE)
@@ -8371,6 +8395,10 @@ bin250space50_gt_pval05$log2FC[bin250space50_gt_pval05$log2FC == -Inf] <- min(bi
 bin250space50_gt_pval001$log2FC[bin250space50_gt_pval001$log2FC == Inf] <- max(bin250space50_gt_pval001$log2FC[is.finite(bin250space50_gt_pval001$log2FC)], na.rm = TRUE)
 bin250space50_gt_pval001$log2FC[bin250space50_gt_pval001$log2FC == -Inf] <- min(bin250space50_gt_pval001$log2FC[is.finite(bin250space50_gt_pval001$log2FC)], na.rm = TRUE)
 
+bin250space50_gt_pval1$log2FC[bin250space50_gt_pval1$log2FC == Inf] <- max(bin250space50_gt_pval1$log2FC[is.finite(bin250space50_gt_pval1$log2FC)], na.rm = TRUE)
+bin250space50_gt_pval1$log2FC[bin250space50_gt_pval1$log2FC == -Inf] <- min(bin250space50_gt_pval1$log2FC[is.finite(bin250space50_gt_pval1$log2FC)], na.rm = TRUE)
+
+
 
 bin100space50_gt_pval05$log2FC[bin100space50_gt_pval05$log2FC == Inf] <- max(bin100space50_gt_pval05$log2FC[is.finite(bin100space50_gt_pval05$log2FC)], na.rm = TRUE)
 bin100space50_gt_pval05$log2FC[bin100space50_gt_pval05$log2FC == -Inf] <- min(bin100space50_gt_pval05$log2FC[is.finite(bin100space50_gt_pval05$log2FC)], na.rm = TRUE)
@@ -8379,13 +8407,14 @@ bin100space50_gt_pval1$log2FC[bin100space50_gt_pval1$log2FC == Inf] <- max(bin10
 bin100space50_gt_pval1$log2FC[bin100space50_gt_pval1$log2FC == -Inf] <- min(bin100space50_gt_pval1$log2FC[is.finite(bin100space50_gt_pval1$log2FC)], na.rm = TRUE)
 
 # List of dataset names
-file_names <- c("bin5000space100_gt_pval05", "bin2000space100_gt_pval05", "bin2000space100_gt_pval1",
+file_names <- c("bin5000space100_gt_pval1","bin5000space100_gt_pval05", "bin2000space100_gt_pval05", "bin2000space100_gt_pval1",
                 "bin1000space100_gt_pval1",
                 "bin1000space100_nb_pval05", "bin1000space100_nb_pval001", 
                 "bin1000space100_gt_pval05", "bin1000space100_gt_pval001",
                 "bin500space100_gt_pval1",
                 "bin500space100_nb_pval05", "bin500space100_nb_pval001",
                 "bin500space100_gt_pval05", "bin500space100_gt_pval001",
+                "bin250space50_gt_pval1",
                 "bin250space50_nb_pval05", "bin250space50_nb_pval001",
                 "bin250space50_gt_pval05", "bin250space50_gt_pval001",
                 "bin100space50_gt_pval05", "bin100space50_gt_pval1")
@@ -8459,22 +8488,54 @@ dev.off()
 
 
 
+
+
+
+# Focus bin1000space100_gt_pval1 and bin500space100_gt_pval1 and bin2000space100_gt_pval1 and bin5000space100_gt_pval1
+combined_data_counts_filt = combined_data_counts %>%  filter(dataset %in% c("bin5000space100_gt_pval1","bin1000space100_gt_pval1" , "bin500space100_gt_pval1", "bin2000space100_gt_pval1", "bin250space50_gt_pval1")) %>%
+  mutate(dataset = factor(dataset, levels = c("bin250space50_gt_pval1","bin500space100_gt_pval1", "bin1000space100_gt_pval1", "bin2000space100_gt_pval1", "bin5000space100_gt_pval1")))
+
+pdf("output/diffreps/hist-log2FC_distribution-padj05_gt_pval1.pdf", width=9, height=3)
+combined_data %>% 
+  filter(padj<0.05) %>%   ## !!!!!!!!!! CHANGE PVAL HERE !!!!!!!!!!!!!!!!!!!!!! 
+  filter(dataset %in% c("bin5000space100_gt_pval1","bin500space100_gt_pval1" , "bin1000space100_gt_pval1", "bin2000space100_gt_pval1", "bin250space50_gt_pval1")) %>% 
+  mutate(dataset = factor(dataset, levels = c("bin250space50_gt_pval1", "bin500space100_gt_pval1", "bin1000space100_gt_pval1", "bin2000space100_gt_pval1", "bin5000space100_gt_pval1"))) %>%
+ggplot(., aes(x = log2FC)) +
+  geom_histogram(binwidth = 0.5, fill = "black", color = "black", alpha = 0.7) +
+  facet_wrap(~ dataset, scales = "free_y", nrow = 1) +  # Facet per dataset
+  labs(title = "Log2FC Distribution Across Datasets",
+       x = "Log2 Fold Change (log2FC)",
+       y = "Frequency") +
+  theme_bw() +
+  theme(strip.text = element_text(size = 7, face = "bold")) +
+  geom_text(data = combined_data_counts_filt , 
+            aes(x = ifelse(direction == "Negative", -6, 4),  # Fixed x positions
+                y = Inf, 
+                label = paste0(count)), 
+            vjust = 1.5, 
+            hjust = ifelse(combined_data_counts_filt$direction == "Negative", 0, 1), 
+            size = 3, fontface = "bold", color = "red")
+dev.off()
+
+
+
+
+
 # Investigate some unique genes
-
-
 combined_data %>% 
   filter(padj<0.05, log2FC > 0) %>%   
   filter(dataset %in% c("bin1000space100_gt_pval05")) %>%
   dplyr::select(-Length, -dataset) 
-
-
 combined_data %>% 
   filter(padj<0.05, log2FC > 0) %>%   
   filter(dataset %in% c("bin500space100_gt_pval05")) %>%
   dplyr::select(-Length, -dataset) 
 
 
-# Combine windows
+
+
+# Combine windows - pval05
+
 combined_data_select = combined_data %>% 
   filter(padj<0.05) %>%   ## !!!!!!!!!! CHANGE PVAL HERE !!!!!!!!!!!!!!!!!!!!!! 
   filter(dataset %in% c("bin5000space100_gt_pval05","bin500space100_gt_pval05" , "bin1000space100_gt_pval05", "bin2000space100_gt_pval05", "bin250space50_gt_pval05")) %>% 
@@ -8489,13 +8550,10 @@ gr_combined <- GRanges(
   padj = combined_data_select$padj,
   dataset = combined_data_select$dataset
 )
-
 ## Merge overlapping windows across all datasets
 merged_gr <- reduce(gr_combined, ignore.strand = TRUE)
-
 ## Find overlaps with original intervals
 ov <- findOverlaps(merged_gr, gr_combined)
-
 ## Summarize merged regions and assign labels
 merged_df <- as.data.frame(merged_gr) %>%
   mutate(
@@ -8532,11 +8590,7 @@ merged_df <- as.data.frame(merged_gr) %>%
   ) %>%
   select(seqnames, start, end, direction, Largest_window, log2FC) %>%
   as_tibble()
-
 #--> 753 Gain, 1122 Lost, 2 Mixed
-
-
-
 
 # PLOT combine windows
 merged_df_counts <- merged_df %>%  
@@ -8544,9 +8598,6 @@ merged_df_counts <- merged_df %>%
   mutate(direction = ifelse(log2FC < 0, "Negative", "Positive")) %>%
   group_by(direction) %>%
   summarise(count = n(), .groups = "drop")
-
-
-
 
 pdf("output/diffreps/hist-log2FC_distribution-padj05_gt_pval05-WindowCombine_5kb2kb1kb500bp250bp.pdf", width=3, height=3)
 merged_df %>%  
@@ -8568,10 +8619,98 @@ ggplot(., aes(x = log2FC)) +
             size = 3, fontface = "bold", color = "red")
 dev.off()
 
+## Save output
+write.table(merged_df, "output/diffreps/merged_intervals-padj05_gt_pval05-5kb2kb1kb500bp250bp.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 
-# Save output
-write.table(merged_df, "output/diffreps/merged_intervals-5kb2kb1kb500bp250bp.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 
+
+# combine window - pval1
+
+combined_data_select = combined_data %>% 
+  filter(padj<0.05) %>%   ## !!!!!!!!!! CHANGE PVAL HERE !!!!!!!!!!!!!!!!!!!!!! 
+  filter(dataset %in% c("bin5000space100_gt_pval1","bin500space100_gt_pval1" , "bin1000space100_gt_pval1", "bin2000space100_gt_pval1", "bin250space50_gt_pval1")) %>% 
+  mutate(dataset = factor(dataset, levels = c("bin250space50_gt_pval1", "bin500space100_gt_pval1", "bin1000space100_gt_pval1", "bin2000space100_gt_pval1", "bin5000space100_gt_pval1")))
+
+## Convert to GRanges
+## Convert combined_data_filt to GRanges
+gr_combined <- GRanges(
+  seqnames = combined_data_select$Chrom,
+  ranges = IRanges(start = combined_data_select$Start, end = combined_data_select$End),
+  log2FC = combined_data_select$log2FC,
+  padj = combined_data_select$padj,
+  dataset = combined_data_select$dataset
+)
+## Merge overlapping windows across all datasets
+merged_gr <- reduce(gr_combined, ignore.strand = TRUE)
+## Find overlaps with original intervals
+ov <- findOverlaps(merged_gr, gr_combined)
+## Summarize merged regions and assign labels
+merged_df <- as.data.frame(merged_gr) %>%
+  mutate(
+    log2FC_list = lapply(seq_along(merged_gr), function(i) gr_combined$log2FC[subjectHits(ov)[queryHits(ov) == i]]),
+    dataset_list = lapply(seq_along(merged_gr), function(i) gr_combined$dataset[subjectHits(ov)[queryHits(ov) == i]]),
+    direction = sapply(log2FC_list, function(fc) {
+      if (all(fc > 0)) return("Gain")
+      if (all(fc < 0)) return("Lost")
+      return("Mixed")
+    }),
+    Largest_window = sapply(dataset_list, function(ds) {
+      if ("bin5000space100_gt_pval1" %in% ds) return("5kb")
+      if ("bin2000space100_gt_pval1" %in% ds) return("2kb")
+      if ("bin1000space100_gt_pval1" %in% ds) return("1kb")
+      if ("bin500space100_gt_pval1" %in% ds) return("1kb")
+      return("250bp")
+    }),
+    log2FC = sapply(seq_along(log2FC_list), function(i) {
+      ds <- dataset_list[[i]]
+      fc <- log2FC_list[[i]]
+      
+      # Mixed: both negative and positive log2FC
+      if(any(fc > 0) && any(fc < 0)) {
+        return(paste(min(fc), max(fc), sep = "_"))
+      }
+      
+      # Non-mixed: safely find log2FC of Largest_window
+      idx <- which(ds == Largest_window[i])
+      if(length(idx) > 0) return(fc[idx[1]])
+      
+      # Fallback if for some reason largest window is missing (rare)
+      return(round(mean(fc), 2))
+    })
+  ) %>%
+  select(seqnames, start, end, direction, Largest_window, log2FC) %>%
+  as_tibble()
+#--> 771 Gain, 1132 Lost, 3 Mixed
+
+# PLOT combine windows
+merged_df_counts <- merged_df %>%  
+  filter(direction != "Mixed") %>%
+  mutate(direction = ifelse(log2FC < 0, "Negative", "Positive")) %>%
+  group_by(direction) %>%
+  summarise(count = n(), .groups = "drop")
+
+pdf("output/diffreps/hist-log2FC_distribution-padj05_gt_pval1-WindowCombine_5kb2kb1kb500bp250bp.pdf", width=3, height=3)
+merged_df %>%  
+  filter(direction != "Mixed") %>%
+  mutate(log2FC = as.numeric(log2FC)) %>%
+ggplot(., aes(x = log2FC)) +
+  geom_histogram(binwidth = 0.5, fill = "black", color = "black", alpha = 0.7) +
+  labs(title = "Log2FC Distribution",
+       x = "Log2 Fold Change",
+       y = "Frequency") +
+  theme_bw() +
+  theme(strip.text = element_text(size = 7, face = "bold")) +
+  geom_text(data = merged_df_counts , 
+            aes(x = ifelse(direction == "Negative", -6, 4),  # Fixed x positions
+                y = Inf, 
+                label = paste0(count)), 
+            vjust = 1.5, 
+            hjust = ifelse(merged_df_counts$direction == "Negative", 0, 1), 
+            size = 3, fontface = "bold", color = "red")
+dev.off()
+
+## Save output
+write.table(merged_df, "output/diffreps/merged_intervals-padj05_gt_pval1-5kb2kb1kb500bp250bp.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 
 
 ```
