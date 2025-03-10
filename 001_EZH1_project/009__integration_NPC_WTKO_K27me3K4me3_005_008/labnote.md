@@ -951,14 +951,32 @@ First in the **Venn diagram webpage, collect the genes**, and organize them as o
 
 ```bash
 # Gain specific
+## pval default padj 0.05
 nano output/vennDiagram/DIFFREPS_Gain_45.txt
 nano output/vennDiagram/DESEQ2_Gain_29.txt
 nano output/vennDiagram/THOR_Gain_736.txt
+## pval 0.1 padj 0.1
+nano output/vennDiagram/DIFFREPS_Gain_278.txt
+nano output/vennDiagram/DESEQ2_Gain_25.txt
+nano output/vennDiagram/THOR_Gain_463.txt
+## pval 0.05 padj 0.05
+nano output/vennDiagram/DIFFREPS_Gain_170.txt
+nano output/vennDiagram/DESEQ2_Gain_26.txt
+nano output/vennDiagram/THOR_Gain_520.txt
 
 # Lost specific
-nano output/vennDiagram/DIFFREPS_Lost_41.txt
-nano output/vennDiagram/DESEQ2_Lost_89.txt
-nano output/vennDiagram/THOR_Lost_172.txt
+## pval default padj 0.05
+nano output/vennDiagram/DIFFREPS_Lost_332.txt
+nano output/vennDiagram/DESEQ2_Lost_64.txt
+nano output/vennDiagram/THOR_Lost_102.txt
+## pval 0.1 padj 0.1
+nano output/vennDiagram/DIFFREPS_Lost_332.txt
+nano output/vennDiagram/DESEQ2_Lost_64.txt
+nano output/vennDiagram/THOR_Lost_102.txt
+## pval 0.05 padj 0.05
+nano output/vennDiagram/DIFFREPS_Lost_217.txt
+nano output/vennDiagram/DESEQ2_Lost_67.txt
+nano output/vennDiagram/THOR_Lost_122.txt
 ```
 
 **Generate GTF file from these geneSymbol list** of genes:
@@ -969,6 +987,7 @@ nano output/vennDiagram/THOR_Lost_172.txt
 
 ### create gtf from gene list
 #### Modify the .txt file that list all genes so that it match gtf structure
+## pval default padj 0.05
 sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DIFFREPS_Gain_45.txt > output/vennDiagram/DIFFREPS_Gain_45_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DESEQ2_Gain_29.txt > output/vennDiagram/DESEQ2_Gain_29_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/THOR_Gain_736.txt > output/vennDiagram/THOR_Gain_736_as_gtf_geneSymbol.txt
@@ -977,7 +996,30 @@ sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DIFFREPS_Lost_41.txt > out
 sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DESEQ2_Lost_89.txt > output/vennDiagram/DESEQ2_Lost_89_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/THOR_Lost_172.txt > output/vennDiagram/THOR_Lost_172_as_gtf_geneSymbol.txt
 
+## pval 0.1 padj 0.1
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DIFFREPS_Gain_278.txt > output/vennDiagram/DIFFREPS_Gain_278_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DESEQ2_Gain_25.txt > output/vennDiagram/DESEQ2_Gain_25_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/THOR_Gain_463.txt > output/vennDiagram/THOR_Gain_463_as_gtf_geneSymbol.txt
+
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DIFFREPS_Lost_332.txt > output/vennDiagram/DIFFREPS_Lost_332_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DESEQ2_Lost_64.txt > output/vennDiagram/DESEQ2_Lost_64_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/THOR_Lost_102.txt > output/vennDiagram/THOR_Lost_102_as_gtf_geneSymbol.txt
+
+## pval 0.05 padj 0.05
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DIFFREPS_Gain_170.txt > output/vennDiagram/DIFFREPS_Gain_170_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DESEQ2_Gain_26.txt > output/vennDiagram/DESEQ2_Gain_26_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/THOR_Gain_520.txt > output/vennDiagram/THOR_Gain_520_as_gtf_geneSymbol.txt
+
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DIFFREPS_Lost_217.txt > output/vennDiagram/DIFFREPS_Lost_217_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DESEQ2_Lost_67.txt > output/vennDiagram/DESEQ2_Lost_67_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/THOR_Lost_122.txt > output/vennDiagram/THOR_Lost_122_as_gtf_geneSymbol.txt
+
+
+
+
+
 ## Filter the gtf
+## pval default padj 0.05
 grep -Ff output/vennDiagram/DIFFREPS_Gain_45_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DIFFREPS_Gain_45.gtf
 grep -Ff output/vennDiagram/DESEQ2_Gain_29_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DESEQ2_Gain_29.gtf
 grep -Ff output/vennDiagram/THOR_Gain_736_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_THOR_Gain_736.gtf
@@ -986,9 +1028,28 @@ grep -Ff output/vennDiagram/DIFFREPS_Lost_41_as_gtf_geneSymbol.txt meta/ENCFF159
 grep -Ff output/vennDiagram/DESEQ2_Lost_89_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DESEQ2_Lost_89.gtf
 grep -Ff output/vennDiagram/THOR_Lost_172_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_THOR_Lost_172.gtf
 
+## pval 0.1 padj 0.1
+grep -Ff output/vennDiagram/DIFFREPS_Gain_278_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DIFFREPS_Gain_278.gtf
+grep -Ff output/vennDiagram/DESEQ2_Gain_25_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DESEQ2_Gain_25.gtf
+grep -Ff output/vennDiagram/THOR_Gain_463_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_THOR_Gain_463.gtf
+
+grep -Ff output/vennDiagram/DIFFREPS_Lost_332_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DIFFREPS_Lost_332.gtf
+grep -Ff output/vennDiagram/DESEQ2_Lost_64_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DESEQ2_Lost_64.gtf
+grep -Ff output/vennDiagram/THOR_Lost_102_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_THOR_Lost_102.gtf
+
+## pval 0.05 padj 0.05
+grep -Ff output/vennDiagram/DIFFREPS_Gain_170_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DIFFREPS_Gain_170.gtf
+grep -Ff output/vennDiagram/DESEQ2_Gain_26_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DESEQ2_Gain_26.gtf
+grep -Ff output/vennDiagram/THOR_Gain_520_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_THOR_Gain_520.gtf
+
+grep -Ff output/vennDiagram/DIFFREPS_Lost_217_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DIFFREPS_Lost_217.gtf
+grep -Ff output/vennDiagram/DESEQ2_Lost_67_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DESEQ2_Lost_67.gtf
+grep -Ff output/vennDiagram/THOR_Lost_122_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_THOR_Lost_122.gtf
+
 
 
 # deeptool plots
+## pval default padj 0.05
 sbatch scripts/matrix_TSS_5kb_Venn_overlap-DIFFREPS_Gain_45.sh # 38761065 ok
 sbatch scripts/matrix_TSS_5kb_Venn_overlap-DESEQ2_Gain_29.sh # 38761228 ok
 sbatch scripts/matrix_TSS_5kb_Venn_overlap-THOR_Gain_736.sh # 38761489 ok
@@ -997,10 +1058,31 @@ sbatch scripts/matrix_TSS_5kb_Venn_overlap-DIFFREPS_Lost_41.sh # 38761735 ok
 sbatch scripts/matrix_TSS_5kb_Venn_overlap-DESEQ2_Lost_89.sh # 38762008 ok
 sbatch scripts/matrix_TSS_5kb_Venn_overlap-THOR_Lost_172.sh # 38762279 ok
 
+## pval 0.1 padj 0.1
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-DIFFREPS_Gain_278.sh # 38998342 ok
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-DESEQ2_Gain_25.sh # 38998397 ok
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-THOR_Gain_463.sh # 38998405 ok
+
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-DIFFREPS_Lost_332.sh # 38998407 ok
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-DESEQ2_Lost_64.sh # 38998428 ok
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-THOR_Lost_102.sh # 38998434 ok
+
+## pval 0.05 padj 0.05
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-DIFFREPS_Gain_170.sh # 39004969 ok
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-DESEQ2_Gain_26.sh # 39005134 ok
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-THOR_Gain_520.sh # 39005223 ok
+
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-DIFFREPS_Lost_217.sh # 39005319 ok
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-DESEQ2_Lost_67.sh # 39005375 ok
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-THOR_Lost_122.sh # 39005477 ok
+
+
+
 ```
 
 --> The method  specific genes identified looks real!! So each method got advantage lol!!! 
   --> Let's relax statistics on DIFFREPS to be like THOR and have more sites....
+    --> Tested pval 0.1 and padj 0.1 with DIFFREPS: 
 
 
 
@@ -1722,7 +1804,9 @@ write.table(bin500space100_gt_pval05_Lost_annot_promoterAnd5_geneSymbol, file = 
 
 ### On combine windows 5kb-250bp
 Let's assign peak to genes on the two best windowns/parameters:
-- merge interval from G-test (gt) pval 0.05 for window; of 5kb, 2kb, 1kb, 500bp, 250bp: `output/diffreps/merged_intervals-5kb2kb1kb500bp250bp.txt`
+- merge interval from **G-test (gt) pval 0.05 for window and padj 0.05**; of 5kb, 2kb, 1kb, 500bp, 250bp: `output/diffreps/merged_intervals-5kb2kb1kb500bp250bp.txt`
+- merge interval from **G-test (gt) pval 0.1 for window and padj 0.05**; of 5kb, 2kb, 1kb, 500bp, 250bp: `output/diffreps/merged_intervals-padj05_gt_pval1-5kb2kb1kb500bp250bp.txt`
+- merge interval from **G-test (gt) pval 0.1 for window and padj 0.1**; of 5kb, 2kb, 1kb, 500bp, 250bp: `output/diffreps/merged_intervals-padj1_gt_pval1-5kb2kb1kb500bp250bp.txt`
 
 
 
@@ -1743,22 +1827,45 @@ library("VennDiagram")
 
 
 # Import diff peaks
-merged_intervals_5kb2kb1kb500bp250bp <- read.delim("output/diffreps/merged_intervals-5kb2kb1kb500bp250bp.txt", sep = "\t", header = TRUE) %>%
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105 <- read.delim("output/diffreps/merged_intervals-5kb2kb1kb500bp250bp.txt", sep = "\t", header = TRUE) %>%
   as_tibble()
-
-merged_intervals_5kb2kb1kb500bp250bp_Gain = merged_intervals_5kb2kb1kb500bp250bp %>%
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain = merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105 %>%
   filter(direction == "Gain")
-merged_intervals_5kb2kb1kb500bp250bp_Lost = merged_intervals_5kb2kb1kb500bp250bp %>%
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost = merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105 %>%
+  filter(direction == "Lost")
+
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1 <- read.delim("output/diffreps/merged_intervals-padj05_gt_pval1-5kb2kb1kb500bp250bp.txt", sep = "\t", header = TRUE) %>%
+  as_tibble()
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Gain = merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1 %>%
+  filter(direction == "Gain")
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Lost = merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1 %>%
+  filter(direction == "Lost")
+
+merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1 <- read.delim("output/diffreps/merged_intervals-padj1_gt_pval1-5kb2kb1kb500bp250bp.txt", sep = "\t", header = TRUE) %>%
+  as_tibble()
+merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Gain = merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1 %>%
+  filter(direction == "Gain")
+merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Lost = merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1 %>%
   filter(direction == "Lost")
 
 
+
 # Tidy peaks 
-merged_intervals_5kb2kb1kb500bp250bp_Gain_gr = makeGRangesFromDataFrame(merged_intervals_5kb2kb1kb500bp250bp_Gain,keep.extra.columns=TRUE)
-merged_intervals_5kb2kb1kb500bp250bp_Lost_gr = makeGRangesFromDataFrame(merged_intervals_5kb2kb1kb500bp250bp_Lost,keep.extra.columns=TRUE)
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain_gr = makeGRangesFromDataFrame(merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain,keep.extra.columns=TRUE)
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost_gr = makeGRangesFromDataFrame(merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost,keep.extra.columns=TRUE)
 
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Gain_gr = makeGRangesFromDataFrame(merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Gain,keep.extra.columns=TRUE)
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Lost_gr = makeGRangesFromDataFrame(merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Lost,keep.extra.columns=TRUE)
 
+merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Gain_gr = makeGRangesFromDataFrame(merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Gain,keep.extra.columns=TRUE)
+merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Lost_gr = makeGRangesFromDataFrame(merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Lost,keep.extra.columns=TRUE)
 
-gr_list <- list(merged_intervals_5kb2kb1kb500bp250bp_Gain=merged_intervals_5kb2kb1kb500bp250bp_Gain_gr, merged_intervals_5kb2kb1kb500bp250bp_Lost=merged_intervals_5kb2kb1kb500bp250bp_Lost_gr)
+gr_list <- list(merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain=merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain_gr, merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost=merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost_gr,
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Gain=merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Gain_gr,
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Lost=merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Lost_gr,
+merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Gain=merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Gain_gr,
+merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Lost=merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Lost_gr
+)
 
 # Export Gene peak assignemnt
 peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
@@ -1772,49 +1879,115 @@ plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
 dev.off()
 
 ## Get annotation data frame
-merged_intervals_5kb2kb1kb500bp250bp_Gain_annot <- as.data.frame(peakAnnoList[["merged_intervals_5kb2kb1kb500bp250bp_Gain"]]@anno)
-merged_intervals_5kb2kb1kb500bp250bp_Lost_annot <- as.data.frame(peakAnnoList[["merged_intervals_5kb2kb1kb500bp250bp_Lost"]]@anno)
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain_annot <- as.data.frame(peakAnnoList[["merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain"]]@anno)
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost_annot <- as.data.frame(peakAnnoList[["merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost"]]@anno)
 
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Gain_annot <- as.data.frame(peakAnnoList[["merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Gain"]]@anno)
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Lost_annot <- as.data.frame(peakAnnoList[["merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Lost"]]@anno)
+
+merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Gain_annot <- as.data.frame(peakAnnoList[["merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Gain"]]@anno)
+merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Lost_annot <- as.data.frame(peakAnnoList[["merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Lost"]]@anno)
 
 ## Convert entrez gene IDs to gene symbols
-merged_intervals_5kb2kb1kb500bp250bp_Gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp_Gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-merged_intervals_5kb2kb1kb500bp250bp_Gain_annot$gene <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp_Gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain_annot$gene <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost_annot$gene <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
 
-merged_intervals_5kb2kb1kb500bp250bp_Lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp_Lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-merged_intervals_5kb2kb1kb500bp250bp_Lost_annot$gene <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp_Lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Gain_annot$gene <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Lost_annot$gene <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Gain_annot$gene <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Lost_annot$gene <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
 
 ## Save output table
-write.table(merged_intervals_5kb2kb1kb500bp250bp_Gain_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp_Gain_annot.txt", sep="\t", quote=F, row.names=F)  
-write.table(merged_intervals_5kb2kb1kb500bp250bp_Lost_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp_Lost_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost_annot.txt", sep="\t", quote=F, row.names=F)  
+
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Gain_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Gain_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Lost_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Lost_annot.txt", sep="\t", quote=F, row.names=F)  
+
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Gain_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Gain_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Lost_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Lost_annot.txt", sep="\t", quote=F, row.names=F)  
 
 
 ## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
-merged_intervals_5kb2kb1kb500bp250bp_Gain_annot_promoterAnd5 = tibble(merged_intervals_5kb2kb1kb500bp250bp_Gain_annot) %>%
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain_annot_promoterAnd5 = tibble(merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-merged_intervals_5kb2kb1kb500bp250bp_Lost_annot_promoterAnd5 = tibble(merged_intervals_5kb2kb1kb500bp250bp_Lost_annot) %>%
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost_annot_promoterAnd5 = tibble(merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Gain_annot_promoterAnd5 = tibble(merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Gain_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Lost_annot_promoterAnd5 = tibble(merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Lost_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+    
+merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Gain_annot_promoterAnd5 = tibble(merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Gain_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Lost_annot_promoterAnd5 = tibble(merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Lost_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+    
 
 
 ### Save output gene lists
-merged_intervals_5kb2kb1kb500bp250bp_Gain_annot_promoterAnd5_geneSymbol = merged_intervals_5kb2kb1kb500bp250bp_Gain_annot_promoterAnd5 %>%
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain_annot_promoterAnd5_geneSymbol = merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain_annot_promoterAnd5 %>%
     dplyr::select(geneSymbol) %>%
     unique()
-merged_intervals_5kb2kb1kb500bp250bp_Lost_annot_promoterAnd5_geneSymbol = merged_intervals_5kb2kb1kb500bp250bp_Lost_annot_promoterAnd5 %>%
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost_annot_promoterAnd5_geneSymbol = merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Gain_annot_promoterAnd5_geneSymbol = merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Gain_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Lost_annot_promoterAnd5_geneSymbol = merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Lost_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Gain_annot_promoterAnd5_geneSymbol = merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Gain_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Lost_annot_promoterAnd5_geneSymbol = merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Lost_annot_promoterAnd5 %>%
     dplyr::select(geneSymbol) %>%
     unique()
 
 
-write.table(merged_intervals_5kb2kb1kb500bp250bp_Gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp_Gain_annot_promoterAnd5_geneSymbol.txt",
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain_annot_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(merged_intervals_5kb2kb1kb500bp250bp_Lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp_Lost_annot_promoterAnd5_geneSymbol.txt",
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost_annot_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
 
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Gain_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1_Lost_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Gain_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Lost_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
 
 ```
 
@@ -8060,6 +8233,8 @@ diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed out
 # 5000bp every 100bp - G test with pval 0.1
 diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin5000space100_gt_pval1-diff.nb.txt --window 5000 --step 100 --meth gt --pval 0.1
 
+# 5000bp every 100bp - NB with pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin5000space100_nb_pval05-diff.nb.txt --window 5000 --step 100 --pval 0.05
 
 ########### 2000bp every 100bp #################################
 
@@ -8071,7 +8246,8 @@ diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed out
 diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin2000space100_gt_pval1-diff.nb.txt --window 2000 --step 100 --meth gt --pval 0.1
 
 
-
+# 2000bp every 100bp - NB with pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin2000space100_nb_pval05-diff.nb.txt --window 2000 --step 100 --pval 0.05
 
 
 
@@ -8204,7 +8380,7 @@ diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed out
 
 ## Explore diffreps results in R
 
-These versions looks good:
+List1: 
 - 5000bp every 100bp (Default histone) - G test with pval 0.05: `output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin5000space100_gt_pval05-diff.nb.txt`
 
 - 2000bp every 100bp (Default histone) - G test with pval 0.05: `output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin2000space100_gt_pval05-diff.nb.txt`
@@ -8229,11 +8405,6 @@ These versions looks good:
 
 - 100bp every 50bp (Default histone) - G test with pval 0.05: `output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin100space50_gt_pval05-diff.nb.txt`
 - 100bp every 50bp (Default histone) - G test with pval 0.1: `output/diffreps/NPC_H3K27me3_unique_norm99.bed-bin100space50_gt_pval1-diff.nb.txt`
-
-
-
-
-
 
 
 
@@ -8742,6 +8913,9 @@ To **combine windows**, lets try the following:
 
 
 
+
+
+
 # SICER2 - differential binding analysis
 
 SICER2 is [here](https://zanglab.github.io/SICER2/#sicer2) and [github](https://github.com/zanglab/SICER2)
@@ -8752,30 +8926,47 @@ Lets install through conda from [here](https://anaconda.org/bioconda/sicer2)
 
 ```bash
 conda create -n sicer2 -c bioconda sicer2
+#--> Bug with scipy upon running sicer2; here I re-installed it:
+conda install --force-reinstall scipy numpy
+#--> Does not solve the issue so lets manually modify the script:
+
+nano /home/roulet/anaconda3/envs/sicer2/lib/python3.10/site-packages/sicer/src/compare_two_libraries_on_islands.py
+
+# Replace: pvaluearray = scipy.array(pvalue_list) by 
+pvaluearray = np.array(pvalue_list)
+#--> WORK!!!
 ```
 
 
 ## Run SICER2
 
-SICER2 *does NOT handle biological replicate*. The author recommended [here](https://github.com/zanglab/SICER2/issues/1) to "run SICER2 on each biological replicate separately".
+- SICER2 *does NOT handle biological replicate*. The author recommended [here](https://github.com/zanglab/SICER2/issues/1) to "run SICER2 on each biological replicate separately".
+- SICER2 *does NOT handle decimals*, need integer values. Median values is 1.43 so I will scale up my score (*1000) and then round it to avoid losing information (if I directly round it). And needs `+` or `-` at the last column of the bed!!! Not  `*`!
 
+--> SICER2 automatically create file,
 
 ```bash
 conda activate sicer2
 
+# Scale up and Round score
+awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed > output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded.bed
+awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed > output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_scaleUpRounded.bed
 
-# Default parameters Rep 005
-sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed -s hg38 --window_size 200 -fdr 0.01 --gap_size 600 --e_value 1000
+awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed > output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded.bed
+awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed > output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_scaleUpRounded.bed
 
-# Default parameters Rep 008
-sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed -s hg38 --window_size 200 -fdr 0.01 --gap_size 600 --e_value 1000
+# Run SICER2
+## Default parameters Rep 005
+sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.01 --gap_size 600 --e_value 1000 -o output/sicer2/window200gap600fdr01evalue1000
+
+## Default parameters Rep 008
+sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.01 --gap_size 600 --e_value 1000 -o output/sicer2/window200gap600fdr01evalue1000
 
 
-
-
-
-
-
+## FDR 0.05 Rep 005
+sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.05 --gap_size 600 --e_value 1000 -o output/sicer2/window200gap600fdr05evalue1000
+## FDR 0.05 Rep 008
+sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.05 --gap_size 600 --e_value 1000 -o output/sicer2/window200gap600fdr05evalue1000
 
 ```
 
@@ -8783,9 +8974,79 @@ sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed output/
 - NOTE: fdr could be change to 0.05 if not enough peaks. Also e_value could be change.
 
 
+## Explore result in R
+
+Lets follow this worklfow to integrate bio rep:
+- Load each replicate into R.
+- Keep only significant regions (rows) from each replicate --> Use `*increased*`/`*decreased*` files
+- Convert significant peaks from each replicate into GenomicRanges objects.
+- Intersect the peaks across replicates
+- Export final intersect peaks as a BED file
 
 
 
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+library("GenomicRanges")
+
+# import file
+NPC_KO_H3K27me3_005__decreased <- read.table("output/sicer2/window200gap600fdr05evalue1000/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded-W200-G600-decreased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+NPC_KO_H3K27me3_008__increased <- read.table("output/sicer2/window200gap600fdr05evalue1000/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded-W200-G600-increased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+
+NPC_KO_H3K27me3_008__decreased <- read.table("output/sicer2/window200gap600fdr05evalue1000/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded-W200-G600-decreased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+NPC_KO_H3K27me3_008__increased <- read.table("output/sicer2/window200gap600fdr05evalue1000/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded-W200-G600-increased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+
+
+##########################################
+# DECREASED / LOST #####################
+##########################################
+NPC_KO_H3K27me3_005__decreased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_005__decreased$"#chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_005__decreased$start, end=NPC_KO_H3K27me3_005__decreased$end))
+NPC_KO_H3K27me3_008__decreased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_008__decreased$"#chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_008__decreased$start, end=NPC_KO_H3K27me3_008__decreased$end))
+# find overlap
+overlap <- findOverlaps(NPC_KO_H3K27me3_005__decreased_GR, NPC_KO_H3K27me3_008__decreased_GR)
+rep1_overlap <- NPC_KO_H3K27me3_005__decreased_GR[queryHits(overlap)]
+rep2_overlap <- NPC_KO_H3K27me3_008__decreased_GR[subjectHits(overlap)]
+# Merge overlapping regions into consensus peaks
+consensus_peaks <- reduce(c(rep1_overlap, rep2_overlap))
+# Export bed file
+rtracklayer::export.bed(consensus_peaks, "output/sicer2/window200gap600fdr05evalue1000/NPC_KO_H3K27me3_005008-decreased.bed")
+
+##########################################
+# INCREASED / GAIN #####################
+##########################################
+NPC_KO_H3K27me3_005__increased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_005__increased$"#chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_005__increased$start, end=NPC_KO_H3K27me3_005__increased$end))
+NPC_KO_H3K27me3_008__increased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_008__increased$"#chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_008__increased$start, end=NPC_KO_H3K27me3_008__increased$end))
+# find overlap
+overlap <- findOverlaps(NPC_KO_H3K27me3_005__increased_GR, NPC_KO_H3K27me3_008__increased_GR)
+rep1_overlap <- NPC_KO_H3K27me3_005__increased_GR[queryHits(overlap)]
+rep2_overlap <- NPC_KO_H3K27me3_008__increased_GR[subjectHits(overlap)]
+# Merge overlapping regions into consensus peaks
+consensus_peaks <- reduce(c(rep1_overlap, rep2_overlap))
+# Export bed file
+rtracklayer::export.bed(consensus_peaks, "output/sicer2/window200gap600fdr05evalue1000/NPC_KO_H3K27me3_005008-increased.bed")
+
+
+
+
+```
 
 
 
