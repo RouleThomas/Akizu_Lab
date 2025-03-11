@@ -1086,11 +1086,80 @@ sbatch scripts/matrix_TSS_5kb_Venn_overlap-THOR_Lost_122.sh # 39005477 ok
 
 
 
+# deepTools plot to compare SICER2 vs DIFFREPS vs THOR to identify diff. bound regions
+
+I assign peak to genes for each of the three method and perform venn diagram to check for overlap: A lot of genes identify as differential in a method -specific way! So let's check the profile of these method -specific genes, to see which method to believe (more detail in ppt `20250306`)
+
+--> Let's generate heatmap plots of peaks, and genes.
+
+
+## Gene plots
+
+
+**Generate GTF file from these geneSymbol list** of genes:
+
+--> Import gene Symbol and convert to GTF
+
+```bash
+# Generate gtf file from gene list:
+#### Modify the .txt file that list all genes so that it match gtf structure
+##### THOR q30 ##########
+#--> Already done: ENCFF159KBI_H3K27me3_[pos or neg]_Promoter_5.gtf
+
+##### DIFFREPS 05 05 ##########
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt
+
+##### SICER2 200/600 Eval50000 ##########
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue50000_gain_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue50000_gain_annot_promoterAnd5_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue50000_lost_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue50000_lost_annot_promoterAnd5_as_gtf_geneSymbol.txt
+
+##### DESEQ2 ##########
+sed 's/\r$//; s/.*/gene_name "&"/' output/edgeR/downregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL.txt > output/edgeR/downregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/edgeR/upregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL.txt > output/edgeR/upregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL_as_gtf_geneSymbol.txt
+
+
+## Filter the gtf
+##### DIFFREPS 05 05 ##########
+grep -Ff output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI__NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain_annot_promoterAnd5.gtf
+grep -Ff output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI__NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost_annot_promoterAnd5.gtf
+##### SICER2 200/600 Eval50000 ##########
+grep -Ff output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue50000_gain_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI__NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue50000_gain_annot_promoterAnd5.gtf
+grep -Ff output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue50000_lost_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI__NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue50000_lost_annot_promoterAnd5.gtf
+##### DESEQ2 ##########
+grep -Ff output/edgeR/downregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI__NPC_WTKO_H3K27me3_downregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL.gtf
+grep -Ff output/edgeR/upregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI__NPC_WTKO_H3K27me3_upregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL.gtf
+
+
+# deeptool plots
+sbatch scripts/matrix_TSS_5kb-DIFFREPS-NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105-gene.sh # 39078649 ok
+sbatch scripts/matrix_TSS_5kb-SICER2-SICER2window200gap600fdr05evalue50000-gene.sh # 39078715 ok
+sbatch scripts/matrix_TSS_5kb-DESEQ2-q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL-gene.sh # 39078767 ok
+sbatch scripts/matrix_TSS_5kb-THORq30-gene.sh # 39078767 ok
+
+```
+
+
+## Peak plots
 
 
 
+```bash
+conda activate deeptools
+
+# deeptool plots
+sbatch scripts/matrix_TSS_5kb-DIFFREPS-NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105-peak.sh # 39085851 ok
+sbatch scripts/matrix_TSS_5kb-SICER2-SICER2window200gap600fdr05evalue50000-peak.sh # 39081151 ok
+sbatch scripts/matrix_TSS_5kb-DESEQ2-q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL-peak.sh # 39081200 ok
+#--> Already done sbatch scripts/matrix_TSS_5kb-THORq30-peak.sh #  xxx already run elswehere
 
 
+
+```
+
+--> 2 options possible, to get the most of each tools:
+  - DIFFREPS alone: quite balanced between gain and lost, still showing a bit more gain regions
+  - SICER2 + DESEQ2: SICER2 seems better for large regions changes; DESEQ2 for smaller. When put together, quite balanced.
 
 
 
@@ -1833,6 +1902,11 @@ merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain = merged_intervals_
   filter(direction == "Gain")
 merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost = merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105 %>%
   filter(direction == "Lost")
+### SAVE Gain and Lost peaks
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain, file="output/diffreps/merged_intervals-5kb2kb1kb500bp250bp_Gain.txt", sep="\t", quote=F, row.names=F) 
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost, file="output/diffreps/merged_intervals-5kb2kb1kb500bp250bp_Lost.txt", sep="\t", quote=F, row.names=F) 
+########
+
 
 merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval1 <- read.delim("output/diffreps/merged_intervals-padj05_gt_pval1-5kb2kb1kb500bp250bp.txt", sep = "\t", header = TRUE) %>%
   as_tibble()
@@ -1990,6 +2064,271 @@ write.table(merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Lost_annot_prom
             row.names = FALSE)
 
 ```
+
+
+## From SICER2
+
+### On Window 200bp gap 600bp
+
+Tested here E-value 1000, 5000, 10000, 20000, 50000
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+set.seed(42)
+
+# Import diff peaks
+window200gap600fdr05evalue1000_gain <- read.delim("output/sicer2/window200gap600fdr05evalue1000/NPC_KO_H3K27me3_005008-increased.bed", sep = "\t", skip = 0, header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = V1, start= V2, end=V3)
+window200gap600fdr05evalue1000_lost <- read.delim("output/sicer2/window200gap600fdr05evalue1000/NPC_KO_H3K27me3_005008-decreased.bed", sep = "\t", skip = 0, header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = V1, start= V2, end=V3)
+
+window200gap600fdr05evalue5000_gain <- read.delim("output/sicer2/window200gap600fdr05evalue5000/NPC_KO_H3K27me3_005008-increased.bed", sep = "\t", skip = 0, header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = V1, start= V2, end=V3)
+window200gap600fdr05evalue5000_lost <- read.delim("output/sicer2/window200gap600fdr05evalue5000/NPC_KO_H3K27me3_005008-decreased.bed", sep = "\t", skip = 0, header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = V1, start= V2, end=V3)
+
+window200gap600fdr05evalue10000_gain <- read.delim("output/sicer2/window200gap600fdr05evalue10000/NPC_KO_H3K27me3_005008-increased.bed", sep = "\t", skip = 0, header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = V1, start= V2, end=V3)
+window200gap600fdr05evalue10000_lost <- read.delim("output/sicer2/window200gap600fdr05evalue10000/NPC_KO_H3K27me3_005008-decreased.bed", sep = "\t", skip = 0, header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = V1, start= V2, end=V3)
+
+window200gap600fdr05evalue20000_gain <- read.delim("output/sicer2/window200gap600fdr05evalue20000/NPC_KO_H3K27me3_005008-increased.bed", sep = "\t", skip = 0, header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = V1, start= V2, end=V3)
+window200gap600fdr05evalue20000_lost <- read.delim("output/sicer2/window200gap600fdr05evalue20000/NPC_KO_H3K27me3_005008-decreased.bed", sep = "\t", skip = 0, header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = V1, start= V2, end=V3)
+
+window200gap600fdr05evalue50000_gain <- read.delim("output/sicer2/window200gap600fdr05evalue50000/NPC_KO_H3K27me3_005008-increased.bed", sep = "\t", skip = 0, header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = V1, start= V2, end=V3)
+window200gap600fdr05evalue50000_lost <- read.delim("output/sicer2/window200gap600fdr05evalue50000/NPC_KO_H3K27me3_005008-decreased.bed", sep = "\t", skip = 0, header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = V1, start= V2, end=V3)
+
+# Tidy peaks 
+## H3K4me3
+window200gap600fdr05evalue1000_gain_gr = makeGRangesFromDataFrame(window200gap600fdr05evalue1000_gain,keep.extra.columns=TRUE)
+window200gap600fdr05evalue1000_lost_gr = makeGRangesFromDataFrame(window200gap600fdr05evalue1000_lost,keep.extra.columns=TRUE)
+window200gap600fdr05evalue5000_gain_gr = makeGRangesFromDataFrame(window200gap600fdr05evalue5000_gain,keep.extra.columns=TRUE)
+window200gap600fdr05evalue5000_lost_gr = makeGRangesFromDataFrame(window200gap600fdr05evalue5000_lost,keep.extra.columns=TRUE)
+window200gap600fdr05evalue10000_gain_gr = makeGRangesFromDataFrame(window200gap600fdr05evalue10000_gain,keep.extra.columns=TRUE)
+window200gap600fdr05evalue10000_lost_gr = makeGRangesFromDataFrame(window200gap600fdr05evalue10000_lost,keep.extra.columns=TRUE)
+window200gap600fdr05evalue20000_gain_gr = makeGRangesFromDataFrame(window200gap600fdr05evalue20000_gain,keep.extra.columns=TRUE)
+window200gap600fdr05evalue20000_lost_gr = makeGRangesFromDataFrame(window200gap600fdr05evalue20000_lost,keep.extra.columns=TRUE)
+window200gap600fdr05evalue50000_gain_gr = makeGRangesFromDataFrame(window200gap600fdr05evalue50000_gain,keep.extra.columns=TRUE)
+window200gap600fdr05evalue50000_lost_gr = makeGRangesFromDataFrame(window200gap600fdr05evalue50000_lost,keep.extra.columns=TRUE)
+
+gr_list <- list(window200gap600fdr05evalue1000_gain=window200gap600fdr05evalue1000_gain_gr, window200gap600fdr05evalue1000_lost=window200gap600fdr05evalue1000_lost_gr,
+window200gap600fdr05evalue5000_gain=window200gap600fdr05evalue5000_gain_gr, window200gap600fdr05evalue5000_lost=window200gap600fdr05evalue5000_lost_gr,
+window200gap600fdr05evalue10000_gain=window200gap600fdr05evalue10000_gain_gr, window200gap600fdr05evalue10000_lost=window200gap600fdr05evalue10000_lost_gr,
+window200gap600fdr05evalue20000_gain=window200gap600fdr05evalue20000_gain_gr, window200gap600fdr05evalue20000_lost=window200gap600fdr05evalue20000_lost_gr,
+window200gap600fdr05evalue50000_gain=window200gap600fdr05evalue50000_gain_gr, window200gap600fdr05evalue50000_lost=window200gap600fdr05evalue50000_lost_gr)
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## plots
+pdf("output/ChIPseeker/plotAnnoBar_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue.pdf", width = 8, height = 3)
+plotAnnoBar(peakAnnoList)
+dev.off()
+pdf("output/ChIPseeker/plotDistToTSS_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue.pdf", width = 8, height = 3)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
+
+## Get annotation data frame
+window200gap600fdr05evalue1000_gain_annot <- as.data.frame(peakAnnoList[["window200gap600fdr05evalue1000_gain"]]@anno)
+window200gap600fdr05evalue1000_lost_annot <- as.data.frame(peakAnnoList[["window200gap600fdr05evalue1000_lost"]]@anno)
+window200gap600fdr05evalue5000_gain_annot <- as.data.frame(peakAnnoList[["window200gap600fdr05evalue5000_gain"]]@anno)
+window200gap600fdr05evalue5000_lost_annot <- as.data.frame(peakAnnoList[["window200gap600fdr05evalue5000_lost"]]@anno)
+window200gap600fdr05evalue10000_gain_annot <- as.data.frame(peakAnnoList[["window200gap600fdr05evalue10000_gain"]]@anno)
+window200gap600fdr05evalue10000_lost_annot <- as.data.frame(peakAnnoList[["window200gap600fdr05evalue10000_lost"]]@anno)
+window200gap600fdr05evalue20000_gain_annot <- as.data.frame(peakAnnoList[["window200gap600fdr05evalue20000_gain"]]@anno)
+window200gap600fdr05evalue20000_lost_annot <- as.data.frame(peakAnnoList[["window200gap600fdr05evalue20000_lost"]]@anno)
+window200gap600fdr05evalue50000_gain_annot <- as.data.frame(peakAnnoList[["window200gap600fdr05evalue50000_gain"]]@anno)
+window200gap600fdr05evalue50000_lost_annot <- as.data.frame(peakAnnoList[["window200gap600fdr05evalue50000_lost"]]@anno)
+
+## Convert entrez gene IDs to gene symbols
+window200gap600fdr05evalue1000_gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = window200gap600fdr05evalue1000_gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+window200gap600fdr05evalue1000_gain_annot$gene <- mapIds(org.Hs.eg.db, keys = window200gap600fdr05evalue1000_gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+window200gap600fdr05evalue1000_lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = window200gap600fdr05evalue1000_lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+window200gap600fdr05evalue1000_lost_annot$gene <- mapIds(org.Hs.eg.db, keys = window200gap600fdr05evalue1000_lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+window200gap600fdr05evalue5000_gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = window200gap600fdr05evalue5000_gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+window200gap600fdr05evalue5000_gain_annot$gene <- mapIds(org.Hs.eg.db, keys = window200gap600fdr05evalue5000_gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+window200gap600fdr05evalue5000_lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = window200gap600fdr05evalue5000_lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+window200gap600fdr05evalue5000_lost_annot$gene <- mapIds(org.Hs.eg.db, keys = window200gap600fdr05evalue5000_lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+window200gap600fdr05evalue10000_gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = window200gap600fdr05evalue10000_gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+window200gap600fdr05evalue10000_gain_annot$gene <- mapIds(org.Hs.eg.db, keys = window200gap600fdr05evalue10000_gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+window200gap600fdr05evalue10000_lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = window200gap600fdr05evalue10000_lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+window200gap600fdr05evalue10000_lost_annot$gene <- mapIds(org.Hs.eg.db, keys = window200gap600fdr05evalue10000_lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+window200gap600fdr05evalue20000_gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = window200gap600fdr05evalue20000_gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+window200gap600fdr05evalue20000_gain_annot$gene <- mapIds(org.Hs.eg.db, keys = window200gap600fdr05evalue20000_gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+window200gap600fdr05evalue20000_lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = window200gap600fdr05evalue20000_lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+window200gap600fdr05evalue20000_lost_annot$gene <- mapIds(org.Hs.eg.db, keys = window200gap600fdr05evalue20000_lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+window200gap600fdr05evalue50000_gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = window200gap600fdr05evalue50000_gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+window200gap600fdr05evalue50000_gain_annot$gene <- mapIds(org.Hs.eg.db, keys = window200gap600fdr05evalue50000_gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+window200gap600fdr05evalue50000_lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = window200gap600fdr05evalue50000_lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+window200gap600fdr05evalue50000_lost_annot$gene <- mapIds(org.Hs.eg.db, keys = window200gap600fdr05evalue50000_lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+## Save output table
+write.table(window200gap600fdr05evalue1000_gain_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue1000_gain_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(window200gap600fdr05evalue1000_lost_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue1000_lost_annot.txt", sep="\t", quote=F, row.names=F)  
+
+write.table(window200gap600fdr05evalue5000_gain_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue5000_gain_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(window200gap600fdr05evalue5000_lost_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue5000_lost_annot.txt", sep="\t", quote=F, row.names=F)  
+
+write.table(window200gap600fdr05evalue10000_gain_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue10000_gain_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(window200gap600fdr05evalue10000_lost_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue10000_lost_annot.txt", sep="\t", quote=F, row.names=F)  
+
+write.table(window200gap600fdr05evalue20000_gain_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue20000_gain_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(window200gap600fdr05evalue20000_lost_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue20000_lost_annot.txt", sep="\t", quote=F, row.names=F)  
+
+write.table(window200gap600fdr05evalue50000_gain_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue50000_gain_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(window200gap600fdr05evalue50000_lost_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue50000_lost_annot.txt", sep="\t", quote=F, row.names=F)  
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+window200gap600fdr05evalue1000_gain_annot_promoterAnd5 = tibble(window200gap600fdr05evalue1000_gain_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+window200gap600fdr05evalue1000_lost_annot_promoterAnd5 = tibble(window200gap600fdr05evalue1000_lost_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+window200gap600fdr05evalue5000_gain_annot_promoterAnd5 = tibble(window200gap600fdr05evalue5000_gain_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+window200gap600fdr05evalue5000_lost_annot_promoterAnd5 = tibble(window200gap600fdr05evalue5000_lost_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+window200gap600fdr05evalue10000_gain_annot_promoterAnd5 = tibble(window200gap600fdr05evalue10000_gain_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+window200gap600fdr05evalue10000_lost_annot_promoterAnd5 = tibble(window200gap600fdr05evalue10000_lost_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+window200gap600fdr05evalue20000_gain_annot_promoterAnd5 = tibble(window200gap600fdr05evalue20000_gain_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+window200gap600fdr05evalue20000_lost_annot_promoterAnd5 = tibble(window200gap600fdr05evalue20000_lost_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+window200gap600fdr05evalue50000_gain_annot_promoterAnd5 = tibble(window200gap600fdr05evalue50000_gain_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+window200gap600fdr05evalue50000_lost_annot_promoterAnd5 = tibble(window200gap600fdr05evalue50000_lost_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+### Save output gene lists
+window200gap600fdr05evalue1000_gain_annot_promoterAnd5_geneSymbol = window200gap600fdr05evalue1000_gain_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+window200gap600fdr05evalue1000_lost_annot_promoterAnd5_geneSymbol = window200gap600fdr05evalue1000_lost_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+window200gap600fdr05evalue5000_gain_annot_promoterAnd5_geneSymbol = window200gap600fdr05evalue5000_gain_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+window200gap600fdr05evalue5000_lost_annot_promoterAnd5_geneSymbol = window200gap600fdr05evalue5000_lost_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+window200gap600fdr05evalue10000_gain_annot_promoterAnd5_geneSymbol = window200gap600fdr05evalue10000_gain_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+window200gap600fdr05evalue10000_lost_annot_promoterAnd5_geneSymbol = window200gap600fdr05evalue10000_lost_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+window200gap600fdr05evalue20000_gain_annot_promoterAnd5_geneSymbol = window200gap600fdr05evalue20000_gain_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+window200gap600fdr05evalue20000_lost_annot_promoterAnd5_geneSymbol = window200gap600fdr05evalue20000_lost_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+window200gap600fdr05evalue50000_gain_annot_promoterAnd5_geneSymbol = window200gap600fdr05evalue50000_gain_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+window200gap600fdr05evalue50000_lost_annot_promoterAnd5_geneSymbol = window200gap600fdr05evalue50000_lost_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+write.table(window200gap600fdr05evalue1000_gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue1000_gain_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(window200gap600fdr05evalue1000_lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue1000_lost_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+write.table(window200gap600fdr05evalue5000_gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue5000_gain_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(window200gap600fdr05evalue5000_lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue5000_lost_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+write.table(window200gap600fdr05evalue10000_gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue10000_gain_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(window200gap600fdr05evalue10000_lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue10000_lost_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+write.table(window200gap600fdr05evalue20000_gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue20000_gain_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(window200gap600fdr05evalue20000_lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue20000_lost_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+write.table(window200gap600fdr05evalue50000_gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue50000_gain_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(window200gap600fdr05evalue50000_lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue50000_lost_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+```
+
 
 
 
@@ -8918,7 +9257,7 @@ To **combine windows**, lets try the following:
 
 # SICER2 - differential binding analysis
 
-SICER2 is [here](https://zanglab.github.io/SICER2/#sicer2) and [github](https://github.com/zanglab/SICER2)
+SICER2 is [here](https://zanglab.github.io/SICER2/#sicer2) and [github](https://github.com/zanglab/SICER2), and [here](https://www.bx.psu.edu/~giardine/tests/tmp/SICER-README.pdf)
 
 ## SICER2 installation
 
@@ -8948,30 +9287,74 @@ pvaluearray = np.array(pvalue_list)
 ```bash
 conda activate sicer2
 
+##################################
+# DATA PREP #################
+##################################
+
 # Scale up and Round score
 awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99.bed > output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded.bed
 awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99.bed > output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_scaleUpRounded.bed
-
 awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99.bed > output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded.bed
 awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99.bed > output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_scaleUpRounded.bed
 
-# Run SICER2
+
+
+##################################
+# Run SICER2 #################
+##################################
+
 ## Default parameters Rep 005
 sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.01 --gap_size 600 --e_value 1000 -o output/sicer2/window200gap600fdr01evalue1000
-
-## Default parameters Rep 008
 sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.01 --gap_size 600 --e_value 1000 -o output/sicer2/window200gap600fdr01evalue1000
 
 
-## FDR 0.05 Rep 005
+## FDR 0.05 Rep 005 window 200 gap 600 e-value 1000
 sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.05 --gap_size 600 --e_value 1000 -o output/sicer2/window200gap600fdr05evalue1000
-## FDR 0.05 Rep 008
 sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.05 --gap_size 600 --e_value 1000 -o output/sicer2/window200gap600fdr05evalue1000
+
+## FDR 0.05 Rep 005 window 200 gap 600 e-value 100
+sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.05 --gap_size 600 --e_value 100 -o output/sicer2/window200gap600fdr05evalue100
+sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.05 --gap_size 600 --e_value 100 -o output/sicer2/window200gap600fdr05evalue100
+
+## FDR 0.05 Rep 005 window 200 gap 600 e-value 10000
+sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.05 --gap_size 600 --e_value 10000 -o output/sicer2/window200gap600fdr05evalue10000
+sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.05 --gap_size 600 --e_value 10000 -o output/sicer2/window200gap600fdr05evalue10000
+
+## FDR 0.05 Rep 005 window 200 gap 600 e-value 20000
+sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.05 --gap_size 600 --e_value 20000 -o output/sicer2/window200gap600fdr05evalue20000
+sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.05 --gap_size 600 --e_value 20000 -o output/sicer2/window200gap600fdr05evalue20000
+
+## FDR 0.05 Rep 005 window 200 gap 600 e-value 50000
+sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.05 --gap_size 600 --e_value 50000 -o output/sicer2/window200gap600fdr05evalue50000
+sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.05 --gap_size 600 --e_value 50000 -o output/sicer2/window200gap600fdr05evalue50000
+
+## FDR 0.05 Rep 005 window 200 gap 600 e-value 5000
+sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.05 --gap_size 600 --e_value 5000 -o output/sicer2/window200gap600fdr05evalue5000
+sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.05 --gap_size 600 --e_value 5000 -o output/sicer2/window200gap600fdr05evalue5000
+
+## FDR 0.05 Rep 005 window 500 gap 1500 e-value 1000
+sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 500 -fdr_df 0.05 --gap_size 1500 --e_value 1000 -o output/sicer2/window500gap1500fdr05evalue1000
+sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 500 -fdr_df 0.05 --gap_size 1500 --e_value 1000 -o output/sicer2/window500gap1500fdr05evalue1000
+
+
+## FDR 0.05 Rep 005 window 1000 gap 3000 e-value 1000
+sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 1000 -fdr_df 0.05 --gap_size 3000 --e_value 1000 -o output/sicer2/window1000gap3000fdr05evalue1000
+sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 1000 -fdr_df 0.05 --gap_size 3000 --e_value 1000 -o output/sicer2/window1000gap3000fdr05evalue1000
 
 ```
 
 
 - NOTE: fdr could be change to 0.05 if not enough peaks. Also e_value could be change.
+
+
+--> SICER2 recommend to use gap = 3*Window size (Gap= put diff region together if close from each other)
+
+
+--> Window of 200 with gap 600 seems optimal; more diff regions
+--> E-value default is 1000; increasing it, increase the nb of diff bound! Tested 5000 and 10000
+  --> 10000 equilibate more gain/lost, looks optimal so far
+
+
 
 
 ## Explore result in R
@@ -8995,11 +9378,16 @@ conda activate deseq2
 library("tidyverse")
 library("GenomicRanges")
 
+
+
+###############################################################
+####### FDR 0.05 window 200 gap 600 E-value 1000 ######
+###############################################################
 # import file
 NPC_KO_H3K27me3_005__decreased <- read.table("output/sicer2/window200gap600fdr05evalue1000/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded-W200-G600-decreased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
   dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
   as_tibble()
-NPC_KO_H3K27me3_008__increased <- read.table("output/sicer2/window200gap600fdr05evalue1000/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded-W200-G600-increased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+NPC_KO_H3K27me3_005__increased <- read.table("output/sicer2/window200gap600fdr05evalue1000/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded-W200-G600-increased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
   dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
   as_tibble()
 
@@ -9010,13 +9398,10 @@ NPC_KO_H3K27me3_008__increased <- read.table("output/sicer2/window200gap600fdr05
   dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
   as_tibble()
 
-
-##########################################
 # DECREASED / LOST #####################
-##########################################
-NPC_KO_H3K27me3_005__decreased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_005__decreased$"#chr",
+NPC_KO_H3K27me3_005__decreased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_005__decreased$"chr",
                    ranges=IRanges(start=NPC_KO_H3K27me3_005__decreased$start, end=NPC_KO_H3K27me3_005__decreased$end))
-NPC_KO_H3K27me3_008__decreased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_008__decreased$"#chr",
+NPC_KO_H3K27me3_008__decreased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_008__decreased$"chr",
                    ranges=IRanges(start=NPC_KO_H3K27me3_008__decreased$start, end=NPC_KO_H3K27me3_008__decreased$end))
 # find overlap
 overlap <- findOverlaps(NPC_KO_H3K27me3_005__decreased_GR, NPC_KO_H3K27me3_008__decreased_GR)
@@ -9027,12 +9412,10 @@ consensus_peaks <- reduce(c(rep1_overlap, rep2_overlap))
 # Export bed file
 rtracklayer::export.bed(consensus_peaks, "output/sicer2/window200gap600fdr05evalue1000/NPC_KO_H3K27me3_005008-decreased.bed")
 
-##########################################
 # INCREASED / GAIN #####################
-##########################################
-NPC_KO_H3K27me3_005__increased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_005__increased$"#chr",
+NPC_KO_H3K27me3_005__increased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_005__increased$"chr",
                    ranges=IRanges(start=NPC_KO_H3K27me3_005__increased$start, end=NPC_KO_H3K27me3_005__increased$end))
-NPC_KO_H3K27me3_008__increased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_008__increased$"#chr",
+NPC_KO_H3K27me3_008__increased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_008__increased$"chr",
                    ranges=IRanges(start=NPC_KO_H3K27me3_008__increased$start, end=NPC_KO_H3K27me3_008__increased$end))
 # find overlap
 overlap <- findOverlaps(NPC_KO_H3K27me3_005__increased_GR, NPC_KO_H3K27me3_008__increased_GR)
@@ -9046,9 +9429,324 @@ rtracklayer::export.bed(consensus_peaks, "output/sicer2/window200gap600fdr05eval
 
 
 
+
+
+###############################################################
+####### FDR 0.05 window 200 gap 600 E-value 5000 ######
+###############################################################
+# import file
+NPC_KO_H3K27me3_005__decreased <- read.table("output/sicer2/window200gap600fdr05evalue5000/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded-W200-G600-decreased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+NPC_KO_H3K27me3_005__increased <- read.table("output/sicer2/window200gap600fdr05evalue5000/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded-W200-G600-increased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+
+NPC_KO_H3K27me3_008__decreased <- read.table("output/sicer2/window200gap600fdr05evalue5000/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded-W200-G600-decreased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+NPC_KO_H3K27me3_008__increased <- read.table("output/sicer2/window200gap600fdr05evalue5000/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded-W200-G600-increased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+
+# DECREASED / LOST #####################
+NPC_KO_H3K27me3_005__decreased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_005__decreased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_005__decreased$start, end=NPC_KO_H3K27me3_005__decreased$end))
+NPC_KO_H3K27me3_008__decreased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_008__decreased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_008__decreased$start, end=NPC_KO_H3K27me3_008__decreased$end))
+# find overlap
+overlap <- findOverlaps(NPC_KO_H3K27me3_005__decreased_GR, NPC_KO_H3K27me3_008__decreased_GR)
+rep1_overlap <- NPC_KO_H3K27me3_005__decreased_GR[queryHits(overlap)]
+rep2_overlap <- NPC_KO_H3K27me3_008__decreased_GR[subjectHits(overlap)]
+# Merge overlapping regions into consensus peaks
+consensus_peaks <- reduce(c(rep1_overlap, rep2_overlap))
+# Export bed file
+rtracklayer::export.bed(consensus_peaks, "output/sicer2/window200gap600fdr05evalue5000/NPC_KO_H3K27me3_005008-decreased.bed")
+
+# INCREASED / GAIN #####################
+NPC_KO_H3K27me3_005__increased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_005__increased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_005__increased$start, end=NPC_KO_H3K27me3_005__increased$end))
+NPC_KO_H3K27me3_008__increased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_008__increased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_008__increased$start, end=NPC_KO_H3K27me3_008__increased$end))
+# find overlap
+overlap <- findOverlaps(NPC_KO_H3K27me3_005__increased_GR, NPC_KO_H3K27me3_008__increased_GR)
+rep1_overlap <- NPC_KO_H3K27me3_005__increased_GR[queryHits(overlap)]
+rep2_overlap <- NPC_KO_H3K27me3_008__increased_GR[subjectHits(overlap)]
+# Merge overlapping regions into consensus peaks
+consensus_peaks <- reduce(c(rep1_overlap, rep2_overlap))
+# Export bed file
+rtracklayer::export.bed(consensus_peaks, "output/sicer2/window200gap600fdr05evalue5000/NPC_KO_H3K27me3_005008-increased.bed")
+
+
+
+
+
+
+###############################################################
+####### FDR 0.05 window 200 gap 600 E-value 10000 ######
+###############################################################
+# import file
+NPC_KO_H3K27me3_005__decreased <- read.table("output/sicer2/window200gap600fdr05evalue10000/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded-W200-G600-decreased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+NPC_KO_H3K27me3_005__increased <- read.table("output/sicer2/window200gap600fdr05evalue10000/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded-W200-G600-increased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+
+NPC_KO_H3K27me3_008__decreased <- read.table("output/sicer2/window200gap600fdr05evalue10000/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded-W200-G600-decreased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+NPC_KO_H3K27me3_008__increased <- read.table("output/sicer2/window200gap600fdr05evalue10000/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded-W200-G600-increased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+
+# DECREASED / LOST #####################
+NPC_KO_H3K27me3_005__decreased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_005__decreased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_005__decreased$start, end=NPC_KO_H3K27me3_005__decreased$end))
+NPC_KO_H3K27me3_008__decreased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_008__decreased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_008__decreased$start, end=NPC_KO_H3K27me3_008__decreased$end))
+# find overlap
+overlap <- findOverlaps(NPC_KO_H3K27me3_005__decreased_GR, NPC_KO_H3K27me3_008__decreased_GR)
+rep1_overlap <- NPC_KO_H3K27me3_005__decreased_GR[queryHits(overlap)]
+rep2_overlap <- NPC_KO_H3K27me3_008__decreased_GR[subjectHits(overlap)]
+# Merge overlapping regions into consensus peaks
+consensus_peaks <- reduce(c(rep1_overlap, rep2_overlap))
+# Export bed file
+rtracklayer::export.bed(consensus_peaks, "output/sicer2/window200gap600fdr05evalue10000/NPC_KO_H3K27me3_005008-decreased.bed")
+
+# INCREASED / GAIN #####################
+NPC_KO_H3K27me3_005__increased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_005__increased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_005__increased$start, end=NPC_KO_H3K27me3_005__increased$end))
+NPC_KO_H3K27me3_008__increased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_008__increased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_008__increased$start, end=NPC_KO_H3K27me3_008__increased$end))
+# find overlap
+overlap <- findOverlaps(NPC_KO_H3K27me3_005__increased_GR, NPC_KO_H3K27me3_008__increased_GR)
+rep1_overlap <- NPC_KO_H3K27me3_005__increased_GR[queryHits(overlap)]
+rep2_overlap <- NPC_KO_H3K27me3_008__increased_GR[subjectHits(overlap)]
+# Merge overlapping regions into consensus peaks
+consensus_peaks <- reduce(c(rep1_overlap, rep2_overlap))
+# Export bed file
+rtracklayer::export.bed(consensus_peaks, "output/sicer2/window200gap600fdr05evalue10000/NPC_KO_H3K27me3_005008-increased.bed")
+
+
+
+
+
+
+###############################################################
+####### FDR 0.05 window 200 gap 600 E-value 20000 ######
+###############################################################
+# import file
+NPC_KO_H3K27me3_005__decreased <- read.table("output/sicer2/window200gap600fdr05evalue20000/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded-W200-G600-decreased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+NPC_KO_H3K27me3_005__increased <- read.table("output/sicer2/window200gap600fdr05evalue20000/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded-W200-G600-increased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+
+NPC_KO_H3K27me3_008__decreased <- read.table("output/sicer2/window200gap600fdr05evalue20000/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded-W200-G600-decreased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+NPC_KO_H3K27me3_008__increased <- read.table("output/sicer2/window200gap600fdr05evalue20000/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded-W200-G600-increased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+
+# DECREASED / LOST #####################
+NPC_KO_H3K27me3_005__decreased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_005__decreased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_005__decreased$start, end=NPC_KO_H3K27me3_005__decreased$end))
+NPC_KO_H3K27me3_008__decreased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_008__decreased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_008__decreased$start, end=NPC_KO_H3K27me3_008__decreased$end))
+# find overlap
+overlap <- findOverlaps(NPC_KO_H3K27me3_005__decreased_GR, NPC_KO_H3K27me3_008__decreased_GR)
+rep1_overlap <- NPC_KO_H3K27me3_005__decreased_GR[queryHits(overlap)]
+rep2_overlap <- NPC_KO_H3K27me3_008__decreased_GR[subjectHits(overlap)]
+# Merge overlapping regions into consensus peaks
+consensus_peaks <- reduce(c(rep1_overlap, rep2_overlap))
+# Export bed file
+rtracklayer::export.bed(consensus_peaks, "output/sicer2/window200gap600fdr05evalue20000/NPC_KO_H3K27me3_005008-decreased.bed")
+
+# INCREASED / GAIN #####################
+NPC_KO_H3K27me3_005__increased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_005__increased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_005__increased$start, end=NPC_KO_H3K27me3_005__increased$end))
+NPC_KO_H3K27me3_008__increased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_008__increased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_008__increased$start, end=NPC_KO_H3K27me3_008__increased$end))
+# find overlap
+overlap <- findOverlaps(NPC_KO_H3K27me3_005__increased_GR, NPC_KO_H3K27me3_008__increased_GR)
+rep1_overlap <- NPC_KO_H3K27me3_005__increased_GR[queryHits(overlap)]
+rep2_overlap <- NPC_KO_H3K27me3_008__increased_GR[subjectHits(overlap)]
+# Merge overlapping regions into consensus peaks
+consensus_peaks <- reduce(c(rep1_overlap, rep2_overlap))
+# Export bed file
+rtracklayer::export.bed(consensus_peaks, "output/sicer2/window200gap600fdr05evalue20000/NPC_KO_H3K27me3_005008-increased.bed")
+
+
+
+
+
+
+###############################################################
+####### FDR 0.05 window 200 gap 600 E-value 50000 ######
+###############################################################
+# import file
+NPC_KO_H3K27me3_005__decreased <- read.table("output/sicer2/window200gap600fdr05evalue50000/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded-W200-G600-decreased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+NPC_KO_H3K27me3_005__increased <- read.table("output/sicer2/window200gap600fdr05evalue50000/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded-W200-G600-increased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+
+NPC_KO_H3K27me3_008__decreased <- read.table("output/sicer2/window200gap600fdr05evalue50000/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded-W200-G600-decreased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+NPC_KO_H3K27me3_008__increased <- read.table("output/sicer2/window200gap600fdr05evalue50000/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded-W200-G600-increased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+
+# DECREASED / LOST #####################
+NPC_KO_H3K27me3_005__decreased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_005__decreased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_005__decreased$start, end=NPC_KO_H3K27me3_005__decreased$end))
+NPC_KO_H3K27me3_008__decreased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_008__decreased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_008__decreased$start, end=NPC_KO_H3K27me3_008__decreased$end))
+# find overlap
+overlap <- findOverlaps(NPC_KO_H3K27me3_005__decreased_GR, NPC_KO_H3K27me3_008__decreased_GR)
+rep1_overlap <- NPC_KO_H3K27me3_005__decreased_GR[queryHits(overlap)]
+rep2_overlap <- NPC_KO_H3K27me3_008__decreased_GR[subjectHits(overlap)]
+# Merge overlapping regions into consensus peaks
+consensus_peaks <- reduce(c(rep1_overlap, rep2_overlap))
+# Export bed file
+rtracklayer::export.bed(consensus_peaks, "output/sicer2/window200gap600fdr05evalue50000/NPC_KO_H3K27me3_005008-decreased.bed")
+
+# INCREASED / GAIN #####################
+NPC_KO_H3K27me3_005__increased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_005__increased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_005__increased$start, end=NPC_KO_H3K27me3_005__increased$end))
+NPC_KO_H3K27me3_008__increased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_008__increased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_008__increased$start, end=NPC_KO_H3K27me3_008__increased$end))
+# find overlap
+overlap <- findOverlaps(NPC_KO_H3K27me3_005__increased_GR, NPC_KO_H3K27me3_008__increased_GR)
+rep1_overlap <- NPC_KO_H3K27me3_005__increased_GR[queryHits(overlap)]
+rep2_overlap <- NPC_KO_H3K27me3_008__increased_GR[subjectHits(overlap)]
+# Merge overlapping regions into consensus peaks
+consensus_peaks <- reduce(c(rep1_overlap, rep2_overlap))
+# Export bed file
+rtracklayer::export.bed(consensus_peaks, "output/sicer2/window200gap600fdr05evalue50000/NPC_KO_H3K27me3_005008-increased.bed")
+
+
+
+
+
+
+
+###############################################################
+####### FDR 0.05 window 500 gap 1500 E-value 1000 ######
+###############################################################
+# import file
+NPC_KO_H3K27me3_005__decreased <- read.table("output/sicer2/window500gap1500fdr05evalue1000/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded-W500-G1500-decreased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+NPC_KO_H3K27me3_005__increased <- read.table("output/sicer2/window500gap1500fdr05evalue1000/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded-W500-G1500-increased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+
+NPC_KO_H3K27me3_008__decreased <- read.table("output/sicer2/window500gap1500fdr05evalue1000/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded-W500-G1500-decreased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+NPC_KO_H3K27me3_008__increased <- read.table("output/sicer2/window500gap1500fdr05evalue1000/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded-W500-G1500-increased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+
+# DECREASED / LOST #####################
+NPC_KO_H3K27me3_005__decreased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_005__decreased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_005__decreased$start, end=NPC_KO_H3K27me3_005__decreased$end))
+NPC_KO_H3K27me3_008__decreased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_008__decreased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_008__decreased$start, end=NPC_KO_H3K27me3_008__decreased$end))
+# find overlap
+overlap <- findOverlaps(NPC_KO_H3K27me3_005__decreased_GR, NPC_KO_H3K27me3_008__decreased_GR)
+rep1_overlap <- NPC_KO_H3K27me3_005__decreased_GR[queryHits(overlap)]
+rep2_overlap <- NPC_KO_H3K27me3_008__decreased_GR[subjectHits(overlap)]
+# Merge overlapping regions into consensus peaks
+consensus_peaks <- reduce(c(rep1_overlap, rep2_overlap))
+# Export bed file
+rtracklayer::export.bed(consensus_peaks, "output/sicer2/window500gap1500fdr05evalue1000/NPC_KO_H3K27me3_005008-decreased.bed")
+
+# INCREASED / GAIN #####################
+NPC_KO_H3K27me3_005__increased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_005__increased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_005__increased$start, end=NPC_KO_H3K27me3_005__increased$end))
+NPC_KO_H3K27me3_008__increased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_008__increased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_008__increased$start, end=NPC_KO_H3K27me3_008__increased$end))
+# find overlap
+overlap <- findOverlaps(NPC_KO_H3K27me3_005__increased_GR, NPC_KO_H3K27me3_008__increased_GR)
+rep1_overlap <- NPC_KO_H3K27me3_005__increased_GR[queryHits(overlap)]
+rep2_overlap <- NPC_KO_H3K27me3_008__increased_GR[subjectHits(overlap)]
+# Merge overlapping regions into consensus peaks
+consensus_peaks <- reduce(c(rep1_overlap, rep2_overlap))
+# Export bed file
+rtracklayer::export.bed(consensus_peaks, "output/sicer2/window500gap1500fdr05evalue1000/NPC_KO_H3K27me3_005008-increased.bed")
+
+
+
+
+
+
+
+
+
+###############################################################
+####### FDR 0.05 window 1000 gap 3000 E-value 1000 ######
+###############################################################
+# import file
+NPC_KO_H3K27me3_005__decreased <- read.table("output/sicer2/window1000gap3000fdr05evalue1000/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded-W1000-G3000-decreased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+NPC_KO_H3K27me3_005__increased <- read.table("output/sicer2/window1000gap3000fdr05evalue1000/NPC_KO_H3K27me3_005_unique_norm99_scaleUpRounded-W1000-G3000-increased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+
+NPC_KO_H3K27me3_008__decreased <- read.table("output/sicer2/window1000gap3000fdr05evalue1000/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded-W1000-G3000-decreased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+NPC_KO_H3K27me3_008__increased <- read.table("output/sicer2/window1000gap3000fdr05evalue1000/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRounded-W1000-G3000-increased-islands-summary-FDR0.05", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+
+# DECREASED / LOST #####################
+NPC_KO_H3K27me3_005__decreased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_005__decreased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_005__decreased$start, end=NPC_KO_H3K27me3_005__decreased$end))
+NPC_KO_H3K27me3_008__decreased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_008__decreased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_008__decreased$start, end=NPC_KO_H3K27me3_008__decreased$end))
+# find overlap
+overlap <- findOverlaps(NPC_KO_H3K27me3_005__decreased_GR, NPC_KO_H3K27me3_008__decreased_GR)
+rep1_overlap <- NPC_KO_H3K27me3_005__decreased_GR[queryHits(overlap)]
+rep2_overlap <- NPC_KO_H3K27me3_008__decreased_GR[subjectHits(overlap)]
+# Merge overlapping regions into consensus peaks
+consensus_peaks <- reduce(c(rep1_overlap, rep2_overlap))
+# Export bed file
+rtracklayer::export.bed(consensus_peaks, "output/sicer2/window1000gap3000fdr05evalue1000/NPC_KO_H3K27me3_005008-decreased.bed")
+
+# INCREASED / GAIN #####################
+NPC_KO_H3K27me3_005__increased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_005__increased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_005__increased$start, end=NPC_KO_H3K27me3_005__increased$end))
+NPC_KO_H3K27me3_008__increased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_008__increased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_008__increased$start, end=NPC_KO_H3K27me3_008__increased$end))
+# find overlap
+overlap <- findOverlaps(NPC_KO_H3K27me3_005__increased_GR, NPC_KO_H3K27me3_008__increased_GR)
+rep1_overlap <- NPC_KO_H3K27me3_005__increased_GR[queryHits(overlap)]
+rep2_overlap <- NPC_KO_H3K27me3_008__increased_GR[subjectHits(overlap)]
+# Merge overlapping regions into consensus peaks
+consensus_peaks <- reduce(c(rep1_overlap, rep2_overlap))
+# Export bed file
+rtracklayer::export.bed(consensus_peaks, "output/sicer2/window1000gap3000fdr05evalue1000/NPC_KO_H3K27me3_005008-increased.bed")
+
 ```
 
-
+- *Window 200, Gap 600, E-value 1000* --> This one seems the best + recommended by SICER2
+  - Lost= 337
+  - Gain= 1347
+- *Window 500, Gap 1500, E-value 1000*
+  - Lost= 235
+  - Gain= 1570
+- *Window 1000, Gap 3000, E-value 1000*
+  - Lost= 230
+  - Gain= 1510
 
 
 
