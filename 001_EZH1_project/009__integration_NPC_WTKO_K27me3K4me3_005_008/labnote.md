@@ -4169,6 +4169,8 @@ library("RColorBrewer")
 library("pheatmap")
 library("AnnotationDbi")
 
+set.seed(42)
+
 # import featurecounts output and keep only gene ID and counts
 ## collect all samples ID
 samples <- c("NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
@@ -4260,11 +4262,27 @@ res$GeneSymbol <- gene_symbols
 
 # H3K27me3
 ### GAIN
-
+#### THOR q30
 H3K27me3_qval30_Gain = read.table("../009__integration_NPC_WTKO_K27me3K4me3_005_008/output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol.txt", 
                                            header = FALSE, 
                                            col.names = "GeneSymbol") %>%
                                as_tibble()
+
+H3K27me3_qval30_Gain = read.table("output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain_annot_promoterAnd5_geneSymbol.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+
+H3K27me3_qval30_Gain = read.table("output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue50000_gain_annot_promoterAnd5_geneSymbol.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+
+H3K27me3_qval30_Gain = read.table("output/edgeR/upregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+
 
 
 #### Remove gene version on the res and compil with THOR diff genes
@@ -4283,6 +4301,21 @@ H3K27me3_qval30_Lost = read.table("../009__integration_NPC_WTKO_K27me3K4me3_005_
                                            col.names = "GeneSymbol") %>%
                                as_tibble()
 
+H3K27me3_qval30_Lost = read.table("output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost_annot_promoterAnd5_geneSymbol.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+
+
+H3K27me3_qval30_Lost = read.table("output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr05evalue50000_lost_annot_promoterAnd5_geneSymbol.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+
+H3K27me3_qval30_Lost = read.table("output/edgeR/downregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
 
 
 #### Remove gene version on the res and compil with THOR diff genes
@@ -4309,7 +4342,10 @@ names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5
 names(keyvals)[keyvals == 'grey'] <- 'Not significant'
 names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
 
-pdf("output/deseq2/plotVolcano_res_001009_Gain_H3K27me3_qval30_NPC_KO_vs_NPC_WT.pdf", width=8, height=8)  
+# pdf("output/deseq2/plotVolcano_res_001009_Gain_H3K27me3_qval30_NPC_KO_vs_NPC_WT.pdf", width=8, height=8)  
+# pdf("output/deseq2/plotVolcano_res_001009_Gain_H3K27me3_merged_intervals-DIFFREPS5kb2kb1kb500bp250bp__padj05_gt_pval105-NPC_KO_vs_NPC_WT.pdf", width=8, height=8)  
+# pdf("output/deseq2/plotVolcano_res_001009_Gain_H3K27me3_merged_intervals-SICER2window200gap600fdr05evalue50000-NPC_KO_vs_NPC_WT.pdf", width=8, height=8)  
+pdf("output/deseq2/plotVolcano_res_001009_Gain_H3K27me3_merged_intervals-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL-NPC_KO_vs_NPC_WT.pdf", width=8, height=8) 
 EnhancedVolcano(res_Gain,
   lab = res_Gain$GeneSymbol,
   x = 'log2FoldChange',
@@ -4348,9 +4384,10 @@ upregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) 
 downregulated <- res_Gain[res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, ]
 downregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange < -0.5 & res_Gain$padj < 5e-2, ]
 #### Save
-write.table(upregulated$GeneSymbol, file = "output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
-write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
-
+#write.table(upregulated$GeneSymbol, file = "output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+#write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(upregulated$GeneSymbol, file = "output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
 
 ### LOST
@@ -4367,7 +4404,10 @@ names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5
 names(keyvals)[keyvals == 'grey'] <- 'Not significant'
 names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.5)'
 
-pdf("output/deseq2/plotVolcano_res_001009_Lost_H3K27me3_qval30_NPC_KO_vs_NPC_WT.pdf", width=8, height=8)  
+#pdf("output/deseq2/plotVolcano_res_001009_Lost_H3K27me3_qval30_NPC_KO_vs_NPC_WT.pdf", width=8, height=8)
+# pdf("output/deseq2/plotVolcano_res_001009_Lost_H3K27me3_merged_intervals-DIFFREPS5kb2kb1kb500bp250bp__padj05_gt_pval105-NPC_KO_vs_NPC_WT.pdf", width=8, height=8)  
+#pdf("output/deseq2/plotVolcano_res_001009_Lost_H3K27me3_merged_intervals-SICER2window200gap600fdr05evalue50000-NPC_KO_vs_NPC_WT.pdf", width=8, height=8)  
+pdf("output/deseq2/plotVolcano_res_001009_Lost_H3K27me3_merged_intervals-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL-NPC_KO_vs_NPC_WT.pdf", width=8, height=8)   
 EnhancedVolcano(res_Lost,
   lab = res_Lost$GeneSymbol,
   x = 'log2FoldChange',
@@ -4405,14 +4445,21 @@ upregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) 
 downregulated <- res_Lost[res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, ]
 downregulated <- res_Lost[!is.na(res_Lost$log2FoldChange) & !is.na(res_Lost$padj) & res_Lost$log2FoldChange < -0.5 & res_Lost$padj < 5e-2, ]
 #### Save
-write.table(upregulated$GeneSymbol, file = "output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
-write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
-
+#write.table(upregulated$GeneSymbol, file = "output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+#write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(upregulated$GeneSymbol, file = "output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
 ```
 
 
 --> Functional analysis of Gain/Lost and DEGs done at `# Functional analysis with enrichR`
+
+--> Comparing genes that Gain H3K27me3 and that are downregulated between method:
+  --> Both SICER2, DIFFREPS, THOR gave comparable amount, good proportion (only DESEQ2 perform badly)
+  --> Venn diagram shows that XXX
+
+
 
 
 # Assess H3K27me3 spreading around PRC2 peak (SUZ12, EZH2)

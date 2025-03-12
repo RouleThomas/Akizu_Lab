@@ -27052,7 +27052,7 @@ set.seed(42)
 
 # Data import - all samples and genotype CB
 humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid.combined.sct_V2-dim25kparam50res07.rds")
-humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid.combined.sct_V2-dim25kparam50res08.rds")
+#humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid.combined.sct_V2-dim25kparam50res08.rds")
 
 DefaultAssay(humangastruloid.combined.sct) <- "RNA" # According to condiments workflow
 
@@ -27102,7 +27102,7 @@ dev.off()
 
 UNT_DASA_72hr <- slingshot(UNT_DASA_72hr, reducedDim = 'UMAP',
                  clusterLabels = colData(UNT_DASA_72hr)$seurat_clusters,
-                 start.clus = c("5"), end.clus = c("1", "8") ,approx_points = 100, extend = 'n', stretch = 0.2) # extend y n pc1
+                 start.clus = c("5", "6"), end.clus = c("1", "8") ,approx_points = 100, extend = 'pc1', stretch = 0.2) # extend y n pc1
                  
 
 
@@ -27111,7 +27111,7 @@ topologyTest(SlingshotDataSet(UNT_DASA_72hr), UNT_DASA_72hr$condition) #
 sdss <- slingshot_conditions(SlingshotDataSet(UNT_DASA_72hr), UNT_DASA_72hr$condition)
 curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
                     .id = "condition")
-pdf("output/condiments/UMAP_trajectory_UNT_DASA_72hr-dim25kparam50res07-START-5-END-1_8-points100extendnstretch02.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_trajectory_UNT_DASA_72hr-dim25kparam50res07-START-5_6-END-1_8-points100extendpc1stretch02.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7, alpha = .2) +
   scale_color_brewer(palette = "Accent") +
