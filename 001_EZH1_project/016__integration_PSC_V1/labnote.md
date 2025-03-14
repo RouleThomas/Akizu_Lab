@@ -8413,3 +8413,16 @@ sbatch scripts/bigwigCompare_raw_subtractIGG.sh # 34088708 ok
 
 
 
+# DIFFREPS
+
+Lets use DIFFREPS to identify gain lost regions
+
+From `001*/009*` best parameters to use were:
+- *gt test, pval 0.05 for window, padj 0.05 FDR*
+- in window of *5kb, 2kb, 1kb, 500bp, 250bp*;
+--> and then combine into a single file. More detail at `## Run diffreps` 
+
+
+XXXY
+
+
