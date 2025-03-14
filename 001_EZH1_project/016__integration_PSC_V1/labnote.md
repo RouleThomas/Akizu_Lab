@@ -5244,10 +5244,10 @@ bedtools intersect -wa -a output/diffreps/merged_intervals-padj05_gt_pval05-5kb2
 bedtools intersect -wa -a output/diffreps/merged_intervals-padj05_gt_pval05-5kb2kb1kb500bp250bp-WTvsKO-Lost.txt -b output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKO_EZH2_pool_peaks.sorted.merge.bed > output/diffreps/merged_intervals-padj05_gt_pval05-5kb2kb1kb500bp250bp-WTvsKO-Lost-macs2qval2.3_PSC_WTKO_EZH2_pool_peaks.bed
 
 
-sbatch scripts/matrix_TSS_5kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval05-macs2qval2.3_WTKO_EZH2-FergusonUniqueNorm99smooth50bp_H3K27me3_EZH2-peak.sh
+sbatch scripts/matrix_TSS_5kb-DIFFREPS-WTKO_H3K27me3_5kb2kb1kb500bp250bp__padj05_gt_pval05-macs2qval2.3_WTKO_EZH2-FergusonUniqueNorm99smooth50bp_H3K27me3_EZH2-peak.sh
 
 
-sbatch scripts/matrix_TSS_5kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval05-macs2qval2.3_WTKO_EZH2-FergusonUniqueNorm99smooth50bp_H3K27me3_EZH2-peak.sh # interactive 
+
 
 
 
