@@ -4997,6 +4997,10 @@ sbatch scripts/matrix_TSS_5kb_PSC_EZH1EZH2SUZ12H3K27me3_WTKOEF1aEZH1merge_DEGWTv
 
 Let's generate median tracks for Ferguson and THOR_Ferguson bigwigs (Norm99 unique)
 
+
+**Not recommended method here, see IMPORTANT NOTE**
+
+
 **Run wiggletools:**
 ```bash
 conda activate BedToBigwig
@@ -5013,9 +5017,7 @@ sbatch scripts/bigwigmerge_THOR_FergusonUniqueNorm99-SUZ12.sh # 35440635 ok
 
 
 
-
-
-## smooth bigwig
+## smooth bigwig - smooth50bp
 ### calculate bin signal with multiBigwigSummary
 conda activate deeptools
 
@@ -5024,10 +5026,55 @@ sbatch scripts/bigwigsmooth_Norm99_Ferguson_unique.sh # 35640884 fail; miss some
 conda activate BedToBigwig
 
 sbatch --dependency=afterany:35652328 scripts/bigwigsmooth_Norm99_Ferguson_unique_part2.sh # 35652519 ok
+
+## smooth bigwig - smooth250bp
+### calculate bin signal with multiBigwigSummary
+conda activate deeptools
+
+sbatch scripts/bigwigsmooth250bp_Norm99_Ferguson_unique.sh # 39632034 ok
+### Re-convert to bigwig
+conda activate BedToBigwig
+
+sbatch --dependency=afterany:39632034 scripts/bigwigsmooth250bp_Norm99_Ferguson_unique_part2.sh # 39632090 ok
 ```
 *NOTE: bigwig are merge into 1 bedgraph which is then converted into 1 bigwig (wiggletools cannot output bigwig directly so need to pass by bedgraph or wiggle in between)*
 
 -->  Smoothing bigwig using `multiBigwigSummary` work great! 
+
+--> ***IMPORTANT NOTE**: with this method, sharp CutRun like EZH2 SUZ12, signal is not smooth enough, too much sharp. That is because I used the 1bp resolution and did median on them, and then perform the smoothing. I should do instead: perform the smoothing from 1bp to 50bp (or 250bp), and then generate the median. --> File name as `-IndividualSampleSmoothing`*
+
+
+Let's do **smoothing per sample and then median**:
+
+
+
+```bash
+
+## smooth bigwig - smooth50bp SAMPLE PER SAMPLE
+### calculate bin signal with multiBigwigSummary
+conda activate deeptools
+
+sbatch scripts/bigwigsmooth50bp_Norm99_Ferguson_unique-IndividualSampleSmoothing-H3K27me3.sh # 39634388 xxx
+sbatch scripts/bigwigsmooth50bp_Norm99_Ferguson_unique-IndividualSampleSmoothing-EZH2.sh # 39634451 xxx
+sbatch scripts/bigwigsmooth50bp_Norm99_Ferguson_unique-IndividualSampleSmoothing-SUZ12.sh # 39634541 xxx
+
+
+
+### Re-convert to bigwig
+conda activate BedToBigwig
+
+sbatch --dependency=afterany:39634388 scripts/bigwigsmooth50bp_Norm99_Ferguson_unique-IndividualSampleSmoothing-H3K27me3_part2.sh # 39634917 xxx
+sbatch --dependency=afterany:39634451 scripts/bigwigsmooth50bp_Norm99_Ferguson_unique-IndividualSampleSmoothing-EZH2_part2.sh # 39635023 xxx
+sbatch --dependency=afterany:39634541 scripts/bigwigsmooth50bp_Norm99_Ferguson_unique-IndividualSampleSmoothing-SUZ12_part2.sh # 39635126 xxx
+```
+
+
+--> XXXY?? The median bigwigs are much better, notably for EZH2 and SUZ12, more smooth, and less sharp
+
+
+
+
+
 
 
 ### deepTool plots
@@ -5243,14 +5290,9 @@ sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2k
 bedtools intersect -wa -a output/diffreps/merged_intervals-padj05_gt_pval05-5kb2kb1kb500bp250bp-WTvsKO-Gain.txt -b output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKO_EZH2_pool_peaks.sorted.merge.bed > output/diffreps/merged_intervals-padj05_gt_pval05-5kb2kb1kb500bp250bp-WTvsKO-Gain-macs2qval2.3_PSC_WTKO_EZH2_pool_peaks.bed
 bedtools intersect -wa -a output/diffreps/merged_intervals-padj05_gt_pval05-5kb2kb1kb500bp250bp-WTvsKO-Lost.txt -b output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKO_EZH2_pool_peaks.sorted.merge.bed > output/diffreps/merged_intervals-padj05_gt_pval05-5kb2kb1kb500bp250bp-WTvsKO-Lost-macs2qval2.3_PSC_WTKO_EZH2_pool_peaks.bed
 
-
+#### bigwig Ferguson smooth50bp
 sbatch scripts/matrix_TSS_5kb-DIFFREPS-WTKO_H3K27me3_5kb2kb1kb500bp250bp__padj05_gt_pval05-macs2qval2.3_WTKO_EZH2-FergusonUniqueNorm99smooth50bp_H3K27me3_EZH2-peak.sh
-
-
-
-
-
-
+#### bigwig Ferguson smooth250bp
 
 
 ```
@@ -5259,7 +5301,7 @@ sbatch scripts/matrix_TSS_5kb-DIFFREPS-WTKO_H3K27me3_5kb2kb1kb500bp250bp__padj05
   --> Let's *keep Only H3K27me3 binding changes region that overlap with EZH2 consensus (WT and/or KO) peak*
   
 
-
+--> Seems that my smooth50bp is not smooth enough, many sharp peaks; may affect vizualization; lets smooth to 250bp instead
 
 
 
