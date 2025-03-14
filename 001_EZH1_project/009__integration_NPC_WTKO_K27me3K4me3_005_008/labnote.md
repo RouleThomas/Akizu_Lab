@@ -9398,9 +9398,10 @@ sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRoun
 
 
 --> Window of 200 with gap 600 seems optimal; more diff regions
---> E-value default is 1000; increasing it, increase the nb of diff bound! Tested 5000 and 10000
-  --> 10000 equilibate more gain/lost, looks optimal so far
+--> E-value default is 1000; increasing it, increase the nb of diff bound! Tested 5000, 10000, 20000, 50000
+  --> 50000 equilibate more gain/lost, looks optimal so far
 
+--> Optimal parameters: `window200gap600fdr05evalue50000`
 
 
 

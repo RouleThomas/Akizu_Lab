@@ -1148,9 +1148,13 @@ cat output/macs2/broad/PSC_WT_H3K27me3_pool_peaks.broadPeak output/macs2/broad/P
 cat output/macs2/broad/PSC_WT_EZH2_pool_peaks.broadPeak output/macs2/broad/PSC_KO_EZH2_pool_peaks.broadPeak output/macs2/broad/PSC_KOEF1aEZH1_EZH2_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.broadPeak
 cat output/macs2/broad/PSC_WT_SUZ12_pool_peaks.broadPeak output/macs2/broad/PSC_KO_SUZ12_pool_peaks.broadPeak output/macs2/broad/PSC_KOEF1aEZH1_SUZ12_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.broadPeak
 ## qvalue 2.3 ##############
+### WT KO KOEF
 cat output/macs2/broad/broad_blacklist_qval2.30103/PSC_WT_H3K27me3_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/PSC_KO_H3K27me3_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/PSC_KOEF1aEZH1_H3K27me3_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.broadPeak
 cat output/macs2/broad/broad_blacklist_qval2.30103/PSC_WT_EZH2_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/PSC_KO_EZH2_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/PSC_KOEF1aEZH1_EZH2_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.broadPeak
 cat output/macs2/broad/broad_blacklist_qval2.30103/PSC_WT_SUZ12_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/PSC_KO_SUZ12_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/PSC_KOEF1aEZH1_SUZ12_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.broadPeak
+### WT KO
+cat output/macs2/broad/broad_blacklist_qval2.30103/PSC_WT_EZH2_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/PSC_KO_EZH2_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKO_EZH2_pool_peaks.sorted.broadPeak
+
 ## qvalue 3 ##############
 cat output/macs2/broad/broad_blacklist_qval3/PSC_WT_H3K27me3_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval3/PSC_KO_H3K27me3_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval3/PSC_KOEF1aEZH1_H3K27me3_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval3/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.broadPeak
 cat output/macs2/broad/broad_blacklist_qval3/PSC_WT_EZH2_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval3/PSC_KO_EZH2_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval3/PSC_KOEF1aEZH1_EZH2_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval3/PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.broadPeak
@@ -1176,9 +1180,12 @@ bedtools merge -d 500 -i output/macs2/broad/PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks.
 
 ## qvalue 2.3 ##############
 ### no merge extension
+#### WT KO KOEF
 bedtools merge -i output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge.bed
 bedtools merge -i output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge.bed
 bedtools merge -i output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKOKOEF1aEZH1_SUZ12_pool_peaks.sorted.merge.bed
+#### WT KO
+bedtools merge -i output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKO_EZH2_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKO_EZH2_pool_peaks.sorted.merge.bed
 ### with 100bp peak merging
 bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge100bp.bed
 bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks.sorted.merge100bp.bed
@@ -5206,6 +5213,59 @@ sbatch scripts/multiBigwigSummary_H3K27me3_WTvsKOEF1aEZH1_THOR_DiffBindTMMEpiCyp
 
 
 
+## DIFFREPS
+
+Let's check gain / lost H3K27me3 regions in WT vs KO; and check H3K27me3 and EZH2 signal in:
+- H3K27me3 binding changes peak
+- H3K27me3 binding changes peak, overlapping with EZH2 consensus peaks (WT/KO)
+
+
+
+```bash
+conda activate deeptools
+
+
+# PEAK
+# DIFFREPS diff peaks
+## isolate gain / lost peaks
+awk -F'\t' '$4 == "Gain" ' output/diffreps/merged_intervals-padj05_gt_pval05-5kb2kb1kb500bp250bp-WTvsKO.txt > output/diffreps/merged_intervals-padj05_gt_pval05-5kb2kb1kb500bp250bp-WTvsKO-Gain.txt
+awk -F'\t' '$4 == "Lost" ' output/diffreps/merged_intervals-padj05_gt_pval05-5kb2kb1kb500bp250bp-WTvsKO.txt > output/diffreps/merged_intervals-padj05_gt_pval05-5kb2kb1kb500bp250bp-WTvsKO-Lost.txt
+
+
+# DEEPTOOL PLOTS
+## H3K27me3 binding changes
+sbatch scripts/matrix_TSS_5kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval05-FergusonUniqueNorm99smooth50bp_H3K27me3_EZH2-peak.sh # interactive 
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval05-FergusonUniqueNorm99smooth50bp_H3K27me3_EZH2-peak.sh # interactive 
+
+
+## H3K27me3 binding changes overlapping with EZH2 consensus peak (WT/KO)
+### Filter H3K27me3 binding changes to keep the one overlapping with EZH2
+bedtools intersect -wa -a output/diffreps/merged_intervals-padj05_gt_pval05-5kb2kb1kb500bp250bp-WTvsKO-Gain.txt -b output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKO_EZH2_pool_peaks.sorted.merge.bed > output/diffreps/merged_intervals-padj05_gt_pval05-5kb2kb1kb500bp250bp-WTvsKO-Gain-macs2qval2.3_PSC_WTKO_EZH2_pool_peaks.bed
+bedtools intersect -wa -a output/diffreps/merged_intervals-padj05_gt_pval05-5kb2kb1kb500bp250bp-WTvsKO-Lost.txt -b output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKO_EZH2_pool_peaks.sorted.merge.bed > output/diffreps/merged_intervals-padj05_gt_pval05-5kb2kb1kb500bp250bp-WTvsKO-Lost-macs2qval2.3_PSC_WTKO_EZH2_pool_peaks.bed
+
+
+sbatch scripts/matrix_TSS_5kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval05-macs2qval2.3_WTKO_EZH2-FergusonUniqueNorm99smooth50bp_H3K27me3_EZH2-peak.sh
+
+
+sbatch scripts/matrix_TSS_5kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval05-macs2qval2.3_WTKO_EZH2-FergusonUniqueNorm99smooth50bp_H3K27me3_EZH2-peak.sh # interactive 
+
+
+
+
+
+```
+
+--> H3K27me3 show clear changes, EZH2 follow the pattern only for Lost region. For gain, EZH2 not clean enough, or no EZH2 peak!
+  --> Let's *keep Only H3K27me3 binding changes region that overlap with EZH2 consensus (WT and/or KO) peak*
+  
+
+
+
+
+
+
+
+
 
 # Bigwig
 ## Generate raw bigwig from unique.dupmark.sorted
@@ -8415,6 +8475,7 @@ sbatch scripts/bigwigCompare_raw_subtractIGG.sh # 34088708 ok
 
 # DIFFREPS
 
+
 Lets use DIFFREPS to identify gain lost regions
 
 From `001*/009*` best parameters to use were:
@@ -8423,6 +8484,316 @@ From `001*/009*` best parameters to use were:
 --> and then combine into a single file. More detail at `## Run diffreps` 
 
 
-XXXY
+
+## WT vs KO - DIFFREPS
+
+
+```bash
+conda activate ChIPseqSpikeInFree
+
+## PREPARE BED FILE FOR QUANTIFICATION ##
+output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99.bedGraph 
+output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99.bedGraph
+output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99.bedGraph 
+
+output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99.bedGraph 
+output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99.bedGraph
+output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99.bedGraph 
+
+# Modify our bedGraph into bed (score in the 5th column); add dummy column 4
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99.bedGraph > output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99.bedGraph > output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99.bedGraph > output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99.bed
+
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99.bedGraph > output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99.bedGraph > output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99.bedGraph > output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99.bed
+
+
+## RUN NDIFFREPS ##
+# 5000bp every 100bp - G test with pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99.bed -co output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/PSC_WT_H3K27me3_unique_norm99.bed-bin5000space100_gt_pval05-diff.nb.txt --window 5000 --step 100 --meth gt --pval 0.05
+
+
+# 2000bp every 100bp - G test with pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99.bed -co output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/PSC_WT_H3K27me3_unique_norm99.bed-bin2000space100_gt_pval05-diff.nb.txt --window 2000 --step 100 --meth gt --pval 0.05
+
+
+
+# 1000bp every 100bp - G test with pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99.bed -co output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/PSC_WT_H3K27me3_unique_norm99.bed-bin1000space100_gt_pval05-diff.nb.txt --window 1000 --step 100 --meth gt --pval 0.05
+
+# 500bp every 100bp - G test with pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99.bed -co output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/PSC_WT_H3K27me3_unique_norm99.bed-bin500space100_gt_pval05-diff.nb.txt --window 500 --step 100 --meth gt --pval 0.05
+
+
+# 250bp every 50bp - G test with pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99.bed -co output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/PSC_WT_H3K27me3_unique_norm99.bed-bin250space50_gt_pval05-diff.nb.txt --window 250 --step 50 --meth gt --pval 0.05
+
+```
+
+
+
+### Explore diffreps results in R
+
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+library("GenomicRanges")
+set.seed(42)
+
+# import files
+bin5000space100_gt_pval05 <- read.delim("output/diffreps/PSC_WT_H3K27me3_unique_norm99.bed-bin5000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin2000space100_gt_pval05 <- read.delim("output/diffreps/PSC_WT_H3K27me3_unique_norm99.bed-bin2000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin1000space100_gt_pval05 <- read.delim("output/diffreps/PSC_WT_H3K27me3_unique_norm99.bed-bin1000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin500space100_gt_pval05 <- read.delim("output/diffreps/PSC_WT_H3K27me3_unique_norm99.bed-bin500space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin250space50_gt_pval05 <- read.delim("output/diffreps/PSC_WT_H3K27me3_unique_norm99.bed-bin250space50_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+
+
+
+
+
+
+
+# Replace Inf by min/max values
+bin5000space100_gt_pval05$log2FC[bin5000space100_gt_pval05$log2FC == Inf] <- max(bin5000space100_gt_pval05$log2FC[is.finite(bin5000space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin5000space100_gt_pval05$log2FC[bin5000space100_gt_pval05$log2FC == -Inf] <- min(bin5000space100_gt_pval05$log2FC[is.finite(bin5000space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin2000space100_gt_pval05$log2FC[bin2000space100_gt_pval05$log2FC == Inf] <- max(bin2000space100_gt_pval05$log2FC[is.finite(bin2000space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin2000space100_gt_pval05$log2FC[bin2000space100_gt_pval05$log2FC == -Inf] <- min(bin2000space100_gt_pval05$log2FC[is.finite(bin2000space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin1000space100_gt_pval05$log2FC[bin1000space100_gt_pval05$log2FC == Inf] <- max(bin1000space100_gt_pval05$log2FC[is.finite(bin1000space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin1000space100_gt_pval05$log2FC[bin1000space100_gt_pval05$log2FC == -Inf] <- min(bin1000space100_gt_pval05$log2FC[is.finite(bin1000space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin500space100_gt_pval05$log2FC[bin500space100_gt_pval05$log2FC == Inf] <- max(bin500space100_gt_pval05$log2FC[is.finite(bin500space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin500space100_gt_pval05$log2FC[bin500space100_gt_pval05$log2FC == -Inf] <- min(bin500space100_gt_pval05$log2FC[is.finite(bin500space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin250space50_gt_pval05$log2FC[bin250space50_gt_pval05$log2FC == Inf] <- max(bin250space50_gt_pval05$log2FC[is.finite(bin250space50_gt_pval05$log2FC)], na.rm = TRUE)
+bin250space50_gt_pval05$log2FC[bin250space50_gt_pval05$log2FC == -Inf] <- min(bin250space50_gt_pval05$log2FC[is.finite(bin250space50_gt_pval05$log2FC)], na.rm = TRUE)
+
+
+
+# List of dataset names
+file_names <- c("bin5000space100_gt_pval05", "bin2000space100_gt_pval05", "bin1000space100_gt_pval05", "bin500space100_gt_pval05", "bin250space50_gt_pval05")
+
+## Function to read and format each file
+read_and_process <- function(file) {
+  df <- get(file)  # Load dataset from environment
+  df$dataset <- file  # Add dataset identifier
+  return(df)
+}
+
+## Combine all datasets into one
+combined_data <- bind_rows(lapply(file_names, read_and_process)) 
+
+combined_data_counts <- combined_data %>% 
+  filter(padj<0.05) %>%   ## !!!!!!!!!! CHANGE PVAL HERE !!!!!!!!!!!!!!!!!!!!!!
+  mutate(direction = ifelse(log2FC < 0, "Negative", "Positive")) %>%
+  group_by(dataset, direction) %>%
+  summarise(count = n(), .groups = "drop")
+
+## plot
+
+pdf("output/diffreps/hist-log2FC_distribution-padj05.pdf", width=8, height=2)
+combined_data %>% 
+  filter(padj<0.05) %>%   ## !!!!!!!!!! CHANGE PVAL HERE !!!!!!!!!!!!!!!!!!!!!!
+ggplot(., aes(x = log2FC)) +
+  geom_histogram(binwidth = 0.5, fill = "black", color = "black", alpha = 0.7) +
+  facet_wrap(~ dataset, scales = "free_y", nrow = 1) +  # Facet per dataset
+  labs(title = "Log2FC Distribution Across Datasets",
+       x = "Log2 Fold Change (log2FC)",
+       y = "Frequency") +
+  theme_bw() +
+  theme(strip.text = element_text(size = 4, face = "bold")) +
+  geom_text(data = combined_data_counts, 
+            aes(x = ifelse(direction == "Negative", -6, 4),  # Fixed x positions
+                y = Inf, 
+                label = paste0(count)), 
+            vjust = 1.5, 
+            hjust = ifelse(combined_data_counts$direction == "Negative", 0, 1), 
+            size = 3, fontface = "bold", color = "red")
+dev.off()
+
+
+
+# Combine windows - pval05
+combined_data_select = combined_data %>% 
+  filter(padj<0.05)
+
+## Convert to GRanges
+## Convert combined_data_filt to GRanges
+gr_combined <- GRanges(
+  seqnames = combined_data_select$Chrom,
+  ranges = IRanges(start = combined_data_select$Start, end = combined_data_select$End),
+  log2FC = combined_data_select$log2FC,
+  padj = combined_data_select$padj,
+  dataset = combined_data_select$dataset
+)
+## Merge overlapping windows across all datasets
+merged_gr <- reduce(gr_combined, ignore.strand = TRUE)
+## Find overlaps with original intervals
+ov <- findOverlaps(merged_gr, gr_combined)
+## Summarize merged regions and assign labels
+merged_df <- as.data.frame(merged_gr) %>%
+  mutate(
+    log2FC_list = lapply(seq_along(merged_gr), function(i) gr_combined$log2FC[subjectHits(ov)[queryHits(ov) == i]]),
+    dataset_list = lapply(seq_along(merged_gr), function(i) gr_combined$dataset[subjectHits(ov)[queryHits(ov) == i]]),
+    direction = sapply(log2FC_list, function(fc) {
+      if (all(fc > 0)) return("Gain")
+      if (all(fc < 0)) return("Lost")
+      return("Mixed")
+    }),
+    Largest_window = sapply(dataset_list, function(ds) {
+      if ("bin5000space100_gt_pval05" %in% ds) return("5kb")
+      if ("bin2000space100_gt_pval05" %in% ds) return("2kb")
+      if ("bin1000space100_gt_pval05" %in% ds) return("1kb")
+      if ("bin500space100_gt_pval05" %in% ds) return("1kb")
+      return("250bp")
+    }),
+    log2FC = sapply(seq_along(log2FC_list), function(i) {
+      ds <- dataset_list[[i]]
+      fc <- log2FC_list[[i]]
+      
+      # Mixed: both negative and positive log2FC
+      if(any(fc > 0) && any(fc < 0)) {
+        return(paste(min(fc), max(fc), sep = "_"))
+      }
+      
+      # Non-mixed: safely find log2FC of Largest_window
+      idx <- which(ds == Largest_window[i])
+      if(length(idx) > 0) return(fc[idx[1]])
+      
+      # Fallback if for some reason largest window is missing (rare)
+      return(round(mean(fc), 2))
+    })
+  ) %>%
+  select(seqnames, start, end, direction, Largest_window, log2FC) %>%
+  as_tibble()
+#--> 395 Gain, 331 Lost, 3 Mixed
+
+# PLOT combine windows
+merged_df_counts <- merged_df %>%  
+  filter(direction != "Mixed") %>%
+  mutate(direction = ifelse(log2FC < 0, "Negative", "Positive")) %>%
+  group_by(direction) %>%
+  summarise(count = n(), .groups = "drop")
+
+pdf("output/diffreps/hist-log2FC_distribution-padj05_gt_pval05-WindowCombine_5kb2kb1kb500bp250bp.pdf", width=3, height=3)
+merged_df %>%  
+  filter(direction != "Mixed") %>%
+  mutate(log2FC = as.numeric(log2FC)) %>%
+ggplot(., aes(x = log2FC)) +
+  geom_histogram(binwidth = 0.5, fill = "black", color = "black", alpha = 0.7) +
+  labs(title = "Log2FC Distribution",
+       x = "Log2 Fold Change",
+       y = "Frequency") +
+  theme_bw() +
+  theme(strip.text = element_text(size = 7, face = "bold")) +
+  geom_text(data = merged_df_counts , 
+            aes(x = ifelse(direction == "Negative", -6, 4),  # Fixed x positions
+                y = Inf, 
+                label = paste0(count)), 
+            vjust = 1.5, 
+            hjust = ifelse(merged_df_counts$direction == "Negative", 0, 1), 
+            size = 3, fontface = "bold", color = "red")
+dev.off()
+
+## Save output
+write.table(merged_df, "output/diffreps/merged_intervals-padj05_gt_pval05-5kb2kb1kb500bp250bp-WTvsKO.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+
+```
+
+--> Looks great!! Nice combination of gain/lost, with a bit more gain.
+
+
+
+
+
+
+
+
+
+
+# SICER2
+
+
+
+## WT vs KO - SICER2
+
+
+--> SICER2 work with simplicate. BUT I do not have always corresponding WT/KO from the same experiment!!!
+  --> Here, I will do **006R WT with 006R KO, 013R1 WT with 013R1 KO**, I will *use only two bio reps*
+
+
+
+```bash
+conda activate sicer2
+
+##################################
+# DATA PREP #################
+##################################
+
+output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99.bed
+output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99.bed
+output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99.bed
+
+output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99.bed
+output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99.bed
+output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99.bed
+
+# Scale up and Round score
+awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99.bed > output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_scaleUpRounded.bed
+awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99.bed > output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99_scaleUpRounded.bed
+awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99.bed > output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_scaleUpRounded.bed
+awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99.bed > output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99_scaleUpRounded.bed
+awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99.bed > output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99_scaleUpRounded.bed
+awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99.bed > output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99_scaleUpRounded.bed
+
+
+##################################
+# Run SICER2 #################
+##################################
+
+## FDR 0.05 Rep 005 window 200 gap 600 e-value 50000
+sicer_df -t output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.05 --gap_size 600 --e_value 50000 -o output/sicer2/window200gap600fdr05evalue50000
+sicer_df -t output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.05 --gap_size 600 --e_value 50000 -o output/sicer2/window200gap600fdr05evalue50000
+
+## FDR 0.05 Rep 005 window 200 gap 600 e-value 1000
+sicer_df -t output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.05 --gap_size 600 --e_value 1000 -o output/sicer2/window200gap600fdr05evalue1000
+sicer_df -t output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99_scaleUpRounded.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.05 --gap_size 600 --e_value 1000 -o output/sicer2/window200gap600fdr05evalue1000
+
+
+```
+
+- `window200gap600fdr05evalue50000`: 006R show almost only Lost H3K27me3, but 013R1 is more homogeneous (even tho more Lost)
+- `window200gap600fdr05evalue1000`: 006R show almost only Lost H3K27me3, but 013R1 is more homogeneous (even tho more Lost)
+
+--> I would recommend using DIFFREPS, and not SICER2, for this experiment; likely because replicate are treated individually, I think DIFFREPS decrease batch effects by treating replicates together.
+
+
+
+
+
+
+
+
 
 
