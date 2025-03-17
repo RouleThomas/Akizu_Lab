@@ -2742,6 +2742,7 @@ library("sctransform")
 library("glmGamPoi")
 library("celldex")
 library("SingleR")
+library("ggpubr")
 
 set.seed(42)
 
@@ -2770,6 +2771,78 @@ dev.off()
 pdf("output/seurat/UMAP_humangastruloid72hrs_V2-dim25kparam50res08-splitCondition.pdf", width=12, height=6)
 DimPlot(humangastruloid.combined.sct, reduction = "umap", split.by= "condition", label=TRUE)
 dev.off()
+
+
+# 
+
+humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid.combined.sct_V2-dim25kparam50res07.rds")
+
+
+## Cell type proportion ###############################
+### count nb of cells in each cluster
+UNTREATED = table(Idents(humangastruloid.combined.sct)[humangastruloid.combined.sct$condition == "UNTREATED72hr"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(treatment= "UNTREATED72hr")
+DASATINIB = table(Idents(humangastruloid.combined.sct)[humangastruloid.combined.sct$condition == "DASATINIB72hr"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(treatment= "DASATINIB72hr")           
+
+UNTREATED_DASATINIB = UNTREATED %>%
+  bind_rows(DASATINIB) %>%
+  as_tibble()
+  
+UNTREATED_DASATINIB_prop = UNTREATED_DASATINIB %>%
+  group_by(treatment) %>%
+  mutate(total_count = sum(count)) %>%
+  ungroup() %>%
+  mutate(proportion = (count / total_count) * 100)
+
+UNTREATED_DASATINIB_prop$treatment <-
+  factor(UNTREATED_DASATINIB_prop$treatment,
+         c("UNTREATED72hr", "DASATINIB72hr"))
+
+
+pdf("output/seurat/histogramProp_UNTREATED_DASATINIB_72hrs_dim25kparam50res07.pdf", width=4, height=2)
+ggbarplot(UNTREATED_DASATINIB_prop, x = "cluster", y = "proportion", fill = "treatment",
+                  color = "treatment", palette = c("blue", "red"),
+                  position = position_dodge(0.85), # Separate bars by treatment
+                  add = "mean_se", # Add error bars
+                  lab.pos = "out", lab.size = 3) +
+  stat_compare_means(aes(group = treatment), method = "t.test", label = "p.signif") +
+  theme_bw() +
+  labs(x = "Cell Type (Cluster)", y = "Cell Proportion (%)") +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+dev.off()
+
+
+write.table(UNTREATED_DASATINIB_prop, file = "output/seurat/UNTREATED_DASATINIB_72hrs_prop_dim25kparam50res07.tsv", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+
+
+# marker genes for each cell type
+### Find all markers 
+
+# differential expressed genes across conditions
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+DefaultAssay(humangastruloid.combined.sct) <- "RNA"
+
+humangastruloid.combined.sct <- NormalizeData(humangastruloid.combined.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(humangastruloid.combined.sct)
+humangastruloid.combined.sct <- ScaleData(humangastruloid.combined.sct, features = all.genes) # zero-centres and scales it
+
+
+
+Idents(humangastruloid.combined.sct) <- "seurat_clusters"
+
+all_markers <- FindAllMarkers(humangastruloid.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.1, logfc.threshold = 0.1)
+write.table(all_markers, file = "output/seurat/srat_humangastruloid72hrs_dim25kparam50res07_3Dpaper_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+
+
+
 
 XXXY BELOW NOT MOD
 
@@ -2801,6 +2874,7 @@ dev.off()
 # 
 #saveRDS(humangastruloid.combined.sct, file = "output/seurat/humangastruloid.combined.sct_V2-dim25kparam50res07.rds")
 #saveRDS(humangastruloid.combined.sct, file = "output/seurat/humangastruloid.combined.sct_V2-dim25kparam50res08.rds")
+humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid.combined.sct_V2-dim25kparam50res07.rds")
 ########################################################################################################################################################################
 
 
@@ -12853,6 +12927,21 @@ rsconnect::deployApp('shinyApp_Humangastruloid2472hr_dim30kparam15res04_QCV2')
 
 
 
+
+
+# Data import HUMAN 72hr new clustering - dim25kparam50res07 (3D gastru paper)
+humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid.combined.sct_V2-dim25kparam50res07.rds")
+DefaultAssay(humangastruloid.combined.sct) <- "RNA" # Recommended 
+
+
+# Generate Shiny app
+scConf = createConfig(humangastruloid.combined.sct)
+
+makeShinyApp(humangastruloid.combined.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "Humangastruloid72hr_dim25kparam50res07",
+             shiny.dir = "shinyApp_Humangastruloid72hr_dim25kparam50res07/") 
+
+rsconnect::deployApp('shinyApp_Humangastruloid72hr_dim25kparam50res07')
 
 
 
@@ -27106,7 +27195,7 @@ UNT_DASA_72hr <- slingshot(UNT_DASA_72hr, reducedDim = 'UMAP',
 ## dim25kparam50res08
 UNT_DASA_72hr <- slingshot(UNT_DASA_72hr, reducedDim = 'UMAP',
                  clusterLabels = colData(UNT_DASA_72hr)$seurat_clusters,
-                 start.clus = c("6", "2"), end.clus = c("10", "1", "8") ,approx_points = 100, extend = 'n', stretch = 0.2) # extend y n pc1
+                 start.clus = c("6", "2"), end.clus = c("10", "8", "1") ,approx_points = 100, extend = 'y', stretch = 0.2) # extend y n pc1
                  
 
 #test reduceDim PCA or subset endoderm
@@ -27115,7 +27204,7 @@ sdss <- slingshot_conditions(SlingshotDataSet(UNT_DASA_72hr), UNT_DASA_72hr$cond
 curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
                     .id = "condition")
 #pdf("output/condiments/UMAP_trajectory_UNT_DASA_72hr-dim25kparam50res07-START-5_6-END-1_8-points100extendpc1stretch02.pdf", width=6, height=5)
-pdf("output/condiments/UMAP_trajectory_UNT_DASA_72hr-dim25kparam50res08-START-6_2-END-10_1_8-points100extendnstretch02.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_trajectory_UNT_DASA_72hr-dim25kparam50res08-START-2_6-END-1_8_10-points100extendystretch02.pdf", width=6, height=5)
 
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7, alpha = .2) +
