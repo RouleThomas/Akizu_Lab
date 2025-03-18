@@ -9354,7 +9354,6 @@ diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_initial
 
 --> All good
 
-XXXXY BELOW NOT MOD
 
 
 ### Explore diffreps results in R
@@ -9373,19 +9372,19 @@ library("GenomicRanges")
 set.seed(42)
 
 # import files
-bin5000space100_nb_pval0001 <- read.delim("output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin5000space100_nb_pval0001-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+bin5000space100_nb_pval0001 <- read.delim("output/diffreps/NPC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin5000space100_nb_pval0001-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
   as_tibble() %>%
   dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
-bin2000space100_nb_pval0001 <- read.delim("output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin2000space100_nb_pval0001-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+bin2000space100_nb_pval0001 <- read.delim("output/diffreps/NPC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin2000space100_nb_pval0001-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
   as_tibble() %>%
   dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
-bin1000space100_nb_pval0001 <- read.delim("output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin1000space100_nb_pval0001-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+bin1000space100_nb_pval0001 <- read.delim("output/diffreps/NPC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin1000space100_nb_pval0001-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
   as_tibble() %>%
   dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
-bin500space100_nb_pval0001 <- read.delim("output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin500space100_nb_pval0001-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+bin500space100_nb_pval0001 <- read.delim("output/diffreps/NPC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin500space100_nb_pval0001-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
   as_tibble() %>%
   dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
-bin250space50_nb_pval0001 <- read.delim("output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin250space50_nb_pval0001-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+bin250space50_nb_pval0001 <- read.delim("output/diffreps/NPC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin250space50_nb_pval0001-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
   as_tibble() %>%
   dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
 
@@ -9458,7 +9457,7 @@ dev.off()
 
 # Combine windows 
 combined_data_select = combined_data %>% 
-  filter(padj<0.05)
+  filter(padj<0.001)
 
 ## Convert to GRanges
 ## Convert combined_data_filt to GRanges
@@ -9509,21 +9508,32 @@ merged_df <- as.data.frame(merged_gr) %>%
   ) %>%
   select(seqnames, start, end, direction, Largest_window, log2FC) %>%
   as_tibble()
-#--> 395 Gain, 331 Lost, 3 Mixed
+
 
 # PLOT combine windows
+## FC pos/neg 0 treshold
 merged_df_counts <- merged_df %>%  
+  mutate(log2FC = as.numeric(log2FC)) %>%
   filter(direction != "Mixed") %>%
   mutate(direction = ifelse(log2FC < 0, "Negative", "Positive")) %>%
   group_by(direction) %>%
   summarise(count = n(), .groups = "drop")
+## FC pos/neg 1 treshold
+merged_df_counts <- merged_df %>%  
+  mutate(log2FC = as.numeric(log2FC)) %>%
+  filter(log2FC > 1 | log2FC < -1) %>%
+  mutate(direction = ifelse(log2FC < -1, "Negative", "Positive")) %>%
+  group_by(direction) %>%
+  summarise(count = n(), .groups = "drop")
 
-pdf("output/diffreps/hist-log2FC_distribution-padj05_nb_pval0001-WindowCombine_5kb2kb1kb500bp250bp_initialBigwig.pdf", width=3, height=3)
+
+pdf("output/diffreps/hist-log2FC_distribution-padj001_nb_pval0001_log2FC1-WindowCombine_5kb2kb1kb500bp250bp_initialBigwig.pdf", width=3, height=3)
 merged_df %>%  
   filter(direction != "Mixed") %>%
   mutate(log2FC = as.numeric(log2FC)) %>%
 ggplot(., aes(x = log2FC)) +
   geom_histogram(binwidth = 0.5, fill = "black", color = "black", alpha = 0.7) +
+  geom_vline(xintercept = c(-1, 1), color = "red", linetype = "dashed") +
   labs(title = "Log2FC Distribution",
        x = "Log2 Fold Change",
        y = "Frequency") +
@@ -9539,13 +9549,13 @@ ggplot(., aes(x = log2FC)) +
 dev.off()
 
 ## Save output
-write.table(merged_df, "output/diffreps/merged_intervals-padj05_nb_pval0001-5kb2kb1kb500bp250bp-WTvsKO_initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(merged_df, "output/diffreps/merged_intervals-padj001_nb_pval0001_log2FC1-5kb2kb1kb500bp250bp-WTvsKO_initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 
 
 ```
 
 
-
+--> Comparable to what we have with the previous FAIL version; a bit more lost than gain, but maybe most lost are in intergenic regions...
 
 
 
@@ -9579,7 +9589,9 @@ pvaluearray = np.array(pvalue_list)
 ```
 
 
-## Run SICER2
+## Run SICER2 - FAIL
+
+--> FAIL as I applied the SF to the local maxima bed, and not the initial bigwigs files...
 
 - SICER2 *does NOT handle biological replicate*. The author recommended [here](https://github.com/zanglab/SICER2/issues/1) to "run SICER2 on each biological replicate separately".
 - SICER2 *does NOT handle decimals*, need integer values. Median values is 1.43 so I will scale up my score (*1000) and then round it to avoid losing information (if I directly round it). And needs `+` or `-` at the last column of the bed!!! Not  `*`!
@@ -9660,7 +9672,7 @@ sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_scaleUpRoun
 
 
 
-## Explore result in R
+### Explore result in R
 
 Lets follow this worklfow to integrate bio rep:
 - Load each replicate into R.
@@ -10050,6 +10062,148 @@ rtracklayer::export.bed(consensus_peaks, "output/sicer2/window1000gap3000fdr05ev
 - *Window 1000, Gap 3000, E-value 1000*
   - Lost= 230
   - Gain= 1510
+
+
+
+
+
+
+
+
+
+## Run SICER2 - - initialBigwig 
+
+
+- SICER2 *does NOT handle biological replicate*. The author recommended [here](https://github.com/zanglab/SICER2/issues/1) to "run SICER2 on each biological replicate separately".
+- SICER2 *does NOT handle decimals*, need integer values. Median values is 1.43 so I will scale up my score (*1000) and then round it to avoid losing information (if I directly round it). And needs `+` or `-` at the last column of the bed!!! Not  `*`!
+
+--> SICER2 automatically create file,
+
+
+XXXY 
+
+```bash
+conda activate sicer2
+
+##################################
+# DATA PREP #################
+##################################
+
+# Scale up and Round score
+awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_initialBigwig.sorted.bed > output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_initialBigwig_scaleUpRounded.bed
+awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_initialBigwig.sorted.bed > output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_initialBigwig_scaleUpRounded.bed
+awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_initialBigwig.sorted.bed > output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_initialBigwig_scaleUpRounded.bed
+awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_initialBigwig.sorted.bed > output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_initialBigwig_scaleUpRounded.bed
+
+
+
+##################################
+# Run SICER2 #################
+##################################
+
+## Default parameters Rep 005
+sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_initialBigwig_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_initialBigwig_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.01 --gap_size 600 --e_value 1000 -o output/sicer2/window200gap600fdr01evalue1000_initialBigwig
+sicer_df -t output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_initialBigwig_scaleUpRounded.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_initialBigwig_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.01 --gap_size 600 --e_value 1000 -o output/sicer2/window200gap600fdr01evalue1000_initialBigwig
+
+
+
+```
+
+
+- NOTE: fdr could be change to 0.05 if not enough peaks. Also e_value could be change.
+
+
+--> SICER2 recommend to use gap = 3*Window size (Gap= put diff region together if close from each other)
+
+
+--> Window of 200 with gap 600 seems optimal; more diff regions
+--> E-value default is 1000; increasing it, increase the nb of diff bound! Tested 5000, 10000, 20000, 50000
+  --> 50000 equilibate more gain/lost, looks optimal so far
+
+--> Optimal parameters: `window200gap600fdr01evalue1000_initialBigwig` (default)
+
+
+
+### Explore result in R
+
+Lets follow this workflow to integrate bio rep:
+- Load each replicate into R.
+- Keep only significant regions (rows) from each replicate --> Use `*increased*`/`*decreased*` files
+- Convert significant peaks from each replicate into GenomicRanges objects.
+- Intersect the peaks across replicates
+- Export final intersect peaks as a BED file
+
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+library("GenomicRanges")
+
+
+
+###############################################################
+####### FDR 0.01 window 200 gap 600 E-value 1000 ######
+###############################################################
+# import file
+NPC_KO_H3K27me3_005__decreased <- read.table("output/sicer2/window200gap600fdr01evalue1000_initialBigwig/NPC_KO_H3K27me3_005_unique_norm99_initialBigwig_scaleUpRounded-W200-G600-decreased-islands-summary-FDR0.01", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+NPC_KO_H3K27me3_005__increased <- read.table("output/sicer2/window200gap600fdr01evalue1000_initialBigwig/NPC_KO_H3K27me3_005_unique_norm99_initialBigwig_scaleUpRounded-W200-G600-increased-islands-summary-FDR0.01", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+
+NPC_KO_H3K27me3_008__decreased <- read.table("output/sicer2/window200gap600fdr01evalue1000_initialBigwig/NPC_KO_H3K27me3_008_unique_norm99_initialBigwig_scaleUpRounded-W200-G600-decreased-islands-summary-FDR0.01", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+NPC_KO_H3K27me3_008__increased <- read.table("output/sicer2/window200gap600fdr01evalue1000_initialBigwig/NPC_KO_H3K27me3_008_unique_norm99_initialBigwig_scaleUpRounded-W200-G600-increased-islands-summary-FDR0.01", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+
+# DECREASED / LOST #####################
+NPC_KO_H3K27me3_005__decreased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_005__decreased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_005__decreased$start, end=NPC_KO_H3K27me3_005__decreased$end))
+NPC_KO_H3K27me3_008__decreased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_008__decreased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_008__decreased$start, end=NPC_KO_H3K27me3_008__decreased$end))
+# find overlap
+overlap <- findOverlaps(NPC_KO_H3K27me3_005__decreased_GR, NPC_KO_H3K27me3_008__decreased_GR)
+rep1_overlap <- NPC_KO_H3K27me3_005__decreased_GR[queryHits(overlap)]
+rep2_overlap <- NPC_KO_H3K27me3_008__decreased_GR[subjectHits(overlap)]
+# Merge overlapping regions into consensus peaks
+consensus_peaks <- reduce(c(rep1_overlap, rep2_overlap))
+# Export bed file
+rtracklayer::export.bed(consensus_peaks, "output/sicer2/window200gap600fdr01evalue1000_initialBigwig/NPC_KO_H3K27me3_005008-decreased.bed")
+
+# INCREASED / GAIN #####################
+NPC_KO_H3K27me3_005__increased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_005__increased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_005__increased$start, end=NPC_KO_H3K27me3_005__increased$end))
+NPC_KO_H3K27me3_008__increased_GR <- GRanges(seqnames=NPC_KO_H3K27me3_008__increased$"chr",
+                   ranges=IRanges(start=NPC_KO_H3K27me3_008__increased$start, end=NPC_KO_H3K27me3_008__increased$end))
+# find overlap
+overlap <- findOverlaps(NPC_KO_H3K27me3_005__increased_GR, NPC_KO_H3K27me3_008__increased_GR)
+rep1_overlap <- NPC_KO_H3K27me3_005__increased_GR[queryHits(overlap)]
+rep2_overlap <- NPC_KO_H3K27me3_008__increased_GR[subjectHits(overlap)]
+# Merge overlapping regions into consensus peaks
+consensus_peaks <- reduce(c(rep1_overlap, rep2_overlap))
+# Export bed file
+rtracklayer::export.bed(consensus_peaks, "output/sicer2/window200gap600fdr01evalue1000_initialBigwig/NPC_KO_H3K27me3_005008-increased.bed")
+
+
+
+```
+
+- *Window 200, Gap 600, E-value 1000* --> This one seems the best + recommended by SICER2
+  - Lost= 1126
+  - Gain= 3162
+  
+
+
+
 
 
 
