@@ -1106,6 +1106,11 @@ I assign peak to genes for each of the three method and perform venn diagram to 
 ##### THOR q30 ##########
 #--> Already done: ENCFF159KBI_H3K27me3_[pos or neg]_Promoter_5.gtf
 
+################################################
+##--> FAIL bigwigs  #########################
+################################################
+
+
 ##### DIFFREPS 05 05 ##########
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105_Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt
@@ -1137,6 +1142,41 @@ sbatch scripts/matrix_TSS_5kb-SICER2-SICER2window200gap600fdr05evalue50000-gene.
 sbatch scripts/matrix_TSS_5kb-DESEQ2-q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL-gene.sh # 39078767 ok
 sbatch scripts/matrix_TSS_5kb-THORq30-gene.sh # 39078767 ok
 
+
+
+
+
+################################################
+##--> Correct bigwig intitialBigwig ########################
+################################################
+
+
+##### DIFFREPS padj001_nb_pval0001_log2FC1 ##########
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt
+##### SICER2 window200gap600fdr01evalue1000_initialBigwig ##########
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig_gain_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig_gain_annot_promoterAnd5_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig_lost_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig_lost_annot_promoterAnd5_as_gtf_geneSymbol.txt
+
+
+
+## Filter the gtf
+##### DIFFREPS ##########
+grep -Ff output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI__NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot_promoterAnd5.gtf
+grep -Ff output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI__NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot_promoterAnd5.gtf
+##### SICER2 window200gap600fdr01evalue1000_initialBigwig ##########
+grep -Ff output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig_gain_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI__NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig_gain_annot_promoterAnd5.gtf
+grep -Ff output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig_lost_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI__NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig_lost_annot_promoterAnd5.gtf
+
+# deeptool plots
+##### DIFFREPS ##########
+sbatch scripts/matrix_TSS_5kb-DIFFREPS-NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_fc1-gene.sh # 39959604 ok
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_fc1-gene.sh # 39959841 ok
+##### SICER2 window200gap600fdr01evalue1000_initialBigwig ##########
+sbatch scripts/matrix_TSS_5kb-SICER2-NPC_WTKO_H3K27me3_window200gap600fdr01evalue1000_initialBigwig-gene.sh # 39963256 ok
+sbatch scripts/matrix_TSS_10kb-SICER2-NPC_WTKO_H3K27me3_window200gap600fdr01evalue1000_initialBigwig-gene.sh # 39963267 ok
+
+
 ```
 
 
@@ -1148,10 +1188,22 @@ sbatch scripts/matrix_TSS_5kb-THORq30-gene.sh # 39078767 ok
 conda activate deeptools
 
 # deeptool plots
+##--> FAIL bigwigs 
 sbatch scripts/matrix_TSS_5kb-DIFFREPS-NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval105-peak.sh # 39085851 ok
 sbatch scripts/matrix_TSS_5kb-SICER2-SICER2window200gap600fdr05evalue50000-peak.sh # 39081151 ok
 sbatch scripts/matrix_TSS_5kb-DESEQ2-q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL-peak.sh # 39081200 ok
 #--> Already done sbatch scripts/matrix_TSS_5kb-THORq30-peak.sh #  xxx already run elswehere
+
+
+# deeptool plots
+##--> Correct bigwig intitialBigwig
+##### DIFFREPS ##########
+sbatch scripts/matrix_TSS_5kb-DIFFREPS-NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_fc1-peak.sh #  39954962 ok
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_fc1-peak.sh # 39955144 ok
+
+##### SICER2 window200gap600fdr01evalue1000_initialBigwig ##########
+sbatch scripts/matrix_TSS_5kb-SICER2-NPC_WTKO_H3K27me3_window200gap600fdr01evalue1000_initialBigwig-peak.sh # 39963434 ok
+sbatch scripts/matrix_TSS_10kb-SICER2-NPC_WTKO_H3K27me3_window200gap600fdr01evalue1000_initialBigwig-peak.sh # 39963487 ok
 
 
 
@@ -1871,7 +1923,7 @@ write.table(bin500space100_gt_pval05_Lost_annot_promoterAnd5_geneSymbol, file = 
 
 
 
-### On combine windows 5kb-250bp
+### On combine windows 5kb-250bp - FAIL
 Let's assign peak to genes on the two best windowns/parameters:
 - merge interval from **G-test (gt) pval 0.05 for window and padj 0.05**; of 5kb, 2kb, 1kb, 500bp, 250bp: `output/diffreps/merged_intervals-5kb2kb1kb500bp250bp.txt`
 - merge interval from **G-test (gt) pval 0.1 for window and padj 0.05**; of 5kb, 2kb, 1kb, 500bp, 250bp: `output/diffreps/merged_intervals-padj05_gt_pval1-5kb2kb1kb500bp250bp.txt`
@@ -2066,9 +2118,117 @@ write.table(merged_intervals_5kb2kb1kb500bp250bp__padj1_gt_pval1_Lost_annot_prom
 ```
 
 
+
+
+### On combine windows 5kb-250bp - initialBigwig
+
+Let's assign peak to genes on the two best windowns/parameters:
+- merge interval from **Negative binomial (nb) pval 0.0001 for window and padj 0.001**; of 5kb, 2kb, 1kb, 500bp, 250bp: `output/diffreps/merged_intervals-padj001_nb_pval0001_log2FC1-5kb2kb1kb500bp250bp-WTvsKO_initialBigwig.txt`
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import diff peaks
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1 <- read.delim("output/diffreps/merged_intervals-padj001_nb_pval0001_log2FC1-5kb2kb1kb500bp250bp-WTvsKO_initialBigwig.txt", sep = "\t", header = TRUE) %>%
+  as_tibble()
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain = merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1 %>%
+  filter(direction == "Gain") %>% mutate(log2FC = as.numeric(log2FC)) %>% filter(log2FC > 1)
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost = merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1 %>%
+  filter(direction == "Lost") %>% mutate(log2FC = as.numeric(log2FC)) %>% filter(log2FC < -1)
+### SAVE Gain and Lost peaks
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain, file="output/diffreps/merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain.txt", sep="\t", quote=F, row.names=F) 
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost, file="output/diffreps/merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost.txt", sep="\t", quote=F, row.names=F) 
+########
+
+# Tidy peaks 
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_gr = makeGRangesFromDataFrame(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain,keep.extra.columns=TRUE)
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_gr = makeGRangesFromDataFrame(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost,keep.extra.columns=TRUE)
+
+
+gr_list <- list(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain=merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_gr,merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost=merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_gr
+)
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## plots
+pdf("output/ChIPseeker/plotAnnoBar_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_initialBigwig.pdf", width = 16, height = 3)
+plotAnnoBar(peakAnnoList)
+dev.off()
+pdf("output/ChIPseeker/plotDistToTSS_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_initialBigwig.pdf", width = 16, height = 3)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
+
+## Get annotation data frame
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot <- as.data.frame(peakAnnoList[["merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain"]]@anno)
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot <- as.data.frame(peakAnnoList[["merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot$gene <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot$gene <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+## Save output table
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_initialBigwig_log2FC1_Gain_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_initialBigwig_log2FC1_Lost_annot.txt", sep="\t", quote=F, row.names=F)  
+
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot_promoterAnd5 = tibble(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot_promoterAnd5 = tibble(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+
+### Save output gene lists
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot_promoterAnd5_geneSymbol = merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot_promoterAnd5_geneSymbol = merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+
+```
+
+
+
+
 ## From SICER2
 
-### On Window 200bp gap 600bp
+### On Window 200bp gap 600bp - FAIL
 
 Tested here E-value 1000, 5000, 10000, 20000, 50000
 
@@ -2325,6 +2485,116 @@ write.table(window200gap600fdr05evalue50000_lost_annot_promoterAnd5_geneSymbol, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
+
+
+```
+
+
+
+
+
+
+### On Window 200bp gap 600bp - initialBigwig
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+set.seed(42)
+
+# Import diff peaks
+
+window200gap600fdr01evalue1000_initialBigwig_gain <- read.delim("output/sicer2/window200gap600fdr01evalue1000_initialBigwig/NPC_KO_H3K27me3_005008-increased.bed", sep = "\t", skip = 0, header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = V1, start= V2, end=V3)
+window200gap600fdr01evalue1000_initialBigwig_lost <- read.delim("output/sicer2/window200gap600fdr01evalue1000_initialBigwig/NPC_KO_H3K27me3_005008-decreased.bed", sep = "\t", skip = 0, header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = V1, start= V2, end=V3)
+
+
+
+# Tidy peaks 
+## H3K27me3
+window200gap600fdr01evalue1000_initialBigwig_gain_gr = makeGRangesFromDataFrame(window200gap600fdr01evalue1000_initialBigwig_gain,keep.extra.columns=TRUE)
+window200gap600fdr01evalue1000_initialBigwig_lost_gr = makeGRangesFromDataFrame(window200gap600fdr01evalue1000_initialBigwig_lost,keep.extra.columns=TRUE)
+
+
+gr_list <- list(window200gap600fdr01evalue1000_initialBigwig_gain=window200gap600fdr01evalue1000_initialBigwig_gain_gr, window200gap600fdr01evalue1000_initialBigwig_lost=window200gap600fdr01evalue1000_initialBigwig_lost_gr)
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## plots
+pdf("output/ChIPseeker/plotAnnoBar_NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig.pdf", width = 16, height = 3)
+plotAnnoBar(peakAnnoList)
+dev.off()
+pdf("output/ChIPseeker/plotDistToTSS_NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig.pdf", width = 16, height = 3)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
+
+## Get annotation data frame
+window200gap600fdr01evalue1000_initialBigwig_gain_annot <- as.data.frame(peakAnnoList[["window200gap600fdr01evalue1000_initialBigwig_gain"]]@anno)
+window200gap600fdr01evalue1000_initialBigwig_lost_annot <- as.data.frame(peakAnnoList[["window200gap600fdr01evalue1000_initialBigwig_lost"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+window200gap600fdr01evalue1000_initialBigwig_gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = window200gap600fdr01evalue1000_initialBigwig_gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+window200gap600fdr01evalue1000_initialBigwig_gain_annot$gene <- mapIds(org.Hs.eg.db, keys = window200gap600fdr01evalue1000_initialBigwig_gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+window200gap600fdr01evalue1000_initialBigwig_lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = window200gap600fdr01evalue1000_initialBigwig_lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+window200gap600fdr01evalue1000_initialBigwig_lost_annot$gene <- mapIds(org.Hs.eg.db, keys = window200gap600fdr01evalue1000_initialBigwig_lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+
+
+## Save output table
+write.table(window200gap600fdr01evalue1000_initialBigwig_gain_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig_gain_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(window200gap600fdr01evalue1000_initialBigwig_lost_annot, file="output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig_lost_annot.txt", sep="\t", quote=F, row.names=F)  
+
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+window200gap600fdr01evalue1000_initialBigwig_gain_annot_promoterAnd5 = tibble(window200gap600fdr01evalue1000_initialBigwig_gain_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+window200gap600fdr01evalue1000_initialBigwig_lost_annot_promoterAnd5 = tibble(window200gap600fdr01evalue1000_initialBigwig_lost_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+
+
+### Save output gene lists
+window200gap600fdr01evalue1000_initialBigwig_gain_annot_promoterAnd5_geneSymbol = window200gap600fdr01evalue1000_initialBigwig_gain_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+window200gap600fdr01evalue1000_initialBigwig_lost_annot_promoterAnd5_geneSymbol = window200gap600fdr01evalue1000_initialBigwig_lost_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+
+
+write.table(window200gap600fdr01evalue1000_initialBigwig_gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig_gain_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(window200gap600fdr01evalue1000_initialBigwig_lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig_lost_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
 
 
 ```
@@ -6171,6 +6441,7 @@ sbatch scripts/BedToBigwig_Norm99_Ferguson_unique_initialBigwig.sh # 39907050 ok
 
 Let's generate median tracks for Ferguson and THOR_Ferguson bigwigs (Norm99 unique)
 
+
 **Run wiggletools:**
 ```bash
 conda activate BedToBigwig
@@ -6189,15 +6460,23 @@ sbatch scripts/bigwigsmooth_Norm99_Ferguson_unique.sh # 38037234 ok
 ### Re-convert to bigwig
 conda activate BedToBigwig
 
-sbatch --dependency=afterany:38037234 scripts/bigwigsmooth_Norm99_Ferguson_unique_part2.sh # 38040571 xxx
+sbatch --dependency=afterany:38037234 scripts/bigwigsmooth_Norm99_Ferguson_unique_part2.sh # 38040571 ok
 ```
 *NOTE: bigwig are merge into 1 bedgraph which is then converted into 1 bigwig (wiggletools cannot output bigwig directly so need to pass by bedgraph or wiggle in between)*
 
 -->  Smoothing bigwig using `multiBigwigSummary` work great! 
 
+--> Fail in the end, I had to smooth as I made a mistake and apply SF to local maxima bed and not initial bigwig
 
 
+```bash
+conda activate BedToBigwig
 
+# Calculate median
+## bigwig_Ferguson
+sbatch scripts/bigwigmerge_Norm99_Ferguson_unique_initialBigwig-H3K27me3.sh # 39953877 ok
+sbatch scripts/bigwigmerge_Norm99_Ferguson_unique_initialBigwig-H3K4me3.sh # 39954377 xxx
+```
 
 
 
