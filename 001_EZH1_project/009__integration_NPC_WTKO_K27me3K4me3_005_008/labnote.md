@@ -9310,53 +9310,51 @@ To **combine windows**, lets try the following:
 
 --> GOOD here as I applied SF to initial bigwigs
 
-XXXY HERE TO RUN!!
 
 ```bash
 conda activate ChIPseqSpikeInFree
 
 ## PREPARE BED FILE FOR QUANTIFICATION ##
-output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_initialBigwig.bedGraph 
-output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99_initialBigwig.bedGraph
-output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_initialBigwig.bedGraph 
+output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_initialBigwig.sorted.bedGraph
+output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_initialBigwig.sorted.bedGraph
+output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_initialBigwig.sorted.bedGraph
+output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_initialBigwig.sorted.bedGraph
 
-output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99_initialBigwig.bedGraph 
-output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99_initialBigwig.bedGraph
-output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99_initialBigwig.bedGraph 
 
 # Modify our bedGraph into bed (score in the 5th column); add dummy column 4
-awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_initialBigwig.bed
-awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99_initialBigwig.bed
-awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_initialBigwig.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_initialBigwig.sorted.bedGraph > output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_initialBigwig.sorted.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_initialBigwig.sorted.bedGraph > output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_initialBigwig.sorted.bed
 
-awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99_initialBigwig.bed
-awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99_initialBigwig.bed
-awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99_initialBigwig.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_initialBigwig.sorted.bedGraph > output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_initialBigwig.sorted.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_initialBigwig.sorted.bedGraph > output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_initialBigwig.sorted.bed
+
 
 
 ## RUN NDIFFREPS ##
 # 5000bp every 100bp -  Negative binomial pval 0.0001
-diffReps.pl -tr output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin5000space100_nb_pval0001-diff.nb.txt --window 5000 --step 100 --meth nb --pval 0.0001
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_initialBigwig.sorted.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_initialBigwig.sorted.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_initialBigwig.sorted.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_initialBigwig.sorted.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin5000space100_nb_pval0001-diff.nb.txt --window 5000 --step 100 --meth nb --pval 0.0001
 
 
-# 2000bp every 100bp - G test with pval 0.05
-diffReps.pl -tr output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin2000space100_nb_pval0001-diff.nb.txt --window 2000 --step 100 --meth nb --pval 0.0001
+# 2000bp every 100bp - Negative binomial pval 0.0001
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_initialBigwig.sorted.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_initialBigwig.sorted.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_initialBigwig.sorted.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_initialBigwig.sorted.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin2000space100_nb_pval0001-diff.nb.txt --window 2000 --step 100 --meth nb --pval 0.0001
 
 
 
-# 1000bp every 100bp - G test with pval 0.05
-diffReps.pl -tr output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin1000space100_nb_pval0001-diff.nb.txt --window 1000 --step 100 --meth nb --pval 0.0001
+# 1000bp every 100bp - Negative binomial pval 0.0001
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_initialBigwig.sorted.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_initialBigwig.sorted.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_initialBigwig.sorted.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_initialBigwig.sorted.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin1000space100_nb_pval0001-diff.nb.txt --window 1000 --step 100 --meth nb --pval 0.0001
 
-# 500bp every 100bp - G test with pval 0.05
-diffReps.pl -tr output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin500space100_nb_pval0001-diff.nb.txt --window 500 --step 100 --meth nb --pval 0.0001
+# 500bp every 100bp - Negative binomial pval 0.0001
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_initialBigwig.sorted.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_initialBigwig.sorted.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_initialBigwig.sorted.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_initialBigwig.sorted.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin500space100_nb_pval0001-diff.nb.txt --window 500 --step 100 --meth nb --pval 0.0001
 
 
-# 250bp every 50bp - G test with pval 0.05
-diffReps.pl -tr output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin250space50_nb_pval0001-diff.nb.txt --window 250 --step 50 --meth nb --pval 0.0001
+# 250bp every 50bp - Negative binomial pval 0.0001
+diffReps.pl -tr output/bigwig_Ferguson/NPC_KO_H3K27me3_005_unique_norm99_initialBigwig.sorted.bed output/bigwig_Ferguson/NPC_KO_H3K27me3_008_unique_norm99_initialBigwig.sorted.bed -co output/bigwig_Ferguson/NPC_WT_H3K27me3_005_unique_norm99_initialBigwig.sorted.bed output/bigwig_Ferguson/NPC_WT_H3K27me3_008_unique_norm99_initialBigwig.sorted.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/NPC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin250space50_nb_pval0001-diff.nb.txt --window 250 --step 50 --meth nb --pval 0.0001
 
 ```
 
+--> All good
 
+XXXXY BELOW NOT MOD
 
 
 ### Explore diffreps results in R
