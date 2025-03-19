@@ -5295,6 +5295,11 @@ awk -F'\t' '$4 == "Lost" ' output/diffreps/merged_intervals-padj05_gt_pval05-5kb
 awk -F'\t' '$4 == "Gain" ' output/diffreps/merged_intervals-padj05_nb_pval0001-5kb2kb1kb500bp250bp-WTvsKO_initialBigwig.txt > output/diffreps/merged_intervals-padj05_nb_pval0001-5kb2kb1kb500bp250bp-WTvsKO_initialBigwig-Gain.txt
 awk -F'\t' '$4 == "Lost" ' output/diffreps/merged_intervals-padj05_nb_pval0001-5kb2kb1kb500bp250bp-WTvsKO_initialBigwig.txt > output/diffreps/merged_intervals-padj05_nb_pval0001-5kb2kb1kb500bp250bp-WTvsKO_initialBigwig-Lost.txt
 
+awk -F'\t' '$4 == "Gain" ' output/diffreps/merged_intervals-padj001_nb_pval0001_log2FC1-5kb2kb1kb500bp250bp-WTvsKO_initialBigwig.txt > output/diffreps/merged_intervals-padj001_nb_pval0001_log2FC1-5kb2kb1kb500bp250bp-WTvsKO_initialBigwig-Gain.txt
+awk -F'\t' '$4 == "Lost" ' output/diffreps/merged_intervals-padj001_nb_pval0001_log2FC1-5kb2kb1kb500bp250bp-WTvsKO_initialBigwig.txt > output/diffreps/merged_intervals-padj001_nb_pval0001_log2FC1-5kb2kb1kb500bp250bp-WTvsKO_initialBigwig-Lost.txt
+
+
+
 
 # DEEPTOOL PLOTS
 ## H3K27me3 binding changes
@@ -5304,6 +5309,9 @@ sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2k
 ### Good `*initialBigwig`
 sbatch scripts/matrix_TSS_5kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_nb_pval0001-FergusonUniqueNorm99initialBigwig_H3K27me3_EZH2-peak.sh # 39926889 ok 
 sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_nb_pval0001-FergusonUniqueNorm99initialBigwig_H3K27me3_EZH2-peak.sh # 39926902 ok 
+
+sbatch scripts/matrix_TSS_5kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1-FergusonUniqueNorm99initialBigwig_H3K27me3_EZH2-peak.sh # 40025589 ok
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1-FergusonUniqueNorm99initialBigwig_H3K27me3_EZH2-peak.sh # 40025596 ok
 
 
 
@@ -9037,12 +9045,21 @@ merged_df <- as.data.frame(merged_gr) %>%
   ) %>%
   select(seqnames, start, end, direction, Largest_window, log2FC) %>%
   as_tibble()
-#--> 395 Gain, 331 Lost, 3 Mixed
+
 
 # PLOT combine windows
+## FC pos/neg 0 treshold
 merged_df_counts <- merged_df %>%  
+  mutate(log2FC = as.numeric(log2FC)) %>%
   filter(direction != "Mixed") %>%
   mutate(direction = ifelse(log2FC < 0, "Negative", "Positive")) %>%
+  group_by(direction) %>%
+  summarise(count = n(), .groups = "drop")
+## FC pos/neg 1 treshold
+merged_df_counts <- merged_df %>%  
+  mutate(log2FC = as.numeric(log2FC)) %>%
+  filter(log2FC > 1 | log2FC < -1) %>%
+  mutate(direction = ifelse(log2FC < -1, "Negative", "Positive")) %>%
   group_by(direction) %>%
   summarise(count = n(), .groups = "drop")
 
@@ -9113,19 +9130,19 @@ awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Fergus
 diffReps.pl -tr output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin5000space100_nb_pval0001-diff.nb.txt --window 5000 --step 100 --meth nb --pval 0.0001
 
 
-# 2000bp every 100bp - G test with pval 0.05
+# 2000bp every 100bp -  Negative binomial pval 0.0001
 diffReps.pl -tr output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin2000space100_nb_pval0001-diff.nb.txt --window 2000 --step 100 --meth nb --pval 0.0001
 
 
 
-# 1000bp every 100bp - G test with pval 0.05
+# 1000bp every 100bp -  Negative binomial pval 0.0001
 diffReps.pl -tr output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin1000space100_nb_pval0001-diff.nb.txt --window 1000 --step 100 --meth nb --pval 0.0001
 
-# 500bp every 100bp - G test with pval 0.05
+# 500bp every 100bp -  Negative binomial pval 0.0001
 diffReps.pl -tr output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin500space100_nb_pval0001-diff.nb.txt --window 500 --step 100 --meth nb --pval 0.0001
 
 
-# 250bp every 50bp - G test with pval 0.05
+# 250bp every 50bp -  Negative binomial pval 0.0001
 diffReps.pl -tr output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin250space50_nb_pval0001-diff.nb.txt --window 250 --step 50 --meth nb --pval 0.0001
 
 ```
@@ -9164,10 +9181,6 @@ bin500space100_nb_pval0001 <- read.delim("output/diffreps/PSC_WT_H3K27me3_unique
 bin250space50_nb_pval0001 <- read.delim("output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin250space50_nb_pval0001-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
   as_tibble() %>%
   dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
-
-
-
-
 
 
 
@@ -9234,7 +9247,7 @@ dev.off()
 
 # Combine windows 
 combined_data_select = combined_data %>% 
-  filter(padj<0.05)
+  filter(padj<0.001)
 
 ## Convert to GRanges
 ## Convert combined_data_filt to GRanges
@@ -9288,18 +9301,28 @@ merged_df <- as.data.frame(merged_gr) %>%
 #--> 395 Gain, 331 Lost, 3 Mixed
 
 # PLOT combine windows
+## FC pos/neg 0 treshold
 merged_df_counts <- merged_df %>%  
+  mutate(log2FC = as.numeric(log2FC)) %>%
   filter(direction != "Mixed") %>%
   mutate(direction = ifelse(log2FC < 0, "Negative", "Positive")) %>%
   group_by(direction) %>%
   summarise(count = n(), .groups = "drop")
+## FC pos/neg 1 treshold
+merged_df_counts <- merged_df %>%  
+  mutate(log2FC = as.numeric(log2FC)) %>%
+  filter(log2FC > 1 | log2FC < -1) %>%
+  mutate(direction = ifelse(log2FC < -1, "Negative", "Positive")) %>%
+  group_by(direction) %>%
+  summarise(count = n(), .groups = "drop")
 
-pdf("output/diffreps/hist-log2FC_distribution-padj05_nb_pval0001-WindowCombine_5kb2kb1kb500bp250bp_initialBigwig.pdf", width=3, height=3)
+pdf("output/diffreps/hist-log2FC_distribution-padj001_nb_pval0001_log2FC1-WindowCombine_5kb2kb1kb500bp250bp_initialBigwig.pdf", width=3, height=3)
 merged_df %>%  
   filter(direction != "Mixed") %>%
   mutate(log2FC = as.numeric(log2FC)) %>%
 ggplot(., aes(x = log2FC)) +
   geom_histogram(binwidth = 0.5, fill = "black", color = "black", alpha = 0.7) +
+  geom_vline(xintercept = c(-1, 1), color = "red", linetype = "dashed") +
   labs(title = "Log2FC Distribution",
        x = "Log2 Fold Change",
        y = "Frequency") +
@@ -9315,13 +9338,13 @@ ggplot(., aes(x = log2FC)) +
 dev.off()
 
 ## Save output
-write.table(merged_df, "output/diffreps/merged_intervals-padj05_nb_pval0001-5kb2kb1kb500bp250bp-WTvsKO_initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(merged_df, "output/diffreps/merged_intervals-padj001_nb_pval0001_log2FC1-5kb2kb1kb500bp250bp-WTvsKO_initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 
 
 ```
 
 --> Looks great!! Nice combination of gain/lost, with a bit more gain. AND much more Diff. bound site here!!
-
+  --> `padj001_nb_pval0001_log2FC1` may be optimal
 
 
 
@@ -9332,7 +9355,9 @@ write.table(merged_df, "output/diffreps/merged_intervals-padj05_nb_pval0001-5kb2
 
 
 
-## WT vs KO - SICER2
+## WT vs KO - SICER2 - FAIL
+
+--> FAIL, as I applied SF to local maxima bed and not bigwig
 
 
 --> SICER2 work with simplicate. BUT I do not have always corresponding WT/KO from the same experiment!!!
@@ -9390,6 +9415,137 @@ sicer_df -t output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99_scaleUpRo
 
 
 
+
+
+
+
+## WT vs KO - SICER2 - initialBigwig
+
+
+
+--> SICER2 work with simplicate. BUT I do not have always corresponding WT/KO from the same experiment!!!
+  --> Here, I will do **006R WT with 006R KO, 013R1 WT with 013R1 KO**, I will *use only two bio reps*
+
+
+
+```bash
+conda activate sicer2
+
+##################################
+# DATA PREP #################
+##################################
+
+output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_initialBigwig.bed
+output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99_initialBigwig.bed
+output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_initialBigwig.bed
+
+output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99_initialBigwig.bed
+output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99_initialBigwig.bed
+output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99_initialBigwig.bed
+
+# Scale up and Round score
+awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_initialBigwig.bed > output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_initialBigwig_scaleUpRounded.bed
+awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99_initialBigwig.bed > output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99_initialBigwig_scaleUpRounded.bed
+awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_initialBigwig.bed > output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_initialBigwig_scaleUpRounded.bed
+awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99_initialBigwig.bed > output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99_initialBigwig_scaleUpRounded.bed
+awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99_initialBigwig.bed > output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99_initialBigwig_scaleUpRounded.bed
+awk 'OFS="\t" {print $1, $2, $3, $4, int($5*1000 + 0.5), "+"}' output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99_initialBigwig.bed > output/bigwig_Ferguson/PSC_KO_H3K27me3_014R2_unique_norm99_initialBigwig_scaleUpRounded.bed
+
+
+##################################
+# Run SICER2 #################
+##################################
+
+## Default parameters Rep 005
+sicer_df -t output/bigwig_Ferguson/PSC_KO_H3K27me3_006R_unique_norm99_initialBigwig_scaleUpRounded.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_initialBigwig_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.01 --gap_size 600 --e_value 1000 -o output/sicer2/window200gap600fdr01evalue1000_initialBigwig
+#--> 2132 increase, 14394 decreased
+sicer_df -t output/bigwig_Ferguson/PSC_KO_H3K27me3_013R1_unique_norm99_initialBigwig_scaleUpRounded.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_initialBigwig_scaleUpRounded.bed -s hg38 --window_size 200 -fdr_df 0.01 --gap_size 600 --e_value 1000 -o output/sicer2/window200gap600fdr01evalue1000_initialBigwig
+#--> 5138 increase, 6315 decreased
+```
+
+- `window200gap600fdr01evalue1000_initialBigwig`: 006R show almost only Lost H3K27me3, but 013R1 is more homogeneous (even tho more Lost)
+
+
+
+
+### Explore result in R
+
+Lets follow this workflow to integrate bio rep:
+- Load each replicate into R.
+- Keep only significant regions (rows) from each replicate --> Use `*increased*`/`*decreased*` files
+- Convert significant peaks from each replicate into GenomicRanges objects.
+- Intersect the peaks across replicates
+- Export final intersect peaks as a BED file
+
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+library("GenomicRanges")
+
+
+
+###############################################################
+####### FDR 0.01 window 200 gap 600 E-value 1000 ######
+###############################################################
+# import file
+PSC_KO_H3K27me3_006R__decreased <- read.table("output/sicer2/window200gap600fdr01evalue1000_initialBigwig/PSC_KO_H3K27me3_006R_unique_norm99_initialBigwig_scaleUpRounded-W200-G600-decreased-islands-summary-FDR0.01", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+PSC_KO_H3K27me3_006R__increased <- read.table("output/sicer2/window200gap600fdr01evalue1000_initialBigwig/PSC_KO_H3K27me3_006R_unique_norm99_initialBigwig_scaleUpRounded-W200-G600-increased-islands-summary-FDR0.01", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+
+PSC_KO_H3K27me3_013R1__decreased <- read.table("output/sicer2/window200gap600fdr01evalue1000_initialBigwig/PSC_KO_H3K27me3_013R1_unique_norm99_initialBigwig_scaleUpRounded-W200-G600-decreased-islands-summary-FDR0.01", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+PSC_KO_H3K27me3_013R1__increased <- read.table("output/sicer2/window200gap600fdr01evalue1000_initialBigwig/PSC_KO_H3K27me3_013R1_unique_norm99_initialBigwig_scaleUpRounded-W200-G600-increased-islands-summary-FDR0.01", header=FALSE, sep="\t") %>%
+  dplyr::rename(chr= V1, start= V2, end= V3, Readcount_KO= V4, Normalized_Readcount_KO= V5, Readcount_WT= V6, Normalized_Readcount_WT= V7) %>%
+  as_tibble()
+
+# DECREASED / LOST #####################
+PSC_KO_H3K27me3_006R__decreased_GR <- GRanges(seqnames=PSC_KO_H3K27me3_006R__decreased$"chr",
+                   ranges=IRanges(start=PSC_KO_H3K27me3_006R__decreased$start, end=PSC_KO_H3K27me3_006R__decreased$end))
+PSC_KO_H3K27me3_013R1__decreased_GR <- GRanges(seqnames=PSC_KO_H3K27me3_013R1__decreased$"chr",
+                   ranges=IRanges(start=PSC_KO_H3K27me3_013R1__decreased$start, end=PSC_KO_H3K27me3_013R1__decreased$end))
+# find overlap
+overlap <- findOverlaps(PSC_KO_H3K27me3_006R__decreased_GR, PSC_KO_H3K27me3_013R1__decreased_GR)
+rep1_overlap <- PSC_KO_H3K27me3_006R__decreased_GR[queryHits(overlap)]
+rep2_overlap <- PSC_KO_H3K27me3_013R1__decreased_GR[subjectHits(overlap)]
+# Merge overlapping regions into consensus peaks
+consensus_peaks <- reduce(c(rep1_overlap, rep2_overlap))
+# Export bed file
+rtracklayer::export.bed(consensus_peaks, "output/sicer2/window200gap600fdr01evalue1000_initialBigwig/PSC_KO_H3K27me3_006R013R1-decreased.bed")
+
+# INCREASED / GAIN #####################
+PSC_KO_H3K27me3_006R__increased_GR <- GRanges(seqnames=PSC_KO_H3K27me3_006R__increased$"chr",
+                   ranges=IRanges(start=PSC_KO_H3K27me3_006R__increased$start, end=PSC_KO_H3K27me3_006R__increased$end))
+PSC_KO_H3K27me3_013R1__increased_GR <- GRanges(seqnames=PSC_KO_H3K27me3_013R1__increased$"chr",
+                   ranges=IRanges(start=PSC_KO_H3K27me3_013R1__increased$start, end=PSC_KO_H3K27me3_013R1__increased$end))
+# find overlap
+overlap <- findOverlaps(PSC_KO_H3K27me3_006R__increased_GR, PSC_KO_H3K27me3_013R1__increased_GR)
+rep1_overlap <- PSC_KO_H3K27me3_006R__increased_GR[queryHits(overlap)]
+rep2_overlap <- PSC_KO_H3K27me3_013R1__increased_GR[subjectHits(overlap)]
+# Merge overlapping regions into consensus peaks
+consensus_peaks <- reduce(c(rep1_overlap, rep2_overlap))
+# Export bed file
+rtracklayer::export.bed(consensus_peaks, "output/sicer2/window200gap600fdr01evalue1000_initialBigwig/PSC_KO_H3K27me3_006R013R1-increased.bed")
+
+
+
+```
+
+- *Window 200, Gap 600, E-value 1000* --> This one seems the best + recommended by SICER2
+  - Lost= 2689
+  - Gain= 130
+--> WEIRD!!
+  
 
 
 

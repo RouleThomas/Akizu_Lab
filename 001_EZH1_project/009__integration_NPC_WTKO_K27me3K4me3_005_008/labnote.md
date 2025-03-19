@@ -942,7 +942,7 @@ sbatch scripts/matrix_TSS_10kb_H3K27me3-LocalMaxima_THOR-consensusPeaks.sh # 386
 
 
 
-# deepTools plot to compare DESEQ2 vs DIFFREPS vs THOR to identify diff. bound regions
+# deepTools plot to compare gene specific SICER2 vs DESEQ2 vs DIFFREPS vs THOR to identify diff. bound regions
 
 I assign peak to genes for each of the three method and perform venn diagram to check for overlap: A lot of genes identify as differential in a method -specific way! So let's check the profile of these method -specific genes, to see which method to believe (more detail in ppt `20250306`)
 
@@ -951,32 +951,49 @@ First in the **Venn diagram webpage, collect the genes**, and organize them as o
 
 ```bash
 # Gain specific
-## pval default padj 0.05
+## pval default padj 0.05 - FAIL bigwig
 nano output/vennDiagram/DIFFREPS_Gain_45.txt
 nano output/vennDiagram/DESEQ2_Gain_29.txt
 nano output/vennDiagram/THOR_Gain_736.txt
-## pval 0.1 padj 0.1
+## pval 0.1 padj 0.1 - FAIL bigwig
 nano output/vennDiagram/DIFFREPS_Gain_278.txt
 nano output/vennDiagram/DESEQ2_Gain_25.txt
 nano output/vennDiagram/THOR_Gain_463.txt
-## pval 0.05 padj 0.05
+## pval 0.05 padj 0.05 - FAIL bigwig
 nano output/vennDiagram/DIFFREPS_Gain_170.txt
 nano output/vennDiagram/DESEQ2_Gain_26.txt
 nano output/vennDiagram/THOR_Gain_520.txt
+## initial bigwig
+nano output/vennDiagram/SICER2_Gain_1249.txt
+nano output/vennDiagram/DIFFREPS_Gain_174.txt
+nano output/vennDiagram/THOR_Gain_217.txt
+
+
+
+
+
 
 # Lost specific
-## pval default padj 0.05
+## pval default padj 0.05 - FAIL bigwig
 nano output/vennDiagram/DIFFREPS_Lost_332.txt
 nano output/vennDiagram/DESEQ2_Lost_64.txt
 nano output/vennDiagram/THOR_Lost_102.txt
-## pval 0.1 padj 0.1
+## pval 0.1 padj 0.1 - FAIL bigwig
 nano output/vennDiagram/DIFFREPS_Lost_332.txt
 nano output/vennDiagram/DESEQ2_Lost_64.txt
 nano output/vennDiagram/THOR_Lost_102.txt
-## pval 0.05 padj 0.05
+## pval 0.05 padj 0.05 - FAIL bigwig
 nano output/vennDiagram/DIFFREPS_Lost_217.txt
 nano output/vennDiagram/DESEQ2_Lost_67.txt
 nano output/vennDiagram/THOR_Lost_122.txt
+## initial bigwig
+nano output/vennDiagram/SICER2_Lost_129.txt
+nano output/vennDiagram/DIFFREPS_Lost_505.txt
+nano output/vennDiagram/THOR_Lost_119.txt
+
+
+
+
 ```
 
 **Generate GTF file from these geneSymbol list** of genes:
@@ -995,7 +1012,6 @@ sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/THOR_Gain_736.txt > output
 sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DIFFREPS_Lost_41.txt > output/vennDiagram/DIFFREPS_Lost_41_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DESEQ2_Lost_89.txt > output/vennDiagram/DESEQ2_Lost_89_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/THOR_Lost_172.txt > output/vennDiagram/THOR_Lost_172_as_gtf_geneSymbol.txt
-
 ## pval 0.1 padj 0.1
 sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DIFFREPS_Gain_278.txt > output/vennDiagram/DIFFREPS_Gain_278_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DESEQ2_Gain_25.txt > output/vennDiagram/DESEQ2_Gain_25_as_gtf_geneSymbol.txt
@@ -1004,7 +1020,6 @@ sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/THOR_Gain_463.txt > output
 sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DIFFREPS_Lost_332.txt > output/vennDiagram/DIFFREPS_Lost_332_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DESEQ2_Lost_64.txt > output/vennDiagram/DESEQ2_Lost_64_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/THOR_Lost_102.txt > output/vennDiagram/THOR_Lost_102_as_gtf_geneSymbol.txt
-
 ## pval 0.05 padj 0.05
 sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DIFFREPS_Gain_170.txt > output/vennDiagram/DIFFREPS_Gain_170_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DESEQ2_Gain_26.txt > output/vennDiagram/DESEQ2_Gain_26_as_gtf_geneSymbol.txt
@@ -1013,6 +1028,14 @@ sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/THOR_Gain_520.txt > output
 sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DIFFREPS_Lost_217.txt > output/vennDiagram/DIFFREPS_Lost_217_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DESEQ2_Lost_67.txt > output/vennDiagram/DESEQ2_Lost_67_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/THOR_Lost_122.txt > output/vennDiagram/THOR_Lost_122_as_gtf_geneSymbol.txt
+## initial bigwig
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/SICER2_Gain_1249.txt > output/vennDiagram/SICER2_Gain_1249_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DIFFREPS_Gain_174.txt > output/vennDiagram/DIFFREPS_Gain_174_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/THOR_Gain_217.txt > output/vennDiagram/THOR_Gain_217_as_gtf_geneSymbol.txt
+
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/SICER2_Lost_129.txt > output/vennDiagram/SICER2_Lost_129_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/DIFFREPS_Lost_505.txt > output/vennDiagram/DIFFREPS_Lost_505_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/vennDiagram/THOR_Lost_119.txt > output/vennDiagram/THOR_Lost_119_as_gtf_geneSymbol.txt
 
 
 
@@ -1027,7 +1050,6 @@ grep -Ff output/vennDiagram/THOR_Gain_736_as_gtf_geneSymbol.txt meta/ENCFF159KBI
 grep -Ff output/vennDiagram/DIFFREPS_Lost_41_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DIFFREPS_Lost_41.gtf
 grep -Ff output/vennDiagram/DESEQ2_Lost_89_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DESEQ2_Lost_89.gtf
 grep -Ff output/vennDiagram/THOR_Lost_172_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_THOR_Lost_172.gtf
-
 ## pval 0.1 padj 0.1
 grep -Ff output/vennDiagram/DIFFREPS_Gain_278_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DIFFREPS_Gain_278.gtf
 grep -Ff output/vennDiagram/DESEQ2_Gain_25_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DESEQ2_Gain_25.gtf
@@ -1036,7 +1058,6 @@ grep -Ff output/vennDiagram/THOR_Gain_463_as_gtf_geneSymbol.txt meta/ENCFF159KBI
 grep -Ff output/vennDiagram/DIFFREPS_Lost_332_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DIFFREPS_Lost_332.gtf
 grep -Ff output/vennDiagram/DESEQ2_Lost_64_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DESEQ2_Lost_64.gtf
 grep -Ff output/vennDiagram/THOR_Lost_102_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_THOR_Lost_102.gtf
-
 ## pval 0.05 padj 0.05
 grep -Ff output/vennDiagram/DIFFREPS_Gain_170_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DIFFREPS_Gain_170.gtf
 grep -Ff output/vennDiagram/DESEQ2_Gain_26_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DESEQ2_Gain_26.gtf
@@ -1045,6 +1066,17 @@ grep -Ff output/vennDiagram/THOR_Gain_520_as_gtf_geneSymbol.txt meta/ENCFF159KBI
 grep -Ff output/vennDiagram/DIFFREPS_Lost_217_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DIFFREPS_Lost_217.gtf
 grep -Ff output/vennDiagram/DESEQ2_Lost_67_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DESEQ2_Lost_67.gtf
 grep -Ff output/vennDiagram/THOR_Lost_122_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_THOR_Lost_122.gtf
+## initial bigwig
+grep -Ff output/vennDiagram/SICER2_Gain_1249_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_SICER2_Gain_1249.gtf
+grep -Ff output/vennDiagram/DIFFREPS_Gain_174_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DIFFREPS_Gain_174.gtf
+grep -Ff output/vennDiagram/THOR_Gain_217_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_THOR_Gain_217.gtf
+
+grep -Ff output/vennDiagram/SICER2_Lost_129_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_SICER2_Lost_129.gtf
+grep -Ff output/vennDiagram/DIFFREPS_Lost_505_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_DIFFREPS_Lost_505.gtf
+grep -Ff output/vennDiagram/THOR_Lost_119_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_THOR_Lost_119.gtf
+
+
+
 
 
 
@@ -1057,7 +1089,6 @@ sbatch scripts/matrix_TSS_5kb_Venn_overlap-THOR_Gain_736.sh # 38761489 ok
 sbatch scripts/matrix_TSS_5kb_Venn_overlap-DIFFREPS_Lost_41.sh # 38761735 ok
 sbatch scripts/matrix_TSS_5kb_Venn_overlap-DESEQ2_Lost_89.sh # 38762008 ok
 sbatch scripts/matrix_TSS_5kb_Venn_overlap-THOR_Lost_172.sh # 38762279 ok
-
 ## pval 0.1 padj 0.1
 sbatch scripts/matrix_TSS_5kb_Venn_overlap-DIFFREPS_Gain_278.sh # 38998342 ok
 sbatch scripts/matrix_TSS_5kb_Venn_overlap-DESEQ2_Gain_25.sh # 38998397 ok
@@ -1066,7 +1097,6 @@ sbatch scripts/matrix_TSS_5kb_Venn_overlap-THOR_Gain_463.sh # 38998405 ok
 sbatch scripts/matrix_TSS_5kb_Venn_overlap-DIFFREPS_Lost_332.sh # 38998407 ok
 sbatch scripts/matrix_TSS_5kb_Venn_overlap-DESEQ2_Lost_64.sh # 38998428 ok
 sbatch scripts/matrix_TSS_5kb_Venn_overlap-THOR_Lost_102.sh # 38998434 ok
-
 ## pval 0.05 padj 0.05
 sbatch scripts/matrix_TSS_5kb_Venn_overlap-DIFFREPS_Gain_170.sh # 39004969 ok
 sbatch scripts/matrix_TSS_5kb_Venn_overlap-DESEQ2_Gain_26.sh # 39005134 ok
@@ -1075,7 +1105,16 @@ sbatch scripts/matrix_TSS_5kb_Venn_overlap-THOR_Gain_520.sh # 39005223 ok
 sbatch scripts/matrix_TSS_5kb_Venn_overlap-DIFFREPS_Lost_217.sh # 39005319 ok
 sbatch scripts/matrix_TSS_5kb_Venn_overlap-DESEQ2_Lost_67.sh # 39005375 ok
 sbatch scripts/matrix_TSS_5kb_Venn_overlap-THOR_Lost_122.sh # 39005477 ok
+## initial bigwig
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-SICER2_Gain_1249.sh # 40026049 xxx
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-DIFFREPS_Gain_174.sh # 40026052 xxx
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-THOR_Gain_217.sh # 40026053 xxx
 
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-SICER2_Lost_129.sh # 40026054 xxx
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-DIFFREPS_Lost_505.sh # 40026056 xxx
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-THOR_Lost_119.sh # 40026057 xxx
+
+XXXY HERE HECK BIGIG!!
 
 
 ```
