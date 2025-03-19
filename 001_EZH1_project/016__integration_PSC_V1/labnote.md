@@ -5275,6 +5275,7 @@ sbatch scripts/multiBigwigSummary_H3K27me3_WTvsKOEF1aEZH1_THOR_DiffBindTMMEpiCyp
 
 ## DIFFREPS
 
+### peaks - DIFFREPS
 Let's check gain / lost H3K27me3 regions in WT vs KO; and check H3K27me3 and EZH2 signal in:
 - H3K27me3 binding changes peak
 - H3K27me3 binding changes peak, overlapping with EZH2 consensus peaks (WT/KO)
@@ -5310,8 +5311,9 @@ sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2k
 sbatch scripts/matrix_TSS_5kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_nb_pval0001-FergusonUniqueNorm99initialBigwig_H3K27me3_EZH2-peak.sh # 39926889 ok 
 sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_nb_pval0001-FergusonUniqueNorm99initialBigwig_H3K27me3_EZH2-peak.sh # 39926902 ok 
 
-sbatch scripts/matrix_TSS_5kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1-FergusonUniqueNorm99initialBigwig_H3K27me3_EZH2-peak.sh # 40025589 ok
-sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1-FergusonUniqueNorm99initialBigwig_H3K27me3_EZH2-peak.sh # 40025596 ok
+sbatch scripts/matrix_TSS_5kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1-initialBigwig_H3K27me3_EZH2-peak.sh # 40025589 ok
+
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1-initialBigwig_H3K27me3_EZH2-peak.sh # 40025596 ok
 
 
 
@@ -5333,6 +5335,12 @@ sbatch scripts/matrix_TSS_5kb-DIFFREPS-WTKO_H3K27me3_5kb2kb1kb500bp250bp__padj05
   
 
 --> Seems that my smooth50bp is not smooth enough, many sharp peaks; may affect vizualization; lets smooth to 250bp instead
+
+
+### genes - DIFFREPS
+
+
+XXXY HERE !!!!!!
 
 
 
@@ -6396,6 +6404,113 @@ write.table(PSC_WTKOKOEF1aEZH1_EZH2_pool_peaks_merge500bp_annot_promoterAnd5_gen
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
+```
+
+
+## From DIFFREPS
+
+
+### On combine windows 5kb-250bp - initialBigwig
+
+Let's assign peak to genes on the two best windowns/parameters:
+- merge interval from **Negative binomial (nb) pval 0.0001 for window and padj 0.001**; of 5kb, 2kb, 1kb, 500bp, 250bp: `output/diffreps/merged_intervals-padj001_nb_pval0001_log2FC1-5kb2kb1kb500bp250bp-WTvsKO_initialBigwig.txt`
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import diff peaks
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1 <- read.delim("output/diffreps/merged_intervals-padj001_nb_pval0001_log2FC1-5kb2kb1kb500bp250bp-WTvsKO_initialBigwig.txt", sep = "\t", header = TRUE) %>%
+  as_tibble()
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain = merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1 %>%
+  filter(direction == "Gain") %>% mutate(log2FC = as.numeric(log2FC)) %>% filter(log2FC > 1)
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost = merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1 %>%
+  filter(direction == "Lost") %>% mutate(log2FC = as.numeric(log2FC)) %>% filter(log2FC < -1)
+### SAVE Gain and Lost peaks
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain, file="output/diffreps/merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain.txt", sep="\t", quote=F, row.names=F) 
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost, file="output/diffreps/merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost.txt", sep="\t", quote=F, row.names=F) 
+########
+
+# Tidy peaks 
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_gr = makeGRangesFromDataFrame(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain,keep.extra.columns=TRUE)
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_gr = makeGRangesFromDataFrame(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost,keep.extra.columns=TRUE)
+
+
+gr_list <- list(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain=merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_gr,merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost=merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_gr
+)
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## plots
+pdf("output/ChIPseeker/plotAnnoBar_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_initialBigwig.pdf", width = 16, height = 3)
+plotAnnoBar(peakAnnoList)
+dev.off()
+pdf("output/ChIPseeker/plotDistToTSS_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_initialBigwig.pdf", width = 16, height = 3)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
+
+## Get annotation data frame
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot <- as.data.frame(peakAnnoList[["merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain"]]@anno)
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot <- as.data.frame(peakAnnoList[["merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot$gene <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot$gene <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+## Save output table
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot, file="output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_initialBigwig_log2FC1_Gain_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot, file="output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_initialBigwig_log2FC1_Lost_annot.txt", sep="\t", quote=F, row.names=F)  
+
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot_promoterAnd5 = tibble(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot_promoterAnd5 = tibble(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+
+### Save output gene lists
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot_promoterAnd5_geneSymbol = merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot_promoterAnd5_geneSymbol = merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+
 ```
 
 

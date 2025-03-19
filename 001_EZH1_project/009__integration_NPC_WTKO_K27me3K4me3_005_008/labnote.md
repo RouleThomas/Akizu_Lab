@@ -1106,15 +1106,13 @@ sbatch scripts/matrix_TSS_5kb_Venn_overlap-DIFFREPS_Lost_217.sh # 39005319 ok
 sbatch scripts/matrix_TSS_5kb_Venn_overlap-DESEQ2_Lost_67.sh # 39005375 ok
 sbatch scripts/matrix_TSS_5kb_Venn_overlap-THOR_Lost_122.sh # 39005477 ok
 ## initial bigwig
-sbatch scripts/matrix_TSS_5kb_Venn_overlap-SICER2_Gain_1249.sh # 40026049 xxx
-sbatch scripts/matrix_TSS_5kb_Venn_overlap-DIFFREPS_Gain_174.sh # 40026052 xxx
-sbatch scripts/matrix_TSS_5kb_Venn_overlap-THOR_Gain_217.sh # 40026053 xxx
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-SICER2_Gain_1249.sh # 40026049 ok
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-DIFFREPS_Gain_174.sh # 40026052 ok
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-THOR_Gain_217.sh # 40026053 ok
 
-sbatch scripts/matrix_TSS_5kb_Venn_overlap-SICER2_Lost_129.sh # 40026054 xxx
-sbatch scripts/matrix_TSS_5kb_Venn_overlap-DIFFREPS_Lost_505.sh # 40026056 xxx
-sbatch scripts/matrix_TSS_5kb_Venn_overlap-THOR_Lost_119.sh # 40026057 xxx
-
-XXXY HERE HECK BIGIG!!
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-SICER2_Lost_129.sh # 40026054 ok
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-DIFFREPS_Lost_505.sh # 40026056 ok
+sbatch scripts/matrix_TSS_5kb_Venn_overlap-THOR_Lost_119.sh # 40026057 ok
 
 
 ```
@@ -4592,6 +4590,16 @@ H3K27me3_qval30_Gain = read.table("output/edgeR/upregulated_q05fc01_WTKO_H3K27me
                                            col.names = "GeneSymbol") %>%
                                as_tibble()
 
+H3K27me3_qval30_Gain = read.table("output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot_promoterAnd5_geneSymbol.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+
+H3K27me3_qval30_Gain = read.table("output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig_gain_annot_promoterAnd5_geneSymbol.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+
 
 
 #### Remove gene version on the res and compil with THOR diff genes
@@ -4626,6 +4634,16 @@ H3K27me3_qval30_Lost = read.table("output/edgeR/downregulated_q05fc01_WTKO_H3K27
                                            col.names = "GeneSymbol") %>%
                                as_tibble()
 
+H3K27me3_qval30_Lost = read.table("output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot_promoterAnd5_geneSymbol.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+H3K27me3_qval30_Lost = read.table("output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig_lost_annot_promoterAnd5_geneSymbol.txt", 
+                                           header = FALSE, 
+                                           col.names = "GeneSymbol") %>%
+                               as_tibble()
+
+
 
 #### Remove gene version on the res and compil with THOR diff genes
 rownames(res) <- gsub("\\..*", "", rownames(res))
@@ -4654,7 +4672,9 @@ names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC <
 # pdf("output/deseq2/plotVolcano_res_001009_Gain_H3K27me3_qval30_NPC_KO_vs_NPC_WT.pdf", width=8, height=8)  
 # pdf("output/deseq2/plotVolcano_res_001009_Gain_H3K27me3_merged_intervals-DIFFREPS5kb2kb1kb500bp250bp__padj05_gt_pval105-NPC_KO_vs_NPC_WT.pdf", width=8, height=8)  
 # pdf("output/deseq2/plotVolcano_res_001009_Gain_H3K27me3_merged_intervals-SICER2window200gap600fdr05evalue50000-NPC_KO_vs_NPC_WT.pdf", width=8, height=8)  
-pdf("output/deseq2/plotVolcano_res_001009_Gain_H3K27me3_merged_intervals-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL-NPC_KO_vs_NPC_WT.pdf", width=8, height=8) 
+#pdf("output/deseq2/plotVolcano_res_001009_Gain_H3K27me3_merged_intervals-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL-NPC_KO_vs_NPC_WT.pdf", width=8, height=8) 
+#pdf("output/deseq2/plotVolcano_res_001009_Gain_H3K27me3_merged_intervals-DIFFREPS5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1-NPC_KO_vs_NPC_WT.pdf", width=8, height=8) 
+pdf("output/deseq2/plotVolcano_res_001009_Gain_H3K27me3_merged_intervals-SICER2window200gap600fdr01evalue1000_initialBigwig-NPC_KO_vs_NPC_WT.pdf", width=8, height=8) 
 EnhancedVolcano(res_Gain,
   lab = res_Gain$GeneSymbol,
   x = 'log2FoldChange',
@@ -4716,7 +4736,9 @@ names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC <
 #pdf("output/deseq2/plotVolcano_res_001009_Lost_H3K27me3_qval30_NPC_KO_vs_NPC_WT.pdf", width=8, height=8)
 # pdf("output/deseq2/plotVolcano_res_001009_Lost_H3K27me3_merged_intervals-DIFFREPS5kb2kb1kb500bp250bp__padj05_gt_pval105-NPC_KO_vs_NPC_WT.pdf", width=8, height=8)  
 #pdf("output/deseq2/plotVolcano_res_001009_Lost_H3K27me3_merged_intervals-SICER2window200gap600fdr05evalue50000-NPC_KO_vs_NPC_WT.pdf", width=8, height=8)  
-pdf("output/deseq2/plotVolcano_res_001009_Lost_H3K27me3_merged_intervals-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL-NPC_KO_vs_NPC_WT.pdf", width=8, height=8)   
+#pdf("output/deseq2/plotVolcano_res_001009_Lost_H3K27me3_merged_intervals-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-lfcShrinkNORMAL-NPC_KO_vs_NPC_WT.pdf", width=8, height=8)   
+#pdf("output/deseq2/plotVolcano_res_001009_Lost_H3K27me3_merged_intervals-DIFFREPS5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1-NPC_KO_vs_NPC_WT.pdf", width=8, height=8) 
+pdf("output/deseq2/plotVolcano_res_001009_Lost_H3K27me3_merged_intervals-SICER2window200gap600fdr01evalue1000_initialBigwig-NPC_KO_vs_NPC_WT.pdf", width=8, height=8)
 EnhancedVolcano(res_Lost,
   lab = res_Lost$GeneSymbol,
   x = 'log2FoldChange',
@@ -10397,8 +10419,7 @@ rtracklayer::export.bed(consensus_peaks, "output/sicer2/window1000gap3000fdr05ev
 
 --> SICER2 automatically create file,
 
-
-XXXY 
+ 
 
 ```bash
 conda activate sicer2
