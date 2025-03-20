@@ -5307,7 +5307,8 @@ awk -F'\t' '$4 == "Lost" ' output/diffreps/merged_intervals-padj001_nb_pval0001_
 ### Parameters FAIL - bigwig local maxima...
 sbatch scripts/matrix_TSS_5kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval05-FergusonUniqueNorm99smooth50bp_H3K27me3_EZH2-peak.sh # interactive 
 sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_gt_pval05-FergusonUniqueNorm99smooth50bp_H3K27me3_EZH2-peak.sh # interactive 
-### Good `*initialBigwig`
+
+### GOOD `*initialBigwig`
 sbatch scripts/matrix_TSS_5kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_nb_pval0001-FergusonUniqueNorm99initialBigwig_H3K27me3_EZH2-peak.sh # 39926889 ok 
 sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj05_nb_pval0001-FergusonUniqueNorm99initialBigwig_H3K27me3_EZH2-peak.sh # 39926902 ok 
 
@@ -5316,16 +5317,25 @@ sbatch scripts/matrix_TSS_5kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_5kb2kb1kb500bp25
 sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1-initialBigwig_H3K27me3_EZH2-peak.sh # 40025596 ok
 
 
+########################################################################################
+## H3K27me3 binding changes overlapping with EZH2 consensus peak (WT/KO) ######################
+########################################################################################
 
-## H3K27me3 binding changes overlapping with EZH2 consensus peak (WT/KO)
 ### Filter H3K27me3 binding changes to keep the one overlapping with EZH2
 ### Parameters FAIL - bigwig local maxima...
 bedtools intersect -wa -a output/diffreps/merged_intervals-padj05_gt_pval05-5kb2kb1kb500bp250bp-WTvsKO-Gain.txt -b output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKO_EZH2_pool_peaks.sorted.merge.bed > output/diffreps/merged_intervals-padj05_gt_pval05-5kb2kb1kb500bp250bp-WTvsKO-Gain-macs2qval2.3_PSC_WTKO_EZH2_pool_peaks.bed
 bedtools intersect -wa -a output/diffreps/merged_intervals-padj05_gt_pval05-5kb2kb1kb500bp250bp-WTvsKO-Lost.txt -b output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKO_EZH2_pool_peaks.sorted.merge.bed > output/diffreps/merged_intervals-padj05_gt_pval05-5kb2kb1kb500bp250bp-WTvsKO-Lost-macs2qval2.3_PSC_WTKO_EZH2_pool_peaks.bed
-
 #### bigwig Ferguson smooth50bp
-sbatch scripts/matrix_TSS_5kb-DIFFREPS-WTKO_H3K27me3_5kb2kb1kb500bp250bp__padj05_gt_pval05-macs2qval2.3_WTKO_EZH2-FergusonUniqueNorm99smooth50bp_H3K27me3_EZH2-peak.sh
-#### bigwig Ferguson smooth250bp
+sbatch scripts/matrix_TSS_5kb-DIFFREPS-WTKO_H3K27me3_5kb2kb1kb500bp250bp__padj05_gt_pval05-macs2qval2.3_WTKO_EZH2-FergusonUniqueNorm99smooth50bp_H3K27me3_EZH2-peak.sh 
+
+### GOOD `*initialBigwig`
+conda activate BedToBigwig
+
+bedtools intersect -wa -a output/diffreps/merged_intervals-padj001_nb_pval0001_log2FC1-5kb2kb1kb500bp250bp-WTvsKO_initialBigwig-Gain.txt -b output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKO_EZH2_pool_peaks.sorted.merge.bed > output/diffreps/merged_intervals-padj001_nb_pval0001_log2FC1_initialBigwig-5kb2kb1kb500bp250bp-WTvsKO-Gain-macs2qval2.3_PSC_WTKO_EZH2_pool_peaks.bed
+bedtools intersect -wa -a output/diffreps/merged_intervals-padj001_nb_pval0001_log2FC1-5kb2kb1kb500bp250bp-WTvsKO_initialBigwig-Lost.txt -b output/macs2/broad/broad_blacklist_qval2.30103/PSC_WTKO_EZH2_pool_peaks.sorted.merge.bed > output/diffreps/merged_intervals-padj001_nb_pval0001_log2FC1_initialBigwig-5kb2kb1kb500bp250bp-WTvsKO-Lost-macs2qval2.3_PSC_WTKO_EZH2_pool_peaks.bed
+
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-WTKO_H3K27me3__padj001_nb_pval0001_log2FC1_initialBigwig-macs2qval2.3_WTKO_EZH2-H3K27me3_EZH2-peak.sh # 40044647 ok
+
 
 
 ```
@@ -5340,8 +5350,41 @@ sbatch scripts/matrix_TSS_5kb-DIFFREPS-WTKO_H3K27me3_5kb2kb1kb500bp250bp__padj05
 ### genes - DIFFREPS
 
 
-XXXY HERE !!!!!!
 
+**Generate GTF file from these geneSymbol list** of genes:
+
+
+- DIFFREPS genes
+- DIFFREPS gene overlapping with EZH2 consensus peak WT/KO
+
+```bash
+# Generate gtf file from gene list:
+
+### create gtf from gene list
+#### Modify the .txt file that list all genes so that it match gtf structure
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt
+
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt
+
+
+## Filter the gtf
+grep -Ff output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot_promoterAnd5.gtf
+grep -Ff output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lost_annot_promoterAnd5.gtf
+
+grep -Ff output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain_annot_promoterAnd5.gtf
+grep -Ff output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost_annot_promoterAnd5.gtf
+
+
+
+# deeptool plots
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1-initialBigwig_H3K27me3_EZH2-gene.sh # 40044612 ok
+
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-padj001_nb_pval0001_log2FC1-macs2qval2EZH2_WTKO-initialBigwig_H3K27me3_EZH2-gene.sh # 40045139 ok
+
+
+```
 
 
 
@@ -6514,7 +6557,108 @@ write.table(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lo
 ```
 
 
+## DIFFREPS overlapping with EZH2 consensus peaks
 
+
+
+
+output/diffreps/merged_intervals-padj001_nb_pval0001_log2FC1_initialBigwig-5kb2kb1kb500bp250bp-WTvsKO-Lost-macs2qval2.3_PSC_WTKO_EZH2_pool_peaks.bed
+
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import diff peaks
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain <- read.delim("output/diffreps/merged_intervals-padj001_nb_pval0001_log2FC1_initialBigwig-5kb2kb1kb500bp250bp-WTvsKO-Gain-macs2qval2.3_PSC_WTKO_EZH2_pool_peaks.bed", sep = "\t", header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename(Chr = V1, Start = V2, End = V3)
+  merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost <- read.delim("output/diffreps/merged_intervals-padj001_nb_pval0001_log2FC1_initialBigwig-5kb2kb1kb500bp250bp-WTvsKO-Lost-macs2qval2.3_PSC_WTKO_EZH2_pool_peaks.bed", sep = "\t", header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename(Chr = V1, Start = V2, End = V3)
+
+
+# Tidy peaks 
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain_gr = makeGRangesFromDataFrame(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain,keep.extra.columns=TRUE)
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost_gr = makeGRangesFromDataFrame(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost,keep.extra.columns=TRUE)
+
+
+gr_list <- list(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain=merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain_gr,merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost=merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost_gr
+)
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## plots
+pdf("output/ChIPseeker/plotAnnoBar_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_initialBigwig__macs2qval2EZH2_WTKO.pdf", width = 16, height = 3)
+plotAnnoBar(peakAnnoList)
+dev.off()
+pdf("output/ChIPseeker/plotDistToTSS_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_initialBigwig__macs2qval2EZH2_WTKO.pdf", width = 16, height = 3)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
+
+## Get annotation data frame
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain_annot <- as.data.frame(peakAnnoList[["merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain"]]@anno)
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost_annot <- as.data.frame(peakAnnoList[["merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain_annot$gene <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost_annot$gene <- mapIds(org.Hs.eg.db, keys = merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+## Save output table
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain_annot, file="output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_initialBigwig_Gain_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost_annot, file="output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_initialBigwig_Lost_annot.txt", sep="\t", quote=F, row.names=F)  
+
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain_annot_promoterAnd5 = tibble(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost_annot_promoterAnd5 = tibble(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+
+### Save output gene lists
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain_annot_promoterAnd5_geneSymbol = merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost_annot_promoterAnd5_geneSymbol = merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+
+```
 
 
 

@@ -44,3 +44,20 @@ plotHeatmap -m output/deeptools/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3_merge
     --zMax 12 12 2 2
 
 
+
+
+plotProfile -m output/deeptools/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1-FergusonUniqueNorm99initialBigwig_H3K27me3_EZH2-peak.gz \
+    -out output/deeptools/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1-FergusonUniqueNorm99initialBigwig_H3K27me3_EZH2-peak_plotProfile1.pdf \
+    --samplesLabel "WT_H3K27me3" "KO_H3K27me3" "WT_EZH2" "KO_EZH2" \
+    --colors black red white white \
+    --perGroup
+
+plotProfile -m output/deeptools/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1-FergusonUniqueNorm99initialBigwig_H3K27me3_EZH2-peak.gz \
+    -out output/deeptools/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1-FergusonUniqueNorm99initialBigwig_H3K27me3_EZH2-peak_plotProfile2.pdf \
+    --samplesLabel "WT_H3K27me3" "KO_H3K27me3" "WT_EZH2" "KO_EZH2" \
+    --colors white white black red \
+    --perGroup \
+    --plotWidth 4 \
+    --yMax 3
+
+
