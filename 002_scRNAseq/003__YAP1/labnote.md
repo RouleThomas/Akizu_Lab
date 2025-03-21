@@ -29698,6 +29698,135 @@ dev.off()
 
 
 
+## emboR revisison1
+
+
+Follow guideline from `002*/003*/gastrulation paper or QSER1 paper/Revisison1 emboR/For Thomas for Revisions/Reviewers comments EMBOR Thomas highlight.docx`:
+
+- Vlnt plot embryo E7 WT vs cYPAKO with stat for each cluster
+- 
+
+
+```bash
+srun --mem=500g --pty bash -l
+conda activate scRNAseqV2
+```
+
+
+```R
+# packages 
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") 
+
+embryoE7.combined.sct <- readRDS(file = "output/seurat/embryoE7.combined.sct_19dim_V2.rds")
+embryoE7.combined.sct$condition <- factor(embryoE7.combined.sct$condition, levels = c("WT_E7", "cYAPKO_E7"))
+
+
+
+###############################################################
+# VLN PLOTS with STATISTICS #####################
+###############################################################
+
+
+# Check some genes
+DefaultAssay(embryoE7.combined.sct) <- "RNA"
+
+## post 20231005 Conchi meeting
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("Blood_Progenitor", "Endoderm", "Exe_Ectoderm", "Primitive_Streak", "Nascent_Mesoderm", "Cardiac_Mesoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", "Epiblast")
+##### Initialize empty list to store data
+deg_list <- list()
+
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-cYAPKO_response_E7_19dim_allGenes_V2.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.0001 ~ "***",
+    p_val_adj < 0.001  ~ "**",
+    p_val_adj < 0.05   ~ "*",
+    TRUE               ~ ""
+  ))
+
+
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- c("Nodal", "Yap1", "Amotl2", "Ptpn14", "Fgf8", "Qser1", "Wnt3", "Wnt3a", "Axin2", "Ccn1", "Ccn2")
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(embryoE7.combined.sct, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(embryoE7.combined.sct))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+pdf("output/seurat/VlnPlot_RNA_E7_control_cYAPKO_11genes_sct_19dim_V2_STAT.pdf", width=7, height=3.5)
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(embryoE7.combined.sct, 
+               features = gene, 
+               pt.size = 0.1, 
+               split.by = "condition", cols = c("blue", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos, label = significance), 
+                     size = 6, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+```
+
+
+
+
+
+
+
+
 # human gastruloid 24hr (second sample) analysis in Seurat
 
 
