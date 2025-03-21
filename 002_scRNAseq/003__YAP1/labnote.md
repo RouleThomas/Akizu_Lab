@@ -29704,7 +29704,7 @@ dev.off()
 Follow guideline from `002*/003*/gastrulation paper or QSER1 paper/Revisison1 emboR/For Thomas for Revisions/Reviewers comments EMBOR Thomas highlight.docx`:
 
 - Vlnt plot embryo E7 WT vs cYPAKO with stat for each cluster
-- 
+- SCPA output into UMAP; output file from dropbox: `Thomas Roule/Thomas analysis on scRNAseq embryos and gastruloids/embryo_E7_V2/Pathway analysis`
 
 
 ```bash
@@ -29818,6 +29818,23 @@ for (gene in genes_of_interest) {
   print(p)
 }
 dev.off()
+
+
+
+###############################################################
+# SCPA output to UMAP #####################
+###############################################################
+
+
+XXXY here
+
+
+
+
+
+
+
+
 ```
 
 
