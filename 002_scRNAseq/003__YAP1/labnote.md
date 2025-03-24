@@ -29705,6 +29705,7 @@ Follow guideline from `002*/003*/gastrulation paper or QSER1 paper/Revisison1 em
 
 - Vlnt plot embryo E7 WT vs cYPAKO with stat for each cluster
 - SCPA output into UMAP; output file from dropbox: `Thomas Roule/Thomas analysis on scRNAseq embryos and gastruloids/embryo_E7_V2/Pathway analysis`
+- GO analysis of DEG of Epiblast
 
 
 ```bash
@@ -29835,11 +29836,380 @@ XXXY here
 
 
 
+
+
+
+
 ```
 
 
 
 
+
+
+```bash
+srun --mem=500g --pty bash -l
+conda activate deseq2
+```
+
+
+
+
+
+
+```R
+
+library("tidyverse")
+library("enrichR")
+
+
+
+###############################################################
+# GO analysis Epiblast DEGs #####################
+###############################################################
+
+# Import DEG Epiblast
+
+#### import all clsuter DEGs output :
+cluster_types <- c("Blood_Progenitor", "Endoderm", "Exe_Ectoderm", "Primitive_Streak", "Nascent_Mesoderm", "Cardiac_Mesoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", "Epiblast")
+##### Initialize empty list to store data
+deg_list <- list()
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-cYAPKO_response_E7_19dim_allGenes_V2.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+
+
+combined_deg_Epiblast = as_tibble(combined_deg) %>%
+  filter(cluster == "Epiblast") 
+
+
+
+# enrichR GO analysis
+## Define databases for enrichment
+dbs <- c("GO_Biological_Process_2023") # 
+
+
+## IF starting with geneSymbol
+### Read and preprocess data for downregulated genes
+gene_names_down <- combined_deg_Epiblast %>% filter(p_val_adj < 0.05, avg_log2FC < 0) 
+list_down <- unique(as.character(gene_names_down$gene))
+edown <- enrichr(list_down, dbs)
+### Read and preprocess data for upregulated genes
+gene_names_up <- combined_deg_Epiblast %>% filter(p_val_adj < 0.05, avg_log2FC > 0) 
+list_up <- unique(as.character(gene_names_up$gene))
+eup <- enrichr(list_up, dbs)
+
+### Extracting KEGG data and assigning types
+up <- eup$GO_Biological_Process_2023
+down <- edown$GO_Biological_Process_2023
+up$type <- "up"
+down$type <- "down"
+### Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 20)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 20)
+### Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+### Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+### Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+### Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+## FAIL as dupplicates:
+up_pathways_suffixed <- paste0(up_pathways, "_up")
+down_pathways_suffixed <- paste0(down_pathways, "_down")
+new_order <- c(down_pathways_suffixed, up_pathways_suffixed)
+gos$Term <- ifelse(gos$type == "up", paste0(gos$Term, "_up"), paste0(gos$Term, "_down"))
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+pdf("output/GO/enrichR_GO_Biological_Process_2023-Epiblast-cYAPKO_response_E7_19dim_allGenes_V2-padj05posFC.pdf", width=12, height=7)
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="DEGs",   # H3K27me3  H3K4me3
+                    labels = c("down-reg", "up-reg"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "GO_Biological_Process_2023") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+
+
+## save output
+write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023-Epiblast-cYAPKO_response_E7_19dim_allGenes_V2-padj05posFC.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+
+
+
+
+
+## Define databases for enrichment
+dbs <- c("GO_Molecular_Function_2023") # 
+
+
+## IF starting with geneSymbol
+### Read and preprocess data for downregulated genes
+gene_names_down <- combined_deg_Epiblast %>% filter(p_val_adj < 0.05, avg_log2FC < 0) 
+list_down <- unique(as.character(gene_names_down$gene))
+edown <- enrichr(list_down, dbs)
+### Read and preprocess data for upregulated genes
+gene_names_up <- combined_deg_Epiblast %>% filter(p_val_adj < 0.05, avg_log2FC > 0) 
+list_up <- unique(as.character(gene_names_up$gene))
+eup <- enrichr(list_up, dbs)
+
+### Extracting KEGG data and assigning types
+up <- eup$GO_Molecular_Function_2023
+down <- edown$GO_Molecular_Function_2023
+up$type <- "up"
+down$type <- "down"
+### Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 20)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 20)
+### Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+### Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+### Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+### Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+## FAIL as dupplicates:
+up_pathways_suffixed <- paste0(up_pathways, "_up")
+down_pathways_suffixed <- paste0(down_pathways, "_down")
+new_order <- c(down_pathways_suffixed, up_pathways_suffixed)
+gos$Term <- ifelse(gos$type == "up", paste0(gos$Term, "_up"), paste0(gos$Term, "_down"))
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+pdf("output/GO/enrichR_GO_Molecular_Function_2023-Epiblast-cYAPKO_response_E7_19dim_allGenes_V2-padj05posFC.pdf", width=12, height=7)
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="DEGs",   # H3K27me3  H3K4me3
+                    labels = c("down-reg", "up-reg"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "GO_Molecular_Function_2023") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+
+
+## save output
+write.table(gos, "output/GO/enrichR_GO_Molecular_Function_2023-Epiblast-cYAPKO_response_E7_19dim_allGenes_V2-padj05posFC.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+
+
+
+
+
+## Define databases for enrichment
+dbs <- c("GO_Cellular_Component_2023") # 
+
+
+## IF starting with geneSymbol
+### Read and preprocess data for downregulated genes
+gene_names_down <- combined_deg_Epiblast %>% filter(p_val_adj < 0.05, avg_log2FC < 0) 
+list_down <- unique(as.character(gene_names_down$gene))
+edown <- enrichr(list_down, dbs)
+### Read and preprocess data for upregulated genes
+gene_names_up <- combined_deg_Epiblast %>% filter(p_val_adj < 0.05, avg_log2FC > 0) 
+list_up <- unique(as.character(gene_names_up$gene))
+eup <- enrichr(list_up, dbs)
+
+### Extracting KEGG data and assigning types
+up <- eup$GO_Cellular_Component_2023
+down <- edown$GO_Cellular_Component_2023
+up$type <- "up"
+down$type <- "down"
+### Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 20)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 20)
+### Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+### Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+### Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+### Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+## FAIL as dupplicates:
+up_pathways_suffixed <- paste0(up_pathways, "_up")
+down_pathways_suffixed <- paste0(down_pathways, "_down")
+new_order <- c(down_pathways_suffixed, up_pathways_suffixed)
+gos$Term <- ifelse(gos$type == "up", paste0(gos$Term, "_up"), paste0(gos$Term, "_down"))
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+pdf("output/GO/enrichR_GO_Cellular_Component_2023-Epiblast-cYAPKO_response_E7_19dim_allGenes_V2-padj05posFC.pdf", width=12, height=7)
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="DEGs",   # H3K27me3  H3K4me3
+                    labels = c("down-reg", "up-reg"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "GO_Cellular_Component_2023") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+
+
+## save output
+write.table(gos, "output/GO/enrichR_GO_Cellular_Component_2023-Epiblast-cYAPKO_response_E7_19dim_allGenes_V2-padj05posFC.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("KEGG_2021_Human") # 
+
+## IF starting with geneSymbol
+### Read and preprocess data for downregulated genes
+gene_names_down <- combined_deg_Epiblast %>% filter(p_val_adj < 0.05, avg_log2FC < 0) 
+list_down <- unique(as.character(gene_names_down$gene))
+edown <- enrichr(list_down, dbs)
+### Read and preprocess data for upregulated genes
+gene_names_up <- combined_deg_Epiblast %>% filter(p_val_adj < 0.05, avg_log2FC > 0) 
+list_up <- unique(as.character(gene_names_up$gene))
+eup <- enrichr(list_up, dbs)
+
+### Extracting KEGG data and assigning types
+up <- eup$KEGG_2021_Human
+down <- edown$KEGG_2021_Human
+up$type <- "up"
+down$type <- "down"
+### Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 20)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 20)
+### Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+### Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+### Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+### Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+## FAIL as dupplicates:
+up_pathways_suffixed <- paste0(up_pathways, "_up")
+down_pathways_suffixed <- paste0(down_pathways, "_down")
+new_order <- c(down_pathways_suffixed, up_pathways_suffixed)
+gos$Term <- ifelse(gos$type == "up", paste0(gos$Term, "_up"), paste0(gos$Term, "_down"))
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+pdf("output/GO/enrichR_KEGG_2021_Human-Epiblast-cYAPKO_response_E7_19dim_allGenes_V2-padj05posFC.pdf", width=12, height=7)
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="DEGs",   # H3K27me3  H3K4me3
+                    labels = c("down-reg", "up-reg"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "KEGG_2021_Human") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+
+
+## save output
+write.table(gos, "output/GO/enrichR_KEGG_2021_Human-Epiblast-cYAPKO_response_E7_19dim_allGenes_V2-padj05posFC.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+```
 
 
 
