@@ -161,14 +161,38 @@ bedtools intersect -wa -a output/annotation_homer_hESC_WT_QSER1_pool_annot_exten
 bedtools intersect -wa -a output/annotation_homer_hESC_WT_QSER1_pool_annot_extend200bp.bed -b output/ENCODE/Bernstein_H3K4me1.bed | uniq | wc -l # 5607
 bedtools intersect -wa -a output/annotation_homer_hESC_WT_QSER1_pool_annot_extend200bp.bed -b output/ENCODE/Bernstein_H3K27me3.bed | uniq | wc -l # 2797
 bedtools intersect -wa -a output/annotation_homer_hESC_WT_QSER1_pool_annot_extend200bp.bed -b output/ENCODE/Bernstein_H3K36me3.bed | uniq | wc -l # 33
-
-
 ```
 
-
-
-
 --> ChIPseeker files from homer used for total peak counts (in `008*/001*` and `008*/003*`)
+
+For emboR revision, we need the list of genes with **QSER1:YAP1 co-bound peaks (199) overlapping with H3K4me1 and H3K27ac**. Let's isolate bed file and then assign peak to genes (direct overlap AND +/-200bp)
+
+
+
+
+```bash
+conda activate BedToBigwig
+
+
+# QSER1:YAP1
+## Direct overlap, non extension
+bedtools intersect -wa -a output/QSER1YAP1_199peaks.bed -b output/ENCODE/Ren_H3K27ac.bed | uniq > output/ENCODE/QSER1YAP1_199peaks__Ren_H3K27ac.bed
+bedtools intersect -wa -a output/QSER1YAP1_199peaks.bed -b output/ENCODE/Ren_H3K4me1.bed | uniq > output/ENCODE/QSER1YAP1_199peaks__Ren_H3K4me1.bed
+
+bedtools intersect -wa -a output/QSER1YAP1_199peaks.bed -b output/ENCODE/Bernstein_H3K27ac.bed | uniq > output/ENCODE/QSER1YAP1_199peaks__Bernstein_H3K27ac.bed
+bedtools intersect -wa -a output/QSER1YAP1_199peaks.bed -b output/ENCODE/Bernstein_H3K4me1.bed | uniq > output/ENCODE/QSER1YAP1_199peaks__Bernstein_H3K4me1.bed
+
+## 200bp extension
+bedtools intersect -wa -a output/QSER1YAP1_199peaks_extend200bp.bed -b output/ENCODE/Ren_H3K27ac.bed | uniq > output/ENCODE/QSER1YAP1_199peaks_extend200bp__Ren_H3K27ac.bed
+bedtools intersect -wa -a output/QSER1YAP1_199peaks_extend200bp.bed -b output/ENCODE/Ren_H3K4me1.bed | uniq > output/ENCODE/QSER1YAP1_199peaks_extend200bp__Ren_H3K4me1.bed
+
+bedtools intersect -wa -a output/QSER1YAP1_199peaks_extend200bp.bed -b output/ENCODE/Bernstein_H3K27ac.bed | uniq > output/ENCODE/QSER1YAP1_199peaks_extend200bp__Bernstein_H3K27ac.bed
+bedtools intersect -wa -a output/QSER1YAP1_199peaks_extend200bp.bed -b output/ENCODE/Bernstein_H3K4me1.bed | uniq > output/ENCODE/QSER1YAP1_199peaks_extend200bp__Bernstein_H3K4me1.bed
+```
+
+--> Good, next lets assign peak to genes (output in ppt: `002*/003*/gastrulation paper or QSER1 paper/Revision1 emboR/QSER1 paper_Revision_TR.pptx`)
+
+
 
 
 
@@ -203,7 +227,7 @@ sbatch scripts/matrix_2kb_H3K4me3_YAP1peaks_Bernstein.sh # 29179075 ok
 sbatch scripts/matrix_5kb_H3K4me3_YAP1peaks_Bernstein.sh # 29179088 ok
 sbatch scripts/matrix_10kb_H3K4me3_YAP1peaks_Bernstein.sh # 29179106 ok
 
-# QSER1 only peaks
+# QSER1 only peaks (H3K4me1, H3K27ac, H3K36me3, H3K27me3, EZH2)
 sbatch scripts/matrix_2kb_H3K4me3_QSER1peaks_Ren.sh # 29179264 ok
 sbatch scripts/matrix_5kb_H3K4me3_QSER1peaks_Ren.sh # 29179285 ok
 sbatch scripts/matrix_10kb_H3K4me3_QSER1peaks_Ren.sh # 29179334 ok
@@ -211,6 +235,10 @@ sbatch scripts/matrix_10kb_H3K4me3_QSER1peaks_Ren.sh # 29179334 ok
 sbatch scripts/matrix_2kb_H3K4me3_QSER1peaks_Bernstein.sh # 29179355 ok
 sbatch scripts/matrix_5kb_H3K4me3_QSER1peaks_Bernstein.sh # 29179370 ok
 sbatch scripts/matrix_10kb_H3K4me3_QSER1peaks_Bernstein.sh # 29179387 ok
+
+# QSER1 only peaks (QSER1, H3K4me1, H3K27ac, H3K36me3, H3K27me3, EZH2)
+sbatch scripts/matrix_2kb_QSER1peaks_Bernstein.sh # 40287751 ok
+sbatch scripts/matrix_2kb_QSER1peaks_Ren.sh # 40292479 ok
 
 
 # EZH2 and H3K27me3 signal - All genes
@@ -422,6 +450,203 @@ write.table(Bernstein_H3K36me3_annot_noIntergenic, file = "output/ChIPseeker/ann
 
 
 ```
+
+
+
+
+# ChIPseeker for QSER1:YAP1 overlapping with H3K4me1, H3K27ac - emboR revision
+
+- no extension
+- QSER1:YAP1 peak extended of 200bp prior checking overlap with histone H3K4me1, H3K27ac
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import 
+# Add header to bed
+QSER1YAP1_199peaks__Ren_H3K27ac = as_tibble(read.table("output/ENCODE/QSER1YAP1_199peaks__Ren_H3K27ac.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+QSER1YAP1_199peaks__Ren_H3K4me1 = as_tibble(read.table("output/ENCODE/QSER1YAP1_199peaks__Ren_H3K4me1.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+QSER1YAP1_199peaks__Bernstein_H3K27ac = as_tibble(read.table("output/ENCODE/QSER1YAP1_199peaks__Bernstein_H3K27ac.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+QSER1YAP1_199peaks__Bernstein_H3K4me1 = as_tibble(read.table("output/ENCODE/QSER1YAP1_199peaks__Bernstein_H3K4me1.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+QSER1YAP1_199peaks_extend200bp__Ren_H3K27ac = as_tibble(read.table("output/ENCODE/QSER1YAP1_199peaks_extend200bp__Ren_H3K27ac.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+QSER1YAP1_199peaks_extend200bp__Ren_H3K4me1 = as_tibble(read.table("output/ENCODE/QSER1YAP1_199peaks_extend200bp__Ren_H3K4me1.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+QSER1YAP1_199peaks_extend200bp__Bernstein_H3K27ac = as_tibble(read.table("output/ENCODE/QSER1YAP1_199peaks_extend200bp__Bernstein_H3K27ac.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+QSER1YAP1_199peaks_extend200bp__Bernstein_H3K4me1 = as_tibble(read.table("output/ENCODE/QSER1YAP1_199peaks_extend200bp__Bernstein_H3K4me1.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+
+
+
+## Tidy peaks 
+QSER1YAP1_199peaks__Ren_H3K27ac_gr = makeGRangesFromDataFrame(QSER1YAP1_199peaks__Ren_H3K27ac,keep.extra.columns=TRUE)
+QSER1YAP1_199peaks__Ren_H3K4me1_gr = makeGRangesFromDataFrame(QSER1YAP1_199peaks__Ren_H3K4me1,keep.extra.columns=TRUE)
+QSER1YAP1_199peaks__Bernstein_H3K27ac_gr = makeGRangesFromDataFrame(QSER1YAP1_199peaks__Bernstein_H3K27ac,keep.extra.columns=TRUE)
+QSER1YAP1_199peaks__Bernstein_H3K4me1_gr = makeGRangesFromDataFrame(QSER1YAP1_199peaks__Bernstein_H3K4me1,keep.extra.columns=TRUE)
+QSER1YAP1_199peaks_extend200bp__Ren_H3K27ac_gr = makeGRangesFromDataFrame(QSER1YAP1_199peaks_extend200bp__Ren_H3K27ac,keep.extra.columns=TRUE)
+QSER1YAP1_199peaks_extend200bp__Ren_H3K4me1_gr = makeGRangesFromDataFrame(QSER1YAP1_199peaks_extend200bp__Ren_H3K4me1,keep.extra.columns=TRUE)
+QSER1YAP1_199peaks_extend200bp__Bernstein_H3K27ac_gr = makeGRangesFromDataFrame(QSER1YAP1_199peaks_extend200bp__Bernstein_H3K27ac,keep.extra.columns=TRUE)
+QSER1YAP1_199peaks_extend200bp__Bernstein_H3K4me1_gr = makeGRangesFromDataFrame(QSER1YAP1_199peaks_extend200bp__Bernstein_H3K4me1,keep.extra.columns=TRUE)
+
+
+
+gr_list <- list(QSER1YAP1_199peaks__Ren_H3K27ac=QSER1YAP1_199peaks__Ren_H3K27ac_gr, QSER1YAP1_199peaks__Ren_H3K4me1=QSER1YAP1_199peaks__Ren_H3K4me1_gr, QSER1YAP1_199peaks__Bernstein_H3K27ac=QSER1YAP1_199peaks__Bernstein_H3K27ac_gr,    QSER1YAP1_199peaks__Bernstein_H3K4me1 = QSER1YAP1_199peaks__Bernstein_H3K4me1_gr, QSER1YAP1_199peaks_extend200bp__Ren_H3K27ac = QSER1YAP1_199peaks_extend200bp__Ren_H3K27ac_gr, QSER1YAP1_199peaks_extend200bp__Ren_H3K4me1 = QSER1YAP1_199peaks_extend200bp__Ren_H3K4me1_gr, QSER1YAP1_199peaks_extend200bp__Bernstein_H3K27ac = QSER1YAP1_199peaks_extend200bp__Bernstein_H3K27ac_gr, QSER1YAP1_199peaks_extend200bp__Bernstein_H3K4me1 = QSER1YAP1_199peaks_extend200bp__Bernstein_H3K4me1_gr)
+
+## Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+
+                       
+### Barplot
+pdf("output/ChIPseeker/annotation_barplot_QSER1YAP1_199peaks_ENCODE_BernsteinRen.pdf", width=14, height=5)
+plotAnnoBar(peakAnnoList)
+dev.off()
+
+## Get annotation data frame
+QSER1YAP1_199peaks__Ren_H3K27ac_annot <- as.data.frame(peakAnnoList[["QSER1YAP1_199peaks__Ren_H3K27ac"]]@anno)
+QSER1YAP1_199peaks__Ren_H3K4me1_annot <- as.data.frame(peakAnnoList[["QSER1YAP1_199peaks__Ren_H3K4me1"]]@anno)
+QSER1YAP1_199peaks__Bernstein_H3K27ac_annot <- as.data.frame(peakAnnoList[["QSER1YAP1_199peaks__Bernstein_H3K27ac"]]@anno)
+QSER1YAP1_199peaks__Bernstein_H3K4me1_annot <- as.data.frame(peakAnnoList[["QSER1YAP1_199peaks__Bernstein_H3K4me1"]]@anno)
+QSER1YAP1_199peaks_extend200bp__Ren_H3K27ac_annot <- as.data.frame(peakAnnoList[["QSER1YAP1_199peaks_extend200bp__Ren_H3K27ac"]]@anno)
+QSER1YAP1_199peaks_extend200bp__Ren_H3K4me1_annot <- as.data.frame(peakAnnoList[["QSER1YAP1_199peaks_extend200bp__Ren_H3K4me1"]]@anno)
+QSER1YAP1_199peaks_extend200bp__Bernstein_H3K27ac_annot <- as.data.frame(peakAnnoList[["QSER1YAP1_199peaks_extend200bp__Bernstein_H3K27ac"]]@anno)
+QSER1YAP1_199peaks_extend200bp__Bernstein_H3K4me1_annot <- as.data.frame(peakAnnoList[["QSER1YAP1_199peaks_extend200bp__Bernstein_H3K4me1"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+QSER1YAP1_199peaks__Ren_H3K27ac_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = QSER1YAP1_199peaks__Ren_H3K27ac_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+QSER1YAP1_199peaks__Ren_H3K27ac_annot$gene <- mapIds(org.Hs.eg.db, keys = QSER1YAP1_199peaks__Ren_H3K27ac_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+QSER1YAP1_199peaks__Ren_H3K4me1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = QSER1YAP1_199peaks__Ren_H3K4me1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+QSER1YAP1_199peaks__Ren_H3K4me1_annot$gene <- mapIds(org.Hs.eg.db, keys = QSER1YAP1_199peaks__Ren_H3K4me1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+QSER1YAP1_199peaks__Bernstein_H3K27ac_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = QSER1YAP1_199peaks__Bernstein_H3K27ac_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+QSER1YAP1_199peaks__Bernstein_H3K27ac_annot$gene <- mapIds(org.Hs.eg.db, keys = QSER1YAP1_199peaks__Bernstein_H3K27ac_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+QSER1YAP1_199peaks__Bernstein_H3K4me1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = QSER1YAP1_199peaks__Bernstein_H3K4me1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+QSER1YAP1_199peaks__Bernstein_H3K4me1_annot$gene <- mapIds(org.Hs.eg.db, keys = QSER1YAP1_199peaks__Bernstein_H3K4me1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+QSER1YAP1_199peaks_extend200bp__Ren_H3K27ac_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = QSER1YAP1_199peaks_extend200bp__Ren_H3K27ac_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+QSER1YAP1_199peaks_extend200bp__Ren_H3K27ac_annot$gene <- mapIds(org.Hs.eg.db, keys = QSER1YAP1_199peaks_extend200bp__Ren_H3K27ac_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+QSER1YAP1_199peaks_extend200bp__Ren_H3K4me1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = QSER1YAP1_199peaks_extend200bp__Ren_H3K4me1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+QSER1YAP1_199peaks_extend200bp__Ren_H3K4me1_annot$gene <- mapIds(org.Hs.eg.db, keys = QSER1YAP1_199peaks_extend200bp__Ren_H3K4me1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+QSER1YAP1_199peaks_extend200bp__Bernstein_H3K27ac_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = QSER1YAP1_199peaks_extend200bp__Bernstein_H3K27ac_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+QSER1YAP1_199peaks_extend200bp__Bernstein_H3K27ac_annot$gene <- mapIds(org.Hs.eg.db, keys = QSER1YAP1_199peaks_extend200bp__Bernstein_H3K27ac_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+QSER1YAP1_199peaks_extend200bp__Bernstein_H3K4me1_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = QSER1YAP1_199peaks_extend200bp__Bernstein_H3K4me1_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+QSER1YAP1_199peaks_extend200bp__Bernstein_H3K4me1_annot$gene <- mapIds(org.Hs.eg.db, keys = QSER1YAP1_199peaks_extend200bp__Bernstein_H3K4me1_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+
+## Save output table
+write.table(QSER1YAP1_199peaks__Ren_H3K27ac_annot, file="output/ChIPseeker/annotation_ENCODE_QSER1YAP1_199peaks__Ren_H3K27ac_annot.txt", sep="\t", quote=F, row.names=F) 
+write.table(QSER1YAP1_199peaks__Ren_H3K4me1_annot, file="output/ChIPseeker/annotation_ENCODE_QSER1YAP1_199peaks__Ren_H3K4me1_annot.txt", sep="\t", quote=F, row.names=F) 
+write.table(QSER1YAP1_199peaks__Bernstein_H3K27ac_annot, file="output/ChIPseeker/annotation_ENCODE_QSER1YAP1_199peaks__Bernstein_H3K27ac_annot.txt", sep="\t", quote=F, row.names=F) 
+write.table(QSER1YAP1_199peaks__Bernstein_H3K4me1_annot, file="output/ChIPseeker/annotation_ENCODE_QSER1YAP1_199peaks__Bernstein_H3K4me1_annot.txt", sep="\t", quote=F, row.names=F) 
+write.table(QSER1YAP1_199peaks_extend200bp__Ren_H3K27ac_annot, file="output/ChIPseeker/annotation_ENCODE_QSER1YAP1_199peaks_extend200bp__Ren_H3K27ac_annot.txt", sep="\t", quote=F, row.names=F) 
+write.table(QSER1YAP1_199peaks_extend200bp__Ren_H3K4me1_annot, file="output/ChIPseeker/annotation_ENCODE_QSER1YAP1_199peaks_extend200bp__Ren_H3K4me1_annot.txt", sep="\t", quote=F, row.names=F) 
+write.table(QSER1YAP1_199peaks_extend200bp__Bernstein_H3K27ac_annot, file="output/ChIPseeker/annotation_ENCODE_QSER1YAP1_199peaks_extend200bp__Bernstein_H3K27ac_annot.txt", sep="\t", quote=F, row.names=F) 
+write.table(QSER1YAP1_199peaks_extend200bp__Bernstein_H3K4me1_annot, file="output/ChIPseeker/annotation_ENCODE_QSER1YAP1_199peaks_extend200bp__Bernstein_H3K4me1_annot.txt", sep="\t", quote=F, row.names=F) 
+
+
+
+
+## Keep only signals in non intergenic region ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+QSER1YAP1_199peaks__Ren_H3K27ac_annot_noIntergenic = tibble(QSER1YAP1_199peaks__Ren_H3K27ac_annot) %>%
+    filter(annotation != c("Distal Intergenic"))%>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+QSER1YAP1_199peaks__Ren_H3K4me1_annot_noIntergenic = tibble(QSER1YAP1_199peaks__Ren_H3K4me1_annot) %>%
+    filter(annotation != c("Distal Intergenic"))%>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+QSER1YAP1_199peaks__Bernstein_H3K27ac_annot_noIntergenic = tibble(QSER1YAP1_199peaks__Bernstein_H3K27ac_annot) %>%
+    filter(annotation != c("Distal Intergenic"))%>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+QSER1YAP1_199peaks__Bernstein_H3K4me1_annot_noIntergenic = tibble(QSER1YAP1_199peaks__Bernstein_H3K4me1_annot) %>%
+    filter(annotation != c("Distal Intergenic"))%>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+QSER1YAP1_199peaks_extend200bp__Ren_H3K27ac_annot_noIntergenic = tibble(QSER1YAP1_199peaks_extend200bp__Ren_H3K27ac_annot) %>%
+    filter(annotation != c("Distal Intergenic"))%>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+QSER1YAP1_199peaks_extend200bp__Ren_H3K4me1_annot_noIntergenic = tibble(QSER1YAP1_199peaks_extend200bp__Ren_H3K4me1_annot) %>%
+    filter(annotation != c("Distal Intergenic"))%>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+QSER1YAP1_199peaks_extend200bp__Bernstein_H3K27ac_annot_noIntergenic = tibble(QSER1YAP1_199peaks_extend200bp__Bernstein_H3K27ac_annot) %>%
+    filter(annotation != c("Distal Intergenic"))%>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+QSER1YAP1_199peaks_extend200bp__Bernstein_H3K4me1_annot_noIntergenic = tibble(QSER1YAP1_199peaks_extend200bp__Bernstein_H3K4me1_annot) %>%
+    filter(annotation != c("Distal Intergenic"))%>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+
+
+write.table(QSER1YAP1_199peaks__Ren_H3K27ac_annot_noIntergenic, file = "output/ChIPseeker/annotation_ENCODE_QSER1YAP1_199peaks__Ren_H3K27ac_annot_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(QSER1YAP1_199peaks__Ren_H3K4me1_annot_noIntergenic, file = "output/ChIPseeker/annotation_ENCODE_QSER1YAP1_199peaks__Ren_H3K4me1_annot_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(QSER1YAP1_199peaks__Bernstein_H3K27ac_annot_noIntergenic, file = "output/ChIPseeker/annotation_ENCODE_QSER1YAP1_199peaks__Bernstein_H3K27ac_annot_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(QSER1YAP1_199peaks__Bernstein_H3K4me1_annot_noIntergenic, file = "output/ChIPseeker/annotation_ENCODE_QSER1YAP1_199peaks__Bernstein_H3K4me1_annot_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(QSER1YAP1_199peaks_extend200bp__Ren_H3K27ac_annot_noIntergenic, file = "output/ChIPseeker/annotation_ENCODE_QSER1YAP1_199peaks_extend200bp__Ren_H3K27ac_annot_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(QSER1YAP1_199peaks_extend200bp__Ren_H3K4me1_annot_noIntergenic, file = "output/ChIPseeker/annotation_ENCODE_QSER1YAP1_199peaks_extend200bp__Ren_H3K4me1_annot_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(QSER1YAP1_199peaks_extend200bp__Bernstein_H3K27ac_annot_noIntergenic, file = "output/ChIPseeker/annotation_ENCODE_QSER1YAP1_199peaks_extend200bp__Bernstein_H3K27ac_annot_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(QSER1YAP1_199peaks_extend200bp__Bernstein_H3K4me1_annot_noIntergenic, file = "output/ChIPseeker/annotation_ENCODE_QSER1YAP1_199peaks_extend200bp__Bernstein_H3K4me1_annot_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+```
+
 
 
 
