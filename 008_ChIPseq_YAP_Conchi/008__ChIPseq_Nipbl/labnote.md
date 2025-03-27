@@ -34,7 +34,7 @@ Seems that there is only one bio rep. Lets download IP and input:
 # Fastp cleaning
 
 ```bash
-sbatch scripts/fastp.sh # 40428506 xxx
+sbatch scripts/fastp.sh # 40428506 ok
 ```
 
 
@@ -48,12 +48,12 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:40428506 scripts/bowtie2.sh # 40428600 xxx
+sbatch --dependency=afterany:40428506 scripts/bowtie2.sh # 40428600 ok
 ```
 
 
  
---> XXX Looks ok; around 50-70% uniq aligned reads (70-90% total) 
+--> Looks ok; around 70% uniq aligned reads (97% total) 
 
 
 
@@ -90,10 +90,9 @@ This is prefered for THOR bam input.
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:40428600 scripts/samtools_unique_raw.sh #  xxx
+sbatch --dependency=afterany:40428600 scripts/samtools_unique_raw.sh # 40428881 ok
 ```
 
-XXXY HERE !!!
 
 
 # Generate bigwig coverage files
@@ -143,6 +142,8 @@ ChIPQCreport(resqc)
 ```
 
 --> A `ChIPQCreport` folder is created in current wd; I moved it to `output`
+    - input FragL=179, ReadL=51; FragL-ReadL= 128
+    - Nipbl FragL=189, ReadL=51; FragL-ReadL= 138
 
 
 Then generate bigwig with the corresponding fragment size for each sample:
@@ -159,7 +160,7 @@ Paramaters:
 conda activate deeptools
 
 # bigwig with extendReads from CHIPQC
-sbatch scripts/bamtobigwig_unique_extendReads_raw.sh # 18481263 ok
+sbatch scripts/bamtobigwig_unique_extendReads_raw.sh # 40532753 xxx
 ```
 
 
@@ -183,76 +184,27 @@ conda activate homer_deseq2_V1
 module load SAMtools/1.16.1-GCC-11.3.0
 
 # Create tagDirectory to be used by homer (FAST, so run in interactive)
-makeTagDirectory output/homer/hESC_WT_EZH2_R1 output/bowtie2/hESC_WT_EZH2_R1.unique.dupmark.sorted.bam 
-makeTagDirectory output/homer/hESC_WT_EZH2_R2 output/bowtie2/hESC_WT_EZH2_R2.unique.dupmark.sorted.bam 
-makeTagDirectory output/homer/hESC_WT_input_R1 output/bowtie2/hESC_WT_input_R1.unique.dupmark.sorted.bam 
-makeTagDirectory output/homer/hESC_WT_QSER1_R1 output/bowtie2/hESC_WT_QSER1_R1.unique.dupmark.sorted.bam 
-makeTagDirectory output/homer/hESC_WT_QSER1_R2 output/bowtie2/hESC_WT_QSER1_R2.unique.dupmark.sorted.bam 
-makeTagDirectory output/homer/hESC_YAPKO_EZH2_R1 output/bowtie2/hESC_YAPKO_EZH2_R1.unique.dupmark.sorted.bam 
-makeTagDirectory output/homer/hESC_YAPKO_EZH2_R2 output/bowtie2/hESC_YAPKO_EZH2_R2.unique.dupmark.sorted.bam 
-makeTagDirectory output/homer/hESC_YAPKO_QSER1_R1 output/bowtie2/hESC_YAPKO_QSER1_R1.unique.dupmark.sorted.bam 
-makeTagDirectory output/homer/hESC_YAPKO_QSER1_R2 output/bowtie2/hESC_YAPKO_QSER1_R2.unique.dupmark.sorted.bam 
-
-## 008*/003*
-makeTagDirectory ../003__ChIPseq_pluripotency/output/homer/hESC_WT_input_R1 ../003__ChIPseq_pluripotency/output/bowtie2/hESC_WT_input_R1.unique.dupmark.sorted.bam 
-makeTagDirectory ../003__ChIPseq_pluripotency/output/homer/hESC_WT_TEAD4_R1 ../003__ChIPseq_pluripotency/output/bowtie2/hESC_WT_TEAD4_R1.unique.dupmark.sorted.bam 
-makeTagDirectory ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1 ../003__ChIPseq_pluripotency/output/bowtie2/hESC_WT_YAP1_R1.unique.dupmark.sorted.bam 
-
+makeTagDirectory output/homer/input output/bowtie2/input.unique.dupmark.sorted.bam 
+makeTagDirectory output/homer/Nipbl output/bowtie2/Nipbl.unique.dupmark.sorted.bam 
 #--> By default homer run in singleend
 
 
 # PEAK CALLING
-## Call peaks with multiple bio rep
-getDifferentialPeaksReplicates.pl -all -style factor -t output/homer/hESC_WT_EZH2_R1 output/homer/hESC_WT_EZH2_R2 -i output/homer/hESC_WT_input_R1 > output/homer/hESC_WT_EZH2_outputPeaks.txt 
-getDifferentialPeaksReplicates.pl -all -style factor -t output/homer/hESC_WT_QSER1_R1 output/homer/hESC_WT_QSER1_R2 -i output/homer/hESC_WT_input_R1 > output/homer/hESC_WT_QSER1_outputPeaks.txt
-getDifferentialPeaksReplicates.pl -all -style factor -t output/homer/hESC_YAPKO_EZH2_R1 output/homer/hESC_YAPKO_EZH2_R2 -i output/homer/hESC_WT_input_R1 > output/homer/hESC_YAPKO_EZH2_outputPeaks.txt 
-getDifferentialPeaksReplicates.pl -all -style factor -t output/homer/hESC_YAPKO_QSER1_R1 output/homer/hESC_YAPKO_QSER1_R2 -i output/homer/hESC_WT_input_R1 > output/homer/hESC_YAPKO_QSER1_outputPeaks.txt
-
-
 ## Call peaks with one bio rep (simplicate)
-findPeaks output/homer/hESC_WT_EZH2_R1 -style factor -o auto -i output/homer/hESC_WT_input_R1
-findPeaks output/homer/hESC_WT_EZH2_R2 -style factor -o auto -i output/homer/hESC_WT_input_R1
-findPeaks output/homer/hESC_WT_QSER1_R1 -style factor -o auto -i output/homer/hESC_WT_input_R1
-findPeaks output/homer/hESC_WT_QSER1_R2 -style factor -o auto -i output/homer/hESC_WT_input_R1
-findPeaks output/homer/hESC_YAPKO_EZH2_R1 -style factor -o auto -i output/homer/hESC_WT_input_R1
-findPeaks output/homer/hESC_YAPKO_EZH2_R2 -style factor -o auto -i output/homer/hESC_WT_input_R1
-findPeaks output/homer/hESC_YAPKO_QSER1_R1 -style factor -o auto -i output/homer/hESC_WT_input_R1
-findPeaks output/homer/hESC_YAPKO_QSER1_R2 -style factor -o auto -i output/homer/hESC_WT_input_R1
-## 008*/003*
-findPeaks ../003__ChIPseq_pluripotency/output/homer/hESC_WT_TEAD4_R1 -style factor -o auto -i ../003__ChIPseq_pluripotency/output/homer/hESC_WT_input_R1
-findPeaks ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1 -style factor -o auto -i ../003__ChIPseq_pluripotency/output/homer/hESC_WT_input_R1
+findPeaks output/homer/Nipbl -style factor -o auto -i output/homer/input
 
 ## Convert .txt to .bed
 ### simplicate
-pos2bed.pl output/homer/hESC_WT_EZH2_R1/peaks.txt > output/homer/hESC_WT_EZH2_R1/peaks.bed
-pos2bed.pl output/homer/hESC_WT_EZH2_R2/peaks.txt > output/homer/hESC_WT_EZH2_R2/peaks.bed
-pos2bed.pl output/homer/hESC_WT_QSER1_R1/peaks.txt > output/homer/hESC_WT_QSER1_R1/peaks.bed
-pos2bed.pl output/homer/hESC_WT_QSER1_R2/peaks.txt > output/homer/hESC_WT_QSER1_R2/peaks.bed
-pos2bed.pl output/homer/hESC_YAPKO_EZH2_R1/peaks.txt > output/homer/hESC_YAPKO_EZH2_R1/peaks.bed
-pos2bed.pl output/homer/hESC_YAPKO_EZH2_R2/peaks.txt > output/homer/hESC_YAPKO_EZH2_R2/peaks.bed
-pos2bed.pl output/homer/hESC_YAPKO_QSER1_R1/peaks.txt > output/homer/hESC_YAPKO_QSER1_R1/peaks.bed
-pos2bed.pl output/homer/hESC_YAPKO_QSER1_R2/peaks.txt > output/homer/hESC_YAPKO_QSER1_R2/peaks.bed
-#### 008*/003*
-pos2bed.pl ../003__ChIPseq_pluripotency/output/homer/hESC_WT_TEAD4_R1/peaks.txt > ../003__ChIPseq_pluripotency/output/homer/hESC_WT_TEAD4_R1/peaks.bed
-pos2bed.pl ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks.txt > ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks.bed
-### multiple replicate
-pos2bed.pl output/homer/hESC_WT_EZH2_outputPeaks.txt > output/homer/hESC_WT_EZH2_outputPeaks.bed
-pos2bed.pl output/homer/hESC_WT_QSER1_outputPeaks.txt > output/homer/hESC_WT_QSER1_outputPeaks.bed
-pos2bed.pl output/homer/hESC_YAPKO_EZH2_outputPeaks.txt > output/homer/hESC_YAPKO_EZH2_outputPeaks.bed
-pos2bed.pl output/homer/hESC_YAPKO_QSER1_outputPeaks.txt > output/homer/hESC_YAPKO_QSER1_outputPeaks.bed
-
- 
- 
-
+pos2bed.pl output/homer/Nipbl/peaks.txt > output/homer/Nipbl/peaks.bed
 ```
 
 
 
---> All good
+--> All good, peak and bigwig looking good
 
 
 
-
+XXXY HERE double check peak and bigiwg and then do peak annoatiton
 
 
 # ChIPseeker - homer
