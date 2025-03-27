@@ -46,6 +46,8 @@ done < rename.txt
 --> All good 
 
 
+
+
 # Check overlap QSER1:YAP1 peaks
 
 
@@ -219,13 +221,12 @@ sbatch scripts/matrix_5kb_H3K4me3_QSER1YAP1peaks_Bernstein.sh # 29178852 ok
 sbatch scripts/matrix_10kb_H3K4me3_QSER1YAP1peaks_Bernstein.sh  # 29178862 ok
 
 # YAP:QSER1 peaks (YAP1, QSER1, H3K4me1, H3K27ac, H3K36me3, H3K27me3, EZH2)
-sbatch scripts/matrix_2kb_QSER1YAP1peaks_Ren.sh # 40532499 xxx
-sbatch scripts/matrix_5kb_QSER1YAP1peaks_Ren.sh # 40532511 xxx
+sbatch scripts/matrix_2kb_QSER1YAP1peaks_Ren.sh # 40532499 ok
+sbatch scripts/matrix_5kb_QSER1YAP1peaks_Ren.sh # 40532511 ok
 
-sbatch scripts/matrix_2kb_QSER1YAP1peaks_Bernstein.sh # 40532543 xxx
-sbatch scripts/matrix_5kb_QSER1YAP1peaks_Bernstein.sh # 40532556 xxx
+sbatch scripts/matrix_2kb_QSER1YAP1peaks_Bernstein.sh # 40532543 ok
+sbatch scripts/matrix_5kb_QSER1YAP1peaks_Bernstein.sh # 40532556 ok
 
-XXXY COPY FILES!!!
 
 # YAP1 only peaks
 sbatch scripts/matrix_2kb_H3K4me3_YAP1peaks_Ren.sh # 29178940 ok

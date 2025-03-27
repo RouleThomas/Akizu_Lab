@@ -29703,10 +29703,11 @@ dev.off()
 
 Follow guideline from `002*/003*/gastrulation paper or QSER1 paper/Revisison1 emboR/For Thomas for Revisions/Reviewers comments EMBOR Thomas highlight.docx`:
 
-- Vlnt plot embryo E7 WT vs cYPAKO with stat for each cluster
+- Vlnt plot embryo E7 WT vs cYPAKO with stat (WT vs cYPAKO) for each cluster
 - SCPA output (TGFB, WNT) into UMAP; output file from dropbox: `Thomas Roule/Thomas analysis on scRNAseq embryos and gastruloids/embryo_E7_V2/Pathway analysis`:
   - SCPA terms has been collected, from `002*/003*/gastrulation paper or QSER1 paper/Revisison1 emboR/SCPA_Figure1L_IDTerms.xlsx`; sheet= `corrected`
 - Output number of DEGs for each cluster
+- Vln plot E7 WT and cYPAKO with stat (cell cluster vs all cell cluster) - cell type marker
 - GO analysis of DEG of Epiblast
 
 
@@ -30999,6 +31000,82 @@ combined_deg_tibble %>%
   arrange(desc(num_signif_genes))
 
 
+
+
+
+
+
+
+
+
+
+
+###############################################################
+# VLN PLOTS with STATISTICS #####################
+###############################################################
+
+
+# Check some genes
+DefaultAssay(embryoE7.combined.sct) <- "RNA"
+
+## perform DEG cluster vs all cluster
+all_markers <- FindAllMarkers(embryoE7.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.01)
+
+
+genes_of_interest <- c("Pou5f1", "Sox2", "Cdh1", "Nodal", "Eomes", "Fgf8", "Mesp1", "Hand1", "Tal1", "Kdr", "Runx1", "Etv2", "Sox7", "Sox17", "Foxa1", "Elf5", "Gata1", "Ets2", "Rhox5", "Cldn6", "Ttr", "Dab2", "Fabp1", "Fabp2", "Gata4")
+
+
+# map marker gene to its specific cluster
+gene_cluster_map <- c(
+  Pou5f1 = "Epiblast", Sox2 = "Epiblast", Cdh1 = "Epiblast",
+  Nodal = "Primitive_Streak", Eomes = "Primitive_Streak", Fgf8 = "Primitive_Streak",
+  Mesp1 = "Nascent_Mesoderm", Hand1 = "Nascent_Mesoderm",
+  Tal1 = "Blood_Progenitor", Kdr = "Blood_Progenitor", Runx1 = "Blood_Progenitor", 
+  Etv2 = "Blood_Progenitor", Sox7 = "Blood_Progenitor",
+  Sox17 = "Endoderm", Foxa1 = "Endoderm",
+  Elf5 = "Exe_Ectoderm", Gata1 = "Exe_Ectoderm", Ets2 = "Exe_Ectoderm", Rhox5 = "Exe_Ectoderm",
+  Cldn6 = "Exe_Endoderm_2", Ttr = "Exe_Endoderm_2", Dab2 = "Exe_Endoderm_2",
+  Fabp1 = "Exe_Endoderm_1", Fabp2 = "Exe_Endoderm_1", Gata4 = "Exe_Endoderm_1"
+)
+gene_cluster_df <- tibble::tibble(
+  gene = names(gene_cluster_map),
+  cluster = unname(gene_cluster_map)
+)
+
+# collect padj value
+gene_cluster_df %>%
+  left_join(all_markers, by = c("gene", "cluster")) 
+
+# Prepare the data to annotate each gene with its p_val_adj
+sig_data <- gene_cluster_df %>%
+  left_join(all_markers, by = c("gene", "cluster")) %>%
+  mutate(
+    Identity = cluster,
+    y_pos = avg_log2FC + 0.25,  # adjust based on expression range
+    significance = ifelse(!is.na(p_val_adj), paste0("p.adj = ", signif(p_val_adj, 2)), "not found")
+  ) %>%
+  select(gene, Identity, y_pos, significance, p_val_adj)
+
+pdf("output/seurat/VlnPlot_RNA_E7_control_cYAPKO_markerGenes_sct_19dim_V2.pdf", width=7, height=3.5)
+for (gene in names(gene_cluster_map)) {
+  print(paste("Generating plot for:", gene))
+  gene_sig_data <- sig_data %>% filter(gene == !!gene)
+  # Define title with gene and p.adj
+  if (nrow(gene_sig_data) == 1 && !is.na(gene_sig_data$p_val_adj)) {
+    title_text <- paste0(gene, " (p.adj = ", signif(gene_sig_data$p_val_adj, 2), ")")
+  } else {
+    title_text <- paste0(gene, " (p.adj = not found)")
+  }
+  # Generate violin plot
+  p <- VlnPlot(embryoE7.combined.sct, 
+               features = gene, 
+               pt.size = 0.1) +
+    ggtitle(title_text) +
+    theme(plot.title = element_text(size=10, face = "bold"),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  print(p)
+}
+dev.off()
 
 ```
 
