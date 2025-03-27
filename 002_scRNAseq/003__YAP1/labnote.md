@@ -29704,8 +29704,11 @@ dev.off()
 Follow guideline from `002*/003*/gastrulation paper or QSER1 paper/Revisison1 emboR/For Thomas for Revisions/Reviewers comments EMBOR Thomas highlight.docx`:
 
 - Vlnt plot embryo E7 WT vs cYPAKO with stat for each cluster
-- SCPA output into UMAP; output file from dropbox: `Thomas Roule/Thomas analysis on scRNAseq embryos and gastruloids/embryo_E7_V2/Pathway analysis`
+- SCPA output (TGFB, WNT) into UMAP; output file from dropbox: `Thomas Roule/Thomas analysis on scRNAseq embryos and gastruloids/embryo_E7_V2/Pathway analysis`:
+  - SCPA terms has been collected, from `002*/003*/gastrulation paper or QSER1 paper/Revisison1 emboR/SCPA_Figure1L_IDTerms.xlsx`; sheet= `corrected`
+- Output number of DEGs for each cluster
 - GO analysis of DEG of Epiblast
+
 
 
 ```bash
@@ -29727,6 +29730,7 @@ library("glmGamPoi")
 library("celldex")
 library("SingleR")
 library("gprofiler2") 
+set.seed(42)
 
 embryoE7.combined.sct <- readRDS(file = "output/seurat/embryoE7.combined.sct_19dim_V2.rds")
 embryoE7.combined.sct$condition <- factor(embryoE7.combined.sct$condition, levels = c("WT_E7", "cYAPKO_E7"))
@@ -29827,7 +29831,236 @@ dev.off()
 ###############################################################
 
 
-XXXY here
+# pathway list
+PID_TGFBR_PATHWAY
+KARLSSON_TGFB1_TARGETS_DN
+MCBRYAN_PUBERTAL_TGFB1_TARGETS_UP
+PLASARI_TGFB1_TARGETS_10HR_DN
+REACTOME_TGF_BETA_RECEPTOR_SIGNALING_ACTIVATES_SMADS
+REACTOME_DOWNREGULATION_OF_TGF_BETA_RECEPTOR_SIGNALING
+KARLSSON_TGFB1_TARGETS_UP
+REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS
+WP_TGFBETA_SIGNALING_PATHWAY
+JAZAG_TGFB1_SIGNALING_VIA_SMAD4_UP
+PLASARI_TGFB1_SIGNALING_VIA_NFIC_1HR_DN
+REACTOME_TGF_BETA_RECEPTOR_SIGNALING_IN_EMT_EPITHELIAL_TO_MESENCHYMAL_TRANSITION
+VERRECCHIA_EARLY_RESPONSE_TO_TGFB1
+REACTOME_DOWNREGULATION_OF_SMAD2_3_SMAD4_TRANSCRIPTIONAL_ACTIVITY
+PANGAS_TUMOR_SUPPRESSION_BY_SMAD1_AND_SMAD5_DN
+REACTOME_SMAD2_SMAD3_SMAD4_HETEROTRIMER_REGULATES_TRANSCRIPTION
+REACTOME_SIGNALING_BY_WNT
+WP_LNCRNA_IN_CANONICAL_WNT_SIGNALING_AND_COLORECTAL_CANCER
+WNT_SIGNALING
+REACTOME_TCF_DEPENDENT_SIGNALING_IN_RESPONSE_TO_WNT
+
+
+
+
+# SCPA output colored in a UMAP
+
+############################## PID_TGFBR_PATHWAY ##############################
+clusters <- c("Blood_Progenitor", "Cardiac_Mesoderm", "Endoderm", "Epiblast", 
+              "Exe_Ectoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", 
+              "Nascent_Mesoderm", "Primitive_Streak")
+## Initialize an empty dataframe
+combined_data <- data.frame()
+## Loop to read and combine data for each cluster
+for (cluster in clusters) {
+  file_path <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C2_", cluster, ".txt")
+  
+  cluster_data <- read.table(file_path, sep = "\t", header = TRUE, quote = "") %>%
+    mutate(cluster = cluster) %>%
+    filter(Pathway == "PID_TGFBR_PATHWAY") ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+  
+  combined_data <- bind_rows(combined_data, cluster_data)
+}
+## Output the combined dataframe
+combined_data
+
+## Add qval information to the Seurat object metadata
+embryoE7.combined.sct@meta.data$qval <- combined_data$qval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+embryoE7.combined.sct@meta.data$adjPval <- combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with adjPval > 0.05 as grey
+embryoE7.combined.sct@meta.data$qval_colored <- ifelse(
+  combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, combined_data$cluster)] > 0.05,
+  NA,
+  embryoE7.combined.sct@meta.data$qval
+)
+                                                     
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(embryoE7.combined.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- embryoE7.combined.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(combined_data, by = c("cluster" = "cluster"))
+## Format qval values to two decimal places
+cluster_centers$qval <- sprintf("%.2f", cluster_centers$qval)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_E7_control_cYAPKO_19dim_V2-PID_TGFBR_PATHWAY.pdf", width = 6, height = 6) ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+FeaturePlot(embryoE7.combined.sct, features = "qval_colored", pt.size = 0.5, reduction = "umap") +
+  scale_color_gradient(name = "qval", low = "Orange", high = "OrangeRed", limits = c(1, 3), na.value = "gray85") +
+  geom_text(data = cluster_centers %>% filter(adjPval<0.05), aes(x = UMAP_1, y = UMAP_2, label = qval), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+############################## KARLSSON_TGFB1_TARGETS_DN ##############################
+clusters <- c("Blood_Progenitor", "Cardiac_Mesoderm", "Endoderm", "Epiblast", 
+              "Exe_Ectoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", 
+              "Nascent_Mesoderm", "Primitive_Streak")
+## Initialize an empty dataframe
+combined_data <- data.frame()
+## Loop to read and combine data for each cluster
+for (cluster in clusters) {
+  file_path <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C2_", cluster, ".txt")
+  
+  cluster_data <- read.table(file_path, sep = "\t", header = TRUE, quote = "") %>%
+    mutate(cluster = cluster) %>%
+    filter(Pathway == "KARLSSON_TGFB1_TARGETS_DN") ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+  
+  combined_data <- bind_rows(combined_data, cluster_data)
+}
+## Output the combined dataframe
+combined_data
+
+## Add qval information to the Seurat object metadata
+embryoE7.combined.sct@meta.data$qval <- combined_data$qval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+embryoE7.combined.sct@meta.data$adjPval <- combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with adjPval > 0.05 as grey
+embryoE7.combined.sct@meta.data$qval_colored <- ifelse(
+  combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, combined_data$cluster)] > 0.05,
+  NA,
+  embryoE7.combined.sct@meta.data$qval
+)
+                                                     
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(embryoE7.combined.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- embryoE7.combined.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(combined_data, by = c("cluster" = "cluster"))
+## Format qval values to two decimal places
+cluster_centers$qval <- sprintf("%.2f", cluster_centers$qval)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_E7_control_cYAPKO_19dim_V2-KARLSSON_TGFB1_TARGETS_DN.pdf", width = 6, height = 6) ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+FeaturePlot(embryoE7.combined.sct, features = "qval_colored", pt.size = 0.5, reduction = "umap") +
+  scale_color_gradient(name = "qval", low = "Orange", high = "OrangeRed", limits = c(1, 3), na.value = "gray85") +
+  geom_text(data = cluster_centers %>% filter(adjPval<0.05), aes(x = UMAP_1, y = UMAP_2, label = qval), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+
+
+############################## MCBRYAN_PUBERTAL_TGFB1_TARGETS_UP ##############################
+clusters <- c("Blood_Progenitor", "Cardiac_Mesoderm", "Endoderm", "Epiblast", 
+              "Exe_Ectoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", 
+              "Nascent_Mesoderm", "Primitive_Streak")
+## Initialize an empty dataframe
+combined_data <- data.frame()
+## Loop to read and combine data for each cluster
+for (cluster in clusters) {
+  file_path <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C2_", cluster, ".txt")
+  
+  cluster_data <- read.table(file_path, sep = "\t", header = TRUE, quote = "") %>%
+    mutate(cluster = cluster) %>%
+    filter(Pathway == "MCBRYAN_PUBERTAL_TGFB1_TARGETS_UP") ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+  
+  combined_data <- bind_rows(combined_data, cluster_data)
+}
+## Output the combined dataframe
+combined_data
+
+## Add qval information to the Seurat object metadata
+embryoE7.combined.sct@meta.data$qval <- combined_data$qval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+embryoE7.combined.sct@meta.data$adjPval <- combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with adjPval > 0.05 as grey
+embryoE7.combined.sct@meta.data$qval_colored <- ifelse(
+  combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, combined_data$cluster)] > 0.05,
+  NA,
+  embryoE7.combined.sct@meta.data$qval
+)
+                                                     
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(embryoE7.combined.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- embryoE7.combined.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(combined_data, by = c("cluster" = "cluster"))
+## Format qval values to two decimal places
+cluster_centers$qval <- sprintf("%.2f", cluster_centers$qval)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_E7_control_cYAPKO_19dim_V2-MCBRYAN_PUBERTAL_TGFB1_TARGETS_UP.pdf", width = 6, height = 6) ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+FeaturePlot(embryoE7.combined.sct, features = "qval_colored", pt.size = 0.5, reduction = "umap") +
+  scale_color_gradient(name = "qval", low = "Orange", high = "OrangeRed", limits = c(1, 3), na.value = "gray85") +
+  geom_text(data = cluster_centers %>% filter(adjPval<0.05), aes(x = UMAP_1, y = UMAP_2, label = qval), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+
+
+############################## PLASARI_TGFB1_TARGETS_10HR_DN ##############################
+clusters <- c("Blood_Progenitor", "Cardiac_Mesoderm", "Endoderm", "Epiblast", 
+              "Exe_Ectoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", 
+              "Nascent_Mesoderm", "Primitive_Streak")
+## Initialize an empty dataframe
+combined_data <- data.frame()
+## Loop to read and combine data for each cluster
+for (cluster in clusters) {
+  file_path <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C2_", cluster, ".txt")
+  
+  cluster_data <- read.table(file_path, sep = "\t", header = TRUE, quote = "") %>%
+    mutate(cluster = cluster) %>%
+    filter(Pathway == "PLASARI_TGFB1_TARGETS_10HR_DN") ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+  
+  combined_data <- bind_rows(combined_data, cluster_data)
+}
+## Output the combined dataframe
+combined_data
+
+## Add qval information to the Seurat object metadata
+embryoE7.combined.sct@meta.data$qval <- combined_data$qval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+embryoE7.combined.sct@meta.data$adjPval <- combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with adjPval > 0.05 as grey
+embryoE7.combined.sct@meta.data$qval_colored <- ifelse(
+  combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, combined_data$cluster)] > 0.05,
+  NA,
+  embryoE7.combined.sct@meta.data$qval
+)
+                                                     
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(embryoE7.combined.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- embryoE7.combined.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(combined_data, by = c("cluster" = "cluster"))
+## Format qval values to two decimal places
+cluster_centers$qval <- sprintf("%.2f", cluster_centers$qval)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_E7_control_cYAPKO_19dim_V2-PLASARI_TGFB1_TARGETS_10HR_DN.pdf", width = 6, height = 6) ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+FeaturePlot(embryoE7.combined.sct, features = "qval_colored", pt.size = 0.5, reduction = "umap") +
+  scale_color_gradient(name = "qval", low = "Orange", high = "OrangeRed", limits = c(1, 3), na.value = "gray85") +
+  geom_text(data = cluster_centers %>% filter(adjPval<0.05), aes(x = UMAP_1, y = UMAP_2, label = qval), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
 
 
 
@@ -29837,6 +30070,933 @@ XXXY here
 
 
 
+
+############################## REACTOME_TGF_BETA_RECEPTOR_SIGNALING_ACTIVATES_SMADS ##############################
+clusters <- c("Blood_Progenitor", "Cardiac_Mesoderm", "Endoderm", "Epiblast", 
+              "Exe_Ectoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", 
+              "Nascent_Mesoderm", "Primitive_Streak")
+## Initialize an empty dataframe
+combined_data <- data.frame()
+## Loop to read and combine data for each cluster
+for (cluster in clusters) {
+  file_path <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C2_", cluster, ".txt")
+  
+  cluster_data <- read.table(file_path, sep = "\t", header = TRUE, quote = "") %>%
+    mutate(cluster = cluster) %>%
+    filter(Pathway == "REACTOME_TGF_BETA_RECEPTOR_SIGNALING_ACTIVATES_SMADS") ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+  
+  combined_data <- bind_rows(combined_data, cluster_data)
+}
+## Output the combined dataframe
+combined_data
+
+## Add qval information to the Seurat object metadata
+embryoE7.combined.sct@meta.data$qval <- combined_data$qval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+embryoE7.combined.sct@meta.data$adjPval <- combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with adjPval > 0.05 as grey
+embryoE7.combined.sct@meta.data$qval_colored <- ifelse(
+  combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, combined_data$cluster)] > 0.05,
+  NA,
+  embryoE7.combined.sct@meta.data$qval
+)
+                                                     
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(embryoE7.combined.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- embryoE7.combined.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(combined_data, by = c("cluster" = "cluster"))
+## Format qval values to two decimal places
+cluster_centers$qval <- sprintf("%.2f", cluster_centers$qval)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_E7_control_cYAPKO_19dim_V2-REACTOME_TGF_BETA_RECEPTOR_SIGNALING_ACTIVATES_SMADS.pdf", width = 6, height = 6) ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+FeaturePlot(embryoE7.combined.sct, features = "qval_colored", pt.size = 0.5, reduction = "umap") +
+  scale_color_gradient(name = "qval", low = "Orange", high = "OrangeRed", limits = c(1, 3), na.value = "gray85") +
+  geom_text(data = cluster_centers %>% filter(adjPval<0.05), aes(x = UMAP_1, y = UMAP_2, label = qval), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+
+
+
+############################## REACTOME_DOWNREGULATION_OF_TGF_BETA_RECEPTOR_SIGNALING ##############################
+clusters <- c("Blood_Progenitor", "Cardiac_Mesoderm", "Endoderm", "Epiblast", 
+              "Exe_Ectoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", 
+              "Nascent_Mesoderm", "Primitive_Streak")
+## Initialize an empty dataframe
+combined_data <- data.frame()
+## Loop to read and combine data for each cluster
+for (cluster in clusters) {
+  file_path <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C2_", cluster, ".txt")
+  
+  cluster_data <- read.table(file_path, sep = "\t", header = TRUE, quote = "") %>%
+    mutate(cluster = cluster) %>%
+    filter(Pathway == "REACTOME_DOWNREGULATION_OF_TGF_BETA_RECEPTOR_SIGNALING") ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+  
+  combined_data <- bind_rows(combined_data, cluster_data)
+}
+## Output the combined dataframe
+combined_data
+
+## Add qval information to the Seurat object metadata
+embryoE7.combined.sct@meta.data$qval <- combined_data$qval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+embryoE7.combined.sct@meta.data$adjPval <- combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with adjPval > 0.05 as grey
+embryoE7.combined.sct@meta.data$qval_colored <- ifelse(
+  combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, combined_data$cluster)] > 0.05,
+  NA,
+  embryoE7.combined.sct@meta.data$qval
+)
+                                                     
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(embryoE7.combined.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- embryoE7.combined.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(combined_data, by = c("cluster" = "cluster"))
+## Format qval values to two decimal places
+cluster_centers$qval <- sprintf("%.2f", cluster_centers$qval)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_E7_control_cYAPKO_19dim_V2-REACTOME_DOWNREGULATION_OF_TGF_BETA_RECEPTOR_SIGNALING.pdf", width = 6, height = 6) ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+FeaturePlot(embryoE7.combined.sct, features = "qval_colored", pt.size = 0.5, reduction = "umap") +
+  scale_color_gradient(name = "qval", low = "Orange", high = "OrangeRed", limits = c(1, 3), na.value = "gray85") +
+  geom_text(data = cluster_centers %>% filter(adjPval<0.05), aes(x = UMAP_1, y = UMAP_2, label = qval), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+
+
+
+
+############################## KARLSSON_TGFB1_TARGETS_UP ##############################
+clusters <- c("Blood_Progenitor", "Cardiac_Mesoderm", "Endoderm", "Epiblast", 
+              "Exe_Ectoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", 
+              "Nascent_Mesoderm", "Primitive_Streak")
+## Initialize an empty dataframe
+combined_data <- data.frame()
+## Loop to read and combine data for each cluster
+for (cluster in clusters) {
+  file_path <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C2_", cluster, ".txt")
+  
+  cluster_data <- read.table(file_path, sep = "\t", header = TRUE, quote = "") %>%
+    mutate(cluster = cluster) %>%
+    filter(Pathway == "KARLSSON_TGFB1_TARGETS_UP") ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+  
+  combined_data <- bind_rows(combined_data, cluster_data)
+}
+## Output the combined dataframe
+combined_data
+
+## Add qval information to the Seurat object metadata
+embryoE7.combined.sct@meta.data$qval <- combined_data$qval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+embryoE7.combined.sct@meta.data$adjPval <- combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with adjPval > 0.05 as grey
+embryoE7.combined.sct@meta.data$qval_colored <- ifelse(
+  combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, combined_data$cluster)] > 0.05,
+  NA,
+  embryoE7.combined.sct@meta.data$qval
+)
+                                                     
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(embryoE7.combined.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- embryoE7.combined.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(combined_data, by = c("cluster" = "cluster"))
+## Format qval values to two decimal places
+cluster_centers$qval <- sprintf("%.2f", cluster_centers$qval)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_E7_control_cYAPKO_19dim_V2-KARLSSON_TGFB1_TARGETS_UP.pdf", width = 6, height = 6) ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+FeaturePlot(embryoE7.combined.sct, features = "qval_colored", pt.size = 0.5, reduction = "umap") +
+  scale_color_gradient(name = "qval", low = "Orange", high = "OrangeRed", limits = c(1, 3), na.value = "gray85") +
+  geom_text(data = cluster_centers %>% filter(adjPval<0.05), aes(x = UMAP_1, y = UMAP_2, label = qval), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+
+
+
+############################## REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS ##############################
+clusters <- c("Blood_Progenitor", "Cardiac_Mesoderm", "Endoderm", "Epiblast", 
+              "Exe_Ectoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", 
+              "Nascent_Mesoderm", "Primitive_Streak")
+## Initialize an empty dataframe
+combined_data <- data.frame()
+## Loop to read and combine data for each cluster
+for (cluster in clusters) {
+  file_path <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C2_", cluster, ".txt")
+  
+  cluster_data <- read.table(file_path, sep = "\t", header = TRUE, quote = "") %>%
+    mutate(cluster = cluster) %>%
+    filter(Pathway == "REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS") ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+  
+  combined_data <- bind_rows(combined_data, cluster_data)
+}
+## Output the combined dataframe
+combined_data
+
+## Add qval information to the Seurat object metadata
+embryoE7.combined.sct@meta.data$qval <- combined_data$qval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+embryoE7.combined.sct@meta.data$adjPval <- combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with adjPval > 0.05 as grey
+embryoE7.combined.sct@meta.data$qval_colored <- ifelse(
+  combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, combined_data$cluster)] > 0.05,
+  NA,
+  embryoE7.combined.sct@meta.data$qval
+)
+                                                     
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(embryoE7.combined.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- embryoE7.combined.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(combined_data, by = c("cluster" = "cluster"))
+## Format qval values to two decimal places
+cluster_centers$qval <- sprintf("%.2f", cluster_centers$qval)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_E7_control_cYAPKO_19dim_V2-REACTOME_SIGNALING_BY_TGFB_FAMILY_MEMBERS.pdf", width = 6, height = 6) ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+FeaturePlot(embryoE7.combined.sct, features = "qval_colored", pt.size = 0.5, reduction = "umap") +
+  scale_color_gradient(name = "qval", low = "Orange", high = "OrangeRed", limits = c(1, 3), na.value = "gray85") +
+  geom_text(data = cluster_centers %>% filter(adjPval<0.05), aes(x = UMAP_1, y = UMAP_2, label = qval), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+
+
+
+
+############################## WP_TGFBETA_SIGNALING_PATHWAY ##############################
+clusters <- c("Blood_Progenitor", "Cardiac_Mesoderm", "Endoderm", "Epiblast", 
+              "Exe_Ectoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", 
+              "Nascent_Mesoderm", "Primitive_Streak")
+## Initialize an empty dataframe
+combined_data <- data.frame()
+## Loop to read and combine data for each cluster
+for (cluster in clusters) {
+  file_path <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C2_", cluster, ".txt")
+  
+  cluster_data <- read.table(file_path, sep = "\t", header = TRUE, quote = "") %>%
+    mutate(cluster = cluster) %>%
+    filter(Pathway == "WP_TGFBETA_SIGNALING_PATHWAY") ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+  
+  combined_data <- bind_rows(combined_data, cluster_data)
+}
+## Output the combined dataframe
+combined_data
+
+## Add qval information to the Seurat object metadata
+embryoE7.combined.sct@meta.data$qval <- combined_data$qval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+embryoE7.combined.sct@meta.data$adjPval <- combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with adjPval > 0.05 as grey
+embryoE7.combined.sct@meta.data$qval_colored <- ifelse(
+  combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, combined_data$cluster)] > 0.05,
+  NA,
+  embryoE7.combined.sct@meta.data$qval
+)
+                                                     
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(embryoE7.combined.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- embryoE7.combined.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(combined_data, by = c("cluster" = "cluster"))
+## Format qval values to two decimal places
+cluster_centers$qval <- sprintf("%.2f", cluster_centers$qval)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_E7_control_cYAPKO_19dim_V2-WP_TGFBETA_SIGNALING_PATHWAY.pdf", width = 6, height = 6) ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+FeaturePlot(embryoE7.combined.sct, features = "qval_colored", pt.size = 0.5, reduction = "umap") +
+  scale_color_gradient(name = "qval", low = "Orange", high = "OrangeRed", limits = c(1, 3), na.value = "gray85") +
+  geom_text(data = cluster_centers %>% filter(adjPval<0.05), aes(x = UMAP_1, y = UMAP_2, label = qval), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+
+
+
+
+############################## JAZAG_TGFB1_SIGNALING_VIA_SMAD4_UP ##############################
+clusters <- c("Blood_Progenitor", "Cardiac_Mesoderm", "Endoderm", "Epiblast", 
+              "Exe_Ectoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", 
+              "Nascent_Mesoderm", "Primitive_Streak")
+## Initialize an empty dataframe
+combined_data <- data.frame()
+## Loop to read and combine data for each cluster
+for (cluster in clusters) {
+  file_path <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C2_", cluster, ".txt")
+  
+  cluster_data <- read.table(file_path, sep = "\t", header = TRUE, quote = "") %>%
+    mutate(cluster = cluster) %>%
+    filter(Pathway == "JAZAG_TGFB1_SIGNALING_VIA_SMAD4_UP") ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+  
+  combined_data <- bind_rows(combined_data, cluster_data)
+}
+## Output the combined dataframe
+combined_data
+
+## Add qval information to the Seurat object metadata
+embryoE7.combined.sct@meta.data$qval <- combined_data$qval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+embryoE7.combined.sct@meta.data$adjPval <- combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with adjPval > 0.05 as grey
+embryoE7.combined.sct@meta.data$qval_colored <- ifelse(
+  combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, combined_data$cluster)] > 0.05,
+  NA,
+  embryoE7.combined.sct@meta.data$qval
+)
+                                                     
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(embryoE7.combined.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- embryoE7.combined.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(combined_data, by = c("cluster" = "cluster"))
+## Format qval values to two decimal places
+cluster_centers$qval <- sprintf("%.2f", cluster_centers$qval)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_E7_control_cYAPKO_19dim_V2-JAZAG_TGFB1_SIGNALING_VIA_SMAD4_UP.pdf", width = 6, height = 6) ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+FeaturePlot(embryoE7.combined.sct, features = "qval_colored", pt.size = 0.5, reduction = "umap") +
+  scale_color_gradient(name = "qval", low = "Orange", high = "OrangeRed", limits = c(1, 3), na.value = "gray85") +
+  geom_text(data = cluster_centers %>% filter(adjPval<0.05), aes(x = UMAP_1, y = UMAP_2, label = qval), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+
+############################## PLASARI_TGFB1_SIGNALING_VIA_NFIC_1HR_DN ##############################
+clusters <- c("Blood_Progenitor", "Cardiac_Mesoderm", "Endoderm", "Epiblast", 
+              "Exe_Ectoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", 
+              "Nascent_Mesoderm", "Primitive_Streak")
+## Initialize an empty dataframe
+combined_data <- data.frame()
+## Loop to read and combine data for each cluster
+for (cluster in clusters) {
+  file_path <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C2_", cluster, ".txt")
+  
+  cluster_data <- read.table(file_path, sep = "\t", header = TRUE, quote = "") %>%
+    mutate(cluster = cluster) %>%
+    filter(Pathway == "PLASARI_TGFB1_SIGNALING_VIA_NFIC_1HR_DN") ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+  
+  combined_data <- bind_rows(combined_data, cluster_data)
+}
+## Output the combined dataframe
+combined_data
+
+## Add qval information to the Seurat object metadata
+embryoE7.combined.sct@meta.data$qval <- combined_data$qval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+embryoE7.combined.sct@meta.data$adjPval <- combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with adjPval > 0.05 as grey
+embryoE7.combined.sct@meta.data$qval_colored <- ifelse(
+  combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, combined_data$cluster)] > 0.05,
+  NA,
+  embryoE7.combined.sct@meta.data$qval
+)
+                                                     
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(embryoE7.combined.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- embryoE7.combined.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(combined_data, by = c("cluster" = "cluster"))
+## Format qval values to two decimal places
+cluster_centers$qval <- sprintf("%.2f", cluster_centers$qval)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_E7_control_cYAPKO_19dim_V2-PLASARI_TGFB1_SIGNALING_VIA_NFIC_1HR_DN.pdf", width = 6, height = 6) ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+FeaturePlot(embryoE7.combined.sct, features = "qval_colored", pt.size = 0.5, reduction = "umap") +
+  scale_color_gradient(name = "qval", low = "Orange", high = "OrangeRed", limits = c(1, 3), na.value = "gray85") +
+  geom_text(data = cluster_centers %>% filter(adjPval<0.05), aes(x = UMAP_1, y = UMAP_2, label = qval), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+
+
+############################## REACTOME_TGF_BETA_RECEPTOR_SIGNALING_IN_EMT_EPITHELIAL_TO_MESENCHYMAL_TRANSITION ##############################
+clusters <- c("Blood_Progenitor", "Cardiac_Mesoderm", "Endoderm", "Epiblast", 
+              "Exe_Ectoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", 
+              "Nascent_Mesoderm", "Primitive_Streak")
+## Initialize an empty dataframe
+combined_data <- data.frame()
+## Loop to read and combine data for each cluster
+for (cluster in clusters) {
+  file_path <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C2_", cluster, ".txt")
+  
+  cluster_data <- read.table(file_path, sep = "\t", header = TRUE, quote = "") %>%
+    mutate(cluster = cluster) %>%
+    filter(Pathway == "REACTOME_TGF_BETA_RECEPTOR_SIGNALING_IN_EMT_EPITHELIAL_TO_MESENCHYMAL_TRANSITION") ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+  
+  combined_data <- bind_rows(combined_data, cluster_data)
+}
+## Output the combined dataframe
+combined_data
+
+## Add qval information to the Seurat object metadata
+embryoE7.combined.sct@meta.data$qval <- combined_data$qval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+embryoE7.combined.sct@meta.data$adjPval <- combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with adjPval > 0.05 as grey
+embryoE7.combined.sct@meta.data$qval_colored <- ifelse(
+  combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, combined_data$cluster)] > 0.05,
+  NA,
+  embryoE7.combined.sct@meta.data$qval
+)
+                                                     
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(embryoE7.combined.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- embryoE7.combined.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(combined_data, by = c("cluster" = "cluster"))
+## Format qval values to two decimal places
+cluster_centers$qval <- sprintf("%.2f", cluster_centers$qval)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_E7_control_cYAPKO_19dim_V2-REACTOME_TGF_BETA_RECEPTOR_SIGNALING_IN_EMT_EPITHELIAL_TO_MESENCHYMAL_TRANSITION.pdf", width = 6, height = 6) ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+FeaturePlot(embryoE7.combined.sct, features = "qval_colored", pt.size = 0.5, reduction = "umap") +
+  scale_color_gradient(name = "qval", low = "Orange", high = "OrangeRed", limits = c(1, 3), na.value = "gray85") +
+  geom_text(data = cluster_centers %>% filter(adjPval<0.05), aes(x = UMAP_1, y = UMAP_2, label = qval), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+
+
+
+
+
+############################## VERRECCHIA_EARLY_RESPONSE_TO_TGFB1 ##############################
+clusters <- c("Blood_Progenitor", "Cardiac_Mesoderm", "Endoderm", "Epiblast", 
+              "Exe_Ectoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", 
+              "Nascent_Mesoderm", "Primitive_Streak")
+## Initialize an empty dataframe
+combined_data <- data.frame()
+## Loop to read and combine data for each cluster
+for (cluster in clusters) {
+  file_path <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C2_", cluster, ".txt")
+  
+  cluster_data <- read.table(file_path, sep = "\t", header = TRUE, quote = "") %>%
+    mutate(cluster = cluster) %>%
+    filter(Pathway == "VERRECCHIA_EARLY_RESPONSE_TO_TGFB1") ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+  
+  combined_data <- bind_rows(combined_data, cluster_data)
+}
+## Output the combined dataframe
+combined_data
+
+## Add qval information to the Seurat object metadata
+embryoE7.combined.sct@meta.data$qval <- combined_data$qval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+embryoE7.combined.sct@meta.data$adjPval <- combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with adjPval > 0.05 as grey
+embryoE7.combined.sct@meta.data$qval_colored <- ifelse(
+  combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, combined_data$cluster)] > 0.05,
+  NA,
+  embryoE7.combined.sct@meta.data$qval
+)
+                                                     
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(embryoE7.combined.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- embryoE7.combined.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(combined_data, by = c("cluster" = "cluster"))
+## Format qval values to two decimal places
+cluster_centers$qval <- sprintf("%.2f", cluster_centers$qval)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_E7_control_cYAPKO_19dim_V2-VERRECCHIA_EARLY_RESPONSE_TO_TGFB1.pdf", width = 6, height = 6) ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+FeaturePlot(embryoE7.combined.sct, features = "qval_colored", pt.size = 0.5, reduction = "umap") +
+  scale_color_gradient(name = "qval", low = "Orange", high = "OrangeRed", limits = c(1, 3), na.value = "gray85") +
+  geom_text(data = cluster_centers %>% filter(adjPval<0.05), aes(x = UMAP_1, y = UMAP_2, label = qval), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+
+
+
+############################## REACTOME_DOWNREGULATION_OF_SMAD2_3_SMAD4_TRANSCRIPTIONAL_ACTIVITY ##############################
+clusters <- c("Blood_Progenitor", "Cardiac_Mesoderm", "Endoderm", "Epiblast", 
+              "Exe_Ectoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", 
+              "Nascent_Mesoderm", "Primitive_Streak")
+## Initialize an empty dataframe
+combined_data <- data.frame()
+## Loop to read and combine data for each cluster
+for (cluster in clusters) {
+  file_path <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C2_", cluster, ".txt")
+  
+  cluster_data <- read.table(file_path, sep = "\t", header = TRUE, quote = "") %>%
+    mutate(cluster = cluster) %>%
+    filter(Pathway == "REACTOME_DOWNREGULATION_OF_SMAD2_3_SMAD4_TRANSCRIPTIONAL_ACTIVITY") ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+  
+  combined_data <- bind_rows(combined_data, cluster_data)
+}
+## Output the combined dataframe
+combined_data
+
+## Add qval information to the Seurat object metadata
+embryoE7.combined.sct@meta.data$qval <- combined_data$qval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+embryoE7.combined.sct@meta.data$adjPval <- combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with adjPval > 0.05 as grey
+embryoE7.combined.sct@meta.data$qval_colored <- ifelse(
+  combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, combined_data$cluster)] > 0.05,
+  NA,
+  embryoE7.combined.sct@meta.data$qval
+)
+                                                     
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(embryoE7.combined.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- embryoE7.combined.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(combined_data, by = c("cluster" = "cluster"))
+## Format qval values to two decimal places
+cluster_centers$qval <- sprintf("%.2f", cluster_centers$qval)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_E7_control_cYAPKO_19dim_V2-REACTOME_DOWNREGULATION_OF_SMAD2_3_SMAD4_TRANSCRIPTIONAL_ACTIVITY.pdf", width = 6, height = 6) ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+FeaturePlot(embryoE7.combined.sct, features = "qval_colored", pt.size = 0.5, reduction = "umap") +
+  scale_color_gradient(name = "qval", low = "Orange", high = "OrangeRed", limits = c(1, 3), na.value = "gray85") +
+  geom_text(data = cluster_centers %>% filter(adjPval<0.05), aes(x = UMAP_1, y = UMAP_2, label = qval), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+
+
+############################## PANGAS_TUMOR_SUPPRESSION_BY_SMAD1_AND_SMAD5_DN ##############################
+clusters <- c("Blood_Progenitor", "Cardiac_Mesoderm", "Endoderm", "Epiblast", 
+              "Exe_Ectoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", 
+              "Nascent_Mesoderm", "Primitive_Streak")
+## Initialize an empty dataframe
+combined_data <- data.frame()
+## Loop to read and combine data for each cluster
+for (cluster in clusters) {
+  file_path <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C2_", cluster, ".txt")
+  
+  cluster_data <- read.table(file_path, sep = "\t", header = TRUE, quote = "") %>%
+    mutate(cluster = cluster) %>%
+    filter(Pathway == "PANGAS_TUMOR_SUPPRESSION_BY_SMAD1_AND_SMAD5_DN") ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+  
+  combined_data <- bind_rows(combined_data, cluster_data)
+}
+## Output the combined dataframe
+combined_data
+
+## Add qval information to the Seurat object metadata
+embryoE7.combined.sct@meta.data$qval <- combined_data$qval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+embryoE7.combined.sct@meta.data$adjPval <- combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with adjPval > 0.05 as grey
+embryoE7.combined.sct@meta.data$qval_colored <- ifelse(
+  combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, combined_data$cluster)] > 0.05,
+  NA,
+  embryoE7.combined.sct@meta.data$qval
+)
+                                                     
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(embryoE7.combined.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- embryoE7.combined.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(combined_data, by = c("cluster" = "cluster"))
+## Format qval values to two decimal places
+cluster_centers$qval <- sprintf("%.2f", cluster_centers$qval)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_E7_control_cYAPKO_19dim_V2-PANGAS_TUMOR_SUPPRESSION_BY_SMAD1_AND_SMAD5_DN.pdf", width = 6, height = 6) ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+FeaturePlot(embryoE7.combined.sct, features = "qval_colored", pt.size = 0.5, reduction = "umap") +
+  scale_color_gradient(name = "qval", low = "Orange", high = "OrangeRed", limits = c(1, 3), na.value = "gray85") +
+  geom_text(data = cluster_centers %>% filter(adjPval<0.05), aes(x = UMAP_1, y = UMAP_2, label = qval), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+
+
+############################## REACTOME_SMAD2_SMAD3_SMAD4_HETEROTRIMER_REGULATES_TRANSCRIPTION ##############################
+clusters <- c("Blood_Progenitor", "Cardiac_Mesoderm", "Endoderm", "Epiblast", 
+              "Exe_Ectoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", 
+              "Nascent_Mesoderm", "Primitive_Streak")
+## Initialize an empty dataframe
+combined_data <- data.frame()
+## Loop to read and combine data for each cluster
+for (cluster in clusters) {
+  file_path <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C2_", cluster, ".txt")
+  
+  cluster_data <- read.table(file_path, sep = "\t", header = TRUE, quote = "") %>%
+    mutate(cluster = cluster) %>%
+    filter(Pathway == "REACTOME_SMAD2_SMAD3_SMAD4_HETEROTRIMER_REGULATES_TRANSCRIPTION") ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+  
+  combined_data <- bind_rows(combined_data, cluster_data)
+}
+## Output the combined dataframe
+combined_data
+
+## Add qval information to the Seurat object metadata
+embryoE7.combined.sct@meta.data$qval <- combined_data$qval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+embryoE7.combined.sct@meta.data$adjPval <- combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with adjPval > 0.05 as grey
+embryoE7.combined.sct@meta.data$qval_colored <- ifelse(
+  combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, combined_data$cluster)] > 0.05,
+  NA,
+  embryoE7.combined.sct@meta.data$qval
+)
+                                                     
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(embryoE7.combined.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- embryoE7.combined.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(combined_data, by = c("cluster" = "cluster"))
+## Format qval values to two decimal places
+cluster_centers$qval <- sprintf("%.2f", cluster_centers$qval)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_E7_control_cYAPKO_19dim_V2-REACTOME_SMAD2_SMAD3_SMAD4_HETEROTRIMER_REGULATES_TRANSCRIPTION.pdf", width = 6, height = 6) ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+FeaturePlot(embryoE7.combined.sct, features = "qval_colored", pt.size = 0.5, reduction = "umap") +
+  scale_color_gradient(name = "qval", low = "Orange", high = "OrangeRed", limits = c(1, 3), na.value = "gray85") +
+  geom_text(data = cluster_centers %>% filter(adjPval<0.05), aes(x = UMAP_1, y = UMAP_2, label = qval), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+
+
+
+
+
+############################## REACTOME_SIGNALING_BY_WNT ##############################
+clusters <- c("Blood_Progenitor", "Cardiac_Mesoderm", "Endoderm", "Epiblast", 
+              "Exe_Ectoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", 
+              "Nascent_Mesoderm", "Primitive_Streak")
+## Initialize an empty dataframe
+combined_data <- data.frame()
+## Loop to read and combine data for each cluster
+for (cluster in clusters) {
+  file_path <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C2_", cluster, ".txt")
+  
+  cluster_data <- read.table(file_path, sep = "\t", header = TRUE, quote = "") %>%
+    mutate(cluster = cluster) %>%
+    filter(Pathway == "REACTOME_SIGNALING_BY_WNT") ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+  
+  combined_data <- bind_rows(combined_data, cluster_data)
+}
+## Output the combined dataframe
+combined_data
+
+## Add qval information to the Seurat object metadata
+embryoE7.combined.sct@meta.data$qval <- combined_data$qval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+embryoE7.combined.sct@meta.data$adjPval <- combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with adjPval > 0.05 as grey
+embryoE7.combined.sct@meta.data$qval_colored <- ifelse(
+  combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, combined_data$cluster)] > 0.05,
+  NA,
+  embryoE7.combined.sct@meta.data$qval
+)
+                                                     
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(embryoE7.combined.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- embryoE7.combined.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(combined_data, by = c("cluster" = "cluster"))
+## Format qval values to two decimal places
+cluster_centers$qval <- sprintf("%.2f", cluster_centers$qval)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_E7_control_cYAPKO_19dim_V2-REACTOME_SIGNALING_BY_WNT.pdf", width = 6, height = 6) ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+FeaturePlot(embryoE7.combined.sct, features = "qval_colored", pt.size = 0.5, reduction = "umap") +
+  scale_color_gradient(name = "qval", low = "Orange", high = "OrangeRed", limits = c(1, 3), na.value = "gray85") +
+  geom_text(data = cluster_centers %>% filter(adjPval<0.05), aes(x = UMAP_1, y = UMAP_2, label = qval), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+
+
+############################## WP_LNCRNA_IN_CANONICAL_WNT_SIGNALING_AND_COLORECTAL_CANCER ##############################
+clusters <- c("Blood_Progenitor", "Cardiac_Mesoderm", "Endoderm", "Epiblast", 
+              "Exe_Ectoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", 
+              "Nascent_Mesoderm", "Primitive_Streak")
+## Initialize an empty dataframe
+combined_data <- data.frame()
+## Loop to read and combine data for each cluster
+for (cluster in clusters) {
+  file_path <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C2_", cluster, ".txt")
+  
+  cluster_data <- read.table(file_path, sep = "\t", header = TRUE, quote = "") %>%
+    mutate(cluster = cluster) %>%
+    filter(Pathway == "WP_LNCRNA_IN_CANONICAL_WNT_SIGNALING_AND_COLORECTAL_CANCER") ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+  
+  combined_data <- bind_rows(combined_data, cluster_data)
+}
+## Output the combined dataframe
+combined_data
+
+## Add qval information to the Seurat object metadata
+embryoE7.combined.sct@meta.data$qval <- combined_data$qval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+embryoE7.combined.sct@meta.data$adjPval <- combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with adjPval > 0.05 as grey
+embryoE7.combined.sct@meta.data$qval_colored <- ifelse(
+  combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, combined_data$cluster)] > 0.05,
+  NA,
+  embryoE7.combined.sct@meta.data$qval
+)
+                                                     
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(embryoE7.combined.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- embryoE7.combined.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(combined_data, by = c("cluster" = "cluster"))
+## Format qval values to two decimal places
+cluster_centers$qval <- sprintf("%.2f", cluster_centers$qval)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_E7_control_cYAPKO_19dim_V2-WP_LNCRNA_IN_CANONICAL_WNT_SIGNALING_AND_COLORECTAL_CANCER.pdf", width = 6, height = 6) ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+FeaturePlot(embryoE7.combined.sct, features = "qval_colored", pt.size = 0.5, reduction = "umap") +
+  scale_color_gradient(name = "qval", low = "Orange", high = "OrangeRed", limits = c(1, 3), na.value = "gray85") +
+  geom_text(data = cluster_centers %>% filter(adjPval<0.05), aes(x = UMAP_1, y = UMAP_2, label = qval), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+############################## WNT_SIGNALING ##############################
+clusters <- c("Blood_Progenitor", "Cardiac_Mesoderm", "Endoderm", "Epiblast", 
+              "Exe_Ectoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", 
+              "Nascent_Mesoderm", "Primitive_Streak")
+## Initialize an empty dataframe
+combined_data <- data.frame()
+## Loop to read and combine data for each cluster
+for (cluster in clusters) {
+  file_path <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C2_", cluster, ".txt")
+  
+  cluster_data <- read.table(file_path, sep = "\t", header = TRUE, quote = "") %>%
+    mutate(cluster = cluster) %>%
+    filter(Pathway == "WNT_SIGNALING") ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+  
+  combined_data <- bind_rows(combined_data, cluster_data)
+}
+## Output the combined dataframe
+combined_data
+
+## Add qval information to the Seurat object metadata
+embryoE7.combined.sct@meta.data$qval <- combined_data$qval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+embryoE7.combined.sct@meta.data$adjPval <- combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with adjPval > 0.05 as grey
+embryoE7.combined.sct@meta.data$qval_colored <- ifelse(
+  combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, combined_data$cluster)] > 0.05,
+  NA,
+  embryoE7.combined.sct@meta.data$qval
+)
+                                                     
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(embryoE7.combined.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- embryoE7.combined.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(combined_data, by = c("cluster" = "cluster"))
+## Format qval values to two decimal places
+cluster_centers$qval <- sprintf("%.2f", cluster_centers$qval)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_E7_control_cYAPKO_19dim_V2-WNT_SIGNALING.pdf", width = 6, height = 6) ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+FeaturePlot(embryoE7.combined.sct, features = "qval_colored", pt.size = 0.5, reduction = "umap") +
+  scale_color_gradient(name = "qval", low = "Orange", high = "OrangeRed", limits = c(1, 3), na.value = "gray85") +
+  geom_text(data = cluster_centers %>% filter(adjPval<0.05), aes(x = UMAP_1, y = UMAP_2, label = qval), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+
+
+
+############################## REACTOME_TCF_DEPENDENT_SIGNALING_IN_RESPONSE_TO_WNT ##############################
+clusters <- c("Blood_Progenitor", "Cardiac_Mesoderm", "Endoderm", "Epiblast", 
+              "Exe_Ectoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", 
+              "Nascent_Mesoderm", "Primitive_Streak")
+## Initialize an empty dataframe
+combined_data <- data.frame()
+## Loop to read and combine data for each cluster
+for (cluster in clusters) {
+  file_path <- paste0("output/Pathway/SCT_E7_19dim_V2_SCPA_C2_", cluster, ".txt")
+  
+  cluster_data <- read.table(file_path, sep = "\t", header = TRUE, quote = "") %>%
+    mutate(cluster = cluster) %>%
+    filter(Pathway == "REACTOME_TCF_DEPENDENT_SIGNALING_IN_RESPONSE_TO_WNT") ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+  
+  combined_data <- bind_rows(combined_data, cluster_data)
+}
+## Output the combined dataframe
+combined_data
+
+## Add qval information to the Seurat object metadata
+embryoE7.combined.sct@meta.data$qval <- combined_data$qval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+embryoE7.combined.sct@meta.data$adjPval <- combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, 
+                                                                       combined_data$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with adjPval > 0.05 as grey
+embryoE7.combined.sct@meta.data$qval_colored <- ifelse(
+  combined_data$adjPval[match(embryoE7.combined.sct@meta.data$cluster.annot, combined_data$cluster)] > 0.05,
+  NA,
+  embryoE7.combined.sct@meta.data$qval
+)
+                                                     
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(embryoE7.combined.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- embryoE7.combined.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(combined_data, by = c("cluster" = "cluster"))
+## Format qval values to two decimal places
+cluster_centers$qval <- sprintf("%.2f", cluster_centers$qval)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_E7_control_cYAPKO_19dim_V2-REACTOME_TCF_DEPENDENT_SIGNALING_IN_RESPONSE_TO_WNT.pdf", width = 6, height = 6) ## !!!! CHANGE PATHWAY NAME HERE !!!!!
+FeaturePlot(embryoE7.combined.sct, features = "qval_colored", pt.size = 0.5, reduction = "umap") +
+  scale_color_gradient(name = "qval", low = "Orange", high = "OrangeRed", limits = c(1, 3), na.value = "gray85") +
+  geom_text(data = cluster_centers %>% filter(adjPval<0.05), aes(x = UMAP_1, y = UMAP_2, label = qval), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
+###############################################################
+# NB OF DEGs per CLUSTER #####################
+###############################################################
+
+
+
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") 
+set.seed(42)
+
+embryoE7.combined.sct <- readRDS(file = "output/seurat/embryoE7.combined.sct_19dim_V2.rds")
+embryoE7.combined.sct$condition <- factor(embryoE7.combined.sct$condition, levels = c("WT_E7", "cYAPKO_E7"))
+
+
+
+###############################################################
+# VLN PLOTS with STATISTICS #####################
+###############################################################
+
+
+# Check some genes
+DefaultAssay(embryoE7.combined.sct) <- "RNA"
+
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("Blood_Progenitor", "Endoderm", "Exe_Ectoderm", "Primitive_Streak", "Nascent_Mesoderm", "Cardiac_Mesoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", "Epiblast")
+##### Initialize empty list to store data
+deg_list <- list()
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-cYAPKO_response_E7_19dim_allGenes_V2.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+
+combined_deg_tibble = as_tibble(combined_deg)
+
+### output nb of DEGs
+combined_deg_tibble %>%
+  filter(p_val_adj < 0.05)  %>%
+  group_by(cluster) %>%
+  summarise(num_signif_genes = n()) %>%
+  arrange(desc(num_signif_genes))
 
 
 
@@ -29844,7 +31004,7 @@ XXXY here
 
 
 
-
+### GO enrichR DEG cluster per cluster
 
 
 ```bash

@@ -2583,10 +2583,12 @@ Venn diagram of peak-genes TED4, QSER1 and EZH2 has been generated.
 Generate gtf file from gene list; 
 - all genes
 - gene with peak in promoter (qval macs2 2.3)
-- QSER1 comparison Conchi vs Dixon (`008002`)
-- EZH2 comparison Conchi vs Dixon (`008002`)
+- QSER1 comparison Conchi vs Dixon (`008002`) - MACS2
+- EZH2 comparison Conchi vs Dixon (`008002`) - MACS2
 - QSER1, EZH2, YAP1 
 - gene with differential EZH2 binding (THORq4)
+- QSER1 comparison Conchi vs Dixon (`008002`) - HOMER
+
 
 ```bash
 ### create gtf from gene list
@@ -2615,6 +2617,10 @@ cat output/ChIPseeker/annotation_THORq4_EZH2_pos_annot_promoterAnd5_geneSymbol.t
 
 
 
+sed 's/\r$//; s/.*/gene_name "&"/' ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_homer_hESC_WT_QSER1FLAG_promoterAnd5_geneSymbol.txt > ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_homer_hESC_WT_QSER1FLAG_promoterAnd5_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_homer_hESC_WT_QSER1FLAG_annot_noIntergenic_geneSymbol.txt > ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_homer_hESC_WT_QSER1FLAG_annot_noIntergenic_as_gtf_geneSymbol.txt
+
+
 ## Filter the gtf
 grep -Ff output/ChIPseeker/Venn_overlap_hESC_WT_QSER1TEAD4_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_hESC_WT_QSER1TEAD4.gtf
 grep -Ff output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_Venn_overlap_hESC_WT_QSER1EZH2.gtf
@@ -2636,6 +2642,10 @@ grep -Ff output/ChIPseeker/Venn_overlap_hESC_WT_QSER1EZH2YAP1_as_gtf_geneSymbol.
 grep -Ff output/ChIPseeker/annotation_THORq4_EZH2_pos_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_THORq4_EZH2_pos_annot_promoterAnd5.gtf
 grep -Ff output/ChIPseeker/annotation_THORq4_EZH2_neg_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_THORq4_EZH2_neg_annot_promoterAnd5.gtf
 grep -Ff output/ChIPseeker/annotation_THORq4_EZH2_posneg_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_THORq4_EZH2_posneg_annot_promoterAnd5.gtf
+
+
+grep -Ff ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_homer_hESC_WT_QSER1FLAG_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_homer_hESC_WT_QSER1FLAG_promoterAnd5.gtf
+grep -Ff ../002__ChIPseq_Dixon2021/output/ChIPseeker/annotation_homer_hESC_WT_QSER1FLAG_annot_noIntergenic_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_homer_hESC_WT_QSER1FLAG_annot_noIntergenic.gtf
 
 
 
@@ -2676,6 +2686,10 @@ sbatch scripts/matrix_TSS_5kb_rawBigwig_hESC_WT_EZH2_008001vs008002_008002promot
 
 
 
+
+## homer QSER1 008001 vs 008002 with output/bigwig raw files
+sbatch scripts/matrix_TSS_5kb_rawBigwig_hESC_WT_QSER1_008001vs008002_008001noIntergenic_homer.sh # 40453678 ok
+sbatch scripts/matrix_TSS_5kb_rawBigwig_hESC_WT_QSER1_008001vs008002_008001promoterAnd5_homer.sh # 40453743 ok
 ```
 
 --> QSER1 before TSS; EZH2 right after TSS

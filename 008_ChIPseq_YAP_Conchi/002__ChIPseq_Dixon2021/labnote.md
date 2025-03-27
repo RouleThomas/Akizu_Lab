@@ -252,9 +252,56 @@ Then keep only the significant peaks (re-run the script to test different qvalue
 
 
 
+
+
+# Run HOMER peak caller
+
+From method; use HOMER findPeaks command with input control; Option `-style factor` (for TF; otherwise `-style histone` was used)
+
+- Convert .bam to tagDirectory for [homer](http://homer.ucsd.edu/homer/ngs/peaks.html). Method said only uniquely aligned reads where used, so let's use our `*unique.dupmark.sorted.bam` files
+- Call peaks (Method differ if [simplicate](http://homer.ucsd.edu/homer/ngs/peaks.html) or [replicate](http://homer.ucsd.edu/homer/ngs/peaksReplicates.html))
+
+
+
+
+
+```bash
+conda activate homer_deseq2_V1
+module load SAMtools/1.16.1-GCC-11.3.0
+
+# Create tagDirectory to be used by homer (FAST, so run in interactive)
+makeTagDirectory output/homer/hESC_WT_QSER1FLAG_R1 output/bowtie2/hESC_WT_QSER1FLAG_R1.unique.dupmark.sorted.bam 
+makeTagDirectory output/homer/hESC_WT_QSER1FLAG_R2 output/bowtie2/hESC_WT_QSER1FLAG_R2.unique.dupmark.sorted.bam 
+makeTagDirectory output/homer/hESC_WT_input_R1 output/bowtie2/hESC_WT_input_R1.unique.dupmark.sorted.bam 
+makeTagDirectory output/homer/hESC_WT_input_R2 output/bowtie2/hESC_WT_input_R2.unique.dupmark.sorted.bam 
+#--> By default homer run in singleend
+
+
+# PEAK CALLING
+## Call peaks with multiple bio rep
+getDifferentialPeaksReplicates.pl -all -style factor -t output/homer/hESC_WT_QSER1FLAG_R1 output/homer/hESC_WT_QSER1FLAG_R2 -i output/homer/hESC_WT_input_R1 output/homer/hESC_WT_input_R2 > output/homer/hESC_WT_QSER1FLAG_outputPeaks.txt 
+
+### multiple replicate
+pos2bed.pl output/homer/hESC_WT_QSER1FLAG_outputPeaks.txt  > output/homer/hESC_WT_QSER1FLAG_outputPeaks.bed
+
+ 
+ 
+
+
+
+```
+
+
+
+--> All good
+
+
+
+
+
 # ChIPseeker peak gene assignment
 
-## From optimal qval bed files peaks
+## From optimal qval bed files peaks - MACS2
 Let's assign **peak to genes from MACS2 peak**:
 
 **Optimal qvalue** according to IGV:
@@ -906,6 +953,112 @@ write.table(hESC_WT_EZH2_qval4_annot_noIntergenic_geneSymbol, file = "output/ChI
 
 
 
+
+
+## From optimal qval bed files peaks - HOMER
+Let's assign **peak to genes from HOMER peak**:
+
+
+Output from homer directly used
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import macs2 peaks
+## optimal qval
+hESC_WT_QSER1FLAG = as_tibble(read.table('output/homer/hESC_WT_QSER1FLAG_outputPeaks.bed') ) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+    
+
+
+
+# Tidy peaks 
+## H3K27me3
+hESC_WT_QSER1FLAG_gr = makeGRangesFromDataFrame(hESC_WT_QSER1FLAG,keep.extra.columns=TRUE)
+
+gr_list <- list(hESC_WT_QSER1FLAG=hESC_WT_QSER1FLAG_gr)
+
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## plots
+pdf("output/ChIPseeker/plotAnnoBar_hESC_WT_QSER1FLAG.pdf", width = 8, height = 1)
+plotAnnoBar(peakAnnoList)
+dev.off()
+pdf("output/ChIPseeker/plotDistToTSS_hESC_WT_QSER1FLAG.pdf", width = 8, height = 1)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
+
+## Get annotation data frame
+hESC_WT_QSER1FLAG_annot <- as.data.frame(peakAnnoList[["hESC_WT_QSER1FLAG"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+hESC_WT_QSER1FLAG_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1FLAG_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+hESC_WT_QSER1FLAG_annot$gene <- mapIds(org.Hs.eg.db, keys = hESC_WT_QSER1FLAG_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+## Save output table
+write.table(hESC_WT_QSER1FLAG_annot, file="output/ChIPseeker/annotation_homer_hESC_WT_QSER1FLAG_annot.txt", sep="\t", quote=F, row.names=F)  # CHANGE TITLE
+
+
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+hESC_WT_QSER1FLAG_annot_promoterAnd5 = tibble(hESC_WT_QSER1FLAG_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+    
+
+### Save output gene lists
+hESC_WT_QSER1FLAG_annot_promoterAnd5_geneSymbol = hESC_WT_QSER1FLAG_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+    
+write.table(hESC_WT_QSER1FLAG_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_QSER1FLAG_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+            
+
+
+
+## Keep only signals in non intergenic region ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+hESC_WT_QSER1FLAG_annot_noIntergenic = tibble(hESC_WT_QSER1FLAG_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+    
+
+### Save output gene lists
+hESC_WT_QSER1FLAG_annot_noIntergenic_geneSymbol = hESC_WT_QSER1FLAG_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+    
+write.table(hESC_WT_QSER1FLAG_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_homer_hESC_WT_QSER1FLAG_annot_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+            
+            
+```
+
+--> Used in *gastrulation/QSER1 paper* to show signal of QSER1 `008*/001*` vs QSER1-FLAG `008*/002*`/Dixon in QSER1 peaks from Dixon
 
 # DiffBind TMM normalization (for sample without spikein)
 
