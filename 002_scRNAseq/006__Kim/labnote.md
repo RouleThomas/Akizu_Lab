@@ -1778,6 +1778,7 @@ Created with [ShinyCell](https://github.com/SGDDNB/ShinyCell); and follow [shiny
 
 ```bash
 conda activate SignacV5
+module load hdf5 # to read `.h5` files
 ```
 
 ```R
@@ -1812,16 +1813,25 @@ rsconnect::deployApp('shinyApp_multiome_WT_Bap1KO_QCV3')
 ## saveRDS(multiome_WT_Bap1KO_QCV2vC1.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000.sct_numeric_label.rds") ##
 multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000.sct_numeric_label.rds")
 DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "RNA" # 
-
-
 # Generate Shiny app V2
 scConf = createConfig(multiome_WT_Bap1KO_QCV2vC1.sct)
-
 makeShinyApp(multiome_WT_Bap1KO_QCV2vC1.sct, scConf, gene.mapping = TRUE,
              shiny.title = "multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000",
              shiny.dir = "shinyApp_multiome_WT_Bap1KO_QCV2vC1/") 
-
 rsconnect::deployApp('shinyApp_multiome_WT_Bap1KO_QCV2vC1')
+
+
+
+# Correct1, including RNA and ATAC assay
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.sct_numeric_label.rds")
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "RNA" # 
+# Generate Shiny app V2
+scConf = createConfig(multiome_WT_Bap1KO_QCV2vC1.sct)
+makeShinyApp(multiome_WT_Bap1KO_QCV2vC1.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "multiome_WT_Bap1KO_QCV2vC1_correct1GeneActivityLinkPeaks",
+             shiny.dir = "shinyApp_multiome_WT_Bap1KO_correct1/") 
+rsconnect::deployApp('shinyApp_multiome_WT_Bap1KO_correct1')
+
 
 
 ```
@@ -11418,6 +11428,125 @@ dev.off()
 
 --> Not good to use WNN reduction for pseudotime. Pseudotime is temporal dynamics of gene expression. So focus on gene expression; so need top use the RNA UMAP version.
 
+# Task post meeting 20250327
+
+- Import correct1 .Rds file
+- Identify unbiased marker genes in each cluster
+- Generate Vln plot for Hopx (do statistics NSC_proliferative_2 vs all other clusters)
+- Perform pseudotime analysis for DG_GC (starting cluster = NSC_proliferative_2; express Hopx genes / end cluster = DG_GC)
+
+
+
+```bash
+conda activate SignacV5
+module load hdf5
+```
+
+```R
+set.seed(42)
+
+# library
+library("Signac")
+library("Seurat")
+#library("hdf5r") # need to reinstall it at each session... with install.packages("hdf5r")
+library("tidyverse")
+library("EnsDb.Mmusculus.v79") # mm10
+library("reticulate") # needed to use FindClusters()
+library("metap") # needed to use FindConservedMarkers()
+library("ggbeeswarm")
+use_python("~/anaconda3/envs/SignacV5/bin/python") # to specify which python to use... Needed for FindClusters()
+# remotes::install_github('immunogenomics/presto')
+
+# import seurat object
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.sct_numeric_label.rds")
+
+multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident <- factor(multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident, levels = c("multiome_WT", "multiome_Bap1KO"))
+
+
+
+###############################################################
+# VLN PLOTS with STATISTICS #####################
+###############################################################
+
+
+# Check some genes
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "RNA"
+
+## perform DEG cluster vs all cluster
+all_markers <- FindAllMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.01)
+### output file
+write.table(all_markers, file = "output/Signac/srat_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+# map marker gene to its specific cluster
+gene_cluster_map <- c(
+  Hopx = "NSC_proliferative_2"
+)
+gene_cluster_df <- tibble::tibble(
+  gene = names(gene_cluster_map),
+  cluster = unname(gene_cluster_map)
+)
+
+# collect padj value
+gene_cluster_df %>%
+  left_join(all_markers, by = c("gene", "cluster")) 
+
+# Prepare the data to annotate each gene with its p_val_adj
+sig_data <- gene_cluster_df %>%
+  left_join(all_markers, by = c("gene", "cluster")) %>%
+  mutate(
+    Identity = cluster,
+    y_pos = avg_log2FC + 0.25,  # adjust based on expression range
+    significance = ifelse(!is.na(p_val_adj), paste0("p.adj = ", signif(p_val_adj, 2)), "not found")
+  ) %>%
+  dplyr::select(gene, Identity, y_pos, significance, p_val_adj)
+
+pdf("output/Signac/VlnPlot_RNA_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-Hopx_RNA.pdf", width=7, height=3.5)
+for (gene in names(gene_cluster_map)) {
+  print(paste("Generating plot for:", gene))
+  gene_sig_data <- sig_data %>% dplyr::filter(gene == !!gene)
+  # Define title with gene and p.adj
+  if (nrow(gene_sig_data) == 1 && !is.na(gene_sig_data$p_val_adj)) {
+    title_text <- paste0(gene, " (p.adj = ", signif(gene_sig_data$p_val_adj, 2), ")")
+  } else {
+    title_text <- paste0(gene, " (p.adj = not found)")
+  }
+  # Generate violin plot
+  p <- VlnPlot(multiome_WT_Bap1KO_QCV2vC1.sct, 
+               features = gene, 
+               pt.size = 0.1) +
+    ggtitle(title_text) +
+    theme(plot.title = element_text(size=10, face = "bold"),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  print(p)
+}
+dev.off()
+
+
+pdf("output/Signac/VlnPlot_RNA_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-Hopx_SCT.pdf", width=7, height=3.5)
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "SCT"
+for (gene in names(gene_cluster_map)) {
+  print(paste("Generating plot for:", gene))
+  gene_sig_data <- sig_data %>% dplyr::filter(gene == !!gene)
+  # Define title with gene and p.adj
+  if (nrow(gene_sig_data) == 1 && !is.na(gene_sig_data$p_val_adj)) {
+    title_text <- paste0(gene, " (p.adj = ", signif(gene_sig_data$p_val_adj, 2), ")")
+  } else {
+    title_text <- paste0(gene, " (p.adj = not found)")
+  }
+  # Generate violin plot
+  p <- VlnPlot(multiome_WT_Bap1KO_QCV2vC1.sct, 
+               features = gene, 
+               pt.size = 0.1) +
+    ggtitle(title_text) +
+    theme(plot.title = element_text(size=10, face = "bold"),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  print(p)
+}
+dev.off()
+
+
+```
 
 
 
