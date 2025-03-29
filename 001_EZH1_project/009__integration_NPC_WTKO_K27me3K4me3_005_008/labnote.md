@@ -6603,7 +6603,7 @@ conda activate deeptools
 
 # sample per sample (replicate per replicate)
 ## no merge extension
-## qvalue 2.3 ##############
+## qvalue 2.3 - FAIL (localMaxima on bed)##############
 #### WT
 sbatch scripts/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.sh # 38043666 ok
 sbatch scripts/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_WT_H3K27me3_008-FergusonUniqueNorm99.sh # 38043672 ok
@@ -6612,6 +6612,15 @@ sbatch scripts/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.3010
 sbatch scripts/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_KO_H3K27me3_005-FergusonUniqueNorm99.sh # 38043680 ok
 sbatch scripts/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_KO_H3K27me3_008-FergusonUniqueNorm99.sh # 38043689 ok
 
+
+## qvalue 2.3 - initialBigwig ##############
+#### WT
+sbatch scripts/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_WT_H3K27me3_005-FergusonUniqueNorm99initialBigwig.sh # 40572699 ok
+sbatch scripts/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_WT_H3K27me3_008-FergusonUniqueNorm99initialBigwig.sh # 40572717 ok
+
+#### KO
+sbatch scripts/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_H3K27me3_005-FergusonUniqueNorm99initialBigwig.sh # 40572733 ok
+sbatch scripts/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_H3K27me3_008-FergusonUniqueNorm99initialBigwig.sh # 40572736 ok
 
 
 
@@ -6655,6 +6664,7 @@ NPC_WTKO_H3K27me3_pool_peaks_merge_annot <- read.delim("output/ChIPseeker/annota
   dplyr::select(chr, start, end, annotation, geneSymbol, gene, peakID)
 
 
+## BELOW FAIL  ##############
 # import SCORE 
 SCORE_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
   as_tibble() %>%
@@ -6672,12 +6682,7 @@ SCORE_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008 <- read.delim("output/edgeR/
   as_tibble() %>%
   dplyr::rename(score = V1) %>%
   mutate(rowNumber = row_number())
-
-
-
-
-
-# import BED position from matrix
+# import BED position from matrix - FAIL
 BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
   as_tibble() %>%
   dplyr::rename(chr = "X.chrom") %>%
@@ -6698,11 +6703,53 @@ BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008 <- read.delim("output/edgeR/Le
   dplyr::rename(chr = "X.chrom") %>%
   dplyr::select(chr, start, end) %>%
   mutate(rowNumber = row_number())
+##########################################
+
+
+# import SCORE - initialBigwig
+SCORE_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_WT_H3K27me3_005-FergusonUniqueNorm99initialBigwig.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_WT_H3K27me3_008-FergusonUniqueNorm99initialBigwig.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_H3K27me3_005-FergusonUniqueNorm99initialBigwig.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_H3K27me3_008-FergusonUniqueNorm99initialBigwig.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+# import BED position from matrix - initialBigwig
+BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_WT_H3K27me3_005-FergusonUniqueNorm99initialBigwig.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_WT_H3K27me3_008-FergusonUniqueNorm99initialBigwig.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_H3K27me3_005-FergusonUniqueNorm99initialBigwig.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_H3K27me3_008-FergusonUniqueNorm99initialBigwig.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+
+
+
 
 
 # Put together, gene name, scoer per row, coordinate and row
-
-
 SCORE_BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 = SCORE_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 %>%
   left_join(BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 ) %>%
   left_join(NPC_WTKO_H3K27me3_pool_peaks_merge_annot) %>%
@@ -6827,9 +6874,9 @@ names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC <
 
 res_tibble <- as_tibble(res, rownames = "peakID") %>% left_join(NPC_WTKO_H3K27me3_pool_peaks_merge_annot)
 # Export result
-write.table(res_tibble, file="output/edgeR/DESEQ2-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(res_tibble, file="output/edgeR/DESEQ2-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3_initialBigwig.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
-pdf("output/edgeR/plotVolcano_res_q05fc01-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3.pdf", width=3, height=4)    
+pdf("output/edgeR/plotVolcano_res_q05fc01-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3_initialBigwig.pdf", width=3, height=4)    
 EnhancedVolcano(res_tibble,
   lab = res_tibble$geneSymbol,
   x = 'log2FoldChange',
@@ -6855,8 +6902,8 @@ upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$
 #### Filter for down-regulated genes
 downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.1 & res_tibble$padj < 5e-2, ]
 #### Save
-write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
-write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3_initialBigwig.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3_initialBigwig.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
 
 
@@ -6880,8 +6927,8 @@ res_tibble %>% dplyr::select(peakID, geneSymbol, log2FoldChange, pvalue) %>%
 --> Seems that there are fewer Diff. bound regions as compare to when using THOR; here; 40 lost 35 gain 
 
 Let's compare with Venn diagram the gene that gain/lost H3K27me3 with Ferguson and THOR method; files:
-- *Ferguson, Gain*: `output/edgeR/upregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3.txt` # 35 genes
-- *Ferguson, Lost*: `output/edgeR/downregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3.txt` # 40 genes
+- *Ferguson, Gain*: `output/edgeR/upregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3_initialBigwig.txt` # 43 genes
+- *Ferguson, Lost*: `output/edgeR/downregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3_initialBigwig.txt` # 86 genes
 - *THOR, Gain*: `output/ChIPseeker/annotation_THOR_H3K27me3_q30_pos_promoterAnd5_geneSymbol.txt` # 840 genes
 - *THOR, Lost*: `output/ChIPseeker/annotation_THOR_H3K27me3_q30_neg_promoterAnd5_geneSymbol.txt` # 224 genes
 
@@ -6926,6 +6973,8 @@ NPC_WTKO_H3K27me3_pool_peaks_merge_annot <- read.delim("output/ChIPseeker/annota
   dplyr::select(chr, start, end, annotation, geneSymbol, gene, peakID)
 
 
+
+## BELOW FAIL  ##############
 # import SCORE 
 SCORE_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
   as_tibble() %>%
@@ -6943,12 +6992,7 @@ SCORE_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008 <- read.delim("output/edgeR/
   as_tibble() %>%
   dplyr::rename(score = V1) %>%
   mutate(rowNumber = row_number())
-
-
-
-
-
-# import BED position from matrix
+# import BED position from matrix - FAIL
 BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
   as_tibble() %>%
   dplyr::rename(chr = "X.chrom") %>%
@@ -6969,6 +7013,48 @@ BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008 <- read.delim("output/edgeR/Le
   dplyr::rename(chr = "X.chrom") %>%
   dplyr::select(chr, start, end) %>%
   mutate(rowNumber = row_number())
+##########################################
+
+
+# import SCORE - initialBigwig
+SCORE_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_WT_H3K27me3_005-FergusonUniqueNorm99initialBigwig.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_WT_H3K27me3_008-FergusonUniqueNorm99initialBigwig.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_H3K27me3_005-FergusonUniqueNorm99initialBigwig.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_H3K27me3_008-FergusonUniqueNorm99initialBigwig.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+# import BED position from matrix - initialBigwig
+BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_WT_H3K27me3_005-FergusonUniqueNorm99initialBigwig.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_WT_H3K27me3_008-FergusonUniqueNorm99initialBigwig.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_H3K27me3_005-FergusonUniqueNorm99initialBigwig.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_H3K27me3_008-FergusonUniqueNorm99initialBigwig.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+
 
 
 # Put together, gene name, scoer per row, coordinate and row
@@ -7101,9 +7187,9 @@ names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC <
 
 res_tibble <- as_tibble(res, rownames = "peakID") %>% left_join(NPC_WTKO_H3K27me3_pool_peaks_merge_annot)
 # Export result
-write.table(res_tibble, file="output/edgeR/DESEQ2-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-resultsFDR.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(res_tibble, file="output/edgeR/DESEQ2-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3_initialBigwig-resultsFDR.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
-pdf("output/edgeR/plotVolcano_res_q05fc01-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-resultsFDR.pdf", width=3, height=4)    
+pdf("output/edgeR/plotVolcano_res_q05fc01-WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3_initialBigwig-resultsFDR.pdf", width=3, height=4)    
 EnhancedVolcano(res_tibble,
   lab = res_tibble$geneSymbol,
   x = 'log2FoldChange',
@@ -7129,8 +7215,8 @@ upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$
 #### Filter for down-regulated genes
 downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.1 & res_tibble$padj < 5e-2, ]
 #### Save
-write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-resultsFDR.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
-write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3-resultsFDR.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3_initialBigwig-resultsFDR.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc01_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_vs_NPC_WT-H3K27me3_initialBigwig-resultsFDR.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
 
 
@@ -7189,6 +7275,8 @@ NPC_WTKO_H3K27me3_pool_peaks_merge_annot <- read.delim("output/ChIPseeker/annota
   dplyr::select(chr, start, end, annotation, geneSymbol, gene, peakID)
 
 
+
+## BELOW FAIL  ##############
 # import SCORE 
 SCORE_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
   as_tibble() %>%
@@ -7206,12 +7294,7 @@ SCORE_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008 <- read.delim("output/edgeR/
   as_tibble() %>%
   dplyr::rename(score = V1) %>%
   mutate(rowNumber = row_number())
-
-
-
-
-
-# import BED position from matrix
+# import BED position from matrix - FAIL
 BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks.sorted.merge-qval2.30103-NPC_WT_H3K27me3_005-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
   as_tibble() %>%
   dplyr::rename(chr = "X.chrom") %>%
@@ -7232,6 +7315,49 @@ BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008 <- read.delim("output/edgeR/Le
   dplyr::rename(chr = "X.chrom") %>%
   dplyr::select(chr, start, end) %>%
   mutate(rowNumber = row_number())
+##########################################
+
+
+# import SCORE - initialBigwig
+SCORE_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_WT_H3K27me3_005-FergusonUniqueNorm99initialBigwig.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_WT_H3K27me3_008-FergusonUniqueNorm99initialBigwig.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_H3K27me3_005-FergusonUniqueNorm99initialBigwig.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_H3K27me3_008-FergusonUniqueNorm99initialBigwig.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+# import BED position from matrix - initialBigwig
+BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_WT_H3K27me3_005-FergusonUniqueNorm99initialBigwig.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKO_H3K27me3_pool_peaks__NPC_WT_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_WT_H3K27me3_008-FergusonUniqueNorm99initialBigwig.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_005 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_H3K27me3_005-FergusonUniqueNorm99initialBigwig.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKO_H3K27me3_pool_peaks__NPC_KO_H3K27me3_008 <- read.delim("output/edgeR/LengthNormSignal_WTKO_H3K27me3_pool_peaks-qval2.30103-NPC_KO_H3K27me3_008-FergusonUniqueNorm99initialBigwig.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+
+
 
 
 # Put together, gene name, scoer per row, coordinate and row
@@ -7763,6 +7889,11 @@ With limma use QL test or likelihood test
 
 --> It may be worst changing pval trehsold or method for pvalue adjustment? 
   --> It did not help that much, detect more but still miss many from THOR...
+
+
+
+
+
 
 
 

@@ -23533,15 +23533,18 @@ DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "integrated"
 
 WT_Kcnc1_p180_CB_1step.sct <- RunPCA(WT_Kcnc1_p180_CB_1step.sct, verbose = FALSE, npcs = 30)
 WT_Kcnc1_p180_CB_1step.sct <- RunUMAP(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
-WT_Kcnc1_p180_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", k.param = 30, dims = 1:30)
-WT_Kcnc1_p180_CB_1step.sct <- FindClusters(WT_Kcnc1_p180_CB_1step.sct, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+WT_Kcnc1_p180_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", k.param = 10, dims = 1:30)
+WT_Kcnc1_p180_CB_1step.sct <- FindClusters(WT_Kcnc1_p180_CB_1step.sct, resolution = 0.12, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
 WT_Kcnc1_p180_CB_1step.sct$condition <- factor(WT_Kcnc1_p180_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version4dim30kparam30res03.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version4dim30kparam10res012.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
+
+
+XXXY paste plot, I reduced res test other res
 
 
 DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "SCT"
@@ -23553,18 +23556,18 @@ FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c(   "Gabra6","Pax6", # Granu
   "Klhl1", "Gfra2", "Aldh1a3", # PLI12
   "Galntl6", "Kcnc2", # PLI23
   "Pax2", # Golgi
-  "Eomes", # Unipolar_Brush
+  "Eomes", "Rgs6", "Tafa2", # Unipolar_Brush
   "Calb1", "Slc1a6", "Car8", # Purkinje
   "Zeb2", # Astrocyte
   "Aqp4", "Slc39a12", # Bergmann_Glia
   "Mbp", "Mag", "Plp1", # Oligodendrocyte
   "Aldoc", "Cnp", # OPC
   "Itgam", "Cx3cr1", # Mix_Microglia_Meningeal
-  "Ptgds", "Dcn", # Endothelial
+  "Ptgds", "Dcn", # Meningeal
   "Lef1", "Notum", "Apcdd1", # Endothelial_Mural
-  "Dlc1", "Pdgfrb", # Choroid_Plexus
-  "Kl",  "Ttr",
-  "Eomes", "Rgs6", "Tafa2"), max.cutoff = 1, cols = c("grey", "red"))
+  "Dlc1", "Pdgfrb",  # Endothelial
+  "Kl",  "Ttr", # Choroid_Plexus
+  ), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
 pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim30-ListAllGenes.pdf", width=30, height=80)
