@@ -29803,6 +29803,8 @@ sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches c
 sig_data <- sig_data %>%
   left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
 pdf("output/seurat/VlnPlot_RNA_E7_control_cYAPKO_11genes_sct_19dim_V2_STAT.pdf", width=7, height=3.5)
+pdf("output/seurat/VlnPlot_RNA_E7_control_cYAPKO_11genes_sct_19dim_V2_STATmiddle.pdf", width=7, height=3.5)
+
 ###### Generate separate plots per gene
 for (gene in genes_of_interest) {
   print(paste("Generating plot for:", gene))
@@ -29818,7 +29820,7 @@ for (gene in genes_of_interest) {
     filter(gene == !!gene)
   # Add significance stars manually
   p <- p + geom_text(data = gene_sig_data, 
-                     aes(x = Identity, y = y_pos, label = significance), 
+                     aes(x = Identity, y = y_pos-0.2, label = significance), 
                      size = 6, color = "black", inherit.aes = FALSE)
   # Print each plot to a new PDF page
   print(p)

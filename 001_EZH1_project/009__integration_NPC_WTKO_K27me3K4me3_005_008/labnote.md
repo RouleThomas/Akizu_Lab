@@ -1194,6 +1194,13 @@ sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_NPC_WTKO_H3K27me
 ##### SICER2 window200gap600fdr01evalue1000_initialBigwig ##########
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig_gain_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig_gain_annot_promoterAnd5_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig_lost_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig_lost_annot_promoterAnd5_as_gtf_geneSymbol.txt
+##### DIFFREPS bin1000space100_gt_pval05_padj001 (Serie1) ##########
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt
+
+
+
+
 
 
 
@@ -1204,6 +1211,10 @@ grep -Ff output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_merged_intervals_5kb2kb1
 ##### SICER2 window200gap600fdr01evalue1000_initialBigwig ##########
 grep -Ff output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig_gain_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI__NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig_gain_annot_promoterAnd5.gtf
 grep -Ff output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig_lost_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI__NPC_WTKO_H3K27me3_SICER2window200gap600fdr01evalue1000_initialBigwig_lost_annot_promoterAnd5.gtf
+##### DIFFREPS bin1000space100_gt_pval05_padj001 (Serie1) ##########
+grep -Ff output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI__NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001_initialBigwig_gain_annot_promoterAnd5.gtf
+grep -Ff output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI__NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001_initialBigwig_lost_annot_promoterAnd5.gtf
+
 
 # deeptool plots
 ##### DIFFREPS ##########
@@ -1212,8 +1223,8 @@ sbatch scripts/matrix_TSS_10kb-DIFFREPS-NPC_WTKO_H3K27me3_merged_intervals_5kb2k
 ##### SICER2 window200gap600fdr01evalue1000_initialBigwig ##########
 sbatch scripts/matrix_TSS_5kb-SICER2-NPC_WTKO_H3K27me3_window200gap600fdr01evalue1000_initialBigwig-gene.sh # 39963256 ok
 sbatch scripts/matrix_TSS_10kb-SICER2-NPC_WTKO_H3K27me3_window200gap600fdr01evalue1000_initialBigwig-gene.sh # 39963267 ok
-
-
+##### DIFFREPS bin1000space100_gt_pval05_padj001 (Serie1) ##########
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001_initialBigwig-gene.sh # 40783220 ok
 ```
 
 
