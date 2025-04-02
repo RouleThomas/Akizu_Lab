@@ -23533,23 +23533,21 @@ DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "integrated"
 
 WT_Kcnc1_p180_CB_1step.sct <- RunPCA(WT_Kcnc1_p180_CB_1step.sct, verbose = FALSE, npcs = 20)
 WT_Kcnc1_p180_CB_1step.sct <- RunUMAP(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", dims = 1:20, verbose = FALSE)
-WT_Kcnc1_p180_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", k.param = 20, dims = 1:20)
-WT_Kcnc1_p180_CB_1step.sct <- FindClusters(WT_Kcnc1_p180_CB_1step.sct, resolution = 0.1, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+WT_Kcnc1_p180_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p180_CB_1step.sct, reduction = "pca", k.param = 10, dims = 1:20)
+WT_Kcnc1_p180_CB_1step.sct <- FindClusters(WT_Kcnc1_p180_CB_1step.sct, resolution = 0.115, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
 WT_Kcnc1_p180_CB_1step.sct$condition <- factor(WT_Kcnc1_p180_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version4dim20kparam20res01.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version4dim20kparam10res0115.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
 
-XXXY paste plot, I reduced res test other res
-
 
 DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "SCT"
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim30-ListdotPLot.pdf", width=30, height=60)
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim20-ListdotPLot.pdf", width=30, height=60)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c(   "Gabra6","Pax6", # Granular_1
   "Sorcs3", "Ptprk", # MLI1
   "Nxph1", "Cdh22", # MLI2
@@ -23566,7 +23564,7 @@ FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c(   "Gabra6","Pax6", # Granu
   "Ptgds", "Dcn", # Meningeal
   "Lef1", "Notum", "Apcdd1", # Endothelial_Mural
   "Dlc1", "Pdgfrb",  # Endothelial
-  "Kl",  "Ttr", # Choroid_Plexus
+  "Kl",  "Ttr" # Choroid_Plexus
   ), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
@@ -23583,7 +23581,6 @@ FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Gabra6", "Pax6", "Calb1", 
 dev.off()
 
  
-XXXY HERE pick the best dims and change resoltuion
 
 # genes
 Neuronal Cell Types
@@ -23627,7 +23624,7 @@ DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "SCT"
 
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim40-ListAllGenesFILTER.pdf", width=30, height=70)
+pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim20-ListAllGenesFILTER.pdf", width=30, height=70)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Gabra6", "Pax6","Calb1", "Slc1a6", "Car8","Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Klhl1", "Gfra2", "Aldh1a3", "Galntl6", "Kcnc2", "Pax2","Rgs6", "Tafa2","Slc18a2", "Ddc", "Slc6a4", "Tph2", "Ddc", "Slc18a2", "Zeb2", "Slc1a3","Aqp4", "Slc39a12", "Vcan", "Sox6", "Mbp", "Mag", "Plp1", "Lef1", "Apcdd1", "Ptgds", "Dcn", "Kl", "Ttr", "Clic6", "Slc13a4", "Cfap54", "Ccdc153", "Cfap44", "Tmem212"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
@@ -23638,28 +23635,28 @@ dev.off()
 
 #### QC metrics investigation ####################################
 
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p180_CB_nFeature_RNA-1stepIntegrationRegressNotRepeated-version4dim40.pdf", width=5, height=5)
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p180_CB_nFeature_RNA-1stepIntegrationRegressNotRepeated-version4dim20.pdf", width=5, height=5)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=FALSE, features = "nFeature_RNA")
 dev.off()  
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p180_CB_percentmt-1stepIntegrationRegressNotRepeated-version4dim40.pdf", width=5, height=5)
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p180_CB_percentmt-1stepIntegrationRegressNotRepeated-version4dim20.pdf", width=5, height=5)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.mt")
 dev.off()  
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p180_CB_percentrb-1stepIntegrationRegressNotRepeated-version4dim40.pdf", width=5, height=5)
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p180_CB_percentrb-1stepIntegrationRegressNotRepeated-version4dim20.pdf", width=5, height=5)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.rb")
 dev.off()  
 
 #
-pdf("output/seurat/VlnPlot_QCmetrics_SCT_WT_Kcnc1_p180_CB_1step-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-countMtRbRegression.pdf", width=20, height=5)
+pdf("output/seurat/VlnPlot_QCmetrics_SCT_WT_Kcnc1_p180_CB_1step-1stepIntegrationRegressNotRepeated-version4dim20kparam10res0115-countMtRbRegression.pdf", width=20, height=5)
 VlnPlot(WT_Kcnc1_p180_CB_1step.sct,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
   theme(plot.title = element_text(size=10))
 dev.off()
 
-pdf("output/seurat/VlnPlot_QCmetrics_nFeature_RNA_SCT_WT_Kcnc1_p180_CB_1step-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-countMtRbRegression.pdf", width=5, height=5)
+pdf("output/seurat/VlnPlot_QCmetrics_nFeature_RNA_SCT_WT_Kcnc1_p180_CB_1step-1stepIntegrationRegressNotRepeated-version4dim20kparam10res0115-countMtRbRegression.pdf", width=5, height=5)
 VlnPlot(WT_Kcnc1_p180_CB_1step.sct,features = c("nFeature_RNA")) +
   ylim(0,2000)
 dev.off()
 
-pdf("output/seurat/VlnPlot_QCmetrics_nCount_RNA_SCT_WT_Kcnc1_p180_CB_1step-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-countMtRbRegression.pdf", width=5, height=5)
+pdf("output/seurat/VlnPlot_QCmetrics_nCount_RNA_SCT_WT_Kcnc1_p180_CB_1step-1stepIntegrationRegressNotRepeated-version4dim20kparam10res0115-countMtRbRegression.pdf", width=5, height=5)
 VlnPlot(WT_Kcnc1_p180_CB_1step.sct,features = c("nCount_RNA")) +
   ylim(0,10000)
 dev.off()
@@ -23668,14 +23665,14 @@ dev.off()
 ############################################################
 
 
-pdf("output/seurat/UMAP_WT_Kcnc1_splitCondition-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03.pdf", width=13, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_splitCondition-1stepIntegrationRegressNotRepeated-version4dim20kparam10res0115.pdf", width=13, height=6)
 DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=TRUE, split.by = "condition")
 dev.off()
-pdf("output/seurat/UMAP_WT_Kcnc1_splitReplicate-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03.pdf", width=15, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_splitReplicate-1stepIntegrationRegressNotRepeated-version4dim20kparam10res0115.pdf", width=15, height=6)
 DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", label=TRUE, split.by = "replicate")
 dev.off()
 
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_Phase-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03.pdf", width=6, height=5)
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_Phase-1stepIntegrationRegressNotRepeated-version4dim20kparam10res0115.pdf", width=6, height=5)
 DimPlot(WT_Kcnc1_p180_CB_1step.sct, group.by= "Phase") & 
   theme(plot.title = element_text(size=10))
 dev.off()  
@@ -23685,16 +23682,16 @@ dev.off()
 # WT vs Kcnc1 gene expr ############
 DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "SCT"
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-Kcnc1.pdf", width=5, height=5)
+pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB-1stepIntegrationRegressNotRepeated-version4dim20kparam10res0115-Kcnc1.pdf", width=5, height=5)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Kcnc1"),  cols = c("grey", "red"), max.cutoff = 1) #  max.cutoff = 10, min.cutoff = 1
 dev.off()
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-Kcnc1split.pdf", width=12, height=6)
+pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB-1stepIntegrationRegressNotRepeated-version4dim20kparam10res0115-Kcnc1split.pdf", width=12, height=6)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Kcnc1"),  cols = c("grey", "red"), split.by = "condition", max.cutoff = 1) #  max.cutoff = 10, min.cutoff = 1
 dev.off()
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-Kcnc1234-split.pdf", width=12, height=20)
+pdf("output/seurat/FeaturePlot_SCT_WT_p180_CB-1stepIntegrationRegressNotRepeated-version4dim20kparam10res0115-Kcnc1234-split.pdf", width=12, height=20)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Kcnc1","Kcnc2", "Kcnc3", "Kcnc4"),  cols = c("grey", "red"), split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
 dev.off()
 
@@ -23702,8 +23699,9 @@ dev.off()
 # save ##################
 
 ## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step-version4dim30kparam30res03.sct_V1_numeric.rds") 
+## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step-version4dim20kparam10res0115.sct_V1_numeric.rds") 
 
-WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-version4dim30kparam30res03.sct_V1_numeric.rds") # 
+WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-version4dim20kparam10res0115.sct_V1_numeric.rds") # 
 set.seed(42)
 ##########
 
@@ -23717,53 +23715,49 @@ all.genes <- rownames(WT_Kcnc1_p180_CB_1step.sct)
 WT_Kcnc1_p180_CB_1step.sct <- ScaleData(WT_Kcnc1_p180_CB_1step.sct, features = all.genes) # zero-centres and scales it
 
 all_markers <- FindAllMarkers(WT_Kcnc1_p180_CB_1step.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
-write.table(all_markers, file = "output/seurat/srat_WT_Kcnc1_p180_CB_1step-version4dim40kparam30res03-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(all_markers, file = "output/seurat/srat_WT_Kcnc1_p180_CB_1step-version4dim20kparam10res0115-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 
 
-############ V2 naming  version4dim40kparam30res03 (output/seurat/WT_Kcnc1_p180_CB_1step-version4dim40kparam30res03.sct_V1_numeric.rds )
+############ V1 naming  version4dim20kparam10res0115 (output/seurat/WT_Kcnc1_p180_CB_1step-version4dim20kparam10res0115.sct_V1_numeric.rds )
 WT_Kcnc1_p180_CB_1step.sct$Purkinje <- NULL
 WT_Kcnc1_p180_CB_1step.sct$Golgi <- NULL
 Idents(WT_Kcnc1_p180_CB_1step.sct) <- "seurat_clusters"
 
 
+
 Cluster1= Granule = Gabra6, Pax6 
 Cluster2= MLI1: Sorcs3, Ptprk 
-Cluster3= PLI23: Galntl6, Kcnc2
-Cluster4= Granule = Gabra6, Pax6 
-Cluster5= Granule = Gabra6, Pax6 
-Cluster6= Granule = Gabra6, Pax6 
-Cluster7= MLI2: Nxph1, Cdh22
-Cluster8= Endothelial: Lef1, Apcdd1, Notum
-Cluster9= Bergman: Zeb2 , Slc1a3
-Cluser10= Astrocyte: Aqp4, Slc39a12
-Cluster11= PLI12: Klhl1, Gfra2, Aldh1a3
-Cluster12= Oligodendrocyte: Mbp, Mag, Plp1
-Cluster13= Meningeal: Ptgds, Dcn, 
+Cluster3= MLI2: Nxph1, Cdh22
+Cluster4= Astrocyte: Zeb2
+Cluster5= PLI23: Galntl6, Kcnc2
+Cluster6= PLI12: Klhl1, Gfra2, Aldh1a3
+Cluster7= Endothelial: Lef1, Apcdd1, Dlc1, Pdgfrb
+Cluster8= Bergman: Aqp4", "Slc39a12“
+Cluster9= Unipolar Brush: Eomes, Rgs6, Tafa2
+Cluster10= Meningeal: Ptgds, Dcn
+Cluster11= Choiroid_Plexus: Kl, Ttr
+Cluster12= Golgi: Pax2
+Cluster13= OPC: Aldoc, Cnp
 Cluster14= Purkinje: Calb1, Slc1a6, Car8
-Cluster15= Golgi: Pax2,, Sgcd 
-Cluster16= Unipolar Brush Rgs6, Tafa2
-Cluster17= ChoroidPlexus : Kl, Ttr, Clic6, Slc13a4
+
 
 
 new.cluster.ids <- c(
-  "Granule_1",
+  "Granule",
   "MLI1",
-  "PLI23",
-  "Granule_2",
-  "Granule_3",
-  "Granule_4",
   "MLI2",
+  "Astrocyte",
+  "PLI23",
+  "PLI12",
   "Endothelial",
   "Bergman",
-  "Astrocyte",
-  "PLI12",
-  "Oligodendrocyte",
-  "Meningeal",
-  "Purkinje",
-  "Golgi",
   "UnipolarBrush",
-  "ChoroidPlexus"
+  "Meningeal",
+  "ChoroidPlexus",
+  "Golgi",
+  "OPC",
+  "Purkinje"
 )
 
 names(new.cluster.ids) <- levels(WT_Kcnc1_p180_CB_1step.sct)
@@ -23771,11 +23765,11 @@ WT_Kcnc1_p180_CB_1step.sct <- RenameIdents(WT_Kcnc1_p180_CB_1step.sct, new.clust
 WT_Kcnc1_p180_CB_1step.sct$cluster.annot <- Idents(WT_Kcnc1_p180_CB_1step.sct) # create a new slot in my seurat object
 
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB_1step_version4dim40kparam30res03_label.pdf", width=15, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB_1step_version4dim20kparam10res0115_label.pdf", width=15, height=6)
 DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
 dev.off()
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB_1step_version4dim40kparam30res03_noSplit_label.pdf", width=9, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB_1step_version4dim20kparam10res0115_noSplit_label.pdf", width=9, height=6)
 DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5)
 dev.off()
 
@@ -23788,22 +23782,19 @@ DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
 
 
 Cluster1= Granule = Gabra6, Pax6 
-Cluster4= Granule = Gabra6, Pax6 
-Cluster5= Granule = Gabra6, Pax6 
-Cluster6= Granule = Gabra6, Pax6 
 Cluster2= MLI1: Sorcs3, Ptprk 
-Cluster7= MLI2: Nxph1, Cdh22
-Cluster11= PLI12: Klhl1, Gfra2, Aldh1a3
-Cluster3= PLI23: Galntl6, Kcnc2
+Cluster3= MLI2: Nxph1, Cdh22
+Cluster4= Astrocyte: Zeb2
+Cluster5= PLI23: Galntl6, Kcnc2
+Cluster6= PLI12: Klhl1, Gfra2, Aldh1a3
+Cluster7= Endothelial: Lef1, Apcdd1, Dlc1, Pdgfrb
+Cluster8= Bergman: Aqp4", "Slc39a12“
+Cluster9= Unipolar Brush: Eomes, Rgs6, Tafa2
+Cluster10= Meningeal: Ptgds, Dcn
+Cluster11= Choiroid_Plexus: Kl, Ttr
+Cluster12= Golgi: Pax2
+Cluster13= OPC: Aldoc, Cnp
 Cluster14= Purkinje: Calb1, Slc1a6, Car8
-Cluster15= Golgi: Pax2,, Sgcd 
-Cluster16= Unipolar Brush Rgs6, Tafa2
-Cluster12= Oligodendrocyte: Mbp, Mag, Plp1
-Cluser10= Astrocyte: Aqp4, Slc39a12
-Cluster9= Bergman: Zeb2 , Slc1a3
-Cluster8= Endothelial: Lef1, Apcdd1, Notum
-Cluster13= Meningeal: Ptgds, Dcn, 
-Cluster17= ChoroidPlexus : Kl, Ttr, Clic6, Slc13a4
 
 
 
@@ -23812,48 +23803,45 @@ all_markers <- c(
   "Gabra6", "Pax6" ,
   "Sorcs3", "Ptprk" ,
   "Nxph1", "Cdh22",
-  "Klhl1", "Gfra2", "Aldh1a3",
+  "Zeb2",
   "Galntl6", "Kcnc2",
-  "Calb1", "Slc1a6", "Car8",
-  "Pax2", "Sgcd" ,
-  "Rgs6", "Tafa2",
-  "Mbp", "Mag", "Plp1",
+  "Klhl1", "Gfra2", "Aldh1a3",
+  "Lef1", "Apcdd1", "Dlc1", "Pdgfrb",
   "Aqp4", "Slc39a12",
-  "Zeb2" , "Slc1a3",
-  "Lef1", "Apcdd1", "Notum",
-  "Ptgds", "Dcn", 
-  "Kl", "Ttr", "Clic6", "Slc13a4"
+  "Eomes", "Rgs6", "Tafa2",
+  "Ptgds", "Dcn",
+  "Kl", "Ttr",
+  "Pax2",
+  "Aldoc", "Cnp",
+  "Calb1", "Slc1a6", "Car8"
 )
 
 
 
 levels(WT_Kcnc1_p14_CB_1step.sct) <- c(
-  "Granule_1" ,
-  "Granule_2" ,
-  "Granule_3" ,
-  "Granule_4" ,
+  "Granule",
   "MLI1",
   "MLI2",
-  "PLI12",
-  "PLI23",
-  "Purkinje",
-  "Golgi",
-  "UnipolarBrush",
-  "Oligodendrocyte",
   "Astrocyte",
-  "Bergman",
+  "PLI23",
+  "PLI12",
   "Endothelial",
-  "Meningeal", 
-  "ChoroidPlexus"
+  "Bergman",
+  "UnipolarBrush",
+  "Meningeal",
+  "ChoroidPlexus",
+  "Golgi",
+  "OPC",
+  "Purkinje"
 )
 
 
 
-pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CB_1step_version4dim40kparam30res03_label.pdf", width=11, height=4.5)
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CB_1step_version4dim20kparam10res0115_label.pdf", width=11, height=4.5)
 DotPlot(WT_Kcnc1_p14_CB_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
 dev.off()
 
-pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CB_1step_version4dim40kparam30res03_label_vertical.pdf", width=11, height=4.5)
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CB_1step_version4dim20kparam10res0115_label_vertical.pdf", width=11, height=4.5)
 DotPlot(WT_Kcnc1_p14_CB_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
         axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
@@ -23862,14 +23850,15 @@ dev.off()
 
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03-ListDotPlot.pdf", width=30, height=70)
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version4dim20kparam10res0115-ListDotPlot.pdf", width=30, height=70)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = all_markers, max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03-Kcnc1.pdf", width=6, height=6)
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version4dim20kparam10res0115-Kcnc1.pdf", width=6, height=6)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "Kcnc1", cols = c("grey", "red"), max.cutoff = 1)
 dev.off()
+
 
 
 
@@ -28517,11 +28506,6 @@ write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version
 
 
 
-
-
-
-XXXY HER E!!!
-
 ################################################################
 ##################### Kcnc1_p35_CX_Rep2 ###########################
 ################################################################
@@ -28582,7 +28566,7 @@ dev.off()
 
 
 pdf("output/seurat/VlnPlot_QC_Kcnc1_p35_CX_Rep2-nFeature_RNA.pdf", width = 15, height = 6)
-VlnPlot(Kcnc1_p35_CX_Rep2, features = c("nFeature_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,1000)
+VlnPlot(Kcnc1_p35_CX_Rep2, features = c("nFeature_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,2000)
 dev.off()
 
 pdf("output/seurat/VlnPlot_QC_Kcnc1_p35_CX_Rep2-nCount_RNA.pdf", width = 15, height = 6)
@@ -28598,9 +28582,9 @@ apply_qc <- function(seurat_object) {
   # Identify failing QC conditions
   meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
   meta$QC[meta$nFeature_RNA < 500] <- 'Low_nFeature'
-  meta$QC[meta$nFeature_RNA > 4000] <- 'High_nFeatureRNA'
+  meta$QC[meta$nFeature_RNA > 5000] <- 'High_nFeatureRNA'
   meta$QC[meta$nCount_RNA < 100] <- 'Low_nCountRNA'
-  meta$QC[meta$nCount_RNA > 10000] <- 'High_nCountRNA'
+  meta$QC[meta$nCount_RNA > 20000] <- 'High_nCountRNA'
   meta$QC[meta$percent.mt > 10] <- 'High_MT'
   meta$QC[meta$percent.rb > 5] <- 'High_RB'
   # Handle multiple failing conditions
@@ -28687,11 +28671,11 @@ write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version
 
 
 ################################################################
-##################### Kcnc1_p14_CX_Rep3 ###########################
+##################### Kcnc1_p35_CX_Rep3 ###########################
 ################################################################
 ## Load the matrix and Create SEURAT object
 samples <- list(
-  Kcnc1_p14_CX_Rep3 = "output/soupX/Kcnc1_p14_CX_Rep3.RData"
+  Kcnc1_p35_CX_Rep3 = "output/soupX/Kcnc1_p35_CX_Rep3.RData"
 )
 
 seurat_objects <- list()
@@ -28740,17 +28724,17 @@ assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the pre
 ## QC plot
 # --> Already generated as VlnPlot_QC_[samplename].pdf
 
-pdf("output/seurat/VlnPlot_QC_Kcnc1_p14_CX_Rep3.pdf", width = 15, height = 6)
-VlnPlot(Kcnc1_p14_CX_Rep3, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1) 
+pdf("output/seurat/VlnPlot_QC_Kcnc1_p35_CX_Rep3.pdf", width = 15, height = 6)
+VlnPlot(Kcnc1_p35_CX_Rep3, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1) 
 dev.off()
 
 
-pdf("output/seurat/VlnPlot_QC_Kcnc1_p14_CX_Rep3-nFeature_RNA.pdf", width = 15, height = 6)
-VlnPlot(Kcnc1_p14_CX_Rep3, features = c("nFeature_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,2000)
+pdf("output/seurat/VlnPlot_QC_Kcnc1_p35_CX_Rep3-nFeature_RNA.pdf", width = 15, height = 6)
+VlnPlot(Kcnc1_p35_CX_Rep3, features = c("nFeature_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,2000)
 dev.off()
 
-pdf("output/seurat/VlnPlot_QC_Kcnc1_p14_CX_Rep3-nCount_RNA.pdf", width = 15, height = 6)
-VlnPlot(Kcnc1_p14_CX_Rep3, features = c("nCount_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,10000)
+pdf("output/seurat/VlnPlot_QC_Kcnc1_p35_CX_Rep3-nCount_RNA.pdf", width = 15, height = 6)
+VlnPlot(Kcnc1_p35_CX_Rep3, features = c("nCount_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,10000)
 dev.off()
 
 ##### QC filtering
@@ -28762,11 +28746,11 @@ apply_qc <- function(seurat_object) {
   # Identify failing QC conditions
   meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
   meta$QC[meta$nFeature_RNA < 500] <- 'Low_nFeature'
-  meta$QC[meta$nFeature_RNA > 4000] <- 'High_nFeatureRNA'
+  meta$QC[meta$nFeature_RNA > 5000] <- 'High_nFeatureRNA'
   meta$QC[meta$nCount_RNA < 100] <- 'Low_nCountRNA'
   meta$QC[meta$nCount_RNA > 20000] <- 'High_nCountRNA'
   meta$QC[meta$percent.mt > 10] <- 'High_MT'
-  meta$QC[meta$percent.rb > 3] <- 'High_RB'
+  meta$QC[meta$percent.rb > 5] <- 'High_RB'
   # Handle multiple failing conditions
   meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
   # Assign back to Seurat object
@@ -28790,7 +28774,7 @@ for (sample_name in names(seurat_objects)) {
 }
 qc_summary_combined <- do.call(rbind, qc_summary_list)
 # Write the data frame to a tab-separated text file
-write.table(qc_summary_combined, file = "output/seurat/QC_summary_version2-Kcnc1_p14_CX_Rep3.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
+write.table(qc_summary_combined, file = "output/seurat/QC_summary_version2-Kcnc1_p35_CX_Rep3.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
 
 ## subset seurat object to keep cells that pass the QC
 subset_qc <- function(seurat_object) {
@@ -28803,7 +28787,7 @@ for (sample_name in names(seurat_objects)) {
 assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
 
 # Normalize and scale data, then run cell cycle sorting
-DefaultAssay(Kcnc1_p14_CX_Rep3) <- "RNA"
+DefaultAssay(Kcnc1_p35_CX_Rep3) <- "RNA"
 set.seed(42)
 ## Load gene marker of cell type
 mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
@@ -28833,10 +28817,10 @@ for (sample_name in names(seurat_objects)) {
 }
 # Combine all summaries into one data frame
 phase_summary_combined <- do.call(rbind, phase_summary_list)
-write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version2-Kcnc1_p14_CX_Rep3.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) #
+write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version2-Kcnc1_p35_CX_Rep3.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) #
 
 ############ SAVE sample ########################################
-# saveRDS(Kcnc1_p14_CX_Rep3, file = "output/seurat/Kcnc1_p14_CX_Rep3-version2-QCPass.rds") # 
+# saveRDS(Kcnc1_p35_CX_Rep3, file = "output/seurat/Kcnc1_p35_CX_Rep3-version2-QCPass.rds") # 
 #################################################################
 
 
@@ -30017,11 +30001,11 @@ library("gprofiler2") # for human mouse gene conversion for cell cycle genes
 
 
 ################################################################
-##################### WT_p14_CB_Rep1 ###########################
+##################### WT_p180_CX_Rep1 ###########################
 ################################################################
 ## Load the matrix and Create SEURAT object
 samples <- list(
-  WT_p14_CX_Rep1 = "output/soupX/WT_p14_CX_Rep1.RData"
+  WT_p180_CX_Rep1 = "output/soupX/WT_p180_CX_Rep1.RData"
 )
 
 seurat_objects <- list()
@@ -30070,17 +30054,17 @@ assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the pre
 ## QC plot
 # --> Already generated as VlnPlot_QC_[samplename].pdf
 
-pdf("output/seurat/VlnPlot_QC_WT_p14_CX_Rep1.pdf", width = 15, height = 6)
-VlnPlot(WT_p14_CX_Rep1, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1) 
+pdf("output/seurat/VlnPlot_QC_WT_p180_CX_Rep1.pdf", width = 15, height = 6)
+VlnPlot(WT_p180_CX_Rep1, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1) 
 dev.off()
 
 
-pdf("output/seurat/VlnPlot_QC_WT_p14_CX_Rep1-nFeature_RNA.pdf", width = 15, height = 6)
-VlnPlot(WT_p14_CX_Rep1, features = c("nFeature_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,2000)
+pdf("output/seurat/VlnPlot_QC_WT_p180_CX_Rep1-nFeature_RNA.pdf", width = 15, height = 6)
+VlnPlot(WT_p180_CX_Rep1, features = c("nFeature_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,2000)
 dev.off()
 
-pdf("output/seurat/VlnPlot_QC_WT_p14_CX_Rep1-nCount_RNA.pdf", width = 15, height = 6)
-VlnPlot(WT_p14_CX_Rep1, features = c("nCount_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,10000)
+pdf("output/seurat/VlnPlot_QC_WT_p180_CX_Rep1-nCount_RNA.pdf", width = 15, height = 6)
+VlnPlot(WT_p180_CX_Rep1, features = c("nCount_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,10000)
 dev.off()
 
 ##### QC filtering
@@ -30092,6 +30076,166 @@ apply_qc <- function(seurat_object) {
   # Identify failing QC conditions
   meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
   meta$QC[meta$nFeature_RNA < 500] <- 'Low_nFeature'
+  meta$QC[meta$nFeature_RNA > 5000] <- 'High_nFeatureRNA'
+  meta$QC[meta$nCount_RNA < 100] <- 'Low_nCountRNA'
+  meta$QC[meta$nCount_RNA > 20000] <- 'High_nCountRNA'
+  meta$QC[meta$percent.mt > 10] <- 'High_MT'
+  meta$QC[meta$percent.rb > 5] <- 'High_RB'
+  # Handle multiple failing conditions
+  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
+  # Assign back to Seurat object
+  seurat_object@meta.data <- meta
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # Reapply function to all individuals in the list
+
+
+#### Write QC summary
+qc_summary_list <- list()
+# Collect QC summary for each sample
+for (sample_name in names(seurat_objects)) {
+  qc_summary <- table(seurat_objects[[sample_name]][['QC']])
+  qc_summary_df <- as.data.frame(qc_summary)
+  qc_summary_df$Sample <- sample_name
+  qc_summary_list[[sample_name]] <- qc_summary_df
+}
+qc_summary_combined <- do.call(rbind, qc_summary_list)
+# Write the data frame to a tab-separated text file
+write.table(qc_summary_combined, file = "output/seurat/QC_summary_version2-WT_p180_CX_Rep1.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
+
+## subset seurat object to keep cells that pass the QC
+subset_qc <- function(seurat_object) {
+  seurat_object <- subset(seurat_object, subset = QC == 'Pass')
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- subset_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# Normalize and scale data, then run cell cycle sorting
+DefaultAssay(WT_p180_CX_Rep1) <- "RNA"
+set.seed(42)
+## Load gene marker of cell type
+mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+
+# Function to normalize, scale data, and perform cell cycle scoring
+process_seurat_object <- function(seurat_object, mmus_s, mmus_g2m) {
+  seurat_object <- NormalizeData(seurat_object, normalization.method = "LogNormalize", scale.factor = 10000)
+  all.genes <- rownames(seurat_object)
+  seurat_object <- ScaleData(seurat_object, features = all.genes)  # zero-centres and scales it
+  seurat_object <- CellCycleScoring(seurat_object, s.features = mmus_s, g2m.features = mmus_g2m)  # cell cycle sorting
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- process_seurat_object(seurat_objects[[sample_name]], mmus_s, mmus_g2m)
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# write output summary phase
+phase_summary_list <- list()
+# Collect QC phase summary for each sample
+for (sample_name in names(seurat_objects)) {
+  phase_summary <- table(seurat_objects[[sample_name]][[]]$Phase)
+  phase_summary_df <- as.data.frame(phase_summary)
+  phase_summary_df$Sample <- sample_name
+  phase_summary_list[[sample_name]] <- phase_summary_df
+}
+# Combine all summaries into one data frame
+phase_summary_combined <- do.call(rbind, phase_summary_list)
+write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version2-WT_p180_CX_Rep1.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) #
+
+############ SAVE sample ########################################
+# saveRDS(WT_p180_CX_Rep1, file = "output/seurat/WT_p180_CX_Rep1-version2-QCPass.rds") # 
+#################################################################
+
+
+
+
+
+
+
+
+################################################################
+##################### WT_p180_CX_Rep2 ###########################
+################################################################
+## Load the matrix and Create SEURAT object
+samples <- list(
+  WT_p180_CX_Rep2 = "output/soupX/WT_p180_CX_Rep2.RData"
+)
+
+seurat_objects <- list()
+
+for (sample_name in names(samples)) {
+  load(samples[[sample_name]])
+  seurat_objects[[sample_name]] <- CreateSeuratObject(counts = out, project = sample_name)
+}
+
+## Function to assign Seurat objects to variables (unlist the list)
+assign_seurat_objects <- function(seurat_objects_list) {
+  for (sample_name in names(seurat_objects_list)) {
+    assign(sample_name, seurat_objects_list[[sample_name]], envir = .GlobalEnv)
+  }
+}
+assign_seurat_objects(seurat_objects) # This apply the function
+
+
+# QUALITY CONTROL
+# Function to add mitochondrial and ribosomal content
+add_quality_control <- function(seurat_object) {
+  seurat_object[["percent.mt"]] <- PercentageFeatureSet(seurat_object, pattern = "^mt-")
+  seurat_object[["percent.rb"]] <- PercentageFeatureSet(seurat_object, pattern = "^Rp[sl]")
+  return(seurat_object)
+}
+seurat_objects <- lapply(seurat_objects, add_quality_control) # This apply the function
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+
+# Function to add doublet information
+add_doublet_information <- function(sample_name, seurat_object) {
+  doublet_file <- paste0("output/doublets/", sample_name, ".tsv")
+  doublets <- read.table(doublet_file, header = FALSE, row.names = 1)
+  colnames(doublets) <- c("Doublet_score", "Is_doublet")
+  seurat_object <- AddMetaData(seurat_object, doublets)
+  seurat_object$Doublet_score <- as.numeric(seurat_object$Doublet_score)
+  return(seurat_object)
+}
+## Apply the function to each Seurat object in the list
+for (sample_name in names(seurat_objects)) {
+    seurat_objects[[sample_name]] <- add_doublet_information(sample_name, seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+
+## QC plot
+# --> Already generated as VlnPlot_QC_[samplename].pdf
+
+pdf("output/seurat/VlnPlot_QC_WT_p180_CX_Rep2.pdf", width = 15, height = 6)
+VlnPlot(WT_p180_CX_Rep2, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1) 
+dev.off()
+
+
+pdf("output/seurat/VlnPlot_QC_WT_p180_CX_Rep2-nFeature_RNA.pdf", width = 15, height = 6)
+VlnPlot(WT_p180_CX_Rep2, features = c("nFeature_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,1500)
+dev.off()
+
+pdf("output/seurat/VlnPlot_QC_WT_p180_CX_Rep2-nCount_RNA.pdf", width = 15, height = 6)
+VlnPlot(WT_p180_CX_Rep2, features = c("nCount_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,5000)
+dev.off()
+
+##### QC filtering
+
+apply_qc <- function(seurat_object) {
+  meta <- seurat_object@meta.data
+  # Initialize QC column with 'Pass'
+  meta$QC <- 'Pass'
+  # Identify failing QC conditions
+  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
+  meta$QC[meta$nFeature_RNA < 400] <- 'Low_nFeature'
   meta$QC[meta$nFeature_RNA > 4000] <- 'High_nFeatureRNA'
   meta$QC[meta$nCount_RNA < 100] <- 'Low_nCountRNA'
   meta$QC[meta$nCount_RNA > 15000] <- 'High_nCountRNA'
@@ -30120,7 +30264,7 @@ for (sample_name in names(seurat_objects)) {
 }
 qc_summary_combined <- do.call(rbind, qc_summary_list)
 # Write the data frame to a tab-separated text file
-write.table(qc_summary_combined, file = "output/seurat/QC_summary_version2-WT_p14_CX_Rep1.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
+write.table(qc_summary_combined, file = "output/seurat/QC_summary_version2-WT_p180_CX_Rep2.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
 
 ## subset seurat object to keep cells that pass the QC
 subset_qc <- function(seurat_object) {
@@ -30133,7 +30277,7 @@ for (sample_name in names(seurat_objects)) {
 assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
 
 # Normalize and scale data, then run cell cycle sorting
-DefaultAssay(WT_p14_CX_Rep1) <- "RNA"
+DefaultAssay(WT_p180_CX_Rep2) <- "RNA"
 set.seed(42)
 ## Load gene marker of cell type
 mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
@@ -30163,10 +30307,10 @@ for (sample_name in names(seurat_objects)) {
 }
 # Combine all summaries into one data frame
 phase_summary_combined <- do.call(rbind, phase_summary_list)
-write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version2-WT_p14_CX_Rep1.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) #
+write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version2-WT_p180_CX_Rep2.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) #
 
 ############ SAVE sample ########################################
-# saveRDS(WT_p14_CX_Rep1, file = "output/seurat/WT_p14_CX_Rep1-version2-QCPass.rds") # 
+# saveRDS(WT_p180_CX_Rep2, file = "output/seurat/WT_p180_CX_Rep2-version2-QCPass.rds") # 
 #################################################################
 
 
@@ -30176,12 +30320,18 @@ write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version
 
 
 
+
+
+
+
+
+
 ################################################################
-##################### WT_p14_CB_Rep2 ###########################
+##################### WT_p180_CX_Rep3 ###########################
 ################################################################
 ## Load the matrix and Create SEURAT object
 samples <- list(
-  WT_p14_CX_Rep2 = "output/soupX/WT_p14_CX_Rep2.RData"
+  WT_p180_CX_Rep3 = "output/soupX/WT_p180_CX_Rep3.RData"
 )
 
 seurat_objects <- list()
@@ -30230,183 +30380,17 @@ assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the pre
 ## QC plot
 # --> Already generated as VlnPlot_QC_[samplename].pdf
 
-pdf("output/seurat/VlnPlot_QC_WT_p14_CX_Rep2.pdf", width = 15, height = 6)
-VlnPlot(WT_p14_CX_Rep2, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1) 
+pdf("output/seurat/VlnPlot_QC_WT_p180_CX_Rep3.pdf", width = 15, height = 6)
+VlnPlot(WT_p180_CX_Rep3, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1) 
 dev.off()
 
 
-pdf("output/seurat/VlnPlot_QC_WT_p14_CX_Rep2-nFeature_RNA.pdf", width = 15, height = 6)
-VlnPlot(WT_p14_CX_Rep2, features = c("nFeature_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,1500)
+pdf("output/seurat/VlnPlot_QC_WT_p180_CX_Rep3-nFeature_RNA.pdf", width = 15, height = 6)
+VlnPlot(WT_p180_CX_Rep3, features = c("nFeature_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,2000)
 dev.off()
 
-pdf("output/seurat/VlnPlot_QC_WT_p14_CX_Rep2-nCount_RNA.pdf", width = 15, height = 6)
-VlnPlot(WT_p14_CX_Rep2, features = c("nCount_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,5000)
-dev.off()
-
-##### QC filtering
-
-apply_qc <- function(seurat_object) {
-  meta <- seurat_object@meta.data
-  # Initialize QC column with 'Pass'
-  meta$QC <- 'Pass'
-  # Identify failing QC conditions
-  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
-  meta$QC[meta$nFeature_RNA < 500] <- 'Low_nFeature'
-  meta$QC[meta$nFeature_RNA > 2500] <- 'High_nFeatureRNA'
-  meta$QC[meta$nCount_RNA < 750] <- 'Low_nCountRNA'
-  meta$QC[meta$nCount_RNA > 5000] <- 'High_nCountRNA'
-  meta$QC[meta$percent.mt > 10] <- 'High_MT'
-  meta$QC[meta$percent.rb > 3] <- 'High_RB'
-  # Handle multiple failing conditions
-  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
-  # Assign back to Seurat object
-  seurat_object@meta.data <- meta
-  return(seurat_object)
-}
-for (sample_name in names(seurat_objects)) {
-  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
-}
-assign_seurat_objects(seurat_objects) # Reapply function to all individuals in the list
-
-
-#### Write QC summary
-qc_summary_list <- list()
-# Collect QC summary for each sample
-for (sample_name in names(seurat_objects)) {
-  qc_summary <- table(seurat_objects[[sample_name]][['QC']])
-  qc_summary_df <- as.data.frame(qc_summary)
-  qc_summary_df$Sample <- sample_name
-  qc_summary_list[[sample_name]] <- qc_summary_df
-}
-qc_summary_combined <- do.call(rbind, qc_summary_list)
-# Write the data frame to a tab-separated text file
-write.table(qc_summary_combined, file = "output/seurat/QC_summary_version2-WT_p14_CX_Rep2.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
-
-## subset seurat object to keep cells that pass the QC
-subset_qc <- function(seurat_object) {
-  seurat_object <- subset(seurat_object, subset = QC == 'Pass')
-  return(seurat_object)
-}
-for (sample_name in names(seurat_objects)) {
-  seurat_objects[[sample_name]] <- subset_qc(seurat_objects[[sample_name]])
-}
-assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
-
-# Normalize and scale data, then run cell cycle sorting
-DefaultAssay(WT_p14_CX_Rep2) <- "RNA"
-set.seed(42)
-## Load gene marker of cell type
-mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
-mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
-
-# Function to normalize, scale data, and perform cell cycle scoring
-process_seurat_object <- function(seurat_object, mmus_s, mmus_g2m) {
-  seurat_object <- NormalizeData(seurat_object, normalization.method = "LogNormalize", scale.factor = 10000)
-  all.genes <- rownames(seurat_object)
-  seurat_object <- ScaleData(seurat_object, features = all.genes)  # zero-centres and scales it
-  seurat_object <- CellCycleScoring(seurat_object, s.features = mmus_s, g2m.features = mmus_g2m)  # cell cycle sorting
-  return(seurat_object)
-}
-for (sample_name in names(seurat_objects)) {
-  seurat_objects[[sample_name]] <- process_seurat_object(seurat_objects[[sample_name]], mmus_s, mmus_g2m)
-}
-assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
-
-# write output summary phase
-phase_summary_list <- list()
-# Collect QC phase summary for each sample
-for (sample_name in names(seurat_objects)) {
-  phase_summary <- table(seurat_objects[[sample_name]][[]]$Phase)
-  phase_summary_df <- as.data.frame(phase_summary)
-  phase_summary_df$Sample <- sample_name
-  phase_summary_list[[sample_name]] <- phase_summary_df
-}
-# Combine all summaries into one data frame
-phase_summary_combined <- do.call(rbind, phase_summary_list)
-write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version2-WT_p14_CX_Rep2.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) #
-
-############ SAVE sample ########################################
-# saveRDS(WT_p14_CX_Rep2, file = "output/seurat/WT_p14_CX_Rep2-version2-QCPass.rds") # 
-#################################################################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-################################################################
-##################### WT_p14_CX_Rep3 ###########################
-################################################################
-## Load the matrix and Create SEURAT object
-samples <- list(
-  WT_p14_CX_Rep3 = "output/soupX/WT_p14_CX_Rep3.RData"
-)
-
-seurat_objects <- list()
-
-for (sample_name in names(samples)) {
-  load(samples[[sample_name]])
-  seurat_objects[[sample_name]] <- CreateSeuratObject(counts = out, project = sample_name)
-}
-
-## Function to assign Seurat objects to variables (unlist the list)
-assign_seurat_objects <- function(seurat_objects_list) {
-  for (sample_name in names(seurat_objects_list)) {
-    assign(sample_name, seurat_objects_list[[sample_name]], envir = .GlobalEnv)
-  }
-}
-assign_seurat_objects(seurat_objects) # This apply the function
-
-
-# QUALITY CONTROL
-# Function to add mitochondrial and ribosomal content
-add_quality_control <- function(seurat_object) {
-  seurat_object[["percent.mt"]] <- PercentageFeatureSet(seurat_object, pattern = "^mt-")
-  seurat_object[["percent.rb"]] <- PercentageFeatureSet(seurat_object, pattern = "^Rp[sl]")
-  return(seurat_object)
-}
-seurat_objects <- lapply(seurat_objects, add_quality_control) # This apply the function
-assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
-
-
-# Function to add doublet information
-add_doublet_information <- function(sample_name, seurat_object) {
-  doublet_file <- paste0("output/doublets/", sample_name, ".tsv")
-  doublets <- read.table(doublet_file, header = FALSE, row.names = 1)
-  colnames(doublets) <- c("Doublet_score", "Is_doublet")
-  seurat_object <- AddMetaData(seurat_object, doublets)
-  seurat_object$Doublet_score <- as.numeric(seurat_object$Doublet_score)
-  return(seurat_object)
-}
-## Apply the function to each Seurat object in the list
-for (sample_name in names(seurat_objects)) {
-    seurat_objects[[sample_name]] <- add_doublet_information(sample_name, seurat_objects[[sample_name]])
-}
-assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
-
-
-## QC plot
-# --> Already generated as VlnPlot_QC_[samplename].pdf
-
-pdf("output/seurat/VlnPlot_QC_WT_p14_CX_Rep3.pdf", width = 15, height = 6)
-VlnPlot(WT_p14_CX_Rep3, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1) 
-dev.off()
-
-
-pdf("output/seurat/VlnPlot_QC_WT_p14_CX_Rep3-nFeature_RNA.pdf", width = 15, height = 6)
-VlnPlot(WT_p14_CX_Rep3, features = c("nFeature_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,2000)
-dev.off()
-
-pdf("output/seurat/VlnPlot_QC_WT_p14_CX_Rep3-nCount_RNA.pdf", width = 15, height = 6)
-VlnPlot(WT_p14_CX_Rep3, features = c("nCount_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,5000)
+pdf("output/seurat/VlnPlot_QC_WT_p180_CX_Rep3-nCount_RNA.pdf", width = 15, height = 6)
+VlnPlot(WT_p180_CX_Rep3, features = c("nCount_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,5000)
 dev.off()
 
 ##### QC filtering
@@ -30417,511 +30401,12 @@ apply_qc <- function(seurat_object) {
   meta$QC <- 'Pass'
   # Identify failing QC conditions
   meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
-  meta$QC[meta$nFeature_RNA < 500] <- 'Low_nFeature'
-  meta$QC[meta$nFeature_RNA > 4000] <- 'High_nFeatureRNA'
-  meta$QC[meta$nCount_RNA < 100] <- 'Low_nCountRNA'
-  meta$QC[meta$nCount_RNA > 10000] <- 'High_nCountRNA'
-  meta$QC[meta$percent.mt > 5] <- 'High_MT'
-  meta$QC[meta$percent.rb > 5] <- 'High_RB'
-  # Handle multiple failing conditions
-  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
-  # Assign back to Seurat object
-  seurat_object@meta.data <- meta
-  return(seurat_object)
-}
-for (sample_name in names(seurat_objects)) {
-  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
-}
-assign_seurat_objects(seurat_objects) # Reapply function to all individuals in the list
-
-
-#### Write QC summary
-qc_summary_list <- list()
-# Collect QC summary for each sample
-for (sample_name in names(seurat_objects)) {
-  qc_summary <- table(seurat_objects[[sample_name]][['QC']])
-  qc_summary_df <- as.data.frame(qc_summary)
-  qc_summary_df$Sample <- sample_name
-  qc_summary_list[[sample_name]] <- qc_summary_df
-}
-qc_summary_combined <- do.call(rbind, qc_summary_list)
-# Write the data frame to a tab-separated text file
-write.table(qc_summary_combined, file = "output/seurat/QC_summary_version2-WT_p14_CX_Rep3.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
-
-## subset seurat object to keep cells that pass the QC
-subset_qc <- function(seurat_object) {
-  seurat_object <- subset(seurat_object, subset = QC == 'Pass')
-  return(seurat_object)
-}
-for (sample_name in names(seurat_objects)) {
-  seurat_objects[[sample_name]] <- subset_qc(seurat_objects[[sample_name]])
-}
-assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
-
-# Normalize and scale data, then run cell cycle sorting
-DefaultAssay(WT_p14_CX_Rep3) <- "RNA"
-set.seed(42)
-## Load gene marker of cell type
-mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
-mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
-
-# Function to normalize, scale data, and perform cell cycle scoring
-process_seurat_object <- function(seurat_object, mmus_s, mmus_g2m) {
-  seurat_object <- NormalizeData(seurat_object, normalization.method = "LogNormalize", scale.factor = 10000)
-  all.genes <- rownames(seurat_object)
-  seurat_object <- ScaleData(seurat_object, features = all.genes)  # zero-centres and scales it
-  seurat_object <- CellCycleScoring(seurat_object, s.features = mmus_s, g2m.features = mmus_g2m)  # cell cycle sorting
-  return(seurat_object)
-}
-for (sample_name in names(seurat_objects)) {
-  seurat_objects[[sample_name]] <- process_seurat_object(seurat_objects[[sample_name]], mmus_s, mmus_g2m)
-}
-assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
-
-# write output summary phase
-phase_summary_list <- list()
-# Collect QC phase summary for each sample
-for (sample_name in names(seurat_objects)) {
-  phase_summary <- table(seurat_objects[[sample_name]][[]]$Phase)
-  phase_summary_df <- as.data.frame(phase_summary)
-  phase_summary_df$Sample <- sample_name
-  phase_summary_list[[sample_name]] <- phase_summary_df
-}
-# Combine all summaries into one data frame
-phase_summary_combined <- do.call(rbind, phase_summary_list)
-write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version2-WT_p14_CX_Rep3.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) #
-
-############ SAVE sample ########################################
-# saveRDS(WT_p14_CX_Rep3, file = "output/seurat/WT_p14_CX_Rep3-version2-QCPass.rds") # 
-#################################################################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-################################################################
-##################### Kcnc1_p14_CX_Rep1 ###########################
-################################################################
-## Load the matrix and Create SEURAT object
-samples <- list(
-  Kcnc1_p14_CX_Rep1 = "output/soupX/Kcnc1_p14_CX_Rep1.RData"
-)
-
-seurat_objects <- list()
-
-for (sample_name in names(samples)) {
-  load(samples[[sample_name]])
-  seurat_objects[[sample_name]] <- CreateSeuratObject(counts = out, project = sample_name)
-}
-
-## Function to assign Seurat objects to variables (unlist the list)
-assign_seurat_objects <- function(seurat_objects_list) {
-  for (sample_name in names(seurat_objects_list)) {
-    assign(sample_name, seurat_objects_list[[sample_name]], envir = .GlobalEnv)
-  }
-}
-assign_seurat_objects(seurat_objects) # This apply the function
-
-
-# QUALITY CONTROL
-# Function to add mitochondrial and ribosomal content
-add_quality_control <- function(seurat_object) {
-  seurat_object[["percent.mt"]] <- PercentageFeatureSet(seurat_object, pattern = "^mt-")
-  seurat_object[["percent.rb"]] <- PercentageFeatureSet(seurat_object, pattern = "^Rp[sl]")
-  return(seurat_object)
-}
-seurat_objects <- lapply(seurat_objects, add_quality_control) # This apply the function
-assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
-
-
-# Function to add doublet information
-add_doublet_information <- function(sample_name, seurat_object) {
-  doublet_file <- paste0("output/doublets/", sample_name, ".tsv")
-  doublets <- read.table(doublet_file, header = FALSE, row.names = 1)
-  colnames(doublets) <- c("Doublet_score", "Is_doublet")
-  seurat_object <- AddMetaData(seurat_object, doublets)
-  seurat_object$Doublet_score <- as.numeric(seurat_object$Doublet_score)
-  return(seurat_object)
-}
-## Apply the function to each Seurat object in the list
-for (sample_name in names(seurat_objects)) {
-    seurat_objects[[sample_name]] <- add_doublet_information(sample_name, seurat_objects[[sample_name]])
-}
-assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
-
-
-## QC plot
-# --> Already generated as VlnPlot_QC_[samplename].pdf
-
-pdf("output/seurat/VlnPlot_QC_Kcnc1_p14_CX_Rep1.pdf", width = 15, height = 6)
-VlnPlot(Kcnc1_p14_CX_Rep1, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1) 
-dev.off()
-
-
-pdf("output/seurat/VlnPlot_QC_Kcnc1_p14_CX_Rep1-nFeature_RNA.pdf", width = 15, height = 6)
-VlnPlot(Kcnc1_p14_CX_Rep1, features = c("nFeature_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,2000)
-dev.off()
-
-pdf("output/seurat/VlnPlot_QC_Kcnc1_p14_CX_Rep1-nCount_RNA.pdf", width = 15, height = 6)
-VlnPlot(Kcnc1_p14_CX_Rep1, features = c("nCount_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,10000)
-dev.off()
-
-##### QC filtering
-
-apply_qc <- function(seurat_object) {
-  meta <- seurat_object@meta.data
-  # Initialize QC column with 'Pass'
-  meta$QC <- 'Pass'
-  # Identify failing QC conditions
-  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
-  meta$QC[meta$nFeature_RNA < 500] <- 'Low_nFeature'
-  meta$QC[meta$nFeature_RNA > 4000] <- 'High_nFeatureRNA'
-  meta$QC[meta$nCount_RNA < 100] <- 'Low_nCountRNA'
-  meta$QC[meta$nCount_RNA > 10000] <- 'High_nCountRNA'
-  meta$QC[meta$percent.mt > 10] <- 'High_MT'
-  meta$QC[meta$percent.rb > 5] <- 'High_RB'
-  # Handle multiple failing conditions
-  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
-  # Assign back to Seurat object
-  seurat_object@meta.data <- meta
-  return(seurat_object)
-}
-for (sample_name in names(seurat_objects)) {
-  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
-}
-assign_seurat_objects(seurat_objects) # Reapply function to all individuals in the list
-
-
-#### Write QC summary
-qc_summary_list <- list()
-# Collect QC summary for each sample
-for (sample_name in names(seurat_objects)) {
-  qc_summary <- table(seurat_objects[[sample_name]][['QC']])
-  qc_summary_df <- as.data.frame(qc_summary)
-  qc_summary_df$Sample <- sample_name
-  qc_summary_list[[sample_name]] <- qc_summary_df
-}
-qc_summary_combined <- do.call(rbind, qc_summary_list)
-# Write the data frame to a tab-separated text file
-write.table(qc_summary_combined, file = "output/seurat/QC_summary_version2-Kcnc1_p14_CX_Rep1.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
-
-## subset seurat object to keep cells that pass the QC
-subset_qc <- function(seurat_object) {
-  seurat_object <- subset(seurat_object, subset = QC == 'Pass')
-  return(seurat_object)
-}
-for (sample_name in names(seurat_objects)) {
-  seurat_objects[[sample_name]] <- subset_qc(seurat_objects[[sample_name]])
-}
-assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
-
-# Normalize and scale data, then run cell cycle sorting
-DefaultAssay(Kcnc1_p14_CX_Rep1) <- "RNA"
-set.seed(42)
-## Load gene marker of cell type
-mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
-mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
-
-# Function to normalize, scale data, and perform cell cycle scoring
-process_seurat_object <- function(seurat_object, mmus_s, mmus_g2m) {
-  seurat_object <- NormalizeData(seurat_object, normalization.method = "LogNormalize", scale.factor = 10000)
-  all.genes <- rownames(seurat_object)
-  seurat_object <- ScaleData(seurat_object, features = all.genes)  # zero-centres and scales it
-  seurat_object <- CellCycleScoring(seurat_object, s.features = mmus_s, g2m.features = mmus_g2m)  # cell cycle sorting
-  return(seurat_object)
-}
-for (sample_name in names(seurat_objects)) {
-  seurat_objects[[sample_name]] <- process_seurat_object(seurat_objects[[sample_name]], mmus_s, mmus_g2m)
-}
-assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
-
-# write output summary phase
-phase_summary_list <- list()
-# Collect QC phase summary for each sample
-for (sample_name in names(seurat_objects)) {
-  phase_summary <- table(seurat_objects[[sample_name]][[]]$Phase)
-  phase_summary_df <- as.data.frame(phase_summary)
-  phase_summary_df$Sample <- sample_name
-  phase_summary_list[[sample_name]] <- phase_summary_df
-}
-# Combine all summaries into one data frame
-phase_summary_combined <- do.call(rbind, phase_summary_list)
-write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version2-Kcnc1_p14_CX_Rep1.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) #
-
-############ SAVE sample ########################################
-# saveRDS(Kcnc1_p14_CX_Rep1, file = "output/seurat/Kcnc1_p14_CX_Rep1-version2-QCPass.rds") # 
-#################################################################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-################################################################
-##################### Kcnc1_p14_CB_Rep2 ###########################
-################################################################
-## Load the matrix and Create SEURAT object
-samples <- list(
-  Kcnc1_p14_CX_Rep2 = "output/soupX/Kcnc1_p14_CX_Rep2.RData"
-)
-
-seurat_objects <- list()
-
-for (sample_name in names(samples)) {
-  load(samples[[sample_name]])
-  seurat_objects[[sample_name]] <- CreateSeuratObject(counts = out, project = sample_name)
-}
-
-## Function to assign Seurat objects to variables (unlist the list)
-assign_seurat_objects <- function(seurat_objects_list) {
-  for (sample_name in names(seurat_objects_list)) {
-    assign(sample_name, seurat_objects_list[[sample_name]], envir = .GlobalEnv)
-  }
-}
-assign_seurat_objects(seurat_objects) # This apply the function
-
-
-# QUALITY CONTROL
-# Function to add mitochondrial and ribosomal content
-add_quality_control <- function(seurat_object) {
-  seurat_object[["percent.mt"]] <- PercentageFeatureSet(seurat_object, pattern = "^mt-")
-  seurat_object[["percent.rb"]] <- PercentageFeatureSet(seurat_object, pattern = "^Rp[sl]")
-  return(seurat_object)
-}
-seurat_objects <- lapply(seurat_objects, add_quality_control) # This apply the function
-assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
-
-
-# Function to add doublet information
-add_doublet_information <- function(sample_name, seurat_object) {
-  doublet_file <- paste0("output/doublets/", sample_name, ".tsv")
-  doublets <- read.table(doublet_file, header = FALSE, row.names = 1)
-  colnames(doublets) <- c("Doublet_score", "Is_doublet")
-  seurat_object <- AddMetaData(seurat_object, doublets)
-  seurat_object$Doublet_score <- as.numeric(seurat_object$Doublet_score)
-  return(seurat_object)
-}
-## Apply the function to each Seurat object in the list
-for (sample_name in names(seurat_objects)) {
-    seurat_objects[[sample_name]] <- add_doublet_information(sample_name, seurat_objects[[sample_name]])
-}
-assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
-
-
-## QC plot
-# --> Already generated as VlnPlot_QC_[samplename].pdf
-
-pdf("output/seurat/VlnPlot_QC_Kcnc1_p14_CX_Rep2.pdf", width = 15, height = 6)
-VlnPlot(Kcnc1_p14_CX_Rep2, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1) 
-dev.off()
-
-
-pdf("output/seurat/VlnPlot_QC_Kcnc1_p14_CX_Rep2-nFeature_RNA.pdf", width = 15, height = 6)
-VlnPlot(Kcnc1_p14_CX_Rep2, features = c("nFeature_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,1000)
-dev.off()
-
-pdf("output/seurat/VlnPlot_QC_Kcnc1_p14_CX_Rep2-nCount_RNA.pdf", width = 15, height = 6)
-VlnPlot(Kcnc1_p14_CX_Rep2, features = c("nCount_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,5000)
-dev.off()
-
-##### QC filtering
-
-apply_qc <- function(seurat_object) {
-  meta <- seurat_object@meta.data
-  # Initialize QC column with 'Pass'
-  meta$QC <- 'Pass'
-  # Identify failing QC conditions
-  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
-  meta$QC[meta$nFeature_RNA < 500] <- 'Low_nFeature'
-  meta$QC[meta$nFeature_RNA > 4000] <- 'High_nFeatureRNA'
-  meta$QC[meta$nCount_RNA < 100] <- 'Low_nCountRNA'
-  meta$QC[meta$nCount_RNA > 10000] <- 'High_nCountRNA'
-  meta$QC[meta$percent.mt > 10] <- 'High_MT'
-  meta$QC[meta$percent.rb > 5] <- 'High_RB'
-  # Handle multiple failing conditions
-  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
-  # Assign back to Seurat object
-  seurat_object@meta.data <- meta
-  return(seurat_object)
-}
-for (sample_name in names(seurat_objects)) {
-  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
-}
-assign_seurat_objects(seurat_objects) # Reapply function to all individuals in the list
-
-
-#### Write QC summary
-qc_summary_list <- list()
-# Collect QC summary for each sample
-for (sample_name in names(seurat_objects)) {
-  qc_summary <- table(seurat_objects[[sample_name]][['QC']])
-  qc_summary_df <- as.data.frame(qc_summary)
-  qc_summary_df$Sample <- sample_name
-  qc_summary_list[[sample_name]] <- qc_summary_df
-}
-qc_summary_combined <- do.call(rbind, qc_summary_list)
-# Write the data frame to a tab-separated text file
-write.table(qc_summary_combined, file = "output/seurat/QC_summary_version2-Kcnc1_p14_CX_Rep2.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
-
-## subset seurat object to keep cells that pass the QC
-subset_qc <- function(seurat_object) {
-  seurat_object <- subset(seurat_object, subset = QC == 'Pass')
-  return(seurat_object)
-}
-for (sample_name in names(seurat_objects)) {
-  seurat_objects[[sample_name]] <- subset_qc(seurat_objects[[sample_name]])
-}
-assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
-
-# Normalize and scale data, then run cell cycle sorting
-DefaultAssay(Kcnc1_p14_CX_Rep2) <- "RNA"
-set.seed(42)
-## Load gene marker of cell type
-mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
-mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
-
-# Function to normalize, scale data, and perform cell cycle scoring
-process_seurat_object <- function(seurat_object, mmus_s, mmus_g2m) {
-  seurat_object <- NormalizeData(seurat_object, normalization.method = "LogNormalize", scale.factor = 10000)
-  all.genes <- rownames(seurat_object)
-  seurat_object <- ScaleData(seurat_object, features = all.genes)  # zero-centres and scales it
-  seurat_object <- CellCycleScoring(seurat_object, s.features = mmus_s, g2m.features = mmus_g2m)  # cell cycle sorting
-  return(seurat_object)
-}
-for (sample_name in names(seurat_objects)) {
-  seurat_objects[[sample_name]] <- process_seurat_object(seurat_objects[[sample_name]], mmus_s, mmus_g2m)
-}
-assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
-
-# write output summary phase
-phase_summary_list <- list()
-# Collect QC phase summary for each sample
-for (sample_name in names(seurat_objects)) {
-  phase_summary <- table(seurat_objects[[sample_name]][[]]$Phase)
-  phase_summary_df <- as.data.frame(phase_summary)
-  phase_summary_df$Sample <- sample_name
-  phase_summary_list[[sample_name]] <- phase_summary_df
-}
-# Combine all summaries into one data frame
-phase_summary_combined <- do.call(rbind, phase_summary_list)
-write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version2-Kcnc1_p14_CX_Rep2.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) #
-
-############ SAVE sample ########################################
-# saveRDS(Kcnc1_p14_CX_Rep2, file = "output/seurat/Kcnc1_p14_CX_Rep2-version2-QCPass.rds") # 
-#################################################################
-
-
-
-
-
-
-
-
-
-
-
-
-################################################################
-##################### Kcnc1_p14_CX_Rep3 ###########################
-################################################################
-## Load the matrix and Create SEURAT object
-samples <- list(
-  Kcnc1_p14_CX_Rep3 = "output/soupX/Kcnc1_p14_CX_Rep3.RData"
-)
-
-seurat_objects <- list()
-
-for (sample_name in names(samples)) {
-  load(samples[[sample_name]])
-  seurat_objects[[sample_name]] <- CreateSeuratObject(counts = out, project = sample_name)
-}
-
-## Function to assign Seurat objects to variables (unlist the list)
-assign_seurat_objects <- function(seurat_objects_list) {
-  for (sample_name in names(seurat_objects_list)) {
-    assign(sample_name, seurat_objects_list[[sample_name]], envir = .GlobalEnv)
-  }
-}
-assign_seurat_objects(seurat_objects) # This apply the function
-
-
-# QUALITY CONTROL
-# Function to add mitochondrial and ribosomal content
-add_quality_control <- function(seurat_object) {
-  seurat_object[["percent.mt"]] <- PercentageFeatureSet(seurat_object, pattern = "^mt-")
-  seurat_object[["percent.rb"]] <- PercentageFeatureSet(seurat_object, pattern = "^Rp[sl]")
-  return(seurat_object)
-}
-seurat_objects <- lapply(seurat_objects, add_quality_control) # This apply the function
-assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
-
-
-# Function to add doublet information
-add_doublet_information <- function(sample_name, seurat_object) {
-  doublet_file <- paste0("output/doublets/", sample_name, ".tsv")
-  doublets <- read.table(doublet_file, header = FALSE, row.names = 1)
-  colnames(doublets) <- c("Doublet_score", "Is_doublet")
-  seurat_object <- AddMetaData(seurat_object, doublets)
-  seurat_object$Doublet_score <- as.numeric(seurat_object$Doublet_score)
-  return(seurat_object)
-}
-## Apply the function to each Seurat object in the list
-for (sample_name in names(seurat_objects)) {
-    seurat_objects[[sample_name]] <- add_doublet_information(sample_name, seurat_objects[[sample_name]])
-}
-assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
-
-
-## QC plot
-# --> Already generated as VlnPlot_QC_[samplename].pdf
-
-pdf("output/seurat/VlnPlot_QC_Kcnc1_p14_CX_Rep3.pdf", width = 15, height = 6)
-VlnPlot(Kcnc1_p14_CX_Rep3, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1) 
-dev.off()
-
-
-pdf("output/seurat/VlnPlot_QC_Kcnc1_p14_CX_Rep3-nFeature_RNA.pdf", width = 15, height = 6)
-VlnPlot(Kcnc1_p14_CX_Rep3, features = c("nFeature_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,2000)
-dev.off()
-
-pdf("output/seurat/VlnPlot_QC_Kcnc1_p14_CX_Rep3-nCount_RNA.pdf", width = 15, height = 6)
-VlnPlot(Kcnc1_p14_CX_Rep3, features = c("nCount_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,10000)
-dev.off()
-
-##### QC filtering
-
-apply_qc <- function(seurat_object) {
-  meta <- seurat_object@meta.data
-  # Initialize QC column with 'Pass'
-  meta$QC <- 'Pass'
-  # Identify failing QC conditions
-  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
-  meta$QC[meta$nFeature_RNA < 500] <- 'Low_nFeature'
-  meta$QC[meta$nFeature_RNA > 4000] <- 'High_nFeatureRNA'
+  meta$QC[meta$nFeature_RNA < 400] <- 'Low_nFeature'
+  meta$QC[meta$nFeature_RNA > 5000] <- 'High_nFeatureRNA'
   meta$QC[meta$nCount_RNA < 100] <- 'Low_nCountRNA'
   meta$QC[meta$nCount_RNA > 20000] <- 'High_nCountRNA'
   meta$QC[meta$percent.mt > 10] <- 'High_MT'
-  meta$QC[meta$percent.rb > 3] <- 'High_RB'
+  meta$QC[meta$percent.rb > 5] <- 'High_RB'
   # Handle multiple failing conditions
   meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
   # Assign back to Seurat object
@@ -30945,7 +30430,7 @@ for (sample_name in names(seurat_objects)) {
 }
 qc_summary_combined <- do.call(rbind, qc_summary_list)
 # Write the data frame to a tab-separated text file
-write.table(qc_summary_combined, file = "output/seurat/QC_summary_version2-Kcnc1_p14_CX_Rep3.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
+write.table(qc_summary_combined, file = "output/seurat/QC_summary_version2-WT_p180_CX_Rep3.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
 
 ## subset seurat object to keep cells that pass the QC
 subset_qc <- function(seurat_object) {
@@ -30958,7 +30443,7 @@ for (sample_name in names(seurat_objects)) {
 assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
 
 # Normalize and scale data, then run cell cycle sorting
-DefaultAssay(Kcnc1_p14_CX_Rep3) <- "RNA"
+DefaultAssay(WT_p180_CX_Rep3) <- "RNA"
 set.seed(42)
 ## Load gene marker of cell type
 mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
@@ -30988,10 +30473,509 @@ for (sample_name in names(seurat_objects)) {
 }
 # Combine all summaries into one data frame
 phase_summary_combined <- do.call(rbind, phase_summary_list)
-write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version2-Kcnc1_p14_CX_Rep3.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) #
+write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version2-WT_p180_CX_Rep3.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) #
 
 ############ SAVE sample ########################################
-# saveRDS(Kcnc1_p14_CX_Rep3, file = "output/seurat/Kcnc1_p14_CX_Rep3-version2-QCPass.rds") # 
+# saveRDS(WT_p180_CX_Rep3, file = "output/seurat/WT_p180_CX_Rep3-version2-QCPass.rds") # 
+#################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+################################################################
+##################### Kcnc1_p180_CX_Rep1 ###########################
+################################################################
+## Load the matrix and Create SEURAT object
+samples <- list(
+  Kcnc1_p180_CX_Rep1 = "output/soupX/Kcnc1_p180_CX_Rep1.RData"
+)
+
+seurat_objects <- list()
+
+for (sample_name in names(samples)) {
+  load(samples[[sample_name]])
+  seurat_objects[[sample_name]] <- CreateSeuratObject(counts = out, project = sample_name)
+}
+
+## Function to assign Seurat objects to variables (unlist the list)
+assign_seurat_objects <- function(seurat_objects_list) {
+  for (sample_name in names(seurat_objects_list)) {
+    assign(sample_name, seurat_objects_list[[sample_name]], envir = .GlobalEnv)
+  }
+}
+assign_seurat_objects(seurat_objects) # This apply the function
+
+
+# QUALITY CONTROL
+# Function to add mitochondrial and ribosomal content
+add_quality_control <- function(seurat_object) {
+  seurat_object[["percent.mt"]] <- PercentageFeatureSet(seurat_object, pattern = "^mt-")
+  seurat_object[["percent.rb"]] <- PercentageFeatureSet(seurat_object, pattern = "^Rp[sl]")
+  return(seurat_object)
+}
+seurat_objects <- lapply(seurat_objects, add_quality_control) # This apply the function
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+
+# Function to add doublet information
+add_doublet_information <- function(sample_name, seurat_object) {
+  doublet_file <- paste0("output/doublets/", sample_name, ".tsv")
+  doublets <- read.table(doublet_file, header = FALSE, row.names = 1)
+  colnames(doublets) <- c("Doublet_score", "Is_doublet")
+  seurat_object <- AddMetaData(seurat_object, doublets)
+  seurat_object$Doublet_score <- as.numeric(seurat_object$Doublet_score)
+  return(seurat_object)
+}
+## Apply the function to each Seurat object in the list
+for (sample_name in names(seurat_objects)) {
+    seurat_objects[[sample_name]] <- add_doublet_information(sample_name, seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+
+## QC plot
+# --> Already generated as VlnPlot_QC_[samplename].pdf
+
+pdf("output/seurat/VlnPlot_QC_Kcnc1_p180_CX_Rep1.pdf", width = 15, height = 6)
+VlnPlot(Kcnc1_p180_CX_Rep1, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1) 
+dev.off()
+
+
+pdf("output/seurat/VlnPlot_QC_Kcnc1_p180_CX_Rep1-nFeature_RNA.pdf", width = 15, height = 6)
+VlnPlot(Kcnc1_p180_CX_Rep1, features = c("nFeature_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,2000)
+dev.off()
+
+pdf("output/seurat/VlnPlot_QC_Kcnc1_p180_CX_Rep1-nCount_RNA.pdf", width = 15, height = 6)
+VlnPlot(Kcnc1_p180_CX_Rep1, features = c("nCount_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,5000)
+dev.off()
+
+##### QC filtering
+
+apply_qc <- function(seurat_object) {
+  meta <- seurat_object@meta.data
+  # Initialize QC column with 'Pass'
+  meta$QC <- 'Pass'
+  # Identify failing QC conditions
+  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
+  meta$QC[meta$nFeature_RNA < 400] <- 'Low_nFeature'
+  meta$QC[meta$nFeature_RNA > 4000] <- 'High_nFeatureRNA'
+  meta$QC[meta$nCount_RNA < 100] <- 'Low_nCountRNA'
+  meta$QC[meta$nCount_RNA > 15000] <- 'High_nCountRNA'
+  meta$QC[meta$percent.mt > 10] <- 'High_MT'
+  meta$QC[meta$percent.rb > 5] <- 'High_RB'
+  # Handle multiple failing conditions
+  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
+  # Assign back to Seurat object
+  seurat_object@meta.data <- meta
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # Reapply function to all individuals in the list
+
+
+#### Write QC summary
+qc_summary_list <- list()
+# Collect QC summary for each sample
+for (sample_name in names(seurat_objects)) {
+  qc_summary <- table(seurat_objects[[sample_name]][['QC']])
+  qc_summary_df <- as.data.frame(qc_summary)
+  qc_summary_df$Sample <- sample_name
+  qc_summary_list[[sample_name]] <- qc_summary_df
+}
+qc_summary_combined <- do.call(rbind, qc_summary_list)
+# Write the data frame to a tab-separated text file
+write.table(qc_summary_combined, file = "output/seurat/QC_summary_version2-Kcnc1_p180_CX_Rep1.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
+
+## subset seurat object to keep cells that pass the QC
+subset_qc <- function(seurat_object) {
+  seurat_object <- subset(seurat_object, subset = QC == 'Pass')
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- subset_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# Normalize and scale data, then run cell cycle sorting
+DefaultAssay(Kcnc1_p180_CX_Rep1) <- "RNA"
+set.seed(42)
+## Load gene marker of cell type
+mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+
+# Function to normalize, scale data, and perform cell cycle scoring
+process_seurat_object <- function(seurat_object, mmus_s, mmus_g2m) {
+  seurat_object <- NormalizeData(seurat_object, normalization.method = "LogNormalize", scale.factor = 10000)
+  all.genes <- rownames(seurat_object)
+  seurat_object <- ScaleData(seurat_object, features = all.genes)  # zero-centres and scales it
+  seurat_object <- CellCycleScoring(seurat_object, s.features = mmus_s, g2m.features = mmus_g2m)  # cell cycle sorting
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- process_seurat_object(seurat_objects[[sample_name]], mmus_s, mmus_g2m)
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# write output summary phase
+phase_summary_list <- list()
+# Collect QC phase summary for each sample
+for (sample_name in names(seurat_objects)) {
+  phase_summary <- table(seurat_objects[[sample_name]][[]]$Phase)
+  phase_summary_df <- as.data.frame(phase_summary)
+  phase_summary_df$Sample <- sample_name
+  phase_summary_list[[sample_name]] <- phase_summary_df
+}
+# Combine all summaries into one data frame
+phase_summary_combined <- do.call(rbind, phase_summary_list)
+write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version2-Kcnc1_p180_CX_Rep1.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) #
+
+############ SAVE sample ########################################
+# saveRDS(Kcnc1_p180_CX_Rep1, file = "output/seurat/Kcnc1_p180_CX_Rep1-version2-QCPass.rds") # 
+#################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+################################################################
+##################### Kcnc1_p180_CX_Rep2 ###########################
+################################################################
+## Load the matrix and Create SEURAT object
+samples <- list(
+  Kcnc1_p180_CX_Rep2 = "output/soupX/Kcnc1_p180_CX_Rep2.RData"
+)
+
+seurat_objects <- list()
+
+for (sample_name in names(samples)) {
+  load(samples[[sample_name]])
+  seurat_objects[[sample_name]] <- CreateSeuratObject(counts = out, project = sample_name)
+}
+
+## Function to assign Seurat objects to variables (unlist the list)
+assign_seurat_objects <- function(seurat_objects_list) {
+  for (sample_name in names(seurat_objects_list)) {
+    assign(sample_name, seurat_objects_list[[sample_name]], envir = .GlobalEnv)
+  }
+}
+assign_seurat_objects(seurat_objects) # This apply the function
+
+
+# QUALITY CONTROL
+# Function to add mitochondrial and ribosomal content
+add_quality_control <- function(seurat_object) {
+  seurat_object[["percent.mt"]] <- PercentageFeatureSet(seurat_object, pattern = "^mt-")
+  seurat_object[["percent.rb"]] <- PercentageFeatureSet(seurat_object, pattern = "^Rp[sl]")
+  return(seurat_object)
+}
+seurat_objects <- lapply(seurat_objects, add_quality_control) # This apply the function
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+
+# Function to add doublet information
+add_doublet_information <- function(sample_name, seurat_object) {
+  doublet_file <- paste0("output/doublets/", sample_name, ".tsv")
+  doublets <- read.table(doublet_file, header = FALSE, row.names = 1)
+  colnames(doublets) <- c("Doublet_score", "Is_doublet")
+  seurat_object <- AddMetaData(seurat_object, doublets)
+  seurat_object$Doublet_score <- as.numeric(seurat_object$Doublet_score)
+  return(seurat_object)
+}
+## Apply the function to each Seurat object in the list
+for (sample_name in names(seurat_objects)) {
+    seurat_objects[[sample_name]] <- add_doublet_information(sample_name, seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+
+## QC plot
+# --> Already generated as VlnPlot_QC_[samplename].pdf
+
+pdf("output/seurat/VlnPlot_QC_Kcnc1_p180_CX_Rep2.pdf", width = 15, height = 6)
+VlnPlot(Kcnc1_p180_CX_Rep2, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1) 
+dev.off()
+
+
+pdf("output/seurat/VlnPlot_QC_Kcnc1_p180_CX_Rep2-nFeature_RNA.pdf", width = 15, height = 6)
+VlnPlot(Kcnc1_p180_CX_Rep2, features = c("nFeature_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,1000)
+dev.off()
+
+pdf("output/seurat/VlnPlot_QC_Kcnc1_p180_CX_Rep2-nCount_RNA.pdf", width = 15, height = 6)
+VlnPlot(Kcnc1_p180_CX_Rep2, features = c("nCount_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,5000)
+dev.off()
+
+##### QC filtering
+
+apply_qc <- function(seurat_object) {
+  meta <- seurat_object@meta.data
+  # Initialize QC column with 'Pass'
+  meta$QC <- 'Pass'
+  # Identify failing QC conditions
+  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
+  meta$QC[meta$nFeature_RNA < 400] <- 'Low_nFeature'
+  meta$QC[meta$nFeature_RNA > 4000] <- 'High_nFeatureRNA'
+  meta$QC[meta$nCount_RNA < 100] <- 'Low_nCountRNA'
+  meta$QC[meta$nCount_RNA > 15000] <- 'High_nCountRNA'
+  meta$QC[meta$percent.mt > 10] <- 'High_MT'
+  meta$QC[meta$percent.rb > 5] <- 'High_RB'
+  # Handle multiple failing conditions
+  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
+  # Assign back to Seurat object
+  seurat_object@meta.data <- meta
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # Reapply function to all individuals in the list
+
+
+#### Write QC summary
+qc_summary_list <- list()
+# Collect QC summary for each sample
+for (sample_name in names(seurat_objects)) {
+  qc_summary <- table(seurat_objects[[sample_name]][['QC']])
+  qc_summary_df <- as.data.frame(qc_summary)
+  qc_summary_df$Sample <- sample_name
+  qc_summary_list[[sample_name]] <- qc_summary_df
+}
+qc_summary_combined <- do.call(rbind, qc_summary_list)
+# Write the data frame to a tab-separated text file
+write.table(qc_summary_combined, file = "output/seurat/QC_summary_version2-Kcnc1_p180_CX_Rep2.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
+
+## subset seurat object to keep cells that pass the QC
+subset_qc <- function(seurat_object) {
+  seurat_object <- subset(seurat_object, subset = QC == 'Pass')
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- subset_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# Normalize and scale data, then run cell cycle sorting
+DefaultAssay(Kcnc1_p180_CX_Rep2) <- "RNA"
+set.seed(42)
+## Load gene marker of cell type
+mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+
+# Function to normalize, scale data, and perform cell cycle scoring
+process_seurat_object <- function(seurat_object, mmus_s, mmus_g2m) {
+  seurat_object <- NormalizeData(seurat_object, normalization.method = "LogNormalize", scale.factor = 10000)
+  all.genes <- rownames(seurat_object)
+  seurat_object <- ScaleData(seurat_object, features = all.genes)  # zero-centres and scales it
+  seurat_object <- CellCycleScoring(seurat_object, s.features = mmus_s, g2m.features = mmus_g2m)  # cell cycle sorting
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- process_seurat_object(seurat_objects[[sample_name]], mmus_s, mmus_g2m)
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# write output summary phase
+phase_summary_list <- list()
+# Collect QC phase summary for each sample
+for (sample_name in names(seurat_objects)) {
+  phase_summary <- table(seurat_objects[[sample_name]][[]]$Phase)
+  phase_summary_df <- as.data.frame(phase_summary)
+  phase_summary_df$Sample <- sample_name
+  phase_summary_list[[sample_name]] <- phase_summary_df
+}
+# Combine all summaries into one data frame
+phase_summary_combined <- do.call(rbind, phase_summary_list)
+write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version2-Kcnc1_p180_CX_Rep2.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) #
+
+############ SAVE sample ########################################
+# saveRDS(Kcnc1_p180_CX_Rep2, file = "output/seurat/Kcnc1_p180_CX_Rep2-version2-QCPass.rds") # 
+#################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+################################################################
+##################### Kcnc1_p180_CX_Rep3 ###########################
+################################################################
+## Load the matrix and Create SEURAT object
+samples <- list(
+  Kcnc1_p180_CX_Rep3 = "output/soupX/Kcnc1_p180_CX_Rep3.RData"
+)
+
+seurat_objects <- list()
+
+for (sample_name in names(samples)) {
+  load(samples[[sample_name]])
+  seurat_objects[[sample_name]] <- CreateSeuratObject(counts = out, project = sample_name)
+}
+
+## Function to assign Seurat objects to variables (unlist the list)
+assign_seurat_objects <- function(seurat_objects_list) {
+  for (sample_name in names(seurat_objects_list)) {
+    assign(sample_name, seurat_objects_list[[sample_name]], envir = .GlobalEnv)
+  }
+}
+assign_seurat_objects(seurat_objects) # This apply the function
+
+
+# QUALITY CONTROL
+# Function to add mitochondrial and ribosomal content
+add_quality_control <- function(seurat_object) {
+  seurat_object[["percent.mt"]] <- PercentageFeatureSet(seurat_object, pattern = "^mt-")
+  seurat_object[["percent.rb"]] <- PercentageFeatureSet(seurat_object, pattern = "^Rp[sl]")
+  return(seurat_object)
+}
+seurat_objects <- lapply(seurat_objects, add_quality_control) # This apply the function
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+
+# Function to add doublet information
+add_doublet_information <- function(sample_name, seurat_object) {
+  doublet_file <- paste0("output/doublets/", sample_name, ".tsv")
+  doublets <- read.table(doublet_file, header = FALSE, row.names = 1)
+  colnames(doublets) <- c("Doublet_score", "Is_doublet")
+  seurat_object <- AddMetaData(seurat_object, doublets)
+  seurat_object$Doublet_score <- as.numeric(seurat_object$Doublet_score)
+  return(seurat_object)
+}
+## Apply the function to each Seurat object in the list
+for (sample_name in names(seurat_objects)) {
+    seurat_objects[[sample_name]] <- add_doublet_information(sample_name, seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+
+## QC plot
+# --> Already generated as VlnPlot_QC_[samplename].pdf
+
+pdf("output/seurat/VlnPlot_QC_Kcnc1_p180_CX_Rep3.pdf", width = 15, height = 6)
+VlnPlot(Kcnc1_p180_CX_Rep3, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 4, pt.size = 0.1) 
+dev.off()
+
+
+pdf("output/seurat/VlnPlot_QC_Kcnc1_p180_CX_Rep3-nFeature_RNA.pdf", width = 15, height = 6)
+VlnPlot(Kcnc1_p180_CX_Rep3, features = c("nFeature_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,2000)
+dev.off()
+
+pdf("output/seurat/VlnPlot_QC_Kcnc1_p180_CX_Rep3-nCount_RNA.pdf", width = 15, height = 6)
+VlnPlot(Kcnc1_p180_CX_Rep3, features = c("nCount_RNA"), ncol = 4, pt.size = 0.1) + ylim(0,5000)
+dev.off()
+
+##### QC filtering
+
+apply_qc <- function(seurat_object) {
+  meta <- seurat_object@meta.data
+  # Initialize QC column with 'Pass'
+  meta$QC <- 'Pass'
+  # Identify failing QC conditions
+  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
+  meta$QC[meta$nFeature_RNA < 400] <- 'Low_nFeature'
+  meta$QC[meta$nFeature_RNA > 5000] <- 'High_nFeatureRNA'
+  meta$QC[meta$nCount_RNA < 100] <- 'Low_nCountRNA'
+  meta$QC[meta$nCount_RNA > 20000] <- 'High_nCountRNA'
+  meta$QC[meta$percent.mt > 6] <- 'High_MT'
+  meta$QC[meta$percent.rb > 3] <- 'High_RB'
+  # Handle multiple failing conditions
+  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
+  # Assign back to Seurat object
+  seurat_object@meta.data <- meta
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # Reapply function to all individuals in the list
+
+
+#### Write QC summary
+qc_summary_list <- list()
+# Collect QC summary for each sample
+for (sample_name in names(seurat_objects)) {
+  qc_summary <- table(seurat_objects[[sample_name]][['QC']])
+  qc_summary_df <- as.data.frame(qc_summary)
+  qc_summary_df$Sample <- sample_name
+  qc_summary_list[[sample_name]] <- qc_summary_df
+}
+qc_summary_combined <- do.call(rbind, qc_summary_list)
+# Write the data frame to a tab-separated text file
+write.table(qc_summary_combined, file = "output/seurat/QC_summary_version2-Kcnc1_p180_CX_Rep3.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
+
+## subset seurat object to keep cells that pass the QC
+subset_qc <- function(seurat_object) {
+  seurat_object <- subset(seurat_object, subset = QC == 'Pass')
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- subset_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# Normalize and scale data, then run cell cycle sorting
+DefaultAssay(Kcnc1_p180_CX_Rep3) <- "RNA"
+set.seed(42)
+## Load gene marker of cell type
+mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
+
+# Function to normalize, scale data, and perform cell cycle scoring
+process_seurat_object <- function(seurat_object, mmus_s, mmus_g2m) {
+  seurat_object <- NormalizeData(seurat_object, normalization.method = "LogNormalize", scale.factor = 10000)
+  all.genes <- rownames(seurat_object)
+  seurat_object <- ScaleData(seurat_object, features = all.genes)  # zero-centres and scales it
+  seurat_object <- CellCycleScoring(seurat_object, s.features = mmus_s, g2m.features = mmus_g2m)  # cell cycle sorting
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- process_seurat_object(seurat_objects[[sample_name]], mmus_s, mmus_g2m)
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+
+# write output summary phase
+phase_summary_list <- list()
+# Collect QC phase summary for each sample
+for (sample_name in names(seurat_objects)) {
+  phase_summary <- table(seurat_objects[[sample_name]][[]]$Phase)
+  phase_summary_df <- as.data.frame(phase_summary)
+  phase_summary_df$Sample <- sample_name
+  phase_summary_list[[sample_name]] <- phase_summary_df
+}
+# Combine all summaries into one data frame
+phase_summary_combined <- do.call(rbind, phase_summary_list)
+write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version2-Kcnc1_p180_CX_Rep3.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) #
+
+############ SAVE sample ########################################
+# saveRDS(Kcnc1_p180_CX_Rep3, file = "output/seurat/Kcnc1_p180_CX_Rep3-version2-QCPass.rds") # 
 #################################################################
 
 
