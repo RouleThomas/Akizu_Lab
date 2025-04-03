@@ -10243,3 +10243,547 @@ rtracklayer::export.bed(consensus_peaks, "output/sicer2/window200gap600fdr01eval
 
 
 
+
+# Functional analysis with enrichR
+
+Functional analysis **enrichR with DIFFREPS diff bound genes** --> Code copied from `001*/009*` `# Functional analysis with enrichR`
+
+
+**IMPOPRTANT NOTE: Run the reading and processing ONE BY ONE !!! Otherwise, lead to bug!!!!**
+
+```R
+# library
+library("tidyverse")
+library("enrichR")
+library("ggrepel")
+
+# Define databases for enrichment
+dbs <- c("GO_Biological_Process_2023") # 
+
+### GeneSymbol list of signif gain/lost H3K27me3 from DIFFREPS intitialBigwig bin1000space100 gt pval05 padj001
+output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt
+output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt
+
+
+
+
+# IF starting with geneSymbol
+## Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+## Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$GO_Biological_Process_2023
+down <- edown$GO_Biological_Process_2023
+up$type <- "up"
+down$type <- "down"
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 20)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 20)
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+pdf("output/GO/enrichR_GO_Biological_Process_2023_DIFFREPS_bin1000space100_gt_pval05_padj001_GainLost_promoterAnd5.pdf", width=8, height=3)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="H3K27me3",   # H3K27me3  H3K4me3 DEGs and H3K27me3
+                    labels = c("Lost", "Gain"), # down-reg and Gain up-reg and Lost
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "GO_Biological_Process_2023") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+
+
+## save output
+write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_DIFFREPS_bin1000space100_gt_pval05_padj001_GainLost_promoterAnd5.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("GO_Molecular_Function_2023") # 
+### GeneSymbol list of signif gain/lost H3K27me3 from DIFFREPS intitialBigwig bin1000space100 gt pval05 padj001
+output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt
+output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt
+
+
+
+# IF starting with geneSymbol
+## Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+## Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+# Extracting KEGG data and assigning types
+up <- eup$GO_Molecular_Function_2023
+down <- edown$GO_Molecular_Function_2023
+up$type <- "up"
+down$type <- "down"
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 20)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 20)
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+
+
+pdf("output/GO/enrichR_GO_Molecular_Function_2023_DIFFREPS_bin1000space100_gt_pval05_padj001_GainLost_promoterAnd5.pdf", width=8, height=4)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="H3K27me3",   # H3K27me3  H3K4me3
+                    labels = c("Lost", "Gain"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "GO_Molecular_Function_2023") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+
+## save output
+write.table(gos, "output/GO/enrichR_GO_Molecular_Function_2023_DIFFREPS_bin1000space100_gt_pval05_padj001_GainLost_promoterAnd5.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("GO_Cellular_Component_2023") # 
+
+### GeneSymbol list of signif gain/lost H3K27me3 from DIFFREPS intitialBigwig bin1000space100 gt pval05 padj001
+output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt
+output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt
+
+
+# IF starting with geneSymbol
+## Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+## Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$GO_Cellular_Component_2023
+down <- edown$GO_Cellular_Component_2023
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 20)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 20)
+
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+
+
+# Plotting with enhanced aesthetics
+
+
+pdf("output/GO/enrichR_GO_Cellular_Component_2023_DIFFREPS_bin1000space100_gt_pval05_padj001_GainLost_promoterAnd5.pdf", width=8, height=4)
+
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="H3K27me3",   # H3K27me3  H3K4me3
+                    labels = c("Lost", "Gain"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "GO_Cellular_Component_2023") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+
+
+## save output
+write.table(gos, "output/GO/enrichR_GO_Cellular_Component_2023_DIFFREPS_bin1000space100_gt_pval05_padj001_GainLost_promoterAnd5.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("KEGG_2021_Human") # 
+
+### GeneSymbol list of signif gain/lost H3K27me3 from DIFFREPS intitialBigwig bin1000space100 gt pval05 padj001
+output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt
+output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt
+
+
+
+# IF starting with geneSymbol
+## Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+## Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$KEGG_2021_Human
+down <- edown$KEGG_2021_Human
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 20)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 20)
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+# Plotting with enhanced aesthetics
+
+
+pdf("output/GO/enrichR_KEGG_2021_Human_DIFFREPS_bin1000space100_gt_pval05_padj001_GainLost_promoterAnd5.pdf", width=8, height=4)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="H3K4me3",   # H3K27me3  H3K4me3
+                    labels = c("Lost", "Gain"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "KEGG_2021_Human") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+
+
+## save output
+write.table(gos, "output/GO/enrichR_KEGG_2021_Human_DIFFREPS_bin1000space100_gt_pval05_padj001_GainLost_promoterAnd5.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+
+
+
+# Define databases for enrichment
+dbs <- c("ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X") # 
+
+### GeneSymbol list of signif gain/lost H3K27me3 from DIFFREPS intitialBigwig bin1000space100 gt pval05 padj001
+output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt
+output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt
+
+### negative control 202 random genes
+meta/ENCFF159KBI_geneSymbol_202random_1.bed
+meta/ENCFF159KBI_geneSymbol_202random_2.bed
+meta/ENCFF159KBI_geneSymbol_202random_3.bed
+meta/ENCFF159KBI_geneSymbol_202random_4.bed
+meta/ENCFF159KBI_geneSymbol_202random_5.bed
+meta/ENCFF159KBI_geneSymbol_202random_6.bed
+meta/ENCFF159KBI_geneSymbol_202random_7.bed
+meta/ENCFF159KBI_geneSymbol_202random_8.bed
+meta/ENCFF159KBI_geneSymbol_202random_9.bed
+meta/ENCFF159KBI_geneSymbol_202random_10.bed
+
+meta/ENCFF159KBI_geneSymbol_500random_1.bed
+meta/ENCFF159KBI_geneSymbol_500random_2.bed
+meta/ENCFF159KBI_geneSymbol_500random_3.bed
+meta/ENCFF159KBI_geneSymbol_500random_4.bed
+meta/ENCFF159KBI_geneSymbol_500random_5.bed
+meta/ENCFF159KBI_geneSymbol_500random_6.bed
+meta/ENCFF159KBI_geneSymbol_500random_7.bed
+meta/ENCFF159KBI_geneSymbol_500random_8.bed
+meta/ENCFF159KBI_geneSymbol_500random_9.bed
+meta/ENCFF159KBI_geneSymbol_500random_10.bed
+
+
+# IF starting with geneSymbol
+## Read and preprocess data for downregulated genes
+gene_names_down <- read.csv("output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+list_down <- unique(as.character(gene_names_down$V1))
+edown <- enrichr(list_down, dbs)
+## Read and preprocess data for upregulated genes
+gene_names_up <- read.csv("output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
+list_up <- unique(as.character(gene_names_up$V1))
+eup <- enrichr(list_up, dbs)
+
+# Extracting KEGG data and assigning types
+up <- eup$`ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X`
+down <- edown$`ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X`
+up$type <- "up"
+down$type <- "down"
+
+# Get top enriched terms and sort by Combined.Score (Note: Adjust if you don't want the top 10)
+up <- head(up[order(up$Combined.Score, decreasing = TRUE), ], 20)
+down <- head(down[order(down$Combined.Score, decreasing = TRUE), ], 20)
+# Convert adjusted p-values and differentiate direction for up and down
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+# Combine the two dataframes
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+# Filter out rows where absolute logAdjP 1.3 = 0.05
+gos <- gos %>% filter(abs(logAdjP) > 1.3)
+gos$Term <- gsub("\\(GO:[0-9]+\\)", "", gos$Term)  # Regular expression to match the GO pattern and replace it with an empty string
+# Create the order based on the approach given
+up_pathways <- gos %>% filter(type == "up") %>% arrange(-logAdjP) %>% pull(Term)
+down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Term)
+new_order <- c(down_pathways, up_pathways)
+gos$Term <- factor(gos$Term, levels = new_order)
+
+## FAIL as dupplicates:
+up_pathways_suffixed <- paste0(up_pathways, "_up")
+down_pathways_suffixed <- paste0(down_pathways, "_down")
+new_order <- c(down_pathways_suffixed, up_pathways_suffixed)
+gos$Term <- ifelse(gos$type == "up", paste0(gos$Term, "_up"), paste0(gos$Term, "_down"))
+gos$Term <- factor(gos$Term, levels = new_order)
+
+
+
+# Plotting with enhanced aesthetics
+
+
+pdf("output/GO/enrichR_ENCODE_and_ChEA_Consensus_TFs_from_ChIP_DIFFREPS_bin1000space100_gt_pval05_padj001_GainLost_promoterAnd5.pdf", width=8, height=3)
+
+ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
+  geom_bar(stat='identity', width=.7) +
+  # Adjusted label position based on the type of gene (up/down) and increased separation
+  geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
+  geom_hline(yintercept = 0, linetype="solid", color = "black") +
+  scale_fill_manual(name="H3K4me3",   # H3K27me3  H3K4me3
+                    labels = c("Lost", "Gain"), 
+                    values = c("down"="Sky Blue", "up"="Orange")) + 
+  labs(title= "ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X") + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size = 15)
+  )
+dev.off()
+
+
+## save output
+write.table(gos, "output/GO/enrichR_ENCODE_and_ChEA_Consensus_TFs_from_ChIP_DIFFREPS_bin1000space100_gt_pval05_padj001_GainLost_promoterAnd5.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+### TF plot like JC paper
+#### import all TF genes
+TF = read.csv("output/GO/ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X_TFonly.txt") %>%
+                               as_tibble()
+
+#### re do gos without filtering for pvalue
+up <- eup$`ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X`
+down <- edown$`ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X`
+up$type <- "up"
+down$type <- "down"
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+up$logAdjP <- -log10(up$Adjusted.P.value)
+down$logAdjP <- -1 * -log10(down$Adjusted.P.value)
+gos <- rbind(down, up)
+gos <- gos %>% arrange(logAdjP)
+gos <- rbind(down, up)
+
+### combine TF with gos
+gos_TF = TF %>%
+  left_join(as_tibble(gos) ) %>%
+  filter(type == "down") 
+
+gos_TF_tidy = gos_TF %>%
+  separate(Term, into = c("TF", "db"))
+
+
+### plot
+
+pdf("output/GO/VolcanoPlotTF_ENCODE_and_ChEA_Consensus_TFs_from_ChIP_DIFFREPS_bin1000space100_gt_pval05_padj001_Gain_promoterAnd5.pdf", width=5, height=4)
+ggplot(gos_TF_tidy, aes(x = Odds.Ratio, y = -logAdjP, color = db)) +
+  geom_point(aes(color = ifelse(-logAdjP < 1.3, "not signif.", db))) +
+  scale_color_manual(values = c("lightgreen", "darkgreen", "grey")) + # Replace with your actual colors
+  theme_bw() +
+  labs(x = "Odds Ratio", y = "-log10(adjusted p-value)") +
+  geom_text_repel(data = subset(gos_TF_tidy, logAdjP < 1.3),
+                  aes(label = TF),
+                  nudge_x = 0.2,  # Adjust this value to nudge labels to the right
+                  size = 3,
+                  max.overlaps = 25)  +
+  guides(color = guide_legend(override.aes = list(label = ""))) # just to remove the "a" added in fig legend
+dev.off()
+
+
+pdf("output/GO/VolcanoPlotTF_ENCODE_and_ChEA_Consensus_TFs_from_ChIP_DIFFREPS_bin1000space100_gt_pval05_padj001_Gain_promoterAnd5_posterCHOP1.pdf", width=5, height=4)
+ggplot(gos_TF_tidy, aes(x = Odds.Ratio, y = -logAdjP, color = db)) +
+  geom_point(aes(color = ifelse(-logAdjP < 1.3, "not signif.", db))) +
+  scale_color_manual(values = c("blue", "lightblue", "grey")) + # Replace with your actual colors
+  theme_bw() +
+  labs(x = "Odds Ratio", y = "-log10(adjusted p-value)") +
+  geom_text_repel(data = subset(gos_TF_tidy, logAdjP < 1.3),
+                  aes(label = TF),
+                  nudge_x = 0.2,  # Adjust this value to nudge labels to the right
+                  size = 6,
+                  max.overlaps = 50)  + # 30
+  guides(color = guide_legend(override.aes = list(label = ""))) # just to remove the "a" added in fig legend
+dev.off()
+
+
+
+pdf("output/GO/VolcanoPlotTF_ENCODE_and_ChEA_Consensus_TFs_from_ChIP_DIFFREPS_bin1000space100_gt_pval05_padj001_Gain_promoterAnd5_posterCHOP1.pdf", width=5, height=4)
+ggplot(gos_TF_tidy, aes(x = Odds.Ratio, y = -logAdjP, color = db)) +
+  geom_point(aes(color = ifelse(-logAdjP < 1.3, "not signif.", db))) +
+  scale_color_manual(values = c("blue", "lightblue", "grey")) + # Replace with your actual colors
+  theme_bw() +
+  labs(x = "Odds Ratio", y = "-log10(adjusted p-value)") +
+  geom_text_repel(data = subset(gos_TF_tidy, logAdjP < 1.3),
+                  aes(label = TF),
+                  nudge_x = 0.2,  # Adjust this value to nudge labels to the right
+                  size = 6,
+                  max.overlaps = 50)  + # 30
+  guides(color = guide_legend(override.aes = list(label = ""))) # just to remove the "a" added in fig legend
+dev.off()
+
+
+```
+
+--> `ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X` db identified *EZH2* and *SUZ12* as genes upreg in KO
+----> plot `x = odd.ratio` and `y = logadjPval` like JC done after.
+
+
+Let's add a negative control for ENCODE_ChEA analysis; by selecting 202 random genes and see if we find EZH2 SUZ12 too:
+XXX Below not ran; should make for the same number as I have for Gain H3K27me3 here = 1,195 genes
+
+```bash
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 202 > meta/ENCFF159KBI_geneSymbol_202random_1.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 202 > meta/ENCFF159KBI_geneSymbol_202random_2.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 202 > meta/ENCFF159KBI_geneSymbol_202random_3.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 202 > meta/ENCFF159KBI_geneSymbol_202random_4.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 202 > meta/ENCFF159KBI_geneSymbol_202random_5.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 202 > meta/ENCFF159KBI_geneSymbol_202random_6.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 202 > meta/ENCFF159KBI_geneSymbol_202random_7.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 202 > meta/ENCFF159KBI_geneSymbol_202random_8.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 202 > meta/ENCFF159KBI_geneSymbol_202random_9.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 202 > meta/ENCFF159KBI_geneSymbol_202random_10.bed
+
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_1.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_2.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_3.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_4.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_5.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_6.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_7.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_8.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_9.bed
+awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_10.bed
+
+```
+
+
+
+

@@ -18898,7 +18898,7 @@ write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version
 
 
 
-###### Integration
+###### Integration - V1 multiple granule
 
 
 
@@ -20048,7 +20048,7 @@ dev.off()
 
 
 
-###### CellChat Cell type verification
+###### CellChat Cell type verification  - V1 multiple granule
 
 Let's use CellChat to confirm our cell type annotation
 
@@ -20342,6 +20342,1453 @@ saveRDS(cellchat, file = "output/CellChat/p14_CB_WT-version4dim40kparam30res03-d
 
 
 
+
+
+
+
+###### Integration - V2 one granule pop
+
+
+
+
+```bash
+conda activate scRNAseqV2
+```
+
+
+
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+set.seed(42)
+
+
+
+# import samples
+WT_p14_CB_Rep1 <- readRDS(file = "output/seurat/WT_p14_CB_Rep1-PurkinjeGolgiAnnotated-QCPass.rds")
+WT_p14_CB_Rep2 <- readRDS(file = "output/seurat/WT_p14_CB_Rep2-PurkinjeGolgiAnnotated-QCPass.rds")
+WT_p14_CB_Rep3 <- readRDS(file = "output/seurat/WT_p14_CB_Rep3-PurkinjeGolgiAnnotated-QCPass.rds")
+Kcnc1_p14_CB_Rep1 <- readRDS(file = "output/seurat/Kcnc1_p14_CB_Rep1-PurkinjeGolgiAnnotated-QCPass.rds")
+Kcnc1_p14_CB_Rep2 <- readRDS(file = "output/seurat/Kcnc1_p14_CB_Rep2-PurkinjeGolgiAnnotated-QCPass.rds")
+Kcnc1_p14_CB_Rep3 <- readRDS(file = "output/seurat/Kcnc1_p14_CB_Rep3-PurkinjeGolgiAnnotated-QCPass.rds")
+
+DefaultAssay(WT_p14_CB_Rep1) <- "RNA"
+DefaultAssay(WT_p14_CB_Rep2) <- "RNA"
+DefaultAssay(WT_p14_CB_Rep3) <- "RNA"
+DefaultAssay(Kcnc1_p14_CB_Rep1) <- "RNA"
+DefaultAssay(Kcnc1_p14_CB_Rep2) <- "RNA"
+DefaultAssay(Kcnc1_p14_CB_Rep3) <- "RNA"
+
+
+
+##########################################
+## integration WT Kcnc1 p14 all replicates (1st replicate, then genotype) ######
+ ##########################################
+
+WT_p14_CB_Rep1$replicate <- "Rep1"
+WT_p14_CB_Rep2$replicate <- "Rep2"
+WT_p14_CB_Rep3$replicate <- "Rep3"
+
+WT_p14_CB_Rep1$condition <- "WT"
+WT_p14_CB_Rep2$condition <- "WT"
+WT_p14_CB_Rep3$condition <- "WT"
+
+Kcnc1_p14_CB_Rep1$replicate <- "Rep1"
+Kcnc1_p14_CB_Rep2$replicate <- "Rep2"
+Kcnc1_p14_CB_Rep3$replicate <- "Rep3"
+
+Kcnc1_p14_CB_Rep1$condition <- "Kcnc1"
+Kcnc1_p14_CB_Rep2$condition <- "Kcnc1"
+Kcnc1_p14_CB_Rep3$condition <- "Kcnc1"
+
+
+
+# Test Replicate and Genotype integration (1 step integration)
+## WT Rep
+
+WT_p14_CB_Rep1 <- SCTransform(WT_p14_CB_Rep1, method = "glmGamPoi", ncells = 11774, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+WT_p14_CB_Rep2 <- SCTransform(WT_p14_CB_Rep2, method = "glmGamPoi", ncells = 13020, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+WT_p14_CB_Rep3 <- SCTransform(WT_p14_CB_Rep3, method = "glmGamPoi", ncells = 12733, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+Kcnc1_p14_CB_Rep1 <- SCTransform(Kcnc1_p14_CB_Rep1, method = "glmGamPoi", ncells = 10125, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+Kcnc1_p14_CB_Rep2 <- SCTransform(Kcnc1_p14_CB_Rep2, method = "glmGamPoi", ncells = 9132, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+Kcnc1_p14_CB_Rep3 <- SCTransform(Kcnc1_p14_CB_Rep3, method = "glmGamPoi", ncells = 14121, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+
+
+
+
+srat.list <- list(WT_p14_CB_Rep1 = WT_p14_CB_Rep1, WT_p14_CB_Rep2 = WT_p14_CB_Rep2, WT_p14_CB_Rep3 = WT_p14_CB_Rep3, Kcnc1_p14_CB_Rep1 = Kcnc1_p14_CB_Rep1, Kcnc1_p14_CB_Rep2 = Kcnc1_p14_CB_Rep2, Kcnc1_p14_CB_Rep3 = Kcnc1_p14_CB_Rep3)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+WT_Kcnc1_p14_CB_1step.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+WT_Kcnc1_p14_CB_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p14_CB_1step.anchors, normalization.method = "SCT")
+
+
+#### UMAP
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "integrated"
+
+WT_Kcnc1_p14_CB_1step.sct <- RunPCA(WT_Kcnc1_p14_CB_1step.sct, verbose = FALSE, npcs = 40)
+WT_Kcnc1_p14_CB_1step.sct <- RunUMAP(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
+WT_Kcnc1_p14_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", k.param = 20, dims = 1:40)
+WT_Kcnc1_p14_CB_1step.sct <- FindClusters(WT_Kcnc1_p14_CB_1step.sct, resolution = 0.14, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+
+WT_Kcnc1_p14_CB_1step.sct$condition <- factor(WT_Kcnc1_p14_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version4dim40kparam20res014.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE)
+dev.off()
+
+
+XXXY here play with resolatuon
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim40-ListdotPLot.pdf", width=30, height=60)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c(   "Gabra6","Pax6", # Granular_1
+  "Sorcs3", "Ptprk", # MLI1
+  "Nxph1", "Cdh22", # MLI2
+  "Klhl1", "Gfra2", "Aldh1a3", # PLI12
+  "Galntl6", "Kcnc2", # PLI23
+  "Pax2", # Golgi
+  "Eomes", # Unipolar_Brush
+  "Calb1", "Slc1a6", "Car8", # Purkinje
+  "Zeb2", # Astrocyte
+  "Aqp4", "Slc39a12", # Bergmann_Glia
+  "Mbp", "Mag", "Plp1", # Oligodendrocyte
+  "Aldoc", "Cnp", # OPC
+  "Itgam", "Cx3cr1", # Mix_Microglia_Meningeal
+  "Ptgds", "Dcn", # Endothelial
+  "Lef1", "Notum", "Apcdd1", # Endothelial_Mural
+  "Dlc1", "Pdgfrb", # Choroid_Plexus
+  "Kl",  "Ttr",
+  "Eomes", "Rgs6", "Tafa2"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+# genes
+Neuronal Cell Types
+    Granule: "Gabra6", "Pax6"
+    Purkinje: "Calb1", "Slc1a6", "Car8"
+    MLI1: "Sorcs3", "Ptprk"
+    MLI2: "Nxph1", "Cdh22"
+    PLI12: "Klhl1", "Gfra2", "Aldh1a3"
+    PLI23: "Galntl6", "Kcnc2"
+    Golgi: "Pax2"
+    Unipolar Brush: Eomes, "Rgs6", "Tafa2"
+    Noradrenergic Neurons: "Slc18a2", "Ddc"
+    Serotonergic Neurons: "Slc6a4", "Tph2", "Ddc", "Slc18a2"
+Glial & Supporting Cells
+    Astrocyte: Slc1a2, Apoe, "Zeb2"
+    Astrocyte (Satellite Glia Marker): Glul, "Slc1a3", Ednrb
+    Bergmann Glia: "Aqp4", "Slc39a12"
+    Microglia: Colec12
+    Radial Glia Cells: Slc1a3, Pdgfd, Gli3
+    OPC (Oligodendrocyte Precursor Cells): "Vcan", "Sox6", Aldoc, Nnat
+    Oligodendrocyte: "Mbp", "Mag", "Plp1"
+    Schwann Cells: S100b, Aldoc, Cnp
+Non-Neuronal Cell Types
+    Endothelial Cells: "Lef1", Notum, "Apcdd1"
+    Endothelial Stalk Cells: Actb, Tmsb4x
+    Endothelial Mural: Dlc1, Pdgfrb
+    Meningeal Cells: "Ptgds", "Dcn"
+    Choroid Plexus Cells: "Kl", "Ttr", "Clic6", "Slc13a4"
+    Ependymal Cells: "Cfap54", "Ccdc153", "Cfap44", "Tmem212"
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim40-ListAllGenes.pdf", width=30, height=80)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gabra6", "Pax6", "Calb1", "Slc1a6", "Car8", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", 
+"Klhl1", "Gfra2", "Aldh1a3", "Galntl6", "Kcnc2", "Pax2", "Eomes", "Rgs6", "Tafa2", 
+"Gad2", "Slc6a1", "Nxph1", "Gad1", "Gria3", "Slc18a2", "Ddc", "Slc6a4", "Tph2", 
+"Slc18a2", "Slc1a2", "Apoe", "Zeb2", "Glul", "Slc1a3", "Ednrb", "Aqp4", "Slc39a12", 
+"Colec12", "Slc1a3", "Pdgfd", "Gli3", "Vcan", "Sox6", "Aldoc", "Nnat", "Mbp", 
+"Mag", "Plp1", "S100b", "Aldoc", "Cnp", "Lef1", "Notum", "Apcdd1", "Actb", 
+"Tmsb4x", "Dlc1", "Pdgfrb", "Ptgds", "Dcn", "Kl", "Ttr", "Clic6", "Slc13a4", 
+"Cfap54", "Ccdc153", "Cfap44", "Tmem212"
+), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim40-ListAllGenesFILTER.pdf", width=30, height=70)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gabra6", "Pax6","Calb1", "Slc1a6", "Car8","Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Klhl1", "Gfra2", "Aldh1a3", "Galntl6", "Kcnc2", "Pax2","Rgs6", "Tafa2","Slc18a2", "Ddc", "Slc6a4", "Tph2", "Ddc", "Slc18a2", "Zeb2", "Slc1a3","Aqp4", "Slc39a12", "Vcan", "Sox6", "Mbp", "Mag", "Plp1", "Lef1", "Apcdd1", "Ptgds", "Dcn", "Kl", "Ttr", "Clic6", "Slc13a4", "Cfap54", "Ccdc153", "Cfap44", "Tmem212"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+
+
+
+
+#### QC metrics investigation ####################################
+
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_nFeature_RNA-1stepIntegrationRegressNotRepeated-version4dim40.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "nFeature_RNA")
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_percentmt-1stepIntegrationRegressNotRepeated-version4dim40.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.mt")
+dev.off()  
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_percentrb-1stepIntegrationRegressNotRepeated-version4dim40.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.rb")
+dev.off()  
+
+#
+pdf("output/seurat/VlnPlot_QCmetrics_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-countMtRbRegression.pdf", width=20, height=5)
+VlnPlot(WT_Kcnc1_p14_CB_1step.sct,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+
+pdf("output/seurat/VlnPlot_QCmetrics_nFeature_RNA_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-countMtRbRegression.pdf", width=5, height=5)
+VlnPlot(WT_Kcnc1_p14_CB_1step.sct,features = c("nFeature_RNA")) +
+  ylim(0,2000)
+dev.off()
+
+pdf("output/seurat/VlnPlot_QCmetrics_nCount_RNA_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-countMtRbRegression.pdf", width=5, height=5)
+VlnPlot(WT_Kcnc1_p14_CB_1step.sct,features = c("nCount_RNA")) +
+  ylim(0,10000)
+dev.off()
+
+
+############################################################
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_splitCondition-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03.pdf", width=13, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE, split.by = "condition")
+dev.off()
+pdf("output/seurat/UMAP_WT_Kcnc1_splitReplicate-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE, split.by = "replicate")
+dev.off()
+
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_Phase-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03.pdf", width=6, height=5)
+DimPlot(WT_Kcnc1_p14_CB_1step.sct, group.by= "Phase") & 
+  theme(plot.title = element_text(size=10))
+dev.off()  
+
+
+
+# WT vs Kcnc1 gene expr ############
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-Kcnc1.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1"),  cols = c("grey", "red"), max.cutoff = 1) #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-Kcnc1split.pdf", width=12, height=6)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1"),  cols = c("grey", "red"), split.by = "condition", max.cutoff = 1) #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-Kcnc1234-split.pdf", width=12, height=20)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1","Kcnc2", "Kcnc3", "Kcnc4"),  cols = c("grey", "red"), split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+
+
+# save ##################
+
+## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_numeric.rds") 
+#WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_numeric.rds") # 
+
+## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_label.rds") 
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_label.rds") # 
+set.seed(42)
+##########
+
+
+# Unbiased cell type marker genes
+Idents(WT_Kcnc1_p14_CB_1step.sct) <- "seurat_clusters"
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
+WT_Kcnc1_p14_CB_1step.sct <- NormalizeData(WT_Kcnc1_p14_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p14_CB_1step.sct)
+WT_Kcnc1_p14_CB_1step.sct <- ScaleData(WT_Kcnc1_p14_CB_1step.sct, features = all.genes) # zero-centres and scales it
+
+all_markers <- FindAllMarkers(WT_Kcnc1_p14_CB_1step.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all_markers, file = "output/seurat/srat_WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+
+############ V2 naming  version4dim40kparam30res03 (output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_numeric.rds )
+WT_Kcnc1_p14_CB_1step.sct$Purkinje <- NULL
+WT_Kcnc1_p14_CB_1step.sct$Golgi <- NULL
+Idents(WT_Kcnc1_p14_CB_1step.sct) <- "seurat_clusters"
+
+
+Cluster1= Granule = Gabra6, Pax6 
+Cluster2= MLI1: Sorcs3, Ptprk 
+Cluster3= PLI23: Galntl6, Kcnc2
+Cluster4= Granule = Gabra6, Pax6 
+Cluster5= Granule = Gabra6, Pax6 
+Cluster6= Granule = Gabra6, Pax6 
+Cluster7= MLI2: Nxph1, Cdh22
+Cluster8= Endothelial: Lef1, Apcdd1, Notum
+Cluster9= Bergman: Zeb2 , Slc1a3
+Cluser10= Astrocyte: Aqp4, Slc39a12
+Cluster11= PLI12: Klhl1, Gfra2, Aldh1a3
+Cluster12= Oligodendrocyte: Mbp, Mag, Plp1
+Cluster13= Meningeal: Ptgds, Dcn, 
+Cluster14= Purkinje: Calb1, Slc1a6, Car8
+Cluster15= Golgi: Pax2,, Sgcd 
+Cluster16= Unipolar Brush Rgs6, Tafa2
+Cluster17= ChoroidPlexus : Kl, Ttr, Clic6, Slc13a4
+
+
+new.cluster.ids <- c(
+  "Granule_1",
+  "MLI1",
+  "PLI23",
+  "Granule_2",
+  "Granule_3",
+  "Granule_4",
+  "MLI2",
+  "Endothelial",
+  "Bergman",
+  "Astrocyte",
+  "PLI12",
+  "Oligodendrocyte",
+  "Meningeal",
+  "Purkinje",
+  "Golgi",
+  "UnipolarBrush",
+  "ChoroidPlexus"
+)
+
+names(new.cluster.ids) <- levels(WT_Kcnc1_p14_CB_1step.sct)
+WT_Kcnc1_p14_CB_1step.sct <- RenameIdents(WT_Kcnc1_p14_CB_1step.sct, new.cluster.ids)
+WT_Kcnc1_p14_CB_1step.sct$cluster.annot <- Idents(WT_Kcnc1_p14_CB_1step.sct) # create a new slot in my seurat object
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB_1step_version4dim40kparam30res03_label.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+dev.off()
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB_1step_version4dim40kparam30res03_noSplit_label.pdf", width=9, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5)
+dev.off()
+
+
+XXXY BELOW NOT RUN, marker and cluster name as been updated tho
+
+# All in dotplot
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
+
+
+
+Cluster1= Granule = Gabra6, Pax6 
+Cluster4= Granule = Gabra6, Pax6 
+Cluster5= Granule = Gabra6, Pax6 
+Cluster6= Granule = Gabra6, Pax6 
+Cluster2= MLI1: Sorcs3, Ptprk 
+Cluster7= MLI2: Nxph1, Cdh22
+Cluster11= PLI12: Klhl1, Gfra2, Aldh1a3
+Cluster3= PLI23: Galntl6, Kcnc2
+Cluster14= Purkinje: Calb1, Slc1a6, Car8
+Cluster15= Golgi: Pax2,, Sgcd 
+Cluster16= Unipolar Brush Rgs6, Tafa2
+Cluster12= Oligodendrocyte: Mbp, Mag, Plp1
+Cluser10= Astrocyte: Aqp4, Slc39a12
+Cluster9= Bergman: Zeb2 , Slc1a3
+Cluster8= Endothelial: Lef1, Apcdd1, Notum
+Cluster13= Meningeal: Ptgds, Dcn, 
+Cluster17= ChoroidPlexus : Kl, Ttr, Clic6, Slc13a4
+
+
+
+
+all_markers <- c(
+  "Gabra6", "Pax6" ,
+  "Sorcs3", "Ptprk" ,
+  "Nxph1", "Cdh22",
+  "Klhl1", "Gfra2", "Aldh1a3",
+  "Galntl6", "Kcnc2",
+  "Calb1", "Slc1a6", "Car8",
+  "Pax2", "Sgcd" ,
+  "Rgs6", "Tafa2",
+  "Mbp", "Mag", "Plp1",
+  "Aqp4", "Slc39a12",
+  "Zeb2" , "Slc1a3",
+  "Lef1", "Apcdd1", "Notum",
+  "Ptgds", "Dcn", 
+  "Kl", "Ttr", "Clic6", "Slc13a4"
+)
+
+
+
+levels(WT_Kcnc1_p14_CB_1step.sct) <- c(
+  "Granule_1" ,
+  "Granule_2" ,
+  "Granule_3" ,
+  "Granule_4" ,
+  "MLI1",
+  "MLI2",
+  "PLI12",
+  "PLI23",
+  "Purkinje",
+  "Golgi",
+  "UnipolarBrush",
+  "Oligodendrocyte",
+  "Astrocyte",
+  "Bergman",
+  "Endothelial",
+  "Meningeal", 
+  "ChoroidPlexus"
+)
+
+
+
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CB_1step_version4dim40kparam30res03_label.pdf", width=11, height=4.5)
+DotPlot(WT_Kcnc1_p14_CB_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
+dev.off()
+
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CB_1step_version4dim40kparam30res03_label_vertical.pdf", width=11, height=4.5)
+DotPlot(WT_Kcnc1_p14_CB_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
+dev.off()
+
+
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03-ListDotPlot.pdf", width=30, height=70)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = all_markers, max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03-Kcnc1.pdf", width=6, height=6)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "Kcnc1", cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
+
+
+
+# WT vs Kcnc1
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
+WT_Kcnc1_p14_CB_1step.sct <- NormalizeData(WT_Kcnc1_p14_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p14_CB_1step.sct)
+WT_Kcnc1_p14_CB_1step.sct <- ScaleData(WT_Kcnc1_p14_CB_1step.sct, features = all.genes) # zero-centres and scales it
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03-Kcnc1-split.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03-Gria1-split.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gria1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03-Slc1a2-split.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Slc1a2"), max.cutoff = 1,  cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03-mt-Nd4.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("mt-Nd4"), cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03-Apoe.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Apoe"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+
+# Vln Plot WT vs Kcnc1
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
+
+cell_types <- c(   "Granule", 
+  "MLI1", 
+  "MLI2", 
+  "PLI12",
+  "PLI23", 
+  "Golgi",
+  "Unipolar_Brush",
+  "Purkinje",
+  "Astrocyte",
+  "Bergman_Glia", 
+  "Endothelial",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Oligodendrocyte",
+  "Unknown")
+WT_Kcnc1_p14_CB_1step.sct$cluster.annot <- factor(
+  WT_Kcnc1_p14_CB_1step.sct$cluster.annot, 
+  levels = cell_types
+)
+
+
+pdf("output/seurat/VlnPlot_SCT_WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015-Kcnc1-split.pdf", width=8, height=4)
+VlnPlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1"),split.by = "condition", group.by = "cluster.annot")
+dev.off()
+
+
+
+
+
+## p14 cell type proportion ###############################
+### count nb of cells in each cluster
+WT_p14_CB_Rep1 = table(Idents(WT_Kcnc1_p14_CB_1step.sct)[WT_Kcnc1_p14_CB_1step.sct$orig.ident == "WT_p14_CB_Rep1"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p14",
+             replicate= "Rep1")
+WT_p14_CB_Rep2 = table(Idents(WT_Kcnc1_p14_CB_1step.sct)[WT_Kcnc1_p14_CB_1step.sct$orig.ident == "WT_p14_CB_Rep2"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p14",
+             replicate= "Rep2")
+WT_p14_CB_Rep3 = table(Idents(WT_Kcnc1_p14_CB_1step.sct)[WT_Kcnc1_p14_CB_1step.sct$orig.ident == "WT_p14_CB_Rep3"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p14",
+             replicate= "Rep3")
+
+Kcnc1_p14_CB_Rep1 = table(Idents(WT_Kcnc1_p14_CB_1step.sct)[WT_Kcnc1_p14_CB_1step.sct$orig.ident == "Kcnc1_p14_CB_Rep1"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p14",
+             replicate= "Rep1")
+Kcnc1_p14_CB_Rep2 = table(Idents(WT_Kcnc1_p14_CB_1step.sct)[WT_Kcnc1_p14_CB_1step.sct$orig.ident == "Kcnc1_p14_CB_Rep2"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p14",
+             replicate= "Rep2")
+Kcnc1_p14_CB_Rep3 = table(Idents(WT_Kcnc1_p14_CB_1step.sct)[WT_Kcnc1_p14_CB_1step.sct$orig.ident == "Kcnc1_p14_CB_Rep3"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p14",
+             replicate= "Rep3")
+
+
+p14_CB = WT_p14_CB_Rep1 %>%
+  bind_rows(WT_p14_CB_Rep2) %>%
+  bind_rows(WT_p14_CB_Rep3) %>%
+  bind_rows(Kcnc1_p14_CB_Rep1) %>%
+  bind_rows(Kcnc1_p14_CB_Rep2) %>%
+  bind_rows(Kcnc1_p14_CB_Rep3) %>%
+  as_tibble()
+  
+
+
+
+### Keeping all replicates
+p14_CB_prop = p14_CB %>%
+  group_by(replicate, genotype) %>%
+  mutate(total_count = sum(count)) %>%
+  ungroup() %>%
+  mutate(proportion = (count / total_count) * 100)
+
+p14_CB_prop$genotype <-
+  factor(p14_CB_prop$genotype,
+         c("WT", "Kcnc1"))
+
+pdf("output/seurat/histogramProp_WT_Kcnc1_p14_CB_1step_version2dim45kparam10res015.pdf", width=7, height=4)
+ggbarplot(p14_CB_prop, x = "cluster", y = "proportion", fill = "genotype",
+                  color = "genotype", palette = c("black", "blue"),
+                  position = position_dodge(0.8), # Separate bars by genotype
+                  add = "mean_se", # Add error bars
+                  lab.pos = "out", lab.size = 3) +
+  stat_compare_means(aes(group = genotype), method = "t.test", label = "p.signif") +
+  theme_bw() +
+  labs(x = "Cell Type (Cluster)", y = "Cell Proportion (%)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
+
+# differential expressed genes across conditions
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+# --> This is very long and has been run in slurm job
+
+
+# DEGs number in dotplot
+DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
+## List of cell types
+cell_types <- c(   "Granule", 
+  "MLI1", 
+  "MLI2", 
+  "PLI12",
+  "PLI23", 
+  "Golgi",
+  "Unipolar_Brush",
+  "Purkinje",
+  "Astrocyte",
+  "Bergman_Glia", 
+  "Endothelial",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Oligodendrocyte",
+  "Unknown")
+## Loop through each cell type to count the number of significant DEGs
+for (cell_type in cell_types) {
+  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST.txt", sep = "")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
+  num_degs <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.15 | deg_data$avg_log2FC < -0.15)) ## Count the number of significant DEGs
+  DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
+}
+## Dotplot
+DEG_count= DEG_count %>%
+  mutate(Cell_Type = factor(Cell_Type, levels = c( 
+"Granule", 
+  "MLI1", 
+  "MLI2", 
+  "PLI12",
+  "PLI23", 
+  "Golgi",
+  "Unipolar_Brush",
+  "Purkinje",
+  "Astrocyte",
+  "Bergman_Glia", 
+  "Endothelial",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Oligodendrocyte",
+  "Unknown") ) ) 
+DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = rev(levels(DEG_count$Cell_Type)))
+
+# Generate the dot plot
+pdf("output/seurat/Dotplot_DEG_count_WT_Kcnc1_p14_CB_1step_DEG_MAST_padj05fc015_numeric_version2.pdf", width=9, height=4)
+ggplot(DEG_count, aes(x = 1, y = Cell_Type, color = Cell_Type)) +
+  geom_point(aes(size = Num_DEGs), alpha = 0.8) +
+  scale_size(range = c(2, 10)) +
+  theme_void() + # Removes all gridlines, axes, and background elements
+  theme(
+    axis.text.x = element_blank(), # Removes x-axis labels
+    axis.ticks.x = element_blank(), # Removes x-axis ticks
+    axis.title.x = element_blank(), # Removes x-axis title
+    axis.text.y = element_text(size = 10, hjust = 0),
+    axis.title = element_text(size = 12, face = "bold"),
+    legend.position = "left", # Keeps the legend visible
+    legend.title = element_text(size = 12, face = "bold"), # Adjusts legend title style
+    legend.text = element_text(size = 10) # Adjusts legend text style
+  ) +
+  labs(
+    y = "Cell Type",
+    color = "Cell Type",
+    size = "Number of DEGs"
+  )
+dev.off()
+
+
+
+
+
+
+# DEGs number colored in a UMAP
+Idents(WT_Kcnc1_p14_CB_1step.sct) <- "cluster.annot"
+
+DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
+## List of cell types
+cell_types <- c(   "Granule", 
+  "MLI1", 
+  "MLI2", 
+  "PLI12",
+  "PLI23", 
+  "Golgi",
+  "Unipolar_Brush",
+  "Purkinje",
+  "Astrocyte",
+  "Bergman_Glia", 
+  "Endothelial",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Oligodendrocyte",
+  "Unknown")
+## Loop through each cell type to count the number of significant DEGs
+for (cell_type in cell_types) {
+  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST.txt", sep = "") # CHANGE FILE HERE
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
+  num_degs <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.25 | deg_data$avg_log2FC < -0.25)) ## Count the number of significant DEGs
+  DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
+}
+
+DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = c(    "Granule", 
+  "MLI1", 
+  "MLI2", 
+  "PLI12",
+  "PLI23", 
+  "Golgi",
+  "Unipolar_Brush",
+  "Purkinje",
+  "Astrocyte",
+  "Bergman_Glia", 
+  "Endothelial",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Oligodendrocyte",
+  "Unknown")) 
+  
+  
+# Add DEG information to my seurat object - DEG_count
+cell_clusters <- WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot
+names(cell_clusters) <- rownames(WT_Kcnc1_p14_CB_1step.sct@meta.data)
+DEG_named_vector <- DEG_count$Num_DEGs[match(cell_clusters, DEG_count$Cell_Type)]
+names(DEG_named_vector) <- names(cell_clusters)
+# Integrate DEG values into the Seurat object
+WT_Kcnc1_p14_CB_1step.sct <- AddMetaData(WT_Kcnc1_p14_CB_1step.sct, metadata = DEG_named_vector, col.name = "DEG")
+
+# Add values on the heatmap
+## Extract UMAP coordinates
+umap_coordinates <- as.data.frame(WT_Kcnc1_p14_CB_1step.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot
+## Calculate cluster centers
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(DEG_count %>% dplyr::rename( "cluster"="Cell_Type"))
+## Create a UMAP plot colored by DEG values, with cluster DEG counts as text annotations
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CB_1step_DEG_MAST_padj05fc025_numeric_version2.pdf", width=6, height=6)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "DEG", pt.size = 0.5, reduction = "umap") +
+  scale_colour_viridis(option="magma") + # option="magma"
+  geom_text(data = cluster_centers, aes(x = UMAP_1, y = UMAP_2, label = Num_DEGs), 
+            size = 4, color = "red", fontface = "bold") 
+dev.off()
+
+
+
+
+# GSEA output colored in a UMAP
+## Pathway of neurodegeneration
+
+
+p14_correct_List4_PathwaysOfNeurodegeneration <- read.table("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST-List4.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "PathwaysOfNeurodegeneration")
+## Add NES and pval information to the Seurat object metadata
+WT_Kcnc1_p14_CB_1step.sct@meta.data$NES <- p14_correct_List4_PathwaysOfNeurodegeneration$NES[match(WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot, 
+                                                                       p14_correct_List4_PathwaysOfNeurodegeneration$cluster)]
+WT_Kcnc1_p14_CB_1step.sct@meta.data$pval <- p14_correct_List4_PathwaysOfNeurodegeneration$pval[match(WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot, 
+                                                                         p14_correct_List4_PathwaysOfNeurodegeneration$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with pval < 0.05 as grey
+WT_Kcnc1_p14_CB_1step.sct@meta.data$NES_colored <- ifelse(WT_Kcnc1_p14_CB_1step.sct@meta.data$pval > 0.05, NA, 
+                                                          WT_Kcnc1_p14_CB_1step.sct@meta.data$NES)                                                       
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(WT_Kcnc1_p14_CB_1step.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(p14_correct_List4_PathwaysOfNeurodegeneration, by = c("cluster" = "cluster"))
+## Format NES values to two decimal places
+cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CB_1step_MAST_PathwaysOfNeurodegeneration_version2.pdf", width = 6, height = 6)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
+  scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
+  geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+## REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION
+p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION <- read.table("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST-List4.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")
+## Add NES and pval information to the Seurat object metadata
+WT_Kcnc1_p14_CB_1step.sct@meta.data$NES <- p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$NES[match(WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot, 
+                                                                       p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$cluster)]
+WT_Kcnc1_p14_CB_1step.sct@meta.data$pval <- p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$pval[match(WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot, 
+                                                                         p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with pval < 0.05 as grey
+WT_Kcnc1_p14_CB_1step.sct@meta.data$NES_colored <- ifelse(WT_Kcnc1_p14_CB_1step.sct@meta.data$pval > 0.05, NA, 
+                                                          WT_Kcnc1_p14_CB_1step.sct@meta.data$NES)                                                       
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(WT_Kcnc1_p14_CB_1step.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION, by = c("cluster" = "cluster"))
+## Format NES values to two decimal places
+cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CB_1step_MAST_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION_version2.pdf", width = 6, height = 6)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
+  scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
+  geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+XXXXXXXXXXXXXXXXXXXXXXX NOT DONE DOWN
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+
+# SCPA
+
+# Compare WT and cYAPKO using SCPA ##########################################
+
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") 
+library("SCPA")
+library("circlize")
+library("magrittr")
+library("msigdb")
+library("msigdbr")
+library("ComplexHeatmap")
+library("ggrepel")
+library("ggpubr")
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA" # Recommended 
+
+
+
+# Test different Pathway collections and generate enrichment plot for each cell types (C2 = Pathway, C5 = ontology )
+## import Pathways
+pathways <- msigdbr("Mus musculus", "C5") %>%          # !!!!!! CHANGE HERE PATHWAYS !!!!!!
+format_pathways()
+names(pathways) <- sapply(pathways, function(x) x$Pathway[1]) # just to name the list, so easier to visualise
+
+# Code to save output for each cell type comparison
+clusters = c(
+"Granular_1", "Granular_2", "Granular_3", "Granular_4", "Granular_5",
+  "Interneuron", "MLI1", "MLI2", "PLI", "Golgi", "Unipolar_Brush",
+  "Purkinje", "Astrocyte", "Bergmann_Glia", "Oligodendrocyte", "OPC",
+  "Mix_Microglia_Meningeal", "Endothelial", "Endothelial_Mural", "Choroid_Plexus"
+)
+### Loop through each value
+for (cluster in clusters) {
+  #### Extract data for WT and cYAPKO based on current value
+  WT <- seurat_extract(WT_Kcnc1_p14_CB_1step.sct,
+                       meta1 = "condition", value_meta1 = "WT",
+                       meta2 = "cluster.annot", value_meta2 = cluster)
+
+  Kcnc1 <- seurat_extract(WT_Kcnc1_p14_CB_1step.sct,
+                           meta1 = "condition", value_meta1 = "Kcnc1",
+                           meta2 = "cluster.annot", value_meta2 = cluster)
+
+  ##### Compare pathways
+  WT_cYAPKO <- compare_pathways(samples = list(WT, Kcnc1),
+                                pathways = pathways,
+                                parallel = TRUE, cores = 8)
+
+  ##### Write to file using the current value in the filename
+  output_filename <- paste0("output/Pathway/SCPA_SB_p14_C5_", cluster, ".txt")       # !!!!!! CHANGE HERE PATHWAYS !!!!!!
+  write.table(WT_cYAPKO, file = output_filename, sep = "\t", quote = FALSE, row.names = FALSE)
+}
+#--> Long ~2hrs
+
+
+
+## load all the comparison for each cell type (FC qval information)
+clusters = c(
+"Granular_1", "Granular_2", "Granular_3", "Granular_4", "Granular_5",
+  "Interneuron", "MLI1", "MLI2", "PLI", "Golgi", "Unipolar_Brush",
+  "Purkinje", "Astrocyte", "Bergmann_Glia", "Oligodendrocyte", "OPC",
+  "Mix_Microglia_Meningeal", "Endothelial", "Endothelial_Mural", "Choroid_Plexus"
+)
+## import with a function
+### A function to read and add the cluster column
+read_and_add_cluster <- function(cluster) {
+  path <- paste0("output/Pathway/SCPA_CB_p14_C2_", cluster, ".txt")
+  df <- read.delim(path, header = TRUE) %>%
+    add_column(cluster = cluster)
+  return(df)
+}
+### Use lapply to apply the function on each cluster and bind all data frames together
+all_data <- bind_rows(lapply(clusters, read_and_add_cluster)) %>% as_tibble()
+
+## Filter pathway of interest
+pathways <- c(
+  "WP_NEURODEGENERATION_WITH_BRAIN_IRON_ACCUMULATION_NBIA_SUBTYPES_PATHWAY",
+  "WP_NEUROINFLAMMATION_AND_GLUTAMATERGIC_SIGNALING",
+  "KEGG_ALZHEIMERS_DISEASE",
+  "WP_ALZHEIMERS_DISEASE",
+  "KEGG_PARKINSONS_DISEASE",
+  "WP_PARKINSONS_DISEASE_PATHWAY",
+  "KEGG_HUNTINGTONS_DISEASE",
+  "WP_ERK_PATHWAY_IN_HUNTINGTONS_DISEASE",
+  "KEGG_AMYOTROPHIC_LATERAL_SCLEROSIS_ALS",
+  "WP_AMYOTROPHIC_LATERAL_SCLEROSIS_ALS",
+  "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION",
+  "REACTOME_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "KEGG_NEUROACTIVE_LIGAND_RECEPTOR_INTERACTION",
+  "REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS",
+  "REACTOME_POTASSIUM_CHANNELS",
+  "REACTOME_ION_CHANNEL_TRANSPORT",
+  "KEGG_CALCIUM_SIGNALING_PATHWAY",
+  "REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS",
+  "REACTOME_ACETYLCHOLINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_DOPAMINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_GLUTAMATE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_NOREPINEPHRINE_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "REACTOME_SEROTONIN_NEUROTRANSMITTER_RELEASE_CYCLE",
+  "ALCALA_APOPTOSIS",
+  "KEGG_APOPTOSIS",
+  "REACTOME_APOPTOSIS",
+  "REACTOME_INTRINSIC_PATHWAY_FOR_APOPTOSIS",
+  "WP_APOPTOSIS",
+  "WP_APOPTOSIS_MODULATION_AND_SIGNALING",
+  "REACTOME_DEATH_RECEPTOR_SIGNALLING",
+  "REACTOME_DISEASES_OF_PROGRAMMED_CELL_DEATH",
+  "REACTOME_FOXO_MEDIATED_TRANSCRIPTION_OF_CELL_DEATH_GENES",
+  "REACTOME_PROGRAMMED_CELL_DEATH",
+  "REACTOME_TP53_REGULATES_TRANSCRIPTION_OF_CELL_DEATH_GENES",
+  "BIOCARTA_DEATH_PATHWAY",
+  "REACTOME_DETOXIFICATION_OF_REACTIVE_OXYGEN_SPECIES",
+  "WP_PKCGAMMA_CALCIUM_SIGNALING_PATHWAY_IN_ATAXIA"
+)
+classes <- c(
+  rep("Neurodegeneration", 10),
+  rep("Neuronal_Activity", 13),
+  rep("Apoptosis", 12),
+  "ROS",
+  "Ataxia"
+)
+colors <- c(
+  rep("Purple", 10),
+  rep("Green", 13),
+  rep("Dark Orange", 12),
+  "Red",
+  "Blue"
+)
+pathway_tibble <- tibble(
+  Pathway = pathways,
+  Class = classes,
+  Color = colors
+)
+
+pathway_all_data = pathway_tibble %>%
+  left_join(all_data)
+
+pathway_all_data$Pathway <- factor(pathway_all_data$Pathway, levels = pathways)
+
+
+### dotplot
+pdf("output/Pathway/dotplot_SCPA_CB_p14_C2_selectedPathwayV1.pdf", width=12, height=8)
+ggplot(pathway_all_data, aes(x = cluster, y = Pathway)) +
+  geom_point(aes(size = ifelse(qval > 1.4, qval, NA), color = Color), na.rm = TRUE) +
+  scale_size_continuous(range = c(3, 10), breaks = c(1.5, 2, 3, 4), name = "qval") +
+  scale_color_identity() +
+  theme_bw() +
+  labs(x = "Cluster",
+       y = "Pathway",
+       color = "Class Color") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+        legend.position = "right") +
+  guides(color = guide_legend(title = "Class Color", override.aes = list(size = 5)),
+         size = guide_legend(title = "qval"))
+dev.off()
+
+
+XXXXXXXXXXXXXXXXXXXXXXX NOT DONE UP
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+
+
+
+# GSEA plot
+library("fgsea")
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("Granule", 
+  "MLI1", 
+  "MLI2", 
+  "PLI12",
+  "PLI23", 
+  "Golgi",
+  "Unipolar_Brush",
+  "Purkinje",
+  "Astrocyte",
+  "Bergman_Glia", 
+  "Endothelial",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Oligodendrocyte",
+  "Unknown")
+# Loop over each cluster type to read data and assign to a variable
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1)
+  assign(cluster, data)
+}
+
+## load list of genes to test
+### List1
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURON_INTRINSIC_APOPTOTIC_SIGNALING_PATHWAY_IN_RESPONSE_TO_OXIDATIVE_STRESS = read_table(file = "output/Pathway/geneList_GOBP_NEURON_INTRINSIC_APOPTOTIC.txt")$Genes,
+  GOBP_NEUROINFLAMMATORY_RESPONSE = read_table(file = "output/Pathway/geneList_GOBP_NEUROINFLAMMATORY_RESPONSE.txt")$Genes
+)
+### List2
+fgsea_sets <- list(
+  GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION = read_table(file = "output/Pathway/geneList_GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  GOBP_NEURONAL_SIGNAL_TRANSDUCTION = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_SIGNAL_TRANSDUCTION.txt")$Genes,
+  REACTOME_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_POTASSIUM_CHANNELS.txt")$Genes,
+  REACTOME_ION_CHANNEL_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_ION_CHANNEL_TRANSPORT.txt")$Genes
+)
+### List3
+fgsea_sets <- list(
+  REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING = read_table(file = "output/Pathway/geneList_REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING.txt")$Genes,
+  REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS = read_table(file = "output/Pathway/geneList_REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes,
+  REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS.txt")$Genes
+)
+### List4
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes
+)
+
+
+## Rank genes based on FC
+genes <- MLI2 %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+  rownames_to_column(var = "gene") %>%
+  arrange(desc(avg_log2FC)) %>% 
+  dplyr::select(gene, avg_log2FC)
+
+ranks <- deframe(genes)
+head(ranks)
+## Run GSEA
+
+fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 1000)
+fgseaResTidy <- fgseaRes %>%
+  as_tibble() %>%
+  arrange(desc(ES))
+fgseaResTidy %>% 
+  dplyr::select(-leadingEdge, -NES, -nMoreExtreme) %>% 
+  arrange(padj) %>% 
+  head()
+
+
+## plot GSEA
+pdf("output/Pathway/GSEA_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST-REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION-MLI2.pdf", width=5, height=3)
+plotEnrichment(fgsea_sets[["REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION"]],
+               ranks) + labs(title="REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION-MLI2") +
+               theme_bw()
+dev.off()
+
+
+# Save output table for all pathway and cluster
+## Define the list of cluster types
+cluster_types <- c("Granule", 
+  "MLI1", 
+  "MLI2", 
+  "PLI12",
+  "PLI23", 
+  "Golgi",
+  "Unipolar_Brush",
+  "Purkinje",
+  "Astrocyte",
+  "Bergman_Glia", 
+  "Endothelial",
+  "Meningeal",
+  "Choroid_Plexus",
+  "Oligodendrocyte",
+  "Unknown")
+
+## Initialize an empty list to store the results for each cluster type
+all_results <- list()
+## Loop over each cluster type
+for (cluster in cluster_types) {
+  
+  # Extract genes for the current cluster
+  genes <- get(cluster) %>% 
+    rownames_to_column(var = "gene") %>%
+    arrange(desc(avg_log2FC)) %>% 
+    dplyr::select(gene, avg_log2FC)
+  
+  ranks <- deframe(genes)
+  
+  # Run GSEA for the current cluster
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 10000)
+  fgseaResTidy <- fgseaRes %>%
+    as_tibble() %>%
+    arrange(desc(ES))
+  
+  # Extract summary table and add cluster column
+  fgseaResTidy_summary = fgseaResTidy %>% 
+    dplyr::select(pathway, pval, padj, ES, size, NES, leadingEdge) %>%
+    mutate(cluster = cluster) %>%
+    arrange(padj) %>% 
+    head()
+  
+  # Store results in the list
+  all_results[[cluster]] <- fgseaResTidy_summary
+}
+## Combine results from all cluster types into one table
+final_results <- bind_rows(all_results, .id = "cluster") %>%
+  mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
+
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST-List4gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+
+# Heatmap all GSEA
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST-List4.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+### if need reorder terms
+final_results$pathway <- factor(final_results$pathway, levels = c("PathwaysOfNeurodegeneration", "GOBP_NEURONAL_ACTION_POTENTIAL", "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")) 
+
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST_ordered-List4.pdf", width=10, height=3)
+ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+```
+
+
+
+
+
+
+
+###### CellChat Cell type verification  - V2 one granule pop
+
+Let's use CellChat to confirm our cell type annotation
+
+
+```bash
+conda activate CellChat
+```
+
+
+
+Follow [Full tutorial for CellChat analysis of a single dataset with detailed explanation of each function](https://htmlpreview.github.io/?https://github.com/jinworks/CellChat/blob/master/tutorial/CellChat-vignette.html)
+
+
+Lets do a first test with only **WT cells from p14**
+
+
+```R
+# packages
+library("Seurat")
+library("CellChat")
+library("patchwork")
+library("presto")
+library("NMF")
+library("ggalluvial")
+options(stringsAsFactors = FALSE)
+set.seed(42)
+
+
+# import seurat object
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_label.rds") # 
+
+
+
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
+WT_Kcnc1_p14_CB_1step.sct <- NormalizeData(WT_Kcnc1_p14_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p14_CB_1step.sct)
+WT_Kcnc1_p14_CB_1step.sct <- ScaleData(WT_Kcnc1_p14_CB_1step.sct, features = all.genes) # zero-centres and scales it
+
+# Subset to keep WT cells only 
+WT_p14 <- subset(WT_Kcnc1_p14_CB_1step.sct, cells = WhichCells(WT_Kcnc1_p14_CB_1step.sct, expression = condition == "WT"))
+# Subset to keep only cell type of interest
+cells_to_keep <- WhichCells(WT_p14, expression = cluster.annot %in% c(
+  "Granule_1" ,
+  "Granule_2" ,
+  "Granule_3" ,
+  "Granule_4" ,
+  "MLI1",
+  "MLI2",
+  "PLI12",
+  "PLI23",
+  "Purkinje",
+  "Golgi",
+  "UnipolarBrush",
+  "Oligodendrocyte",
+  "Astrocyte",
+  "Bergman"
+  #"Endothelial",
+  #"Meningeal", 
+  #"ChoroidPlexus"
+))
+WT_p14 <- subset(WT_p14, cells = cells_to_keep)
+WT_p14$cluster.annot <- droplevels(WT_p14$cluster.annot)
+table(WT_p14$cluster.annot)  # Should no longer show empty clusters
+
+# change order
+WT_p14$cluster.annot <- factor(x = WT_p14$cluster.annot, levels = c(  "Granule_1", "Granule_2", "Granule_3", "Granule_4" , "UnipolarBrush",
+  "MLI1",  "MLI2",  "PLI12",  "PLI23", "Golgi", "Purkinje",
+  "Oligodendrocyte", "Astrocyte", "Bergman"))
+
+
+
+# Create CellChat object
+data.input <- WT_p14[["RNA"]]@data # normalized data matrix
+# For Seurat version >= “5.0.0”, get the normalized data via `seurat_object[["RNA"]]$data`
+labels <- Idents(WT_p14)
+meta <- data.frame(labels = labels, row.names = names(labels)) # create a dataframe of the cell labels
+cellchat <- createCellChat(object = WT_p14, group.by = "cluster.annot", assay = "RNA")
+
+# import ligand receptor information
+CellChatDB <- CellChatDB.mouse
+dplyr::glimpse(CellChatDB$interaction) # Show the structure of the database
+
+#--> HERE WE CAN TRY DIFFERENT DATABASE! I pick the ChatGPT recommended on. But could try other!
+# use a subset of CellChatDB for cell-cell communication analysis
+#CellChatDB.use <- subsetDB(CellChatDB, search = "Secreted Signaling", key = "annotation") 
+#CellChatDB.use <- CellChatDB # use all CellChatDB for cell-cell communication analysis
+CellChatDB.use <- subsetDB(CellChatDB, search = "Non-protein Signaling", key = "annotation") # for neuron-neuron comm
+
+cellchat@DB <- CellChatDB.use # set the used database in the object
+
+# Preprocessing the expression data for cell-cell communication analysis
+## subset the expression data of signaling genes for saving computation cost
+cellchat <- subsetData(cellchat) # This step is necessary even if using the whole database
+#future::plan("multisession", workers = 4) # do parallel
+cellchat <- identifyOverExpressedGenes(cellchat)
+cellchat <- identifyOverExpressedInteractions(cellchat)
+#--> The number of highly variable ligand-receptor pairs used for signaling inference is 948
+
+
+# Part II: Inference of cell-cell communication network
+# --> IMPORTANT: We can reduce threshold with type = "truncatedMean" and trim = 0.1 = 10% = average gene expression is zero if the percent of expressed cells in one group is less than 10% (Default is 25%)
+
+cellchat <- computeCommunProb(cellchat, type = "triMean") # By default type = "triMean", producing fewer but stronger interactions
+#cellchat <- computeCommunProb(cellchat, type = "truncatedMean", trim = 0.1) # By default type = "triMean", producing fewer but stronger interactions
+
+cellchat <- filterCommunication(cellchat, min.cells = 10) # filter out the cell-cell communication if there are only few cells in certain cell groups. By default, the minimum number of cells required in each cell group for cell-cell communication is 10.
+# Extract the inferred cellular communication network as a data frame
+df.net <- subsetCommunication(cellchat)
+
+# Infer the cell-cell communication at a signaling pathway level
+cellchat <- computeCommunProbPathway(cellchat) # The inferred intercellular communication network of each ligand-receptor pair and each signaling pathway is stored in the slot ‘net’ and ‘netP’, respectively.
+
+# Calculate the aggregated cell-cell communication network
+cellchat <- aggregateNet(cellchat)
+
+pdf("output/CellChat/netVisual_circle-p14_CB_WT-version4dim40kparam30res03-default-NonproteinSignaling-filterCells.pdf", width=20, height=20)
+groupSize <- as.numeric(table(cellchat@idents))
+par(mfrow = c(1,2), xpd=TRUE)
+netVisual_circle(cellchat@net$count, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Number of interactions")
+netVisual_circle(cellchat@net$weight, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Interaction weights/strength")
+dev.off()
+
+
+pdf("output/CellChat/netVisual_circle-p14_CB_WT-version4dim40kparam30res03-cellType-default-NonproteinSignaling-filterCells.pdf", width=15, height=15)
+mat <- cellchat@net$weight
+par(mfrow = c(3,4), xpd=TRUE)
+for (i in 1:nrow(mat)) {
+  mat2 <- matrix(0, nrow = nrow(mat), ncol = ncol(mat), dimnames = dimnames(mat))
+  mat2[i, ] <- mat[i, ]
+  netVisual_circle(mat2, vertex.weight = groupSize, weight.scale = T, edge.weight.max = max(mat), title.name = rownames(mat)[i])
+}
+dev.off()
+
+
+
+
+# Specify group of interest 
+# Define the groups based on the cell type categorization
+# Define the groups based on the revised cell type categorization
+group.cellType <- rep(NA, length(levels(cellchat@idents)))
+names(group.cellType) <- levels(cellchat@idents)
+# Assign each cell type to a category
+group.cellType[c("Granule_1", "Granule_2", "Granule_3", "Granule_4" , "UnipolarBrush")] <- "Glutamatergic"
+group.cellType[c("MLI1",  "MLI2",  "PLI12",  "PLI23", "Golgi", "Purkinje")] <- "GABAergic"
+group.cellType[c("Oligodendrocyte", "Astrocyte", "Bergman")] <- "Non-neuronal"
+# Check if all assignments are done correctly
+print(group.cellType)
+names(group.cellType) <- levels(cellchat@idents)
+
+
+# Change order of cell type:
+# Reorder the levels of cellchat@idents according to the specified order
+cellchat@idents <- factor(cellchat@idents, levels = c(
+  "Granule_1", "Granule_2", "Granule_3", "Granule_4" , "UnipolarBrush",
+  "MLI1",  "MLI2",  "PLI12",  "PLI23", "Golgi", "Purkinje",
+  "Oligodendrocyte", "Astrocyte", "Bergman"
+)) # "ChoroidPlexus", "Ependymal", "Meningeal", "Endothelial"
+# Check if the levels are correctly ordered now
+print(levels(cellchat@idents))
+
+
+
+
+
+
+# Visualize each signaling pathway using Hierarchy plot, Circle plot or Chord diagram
+cellchat@netP$pathways # show pathway with signif interactions
+#--> FROM THIS PICK PATHWAY OF INTEREST
+
+pathways.show <- c("Glutamate") 
+pathways.show <- c("GABA-A") 
+pathways.show <- c("GABA-B") 
+pdf("output/CellChat/netVisual_aggregate-p14_CB_WT-version4dim40kparam30res03-GABAB-default-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+# Here we define `vertex.receive` so that the left portion of the hierarchy plot shows signaling to fibroblast and the right portion shows signaling to immune cells 
+vertex.receiver = seq(1,4) # a numeric vector. 
+netVisual_aggregate(cellchat, signaling = pathways.show,  vertex.receiver = vertex.receiver)
+# Circle plot
+par(mfrow=c(1,1))
+netVisual_aggregate(cellchat, signaling = pathways.show, layout = "circle")
+# Chord diagram
+par(mfrow=c(1,1))
+netVisual_aggregate(cellchat, signaling = pathways.show, layout = "chord")
+par(mfrow=c(1,1))
+netVisual_heatmap(cellchat, signaling = pathways.show, color.heatmap = "Reds")
+dev.off()
+
+
+
+# Chord diagram
+pathways.show <- c("Glutamate") 
+pathways.show <- c("GABA-A") 
+pathways.show <- c("GABA-B") 
+pdf("output/CellChat/netVisual_chord_cell-p14_CB_WT-version4dim40kparam30res03-GABAB-default-NonproteinSignaling-filterCells.pdf", width=10, height=10)
+# The cellchat function to visualize the chord diagram based on your defined groups
+netVisual_chord_cell(cellchat, signaling = pathways.show, group = group.cellType, title.name = paste0(pathways.show, " signaling network"))
+#> Plot the aggregated cell-cell communication network at the signaling pathway level
+dev.off()
+
+
+# Automatically save the plots of the all inferred network for quick exploration
+# Access all the signaling pathways showing significant communications
+pathways.show.all <- cellchat@netP$pathways
+# check the order of cell identity to set suitable vertex.receiver
+levels(cellchat@idents)
+vertex.receiver = seq(1,4)
+for (i in 1:length(pathways.show.all)) {
+  # Visualize communication network associated with both signaling pathway and individual L-R pairs
+  netVisual(cellchat, signaling = pathways.show.all[i], vertex.receiver = vertex.receiver, layout = "hierarchy")
+  # Compute and visualize the contribution of each ligand-receptor pair to the overall signaling pathway
+  gg <- netAnalysis_contribution(cellchat, signaling = pathways.show.all[i])
+  ggsave(filename=paste0("output/CellChat/",pathways.show.all[i], "_L-R_contribution.pdf"), plot=gg, width = 3, height = 2, units = 'in', dpi = 300)
+}
+# --> Not sure that was usefull...
+
+
+
+# Part IV: Systems analysis of cell-cell communication network
+## Compute and visualize the network centrality scores
+pathways.show <- c("Glutamate") 
+pathways.show <- c("GABA-A") 
+pathways.show <- c("GABA-B") 
+cellchat <- netAnalysis_computeCentrality(cellchat, slot.name = "netP") # the slot 'netP' means the inferred intercellular communication network of signaling pathways
+# Visualize the computed centrality scores using heatmap, allowing ready identification of major signaling roles of cell groups
+pdf("output/CellChat/netAnalysis_signalingRole_network-p14_CB_WT-version4dim40kparam30res03-GABAB-default-NonproteinSignaling-filterCells.pdf", width=10, height=10)
+netAnalysis_signalingRole_network(cellchat, signaling = pathways.show, width = 8, height = 2.5, font.size = 10) # , cluster.cols = TRUE
+dev.off()
+
+
+
+pdf("output/CellChat/netAnalysis_signalingRole_heatmap-p14_CB_WT-version4dim40kparam30res03-default-NonproteinSignaling-filterCells.pdf", width=10, height=6)
+# Signaling role analysis on the aggregated cell-cell communication network from all signaling pathways
+ht1 <- netAnalysis_signalingRole_heatmap(cellchat, pattern = "outgoing", height = 4,)
+ht2 <- netAnalysis_signalingRole_heatmap(cellchat, pattern = "incoming", height = 4)
+ht1 + ht2
+dev.off()
+
+
+# Identify global communication patterns to explore how multiple cell types and signaling pathways coordinate together
+##### outgoing #######
+## Here we run selectK to infer the number of patterns.
+pdf("output/CellChat/selectK-p14_CB_WT-version4dim40kparam30res03-default-outgoing-NonproteinSignaling.pdf", width=10, height=10)
+selectK(cellchat, pattern = "outgoing")
+dev.off()
+#--> Identify at which value the line drop down = 5 for `Secreted Signaling`; 5/7 for all DB=CellChatDB; 5 for NonproteinSignaling
+nPatterns = 4
+pdf("output/CellChat/netAnalysis_river-p14_CB_WT-version4dim40kparam30res03-default-outgoing-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+cellchat <- identifyCommunicationPatterns(cellchat, pattern = "outgoing", k = nPatterns)
+netAnalysis_river(cellchat, pattern = "outgoing")
+dev.off()
+pdf("output/CellChat/netAnalysis_dot-p14_CB_WT-version4dim40kparam30res03-default-outgoing-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+netAnalysis_dot(cellchat, pattern = "outgoing")
+dev.off()
+
+
+
+##### incoming #######
+## Here we run selectK to infer the number of patterns.
+pdf("output/CellChat/selectK-p14_CB_WT-version4dim40kparam30res03-default-incoming-NonproteinSignaling.pdf", width=10, height=10)
+selectK(cellchat, pattern = "incoming")
+dev.off()
+#--> Identify at which value the line drop down = 5 for `Secreted Signaling`; 5/7 for all DB=CellChatDB; 5 for NonproteinSignaling
+nPatterns = 5
+pdf("output/CellChat/netAnalysis_river-p14_CB_WT-version4dim40kparam30res03-default-incoming-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+cellchat <- identifyCommunicationPatterns(cellchat, pattern = "incoming", k = nPatterns)
+netAnalysis_river(cellchat, pattern = "incoming")
+dev.off()
+pdf("output/CellChat/netAnalysis_dot-p14_CB_WT-version4dim40kparam30res03-default-incoming-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+netAnalysis_dot(cellchat, pattern = "incoming")
+dev.off()
+
+
+
+
+# Identify signaling groups based on their functional similarity
+cellchat <- computeNetSimilarity(cellchat, type = "functional")
+cellchat <- netEmbedding(cellchat, type = "functional")
+cellchat <- netClustering(cellchat, type = "functional")
+# Visualization in 2D-space
+pdf("output/CellChat/netVisual_embedding-p14_CB_WT-version4dim40kparam30res03-default-functional-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+netVisual_embedding(cellchat, type = "functional", label.size = 3.5)
+dev.off()
+#--> High degree of functional similarity indicates major senders and receivers are similar, and it can be interpreted as the two signaling pathways or two ligand-receptor pairs exhibit similar and/or redundant roles
+
+# Part V: Save the CellChat object
+saveRDS(cellchat, file = "output/CellChat/p14_CB_WT-version4dim40kparam30res03-default-NonproteinSignaling-filterCells.rds")
+
+```
+
+--> Need to *use the NonproteinSignaling DB* to make it work (ie. show GABA for MLI12 and Glutamate for Granule)
 
 
 
@@ -23703,6 +25150,11 @@ dev.off()
 
 WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-version4dim20kparam10res0115.sct_V1_numeric.rds") # 
 set.seed(42)
+
+## saveRDS(WT_Kcnc1_p180_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CB_1step-version4dim20kparam10res0115.sct_V1_label.rds") 
+WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-version4dim20kparam10res0115.sct_V1_label.rds") # 
+set.seed(42)
+
 ##########
 
 
@@ -23765,7 +25217,8 @@ WT_Kcnc1_p180_CB_1step.sct <- RenameIdents(WT_Kcnc1_p180_CB_1step.sct, new.clust
 WT_Kcnc1_p180_CB_1step.sct$cluster.annot <- Idents(WT_Kcnc1_p180_CB_1step.sct) # create a new slot in my seurat object
 
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB_1step_version4dim20kparam10res0115_label.pdf", width=15, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB_1step_version4dim20kparam10res0115_label.pdf", width=15, height=6)pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB_1step_version4dim20kparam10res0115_label.pdf", width=15, height=6)
+#pdf("output/seurat/testt.pdf", width=15, height=6)
 DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
 dev.off()
 
@@ -24577,6 +26030,294 @@ dev.off()
 ```
 
 
+
+###### CellChat Cell type verification
+
+Let's use CellChat to confirm our cell type annotation
+
+
+```bash
+conda activate CellChat
+```
+
+
+
+Follow [Full tutorial for CellChat analysis of a single dataset with detailed explanation of each function](https://htmlpreview.github.io/?https://github.com/jinworks/CellChat/blob/master/tutorial/CellChat-vignette.html)
+
+
+
+
+```R
+# packages
+library("Seurat")
+library("CellChat")
+library("patchwork")
+library("presto")
+library("NMF")
+library("ggalluvial")
+options(stringsAsFactors = FALSE)
+set.seed(42)
+
+
+# import seurat object
+WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-version4dim20kparam10res0115.sct_V1_label.rds")
+set.seed(42)
+
+
+DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "RNA"
+WT_Kcnc1_p180_CB_1step.sct <- NormalizeData(WT_Kcnc1_p180_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p180_CB_1step.sct)
+WT_Kcnc1_p180_CB_1step.sct <- ScaleData(WT_Kcnc1_p180_CB_1step.sct, features = all.genes) # zero-centres and scales it
+
+# Subset to keep WT cells only 
+WT_p180 <- subset(WT_Kcnc1_p180_CB_1step.sct, cells = WhichCells(WT_Kcnc1_p180_CB_1step.sct, expression = condition == "WT"))
+# Subset to keep only cell type of interest
+cells_to_keep <- WhichCells(WT_p180, expression = cluster.annot %in% c(
+  "Granule",
+  "MLI1",
+  "MLI2",
+  "Astrocyte",
+  "PLI23",
+  "PLI12",
+ # "Endothelial",
+  "Bergman",
+  "UnipolarBrush",
+ # "Meningeal",
+ # "ChoroidPlexus",
+  "Golgi",
+  "OPC",
+  "Purkinje"
+))
+WT_p180 <- subset(WT_p180, cells = cells_to_keep)
+WT_p180$cluster.annot <- droplevels(WT_p180$cluster.annot)
+table(WT_p180$cluster.annot)  # Should no longer show empty clusters
+
+# change order
+WT_p180$cluster.annot <- factor(x = WT_p180$cluster.annot, levels = c(  "Granule", "UnipolarBrush",
+  "MLI1",  "MLI2",  "PLI12",  "PLI23", "Golgi", "Purkinje",
+  "OPC", "Astrocyte", "Bergman"))
+
+
+
+# Create CellChat object
+data.input <- WT_p180[["RNA"]]@data # normalized data matrix
+# For Seurat version >= “5.0.0”, get the normalized data via `seurat_object[["RNA"]]$data`
+labels <- Idents(WT_p180)
+meta <- data.frame(labels = labels, row.names = names(labels)) # create a dataframe of the cell labels
+cellchat <- createCellChat(object = WT_p180, group.by = "cluster.annot", assay = "RNA")
+
+# import ligand receptor information
+CellChatDB <- CellChatDB.mouse
+dplyr::glimpse(CellChatDB$interaction) # Show the structure of the database
+
+#--> HERE WE CAN TRY DIFFERENT DATABASE! I pick the ChatGPT recommended on. But could try other!
+# use a subset of CellChatDB for cell-cell communication analysis
+#CellChatDB.use <- subsetDB(CellChatDB, search = "Secreted Signaling", key = "annotation") 
+#CellChatDB.use <- CellChatDB # use all CellChatDB for cell-cell communication analysis
+CellChatDB.use <- subsetDB(CellChatDB, search = "Non-protein Signaling", key = "annotation") # for neuron-neuron comm
+
+cellchat@DB <- CellChatDB.use # set the used database in the object
+
+# Preprocessing the expression data for cell-cell communication analysis
+## subset the expression data of signaling genes for saving computation cost
+cellchat <- subsetData(cellchat) # This step is necessary even if using the whole database
+#future::plan("multisession", workers = 4) # do parallel
+cellchat <- identifyOverExpressedGenes(cellchat)
+cellchat <- identifyOverExpressedInteractions(cellchat)
+#--> The number of highly variable ligand-receptor pairs used for signaling inference is 951
+
+
+# Part II: Inference of cell-cell communication network
+# --> IMPORTANT: We can reduce threshold with type = "truncatedMean" and trim = 0.1 = 10% = average gene expression is zero if the percent of expressed cells in one group is less than 10% (Default is 25%)
+
+cellchat <- computeCommunProb(cellchat, type = "triMean") # By default type = "triMean", producing fewer but stronger interactions
+#cellchat <- computeCommunProb(cellchat, type = "truncatedMean", trim = 0.1) # By default type = "triMean", producing fewer but stronger interactions
+
+cellchat <- filterCommunication(cellchat, min.cells = 10) # filter out the cell-cell communication if there are only few cells in certain cell groups. By default, the minimum number of cells required in each cell group for cell-cell communication is 10.
+# Extract the inferred cellular communication network as a data frame
+df.net <- subsetCommunication(cellchat)
+
+# Infer the cell-cell communication at a signaling pathway level
+cellchat <- computeCommunProbPathway(cellchat) # The inferred intercellular communication network of each ligand-receptor pair and each signaling pathway is stored in the slot ‘net’ and ‘netP’, respectively.
+
+# Calculate the aggregated cell-cell communication network
+cellchat <- aggregateNet(cellchat)
+
+pdf("output/CellChat/netVisual_circle-p180_CB_WT-version4dim20kparam10res0115-default-NonproteinSignaling-filterCells.pdf", width=20, height=20)
+groupSize <- as.numeric(table(cellchat@idents))
+par(mfrow = c(1,2), xpd=TRUE)
+netVisual_circle(cellchat@net$count, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Number of interactions")
+netVisual_circle(cellchat@net$weight, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Interaction weights/strength")
+dev.off()
+
+
+pdf("output/CellChat/netVisual_circle-p180_CB_WT-version4dim20kparam10res0115-cellType-default-NonproteinSignaling-filterCells.pdf", width=15, height=15)
+mat <- cellchat@net$weight
+par(mfrow = c(3,4), xpd=TRUE)
+for (i in 1:nrow(mat)) {
+  mat2 <- matrix(0, nrow = nrow(mat), ncol = ncol(mat), dimnames = dimnames(mat))
+  mat2[i, ] <- mat[i, ]
+  netVisual_circle(mat2, vertex.weight = groupSize, weight.scale = T, edge.weight.max = max(mat), title.name = rownames(mat)[i])
+}
+dev.off()
+
+
+
+
+# Specify group of interest 
+# Define the groups based on the cell type categorization
+# Define the groups based on the revised cell type categorization
+group.cellType <- rep(NA, length(levels(cellchat@idents)))
+names(group.cellType) <- levels(cellchat@idents)
+# Assign each cell type to a category
+group.cellType[c("Granule", "UnipolarBrush")] <- "Glutamatergic"
+group.cellType[c("MLI1",  "MLI2",  "PLI12",  "PLI23", "Golgi", "Purkinje")] <- "GABAergic"
+group.cellType[c("OPC", "Astrocyte", "Bergman")] <- "Non-neuronal"
+# Check if all assignments are done correctly
+print(group.cellType)
+names(group.cellType) <- levels(cellchat@idents)
+
+
+
+# Change order of cell type:
+# Reorder the levels of cellchat@idents according to the specified order
+cellchat@idents <- factor(cellchat@idents, levels = c(
+  "Granule", "UnipolarBrush", 
+  "MLI1",  "MLI2",  "PLI12",  "PLI23", "Golgi", "Purkinje",
+  "OPC", "Astrocyte", "Bergman"
+)) # "ChoroidPlexus", "Ependymal", "Meningeal", "Endothelial"
+# Check if the levels are correctly ordered now
+print(levels(cellchat@idents))
+
+
+
+
+
+
+# Visualize each signaling pathway using Hierarchy plot, Circle plot or Chord diagram
+cellchat@netP$pathways # show pathway with signif interactions
+#--> FROM THIS PICK PATHWAY OF INTEREST
+
+pathways.show <- c("Glutamate") 
+pathways.show <- c("GABA-A") 
+pathways.show <- c("GABA-B") 
+pdf("output/CellChat/netVisual_aggregate-p180_CB_WT-version4dim20kparam10res0115-GABAB-default-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+# Here we define `vertex.receive` so that the left portion of the hierarchy plot shows signaling to fibroblast and the right portion shows signaling to immune cells 
+vertex.receiver = seq(1,4) # a numeric vector. 
+netVisual_aggregate(cellchat, signaling = pathways.show,  vertex.receiver = vertex.receiver)
+# Circle plot
+par(mfrow=c(1,1))
+netVisual_aggregate(cellchat, signaling = pathways.show, layout = "circle")
+# Chord diagram
+par(mfrow=c(1,1))
+netVisual_aggregate(cellchat, signaling = pathways.show, layout = "chord")
+par(mfrow=c(1,1))
+netVisual_heatmap(cellchat, signaling = pathways.show, color.heatmap = "Reds")
+dev.off()
+
+
+
+# Chord diagram
+pathways.show <- c("Glutamate") 
+pathways.show <- c("GABA-A") 
+pathways.show <- c("GABA-B") 
+pdf("output/CellChat/netVisual_chord_cell-p180_CB_WT-version4dim20kparam10res0115-GABAB-default-NonproteinSignaling-filterCells.pdf", width=10, height=10)
+# The cellchat function to visualize the chord diagram based on your defined groups
+netVisual_chord_cell(cellchat, signaling = pathways.show, group = group.cellType, title.name = paste0(pathways.show, " signaling network"))
+#> Plot the aggregated cell-cell communication network at the signaling pathway level
+dev.off()
+
+
+# Automatically save the plots of the all inferred network for quick exploration
+# Access all the signaling pathways showing significant communications
+pathways.show.all <- cellchat@netP$pathways
+# check the order of cell identity to set suitable vertex.receiver
+levels(cellchat@idents)
+vertex.receiver = seq(1,4)
+for (i in 1:length(pathways.show.all)) {
+  # Visualize communication network associated with both signaling pathway and individual L-R pairs
+  netVisual(cellchat, signaling = pathways.show.all[i], vertex.receiver = vertex.receiver, layout = "hierarchy")
+  # Compute and visualize the contribution of each ligand-receptor pair to the overall signaling pathway
+  gg <- netAnalysis_contribution(cellchat, signaling = pathways.show.all[i])
+  ggsave(filename=paste0("output/CellChat/",pathways.show.all[i], "_L-R_contribution.pdf"), plot=gg, width = 3, height = 2, units = 'in', dpi = 300)
+}
+# --> Not sure that was usefull...
+
+
+
+# Part IV: Systems analysis of cell-cell communication network
+## Compute and visualize the network centrality scores
+pathways.show <- c("Glutamate") 
+pathways.show <- c("GABA-A") 
+pathways.show <- c("GABA-B") 
+cellchat <- netAnalysis_computeCentrality(cellchat, slot.name = "netP") # the slot 'netP' means the inferred intercellular communication network of signaling pathways
+# Visualize the computed centrality scores using heatmap, allowing ready identification of major signaling roles of cell groups
+pdf("output/CellChat/netAnalysis_signalingRole_network-p180_CB_WT-version4dim20kparam10res0115-GABAB-default-NonproteinSignaling-filterCells.pdf", width=10, height=10)
+netAnalysis_signalingRole_network(cellchat, signaling = pathways.show, width = 8, height = 2.5, font.size = 10) # , cluster.cols = TRUE
+dev.off()
+
+
+
+pdf("output/CellChat/netAnalysis_signalingRole_heatmap-p180_CB_WT-version4dim20kparam10res0115-default-NonproteinSignaling-filterCells.pdf", width=10, height=6)
+# Signaling role analysis on the aggregated cell-cell communication network from all signaling pathways
+ht1 <- netAnalysis_signalingRole_heatmap(cellchat, pattern = "outgoing", height = 4,)
+ht2 <- netAnalysis_signalingRole_heatmap(cellchat, pattern = "incoming", height = 4)
+ht1 + ht2
+dev.off()
+
+
+# Identify global communication patterns to explore how multiple cell types and signaling pathways coordinate together
+##### outgoing #######
+## Here we run selectK to infer the number of patterns.
+pdf("output/CellChat/selectK-p180_CB_WT-version4dim20kparam10res0115-default-outgoing-NonproteinSignaling.pdf", width=10, height=10)
+selectK(cellchat, pattern = "outgoing")
+dev.off()
+#--> Identify at which value the line drop down = 5 for `Secreted Signaling`; 5/7 for all DB=CellChatDB; 5 for NonproteinSignaling
+nPatterns = 5
+pdf("output/CellChat/netAnalysis_river-p180_CB_WT-version4dim20kparam10res0115-default-outgoing-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+cellchat <- identifyCommunicationPatterns(cellchat, pattern = "outgoing", k = nPatterns)
+netAnalysis_river(cellchat, pattern = "outgoing")
+dev.off()
+pdf("output/CellChat/netAnalysis_dot-p180_CB_WT-version4dim20kparam10res0115-default-outgoing-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+netAnalysis_dot(cellchat, pattern = "outgoing")
+dev.off()
+
+
+
+##### incoming #######
+## Here we run selectK to infer the number of patterns.
+pdf("output/CellChat/selectK-p180_CB_WT-version4dim20kparam10res0115-default-incoming-NonproteinSignaling.pdf", width=10, height=10)
+selectK(cellchat, pattern = "incoming")
+dev.off()
+#--> Identify at which value the line drop down = 5 for `Secreted Signaling`; 5/7 for all DB=CellChatDB; 5 for NonproteinSignaling
+nPatterns = 5
+pdf("output/CellChat/netAnalysis_river-p180_CB_WT-version4dim20kparam10res0115-default-incoming-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+cellchat <- identifyCommunicationPatterns(cellchat, pattern = "incoming", k = nPatterns)
+netAnalysis_river(cellchat, pattern = "incoming")
+dev.off()
+pdf("output/CellChat/netAnalysis_dot-p180_CB_WT-version4dim20kparam10res0115-default-incoming-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+netAnalysis_dot(cellchat, pattern = "incoming")
+dev.off()
+
+
+
+
+# Identify signaling groups based on their functional similarity
+cellchat <- computeNetSimilarity(cellchat, type = "functional")
+cellchat <- netEmbedding(cellchat, type = "functional")
+cellchat <- netClustering(cellchat, type = "functional")
+# Visualization in 2D-space
+pdf("output/CellChat/netVisual_embedding-p180_CB_WT-version4dim20kparam10res0115-default-functional-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+netVisual_embedding(cellchat, type = "functional", label.size = 3.5)
+dev.off()
+#--> High degree of functional similarity indicates major senders and receivers are similar, and it can be interpreted as the two signaling pathways or two ligand-receptor pairs exhibit similar and/or redundant roles
+
+# Part V: Save the CellChat object
+saveRDS(cellchat, file = "output/CellChat/p180_CB_WT-version4dim20kparam10res0115-default-NonproteinSignaling-filterCells.rds")
+
+```
+
+--> Need to *use the NonproteinSignaling DB* to make it work (ie. show GABA for MLI12 and Glutamate for Granule)
 
 
 
@@ -26675,7 +28416,6 @@ write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version
 
 ```
 
-XXXY HERE !!!
 
 
 ###### Integration
@@ -26708,19 +28448,19 @@ set.seed(42)
 
 
 # import samples
-WT_p14_CB_Rep1 <- readRDS(file = "output/seurat/WT_p14_CB_Rep1-PurkinjeGolgiAnnotated-QCPass.rds")
-WT_p14_CB_Rep2 <- readRDS(file = "output/seurat/WT_p14_CB_Rep2-PurkinjeGolgiAnnotated-QCPass.rds")
-WT_p14_CB_Rep3 <- readRDS(file = "output/seurat/WT_p14_CB_Rep3-PurkinjeGolgiAnnotated-QCPass.rds")
-Kcnc1_p14_CB_Rep1 <- readRDS(file = "output/seurat/Kcnc1_p14_CB_Rep1-PurkinjeGolgiAnnotated-QCPass.rds")
-Kcnc1_p14_CB_Rep2 <- readRDS(file = "output/seurat/Kcnc1_p14_CB_Rep2-PurkinjeGolgiAnnotated-QCPass.rds")
-Kcnc1_p14_CB_Rep3 <- readRDS(file = "output/seurat/Kcnc1_p14_CB_Rep3-PurkinjeGolgiAnnotated-QCPass.rds")
+WT_p14_CX_Rep1 <- readRDS(file = "output/seurat/WT_p14_CX_Rep1-version2-QCPass.rds")
+WT_p14_CX_Rep2 <- readRDS(file = "output/seurat/WT_p14_CX_Rep2-version2-QCPass.rds")
+WT_p14_CX_Rep3 <- readRDS(file = "output/seurat/WT_p14_CX_Rep3-version2-QCPass.rds")
+Kcnc1_p14_CX_Rep1 <- readRDS(file = "output/seurat/Kcnc1_p14_CX_Rep1-version2-QCPass.rds")
+Kcnc1_p14_CX_Rep2 <- readRDS(file = "output/seurat/Kcnc1_p14_CX_Rep2-version2-QCPass.rds")
+Kcnc1_p14_CX_Rep3 <- readRDS(file = "output/seurat/Kcnc1_p14_CX_Rep3-version2-QCPass.rds")
 
-DefaultAssay(WT_p14_CB_Rep1) <- "RNA"
-DefaultAssay(WT_p14_CB_Rep2) <- "RNA"
-DefaultAssay(WT_p14_CB_Rep3) <- "RNA"
-DefaultAssay(Kcnc1_p14_CB_Rep1) <- "RNA"
-DefaultAssay(Kcnc1_p14_CB_Rep2) <- "RNA"
-DefaultAssay(Kcnc1_p14_CB_Rep3) <- "RNA"
+DefaultAssay(WT_p14_CX_Rep1) <- "RNA"
+DefaultAssay(WT_p14_CX_Rep2) <- "RNA"
+DefaultAssay(WT_p14_CX_Rep3) <- "RNA"
+DefaultAssay(Kcnc1_p14_CX_Rep1) <- "RNA"
+DefaultAssay(Kcnc1_p14_CX_Rep2) <- "RNA"
+DefaultAssay(Kcnc1_p14_CX_Rep3) <- "RNA"
 
 
 
@@ -26728,65 +28468,67 @@ DefaultAssay(Kcnc1_p14_CB_Rep3) <- "RNA"
 ## integration WT Kcnc1 p14 all replicates (1st replicate, then genotype) ######
  ##########################################
 
-WT_p14_CB_Rep1$replicate <- "Rep1"
-WT_p14_CB_Rep2$replicate <- "Rep2"
-WT_p14_CB_Rep3$replicate <- "Rep3"
+WT_p14_CX_Rep1$replicate <- "Rep1"
+WT_p14_CX_Rep2$replicate <- "Rep2"
+WT_p14_CX_Rep3$replicate <- "Rep3"
 
-WT_p14_CB_Rep1$condition <- "WT"
-WT_p14_CB_Rep2$condition <- "WT"
-WT_p14_CB_Rep3$condition <- "WT"
+WT_p14_CX_Rep1$condition <- "WT"
+WT_p14_CX_Rep2$condition <- "WT"
+WT_p14_CX_Rep3$condition <- "WT"
 
-Kcnc1_p14_CB_Rep1$replicate <- "Rep1"
-Kcnc1_p14_CB_Rep2$replicate <- "Rep2"
-Kcnc1_p14_CB_Rep3$replicate <- "Rep3"
+Kcnc1_p14_CX_Rep1$replicate <- "Rep1"
+Kcnc1_p14_CX_Rep2$replicate <- "Rep2"
+Kcnc1_p14_CX_Rep3$replicate <- "Rep3"
 
-Kcnc1_p14_CB_Rep1$condition <- "Kcnc1"
-Kcnc1_p14_CB_Rep2$condition <- "Kcnc1"
-Kcnc1_p14_CB_Rep3$condition <- "Kcnc1"
+Kcnc1_p14_CX_Rep1$condition <- "Kcnc1"
+Kcnc1_p14_CX_Rep2$condition <- "Kcnc1"
+Kcnc1_p14_CX_Rep3$condition <- "Kcnc1"
 
 
 
 # Test Replicate and Genotype integration (1 step integration)
 ## WT Rep
 
-WT_p14_CB_Rep1 <- SCTransform(WT_p14_CB_Rep1, method = "glmGamPoi", ncells = 11774, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
-WT_p14_CB_Rep2 <- SCTransform(WT_p14_CB_Rep2, method = "glmGamPoi", ncells = 13020, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
-WT_p14_CB_Rep3 <- SCTransform(WT_p14_CB_Rep3, method = "glmGamPoi", ncells = 12733, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
-Kcnc1_p14_CB_Rep1 <- SCTransform(Kcnc1_p14_CB_Rep1, method = "glmGamPoi", ncells = 10125, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
-Kcnc1_p14_CB_Rep2 <- SCTransform(Kcnc1_p14_CB_Rep2, method = "glmGamPoi", ncells = 9132, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
-Kcnc1_p14_CB_Rep3 <- SCTransform(Kcnc1_p14_CB_Rep3, method = "glmGamPoi", ncells = 14121, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+WT_p14_CX_Rep1 <- SCTransform(WT_p14_CX_Rep1, method = "glmGamPoi", ncells = 10212, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+WT_p14_CX_Rep2 <- SCTransform(WT_p14_CX_Rep2, method = "glmGamPoi", ncells = 9542, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+WT_p14_CX_Rep3 <- SCTransform(WT_p14_CX_Rep3, method = "glmGamPoi", ncells = 10766, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+Kcnc1_p14_CX_Rep1 <- SCTransform(Kcnc1_p14_CX_Rep1, method = "glmGamPoi", ncells = 14634, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+Kcnc1_p14_CX_Rep2 <- SCTransform(Kcnc1_p14_CX_Rep2, method = "glmGamPoi", ncells = 10864, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+Kcnc1_p14_CX_Rep3 <- SCTransform(Kcnc1_p14_CX_Rep3, method = "glmGamPoi", ncells = 12438, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
 
 
 
 
-srat.list <- list(WT_p14_CB_Rep1 = WT_p14_CB_Rep1, WT_p14_CB_Rep2 = WT_p14_CB_Rep2, WT_p14_CB_Rep3 = WT_p14_CB_Rep3, Kcnc1_p14_CB_Rep1 = Kcnc1_p14_CB_Rep1, Kcnc1_p14_CB_Rep2 = Kcnc1_p14_CB_Rep2, Kcnc1_p14_CB_Rep3 = Kcnc1_p14_CB_Rep3)
+srat.list <- list(WT_p14_CX_Rep1 = WT_p14_CX_Rep1, WT_p14_CX_Rep2 = WT_p14_CX_Rep2, WT_p14_CX_Rep3 = WT_p14_CX_Rep3, Kcnc1_p14_CX_Rep1 = Kcnc1_p14_CX_Rep1, Kcnc1_p14_CX_Rep2 = Kcnc1_p14_CX_Rep2, Kcnc1_p14_CX_Rep3 = Kcnc1_p14_CX_Rep3)
 features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
 srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
-WT_Kcnc1_p14_CB_1step.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+WT_Kcnc1_p14_CX_1step.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
     anchor.features = features)
-WT_Kcnc1_p14_CB_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p14_CB_1step.anchors, normalization.method = "SCT")
+WT_Kcnc1_p14_CX_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p14_CX_1step.anchors, normalization.method = "SCT")
 
 
 #### UMAP
-DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "integrated"
+DefaultAssay(WT_Kcnc1_p14_CX_1step.sct) <- "integrated"
 
-WT_Kcnc1_p14_CB_1step.sct <- RunPCA(WT_Kcnc1_p14_CB_1step.sct, verbose = FALSE, npcs = 40)
-WT_Kcnc1_p14_CB_1step.sct <- RunUMAP(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
-WT_Kcnc1_p14_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", k.param = 30, dims = 1:40)
-WT_Kcnc1_p14_CB_1step.sct <- FindClusters(WT_Kcnc1_p14_CB_1step.sct, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+WT_Kcnc1_p14_CX_1step.sct <- RunPCA(WT_Kcnc1_p14_CX_1step.sct, verbose = FALSE, npcs = 40)
+WT_Kcnc1_p14_CX_1step.sct <- RunUMAP(WT_Kcnc1_p14_CX_1step.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
+WT_Kcnc1_p14_CX_1step.sct <- FindNeighbors(WT_Kcnc1_p14_CX_1step.sct, reduction = "pca", k.param = 30, dims = 1:40)
+WT_Kcnc1_p14_CX_1step.sct <- FindClusters(WT_Kcnc1_p14_CX_1step.sct, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
-WT_Kcnc1_p14_CB_1step.sct$condition <- factor(WT_Kcnc1_p14_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+WT_Kcnc1_p14_CX_1step.sct$condition <- factor(WT_Kcnc1_p14_CX_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version4dim40kparam30res03.pdf", width=7, height=6)
-DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE)
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CX-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version2dim40kparam30res03.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p14_CX_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
 
-DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
+XXXY HERE FIND MARKER GENES!
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim40-ListdotPLot.pdf", width=30, height=60)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c(   "Gabra6","Pax6", # Granular_1
+DefaultAssay(WT_Kcnc1_p14_CX_1step.sct) <- "SCT"
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CX-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim40-ListdotPLot.pdf", width=30, height=60)
+FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = c(   "Gabra6","Pax6", # Granular_1
   "Sorcs3", "Ptprk", # MLI1
   "Nxph1", "Cdh22", # MLI2
   "Klhl1", "Gfra2", "Aldh1a3", # PLI12
@@ -26836,10 +28578,10 @@ Non-Neuronal Cell Types
     Choroid Plexus Cells: "Kl", "Ttr", "Clic6", "Slc13a4"
     Ependymal Cells: "Cfap54", "Ccdc153", "Cfap44", "Tmem212"
 
-DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
+DefaultAssay(WT_Kcnc1_p14_CX_1step.sct) <- "SCT"
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim40-ListAllGenes.pdf", width=30, height=80)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gabra6", "Pax6", "Calb1", "Slc1a6", "Car8", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", 
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CX-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim40-ListAllGenes.pdf", width=30, height=80)
+FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = c("Gabra6", "Pax6", "Calb1", "Slc1a6", "Car8", "Sorcs3", "Ptprk", "Nxph1", "Cdh22", 
 "Klhl1", "Gfra2", "Aldh1a3", "Galntl6", "Kcnc2", "Pax2", "Eomes", "Rgs6", "Tafa2", 
 "Gad2", "Slc6a1", "Nxph1", "Gad1", "Gria3", "Slc18a2", "Ddc", "Slc6a4", "Tph2", 
 "Slc18a2", "Slc1a2", "Apoe", "Zeb2", "Glul", "Slc1a3", "Ednrb", "Aqp4", "Slc39a12", 
@@ -26860,8 +28602,8 @@ dev.off()
 
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim40-ListAllGenesFILTER.pdf", width=30, height=70)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gabra6", "Pax6","Calb1", "Slc1a6", "Car8","Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Klhl1", "Gfra2", "Aldh1a3", "Galntl6", "Kcnc2", "Pax2","Rgs6", "Tafa2","Slc18a2", "Ddc", "Slc6a4", "Tph2", "Ddc", "Slc18a2", "Zeb2", "Slc1a3","Aqp4", "Slc39a12", "Vcan", "Sox6", "Mbp", "Mag", "Plp1", "Lef1", "Apcdd1", "Ptgds", "Dcn", "Kl", "Ttr", "Clic6", "Slc13a4", "Cfap54", "Ccdc153", "Cfap44", "Tmem212"), max.cutoff = 1, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CX-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim40-ListAllGenesFILTER.pdf", width=30, height=70)
+FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = c("Gabra6", "Pax6","Calb1", "Slc1a6", "Car8","Sorcs3", "Ptprk", "Nxph1", "Cdh22", "Klhl1", "Gfra2", "Aldh1a3", "Galntl6", "Kcnc2", "Pax2","Rgs6", "Tafa2","Slc18a2", "Ddc", "Slc6a4", "Tph2", "Ddc", "Slc18a2", "Zeb2", "Slc1a3","Aqp4", "Slc39a12", "Vcan", "Sox6", "Mbp", "Mag", "Plp1", "Lef1", "Apcdd1", "Ptgds", "Dcn", "Kl", "Ttr", "Clic6", "Slc13a4", "Cfap54", "Ccdc153", "Cfap44", "Tmem212"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
 
@@ -26871,29 +28613,29 @@ dev.off()
 
 #### QC metrics investigation ####################################
 
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_nFeature_RNA-1stepIntegrationRegressNotRepeated-version4dim40.pdf", width=5, height=5)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "nFeature_RNA")
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CX_nFeature_RNA-1stepIntegrationRegressNotRepeated-version4dim40.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, reduction = "umap", label=FALSE, features = "nFeature_RNA")
 dev.off()  
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_percentmt-1stepIntegrationRegressNotRepeated-version4dim40.pdf", width=5, height=5)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.mt")
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CX_percentmt-1stepIntegrationRegressNotRepeated-version4dim40.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, reduction = "umap", label=FALSE, features = "percent.mt")
 dev.off()  
-pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CB_percentrb-1stepIntegrationRegressNotRepeated-version4dim40.pdf", width=5, height=5)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=FALSE, features = "percent.rb")
+pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_p14_CX_percentrb-1stepIntegrationRegressNotRepeated-version4dim40.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, reduction = "umap", label=FALSE, features = "percent.rb")
 dev.off()  
 
 #
-pdf("output/seurat/VlnPlot_QCmetrics_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-countMtRbRegression.pdf", width=20, height=5)
-VlnPlot(WT_Kcnc1_p14_CB_1step.sct,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
+pdf("output/seurat/VlnPlot_QCmetrics_SCT_WT_Kcnc1_p14_CX_1step-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-countMtRbRegression.pdf", width=20, height=5)
+VlnPlot(WT_Kcnc1_p14_CX_1step.sct,features = c("percent.mt", "percent.rb","nCount_RNA","nFeature_RNA","S.Score","G2M.Score")) & 
   theme(plot.title = element_text(size=10))
 dev.off()
 
-pdf("output/seurat/VlnPlot_QCmetrics_nFeature_RNA_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-countMtRbRegression.pdf", width=5, height=5)
-VlnPlot(WT_Kcnc1_p14_CB_1step.sct,features = c("nFeature_RNA")) +
+pdf("output/seurat/VlnPlot_QCmetrics_nFeature_RNA_SCT_WT_Kcnc1_p14_CX_1step-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-countMtRbRegression.pdf", width=5, height=5)
+VlnPlot(WT_Kcnc1_p14_CX_1step.sct,features = c("nFeature_RNA")) +
   ylim(0,2000)
 dev.off()
 
-pdf("output/seurat/VlnPlot_QCmetrics_nCount_RNA_SCT_WT_Kcnc1_p14_CB_1step-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-countMtRbRegression.pdf", width=5, height=5)
-VlnPlot(WT_Kcnc1_p14_CB_1step.sct,features = c("nCount_RNA")) +
+pdf("output/seurat/VlnPlot_QCmetrics_nCount_RNA_SCT_WT_Kcnc1_p14_CX_1step-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-countMtRbRegression.pdf", width=5, height=5)
+VlnPlot(WT_Kcnc1_p14_CX_1step.sct,features = c("nCount_RNA")) +
   ylim(0,10000)
 dev.off()
 
@@ -26902,61 +28644,63 @@ dev.off()
 
 
 pdf("output/seurat/UMAP_WT_Kcnc1_splitCondition-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03.pdf", width=13, height=6)
-DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE, split.by = "condition")
+DimPlot(WT_Kcnc1_p14_CX_1step.sct, reduction = "umap", label=TRUE, split.by = "condition")
 dev.off()
 pdf("output/seurat/UMAP_WT_Kcnc1_splitReplicate-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03.pdf", width=15, height=6)
-DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE, split.by = "replicate")
+DimPlot(WT_Kcnc1_p14_CX_1step.sct, reduction = "umap", label=TRUE, split.by = "replicate")
 dev.off()
 
 pdf("output/seurat/FeaturePlot_QCmetrics_WT_Kcnc1_Phase-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03.pdf", width=6, height=5)
-DimPlot(WT_Kcnc1_p14_CB_1step.sct, group.by= "Phase") & 
+DimPlot(WT_Kcnc1_p14_CX_1step.sct, group.by= "Phase") & 
   theme(plot.title = element_text(size=10))
 dev.off()  
 
 
 
 # WT vs Kcnc1 gene expr ############
-DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
+DefaultAssay(WT_Kcnc1_p14_CX_1step.sct) <- "SCT"
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-Kcnc1.pdf", width=5, height=5)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1"),  cols = c("grey", "red"), max.cutoff = 1) #  max.cutoff = 10, min.cutoff = 1
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CX-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-Kcnc1.pdf", width=5, height=5)
+FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = c("Kcnc1"),  cols = c("grey", "red"), max.cutoff = 1) #  max.cutoff = 10, min.cutoff = 1
 dev.off()
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-Kcnc1split.pdf", width=12, height=6)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1"),  cols = c("grey", "red"), split.by = "condition", max.cutoff = 1) #  max.cutoff = 10, min.cutoff = 1
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CX-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-Kcnc1split.pdf", width=12, height=6)
+FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = c("Kcnc1"),  cols = c("grey", "red"), split.by = "condition", max.cutoff = 1) #  max.cutoff = 10, min.cutoff = 1
 dev.off()
 
-pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-Kcnc1234-split.pdf", width=12, height=20)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1","Kcnc2", "Kcnc3", "Kcnc4"),  cols = c("grey", "red"), split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CX-1stepIntegrationRegressNotRepeated-version4dim40kparam30res03-Kcnc1234-split.pdf", width=12, height=20)
+FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = c("Kcnc1","Kcnc2", "Kcnc3", "Kcnc4"),  cols = c("grey", "red"), split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
 dev.off()
 
 
 # save ##################
 
-## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_numeric.rds") 
-#WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_numeric.rds") # 
+## saveRDS(WT_Kcnc1_p14_CX_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CX_1step-version4dim40kparam30res03.sct_V1_numeric.rds") 
+#WT_Kcnc1_p14_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CX_1step-version4dim40kparam30res03.sct_V1_numeric.rds") # 
 
-## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_label.rds") 
-WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_label.rds") # 
+## saveRDS(WT_Kcnc1_p14_CX_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CX_1step-version4dim40kparam30res03.sct_V1_label.rds") 
+WT_Kcnc1_p14_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CX_1step-version4dim40kparam30res03.sct_V1_label.rds") # 
 set.seed(42)
 ##########
 
+XXX BELOW NOT CHANGE
+
 
 # Unbiased cell type marker genes
-Idents(WT_Kcnc1_p14_CB_1step.sct) <- "seurat_clusters"
+Idents(WT_Kcnc1_p14_CX_1step.sct) <- "seurat_clusters"
 ## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
-DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
-WT_Kcnc1_p14_CB_1step.sct <- NormalizeData(WT_Kcnc1_p14_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
-all.genes <- rownames(WT_Kcnc1_p14_CB_1step.sct)
-WT_Kcnc1_p14_CB_1step.sct <- ScaleData(WT_Kcnc1_p14_CB_1step.sct, features = all.genes) # zero-centres and scales it
+DefaultAssay(WT_Kcnc1_p14_CX_1step.sct) <- "RNA"
+WT_Kcnc1_p14_CX_1step.sct <- NormalizeData(WT_Kcnc1_p14_CX_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p14_CX_1step.sct)
+WT_Kcnc1_p14_CX_1step.sct <- ScaleData(WT_Kcnc1_p14_CX_1step.sct, features = all.genes) # zero-centres and scales it
 
-all_markers <- FindAllMarkers(WT_Kcnc1_p14_CB_1step.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
-write.table(all_markers, file = "output/seurat/srat_WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+all_markers <- FindAllMarkers(WT_Kcnc1_p14_CX_1step.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all_markers, file = "output/seurat/srat_WT_Kcnc1_p14_CX_1step-version4dim40kparam30res03-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 
 
-############ V2 naming  version4dim40kparam30res03 (output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_numeric.rds )
+############ V2 naming  version4dim40kparam30res03 (output/seurat/WT_Kcnc1_p14_CX_1step-version4dim40kparam30res03.sct_V1_numeric.rds )
 WT_Kcnc1_p14_CB_1step.sct$Purkinje <- NULL
 WT_Kcnc1_p14_CB_1step.sct$Golgi <- NULL
 Idents(WT_Kcnc1_p14_CB_1step.sct) <- "seurat_clusters"

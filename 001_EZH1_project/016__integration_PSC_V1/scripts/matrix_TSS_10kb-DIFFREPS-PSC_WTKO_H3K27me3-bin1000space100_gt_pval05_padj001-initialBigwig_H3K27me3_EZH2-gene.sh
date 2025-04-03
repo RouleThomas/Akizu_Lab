@@ -63,3 +63,13 @@ plotProfile -m output/deeptools/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin10
     --perGroup \
     --plotWidth 4 \
     --yMax 6
+
+
+
+plotProfile -m output/deeptools/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3_EZH2-gene.gz \
+    -out output/deeptools/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3_EZH2-gene_plotProfile3.pdf \
+    --samplesLabel "WT_H3K27me3" "KO_H3K27me3" "WT_EZH2" "KO_EZH2" \
+    --colors white white black red \
+    --perGroup \
+    --plotWidth 4 \
+    --yMax 3

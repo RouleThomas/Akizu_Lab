@@ -3430,14 +3430,18 @@ output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30
 output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt
 output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt
 
+### GeneSymbol list of signif gain/lost H3K27me3 from DIFFREPS intitialBigwig bin1000space100 gt pval05 padj001
+output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt
+output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt
+
 
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -3475,13 +3479,15 @@ pdf("output/GO/enrichR_GO_Biological_Process_2023_THOR_H3K27me3_q40.pdf", width=
 pdf("output/GO/enrichR_GO_Biological_Process_2023_THOR_H3K27me3_q30_Lost_q05FC05_NPC_KO_vs_NPC_WT.pdf", width=8, height=6)
 pdf("output/GO/enrichR_GO_Biological_Process_2023_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT.pdf", width=8, height=6)
 
+pdf("output/GO/enrichR_GO_Biological_Process_2023_DIFFREPS_bin1000space100_gt_pval05_padj001_GainLost_promoterAnd5.pdf", width=8, height=6)
+
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
   # Adjusted label position based on the type of gene (up/down) and increased separation
   geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
   geom_hline(yintercept = 0, linetype="solid", color = "black") +
-  scale_fill_manual(name="DEGs and H3K27me3",   # H3K27me3  H3K4me3
-                    labels = c("down-reg and Gain", "up-reg and Lost"), 
+  scale_fill_manual(name="H3K27me3",   # H3K27me3  H3K4me3 DEGs and H3K27me3
+                    labels = c("Gain", "Lost"), # down-reg and Gain up-reg and Lost
                     values = c("down"="Sky Blue", "up"="Orange")) + 
   labs(title= "GO_Biological_Process_2023") + 
   coord_flip() + 
@@ -3498,7 +3504,7 @@ dev.off()
 
 
 ## save output
-write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_DIFFREPS_bin1000space100_gt_pval05_padj001_GainLost_promoterAnd5.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 
@@ -3528,13 +3534,19 @@ output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30
 output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt
 output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt
 
+
+### GeneSymbol list of signif gain/lost H3K27me3 from DIFFREPS intitialBigwig bin1000space100 gt pval05 padj001
+output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt
+output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt
+
+
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 # Extracting KEGG data and assigning types
@@ -3569,12 +3581,14 @@ pdf("output/GO/enrichR_GO_Molecular_Function_2023_THOR_H3K27me3_q40.pdf", width=
 pdf("output/GO/enrichR_GO_Molecular_Function_2023_THOR_H3K27me3_q30_Lost_q05FC05_NPC_KO_vs_NPC_WT.pdf", width=8, height=8)
 pdf("output/GO/enrichR_GO_Molecular_Function_2023_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT.pdf", width=8, height=5)
 
+pdf("output/GO/enrichR_GO_Molecular_Function_2023_DIFFREPS_bin1000space100_gt_pval05_padj001_GainLost_promoterAnd5.pdf", width=8, height=5)
+
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
   # Adjusted label position based on the type of gene (up/down) and increased separation
   geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
   geom_hline(yintercept = 0, linetype="solid", color = "black") +
-  scale_fill_manual(name="H3K4me3",   # H3K27me3  H3K4me3
+  scale_fill_manual(name="H3K27me3",   # H3K27me3  H3K4me3
                     labels = c("Lost", "Gain"), 
                     values = c("down"="Sky Blue", "up"="Orange")) + 
   labs(title= "GO_Molecular_Function_2023") + 
@@ -3591,7 +3605,7 @@ ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) +
 dev.off()
 
 ## save output
-write.table(gos, "output/GO/enrichR_GO_Molecular_Function_2023_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_GO_Molecular_Function_2023_DIFFREPS_bin1000space100_gt_pval05_padj001_GainLost_promoterAnd5.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 
@@ -3621,14 +3635,19 @@ output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30
 output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt
 output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt
 
+### GeneSymbol list of signif gain/lost H3K27me3 from DIFFREPS intitialBigwig bin1000space100 gt pval05 padj001
+output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt
+output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt
+
+
 
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -3672,6 +3691,7 @@ pdf("output/GO/enrichR_GO_Cellular_Component_2023_THOR_H3K4me3_q30.pdf", width=8
 pdf("output/GO/enrichR_GO_Cellular_Component_2023_THOR_H3K27me3_q40.pdf", width=8, height=4)
 
 pdf("output/GO/enrichR_GO_Cellular_Component_2023_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT.pdf", width=8, height=4)
+pdf("output/GO/enrichR_GO_Cellular_Component_2023_DIFFREPS_bin1000space100_gt_pval05_padj001_GainLost_promoterAnd5.pdf", width=8, height=4)
 
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
@@ -3679,7 +3699,7 @@ ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) +
   # Adjusted label position based on the type of gene (up/down) and increased separation
   geom_text(aes(label=Term, y=ifelse(type == "up", max(gos$logAdjP) + 2, min(gos$logAdjP) - 2)), hjust = ifelse(gos$type == "up", 1, 0), size = 7, color = "gray28") +
   geom_hline(yintercept = 0, linetype="solid", color = "black") +
-  scale_fill_manual(name="H3K4me3",   # H3K27me3  H3K4me3
+  scale_fill_manual(name="H3K27me3",   # H3K27me3  H3K4me3
                     labels = c("Lost", "Gain"), 
                     values = c("down"="Sky Blue", "up"="Orange")) + 
   labs(title= "GO_Cellular_Component_2023") + 
@@ -3697,7 +3717,7 @@ dev.off()
 
 
 ## save output
-write.table(gos, "output/GO/enrichR_GO_Cellular_Component_2023_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_GO_Cellular_Component_2023_DIFFREPS_bin1000space100_gt_pval05_padj001_GainLost_promoterAnd5.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 
@@ -3729,13 +3749,21 @@ output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30
 output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt
 output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt
 
+
+### GeneSymbol list of signif gain/lost H3K27me3 from DIFFREPS intitialBigwig bin1000space100 gt pval05 padj001
+output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt
+output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt
+
+
+
+
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -3773,6 +3801,7 @@ pdf("output/GO/enrichR_KEGG_2021_Human_THOR_H3K27me3_q40.pdf", width=8, height=2
 
 pdf("output/GO/enrichR_KEGG_2021_Human_THOR_H3K27me3_q30_Lost_q05FC05_NPC_KO_vs_NPC_WT.pdf", width=8, height=2)
 pdf("output/GO/enrichR_KEGG_2021_Human_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT.pdf", width=8, height=3)
+pdf("output/GO/enrichR_KEGG_2021_Human_DIFFREPS_bin1000space100_gt_pval05_padj001_GainLost_promoterAnd5.pdf", width=8, height=4)
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
@@ -3797,7 +3826,7 @@ dev.off()
 
 
 ## save output
-write.table(gos, "output/GO/enrichR_KEGG_2021_Human_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_KEGG_2021_Human_DIFFREPS_bin1000space100_gt_pval05_padj001_GainLost_promoterAnd5.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 
@@ -3827,6 +3856,13 @@ output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Lost_H3K27me3_qval30
 output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt
 output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt
 
+
+### GeneSymbol list of signif gain/lost H3K27me3 from DIFFREPS intitialBigwig bin1000space100 gt pval05 padj001
+output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt
+output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt
+
+
+
 ### negative control 202 random genes
 meta/ENCFF159KBI_geneSymbol_202random_1.bed
 meta/ENCFF159KBI_geneSymbol_202random_2.bed
@@ -3853,11 +3889,11 @@ meta/ENCFF159KBI_geneSymbol_500random_10.bed
 
 # IF starting with geneSymbol
 ## Read and preprocess data for downregulated genes
-gene_names_down <- read.csv("output/deseq2/downregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_down <- read.csv("output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
 list_down <- unique(as.character(gene_names_down$V1))
 edown <- enrichr(list_down, dbs)
 ## Read and preprocess data for upregulated genes
-gene_names_up <- read.csv("output/deseq2/upregulated_q05FC05_NPC_KO_vs_NPC_WT_001009_Gain_H3K27me3_qval30.txt", header=FALSE, stringsAsFactors=FALSE)
+gene_names_up <- read.csv("output/ChIPseeker/annotation_NPC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt", header=FALSE, stringsAsFactors=FALSE)
 list_up <- unique(as.character(gene_names_up$V1))
 eup <- enrichr(list_up, dbs)
 
@@ -3885,10 +3921,20 @@ down_pathways <- gos %>% filter(type == "down") %>% arrange(logAdjP) %>% pull(Te
 new_order <- c(down_pathways, up_pathways)
 gos$Term <- factor(gos$Term, levels = new_order)
 
+## FAIL as dupplicates:
+up_pathways_suffixed <- paste0(up_pathways, "_up")
+down_pathways_suffixed <- paste0(down_pathways, "_down")
+new_order <- c(down_pathways_suffixed, up_pathways_suffixed)
+gos$Term <- ifelse(gos$type == "up", paste0(gos$Term, "_up"), paste0(gos$Term, "_down"))
+gos$Term <- factor(gos$Term, levels = new_order)
+
+
+
 # Plotting with enhanced aesthetics
 
 
 pdf("output/GO/enrichR_ENCODE_and_ChEA_Consensus_TFs_from_ChIP_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT.pdf", width=8, height=3)
+pdf("output/GO/enrichR_ENCODE_and_ChEA_Consensus_TFs_from_ChIP_DIFFREPS_bin1000space100_gt_pval05_padj001_GainLost_promoterAnd5.pdf", width=8, height=3)
 
 ggplot(gos, aes(x=Term, y=logAdjP, fill=type)) + 
   geom_bar(stat='identity', width=.7) +
@@ -3913,7 +3959,7 @@ dev.off()
 
 
 ## save output
-write.table(gos, "output/GO/enrichR_ENCODE_and_ChEA_Consensus_TFs_from_ChIP_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(gos, "output/GO/enrichR_ENCODE_and_ChEA_Consensus_TFs_from_ChIP_DIFFREPS_bin1000space100_gt_pval05_padj001_GainLost_promoterAnd5.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
 ### TF plot like JC paper
@@ -3949,6 +3995,7 @@ gos_TF_tidy = gos_TF %>%
 
 
 pdf("output/GO/VolcanoPlotTF_ENCODE_and_ChEA_Consensus_TFs_from_ChIP_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT_down.pdf", width=5, height=4)
+pdf("output/GO/VolcanoPlotTF_ENCODE_and_ChEA_Consensus_TFs_from_ChIP_DIFFREPS_bin1000space100_gt_pval05_padj001_Gain_promoterAnd5.pdf", width=5, height=4)
 ggplot(gos_TF_tidy, aes(x = Odds.Ratio, y = -logAdjP, color = db)) +
   geom_point(aes(color = ifelse(-logAdjP < 1.3, "not signif.", db))) +
   scale_color_manual(values = c("lightgreen", "darkgreen", "grey")) + # Replace with your actual colors
@@ -3963,7 +4010,7 @@ ggplot(gos_TF_tidy, aes(x = Odds.Ratio, y = -logAdjP, color = db)) +
 dev.off()
 
 
-pdf("output/GO/VolcanoPlotTF_ENCODE_and_ChEA_Consensus_TFs_from_ChIP_THOR_H3K27me3_q30_Gain_q05FC05_NPC_KO_vs_NPC_WT_down_posterCHOP1.pdf", width=5, height=4)
+pdf("output/GO/VolcanoPlotTF_ENCODE_and_ChEA_Consensus_TFs_from_ChIP_DIFFREPS_bin1000space100_gt_pval05_padj001_Gain_promoterAnd5_posterCHOP1.pdf", width=5, height=4)
 ggplot(gos_TF_tidy, aes(x = Odds.Ratio, y = -logAdjP, color = db)) +
   geom_point(aes(color = ifelse(-logAdjP < 1.3, "not signif.", db))) +
   scale_color_manual(values = c("blue", "lightblue", "grey")) + # Replace with your actual colors
@@ -3973,10 +4020,42 @@ ggplot(gos_TF_tidy, aes(x = Odds.Ratio, y = -logAdjP, color = db)) +
                   aes(label = TF),
                   nudge_x = 0.2,  # Adjust this value to nudge labels to the right
                   size = 6,
-                  max.overlaps = 30)  +
+                  max.overlaps = 50)  + # 30
   guides(color = guide_legend(override.aes = list(label = ""))) # just to remove the "a" added in fig legend
 dev.off()
 
+
+
+pdf("output/GO/VolcanoPlotTF_ENCODE_and_ChEA_Consensus_TFs_from_ChIP_DIFFREPS_bin1000space100_gt_pval05_padj001_Gain_promoterAnd5_posterCHOP1.pdf", width=5, height=4)
+ggplot(gos_TF_tidy, aes(x = Odds.Ratio, y = -logAdjP, color = db)) +
+  geom_point(aes(color = ifelse(-logAdjP < 1.3, "not signif.", db))) +
+  scale_color_manual(values = c("blue", "lightblue", "grey")) + # Replace with your actual colors
+  theme_bw() +
+  labs(x = "Odds Ratio", y = "-log10(adjusted p-value)") +
+  geom_text_repel(data = subset(gos_TF_tidy, logAdjP < 1.3),
+                  aes(label = TF),
+                  nudge_x = 0.2,  # Adjust this value to nudge labels to the right
+                  size = 6,
+                  max.overlaps = 50)  + # 30
+  guides(color = guide_legend(override.aes = list(label = ""))) # just to remove the "a" added in fig legend
+dev.off()
+
+
+pdf("output/GO/VolcanoPlotTF_ENCODE_and_ChEA_Consensus_TFs_from_ChIP_DIFFREPS_bin1000space100_gt_pval05_padj001_Gain_promoterAnd5_EZH2SUZ12label.pdf", width=5, height=4)
+
+ggplot(gos_TF_tidy, aes(x = Odds.Ratio, y = -logAdjP, color = db)) +
+  geom_point(aes(color = ifelse(-logAdjP < 1.3, "not signif.", db))) +
+  scale_color_manual(values = c("blue", "lightblue", "grey")) +
+  theme_bw() +
+  labs(x = "Odds Ratio", y = "-log10(adjusted p-value)") +
+  geom_text_repel(data = subset(gos_TF_tidy, TF %in% c("EZH2", "SUZ12")),
+                  aes(label = TF),
+                  nudge_x = 0.2,
+                  size = 6,
+                  max.overlaps = 50) +
+  guides(color = guide_legend(override.aes = list(label = "")))
+dev.off()
+#--> Not signif for EZH2
 ```
 
 --> `ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X` db identified *EZH2* and *SUZ12* as genes upreg in KO
@@ -4010,6 +4089,8 @@ awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > met
 awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_10.bed
 
 ```
+
+
 
 # Functional analysis with enrichGO (single list of genes dotplot)
 
