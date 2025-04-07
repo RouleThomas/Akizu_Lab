@@ -28756,8 +28756,6 @@ write.table(all_markers, file = "output/seurat/srat_WT_Kcnc1_p14_CX_1step-versio
 
 ############################ EasyCellType automatic annotation ##########################################
 
-XXXY HERE RUN EASY CELL TYPE
-
 # BiocManager::install("EasyCellType")
 library("EasyCellType")
 library("org.Mm.eg.db")
@@ -28788,14 +28786,8 @@ input.d <- as.data.frame(all_markers_sort[, 1:3])
 
 annot.GSEA <- easyct(input.d, db="cellmarker", # cellmarker or panglao or clustermole
                     species="Mouse", #  Human or Mouse
-                    tissue=c("Brain", "Cerebellum", "Hippocampus"), p_cut=0.5,   # to see: data(cellmarker_tissue), data(clustermole_tissue), data(panglao_tissue)
+                    tissue=c("Brain"), p_cut=0.5,   # to see: data(cellmarker_tissue), data(clustermole_tissue), data(panglao_tissue)
                     test="GSEA")    # GSEA or fisher?
-
-annot.GSEA <- easyct(input.d, db="cellmarker", # cellmarker or panglao or clustermole
-                    species="Mouse", #  Human or Mouse
-                    tissue=c("Cerebellum"), p_cut=0.5,   # to see: data(cellmarker_tissue), data(clustermole_tissue), data(panglao_tissue)
-                    test="GSEA")    # GSEA or fisher?
-
 
 
 annot.GSEA <- easyct(input.d, db="clustermole", # cellmarker or panglao or clustermole
@@ -28803,22 +28795,16 @@ annot.GSEA <- easyct(input.d, db="clustermole", # cellmarker or panglao or clust
                     tissue=c("Brain"), p_cut=0.5,   # to see: data(cellmarker_tissue), data(clustermole_tissue), data(panglao_tissue)
                     test="GSEA")    # GSEA or fisher?
 
+
 ## plots
 
 
 
-pdf("output/seurat/EasyCellType_dotplot_WT_p14_CB_Rep2_dim30kparam40res07-cellmarker_brainCerebellumHippocampus.pdf", width=6, height=8)
-pdf("output/seurat/EasyCellType_dotplot_WT_p14_CB_Rep2_dim30kparam40res07-cellmarker_cerebellum.pdf", width=6, height=8)
-
-pdf("output/seurat/EasyCellType_dotplot_WT_p14_CB_Rep2_dim30kparam40res07-clustermole_brain.pdf", width=6, height=8)
+pdf("output/seurat/EasyCellType_dotplot_WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07-clustermole_brain.pdf", width=6, height=8)
 
 plot_dot(test="GSEA", annot.GSEA) + 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 dev.off()
-
-
-
-
 
 
 
@@ -40114,9 +40100,36 @@ rsconnect::deployApp('shinyApp_WT_Kcnc1_p14_CB_1step_version4dim40kparam30res03'
 
 
 
+
+
+# Generate Shiny app CX Version2 p14 - version2dim30kparam50res07
+## import Seurat object
+WT_Kcnc1_p14_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07.sct_V1_numeric.rds") # 
+set.seed(42)
+# differential expressed genes across conditions
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+DefaultAssay(WT_Kcnc1_p14_CX_1step.sct) <- "RNA"
+WT_Kcnc1_p14_CX_1step.sct <- NormalizeData(WT_Kcnc1_p14_CX_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p14_CX_1step.sct)
+WT_Kcnc1_p14_CX_1step.sct <- ScaleData(WT_Kcnc1_p14_CX_1step.sct, features = all.genes) # zero-centres and scales it
+WT_Kcnc1_p14_CX_1step.sct$celltype.stim <- paste(WT_Kcnc1_p14_CX_1step.sct$seurat_clusters, WT_Kcnc1_p14_CX_1step.sct$condition,
+    sep = "-")
+Idents(WT_Kcnc1_p14_CX_1step.sct) <- "celltype.stim"
+
+
+DefaultAssay(WT_Kcnc1_p14_CX_1step.sct) <- "RNA" # 
+scConf = createConfig(WT_Kcnc1_p14_CX_1step.sct)
+makeShinyApp(WT_Kcnc1_p14_CX_1step.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07",
+             shiny.dir = "shinyApp_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07/") 
+rsconnect::deployApp('shinyApp_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07')
+
+
+
+
 ```
 
-
+**CB**
 Version1
 - [CB_p14](https://roulethomas.shinyapps.io/shinyapp_wt_kcnc1_p14_cb_1step_qcv3dim30kparam50res035/)
 - [CB_p35](https://roulethomas.shinyapps.io/shinyapp_wt_kcnc1_p35_cb_1step_qcv3dim50kparam50res03/)
@@ -40130,7 +40143,9 @@ Version4
 - [CB_p35](https://roulethomas.shinyapps.io/shinyApp_WT_Kcnc1_p35_CB_1step_version4dim30kparam10res02/)
 - [CB_p180](xxx)
 
-
+**CX**
+Version2
+- [CX_p14](https://roulethomas.shinyapps.io/shinyapp_wt_kcnc1_p14_cx_1step_version2dim30kparam50res07/)
 
 
 # Generate bigwig
