@@ -268,6 +268,56 @@ sbatch scripts/matrix_10kb_H3K27me3_Bernstein_EZH2008001_EZH2target.sh # 3176412
 
 
 
+# Overlap QSER1 peaks with H3K4me1 and H3K27ac - emboR revision tasks, email 4/5/2023
+
+emboR revision tasks, email 4/5/2023:
+
+- For 3F: How many of the QSER1 peaks are included in the heatmap? (number)
+12,461 peaks (identified with homer) (`wc -l output/annotation_homer_hESC_WT_QSER1_pool_annot.bed`; file used to generate heatmaps)
+
+- For 3F: How many of the QSER1 peaks bind H3K4me1 and H3K27ac?(number)
+```bash
+conda activate BedToBigwig
+
+bedtools intersect -v -a output/annotation_homer_hESC_WT_QSER1_pool_annot.bed -b output/ENCODE/Bernstein_H3K4me1.bed | wc -l # 8434
+bedtools intersect -v -a output/annotation_homer_hESC_WT_QSER1_pool_annot.bed -b output/ENCODE/Bernstein_H3K27ac.bed | wc -l # 8843
+
+bedtools intersect -v -a output/annotation_homer_hESC_WT_QSER1_pool_annot.bed -b output/ENCODE/Ren_H3K4me1.bed | wc -l # 9094
+bedtools intersect -v -a output/annotation_homer_hESC_WT_QSER1_pool_annot.bed -b output/ENCODE/Ren_H3K27ac.bed | wc -l # 7599
+```
+
+
+- NIPBL overlap: how many of the actual YAP and QSER1 peaks overlap with NIPBL peaks on the 1192 genes?
+
+On the 1192 genes co-bound by QSER1 and YAP1. Here is the respective overlap for QSER1 and YAP1 with NIPBL:
+(1192 is the QSER1:YAP1 cobound genes.)
+
+Peak coordinate of QSER1 and YAP1 peaks from the 1192 QSER1:YAP1 co-bound genes as already been isolated in `008*/001*`:
+- Including intergenic peaks:
+    - QSER1 peak= `../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker.txt` --> convert to bed and remove header: `../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader.bed`
+    - YAP1 peak= `../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1.txt` --> convert to bed and remove header: `../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader.bed`
+
+
+```bash
+conda activate BedToBigwig
+# Check overlap QSER1 peaks with NIPBL
+bedtools intersect -v -a ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader.bed -b ../008__ChIPseq_Nipbl/output/homer/Nipbl/peaks_noHeader.bed | wc -l # 1548
+wc -l ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader.bed # 2073
+
+# Check overlap YAP1 peaks with NIPBL
+bedtools intersect -v -a ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader.bed -b ../008__ChIPseq_Nipbl/output/homer/Nipbl/peaks_noHeader.bed | wc -l # 639
+wc -l ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader.bed # 1538
+```
+
+--> Among the 1192 genes cobound by QSER1 and YAP1; I exported the QSER1 and YAP1 peaks and check their overlap with NIPBL:
+- Among the 1192 genes, there are 2073 QSER1 peaks, from which 1548 directly overlap with NIPBL
+- Among the 1192 genes, there are 1538 YAP1 peaks, from which 639 directly overlap with NIPBL
+
+
+
+
+
+
 
 # ChIPseeker for histone ENCODE files
 

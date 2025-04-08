@@ -10469,9 +10469,24 @@ ChIPseeker_QSER1 = read_tsv("output/ChIPseeker/annotation_homer_hESC_WT_QSER1_po
   dplyr::select(seqnames, start, end, name, annotation, distanceToTSS, geneSymbol, gene) %>%
   add_column(ChIPseeker = "QSER1")
 
-# join files and save
+## join files and save
 ChIPseeker_QSER1 %>% inner_join(QSER1_YAP1) %>%
 write.table(., file = "output/homer/QSER1_YAP1_1192genes_ChIPseeker.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+
+
+
+# Just in case, save YAP1 peak coordinate from the QSER:YAP1 cobound genes
+## import the YAP1 ChIPseeker output to collect peak coordinates
+ChIPseeker_YAP1 = as_tibble(read_tsv("output/ChIPseeker/annotation_homer_hESC_WT_YAP1_R1_annot.txt")) %>% 
+  dplyr::select(seqnames, start, end, name, annotation, distanceToTSS, geneSymbol, gene) %>%
+  add_column(ChIPseeker = "YAP1")
+# join files and save
+ChIPseeker_YAP1 %>% inner_join(QSER1_YAP1) %>%
+write.table(., file = "output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+
+
 
 ```
 

@@ -28735,6 +28735,9 @@ WT_Kcnc1_p14_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CX_1step
 ## saveRDS(WT_Kcnc1_p14_CX_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07.sct_V1_numeric.rds") 
 WT_Kcnc1_p14_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07.sct_V1_numeric.rds") # 
 
+## saveRDS(WT_Kcnc1_p14_CX_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07.sct_V1_label.rds") 
+WT_Kcnc1_p14_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07.sct_V1_label.rds") # 
+
 set.seed(42)
 ##########
 
@@ -28809,144 +28812,226 @@ dev.off()
 
 
 
+############ V1 naming  version2dim30kparam50res07 (output/seurat/WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07.sct_V1_numeric.rds )
 
-XXXY BELOW NOT CHANGE
-
-
-############ V2 naming  version4dim40kparam30res03 (output/seurat/WT_Kcnc1_p14_CX_1step-version4dim40kparam30res03.sct_V1_numeric.rds )
-WT_Kcnc1_p14_CB_1step.sct$Purkinje <- NULL
-WT_Kcnc1_p14_CB_1step.sct$Golgi <- NULL
-Idents(WT_Kcnc1_p14_CB_1step.sct) <- "seurat_clusters"
+Idents(WT_Kcnc1_p14_CX_1step.sct) <- "seurat_clusters"
 
 
-Cluster1= Granule = Gabra6, Pax6 
-Cluster2= MLI1: Sorcs3, Ptprk 
-Cluster3= PLI23: Galntl6, Kcnc2
-Cluster4= Granule = Gabra6, Pax6 
-Cluster5= Granule = Gabra6, Pax6 
-Cluster6= Granule = Gabra6, Pax6 
-Cluster7= MLI2: Nxph1, Cdh22
-Cluster8= Endothelial: Lef1, Apcdd1, Notum
-Cluster9= Bergman: Zeb2 , Slc1a3
-Cluser10= Astrocyte: Aqp4, Slc39a12
-Cluster11= PLI12: Klhl1, Gfra2, Aldh1a3
-Cluster12= Oligodendrocyte: Mbp, Mag, Plp1
-Cluster13= Meningeal: Ptgds, Dcn, 
-Cluster14= Purkinje: Calb1, Slc1a6, Car8
-Cluster15= Golgi: Pax2,, Sgcd 
-Cluster16= Unipolar Brush Rgs6, Tafa2
-Cluster17= ChoroidPlexus : Kl, Ttr, Clic6, Slc13a4
+L2L3_1 = Otof (Cluster1)
+L2L3_2 = Otof  (Cluster2)
+L6__LT= Foxp2, Cal12a1 (Cluster3)
+L4L5= Rorb, Rspo1, Cux2 (Cluster4)
+cluster5= (Cluster5) Sst_Mix?
+L2_L3__inh = Otof, Gad1 (Cluster6)  ?
+GABA_Vipr2= Vipr2 (Cluster7)
+L6__IT= Sulf1, Cdh9, Osr1 (Cluster8)
+L5= Etv1 (Cluster9) cluster11 is more L5 then this one
+Microglia= Itgam, Cx3cr1 (Cluster10)
+L5= Etv1 (Cluster11)
+GABA_Pvalb= Pvalb (Cluster12)
+GABA_Vip= Vip, Prox1 (Cluster13)
+GABA_Sst= Sst (Cluster14)
+L6B= Galnt10, Nxph4, Nxph3, Pou6f2, Cplx3, Galnt10 (Cluster15)
+Bergman= Aqp4, Slc39a12 (Cluster16)
+OPC= Pdgfra, Cspg4 (Cluster17)
+cluster18= (Cluster18)
+GABA_SstCalb2 = Calb2, Sst (Cluster19)
+L5__PT= Pou3f1, Npr3, Bcl6, Chst8 (Cluster20)
+Endothelial= Lef1, Notum, Apcdd1, Pdgfrb (Cluster21)
+L2__IT= Pdlim1 (Cluster22)
+Lamp5= Lamp5, Ndnf (Cluster23)
+Oligodendrocyte= Mbp, Mag, Plp1 (Cluster24)
+cluster25= (Cluster25)
+cluster26= (Cluster26)
+L5_L6__NP= Stard5, Trpe3, Cbln2, Dcc, Rell1, Pamr1 (Cluster27)
+L6__inh= Foxp2 (Cluster28)  ?
+L6_Car3= Car3 (Cluster29)
+Meningeal= Ptgds, Dcn (Cluster30)
+cluster31= (Cluster31)
+L5__IT= Tshz2 (Cluster32)
+cluster33= (Cluster33)
+cluster34= (Cluster34)
+
+
 
 
 new.cluster.ids <- c(
-  "Granule_1",
-  "MLI1",
-  "PLI23",
-  "Granule_2",
-  "Granule_3",
-  "Granule_4",
-  "MLI2",
-  "Endothelial",
+  "L2L3_1",
+  "L2L3_2",
+  "L6__LT",
+  "L4L5",
+  "cluster5",
+  "L2_L3__inh",
+  "GABA_Vipr2",
+  "L6__IT",
+  "L5_1",
+  "Microglia",
+  "L5_2",
+  "GABA_Pvalb",
+  "GABA_Vip",
+  "GABA_Sst",
+  "L6B",
   "Bergman",
-  "Astrocyte",
-  "PLI12",
+  "OPC",
+  "cluster18",
+  "GABA_SstCalb2",
+  "L5__PT",
+  "Endothelial",
+  "L2__IT",
+  "GABA_Lamp5",
   "Oligodendrocyte",
+  "cluster25",
+  "cluster26",
+  "L5_L6__NP",
+  "L6__inh",
+  "L6_Car3",
   "Meningeal",
-  "Purkinje",
-  "Golgi",
-  "UnipolarBrush",
-  "ChoroidPlexus"
+  "cluster31",
+  "L5__IT",
+  "cluster33",
+  "cluster34"
 )
 
-names(new.cluster.ids) <- levels(WT_Kcnc1_p14_CB_1step.sct)
-WT_Kcnc1_p14_CB_1step.sct <- RenameIdents(WT_Kcnc1_p14_CB_1step.sct, new.cluster.ids)
-WT_Kcnc1_p14_CB_1step.sct$cluster.annot <- Idents(WT_Kcnc1_p14_CB_1step.sct) # create a new slot in my seurat object
+names(new.cluster.ids) <- levels(WT_Kcnc1_p14_CX_1step.sct)
+WT_Kcnc1_p14_CX_1step.sct <- RenameIdents(WT_Kcnc1_p14_CX_1step.sct, new.cluster.ids)
+WT_Kcnc1_p14_CX_1step.sct$cluster.annot <- Idents(WT_Kcnc1_p14_CX_1step.sct) # create a new slot in my seurat object
 
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB_1step_version4dim40kparam30res03_label.pdf", width=15, height=6)
-DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07_label.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_p14_CX_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
 dev.off()
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB_1step_version4dim40kparam30res03_noSplit_label.pdf", width=9, height=6)
-DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5)
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07_noSplit_label.pdf", width=9, height=6)
+DimPlot(WT_Kcnc1_p14_CX_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 4)
 dev.off()
 
-
-XXXY BELOW NOT RUN, marker and cluster name as been updated tho
 
 # All in dotplot
-DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
+DefaultAssay(WT_Kcnc1_p14_CX_1step.sct) <- "SCT"
+
+  Slc17a7, Slc30a3  # Glu marker
+L2__IT= Pdlim1 (Cluster22)
+L2L3_1 = Otof (Cluster1)
+#L2L3_2 = Otof  (Cluster2)
+L2_L3__inh = , Gad1 (Cluster6)  ? # Otof
+L4L5= Rorb, Rspo1, Cux2 (Cluster4)
+L5_1= Etv1 (Cluster9) cluster11 is more L5 then this one
+#L5_2= Etv1 (Cluster11)
+L5__PT= Pou3f1, Npr3, Bcl6, Chst8 (Cluster20)
+L5__IT= Tshz2 (Cluster32)
+L5_L6__NP= Stard5, Trpe3, Cbln2, Dcc, Rell1, Pamr1 (Cluster27)
+L6__inh= Foxp2 (Cluster28)  ?
+L6_Car3= Car3 (Cluster29)
+L6__LT= , Cal12a1 (Cluster3) # Foxp2
+L6__IT= Sulf1, Cdh9, Osr1 (Cluster8)
+L6B= Galnt10, Nxph4, Nxph3, Pou6f2, Cplx3 (Cluster15)
+
+GABA_Vipr2= Vipr2 (Cluster7)
+GABA_Pvalb= Pvalb (Cluster12)
+GABA_Vip= Vip, Prox1 (Cluster13)
+GABA_Sst= Sst (Cluster14)
+GABA_SstCalb2 = Calb2, (Cluster19) #  Sst
+GABA_Lamp5= Lamp5, Ndnf (Cluster23)
+
+Microglia= Itgam, Cx3cr1 (Cluster10)
+Bergman= Aqp4, Slc39a12 (Cluster16)
+OPC= Pdgfra, Cspg4 (Cluster17)
+Oligodendrocyte= Mbp, Mag, Plp1 (Cluster24)
+Endothelial= Lef1, Notum, Apcdd1, Pdgfrb (Cluster21)
+Meningeal= Ptgds, Dcn (Cluster30)
+
+cluster5= (Cluster5) Sst_Mix?
+cluster18= (Cluster18)
+cluster25= (Cluster25)
+cluster26= (Cluster26)
+cluster31= (Cluster31)
+cluster33= (Cluster33)
+cluster34= (Cluster34)
 
 
-
-Cluster1= Granule = Gabra6, Pax6 
-Cluster4= Granule = Gabra6, Pax6 
-Cluster5= Granule = Gabra6, Pax6 
-Cluster6= Granule = Gabra6, Pax6 
-Cluster2= MLI1: Sorcs3, Ptprk 
-Cluster7= MLI2: Nxph1, Cdh22
-Cluster11= PLI12: Klhl1, Gfra2, Aldh1a3
-Cluster3= PLI23: Galntl6, Kcnc2
-Cluster14= Purkinje: Calb1, Slc1a6, Car8
-Cluster15= Golgi: Pax2,, Sgcd 
-Cluster16= Unipolar Brush Rgs6, Tafa2
-Cluster12= Oligodendrocyte: Mbp, Mag, Plp1
-Cluser10= Astrocyte: Aqp4, Slc39a12
-Cluster9= Bergman: Zeb2 , Slc1a3
-Cluster8= Endothelial: Lef1, Apcdd1, Notum
-Cluster13= Meningeal: Ptgds, Dcn, 
-Cluster17= ChoroidPlexus : Kl, Ttr, Clic6, Slc13a4
 
 
 
 
 all_markers <- c(
-  "Gabra6", "Pax6" ,
-  "Sorcs3", "Ptprk" ,
-  "Nxph1", "Cdh22",
-  "Klhl1", "Gfra2", "Aldh1a3",
-  "Galntl6", "Kcnc2",
-  "Calb1", "Slc1a6", "Car8",
-  "Pax2", "Sgcd" ,
-  "Rgs6", "Tafa2",
-  "Mbp", "Mag", "Plp1",
+  "Slc17a7", "Slc30a3",
+  "Pdlim1",
+  "Otof",
+  "Gad1",
+  "Rorb", "Rspo1", "Cux2",
+  "Etv1",
+  "Pou3f1", "Npr3", "Bcl6", "Chst8",
+  "Tshz2",
+  "Stard5", "Trpe3", "Cbln2", "Dcc", "Rell1", "Pamr1",
+  "Foxp2",
+  "Car3",
+  "Cal12a1",
+  "Sulf1", "Cdh9", "Osr1",
+  "Galnt10", "Nxph4", "Nxph3", "Pou6f2", "Cplx3",
+  "Vipr2",
+  "Pvalb",
+  "Vip", "Prox1",
+  "Sst",
+  "Calb2",
+  "Lamp5", "Ndnf",
+  "Itgam", "Cx3cr1",
   "Aqp4", "Slc39a12",
-  "Zeb2" , "Slc1a3",
-  "Lef1", "Apcdd1", "Notum",
-  "Ptgds", "Dcn", 
-  "Kl", "Ttr", "Clic6", "Slc13a4"
+  "Pdgfra", "Cspg4",
+  "Mbp", "Mag", "Plp1",
+  "Lef1", "Notum", "Apcdd1", "Pdgfrb",
+  "Ptgds", "Dcn"
 )
 
 
 
-levels(WT_Kcnc1_p14_CB_1step.sct) <- c(
-  "Granule_1" ,
-  "Granule_2" ,
-  "Granule_3" ,
-  "Granule_4" ,
-  "MLI1",
-  "MLI2",
-  "PLI12",
-  "PLI23",
-  "Purkinje",
-  "Golgi",
-  "UnipolarBrush",
-  "Oligodendrocyte",
-  "Astrocyte",
+levels(WT_Kcnc1_p14_CX_1step.sct) <- c(
+  "L2__IT",
+  "L2L3_1",
+  "L2L3_2",
+  "L2_L3__inh",
+  "L4L5",
+  "L5_1",
+  "L5_2",
+  "L5__PT",
+  "L5__IT",
+  "L5_L6__NP",
+  "L6__inh",
+  "L6_Car3",
+  "L6__LT",
+  "L6__IT",
+  "L6B",
+
+  "GABA_Vipr2",
+  "GABA_Pvalb",
+  "GABA_Vip",
+  "GABA_Sst",
+  "GABA_SstCalb2",
+  "GABA_Lamp5",
+
+  "Microglia",
   "Bergman",
+  "OPC",
+  "Oligodendrocyte",
   "Endothelial",
-  "Meningeal", 
-  "ChoroidPlexus"
+  "Meningeal",
+
+  "cluster5",
+  "cluster18",
+  "cluster25",
+  "cluster26",
+  "cluster31",
+  "cluster33",
+  "cluster34"
 )
 
 
 
-pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CB_1step_version4dim40kparam30res03_label.pdf", width=11, height=4.5)
-DotPlot(WT_Kcnc1_p14_CB_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07_label.pdf", width=15, height=7)
+DotPlot(WT_Kcnc1_p14_CX_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
 dev.off()
 
-pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CB_1step_version4dim40kparam30res03_label_vertical.pdf", width=11, height=4.5)
-DotPlot(WT_Kcnc1_p14_CB_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07_label_vertical.pdf", width=11, height=6)
+DotPlot(WT_Kcnc1_p14_CX_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
         axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
 dev.off()
@@ -28954,73 +29039,93 @@ dev.off()
 
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03-ListDotPlot.pdf", width=30, height=70)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = all_markers, max.cutoff = 1, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07-ListDotPlot.pdf", width=30, height=70)
+FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = all_markers, max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03-Kcnc1.pdf", width=6, height=6)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "Kcnc1", cols = c("grey", "red"), max.cutoff = 1)
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07-Kcnc1.pdf", width=6, height=6)
+FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = "Kcnc1", cols = c("grey", "red"), max.cutoff = 1)
 dev.off()
+
+
 
 
 
 # WT vs Kcnc1
-DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
-WT_Kcnc1_p14_CB_1step.sct <- NormalizeData(WT_Kcnc1_p14_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
-all.genes <- rownames(WT_Kcnc1_p14_CB_1step.sct)
-WT_Kcnc1_p14_CB_1step.sct <- ScaleData(WT_Kcnc1_p14_CB_1step.sct, features = all.genes) # zero-centres and scales it
+DefaultAssay(WT_Kcnc1_p14_CX_1step.sct) <- "RNA"
+WT_Kcnc1_p14_CX_1step.sct <- NormalizeData(WT_Kcnc1_p14_CX_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p14_CX_1step.sct)
+WT_Kcnc1_p14_CX_1step.sct <- ScaleData(WT_Kcnc1_p14_CX_1step.sct, features = all.genes) # zero-centres and scales it
 
-DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
+DefaultAssay(WT_Kcnc1_p14_CX_1step.sct) <- "SCT"
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03-Kcnc1-split.pdf", width=10, height=5)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07-Kcnc1-split.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = c("Kcnc1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03-Gria1-split.pdf", width=10, height=5)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gria1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
-dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03-Slc1a2-split.pdf", width=10, height=5)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Slc1a2"), max.cutoff = 1,  cols = c("grey", "red"), split.by = "condition")
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07-Gria1-split.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = c("Gria1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03-mt-Nd4.pdf", width=10, height=5)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("mt-Nd4"), cols = c("grey", "red"), split.by = "condition")
-dev.off()
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03-Apoe.pdf", width=10, height=5)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Apoe"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07-Apoe.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = c("Apoe"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
 
 
 # Vln Plot WT vs Kcnc1
 
-DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
+DefaultAssay(WT_Kcnc1_p14_CX_1step.sct) <- "RNA"
 
-cell_types <- c(   "Granule", 
-  "MLI1", 
-  "MLI2", 
-  "PLI12",
-  "PLI23", 
-  "Golgi",
-  "Unipolar_Brush",
-  "Purkinje",
-  "Astrocyte",
-  "Bergman_Glia", 
+cell_types <- c(   
+  "L2__IT",
+  "L2L3_1",
+  "L2L3_2",
+  "L2_L3__inh",
+  "L4L5",
+  "L5_1",
+  "L5_2",
+  "L5__PT",
+  "L5__IT",
+  "L5_L6__NP",
+  "L6__inh",
+  "L6_Car3",
+  "L6__LT",
+  "L6__IT",
+  "L6B",
+
+  "GABA_Vipr2",
+  "GABA_Pvalb",
+  "GABA_Vip",
+  "GABA_Sst",
+  "GABA_SstCalb2",
+  "GABA_Lamp5",
+
+  "Microglia",
+  "Bergman",
+  "OPC",
+  "Oligodendrocyte",
   "Endothelial",
   "Meningeal",
-  "Choroid_Plexus",
-  "Oligodendrocyte",
-  "Unknown")
-WT_Kcnc1_p14_CB_1step.sct$cluster.annot <- factor(
-  WT_Kcnc1_p14_CB_1step.sct$cluster.annot, 
+
+  "cluster5",
+  "cluster18",
+  "cluster25",
+  "cluster26",
+  "cluster31",
+  "cluster33",
+  "cluster34"
+)
+WT_Kcnc1_p14_CX_1step.sct$cluster.annot <- factor(
+  WT_Kcnc1_p14_CX_1step.sct$cluster.annot, 
   levels = cell_types
 )
 
 
-pdf("output/seurat/VlnPlot_SCT_WT_Kcnc1_p14_CB_1step-version2dim45kparam10res015-Kcnc1-split.pdf", width=8, height=4)
-VlnPlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1"),split.by = "condition", group.by = "cluster.annot")
+pdf("output/seurat/VlnPlot_SCT_WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07-Kcnc1-split.pdf", width=12, height=4)
+VlnPlot(WT_Kcnc1_p14_CX_1step.sct, features = c("Kcnc1"),split.by = "condition", group.by = "cluster.annot")
 dev.off()
 
 
@@ -29029,38 +29134,38 @@ dev.off()
 
 ## p14 cell type proportion ###############################
 ### count nb of cells in each cluster
-WT_p14_CB_Rep1 = table(Idents(WT_Kcnc1_p14_CB_1step.sct)[WT_Kcnc1_p14_CB_1step.sct$orig.ident == "WT_p14_CB_Rep1"]) %>%
+WT_p14_CX_Rep1 = table(Idents(WT_Kcnc1_p14_CX_1step.sct)[WT_Kcnc1_p14_CX_1step.sct$orig.ident == "WT_p14_CX_Rep1"]) %>%
   as.data.frame() %>%
   dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
   add_column(genotype= "WT",
              time= "p14",
              replicate= "Rep1")
-WT_p14_CB_Rep2 = table(Idents(WT_Kcnc1_p14_CB_1step.sct)[WT_Kcnc1_p14_CB_1step.sct$orig.ident == "WT_p14_CB_Rep2"]) %>%
+WT_p14_CX_Rep2 = table(Idents(WT_Kcnc1_p14_CX_1step.sct)[WT_Kcnc1_p14_CX_1step.sct$orig.ident == "WT_p14_CX_Rep2"]) %>%
   as.data.frame() %>%
   dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
   add_column(genotype= "WT",
              time= "p14",
              replicate= "Rep2")
-WT_p14_CB_Rep3 = table(Idents(WT_Kcnc1_p14_CB_1step.sct)[WT_Kcnc1_p14_CB_1step.sct$orig.ident == "WT_p14_CB_Rep3"]) %>%
+WT_p14_CX_Rep3 = table(Idents(WT_Kcnc1_p14_CX_1step.sct)[WT_Kcnc1_p14_CX_1step.sct$orig.ident == "WT_p14_CX_Rep3"]) %>%
   as.data.frame() %>%
   dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
   add_column(genotype= "WT",
              time= "p14",
              replicate= "Rep3")
 
-Kcnc1_p14_CB_Rep1 = table(Idents(WT_Kcnc1_p14_CB_1step.sct)[WT_Kcnc1_p14_CB_1step.sct$orig.ident == "Kcnc1_p14_CB_Rep1"]) %>%
+Kcnc1_p14_CX_Rep1 = table(Idents(WT_Kcnc1_p14_CX_1step.sct)[WT_Kcnc1_p14_CX_1step.sct$orig.ident == "Kcnc1_p14_CX_Rep1"]) %>%
   as.data.frame() %>%
   dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
   add_column(genotype= "Kcnc1",
              time= "p14",
              replicate= "Rep1")
-Kcnc1_p14_CB_Rep2 = table(Idents(WT_Kcnc1_p14_CB_1step.sct)[WT_Kcnc1_p14_CB_1step.sct$orig.ident == "Kcnc1_p14_CB_Rep2"]) %>%
+Kcnc1_p14_CX_Rep2 = table(Idents(WT_Kcnc1_p14_CX_1step.sct)[WT_Kcnc1_p14_CX_1step.sct$orig.ident == "Kcnc1_p14_CX_Rep2"]) %>%
   as.data.frame() %>%
   dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
   add_column(genotype= "Kcnc1",
              time= "p14",
              replicate= "Rep2")
-Kcnc1_p14_CB_Rep3 = table(Idents(WT_Kcnc1_p14_CB_1step.sct)[WT_Kcnc1_p14_CB_1step.sct$orig.ident == "Kcnc1_p14_CB_Rep3"]) %>%
+Kcnc1_p14_CX_Rep3 = table(Idents(WT_Kcnc1_p14_CX_1step.sct)[WT_Kcnc1_p14_CX_1step.sct$orig.ident == "Kcnc1_p14_CX_Rep3"]) %>%
   as.data.frame() %>%
   dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
   add_column(genotype= "Kcnc1",
@@ -29068,30 +29173,30 @@ Kcnc1_p14_CB_Rep3 = table(Idents(WT_Kcnc1_p14_CB_1step.sct)[WT_Kcnc1_p14_CB_1ste
              replicate= "Rep3")
 
 
-p14_CB = WT_p14_CB_Rep1 %>%
-  bind_rows(WT_p14_CB_Rep2) %>%
-  bind_rows(WT_p14_CB_Rep3) %>%
-  bind_rows(Kcnc1_p14_CB_Rep1) %>%
-  bind_rows(Kcnc1_p14_CB_Rep2) %>%
-  bind_rows(Kcnc1_p14_CB_Rep3) %>%
+p14_CX = WT_p14_CX_Rep1 %>%
+  bind_rows(WT_p14_CX_Rep2) %>%
+  bind_rows(WT_p14_CX_Rep3) %>%
+  bind_rows(Kcnc1_p14_CX_Rep1) %>%
+  bind_rows(Kcnc1_p14_CX_Rep2) %>%
+  bind_rows(Kcnc1_p14_CX_Rep3) %>%
   as_tibble()
   
 
 
 
 ### Keeping all replicates
-p14_CB_prop = p14_CB %>%
+p14_CX_prop = p14_CX %>%
   group_by(replicate, genotype) %>%
   mutate(total_count = sum(count)) %>%
   ungroup() %>%
   mutate(proportion = (count / total_count) * 100)
 
-p14_CB_prop$genotype <-
-  factor(p14_CB_prop$genotype,
+p14_CX_prop$genotype <-
+  factor(p14_CX_prop$genotype,
          c("WT", "Kcnc1"))
 
-pdf("output/seurat/histogramProp_WT_Kcnc1_p14_CB_1step_version2dim45kparam10res015.pdf", width=7, height=4)
-ggbarplot(p14_CB_prop, x = "cluster", y = "proportion", fill = "genotype",
+pdf("output/seurat/histogramProp_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07.pdf", width=9, height=4)
+ggbarplot(p14_CX_prop, x = "cluster", y = "proportion", fill = "genotype",
                   color = "genotype", palette = c("black", "blue"),
                   position = position_dodge(0.8), # Separate bars by genotype
                   add = "mean_se", # Add error bars
@@ -29105,6 +29210,8 @@ dev.off()
 
 
 
+
+XXXY BELOW NOT MOD 
 
 # differential expressed genes across conditions
 ## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
@@ -36117,6 +36224,11 @@ sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_Version2_default.sh # 36792179 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_Version4_MAST.sh # 41084688 xxx
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_Version4_default.sh # 41084716 xxx
 
+
+
+# p14 CX - version2dim30kparam50res07
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CX_Version2_MAST.sh # 41323739 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CX_Version2_default.sh # 41323740 xxx
 
 
 
