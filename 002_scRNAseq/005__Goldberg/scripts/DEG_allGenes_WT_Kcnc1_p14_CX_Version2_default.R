@@ -183,6 +183,46 @@ for (cluster in clusters) {
 
 # Light test interactive
 
+# List of clusters (used to locate files)
+clusters <- c(
+ "L2__IT",
+  "L2L3_1",
+  "L2L3_2",
+  "L2_L3__inh",
+  "L4L5",
+  "L5_1",
+  "L5_2",
+  "L5__PT",
+  "L5__IT",
+  "L5_L6__NP",
+  "L6__inh",
+  "L6_Car3",
+  "L6__LT",
+  "L6__IT",
+  "L6B",
+
+  "GABA_Vipr2",
+  "GABA_Pvalb",
+  "GABA_Vip",
+  "GABA_Sst",
+  "GABA_SstCalb2",
+  "GABA_Lamp5",
+
+  "Microglia",
+  "Bergman",
+  "OPC",
+  "Oligodendrocyte",
+  "Endothelial",
+  "Meningeal",
+
+  "cluster5",
+  "cluster18",
+  "cluster25",
+  "cluster26",
+  "cluster31",
+  "cluster33",
+  "cluster34"
+)
 
 ## Count up and down
 cluster_markers <- list()
