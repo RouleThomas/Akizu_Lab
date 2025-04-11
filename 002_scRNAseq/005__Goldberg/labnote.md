@@ -23227,7 +23227,6 @@ dev.off()
 
 
 
-XXXY BELOW NOT DONE!!
 
 # GSEA output colored in a UMAP
 ## Pathway of neurodegeneration
@@ -23259,7 +23258,7 @@ FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = "NES_colored", pt.size = 0.5, 
 dev.off()
 
 ## REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION
-p35_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION <- read.table("output/Pathway/gsea_output_Kcnc1_response_p35_CB_version4dim30kparam10res02_allGenes_MAST-List4.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")
+p35_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION <- read.table("output/Pathway/gsea_output_Kcnc1_response_p35_CB_version4dim30kparam10res02_allGenes_MAST-List4gene.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")
 ## Add NES and pval information to the Seurat object metadata
 WT_Kcnc1_p35_CB_1step.sct@meta.data$NES <- p35_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$NES[match(WT_Kcnc1_p35_CB_1step.sct@meta.data$cluster.annot, 
                                                                        p35_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$cluster)]
@@ -25624,7 +25623,6 @@ dev.off()
 
 
 
-XXXY BWLOEW!!
 
 # GSEA output colored in a UMAP
 ## Pathway of neurodegeneration
@@ -25656,7 +25654,7 @@ FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = "NES_colored", pt.size = 0.5,
 dev.off()
 
 ## REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION
-p180_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION <- read.table("output/Pathway/gsea_output_Kcnc1_response_p180_CB_version4dim20kparam10res0115_allGenes_MAST-List4.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")
+p180_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION <- read.table("output/Pathway/gsea_output_Kcnc1_response_p180_CB_version4dim20kparam10res0115_allGenes_MAST-List4gene.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")
 ## Add NES and pval information to the Seurat object metadata
 WT_Kcnc1_p180_CB_1step.sct@meta.data$NES <- p180_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$NES[match(WT_Kcnc1_p180_CB_1step.sct@meta.data$cluster.annot, 
                                                                        p180_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$cluster)]
@@ -25859,31 +25857,30 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 
-XXXY HERE TO DO THEN PLOT GSEA!!
+
 
 # GSEA plot
 library("fgsea")
 
 
 #### import all clsuter DEGs output :
-cluster_types <- c("Granule", 
-  "MLI1", 
-  "MLI2", 
-  "PLI12",
-  "PLI23", 
-  "Golgi",
-  "Unipolar_Brush",
-  "Purkinje",
+cluster_types <- c(  "Granule",
+  "MLI1",
+  "MLI2",
   "Astrocyte",
-  "Bergman_Glia", 
+  "PLI23",
+  "PLI12",
   "Endothelial",
+  "Bergman",
+  "UnipolarBrush",
   "Meningeal",
-  "Choroid_Plexus",
-  "Oligodendrocyte",
-  "Unknown")
+  "ChoroidPlexus",
+  "Golgi",
+  "OPC",
+  "Purkinje")
 # Loop over each cluster type to read data and assign to a variable
 for (cluster in cluster_types) {
-  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST.txt")
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p180_CB_version4dim20kparam10res0115_allGenes_MAST.txt")
   data <- read.delim(file_path, header = TRUE, row.names = 1)
   assign(cluster, data)
 }
@@ -25939,7 +25936,7 @@ fgseaResTidy %>%
 
 
 ## plot GSEA
-pdf("output/Pathway/GSEA_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST-REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION-MLI2.pdf", width=5, height=3)
+#pdf("output/Pathway/GSEA_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST-REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION-MLI2.pdf", width=5, height=3)
 plotEnrichment(fgsea_sets[["REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION"]],
                ranks) + labs(title="REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION-MLI2") +
                theme_bw()
@@ -25948,21 +25945,20 @@ dev.off()
 
 # Save output table for all pathway and cluster
 ## Define the list of cluster types
-cluster_types <- c("Granule", 
-  "MLI1", 
-  "MLI2", 
-  "PLI12",
-  "PLI23", 
-  "Golgi",
-  "Unipolar_Brush",
-  "Purkinje",
+cluster_types <- c("Granule",
+  "MLI1",
+  "MLI2",
   "Astrocyte",
-  "Bergman_Glia", 
+  "PLI23",
+  "PLI12",
   "Endothelial",
+  "Bergman",
+  "UnipolarBrush",
   "Meningeal",
-  "Choroid_Plexus",
-  "Oligodendrocyte",
-  "Unknown")
+  "ChoroidPlexus",
+  "Golgi",
+  "OPC",
+  "Purkinje")
 
 ## Initialize an empty list to store the results for each cluster type
 all_results <- list()
@@ -25997,10 +25993,10 @@ for (cluster in cluster_types) {
 final_results <- bind_rows(all_results, .id = "cluster") %>%
   mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST-List4gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p180_CB_version4dim20kparam10res0115_allGenes_MAST-List4gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST-List4.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p180_CB_version4dim20kparam10res0115_allGenes_MAST-List4.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -26026,7 +26022,7 @@ dev.off()
 ### if need reorder terms
 final_results$pathway <- factor(final_results$pathway, levels = c("PathwaysOfNeurodegeneration", "GOBP_NEURONAL_ACTION_POTENTIAL", "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")) 
 
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST_ordered-List4.pdf", width=10, height=3)
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p180_CB_version4dim20kparam10res0115_allGenes_MAST_ordered-List4.pdf", width=10, height=3)
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -29478,58 +29474,57 @@ FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = "DEG", pt.size = 0.5, reductio
 dev.off()
 
 
-XXXY below not mod!!!!!!!!!!!!!!!!
 
 # GSEA output colored in a UMAP
 ## Pathway of neurodegeneration
 
 
-p14_correct_List4_PathwaysOfNeurodegeneration <- read.table("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST-List4.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "PathwaysOfNeurodegeneration")
+p14_correct_List4_PathwaysOfNeurodegeneration <- read.table("output/Pathway/gsea_output_Kcnc1_response_p14_CX_version2dim30kparam50res07_allGenes_MAST-List4gene.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "PathwaysOfNeurodegeneration")
 ## Add NES and pval information to the Seurat object metadata
-WT_Kcnc1_p14_CB_1step.sct@meta.data$NES <- p14_correct_List4_PathwaysOfNeurodegeneration$NES[match(WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot, 
+WT_Kcnc1_p14_CX_1step.sct@meta.data$NES <- p14_correct_List4_PathwaysOfNeurodegeneration$NES[match(WT_Kcnc1_p14_CX_1step.sct@meta.data$cluster.annot, 
                                                                        p14_correct_List4_PathwaysOfNeurodegeneration$cluster)]
-WT_Kcnc1_p14_CB_1step.sct@meta.data$pval <- p14_correct_List4_PathwaysOfNeurodegeneration$pval[match(WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot, 
+WT_Kcnc1_p14_CX_1step.sct@meta.data$pval <- p14_correct_List4_PathwaysOfNeurodegeneration$pval[match(WT_Kcnc1_p14_CX_1step.sct@meta.data$cluster.annot, 
                                                                          p14_correct_List4_PathwaysOfNeurodegeneration$cluster)]
 ## Prepare the NES values for visualization
 ## Color clusters with pval < 0.05 as grey
-WT_Kcnc1_p14_CB_1step.sct@meta.data$NES_colored <- ifelse(WT_Kcnc1_p14_CB_1step.sct@meta.data$pval > 0.05, NA, 
-                                                          WT_Kcnc1_p14_CB_1step.sct@meta.data$NES)                                                       
+WT_Kcnc1_p14_CX_1step.sct@meta.data$NES_colored <- ifelse(WT_Kcnc1_p14_CX_1step.sct@meta.data$pval > 0.05, NA, 
+                                                          WT_Kcnc1_p14_CX_1step.sct@meta.data$NES)                                                       
 ## Extract UMAP coordinates and cluster centers
-umap_coordinates <- as.data.frame(WT_Kcnc1_p14_CB_1step.sct@reductions$umap@cell.embeddings)
-umap_coordinates$cluster <- WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot
+umap_coordinates <- as.data.frame(WT_Kcnc1_p14_CX_1step.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- WT_Kcnc1_p14_CX_1step.sct@meta.data$cluster.annot
 cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
   left_join(p14_correct_List4_PathwaysOfNeurodegeneration, by = c("cluster" = "cluster"))
 ## Format NES values to two decimal places
 cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
 ## Generate the UMAP plot with FeaturePlot
-pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CB_1step_MAST_PathwaysOfNeurodegeneration_version2.pdf", width = 6, height = 6)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CX_1step_MAST_PathwaysOfNeurodegeneration_version2dim30kparam50res07.pdf", width = 6, height = 6)
+FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
   scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
   geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
             size = 4, color = "black", fontface = "bold")
 dev.off()
 
 ## REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION
-p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION <- read.table("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST-List4.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")
+p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION <- read.table("output/Pathway/gsea_output_Kcnc1_response_p14_CX_version2dim30kparam50res07_allGenes_MAST-List4gene.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")
 ## Add NES and pval information to the Seurat object metadata
-WT_Kcnc1_p14_CB_1step.sct@meta.data$NES <- p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$NES[match(WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot, 
+WT_Kcnc1_p14_CX_1step.sct@meta.data$NES <- p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$NES[match(WT_Kcnc1_p14_CX_1step.sct@meta.data$cluster.annot, 
                                                                        p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$cluster)]
-WT_Kcnc1_p14_CB_1step.sct@meta.data$pval <- p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$pval[match(WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot, 
+WT_Kcnc1_p14_CX_1step.sct@meta.data$pval <- p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$pval[match(WT_Kcnc1_p14_CX_1step.sct@meta.data$cluster.annot, 
                                                                          p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$cluster)]
 ## Prepare the NES values for visualization
 ## Color clusters with pval < 0.05 as grey
-WT_Kcnc1_p14_CB_1step.sct@meta.data$NES_colored <- ifelse(WT_Kcnc1_p14_CB_1step.sct@meta.data$pval > 0.05, NA, 
-                                                          WT_Kcnc1_p14_CB_1step.sct@meta.data$NES)                                                       
+WT_Kcnc1_p14_CX_1step.sct@meta.data$NES_colored <- ifelse(WT_Kcnc1_p14_CX_1step.sct@meta.data$pval > 0.05, NA, 
+                                                          WT_Kcnc1_p14_CX_1step.sct@meta.data$NES)                                                       
 ## Extract UMAP coordinates and cluster centers
-umap_coordinates <- as.data.frame(WT_Kcnc1_p14_CB_1step.sct@reductions$umap@cell.embeddings)
-umap_coordinates$cluster <- WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot
+umap_coordinates <- as.data.frame(WT_Kcnc1_p14_CX_1step.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- WT_Kcnc1_p14_CX_1step.sct@meta.data$cluster.annot
 cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
   left_join(p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION, by = c("cluster" = "cluster"))
 ## Format NES values to two decimal places
 cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
 ## Generate the UMAP plot with FeaturePlot
-pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CB_1step_MAST_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION_version2.pdf", width = 6, height = 6)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CX_1step_MAST_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION_version2dim30kparam50res07.pdf", width = 6, height = 6)
+FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
   scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
   geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
             size = 4, color = "black", fontface = "bold")
@@ -29979,6 +29974,366 @@ dev.off()
 
 
 ```
+
+
+
+###### CellChat Cell type verification
+
+Let's use CellChat to confirm our cell type annotation
+
+
+```bash
+conda activate CellChat
+```
+
+
+
+Follow [Full tutorial for CellChat analysis of a single dataset with detailed explanation of each function](https://htmlpreview.github.io/?https://github.com/jinworks/CellChat/blob/master/tutorial/CellChat-vignette.html)
+
+
+Lets do a first test with only **WT cells from p14**
+
+
+```R
+# packages
+library("Seurat")
+library("CellChat")
+library("patchwork")
+library("presto")
+library("NMF")
+library("ggalluvial")
+options(stringsAsFactors = FALSE)
+set.seed(42)
+
+
+# import seurat object
+WT_Kcnc1_p14_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07.sct_V1_label.rds") # 
+
+
+
+
+
+DefaultAssay(WT_Kcnc1_p14_CX_1step.sct) <- "RNA"
+WT_Kcnc1_p14_CX_1step.sct <- NormalizeData(WT_Kcnc1_p14_CX_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p14_CX_1step.sct)
+WT_Kcnc1_p14_CX_1step.sct <- ScaleData(WT_Kcnc1_p14_CX_1step.sct, features = all.genes) # zero-centres and scales it
+
+# Subset to keep WT cells only 
+WT_p14 <- subset(WT_Kcnc1_p14_CX_1step.sct, cells = WhichCells(WT_Kcnc1_p14_CX_1step.sct, expression = condition == "WT"))
+# Subset to keep only cell type of interest
+cells_to_keep <- WhichCells(WT_p14, expression = cluster.annot %in% c(
+  "L2__IT",
+  "L2L3_1",
+  "L2L3_2",
+  "L2_L3__inh",
+  "L4L5",
+  "L5_1",
+  "L5_2",
+  "L5__PT",
+  "L5__IT",
+  "L5_L6__NP",
+  "L6__inh",
+  "L6_Car3",
+  "L6__LT",
+  "L6__IT",
+  "L6B",
+
+  "GABA_Vipr2",
+  "GABA_Pvalb",
+  "GABA_Vip",
+  "GABA_Sst",
+  "GABA_SstCalb2",
+  "GABA_Lamp5",
+
+  "Microglia",
+  "Bergman",
+  "OPC",
+  "Oligodendrocyte",
+ # "Endothelial",
+ # "Meningeal",
+
+  "cluster5",
+  "cluster18",
+  "cluster25",
+  "cluster26",
+  "cluster31",
+  "cluster33",
+  "cluster34"
+))
+WT_p14 <- subset(WT_p14, cells = cells_to_keep)
+WT_p14$cluster.annot <- droplevels(WT_p14$cluster.annot)
+table(WT_p14$cluster.annot)  # Should no longer show empty clusters
+
+# change order
+WT_p14$cluster.annot <- factor(x = WT_p14$cluster.annot, levels = c(   "L2__IT",
+  "L2L3_1",
+  "L2L3_2",
+  "L2_L3__inh",
+  "L4L5",
+  "L5_1",
+  "L5_2",
+  "L5__PT",
+  "L5__IT",
+  "L5_L6__NP",
+  "L6__inh",
+  "L6_Car3",
+  "L6__LT",
+  "L6__IT",
+  "L6B",
+
+  "GABA_Vipr2",
+  "GABA_Pvalb",
+  "GABA_Vip",
+  "GABA_Sst",
+  "GABA_SstCalb2",
+  "GABA_Lamp5",
+
+  "Microglia",
+  "Bergman",
+  "OPC",
+  "Oligodendrocyte",
+ # "Endothelial",
+ # "Meningeal",
+
+  "cluster5",
+  "cluster18",
+  "cluster25",
+  "cluster26",
+  "cluster31",
+  "cluster33",
+  "cluster34"))
+
+
+
+# Create CellChat object
+data.input <- WT_p14[["RNA"]]@data # normalized data matrix
+# For Seurat version >= “5.0.0”, get the normalized data via `seurat_object[["RNA"]]$data`
+labels <- Idents(WT_p14)
+meta <- data.frame(labels = labels, row.names = names(labels)) # create a dataframe of the cell labels
+cellchat <- createCellChat(object = WT_p14, group.by = "cluster.annot", assay = "RNA")
+
+# import ligand receptor information
+CellChatDB <- CellChatDB.mouse
+dplyr::glimpse(CellChatDB$interaction) # Show the structure of the database
+
+#--> HERE WE CAN TRY DIFFERENT DATABASE! I pick the ChatGPT recommended on. But could try other!
+# use a subset of CellChatDB for cell-cell communication analysis
+#CellChatDB.use <- subsetDB(CellChatDB, search = "Secreted Signaling", key = "annotation") 
+#CellChatDB.use <- CellChatDB # use all CellChatDB for cell-cell communication analysis
+CellChatDB.use <- subsetDB(CellChatDB, search = "Non-protein Signaling", key = "annotation") # for neuron-neuron comm
+
+cellchat@DB <- CellChatDB.use # set the used database in the object
+
+# Preprocessing the expression data for cell-cell communication analysis
+## subset the expression data of signaling genes for saving computation cost
+cellchat <- subsetData(cellchat) # This step is necessary even if using the whole database
+#future::plan("multisession", workers = 4) # do parallel
+cellchat <- identifyOverExpressedGenes(cellchat)
+cellchat <- identifyOverExpressedInteractions(cellchat)
+#--> The number of highly variable ligand-receptor pairs used for signaling inference is 948
+
+
+# Part II: Inference of cell-cell communication network
+# --> IMPORTANT: We can reduce threshold with type = "truncatedMean" and trim = 0.1 = 10% = average gene expression is zero if the percent of expressed cells in one group is less than 10% (Default is 25%)
+
+cellchat <- computeCommunProb(cellchat, type = "triMean") # By default type = "triMean", producing fewer but stronger interactions
+#cellchat <- computeCommunProb(cellchat, type = "truncatedMean", trim = 0.1) # By default type = "triMean", producing fewer but stronger interactions
+
+cellchat <- filterCommunication(cellchat, min.cells = 10) # filter out the cell-cell communication if there are only few cells in certain cell groups. By default, the minimum number of cells required in each cell group for cell-cell communication is 10.
+# Extract the inferred cellular communication network as a data frame
+df.net <- subsetCommunication(cellchat)
+
+# Infer the cell-cell communication at a signaling pathway level
+cellchat <- computeCommunProbPathway(cellchat) # The inferred intercellular communication network of each ligand-receptor pair and each signaling pathway is stored in the slot ‘net’ and ‘netP’, respectively.
+
+# Calculate the aggregated cell-cell communication network
+cellchat <- aggregateNet(cellchat)
+
+pdf("output/CellChat/netVisual_circle-p14_CX_WT-version2dim30kparam50res07-default-NonproteinSignaling-filterCells.pdf", width=20, height=20)
+groupSize <- as.numeric(table(cellchat@idents))
+par(mfrow = c(1,2), xpd=TRUE)
+netVisual_circle(cellchat@net$count, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Number of interactions")
+netVisual_circle(cellchat@net$weight, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Interaction weights/strength")
+dev.off()
+
+
+pdf("output/CellChat/netVisual_circle-p14_CX_WT-version2dim30kparam50res07-cellType-default-NonproteinSignaling-filterCells.pdf", width=15, height=15)
+mat <- cellchat@net$weight
+par(mfrow = c(3,4), xpd=TRUE)
+for (i in 1:nrow(mat)) {
+  mat2 <- matrix(0, nrow = nrow(mat), ncol = ncol(mat), dimnames = dimnames(mat))
+  mat2[i, ] <- mat[i, ]
+  netVisual_circle(mat2, vertex.weight = groupSize, weight.scale = T, edge.weight.max = max(mat), title.name = rownames(mat)[i])
+}
+dev.off()
+
+
+
+
+# Specify group of interest 
+# Define the groups based on the cell type categorization
+# Define the groups based on the revised cell type categorization
+group.cellType <- rep(NA, length(levels(cellchat@idents)))
+names(group.cellType) <- levels(cellchat@idents)
+# Assign each cell type to a category
+group.cellType[c("L2__IT",   "L2L3_1",  "L2L3_2",  "L2_L3__inh",  "L4L5",  "L5_1",  "L5_2",  "L5__PT",  "L5__IT",  "L5_L6__NP",  "L6__inh",  "L6_Car3",  "L6__LT",  "L6__IT",  "L6B")] <- "Glutamatergic"
+group.cellType[c("GABA_Vipr2",  "GABA_Pvalb",  "GABA_Vip",  "GABA_Sst",  "GABA_SstCalb2",  "GABA_Lamp5")] <- "GABAergic"
+group.cellType[c("Microglia",  "Bergman",  "OPC",  "Oligodendrocyte")] <- "Other"
+group.cellType[c(  "cluster5",  "cluster18",  "cluster25",  "cluster26",  "cluster31",  "cluster33",  "cluster34")] <- "Unknown"
+
+# Check if all assignments are done correctly
+print(group.cellType)
+names(group.cellType) <- levels(cellchat@idents)
+
+
+# Change order of cell type:
+# Reorder the levels of cellchat@idents according to the specified order
+cellchat@idents <- factor(cellchat@idents, levels = c(
+  "L2__IT",   "L2L3_1",  "L2L3_2",  "L2_L3__inh",  "L4L5",  "L5_1",  "L5_2",  "L5__PT",  "L5__IT",  "L5_L6__NP",  "L6__inh",  "L6_Car3",  "L6__LT",  "L6__IT",  "L6B","GABA_Vipr2",  "GABA_Pvalb",  "GABA_Vip",  "GABA_Sst",  "GABA_SstCalb2",  "GABA_Lamp5","Microglia",  "Bergman",  "OPC",  "Oligodendrocyte", "cluster5",  "cluster18",  "cluster25",  "cluster26",  "cluster31",  "cluster33",  "cluster34"
+)) # "ChoroidPlexus", "Ependymal", "Meningeal", "Endothelial"
+# Check if the levels are correctly ordered now
+print(levels(cellchat@idents))
+
+
+
+
+
+
+# Visualize each signaling pathway using Hierarchy plot, Circle plot or Chord diagram
+cellchat@netP$pathways # show pathway with signif interactions
+#--> FROM THIS PICK PATHWAY OF INTEREST
+
+pathways.show <- c("Glutamate") 
+pathways.show <- c("GABA-A") 
+pathways.show <- c("GABA-B") 
+pdf("output/CellChat/netVisual_aggregate-p14_CX_WT-version2dim30kparam50res07-GABAB-default-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+# Here we define `vertex.receive` so that the left portion of the hierarchy plot shows signaling to fibroblast and the right portion shows signaling to immune cells 
+vertex.receiver = seq(1,4) # a numeric vector. 
+netVisual_aggregate(cellchat, signaling = pathways.show,  vertex.receiver = vertex.receiver)
+# Circle plot
+par(mfrow=c(1,1))
+netVisual_aggregate(cellchat, signaling = pathways.show, layout = "circle")
+# Chord diagram
+par(mfrow=c(1,1))
+netVisual_aggregate(cellchat, signaling = pathways.show, layout = "chord")
+par(mfrow=c(1,1))
+netVisual_heatmap(cellchat, signaling = pathways.show, color.heatmap = "Reds")
+dev.off()
+
+
+
+# Chord diagram
+pathways.show <- c("Glutamate") 
+pathways.show <- c("GABA-A") 
+pathways.show <- c("GABA-B") 
+pdf("output/CellChat/netVisual_chord_cell-p14_CX_WT-version2dim30kparam50res07-GABAB-default-NonproteinSignaling-filterCells.pdf", width=10, height=10)
+# The cellchat function to visualize the chord diagram based on your defined groups
+netVisual_chord_cell(cellchat, signaling = pathways.show, group = group.cellType, title.name = paste0(pathways.show, " signaling network"))
+#> Plot the aggregated cell-cell communication network at the signaling pathway level
+dev.off()
+
+
+# Automatically save the plots of the all inferred network for quick exploration
+# Access all the signaling pathways showing significant communications
+pathways.show.all <- cellchat@netP$pathways
+# check the order of cell identity to set suitable vertex.receiver
+levels(cellchat@idents)
+vertex.receiver = seq(1,4)
+for (i in 1:length(pathways.show.all)) {
+  # Visualize communication network associated with both signaling pathway and individual L-R pairs
+  netVisual(cellchat, signaling = pathways.show.all[i], vertex.receiver = vertex.receiver, layout = "hierarchy")
+  # Compute and visualize the contribution of each ligand-receptor pair to the overall signaling pathway
+  gg <- netAnalysis_contribution(cellchat, signaling = pathways.show.all[i])
+  ggsave(filename=paste0("output/CellChat/",pathways.show.all[i], "_L-R_contribution.pdf"), plot=gg, width = 3, height = 2, units = 'in', dpi = 300)
+}
+# --> Not sure that was usefull...
+
+
+
+# Part IV: Systems analysis of cell-cell communication network
+## Compute and visualize the network centrality scores
+pathways.show <- c("Glutamate") 
+pathways.show <- c("GABA-A") 
+pathways.show <- c("GABA-B") 
+cellchat <- netAnalysis_computeCentrality(cellchat, slot.name = "netP") # the slot 'netP' means the inferred intercellular communication network of signaling pathways
+# Visualize the computed centrality scores using heatmap, allowing ready identification of major signaling roles of cell groups
+pdf("output/CellChat/netAnalysis_signalingRole_network-p14_CX_WT-version2dim30kparam50res07-GABAB-default-NonproteinSignaling-filterCells.pdf", width=10, height=10)
+netAnalysis_signalingRole_network(cellchat, signaling = pathways.show, width = 15, height = 2.5, font.size = 10) # , cluster.cols = TRUE
+dev.off()
+
+
+
+pdf("output/CellChat/netAnalysis_signalingRole_heatmap-p14_CX_WT-version2dim30kparam50res07-default-NonproteinSignaling-filterCells.pdf", width=10, height=6)
+# Signaling role analysis on the aggregated cell-cell communication network from all signaling pathways
+ht1 <- netAnalysis_signalingRole_heatmap(cellchat, pattern = "outgoing", height = 4,)
+ht2 <- netAnalysis_signalingRole_heatmap(cellchat, pattern = "incoming", height = 4)
+ht1 + ht2
+dev.off()
+
+
+# Identify global communication patterns to explore how multiple cell types and signaling pathways coordinate together
+##### outgoing #######
+## Here we run selectK to infer the number of patterns.
+pdf("output/CellChat/selectK-p14_CX_WT-version2dim30kparam50res07-default-outgoing-NonproteinSignaling.pdf", width=10, height=10)
+selectK(cellchat, pattern = "outgoing")
+dev.off()
+#--> Identify at which value the line drop down = 5 for `Secreted Signaling`; 5/7 for all DB=CellChatDB; 5 for NonproteinSignaling
+nPatterns = 4
+pdf("output/CellChat/netAnalysis_river-p14_CX_WT-version2dim30kparam50res07-default-outgoing-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+cellchat <- identifyCommunicationPatterns(cellchat, pattern = "outgoing", k = nPatterns)
+netAnalysis_river(cellchat, pattern = "outgoing")
+dev.off()
+pdf("output/CellChat/netAnalysis_dot-p14_CX_WT-version2dim30kparam50res07-default-outgoing-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+netAnalysis_dot(cellchat, pattern = "outgoing")
+dev.off()
+
+
+
+##### incoming #######
+## Here we run selectK to infer the number of patterns.
+pdf("output/CellChat/selectK-p14_CX_WT-version2dim30kparam50res07-default-incoming-NonproteinSignaling.pdf", width=10, height=10)
+selectK(cellchat, pattern = "incoming")
+dev.off()
+#--> Identify at which value the line drop down = 5 for `Secreted Signaling`; 5/7 for all DB=CellChatDB; 5 for NonproteinSignaling
+nPatterns = 4
+pdf("output/CellChat/netAnalysis_river-p14_CX_WT-version2dim30kparam50res07-default-incoming-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+cellchat <- identifyCommunicationPatterns(cellchat, pattern = "incoming", k = nPatterns)
+netAnalysis_river(cellchat, pattern = "incoming")
+dev.off()
+pdf("output/CellChat/netAnalysis_dot-p14_CX_WT-version2dim30kparam50res07-default-incoming-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+netAnalysis_dot(cellchat, pattern = "incoming")
+dev.off()
+
+
+
+
+# Identify signaling groups based on their functional similarity
+cellchat <- computeNetSimilarity(cellchat, type = "functional")
+cellchat <- netEmbedding(cellchat, type = "functional")
+cellchat <- netClustering(cellchat, type = "functional")
+# Visualization in 2D-space
+pdf("output/CellChat/netVisual_embedding-p14_CX_WT-version2dim30kparam50res07-default-functional-NonproteinSignaling-filterCells.pdf", width=6, height=6)
+netVisual_embedding(cellchat, type = "functional", label.size = 3.5)
+dev.off()
+#--> High degree of functional similarity indicates major senders and receivers are similar, and it can be interpreted as the two signaling pathways or two ligand-receptor pairs exhibit similar and/or redundant roles
+
+# Part V: Save the CellChat object
+saveRDS(cellchat, file = "output/CellChat/p14_CX_WT-version2dim30kparam50res07-default-NonproteinSignaling-filterCells.rds")
+
+```
+
+--> Need to *use the NonproteinSignaling DB* to make it work (ie. show GABA for MLI12 and Glutamate for Granule)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -34340,6 +34695,8 @@ sbatch scripts/dataIntegration_CB_2step_integrateMerge_Version2.sh # 36824743 ok
 sbatch scripts/dataIntegration_CB_2step_integrateMerge_Version3_QCversion4.sh # 41084221 ok
 
 
+
+
 ```
 
 --> Error `unable to coerce from TsparseMatrix to [CR]sparseMatrixwhen length of 'i' slot exceeds 2^31-1` discussed [here](https://github.com/satijalab/seurat/discussions/7311). Solution discussed:
@@ -35014,39 +35371,39 @@ DefaultAssay(WT_Kcnc1_CB_integrateMerge.sct) <- "SCT"
 WT_Kcnc1_CB_integrateMerge.sct <- RunPCA(WT_Kcnc1_CB_integrateMerge.sct, verbose = FALSE, npcs = 50)
 WT_Kcnc1_CB_integrateMerge.sct <- RunUMAP(WT_Kcnc1_CB_integrateMerge.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
 WT_Kcnc1_CB_integrateMerge.sct <- FindNeighbors(WT_Kcnc1_CB_integrateMerge.sct, reduction = "pca", k.param = 30, dims = 1:50)
-WT_Kcnc1_CB_integrateMerge.sct <- FindClusters(WT_Kcnc1_CB_integrateMerge.sct, resolution = 0.5, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+WT_Kcnc1_CB_integrateMerge.sct <- FindClusters(WT_Kcnc1_CB_integrateMerge.sct, resolution = 1.2, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
 WT_Kcnc1_CB_integrateMerge.sct$condition <- factor(WT_Kcnc1_CB_integrateMerge.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 WT_Kcnc1_CB_integrateMerge.sct$time <- factor(WT_Kcnc1_CB_integrateMerge.sct$time, levels = c("p14", "p35", "p180")) 
 
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res05-version3QCversion4.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res12-version3QCversion4.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE, raster = FALSE)
 dev.off()
 
 
 
 
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res05-version3QCversion4-nolabel.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res12-version3QCversion4-nolabel.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=FALSE, raster = FALSE)
 dev.off()
 
 
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res05_splitOrig-version3QCversion4.pdf", width=60, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res12_splitOrig-version3QCversion4.pdf", width=60, height=6)
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE, raster = FALSE, split.by = "orig.ident") # add `raster = FALSE` when more than 100k cells in the plot
 dev.off()
 
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res05_splitTime-version3QCversion4.pdf", width=15, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res12_splitTime-version3QCversion4.pdf", width=15, height=6)
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE, raster = FALSE, split.by = "time") # add `raster = FALSE` when more than 100k cells in the plot
 dev.off()
 
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res05_groupTime-version3QCversion4.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res12_groupTime-version3QCversion4.pdf", width=7, height=6)
 my_cols = brewer.pal(3,"Dark2")
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE, raster = FALSE, group.by = "time", cols=alpha(my_cols,0.3)) # add `raster = FALSE` when more than 100k cells in the plot
 dev.off()
 
 
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res05_splitConditionGroupTime_label-version3QCversion4.pdf", width=15, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res12_splitConditionGroupTime_label-version3QCversion4.pdf", width=15, height=6)
 DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", split.by = "condition", pt.size = 0.5, label.size = 3, raster = FALSE, group.by = "time")
 dev.off()
 
@@ -35082,8 +35439,8 @@ dev.off()
 
 
 # save ######################################################
-## saveRDS(WT_Kcnc1_CB_integrateMerge.sct, file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res05-V1_numeric.rds") #
-WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res05-V1_numeric.rds")
+## saveRDS(WT_Kcnc1_CB_integrateMerge.sct, file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res12-V1_numeric.rds") #
+WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res12-V1_numeric.rds")
 
 # ADD LABEL V1:
 
@@ -35091,7 +35448,7 @@ WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_inte
 WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res05-V1_label.rds")
 ############################################################################################################
 
-
+XXX Below not run with the new version3QCversion4dim50kparam30res12 version, but not needed...
 
 
 # V1 naming
@@ -35202,7 +35559,8 @@ dev.off()
 
 
 
-### Pseudotime
+### Pseudotime trajectory and DEG 
+#### Keeping all cells
 
 --> Follow `002*/006__Kim` `#### Run condiments RNA assay - V1 common condition`
 
@@ -35247,8 +35605,8 @@ set.seed(42)
 
 
 # Data import - all samples and genotype CB
-WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-dim40kparam15res03-labelv1.rds")
-
+#WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-dim40kparam15res03-labelv1.rds")
+WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res05-V1_numeric.rds")
 
 DefaultAssay(WT_Kcnc1_CB_integrateMerge.sct) <- "RNA" # According to condiments workflow
 
@@ -35266,7 +35624,7 @@ df <- bind_cols(
 
 # PLOT
 ## genotype overlap
-pdf("output/condiments/UMAP_condition_WT_Kcnc1_CB-dim40kparam15res03.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_condition_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7) +
   scale_color_manual(values = c("blue", "red")) + # Specify colors here
@@ -35281,7 +35639,7 @@ scores <- condiments::imbalance_score(
   k = 20, smooth = 40)
 df$scores <- scores$scaled_scores
 
-pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_CB-dim40kparam15res03.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
   geom_point(size = .7) +
   scale_color_viridis_c(option = "C") +
@@ -35296,60 +35654,15 @@ dev.off()
 
 #  TOO LONG RUN IN SLURM |||||||||
 WT_Kcnc1_CB <- slingshot(WT_Kcnc1_CB, reducedDim = 'UMAP',
-                 clusterLabels = colData(WT_Kcnc1_CB)$cluster.annot,
-                 start.clus = c('Granule_3', "MLI1_3", "MLI2_3"), end.clus = c("Granule_1","MLI1_1","MLI2_2") ,approx_points = 100, extend = 'n', stretch = 1)
+                 clusterLabels = colData(WT_Kcnc1_CB)$seurat_clusters,
+                 start.clus = c('14', "6", "8"), end.clus = c("11","3","1") ,approx_points = 100, extend = 'n', stretch = 1)
 
 #test reduceDim PCA or subset endoderm
 topologyTest(SlingshotDataSet(WT_Kcnc1_CB), WT_Kcnc1_CB$condition) #  
 sdss <- slingshot_conditions(SlingshotDataSet(WT_Kcnc1_CB), WT_Kcnc1_CB$condition)
 curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
                     .id = "condition")
-pdf("output/condiments/UMAP_trajectory_WT_Kcnc1_CB-dim40kparam15res03-START-Granule_3MLI1MLI2_3_3-END-Granule_1MLI1_1MLI2_2-points100extendnstretch1.pdf", width=6, height=5)
-ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
-  geom_point(size = .7, alpha = .2) +
-  scale_color_brewer(palette = "Accent") +
-  geom_path(data = curves %>% arrange(condition, Lineage, Order),
-            aes(group = interaction(Lineage, condition)), size = 1.5) +
-  theme_classic()
-dev.off()
-#  TOO LONG RUN IN SLURM |||||||||
-
-
-
-
-
-XXXY
-
-
-
-
-########################################
-## PLOT NOT keeping all cells (with Separate trajectories)  ##########
-### Testing Area ######################
-
-
-
-WT_Kcnc1_CB <- slingshot(WT_Kcnc1_CB, reducedDim = 'UMAP',
-                 clusterLabels = colData(WT_Kcnc1_CB)$cluster.annot,
-                 start.clus = 'Granule_3', end.clus = c("Granule_1") ,approx_points = 100, extend = 'n', stretch = 1)
-
-
-
-
-#test reduceDim PCA or subset endoderm
-topologyTest(SlingshotDataSet(Part_Granule), Part_Granule$condition) #  
-
-
-sdss <- slingshot_conditions(SlingshotDataSet(Part_Granule), Part_Granule$condition)
-curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
-                    .id = "condition")
-
-
-
-#  
-#pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-dim40kparam15res03-Part_Granule-STARTGranule_3ENDGranule_1points100extendn.pdf", width=6, height=5)
-#pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-dim40kparam15res03-Part_Granule-STARTGranule_3ENDGranule_1points100extendnstretch0.pdf", width=6, height=5)
-pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-dim40kparam15res03-Part_Granule-STARTGranule_3ENDGranule_1points100extendnstretch1.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_trajectory_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05-START14_6_8-END11_3_1-points100extendnstretch1.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7, alpha = .2) +
   scale_color_brewer(palette = "Accent") +
@@ -35358,6 +35671,7 @@ ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   theme_classic()
 dev.off()
 
+#--> TOO LONG!!! ~20hours!
 
 
 
@@ -35371,122 +35685,6 @@ dev.off()
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#  Trajectory Inference and Differential Topology
-
-## SEPARATE CELLS for each trajectory ############################
-
-########################################################
-############################ Granule ############################
-########################################################
-
-# Separate SCE object for each partitions:
-Part_Granule <- WT_Kcnc1_CB[, WT_Kcnc1_CB$cluster.annot %in% c("Granule_1", "Granule_2", "Granule_3")]
-table(Part_Granule$cluster.annot) # to double check
-
-
-
-# tidy
-df <- bind_cols(
-  as.data.frame(reducedDims(Part_Granule)$UMAP),
-  as.data.frame(colData(Part_Granule)[, -3])
-  ) %>%
-  sample_frac(1)
-
-# PLOT
-pdf("output/condiments/UMAP_WT_Kcnc1_CB-dim40kparam15res03-Part_Granule.pdf", width=6, height=5)
-ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = cluster.annot)) +
-  geom_point(size = .7) +
-  labs(col = "Genotype") +
-  theme_classic()
-dev.off()
-
-## genotype overlap
-pdf("output/condiments/UMAP_condition_WT_Kcnc1_CB-dim40kparam15res03-Part_Granule.pdf", width=6, height=5)
-ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
-  geom_point(size = .7) +
-  scale_color_manual(values = c("blue", "red")) + # Specify colors here
-  labs(col = "Genotype") +
-  theme_classic()
-dev.off()
-
-## imbalance score
-scores <- condiments::imbalance_score(
-  Object = df %>% select(UMAP_1, UMAP_2) %>% as.matrix(), 
-  conditions = df$condition,
-  k = 20, smooth = 40)
-df$scores <- scores$scaled_scores
-
-pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_CB-dim40kparam15res03-Part_Granule.pdf", width=5, height=5)
-ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
-  geom_point(size = .7) +
-  scale_color_viridis_c(option = "C") +
-  labs(col = "Scores") +
-  theme_classic()
-dev.off()
-
-
-
-
-
-## PLOT with Separate trajectories
-### Testing Area ############
-Part_Granule <- slingshot(Part_Granule, reducedDim = 'UMAP',
-                 clusterLabels = colData(Part_Granule)$cluster.annot,
-                 start.clus = 'Granule_3', end.clus = c("Granule_1") ,approx_points = 100, extend = 'n')
-Part_Granule <- slingshot(Part_Granule, reducedDim = 'UMAP',
-                 clusterLabels = colData(Part_Granule)$cluster.annot,
-                 start.clus = 'Granule_3', end.clus = c("Granule_1") ,approx_points = 100, extend = 'n', stretch = 0)
-##########################################
-
-xxxy chagne apramter to decease lenght of traj!! xxxy
-
-Part_Granule <- slingshot(Part_Granule, reducedDim = 'UMAP',
-                 clusterLabels = colData(Part_Granule)$cluster.annot,
-                 start.clus = 'Granule_3', end.clus = c("Granule_1") ,approx_points = 100, extend = 'n', stretch = 1)
-
-
-
-
-#test reduceDim PCA or subset endoderm
-topologyTest(SlingshotDataSet(Part_Granule), Part_Granule$condition) #  
-
-
-sdss <- slingshot_conditions(SlingshotDataSet(Part_Granule), Part_Granule$condition)
-curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
-                    .id = "condition")
-
-
-
-#  
-#pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-dim40kparam15res03-Part_Granule-STARTGranule_3ENDGranule_1points100extendn.pdf", width=6, height=5)
-#pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-dim40kparam15res03-Part_Granule-STARTGranule_3ENDGranule_1points100extendnstretch0.pdf", width=6, height=5)
-pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-dim40kparam15res03-Part_Granule-STARTGranule_3ENDGranule_1points100extendnstretch1.pdf", width=6, height=5)
-ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
-  geom_point(size = .7, alpha = .2) +
-  scale_color_brewer(palette = "Accent") +
-  geom_path(data = curves %>% arrange(condition, Lineage, Order),
-            aes(group = interaction(Lineage, condition)), size = 1.5) +
-  theme_classic()
-dev.off()
 
 XXX BELOW NOT MOPD XXXXXXXXX
 XXXXXXXXXXXXXXXXXX
@@ -36362,6 +36560,921 @@ dev.off()
 ```
 
 
+#### Isolating cell of interest - Granule
+
+Let's do pseudoitme by isolating cell cluster of interest (ie. for Granule, isolate all granule cell clusters)
+
+
+--> Follow `002*/006__Kim` `#### Run condiments RNA assay - V1 common condition`
+
+
+```bash
+conda activate condiments_V6
+```
+
+
+
+
+```R
+
+# package installation 
+## install.packages("remotes")
+## remotes::install_github("cran/spatstat.core")
+## remotes::install_version("Seurat", "4.0.3")
+## install.packages("magrittr")
+## install.packages("magrittr")
+## install.packages("dplyr")
+## BiocManager::install("DelayedMatrixStats")
+## BiocManager::install("tradeSeq")
+
+
+# packages
+library("condiments")
+library("Seurat")
+library("magrittr") # to use pipe
+library("dplyr") # to use bind_cols and sample_frac
+library("SingleCellExperiment") # for reducedDims
+library("ggplot2")
+library("slingshot")
+library("DelayedMatrixStats")
+library("tidyr")
+library("tradeSeq")
+library("cowplot")
+library("scales")
+library("pheatmap")
+library("readr")
+set.seed(42)
+
+
+
+# Data import - all samples and genotype CB
+#WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-dim40kparam15res03-labelv1.rds")
+#WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res05-V1_numeric.rds")
+WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res12-V1_numeric.rds")
+DefaultAssay(WT_Kcnc1_CB_integrateMerge.sct) <- "RNA" # According to condiments workflow
+
+
+# convert to SingleCellExperiment
+WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_CB_integrateMerge.sct, assay = "RNA")
+
+
+
+## SEPARATE CELLS for each trajectory ############################
+
+########################################################
+############################ Granule ############################
+########################################################
+
+# First filter based on cell type
+Part_Granule <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c("11","7","4","2","1","6","12","23")]
+table(Part_Granule$seurat_clusters) # to double check
+
+
+# tidy
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_Granule)$UMAP),
+  as.data.frame(colData(Part_Granule)[, -3])
+  ) %>%
+  sample_frac(1)
+
+# PLOT
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res12-Part_Granule.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
+  geom_point(size = .7) +
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+
+## Second filter based on UMAP coordinate
+umap_coords <- reducedDims(Part_Granule)$UMAP
+
+# Filter conditions based on your description:
+# Keep cells with UMAP_1 > -3 and UMAP_2 < 2.5
+selected_cells <- umap_coords[,1] > -3 & umap_coords[,2] < 2.5 &  umap_coords[,1] < 6.5
+
+# Subset your SCE object
+Part_Granule_subset <- Part_Granule[, selected_cells]
+
+# Check resulting subset
+dim(Part_Granule_subset)
+
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_Granule_subset)$UMAP),
+  as.data.frame(colData(Part_Granule_subset)[, -3])
+  ) %>%
+  sample_frac(1)
+
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res12-Part_Granule_subset.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
+  geom_point(size = .7) +
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+
+
+## genotype overlap
+pdf("output/condiments/UMAP_condition_WT_Kcnc1_CB-version3QCversion4dim50kparam30res12-Part_Granule_subset.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7) +
+  scale_color_manual(values = c("blue", "red")) + # Specify colors here
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+## imbalance score
+scores <- condiments::imbalance_score(
+  Object = df %>% select(UMAP_1, UMAP_2) %>% as.matrix(), 
+  conditions = df$condition,
+  k = 20, smooth = 40)
+df$scores <- scores$scaled_scores
+
+pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_CB-version3QCversion4dim50kparam30res12-Part_Granule_subset.pdf", width=4, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
+  geom_point(size = .7) +
+  scale_color_viridis_c(option = "C") +
+  labs(col = "Scores") +
+  theme_classic()
+dev.off()
+
+
+
+
+
+## PLOT with Separate trajectories
+### Testing Area ############
+
+
+##########################################
+
+
+Part_Granule_subset <- slingshot(Part_Granule_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_Granule_subset)$seurat_clusters,
+                 start.clus = "11", end.clus = c("6") ,approx_points = 100, extend = 'y', stretch = 1)
+
+
+
+
+#test reduceDim PCA or subset endoderm
+topologyTest(SlingshotDataSet(Part_Granule_subset), Part_Granule_subset$condition) #  
+
+
+sdss <- slingshot_conditions(SlingshotDataSet(Part_Granule_subset), Part_Granule_subset$condition)
+curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
+                    .id = "condition")
+
+
+
+#  
+
+pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-version3QCversion4dim50kparam30res12-Part_Granule_subset-START11_END6_points100extendystretch1.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(condition, Lineage, Order),
+            aes(group = interaction(Lineage, condition)), size = 1.5) +
+  theme_classic()
+dev.off()
+
+
+
+
+
+
+
+
+```
+
+
+XXXY HERE !!! RE DO MLI1 AND MLI2 WITH NEW RES 12 !!
+
+
+
+#### Isolating cell of interest - MLI1
+
+Let's do pseudoitme by isolating cell cluster of interest (ie. for Granule, isolate all granule cell clusters)
+
+
+--> Follow `002*/006__Kim` `#### Run condiments RNA assay - V1 common condition`
+
+
+```bash
+conda activate condiments_V6
+```
+
+
+
+
+```R
+
+# package installation 
+## install.packages("remotes")
+## remotes::install_github("cran/spatstat.core")
+## remotes::install_version("Seurat", "4.0.3")
+## install.packages("magrittr")
+## install.packages("magrittr")
+## install.packages("dplyr")
+## BiocManager::install("DelayedMatrixStats")
+## BiocManager::install("tradeSeq")
+
+
+# packages
+library("condiments")
+library("Seurat")
+library("magrittr") # to use pipe
+library("dplyr") # to use bind_cols and sample_frac
+library("SingleCellExperiment") # for reducedDims
+library("ggplot2")
+library("slingshot")
+library("DelayedMatrixStats")
+library("tidyr")
+library("tradeSeq")
+library("cowplot")
+library("scales")
+library("pheatmap")
+library("readr")
+set.seed(42)
+
+
+
+# Data import - all samples and genotype CB
+#WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-dim40kparam15res03-labelv1.rds")
+WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res05-V1_numeric.rds")
+
+DefaultAssay(WT_Kcnc1_CB_integrateMerge.sct) <- "RNA" # According to condiments workflow
+
+
+# convert to SingleCellExperiment
+WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_CB_integrateMerge.sct, assay = "RNA")
+
+
+
+## SEPARATE CELLS for each trajectory ############################
+
+########################################################
+############################ MLI1 ############################
+########################################################
+
+# First filter based on cell type
+Part_MLI1 <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c("14","7","11")]
+table(Part_MLI1$seurat_clusters) # to double check
+
+
+# tidy
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_MLI1)$UMAP),
+  as.data.frame(colData(Part_MLI1)[, -3])
+  ) %>%
+  sample_frac(1)
+
+# PLOT
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05-Part_MLI1.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
+  geom_point(size = .7) +
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+
+## Second filter based on UMAP coordinate
+umap_coords <- reducedDims(Part_MLI1)$UMAP
+
+# Filter conditions based on your description:
+# Keep cells with UMAP_1 > -3 and UMAP_2 < 2.5
+selected_cells <- umap_coords[,1] < -2.1 & umap_coords[,2] > 1.5 &  umap_coords[,1] > -10
+
+# Subset your SCE object
+Part_MLI1_subset <- Part_MLI1[, selected_cells]
+
+# Check resulting subset
+dim(Part_MLI1_subset)
+
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_MLI1_subset)$UMAP),
+  as.data.frame(colData(Part_MLI1_subset)[, -3])
+  ) %>%
+  sample_frac(1)
+
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05-Part_MLI1_subset.pdf", width=4, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
+  geom_point(size = .7) +
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+
+
+## genotype overlap
+pdf("output/condiments/UMAP_condition_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05-Part_MLI1_subset.pdf", width=4, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7) +
+  scale_color_manual(values = c("blue", "red")) + # Specify colors here
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+## imbalance score
+scores <- condiments::imbalance_score(
+  Object = df %>% select(UMAP_1, UMAP_2) %>% as.matrix(), 
+  conditions = df$condition,
+  k = 20, smooth = 40)
+df$scores <- scores$scaled_scores
+
+pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05-Part_MLI1_subset.pdf", width=4, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
+  geom_point(size = .7) +
+  scale_color_viridis_c(option = "C") +
+  labs(col = "Scores") +
+  theme_classic()
+dev.off()
+
+
+
+
+
+## PLOT with Separate trajectories
+### Testing Area ############
+
+
+##########################################
+
+
+Part_MLI1_subset <- slingshot(Part_MLI1_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_MLI1_subset)$seurat_clusters,
+                 start.clus = "14", end.clus = c("11") ,approx_points = 100, extend = 'n', stretch = 1)
+
+
+
+
+#test reduceDim PCA or subset endoderm
+topologyTest(SlingshotDataSet(Part_MLI1_subset), Part_MLI1_subset$condition) #  
+
+
+sdss <- slingshot_conditions(SlingshotDataSet(Part_MLI1_subset), Part_MLI1_subset$condition)
+curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
+                    .id = "condition")
+
+
+
+#  
+
+pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05-Part_MLI1_subset-START14_END11_points100extendnstretch1.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(condition, Lineage, Order),
+            aes(group = interaction(Lineage, condition)), size = 1.5) +
+  theme_classic()
+dev.off()
+
+
+
+
+
+## PLOT with separate trajectories - Individually
+### WT
+Part_MLI1_subset_WT <- Part_MLI1_subset[, Part_MLI1_subset$condition == "WT"]
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(Part_MLI1_subset_WT, "UMAP")),
+  slingPseudotime(Part_MLI1_subset_WT) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(Part_MLI1_subset_WT) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst))
+curves <- slingCurves(Part_MLI1_subset_WT, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = UMAP_1, y = UMAP_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = UMAP_1, y = UMAP_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = UMAP_1, y = UMAP_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = UMAP_1, y = UMAP_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:1) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_Part_MLI1_subset_WT-START14_END11_points100extendnstretch1_WTonly.pdf", width=10, height=10)
+gridExtra::grid.arrange(grobs = plots, ncol = 1)
+dev.off()
+
+
+### Kcnc1
+Part_MLI1_subset_Kcnc1 <- Part_MLI1_subset[, Part_MLI1_subset$condition == "Kcnc1"]
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(Part_MLI1_subset_Kcnc1, "UMAP")),
+  slingPseudotime(Part_MLI1_subset_Kcnc1) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(Part_MLI1_subset_Kcnc1) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst))
+curves <- slingCurves(Part_MLI1_subset_Kcnc1, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = UMAP_1, y = UMAP_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = UMAP_1, y = UMAP_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = UMAP_1, y = UMAP_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = UMAP_1, y = UMAP_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:1) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_Part_MLI1_subset_Kcnc1-START14_END11_points100extendnstretch1_Kcnc1only.pdf", width=10, height=10)
+gridExtra::grid.arrange(grobs = plots, ncol = 1)
+dev.off()
+
+
+
+# Differential Progression
+prog_res <- progressionTest(Part_MLI1_subset, conditions = Part_MLI1_subset$condition, lineages = TRUE)
+
+df_3 <-  slingPseudotime(Part_MLI1_subset) %>% as.data.frame() 
+
+df_3$condition <- Part_MLI1_subset$condition
+df_3 <- df_3 %>% 
+  pivot_longer(-condition, names_to = "Lineage",
+               values_to = "pst") %>%
+  filter(!is.na(pst))
+
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_MLI1_subset_START14_END11_points100extendnstretch1.pdf", width=6, height=3)
+ggplot(df_3, aes(x = pst)) +
+  geom_density(alpha = .8, aes(fill = condition), col = "transparent") +
+  geom_density(aes(col = condition), fill = "transparent", size = 1.5) +
+  labs(x = "Pseudotime", fill = "condition") +
+  facet_wrap(~Lineage, scales = "free", nrow=2) +
+  guides(col = "none", fill = guide_legend(
+    override.aes = list(size = 1.5, col = c("blue", "red"))
+  )) +
+  scale_fill_manual(values = c("blue", "red")) +
+  scale_color_manual(values = c("blue", "red")) +
+  theme_bw()
+dev.off()
+
+
+#### ->  save.image(file="output/condiments/condiments-Part_MLI1_subset_START14_END11_points100extendnstretch1-version3QCversion4dim50kparam30res05.RData")
+### load("output/condiments/condiments-Part_MLI1_subset_START14_END11_points100extendnstretch1-version3QCversion4dim50kparam30res05.RData")
+set.seed(42)
+
+#  Differential expression
+# --> Run fitGam() through Slurm
+
+
+XXXY HERE VELOW NOT MOD!!!!!!!!!!!!!!!!!!
+
+
+################### Time Course effect COMMON CONDITIONS ######################################################
+## TRAJECTORY9 ##################
+set.seed(42)
+traj9_RNA_common <- readRDS("output/condiments/traj9_RNA_common.rds")
+
+
+## DEGs between condition
+traj9_RNA_common_l2fc0 <- conditionTest(traj9_RNA_common, l2fc = 0) # 
+
+
+# Correct the pvalue with fdr
+traj9_RNA_common_l2fc0$padj <- p.adjust(traj9_RNA_common_l2fc0$pvalue, "fdr")
+
+
+### Save output tables
+traj9_RNA_common_l2fc0$gene <- rownames(traj9_RNA_common_l2fc0) # create new column label gene; as matrix before
+condRes_traj9_RNA_common_l2fc0 <- traj9_RNA_common_l2fc0[, c(ncol(traj9_RNA_common_l2fc0), 1:(ncol(traj9_RNA_common_l2fc0)-1))] # just to put gene column 1st
+write.table(condRes_traj9_RNA_common_l2fc0, file = c("output/condiments/condRes_traj9_RNA_common_l2fc0.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+# Heatmap clutering DEGs per traj _ REVISED METHOD
+## import DEGs
+condRes_traj9_RNA_common_l2fc0 <- read.table("output/condiments/condRes_traj9_RNA_common_l2fc0.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) 
+
+## Isolate significant DEGs and transform into a vector
+conditionGenes_traj9_l2fc0_vector <- condRes_traj9_RNA_common_l2fc0 %>% 
+  filter(padj <= 0.05) %>%
+  pull(gene)
+
+# Predict smoothed values
+yhatSmooth <- 
+  predictSmooth(traj9_RNA_common, gene = conditionGenes_traj9_l2fc0_vector, nPoints = 50, tidy = FALSE) %>%
+  log1p()
+yhatSmoothScaled <- t(apply(yhatSmooth, 1, scales::rescale))
+combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
+# Generate heatmap with clustering
+# Perform hierarchical clustering
+hc <- hclust(dist(combinedData))
+clusters <- cutree(hc, k=10) # !!!!!!!!!!!!!!!!!! CHANGE CLUSTER NB HERE !!!!!!!!!!!!!!!!!!
+# Create an annotation data frame for the rows based on cluster assignments
+annotation_row <- data.frame(Cluster = factor(clusters))
+
+
+
+# Line plots
+library("reshape2")
+library("stringr")
+# Assuming yhatSmoothScaled contains your smoothed gene expression data
+# Convert the yhatSmoothScaled data to a dataframe
+df <- as.data.frame(yhatSmoothScaled)
+df$Gene <- rownames(df)
+# Transform the data into a long format
+df_long <- melt(df, id.vars = "Gene", variable.name = "Pseudotime", value.name = "Expression")
+# Attach the cluster information to the data frame
+df$Cluster <- factor(clusters[df$Gene])
+df_long$Cluster <- df$Cluster[match(df_long$Gene, df$Gene)]
+
+# Extract condition column
+df_long$Condition <- ifelse(str_detect(df_long$Pseudotime, "WT"), "WT", "Bap1KO")
+
+# Extract the point value and convert it to numeric
+df_long$Updated_Pseudotime <- as.numeric(str_extract(df_long$Pseudotime, "(?<=point)\\d+"))
+
+# Define colors for the conditions
+color_map <- c("WT" = "blue", "Bap1KO" = "red")
+
+gene_counts <- df_long %>%
+  group_by(Cluster) %>%
+  summarise(GeneCount = n_distinct(Gene))
+df_long <- df_long %>%
+  left_join(gene_counts, by = "Cluster") %>%
+  mutate(ClusterLabel = paste0("Cluster ", Cluster, " (", GeneCount, " genes)"))
+
+# Plot using ggplot
+pdf("output/condiments/clustered_linePlot_traj9_RNA_common_l2fc0_cl10.pdf", width=10, height=5)
+ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
+  geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
+  geom_line(data = subset(df_long, Condition == "Bap1KO"), aes(color = Condition), alpha = 0.5) +
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+
+dev.off()
+
+# Plot using ggplot
+pdf("output/condiments/smoothed_linePlot_traj9_RNA_common_l2fc0_cl10.pdf", width=10, height=5)
+ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
+  geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Smoothed Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+
+
+### Export gene list from each cluster
+## Create a data frame with gene names and their respective cluster assignments
+output_df <- data.frame(
+  gene = rownames(combinedData),
+  cluster = clusters
+)
+
+# Write the data frame to a .txt file
+write.table(output_df, 
+            file = "output/condiments/gene_clusters_traj9_RNA_common_l2fc0_cl10.txt", 
+            sep = "\t", 
+            quote = FALSE, 
+            row.names = FALSE, 
+            col.names = TRUE)
+
+# Check some genes individually - RNA
+## FOR LINEAGE 9
+counts <- multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident) # identify conditions
+pseudotimes <- slingPseudotime(RNA_WT_Bap1KO, na = FALSE) [,9] # HERE INDICATE TRAJ
+cellweights <- slingCurveWeights(RNA_WT_Bap1KO) [,9] # HERE INDICATE TRAJ
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+pdf("output/condiments/plotSmoothers_traj9_RNA_common-Eomes.pdf", width=4, height=2)
+plotSmoothers(traj9_RNA_common, sub_counts, gene = "Eomes", curvesCol = c("blue","red") ) +
+scale_color_manual(values =c("blue","red"))
+dev.off()
+
+
+# Check some genes individually - ATAC
+xxxxxx NOT WORKING xxxxxx
+multiome_WT_Bap1KO_QCV2vC1_GeneActivity.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.sct_numeric_label.rds")
+## FOR LINEAGE 9
+counts <- multiome_WT_Bap1KO_QCV2vC1_GeneActivity.sct[["GeneActivity"]]@counts # Collect the counts from seurat
+cond <- factor(multiome_WT_Bap1KO_QCV2vC1_GeneActivity.sct$orig.ident) # identify conditions
+pseudotimes <- slingPseudotime(RNA_WT_Bap1KO, na = FALSE) [,9] # HERE INDICATE TRAJ
+cellweights <- slingCurveWeights(RNA_WT_Bap1KO) [,9] # HERE INDICATE TRAJ
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+pdf("output/condiments/plotSmoothers_traj9_ATAC_common-Prox1.pdf", width=4, height=2)
+plotSmoothers(traj9_RNA_common, sub_counts, gene = "Prox1", curvesCol = c("blue","red") ) +
+scale_color_manual(values =c("blue","red"))
+dev.off()
+xxxxxxxxxxxxxxxxxxxxxxxx
+
+
+
+
+
+# Heatmap representation
+# Define colors for each cluster
+# 20
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "grey", "darkred", "darkblue", "gold", "darkgray", "lightblue", "lightgreen", "lightcoral", "lightpink", "lightcyan"))(20),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 10
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen" ))(10),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 8
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown" ))(8),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 7
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink" ))(7),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 6
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange"))(6),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 5
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple"))(5),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 4
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow" ))(4),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# Generate the heatmap
+
+col_order <- order(grepl("WT", colnames(combinedData)), decreasing = TRUE)
+combinedData <- combinedData[, col_order]
+pdf("output/condiments/heatmap_traj9_RNA_common_l2fc0_cl10.pdf", width=5, height=5)
+pheatmap(combinedData,
+  cluster_cols = FALSE,
+  show_rownames = FALSE,
+  show_colnames = FALSE,
+  legend = TRUE,
+  cutree_rows = 10,
+  annotation_row = annotation_row,
+  annotation_colors = annotation_colors
+)
+dev.off()
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+#### Isolating cell of interest - MLI2
+
+Let's do pseudoitme by isolating cell cluster of interest (ie. for Granule, isolate all granule cell clusters)
+
+
+--> Follow `002*/006__Kim` `#### Run condiments RNA assay - V1 common condition`
+
+
+```bash
+conda activate condiments_V6
+```
+
+
+
+
+```R
+
+# package installation 
+## install.packages("remotes")
+## remotes::install_github("cran/spatstat.core")
+## remotes::install_version("Seurat", "4.0.3")
+## install.packages("magrittr")
+## install.packages("magrittr")
+## install.packages("dplyr")
+## BiocManager::install("DelayedMatrixStats")
+## BiocManager::install("tradeSeq")
+
+
+# packages
+library("condiments")
+library("Seurat")
+library("magrittr") # to use pipe
+library("dplyr") # to use bind_cols and sample_frac
+library("SingleCellExperiment") # for reducedDims
+library("ggplot2")
+library("slingshot")
+library("DelayedMatrixStats")
+library("tidyr")
+library("tradeSeq")
+library("cowplot")
+library("scales")
+library("pheatmap")
+library("readr")
+set.seed(42)
+
+
+
+# Data import - all samples and genotype CB
+#WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-dim40kparam15res03-labelv1.rds")
+WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res05-V1_numeric.rds")
+
+DefaultAssay(WT_Kcnc1_CB_integrateMerge.sct) <- "RNA" # According to condiments workflow
+
+
+# convert to SingleCellExperiment
+WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_CB_integrateMerge.sct, assay = "RNA")
+
+
+
+## SEPARATE CELLS for each trajectory ############################
+
+########################################################
+############################ MLI2 ############################
+########################################################
+
+# First filter based on cell type
+Part_MLI2 <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c("6","15","3")]
+table(Part_MLI2$seurat_clusters) # to double check
+
+
+# tidy
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_MLI2)$UMAP),
+  as.data.frame(colData(Part_MLI2)[, -3])
+  ) %>%
+  sample_frac(1)
+
+# PLOT
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05-Part_MLI2.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
+  geom_point(size = .7) +
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+
+## Second filter based on UMAP coordinate
+umap_coords <- reducedDims(Part_MLI2)$UMAP
+
+# Filter conditions based on your description:
+# Keep cells with UMAP_1 > -3 and UMAP_2 < 2.5
+selected_cells <- umap_coords[,1] < 5.2 & umap_coords[,2] > 6 &  umap_coords[,1] > -5
+
+# Subset your SCE object
+Part_MLI2_subset <- Part_MLI2[, selected_cells]
+
+# Check resulting subset
+dim(Part_MLI2_subset)
+
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_MLI2_subset)$UMAP),
+  as.data.frame(colData(Part_MLI2_subset)[, -3])
+  ) %>%
+  sample_frac(1)
+
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05-Part_MLI2_subset.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
+  geom_point(size = .7) +
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+
+
+## genotype overlap
+pdf("output/condiments/UMAP_condition_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05-Part_MLI2_subset.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7) +
+  scale_color_manual(values = c("blue", "red")) + # Specify colors here
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+## imbalance score
+scores <- condiments::imbalance_score(
+  Object = df %>% select(UMAP_1, UMAP_2) %>% as.matrix(), 
+  conditions = df$condition,
+  k = 20, smooth = 40)
+df$scores <- scores$scaled_scores
+
+pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05-Part_MLI2_subset.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
+  geom_point(size = .7) +
+  scale_color_viridis_c(option = "C") +
+  labs(col = "Scores") +
+  theme_classic()
+dev.off()
+
+
+
+
+
+## PLOT with Separate trajectories
+### Testing Area ############
+
+
+##########################################
+
+
+Part_MLI2_subset <- slingshot(Part_MLI2_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_MLI2_subset)$seurat_clusters,
+                 start.clus = "6", end.clus = c("3") ,approx_points = 100, extend = 'pc1', stretch = 1)
+
+
+
+
+#test reduceDim PCA or subset endoderm
+topologyTest(SlingshotDataSet(Part_MLI2_subset), Part_MLI2_subset$condition) #  
+
+
+sdss <- slingshot_conditions(SlingshotDataSet(Part_MLI2_subset), Part_MLI2_subset$condition)
+curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
+                    .id = "condition")
+
+
+
+#  
+
+pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05-Part_MLI2_subset-START6_END3_points100extendpc1stretch1.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(condition, Lineage, Order),
+            aes(group = interaction(Lineage, condition)), size = 1.5) +
+  theme_classic()
+dev.off()
+
+
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
 
 
 
@@ -36473,6 +37586,34 @@ xxx
 
 --> Different parameter per trajectory:
   --> pseudotime_allCells_v1_MLI1: Not good, starting point is the weird patch of cells (from p35 Kcnc1) outside MLI1 cluster... *Need to get rid of these cells! Increase QC filtering*
+
+
+
+#### FitGam slurm jobs
+
+
+
+```bash
+conda activate condiments_Signac
+
+# trajectory per ondition together (for DEG condition, condiments) - pseudotime-condition DEG
+### traj of interest MLI1
+XNOT RUN CHANGE RESOLUTON... sbatch scripts/fitGAM_6knots_traj1_Part_MLI1_subset-version3QCversion4xxxx.sh #  xxx
+
+```
+
+load("output/condiments/condiments-Part_MLI1_subset_START14_END11_points100extendnstretch1-version3QCversion4dim50kparam30res05.RData")
+set.seed(42)
+
+
+
+
+
+
+
+
+
+
 
 
 ### SCPA
