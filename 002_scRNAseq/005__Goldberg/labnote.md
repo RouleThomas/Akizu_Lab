@@ -21691,7 +21691,8 @@ dev.off()
 pathways.show <- c("Glutamate") 
 pathways.show <- c("GABA-A") 
 pathways.show <- c("GABA-B") 
-pdf("output/CellChat/netVisual_chord_cell-p14_CB_WT-version4dim40kparam15res015-GABAB-default-NonproteinSignaling-filterCells.pdf", width=10, height=10)
+pathways.show <- c("2-AG") 
+pdf("output/CellChat/netVisual_chord_cell-p14_CB_WT-version4dim40kparam15res015-2AG-default-NonproteinSignaling-filterCells.pdf", width=10, height=10)
 # The cellchat function to visualize the chord diagram based on your defined groups
 netVisual_chord_cell(cellchat, signaling = pathways.show, group = group.cellType, title.name = paste0(pathways.show, " signaling network"))
 #> Plot the aggregated cell-cell communication network at the signaling pathway level
@@ -21784,6 +21785,58 @@ dev.off()
 
 # Part V: Save the CellChat object
 saveRDS(cellchat, file = "output/CellChat/p14_CB_WT-version4dim40kparam15res015-default-NonproteinSignaling-filterCells.rds")
+cellchat <- readRDS("output/CellChat/p14_CB_WT-version4dim40kparam15res015-default-NonproteinSignaling-filterCells.rds")
+
+
+# Compute the contribution of each ligand-receptor pair to the overall signaling pathway and visualize cell-cell communication mediated by a single ligand-receptor pair
+
+pathways.show.all <- cellchat@netP$pathways
+pdf("output/CellChat/netAnalysis_contribution-p14_CB_WT-version4dim40kparam15res015-default-NonproteinSignaling-filterCells.pdf", width=6, height=20)
+netAnalysis_contribution(cellchat, signaling = pathways.show.all)
+dev.off()
+#--> Top Glu: Glu-(Slc1a2+Gls) - Gria4 [1]
+#--> Top Glu: Glu-(Slc1a2+Gls) - Gria2 [2] Glu_Gria2
+#--> Top GABA: GABA-B (Gad1+Slc6a1) - Gabbr2 [3] Gad1_Gabbr2
+#--> Top GABA A: GABA-A (Gad1+Slc6a1) - Gabr_a1b2 [13] Gad1_Gabr_a1b2
+#--> Top GABA A:  [17] 
+
+
+pairLR <- extractEnrichedLR(cellchat, signaling = pathways.show.all, geneLR.return = FALSE)
+## count nb of unique signficant interactions
+### Count Glutamate
+n_glutamate <- sum(startsWith(pairLR$interaction_name, "Glutamate"))
+### Count GABA-A
+n_gabaa <- sum(startsWith(pairLR$interaction_name, "GABA-A"))
+### Count GABA-B
+n_gabab <- sum(startsWith(pairLR$interaction_name, "GABA-B"))
+cat("Glutamate:", n_glutamate, "\nGABA-A:", n_gabaa, "\nGABA-B:", n_gabab)
+
+## Chord diagram
+LR.show <- pairLR[3,] # CHANGE HERE !! = postiion in plot !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+pdf("output/CellChat/netVisual_individual-3-p14_CB_WT-version4dim40kparam15res015-default-NonproteinSignaling-filterCells.pdf", width=6, height=6) # CHAGNE TITLE 
+vertex.receiver = seq(1,4) # a numeric vector
+netVisual_individual(cellchat, signaling = pathways.show.all,  pairLR.use = LR.show, vertex.receiver = vertex.receiver)
+netVisual_individual(cellchat, signaling = pathways.show.all, pairLR.use = LR.show, layout = "chord")
+dev.off()
+
+
+## automatic first 206 interaction - 1 plot per page # HERE INDICATE THE CORRECT NB OF TOTAL INTERACTIONS
+### Loop through the first 206 ligand-receptor pairs
+pdf("output/CellChat/netVisual_individual-ALL-p14_CB_WT-version4dim40kparam15res015-default-NonproteinSignaling-filterCells.pdf", width = 6, height = 6)
+vertex.receiver <- seq(1, 4) 
+for (i in 1:206) {
+  LR.show <- pairLR[i,]  
+  # Circle plot
+  netVisual_individual(cellchat, signaling = pathways.show.all, pairLR.use = LR.show, vertex.receiver = vertex.receiver)
+  # Chord plot
+  netVisual_individual(cellchat, signaling = pathways.show.all, pairLR.use = LR.show, layout = "chord")
+}
+dev.off()
+
+
+
+
+
 
 ```
 
@@ -21825,7 +21878,7 @@ library("glmGamPoi")
 library("celldex")
 library("SingleR")
 library("gprofiler2") # for human mouse gene conversion for cell cycle genes
-
+set.seed(42)
 
 ################################################################
 ##################### WT_p35_CB_Rep1 ###########################
@@ -23975,7 +24028,8 @@ dev.off()
 pathways.show <- c("Glutamate") 
 pathways.show <- c("GABA-A") 
 pathways.show <- c("GABA-B") 
-pdf("output/CellChat/netVisual_chord_cell-p35_CB_WT-version4dim30kparam10res02-GABAB-default-NonproteinSignaling-filterCells.pdf", width=10, height=10)
+pathways.show <- c("2-AG") 
+pdf("output/CellChat/netVisual_chord_cell-p35_CB_WT-version4dim30kparam10res02-2AG-default-NonproteinSignaling-filterCells.pdf", width=10, height=10)
 # The cellchat function to visualize the chord diagram based on your defined groups
 netVisual_chord_cell(cellchat, signaling = pathways.show, group = group.cellType, title.name = paste0(pathways.show, " signaling network"))
 #> Plot the aggregated cell-cell communication network at the signaling pathway level
@@ -24068,6 +24122,51 @@ dev.off()
 
 # Part V: Save the CellChat object
 saveRDS(cellchat, file = "output/CellChat/p35_CB_WT-version4dim30kparam10res02-default-NonproteinSignaling-filterCells.rds")
+
+cellchat <- readRDS("output/CellChat/p35_CB_WT-version4dim30kparam10res02-default-NonproteinSignaling-filterCells.rds")
+
+
+# Compute the contribution of each ligand-receptor pair to the overall signaling pathway and visualize cell-cell communication mediated by a single ligand-receptor pair
+
+pathways.show.all <- cellchat@netP$pathways
+pdf("output/CellChat/netAnalysis_contribution-p35_CB_WT-version4dim30kparam10res02-default-NonproteinSignaling-filterCells.pdf", width=6, height=20)
+netAnalysis_contribution(cellchat, signaling = pathways.show.all)
+dev.off()
+
+
+
+pairLR <- extractEnrichedLR(cellchat, signaling = pathways.show.all, geneLR.return = FALSE)
+## count nb of unique signficant interactions
+### Count Glutamate
+n_glutamate <- sum(startsWith(pairLR$interaction_name, "Glutamate"))
+### Count GABA-A
+n_gabaa <- sum(startsWith(pairLR$interaction_name, "GABA-A"))
+### Count GABA-B
+n_gabab <- sum(startsWith(pairLR$interaction_name, "GABA-B"))
+cat("Glutamate:", n_glutamate, "\nGABA-A:", n_gabaa, "\nGABA-B:", n_gabab)
+
+## Chord diagram
+LR.show <- pairLR[3,] # CHANGE HERE !! = postiion in plot !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+pdf("output/CellChat/netVisual_individual-3-p35_CB_WT-version4dim30kparam10res02-default-NonproteinSignaling-filterCells.pdf", width=6, height=6) # CHAGNE TITLE 
+vertex.receiver = seq(1,4) # a numeric vector
+netVisual_individual(cellchat, signaling = pathways.show.all,  pairLR.use = LR.show, vertex.receiver = vertex.receiver)
+netVisual_individual(cellchat, signaling = pathways.show.all, pairLR.use = LR.show, layout = "chord")
+dev.off()
+
+
+## automatic first 205 interaction - 1 plot per page # HERE INDICATE THE CORRECT NB OF TOTAL INTERACTIONS
+### Loop through the first 205 ligand-receptor pairs
+pdf("output/CellChat/netVisual_individual-ALL-p35_CB_WT-version4dim30kparam10res02-default-NonproteinSignaling-filterCells.pdf", width = 6, height = 6)
+vertex.receiver <- seq(1, 4) 
+for (i in 1:205) {
+  LR.show <- pairLR[i,]  
+  # Circle plot
+  netVisual_individual(cellchat, signaling = pathways.show.all, pairLR.use = LR.show, vertex.receiver = vertex.receiver)
+  # Chord plot
+  netVisual_individual(cellchat, signaling = pathways.show.all, pairLR.use = LR.show, layout = "chord")
+}
+dev.off()
+
 
 ```
 
@@ -25526,7 +25625,7 @@ DEG_count= DEG_count %>%
 DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = rev(levels(DEG_count$Cell_Type)))
 
 # Generate the dot plot
-pdf("output/seurat/Dotplot_DEG_count_WT_Kcnc1_p14_CB_1step_DEG_MAST_padj05fc025_numeric_version4dim20kparam10res0115.pdf", width=9, height=4)
+pdf("output/seurat/Dotplot_DEG_count_WT_Kcnc1_p180_CB_1step_DEG_MAST_padj05fc025_numeric_version4dim20kparam10res0115.pdf", width=9, height=4)
 ggplot(DEG_count, aes(x = 1, y = Cell_Type, color = Cell_Type)) +
   geom_point(aes(size = Num_DEGs), alpha = 0.8) +
   scale_size(range = c(2, 10)) +
@@ -26240,7 +26339,8 @@ dev.off()
 pathways.show <- c("Glutamate") 
 pathways.show <- c("GABA-A") 
 pathways.show <- c("GABA-B") 
-pdf("output/CellChat/netVisual_chord_cell-p180_CB_WT-version4dim20kparam10res0115-GABAB-default-NonproteinSignaling-filterCells.pdf", width=10, height=10)
+pathways.show <- c("2-AG") 
+pdf("output/CellChat/netVisual_chord_cell-p180_CB_WT-version4dim20kparam10res0115-2AG-default-NonproteinSignaling-filterCells.pdf", width=10, height=10)
 # The cellchat function to visualize the chord diagram based on your defined groups
 netVisual_chord_cell(cellchat, signaling = pathways.show, group = group.cellType, title.name = paste0(pathways.show, " signaling network"))
 #> Plot the aggregated cell-cell communication network at the signaling pathway level
@@ -26333,6 +26433,50 @@ dev.off()
 
 # Part V: Save the CellChat object
 saveRDS(cellchat, file = "output/CellChat/p180_CB_WT-version4dim20kparam10res0115-default-NonproteinSignaling-filterCells.rds")
+
+cellchat <- readRDS("output/CellChat/p180_CB_WT-version4dim20kparam10res0115-default-NonproteinSignaling-filterCells.rds")
+
+
+# Compute the contribution of each ligand-receptor pair to the overall signaling pathway and visualize cell-cell communication mediated by a single ligand-receptor pair
+
+pathways.show.all <- cellchat@netP$pathways
+pdf("output/CellChat/netAnalysis_contribution-p180_CB_WT-version4dim20kparam10res0115-default-NonproteinSignaling-filterCells.pdf", width=6, height=20)
+netAnalysis_contribution(cellchat, signaling = pathways.show.all)
+dev.off()
+
+
+
+pairLR <- extractEnrichedLR(cellchat, signaling = pathways.show.all, geneLR.return = FALSE)
+## count nb of unique signficant interactions
+### Count Glutamate
+n_glutamate <- sum(startsWith(pairLR$interaction_name, "Glutamate"))
+### Count GABA-A
+n_gabaa <- sum(startsWith(pairLR$interaction_name, "GABA-A"))
+### Count GABA-B
+n_gabab <- sum(startsWith(pairLR$interaction_name, "GABA-B"))
+cat("Glutamate:", n_glutamate, "\nGABA-A:", n_gabaa, "\nGABA-B:", n_gabab)
+
+## Chord diagram
+LR.show <- pairLR[3,] # CHANGE HERE !! = postiion in plot !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+pdf("output/CellChat/netVisual_individual-3-p180_CB_WT-version4dim20kparam10res0115-default-NonproteinSignaling-filterCells.pdf", width=6, height=6) # CHAGNE TITLE 
+vertex.receiver = seq(1,4) # a numeric vector
+netVisual_individual(cellchat, signaling = pathways.show.all,  pairLR.use = LR.show, vertex.receiver = vertex.receiver)
+netVisual_individual(cellchat, signaling = pathways.show.all, pairLR.use = LR.show, layout = "chord")
+dev.off()
+
+
+## automatic first 204 interaction - 1 plot per page # HERE INDICATE THE CORRECT NB OF TOTAL INTERACTIONS
+### Loop through the first 204 ligand-receptor pairs
+pdf("output/CellChat/netVisual_individual-ALL-p180_CB_WT-version4dim20kparam10res0115-default-NonproteinSignaling-filterCells.pdf", width = 6, height = 6)
+vertex.receiver <- seq(1, 4) 
+for (i in 1:204) {
+  LR.show <- pairLR[i,]  
+  # Circle plot
+  netVisual_individual(cellchat, signaling = pathways.show.all, pairLR.use = LR.show, vertex.receiver = vertex.receiver)
+  # Chord plot
+  netVisual_individual(cellchat, signaling = pathways.show.all, pairLR.use = LR.show, layout = "chord")
+}
+dev.off()
 
 ```
 
@@ -28743,6 +28887,9 @@ pdf("output/seurat/FeaturePlot_SCT_WT_p14_CX-1stepIntegrationRegressNotRepeated-
 FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = c("Kcnc1"),  cols = c("grey", "red"), max.cutoff = 1) #  max.cutoff = 10, min.cutoff = 1
 dev.off()
 
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CX-1stepIntegrationRegressNotRepeated-version2dim30kparam50res07-Pvalb.pdf", width=7, height=5)
+FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = c("Pvalb"),  cols = c("grey", "red"), max.cutoff = 0.5) #  max.cutoff = 10, min.cutoff = 1
+dev.off()
 
 pdf("output/seurat/FeaturePlot_SCT_WT_p14_CX-1stepIntegrationRegressNotRepeated-version2dim30kparam50res07-Kcnc1split.pdf", width=12, height=6)
 FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = c("Kcnc1"),  cols = c("grey", "red"), split.by = "condition", max.cutoff = 1) #  max.cutoff = 10, min.cutoff = 1
