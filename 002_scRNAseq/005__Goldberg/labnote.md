@@ -13373,7 +13373,7 @@ dev.off()
 
 ```
 
-- XXXY Check **which type of count** to use: Raw/data/scale.data ?
+- Check **which type of count** to use: Raw/data/scale.data ?
 
 
 ### Version3 - valiDrops
@@ -36889,12 +36889,11 @@ dev.off()
 
 
 
-
+XXXY COPY CODE FOR NEXTPLOTS DEG stuff///
 
 ```
 
 
-XXXY HERE !!! RE DO MLI1 AND MLI2 WITH NEW RES 12 !!
 
 
 
@@ -36947,7 +36946,7 @@ set.seed(42)
 
 # Data import - all samples and genotype CB
 #WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-dim40kparam15res03-labelv1.rds")
-WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res05-V1_numeric.rds")
+WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res12-V1_numeric.rds")
 
 DefaultAssay(WT_Kcnc1_CB_integrateMerge.sct) <- "RNA" # According to condiments workflow
 
@@ -36964,7 +36963,7 @@ WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_CB_integrateMerge.sct, assay = "
 ########################################################
 
 # First filter based on cell type
-Part_MLI1 <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c("14","7","11")]
+Part_MLI1 <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c("9","20","8","3")]
 table(Part_MLI1$seurat_clusters) # to double check
 
 
@@ -36976,7 +36975,7 @@ df <- bind_cols(
   sample_frac(1)
 
 # PLOT
-pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05-Part_MLI1.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res12-Part_MLI1.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
   geom_point(size = .7) +
   labs(col = "Genotype") +
@@ -36989,7 +36988,7 @@ umap_coords <- reducedDims(Part_MLI1)$UMAP
 
 # Filter conditions based on your description:
 # Keep cells with UMAP_1 > -3 and UMAP_2 < 2.5
-selected_cells <- umap_coords[,1] < -2.1 & umap_coords[,2] > 1.5 &  umap_coords[,1] > -10
+selected_cells <- umap_coords[,1] < 5 & umap_coords[,2] > 5 &  umap_coords[,1] > -4.3
 
 # Subset your SCE object
 Part_MLI1_subset <- Part_MLI1[, selected_cells]
@@ -37003,7 +37002,7 @@ df <- bind_cols(
   ) %>%
   sample_frac(1)
 
-pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05-Part_MLI1_subset.pdf", width=4, height=5)
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res12-Part_MLI1_subset.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
   geom_point(size = .7) +
   labs(col = "Genotype") +
@@ -37013,7 +37012,7 @@ dev.off()
 
 
 ## genotype overlap
-pdf("output/condiments/UMAP_condition_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05-Part_MLI1_subset.pdf", width=4, height=5)
+pdf("output/condiments/UMAP_condition_WT_Kcnc1_CB-version3QCversion4dim50kparam30res12-Part_MLI1_subset.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7) +
   scale_color_manual(values = c("blue", "red")) + # Specify colors here
@@ -37028,7 +37027,7 @@ scores <- condiments::imbalance_score(
   k = 20, smooth = 40)
 df$scores <- scores$scaled_scores
 
-pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05-Part_MLI1_subset.pdf", width=4, height=5)
+pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_CB-version3QCversion4dim50kparam30res12-Part_MLI1_subset.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
   geom_point(size = .7) +
   scale_color_viridis_c(option = "C") +
@@ -37047,9 +37046,11 @@ dev.off()
 ##########################################
 
 
+XXXY HERE PLAY WITH PARMA!!!
+
 Part_MLI1_subset <- slingshot(Part_MLI1_subset, reducedDim = 'UMAP',
                  clusterLabels = colData(Part_MLI1_subset)$seurat_clusters,
-                 start.clus = "14", end.clus = c("11") ,approx_points = 100, extend = 'n', stretch = 1)
+                 start.clus = "9", end.clus = c("3") ,approx_points = 100, extend = 'y', stretch = 1)
 
 
 
@@ -37066,7 +37067,7 @@ curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
 
 #  
 
-pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05-Part_MLI1_subset-START14_END11_points100extendnstretch1.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-version3QCversion4dim50kparam30res12-Part_MLI1_subset-START9_END3_points100extendystretch1.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7, alpha = .2) +
   scale_color_brewer(palette = "Accent") +
@@ -37074,6 +37075,13 @@ ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
             aes(group = interaction(Lineage, condition)), size = 1.5) +
   theme_classic()
 dev.off()
+
+
+
+XXXY HERE BELOW NOT MOD
+
+
+
 
 
 
