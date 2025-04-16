@@ -36871,7 +36871,7 @@ dev.off()
 
 Part_Granule_subset <- slingshot(Part_Granule_subset, reducedDim = 'UMAP',
                  clusterLabels = colData(Part_Granule_subset)$seurat_clusters,
-                 start.clus = "29", end.clus = c("24") ,approx_points = 100, extend = 'y', stretch = 1)
+                 start.clus = "29", end.clus = c("24") ,approx_points = 100, extend = 'pc1', stretch = 1)
 
 
 
@@ -36888,9 +36888,7 @@ curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
 
 #  
 
-XXXY HERE RE RUN THISSS!
-
-pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-version3QCversion4dim50kparam30res12-Part_Granule_subset-START29_END24_points100extendystretch1.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-version3QCversion4dim50kparam30res12-Part_Granule_subset-START29_END24_points100extendpc1stretch1.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7, alpha = .2) +
   scale_color_brewer(palette = "Accent") +
@@ -36904,7 +36902,153 @@ dev.off()
 
 
 
-XXXY COPY CODE FOR NEXTPLOTS DEG stuff///
+
+
+
+
+
+
+## PLOT with separate trajectories - Individually
+### WT
+Part_Granule_subset_WT <- Part_Granule_subset[, Part_Granule_subset$condition == "WT"]
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(Part_Granule_subset_WT, "UMAP")),
+  slingPseudotime(Part_Granule_subset_WT) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(Part_Granule_subset_WT) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+         Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst),
+         Lineage4_pst = if_else(is.na(Lineage4_pst), 0, Lineage4_pst),
+         Lineage5_pst = if_else(is.na(Lineage5_pst), 0, Lineage5_pst))
+curves <- slingCurves(Part_Granule_subset_WT, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = UMAP_1, y = UMAP_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = UMAP_1, y = UMAP_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = UMAP_1, y = UMAP_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = UMAP_1, y = UMAP_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:5) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_Part_Granule_subset_WT-version3QCversion4dim50kparam30res25-START29_END24_points100extendpc1stretch1_WTonly.pdf", width=5, height=20)
+gridExtra::grid.arrange(grobs = plots, ncol = 1)
+dev.off()
+
+
+### Kcnc1
+Part_Granule_subset_Kcnc1 <- Part_Granule_subset[, Part_Granule_subset$condition == "Kcnc1"]
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(Part_Granule_subset_Kcnc1, "UMAP")),
+  slingPseudotime(Part_Granule_subset_Kcnc1) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(Part_Granule_subset_Kcnc1) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+         Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst),
+         Lineage4_pst = if_else(is.na(Lineage4_pst), 0, Lineage4_pst),
+         Lineage5_pst = if_else(is.na(Lineage5_pst), 0, Lineage5_pst))
+curves <- slingCurves(Part_Granule_subset_Kcnc1, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = UMAP_1, y = UMAP_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = UMAP_1, y = UMAP_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = UMAP_1, y = UMAP_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = UMAP_1, y = UMAP_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:5) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_Part_Granule_subset_Kcnc1-version3QCversion4dim50kparam30res25-START29_END24_points100extendpc1stretch1_Kcnc1only.pdf", width=5, height=20)
+gridExtra::grid.arrange(grobs = plots, ncol = 1)
+dev.off()
+
+
+
+# Differential Progression
+prog_res <- progressionTest(Part_Granule_subset, conditions = Part_Granule_subset$condition, lineages = TRUE)
+
+df_3 <-  slingPseudotime(Part_Granule_subset) %>% as.data.frame() 
+
+df_3$condition <- Part_Granule_subset$condition
+df_3 <- df_3 %>% 
+  pivot_longer(-condition, names_to = "Lineage",
+               values_to = "pst") %>%
+  filter(!is.na(pst))
+
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_Granule_subset-version3QCversion4dim50kparam30res25-START29_END24_points100extendpc1stretch1.pdf", width=10, height=3)
+ggplot(df_3, aes(x = pst)) +
+  geom_density(alpha = .8, aes(fill = condition), col = "transparent") +
+  geom_density(aes(col = condition), fill = "transparent", size = 1.5) +
+  labs(x = "Pseudotime", fill = "condition") +
+  facet_wrap(~Lineage, scales = "free", nrow=2) +
+  guides(col = "none", fill = guide_legend(
+    override.aes = list(size = 1.5, col = c("blue", "red"))
+  )) +
+  scale_fill_manual(values = c("blue", "red")) +
+  scale_color_manual(values = c("blue", "red")) +
+  theme_bw()
+dev.off()
+
+
+#### ->  save.image(file="output/condiments/condiments-Part_Granule_subset_START29_END24_points100extendpc1stretch1-version3QCversion4dim50kparam30res25.RData")
+### load("output/condiments/condiments-Part_Granule_subset_START29_END24_points100extendpc1stretch1-version3QCversion4dim50kparam30res25.RData")
+set.seed(42)
+
+#  Differential expression
+# --> Run fitGam() through Slurm
+
+
+XXXY HERE VELOW NOT MOD!!!!!!!!!!!!!!!!!!
+
+
 
 ```
 
@@ -36961,8 +37105,7 @@ set.seed(42)
 
 # Data import - all samples and genotype CB
 #WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-dim40kparam15res03-labelv1.rds")
-WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res12-V1_numeric.rds")
-
+WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res25-V1_numeric.rds")
 DefaultAssay(WT_Kcnc1_CB_integrateMerge.sct) <- "RNA" # According to condiments workflow
 
 
@@ -36978,7 +37121,7 @@ WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_CB_integrateMerge.sct, assay = "
 ########################################################
 
 # First filter based on cell type
-Part_MLI1 <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c("9","20","8","3")]
+Part_MLI1 <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c("22","11","2","3","14")]
 table(Part_MLI1$seurat_clusters) # to double check
 
 
@@ -36990,7 +37133,7 @@ df <- bind_cols(
   sample_frac(1)
 
 # PLOT
-pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res12-Part_MLI1.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI1.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
   geom_point(size = .7) +
   labs(col = "Genotype") +
@@ -37017,17 +37160,27 @@ df <- bind_cols(
   ) %>%
   sample_frac(1)
 
-pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res12-Part_MLI1_subset.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI1_subset.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
   geom_point(size = .7) +
   labs(col = "Genotype") +
   theme_classic()
 dev.off()
 
+library("RColorBrewer")
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI1_subset-time.pdf", width=6, height=5)
+my_cols = brewer.pal(3,"Dark2")
+cols=alpha(my_cols,0.3)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = time)) +
+  geom_point(size = .7) +
+  labs(col = "time") +
+  scale_color_manual(values = cols) +
+  theme_classic()
+dev.off()
 
 
 ## genotype overlap
-pdf("output/condiments/UMAP_condition_WT_Kcnc1_CB-version3QCversion4dim50kparam30res12-Part_MLI1_subset.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_condition_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI1_subset.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7) +
   scale_color_manual(values = c("blue", "red")) + # Specify colors here
@@ -37042,7 +37195,7 @@ scores <- condiments::imbalance_score(
   k = 20, smooth = 40)
 df$scores <- scores$scaled_scores
 
-pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_CB-version3QCversion4dim50kparam30res12-Part_MLI1_subset.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI1_subset.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
   geom_point(size = .7) +
   scale_color_viridis_c(option = "C") +
@@ -37061,11 +37214,10 @@ dev.off()
 ##########################################
 
 
-XXXY HERE PLAY WITH PARMA!!!
 
 Part_MLI1_subset <- slingshot(Part_MLI1_subset, reducedDim = 'UMAP',
                  clusterLabels = colData(Part_MLI1_subset)$seurat_clusters,
-                 start.clus = c("9", "20"), end.clus = c("3") ,approx_points = 100, extend = 'pc1', stretch = 1)
+                 start.clus = c("22"), end.clus = c("3") ,approx_points = 100, extend = 'pc1', stretch = 1)
 
 
 
@@ -37082,7 +37234,7 @@ curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
 
 #  
 
-pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-version3QCversion4dim50kparam30res12-Part_MLI1_subset-START920_END3_points100extendpc1stretch1.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI1_subset-START22_END3_points100extendpc1stretch1.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7, alpha = .2) +
   scale_color_brewer(palette = "Accent") +
@@ -37092,8 +37244,6 @@ ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
 dev.off()
 
 
-
-XXXY HERE BELOW NOT MOD
 
 
 
@@ -37112,7 +37262,8 @@ df_2 <- bind_cols(
     dplyr::rename_with(paste0, "_pst", .cols = everything()),
   slingCurveWeights(Part_MLI1_subset_WT) %>% as.data.frame(),
   ) %>%
-  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst))
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst))
 curves <- slingCurves(Part_MLI1_subset_WT, as.df = TRUE)
 ### Function to create the plot for each lineage
 create_plot <- function(lineage_number) {
@@ -37142,10 +37293,10 @@ create_plot <- function(lineage_number) {
 }
 ### Generate the plots for each lineage
 plots <- list()
-for (i in 1:1) {
+for (i in 1:2) {
   plots[[i]] <- create_plot(i)
 }
-pdf("output/condiments/UMAP_trajectory_common_label_Part_MLI1_subset_WT-START14_END11_points100extendnstretch1_WTonly.pdf", width=10, height=10)
+pdf("output/condiments/UMAP_trajectory_common_label_Part_MLI1_subset_WT-version3QCversion4dim50kparam30res25-START22_END3_points100extendpc1stretch1_WTonly.pdf", width=5, height=10)
 gridExtra::grid.arrange(grobs = plots, ncol = 1)
 dev.off()
 
@@ -37159,7 +37310,8 @@ df_2 <- bind_cols(
     dplyr::rename_with(paste0, "_pst", .cols = everything()),
   slingCurveWeights(Part_MLI1_subset_Kcnc1) %>% as.data.frame(),
   ) %>%
-  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst))
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst))
 curves <- slingCurves(Part_MLI1_subset_Kcnc1, as.df = TRUE)
 ### Function to create the plot for each lineage
 create_plot <- function(lineage_number) {
@@ -37189,10 +37341,10 @@ create_plot <- function(lineage_number) {
 }
 ### Generate the plots for each lineage
 plots <- list()
-for (i in 1:1) {
+for (i in 1:2) {
   plots[[i]] <- create_plot(i)
 }
-pdf("output/condiments/UMAP_trajectory_common_label_Part_MLI1_subset_Kcnc1-START14_END11_points100extendnstretch1_Kcnc1only.pdf", width=10, height=10)
+pdf("output/condiments/UMAP_trajectory_common_label_Part_MLI1_subset_Kcnc1-version3QCversion4dim50kparam30res25-START22_END3_points100extendpc1stretch1_Kcnc1only.pdf", width=5, height=10)
 gridExtra::grid.arrange(grobs = plots, ncol = 1)
 dev.off()
 
@@ -37209,7 +37361,7 @@ df_3 <- df_3 %>%
                values_to = "pst") %>%
   filter(!is.na(pst))
 
-pdf("output/condiments/densityPlot_trajectory_lineage_Part_MLI1_subset_START14_END11_points100extendnstretch1.pdf", width=6, height=3)
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_MLI1_subset-version3QCversion4dim50kparam30res25-START22_END3_points100extendpc1stretch1.pdf", width=6, height=3)
 ggplot(df_3, aes(x = pst)) +
   geom_density(alpha = .8, aes(fill = condition), col = "transparent") +
   geom_density(aes(col = condition), fill = "transparent", size = 1.5) +
@@ -37224,8 +37376,8 @@ ggplot(df_3, aes(x = pst)) +
 dev.off()
 
 
-#### ->  save.image(file="output/condiments/condiments-Part_MLI1_subset_START14_END11_points100extendnstretch1-version3QCversion4dim50kparam30res05.RData")
-### load("output/condiments/condiments-Part_MLI1_subset_START14_END11_points100extendnstretch1-version3QCversion4dim50kparam30res05.RData")
+#### ->  save.image(file="output/condiments/condiments-Part_MLI1_subset_START22_END3_points100extendpc1stretch1-version3QCversion4dim50kparam30res25.RData")
+### load("output/condiments/condiments-Part_MLI1_subset_START22_END3_points100extendpc1stretch1-version3QCversion4dim50kparam30res25.RData")
 set.seed(42)
 
 #  Differential expression
@@ -37502,7 +37654,7 @@ set.seed(42)
 
 # Data import - all samples and genotype CB
 #WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-dim40kparam15res03-labelv1.rds")
-WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res05-V1_numeric.rds")
+WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res25-V1_numeric.rds")
 
 DefaultAssay(WT_Kcnc1_CB_integrateMerge.sct) <- "RNA" # According to condiments workflow
 
@@ -37519,7 +37671,7 @@ WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_CB_integrateMerge.sct, assay = "
 ########################################################
 
 # First filter based on cell type
-Part_MLI2 <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c("6","15","3")]
+Part_MLI2 <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c(28,19,16,45,18)]
 table(Part_MLI2$seurat_clusters) # to double check
 
 
@@ -37531,7 +37683,7 @@ df <- bind_cols(
   sample_frac(1)
 
 # PLOT
-pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05-Part_MLI2.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI2.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
   geom_point(size = .7) +
   labs(col = "Genotype") +
@@ -37544,7 +37696,7 @@ umap_coords <- reducedDims(Part_MLI2)$UMAP
 
 # Filter conditions based on your description:
 # Keep cells with UMAP_1 > -3 and UMAP_2 < 2.5
-selected_cells <- umap_coords[,1] < 5.2 & umap_coords[,2] > 6 &  umap_coords[,1] > -5
+selected_cells <- umap_coords[,1] < -2.2 & umap_coords[,2] > 2.4 &  umap_coords[,1] > -10
 
 # Subset your SCE object
 Part_MLI2_subset <- Part_MLI2[, selected_cells]
@@ -37558,17 +37710,27 @@ df <- bind_cols(
   ) %>%
   sample_frac(1)
 
-pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05-Part_MLI2_subset.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI2_subset.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
   geom_point(size = .7) +
   labs(col = "Genotype") +
   theme_classic()
 dev.off()
 
+library("RColorBrewer")
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI2_subset-time.pdf", width=6, height=5)
+my_cols = brewer.pal(3,"Dark2")
+cols=alpha(my_cols,0.3)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = time)) +
+  geom_point(size = .7) +
+  labs(col = "time") +
+  scale_color_manual(values = cols) +
+  theme_classic()
+dev.off()
 
 
 ## genotype overlap
-pdf("output/condiments/UMAP_condition_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05-Part_MLI2_subset.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_condition_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI2_subset.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7) +
   scale_color_manual(values = c("blue", "red")) + # Specify colors here
@@ -37583,7 +37745,7 @@ scores <- condiments::imbalance_score(
   k = 20, smooth = 40)
 df$scores <- scores$scaled_scores
 
-pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05-Part_MLI2_subset.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI2_subset.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
   geom_point(size = .7) +
   scale_color_viridis_c(option = "C") +
@@ -37604,7 +37766,7 @@ dev.off()
 
 Part_MLI2_subset <- slingshot(Part_MLI2_subset, reducedDim = 'UMAP',
                  clusterLabels = colData(Part_MLI2_subset)$seurat_clusters,
-                 start.clus = "6", end.clus = c("3") ,approx_points = 100, extend = 'pc1', stretch = 1)
+                 start.clus = "28", end.clus = c("18") ,approx_points = 100, extend = 'pc1', stretch = 1)
 
 
 
@@ -37621,7 +37783,7 @@ curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
 
 #  
 
-pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-version3QCversion4dim50kparam30res05-Part_MLI2_subset-START6_END3_points100extendpc1stretch1.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI2_subset-START28_END18_points100extendpc1stretch1.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7, alpha = .2) +
   scale_color_brewer(palette = "Accent") +
@@ -37633,7 +37795,140 @@ dev.off()
 
 
 
+## PLOT with separate trajectories - Individually
+### WT
+Part_MLI2_subset_WT <- Part_MLI2_subset[, Part_MLI2_subset$condition == "WT"]
 
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(Part_MLI2_subset_WT, "UMAP")),
+  slingPseudotime(Part_MLI2_subset_WT) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(Part_MLI2_subset_WT) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+         Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst))
+curves <- slingCurves(Part_MLI2_subset_WT, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = UMAP_1, y = UMAP_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = UMAP_1, y = UMAP_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = UMAP_1, y = UMAP_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = UMAP_1, y = UMAP_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:3) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_Part_MLI2_subset_WT-version3QCversion4dim50kparam30res25-START28_END18_points100extendpc1stretch1_WTonly.pdf", width=5, height=10)
+gridExtra::grid.arrange(grobs = plots, ncol = 1)
+dev.off()
+
+
+### Kcnc1
+Part_MLI2_subset_Kcnc1 <- Part_MLI2_subset[, Part_MLI2_subset$condition == "Kcnc1"]
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(Part_MLI2_subset_Kcnc1, "UMAP")),
+  slingPseudotime(Part_MLI2_subset_Kcnc1) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(Part_MLI2_subset_Kcnc1) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+         Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst))
+curves <- slingCurves(Part_MLI2_subset_Kcnc1, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = UMAP_1, y = UMAP_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = UMAP_1, y = UMAP_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = UMAP_1, y = UMAP_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = UMAP_1, y = UMAP_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:3) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_Part_MLI2_subset_Kcnc1-version3QCversion4dim50kparam30res25-START28_END18_points100extendpc1stretch1_Kcnc1only.pdf", width=5, height=10)
+gridExtra::grid.arrange(grobs = plots, ncol = 1)
+dev.off()
+
+
+
+# Differential Progression
+prog_res <- progressionTest(Part_MLI2_subset, conditions = Part_MLI2_subset$condition, lineages = TRUE)
+
+df_3 <-  slingPseudotime(Part_MLI2_subset) %>% as.data.frame() 
+
+df_3$condition <- Part_MLI2_subset$condition
+df_3 <- df_3 %>% 
+  pivot_longer(-condition, names_to = "Lineage",
+               values_to = "pst") %>%
+  filter(!is.na(pst))
+
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_MLI2_subset-version3QCversion4dim50kparam30res25-START28_END18_points100extendpc1stretch1.pdf", width=6, height=3)
+ggplot(df_3, aes(x = pst)) +
+  geom_density(alpha = .8, aes(fill = condition), col = "transparent") +
+  geom_density(aes(col = condition), fill = "transparent", size = 1.5) +
+  labs(x = "Pseudotime", fill = "condition") +
+  facet_wrap(~Lineage, scales = "free", nrow=2) +
+  guides(col = "none", fill = guide_legend(
+    override.aes = list(size = 1.5, col = c("blue", "red"))
+  )) +
+  scale_fill_manual(values = c("blue", "red")) +
+  scale_color_manual(values = c("blue", "red")) +
+  theme_bw()
+dev.off()
+
+
+#### ->  save.image(file="output/condiments/condiments-Part_MLI2_subset_START28_END18_points100extendpc1stretch1-version3QCversion4dim50kparam30res25.RData")
+### load("output/condiments/condiments-Part_MLI2_subset_START28_END18_points100extendpc1stretch1-version3QCversion4dim50kparam30res25.RData")
+set.seed(42)
+
+#  Differential expression
+# --> Run fitGam() through Slurm
+
+XXXY 
 
 
 
