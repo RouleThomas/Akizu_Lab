@@ -22161,7 +22161,7 @@ library("presto")
 library("NMF")
 library("ggalluvial")
 library("ComplexHeatmap")
-library("wordcloud")
+
 options(stringsAsFactors = FALSE)
 set.seed(42)
 
@@ -22178,11 +22178,12 @@ cellchat
 
 
 # Compare the total number of interactions and interaction strength
-pdf("output/CellChat/compareInteractions-p14_CB-version4dim40kparam15res015-filterCells.pdf", width = 6, height = 3)
-gg1 <- compareInteractions(cellchat, show.legend = F, group = c(1,2))
-gg2 <- compareInteractions(cellchat, show.legend = F, group = c(1,2), measure = "weight")
+pdf("output/CellChat/compareInteractions-p14_CB-version4dim40kparam15res015-filterCells.pdf", width = 4, height = 3)
+gg1 <- compareInteractions(cellchat, show.legend = F, group = c(1,2), color.use = c("black", "red"))
+gg2 <- compareInteractions(cellchat, show.legend = F, group = c(1,2), measure = "weight", color.use = c("black", "red"))
 gg1 + gg2
 dev.off()
+#!!! PLOT TO SHOW!!!
 
 
 # Compare the number of interactions and interaction strength among different cell populations
@@ -22259,10 +22260,11 @@ dev.off()
 # Identify and visualize the conserved and context-specific signaling pathways
 ## Compare the overall information flow of each signaling pathway
 
-pdf("output/CellChat/rankNet-p14_CB-version4dim40kparam15res015-filterCells.pdf", width = 10, height = 5)
-gg1 <- rankNet(cellchat, mode = "comparison", stacked = T, do.stat = TRUE)
-gg2 <- rankNet(cellchat, mode = "comparison", stacked = F, do.stat = TRUE)
-gg1 + gg2
+pdf("output/CellChat/rankNet-p14_CB-version4dim40kparam15res015-filterCells.pdf", width = 10, height = 3)
+gg1 <- rankNet(cellchat, mode = "comparison", stacked = T, do.stat = TRUE, color.use = c("gray9", "red"))
+gg2 <- rankNet(cellchat, mode = "comparison", stacked = F, do.stat = TRUE, color.use = c("gray9", "red"), show.raw = TRUE, measure = "count" )
+gg3 <- rankNet(cellchat, mode = "comparison", stacked = F, do.stat = TRUE, color.use = c("gray9", "red"), show.raw = TRUE, measure = "weight" )
+gg1 + gg2 + gg3
 dev.off()
 
 
@@ -22306,6 +22308,24 @@ gg1 + gg2
 dev.off()
 
 
+pdf("output/CellChat/netVisual_bubble_Increased-Granule-vs-MLI1MLI2PLI12PLI23GolgiPurkinje-p14_CB-version4dim40kparam15res015-filterCells.pdf", width = 5.5, height = 7)
+netVisual_bubble(cellchat, sources.use = "Granule", targets.use = c("MLI1","MLI2","PLI12","PLI23","Golgi","Purkinje"),  comparison = c(1, 2), max.dataset = 2, title.name = "Increased signaling in Kcnc1", angle.x = 45, remove.isolate = TRUE, color.heatmap = "viridis", line.on = TRUE, line.size = 0.2, color.text = c("gray9", "red"))
+dev.off()
+
+pdf("output/CellChat/netVisual_bubble_Decreased-Granule-vs-MLI1MLI2PLI12PLI23GolgiPurkinje-p14_CB-version4dim40kparam15res015-filterCells.pdf", width = 5, height = 3)
+netVisual_bubble(cellchat, sources.use = "Granule", targets.use = c("MLI1","MLI2","PLI12","PLI23","Golgi","Purkinje"),  comparison = c(1, 2), max.dataset = 1, title.name = "Decreased signaling in Kcnc1", angle.x = 45, remove.isolate = TRUE, color.heatmap = "viridis", color.text = c("gray9", "red"))
+dev.off()
+
+
+
+pdf("output/CellChat/netVisual_bubble_Increased-Purkinje-vs-MLI1MLI2PLI12PLI23Granule-p14_CB-version4dim40kparam15res015-filterCells.pdf", width = 5.5, height = 10)
+netVisual_bubble(cellchat, sources.use = "Purkinje", targets.use = c("MLI1","MLI2","PLI12","PLI23","Granule"),  comparison = c(1, 2), max.dataset = 2, title.name = "Increased signaling in Kcnc1", angle.x = 45, remove.isolate = TRUE, color.heatmap = "viridis", line.on = TRUE, line.size = 0.2, color.text = c("gray9", "red"))
+dev.off()
+
+pdf("output/CellChat/netVisual_bubble_Decreased-Purkinje-vs-MLI1MLI2PLI12PLI23Granule-p14_CB-version4dim40kparam15res015-filterCells.pdf", width = 5, height = 3)
+netVisual_bubble(cellchat, sources.use = "Purkinje", targets.use = c("MLI1","MLI2","PLI12","PLI23","Granule"),  comparison = c(1, 2), max.dataset = 1, title.name = "Decreased signaling in Kcnc1", angle.x = 45, remove.isolate = TRUE, color.heatmap = "viridis", color.text = c("gray9", "red"))
+dev.off()
+#--> Nothing from Purkinje decreasing
 
 ## Identify dysfunctional signaling by using differential expression analysis
 
@@ -22319,7 +22339,7 @@ cellchat <- identifyOverExpressedGenes(cellchat, group.dataset = "datasets", pos
 # map the results of differential expression analysis onto the inferred cell-cell communications to easily manage/subset the ligand-receptor pairs of interest
 net <- netMappingDEG(cellchat, features.name = features.name)
 # extract the ligand-receptor pairs with upregulated ligands in Kcnc1
-net.up <- subsetCommunication(cellchat, net = net, datasets = "Kcnc1_p14",ligand.logFC = 0.2, receptor.logFC = NULL)
+net.up <- subsetCommunication(cellchat, net = net, datasets = "Kcnc1_p14",ligand.logFC = 0.1, receptor.logFC = NULL)
 # extract the ligand-receptor pairs with upregulated ligands and upregulated recetptors in NL, i.e.,downregulated in Kcnc1
 net.down <- subsetCommunication(cellchat, net = net, datasets = "Kcnc1_p14",ligand.logFC = -0.1, receptor.logFC = -0.1)
 
@@ -22333,6 +22353,14 @@ pairLR.use.up = net.up[, "interaction_name", drop = F]
 gg1 <- netVisual_bubble(cellchat, pairLR.use = pairLR.use.up, sources.use = "MLI1", targets.use = c(1:12), comparison = c(1, 2),  angle.x = 90, remove.isolate = T,title.name = "Up-regulated signaling in Kcnc1")
 pairLR.use.down = net.down[, "interaction_name", drop = F]
 gg2 <- netVisual_bubble(cellchat, pairLR.use = pairLR.use.down, sources.use = "MLI1", targets.use = c(1:12), comparison = c(1, 2),  angle.x = 90, remove.isolate = T,title.name = "Down-regulated signaling in Kcnc1")
+gg1 + gg2
+dev.off()
+
+pdf("output/CellChat/netVisual_bubble_pairLR-Granule-vs-MLI1MLI2PLI12PLI23GolgiPurkinje-p14_CB-version4dim40kparam15res015-filterCells.pdf", width = 14, height = 7)
+pairLR.use.up = net.up[, "interaction_name", drop = F]
+gg1 <- netVisual_bubble(cellchat, pairLR.use = pairLR.use.up, sources.use = "Granule", targets.use = c("MLI1","MLI2","PLI12","PLI23","Golgi","Purkinje"), comparison = c(1, 2),  angle.x = 90, remove.isolate = T,title.name = "Up-regulated signaling in Kcnc1")
+pairLR.use.down = net.down[, "interaction_name", drop = F]
+gg2 <- netVisual_bubble(cellchat, pairLR.use = pairLR.use.down, sources.use = "Granule", targets.use = c("MLI1","MLI2","PLI12","PLI23","Golgi","Purkinje"), comparison = c(1, 2),  angle.x = 90, remove.isolate = T,title.name = "Down-regulated signaling in Kcnc1")
 gg1 + gg2
 dev.off()
 
@@ -22389,10 +22417,205 @@ for (i in 1:length(object.list)) {
 dev.off()
 
 
+# Specify group of interest 
+# Define the groups based on the cell type categorization
+# Define the groups based on the revised cell type categorization
+group.cellType <- rep(NA, length(levels(cellchat@idents)))
+names(group.cellType) <- levels(cellchat@idents)
+# Assign each cell type to a category
+group.cellType[c("Unknown", "Granule" , "UnipolarBrush")] <- "Glutamatergic"
+group.cellType[c("MLI1",  "MLI2",  "PLI12",  "PLI23", "Golgi", "Purkinje")] <- "GABAergic"
+group.cellType[c("Oligodendrocyte", "Astrocyte", "Bergman")] <- "Non-neuronal"
+# Check if all assignments are done correctly
+print(group.cellType)
+names(group.cellType) <- levels(cellchat@idents)
+names(group.cellType) <- levels(object.list[[1]]@idents)
 
 
-XXXY : HERE :
-For the chord diagram, CellChat has an independent function netVisual_chord_cell to flexibly visualize the signaling network by adjusting different parameters in the circlize package. For example, we can define a named char vector group to create multiple-group chord diagram, e
+pathways.show <- c("Glutamate") 
+pathways.show <- c("GABA-A") 
+pathways.show <- c("GABA-B") 
+pathways.show <- c("2-AG") 
+pdf("output/CellChat/netVisual_aggregate_CHORD1-2AG-p14_CB-version4dim40kparam15res015-filterCells.pdf", width = 20, height = 7)
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_chord_cell(object.list[[i]], signaling = pathways.show, group = group.cellType, title.name = paste0(pathways.show, " signaling network - ", names(object.list)[i]))
+}
+dev.off()
+
+
+
+
+
+
+
+pdf("output/CellChat/netVisual_chord_GENE-MLI1-vsALL-p14_CB-version4dim40kparam15res015-filterCells.pdf", width = 20, height = 7)
+par(mfrow = c(1, 2), xpd=TRUE)
+# compare all the interactions sending from MLI1 to ALL cells
+for (i in 1:length(object.list)) {
+  netVisual_chord_gene(object.list[[i]], sources.use = "MLI1", targets.use = c(1:12), lab.cex = 0.5, title.name = paste0("Signaling from MLI1 - ", names(object.list)[i]))
+}
+# compare all the interactions sending from MLI1 to ALL cells - CHAGING SIZE TEXT
+par(mfrow = c(1, 2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_chord_gene(object.list[[i]], sources.use = "MLI1", targets.use = c(1:12),  title.name = paste0("Signaling from MLI1 - ", names(object.list)[i]), legend.pos.x = 10)
+}
+# show all the significant signaling pathways from fibroblast to immune cells
+par(mfrow = c(1, 2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_chord_gene(object.list[[i]], sources.use = "MLI1", targets.use = c(1:12), slot.name = "netP", title.name = paste0("Signaling from MLI1 - ", names(object.list)[i]), legend.pos.x = 10)
+}
+dev.off()
+
+
+
+# Part V: Compare the signaling gene expression distribution between different datasets
+
+
+pdf("output/CellChat/plotGeneExpression-Glutamate-p14_CB-version4dim40kparam15res015-filterCells.pdf", width = 10, height = 15)
+cellchat@meta$datasets = factor(cellchat@meta$datasets, levels = c("WT_p14", "Kcnc1_p14")) # set factor level
+plotGeneExpression(cellchat, signaling = "Glutamate", split.by = "datasets", colors.ggplot = T) # Glutamate, GABA-A, GABA-B, 2-AG
+dev.off()
+
+pdf("output/CellChat/plotGeneExpression-GABAA-p14_CB-version4dim40kparam15res015-filterCells.pdf", width = 10, height = 13)
+cellchat@meta$datasets = factor(cellchat@meta$datasets, levels = c("WT_p14", "Kcnc1_p14")) # set factor level
+plotGeneExpression(cellchat, signaling = "GABA-A", split.by = "datasets", colors.ggplot = T) # Glutamate, GABA-A, GABA-B, 2-AG
+dev.off()
+
+
+pdf("output/CellChat/plotGeneExpression-GABAB-p14_CB-version4dim40kparam15res015-filterCells.pdf", width = 10, height = 8)
+cellchat@meta$datasets = factor(cellchat@meta$datasets, levels = c("WT_p14", "Kcnc1_p14")) # set factor level
+plotGeneExpression(cellchat, signaling = "GABA-B", split.by = "datasets", colors.ggplot = T) # Glutamate, GABA-A, GABA-B, 2-AG
+dev.off()
+
+
+pdf("output/CellChat/plotGeneExpression-2AG-p14_CB-version4dim40kparam15res015-filterCells.pdf", width = 10, height = 6)
+cellchat@meta$datasets = factor(cellchat@meta$datasets, levels = c("WT_p14", "Kcnc1_p14")) # set factor level
+plotGeneExpression(cellchat, signaling = "2-AG", split.by = "datasets", colors.ggplot = T) # Glutamate, GABA-A, GABA-B, 2-AG
+dev.off()
+
+
+
+###############################################################
+# EXPRESSION WT vs KCNC1 UMAP #####################
+###############################################################
+
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam15res015.sct_V1_label.rds") # 
+set.seed(42)
+
+# WT vs Kcnc1 gene expr ############
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version4dim40kparam15res015-Slc17a7.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Slc17a7"),  cols = c("grey", "red"), max.cutoff = 1,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version4dim40kparam15res015-Gabbr1.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gabbr1"),  cols = c("grey", "red"), max.cutoff = 1,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version4dim40kparam15res015-gene.up.pdf", width=10, height=160)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = gene.up,  cols = c("grey", "red"),split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+
+
+
+
+
+
+###############################################################
+# VLN PLOTS with STATISTICS #####################
+###############################################################
+# Subset seurat object to keep cell tye of interest
+
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c("Granule", "MLI1", "MLI2", "PLI12", "PLI23", "Golgi", "Purkinje"))
+
+
+# Check some genes
+DefaultAssay(WT_Kcnc1_p14_CB_1step_subset) <- "RNA"
+
+## post 20231005 Conchi meeting
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("Granule", "MLI1","MLI2","PLI12","PLI23","Golgi","Purkinje")
+##### Initialize empty list to store data
+deg_list <- list()
+
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_version4dim40kparam15res015_allGenes_MAST.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.0001 ~ "***",
+    p_val_adj < 0.001  ~ "**",
+    p_val_adj < 0.05   ~ "*",
+    TRUE               ~ ""
+  ))
+
+
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- gene.down # gene.up
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(WT_Kcnc1_p14_CB_1step_subset, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p14_CB_1step_subset))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CB_1step_subset-version4dim40kparam15res015-gene.down-STAT.pdf", width=5, height=3)
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(WT_Kcnc1_p14_CB_1step_subset, 
+               features = gene, 
+               pt.size = 0, 
+               split.by = "condition", cols = c("black", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.2, label = significance), 
+                     size = 6, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+
 
 
 ```
