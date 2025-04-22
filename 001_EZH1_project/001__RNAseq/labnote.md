@@ -198,11 +198,14 @@ STAR --genomeDir ../../Master/meta/STAR_hg19/ \
 	--outFileNamePrefix output/STAR/fastp/NPC_WT_R1_
 
 # Run time-per-time:
-sbatch scripts/STAR_fastp_ESC.sh # 11062736, 11065467
-sbatch scripts/STAR_fastp_NPC.sh # 11062742, 11065493
-sbatch scripts/STAR_fastp_2dN.sh # 11062743, 11065515
-sbatch scripts/STAR_fastp_4wN.sh # 11062744, 11065547
-sbatch scripts/STAR_fastp_8wN.sh # 11062745, 11065561
+sbatch scripts/STAR_fastp_ESC.sh # 11062736, 11065467 
+sbatch scripts/STAR_fastp_NPC.sh # 11062742, 11065493 
+sbatch scripts/STAR_fastp_2dN.sh # 11062743, 11065515 
+sbatch scripts/STAR_fastp_4wN.sh # 11062744, 11065547 
+sbatch scripts/STAR_fastp_8wN.sh # 11062745, 11065561 
+
+
+
 ```
 Mapping indexation
 ```bash
@@ -5351,8 +5354,13 @@ sbatch scripts/STAR_index_hg38.sh # 12323950 ok
 ### Mapp the reads to features (fastp-clean)
 Mapping and indexation:
 ```bash
-sbatch scripts/STAR_mapping_hg38_1.sh # 12325921 ok
-sbatch scripts/STAR_mapping_hg38_2.sh # 12325922 ok
+sbatch scripts/STAR_mapping_hg38_1.sh # 12325921 ok 
+sbatch scripts/STAR_mapping_hg38_2.sh # 12325922 ok 
+
+# Re-run as bug .pgbam: 
+sbatch scripts/STAR_mapping_hg38_1_re.sh # 42056656 xxx
+sbatch scripts/STAR_mapping_hg38_2_re.sh # 42056687 xxx
+
 ```
 
 --> Let's compil the number of uniquely mapped reads for all files (add it in the Google Drive `RNAseq_infos.xlsx` file)
@@ -20926,6 +20934,34 @@ dev.off()
 
 
 ```
+
+
+
+
+
+# Seq depth of all bam files
+
+
+To calculate seq depth from BAM I used the following command, from [here](https://www.biostars.org/p/356937/); and confirm by ChatGPT.
+
+Using SAMTOOLS (prefered method)
+
+```bash
+module load SAMtools
+
+
+
+samtools depth input.bam | awk '{sum+=$3} END { print "Average = ",sum/NR}'
+
+samtools depth output/STAR_hg38/ESC_WT_R1_Aligned.sortedByCoord.out.bam | awk '{sum+=$3} END { print "Average = ",sum/NR}'
+#--> My files have been transofrm to .pgbam, not sure why, bug already encountered...
+
+```
+
+
+Using FASTQC (rough estimation)
+
+
 
 
 
