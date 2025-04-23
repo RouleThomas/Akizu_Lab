@@ -5206,6 +5206,15 @@ sbatch scripts/matrix_TSS_5kb_PSC_SUZ12_WTKOKOEF1aEZH1-H3K27me3_WTvsKOEF1aEZH1_D
 sbatch scripts/matrix_TSS_5kb_PSC_EZH2_WTKOKOEF1aEZH1-H3K27me3_WTvsKOEF1aEZH1_DESEQ2padj05FC01_peak-FergusonUniqueNorm99smooth50bp.sh # 36689220 ok
 
 
+
+
+## Check EZH1 and EZH2 signal in WT and OE in EZH1 peak (identified from KOEF1aEZH1)
+sbatch scripts/matrix_TSS_5kb_PSC_WTKOEF1aEZH1-initialBigwig_EZH1_EZH2-peakKOEF1aEZH1_EZH1macs2q3.sh # 42096114 ok
+sbatch scripts/matrix_TSS_5kb_PSC_WTKO-initialBigwig_EZH1_EZH2-peakKOEF1aEZH1_EZH1macs2q3.sh # 42097105 xxx
+
+
+
+
 ```
 
 
@@ -5563,6 +5572,8 @@ Then keep only the significant peaks (re-run the script to test different qvalue
 - KO_EZH2: 2.3 or 3
 - KOEF1aEZH1_EZH2: 2.3 or 3
 --> Let's setup *optimal qvalue to 3 (look more true) for EZH2*
+- KOEF1aEZH1_EZH1: 2.3 or 3
+--> Let's setup *optimal qvalue to 3 (look more true) for EZH1*
 
 
 
