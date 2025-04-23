@@ -5358,8 +5358,8 @@ sbatch scripts/STAR_mapping_hg38_1.sh # 12325921 ok
 sbatch scripts/STAR_mapping_hg38_2.sh # 12325922 ok 
 
 # Re-run as bug .pgbam: 
-sbatch scripts/STAR_mapping_hg38_1_re.sh # 42056656 xxx
-sbatch scripts/STAR_mapping_hg38_2_re.sh # 42056687 xxx
+sbatch scripts/STAR_mapping_hg38_1_re.sh # 42056656 ok
+sbatch scripts/STAR_mapping_hg38_2_re.sh # 42056687 ok
 
 ```
 
@@ -20944,6 +20944,8 @@ dev.off()
 
 To calculate seq depth from BAM I used the following command, from [here](https://www.biostars.org/p/356937/); and confirm by ChatGPT.
 
+BUT for RNAseq, using number of reads to say seq depth is ok. And for CutRun/ChIPseq: total number of uniquely aligned reads is to be used.
+
 Using SAMTOOLS (prefered method)
 
 ```bash
@@ -20953,9 +20955,17 @@ module load SAMtools
 
 samtools depth input.bam | awk '{sum+=$3} END { print "Average = ",sum/NR}'
 
-samtools depth output/STAR_hg38/ESC_WT_R1_Aligned.sortedByCoord.out.bam | awk '{sum+=$3} END { print "Average = ",sum/NR}'
-#--> My files have been transofrm to .pgbam, not sure why, bug already encountered...
+samtools depth output/STAR_hg38/ESC_WT_R1_Aligned.sortedByCoord.out.bam | awk '{sum+=$3} END { print "Average = ",sum/NR}' # seq depth= 5.14673; total nb of fastpreads= 42M
+samtools depth output/STAR_hg38/ESC_WT_R2_Aligned.sortedByCoord.out.bam | awk '{sum+=$3} END { print "Average = ",sum/NR}' # seq depth= 5.16063; total nb of fastpreads= 43M
+samtools depth output/STAR_hg38/ESC_WT_R3_Aligned.sortedByCoord.out.bam | awk '{sum+=$3} END { print "Average = ",sum/NR}' # seq depth= ; total nb of fastpreads= 51M
 
+samtools depth output/STAR_hg38/NPC_WT_R1_Aligned.sortedByCoord.out.bam | awk '{sum+=$3} END { print "Average = ",sum/NR}' # seq depth= ; total nb of fastpreads= 46M
+samtools depth output/STAR_hg38/NPC_WT_R2_Aligned.sortedByCoord.out.bam | awk '{sum+=$3} END { print "Average = ",sum/NR}' # seq depth= ; total nb of fastpreads= 47M
+samtools depth output/STAR_hg38/NPC_WT_R3_Aligned.sortedByCoord.out.bam | awk '{sum+=$3} END { print "Average = ",sum/NR}' # seq depth= ; total nb of fastpreads= 54M
+
+samtools depth output/STAR_hg38/2dN_WT_R1_Aligned.sortedByCoord.out.bam | awk '{sum+=$3} END { print "Average = ",sum/NR}' # seq depth= ; total nb of fastpreads= 46M
+samtools depth output/STAR_hg38/2dN_WT_R2_Aligned.sortedByCoord.out.bam | awk '{sum+=$3} END { print "Average = ",sum/NR}' # seq depth= ; total nb of fastpreads= 55M
+samtools depth output/STAR_hg38/2dN_WT_R3_Aligned.sortedByCoord.out.bam | awk '{sum+=$3} END { print "Average = ",sum/NR}' # seq depth= ; total nb of fastpreads= 48M
 ```
 
 
