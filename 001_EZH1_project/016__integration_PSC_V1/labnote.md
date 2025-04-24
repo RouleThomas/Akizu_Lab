@@ -6597,7 +6597,7 @@ write.table(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Lo
 
 
 
-### On bin1000space100_gt_pval05_padj001 
+### On bin1000space100_gt_pval05_padj001 - WT vs KO H3K27me3
 
 Let's assign peak to genes on the two best windowns/parameters as in `001*/009*`:
 - Bin 1000bp space 100bp, G test, pval 0.05 and padj 0.001: done without FC and with FC 1 treshold
@@ -6741,6 +6741,161 @@ write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_pr
 
 
 ```
+
+
+
+
+
+
+### On bin1000space100_gt_pval05_padj001 - WT vs KOEF1aEZH1 H3K27me3
+
+Let's assign peak to genes on the two best windowns/parameters as in `001*/009*`:
+- Bin 1000bp space 100bp, G test, pval 0.05 and padj 0.001: done without FC and with FC 1 treshold
+
+
+XXXY
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import diff peaks
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001 <- read.delim("output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin1000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) %>%
+  filter(padj < 0.001)
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001 %>%
+  filter(log2FC>0)
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001 %>%
+  filter(log2FC<0)
+
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001 <- read.delim("output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin1000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) %>%
+  filter(padj < 0.001)
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001 %>%
+  filter(log2FC>1)
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001 %>%
+  filter(log2FC< (-1) )
+
+
+### SAVE Gain and Lost peaks
+write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain, file="output/diffreps/PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain.txt", sep="\t", quote=F, row.names=F) 
+write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost, file="output/diffreps/PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost.txt", sep="\t", quote=F, row.names=F) 
+
+write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain, file="output/diffreps/PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain.txt", sep="\t", quote=F, row.names=F) 
+write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost, file="output/diffreps/PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost.txt", sep="\t", quote=F, row.names=F) 
+########
+
+# Tidy peaks 
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_gr = makeGRangesFromDataFrame(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain,keep.extra.columns=TRUE)
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_gr = makeGRangesFromDataFrame(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost,keep.extra.columns=TRUE)
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_gr = makeGRangesFromDataFrame(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain,keep.extra.columns=TRUE)
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_gr = makeGRangesFromDataFrame(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost,keep.extra.columns=TRUE)
+
+gr_list <- list(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain=PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_gr,PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost=PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_gr, PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain=PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_gr,PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost=PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_gr
+)
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## plots
+pdf("output/ChIPseeker/plotAnnoBar_PSC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001_initialBigwig.pdf", width = 16, height = 3)
+plotAnnoBar(peakAnnoList)
+dev.off()
+pdf("output/ChIPseeker/plotDistToTSS_PSC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001_initialBigwig.pdf", width = 16, height = 3)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
+
+## Get annotation data frame
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot <- as.data.frame(peakAnnoList[["PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain"]]@anno)
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot <- as.data.frame(peakAnnoList[["PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost"]]@anno)
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot <- as.data.frame(peakAnnoList[["PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain"]]@anno)
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot <- as.data.frame(peakAnnoList[["PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost"]]@anno)
+
+## Convert entrez gene IDs to gene symbols
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot$gene <- mapIds(org.Hs.eg.db, keys = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot$gene <- mapIds(org.Hs.eg.db, keys = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot$gene <- mapIds(org.Hs.eg.db, keys = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot$gene <- mapIds(org.Hs.eg.db, keys = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+## Save output table
+write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot, file="output/ChIPseeker/annotation_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot, file="output/ChIPseeker/annotation_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot, file="output/ChIPseeker/annotation_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot, file="output/ChIPseeker/annotation_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot.txt", sep="\t", quote=F, row.names=F)  
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5 = tibble(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5 = tibble(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5 = tibble(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5 = tibble(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+### Save output gene lists
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5_geneSymbol = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5_geneSymbol = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+
+```
+
+
+
 
 
 
@@ -10050,6 +10205,131 @@ XXX
 --> Looks great!! Nice combination of gain/lost, with a bit more gain. AND much more Diff. bound site here!!
   --> `padj001_gt_pval05_log2FC1` may be optimal
 XXX
+
+
+
+
+
+
+
+## WT vs KOEF1aEZH1 - DIFFREPS - initialBigwig - G test pval 0.05
+
+--> Focus on `pval 0.05 padj 0.001 1000bp 100bp`: parameter that works best in `001*/009*`.
+
+
+```bash
+conda activate ChIPseqSpikeInFree
+
+## PREPARE BED FILE FOR QUANTIFICATION ##
+output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_initialBigwig.bedGraph 
+output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99_initialBigwig.bedGraph
+output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_initialBigwig.bedGraph 
+
+output/bigwig_Ferguson/PSC_KOEF1aEZH1_H3K27me3_005R_unique_norm99_initialBigwig.bedGraph 
+output/bigwig_Ferguson/PSC_KOEF1aEZH1_H3K27me3_006R_unique_norm99_initialBigwig.bedGraph
+output/bigwig_Ferguson/PSC_KOEF1aEZH1_H3K27me3_013R1_unique_norm99_initialBigwig.bedGraph 
+
+# Modify our bedGraph into bed (score in the 5th column); add dummy column 4
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_initialBigwig.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99_initialBigwig.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_initialBigwig.bed
+
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/PSC_KOEF1aEZH1_H3K27me3_005R_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/PSC_KOEF1aEZH1_H3K27me3_005R_unique_norm99_initialBigwig.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/PSC_KOEF1aEZH1_H3K27me3_006R_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/PSC_KOEF1aEZH1_H3K27me3_006R_unique_norm99_initialBigwig.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/PSC_KOEF1aEZH1_H3K27me3_013R1_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/PSC_KOEF1aEZH1_H3K27me3_013R1_unique_norm99_initialBigwig.bed
+
+
+## RUN NDIFFREPS ##
+# 1000bp every 100bp -  G test pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/PSC_KOEF1aEZH1_H3K27me3_005R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_KOEF1aEZH1_H3K27me3_006R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_KOEF1aEZH1_H3K27me3_013R1_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/PSC_WT_H3K27me3_006R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_010R_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/PSC_WT_H3K27me3_013R1_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/PSC_WTKOEF1aEZH1_H3K27me3_unique_norm99_initialBigwig.bed-bin1000space100_gt_pval05-diff.nb.txt --window 1000 --step 100 --meth gt --pval 0.05
+
+
+
+```
+
+
+
+
+
+### Explore diffreps results in R
+
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+library("GenomicRanges")
+set.seed(42)
+
+# import files
+bin1000space100_gt_pval05 <- read.delim("output/diffreps/PSC_WTKOEF1aEZH1_H3K27me3_unique_norm99_initialBigwig.bed-bin1000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+
+
+# Replace Inf by min/max values
+bin1000space100_gt_pval05$log2FC[bin1000space100_gt_pval05$log2FC == Inf] <- max(bin1000space100_gt_pval05$log2FC[is.finite(bin1000space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin1000space100_gt_pval05$log2FC[bin1000space100_gt_pval05$log2FC == -Inf] <- min(bin1000space100_gt_pval05$log2FC[is.finite(bin1000space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+
+# List of dataset names
+file_names <- c("bin1000space100_gt_pval05")
+
+## Function to read and format each file
+read_and_process <- function(file) {
+  df <- get(file)  # Load dataset from environment
+  df$dataset <- file  # Add dataset identifier
+  return(df)
+}
+
+## Combine all datasets into one
+combined_data <- bind_rows(lapply(file_names, read_and_process)) 
+
+combined_data_counts <- combined_data %>% 
+  filter(padj<0.001) %>%   ## !!!!!!!!!! CHANGE PVAL HERE !!!!!!!!!!!!!!!!!!!!!!
+  mutate(direction = ifelse(log2FC < 0, "Negative", "Positive")) %>%
+  group_by(dataset, direction) %>%
+  summarise(count = n(), .groups = "drop")
+
+## plot
+
+pdf("output/diffreps/hist-PSC_WTvsKOEF1aEZH1_H3K27me3-log2FC_distribution-padj001_gt_pval05_initialBigwig.pdf", width=4, height=4)
+combined_data %>% 
+  filter(padj<0.001) %>%   ## !!!!!!!!!! CHANGE PVAL HERE !!!!!!!!!!!!!!!!!!!!!!
+ggplot(., aes(x = log2FC)) +
+  geom_histogram(binwidth = 0.5, fill = "black", color = "black", alpha = 0.7) +
+  facet_wrap(~ dataset, scales = "free_y", nrow = 1) +  # Facet per dataset
+  labs(title = "Log2FC Distribution Across Datasets",
+       x = "Log2 Fold Change (log2FC)",
+       y = "Frequency") +
+  theme_bw() +
+  theme(strip.text = element_text(size = 4, face = "bold")) +
+  geom_text(data = combined_data_counts, 
+            aes(x = ifelse(direction == "Negative", -6, 4),  # Fixed x positions
+                y = Inf, 
+                label = paste0(count)), 
+            vjust = 1.5, 
+            hjust = ifelse(combined_data_counts$direction == "Negative", 0, 1), 
+            size = 3, fontface = "bold", color = "red")
+dev.off()
+
+```
+
+
+--> KOEF1aEZH1 show more H3K27me3 lost. It is great, as we have OE EZH1 less EZH2, and less H3K27me3.
+
+
+
+
+
+
+
+
 
 
 
