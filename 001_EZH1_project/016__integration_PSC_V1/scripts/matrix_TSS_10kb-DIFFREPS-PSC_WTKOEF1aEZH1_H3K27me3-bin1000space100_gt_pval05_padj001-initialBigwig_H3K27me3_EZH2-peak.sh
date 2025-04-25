@@ -69,3 +69,15 @@ plotProfile -m output/deeptools/matrix_TSS_10kb-DIFFREPS-PSC_WTKOEF1aEZH1_H3K27m
     --yMax 6
 
 
+
+
+plotProfile -m output/deeptools/matrix_TSS_10kb-DIFFREPS-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3_EZH2-peak.gz \
+    -out output/deeptools/matrix_TSS_10kb-DIFFREPS-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3_EZH2-peak_plotProfile3.pdf \
+    --samplesLabel "WT_H3K27me3" "KOEF1aEZH1_H3K27me3" "WT_EZH2" "KOEF1aEZH1_EZH2" \
+    --colors black blue white white \
+    --perGroup \
+    --plotWidth 4 \
+    --yMax 20
+
+
+
