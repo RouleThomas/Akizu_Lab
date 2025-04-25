@@ -5210,7 +5210,7 @@ sbatch scripts/matrix_TSS_5kb_PSC_EZH2_WTKOKOEF1aEZH1-H3K27me3_WTvsKOEF1aEZH1_DE
 
 ## Check EZH1 and EZH2 signal in WT and OE in EZH1 peak (identified from KOEF1aEZH1)
 sbatch scripts/matrix_TSS_5kb_PSC_WTKOEF1aEZH1-initialBigwig_EZH1_EZH2-peakKOEF1aEZH1_EZH1macs2q3.sh # 42096114 ok
-sbatch scripts/matrix_TSS_5kb_PSC_WTKO-initialBigwig_EZH1_EZH2-peakKOEF1aEZH1_EZH1macs2q3.sh # 42097105 xxx
+sbatch scripts/matrix_TSS_5kb_PSC_WTKO-initialBigwig_EZH1_EZH2-peakKOEF1aEZH1_EZH1macs2q3.sh # 42097105 ok
 
 
 
@@ -5284,7 +5284,7 @@ sbatch scripts/multiBigwigSummary_H3K27me3_WTvsKOEF1aEZH1_THOR_DiffBindTMMEpiCyp
 
 ## DIFFREPS
 
-### peaks - DIFFREPS
+### peaks - DIFFREPS - WT vs KO
 Let's check gain / lost H3K27me3 regions in WT vs KO; and check H3K27me3 and EZH2 signal in:
 - H3K27me3 binding changes peak
 - H3K27me3 binding changes peak, overlapping with EZH2 consensus peaks (WT/KO)
@@ -5363,7 +5363,52 @@ sbatch scripts/matrix_TSS_10kb-DIFFREPS-WTKO_H3K27me3__padj001_nb_pval0001_log2F
 --> Seems that my smooth50bp is not smooth enough, many sharp peaks; may affect vizualization; lets smooth to 250bp instead
 
 
-### genes - DIFFREPS
+
+### peaks - DIFFREPS - WT vs KOEF1aEZH1
+Let's check gain / lost H3K27me3 regions in WT vs KOEF1aEZH1; and check H3K27me3 and EZH2 signal in:
+- H3K27me3 binding changes peak
+- H3K27me3 binding changes peak, overlapping with EZH2 consensus peaks (WT/KO)
+
+
+
+
+```bash
+conda activate deeptools
+
+
+# PEAK
+# DIFFREPS diff peaks
+
+## isolate gain / lost peaks
+output/diffreps/PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain.txt
+output/diffreps/PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost.txt
+
+output/diffreps/PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain.txt
+output/diffreps/PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost.txt
+
+
+
+
+
+# DEEPTOOL PLOTS
+## H3K27me3 binding changes
+### Good `*initialBigwig` - gt pval05 padj 001
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3_EZH2-peak.sh # 42181252 ok
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001_FC1-initialBigwig_H3K27me3_EZH2-peak.sh # 42191632 ok
+
+
+
+
+```
+
+--> H3K27me3 show clear changes, EZH2 follow the pattern only for Lost region. For gain, EZH2 not clean enough, or no EZH2 peak!
+
+  
+
+
+
+
+### genes - DIFFREPS - WT vs KO
 
 
 
@@ -5423,6 +5468,49 @@ sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pva
 ```
 
 
+
+
+
+
+### genes - DIFFREPS - WT vs KOEF1aEZH1
+
+
+
+**Generate GTF file from these geneSymbol list** of genes:
+
+
+- DIFFREPS genes - GT pval05 padj 001 with without FC tresh 1
+
+
+
+```bash
+# Generate gtf file from gene list:
+
+### create gtf from gene list
+#### Modify the .txt file that list all genes so that it match gtf structure
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt
+
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt
+
+## Filter the gtf
+grep -Ff output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5.gtf
+grep -Ff output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5.gtf
+
+grep -Ff output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5.gtf
+grep -Ff output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5.gtf
+
+
+
+# deeptool plots
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3_EZH2-gene.sh # 42193871 ok
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001_FC1-initialBigwig_H3K27me3_EZH2-gene.sh # 42193932 ok
+
+
+
+
+```
 
 
 
@@ -6753,7 +6841,6 @@ Let's assign peak to genes on the two best windowns/parameters as in `001*/009*`
 - Bin 1000bp space 100bp, G test, pval 0.05 and padj 0.001: done without FC and with FC 1 treshold
 
 
-XXXY HERE TO DO BELOW!!
 
 
 ```bash
@@ -6773,118 +6860,118 @@ library("VennDiagram")
 
 
 # Import diff peaks
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001 <- read.delim("output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin1000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001 <- read.delim("output/diffreps/PSC_WTKOEF1aEZH1_H3K27me3_unique_norm99_initialBigwig.bed-bin1000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
   as_tibble() %>%
   dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) %>%
   filter(padj < 0.001)
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001 %>%
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain = PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001 %>%
   filter(log2FC>0)
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001 %>%
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost = PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001 %>%
   filter(log2FC<0)
 
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001 <- read.delim("output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin1000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
-  as_tibble() %>%
-  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) %>%
-  filter(padj < 0.001)
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001 %>%
+
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain = PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001 %>%
   filter(log2FC>1)
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001 %>%
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost = PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001 %>%
   filter(log2FC< (-1) )
 
 
 ### SAVE Gain and Lost peaks
-write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain, file="output/diffreps/PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain.txt", sep="\t", quote=F, row.names=F) 
-write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost, file="output/diffreps/PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost.txt", sep="\t", quote=F, row.names=F) 
+write.table(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain, file="output/diffreps/PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain.txt", sep="\t", quote=F, row.names=F) 
+write.table(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost, file="output/diffreps/PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost.txt", sep="\t", quote=F, row.names=F) 
 
-write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain, file="output/diffreps/PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain.txt", sep="\t", quote=F, row.names=F) 
-write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost, file="output/diffreps/PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost.txt", sep="\t", quote=F, row.names=F) 
+write.table(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain, file="output/diffreps/PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain.txt", sep="\t", quote=F, row.names=F) 
+write.table(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost, file="output/diffreps/PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost.txt", sep="\t", quote=F, row.names=F) 
 ########
 
 # Tidy peaks 
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_gr = makeGRangesFromDataFrame(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain,keep.extra.columns=TRUE)
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_gr = makeGRangesFromDataFrame(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost,keep.extra.columns=TRUE)
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_gr = makeGRangesFromDataFrame(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain,keep.extra.columns=TRUE)
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_gr = makeGRangesFromDataFrame(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost,keep.extra.columns=TRUE)
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_gr = makeGRangesFromDataFrame(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain,keep.extra.columns=TRUE)
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_gr = makeGRangesFromDataFrame(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost,keep.extra.columns=TRUE)
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_gr = makeGRangesFromDataFrame(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain,keep.extra.columns=TRUE)
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_gr = makeGRangesFromDataFrame(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost,keep.extra.columns=TRUE)
 
-gr_list <- list(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain=PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_gr,PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost=PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_gr, PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain=PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_gr,PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost=PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_gr
+gr_list <- list(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain=PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_gr,PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost=PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_gr, PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain=PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_gr,PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost=PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_gr
 )
 
 # Export Gene peak assignemnt
 peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
                        tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
 ## plots
-pdf("output/ChIPseeker/plotAnnoBar_PSC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001_initialBigwig.pdf", width = 16, height = 3)
+pdf("output/ChIPseeker/plotAnnoBar_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_initialBigwig.pdf", width = 16, height = 3)
 plotAnnoBar(peakAnnoList)
 dev.off()
-pdf("output/ChIPseeker/plotDistToTSS_PSC_WTKO_H3K27me3_bin1000space100_gt_pval05_padj001_initialBigwig.pdf", width = 16, height = 3)
+pdf("output/ChIPseeker/plotDistToTSS_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_initialBigwig.pdf", width = 16, height = 3)
 plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
 dev.off()
 
 ## Get annotation data frame
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot <- as.data.frame(peakAnnoList[["PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain"]]@anno)
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot <- as.data.frame(peakAnnoList[["PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost"]]@anno)
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot <- as.data.frame(peakAnnoList[["PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain"]]@anno)
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot <- as.data.frame(peakAnnoList[["PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost"]]@anno)
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot <- as.data.frame(peakAnnoList[["PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain"]]@anno)
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot <- as.data.frame(peakAnnoList[["PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost"]]@anno)
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot <- as.data.frame(peakAnnoList[["PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain"]]@anno)
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot <- as.data.frame(peakAnnoList[["PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost"]]@anno)
 
 ## Convert entrez gene IDs to gene symbols
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot$gene <- mapIds(org.Hs.eg.db, keys = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot$gene <- mapIds(org.Hs.eg.db, keys = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot$gene <- mapIds(org.Hs.eg.db, keys = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot$gene <- mapIds(org.Hs.eg.db, keys = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot$gene <- mapIds(org.Hs.eg.db, keys = PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot$gene <- mapIds(org.Hs.eg.db, keys = PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot$gene <- mapIds(org.Hs.eg.db, keys = PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot$gene <- mapIds(org.Hs.eg.db, keys = PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
 
 
 ## Save output table
-write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot, file="output/ChIPseeker/annotation_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot.txt", sep="\t", quote=F, row.names=F)  
-write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot, file="output/ChIPseeker/annotation_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot.txt", sep="\t", quote=F, row.names=F)  
-write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot, file="output/ChIPseeker/annotation_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot.txt", sep="\t", quote=F, row.names=F)  
-write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot, file="output/ChIPseeker/annotation_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot, file="output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot, file="output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot, file="output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot, file="output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot.txt", sep="\t", quote=F, row.names=F)  
 
 
 ## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5 = tibble(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot) %>%
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5 = tibble(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5 = tibble(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot) %>%
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5 = tibble(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5 = tibble(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot) %>%
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5 = tibble(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5 = tibble(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot) %>%
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5 = tibble(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
 
 ### Save output gene lists
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5 %>%
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol = PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5 %>%
     dplyr::select(geneSymbol) %>%
     unique()
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5 %>%
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol = PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5 %>%
     dplyr::select(geneSymbol) %>%
     unique()
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5_geneSymbol = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5 %>%
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5_geneSymbol = PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5 %>%
     dplyr::select(geneSymbol) %>%
     unique()
-PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5_geneSymbol = PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5 %>%
+PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5_geneSymbol = PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5 %>%
     dplyr::select(geneSymbol) %>%
     unique()
 
 
-write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt",
+write.table(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt",
+write.table(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5_geneSymbol.txt",
+write.table(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5_geneSymbol.txt",
+write.table(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
@@ -11074,6 +11161,104 @@ awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > met
 awk '!seen[$4]++ {print $4}' meta/ENCFF159KBI_geneSymbol.bed | shuf -n 500 > meta/ENCFF159KBI_geneSymbol_500random_10.bed
 
 ```
+
+
+
+
+
+# Functional analysis with enrichGO (single list of genes dotplot)
+
+
+We will use clusterProfile package. Tutorial [here](https://hbctraining.github.io/DGE_workshop_salmon/lessons/functional_analysis_2019.html).
+
+Let's do a test of the pipeline with genes from cluster4 amd cluster14 from the rlog counts. Our background list will be all genes tested for differential expression.
+
+**IMPORTANT NOTE: When doing GO, do NOT set a universe (background list of genes) it perform better!**
+
+```R
+# packages
+library("clusterProfiler")
+library("pathview")
+library("DOSE")
+library("org.Hs.eg.db")
+library("enrichplot")
+library("rtracklayer")
+library("tidyverse")
+
+## Read GTF file
+gtf_file <- "../../Master/meta/ENCFF159KBI.gtf"
+gtf_data <- import(gtf_file)
+
+## Extract gene_id and gene_name
+gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
+gene_id <- elementMetadata(gene_data)$gene_id
+gene_name <- elementMetadata(gene_data)$gene_name
+
+## Combine gene_id and gene_name into a data frame
+gene_id_name <- data.frame(gene_id, gene_name) %>%
+  unique() %>%
+  as_tibble()
+
+
+### GeneSymbol list of signif gain/lost H3K27me3 from DIFFREPS intitialBigwig bin1000space100 gt pval05 padj001
+output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt
+output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt
+
+
+############ LOST ############
+
+
+
+lost_H3K27me3_KO = read_csv("output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt", col_names = "gene_name")
+  
+
+ego <- enrichGO(gene = as.character(lost_H3K27me3_KO$gene_name), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+                
+pdf("output/GO/dotplot_BP_annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_top20.pdf", width=7, height=7)
+dotplot(ego, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_BP_annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_top10.pdf", width=5, height=4)
+dotplot(ego, showCategory=10)
+dev.off()
+
+
+
+
+############ GAIN ############
+
+
+gain_H3K27me3_KO = read_csv("output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt", col_names = "gene_name")
+  
+
+ego <- enrichGO(gene = as.character(gain_H3K27me3_KO$gene_name), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+                
+pdf("output/GO/dotplot_BP_annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_top20.pdf", width=7, height=7)
+dotplot(ego, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_BP_annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_top10.pdf", width=5, height=4)
+dotplot(ego, showCategory=10)
+dev.off()
+
+```
+
+
+
+
+
 
 
 
