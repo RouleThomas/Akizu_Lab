@@ -1,6 +1,8 @@
 # Daily-To-Do-List
 --> On Benchling
 
+Server name: 
+
 # Infos
 ## Usefull commands
 
