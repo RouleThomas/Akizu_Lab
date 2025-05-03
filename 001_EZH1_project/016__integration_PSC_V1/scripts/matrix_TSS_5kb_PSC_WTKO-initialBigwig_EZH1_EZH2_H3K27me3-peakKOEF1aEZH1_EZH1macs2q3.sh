@@ -1,0 +1,71 @@
+#!/bin/bash
+#SBATCH --mem=500G
+#SBATCH --time=100:00:00
+#SBATCH --cpus-per-task=6
+
+computeMatrix reference-point --referencePoint center \
+    -b 5000 -a 5000 \
+    -R output/macs2/broad/broad_blacklist_qval3/PSC_KOEF1aEZH1_EZH1_pool_peaks.broadPeak \
+    -S output/bigwig/PSC_WT_EZH1_006R.unique.dupmark.sorted.bw output/bigwig/PSC_KO_EZH1_006R.unique.dupmark.sorted.bw output/bigwig_Ferguson/PSC_WT_EZH2_unique_norm99_initialBigwig_median.bw output/bigwig_Ferguson/PSC_KO_EZH2_unique_norm99_initialBigwig_median.bw output/bigwig_Ferguson/PSC_WT_H3K27me3_unique_norm99_initialBigwig_median.bw output/bigwig_Ferguson/PSC_KO_H3K27me3_unique_norm99_initialBigwig_median.bw \
+    --skipZeros \
+    --missingDataAsZero \
+    --blackListFileName ../../Master/meta/hg38-blacklist.v2.bed \
+    -o output/deeptools/matrix_TSS_5kb_PSC_WTKO-initialBigwig_EZH1_EZH2_H3K27me3-peakKOEF1aEZH1_EZH1macs2q3.gz \
+    -p 6
+
+
+plotHeatmap -m output/deeptools/matrix_TSS_5kb_PSC_WTKO-initialBigwig_EZH1_EZH2_H3K27me3-peakKOEF1aEZH1_EZH1macs2q3.gz \
+    -out output/deeptools/matrix_TSS_5kb_PSC_WTKO-initialBigwig_EZH1_EZH2_H3K27me3-peakKOEF1aEZH1_EZH1macs2q3_heatmap_colorSmall.pdf \
+    --samplesLabel "WT_EZH1" "KO_EZH1" "WT_EZH2" "KO_EZH2" "WT_H3K27me3" "KO_H3K27me3" \
+    --colorMap bwr \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2
+
+
+# interactive
+plotHeatmap -m output/deeptools/matrix_TSS_5kb_PSC_WTKO-initialBigwig_EZH1_EZH2_H3K27me3-peakKOEF1aEZH1_EZH1macs2q3.gz \
+    -out output/deeptools/matrix_TSS_5kb_PSC_WTKO-initialBigwig_EZH1_EZH2_H3K27me3-peakKOEF1aEZH1_EZH1macs2q3_heatmap_colorSmall1.pdf \
+    --samplesLabel "WT_EZH1" "KO_EZH1" "WT_EZH2" "KO_EZH2" "WT_H3K27me3" "KO_H3K27me3" \
+    --colorList 'black, yellow' \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --zMax 20
+
+plotHeatmap -m output/deeptools/matrix_TSS_5kb_PSC_WTKO-initialBigwig_EZH1_EZH2_H3K27me3-peakKOEF1aEZH1_EZH1macs2q3.gz \
+    -out output/deeptools/matrix_TSS_5kb_PSC_WTKO-initialBigwig_EZH1_EZH2_H3K27me3-peakKOEF1aEZH1_EZH1macs2q3_heatmap_colorSmall2.pdf \
+    --samplesLabel "WT_EZH1" "KO_EZH1" "WT_EZH2" "KO_EZH2" "WT_H3K27me3" "KO_H3K27me3" \
+    --colorMap bwr \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --zMax 0.5
+
+plotHeatmap -m output/deeptools/matrix_TSS_5kb_PSC_WTKO-initialBigwig_EZH1_EZH2_H3K27me3-peakKOEF1aEZH1_EZH1macs2q3.gz \
+    -out output/deeptools/matrix_TSS_5kb_PSC_WTKO-initialBigwig_EZH1_EZH2_H3K27me3-peakKOEF1aEZH1_EZH1macs2q3_heatmap_colorSmall3.pdf \
+    --samplesLabel "WT_EZH1" "KO_EZH1" "WT_EZH2" "KO_EZH2" "WT_H3K27me3" "KO_H3K27me3" \
+    --colorMap bwr \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --zMax 5 5 10 10 150 150
+        
+
+
+
+plotProfile -m output/deeptools/matrix_TSS_5kb_PSC_WTKO-initialBigwig_EZH1_EZH2_H3K27me3-peakKOEF1aEZH1_EZH1macs2q3.gz \
+    -out output/deeptools/matrix_TSS_5kb_PSC_WTKO-initialBigwig_EZH1_EZH2_H3K27me3-peakKOEF1aEZH1_EZH1macs2q3_plotProfile1.pdf \
+    --samplesLabel "WT_EZH1" "KO_EZH1" "WT_EZH2" "KO_EZH2" "WT_H3K27me3" "KO_H3K27me3" \
+    --colors white white black red white white \
+    --perGroup
+
+
+plotProfile -m output/deeptools/matrix_TSS_5kb_PSC_WTKO-initialBigwig_EZH1_EZH2_H3K27me3-peakKOEF1aEZH1_EZH1macs2q3.gz \
+    -out output/deeptools/matrix_TSS_5kb_PSC_WTKO-initialBigwig_EZH1_EZH2_H3K27me3-peakKOEF1aEZH1_EZH1macs2q3_plotProfile2.pdf \
+    --samplesLabel "WT_EZH1" "KO_EZH1" "WT_EZH2" "KO_EZH2" "WT_H3K27me3" "KO_H3K27me3" \
+    --colors white white black red white white \
+    --perGroup \
+    --plotHeight 10 \
+    --plotWidth 7
+

@@ -5208,12 +5208,21 @@ sbatch scripts/matrix_TSS_5kb_PSC_EZH2_WTKOKOEF1aEZH1-H3K27me3_WTvsKOEF1aEZH1_DE
 
 
 
-## Check EZH1 and EZH2 signal in WT and OE in EZH1 peak (identified from KOEF1aEZH1)
+## Check EZH1 and EZH2 signal in WT and KO/OE in EZH1 peak (identified from KOEF1aEZH1)
 sbatch scripts/matrix_TSS_5kb_PSC_WTKOEF1aEZH1-initialBigwig_EZH1_EZH2-peakKOEF1aEZH1_EZH1macs2q3.sh # 42096114 ok
 sbatch scripts/matrix_TSS_5kb_PSC_WTKO-initialBigwig_EZH1_EZH2-peakKOEF1aEZH1_EZH1macs2q3.sh # 42097105 ok
 
+## Check EZH1 and EZH2 and H3K27me3 signal in WT and and KO/OE in EZH1 peak (identified from KOEF1aEZH1)
+sbatch scripts/matrix_TSS_5kb_PSC_WTKOEF1aEZH1-initialBigwig_EZH1_EZH2_H3K27me3-peakKOEF1aEZH1_EZH1macs2q3.sh # 42697239 ok
+sbatch scripts/matrix_TSS_5kb_PSC_WTKO-initialBigwig_EZH1_EZH2_H3K27me3-peakKOEF1aEZH1_EZH1macs2q3.sh # 42697395 ok
 
+## Check H3K27me3 signal in WT and and KO/OE in EZH1 peak (identified from KOEF1aEZH1)
+sbatch scripts/matrix_TSS_5kb_PSC_WTKOEF1aEZH1-initialBigwig_H3K27me3-peakKOEF1aEZH1_EZH1macs2q3.sh # 42697350 ok
+sbatch scripts/matrix_TSS_5kb_PSC_WTKO-initialBigwig_H3K27me3-peakKOEF1aEZH1_EZH1macs2q3.sh # 42697401 ok
 
+## Check EZH2 signal in WT and and KO/OE in EZH1 peak (identified from KOEF1aEZH1)
+sbatch scripts/matrix_TSS_5kb_PSC_WTKOEF1aEZH1-initialBigwig_EZH2-peakKOEF1aEZH1_EZH1macs2q3.sh # 42697386 ok
+sbatch scripts/matrix_TSS_5kb_PSC_WTKO-initialBigwig_EZH2-peakKOEF1aEZH1_EZH1macs2q3.sh # 42697405 xxx
 
 ```
 
@@ -5412,9 +5421,18 @@ output/diffreps/PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1_
 # DEEPTOOL PLOTS
 ## H3K27me3 binding changes
 ### Good `*initialBigwig` - gt pval05 padj 001
+#### H3K27me3 and EZH2 - separating gain and lost
 sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3_EZH2-peak.sh # 42181252 ok
 sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001_FC1-initialBigwig_H3K27me3_EZH2-peak.sh # 42191632 ok
+#### H3K27me3 - separating gain and lost
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3-peak.sh # 42694114 ok
+#### EZH2 - separating gain and lost
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-peak.sh # 42694116 ok
 
+#### H3K27me3 - NOT separating gain and lost
+sbatch scripts/matrix_TSS_10kb-DIFFREPS_GainLostMix-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3-peak.sh # 42694155 ok
+#### EZH2 - NOT separating gain and lost
+sbatch scripts/matrix_TSS_10kb-DIFFREPS_GainLostMix-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-peak.sh # 42694159 xxx
 
 
 
@@ -5499,6 +5517,8 @@ sbatch scripts/matrix_TSSTES_250bp100bp-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space1
 #sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001_FC1-initialBigwig_H3K27me3-gene.sh #  xxx
 ## EZH2 - separating gain and lost
 sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-gene.sh # 42647154 ok
+sbatch scripts/matrix_TSSTES_250bp100bp-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-gene.sh # 42693971 ok
+
 #sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001_FC1-initialBigwig_EZH2-gene.sh #  xxx
 
 
@@ -5509,10 +5529,9 @@ sbatch scripts/matrix_TSS_10kb-DIFFREPS_GainLostMix-PSC_WTKO_H3K27me3-bin1000spa
 sbatch scripts/matrix_TSSTES_250bp100bp-DIFFREPS_GainLostMix-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3-gene.sh # 42656744 ok
 #### EZH2 - NOT separating gain and lost
 sbatch scripts/matrix_TSS_10kb-DIFFREPS_GainLostMix-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-gene.sh # 42649317 ok
-XXY HERE!!! THIS ONE : sbatch scripts/matrix_TSSTES_250bp100bp-DIFFREPS_GainLostMix-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-gene.sh #  xxx
+sbatch scripts/matrix_TSSTES_250bp100bp-DIFFREPS_GainLostMix-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-gene.sh # 42693963 ok
 
 
-meta/ENCFF159KBI_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__GainLost_annot_promoterAnd5.gtf
 
 ```
 
@@ -5535,8 +5554,17 @@ meta/ENCFF159KBI_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_pad
 ```bash
 # Generate gtf file from gene list:
 
+## put together Gain and Lost mix
+cat output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt \
+    output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt \
+    | sort | uniq > output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__GainLost_annot_promoterAnd5_geneSymbol.txt
+
+
 ### create gtf from gene list
 #### Modify the .txt file that list all genes so that it match gtf structure
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__GainLost_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__GainLost_annot_promoterAnd5_as_gtf_geneSymbol.txt
+
+
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt
 
@@ -5544,6 +5572,10 @@ sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt
 
 ## Filter the gtf
+
+grep -Ff output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__GainLost_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__GainLost_annot_promoterAnd5.gtf
+
+
 grep -Ff output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5.gtf
 grep -Ff output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5.gtf
 
@@ -5553,10 +5585,25 @@ grep -Ff output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_
 
 
 # deeptool plots
+#### H3K27me3 and EZH2 - separating gain and lost
 sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3_EZH2-gene.sh # 42193871 ok
 sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001_FC1-initialBigwig_H3K27me3_EZH2-gene.sh # 42193932 ok
 
+#### H3K27me3 - separating gain and lost
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3-gene.sh # 42694191 ok
+sbatch scripts/matrix_TSSTES_250bp100bp-DIFFREPS-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3-gene.sh # 42694220 ok
 
+#### EZH2 - separating gain and lost
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-gene.sh # 42694199 ok
+sbatch scripts/matrix_TSSTES_250bp100bp-DIFFREPS-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-gene.sh # 42694222 ok
+
+
+#### H3K27me3 - NOT separating gain and lost
+sbatch scripts/matrix_TSS_10kb-DIFFREPS_GainLostMix-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3-gene.sh # 42694986 ok
+sbatch scripts/matrix_TSSTES_250bp100bp-DIFFREPS_GainLostMix-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3-gene.sh # 42695408 ok
+#### EZH2 - NOT separating gain and lost
+sbatch scripts/matrix_TSS_10kb-DIFFREPS_GainLostMix-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-gene.sh # 42695002 ok
+sbatch scripts/matrix_TSSTES_250bp100bp-DIFFREPS_GainLostMix-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-gene.sh # 42695472 ok
 
 
 ```
@@ -6929,6 +6976,9 @@ PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost = PSC_WTKO
 
 
 ### SAVE Gain and Lost peaks
+write.table(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001, file="output/diffreps/PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001.txt", sep="\t", quote=F, row.names=F) 
+
+
 write.table(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain, file="output/diffreps/PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain.txt", sep="\t", quote=F, row.names=F) 
 write.table(PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost, file="output/diffreps/PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost.txt", sep="\t", quote=F, row.names=F) 
 
@@ -10760,6 +10810,43 @@ dev.off()
 write.table(gos, "output/GO/enrichR_GO_Biological_Process_2023_DIFFREPS_bin1000space100_gt_pval05_padj001_GainLost_promoterAnd5.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 
+# DOTPLOT enrichR
+# Extract count and total genes from Overlap and calculate geneRatio
+gos$Count <- as.numeric(sub("/.*", "", gos$Overlap))
+gos$Total <- as.numeric(sub(".*/", "", gos$Overlap))
+gos$GeneRatio <- gos$Count / gos$Total
+
+## Gain H3K27me3
+gos_up= gos %>%
+  filter(type =="up")
+gos_up$Term <- factor(gos_up$Term, levels = gos_up$Term[rev(order(gos_up$GeneRatio))])
+
+pdf("output/GO/enrichR_DOTPLOT_GO_Biological_Process_2023_DIFFREPS_bin1000space100_gt_pval05_padj001_Gain_promoterAnd5.pdf", width=5, height=2)
+ggplot(gos_up, aes(x = GeneRatio, y = Term, size = Count, color = Adjusted.P.value)) +
+  geom_point() +
+  scale_color_gradient(low = "red", high = "red", name = "p.adjust") +
+  scale_y_discrete(limits = rev) +
+  theme_bw() +
+  labs(x = "GeneRatio", y = NULL)
+dev.off()
+
+## Lost H3K27me3
+gos_down= gos %>%
+  filter(type =="down")
+gos_down$Term <- factor(gos_down$Term, levels = gos_down$Term[rev(order(gos_down$GeneRatio))])
+
+pdf("output/GO/enrichR_DOTPLOT_GO_Biological_Process_2023_DIFFREPS_bin1000space100_gt_pval05_padj001_Lost_promoterAnd5.pdf", width=5, height=2)
+ggplot(gos_down, aes(x = GeneRatio, y = Term, size = Count, color = Adjusted.P.value)) +
+  geom_point() +
+  scale_color_gradient(low = "red", high = "red", name = "p.adjust") +
+  scale_y_discrete(limits = rev) +
+  theme_bw() +
+  labs(x = "GeneRatio", y = NULL)
+dev.off()
+
+
+
+
 
 
 
@@ -11256,15 +11343,16 @@ gene_id_name <- data.frame(gene_id, gene_name) %>%
 output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt
 output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt
 
-
+output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt
+output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt
 ############ LOST ############
 
 
 
 lost_H3K27me3_KO = read_csv("output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt", col_names = "gene_name")
-  
+lost_H3K27me3_KOEF1aEZH1 = read_csv("output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt", col_names = "gene_name")
 
-ego <- enrichGO(gene = as.character(lost_H3K27me3_KO$gene_name), 
+ego <- enrichGO(gene = as.character(lost_H3K27me3_KOEF1aEZH1$gene_name), 
                 keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
                 OrgDb = org.Hs.eg.db, 
                 ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
@@ -11272,14 +11360,28 @@ ego <- enrichGO(gene = as.character(lost_H3K27me3_KO$gene_name),
                 pvalueCutoff = 0.05, 
                 readable = TRUE)
                 
-pdf("output/GO/dotplot_BP_annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_top20.pdf", width=7, height=7)
+pdf("output/GO/dotplot_BP_annotation_PSC_WTKOEF1aEZH1_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_top20.pdf", width=7, height=7)
 dotplot(ego, showCategory=20)
 dev.off()
 
-pdf("output/GO/dotplot_BP_annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_top10.pdf", width=5, height=4)
+pdf("output/GO/dotplot_BP_annotation_PSC_WTKOEF1aEZH1_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_top10.pdf", width=5, height=4)
 dotplot(ego, showCategory=10)
 dev.off()
 
+
+entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(lost_H3K27me3_KOEF1aEZH1$gene_name), 'ENTREZID', 'SYMBOL') )
+
+ekegg <- enrichKEGG(gene = entrez_genes, 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05)
+                
+pdf("output/GO/dotplot_KEGG_annotation_PSC_WTKOEF1aEZH1_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_top20.pdf", width=7, height=7)
+dotplot(ekegg, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_KEGG_annotation_PSC_WTKOEF1aEZH1_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_top10.pdf", width=5, height=4)
+dotplot(ekegg, showCategory=10)
+dev.off()
 
 
 
@@ -11287,9 +11389,9 @@ dev.off()
 
 
 gain_H3K27me3_KO = read_csv("output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt", col_names = "gene_name")
-  
+gain_H3K27me3_KOEF1aEZH1 = read_csv("output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt", col_names = "gene_name")
 
-ego <- enrichGO(gene = as.character(gain_H3K27me3_KO$gene_name), 
+ego <- enrichGO(gene = as.character(gain_H3K27me3_KOEF1aEZH1$gene_name), 
                 keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
                 OrgDb = org.Hs.eg.db, 
                 ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
@@ -11297,13 +11399,33 @@ ego <- enrichGO(gene = as.character(gain_H3K27me3_KO$gene_name),
                 pvalueCutoff = 0.05, 
                 readable = TRUE)
                 
-pdf("output/GO/dotplot_BP_annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_top20.pdf", width=7, height=7)
+pdf("output/GO/dotplot_BP_annotation_PSC_WTKOEF1aEZH1_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_top20.pdf", width=7, height=7)
 dotplot(ego, showCategory=20)
 dev.off()
 
-pdf("output/GO/dotplot_BP_annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_top10.pdf", width=5, height=4)
+pdf("output/GO/dotplot_BP_annotation_PSC_WTKOEF1aEZH1_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_top10.pdf", width=5, height=4)
 dotplot(ego, showCategory=10)
 dev.off()
+
+
+
+
+
+entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(gain_H3K27me3_KOEF1aEZH1$gene_name), 'ENTREZID', 'SYMBOL') )
+
+ekegg <- enrichKEGG(gene = entrez_genes, 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05)
+                
+pdf("output/GO/dotplot_KEGG_annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_top20.pdf", width=7, height=7)
+dotplot(ekegg, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_KEGG_annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_top10.pdf", width=5, height=4)
+dotplot(ekegg, showCategory=10)
+dev.off()
+
+
 
 ```
 
