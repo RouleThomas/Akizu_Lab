@@ -5326,10 +5326,29 @@ sbatch scripts/matrix_TSS_5kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_5kb2kb1kb500bp25
 
 sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1-initialBigwig_H3K27me3_EZH2-peak.sh # 40025596 ok
 
-
-### Good `*initialBigwig` - gt pval05 padj 001
+########################################################################
+### Good `*initialBigwig` - gt pval05 padj 001 #########################
+########################################################################
+#### H3K27me3 and EZH2 - separating gain and lost
 sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3_EZH2-peak.sh # 40810626 ok
 sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001_FC1-initialBigwig_H3K27me3_EZH2-peak.sh # 40810627 ok
+#### H3K27me3 - separating gain and lost
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3-peak.sh # 42644129 ok
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001_FC1-initialBigwig_H3K27me3-peak.sh # 42644223 ok
+#### EZH2 - separating gain and lost
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-peak.sh # 42644270 ok
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001_FC1-initialBigwig_EZH2-peak.sh # 42644413 ok
+
+#### H3K27me3 and EZH2 - NOT separating gain and lost
+sbatch scripts/matrix_TSS_10kb-DIFFREPS_GainLostMix-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3_EZH2-peak.sh # 42645847 ok
+#sbatch scripts/matrix_TSS_10kb-DIFFREPS_GainLostMix-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001_FC1-initialBigwig_H3K27me3_EZH2-peak.sh #  xxx
+#### H3K27me3 - NOT separating gain and lost
+sbatch scripts/matrix_TSS_10kb-DIFFREPS_GainLostMix-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3-peak.sh # 42645848 ok
+#sbatch scripts/matrix_TSS_10kb-DIFFREPS_GainLostMix-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001_FC1-initialBigwig_H3K27me3-peak.sh #  xxx
+#### EZH2 - NOT separating gain and lost
+sbatch scripts/matrix_TSS_10kb-DIFFREPS_GainLostMix-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-peak.sh # 42645854 ok
+#sbatch scripts/matrix_TSS_10kb-DIFFREPS_GainLostMix-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001_FC1-initialBigwig_EZH2-peak.sh #  xxx
+
 
 
 
@@ -5424,6 +5443,14 @@ sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space10
 ```bash
 # Generate gtf file from gene list:
 
+## put together Gain and Lost mix
+cat output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt \
+    output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt \
+    | sort | uniq > output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__GainLost_annot_promoterAnd5_geneSymbol.txt
+
+
+
+
 ### create gtf from gene list
 #### Modify the .txt file that list all genes so that it match gtf structure
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1_Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt
@@ -5432,6 +5459,9 @@ sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKO_H3K27me
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt
 
+
+
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__GainLost_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__GainLost_annot_promoterAnd5_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt
 
@@ -5445,7 +5475,7 @@ grep -Ff output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1
 grep -Ff output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Gain_annot_promoterAnd5.gtf
 grep -Ff output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_WTKO_H3K27me3_merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__macs2qval2EZH2_WTKO_Lost_annot_promoterAnd5.gtf
 
-
+grep -Ff output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__GainLost_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__GainLost_annot_promoterAnd5.gtf
 grep -Ff output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5.gtf
 grep -Ff output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5.gtf
 
@@ -5458,12 +5488,26 @@ grep -Ff output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000s
 sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3_merged_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1-initialBigwig_H3K27me3_EZH2-gene.sh # 40044612 ok
 
 sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-padj001_nb_pval0001_log2FC1-macs2qval2EZH2_WTKO-initialBigwig_H3K27me3_EZH2-gene.sh # 40045139 ok
-
+## H3K27me3 and EZH2  - separating gain and lost
 sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3_EZH2-gene.sh # 40812453 ok
 sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001_FC1-initialBigwig_H3K27me3_EZH2-gene.sh # 40813239 ok
+## H3K27me3 - separating gain and lost
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3-gene.sh # 42646933 ok
+#sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001_FC1-initialBigwig_H3K27me3-gene.sh #  xxx
+## EZH2 - separating gain and lost
+sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-gene.sh # 42647154 ok
+#sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001_FC1-initialBigwig_EZH2-gene.sh #  xxx
 
 
+#### H3K27me3 and EZH2 - NOT separating gain and lost
+sbatch scripts/matrix_TSS_10kb-DIFFREPS_GainLostMix-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3_EZH2-gene.sh # 42649027 ok
+#### H3K27me3 - NOT separating gain and lost
+sbatch scripts/matrix_TSS_10kb-DIFFREPS_GainLostMix-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3-gene.sh # 42649155 ok
+#### EZH2 - NOT separating gain and lost
+sbatch scripts/matrix_TSS_10kb-DIFFREPS_GainLostMix-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-gene.sh # 42649317 ok
 
+
+meta/ENCFF159KBI_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__GainLost_annot_promoterAnd5.gtf
 
 ```
 
@@ -6729,6 +6773,9 @@ PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost = PSC_WT_H3K27me3_bi
 
 
 ### SAVE Gain and Lost peaks
+write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001, file="output/diffreps/PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001.txt", sep="\t", quote=F, row.names=F) 
+
+
 write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain, file="output/diffreps/PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Gain.txt", sep="\t", quote=F, row.names=F) 
 write.table(PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost, file="output/diffreps/PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__Lost.txt", sep="\t", quote=F, row.names=F) 
 
