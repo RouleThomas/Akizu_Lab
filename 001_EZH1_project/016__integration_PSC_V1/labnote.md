@@ -5493,6 +5493,9 @@ sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pva
 sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001_FC1-initialBigwig_H3K27me3_EZH2-gene.sh # 40813239 ok
 ## H3K27me3 - separating gain and lost
 sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3-gene.sh # 42646933 ok
+sbatch scripts/matrix_TSSTES_1kb250bp-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3-gene.sh # 42654541 ok
+sbatch scripts/matrix_TSSTES_250bp100bp-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3-gene.sh # 42656001 ok
+
 #sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001_FC1-initialBigwig_H3K27me3-gene.sh #  xxx
 ## EZH2 - separating gain and lost
 sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-gene.sh # 42647154 ok
@@ -5503,8 +5506,10 @@ sbatch scripts/matrix_TSS_10kb-DIFFREPS-PSC_WTKO_H3K27me3-bin1000space100_gt_pva
 sbatch scripts/matrix_TSS_10kb-DIFFREPS_GainLostMix-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3_EZH2-gene.sh # 42649027 ok
 #### H3K27me3 - NOT separating gain and lost
 sbatch scripts/matrix_TSS_10kb-DIFFREPS_GainLostMix-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3-gene.sh # 42649155 ok
+sbatch scripts/matrix_TSSTES_250bp100bp-DIFFREPS_GainLostMix-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3-gene.sh # 42656744 ok
 #### EZH2 - NOT separating gain and lost
 sbatch scripts/matrix_TSS_10kb-DIFFREPS_GainLostMix-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-gene.sh # 42649317 ok
+XXY HERE!!! THIS ONE : sbatch scripts/matrix_TSSTES_250bp100bp-DIFFREPS_GainLostMix-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-gene.sh #  xxx
 
 
 meta/ENCFF159KBI_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_gt_pval05_padj001__GainLost_annot_promoterAnd5.gtf
