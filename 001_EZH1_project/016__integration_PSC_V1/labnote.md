@@ -5222,7 +5222,7 @@ sbatch scripts/matrix_TSS_5kb_PSC_WTKO-initialBigwig_H3K27me3-peakKOEF1aEZH1_EZH
 
 ## Check EZH2 signal in WT and and KO/OE in EZH1 peak (identified from KOEF1aEZH1)
 sbatch scripts/matrix_TSS_5kb_PSC_WTKOEF1aEZH1-initialBigwig_EZH2-peakKOEF1aEZH1_EZH1macs2q3.sh # 42697386 ok
-sbatch scripts/matrix_TSS_5kb_PSC_WTKO-initialBigwig_EZH2-peakKOEF1aEZH1_EZH1macs2q3.sh # 42697405 xxx
+sbatch scripts/matrix_TSS_5kb_PSC_WTKO-initialBigwig_EZH2-peakKOEF1aEZH1_EZH1macs2q3.sh # 42697405 ok
 
 ```
 
@@ -5455,7 +5455,7 @@ sbatch scripts/matrix_TSS_10kb-DIFFREPS_GainLostMix-PSC_WTKOEF1aEZH1_H3K27me3-bi
 - DIFFREPS genes - NB default
 - DIFFREPS gene overlapping with EZH2 consensus peak WT/KO
 - DIFFREPS genes - GT pval05 padj 001 with without FC tresh 1
-
+- signal in EZH1 peak from the KOEF1aEZH1
 
 
 ```bash
@@ -5532,6 +5532,15 @@ sbatch scripts/matrix_TSS_10kb-DIFFREPS_GainLostMix-PSC_WTKO_H3K27me3-bin1000spa
 sbatch scripts/matrix_TSSTES_250bp100bp-DIFFREPS_GainLostMix-PSC_WTKO_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-gene.sh # 42693963 ok
 
 
+#### EZH1, EZH2, H3K27me3 signal in EZH1-bound genes (identified with the KOEF1aEZH1)
+sbatch scripts/matrix_TSS_5kb-PSC_WTKO-bin1000space100_gt_pval05_padj001-initialBigwig_EZH1_EZH2_H3K27me3-EZH1_macs2qval3gene.sh # 42731069 ok
+
+#### EZH2 in EZH1-bound genes (identified with the KOEF1aEZH1)
+sbatch scripts/matrix_TSS_5kb-PSC_WTKO-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-EZH1_macs2qval3gene.sh # 42731120 ok
+
+#### H3K27me3 in EZH1-bound genes (identified with the KOEF1aEZH1)
+sbatch scripts/matrix_TSS_5kb-PSC_WTKO-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3-EZH1_macs2qval3gene.sh # 42731177 ok
+
 
 ```
 
@@ -5548,7 +5557,7 @@ sbatch scripts/matrix_TSSTES_250bp100bp-DIFFREPS_GainLostMix-PSC_WTKO_H3K27me3-b
 
 
 - DIFFREPS genes - GT pval05 padj 001 with without FC tresh 1
-
+- EZH1 peak from the KOEF1aEZH1
 
 
 ```bash
@@ -5571,6 +5580,10 @@ sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt
 sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt
 
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_KOEF1aEZH1_EZH1_qval3_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_PSC_KOEF1aEZH1_EZH1_qval3_annot_promoterAnd5_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_PSC_KOEF1aEZH1_EZH1_qval230103_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_PSC_KOEF1aEZH1_EZH1_qval230103_annot_promoterAnd5_as_gtf_geneSymbol.txt
+
+
 ## Filter the gtf
 
 grep -Ff output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__GainLost_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__GainLost_annot_promoterAnd5.gtf
@@ -5582,6 +5595,8 @@ grep -Ff output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_
 grep -Ff output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Gain_annot_promoterAnd5.gtf
 grep -Ff output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001_FC1__Lost_annot_promoterAnd5.gtf
 
+grep -Ff output/ChIPseeker/annotation_PSC_KOEF1aEZH1_EZH1_qval3_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_KOEF1aEZH1_EZH1_qval3_annot_promoterAnd5.gtf
+grep -Ff output/ChIPseeker/annotation_PSC_KOEF1aEZH1_EZH1_qval230103_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_KOEF1aEZH1_EZH1_qval230103_annot_promoterAnd5.gtf
 
 
 # deeptool plots
@@ -5606,7 +5621,21 @@ sbatch scripts/matrix_TSS_10kb-DIFFREPS_GainLostMix-PSC_WTKOEF1aEZH1_H3K27me3-bi
 sbatch scripts/matrix_TSSTES_250bp100bp-DIFFREPS_GainLostMix-PSC_WTKOEF1aEZH1_H3K27me3-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-gene.sh # 42695472 ok
 
 
+#### EZH1, EZH2, H3K27me3 signal in EZH1-bound genes (identified with the KOEF1aEZH1)
+sbatch scripts/matrix_TSS_5kb-PSC_WTKOEF1aEZH1-bin1000space100_gt_pval05_padj001-initialBigwig_EZH1_EZH2_H3K27me3-EZH1_macs2qval3gene.sh # 42730172 ok
+sbatch scripts/matrix_TSS_5kb-PSC_WTKOEF1aEZH1-bin1000space100_gt_pval05_padj001-initialBigwig_EZH1_EZH2_H3K27me3-EZH1_macs2qval230103gene.sh # 42730188 ok
+
+#### EZH2 in EZH1-bound genes (identified with the KOEF1aEZH1)
+sbatch scripts/matrix_TSS_5kb-PSC_WTKOEF1aEZH1-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-EZH1_macs2qval3gene.sh # 42730505 ok
+sbatch scripts/matrix_TSS_5kb-PSC_WTKOEF1aEZH1-bin1000space100_gt_pval05_padj001-initialBigwig_EZH2-EZH1_macs2qval230103gene.sh # 42730549 ok
+#### H3K27me3 in EZH1-bound genes (identified with the KOEF1aEZH1)
+sbatch scripts/matrix_TSS_5kb-PSC_WTKOEF1aEZH1-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3-EZH1_macs2qval3gene.sh # 42730615 ok
+sbatch scripts/matrix_TSS_5kb-PSC_WTKOEF1aEZH1-bin1000space100_gt_pval05_padj001-initialBigwig_H3K27me3-EZH1_macs2qval230103gene.sh # 42730642 ok
+
 ```
+
+
+--> NOTE: For EZH1, qval3 seems better than qval2.3 (ie. more loss of EZH2 in EZH1 region in the KOEF1aEZH1)
 
 
 
@@ -7191,6 +7220,115 @@ write.table(merged_intervals_5kb2kb1kb500bp250bp__padj001_nb_pval0001_log2FC1__m
 
 
 ```
+
+
+
+
+
+## EZH1 peaks from KOEF1aEZH1
+
+
+- KOEF1aEZH1_EZH1: 2.3 or 3
+--> Let's setup *optimal qvalue to 3 (look more true) for EZH1*
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import diff peaks
+KOEF1aEZH1_EZH1_EZH1qval3 <- read.delim("output/macs2/broad/broad_blacklist_qval3/PSC_KOEF1aEZH1_EZH1_pool_peaks.broadPeak", sep = "\t", header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename(Chr = V1, Start = V2, End = V3)
+
+KOEF1aEZH1_EZH1_EZH1qval230103 <- read.delim("output/macs2/broad/broad_blacklist_qval2.30103/PSC_KOEF1aEZH1_EZH1_pool_peaks.broadPeak", sep = "\t", header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename(Chr = V1, Start = V2, End = V3)
+
+
+# Tidy peaks 
+KOEF1aEZH1_EZH1_EZH1qval3_gr = makeGRangesFromDataFrame(KOEF1aEZH1_EZH1_EZH1qval3,keep.extra.columns=TRUE)
+KOEF1aEZH1_EZH1_EZH1qval230103_gr = makeGRangesFromDataFrame(KOEF1aEZH1_EZH1_EZH1qval230103,keep.extra.columns=TRUE)
+
+
+gr_list <- list(KOEF1aEZH1_EZH1_EZH1qval3=KOEF1aEZH1_EZH1_EZH1qval3_gr,KOEF1aEZH1_EZH1_EZH1qval230103=KOEF1aEZH1_EZH1_EZH1qval230103_gr)
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## plots
+pdf("output/ChIPseeker/plotAnnoBar_PSC_KOEF1aEZH1_EZH1macs2qval.pdf", width = 16, height = 3)
+plotAnnoBar(peakAnnoList)
+dev.off()
+pdf("output/ChIPseeker/plotDistToTSS_PSC_KOEF1aEZH1_EZH1macs2qval.pdf", width = 16, height = 3)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
+
+## Get annotation data frame
+KOEF1aEZH1_EZH1_EZH1qval3_annot <- as.data.frame(peakAnnoList[["KOEF1aEZH1_EZH1_EZH1qval3"]]@anno)
+KOEF1aEZH1_EZH1_EZH1qval230103_annot <- as.data.frame(peakAnnoList[["KOEF1aEZH1_EZH1_EZH1qval230103"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+KOEF1aEZH1_EZH1_EZH1qval3_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = KOEF1aEZH1_EZH1_EZH1qval3_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+KOEF1aEZH1_EZH1_EZH1qval3_annot$gene <- mapIds(org.Hs.eg.db, keys = KOEF1aEZH1_EZH1_EZH1qval3_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+KOEF1aEZH1_EZH1_EZH1qval230103_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = KOEF1aEZH1_EZH1_EZH1qval230103_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+KOEF1aEZH1_EZH1_EZH1qval230103_annot$gene <- mapIds(org.Hs.eg.db, keys = KOEF1aEZH1_EZH1_EZH1qval230103_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+## Save output table
+write.table(KOEF1aEZH1_EZH1_EZH1qval3_annot, file="output/ChIPseeker/annotation_PSC_KOEF1aEZH1_EZH1macs2qval3.txt", sep="\t", quote=F, row.names=F)  
+write.table(KOEF1aEZH1_EZH1_EZH1qval230103_annot, file="output/ChIPseeker/annotation_PSC_KOEF1aEZH1_EZH1macs2qval230103.txt", sep="\t", quote=F, row.names=F)  
+
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+KOEF1aEZH1_EZH1_EZH1qval3_annot_promoterAnd5 = tibble(KOEF1aEZH1_EZH1_EZH1qval3_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+KOEF1aEZH1_EZH1_EZH1qval230103_annot_promoterAnd5 = tibble(KOEF1aEZH1_EZH1_EZH1qval230103_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+
+### Save output gene lists
+KOEF1aEZH1_EZH1_EZH1qval3_annot_promoterAnd5_geneSymbol = KOEF1aEZH1_EZH1_EZH1qval3_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+KOEF1aEZH1_EZH1_EZH1qval230103_annot_promoterAnd5_geneSymbol = KOEF1aEZH1_EZH1_EZH1qval230103_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+write.table(KOEF1aEZH1_EZH1_EZH1qval3_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_KOEF1aEZH1_EZH1_qval3_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+write.table(KOEF1aEZH1_EZH1_EZH1qval230103_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_KOEF1aEZH1_EZH1_qval230103_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+
+
+```
+
+
+
+
 
 
 
@@ -11314,6 +11452,12 @@ Let's do a test of the pipeline with genes from cluster4 amd cluster14 from the 
 
 **IMPORTANT NOTE: When doing GO, do NOT set a universe (background list of genes) it perform better!**
 
+
+Below separated in:
+- Lost: DIFFREPS
+- Gain: DIFFREPS
+- Other: EZH1 bound genes (identified from KOEF1aEZH1)
+
 ```R
 # packages
 library("clusterProfiler")
@@ -11345,6 +11489,9 @@ output/ChIPseeker/annotation_PSC_WTKO_H3K27me3_PSC_WT_H3K27me3_bin1000space100_g
 
 output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Lost_annot_promoterAnd5_geneSymbol.txt
 output/ChIPseeker/annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_geneSymbol.txt
+
+
+
 ############ LOST ############
 
 
@@ -11422,6 +11569,53 @@ dotplot(ekegg, showCategory=20)
 dev.off()
 
 pdf("output/GO/dotplot_KEGG_annotation_PSC_WTKOEF1aEZH1_H3K27me3_bin1000space100_gt_pval05_padj001__Gain_annot_promoterAnd5_top10.pdf", width=5, height=4)
+dotplot(ekegg, showCategory=10)
+dev.off()
+
+
+
+
+
+############ GAIN ############
+
+
+output/ChIPseeker/annotation_PSC_KOEF1aEZH1_EZH1_qval3_annot_promoterAnd5_geneSymbol.txt
+
+
+KOEF1aEZH1_EZH1_qval3_annot_promoterAnd5 = read_csv("output/ChIPseeker/annotation_PSC_KOEF1aEZH1_EZH1_qval3_annot_promoterAnd5_geneSymbol.txt", col_names = "gene_name")
+
+
+ego <- enrichGO(gene = as.character(KOEF1aEZH1_EZH1_qval3_annot_promoterAnd5$gene_name), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+                
+pdf("output/GO/dotplot_BP_annotation_PSC_KOEF1aEZH1_EZH1_qval3_annot_promoterAnd5_top20.pdf", width=7, height=7)
+dotplot(ego, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_BP_annotation_PSC_KOEF1aEZH1_EZH1_qval3_annot_promoterAnd5_top10.pdf", width=6, height=4)
+dotplot(ego, showCategory=10)
+dev.off()
+
+
+
+
+
+entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(KOEF1aEZH1_EZH1_qval3_annot_promoterAnd5$gene_name), 'ENTREZID', 'SYMBOL') )
+
+ekegg <- enrichKEGG(gene = entrez_genes, 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05)
+                
+pdf("output/GO/dotplot_KEGG_annotation_PSC_KOEF1aEZH1_EZH1_qval3_annot_promoterAnd5_top20.pdf", width=7, height=7)
+dotplot(ekegg, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_KEGG_annotation_PSC_KOEF1aEZH1_EZH1_qval3_annot_promoterAnd5_top10.pdf", width=5, height=5)
 dotplot(ekegg, showCategory=10)
 dev.off()
 
