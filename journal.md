@@ -19,7 +19,7 @@ Just copy/paste with cp from cluster to local computer Google Drive!
 ## IGV with ressource
 - Maybe try Mobaxterm with ssh and -X
 
-
+To run IGV: type `igv.sh` or `igv_hidpi.sh` depending on computer reslution
 
 
 ## Cluster-files folder-like interace
