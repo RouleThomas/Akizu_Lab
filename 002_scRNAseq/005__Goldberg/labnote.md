@@ -48660,7 +48660,7 @@ sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_Version2_default.sh # 36787127 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_Version4_MAST.sh # 41084682 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_Version4_default.sh # 41084692 ok
 
-sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_Version5_MAST.sh # 42975229 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CB_Version5_MAST.sh # 42975229 ok
 
 
 
@@ -48678,7 +48678,7 @@ sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_Version2_default.sh # 36792179 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_Version4_MAST.sh # 41084688 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_Version4_default.sh # 41084716 ok
 
-sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_Version5_MAST.sh # 42956871 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_Version5_MAST.sh # 42956871 ok
 
 
 
