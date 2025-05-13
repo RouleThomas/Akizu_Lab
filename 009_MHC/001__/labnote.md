@@ -48,7 +48,39 @@ For SBS-96:
 
 To simulate the mutation signature to genome/exome:
 - [MSA](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-021-04450-8) --> More recent, test this one first!
-- [SigProfilerSimulator](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-020-03772-3)
+- [SigProfilerSimulator](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-020-03772-3); more info [here](https://osf.io/usxjz/wiki/2.%20Simulations/)
+
+
+## SigProfilerSimulator
+
+### Install SigProfiler 
+
+Tool library [here](https://cancer.sanger.ac.uk/signatures/tools/); adn let's follow the R version of [SigProfilerSimulatorR](https://github.com/AlexandrovLab/SigProfilerSimulatorR)
+
+
+```bash
+# Create a conda env with R and Python3
+conda create --name SigProfiler --clone scRNAseq
+
+pip install SigProfilerSimulator
+```
+
+```R
+library("reticulate")
+library("devtools")
+
+
+install_github("AlexandrovLab/SigProfilerSimulatorR")
+
+library("SigProfilerSimulatorR")
+```
+
+
+
+### Run SigProfilerSimulator
+
+
+
 
 
 
