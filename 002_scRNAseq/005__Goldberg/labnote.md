@@ -36288,7 +36288,7 @@ pathways.show <- c("Glutamate")
 pathways.show <- c("GABA-A") 
 pathways.show <- c("GABA-B") 
 pathways.show <- c("2-AG") 
-pdf("output/CellChat/netVisual_heatmap-2AG-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 20, height = 7)
+pdf("output/CellChat/netVisual_heatmap-Glutamate-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 20, height = 7)
 par(mfrow = c(1,2), xpd=TRUE)
 ht <- list()
 for (i in 1:length(object.list)) {
@@ -38503,7 +38503,7 @@ pathways.show <- c("Glutamate")
 pathways.show <- c("GABA-A") 
 pathways.show <- c("GABA-B") 
 pathways.show <- c("2-AG") 
-pdf("output/CellChat/netVisual_aggregate_CIRCLE-2AG-p35_CB-version5dim40kparam15res0245-filterNeurons.pdf", width = 20, height = 7)
+pdf("output/CellChat/netVisual_aggregate_CIRCLE-GABAA-p35_CB-version5dim40kparam15res0245-filterNeurons.pdf", width = 20, height = 7)
 weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
 par(mfrow = c(1,2), xpd=TRUE)
 for (i in 1:length(object.list)) {
