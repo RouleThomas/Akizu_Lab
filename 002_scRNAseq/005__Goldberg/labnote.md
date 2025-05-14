@@ -34654,7 +34654,7 @@ p14_CB_prop$genotype <-
 
 pdf("output/seurat/histogramProp_WT_Kcnc1_p14_CB_1step_version5dim40kparam15res015.pdf", width=7, height=4)
 ggbarplot(p14_CB_prop, x = "cluster", y = "proportion", fill = "genotype",
-                  color = "genotype", palette = c("black", "blue"),
+                  color = "genotype", palette = c("black", "red"),
                   position = position_dodge(0.8), # Separate bars by genotype
                   add = "mean_se", # Add error bars
                   lab.pos = "out", lab.size = 3) +
@@ -36052,7 +36052,7 @@ cellchat <- identifyOverExpressedGenes(cellchat, group.dataset = "datasets", pos
 # map the results of differential expression analysis onto the inferred cell-cell communications to easily manage/subset the ligand-receptor pairs of interest
 net <- netMappingDEG(cellchat, features.name = features.name)
 # extract the ligand-receptor pairs with upregulated ligands in Kcnc1
-net.up <- subsetCommunication(cellchat, net = net, datasets = "Kcnc1_p14",ligand.logFC = 0.2, receptor.logFC = NULL)
+net.up <- subsetCommunication(cellchat, net = net, datasets = "Kcnc1_p14",ligand.logFC = 0.2, receptor.logFC = 0.2)
 # extract the ligand-receptor pairs with upregulated ligands and upregulated recetptors in NL, i.e.,downregulated in Kcnc1
 net.down <- subsetCommunication(cellchat, net = net, datasets = "WT_p14",ligand.logFC = -0.1, receptor.logFC = -0.1)
 
@@ -36068,10 +36068,17 @@ pdf("output/CellChat/netVisual_bubble_pairLR_upregulated-Granule-vs-All-p14_CB-v
 pairLR.use.up = net.up[, "interaction_name", drop = F]
 netVisual_bubble(cellchat, pairLR.use = pairLR.use.up, sources.use = "Granule", targets.use = c("ImmatureGranule", "Granule", "UBC" ,  "CerebellarNuclei","Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi"), comparison = c(1, 2),  angle.x = 90, remove.isolate = F,title.name = "Up-regulated signaling in Kcnc1", color.text = c("gray9", "red"), color.heatmap = "viridis", line.on = TRUE, line.size = 0.2)
 dev.off()
+pdf("output/CellChat/netVisual_bubble_pairLR_upregulated-Granule-vs-MLI2MLI1PurkinjeGolgiCerebellarNucleiImmatureGranuleGranulePLI-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 6, height =4)
+pairLR.use.up = net.up[, "interaction_name", drop = F]
+netVisual_bubble(cellchat, pairLR.use = pairLR.use.up, sources.use = c("Granule") , targets.use =  c("MLI2", "MLI1", "Purkinje", "Golgi", "CerebellarNuclei","ImmatureGranule" ,"Granule", "PLI"), comparison = c(1, 2),  angle.x = 90, remove.isolate = F,title.name = "Up-regulated signaling in Kcnc1", color.text = c("gray9", "red"), color.heatmap = "viridis", line.on = TRUE, line.size = 0.2)
+dev.off()
 #--> NO DOWN
 # Chord diagram
 pdf("output/CellChat/netVisual_chord_gene_upregulated-Granule-vs-All-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 20, height = 7)
 netVisual_chord_gene(object.list[[2]], sources.use = "Granule", targets.use = c("ImmatureGranule", "Granule", "UBC" ,  "CerebellarNuclei","Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi"), slot.name = 'net', net = net.up, lab.cex = 0.8, small.gap = 3.5, title.name = paste0("Up-regulated signaling in Kcnc1"))
+dev.off()
+pdf("output/CellChat/netVisual_chord_gene_upregulated-Granule-vs-MLI2MLI1PurkinjeGolgiCerebellarNucleiImmatureGranuleGranulePLI-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 20, height = 7)
+netVisual_chord_gene(object.list[[2]], sources.use = c("Granule") , targets.use =  c("MLI2", "MLI1", "Purkinje", "Golgi", "CerebellarNuclei","ImmatureGranule" ,"Granule", "PLI"), slot.name = 'net', net = net.up, lab.cex = 0.8, small.gap = 3.5, title.name = paste0("Up-regulated signaling in Kcnc1"))
 dev.off()
 #--> NO DOWN
 
@@ -36111,7 +36118,10 @@ pdf("output/CellChat/netVisual_bubble_pairLR_upregulated-Purkinje-vs-All-p14_CB-
 pairLR.use.up = net.up[, "interaction_name", drop = F]
 netVisual_bubble(cellchat, pairLR.use = pairLR.use.up, sources.use = "Purkinje", targets.use = c("ImmatureGranule", "Granule", "UBC" ,  "CerebellarNuclei","Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi"), comparison = c(1, 2),  angle.x = 90, remove.isolate = F,title.name = "Up-regulated signaling in Kcnc1", color.text = c("gray9", "red"), color.heatmap = "viridis", line.on = TRUE, line.size = 0.2)
 dev.off()
-
+pdf("output/CellChat/netVisual_bubble_pairLR_upregulated-Purkinje-vs-PurkinjeCerebellarNucleiImmatureGranuleGranule-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 5, height = 8)
+pairLR.use.up = net.up[, "interaction_name", drop = F]
+netVisual_bubble(cellchat, pairLR.use = pairLR.use.up, sources.use = c("Purkinje") , targets.use =  c("Purkinje", "CerebellarNuclei","ImmatureGranule" ,"Granule"), comparison = c(1, 2),  angle.x = 90, remove.isolate = F,title.name = "Up-regulated signaling in Kcnc1", color.text = c("gray9", "red"), color.heatmap = "viridis", line.on = TRUE, line.size = 0.2)
+dev.off()
 # Chord diagram
 pdf("output/CellChat/netVisual_chord_gene_upregulated-Purkinje-vs-All-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 20, height = 7)
 netVisual_chord_gene(object.list[[2]], sources.use = "Purkinje", targets.use = c("ImmatureGranule", "Granule", "UBC" ,  "CerebellarNuclei","Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi"), slot.name = 'net', net = net.up, lab.cex = 0.8, small.gap = 2, title.name = paste0("Up-regulated signaling in Kcnc1"))
@@ -36228,7 +36238,6 @@ dev.off()
 
 
 
-pathways.show <- c("Glutamate") 
 pathways.show <- c("GABA-A") 
 pathways.show <- c("GABA-B") 
 pathways.show <- c("2-AG") 
@@ -36239,6 +36248,40 @@ for (i in 1:length(object.list)) {
   netVisual_aggregate(object.list[[i]], signaling = pathways.show, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
 }
 dev.off()
+
+
+## SHOW ONLY biologically relevant interactions
+#!!! PLOT TO SHOW!!!
+pdf("output/CellChat/netVisual_aggregate_CIRCLE-Glutamate_BioRelevant-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 10, height = 7)
+pathways.show <- c("Glutamate") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c("ImmatureGranule" ,"Granule") , targets.use =  c("MLI2", "MLI1", "Purkinje", "Golgi", "CerebellarNuclei","ImmatureGranule" ,"Granule", "PLI"), vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+dev.off()
+
+pdf("output/CellChat/netVisual_aggregate_CIRCLE-GABA_Purkinje_BioRelevant-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 10, height = 7)
+pathways.show <- c("GABA-A") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c("Purkinje") , targets.use =  c("Purkinje", "CerebellarNuclei","ImmatureGranule" ,"Granule"), vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+pathways.show <- c("GABA-B") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c("Purkinje") , targets.use =  c("Purkinje", "CerebellarNuclei","ImmatureGranule" ,"Granule"), vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+dev.off()
+
+
+
+
+
+
+
 
 
 pathways.show <- c("Glutamate") 
@@ -36267,6 +36310,7 @@ for (i in 1:length(object.list)) {
 dev.off()
 
 
+
 # Specify group of interest 
 # Define the groups based on the cell type categorization
 # Define the groups based on the revised cell type categorization
@@ -36279,7 +36323,6 @@ group.cellType[c("Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi")] <- "GABAergic"
 print(group.cellType)
 names(group.cellType) <- levels(cellchat@idents)
 names(group.cellType) <- levels(object.list[[1]]@idents)
-
 
 
 pdf("output/CellChat/netVisual_aggregate_CHORD1-GlutamateGABAGABAB2AG-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 20, height = 7)
@@ -36305,6 +36348,9 @@ for (i in 1:length(object.list)) {
 }
 dev.off()
 #!!! PLOT TO SHOW!!!
+
+
+
 
 
 
@@ -36388,6 +36434,7 @@ set.seed(42)
 # WT vs Kcnc1 gene expr ############
 
 DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
 
 pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Slc17a7.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Slc17a7"),  cols = c("grey", "red"), max.cutoff = 1,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
@@ -36395,7 +36442,33 @@ dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Gabbr1.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gabbr1"),  cols = c("grey", "red"), max.cutoff = 1,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
 dev.off()
-
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Slc1a2.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Slc1a2"),  cols = c("grey", "red"), max.cutoff = 1,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Gls.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gls"),  cols = c("grey", "red"), max.cutoff = 2,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Gria3.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gria3"),  cols = c("grey", "red"), max.cutoff = 5,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Gria4.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gria4"),  cols = c("grey", "red"), max.cutoff = 5,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Grm8.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Grm8"),  cols = c("grey", "red"), max.cutoff = 2,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Grm1.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Grm1"),  cols = c("grey", "red"), max.cutoff = 4,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Gad1.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gad1"),  cols = c("grey", "red"), max.cutoff = 1,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Slc6a1.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Slc6a1"),  cols = c("grey", "red"), max.cutoff = 1,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Gabrb2.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gabrb2"),  cols = c("grey", "red"), max.cutoff = 1.5,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
 
 pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-gene.up.pdf", width=10, height=160)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = gene.up,  cols = c("grey", "red"),split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
@@ -36413,6 +36486,9 @@ dev.off()
 
 WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
                                        subset = cluster.annot %in% c( "ImmatureGranule",  "Granule" ,  "UBC" ,  "CerebellarNuclei","Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi"))
+
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "ImmatureGranule",  "Granule" ,  "CerebellarNuclei","Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi"))
 
 
 # Check some genes
@@ -36831,9 +36907,30 @@ p35_CB_prop$genotype <-
   factor(p35_CB_prop$genotype,
          c("WT", "Kcnc1"))
 
+p35_CB_prop$cluster <-
+  factor(p35_CB_prop$cluster,
+         c(  "Granule",
+  "UBC",
+  "CerebellarNuclei",
+  "MixNeurons",
+  "Purkinje",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi",
+  "Astrocyte",
+  "BergmanGlia",
+  "OPC",
+  "Endothelial",
+  "Meningeal",
+  "ChoroidPlexus"))
+
+
+
+
 pdf("output/seurat/histogramProp_WT_Kcnc1_p35_CB_1step_version5dim40kparam15res0245.pdf", width=7, height=4)
 ggbarplot(p35_CB_prop, x = "cluster", y = "proportion", fill = "genotype",
-                  color = "genotype", palette = c("black", "blue"),
+                  color = "genotype", palette = c("black", "red"),
                   position = position_dodge(0.8), # Separate bars by genotype
                   add = "mean_se", # Add error bars
                   lab.pos = "out", lab.size = 3) +
@@ -38231,9 +38328,9 @@ cellchat <- identifyOverExpressedGenes(cellchat, group.dataset = "datasets", pos
 # map the results of differential expression analysis onto the inferred cell-cell communications to easily manage/subset the ligand-receptor pairs of interest
 net <- netMappingDEG(cellchat, features.name = features.name)
 # extract the ligand-receptor pairs with upregulated ligands in Kcnc1
-net.up <- subsetCommunication(cellchat, net = net, datasets = "Kcnc1_p35",ligand.logFC = 0.2, receptor.logFC = NULL)
+net.up <- subsetCommunication(cellchat, net = net, datasets = "Kcnc1_p35",ligand.logFC = 0.2, receptor.logFC = 0.2)
 # extract the ligand-receptor pairs with upregulated ligands and upregulated recetptors in NL, i.e.,downregulated in Kcnc1
-net.down <- subsetCommunication(cellchat, net = net, datasets = "WT_p35",ligand.logFC = -0.1, receptor.logFC = -0.1)
+net.down <- subsetCommunication(cellchat, net = net, datasets = "WT_p35",ligand.logFC = -0.2, receptor.logFC = -0.2)
 
 gene.up <- extractGeneSubsetFromPair(net.up, cellchat)
 gene.down <- extractGeneSubsetFromPair(net.down, cellchat)
@@ -38246,6 +38343,10 @@ gene.down <- extractGeneSubsetFromPair(net.down, cellchat)
 pdf("output/CellChat/netVisual_bubble_pairLR_downregulated-Granule-vs-All-p35_CB-version5dim40kparam15res0245-filterNeurons.pdf", width = 6, height = 6)
 pairLR.use.down = net.down[, "interaction_name", drop = F]
 netVisual_bubble(cellchat, pairLR.use = pairLR.use.down, sources.use = "Granule", targets.use = c("Granule",  "UBC",  "CerebellarNuclei",  "MixNeurons",  "Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi"), comparison = c(1, 2),  angle.x = 90, remove.isolate = F,title.name = "Down-regulated signaling in Kcnc1", color.text = c("gray9", "red"), color.heatmap = "viridis", line.on = TRUE, line.size = 0.2)
+dev.off()
+pdf("output/CellChat/netVisual_bubble_pairLR_upregulated-Granule-vs-MLI2MLI1PurkinjeGolgiCerebellarNucleiGranulePLI-p35_CB-version5dim40kparam15res0245-filterNeurons.pdf", width = 6, height =4)
+pairLR.use.down = net.down[, "interaction_name", drop = F]
+netVisual_bubble(cellchat, pairLR.use = pairLR.use.down, sources.use = c("Granule") , targets.use =  c("MLI2", "MLI1", "Purkinje", "Golgi", "CerebellarNuclei", "Granule", "PLI"), comparison = c(1, 2),  angle.x = 90, remove.isolate = F,title.name = "Down-regulated signaling in Kcnc1", color.text = c("gray9", "red"), color.heatmap = "viridis", line.on = TRUE, line.size = 0.2)
 dev.off()
 #--> NO UP
 # Chord diagram
@@ -38290,7 +38391,10 @@ pdf("output/CellChat/netVisual_bubble_pairLR_downregulated-Purkinje-vs-All-p35_C
 pairLR.use.down = net.down[, "interaction_name", drop = F]
 netVisual_bubble(cellchat, pairLR.use = pairLR.use.down, sources.use = "Purkinje", targets.use = c("Granule",  "UBC",  "CerebellarNuclei",  "MixNeurons",  "Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi"), comparison = c(1, 2),  angle.x = 90, remove.isolate = F,title.name = "Down-regulated signaling in Kcnc1", color.text = c("gray9", "red"), color.heatmap = "viridis", line.on = TRUE, line.size = 0.2)
 dev.off()
-
+pdf("output/CellChat/netVisual_bubble_pairLR_upregulated-Purkinje-vs-PurkinjeCerebellarNucleiGranule-p35_CB-version5dim40kparam15res0245-filterNeurons.pdf", width = 5, height = 4)
+pairLR.use.down = net.down[, "interaction_name", drop = F]
+netVisual_bubble(cellchat, pairLR.use = pairLR.use.down, sources.use = c("Purkinje") , targets.use =  c("Purkinje", "CerebellarNuclei","Granule"), comparison = c(1, 2),  angle.x = 90, remove.isolate = F,title.name = "Down-regulated signaling in Kcnc1", color.text = c("gray9", "red"), color.heatmap = "viridis", line.on = TRUE, line.size = 0.2)
+dev.off()
 # Chord diagram
 pdf("output/CellChat/netVisual_chord_gene_downregulated-Purkinje-vs-All-p35_CB-version5dim40kparam15res0245-filterNeurons.pdf", width = 20, height = 7)
 netVisual_chord_gene(object.list[[2]], sources.use = "Purkinje", targets.use = c("Granule",  "UBC",  "CerebellarNuclei",  "MixNeurons",  "Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi"), slot.name = 'net', net = net.down, lab.cex = 0.8, small.gap = 2, title.name = paste0("Down-regulated signaling in Kcnc1"))
@@ -38406,6 +38510,90 @@ for (i in 1:length(object.list)) {
   netVisual_aggregate(object.list[[i]], signaling = pathways.show, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
 }
 dev.off()
+
+
+## SHOW ONLY biologically relevant interactions
+#!!! PLOT TO SHOW!!!
+pdf("output/CellChat/netVisual_aggregate_CIRCLE-Glutamate_BioRelevant-p35_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 10, height = 7)
+pathways.show <- c("Glutamate") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c("Granule") , targets.use =  c("MLI2", "MLI1", "Purkinje", "Golgi", "CerebellarNuclei","Granule", "PLI", "MixNeurons"), vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+dev.off()
+
+pdf("output/CellChat/netVisual_aggregate_CIRCLE-GABA_Purkinje_BioRelevant-p35_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 10, height = 7)
+pathways.show <- c("GABA-A") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c("Purkinje") , targets.use =  c("Purkinje", "CerebellarNuclei" ,"Granule", "MixNeurons"), vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+pathways.show <- c("GABA-B") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c("Purkinje") , targets.use =  c("Purkinje", "CerebellarNuclei","Granule", "MixNeurons"), vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+dev.off()
+
+pdf("output/CellChat/netVisual_aggregate_CIRCLE-GABA_Purkinje_ALL-p35_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 10, height = 7)
+pathways.show <- c("GABA-A") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c("Purkinje") , targets.use =  NULL, vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+pathways.show <- c("GABA-B") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c("Purkinje") , targets.use =  NULL, vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+dev.off()
+
+
+
+
+
+########### Test the discrpeancy heatap and circular plot ##########
+# Numeric comparison for GABA-A pathway
+wt_GABA_A <- object.list[["WT_p35"]]@netP$prob[,,"GABA-A"]
+kcnc1_GABA_A <- object.list[["Kcnc1_p35"]]@netP$prob[,,"GABA-A"]
+
+wt_purkinje_outgoing <- wt_GABA_A["Purkinje", ]
+kcnc1_purkinje_outgoing <- kcnc1_GABA_A["Purkinje", ]
+
+comparison_df <- data.frame(
+  Target = names(wt_purkinje_outgoing),
+  WT = wt_purkinje_outgoing,
+  Kcnc1 = kcnc1_purkinje_outgoing
+)
+# First determine the absolute max interaction strength across both conditions
+max_wt <- max(object.list[["WT_p35"]]@netP$prob[,,"GABA-A"]["Purkinje", ])
+max_kcnc1 <- max(object.list[["Kcnc1_p35"]]@netP$prob[,,"GABA-A"]["Purkinje", ])
+custom_weight_max <- max(max_wt, max_kcnc1)
+
+
+print(comparison_df)
+pdf("output/CellChat/test.pdf", width = 10, height = 7)
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], 
+                      signaling = "GABA-A", 
+                      sources.use = "Purkinje",
+                      targets.use = NULL,
+                      vertex.label.cex = 1, 
+                      point.size = 5, 
+                      layout = "circle",
+                      edge.weight.max = custom_weight_max, # <- clear comparison
+                      edge.width.max = 10,
+                      signaling.name = paste("GABA-A", names(object.list)[i]))
+}
+dev.off()
+
+####################
 
 
 pathways.show <- c("Glutamate") 
@@ -38564,7 +38752,15 @@ dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res0245-Gabbr1.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Gabbr1"),  cols = c("grey", "red"), max.cutoff = 1,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
 dev.off()
-
+pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res0245-Gad1.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Gad1"),  cols = c("grey", "red"), max.cutoff = 2,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res0245-Slc6a6.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Slc6a6"),  cols = c("grey", "red"), max.cutoff = 1,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res0245-Gabrb2.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Gabrb2"),  cols = c("grey", "red"), max.cutoff = 2,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
 
 pdf("output/seurat/FeaturePlot_SCT_WT_p35_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res0245-gene.up.pdf", width=10, height=160)
 FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = gene.up,  cols = c("grey", "red"),split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
@@ -39051,7 +39247,7 @@ p180_CB_prop$cluster <- factor(p180_CB_prop$cluster, levels = c(
 ))
 pdf("output/seurat/histogramProp_WT_Kcnc1_p180_CB_1step_version5dim20kparam10res0115.pdf", width=7, height=4)
 ggbarplot(p180_CB_prop, x = "cluster", y = "proportion", fill = "genotype",
-                  color = "genotype", palette = c("black", "blue"),
+                  color = "genotype", palette = c("black", "red"),
                   position = position_dodge(0.8), # Separate bars by genotype
                   add = "mean_se", # Add error bars
                   lab.pos = "out", lab.size = 3) +
@@ -40414,9 +40610,9 @@ cellchat <- identifyOverExpressedGenes(cellchat, group.dataset = "datasets", pos
 # map the results of differential expression analysis onto the inferred cell-cell communications to easily manage/subset the ligand-receptor pairs of interest
 net <- netMappingDEG(cellchat, features.name = features.name)
 # extract the ligand-receptor pairs with upregulated ligands in Kcnc1
-net.up <- subsetCommunication(cellchat, net = net, datasets = "Kcnc1_p180",ligand.logFC = 0.2, receptor.logFC = NULL)
+net.up <- subsetCommunication(cellchat, net = net, datasets = "Kcnc1_p180",ligand.logFC = 0.2, receptor.logFC = 0.2)
 # extract the ligand-receptor pairs with upregulated ligands and upregulated recetptors in NL, i.e.,downregulated in Kcnc1
-net.down <- subsetCommunication(cellchat, net = net, datasets = "WT_p180",ligand.logFC = -0.1, receptor.logFC = -0.1)
+net.down <- subsetCommunication(cellchat, net = net, datasets = "WT_p180",ligand.logFC = -0.2, receptor.logFC = -0.2)
 
 gene.up <- extractGeneSubsetFromPair(net.up, cellchat)
 gene.down <- extractGeneSubsetFromPair(net.down, cellchat)
@@ -40435,6 +40631,10 @@ pairLR.use.up = net.up[, "interaction_name", drop = F]
 netVisual_bubble(cellchat, pairLR.use = pairLR.use.up, sources.use = "Granule", targets.use = c("Granule",  "UBC",  "CerebellarNuclei",  "Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi"), comparison = c(1, 2),  angle.x = 90, remove.isolate = F,title.name = "Up-regulated signaling in Kcnc1", color.text = c("gray9", "red"), color.heatmap = "viridis", line.on = TRUE, line.size = 0.2)
 dev.off()
 
+pdf("output/CellChat/netVisual_bubble_pairLR_downregulated-Granule-vs-MLI2MLI1PurkinjeGolgiCerebellarNucleiGranulePLI-p180_CB-version5dim20kparam10res0115-filterNeurons.pdf", width = 6, height =4)
+pairLR.use.down = net.down[, "interaction_name", drop = F]
+netVisual_bubble(cellchat, pairLR.use = pairLR.use.down, sources.use = c("Granule") , targets.use =  c("MLI2", "MLI1", "Purkinje", "Golgi", "CerebellarNuclei" ,"Granule", "PLI"), comparison = c(1, 2),  angle.x = 90, remove.isolate = F,title.name = "Down-regulated signaling in Kcnc1", color.text = c("gray9", "red"), color.heatmap = "viridis", line.on = TRUE, line.size = 0.2)
+dev.off()
 
 # Chord diagram
 pdf("output/CellChat/netVisual_chord_gene_downregulated-Granule-vs-All-p180_CB-version5dim20kparam10res0115-filterNeurons.pdf", width = 20, height = 7)
@@ -40662,6 +40862,38 @@ for (i in 1:length(object.list)) {
   netVisual_aggregate(object.list[[i]], signaling = pathways.show, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
 }
 dev.off()
+
+
+
+## SHOW ONLY biologically relevant interactions
+#!!! PLOT TO SHOW!!!
+pdf("output/CellChat/netVisual_aggregate_CIRCLE-Glutamate_BioRelevant-p180_CB-version5dim20kparam10res0115-filterNeurons.pdf", width = 10, height = 7)
+pathways.show <- c("Glutamate") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c("Granule") , targets.use =  c("MLI2", "MLI1", "Purkinje", "Golgi", "CerebellarNuclei","Granule", "PLI"), vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+dev.off()
+
+pdf("output/CellChat/netVisual_aggregate_CIRCLE-GABA_Purkinje_BioRelevant-p180_CB-version5dim20kparam10res0115-filterNeurons.pdf", width = 10, height = 7)
+pathways.show <- c("GABA-A") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c("Purkinje") , targets.use =  c("Purkinje", "CerebellarNuclei","Granule"), vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+pathways.show <- c("GABA-B") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c("Purkinje") , targets.use =  c("Purkinje", "CerebellarNuclei","Granule"), vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+dev.off()
+
+
+
+
 
 
 pathways.show <- c("Glutamate") 
