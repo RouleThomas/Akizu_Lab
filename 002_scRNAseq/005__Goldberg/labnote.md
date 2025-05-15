@@ -38283,9 +38283,9 @@ dev.off()
 ## Compare the overall information flow of each signaling pathway
 
 pdf("output/CellChat/rankNet-p35_CB-version5dim40kparam15res0245-filterNeurons.pdf", width = 10, height = 3)
-gg1 <- rankNet(cellchat, mode = "comparison", stacked = T, do.stat = TRUE, color.use = c("blue", "red"))
-gg2 <- rankNet(cellchat, mode = "comparison", stacked = F, do.stat = TRUE, color.use = c("blue", "red"), show.raw = TRUE, measure = "count" )
-gg3 <- rankNet(cellchat, mode = "comparison", stacked = F, do.stat = TRUE, color.use = c("blue", "red"), show.raw = TRUE, measure = "weight" )
+gg1 <- rankNet(cellchat, mode = "comparison", stacked = T, do.stat = TRUE, color.use = c("black", "red"))
+gg2 <- rankNet(cellchat, mode = "comparison", stacked = F, do.stat = TRUE, color.use = c("black", "red"), show.raw = TRUE, measure = "count" )
+gg3 <- rankNet(cellchat, mode = "comparison", stacked = F, do.stat = TRUE, color.use = c("black", "red"), show.raw = TRUE, measure = "weight" )
 gg1 + gg2 + gg3
 dev.off()
 
@@ -38444,6 +38444,17 @@ pdf("output/CellChat/netVisual_chord_gene_downregulated-CerebellarNuclei-vs-All-
 netVisual_chord_gene(object.list[[2]], sources.use = "CerebellarNuclei", targets.use = c("Granule",  "UBC",  "CerebellarNuclei",  "MixNeurons",  "Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi"), slot.name = 'net', net = net.down, lab.cex = 0.8, small.gap = 2, title.name = paste0("Down-regulated signaling in Kcnc1"))
 dev.off()
 
+
+
+### MixNeurons  #########
+pdf("output/CellChat/netVisual_bubble_pairLR_downregulated-MixNeurons-vs-All-p35_CB-version5dim40kparam15res0245-filterNeurons.pdf", width = 6, height = 6)
+pairLR.use.down = net.down[, "interaction_name", drop = F]
+netVisual_bubble(cellchat, pairLR.use = pairLR.use.down, sources.use = "MixNeurons", targets.use = c("Granule",  "UBC",  "CerebellarNuclei",  "MixNeurons",  "Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi"), comparison = c(1, 2),  angle.x = 90, remove.isolate = F,title.name = "Down-regulated signaling in Kcnc1", color.text = c("gray9", "red"), color.heatmap = "viridis", line.on = TRUE, line.size = 0.2)
+dev.off()
+# Chord diagram
+pdf("output/CellChat/netVisual_chord_gene_downregulated-MixNeurons-vs-All-p35_CB-version5dim40kparam15res0245-filterNeurons.pdf", width = 20, height = 7)
+netVisual_chord_gene(object.list[[2]], sources.use = "MixNeurons", targets.use = c("Granule",  "UBC",  "CerebellarNuclei",  "MixNeurons",  "Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi"), slot.name = 'net', net = net.down, lab.cex = 0.8, small.gap = 2, title.name = paste0("Down-regulated signaling in Kcnc1"))
+dev.off()
 
 
 
