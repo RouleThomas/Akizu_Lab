@@ -29780,7 +29780,7 @@ combined_deg <- combined_deg %>%
 
 # Generate the violin plot
 ###### Define genes of interest
-genes_of_interest <- c("Nodal", "Yap1", "Amotl2", "Ptpn14", "Fgf8", "Qser1", "Wnt3", "Wnt3a", "Axin2", "Ccn1", "Ccn2")
+genes_of_interest <- c("Nodal", "Yap1", "Amotl2", "Ptpn14", "Fgf8", "Qser1", "Wnt3", "Wnt3a", "Axin2", "Ccn1", "Ccn2", "Wwtr1")
 ###### Extract the subset of significant DEGs
 sig_data <- combined_deg %>%
   filter(gene %in% genes_of_interest)
@@ -29826,6 +29826,8 @@ for (gene in genes_of_interest) {
   print(p)
 }
 dev.off()
+
+
 
 
 
