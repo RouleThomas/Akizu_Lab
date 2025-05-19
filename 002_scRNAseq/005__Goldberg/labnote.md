@@ -49545,6 +49545,9 @@ sbatch scripts/dataIntegration_CB_2step_integrateMerge_Version2.sh # 36824743 ok
 # pseudotime sample integration for QC version4 sample per sample (saving Purkinje/Golgi)
 sbatch scripts/dataIntegration_CB_2step_integrateMerge_Version3_QCversion4.sh # 41084221 ok
 
+# pseudotime sample integration version5 (sample renaming; after QCversion4 and purkinje/golgi saved)
+sbatch scripts/dataIntegration_CB_2step_integrateMerge_Version5.sh # 43695541 xxx
+
 
 
 
