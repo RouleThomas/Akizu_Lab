@@ -49546,7 +49546,7 @@ sbatch scripts/dataIntegration_CB_2step_integrateMerge_Version2.sh # 36824743 ok
 sbatch scripts/dataIntegration_CB_2step_integrateMerge_Version3_QCversion4.sh # 41084221 ok
 
 # pseudotime sample integration version5 (sample renaming; after QCversion4 and purkinje/golgi saved)
-sbatch scripts/dataIntegration_CB_2step_integrateMerge_Version5.sh # 43695541 xxx
+sbatch scripts/dataIntegration_CB_2step_integrateMerge_Version5.sh # 43695541 ok
 
 
 
@@ -50406,6 +50406,231 @@ dev.off()
 
 
 ```
+
+
+
+
+##### Version5
+
+
+```bash
+conda activate scRNAseqV2
+```
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+library("RColorBrewer")
+set.seed(42)
+
+# load seurat object
+WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge_Version5.sct.rds")
+## Add the time information (p14, p35, p180) from orig.ident
+WT_Kcnc1_CB_integrateMerge.sct$time <- stringr::str_extract(WT_Kcnc1_CB_integrateMerge.sct$orig.ident, "p\\d+")
+# Load the variable features from the previous SCT individual objects
+VariableFeatures(WT_Kcnc1_CB_integrateMerge.sct[["SCT"]]) <- rownames(WT_Kcnc1_CB_integrateMerge.sct[["SCT"]]@scale.data)
+
+
+
+
+#### UMAP
+DefaultAssay(WT_Kcnc1_CB_integrateMerge.sct) <- "SCT"
+
+WT_Kcnc1_CB_integrateMerge.sct <- RunPCA(WT_Kcnc1_CB_integrateMerge.sct, verbose = FALSE, npcs = 50)
+WT_Kcnc1_CB_integrateMerge.sct <- RunUMAP(WT_Kcnc1_CB_integrateMerge.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
+WT_Kcnc1_CB_integrateMerge.sct <- FindNeighbors(WT_Kcnc1_CB_integrateMerge.sct, reduction = "pca", k.param = 30, dims = 1:50)
+WT_Kcnc1_CB_integrateMerge.sct <- FindClusters(WT_Kcnc1_CB_integrateMerge.sct, resolution = 2.5, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+
+WT_Kcnc1_CB_integrateMerge.sct$condition <- factor(WT_Kcnc1_CB_integrateMerge.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+WT_Kcnc1_CB_integrateMerge.sct$time <- factor(WT_Kcnc1_CB_integrateMerge.sct$time, levels = c("p14", "p35", "p180")) 
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res25-version5.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE, raster = FALSE)
+dev.off()
+
+
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res25-version5-nolabel.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=FALSE, raster = FALSE)
+dev.off()
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res25_splitOrig-version5.pdf", width=60, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE, raster = FALSE, split.by = "orig.ident") # add `raster = FALSE` when more than 100k cells in the plot
+dev.off()
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res25_splitTime-version5.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE, raster = FALSE, split.by = "time") # add `raster = FALSE` when more than 100k cells in the plot
+dev.off()
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res25_groupTime-version5.pdf", width=7, height=6)
+my_cols = brewer.pal(3,"Dark2")
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", label=TRUE, raster = FALSE, group.by = "time", cols=alpha(my_cols,0.3)) # add `raster = FALSE` when more than 100k cells in the plot
+dev.off()
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-dim50kparam30res25_splitConditionGroupTime_label-version5.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", split.by = "condition", pt.size = 0.5, label.size = 3, raster = FALSE, group.by = "time")
+dev.off()
+
+
+# List678: (*combine list6 (p14), list7(p35), list8(p180)*)
+Granule = Gabra6, Pax6
+MLI1 = Sorcs3, Ptprk
+MLI2 = Nxph1, Cdh22
+PLI12 = Klhl1, Gfra2, Aldh1a3
+PLI23 = Galntl6, Kcnc2
+Golgi = Pax2
+Unipolar_Brush = Eomes, Rgs6, Tafa2
+Purkinje = Calb1, Slc1a6, Car8
+Bergman_Glia = Aqp4, Slc39a12
+Astrocyte = Zeb2
+OPC = Aldoc, Cnp,     Vcan, Sox6
+Oligodendrocyte= Mbp, Mag, Plp1
+Microglia = Itgam, Cx3cr1
+Meningeal = Ptgds, Dcn
+Endothelial = Lef1, Notum, Apcdd1
+Endothelial_Mural =  Dlc1, Pdgfrb
+Endothelial_Stalk = Actb, Tmsb4x
+Choroid plexus cells = Kl,  Ttr
+
+
+DefaultAssay(WT_Kcnc1_CB_integrateMerge.sct) <- "SCT" # For vizualization either use SCT or norm RNA
+
+pdf("output/seurat/FeaturePlot_SCT_WT_CB-integrateMerge-version5-List678.pdf", width=25, height=40)
+FeaturePlot(WT_Kcnc1_CB_integrateMerge.sct, features = c("Gabra6", "Pax6", "Sorcs3", "Ptprk", "Nxph1", "Cdh22",  "Klhl1", "Gfra2", "Aldh1a3", "Galntl6", "Kcnc2", "Pax2", "Eomes", "Rgs6", "Tafa2", "Calb1", "Slc1a6", "Car8", "Aqp4", "Slc39a12", "Zeb2", "Aldoc", "Cnp", "Vcan", "Sox6", "Mbp", "Mag", "Plp1", "Itgam", "Cx3cr1", "Ptgds", "Dcn", "Lef1", "Notum", "Apcdd1", "Dlc1", "Pdgfrb", "Actb", "Tmsb4x", "Kl",  "Ttr"), max.cutoff = 2, cols = c("grey", "red"), raster = FALSE)
+dev.off()
+
+
+
+
+# save ######################################################
+## saveRDS(WT_Kcnc1_CB_integrateMerge.sct, file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version5dim50kparam30res25-V1_numeric.rds") #
+WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version5dim50kparam30res25-V1_numeric.rds")
+
+# ADD LABEL V1:
+
+## saveRDS(WT_Kcnc1_CB_integrateMerge.sct, file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version5dim50kparam30res25-V1_label.rds") #
+WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version5dim50kparam30res25-V1_label.rds")
+############################################################################################################
+
+XXX Below not run 
+
+
+# V1 naming
+Cluster1= Granule_1
+Cluster2= Granule_2
+Cluster3= MLI1_1
+Cluster4= Granule_3
+Cluster5= PLI23_1
+Cluster6= MLI1_2
+Cluster7= MLI2_1
+Cluster8= Granule_4
+Cluster9= Astrocyte_1
+Cluster10= PLI23_2
+Cluster11= MLI2_2
+Cluster12= Endothelial
+Cluster13= Bergman
+Cluster14= MLI2_3
+Cluster15= MLI1_3
+Cluster16= UnipolarBrush
+Cluster17= Golgi
+Cluster18= Granule_5
+Cluster19= Meningeal
+Cluster20= ChoroidPlexus
+Cluster21= Astrocyte_2
+Cluster22= Purkinje
+Cluster23= EndothelialMural
+Cluster24= Oligodendrocyte
+Cluster25= Granule_6
+
+
+
+
+
+
+new.cluster.ids <- c(
+  "Granule_1",
+  "Granule_2",
+  "MLI1_1",
+  "Granule_3",
+  "PLI23_1",
+  "MLI1_2",
+  "MLI2_1",
+  "Granule_4",
+  "Astrocyte_1",
+  "PLI23_2",
+  "MLI2_2",
+  "Endothelial",
+  "Bergman",
+  "MLI2_3",
+  "MLI1_3",
+  "UnipolarBrush",
+  "Golgi",
+  "Granule_5",
+  "Meningeal",
+  "ChoroidPlexus",
+  "Astrocyte_2",
+  "Purkinje",
+  "EndothelialMural",
+  "Oligodendrocyte",
+  "Granule_6"
+)
+
+names(new.cluster.ids) <- levels(WT_Kcnc1_CB_integrateMerge.sct)
+WT_Kcnc1_CB_integrateMerge.sct <- RenameIdents(WT_Kcnc1_CB_integrateMerge.sct, new.cluster.ids)
+WT_Kcnc1_CB_integrateMerge.sct$cluster.annot <- Idents(WT_Kcnc1_CB_integrateMerge.sct) # create a new slot in my seurat object
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-version3QCversion4dim50kparam30res05_label.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", split.by = "time", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3, raster = FALSE)
+dev.off()
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-version3QCversion4dim50kparam30res05_splitConditionGroupTime_label.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", split.by = "condition", pt.size = 0.5, label.size = 3, raster = FALSE, group.by = "time")
+dev.off()
+# Keep only p14 and p180
+WT_Kcnc1_CB_integrateMerge_subset <- subset(
+  WT_Kcnc1_CB_integrateMerge.sct, 
+  subset = time %in% c("p14", "p180")
+)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-version3QCversion4dim50kparam30res05_splitConditionGroupTime_label-p14p180.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge_subset, reduction = "umap", split.by = "condition", pt.size = 0.5, label.size = 3, raster = FALSE, group.by = "time")
+dev.off()
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-version3QCversion4dim50kparam30res05_noSplit_label.pdf", width=9, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5, raster = FALSE)
+dev.off()
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-version3QCversion4dim50kparam30res05_noSplit_nolabel.pdf", width=9, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap",  label = FALSE, pt.size = 0.3, label.size = 5, raster = FALSE)
+dev.off()
+
+WT_Kcnc1_CB_integrateMerge.sct$condition <- factor(WT_Kcnc1_CB_integrateMerge.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB-integrateMerge-version3QCversion4dim50kparam30res05_splitCondition_label.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3, raster = FALSE)
+dev.off()
+
+
+
+```
+
 
 
 
@@ -51466,7 +51691,11 @@ set.seed(42)
 #WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res05-V1_numeric.rds")
 #WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res12-V1_numeric.rds")
 
-WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res25-V1_numeric.rds")
+#WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res25-V1_numeric.rds")
+
+WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version5dim50kparam30res25-V1_numeric.rds")
+
+
 DefaultAssay(WT_Kcnc1_CB_integrateMerge.sct) <- "RNA" # According to condiments workflow
 
 # convert to SingleCellExperiment
@@ -51481,7 +51710,7 @@ WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_CB_integrateMerge.sct, assay = "
 ########################################################
 
 # First filter based on cell type
-Part_Granule <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c("29","20","32","12","7","15","21","1","4","17","10","8","9","6","35","24")]
+Part_Granule <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c("26","21","16","10","5","12","14","6","1","36","13","8","15","11","3","34")]
 table(Part_Granule$seurat_clusters) # to double check
 
 
@@ -51493,7 +51722,7 @@ df <- bind_cols(
   sample_frac(1)
 
 # PLOT
-pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_Granule.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version5dim50kparam30res25-Part_Granule.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
   geom_point(size = .7) +
   labs(col = "Genotype") +
@@ -51507,7 +51736,10 @@ umap_coords <- reducedDims(Part_Granule)$UMAP
 
 # Filter conditions based on your description:
 # Keep cells with UMAP_1 > -3 and UMAP_2 < 2.5
-selected_cells <- umap_coords[,1] > -3 & umap_coords[,2] < 2.5 &  umap_coords[,1] < 6.5
+
+XXXY HERE TRY FILTER MORE THE CELLS!!!
+
+selected_cells <- umap_coords[,1] > -8 & umap_coords[,2] > 1 &  umap_coords[,1] < 5.25
 
 # Subset your SCE object
 Part_Granule_subset <- Part_Granule[, selected_cells]
@@ -51521,7 +51753,7 @@ df <- bind_cols(
   ) %>%
   sample_frac(1)
 
-pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_Granule_subset.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version5dim50kparam30res25-Part_Granule_subset.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
   geom_point(size = .7) +
   labs(col = "Genotype") +
@@ -51529,7 +51761,7 @@ ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
 dev.off()
 
 library("RColorBrewer")
-pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_Granule_subset-time.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version5dim50kparam30res25-Part_Granule_subset-time.pdf", width=6, height=5)
 my_cols = brewer.pal(3,"Dark2")
 cols=alpha(my_cols,0.3)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = time)) +
@@ -51542,7 +51774,7 @@ dev.off()
 
 
 ## genotype overlap
-pdf("output/condiments/UMAP_condition_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_Granule_subset.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_condition_WT_Kcnc1_CB-version5dim50kparam30res25-Part_Granule_subset.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7) +
   scale_color_manual(values = c("blue", "red")) + # Specify colors here
@@ -51557,7 +51789,7 @@ scores <- condiments::imbalance_score(
   k = 20, smooth = 40)
 df$scores <- scores$scaled_scores
 
-pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_Granule_subset.pdf", width=4, height=5)
+pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_CB-version5dim50kparam30res25-Part_Granule_subset.pdf", width=4, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
   geom_point(size = .7) +
   scale_color_viridis_c(option = "C") +
@@ -51578,7 +51810,7 @@ dev.off()
 
 Part_Granule_subset <- slingshot(Part_Granule_subset, reducedDim = 'UMAP',
                  clusterLabels = colData(Part_Granule_subset)$seurat_clusters,
-                 start.clus = "29", end.clus = c("24") ,approx_points = 100, extend = 'pc1', stretch = 1)
+                 start.clus = "26", end.clus = c("11") ,approx_points = 100, extend = 'pc1', stretch = 1)
 
 
 
@@ -51595,7 +51827,7 @@ curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
 
 #  
 
-pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-version3QCversion4dim50kparam30res12-Part_Granule_subset-START29_END24_points100extendpc1stretch1.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-version5dim50kparam30res25-Part_Granule_subset-START26_END11_points100extendpc1stretch1.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7, alpha = .2) +
   scale_color_brewer(palette = "Accent") +
@@ -51662,7 +51894,7 @@ plots <- list()
 for (i in 1:5) {
   plots[[i]] <- create_plot(i)
 }
-pdf("output/condiments/UMAP_trajectory_common_label_Part_Granule_subset_WT-version3QCversion4dim50kparam30res25-START29_END24_points100extendpc1stretch1_WTonly.pdf", width=5, height=20)
+pdf("output/condiments/UMAP_trajectory_common_label_Part_Granule_subset_WT-version5dim50kparam30res25-START29_END24_points100extendpc1stretch1_WTonly.pdf", width=5, height=20)
 gridExtra::grid.arrange(grobs = plots, ncol = 1)
 dev.off()
 
@@ -51713,7 +51945,7 @@ plots <- list()
 for (i in 1:5) {
   plots[[i]] <- create_plot(i)
 }
-pdf("output/condiments/UMAP_trajectory_common_label_Part_Granule_subset_Kcnc1-version3QCversion4dim50kparam30res25-START29_END24_points100extendpc1stretch1_Kcnc1only.pdf", width=5, height=20)
+pdf("output/condiments/UMAP_trajectory_common_label_Part_Granule_subset_Kcnc1-version5dim50kparam30res25-START29_END24_points100extendpc1stretch1_Kcnc1only.pdf", width=5, height=20)
 gridExtra::grid.arrange(grobs = plots, ncol = 1)
 dev.off()
 
@@ -51730,7 +51962,7 @@ df_3 <- df_3 %>%
                values_to = "pst") %>%
   filter(!is.na(pst))
 
-pdf("output/condiments/densityPlot_trajectory_lineage_Part_Granule_subset-version3QCversion4dim50kparam30res25-START29_END24_points100extendpc1stretch1.pdf", width=10, height=3)
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_Granule_subset-version5dim50kparam30res25-START29_END24_points100extendpc1stretch1.pdf", width=10, height=3)
 ggplot(df_3, aes(x = pst)) +
   geom_density(alpha = .8, aes(fill = condition), col = "transparent") +
   geom_density(aes(col = condition), fill = "transparent", size = 1.5) +
@@ -51745,8 +51977,8 @@ ggplot(df_3, aes(x = pst)) +
 dev.off()
 
 
-#### ->  save.image(file="output/condiments/condiments-Part_Granule_subset_START29_END24_points100extendpc1stretch1-version3QCversion4dim50kparam30res25.RData")
-### load("output/condiments/condiments-Part_Granule_subset_START29_END24_points100extendpc1stretch1-version3QCversion4dim50kparam30res25.RData")
+#### ->  save.image(file="output/condiments/condiments-Part_Granule_subset_START29_END24_points100extendpc1stretch1-version5dim50kparam30res25.RData")
+### load("output/condiments/condiments-Part_Granule_subset_START29_END24_points100extendpc1stretch1-version5dim50kparam30res25.RData")
 set.seed(42)
 
 #  Differential expression
