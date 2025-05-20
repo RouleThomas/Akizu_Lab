@@ -355,3 +355,21 @@ sbatch scripts/matrix_2kb_NIPBLYAP1QSER1_NIPBLpeaks.sh # 40544978 ok
 
 
 
+# Overlap between QSER1 (008001) and NIPBL peaks - emboR?QSER1? revision tasks, email 5/20/2025
+
+
+
+
+
+output/annotation_homer_hESC_WT_QSER1_pool_annot.bed
+
+
+
+```bash
+conda activate BedToBigwig
+
+bedtools intersect -v -a ../007__ENCODE_hESC_histone/output/annotation_homer_hESC_WT_QSER1_pool_annot.bed -b output/homer/Nipbl/peaks.bed | wc -l # 9505
+
+bedtools intersect -v -a output/homer/Nipbl/peaks.bed -b ../007__ENCODE_hESC_histone/output/annotation_homer_hESC_WT_QSER1_pool_annot.bed | wc -l # 18351
+
+```
