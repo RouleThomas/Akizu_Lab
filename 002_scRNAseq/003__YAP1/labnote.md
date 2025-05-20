@@ -29735,6 +29735,10 @@ set.seed(42)
 
 embryoE7.combined.sct <- readRDS(file = "output/seurat/embryoE7.combined.sct_19dim_V2.rds")
 embryoE7.combined.sct$condition <- factor(embryoE7.combined.sct$condition, levels = c("WT_E7", "cYAPKO_E7"))
+embryoE7.combined.sct$cluster.annot <- factor(embryoE7.combined.sct$cluster.annot, levels = c("Epiblast", "Primitive_Streak", "Nascent_Mesoderm", "Cardiac_Mesoderm", "Blood_Progenitor", "Endoderm", "Exe_Ectoderm", "Exe_Endoderm_1", "Exe_Endoderm_2"))
+
+
+
 
 
 
@@ -29750,7 +29754,10 @@ DefaultAssay(embryoE7.combined.sct) <- "RNA"
 
 
 #### import all clsuter DEGs output :
+
 cluster_types <- c("Blood_Progenitor", "Endoderm", "Exe_Ectoderm", "Primitive_Streak", "Nascent_Mesoderm", "Cardiac_Mesoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", "Epiblast")
+
+
 ##### Initialize empty list to store data
 deg_list <- list()
 
@@ -29790,6 +29797,7 @@ sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
 expr_data <- FetchData(embryoE7.combined.sct, vars = genes_of_interest, slot = "data")
 ###### Add cluster identity for correct mapping
 expr_data$Identity <- as.character(Idents(embryoE7.combined.sct))  # Convert to character to match
+
 ###### Convert expression data into long format
 expr_data_long <- expr_data %>%
   pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
@@ -29802,9 +29810,13 @@ sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches c
 ###### Merge significance with computed max expression
 sig_data <- sig_data %>%
   left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+
+
 pdf("output/seurat/VlnPlot_RNA_E7_control_cYAPKO_11genes_sct_19dim_V2_STAT.pdf", width=7, height=3.5)
 pdf("output/seurat/VlnPlot_RNA_E7_control_cYAPKO_11genes_sct_19dim_V2_STATmiddle.pdf", width=7, height=3.5)
-
+pdf("output/seurat/VlnPlot_RNA_E7_control_cYAPKO_11genes_sct_19dim_V2_STATmiddle_orderUpdated.pdf", width=7, height=3.5)
+Idents(embryoE7.combined.sct) <- "cluster.annot"
 ###### Generate separate plots per gene
 for (gene in genes_of_interest) {
   print(paste("Generating plot for:", gene))

@@ -51737,8 +51737,6 @@ umap_coords <- reducedDims(Part_Granule)$UMAP
 # Filter conditions based on your description:
 # Keep cells with UMAP_1 > -3 and UMAP_2 < 2.5
 
-XXXY HERE TRY FILTER MORE THE CELLS!!!
-
 selected_cells <- umap_coords[,1] > -8 & umap_coords[,2] > 1 &  umap_coords[,1] < 5.25
 
 # Subset your SCE object
@@ -51838,7 +51836,9 @@ dev.off()
 
 
 
-
+#### ->  save.image(file="output/condiments/condiments-Part_Granule_subset_START26_END11_points100extendpc1stretch1-version5dim50kparam30res25.RData")
+### load("output/condiments/condiments-Part_Granule_subset_START26_END11_points100extendpc1stretch1-version5dim50kparam30res25.RData")
+set.seed(42)
 
 
 
@@ -52044,7 +52044,9 @@ set.seed(42)
 
 # Data import - all samples and genotype CB
 #WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-dim40kparam15res03-labelv1.rds")
-WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res25-V1_numeric.rds")
+#WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res25-V1_numeric.rds")
+WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version5dim50kparam30res25-V1_numeric.rds")
+
 DefaultAssay(WT_Kcnc1_CB_integrateMerge.sct) <- "RNA" # According to condiments workflow
 
 
@@ -52060,7 +52062,7 @@ WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_CB_integrateMerge.sct, assay = "
 ########################################################
 
 # First filter based on cell type
-Part_MLI1 <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c("22","11","2","3","14")]
+Part_MLI1 <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c("29","9","4","2","18")]
 table(Part_MLI1$seurat_clusters) # to double check
 
 
@@ -52072,7 +52074,7 @@ df <- bind_cols(
   sample_frac(1)
 
 # PLOT
-pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI1.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version5dim50kparam30res25-Part_MLI1.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
   geom_point(size = .7) +
   labs(col = "Genotype") +
@@ -52085,7 +52087,7 @@ umap_coords <- reducedDims(Part_MLI1)$UMAP
 
 # Filter conditions based on your description:
 # Keep cells with UMAP_1 > -3 and UMAP_2 < 2.5
-selected_cells <- umap_coords[,1] < 5 & umap_coords[,2] > 5 &  umap_coords[,1] > -4.3
+selected_cells <- umap_coords[,1] < 1 & umap_coords[,2] < -4.5 &  umap_coords[,1] > -9
 
 # Subset your SCE object
 Part_MLI1_subset <- Part_MLI1[, selected_cells]
@@ -52099,7 +52101,7 @@ df <- bind_cols(
   ) %>%
   sample_frac(1)
 
-pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI1_subset.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version5dim50kparam30res25-Part_MLI1_subset.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
   geom_point(size = .7) +
   labs(col = "Genotype") +
@@ -52107,7 +52109,7 @@ ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
 dev.off()
 
 library("RColorBrewer")
-pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI1_subset-time.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version5dim50kparam30res25-Part_MLI1_subset-time.pdf", width=6, height=5)
 my_cols = brewer.pal(3,"Dark2")
 cols=alpha(my_cols,0.3)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = time)) +
@@ -52119,7 +52121,7 @@ dev.off()
 
 
 ## genotype overlap
-pdf("output/condiments/UMAP_condition_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI1_subset.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_condition_WT_Kcnc1_CB-version5dim50kparam30res25-Part_MLI1_subset.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7) +
   scale_color_manual(values = c("blue", "red")) + # Specify colors here
@@ -52134,7 +52136,7 @@ scores <- condiments::imbalance_score(
   k = 20, smooth = 40)
 df$scores <- scores$scaled_scores
 
-pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI1_subset.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_CB-version5dim50kparam30res25-Part_MLI1_subset.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
   geom_point(size = .7) +
   scale_color_viridis_c(option = "C") +
@@ -52156,7 +52158,7 @@ dev.off()
 
 Part_MLI1_subset <- slingshot(Part_MLI1_subset, reducedDim = 'UMAP',
                  clusterLabels = colData(Part_MLI1_subset)$seurat_clusters,
-                 start.clus = c("22"), end.clus = c("3") ,approx_points = 100, extend = 'pc1', stretch = 1)
+                 start.clus = c("29"), end.clus = c("2") ,approx_points = 100, extend = 'pc1', stretch = 1)
 
 
 
@@ -52173,7 +52175,7 @@ curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
 
 #  
 
-pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI1_subset-START22_END3_points100extendpc1stretch1.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-version5dim50kparam30res25-Part_MLI1_subset-START29_END2_points100extendpc1stretch1.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7, alpha = .2) +
   scale_color_brewer(palette = "Accent") +
@@ -52235,7 +52237,7 @@ plots <- list()
 for (i in 1:2) {
   plots[[i]] <- create_plot(i)
 }
-pdf("output/condiments/UMAP_trajectory_common_label_Part_MLI1_subset_WT-version3QCversion4dim50kparam30res25-START22_END3_points100extendpc1stretch1_WTonly.pdf", width=5, height=10)
+pdf("output/condiments/UMAP_trajectory_common_label_Part_MLI1_subset_WT-version5dim50kparam30res25-START29_END2_points100extendpc1stretch1_WTonly.pdf", width=5, height=10)
 gridExtra::grid.arrange(grobs = plots, ncol = 1)
 dev.off()
 
@@ -52283,7 +52285,7 @@ plots <- list()
 for (i in 1:2) {
   plots[[i]] <- create_plot(i)
 }
-pdf("output/condiments/UMAP_trajectory_common_label_Part_MLI1_subset_Kcnc1-version3QCversion4dim50kparam30res25-START22_END3_points100extendpc1stretch1_Kcnc1only.pdf", width=5, height=10)
+pdf("output/condiments/UMAP_trajectory_common_label_Part_MLI1_subset_Kcnc1-version5dim50kparam30res25-START29_END2_points100extendpc1stretch1_Kcnc1only.pdf", width=5, height=10)
 gridExtra::grid.arrange(grobs = plots, ncol = 1)
 dev.off()
 
@@ -52300,7 +52302,7 @@ df_3 <- df_3 %>%
                values_to = "pst") %>%
   filter(!is.na(pst))
 
-pdf("output/condiments/densityPlot_trajectory_lineage_Part_MLI1_subset-version3QCversion4dim50kparam30res25-START22_END3_points100extendpc1stretch1.pdf", width=6, height=3)
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_MLI1_subset-version5dim50kparam30res25-START29_END2_points100extendpc1stretch1.pdf", width=6, height=3)
 ggplot(df_3, aes(x = pst)) +
   geom_density(alpha = .8, aes(fill = condition), col = "transparent") +
   geom_density(aes(col = condition), fill = "transparent", size = 1.5) +
@@ -52315,8 +52317,8 @@ ggplot(df_3, aes(x = pst)) +
 dev.off()
 
 
-#### ->  save.image(file="output/condiments/condiments-Part_MLI1_subset_START22_END3_points100extendpc1stretch1-version3QCversion4dim50kparam30res25.RData")
-### load("output/condiments/condiments-Part_MLI1_subset_START22_END3_points100extendpc1stretch1-version3QCversion4dim50kparam30res25.RData")
+#### ->  save.image(file="output/condiments/condiments-Part_MLI1_subset_START29_END2_points100extendpc1stretch1-version5dim50kparam30res25.RData")
+### load("output/condiments/condiments-Part_MLI1_subset_START29_END2_points100extendpc1stretch1-version5dim50kparam30res25.RData")
 set.seed(42)
 
 #  Differential expression
@@ -52985,8 +52987,11 @@ sbatch scripts/pseudotime_allCells_v1_Granule-version2.sh # 37207530 ok
 sbatch scripts/pseudotime_allCells_v1_MLI1-version2.sh # 37207543 xxx
 sbatch scripts/pseudotime_allCells_v1_MLI2-version2.sh # 37207550 xxx
 
-# version3 _ With QC version4 sample per sample saving Purkinje/Golgi
-xxx
+
+## Pseudotime cells separated
+# version5
+
+sbatch scripts/pseudotime_Granule-version5.sh # 43717307 xxx
 
 
 
