@@ -32,7 +32,7 @@ plotHeatmap -m output/deeptools/matrix_TSS_5kb_rawBigwig_hESC_WT_QSER1_008001vs0
     --heatmapHeight 10 \
     --heatmapWidth 2 \
     --colorMap bwr \
-    --zMax 2 40
+    --zMax 2 5
 
 
 plotHeatmap -m output/deeptools/matrix_TSS_5kb_rawBigwig_hESC_WT_QSER1_008001vs008002_008001promoterAnd5_homer.gz \
