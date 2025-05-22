@@ -26,6 +26,16 @@ plotHeatmap -m output/deeptools/matrix_TSS_5kb_rawBigwig_hESC_WT_QSER1_008001vs0
 
 
 plotHeatmap -m output/deeptools/matrix_TSS_5kb_rawBigwig_hESC_WT_QSER1_008001vs008002_008001promoterAnd5_homer.gz \
+    -out output/deeptools/matrix_TSS_5kb_rawBigwig_hESC_WT_QSER1_008001vs008002_008001promoterAnd5_homer_heatmap_colorSmall1zoom.pdf \
+    --samplesLabel "QSER1" "QSER1FLAG" \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --colorMap bwr \
+    --zMax 2 40
+
+
+plotHeatmap -m output/deeptools/matrix_TSS_5kb_rawBigwig_hESC_WT_QSER1_008001vs008002_008001promoterAnd5_homer.gz \
     -out output/deeptools/matrix_TSS_5kb_rawBigwig_hESC_WT_QSER1_008001vs008002_008001promoterAnd5_homer_heatmap_colorSmall.pdf \
     --samplesLabel "QSER1" "QSER1FLAG" \
     --whatToShow 'heatmap and colorbar' \
