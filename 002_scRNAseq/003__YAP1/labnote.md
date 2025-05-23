@@ -29709,7 +29709,7 @@ Follow guideline from `002*/003*/gastrulation paper or QSER1 paper/Revisison1 em
 - Output number of DEGs for each cluster
 - Vln plot E7 WT and cYPAKO with stat (cell cluster vs all cell cluster) - cell type marker
 - GO analysis of DEG of Epiblast
-
+- heatmap marker genes
 
 
 ```bash
@@ -31092,6 +31092,39 @@ for (gene in names(gene_cluster_map)) {
   print(p)
 }
 dev.off()
+
+
+
+
+
+
+###############################################################
+# HEATMAP MARKER GENES #####################
+###############################################################
+
+
+embryoE7.combined.sct,
+
+DefaultAssay(embryoE7.combined.sct) <- "RNA"
+
+
+genes_of_interest <- c("Pou5f1", "Sox2", "Cdh1", "Nodal", "Eomes", "Fgf8", "Mesp1", "Hand1", "Tal1", "Kdr", "Runx1", "Etv2", "Sox7", "Sox17", "Foxa1", "Elf5", "Gata1", "Ets2", "Rhox5", "Ttr", "Lefty1", "Cer1", "Dkk1", "Hhex", "Fabp2", "Gata4")
+
+genes_of_interest <- c("Pou5f1", "Sox2", "Cdh1", "Nodal", "Eomes", "Fgf8", "Mesp1", "Hand1", "Tal1", "Kdr", "Runx1", "Etv2", "Sox7", "Sox17", "Foxa1", "Elf5", "Gata1", "Ets2", "Rhox5", "Ttr","Fabp2", "Gata4", "Lefty1", "Cer1", "Dkk1", "Hhex" )
+
+embryoE7.combined.sct$cluster.annot <- factor(embryoE7.combined.sct$cluster.annot, levels = c("Epiblast", "Primitive_Streak", "Nascent_Mesoderm", "Cardiac_Mesoderm", "Blood_Progenitor", "Endoderm", "Exe_Ectoderm", "Exe_Endoderm_1", "Exe_Endoderm_2"))
+
+
+Idents(embryoE7.combined.sct) <- "cluster.annot"
+pdf("output/seurat/DoHeatmap_RNA_embryo_E7_control_cYAPKO_markerGenes.pdf", width=3, height=4.25)
+DoHeatmap(embryoE7.combined.sct, assay = "RNA", slot = "scale.data", features = genes_of_interest) + NoLegend() +
+  scale_fill_gradientn(colors = c("white", "white", "#fc9272", "#de2d26"))   
+dev.off()
+
+
+
+
+
 
 ```
 
