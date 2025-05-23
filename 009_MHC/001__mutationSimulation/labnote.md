@@ -260,16 +260,48 @@ genInstall.install('GRCh38', rsync=True, bash=True)
 
 So I `git clone https://github.com/AlexandrovLab/SigProfilerMatrixGenerator.git` cloned the whole repository, and then genome are here: `/SigProfilerMatrixGenerator/SigProfilerMatrixGenerator/references`
 
-This is where to put it : https://github.com/AlexandrovLab/SigProfilerExtractor/issues/16
+This is [where](https://github.com/AlexandrovLab/SigProfilerExtractor/issues/16) to put it..
 
-But i do not find it online!! Not present in the repo
+But i do not find it online!! Not present in the repo; so instead I opened the VSC code code below and ran:
 
 ```bash
+pip install SigProfilerMatrixGenerator SigProfilerSimulator
+```
+Then type `python`
+```python
+from SigProfilerMatrixGenerator.install import install as genInstall
+genInstall("GRCh38", rsync=True, bash=True)
+# --> Work!! Then below is to find where it has install it
+import os
 
-wget ftp://alexandrovlab-ftp.ucsd.edu/pub/tools/SigProfilerMatrixGenerator/GRCh38.tar.gz
+for root, dirs, files in os.walk(os.path.expanduser("~")):
+    for name in dirs:
+        if name == "GRCh38":
+            print("FOUND:", os.path.join(root, name))
 
+#--> C:\Users\roule\AppData\Local\Programs\Python\Python310\Lib\site-packages\SigProfilerMatrixGenerator\references\chromosomes ; in hidden files!
+```
+--> But then not sure what to do with these files, so instead I follow what was recommended [here](https://github.com/AlexandrovLab/SigProfilerExtractor/issues/16)
+
+I open Git bash on my computer and cd `009*/001*` and then:
+
+```bash
+curl -O ftp://alexandrovlab-ftp.ucsd.edu/pub/tools/SigProfilerMatrixGenerator/GRCh38.tar.gz
+#--> Downloaded to current working dir; that I then transfer to 
+
+python -c "import SigProfilerMatrixGenerator as sp; print(sp.__file__)" # Say where my SigProfiler is installed
+```
+--> This downloaded to my current local work dir `C:\Users\roule\OneDrive\Bureau\Github\Akiz_Lab` and tehn I copy to the clsuter at `/home/roulet/anaconda3/envs/mutsim/lib/python3.11/site-packages/SigProfilerMatrixGenerator/references/chromosomes/tsb/` and unzip file with `tar -xzf`
+
+
+XXXY HERE TRY RUN SHIT BELOW
+
+```bash
+conda activate mutsim
 
 SigProfilerMatrixGenerator matrix_generator test GRCh38 vcf/test_SBS5_1k.vcf
-
-
 ```
+
+
+
+
