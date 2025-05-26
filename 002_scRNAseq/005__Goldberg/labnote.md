@@ -36053,6 +36053,8 @@ cellchat <- identifyOverExpressedGenes(cellchat, group.dataset = "datasets", pos
 net <- netMappingDEG(cellchat, features.name = features.name)
 # extract the ligand-receptor pairs with upregulated ligands in Kcnc1
 net.up <- subsetCommunication(cellchat, net = net, datasets = "Kcnc1_p14",ligand.logFC = 0.2, receptor.logFC = 0.2)
+net.up <- subsetCommunication(cellchat, net = net, datasets = "Kcnc1_p14",ligand.logFC = 0.25, receptor.logFC = 0.25)
+
 # extract the ligand-receptor pairs with upregulated ligands and upregulated recetptors in NL, i.e.,downregulated in Kcnc1
 net.down <- subsetCommunication(cellchat, net = net, datasets = "WT_p14",ligand.logFC = -0.1, receptor.logFC = -0.1)
 
@@ -36189,29 +36191,6 @@ dev.off()
 
 
 
-
-
-
-### GranuleCentric  #########
-#Granule send signal to: CerebellarNuclei, MLI1, MLI2, Purkinje, Golgi
-pdf("output/CellChat/netVisual_bubble_pairLR_upregulated-ImmatureGranuleGranule-vs-CerebellarNucleiPurkinjeMLI1MLI2Golgi-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 6, height = 6)
-pairLR.use.up = net.up[, "interaction_name", drop = F]
-netVisual_bubble(cellchat, pairLR.use = pairLR.use.up, sources.use = c("ImmatureGranule", "Granule"), targets.use = c("CerebellarNuclei","Purkinje",  "MLI1",  "MLI2", "Golgi"), comparison = c(1, 2),  angle.x = 90, remove.isolate = F,title.name = "Up-regulated signaling in Kcnc1", color.text = c("gray9", "red"), color.heatmap = "viridis", line.on = TRUE, line.size = 0.2)
-dev.off()
-pdf("output/CellChat/netVisual_bubble_pairLR_upregulated-Granule-vs-MLI2MLI1Purkinje-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 4, height = 4)
-pairLR.use.up = net.up[, "interaction_name", drop = F]
-netVisual_bubble(cellchat, pairLR.use = pairLR.use.up, sources.use = c("Granule"), targets.use = c( "MLI2","MLI1","Purkinje" ), comparison = c(1, 2),  angle.x = 90, remove.isolate = F,title.name = "Up-regulated signaling in Kcnc1", color.text = c("gray9", "red"), color.heatmap = "viridis", line.on = TRUE, line.size = 0.2)
-dev.off()
-# Chord diagram
-pdf("output/CellChat/netVisual_chord_gene_upregulated-ImmatureGranuleGranule-vs-CerebellarNucleiPurkinjeMLI1MLI2Golgi-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 20, height = 7)
-netVisual_chord_gene(object.list[[2]], sources.use = c("ImmatureGranule", "Granule"), targets.use = c("CerebellarNuclei","Purkinje",  "MLI1",  "MLI2", "Golgi"), slot.name = 'net', net = net.up, lab.cex = 0.8, small.gap = 2, title.name = paste0("Up-regulated signaling in Kcnc1"))
-dev.off()
-pdf("output/CellChat/netVisual_chord_gene_upregulated-Granule-vs-MLI2MLI1Purkinje-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 20, height = 7)
-netVisual_chord_gene(object.list[[2]], sources.use = c("Granule"), targets.use = c( "MLI2","MLI1","Purkinje" ), slot.name = 'net', net = net.up, lab.cex = 0.8, small.gap = 2, title.name = paste0("Up-regulated signaling in Kcnc1"))
-dev.off()
-
-
-
 #UBC and Golgi send signal to Granule
 pdf("output/CellChat/netVisual_bubble_pairLR_upregulated-ImmatureGranuleGranule-vs-CerebellarNucleiPurkinjeMLI1MLI2Golgi-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 6, height = 6)
 pairLR.use.up = net.up[, "interaction_name", drop = F]
@@ -36229,6 +36208,74 @@ dev.off()
 pdf("output/CellChat/netVisual_chord_gene_upregulated-Purkinje-vs-GranuleCerebellarNuclei-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 20, height = 7)
 netVisual_chord_gene(object.list[[2]], sources.use = c("Purkinje"), targets.use = c("Granule","CerebellarNuclei"), slot.name = 'net', net = net.up, lab.cex = 0.8, small.gap = 2, title.name = paste0("Up-regulated signaling in Kcnc1"))
 dev.off()
+
+
+
+
+
+
+
+
+
+### Glutamate centric #########
+#Granule send signal to: CerebellarNuclei, MLI1, MLI2, Purkinje, Golgi
+pdf("output/CellChat/netVisual_bubble_pairLR_upregulated-ImmatureGranuleGranule-vs-CerebellarNucleiPurkinjeMLI1MLI2Golgi-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 6, height = 6)
+pairLR.use.up = net.up[, "interaction_name", drop = F]
+netVisual_bubble(cellchat, pairLR.use = pairLR.use.up, sources.use = c("ImmatureGranule", "Granule"), targets.use = c("CerebellarNuclei","Purkinje",  "MLI1",  "MLI2", "Golgi"), comparison = c(1, 2),  angle.x = 90, remove.isolate = F,title.name = "Up-regulated signaling in Kcnc1", color.text = c("gray9", "red"), color.heatmap = "viridis", line.on = TRUE, line.size = 0.2)
+dev.off()
+pdf("output/CellChat/netVisual_bubble_pairLR_upregulated-Granule-vs-MLI2MLI1Purkinje-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 4, height = 4)
+pairLR.use.up = net.up[, "interaction_name", drop = F]
+netVisual_bubble(cellchat, pairLR.use = pairLR.use.up, sources.use = c("Granule"), targets.use = c( "MLI2","MLI1","Purkinje" ), comparison = c(1, 2),  angle.x = 90, remove.isolate = F,title.name = "Up-regulated signaling in Kcnc1", color.text = c("gray9", "red"), color.heatmap = "viridis", line.on = TRUE, line.size = 0.2)
+dev.off()
+# Chord diagram
+pdf("output/CellChat/netVisual_chord_gene_upregulated-ImmatureGranuleGranule-vs-CerebellarNucleiPurkinjeMLI1MLI2Golgi-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 20, height = 7)
+netVisual_chord_gene(object.list[[2]], sources.use = c("ImmatureGranule", "Granule"), targets.use = c("CerebellarNuclei","Purkinje",  "MLI1",  "MLI2", "Golgi"), slot.name = 'net', net = net.up, lab.cex = 0.8, small.gap = 2, title.name = paste0("Up-regulated signaling in Kcnc1"))
+dev.off()
+pdf("output/CellChat/netVisual_chord_gene_upregulated-Granule-vs-MLI2MLI1Purkinje-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 20, height = 7)
+netVisual_chord_gene(object.list[[2]], sources.use = c("Granule"), targets.use = c( "MLI2","MLI1","Purkinje" ), slot.name = 'net', net = net.up, lab.cex = 0.8, small.gap = 2, title.name = paste0("Up-regulated signaling in Kcnc1"))
+dev.off()
+#Granule send signal to: MLI1, MLI2, Purkinje, Golgi
+pdf("output/CellChat/netVisual_bubble_pairLR_upregulated-ImmatureGranuleGranule-vs-PurkinjeMLI1MLI2Golgi-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 6, height = 4)
+pairLR.use.up = net.up[, "interaction_name", drop = F]
+netVisual_bubble(cellchat, pairLR.use = pairLR.use.up, sources.use = c("ImmatureGranule", "Granule"), targets.use = c("Purkinje",  "MLI1",  "MLI2", "Golgi", "PLI"), comparison = c(1, 2),  angle.x = 90, remove.isolate = F,title.name = "Up-regulated signaling in Kcnc1", color.text = c("gray9", "red"), color.heatmap = "viridis", line.on = TRUE, line.size = 0.2)
+dev.off()
+
+# Chord diagram
+pdf("output/CellChat/netVisual_chord_gene_upregulated-ImmatureGranuleGranule-vs-PurkinjeMLI1MLI2Golgi-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 20, height = 7)
+netVisual_chord_gene(object.list[[2]], sources.use = c("ImmatureGranule", "Granule"), targets.use = c("Purkinje",  "MLI1",  "MLI2", "Golgi", "PLI"), slot.name = 'net', net = net.up, lab.cex = 0.8, small.gap = 2, title.name = paste0("Up-regulated signaling in Kcnc1"))
+dev.off()
+
+
+
+
+### GABA centric #########
+#Purkinje send to DCN, MLI2 send to MLI1, MLI1 send to Purkinje
+pdf("output/CellChat/netVisual_bubble_pairLR_upregulated-MLI2MLI1PurkinjeGolgi-vs-MLI1PurkinjeCerebellarNucleiGranule-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 8, height = 7)
+pairLR.use.up = net.up[, "interaction_name", drop = F]
+netVisual_bubble(cellchat, pairLR.use = pairLR.use.up, sources.use = c(  "MLI2","MLI1", "Purkinje", "Golgi"), targets.use = c( "MLI1", "Purkinje",  "CerebellarNuclei", "Granule"), comparison = c(1, 2),  angle.x = 90, remove.isolate = F,title.name = "Up-regulated signaling in Kcnc1", color.text = c("gray9", "red"), color.heatmap = "viridis", line.on = TRUE, line.size = 0.2)
+dev.off()
+#--> No relevant interaction!
+pdf("output/CellChat/netVisual_bubble_pairLR_upregulated-Glutamate-Purkinje-vs-CerebellarNuclei-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 4, height = 7)
+pairLR.use.up = net.up[, "interaction_name", drop = F]
+pairLR.glutamate <- subset(pairLR.use.up, grepl("^Glutamate", interaction_name))
+netVisual_bubble(cellchat, pairLR.use = pairLR.glutamate, sources.use = c(  "Purkinje"), targets.use = c( "CerebellarNuclei",  "Granule"), comparison = c(1, 2),  angle.x = 90, remove.isolate = F,title.name = "Up-regulated signaling in Kcnc1", color.text = c("gray9", "red"), color.heatmap = "viridis", line.on = TRUE, line.size = 0.2)
+dev.off()
+pdf("output/CellChat/netVisual_bubble_pairLR_upregulated-GlutamateSelected-Purkinje-vs-CerebellarNuclei-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 4, height =4)
+pairLR.use.up = net.up[, "interaction_name", drop = F]
+pairLR.use.up.selected = pairLR.use.up %>% filter(interaction_name %in% c("Glutamate-Glu-SLC1A2_GLS_GRIK1_GRIK4", "Glutamate-Glu-SLC1A2_GLS_GRM8", "Glutamate-Glu-SLC1A2_GLS_GRM7", "Glutamate-Glu-SLC1A2_GLS_GRM5", "Glutamate-Glu-SLC1A2_GLS_GRIK1", "Glutamate-Glu-SLC1A2_GLS_GRA1"))
+pairLR.glutamate <- subset(pairLR.use.up, grepl("^Glutamate", interaction_name))
+netVisual_bubble(cellchat, pairLR.use = pairLR.use.up.selected, sources.use = c(  "Purkinje"), targets.use = c( "CerebellarNuclei",  "Granule"), comparison = c(1, 2),  angle.x = 90, remove.isolate = F,title.name = "Up-regulated signaling in Kcnc1", color.text = c("gray9", "red"), color.heatmap = "viridis", line.on = TRUE, line.size = 0.2)
+dev.off()
+# Chord diagram
+pdf("output/CellChat/netVisual_chord_gene_upregulated-ImmatureGranuleGranule-vs-PurkinjeMLI1MLI2Golgi-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 20, height = 7)
+netVisual_chord_gene(object.list[[2]], sources.use = c("ImmatureGranule", "Granule"), targets.use = c("Purkinje",  "MLI1",  "MLI2", "Golgi", "PLI"), slot.name = 'net', net = net.up, lab.cex = 0.8, small.gap = 2, title.name = paste0("Up-regulated signaling in Kcnc1"))
+dev.off()
+
+
+
+
+
+
 
 
 
@@ -36260,6 +36307,15 @@ for (i in 1:length(object.list)) {
   netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c("ImmatureGranule" ,"Granule") , targets.use =  c("MLI2", "MLI1", "Purkinje", "Golgi", "CerebellarNuclei","ImmatureGranule" ,"Granule", "PLI"), vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
 }
 dev.off()
+pdf("output/CellChat/netVisual_aggregate_CIRCLE-Glutamate_BioRelevant2-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 10, height = 7)
+pathways.show <- c("Glutamate") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c("ImmatureGranule" ,"Granule") , targets.use =  c("MLI2", "MLI1", "Purkinje", "Golgi", "PLI"), vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+dev.off()
+
 
 pdf("output/CellChat/netVisual_aggregate_CIRCLE-GABA_Purkinje_BioRelevant-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 10, height = 7)
 pathways.show <- c("GABA-A") 
@@ -36277,7 +36333,20 @@ for (i in 1:length(object.list)) {
 dev.off()
 
 
-
+pdf("output/CellChat/netVisual_aggregate_CIRCLE-GABA_Purkinje_BioRelevant2-p14_CB-version5dim40kparam15res015-filterNeurons.pdf", width = 10, height = 7)
+pathways.show <- c("GABA-A") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c(  "MLI2","MLI1", "Purkinje", "Golgi"), targets.use = c( "MLI1", "Purkinje",  "CerebellarNuclei", "Granule"), vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+pathways.show <- c("GABA-B") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c(  "MLI2","MLI1", "Purkinje", "Golgi"), targets.use = c( "MLI1", "Purkinje",  "CerebellarNuclei", "Granule"), vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+dev.off()
 
 
 
@@ -38329,8 +38398,11 @@ cellchat <- identifyOverExpressedGenes(cellchat, group.dataset = "datasets", pos
 net <- netMappingDEG(cellchat, features.name = features.name)
 # extract the ligand-receptor pairs with upregulated ligands in Kcnc1
 net.up <- subsetCommunication(cellchat, net = net, datasets = "Kcnc1_p35",ligand.logFC = 0.2, receptor.logFC = 0.2)
+net.up <- subsetCommunication(cellchat, net = net, datasets = "Kcnc1_p35",ligand.logFC = 0.25, receptor.logFC = 0.25) # no genes
+
 # extract the ligand-receptor pairs with upregulated ligands and upregulated recetptors in NL, i.e.,downregulated in Kcnc1
 net.down <- subsetCommunication(cellchat, net = net, datasets = "WT_p35",ligand.logFC = -0.2, receptor.logFC = -0.2)
+net.down <- subsetCommunication(cellchat, net = net, datasets = "WT_p35",ligand.logFC = -0.25, receptor.logFC = -0.25) # no genes
 
 gene.up <- extractGeneSubsetFromPair(net.up, cellchat)
 gene.down <- extractGeneSubsetFromPair(net.down, cellchat)

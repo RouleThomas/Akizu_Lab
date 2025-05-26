@@ -202,6 +202,13 @@ python scripts/simulate_mutations.py \
   --context-index indices/context96.pkl \
   --out parquet/test_SBS5_1k.parquet
 
+python scripts/simulate_mutations.py \
+  --signatures signatures/COSMIC_v3.4_SBS_GRCh38.txt \
+  --signature-name SBS2 \
+  --n 10000 \
+  --exome-dir parquet \
+  --context-index indices/context96.pkl \
+  --out parquet/test_SBS2_10k.parquet
 
 # Check output
 parquet-tools show --head 5 parquet/test_SBS5_1k.parquet 
@@ -211,14 +218,16 @@ parquet-tools show --head 5 parquet/test_SBS5_1k.parquet
 
 
 
-## Mutation profile plots
+## Convert parquet to txt file for SigProfiler
 
 Let's check that the mutation simulation worked, by generating profile mutation plot with SigProfiler:
 
 - Convert Parquet file to a SigProfiler-compatible matrix
-    - First convert .parquet into .vcf file
+    - First convert .parquet into .txt file, followin example file [here](https://osf.io/s93d5/wiki/home/)
 
-**Parquet to VCF**
+
+
+**Parquet to txt**
 
 ```bash
 conda activate mutsim
@@ -226,26 +235,41 @@ python
 ```
 ```python
 import pandas as pd
+import numpy as np
 
-df = pd.read_parquet("parquet/test_SBS5_1k.parquet")
+# Load parquet
+df = pd.read_parquet("parquet/test_SBS2_10k.parquet") # SBS5
 
-# Create basic VCF columns
-df_vcf = pd.DataFrame()
-df_vcf["#CHROM"] = df["chr"]
-df_vcf["POS"] = df["pos"]
-df_vcf["ID"] = "."
-df_vcf["REF"] = df["ref_base"]
-df_vcf["ALT"] = df["alt_base"]
-df_vcf["QUAL"] = "."
-df_vcf["FILTER"] = "PASS"
-df_vcf["INFO"] = "."
+# Decode ref_base integers to letters
+INT2BASE = np.array(["A", "C", "G", "T", "N"])
+df["ref_base_letter"] = INT2BASE[df["ref_base"]]
 
-# Save as VCF
-df_vcf.to_csv("vcf/test_SBS5_1k.vcf", sep="\t", index=False)
+# Remove 'chr' prefix from chromosome names
+df["chr_clean"] = df["chr"].str.replace("^chr", "", regex=True)
+
+# Format to expected mutation text format
+df_txt = pd.DataFrame({
+    "Project": "Simu",
+    "Sample": "SBS2_10k", # SBS5
+    "ID": ".",
+    "Genome": "GRCh38",
+    "mut_type": "SNP",
+    "chrom": df["chr_clean"],
+    "pos_start": df["pos"],
+    "pos_end": df["pos"],
+    "ref": df["ref_base_letter"],
+    "alt": df["alt_base"],
+    "Type": "SOMATIC"
+})
+
+# Save to file
+df_txt.to_csv("txt/input/test_SBS2_10k.txt", sep="\t", index=False) # SBS5
 ```
 
-**VCF to matrix**
 
+
+
+### install SigProfilerMatrixGenerator 
 
 ```bash
 conda activate mutsim
@@ -294,13 +318,109 @@ python -c "import SigProfilerMatrixGenerator as sp; print(sp.__file__)" # Say wh
 --> This downloaded to my current local work dir `C:\Users\roule\OneDrive\Bureau\Github\Akiz_Lab` and tehn I copy to the clsuter at `/home/roulet/anaconda3/envs/mutsim/lib/python3.11/site-packages/SigProfilerMatrixGenerator/references/chromosomes/tsb/` and unzip file with `tar -xzf`
 
 
-XXXY HERE TRY RUN SHIT BELOW
+
+## Generate SigProfiler matrix
+
 
 ```bash
 conda activate mutsim
 
-SigProfilerMatrixGenerator matrix_generator test GRCh38 vcf/test_SBS5_1k.vcf
+SigProfilerMatrixGenerator matrix_generator test GRCh38 txt --plot=TRUE
 ```
+
+
+--> The msimulation does not work properly, did not reproduce SBS2 mutation... Lets write anothoer `simulate_mutation.py` script
+
+
+## Fine tune simulate_mutation.py scripts
+
+### Change simulate_mutations script
+
+
+```bash
+nano scripts/simulate_mutations_v2.py
+
+
+
+python scripts/simulate_mutations_v2.py \
+  --signatures signatures/COSMIC_v3.4_SBS_GRCh38.txt \
+  --signature-name SBS5 \
+  --n 1000 \
+  --exome-dir parquet \
+  --context-index indices/context96.pkl \
+  --out parquet/testv2_SBS5_1k.parquet
+
+# Check output
+parquet-tools show --head 5 parquet/testv2_SBS1_1k.parquet 
+
+parquet-tools show --head 5 parquet/test_SBS2_1k.parquet 
+
+```
+
+
+#### Parquet to txt
+
+```bash
+conda activate mutsim
+python
+```
+```python
+import pandas as pd
+import numpy as np
+
+# Load the V2-style simulated mutations
+df = pd.read_parquet("parquet/testv2_SBS5_1k.parquet")  # CHANGE NAME HERE!!!!!!!!!!!!!!!!!!!!!!
+
+# Extract ref base from context ID
+CONTEXTS_96 = [
+    f"{l}[{ref}>{alt}]{r}"
+    for ref, alts in [("C", "AGT"), ("T", "ACG")]
+    for alt in alts
+    for l in "ACGT"
+    for r in "ACGT"
+]
+contexts = np.array(CONTEXTS_96)
+df["ref_base"] = [c[2] for c in contexts[df["context_id"]]]  # extract REF from e.g., T[C>T]A
+
+# Remove 'chr' prefix
+df["chr_clean"] = df["chr"].str.replace("^chr", "", regex=True)
+
+# Format correctly
+df_txt = pd.DataFrame({
+    "Project": "Simu",
+    "Sample": "SBS5_1k_v2",  # CHANGE NAME HERE!!!!!!!!!!!!!!!!!!!!!!
+    "ID": ".",
+    "Genome": "GRCh38",
+    "mut_type": "SNP",
+    "chrom": df["chr_clean"],
+    "pos_start": df["pos"],
+    "pos_end": df["pos"],
+    "ref": df["ref_base"],
+    "alt": df["alt_base"],
+    "Type": "SOMATIC"
+})
+
+# Save to tab-delimited text file
+df_txt.to_csv("txt/input/testv2_SBS5_1k.txt", sep="\t", index=False)   # CHANGE NAME HERE!!!!!!!!!!!!!!!!!!!!!!
+
+```
+
+#### Matrix and plot
+
+```bash
+conda activate mutsim
+
+SigProfilerMatrixGenerator matrix_generator test GRCh38 txt --plot=TRUE
+```
+
+
+
+
+## Mutation profile plots - Parrallel generation
+
+
+
+XXXY WAIT JOAN FOR ASSIGNMENT; see on what studff it needs to be added?
 
 
 
