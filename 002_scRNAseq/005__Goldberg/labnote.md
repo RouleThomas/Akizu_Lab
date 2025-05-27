@@ -34585,6 +34585,9 @@ pdf("output/seurat/VlnPlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015
 VlnPlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1"),split.by = "condition", group.by = "cluster.annot", cols = c("black", "red"))
 dev.off()
 
+pdf("output/seurat/VlnPlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-Apoe-split.pdf", width=8, height=4)
+VlnPlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Apoe"),split.by = "condition", group.by = "cluster.annot", cols = c("black", "red"), pt.size=0)
+dev.off()
 
 
 
@@ -34742,7 +34745,43 @@ ggplot(DEG_count, aes(x = 1, y = Cell_Type, color = Cell_Type)) +
 dev.off()
 
 
-
+## Output number up and down ############################################
+# Initialize the DEG count table
+DEG_count <- data.frame(Cell_Type = character(), Num_Up_DEGs = integer(), Num_Down_DEGs = integer(), DEG_total = integer())
+# List of cell types
+cell_types <- c(
+  "ImmatureGranule", "Granule", "UBC", "CerebellarNuclei", "Purkinje",
+  "MLI1", "MLI2", "PLI", "Golgi", "Astrocyte", "BergmanGlia",
+  "Oligodendrocyte", "Endothelial", "Meningeal", "ChoroidPlexus"
+)
+# Loop to calculate number of up, downregulated DEGs, and total
+for (cell_type in cell_types) {
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  num_up <- sum(deg_data$p_val_adj < 0.05 & deg_data$avg_log2FC > 0.25)
+  num_down <- sum(deg_data$p_val_adj < 0.05 & deg_data$avg_log2FC < -0.25)
+  num_total <- num_up + num_down
+  DEG_count <- rbind(DEG_count, data.frame(
+    Cell_Type = cell_type,
+    Num_Up_DEGs = num_up,
+    Num_Down_DEGs = num_down,
+    DEG_total = num_total
+  ))
+}
+# Set cell type order and reverse for plotting
+DEG_count <- DEG_count %>%
+  mutate(Cell_Type = factor(Cell_Type, levels = rev(c(
+    "ImmatureGranule", "Granule", "UBC", "CerebellarNuclei", "Purkinje",
+    "MLI1", "MLI2", "PLI", "Golgi", "Astrocyte", "BergmanGlia",
+    "Oligodendrocyte", "Endothelial", "Meningeal", "ChoroidPlexus"
+  ))))
+total_up <- sum(DEG_count$Num_Up_DEGs)
+total_down <- sum(DEG_count$Num_Down_DEGs)
+total_all <- sum(DEG_count$DEG_total)
+cat("Total Upregulated DEGs:", total_up, "\n")
+cat("Total Downregulated DEGs:", total_down, "\n")
+cat("Total DEGs (Up + Down):", total_all, "\n")
+########################################################
 
 
 
@@ -35117,6 +35156,42 @@ fgsea_sets <- list(
   REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes
 )
 
+### List5 - Pathway
+fgsea_sets <- list(
+  REACTOME_GABA_SYNTHESIS_RELEASE_REUPTAKE_AND_DEGRADATION = read_table(file = "output/Pathway/geneList_REACTOME_GABA_SYNTHESIS_RELEASE_REUPTAKE_AND_DEGRADATION.txt")$Genes,
+  REACTOME_GABA_RECEPTOR_ACTIVATION = read_table(file = "output/Pathway/geneList_REACTOME_GABA_RECEPTOR_ACTIVATION.txt")$Genes,
+  REACTOME_GABA_B_RECEPTOR_ACTIVATION = read_table(file = "output/Pathway/geneList_REACTOME_GABA_B_RECEPTOR_ACTIVATION.txt")$Genes,
+  BIOCARTA_GABA_PATHWAY = read_table(file = "output/Pathway/geneList_BIOCARTA_GABA_PATHWAY.txt")$Genes,
+  REACTOME_GLUTAMATE_NEUROTRANSMITTER_RELEASE_CYCLE = read_table(file = "output/Pathway/geneList_REACTOME_GLUTAMATE_NEUROTRANSMITTER_RELEASE_CYCLE.txt")$Genes,
+  REACTOME_GLUTAMATE_AND_GLUTAMINE_METABOLISM = read_table(file = "output/Pathway/geneList_REACTOME_GLUTAMATE_AND_GLUTAMINE_METABOLISM.txt")$Genes
+)
+### List6 - GOBP - Glutamate1
+fgsea_sets <- list(
+  GOBP_SYNAPTIC_TRANSMISSION_GLUTAMATERGIC = read_table(file = "output/Pathway/geneList_GOBP_SYNAPTIC_TRANSMISSION_GLUTAMATERGIC.txt")$Genes,
+  GOBP_REGULATION_OF_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY.txt")$Genes,
+  GOBP_REGULATION_OF_GLUTAMATE_SECRETION = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_GLUTAMATE_SECRETION.txt")$Genes,
+  GOBP_REGULATION_OF_GLUTAMATE_SECRETION_NEUROTRANSMISSION = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_GLUTAMATE_SECRETION_NEUROTRANSMISSION.txt")$Genes,
+  GOBP_REGULATION_OF_SYNAPTIC_TRANSMISSION_GLUTAMATERGIC = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_SYNAPTIC_TRANSMISSION_GLUTAMATERGIC.txt")$Genes,
+  GOBP_GLUTAMATE_CATABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_CATABOLIC_PROCESS.txt")$Genes
+)
+### List7 - GOBP - Glutamate2
+fgsea_sets <- list(
+  GOBP_GLUTAMATE_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_METABOLIC_PROCESS.txt")$Genes,
+  GOBP_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY.txt")$Genes,
+  GOBP_GLUTAMATE_SECRETION = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_SECRETION.txt")$Genes,
+  GOBP_GLUTAMATE_SECRETION_NEUROTRANSMISSION = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_SECRETION_NEUROTRANSMISSION.txt")$Genes,
+  GOBP_GLUTAMATERGIC_NEURON_DIFFERENTIATION = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATERGIC_NEURON_DIFFERENTIATION.txt")$Genes,
+  GOBP_IONOTROPIC_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_IONOTROPIC_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY.txt")$Genes
+)
+
+### List8 - GOBP - GABA
+fgsea_sets <- list(
+  GOBP_GABAERGIC_NEURON_DIFFERENTIATION = read_table(file = "output/Pathway/geneList_GOBP_GABAERGIC_NEURON_DIFFERENTIATION.txt")$Genes,
+  GOBP_REGULATION_OF_SYNAPTIC_TRANSMISSION_GABAERGIC = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_SYNAPTIC_TRANSMISSION_GABAERGIC.txt")$Genes,
+  GOBP_SYNAPTIC_TRANSMISSION_GABAERGIC = read_table(file = "output/Pathway/geneList_GOBP_SYNAPTIC_TRANSMISSION_GABAERGIC.txt")$Genes
+)
+
+
 
 ## Rank genes based on FC
 genes <- MLI2 %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
@@ -35197,10 +35272,10 @@ for (cluster in cluster_types) {
 final_results <- bind_rows(all_results, .id = "cluster") %>%
   mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List4gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List8gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List4.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List8.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 final_results$cluster <- factor(final_results$cluster, levels = c(
   "ImmatureGranule",
   "Granule",
@@ -35235,7 +35310,7 @@ ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) +
   ) +
   scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
   geom_text(aes(label=sprintf("%.2f", NES)), 
-            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            color = ifelse(final_results$pval <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
             size=2) +
   coord_fixed()  # Force aspect ratio of the plot to be 1:1
 dev.off()
@@ -35270,6 +35345,278 @@ dev.off()
 
 ```
 
+##### GO all clusters
+
+
+Let's do GO analysis for all cluster, separating up and down reg genes
+
+
+
+```bash
+conda activate deseq2
+```
+
+
+```R
+# Required packages
+library("clusterProfiler")
+library("org.Mm.eg.db")  
+library("enrichplot")
+library("tidyverse")
+library("patchwork")
+
+# Cell types
+cell_types <- c(
+  "ImmatureGranule", "Granule", "UBC", "CerebellarNuclei", "Purkinje",
+  "MLI1", "MLI2", "PLI", "Golgi", "Astrocyte", "BergmanGlia",
+  "Oligodendrocyte", "Endothelial", "Meningeal", "ChoroidPlexus"
+)
+
+
+# GO BP  - sep up down 
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-top20.pdf", width = 12, height = 6)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)  # progress tracking
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  up_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  down_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Run GO enrichment only if gene list is non-empty
+  ego_up <- if (length(up_genes) > 0) {
+    enrichGO(gene = up_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  ego_down <- if (length(down_genes) > 0) {
+    enrichGO(gene = down_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplots if not NULL and has rows
+  p1 <- if (!is.null(ego_down) && nrow(ego_down) > 0) {
+    dotplot(ego_down, showCategory = 20) + ggtitle(paste(cell_type, "DOWN"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "DOWN - No Enrichment")) + theme_void()
+  }
+  p2 <- if (!is.null(ego_up) && nrow(ego_up) > 0) {
+    dotplot(ego_up, showCategory = 20) + ggtitle(paste(cell_type, "UP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "UP - No Enrichment")) + theme_void()
+  }
+  print(p1 + p2)
+}
+dev.off()
+
+
+
+# GO BP  - NOT sep up down 
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-top20_UpandDown.pdf", width = 6, height = 6)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 20) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+
+
+# KEGG  -  sep up down 
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-top20.pdf", width = 12, height = 6)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Extract gene names
+  up_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  down_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Convert SYMBOL to ENTREZ ID with safety check
+  entrez_up <- if (length(up_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = up_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>% 
+      na.omit() %>% as.character()
+  } else { character(0) }
+  entrez_down <- if (length(down_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = down_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>% 
+      na.omit() %>% as.character()
+  } else { character(0) }
+  # KEGG enrichment with robust checks
+  ekegg_up <- if (length(entrez_up) > 0) {
+    enrichKEGG(gene = entrez_up, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  ekegg_down <- if (length(entrez_down) > 0) {
+    enrichKEGG(gene = entrez_down, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Dotplots
+  p1 <- if (!is.null(ekegg_down) && nrow(ekegg_down) > 0) {
+    dotplot(ekegg_down, showCategory = 20) + ggtitle(paste(cell_type, "KEGG DOWN"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "KEGG DOWN - No Enrichment")) + theme_void()
+  }
+  p2 <- if (!is.null(ekegg_up) && nrow(ekegg_up) > 0) {
+    dotplot(ekegg_up, showCategory = 20) + ggtitle(paste(cell_type, "KEGG UP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "KEGG UP - No Enrichment")) + theme_void()
+  }
+  print(p1 + p2)
+}
+dev.off()
+
+
+# KEGG - NOT sep up down 
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-top20_UpandDown.pdf", width = 8, height = 6)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 20) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+######## Specific case KEGG ################
+cell_types <- c("Granule")
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-top10_UpandDown-Granule.pdf", width = 6, height = 5)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 10) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+cell_types <- c("Purkinje")
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-top10_UpandDown-Purkinje.pdf", width = 6, height = 5)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 10) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+
+
+
+######## Specific case GO BP ################
+cell_types <- c("Granule")
+cell_types <- c("Purkinje")
+
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-top20_UpandDown-Purkinje.pdf", width = 6, height = 5)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 10) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+```
 
 
 
@@ -37091,6 +37438,69 @@ dev.off()
 
 
 
+## Output number up and down ############################################
+# Initialize the DEG count table
+DEG_count <- data.frame(Cell_Type = character(), Num_Up_DEGs = integer(), Num_Down_DEGs = integer(), DEG_total = integer())
+# List of cell types
+cell_types <- c(
+  "Granule",
+  "UBC",
+  "CerebellarNuclei",
+  "MixNeurons",
+  "Purkinje",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi",
+  "Astrocyte",
+  "BergmanGlia",
+  "OPC",
+  "Endothelial",
+  "Meningeal",
+  "ChoroidPlexus"
+)
+# Loop to calculate number of up, downregulated DEGs, and total
+for (cell_type in cell_types) {
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  num_up <- sum(deg_data$p_val_adj < 0.05 & deg_data$avg_log2FC > 0.25)
+  num_down <- sum(deg_data$p_val_adj < 0.05 & deg_data$avg_log2FC < -0.25)
+  num_total <- num_up + num_down
+  DEG_count <- rbind(DEG_count, data.frame(
+    Cell_Type = cell_type,
+    Num_Up_DEGs = num_up,
+    Num_Down_DEGs = num_down,
+    DEG_total = num_total
+  ))
+}
+# Set cell type order and reverse for plotting
+DEG_count <- DEG_count %>%
+  mutate(Cell_Type = factor(Cell_Type, levels = rev(c(
+  "Granule",
+  "UBC",
+  "CerebellarNuclei",
+  "MixNeurons",
+  "Purkinje",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi",
+  "Astrocyte",
+  "BergmanGlia",
+  "OPC",
+  "Endothelial",
+  "Meningeal",
+  "ChoroidPlexus"
+  ))))
+total_up <- sum(DEG_count$Num_Up_DEGs)
+total_down <- sum(DEG_count$Num_Down_DEGs)
+total_all <- sum(DEG_count$DEG_total)
+cat("Total Upregulated DEGs:", total_up, "\n")
+cat("Total Downregulated DEGs:", total_down, "\n")
+cat("Total DEGs (Up + Down):", total_all, "\n")
+########################################################
+
+
 
 
 # DEGs number colored in a UMAP
@@ -37452,6 +37862,46 @@ fgsea_sets <- list(
   GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
   REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes
 )
+### List5 - Pathway
+fgsea_sets <- list(
+  REACTOME_GABA_SYNTHESIS_RELEASE_REUPTAKE_AND_DEGRADATION = read_table(file = "output/Pathway/geneList_REACTOME_GABA_SYNTHESIS_RELEASE_REUPTAKE_AND_DEGRADATION.txt")$Genes,
+  REACTOME_GABA_RECEPTOR_ACTIVATION = read_table(file = "output/Pathway/geneList_REACTOME_GABA_RECEPTOR_ACTIVATION.txt")$Genes,
+  REACTOME_GABA_B_RECEPTOR_ACTIVATION = read_table(file = "output/Pathway/geneList_REACTOME_GABA_B_RECEPTOR_ACTIVATION.txt")$Genes,
+  BIOCARTA_GABA_PATHWAY = read_table(file = "output/Pathway/geneList_BIOCARTA_GABA_PATHWAY.txt")$Genes,
+  REACTOME_GLUTAMATE_NEUROTRANSMITTER_RELEASE_CYCLE = read_table(file = "output/Pathway/geneList_REACTOME_GLUTAMATE_NEUROTRANSMITTER_RELEASE_CYCLE.txt")$Genes,
+  REACTOME_GLUTAMATE_AND_GLUTAMINE_METABOLISM = read_table(file = "output/Pathway/geneList_REACTOME_GLUTAMATE_AND_GLUTAMINE_METABOLISM.txt")$Genes
+)
+### List6 - GOBP - Glutamate1
+fgsea_sets <- list(
+  GOBP_SYNAPTIC_TRANSMISSION_GLUTAMATERGIC = read_table(file = "output/Pathway/geneList_GOBP_SYNAPTIC_TRANSMISSION_GLUTAMATERGIC.txt")$Genes,
+  GOBP_REGULATION_OF_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY.txt")$Genes,
+  GOBP_REGULATION_OF_GLUTAMATE_SECRETION = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_GLUTAMATE_SECRETION.txt")$Genes,
+  GOBP_REGULATION_OF_GLUTAMATE_SECRETION_NEUROTRANSMISSION = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_GLUTAMATE_SECRETION_NEUROTRANSMISSION.txt")$Genes,
+  GOBP_REGULATION_OF_SYNAPTIC_TRANSMISSION_GLUTAMATERGIC = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_SYNAPTIC_TRANSMISSION_GLUTAMATERGIC.txt")$Genes,
+  GOBP_GLUTAMATE_CATABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_CATABOLIC_PROCESS.txt")$Genes
+)
+### List7 - GOBP - Glutamate2
+fgsea_sets <- list(
+  GOBP_GLUTAMATE_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_METABOLIC_PROCESS.txt")$Genes,
+  GOBP_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY.txt")$Genes,
+  GOBP_GLUTAMATE_SECRETION = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_SECRETION.txt")$Genes,
+  GOBP_GLUTAMATE_SECRETION_NEUROTRANSMISSION = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_SECRETION_NEUROTRANSMISSION.txt")$Genes,
+  GOBP_GLUTAMATERGIC_NEURON_DIFFERENTIATION = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATERGIC_NEURON_DIFFERENTIATION.txt")$Genes,
+  GOBP_IONOTROPIC_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_IONOTROPIC_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY.txt")$Genes
+)
+
+### List8 - GOBP - GABA
+fgsea_sets <- list(
+  GOBP_GABAERGIC_NEURON_DIFFERENTIATION = read_table(file = "output/Pathway/geneList_GOBP_GABAERGIC_NEURON_DIFFERENTIATION.txt")$Genes,
+  GOBP_REGULATION_OF_SYNAPTIC_TRANSMISSION_GABAERGIC = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_SYNAPTIC_TRANSMISSION_GABAERGIC.txt")$Genes,
+  GOBP_SYNAPTIC_TRANSMISSION_GABAERGIC = read_table(file = "output/Pathway/geneList_GOBP_SYNAPTIC_TRANSMISSION_GABAERGIC.txt")$Genes
+)
+
+
+
+
+
+
 
 
 ## Rank genes based on FC
@@ -37533,10 +37983,10 @@ for (cluster in cluster_types) {
 final_results <- bind_rows(all_results, .id = "cluster") %>%
   mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List4gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List8gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List4.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List8.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 final_results$cluster <- factor(final_results$cluster, levels = c(
 "Granule",
   "UBC",
@@ -37571,7 +38021,7 @@ ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) +
   ) +
   scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
   geom_text(aes(label=sprintf("%.2f", NES)), 
-            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            color = ifelse(final_results$pval <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
             size=2) +
   coord_fixed()  # Force aspect ratio of the plot to be 1:1
 dev.off()
@@ -37626,6 +38076,261 @@ dev.off()
 
 
 ```
+
+
+
+
+##### GO all clusters
+
+
+Let's do GO analysis for all cluster, separating up and down reg genes
+
+
+
+```bash
+conda activate deseq2
+```
+
+
+```R
+# Required packages
+library("clusterProfiler")
+library("org.Mm.eg.db")  
+library("enrichplot")
+library("tidyverse")
+library("patchwork")
+
+# Cell types
+cell_types <- c(
+"Granule",
+  "UBC",
+  "CerebellarNuclei",
+  "MixNeurons",
+  "Purkinje",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi",
+  "Astrocyte",
+  "BergmanGlia",
+  "OPC",
+  "Endothelial",
+  "Meningeal",
+  "ChoroidPlexus"
+)
+
+# GO BP
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-top20.pdf", width = 12, height = 6)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)  # progress tracking
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  up_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  down_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Run GO enrichment only if gene list is non-empty
+  ego_up <- if (length(up_genes) > 0) {
+    enrichGO(gene = up_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  ego_down <- if (length(down_genes) > 0) {
+    enrichGO(gene = down_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplots if not NULL and has rows
+  p1 <- if (!is.null(ego_down) && nrow(ego_down) > 0) {
+    dotplot(ego_down, showCategory = 20) + ggtitle(paste(cell_type, "DOWN"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "DOWN - No Enrichment")) + theme_void()
+  }
+  p2 <- if (!is.null(ego_up) && nrow(ego_up) > 0) {
+    dotplot(ego_up, showCategory = 20) + ggtitle(paste(cell_type, "UP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "UP - No Enrichment")) + theme_void()
+  }
+  print(p1 + p2)
+}
+dev.off()
+
+
+# GO BP  - NOT sep up down 
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-top20_UpandDown.pdf", width = 6, height = 6)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 20) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+# KEGG
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-top20.pdf", width = 12, height = 6)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Extract gene names
+  up_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  down_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Convert SYMBOL to ENTREZ ID with safety check
+  entrez_up <- if (length(up_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = up_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>% 
+      na.omit() %>% as.character()
+  } else { character(0) }
+  entrez_down <- if (length(down_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = down_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>% 
+      na.omit() %>% as.character()
+  } else { character(0) }
+  # KEGG enrichment with robust checks
+  ekegg_up <- if (length(entrez_up) > 0) {
+    enrichKEGG(gene = entrez_up, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  ekegg_down <- if (length(entrez_down) > 0) {
+    enrichKEGG(gene = entrez_down, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Dotplots
+  p1 <- if (!is.null(ekegg_down) && nrow(ekegg_down) > 0) {
+    dotplot(ekegg_down, showCategory = 20) + ggtitle(paste(cell_type, "KEGG DOWN"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "KEGG DOWN - No Enrichment")) + theme_void()
+  }
+  p2 <- if (!is.null(ekegg_up) && nrow(ekegg_up) > 0) {
+    dotplot(ekegg_up, showCategory = 20) + ggtitle(paste(cell_type, "KEGG UP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "KEGG UP - No Enrichment")) + theme_void()
+  }
+  print(p1 + p2)
+}
+dev.off()
+
+
+
+# KEGG - NOT sep up down 
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-top20_UpandDown.pdf", width = 8, height = 6)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 20) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+######## Specific case ################
+cell_types <- c("Granule")
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-top10_UpandDown-Granule.pdf", width = 6, height = 5)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 10) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+
+
+
+######## Specific case GO BP ################
+cell_types <- c("Granule")
+
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-top20_UpandDown-Granule.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 10) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+```
+
+
+
 
 
 
@@ -39418,6 +40123,65 @@ dev.off()
 
 
 
+## Output number up and down ############################################
+# Initialize the DEG count table
+DEG_count <- data.frame(Cell_Type = character(), Num_Up_DEGs = integer(), Num_Down_DEGs = integer(), DEG_total = integer())
+# List of cell types
+cell_types <- c(
+  "Granule",
+  "UBC",
+  "CerebellarNuclei",
+  "Purkinje",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi",
+  "Astrocyte",
+  "BergmanGlia",
+  "OPC",
+  "Endothelial",
+  "Meningeal",
+  "ChoiroidPlexus"
+)
+# Loop to calculate number of up, downregulated DEGs, and total
+for (cell_type in cell_types) {
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  num_up <- sum(deg_data$p_val_adj < 0.05 & deg_data$avg_log2FC > 0.25)
+  num_down <- sum(deg_data$p_val_adj < 0.05 & deg_data$avg_log2FC < -0.25)
+  num_total <- num_up + num_down
+  DEG_count <- rbind(DEG_count, data.frame(
+    Cell_Type = cell_type,
+    Num_Up_DEGs = num_up,
+    Num_Down_DEGs = num_down,
+    DEG_total = num_total
+  ))
+}
+# Set cell type order and reverse for plotting
+DEG_count <- DEG_count %>%
+  mutate(Cell_Type = factor(Cell_Type, levels = rev(c(
+  "Granule",
+  "UBC",
+  "CerebellarNuclei",
+  "Purkinje",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi",
+  "Astrocyte",
+  "BergmanGlia",
+  "OPC",
+  "Endothelial",
+  "Meningeal",
+  "ChoiroidPlexus"
+  ))))
+total_up <- sum(DEG_count$Num_Up_DEGs)
+total_down <- sum(DEG_count$Num_Down_DEGs)
+total_all <- sum(DEG_count$DEG_total)
+cat("Total Upregulated DEGs:", total_up, "\n")
+cat("Total Downregulated DEGs:", total_down, "\n")
+cat("Total DEGs (Up + Down):", total_all, "\n")
+########################################################
 
 
 
@@ -39782,6 +40546,41 @@ fgsea_sets <- list(
   REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes
 )
 
+### List5 - Pathway
+fgsea_sets <- list(
+  REACTOME_GABA_SYNTHESIS_RELEASE_REUPTAKE_AND_DEGRADATION = read_table(file = "output/Pathway/geneList_REACTOME_GABA_SYNTHESIS_RELEASE_REUPTAKE_AND_DEGRADATION.txt")$Genes,
+  REACTOME_GABA_RECEPTOR_ACTIVATION = read_table(file = "output/Pathway/geneList_REACTOME_GABA_RECEPTOR_ACTIVATION.txt")$Genes,
+  REACTOME_GABA_B_RECEPTOR_ACTIVATION = read_table(file = "output/Pathway/geneList_REACTOME_GABA_B_RECEPTOR_ACTIVATION.txt")$Genes,
+  BIOCARTA_GABA_PATHWAY = read_table(file = "output/Pathway/geneList_BIOCARTA_GABA_PATHWAY.txt")$Genes,
+  REACTOME_GLUTAMATE_NEUROTRANSMITTER_RELEASE_CYCLE = read_table(file = "output/Pathway/geneList_REACTOME_GLUTAMATE_NEUROTRANSMITTER_RELEASE_CYCLE.txt")$Genes,
+  REACTOME_GLUTAMATE_AND_GLUTAMINE_METABOLISM = read_table(file = "output/Pathway/geneList_REACTOME_GLUTAMATE_AND_GLUTAMINE_METABOLISM.txt")$Genes
+)
+### List6 - GOBP - Glutamate1
+fgsea_sets <- list(
+  GOBP_SYNAPTIC_TRANSMISSION_GLUTAMATERGIC = read_table(file = "output/Pathway/geneList_GOBP_SYNAPTIC_TRANSMISSION_GLUTAMATERGIC.txt")$Genes,
+  GOBP_REGULATION_OF_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY.txt")$Genes,
+  GOBP_REGULATION_OF_GLUTAMATE_SECRETION = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_GLUTAMATE_SECRETION.txt")$Genes,
+  GOBP_REGULATION_OF_GLUTAMATE_SECRETION_NEUROTRANSMISSION = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_GLUTAMATE_SECRETION_NEUROTRANSMISSION.txt")$Genes,
+  GOBP_REGULATION_OF_SYNAPTIC_TRANSMISSION_GLUTAMATERGIC = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_SYNAPTIC_TRANSMISSION_GLUTAMATERGIC.txt")$Genes,
+  GOBP_GLUTAMATE_CATABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_CATABOLIC_PROCESS.txt")$Genes
+)
+### List7 - GOBP - Glutamate2
+fgsea_sets <- list(
+  GOBP_GLUTAMATE_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_METABOLIC_PROCESS.txt")$Genes,
+  GOBP_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY.txt")$Genes,
+  GOBP_GLUTAMATE_SECRETION = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_SECRETION.txt")$Genes,
+  GOBP_GLUTAMATE_SECRETION_NEUROTRANSMISSION = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_SECRETION_NEUROTRANSMISSION.txt")$Genes,
+  GOBP_GLUTAMATERGIC_NEURON_DIFFERENTIATION = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATERGIC_NEURON_DIFFERENTIATION.txt")$Genes,
+  GOBP_IONOTROPIC_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_IONOTROPIC_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY.txt")$Genes
+)
+
+### List8 - GOBP - GABA
+fgsea_sets <- list(
+  GOBP_GABAERGIC_NEURON_DIFFERENTIATION = read_table(file = "output/Pathway/geneList_GOBP_GABAERGIC_NEURON_DIFFERENTIATION.txt")$Genes,
+  GOBP_REGULATION_OF_SYNAPTIC_TRANSMISSION_GABAERGIC = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_SYNAPTIC_TRANSMISSION_GABAERGIC.txt")$Genes,
+  GOBP_SYNAPTIC_TRANSMISSION_GABAERGIC = read_table(file = "output/Pathway/geneList_GOBP_SYNAPTIC_TRANSMISSION_GABAERGIC.txt")$Genes
+)
+
 
 ## Rank genes based on FC
 genes <- MLI2 %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
@@ -39861,10 +40660,10 @@ for (cluster in cluster_types) {
 final_results <- bind_rows(all_results, .id = "cluster") %>%
   mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-List4gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-List8gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-List4.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-List8.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 final_results$cluster <- factor(final_results$cluster, levels = c(
   "Granule",
   "UBC",
@@ -39931,6 +40730,257 @@ dev.off()
 
 
 ```
+
+
+
+
+##### GO all clusters
+
+
+Let's do GO analysis for all cluster, separating up and down reg genes
+
+
+
+```bash
+conda activate deseq2
+```
+
+
+```R
+# Required packages
+library("clusterProfiler")
+library("org.Mm.eg.db")  
+library("enrichplot")
+library("tidyverse")
+library("patchwork")
+
+# Cell types
+cell_types <- c(
+  "Granule",
+  "UBC",
+  "CerebellarNuclei",
+  "Purkinje",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi",
+  "Astrocyte",
+  "BergmanGlia",
+  "OPC",
+  "Endothelial",
+  "Meningeal",
+  "ChoiroidPlexus"
+)
+
+# GO BP
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-top20.pdf", width = 12, height = 6)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)  # progress tracking
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  up_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  down_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Run GO enrichment only if gene list is non-empty
+  ego_up <- if (length(up_genes) > 0) {
+    enrichGO(gene = up_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  ego_down <- if (length(down_genes) > 0) {
+    enrichGO(gene = down_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplots if not NULL and has rows
+  p1 <- if (!is.null(ego_down) && nrow(ego_down) > 0) {
+    dotplot(ego_down, showCategory = 20) + ggtitle(paste(cell_type, "DOWN"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "DOWN - No Enrichment")) + theme_void()
+  }
+  p2 <- if (!is.null(ego_up) && nrow(ego_up) > 0) {
+    dotplot(ego_up, showCategory = 20) + ggtitle(paste(cell_type, "UP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "UP - No Enrichment")) + theme_void()
+  }
+  print(p1 + p2)
+}
+dev.off()
+
+
+# GO BP  - NOT sep up down 
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-top20_UpandDown.pdf", width = 6, height = 6)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 20) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+# GO BP
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-top20.pdf", width = 12, height = 6)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Extract gene names
+  up_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  down_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Convert SYMBOL to ENTREZ ID with safety check
+  entrez_up <- if (length(up_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = up_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>% 
+      na.omit() %>% as.character()
+  } else { character(0) }
+  entrez_down <- if (length(down_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = down_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>% 
+      na.omit() %>% as.character()
+  } else { character(0) }
+  # KEGG enrichment with robust checks
+  ekegg_up <- if (length(entrez_up) > 0) {
+    enrichKEGG(gene = entrez_up, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  ekegg_down <- if (length(entrez_down) > 0) {
+    enrichKEGG(gene = entrez_down, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Dotplots
+  p1 <- if (!is.null(ekegg_down) && nrow(ekegg_down) > 0) {
+    dotplot(ekegg_down, showCategory = 20) + ggtitle(paste(cell_type, "KEGG DOWN"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "KEGG DOWN - No Enrichment")) + theme_void()
+  }
+  p2 <- if (!is.null(ekegg_up) && nrow(ekegg_up) > 0) {
+    dotplot(ekegg_up, showCategory = 20) + ggtitle(paste(cell_type, "KEGG UP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "KEGG UP - No Enrichment")) + theme_void()
+  }
+  print(p1 + p2)
+}
+dev.off()
+
+
+
+
+# KEGG - NOT sep up down 
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-top20_UpandDown.pdf", width = 8, height = 6)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 20) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+######## Specific case ################
+cell_types <- c("Granule")
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-top10_UpandDown-Granule.pdf", width = 6, height = 5)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 10) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+######## Specific case GO BP ################
+cell_types <- c("Granule")
+
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-top20_UpandDown-Granule.pdf", width = 6, height = 5)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 10) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+
+```
+
+
 
 
 
