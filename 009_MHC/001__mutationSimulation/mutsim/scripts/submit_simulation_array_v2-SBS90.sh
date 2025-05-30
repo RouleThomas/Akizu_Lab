@@ -2,7 +2,7 @@
 #SBATCH --job-name=sim_sbs90
 #SBATCH --array=0-79
 #SBATCH --cpus-per-task=2
-#SBATCH --mem=36G
+#SBATCH --mem=100G
 #SBATCH --time=01:00:00
 #SBATCH --output=/scr1/users/roulet/Akizu_Lab/009_MHC/001__mutationSimulation/mutsim/logs/sbs90_%A_%a.out
 #SBATCH --error=/scr1/users/roulet/Akizu_Lab/009_MHC/001__mutationSimulation/mutsim/logs/sbs90_%A_%a.err

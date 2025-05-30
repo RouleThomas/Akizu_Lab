@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --job-name=sim_sbs90
+#SBATCH --job-name=sim_sbs5
 #SBATCH --array=0-79
 #SBATCH --cpus-per-task=2
-#SBATCH --mem=36G
+#SBATCH --mem=100G
 #SBATCH --time=01:00:00
 #SBATCH --output=/scr1/users/roulet/Akizu_Lab/009_MHC/001__mutationSimulation/mutsim/logs/sbs90_%A_%a.out
 #SBATCH --error=/scr1/users/roulet/Akizu_Lab/009_MHC/001__mutationSimulation/mutsim/logs/sbs90_%A_%a.err
@@ -11,7 +11,7 @@
 
 
 # Parameters
-SIGNATURE="SBS90"
+SIGNATURE="SBS5"
 N_LIST=(500 1000 2000 4000 8000 16000 32000 64000)
 REPS=10
 

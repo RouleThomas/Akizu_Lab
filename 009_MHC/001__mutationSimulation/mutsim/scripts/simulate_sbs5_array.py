@@ -35,11 +35,11 @@ def main():
     parser.add_argument("--n", type=int, required=True)
     parser.add_argument("--rep", type=int, required=True)
     parser.add_argument("--seed", type=int, default=None)
-    parser.add_argument("--outdir", default="/scr1/users/roulet/Akizu_Lab/009_MHC/001__mutationSimulation/mutsim/results") # MODIFIED
-    parser.add_argument("--sigfile", default="/scr1/users/roulet/Akizu_Lab/009_MHC/001__mutationSimulation/mutsim/signatures/COSMIC_v3.4_SBS_GRCh38.txt") # MODIFIED
-    parser.add_argument("--context", default="/scr1/users/roulet/Akizu_Lab/009_MHC/001__mutationSimulation/mutsim/indices/context96.pkl") # MODIFIED
-    parser.add_argument("--exome", default="/scr1/users/roulet/Akizu_Lab/009_MHC/001__mutationSimulation/mutsim/parquet") # MODIFIED
-    parser.add_argument("--dbnsfp", default="/scr1/users/roulet/Akizu_Lab/009_MHC/001__mutationSimulation/mutsim/ref/dbNSFP5.1a_grch38.gz") # MODIFIED
+    parser.add_argument("--outdir", default="../results")
+    parser.add_argument("--sigfile", default="../signatures/COSMIC_v3.4_SBS_GRCh38.txt")
+    parser.add_argument("--context", default="../indices/context96.pkl")
+    parser.add_argument("--exome", default="../parquet")
+    parser.add_argument("--dbnsfp", default="../ref/dbNSFP5.1a_grch38.gz")
     args = parser.parse_args()
 
     # Fail-fast path check

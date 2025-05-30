@@ -117,6 +117,8 @@ conda install anaconda::pandas # Was needed for simulate_mutations.py
 pip install biopython
 pip install pandas
 pip install SigProfilerMatrixGenerator
+pip install seaborn
+conda install bioconda::tabix # for tabix bug
 
 cd mutsim
 
@@ -413,24 +415,83 @@ SigProfilerMatrixGenerator matrix_generator test GRCh38 txt --plot=TRUE
 
 
 
-## Add annotations
+## Simulation with annotation and plots - testing
 
 Let's collect the annoation information from [dbNSFP](https://www.dbnsfp.org/download) --> Set up an academic account and download `dbNSFP5.1a_grch38.gz` and `dbNSFP5.1a_grch38.gz.tbi` from the GoogleDrive linke received. Then transferred these files to `/ref`
 
 
 Let's **simulate+annotate** using `simulate_sbs5_array.py` with 
---> I modified a bit `scripts/simulate_sbs5_array.py` and added entire path to folders `ref/` `signature/`... --> Renamed as `scripts/simulate_array_v2.py`
+--> I modified a bit `scripts/simulate_sbs5_array.py` and added entire path to folders `ref/` `signature/`... --> Renamed as `scripts/simulate_array_v2.py`; I also now use `--mem=100G` memory instead 36
 
 
 ```bash
 conda activate mutsim
 
-sbatch scripts/submit_simulation_array_v2.sh # 44062009 xxx
+sbatch scripts/submit_simulation_array_v2.sh # 44062009/44063127/44063359 tabix installation error; 44063761 cancel; 
+
+# Test on SBS5 and SBS90
+sbatch scripts/submit_simulation_array_v2-SBS90.sh # 44064135  xxx ~20min
+sbatch scripts/submit_simulation_array_v2-SBS5.sh # 44064160 xxx
+
 ```
 
-*NOTE: Here `scripts/submit_simulation_array_v2.sh` is simply `scripts/submit_simulation_array.sh` but with `scripts/simulate_array_v2.py`*
+- *NOTE: Here `scripts/submit_simulation_array_v2.sh` is simply `scripts/submit_simulation_array.sh` but with `scripts/simulate_array_v2.py`*
 
 There is 80 array jobs in the `scripts/submit_simulation_array_v2.sh` as *8 mutation counts × 10 replicates = 80 combinations → array indices 0 to 79*
 
+Then **plots to summarise simmulation**:
 
-XXXY HERE seems bug empty
+--> I modified a bit `scripts/summarize_simulation_results.py`; to deal with a bug with matching file name.
+
+```bash
+# summary metrics
+python scripts/summarize_simulation_results_v2.py \
+ --results-dir results/SBS90 \
+ --output results/SBS90/sbs90_summary_all.tsv
+python scripts/summarize_simulation_results_v2.py \
+ --results-dir results/SBS5 \
+ --output results/SBS5/sbs5_summary_all.tsv
+# plot
+python scripts/plot_signature_summary.py \
+  --input results/SBS90/sbs90_summary_all.tsv \
+  --output results/SBS90/sbs90_summary_plots.pdf
+python scripts/plot_signature_summary.py \
+  --input results/SBS5/sbs5_summary_all.tsv \
+  --output results/SBS5/sbs5_summary_plots.pdf
+```
+
+
+--> The test seems good, results are the same as the one obtained by Joan. 
+
+
+## Simulation with annotation and plots - Run all mutation signature
+
+
+Let's generate a custom code to run all mutation signature in a single script; script will:
+- Extracts all signature names (ie. SBS1, SBS5, SBS7a, etc.) from `signatures/COSMIC_v3.4_SBS_GRCh38.txt` 
+- Loops over them
+- Writes individual SLURM batch scripts (one per signature) to `scripts/submit_all_signatures`
+- Then run run them all `for f in scripts/submit_all_signatures/*.sh; do sbatch "$f"; done`
+- Run a SLURM batch that will generate summary and plots for all signatures
+
+
+
+```bash
+conda activate mutsim
+
+# Generate all unique scripts for each mutation automatically
+bash scripts/GenerateScript-submit_simulation_array_v2.sh
+#--> All scripts generated at scripts/submit_all_signatures
+
+for f in scripts/submit_all_signatures/*.sh; do sbatch "$f"; done # XXX
+
+XXXY BELOW NOT RUN!!!
+
+# Generate summary metrics and plots for each signature
+bash scripts/run_summary_plot_all.sh
+
+
+
+```
+
+
