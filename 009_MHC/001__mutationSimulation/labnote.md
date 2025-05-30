@@ -212,8 +212,6 @@ python scripts/simulate_mutations.py \
 
 # Check output
 parquet-tools show --head 5 parquet/test_SBS5_1k.parquet 
-
-
 ```
 
 
@@ -415,9 +413,24 @@ SigProfilerMatrixGenerator matrix_generator test GRCh38 txt --plot=TRUE
 
 
 
-
 ## Add annotations
 
 Let's collect the annoation information from [dbNSFP](https://www.dbnsfp.org/download) --> Set up an academic account and download `dbNSFP5.1a_grch38.gz` and `dbNSFP5.1a_grch38.gz.tbi` from the GoogleDrive linke received. Then transferred these files to `/ref`
 
 
+Let's **simulate+annotate** using `simulate_sbs5_array.py` with 
+--> I modified a bit `scripts/simulate_sbs5_array.py` and added entire path to folders `ref/` `signature/`... --> Renamed as `scripts/simulate_array_v2.py`
+
+
+```bash
+conda activate mutsim
+
+sbatch scripts/submit_simulation_array_v2.sh # 44062009 xxx
+```
+
+*NOTE: Here `scripts/submit_simulation_array_v2.sh` is simply `scripts/submit_simulation_array.sh` but with `scripts/simulate_array_v2.py`*
+
+There is 80 array jobs in the `scripts/submit_simulation_array_v2.sh` as *8 mutation counts × 10 replicates = 80 combinations → array indices 0 to 79*
+
+
+XXXY HERE seems bug empty
