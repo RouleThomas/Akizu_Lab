@@ -1,15 +1,10 @@
 #!/usr/bin/env python3
 # simulate_mutations.py
-"""
-Fast SBS-signature mutation simulator on a pre-built exome Parquet table.
-See header comments for required input artefacts.
-"""
-from __future__ import annotations
 
-import argparse, json
-import pickle
+from __future__ import annotations
+import argparse, json, pickle
 from pathlib import Path
-from typing import Dict, Sequence
+from typing import Dict
 
 import numpy as np
 import pandas as pd
@@ -46,36 +41,47 @@ class ExomeSampler:
         self.arrow_table = pa.concat_tables([
             pq.read_table(fp) for fp in sorted(Path(parquet_dir).glob("chr*.parquet"))
         ])
-        # promote string columns
+        # Promote string columns to large_string
         new_cols, new_schema = [], []
         for field, col in zip(self.arrow_table.schema, self.arrow_table.columns):
             if pa.types.is_string(field.type):
                 col = col.cast(pa.large_string())
                 field = pa.field(field.name, pa.large_string())
-            new_cols.append(col); new_schema.append(field)
+            new_cols.append(col)
+            new_schema.append(field)
         self.arrow_table = pa.Table.from_arrays(new_cols, schema=pa.schema(new_schema))
+
         with open(context_index_pkl, "rb") as fh:
             self.context_index: Dict[int, np.ndarray] = pickle.load(fh)
 
-    def sample(self, signature_probs: np.ndarray, n: int, rng=None) -> pa.Table:
-        rng    = rng or np.random.default_rng()
-        draws  = rng.multinomial(n, signature_probs)
+    def sample(self, signature_probs: np.ndarray, n: int, rng=None) -> tuple[pa.Table, np.ndarray]:
+        rng = rng or np.random.default_rng()
+        draws = rng.multinomial(n, signature_probs)
         picked = []
+        picked_ctx_ids = []
         for ctx_id, k in enumerate(draws):
             if k:
                 pool = self.context_index[ctx_id]
-                picked.extend(rng.choice(pool, k, replace=False))
-        return self.arrow_table.take(picked)
+                sampled_rows = rng.choice(pool, k, replace=False)
+                picked.extend(sampled_rows)
+                picked_ctx_ids.extend([ctx_id] * k)
+        return self.arrow_table.take(picked), np.array(picked_ctx_ids)
 
-    def annotate(self, tbl: pa.Table, rng=None) -> pd.DataFrame:
-        rng = rng or np.random.default_rng()
+
+    def annotate(self, tbl: pa.Table, ctx_ids: np.ndarray) -> pd.DataFrame:
+        import re
         pdf = tbl.to_pandas()
-        offsets = rng.integers(1, 4, size=len(pdf))
-        pdf["alt_base"] = BASES[(pdf["ref_base"] + offsets) % 4]
+        pdf["context_id"] = ctx_ids
+
+        # Extract ALT base safely via regex
+        alt_bases = [re.search(r"\[(.?)>(.?)\]", CONTEXTS_96[ctx_id]).group(2) for ctx_id in ctx_ids]
+        pdf["alt_base"] = alt_bases
 
         mutated, aa_alt, cons = [], [], []
-        for ref_codon, idx, alt in zip(pdf.ref_codon, pdf.codon_index, pdf.alt_base):
-            cod = list(ref_codon); cod[idx] = alt; new = "".join(cod)
+        for ref_codon, idx, alt in zip(pdf.ref_codon, pdf.codon_index, pdf["alt_base"]):
+            cod = list(ref_codon)
+            cod[idx] = alt
+            new = "".join(cod)
             mutated.append(new)
             if new in STOP_CODONS:
                 aa_alt.append("*"); cons.append("stop")
@@ -95,18 +101,16 @@ class ExomeSampler:
         return pdf
 
     @staticmethod
-    def summarise(df: pd.DataFrame) -> dict[str,float]:
+    def summarise(df: pd.DataFrame) -> dict[str, float]:
         return {
             "n_total":      len(df),
-            "frac_syn":     float((df.consequence=="synonymous").mean()),
-            "frac_stop":    float((df.consequence=="stop").mean()),
-            "frac_missense":float((df.consequence=="missense").mean()),
+            "frac_syn":     float((df.consequence == "synonymous").mean()),
+            "frac_stop":    float((df.consequence == "stop").mean()),
+            "frac_missense":float((df.consequence == "missense").mean()),
         }
 
 def main():
-    p = argparse.ArgumentParser(
-        description="Simulate mutations from an SBS signature"
-    )
+    p = argparse.ArgumentParser(description="Simulate mutations from an SBS signature")
     p.add_argument("--signatures",     required=True)
     p.add_argument("--signature-name", required=True)
     p.add_argument("--n",              type=int, required=True)
@@ -119,12 +123,14 @@ def main():
     sig_df = load_signatures(args.signatures)
     probs  = get_signature_probs(sig_df, args.signature_name)
     rng    = np.random.default_rng(args.seed)
+
     samp   = ExomeSampler(args.exome_dir, args.context_index)
-    tbl    = samp.sample(probs, args.n, rng)
-    df     = samp.annotate(tbl, rng)
+    tbl, ctx_ids = samp.sample(probs, args.n, rng)
+    df     = samp.annotate(tbl, ctx_ids)
     pq.write_table(pa.Table.from_pandas(df), Path(args.out), compression="zstd")
     print(json.dumps(samp.summarise(df)), flush=True)
 
 if __name__ == "__main__":
     main()
+
 

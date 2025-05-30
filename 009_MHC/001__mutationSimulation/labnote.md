@@ -416,12 +416,8 @@ SigProfilerMatrixGenerator matrix_generator test GRCh38 txt --plot=TRUE
 
 
 
-## Mutation profile plots - Parrallel generation
+## Add annotations
 
-
-
-XXXY WAIT JOAN FOR ASSIGNMENT; see on what studff it needs to be added?
-
-
+Let's collect the annoation information from [dbNSFP](https://www.dbnsfp.org/download) --> Set up an academic account and download `dbNSFP5.1a_grch38.gz` and `dbNSFP5.1a_grch38.gz.tbi` from the GoogleDrive linke received. Then transferred these files to `/ref`
 
 

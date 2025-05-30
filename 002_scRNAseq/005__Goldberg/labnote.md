@@ -35099,8 +35099,9 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 
-
-# GSEA plot
+############################################################
+##################### GSEA plot - FC only ####################
+############################################################
 library("fgsea")
 
 
@@ -35341,6 +35342,374 @@ ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) +
             size=2) +
   coord_fixed()  # Force aspect ratio of the plot to be 1:1
 dev.off()
+
+
+
+
+
+
+############################################################
+##################### GSEA plot - FC+pvalue ####################
+############################################################
+library("fgsea")
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("ImmatureGranule",
+  "Granule" ,
+  "UBC" ,
+  "CerebellarNuclei",
+  "Purkinje",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi",
+  "Astrocyte",
+  "BergmanGlia",
+  "Oligodendrocyte",
+  "Endothelial",
+  "Meningeal",
+  "ChoroidPlexus")
+# Loop over each cluster type to read data and assign to a variable
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1)
+  assign(cluster, data)
+}
+
+## load list of genes to test
+### List1
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURON_INTRINSIC_APOPTOTIC_SIGNALING_PATHWAY_IN_RESPONSE_TO_OXIDATIVE_STRESS = read_table(file = "output/Pathway/geneList_GOBP_NEURON_INTRINSIC_APOPTOTIC.txt")$Genes,
+  GOBP_NEUROINFLAMMATORY_RESPONSE = read_table(file = "output/Pathway/geneList_GOBP_NEUROINFLAMMATORY_RESPONSE.txt")$Genes
+)
+### List2
+fgsea_sets <- list(
+  GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION = read_table(file = "output/Pathway/geneList_GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  GOBP_NEURONAL_SIGNAL_TRANSDUCTION = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_SIGNAL_TRANSDUCTION.txt")$Genes,
+  REACTOME_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_POTASSIUM_CHANNELS.txt")$Genes,
+  REACTOME_ION_CHANNEL_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_ION_CHANNEL_TRANSPORT.txt")$Genes
+)
+### List3
+fgsea_sets <- list(
+  REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING = read_table(file = "output/Pathway/geneList_REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING.txt")$Genes,
+  REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS = read_table(file = "output/Pathway/geneList_REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes,
+  REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS.txt")$Genes
+)
+### List4
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes
+)
+
+### List5 - Pathway
+fgsea_sets <- list(
+  REACTOME_GABA_SYNTHESIS_RELEASE_REUPTAKE_AND_DEGRADATION = read_table(file = "output/Pathway/geneList_REACTOME_GABA_SYNTHESIS_RELEASE_REUPTAKE_AND_DEGRADATION.txt")$Genes,
+  REACTOME_GABA_RECEPTOR_ACTIVATION = read_table(file = "output/Pathway/geneList_REACTOME_GABA_RECEPTOR_ACTIVATION.txt")$Genes,
+  REACTOME_GABA_B_RECEPTOR_ACTIVATION = read_table(file = "output/Pathway/geneList_REACTOME_GABA_B_RECEPTOR_ACTIVATION.txt")$Genes,
+  BIOCARTA_GABA_PATHWAY = read_table(file = "output/Pathway/geneList_BIOCARTA_GABA_PATHWAY.txt")$Genes,
+  REACTOME_GLUTAMATE_NEUROTRANSMITTER_RELEASE_CYCLE = read_table(file = "output/Pathway/geneList_REACTOME_GLUTAMATE_NEUROTRANSMITTER_RELEASE_CYCLE.txt")$Genes,
+  REACTOME_GLUTAMATE_AND_GLUTAMINE_METABOLISM = read_table(file = "output/Pathway/geneList_REACTOME_GLUTAMATE_AND_GLUTAMINE_METABOLISM.txt")$Genes
+)
+### List6 - GOBP - Glutamate1
+fgsea_sets <- list(
+  GOBP_SYNAPTIC_TRANSMISSION_GLUTAMATERGIC = read_table(file = "output/Pathway/geneList_GOBP_SYNAPTIC_TRANSMISSION_GLUTAMATERGIC.txt")$Genes,
+  GOBP_REGULATION_OF_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY.txt")$Genes,
+  GOBP_REGULATION_OF_GLUTAMATE_SECRETION = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_GLUTAMATE_SECRETION.txt")$Genes,
+  GOBP_REGULATION_OF_GLUTAMATE_SECRETION_NEUROTRANSMISSION = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_GLUTAMATE_SECRETION_NEUROTRANSMISSION.txt")$Genes,
+  GOBP_REGULATION_OF_SYNAPTIC_TRANSMISSION_GLUTAMATERGIC = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_SYNAPTIC_TRANSMISSION_GLUTAMATERGIC.txt")$Genes,
+  GOBP_GLUTAMATE_CATABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_CATABOLIC_PROCESS.txt")$Genes
+)
+### List7 - GOBP - Glutamate2
+fgsea_sets <- list(
+  GOBP_GLUTAMATE_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_METABOLIC_PROCESS.txt")$Genes,
+  GOBP_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY.txt")$Genes,
+  GOBP_GLUTAMATE_SECRETION = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_SECRETION.txt")$Genes,
+  GOBP_GLUTAMATE_SECRETION_NEUROTRANSMISSION = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_SECRETION_NEUROTRANSMISSION.txt")$Genes,
+  GOBP_GLUTAMATERGIC_NEURON_DIFFERENTIATION = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATERGIC_NEURON_DIFFERENTIATION.txt")$Genes,
+  GOBP_IONOTROPIC_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_IONOTROPIC_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY.txt")$Genes
+)
+
+### List8 - GOBP - GABA
+fgsea_sets <- list(
+  GOBP_GABAERGIC_NEURON_DIFFERENTIATION = read_table(file = "output/Pathway/geneList_GOBP_GABAERGIC_NEURON_DIFFERENTIATION.txt")$Genes,
+  GOBP_REGULATION_OF_SYNAPTIC_TRANSMISSION_GABAERGIC = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_SYNAPTIC_TRANSMISSION_GABAERGIC.txt")$Genes,
+  GOBP_SYNAPTIC_TRANSMISSION_GABAERGIC = read_table(file = "output/Pathway/geneList_GOBP_SYNAPTIC_TRANSMISSION_GABAERGIC.txt")$Genes
+)
+
+
+
+
+# Save output table for all pathway and cluster
+## Define the list of cluster types
+cluster_types <- c("ImmatureGranule",
+  "Granule" ,
+  "UBC" ,
+  "CerebellarNuclei",
+  "Purkinje",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi",
+  "Astrocyte",
+  "BergmanGlia",
+  "Oligodendrocyte",
+  "Endothelial",
+  "Meningeal",
+  "ChoroidPlexus")
+
+## Initialize an empty list to store the results for each cluster type
+all_results <- list()
+## Loop over each cluster type
+for (cluster in cluster_types) {
+  # Extract genes for the current cluster and compute ranking score
+  genes <- get(cluster) %>% 
+    rownames_to_column(var = "gene") %>%
+    mutate(p_val_adj = ifelse(p_val_adj == 0, 1e-300, p_val_adj)) %>%  # Avoid log10(0)
+    mutate(ranking_score = avg_log2FC * -log10(p_val_adj)) %>%
+    arrange(desc(ranking_score)) %>% 
+    dplyr::select(gene, ranking_score)
+  ranks <- deframe(genes)
+  # Run GSEA for the current cluster
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 10000)
+  fgseaResTidy <- fgseaRes %>%
+    as_tibble() %>%
+    arrange(desc(ES))
+  # Extract summary table and add cluster column
+  fgseaResTidy_summary = fgseaResTidy %>% 
+    dplyr::select(pathway, pval, padj, ES, size, NES, leadingEdge) %>%
+    mutate(cluster = cluster) %>%
+    arrange(padj) %>% 
+    head()
+  # Store results in the list
+  all_results[[cluster]] <- fgseaResTidy_summary
+}
+## Combine results from all cluster types into one table
+final_results <- bind_rows(all_results, .id = "cluster") %>%
+  mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
+
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List1gene_FCpval.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+
+# Heatmap all GSEA
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List1_FCpval.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+final_results$cluster <- factor(final_results$cluster, levels = c(
+  "ImmatureGranule",
+  "Granule",
+  "UBC",
+  "CerebellarNuclei",
+  "Purkinje",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi",
+  "Astrocyte",
+  "BergmanGlia",
+  "Oligodendrocyte",
+  "Endothelial",
+  "Meningeal",
+  "ChoroidPlexus"
+))
+ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(final_results$pval <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+### if need reorder terms
+final_results$pathway <- factor(final_results$pathway, levels = c("PathwaysOfNeurodegeneration", "GOBP_NEURONAL_ACTION_POTENTIAL", "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")) 
+
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST_ordered-List4_FCpval.pdf", width=10, height=3)
+ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+
+
+
+
+
+
+###############################################################
+# VLN PLOTS with STATISTICS #####################
+###############################################################
+# Subset seurat object to keep cell tye of interest
+
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "ImmatureGranule",  "Granule" ,  "UBC" ,  "CerebellarNuclei","Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi"))
+
+
+WT_Kcnc1_p14_CB_1step_subset = WT_Kcnc1_p14_CB_1step.sct
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step_subset) <- "RNA"
+
+cell_types <- c(      "ImmatureGranule",
+  "Granule" ,
+  "UBC" ,
+  "CerebellarNuclei",
+  "Purkinje",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi",
+  "Astrocyte",
+  "BergmanGlia",
+  "Oligodendrocyte",
+  "Endothelial",
+  "Meningeal",
+  "ChoroidPlexus" )
+WT_Kcnc1_p14_CB_1step_subset$cluster.annot <- factor(
+WT_Kcnc1_p14_CB_1step_subset$cluster.annot, 
+  levels = cell_types
+)
+
+
+
+
+# Check some genes
+DefaultAssay(WT_Kcnc1_p14_CB_1step_subset) <- "RNA"
+
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("ImmatureGranule",
+  "Granule" ,
+  "UBC" ,
+  "CerebellarNuclei",
+  "Purkinje",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi",
+  "Astrocyte",
+  "BergmanGlia",
+  "Oligodendrocyte",
+  "Endothelial",
+  "Meningeal",
+  "ChoroidPlexus")
+##### Initialize empty list to store data
+deg_list <- list()
+
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.0001 ~ "***",
+    p_val_adj < 0.001  ~ "**",
+    p_val_adj < 0.05   ~ "*",
+    TRUE               ~ ""
+  ))
+
+
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- c("Kcnc1", "Kcnc2", "Kcnc3", "Kcnc4")
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(WT_Kcnc1_p14_CB_1step_subset, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p14_CB_1step_subset))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CB_1step_subset-version5dim40kparam15res015-Kcnc1234-filterNeurons-STAT.pdf", width=7, height=3)
+
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(WT_Kcnc1_p14_CB_1step_subset, 
+               features = gene, 
+               pt.size = 0, 
+               split.by = "condition", cols = c("black", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.4, label = significance), 
+                     size = 4, color = "black", inherit.aes = FALSE)
+  # Add avg_log2FC for significant values only
+  gene_sig_fc <- gene_sig_data %>%
+    filter(significance != "") %>%
+    mutate(log2FC_label = sprintf("%.2f", avg_log2FC))
+   p <- p + geom_text(data = gene_sig_fc, 
+                     aes(x = Identity, y = y_pos +0, label = log2FC_label), 
+                     size = 4, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+
+
 
 
 ```
@@ -37252,7 +37621,6 @@ WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct,
 WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
                                        subset = cluster.annot %in% c( "ImmatureGranule",  "Granule" ,  "CerebellarNuclei","Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi"))
 
-
 # Check some genes
 DefaultAssay(WT_Kcnc1_p14_CB_1step_subset) <- "RNA"
 
@@ -37289,7 +37657,7 @@ combined_deg <- combined_deg %>%
 
 # Generate the violin plot
 ###### Define genes of interest
-genes_of_interest <- gene.up # gene.down gene.up
+genes_of_interest <- gene.down # gene.down gene.up 
 ###### Extract the subset of significant DEGs
 sig_data <- combined_deg %>%
   filter(gene %in% genes_of_interest)
@@ -37312,7 +37680,8 @@ sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches c
 sig_data <- sig_data %>%
   left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
 
-pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CB_1step_subset-version5dim40kparam15res015-gene.up-filterNeurons-STAT.pdf", width=5, height=3)
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CB_1step_subset-version5dim40kparam15res015-Kcnc1234-filterNeurons-STAT.pdf", width=5, height=3)
+
 ###### Generate separate plots per gene
 for (gene in genes_of_interest) {
   print(paste("Generating plot for:", gene))
@@ -38417,6 +38786,145 @@ ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) +
 dev.off()
 
 
+
+
+
+###############################################################
+# VLN PLOTS with STATISTICS #####################
+###############################################################
+# Subset seurat object to keep cell tye of interest
+
+
+WT_Kcnc1_p35_CB_1step_subset = WT_Kcnc1_p35_CB_1step.sct
+
+DefaultAssay(WT_Kcnc1_p35_CB_1step_subset) <- "RNA"
+
+cell_types <- c(      "Granule",
+  "UBC",
+  "CerebellarNuclei",
+  "MixNeurons",
+  "Purkinje",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi",
+  "Astrocyte",
+  "BergmanGlia",
+  "OPC",
+  "Endothelial",
+  "Meningeal",
+  "ChoroidPlexus" )
+WT_Kcnc1_p35_CB_1step_subset$cluster.annot <- factor(
+WT_Kcnc1_p35_CB_1step_subset$cluster.annot, 
+  levels = cell_types
+)
+
+
+
+
+# Check some genes
+DefaultAssay(WT_Kcnc1_p35_CB_1step_subset) <- "RNA"
+
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c( "Granule",
+  "UBC",
+  "CerebellarNuclei",
+  "MixNeurons",
+  "Purkinje",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi",
+  "Astrocyte",
+  "BergmanGlia",
+  "OPC",
+  "Endothelial",
+  "Meningeal",
+  "ChoroidPlexus")
+##### Initialize empty list to store data
+deg_list <- list()
+
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.0001 ~ "***",
+    p_val_adj < 0.001  ~ "**",
+    p_val_adj < 0.05   ~ "*",
+    TRUE               ~ ""
+  ))
+
+
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- c("Kcnc1", "Kcnc2", "Kcnc3", "Kcnc4")
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(WT_Kcnc1_p35_CB_1step_subset, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p35_CB_1step_subset))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p35_CB_1step_subset-version5dim40kparam15res0245-Kcnc1234-filterNeurons-STAT.pdf", width=7, height=3)
+
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(WT_Kcnc1_p35_CB_1step_subset, 
+               features = gene, 
+               pt.size = 0, 
+               split.by = "condition", cols = c("black", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.4, label = significance), 
+                     size = 4, color = "black", inherit.aes = FALSE)
+  # Add avg_log2FC for significant values only
+  gene_sig_fc <- gene_sig_data %>%
+    filter(significance != "") %>%
+    mutate(log2FC_label = sprintf("%.2f", avg_log2FC))
+   p <- p + geom_text(data = gene_sig_fc, 
+                     aes(x = Identity, y = y_pos +0, label = log2FC_label), 
+                     size = 4, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
 
 
 
@@ -40147,7 +40655,7 @@ combined_deg <- combined_deg %>%
 
 # Generate the violin plot
 ###### Define genes of interest
-genes_of_interest <- gene.down # gene.up
+genes_of_interest <- c("Kcnc1", "Kcnc2", "Kcnc3", "Kcnc4") 
 ###### Extract the subset of significant DEGs
 sig_data <- combined_deg %>%
   filter(gene %in% genes_of_interest)
@@ -40171,6 +40679,7 @@ sig_data <- sig_data %>%
   left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
 
 pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p35_CB_1step_subset-version5dim40kparam15res0245-gene.down-STAT.pdf", width=5, height=3)
+
 ###### Generate separate plots per gene
 for (gene in genes_of_interest) {
   print(paste("Generating plot for:", gene))
@@ -41254,6 +41763,150 @@ ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) +
             size=2) +
   coord_fixed()  # Force aspect ratio of the plot to be 1:1
 dev.off()
+
+
+
+
+
+###############################################################
+# VLN PLOTS with STATISTICS #####################
+###############################################################
+# Subset seurat object to keep cell tye of interest
+
+WT_Kcnc1_p180_CB_1step_subset <- subset(WT_Kcnc1_p180_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "Granule" ,  "UBC" ,  "CerebellarNuclei","Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi"))
+
+
+WT_Kcnc1_p180_CB_1step_subset = WT_Kcnc1_p180_CB_1step.sct
+
+DefaultAssay(WT_Kcnc1_p180_CB_1step_subset) <- "RNA"
+
+cell_types <- c(      "Granule",
+  "UBC",
+  "CerebellarNuclei",
+  "Purkinje",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi",
+  "Astrocyte",
+  "BergmanGlia",
+  "OPC",
+  "Endothelial",
+  "Meningeal",
+  "ChoiroidPlexus" )
+WT_Kcnc1_p180_CB_1step_subset$cluster.annot <- factor(
+WT_Kcnc1_p180_CB_1step_subset$cluster.annot, 
+  levels = cell_types
+)
+
+
+
+
+# Check some genes
+DefaultAssay(WT_Kcnc1_p180_CB_1step_subset) <- "RNA"
+
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("Granule",
+  "UBC",
+  "CerebellarNuclei",
+  "Purkinje",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi",
+  "Astrocyte",
+  "BergmanGlia",
+  "OPC",
+  "Endothelial",
+  "Meningeal",
+  "ChoiroidPlexus")
+##### Initialize empty list to store data
+deg_list <- list()
+
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.0001 ~ "***",
+    p_val_adj < 0.001  ~ "**",
+    p_val_adj < 0.05   ~ "*",
+    TRUE               ~ ""
+  ))
+
+
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- c("Kcnc1", "Kcnc2", "Kcnc3", "Kcnc4")
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(WT_Kcnc1_p180_CB_1step_subset, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p180_CB_1step_subset))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p180_CB_1step_subset-version5dim20kparam10res0115-Kcnc1234-filterNeurons-STAT.pdf", width=7, height=3)
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(WT_Kcnc1_p180_CB_1step_subset, 
+               features = gene, 
+               pt.size = 0, 
+               split.by = "condition", cols = c("black", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.4, label = significance), 
+                     size = 4, color = "black", inherit.aes = FALSE)
+  # Add avg_log2FC for significant values only
+  gene_sig_fc <- gene_sig_data %>%
+    filter(significance != "") %>%
+    mutate(log2FC_label = sprintf("%.2f", avg_log2FC))
+   p <- p + geom_text(data = gene_sig_fc, 
+                     aes(x = Identity, y = y_pos +0, label = log2FC_label), 
+                     size = 4, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+
+
+
 
 
 ```
@@ -53517,10 +54170,6 @@ set.seed(42)
 
 
 
-
-
-
-
 ## PLOT with separate trajectories - Individually
 ### WT
 Part_Granule_subset_WT <- Part_Granule_subset[, Part_Granule_subset$condition == "WT"]
@@ -53535,7 +54184,8 @@ df_2 <- bind_cols(
          Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
          Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst),
          Lineage4_pst = if_else(is.na(Lineage4_pst), 0, Lineage4_pst),
-         Lineage5_pst = if_else(is.na(Lineage5_pst), 0, Lineage5_pst))
+         Lineage5_pst = if_else(is.na(Lineage5_pst), 0, Lineage5_pst),
+         Lineage6_pst = if_else(is.na(Lineage6_pst), 0, Lineage6_pst))
 curves <- slingCurves(Part_Granule_subset_WT, as.df = TRUE)
 ### Function to create the plot for each lineage
 create_plot <- function(lineage_number) {
@@ -53565,11 +54215,11 @@ create_plot <- function(lineage_number) {
 }
 ### Generate the plots for each lineage
 plots <- list()
-for (i in 1:5) {
+for (i in 1:6) {
   plots[[i]] <- create_plot(i)
 }
-pdf("output/condiments/UMAP_trajectory_common_label_Part_Granule_subset_WT-version5dim50kparam30res25-START29_END24_points100extendpc1stretch1_WTonly.pdf", width=5, height=20)
-gridExtra::grid.arrange(grobs = plots, ncol = 1)
+pdf("output/condiments/UMAP_trajectory_common_label_Part_Granule_subset_WT-version5dim50kparam30res25-START26_END11_points100extendpc1stretch1_WTonly.pdf", width=10, height=6)
+gridExtra::grid.arrange(grobs = plots, ncol = 3)
 dev.off()
 
 
@@ -53586,7 +54236,8 @@ df_2 <- bind_cols(
          Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
          Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst),
          Lineage4_pst = if_else(is.na(Lineage4_pst), 0, Lineage4_pst),
-         Lineage5_pst = if_else(is.na(Lineage5_pst), 0, Lineage5_pst))
+         Lineage5_pst = if_else(is.na(Lineage5_pst), 0, Lineage5_pst),
+         Lineage6_pst = if_else(is.na(Lineage6_pst), 0, Lineage6_pst))
 curves <- slingCurves(Part_Granule_subset_Kcnc1, as.df = TRUE)
 ### Function to create the plot for each lineage
 create_plot <- function(lineage_number) {
@@ -53616,11 +54267,11 @@ create_plot <- function(lineage_number) {
 }
 ### Generate the plots for each lineage
 plots <- list()
-for (i in 1:5) {
+for (i in 1:6) {
   plots[[i]] <- create_plot(i)
 }
-pdf("output/condiments/UMAP_trajectory_common_label_Part_Granule_subset_Kcnc1-version5dim50kparam30res25-START29_END24_points100extendpc1stretch1_Kcnc1only.pdf", width=5, height=20)
-gridExtra::grid.arrange(grobs = plots, ncol = 1)
+pdf("output/condiments/UMAP_trajectory_common_label_Part_Granule_subset_Kcnc1-version5dim50kparam30res25-START26_END11_points100extendpc1stretch1_Kcnc1only.pdf", width=10, height=6)
+gridExtra::grid.arrange(grobs = plots, ncol = 3)
 dev.off()
 
 
@@ -53636,7 +54287,7 @@ df_3 <- df_3 %>%
                values_to = "pst") %>%
   filter(!is.na(pst))
 
-pdf("output/condiments/densityPlot_trajectory_lineage_Part_Granule_subset-version5dim50kparam30res25-START29_END24_points100extendpc1stretch1.pdf", width=10, height=3)
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_Granule_subset-version5dim50kparam30res25-START26_END11_points100extendpc1stretch1.pdf", width=10, height=3)
 ggplot(df_3, aes(x = pst)) +
   geom_density(alpha = .8, aes(fill = condition), col = "transparent") +
   geom_density(aes(col = condition), fill = "transparent", size = 1.5) +
@@ -53651,16 +54302,15 @@ ggplot(df_3, aes(x = pst)) +
 dev.off()
 
 
-#### ->  save.image(file="output/condiments/condiments-Part_Granule_subset_START29_END24_points100extendpc1stretch1-version5dim50kparam30res25.RData")
-### load("output/condiments/condiments-Part_Granule_subset_START29_END24_points100extendpc1stretch1-version5dim50kparam30res25.RData")
+#### ->  save.image(file="output/condiments/condiments-Part_Granule_subset_START26_END11_points100extendpc1stretch1-version5dim50kparam30res25.RData")
+### load("output/condiments/condiments-Part_Granule_subset_START26_END11_points100extendpc1stretch1-version5dim50kparam30res25.RData")
 set.seed(42)
 
 #  Differential expression
 # --> Run fitGam() through Slurm
 
 
-XXXY HERE VELOW NOT MOD!!!!!!!!!!!!!!!!!!
-
+XXXY 
 
 
 ```
@@ -54269,7 +54919,8 @@ set.seed(42)
 
 # Data import - all samples and genotype CB
 #WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-dim40kparam15res03-labelv1.rds")
-WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res25-V1_numeric.rds")
+#WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res25-V1_numeric.rds")
+WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version5dim50kparam30res25-V1_numeric.rds")
 
 DefaultAssay(WT_Kcnc1_CB_integrateMerge.sct) <- "RNA" # According to condiments workflow
 
@@ -54286,7 +54937,7 @@ WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_CB_integrateMerge.sct, assay = "
 ########################################################
 
 # First filter based on cell type
-Part_MLI2 <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c(28,19,16,45,18)]
+Part_MLI2 <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c(27,25,19)]
 table(Part_MLI2$seurat_clusters) # to double check
 
 
@@ -54298,7 +54949,7 @@ df <- bind_cols(
   sample_frac(1)
 
 # PLOT
-pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI2.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version5dim50kparam30res25-Part_MLI2.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
   geom_point(size = .7) +
   labs(col = "Genotype") +
@@ -54311,7 +54962,7 @@ umap_coords <- reducedDims(Part_MLI2)$UMAP
 
 # Filter conditions based on your description:
 # Keep cells with UMAP_1 > -3 and UMAP_2 < 2.5
-selected_cells <- umap_coords[,1] < -2.2 & umap_coords[,2] > 2.4 &  umap_coords[,1] > -10
+selected_cells <- umap_coords[,1] < 5 & umap_coords[,2] < -4 &  umap_coords[,1] > -1
 
 # Subset your SCE object
 Part_MLI2_subset <- Part_MLI2[, selected_cells]
@@ -54325,7 +54976,7 @@ df <- bind_cols(
   ) %>%
   sample_frac(1)
 
-pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI2_subset.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version5dim50kparam30res25-Part_MLI2_subset.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
   geom_point(size = .7) +
   labs(col = "Genotype") +
@@ -54333,7 +54984,7 @@ ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
 dev.off()
 
 library("RColorBrewer")
-pdf("output/condiments/UMAP_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI2_subset-time.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version5dim50kparam30res25-Part_MLI2_subset-time.pdf", width=6, height=5)
 my_cols = brewer.pal(3,"Dark2")
 cols=alpha(my_cols,0.3)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = time)) +
@@ -54345,7 +54996,7 @@ dev.off()
 
 
 ## genotype overlap
-pdf("output/condiments/UMAP_condition_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI2_subset.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_condition_WT_Kcnc1_CB-version5dim50kparam30res25-Part_MLI2_subset.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7) +
   scale_color_manual(values = c("blue", "red")) + # Specify colors here
@@ -54360,7 +55011,7 @@ scores <- condiments::imbalance_score(
   k = 20, smooth = 40)
 df$scores <- scores$scaled_scores
 
-pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI2_subset.pdf", width=5, height=5)
+pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_CB-version5dim50kparam30res25-Part_MLI2_subset.pdf", width=5, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
   geom_point(size = .7) +
   scale_color_viridis_c(option = "C") +
@@ -54381,7 +55032,7 @@ dev.off()
 
 Part_MLI2_subset <- slingshot(Part_MLI2_subset, reducedDim = 'UMAP',
                  clusterLabels = colData(Part_MLI2_subset)$seurat_clusters,
-                 start.clus = "28", end.clus = c("18") ,approx_points = 100, extend = 'pc1', stretch = 1)
+                 start.clus = "27", end.clus = c("19") ,approx_points = 100, extend = 'pc1', stretch = 1)
 
 
 
@@ -54398,7 +55049,7 @@ curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
 
 #  
 
-pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-version3QCversion4dim50kparam30res25-Part_MLI2_subset-START28_END18_points100extendpc1stretch1.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-version5dim50kparam30res25-Part_MLI2_subset-START27_END19_points100extendpc1stretch1.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7, alpha = .2) +
   scale_color_brewer(palette = "Accent") +
@@ -54420,9 +55071,7 @@ df_2 <- bind_cols(
     dplyr::rename_with(paste0, "_pst", .cols = everything()),
   slingCurveWeights(Part_MLI2_subset_WT) %>% as.data.frame(),
   ) %>%
-  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
-         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
-         Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst))
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst))
 curves <- slingCurves(Part_MLI2_subset_WT, as.df = TRUE)
 ### Function to create the plot for each lineage
 create_plot <- function(lineage_number) {
@@ -54452,10 +55101,10 @@ create_plot <- function(lineage_number) {
 }
 ### Generate the plots for each lineage
 plots <- list()
-for (i in 1:3) {
+for (i in 1:1) {
   plots[[i]] <- create_plot(i)
 }
-pdf("output/condiments/UMAP_trajectory_common_label_Part_MLI2_subset_WT-version3QCversion4dim50kparam30res25-START28_END18_points100extendpc1stretch1_WTonly.pdf", width=5, height=10)
+pdf("output/condiments/UMAP_trajectory_common_label_Part_MLI2_subset_WT-version5dim50kparam30res25-START27_END19_points100extendpc1stretch1_WTonly.pdf", width=5, height=5)
 gridExtra::grid.arrange(grobs = plots, ncol = 1)
 dev.off()
 
@@ -54469,9 +55118,7 @@ df_2 <- bind_cols(
     dplyr::rename_with(paste0, "_pst", .cols = everything()),
   slingCurveWeights(Part_MLI2_subset_Kcnc1) %>% as.data.frame(),
   ) %>%
-  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
-         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
-         Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst))
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst))
 curves <- slingCurves(Part_MLI2_subset_Kcnc1, as.df = TRUE)
 ### Function to create the plot for each lineage
 create_plot <- function(lineage_number) {
@@ -54501,10 +55148,10 @@ create_plot <- function(lineage_number) {
 }
 ### Generate the plots for each lineage
 plots <- list()
-for (i in 1:3) {
+for (i in 1:1) {
   plots[[i]] <- create_plot(i)
 }
-pdf("output/condiments/UMAP_trajectory_common_label_Part_MLI2_subset_Kcnc1-version3QCversion4dim50kparam30res25-START28_END18_points100extendpc1stretch1_Kcnc1only.pdf", width=5, height=10)
+pdf("output/condiments/UMAP_trajectory_common_label_Part_MLI2_subset_Kcnc1-version5dim50kparam30res25-START27_END19_points100extendpc1stretch1_Kcnc1only.pdf", width=5, height=5)
 gridExtra::grid.arrange(grobs = plots, ncol = 1)
 dev.off()
 
@@ -54521,7 +55168,7 @@ df_3 <- df_3 %>%
                values_to = "pst") %>%
   filter(!is.na(pst))
 
-pdf("output/condiments/densityPlot_trajectory_lineage_Part_MLI2_subset-version3QCversion4dim50kparam30res25-START28_END18_points100extendpc1stretch1.pdf", width=6, height=3)
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_MLI2_subset-version5dim50kparam30res25-START27_END19_points100extendpc1stretch1.pdf", width=6, height=3)
 ggplot(df_3, aes(x = pst)) +
   geom_density(alpha = .8, aes(fill = condition), col = "transparent") +
   geom_density(aes(col = condition), fill = "transparent", size = 1.5) +
@@ -54536,8 +55183,8 @@ ggplot(df_3, aes(x = pst)) +
 dev.off()
 
 
-#### ->  save.image(file="output/condiments/condiments-Part_MLI2_subset_START28_END18_points100extendpc1stretch1-version3QCversion4dim50kparam30res25.RData")
-### load("output/condiments/condiments-Part_MLI2_subset_START28_END18_points100extendpc1stretch1-version3QCversion4dim50kparam30res25.RData")
+#### ->  save.image(file="output/condiments/condiments-Part_MLI2_subset_START27_END19_points100extendpc1stretch1-version5dim50kparam30res25.RData")
+### load("output/condiments/condiments-Part_MLI2_subset_START27_END19_points100extendpc1stretch1-version5dim50kparam30res25.RData")
 set.seed(42)
 
 #  Differential expression
@@ -54689,15 +55336,19 @@ sbatch scripts/pseudotime_Granule-version5.sh # 43717307 xxx
 ```bash
 conda activate condiments_Signac
 
-# trajectory per ondition together (for DEG condition, condiments) - pseudotime-condition DEG
-### traj of interest MLI1
-XNOT RUN CHANGE RESOLUTON... sbatch scripts/fitGAM_6knots_traj1_Part_MLI1_subset-version3QCversion4xxxx.sh #  xxx
+# trajectory per condition together (for DEG condition, condiments) - pseudotime-condition DEG
+### traj of interest Granule --> ONLY TRAJ OF INTEREST RAN; trajectory 2 START26_END11
+sbatch scripts/fitGAM_6knots_traj2_Part_Granule_subset-version5dim50kparam30res25.sh # 44043797 xxx
+
+### traj of interest MLI1 --> ONLY TRAJ OF INTEREST RAN; trajectory 2 START29_END2
+sbatch scripts/fitGAM_6knots_traj2_Part_MLI1_subset-version5dim50kparam30res25.sh # 44043807 xxx
+
+### traj of interest MLI2 --> ONLY TRAJ OF INTEREST RAN; trajectory 1 START27_END19
+sbatch scripts/fitGAM_6knots_traj1_Part_MLI2_subset-version5dim50kparam30res25.sh # 44052450 xxx
+
+
 
 ```
-
-load("output/condiments/condiments-Part_MLI1_subset_START14_END11_points100extendnstretch1-version3QCversion4dim50kparam30res05.RData")
-set.seed(42)
-
 
 
 
