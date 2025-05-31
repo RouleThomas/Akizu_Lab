@@ -495,3 +495,74 @@ bash scripts/run_summary_plot_all.sh
 ```
 
 
+
+
+
+
+
+
+# Run simulation for experimental signatures
+
+
+Experimental signatures download from [COSMIC](https://cancer.sanger.ac.uk/signatures/downloads/).
+
+There is two versions, *filtered* and *unfiltered*; lets first work with the filtered one (less data, maybe more robust?); files transfered to `signature/human_sbs96_[filtered]_v1_0.txt`
+
+
+--> `scripts/simulate_array_experimental.py` generated which is same as `scripts/simulate_array_v2.py` but with Experimental signatures file.
+
+
+
+```bash
+nano scripts/simulate_array_experimental.py
+
+```
+
+Lets do test first
+
+```bash
+conda activate mutsim
+
+# Test on 1_2_dimethylhydrazine_9cffdc696a32
+sbatch scripts/submit_simulation_array_v2-1_2_dimethylhydrazine_9cffdc696a32.sh # 44106484 xxx
+
+```
+
+--> XXX Works great!; lets run for all:
+
+
+XXXY
+
+
+
+
+
+# Run random flat96 simulation
+
+Let's generate a random control; so we will apply in same proportion each of the 96 possible mutation
+
+--> Script is `simulate_random_flat96.py`; follow same organization as `simulate_mutations_v2.py`
+
+
+```bash
+simulate_random_flat96.py
+
+# testing
+python scripts/simulate_random_flat96.py \
+  --n 8000 \
+  --exome-dir parquet \
+  --context-index indices/context96.pkl \
+  --out results/random/n_8000/rep_01.annot.parquet \
+  --seed 42
+
+#--> Seems to be working!
+
+# run in a job
+
+sbatch scripts/submit_simulation_random_flat96.sh # 44107109 xxx
+
+XXXY RUN PLOT !!!
+
+```
+
+
