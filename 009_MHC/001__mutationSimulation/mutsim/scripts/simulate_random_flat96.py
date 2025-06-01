@@ -103,6 +103,7 @@ def main():
     p.add_argument("--n",              type=int, required=True)
     p.add_argument("--exome-dir",      required=True)
     p.add_argument("--context-index",  required=True)
+    p.add_argument("--rep",            type=int, required=True)
     p.add_argument("--out",            required=True)
     p.add_argument("--seed",           type=int, default=0)
     args = p.parse_args()

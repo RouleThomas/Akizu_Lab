@@ -329,7 +329,7 @@ SigProfilerMatrixGenerator matrix_generator test GRCh38 txt --plot=TRUE
 ```
 
 
---> The msimulation does not work properly, did not reproduce SBS2 mutation... Lets write anothoer `simulate_mutation.py` script
+--> The simulation does not work properly, did not reproduce SBS2 mutation... Lets write anothoer `simulate_mutation.py` script
 
 
 ## Fine tune simulate_mutation.py scripts
@@ -430,8 +430,8 @@ conda activate mutsim
 sbatch scripts/submit_simulation_array_v2.sh # 44062009/44063127/44063359 tabix installation error; 44063761 cancel; 
 
 # Test on SBS5 and SBS90
-sbatch scripts/submit_simulation_array_v2-SBS90.sh # 44064135  xxx ~20min
-sbatch scripts/submit_simulation_array_v2-SBS5.sh # 44064160 xxx
+sbatch scripts/submit_simulation_array_v2-SBS90.sh # 44064135  ok ~20min
+sbatch scripts/submit_simulation_array_v2-SBS5.sh # 44064160 ok
 
 ```
 
@@ -483,7 +483,7 @@ conda activate mutsim
 bash scripts/GenerateScript-submit_simulation_array_v2.sh
 #--> All scripts generated at scripts/submit_all_signatures
 
-for f in scripts/submit_all_signatures/*.sh; do sbatch "$f"; done # XXX
+for f in scripts/submit_all_signatures/*.sh; do sbatch "$f"; done # ok
 
 XXXY BELOW NOT RUN!!!
 
@@ -524,14 +524,99 @@ Lets do test first
 conda activate mutsim
 
 # Test on 1_2_dimethylhydrazine_9cffdc696a32
-sbatch scripts/submit_simulation_array_v2-1_2_dimethylhydrazine_9cffdc696a32.sh # 44106484 xxx
+sbatch scripts/submit_simulation_array_v2-1_2_dimethylhydrazine_9cffdc696a32.sh # 44106484 ok
+
 
 ```
 
---> XXX Works great!; lets run for all:
 
 
-XXXY
+
+**Parquet to txt** To check simulation worked
+
+Just convert one of the generated .parquet simulation in .txt to generate a plot with sigprofiler
+
+```bash
+conda activate mutsim
+python
+```
+```python
+import pandas as pd
+import numpy as np
+
+# Load parquet
+df = pd.read_parquet("results/1_2_dimethylhydrazine_9cffdc696a32/n_2000/rep_01.annot.parquet") # 1_2_dimethylhydrazine_9cffdc696a32
+
+# Decode ref_base integers to letters
+INT2BASE = np.array(["A", "C", "G", "T", "N"])
+df["ref_base_letter"] = INT2BASE[df["ref_base"]]
+
+# Remove 'chr' prefix from chromosome names
+df["chr_clean"] = df["chr"].str.replace("^chr", "", regex=True)
+
+# Format to expected mutation text format
+df_txt = pd.DataFrame({
+    "Project": "Simu",
+    "Sample": "1_2_dimethylhydrazine_9cffdc696a32", # CHANGE HERE !!!
+    "ID": ".",
+    "Genome": "GRCh38",
+    "mut_type": "SNP",
+    "chrom": df["chr_clean"],
+    "pos_start": df["pos"],
+    "pos_end": df["pos"],
+    "ref": df["ref_base_letter"],
+    "alt": df["alt_base"],
+    "Type": "SOMATIC"
+})
+
+# Save to file
+df_txt.to_csv("txt/input/1_2_dimethylhydrazine_9cffdc696a32-n_2000-rep_01.txt", sep="\t", index=False) # 
+```
+
+#### Matrix and plot
+
+```bash
+conda activate mutsim
+
+SigProfilerMatrixGenerator matrix_generator test GRCh38 txt --plot=TRUE
+```
+
+
+
+--> Works great!; lets run for all:
+
+
+
+### Simulation with annotation and plots - Run all experimental mutation signature
+
+
+Let's generate a custom code to run all mutation signature in a single script; script will:
+- Extracts all signature names from `signatures/human_sbs96_filtered_v1_0.txt` 
+- Loops over them
+- Writes individual SLURM batch scripts (one per signature) to `scripts/submit_all_signatures_experimental`
+- Then run run them all `for f in scripts/submit_all_signatures_experimental/*.sh; do sbatch "$f"; done`
+- Run a SLURM batch that will generate summary and plots for all signatures
+
+
+
+```bash
+conda activate mutsim
+
+# Generate all unique scripts for each mutation automatically
+bash scripts/GenerateScript-submit_simulation_array_v2_experimental.sh
+#--> All scripts generated at scripts/submit_all_signatures_experimental
+
+for f in scripts/submit_all_signatures_experimental/*.sh; do sbatch "$f"; done # XXX
+
+XXXY BELOW NOT RUN!!!
+
+# Generate summary metrics and plots for each signature
+bash scripts/run_summary_plot_all.sh
+
+
+
+```
+
 
 
 
@@ -559,10 +644,64 @@ python scripts/simulate_random_flat96.py \
 
 # run in a job
 
-sbatch scripts/submit_simulation_random_flat96.sh # 44107109 xxx
+sbatch scripts/submit_simulation_random_flat96.sh # 44107109 fail misses --rep; 44134356 xxx
 
-XXXY RUN PLOT !!!
+XXXY RUN summary annotation
 
 ```
+
+
+
+**Parquet to txt** To check simulation worked
+
+Just convert one of the generated .parquet simulation in .txt to generate a plot with sigprofiler
+
+```bash
+conda activate mutsim
+python
+```
+```python
+import pandas as pd
+import numpy as np
+
+# Load parquet
+df = pd.read_parquet("results/random/n_8000/rep_01.annot.parquet") # 1_2_dimethylhydrazine_9cffdc696a32
+
+# Decode ref_base integers to letters
+INT2BASE = np.array(["A", "C", "G", "T", "N"])
+df["ref_base_letter"] = INT2BASE[df["ref_base"]]
+
+# Remove 'chr' prefix from chromosome names
+df["chr_clean"] = df["chr"].str.replace("^chr", "", regex=True)
+
+# Format to expected mutation text format
+df_txt = pd.DataFrame({
+    "Project": "Simu",
+    "Sample": "random-n_8000-rep01", # CHANGE HERE !!!
+    "ID": ".",
+    "Genome": "GRCh38",
+    "mut_type": "SNP",
+    "chrom": df["chr_clean"],
+    "pos_start": df["pos"],
+    "pos_end": df["pos"],
+    "ref": df["ref_base_letter"],
+    "alt": df["alt_base"],
+    "Type": "SOMATIC"
+})
+
+# Save to file
+df_txt.to_csv("txt/input/random-n_8000-rep_01.txt", sep="\t", index=False) # 
+```
+
+
+#### Matrix and plot
+
+```bash
+conda activate mutsim
+
+SigProfilerMatrixGenerator matrix_generator test GRCh38 txt --plot=TRUE
+```
+
+
 
 
