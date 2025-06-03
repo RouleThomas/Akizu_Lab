@@ -494,10 +494,230 @@ bash scripts/run_summary_plot_all.sh
 
 ```
 
+### Automatic summary plot interpretation
+
+Let's automatically identify when the pathogenecity score reach a plateau=stabilize.
+
+Let's do some test with `SBS*` and *Fraction stop* only
+
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Load SBS5 summary file
+df = pd.read_csv("results/SBS5/SBS5_summary_all.tsv", sep="\t")
+
+# Group by mutation count, compute mean + std
+grouped = df.groupby("n")["frac_stop"].agg(["mean", "std"]).reset_index()
+grouped["rel_change"] = grouped["mean"].pct_change().abs()
+
+# Detect where rel_change is < 5% for 3 consecutive bins
+stable = grouped["rel_change"] < 0.05
+rolling_stable = stable.rolling(window=3).apply(lambda x: x.all(), raw=True).fillna(0)
+
+# Find first index where condition is met
+stab_idx = rolling_stable.gt(0).idxmax()
+stab_n = grouped.loc[stab_idx, "n"]
+print(f"📌 SBS5: frac_stop stabilizes after 3 bins <5% at ~{stab_n} mutations")
+
+# Plot
+plt.figure(figsize=(6, 4))
+plt.errorbar(grouped["n"], grouped["mean"], yerr=grouped["std"], fmt="-o", label="frac_stop")
+plt.axvline(stab_n, color="red", linestyle="--", label=f"Stabilized at {stab_n}")
+plt.title("SBS5: Fraction Stop Stabilization Check (3x <5%)")
+plt.xlabel("Number of Mutations")
+plt.ylabel("Fraction Stop")
+plt.legend()
+plt.tight_layout()
+plt.savefig("results/SBS5/SBS5_frac_stop_stabilization_check.pdf")
 
 
 
 
+
+# Load SBS6 summary file
+df = pd.read_csv("results/SBS6/SBS6_summary_all.tsv", sep="\t")
+
+# Group by mutation count, compute mean + std
+grouped = df.groupby("n")["frac_stop"].agg(["mean", "std"]).reset_index()
+grouped["rel_change"] = grouped["mean"].pct_change().abs()
+
+# Detect where rel_change is < 5% for 3 consecutive bins
+stable = grouped["rel_change"] < 0.05
+rolling_stable = stable.rolling(window=3).apply(lambda x: x.all(), raw=True).fillna(0)
+
+# Find first index where condition is met
+stab_idx = rolling_stable.gt(0).idxmax()
+stab_n = grouped.loc[stab_idx, "n"]
+print(f"📌 SBS6: frac_stop stabilizes after 3 bins <5% at ~{stab_n} mutations")
+
+# Plot
+plt.figure(figsize=(6, 4))
+plt.errorbar(grouped["n"], grouped["mean"], yerr=grouped["std"], fmt="-o", label="frac_stop")
+plt.axvline(stab_n, color="red", linestyle="--", label=f"Stabilized at {stab_n}")
+plt.title("SBS6: Fraction Stop Stabilization Check (3x <5%)")
+plt.xlabel("Number of Mutations")
+plt.ylabel("Fraction Stop")
+plt.legend()
+plt.tight_layout()
+plt.savefig("results/SBS6/SBS6_frac_stop_stabilization_check.pdf")
+
+
+
+
+
+
+# Load SBS9 summary file
+df = pd.read_csv("results/SBS9/SBS9_summary_all.tsv", sep="\t")
+
+# Group by mutation count, compute mean + std
+grouped = df.groupby("n")["frac_stop"].agg(["mean", "std"]).reset_index()
+grouped["rel_change"] = grouped["mean"].pct_change().abs()
+
+# Detect where rel_change is < 5% for 3 consecutive bins
+stable = grouped["rel_change"] < 0.05
+rolling_stable = stable.rolling(window=3).apply(lambda x: x.all(), raw=True).fillna(0)
+
+# Find first index where condition is met
+stab_idx = rolling_stable.gt(0).idxmax()
+stab_n = grouped.loc[stab_idx, "n"]
+print(f"📌 SBS9: frac_stop stabilizes after 3 bins <5% at ~{stab_n} mutations")
+
+# Plot
+plt.figure(figsize=(6, 4))
+plt.errorbar(grouped["n"], grouped["mean"], yerr=grouped["std"], fmt="-o", label="frac_stop")
+plt.axvline(stab_n, color="red", linestyle="--", label=f"Stabilized at {stab_n}")
+plt.title("SBS9: Fraction Stop Stabilization Check (3x <5%)")
+plt.xlabel("Number of Mutations")
+plt.ylabel("Fraction Stop")
+plt.legend()
+plt.tight_layout()
+plt.savefig("results/SBS9/SBS9_frac_stop_stabilization_check.pdf")
+
+
+```
+
+
+Now `SBS*` and *polyphen2_hdiv_score_mean* only
+
+
+
+
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+# Load SBS5 summary file
+df = pd.read_csv("results/SBS5/SBS5_summary_all.tsv", sep="\t")
+
+# Group by mutation count, compute mean + std for Polyphen2 score
+grouped = df.groupby("n")["polyphen2_hdiv_score_mean"].agg(["mean", "std"]).reset_index()
+grouped["rel_change"] = grouped["mean"].pct_change().abs()
+
+# Detect where rel_change is < 5% for 3 consecutive bins
+stable = grouped["rel_change"] < 0.05
+rolling_stable = stable.rolling(window=3).apply(lambda x: x.all(), raw=True).fillna(0)
+
+# Find first index where condition is met
+stab_idx = rolling_stable.gt(0).idxmax()
+stab_n = grouped.loc[stab_idx, "n"]
+print(f"📌 SBS5: Polyphen2 score stabilizes after 3 bins <5% at ~{stab_n} mutations")
+
+# Plot
+plt.figure(figsize=(6, 4))
+plt.errorbar(grouped["n"], grouped["mean"], yerr=grouped["std"], fmt="-o", label="Polyphen2 Score")
+plt.axvline(stab_n, color="red", linestyle="--", label=f"Stabilized at {stab_n}")
+plt.title("SBS5: Polyphen2 Score Stabilization Check (3x <5%)")
+plt.xlabel("Number of Mutations")
+plt.ylabel("Polyphen2 Score")
+plt.legend()
+plt.tight_layout()
+plt.savefig("results/SBS5/SBS5_polyphen2_stabilization_check.pdf")
+
+
+# Load SBS6 summary file
+df = pd.read_csv("results/SBS6/SBS6_summary_all.tsv", sep="\t")
+
+# Group by mutation count, compute mean + std for Polyphen2 score
+grouped = df.groupby("n")["polyphen2_hdiv_score_mean"].agg(["mean", "std"]).reset_index()
+grouped["rel_change"] = grouped["mean"].pct_change().abs()
+
+# Detect where rel_change is < 5% for 3 consecutive bins
+stable = grouped["rel_change"] < 0.05
+rolling_stable = stable.rolling(window=3).apply(lambda x: x.all(), raw=True).fillna(0)
+
+# Find first index where condition is met
+stab_idx = rolling_stable.gt(0).idxmax()
+stab_n = grouped.loc[stab_idx, "n"]
+print(f"📌 SBS6: Polyphen2 score stabilizes after 3 bins <5% at ~{stab_n} mutations")
+
+# Plot
+plt.figure(figsize=(6, 4))
+plt.errorbar(grouped["n"], grouped["mean"], yerr=grouped["std"], fmt="-o", label="Polyphen2 Score")
+plt.axvline(stab_n, color="red", linestyle="--", label=f"Stabilized at {stab_n}")
+plt.title("SBS6: Polyphen2 Score Stabilization Check (3x <5%)")
+plt.xlabel("Number of Mutations")
+plt.ylabel("Polyphen2 Score")
+plt.legend()
+plt.tight_layout()
+plt.savefig("results/SBS6/SBS6_polyphen2_stabilization_check.pdf")
+
+
+# Load SBS9 summary file
+df = pd.read_csv("results/SBS9/SBS9_summary_all.tsv", sep="\t")
+
+# Group by mutation count, compute mean + std for Polyphen2 score
+grouped = df.groupby("n")["polyphen2_hdiv_score_mean"].agg(["mean", "std"]).reset_index()
+grouped["rel_change"] = grouped["mean"].pct_change().abs()
+
+# Detect where rel_change is < 5% for 3 consecutive bins
+stable = grouped["rel_change"] < 0.05
+rolling_stable = stable.rolling(window=3).apply(lambda x: x.all(), raw=True).fillna(0)
+
+# Find first index where condition is met
+stab_idx = rolling_stable.gt(0).idxmax()
+stab_n = grouped.loc[stab_idx, "n"]
+print(f"📌 SBS9: Polyphen2 score stabilizes after 3 bins <5% at ~{stab_n} mutations")
+
+# Plot
+plt.figure(figsize=(6, 4))
+plt.errorbar(grouped["n"], grouped["mean"], yerr=grouped["std"], fmt="-o", label="Polyphen2 Score")
+plt.axvline(stab_n, color="red", linestyle="--", label=f"Stabilized at {stab_n}")
+plt.title("SBS9: Polyphen2 Score Stabilization Check (3x <5%)")
+plt.xlabel("Number of Mutations")
+plt.ylabel("Polyphen2 Score")
+plt.legend()
+plt.tight_layout()
+plt.savefig("results/SBS9/SBS9_polyphen2_stabilization_check.pdf")
+
+
+
+```
+
+--> Seems to be working great!! Let's automatize the process now
+
+
+
+
+
+
+
+
+
+
+
+
+XXXY RE MODIFY BLEOW
+
+For this analyze the `results/SBS*/*summary_all.tsv` files
+
+
+```bash
+python scripts/analyze_stabilization_points.py
+# --> Save to results/
+
+```
 
 
 
@@ -545,8 +765,8 @@ import pandas as pd
 import numpy as np
 
 # Load parquet
-df = pd.read_parquet("results/1_2_dimethylhydrazine_9cffdc696a32/n_2000/rep_01.annot.parquet") # 1_2_dimethylhydrazine_9cffdc696a32
-
+df = pd.read_parquet("results/acrylamide_fc03d8ed1dc2/n_2000/rep_01.annot.parquet") # 1_2_dimethylhydrazine_9cffdc696a32
+# aflatoxin_b1_60c8b83450ec 1_8_dinitropyrene_da7ddba98e4a  acrylamide_fc03d8ed1dc2
 # Decode ref_base integers to letters
 INT2BASE = np.array(["A", "C", "G", "T", "N"])
 df["ref_base_letter"] = INT2BASE[df["ref_base"]]
@@ -557,7 +777,7 @@ df["chr_clean"] = df["chr"].str.replace("^chr", "", regex=True)
 # Format to expected mutation text format
 df_txt = pd.DataFrame({
     "Project": "Simu",
-    "Sample": "1_2_dimethylhydrazine_9cffdc696a32", # CHANGE HERE !!!
+    "Sample": "acrylamide_fc03d8ed1dc2", # CHANGE HERE !!!
     "ID": ".",
     "Genome": "GRCh38",
     "mut_type": "SNP",
@@ -570,7 +790,7 @@ df_txt = pd.DataFrame({
 })
 
 # Save to file
-df_txt.to_csv("txt/input/1_2_dimethylhydrazine_9cffdc696a32-n_2000-rep_01.txt", sep="\t", index=False) # 
+df_txt.to_csv("txt/input/acrylamide_fc03d8ed1dc2-n_2000-rep_01.txt", sep="\t", index=False) # 
 ```
 
 #### Matrix and plot

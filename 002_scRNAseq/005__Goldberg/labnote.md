@@ -55344,7 +55344,7 @@ sbatch scripts/fitGAM_6knots_traj2_Part_Granule_subset-version5dim50kparam30res2
 sbatch scripts/fitGAM_6knots_traj2_Part_MLI1_subset-version5dim50kparam30res25.sh # 44043807 xxx
 
 ### traj of interest MLI2 --> ONLY TRAJ OF INTEREST RAN; trajectory 1 START27_END19
-sbatch scripts/fitGAM_6knots_traj1_Part_MLI2_subset-version5dim50kparam30res25.sh # 44052450 xxx
+sbatch scripts/fitGAM_6knots_traj1_Part_MLI2_subset-version5dim50kparam30res25.sh # 44052450 ok
 
 
 
