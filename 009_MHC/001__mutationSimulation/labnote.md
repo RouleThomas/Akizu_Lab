@@ -464,7 +464,7 @@ python scripts/plot_signature_summary.py \
 --> The test seems good, results are the same as the one obtained by Joan. 
 
 
-## Simulation with annotation and plots - Run all mutation signature
+# Simulation with annotation and plots - Run all mutation signature
 
 
 Let's generate a custom code to run all mutation signature in a single script; script will:
@@ -485,14 +485,28 @@ bash scripts/GenerateScript-submit_simulation_array_v2.sh
 
 for f in scripts/submit_all_signatures/*.sh; do sbatch "$f"; done # ok
 
-XXXY BELOW NOT RUN!!!
-
 # Generate summary metrics and plots for each signature
 bash scripts/run_summary_plot_all.sh
 
 
+```
+
+--> ALL good, we got summary for all cancer SBS signatures! Now let's **represent all the unique mutation into a single plot; one plot per score**:
+
+```bash
+conda activate mutsim
+
+python scripts/plot_all_signatures_combined.py
+#--> results/combined_signature_summary_plots.pdf 
 
 ```
+
+
+
+
+
+
+
 
 ### Automatic summary plot interpretation
 
