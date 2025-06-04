@@ -314,6 +314,200 @@ wc -l ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHea
 - Among the 1192 genes, there are 1538 YAP1 peaks, from which 639 directly overlap with NIPBL
 
 
+## HUGE MISTAKE: email 20250604; I use -v instead of -wa to chekc for overlap... HERE below correction:
+
+
+```bash
+conda activate BedToBigwig
+# Check overlap QSER1 peaks with NIPBL
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader.bed -b ../008__ChIPseq_Nipbl/output/homer/Nipbl/peaks_noHeader.bed | uniq | wc -l # 525
+wc -l ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader.bed # 2073
+
+# Check overlap YAP1 peaks with NIPBL
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader.bed -b ../008__ChIPseq_Nipbl/output/homer/Nipbl/peaks_noHeader.bed | uniq | wc -l # 899
+wc -l ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader.bed # 1538
+```
+
+--> Among the 1192 genes cobound by QSER1 and YAP1; I exported the QSER1 and YAP1 peaks and check their overlap with NIPBL:
+- Among the 1192 genes, there are 2073 QSER1 peaks, from which 525 directly overlap with NIPBL
+- Among the 1192 genes, there are 1538 YAP1 peaks, from which 899 directly overlap with NIPBL
+
+
+If we add extension to these QSER1, YAP1, NIPBL peaks:
+
+
+
+```bash
+# Add extension 
+bedtools slop -i ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 200 > ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader_extend200bp.bed
+bedtools slop -i ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 500 > ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader_extend500bp.bed
+bedtools slop -i ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 1000 > ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader_extend1kp.bed
+bedtools slop -i ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 2000 > ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader_extend2kp.bed
+bedtools slop -i ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 5000 > ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader_extend5kp.bed
+
+bedtools slop -i ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 200 > ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader_extend200bp.bed
+bedtools slop -i ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 500 > ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader_extend500bp.bed
+bedtools slop -i ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 1000 > ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader_extend1kp.bed
+bedtools slop -i ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 2000 > ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader_extend2kp.bed
+bedtools slop -i ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 5000 > ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader_extend5kp.bed
+
+
+
+# extended files:
+../008__ChIPseq_Nipbl/output/homer/Nipbl/peaks_noHeader_extend200bp.bed
+../008__ChIPseq_Nipbl/output/homer/Nipbl/peaks_noHeader_extend500bp.bed
+../008__ChIPseq_Nipbl/output/homer/Nipbl/peaks_noHeader_extend1kp.bed
+../008__ChIPseq_Nipbl/output/homer/Nipbl/peaks_noHeader_extend2kp.bed
+../008__ChIPseq_Nipbl/output/homer/Nipbl/peaks_noHeader_extend5kp.bed
+../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader_extend200bp.bed
+../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader_extend500bp.bed
+../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader_extend1kp.bed
+../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader_extend2kp.bed
+../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader_extend200bp.bed
+../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader_extend500bp.bed
+../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader_extend1kp.bed
+../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader_extend2kp.bed
+
+
+
+
+# overlap
+## Check overlap QSER1 peaks with NIPBL
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader_extend200bp.bed -b ../008__ChIPseq_Nipbl/output/homer/Nipbl/peaks_noHeader_extend200bp.bed | uniq | wc -l # 653
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader_extend500bp.bed -b ../008__ChIPseq_Nipbl/output/homer/Nipbl/peaks_noHeader_extend500bp.bed | uniq | wc -l # 750
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader_extend1kp.bed -b ../008__ChIPseq_Nipbl/output/homer/Nipbl/peaks_noHeader_extend1kp.bed | uniq | wc -l # 803
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader_extend2kp.bed -b ../008__ChIPseq_Nipbl/output/homer/Nipbl/peaks_noHeader_extend2kp.bed | uniq | wc -l # 891
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_noHeader_extend5kp.bed -b ../008__ChIPseq_Nipbl/output/homer/Nipbl/peaks_noHeader_extend5kp.bed | uniq | wc -l # 1090
+
+## Check overlap YAP1 peaks with NIPBL
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader_extend200bp.bed -b ../008__ChIPseq_Nipbl/output/homer/Nipbl/peaks_noHeader_extend200bp.bed | uniq | wc -l # 923
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader_extend500bp.bed -b ../008__ChIPseq_Nipbl/output/homer/Nipbl/peaks_noHeader_extend500bp.bed | uniq | wc -l # 941
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader_extend1kp.bed -b ../008__ChIPseq_Nipbl/output/homer/Nipbl/peaks_noHeader_extend1kp.bed | uniq | wc -l # 965
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader_extend2kp.bed -b ../008__ChIPseq_Nipbl/output/homer/Nipbl/peaks_noHeader_extend2kp.bed | uniq | wc -l # 1006
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/QSER1_YAP1_1192genes_ChIPseeker_YAP1_noHeader_extend5kp.bed -b ../008__ChIPseq_Nipbl/output/homer/Nipbl/peaks_noHeader_extend5kp.bed | uniq | wc -l # 1082
+
+
+```
+
+--> Among the 1192 genes cobound by QSER1 and YAP1; I exported the QSER1 and YAP1 peaks and check their overlap with NIPBL:
+- Among the 1192 genes, there are 2073 QSER1 peaks, from which 525 directly overlap with NIPBL (extension 200bp-> 653 peak overlap; 500bp-> 750; 1kb-> 803; 2kb-> 891; 5kb-> 1090)
+- Among the 1192 genes, there are 1538 YAP1 peaks, from which 899 directly overlap with NIPBL (extension 200bp-> 923 peak overlap; 500bp-> 941; 1kb-> 965; 2kb-> 1006; 5kb-> 1082)
+
+
+
+
+
+
+Same here huge mistake
+
+
+- For 3F: How many of the QSER1 peaks bind H3K4me1 and H3K27ac?(number)
+```bash
+conda activate BedToBigwig
+
+bedtools intersect -wa -a output/annotation_homer_hESC_WT_QSER1_pool_annot.bed -b output/ENCODE/Bernstein_H3K4me1.bed | uniq | wc -l # 4027
+bedtools intersect -wa -a output/annotation_homer_hESC_WT_QSER1_pool_annot.bed -b output/ENCODE/Bernstein_H3K27ac.bed | uniq | wc -l # 3618
+
+bedtools intersect -wa -a output/annotation_homer_hESC_WT_QSER1_pool_annot.bed -b output/ENCODE/Ren_H3K4me1.bed | uniq | wc -l # 3367
+bedtools intersect -wa -a output/annotation_homer_hESC_WT_QSER1_pool_annot.bed -b output/ENCODE/Ren_H3K27ac.bed | uniq | wc -l # 4862
+
+
+
+# Add extension 
+bedtools slop -i output/ENCODE/Bernstein_H3K4me1.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 200 > output/ENCODE/Bernstein_H3K4me1_extend200bp.bed
+bedtools slop -i output/ENCODE/Bernstein_H3K4me1.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 500 > output/ENCODE/Bernstein_H3K4me1_extend500bp.bed
+bedtools slop -i output/ENCODE/Bernstein_H3K4me1.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 1000 > output/ENCODE/Bernstein_H3K4me1_extend1kp.bed
+bedtools slop -i output/ENCODE/Bernstein_H3K4me1.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 2000 > output/ENCODE/Bernstein_H3K4me1_extend2kp.bed
+bedtools slop -i output/ENCODE/Bernstein_H3K4me1.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 5000 > output/ENCODE/Bernstein_H3K4me1_extend5kp.bed
+
+
+bedtools slop -i output/ENCODE/Bernstein_H3K27ac.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 200 > output/ENCODE/Bernstein_H3K27ac_extend200bp.bed
+bedtools slop -i output/ENCODE/Bernstein_H3K27ac.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 500 > output/ENCODE/Bernstein_H3K27ac_extend500bp.bed
+bedtools slop -i output/ENCODE/Bernstein_H3K27ac.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 1000 > output/ENCODE/Bernstein_H3K27ac_extend1kp.bed
+bedtools slop -i output/ENCODE/Bernstein_H3K27ac.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 2000 > output/ENCODE/Bernstein_H3K27ac_extend2kp.bed
+bedtools slop -i output/ENCODE/Bernstein_H3K27ac.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 5000 > output/ENCODE/Bernstein_H3K27ac_extend5kp.bed
+
+bedtools slop -i output/ENCODE/Ren_H3K4me1.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 200 > output/ENCODE/Ren_H3K4me1_extend200bp.bed
+bedtools slop -i output/ENCODE/Ren_H3K4me1.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 500 > output/ENCODE/Ren_H3K4me1_extend500bp.bed
+bedtools slop -i output/ENCODE/Ren_H3K4me1.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 1000 > output/ENCODE/Ren_H3K4me1_extend1kp.bed
+bedtools slop -i output/ENCODE/Ren_H3K4me1.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 2000 > output/ENCODE/Ren_H3K4me1_extend2kp.bed
+bedtools slop -i output/ENCODE/Ren_H3K4me1.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 5000 > output/ENCODE/Ren_H3K4me1_extend5kp.bed
+
+
+
+bedtools slop -i output/ENCODE/Ren_H3K27ac.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 200 > output/ENCODE/Ren_H3K27ac_extend200bp.bed
+bedtools slop -i output/ENCODE/Ren_H3K27ac.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 500 > output/ENCODE/Ren_H3K27ac_extend500bp.bed
+bedtools slop -i output/ENCODE/Ren_H3K27ac.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 1000 > output/ENCODE/Ren_H3K27ac_extend1kp.bed
+bedtools slop -i output/ENCODE/Ren_H3K27ac.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 2000 > output/ENCODE/Ren_H3K27ac_extend2kp.bed
+bedtools slop -i output/ENCODE/Ren_H3K27ac.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 5000 > output/ENCODE/Ren_H3K27ac_extend5kp.bed
+
+
+
+
+## Files extended
+../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend200bp.bed
+../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend500bp.bed
+../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend1kp.bed
+../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend2kp.bed
+../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend5kp.bed
+
+output/ENCODE/Bernstein_H3K4me1_extend200bp.bed
+output/ENCODE/Bernstein_H3K4me1_extend500bp.bed
+output/ENCODE/Bernstein_H3K4me1_extend1kp.bed
+output/ENCODE/Bernstein_H3K4me1_extend2kp.bed
+output/ENCODE/Bernstein_H3K4me1_extend5kp.bed
+
+output/ENCODE/Bernstein_H3K27ac_extend200bp.bed
+output/ENCODE/Bernstein_H3K27ac_extend500bp.bed
+output/ENCODE/Bernstein_H3K27ac_extend1kp.bed
+output/ENCODE/Bernstein_H3K27ac_extend2kp.bed
+output/ENCODE/Bernstein_H3K27ac_extend5kp.bed
+
+Ren_H3K4me1_extend200bp.bed
+Ren_H3K4me1_extend500bp.bed
+Ren_H3K4me1_extend1kp.bed
+Ren_H3K4me1_extend2kp.bed
+Ren_H3K4me1_extend5kp.bed
+
+output/ENCODE/Ren_H3K27ac_extend200bp.bed
+output/ENCODE/Ren_H3K27ac_extend500bp.bed
+output/ENCODE/Ren_H3K27ac_extend1kp.bed
+output/ENCODE/Ren_H3K27ac_extend2kp.bed
+output/ENCODE/Ren_H3K27ac_extend5kp.bed
+
+
+# overlap extended
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend200bp.bed -b output/ENCODE/Bernstein_H3K4me1_extend200bp.bed | uniq | wc -l # 6710
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend500bp.bed -b output/ENCODE/Bernstein_H3K4me1_extend500bp.bed | uniq | wc -l # 8522
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend1kp.bed -b output/ENCODE/Bernstein_H3K4me1_extend1kp.bed | uniq | wc -l # 9478
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend2kp.bed -b output/ENCODE/Bernstein_H3K4me1_extend2kp.bed | uniq | wc -l # 9974
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend5kp.bed -b output/ENCODE/Bernstein_H3K4me1_extend5kp.bed | uniq | wc -l # 10721
+
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend200bp.bed -b output/ENCODE/Bernstein_H3K27ac_extend200bp.bed | uniq | wc -l # 4420
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend500bp.bed -b output/ENCODE/Bernstein_H3K27ac_extend500bp.bed | uniq | wc -l # 4652
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend1kp.bed -b output/ENCODE/Bernstein_H3K27ac_extend1kp.bed | uniq | wc -l # 4820
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend2kp.bed -b output/ENCODE/Bernstein_H3K27ac_extend2kp.bed | uniq | wc -l # 5053
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend5kp.bed -b output/ENCODE/Bernstein_H3K27ac_extend5kp.bed | uniq | wc -l # 
+
+
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend200bp.bed -b output/ENCODE/Ren_H3K4me1_extend200bp.bed | uniq | wc -l # 5743
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend500bp.bed -b output/ENCODE/Ren_H3K4me1_extend500bp.bed | uniq | wc -l # 7625
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend1kp.bed -b output/ENCODE/Ren_H3K4me1_extend1kp.bed | uniq | wc -l # 8751
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend2kp.bed -b output/ENCODE/Ren_H3K4me1_extend2kp.bed | uniq | wc -l # 9356
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend5kp.bed -b output/ENCODE/Ren_H3K4me1_extend5kp.bed | uniq | wc -l # 10343
+
+
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend200bp.bed -b output/ENCODE/Ren_H3K27ac_extend200bp.bed | uniq | wc -l # 6005
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend500bp.bed -b output/ENCODE/Ren_H3K27ac_extend500bp.bed | uniq | wc -l # 6275
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend1kp.bed -b output/ENCODE/Ren_H3K27ac_extend1kp.bed | uniq | wc -l # 6494
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend2kp.bed -b output/ENCODE/Ren_H3K27ac_extend2kp.bed | uniq | wc -l # 6758
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend5kp.bed -b output/ENCODE/Ren_H3K27ac_extend5kp.bed | uniq | wc -l # 7589
+
+
+```
+
+
+
 
 
 

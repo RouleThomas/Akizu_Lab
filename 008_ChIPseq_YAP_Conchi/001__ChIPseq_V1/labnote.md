@@ -9878,6 +9878,22 @@ tail -n +2 output/ChIPseeker/annotation_homer_hESC_WT_EZH2_pool_annot.txt | bedt
 tail -n +2 output/ChIPseeker/annotation_homer_hESC_WT_YAP1_R1_annot.txt | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 500 >  output/ChIPseeker/annotation_homer_hESC_WT_YAP1_R1_annot_extend500bp.txt # tail used top skip the header (1st line)
 tail -n +2 output/ChIPseeker/annotation_homer_hESC_WT_TEAD4_R1_annot.txt | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 500 >  output/ChIPseeker/annotation_homer_hESC_WT_TEAD4_R1_annot_extend500bp.txt # tail used top skip the header (1st line)
 
+
+# extend the peak of 1kb up and down
+tail -n +2 output/homer/hESC_WT_QSER1_outputPeaks.bed | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 1000 >  output/homer/hESC_WT_QSER1_outputPeaks_extend1kp.bed # tail used top skip the header (1st line)
+
+
+
+
+
+# extend the peak of 2kb up and down
+tail -n +2 output/homer/hESC_WT_QSER1_outputPeaks.bed | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 2000 >  output/homer/hESC_WT_QSER1_outputPeaks_extend2kp.bed # tail used top skip the header (1st line)
+
+
+
+# extend the peak of 5kb up and down
+tail -n +2 output/homer/hESC_WT_QSER1_outputPeaks.bed | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 5000 >  output/homer/hESC_WT_QSER1_outputPeaks_extend5kp.bed # tail used top skip the header (1st line)
+
 ```
 
 --> Venn diagram of peak made using [Intervene webtool](https://www.bioinformatics.com.cn/plot_basic_genomic_regions_overlap_venn_diagram_026_en) From this [paper](https://www.bioinformatics.com.cn/static/papers/026_fig2A.pdf).

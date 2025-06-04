@@ -349,6 +349,9 @@ conda activate deeptools
 
 sbatch scripts/matrix_5kb_NIPBLYAP1QSER1_NIPBLpeaks.sh # 40544977 ok
 sbatch scripts/matrix_2kb_NIPBLYAP1QSER1_NIPBLpeaks.sh # 40544978 ok
+
+sbatch scripts/matrix_2kb_NIPBLYAP1QSER1_NIPBLpeaks-QSER1NIPBL.sh # interactive
+
 ```
 
 --> All good, show postive correlation/overlapping between NIPBL, YAP1, and QSER1
@@ -368,8 +371,62 @@ output/annotation_homer_hESC_WT_QSER1_pool_annot.bed
 ```bash
 conda activate BedToBigwig
 
-bedtools intersect -v -a ../007__ENCODE_hESC_histone/output/annotation_homer_hESC_WT_QSER1_pool_annot.bed -b output/homer/Nipbl/peaks.bed | wc -l # 9505
+bedtools intersect -v -a ../007__ENCODE_hESC_histone/output/annotation_homer_hESC_WT_QSER1_pool_annot.bed -b output/homer/Nipbl/peaks.bed | wc -l # 9505 do NOT overlap with NIPBL
+bedtools intersect -wa -a ../007__ENCODE_hESC_histone/output/annotation_homer_hESC_WT_QSER1_pool_annot.bed -b output/homer/Nipbl/peaks.bed | wc -l # 2957
 
 bedtools intersect -v -a output/homer/Nipbl/peaks.bed -b ../007__ENCODE_hESC_histone/output/annotation_homer_hESC_WT_QSER1_pool_annot.bed | wc -l # 18351
 
+
+# 
+
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_noHeader.bed -b output/homer/Nipbl/peaks_noHeader.bed | uniq | wc -l # 2956
+
+
+
 ```
+
+
+Let's extend the peak size of QSER1 and NIPBL of 200bp up and down; and 500bp up and down and check overlap again.
+
+
+
+```bash
+# Extend peak size
+
+bedtools slop -i output/homer/Nipbl/peaks_noHeader.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 200 > output/homer/Nipbl/peaks_noHeader_extend200bp.bed
+bedtools slop -i output/homer/Nipbl/peaks_noHeader.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 500 > output/homer/Nipbl/peaks_noHeader_extend500bp.bed
+bedtools slop -i output/homer/Nipbl/peaks_noHeader.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 1000 > output/homer/Nipbl/peaks_noHeader_extend1kp.bed
+bedtools slop -i output/homer/Nipbl/peaks_noHeader.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 2000 > output/homer/Nipbl/peaks_noHeader_extend2kp.bed
+bedtools slop -i output/homer/Nipbl/peaks_noHeader.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 5000 > output/homer/Nipbl/peaks_noHeader_extend5kp.bed
+
+
+## Files extended
+../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend200bp.bed
+../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend500bp.bed
+../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend1kp.bed
+../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend2kp.bed
+../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend5kp.bed
+
+output/homer/Nipbl/peaks_noHeader_extend200bp.bed
+output/homer/Nipbl/peaks_noHeader_extend500bp.bed
+output/homer/Nipbl/peaks_noHeader_extend1kp.bed
+output/homer/Nipbl/peaks_noHeader_extend2kp.bed
+output/homer/Nipbl/peaks_noHeader_extend5kp.bed
+
+## overlap
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend200bp.bed -b output/homer/Nipbl/peaks_noHeader_extend200bp.bed | uniq | wc -l # 3733
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend500bp.bed -b output/homer/Nipbl/peaks_noHeader_extend500bp.bed | uniq | wc -l # 4219
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend1kp.bed -b output/homer/Nipbl/peaks_noHeader_extend1kp.bed | uniq | wc -l # 4496
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend2kp.bed -b output/homer/Nipbl/peaks_noHeader_extend2kp.bed | uniq | wc -l # 4838
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend5kp.bed -b output/homer/Nipbl/peaks_noHeader_extend5kp.bed | uniq | wc -l # 5908
+
+```
+
+
+
+Then overlap with only QSER1 intergenic peaks (ie. removing QSER1 promoter and TSS peaks)
+
+XXXY
+
+
+

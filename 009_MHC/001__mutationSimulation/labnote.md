@@ -874,15 +874,30 @@ python scripts/simulate_random_flat96.py \
   --out results/random/n_8000/rep_01.annot.parquet \
   --seed 42
 
+500 1000 2000 4000 8000 16000 32000 64000
+# Run one rep per mutation count in interactive
+python scripts/simulate_random_flat96.py \
+  --n 64000 \
+  --exome-dir parquet \
+  --context-index indices/context96.pkl \
+  --out results/random_interactive/n_64000/rep_01.annot.parquet \
+  --rep 1 \
+  --seed 42
+
 #--> Seems to be working!
 
 # run in a job
 
 sbatch scripts/submit_simulation_random_flat96.sh # 44107109 fail misses --rep; 44134356 xxx
 
+# Too long, lets run in interactive to see:
+bash scripts/submit_simulation_random_flat96_interactive.sh
+
 XXXY RUN summary annotation
 
 ```
+
+
 
 
 
