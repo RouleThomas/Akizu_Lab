@@ -234,6 +234,17 @@ sbatch scripts/matrix_2kb_QSER1YAP1peaks_Bernstein_2.sh #  interactive
 # YAP:QSER1 peaks (YAP1, QSER1, H3K4me1, H3K27ac, H3K36me3, H3K27me3, EZH2, NIPBL, NIBPLinput)
 sbatch scripts/matrix_2kb_QSER1YAP1peaks_Ren_2input.sh #  interactive
 sbatch scripts/matrix_2kb_QSER1YAP1peaks_Bernstein_2input.sh #  interactive
+sbatch scripts/matrix_2kb_QSER1YAP1peaks_Ren_3input.sh #  xxxY TO RUN!!!
+sbatch scripts/matrix_2kb_QSER1YAP1peaks_Bernstein_3input.sh #  xxxY TO RUN!!!
+
+
+# 1538 YAP1 only peaks QSER1:YAP1 co bound genes (YAP1, QSER1, H3K4me1, H3K27ac, H3K36me3, H3K27me3, EZH2, NIPBL, NIBPLinput)
+sbatch scripts/matrix_2kb_H3K4me3_YAP1peaksQSER1YAP1genes_Ren.sh # xxxY TO RUN!!!
+sbatch scripts/matrix_2kb_H3K4me3_YAP1peaksQSER1YAP1genes_Bernstein.sh # TO PREPARE!!!
+
+# 2073 QSER1 only peaks QSER1:YAP1 co bound genes (QSER1, YAP1, H3K4me1, H3K27ac, H3K36me3, H3K27me3, EZH2, NIPBL, NIBPLinput)
+sbatch scripts/matrix_2kb_H3K4me3_QSER1peaksQSER1YAP1genes_Ren.sh # TO PREPARE!!!
+sbatch scripts/matrix_2kb_H3K4me3_QSER1peaksQSER1YAP1genes_Bernstein.sh # TO PREPARE!!!
 
 
 # YAP1 only peaks
