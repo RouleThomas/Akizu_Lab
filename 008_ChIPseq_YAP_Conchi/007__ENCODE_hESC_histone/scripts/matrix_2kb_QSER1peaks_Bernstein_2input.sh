@@ -54,4 +54,12 @@ plotHeatmap -m output/deeptools/matrix_2kb_QSER1peaks_Bernstein_2input.gz \
     --zMax 25 8 8 4 15 10 10 10
 
 
+plotHeatmap -m output/deeptools/matrix_2kb_QSER1peaks_Bernstein_2input.gz \
+    -out output/deeptools/matrix_2kb_QSER1peaks_Bernstein_2input_heatmap4.pdf \
+    --samplesLabel "QSER1" "H3K4me1" "H3K27ac" "H3K36me3" "H3K27me3" "EZH2" "NIPBL" "input" \
+    --colorList 'black, yellow' \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 3 \
+    --zMax 25 8 8 4 15 10 10 2
 
