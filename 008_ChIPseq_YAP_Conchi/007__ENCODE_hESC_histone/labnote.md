@@ -263,8 +263,8 @@ sbatch scripts/matrix_2kb_QSER1peaks_Bernstein_2.sh # interactive
 sbatch scripts/matrix_2kb_QSER1peaks_Ren_2.sh # interactive
 
 # QSER1 only peaks (QSER1, H3K4me1, H3K27ac, H3K36me3, H3K27me3, EZH2, NIPBL, NIPBLinput)
-sbatch scripts/matrix_2kb_QSER1peaks_Bernstein_2input.sh #  xxxy hereyo
-sbatch scripts/matrix_2kb_QSER1peaks_Ren_2input.sh # xxxy hereyo
+sbatch scripts/matrix_2kb_QSER1peaks_Bernstein_2input.sh #  interactive
+sbatch scripts/matrix_2kb_QSER1peaks_Ren_2input.sh # interactive
 
 # EZH2 and H3K27me3 signal - All genes
 sbatch scripts/matrix_5kb_H3K27me3_Bernstein_EZH2008001_allGenes.sh # 31762805 ok
