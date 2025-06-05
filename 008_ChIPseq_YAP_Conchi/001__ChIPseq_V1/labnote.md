@@ -9881,18 +9881,57 @@ tail -n +2 output/ChIPseeker/annotation_homer_hESC_WT_TEAD4_R1_annot.txt | bedto
 
 # extend the peak of 1kb up and down
 tail -n +2 output/homer/hESC_WT_QSER1_outputPeaks.bed | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 1000 >  output/homer/hESC_WT_QSER1_outputPeaks_extend1kp.bed # tail used top skip the header (1st line)
+conda activate BedToBigwig
 
-
+tail -n +2 ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks.bed | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 1000 >  ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks_extend1kp.bed # tail used top skip the header (1st line)
 
 
 
 # extend the peak of 2kb up and down
 tail -n +2 output/homer/hESC_WT_QSER1_outputPeaks.bed | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 2000 >  output/homer/hESC_WT_QSER1_outputPeaks_extend2kp.bed # tail used top skip the header (1st line)
 
+tail -n +2 ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks.bed | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 2000 >  ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks_extend2kp.bed # tail used top skip the header (1st line)
 
 
 # extend the peak of 5kb up and down
 tail -n +2 output/homer/hESC_WT_QSER1_outputPeaks.bed | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 5000 >  output/homer/hESC_WT_QSER1_outputPeaks_extend5kp.bed # tail used top skip the header (1st line)
+
+tail -n +2 ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks.bed | bedtools slop -i - -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 5000 >  ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks_extend5kp.bed # tail used top skip the header (1st line)
+
+
+# AFTER HUGE FAIL email 20250604
+#--> Overlap QSER1 and YAP1
+
+## Files extended
+../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks.bed
+../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend200bp.bed
+../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend500bp.bed
+../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend1kp.bed
+../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend2kp.bed
+../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend5kp.bed
+
+../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks_noHeader.bed
+../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks_extend200bp.bed
+../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks_extend500bp.bed
+../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks_extend1kp.bed
+../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks_extend2kp.bed
+../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks_extend5kp.bed
+
+
+## Overlap with bedtools
+
+conda activate BedToBigwig
+
+
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks.bed -b ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks_noHeader.bed | uniq | wc -l #   199
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend200bp.bed -b ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks_extend200bp.bed | uniq | wc -l #  220
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend500bp.bed -b ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks_extend500bp.bed | uniq | wc -l #  258
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend1kp.bed -b ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks_extend1kp.bed | uniq | wc -l #   308
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend2kp.bed -b ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks_extend2kp.bed | uniq | wc -l #   378
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend5kp.bed -b ../003__ChIPseq_pluripotency/output/homer/hESC_WT_YAP1_R1/peaks_extend5kp.bed | uniq | wc -l #   573
+
+
+
 
 ```
 

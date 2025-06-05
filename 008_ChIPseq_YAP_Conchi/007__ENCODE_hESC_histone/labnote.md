@@ -227,6 +227,11 @@ sbatch scripts/matrix_5kb_QSER1YAP1peaks_Ren.sh # 40532511 ok
 sbatch scripts/matrix_2kb_QSER1YAP1peaks_Bernstein.sh # 40532543 ok
 sbatch scripts/matrix_5kb_QSER1YAP1peaks_Bernstein.sh # 40532556 ok
 
+# YAP:QSER1 peaks (YAP1, QSER1, H3K4me1, H3K27ac, H3K36me3, H3K27me3, EZH2, NIPBL)
+sbatch scripts/matrix_2kb_QSER1YAP1peaks_Ren_2.sh #  xxx
+sbatch scripts/matrix_2kb_QSER1YAP1peaks_Bernstein_2.sh #  xxx
+
+
 
 # YAP1 only peaks
 sbatch scripts/matrix_2kb_H3K4me3_YAP1peaks_Ren.sh # 29178940 ok
@@ -249,6 +254,10 @@ sbatch scripts/matrix_10kb_H3K4me3_QSER1peaks_Bernstein.sh # 29179387 ok
 # QSER1 only peaks (QSER1, H3K4me1, H3K27ac, H3K36me3, H3K27me3, EZH2)
 sbatch scripts/matrix_2kb_QSER1peaks_Bernstein.sh # 40287751 ok
 sbatch scripts/matrix_2kb_QSER1peaks_Ren.sh # 40292479 ok
+
+# QSER1 only peaks (QSER1, H3K4me1, H3K27ac, H3K36me3, H3K27me3, EZH2, NIPBL)
+sbatch scripts/matrix_2kb_QSER1peaks_Bernstein_2.sh #  xxx
+sbatch scripts/matrix_2kb_QSER1peaks_Ren_2.sh #  xxx
 
 
 # EZH2 and H3K27me3 signal - All genes
@@ -502,6 +511,38 @@ bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPe
 bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend1kp.bed -b output/ENCODE/Ren_H3K27ac_extend1kp.bed | uniq | wc -l # 6494
 bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend2kp.bed -b output/ENCODE/Ren_H3K27ac_extend2kp.bed | uniq | wc -l # 6758
 bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend5kp.bed -b output/ENCODE/Ren_H3K27ac_extend5kp.bed | uniq | wc -l # 7589
+
+
+```
+
+
+Let's now check the overlap for the heatmap with the QSER1 peaks with QSER1, H3K4me1, H3K27ac, H3K36me3, H3K27me3, EZH2, NIPBL
+
+```bash
+conda activate BedToBigwig
+
+# files
+../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks.bed
+../007__ENCODE_hESC_histone/output/ENCODE/Bernstein_H3K4me1.bed
+../007__ENCODE_hESC_histone/output/ENCODE/Bernstein_H3K27ac.bed
+../007__ENCODE_hESC_histone/output/ENCODE/Bernstein_H3K36me3.bed
+../007__ENCODE_hESC_histone/output/ENCODE/Bernstein_H3K27me3.bed
+../001__ChIPseq_V1/output/homer/hESC_WT_EZH2_outputPeaks.bed
+../008__ChIPseq_Nipbl/output/homer/Nipbl/peaks_noHeader.bed
+ 
+
+
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks.bed -b ../007__ENCODE_hESC_histone/output/ENCODE/Bernstein_H3K4me1.bed | uniq | wc -l # 4027
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks.bed -b ../007__ENCODE_hESC_histone/output/ENCODE/Bernstein_H3K27ac.bed | uniq | wc -l # 3618
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks.bed -b ../007__ENCODE_hESC_histone/output/ENCODE/Bernstein_H3K36me3.bed | uniq | wc -l # 14
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks.bed -b ../007__ENCODE_hESC_histone/output/ENCODE/Bernstein_H3K27me3.bed | uniq | wc -l # 2229
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks.bed -b ../001__ChIPseq_V1/output/homer/hESC_WT_EZH2_outputPeaks.bed | uniq | wc -l # 445
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks.bed -b ../008__ChIPseq_Nipbl/output/homer/Nipbl/peaks_noHeader.bed | uniq | wc -l # 2956
+
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks.bed -b ../007__ENCODE_hESC_histone/output/ENCODE/Ren_H3K4me1.bed | uniq | wc -l # 3367
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks.bed -b ../007__ENCODE_hESC_histone/output/ENCODE/Ren_H3K27ac.bed | uniq | wc -l # 4862
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks.bed -b ../007__ENCODE_hESC_histone/output/ENCODE/Ren_H3K36me3.bed | uniq | wc -l # 58
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks.bed -b ../007__ENCODE_hESC_histone/output/ENCODE/Ren_H3K27me3.bed | uniq | wc -l # 1563
 
 
 ```
