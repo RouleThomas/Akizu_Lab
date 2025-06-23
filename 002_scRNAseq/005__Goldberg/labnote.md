@@ -52840,7 +52840,12 @@ pdf("output/seurat/FeaturePlot_SCT_WT_CB-integrateMerge-version5-List678.pdf", w
 FeaturePlot(WT_Kcnc1_CB_integrateMerge.sct, features = c("Gabra6", "Pax6", "Sorcs3", "Ptprk", "Nxph1", "Cdh22",  "Klhl1", "Gfra2", "Aldh1a3", "Galntl6", "Kcnc2", "Pax2", "Eomes", "Rgs6", "Tafa2", "Calb1", "Slc1a6", "Car8", "Aqp4", "Slc39a12", "Zeb2", "Aldoc", "Cnp", "Vcan", "Sox6", "Mbp", "Mag", "Plp1", "Itgam", "Cx3cr1", "Ptgds", "Dcn", "Lef1", "Notum", "Apcdd1", "Dlc1", "Pdgfrb", "Actb", "Tmsb4x", "Kl",  "Ttr"), max.cutoff = 2, cols = c("grey", "red"), raster = FALSE)
 dev.off()
 
-
+pdf("output/seurat/FeaturePlot_SCT_WT_CB-integrateMerge-version5-testPseudotime1.pdf", width=25, height=25)
+FeaturePlot(WT_Kcnc1_CB_integrateMerge.sct, features = c("Cops5", "Tmem131", "Mitd1", "Serpine2", "Olfm1", "Terf1", "Lmbrd1", "Retreg2", "Nenf", "Taf3", "Gm9929", "Angel2"), max.cutoff = 2, cols = c("grey", "red"), raster = FALSE)
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_CB-integrateMerge-version5-testPseudotime2.pdf", width=25, height=25)
+FeaturePlot(WT_Kcnc1_CB_integrateMerge.sct, features = c("Npdc1", "Wdr5", "Golga2","Zfp408", "Cenpb" , "Cep250", "Phf20", "Ncoa5", "Polr3k", "Actl6a", "Tmem13al", "Vps72", "Tet2", "Gm15688", "Hnrnpr", "Thap3", "En2", "Nub1", "Aurkaip1", "Bod1l", "Gusb", "Sbds"), max.cutoff = 2, cols = c("grey", "red"), raster = FALSE)
+dev.off()
 
 
 # save ######################################################
@@ -55194,8 +55199,6 @@ traj1_l2fc0$padj <- p.adjust(traj1_l2fc0$pvalue, "fdr")
 traj1_l2fc0$gene <- rownames(traj1_l2fc0) # create new column label gene; as matrix before
 condRes_traj1_l2fc0 <- traj1_l2fc0[, c(ncol(traj1_l2fc0), 1:(ncol(traj1_l2fc0)-1))] # just to put gene column 1st
 
-XXXY HERE !!!
-
 write.table(condRes_traj1_l2fc0, file = c("output/condiments/condRes-traj1_MLI2-version5dim50kparam30res25-l2fc0.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
 # Heatmap clutering DEGs per traj _ REVISED METHOD
@@ -55294,21 +55297,21 @@ write.table(output_df,
             col.names = TRUE)
 
 # Check some genes individually - RNA
-load("output/condiments/condiments-Part_MLI2_subset_START29_END2_points100extendpc1stretch1-version5dim50kparam30res25.RData")
+load("output/condiments/condiments-Part_MLI2_subset_START27_END19_points100extendpc1stretch1-version5dim50kparam30res25.RData")
 set.seed(42)
 ## FOR LINEAGE 2
 counts <- WT_Kcnc1_CB_integrateMerge.sct[["RNA"]]@counts # Collect the counts from seurat
 cond <- factor(WT_Kcnc1_CB_integrateMerge.sct$condition) # identify conditions
-pseudotimes <- slingPseudotime(Part_MLI2_subset, na = FALSE) [,2] # HERE INDICATE TRAJ
-cellweights <- slingCurveWeights(Part_MLI2_subset) [,2] # HERE INDICATE TRAJ
+pseudotimes <- slingPseudotime(Part_MLI2_subset, na = FALSE) [,1] # HERE INDICATE TRAJ
+cellweights <- slingCurveWeights(Part_MLI2_subset) [,1] # HERE INDICATE TRAJ
 #### Subset the counts, pseudotimes, and cell weights for non-zero weights:
 sub_weights <- cellweights[cellweights != 0]
 sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
 sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
 sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
 
-pdf("output/condiments/plotSmoothers-traj1_MLI2_version5dim50kparam30res25-RNA_common-Atp5g3.pdf", width=4, height=2)
-plotSmoothers(traj1, sub_counts, gene = "Atp5g3", curvesCol = c("black","red")) +
+pdf("output/condiments/plotSmoothers-traj1_MLI2_version5dim50kparam30res25-RNA_common-Pqlc2.pdf", width=4, height=2)
+plotSmoothers(traj1, sub_counts, gene = "Pqlc2", curvesCol = c("black","red")) +
 scale_color_manual(values =c("black","red"))
 dev.off()
 
