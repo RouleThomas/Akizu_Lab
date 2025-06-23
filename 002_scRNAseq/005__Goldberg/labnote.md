@@ -54649,40 +54649,37 @@ set.seed(42)
 # --> Run fitGam() through Slurm
 
 
-XXXY HERE VELOW NOT MOD!!!!!!!!!!!!!!!!!!
-
-
 ################### Time Course effect COMMON CONDITIONS ######################################################
-## TRAJECTORY9 ##################
+## TRAJECTORY2 - MLI1 ##################
 set.seed(42)
-traj9_RNA_common <- readRDS("output/condiments/traj9_RNA_common.rds")
+traj2 <- readRDS("output/condiments/traj2_Part_MLI1_subset-version5dim50kparam30res25.rds")
 
 
 ## DEGs between condition
-traj9_RNA_common_l2fc0 <- conditionTest(traj9_RNA_common, l2fc = 0) # 
+traj2_l2fc0 <- conditionTest(traj2, l2fc = 0) # 
 
 
 # Correct the pvalue with fdr
-traj9_RNA_common_l2fc0$padj <- p.adjust(traj9_RNA_common_l2fc0$pvalue, "fdr")
+traj2_l2fc0$padj <- p.adjust(traj2_l2fc0$pvalue, "fdr")
 
 
 ### Save output tables
-traj9_RNA_common_l2fc0$gene <- rownames(traj9_RNA_common_l2fc0) # create new column label gene; as matrix before
-condRes_traj9_RNA_common_l2fc0 <- traj9_RNA_common_l2fc0[, c(ncol(traj9_RNA_common_l2fc0), 1:(ncol(traj9_RNA_common_l2fc0)-1))] # just to put gene column 1st
-write.table(condRes_traj9_RNA_common_l2fc0, file = c("output/condiments/condRes_traj9_RNA_common_l2fc0.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+traj2_l2fc0$gene <- rownames(traj2_l2fc0) # create new column label gene; as matrix before
+condRes_traj2_l2fc0 <- traj2_l2fc0[, c(ncol(traj2_l2fc0), 1:(ncol(traj2_l2fc0)-1))] # just to put gene column 1st
+write.table(condRes_traj2_l2fc0, file = c("output/condiments/condRes-traj2_MLI1-version5dim50kparam30res25-l2fc0.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
 # Heatmap clutering DEGs per traj _ REVISED METHOD
 ## import DEGs
-condRes_traj9_RNA_common_l2fc0 <- read.table("output/condiments/condRes_traj9_RNA_common_l2fc0.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) 
+condRes_traj2_l2fc0 <- read.table("output/condiments/condRes-traj2_MLI1-version5dim50kparam30res25-l2fc0.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) 
 
 ## Isolate significant DEGs and transform into a vector
-conditionGenes_traj9_l2fc0_vector <- condRes_traj9_RNA_common_l2fc0 %>% 
+conditionGenes_traj2_l2fc0 <- condRes_traj2_l2fc0 %>% 
   filter(padj <= 0.05) %>%
   pull(gene)
 
 # Predict smoothed values
 yhatSmooth <- 
-  predictSmooth(traj9_RNA_common, gene = conditionGenes_traj9_l2fc0_vector, nPoints = 50, tidy = FALSE) %>%
+  predictSmooth(traj2, gene = conditionGenes_traj2_l2fc0, nPoints = 50, tidy = FALSE) %>%
   log1p()
 yhatSmoothScaled <- t(apply(yhatSmooth, 1, scales::rescale))
 combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
@@ -54709,13 +54706,13 @@ df$Cluster <- factor(clusters[df$Gene])
 df_long$Cluster <- df$Cluster[match(df_long$Gene, df$Gene)]
 
 # Extract condition column
-df_long$Condition <- ifelse(str_detect(df_long$Pseudotime, "WT"), "WT", "Bap1KO")
+df_long$Condition <- ifelse(str_detect(df_long$Pseudotime, "WT"), "WT", "Kcnc1")
 
 # Extract the point value and convert it to numeric
 df_long$Updated_Pseudotime <- as.numeric(str_extract(df_long$Pseudotime, "(?<=point)\\d+"))
 
 # Define colors for the conditions
-color_map <- c("WT" = "blue", "Bap1KO" = "red")
+color_map <- c("WT" = "black", "Kcnc1" = "red")
 
 gene_counts <- df_long %>%
   group_by(Cluster) %>%
@@ -54725,21 +54722,20 @@ df_long <- df_long %>%
   mutate(ClusterLabel = paste0("Cluster ", Cluster, " (", GeneCount, " genes)"))
 
 # Plot using ggplot
-pdf("output/condiments/clustered_linePlot_traj9_RNA_common_l2fc0_cl10.pdf", width=10, height=5)
+pdf("output/condiments/clustered_linePlot_traj2_MLI1-version5dim50kparam30res25-l2fc0-cl10.pdf", width=10, height=5)
 ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
   geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
-  geom_line(data = subset(df_long, Condition == "Bap1KO"), aes(color = Condition), alpha = 0.5) +
+  geom_line(data = subset(df_long, Condition == "Kcnc1"), aes(color = Condition), alpha = 0.5) +
   scale_color_manual(values = color_map) + 
   facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
   theme_bw() +
   labs(title = "Gene Expression Dynamics Across Pseudotime by Cluster",
        x = "Pseudotime",
        y = "Expression Level")
-
 dev.off()
 
 # Plot using ggplot
-pdf("output/condiments/smoothed_linePlot_traj9_RNA_common_l2fc0_cl10.pdf", width=10, height=5)
+pdf("output/condiments/smoothed_linePlot_traj2_MLI1-version5dim50kparam30res25-l2fc0-cl10.pdf", width=10, height=5)
 ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
   geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
   scale_color_manual(values = color_map) + 
@@ -54761,50 +54757,30 @@ output_df <- data.frame(
 
 # Write the data frame to a .txt file
 write.table(output_df, 
-            file = "output/condiments/gene_clusters_traj9_RNA_common_l2fc0_cl10.txt", 
+            file = "output/condiments/gene_clusters-traj2_MLI1-version5dim50kparam30res25-l2fc0-cl10.txt", 
             sep = "\t", 
             quote = FALSE, 
             row.names = FALSE, 
             col.names = TRUE)
 
 # Check some genes individually - RNA
-## FOR LINEAGE 9
-counts <- multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@counts # Collect the counts from seurat
-cond <- factor(multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident) # identify conditions
-pseudotimes <- slingPseudotime(RNA_WT_Bap1KO, na = FALSE) [,9] # HERE INDICATE TRAJ
-cellweights <- slingCurveWeights(RNA_WT_Bap1KO) [,9] # HERE INDICATE TRAJ
+load("output/condiments/condiments-Part_MLI1_subset_START29_END2_points100extendpc1stretch1-version5dim50kparam30res25.RData")
+set.seed(42)
+## FOR LINEAGE 2
+counts <- WT_Kcnc1_CB_integrateMerge.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(WT_Kcnc1_CB_integrateMerge.sct$condition) # identify conditions
+pseudotimes <- slingPseudotime(Part_MLI1_subset, na = FALSE) [,2] # HERE INDICATE TRAJ
+cellweights <- slingCurveWeights(Part_MLI1_subset) [,2] # HERE INDICATE TRAJ
 #### Subset the counts, pseudotimes, and cell weights for non-zero weights:
 sub_weights <- cellweights[cellweights != 0]
 sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
 sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
 sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
 
-pdf("output/condiments/plotSmoothers_traj9_RNA_common-Eomes.pdf", width=4, height=2)
-plotSmoothers(traj9_RNA_common, sub_counts, gene = "Eomes", curvesCol = c("blue","red") ) +
-scale_color_manual(values =c("blue","red"))
+pdf("output/condiments/plotSmoothers-traj2_MLI1_version5dim50kparam30res25-RNA_common-Atp5g3.pdf", width=4, height=2)
+plotSmoothers(traj2, sub_counts, gene = "Atp5g3", curvesCol = c("black","red")) +
+scale_color_manual(values =c("black","red"))
 dev.off()
-
-
-# Check some genes individually - ATAC
-xxxxxx NOT WORKING xxxxxx
-multiome_WT_Bap1KO_QCV2vC1_GeneActivity.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.sct_numeric_label.rds")
-## FOR LINEAGE 9
-counts <- multiome_WT_Bap1KO_QCV2vC1_GeneActivity.sct[["GeneActivity"]]@counts # Collect the counts from seurat
-cond <- factor(multiome_WT_Bap1KO_QCV2vC1_GeneActivity.sct$orig.ident) # identify conditions
-pseudotimes <- slingPseudotime(RNA_WT_Bap1KO, na = FALSE) [,9] # HERE INDICATE TRAJ
-cellweights <- slingCurveWeights(RNA_WT_Bap1KO) [,9] # HERE INDICATE TRAJ
-#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
-sub_weights <- cellweights[cellweights != 0]
-sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
-sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
-sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
-
-pdf("output/condiments/plotSmoothers_traj9_ATAC_common-Prox1.pdf", width=4, height=2)
-plotSmoothers(traj9_RNA_common, sub_counts, gene = "Prox1", curvesCol = c("blue","red") ) +
-scale_color_manual(values =c("blue","red"))
-dev.off()
-xxxxxxxxxxxxxxxxxxxxxxxx
-
 
 
 
@@ -54843,7 +54819,7 @@ annotation_colors <- list(Cluster = cluster_colors)
 
 col_order <- order(grepl("WT", colnames(combinedData)), decreasing = TRUE)
 combinedData <- combinedData[, col_order]
-pdf("output/condiments/heatmap_traj9_RNA_common_l2fc0_cl10.pdf", width=5, height=5)
+pdf("output/condiments/heatmap-traj2_MLI1_version5dim50kparam30res25-l2fc0_cl10.pdf", width=5, height=5)
 pheatmap(combinedData,
   cluster_cols = FALSE,
   show_rownames = FALSE,
@@ -54859,6 +54835,15 @@ dev.off()
 
 
 ```
+
+--> All good
+  - do plot GO on each of the 10 clusters?
+  - Could increase stringeancy? Got ~850 DEG for MLI1, maybe too much?
+
+
+
+
+
 
 
 
@@ -55190,7 +55175,193 @@ set.seed(42)
 #  Differential expression
 # --> Run fitGam() through Slurm
 
-XXXY 
+
+################### Time Course effect COMMON CONDITIONS ######################################################
+## TRAJECTORY1 - MLI2 ##################
+set.seed(42)
+traj1 <- readRDS("output/condiments/traj1_Part_MLI2_subset-version5dim50kparam30res25.rds")
+
+
+## DEGs between condition
+traj1_l2fc0 <- conditionTest(traj1, l2fc = 0) # 
+
+
+# Correct the pvalue with fdr
+traj1_l2fc0$padj <- p.adjust(traj1_l2fc0$pvalue, "fdr")
+
+
+### Save output tables
+traj1_l2fc0$gene <- rownames(traj1_l2fc0) # create new column label gene; as matrix before
+condRes_traj1_l2fc0 <- traj1_l2fc0[, c(ncol(traj1_l2fc0), 1:(ncol(traj1_l2fc0)-1))] # just to put gene column 1st
+
+XXXY HERE !!!
+
+write.table(condRes_traj1_l2fc0, file = c("output/condiments/condRes-traj1_MLI2-version5dim50kparam30res25-l2fc0.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+# Heatmap clutering DEGs per traj _ REVISED METHOD
+## import DEGs
+condRes_traj1_l2fc0 <- read.table("output/condiments/condRes-traj1_MLI2-version5dim50kparam30res25-l2fc0.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) 
+
+## Isolate significant DEGs and transform into a vector
+conditionGenes_traj1_l2fc0 <- condRes_traj1_l2fc0 %>% 
+  filter(padj <= 0.05) %>%
+  pull(gene)
+
+# Predict smoothed values
+yhatSmooth <- 
+  predictSmooth(traj1, gene = conditionGenes_traj1_l2fc0, nPoints = 50, tidy = FALSE) %>%
+  log1p()
+yhatSmoothScaled <- t(apply(yhatSmooth, 1, scales::rescale))
+combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
+# Generate heatmap with clustering
+# Perform hierarchical clustering
+hc <- hclust(dist(combinedData))
+clusters <- cutree(hc, k=10) # !!!!!!!!!!!!!!!!!! CHANGE CLUSTER NB HERE !!!!!!!!!!!!!!!!!!
+# Create an annotation data frame for the rows based on cluster assignments
+annotation_row <- data.frame(Cluster = factor(clusters))
+
+
+
+# Line plots
+library("reshape2")
+library("stringr")
+# Assuming yhatSmoothScaled contains your smoothed gene expression data
+# Convert the yhatSmoothScaled data to a dataframe
+df <- as.data.frame(yhatSmoothScaled)
+df$Gene <- rownames(df)
+# Transform the data into a long format
+df_long <- melt(df, id.vars = "Gene", variable.name = "Pseudotime", value.name = "Expression")
+# Attach the cluster information to the data frame
+df$Cluster <- factor(clusters[df$Gene])
+df_long$Cluster <- df$Cluster[match(df_long$Gene, df$Gene)]
+
+# Extract condition column
+df_long$Condition <- ifelse(str_detect(df_long$Pseudotime, "WT"), "WT", "Kcnc1")
+
+# Extract the point value and convert it to numeric
+df_long$Updated_Pseudotime <- as.numeric(str_extract(df_long$Pseudotime, "(?<=point)\\d+"))
+
+# Define colors for the conditions
+color_map <- c("WT" = "black", "Kcnc1" = "red")
+
+gene_counts <- df_long %>%
+  group_by(Cluster) %>%
+  summarise(GeneCount = n_distinct(Gene))
+df_long <- df_long %>%
+  left_join(gene_counts, by = "Cluster") %>%
+  mutate(ClusterLabel = paste0("Cluster ", Cluster, " (", GeneCount, " genes)"))
+
+# Plot using ggplot
+pdf("output/condiments/clustered_linePlot_traj1_MLI2-version5dim50kparam30res25-l2fc0-cl10.pdf", width=10, height=5)
+ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
+  geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
+  geom_line(data = subset(df_long, Condition == "Kcnc1"), aes(color = Condition), alpha = 0.5) +
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+# Plot using ggplot
+pdf("output/condiments/smoothed_linePlot_traj1_MLI2-version5dim50kparam30res25-l2fc0-cl10.pdf", width=10, height=5)
+ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
+  geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Smoothed Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+
+
+### Export gene list from each cluster
+## Create a data frame with gene names and their respective cluster assignments
+output_df <- data.frame(
+  gene = rownames(combinedData),
+  cluster = clusters
+)
+
+# Write the data frame to a .txt file
+write.table(output_df, 
+            file = "output/condiments/gene_clusters-traj1_MLI2-version5dim50kparam30res25-l2fc0-cl10.txt", 
+            sep = "\t", 
+            quote = FALSE, 
+            row.names = FALSE, 
+            col.names = TRUE)
+
+# Check some genes individually - RNA
+load("output/condiments/condiments-Part_MLI2_subset_START29_END2_points100extendpc1stretch1-version5dim50kparam30res25.RData")
+set.seed(42)
+## FOR LINEAGE 2
+counts <- WT_Kcnc1_CB_integrateMerge.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(WT_Kcnc1_CB_integrateMerge.sct$condition) # identify conditions
+pseudotimes <- slingPseudotime(Part_MLI2_subset, na = FALSE) [,2] # HERE INDICATE TRAJ
+cellweights <- slingCurveWeights(Part_MLI2_subset) [,2] # HERE INDICATE TRAJ
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+pdf("output/condiments/plotSmoothers-traj1_MLI2_version5dim50kparam30res25-RNA_common-Atp5g3.pdf", width=4, height=2)
+plotSmoothers(traj1, sub_counts, gene = "Atp5g3", curvesCol = c("black","red")) +
+scale_color_manual(values =c("black","red"))
+dev.off()
+
+
+
+
+# Heatmap representation
+# Define colors for each cluster
+# 20
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "grey", "darkred", "darkblue", "gold", "darkgray", "lightblue", "lightgreen", "lightcoral", "lightpink", "lightcyan"))(20),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 10
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen" ))(10),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 8
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown" ))(8),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 7
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink" ))(7),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 6
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange"))(6),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 5
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple"))(5),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 4
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow" ))(4),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# Generate the heatmap
+
+col_order <- order(grepl("WT", colnames(combinedData)), decreasing = TRUE)
+combinedData <- combinedData[, col_order]
+pdf("output/condiments/heatmap-traj1_MLI2_version5dim50kparam30res25-l2fc0_cl10.pdf", width=5, height=5)
+pheatmap(combinedData,
+  cluster_cols = FALSE,
+  show_rownames = FALSE,
+  show_colnames = FALSE,
+  legend = TRUE,
+  cutree_rows = 10,
+  annotation_row = annotation_row,
+  annotation_colors = annotation_colors
+)
+dev.off()
+
+
 
 
 
@@ -55338,15 +55509,13 @@ conda activate condiments_Signac
 
 # trajectory per condition together (for DEG condition, condiments) - pseudotime-condition DEG
 ### traj of interest Granule --> ONLY TRAJ OF INTEREST RAN; trajectory 2 START26_END11
-sbatch scripts/fitGAM_6knots_traj2_Part_Granule_subset-version5dim50kparam30res25.sh # 44043797 xxx
+sbatch scripts/fitGAM_6knots_traj2_Part_Granule_subset-version5dim50kparam30res25.sh # 44043797 CANCEL TIME LIMIT increase to 750Go and removed header to R scripts: 45655379 xxx
 
 ### traj of interest MLI1 --> ONLY TRAJ OF INTEREST RAN; trajectory 2 START29_END2
-sbatch scripts/fitGAM_6knots_traj2_Part_MLI1_subset-version5dim50kparam30res25.sh # 44043807 xxx
+sbatch scripts/fitGAM_6knots_traj2_Part_MLI1_subset-version5dim50kparam30res25.sh # 44043807 ok
 
 ### traj of interest MLI2 --> ONLY TRAJ OF INTEREST RAN; trajectory 1 START27_END19
 sbatch scripts/fitGAM_6knots_traj1_Part_MLI2_subset-version5dim50kparam30res25.sh # 44052450 ok
-
-
 
 ```
 
