@@ -54782,8 +54782,8 @@ sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
 sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
 sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
 
-pdf("output/condiments/plotSmoothers-traj2_MLI1_version5dim50kparam30res25-RNA_common-Atp5g3.pdf", width=4, height=2)
-plotSmoothers(traj2, sub_counts, gene = "Atp5g3", curvesCol = c("black","red")) +
+pdf("output/condiments/plotSmoothers-traj2_MLI1_version5dim50kparam30res25-RNA_common-Apoe.pdf", width=4, height=2)
+plotSmoothers(traj2, sub_counts, gene = "Apoe", curvesCol = c("black","red"), lwd = 1, size = 0.2) +
 scale_color_manual(values =c("black","red"))
 dev.off()
 
@@ -54849,6 +54849,127 @@ dev.off()
 
 
 
+
+
+
+##### GO MLI1
+
+Let's do GO analysis for all the 10 clusters of pseudotime DEGs
+
+
+```bash
+conda activate deseq2
+```
+
+
+```R
+# Required packages
+library("clusterProfiler")
+library("org.Mm.eg.db")  
+library("enrichplot")
+library("tidyverse")
+library("patchwork")
+
+
+gene_clusters_traj2_MLI1 <- read.table("output/condiments/gene_clusters-traj2_MLI1-version5dim50kparam30res25-l2fc0-cl10.txt", 
+                            header = TRUE, 
+                            sep = "\t", 
+                            stringsAsFactors = FALSE)
+
+
+
+# GO BP
+pdf("output/Pathway/dotplot_BP-traj2_MLI1_version5dim50kparam30res25-l2fc0_cl10.pdf", width = 12, height = 6)
+# Loop through clusters 1 to 10
+for (cluster_id in sort(unique(gene_clusters_traj2_MLI1$cluster))) {
+  message("Processing cluster: ", cluster_id)
+  gene_list <- gene_clusters_traj2_MLI1 %>%
+    filter(cluster == cluster_id) %>%
+    pull(gene)
+  ego <- enrichGO(gene = gene_list,
+                  OrgDb = org.Mm.eg.db,
+                  keyType = "SYMBOL",
+                  ont = "BP",
+                  pvalueCutoff = 0.05,
+                  pAdjustMethod = "BH",
+                  readable = TRUE)
+  if (!is.null(ego) && nrow(ego) > 0) {
+    print(dotplot(ego, showCategory = 20) + ggtitle(paste("Cluster", cluster_id)))
+  } else {
+    print(ggplot() + ggtitle(paste("Cluster", cluster_id, "- No Enrichment")) + theme_void())
+  }
+}
+dev.off()
+
+
+
+# KEGG
+pdf("output/Pathway/dotplot_KEGG-traj2_MLI1_version5dim50kparam30res25-l2fc0_cl10.pdf", width = 12, height = 6)
+# Loop through clusters 1 to 10
+for (cluster_id in sort(unique(gene_clusters_traj2_MLI1$cluster))) {
+  message("Processing KEGG cluster: ", cluster_id)
+  gene_symbols <- gene_clusters_traj2_MLI1 %>%
+    filter(cluster == cluster_id) %>%
+    pull(gene)
+  # Convert to ENTREZ IDs
+  entrez_ids <- mapIds(org.Mm.eg.db,
+                       keys = gene_symbols,
+                       column = "ENTREZID",
+                       keytype = "SYMBOL",
+                       multiVals = "first") %>%
+    na.omit() %>% as.character()
+  # Perform KEGG enrichment if gene list not empty
+  ekegg <- if (length(entrez_ids) > 0) {
+    enrichKEGG(gene = entrez_ids,
+               organism = "mmu",
+               pvalueCutoff = 0.05,
+               pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  if (!is.null(ekegg) && nrow(ekegg) > 0) {
+    print(dotplot(ekegg, showCategory = 20) + ggtitle(paste("Cluster", cluster_id)))
+  } else {
+    print(ggplot() + ggtitle(paste("Cluster", cluster_id, "- No KEGG Enrichment")) + theme_void())
+  }
+}
+dev.off()
+
+
+
+
+######## Specific case ################
+
+genes_cluster <- gene_clusters_traj2_MLI1 %>%
+  filter(cluster == 10) %>%
+  pull(gene)
+
+# Convert SYMBOLs to ENTREZ IDs
+entrez_cluster <- mapIds(org.Mm.eg.db,
+                          keys = genes_cluster,
+                          column = "ENTREZID",
+                          keytype = "SYMBOL",
+                          multiVals = "first") %>%
+  na.omit() %>% as.character()
+
+# KEGG enrichment
+ekegg_cluster <- enrichKEGG(gene = entrez_cluster,
+                             organism = "mmu",
+                             pvalueCutoff = 0.05,
+                             pAdjustMethod = "BH")
+
+# Plot
+pdf("output/Pathway/dotplot_KEGG-traj2_MLI1_version5dim50kparam30res25-l2fc0_cl10_cluster10.pdf", width = 6, height = 6)
+if (!is.null(ekegg_cluster) && nrow(ekegg_cluster) > 0) {
+  print(dotplot(ekegg_cluster, showCategory = 10) )
+} else {
+  print(ggplot() + ggtitle("No KEGG Enrichment") + theme_void())
+}
+dev.off()
+
+
+
+
+```
 
 
 

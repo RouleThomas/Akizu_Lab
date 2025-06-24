@@ -1,22 +1,16 @@
 # Project
 
-**H9 cell lines**
+NPC at p20
 
-- PSC native:
-    - KO: IGG (R1, R2, R3), SUZ12 (R1, R2, R3), H3K27me3 (R2), EZH2 (R1, R2), EZH1 (R2)
-    - KOEF1aEZH1: IGG, EZH2
-    - WT: IGG, EZH1cs, EZH2, SUZ12
-
-
-
+One bio rep to test DOX inducible system (KO cell line with DOX to create overexpression):
+- WT (no dox)
+- KO (no dox)
+- OEKO (50ng/mL of dox) 
 
 
 **Objectives:**
-- Some issues with previous CutRun, here is more a test with few samples, only WT.
+- Check if the DOX system work! 
 
-This time, *no nuclear purification has been performed.*
-
---> **Working samples can be added as aditional WT replicate!**
 
 
 
