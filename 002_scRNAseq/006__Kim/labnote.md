@@ -11574,54 +11574,49 @@ set.seed(42)
 # --> Run fitGam() through Slurm
 
 
-XXXY HERE WAIT SLURM JOB!!!
-
-
-
-
-
 ################### Time Course effect COMMON CONDITIONS ######################################################
-## TRAJECTORY2 - MLI1 ##################
+## TRAJECTORY1 - DG_GC ##################
 set.seed(42)
-traj2 <- readRDS("output/condiments/traj2_Part_MLI1_subset-version5dim50kparam30res25.rds")
+traj1 <- readRDS("output/condiments/traj1_Part_DG_GC_subset-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.rds")
+
 
 
 ## DEGs between condition
-traj2_l2fc0 <- conditionTest(traj2, l2fc = 0) # 
+traj1_l2fc0 <- conditionTest(traj1, l2fc = 0) # 
 
 
 # Correct the pvalue with fdr
-traj2_l2fc0$padj <- p.adjust(traj2_l2fc0$pvalue, "fdr")
+traj1_l2fc0$padj <- p.adjust(traj1_l2fc0$pvalue, "fdr")
 
 
 ### Save output tables
-traj2_l2fc0$gene <- rownames(traj2_l2fc0) # create new column label gene; as matrix before
-condRes_traj2_l2fc0 <- traj2_l2fc0[, c(ncol(traj2_l2fc0), 1:(ncol(traj2_l2fc0)-1))] # just to put gene column 1st
-write.table(condRes_traj2_l2fc0, file = c("output/condiments/condRes-traj2_MLI1-version5dim50kparam30res25-l2fc0.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+traj1_l2fc0$gene <- rownames(traj1_l2fc0) # create new column label gene; as matrix before
+condRes_traj1_l2fc0 <- traj1_l2fc0[, c(ncol(traj1_l2fc0), 1:(ncol(traj1_l2fc0)-1))] # just to put gene column 1st
+write.table(condRes_traj1_l2fc0, file = c("output/condiments/condRes-traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
 # Heatmap clutering DEGs per traj _ REVISED METHOD
 ## import DEGs
-condRes_traj2_l2fc0 <- read.table("output/condiments/condRes-traj2_MLI1-version5dim50kparam30res25-l2fc0.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) 
+condRes_traj1_l2fc0 <- read.table("output/condiments/condRes-traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) 
 
 ## Isolate significant DEGs and transform into a vector
-conditionGenes_traj2_l2fc0 <- condRes_traj2_l2fc0 %>% 
+conditionGenes_traj1_l2fc0 <- condRes_traj1_l2fc0 %>% 
   filter(padj <= 0.05) %>%
   pull(gene)
 
 # Predict smoothed values
 yhatSmooth <- 
-  predictSmooth(traj2, gene = conditionGenes_traj2_l2fc0, nPoints = 50, tidy = FALSE) %>%
+  predictSmooth(traj1, gene = conditionGenes_traj1_l2fc0, nPoints = 50, tidy = FALSE) %>%
   log1p()
 yhatSmoothScaled <- t(apply(yhatSmooth, 1, scales::rescale))
 combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
 # Generate heatmap with clustering
 # Perform hierarchical clustering
 hc <- hclust(dist(combinedData))
-clusters <- cutree(hc, k=10) # !!!!!!!!!!!!!!!!!! CHANGE CLUSTER NB HERE !!!!!!!!!!!!!!!!!!
+clusters <- cutree(hc, k=5) # !!!!!!!!!!!!!!!!!! CHANGE CLUSTER NB HERE !!!!!!!!!!!!!!!!!!
 # Create an annotation data frame for the rows based on cluster assignments
 annotation_row <- data.frame(Cluster = factor(clusters))
 
-
+XXXY HERE
 
 # Line plots
 library("reshape2")
@@ -11637,13 +11632,13 @@ df$Cluster <- factor(clusters[df$Gene])
 df_long$Cluster <- df$Cluster[match(df_long$Gene, df$Gene)]
 
 # Extract condition column
-df_long$Condition <- ifelse(str_detect(df_long$Pseudotime, "WT"), "WT", "Kcnc1")
+df_long$Condition <- ifelse(str_detect(df_long$Pseudotime, "WT"), "WT", "Bap1KO")
 
 # Extract the point value and convert it to numeric
 df_long$Updated_Pseudotime <- as.numeric(str_extract(df_long$Pseudotime, "(?<=point)\\d+"))
 
 # Define colors for the conditions
-color_map <- c("WT" = "black", "Kcnc1" = "red")
+color_map <- c("WT" = "blue", "Bap1KO" = "red")
 
 gene_counts <- df_long %>%
   group_by(Cluster) %>%
@@ -11653,10 +11648,11 @@ df_long <- df_long %>%
   mutate(ClusterLabel = paste0("Cluster ", Cluster, " (", GeneCount, " genes)"))
 
 # Plot using ggplot
-pdf("output/condiments/clustered_linePlot_traj2_MLI1-version5dim50kparam30res25-l2fc0-cl10.pdf", width=10, height=5)
+#pdf("output/condiments/clustered_linePlot_traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl10.pdf", width=10, height=5)
+pdf("output/condiments/clustered_linePlot_traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl5.pdf", width=10, height=5)
 ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
   geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
-  geom_line(data = subset(df_long, Condition == "Kcnc1"), aes(color = Condition), alpha = 0.5) +
+  geom_line(data = subset(df_long, Condition == "Bap1KO"), aes(color = Condition), alpha = 0.5) +
   scale_color_manual(values = color_map) + 
   facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
   theme_bw() +
@@ -11666,7 +11662,7 @@ ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = 
 dev.off()
 
 # Plot using ggplot
-pdf("output/condiments/smoothed_linePlot_traj2_MLI1-version5dim50kparam30res25-l2fc0-cl10.pdf", width=10, height=5)
+pdf("output/condiments/smoothed_linePlot_traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl10.pdf", width=10, height=5)
 ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
   geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
   scale_color_manual(values = color_map) + 
@@ -11688,14 +11684,14 @@ output_df <- data.frame(
 
 # Write the data frame to a .txt file
 write.table(output_df, 
-            file = "output/condiments/gene_clusters-traj2_MLI1-version5dim50kparam30res25-l2fc0-cl10.txt", 
+            file = "output/condiments/gene_clusters-traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl10.txt", 
             sep = "\t", 
             quote = FALSE, 
             row.names = FALSE, 
             col.names = TRUE)
 
 # Check some genes individually - RNA
-load("output/condiments/condiments-Part_MLI1_subset_START29_END2_points100extendpc1stretch1-version5dim50kparam30res25.RData")
+load("output/condiments/condiments-Part_MLI1_subset_STARTNSCprol2_ENDDGGC_points100extendpc1stretch1-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.RData")
 set.seed(42)
 ## FOR LINEAGE 2
 counts <- WT_Kcnc1_CB_integrateMerge.sct[["RNA"]]@counts # Collect the counts from seurat
@@ -11708,8 +11704,8 @@ sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
 sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
 sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
 
-pdf("output/condiments/plotSmoothers-traj2_MLI1_version5dim50kparam30res25-RNA_common-Apoe.pdf", width=4, height=2)
-plotSmoothers(traj2, sub_counts, gene = "Apoe", curvesCol = c("black","red"), lwd = 1, size = 0.2) +
+pdf("output/condiments/plotSmoothers-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-RNA_common-Apoe.pdf", width=4, height=2)
+plotSmoothers(traj1, sub_counts, gene = "Apoe", curvesCol = c("black","red"), lwd = 1, size = 0.2) +
 scale_color_manual(values =c("black","red"))
 dev.off()
 
@@ -11750,7 +11746,7 @@ annotation_colors <- list(Cluster = cluster_colors)
 
 col_order <- order(grepl("WT", colnames(combinedData)), decreasing = TRUE)
 combinedData <- combinedData[, col_order]
-pdf("output/condiments/heatmap-traj2_MLI1_version5dim50kparam30res25-l2fc0_cl10.pdf", width=5, height=5)
+pdf("output/condiments/heatmap-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0_cl10.pdf", width=5, height=5)
 pheatmap(combinedData,
   cluster_cols = FALSE,
   show_rownames = FALSE,
@@ -11761,11 +11757,6 @@ pheatmap(combinedData,
   annotation_colors = annotation_colors
 )
 dev.off()
-
-
-
-
-
 
 
 
@@ -11798,7 +11789,7 @@ sbatch scripts/fitGAM_6knots_traj9_RNA_common.sh # 31299442 ok
 ### traj of interest NSC --> CA123 traj2
 sbatch scripts/fitGAM_6knots_traj2_RNA_common.sh # 31299487 ok
 ### traj of interest NSC_prol_2 --> DG_GC isolated cells
-sbatch scripts/fitGAM_6knots_traj1_RNA_common_DG_GC.sh # 45797474 xxx
+sbatch scripts/fitGAM_6knots_traj1_RNA_common_DG_GC.sh # 45797474 ok
 
 
 
