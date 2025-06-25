@@ -11612,11 +11612,10 @@ combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
 # Generate heatmap with clustering
 # Perform hierarchical clustering
 hc <- hclust(dist(combinedData))
-clusters <- cutree(hc, k=5) # !!!!!!!!!!!!!!!!!! CHANGE CLUSTER NB HERE !!!!!!!!!!!!!!!!!!
+clusters <- cutree(hc, k=6) # !!!!!!!!!!!!!!!!!! CHANGE CLUSTER NB HERE !!!!!!!!!!!!!!!!!!
 # Create an annotation data frame for the rows based on cluster assignments
 annotation_row <- data.frame(Cluster = factor(clusters))
 
-XXXY HERE
 
 # Line plots
 library("reshape2")
@@ -11649,7 +11648,7 @@ df_long <- df_long %>%
 
 # Plot using ggplot
 #pdf("output/condiments/clustered_linePlot_traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl10.pdf", width=10, height=5)
-pdf("output/condiments/clustered_linePlot_traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl5.pdf", width=10, height=5)
+pdf("output/condiments/clustered_linePlot_traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl6.pdf", width=12, height=5)
 ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
   geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
   geom_line(data = subset(df_long, Condition == "Bap1KO"), aes(color = Condition), alpha = 0.5) +
@@ -11662,7 +11661,7 @@ ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = 
 dev.off()
 
 # Plot using ggplot
-pdf("output/condiments/smoothed_linePlot_traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl10.pdf", width=10, height=5)
+pdf("output/condiments/smoothed_linePlot_traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl6.pdf", width=10, height=5)
 ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
   geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
   scale_color_manual(values = color_map) + 
@@ -11684,7 +11683,7 @@ output_df <- data.frame(
 
 # Write the data frame to a .txt file
 write.table(output_df, 
-            file = "output/condiments/gene_clusters-traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl10.txt", 
+            file = "output/condiments/gene_clusters-traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl6.txt", 
             sep = "\t", 
             quote = FALSE, 
             row.names = FALSE, 
@@ -11746,13 +11745,13 @@ annotation_colors <- list(Cluster = cluster_colors)
 
 col_order <- order(grepl("WT", colnames(combinedData)), decreasing = TRUE)
 combinedData <- combinedData[, col_order]
-pdf("output/condiments/heatmap-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0_cl10.pdf", width=5, height=5)
+pdf("output/condiments/heatmap-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0_cl6.pdf", width=5, height=5)
 pheatmap(combinedData,
   cluster_cols = FALSE,
   show_rownames = FALSE,
   show_colnames = FALSE,
   legend = TRUE,
-  cutree_rows = 10,
+  cutree_rows = 6,
   annotation_row = annotation_row,
   annotation_colors = annotation_colors
 )
@@ -11762,7 +11761,128 @@ dev.off()
 
 ```
 
+--> 8 clusters seems optimal for pseudotime DEG DG_GC
 
+
+
+##### GO pseudotime V3 NSC prol2 --> DG_GC (8 clusters)
+
+Let's do GO analysis for all the 8 clusters of pseudotime DEGs
+
+
+```bash
+conda activate deseq2
+```
+
+
+```R
+# Required packages
+library("clusterProfiler")
+library("org.Mm.eg.db")  
+library("enrichplot")
+library("tidyverse")
+library("patchwork")
+
+
+gene_clusters_traj1_DG_GC <- read.table("output/condiments/gene_clusters-traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl8.txt", 
+                            header = TRUE, 
+                            sep = "\t", 
+                            stringsAsFactors = FALSE)
+
+
+
+# GO BP
+pdf("output/Pathway/dotplot_BP-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0_cl8.pdf", width = 8, height = 6)
+# Loop through clusters 1 to 10
+for (cluster_id in sort(unique(gene_clusters_traj1_DG_GC$cluster))) {
+  message("Processing cluster: ", cluster_id)
+  gene_list <- gene_clusters_traj1_DG_GC %>%
+    filter(cluster == cluster_id) %>%
+    pull(gene)
+  ego <- enrichGO(gene = gene_list,
+                  OrgDb = org.Mm.eg.db,
+                  keyType = "SYMBOL",
+                  ont = "BP",
+                  pvalueCutoff = 0.05,
+                  pAdjustMethod = "BH",
+                  readable = TRUE)
+  if (!is.null(ego) && nrow(ego) > 0) {
+    print(dotplot(ego, showCategory = 20) + ggtitle(paste("Cluster", cluster_id)))
+  } else {
+    print(ggplot() + ggtitle(paste("Cluster", cluster_id, "- No Enrichment")) + theme_void())
+  }
+}
+dev.off()
+
+
+
+# KEGG
+pdf("output/Pathway/dotplot_KEGG-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0_cl8.pdf", width = 8, height = 6)
+# Loop through clusters 1 to 10
+for (cluster_id in sort(unique(gene_clusters_traj1_DG_GC$cluster))) {
+  message("Processing KEGG cluster: ", cluster_id)
+  gene_symbols <- gene_clusters_traj1_DG_GC %>%
+    filter(cluster == cluster_id) %>%
+    pull(gene)
+  # Convert to ENTREZ IDs
+  entrez_ids <- mapIds(org.Mm.eg.db,
+                       keys = gene_symbols,
+                       column = "ENTREZID",
+                       keytype = "SYMBOL",
+                       multiVals = "first") %>%
+    na.omit() %>% as.character()
+  # Perform KEGG enrichment if gene list not empty
+  ekegg <- if (length(entrez_ids) > 0) {
+    enrichKEGG(gene = entrez_ids,
+               organism = "mmu",
+               pvalueCutoff = 0.05,
+               pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  if (!is.null(ekegg) && nrow(ekegg) > 0) {
+    print(dotplot(ekegg, showCategory = 20) + ggtitle(paste("Cluster", cluster_id)))
+  } else {
+    print(ggplot() + ggtitle(paste("Cluster", cluster_id, "- No KEGG Enrichment")) + theme_void())
+  }
+}
+dev.off()
+
+
+
+
+######## Specific case ################
+
+genes_cluster <- gene_clusters_traj1_DG_GC %>%
+  filter(cluster == 10) %>%
+  pull(gene)
+
+# Convert SYMBOLs to ENTREZ IDs
+entrez_cluster <- mapIds(org.Mm.eg.db,
+                          keys = genes_cluster,
+                          column = "ENTREZID",
+                          keytype = "SYMBOL",
+                          multiVals = "first") %>%
+  na.omit() %>% as.character()
+
+# KEGG enrichment
+ekegg_cluster <- enrichKEGG(gene = entrez_cluster,
+                             organism = "mmu",
+                             pvalueCutoff = 0.05,
+                             pAdjustMethod = "BH")
+
+# Plot
+pdf("output/Pathway/dotplot_KEGG-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0_cl8_cluster10.pdf", width = 6, height = 6)
+if (!is.null(ekegg_cluster) && nrow(ekegg_cluster) > 0) {
+  print(dotplot(ekegg_cluster, showCategory = 10) )
+} else {
+  print(ggplot() + ggtitle("No KEGG Enrichment") + theme_void())
+}
+dev.off()
+
+
+
+
+```
 
 
 
