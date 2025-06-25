@@ -11689,23 +11689,21 @@ write.table(output_df,
             row.names = FALSE, 
             col.names = TRUE)
 
+
 # Check some genes individually - RNA
-load("output/condiments/condiments-Part_MLI1_subset_STARTNSCprol2_ENDDGGC_points100extendpc1stretch1-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.RData")
-set.seed(42)
-## FOR LINEAGE 2
-counts <- WT_Kcnc1_CB_integrateMerge.sct[["RNA"]]@counts # Collect the counts from seurat
-cond <- factor(WT_Kcnc1_CB_integrateMerge.sct$condition) # identify conditions
-pseudotimes <- slingPseudotime(Part_MLI1_subset, na = FALSE) [,2] # HERE INDICATE TRAJ
-cellweights <- slingCurveWeights(Part_MLI1_subset) [,2] # HERE INDICATE TRAJ
+## FOR LINEAGE 1
+counts <- multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident) # identify conditions
+pseudotimes <- slingPseudotime(Part_DG_GC_subset, na = FALSE) [,1] # HERE INDICATE TRAJ
+cellweights <- slingCurveWeights(Part_DG_GC_subset) [,1] # HERE INDICATE TRAJ
 #### Subset the counts, pseudotimes, and cell weights for non-zero weights:
 sub_weights <- cellweights[cellweights != 0]
 sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
 sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
 sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
-
-pdf("output/condiments/plotSmoothers-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-RNA_common-Apoe.pdf", width=4, height=2)
-plotSmoothers(traj1, sub_counts, gene = "Apoe", curvesCol = c("black","red"), lwd = 1, size = 0.2) +
-scale_color_manual(values =c("black","red"))
+pdf("output/condiments/plotSmoothers-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-RNA_common-Prox1.pdf", width=5, height=2)
+plotSmoothers(traj1, sub_counts, gene = "Prox1", curvesCol = c("blue","red"), lwd = 1, size = 0.2) +
+scale_color_manual(values =c("blue","red"))
 dev.off()
 
 
