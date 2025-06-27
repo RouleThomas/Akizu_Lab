@@ -2,7 +2,7 @@
 #SBATCH --job-name=sim_random_flat96
 #SBATCH --array=0-79
 #SBATCH --cpus-per-task=2
-#SBATCH --mem=100G
+#SBATCH --mem=250G
 #SBATCH --time=01:00:00
 #SBATCH --output=/scr1/users/roulet/Akizu_Lab/009_MHC/001__mutationSimulation/mutsim/logs/random_flat96_%A_%a.out
 #SBATCH --error=/scr1/users/roulet/Akizu_Lab/009_MHC/001__mutationSimulation/mutsim/logs/random_flat96_%A_%a.err
@@ -16,6 +16,10 @@ IDX=$SLURM_ARRAY_TASK_ID
 N_IDX=$((IDX / REPS))
 REP=$((IDX % REPS + 1))
 MUTATION_COUNT=${N_LIST[$N_IDX]}
+
+# Create output directory
+OUTDIR=results/random/n_${MUTATION_COUNT}
+mkdir -p $OUTDIR
 
 # Set output file path
 OUTFILE=results/random/n_${MUTATION_COUNT}/rep_$(printf "%02d" $REP).annot.parquet

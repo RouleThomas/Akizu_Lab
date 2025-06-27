@@ -888,7 +888,7 @@ python scripts/simulate_random_flat96.py \
 
 # run in a job
 
-sbatch scripts/submit_simulation_random_flat96.sh # 44107109 fail misses --rep; 44134356 xxx
+sbatch scripts/submit_simulation_random_flat96.sh # 44107109 fail misses --rep; 44134356 fail only did 8000 mutation; 46042983 xxx
 
 # Too long, lets run in interactive to see:
 bash scripts/submit_simulation_random_flat96_interactive.sh
