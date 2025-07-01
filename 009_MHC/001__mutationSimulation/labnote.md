@@ -840,13 +840,10 @@ conda activate mutsim
 bash scripts/GenerateScript-submit_simulation_array_v2_experimental.sh
 #--> All scripts generated at scripts/submit_all_signatures_experimental
 
-for f in scripts/submit_all_signatures_experimental/*.sh; do sbatch "$f"; done # XXX
-
-XXXY BELOW NOT RUN!!!
+for f in scripts/submit_all_signatures_experimental/*.sh; do sbatch "$f"; done # ok
 
 # Generate summary metrics and plots for each signature
-bash scripts/run_summary_plot_all.sh
-
+bash scripts/run_summary_plot_experimental_all.sh
 
 
 ```
@@ -888,12 +885,23 @@ python scripts/simulate_random_flat96.py \
 
 # run in a job
 
-sbatch scripts/submit_simulation_random_flat96.sh # 44107109 fail misses --rep; 44134356 fail only did 8000 mutation; 46042983 xxx
+sbatch scripts/submit_simulation_random_flat96.sh # 44107109 fail misses --rep; 44134356 fail only did 8000 mutation; 46042983 ok 
+# too long, Lets test run in interactive to see:
+#bash scripts/submit_simulation_random_flat96_interactive.sh # Work
 
-# Too long, lets run in interactive to see:
-bash scripts/submit_simulation_random_flat96_interactive.sh
+# Run script to add annotations (risk score; .json files)
+for dir in results/random/n_*/; do
+    echo "🔄 Annotating $dir"
+    python scripts/annotate_random_replicates.py \
+      --input-dir "$dir" \
+      --dbnsfp /scr1/users/roulet/Akizu_Lab/009_MHC/001__mutationSimulation/mutsim/ref/dbNSFP5.1a_grch38.gz
+done
 
-XXXY RUN summary annotation
+
+#--> Seems there is a bug as .json summary annotation is not created; lets start again from scratch
+nano scripts/simulate_random_flat96_v2.py # new script, added annotation notably for .json
+
+sbatch scripts/submit_simulation_random_flat96_v2.sh # 46373428 FAIL; 46375891 xxx
 
 ```
 

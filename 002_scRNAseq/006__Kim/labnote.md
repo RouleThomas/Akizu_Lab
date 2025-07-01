@@ -13667,7 +13667,7 @@ coef(Part_DG_GC_subset_WT_GRN_allGenes)
 # THIS BELOW IS WITH SIGNAC GLM
 #saveRDS(Part_DG_GC_subset_WT_GRN_allGenes, file = "output/Pando/Part_DG_GC_subset_WT_GRN_allGenes.rds")
 #load: Part_DG_GC_subset_WT_GRN_allGenes <- readRDS(file = "output/Pando/Part_DG_GC_subset_WT_GRN_allGenes.rds")
-# THIS BELOW IS WITH GREAT GLM
+
 
 
 
@@ -14129,7 +14129,6 @@ write.table(
 # check expressioon of all 28 target genes
 # Make sure the object has condition info and RNA assay active
 DefaultAssay(Part_DG_GC_subset) <- "RNA"
-
 # UMAP plot of all Pax6 regulon genes, split by WT vs Bap1KO
 pdf("output/Pando/FeaturePlot_Pax6RegulonGenes_WTvsBap1KO.pdf", width = 7, height = 60)
 FeaturePlot(
@@ -14140,6 +14139,37 @@ FeaturePlot(
   cols = c("lightgrey", "darkred"),  # adjust color if needed
   ncol = 5,
   order = TRUE
+)
+dev.off()
+
+
+Part_DG_GC_subset$orig.ident <- factor(Part_DG_GC_subset$orig.ident, levels = c("multiome_WT", "multiome_Bap1KO"))
+
+DefaultAssay(Part_DG_GC_subset) <- "GeneActivity"
+# UMAP plot of all Pax6 regulon genes, split by WT vs Bap1KO
+pdf("output/Pando/FeaturePlot_Pax6RegulonGenes_WTvsBap1KO-GeneActivity.pdf", width = 7, height = 60)
+FeaturePlot(
+  Part_DG_GC_subset,
+  features = c("Abcc2","Adamts16","Arhgap10","Cdc6","Cks2","Cldn10","Cux1","Daam2","Fech","Gab1","Gas2l3","Hmcn1","Ical","Ifngr1","Iqgap2","Kpna2","Lama2","Mcm10","Mms22l","Nell2","Palld","Pbx3","Pde8b","Per3","Rbms3","Rpa1","Xylt1","Zfp217"), # pax6_regulon_genes
+  reduction = "umap",
+  split.by = "orig.ident",
+  cols = c("lightgrey", "darkgreen"),  # adjust color if needed
+  ncol = 5,
+  order = TRUE
+)
+dev.off()
+
+
+DefaultAssay(Part_DG_GC_subset) <- "GeneActivity"
+# Vln plot of all Pax6 regulon genes, split by WT vs Bap1KO
+pdf("output/Pando/VlnPlot_Pax6RegulonGenes_WTvsBap1KO-GeneActivity.pdf", width = 10, height = 20)
+VlnPlot(
+  Part_DG_GC_subset,
+  features = c("Abcc2","Adamts16","Arhgap10","Cdc6","Cks2","Cldn10","Cux1","Daam2","Fech","Gab1","Gas2l3","Hmcn1","Ical","Ifngr1","Iqgap2","Kpna2","Lama2","Mcm10","Mms22l","Nell2","Palld","Pbx3","Pde8b","Per3","Rbms3","Rpa1","Xylt1","Zfp217"), # pax6_regulon_genes
+  group.by = "cluster.annot",
+  split.by = "orig.ident",
+  pt.size = 0.1,
+  cols = c("blue", "red")
 )
 dev.off()
 
