@@ -36,24 +36,15 @@ One bio rep to test DOX inducible system (KO cell line with DOX to create overex
 ```bash
 module load lftp
 
-cd input_raw/
-
 # Following email instructions
 lftp -c 'set sftp:auto-confirm yes;set net:max-retries 20;open sftp://X202SC25052722-Z01-F001:2mfm2na2@usftp23.novogene.com; mirror --verbose --use-pget-n=8 -c' 
 
 
-
-XXXY HERE !!!!!!!!!!!!!!!!!!
-
-
-
-# Copy all .fz.gz data into input_raw/ folder
-rsync -av --include '*/' --include '*.fq.gz' --exclude '*' usftp21.novogene.com/01.RawData/ input_raw/ # copy from usftp21 folder to input_raw
-find input_raw/ -mindepth 2 -type f -exec mv -t input_raw/ {} + # mv files from their folder to input_raw/ folder
-find input_raw/ -type d -empty -delete # delete empty directory
+# Copy all .fz.gz data from raw_data into input/ folder to be renames
+find input_raw/01.RawData/ -type f -name "*.fq.gz" -exec cp {} input/ \;
 ```
 
---> All good, files created in `usftp21.novogene.com/`
+--> All good, files fq.gz copied to `input/` to be renamed
 
 
 
@@ -64,7 +55,7 @@ I created a tab separated file with current (`sample_name.txt`) / new file names
 
 
 ```bash
-cd input_raw
+cd input
 
 while IFS=$'\t' read -r old_name new_name
 do
@@ -79,7 +70,7 @@ done < rename_map.txt
 # Fastp cleaning
 
 ```bash
-sbatch scripts/fastp.sh # 28205563 ok
+sbatch scripts/fastp.sh # 46489341 xxx
 ```
 
 
@@ -90,22 +81,19 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:28205563 scripts/bowtie2.sh # 28205600 ok
+sbatch --dependency=afterany:46489341 scripts/bowtie2.sh # 46489414 xxx
 ```
 
---> Looks good; overall ~75% uniquely aligned reads
+--> XXX Looks good; overall ~75% uniquely aligned reads
 
 
-Mapping on E coli 
-
+XXX Mapping on E coli  XXXXXXXXXXXXXXXXXXXXX
 ```bash
 conda activate bowtie2
-
 sbatch scripts/bowtie2_MG1655.sh # 29756394 xxx
 ```
-
 --> Between 1 - 5% uniquely aligned reads (not a lot..; previously `005__CutRun` 10% (in `003__CutRun` was less than 1%) )
-
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 
@@ -115,18 +103,18 @@ Quality control plot (total read before trimming/ total read after trimming/ uni
 
 Collect nb of reads from the slurm bowtie2 jobs:
 ```bash
-for file in slurm-28205600.out; do
+for file in slurm-46489414.out; do
     total_reads=$(grep "reads; of these" $file | awk '{print $1}')
     aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
     aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
     echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
-done > output/bowtie2/alignment_counts_28205600.txt
+done > output/bowtie2/alignment_counts_46489414.txt
 ```
 
-Add these values to `/home/roulet/001_EZH1_project/014__CutRun_PSC_native/samples_001014.xlsx`\
+Add these values to `/home/roulet/001_EZH1_project/017__CutRun_DOX_test/samples_001017.xlsx`\
 Then in R; see `/home/roulet/001_EZH1_project/001_EZH1_project.R`.
 
---> Overall >75% input reads as been uniquely mapped to the genome (90% non uniq) 
+--> XXX Overall >75% input reads as been uniquely mapped to the genome (90% non uniq) 
 
 
 
@@ -138,21 +126,18 @@ This is prefered for THOR bam input.
 
 ```bash
 conda activate bowtie2
-
-sbatch --dependency=afterany:28205600 scripts/samtools_unique.sh # 28205653 ok
+sbatch --dependency=afterany:46489414 scripts/samtools_unique.sh # 46489488 xxx
 ```
 
 
-
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 Let's do the same for E coli MG1655 spike in samples:
-
 ```bash
 conda activate bowtie2
-
 sbatch scripts/samtools_MG1655_unique.sh # 29772397 xxx
 ```
-
 --> More information on this step in the `005__CutRun` labnote
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 
@@ -165,17 +150,16 @@ Paramaters:
 
 ```bash
 conda activate deeptools
-
-sbatch --dependency=afterany:28205653 scripts/bamtobigwig_unique.sh # 28205735 ok
-
-
+sbatch --dependency=afterany:46489488 scripts/bamtobigwig_unique.sh # 46489574 xxx
 ```
 
 - PSC
-*Pass*: PSC_WT_SUZ12_R1 PSC_WT_EZH2_R1 PSC_KOEF1aEZH1_EZH2_R1 PSC_KO_H3K27me3_R2 PSC_KO_SUZ12_R1 PSC_KO_SUZ12_R2 PSC_KO_SUZ12_R3 PSC_KO_EZH2_R1 PSC_KO_EZH1_R2 PSC_KO_EZH2_R2
-*Failed*: PSC_WT_EZH1_R1 (maybe very low signal, unlikely)
+*Pass*: xxx
+*Failed*: xxx
 
 
+
+XXXY HERE !!!!! Check all has ran smoothly
 
 
 

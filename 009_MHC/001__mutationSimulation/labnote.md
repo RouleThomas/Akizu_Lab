@@ -499,6 +499,9 @@ conda activate mutsim
 python scripts/plot_all_signatures_combined.py
 #--> results/combined_signature_summary_plots.pdf 
 
+# highlight random_v2
+python scripts/plot_all_signatures_combined-highlight_random_v2.py
+#--> results/combined_signature_summary_plots-highlight_random_v2.pdf
 ```
 
 
@@ -843,10 +846,28 @@ bash scripts/GenerateScript-submit_simulation_array_v2_experimental.sh
 for f in scripts/submit_all_signatures_experimental/*.sh; do sbatch "$f"; done # ok
 
 # Generate summary metrics and plots for each signature
-bash scripts/run_summary_plot_experimental_all.sh
+bash scripts/run_summary_plot_experimental_all.sh # ok
+
+## Run specifically for random_v2 sample (as issue in 1st version)
+bash scripts/run_summary_plot_experimental_all_random_v2.sh # ok
+
+```
+
+--> ALL good, we got summary for all Experimental signatures! Now let's **represent all the unique mutation into a single plot; one plot per score**:
+
+```bash
+conda activate mutsim
+
+python scripts/plot_all_signatures_experimental_combined.py
+#--> results/combined_signature_experimental_summary_errorbars.pdf 
+
+# highlight random_v2
+python scripts/plot_all_signatures_experimental_combined-highlight_random_v2.py
+#-->results/combined_signature_experimental_summary_errorbars-highlight_random_v2.pdf
 
 
 ```
+
 
 
 
@@ -901,7 +922,7 @@ done
 #--> Seems there is a bug as .json summary annotation is not created; lets start again from scratch
 nano scripts/simulate_random_flat96_v2.py # new script, added annotation notably for .json
 
-sbatch scripts/submit_simulation_random_flat96_v2.sh # 46373428 FAIL; 46375891 xxx
+sbatch scripts/submit_simulation_random_flat96_v2.sh # 46373428 FAIL; 46375891 ok
 
 ```
 
