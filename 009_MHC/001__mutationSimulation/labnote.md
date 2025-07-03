@@ -511,7 +511,7 @@ python scripts/plot_all_signatures_combined-highlight_random_v2.py
 
 
 
-### Automatic summary plot interpretation
+### Automatic stabilization summary plot interpretation
 
 Let's automatically identify when the pathogenecity score reach a plateau=stabilize.
 
@@ -528,8 +528,8 @@ df = pd.read_csv("results/SBS5/SBS5_summary_all.tsv", sep="\t")
 grouped = df.groupby("n")["frac_stop"].agg(["mean", "std"]).reset_index()
 grouped["rel_change"] = grouped["mean"].pct_change().abs()
 
-# Detect where rel_change is < 5% for 3 consecutive bins
-stable = grouped["rel_change"] < 0.05
+# Detect where rel_change is < 2% for 3 consecutive bins
+stable = grouped["rel_change"] < 0.02
 rolling_stable = stable.rolling(window=3).apply(lambda x: x.all(), raw=True).fillna(0)
 
 # Find first index where condition is met
@@ -541,7 +541,7 @@ print(f"📌 SBS5: frac_stop stabilizes after 3 bins <5% at ~{stab_n} mutations"
 plt.figure(figsize=(6, 4))
 plt.errorbar(grouped["n"], grouped["mean"], yerr=grouped["std"], fmt="-o", label="frac_stop")
 plt.axvline(stab_n, color="red", linestyle="--", label=f"Stabilized at {stab_n}")
-plt.title("SBS5: Fraction Stop Stabilization Check (3x <5%)")
+plt.title("SBS5: Fraction Stop Stabilization Check (3x <2%)")
 plt.xlabel("Number of Mutations")
 plt.ylabel("Fraction Stop")
 plt.legend()
@@ -559,8 +559,8 @@ df = pd.read_csv("results/SBS6/SBS6_summary_all.tsv", sep="\t")
 grouped = df.groupby("n")["frac_stop"].agg(["mean", "std"]).reset_index()
 grouped["rel_change"] = grouped["mean"].pct_change().abs()
 
-# Detect where rel_change is < 5% for 3 consecutive bins
-stable = grouped["rel_change"] < 0.05
+# Detect where rel_change is < 2% for 3 consecutive bins
+stable = grouped["rel_change"] < 0.02
 rolling_stable = stable.rolling(window=3).apply(lambda x: x.all(), raw=True).fillna(0)
 
 # Find first index where condition is met
@@ -572,7 +572,7 @@ print(f"📌 SBS6: frac_stop stabilizes after 3 bins <5% at ~{stab_n} mutations"
 plt.figure(figsize=(6, 4))
 plt.errorbar(grouped["n"], grouped["mean"], yerr=grouped["std"], fmt="-o", label="frac_stop")
 plt.axvline(stab_n, color="red", linestyle="--", label=f"Stabilized at {stab_n}")
-plt.title("SBS6: Fraction Stop Stabilization Check (3x <5%)")
+plt.title("SBS6: Fraction Stop Stabilization Check (3x <2%)")
 plt.xlabel("Number of Mutations")
 plt.ylabel("Fraction Stop")
 plt.legend()
@@ -591,8 +591,8 @@ df = pd.read_csv("results/SBS9/SBS9_summary_all.tsv", sep="\t")
 grouped = df.groupby("n")["frac_stop"].agg(["mean", "std"]).reset_index()
 grouped["rel_change"] = grouped["mean"].pct_change().abs()
 
-# Detect where rel_change is < 5% for 3 consecutive bins
-stable = grouped["rel_change"] < 0.05
+# Detect where rel_change is < 2% for 3 consecutive bins
+stable = grouped["rel_change"] < 0.02
 rolling_stable = stable.rolling(window=3).apply(lambda x: x.all(), raw=True).fillna(0)
 
 # Find first index where condition is met
@@ -604,7 +604,7 @@ print(f"📌 SBS9: frac_stop stabilizes after 3 bins <5% at ~{stab_n} mutations"
 plt.figure(figsize=(6, 4))
 plt.errorbar(grouped["n"], grouped["mean"], yerr=grouped["std"], fmt="-o", label="frac_stop")
 plt.axvline(stab_n, color="red", linestyle="--", label=f"Stabilized at {stab_n}")
-plt.title("SBS9: Fraction Stop Stabilization Check (3x <5%)")
+plt.title("SBS9: Fraction Stop Stabilization Check (3x <2%)")
 plt.xlabel("Number of Mutations")
 plt.ylabel("Fraction Stop")
 plt.legend()
@@ -632,8 +632,8 @@ df = pd.read_csv("results/SBS5/SBS5_summary_all.tsv", sep="\t")
 grouped = df.groupby("n")["polyphen2_hdiv_score_mean"].agg(["mean", "std"]).reset_index()
 grouped["rel_change"] = grouped["mean"].pct_change().abs()
 
-# Detect where rel_change is < 5% for 3 consecutive bins
-stable = grouped["rel_change"] < 0.05
+# Detect where rel_change is < 2% for 3 consecutive bins
+stable = grouped["rel_change"] < 0.02
 rolling_stable = stable.rolling(window=3).apply(lambda x: x.all(), raw=True).fillna(0)
 
 # Find first index where condition is met
@@ -645,7 +645,7 @@ print(f"📌 SBS5: Polyphen2 score stabilizes after 3 bins <5% at ~{stab_n} muta
 plt.figure(figsize=(6, 4))
 plt.errorbar(grouped["n"], grouped["mean"], yerr=grouped["std"], fmt="-o", label="Polyphen2 Score")
 plt.axvline(stab_n, color="red", linestyle="--", label=f"Stabilized at {stab_n}")
-plt.title("SBS5: Polyphen2 Score Stabilization Check (3x <5%)")
+plt.title("SBS5: Polyphen2 Score Stabilization Check (3x <2%)")
 plt.xlabel("Number of Mutations")
 plt.ylabel("Polyphen2 Score")
 plt.legend()
@@ -660,8 +660,8 @@ df = pd.read_csv("results/SBS6/SBS6_summary_all.tsv", sep="\t")
 grouped = df.groupby("n")["polyphen2_hdiv_score_mean"].agg(["mean", "std"]).reset_index()
 grouped["rel_change"] = grouped["mean"].pct_change().abs()
 
-# Detect where rel_change is < 5% for 3 consecutive bins
-stable = grouped["rel_change"] < 0.05
+# Detect where rel_change is < 1% for 3 consecutive bins
+stable = grouped["rel_change"] < 0.02
 rolling_stable = stable.rolling(window=3).apply(lambda x: x.all(), raw=True).fillna(0)
 
 # Find first index where condition is met
@@ -673,7 +673,7 @@ print(f"📌 SBS6: Polyphen2 score stabilizes after 3 bins <5% at ~{stab_n} muta
 plt.figure(figsize=(6, 4))
 plt.errorbar(grouped["n"], grouped["mean"], yerr=grouped["std"], fmt="-o", label="Polyphen2 Score")
 plt.axvline(stab_n, color="red", linestyle="--", label=f"Stabilized at {stab_n}")
-plt.title("SBS6: Polyphen2 Score Stabilization Check (3x <5%)")
+plt.title("SBS6: Polyphen2 Score Stabilization Check (3x <2%)")
 plt.xlabel("Number of Mutations")
 plt.ylabel("Polyphen2 Score")
 plt.legend()
@@ -688,8 +688,8 @@ df = pd.read_csv("results/SBS9/SBS9_summary_all.tsv", sep="\t")
 grouped = df.groupby("n")["polyphen2_hdiv_score_mean"].agg(["mean", "std"]).reset_index()
 grouped["rel_change"] = grouped["mean"].pct_change().abs()
 
-# Detect where rel_change is < 5% for 3 consecutive bins
-stable = grouped["rel_change"] < 0.05
+# Detect where rel_change is < 2% for 3 consecutive bins
+stable = grouped["rel_change"] < 0.02
 rolling_stable = stable.rolling(window=3).apply(lambda x: x.all(), raw=True).fillna(0)
 
 # Find first index where condition is met
@@ -701,7 +701,7 @@ print(f"📌 SBS9: Polyphen2 score stabilizes after 3 bins <5% at ~{stab_n} muta
 plt.figure(figsize=(6, 4))
 plt.errorbar(grouped["n"], grouped["mean"], yerr=grouped["std"], fmt="-o", label="Polyphen2 Score")
 plt.axvline(stab_n, color="red", linestyle="--", label=f"Stabilized at {stab_n}")
-plt.title("SBS9: Polyphen2 Score Stabilization Check (3x <5%)")
+plt.title("SBS9: Polyphen2 Score Stabilization Check (3x <2%)")
 plt.xlabel("Number of Mutations")
 plt.ylabel("Polyphen2 Score")
 plt.legend()
@@ -712,29 +712,26 @@ plt.savefig("results/SBS9/SBS9_polyphen2_stabilization_check.pdf")
 
 ```
 
---> Seems to be working great!! Let's automatize the process now
+--> I tested, 1,2 and 5%; **Less 5% variation in 3 consecutive bins seems optimal**.
 
 
 
-
-
-
-
-
-
-
-
-
-XXXY RE MODIFY BLEOW
-
-For this analyze the `results/SBS*/*summary_all.tsv` files
-
+Let's now generate plot for all SBS signatures; by analzyzing all `results/SBS*/*summary_all.tsv` files.
 
 ```bash
-python scripts/analyze_stabilization_points.py
-# --> Save to results/
+# PLOT for each SBS annotations
+python scripts/analyze_stabilization_points_SBS.py
+python scripts/analyze_stabilization_points_random_v2.py
+# --> Save to results/SBS* or results_random_v2
+
+# SUMMARY PLOT - histogram of all SBs signatures
+python scripts/analyze_stabilization_points_SBS-summary.py # ok; generate one plot per score in results/stabilization_summary_SBS_{metric}.pdf
+python scripts/analyze_stabilization_points_SBS-summary_oneplot.py # ok; generate all plot on same page in results/stabilization_summary_SBS_all.pdf
 
 ```
+
+
+
 
 
 
@@ -870,6 +867,23 @@ python scripts/plot_all_signatures_experimental_combined-highlight_random_v2.py
 
 
 
+### Automatic stabilization summary plot interpretation - experimental
+
+
+Let's now generate plot for all SBS signatures; by analyzing all files except: `results/SBS*/*summary_all.tsv` files.
+
+```bash
+# PLOT for each experimental annotations
+python scripts/analyze_stabilization_points_experimental.py
+# --> Save to results/* or results_random_v2
+
+# SUMMARY PLOT - histogram of all experimental signatures
+python scripts/analyze_stabilization_points_experimental-summary.py # ok; generate one plot per score in results/stabilization_summary_experimental_{metric}.pdf
+python scripts/analyze_stabilization_points_experimental-summary_oneplot.py # ok; generate all plot on same page in results/stabilization_summary_experimental_all.pdf
+
+
+```
+
 
 
 
@@ -983,3 +997,29 @@ SigProfilerMatrixGenerator matrix_generator test GRCh38 txt --plot=TRUE
 
 
 
+
+# Score distribution 
+
+## SBS
+
+Let's now check for each SBS signature the profile/distribution of each scores for 4k mutations (ie. 4k is where variance stabilizes)
+
+For each SBS signature:
+- Loop through `results/SBS*/n_4000/`
+- Generates one 6-panel page per replicate (6 scores annotations)
+
+```bash
+conda activate mutsim
+
+# keep modifying for score stop and synonmyous i need it to print the number as it is 1 or 0...
+python scripts/plot_distributions_per_replicate-4k_SBS.py
+
+
+```
+
+
+
+## Experimental
+
+
+XXXY
