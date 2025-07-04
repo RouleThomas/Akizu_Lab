@@ -51835,7 +51835,10 @@ dev.off()
 
 Let's integrate the three time points together (SCT method, same as replicates/genotypes integration); and perform pseudotime analysis. Granules to focus on.
 
-### Data integration all samples
+
+
+
+### Data integration all samples (for MLI1, MLI2)
 
 Let's try:
 - *two step integration*: Load our WT_Kcnc1 integrated sample for each time points. And integrate them. Do not re-regress variables.
@@ -54324,6 +54327,405 @@ XXXY
 
 
 
+#### Isolating cell of interest - Granule p14 time point only
+
+Let's do pseudoitme by isolating cell cluster of interest (ie. for Granule, isolate all granule cell clusters); from p14 only:
+- this is the only sample that include immature granule
+- intergration of the three time points does not clearly follow pattern from p14>p35>p180
+
+First we need to **increase the clustering; to get rid of the cells on the left in granule (likely mix of granule and DCN)**
+
+```bash
+conda activate scRNAseqV2
+```
+
+
+
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+
+
+# Data import - all samples and genotype CB
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015.sct_V1_label.rds") # 
+
+
+# Increase clustering to get rid of 
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "integrated"
+
+WT_Kcnc1_p14_CB_1step.sct <- RunPCA(WT_Kcnc1_p14_CB_1step.sct, verbose = FALSE, npcs = 40)
+WT_Kcnc1_p14_CB_1step.sct <- RunUMAP(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
+WT_Kcnc1_p14_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", k.param = 15, dims = 1:40)
+WT_Kcnc1_p14_CB_1step.sct <- FindClusters(WT_Kcnc1_p14_CB_1step.sct, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+
+WT_Kcnc1_p14_CB_1step.sct$condition <- factor(WT_Kcnc1_p14_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version4dim40kparam15res03.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE)
+dev.off()
+
+
+
+# save ##################
+## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam15res03.sct_V1_numeric.rds") 
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam15res03.sct_V1_numeric.rds") # 
+set.seed(42)
+##########
+
+
+```
+
+
+--> Follow `002*/006__Kim` `#### Run condiments RNA assay - V1 common condition`
+
+
+```bash
+conda activate condiments_V6
+```
+
+
+
+
+```R
+
+# package installation 
+## install.packages("remotes")
+## remotes::install_github("cran/spatstat.core")
+## remotes::install_version("Seurat", "4.0.3")
+## install.packages("magrittr")
+## install.packages("magrittr")
+## install.packages("dplyr")
+## BiocManager::install("DelayedMatrixStats")
+## BiocManager::install("tradeSeq")
+
+
+# packages
+library("condiments")
+library("Seurat")
+library("magrittr") # to use pipe
+library("dplyr") # to use bind_cols and sample_frac
+library("SingleCellExperiment") # for reducedDims
+library("ggplot2")
+library("slingshot")
+library("DelayedMatrixStats")
+library("tidyr")
+library("tradeSeq")
+library("cowplot")
+library("scales")
+library("pheatmap")
+library("readr")
+set.seed(42)
+
+
+# import rds with increased clustering
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam15res03.sct_V1_numeric.rds") # 
+
+
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA" # According to condiments workflow
+
+# convert to SingleCellExperiment
+WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_p14_CB_1step.sct, assay = "RNA")
+
+
+
+## SEPARATE CELLS for each trajectory ############################
+
+########################################################
+############################ Granule ############################
+########################################################
+
+# First filter based on cell type
+Part_Granule <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c("6", "1", "4")]
+table(Part_Granule$seurat_clusters) # to double check
+
+
+# tidy
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_Granule)$UMAP),
+  as.data.frame(colData(Part_Granule)[, -3])
+  ) %>%
+  sample_frac(1)
+
+# PLOT
+pdf("output/condiments/UMAP_WT_Kcnc1_p14_CB-version4dim40kparam15res03-Part_Granule.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
+  geom_point(size = .7) +
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+
+
+## Second filter based on UMAP coordinate
+umap_coords <- reducedDims(Part_Granule)$UMAP
+
+# Filter conditions based on your description:
+# Keep cells with UMAP_1 > -3 and UMAP_2 < 2.5
+
+selected_cells <-  umap_coords[,1] > 3 & umap_coords[,2] < 8 & umap_coords[,2] > -10
+
+
+# Subset your SCE object
+Part_Granule_subset <- Part_Granule[, selected_cells]
+
+# Check resulting subset
+dim(Part_Granule_subset)
+
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_Granule_subset)$UMAP),
+  as.data.frame(colData(Part_Granule_subset)[, -3])
+  ) %>%
+  sample_frac(1)
+
+pdf("output/condiments/UMAP_WT_Kcnc1_p14_CB-version4dim40kparam15res03-Part_Granule_subset.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
+  geom_point(size = .7) +
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+
+
+## genotype overlap
+pdf("output/condiments/UMAP_condition_WT_Kcnc1_p14_CB-version4dim40kparam15res03-Part_Granule_subset.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7) +
+  scale_color_manual(values = c("blue", "red")) + # Specify colors here
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+## imbalance score
+scores <- condiments::imbalance_score(
+  Object = df %>% select(UMAP_1, UMAP_2) %>% as.matrix(), 
+  conditions = df$condition,
+  k = 20, smooth = 40)
+df$scores <- scores$scaled_scores
+
+pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_p14_CB-version4dim40kparam15res03-Part_Granule_subset.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
+  geom_point(size = .7) +
+  scale_color_viridis_c(option = "C") +
+  labs(col = "Scores") +
+  theme_classic()
+dev.off()
+
+
+
+
+
+## PLOT with Separate trajectories
+### Testing Area ############
+
+Part_Granule_subset <- slingshot(Part_Granule_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_Granule_subset)$seurat_clusters,
+                 start.clus = "4", end.clus = c("1") ,approx_points = 100, extend = 'pc1', stretch = 1)
+Part_Granule_subset <- slingshot(Part_Granule_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_Granule_subset)$seurat_clusters,
+                 start.clus = "4", end.clus = c("1") ,approx_points = 100, extend = 'y', stretch = 1) # n
+
+##########################################
+
+
+
+Part_Granule_subset <- slingshot(Part_Granule_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_Granule_subset)$seurat_clusters,
+                 start.clus = "4", end.clus = c("1") ,approx_points = 100, extend = 'pc1', stretch = 1) # n
+
+
+#test reduceDim PCA or subset endoderm
+topologyTest(SlingshotDataSet(Part_Granule_subset), Part_Granule_subset$condition) #  
+
+
+sdss <- slingshot_conditions(SlingshotDataSet(Part_Granule_subset), Part_Granule_subset$condition)
+curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
+                    .id = "condition")
+
+
+
+#  
+
+pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_p14_CB-version4dim40kparam15res03-Part_Granule_subset-START4_END1_points100extendpc1stretch1.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(condition, Lineage, Order),
+            aes(group = interaction(Lineage, condition)), size = 1.5) +
+  theme_classic()
+dev.off()
+
+
+
+#### ->  save.image(file="output/condiments/condiments-Part_Granule_subset_START4_END1_points100extendpc1stretch1-version4dim40kparam15res03.RData")
+### load("output/condiments/condiments-Part_Granule_subset_START4_END1_points100extendpc1stretch1-version4dim40kparam15res03.RData")
+set.seed(42)
+
+XXXY HERE !! traj1, file = "output/condiments/traj1_Part_Granule_subset-version4dim40kparam15res03.rds")
+
+
+
+## PLOT with separate trajectories - Individually
+### WT
+Part_Granule_subset_WT <- Part_Granule_subset[, Part_Granule_subset$condition == "WT"]
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(Part_Granule_subset_WT, "UMAP")),
+  slingPseudotime(Part_Granule_subset_WT) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(Part_Granule_subset_WT) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+         Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst),
+         Lineage4_pst = if_else(is.na(Lineage4_pst), 0, Lineage4_pst),
+         Lineage5_pst = if_else(is.na(Lineage5_pst), 0, Lineage5_pst),
+         Lineage6_pst = if_else(is.na(Lineage6_pst), 0, Lineage6_pst))
+curves <- slingCurves(Part_Granule_subset_WT, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = UMAP_1, y = UMAP_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = UMAP_1, y = UMAP_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = UMAP_1, y = UMAP_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = UMAP_1, y = UMAP_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:6) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_Part_Granule_subset_WT-version5dim50kparam30res25-START26_END11_points100extendpc1stretch1_WTonly.pdf", width=10, height=6)
+gridExtra::grid.arrange(grobs = plots, ncol = 3)
+dev.off()
+
+
+### Kcnc1
+Part_Granule_subset_Kcnc1 <- Part_Granule_subset[, Part_Granule_subset$condition == "Kcnc1"]
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(Part_Granule_subset_Kcnc1, "UMAP")),
+  slingPseudotime(Part_Granule_subset_Kcnc1) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(Part_Granule_subset_Kcnc1) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+         Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst),
+         Lineage4_pst = if_else(is.na(Lineage4_pst), 0, Lineage4_pst),
+         Lineage5_pst = if_else(is.na(Lineage5_pst), 0, Lineage5_pst),
+         Lineage6_pst = if_else(is.na(Lineage6_pst), 0, Lineage6_pst))
+curves <- slingCurves(Part_Granule_subset_Kcnc1, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = UMAP_1, y = UMAP_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = UMAP_1, y = UMAP_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = UMAP_1, y = UMAP_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = UMAP_1, y = UMAP_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:6) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_Part_Granule_subset_Kcnc1-version5dim50kparam30res25-START26_END11_points100extendpc1stretch1_Kcnc1only.pdf", width=10, height=6)
+gridExtra::grid.arrange(grobs = plots, ncol = 3)
+dev.off()
+
+
+
+# Differential Progression
+prog_res <- progressionTest(Part_Granule_subset, conditions = Part_Granule_subset$condition, lineages = TRUE)
+
+df_3 <-  slingPseudotime(Part_Granule_subset) %>% as.data.frame() 
+
+df_3$condition <- Part_Granule_subset$condition
+df_3 <- df_3 %>% 
+  pivot_longer(-condition, names_to = "Lineage",
+               values_to = "pst") %>%
+  filter(!is.na(pst))
+
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_Granule_subset-version5dim50kparam30res25-START26_END11_points100extendpc1stretch1.pdf", width=10, height=3)
+ggplot(df_3, aes(x = pst)) +
+  geom_density(alpha = .8, aes(fill = condition), col = "transparent") +
+  geom_density(aes(col = condition), fill = "transparent", size = 1.5) +
+  labs(x = "Pseudotime", fill = "condition") +
+  facet_wrap(~Lineage, scales = "free", nrow=2) +
+  guides(col = "none", fill = guide_legend(
+    override.aes = list(size = 1.5, col = c("blue", "red"))
+  )) +
+  scale_fill_manual(values = c("blue", "red")) +
+  scale_color_manual(values = c("blue", "red")) +
+  theme_bw()
+dev.off()
+
+
+#### ->  save.image(file="output/condiments/condiments-Part_Granule_subset_START26_END11_points100extendpc1stretch1-version5dim50kparam30res25.RData")
+### load("output/condiments/condiments-Part_Granule_subset_START26_END11_points100extendpc1stretch1-version5dim50kparam30res25.RData")
+set.seed(42)
+
+#  Differential expression
+# --> Run fitGam() through Slurm
+
+
+XXXY 
+
+
+```
+
+
+
+
 #### Isolating cell of interest - MLI1
 
 Let's do pseudoitme by isolating cell cluster of interest (ie. for Granule, isolate all granule cell clusters)
@@ -55634,6 +56036,10 @@ conda activate condiments_Signac
 # trajectory per condition together (for DEG condition, condiments) - pseudotime-condition DEG
 ### traj of interest Granule --> ONLY TRAJ OF INTEREST RAN; trajectory 2 START26_END11
 sbatch scripts/fitGAM_6knots_traj2_Part_Granule_subset-version5dim50kparam30res25.sh # 44043797 CANCEL TIME LIMIT increase to 750Go and removed header to R scripts: 45655379 xxx
+### traj of interest Granule --> ONLY TRAJ OF INTEREST RAN; trajectory 1 START4 END1; version with p14 time point
+sbatch scripts/fitGAM_6knots_traj1_Part_Granule_subset-version4dim40kparam15res03.sh # 46573318 xxx
+
+
 
 ### traj of interest MLI1 --> ONLY TRAJ OF INTEREST RAN; trajectory 2 START29_END2
 sbatch scripts/fitGAM_6knots_traj2_Part_MLI1_subset-version5dim50kparam30res25.sh # 44043807 ok

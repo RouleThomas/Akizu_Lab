@@ -1013,13 +1013,32 @@ conda activate mutsim
 
 # keep modifying for score stop and synonmyous i need it to print the number as it is 1 or 0...
 python scripts/plot_distributions_per_replicate-4k_SBS.py
-
-
 ```
-
+--> Plot produced at `results/SBS*/n_4000/*_replicate_score_distributions.pdf`
 
 
 ## Experimental
 
 
-XXXY
+
+Let's now check for each experimental signature the profile/distribution of each scores for 4k mutations (ie. 4k is where variance stabilizes)
+
+For all signature, except SBS:
+- Loop through `results/*/n_4000/`
+- Generates one 6-panel page per replicate (6 scores annotations)
+
+```bash
+conda activate mutsim
+
+# keep modifying for score stop and synonmyous i need it to print the number as it is 1 or 0...
+python scripts/plot_distributions_per_replicate-4k_experimental.py
+```
+--> Plot produced at `results/*/n_4000/*_replicate_score_distributions.pdf`
+
+
+
+
+
+
+
+
