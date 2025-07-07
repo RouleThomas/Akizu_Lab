@@ -70,7 +70,7 @@ done < rename_map.txt
 # Fastp cleaning
 
 ```bash
-sbatch scripts/fastp.sh # 46489341 xxx
+sbatch scripts/fastp.sh # 46489341 ok
 ```
 
 
@@ -81,10 +81,10 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:46489341 scripts/bowtie2.sh # 46489414 xxx
+sbatch --dependency=afterany:46489341 scripts/bowtie2.sh # 46489414 ok
 ```
 
---> XXX Looks good; overall ~75% uniquely aligned reads
+--> Looks good; overall ~85% uniquely aligned reads
 
 
 XXX Mapping on E coli  XXXXXXXXXXXXXXXXXXXXX
@@ -126,7 +126,7 @@ This is prefered for THOR bam input.
 
 ```bash
 conda activate bowtie2
-sbatch --dependency=afterany:46489414 scripts/samtools_unique.sh # 46489488 xxx
+sbatch --dependency=afterany:46489414 scripts/samtools_unique.sh # 46489488 ok
 ```
 
 
@@ -150,16 +150,18 @@ Paramaters:
 
 ```bash
 conda activate deeptools
-sbatch --dependency=afterany:46489488 scripts/bamtobigwig_unique.sh # 46489574 xxx
+sbatch --dependency=afterany:46489488 scripts/bamtobigwig_unique.sh # 46489574 ok
 ```
 
-- PSC
-*Pass*: xxx
-*Failed*: xxx
+- ESC
+*Pass*: WT_H3K27me3, WTH3K27me3epi (less good), WT_EZH2, WT_EZH1, OE_H3K27me3, OE_EZH2, OE_EZH1, KO_H3K27me3, KO_H3K27me3epi (less), KO_EZH2, KO_EZH1 (no signal as expected)
+*Failed*: none
+- NPC
+*Pass*: WT_H3K72me3, OE_H3K27me3, KO_H3K27me3
+*Failed*: WT_EZH2, WT_EZH1, OE_EZH2, OE_EZH1, KO_EZH2, KO_EZH1
 
 
 
-XXXY HERE !!!!! Check all has ran smoothly
 
 
 
@@ -171,77 +173,73 @@ XXXY HERE !!!!! Check all has ran smoothly
 ```bash
 conda activate deeptools
 # Generate compile bigwig (.npz) files
-sbatch scripts/multiBigwigSummary_all.sh # 28744326 ok
-sbatch scripts/multiBigwigSummary_WT.sh # 28744549 ok
-sbatch scripts/multiBigwigSummary_KO.sh # 28744586 ok
+sbatch scripts/multiBigwigSummary_ESC.sh # 46741362 xxx
+sbatch scripts/multiBigwigSummary_NPC.sh # 46741404 ok
 
 
-# Plot all
+output/bigwig/.unique.dupmark.sorted.bw \
+    output/bigwig/.unique.dupmark.sorted.bw \
+    output/bigwig/.unique.dupmark.sorted.bw \
+    output/bigwig/.unique.dupmark.sorted.bw \
+    output/bigwig/.unique.dupmark.sorted.bw \
+    output/bigwig/.unique.dupmark.sorted.bw \
+    output/bigwig/.unique.dupmark.sorted.bw \
+    output/bigwig/.unique.dupmark.sorted.bw \
+    output/bigwig/.unique.dupmark.sorted.bw \
+    output/bigwig/.unique.dupmark.sorted.bw \
+    output/bigwig/.unique.dupmark.sorted.bw \
+    output/bigwig/.unique.dupmark.sorted.bw \
+
+
+# Plot ESC
 ## PCA
-plotPCA -in output/bigwig/multiBigwigSummary_all.npz \
+plotPCA -in output/bigwig/multiBigwigSummary_ESC.npz \
     --transpose \
     --ntop 0 \
-    --labels PSC_WT_SUZ12_R1 PSC_WT_EZH2_R1 PSC_WT_EZH1_R1 PSC_WT_IGG_R1 PSC_KO_H3K27me3_R2 PSC_KO_SUZ12_R1 PSC_KO_SUZ12_R2 PSC_KO_SUZ12_R3 PSC_KO_EZH2_R1 PSC_KO_EZH2_R2 PSC_KO_EZH1_R2 PSC_KO_IGG_R1 PSC_KO_IGG_R2 PSC_KO_IGG_R3 PSC_KOEF1aEZH1_EZH2_R1 PSC_KOEF1aEZH1_IGG_R1 \
-    --colors black black PSC_WT_EZH1_R1 black red red red red red red red red red red blue blue \
-    -o output/bigwig/multiBigwigSummary_all_plotPCA.pdf
+    --labels ESC_KO_EZH1 ESC_KO_EZH2 ESC_KO_H3K27me3 ESC_KO_H3K27me3epi ESC_OEKO_EZH1 ESC_OEKO_EZH2 ESC_OEKO_H3K27me3 ESC_WT_EZH1 ESC_WT_EZH2 ESC_WT_H3K27me3 ESC_WT_H3K27me3epi ESC_WT_IGG \
+    --colors red red red red blue blue blue black black black black black \
+    -o output/bigwig/multiBigwigSummary_ESC_plotPCA.pdf
 
 ## Heatmap
 plotCorrelation \
-    -in output/bigwig/multiBigwigSummary_all.npz \
+    -in output/bigwig/multiBigwigSummary_ESC.npz \
     --corMethod pearson --skipZeros \
     --plotTitle "Pearson Correlation" \
     --removeOutliers \
-    --labels PSC_WT_SUZ12_R1 PSC_WT_EZH2_R1 PSC_WT_EZH1_R1 PSC_WT_IGG_R1 PSC_KO_H3K27me3_R2 PSC_KO_SUZ12_R1 PSC_KO_SUZ12_R2 PSC_KO_SUZ12_R3 PSC_KO_EZH2_R1 PSC_KO_EZH2_R2 PSC_KO_EZH1_R2 PSC_KO_IGG_R1 PSC_KO_IGG_R2 PSC_KO_IGG_R3 PSC_KOEF1aEZH1_EZH2_R1 PSC_KOEF1aEZH1_IGG_R1 \
+    --labels ESC_KO_EZH1 ESC_KO_EZH2 ESC_KO_H3K27me3 ESC_KO_H3K27me3epi ESC_OEKO_EZH1 ESC_OEKO_EZH2 ESC_OEKO_H3K27me3 ESC_WT_EZH1 ESC_WT_EZH2 ESC_WT_H3K27me3 ESC_WT_H3K27me3epi ESC_WT_IGG \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig/multiBigwigSummary_all_heatmap.pdf
+    -o output/bigwig/multiBigwigSummary_ESC_heatmap.pdf
 
 
 
-# Plot WT
+
+
+# Plot NPC
 ## PCA
-plotPCA -in output/bigwig/multiBigwigSummary_WT.npz \
+plotPCA -in output/bigwig/multiBigwigSummary_NPC.npz \
     --transpose \
     --ntop 0 \
-    --labels PSC_WT_SUZ12_R1 PSC_WT_EZH2_R1 PSC_WT_EZH1_R1 PSC_WT_IGG_R1 \
-    -o output/bigwig/multiBigwigSummary_WT_plotPCA.pdf
+    --labels NPC_KO_EZH1 NPC_KO_EZH2 NPC_KO_H3K27me3 NPC_KO_IGG NPC_OEKO_EZH1 NPC_OEKO_EZH2 NPC_OEKO_H3K27me3 NPC_WT_EZH1 NPC_WT_EZH2 NPC_WT_H3K27me3 \
+    --colors red red red red blue blue blue black black black \
+    -o output/bigwig/multiBigwigSummary_NPC_plotPCA.pdf
 
 ## Heatmap
 plotCorrelation \
-    -in output/bigwig/multiBigwigSummary_WT.npz \
+    -in output/bigwig/multiBigwigSummary_NPC.npz \
     --corMethod pearson --skipZeros \
     --plotTitle "Pearson Correlation" \
     --removeOutliers \
-    --labels PSC_WT_SUZ12_R1 PSC_WT_EZH2_R1 PSC_WT_EZH1_R1 PSC_WT_IGG_R1 \
+    --labels NPC_KO_EZH1 NPC_KO_EZH2 NPC_KO_H3K27me3 NPC_KO_IGG NPC_OEKO_EZH1 NPC_OEKO_EZH2 NPC_OEKO_H3K27me3 NPC_WT_EZH1 NPC_WT_EZH2 NPC_WT_H3K27me3 \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig/multiBigwigSummary_WT_heatmap.pdf
-
-
-
-# Plot KO
-## PCA
-plotPCA -in output/bigwig/multiBigwigSummary_KO.npz \
-    --transpose \
-    --ntop 0 \
-    --labels PSC_KO_H3K27me3_R2 PSC_KO_SUZ12_R1 PSC_KO_SUZ12_R2 PSC_KO_SUZ12_R3 PSC_KO_EZH2_R1 PSC_KO_EZH2_R2 PSC_KO_EZH1_R2 PSC_KO_IGG_R1 PSC_KO_IGG_R2 PSC_KO_IGG_R3 \
-    -o output/bigwig/multiBigwigSummary_KO_plotPCA.pdf
-
-## Heatmap
-plotCorrelation \
-    -in output/bigwig/multiBigwigSummary_KO.npz \
-    --corMethod pearson --skipZeros \
-    --plotTitle "Pearson Correlation" \
-    --removeOutliers \
-    --labels PSC_KO_H3K27me3_R2 PSC_KO_SUZ12_R1 PSC_KO_SUZ12_R2 PSC_KO_SUZ12_R3 PSC_KO_EZH2_R1 PSC_KO_EZH2_R2 PSC_KO_EZH1_R2 PSC_KO_IGG_R1 PSC_KO_IGG_R2 PSC_KO_IGG_R3 \
-    --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig/multiBigwigSummary_KO_heatmap.pdf
-
+    -o output/bigwig/multiBigwigSummary_NPC_heatmap.pdf
 
 
 ```
 
---> H3K27me3 which works, form a group appart.. All the other cluster together. 
+--> *ESC* samples is perfect! KO_EZH1 cluster with IGG; clkuster of EZH2; and cluster of H3K27me3, well separated.
 
---> As `010__CutRun_PSC_50dN_native` H3K27me1 form group apart... Which may indicate they barely kind of work but with a completely useless signal... Not sure what to conclude... But look a bit more different than a completely failed sample that is similar to IGG.
+--> *NPC* samples, only H3K27me3 worked
+
 
 
 
@@ -257,34 +255,44 @@ plotCorrelation \
 ```bash
 conda activate macs2
 # genotype per genotype
-sbatch --dependency=afterany:17776169 scripts/macs2_broad.sh # 17795289 ok
+sbatch scripts/macs2_broad.sh # 46741501 ok
 
 # genotype per genotype
-sbatch scripts/macs2_narrow.sh # 17867455 ok
+#XXX sbatch scripts/macs2_narrow.sh #  xxx
 
 ```
 
---> All fail, except *H3K27me3; barely with 5,324 peaks*
+XXX LETS STOP HERE FOR NOW; wait the `018__CutRun_DOX_ESC` exp with 3 bio reps for further analysis.
+
+
 
 **broad**:
-- 50dN_WT_EZH1; n(peaks)= 2
-- 50dN_WT_EZH2; n(peaks)= 1
-- 50dN_WT_H3K27ac; n(peaks)= 3
-- 50dN_WT_H3K27me1AM; n(peaks)= 2
-- 50dN_WT_H3K27me1OR; n(peaks)= 2
-- 50dN_WT_H3K27me3; n(peaks)= 5,324
-- 50dN_WT_SUZ12= n(peaks)= 0
+- *ESC*:
+    - ESC_KO_EZH1; n(peaks)= 
+    - ESC_KO_EZH2; n(peaks)= 
+    - ESC_KO_H3K27me3; n(peaks)= 
+    - ESC_KO_H3K27me3epi; n(peaks)= 
+    - ESC_OEKO_EZH1; n(peaks)= 
+    - ESC_OEKO_EZH2; n(peaks)= 
+    - ESC_OEKO_H3K27me3= n(peaks)= 
+    - ESC_WT_EZH1; n(peaks)= 
+    - ESC_WT_EZH2; n(peaks)= 
+    - ESC_WT_H3K27me3; n(peaks)= 
+    - ESC_WT_H3K27me3epi; n(peaks)= 
 
-**narrow**:
-- 50dN_WT_EZH1; n(peaks)= 2
-- 50dN_WT_EZH2; n(peaks)= 1
-- 50dN_WT_H3K27ac; n(peaks)= 3
-- 50dN_WT_H3K27me1AM; n(peaks)= 2
-- 50dN_WT_H3K27me1OR; n(peaks)= 1
-- 50dN_WT_H3K27me3; n(peaks)= 3,830
-- 50dN_WT_SUZ12= n(peaks)= 0
-
---> *narrow* -mode does not help....
+- *NPC*:
+    - NPC_KO_EZH1; n(peaks)= 
+    - NPC_KO_EZH2; n(peaks)= 
+    - NPC_KO_H3K27me3; n(peaks)= 
+    - NPC_OEKO_EZH1; n(peaks)= 
+    - NPC_OEKO_EZH2; n(peaks)= 
+    - NPC_OEKO_H3K27me3; n(peaks)= 
+    - NPC_WT_EZH1= n(peaks)= 
+    - NPC_WT_EZH2; n(peaks)= 
+    - NPC_WT_H3K27me3; n(peaks)= 
+    - ESC_WT_H3K27me3; n(peaks)= 
+    - ESC_WT_H3K27me3epi; n(peaks)= 
+    - ESC_WT_IGG; n(peaks)=   
 
 
 

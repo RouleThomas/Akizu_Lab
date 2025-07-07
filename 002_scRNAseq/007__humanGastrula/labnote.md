@@ -113,6 +113,14 @@ DimPlot(humanGastrula, reduction = "umap", label=TRUE, group.by = "cluster_id")
 dev.off()
 
 
+# Check some genes
+
+ParaxialMesoderm= c("TBX6", "MESP2", "HES7", "MSGN1", "NKX1.2")
+pdf("output/seurat/FeaturePlot_SCT_humanGastrula-dim25-ParaxialMesoderm.pdf", width=10, height=10)
+FeaturePlot(humanGastrula, features = ParaxialMesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+
 
 
 
@@ -158,6 +166,63 @@ DimPlot(humangastruloid_dim25kparam15res02, group.by = "predicted.id", label = T
 dev.off()
 
 #--> V1 is the opposite as done in the paper: we annotate our cells using the other cell type annotation
+
+
+# DO OVERLAY with v1
+
+humanGastrula <- RunUMAP(
+  humangastruloid_dim25kparam15res02,
+  dims = 1:25,
+  reduction = "pca",
+  return.model = TRUE  
+)
+
+
+# Find anchors using PCA projection
+shared_features <- intersect(
+  rownames(humanGastrula),
+  rownames(humangastruloid_dim25kparam15res02)
+)
+XXXY HER E!!!
+anchors <- FindTransferAnchors(
+  reference = humangastruloid_dim25kparam15res02,
+  query = humanGastrula,
+  normalization.method = "LogNormalize",  # or "LogNormalize"
+  reference.reduction = "pca",  
+  reduction = "pcaproject",
+  dims = 1:25,
+  features = shared_features,
+  k.anchor = 100,
+  k.filter = 500
+)
+# Step 2: Transfer labels from reference to query
+predictions <- TransferData(
+  anchorset = anchors,
+  refdata = humangastruloid_dim25kparam15res02$cluster.annot,
+  dims = 1:25,
+  k.weight = 100
+)
+humanGastrula <- AddMetaData(humanGastrula, metadata = predictions)
+# Step 3: Project query onto reference UMAP
+humanGastrula <- MapQuery(
+  anchorset = anchors,
+  reference = humangastruloid_dim25kparam15res02,
+  query = humanGastrula,
+  refdata = list(cluster_id = "cluster.annot"),
+  reference.reduction = "pca",
+  reduction.model = "umap"
+)
+
+
+
+
+# Save to PDF
+pdf("output/seurat/UMAP_humanGastrula-overlay_v1.pdf", width=10, height=6)
+print(g_overlay)
+dev.off()
+
+
+
 
 
 
@@ -211,7 +276,7 @@ p1 <- DimPlot(humanGastrula, reduction = "umap", group.by = "cluster_id", label 
   ggtitle("Human gastrula")
 
 # Panel 2: Projected gastruloid
-p2 <- DimPlot(humangastruloid_dim25kparam15res02, reduction = "ref.umap", group.by = "predicted.id", label = TRUE, pt.size = 1) +
+p2 <- DimPlot(humangastruloid_dim25kparam15res02, reduction = "ref.umap", group.by = "cluster.annot", label = TRUE, pt.size = 1) +
   ggtitle("Human gastruloid 72hr")
 
 # Panel 3: True overlay
