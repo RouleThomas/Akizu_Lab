@@ -171,12 +171,17 @@ dev.off()
 # DO OVERLAY with v1
 
 humanGastrula <- RunUMAP(
+  humanGastrula,
+  dims = 1:25,
+  reduction = "pca",
+  return.model = TRUE  
+)
+humangastruloid_dim25kparam15res02 <- RunUMAP(
   humangastruloid_dim25kparam15res02,
   dims = 1:25,
   reduction = "pca",
   return.model = TRUE  
 )
-
 
 # Find anchors using PCA projection
 shared_features <- intersect(
@@ -187,7 +192,7 @@ shared_features <- intersect(
 anchors <- FindTransferAnchors(
   reference = humangastruloid_dim25kparam15res02,
   query = humanGastrula,
-  normalization.method = "LogNormalize",  # or "LogNormalize"
+  normalization.method = "SCT",  # or "LogNormalize"
   reference.reduction = "pca",  
   reduction = "pcaproject",
   dims = 1:25,
@@ -196,7 +201,7 @@ anchors <- FindTransferAnchors(
   k.filter = 500
 )
 
-XXXY HERE TO RUN!!!
+
 
 # Step 2: Transfer labels from reference to query
 predictions <- TransferData(
@@ -207,6 +212,8 @@ predictions <- TransferData(
 )
 humanGastrula <- AddMetaData(humanGastrula, metadata = predictions)
 # Step 3: Project query onto reference UMAP
+## Need to re-run this, not sure why...
+
 humanGastrula <- MapQuery(
   anchorset = anchors,
   reference = humangastruloid_dim25kparam15res02,
@@ -216,8 +223,7 @@ humanGastrula <- MapQuery(
   reduction.model = "umap"
 )
 
-
-
+XXY HERE !!!!
 
 # Save to PDF
 pdf("output/seurat/UMAP_humanGastrula-overlay_v1.pdf", width=10, height=6)
