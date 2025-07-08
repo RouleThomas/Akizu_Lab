@@ -183,7 +183,7 @@ shared_features <- intersect(
   rownames(humanGastrula),
   rownames(humangastruloid_dim25kparam15res02)
 )
-XXXY HER E!!!
+
 anchors <- FindTransferAnchors(
   reference = humangastruloid_dim25kparam15res02,
   query = humanGastrula,
@@ -195,6 +195,9 @@ anchors <- FindTransferAnchors(
   k.anchor = 100,
   k.filter = 500
 )
+
+XXXY HERE TO RUN!!!
+
 # Step 2: Transfer labels from reference to query
 predictions <- TransferData(
   anchorset = anchors,

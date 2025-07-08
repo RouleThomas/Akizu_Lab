@@ -15,7 +15,11 @@
 - 50dN: check whether FA improve CutRun, notably for EZH1cs (CutRun 007 failed, technical issue)
 - NPC FA: check whether we detect EZH1cs in NPC in WT or EZH1cs + test other AB
 
+# CONCLUSION samples QC
 
+--> 50dN did NOT WORK!
+
+--> NPC: H3K27me3 WT (1 Bio rep), H3K27me3 KO (1 Bio rep)
 
 
 # Pipeline

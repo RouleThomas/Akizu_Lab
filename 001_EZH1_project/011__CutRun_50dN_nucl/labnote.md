@@ -16,6 +16,9 @@ This time, *no nuclear purification has been performed.*
 --> **Working samples can be added as aditional WT replicate!**
 
 
+# CONCLUSION samples QC
+
+--> 50dN: H3K27me3 WT (1 Bio rep) works
 
 
 # Pipeline

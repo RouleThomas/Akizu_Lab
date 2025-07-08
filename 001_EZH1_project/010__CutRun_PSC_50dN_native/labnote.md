@@ -13,6 +13,13 @@
 
 
 
+# CONCLUSION samples QC
+
+--> 50dN did NOT WORK!
+
+--> PSC: H3K27me3 WT (1 Bio rep), EZH2 WT (1 Bio rep) works
+
+
 
 # Pipeline
 - Download data (wget)
