@@ -137,7 +137,7 @@ save(out, file = "output/soupX/out_Sample7.RData")
 ```
 
 
-## Clustering and integration
+## Clustering, integration and projection - version1 raw
 
 
 ```bash
@@ -604,13 +604,387 @@ ggplot(df2, aes(x = predicted_id, y = prediction_score)) +
 dev.off()
 
 
+```
 
+
+--> Poor overlap with paraxial mesoderm with this dataset
+
+## Projection - version2 clean
+
+
+Let's load the .rds integrated object from version1 but re-do the projection
+
+
+
+
+
+```bash
+conda activate scRNAseqV2
+```
+
+```R
+# packages
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("ggpubr")
+
+set.seed(42)
+
+
+# import D3_hG from version1 raw
+
+D3_hG = readRDS(file = "output/seurat/D3_hG-dim20kparam5res01_label.rds")
+
+DefaultAssay(D3_hG) <- "RNA"
+
+
+# Import our data
+
+humangastruloid_dim25kparam15res02 <- readRDS(file = "../003__YAP1/output/seurat/humangastruloid.combined.sct_V2-dim25kparam15res02.rds")
+humangastruloid_dim25kparam50res07 <- readRDS(file = "../003__YAP1/output/seurat/humangastruloid.combined.sct_V2-dim25kparam50res07.rds")
+
+
+DefaultAssay(humangastruloid_dim25kparam15res02) <- "RNA"
+
+
+# Do scRNAseq projection (reference D3_hG and query humangastruloid_dim25kparam15res02) - V1 
+
+# V2 - like in the paper
+
+# Step 1: Find anchors (you may have already done this)
+humangastruloid_dim25kparam15res02 <- RunUMAP(
+  humangastruloid_dim25kparam15res02,
+  dims = 1:25,
+  reduction = "pca",
+  return.model = TRUE  
+)
+
+
+# Find anchors using PCA projection
+shared_features <- intersect(
+  rownames(D3_hG),
+  rownames(humangastruloid_dim25kparam15res02)
+)
+
+
+
+anchors <- FindTransferAnchors(
+  reference = humangastruloid_dim25kparam15res02 ,
+  query = D3_hG,
+  normalization.method = "LogNormalize",  # or "LogNormalize"
+  reference.reduction = "pca",  
+  reduction = "pcaproject",
+  dims = 1:25,
+  features = shared_features,
+  k.anchor = 100,
+  k.filter = 500
+)
+
+# Step 2: Transfer labels from reference to query
+predictions <- TransferData(
+  anchorset = anchors,
+  refdata = humangastruloid_dim25kparam15res02$cluster.annot,
+  dims = 1:25,
+  k.weight = 100
+)
+
+D3_hG <- AddMetaData(D3_hG, metadata = predictions)
+
+
+# Step 3: Project query onto reference UMAP
+D3_hG <- MapQuery(
+  anchorset = anchors,
+  reference = humangastruloid_dim25kparam15res02,
+  query = D3_hG,
+  refdata = list(cluster_id = "cluster.annot"),
+  reference.reduction = "pca",
+  reduction.model = "umap"
+)
+
+# Step 4: Generate UMAP plots
+# Step 1: Create a color palette for all cluster levels
+# Get all unique cluster names from both reference and query
+all_clusters <- union(
+  unique(humangastruloid_dim25kparam15res02$cluster.annot),
+  unique(D3_hG$predicted.id)
+)
+
+# Assign colors (adjust palette as needed or use scales::hue_pal())
+cluster_colors <- setNames(
+  scales::hue_pal()(length(all_clusters)),
+  sort(all_clusters)
+)
+
+# Panel 1: Human gastruloid
+p1 <- DimPlot(
+  humangastruloid_dim25kparam15res02,
+  reduction = "umap",
+  group.by = "cluster.annot",
+  label = TRUE,
+  pt.size = 1,
+  cols = cluster_colors
+) + ggtitle("Human gastruloid 72hr")
+
+# Panel 2: Projected gastrula
+p2 <- DimPlot(
+  D3_hG,
+  reduction = "ref.umap",
+  group.by = "predicted.id",
+  label = TRUE,
+  pt.size = 1,
+  cols = cluster_colors
+) + ggtitle("D3_hG")
+
+# Panel 3: Overlay
+# Reference in gray
+humangastruloid_dim25kparam15res02$dummy_group <- "Reference"
+p_ref <- DimPlot(
+  humangastruloid_dim25kparam15res02,
+  reduction = "umap",
+  group.by = "dummy_group",
+  cols = "lightgray",
+  pt.size = 1
+) + NoLegend()
+
+# Query plotted separately with correct colors
+p_query <- DimPlot(
+  D3_hG,
+  reduction = "ref.umap",
+  group.by = "predicted.id",
+  pt.size = 1,
+  cols = cluster_colors
+) + NoAxes() + NoLegend()
+
+# Extract and overlay
+g_ref <- p_ref[[1]]
+query_layer <- ggplot_build(p_query[[1]])$data[[1]]
+
+g_overlay <- g_ref +
+  geom_point(
+    data = query_layer,
+    aes(x = x, y = y),
+    color = query_layer$colour,
+    size = 1,
+    show.legend = FALSE
+  ) +
+  ggtitle("Overlay") +
+  theme_void() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Step 5: Export
+pdf("output/seurat/UMAP_D3_hG-reference_query_overlay-order1-version2.pdf", width = 30, height = 7)
+(p1 | p2 | g_overlay)
+dev.off()
+
+
+
+# Prediciton score
+# Extract scores and metadata
+# Create a dummy timepoint to allow boxplot
+df <- data.frame(
+  prediction_score = D3_hG$prediction.score.max,
+  group = "D3_hG"
+)
+
+# Plot
+pdf("output/seurat/UMAP_D3_hG-reference_query_overlay-order1-prediction_score.pdf", width = 5, height = 7)
+ggplot(df, aes(x = group, y = prediction_score)) +
+  geom_boxplot(fill = "white", color = "black") +
+  theme_minimal(base_size = 14) +
+  labs(title = "Prediction score", x = NULL, y = NULL)
+dev.off()
+
+
+df2 <- data.frame(
+  prediction_score = D3_hG$prediction.score.max,
+  predicted_id = D3_hG$predicted.id
+)
+pdf("output/seurat/UMAP_D3_hG-reference_query_overlay-order1-prediction_score_predicted_id.pdf", width = 5, height = 4)
+ggplot(df2, aes(x = predicted_id, y = prediction_score)) +
+  geom_boxplot(outlier.size = 0.5) +
+  theme_bw() +
+  coord_flip() +
+  labs(title = "Prediction score", x = NULL, y = NULL)
+dev.off()
+
+
+
+
+
+
+
+
+##############################################################
+# The other way ##############################################
+##############################################################
+DefaultAssay(humangastruloid_dim25kparam15res02) <- "RNA"
+
+
+# Step 1: Find anchors (you may have already done this)
+D3_hG <- RunUMAP(
+  D3_hG,
+  dims = 1:20,
+  reduction = "pca",
+  return.model = TRUE  
+)
+
+
+anchors <- FindTransferAnchors(
+  reference = D3_hG,
+  query = humangastruloid_dim25kparam15res02,
+  normalization.method = "LogNormalize",  # or "LogNormalize"
+  reference.reduction = "pca",  
+  reduction = "pcaproject",
+  dims = 1:20,
+  features = shared_features,
+  k.anchor = 100,
+  k.filter = 500
+)
+
+# Step 2: Transfer labels from reference to query
+predictions <- TransferData(
+  anchorset = anchors,
+  refdata = D3_hG$cluster.annot,
+  dims = 1:20,
+  k.weight = 100
+)
+
+humangastruloid_dim25kparam15res02 <- AddMetaData(humangastruloid_dim25kparam15res02, metadata = predictions)
+
+
+# Step 3: Project query onto reference UMAP
+humangastruloid_dim25kparam15res02 <- MapQuery(
+  anchorset = anchors,
+  reference = D3_hG,
+  query = humangastruloid_dim25kparam15res02,
+  refdata = list(cluster_id = "cluster.annot"),
+  reference.reduction = "pca",
+  reduction.model = "umap"
+)
+
+# Step 4: Generate UMAP plots
+all_clusters <- union(
+  unique(D3_hG$cluster.annot),
+  unique(humangastruloid_dim25kparam15res02$predicted.id)
+)
+
+# Step 2: Assign consistent colors
+cluster_colors <- setNames(scales::hue_pal()(length(all_clusters)), sort(all_clusters))
+# Panel 1: Human gastrula
+p1 <- DimPlot(
+  D3_hG,
+  reduction = "umap",
+  group.by = "cluster.annot",
+  label = TRUE,
+  pt.size = 1,
+  cols = cluster_colors
+) + ggtitle("D3_hG")
+
+# Panel 2: Projected gastruloid
+p2 <- DimPlot(
+  humangastruloid_dim25kparam15res02,
+  reduction = "ref.umap",
+  group.by = "predicted.id",
+  label = TRUE,
+  pt.size = 1,
+  cols = cluster_colors
+) + ggtitle("Human gastruloid 72hr")
+
+# Panel 3: Overlay
+
+# Plot reference (D3_hG) in gray
+D3_hG$dummy_group <- "Reference"
+p_ref <- DimPlot(
+  D3_hG,
+  reduction = "umap",
+  group.by = "dummy_group",
+  cols = "lightgray",
+  pt.size = 1
+) + NoLegend()
+
+# Plot projected query separately with colors
+p_query <- DimPlot(
+  humangastruloid_dim25kparam15res02,
+  reduction = "ref.umap",
+  group.by = "predicted.id",
+  pt.size = 1,
+  cols = cluster_colors
+) + NoAxes() + NoLegend()
+
+# Overlay: Extract and draw query points on top of reference
+g_ref <- p_ref[[1]]
+query_layer <- ggplot_build(p_query[[1]])$data[[1]]
+
+g_overlay <- g_ref +
+  geom_point(
+    data = query_layer,
+    aes(x = x, y = y),
+    color = query_layer$colour,  # already hex
+    size = 1
+  ) +
+  ggtitle("Overlay") +
+  theme_void() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Step 4: Export
+pdf("output/seurat/UMAP_D3_hG-reference_query_overlay-version2.pdf", width = 30, height = 7)
+(p1 | p2 | g_overlay)
+dev.off()
+
+
+
+
+
+# Prediciton score
+# Extract scores and metadata
+# Create a dummy timepoint to allow boxplot
+df <- data.frame(
+  prediction_score = humangastruloid_dim25kparam15res02$prediction.score.max,
+  group = "72hr Gastruloid"
+)
+
+# Plot
+pdf("output/seurat/UMAP_D3_hG-reference_query_overlay-prediction_score.pdf", width = 5, height = 7)
+ggplot(df, aes(x = group, y = prediction_score)) +
+  geom_boxplot(fill = "white", color = "black") +
+  theme_minimal(base_size = 14) +
+  labs(title = "Prediction score", x = NULL, y = NULL)
+dev.off()
+
+
+df2 <- data.frame(
+  prediction_score = humangastruloid_dim25kparam15res02$prediction.score.max,
+  predicted_id = humangastruloid_dim25kparam15res02$predicted.id
+)
+pdf("output/seurat/UMAP_D3_hG-reference_query_overlay-prediction_score_predicted_id.pdf", width = 5, height = 4)
+ggplot(df2, aes(x = predicted_id, y = prediction_score)) +
+  geom_boxplot(outlier.size = 0.5) +
+  theme_bw() +
+  coord_flip() +
+  labs(title = "Prediction score", x = NULL, y = NULL)
+dev.off()
 
 
 ```
 
 
---> Poor overlap with paraxial mesoderm with this dataset
+
+
+
+
+
+
+
+
+
 
 
 
