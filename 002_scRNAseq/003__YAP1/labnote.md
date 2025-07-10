@@ -34058,7 +34058,19 @@ rsconnect::deployApp('shinyApp_Embryo_E7E775_19dim_V1')
 
 
 
+# XMU samples
 
+--> *Samples downloaded locally from Basespace, and imported onto the cluster*
+
+We expect the treatment to make gastruloid develop/elongate less, and have more epiblast-type of cells.
+
+For sample integration: xxx
+
+
+
+
+
+XXXY HERE 
 
 
 
