@@ -733,7 +733,7 @@ humangastruloid_dim25kparam15res02 <- MapQuery(
   reduction.model = "umap"
 )
 
-# Step 4: Generate UMAP plots
+# Step 4: Generate UMAP plots - USING HUMAN GASTRULA ANNOTATION
 all_clusters <- union(
   unique(humanGastrula$cluster_id),
   unique(humangastruloid_dim25kparam15res02$predicted.id)
@@ -801,6 +801,89 @@ g_overlay <- g_ref +
 pdf("output/seurat/UMAP_humanGastrula-reference_query_overlay-version2.pdf", width = 30, height = 7)
 (p1 | p2 | g_overlay)
 dev.off()
+
+
+
+
+# Step 4: Generate UMAP plots - USING OUR GASTRULOID 72hr ANNOTATION
+all_clusters <- union(
+  unique(humanGastrula$cluster_id),
+  unique(humangastruloid_dim25kparam15res02$predicted.id)
+)
+
+# Step 2: Assign consistent colors
+cluster_colors <- setNames(scales::hue_pal()(length(all_clusters)), sort(all_clusters))
+# Panel 1: Human gastrula
+p1 <- DimPlot(
+  humanGastrula,
+  reduction = "umap",
+  group.by = "cluster_id",
+  label = TRUE,
+  pt.size = 1,
+  cols = cluster_colors
+) + ggtitle("Human gastrula")
+
+# Panel 2: Projected gastruloid
+p2 <- DimPlot(
+  humangastruloid_dim25kparam15res02,
+  reduction = "ref.umap",
+  group.by = "cluster.annot",
+  label = FALSE,
+  pt.size = 1,
+  cols = c(
+    "CardiacMesoderm" = "#F8766D", # red
+    "CardiacProgenitors" = "#AEA200",
+    "NascentMesoderm1" = "#00A6FF",
+    "Endoderm" = "#00C1A7",
+    "Ectoderm" = "#00BD5C",
+    "NascentMesoderm2" = "#EF67EB"
+  )
+) + ggtitle("Human gastruloid 72hr")
+
+# Panel 3: Overlay
+# Plot reference (humanGastrula) in gray
+humanGastrula$dummy_group <- "Reference"
+p_ref <- DimPlot(
+  humanGastrula,
+  reduction = "umap",
+  group.by = "dummy_group",
+  cols = "lightgray",
+  pt.size = 1
+) + NoLegend()
+p_query <- DimPlot(
+  humangastruloid_dim25kparam15res02,
+  reduction = "ref.umap",
+  group.by = "cluster.annot",
+  pt.size = 1,
+  cols = c(
+    "CardiacMesoderm" = "#F8766D", # red
+    "CardiacProgenitors" = "#AEA200",
+    "NascentMesoderm1" = "#00A6FF",
+    "Endoderm" = "#00C1A7",
+    "Ectoderm" = "#00BD5C",
+    "NascentMesoderm2" = "#EF67EB"
+  )
+) + NoAxes() + NoLegend()
+
+g_ref <- p_ref[[1]]
+query_layer <- ggplot_build(p_query[[1]])$data[[1]]
+g_overlay <- g_ref +
+  geom_point(
+    data = query_layer,
+    aes(x = x, y = y),
+    color = query_layer$colour,  # already hex
+    size = 1
+  ) +
+  ggtitle("Overlay") +
+  theme_void() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Step 4: Export
+pdf("output/seurat/UMAP_humanGastrula-reference_query_overlay-annotation-version2.pdf", width = 30, height = 7)
+(p1 | p2 | g_overlay)
+dev.off()
+
+
 
 
 
