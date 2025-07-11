@@ -102,9 +102,9 @@ Let's re-name `scripts/simulate_sbs5_array.py` into `scripts/simulate_array.py`;
 ```bash
 conda activate mutsim
 
-sbatch scripts/run_filtered_cosmic_1.slurm # 46998992 xxx  --> results
-sbatch scripts/run_filtered_experimental_1.slurm # TO RUN
-sbatch scripts/run_filtered_contexts_1.slurm #  TO RUN
+sbatch scripts/run_filtered_cosmic_1.slurm # 46998992 ok  --> results
+sbatch scripts/run_filtered_experimental_1.slurm # 47058807 xxx
+sbatch scripts/run_filtered_contexts_1.slurm #  47058818 xxx
 
 
 ```
