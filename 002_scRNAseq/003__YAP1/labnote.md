@@ -34088,15 +34088,6 @@ XXXY HERE below not mod !!!
 
 
 
---> Weird bug for `embryo_control_E7`: `I0 error in FASTQ dile ... line: 0 failed to fill whole buffer`
-----> There is 2 embryo_control_E7 files in BaseSpace; QC fail and not  QC failed; lets test both;
-------> I indeed imported the QC fail one; let's use the QC not fail: *Success*
-
-
---> Bug for `cellranger_count_humangastruloid_UNTREATED24hr`: `Sequence and quality length mismatch: file: "/scr1/users/roulet/Akizu_Lab/002_scRNAseq/003__YAP1/input/24hgastruloidhumanUN/24hgastruloidhumanUN_S1_L001_R2_001.fastq.gz", line: 563052004`
-----> There is 2 24hgastruloidhumanUN files in BaseSpace; QC fail and not  QC failed; lets test both;
-------> I indeed imported the QC fail one; let's use the QC not fail: *Success*
-
 
 
 
