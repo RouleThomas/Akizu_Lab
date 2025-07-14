@@ -11887,7 +11887,7 @@ dev.off()
 
 
 
-#### Run condiments RNA assay - V3 NSC quiescent --> DG_GC (Task post meeting 20250702)
+#### Run condiments RNA assay - V3 NSC quiescent --> DG_GC (Task post meeting 20250702) Option1
 
 Starting cluster = NSC_quiescent; express Hopx genes / end cluster = DG_GC
 
@@ -12047,13 +12047,15 @@ Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
 Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
                  clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
                  start.clus = c("NSC_quiescent"), end.clus = c("DG_GC") ,approx_points = 100, extend = 'n', stretch = 1)
-
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c("NSC_quiescent"), end.clus = c("DG_GC") ,approx_points = 100, extend = 'y', stretch = 1)
 ##########################################
 
 
 Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
                  clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
-                 start.clus = c("NSC_quiescent"), end.clus = c("DG_GC") ,approx_points = 100, extend = 'y', stretch = 1)
+                 start.clus = c("NSC_quiescent"), end.clus = c("DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1, dist.method = "mnn")
 
 
 
@@ -12070,7 +12072,7 @@ curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
 
 #  
 
-pdf("output/condiments/UMAP_trajectory_separated_WT_Bap1KO-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-Part_DG_GC_option1_subset-STARTNSCquiesc_ENDDGGC_points100extendystretch1.pdf", width=7, height=5)
+pdf("output/condiments/UMAP_trajectory_separated_WT_Bap1KO-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-Part_DG_GC_option1_subset-STARTNSCquiesc_ENDDGGC_points100extendpc1stretch1distMetmnn.pdf", width=7, height=5)
 ggplot(df, aes(x = umap_1, y = umap_2, col = orig.ident)) +
   geom_point(size = .7, alpha = .2) +
   scale_color_brewer(palette = "Accent") +
@@ -12078,11 +12080,6 @@ ggplot(df, aes(x = umap_1, y = umap_2, col = orig.ident)) +
             aes(group = interaction(Lineage, orig.ident)), size = 1.5) +
   theme_classic()
 dev.off()
-
-
-
-
-
 
 
 
@@ -12098,8 +12095,7 @@ df_2 <- bind_cols(
     dplyr::rename_with(paste0, "_pst", .cols = everything()),
   slingCurveWeights(Part_DG_GC_subset_WT) %>% as.data.frame(),
   ) %>%
-  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
-         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst))
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst))
 curves <- slingCurves(Part_DG_GC_subset_WT, as.df = TRUE)
 ### Function to create the plot for each lineage
 create_plot <- function(lineage_number) {
@@ -12129,17 +12125,12 @@ create_plot <- function(lineage_number) {
 }
 ### Generate the plots for each lineage
 plots <- list()
-for (i in 1:2) {
+for (i in 1:1) {
   plots[[i]] <- create_plot(i)
 }
-pdf("output/condiments/UMAP_trajectory_common_label_Part_DG_GC_option1_subset_WT-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-STARTNSCprol2_ENDDGGC_points100extendpc1stretch1_WTonly.pdf", width=14, height=5)
-gridExtra::grid.arrange(grobs = plots, ncol = 2)
+pdf("output/condiments/UMAP_trajectory_common_label_Part_DG_GC_option1_subset_WT-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-STARTNSCquiesc_ENDDGGC_points100extendpc1stretch1distMetmnn_WTonly.pdf", width=7, height=5)
+gridExtra::grid.arrange(grobs = plots, ncol = 1)
 dev.off()
-
-
-
-XXX BELOW NOT MOD!!! WAITING CASET UPDATE IF PURSUE THIS OR NOT
-
 
 
 
@@ -12187,7 +12178,7 @@ plots <- list()
 for (i in 1:1) {
   plots[[i]] <- create_plot(i)
 }
-pdf("output/condiments/UMAP_trajectory_common_label_Part_DG_GC_subset_WT-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-STARTNSCprol2_ENDDGGC_points100extendpc1stretch1_Bap1KOonly.pdf", width=7, height=5)
+pdf("output/condiments/UMAP_trajectory_common_label_Part_DG_GC_option1_subset_WT-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-STARTNSCquiesc_ENDDGGC_points100extendpc1stretch1distMetmnn_Bap1KOonly.pdf", width=7, height=5)
 gridExtra::grid.arrange(grobs = plots, ncol = 1)
 dev.off()
 
@@ -12204,7 +12195,7 @@ df_3 <- df_3 %>%
                values_to = "pst") %>%
   filter(!is.na(pst))
 
-pdf("output/condiments/densityPlot_trajectory_lineage_Part_DG_GC_subset-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-STARTNSCprol2_ENDDGGC_points100extendpc1stretch1.pdf", width=6, height=3)
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_DG_GC_option1_subset-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-STARTNSCquiesc_ENDDGGC_points100extendpc1stretch1distMetmnn.pdf", width=6, height=3)
 ggplot(df_3, aes(x = pst)) +
   geom_density(alpha = .8, aes(fill = orig.ident), col = "transparent") +
   geom_density(aes(col = orig.ident), fill = "transparent", size = 1.5) +
@@ -12219,8 +12210,8 @@ ggplot(df_3, aes(x = pst)) +
 dev.off()
 
 
-#### ->  save.image(file="output/condiments/condiments-Part_DG_GC_subset_STARTNSCprol2_ENDDGGC_points100extendpc1stretch1-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.RData")
-### load("output/condiments/condiments-Part_DG_GC_subset_STARTNSCprol2_ENDDGGC_points100extendpc1stretch1-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.RData")
+#### ->  save.image(file="output/condiments/condiments-Part_DG_GC_option1_subset_STARTNSCquiesc_ENDDGGC_points100extendpc1stretch1distMetmnn-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.RData")
+### load("output/condiments/condiments-Part_DG_GC_option1_subset_STARTNSCquiesc_ENDDGGC_points100extendpc1stretch1distMetmnn-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.RData")
 set.seed(42)
 
 #  Differential expression
@@ -12759,14 +12750,23 @@ Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
                  clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
                  start.clus = c( "NSC_quiescent"), end.clus = c( "DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1, dist.method = "mnn")
 
-
-##########################################
-
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c( "NSC_proliferative_2"), end.clus = c( "DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1, dist.method = "mnn")
 
 
 Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
                  clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
-                 start.clus = c( "NSC_proliferative_2"), end.clus = c( "DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1, dist.method = "mnn")
+                 start.clus = c("NSC_proliferative_1", "NSC_proliferative_2"), end.clus = c( "DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1, dist.method = "mnn")
+
+
+##########################################
+
+
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c("NSC_proliferative_2"), end.clus = c( "DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1, dist.method = "mnn")
+
 
 
 
@@ -13264,7 +13264,8 @@ sbatch scripts/fitGAM_6knots_traj9_RNA_common.sh # 31299442 ok
 sbatch scripts/fitGAM_6knots_traj2_RNA_common.sh # 31299487 ok
 ### traj of interest NSC_prol_2 --> DG_GC isolated cells
 sbatch scripts/fitGAM_6knots_traj1_RNA_common_DG_GC.sh # 45797474 ok
-
+### traj of interest NSC_quiescent --> DG_GC isolated cells - (Task post meeting 20250702) Option1
+sbatch scripts/fitGAM_6knots_traj1_RNA_common_DG_GC_option1.sh # 47206838 xxx
 
 
 
