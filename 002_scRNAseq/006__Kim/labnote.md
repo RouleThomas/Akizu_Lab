@@ -11887,6 +11887,1362 @@ dev.off()
 
 
 
+#### Run condiments RNA assay - V3 NSC quiescent --> DG_GC (Task post meeting 20250702)
+
+Starting cluster = NSC_quiescent; express Hopx genes / end cluster = DG_GC
+
+
+Lets **isolate the cell types** first; follow same method as Kcnc1 project (`002*/005*`)
+
+
+
+
+```bash
+conda activate condiments_Signac
+```
+
+
+
+```R
+# package installation 
+## install.packages("remotes")
+## remotes::install_github("cran/spatstat.core")
+## remotes::install_version("Seurat", "4.0.3")
+## install.packages("magrittr")
+## install.packages("magrittr")
+## install.packages("dplyr")
+## BiocManager::install("DelayedMatrixStats")
+## BiocManager::install("tradeSeq")
+
+
+# packages
+library("condiments")
+library("Seurat")
+library("magrittr") # to use pipe
+library("dplyr") # to use bind_cols and sample_frac
+library("SingleCellExperiment") # for reducedDims
+library("ggplot2")
+library("slingshot")
+library("DelayedMatrixStats")
+library("tidyr")
+library("tradeSeq") 
+library("cowplot")
+library("scales")
+library("pheatmap")
+
+# Data import
+
+
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.sct_numeric_label.rds")
+
+
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "RNA" # According to condiments workflow
+
+
+# convert to SingleCellExperiment
+WT_Bap1KO <- as.SingleCellExperiment(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA")
+
+
+
+## SEPARATE CELLS for each trajectory ############################
+
+########################################################
+############################ DG_GC ############################
+########################################################
+
+# First filter based on cell type
+Part_DG_GC <- WT_Bap1KO[, WT_Bap1KO$cluster.annot %in% c("NSC_quiescent", "NSC_proliferative_2", "IP", "DG_GC")]
+table(Part_DG_GC$cluster.annot) # to double check
+
+
+# tidy
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_DG_GC)$UMAP),
+  as.data.frame(colData(Part_DG_GC)[, -3])
+  ) %>%
+  sample_frac(1)
+
+# PLOT
+pdf("output/condiments/UMAP_WT_Bap1KO-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-Part_DG_GC_option1.pdf", width=6, height=5)
+ggplot(df, aes(x = umap_1, y = umap_2, col = cluster.annot)) +
+  geom_point(size = .7) +
+  labs(col = "orig.ident") +
+  theme_classic()
+dev.off()
+
+
+## Second filter based on UMAP coordinate
+umap_coords <- reducedDims(Part_DG_GC)$UMAP
+
+# Filter conditions based on your description:
+# Keep cells with UMAP_1 > -3 and UMAP_2 < 2.5
+selected_cells <- umap_coords[,1] < 5 &  umap_coords[,2] < 0 &  umap_coords[,2] > -11.75
+
+# Subset your SCE object
+Part_DG_GC_subset <- Part_DG_GC[, selected_cells]
+
+# Check resulting subset
+dim(Part_DG_GC_subset)
+
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_DG_GC_subset)$UMAP),
+  as.data.frame(colData(Part_DG_GC_subset)[, -3])
+  ) %>%
+  sample_frac(1)
+
+pdf("output/condiments/UMAP_WT_Bap1KO-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-Part_DG_GC_option1_subset.pdf", width=7, height=5)
+ggplot(df, aes(x = umap_1, y = umap_2, col =  cluster.annot)) +
+  geom_point(size = .7) +
+  theme_classic()
+dev.off()
+
+
+
+## genotype overlap
+pdf("output/condiments/UMAP_genotype_WT_Bap1KO-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-Part_DG_GC_option1_subset.pdf", width=7, height=5)
+ggplot(df, aes(x = umap_1, y = umap_2, col = orig.ident)) +
+  geom_point(size = .7) +
+  scale_color_manual(values = c("blue", "red")) + # Specify colors here
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+## imbalance score
+scores <- condiments::imbalance_score(
+  Object = df %>% select(umap_1, umap_2) %>% as.matrix(), 
+  conditions = df$orig.ident,
+  k = 20, smooth = 40)
+df$scores <- scores$scaled_scores
+
+pdf("output/condiments/UMAP_imbalance_score_WT_Bap1KO-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-Part_DG_GC_option1_subset.pdf", width=7, height=5)
+ggplot(df, aes(x = umap_1, y = umap_2, col = scores)) +
+  geom_point(size = .7) +
+  scale_color_viridis_c(option = "C") +
+  labs(col = "Scores") +
+  theme_classic()
+dev.off()
+
+
+
+
+
+## PLOT with Separate trajectories
+### Testing Area ############
+
+
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c("NSC_quiescent"), end.clus = c("DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1)
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c("NSC_quiescent","NSC_proliferative_2"), end.clus = c("DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1)
+                 
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c("NSC_proliferative_2"), end.clus = c("DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1)
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c("NSC_quiescent"), end.clus = c("NSC_proliferative_2", "DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1)
+
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c("NSC_quiescent"), end.clus = c("DG_GC") ,approx_points = 100, extend = 'n', stretch = 1)
+
+##########################################
+
+
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c("NSC_quiescent"), end.clus = c("DG_GC") ,approx_points = 100, extend = 'y', stretch = 1)
+
+
+
+
+#test reduceDim PCA or subset endoderm
+topologyTest(SlingshotDataSet(Part_DG_GC_subset), Part_DG_GC_subset$orig.ident) #  
+
+
+sdss <- slingshot_conditions(SlingshotDataSet(Part_DG_GC_subset), Part_DG_GC_subset$orig.ident)
+curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
+                    .id = "orig.ident")
+
+
+
+#  
+
+pdf("output/condiments/UMAP_trajectory_separated_WT_Bap1KO-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-Part_DG_GC_option1_subset-STARTNSCquiesc_ENDDGGC_points100extendystretch1.pdf", width=7, height=5)
+ggplot(df, aes(x = umap_1, y = umap_2, col = orig.ident)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(orig.ident, Lineage, Order),
+            aes(group = interaction(Lineage, orig.ident)), size = 1.5) +
+  theme_classic()
+dev.off()
+
+
+
+
+
+
+
+
+
+
+## PLOT with separate trajectories - Individually
+### WT
+Part_DG_GC_subset_WT <- Part_DG_GC_subset[, Part_DG_GC_subset$orig.ident == "multiome_WT"]
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(Part_DG_GC_subset_WT, "UMAP")),
+  slingPseudotime(Part_DG_GC_subset_WT) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(Part_DG_GC_subset_WT) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst))
+curves <- slingCurves(Part_DG_GC_subset_WT, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = umap_1, y = umap_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = umap_1, y = umap_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = umap_1, y = umap_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = umap_1, y = umap_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:2) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_Part_DG_GC_option1_subset_WT-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-STARTNSCprol2_ENDDGGC_points100extendpc1stretch1_WTonly.pdf", width=14, height=5)
+gridExtra::grid.arrange(grobs = plots, ncol = 2)
+dev.off()
+
+
+
+XXX BELOW NOT MOD!!! WAITING CASET UPDATE IF PURSUE THIS OR NOT
+
+
+
+
+
+
+### Bap1KO
+Part_DG_GC_subset_Bap1KO <- Part_DG_GC_subset[, Part_DG_GC_subset$orig.ident == "multiome_Bap1KO"]
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(Part_DG_GC_subset_Bap1KO, "UMAP")),
+  slingPseudotime(Part_DG_GC_subset_Bap1KO) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(Part_DG_GC_subset_Bap1KO) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst))
+curves <- slingCurves(Part_DG_GC_subset_Bap1KO, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = umap_1, y = umap_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = umap_1, y = umap_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = umap_1, y = umap_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = umap_1, y = umap_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:1) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_Part_DG_GC_subset_WT-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-STARTNSCprol2_ENDDGGC_points100extendpc1stretch1_Bap1KOonly.pdf", width=7, height=5)
+gridExtra::grid.arrange(grobs = plots, ncol = 1)
+dev.off()
+
+
+
+# Differential Progression
+prog_res <- progressionTest(Part_DG_GC_subset, conditions = Part_DG_GC_subset$orig.ident, lineages = TRUE)
+
+df_3 <-  slingPseudotime(Part_DG_GC_subset) %>% as.data.frame() 
+
+df_3$orig.ident <- Part_DG_GC_subset$orig.ident
+df_3 <- df_3 %>% 
+  pivot_longer(-orig.ident, names_to = "Lineage",
+               values_to = "pst") %>%
+  filter(!is.na(pst))
+
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_DG_GC_subset-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-STARTNSCprol2_ENDDGGC_points100extendpc1stretch1.pdf", width=6, height=3)
+ggplot(df_3, aes(x = pst)) +
+  geom_density(alpha = .8, aes(fill = orig.ident), col = "transparent") +
+  geom_density(aes(col = orig.ident), fill = "transparent", size = 1.5) +
+  labs(x = "Pseudotime", fill = "orig.ident") +
+  facet_wrap(~Lineage, scales = "free", nrow=2) +
+  guides(col = "none", fill = guide_legend(
+    override.aes = list(size = 1.5, col = c("blue", "red"))
+  )) +
+  scale_fill_manual(values = c("blue", "red")) +
+  scale_color_manual(values = c("blue", "red")) +
+  theme_bw()
+dev.off()
+
+
+#### ->  save.image(file="output/condiments/condiments-Part_DG_GC_subset_STARTNSCprol2_ENDDGGC_points100extendpc1stretch1-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.RData")
+### load("output/condiments/condiments-Part_DG_GC_subset_STARTNSCprol2_ENDDGGC_points100extendpc1stretch1-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.RData")
+set.seed(42)
+
+#  Differential expression
+# --> Run fitGam() through Slurm
+
+
+################### Time Course effect COMMON CONDITIONS ######################################################
+## TRAJECTORY1 - DG_GC ##################
+set.seed(42)
+traj1 <- readRDS("output/condiments/traj1_Part_DG_GC_subset-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.rds")
+
+
+
+## DEGs between condition
+traj1_l2fc0 <- conditionTest(traj1, l2fc = 0) # 
+
+
+# Correct the pvalue with fdr
+traj1_l2fc0$padj <- p.adjust(traj1_l2fc0$pvalue, "fdr")
+
+
+### Save output tables
+traj1_l2fc0$gene <- rownames(traj1_l2fc0) # create new column label gene; as matrix before
+condRes_traj1_l2fc0 <- traj1_l2fc0[, c(ncol(traj1_l2fc0), 1:(ncol(traj1_l2fc0)-1))] # just to put gene column 1st
+write.table(condRes_traj1_l2fc0, file = c("output/condiments/condRes-traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+# Heatmap clutering DEGs per traj _ REVISED METHOD
+## import DEGs
+condRes_traj1_l2fc0 <- read.table("output/condiments/condRes-traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) 
+
+## Isolate significant DEGs and transform into a vector
+conditionGenes_traj1_l2fc0 <- condRes_traj1_l2fc0 %>% 
+  dplyr::filter(padj <= 0.05) %>%
+  pull(gene)
+
+# Predict smoothed values
+yhatSmooth <- 
+  predictSmooth(traj1, gene = conditionGenes_traj1_l2fc0, nPoints = 50, tidy = FALSE) %>%
+  log1p()
+yhatSmoothScaled <- t(apply(yhatSmooth, 1, scales::rescale))
+combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
+# Generate heatmap with clustering
+# Perform hierarchical clustering
+hc <- hclust(dist(combinedData))
+clusters <- cutree(hc, k=6) # !!!!!!!!!!!!!!!!!! CHANGE CLUSTER NB HERE !!!!!!!!!!!!!!!!!!
+# Create an annotation data frame for the rows based on cluster assignments
+annotation_row <- data.frame(Cluster = factor(clusters))
+
+
+# Line plots
+library("reshape2")
+library("stringr")
+# Assuming yhatSmoothScaled contains your smoothed gene expression data
+# Convert the yhatSmoothScaled data to a dataframe
+df <- as.data.frame(yhatSmoothScaled)
+df$Gene <- rownames(df)
+# Transform the data into a long format
+df_long <- melt(df, id.vars = "Gene", variable.name = "Pseudotime", value.name = "Expression")
+# Attach the cluster information to the data frame
+df$Cluster <- factor(clusters[df$Gene])
+df_long$Cluster <- df$Cluster[match(df_long$Gene, df$Gene)]
+
+# Extract condition column
+df_long$Condition <- ifelse(str_detect(df_long$Pseudotime, "WT"), "WT", "Bap1KO")
+
+# Extract the point value and convert it to numeric
+df_long$Updated_Pseudotime <- as.numeric(str_extract(df_long$Pseudotime, "(?<=point)\\d+"))
+
+# Define colors for the conditions
+color_map <- c("WT" = "blue", "Bap1KO" = "red")
+
+gene_counts <- df_long %>%
+  group_by(Cluster) %>%
+  summarise(GeneCount = n_distinct(Gene))
+df_long <- df_long %>%
+  left_join(gene_counts, by = "Cluster") %>%
+  mutate(ClusterLabel = paste0("Cluster ", Cluster, " (", GeneCount, " genes)"))
+
+# Plot using ggplot
+#pdf("output/condiments/clustered_linePlot_traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl10.pdf", width=10, height=5)
+pdf("output/condiments/clustered_linePlot_traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl6.pdf", width=12, height=5)
+ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
+  geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
+  geom_line(data = subset(df_long, Condition == "Bap1KO"), aes(color = Condition), alpha = 0.5) +
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+# Plot using ggplot
+pdf("output/condiments/smoothed_linePlot_traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl6.pdf", width=10, height=5)
+ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
+  geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Smoothed Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+
+
+### Export gene list from each cluster
+## Create a data frame with gene names and their respective cluster assignments
+output_df <- data.frame(
+  gene = rownames(combinedData),
+  cluster = clusters
+)
+
+# Write the data frame to a .txt file
+write.table(output_df, 
+            file = "output/condiments/gene_clusters-traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl6.txt", 
+            sep = "\t", 
+            quote = FALSE, 
+            row.names = FALSE, 
+            col.names = TRUE)
+
+
+# Check some genes individually - RNA
+## FOR LINEAGE 1
+counts <- multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident) # identify conditions
+pseudotimes <- slingPseudotime(Part_DG_GC_subset, na = FALSE) [,1] # HERE INDICATE TRAJ
+cellweights <- slingCurveWeights(Part_DG_GC_subset) [,1] # HERE INDICATE TRAJ
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+pdf("output/condiments/plotSmoothers-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-RNA_common-Hopx.pdf", width=5, height=2)
+plotSmoothers(traj1, sub_counts, gene = "Hopx", curvesCol = c("blue","red"), lwd = 1, size = 0.2) +
+scale_color_manual(values =c("blue","red"))
+dev.off()
+
+
+
+
+# Heatmap representation
+# Define colors for each cluster
+# 20
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "grey", "darkred", "darkblue", "gold", "darkgray", "lightblue", "lightgreen", "lightcoral", "lightpink", "lightcyan"))(20),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 10
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen" ))(10),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 8
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown" ))(8),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 7
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink" ))(7),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 6
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange"))(6),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 5
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple"))(5),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 4
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow" ))(4),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# Generate the heatmap
+
+col_order <- order(grepl("WT", colnames(combinedData)), decreasing = TRUE)
+combinedData <- combinedData[, col_order]
+pdf("output/condiments/heatmap-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0_cl6.pdf", width=5, height=5)
+pheatmap(combinedData,
+  cluster_cols = FALSE,
+  show_rownames = FALSE,
+  show_colnames = FALSE,
+  legend = TRUE,
+  cutree_rows = 6,
+  annotation_row = annotation_row,
+  annotation_colors = annotation_colors
+)
+dev.off()
+
+
+
+```
+
+--> 8 clusters seems optimal for pseudotime DEG DG_GC
+
+
+
+##### GO pseudotime V3 NSC prol2 --> DG_GC (8 clusters)
+
+Let's do GO analysis for all the 8 clusters of pseudotime DEGs
+
+
+```bash
+conda activate deseq2
+```
+
+
+```R
+# Required packages
+library("clusterProfiler")
+library("org.Mm.eg.db")  
+library("enrichplot")
+library("tidyverse")
+library("patchwork")
+
+
+gene_clusters_traj1_DG_GC <- read.table("output/condiments/gene_clusters-traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl8.txt", 
+                            header = TRUE, 
+                            sep = "\t", 
+                            stringsAsFactors = FALSE)
+
+
+
+# GO BP
+pdf("output/Pathway/dotplot_BP-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0_cl8.pdf", width = 8, height = 6)
+# Loop through clusters 1 to 10
+for (cluster_id in sort(unique(gene_clusters_traj1_DG_GC$cluster))) {
+  message("Processing cluster: ", cluster_id)
+  gene_list <- gene_clusters_traj1_DG_GC %>%
+    filter(cluster == cluster_id) %>%
+    pull(gene)
+  ego <- enrichGO(gene = gene_list,
+                  OrgDb = org.Mm.eg.db,
+                  keyType = "SYMBOL",
+                  ont = "BP",
+                  pvalueCutoff = 0.05,
+                  pAdjustMethod = "BH",
+                  readable = TRUE)
+  if (!is.null(ego) && nrow(ego) > 0) {
+    print(dotplot(ego, showCategory = 20) + ggtitle(paste("Cluster", cluster_id)))
+  } else {
+    print(ggplot() + ggtitle(paste("Cluster", cluster_id, "- No Enrichment")) + theme_void())
+  }
+}
+dev.off()
+
+
+
+# KEGG
+pdf("output/Pathway/dotplot_KEGG-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0_cl8.pdf", width = 8, height = 6)
+# Loop through clusters 1 to 10
+for (cluster_id in sort(unique(gene_clusters_traj1_DG_GC$cluster))) {
+  message("Processing KEGG cluster: ", cluster_id)
+  gene_symbols <- gene_clusters_traj1_DG_GC %>%
+    filter(cluster == cluster_id) %>%
+    pull(gene)
+  # Convert to ENTREZ IDs
+  entrez_ids <- mapIds(org.Mm.eg.db,
+                       keys = gene_symbols,
+                       column = "ENTREZID",
+                       keytype = "SYMBOL",
+                       multiVals = "first") %>%
+    na.omit() %>% as.character()
+  # Perform KEGG enrichment if gene list not empty
+  ekegg <- if (length(entrez_ids) > 0) {
+    enrichKEGG(gene = entrez_ids,
+               organism = "mmu",
+               pvalueCutoff = 0.05,
+               pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  if (!is.null(ekegg) && nrow(ekegg) > 0) {
+    print(dotplot(ekegg, showCategory = 20) + ggtitle(paste("Cluster", cluster_id)))
+  } else {
+    print(ggplot() + ggtitle(paste("Cluster", cluster_id, "- No KEGG Enrichment")) + theme_void())
+  }
+}
+dev.off()
+
+
+
+
+######## Specific case ################
+
+genes_cluster <- gene_clusters_traj1_DG_GC %>%
+  filter(cluster == 10) %>%
+  pull(gene)
+
+# Convert SYMBOLs to ENTREZ IDs
+entrez_cluster <- mapIds(org.Mm.eg.db,
+                          keys = genes_cluster,
+                          column = "ENTREZID",
+                          keytype = "SYMBOL",
+                          multiVals = "first") %>%
+  na.omit() %>% as.character()
+
+# KEGG enrichment
+ekegg_cluster <- enrichKEGG(gene = entrez_cluster,
+                             organism = "mmu",
+                             pvalueCutoff = 0.05,
+                             pAdjustMethod = "BH")
+
+# Plot
+pdf("output/Pathway/dotplot_KEGG-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0_cl8_cluster10.pdf", width = 6, height = 6)
+if (!is.null(ekegg_cluster) && nrow(ekegg_cluster) > 0) {
+  print(dotplot(ekegg_cluster, showCategory = 10) )
+} else {
+  print(ggplot() + ggtitle("No KEGG Enrichment") + theme_void())
+}
+dev.off()
+
+
+
+
+```
+
+
+
+
+
+
+#### Run condiments RNA assay - V3 NSC prol1 --> DG_GC (Task post meeting 20250702)
+
+Starting cluster = NSC_proliferative_1; express Hopx genes / end cluster = DG_GC
+
+
+Lets **isolate the cell types** first; follow same method as Kcnc1 project (`002*/005*`)
+
+
+
+
+```bash
+conda activate condiments_Signac
+```
+
+
+
+```R
+# package installation 
+## install.packages("remotes")
+## remotes::install_github("cran/spatstat.core")
+## remotes::install_version("Seurat", "4.0.3")
+## install.packages("magrittr")
+## install.packages("magrittr")
+## install.packages("dplyr")
+## BiocManager::install("DelayedMatrixStats")
+## BiocManager::install("tradeSeq")
+
+
+# packages
+library("condiments")
+library("Seurat")
+library("magrittr") # to use pipe
+library("dplyr") # to use bind_cols and sample_frac
+library("SingleCellExperiment") # for reducedDims
+library("ggplot2")
+library("slingshot")
+library("DelayedMatrixStats")
+library("tidyr")
+library("tradeSeq") 
+library("cowplot")
+library("scales")
+library("pheatmap")
+
+# Data import
+
+
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.sct_numeric_label.rds")
+
+
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "RNA" # According to condiments workflow
+
+
+# convert to SingleCellExperiment
+WT_Bap1KO <- as.SingleCellExperiment(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA")
+
+
+
+## SEPARATE CELLS for each trajectory ############################
+
+########################################################
+############################ DG_GC ############################
+########################################################
+
+# First filter based on cell type
+Part_DG_GC <- WT_Bap1KO[, WT_Bap1KO$cluster.annot %in% c("NSC_proliferative_1", "NSC_quiescent", "NSC_proliferative_2", "IP", "DG_GC")]
+table(Part_DG_GC$cluster.annot) # to double check
+
+
+# tidy
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_DG_GC)$UMAP),
+  as.data.frame(colData(Part_DG_GC)[, -3])
+  ) %>%
+  sample_frac(1)
+
+# PLOT
+pdf("output/condiments/UMAP_WT_Bap1KO-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-Part_DG_GC_option2.pdf", width=6, height=5)
+ggplot(df, aes(x = umap_1, y = umap_2, col = cluster.annot)) +
+  geom_point(size = .7) +
+  labs(col = "orig.ident") +
+  theme_classic()
+dev.off()
+
+
+## Second filter based on UMAP coordinate
+umap_coords <- reducedDims(Part_DG_GC)$UMAP
+
+# Filter conditions based on your description:
+# Keep cells with UMAP_1 > -3 and UMAP_2 < 2.5
+selected_cells <- umap_coords[,1] < 5 &  umap_coords[,2] < 0 &  umap_coords[,2] > -15
+
+# Subset your SCE object
+Part_DG_GC_subset <- Part_DG_GC[, selected_cells]
+
+# Check resulting subset
+dim(Part_DG_GC_subset)
+
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_DG_GC_subset)$UMAP),
+  as.data.frame(colData(Part_DG_GC_subset)[, -3])
+  ) %>%
+  sample_frac(1)
+
+pdf("output/condiments/UMAP_WT_Bap1KO-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-Part_DG_GC_option2_subset.pdf", width=7, height=5)
+ggplot(df, aes(x = umap_1, y = umap_2, col =  cluster.annot)) +
+  geom_point(size = .7) +
+  theme_classic()
+dev.off()
+
+
+
+## genotype overlap
+pdf("output/condiments/UMAP_genotype_WT_Bap1KO-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-Part_DG_GC_option2_subset.pdf", width=7, height=5)
+ggplot(df, aes(x = umap_1, y = umap_2, col = orig.ident)) +
+  geom_point(size = .7) +
+  scale_color_manual(values = c("blue", "red")) + # Specify colors here
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+## imbalance score
+scores <- condiments::imbalance_score(
+  Object = df %>% select(umap_1, umap_2) %>% as.matrix(), 
+  conditions = df$orig.ident,
+  k = 20, smooth = 40)
+df$scores <- scores$scaled_scores
+
+pdf("output/condiments/UMAP_imbalance_score_WT_Bap1KO-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-Part_DG_GC_option2_subset.pdf", width=7, height=5)
+ggplot(df, aes(x = umap_1, y = umap_2, col = scores)) +
+  geom_point(size = .7) +
+  scale_color_viridis_c(option = "C") +
+  labs(col = "Scores") +
+  theme_classic()
+dev.off()
+
+
+
+
+
+## PLOT with Separate trajectories
+### Testing Area ############
+
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c("NSC_proliferative_1"), end.clus = c("DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1)
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c("NSC_proliferative_1", "NSC_quiescent"), end.clus = c("DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1)
+
+
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c("NSC_quiescent"), end.clus = c("DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1)
+
+
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c("NSC_proliferative_1", "NSC_quiescent"), end.clus = c("NSC_proliferative_2", "DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1)
+
+
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c("NSC_proliferative_1"), end.clus = c( "DG_GC") ,approx_points = 100, extend = 'y', stretch = 1)
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c("NSC_proliferative_1"), end.clus = c( "DG_GC") ,approx_points = 100, extend = 'n', stretch = 1)
+
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c( "NSC_quiescent", "NSC_proliferative_2"), end.clus = c( "DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1)
+
+
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c( "NSC_quiescent", "NSC_proliferative_2"), end.clus = c( "DG_GC", "IP") ,approx_points = 100, extend = 'pc1', stretch = 1)
+
+
+
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c( "NSC_quiescent", "NSC_proliferative_2"), end.clus = c( "DG_GC", "IP") ,approx_points = 100, extend = 'y', stretch = 1)
+
+
+                 
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c( "NSC_quiescent", "NSC_proliferative_2"), end.clus = c( "DG_GC", "IP") ,approx_points = 100, extend = 'n', stretch = 1)
+
+
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c( "NSC_quiescent", "NSC_proliferative_2", "NSC_proliferative_1"), end.clus = c( "DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1)
+
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c( "NSC_quiescent", "NSC_proliferative_2", "NSC_proliferative_1"), end.clus = c( "DG_GC") ,approx_points = 100, extend = 'y', stretch = 1)
+
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c( "NSC_quiescent", "NSC_proliferative_2", "NSC_proliferative_1"), end.clus = c( "DG_GC") ,approx_points = 100, extend = 'n', stretch = 1)
+
+
+
+
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c( end.clus = c( "DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1) )
+
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c( start.clus = c( "DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1) )
+
+
+
+
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c( "NSC_quiescent"), end.clus = c( "DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1, dist.method = "mnn")
+
+
+##########################################
+
+
+
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c( "NSC_proliferative_2"), end.clus = c( "DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1, dist.method = "mnn")
+
+
+
+
+
+#test reduceDim PCA or subset endoderm
+topologyTest(SlingshotDataSet(Part_DG_GC_subset), Part_DG_GC_subset$orig.ident) #  
+
+
+sdss <- slingshot_conditions(SlingshotDataSet(Part_DG_GC_subset), Part_DG_GC_subset$orig.ident)
+curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
+                    .id = "orig.ident")
+
+
+
+#  
+#pdf("output/condiments/UMAP_trajectory_separated_WT_Bap1KO-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-Part_DG_GC_option2_subset-STARTNSCcquiescNSCprol2NSCprol1_ENDDGGC_points100extendnstretch1.pdf", width=7, height=5)
+
+pdf("output/condiments/UMAP_trajectory_separated_WT_Bap1KO-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-Part_DG_GC_option2_subset-STARTNSCprol2_ENDDGGC_points100extendnstretch1distMethmnn.pdf", width=7, height=5)
+ggplot(df, aes(x = umap_1, y = umap_2, col = orig.ident)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(orig.ident, Lineage, Order),
+            aes(group = interaction(Lineage, orig.ident)), size = 1.5) +
+  theme_classic()
+dev.off()
+
+
+
+xxxy here !! pursue try all nsc cluster as START; then try the other dist meth 
+
+
+
+## PLOT with separate trajectories - Individually
+### WT
+Part_DG_GC_subset_WT <- Part_DG_GC_subset[, Part_DG_GC_subset$orig.ident == "multiome_WT"]
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(Part_DG_GC_subset_WT, "UMAP")),
+  slingPseudotime(Part_DG_GC_subset_WT) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(Part_DG_GC_subset_WT) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst))
+curves <- slingCurves(Part_DG_GC_subset_WT, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = umap_1, y = umap_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = umap_1, y = umap_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = umap_1, y = umap_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = umap_1, y = umap_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:2) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_Part_DG_GC_option2_subset_WT-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-STARTNSCcquiesc_ENDDGGC_points100extendnstretch1distMethmnn_WTonly.pdf", width=14, height=5)
+gridExtra::grid.arrange(grobs = plots, ncol = 2)
+dev.off()
+
+
+
+
+
+### Bap1KO
+Part_DG_GC_subset_Bap1KO <- Part_DG_GC_subset[, Part_DG_GC_subset$orig.ident == "multiome_Bap1KO"]
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(Part_DG_GC_subset_Bap1KO, "UMAP")),
+  slingPseudotime(Part_DG_GC_subset_Bap1KO) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(Part_DG_GC_subset_Bap1KO) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst))
+curves <- slingCurves(Part_DG_GC_subset_Bap1KO, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = umap_1, y = umap_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = umap_1, y = umap_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = umap_1, y = umap_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = umap_1, y = umap_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:2) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_Part_DG_GC_option2_subset_WT-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-STARTNSCcquiesc_ENDDGGC_points100extendnstretch1distMethmnn_Bap1KOonly.pdf", width=14, height=5)
+gridExtra::grid.arrange(grobs = plots, ncol = 2)
+dev.off()
+
+
+
+# Differential Progression
+prog_res <- progressionTest(Part_DG_GC_subset, conditions = Part_DG_GC_subset$orig.ident, lineages = TRUE)
+
+df_3 <-  slingPseudotime(Part_DG_GC_subset) %>% as.data.frame() 
+
+df_3$orig.ident <- Part_DG_GC_subset$orig.ident
+df_3 <- df_3 %>% 
+  pivot_longer(-orig.ident, names_to = "Lineage",
+               values_to = "pst") %>%
+  filter(!is.na(pst))
+
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_DG_GC_option2_subset-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-STARTNSCcquiesc_ENDDGGC_points100extendnstretch1distMethmnn.pdf", width=6, height=3)
+ggplot(df_3, aes(x = pst)) +
+  geom_density(alpha = .8, aes(fill = orig.ident), col = "transparent") +
+  geom_density(aes(col = orig.ident), fill = "transparent", size = 1.5) +
+  labs(x = "Pseudotime", fill = "orig.ident") +
+  facet_wrap(~Lineage, scales = "free", nrow=2) +
+  guides(col = "none", fill = guide_legend(
+    override.aes = list(size = 1.5, col = c("blue", "red"))
+  )) +
+  scale_fill_manual(values = c("blue", "red")) +
+  scale_color_manual(values = c("blue", "red")) +
+  theme_bw()
+dev.off()
+
+
+#### ->  save.image(file="output/condiments/condiments-Part_DG_GC_subset_STARTNSCprol2_ENDDGGC_points100extendpc1stretch1-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.RData")
+### load("output/condiments/condiments-Part_DG_GC_subset_STARTNSCprol2_ENDDGGC_points100extendpc1stretch1-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.RData")
+set.seed(42)
+
+#  Differential expression
+# --> Run fitGam() through Slurm
+
+
+################### Time Course effect COMMON CONDITIONS ######################################################
+## TRAJECTORY1 - DG_GC ##################
+set.seed(42)
+traj1 <- readRDS("output/condiments/traj1_Part_DG_GC_subset-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.rds")
+
+
+
+## DEGs between condition
+traj1_l2fc0 <- conditionTest(traj1, l2fc = 0) # 
+
+
+# Correct the pvalue with fdr
+traj1_l2fc0$padj <- p.adjust(traj1_l2fc0$pvalue, "fdr")
+
+
+### Save output tables
+traj1_l2fc0$gene <- rownames(traj1_l2fc0) # create new column label gene; as matrix before
+condRes_traj1_l2fc0 <- traj1_l2fc0[, c(ncol(traj1_l2fc0), 1:(ncol(traj1_l2fc0)-1))] # just to put gene column 1st
+write.table(condRes_traj1_l2fc0, file = c("output/condiments/condRes-traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+# Heatmap clutering DEGs per traj _ REVISED METHOD
+## import DEGs
+condRes_traj1_l2fc0 <- read.table("output/condiments/condRes-traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) 
+
+## Isolate significant DEGs and transform into a vector
+conditionGenes_traj1_l2fc0 <- condRes_traj1_l2fc0 %>% 
+  dplyr::filter(padj <= 0.05) %>%
+  pull(gene)
+
+# Predict smoothed values
+yhatSmooth <- 
+  predictSmooth(traj1, gene = conditionGenes_traj1_l2fc0, nPoints = 50, tidy = FALSE) %>%
+  log1p()
+yhatSmoothScaled <- t(apply(yhatSmooth, 1, scales::rescale))
+combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
+# Generate heatmap with clustering
+# Perform hierarchical clustering
+hc <- hclust(dist(combinedData))
+clusters <- cutree(hc, k=6) # !!!!!!!!!!!!!!!!!! CHANGE CLUSTER NB HERE !!!!!!!!!!!!!!!!!!
+# Create an annotation data frame for the rows based on cluster assignments
+annotation_row <- data.frame(Cluster = factor(clusters))
+
+
+# Line plots
+library("reshape2")
+library("stringr")
+# Assuming yhatSmoothScaled contains your smoothed gene expression data
+# Convert the yhatSmoothScaled data to a dataframe
+df <- as.data.frame(yhatSmoothScaled)
+df$Gene <- rownames(df)
+# Transform the data into a long format
+df_long <- melt(df, id.vars = "Gene", variable.name = "Pseudotime", value.name = "Expression")
+# Attach the cluster information to the data frame
+df$Cluster <- factor(clusters[df$Gene])
+df_long$Cluster <- df$Cluster[match(df_long$Gene, df$Gene)]
+
+# Extract condition column
+df_long$Condition <- ifelse(str_detect(df_long$Pseudotime, "WT"), "WT", "Bap1KO")
+
+# Extract the point value and convert it to numeric
+df_long$Updated_Pseudotime <- as.numeric(str_extract(df_long$Pseudotime, "(?<=point)\\d+"))
+
+# Define colors for the conditions
+color_map <- c("WT" = "blue", "Bap1KO" = "red")
+
+gene_counts <- df_long %>%
+  group_by(Cluster) %>%
+  summarise(GeneCount = n_distinct(Gene))
+df_long <- df_long %>%
+  left_join(gene_counts, by = "Cluster") %>%
+  mutate(ClusterLabel = paste0("Cluster ", Cluster, " (", GeneCount, " genes)"))
+
+# Plot using ggplot
+#pdf("output/condiments/clustered_linePlot_traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl10.pdf", width=10, height=5)
+pdf("output/condiments/clustered_linePlot_traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl6.pdf", width=12, height=5)
+ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
+  geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
+  geom_line(data = subset(df_long, Condition == "Bap1KO"), aes(color = Condition), alpha = 0.5) +
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+# Plot using ggplot
+pdf("output/condiments/smoothed_linePlot_traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl6.pdf", width=10, height=5)
+ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
+  geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Smoothed Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+
+
+### Export gene list from each cluster
+## Create a data frame with gene names and their respective cluster assignments
+output_df <- data.frame(
+  gene = rownames(combinedData),
+  cluster = clusters
+)
+
+# Write the data frame to a .txt file
+write.table(output_df, 
+            file = "output/condiments/gene_clusters-traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl6.txt", 
+            sep = "\t", 
+            quote = FALSE, 
+            row.names = FALSE, 
+            col.names = TRUE)
+
+
+# Check some genes individually - RNA
+## FOR LINEAGE 1
+counts <- multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident) # identify conditions
+pseudotimes <- slingPseudotime(Part_DG_GC_subset, na = FALSE) [,1] # HERE INDICATE TRAJ
+cellweights <- slingCurveWeights(Part_DG_GC_subset) [,1] # HERE INDICATE TRAJ
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+pdf("output/condiments/plotSmoothers-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-RNA_common-Hopx.pdf", width=5, height=2)
+plotSmoothers(traj1, sub_counts, gene = "Hopx", curvesCol = c("blue","red"), lwd = 1, size = 0.2) +
+scale_color_manual(values =c("blue","red"))
+dev.off()
+
+
+
+
+# Heatmap representation
+# Define colors for each cluster
+# 20
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "grey", "darkred", "darkblue", "gold", "darkgray", "lightblue", "lightgreen", "lightcoral", "lightpink", "lightcyan"))(20),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 10
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen" ))(10),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 8
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown" ))(8),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 7
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink" ))(7),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 6
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange"))(6),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 5
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple"))(5),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 4
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow" ))(4),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# Generate the heatmap
+
+col_order <- order(grepl("WT", colnames(combinedData)), decreasing = TRUE)
+combinedData <- combinedData[, col_order]
+pdf("output/condiments/heatmap-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0_cl6.pdf", width=5, height=5)
+pheatmap(combinedData,
+  cluster_cols = FALSE,
+  show_rownames = FALSE,
+  show_colnames = FALSE,
+  legend = TRUE,
+  cutree_rows = 6,
+  annotation_row = annotation_row,
+  annotation_colors = annotation_colors
+)
+dev.off()
+
+
+
+```
+
+--> 8 clusters seems optimal for pseudotime DEG DG_GC
+
+
+
+##### GO pseudotime V3 NSC prol2 --> DG_GC (8 clusters)
+
+Let's do GO analysis for all the 8 clusters of pseudotime DEGs
+
+
+```bash
+conda activate deseq2
+```
+
+
+```R
+# Required packages
+library("clusterProfiler")
+library("org.Mm.eg.db")  
+library("enrichplot")
+library("tidyverse")
+library("patchwork")
+
+
+gene_clusters_traj1_DG_GC <- read.table("output/condiments/gene_clusters-traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl8.txt", 
+                            header = TRUE, 
+                            sep = "\t", 
+                            stringsAsFactors = FALSE)
+
+
+
+# GO BP
+pdf("output/Pathway/dotplot_BP-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0_cl8.pdf", width = 8, height = 6)
+# Loop through clusters 1 to 10
+for (cluster_id in sort(unique(gene_clusters_traj1_DG_GC$cluster))) {
+  message("Processing cluster: ", cluster_id)
+  gene_list <- gene_clusters_traj1_DG_GC %>%
+    filter(cluster == cluster_id) %>%
+    pull(gene)
+  ego <- enrichGO(gene = gene_list,
+                  OrgDb = org.Mm.eg.db,
+                  keyType = "SYMBOL",
+                  ont = "BP",
+                  pvalueCutoff = 0.05,
+                  pAdjustMethod = "BH",
+                  readable = TRUE)
+  if (!is.null(ego) && nrow(ego) > 0) {
+    print(dotplot(ego, showCategory = 20) + ggtitle(paste("Cluster", cluster_id)))
+  } else {
+    print(ggplot() + ggtitle(paste("Cluster", cluster_id, "- No Enrichment")) + theme_void())
+  }
+}
+dev.off()
+
+
+
+# KEGG
+pdf("output/Pathway/dotplot_KEGG-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0_cl8.pdf", width = 8, height = 6)
+# Loop through clusters 1 to 10
+for (cluster_id in sort(unique(gene_clusters_traj1_DG_GC$cluster))) {
+  message("Processing KEGG cluster: ", cluster_id)
+  gene_symbols <- gene_clusters_traj1_DG_GC %>%
+    filter(cluster == cluster_id) %>%
+    pull(gene)
+  # Convert to ENTREZ IDs
+  entrez_ids <- mapIds(org.Mm.eg.db,
+                       keys = gene_symbols,
+                       column = "ENTREZID",
+                       keytype = "SYMBOL",
+                       multiVals = "first") %>%
+    na.omit() %>% as.character()
+  # Perform KEGG enrichment if gene list not empty
+  ekegg <- if (length(entrez_ids) > 0) {
+    enrichKEGG(gene = entrez_ids,
+               organism = "mmu",
+               pvalueCutoff = 0.05,
+               pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  if (!is.null(ekegg) && nrow(ekegg) > 0) {
+    print(dotplot(ekegg, showCategory = 20) + ggtitle(paste("Cluster", cluster_id)))
+  } else {
+    print(ggplot() + ggtitle(paste("Cluster", cluster_id, "- No KEGG Enrichment")) + theme_void())
+  }
+}
+dev.off()
+
+
+
+
+######## Specific case ################
+
+genes_cluster <- gene_clusters_traj1_DG_GC %>%
+  filter(cluster == 10) %>%
+  pull(gene)
+
+# Convert SYMBOLs to ENTREZ IDs
+entrez_cluster <- mapIds(org.Mm.eg.db,
+                          keys = genes_cluster,
+                          column = "ENTREZID",
+                          keytype = "SYMBOL",
+                          multiVals = "first") %>%
+  na.omit() %>% as.character()
+
+# KEGG enrichment
+ekegg_cluster <- enrichKEGG(gene = entrez_cluster,
+                             organism = "mmu",
+                             pvalueCutoff = 0.05,
+                             pAdjustMethod = "BH")
+
+# Plot
+pdf("output/Pathway/dotplot_KEGG-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0_cl8_cluster10.pdf", width = 6, height = 6)
+if (!is.null(ekegg_cluster) && nrow(ekegg_cluster) > 0) {
+  print(dotplot(ekegg_cluster, showCategory = 10) )
+} else {
+  print(ggplot() + ggtitle("No KEGG Enrichment") + theme_void())
+}
+dev.off()
+
+
+
+
+```
+
 
 
 
