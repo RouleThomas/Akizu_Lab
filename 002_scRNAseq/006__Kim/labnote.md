@@ -12221,12 +12221,11 @@ set.seed(42)
 ################### Time Course effect COMMON CONDITIONS ######################################################
 ## TRAJECTORY1 - DG_GC ##################
 set.seed(42)
-traj1 <- readRDS("output/condiments/traj1_Part_DG_GC_subset-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.rds")
-
+traj1 <- readRDS("output/condiments/traj1_Part_DG_GC_option1_subset-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.rds")
 
 
 ## DEGs between condition
-traj1_l2fc0 <- conditionTest(traj1, l2fc = 0) # 
+traj1_l2fc0 <- conditionTest(traj1, l2fc = 0.1) # 
 
 
 # Correct the pvalue with fdr
@@ -12236,15 +12235,15 @@ traj1_l2fc0$padj <- p.adjust(traj1_l2fc0$pvalue, "fdr")
 ### Save output tables
 traj1_l2fc0$gene <- rownames(traj1_l2fc0) # create new column label gene; as matrix before
 condRes_traj1_l2fc0 <- traj1_l2fc0[, c(ncol(traj1_l2fc0), 1:(ncol(traj1_l2fc0)-1))] # just to put gene column 1st
-write.table(condRes_traj1_l2fc0, file = c("output/condiments/condRes-traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+write.table(condRes_traj1_l2fc0, file = c("output/condiments/condRes-traj1_Part_DG_GC_option1_subset-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc01.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
 # Heatmap clutering DEGs per traj _ REVISED METHOD
 ## import DEGs
-condRes_traj1_l2fc0 <- read.table("output/condiments/condRes-traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) 
+condRes_traj1_l2fc0 <- read.table("condRes-traj1_Part_DG_GC_option1_subset-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc01.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) 
 
 ## Isolate significant DEGs and transform into a vector
 conditionGenes_traj1_l2fc0 <- condRes_traj1_l2fc0 %>% 
-  dplyr::filter(padj <= 0.05) %>%
+  dplyr::filter(padj <= 0.01) %>%  # 0.01 0.05
   pull(gene)
 
 # Predict smoothed values
@@ -12291,8 +12290,7 @@ df_long <- df_long %>%
   mutate(ClusterLabel = paste0("Cluster ", Cluster, " (", GeneCount, " genes)"))
 
 # Plot using ggplot
-#pdf("output/condiments/clustered_linePlot_traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl10.pdf", width=10, height=5)
-pdf("output/condiments/clustered_linePlot_traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl6.pdf", width=12, height=5)
+pdf("output/condiments/clustered_linePlot_traj1_DG_GC_option1_subset-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc01padj01-cl6.pdf", width=12, height=5)
 ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
   geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
   geom_line(data = subset(df_long, Condition == "Bap1KO"), aes(color = Condition), alpha = 0.5) +
@@ -12305,7 +12303,7 @@ ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = 
 dev.off()
 
 # Plot using ggplot
-pdf("output/condiments/smoothed_linePlot_traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl6.pdf", width=10, height=5)
+pdf("output/condiments/smoothed_linePlot_traj1_DG_GC_option1_subset-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc01padj01-cl6.pdf", width=10, height=5)
 ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
   geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
   scale_color_manual(values = color_map) + 
@@ -12327,28 +12325,12 @@ output_df <- data.frame(
 
 # Write the data frame to a .txt file
 write.table(output_df, 
-            file = "output/condiments/gene_clusters-traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl6.txt", 
+            file = "output/condiments/gene_clusters-traj1_DG_GC_option1_subset-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc01padj01-cl6.txt", 
             sep = "\t", 
             quote = FALSE, 
             row.names = FALSE, 
             col.names = TRUE)
 
-
-# Check some genes individually - RNA
-## FOR LINEAGE 1
-counts <- multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@counts # Collect the counts from seurat
-cond <- factor(multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident) # identify conditions
-pseudotimes <- slingPseudotime(Part_DG_GC_subset, na = FALSE) [,1] # HERE INDICATE TRAJ
-cellweights <- slingCurveWeights(Part_DG_GC_subset) [,1] # HERE INDICATE TRAJ
-#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
-sub_weights <- cellweights[cellweights != 0]
-sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
-sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
-sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
-pdf("output/condiments/plotSmoothers-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-RNA_common-Hopx.pdf", width=5, height=2)
-plotSmoothers(traj1, sub_counts, gene = "Hopx", curvesCol = c("blue","red"), lwd = 1, size = 0.2) +
-scale_color_manual(values =c("blue","red"))
-dev.off()
 
 
 
@@ -12357,6 +12339,10 @@ dev.off()
 # Define colors for each cluster
 # 20
 cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "grey", "darkred", "darkblue", "gold", "darkgray", "lightblue", "lightgreen", "lightcoral", "lightpink", "lightcyan"))(20),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 12
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen","grey", "darkred" ))(12),
                            unique(annotation_row$Cluster))
 annotation_colors <- list(Cluster = cluster_colors)
 # 10
@@ -12387,7 +12373,7 @@ annotation_colors <- list(Cluster = cluster_colors)
 
 col_order <- order(grepl("WT", colnames(combinedData)), decreasing = TRUE)
 combinedData <- combinedData[, col_order]
-pdf("output/condiments/heatmap-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0_cl6.pdf", width=5, height=5)
+pdf("output/condiments/heatmap-traj1_DG_GC_option1_subset_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc01padj01_cl6.pdf", width=5, height=5)
 pheatmap(combinedData,
   cluster_cols = FALSE,
   show_rownames = FALSE,
@@ -12401,15 +12387,45 @@ dev.off()
 
 
 
+
+
+
+
+
+# Check some genes individually - RNA
+## FOR LINEAGE 1
+counts <- multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident) # identify conditions
+pseudotimes <- slingPseudotime(Part_DG_GC_subset, na = FALSE) [,1] # HERE INDICATE TRAJ
+cellweights <- slingCurveWeights(Part_DG_GC_subset) [,1] # HERE INDICATE TRAJ
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+pdf("output/condiments/plotSmoothers-traj1_DG_GC_option1_subset_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-RNA_common-Prox1.pdf", width=5, height=2)
+plotSmoothers(traj1, sub_counts, gene = "Prox1", curvesCol = c("blue","red"), lwd = 1, size = 0.2) +
+scale_color_manual(values =c("blue","red"))
+dev.off()
+
+
+
+
 ```
 
---> 8 clusters seems optimal for pseudotime DEG DG_GC
+--> 10 clusters seems optimal for pseudotime DEG DG_GC option1
 
 
 
-##### GO pseudotime V3 NSC prol2 --> DG_GC (8 clusters)
 
-Let's do GO analysis for all the 8 clusters of pseudotime DEGs
+
+
+
+
+
+##### GO pseudotime V3 NSC quiesc --> DG_GC (10 clusters)
+
+Let's do GO analysis for all the 10 clusters of pseudotime DEGs
 
 
 ```bash
@@ -12426,15 +12442,16 @@ library("tidyverse")
 library("patchwork")
 
 
-gene_clusters_traj1_DG_GC <- read.table("output/condiments/gene_clusters-traj1_DG_GC-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl8.txt", 
+gene_clusters_traj1_DG_GC <- read.table("output/condiments/gene_clusters-traj1_DG_GC_option1_subset-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc01padj01-cl10.txt", 
                             header = TRUE, 
                             sep = "\t", 
                             stringsAsFactors = FALSE)
 
-
+#  
+#  output/condiments/gene_clusters-traj1_DG_GC_option1_subset-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0-cl10.txt
 
 # GO BP
-pdf("output/Pathway/dotplot_BP-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0_cl8.pdf", width = 8, height = 6)
+pdf("output/Pathway/dotplot_BP-traj1_DG_GC_option1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc01padj01_cl10.pdf", width = 8, height = 6)
 # Loop through clusters 1 to 10
 for (cluster_id in sort(unique(gene_clusters_traj1_DG_GC$cluster))) {
   message("Processing cluster: ", cluster_id)
@@ -12459,7 +12476,7 @@ dev.off()
 
 
 # KEGG
-pdf("output/Pathway/dotplot_KEGG-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0_cl8.pdf", width = 8, height = 6)
+pdf("output/Pathway/dotplot_KEGG-traj1_DG_GC_option1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc01padj01_cl10.pdf", width = 8, height = 6)
 # Loop through clusters 1 to 10
 for (cluster_id in sort(unique(gene_clusters_traj1_DG_GC$cluster))) {
   message("Processing KEGG cluster: ", cluster_id)
@@ -12492,10 +12509,11 @@ dev.off()
 
 
 
+
 ######## Specific case ################
 
 genes_cluster <- gene_clusters_traj1_DG_GC %>%
-  filter(cluster == 10) %>%
+  filter(cluster == 2) %>%
   pull(gene)
 
 # Convert SYMBOLs to ENTREZ IDs
@@ -12513,7 +12531,7 @@ ekegg_cluster <- enrichKEGG(gene = entrez_cluster,
                              pAdjustMethod = "BH")
 
 # Plot
-pdf("output/Pathway/dotplot_KEGG-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0_cl8_cluster10.pdf", width = 6, height = 6)
+pdf("output/Pathway/dotplot_KEGG-traj1_DG_GC_option1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-l2fc0_cl10_cluster2.pdf", width = 6, height = 6)
 if (!is.null(ekegg_cluster) && nrow(ekegg_cluster) > 0) {
   print(dotplot(ekegg_cluster, showCategory = 10) )
 } else {
@@ -12531,7 +12549,7 @@ dev.off()
 
 
 
-#### Run condiments RNA assay - V3 NSC prol1 --> DG_GC (Task post meeting 20250702)
+#### Run condiments RNA assay - V3 NSC prol1 --> DG_GC (Task post meeting 20250702) Option2
 
 Starting cluster = NSC_proliferative_1; express Hopx genes / end cluster = DG_GC
 
@@ -12759,13 +12777,31 @@ Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
                  clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
                  start.clus = c("NSC_proliferative_1", "NSC_proliferative_2"), end.clus = c( "DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1, dist.method = "mnn")
 
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c("NSC_quiescent", "NSC_proliferative_1"), end.clus = c( "DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1, dist.method = "mnn")
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c("NSC_quiescent", "NSC_proliferative_1","NSC_proliferative_2"), end.clus = c( "DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1, dist.method = "mnn")
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c("NSC_quiescent", "NSC_proliferative_1"), end.clus = c( "DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1, dist.method = "simple")
+
+
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c("NSC_quiescent", "NSC_proliferative_1"), end.clus = c( "DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1, dist.method = "scaled.full")
+
+Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
+                 start.clus = c("NSC_quiescent", "NSC_proliferative_1", "NSC_proliferative_2"), end.clus = c( "DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1, dist.method = "scaled.full")
 
 ##########################################
 
 
 Part_DG_GC_subset <- slingshot(Part_DG_GC_subset, reducedDim = 'UMAP',
                  clusterLabels = colData(Part_DG_GC_subset)$cluster.annot,
-                 start.clus = c("NSC_proliferative_2"), end.clus = c( "DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1, dist.method = "mnn")
+                 start.clus = c("NSC_quiescent", "NSC_proliferative_1"), end.clus = c( "DG_GC") ,approx_points = 100, extend = 'pc1', stretch = 1, dist.method = "scaled.diag")
 
 
 
@@ -12785,7 +12821,7 @@ curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
 #  
 #pdf("output/condiments/UMAP_trajectory_separated_WT_Bap1KO-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-Part_DG_GC_option2_subset-STARTNSCcquiescNSCprol2NSCprol1_ENDDGGC_points100extendnstretch1.pdf", width=7, height=5)
 
-pdf("output/condiments/UMAP_trajectory_separated_WT_Bap1KO-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-Part_DG_GC_option2_subset-STARTNSCprol2_ENDDGGC_points100extendnstretch1distMethmnn.pdf", width=7, height=5)
+pdf("output/condiments/UMAP_trajectory_separated_WT_Bap1KO-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-Part_DG_GC_option2_subset-STARTNSCquiescNSCprol1_ENDDGGC_points100extendnstretch1distMethscalediag.pdf", width=7, height=5)
 ggplot(df, aes(x = umap_1, y = umap_2, col = orig.ident)) +
   geom_point(size = .7, alpha = .2) +
   scale_color_brewer(palette = "Accent") +
@@ -13265,7 +13301,7 @@ sbatch scripts/fitGAM_6knots_traj2_RNA_common.sh # 31299487 ok
 ### traj of interest NSC_prol_2 --> DG_GC isolated cells
 sbatch scripts/fitGAM_6knots_traj1_RNA_common_DG_GC.sh # 45797474 ok
 ### traj of interest NSC_quiescent --> DG_GC isolated cells - (Task post meeting 20250702) Option1
-sbatch scripts/fitGAM_6knots_traj1_RNA_common_DG_GC_option1.sh # 47206838 xxx
+sbatch scripts/fitGAM_6knots_traj1_RNA_common_DG_GC_option1.sh # 47206838 ok
 
 
 

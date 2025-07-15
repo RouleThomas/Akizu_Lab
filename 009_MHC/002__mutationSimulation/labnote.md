@@ -102,11 +102,297 @@ Let's re-name `scripts/simulate_sbs5_array.py` into `scripts/simulate_array.py`;
 ```bash
 conda activate mutsim
 
-sbatch scripts/run_filtered_cosmic_1.slurm # 46998992 ok  --> results/
-sbatch scripts/run_filtered_experimental_1.slurm # 47058807 fail; 47174183 xxx
-sbatch scripts/run_filtered_contexts_1.slurm #  47058818 ok  --> results_contexts/
+sbatch scripts/run_filtered_cosmic_1.slurm # 46998992 ok --> results/
+sbatch scripts/run_filtered_experimental_1.slurm # 47058807 fail; 47174183 ok --> results_experimental/
+sbatch scripts/run_filtered_contexts_1.slurm #  47058818 ok --> results_contexts/
 
 
 ```
 
---> XXX
+--> All good all files generated with `n_*` folders in the respectrive `results*/` folders
+
+
+
+# Verify that the simulation were perform correctly
+
+## Check individual mutations and dbnsfp
+
+Import simulation in python and manually inspect whether STOP is STOP, missense is missense; using manual query in [dbnsfp](https://www.dbnsfp.org/web-query).
+
+
+
+```python
+import pandas as pd
+df = pd.read_parquet("results/SBS4/n_16000/rep_01.annot.parquet")
+df[['chr', 'pos', 'ref_base', 'alt_base', 'consequence']].sample(5) # check a few rows
+```
+
+--> SBS4  rep1 n 16k; first five rows:
+
+| Row | Original             | Formatted Variant ID |
+| --- | -------------------- | -------------------- |
+| 1   | `chr3 184321295 2 A` | `3-184321295-G-A`    |
+| 2   | `chr18 58939494 0 A` | `18-58939494-A-A`    |
+| 3   | `chr14 71661412 0 G` | `14-71661412-A-G`    |
+| 4   | `chr14 64404139 1 T` | `14-64404139-C-T`    |
+| 5   | `chr17 50618101 2 A` | `17-50618101-G-A`    |
+
+--> Pasted formatted variant ID in in [dbnsfp](https://www.dbnsfp.org/web-query).
+
+--> Issue here is that these variants does not exist in dbnsfp; not annotated as they are new! **Let's filter to keep the one that already exist in dbnsfp**
+
+
+
+```python
+import pandas as pd
+from pathlib import Path
+import sys
+sys.path.append("scripts") 
+from annotate_damage3 import DBNSFP
+
+
+# Load Parquet simulation
+df = pd.read_parquet("results/SBS4/n_500/rep_01.annot.parquet")
+
+# Convert numeric base to letter
+BASES = ["A", "C", "G", "T"]
+df["ref_nt"] = df["ref_base"].map(lambda i: BASES[i])
+df["alt_nt"] = df["alt_base"].astype(str)
+
+# Load dbNSFP
+db = DBNSFP(Path("ref/dbNSFP5.2a_grch38.gz"))
+
+# Check existence in dbNSFP
+hits = []
+for idx, row in df.iterrows():
+    result = db.query(str(row["chr"]).replace("chr", ""), int(row["pos"]), row["ref_nt"], row["alt_nt"])
+    hits.append(result is not None and result["sift4g_score"] is not None)
+
+# Add result column
+df["in_dbNSFP"] = hits
+
+# Summary - output rows with match with dbNSFP
+print(df["in_dbNSFP"].value_counts())
+print(df[df["in_dbNSFP"]].head())
+
+
+# check specific rows where there is a match in dbNSFP
+df[['chr', 'pos', 'ref_base', 'alt_base', 'consequence','sift4g_score', 'polyphen2_hdiv_score','cadd_phred','sift4g_pred']].iloc[4]
+
+# Inspect my local dbNSFP to check constitency with simulation
+result = db.query("11", 64651633, "T", "A")
+print(result)
+result = db.query("9", 83970201, "T", "A")
+print(result)
+result = db.query("19", 6697388, "G", "A")
+print(result)
+result = db.query("12", 53443571, "C", "A")
+print(result)
+result = db.query("12", 69257848, "G", "A")
+print(result)
+
+```
+
+--> SBS4  rep1 n 500; first five rows with dbNSFP hit:
+
+| Row | Original             | Formatted Variant ID |
+| --- | -------------------- | -------------------- |
+| 1   | `chr11 64651633 3 A`  | `1-64651633-T-A`     |
+| 2   | `chr9 83970201 3 A`  | `9-83970201-T-A`     |
+| 3   | `chr19 6697388 2 A`  | `19-6697388-G-A`     |
+| 4   | `chr12 53443571 1 A` | `12-53443571-C-A`    |
+| 5   | `chr12 69257848 2 A` | `12-69257848-G-A`    |
+
+
+
+--> Looks good, the score are the same between the known variant from dbNSFP and the one I simulated.
+
+
+
+## Check KRAS gene
+
+
+
+
+```python
+import pyarrow.parquet as pq
+import pandas as pd
+
+# Adjust path
+df = pq.read_table("parquet/chr12.parquet").to_pandas()  # KRAS is on chr12
+df['gene_id'] = df['gene_id'].str.replace(r'\.\d+$', '', regex=True) # remove gene version
+# Check how many bases are associated with KRAS
+kras_rows = df[df['gene_id'] == "ENSG00000133703"]
+print(kras_rows.shape)
+print(kras_rows[['pos', 'strand', 'codon_index', 'ref_codon', 'ref_aa']].drop_duplicates())
+
+
+# Glycine codons: GGT, GGC, GGA, GGG
+gly_codon_set = {"GGT", "GGC", "GGA", "GGG"}
+
+# Which codons code glycine in KRAS
+gly_kras_codons = kras_rows[kras_rows['ref_codon'].isin(gly_codon_set)]
+print(gly_kras_codons[['pos', 'strand', 'ref_codon', 'ref_aa']].drop_duplicates())
+print(f"Total glycine codons in KRAS: {gly_kras_codons['codon_index'].nunique()}")
+```
+
+
+
+--> Not sure what to conclude from that part...
+
+
+
+
+
+## Generate profile plots
+
+
+Let's generate profile plots of my simulation to see if these are in agreement with the known profile.
+
+- Convert simulation `.parquet` to `.txt`
+- Transfer to `plot/` folder a few .txt files
+- Run `SigProfilerMatrixGenerator` to generate signature profile plot 
+
+
+```bash
+conda activate mutsim
+python
+```
+```python
+import pandas as pd
+import numpy as np
+import pysam
+
+
+
+
+
+
+############################################
+# Load from results ######################
+############################################
+# Load your annotated Parquet file
+df = pd.read_parquet("results/SBS6/n_4000/rep_01.annot.parquet")
+# Load the reference genome
+fasta = pysam.FastaFile("ref/GRCh38.primary_assembly.genome.fa")  # <-- UPDATE THIS
+# Clean chromosome name
+df["chr_clean"] = df["chr"].str.replace("^chr", "", regex=True)
+
+# Fetch the actual REF base from genome (+ strand)
+def fetch_ref(row):
+    try:
+        return fasta.fetch(row["chr_clean"], row["pos"] - 1, row["pos"]).upper()
+    except Exception:
+        return "N"
+
+df["ref"] = df.apply(fetch_ref, axis=1)
+
+# Now compare to df["alt_base"] and construct the final .txt
+df_txt = pd.DataFrame({
+    "Project": "Simu",
+    "Sample": "SBS6-n_4000-rep_01",
+    "ID": ".",
+    "Genome": "GRCh38",
+    "mut_type": "SNP",
+    "chrom": df["chr_clean"],
+    "pos_start": df["pos"],
+    "pos_end": df["pos"],
+    "ref": df["ref"],
+    "alt": df["alt_base"],
+    "Type": "SOMATIC"
+})
+
+# Filter out any entries with ambiguous base
+df_txt = df_txt[df_txt["ref"] != "N"]
+df_txt.to_csv("plot/SBS6-n_4000-rep_01.txt", sep="\t", index=False)
+
+
+
+
+
+
+# Get ALT base from simulation (integer-coded)
+INT2BASE = {0: "A", 1: "C", 2: "G", 3: "T"}
+df["alt"] = df["alt_base"].map(INT2BASE)
+# Filter out where the reference base does not match the genome
+mismatch_mask = df["ref_base"].map(INT2BASE) != df["ref"]
+print(f"⚠️ Filtering out {mismatch_mask.sum()} mismatches between simulated and real genome bases.")
+df = df[~mismatch_mask]
+# Create SigProfiler-compatible .txt
+df_txt = pd.DataFrame({
+    "Project": "Simu",
+    "Sample": "SBS6-n_4000-rep_01",
+    "ID": ".",
+    "Genome": "GRCh38",
+    "mut_type": "SNP",
+    "chrom": df["chr_clean"],
+    "pos_start": df["pos"],
+    "pos_end": df["pos"],
+    "ref": df["ref"],
+    "alt": df["alt"],
+    "Type": "SOMATIC"
+})
+# Save
+df_txt.to_csv("plot/SBS6-n_4000-rep_01.txt", sep="\t", index=False)
+
+
+
+
+
+
+
+############################################
+# Load from results_experimental ######################
+############################################
+df = pd.read_parquet("results_experimental/methanol_5f193a12cbbf/n_4000/rep_01.annot.parquet")  # CHANGE NAME HERE!!!!!!!!!!!!!!!!!!!!!!
+# Extract ref base from context ID
+CONTEXTS_96 = [
+    f"{l}[{ref}>{alt}]{r}"
+    for ref, alts in [("C", "AGT"), ("T", "ACG")]
+    for alt in alts
+    for l in "ACGT"
+    for r in "ACGT"
+]
+contexts = np.array(CONTEXTS_96)
+df["ref_base"] = df["ref_base"].map({0: "A", 1: "C", 2: "G", 3: "T"})
+# Remove 'chr' prefix
+df["chr_clean"] = df["chr"].str.replace("^chr", "", regex=True)
+# Format correctly
+df_txt = pd.DataFrame({
+    "Project": "Simu",
+    "Sample": "methanol_5f193a12cbbf-n_4000-rep_01",  # CHANGE NAME HERE!!!!!!!!!!!!!!!!!!!!!!
+    "ID": ".",
+    "Genome": "GRCh38",
+    "mut_type": "SNP",
+    "chrom": df["chr_clean"],
+    "pos_start": df["pos"],
+    "pos_end": df["pos"],
+    "ref": df["ref_base"],
+    "alt": df["alt_base"],
+    "Type": "SOMATIC"
+})
+# Save to tab-delimited text file
+df_txt.to_csv("plot/methanol_5f193a12cbbf-n_4000-rep_01.txt", sep="\t", index=False)   # CHANGE NAME HERE!!!!!!!!!!!!!!!!!!!!!!
+
+
+```
+
+
+
+```bash
+SigProfilerMatrixGenerator matrix_generator test GRCh38 plot --plot=TRUE
+
+
+```
+
+
+
+
+
+--> HUGE ISSUE WHEN GENERATING THE PKL... ISSUE RELATED TO THE PYRIMIDINE....
+
+--> Lets do a new version `003__mutationSimulation`
+
+
+
+
