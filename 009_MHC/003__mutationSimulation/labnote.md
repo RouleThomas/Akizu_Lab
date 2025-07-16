@@ -75,6 +75,10 @@ print(f"🔍 Unique positions covered (non-redundant rows): {len(unique_indices)
 
 # Simulate mutation
 
+--> Update `scripts/simulate_mutations.py` into `scripts/simulate_mutations_1.py`
+
+--> Update `scripts/simulate_array.py` into `scripts/simulate_array_1.py`
+
 Three scripts `run_filtered_*.slurm`; each uses `scripts/simulate_array.py` for simulation and annotation:
 - cosmic= All SBS signatures (without the artifcatual ones)
 - experimental_serial= experimental signatures
@@ -86,6 +90,13 @@ Three scripts `run_filtered_*.slurm`; each uses `scripts/simulate_array.py` for 
 conda activate mutsim
 
 sbatch scripts/run_filtered_cosmic_1.slurm # 47244234 fail --> results/
+# --> NEW scripts: scripts/simulate_mutations_1.py scripts/simulate_array_1.py
+sbatch scripts/run_filtered_cosmic_2.slurm # 47287932 xxx --> results/
+
+
+
+
+
 sbatch scripts/run_filtered_experimental_1.slurm # WAIT CHECK COSMIC FIRST xxx --> results_experimental/
 sbatch scripts/run_filtered_contexts_1.slurm #  xxx --> results_contexts/
 
@@ -98,5 +109,111 @@ sbatch scripts/run_filtered_contexts_1.slurm #  xxx --> results_contexts/
 
 XXXY HERE CHECK MAIN IN CHATGPT...
 
+
+
+
+## Generate profile plots
+
+
+Let's generate profile plots of my simulation to see if these are in agreement with the known profile.
+
+- Convert simulation `.parquet` to `.txt`
+- Transfer to `plot/` folder a few .txt files
+- Run `SigProfilerMatrixGenerator` to generate signature profile plot 
+
+
+```bash
+conda activate mutsim
+python
+```
+```python
+import pandas as pd
+import numpy as np
+import pysam
+
+
+
+
+
+
+############################################
+# Load from results ######################
+############################################
+import pandas as pd
+import pysam
+import numpy as np
+
+# === INPUTS ===
+parquet_path = "results/SBS1/n_1000/rep_01.annot.parquet"  # CHANGE THIS
+fasta_path = "ref/GRCh38.primary_assembly.genome.fa"       # CHANGE THIS
+sample_name = "SBS1-n_1000-rep_01"                          # CHANGE THIS
+output_txt = f"plot/{sample_name}.txt"
+
+# === LOAD ===
+df = pd.read_parquet(parquet_path)
+fasta = pysam.FastaFile(fasta_path)
+
+# === Normalize chromosome name (e.g. 'chr1' → '1') ===
+df["chr_clean"] = df["chr"].str.replace("^chr", "", regex=True)
+
+# === Get genome REF base (+ strand) ===
+def fetch_genome_ref(row):
+    try:
+        return fasta.fetch(row["chr_clean"], row["pos"] - 1, row["pos"]).upper()
+    except Exception:
+        return "N"
+
+df["genome_ref"] = df.apply(fetch_genome_ref, axis=1)
+
+# === Decode simulated REF base ===
+INT2BASE = {0: "A", 1: "C", 2: "G", 3: "T"}
+df["simulated_ref"] = df["ref_base"].map(INT2BASE)
+
+# === Check which entries match the genome ===
+df["match"] = df["genome_ref"] == df["simulated_ref"]
+
+# === Report ===
+n_total = len(df)
+n_match = df["match"].sum()
+print(f"✅ Matches: {n_match} / {n_total} ({n_match/n_total:.1%})")
+
+# === Filter only valid entries ===
+df_valid = df[df["match"] & (df["genome_ref"] != "N")].copy()
+
+# === Format final DataFrame for SigProfiler ===
+df_txt = pd.DataFrame({
+    "Project": "Simu",
+    "Sample": sample_name,
+    "ID": ".",
+    "Genome": "GRCh38",
+    "mut_type": "SNP",
+    "chrom": df_valid["chr_clean"],
+    "pos_start": df_valid["pos"],
+    "pos_end": df_valid["pos"],
+    "ref": df_valid["genome_ref"],
+    "alt": df_valid["alt_base"],
+    "Type": "SOMATIC"
+})
+
+# === Save ===
+df_txt.to_csv(output_txt, sep="\t", index=False)
+print(f"✅ Saved: {output_txt} with {len(df_txt)} mutations")
+
+
+############################################
+# Load from results_experimental ######################
+############################################
+
+
+
+```
+
+
+
+```bash
+SigProfilerMatrixGenerator matrix_generator test GRCh38 plot/input --plot=TRUE
+
+
+```
 
 
