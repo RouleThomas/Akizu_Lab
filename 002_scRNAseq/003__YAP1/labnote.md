@@ -34076,10 +34076,10 @@ conda activate scRNAseq
 which cellranger
 
 # Run counting sample per sample for XMU 24hrs
-sbatch scripts/cellranger_count_humangastruloid_XMU24hr.sh # 47054478 xxx
+sbatch scripts/cellranger_count_humangastruloid_XMU24hr.sh # 47319135 xxx
 
 # Run counting sample per sample for XMU 72hrs
-sbatch scripts/cellranger_count_humangastruloid_XMU72hr.sh # 47054493 xxx
+sbatch scripts/cellranger_count_humangastruloid_XMU72hr.sh # 47319136 xxx
 ```
 
 

@@ -91,7 +91,7 @@ conda activate mutsim
 
 sbatch scripts/run_filtered_cosmic_1.slurm # 47244234 fail --> results/
 # --> NEW scripts: scripts/simulate_mutations_1.py scripts/simulate_array_1.py
-sbatch scripts/run_filtered_cosmic_2.slurm # 47287932 xxx --> results/
+sbatch scripts/run_filtered_cosmic_2.slurm # 47307286 xxx --> results/
 
 
 
@@ -120,6 +120,30 @@ Let's generate profile plots of my simulation to see if these are in agreement w
 - Convert simulation `.parquet` to `.txt`
 - Transfer to `plot/` folder a few .txt files
 - Run `SigProfilerMatrixGenerator` to generate signature profile plot 
+
+
+
+
+
+
+
+
+```bash
+parquet_to_sigprofiler_txt.py
+
+
+python scripts/parquet_to_sigprofiler_txt.py \
+  --parquet results/SBS1/n_500/rep_02.annot.parquet \
+  --fasta ref/GRCh38.primary_assembly.genome.fa \
+  --sample-name SBS1-n_500-rep_02 \
+  --output plot/SBS1-n_1000-rep_02.txt
+
+```
+
+
+
+
+
 
 
 ```bash

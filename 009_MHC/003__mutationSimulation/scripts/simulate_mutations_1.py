@@ -77,7 +77,6 @@ class ExomeSampler:
         )
 
 
-
     def annotate(self, tbl: pa.Table, ctx_ids: np.ndarray, revcomp_flags: np.ndarray) -> pd.DataFrame:
         import re
         pdf = tbl.to_pandas()
@@ -122,7 +121,7 @@ class ExomeSampler:
         pdf["mut_codon"]   = mutated
         pdf["alt_aa"]      = aa_alt
         pdf["consequence"] = cons
-        pdf["ref_base"]    = [ "ACGT".index(b) for b in ref_bases ]
+        pdf["ref_base"]    = ["ACGT".index(b) for b in ref_bases]
 
         return pdf
 
