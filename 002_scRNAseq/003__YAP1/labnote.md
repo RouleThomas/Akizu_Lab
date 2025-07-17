@@ -34042,6 +34042,77 @@ rsconnect::deployApp('shinyApp_Embryo_E7E775_19dim_V1')
 
 
 
+
+
+
+
+
+# Data import GASTRU_24h_integrate
+GASTRU_24h_integrate <- readRDS(file = "output/seurat/GASTRU_24h_integrate-dim20kparam30res03.rds")
+DefaultAssay(GASTRU_24h_integrate) <- "RNA" # 
+
+# Generate Shiny app V1
+scConf = createConfig(GASTRU_24h_integrate)
+
+makeShinyApp(GASTRU_24h_integrate, scConf, gene.mapping = TRUE,
+             shiny.title = "GASTRU_24h_integrate",
+             shiny.dir = "shinyApp_GASTRU_24h_integrate/") 
+
+rsconnect::deployApp('shinyApp_GASTRU_24h_integrate')
+
+
+
+
+# Data import GASTRU_24h_merge
+GASTRU_24h_merge <- readRDS(file = "output/seurat/GASTRU_24h_merge-dim20kparam30res03.rds")
+DefaultAssay(GASTRU_24h_merge) <- "RNA" # 
+
+# Generate Shiny app V1
+scConf = createConfig(GASTRU_24h_merge)
+
+makeShinyApp(GASTRU_24h_merge, scConf, gene.mapping = TRUE,
+             shiny.title = "GASTRU_24h_merge",
+             shiny.dir = "shinyApp_GASTRU_24h_merge/") 
+
+rsconnect::deployApp('shinyApp_GASTRU_24h_merge')
+
+
+
+
+# Data import GASTRU_72h_integrate
+GASTRU_72h_integrate <- readRDS(file = "output/seurat/GASTRU_72h_integrate-dim20kparam30res03.rds")
+DefaultAssay(GASTRU_72h_integrate) <- "RNA" # 
+
+# Generate Shiny app V1
+scConf = createConfig(GASTRU_72h_integrate)
+
+makeShinyApp(GASTRU_72h_integrate, scConf, gene.mapping = TRUE,
+             shiny.title = "GASTRU_72h_integrate",
+             shiny.dir = "shinyApp_GASTRU_72h_integrate/") 
+
+rsconnect::deployApp('shinyApp_GASTRU_72h_integrate')
+
+
+
+
+# Data import GASTRU_72h_merge
+GASTRU_72h_merge <- readRDS(file = "output/seurat/GASTRU_72h_merge-dim20kparam30res03.rds")
+DefaultAssay(GASTRU_72h_merge) <- "RNA" # 
+
+# Generate Shiny app V1
+scConf = createConfig(GASTRU_72h_merge)
+
+makeShinyApp(GASTRU_72h_merge, scConf, gene.mapping = TRUE,
+             shiny.title = "GASTRU_72h_merge",
+             shiny.dir = "shinyApp_GASTRU_72h_merge/") 
+
+rsconnect::deployApp('shinyApp_GASTRU_72h_merge')
+
+
+
+
+
+
 ```
 
 --> Shiny apps:
@@ -34076,10 +34147,10 @@ conda activate scRNAseq
 which cellranger
 
 # Run counting sample per sample for XMU 24hrs
-sbatch scripts/cellranger_count_humangastruloid_XMU24hr.sh # 47319135 xxx
+sbatch scripts/cellranger_count_humangastruloid_XMU24hr.sh # 47319135 ok
 
 # Run counting sample per sample for XMU 72hrs
-sbatch scripts/cellranger_count_humangastruloid_XMU72hr.sh # 47319136 xxx
+sbatch scripts/cellranger_count_humangastruloid_XMU72hr.sh # 47319136 ok
 ```
 
 
@@ -34100,25 +34171,12 @@ srun --mem=500g --pty bash -l
 conda deactivate # base environment needed
 python3 scrublet.py [input_path] [output_path]
 # Run doublet detection/scrublet sample per sample
-python3 scripts/scrublet_doublets.py E7mousecontrolQCNOTfail/outs/filtered_feature_bc_matrix output/doublets/embryo_E7_control.tsv
-python3 scripts/scrublet_doublets.py E7mousecYAPKO/outs/filtered_feature_bc_matrix output/doublets/embryo_E7_cYAPKO.tsv
-
-python3 scripts/scrublet_doublets.py 24hgastruloidhumanUNQCNOTfail/outs/filtered_feature_bc_matrix output/doublets/humangastruloid_UNTREATED24hr.tsv
-python3 scripts/scrublet_doublets.py 24hgastruloidhumanDASA/outs/filtered_feature_bc_matrix output/doublets/humangastruloid_DASATINIB24hr.tsv
-
+python3 scripts/scrublet_doublets.py 24hgastruloidhumanXMU/outs/filtered_feature_bc_matrix output/doublets/humangastruloid_XMU24hr.tsv
+python3 scripts/scrublet_doublets.py 72hgastruloidhumanXMU/outs/filtered_feature_bc_matrix output/doublets/humangastruloid_XMU72hr.tsv
 ```
-Doublet detection score:
-- humangastruloid_UNTREATED24hr: 42% (previous time: 0% doublet)
-- humangastruloid_DASATINIB24hr: 0.2% (previous time: 34.2% doublet)
-- embryo_E7_control: 7.2% (previous time: 0.1% doublet)
-- embryo_E7_cYAPKO: 6.2% (previous time: 3.6%)
 --> Successfully assigned doublet
 
 
-
-
-
-## Integration - Integrate
 
 
 Then `conda activate scRNAseq` and go into R and filtered out **RNA contamination and start with SEURAT**.
@@ -34143,27 +34201,43 @@ library("gprofiler2") # for human mouse gene conversion for cell cycle genes
 
 # soupX decontamination
 ## Decontaminate one channel of 10X data mapped with cellranger
-sc = load10X('E7mousecontrolQCNOTfail/outs') 
-sc = load10X('E7mousecYAPKO/outs') 
+sc = load10X('24hgastruloidhumanXMU/outs') 
+sc = load10X('72hgastruloidhumanXMU/outs') 
 
 ## Assess % of conta
-pdf("output/soupX/autoEstCont_E7mousecYAPKO.pdf", width=10, height=10)
-pdf("output/soupX/autoEstCont_E7mousecontrol.pdf", width=10, height=10)
+pdf("output/soupX/autoEstCont_24hgastruloidhumanXMU.pdf", width=10, height=10)
+pdf("output/soupX/autoEstCont_72hgastruloidhumanXMU.pdf", width=10, height=10)
 sc = autoEstCont(sc)
 dev.off()
 ## Generate the corrected matrix
 out = adjustCounts(sc)
 ## Save the matrix
-save(out, file = "output/soupX/out_E7mousecontrol.RData")
-save(out, file = "output/soupX/out_E7mousecYAPKO.RData")
+save(out, file = "output/soupX/out_24hgastruloidhumanXMU.RData")
+save(out, file = "output/soupX/out_72hgastruloidhumanXMU.RData")
 
 ```
+
+--> Seems sample do not have enough complexity to be ran by soupX; got error `No plausible marker genes found.`; Issue discuss [here](https://github.com/constantAmateur/SoupX/issues/146), but not answer; query suggest no using soupX in these case...
+
+
+## Data cleaning
+
+Let's clean QC; each samples individually; so individually:
+- human gastruloid 24hr UNTREATED
+- human gastruloid 24hr DASATINIB
+- human gastruloid 24hr XMU
+- human gastruloid 72hr UNTREATED
+- human gastruloid 72hr DASATINIB
+- human gastruloid 72hr XMU
+
+
+
+
 
 ```bash
 conda activate scRNAseqV2
 ```
 
-Let's 1st try to **perform clustering that look like the E775 time-point** (use same marker); display some genes and generate a **shiny app for Conchi** --> Shared to Conchi and discuss; then see if we put both exp together
 
 
 
@@ -34181,270 +34255,1044 @@ library("celldex")
 library("SingleR")
 library("gprofiler2") # for human mouse gene conversion for cell cycle genes
 
+
+################################################################
+##################### human gastruloid 24hr UNTREATED ###########################
+###############################################################
 ## Load the matrix and Create SEURAT object
-load("output/soupX/out_E7mousecontrol.RData")
-srat_WT_E7 <- CreateSeuratObject(counts = out, project = "WT_E7") # 32,285 features across 1,829 samples
-
-load("output/soupX/out_E7mousecYAPKO.RData")
-srat_cYAPKO_E7 <- CreateSeuratObject(counts = out, project = "cYAPKO_E7") # 32,285 features across 1,897 samples
-
-
+samples <- list(
+  GASTRU_24h_UN = "output/soupX/out_24hgastruloidhumanUN.RData"
+)
+seurat_objects <- list()
+for (sample_name in names(samples)) {
+  load(samples[[sample_name]])
+  seurat_objects[[sample_name]] <- CreateSeuratObject(counts = out, project = sample_name)
+}
+## Function to assign Seurat objects to variables (unlist the list)
+assign_seurat_objects <- function(seurat_objects_list) {
+  for (sample_name in names(seurat_objects_list)) {
+    assign(sample_name, seurat_objects_list[[sample_name]], envir = .GlobalEnv)
+  }
+}
+assign_seurat_objects(seurat_objects) # This apply the function
 # QUALITY CONTROL
 ## add mitochondrial and Ribosomal conta 
-srat_WT_E7[["percent.mt"]] <- PercentageFeatureSet(srat_WT_E7, pattern = "^mt-")
-srat_WT_E7[["percent.rb"]] <- PercentageFeatureSet(srat_WT_E7, pattern = "^Rp[sl]")
-
-srat_cYAPKO_E7[["percent.mt"]] <- PercentageFeatureSet(srat_cYAPKO_E7, pattern = "^mt-")
-srat_cYAPKO_E7[["percent.rb"]] <- PercentageFeatureSet(srat_cYAPKO_E7, pattern = "^Rp[sl]")
-
+GASTRU_24h_UN[["percent.mt"]] <- PercentageFeatureSet(GASTRU_24h_UN, pattern = "^MT-")
+GASTRU_24h_UN[["percent.rb"]] <- PercentageFeatureSet(GASTRU_24h_UN, pattern = "^RP[SL]")
 ## add doublet information (scrublet)
-doublets <- read.table("output/doublets/embryo_E7_control.tsv",header = F,row.names = 1)
+doublets <- read.table("output/doublets/humangastruloid_UNTREATED24hr.tsv",header = F,row.names = 1)
 colnames(doublets) <- c("Doublet_score","Is_doublet")
-srat_WT_E7 <- AddMetaData(srat_WT_E7,doublets)
-srat_WT_E7$Doublet_score <- as.numeric(srat_WT_E7$Doublet_score) # make score as numeric
-head(srat_WT_E7[[]])
-
-doublets <- read.table("output/doublets/embryo_E7_cYAPKO.tsv",header = F,row.names = 1)
-colnames(doublets) <- c("Doublet_score","Is_doublet")
-srat_cYAPKO_E7 <- AddMetaData(srat_cYAPKO_E7,doublets)
-srat_cYAPKO_E7$Doublet_score <- as.numeric(srat_cYAPKO_E7$Doublet_score) # make score as numeric
-head(srat_cYAPKO_E7[[]])
-
-
-
+GASTRU_24h_UN <- AddMetaData(GASTRU_24h_UN,doublets)
+GASTRU_24h_UN$Doublet_score <- as.numeric(GASTRU_24h_UN$Doublet_score) # make score as numeric
+head(GASTRU_24h_UN[[]])
 ## Plot
-pdf("output/seurat/VlnPlot_QC_embryo_control_E7.pdf", width=10, height=6)
-pdf("output/seurat/VlnPlot_QC_embryo_cYAPKO_E7.pdf", width=10, height=6)
-VlnPlot(srat_cYAPKO_E7, features = c("nFeature_RNA","nCount_RNA","percent.mt","percent.rb"),ncol = 4,pt.size = 0.1) & 
+pdf("output/seurat/VlnPlot_QC-GASTRU_24h_UN.pdf", width=10, height=6)
+VlnPlot(GASTRU_24h_UN, features = c("nFeature_RNA","nCount_RNA","percent.mt","percent.rb"),ncol = 4,pt.size = 0.1) & 
   theme(plot.title = element_text(size=10))
 dev.off()
-
-pdf("output/seurat/FeatureScatter_QC_RNAcount_mt_cYAPKO_E7.pdf", width=5, height=5)
-pdf("output/seurat/FeatureScatter_QC_RNAcount_mt_control_E7.pdf", width=5, height=5)
-FeatureScatter(srat_cYAPKO_E7, feature1 = "nCount_RNA", feature2 = "percent.mt")
+pdf("output/seurat/VlnPlot_QC-nCount_RNA-GASTRU_24h_UN.pdf", width=10, height=6)
+VlnPlot(GASTRU_24h_UN, features = c("nCount_RNA"),ncol = 4,pt.size = 0.1)+ ylim(0,30000)& 
+  theme(plot.title = element_text(size=10)) 
 dev.off()
-pdf("output/seurat/FeatureScatter_QC_RNAcount_RNAfeature_cYAPKO_E7.pdf", width=5, height=5)
-pdf("output/seurat/FeatureScatter_QC_RNAcount_RNAfeature_control_E7.pdf", width=5, height=5)
-FeatureScatter(srat_cYAPKO_E7, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
-dev.off()
-pdf("output/seurat/FeatureScatter_QC_rb_mt_cYAPKO_E7.pdf", width=5, height=5)
-pdf("output/seurat/FeatureScatter_QC_rb_mt_control_E7.pdf", width=5, height=5)
-FeatureScatter(srat_cYAPKO_E7, feature1 = "percent.rb", feature2 = "percent.mt")
-dev.off()
-pdf("output/seurat/FeatureScatter_QC_mt_doublet_cYAPKO_E7.pdf", width=5, height=5)
-pdf("output/seurat/FeatureScatter_QC_mt_doublet_control_E7.pdf", width=5, height=5)
-FeatureScatter(srat_cYAPKO_E7, feature1 = "percent.mt", feature2 = "Doublet_score")
-dev.off()
-pdf("output/seurat/FeatureScatter_QC_RNAfeature_doublet_cYAPKO_E7.pdf", width=5, height=5)
-pdf("output/seurat/FeatureScatter_QC_RNAfeature_doublet_control_E7.pdf", width=5, height=5)
-FeatureScatter(srat_cYAPKO_E7, feature1 = "nFeature_RNA", feature2 = "Doublet_score")
-dev.off()
+##### QC filtering
+apply_qc <- function(seurat_object) {
+  meta <- seurat_object@meta.data
+  # Initialize QC column with 'Pass'
+  meta$QC <- 'Pass'
+  # Identify failing QC conditions but exclude protected cells
+  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
+  meta$QC[meta$nFeature_RNA < 3000] <- 'Low_nFeature'
+  meta$QC[meta$nFeature_RNA > 11500] <- 'High_nFeatureRNA'
+  meta$QC[meta$nCount_RNA < 10000] <- 'Low_nCountRNA'
+  meta$QC[meta$nCount_RNA > 75000] <- 'High_nCountRNA'
+  meta$QC[meta$percent.mt > 10] <- 'High_MT'
+  meta$QC[meta$percent.rb < 5] <- 'Low_RB'
+  meta$QC[meta$percent.rb > 25] <- 'High_RB'
+  # Handle multiple failing conditions
+  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
+  # Assign back to Seurat object
+  seurat_object@meta.data <- meta
+  return(seurat_object)
+}
+# Apply function to all Seurat objects
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # Reapply function to all individuals in the list
+#### Write QC summary
+qc_summary_list <- list()
+# Collect QC summary for each sample
+for (sample_name in names(seurat_objects)) {
+  qc_summary <- table(seurat_objects[[sample_name]][['QC']])
+  qc_summary_df <- as.data.frame(qc_summary)
+  qc_summary_df$Sample <- sample_name
+  qc_summary_list[[sample_name]] <- qc_summary_df
+}
+qc_summary_combined <- do.call(rbind, qc_summary_list)
+# Write the data frame to a tab-separated text file
+write.table(qc_summary_combined, file = "output/seurat/QC_summary-GASTRU_24h_UN.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
 
-
-
-
-## After seeing the plot; add QC information in our seurat object
-### V1 not super stringeant
-srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$Is_doublet == 'True','Doublet','Pass')
-srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$nFeature_RNA < 500 & srat_WT_E7@meta.data$QC == 'Pass','Low_nFeature',srat_WT_E7@meta.data$QC)
-srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$nFeature_RNA < 500 & srat_WT_E7@meta.data$QC != 'Pass' & srat_WT_E7@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_WT_E7@meta.data$QC,sep = ','),srat_WT_E7@meta.data$QC)
-srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$percent.mt > 10 & srat_WT_E7@meta.data$QC == 'Pass','High_MT',srat_WT_E7@meta.data$QC)
-srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$nFeature_RNA < 500 & srat_WT_E7@meta.data$QC != 'Pass' & srat_WT_E7@meta.data$QC != 'High_MT',paste('High_MT',srat_WT_E7@meta.data$QC,sep = ','),srat_WT_E7@meta.data$QC)
-table(srat_WT_E7[['QC']])
-## 
-srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$Is_doublet == 'True','Doublet','Pass')
-srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 500 & srat_cYAPKO_E7@meta.data$QC == 'Pass','Low_nFeature',srat_cYAPKO_E7@meta.data$QC)
-srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 500 & srat_cYAPKO_E7@meta.data$QC != 'Pass' & srat_cYAPKO_E7@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_cYAPKO_E7@meta.data$QC,sep = ','),srat_cYAPKO_E7@meta.data$QC)
-srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$percent.mt > 10 & srat_cYAPKO_E7@meta.data$QC == 'Pass','High_MT',srat_cYAPKO_E7@meta.data$QC)
-srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 500 & srat_cYAPKO_E7@meta.data$QC != 'Pass' & srat_cYAPKO_E7@meta.data$QC != 'High_MT',paste('High_MT',srat_cYAPKO_E7@meta.data$QC,sep = ','),srat_cYAPKO_E7@meta.data$QC)
-table(srat_cYAPKO_E7[['QC']])
-
-
-### V2 more stringeant
-srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$Is_doublet == 'True','Doublet','Pass')
-srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$nFeature_RNA < 5000 & srat_WT_E7@meta.data$QC == 'Pass','Low_nFeature',srat_WT_E7@meta.data$QC)
-srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$nFeature_RNA < 5000 & srat_WT_E7@meta.data$QC != 'Pass' & srat_WT_E7@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_WT_E7@meta.data$QC,sep = ','),srat_WT_E7@meta.data$QC)
-srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$percent.mt > 10 & srat_WT_E7@meta.data$QC == 'Pass','High_MT',srat_WT_E7@meta.data$QC)
-srat_WT_E7[['QC']] <- ifelse(srat_WT_E7@meta.data$nFeature_RNA < 5000 & srat_WT_E7@meta.data$QC != 'Pass' & srat_WT_E7@meta.data$QC != 'High_MT',paste('High_MT',srat_WT_E7@meta.data$QC,sep = ','),srat_WT_E7@meta.data$QC)
-table(srat_WT_E7[['QC']])
-## 
-srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$Is_doublet == 'True','Doublet','Pass')
-srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 5000 & srat_cYAPKO_E7@meta.data$QC == 'Pass','Low_nFeature',srat_cYAPKO_E7@meta.data$QC)
-srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 5000 & srat_cYAPKO_E7@meta.data$QC != 'Pass' & srat_cYAPKO_E7@meta.data$QC != 'Low_nFeature',paste('Low_nFeature',srat_cYAPKO_E7@meta.data$QC,sep = ','),srat_cYAPKO_E7@meta.data$QC)
-srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$percent.mt > 10 & srat_cYAPKO_E7@meta.data$QC == 'Pass','High_MT',srat_cYAPKO_E7@meta.data$QC)
-srat_cYAPKO_E7[['QC']] <- ifelse(srat_cYAPKO_E7@meta.data$nFeature_RNA < 5000 & srat_cYAPKO_E7@meta.data$QC != 'Pass' & srat_cYAPKO_E7@meta.data$QC != 'High_MT',paste('High_MT',srat_cYAPKO_E7@meta.data$QC,sep = ','),srat_cYAPKO_E7@meta.data$QC)
-table(srat_cYAPKO_E7[['QC']])
-
-
-
-
-
-
-# Quality check after QC filtering
-pdf("output/seurat/VlnPlot_QCPass_embryo_control_E7.pdf", width=10, height=6)
-pdf("output/seurat/VlnPlot_QCPass_embryo_cYAPKO_E7.pdf", width=10, height=6)
-pdf("output/seurat/VlnPlot_QCPassV2_embryo_control_E7.pdf", width=10, height=6)
-pdf("output/seurat/VlnPlot_QCPassV2_embryo_cYAPKO_E7.pdf", width=10, height=6)
-
-VlnPlot(subset(srat_cYAPKO_E7, subset = QC == 'Pass'), 
-        features = c("nFeature_RNA", "nCount_RNA", "percent.mt","percent.rb"), ncol = 4, pt.size = 0.1) & 
-  theme(plot.title = element_text(size=10))
-dev.off()
-
-
-
-
-
-
-
-## subset my seurat object to only analyze the cells that pass the QC
-srat_WT_E7 <- subset(srat_WT_E7, subset = QC == 'Pass')
-srat_cYAPKO_E7 <- subset(srat_cYAPKO_E7, subset = QC == 'Pass')
-srat_WT_E7$condition <- "WT_E7"
-srat_cYAPKO_E7$condition <- "cYAPKO_E7"
-
-
-
-mmus_s = gorth(cc.genes.updated.2019$s.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
-mmus_g2m = gorth(cc.genes.updated.2019$g2m.genes, source_organism = "hsapiens", target_organism = "mmusculus")$ortholog_name
-
-
+## subset seurat object to keep cells that pass the QC
+subset_qc <- function(seurat_object) {
+  seurat_object <- subset(seurat_object, subset = QC == 'Pass')
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- subset_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+# Normalize and scale data, then run cell cycle sorting
+DefaultAssay(GASTRU_24h_UN) <- "RNA"
+set.seed(42)
+## Load gene marker of cell type
+s.genes <- cc.genes.updated.2019$s.genes
+g2m.genes <- cc.genes.updated.2019$g2m.genes
 ## NORMALIZE AND SCALE DATA BEFORE RUNNING CELLCYCLESORTING
-srat_WT_E7 <- NormalizeData(srat_WT_E7, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
-all.genes <- rownames(srat_WT_E7)
-srat_WT_E7 <- ScaleData(srat_WT_E7, features = all.genes) # zero-centres and scales it
-
-srat_cYAPKO_E7 <- NormalizeData(srat_cYAPKO_E7, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
-all.genes <- rownames(srat_cYAPKO_E7)
-srat_cYAPKO_E7 <- ScaleData(srat_cYAPKO_E7, features = all.genes) # zero-centres and scales it
-
+GASTRU_24h_UN <- NormalizeData(GASTRU_24h_UN, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_24h_UN)
+GASTRU_24h_UN <- ScaleData(GASTRU_24h_UN, features = all.genes) # zero-centres and scales it
 ### CELLCYCLESORTING
-srat_WT_E7 <- CellCycleScoring(srat_WT_E7, s.features = mmus_s, g2m.features = mmus_g2m)
-table(srat_WT_E7[[]]$Phase)
-srat_cYAPKO_E7 <- CellCycleScoring(srat_cYAPKO_E7, s.features = mmus_s, g2m.features = mmus_g2m)
-table(srat_cYAPKO_E7[[]]$Phase)
+GASTRU_24h_UN <- CellCycleScoring(GASTRU_24h_UN, s.features = s.genes, g2m.features = g2m.genes)
+table(GASTRU_24h_UN[[]]$Phase)
+############ SAVE sample ########################################
+# saveRDS(GASTRU_24h_UN, file = "output/seurat/GASTRU_24h_UN-QCPass.rds") # 
+#################################################################
 
+
+
+
+
+
+
+################################################################
+##################### human gastruloid 24hr DASATINIB ###########################
+###############################################################
+## Load the matrix and Create SEURAT object
+samples <- list(
+  GASTRU_24h_DASA = "output/soupX/out_24hgastruloidhumanDASA.RData"
+)
+seurat_objects <- list()
+for (sample_name in names(samples)) {
+  load(samples[[sample_name]])
+  seurat_objects[[sample_name]] <- CreateSeuratObject(counts = out, project = sample_name)
+}
+## Function to assign Seurat objects to variables (unlist the list)
+assign_seurat_objects <- function(seurat_objects_list) {
+  for (sample_name in names(seurat_objects_list)) {
+    assign(sample_name, seurat_objects_list[[sample_name]], envir = .GlobalEnv)
+  }
+}
+assign_seurat_objects(seurat_objects) # This apply the function
+# QUALITY CONTROL
+## add mitochondrial and Ribosomal conta 
+GASTRU_24h_DASA[["percent.mt"]] <- PercentageFeatureSet(GASTRU_24h_DASA, pattern = "^MT-")
+GASTRU_24h_DASA[["percent.rb"]] <- PercentageFeatureSet(GASTRU_24h_DASA, pattern = "^RP[SL]")
+## add doublet information (scrublet)
+doublets <- read.table("output/doublets/humangastruloid_DASATINIB24hr.tsv",header = F,row.names = 1)
+colnames(doublets) <- c("Doublet_score","Is_doublet")
+GASTRU_24h_DASA <- AddMetaData(GASTRU_24h_DASA,doublets)
+GASTRU_24h_DASA$Doublet_score <- as.numeric(GASTRU_24h_DASA$Doublet_score) # make score as numeric
+head(GASTRU_24h_DASA[[]])
+## Plot
+pdf("output/seurat/VlnPlot_QC-GASTRU_24h_DASA.pdf", width=10, height=6)
+VlnPlot(GASTRU_24h_DASA, features = c("nFeature_RNA","nCount_RNA","percent.mt","percent.rb"),ncol = 4,pt.size = 0.1) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+pdf("output/seurat/VlnPlot_QC-nCount_RNA-GASTRU_24h_DASA.pdf", width=10, height=6)
+VlnPlot(GASTRU_24h_DASA, features = c("nCount_RNA"),ncol = 4,pt.size = 0.1)+ ylim(0,30000)& 
+  theme(plot.title = element_text(size=10)) 
+dev.off()
+##### QC filtering
+apply_qc <- function(seurat_object) {
+  meta <- seurat_object@meta.data
+  # Initialize QC column with 'Pass'
+  meta$QC <- 'Pass'
+  # Identify failing QC conditions but exclude protected cells
+  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
+  meta$QC[meta$nFeature_RNA < 3000] <- 'Low_nFeature'
+  meta$QC[meta$nFeature_RNA > 10500] <- 'High_nFeatureRNA'
+  meta$QC[meta$nCount_RNA < 6000] <- 'Low_nCountRNA'
+  meta$QC[meta$nCount_RNA > 60000] <- 'High_nCountRNA'
+  meta$QC[meta$percent.mt > 10] <- 'High_MT'
+  meta$QC[meta$percent.rb < 5] <- 'Low_RB'
+  meta$QC[meta$percent.rb > 25] <- 'High_RB'
+  # Handle multiple failing conditions
+  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
+  # Assign back to Seurat object
+  seurat_object@meta.data <- meta
+  return(seurat_object)
+}
+# Apply function to all Seurat objects
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # Reapply function to all individuals in the list
+#### Write QC summary
+qc_summary_list <- list()
+# Collect QC summary for each sample
+for (sample_name in names(seurat_objects)) {
+  qc_summary <- table(seurat_objects[[sample_name]][['QC']])
+  qc_summary_df <- as.data.frame(qc_summary)
+  qc_summary_df$Sample <- sample_name
+  qc_summary_list[[sample_name]] <- qc_summary_df
+}
+qc_summary_combined <- do.call(rbind, qc_summary_list)
+# Write the data frame to a tab-separated text file
+write.table(qc_summary_combined, file = "output/seurat/QC_summary-GASTRU_24h_DASA.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
+
+## subset seurat object to keep cells that pass the QC
+subset_qc <- function(seurat_object) {
+  seurat_object <- subset(seurat_object, subset = QC == 'Pass')
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- subset_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+# Normalize and scale data, then run cell cycle sorting
+DefaultAssay(GASTRU_24h_DASA) <- "RNA"
 set.seed(42)
+## Load gene marker of cell type
+s.genes <- cc.genes.updated.2019$s.genes
+g2m.genes <- cc.genes.updated.2019$g2m.genes
+## NORMALIZE AND SCALE DATA BEFORE RUNNING CELLCYCLESORTING
+GASTRU_24h_DASA <- NormalizeData(GASTRU_24h_DASA, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_24h_DASA)
+GASTRU_24h_DASA <- ScaleData(GASTRU_24h_DASA, features = all.genes) # zero-centres and scales it
+### CELLCYCLESORTING
+GASTRU_24h_DASA <- CellCycleScoring(GASTRU_24h_DASA, s.features = s.genes, g2m.features = g2m.genes)
+table(GASTRU_24h_DASA[[]]$Phase)
+############ SAVE sample ########################################
+# saveRDS(GASTRU_24h_DASA, file = "output/seurat/GASTRU_24h_DASA-QCPass.rds") # 
+#################################################################
 
-# elbow
-## srat_WT_E7_elbow = SCTransform(srat_WT_E7, method = "glmGamPoi", ncells = 1624, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% RunPCA(npcs = 50, verbose = FALSE)
 
 
-pdf("output/seurat/Elbow_srat_WT_E7QCV2.pdf", width=10, height=10)
-ElbowPlot(srat_WT_E7_elbow) # 10 or 15 or 19
+
+
+
+################################################################
+##################### human gastruloid 24hr XMU ###########################
+###############################################################
+## Load the matrix directly
+
+counts <- Read10X(data.dir = "24hgastruloidhumanXMU/outs/filtered_feature_bc_matrix")
+GASTRU_24h_XMU <- CreateSeuratObject(counts = counts, project = "GASTRU_24h_XMU")
+samples <- list(
+  GASTRU_24h_XMU = GASTRU_24h_XMU
+)
+seurat_objects <- list()
+seurat_objects[["GASTRU_24h_XMU"]] <- GASTRU_24h_XMU
+# QUALITY CONTROL
+## add mitochondrial and Ribosomal conta 
+GASTRU_24h_XMU[["percent.mt"]] <- PercentageFeatureSet(GASTRU_24h_XMU, pattern = "^MT-")
+GASTRU_24h_XMU[["percent.rb"]] <- PercentageFeatureSet(GASTRU_24h_XMU, pattern = "^RP[SL]")
+## add doublet information (scrublet)
+doublets <- read.table("output/doublets/humangastruloid_XMU24hr.tsv",header = F,row.names = 1)
+colnames(doublets) <- c("Doublet_score","Is_doublet")
+GASTRU_24h_XMU <- AddMetaData(GASTRU_24h_XMU,doublets)
+GASTRU_24h_XMU$Doublet_score <- as.numeric(GASTRU_24h_XMU$Doublet_score) # make score as numeric
+head(GASTRU_24h_XMU[[]])
+## Plot
+pdf("output/seurat/VlnPlot_QC-GASTRU_24h_XMU.pdf", width=10, height=6)
+VlnPlot(GASTRU_24h_XMU, features = c("nFeature_RNA","nCount_RNA","percent.mt","percent.rb"),ncol = 4,pt.size = 0.1) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+pdf("output/seurat/VlnPlot_QC-nCount_RNA-GASTRU_24h_XMU.pdf", width=10, height=6)
+VlnPlot(GASTRU_24h_XMU, features = c("nCount_RNA"),ncol = 4,pt.size = 0.1)+ ylim(0,30000)& 
+  theme(plot.title = element_text(size=10)) 
+dev.off()
+##### QC filtering
+apply_qc <- function(seurat_object) {
+  meta <- seurat_object@meta.data
+  # Initialize QC column with 'Pass'
+  meta$QC <- 'Pass'
+  # Identify failing QC conditions but exclude protected cells
+  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
+  meta$QC[meta$nFeature_RNA < 3000] <- 'Low_nFeature'
+  meta$QC[meta$nFeature_RNA > 9000] <- 'High_nFeatureRNA'
+  meta$QC[meta$nCount_RNA < 5000] <- 'Low_nCountRNA'
+  meta$QC[meta$nCount_RNA > 50000] <- 'High_nCountRNA'
+  meta$QC[meta$percent.mt > 10] <- 'High_MT'
+  meta$QC[meta$percent.rb < 5] <- 'Low_RB'
+  meta$QC[meta$percent.rb > 25] <- 'High_RB'
+  # Handle multiple failing conditions
+  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
+  # Assign back to Seurat object
+  seurat_object@meta.data <- meta
+  return(seurat_object)
+}
+# Apply function to all Seurat objects
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # Reapply function to all individuals in the list
+#### Write QC summary
+qc_summary_list <- list()
+# Collect QC summary for each sample
+for (sample_name in names(seurat_objects)) {
+  qc_summary <- table(seurat_objects[[sample_name]][['QC']])
+  qc_summary_df <- as.data.frame(qc_summary)
+  qc_summary_df$Sample <- sample_name
+  qc_summary_list[[sample_name]] <- qc_summary_df
+}
+qc_summary_combined <- do.call(rbind, qc_summary_list)
+# Write the data frame to a tab-separated text file
+write.table(qc_summary_combined, file = "output/seurat/QC_summary-GASTRU_24h_XMU.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
+## subset seurat object to keep cells that pass the QC
+subset_qc <- function(seurat_object) {
+  seurat_object <- subset(seurat_object, subset = QC == 'Pass')
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- subset_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+# Normalize and scale data, then run cell cycle sorting
+DefaultAssay(GASTRU_24h_XMU) <- "RNA"
+set.seed(42)
+## Load gene marker of cell type
+s.genes <- cc.genes.updated.2019$s.genes
+g2m.genes <- cc.genes.updated.2019$g2m.genes
+## NORMALIZE AND SCALE DATA BEFORE RUNNING CELLCYCLESORTING
+GASTRU_24h_XMU <- NormalizeData(GASTRU_24h_XMU, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_24h_XMU)
+GASTRU_24h_XMU <- ScaleData(GASTRU_24h_XMU, features = all.genes) # zero-centres and scales it
+### CELLCYCLESORTING
+GASTRU_24h_XMU <- CellCycleScoring(GASTRU_24h_XMU, s.features = s.genes, g2m.features = g2m.genes)
+table(GASTRU_24h_XMU[[]]$Phase)
+############ SAVE sample ########################################
+# saveRDS(GASTRU_24h_XMU, file = "output/seurat/GASTRU_24h_XMU-QCPass.rds") # 
+#################################################################
+
+
+
+
+
+
+
+
+
+################################################################
+##################### human gastruloid 72hr UNTREATED ###########################
+###############################################################
+## Load the matrix and Create SEURAT object
+samples <- list(
+  GASTRU_72h_UN = "output/soupX/out_humangastruloid_UNTREATED72hr.RData"
+)
+seurat_objects <- list()
+for (sample_name in names(samples)) {
+  load(samples[[sample_name]])
+  seurat_objects[[sample_name]] <- CreateSeuratObject(counts = out, project = sample_name)
+}
+## Function to assign Seurat objects to variables (unlist the list)
+assign_seurat_objects <- function(seurat_objects_list) {
+  for (sample_name in names(seurat_objects_list)) {
+    assign(sample_name, seurat_objects_list[[sample_name]], envir = .GlobalEnv)
+  }
+}
+assign_seurat_objects(seurat_objects) # This apply the function
+# QUALITY CONTROL
+## add mitochondrial and Ribosomal conta 
+GASTRU_72h_UN[["percent.mt"]] <- PercentageFeatureSet(GASTRU_72h_UN, pattern = "^MT-")
+GASTRU_72h_UN[["percent.rb"]] <- PercentageFeatureSet(GASTRU_72h_UN, pattern = "^RP[SL]")
+## add doublet information (scrublet)
+doublets <- read.table("output/doublets/humangastruloid_UNTREATED72hr.tsv",header = F,row.names = 1) 
+colnames(doublets) <- c("Doublet_score","Is_doublet")
+GASTRU_72h_UN <- AddMetaData(GASTRU_72h_UN,doublets)
+GASTRU_72h_UN$Doublet_score <- as.numeric(GASTRU_72h_UN$Doublet_score) # make score as numeric
+head(GASTRU_72h_UN[[]])
+## Plot
+pdf("output/seurat/VlnPlot_QC-GASTRU_72h_UN.pdf", width=10, height=6)
+VlnPlot(GASTRU_72h_UN, features = c("nFeature_RNA","nCount_RNA","percent.mt","percent.rb"),ncol = 4,pt.size = 0.1) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+pdf("output/seurat/VlnPlot_QC-nCount_RNA-GASTRU_72h_UN.pdf", width=10, height=6)
+VlnPlot(GASTRU_72h_UN, features = c("nCount_RNA"),ncol = 4,pt.size = 0.1)+ ylim(0,30000)& 
+  theme(plot.title = element_text(size=10)) 
+dev.off()
+##### QC filtering
+apply_qc <- function(seurat_object) {
+  meta <- seurat_object@meta.data
+  # Initialize QC column with 'Pass'
+  meta$QC <- 'Pass'
+  # Identify failing QC conditions but exclude protected cells
+  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
+  meta$QC[meta$nFeature_RNA < 2000] <- 'Low_nFeature'
+  meta$QC[meta$nFeature_RNA > 9000] <- 'High_nFeatureRNA'
+  meta$QC[meta$nCount_RNA < 5000] <- 'Low_nCountRNA'
+  meta$QC[meta$nCount_RNA > 60000] <- 'High_nCountRNA'
+  meta$QC[meta$percent.mt > 10] <- 'High_MT'
+  meta$QC[meta$percent.rb < 5] <- 'Low_RB'
+  meta$QC[meta$percent.rb > 25] <- 'High_RB'
+  # Handle multiple failing conditions
+  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
+  # Assign back to Seurat object
+  seurat_object@meta.data <- meta
+  return(seurat_object)
+}
+# Apply function to all Seurat objects
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # Reapply function to all individuals in the list
+#### Write QC summary
+qc_summary_list <- list()
+# Collect QC summary for each sample
+for (sample_name in names(seurat_objects)) {
+  qc_summary <- table(seurat_objects[[sample_name]][['QC']])
+  qc_summary_df <- as.data.frame(qc_summary)
+  qc_summary_df$Sample <- sample_name
+  qc_summary_list[[sample_name]] <- qc_summary_df
+}
+qc_summary_combined <- do.call(rbind, qc_summary_list)
+# Write the data frame to a tab-separated text file
+write.table(qc_summary_combined, file = "output/seurat/QC_summary-GASTRU_72h_UN.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
+
+## subset seurat object to keep cells that pass the QC
+subset_qc <- function(seurat_object) {
+  seurat_object <- subset(seurat_object, subset = QC == 'Pass')
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- subset_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+# Normalize and scale data, then run cell cycle sorting
+DefaultAssay(GASTRU_72h_UN) <- "RNA"
+set.seed(42)
+## Load gene marker of cell type
+s.genes <- cc.genes.updated.2019$s.genes
+g2m.genes <- cc.genes.updated.2019$g2m.genes
+## NORMALIZE AND SCALE DATA BEFORE RUNNING CELLCYCLESORTING
+GASTRU_72h_UN <- NormalizeData(GASTRU_72h_UN, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_72h_UN)
+GASTRU_72h_UN <- ScaleData(GASTRU_72h_UN, features = all.genes) # zero-centres and scales it
+### CELLCYCLESORTING
+GASTRU_72h_UN <- CellCycleScoring(GASTRU_72h_UN, s.features = s.genes, g2m.features = g2m.genes)
+table(GASTRU_72h_UN[[]]$Phase)
+############ SAVE sample ########################################
+# saveRDS(GASTRU_72h_UN, file = "output/seurat/GASTRU_72h_UN-QCPass.rds") # 
+#################################################################
+
+
+
+
+
+
+
+################################################################
+##################### human gastruloid 72hr DASATINIB ###########################
+###############################################################
+## Load the matrix and Create SEURAT object
+samples <- list(
+  GASTRU_72h_DASA = "output/soupX/out_humangastruloid_DASATINIB72hr.RData"
+)
+seurat_objects <- list()
+for (sample_name in names(samples)) {
+  load(samples[[sample_name]])
+  seurat_objects[[sample_name]] <- CreateSeuratObject(counts = out, project = sample_name)
+}
+## Function to assign Seurat objects to variables (unlist the list)
+assign_seurat_objects <- function(seurat_objects_list) {
+  for (sample_name in names(seurat_objects_list)) {
+    assign(sample_name, seurat_objects_list[[sample_name]], envir = .GlobalEnv)
+  }
+}
+assign_seurat_objects(seurat_objects) # This apply the function
+# QUALITY CONTROL
+## add mitochondrial and Ribosomal conta 
+GASTRU_72h_DASA[["percent.mt"]] <- PercentageFeatureSet(GASTRU_72h_DASA, pattern = "^MT-")
+GASTRU_72h_DASA[["percent.rb"]] <- PercentageFeatureSet(GASTRU_72h_DASA, pattern = "^RP[SL]")
+## add doublet information (scrublet)
+doublets <- read.table("output/doublets/humangastruloid_DASATINIB72hr.tsv",header = F,row.names = 1)
+colnames(doublets) <- c("Doublet_score","Is_doublet")
+GASTRU_72h_DASA <- AddMetaData(GASTRU_72h_DASA,doublets)
+GASTRU_72h_DASA$Doublet_score <- as.numeric(GASTRU_72h_DASA$Doublet_score) # make score as numeric
+head(GASTRU_72h_DASA[[]])
+## Plot
+pdf("output/seurat/VlnPlot_QC-GASTRU_72h_DASA.pdf", width=10, height=6)
+VlnPlot(GASTRU_72h_DASA, features = c("nFeature_RNA","nCount_RNA","percent.mt","percent.rb"),ncol = 4,pt.size = 0.1) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+pdf("output/seurat/VlnPlot_QC-nCount_RNA-GASTRU_72h_DASA.pdf", width=10, height=6)
+VlnPlot(GASTRU_72h_DASA, features = c("nCount_RNA"),ncol = 4,pt.size = 0.1)+ ylim(0,30000)& 
+  theme(plot.title = element_text(size=10)) 
+dev.off()
+##### QC filtering
+apply_qc <- function(seurat_object) {
+  meta <- seurat_object@meta.data
+  # Initialize QC column with 'Pass'
+  meta$QC <- 'Pass'
+  # Identify failing QC conditions but exclude protected cells
+  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
+  meta$QC[meta$nFeature_RNA < 2000] <- 'Low_nFeature'
+  meta$QC[meta$nFeature_RNA > 9000] <- 'High_nFeatureRNA'
+  meta$QC[meta$nCount_RNA < 3000] <- 'Low_nCountRNA'
+  meta$QC[meta$nCount_RNA > 40000] <- 'High_nCountRNA'
+  meta$QC[meta$percent.mt > 10] <- 'High_MT'
+  meta$QC[meta$percent.rb < 5] <- 'Low_RB'
+  meta$QC[meta$percent.rb > 25] <- 'High_RB'
+  # Handle multiple failing conditions
+  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
+  # Assign back to Seurat object
+  seurat_object@meta.data <- meta
+  return(seurat_object)
+}
+# Apply function to all Seurat objects
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # Reapply function to all individuals in the list
+#### Write QC summary
+qc_summary_list <- list()
+# Collect QC summary for each sample
+for (sample_name in names(seurat_objects)) {
+  qc_summary <- table(seurat_objects[[sample_name]][['QC']])
+  qc_summary_df <- as.data.frame(qc_summary)
+  qc_summary_df$Sample <- sample_name
+  qc_summary_list[[sample_name]] <- qc_summary_df
+}
+qc_summary_combined <- do.call(rbind, qc_summary_list)
+# Write the data frame to a tab-separated text file
+write.table(qc_summary_combined, file = "output/seurat/QC_summary-GASTRU_72h_DASA.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
+
+## subset seurat object to keep cells that pass the QC
+subset_qc <- function(seurat_object) {
+  seurat_object <- subset(seurat_object, subset = QC == 'Pass')
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- subset_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+# Normalize and scale data, then run cell cycle sorting
+DefaultAssay(GASTRU_72h_DASA) <- "RNA"
+set.seed(42)
+## Load gene marker of cell type
+s.genes <- cc.genes.updated.2019$s.genes
+g2m.genes <- cc.genes.updated.2019$g2m.genes
+## NORMALIZE AND SCALE DATA BEFORE RUNNING CELLCYCLESORTING
+GASTRU_72h_DASA <- NormalizeData(GASTRU_72h_DASA, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_72h_DASA)
+GASTRU_72h_DASA <- ScaleData(GASTRU_72h_DASA, features = all.genes) # zero-centres and scales it
+### CELLCYCLESORTING
+GASTRU_72h_DASA <- CellCycleScoring(GASTRU_72h_DASA, s.features = s.genes, g2m.features = g2m.genes)
+table(GASTRU_72h_DASA[[]]$Phase)
+############ SAVE sample ########################################
+# saveRDS(GASTRU_72h_DASA, file = "output/seurat/GASTRU_72h_DASA-QCPass.rds") # 
+#################################################################
+
+
+
+
+
+
+################################################################
+##################### human gastruloid 72hr XMU ###########################
+###############################################################
+## Load the matrix directly
+
+counts <- Read10X(data.dir = "72hgastruloidhumanXMU/outs/filtered_feature_bc_matrix")
+GASTRU_72h_XMU <- CreateSeuratObject(counts = counts, project = "GASTRU_72h_XMU")
+samples <- list(
+  GASTRU_72h_XMU = GASTRU_72h_XMU
+)
+seurat_objects <- list()
+seurat_objects[["GASTRU_72h_XMU"]] <- GASTRU_72h_XMU
+# QUALITY CONTROL
+## add mitochondrial and Ribosomal conta 
+GASTRU_72h_XMU[["percent.mt"]] <- PercentageFeatureSet(GASTRU_72h_XMU, pattern = "^MT-")
+GASTRU_72h_XMU[["percent.rb"]] <- PercentageFeatureSet(GASTRU_72h_XMU, pattern = "^RP[SL]")
+## add doublet information (scrublet)
+doublets <- read.table("output/doublets/humangastruloid_XMU72hr.tsv",header = F,row.names = 1)
+colnames(doublets) <- c("Doublet_score","Is_doublet")
+GASTRU_72h_XMU <- AddMetaData(GASTRU_72h_XMU,doublets)
+GASTRU_72h_XMU$Doublet_score <- as.numeric(GASTRU_72h_XMU$Doublet_score) # make score as numeric
+head(GASTRU_72h_XMU[[]])
+## Plot
+pdf("output/seurat/VlnPlot_QC-GASTRU_72h_XMU.pdf", width=10, height=6)
+VlnPlot(GASTRU_72h_XMU, features = c("nFeature_RNA","nCount_RNA","percent.mt","percent.rb"),ncol = 4,pt.size = 0.1) & 
+  theme(plot.title = element_text(size=10))
+dev.off()
+pdf("output/seurat/VlnPlot_QC-nCount_RNA-GASTRU_72h_XMU.pdf", width=10, height=6)
+VlnPlot(GASTRU_72h_XMU, features = c("nCount_RNA"),ncol = 4,pt.size = 0.1)+ ylim(0,30000)& 
+  theme(plot.title = element_text(size=10)) 
+dev.off()
+##### QC filtering
+apply_qc <- function(seurat_object) {
+  meta <- seurat_object@meta.data
+  # Initialize QC column with 'Pass'
+  meta$QC <- 'Pass'
+  # Identify failing QC conditions but exclude protected cells
+  meta$QC[meta$Is_doublet == 'True'] <- 'Doublet'
+  meta$QC[meta$nFeature_RNA < 2500] <- 'Low_nFeature'
+  meta$QC[meta$nFeature_RNA > 10000] <- 'High_nFeatureRNA'
+  meta$QC[meta$nCount_RNA < 12500] <- 'Low_nCountRNA'
+  meta$QC[meta$nCount_RNA > 75000] <- 'High_nCountRNA'
+  meta$QC[meta$percent.mt > 10] <- 'High_MT'
+  meta$QC[meta$percent.rb < 10] <- 'Low_RB'
+  meta$QC[meta$percent.rb > 35] <- 'High_RB'
+  # Handle multiple failing conditions
+  meta$QC <- ave(meta$QC, seq_along(meta$QC), FUN = function(x) paste(unique(x), collapse = ','))
+  # Assign back to Seurat object
+  seurat_object@meta.data <- meta
+  return(seurat_object)
+}
+# Apply function to all Seurat objects
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- apply_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # Reapply function to all individuals in the list
+#### Write QC summary
+qc_summary_list <- list()
+# Collect QC summary for each sample
+for (sample_name in names(seurat_objects)) {
+  qc_summary <- table(seurat_objects[[sample_name]][['QC']])
+  qc_summary_df <- as.data.frame(qc_summary)
+  qc_summary_df$Sample <- sample_name
+  qc_summary_list[[sample_name]] <- qc_summary_df
+}
+qc_summary_combined <- do.call(rbind, qc_summary_list)
+# Write the data frame to a tab-separated text file
+write.table(qc_summary_combined, file = "output/seurat/QC_summary-GASTRU_72h_XMU.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE) # 
+## subset seurat object to keep cells that pass the QC
+subset_qc <- function(seurat_object) {
+  seurat_object <- subset(seurat_object, subset = QC == 'Pass')
+  return(seurat_object)
+}
+for (sample_name in names(seurat_objects)) {
+  seurat_objects[[sample_name]] <- subset_qc(seurat_objects[[sample_name]])
+}
+assign_seurat_objects(seurat_objects) # This NEED to be reapply to apply the previous function to all individual in our list
+# Normalize and scale data, then run cell cycle sorting
+DefaultAssay(GASTRU_72h_XMU) <- "RNA"
+set.seed(42)
+## Load gene marker of cell type
+s.genes <- cc.genes.updated.2019$s.genes
+g2m.genes <- cc.genes.updated.2019$g2m.genes
+## NORMALIZE AND SCALE DATA BEFORE RUNNING CELLCYCLESORTING
+GASTRU_72h_XMU <- NormalizeData(GASTRU_72h_XMU, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_72h_XMU)
+GASTRU_72h_XMU <- ScaleData(GASTRU_72h_XMU, features = all.genes) # zero-centres and scales it
+### CELLCYCLESORTING
+GASTRU_72h_XMU <- CellCycleScoring(GASTRU_72h_XMU, s.features = s.genes, g2m.features = g2m.genes)
+table(GASTRU_72h_XMU[[]]$Phase)
+############ SAVE sample ########################################
+# saveRDS(GASTRU_72h_XMU, file = "output/seurat/GASTRU_72h_XMU-QCPass.rds") # 
+#################################################################
+
+```
+
+
+--> All samples have been clean indivudually.
+
+
+
+
+
+
+
+
+
+
+## Integration - Merge
+
+Let's prefer to use merge, rather than integrate, not to *force* the samples to show the same cell types..
+
+
+### 24hrs UNTREATED, DASA, XMU
+
+
+```bash
+conda activate scRNAseqV2
+```
+
+
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+
+
+# import clean samples
+GASTRU_24h_UN <- readRDS(file = "output/seurat/GASTRU_24h_UN-QCPass.rds")
+GASTRU_24h_DASA <- readRDS(file = "output/seurat/GASTRU_24h_DASA-QCPass.rds")
+GASTRU_24h_XMU <- readRDS(file = "output/seurat/GASTRU_24h_XMU-QCPass.rds")
+## add mitochondrial and Ribosomal conta 
+GASTRU_24h_UN[["percent.mt"]] <- PercentageFeatureSet(GASTRU_24h_UN, pattern = "^MT-")
+GASTRU_24h_UN[["percent.rb"]] <- PercentageFeatureSet(GASTRU_24h_UN, pattern = "^RP[SL]")
+GASTRU_24h_DASA[["percent.mt"]] <- PercentageFeatureSet(GASTRU_24h_DASA, pattern = "^MT-")
+GASTRU_24h_DASA[["percent.rb"]] <- PercentageFeatureSet(GASTRU_24h_DASA, pattern = "^RP[SL]")
+GASTRU_24h_XMU[["percent.mt"]] <- PercentageFeatureSet(GASTRU_24h_XMU, pattern = "^MT-")
+GASTRU_24h_XMU[["percent.rb"]] <- PercentageFeatureSet(GASTRU_24h_XMU, pattern = "^RP[SL]")
+
+## Optimal parameter 20 dim
+GASTRU_24h_UN <- SCTransform(GASTRU_24h_UN, method = "glmGamPoi", ncells = 8013, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 20, verbose = FALSE)
+GASTRU_24h_DASA <- SCTransform(GASTRU_24h_DASA, method = "glmGamPoi", ncells = 6495, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 20, verbose = FALSE)
+GASTRU_24h_XMU <- SCTransform(GASTRU_24h_XMU, method = "glmGamPoi", ncells = 4058, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 20, verbose = FALSE)
+
+GASTRU_24h_UN$condition <- "UNTREATED"
+GASTRU_24h_DASA$condition <- "DASATINIB"
+GASTRU_24h_XMU$condition <- "XMU"
+
+GASTRU_24h_UN$time <- "24hr"
+GASTRU_24h_DASA$time <- "24hr"
+GASTRU_24h_XMU$time <- "24hr"
+
+DefaultAssay(GASTRU_24h_UN) <- "SCT"
+DefaultAssay(GASTRU_24h_DASA) <- "SCT"
+DefaultAssay(GASTRU_24h_XMU) <- "SCT"
+
+### Merge the SCT assay
+GASTRU_24h_merge = merge(
+  x = GASTRU_24h_UN,
+  y = c(GASTRU_24h_DASA, GASTRU_24h_XMU),
+  add.cell.ids = NULL,
+  merge.data = TRUE
+)
+
+
+VariableFeatures(GASTRU_24h_merge[["SCT"]]) <- rownames(GASTRU_24h_merge[["SCT"]]@scale.data)
+
+
+#### UMAP
+DefaultAssay(GASTRU_24h_merge) <- "SCT"
+
+GASTRU_24h_merge <- RunPCA(GASTRU_24h_merge, verbose = FALSE, npcs = 20)
+GASTRU_24h_merge <- RunUMAP(GASTRU_24h_merge, reduction = "pca", dims = 1:20, verbose = FALSE)
+GASTRU_24h_merge <- FindNeighbors(GASTRU_24h_merge, reduction = "pca", k.param = 30, dims = 1:20)
+GASTRU_24h_merge <- FindClusters(GASTRU_24h_merge, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+
+GASTRU_24h_merge$condition <- factor(GASTRU_24h_merge$condition, levels = c("UNTREATED", "DASATINIB", "XMU")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_GASTRU_24h_merge-dim20kparam30res03.pdf", width=7, height=6)
+DimPlot(GASTRU_24h_merge, reduction = "umap", label=TRUE, group.by = "condition")
 dev.off()
 
 
-# clustering
-## Optimal parameter 50 dim
-srat_WT_E7 <- SCTransform(srat_WT_E7, method = "glmGamPoi", ncells = 788, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
-    RunPCA(npcs = 50, verbose = FALSE)
-srat_cYAPKO_E7 <- SCTransform(srat_cYAPKO_E7, method = "glmGamPoi", ncells = 862, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
-    RunPCA(npcs = 50, verbose = FALSE)
-# Data integration (check active assay is 'SCT')
-srat.list <- list(srat_WT_E7 = srat_WT_E7, srat_cYAPKO_E7 = srat_cYAPKO_E7)
-features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
-srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
-embryoE7.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
-    anchor.features = features)
-embryoE7.combined.sct <- IntegrateData(anchorset = embryoE7.anchors, normalization.method = "SCT")
-set.seed(42)
-DefaultAssay(embryoE7.combined.sct) <- "integrated"
-embryoE7.combined.sct <- RunPCA(embryoE7.combined.sct, verbose = FALSE, npcs = 50)
-embryoE7.combined.sct <- RunUMAP(embryoE7.combined.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
-embryoE7.combined.sct <- FindNeighbors(embryoE7.combined.sct, reduction = "pca", k.param = 5, dims = 1:50)
-embryoE7.combined.sct <- FindClusters(embryoE7.combined.sct, resolution = 0.2, verbose = FALSE, algorithm = 4)
-embryoE7.combined.sct$condition <- factor(embryoE7.combined.sct$condition, levels = c("WT_E7", "cYAPKO_E7")) # Reorder untreated 1st
+
+# SAVE OUTPUT
+saveRDS(GASTRU_24h_merge, file = "output/seurat/GASTRU_24h_merge-dim20kparam30res03.rds")
+```
+
+
+--> Untreated and DASATINIB very similar; XMU super different!
+  --> Either true biological difference
+  --> Either Experimental effect as UNTREATED and DASA exp1 and XMU exp2...
 
 
 
 
-## Optimal parameter 19 dim  _ V1
-srat_WT_E7 <- SCTransform(srat_WT_E7, method = "glmGamPoi", ncells = 788, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
-    RunPCA(npcs = 19, verbose = FALSE)
-srat_cYAPKO_E7 <- SCTransform(srat_cYAPKO_E7, method = "glmGamPoi", ncells = 862, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
-    RunPCA(npcs = 19, verbose = FALSE)
-# Data integration (check active assay is 'SCT')
-srat.list <- list(srat_WT_E7 = srat_WT_E7, srat_cYAPKO_E7 = srat_cYAPKO_E7)
-features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
-srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
-embryoE7.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
-    anchor.features = features)
-embryoE7.combined.sct <- IntegrateData(anchorset = embryoE7.anchors, normalization.method = "SCT")
-set.seed(42)
-DefaultAssay(embryoE7.combined.sct) <- "integrated"
-embryoE7.combined.sct <- RunPCA(embryoE7.combined.sct, verbose = FALSE, npcs = 19)
-embryoE7.combined.sct <- RunUMAP(embryoE7.combined.sct, reduction = "pca", dims = 1:19, verbose = FALSE)
-embryoE7.combined.sct <- FindNeighbors(embryoE7.combined.sct, reduction = "pca", k.param = 4, dims = 1:19)
-embryoE7.combined.sct <- FindClusters(embryoE7.combined.sct, resolution = 0.07, verbose = FALSE, algorithm = 4)
-embryoE7.combined.sct$condition <- factor(embryoE7.combined.sct$condition, levels = c("WT_E7", "cYAPKO_E7")) # Reorder untreated 1st
+
+### 72hrs UNTREATED, DASA, XMU
 
 
-## Optimal parameter 19 dim  _ V2
-srat_WT_E7 <- SCTransform(srat_WT_E7, method = "glmGamPoi", ncells = 788, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
-    RunPCA(npcs = 19, verbose = FALSE)
-srat_cYAPKO_E7 <- SCTransform(srat_cYAPKO_E7, method = "glmGamPoi", ncells = 862, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
-    RunPCA(npcs = 19, verbose = FALSE)
-# Data integration (check active assay is 'SCT')
-srat.list <- list(srat_WT_E7 = srat_WT_E7, srat_cYAPKO_E7 = srat_cYAPKO_E7)
-features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
-srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
-embryoE7.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
-    anchor.features = features)
-embryoE7.combined.sct <- IntegrateData(anchorset = embryoE7.anchors, normalization.method = "SCT")
-set.seed(42)
-DefaultAssay(embryoE7.combined.sct) <- "integrated"
-embryoE7.combined.sct <- RunPCA(embryoE7.combined.sct, verbose = FALSE, npcs = 19)
-embryoE7.combined.sct <- RunUMAP(embryoE7.combined.sct, reduction = "pca", dims = 1:19, verbose = FALSE)
-embryoE7.combined.sct <- FindNeighbors(embryoE7.combined.sct, reduction = "pca", k.param = 20, dims = 1:19)
-embryoE7.combined.sct <- FindClusters(embryoE7.combined.sct, resolution = 0.72, verbose = FALSE, algorithm = 4)
-embryoE7.combined.sct$condition <- factor(embryoE7.combined.sct$condition, levels = c("WT_E7", "cYAPKO_E7")) # Reorder untreated 1st
+```bash
+conda activate scRNAseqV2
+```
 
 
 
-
-## CLUSTERING testing
-srat_WT_E7 <- SCTransform(srat_WT_E7, method = "glmGamPoi", ncells = 788, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
-    RunPCA(npcs = 19, verbose = FALSE)
-srat_cYAPKO_E7 <- SCTransform(srat_cYAPKO_E7, method = "glmGamPoi", ncells = 862, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>%
-    RunPCA(npcs = 19, verbose = FALSE)
-# Data integration (check active assay is 'SCT')
-srat.list <- list(srat_WT_E7 = srat_WT_E7, srat_cYAPKO_E7 = srat_cYAPKO_E7)
-features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
-srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
-embryoE7.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
-    anchor.features = features)
-embryoE7.combined.sct <- IntegrateData(anchorset = embryoE7.anchors, normalization.method = "SCT")
-set.seed(42)
-DefaultAssay(embryoE7.combined.sct) <- "integrated"
-embryoE7.combined.sct <- RunPCA(embryoE7.combined.sct, verbose = FALSE, npcs = 19)
-embryoE7.combined.sct <- RunUMAP(embryoE7.combined.sct, reduction = "pca", dims = 1:19, verbose = FALSE)
-embryoE7.combined.sct <- FindNeighbors(embryoE7.combined.sct, reduction = "pca", k.param = 20, dims = 1:19)
-embryoE7.combined.sct <- FindClusters(embryoE7.combined.sct, resolution = 0.72, verbose = FALSE, algorithm = 4)
-embryoE7.combined.sct$condition <- factor(embryoE7.combined.sct$condition, levels = c("WT_E7", "cYAPKO_E7")) # Reorder untreated 1st
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
 
 
+# import clean samples
+GASTRU_72h_UN <- readRDS(file = "output/seurat/GASTRU_72h_UN-QCPass.rds")
+GASTRU_72h_DASA <- readRDS(file = "output/seurat/GASTRU_72h_DASA-QCPass.rds")
+GASTRU_72h_XMU <- readRDS(file = "output/seurat/GASTRU_72h_XMU-QCPass.rds")
+## add mitochondrial and Ribosomal conta 
+GASTRU_72h_UN[["percent.mt"]] <- PercentageFeatureSet(GASTRU_72h_UN, pattern = "^MT-")
+GASTRU_72h_UN[["percent.rb"]] <- PercentageFeatureSet(GASTRU_72h_UN, pattern = "^RP[SL]")
+GASTRU_72h_DASA[["percent.mt"]] <- PercentageFeatureSet(GASTRU_72h_DASA, pattern = "^MT-")
+GASTRU_72h_DASA[["percent.rb"]] <- PercentageFeatureSet(GASTRU_72h_DASA, pattern = "^RP[SL]")
+GASTRU_72h_XMU[["percent.mt"]] <- PercentageFeatureSet(GASTRU_72h_XMU, pattern = "^MT-")
+GASTRU_72h_XMU[["percent.rb"]] <- PercentageFeatureSet(GASTRU_72h_XMU, pattern = "^RP[SL]")
 
-####
+## Optimal parameter 20 dim
+GASTRU_72h_UN <- SCTransform(GASTRU_72h_UN, method = "glmGamPoi", ncells = 5487, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 20, verbose = FALSE)
+GASTRU_72h_DASA <- SCTransform(GASTRU_72h_DASA, method = "glmGamPoi", ncells = 9413, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 20, verbose = FALSE)
+GASTRU_72h_XMU <- SCTransform(GASTRU_72h_XMU, method = "glmGamPoi", ncells = 1219, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 20, verbose = FALSE)
+
+GASTRU_72h_UN$condition <- "UNTREATED"
+GASTRU_72h_DASA$condition <- "DASATINIB"
+GASTRU_72h_XMU$condition <- "XMU"
+
+GASTRU_72h_UN$time <- "72hr"
+GASTRU_72h_DASA$time <- "72hr"
+GASTRU_72h_XMU$time <- "72hr"
+
+DefaultAssay(GASTRU_72h_UN) <- "SCT"
+DefaultAssay(GASTRU_72h_DASA) <- "SCT"
+DefaultAssay(GASTRU_72h_XMU) <- "SCT"
+
+### Merge the SCT assay
+GASTRU_72h_merge = merge(
+  x = GASTRU_72h_UN,
+  y = c(GASTRU_72h_DASA, GASTRU_72h_XMU),
+  add.cell.ids = NULL,
+  merge.data = TRUE
+)
 
 
-pdf("output/seurat/UMAP_control_cYAPKO_E7_50dimOpt.pdf", width=10, height=4)
-pdf("output/seurat/UMAP_control_cYAPKO_E7_19dimOpt.pdf", width=10, height=4)
+VariableFeatures(GASTRU_72h_merge[["SCT"]]) <- rownames(GASTRU_72h_merge[["SCT"]]@scale.data)
 
-pdf("output/seurat/UMAP_control_cYAPKO_E7_test.pdf", width=10, height=4)
-pdf("output/seurat/UMAP_control_cYAPKO_E7_19dimOpt_V2.pdf", width=10, height=4)
 
-DimPlot(embryoE7.combined.sct, reduction = "umap", split.by = "condition", label=TRUE)
+#### UMAP
+DefaultAssay(GASTRU_72h_merge) <- "SCT"
+
+GASTRU_72h_merge <- RunPCA(GASTRU_72h_merge, verbose = FALSE, npcs = 20)
+GASTRU_72h_merge <- RunUMAP(GASTRU_72h_merge, reduction = "pca", dims = 1:20, verbose = FALSE)
+GASTRU_72h_merge <- FindNeighbors(GASTRU_72h_merge, reduction = "pca", k.param = 30, dims = 1:20)
+GASTRU_72h_merge <- FindClusters(GASTRU_72h_merge, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+
+GASTRU_72h_merge$condition <- factor(GASTRU_72h_merge$condition, levels = c("UNTREATED", "DASATINIB", "XMU")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_GASTRU_72h_merge-dim20kparam30res03.pdf", width=7, height=6)
+DimPlot(GASTRU_72h_merge, reduction = "umap", label=TRUE, group.by = "condition")
 dev.off()
 
 
 
+# SAVE OUTPUT
+saveRDS(GASTRU_72h_merge, file = "output/seurat/GASTRU_72h_merge-dim20kparam30res03.rds")
 ```
 
 
 
 
-XXXY HERE 
+## Integration - Integrate
+
+Let's try integrate method; Forcing samples to show same cell types 
+
+
+### 24hrs UNTREATED, DASA, XMU - Integrate
+
+
+```bash
+conda activate scRNAseqV2
+```
+
+
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+
+
+# import clean samples
+GASTRU_24h_UN <- readRDS(file = "output/seurat/GASTRU_24h_UN-QCPass.rds")
+GASTRU_24h_DASA <- readRDS(file = "output/seurat/GASTRU_24h_DASA-QCPass.rds")
+GASTRU_24h_XMU <- readRDS(file = "output/seurat/GASTRU_24h_XMU-QCPass.rds")
+## add mitochondrial and Ribosomal conta 
+GASTRU_24h_UN[["percent.mt"]] <- PercentageFeatureSet(GASTRU_24h_UN, pattern = "^MT-")
+GASTRU_24h_UN[["percent.rb"]] <- PercentageFeatureSet(GASTRU_24h_UN, pattern = "^RP[SL]")
+GASTRU_24h_DASA[["percent.mt"]] <- PercentageFeatureSet(GASTRU_24h_DASA, pattern = "^MT-")
+GASTRU_24h_DASA[["percent.rb"]] <- PercentageFeatureSet(GASTRU_24h_DASA, pattern = "^RP[SL]")
+GASTRU_24h_XMU[["percent.mt"]] <- PercentageFeatureSet(GASTRU_24h_XMU, pattern = "^MT-")
+GASTRU_24h_XMU[["percent.rb"]] <- PercentageFeatureSet(GASTRU_24h_XMU, pattern = "^RP[SL]")
+
+## Optimal parameter 20 dim
+GASTRU_24h_UN <- SCTransform(GASTRU_24h_UN, method = "glmGamPoi", ncells = 8013, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 20, verbose = FALSE)
+GASTRU_24h_DASA <- SCTransform(GASTRU_24h_DASA, method = "glmGamPoi", ncells = 6495, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 20, verbose = FALSE)
+GASTRU_24h_XMU <- SCTransform(GASTRU_24h_XMU, method = "glmGamPoi", ncells = 4058, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 20, verbose = FALSE)
+
+GASTRU_24h_UN$condition <- "UNTREATED"
+GASTRU_24h_DASA$condition <- "DASATINIB"
+GASTRU_24h_XMU$condition <- "XMU"
+
+GASTRU_24h_UN$time <- "24hr"
+GASTRU_24h_DASA$time <- "24hr"
+GASTRU_24h_XMU$time <- "24hr"
+
+DefaultAssay(GASTRU_24h_UN) <- "SCT"
+DefaultAssay(GASTRU_24h_DASA) <- "SCT"
+DefaultAssay(GASTRU_24h_XMU) <- "SCT"
+
+### Integration
+
+
+
+
+# Data integration (check active assay is 'SCT')
+srat.list <- list(GASTRU_24h_UN = GASTRU_24h_UN, GASTRU_24h_DASA = GASTRU_24h_DASA, GASTRU_24h_XMU = GASTRU_24h_XMU)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+GASTRU_24h.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+GASTRU_24h_integrate <- IntegrateData(anchorset = GASTRU_24h.anchors, normalization.method = "SCT")
+set.seed(42)
+DefaultAssay(GASTRU_24h_integrate) <- "integrated"
+GASTRU_24h_integrate <- RunPCA(GASTRU_24h_integrate, verbose = FALSE, npcs = 50)
+GASTRU_24h_integrate <- RunUMAP(GASTRU_24h_integrate, reduction = "pca", dims = 1:50, verbose = FALSE)
+GASTRU_24h_integrate <- FindNeighbors(GASTRU_24h_integrate, reduction = "pca", k.param = 5, dims = 1:50)
+GASTRU_24h_integrate <- FindClusters(GASTRU_24h_integrate, resolution = 0.2, verbose = FALSE, algorithm = 4)
+GASTRU_24h_integrate$condition <- factor(GASTRU_24h_integrate$condition, levels = c("UNTREATED", "DASATINIB", "XMU")) # Reorder untreated 1st
+
+
+
+pdf("output/seurat/UMAP_GASTRU_24h_integrate-dim20kparam30res03.pdf", width=7, height=6)
+DimPlot(GASTRU_24h_integrate, reduction = "umap", label=TRUE, group.by = "condition")
+dev.off()
+
+
+
+pdf("output/seurat/UMAP_GASTRU_24h_integrate-dim20kparam30res03_split.pdf", width=14, height=6)
+DimPlot(GASTRU_24h_integrate, reduction = "umap", label=TRUE, split.by = "condition")
+dev.off()
+
+
+# SAVE OUTPUT
+saveRDS(GASTRU_24h_integrate, file = "output/seurat/GASTRU_24h_integrate-dim20kparam30res03.rds")
+```
+
+
+
+--> Samples perfectly integrate together; like all cell types rpesent in each condition...
+  --> Not sure it s good!
+
+
+  
+
+
+
+### 72hrs UNTREATED, DASA, XMU - Integrate
+
+
+```bash
+conda activate scRNAseqV2
+```
+
+
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+
+
+# import clean samples
+GASTRU_72h_UN <- readRDS(file = "output/seurat/GASTRU_72h_UN-QCPass.rds")
+GASTRU_72h_DASA <- readRDS(file = "output/seurat/GASTRU_72h_DASA-QCPass.rds")
+GASTRU_72h_XMU <- readRDS(file = "output/seurat/GASTRU_72h_XMU-QCPass.rds")
+## add mitochondrial and Ribosomal conta 
+GASTRU_72h_UN[["percent.mt"]] <- PercentageFeatureSet(GASTRU_72h_UN, pattern = "^MT-")
+GASTRU_72h_UN[["percent.rb"]] <- PercentageFeatureSet(GASTRU_72h_UN, pattern = "^RP[SL]")
+GASTRU_72h_DASA[["percent.mt"]] <- PercentageFeatureSet(GASTRU_72h_DASA, pattern = "^MT-")
+GASTRU_72h_DASA[["percent.rb"]] <- PercentageFeatureSet(GASTRU_72h_DASA, pattern = "^RP[SL]")
+GASTRU_72h_XMU[["percent.mt"]] <- PercentageFeatureSet(GASTRU_72h_XMU, pattern = "^MT-")
+GASTRU_72h_XMU[["percent.rb"]] <- PercentageFeatureSet(GASTRU_72h_XMU, pattern = "^RP[SL]")
+
+## Optimal parameter 20 dim
+GASTRU_72h_UN <- SCTransform(GASTRU_72h_UN, method = "glmGamPoi", ncells = 5487, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 20, verbose = FALSE)
+GASTRU_72h_DASA <- SCTransform(GASTRU_72h_DASA, method = "glmGamPoi", ncells = 9413, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 20, verbose = FALSE)
+GASTRU_72h_XMU <- SCTransform(GASTRU_72h_XMU, method = "glmGamPoi", ncells = 1219, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 20, verbose = FALSE)
+
+GASTRU_72h_UN$condition <- "UNTREATED"
+GASTRU_72h_DASA$condition <- "DASATINIB"
+GASTRU_72h_XMU$condition <- "XMU"
+
+GASTRU_72h_UN$time <- "72hr"
+GASTRU_72h_DASA$time <- "72hr"
+GASTRU_72h_XMU$time <- "72hr"
+
+DefaultAssay(GASTRU_72h_UN) <- "SCT"
+DefaultAssay(GASTRU_72h_DASA) <- "SCT"
+DefaultAssay(GASTRU_72h_XMU) <- "SCT"
+
+### Integration
+
+
+
+
+# Data integration (check active assay is 'SCT')
+srat.list <- list(GASTRU_72h_UN = GASTRU_72h_UN, GASTRU_72h_DASA = GASTRU_72h_DASA, GASTRU_72h_XMU = GASTRU_72h_XMU)
+features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
+srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
+GASTRU_72h.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+    anchor.features = features)
+GASTRU_72h_integrate <- IntegrateData(anchorset = GASTRU_72h.anchors, normalization.method = "SCT")
+set.seed(42)
+DefaultAssay(GASTRU_72h_integrate) <- "integrated"
+GASTRU_72h_integrate <- RunPCA(GASTRU_72h_integrate, verbose = FALSE, npcs = 50)
+GASTRU_72h_integrate <- RunUMAP(GASTRU_72h_integrate, reduction = "pca", dims = 1:50, verbose = FALSE)
+GASTRU_72h_integrate <- FindNeighbors(GASTRU_72h_integrate, reduction = "pca", k.param = 5, dims = 1:50)
+GASTRU_72h_integrate <- FindClusters(GASTRU_72h_integrate, resolution = 0.2, verbose = FALSE, algorithm = 4)
+GASTRU_72h_integrate$condition <- factor(GASTRU_72h_integrate$condition, levels = c("UNTREATED", "DASATINIB", "XMU")) # Reorder untreated 1st
+
+
+
+pdf("output/seurat/UMAP_GASTRU_72h_integrate-dim20kparam30res03.pdf", width=7, height=6)
+DimPlot(GASTRU_72h_integrate, reduction = "umap", label=TRUE, group.by = "condition")
+dev.off()
+
+
+
+pdf("output/seurat/UMAP_GASTRU_72h_integrate-dim20kparam30res03_split.pdf", width=14, height=6)
+DimPlot(GASTRU_72h_integrate, reduction = "umap", label=TRUE, split.by = "condition")
+dev.off()
+
+
+# SAVE OUTPUT
+saveRDS(GASTRU_72h_integrate, file = "output/seurat/GASTRU_72h_integrate-dim20kparam30res03.rds")
+```
+
+
 
 
 

@@ -64,7 +64,7 @@ all_indices = np.concatenate(list(context_index.values()))
 unique_indices = np.unique(all_indices)
 
 print(f"🧠 Total indices stored across all 96 contexts: {len(all_indices):,}") # 380,610,012
-print(f"🔍 Unique positions covered (non-redundant rows): {len(unique_indices):,}") # 126,870,005
+print(f"🔍 Unique positions covered (non-redundant rows): {len(unique_indices):,}") # 126,870,004
 ```
 
 --> 126,870,005 positions (= all CDS bp) in both parquet and pkl index. 
@@ -91,7 +91,7 @@ conda activate mutsim
 
 sbatch scripts/run_filtered_cosmic_1.slurm # 47244234 fail --> results/
 # --> NEW scripts: scripts/simulate_mutations_1.py scripts/simulate_array_1.py
-sbatch scripts/run_filtered_cosmic_2.slurm # 47307286 xxx --> results/
+sbatch scripts/run_filtered_cosmic_2.slurm # 47402117 xxx --> results/
 
 
 
@@ -133,10 +133,12 @@ parquet_to_sigprofiler_txt.py
 
 
 python scripts/parquet_to_sigprofiler_txt.py \
-  --parquet results/SBS1/n_500/rep_02.annot.parquet \
+  --parquet results/SBS1/n_1000/rep_01.annot.parquet \
   --fasta ref/GRCh38.primary_assembly.genome.fa \
-  --sample-name SBS1-n_500-rep_02 \
-  --output plot/SBS1-n_1000-rep_02.txt
+  --sample-name SBS1-n_1000-rep_01 \
+  --output plot/SBS1-n_1000-rep_01.txt
+
+
 
 ```
 
