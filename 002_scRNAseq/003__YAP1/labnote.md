@@ -34985,9 +34985,16 @@ DimPlot(GASTRU_24h_merge, reduction = "umap", label=TRUE, group.by = "condition"
 dev.off()
 
 
+pdf("output/seurat/UMAP_GASTRU_24h_merge-dim20kparam30res03-splitCondition.pdf", width=14, height=6)
+DimPlot(GASTRU_24h_merge, reduction = "umap", label=TRUE, split.by = "condition")
+dev.off()
 
-# SAVE OUTPUT
-saveRDS(GASTRU_24h_merge, file = "output/seurat/GASTRU_24h_merge-dim20kparam30res03.rds")
+# SAVE OUTPUT ########################################################
+#saveRDS(GASTRU_24h_merge, file = "output/seurat/GASTRU_24h_merge-dim20kparam30res03.rds")
+GASTRU_24h_merge <- readRDS(file = "output/seurat/GASTRU_24h_merge-dim20kparam30res03.rds")
+
+######################################################################
+
 ```
 
 
@@ -35082,10 +35089,17 @@ pdf("output/seurat/UMAP_GASTRU_72h_merge-dim20kparam30res03.pdf", width=7, heigh
 DimPlot(GASTRU_72h_merge, reduction = "umap", label=TRUE, group.by = "condition")
 dev.off()
 
+pdf("output/seurat/UMAP_GASTRU_72h_merge-dim20kparam30res03-splitCondition.pdf", width=14, height=6)
+DimPlot(GASTRU_72h_merge, reduction = "umap", label=TRUE, split.by = "condition")
+dev.off()
 
+# SAVE OUTPUT ########################################################
+#saveRDS(GASTRU_72h_merge, file = "output/seurat/GASTRU_72h_merge-dim20kparam30res03.rds")
 
-# SAVE OUTPUT
-saveRDS(GASTRU_72h_merge, file = "output/seurat/GASTRU_72h_merge-dim20kparam30res03.rds")
+GASTRU_72h_merge <- readRDS(file = "output/seurat/GASTRU_72h_merge-dim20kparam30res03.rds")
+
+######################################################################
+
 ```
 
 

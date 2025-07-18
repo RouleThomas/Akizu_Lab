@@ -91,7 +91,7 @@ conda activate mutsim
 
 sbatch scripts/run_filtered_cosmic_1.slurm # 47244234 fail --> results/
 # --> NEW scripts: scripts/simulate_mutations_1.py scripts/simulate_array_1.py
-sbatch scripts/run_filtered_cosmic_2.slurm # 47402117 xxx --> results/
+sbatch scripts/run_filtered_cosmic_2.slurm # 47432834 xxx --> results/
 
 
 
@@ -108,6 +108,10 @@ sbatch scripts/run_filtered_contexts_1.slurm #  xxx --> results_contexts/
 
 
 XXXY HERE CHECK MAIN IN CHATGPT...
+
+
+
+
 
 
 
@@ -133,10 +137,11 @@ parquet_to_sigprofiler_txt.py
 
 
 python scripts/parquet_to_sigprofiler_txt.py \
-  --parquet results/SBS1/n_1000/rep_01.annot.parquet \
+  --parquet results/SBS1/n_500/rep_01.annot.parquet \
   --fasta ref/GRCh38.primary_assembly.genome.fa \
-  --sample-name SBS1-n_1000-rep_01 \
-  --output plot/SBS1-n_1000-rep_01.txt
+  --sample-name SBS1-n_500-rep_01 \
+  --output plot/SBS1-n_500-rep_01.txt
+
 
 
 

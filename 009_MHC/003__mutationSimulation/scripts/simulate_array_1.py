@@ -70,20 +70,37 @@ def main():
     ]}
 
     # ✅ FIX: properly decode numeric ref_base index to letter
-    for chrom, pos, r_idx, a in zip(df.chr, df.pos, df.ref_base, df.alt_base):
-        try:
-            ref = "ACGT"[int(r_idx)]
-        except Exception as e:
-            print(f"⚠️ Bad ref index: {r_idx} at {chrom}:{pos} — skipping")
-            for key in annotations:
-                annotations[key].append(None)
-            continue
 
-        alt = str(a)
-        print(f"🔍 Querying dbNSFP: {chrom}:{pos} {ref}>{alt}")
-        result = db.query(str(chrom), int(pos), ref, alt)
+
+
+
+    n_total = 0
+    n_hits = 0
+
+    for chrom, pos, ref, alt in zip(df.chr, df.pos, df.ref_base, df.alt_base):
+        n_total += 1
+        ref = ref.upper()
+        alt = str(alt).upper()
+
+        try:
+            print(f"⏩ Querying: chrom={chrom}, pos={pos}, ref={ref}, alt={alt}")
+            result = db.query(str(chrom), int(pos), ref, alt)
+            if result["cadd_phred"] is not None:
+                n_hits += 1
+        except Exception as e:
+            print(f"❌ dbNSFP query failed: {chrom}:{pos} {ref}>{alt} — {e}")
+            result = {k: None for k in annotations}
+
         for key in annotations:
             annotations[key].append(result[key])
+
+    print(f"✅ dbNSFP hits: {n_hits} / {n_total}")
+
+
+
+
+
+
 
     for k, v in annotations.items():
         df[k] = v

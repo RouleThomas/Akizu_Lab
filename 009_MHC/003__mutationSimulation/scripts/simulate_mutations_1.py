@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# simulate_mutations_1.py
+
 import argparse, json, pickle
 from pathlib import Path
 from typing import Dict
@@ -10,12 +12,13 @@ from Bio.Seq import reverse_complement
 CODON_TABLE = CodonTable.unambiguous_dna_by_name["Standard"].forward_table
 STOP_CODONS = {"TAA", "TAG", "TGA"}
 
+BASES = ["A", "C", "G", "T"]
 CONTEXTS_96 = [
     f"{l}[{ref}>{alt}]{r}"
     for ref, alts in [("C", "AGT"), ("T", "ACG")]
     for alt in alts
-    for l in "ACGT"
-    for r in "ACGT"
+    for l in BASES
+    for r in BASES
 ]
 
 def load_signatures(path: str | Path) -> pd.DataFrame:
@@ -31,7 +34,6 @@ def get_signature_probs(sig_df: pd.DataFrame, signature: str) -> np.ndarray:
 
 class ExomeSampler:
     def __init__(self, parquet_dir: str | Path, context_index_pkl: str | Path):
-        # Fix applied here: Cast string to large_string BEFORE concatenation
         tables = []
         for fp in sorted(Path(parquet_dir).glob("chr*.parquet")):
             tbl = pq.read_table(fp)
@@ -67,41 +69,30 @@ class ExomeSampler:
 
     def annotate(self, tbl: pa.Table, ctx_ids: np.ndarray, revcomp_flags: np.ndarray) -> pd.DataFrame:
         df = tbl.to_pandas()
-        df["context_id"], df["revcomp"] = ctx_ids, revcomp_flags
-        df["alt_base"] = [CONTEXTS_96[c][3] for c in ctx_ids]
+        df["context_id"] = ctx_ids
+        df["revcomp"] = revcomp_flags
 
-        mutated, aa_alt, cons, ref_bases = [], [], [], []
+        alt_bases = [CONTEXTS_96[c][5] for c in ctx_ids]  # Extract ALT from e.g., A[C>T]G
+        ref_bases = []
+        alt_bases_corrected = []
 
-        for ref_codon, idx, alt, flag in zip(df.ref_codon, df.codon_index, df["alt_base"], df["revcomp"]):
-            original_codon = ref_codon
+        for ref_codon, idx, alt, flag in zip(df.ref_codon, df.codon_index, alt_bases, df.revcomp):
             cod = list(ref_codon)
-
             if flag:
                 cod_rc = list(reverse_complement("".join(cod)))
                 ref_base = cod_rc[2 - idx]
-                cod_rc[2 - idx] = reverse_complement(alt)
-                new_codon = reverse_complement("".join(cod_rc))
+                alt_base = reverse_complement(alt)
             else:
                 ref_base = cod[idx]
-                cod[idx] = alt
-                new_codon = "".join(cod)
+                alt_base = alt
 
             ref_bases.append(ref_base)
-            mutated.append(new_codon)
+            alt_bases_corrected.append(alt_base)
 
-            if new_codon in STOP_CODONS:
-                aa_alt.append("*"); cons.append("stop")
-            else:
-                aa_new = CODON_TABLE.get(new_codon)
-                aa_ref = CODON_TABLE.get(original_codon)
-                if aa_new is None:
-                    aa_alt.append(None); cons.append("unknown")
-                elif aa_new == aa_ref:
-                    aa_alt.append(aa_new); cons.append("synonymous")
-                else:
-                    aa_alt.append(aa_new); cons.append("missense")
+        df["ref_base"] = ref_bases
+        df["alt_base"] = alt_bases_corrected
 
-        df["mut_codon"], df["alt_aa"], df["consequence"], df["ref_base"] = mutated, aa_alt, cons, ref_bases
+        # Optionally keep codon/consequence logic
         return df
 
 def main():
@@ -116,8 +107,8 @@ def main():
     args = p.parse_args()
 
     sig_df = load_signatures(args.signatures)
-    probs  = get_signature_probs(sig_df, args.signature_name)
-    rng    = np.random.default_rng(args.seed)
+    probs = get_signature_probs(sig_df, args.signature_name)
+    rng = np.random.default_rng(args.seed)
 
     sampler = ExomeSampler(args.exome_dir, args.context_index)
     tbl, ctx_ids, rev_flags = sampler.sample(probs, args.n, rng)
