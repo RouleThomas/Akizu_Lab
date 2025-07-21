@@ -2,27 +2,33 @@
 import pandas as pd
 import pysam
 import argparse
+from Bio.Seq import reverse_complement
+
 
 def parquet_to_txt(parquet, fasta_path, sample_name, output_path):
     df = pd.read_parquet(parquet)
     fasta = pysam.FastaFile(fasta_path)
 
-    # Ensure ref_base is uppercase character, not int (already handled correctly in simulation now)
-    df["simulated_ref"] = df["ref_base"].str.upper()
+    # Ensure simulated_ref and alt_base are upper-case strings
+    df["simulated_ref"] = df["ref_base"].astype(str).str.upper()
+    df["alt_base"] = df["alt_base"].astype(str).str.upper()
 
-    # Fetch the actual base from the genome FASTA
-    df["genome_ref"] = df.apply(lambda r: fasta.fetch(r.chr, r.pos - 1, r.pos).upper(), axis=1)
+    def get_genome_ref(row):
+        base = fasta.fetch(row.chr, row.pos - 1, row.pos).upper()
+        return reverse_complement(base) if row.revcomp else base
 
-    # Keep only valid matches
+    df["genome_ref"] = df.apply(get_genome_ref, axis=1)
+
+    # Match validation
     match = df["genome_ref"] == df["simulated_ref"]
     mismatches = (~match).sum()
     print(f"✅ {match.sum()} / {len(df)} matches")
     if mismatches > 0:
         print(f"❌ {mismatches} mismatches")
         print("Sample mismatches:")
-        print(df.loc[~match, ["chr", "pos", "simulated_ref", "genome_ref", "alt_base", "revcomp"]].head())
+        print(df.loc[~match, ["chr", "pos", "ref_base", "alt_base", "simulated_ref", "genome_ref", "revcomp"]].head(10))
 
-    df_valid = df[match]
+    df_valid = df[match].copy()
 
     df_txt = pd.DataFrame({
         "Project": "Simu",

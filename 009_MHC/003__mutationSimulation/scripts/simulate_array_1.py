@@ -3,26 +3,30 @@
 Wrapper script for a single SBS signature simulation + annotation run.
 """
 
-import argparse, json, sys
+import argparse, json, subprocess
 from pathlib import Path
-import pyarrow as pa, pyarrow.parquet as pq
-import numpy as np
-from simulate_mutations_1 import ExomeSampler, load_signatures, get_signature_probs
-from annotate_damage3 import DBNSFP
+import pyarrow.parquet as pq
+
 
 def summarize_output(df):
     consequence_counts = df["consequence"].value_counts().to_dict()
+
+    def safe_extract(column):
+        return df[column].dropna().tolist() if column in df.columns else []
+
     scores = {
-        "sift4g_score": df["sift4g_score"].dropna().tolist(),
-        "polyphen2_hdiv_score": df["polyphen2_hdiv_score"].dropna().tolist(),
-        "cadd_phred": df["cadd_phred"].dropna().tolist(),
+        "sift4g_score": safe_extract("sift4g_score"),
+        "polyphen2_hdiv_score": safe_extract("polyphen2_hdiv_score"),
+        "cadd_phred": safe_extract("cadd_phred"),
     }
+
     return {
         "n_mutations": len(df),
         "consequences": consequence_counts,
         "score_counts": {k: len(v) for k, v in scores.items()},
         "score_means": {k: round(np.mean(v), 3) if v else None for k, v in scores.items()},
     }
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -34,83 +38,38 @@ def main():
     parser.add_argument("--sigfile", default="signatures/COSMIC_v3.4_SBS_GRCh38.txt")
     parser.add_argument("--context", default="indices/context96.pkl")
     parser.add_argument("--exome", default="parquet")
+    parser.add_argument("--fasta", default="ref/GRCh38.primary_assembly.genome.fa")
     parser.add_argument("--dbnsfp", default="ref/dbNSFP5.2a_grch38.gz")
     args = parser.parse_args()
-
-    # Fail-fast path check
-    for label, path in {
-        "signature file": args.sigfile,
-        "context index": args.context,
-        "exome dir": args.exome,
-        "dbNSFP file": args.dbnsfp
-    }.items():
-        if not Path(path).exists():
-            sys.exit(f"❌ ERROR: {label} not found at: {path}")
 
     sig = args.signature
     outbase = Path(args.outdir) / sig / f"n_{args.n}"
     outbase.mkdir(parents=True, exist_ok=True)
+
     parquet_path = outbase / f"rep_{args.rep:02d}.annot.parquet"
     json_path = outbase / f"rep_{args.rep:02d}.summary.json"
-
     seed = args.seed if args.seed is not None else args.rep + args.n
-    rng = np.random.default_rng(seed)
 
-    sig_df = load_signatures(args.sigfile)
-    probs = get_signature_probs(sig_df, sig)
-    sampler = ExomeSampler(args.exome, args.context)
-    sampled_tbl, ctx_ids, revcomp_flags = sampler.sample(probs, args.n, rng)
-    df = sampler.annotate(sampled_tbl, ctx_ids, revcomp_flags)
+    cmd = [
+        "python", "scripts/simulate_mutations_1.py",
+        "--signatures", args.sigfile,
+        "--signature-name", sig,
+        "--n", str(args.n),
+        "--exome-dir", args.exome,
+        "--context-index", args.context,
+        "--fasta", args.fasta,
+        "--out", str(parquet_path),
+        "--seed", str(seed),
+    ]
 
-    db = DBNSFP(Path(args.dbnsfp))
-    annotations = {k: [] for k in [
-        "polyphen2_hdiv_score", "polyphen2_hdiv_pred",
-        "sift4g_score", "sift4g_pred", "cadd_phred",
-        "canonical_transcript_id"
-    ]}
+    subprocess.run(cmd, check=True)
 
-    # ✅ FIX: properly decode numeric ref_base index to letter
-
-
-
-
-    n_total = 0
-    n_hits = 0
-
-    for chrom, pos, ref, alt in zip(df.chr, df.pos, df.ref_base, df.alt_base):
-        n_total += 1
-        ref = ref.upper()
-        alt = str(alt).upper()
-
-        try:
-            print(f"⏩ Querying: chrom={chrom}, pos={pos}, ref={ref}, alt={alt}")
-            result = db.query(str(chrom), int(pos), ref, alt)
-            if result["cadd_phred"] is not None:
-                n_hits += 1
-        except Exception as e:
-            print(f"❌ dbNSFP query failed: {chrom}:{pos} {ref}>{alt} — {e}")
-            result = {k: None for k in annotations}
-
-        for key in annotations:
-            annotations[key].append(result[key])
-
-    print(f"✅ dbNSFP hits: {n_hits} / {n_total}")
-
-
-
-
-
-
-
-    for k, v in annotations.items():
-        df[k] = v
-
-    # Save outputs
-    pq.write_table(pa.Table.from_pandas(df), parquet_path, compression="zstd")
+    # Summarize
+    df_summary = pq.read_table(parquet_path).to_pandas()
+    summary = summarize_output(df_summary)
     with open(json_path, "w") as f:
-        json.dump(summarize_output(df), f, indent=2)
-
-    print(f"\n✅ Finished: {parquet_path} ({len(df)} mutations)")
+        json.dump(summary, f, indent=2)
+    print(f"\n✅ Finished: {parquet_path} ({summary['n_mutations']} mutations)")
 
 if __name__ == "__main__":
     main()

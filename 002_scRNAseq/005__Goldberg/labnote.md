@@ -54741,7 +54741,7 @@ combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
 # Generate heatmap with clustering
 # Perform hierarchical clustering
 hc <- hclust(dist(combinedData))
-clusters <- cutree(hc, k=10) # !!!!!!!!!!!!!!!!!! CHANGE CLUSTER NB HERE !!!!!!!!!!!!!!!!!!
+clusters <- cutree(hc, k=13) # !!!!!!!!!!!!!!!!!! CHANGE CLUSTER NB HERE !!!!!!!!!!!!!!!!!!
 # Create an annotation data frame for the rows based on cluster assignments
 annotation_row <- data.frame(Cluster = factor(clusters))
 
@@ -54777,7 +54777,7 @@ df_long <- df_long %>%
   mutate(ClusterLabel = paste0("Cluster ", Cluster, " (", GeneCount, " genes)"))
 
 # Plot using ggplot
-pdf("output/condiments/clustered_linePlot_traj1_Granule-version4dim40kparam15res03-l2fc0-cl10.pdf", width=10, height=5)
+pdf("output/condiments/clustered_linePlot_traj1_Granule-version4dim40kparam15res03-l2fc0-cl13.pdf", width=10, height=5)
 ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
   geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
   geom_line(data = subset(df_long, Condition == "Kcnc1"), aes(color = Condition), alpha = 0.5) +
@@ -54790,7 +54790,7 @@ ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = 
 dev.off()
 
 # Plot using ggplot
-pdf("output/condiments/smoothed_linePlot_traj1_Granule-version4dim40kparam15res03-l2fc0-cl10.pdf", width=10, height=5)
+pdf("output/condiments/smoothed_linePlot_traj1_Granule-version4dim40kparam15res03-l2fc0-cl13.pdf", width=10, height=5)
 ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
   geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
   scale_color_manual(values = color_map) + 
@@ -54812,28 +54812,28 @@ output_df <- data.frame(
 
 # Write the data frame to a .txt file
 write.table(output_df, 
-            file = "output/condiments/gene_clusters-traj1_Granule-version4dim40kparam15res03-l2fc0-cl10.txt", 
+            file = "output/condiments/gene_clusters-traj1_Granule-version4dim40kparam15res03-l2fc0-cl13.txt", 
             sep = "\t", 
             quote = FALSE, 
             row.names = FALSE, 
             col.names = TRUE)
 
 # Check some genes individually - RNA
-load("output/condiments/condiments-Part_Granule_subset_START4_END1_points100extendpc1stretch1-version4dim40kparam15res03.RData")
+#load("output/condiments/condiments-Part_Granule_subset_START4_END1_points100extendpc1stretch1-version4dim40kparam15res03.RData")
 set.seed(42)
 ## FOR LINEAGE 2
-counts <- WT_Kcnc1_CB_integrateMerge.sct[["RNA"]]@counts # Collect the counts from seurat
-cond <- factor(WT_Kcnc1_CB_integrateMerge.sct$condition) # identify conditions
-pseudotimes <- slingPseudotime(Part_MLI2_subset, na = FALSE) [,1] # HERE INDICATE TRAJ
-cellweights <- slingCurveWeights(Part_MLI2_subset) [,1] # HERE INDICATE TRAJ
+counts <- WT_Kcnc1_p14_CB_1step.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(WT_Kcnc1_p14_CB_1step.sct$condition) # identify conditions
+pseudotimes <- slingPseudotime(Part_Granule_subset, na = FALSE) [,1] # HERE INDICATE TRAJ
+cellweights <- slingCurveWeights(Part_Granule_subset) [,1] # HERE INDICATE TRAJ
 #### Subset the counts, pseudotimes, and cell weights for non-zero weights:
 sub_weights <- cellweights[cellweights != 0]
 sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
 sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
 sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
 
-pdf("output/condiments/plotSmoothers-traj1_Granule-version4dim40kparam15res03-RNA_common-Pqlc2.pdf", width=4, height=2)
-plotSmoothers(traj1, sub_counts, gene = "Pqlc2", curvesCol = c("black","red")) +
+pdf("output/condiments/plotSmoothers-traj1_Granule-version4dim40kparam15res03-RNA_common-Kcnc3.pdf", width=4, height=2)
+plotSmoothers(traj1, sub_counts, gene = "Kcnc3", curvesCol = c("black","red")) +
 scale_color_manual(values =c("black","red"))
 dev.off()
 
@@ -54844,6 +54844,14 @@ dev.off()
 # Define colors for each cluster
 # 20
 cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "grey", "darkred", "darkblue", "gold", "darkgray", "lightblue", "lightgreen", "lightcoral", "lightpink", "lightcyan"))(20),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 13
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "grey", "darkred", "darkblue" ))(13),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 12
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "grey", "darkred" ))(12),
                            unique(annotation_row$Cluster))
 annotation_colors <- list(Cluster = cluster_colors)
 # 10
@@ -54874,13 +54882,13 @@ annotation_colors <- list(Cluster = cluster_colors)
 
 col_order <- order(grepl("WT", colnames(combinedData)), decreasing = TRUE)
 combinedData <- combinedData[, col_order]
-pdf("output/condiments/heatmap-traj1_Granule_version4dim40kparam15res03-l2fc0_cl10.pdf", width=5, height=5)
+pdf("output/condiments/heatmap-traj1_Granule_version4dim40kparam15res03-l2fc0_cl13.pdf", width=5, height=5)
 pheatmap(combinedData,
   cluster_cols = FALSE,
   show_rownames = FALSE,
   show_colnames = FALSE,
   legend = TRUE,
-  cutree_rows = 10,
+  cutree_rows = 13,
   annotation_row = annotation_row,
   annotation_colors = annotation_colors
 )
@@ -54891,8 +54899,140 @@ dev.off()
 ```
 
 
+--> 13 clusters with default paramters is optimal; cluster well identifed. 
+  --> *If downstream analysis not great we could iuncrease stringeancy here ; as we have 3,473 DEGs*
 
-XXY HERE Re-do granule test 12 cluster becasue clsuter 10 can be cut in two now... Or try mores tringeant signifcant filtering?
+
+
+##### GO Granule p14
+
+Let's do GO analysis for all the 10 clusters of pseudotime DEGs
+
+
+```bash
+conda activate deseq2
+```
+
+
+```R
+# Required packages
+library("clusterProfiler")
+library("org.Mm.eg.db")  
+library("enrichplot")
+library("tidyverse")
+library("patchwork")
+
+
+gene_clusters_traj1_Granule <- read.table("output/condiments/gene_clusters-traj1_Granule-version4dim40kparam15res03-l2fc0-cl13.txt", 
+                            header = TRUE, 
+                            sep = "\t", 
+                            stringsAsFactors = FALSE)
+
+
+
+# GO BP
+pdf("output/Pathway/dotplot_BP-traj1_Granule-version4dim40kparam15res03-l2fc0_cl13.pdf", width = 12, height = 6)
+# Loop through clusters 1 to 10
+for (cluster_id in sort(unique(gene_clusters_traj1_Granule$cluster))) {
+  message("Processing cluster: ", cluster_id)
+  gene_list <- gene_clusters_traj1_Granule %>%
+    filter(cluster == cluster_id) %>%
+    pull(gene)
+  ego <- enrichGO(gene = gene_list,
+                  OrgDb = org.Mm.eg.db,
+                  keyType = "SYMBOL",
+                  ont = "BP",
+                  pvalueCutoff = 0.05,
+                  pAdjustMethod = "BH",
+                  readable = TRUE)
+  if (!is.null(ego) && nrow(ego) > 0) {
+    print(dotplot(ego, showCategory = 20) + ggtitle(paste("Cluster", cluster_id)))
+  } else {
+    print(ggplot() + ggtitle(paste("Cluster", cluster_id, "- No Enrichment")) + theme_void())
+  }
+}
+dev.off()
+
+
+
+# KEGG
+pdf("output/Pathway/dotplot_KEGG-traj1_Granule-version4dim40kparam15res03-l2fc0_cl13.pdf", width = 12, height = 6)
+# Loop through clusters 1 to 10
+for (cluster_id in sort(unique(gene_clusters_traj1_Granule$cluster))) {
+  message("Processing KEGG cluster: ", cluster_id)
+  gene_symbols <- gene_clusters_traj1_Granule %>%
+    filter(cluster == cluster_id) %>%
+    pull(gene)
+  # Convert to ENTREZ IDs
+  entrez_ids <- mapIds(org.Mm.eg.db,
+                       keys = gene_symbols,
+                       column = "ENTREZID",
+                       keytype = "SYMBOL",
+                       multiVals = "first") %>%
+    na.omit() %>% as.character()
+  # Perform KEGG enrichment if gene list not empty
+  ekegg <- if (length(entrez_ids) > 0) {
+    enrichKEGG(gene = entrez_ids,
+               organism = "mmu",
+               pvalueCutoff = 0.05,
+               pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  if (!is.null(ekegg) && nrow(ekegg) > 0) {
+    print(dotplot(ekegg, showCategory = 20) + ggtitle(paste("Cluster", cluster_id)))
+  } else {
+    print(ggplot() + ggtitle(paste("Cluster", cluster_id, "- No KEGG Enrichment")) + theme_void())
+  }
+}
+dev.off()
+
+
+
+
+######## Specific case ################
+
+genes_cluster <- gene_clusters_traj1_Granule %>%
+  filter(cluster == 10) %>%
+  pull(gene)
+
+# Convert SYMBOLs to ENTREZ IDs
+entrez_cluster <- mapIds(org.Mm.eg.db,
+                          keys = genes_cluster,
+                          column = "ENTREZID",
+                          keytype = "SYMBOL",
+                          multiVals = "first") %>%
+  na.omit() %>% as.character()
+
+# KEGG enrichment
+ekegg_cluster <- enrichKEGG(gene = entrez_cluster,
+                             organism = "mmu",
+                             pvalueCutoff = 0.05,
+                             pAdjustMethod = "BH")
+
+# Plot
+pdf("output/Pathway/dotplot_KEGG-traj1_Granule-version4dim40kparam15res03-l2fc0_cl13_cluster10.pdf", width = 6, height = 6)
+if (!is.null(ekegg_cluster) && nrow(ekegg_cluster) > 0) {
+  print(dotplot(ekegg_cluster, showCategory = 10) )
+} else {
+  print(ggplot() + ggtitle("No KEGG Enrichment") + theme_void())
+}
+dev.off()
+
+
+
+
+```
+
+--> Many cluster less express in Kcnc1 got genes related to neuron dev; Could highlight issue in neuron dev related genes; less express in Kcnc1. Issue in granule dev.
+
+
+
+
+
+
+
+
+
 
 
 #### Isolating cell of interest - MLI1
@@ -56056,6 +56196,128 @@ pheatmap(combinedData,
 )
 dev.off()
 
+
+
+
+
+```
+
+
+
+
+##### GO MLI2
+
+Let's do GO analysis for all the 10 clusters of pseudotime DEGs
+
+
+```bash
+conda activate deseq2
+```
+
+
+```R
+# Required packages
+library("clusterProfiler")
+library("org.Mm.eg.db")  
+library("enrichplot")
+library("tidyverse")
+library("patchwork")
+
+
+gene_clusters_traj1_MLI2 <- read.table("output/condiments/gene_clusters-traj1_MLI2-version5dim50kparam30res25-l2fc0-cl10.txt", 
+                            header = TRUE, 
+                            sep = "\t", 
+                            stringsAsFactors = FALSE)
+
+
+
+# GO BP
+pdf("output/Pathway/dotplot_BP-traj1_MLI2_version5dim50kparam30res25-l2fc0_cl10.pdf", width = 12, height = 6)
+# Loop through clusters 1 to 10
+for (cluster_id in sort(unique(gene_clusters_traj1_MLI2$cluster))) {
+  message("Processing cluster: ", cluster_id)
+  gene_list <- gene_clusters_traj1_MLI2 %>%
+    filter(cluster == cluster_id) %>%
+    pull(gene)
+  ego <- enrichGO(gene = gene_list,
+                  OrgDb = org.Mm.eg.db,
+                  keyType = "SYMBOL",
+                  ont = "BP",
+                  pvalueCutoff = 0.05,
+                  pAdjustMethod = "BH",
+                  readable = TRUE)
+  if (!is.null(ego) && nrow(ego) > 0) {
+    print(dotplot(ego, showCategory = 20) + ggtitle(paste("Cluster", cluster_id)))
+  } else {
+    print(ggplot() + ggtitle(paste("Cluster", cluster_id, "- No Enrichment")) + theme_void())
+  }
+}
+dev.off()
+
+
+
+# KEGG
+pdf("output/Pathway/dotplot_KEGG-traj1_MLI2_version5dim50kparam30res25-l2fc0_cl10.pdf", width = 12, height = 6)
+# Loop through clusters 1 to 10
+for (cluster_id in sort(unique(gene_clusters_traj1_MLI2$cluster))) {
+  message("Processing KEGG cluster: ", cluster_id)
+  gene_symbols <- gene_clusters_traj1_MLI2 %>%
+    filter(cluster == cluster_id) %>%
+    pull(gene)
+  # Convert to ENTREZ IDs
+  entrez_ids <- mapIds(org.Mm.eg.db,
+                       keys = gene_symbols,
+                       column = "ENTREZID",
+                       keytype = "SYMBOL",
+                       multiVals = "first") %>%
+    na.omit() %>% as.character()
+  # Perform KEGG enrichment if gene list not empty
+  ekegg <- if (length(entrez_ids) > 0) {
+    enrichKEGG(gene = entrez_ids,
+               organism = "mmu",
+               pvalueCutoff = 0.05,
+               pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  if (!is.null(ekegg) && nrow(ekegg) > 0) {
+    print(dotplot(ekegg, showCategory = 20) + ggtitle(paste("Cluster", cluster_id)))
+  } else {
+    print(ggplot() + ggtitle(paste("Cluster", cluster_id, "- No KEGG Enrichment")) + theme_void())
+  }
+}
+dev.off()
+
+
+
+
+######## Specific case ################
+
+genes_cluster <- gene_clusters_traj1_MLI2 %>%
+  filter(cluster == 10) %>%
+  pull(gene)
+
+# Convert SYMBOLs to ENTREZ IDs
+entrez_cluster <- mapIds(org.Mm.eg.db,
+                          keys = genes_cluster,
+                          column = "ENTREZID",
+                          keytype = "SYMBOL",
+                          multiVals = "first") %>%
+  na.omit() %>% as.character()
+
+# KEGG enrichment
+ekegg_cluster <- enrichKEGG(gene = entrez_cluster,
+                             organism = "mmu",
+                             pvalueCutoff = 0.05,
+                             pAdjustMethod = "BH")
+
+# Plot
+pdf("output/Pathway/dotplot_KEGG-traj1_MLI2_version5dim50kparam30res25-l2fc0_cl10_cluster10.pdf", width = 6, height = 6)
+if (!is.null(ekegg_cluster) && nrow(ekegg_cluster) > 0) {
+  print(dotplot(ekegg_cluster, showCategory = 10) )
+} else {
+  print(ggplot() + ggtitle("No KEGG Enrichment") + theme_void())
+}
+dev.off()
 
 
 
@@ -60473,6 +60735,114 @@ plotCorrelation \
 
 
 ```
+
+
+
+
+
+
+# scRNAseq projection
+
+
+Let's project our UMAP onto already published dataset. Notably for Cortex sample that will help to guide our annotation
+
+
+
+## Cortex - Yao et al 2021
+
+Let's project our data onto [Yao et al 2021](https://www.nature.com/articles/s41586-021-03500-8) dataset that did mice cortex scRNAseq at p53-59.
+
+--> Data can be found here(https://assets.nemoarchive.org/dat-ch1nqb7). There is 9 total different type of data that has been integrated together by the author; lets use only one of them first: *[10X_v3_Analysis_AIBS]*(https://data.nemoarchive.org/biccn/grant/u19_zeng/zeng/transcriptome/sncell/10x_v3/mouse/processed/analysis/10X_nuclei_v3_AIBS/)
+
+
+
+```bash
+cd input_Yao_et_al_2021/10X_nuclei_v3_AIBS
+
+
+# Download files 10X_nuclei_v3_AIBS
+wget https://data.nemoarchive.org/biccn/grant/u19_zeng/zeng/transcriptome/sncell/10x_v3/mouse/processed/analysis/10X_nuclei_v3_AIBS/barcode.tsv
+wget https://data.nemoarchive.org/biccn/grant/u19_zeng/zeng/transcriptome/sncell/10x_v3/mouse/processed/analysis/10X_nuclei_v3_AIBS/cluster.annotation.csv
+wget https://data.nemoarchive.org/biccn/grant/u19_zeng/zeng/transcriptome/sncell/10x_v3/mouse/processed/analysis/10X_nuclei_v3_AIBS/cluster.membership.csv	
+wget https://data.nemoarchive.org/biccn/grant/u19_zeng/zeng/transcriptome/sncell/10x_v3/mouse/processed/analysis/10X_nuclei_v3_AIBS/features.tsv.gz
+wget https://data.nemoarchive.org/biccn/grant/u19_zeng/zeng/transcriptome/sncell/10x_v3/mouse/processed/analysis/10X_nuclei_v3_AIBS/matrix.mtx.gz
+wget https://data.nemoarchive.org/biccn/grant/u19_zeng/zeng/transcriptome/sncell/10x_v3/mouse/processed/analysis/10X_nuclei_v3_AIBS/sample_metadata.csv
+wget https://data.nemoarchive.org/biccn/grant/u19_zeng/zeng/transcriptome/sncell/10x_v3/mouse/processed/analysis/10X_nuclei_v3_AIBS/umi_counts.h5
+
+## prep data for Read10X()
+cp input_Yao_et_al_2021/10X_nuclei_v3_AIBS/barcode.tsv input_Yao_et_al_2021/10X_nuclei_v3_AIBS/barcodes_TOCORRECT.tsv
+tail -n +2 input_Yao_et_al_2021/10X_nuclei_v3_AIBS/barcodes_TOCORRECT.tsv | cut -d',' -f2 | tr -d '"' > input_Yao_et_al_2021/10X_nuclei_v3_AIBS/barcodes.tsv
+gzip -f input_Yao_et_al_2021/10X_nuclei_v3_AIBS/barcodes.tsv
+
+```
+
+
+
+
+### 10X_nuclei_v3_AIBS
+
+
+```bash
+conda activate scRNAseqV2
+```
+
+```R
+library("Seurat")
+library("dplyr")
+library("Matrix")
+library("ggplot2")
+
+# Read in matrix
+data_dir <- "input_Yao_et_al_2021/10X_nuclei_v3_AIBS"
+counts <- Read10X(data.dir = data_dir)
+# Create Seurat object
+Yao_Cortex <- CreateSeuratObject(counts = counts, project = "10X_nuclei_v3_AIBS", min.cells = 3, min.features = 200)
+# Load cluster membership
+cluster_membership <- read.csv(file.path(data_dir, "cluster.membership.csv"), row.names = 1)
+# Load cluster annotations
+cluster_annotation <- read.csv(file.path(data_dir, "cluster.annotation.csv"))
+valid_barcodes <- intersect(colnames(Yao_Cortex), rownames(cluster_membership))
+# Subset Seurat object
+Yao_Cortex <- subset(Yao_Cortex, cells = valid_barcodes)
+# Assign cluster IDs
+Yao_Cortex$cluster_id <- as.character(cluster_membership[colnames(Yao_Cortex), "x"])
+# Map to cell types
+annotation_map <- setNames(cluster_annotation$cluster_label, cluster_annotation$cluster_id)
+Yao_Cortex$cell_type <- annotation_map[Yao_Cortex$cluster_id]
+# Normalize and reduce
+Yao_Cortex <- NormalizeData(Yao_Cortex)
+Yao_Cortex <- FindVariableFeatures(Yao_Cortex)
+Yao_Cortex <- ScaleData(Yao_Cortex)
+Yao_Cortex <- RunPCA(Yao_Cortex, npcs = 30)
+Yao_Cortex <- RunUMAP(Yao_Cortex, dims = 1:30)
+
+# Plot UMAP with cell type
+
+
+pdf("output/seurat/Yao_Cortex-10X_nuclei_v3_AIBS-30dim.pdf", width=20, height=10)   
+DimPlot(Yao_Cortex, group.by = "cell_type", label = TRUE, repel = TRUE) 
+dev.off()
+
+
+## SAVE ####################################
+
+## saveRDS(Yao_Cortex, file = "output/seurat/Yao_Cortex-10X_nuclei_v3_AIBS-30dim.rds") 
+Yao_Cortex <- readRDS(file = "output/seurat/Yao_Cortex-10X_nuclei_v3_AIBS-30dim.rds") # 
+set.seed(42)
+#############################################
+
+save.rds
+# scRNAseq projection
+
+XXXY
+
+
+
+
+
+```
+
+
 
 
 
