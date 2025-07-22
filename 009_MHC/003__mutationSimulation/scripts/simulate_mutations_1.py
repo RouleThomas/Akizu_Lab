@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import argparse, json, pickle
 from pathlib import Path
 import numpy as np, pandas as pd
@@ -7,6 +6,9 @@ import pyarrow as pa, pyarrow.parquet as pq
 from Bio.Seq import reverse_complement
 from Bio.Data import CodonTable
 import pysam
+import pyarrow.compute as pc
+
+
 
 CODON_TABLE = CodonTable.unambiguous_dna_by_name["Standard"].forward_table
 STOP_CODONS = {"TAA", "TAG", "TGA"}
@@ -49,60 +51,45 @@ def main():
     with open(args.context_index, "rb") as fh:
         ctx_index = pickle.load(fh)
 
-    # Load exome and sample
-    tables = []
-    for f in sorted(Path(args.exome_dir).glob("chr*.parquet")):
-        tbl = pq.read_table(f)
-        # Upgrade string columns to large_string
-        schema = tbl.schema
-        new_schema = pa.schema([
-            pa.field(name, pa.large_string()) if typ == pa.string() else pa.field(name, typ)
-            for name, typ in zip(schema.names, schema.types)
-        ])
-        tbl = tbl.cast(new_schema)
-        tables.append(tbl)
-
+    # Load exome
+    tables = [pq.read_table(f) for f in sorted(Path(args.exome_dir).glob("chr*.parquet"))]
     exome = pa.concat_tables(tables)
-
-
     tbl_df = exome.to_pandas()
     fasta = pysam.FastaFile(args.fasta)
 
-    # Sample
-    picks = rng.multinomial(args.n, probs)
+    # Sample mutations
     rows, ctx_ids, revs = [], [], []
-    for ctx_id, count in enumerate(picks):
-        if count == 0: continue
+    while len(rows) < args.n:
+        ctx_id = rng.choice(len(CONTEXTS_96), p=probs)
         entries = ctx_index.get(ctx_id, [])
-        if len(entries) < count: continue
-        sampled = rng.choice(entries, count, replace=False)
-        for e in sampled:
-            row_id, revcomp = e["row"], e["revcomp"]
-            row = tbl_df.iloc[row_id]
-            chrom, pos = row["chr"], row["pos"]
-            ctx = CONTEXTS_96[ctx_id]
-            ref_base = reverse_complement(ctx[2]) if revcomp else ctx[2]
-            if validate_ref(chrom, pos, ref_base, fasta, revcomp):
-                rows.append(row_id)
-                ctx_ids.append(ctx_id)
-                revs.append(revcomp)
+        if len(entries) == 0:
+            continue
+        entry = rng.choice(entries)
+        row_id, revcomp = entry["row"], entry["revcomp"]
+        row = tbl_df.iloc[row_id]
+        chrom, pos = row["chr"], row["pos"]
+        ctx = CONTEXTS_96[ctx_id]
+        ref_base = reverse_complement(ctx[2]) if revcomp else ctx[2]
 
-    sampled_tbl = exome.take(pa.array(rows, type=pa.int32()))
+        if validate_ref(chrom, pos, ref_base, fasta, revcomp):
+            rows.append(row_id)
+            ctx_ids.append(ctx_id)
+            revs.append(revcomp)
+
+    sampled_tbl = exome.take(pa.array(list(map(int, rows)), type=pa.int32()))
     df = sampled_tbl.to_pandas()
     df["context_id"] = ctx_ids
     df["revcomp"] = revs
-
-    # Annotate
     df["ref_base"] = [reverse_complement(CONTEXTS_96[i][2]) if r else CONTEXTS_96[i][2] for i, r in zip(ctx_ids, revs)]
     df["alt_base"] = [reverse_complement(CONTEXTS_96[i][4]) if r else CONTEXTS_96[i][4] for i, r in zip(ctx_ids, revs)]
 
+    # Codon and consequence
     codon_col, alt_codon_col, aa_col, consequence_col = [], [], [], []
     for i, row in df.iterrows():
         codon = list(row["ref_codon"])
         idx = row["codon_index"]
         alt = df.at[i, "alt_base"]
         rev = row["revcomp"]
-
         if rev:
             codon_rc = list(reverse_complement("".join(codon)))
             codon_rc[2 - idx] = alt
@@ -131,7 +118,15 @@ def main():
     df["alt_aa"] = aa_col
     df["consequence"] = consequence_col
 
-    pq.write_table(pa.Table.from_pandas(df), args.out, compression="zstd")
+
+    table = pa.Table.from_pandas(df)
+    schema = pa.schema([
+        (field.name, pa.large_string() if pa.types.is_string(field.type) else field.type)
+        for field in table.schema
+    ])
+    table = pa.Table.from_pandas(df, schema=schema)
+    pq.write_table(table, args.out, compression="zstd")
+
     print(json.dumps({"n_mutations": len(df)}, indent=2))
 
 if __name__ == "__main__":

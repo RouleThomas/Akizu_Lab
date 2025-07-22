@@ -5131,3 +5131,113 @@ mirror -R ../001__RNAseq/meta/ # contain the meta_additionalProcessedFiles.xlsx 
 
 
 
+
+# Shiny app
+
+
+generate the `tpm_all_sample.txt` file and then go into `001_EZH1*/001__RNAseq` to create shiny app V4 including these
+
+```R
+library("tidyverse")
+library("biomaRt")
+
+# Display some genes in TPM: 
+# ---> The code below is not perfect; issue at the geneSymbol conversin; to troubleshoot later; but it work
+#### Generate TPM for ALL samples
+#### collect all samples ID
+samples <- c(  "S_CB_KO1", "S_CB_KO2", "S_CB_KO3", "S_CB_WT1", "S_CB_WT2", "S_CB_WT3", "S_CX_KO1", "S_CX_KO2", "S_CX_KO3", "S_CX_WT1", "S_CX_WT2", "S_CX_WT3", "171HetCB", "174MTCB" ,"175HetCB" ,"177MTCB" ,"474WTCB", "171HetCX", "174MTCX", "175HetCX", "177MTCX", "474WTCX")
+
+#1month: "S_CB_KO1" "S_CB_KO2" "S_CB_KO3" "S_CB_WT1" "S_CB_WT2" "S_CB_WT3" # output.bam .1month_rnaseqyz072420
+#1month: "S_CX_KO1" "S_CX_KO2" "S_CX_KO3" "S_CX_WT1" "S_CX_WT2" "S_CX_WT3"
+#1year: "171HetCB" "174MTCB" "175HetCB" "177MTCB" "474WTCB" # output.bam .1month_rnaseqyz072420
+#1year: "171HetCX" "174MTCX" "175HetCX" "177MTCX" "474WTCX"
+
+
+
+## Make a loop for importing all tpm data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/tpm/", sample, "_tpm.txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>%
+    dplyr::select(Geneid, starts_with("output.bam.")) %>%
+    rename(!!sample := starts_with("output.bam."))
+}
+
+## Merge all dataframe into a single one
+tpm_all_sample <- purrr::reduce(sample_data, full_join, by = "Geneid")
+write.csv(tpm_all_sample, file="output/tpm/tpm_all_sample_Sanchez.txt")
+### If need to import: tpm_all_sample <- read_csv("output/tpm/tpm_all_sample_Sanchez.txt") %>% dplyr::select(-"...1") #To import
+
+
+
+## add geneSymbol
+tpm_all_sample$Geneid <- gsub("\\..*", "", tpm_all_sample$Geneid) # remove Ensembl gene id version
+
+ensembl <- useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+
+## Convert Ensembl gene IDs to gene symbols
+tpm_all_genesymbols <- getBM(attributes = c("ensembl_gene_id", "external_gene_name"),
+                     filters = "ensembl_gene_id",
+                     values = tpm_all_sample$Geneid,
+                     mart = ensembl)
+
+tpm_all_withGenesymbols = tpm_all_sample %>% 
+  dplyr::rename("ensembl_gene_id" = "Geneid") %>%
+  left_join(tpm_all_genesymbols)
+
+
+## Convert data from wide to long keep only geneSymbol
+long_data_pre <- tpm_all_withGenesymbols %>% 
+  dplyr::select(-ensembl_gene_id) %>%
+  drop_na() %>%
+  tidyr::pivot_longer(-external_gene_name, names_to = "condition", values_to = "TPM") 
+
+### change sample name
+
+fileName <- tibble(
+  ID = c("S_CB_KO1", "S_CB_KO2", "S_CB_KO3", "S_CB_WT1", "S_CB_WT2", "S_CB_WT3", 
+         "S_CX_KO1", "S_CX_KO2", "S_CX_KO3", "S_CX_WT1", "S_CX_WT2", "S_CX_WT3", 
+         "171HetCB", "174MTCB", "175HetCB", "177MTCB", "474WTCB", 
+         "171HetCX", "174MTCX", "175HetCX", "177MTCX", "474WTCX"),
+  genotype = c("KO", "KO", "KO", "WT", "WT", "WT", 
+               "KO", "KO", "KO", "WT", "WT", "WT", 
+               "WT", "KO", "WT", "KO", "WT", 
+               "WT", "KO", "WT", "KO", "WT"),
+  time = c(rep("1month", 12), rep("1year", 10)),
+  tissue = c(rep("CB", 6), rep("CX", 6), rep("CB", 5), rep("CX", 5)),
+  replicate = c(rep("R1", 2), rep("R2", 2), rep("R3", 2), rep("R1", 2), rep("R2", 2), rep("R3", 2), "R1", "R1", "R2", "R2", "R3", "R1", "R1", "R2", "R2", "R3"), 
+  new_ID = c("1monthCB_KO_R1", "1monthCB_KO_R2", "1monthCB_KO_R3", 
+             "1monthCB_WT_R1", "1monthCB_WT_R2", "1monthCB_WT_R3", 
+             "1monthCX_KO_R1", "1monthCX_KO_R2", "1monthCX_KO_R3", 
+             "1monthCX_WT_R1", "1monthCX_WT_R2", "1monthCX_WT_R3", 
+             "1yearCB_WT_R1", "1yearCB_KO_R1", "1yearCB_WT_R2", 
+             "1yearCB_KO_R2", "1yearCB_WT_R3", "1yearCX_WT_R1", 
+             "1yearCX_KO_R1", "1yearCX_WT_R2", "1yearCX_KO_R2", 
+             "1yearCX_WT_R3")
+) 
+
+
+
+
+long_data = long_data_pre %>%
+  left_join(fileName %>% dplyr::select(ID, new_ID)  %>% dplyr::rename(condition = ID )) %>% 
+  tidyr::separate(new_ID, into = c("Tissue", "Genotype", "Replicate"), sep = "_") %>%
+  dplyr::select(-condition)
+
+
+
+long_data_log2tpm = long_data %>%
+  mutate(log2tpm = log2(TPM + 1))
+## Save
+write.table(long_data_log2tpm, file = c("output/tpm/long_data_log2tpm_Sanchez.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+
+```
+
+
+--> Next here: `001_EZH1*/001__RNAseq` (`## Shiny app V4;  including Vanessa SNX14 CB, CX data`)
+
+
+
+
+

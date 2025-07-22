@@ -60831,8 +60831,438 @@ Yao_Cortex <- readRDS(file = "output/seurat/Yao_Cortex-10X_nuclei_v3_AIBS-30dim.
 set.seed(42)
 #############################################
 
-save.rds
+
 # scRNAseq projection
+## Lets downsample to 20k cells both scRNAseq
+Yao_Cortex_20k <- subset(Yao_Cortex, cells = sample(colnames(Yao_Cortex), 20000))
+
+
+# Import our data
+WT_Kcnc1_p14_CX_1step <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07.sct_V1_label.rds") # 
+WT_Kcnc1_p14_CX_1step_20k <- subset(WT_Kcnc1_p14_CX_1step, cells = sample(colnames(WT_Kcnc1_p14_CX_1step), 20000))
+
+
+DefaultAssay(WT_Kcnc1_p14_CX_1step_20k) <- "RNA"
+
+# Do scRNAseq projection (reference Yao_Cortex and query WT_Kcnc1_p14_CX_1step) - V1 
+
+# V2 - like in the paper
+
+# Step 1: Find anchors (you may have already done this)
+WT_Kcnc1_p14_CX_1step_20k <- RunUMAP(
+  WT_Kcnc1_p14_CX_1step_20k,
+  dims = 1:30,
+  reduction = "pca",
+  return.model = TRUE  
+)
+
+
+# Find anchors using PCA projection
+shared_features <- intersect(
+  rownames(Yao_Cortex_20k),
+  rownames(WT_Kcnc1_p14_CX_1step_20k)
+)
+
+
+
+anchors <- FindTransferAnchors(
+  reference = WT_Kcnc1_p14_CX_1step_20k ,
+  query = Yao_Cortex_20k,
+  normalization.method = "LogNormalize",  # or "LogNormalize"
+  reference.reduction = "pca",  
+  reduction = "pcaproject",
+  dims = 1:30,
+  features = shared_features,
+  k.anchor = 100,
+  k.filter = 500
+)
+
+XXXY HERE !!!
+
+
+# Step 2: Transfer labels from reference to query
+predictions <- TransferData(
+  anchorset = anchors,
+  refdata = WT_Kcnc1_p14_CX_1step_20k$cluster.annot,
+  dims = 1:30,
+  k.weight = 100
+)
+
+Yao_Cortex_20k <- AddMetaData(Yao_Cortex_20k, metadata = predictions)
+
+
+# Step 3: Project query onto reference UMAP
+Yao_Cortex_20k <- MapQuery(
+  anchorset = anchors,
+  reference = WT_Kcnc1_p14_CX_1step_20k,
+  query = Yao_Cortex_20k,
+  refdata = list(cluster_id = "cluster.annot"),
+  reference.reduction = "pca",
+  reduction.model = "umap"
+)
+
+# Step 4: Generate UMAP plots
+# Step 1: Create a color palette for all cluster levels
+# Get all unique cluster names from both reference and query
+all_clusters <- union(
+  unique(WT_Kcnc1_p14_CX_1step_20k$cluster.annot),
+  unique(Yao_Cortex_20k$predicted.id)
+)
+
+# Assign colors (adjust palette as needed or use scales::hue_pal())
+cluster_colors <- setNames(
+  scales::hue_pal()(length(all_clusters)),
+  sort(all_clusters)
+)
+
+# Panel 1: Human gastruloid
+p1 <- DimPlot(
+  WT_Kcnc1_p14_CX_1step_20k,
+  reduction = "umap",
+  group.by = "cluster.annot",
+  label = TRUE,
+  pt.size = 1,
+  cols = cluster_colors
+) + ggtitle("Human gastruloid 72hr")
+
+# Panel 2: Projected gastrula
+p2 <- DimPlot(
+  Yao_Cortex_20k,
+  reduction = "ref.umap",
+  group.by = "predicted.id",
+  label = TRUE,
+  pt.size = 1,
+  cols = cluster_colors
+) + ggtitle("Human gastrula")
+
+# Panel 3: Overlay
+# Reference in gray
+WT_Kcnc1_p14_CX_1step_20k$dummy_group <- "Reference"
+p_ref <- DimPlot(
+  WT_Kcnc1_p14_CX_1step_20k,
+  reduction = "umap",
+  group.by = "dummy_group",
+  cols = "lightgray",
+  pt.size = 1
+) + NoLegend()
+
+# Query plotted separately with correct colors
+p_query <- DimPlot(
+  Yao_Cortex_20k,
+  reduction = "ref.umap",
+  group.by = "predicted.id",
+  pt.size = 1,
+  cols = cluster_colors
+) + NoAxes() + NoLegend()
+
+# Extract and overlay
+g_ref <- p_ref[[1]]
+query_layer <- ggplot_build(p_query[[1]])$data[[1]]
+
+g_overlay <- g_ref +
+  geom_point(
+    data = query_layer,
+    aes(x = x, y = y),
+    color = query_layer$colour,
+    size = 1,
+    show.legend = FALSE
+  ) +
+  ggtitle("Overlay") +
+  theme_void() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Step 5: Export
+pdf("output/seurat/UMAP_Yao_Cortex_20k-reference_query_overlay-order1-version2-24hr.pdf", width = 30, height = 7)
+(p1 | p2 | g_overlay)
+dev.off()
+
+
+
+
+
+# Prediciton score
+# Extract scores and metadata
+# Create a dummy timepoint to allow boxplot
+df <- data.frame(
+  prediction_score = Yao_Cortex_20k$prediction.score.max,
+  group = "Human gastrula"
+)
+
+# Plot
+pdf("output/seurat/UMAP_Yao_Cortex_20k-reference_query_overlay-order1-prediction_score-24hr.pdf", width = 5, height = 7)
+ggplot(df, aes(x = group, y = prediction_score)) +
+  geom_boxplot(fill = "white", color = "black") +
+  theme_minimal(base_size = 14) +
+  labs(title = "Prediction score", x = NULL, y = NULL)
+dev.off()
+
+
+df2 <- data.frame(
+  prediction_score = Yao_Cortex_20k$prediction.score.max,
+  predicted_id = Yao_Cortex_20k$predicted.id
+)
+pdf("output/seurat/UMAP_Yao_Cortex_20k-reference_query_overlay-order1-prediction_score_predicted_id-24hr.pdf", width = 5, height = 4)
+ggplot(df2, aes(x = predicted_id, y = prediction_score)) +
+  geom_boxplot(outlier.size = 0.5) +
+  theme_bw() +
+  coord_flip() +
+  labs(title = "Prediction score", x = NULL, y = NULL)
+dev.off()
+
+
+
+
+
+
+
+
+##############################################################
+# The other way ##############################################
+##############################################################
+DefaultAssay(WT_Kcnc1_p14_CX_1step_20k) <- "RNA"
+
+
+# Step 1: Find anchors (you may have already done this)
+Yao_Cortex_20k <- RunUMAP(
+  Yao_Cortex_20k,
+  dims = 1:30,
+  reduction = "pca",
+  return.model = TRUE  
+)
+
+
+anchors <- FindTransferAnchors(
+  reference = Yao_Cortex_20k,
+  query = WT_Kcnc1_p14_CX_1step_20k,
+  normalization.method = "LogNormalize",  # or "LogNormalize"
+  reference.reduction = "pca",  
+  reduction = "pcaproject",
+  dims = 1:30,
+  features = shared_features,
+  k.anchor = 100,
+  k.filter = 500
+)
+
+# Step 2: Transfer labels from reference to query
+predictions <- TransferData(
+  anchorset = anchors,
+  refdata = Yao_Cortex_20k$cluster_id,
+  dims = 1:30,
+  k.weight = 100
+)
+
+WT_Kcnc1_p14_CX_1step_20k <- AddMetaData(WT_Kcnc1_p14_CX_1step_20k, metadata = predictions)
+
+
+# Step 3: Project query onto reference UMAP
+WT_Kcnc1_p14_CX_1step_20k <- MapQuery(
+  anchorset = anchors,
+  reference = Yao_Cortex_20k,
+  query = WT_Kcnc1_p14_CX_1step_20k,
+  refdata = list(cluster_id = "cluster_id"),
+  reference.reduction = "pca",
+  reduction.model = "umap"
+)
+
+# Step 4: Generate UMAP plots - USING HUMAN GASTRULA ANNOTATION
+all_clusters <- union(
+  unique(Yao_Cortex_20k$cluster_id),
+  unique(WT_Kcnc1_p14_CX_1step_20k$predicted.id)
+)
+
+# Step 2: Assign consistent colors
+cluster_colors <- setNames(scales::hue_pal()(length(all_clusters)), sort(all_clusters))
+# Panel 1: Human gastrula
+p1 <- DimPlot(
+  Yao_Cortex_20k,
+  reduction = "umap",
+  group.by = "cluster_id",
+  label = TRUE,
+  pt.size = 1,
+  cols = cluster_colors
+) + ggtitle("Human gastrula")
+
+# Panel 2: Projected gastruloid
+p2 <- DimPlot(
+  WT_Kcnc1_p14_CX_1step_20k,
+  reduction = "ref.umap",
+  group.by = "predicted.id",
+  label = TRUE,
+  pt.size = 1,
+  cols = cluster_colors
+) + ggtitle("Human gastruloid 72hr")
+
+# Panel 3: Overlay
+
+# Plot reference (Yao_Cortex_20k) in gray
+Yao_Cortex_20k$dummy_group <- "Reference"
+p_ref <- DimPlot(
+  Yao_Cortex_20k,
+  reduction = "umap",
+  group.by = "dummy_group",
+  cols = "lightgray",
+  pt.size = 1
+) + NoLegend()
+
+# Plot projected query separately with colors
+p_query <- DimPlot(
+  WT_Kcnc1_p14_CX_1step_20k,
+  reduction = "ref.umap",
+  group.by = "predicted.id",
+  pt.size = 1,
+  cols = cluster_colors
+) + NoAxes() + NoLegend()
+
+# Overlay: Extract and draw query points on top of reference
+g_ref <- p_ref[[1]]
+query_layer <- ggplot_build(p_query[[1]])$data[[1]]
+
+g_overlay <- g_ref +
+  geom_point(
+    data = query_layer,
+    aes(x = x, y = y),
+    color = query_layer$colour,  # already hex
+    size = 1
+  ) +
+  ggtitle("Overlay") +
+  theme_void() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Step 4: Export
+pdf("output/seurat/UMAP_Yao_Cortex_20k-reference_query_overlay-version2-24hr.pdf", width = 30, height = 7)
+(p1 | p2 | g_overlay)
+dev.off()
+
+
+# Step 4: Generate UMAP plots - USING OUR GASTRULOID 72hr ANNOTATION
+all_clusters <- union(
+  unique(Yao_Cortex_20k$cluster_id),
+  unique(WT_Kcnc1_p14_CX_1step_20k$predicted.id)
+)
+# Step 2: Assign consistent colors
+cluster_colors <- setNames(scales::hue_pal()(length(all_clusters)), sort(all_clusters))
+# Panel 1: Human gastrula
+p1 <- DimPlot(
+  Yao_Cortex_20k,
+  reduction = "umap",
+  group.by = "cluster_id",
+  label = TRUE,
+  pt.size = 1,
+  cols = cluster_colors
+) + ggtitle("Human gastrula")
+
+# Panel 2: Projected gastruloid
+p2 <- DimPlot(
+  WT_Kcnc1_p14_CX_1step_20k,
+  reduction = "ref.umap",
+  group.by = "cluster.annot",
+  label = FALSE,
+  pt.size = 1,
+  cols = c(
+    "Nascent_Mesoderm" = "#F8766D", # red
+    "Primitive_Streak" = "#AEA200",
+    "Epiblast" = "#00A6FF",
+    "Endoderm" = "#00C1A7",
+    "Unkown" = "#00BD5C"
+  )
+) + ggtitle("Human gastruloid 72hr")
+# Panel 3: Overlay
+# Plot reference (Yao_Cortex_20k) in gray
+Yao_Cortex_20k$dummy_group <- "Reference"
+p_ref <- DimPlot(
+  Yao_Cortex_20k,
+  reduction = "umap",
+  group.by = "dummy_group",
+  cols = "lightgray",
+  pt.size = 1
+) + NoLegend()
+p_query <- DimPlot(
+  WT_Kcnc1_p14_CX_1step_20k,
+  reduction = "ref.umap",
+  group.by = "cluster.annot",
+  pt.size = 1,
+  cols = c(
+    "Nascent_Mesoderm" = "#F8766D", # red
+    "Primitive_Streak" = "#AEA200",
+    "Epiblast" = "#00A6FF",
+    "Endoderm" = "#00C1A7",
+    "Unkown" = "#00BD5C"
+  )
+) + NoAxes() + NoLegend()
+g_ref <- p_ref[[1]]
+query_layer <- ggplot_build(p_query[[1]])$data[[1]]
+g_overlay <- g_ref +
+  geom_point(
+    data = query_layer,
+    aes(x = x, y = y),
+    color = query_layer$colour,  # already hex
+    size = 1
+  ) +
+  ggtitle("Overlay") +
+  theme_void() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Step 4: Export
+pdf("output/seurat/UMAP_Yao_Cortex_20k-reference_query_overlay-annotation-version2-24hr.pdf", width = 30, height = 7)
+(p1 | p2 | g_overlay)
+dev.off()
+
+xxx
+
+### SHOW EXPRESSION OF SOME GENES #######################
+#saveRDS(WT_Kcnc1_p14_CX_1step_20k, file = "output/seurat/WT_Kcnc1_p14_CX_1step_20k_scRNAseqProjectionversion2.rds")
+WT_Kcnc1_p14_CX_1step_20k <- readRDS("output/seurat/WT_Kcnc1_p14_CX_1step_20k_scRNAseqProjectionversion2.rds")
+# 
+pdf("output/seurat/UMAP_Yao_Cortex_20k-query-TBXT-version2-24hr.pdf", width = 7, height = 7)
+FeaturePlot(
+  WT_Kcnc1_p14_CX_1step_20k,
+  features = "TBXT",
+  reduction = "ref.umap",
+  pt.size = 1, max.cutoff = 1, cols = c("grey", "red")
+) + ggtitle("TBXT expression in human gastruloid 24hr")
+dev.off()
+
+
+############################################################
+
+
+
+
+
+# Prediciton score
+# Extract scores and metadata
+# Create a dummy timepoint to allow boxplot
+df <- data.frame(
+  prediction_score = WT_Kcnc1_p14_CX_1step_20k$prediction.score.max,
+  group = "72hr Gastruloid"
+)
+
+# Plot
+pdf("output/seurat/UMAP_Yao_Cortex_20k-reference_query_overlay-prediction_score-24hr.pdf", width = 5, height = 7)
+ggplot(df, aes(x = group, y = prediction_score)) +
+  geom_boxplot(fill = "white", color = "black") +
+  theme_minimal(base_size = 14) +
+  labs(title = "Prediction score", x = NULL, y = NULL)
+dev.off()
+
+
+df2 <- data.frame(
+  prediction_score = WT_Kcnc1_p14_CX_1step_20k$prediction.score.max,
+  predicted_id = WT_Kcnc1_p14_CX_1step_20k$predicted.id
+)
+pdf("output/seurat/UMAP_Yao_Cortex_20k-reference_query_overlay-prediction_score_predicted_id-24hr.pdf", width = 5, height = 4)
+ggplot(df2, aes(x = predicted_id, y = prediction_score)) +
+  geom_boxplot(outlier.size = 0.5) +
+  theme_bw() +
+  coord_flip() +
+  labs(title = "Prediction score", x = NULL, y = NULL)
+dev.off()
+
+
+
+
+
+
 
 XXXY
 

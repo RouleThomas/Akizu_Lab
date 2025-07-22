@@ -18033,6 +18033,252 @@ rsconnect::deployApp("output/shinyApp/RNAseqDataViewer_V3")
 
 
 
+## Shiny app V4;  including Vanessa SNX14 CB, CX data
+
+
+
+
+
+cp files to `long_data_log2tpm*.txt` files to `output/shinyApp/RNAseqDataViewer_V3`
+- `output/tpm/long_data_log2tpm_Ciceri.txt` = Ciceri
+- `output/shinyApp/*V3/long_data_log2tpm.txt`= our/Carolina: **`GOF` rename to `KOEF1aEZH1`/ `LOF` to `KO` manually**
+- `output/shinyApp/*V3/long_data_log2tpm_Akoto.txt` = Jasmine from` 001*/015*`: **`PSC` rename to `ESC` manually**
+- `output/shinyApp/*V4/long_data_log2tpm_Sanchez.txt` = Sanchez from` 005*/001*`: **`PSC` rename to `ESC` manually**
+
+
+for the line plot comparison, let's assume the following:
+001 / Ciceri \ combined
+ESC / ESC \ ESC
+NPC / NPC \ NPC
+2dN / 25dN \ 2dN_25dN
+4wN / 50dN \ 4wN_50dN
+8wN / 75dN \ 8wN_75dN
+NA / 100dN \NA_100dN
+
+
+
+```bash
+conda activate scRNAseqV2
+```
+
+
+```R
+
+# packages
+library("shiny")
+library("ggplot2")
+library("dplyr")
+library("tidyr")
+library("tidyverse")
+library("biomaRt")
+library("rsconnect")
+
+
+
+# prep the data
+long_data_log2tpm = read.table("output/shinyApp/RNAseqDataViewer_V4/long_data_log2tpm.txt", sep = "\t", header = TRUE)
+long_data_log2tpm_Ciceri = read.table("output/shinyApp/RNAseqDataViewer_V4/long_data_log2tpm_Ciceri.txt", sep = "\t", header = TRUE)
+long_data_log2tpm_Akoto = read.table("output/shinyApp/RNAseqDataViewer_V4/long_data_log2tpm_Akoto.txt", sep = "\t", header = TRUE)
+long_data_log2tpm_Sanchez = read.table("output/shinyApp/RNAseqDataViewer_V4/long_data_log2tpm_Sanchez.txt", sep = "\t", header = TRUE)
+
+
+
+# add combined time
+time_combined = tibble(
+  Tissue = c("ESC", "NPC", "2dN", "4wN", "8wN", NA),
+  Ciceri = c("ESC", "NPC", "25dN", "50dN", "75dN", "100dN"),
+  "Akizu / Ciceri" = c("ESC / ESC", "NPC / NPC", "2dN / 25dN", "4wN / 50dN", "8wN / 75dN", "NA / 100dN")
+)
+
+# ShinyApp 
+global <- '
+library(dplyr)
+library(ggpubr)
+
+# Assuming the data is read from the respective files for Akizu, Ciceri, Akoto, Sanchez
+long_data_log2tpm_Akizu = read.table("long_data_log2tpm.txt", sep = "\t", header = TRUE)
+long_data_log2tpm_Ciceri = read.table("long_data_log2tpm_Ciceri.txt", sep = "\t", header = TRUE)
+long_data_log2tpm_Akoto = read.table("long_data_log2tpm_Akoto.txt", sep = "\t", header = TRUE)
+long_data_log2tpm_Sanchez = read.table("long_data_log2tpm_Sanchez.txt", sep = "\t", header = TRUE)
+'
+writeLines(global, "output/shinyApp/RNAseqDataViewer_V4/global.R")
+
+## WORK GREAT:
+ui_code <- '
+
+library(shiny)
+
+ui <- fluidPage(
+  titlePanel("RNAseq Data Viewer"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("dataset", "Select Dataset:", choices = c("Akizu", "Ciceri", "Akoto", "Sanchez")),
+      selectizeInput("gene", "Select Gene:", choices = NULL, options = list("server" = TRUE)),
+      checkboxGroupInput("tissue", "Select Tissue:", choices = NULL),
+      checkboxGroupInput("genotype", "Select Genotype:", choices = NULL),
+      numericInput("plot_width", label = "Plot Width", value = 500, min = 100, max = 2000, step = 10),
+      numericInput("plot_height", label = "Plot Height", value = 500, min = 100, max = 2000, step = 10),
+      radioButtons("plot_type", "Choose Plot Type:", choices = c("Bar Plot", "Line Plot")),
+      checkboxInput("stat_test", "Perform Statistical Test", value = FALSE)
+    ),
+    
+    mainPanel(
+      plotOutput("chosenPlot", width = "100%"),  # Removed the height function here
+      tags$h4(textOutput("statResult"), style = "color: blue; font-weight: bold; margin-top: 20px; text-align: center;")  # Updated text output for statistical results to be centered at the top
+    )
+  )
+)
+
+'
+writeLines(ui_code, "output/shinyApp/RNAseqDataViewer_V4/ui.R")
+
+server_code <- '
+library(shiny)
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+
+server <- function(input, output, session) {
+  
+  # Update gene selection based on the dataset
+  observeEvent(input$dataset, {
+    if (input$dataset == "Akizu") {
+      genes <- unique(long_data_log2tpm_Akizu$external_gene_name)
+      tissues <- c("ESC", "NPC", "2dN", "4wN", "8wN")
+      genotypes <- c("WT", "KO", "KOEF1aEZH1")
+    } else if (input$dataset == "Ciceri") {
+      genes <- unique(long_data_log2tpm_Ciceri$external_gene_name)
+      tissues <- c("ESC", "NPC", "25dN", "50dN", "75dN", "100dN")
+      genotypes <- c("WT")
+    } else if (input$dataset == "Akoto") {
+      genes <- unique(long_data_log2tpm_Akoto$external_gene_name)
+      tissues <- c("ESC")
+      genotypes <- c("WT", "KO", "KOEF1aEZH1")
+    } else if (input$dataset == "Sanchez") {
+      genes <- unique(long_data_log2tpm_Sanchez$external_gene_name)
+      tissues <- c("1monthCB", "1yearCB", "1monthCX", "1yearCX")
+      genotypes <- c("WT", "KO")
+    }
+    updateSelectizeInput(session, "gene", choices = genes, server = TRUE)
+    updateCheckboxGroupInput(session, "tissue", choices = tissues)
+    updateCheckboxGroupInput(session, "genotype", choices = genotypes)
+  })
+
+  # Reactive expression to filter data based on selections
+  filtered_data <- reactive({
+    if (input$dataset == "Akizu") {
+      data <- long_data_log2tpm_Akizu
+    } else if (input$dataset == "Ciceri") {
+      data <- long_data_log2tpm_Ciceri
+    } else if (input$dataset == "Akoto") {
+      data <- long_data_log2tpm_Akoto
+    } else if (input$dataset == "Sanchez") {
+      data <- long_data_log2tpm_Sanchez
+    }
+
+    data <- data %>%
+      filter(external_gene_name == input$gene,
+             Tissue %in% input$tissue,
+             Genotype %in% input$genotype)
+
+    return(data)
+  })
+
+  # Render the plot output
+  output$chosenPlot <- renderPlot({
+    data <- filtered_data()
+    
+    if (nrow(data) == 0) {
+      return(NULL)
+    }
+
+    data_summary <- data %>%
+      group_by(Genotype, Tissue) %>%
+      summarise(
+        Median = median(log2tpm, na.rm = TRUE),
+        SEM = sd(log2tpm, na.rm = TRUE) / sqrt(n())
+      ) %>%
+      ungroup() %>% 
+      filter(Tissue %in% input$tissue)
+
+    # Define the color order and genotype order for plots
+    genotype_order <- c("WT", "KO", "KOEF1aEZH1")
+    data_summary <- data_summary %>% 
+      mutate(Genotype = factor(Genotype, levels = genotype_order)) %>%
+      arrange(Genotype)
+
+    # Plot the data based on the selected plot type
+    if(input$plot_type == "Bar Plot") {
+      p <- ggplot(data_summary, aes(x = Tissue, y = Median, fill = Genotype)) + 
+        geom_bar(stat = "identity", position = position_dodge()) + 
+        geom_errorbar(aes(ymin = Median - SEM, ymax = Median + SEM), width = 0.25, position = position_dodge(0.9)) + 
+        scale_fill_manual(values = c("WT" = "black", "KO" = "red", "KOEF1aEZH1" = "blue")) + 
+        theme_bw() +
+        labs(x = "Tissue", y = "Median log2(tpm+1)") +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+        scale_x_discrete(limits = input$tissue)
+      print(p)
+    } else {
+      ggplot(data_summary, aes(x = Tissue, y = Median, color = Genotype, group = Genotype)) + 
+        geom_line() + 
+        geom_errorbar(aes(ymin = Median - SEM, ymax = Median + SEM), width = 0.2, size = 1) + 
+        geom_point(shape = 18, size = 3, stroke = 1.5) +
+        scale_color_manual(values = c("WT" = "black", "KO" = "red", "KOEF1aEZH1" = "blue")) + 
+        theme_bw() +
+        labs(x = "Tissue", y = "Median log2(tpm+1)") +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+        scale_x_discrete(limits = input$tissue)
+    }
+  }, width = function() { 
+    input$plot_width 
+  }, height = function() { 
+    if (is.numeric(input$plot_height) && input$plot_height > 0) {
+      input$plot_height
+    } else {
+      400  # Default height if input is invalid
+    }
+  })
+
+  # Render statistical test results
+  output$statResult <- renderText({
+    if (input$stat_test) {
+      data <- filtered_data()
+      if (nrow(data) == 0) {
+        return("No data available for statistical test.")
+      }
+
+      if ((length(unique(data$Genotype)) == 2 && length(unique(data$Tissue)) == 1) ||
+          (length(unique(data$Tissue)) == 2 && length(unique(data$Genotype)) == 1)) {
+        if (length(unique(data$Genotype)) == 2) {
+          test_result <- t.test(log2tpm ~ Genotype, data = data)
+        } else {
+          test_result <- t.test(log2tpm ~ Tissue, data = data)
+        }
+        return(paste("P-value:", signif(test_result$p.value, 4)))
+      } else {
+        return("Please select exactly two groups (either two tissues or two genotypes) for statistical comparison.")
+      }
+    } else {
+      return(NULL)
+    }
+  })
+}
+'
+
+writeLines(server_code, "output/shinyApp/RNAseqDataViewer_V4/server.R")
+
+# Deploy the app
+rsconnect::deployApp("output/shinyApp/RNAseqDataViewer_V4")
+
+                     
+
+```
+
+
+--> SNX data succesfully added.
+
+
 
 In version 5, let's implement other functino such as:
 - looking at multiple genes? Heatmap?
