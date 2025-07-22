@@ -60834,12 +60834,12 @@ set.seed(42)
 
 # scRNAseq projection
 ## Lets downsample to 20k cells both scRNAseq
-Yao_Cortex_20k <- subset(Yao_Cortex, cells = sample(colnames(Yao_Cortex), 20000))
+Yao_Cortex_20k <- subset(Yao_Cortex, cells = sample(colnames(Yao_Cortex), 10000))
 
 
 # Import our data
 WT_Kcnc1_p14_CX_1step <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07.sct_V1_label.rds") # 
-WT_Kcnc1_p14_CX_1step_20k <- subset(WT_Kcnc1_p14_CX_1step, cells = sample(colnames(WT_Kcnc1_p14_CX_1step), 20000))
+WT_Kcnc1_p14_CX_1step_20k <- subset(WT_Kcnc1_p14_CX_1step, cells = sample(colnames(WT_Kcnc1_p14_CX_1step), 10000))
 
 
 DefaultAssay(WT_Kcnc1_p14_CX_1step_20k) <- "RNA"
@@ -60864,11 +60864,10 @@ shared_features <- intersect(
 )
 
 
-
 anchors <- FindTransferAnchors(
   reference = WT_Kcnc1_p14_CX_1step_20k ,
   query = Yao_Cortex_20k,
-  normalization.method = "LogNormalize",  # or "LogNormalize"
+  normalization.method = "LogNormalize",  # or "LogNormalize"  ; SCT
   reference.reduction = "pca",  
   reduction = "pcaproject",
   dims = 1:30,
@@ -60877,7 +60876,6 @@ anchors <- FindTransferAnchors(
   k.filter = 500
 )
 
-XXXY HERE !!!
 
 
 # Step 2: Transfer labels from reference to query
@@ -60923,7 +60921,7 @@ p1 <- DimPlot(
   label = TRUE,
   pt.size = 1,
   cols = cluster_colors
-) + ggtitle("Human gastruloid 72hr")
+) + ggtitle("p14_CX")
 
 # Panel 2: Projected gastrula
 p2 <- DimPlot(
@@ -60933,7 +60931,7 @@ p2 <- DimPlot(
   label = TRUE,
   pt.size = 1,
   cols = cluster_colors
-) + ggtitle("Human gastrula")
+) + ggtitle("Yao_Cortex")
 
 # Panel 3: Overlay
 # Reference in gray
@@ -60972,43 +60970,9 @@ g_overlay <- g_ref +
   theme(plot.title = element_text(hjust = 0.5))
 
 # Step 5: Export
-pdf("output/seurat/UMAP_Yao_Cortex_20k-reference_query_overlay-order1-version2-24hr.pdf", width = 30, height = 7)
+pdf("output/seurat/UMAP_Yao_Cortex_10k-reference_query_overlay-order1.pdf", width = 30, height = 7)
 (p1 | p2 | g_overlay)
 dev.off()
-
-
-
-
-
-# Prediciton score
-# Extract scores and metadata
-# Create a dummy timepoint to allow boxplot
-df <- data.frame(
-  prediction_score = Yao_Cortex_20k$prediction.score.max,
-  group = "Human gastrula"
-)
-
-# Plot
-pdf("output/seurat/UMAP_Yao_Cortex_20k-reference_query_overlay-order1-prediction_score-24hr.pdf", width = 5, height = 7)
-ggplot(df, aes(x = group, y = prediction_score)) +
-  geom_boxplot(fill = "white", color = "black") +
-  theme_minimal(base_size = 14) +
-  labs(title = "Prediction score", x = NULL, y = NULL)
-dev.off()
-
-
-df2 <- data.frame(
-  prediction_score = Yao_Cortex_20k$prediction.score.max,
-  predicted_id = Yao_Cortex_20k$predicted.id
-)
-pdf("output/seurat/UMAP_Yao_Cortex_20k-reference_query_overlay-order1-prediction_score_predicted_id-24hr.pdf", width = 5, height = 4)
-ggplot(df2, aes(x = predicted_id, y = prediction_score)) +
-  geom_boxplot(outlier.size = 0.5) +
-  theme_bw() +
-  coord_flip() +
-  labs(title = "Prediction score", x = NULL, y = NULL)
-dev.off()
-
 
 
 
@@ -61043,10 +61007,12 @@ anchors <- FindTransferAnchors(
   k.filter = 500
 )
 
+XXXY HERE !
+
 # Step 2: Transfer labels from reference to query
 predictions <- TransferData(
   anchorset = anchors,
-  refdata = Yao_Cortex_20k$cluster_id,
+  refdata = Yao_Cortex_20k$cell_type,
   dims = 1:30,
   k.weight = 100
 )

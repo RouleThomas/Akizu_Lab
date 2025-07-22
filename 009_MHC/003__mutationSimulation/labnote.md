@@ -91,7 +91,7 @@ conda activate mutsim
 
 sbatch scripts/run_filtered_cosmic_1.slurm # 47244234 fail --> results/
 # --> NEW scripts: scripts/simulate_mutations_1.py scripts/simulate_array_1.py
-sbatch scripts/run_filtered_cosmic_2.slurm # 47733926 xxx --> results/
+sbatch scripts/run_filtered_cosmic_2.slurm # 47739969 xxx --> results/
 
 
 
