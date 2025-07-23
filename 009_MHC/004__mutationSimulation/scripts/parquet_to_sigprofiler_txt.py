@@ -1,83 +1,80 @@
 #!/usr/bin/env python3
-
-import argparse
 import pandas as pd
-import pyarrow.parquet as pq
-from Bio import SeqIO
+import pysam
+import argparse
 from Bio.Seq import reverse_complement
-from pathlib import Path
 
 
-INT2BASE = ["A", "C", "G", "T"]
+def parquet_to_txt(parquet_path, fasta_path, sample_name, output_path):
+    df = pd.read_parquet(parquet_path)
+    fasta = pysam.FastaFile(fasta_path)
 
+    # Sanity checks
+    if "ref_base_resolved" not in df.columns or "revcomp" not in df.columns:
+        raise ValueError("Input parquet must contain 'ref_base_resolved' and 'revcomp' columns")
 
-def load_genome(fasta_path):
-    """Load reference genome into a dictionary."""
-    genome = {}
-    for record in SeqIO.parse(fasta_path, "fasta"):
-        genome[record.id] = str(record.seq).upper()
-    return genome
+    # Clean up columns
+    df["ref_base_resolved"] = df["ref_base_resolved"].astype(str).str.upper()
+    df["alt_base"] = df["alt_base"].astype(str).str.upper()
+    df["chr"] = df["chr"].astype(str)
 
+    # Compute simulated_ref with strand correction
+    df["simulated_ref"] = df.apply(
+        lambda row: reverse_complement(row["ref_base_resolved"]) if row["revcomp"] else row["ref_base_resolved"],
+        axis=1
+    )
 
-def get_genome_base(genome, chrom, pos):
-    """Return base from genome at 1-based position."""
-    seq = genome.get(chrom)
-    if seq is None or pos - 1 >= len(seq):
-        return "N"
-    return seq[pos - 1]
+    # Fetch true genome reference base
+    def fetch_genome_ref(row):
+        try:
+            base = fasta.fetch(row.chr, row.pos - 1, row.pos).upper()
+            return reverse_complement(base) if row.revcomp else base
+        except Exception as e:
+            print(f"⚠️ Failed to fetch ref for {row.chr}:{row.pos} — {e}")
+            return "N"
 
+    df["genome_ref"] = df.apply(fetch_genome_ref, axis=1)
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--parquet", required=True)
-    parser.add_argument("--fasta", required=True)
-    parser.add_argument("--sample-name", required=True)
-    parser.add_argument("--output", required=True)
-    args = parser.parse_args()
-
-    # Load mutation data
-    df = pq.read_table(args.parquet).to_pandas()
-
-    # Load genome
-    genome = load_genome(args.fasta)
-
-    # Convert integer ref_base to A/C/G/T
-    df["simulated_ref"] = [INT2BASE[int(b)] for b in df["ref_base"]]
-
-    # Reverse complement if revcomp is True
-    df["simulated_ref"] = [
-        reverse_complement(b) if rev else b
-        for b, rev in zip(df["simulated_ref"], df["revcomp"])
-    ]
-
-    # Extract reference base from genome
-    df["genome_ref"] = [
-        get_genome_base(genome, chrom, pos)
-        for chrom, pos in zip(df["chr"], df["pos"])
-    ]
-
-    # Compare genome_ref and simulated_ref
-    df["match"] = df["genome_ref"] == df["simulated_ref"]
-    n_matches = df["match"].sum()
+    # Match validation
+    match = df["simulated_ref"] == df["genome_ref"]
+    n_matches = match.sum()
     n_total = len(df)
+    n_mismatches = (~match).sum()
 
     print(f"✅ {n_matches} / {n_total} matches between genome and simulated ref_base")
-    print(f"❌ {n_total - n_matches} mismatches found")
+    if n_mismatches > 0:
+        print(f"❌ {n_mismatches} mismatches found")
+        print("Sample mismatches:")
+        print(df.loc[~match, ["chr", "pos", "ref_base_resolved", "alt_base", "simulated_ref", "genome_ref", "revcomp"]].head(10))
 
-    mismatches = df[~df["match"]]
-    if not mismatches.empty:
-        print(mismatches[["chr", "pos", "ref_base", "alt_base", "simulated_ref", "genome_ref", "revcomp"]].head(10))
+    # Keep only validated
+    df_valid = df[match].copy()
 
-    # Save only validated mutations
-    df_valid = df[df["match"]].copy()
+    # Format for SigProfiler
+    df_txt = pd.DataFrame({
+        "Project": "Simu",
+        "Sample": sample_name,
+        "ID": ".",
+        "Genome": "GRCh38",
+        "mut_type": "SNP",
+        "chrom": df_valid["chr"].str.replace("chr", "", regex=False),
+        "pos_start": df_valid["pos"],
+        "pos_end": df_valid["pos"],
+        "ref": df_valid["genome_ref"],
+        "alt": df_valid["alt_base"],
+        "Type": "SOMATIC"
+    })
 
-    # Format for SigProfiler: CHROM POS REF ALT SAMPLE
-    df_out = df_valid[["chr", "pos", "simulated_ref", "alt_base"]].copy()
-    df_out["sample"] = args.sample_name
-    df_out.to_csv(args.output, sep="\t", header=False, index=False)
-
-    print(f"✅ Saved {len(df_out)} validated mutations to {args.output}")
+    df_txt.to_csv(output_path, sep="\t", index=False)
+    print(f"✅ Saved {len(df_txt)} validated mutations to {output_path}")
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--parquet", required=True, help="Input annotated .parquet file")
+    parser.add_argument("--fasta", required=True, help="Reference genome FASTA (indexed)")
+    parser.add_argument("--sample-name", required=True, help="Sample name for SigProfiler")
+    parser.add_argument("--output", required=True, help="Output path (.txt)")
+    args = parser.parse_args()
+
+    parquet_to_txt(args.parquet, args.fasta, args.sample_name, args.output)

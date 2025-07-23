@@ -5,6 +5,46 @@ Simulation of Experimental and SBS signatures.
 Previous version `003` got issues, again related to the pkl generation.. Let's start with the 001 version this time, and try correct the issue related to .pkl generation and pyrimidine...
 
 
+# Regenerate cds.fa and .parquet files using clean reference
+
+
+
+```bash
+# Download FASTA
+rm ref/GRCh38.primary_assembly.genome.fa
+cd ref/
+wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_45/GRCh38.primary_assembly.genome.fa.gz
+gunzip GRCh38.primary_assembly.genome.fa.gz
+samtools faidx GRCh38.primary_assembly.genome.fa
+
+# Generate bed of CDS
+cd gtf/
+awk '$3=="CDS"{OFS="\t";
+     chr=$1; start=$4-1; end=$5; strand=$7;
+     gene=$10; tx=$12;
+     gsub(/[\";]/,"",gene); gsub(/[\";]/,"",tx);
+     print chr, start, end, gene, tx, strand
+}' gencode.v45.annotation.gtf > cds.bed
+
+# Generate FASTA of CDS
+conda activate BedToBigwig
+
+grep -v "_" cds.bed > cds.primary.bed # keep only main chr
+bedtools getfasta \
+    -fi ../ref/GRCh38.primary_assembly.genome.fa \
+    -bed cds.primary.bed -s -name+ -fo cds.fa
+
+# build parquet
+conda activate mutsim
+
+sbatch scripts/build_parquet_array.slurm # 47779545 ok
+
+
+
+
+
+```
+
 
 
 
@@ -95,16 +135,16 @@ conda activate mutsim
 
 
 python scripts/simulate_array.py \
-  --signature "SBS1" \
+  --signature "SBS2" \
   --n "500" \
   --rep "1" \
   --seed "42" \
   --sigfile signatures/COSMIC_with_flat.txt \
   --outdir results # UPDATE PATH
+#--> light testing seems to be working!
 
 
-
-
+## BELOW NOT MOD
 
 sbatch scripts/run_filtered_cosmic.slurm # 
 
@@ -131,45 +171,28 @@ XXXY SUFFERING HERE!
 
 Let's generate profile plots of my simulation to see if these are in agreement with the known profile.
 
-- Convert simulation `.parquet` to `.txt`
-- Transfer to `plot/` folder a few .txt files
-- Run `SigProfilerMatrixGenerator` to generate signature profile plot 
-
-
-
-
-
-
+- Custom script `plot_sbs96_from_parquet.py` to make these plot from the `*.parquet`
 
 
 ```bash
-parquet_to_sigprofiler_txt.py
 
+plot_sbs96_from_parquet.py
 
-python scripts/parquet_to_sigprofiler_txt.py \
-  --parquet results/SBS1/n_500/rep_01.annot.parquet \
+# Check a few samples
+
+python scripts/plot_sbs96_from_parquet.py \
+  --parquet results/SBS2/n_500/rep_01.annot.parquet \
   --fasta ref/GRCh38.primary_assembly.genome.fa \
-  --sample-name SBS1-n_500-rep_01 \
-  --output plot/SBS1-n_500-rep_01.txt
+  --sample-name SBS2-n_500-rep_01 \
+  --output-pdf plot/SBS2-n_500-rep_01_plot.pdf
 
+# Generate plot for all
 
-
-
-```
-
-
-
-
-
-
-
-```bash
-SigProfilerMatrixGenerator matrix_generator test GRCh38 plot/input --plot=TRUE
+XXXY
 
 
 ```
 
-
-
+--> It seems to be working!!!
 
 

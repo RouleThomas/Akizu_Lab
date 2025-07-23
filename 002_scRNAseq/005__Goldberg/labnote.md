@@ -60983,6 +60983,14 @@ dev.off()
 # The other way ##############################################
 ##############################################################
 
+#--> TOO LONG!!! Let's run in slurm job without downsamnpling!
+
+
+
+
+
+### START OF SLURM  ######################################################
+########################################################################
 
 # Step 1: Find anchors (you may have already done this)
 Yao_Cortex_20k <- RunUMAP(
@@ -61009,7 +61017,6 @@ anchors <- FindTransferAnchors(
   k.filter = 2000 # 500
 )
 
-XXXY HERE !!!
 
 #--> k.anchor 500; k.filter 2000; give xxx anchors XXXY
 #--> k.anchor 250; k.filter 500; give 1138 anchors (still very low for 20k cells)
@@ -61118,6 +61125,18 @@ g_overlay <- g_ref +
 pdf("output/seurat/UMAP_Yao_Cortex_20k-reference_query_overlay-version2-24hr.pdf", width = 30, height = 7)
 (p1 | p2 | g_overlay)
 dev.off()
+
+### END OF SLURM  ######################################################
+########################################################################
+
+XXXY HERE LOAD SLURM JOB!!
+Yao_Cortex <- readRDS(file = "output/seurat/Yao_Cortex-10X_nuclei_v3_AIBS-30dim-order2.rds") # 
+WT_Kcnc1_p14_CX_1step <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CX_1step-10X_nuclei_v3_AIBS-30dim-order2.rds") # 
+
+XXXY HERE PURSUE !!!
+
+
+
 
 
 # Step 4: Generate UMAP plots - USING OUR GASTRULOID 72hr ANNOTATION
@@ -61265,6 +61284,21 @@ XXXY
 To solve it: make sure FindTransferAnchors() was working, produce anchors; change k.anchor and k.filter it can help increasing number of anchors (more anchors is better). Then in TransferData() decrease k.weight .
 
 
+
+
+### slurm job scRNAseq projection 
+
+
+Too long to run, lets generate a slurm job of the code from `### 10X_nuclei_v3_AIBS`
+
+```bash
+conda activate scRNAseqV2
+
+sbatch scripts/scRNAseqProjection-10X_nuclei_v3_AIBS-order2.sh # 47776001 xxx
+
+```
+
+--> XXX
 
 
 

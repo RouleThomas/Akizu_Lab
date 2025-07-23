@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa, pyarrow.parquet as pq
 from Bio.Data import CodonTable
-from Bio.Seq import reverse_complement
+from Bio.Seq import Seq
 
 CODON_TABLE = CodonTable.unambiguous_dna_by_name["Standard"].forward_table
 STOP_CODONS = {"TAA", "TAG", "TGA"}
@@ -41,7 +41,6 @@ class ExomeSampler:
         self.arrow_table = pa.concat_tables([
             pq.read_table(fp) for fp in sorted(Path(parquet_dir).glob("chr*.parquet"))
         ])
-        # Promote string columns to large_string
         new_cols, new_schema = [], []
         for field, col in zip(self.arrow_table.schema, self.arrow_table.columns):
             if pa.types.is_string(field.type):
@@ -54,7 +53,7 @@ class ExomeSampler:
         with open(context_index_pkl, "rb") as fh:
             self.context_index: Dict[int, np.ndarray] = pickle.load(fh)
         if -1 in self.context_index:
-            del self.context_index[-1]  # Ignore fallback in simulation
+            del self.context_index[-1]
 
     def sample(self, signature_probs: np.ndarray, n: int, rng=None) -> tuple[pa.Table, np.ndarray]:
         rng = rng or np.random.default_rng()
@@ -74,7 +73,7 @@ class ExomeSampler:
         pdf = tbl.to_pandas()
         pdf["context_id"] = ctx_ids
 
-        # Decode context to extract ALT and REF, then determine strand flip
+        # Decode context to get ref and alt bases
         alt_bases, ref_bases = [], []
         for ctx_id in ctx_ids:
             match = re.search(r"([ACGT])\[([CT])>([ACGT])\]([ACGT])", CONTEXTS_96[ctx_id])
@@ -89,14 +88,24 @@ class ExomeSampler:
         pdf["ref_from_ctx"] = ref_bases
         pdf["alt_base"] = alt_bases
 
+        # Convert ref_base int to base character
         ref_base_resolved = [INT2BASE[int(rb)] for rb in pdf["ref_base"]]
+        pdf["ref_base_resolved"] = ref_base_resolved
+
+        # Determine if strand was reverse complemented
         pdf["revcomp"] = [ctx != actual for ctx, actual in zip(pdf["ref_from_ctx"], ref_base_resolved)]
 
-        # Apply strand correction to ALT base
-        def normalize_to_original_strand(row):
-            return reverse_complement(row["alt_base"]) if row.revcomp else row["alt_base"]
+        # Flip alt if revcomp
+        pdf["alt_base"] = [
+            str(Seq(b).reverse_complement()) if rev else b
+            for b, rev in zip(pdf["alt_base"], pdf["revcomp"])
+        ]
 
-        pdf["alt_base"] = pdf.apply(normalize_to_original_strand, axis=1)
+        # Flip simulated_ref if revcomp
+        pdf["simulated_ref"] = [
+            str(Seq(ref).reverse_complement()) if rev else ref
+            for ref, rev in zip(ref_base_resolved, pdf["revcomp"])
+        ]
 
         # Annotate consequence
         mutated, aa_alt, cons = [], [], []
