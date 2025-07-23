@@ -60817,8 +60817,6 @@ Yao_Cortex <- RunPCA(Yao_Cortex, npcs = 30)
 Yao_Cortex <- RunUMAP(Yao_Cortex, dims = 1:30)
 
 # Plot UMAP with cell type
-
-
 pdf("output/seurat/Yao_Cortex-10X_nuclei_v3_AIBS-30dim.pdf", width=20, height=10)   
 DimPlot(Yao_Cortex, group.by = "cell_type", label = TRUE, repel = TRUE) 
 dev.off()
@@ -60834,12 +60832,13 @@ set.seed(42)
 
 # scRNAseq projection
 ## Lets downsample to 20k cells both scRNAseq
-Yao_Cortex_20k <- subset(Yao_Cortex, cells = sample(colnames(Yao_Cortex), 10000))
+Yao_Cortex_20k <- subset(Yao_Cortex, cells = sample(colnames(Yao_Cortex), 20000))
+DefaultAssay(Yao_Cortex_20k) <- "RNA"
 
 
 # Import our data
 WT_Kcnc1_p14_CX_1step <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07.sct_V1_label.rds") # 
-WT_Kcnc1_p14_CX_1step_20k <- subset(WT_Kcnc1_p14_CX_1step, cells = sample(colnames(WT_Kcnc1_p14_CX_1step), 10000))
+WT_Kcnc1_p14_CX_1step_20k <- subset(WT_Kcnc1_p14_CX_1step, cells = sample(colnames(WT_Kcnc1_p14_CX_1step), 20000))
 
 
 DefaultAssay(WT_Kcnc1_p14_CX_1step_20k) <- "RNA"
@@ -60983,7 +60982,6 @@ dev.off()
 ##############################################################
 # The other way ##############################################
 ##############################################################
-DefaultAssay(WT_Kcnc1_p14_CX_1step_20k) <- "RNA"
 
 
 # Step 1: Find anchors (you may have already done this)
@@ -60994,6 +60992,10 @@ Yao_Cortex_20k <- RunUMAP(
   return.model = TRUE  
 )
 
+shared_features <- intersect(
+  rownames(Yao_Cortex_20k),
+  rownames(WT_Kcnc1_p14_CX_1step_20k)
+)
 
 anchors <- FindTransferAnchors(
   reference = Yao_Cortex_20k,
@@ -61003,11 +61005,18 @@ anchors <- FindTransferAnchors(
   reduction = "pcaproject",
   dims = 1:30,
   features = shared_features,
-  k.anchor = 100,
-  k.filter = 500
+  k.anchor = 500, # 100 50 250
+  k.filter = 2000 # 500
 )
 
-XXXY HERE !
+XXXY HERE !!!
+
+#--> k.anchor 500; k.filter 2000; give xxx anchors XXXY
+#--> k.anchor 250; k.filter 500; give 1138 anchors (still very low for 20k cells)
+#--> k.anchor 100; k.filter 500; give 199 anchors
+#--> k.anchor 50; k.filter 500; give 52 anchors
+
+
 
 # Step 2: Transfer labels from reference to query
 predictions <- TransferData(
@@ -61016,6 +61025,17 @@ predictions <- TransferData(
   dims = 1:30,
   k.weight = 100
 )
+
+
+predictions <- TransferData(
+  anchorset = anchors,
+  refdata = Yao_Cortex_20k$cell_type,
+  dims = 1:30,
+  k.weight = 50
+)
+
+
+
 
 WT_Kcnc1_p14_CX_1step_20k <- AddMetaData(WT_Kcnc1_p14_CX_1step_20k, metadata = predictions)
 
@@ -61237,6 +61257,16 @@ XXXY
 
 
 ```
+
+
+
+
+- error at `IntegrateData()`: `number of items to replace is not a multiple of replacement length` ; Discussed [here](https://github.com/satijalab/seurat/issues/6341) and [here](https://github.com/satijalab/seurat/issues/6359), seems to hapenn when some clusters have very few cells...
+To solve it: make sure FindTransferAnchors() was working, produce anchors; change k.anchor and k.filter it can help increasing number of anchors (more anchors is better). Then in TransferData() decrease k.weight .
+
+
+
+
 
 
 
