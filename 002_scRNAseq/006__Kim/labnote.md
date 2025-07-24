@@ -14895,7 +14895,7 @@ dev.off()
 
 
 
-### WT and Bap1KO separated with regions LinkPeaks() - gene peak correlated - Check Pax6: ONLY DG_GC trajectory
+### WT and Bap1KO separated with regions LinkPeaks() - gene peak correlated - Pax6 gene : ONLY DG_GC trajectory (NSC prol2, IP, DG_GC)
 
 --. Not clear how to be run on two condiions; either do separately and compare; or run on control only and then check gene expression; of genes from the network; discuss [here](https://github.com/quadbio/Pando/issues/43)
 
@@ -15941,6 +15941,1373 @@ print(overlap_grn_pseudotime)
 ```
 
 --> Very poor overlap of Pax6 target genes with DEG-pseudotime and DEG-cluter14 (NSC prol 2)
+
+
+
+
+### WT and Bap1KO separated with regions LinkPeaks() - gene peak correlated - Lef1 gene : ONLY DG_GC trajectory (NSC prol2, IP, DG_GC)
+
+
+```bash
+srun --mem=500g --cpus-per-task=8 --pty bash -l
+
+conda activate Signac_Pando
+module load hdf5
+```
+
+```R
+set.seed(42)
+
+# library
+library("Signac")
+library("Seurat")
+#library("hdf5r") # need to reinstall it at each session... with install.packages("hdf5r")
+library("tidyverse")
+library("EnsDb.Mmusculus.v79") # mm10
+library("reticulate") # needed to use FindClusters()
+library("metap") # needed to use FindConservedMarkers()
+use_python("~/anaconda3/envs/SignacV5/bin/python") # to specify which python to use... Needed for FindClusters()
+library("Pando")
+library("chromVARmotifs") # devtools::install_github("GreenleafLab/chromVARmotifs")
+
+# to run job in parrallel
+library(doParallel) # install.packages("doParallel")
+registerDoParallel(8) # update nb of core here!!
+
+
+
+
+# import and rename Seurat obj
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.sct_numeric_label.rds")
+Part_DG_GC_subset_WT_GRN_allGenes <- readRDS(file = "output/Pando/Part_DG_GC_subset_WT_GRN_allGenes.rds")
+Part_DG_GC_subset_Bap1KO_GRN_allGenes <- readRDS(file = "output/Pando/Part_DG_GC_subset_Bap1KO_GRN_allGenes.rds")
+
+
+# process multiome_WT_Bap1KO_QCV2vC1
+Part_DG_GC <- subset(
+  multiome_WT_Bap1KO_QCV2vC1.sct, 
+  subset = cluster.annot %in% c("NSC_proliferative_2", "IP", "DG_GC")
+)
+umap_coords <- Embeddings(Part_DG_GC, "umap")
+# Apply your custom UMAP boundaries
+selected_cells <- which(
+  umap_coords[,1] < 4 &
+  umap_coords[,2] < -2.5 &
+  umap_coords[,2] > -9.5
+)
+# Subset the Seurat object
+Part_DG_GC_subset <- subset(Part_DG_GC, cells = colnames(Part_DG_GC)[selected_cells])
+# Separate Seurat into WT and Bap1KO
+Part_DG_GC_subset_WT <- subset(Part_DG_GC_subset, subset = orig.ident == "multiome_WT")
+Part_DG_GC_subset_Bap1KO <- subset(Part_DG_GC_subset, subset = orig.ident == "multiome_Bap1KO")
+
+
+
+
+###########################################################################
+## WT ###################################################
+###########################################################################
+
+# Find modules = Genes regulated by each TF
+GetNetwork(Part_DG_GC_subset_WT_GRN_allGenes)
+coef(Part_DG_GC_subset_WT_GRN_allGenes)
+
+Part_DG_GC_subset_WT_GRN_allGenes <- find_modules(
+    Part_DG_GC_subset_WT_GRN_allGenes, 
+    p_thresh = 0.05,
+    nvar_thresh = 2, 
+    min_genes_per_module = 1, 
+    rsq_thresh = 0.05
+)
+
+Part_DG_GC_subset_WT_GRN_allGenes_TF <- get_network_graph(Part_DG_GC_subset_WT_GRN_allGenes, 
+    graph_name = 'full_graph', 
+    umap_method = 'none')
+
+
+# GRN plots
+Part_DG_GC_subset_WT_GRN_allGenes_TF.Lef1 <- get_tf_network(Part_DG_GC_subset_WT_GRN_allGenes_TF, tf='Lef1', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Lef1-Part_DG_GC_subset_WT_RegionsLinkPeaks.pdf", width=5, height=2)
+plot_tf_network(Part_DG_GC_subset_WT_GRN_allGenes_TF.Lef1, tf='Lef1', circular=F, label_nodes = "all")
+dev.off()
+pdf("output/Pando/plot_tf_network-Lef1-Part_DG_GC_subset_WT_RegionsLinkPeaks-circular_tfs.pdf", width=25, height=10)
+plot_tf_network(Part_DG_GC_subset_WT_GRN_allGenes_TF.Lef1, tf='Lef1', circular=TRUE, label_nodes = "tfs")
+dev.off()
+
+
+# Investigate regulon
+regulons_WT <- NetworkModules(Part_DG_GC_subset_WT_GRN_allGenes)
+positive_regulons_WT <- regulons_WT@features[['genes_pos']]
+positive_regulons_WT <- positive_regulons_WT[lengths(positive_regulons_WT) > 10]
+negative_regulons_WT <- regulons_WT@features[['genes_neg']]
+negative_regulons_WT <- negative_regulons_WT[lengths(negative_regulons_WT) > 10]
+
+## generate the list of regulons, which are genes that are co-regulated positively or negatively by the same TF
+Part_DG_GC_subset_WT <- AddModuleScore(Part_DG_GC_subset_WT,
+                                       features = positive_regulons_WT,
+                                       name = "regulon_WT_pos")
+
+Part_DG_GC_subset_WT <- AddModuleScore(Part_DG_GC_subset_WT,
+                                       features = negative_regulons_WT,
+                                       name = "regulon_WT_neg")
+
+meta_cols_pos <- grep("^regulon_WT_pos", colnames(Part_DG_GC_subset_WT@meta.data))
+meta_cols_neg <- grep("^regulon_WT_neg", colnames(Part_DG_GC_subset_WT@meta.data))
+
+# Rename
+colnames(Part_DG_GC_subset_WT@meta.data)[meta_cols_pos] <- paste0(names(positive_regulons_WT), "(+)")
+colnames(Part_DG_GC_subset_WT@meta.data)[meta_cols_neg] <- paste0(names(negative_regulons_WT), "(-)")
+
+
+# feature plots for the same TFs we found combining DE and chromVAR analysis, and their positive and negative regulons.
+
+# Set assay to RNA for gene expression
+DefaultAssay(Part_DG_GC_subset_WT) <- "RNA"
+
+# FeaturePlot for Lef1 gene expression
+p1 <- FeaturePlot(
+  Part_DG_GC_subset_WT,
+  features = "Lef1",
+  reduction = "umap",
+  cols = c("lightgrey", "darkred"),
+  order = TRUE
+) & NoAxes() & NoLegend()
+# The regulon scores are in meta.data, not in a new assay, so we must plot them using meta.data columns
+# You don't need to switch assay for this since module scores are stored in meta.data
+# But if you're using a fake assay for plotting, make sure these are accessible
+# Lef1 regulon features
+Lef1_pos <- "Lef1(+)"
+Lef1_neg <- "Lef1(-)"
+# Plot module scores using FeaturePlot with `cells = TRUE` (Seurat v5) or pulling from meta.data
+p2 <- FeaturePlot(
+  Part_DG_GC_subset_WT,
+  features = c(Lef1_pos, Lef1_neg),
+  reduction = "umap",
+  cols = c( "gray96", "darkgreen"),
+  order = TRUE,
+  ncol = 2
+) & NoAxes() & NoLegend()
+# Save to PDF
+pdf("output/Pando/Lef1_regulon_WT.pdf", width = 10, height = 6)
+(p1 / p2) + patchwork::plot_layout(heights = c(1, 1))
+dev.off()
+
+
+
+
+
+
+
+###########################################################################
+## Bap1KO ###################################################
+###########################################################################
+
+# Find modules = Genes regulated by each TF
+GetNetwork(Part_DG_GC_subset_Bap1KO_GRN_allGenes)
+coef(Part_DG_GC_subset_Bap1KO_GRN_allGenes)
+
+Part_DG_GC_subset_Bap1KO_GRN_allGenes <- find_modules(
+    Part_DG_GC_subset_Bap1KO_GRN_allGenes, 
+    p_thresh = 0.05,
+    nvar_thresh = 2, 
+    min_genes_per_module = 1, 
+    rsq_thresh = 0.05
+)
+
+Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF <- get_network_graph(Part_DG_GC_subset_Bap1KO_GRN_allGenes, 
+    graph_name = 'full_graph', 
+    umap_method = 'none')
+
+
+# GRN plots
+Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF.Lef1 <- get_tf_network(Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF, tf='Lef1', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Lef1-Part_DG_GC_subset_Bap1KO_RegionsLinkPeaks.pdf", width=5, height=2)
+plot_tf_network(Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF.Lef1, tf='Lef1', circular=F, label_nodes = "all")
+dev.off()
+pdf("output/Pando/plot_tf_network-Lef1-Part_DG_GC_subset_Bap1KO_RegionsLinkPeaks-circular_tfs.pdf", width=25, height=10)
+plot_tf_network(Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF.Lef1, tf='Lef1', circular=TRUE, label_nodes = "tfs")
+dev.off()
+
+
+# Investigate regulon
+regulons_Bap1KO <- NetworkModules(Part_DG_GC_subset_Bap1KO_GRN_allGenes)
+positive_regulons_Bap1KO <- regulons_Bap1KO@features[['genes_pos']]
+positive_regulons_Bap1KO <- positive_regulons_Bap1KO[lengths(positive_regulons_Bap1KO) > 10]
+negative_regulons_Bap1KO <- regulons_Bap1KO@features[['genes_neg']]
+negative_regulons_Bap1KO <- negative_regulons_Bap1KO[lengths(negative_regulons_Bap1KO) > 10]
+
+## generate the list of regulons, which are genes that are co-regulated positively or negatively by the same TF
+Part_DG_GC_subset_Bap1KO <- AddModuleScore(Part_DG_GC_subset_Bap1KO,
+                                       features = positive_regulons_Bap1KO,
+                                       name = "regulon_Bap1KO_pos")
+
+Part_DG_GC_subset_Bap1KO <- AddModuleScore(Part_DG_GC_subset_Bap1KO,
+                                       features = negative_regulons_Bap1KO,
+                                       name = "regulon_Bap1KO_neg")
+
+meta_cols_pos <- grep("^regulon_Bap1KO_pos", colnames(Part_DG_GC_subset_Bap1KO@meta.data))
+meta_cols_neg <- grep("^regulon_Bap1KO_neg", colnames(Part_DG_GC_subset_Bap1KO@meta.data))
+
+# Rename
+colnames(Part_DG_GC_subset_Bap1KO@meta.data)[meta_cols_pos] <- paste0(names(positive_regulons_Bap1KO), "(+)")
+colnames(Part_DG_GC_subset_Bap1KO@meta.data)[meta_cols_neg] <- paste0(names(negative_regulons_Bap1KO), "(-)")
+
+
+# feature plots for the same TFs we found combining DE and chromVAR analysis, and their positive and negative regulons.
+
+# Set assay to RNA for gene expression
+DefaultAssay(Part_DG_GC_subset_Bap1KO) <- "RNA"
+
+# FeaturePlot for Lef1 gene expression
+p1 <- FeaturePlot(
+  Part_DG_GC_subset_Bap1KO,
+  features = "Lef1",
+  reduction = "umap",
+  cols = c("lightgrey", "darkred"),
+  order = TRUE
+) & NoAxes() & NoLegend()
+# The regulon scores are in meta.data, not in a new assay, so we must plot them using meta.data columns
+# You don't need to switch assay for this since module scores are stored in meta.data
+# But if you're using a fake assay for plotting, make sure these are accessible
+# Lef1 regulon features
+Lef1_pos <- "Lef1(+)"
+Lef1_neg <- "Lef1(-)"
+# Plot module scores using FeaturePlot with `cells = TRUE` (Seurat v5) or pulling from meta.data
+p2 <- FeaturePlot(
+  Part_DG_GC_subset_Bap1KO,
+  features = c(Lef1_pos, Lef1_neg),
+  reduction = "umap",
+  cols = c( "gray96", "darkgreen"),
+  order = TRUE,
+  ncol = 2
+) & NoAxes() & NoLegend()
+# Save to PDF
+pdf("output/Pando/Lef1_regulon_Bap1KO.pdf", width = 10, height = 6)
+(p1 / p2) + patchwork::plot_layout(heights = c(1, 1))
+dev.off()
+
+
+
+
+###########################################################################
+## Compare WT vs Bap1KO ###################################################
+###########################################################################
+
+Lef1_regulon_genes <- positive_regulons_WT[["Lef1"]]
+
+
+
+
+Part_DG_GC_subset_WT <- AddModuleScore(Part_DG_GC_subset_WT, features = list(Lef1_regulon_genes), name = "Lef1_regulon")
+Part_DG_GC_subset_Bap1KO <- AddModuleScore(Part_DG_GC_subset_Bap1KO, features = list(Lef1_regulon_genes), name = "Lef1_regulon")
+
+
+
+Part_DG_GC_subset_WT$condition <- "WT"
+Part_DG_GC_subset_Bap1KO$condition <- "Bap1KO"
+
+combined <- merge(Part_DG_GC_subset_WT, Part_DG_GC_subset_Bap1KO)
+combined$condition <- factor(combined$condition, levels = c("WT", "Bap1KO"))
+pdf("output/Pando/Lef1_regulon-WTvsBap1KO.pdf", width = 8, height = 6)
+VlnPlot(
+  combined,
+  features = "Lef1_regulon1",
+  group.by = "cluster.annot",      # X-axis: cell types
+  split.by = "condition",          # Separate violins by condition
+  pt.size = 0.1,
+  cols = c("blue", "red")   # WT = black, Bap1KO = green (change as needed)
+) +  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
+# Lef1 expression with regulon activity
+p_expr <- VlnPlot(
+  combined,
+  features = "Lef1",
+  group.by = "cluster.annot",
+  split.by = "condition",
+  pt.size = 0.1,
+  cols = c("blue", "red")
+) + 
+  ggtitle("Lef1 expression") +
+  NoLegend() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Lef1 regulon activity plot
+p_regulon <- VlnPlot(
+  combined,
+  features = "Lef1_regulon1",
+  group.by = "cluster.annot",
+  split.by = "condition",
+  pt.size = 0.1,
+  cols = c("blue", "red")
+) + 
+  ggtitle("Lef1 regulon activity") +
+  NoLegend() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+pdf("output/Pando/Lef1_expressionVSregulon-WTvsBap1KO.pdf", width = 8, height = 8)
+p_expr / p_regulon
+dev.off()
+
+
+
+# Lef1 expression with regulon activity + STATS
+df <- data.frame(
+  cluster = combined$cluster.annot,
+  condition = combined$condition,
+  Lef1_expr = FetchData(combined, "Lef1"),
+  Lef1_regulon = combined@meta.data$Lef1_regulon1
+)
+
+# Get unique clusters
+clusters <- unique(df$cluster)
+
+# Initialize results list
+results <- lapply(clusters, function(cl) {
+  sub_df <- dplyr::filter(df, cluster == cl)
+  
+  # Expression test
+  expr_test <- wilcox.test(Lef1 ~ condition, data = sub_df)
+  
+  # Regulon test
+  reg_test <- wilcox.test(Lef1_regulon ~ condition, data = sub_df)
+  
+  tibble(
+    cluster = cl,
+    expr_pval = expr_test$p.value,
+    regulon_pval = reg_test$p.value,
+    expr_median_WT = median(sub_df$Lef1[sub_df$condition == "WT"]),
+    expr_median_KO = median(sub_df$Lef1[sub_df$condition == "Bap1KO"]),
+    regulon_median_WT = median(sub_df$Lef1_regulon[sub_df$condition == "WT"]),
+    regulon_median_KO = median(sub_df$Lef1_regulon[sub_df$condition == "Bap1KO"])
+  )
+})
+
+# Combine all results
+stat_results <- bind_rows(results)
+
+# Optional: adjust p-values (e.g., FDR)
+stat_results <- stat_results %>%
+  mutate(
+    expr_padj = p.adjust(expr_pval, method = "fdr"),
+    regulon_padj = p.adjust(regulon_pval, method = "fdr")
+  )
+
+# View results
+print(stat_results %>% dplyr::select(cluster, regulon_median_WT, regulon_median_KO, expr_padj, regulon_padj))
+
+
+
+# Collect the target of Lef1; many of these are significantly less express in Bap1KO
+## Get all positive regulons
+regulons_WT <- NetworkModules(Part_DG_GC_subset_WT_GRN_allGenes)
+positive_regulons_WT <- regulons_WT@features[["genes_pos"]]
+## Lef1 positive targets
+Lef1_targets <- positive_regulons_WT[["Lef1"]]
+
+write.table(
+  data.frame(gene = Lef1_targets),
+  file = "output/Pando/Lef1_positive_targets_WT.txt",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = TRUE,
+  sep = "\t"
+)
+#--> 60 target genes of Lef1 in WT; so many of them should be downregulated in Bap1KO
+
+
+
+# check expressioon of all 60 target genes
+# Make sure the object has condition info and RNA assay active
+DefaultAssay(Part_DG_GC_subset) <- "RNA"
+# UMAP plot of all Lef1 regulon genes, split by WT vs Bap1KO
+pdf("output/Pando/FeaturePlot_Lef1RegulonGenes_WTvsBap1KO.pdf", width = 7, height = 120)
+FeaturePlot(
+  Part_DG_GC_subset,
+  features = Lef1_regulon_genes,
+  reduction = "umap",
+  split.by = "orig.ident",
+  cols = c("lightgrey", "darkred"),  # adjust color if needed
+  ncol = 5,
+  order = TRUE
+)
+dev.off()
+
+
+Part_DG_GC_subset$orig.ident <- factor(Part_DG_GC_subset$orig.ident, levels = c("multiome_WT", "multiome_Bap1KO"))
+
+DefaultAssay(Part_DG_GC_subset) <- "GeneActivity"
+# UMAP plot of all Lef1 regulon genes, split by WT vs Bap1KO
+pdf("output/Pando/FeaturePlot_Lef1RegulonGenes_WTvsBap1KO-GeneActivity.pdf", width = 7, height = 120)
+FeaturePlot(
+  Part_DG_GC_subset,
+  features = Lef1_regulon_genes, # Lef1_regulon_genes
+  reduction = "umap",
+  split.by = "orig.ident",
+  cols = c("lightgrey", "darkgreen"),  # adjust color if needed
+  ncol = 5,
+  order = TRUE
+)
+dev.off()
+
+
+DefaultAssay(Part_DG_GC_subset) <- "GeneActivity"
+# Vln plot of all Lef1 regulon genes, split by WT vs Bap1KO
+pdf("output/Pando/VlnPlot_Lef1RegulonGenes_WTvsBap1KO-GeneActivity.pdf", width = 10, height = 40)
+VlnPlot(
+  Part_DG_GC_subset,
+  features = Lef1_regulon_genes, # Lef1_regulon_genes
+  group.by = "cluster.annot",
+  split.by = "orig.ident",
+  pt.size = 0.1,
+  cols = c("blue", "red")
+)
+dev.off()
+
+
+
+
+# GRN of WT only for the 60 target
+
+# Extract only Lef1 GRN entries to genes in your positive regulon
+Lef1_edges <- coef(Part_DG_GC_subset_WT_GRN_allGenes) %>%
+  dplyr::filter(tf == "Lef1", target %in% Lef1_regulon_genes, estimate > 0, padj < 0.05)
+
+library(igraph)
+library(ggraph)
+library(tidygraph)
+# Build igraph object
+g <- igraph::graph_from_data_frame(
+  d = Lef1_edges %>% dplyr::select(from = tf, to = target),
+  directed = TRUE
+)
+
+g_tidy <- as_tbl_graph(g)
+
+pdf("output/Pando/GRN_Lef1_regulon_genes_WT.pdf", width = 5, height = 5)
+ggraph(g_tidy, layout = "fr") +
+  geom_edge_link(arrow = arrow(length = unit(3, 'mm')), end_cap = circle(2, 'mm'), edge_colour = "orange") +
+  geom_node_point(size = 4, color = "steelblue") +
+  geom_node_text(aes(label = name), repel = TRUE, size = 3) +
+  theme_void() +
+  ggtitle("Lef1 GRN (WT)")
+dev.off()
+```
+
+
+
+
+
+
+### WT and Bap1KO separated with regions LinkPeaks() - gene peak correlated - Gli gene : ONLY DG_GC trajectory (NSC prol2, IP, DG_GC)
+
+
+```bash
+srun --mem=500g --cpus-per-task=8 --pty bash -l
+
+conda activate Signac_Pando
+module load hdf5
+```
+
+```R
+set.seed(42)
+
+# library
+library("Signac")
+library("Seurat")
+#library("hdf5r") # need to reinstall it at each session... with install.packages("hdf5r")
+library("tidyverse")
+library("EnsDb.Mmusculus.v79") # mm10
+library("reticulate") # needed to use FindClusters()
+library("metap") # needed to use FindConservedMarkers()
+use_python("~/anaconda3/envs/SignacV5/bin/python") # to specify which python to use... Needed for FindClusters()
+library("Pando")
+library("chromVARmotifs") # devtools::install_github("GreenleafLab/chromVARmotifs")
+
+# to run job in parrallel
+library(doParallel) # install.packages("doParallel")
+registerDoParallel(8) # update nb of core here!!
+
+
+
+
+# import and rename Seurat obj
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.sct_numeric_label.rds")
+Part_DG_GC_subset_WT_GRN_allGenes <- readRDS(file = "output/Pando/Part_DG_GC_subset_WT_GRN_allGenes.rds")
+Part_DG_GC_subset_Bap1KO_GRN_allGenes <- readRDS(file = "output/Pando/Part_DG_GC_subset_Bap1KO_GRN_allGenes.rds")
+
+
+# process multiome_WT_Bap1KO_QCV2vC1
+Part_DG_GC <- subset(
+  multiome_WT_Bap1KO_QCV2vC1.sct, 
+  subset = cluster.annot %in% c("NSC_proliferative_2", "IP", "DG_GC")
+)
+umap_coords <- Embeddings(Part_DG_GC, "umap")
+# Apply your custom UMAP boundaries
+selected_cells <- which(
+  umap_coords[,1] < 4 &
+  umap_coords[,2] < -2.5 &
+  umap_coords[,2] > -9.5
+)
+# Subset the Seurat object
+Part_DG_GC_subset <- subset(Part_DG_GC, cells = colnames(Part_DG_GC)[selected_cells])
+# Separate Seurat into WT and Bap1KO
+Part_DG_GC_subset_WT <- subset(Part_DG_GC_subset, subset = orig.ident == "multiome_WT")
+Part_DG_GC_subset_Bap1KO <- subset(Part_DG_GC_subset, subset = orig.ident == "multiome_Bap1KO")
+
+
+
+
+###########################################################################
+## WT ###################################################
+###########################################################################
+
+# Find modules = Genes regulated by each TF
+GetNetwork(Part_DG_GC_subset_WT_GRN_allGenes)
+coef(Part_DG_GC_subset_WT_GRN_allGenes)
+
+Part_DG_GC_subset_WT_GRN_allGenes <- find_modules(
+    Part_DG_GC_subset_WT_GRN_allGenes, 
+    p_thresh = 0.05,
+    nvar_thresh = 2, 
+    min_genes_per_module = 1, 
+    rsq_thresh = 0.05
+)
+
+Part_DG_GC_subset_WT_GRN_allGenes_TF <- get_network_graph(Part_DG_GC_subset_WT_GRN_allGenes, 
+    graph_name = 'full_graph', 
+    umap_method = 'none')
+
+
+# GRN plots
+Part_DG_GC_subset_WT_GRN_allGenes_TF.Gli1 <- get_tf_network(Part_DG_GC_subset_WT_GRN_allGenes_TF, tf='Gli1', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Gli1-Part_DG_GC_subset_WT_RegionsLinkPeaks.pdf", width=5, height=2)
+plot_tf_network(Part_DG_GC_subset_WT_GRN_allGenes_TF.Gli1, tf='Gli1', circular=F, label_nodes = "all")
+dev.off()
+pdf("output/Pando/plot_tf_network-Gli1-Part_DG_GC_subset_WT_RegionsLinkPeaks-circular_tfs.pdf", width=25, height=10)
+plot_tf_network(Part_DG_GC_subset_WT_GRN_allGenes_TF.Gli1, tf='Gli1', circular=TRUE, label_nodes = "tfs")
+dev.off()
+
+
+# Investigate regulon
+regulons_WT <- NetworkModules(Part_DG_GC_subset_WT_GRN_allGenes)
+positive_regulons_WT <- regulons_WT@features[['genes_pos']]
+positive_regulons_WT <- positive_regulons_WT[lengths(positive_regulons_WT) > 10]
+negative_regulons_WT <- regulons_WT@features[['genes_neg']]
+negative_regulons_WT <- negative_regulons_WT[lengths(negative_regulons_WT) > 10]
+
+## generate the list of regulons, which are genes that are co-regulated positively or negatively by the same TF
+Part_DG_GC_subset_WT <- AddModuleScore(Part_DG_GC_subset_WT,
+                                       features = positive_regulons_WT,
+                                       name = "regulon_WT_pos")
+
+Part_DG_GC_subset_WT <- AddModuleScore(Part_DG_GC_subset_WT,
+                                       features = negative_regulons_WT,
+                                       name = "regulon_WT_neg")
+
+meta_cols_pos <- grep("^regulon_WT_pos", colnames(Part_DG_GC_subset_WT@meta.data))
+meta_cols_neg <- grep("^regulon_WT_neg", colnames(Part_DG_GC_subset_WT@meta.data))
+
+# Rename
+colnames(Part_DG_GC_subset_WT@meta.data)[meta_cols_pos] <- paste0(names(positive_regulons_WT), "(+)")
+colnames(Part_DG_GC_subset_WT@meta.data)[meta_cols_neg] <- paste0(names(negative_regulons_WT), "(-)")
+
+
+# feature plots for the same TFs we found combining DE and chromVAR analysis, and their positive and negative regulons.
+
+# Set assay to RNA for gene expression
+DefaultAssay(Part_DG_GC_subset_WT) <- "RNA"
+
+# FeaturePlot for Gli1 gene expression
+p1 <- FeaturePlot(
+  Part_DG_GC_subset_WT,
+  features = "Gli1",
+  reduction = "umap",
+  cols = c("lightgrey", "darkred"),
+  order = TRUE
+) & NoAxes() & NoLegend()
+# The regulon scores are in meta.data, not in a new assay, so we must plot them using meta.data columns
+# You don't need to switch assay for this since module scores are stored in meta.data
+# But if you're using a fake assay for plotting, make sure these are accessible
+# Gli1 regulon features
+Gli1_pos <- "Gli1(+)"
+Gli1_neg <- "Gli1(-)"
+# Plot module scores using FeaturePlot with `cells = TRUE` (Seurat v5) or pulling from meta.data
+p2 <- FeaturePlot(
+  Part_DG_GC_subset_WT,
+  features = c(Gli1_pos, Gli1_neg),
+  reduction = "umap",
+  cols = c( "gray96", "darkgreen"),
+  order = TRUE,
+  ncol = 2
+) & NoAxes() & NoLegend()
+# Save to PDF
+pdf("output/Pando/Gli1_regulon_WT.pdf", width = 10, height = 6)
+(p1 / p2) + patchwork::plot_layout(heights = c(1, 1))
+dev.off()
+
+
+
+
+
+
+
+###########################################################################
+## Bap1KO ###################################################
+###########################################################################
+
+# Find modules = Genes regulated by each TF
+GetNetwork(Part_DG_GC_subset_Bap1KO_GRN_allGenes)
+coef(Part_DG_GC_subset_Bap1KO_GRN_allGenes)
+
+Part_DG_GC_subset_Bap1KO_GRN_allGenes <- find_modules(
+    Part_DG_GC_subset_Bap1KO_GRN_allGenes, 
+    p_thresh = 0.05,
+    nvar_thresh = 2, 
+    min_genes_per_module = 1, 
+    rsq_thresh = 0.05
+)
+Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF <- get_network_graph(Part_DG_GC_subset_Bap1KO_GRN_allGenes, 
+    graph_name = 'full_graph', 
+    umap_method = 'none')
+
+
+# GRN plots
+Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF.Gli1 <- get_tf_network(Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF, tf='Gli1', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Gli1-Part_DG_GC_subset_Bap1KO_RegionsLinkPeaks.pdf", width=5, height=2)
+plot_tf_network(Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF.Gli1, tf='Gli1', circular=F, label_nodes = "all")
+dev.off()
+pdf("output/Pando/plot_tf_network-Gli1-Part_DG_GC_subset_Bap1KO_RegionsLinkPeaks-circular_tfs.pdf", width=25, height=10)
+plot_tf_network(Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF.Gli1, tf='Gli1', circular=TRUE, label_nodes = "tfs")
+dev.off()
+
+
+# Investigate regulon
+regulons_Bap1KO <- NetworkModules(Part_DG_GC_subset_Bap1KO_GRN_allGenes)
+positive_regulons_Bap1KO <- regulons_Bap1KO@features[['genes_pos']]
+positive_regulons_Bap1KO <- positive_regulons_Bap1KO[lengths(positive_regulons_Bap1KO) > 10]
+negative_regulons_Bap1KO <- regulons_Bap1KO@features[['genes_neg']]
+negative_regulons_Bap1KO <- negative_regulons_Bap1KO[lengths(negative_regulons_Bap1KO) > 10]
+
+## generate the list of regulons, which are genes that are co-regulated positively or negatively by the same TF
+Part_DG_GC_subset_Bap1KO <- AddModuleScore(Part_DG_GC_subset_Bap1KO,
+                                       features = positive_regulons_Bap1KO,
+                                       name = "regulon_Bap1KO_pos")
+
+Part_DG_GC_subset_Bap1KO <- AddModuleScore(Part_DG_GC_subset_Bap1KO,
+                                       features = negative_regulons_Bap1KO,
+                                       name = "regulon_Bap1KO_neg")
+
+meta_cols_pos <- grep("^regulon_Bap1KO_pos", colnames(Part_DG_GC_subset_Bap1KO@meta.data))
+meta_cols_neg <- grep("^regulon_Bap1KO_neg", colnames(Part_DG_GC_subset_Bap1KO@meta.data))
+
+# Rename
+colnames(Part_DG_GC_subset_Bap1KO@meta.data)[meta_cols_pos] <- paste0(names(positive_regulons_Bap1KO), "(+)")
+colnames(Part_DG_GC_subset_Bap1KO@meta.data)[meta_cols_neg] <- paste0(names(negative_regulons_Bap1KO), "(-)")
+
+
+# feature plots for the same TFs we found combining DE and chromVAR analysis, and their positive and negative regulons.
+
+# Set assay to RNA for gene expression
+DefaultAssay(Part_DG_GC_subset_Bap1KO) <- "RNA"
+
+# FeaturePlot for Gli1 gene expression
+p1 <- FeaturePlot(
+  Part_DG_GC_subset_Bap1KO,
+  features = "Gli1",
+  reduction = "umap",
+  cols = c("lightgrey", "darkred"),
+  order = TRUE
+) & NoAxes() & NoLegend()
+# The regulon scores are in meta.data, not in a new assay, so we must plot them using meta.data columns
+# You don't need to switch assay for this since module scores are stored in meta.data
+# But if you're using a fake assay for plotting, make sure these are accessible
+# Gli1 regulon features
+Gli1_pos <- "Gli1(+)"
+Gli1_neg <- "Gli1(-)"
+# Plot module scores using FeaturePlot with `cells = TRUE` (Seurat v5) or pulling from meta.data
+p2 <- FeaturePlot(
+  Part_DG_GC_subset_Bap1KO,
+  features = c(Gli1_pos, Gli1_neg),
+  reduction = "umap",
+  cols = c( "gray96", "darkgreen"),
+  order = TRUE,
+  ncol = 2
+) & NoAxes() & NoLegend()
+# Save to PDF
+pdf("output/Pando/Gli1_regulon_Bap1KO.pdf", width = 10, height = 6)
+(p1 / p2) + patchwork::plot_layout(heights = c(1, 1))
+dev.off()
+
+
+
+
+###########################################################################
+## Compare WT vs Bap1KO ###################################################
+###########################################################################
+
+Gli1_regulon_genes <- positive_regulons_WT[["Gli1"]]
+
+
+
+
+Part_DG_GC_subset_WT <- AddModuleScore(Part_DG_GC_subset_WT, features = list(Gli1_regulon_genes), name = "Gli1_regulon")
+Part_DG_GC_subset_Bap1KO <- AddModuleScore(Part_DG_GC_subset_Bap1KO, features = list(Gli1_regulon_genes), name = "Gli1_regulon")
+
+
+
+Part_DG_GC_subset_WT$condition <- "WT"
+Part_DG_GC_subset_Bap1KO$condition <- "Bap1KO"
+
+combined <- merge(Part_DG_GC_subset_WT, Part_DG_GC_subset_Bap1KO)
+combined$condition <- factor(combined$condition, levels = c("WT", "Bap1KO"))
+pdf("output/Pando/Gli1_regulon-WTvsBap1KO.pdf", width = 8, height = 6)
+VlnPlot(
+  combined,
+  features = "Gli1_regulon1",
+  group.by = "cluster.annot",      # X-axis: cell types
+  split.by = "condition",          # Separate violins by condition
+  pt.size = 0.1,
+  cols = c("blue", "red")   # WT = black, Bap1KO = green (change as needed)
+) +  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
+# Gli1 expression with regulon activity
+p_expr <- VlnPlot(
+  combined,
+  features = "Gli1",
+  group.by = "cluster.annot",
+  split.by = "condition",
+  pt.size = 0.1,
+  cols = c("blue", "red")
+) + 
+  ggtitle("Gli1 expression") +
+  NoLegend() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Gli1 regulon activity plot
+p_regulon <- VlnPlot(
+  combined,
+  features = "Gli1_regulon1",
+  group.by = "cluster.annot",
+  split.by = "condition",
+  pt.size = 0.1,
+  cols = c("blue", "red")
+) + 
+  ggtitle("Gli1 regulon activity") +
+  NoLegend() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+pdf("output/Pando/Gli1_expressionVSregulon-WTvsBap1KO.pdf", width = 8, height = 8)
+p_expr / p_regulon
+dev.off()
+
+
+
+# Gli1 expression with regulon activity + STATS
+df <- data.frame(
+  cluster = combined$cluster.annot,
+  condition = combined$condition,
+  Gli1_expr = FetchData(combined, "Gli1"),
+  Gli1_regulon = combined@meta.data$Gli1_regulon1
+)
+
+# Get unique clusters
+clusters <- unique(df$cluster)
+
+# Initialize results list
+results <- lapply(clusters, function(cl) {
+  sub_df <- dplyr::filter(df, cluster == cl)
+  
+  # Expression test
+  expr_test <- wilcox.test(Gli1 ~ condition, data = sub_df)
+  
+  # Regulon test
+  reg_test <- wilcox.test(Gli1_regulon ~ condition, data = sub_df)
+  
+  tibble(
+    cluster = cl,
+    expr_pval = expr_test$p.value,
+    regulon_pval = reg_test$p.value,
+    expr_median_WT = median(sub_df$Gli1[sub_df$condition == "WT"]),
+    expr_median_KO = median(sub_df$Gli1[sub_df$condition == "Bap1KO"]),
+    regulon_median_WT = median(sub_df$Gli1_regulon[sub_df$condition == "WT"]),
+    regulon_median_KO = median(sub_df$Gli1_regulon[sub_df$condition == "Bap1KO"])
+  )
+})
+
+# Combine all results
+stat_results <- bind_rows(results)
+
+# Optional: adjust p-values (e.g., FDR)
+stat_results <- stat_results %>%
+  mutate(
+    expr_padj = p.adjust(expr_pval, method = "fdr"),
+    regulon_padj = p.adjust(regulon_pval, method = "fdr")
+  )
+
+# View results
+print(stat_results %>% dplyr::select(cluster, regulon_median_WT, regulon_median_KO, expr_padj, regulon_padj))
+
+
+
+# Collect the target of Gli1; many of these are significantly less express in Bap1KO
+## Get all positive regulons
+regulons_WT <- NetworkModules(Part_DG_GC_subset_WT_GRN_allGenes)
+positive_regulons_WT <- regulons_WT@features[["genes_pos"]]
+## Gli1 positive targets
+Gli1_targets <- positive_regulons_WT[["Gli1"]]
+
+write.table(
+  data.frame(gene = Gli1_targets),
+  file = "output/Pando/Gli1_positive_targets_WT.txt",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = TRUE,
+  sep = "\t"
+)
+#--> 67 target genes of Gli1 in WT; so many of them should be downregulated in Bap1KO
+
+
+
+# check expressioon of all 67 target genes
+# Make sure the object has condition info and RNA assay active
+DefaultAssay(Part_DG_GC_subset) <- "RNA"
+# UMAP plot of all Gli1 regulon genes, split by WT vs Bap1KO
+pdf("output/Pando/FeaturePlot_Gli1RegulonGenes_WTvsBap1KO.pdf", width = 7, height = 130)
+FeaturePlot(
+  Part_DG_GC_subset,
+  features = Gli1_regulon_genes,
+  reduction = "umap",
+  split.by = "orig.ident",
+  cols = c("lightgrey", "darkred"),  # adjust color if needed
+  ncol = 5,
+  order = TRUE
+)
+dev.off()
+
+
+Part_DG_GC_subset$orig.ident <- factor(Part_DG_GC_subset$orig.ident, levels = c("multiome_WT", "multiome_Bap1KO"))
+
+DefaultAssay(Part_DG_GC_subset) <- "GeneActivity"
+# UMAP plot of all Gli1 regulon genes, split by WT vs Bap1KO
+pdf("output/Pando/FeaturePlot_Gli1RegulonGenes_WTvsBap1KO-GeneActivity.pdf", width = 7, height = 130)
+FeaturePlot(
+  Part_DG_GC_subset,
+  features = Gli1_regulon_genes, # Gli1_regulon_genes
+  reduction = "umap",
+  split.by = "orig.ident",
+  cols = c("lightgrey", "darkgreen"),  # adjust color if needed
+  ncol = 5,
+  order = TRUE
+)
+dev.off()
+
+
+DefaultAssay(Part_DG_GC_subset) <- "GeneActivity"
+# Vln plot of all Gli1 regulon genes, split by WT vs Bap1KO
+pdf("output/Pando/VlnPlot_Gli1RegulonGenes_WTvsBap1KO-GeneActivity.pdf", width = 10, height = 40)
+VlnPlot(
+  Part_DG_GC_subset,
+  features = Gli1_regulon_genes, # Gli1_regulon_genes
+  group.by = "cluster.annot",
+  split.by = "orig.ident",
+  pt.size = 0.1,
+  cols = c("blue", "red")
+)
+dev.off()
+
+
+
+
+# GRN of WT only for the 67 target
+
+# Extract only Gli1 GRN entries to genes in your positive regulon
+Gli1_edges <- coef(Part_DG_GC_subset_WT_GRN_allGenes) %>%
+  dplyr::filter(tf == "Gli1", target %in% Gli1_regulon_genes, estimate > 0, padj < 0.05)
+
+library(igraph)
+library(ggraph)
+library(tidygraph)
+# Build igraph object
+g <- igraph::graph_from_data_frame(
+  d = Gli1_edges %>% dplyr::select(from = tf, to = target),
+  directed = TRUE
+)
+
+g_tidy <- as_tbl_graph(g)
+
+pdf("output/Pando/GRN_Gli1_regulon_genes_WT.pdf", width = 5, height = 5)
+ggraph(g_tidy, layout = "fr") +
+  geom_edge_link(arrow = arrow(length = unit(3, 'mm')), end_cap = circle(2, 'mm'), edge_colour = "orange") +
+  geom_node_point(size = 4, color = "steelblue") +
+  geom_node_text(aes(label = name), repel = TRUE, size = 3) +
+  theme_void() +
+  ggtitle("Gli1 GRN (WT)")
+dev.off()
+```
+
+
+
+
+
+
+
+### WT and Bap1KO separated with regions LinkPeaks() - gene peak correlated - Ctnnb1  gene : ONLY DG_GC trajectory (NSC prol2, IP, DG_GC)
+
+XXY NOT FOUND DOUBLE CHECK!!!
+
+
+```bash
+srun --mem=500g --cpus-per-task=8 --pty bash -l
+
+conda activate Signac_Pando
+module load hdf5
+```
+
+```R
+set.seed(42)
+
+# library
+library("Signac")
+library("Seurat")
+#library("hdf5r") # need to reinstall it at each session... with install.packages("hdf5r")
+library("tidyverse")
+library("EnsDb.Mmusculus.v79") # mm10
+library("reticulate") # needed to use FindClusters()
+library("metap") # needed to use FindConservedMarkers()
+use_python("~/anaconda3/envs/SignacV5/bin/python") # to specify which python to use... Needed for FindClusters()
+library("Pando")
+library("chromVARmotifs") # devtools::install_github("GreenleafLab/chromVARmotifs")
+
+# to run job in parrallel
+library(doParallel) # install.packages("doParallel")
+registerDoParallel(8) # update nb of core here!!
+
+
+
+
+# import and rename Seurat obj
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.sct_numeric_label.rds")
+Part_DG_GC_subset_WT_GRN_allGenes <- readRDS(file = "output/Pando/Part_DG_GC_subset_WT_GRN_allGenes.rds")
+Part_DG_GC_subset_Bap1KO_GRN_allGenes <- readRDS(file = "output/Pando/Part_DG_GC_subset_Bap1KO_GRN_allGenes.rds")
+
+
+# process multiome_WT_Bap1KO_QCV2vC1
+Part_DG_GC <- subset(
+  multiome_WT_Bap1KO_QCV2vC1.sct, 
+  subset = cluster.annot %in% c("NSC_proliferative_2", "IP", "DG_GC")
+)
+umap_coords <- Embeddings(Part_DG_GC, "umap")
+# Apply your custom UMAP boundaries
+selected_cells <- which(
+  umap_coords[,1] < 4 &
+  umap_coords[,2] < -2.5 &
+  umap_coords[,2] > -9.5
+)
+# Subset the Seurat object
+Part_DG_GC_subset <- subset(Part_DG_GC, cells = colnames(Part_DG_GC)[selected_cells])
+# Separate Seurat into WT and Bap1KO
+Part_DG_GC_subset_WT <- subset(Part_DG_GC_subset, subset = orig.ident == "multiome_WT")
+Part_DG_GC_subset_Bap1KO <- subset(Part_DG_GC_subset, subset = orig.ident == "multiome_Bap1KO")
+
+
+
+
+###########################################################################
+## WT ###################################################
+###########################################################################
+
+# Find modules = Genes regulated by each TF
+GetNetwork(Part_DG_GC_subset_WT_GRN_allGenes)
+coef(Part_DG_GC_subset_WT_GRN_allGenes)
+
+Part_DG_GC_subset_WT_GRN_allGenes <- find_modules(
+    Part_DG_GC_subset_WT_GRN_allGenes, 
+    p_thresh = 0.05,
+    nvar_thresh = 2, 
+    min_genes_per_module = 1, 
+    rsq_thresh = 0.05
+)
+
+Part_DG_GC_subset_WT_GRN_allGenes_TF <- get_network_graph(Part_DG_GC_subset_WT_GRN_allGenes, 
+    graph_name = 'full_graph', 
+    umap_method = 'none')
+
+
+# GRN plots
+Part_DG_GC_subset_WT_GRN_allGenes_TF.Ctnnb1 <- get_tf_network(Part_DG_GC_subset_WT_GRN_allGenes_TF, tf='Ctnnb1', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Gli1-Part_DG_GC_subset_WT_RegionsLinkPeaks.pdf", width=5, height=2)
+plot_tf_network(Part_DG_GC_subset_WT_GRN_allGenes_TF.Gli1, tf='Gli1', circular=F, label_nodes = "all")
+dev.off()
+pdf("output/Pando/plot_tf_network-Gli1-Part_DG_GC_subset_WT_RegionsLinkPeaks-circular_tfs.pdf", width=25, height=10)
+plot_tf_network(Part_DG_GC_subset_WT_GRN_allGenes_TF.Gli1, tf='Gli1', circular=TRUE, label_nodes = "tfs")
+dev.off()
+
+
+# Investigate regulon
+regulons_WT <- NetworkModules(Part_DG_GC_subset_WT_GRN_allGenes)
+positive_regulons_WT <- regulons_WT@features[['genes_pos']]
+positive_regulons_WT <- positive_regulons_WT[lengths(positive_regulons_WT) > 10]
+negative_regulons_WT <- regulons_WT@features[['genes_neg']]
+negative_regulons_WT <- negative_regulons_WT[lengths(negative_regulons_WT) > 10]
+
+## generate the list of regulons, which are genes that are co-regulated positively or negatively by the same TF
+Part_DG_GC_subset_WT <- AddModuleScore(Part_DG_GC_subset_WT,
+                                       features = positive_regulons_WT,
+                                       name = "regulon_WT_pos")
+
+Part_DG_GC_subset_WT <- AddModuleScore(Part_DG_GC_subset_WT,
+                                       features = negative_regulons_WT,
+                                       name = "regulon_WT_neg")
+
+meta_cols_pos <- grep("^regulon_WT_pos", colnames(Part_DG_GC_subset_WT@meta.data))
+meta_cols_neg <- grep("^regulon_WT_neg", colnames(Part_DG_GC_subset_WT@meta.data))
+
+# Rename
+colnames(Part_DG_GC_subset_WT@meta.data)[meta_cols_pos] <- paste0(names(positive_regulons_WT), "(+)")
+colnames(Part_DG_GC_subset_WT@meta.data)[meta_cols_neg] <- paste0(names(negative_regulons_WT), "(-)")
+
+
+# feature plots for the same TFs we found combining DE and chromVAR analysis, and their positive and negative regulons.
+
+# Set assay to RNA for gene expression
+DefaultAssay(Part_DG_GC_subset_WT) <- "RNA"
+
+# FeaturePlot for Gli1 gene expression
+p1 <- FeaturePlot(
+  Part_DG_GC_subset_WT,
+  features = "Gli1",
+  reduction = "umap",
+  cols = c("lightgrey", "darkred"),
+  order = TRUE
+) & NoAxes() & NoLegend()
+# The regulon scores are in meta.data, not in a new assay, so we must plot them using meta.data columns
+# You don't need to switch assay for this since module scores are stored in meta.data
+# But if you're using a fake assay for plotting, make sure these are accessible
+# Gli1 regulon features
+Gli1_pos <- "Gli1(+)"
+Gli1_neg <- "Gli1(-)"
+# Plot module scores using FeaturePlot with `cells = TRUE` (Seurat v5) or pulling from meta.data
+p2 <- FeaturePlot(
+  Part_DG_GC_subset_WT,
+  features = c(Gli1_pos, Gli1_neg),
+  reduction = "umap",
+  cols = c( "gray96", "darkgreen"),
+  order = TRUE,
+  ncol = 2
+) & NoAxes() & NoLegend()
+# Save to PDF
+pdf("output/Pando/Gli1_regulon_WT.pdf", width = 10, height = 6)
+(p1 / p2) + patchwork::plot_layout(heights = c(1, 1))
+dev.off()
+
+
+
+
+
+
+
+###########################################################################
+## Bap1KO ###################################################
+###########################################################################
+
+# Find modules = Genes regulated by each TF
+GetNetwork(Part_DG_GC_subset_Bap1KO_GRN_allGenes)
+coef(Part_DG_GC_subset_Bap1KO_GRN_allGenes)
+
+Part_DG_GC_subset_Bap1KO_GRN_allGenes <- find_modules(
+    Part_DG_GC_subset_Bap1KO_GRN_allGenes, 
+    p_thresh = 0.05,
+    nvar_thresh = 2, 
+    min_genes_per_module = 1, 
+    rsq_thresh = 0.05
+)
+Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF <- get_network_graph(Part_DG_GC_subset_Bap1KO_GRN_allGenes, 
+    graph_name = 'full_graph', 
+    umap_method = 'none')
+
+
+# GRN plots
+Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF.Gli1 <- get_tf_network(Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF, tf='Gli1', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Gli1-Part_DG_GC_subset_Bap1KO_RegionsLinkPeaks.pdf", width=5, height=2)
+plot_tf_network(Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF.Gli1, tf='Gli1', circular=F, label_nodes = "all")
+dev.off()
+pdf("output/Pando/plot_tf_network-Gli1-Part_DG_GC_subset_Bap1KO_RegionsLinkPeaks-circular_tfs.pdf", width=25, height=10)
+plot_tf_network(Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF.Gli1, tf='Gli1', circular=TRUE, label_nodes = "tfs")
+dev.off()
+
+
+# Investigate regulon
+regulons_Bap1KO <- NetworkModules(Part_DG_GC_subset_Bap1KO_GRN_allGenes)
+positive_regulons_Bap1KO <- regulons_Bap1KO@features[['genes_pos']]
+positive_regulons_Bap1KO <- positive_regulons_Bap1KO[lengths(positive_regulons_Bap1KO) > 10]
+negative_regulons_Bap1KO <- regulons_Bap1KO@features[['genes_neg']]
+negative_regulons_Bap1KO <- negative_regulons_Bap1KO[lengths(negative_regulons_Bap1KO) > 10]
+
+## generate the list of regulons, which are genes that are co-regulated positively or negatively by the same TF
+Part_DG_GC_subset_Bap1KO <- AddModuleScore(Part_DG_GC_subset_Bap1KO,
+                                       features = positive_regulons_Bap1KO,
+                                       name = "regulon_Bap1KO_pos")
+
+Part_DG_GC_subset_Bap1KO <- AddModuleScore(Part_DG_GC_subset_Bap1KO,
+                                       features = negative_regulons_Bap1KO,
+                                       name = "regulon_Bap1KO_neg")
+
+meta_cols_pos <- grep("^regulon_Bap1KO_pos", colnames(Part_DG_GC_subset_Bap1KO@meta.data))
+meta_cols_neg <- grep("^regulon_Bap1KO_neg", colnames(Part_DG_GC_subset_Bap1KO@meta.data))
+
+# Rename
+colnames(Part_DG_GC_subset_Bap1KO@meta.data)[meta_cols_pos] <- paste0(names(positive_regulons_Bap1KO), "(+)")
+colnames(Part_DG_GC_subset_Bap1KO@meta.data)[meta_cols_neg] <- paste0(names(negative_regulons_Bap1KO), "(-)")
+
+
+# feature plots for the same TFs we found combining DE and chromVAR analysis, and their positive and negative regulons.
+
+# Set assay to RNA for gene expression
+DefaultAssay(Part_DG_GC_subset_Bap1KO) <- "RNA"
+
+# FeaturePlot for Gli1 gene expression
+p1 <- FeaturePlot(
+  Part_DG_GC_subset_Bap1KO,
+  features = "Gli1",
+  reduction = "umap",
+  cols = c("lightgrey", "darkred"),
+  order = TRUE
+) & NoAxes() & NoLegend()
+# The regulon scores are in meta.data, not in a new assay, so we must plot them using meta.data columns
+# You don't need to switch assay for this since module scores are stored in meta.data
+# But if you're using a fake assay for plotting, make sure these are accessible
+# Gli1 regulon features
+Gli1_pos <- "Gli1(+)"
+Gli1_neg <- "Gli1(-)"
+# Plot module scores using FeaturePlot with `cells = TRUE` (Seurat v5) or pulling from meta.data
+p2 <- FeaturePlot(
+  Part_DG_GC_subset_Bap1KO,
+  features = c(Gli1_pos, Gli1_neg),
+  reduction = "umap",
+  cols = c( "gray96", "darkgreen"),
+  order = TRUE,
+  ncol = 2
+) & NoAxes() & NoLegend()
+# Save to PDF
+pdf("output/Pando/Gli1_regulon_Bap1KO.pdf", width = 10, height = 6)
+(p1 / p2) + patchwork::plot_layout(heights = c(1, 1))
+dev.off()
+
+
+
+
+###########################################################################
+## Compare WT vs Bap1KO ###################################################
+###########################################################################
+
+Gli1_regulon_genes <- positive_regulons_WT[["Gli1"]]
+
+
+
+
+Part_DG_GC_subset_WT <- AddModuleScore(Part_DG_GC_subset_WT, features = list(Gli1_regulon_genes), name = "Gli1_regulon")
+Part_DG_GC_subset_Bap1KO <- AddModuleScore(Part_DG_GC_subset_Bap1KO, features = list(Gli1_regulon_genes), name = "Gli1_regulon")
+
+
+
+Part_DG_GC_subset_WT$condition <- "WT"
+Part_DG_GC_subset_Bap1KO$condition <- "Bap1KO"
+
+combined <- merge(Part_DG_GC_subset_WT, Part_DG_GC_subset_Bap1KO)
+combined$condition <- factor(combined$condition, levels = c("WT", "Bap1KO"))
+pdf("output/Pando/Gli1_regulon-WTvsBap1KO.pdf", width = 8, height = 6)
+VlnPlot(
+  combined,
+  features = "Gli1_regulon1",
+  group.by = "cluster.annot",      # X-axis: cell types
+  split.by = "condition",          # Separate violins by condition
+  pt.size = 0.1,
+  cols = c("blue", "red")   # WT = black, Bap1KO = green (change as needed)
+) +  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
+# Gli1 expression with regulon activity
+p_expr <- VlnPlot(
+  combined,
+  features = "Gli1",
+  group.by = "cluster.annot",
+  split.by = "condition",
+  pt.size = 0.1,
+  cols = c("blue", "red")
+) + 
+  ggtitle("Gli1 expression") +
+  NoLegend() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Gli1 regulon activity plot
+p_regulon <- VlnPlot(
+  combined,
+  features = "Gli1_regulon1",
+  group.by = "cluster.annot",
+  split.by = "condition",
+  pt.size = 0.1,
+  cols = c("blue", "red")
+) + 
+  ggtitle("Gli1 regulon activity") +
+  NoLegend() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+pdf("output/Pando/Gli1_expressionVSregulon-WTvsBap1KO.pdf", width = 8, height = 8)
+p_expr / p_regulon
+dev.off()
+
+
+
+# Gli1 expression with regulon activity + STATS
+df <- data.frame(
+  cluster = combined$cluster.annot,
+  condition = combined$condition,
+  Gli1_expr = FetchData(combined, "Gli1"),
+  Gli1_regulon = combined@meta.data$Gli1_regulon1
+)
+
+# Get unique clusters
+clusters <- unique(df$cluster)
+
+# Initialize results list
+results <- lapply(clusters, function(cl) {
+  sub_df <- dplyr::filter(df, cluster == cl)
+  
+  # Expression test
+  expr_test <- wilcox.test(Gli1 ~ condition, data = sub_df)
+  
+  # Regulon test
+  reg_test <- wilcox.test(Gli1_regulon ~ condition, data = sub_df)
+  
+  tibble(
+    cluster = cl,
+    expr_pval = expr_test$p.value,
+    regulon_pval = reg_test$p.value,
+    expr_median_WT = median(sub_df$Gli1[sub_df$condition == "WT"]),
+    expr_median_KO = median(sub_df$Gli1[sub_df$condition == "Bap1KO"]),
+    regulon_median_WT = median(sub_df$Gli1_regulon[sub_df$condition == "WT"]),
+    regulon_median_KO = median(sub_df$Gli1_regulon[sub_df$condition == "Bap1KO"])
+  )
+})
+
+# Combine all results
+stat_results <- bind_rows(results)
+
+# Optional: adjust p-values (e.g., FDR)
+stat_results <- stat_results %>%
+  mutate(
+    expr_padj = p.adjust(expr_pval, method = "fdr"),
+    regulon_padj = p.adjust(regulon_pval, method = "fdr")
+  )
+
+# View results
+print(stat_results %>% dplyr::select(cluster, regulon_median_WT, regulon_median_KO, expr_padj, regulon_padj))
+
+
+
+# Collect the target of Gli1; many of these are significantly less express in Bap1KO
+## Get all positive regulons
+regulons_WT <- NetworkModules(Part_DG_GC_subset_WT_GRN_allGenes)
+positive_regulons_WT <- regulons_WT@features[["genes_pos"]]
+## Gli1 positive targets
+Gli1_targets <- positive_regulons_WT[["Gli1"]]
+
+write.table(
+  data.frame(gene = Gli1_targets),
+  file = "output/Pando/Gli1_positive_targets_WT.txt",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = TRUE,
+  sep = "\t"
+)
+#--> 67 target genes of Gli1 in WT; so many of them should be downregulated in Bap1KO
+
+
+
+# check expressioon of all 67 target genes
+# Make sure the object has condition info and RNA assay active
+DefaultAssay(Part_DG_GC_subset) <- "RNA"
+# UMAP plot of all Gli1 regulon genes, split by WT vs Bap1KO
+pdf("output/Pando/FeaturePlot_Gli1RegulonGenes_WTvsBap1KO.pdf", width = 7, height = 130)
+FeaturePlot(
+  Part_DG_GC_subset,
+  features = Gli1_regulon_genes,
+  reduction = "umap",
+  split.by = "orig.ident",
+  cols = c("lightgrey", "darkred"),  # adjust color if needed
+  ncol = 5,
+  order = TRUE
+)
+dev.off()
+
+
+Part_DG_GC_subset$orig.ident <- factor(Part_DG_GC_subset$orig.ident, levels = c("multiome_WT", "multiome_Bap1KO"))
+
+DefaultAssay(Part_DG_GC_subset) <- "GeneActivity"
+# UMAP plot of all Gli1 regulon genes, split by WT vs Bap1KO
+pdf("output/Pando/FeaturePlot_Gli1RegulonGenes_WTvsBap1KO-GeneActivity.pdf", width = 7, height = 130)
+FeaturePlot(
+  Part_DG_GC_subset,
+  features = Gli1_regulon_genes, # Gli1_regulon_genes
+  reduction = "umap",
+  split.by = "orig.ident",
+  cols = c("lightgrey", "darkgreen"),  # adjust color if needed
+  ncol = 5,
+  order = TRUE
+)
+dev.off()
+
+
+DefaultAssay(Part_DG_GC_subset) <- "GeneActivity"
+# Vln plot of all Gli1 regulon genes, split by WT vs Bap1KO
+pdf("output/Pando/VlnPlot_Gli1RegulonGenes_WTvsBap1KO-GeneActivity.pdf", width = 10, height = 40)
+VlnPlot(
+  Part_DG_GC_subset,
+  features = Gli1_regulon_genes, # Gli1_regulon_genes
+  group.by = "cluster.annot",
+  split.by = "orig.ident",
+  pt.size = 0.1,
+  cols = c("blue", "red")
+)
+dev.off()
+
+
+
+
+# GRN of WT only for the 67 target
+
+# Extract only Gli1 GRN entries to genes in your positive regulon
+Gli1_edges <- coef(Part_DG_GC_subset_WT_GRN_allGenes) %>%
+  dplyr::filter(tf == "Gli1", target %in% Gli1_regulon_genes, estimate > 0, padj < 0.05)
+
+library(igraph)
+library(ggraph)
+library(tidygraph)
+# Build igraph object
+g <- igraph::graph_from_data_frame(
+  d = Gli1_edges %>% dplyr::select(from = tf, to = target),
+  directed = TRUE
+)
+
+g_tidy <- as_tbl_graph(g)
+
+pdf("output/Pando/GRN_Gli1_regulon_genes_WT.pdf", width = 5, height = 5)
+ggraph(g_tidy, layout = "fr") +
+  geom_edge_link(arrow = arrow(length = unit(3, 'mm')), end_cap = circle(2, 'mm'), edge_colour = "orange") +
+  geom_node_point(size = 4, color = "steelblue") +
+  geom_node_text(aes(label = name), repel = TRUE, size = 3) +
+  theme_void() +
+  ggtitle("Gli1 GRN (WT)")
+dev.off()
+```
 
 
 

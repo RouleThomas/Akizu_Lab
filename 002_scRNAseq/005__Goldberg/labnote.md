@@ -61129,70 +61129,53 @@ dev.off()
 ### END OF SLURM  ######################################################
 ########################################################################
 
-XXXY HERE LOAD SLURM JOB!!
 Yao_Cortex <- readRDS(file = "output/seurat/Yao_Cortex-10X_nuclei_v3_AIBS-30dim-order2.rds") # 
 WT_Kcnc1_p14_CX_1step <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CX_1step-10X_nuclei_v3_AIBS-30dim-order2.rds") # 
 
-XXXY HERE PURSUE !!!
 
 
 
 
-
-# Step 4: Generate UMAP plots - USING OUR GASTRULOID 72hr ANNOTATION
+# Step 4: Generate UMAP plots - USING OUR WT_Kcnc1_p14_CX_1step ANNOTATION
 all_clusters <- union(
-  unique(Yao_Cortex_20k$cluster_id),
-  unique(WT_Kcnc1_p14_CX_1step_20k$predicted.id)
+  unique(Yao_Cortex$cluster_id),
+  unique(WT_Kcnc1_p14_CX_1step$predicted.id)
 )
 # Step 2: Assign consistent colors
 cluster_colors <- setNames(scales::hue_pal()(length(all_clusters)), sort(all_clusters))
-# Panel 1: Human gastrula
+# Panel 1: Yao_Cortex
 p1 <- DimPlot(
-  Yao_Cortex_20k,
+  Yao_Cortex,
   reduction = "umap",
   group.by = "cluster_id",
   label = TRUE,
   pt.size = 1,
   cols = cluster_colors
-) + ggtitle("Human gastrula")
+) + ggtitle("Yao_Cortex")
 
-# Panel 2: Projected gastruloid
+# Panel 2: Projected WT_Kcnc1_p14_CX
 p2 <- DimPlot(
-  WT_Kcnc1_p14_CX_1step_20k,
+  WT_Kcnc1_p14_CX_1step,
   reduction = "ref.umap",
   group.by = "cluster.annot",
   label = FALSE,
-  pt.size = 1,
-  cols = c(
-    "Nascent_Mesoderm" = "#F8766D", # red
-    "Primitive_Streak" = "#AEA200",
-    "Epiblast" = "#00A6FF",
-    "Endoderm" = "#00C1A7",
-    "Unkown" = "#00BD5C"
-  )
-) + ggtitle("Human gastruloid 72hr")
+  pt.size = 1
+) + ggtitle("WT_Kcnc1_p14_CX")
 # Panel 3: Overlay
-# Plot reference (Yao_Cortex_20k) in gray
-Yao_Cortex_20k$dummy_group <- "Reference"
+# Plot reference (Yao_Cortex) in gray
+Yao_Cortex$dummy_group <- "Reference"
 p_ref <- DimPlot(
-  Yao_Cortex_20k,
+  Yao_Cortex,
   reduction = "umap",
   group.by = "dummy_group",
   cols = "lightgray",
   pt.size = 1
 ) + NoLegend()
 p_query <- DimPlot(
-  WT_Kcnc1_p14_CX_1step_20k,
+  WT_Kcnc1_p14_CX_1step,
   reduction = "ref.umap",
   group.by = "cluster.annot",
-  pt.size = 1,
-  cols = c(
-    "Nascent_Mesoderm" = "#F8766D", # red
-    "Primitive_Streak" = "#AEA200",
-    "Epiblast" = "#00A6FF",
-    "Endoderm" = "#00C1A7",
-    "Unkown" = "#00BD5C"
-  )
+  pt.size = 1
 ) + NoAxes() + NoLegend()
 g_ref <- p_ref[[1]]
 query_layer <- ggplot_build(p_query[[1]])$data[[1]]
@@ -61208,11 +61191,11 @@ g_overlay <- g_ref +
   theme(plot.title = element_text(hjust = 0.5))
 
 # Step 4: Export
-pdf("output/seurat/UMAP_Yao_Cortex_20k-reference_query_overlay-annotation-version2-24hr.pdf", width = 30, height = 7)
+pdf("output/seurat/UMAP_Yao_Cortex-reference_query_overlay-annotation-order2.pdf", width = 30, height = 7)
 (p1 | p2 | g_overlay)
 dev.off()
 
-xxx
+
 
 ### SHOW EXPRESSION OF SOME GENES #######################
 #saveRDS(WT_Kcnc1_p14_CX_1step_20k, file = "output/seurat/WT_Kcnc1_p14_CX_1step_20k_scRNAseqProjectionversion2.rds")
@@ -61233,45 +61216,21 @@ dev.off()
 
 
 
+# Exctract marker genes from Yao et al 
 
-# Prediciton score
-# Extract scores and metadata
-# Create a dummy timepoint to allow boxplot
-df <- data.frame(
-  prediction_score = WT_Kcnc1_p14_CX_1step_20k$prediction.score.max,
-  group = "72hr Gastruloid"
+
+## Display the top 10 marker genes of each cluster; unbiased
+### Find all markers 
+Idents(Yao_Cortex) <- "cell_type"   # or: Idents(Yao_Cortex) <- Yao_Cortex$cluster
+all_markers <- FindAllMarkers(Yao_Cortex, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(
+  all_markers,
+  file = "output/seurat/Yao_Cortex-all_markers.txt",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
 )
-
-# Plot
-pdf("output/seurat/UMAP_Yao_Cortex_20k-reference_query_overlay-prediction_score-24hr.pdf", width = 5, height = 7)
-ggplot(df, aes(x = group, y = prediction_score)) +
-  geom_boxplot(fill = "white", color = "black") +
-  theme_minimal(base_size = 14) +
-  labs(title = "Prediction score", x = NULL, y = NULL)
-dev.off()
-
-
-df2 <- data.frame(
-  prediction_score = WT_Kcnc1_p14_CX_1step_20k$prediction.score.max,
-  predicted_id = WT_Kcnc1_p14_CX_1step_20k$predicted.id
-)
-pdf("output/seurat/UMAP_Yao_Cortex_20k-reference_query_overlay-prediction_score_predicted_id-24hr.pdf", width = 5, height = 4)
-ggplot(df2, aes(x = predicted_id, y = prediction_score)) +
-  geom_boxplot(outlier.size = 0.5) +
-  theme_bw() +
-  coord_flip() +
-  labs(title = "Prediction score", x = NULL, y = NULL)
-dev.off()
-
-
-
-
-
-
-
-XXXY
-
-
+##
 
 
 
@@ -61282,6 +61241,10 @@ XXXY
 
 - error at `IntegrateData()`: `number of items to replace is not a multiple of replacement length` ; Discussed [here](https://github.com/satijalab/seurat/issues/6341) and [here](https://github.com/satijalab/seurat/issues/6359), seems to hapenn when some clusters have very few cells...
 To solve it: make sure FindTransferAnchors() was working, produce anchors; change k.anchor and k.filter it can help increasing number of anchors (more anchors is better). Then in TransferData() decrease k.weight .
+  --> **SOLVED by using all cells and NOT downsample: Issue can happen if cell type too small; so no cell are projected and it bug... USing all cells from the dataset is better..**
+
+
+
 
 
 
@@ -61294,11 +61257,15 @@ Too long to run, lets generate a slurm job of the code from `### 10X_nuclei_v3_A
 ```bash
 conda activate scRNAseqV2
 
-sbatch scripts/scRNAseqProjection-10X_nuclei_v3_AIBS-order2.sh # 47776001 xxx
+sbatch scripts/scRNAseqProjection-10X_nuclei_v3_AIBS-order2.sh # 47776001 ok
 
 ```
 
---> XXX
+--> All cell types are recovered; 10X_nuclei_v3_AIBS can be used effectively for cell type annotation! Let's use marker genes from their paper; they should overlap!!
+  --> File to use: `seurat/Yao_Cortex-all_markers.txt`
+
+
+
 
 
 

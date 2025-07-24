@@ -5,7 +5,7 @@ Each FASTA header must be in this format:
     >ENSG00000186092.7::chr1:65564-65573(+)
 
 This script outputs one compressed .parquet file per chromosome,
-always using the + strand genomic coordinates (no reverse complement).
+--> always using the + strand genomic coordinates (no reverse complement) as FASTA CDS is already strand-corrected!
 """
 
 from __future__ import annotations

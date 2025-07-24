@@ -38,11 +38,6 @@ bedtools getfasta \
 conda activate mutsim
 
 sbatch scripts/build_parquet_array.slurm # 47779545 ok
-
-
-
-
-
 ```
 
 
@@ -132,11 +127,9 @@ Three scripts `run_filtered_*.slurm`; each uses `scripts/simulate_array.py` for 
 ```bash
 conda activate mutsim
 
-
-
 python scripts/simulate_array.py \
   --signature "SBS2" \
-  --n "500" \
+  --n "4000" \
   --rep "1" \
   --seed "42" \
   --sigfile signatures/COSMIC_with_flat.txt \
@@ -144,24 +137,16 @@ python scripts/simulate_array.py \
 #--> light testing seems to be working!
 
 
-## BELOW NOT MOD
-
-sbatch scripts/run_filtered_cosmic.slurm # 
-
-
-
-
+# Generate plot for all
+sbatch scripts/run_filtered_cosmic.slurm # 47828611 --> results/
 
 sbatch scripts/run_filtered_experimental_1.slurm # WAIT CHECK COSMIC FIRST xxx --> results_experimental/
 sbatch scripts/run_filtered_contexts_1.slurm #  xxx --> results_contexts/
-
-
 ```
 
---> XXX All good all files generated with `n_*` folders in the respectrive `results*/` folders
+--> All good all files generated with `n_*` folders in the respectrive `results*/` folders
 
 
-XXXY SUFFERING HERE!
 
 
 
@@ -181,18 +166,59 @@ plot_sbs96_from_parquet.py
 # Check a few samples
 
 python scripts/plot_sbs96_from_parquet.py \
-  --parquet results/SBS2/n_500/rep_01.annot.parquet \
+  --parquet results/SBS2/n_4000/rep_01.annot.parquet \
   --fasta ref/GRCh38.primary_assembly.genome.fa \
-  --sample-name SBS2-n_500-rep_01 \
-  --output-pdf plot/SBS2-n_500-rep_01_plot.pdf
+  --sample-name SBS2-n_4000-rep_01 \
+  --output-pdf plot/SBS2-n_4000-rep_01_plot.pdf
 
-# Generate plot for all
 
-XXXY
+
+
 
 
 ```
 
 --> It seems to be working!!!
+
+
+# QC simulation
+
+
+Let's double check that the simulation is working properly.
+--> Check KRAS gene (ENSG00000133703 )
+
+```python
+import pandas as pd
+import numpy as np
+
+df = pd.read_parquet("results/SBS2/n_4000/rep_01.annot.parquet")
+# Mapping: 0=A, 1=C, 2=G, 3=T
+INT2BASE = np.array(["A", "C", "G", "T"])
+
+# Replace if needed
+df["ref_base"] = INT2BASE[df["ref_base"].values]
+
+
+# inspect mutation
+print(df[[
+    "chr", "pos", "strand", "ref_base", "alt_base",
+    "ref_codon", "mut_codon", "ref_aa", "alt_aa"
+]])
+```
+
+
+--> I checked (on IGV):
+  - ref and mut codon; all good
+  - `+` `-` strand mutation correctly applied
+  - mutation not always at the center of the codon
+
+
+
+
+
+
+
+
+
 
 
