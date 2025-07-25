@@ -190,30 +190,40 @@ conda activate mutsim
 
 # Plot and summary metric for each mutations
 bash scripts/run_summary_plot-cosmic.sh
-
 # One plot with all mutations
 python scripts/plot_all_signatures_combined-cosmic.py
 #--> results/combined_signature_summary_errorbars.pdf
-
 # One plot with all mutations - Random/Flat highlighted
 python scripts/plot_all_signatures_combined-cosmic-highlight_random.py
 #--> results/combined_signature_summary_plots-highlight_random.pdf
-
-
 
 ####################################
 # EXPERIMENTAL #####################
 ####################################
 
-XXX
+XXXY CODE READY RUN IT WHEN DONE!!! 
 
-
+# Plot and summary metric for each mutations
+bash scripts/run_summary_plot-experimental.sh
+# One plot with all mutations
+python scripts/plot_all_signatures_combined-experimental.py
+#--> results_experimental/combined_signature_summary_errorbars.pdf
+# One plot with all mutations - Random/Flat highlighted
+python scripts/plot_all_signatures_combined-experimental-highlight_random.py
+#--> results_experimental/combined_signature_summary_plots-highlight_random.pdf
 
 ####################################
-# CONTEXT ##########################
+# CONTEXTS ##########################
 ####################################
 
-XXX
+# Plot and summary metric for each mutations
+bash scripts/run_summary_plot-contexts.sh
+# One plot with all mutations
+python scripts/plot_all_signatures_combined-contexts.py
+#--> results_contexts/combined_signature_summary_errorbars.pdf
+# One plot with all mutations - Random/Flat highlighted
+python scripts/plot_all_signatures_combined-contexts-highlight_random.py
+#--> results_contexts/combined_signature_summary_plots-highlight_random.pdf
 
 
 
