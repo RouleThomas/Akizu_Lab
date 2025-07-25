@@ -185,7 +185,7 @@ Let's generate plot with `x` = `n_mutations` and `y` = `annotation score`
 conda activate mutsim
 
 ####################################
-# COSMIC ##########################
+# COSMIC ###########################
 ####################################
 
 # Plot and summary metric for each mutations
@@ -202,7 +202,7 @@ python scripts/plot_all_signatures_combined-cosmic-highlight_random.py
 
 
 ####################################
-# EXPERIMENTAL ##########################
+# EXPERIMENTAL #####################
 ####################################
 
 XXX
