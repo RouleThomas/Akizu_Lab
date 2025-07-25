@@ -138,10 +138,9 @@ python scripts/simulate_array.py \
 
 
 # Generate plot for all
-sbatch scripts/run_filtered_cosmic.slurm # 47828611 --> results/
-
-sbatch scripts/run_filtered_experimental_1.slurm # WAIT CHECK COSMIC FIRST xxx --> results_experimental/
-sbatch scripts/run_filtered_contexts_1.slurm #  xxx --> results_contexts/
+sbatch scripts/run_filtered_cosmic.slurm # 47828611 ok --> results/
+sbatch scripts/run_filtered_experimental.slurm # 47875937 xxx --> results_experimental/
+sbatch scripts/run_filtered_contexts.slurm # 47876020 xxx --> results_contexts/
 ```
 
 --> All good all files generated with `n_*` folders in the respectrive `results*/` folders
@@ -170,15 +169,61 @@ python scripts/plot_sbs96_from_parquet.py \
   --fasta ref/GRCh38.primary_assembly.genome.fa \
   --sample-name SBS2-n_4000-rep_01 \
   --output-pdf plot/SBS2-n_4000-rep_01_plot.pdf
+```
+
+--> It seems to be working!!!
 
 
+
+## Annotation summary plot
+
+Let's generate plot with `x` = `n_mutations` and `y` = `annotation score`
+
+
+
+```bash
+conda activate mutsim
+
+####################################
+# COSMIC ##########################
+####################################
+
+# Plot and summary metric for each mutations
+bash scripts/run_summary_plot-cosmic.sh
+
+# One plot with all mutations
+python scripts/plot_all_signatures_combined-cosmic.py
+#--> results/combined_signature_summary_errorbars.pdf
+
+# One plot with all mutations - Random/Flat highlighted
+python scripts/plot_all_signatures_combined-cosmic-highlight_random.py
+#--> results/combined_signature_summary_plots-highlight_random.pdf
+
+
+
+####################################
+# EXPERIMENTAL ##########################
+####################################
+
+XXX
+
+
+
+####################################
+# CONTEXT ##########################
+####################################
+
+XXX
 
 
 
 
 ```
 
---> It seems to be working!!!
+
+
+
+
 
 
 # QC simulation
