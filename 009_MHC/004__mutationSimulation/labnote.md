@@ -201,8 +201,6 @@ python scripts/plot_all_signatures_combined-cosmic-highlight_random.py
 # EXPERIMENTAL #####################
 ####################################
 
-XXXY CODE READY RUN IT WHEN DONE!!! 
-
 # Plot and summary metric for each mutations
 bash scripts/run_summary_plot-experimental.sh
 # One plot with all mutations
@@ -224,13 +222,9 @@ python scripts/plot_all_signatures_combined-contexts.py
 # One plot with all mutations - Random/Flat highlighted
 python scripts/plot_all_signatures_combined-contexts-highlight_random.py
 #--> results_contexts/combined_signature_summary_plots-highlight_random.pdf
-
-
-
-
 ```
 
-
+--> All good, all summary annottion files and plot generated
 
 
 

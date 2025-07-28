@@ -8,7 +8,7 @@ from scipy.stats import sem
 
 # Parameters
 INPUT_DIR = Path("results_experimental")
-RANDOM_FILE = INPUT_DIR / "Flat" / "Flat_summary_all.tsv"
+RANDOM_FILE = Path("results") / "Flat" / "Flat_summary_all.tsv"
 OUTPUT_PDF = "results_experimental/combined_signature_summary_plots-highlight_random.pdf"
 
 METRICS = [

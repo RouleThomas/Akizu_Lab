@@ -35308,9 +35308,15 @@ saveRDS(GASTRU_72h_integrate, file = "output/seurat/GASTRU_72h_integrate-dim20kp
 
 
 
+--> **Merge option is better**, looking at some marker genes according to Conchi
+  --> Projection of the condition onto human gastrula (Tyser et al 2021) 
 
 
 
+
+## Projection onto Human gastrula Tyser et al 2021
+
+--> Done in `002*/007*`
 
 
 
