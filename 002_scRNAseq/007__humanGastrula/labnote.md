@@ -956,11 +956,6 @@ ggplot(df2, aes(x = predicted_id, y = prediction_score)) +
   labs(title = "Prediction score", x = NULL, y = NULL)
 dev.off()
 
-
-
-
-
-
 ```
 
 --> GOOD for both order
@@ -1894,7 +1889,7 @@ pdf("output/seurat/UMAP_humanGastrula-reference_query_overlay-version3-24hr.pdf"
 dev.off()
 
 
-# Step 4: Generate UMAP plots - USING OUR GASTRULOID 24hr CLUSTER ANNOTATION
+# Generate UMAP plots - USING OUR GASTRULOID 24hr CLUSTER ANNOTATION
 all_clusters <- union(
   unique(humanGastrula$cluster_id),
   unique(GASTRU_24h_merge$predicted.id)
@@ -1947,7 +1942,6 @@ g_overlay <- g_ref +
   ggtitle("Overlay") +
   theme_void() +
   theme(plot.title = element_text(hjust = 0.5))
-
 # Step 4: Export
 pdf("output/seurat/UMAP_humanGastrula-reference_query_overlay-annotation-version3-24hr.pdf", width = 30, height = 7)
 (p1 | p2 | g_overlay)
@@ -1956,7 +1950,7 @@ dev.off()
 
 
 
-# Step 4: Generate UMAP plots - USING OUR GASTRULOID 24hr CONDITION
+# Generate UMAP plots - USING OUR GASTRULOID 24hr CONDITION
 all_clusters <- union(
   unique(humanGastrula$cluster_id),
   unique(GASTRU_24h_merge$predicted.id)
@@ -2009,7 +2003,6 @@ g_overlay <- g_ref +
   ggtitle("Overlay") +
   theme_void() +
   theme(plot.title = element_text(hjust = 0.5))
-
 # Step 4: Export
 pdf("output/seurat/UMAP_humanGastrula-reference_query_overlay-annotationCondition-version3-24hr.pdf", width = 30, height = 7)
 (p1 | p2 | g_overlay)
@@ -2091,6 +2084,633 @@ dev.off()
 
 
 --> Work great, UNTREATED (more epiblast), DASATINIB, XMU (no Emergent_Mesoderm!) projected differently.
+
+
+
+
+# Analyzis with the processed data - version3 MERGE UNTREATED, DASATINIB, XMU - human gastruloid 72hrs projection
+
+
+Let's try to directly used the processed data from the authors
+
+
+```bash
+conda activate scRNAseqV2
+```
+
+```R
+# packages
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("ggpubr")
+
+set.seed(42)
+
+
+# import humanGastrula .rds files
+
+raw_reads <- readRDS("input/raw_reads.rds")
+umap_info <- readRDS("input/umap.rds")
+
+
+
+# Set cell names as rownames
+rownames(raw_reads) <- umap_info$cell_name
+
+# Convert to seurat
+humanGastrula <- CreateSeuratObject(counts = t(raw_reads))  # transpose since genes are in columns
+
+# Build UMAP matrix
+umap_mat <- as.matrix(umap_info[, c("X", "X1")])
+rownames(umap_mat) <- umap_info$cell_name
+colnames(umap_mat) <- c("UMAP_1", "UMAP_2")
+
+# Attach UMAP to Seurat
+humanGastrula[["umap"]] <- CreateDimReducObject(embeddings = umap_mat, key = "UMAP_", assay = "RNA")
+
+# Make sure rownames are cell names
+rownames(umap_info) <- umap_info$cell_name
+
+# Add desired metadata columns to the Seurat object
+humanGastrula$cluster_id <- umap_info$cluster_id
+humanGastrula$sub_cluster <- umap_info$sub_cluster
+
+
+head(humanGastrula@meta.data)
+
+
+# Re-perform clustering
+
+DefaultAssay(humanGastrula) <- "RNA"
+
+## NORMALIZE AND SCALE DATA 
+humanGastrula <- NormalizeData(humanGastrula, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(humanGastrula)
+humanGastrula <- ScaleData(humanGastrula, features = all.genes) # zero-centres and scales it
+
+
+## Find variable features
+humanGastrula = FindVariableFeatures(humanGastrula, nfeatures = 3000)
+
+humanGastrula <- RunPCA(humanGastrula, verbose = FALSE, npcs = 25)
+humanGastrula <- RunUMAP(humanGastrula, reduction = "pca", dims = 1:25, verbose = FALSE)
+humanGastrula <- FindNeighbors(humanGastrula, reduction = "pca", k.param = 15, dims = 1:25)
+humanGastrula <- FindClusters(humanGastrula, resolution = 0.3, verbose = FALSE, algorithm = 4)
+
+
+
+# Plot to confirm it work
+
+pdf("output/seurat/UMAP_humanGastrula.pdf", width=10, height=6)
+DimPlot(humanGastrula, reduction = "umap", label=TRUE, group.by = "cluster_id")
+dev.off()
+
+
+# Check some genes
+
+ParaxialMesoderm= c("TBX6", "MESP2", "HES7", "MSGN1", "NKX1.2")
+pdf("output/seurat/FeaturePlot_SCT_humanGastrula-dim25-ParaxialMesoderm.pdf", width=10, height=10)
+FeaturePlot(humanGastrula, features = ParaxialMesoderm, max.cutoff = 3, cols = c("grey", "red"))
+dev.off()
+
+
+
+
+
+
+# Import our data
+GASTRU_72h_merge <- readRDS(file = "../003__YAP1/output/seurat/GASTRU_72h_merge-dim20kparam30res03.rds")
+
+
+DefaultAssay(GASTRU_72h_merge) <- "RNA"
+
+
+# Do scRNAseq projection (reference humanGasutrla and query GASTRU_72h_merge) - V1 
+
+# V2 - like in the paper
+
+# Step 1: Find anchors (you may have already done this)
+GASTRU_72h_merge <- RunUMAP(
+  GASTRU_72h_merge,
+  dims = 1:20,
+  reduction = "pca",
+  return.model = TRUE  
+)
+
+
+# Find anchors using PCA projection
+shared_features <- intersect(
+  rownames(humanGastrula),
+  rownames(GASTRU_72h_merge)
+)
+
+
+
+anchors <- FindTransferAnchors(
+  reference = GASTRU_72h_merge ,
+  query = humanGastrula,
+  normalization.method = "LogNormalize",  # or "LogNormalize"
+  reference.reduction = "pca",  
+  reduction = "pcaproject",
+  dims = 1:20,
+  features = shared_features,
+  k.anchor = 100,
+  k.filter = 500
+)
+
+# Step 2: Transfer labels from reference to query
+predictions <- TransferData(
+  anchorset = anchors,
+  refdata = GASTRU_72h_merge$seurat_clusters,
+  dims = 1:20,
+  k.weight = 100
+)
+
+humanGastrula <- AddMetaData(humanGastrula, metadata = predictions)
+
+
+# Step 3: Project query onto reference UMAP
+humanGastrula <- MapQuery(
+  anchorset = anchors,
+  reference = GASTRU_72h_merge,
+  query = humanGastrula,
+  refdata = list(cluster_id = "seurat_clusters"),
+  reference.reduction = "pca",
+  reduction.model = "umap"
+)
+
+# Step 4: Generate UMAP plots
+# Step 1: Create a color palette for all cluster levels
+# Get all unique cluster names from both reference and query
+all_clusters <- union(
+  unique(GASTRU_72h_merge$seurat_clusters),
+  unique(humanGastrula$predicted.id)
+)
+
+# Assign colors (adjust palette as needed or use scales::hue_pal())
+cluster_colors <- setNames(
+  scales::hue_pal()(length(all_clusters)),
+  sort(all_clusters)
+)
+
+# Panel 1: Human gastruloid
+p1 <- DimPlot(
+  GASTRU_72h_merge,
+  reduction = "umap",
+  group.by = "seurat_clusters",
+  label = TRUE,
+  pt.size = 1,
+  cols = cluster_colors
+) + ggtitle("Human gastruloid 72hr")
+
+# Panel 2: Projected gastrula
+p2 <- DimPlot(
+  humanGastrula,
+  reduction = "ref.umap",
+  group.by = "predicted.id",
+  label = TRUE,
+  pt.size = 1,
+  cols = cluster_colors
+) + ggtitle("Human gastrula")
+
+# Panel 3: Overlay
+# Reference in gray
+GASTRU_72h_merge$dummy_group <- "Reference"
+p_ref <- DimPlot(
+  GASTRU_72h_merge,
+  reduction = "umap",
+  group.by = "dummy_group",
+  cols = "lightgray",
+  pt.size = 1
+) + NoLegend()
+
+# Query plotted separately with correct colors
+p_query <- DimPlot(
+  humanGastrula,
+  reduction = "ref.umap",
+  group.by = "predicted.id",
+  pt.size = 1,
+  cols = cluster_colors
+) + NoAxes() + NoLegend()
+
+# Extract and overlay
+g_ref <- p_ref[[1]]
+query_layer <- ggplot_build(p_query[[1]])$data[[1]]
+
+g_overlay <- g_ref +
+  geom_point(
+    data = query_layer,
+    aes(x = x, y = y),
+    color = query_layer$colour,
+    size = 1,
+    show.legend = FALSE
+  ) +
+  ggtitle("Overlay") +
+  theme_void() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Step 5: Export
+pdf("output/seurat/UMAP_humanGastrula-reference_query_overlay-order1-version3.pdf", width = 30, height = 7)
+(p1 | p2 | g_overlay)
+dev.off()
+
+
+
+# Prediciton score
+# Extract scores and metadata
+# Create a dummy timepoint to allow boxplot
+df <- data.frame(
+  prediction_score = humanGastrula$prediction.score.max,
+  group = "Human gastrula"
+)
+
+# Plot
+pdf("output/seurat/UMAP_humanGastrula-reference_query_overlay-order1-version3-prediction_score.pdf", width = 5, height = 7)
+ggplot(df, aes(x = group, y = prediction_score)) +
+  geom_boxplot(fill = "white", color = "black") +
+  theme_minimal(base_size = 14) +
+  labs(title = "Prediction score", x = NULL, y = NULL)
+dev.off()
+
+
+df2 <- data.frame(
+  prediction_score = humanGastrula$prediction.score.max,
+  predicted_id = humanGastrula$predicted.id
+)
+pdf("output/seurat/UMAP_humanGastrula-reference_query_overlay-order1-version3-prediction_score_predicted_id.pdf", width = 5, height = 4)
+ggplot(df2, aes(x = predicted_id, y = prediction_score)) +
+  geom_boxplot(outlier.size = 0.5) +
+  theme_bw() +
+  coord_flip() +
+  labs(title = "Prediction score", x = NULL, y = NULL)
+dev.off()
+
+
+
+
+
+
+
+
+##############################################################
+# The other way ##############################################
+##############################################################
+DefaultAssay(GASTRU_72h_merge) <- "RNA"
+
+
+# Step 1: Find anchors (you may have already done this)
+humanGastrula <- RunUMAP(
+  humanGastrula,
+  dims = 1:25,
+  reduction = "pca",
+  return.model = TRUE  
+)
+
+
+anchors <- FindTransferAnchors(
+  reference = humanGastrula,
+  query = GASTRU_72h_merge,
+  normalization.method = "LogNormalize",  # or "LogNormalize"
+  reference.reduction = "pca",  
+  reduction = "pcaproject",
+  dims = 1:25,
+  features = shared_features,
+  k.anchor = 100,
+  k.filter = 500
+)
+
+# Step 2: Transfer labels from reference to query
+predictions <- TransferData(
+  anchorset = anchors,
+  refdata = humanGastrula$cluster_id,
+  dims = 1:25,
+  k.weight = 100
+)
+
+GASTRU_72h_merge <- AddMetaData(GASTRU_72h_merge, metadata = predictions)
+
+
+# Step 3: Project query onto reference UMAP
+GASTRU_72h_merge <- MapQuery(
+  anchorset = anchors,
+  reference = humanGastrula,
+  query = GASTRU_72h_merge,
+  refdata = list(cluster_id = "cluster_id"),
+  reference.reduction = "pca",
+  reduction.model = "umap"
+)
+
+# Step 4: Generate UMAP plots - USING HUMAN GASTRULA ANNOTATION
+all_clusters <- union(
+  unique(humanGastrula$cluster_id),
+  unique(GASTRU_72h_merge$predicted.id)
+)
+
+# Step 2: Assign consistent colors
+cluster_colors <- setNames(scales::hue_pal()(length(all_clusters)), sort(all_clusters))
+# Panel 1: Human gastrula
+p1 <- DimPlot(
+  humanGastrula,
+  reduction = "umap",
+  group.by = "cluster_id",
+  label = TRUE,
+  pt.size = 1,
+  cols = cluster_colors
+) + ggtitle("Human gastrula")
+
+# Panel 2: Projected gastruloid
+p2 <- DimPlot(
+  GASTRU_72h_merge,
+  reduction = "ref.umap",
+  group.by = "predicted.id",
+  label = TRUE,
+  pt.size = 1,
+  cols = cluster_colors
+) + ggtitle("Human gastruloid 72hr")
+
+# Panel 3: Overlay
+
+# Plot reference (humanGastrula) in gray
+humanGastrula$dummy_group <- "Reference"
+p_ref <- DimPlot(
+  humanGastrula,
+  reduction = "umap",
+  group.by = "dummy_group",
+  cols = "lightgray",
+  pt.size = 1
+) + NoLegend()
+
+# Plot projected query separately with colors
+p_query <- DimPlot(
+  GASTRU_72h_merge,
+  reduction = "ref.umap",
+  group.by = "predicted.id",
+  pt.size = 1,
+  cols = cluster_colors
+) + NoAxes() + NoLegend()
+
+# Overlay: Extract and draw query points on top of reference
+g_ref <- p_ref[[1]]
+query_layer <- ggplot_build(p_query[[1]])$data[[1]]
+
+g_overlay <- g_ref +
+  geom_point(
+    data = query_layer,
+    aes(x = x, y = y),
+    color = query_layer$colour,  # already hex
+    size = 1
+  ) +
+  ggtitle("Overlay") +
+  theme_void() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Step 4: Export
+pdf("output/seurat/UMAP_humanGastrula-reference_query_overlay-version3.pdf", width = 30, height = 7)
+(p1 | p2 | g_overlay)
+dev.off()
+
+
+
+
+# Generate UMAP plots - USING OUR GASTRULOID 72hr ANNOTATION
+all_clusters <- union(
+  unique(humanGastrula$cluster_id),
+  unique(GASTRU_72h_merge$predicted.id)
+)
+# Step 2: Assign consistent colors
+cluster_colors <- setNames(scales::hue_pal()(length(all_clusters)), sort(all_clusters))
+# Panel 1: Human gastrula
+p1 <- DimPlot(
+  humanGastrula,
+  reduction = "umap",
+  group.by = "cluster_id",
+  label = TRUE,
+  pt.size = 1,
+  cols = cluster_colors
+) + ggtitle("Human gastrula")
+
+# Panel 2: Projected gastruloid
+p2 <- DimPlot(
+  GASTRU_72h_merge,
+  reduction = "ref.umap",
+  group.by = "seurat_clusters",
+  label = FALSE,
+  pt.size = 1
+) + ggtitle("Human gastruloid 72hr")
+# Panel 3: Overlay
+# Plot reference (humanGastrula) in gray
+humanGastrula$dummy_group <- "Reference"
+p_ref <- DimPlot(
+  humanGastrula,
+  reduction = "umap",
+  group.by = "dummy_group",
+  cols = "lightgray",
+  pt.size = 1
+) + NoLegend()
+p_query <- DimPlot(
+  GASTRU_72h_merge,
+  reduction = "ref.umap",
+  group.by = "seurat_clusters",
+  pt.size = 1
+) + NoAxes() + NoLegend()
+g_ref <- p_ref[[1]]
+query_layer <- ggplot_build(p_query[[1]])$data[[1]]
+g_overlay <- g_ref +
+  geom_point(
+    data = query_layer,
+    aes(x = x, y = y),
+    color = query_layer$colour,  # already hex
+    size = 1
+  ) +
+  ggtitle("Overlay") +
+  theme_void() +
+  theme(plot.title = element_text(hjust = 0.5))
+# Step 4: Export
+pdf("output/seurat/UMAP_humanGastrula-reference_query_overlay-annotation-version3.pdf", width = 30, height = 7)
+(p1 | p2 | g_overlay)
+dev.off()
+
+
+
+# Generate UMAP plots - USING OUR GASTRULOID 24hr CONDITION
+all_clusters <- union(
+  unique(humanGastrula$cluster_id),
+  unique(GASTRU_72h_merge$predicted.id)
+)
+# Step 2: Assign consistent colors
+cluster_colors <- setNames(scales::hue_pal()(length(all_clusters)), sort(all_clusters))
+# Panel 1: Human gastrula
+p1 <- DimPlot(
+  humanGastrula,
+  reduction = "umap",
+  group.by = "cluster_id",
+  label = TRUE,
+  pt.size = 1,
+  cols = cluster_colors
+) + ggtitle("Human gastrula")
+
+# Panel 2: Projected gastruloid
+p2 <- DimPlot(
+  GASTRU_72h_merge,
+  reduction = "ref.umap",
+  group.by = "condition",
+  label = FALSE,
+  pt.size = 1
+) + ggtitle("Human gastruloid 72hr")
+# Panel 3: Overlay
+# Plot reference (humanGastrula) in gray
+humanGastrula$dummy_group <- "Reference"
+p_ref <- DimPlot(
+  humanGastrula,
+  reduction = "umap",
+  group.by = "dummy_group",
+  cols = "lightgray",
+  pt.size = 1
+) + NoLegend()
+p_query <- DimPlot(
+  GASTRU_72h_merge,
+  reduction = "ref.umap",
+  group.by = "condition",
+  pt.size = 1
+) + NoAxes() + NoLegend()
+g_ref <- p_ref[[1]]
+query_layer <- ggplot_build(p_query[[1]])$data[[1]]
+g_overlay <- g_ref +
+  geom_point(
+    data = query_layer,
+    aes(x = x, y = y),
+    color = query_layer$colour,  # already hex
+    size = 1
+  ) +
+  ggtitle("Overlay") +
+  theme_void() +
+  theme(plot.title = element_text(hjust = 0.5))
+# Step 4: Export
+pdf("output/seurat/UMAP_humanGastrula-reference_query_overlay-annotationCondition-version3.pdf", width = 30, height = 7)
+(p1 | p2 | g_overlay)
+dev.off()
+## Condition split
+pdf("output/seurat/UMAP_humanGastrula-reference_query_overlay-annotationConditionSplit-version3.pdf", width = 30, height = 7)
+DimPlot(
+  GASTRU_72h_merge,
+  reduction = "ref.umap",
+  split.by = "condition",
+  label = FALSE,
+  pt.size = 1
+) + ggtitle("Human gastruloid 72hr")
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+### SHOW EXPRESSION OF SOME GENES #######################
+#saveRDS(GASTRU_72h_merge, file = "output/seurat/GASTRU_72h_merge_scRNAseqProjectionversion2.rds")
+GASTRU_72h_merge <- readRDS("output/seurat/GASTRU_72h_merge_scRNAseqProjectionversion2.rds")
+# 
+pdf("output/seurat/UMAP_humanGastrula-query-TBXT-version2.pdf", width = 7, height = 7)
+FeaturePlot(
+  GASTRU_72h_merge,
+  features = "TBXT",
+  reduction = "ref.umap",
+  pt.size = 1, max.cutoff = 1, cols = c("grey", "red")
+) + ggtitle("TBXT expression in human gastruloid 72hr")
+dev.off()
+pdf("output/seurat/UMAP_humanGastrula-query-EOMES-version2.pdf", width = 7, height = 7)
+FeaturePlot(
+  GASTRU_72h_merge,
+  features = "EOMES",
+  reduction = "ref.umap",
+  pt.size = 1, max.cutoff = 0.5, cols = c("grey", "red")
+) + ggtitle("EOMES expression in human gastruloid 72hr")
+dev.off()
+
+pdf("output/seurat/UMAP_humanGastrula-query-TFAP2A-version2.pdf", width = 7, height = 7)
+FeaturePlot(
+  GASTRU_72h_merge,
+  features = "TFAP2A",
+  reduction = "ref.umap",
+  pt.size = 1, max.cutoff = 3, cols = c("grey", "red")
+) + ggtitle("TFAP2A expression in human gastruloid 72hr")
+dev.off()
+pdf("output/seurat/UMAP_humanGastrula-query-KDR-version2.pdf", width = 7, height = 7)
+FeaturePlot(
+  GASTRU_72h_merge,
+  features = "KDR",
+  reduction = "ref.umap",
+  pt.size = 1, max.cutoff = 5, cols = c("grey", "red")
+) + ggtitle("KDR expression in human gastruloid 72hr")
+dev.off()
+
+
+
+############################################################
+
+
+
+
+
+# Prediciton score
+# Extract scores and metadata
+# Create a dummy timepoint to allow boxplot
+df <- data.frame(
+  prediction_score = GASTRU_72h_merge$prediction.score.max,
+  group = "72hr Gastruloid"
+)
+
+# Plot
+pdf("output/seurat/UMAP_humanGastrula-reference_query_overlay-prediction_score-version3.pdf", width = 5, height = 7)
+ggplot(df, aes(x = group, y = prediction_score)) +
+  geom_boxplot(fill = "white", color = "black") +
+  theme_minimal(base_size = 14) +
+  labs(title = "Prediction score", x = NULL, y = NULL)
+dev.off()
+
+
+df2 <- data.frame(
+  prediction_score = GASTRU_72h_merge$prediction.score.max,
+  predicted_id = GASTRU_72h_merge$predicted.id
+)
+pdf("output/seurat/UMAP_humanGastrula-reference_query_overlay-prediction_score_predicted_id-version3.pdf", width = 5, height = 4)
+ggplot(df2, aes(x = predicted_id, y = prediction_score)) +
+  geom_boxplot(outlier.size = 0.5) +
+  theme_bw() +
+  coord_flip() +
+  labs(title = "Prediction score", x = NULL, y = NULL)
+dev.off()
+
+```
+
+
+
+--> XMU very different, more Advanced_Mesoderm
+--> UNTREATED got more Endoderm
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
