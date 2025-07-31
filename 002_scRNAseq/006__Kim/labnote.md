@@ -18883,10 +18883,12 @@ Part_DG_GC_allNSC_subset_WT_GRN <- find_motifs(
 )
 
 
-## SAve motif ###############################
+## Save motif ###############################
 #saveRDS(Part_DG_GC_allNSC_subset_WT_GRN, file = "output/Pando/Part_DG_GC_allNSC_subset_WT_GRN_motif.rds")
 #load: Part_DG_GC_allNSC_subset_WT_GRN <- readRDS(file = "output/Pando/Part_DG_GC_allNSC_subset_WT_GRN_motif.rds")
-
+pdf("output/Pando/test.pdf", width=7, height=6)
+DimPlot(Part_DG_GC_allNSC_subset_WT, reduction = "umap", label = TRUE, pt.size = 0.5)
+dev.off()
 #############################################
 
 
@@ -18912,24 +18914,16 @@ coef(Part_DG_GC_allNSC_subset_WT_GRN_allGenes)
 #load: Part_DG_GC_allNSC_subset_WT_GRN_allGenes <- readRDS(file = "output/Pando/Part_DG_GC_allNSC_subset_WT_GRN_allGenes.rds")
 
 
-XXXY here below not mod
-
 
 
 # Find modules = Genes regulated by each TF
-GetNetwork(Part_DG_GC_subset_WT_GRN_allGenes)
-coef(Part_DG_GC_subset_WT_GRN_allGenes)
+GetNetwork(Part_DG_GC_allNSC_subset_WT_GRN_allGenes)
+coef(Part_DG_GC_allNSC_subset_WT_GRN_allGenes)
 
-Part_DG_GC_subset_WT_GRN_allGenes <- find_modules(
-    Part_DG_GC_subset_WT_GRN_allGenes, 
-    p_thresh = 0.1,
-    nvar_thresh = 2, 
-    min_genes_per_module = 1, 
-    rsq_thresh = 0.05
-)
 
-Part_DG_GC_subset_WT_GRN_allGenes <- find_modules(
-    Part_DG_GC_subset_WT_GRN_allGenes, 
+
+Part_DG_GC_allNSC_subset_WT_GRN_allGenes <- find_modules(
+    Part_DG_GC_allNSC_subset_WT_GRN_allGenes, 
     p_thresh = 0.05,
     nvar_thresh = 2, 
     min_genes_per_module = 1, 
@@ -18938,48 +18932,47 @@ Part_DG_GC_subset_WT_GRN_allGenes <- find_modules(
 
 
 # some QC plots
-pdf("output/Pando/plot_gof_Part_DG_GC_subset_WT_GRN_allGenes_RegionsLinkPeaks.pdf", width=7, height=6)
-plot_gof(Part_DG_GC_subset_WT_GRN_allGenes, point_size=3)
+pdf("output/Pando/plot_gof_Part_DG_GC_allNSC_subset_WT_GRN_allGenes_RegionsLinkPeaks.pdf", width=7, height=6)
+plot_gof(Part_DG_GC_allNSC_subset_WT_GRN_allGenes, point_size=3)
 dev.off()
-pdf("output/Pando/plot_module_Part_DG_GC_subset_WT_GRN_allGenes_RegionsLinkPeaks.pdf", width=7, height=4)
-plot_module_metrics(Part_DG_GC_subset_WT_GRN_allGenes)
+pdf("output/Pando/plot_module_Part_DG_GC_allNSC_subset_WT_GRN_allGenes_RegionsLinkPeaks.pdf", width=7, height=4)
+plot_module_metrics(Part_DG_GC_allNSC_subset_WT_GRN_allGenes)
 dev.off()
 
 # GRN plots
-Part_DG_GC_subset_WT_GRN_allGenes <- get_network_graph(Part_DG_GC_subset_WT_GRN_allGenes)
+Part_DG_GC_allNSC_subset_WT_GRN_allGenes <- get_network_graph(Part_DG_GC_allNSC_subset_WT_GRN_allGenes)
 
-pdf("output/Pando/plot_network_graph_Part_DG_GC_subset_WT_RegionsLinkPeaks.pdf", width=10, height=10)
-plot_network_graph(Part_DG_GC_subset_WT_GRN_allGenes)
+pdf("output/Pando/plot_network_graph_Part_DG_GC_allNSC_subset_WT_RegionsLinkPeaks.pdf", width=10, height=10)
+plot_network_graph(Part_DG_GC_allNSC_subset_WT_GRN_allGenes)
 dev.off()
-pdf("output/Pando/plot_network_graph_fr_Part_DG_GC_subset_WT_RegionsLinkPeaks.pdf", width=10, height=10)
-plot_network_graph(Part_DG_GC_subset_WT_GRN_allGenes, layout='fr')
+pdf("output/Pando/plot_network_graph_fr_Part_DG_GC_allNSC_subset_WT_RegionsLinkPeaks.pdf", width=10, height=10)
+plot_network_graph(Part_DG_GC_allNSC_subset_WT_GRN_allGenes, layout='fr')
 dev.off()
 
 ## 1 TF
-Part_DG_GC_subset_WT_GRN_allGenes_TF <- get_network_graph(Part_DG_GC_subset_WT_GRN_allGenes, 
+Part_DG_GC_allNSC_subset_WT_GRN_allGenes_TF <- get_network_graph(Part_DG_GC_allNSC_subset_WT_GRN_allGenes, 
     graph_name = 'full_graph', 
     umap_method = 'none')
 
 
 
-Part_DG_GC_subset_WT_GRN_allGenes_TF.Pax6 <- get_tf_network(Part_DG_GC_subset_WT_GRN_allGenes_TF, tf='Pax6', graph='full_graph')
-pdf("output/Pando/plot_tf_network-Pax6-Part_DG_GC_subset_WT_RegionsLinkPeaks.pdf", width=50, height=20)
-plot_tf_network(Part_DG_GC_subset_WT_GRN_allGenes_TF.Pax6, tf='Pax6', circular=F, label_nodes = "all")
+Part_DG_GC_allNSC_subset_WT_GRN_allGenes_TF.Pax6 <- get_tf_network(Part_DG_GC_allNSC_subset_WT_GRN_allGenes_TF, tf='Pax6', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Pax6-Part_DG_GC_allNSC_subset_WT_RegionsLinkPeaks.pdf", width=12, height=3)
+plot_tf_network(Part_DG_GC_allNSC_subset_WT_GRN_allGenes_TF.Pax6, tf='Pax6', circular=F, label_nodes = "all")
 dev.off()
 
-pdf("output/Pando/plot_tf_network-Pax6-Part_DG_GC_subset_WT_RegionsLinkPeaks-circular_tfs.pdf", width=25, height=10)
-plot_tf_network(Part_DG_GC_subset_WT_GRN_allGenes_TF.Pax6, tf='Pax6', circular=TRUE, label_nodes = "tfs")
+pdf("output/Pando/plot_tf_network-Pax6-Part_DG_GC_allNSC_subset_WT_RegionsLinkPeaks-circular_tfs.pdf", width=5, height=5)
+plot_tf_network(Part_DG_GC_allNSC_subset_WT_GRN_allGenes_TF.Pax6, tf='Pax6', circular=TRUE, label_nodes = "all")
 dev.off()
-
 
 
 # Save file
 
-Part_DG_GC_subset_WT_GRN_allGenes
+Part_DG_GC_allNSC_subset_WT_GRN_allGenes
 
 # Write the data frame to a .txt file
-write.table(coef(Part_DG_GC_subset_WT_GRN_allGenes), 
-            file = "output/Pando/Part_DG_GC_subset_WT_GRN_allGenes.txt", 
+write.table(coef(Part_DG_GC_allNSC_subset_WT_GRN_allGenes), 
+            file = "output/Pando/Part_DG_GC_allNSC_subset_WT_GRN_allGenes.txt", 
             sep = "\t", 
             quote = FALSE, 
             row.names = FALSE, 
@@ -18990,37 +18983,37 @@ write.table(coef(Part_DG_GC_subset_WT_GRN_allGenes),
 
 # Investigate regulon
 
-regulons_WT <- NetworkModules(Part_DG_GC_subset_WT_GRN_allGenes)
+regulons_WT <- NetworkModules(Part_DG_GC_allNSC_subset_WT_GRN_allGenes)
 positive_regulons_WT <- regulons_WT@features[['genes_pos']]
 positive_regulons_WT <- positive_regulons_WT[lengths(positive_regulons_WT) > 10]
 negative_regulons_WT <- regulons_WT@features[['genes_neg']]
 negative_regulons_WT <- negative_regulons_WT[lengths(negative_regulons_WT) > 10]
 
 ## generate the list of regulons, which are genes that are co-regulated positively or negatively by the same TF
-Part_DG_GC_subset_WT <- AddModuleScore(Part_DG_GC_subset_WT,
+Part_DG_GC_allNSC_subset_WT <- AddModuleScore(Part_DG_GC_allNSC_subset_WT,
                                        features = positive_regulons_WT,
                                        name = "regulon_WT_pos")
 
-Part_DG_GC_subset_WT <- AddModuleScore(Part_DG_GC_subset_WT,
+Part_DG_GC_allNSC_subset_WT <- AddModuleScore(Part_DG_GC_allNSC_subset_WT,
                                        features = negative_regulons_WT,
                                        name = "regulon_WT_neg")
 
-meta_cols_pos <- grep("^regulon_WT_pos", colnames(Part_DG_GC_subset_WT@meta.data))
-meta_cols_neg <- grep("^regulon_WT_neg", colnames(Part_DG_GC_subset_WT@meta.data))
+meta_cols_pos <- grep("^regulon_WT_pos", colnames(Part_DG_GC_allNSC_subset_WT@meta.data))
+meta_cols_neg <- grep("^regulon_WT_neg", colnames(Part_DG_GC_allNSC_subset_WT@meta.data))
 
 # Rename
-colnames(Part_DG_GC_subset_WT@meta.data)[meta_cols_pos] <- paste0(names(positive_regulons_WT), "(+)")
-colnames(Part_DG_GC_subset_WT@meta.data)[meta_cols_neg] <- paste0(names(negative_regulons_WT), "(-)")
+colnames(Part_DG_GC_allNSC_subset_WT@meta.data)[meta_cols_pos] <- paste0(names(positive_regulons_WT), "(+)")
+colnames(Part_DG_GC_allNSC_subset_WT@meta.data)[meta_cols_neg] <- paste0(names(negative_regulons_WT), "(-)")
 
 
 # feature plots for the same TFs we found combining DE and chromVAR analysis, and their positive and negative regulons.
 
 # Set assay to RNA for gene expression
-DefaultAssay(Part_DG_GC_subset_WT) <- "RNA"
+DefaultAssay(Part_DG_GC_allNSC_subset_WT) <- "RNA"
 
 # FeaturePlot for Pax6 gene expression
 p1 <- FeaturePlot(
-  Part_DG_GC_subset_WT,
+  Part_DG_GC_allNSC_subset_WT,
   features = "Pax6",
   reduction = "umap",
   cols = c("lightgrey", "darkred"),
@@ -19034,15 +19027,15 @@ pax6_pos <- "Pax6(+)"
 pax6_neg <- "Pax6(-)"
 # Plot module scores using FeaturePlot with `cells = TRUE` (Seurat v5) or pulling from meta.data
 p2 <- FeaturePlot(
-  Part_DG_GC_subset_WT,
-  features = c(pax6_pos, pax6_neg),
+  Part_DG_GC_allNSC_subset_WT,
+  features = c(pax6_pos, pax6_neg), # 
   reduction = "umap",
   cols = c( "gray96", "darkgreen"),
   order = TRUE,
   ncol = 2
 ) & NoAxes() & NoLegend()
 # Save to PDF
-pdf("output/Pando/Pax6_regulon_WT.pdf", width = 10, height = 6)
+pdf("output/Pando/Pax6_regulon_WT-Part_DG_GC_allNSC.pdf", width = 10, height = 6)
 (p1 / p2) + patchwork::plot_layout(heights = c(1, 1))
 dev.off()
 
@@ -19058,7 +19051,7 @@ dev.off()
 ##################################################################################
 
 # create grn object
-Part_DG_GC_subset_Bap1KO_GRN <- initiate_grn(Part_DG_GC_subset_Bap1KO,
+Part_DG_GC_allNSC_subset_Bap1KO_GRN <- initiate_grn(Part_DG_GC_allNSC_subset_Bap1KO,
   peak_assay = "ATAC",
   rna_assay = "RNA",
   regions = Links_GRanges  # Optional but recommended, see notes
@@ -19080,19 +19073,24 @@ subset(gene_id != "XP" & gene_id != "NP")
 mouse_pwms_v3 <- subset(mouse_pwms_v2, names(mouse_pwms_v2@listData) %in% motif2tf$motif)
 
 ## Find motifs
-Part_DG_GC_subset_Bap1KO_GRN <- find_motifs(
-    Part_DG_GC_subset_Bap1KO_GRN,
+Part_DG_GC_allNSC_subset_Bap1KO_GRN <- find_motifs(
+    Part_DG_GC_allNSC_subset_Bap1KO_GRN,
     pfm = mouse_pwms_v3,
     motif_tfs = motif2tf,
     genome = BSgenome.Mmusculus.UCSC.mm10
 )
+## SAve motif ###############################
+#saveRDS(Part_DG_GC_allNSC_subset_Bap1KO_GRN, file = "output/Pando/Part_DG_GC_allNSC_subset_Bap1KO_GRN_motif.rds")
+#load: Part_DG_GC_allNSC_subset_Bap1KO_GRN <- readRDS(file = "output/Pando/Part_DG_GC_allNSC_subset_Bap1KO_GRN_motif.rds")
+
+#############################################
 
 ######################################################################################################
 # Inferring the GRN - All genes ####################################################################
 
 # TESTING THE MODEL TO HAVE OUR TF of interest in the GRN ##################
-Part_DG_GC_subset_Bap1KO_GRN_allGenes <- infer_grn(
-    Part_DG_GC_subset_Bap1KO_GRN,
+Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes <- infer_grn(
+    Part_DG_GC_allNSC_subset_Bap1KO_GRN,
     peak_to_gene_method = 'Signac', # or use 'GREAT' consider overlapping regulatory regions, lets keep Signac
     method = 'glm', # other model can be tested: ('glmnet', 'cv.glmnet', 'xgb')
     genes = genes_filtered,
@@ -19100,23 +19098,20 @@ Part_DG_GC_subset_Bap1KO_GRN_allGenes <- infer_grn(
 )
 
 # Find modules = Genes regulated by each TF
-GetNetwork(Part_DG_GC_subset_Bap1KO_GRN_allGenes)
-coef(Part_DG_GC_subset_Bap1KO_GRN_allGenes)
+GetNetwork(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes)
+coef(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes)
 
 
-#saveRDS(Part_DG_GC_subset_Bap1KO_GRN_allGenes, file = "output/Pando/Part_DG_GC_subset_Bap1KO_GRN_allGenes.rds")
-#load: Part_DG_GC_subset_Bap1KO_GRN_allGenes <- readRDS(file = "output/Pando/Part_DG_GC_subset_Bap1KO_GRN_allGenes.rds")
-
-
-
+#saveRDS(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes, file = "output/Pando/Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes.rds")
+#load: Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes <- readRDS(file = "output/Pando/Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes.rds")
 
 
 # Find modules = Genes regulated by each TF
-GetNetwork(Part_DG_GC_subset_Bap1KO_GRN_allGenes)
-coef(Part_DG_GC_subset_Bap1KO_GRN_allGenes)
+GetNetwork(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes)
+coef(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes)
 
-Part_DG_GC_subset_Bap1KO_GRN_allGenes <- find_modules(
-    Part_DG_GC_subset_Bap1KO_GRN_allGenes, 
+Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes <- find_modules(
+    Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes, 
     p_thresh = 0.05,
     nvar_thresh = 2, 
     min_genes_per_module = 1, 
@@ -19126,49 +19121,49 @@ Part_DG_GC_subset_Bap1KO_GRN_allGenes <- find_modules(
 
 
 # some QC plots
-pdf("output/Pando/plot_gof_Part_DG_GC_subset_Bap1KO_GRN_allGenes_RegionsLinkPeaks.pdf", width=7, height=6)
-plot_gof(Part_DG_GC_subset_Bap1KO_GRN_allGenes, point_size=3)
+pdf("output/Pando/plot_gof_Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes_RegionsLinkPeaks.pdf", width=7, height=6)
+plot_gof(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes, point_size=3)
 dev.off()
-pdf("output/Pando/plot_module_Part_DG_GC_subset_Bap1KO_GRN_allGenes_RegionsLinkPeaks.pdf", width=7, height=4)
-plot_module_metrics(Part_DG_GC_subset_Bap1KO_GRN_allGenes)
+pdf("output/Pando/plot_module_Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes_RegionsLinkPeaks.pdf", width=7, height=4)
+plot_module_metrics(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes)
 dev.off()
 
 # GRN plots
-Part_DG_GC_subset_Bap1KO_GRN_allGenes <- get_network_graph(Part_DG_GC_subset_Bap1KO_GRN_allGenes)
+Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes <- get_network_graph(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes)
 
-pdf("output/Pando/plot_network_graph_Part_DG_GC_subset_Bap1KO_RegionsLinkPeaks.pdf", width=10, height=10)
-plot_network_graph(Part_DG_GC_subset_Bap1KO_GRN_allGenes)
+pdf("output/Pando/plot_network_graph_Part_DG_GC_allNSC_subset_Bap1KO_RegionsLinkPeaks.pdf", width=10, height=10)
+plot_network_graph(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes)
 dev.off()
-pdf("output/Pando/plot_network_graph_fr_Part_DG_GC_subset_Bap1KO_RegionsLinkPeaks.pdf", width=10, height=10)
-plot_network_graph(Part_DG_GC_subset_Bap1KO_GRN_allGenes, layout='fr')
+pdf("output/Pando/plot_network_graph_fr_Part_DG_GC_allNSC_subset_Bap1KO_RegionsLinkPeaks.pdf", width=10, height=10)
+plot_network_graph(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes, layout='fr')
 dev.off()
 
 ## 1 TF
-Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF <- get_network_graph(Part_DG_GC_subset_Bap1KO_GRN_allGenes, 
+Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes_TF <- get_network_graph(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes, 
     graph_name = 'full_graph', 
     umap_method = 'none')
 
 
 
-Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF.Pax6 <- get_tf_network(Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF, tf='Pax6', graph='full_graph')
-pdf("output/Pando/plot_tf_network-Pax6-Part_DG_GC_subset_Bap1KO_RegionsLinkPeaks.pdf", width=5, height=2)
-plot_tf_network(Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF.Pax6, tf='Pax6', circular=F, label_nodes = "all")
+Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes_TF.Pax6 <- get_tf_network(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes_TF, tf='Pax6', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Pax6-Part_DG_GC_allNSC_subset_Bap1KO_RegionsLinkPeaks.pdf", width=5, height=2)
+plot_tf_network(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes_TF.Pax6, tf='Pax6', circular=F, label_nodes = "all")
 dev.off()
 
 
-pdf("output/Pando/plot_tf_network-Pax6-Part_DG_GC_subset_Bap1KO_RegionsLinkPeaks-circular_tfs.pdf", width=25, height=10)
-plot_tf_network(Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF.Pax6, tf='Pax6', circular=TRUE, label_nodes = "tfs")
+pdf("output/Pando/plot_tf_network-Pax6-Part_DG_GC_allNSC_subset_Bap1KO_RegionsLinkPeaks-circular_tfs.pdf", width=25, height=10)
+plot_tf_network(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes_TF.Pax6, tf='Pax6', circular=TRUE, label_nodes = "tfs")
 dev.off()
 
 
 
 # Save file
 
-Part_DG_GC_subset_Bap1KO_GRN_allGenes
+Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes
 
 # Write the data frame to a .txt file
-write.table(coef(Part_DG_GC_subset_Bap1KO_GRN_allGenes), 
-            file = "output/Pando/Part_DG_GC_subset_Bap1KO_GRN_allGenes.txt", 
+write.table(coef(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes), 
+            file = "output/Pando/Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes.txt", 
             sep = "\t", 
             quote = FALSE, 
             row.names = FALSE, 
@@ -19180,37 +19175,37 @@ write.table(coef(Part_DG_GC_subset_Bap1KO_GRN_allGenes),
 
 # Investigate regulon
 
-regulons_Bap1KO <- NetworkModules(Part_DG_GC_subset_Bap1KO_GRN_allGenes)
+regulons_Bap1KO <- NetworkModules(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes)
 positive_regulons_Bap1KO <- regulons_Bap1KO@features[['genes_pos']]
 positive_regulons_Bap1KO <- positive_regulons_Bap1KO[lengths(positive_regulons_Bap1KO) > 10]
 negative_regulons_Bap1KO <- regulons_Bap1KO@features[['genes_neg']]
 negative_regulons_Bap1KO <- negative_regulons_Bap1KO[lengths(negative_regulons_Bap1KO) > 10]
 
 ## generate the list of regulons, which are genes that are co-regulated positively or negatively by the same TF
-Part_DG_GC_subset_Bap1KO <- AddModuleScore(Part_DG_GC_subset_Bap1KO,
+Part_DG_GC_allNSC_subset_Bap1KO <- AddModuleScore(Part_DG_GC_allNSC_subset_Bap1KO,
                                        features = positive_regulons_Bap1KO,
                                        name = "regulon_Bap1KO_pos")
 
-Part_DG_GC_subset_Bap1KO <- AddModuleScore(Part_DG_GC_subset_Bap1KO,
+Part_DG_GC_allNSC_subset_Bap1KO <- AddModuleScore(Part_DG_GC_allNSC_subset_Bap1KO,
                                        features = negative_regulons_Bap1KO,
                                        name = "regulon_Bap1KO_neg")
 
-meta_cols_pos <- grep("^regulon_Bap1KO_pos", colnames(Part_DG_GC_subset_Bap1KO@meta.data))
-meta_cols_neg <- grep("^regulon_Bap1KO_neg", colnames(Part_DG_GC_subset_Bap1KO@meta.data))
+meta_cols_pos <- grep("^regulon_Bap1KO_pos", colnames(Part_DG_GC_allNSC_subset_Bap1KO@meta.data))
+meta_cols_neg <- grep("^regulon_Bap1KO_neg", colnames(Part_DG_GC_allNSC_subset_Bap1KO@meta.data))
 
 # Rename
-colnames(Part_DG_GC_subset_Bap1KO@meta.data)[meta_cols_pos] <- paste0(names(positive_regulons_Bap1KO), "(+)")
-colnames(Part_DG_GC_subset_Bap1KO@meta.data)[meta_cols_neg] <- paste0(names(negative_regulons_Bap1KO), "(-)")
+colnames(Part_DG_GC_allNSC_subset_Bap1KO@meta.data)[meta_cols_pos] <- paste0(names(positive_regulons_Bap1KO), "(+)")
+colnames(Part_DG_GC_allNSC_subset_Bap1KO@meta.data)[meta_cols_neg] <- paste0(names(negative_regulons_Bap1KO), "(-)")
 
 
 # feature plots for the same TFs we found combining DE and chromVAR analysis, and their positive and negative regulons.
 
 # Set assay to RNA for gene expression
-DefaultAssay(Part_DG_GC_subset_Bap1KO) <- "RNA"
+DefaultAssay(Part_DG_GC_allNSC_subset_Bap1KO) <- "RNA"
 
 # FeaturePlot for Pax6 gene expression
 p1 <- FeaturePlot(
-  Part_DG_GC_subset_Bap1KO,
+  Part_DG_GC_allNSC_subset_Bap1KO,
   features = "Pax6",
   reduction = "umap",
   cols = c("lightgrey", "darkred"),
@@ -19224,7 +19219,7 @@ pax6_pos <- "Pax6(+)"
 pax6_neg <- "Pax6(-)"
 # Plot module scores using FeaturePlot with `cells = TRUE` (Seurat v5) or pulling from meta.data
 p2 <- FeaturePlot(
-  Part_DG_GC_subset_Bap1KO,
+  Part_DG_GC_allNSC_subset_Bap1KO,
   features = c(pax6_pos, pax6_neg),
   reduction = "umap",
   cols = c( "gray96", "darkgreen"),
@@ -19232,13 +19227,14 @@ p2 <- FeaturePlot(
   ncol = 2
 ) & NoAxes() & NoLegend()
 # Save to PDF
-pdf("output/Pando/Pax6_regulon_Bap1KO.pdf", width = 10, height = 6)
+pdf("output/Pando/Pax6_regulon_Bap1KO-Part_DG_GC_allNSC.pdf", width = 10, height = 6)
 (p1 / p2) + patchwork::plot_layout(heights = c(1, 1))
 dev.off()
 
 
 
 
+XXX CANNOT DO BELOW AS NO PLOT FOR BAP1KO
 
 
 ###########################################################################
@@ -19352,7 +19348,7 @@ print(stat_results %>% dplyr::select(cluster, regulon_median_WT, regulon_median_
 
 # Collect the target of Pax6; many of these are significantly less express in Bap1KO
 ## Get all positive regulons
-regulons_WT <- NetworkModules(Part_DG_GC_subset_WT_GRN_allGenes)
+regulons_WT <- NetworkModules(Part_DG_GC_allNSC_subset_WT_GRN_allGenes)
 positive_regulons_WT <- regulons_WT@features[["genes_pos"]]
 ## Pax6 positive targets
 pax6_targets <- positive_regulons_WT[["Pax6"]]
