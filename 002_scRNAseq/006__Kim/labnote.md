@@ -18745,3 +18745,725 @@ dev.off()
 
 
 
+
+## Test different Pando GRN parameters and cell types
+
+
+--> in `infer_grn()` peak_to_gene_method as GREAT gave very few TFs so lets keep it as `peak_to_gene_method = 'Signac'`
+  --> Lets only change `method = glm` to something else: glmnet (also to be tested if needed: `cv.glmnet, xgb`)
+
+
+
+
+### Default method (GREAT, glm) – NSC_prol2, IP, DG_GC
+
+
+
+```bash
+srun --mem=500g --cpus-per-task=8 --pty bash -l
+
+conda activate Signac_Pando
+module load hdf5
+```
+
+```R
+set.seed(42)
+
+# library
+library("Signac")
+library("Seurat")
+#library("hdf5r") # need to reinstall it at each session... with install.packages("hdf5r")
+library("tidyverse")
+library("EnsDb.Mmusculus.v79") # mm10
+library("reticulate") # needed to use FindClusters()
+library("metap") # needed to use FindConservedMarkers()
+use_python("~/anaconda3/envs/SignacV5/bin/python") # to specify which python to use... Needed for FindClusters()
+library("Pando")
+library("chromVARmotifs") # devtools::install_github("GreenleafLab/chromVARmotifs")
+
+# to run job in parrallel
+library(doParallel) # install.packages("doParallel")
+registerDoParallel(8) # update nb of core here!!
+
+
+# import and rename Seurat obj
+#multiome_WT_Bap1KO_QCV2vC1_GRN.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.sct_numeric_label.rds")
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.sct_numeric_label.rds")
+
+
+# Get gene names and filter out 'Rik' genes
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "RNA" 
+genes <- rownames(multiome_WT_Bap1KO_QCV2vC1.sct)
+genes_filtered <- genes[!grepl("Rik", genes)]
+
+# Find variable features
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "RNA" 
+multiome_WT_Bap1KO_QCV2vC1.sct <- FindVariableFeatures(multiome_WT_Bap1KO_QCV2vC1.sct, 
+                                                            selection.method = "vst", 
+                                                            nfeatures = 3000)
+
+# Get variable features and filter out 'Rik' genes
+variable_genes <- multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@var.features
+variable_genes_filtered <- variable_genes[!grepl("Rik", variable_genes)]
+#--> 2859 genes instead of 3000
+
+
+
+
+# Select LinkPeaks()
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "ATAC" 
+
+Links = as_tibble(Links(multiome_WT_Bap1KO_QCV2vC1.sct))
+## Convert to GRange object
+Links_GRanges =  GRanges(Links)
+
+# Only keep DG_GC trajectory cells
+# Step 1: Filter based on cluster identity
+Part_DG_GC <- subset(
+  multiome_WT_Bap1KO_QCV2vC1.sct, 
+  subset = cluster.annot %in% c("NSC_proliferative_2", "IP", "DG_GC")
+)
+# Step 2: Filter based on UMAP coordinates
+umap_coords <- Embeddings(Part_DG_GC, "umap")
+# Apply your custom UMAP boundaries
+selected_cells <- which(
+  umap_coords[,1] < 4 &
+  umap_coords[,2] < -2.5 &
+  umap_coords[,2] > -9.5
+)
+
+# Subset the Seurat object
+Part_DG_GC_subset <- subset(Part_DG_GC, cells = colnames(Part_DG_GC)[selected_cells])
+
+# Optional: Check dimensions
+dim(Part_DG_GC_subset)
+
+
+# Separate Seurat into WT and Bap1KO
+Part_DG_GC_subset_WT <- subset(Part_DG_GC_subset, subset = orig.ident == "multiome_WT")
+Part_DG_GC_subset_Bap1KO <- subset(Part_DG_GC_subset, subset = orig.ident == "multiome_Bap1KO")
+
+
+##################################################################################
+# WT ##################################################################################
+##################################################################################
+
+# create grn object
+Part_DG_GC_subset_WT_GRN <- initiate_grn(Part_DG_GC_subset_WT,
+  peak_assay = "ATAC",
+  rna_assay = "RNA",
+  regions = Links_GRanges  # Optional but recommended, see notes
+  )
+
+
+# Scan for TF motifs
+
+## Prep mouse TF motifs database
+library(BSgenome.Mmusculus.UCSC.mm10)
+data("mouse_pwms_v2")
+x <- character()
+for(i in 1:length(mouse_pwms_v2@listData)){
+x[i] <- mouse_pwms_v2@listData[[i]]@name
+}
+motif2tf <- data.frame(motif = names(mouse_pwms_v2@listData), tf = x, origin = "CIS-BP", gene_id = gsub("_[[:alnum:][:punct:]]*", "", names(mouse_pwms_v2@listData)), family = NA, name = NA, symbol = NA, motif_tf = NA) %>%
+subset(gene_id != "XP" & gene_id != "NP")
+mouse_pwms_v3 <- subset(mouse_pwms_v2, names(mouse_pwms_v2@listData) %in% motif2tf$motif)
+
+## Find motifs
+Part_DG_GC_subset_WT_GRN <- find_motifs(
+    Part_DG_GC_subset_WT_GRN,
+    pfm = mouse_pwms_v3,
+    motif_tfs = motif2tf,
+    genome = BSgenome.Mmusculus.UCSC.mm10
+)
+## SAve motif ###############################
+#saveRDS(Part_DG_GC_subset_WT_GRN, file = "output/Pando/Part_DG_GC_subset_WT_GRN_motif.rds")
+#load: Part_DG_GC_subset_WT_GRN <- readRDS(file = "output/Pando/Part_DG_GC_subset_WT_GRN_motif.rds")
+
+#############################################
+
+
+######################################################################################################
+# Inferring the GRN - All genes ####################################################################
+
+# TESTING THE MODEL TO HAVE OUR TF of interest in the GRN ##################
+Part_DG_GC_subset_WT_GRN_glmnet_allGenes <- infer_grn(
+    Part_DG_GC_subset_WT_GRN,
+    peak_to_gene_method = 'Signac', # or use 'GREAT' consider overlapping regulatory regions, lets keep Signac
+    method = 'glmnet', # other model can be tested: ('glmnet', 'cv.glmnet', 'xgb')
+    genes = genes_filtered,
+    parallel = T 
+)
+
+# Find modules = Genes regulated by each TF
+GetNetwork(Part_DG_GC_subset_WT_GRN_glmnet_allGenes)
+coef(Part_DG_GC_subset_WT_GRN_glmnet_allGenes)
+
+
+
+
+# THIS BELOW IS WITH SIGNAC GLM
+#saveRDS(Part_DG_GC_subset_WT_GRN_glmnet_allGenes, file = "output/Pando/Part_DG_GC_subset_WT_GRN_glmnet_allGenes.rds")
+#load: Part_DG_GC_subset_WT_GRN_glmnet_allGenes <- readRDS(file = "output/Pando/Part_DG_GC_subset_WT_GRN_glmnet_allGenes.rds")
+
+
+# Find modules = Genes regulated by each TF
+GetNetwork(Part_DG_GC_subset_WT_GRN_glmnet_allGenes)
+coef(Part_DG_GC_subset_WT_GRN_glmnet_allGenes)
+
+
+Part_DG_GC_subset_WT_GRN_glmnet_allGenes <- find_modules(
+    Part_DG_GC_subset_WT_GRN_glmnet_allGenes, 
+    p_thresh = 0.05,
+    nvar_thresh = 2, 
+    min_genes_per_module = 1, 
+    rsq_thresh = 0.05
+)
+
+
+# some QC plots
+pdf("output/Pando/plot_gof_Part_DG_GC_subset_WT_GRN_glmnet_allGenes_RegionsLinkPeaks.pdf", width=7, height=6)
+plot_gof(Part_DG_GC_subset_WT_GRN_glmnet_allGenes, point_size=3)
+dev.off()
+pdf("output/Pando/plot_module_Part_DG_GC_subset_WT_GRN_glmnet_allGenes_RegionsLinkPeaks.pdf", width=7, height=4)
+plot_module_metrics(Part_DG_GC_subset_WT_GRN_glmnet_allGenes)
+dev.off()
+
+# GRN plots
+Part_DG_GC_subset_WT_GRN_glmnet_allGenes <- get_network_graph(Part_DG_GC_subset_WT_GRN_glmnet_allGenes)
+
+pdf("output/Pando/plot_network_graph_Part_DG_GC_subset_WT_GRN_glmnet_RegionsLinkPeaks.pdf", width=10, height=10)
+plot_network_graph(Part_DG_GC_subset_WT_GRN_glmnet_allGenes)
+dev.off()
+pdf("output/Pando/plot_network_graph_fr_Part_DG_GC_subset_WT_GRN_glmnet_RegionsLinkPeaks.pdf", width=10, height=10)
+plot_network_graph(Part_DG_GC_subset_WT_GRN_glmnet_allGenes, layout='fr')
+dev.off()
+
+## 1 TF
+Part_DG_GC_subset_WT_GRN_glmnet_allGenes_TF <- get_network_graph(Part_DG_GC_subset_WT_GRN_glmnet_allGenes, 
+    graph_name = 'full_graph', 
+    umap_method = 'none')
+
+
+
+Part_DG_GC_subset_WT_GRN_glmnet_allGenes_TF.Pax6 <- get_tf_network(Part_DG_GC_subset_WT_GRN_glmnet_allGenes_TF, tf='Pax6', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Pax6-Part_DG_GC_subset_WT_GRN_glmnet_RegionsLinkPeaks.pdf", width=50, height=20)
+plot_tf_network(Part_DG_GC_subset_WT_GRN_glmnet_allGenes_TF.Pax6, tf='Pax6', circular=F, label_nodes = "all")
+dev.off()
+
+pdf("output/Pando/plot_tf_network-Pax6-Part_DG_GC_subset_WT_GRN_glmnet_RegionsLinkPeaks-circular_tfs.pdf", width=25, height=10)
+plot_tf_network(Part_DG_GC_subset_WT_GRN_glmnet_allGenes_TF.Pax6, tf='Pax6', circular=TRUE, label_nodes = "tfs")
+dev.off()
+
+
+
+# Save file
+
+Part_DG_GC_subset_WT_GRN_glmnet_allGenes
+
+# Write the data frame to a .txt file
+write.table(coef(Part_DG_GC_subset_WT_GRN_glmnet_allGenes), 
+            file = "output/Pando/Part_DG_GC_subset_WT_GRN_glmnet_allGenes.txt", 
+            sep = "\t", 
+            quote = FALSE, 
+            row.names = FALSE, 
+            col.names = TRUE)
+
+
+
+
+
+
+
+
+##################################################################################
+# Bap1KO ##################################################################################
+##################################################################################
+
+# create grn object
+Part_DG_GC_subset_Bap1KO_GRN <- initiate_grn(Part_DG_GC_subset_Bap1KO,
+  peak_assay = "ATAC",
+  rna_assay = "RNA",
+  regions = Links_GRanges  # Optional but recommended, see notes
+  )
+
+
+# Scan for TF motifs
+
+## Prep mouse TF motifs database
+library(BSgenome.Mmusculus.UCSC.mm10)
+data("mouse_pwms_v2")
+x <- character()
+for(i in 1:length(mouse_pwms_v2@listData)){
+x[i] <- mouse_pwms_v2@listData[[i]]@name
+}
+motif2tf <- data.frame(motif = names(mouse_pwms_v2@listData), tf = x, origin = "CIS-BP", gene_id = gsub("_[[:alnum:][:punct:]]*", "", names(mouse_pwms_v2@listData)), family = NA, name = NA, symbol = NA, motif_tf = NA) %>%
+subset(gene_id != "XP" & gene_id != "NP")
+mouse_pwms_v3 <- subset(mouse_pwms_v2, names(mouse_pwms_v2@listData) %in% motif2tf$motif)
+
+## Find motifs
+Part_DG_GC_subset_Bap1KO_GRN <- find_motifs(
+    Part_DG_GC_subset_Bap1KO_GRN,
+    pfm = mouse_pwms_v3,
+    motif_tfs = motif2tf,
+    genome = BSgenome.Mmusculus.UCSC.mm10
+)
+## SAve motif ###############################
+#saveRDS(Part_DG_GC_subset_Bap1KO_GRN, file = "output/Pando/Part_DG_GC_subset_Bap1KO_GRN_motif.rds")
+#load: Part_DG_GC_subset_Bap1KO_GRN <- readRDS(file = "output/Pando/Part_DG_GC_subset_Bap1KO_GRN_motif.rds")
+
+#############################################
+
+
+######################################################################################################
+# Inferring the GRN - All genes ####################################################################
+
+# TESTING THE MODEL TO HAVE OUR TF of interest in the GRN ##################
+Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes <- infer_grn(
+    Part_DG_GC_subset_Bap1KO_GRN,
+    peak_to_gene_method = 'Signac', # or use 'GREAT' consider overlapping regulatory regions, lets keep Signac
+    method = 'glmnet', # other model can be tested: ('glmnet', 'cv.glmnet', 'xgb')
+    genes = genes_filtered,
+    parallel = T 
+)
+
+# Find modules = Genes regulated by each TF
+GetNetwork(Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes)
+coef(Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes)
+
+
+
+
+# THIS BELOW IS WITH SIGNAC GLM
+#saveRDS(Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes, file = "output/Pando/Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes.rds")
+#load: Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes <- readRDS(file = "output/Pando/Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes.rds")
+
+
+# Find modules = Genes regulated by each TF
+GetNetwork(Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes)
+coef(Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes)
+
+
+Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes <- find_modules(
+    Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes, 
+    p_thresh = 0.05,
+    nvar_thresh = 2, 
+    min_genes_per_module = 1, 
+    rsq_thresh = 0.05
+)
+
+
+# some QC plots
+pdf("output/Pando/plot_gof_Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes_RegionsLinkPeaks.pdf", width=7, height=6)
+plot_gof(Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes, point_size=3)
+dev.off()
+pdf("output/Pando/plot_module_Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes_RegionsLinkPeaks.pdf", width=7, height=4)
+plot_module_metrics(Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes)
+dev.off()
+
+# GRN plots
+Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes <- get_network_graph(Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes)
+
+pdf("output/Pando/plot_network_graph_Part_DG_GC_subset_Bap1KO_GRN_glmnet_RegionsLinkPeaks.pdf", width=10, height=10)
+plot_network_graph(Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes)
+dev.off()
+pdf("output/Pando/plot_network_graph_fr_Part_DG_GC_subset_Bap1KO_GRN_glmnet_RegionsLinkPeaks.pdf", width=10, height=10)
+plot_network_graph(Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes, layout='fr')
+dev.off()
+
+## 1 TF
+Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes_TF <- get_network_graph(Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes, 
+    graph_name = 'full_graph', 
+    umap_method = 'none')
+
+
+
+Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes_TF.Pax6 <- get_tf_network(Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes_TF, tf='Pax6', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Pax6-Part_DG_GC_subset_Bap1KO_GRN_glmnet_RegionsLinkPeaks.pdf", width=50, height=20)
+plot_tf_network(Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes_TF.Pax6, tf='Pax6', circular=F, label_nodes = "all")
+dev.off()
+
+pdf("output/Pando/plot_tf_network-Pax6-Part_DG_GC_subset_Bap1KO_GRN_glmnet_RegionsLinkPeaks-circular_tfs.pdf", width=25, height=10)
+plot_tf_network(Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes_TF.Pax6, tf='Pax6', circular=TRUE, label_nodes = "tfs")
+dev.off()
+
+
+
+# Save file
+
+Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes
+
+# Write the data frame to a .txt file
+write.table(coef(Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes), 
+            file = "output/Pando/Part_DG_GC_subset_Bap1KO_GRN_glmnet_allGenes.txt", 
+            sep = "\t", 
+            quote = FALSE, 
+            row.names = FALSE, 
+            col.names = TRUE)
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Default method (Default: Signac, glm) – All NSC (NSC_prol1, NSC_prol2, NSC_quiesc), IP, DG_GC
+
+
+
+```bash
+srun --mem=500g --cpus-per-task=8 --pty bash -l
+
+conda activate Signac_Pando
+module load hdf5
+```
+
+```R
+set.seed(42)
+
+# library
+library("Signac")
+library("Seurat")
+#library("hdf5r") # need to reinstall it at each session... with install.packages("hdf5r")
+library("tidyverse")
+library("EnsDb.Mmusculus.v79") # mm10
+library("reticulate") # needed to use FindClusters()
+library("metap") # needed to use FindConservedMarkers()
+use_python("~/anaconda3/envs/SignacV5/bin/python") # to specify which python to use... Needed for FindClusters()
+library("Pando")
+library("chromVARmotifs") # devtools::install_github("GreenleafLab/chromVARmotifs")
+
+# to run job in parrallel
+library(doParallel) # install.packages("doParallel")
+registerDoParallel(8) # update nb of core here!!
+
+
+# import and rename Seurat obj
+#multiome_WT_Bap1KO_QCV2vC1_GRN.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.sct_numeric_label.rds")
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.sct_numeric_label.rds")
+
+
+# Get gene names and filter out 'Rik' genes
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "RNA" 
+genes <- rownames(multiome_WT_Bap1KO_QCV2vC1.sct)
+genes_filtered <- genes[!grepl("Rik", genes)]
+
+# Find variable features
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "RNA" 
+multiome_WT_Bap1KO_QCV2vC1.sct <- FindVariableFeatures(multiome_WT_Bap1KO_QCV2vC1.sct, 
+                                                            selection.method = "vst", 
+                                                            nfeatures = 3000)
+
+# Get variable features and filter out 'Rik' genes
+variable_genes <- multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@var.features
+variable_genes_filtered <- variable_genes[!grepl("Rik", variable_genes)]
+#--> 2859 genes instead of 3000
+
+
+
+
+# Select LinkPeaks()
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "ATAC" 
+
+Links = as_tibble(Links(multiome_WT_Bap1KO_QCV2vC1.sct))
+## Convert to GRange object
+Links_GRanges =  GRanges(Links)
+
+# Only keep DG_GC trajectory cells
+# Step 1: Filter based on cluster identity
+Part_DG_GC <- subset(
+  multiome_WT_Bap1KO_QCV2vC1.sct, 
+  subset = cluster.annot %in% c("NSC_proliferative_1", "NSC_quiescent", "NSC_proliferative_2", "IP", "DG_GC")
+)
+# Step 2: Filter based on UMAP coordinates
+umap_coords <- Embeddings(Part_DG_GC, "umap")
+# Apply your custom UMAP boundaries
+selected_cells <- which(
+umap_coords[,1] < 5 &  umap_coords[,2] < 0 &  umap_coords[,2] > -15
+)
+
+# Subset the Seurat object
+Part_DG_GC_allNSC_subset <- subset(Part_DG_GC, cells = colnames(Part_DG_GC)[selected_cells])
+
+# Optional: Check dimensions
+dim(Part_DG_GC_allNSC_subset)
+
+
+# Separate Seurat into WT and Bap1KO
+Part_DG_GC_allNSC_subset_WT <- subset(Part_DG_GC_allNSC_subset, subset = orig.ident == "multiome_WT")
+Part_DG_GC_allNSC_subset_Bap1KO <- subset(Part_DG_GC_allNSC_subset, subset = orig.ident == "multiome_Bap1KO")
+
+
+##################################################################################
+# WT ##################################################################################
+##################################################################################
+
+# create grn object
+Part_DG_GC_allNSC_subset_WT_GRN <- initiate_grn(Part_DG_GC_allNSC_subset_WT,
+  peak_assay = "ATAC",
+  rna_assay = "RNA",
+  regions = Links_GRanges  # Optional but recommended, see notes
+  )
+
+
+# Scan for TF motifs
+
+## Prep mouse TF motifs database
+library(BSgenome.Mmusculus.UCSC.mm10)
+data("mouse_pwms_v2")
+x <- character()
+for(i in 1:length(mouse_pwms_v2@listData)){
+x[i] <- mouse_pwms_v2@listData[[i]]@name
+}
+motif2tf <- data.frame(motif = names(mouse_pwms_v2@listData), tf = x, origin = "CIS-BP", gene_id = gsub("_[[:alnum:][:punct:]]*", "", names(mouse_pwms_v2@listData)), family = NA, name = NA, symbol = NA, motif_tf = NA) %>%
+subset(gene_id != "XP" & gene_id != "NP")
+mouse_pwms_v3 <- subset(mouse_pwms_v2, names(mouse_pwms_v2@listData) %in% motif2tf$motif)
+
+## Find motifs
+Part_DG_GC_allNSC_subset_WT_GRN <- find_motifs(
+    Part_DG_GC_allNSC_subset_WT_GRN,
+    pfm = mouse_pwms_v3,
+    motif_tfs = motif2tf,
+    genome = BSgenome.Mmusculus.UCSC.mm10
+)
+
+## SAve motif ###############################
+#saveRDS(Part_DG_GC_allNSC_subset_WT_GRN, file = "output/Pando/Part_DG_GC_allNSC_subset_WT_GRN_motif.rds")
+#load: Part_DG_GC_allNSC_subset_WT_GRN <- readRDS(file = "output/Pando/Part_DG_GC_allNSC_subset_WT_GRN_motif.rds")
+
+#############################################
+
+
+
+######################################################################################################
+# Inferring the GRN - All genes ####################################################################
+
+# TESTING THE MODEL TO HAVE OUR TF of interest in the GRN ##################
+Part_DG_GC_allNSC_subset_WT_GRN_allGenes <- infer_grn(
+    Part_DG_GC_allNSC_subset_WT_GRN,
+    peak_to_gene_method = 'Signac', # or use 'GREAT' consider overlapping regulatory regions, lets keep Signac
+    method = 'glm', # other model can be tested: ('glmnet', 'cv.glmnet', 'xgb')
+    genes = genes_filtered,
+    parallel = T 
+)
+
+# Find modules = Genes regulated by each TF
+GetNetwork(Part_DG_GC_allNSC_subset_WT_GRN_allGenes)
+coef(Part_DG_GC_allNSC_subset_WT_GRN_allGenes)
+
+# THIS BELOW IS WITH SIGNAC GLM
+#saveRDS(Part_DG_GC_allNSC_subset_WT_GRN_allGenes, file = "output/Pando/Part_DG_GC_allNSC_subset_WT_GRN_allGenes.rds")
+#load: Part_DG_GC_allNSC_subset_WT_GRN_allGenes <- readRDS(file = "output/Pando/Part_DG_GC_allNSC_subset_WT_GRN_allGenes.rds")
+
+
+# Find modules = Genes regulated by each TF
+GetNetwork(Part_DG_GC_allNSC_subset_WT_GRN_allGenes)
+coef(Part_DG_GC_allNSC_subset_WT_GRN_allGenes)
+
+
+Part_DG_GC_allNSC_subset_WT_GRN_allGenes <- find_modules(
+    Part_DG_GC_allNSC_subset_WT_GRN_allGenes, 
+    p_thresh = 0.05,
+    nvar_thresh = 2, 
+    min_genes_per_module = 1, 
+    rsq_thresh = 0.05
+)
+
+
+# some QC plots
+pdf("output/Pando/plot_gof_Part_DG_GC_allNSC_subset_WT_GRN_allGenes_RegionsLinkPeaks.pdf", width=7, height=6)
+plot_gof(Part_DG_GC_allNSC_subset_WT_GRN_allGenes, point_size=3)
+dev.off()
+pdf("output/Pando/plot_module_Part_DG_GC_allNSC_subset_WT_GRN_allGenes_RegionsLinkPeaks.pdf", width=7, height=4)
+plot_module_metrics(Part_DG_GC_allNSC_subset_WT_GRN_allGenes)
+dev.off()
+
+# GRN plots
+Part_DG_GC_allNSC_subset_WT_GRN_allGenes <- get_network_graph(Part_DG_GC_allNSC_subset_WT_GRN_allGenes)
+
+pdf("output/Pando/plot_network_graph__Part_DG_GC_allNSC_subset_WT_GRN_RegionsLinkPeaks.pdf", width=10, height=10)
+plot_network_graph(Part_DG_GC_allNSC_subset_WT_GRN_allGenes)
+dev.off()
+pdf("output/Pando/plot_network_graph_fr__Part_DG_GC_allNSC_subset_WT_GRN_RegionsLinkPeaks.pdf", width=10, height=10)
+plot_network_graph(Part_DG_GC_allNSC_subset_WT_GRN_allGenes, layout='fr')
+dev.off()
+
+## 1 TF
+Part_DG_GC_allNSC_subset_WT_GRN_allGenes_TF <- get_network_graph(Part_DG_GC_allNSC_subset_WT_GRN_allGenes, 
+    graph_name = 'full_graph', 
+    umap_method = 'none')
+
+
+
+Part_DG_GC_allNSC_subset_WT_GRN_allGenes_TF.Pax6 <- get_tf_network(Part_DG_GC_allNSC_subset_WT_GRN_allGenes_TF, tf='Pax6', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Pax6-Part_DG_GC_allNSC_subset_WT_GRN_RegionsLinkPeaks.pdf", width=50, height=20)
+plot_tf_network(Part_DG_GC_allNSC_subset_WT_GRN_allGenes_TF.Pax6, tf='Pax6', circular=F, label_nodes = "all")
+dev.off()
+
+pdf("output/Pando/plot_tf_network-Pax6-Part_DG_GC_allNSC_subset_WT_GRN_RegionsLinkPeaks-circular_tfs.pdf", width=25, height=10)
+plot_tf_network(Part_DG_GC_allNSC_subset_WT_GRN_allGenes_TF.Pax6, tf='Pax6', circular=TRUE, label_nodes = "tfs")
+dev.off()
+
+
+
+# Save file
+
+Part_DG_GC_allNSC_subset_WT_GRN_allGenes
+
+# Write the data frame to a .txt file
+write.table(coef(Part_DG_GC_allNSC_subset_WT_GRN_allGenes), 
+            file = "output/Pando/Part_DG_GC_allNSC_subset_WT_GRN_allGenes.txt", 
+            sep = "\t", 
+            quote = FALSE, 
+            row.names = FALSE, 
+            col.names = TRUE)
+
+
+
+
+##################################################################################
+# Bap1KO ##################################################################################
+##################################################################################
+
+# create grn object
+Part_DG_GC_allNSC_subset_Bap1KO_GRN <- initiate_grn(Part_DG_GC_allNSC_subset_Bap1KO,
+  peak_assay = "ATAC",
+  rna_assay = "RNA",
+  regions = Links_GRanges  # Optional but recommended, see notes
+  )
+
+
+# Scan for TF motifs
+
+## Prep mouse TF motifs database
+library(BSgenome.Mmusculus.UCSC.mm10)
+data("mouse_pwms_v2")
+x <- character()
+for(i in 1:length(mouse_pwms_v2@listData)){
+x[i] <- mouse_pwms_v2@listData[[i]]@name
+}
+motif2tf <- data.frame(motif = names(mouse_pwms_v2@listData), tf = x, origin = "CIS-BP", gene_id = gsub("_[[:alnum:][:punct:]]*", "", names(mouse_pwms_v2@listData)), family = NA, name = NA, symbol = NA, motif_tf = NA) %>%
+subset(gene_id != "XP" & gene_id != "NP")
+mouse_pwms_v3 <- subset(mouse_pwms_v2, names(mouse_pwms_v2@listData) %in% motif2tf$motif)
+
+## Find motifs
+Part_DG_GC_allNSC_subset_Bap1KO_GRN <- find_motifs(
+    Part_DG_GC_allNSC_subset_Bap1KO_GRN,
+    pfm = mouse_pwms_v3,
+    motif_tfs = motif2tf,
+    genome = BSgenome.Mmusculus.UCSC.mm10
+)
+
+## SAve motif ###############################
+#saveRDS(Part_DG_GC_allNSC_subset_Bap1KO_GRN, file = "output/Pando/Part_DG_GC_allNSC_subset_Bap1KO_GRN_motif.rds")
+#load: Part_DG_GC_allNSC_subset_Bap1KO_GRN <- readRDS(file = "output/Pando/Part_DG_GC_allNSC_subset_Bap1KO_GRN_motif.rds")
+
+#############################################
+
+
+
+######################################################################################################
+# Inferring the GRN - All genes ####################################################################
+
+# TESTING THE MODEL TO HAVE OUR TF of interest in the GRN ##################
+Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes <- infer_grn(
+    Part_DG_GC_allNSC_subset_Bap1KO_GRN,
+    peak_to_gene_method = 'Signac', # or use 'GREAT' consider overlapping regulatory regions, lets keep Signac
+    method = 'glm', # other model can be tested: ('glmnet', 'cv.glmnet', 'xgb')
+    genes = genes_filtered,
+    parallel = T 
+)
+
+# Find modules = Genes regulated by each TF
+GetNetwork(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes)
+coef(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes)
+
+# THIS BELOW IS WITH SIGNAC GLM
+#saveRDS(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes, file = "output/Pando/Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes.rds")
+#load: Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes <- readRDS(file = "output/Pando/Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes.rds")
+
+
+# Find modules = Genes regulated by each TF
+GetNetwork(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes)
+coef(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes)
+
+
+Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes <- find_modules(
+    Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes, 
+    p_thresh = 0.05,
+    nvar_thresh = 2, 
+    min_genes_per_module = 1, 
+    rsq_thresh = 0.05
+)
+
+
+# some QC plots
+pdf("output/Pando/plot_gof_Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes_RegionsLinkPeaks.pdf", width=7, height=6)
+plot_gof(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes, point_size=3)
+dev.off()
+pdf("output/Pando/plot_module_Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes_RegionsLinkPeaks.pdf", width=7, height=4)
+plot_module_metrics(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes)
+dev.off()
+
+# GRN plots
+Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes <- get_network_graph(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes)
+
+pdf("output/Pando/plot_network_graph__Part_DG_GC_allNSC_subset_Bap1KO_GRN_RegionsLinkPeaks.pdf", width=10, height=10)
+plot_network_graph(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes)
+dev.off()
+pdf("output/Pando/plot_network_graph_fr__Part_DG_GC_allNSC_subset_Bap1KO_GRN_RegionsLinkPeaks.pdf", width=10, height=10)
+plot_network_graph(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes, layout='fr')
+dev.off()
+
+## 1 TF
+Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes_TF <- get_network_graph(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes, 
+    graph_name = 'full_graph', 
+    umap_method = 'none')
+
+
+
+Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes_TF.Pax6 <- get_tf_network(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes_TF, tf='Pax6', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Pax6-Part_DG_GC_allNSC_subset_Bap1KO_GRN_RegionsLinkPeaks.pdf", width=50, height=20)
+plot_tf_network(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes_TF.Pax6, tf='Pax6', circular=F, label_nodes = "all")
+dev.off()
+
+pdf("output/Pando/plot_tf_network-Pax6-Part_DG_GC_allNSC_subset_Bap1KO_GRN_RegionsLinkPeaks-circular_tfs.pdf", width=25, height=10)
+plot_tf_network(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes_TF.Pax6, tf='Pax6', circular=TRUE, label_nodes = "tfs")
+dev.off()
+
+
+
+# Save file
+
+Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes
+
+# Write the data frame to a .txt file
+write.table(coef(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes), 
+            file = "output/Pando/Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes.txt", 
+            sep = "\t", 
+            quote = FALSE, 
+            row.names = FALSE, 
+            col.names = TRUE)
+
+
+
+
+```
+
+
+
+
+
+
+

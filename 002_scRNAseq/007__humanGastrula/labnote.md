@@ -1818,13 +1818,11 @@ GASTRU_24h_merge <- MapQuery(
   reference.reduction = "pca",
   reduction.model = "umap"
 )
-
 # Step 4: Generate UMAP plots - USING HUMAN GASTRULA ANNOTATION
 all_clusters <- union(
   unique(humanGastrula$cluster_id),
   unique(GASTRU_24h_merge$predicted.id)
 )
-
 # Step 2: Assign consistent colors
 cluster_colors <- setNames(scales::hue_pal()(length(all_clusters)), sort(all_clusters))
 # Panel 1: Human gastrula
@@ -1836,7 +1834,6 @@ p1 <- DimPlot(
   pt.size = 1,
   cols = cluster_colors
 ) + ggtitle("Human gastrula")
-
 # Panel 2: Projected gastruloid
 p2 <- DimPlot(
   GASTRU_24h_merge,
@@ -1846,9 +1843,7 @@ p2 <- DimPlot(
   pt.size = 1,
   cols = cluster_colors
 ) + ggtitle("Human gastruloid 24hr")
-
 # Panel 3: Overlay
-
 # Plot reference (humanGastrula) in gray
 humanGastrula$dummy_group <- "Reference"
 p_ref <- DimPlot(
@@ -1858,7 +1853,6 @@ p_ref <- DimPlot(
   cols = "lightgray",
   pt.size = 1
 ) + NoLegend()
-
 # Plot projected query separately with colors
 p_query <- DimPlot(
   GASTRU_24h_merge,
@@ -1867,11 +1861,9 @@ p_query <- DimPlot(
   pt.size = 1,
   cols = cluster_colors
 ) + NoAxes() + NoLegend()
-
 # Overlay: Extract and draw query points on top of reference
 g_ref <- p_ref[[1]]
 query_layer <- ggplot_build(p_query[[1]])$data[[1]]
-
 g_overlay <- g_ref +
   geom_point(
     data = query_layer,
@@ -1882,11 +1874,12 @@ g_overlay <- g_ref +
   ggtitle("Overlay") +
   theme_void() +
   theme(plot.title = element_text(hjust = 0.5))
-
 # Step 4: Export
 pdf("output/seurat/UMAP_humanGastrula-reference_query_overlay-version3-24hr.pdf", width = 30, height = 7)
 (p1 | p2 | g_overlay)
 dev.off()
+
+
 
 
 # Generate UMAP plots - USING OUR GASTRULOID 24hr CLUSTER ANNOTATION
@@ -1905,7 +1898,6 @@ p1 <- DimPlot(
   pt.size = 1,
   cols = cluster_colors
 ) + ggtitle("Human gastrula")
-
 # Panel 2: Projected gastruloid
 p2 <- DimPlot(
   GASTRU_24h_merge,
@@ -1946,7 +1938,16 @@ g_overlay <- g_ref +
 pdf("output/seurat/UMAP_humanGastrula-reference_query_overlay-annotation-version3-24hr.pdf", width = 30, height = 7)
 (p1 | p2 | g_overlay)
 dev.off()
-
+## Condition split
+pdf("output/seurat/UMAP_humanGastrula-reference_query_overlay-annotationSplitCondition-version3-24hr.pdf", width = 30, height = 7)
+DimPlot(
+  GASTRU_24h_merge,
+  reduction = "ref.umap",
+  split.by = "condition",
+  label = FALSE,
+  pt.size = 1
+) + ggtitle("Human gastruloid 24hr")
+dev.off()
 
 
 
@@ -2078,6 +2079,22 @@ ggplot(df2, aes(x = predicted_id, y = prediction_score)) +
   theme_bw() +
   coord_flip() +
   labs(title = "Prediction score", x = NULL, y = NULL)
+dev.off()
+
+
+df3 <- data.frame(
+  prediction_score = GASTRU_24h_merge$prediction.score.max,
+  predicted_id = GASTRU_24h_merge$predicted.id,
+  condition = GASTRU_24h_merge$condition,
+  condition = factor(GASTRU_24h_merge$condition, levels = c("UNTREATED", "DASATINIB", "XMU"))
+)
+pdf("output/seurat/UMAP_humanGastrula-reference_query_overlay-prediction_score_predicted_id-splitCondition-version4-24hr.pdf", width = 6, height = 5)
+ggplot(df3, aes(x = predicted_id, y = prediction_score, fill = condition)) +
+  geom_boxplot(outlier.size = 0.5, position = position_dodge(width = 0.75)) +
+  theme_bw() +
+  coord_flip() +
+  labs(title = "Prediction score", x = NULL, y = "Score") +
+  scale_fill_manual(values = c("UNTREATED" = "#999999", "DASATINIB" = "#E69F00", "XMU" = "#56B4E9"))  # Custom colors
 dev.off()
 
 ```
@@ -2246,7 +2263,6 @@ humanGastrula <- MapQuery(
   reference.reduction = "pca",
   reduction.model = "umap"
 )
-
 # Step 4: Generate UMAP plots
 # Step 1: Create a color palette for all cluster levels
 # Get all unique cluster names from both reference and query
@@ -2254,13 +2270,11 @@ all_clusters <- union(
   unique(GASTRU_72h_merge$seurat_clusters),
   unique(humanGastrula$predicted.id)
 )
-
 # Assign colors (adjust palette as needed or use scales::hue_pal())
 cluster_colors <- setNames(
   scales::hue_pal()(length(all_clusters)),
   sort(all_clusters)
 )
-
 # Panel 1: Human gastruloid
 p1 <- DimPlot(
   GASTRU_72h_merge,
@@ -2270,7 +2284,6 @@ p1 <- DimPlot(
   pt.size = 1,
   cols = cluster_colors
 ) + ggtitle("Human gastruloid 72hr")
-
 # Panel 2: Projected gastrula
 p2 <- DimPlot(
   humanGastrula,
@@ -2280,7 +2293,6 @@ p2 <- DimPlot(
   pt.size = 1,
   cols = cluster_colors
 ) + ggtitle("Human gastrula")
-
 # Panel 3: Overlay
 # Reference in gray
 GASTRU_72h_merge$dummy_group <- "Reference"
@@ -2291,7 +2303,6 @@ p_ref <- DimPlot(
   cols = "lightgray",
   pt.size = 1
 ) + NoLegend()
-
 # Query plotted separately with correct colors
 p_query <- DimPlot(
   humanGastrula,
@@ -2300,11 +2311,9 @@ p_query <- DimPlot(
   pt.size = 1,
   cols = cluster_colors
 ) + NoAxes() + NoLegend()
-
 # Extract and overlay
 g_ref <- p_ref[[1]]
 query_layer <- ggplot_build(p_query[[1]])$data[[1]]
-
 g_overlay <- g_ref +
   geom_point(
     data = query_layer,
@@ -2316,7 +2325,6 @@ g_overlay <- g_ref +
   ggtitle("Overlay") +
   theme_void() +
   theme(plot.title = element_text(hjust = 0.5))
-
 # Step 5: Export
 pdf("output/seurat/UMAP_humanGastrula-reference_query_overlay-order1-version3.pdf", width = 30, height = 7)
 (p1 | p2 | g_overlay)
@@ -2691,6 +2699,23 @@ ggplot(df2, aes(x = predicted_id, y = prediction_score)) +
   theme_bw() +
   coord_flip() +
   labs(title = "Prediction score", x = NULL, y = NULL)
+dev.off()
+
+
+
+df3 <- data.frame(
+  prediction_score = GASTRU_72h_merge$prediction.score.max,
+  predicted_id = GASTRU_72h_merge$predicted.id,
+  condition = GASTRU_72h_merge$condition,
+  condition = factor(GASTRU_72h_merge$condition, levels = c("UNTREATED", "DASATINIB", "XMU"))
+)
+pdf("output/seurat/UMAP_humanGastrula-reference_query_overlay-prediction_score_predicted_id-splitCondition-version3.pdf", width = 6, height = 5)
+ggplot(df3, aes(x = predicted_id, y = prediction_score, fill = condition)) +
+  geom_boxplot(outlier.size = 0.5, position = position_dodge(width = 0.75)) +
+  theme_bw() +
+  coord_flip() +
+  labs(title = "Prediction score", x = NULL, y = "Score") +
+  scale_fill_manual(values = c("UNTREATED" = "#999999", "DASATINIB" = "#E69F00", "XMU" = "#56B4E9"))  # Custom colors
 dev.off()
 
 ```

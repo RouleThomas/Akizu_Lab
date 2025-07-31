@@ -34989,11 +34989,51 @@ pdf("output/seurat/UMAP_GASTRU_24h_merge-dim20kparam30res03-splitCondition.pdf",
 DimPlot(GASTRU_24h_merge, reduction = "umap", label=TRUE, split.by = "condition")
 dev.off()
 
+pdf("output/seurat/UMAP_GASTRU_24h_merge-dim20kparam30res03-splitConditionGroupPhase.pdf", width=14, height=6)
+DimPlot(GASTRU_24h_merge, reduction = "umap", label=TRUE, split.by = "condition", group.by = "Phase",
+  cols = c("G1" = "#1f77b4", "G2M" = "#ff7f0e", "S" = "#2ca02c")) 
+dev.off()
+
 # SAVE OUTPUT ########################################################
 #saveRDS(GASTRU_24h_merge, file = "output/seurat/GASTRU_24h_merge-dim20kparam30res03.rds")
 GASTRU_24h_merge <- readRDS(file = "output/seurat/GASTRU_24h_merge-dim20kparam30res03.rds")
 
 ######################################################################
+
+
+
+
+# Cell cycle proportion per cluster
+## Using numeric cluster annotation
+plot_cell_cycle_per_cluster <- function(GASTRU_24h_merge, output_dir) {
+  clusters <- unique(GASTRU_24h_merge$seurat_clusters)
+  # Extract the condition per cell and bind to metadata
+  GASTRU_24h_merge$condition <- factor(GASTRU_24h_merge$condition,
+                                       levels = c("UNTREATED", "DASATINIB", "XMU"))
+  for (cluster in clusters) {
+    data <- GASTRU_24h_merge@meta.data %>%
+      dplyr::filter(seurat_clusters == cluster) %>%
+      group_by(condition, Phase) %>%
+      summarise(count = n(), .groups = "drop") %>%
+      group_by(condition) %>%
+      mutate(proportion = count / sum(count)) %>%
+      ungroup()
+    plot <- ggplot(data, aes(x = condition, y = proportion, fill = Phase)) +
+      geom_bar(stat = "identity", position = "fill") +
+      scale_y_continuous(labels = scales::percent) +
+      labs(title = paste("Cluster", cluster), x = "Genotype", y = "Proportion (%)") +
+      theme_bw() +
+      scale_fill_manual(values = c("G1" = "#1f77b4", "G2M" = "#ff7f0e", "S" = "#2ca02c")) +
+      geom_text(aes(label = scales::percent(proportion, accuracy = 0.1)),
+                position = position_fill(vjust = 0.5), size = 5)
+    # Save plot to PDF
+    pdf(paste0(output_dir, "cellCycle_Cluster-GASTRU_24h_merge-dim20kparam30res03-", cluster, ".pdf"), width = 4, height = 5)
+    print(plot)
+    dev.off()
+  }
+}
+plot_cell_cycle_per_cluster(GASTRU_24h_merge, output_dir = "output/seurat/")
+
 
 ```
 
@@ -35093,12 +35133,52 @@ pdf("output/seurat/UMAP_GASTRU_72h_merge-dim20kparam30res03-splitCondition.pdf",
 DimPlot(GASTRU_72h_merge, reduction = "umap", label=TRUE, split.by = "condition")
 dev.off()
 
+pdf("output/seurat/UMAP_GASTRU_72h_merge-dim20kparam30res03-splitConditionGroupPhase.pdf", width=14, height=6)
+DimPlot(GASTRU_72h_merge, reduction = "umap", label=TRUE, split.by = "condition", group.by = "Phase",
+  cols = c("G1" = "#1f77b4", "G2M" = "#ff7f0e", "S" = "#2ca02c")) 
+dev.off()
+
+
 # SAVE OUTPUT ########################################################
 #saveRDS(GASTRU_72h_merge, file = "output/seurat/GASTRU_72h_merge-dim20kparam30res03.rds")
-
 GASTRU_72h_merge <- readRDS(file = "output/seurat/GASTRU_72h_merge-dim20kparam30res03.rds")
-
 ######################################################################
+
+
+
+
+# Cell cycle proportion per cluster
+## Using numeric cluster annotation
+plot_cell_cycle_per_cluster <- function(GASTRU_72h_merge, output_dir) {
+  clusters <- unique(GASTRU_72h_merge$seurat_clusters)
+  # Extract the condition per cell and bind to metadata
+  GASTRU_72h_merge$condition <- factor(GASTRU_72h_merge$condition,
+                                       levels = c("UNTREATED", "DASATINIB", "XMU"))
+  for (cluster in clusters) {
+    data <- GASTRU_72h_merge@meta.data %>%
+      dplyr::filter(seurat_clusters == cluster) %>%
+      group_by(condition, Phase) %>%
+      summarise(count = n(), .groups = "drop") %>%
+      group_by(condition) %>%
+      mutate(proportion = count / sum(count)) %>%
+      ungroup()
+    plot <- ggplot(data, aes(x = condition, y = proportion, fill = Phase)) +
+      geom_bar(stat = "identity", position = "fill") +
+      scale_y_continuous(labels = scales::percent) +
+      labs(title = paste("Cluster", cluster), x = "Genotype", y = "Proportion (%)") +
+      theme_bw() +
+      scale_fill_manual(values = c("G1" = "#1f77b4", "G2M" = "#ff7f0e", "S" = "#2ca02c")) +
+      geom_text(aes(label = scales::percent(proportion, accuracy = 0.1)),
+                position = position_fill(vjust = 0.5), size = 5)
+    # Save plot to PDF
+    pdf(paste0(output_dir, "cellCycle_Cluster-GASTRU_72h_merge-dim20kparam30res03-", cluster, ".pdf"), width = 4, height = 5)
+    print(plot)
+    dev.off()
+  }
+}
+plot_cell_cycle_per_cluster(GASTRU_72h_merge, output_dir = "output/seurat/")
+
+
 
 ```
 
