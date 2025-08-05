@@ -61262,7 +61262,7 @@ sbatch scripts/scRNAseqProjection-10X_nuclei_v3_AIBS-order2.sh # 47776001 ok
 ```
 
 --> All cell types are recovered; 10X_nuclei_v3_AIBS can be used effectively for cell type annotation! Let's use marker genes from their paper; they should overlap!!
-  --> File to use: `seurat/Yao_Cortex-all_markers.txt`
+  --> File to use: `output/seurat/Yao_Cortex-all_markers.txt`
 
 
 
