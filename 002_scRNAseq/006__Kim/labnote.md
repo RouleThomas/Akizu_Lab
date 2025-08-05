@@ -20823,9 +20823,6 @@ Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF <- get_network_graph(Part_DG_GC_subset_
 Part_DG_GC_subset_Bap1KO_GRN_allGenes
 
 
-XXXY HERE ! SAVE
-
-
 
 
 # Write the data frame to a .txt file
@@ -20835,6 +20832,31 @@ write.table(coef(Part_DG_GC_subset_Bap1KO_GRN_allGenes),
             quote = FALSE, 
             row.names = FALSE, 
             col.names = TRUE)
+
+
+
+
+
+
+
+# GRN PLOTS
+## WT
+Part_DG_GC_subset_WT_GRN_allGenes_TF.Gli1 <- get_tf_network(Part_DG_GC_subset_WT_GRN_allGenes_TF, tf='Ctnnb1', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Gli1-Part_DG_GC_subset_WT_RegionsLinkPeaks-pthresh05nvar2min1rsq05.pdf", width=5, height=2)
+plot_tf_network(Part_DG_GC_subset_WT_GRN_allGenes_TF.Gli1, tf='Gli1', circular=F, label_nodes = "all")
+dev.off()
+pdf("output/Pando/plot_tf_network-Gli1-Part_DG_GC_subset_WT_RegionsLinkPeaks-circular_tfs-pthresh05nvar2min1rsq05.pdf", width=25, height=10)
+plot_tf_network(Part_DG_GC_subset_WT_GRN_allGenes_TF.Gli1, tf='Gli1', circular=TRUE, label_nodes = "tfs")
+dev.off()
+
+## Bap1KO
+Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF.Gli1 <- get_tf_network(Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF, tf='Gli1', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Gli1-Part_DG_GC_subset_Bap1KO_RegionsLinkPeaks-pthresh05nvar2min1rsq05.pdf", width=5, height=2)
+plot_tf_network(Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF.Gli1, tf='Gli1', circular=F, label_nodes = "all")
+dev.off()
+pdf("output/Pando/plot_tf_network-Gli1-Part_DG_GC_subset_Bap1KO_RegionsLinkPeaks-circular_tfs-pthresh05nvar2min1rsq05.pdf", width=25, height=10)
+plot_tf_network(Part_DG_GC_subset_Bap1KO_GRN_allGenes_TF.Gli1, tf='Gli1', circular=TRUE, label_nodes = "tfs")
+dev.off()
 
 
 
@@ -21146,8 +21168,6 @@ Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes_TF <- get_network_graph(Part_DG_GC_
 
 
 
-XXXY HERE ! SAVE
-
 # Save file
 
 Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes
@@ -21159,6 +21179,29 @@ write.table(coef(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes),
             quote = FALSE, 
             row.names = FALSE, 
             col.names = TRUE)
+
+
+
+# GRN PLOTS
+## WT
+Part_DG_GC_allNSC_subset_WT_GRN_allGenes_TF.Smo <- get_tf_network(Part_DG_GC_allNSC_subset_WT_GRN_allGenes_TF, tf='Ctnnb1', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Gli1-Part_DG_GC_allNSC_subset_WT_RegionsLinkPeaks-pthresh05nvar2min1rsq05.pdf", width=5, height=2)
+plot_tf_network(Part_DG_GC_allNSC_subset_WT_GRN_allGenes_TF.Gli1, tf='Gli1', circular=F, label_nodes = "all")
+dev.off()
+pdf("output/Pando/plot_tf_network-Gli1-Part_DG_GC_allNSC_subset_WT_RegionsLinkPeaks-circular_tfs-pthresh05nvar2min1rsq05.pdf", width=25, height=10)
+plot_tf_network(Part_DG_GC_allNSC_subset_WT_GRN_allGenes_TF.Gli1, tf='Gli1', circular=TRUE, label_nodes = "tfs")
+dev.off()
+
+## Bap1KO
+Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes_TF.Gli1 <- get_tf_network(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes_TF, tf='Gli1', graph='full_graph')
+pdf("output/Pando/plot_tf_network-Gli1-Part_DG_GC_allNSC_subset_Bap1KO_RegionsLinkPeaks-pthresh05nvar2min1rsq05.pdf", width=5, height=2)
+plot_tf_network(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes_TF.Gli1, tf='Gli1', circular=F, label_nodes = "all")
+dev.off()
+pdf("output/Pando/plot_tf_network-Gli1-Part_DG_GC_allNSC_subset_Bap1KO_RegionsLinkPeaks-circular_tfs-pthresh05nvar2min1rsq05.pdf", width=25, height=10)
+plot_tf_network(Part_DG_GC_allNSC_subset_Bap1KO_GRN_allGenes_TF.Gli1, tf='Gli1', circular=TRUE, label_nodes = "tfs")
+dev.off()
+
+
 
 
 
