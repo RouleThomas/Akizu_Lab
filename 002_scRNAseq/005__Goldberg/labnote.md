@@ -47342,7 +47342,7 @@ Endothelial= Lef1, Notum, Apcdd1, Pdgfrb; Slc38a5, Flt1, Adgrl4, Slco1a4 (Cluste
 
 ## all markers
 all_markers <- c(
-  "Satb2", "Cux1", "Cux2",
+  "Satb2", "Cux1", "Cux2", 
   "Pdlim1",
   "Otof",
   "Rorb", "Rspo1", "Cux2",
