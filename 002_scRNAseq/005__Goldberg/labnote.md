@@ -47266,7 +47266,7 @@ new.cluster.ids <- c(
   "L5_PT__Pou3f1",
   "Endothelial",
   "L2_IT__Pdlim1",
-  "GABA__Lamp5Ndnf",
+  "GABA__NdnfLamp5",
   "Oligodendrocyte",
   "L2L3_IT_immature",
   "GABA_immature_2",
@@ -47289,7 +47289,7 @@ pdf("output/seurat/UMAP_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07_labelve
 DimPlot(WT_Kcnc1_p14_CX_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
 dev.off()
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07_noSplit_labelversion2.pdf", width=12, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07_noSplit_labelversion2.pdf", width=11, height=6)
 DimPlot(WT_Kcnc1_p14_CX_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 4)
 dev.off()
 
@@ -47322,7 +47322,7 @@ GABA_immature_2 =Gad1, Gad2, Dlx1, Dlx2, Arx, Dlx6os1 (Cluster26) – BUT no mat
 GABA__Vipr2= Vipr2 (Cluster7)
 GABA__SstCalb2 = Calb2, Sst (Cluster19)
 GABA__Vip= Vip, Prox1; Crh, Tac2, Htr3a, Grpr (Cluster13)
-GABA__Lamp5Ndnf= Lamp5, Ndnf; Pde11a, Kit, Gm16070 (Cluster23)
+GABA__NdnfLamp5= Lamp5, Ndnf; Pde11a, Kit, Gm16070 (Cluster23)
 GABA__Sst= Sst; Grin3a (Cluster14)
 GABA__Pvalb= Pvalb (Cluster12)
 GABA__Baiap3= Baiap3 (Cluster5)
@@ -47342,7 +47342,7 @@ Endothelial= Lef1, Notum, Apcdd1, Pdgfrb; Slc38a5, Flt1, Adgrl4, Slco1a4 (Cluste
 
 ## all markers
 all_markers <- c(
-  "Satb2", "Cux1", "Cux2", 
+  "Satb2", "Cux1",  # "Cux2"
   "Pdlim1",
   "Otof",
   "Rorb", "Rspo1", "Cux2",
@@ -47353,22 +47353,22 @@ all_markers <- c(
   "Car3", "Oprk1", "Ntng2",
   "Foxp2", "Col12a1",
   "Galnt10", "Nxph4", "Nxph3", "Pou6f2", "Cplx3",
-  "Stard5", "Cbln2", "Dcc", "Rell1", "Pamr1", "Tle4",
+  "Stard5", "Cbln2",  "Rell1", "Pamr1", "Tle4", # Dcc
 
   "Drd2", "Adora2a", "Mhrt", "Gng7",
-  "Foxp2",
+   # Foxp2
   "Reln", "Adamts18",
 
-  "Chst9", "Foxp2", "Dlx6os1", "Unc13c", "Pbx3", "Robo1",
+  "Chst9", "Unc13c", "Pbx3",  # Foxp2,  Dlx6os1 Robo1
   "Gad1", "Gad2", "Dlx1", "Dlx2", "Arx", "Dlx6os1",
   "Vipr2",
-  "Calb2", "Sst",
+  "Calb2", # Sst
   "Vip", "Prox1", "Crh", "Tac2", "Htr3a", "Grpr",
-  "Lamp5", "Ndnf", "Pde11a", "Kit", "Gm16070",
+  "Lamp5", "Pde11a", "Kit", "Gm16070", # Ndnf
   "Sst", "Grin3a",
   "Pvalb",
   "Baiap3",
-  "Pvalb", "St18", "Lamb1", "Gpr83", "Gna14", "Adamts5",
+  "St18", "Lamb1", "Gpr83", "Gna14", "Adamts5", #  Pvalb
   "Ndnf", "Slc12a8", "Ccdc192", "Klhl1",
 
   "Itgam", "Cx3cr1", "C1qb", "Siglech", "C1qa", "Arhgap45",
@@ -47409,7 +47409,7 @@ levels(WT_Kcnc1_p14_CX_1step.sct) <- c(
 "GABA__Vipr2",
 "GABA__SstCalb2",
 "GABA__Vip",
-"GABA__Lamp5Ndnf",
+"GABA__NdnfLamp5",
 "GABA__Sst",
 "GABA__Pvalb",
 "GABA__Baiap3",
@@ -47426,13 +47426,12 @@ levels(WT_Kcnc1_p14_CX_1step.sct) <- c(
 
 
 
-pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07_labelversion2.pdf", width=15, height=7)
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07_labelversion2.pdf", width=25, height=7)
 DotPlot(WT_Kcnc1_p14_CX_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red")) + RotatedAxis()
 dev.off()
 
-XXXY HERE erro maybe duplicate?
 
-pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07_labelversion2_vertical.pdf", width=11, height=6)
+pdf("output/seurat/DotPlot_SCT_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07_labelversion2_vertical.pdf", width=20, height=6)
 DotPlot(WT_Kcnc1_p14_CX_1step.sct, assay = "SCT", features = all_markers, cols = c("grey", "red"))  + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
         axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
@@ -47441,7 +47440,7 @@ dev.off()
 
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07-labelversion2-ListDotPlot.pdf", width=30, height=70)
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07-labelversion2-ListDotPlot.pdf", width=30, height=80)
 FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = all_markers, max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
@@ -47462,16 +47461,16 @@ WT_Kcnc1_p14_CX_1step.sct <- ScaleData(WT_Kcnc1_p14_CX_1step.sct, features = all
 
 DefaultAssay(WT_Kcnc1_p14_CX_1step.sct) <- "SCT"
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07-Kcnc1-split.pdf", width=10, height=5)
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07-Kcnc1-splitlabelversion2.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = c("Kcnc1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07-Gria1-split.pdf", width=10, height=5)
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07-Gria1-splitlabelversion2.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = c("Gria1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07-Apoe.pdf", width=10, height=5)
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07-Apoe-labelversion2.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = c("Apoe"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
@@ -47482,43 +47481,43 @@ dev.off()
 DefaultAssay(WT_Kcnc1_p14_CX_1step.sct) <- "RNA"
 
 cell_types <- c(   
-  "L2__IT",
-  "L2L3_1",
-  "L2L3_2",
-  "L2_L3__inh",
-  "L4L5",
-  "L5_1",
-  "L5_2",
-  "L5__PT",
-  "L5__IT",
-  "L5_L6__NP",
-  "L6__inh",
-  "L6_Car3",
-  "L6__LT",
-  "L6__IT",
-  "L6B",
+"L2L3_IT_immature",
+"L2_IT__Pdlim1",
+"L2L3_IT__Otof_1",
+"L2L3_IT__Otof_2",
+"L4L5_IT__Rorb",
+"L5_IT__Etv1_1",
+"L5_IT__Etv1_2",
+"L5_IT__Tshz2",
+"L5_PT__Pou3f1",
+"L6_IT__Cdh9",
+"L6__Car3",
+"L6_IT__Foxp2",
+"L6B__Pou6f2",
+"L5L6_NP__Tle4Stard5",
 
-  "GABA_Vipr2",
-  "GABA_Pvalb",
-  "GABA_Vip",
-  "GABA_Sst",
-  "GABA_SstCalb2",
-  "GABA_Lamp5",
+"L5_IT_GABA__Adora2a",
+"L6_GABA__Foxp2",
+"L5L6_GABA__Reln",
 
-  "Microglia",
-  "Bergman",
-  "OPC",
-  "Oligodendrocyte",
-  "Endothelial",
-  "Meningeal",
+"GABA_immature_1",
+"GABA_immature_2",
+"GABA__Vipr2",
+"GABA__SstCalb2",
+"GABA__Vip",
+"GABA__NdnfLamp5",
+"GABA__Sst",
+"GABA__Pvalb",
+"GABA__Baiap3",
+"GABA__PvalbSt18",
+"GABA__NdnfKlhl1",
 
-  "cluster5",
-  "cluster18",
-  "cluster25",
-  "cluster26",
-  "cluster31",
-  "cluster33",
-  "cluster34"
+"Microglia",
+"Astrocyte",
+"OPC",
+"Oligodendrocyte",
+"Meningeal",
+"Endothelial"
 )
 WT_Kcnc1_p14_CX_1step.sct$cluster.annot <- factor(
   WT_Kcnc1_p14_CX_1step.sct$cluster.annot, 
@@ -47526,8 +47525,8 @@ WT_Kcnc1_p14_CX_1step.sct$cluster.annot <- factor(
 )
 
 
-pdf("output/seurat/VlnPlot_SCT_WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07-Kcnc1-split.pdf", width=12, height=4)
-VlnPlot(WT_Kcnc1_p14_CX_1step.sct, features = c("Kcnc1"),split.by = "condition", group.by = "cluster.annot")
+pdf("output/seurat/VlnPlot_SCT_WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07-Kcnc1-splitlabelversion2.pdf", width=12, height=4)
+VlnPlot(WT_Kcnc1_p14_CX_1step.sct, features = c("Kcnc1"),split.by = "condition", group.by = "cluster.annot", cols = c("black", "blue"))
 dev.off()
 
 
@@ -47597,7 +47596,7 @@ p14_CX_prop$genotype <-
   factor(p14_CX_prop$genotype,
          c("WT", "Kcnc1"))
 
-pdf("output/seurat/histogramProp_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07.pdf", width=9, height=4)
+pdf("output/seurat/histogramProp_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07-labelversion2.pdf", width=9, height=4)
 ggbarplot(p14_CX_prop, x = "cluster", y = "proportion", fill = "genotype",
                   color = "genotype", palette = c("black", "blue"),
                   position = position_dodge(0.8), # Separate bars by genotype
@@ -47610,6 +47609,20 @@ ggbarplot(p14_CX_prop, x = "cluster", y = "proportion", fill = "genotype",
 dev.off()
 
 
+
+
+
+
+# save ##################
+
+## saveRDS(WT_Kcnc1_p14_CX_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07.sct_V2_label.rds") 
+WT_Kcnc1_p14_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07.sct_V2_label.rds") # 
+
+set.seed(42)
+##########
+
+
+XXXY EHR EBELOW NOT MOD SLUREM JOB DEG! 
 
 
 
@@ -57602,6 +57615,8 @@ sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CB_Version5_MAST.sh # 42956871 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CX_Version2_MAST.sh # 41323739 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CX_Version2_default.sh # 41323740 ok
 
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CX_Version2labelversion2_MAST.sh # 49025733 xxx
+
 
 
 ```
@@ -62214,7 +62229,6 @@ anchors <- FindTransferAnchors(
   k.filter = 2000 # 500
 )
 
-#--> k.anchor 500; k.filter 2000; give xxx anchors XXXY
 #--> k.anchor 250; k.filter 500; give 1138 anchors (still very low for 20k cells)
 #--> k.anchor 100; k.filter 500; give 199 anchors
 #--> k.anchor 50; k.filter 500; give 52 anchors

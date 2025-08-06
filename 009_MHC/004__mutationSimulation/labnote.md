@@ -139,8 +139,8 @@ python scripts/simulate_array.py \
 
 # Generate plot for all
 sbatch scripts/run_filtered_cosmic.slurm # 47828611 ok --> results/
-sbatch scripts/run_filtered_experimental.slurm # 47875937 xxx --> results_experimental/
-sbatch scripts/run_filtered_contexts.slurm # 47876020 xxx --> results_contexts/
+sbatch scripts/run_filtered_experimental.slurm # 47875937 ok --> results_experimental/
+sbatch scripts/run_filtered_contexts.slurm # 47876020 ok --> results_contexts/
 ```
 
 --> All good all files generated with `n_*` folders in the respectrive `results*/` folders
