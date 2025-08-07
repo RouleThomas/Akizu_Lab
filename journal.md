@@ -181,6 +181,8 @@ WORK great!
 
 --> Same scRNAseq but also allow Shiny app creation!
 --> And with harmony
+--> And SeuratDisk
+
 
 ### scRNAseqV3
 
