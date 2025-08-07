@@ -10,8 +10,9 @@ Jasmine making a review about PRC2 subunits and brain stuff.
 
 Download and re-analize public scRNAseq data from fly brain, and human brain neurons:
 - Public data in [SCOPE](https://scope.aertslab.org/#/Fly_Brain/Fly_Brain%2FRavenscroft_et_al_2019_LarvalBrain.loom/welcome):
-    - Davie_Janssens_Koldere_et_al_2018_AdultBrain
-    - Ravenscroft_et_al_2019_LarvalBrain
+    - Davie_Janssens_Koldere_et_al_2018_AdultBrain --> Seems not great, too complex, cell type not clear
+    - Ravenscroft_et_al_2019_LarvalBrain --> XXX
+    - Aerts_Fly_AdultBrain_Filtered_57k --> XXX
 
 
 
