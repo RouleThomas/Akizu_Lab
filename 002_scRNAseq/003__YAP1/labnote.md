@@ -35035,6 +35035,10 @@ plot_cell_cycle_per_cluster <- function(GASTRU_24h_merge, output_dir) {
 plot_cell_cycle_per_cluster(GASTRU_24h_merge, output_dir = "output/seurat/")
 
 
+
+
+
+
 ```
 
 
@@ -35178,6 +35182,18 @@ plot_cell_cycle_per_cluster <- function(GASTRU_72h_merge, output_dir) {
 }
 plot_cell_cycle_per_cluster(GASTRU_72h_merge, output_dir = "output/seurat/")
 
+
+
+# Count how many cells express CDX2 and GATA6
+
+
+DefaultAssay(GASTRU_72h_merge) <- "RNA"
+
+
+sum(
+  GetAssayData(GASTRU_72h_merge, slot = "counts")["GATA6", 
+    GASTRU_72h_merge$condition == "UNTREATED"] > 0
+)
 
 
 ```

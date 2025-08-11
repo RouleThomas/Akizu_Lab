@@ -1642,6 +1642,42 @@ DimPlot(
 dev.off()
 
 
+# Filter to only keep human second trimester ################
+seurat_Second_trimester <- subset(seurat, subset = Group == "Second_trimester")
+
+
+pdf("output/seurat/UMAP-HumanNeocortex-Second_trimester-Type.pdf", width=15, height=10)
+DimPlot(
+  seurat_Second_trimester,
+  reduction = "X_umap",
+  group.by  = "Type",
+  raster    = FALSE,
+  pt.size   = 0.1,
+  label=FALSE
+)
+dev.off()
+pdf("output/seurat/UMAP-HumanNeocortex-Second_trimester-Subclass.pdf", width=6, height=5)
+DimPlot(
+  seurat_Second_trimester,
+  reduction = "X_umap",
+  group.by  = "Subclass",
+  raster    = FALSE,
+  pt.size   = 0.1,
+  label=TRUE
+)
+dev.off()
+pdf("output/seurat/UMAP-HumanNeocortex-Second_trimester-Subclass_nolabel.pdf", width=6, height=5)
+DimPlot(
+  seurat_Second_trimester,
+  reduction = "X_umap",
+  group.by  = "Subclass",
+  raster    = FALSE,
+  pt.size   = 0.1,
+  label=FALSE
+)
+dev.off()
+
+
 
 
 
@@ -1678,15 +1714,125 @@ dev.off()
 
 
 
+levels(WT_Kcnc1_p14_CB_1step.sct) <- c(
+"Granular_1",
+"Granular_2",
+"Granular_3",
+"Granular_4",
+"Granular_5",
+"Granular_6",
+"Granular_7",
+"Neuroblast_1",
+"Neuroblast_2",
+"MLI1",
+"MLI2",
+"Endothelial_Cells",
+"Astrocyte",
+"Bergmann_Glia",
+"OPC",
+"Interneuron_1",
+"Interneuron_2",
+"Oligodendrocyte",
+"EpendymalMeningeal_Cells",
+"Muscle_Cells",
+"Purkinje_Cells",
+"NPC",
+"Choroid_Plexus_Cells"
+)
+
+
+
+pdf("output/seurat/DotPlot-HumanNeocortex-Second_trimester-Class-Subclass.pdf", width=8, height=4)
+DotPlot(seurat_Second_trimester, assay = "RNA", features = gene_list, cols = c("grey", "red"),  group.by = "Subclass"  ) + RotatedAxis()
+dev.off()
+pdf("output/seurat/DotPlot-HumanNeocortex-Second_trimester-Class-Type.pdf", width=8, height=6)
+DotPlot(seurat_Second_trimester, assay = "RNA", features = gene_list, cols = c("grey", "red"),  group.by = "Type"  ) + RotatedAxis()
+dev.off()
+
+
+
+
+
+
 ```
 
 - *NOTE: A lot of trouble to read and convert .h5ad file... I follow [this](https://github.com/satijalab/seurat/issues/9072) suggestion by doing this: `HumanNeocortex <- read_h5ad("input/HumanNeocortex.h5ad")` and `HumanNeocortex <- CreateSeuratObject(counts = t(as.matrix(HumanNeocortex$X)), meta.data = HumanNeocortex$obs,min.features = 500, min.cells = 30)` but lead to new error*
-  --> It owrk with using Seurat v5, together with zellkonverter and readH5AD
+  --> It work with using Seurat v5, together with zellkonverter and readH5AD
 
 
 
 
 
+
+
+
+
+## scRNA-seq data from the larval Drosophila ventral cord provides a resource for studying motor systems function and development
+
+scRNA-seq of Drosophila third instar larval VNC from [this](https://www.sciencedirect.com/science/article/pii/S1534580724001862#app2). --> Data available [here](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE235231) 
+
+
+```bash
+# Download data
+cd input/
+wget "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE235231&format=file&file=GSE235231%5FThird%5Finstar%5Flarvae%5FVNC%5FSerpe%2Erds%2Egz"
+
+# unzip data
+gunzip index*
+
+# Rename file as: Third_instar_larvae_VNC_Serpe.rds
+
+
+conda activate condiments_Signac # For seurat v5 with zellkonverter for readH5AD()
+```
+
+
+
+
+```R
+
+library("Seurat")
+library("tidyverse")
+library("zellkonverter")
+library("SummarizedExperiment")
+
+# Import in .rds file
+Third_instar_larvae_VNC_Serpe <- readRDS("input/Third_instar_larvae_VNC_Serpe.rds")
+
+DefaultAssay(Third_instar_larvae_VNC_Serpe) <- "RNA"   # or your new assay name
+
+
+pdf("output/seurat/UMAP-Third_instar_larvae_VNC_Serpe-Celltypes.pdf", width=10, height=5)
+DimPlot(
+  Third_instar_larvae_VNC_Serpe,
+  reduction = "umap",
+  group.by  = "Celltypes",
+  raster    = FALSE,
+  pt.size   = 0.1,
+  label=TRUE
+)
+dev.off()
+
+
+
+
+# Volcano plot of expression
+
+gene_list_drosophila = c("E(z)", "esc", "escl", "Su(z)12", "Pcl", "Jarid2", "jing", "Caf1-55") 
+
+
+# Case-sensitive check if gene present
+present  <- intersect(gene_list_drosophila, rownames(Third_instar_larvae_VNC_Serpe))
+missing  <- setdiff(gene_list_drosophila, rownames(Third_instar_larvae_VNC_Serpe))
+present
+missing
+
+
+pdf("output/seurat/DotPlot-HumanNeocortex-Second_trimester-Class-Celltypes.pdf", width=7, height=4)
+DotPlot(Third_instar_larvae_VNC_Serpe, assay = "RNA", features = gene_list_drosophila, cols = c("grey", "red"),  group.by = "Celltypes"  ) + RotatedAxis()
+dev.off()
+
+```
 
 
 
