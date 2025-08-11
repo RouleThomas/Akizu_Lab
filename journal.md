@@ -182,7 +182,8 @@ WORK great!
 --> Same scRNAseq but also allow Shiny app creation!
 --> And with harmony
 --> And SeuratDisk
-
+--> And anndata (read .h5ad file)
+--> And zellkonverter  (read/convert .h5ad file)
 
 ### scRNAseqV3
 
@@ -260,7 +261,7 @@ R4.3.1 with `granulator` and `tidyverse`
 --> `homer` with `deseq2` in R v4.3.3  (used in `008*/001*`)
 
 
-### condiments_Signac
+### condiments_Signac (Seurat v5 here)
 
 --> condiments with Signac!!! (and Seurat)
 
@@ -268,7 +269,7 @@ R4.3.1 with `granulator` and `tidyverse`
 
 --> tradeseq installed (can do DEG pseudotime)
 
-
+--> zellkonverter installed (read h5da)
 
 ### salmon1
 

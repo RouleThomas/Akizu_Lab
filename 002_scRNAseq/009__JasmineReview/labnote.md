@@ -1545,3 +1545,153 @@ dev.off()
 
 
 
+## Molecular and cellular dynamics of the developing human neocortex at single-cell resolution
+
+Let's try this data for [human developping cortex](https://cellxgene.cziscience.com/collections/ad2149fc-19c5-41de-8cfe-44710fbada73)
+
+
+
+```bash
+conda activate condiments_Signac # For seurat v5 with zellkonverter for readH5AD()
+
+# Data download
+wget https://datasets.cellxgene.cziscience.com/e6a9bb74-ad09-4906-9ea7-a20b91f186a2.h5ad -O input/HumanNeocortex.h5ad 
+
+```
+
+
+```R
+library("Seurat")
+library("tidyverse")
+library("zellkonverter")
+library("SummarizedExperiment")
+
+# Import in SCE object
+seu <- readH5AD("input/HumanNeocortex.h5ad")
+
+
+# Convert to Seurat (only assay present is "X")
+seurat <- as.Seurat(seu, counts = "X", data = "X")
+
+
+# map ENSG -> symbol from the SCE you loaded
+sym <- as.character(rowData(seu)$gene_name)
+names(sym) <- rownames(seu)
+
+new_names <- sym[rownames(seurat)]
+fallback  <- is.na(new_names) | new_names == ""
+new_names[fallback] <- rownames(seurat)[fallback]
+new_names <- make.unique(new_names)
+
+
+
+# Tidy the seurat
+counts <- GetAssayData(seurat, assay = "originalexp", layer = "counts")
+data   <- GetAssayData(seurat, assay = "originalexp", layer = "data")
+
+rownames(counts) <- new_names
+rownames(data)   <- new_names
+
+seurat[["RNA"]] <- CreateAssay5Object(counts = counts, data = data)
+DefaultAssay(seurat) <- "RNA"
+seurat[["originalexp"]] <- NULL  # drop the old assay
+
+
+
+pdf("output/seurat/UMAP-HumanNeocortex-groupcell_type.pdf", width=20, height=10)
+DimPlot(
+  seurat,
+  reduction = "X_umap",
+  group.by  = "cell_type",
+  raster    = FALSE,
+  pt.size   = 0.1
+)
+dev.off()
+
+pdf("output/seurat/UMAP-HumanNeocortex-groupClass.pdf", width=5, height=5)
+DimPlot(
+  seurat,
+  reduction = "X_umap",
+  group.by  = "Class",
+  raster    = FALSE,
+  pt.size   = 0.1,
+  label=TRUE
+)
+dev.off()
+
+pdf("output/seurat/UMAP-HumanNeocortex-groupGroup.pdf", width=7, height=5)
+DimPlot(
+  seurat,
+  reduction = "X_umap",
+  group.by  = "Group",
+  raster    = FALSE,
+  pt.size   = 0.1,
+  label=TRUE
+)
+dev.off()
+
+pdf("output/seurat/UMAP-HumanNeocortex-development_stage.pdf", width=15, height=10)
+DimPlot(
+  seurat,
+  reduction = "X_umap",
+  group.by  = "development_stage",
+  raster    = FALSE,
+  pt.size   = 0.1,
+  label=FALSE
+)
+dev.off()
+
+
+
+
+
+### SHOW EXPRESSION OF SOME GENES #######################
+#saveRDS(seurat, file = "output/seurat/HumanNeocortex.rds")
+seurat <- readRDS("output/seurat/HumanNeocortex.rds")
+##########################################################
+
+
+DefaultAssay(seurat) <- "RNA"   # or your new assay name
+seurat <- NormalizeData(seurat) %>% FindVariableFeatures() %>% ScaleData()
+
+
+# Volcano plot of expression
+
+gene_list = c("EZH1", "EZH2", "EED", "SUZ12", "PHF1", "MTF2", "PHF19", "JARID2", "AEBP2", "RBBP4", "RBBP7","LCOR","LCORL","EPOP") 
+
+pdf("output/seurat/VlnPlot-HumanNeocortex-Class-genelist.pdf", width = 5, height = 3)
+for (gene in gene_list) {
+  print(paste("Generating plot for:", gene))
+  p <- VlnPlot(seurat, 
+               features = gene, 
+               group.by = "Class",  # x-axis is your annotation
+               pt.size = 0) +
+    theme(plot.title = element_text(size = 10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  print(p)
+}
+dev.off()
+
+
+
+
+
+
+
+```
+
+- *NOTE: A lot of trouble to read and convert .h5ad file... I follow [this](https://github.com/satijalab/seurat/issues/9072) suggestion by doing this: `HumanNeocortex <- read_h5ad("input/HumanNeocortex.h5ad")` and `HumanNeocortex <- CreateSeuratObject(counts = t(as.matrix(HumanNeocortex$X)), meta.data = HumanNeocortex$obs,min.features = 500, min.cells = 30)` but lead to new error*
+  --> It owrk with using Seurat v5, together with zellkonverter and readH5AD
+
+
+
+
+
+
+
+
+
+
+
+
+
