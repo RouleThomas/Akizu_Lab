@@ -35037,7 +35037,133 @@ plot_cell_cycle_per_cluster(GASTRU_24h_merge, output_dir = "output/seurat/")
 
 
 
+# Count how many cells express CDX2 and GATA6
+## COUNT 
+DefaultAssay(GASTRU_24h_merge) <- "RNA"
 
+GASTRU_24h_merge_UNTREATED <- subset(GASTRU_24h_merge, condition == "UNTREATED")
+GASTRU_24h_merge_DASATINIB <- subset(GASTRU_24h_merge, condition == "DASATINIB")
+GASTRU_24h_merge_XMU <- subset(GASTRU_24h_merge, condition == "XMU")
+
+
+
+
+
+coexpr_stats <- function(obj, g1, g2, cells = NULL,
+                         assay = DefaultAssay(obj), slot = "data",
+                         thresh = 0, digits = 2) {
+  if (is.null(cells)) cells <- colnames(obj)
+  E <- GetAssayData(obj, assay = assay, slot = slot)[c(g1, g2), cells, drop = FALSE]
+  g1p <- E[g1, ] > thresh
+  g2p <- E[g2, ] > thresh
+
+  counts <- c(
+    g1_only = sum(g1p & !g2p),
+    g2_only = sum(!g1p & g2p),
+    both    = sum(g1p & g2p),
+    none    = sum(!g1p & !g2p)
+  )
+  total <- length(cells)
+
+  data.frame(
+    category = names(counts),
+    nCells   = as.integer(counts),
+    percent  = round(100 * counts / total, digits),
+    total    = total,
+    row.names = NULL,
+    check.names = FALSE
+  )
+}
+bind_rows(
+  coexpr_stats(GASTRU_24h_merge_UNTREATED, "GATA6", "CDX2") %>% mutate(condition = "UNTREATED"),
+  coexpr_stats(GASTRU_24h_merge_DASATINIB, "GATA6", "CDX2") %>% mutate(condition = "DASATINIB"),
+  coexpr_stats(GASTRU_24h_merge_XMU,       "GATA6", "CDX2") %>% mutate(condition = "XMU")
+) %>%
+  select(condition, category, nCells, percent, total)
+  
+
+
+## PLOT 
+
+
+
+
+g1 <- "GATA6"; g2 <- "CDX2"
+E  <- FetchData(GASTRU_24h_merge_XMU, vars = c(g1, g2))
+c1 <- quantile(E[[g1]], 0.95, na.rm = TRUE)
+c2 <- quantile(E[[g2]], 0.95, na.rm = TRUE)
+pdf("output/seurat/GASTRU_24h_merge_XMU-dim20kparam30res03-coexprGATA6CDX2.pdf",
+    width = 14, height = 6)
+FeaturePlot(
+  GASTRU_24h_merge_XMU,
+  features = c(g1, g2),
+  reduction = "umap",
+  blend = TRUE,
+  blend.threshold = 0,
+  cols = c("red", "green"),     # <- use cols, not cols.blend
+  min.cutoff = c(0, 0),
+  max.cutoff = c(c1, c2),
+  pt.size = 0.9,
+  order = TRUE
+)
+dev.off()
+
+
+## STAT 
+compare_both <- function(obj1, obj2, g1, g2, name1, name2) {
+  # Boolean vectors: gene > 0
+  expr1 <- FetchData(obj1, vars = c(g1, g2)) > 0
+  expr2 <- FetchData(obj2, vars = c(g1, g2)) > 0
+  
+  both1 <- sum(expr1[, g1] & expr1[, g2])
+  both2 <- sum(expr2[, g1] & expr2[, g2])
+  
+  other1 <- ncol(obj1) - both1
+  other2 <- ncol(obj2) - both2
+  
+  tbl <- matrix(c(both1, other1,
+                  both2, other2),
+                nrow = 2, byrow = TRUE,
+                dimnames = list(c(name1, name2),
+                                c("both", "not_both")))
+  
+  fisher <- fisher.test(tbl)
+  
+  list(table = tbl, fisher = fisher)
+}
+
+# Run comparisons
+unt_vs_dasa <- compare_both(GASTRU_24h_merge_UNTREATED, GASTRU_24h_merge_DASATINIB,
+                            "GATA6", "CDX2", "UNTREATED", "DASATINIB")
+
+unt_vs_xmu  <- compare_both(GASTRU_24h_merge_UNTREATED, GASTRU_24h_merge_XMU,
+                            "GATA6", "CDX2", "UNTREATED", "XMU")
+
+# View results
+unt_vs_dasa$table
+unt_vs_dasa$fisher
+
+unt_vs_xmu$table
+unt_vs_xmu$fisher
+
+
+
+# Raw p-values
+pvals <- c(unt_vs_dasa$fisher$p.value,
+           unt_vs_xmu$fisher$p.value)
+
+# Adjusted p-values (Bonferroni)
+padj_bonf <- p.adjust(pvals, method = "bonferroni")
+
+# Adjusted p-values (FDR)
+padj_fdr  <- p.adjust(pvals, method = "BH")
+
+data.frame(
+  comparison = c("UNTREATED vs DASATINIB", "UNTREATED vs XMU"),
+  pval_raw   = signif(pvals, 3),
+  pval_Bonf  = signif(padj_bonf, 3),
+  pval_FDR   = signif(padj_fdr, 3)
+)
 
 ```
 
@@ -35185,15 +35311,139 @@ plot_cell_cycle_per_cluster(GASTRU_72h_merge, output_dir = "output/seurat/")
 
 
 # Count how many cells express CDX2 and GATA6
-
+## COUNT 
 
 DefaultAssay(GASTRU_72h_merge) <- "RNA"
 
 
-sum(
-  GetAssayData(GASTRU_72h_merge, slot = "counts")["GATA6", 
-    GASTRU_72h_merge$condition == "UNTREATED"] > 0
+
+GASTRU_72h_merge_UNTREATED <- subset(GASTRU_72h_merge, condition == "UNTREATED")
+GASTRU_72h_merge_DASATINIB <- subset(GASTRU_72h_merge, condition == "DASATINIB")
+GASTRU_72h_merge_XMU <- subset(GASTRU_72h_merge, condition == "XMU")
+
+
+
+
+
+coexpr_stats <- function(obj, g1, g2, cells = NULL,
+                         assay = DefaultAssay(obj), slot = "data",
+                         thresh = 0, digits = 2) {
+  if (is.null(cells)) cells <- colnames(obj)
+  E <- GetAssayData(obj, assay = assay, slot = slot)[c(g1, g2), cells, drop = FALSE]
+  g1p <- E[g1, ] > thresh
+  g2p <- E[g2, ] > thresh
+
+  counts <- c(
+    g1_only = sum(g1p & !g2p),
+    g2_only = sum(!g1p & g2p),
+    both    = sum(g1p & g2p),
+    none    = sum(!g1p & !g2p)
+  )
+  total <- length(cells)
+
+  data.frame(
+    category = names(counts),
+    nCells   = as.integer(counts),
+    percent  = round(100 * counts / total, digits),
+    total    = total,
+    row.names = NULL,
+    check.names = FALSE
+  )
+}
+bind_rows(
+  coexpr_stats(GASTRU_72h_merge_UNTREATED, "GATA6", "CDX2") %>% mutate(condition = "UNTREATED"),
+  coexpr_stats(GASTRU_72h_merge_DASATINIB, "GATA6", "CDX2") %>% mutate(condition = "DASATINIB"),
+  coexpr_stats(GASTRU_72h_merge_XMU,       "GATA6", "CDX2") %>% mutate(condition = "XMU")
+) %>%
+  select(condition, category, nCells, percent, total)
+  
+
+
+## PLOT 
+
+
+
+
+g1 <- "GATA6"; g2 <- "CDX2"
+E  <- FetchData(GASTRU_72h_merge_UNTREATED, vars = c(g1, g2))
+c1 <- quantile(E[[g1]], 0.95, na.rm = TRUE)
+c2 <- quantile(E[[g2]], 0.95, na.rm = TRUE)
+pdf("output/seurat/GASTRU_72h_merge_UNTREATED-dim20kparam30res03-coexprGATA6CDX2.pdf",
+    width = 14, height = 6)
+FeaturePlot(
+  GASTRU_72h_merge_UNTREATED,
+  features = c(g1, g2),
+  reduction = "umap",
+  blend = TRUE,
+  blend.threshold = 0,
+  cols = c("red", "green"),     # <- use cols, not cols.blend
+  min.cutoff = c(0, 0),
+  max.cutoff = c(c1, c2),
+  pt.size = 0.9,
+  order = TRUE
 )
+dev.off()
+
+
+## STAT 
+compare_both <- function(obj1, obj2, g1, g2, name1, name2) {
+  # Boolean vectors: gene > 0
+  expr1 <- FetchData(obj1, vars = c(g1, g2)) > 0
+  expr2 <- FetchData(obj2, vars = c(g1, g2)) > 0
+  
+  both1 <- sum(expr1[, g1] & expr1[, g2])
+  both2 <- sum(expr2[, g1] & expr2[, g2])
+  
+  other1 <- ncol(obj1) - both1
+  other2 <- ncol(obj2) - both2
+  
+  tbl <- matrix(c(both1, other1,
+                  both2, other2),
+                nrow = 2, byrow = TRUE,
+                dimnames = list(c(name1, name2),
+                                c("both", "not_both")))
+  
+  fisher <- fisher.test(tbl)
+  
+  list(table = tbl, fisher = fisher)
+}
+
+# Run comparisons
+unt_vs_dasa <- compare_both(GASTRU_72h_merge_UNTREATED, GASTRU_72h_merge_DASATINIB,
+                            "GATA6", "CDX2", "UNTREATED", "DASATINIB")
+
+unt_vs_xmu  <- compare_both(GASTRU_72h_merge_UNTREATED, GASTRU_72h_merge_XMU,
+                            "GATA6", "CDX2", "UNTREATED", "XMU")
+
+# View results
+unt_vs_dasa$table
+unt_vs_dasa$fisher
+
+unt_vs_xmu$table
+unt_vs_xmu$fisher
+
+
+
+
+# Raw p-values
+pvals <- c(unt_vs_dasa$fisher$p.value,
+           unt_vs_xmu$fisher$p.value)
+
+# Adjusted p-values (Bonferroni)
+padj_bonf <- p.adjust(pvals, method = "bonferroni")
+
+# Adjusted p-values (FDR)
+padj_fdr  <- p.adjust(pvals, method = "BH")
+
+data.frame(
+  comparison = c("UNTREATED vs DASATINIB", "UNTREATED vs XMU"),
+  pval_raw   = signif(pvals, 3),
+  pval_Bonf  = signif(padj_bonf, 3),
+  pval_FDR   = signif(padj_fdr, 3)
+)
+
+
+
 
 
 ```
