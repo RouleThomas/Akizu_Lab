@@ -139,13 +139,19 @@ python scripts/simulate_array.py \
 
 # Generate plot for all
 sbatch scripts/run_filtered_cosmic.slurm # 47828611 ok --> results/
-sbatch scripts/run_filtered_experimental.slurm # 47875937 ok --> results_experimental/
-sbatch scripts/run_filtered_contexts.slurm # 47876020 ok --> results_contexts/
+sbatch scripts/run_filtered_experimental.slurm # 47875937 FAIL not enough array; 49631598 xxx --> results_experimental/
+sbatch scripts/run_filtered_contexts.slurm # 47876020 FAIL not enough array; 49633293 xxx --> results_contexts/
+
+
+
 ```
+
+
+XXXY HERE CHECK JOB FOR MISSING I RERAN!!!
 
 --> All good all files generated with `n_*` folders in the respectrive `results*/` folders
 
-
+--> *NOTE: I did an error but not using enough array for experimental and context... So ran `*missing*` jobs for the missing ones.*
 
 
 
@@ -232,6 +238,7 @@ python scripts/plot_all_signatures_combined-contexts-highlight_random.py
 
 # QC simulation
 
+## Check issue with mutation center codon
 
 Let's double check that the simulation is working properly.
 --> Check KRAS gene (ENSG00000133703 )
@@ -264,8 +271,39 @@ print(df[[
 
 
 
+## Check issue with stop codon - context
+
+Let's check issue with stop codon related to context; annotation plot show none of my contexts showing 0 for stop codon, but some context should NEVER produce a stop codon, thus, be at 0 all the time, whatever the n_mutations...
 
 
+STOP codon= UAA, UAG, and UGA = TAA, TAG, TGA
+
+Correspond to contexts: 'T[C>A]A','T[C>A]G','T[C>G]A','T[T>A]A','T[T>A]G','T[T>G]A'
+
+But then we do not know WHERE in the codon the bp is mutated! According to Joan, some context should still NEVER produce a stop codons. But I think it is wrong as mutation can be apply to first, second, or last codon, so CDS codon need to be taken into account.
+
+```ruby
+For the stop codon; maybe I 'm wrong, but I am not sure that we expect some context to always give 0 STOP. This would only happen if the mutated base was always the middle base of the codon, but here I didn’t force the mutated base to be codon position 2 (middle) in the CDS/genome.
+Not sure I am clear :sweat_smile: but as a counter example: T[C>A]A lead to TAA which is a stop codon. Thus, it will only lead to a stop codon if the C>A is located at position2 in the human CDS real codon. For example if sequence is AAG.TCA.TTA --> mutation will lead to AAG.TAA.TTA=AAG.STOP.TTA (middle base pair mutated). But if codons are organized like this (3rd base pair mutated):  AA.GTC.ATT.A, then mutation is AA.GTA.ATT.A : no STOP codon in this case. In other words depending on the position of the mutated base pair any context can produce a stop codon?
+```
+
+--> No my point is not true, for example: A[T>C]A T>C will NEVER give stop codon, as stop codon do NOT have C... Let's make a plot to highlight A[T>C]A annotation; like instead of Flat, highlight this one
+
+
+
+```bash
+conda activate mutsim
+
+
+####################################
+# CONTEXTS ##########################
+####################################
+
+python scripts/plot_all_signatures_combined-contexts-highlight_ATCA.py
+#--> results_contexts/combined_signature_summary_plots-highlight_random.pdf
+```
+
+--> A[T>C]A got a low fraction STOP, but not a value of 0... Maybe because it is a mutation that change a stop codon to a stop codon? Or other issue direclty related to how my plot is make (I think related to forward/reverse...)
 
 
 

@@ -2,7 +2,7 @@
 #SBATCH --job-name=filtered
 #SBATCH --output=logs/sim_%A_%a.out
 #SBATCH --error=logs/sim_%A_%a.err
-#SBATCH --array=0-4759%228  # 4760 total jobs= "$TOTAL_SIGNATURES * $TOTAL_NS * $REPS"; will run 228 at same time
+#SBATCH --array=0-7139%228  # 7140 total jobs= "$TOTAL_SIGNATURES * $TOTAL_NS * $REPS"; will run 228 at same time
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=100G
 #SBATCH --time=01:00:00
@@ -11,7 +11,7 @@
 
 
 # Signature and parameter setup
-SIGNATURE_LIST=( $(<signatures/all_experimental_sigs.txt) ) # UPDATE PATH
+SIGNATURE_LIST=( $(<signatures/all_experimental_sigs.txt) ) # 102
 N_LIST=(500 1000 2000 4000 8000 16000 32000)
 REPS=10
 
