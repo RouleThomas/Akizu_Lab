@@ -140,7 +140,7 @@ python scripts/simulate_array.py \
 # Generate plot for all
 sbatch scripts/run_filtered_cosmic.slurm # 47828611 ok --> results/
 sbatch scripts/run_filtered_experimental.slurm # 47875937 FAIL not enough array; 49631598 xxx --> results_experimental/
-sbatch scripts/run_filtered_contexts.slurm # 47876020 FAIL not enough array; 49633293 xxx --> results_contexts/
+sbatch scripts/run_filtered_contexts.slurm # 47876020 FAIL not enough array; TO LAUNCH xxx --> results_contexts/
 
 
 

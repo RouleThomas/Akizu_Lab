@@ -185,9 +185,14 @@ WORK great!
 --> And anndata (read .h5ad file)
 --> And zellkonverter  (read/convert .h5ad file)
 
+*NOTE: BUG after adding ability to read .h5ad file, no longer Leiden algorithm for command like this for example `WT_Kcnc1_p35_CX_1step.sct <- FindClusters(WT_Kcnc1_p35_CX_1step.sct, resolution = 0.7, verbose = FALSE, algorithm = 4, method = "igraph")` --> # algorithm = 4 is Leiden...*
+
+
 ### scRNAseqV3
 
---> Same `scRNAseqV2` but with MuSic2 and bisque
+--> Same `scRNAseqV2` but with MuSic2 and bisque and without  SeuratDisk, anndata, zellkonverter : Can use `algorithm = 4` please see note in `### scRNAseqV2`
+
+
 
 ### SignacV5
 

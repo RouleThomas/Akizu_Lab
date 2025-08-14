@@ -52595,12 +52595,10 @@ write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version
 ###### Integration
 
 
-XXXY HERE TO RUN!!!
-
 
 
 ```bash
-conda activate scRNAseqV2
+conda activate scRNAseqV3 # To be able to use Leiden algo!
 ```
 
 
@@ -52694,10 +52692,11 @@ WT_Kcnc1_p35_CX_1step.sct <- FindClusters(WT_Kcnc1_p35_CX_1step.sct, resolution 
 WT_Kcnc1_p35_CX_1step.sct$condition <- factor(WT_Kcnc1_p35_CX_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version4dim40kparam30res03.pdf", width=7, height=6)
-DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", label=TRUE)
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CX-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version2dim30kparam50res07.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p35_CX_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
+XXXY HERE 
 
 DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "SCT"
 
@@ -52866,15 +52865,22 @@ FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Kcnc1","Kcnc2", "Kcnc3", "K
 dev.off()
 
 
+
+
+
 # save ##################
+## saveRDS(WT_Kcnc1_p35_CX_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CX_1step-version2dim30kparam50res07.sct_V1_numeric.rds") 
+WT_Kcnc1_p35_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CX_1step-version2dim30kparam50res07.sct_V1_numeric.rds") # 
 
-## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_numeric.rds") 
-#WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_numeric.rds") # 
 
-## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_label.rds") 
-WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_label.rds") # 
 set.seed(42)
+
+
 ##########
+
+
+
+
 
 
 # Unbiased cell type marker genes

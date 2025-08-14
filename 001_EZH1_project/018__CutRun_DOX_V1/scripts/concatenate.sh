@@ -1,0 +1,51 @@
+#!/bin/bash
+#SBATCH --mem=100G
+#SBATCH --time=200:00:00
+
+cat input_raw_Novogene/R1_ESC_OEKO_EZH1_CKDL250021971-1A_22W5G2LT4_L2_1.fq.gz input_raw_Novogene/R1_ESC_OEKO_EZH1_CKDL250021971-1A_22W5TMLT4_L3_1.fq.gz > input/ESC_OEKO_EZH1_R1_1.fq.gz
+cat input_raw_Novogene/R1_ESC_OEKO_EZH1_CKDL250021971-1A_22W5G2LT4_L2_2.fq.gz input_raw_Novogene/R1_ESC_OEKO_EZH1_CKDL250021971-1A_22W5TMLT4_L3_2.fq.gz > input/ESC_OEKO_EZH1_R1_2.fq.gz
+
+
+cat input_raw_Novogene/R1_ESC_OEKO_EZH2_CKDL250021972-1A_22W5G2LT4_L2_1.fq.gz input_raw_Novogene/R1_ESC_OEKO_EZH2_CKDL250021972-1A_22W5TMLT4_L3_1.fq.gz > input/ESC_OEKO_EZH2_R1_1.fq.gz
+cat input_raw_Novogene/R1_ESC_OEKO_EZH2_CKDL250021972-1A_22W5G2LT4_L2_2.fq.gz input_raw_Novogene/R1_ESC_OEKO_EZH2_CKDL250021972-1A_22W5TMLT4_L3_2.fq.gz > input/ESC_OEKO_EZH2_R1_2.fq.gz
+
+
+cat input_raw_Novogene/R2_ESC_OEKO_EZH2_CKDL250021982-1A_22W5G2LT4_L2_1.fq.gz input_raw_Novogene/R2_ESC_OEKO_EZH2_CKDL250021982-1A_22W5TMLT4_L3_1.fq.gz > input/ESC_OEKO_EZH2_R2_1.fq.gz
+cat input_raw_Novogene/R2_ESC_OEKO_EZH2_CKDL250021982-1A_22W5G2LT4_L2_2.fq.gz input_raw_Novogene/R2_ESC_OEKO_EZH2_CKDL250021982-1A_22W5TMLT4_L3_2.fq.gz > input/ESC_OEKO_EZH2_R2_2.fq.gz
+
+
+
+cat input_raw_Novogene/R2_ESC_WT_EZH2_CKDL250021976-1A_22W5G2LT4_L2_1.fq.gz input_raw_Novogene/R2_ESC_WT_EZH2_CKDL250021976-1A_22W5TMLT4_L3_1.fq.gz > input/ESC_WT_EZH2_R2_1.fq.gz
+cat input_raw_Novogene/R2_ESC_WT_EZH2_CKDL250021976-1A_22W5G2LT4_L2_2.fq.gz input_raw_Novogene/R2_ESC_WT_EZH2_CKDL250021976-1A_22W5TMLT4_L3_2.fq.gz > input/ESC_WT_EZH2_R2_2.fq.gz
+
+cat input_raw_Novogene/R2_ESC_WT_IGG_CKDL250021973-1A_22W5G2LT4_L2_1.fq.gz input_raw_Novogene/R2_ESC_WT_IGG_CKDL250021973-1A_22W5TMLT4_L3_1.fq.gz > input/ESC_WT_IGG_R2_1.fq.gz
+cat input_raw_Novogene/R2_ESC_WT_IGG_CKDL250021973-1A_22W5G2LT4_L2_2.fq.gz input_raw_Novogene/R2_ESC_WT_IGG_CKDL250021973-1A_22W5TMLT4_L3_2.fq.gz > input/ESC_WT_IGG_R2_2.fq.gz
+
+
+
+cat input_raw_Novogene/R3_ESC_KO_EZH1_CKDL250021988-1A_22W5G2LT4_L2_1.fq.gz input_raw_Novogene/R3_ESC_KO_EZH1_CKDL250021988-1A_22W5TMLT4_L3_1.fq.gz > input/ESC_KO_EZH1_R3_1.fq.gz
+cat input_raw_Novogene/R3_ESC_KO_EZH1_CKDL250021988-1A_22W5G2LT4_L2_2.fq.gz input_raw_Novogene/R3_ESC_KO_EZH1_CKDL250021988-1A_22W5TMLT4_L3_2.fq.gz > input/ESC_KO_EZH1_R3_2.fq.gz
+
+
+
+cat input_raw_Novogene/R3_ESC_KO_H3K27me3_CKDL250021987-1A_22W5G2LT4_L2_1.fq.gz input_raw_Novogene/R3_ESC_KO_H3K27me3_CKDL250021987-1A_22W5TMLT4_L3_1.fq.gz > input/ESC_KO_H3K27me3_R3_1.fq.gz
+cat input_raw_Novogene/R3_ESC_KO_H3K27me3_CKDL250021987-1A_22W5G2LT4_L2_2.fq.gz input_raw_Novogene/R3_ESC_KO_H3K27me3_CKDL250021987-1A_22W5TMLT4_L3_2.fq.gz > input/ESC_KO_H3K27me3_R3_2.fq.gz
+
+
+cat input_raw_Novogene/R3_ESC_OEKO_EZH2_CKDL250021992-1A_22W5G2LT4_L2_1.fq.gz input_raw_Novogene/R3_ESC_OEKO_EZH2_CKDL250021992-1A_22W5TMLT4_L3_1.fq.gz > input/ESC_OEKO_EZH2_R3_1.fq.gz
+cat input_raw_Novogene/R3_ESC_OEKO_EZH2_CKDL250021992-1A_22W5G2LT4_L2_2.fq.gz input_raw_Novogene/R3_ESC_OEKO_EZH2_CKDL250021992-1A_22W5TMLT4_L3_2.fq.gz > input/ESC_OEKO_EZH2_R3_2.fq.gz
+
+
+cat input_raw_Novogene/R3_ESC_WT_EZH2_CKDL250021986-1A_22W5G2LT4_L2_1.fq.gz input_raw_Novogene/R3_ESC_WT_EZH2_CKDL250021986-1A_22W5TMLT4_L3_1.fq.gz > input/ESC_WT_EZH2_R3_1.fq.gz
+cat input_raw_Novogene/R3_ESC_WT_EZH2_CKDL250021986-1A_22W5G2LT4_L2_2.fq.gz input_raw_Novogene/R3_ESC_WT_EZH2_CKDL250021986-1A_22W5TMLT4_L3_2.fq.gz > input/ESC_WT_EZH2_R3_2.fq.gz
+
+
+
+cat input_raw_Novogene/R3_ESC_WT_IGG_CKDL250021983-1A_22W5G2LT4_L2_1.fq.gz input_raw_Novogene/R3_ESC_WT_IGG_CKDL250021983-1A_22W5TMLT4_L3_1.fq.gz > input/ESC_WT_IGG_R3_1.fq.gz
+cat input_raw_Novogene/R3_ESC_WT_IGG_CKDL250021983-1A_22W5G2LT4_L2_2.fq.gz input_raw_Novogene/R3_ESC_WT_IGG_CKDL250021983-1A_22W5TMLT4_L3_2.fq.gz > input/ESC_WT_IGG_R3_2.fq.gz
+
+
+
+
+
+
