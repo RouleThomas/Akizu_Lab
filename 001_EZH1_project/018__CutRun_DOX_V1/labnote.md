@@ -58,14 +58,11 @@ Concatenate fastq discuss [here](https://www.biostars.org/p/317385/): `cat strin
 ```bash
 # Concatenated samples are directly correctly name
 
-sbatch scripts/concatenate.sh # 49713277 xxx
+sbatch scripts/concatenate.sh # 49713277 ok
 ```
 
 --> All good, concatenated samples been rename to and output to `input/`
 
-
-
-XXX YHERE CHECK CONCAT OK!
 
 
 
@@ -77,7 +74,7 @@ I created a tab separated file with current (`sample_name.txt`) / new file names
 --> **Rename all samples except the concatenated ones (already rename previously)**
 
 ```bash
-cd input
+cd input_raw_Novogene
 
 while IFS=$'\t' read -r old_name new_name
 do
@@ -92,7 +89,7 @@ done < rename_map.txt
 # Fastp cleaning
 
 ```bash
-sbatch scripts/fastp.sh # 46489341 ok
+sbatch scripts/fastp.sh # 49800144 xxx
 ```
 
 
@@ -103,10 +100,10 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 ```bash
 conda activate bowtie2
 
-sbatch --dependency=afterany:46489341 scripts/bowtie2.sh # 46489414 ok
+sbatch --dependency=afterany:49800144 scripts/bowtie2.sh # 49800169 xxx
 ```
 
---> Looks good; overall ~85% uniquely aligned reads
+--> XXX Looks good; overall ~85% uniquely aligned reads
 
 
 XXX Mapping on E coli  XXXXXXXXXXXXXXXXXXXXX
@@ -125,15 +122,15 @@ Quality control plot (total read before trimming/ total read after trimming/ uni
 
 Collect nb of reads from the slurm bowtie2 jobs:
 ```bash
-for file in slurm-46489414.out; do
+for file in slurm-49800169.out; do
     total_reads=$(grep "reads; of these" $file | awk '{print $1}')
     aligned_exactly_1_time=$(grep "aligned concordantly exactly 1 time" $file | awk '{print $1}')
     aligned_more_than_1_time=$(grep "aligned concordantly >1 times" $file | awk '{print $1}')
     echo -e "$total_reads\t$aligned_exactly_1_time\t$aligned_more_than_1_time"
-done > output/bowtie2/alignment_counts_46489414.txt
+done > output/bowtie2/alignment_counts_49800169.txt
 ```
 
-Add these values to `/home/roulet/001_EZH1_project/017__CutRun_DOX_test/samples_001017.xlsx`\
+Add these values to `/home/roulet/001_EZH1_project/018__CutRun_DOX_V1/samples_001018.xlsx`\
 Then in R; see `/home/roulet/001_EZH1_project/001_EZH1_project.R`.
 
 --> XXX Overall >75% input reads as been uniquely mapped to the genome (90% non uniq) 
@@ -148,7 +145,7 @@ This is prefered for THOR bam input.
 
 ```bash
 conda activate bowtie2
-sbatch --dependency=afterany:46489414 scripts/samtools_unique.sh # 46489488 ok
+sbatch --dependency=afterany:49800169 scripts/samtools_unique.sh # 49800224 xxx
 ```
 
 
@@ -172,16 +169,14 @@ Paramaters:
 
 ```bash
 conda activate deeptools
-sbatch --dependency=afterany:46489488 scripts/bamtobigwig_unique.sh # 46489574 ok
+sbatch --dependency=afterany:49800224 scripts/bamtobigwig_unique.sh # 49800244 xxx
 ```
 
+
+XXXY BELOW NOT MOD
 - ESC
 *Pass*: WT_H3K27me3, WTH3K27me3epi (less good), WT_EZH2, WT_EZH1, OE_H3K27me3, OE_EZH2, OE_EZH1, KO_H3K27me3, KO_H3K27me3epi (less), KO_EZH2, KO_EZH1 (no signal as expected)
 *Failed*: none
-- NPC
-*Pass*: WT_H3K72me3, OE_H3K27me3, KO_H3K27me3
-*Failed*: WT_EZH2, WT_EZH1, OE_EZH2, OE_EZH1, KO_EZH2, KO_EZH1
-
 
 
 
