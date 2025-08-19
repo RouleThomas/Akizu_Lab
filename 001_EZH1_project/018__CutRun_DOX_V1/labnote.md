@@ -200,10 +200,10 @@ sbatch --dependency=afterany:49800224 scripts/bamtobigwig_unique.sh # 49800244 o
 ```bash
 conda activate deeptools
 # Generate compile bigwig (.npz) files
-sbatch scripts/multiBigwigSummary_ESC.sh # 50086421 xxx
-sbatch scripts/multiBigwigSummary_WT.sh # 50086442 xxx
-sbatch scripts/multiBigwigSummary_KO.sh # 50086524 xxx
-sbatch scripts/multiBigwigSummary_OEKO.sh # 50086534 xxx
+sbatch scripts/multiBigwigSummary_ESC.sh # 50086421 ok
+sbatch scripts/multiBigwigSummary_WT.sh # 50086442 ok
+sbatch scripts/multiBigwigSummary_KO.sh # 50086524 ok
+sbatch scripts/multiBigwigSummary_OEKO.sh # 50086534 ok
 
 
 ############################################
@@ -214,7 +214,7 @@ plotPCA -in output/bigwig/multiBigwigSummary_ESC.npz \
     --ntop 0 \
     --labels ESC_WT_EZH1_R1 ESC_WT_EZH1_R2 ESC_WT_EZH1_R3 ESC_WT_EZH2_R1 ESC_WT_EZH2_R2 ESC_WT_EZH2_R3 ESC_WT_H3K27me3_R1 ESC_WT_H3K27me3_R2 ESC_WT_H3K27me3_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 ESC_KO_EZH1_R1 ESC_KO_EZH1_R2 ESC_KO_EZH1_R3 ESC_KO_EZH2_R1 ESC_KO_EZH2_R2 ESC_KO_EZH2_R3 ESC_KO_H3K27me3_R1 ESC_KO_H3K27me3_R2 ESC_KO_H3K27me3_R3 ESC_OEKO_EZH1_R1 ESC_OEKO_EZH1_R2 ESC_OEKO_EZH1_R3 ESC_OEKO_EZH2_R1 ESC_OEKO_EZH2_R2 ESC_OEKO_EZH2_R3 ESC_OEKO_H3K27me3_R1 ESC_OEKO_H3K27me3_R2 ESC_OEKO_H3K27me3_R3 \
     --colors black black black black black black black black black black black black red red red red red red red red red blue blue blue blue blue blue blue blue blue \
-    --markers s s s o o o > > > < < < s s s o o o > > > s s s o o o > > > \
+    --markers 's' 's' 's' 'o' 'o' 'o' '>' '>' '>' '<' '<' '<' 's' 's' 's' 'o' 'o' 'o' '>' '>' '>' 's' 's' 's' 'o' 'o' 'o' '>' '>' '>' \
     -o output/bigwig/multiBigwigSummary_ESC_plotPCA.pdf
 
 ## Heatmap
@@ -241,7 +241,7 @@ plotPCA -in output/bigwig/multiBigwigSummary_WT.npz \
     --ntop 0 \
     --labels ESC_WT_EZH1_R1 ESC_WT_EZH1_R2 ESC_WT_EZH1_R3 ESC_WT_EZH2_R1 ESC_WT_EZH2_R2 ESC_WT_EZH2_R3 ESC_WT_H3K27me3_R1 ESC_WT_H3K27me3_R2 ESC_WT_H3K27me3_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
     --colors black black black black black black black black black black black black \
-    --markers s s s o o o > > > < < < \
+    --markers 's' 's' 's' 'o' 'o' 'o' '>' '>' '>' '<' '<' '<' \
     -o output/bigwig/multiBigwigSummary_WT_plotPCA.pdf
 
 ## Heatmap
@@ -267,7 +267,7 @@ plotPCA -in output/bigwig/multiBigwigSummary_KO.npz \
     --ntop 0 \
     --labels ESC_KO_EZH1_R1 ESC_KO_EZH1_R2 ESC_KO_EZH1_R3 ESC_KO_EZH2_R1 ESC_KO_EZH2_R2 ESC_KO_EZH2_R3 ESC_KO_H3K27me3_R1 ESC_KO_H3K27me3_R2 ESC_KO_H3K27me3_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
     --colors red red red red red red red red red black black black \
-    --markers s s s o o o > > > < < < \
+    --markers 's' 's' 's' 'o' 'o' 'o' '>' '>' '>' '<' '<' '<' \
     -o output/bigwig/multiBigwigSummary_KO_plotPCA.pdf
 
 ## Heatmap
@@ -291,7 +291,7 @@ plotPCA -in output/bigwig/multiBigwigSummary_OEKO.npz \
     --ntop 0 \
     --labels ESC_OEKO_EZH1_R1 ESC_OEKO_EZH1_R2 ESC_OEKO_EZH1_R3 ESC_OEKO_EZH2_R1 ESC_OEKO_EZH2_R2 ESC_OEKO_EZH2_R3 ESC_OEKO_H3K27me3_R1 ESC_OEKO_H3K27me3_R2 ESC_OEKO_H3K27me3_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
     --colors blue blue blue blue blue blue blue blue blue black black black \
-    --markers s s s o o o > > > < < < \
+    --markers 's' 's' 's' 'o' 'o' 'o' '>' '>' '>' '<' '<' '<' \
     -o output/bigwig/multiBigwigSummary_OEKO_plotPCA.pdf
 
 ## Heatmap
@@ -308,7 +308,7 @@ plotCorrelation \
 
 ```
 
---> XXX
+--> look good
 
 
 
@@ -325,7 +325,8 @@ plotCorrelation \
 ```bash
 conda activate macs2
 # genotype per genotype
-sbatch scripts/macs2_broad.sh # 50090279 xxx
+sbatch scripts/macs2_broad.sh # 50090279 ok
+sbatch scripts/macs2_broad_noIGG.sh # 50100707 xxx
 
 # genotype per genotype
 #XXX sbatch scripts/macs2_narrow.sh #  xxx
@@ -333,45 +334,45 @@ sbatch scripts/macs2_broad.sh # 50090279 xxx
 ```
 
 
-**broad**:
+**broad** with / without IGG:
 - *WT*:
-    - ESC_WT_EZH1_R1; n(peaks)= 
-    - ESC_WT_EZH1_R2; n(peaks)= 
-    - ESC_WT_EZH1_R3; n(peaks)= 
-    - ESC_WT_EZH2_R1; n(peaks)= 
-    - ESC_WT_EZH2_R2; n(peaks)= 
-    - ESC_WT_EZH2_R3; n(peaks)= 
-    - ESC_WT_H3K27me3_R1; n(peaks)= 
-    - ESC_WT_H3K27me3_R2; n(peaks)= 
-    - ESC_WT_H3K27me3_R3; n(peaks)= 
-    - ESC_WT_IGG_R1; n(peaks)= 
-    - ESC_WT_IGG_R2; n(peaks)= 
-    - ESC_WT_IGG_R3; n(peaks)= 
+    - ESC_WT_EZH1_R1; n(peaks)= 0 / 29
+    - ESC_WT_EZH1_R2; n(peaks)= 90 / 27
+    - ESC_WT_EZH1_R3; n(peaks)= 0 / 25
+    - ESC_WT_EZH2_R1; n(peaks)= 264 / 23
+    - ESC_WT_EZH2_R2; n(peaks)= 7223 / 4799
+    - ESC_WT_EZH2_R3; n(peaks)= 6666 / 2257
+    - ESC_WT_H3K27me3_R1; n(peaks)= 9025 / 6256
+    - ESC_WT_H3K27me3_R2; n(peaks)= 26657 / 13328
+    - ESC_WT_H3K27me3_R3; n(peaks)= 27812 / 13635
+    - ESC_WT_IGG_R1; n(peaks)= NA / 29
+    - ESC_WT_IGG_R2; n(peaks)= NA / 38
+    - ESC_WT_IGG_R3; n(peaks)= NA / 30
 
 - *KO*:
-    - ESC_KO_EZH1_R1; n(peaks)= 
-    - ESC_KO_EZH1_R2; n(peaks)= 
-    - ESC_KO_EZH1_R3; n(peaks)= 
-    - ESC_KO_EZH2_R1; n(peaks)= 
-    - ESC_KO_EZH2_R2; n(peaks)= 
-    - ESC_KO_EZH2_R3; n(peaks)= 
-    - ESC_KO_H3K27me3_R1; n(peaks)= 
-    - ESC_KO_H3K27me3_R2; n(peaks)= 
-    - ESC_KO_H3K27me3_R3; n(peaks)= 
+    - ESC_KO_EZH1_R1; n(peaks)= 0 / 28
+    - ESC_KO_EZH1_R2; n(peaks)= 0 / 22
+    - ESC_KO_EZH1_R3; n(peaks)= 0 / 27
+    - ESC_KO_EZH2_R1; n(peaks)= 1371 / 128
+    - ESC_KO_EZH2_R2; n(peaks)= 3929 / 1280
+    - ESC_KO_EZH2_R3; n(peaks)= 4162 / 882
+    - ESC_KO_H3K27me3_R1; n(peaks)= 12245 / 9265
+    - ESC_KO_H3K27me3_R2; n(peaks)= 23307 / 14882
+    - ESC_KO_H3K27me3_R3; n(peaks)= 27511 / 16760
 
 - *OEKO*:
-    - ESC_OEKO_EZH1_R1; n(peaks)= 
-    - ESC_OEKO_EZH1_R2; n(peaks)= 
-    - ESC_OEKO_EZH1_R3; n(peaks)= 
-    - ESC_OEKO_EZH2_R1; n(peaks)= 
-    - ESC_OEKO_EZH2_R2; n(peaks)= 
-    - ESC_OEKO_EZH2_R3; n(peaks)= 
-    - ESC_OEKO_H3K27me3_R1; n(peaks)= 
-    - ESC_OEKO_H3K27me3_R2; n(peaks)= 
-    - ESC_OEKO_H3K27me3_R3; n(peaks)= 
+    - ESC_OEKO_EZH1_R1; n(peaks)= 2291 / 977
+    - ESC_OEKO_EZH1_R2; n(peaks)= 608 / 20
+    - ESC_OEKO_EZH1_R3; n(peaks)= 1068 / 25
+    - ESC_OEKO_EZH2_R1; n(peaks)= 10324 / 8303
+    - ESC_OEKO_EZH2_R2; n(peaks)= 8075 / 5677
+    - ESC_OEKO_EZH2_R3; n(peaks)= 12764 / 6417
+    - ESC_OEKO_H3K27me3_R1; n(peaks)= 15655 / 10875
+    - ESC_OEKO_H3K27me3_R2; n(peaks)= 22711 / 13013
+    - ESC_OEKO_H3K27me3_R3; n(peaks)= 25528 / 13393
 
 
-
+--> Not sure IGG is better... Probably using IGG is better to  call peak here; less peaks recovered without using IGG!
 
 
 
@@ -417,6 +418,131 @@ Then keep only the significant peaks (re-run the script to test different qvalue
 - 50dN_WTQ731E_H3K27me3: 1.30103 (2.3 more true peaks)
 
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+
+
+
+
+
+
+# Normalization method from Ferguson et al 
+
+
+Summary pipeline:
+- bowtie2 unique
+- convert bam to bigwig unique 1bp resolution (use unique reads)
+- convert bigwig to bedGraph
+- identify local maxima
+- calculate 99th percentile of the signal
+
+
+```bash
+# Convert bigwig to bedgraph
+conda activate BedToBigwig
+## Unique bigwig (1bp resolution)
+sbatch scripts/BedToBigwig_Ferguson_unique.sh # 50101629 xxx
+
+
+# Remove blacklist regions
+## Unique bigwig (1bp resolution)
+sbatch --dependency=afterany:50101629 scripts/BedintersectBlacklist_Ferguson_unique.sh # 50101748 xxx
+
+
+```
+
+Use Python to identify local maxima, quantify the height for the 99th percentile peak
+
+```bash
+srun --mem=250g --pty bash -l
+
+
+# Identify local maxima
+## Unique bigwig (1bp resolution)
+python scripts/LocalMaxima_Ferguson_unique.py
+
+#  calculate the 99th percentile of the signal heights (score) in the local maxima files.
+## Unique bigwig (1bp resolution)
+python scripts/Percentile99_Ferguson_unique.py
+
+# normalize AB per AB (using WT sample 1st replicate as reference)
+## Unique bigwig (1bp resolution) APPLYING SF TO INITIAL BIGWIG
+### 99th percentile
+python scripts/norm_H3K27me3_Ferguson_Perc99_unique_initialBigwig.py
+python scripts/norm_EZH2_Ferguson_Perc99_unique_initialBigwig.py
+python scripts/norm_EZH1_Ferguson_Perc99_unique_initialBigwig.py
+
+```
+
+*H3K27me3*:
+- WT_R1: SF= 1.0
+- WT_R2: SF= 0.49166666666666664
+- WT_R3: SF= 0.47580645161290325
+- KO_R1: SF= 0.6082474226804123
+- KO_R2: SF= 0.5042735042735043
+- KO_R3: SF= 0.466403162055336
+- OEKO_R1: SF= 0.6082474226804123
+- OEKO_R2: SF= 0.6519337016574586
+- OEKO_R3: SF= 0.5700483091787439
+*EZH2*:
+- WT_R1: SF= 1.0
+- WT_R2: SF= 0.21052631578947367
+- WT_R3: SF= 0.23529411764705882
+- KO_R1: SF= 0.8
+- KO_R2: SF= 0.3076923076923077
+- KO_R3: SF= 0.36363636363636365
+- OEKO_R1: SF= 0.0784313725490196
+- OEKO_R2: SF= 0.1038961038961039
+- OEKO_R3: SF= 0.16326530612244897
+*EZH1*:
+- WT_R1: SF= 1.0
+- WT_R2: SF= 1.0
+- WT_R3: SF= 1.0
+- KO_R1: SF= 1.0
+- KO_R2: SF= 1.0
+- KO_R3: SF= 1.0
+- OEKO_R1: SF= 0.21052631578947367
+- OEKO_R2: SF= 1.0
+- OEKO_R3: SF= 0.8888888888888888
+
+
+Convert normalized bedGraph back to bigwig
+
+```bash
+conda activate BedToBigwig
+
+
+# Unique bigwig (1bp resolution) APPLYING SF TO INITIAL BIGWIG
+sbatch scripts/BedToBigwig_Norm99_Ferguson_unique_initialBigwig_H3K27me3.sh # 50105248 xxx
+sbatch scripts/BedToBigwig_Norm99_Ferguson_unique_initialBigwig_EZH2.sh # 50105274 xxx
+sbatch scripts/BedToBigwig_Norm99_Ferguson_unique_initialBigwig_EZH1.sh # 50105291 xxx
+```
+
+
+--> XXX
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

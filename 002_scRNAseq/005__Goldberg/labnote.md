@@ -64617,6 +64617,32 @@ rsconnect::deployApp('shinyApp_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07'
 
 
 
+# Generate Shiny app CX Version2 p14 - version2dim35kparam15res065
+## import Seurat object
+WT_Kcnc1_p35_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CX_1step-version2dim35kparam15res065.sct_V1_numeric.rds") 
+set.seed(42)
+# differential expressed genes across conditions
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+DefaultAssay(WT_Kcnc1_p35_CX_1step.sct) <- "RNA"
+WT_Kcnc1_p35_CX_1step.sct <- NormalizeData(WT_Kcnc1_p35_CX_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p35_CX_1step.sct)
+WT_Kcnc1_p35_CX_1step.sct <- ScaleData(WT_Kcnc1_p35_CX_1step.sct, features = all.genes) # zero-centres and scales it
+WT_Kcnc1_p35_CX_1step.sct$celltype.stim <- paste(WT_Kcnc1_p35_CX_1step.sct$seurat_clusters, WT_Kcnc1_p35_CX_1step.sct$condition,
+    sep = "-")
+Idents(WT_Kcnc1_p35_CX_1step.sct) <- "celltype.stim"
+
+
+DefaultAssay(WT_Kcnc1_p35_CX_1step.sct) <- "RNA" # 
+scConf = createConfig(WT_Kcnc1_p35_CX_1step.sct)
+makeShinyApp(WT_Kcnc1_p35_CX_1step.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "WT_Kcnc1_p35_CX_1step_version2dim35kparam15res065",
+             shiny.dir = "shinyApp_WT_Kcnc1_p35_CX_1step_version2dim35kparam15res065/") 
+rsconnect::deployApp('shinyApp_WT_Kcnc1_p35_CX_1step_version2dim35kparam15res065')
+
+
+
+
+
 ```
 
 **CB**
