@@ -183,6 +183,8 @@ python scripts/plot_sbs96_from_parquet.py \
 
 ## Annotation summary plot
 
+### Version1 FAIL
+
 Let's generate plot with `x` = `n_mutations` and `y` = `annotation score`
 
 
@@ -231,6 +233,42 @@ python scripts/plot_all_signatures_combined-contexts-highlight_random.py
 ```
 
 --> All good, all summary annottion files and plot generated
+  --> ERROR! Realized there was an error with the stop count (I count all stops; even the stop->stop). BUT, not because of these scripts, but because of the `.json`...
+
+
+
+
+### Version2 - FAIL STOP, unnecessary correction
+
+--> Same name with `*_v2*` suffix. (realized STOP issue related to `.json`, not this sumary plot part)
+
+
+
+```bash
+conda activate mutsim
+
+
+####################################
+# CONTEXTS ##########################
+####################################
+
+# Plot and summary metric for each mutations
+bash scripts/run_summary_plot_v2-contexts.sh
+# One plot with all mutations
+python scripts/plot_all_signatures_combined_v2-contexts.py
+#--> results_contexts/combined_signature_summary_errorbars.pdf
+# One plot with all mutations - Random/Flat highlighted
+python scripts/plot_all_signatures_combined_v2-contexts-highlight_random.py
+#--> results_contexts/combined_signature_summary_plots-highlight_random.pdf
+
+
+
+```
+
+--> FAIL, the issue comes from the `.json`, not these scripts
+
+
+
 
 
 
@@ -303,9 +341,13 @@ python scripts/plot_all_signatures_combined-contexts-highlight_ATCA.py
 #--> results_contexts/combined_signature_summary_plots-highlight_random.pdf
 ```
 
---> A[T>C]A got a low fraction STOP, but not a value of 0... Maybe because it is a mutation that change a stop codon to a stop codon? Or other issue direclty related to how my plot is make (I think related to forward/reverse...)
+--> A[T>C]A got a low fraction STOP, but not a value of 0... Maybe because it is a mutation that change a stop codon to a stop codon? Or other issue direclty related to how my plot is make (I think related to forward/reverse...). So probably issue with how frac_stop is computed! As should be 0 for this one!
 
 
+
+Issue from `## Annotation summary plot` scripts; when computing the stop; I include stop_retained (stop→stop) and/or stop_lost, so even a T>C context like `A[T>C]A` ends up with non-zero "stop"...
+  --> These scripts are wrong: `scripts/run_summary_plot-*.sh`
+    --> NO!! These scripts were good, `.json` is not good!
 
 
 
