@@ -110,8 +110,8 @@ print(f"🔍 Unique positions covered (non-redundant rows): {len(unique_indices)
 
 
 
-# Simulate mutation
-
+# Simulate mutation 
+## version1 .json issue with STOP
 
 --> Update `scripts/simulate_mutations.py` based on `001__`
 
@@ -139,19 +139,70 @@ python scripts/simulate_array.py \
 
 # Generate plot for all
 sbatch scripts/run_filtered_cosmic.slurm # 47828611 ok --> results/
-sbatch scripts/run_filtered_experimental.slurm # 47875937 FAIL not enough array; 49631598 xxx --> results_experimental/
-sbatch scripts/run_filtered_contexts.slurm # 47876020 FAIL not enough array; TO LAUNCH xxx --> results_contexts/
-
-
-
+sbatch scripts/run_filtered_experimental.slurm # 47875937 FAIL not enough array; 49631598 ok --> results_experimental/
+sbatch scripts/run_filtered_contexts.slurm # 47876020 FAIL not enough array; TO LAUNCH  --> results_contexts/
 ```
-
-
-XXXY HERE CHECK JOB FOR MISSING I RERAN!!!
-
 --> All good all files generated with `n_*` folders in the respectrive `results*/` folders
 
 --> *NOTE: I did an error but not using enough array for experimental and context... So ran `*missing*` jobs for the missing ones.*
+
+--> ERROR with the .json file I count the stop->stop... Start with context signature and verify that context that should not give STOP does not give STOP (`A[T>C]A`)!
+
+
+
+# Simulate mutation 
+## version2 .json corrected
+
+
+
+
+
+```bash
+conda activate mutsim
+
+# Light testing with a context that should not have STOP `A[T>C]A`
+python scripts/simulate_array_v2.py \
+  --signature "A[T>C]A" \
+  --n "4000" \
+  --rep "1" \
+  --seed "42" \
+  --sigfile signatures/context_sigs_fixed.txt \
+  --outdir results_contexts 
+#--> STOP gained at 0 (GOOD!)
+
+# Light testing with a context that should not have STOP `T[C>A]A`
+python scripts/simulate_array_v2.py \
+  --signature "T[C>A]A" \
+  --n "4000" \
+  --rep "1" \
+  --seed "42" \
+  --sigfile signatures/context_sigs_fixed.txt \
+  --outdir results_contexts 
+#--> STOP gained at 301 (GOOD!)
+
+
+# Light testing with a context that should give some STOP XXX
+
+
+
+
+
+
+# Generate plot for all (script updated to use `simulate_array_v2.py`)
+sbatch scripts/run_filtered_contexts_v2.slurm #  xxx --> results_contexts/
+sbatch scripts/run_filtered_cosmic_v2.slurm #  xxx --> results/
+sbatch scripts/run_filtered_experimental_v2.slurm #  xxx --> results_experimental/
+```
+
+XXX HERE!!!
+--> All good all files generated with `n_*` folders in the respectrive `results*/` folders
+
+
+
+
+
+
+
 
 
 
