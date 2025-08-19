@@ -52739,10 +52739,7 @@ dev.off()
 
 
 
-XXXY HERE ! check dim40 and run dim 45 and 50 -. pick best dim and change res
-
-xxxy below not mod 
-
+XXXY 
 
 
 
@@ -52816,6 +52813,8 @@ dev.off()
 ## saveRDS(WT_Kcnc1_p35_CX_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CX_1step-version2dim30kparam50res07.sct_V1_numeric.rds") 
 WT_Kcnc1_p35_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CX_1step-version2dim30kparam50res07.sct_V1_numeric.rds") # 
 
+## saveRDS(WT_Kcnc1_p35_CX_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CX_1step-version2dim35kparam15res065.sct_V1_numeric.rds") 
+WT_Kcnc1_p35_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CX_1step-version2dim35kparam15res065.sct_V1_numeric.rds") # 
 
 set.seed(42)
 
