@@ -650,8 +650,7 @@ According to `001*/016*` best paramters were `bin1000space100_gt_pval05_padj001`
 -> But lets re-test several ones to confirm
 
 
-## WT vs KO - DIFFREPS - initialBigwig - G test pval 0.05 padj001
-
+## WT vs KO - DIFFREPS - initialBigwig
 
 
 ```bash
@@ -695,7 +694,6 @@ diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_H3K27me3_R1_unique_norm99_initialB
 ```
 
 
-XXXY HERE BELOW NOT MOD!
 
 
 ### Explore diffreps results in R
@@ -714,19 +712,19 @@ library("GenomicRanges")
 set.seed(42)
 
 # import files
-bin5000space100_gt_pval05 <- read.delim("output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin5000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+bin5000space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.bed-bin5000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
   as_tibble() %>%
   dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
-bin2000space100_gt_pval05 <- read.delim("output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin2000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+bin2000space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.bed-bin2000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
   as_tibble() %>%
   dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
-bin1000space100_gt_pval05 <- read.delim("output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin1000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+bin1000space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.bed-bin1000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
   as_tibble() %>%
   dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
-bin500space100_gt_pval05 <- read.delim("output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin500space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+bin500space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.bed-bin500space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
   as_tibble() %>%
   dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
-bin250space50_gt_pval05 <- read.delim("output/diffreps/PSC_WT_H3K27me3_unique_norm99_initialBigwig.bed-bin250space50_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+bin250space50_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.bed-bin250space50_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
   as_tibble() %>%
   dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
 
@@ -763,17 +761,22 @@ read_and_process <- function(file) {
 ## Combine all datasets into one
 combined_data <- bind_rows(lapply(file_names, read_and_process)) 
 
+
+
 combined_data_counts <- combined_data %>% 
-  filter(padj<0.001) %>%   ## !!!!!!!!!! CHANGE PVAL HERE !!!!!!!!!!!!!!!!!!!!!!
-  mutate(direction = ifelse(log2FC < 0, "Negative", "Positive")) %>%
+  filter(padj < 0.001, abs(log2FC) > 1, Control.avg > 100 | Treatment.avg > 100) %>%        # keep only |log2FC| > 1
+  mutate(direction = if_else(log2FC < 0, "Negative", "Positive")) %>%
   group_by(dataset, direction) %>%
   summarise(count = n(), .groups = "drop")
 
-## plot
 
-pdf("output/diffreps/hist-log2FC_distribution-padj001_gt_pval05_initialBigwig.pdf", width=8, height=2)
+
+    
+  
+## plot
+pdf("output/diffreps/hist-WTvsKO-log2FC_distribution-padj001_gt_pval05_fc1_avg100_initialBigwig.pdf", width=8, height=2)
 combined_data %>% 
-  filter(padj<0.05) %>%   ## !!!!!!!!!! CHANGE PVAL HERE !!!!!!!!!!!!!!!!!!!!!!
+  filter(padj<0.001, abs(log2FC) > 1, Control.avg > 100 | Treatment.avg > 100) %>%   ## !!!!!!!!!! CHANGE PVAL HERE !!!!!!!!!!!!!!!!!!!!!!
 ggplot(., aes(x = log2FC)) +
   geom_histogram(binwidth = 0.5, fill = "black", color = "black", alpha = 0.7) +
   facet_wrap(~ dataset, scales = "free_y", nrow = 1) +  # Facet per dataset
@@ -793,110 +796,203 @@ dev.off()
 
 
 
-# Combine windows 
-combined_data_select = combined_data %>% 
-  filter(padj<0.001)
-
-## Convert to GRanges
-## Convert combined_data_filt to GRanges
-gr_combined <- GRanges(
-  seqnames = combined_data_select$Chrom,
-  ranges = IRanges(start = combined_data_select$Start, end = combined_data_select$End),
-  log2FC = combined_data_select$log2FC,
-  padj = combined_data_select$padj,
-  dataset = combined_data_select$dataset
-)
-## Merge overlapping windows across all datasets
-merged_gr <- reduce(gr_combined, ignore.strand = TRUE)
-## Find overlaps with original intervals
-ov <- findOverlaps(merged_gr, gr_combined)
-## Summarize merged regions and assign labels
-merged_df <- as.data.frame(merged_gr) %>%
-  mutate(
-    log2FC_list = lapply(seq_along(merged_gr), function(i) gr_combined$log2FC[subjectHits(ov)[queryHits(ov) == i]]),
-    dataset_list = lapply(seq_along(merged_gr), function(i) gr_combined$dataset[subjectHits(ov)[queryHits(ov) == i]]),
-    direction = sapply(log2FC_list, function(fc) {
-      if (all(fc > 0)) return("Gain")
-      if (all(fc < 0)) return("Lost")
-      return("Mixed")
-    }),
-    Largest_window = sapply(dataset_list, function(ds) {
-      if ("bin5000space100_gt_pval05" %in% ds) return("5kb")
-      if ("bin2000space100_gt_pval05" %in% ds) return("2kb")
-      if ("bin1000space100_gt_pval05" %in% ds) return("1kb")
-      if ("bin500space100_gt_pval05" %in% ds) return("1kb")
-      return("250bp")
-    }),
-    log2FC = sapply(seq_along(log2FC_list), function(i) {
-      ds <- dataset_list[[i]]
-      fc <- log2FC_list[[i]]
-      
-      # Mixed: both negative and positive log2FC
-      if(any(fc > 0) && any(fc < 0)) {
-        return(paste(min(fc), max(fc), sep = "_"))
-      }
-      
-      # Non-mixed: safely find log2FC of Largest_window
-      idx <- which(ds == Largest_window[i])
-      if(length(idx) > 0) return(fc[idx[1]])
-      
-      # Fallback if for some reason largest window is missing (rare)
-      return(round(mean(fc), 2))
-    })
-  ) %>%
-  select(seqnames, start, end, direction, Largest_window, log2FC) %>%
-  as_tibble()
-#--> 395 Gain, 331 Lost, 3 Mixed
-
-# PLOT combine windows
-## FC pos/neg 0 treshold
-merged_df_counts <- merged_df %>%  
-  mutate(log2FC = as.numeric(log2FC)) %>%
-  filter(direction != "Mixed") %>%
-  mutate(direction = ifelse(log2FC < 0, "Negative", "Positive")) %>%
-  group_by(direction) %>%
-  summarise(count = n(), .groups = "drop")
-## FC pos/neg 1 treshold
-merged_df_counts <- merged_df %>%  
-  mutate(log2FC = as.numeric(log2FC)) %>%
-  filter(log2FC > 1 | log2FC < -1) %>%
-  mutate(direction = ifelse(log2FC < -1, "Negative", "Positive")) %>%
-  group_by(direction) %>%
-  summarise(count = n(), .groups = "drop")
-
-pdf("output/diffreps/hist-log2FC_distribution-padj001_gt_pval05_log2FC1-WindowCombine_5kb2kb1kb500bp250bp_initialBigwig.pdf", width=3, height=3)
-merged_df %>%  
-  filter(direction != "Mixed") %>%
-  mutate(log2FC = as.numeric(log2FC)) %>%
-ggplot(., aes(x = log2FC)) +
-  geom_histogram(binwidth = 0.5, fill = "black", color = "black", alpha = 0.7) +
-  geom_vline(xintercept = c(-1, 1), color = "red", linetype = "dashed") +
-  labs(title = "Log2FC Distribution",
-       x = "Log2 Fold Change",
-       y = "Frequency") +
-  theme_bw() +
-  theme(strip.text = element_text(size = 7, face = "bold")) +
-  geom_text(data = merged_df_counts , 
-            aes(x = ifelse(direction == "Negative", -6, 4),  # Fixed x positions
-                y = Inf, 
-                label = paste0(count)), 
-            vjust = 1.5, 
-            hjust = ifelse(merged_df_counts$direction == "Negative", 0, 1), 
-            size = 3, fontface = "bold", color = "red")
-dev.off()
-
 ## Save output
-write.table(merged_df, "output/diffreps/merged_intervals-padj001_gt_pval05_log2FC1-5kb2kb1kb500bp250bp-WTvsKO_initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(combined_data, "output/diffreps/combined_data-WTvsKO-initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+write.table(combined_data %>% 
+  filter(
+    padj < 0.001, 
+    (log2FC > 1 | log2FC < -1), 
+    dataset == "bin1000space100_gt_pval05",
+    Control.avg > 100 | Treatment.avg > 100   # <- NEW FILTER
+  ), "output/diffreps/combined_data-bin1000space100_gt_pval05_padj001_fc1_avg100-WTvsKO-initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+write.table(combined_data %>% 
+  filter(
+    padj < 0.001, 
+    (log2FC > 1 | log2FC < -1), 
+    dataset == "bin2000space100_gt_pval05",
+    Control.avg > 100 | Treatment.avg > 100   # <- NEW FILTER
+  ), "output/diffreps/combined_data-bin2000space100_gt_pval05_padj001_fc1_avg100-WTvsKO-initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+```
 
 
+--> To obtain changes that looks real on IGV I had to only keep *.avg with at least 100; so that there is peak changes and not changes from noise to noise!
+    --> Overall, this `output/diffreps/combined_data-bin1000space100_gt_pval05_padj001_fc1_avg100-WTvsKO-initialBigwig.txt` look like the best parameters
+
+
+
+
+
+## WT vs OEKO - DIFFREPS - initialBigwig
+
+
+```bash
+conda activate ChIPseqSpikeInFree
+
+## PREPARE BED FILE FOR QUANTIFICATION ##
+output/bigwig_Ferguson/ESC_WT_H3K27me3_R1_unique_norm99_initialBigwig.bedGraph 
+output/bigwig_Ferguson/ESC_WT_H3K27me3_R2_unique_norm99_initialBigwig.bedGraph 
+output/bigwig_Ferguson/ESC_WT_H3K27me3_R3_unique_norm99_initialBigwig.bedGraph 
+
+output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R1_unique_norm99_initialBigwig.bedGraph 
+output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R2_unique_norm99_initialBigwig.bedGraph 
+output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R3_unique_norm99_initialBigwig.bedGraph 
+
+
+# Modify our bedGraph into bed (score in the 5th column); add dummy column 4
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_WT_H3K27me3_R1_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/ESC_WT_H3K27me3_R1_unique_norm99_initialBigwig.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_WT_H3K27me3_R2_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/ESC_WT_H3K27me3_R2_unique_norm99_initialBigwig.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_WT_H3K27me3_R3_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/ESC_WT_H3K27me3_R3_unique_norm99_initialBigwig.bed
+
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R1_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R1_unique_norm99_initialBigwig.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R2_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R2_unique_norm99_initialBigwig.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R3_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R3_unique_norm99_initialBigwig.bed
+
+
+## RUN NDIFFREPS ##
+# 5000bp every 100bp -  G test pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R3_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/ESC_WT_H3K27me3_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_H3K27me3_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_H3K27me3_R3_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsOEKO_H3K27me3_unique_norm99_initialBigwig.bed-bin5000space100_gt_pval05-diff.nb.txt --window 5000 --step 100 --meth gt --pval 0.05
+
+# 2000bp every 100bp -  G test pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R3_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/ESC_WT_H3K27me3_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_H3K27me3_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_H3K27me3_R3_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsOEKO_H3K27me3_unique_norm99_initialBigwig.bed-bin2000space100_gt_pval05-diff.nb.txt --window 2000 --step 100 --meth gt --pval 0.05
+
+# 1000bp every 100bp -  G test pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R3_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/ESC_WT_H3K27me3_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_H3K27me3_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_H3K27me3_R3_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsOEKO_H3K27me3_unique_norm99_initialBigwig.bed-bin1000space100_gt_pval05-diff.nb.txt --window 1000 --step 100 --meth gt --pval 0.05
+
+# 500bp every 100bp -  G test pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R3_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/ESC_WT_H3K27me3_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_H3K27me3_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_H3K27me3_R3_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsOEKO_H3K27me3_unique_norm99_initialBigwig.bed-bin500space100_gt_pval05-diff.nb.txt --window 500 --step 100 --meth gt --pval 0.05
+
+# 250bp every 50bp -  G test pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R3_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/ESC_WT_H3K27me3_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_H3K27me3_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_H3K27me3_R3_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsOEKO_H3K27me3_unique_norm99_initialBigwig.bed-bin250space50_gt_pval05-diff.nb.txt --window 250 --step 50 --meth gt --pval 0.05
 ```
 
 
 
 
+### Explore diffreps results in R
 
 
 
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+library("GenomicRanges")
+set.seed(42)
+
+# import files
+bin5000space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsOEKO_H3K27me3_unique_norm99_initialBigwig.bed-bin5000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin2000space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsOEKO_H3K27me3_unique_norm99_initialBigwig.bed-bin2000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin1000space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsOEKO_H3K27me3_unique_norm99_initialBigwig.bed-bin1000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin500space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsOEKO_H3K27me3_unique_norm99_initialBigwig.bed-bin500space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin250space50_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsOEKO_H3K27me3_unique_norm99_initialBigwig.bed-bin250space50_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+
+
+
+# Replace Inf by min/max values
+bin5000space100_gt_pval05$log2FC[bin5000space100_gt_pval05$log2FC == Inf] <- max(bin5000space100_gt_pval05$log2FC[is.finite(bin5000space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin5000space100_gt_pval05$log2FC[bin5000space100_gt_pval05$log2FC == -Inf] <- min(bin5000space100_gt_pval05$log2FC[is.finite(bin5000space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin2000space100_gt_pval05$log2FC[bin2000space100_gt_pval05$log2FC == Inf] <- max(bin2000space100_gt_pval05$log2FC[is.finite(bin2000space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin2000space100_gt_pval05$log2FC[bin2000space100_gt_pval05$log2FC == -Inf] <- min(bin2000space100_gt_pval05$log2FC[is.finite(bin2000space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin1000space100_gt_pval05$log2FC[bin1000space100_gt_pval05$log2FC == Inf] <- max(bin1000space100_gt_pval05$log2FC[is.finite(bin1000space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin1000space100_gt_pval05$log2FC[bin1000space100_gt_pval05$log2FC == -Inf] <- min(bin1000space100_gt_pval05$log2FC[is.finite(bin1000space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin500space100_gt_pval05$log2FC[bin500space100_gt_pval05$log2FC == Inf] <- max(bin500space100_gt_pval05$log2FC[is.finite(bin500space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin500space100_gt_pval05$log2FC[bin500space100_gt_pval05$log2FC == -Inf] <- min(bin500space100_gt_pval05$log2FC[is.finite(bin500space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin250space50_gt_pval05$log2FC[bin250space50_gt_pval05$log2FC == Inf] <- max(bin250space50_gt_pval05$log2FC[is.finite(bin250space50_gt_pval05$log2FC)], na.rm = TRUE)
+bin250space50_gt_pval05$log2FC[bin250space50_gt_pval05$log2FC == -Inf] <- min(bin250space50_gt_pval05$log2FC[is.finite(bin250space50_gt_pval05$log2FC)], na.rm = TRUE)
+
+
+
+# List of dataset names
+file_names <- c("bin5000space100_gt_pval05", "bin2000space100_gt_pval05", "bin1000space100_gt_pval05", "bin500space100_gt_pval05", "bin250space50_gt_pval05")
+
+## Function to read and format each file
+read_and_process <- function(file) {
+  df <- get(file)  # Load dataset from environment
+  df$dataset <- file  # Add dataset identifier
+  return(df)
+}
+
+## Combine all datasets into one
+combined_data <- bind_rows(lapply(file_names, read_and_process)) 
+
+
+
+combined_data_counts <- combined_data %>% 
+  filter(padj < 0.001, abs(log2FC) > 1, Control.avg > 100 | Treatment.avg > 100) %>%        # keep only |log2FC| > 1
+  mutate(direction = if_else(log2FC < 0, "Negative", "Positive")) %>%
+  group_by(dataset, direction) %>%
+  summarise(count = n(), .groups = "drop")
+
+
+
+    
+  
+## plot
+pdf("output/diffreps/hist-WTvsOEKO-log2FC_distribution-padj001_gt_pval05_fc1_avg100_initialBigwig.pdf", width=8, height=2)
+combined_data %>% 
+  filter(padj<0.001, abs(log2FC) > 1, Control.avg > 100 | Treatment.avg > 100) %>%   ## !!!!!!!!!! CHANGE PVAL HERE !!!!!!!!!!!!!!!!!!!!!!
+ggplot(., aes(x = log2FC)) +
+  geom_histogram(binwidth = 0.5, fill = "black", color = "black", alpha = 0.7) +
+  facet_wrap(~ dataset, scales = "free_y", nrow = 1) +  # Facet per dataset
+  labs(title = "Log2FC Distribution Across Datasets",
+       x = "Log2 Fold Change (log2FC)",
+       y = "Frequency") +
+  theme_bw() +
+  theme(strip.text = element_text(size = 4, face = "bold")) +
+  geom_text(data = combined_data_counts, 
+            aes(x = ifelse(direction == "Negative", -6, 4),  # Fixed x positions
+                y = Inf, 
+                label = paste0(count)), 
+            vjust = 1.5, 
+            hjust = ifelse(combined_data_counts$direction == "Negative", 0, 1), 
+            size = 3, fontface = "bold", color = "red")
+dev.off()
+
+
+
+## Save output
+write.table(combined_data, "output/diffreps/combined_data-WTvsOEKO-initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+write.table(combined_data %>% 
+  filter(
+    padj < 0.001, 
+    (log2FC > 1 | log2FC < -1), 
+    dataset == "bin1000space100_gt_pval05",
+    Control.avg > 100 | Treatment.avg > 100   # <- NEW FILTER
+  ), "output/diffreps/combined_data-bin1000space100_gt_pval05_padj001_fc1_avg100-WTvsOEKO-initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+write.table(combined_data %>% 
+  filter(
+    padj < 0.001, 
+    (log2FC > 1 | log2FC < -1), 
+    dataset == "bin2000space100_gt_pval05",
+    Control.avg > 100 | Treatment.avg > 100   # <- NEW FILTER
+  ), "output/diffreps/combined_data-bin2000space100_gt_pval05_padj001_fc1_avg100-WTvsOEKO-initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+```
+
+
+--> Look very similar result to what happen in KO; both show mostly decrease of H3K27me3... And on IGV, look KO and OEKO are the same...
 
 
 

@@ -47310,7 +47310,7 @@ L5_PT__Pou3f1= Pou3f1, Npr3, Bcl6, Chst8 (Cluster20)
 L6_IT__Cdh9= Sulf1, Cdh9, Osr1 (Cluster8)
 L6__Car3= Car3; Oprk1, Ntng2 (Cluster29)
 L6_IT__Foxp2 = Foxp2, Col12a1 (Cluster3)
-L6B__Pou6f2= Galnt10, Nxph4, Nxph3, Pou6f2, Cplx3, Galnt10 (Cluster15)
+L6B__Pou6f2= Galnt10, Nxph4, Nxph3, Pou6f2, Cplx3 (Cluster15)
 L5L6_NP__Tle4Stard5= Stard5, Cbln2, Dcc, Rell1, Pamr1, Tle4 (Cluster27)
 
 L5_IT_GABA__Adora2a= Drd2, Adora2a, Mhrt, Gng7 (Cluster6) 
