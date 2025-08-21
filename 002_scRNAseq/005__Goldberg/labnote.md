@@ -52685,16 +52685,16 @@ DefaultAssay(WT_Kcnc1_p35_CX_1step.sct) <- "integrated"
 
 WT_Kcnc1_p35_CX_1step.sct <- RunPCA(WT_Kcnc1_p35_CX_1step.sct, verbose = FALSE, npcs = 35)
 WT_Kcnc1_p35_CX_1step.sct <- RunUMAP(WT_Kcnc1_p35_CX_1step.sct, reduction = "pca", dims = 1: 35, verbose = FALSE)
-WT_Kcnc1_p35_CX_1step.sct <- FindNeighbors(WT_Kcnc1_p35_CX_1step.sct, reduction = "pca", k.param = 15, dims = 1: 35)
-WT_Kcnc1_p35_CX_1step.sct <- FindClusters(WT_Kcnc1_p35_CX_1step.sct, resolution = 0.65, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+WT_Kcnc1_p35_CX_1step.sct <- FindNeighbors(WT_Kcnc1_p35_CX_1step.sct, reduction = "pca", k.param = 10, dims = 1: 35)
+WT_Kcnc1_p35_CX_1step.sct <- FindClusters(WT_Kcnc1_p35_CX_1step.sct, resolution = 0.4, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 WT_Kcnc1_p35_CX_1step.sct$condition <- factor(WT_Kcnc1_p35_CX_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p35_CX-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version2dim35kparam15res065.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CX-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version2dim35kparam10res04.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_p35_CX_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
-
+XXXY HER E chagn res!
 
 DefaultAssay(WT_Kcnc1_p35_CX_1step.sct) <- "SCT"
 

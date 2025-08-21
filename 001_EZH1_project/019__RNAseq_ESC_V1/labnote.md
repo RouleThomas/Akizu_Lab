@@ -72,22 +72,16 @@ Renamed manually as only 8 samples
 # Fastp cleaning
 
 ```bash
-sbatch scripts/fastp.sh # 50212025 xxx
+sbatch scripts/fastp.sh # 50212025 ok
 ```
-
-
 
 ## mapping fastp trim
 
 ```bash
-sbatch --dependency=afterany:50212025 scripts/STAR_mapping_fastp.sh # 50212217 xxx
+sbatch --dependency=afterany:50212025 scripts/STAR_mapping_fastp.sh # 50212217 ok
 ```
 
 -->  xxx
-
-
-
-
 
 
 # Count with Kallisto
@@ -101,8 +95,125 @@ conda activate kallisto
 
 
 ## run in sbatch
-sbatch --dependency=afterany:50212217 scripts/kallisto_count_gtf.sh # 50212654 xxx
+sbatch scripts/kallisto_count_gtf.sh # 50212654 FAIL SHOULD USE STRANDED!; 50302968 xxx
+
+# Convert pseudoalignment to bigwig
+sbatch --dependency=afterany:50302968 scripts/TPM_bw.sh # 50306142 xxx
 ```
+
+- *NOTE: Added `--rf-stranded --genomebam` options for strandness and pseudobam alignemt generation*
+
+
+
+## Gene quantification with txImport
+
+
+XXXY HERE RUN BELOW!
+
+
+
+Follow [this](https://nbisweden.github.io/workshop-RNAseq/2011/lab_kallisto.html#2_Quantification)
+
+
+```bash
+# Extract all transcriptnames (1st) and genenames (4th) from  GTF and write to a file.   
+awk 'BEGIN{OFS=","; print "TXNAME,GENEID"}
+     $3=="transcript"{
+       match($0,/transcript_id "([^"]+)"/,t);
+       match($0,/gene_id "([^"]+)"/,g);
+       if(t[1]!="" && g[1]!=""){
+         tx=t[1]; gn=g[1];
+         sub(/\.[0-9]+$/,"",tx);
+         sub(/\.[0-9]+$/,"",gn);
+         print tx, gn;
+       }
+     }' ../../Master/meta/gencode.v47.annotation.gtf \
+| sort -u > ../../Master/meta/gencode.v47.annotation.tx2gene.csv
+
+
+awk 'BEGIN{OFS=","; print "TXNAME,GENEID"}
+     $3=="transcript"{
+       match($0,/transcript_id "([^"]+)"/,t);
+       match($0,/gene_id "([^"]+)"/,g);
+       if(t[1]!="" && g[1]!="") print t[1], g[1];
+     }' ../../Master/meta/gencode.v47.annotation.gtf \
+| sort -u > ../../Master/meta/gencode.v47.annotation.tx2gene.csv
+
+
+
+conda activate deseq2
+```
+
+Go in R to create metadata file; and convert transcript to gene count
+
+Metadata file format as: SampleName, SampleID, No, Model, Day, Group, Replicate
+
+
+```R
+# packages
+library("tidyverse")
+library("dplyr") # data wrangling
+library("ggplot2") # plotting
+library("DESeq2") # rna-seq
+library("tximport") # importing kalisto transcript counts to geneLevels
+library("readr") # Fast readr of files.
+library("rhdf5") # read/convert kalisto output files.  
+
+
+# Create metadata
+samples <- c(
+  "ESC_WT_R1","ESC_KO_R1","ESC_OEKO_R1",
+  "ESC_WT_R2","ESC_KO_R2","ESC_OEKO_R2",
+  "ESC_WT_R3","ESC_KO_R3","ESC_OEKO_R3"
+)
+mr <- data.frame(
+  SampleID   = samples,
+  No         = 1:length(samples),
+  Model      = "ESC",
+  Day        = "ESC",
+  Group      = sub("ESC_","", sub("_R[0-9]","", samples)),
+  Replicate  = sub(".*_R","", samples),
+  row.names  = samples         # <-- set SampleName as rownames
+)
+mr
+
+
+# List all abundance.tsv files
+files <- list.files(
+  path = "output/kallisto",
+  pattern = "abundance.tsv",
+  recursive = TRUE,
+  full.names = TRUE
+)
+# Name the files with your sample names
+names(files) <- rownames(mr)
+files
+
+
+
+# Convert transcript to gene ID
+tx2gene <- read_csv("../../Master/meta/gencode.v47.annotation.tx2gene.csv")
+txi.kallisto.tsv <- tximport(files, type = "kallisto", tx2gene = tx2gene, ignoreAfterBar = TRUE)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

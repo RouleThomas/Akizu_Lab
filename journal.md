@@ -92,6 +92,9 @@ library("fgsea")
 library("UpSetR") # venn diagram like plot
 library("furrr") # parralel processing
 
+library("tximport") # importing kalisto transcript counts to geneLevels
+library("rhdf5") # read/convert kalisto output files.  
+
 
 
 ### deseq2V2

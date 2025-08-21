@@ -21,7 +21,7 @@ echo "Processing sample ${x}"
 kallisto quant -i ../../Master/meta/kallisto/transcripts.idx \
     -o output/kallisto/${x}_quant \
     -b 100 output/fastp/${x}_1.fq.gz output/fastp/${x}_2.fq.gz \
-    -g ../../Master/meta/gencode.v47.annotation.gtf -t 8
+    -g ../../Master/meta/gencode.v47.annotation.gtf -t 8 --rf-stranded --genomebam --chromosomes ../../Master/meta/GRCh38_chrom_sizes.tab
 done
 
 
