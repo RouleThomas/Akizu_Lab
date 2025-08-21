@@ -52685,16 +52685,16 @@ DefaultAssay(WT_Kcnc1_p35_CX_1step.sct) <- "integrated"
 
 WT_Kcnc1_p35_CX_1step.sct <- RunPCA(WT_Kcnc1_p35_CX_1step.sct, verbose = FALSE, npcs = 35)
 WT_Kcnc1_p35_CX_1step.sct <- RunUMAP(WT_Kcnc1_p35_CX_1step.sct, reduction = "pca", dims = 1: 35, verbose = FALSE)
-WT_Kcnc1_p35_CX_1step.sct <- FindNeighbors(WT_Kcnc1_p35_CX_1step.sct, reduction = "pca", k.param = 10, dims = 1: 35)
+WT_Kcnc1_p35_CX_1step.sct <- FindNeighbors(WT_Kcnc1_p35_CX_1step.sct, reduction = "pca", k.param = 5, dims = 1: 35)
 WT_Kcnc1_p35_CX_1step.sct <- FindClusters(WT_Kcnc1_p35_CX_1step.sct, resolution = 0.4, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 WT_Kcnc1_p35_CX_1step.sct$condition <- factor(WT_Kcnc1_p35_CX_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p35_CX-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version2dim35kparam10res04.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CX-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version2dim35kparam5res04.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_p35_CX_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
-XXXY HER E chagn res!
+XXXY HERE WORK ON NAMING!
 
 DefaultAssay(WT_Kcnc1_p35_CX_1step.sct) <- "SCT"
 
@@ -52815,6 +52815,9 @@ WT_Kcnc1_p35_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CX_1step
 
 ## saveRDS(WT_Kcnc1_p35_CX_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CX_1step-version2dim35kparam15res065.sct_V1_numeric.rds") 
 WT_Kcnc1_p35_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CX_1step-version2dim35kparam15res065.sct_V1_numeric.rds") # 
+
+## saveRDS(WT_Kcnc1_p35_CX_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CX_1step-version2dim35kparam5res04.sct_V1_numeric.rds") 
+WT_Kcnc1_p35_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CX_1step-version2dim35kparam5res04.sct_V1_numeric.rds") # 
 
 set.seed(42)
 
@@ -64848,7 +64851,7 @@ gzip -f input_Yao_et_al_2021/10X_nuclei_v3_AIBS/barcodes.tsv
 
 
 
-### 10X_nuclei_v3_AIBS
+### 10X_nuclei_v3_AIBS - p14 CX
 
 
 ```bash
@@ -65178,7 +65181,6 @@ pdf("output/seurat/UMAP_Yao_Cortex_20k-reference_query_overlay-version2-24hr.pdf
 dev.off()
 ### END OF SLURM  ######################################################
 ########################################################################
-
 Yao_Cortex <- readRDS(file = "output/seurat/Yao_Cortex-10X_nuclei_v3_AIBS-30dim-order2.rds") # 
 WT_Kcnc1_p14_CX_1step <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CX_1step-10X_nuclei_v3_AIBS-30dim-order2.rds") # 
 
@@ -65298,6 +65300,299 @@ To solve it: make sure FindTransferAnchors() was working, produce anchors; chang
 
 
 
+### 10X_nuclei_v3_AIBS - p35 CX
+
+
+```bash
+conda activate scRNAseqV2
+```
+
+```R
+library("Seurat")
+library("dplyr")
+library("Matrix")
+library("ggplot2")
+
+# Read in matrix
+data_dir <- "input_Yao_et_al_2021/10X_nuclei_v3_AIBS"
+counts <- Read10X(data.dir = data_dir)
+# Create Seurat object
+Yao_Cortex <- CreateSeuratObject(counts = counts, project = "10X_nuclei_v3_AIBS", min.cells = 3, min.features = 200)
+# Load cluster membership
+cluster_membership <- read.csv(file.path(data_dir, "cluster.membership.csv"), row.names = 1)
+# Load cluster annotations
+cluster_annotation <- read.csv(file.path(data_dir, "cluster.annotation.csv"))
+valid_barcodes <- intersect(colnames(Yao_Cortex), rownames(cluster_membership))
+# Subset Seurat object
+Yao_Cortex <- subset(Yao_Cortex, cells = valid_barcodes)
+# Assign cluster IDs
+Yao_Cortex$cluster_id <- as.character(cluster_membership[colnames(Yao_Cortex), "x"])
+# Map to cell types
+annotation_map <- setNames(cluster_annotation$cluster_label, cluster_annotation$cluster_id)
+Yao_Cortex$cell_type <- annotation_map[Yao_Cortex$cluster_id]
+# Normalize and reduce
+Yao_Cortex <- NormalizeData(Yao_Cortex)
+Yao_Cortex <- FindVariableFeatures(Yao_Cortex)
+Yao_Cortex <- ScaleData(Yao_Cortex)
+Yao_Cortex <- RunPCA(Yao_Cortex, npcs = 30)
+Yao_Cortex <- RunUMAP(Yao_Cortex, dims = 1:30)
+
+# Plot UMAP with cell type
+pdf("output/seurat/Yao_Cortex-10X_nuclei_v3_AIBS-30dim.pdf", width=20, height=10)   
+DimPlot(Yao_Cortex, group.by = "cell_type", label = TRUE, repel = TRUE) 
+dev.off()
+
+
+## SAVE ####################################
+
+## saveRDS(Yao_Cortex, file = "output/seurat/Yao_Cortex-10X_nuclei_v3_AIBS-30dim.rds") 
+Yao_Cortex <- readRDS(file = "output/seurat/Yao_Cortex-10X_nuclei_v3_AIBS-30dim.rds") # 
+set.seed(42)
+#############################################
+
+
+
+##############################################################
+# The other way ##############################################
+##############################################################
+
+#--> TOO LONG!!! Let's run in slurm job without downsamnpling!
+
+
+
+
+
+### START OF SLURM  ######################################################
+########################################################################
+# Step 1: Find anchors (you may have already done this)
+Yao_Cortex_20k <- RunUMAP(
+  Yao_Cortex_20k,
+  dims = 1:30,
+  reduction = "pca",
+  return.model = TRUE  
+)
+shared_features <- intersect(
+  rownames(Yao_Cortex_20k),
+  rownames(WT_Kcnc1_p14_CX_1step_20k)
+)
+anchors <- FindTransferAnchors(
+  reference = Yao_Cortex_20k,
+  query = WT_Kcnc1_p14_CX_1step_20k,
+  normalization.method = "LogNormalize",  # or "LogNormalize"
+  reference.reduction = "pca",  
+  reduction = "pcaproject",
+  dims = 1:30,
+  features = shared_features,
+  k.anchor = 500, # 100 50 250
+  k.filter = 2000 # 500
+)
+
+#--> k.anchor 250; k.filter 500; give 1138 anchors (still very low for 20k cells)
+#--> k.anchor 100; k.filter 500; give 199 anchors
+#--> k.anchor 50; k.filter 500; give 52 anchors
+
+
+# Step 2: Transfer labels from reference to query
+predictions <- TransferData(
+  anchorset = anchors,
+  refdata = Yao_Cortex_20k$cell_type,
+  dims = 1:30,
+  k.weight = 100
+)
+
+predictions <- TransferData(
+  anchorset = anchors,
+  refdata = Yao_Cortex_20k$cell_type,
+  dims = 1:30,
+  k.weight = 50
+)
+
+
+WT_Kcnc1_p14_CX_1step_20k <- AddMetaData(WT_Kcnc1_p14_CX_1step_20k, metadata = predictions)
+
+
+# Step 3: Project query onto reference UMAP
+WT_Kcnc1_p14_CX_1step_20k <- MapQuery(
+  anchorset = anchors,
+  reference = Yao_Cortex_20k,
+  query = WT_Kcnc1_p14_CX_1step_20k,
+  refdata = list(cluster_id = "cluster_id"),
+  reference.reduction = "pca",
+  reduction.model = "umap"
+)
+# Step 4: Generate UMAP plots - USING HUMAN GASTRULA ANNOTATION
+all_clusters <- union(
+  unique(Yao_Cortex_20k$cluster_id),
+  unique(WT_Kcnc1_p14_CX_1step_20k$predicted.id)
+)
+# Step 2: Assign consistent colors
+cluster_colors <- setNames(scales::hue_pal()(length(all_clusters)), sort(all_clusters))
+# Panel 1: Human gastrula
+p1 <- DimPlot(
+  Yao_Cortex_20k,
+  reduction = "umap",
+  group.by = "cluster_id",
+  label = TRUE,
+  pt.size = 1,
+  cols = cluster_colors
+) + ggtitle("Human gastrula")
+# Panel 2: Projected gastruloid
+p2 <- DimPlot(
+  WT_Kcnc1_p14_CX_1step_20k,
+  reduction = "ref.umap",
+  group.by = "predicted.id",
+  label = TRUE,
+  pt.size = 1,
+  cols = cluster_colors
+) + ggtitle("Human gastruloid 72hr")
+# Panel 3: Overlay
+# Plot reference (Yao_Cortex_20k) in gray
+Yao_Cortex_20k$dummy_group <- "Reference"
+p_ref <- DimPlot(
+  Yao_Cortex_20k,
+  reduction = "umap",
+  group.by = "dummy_group",
+  cols = "lightgray",
+  pt.size = 1
+) + NoLegend()
+# Plot projected query separately with colors
+p_query <- DimPlot(
+  WT_Kcnc1_p14_CX_1step_20k,
+  reduction = "ref.umap",
+  group.by = "predicted.id",
+  pt.size = 1,
+  cols = cluster_colors
+) + NoAxes() + NoLegend()
+# Overlay: Extract and draw query points on top of reference
+g_ref <- p_ref[[1]]
+query_layer <- ggplot_build(p_query[[1]])$data[[1]]
+g_overlay <- g_ref +
+  geom_point(
+    data = query_layer,
+    aes(x = x, y = y),
+    color = query_layer$colour,  # already hex
+    size = 1
+  ) +
+  ggtitle("Overlay") +
+  theme_void() +
+  theme(plot.title = element_text(hjust = 0.5))
+# Step 4: Export
+pdf("output/seurat/UMAP_Yao_Cortex_20k-reference_query_overlay-version2-24hr.pdf", width = 30, height = 7)
+(p1 | p2 | g_overlay)
+dev.off()
+### END OF SLURM  ######################################################
+########################################################################
+Yao_Cortex <- readRDS(file = "output/seurat/Yao_Cortex-10X_nuclei_v3_AIBS-30dim-order2.rds") # 
+WT_Kcnc1_p14_CX_1step <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CX_1step-10X_nuclei_v3_AIBS-30dim-order2.rds") # 
+
+
+
+
+
+# Step 4: Generate UMAP plots - USING OUR WT_Kcnc1_p14_CX_1step ANNOTATION
+all_clusters <- union(
+  unique(Yao_Cortex$cluster_id),
+  unique(WT_Kcnc1_p14_CX_1step$predicted.id)
+)
+# Step 2: Assign consistent colors
+cluster_colors <- setNames(scales::hue_pal()(length(all_clusters)), sort(all_clusters))
+# Panel 1: Yao_Cortex
+p1 <- DimPlot(
+  Yao_Cortex,
+  reduction = "umap",
+  group.by = "cluster_id",
+  label = TRUE,
+  pt.size = 1,
+  cols = cluster_colors
+) + ggtitle("Yao_Cortex")
+# Panel 2: Projected WT_Kcnc1_p14_CX
+p2 <- DimPlot(
+  WT_Kcnc1_p14_CX_1step,
+  reduction = "ref.umap",
+  group.by = "cluster.annot",
+  label = TRUE,
+  pt.size = 1
+) + ggtitle("WT_Kcnc1_p14_CX")
+# Panel 3: Overlay
+# Plot reference (Yao_Cortex) in gray
+Yao_Cortex$dummy_group <- "Reference"
+p_ref <- DimPlot(
+  Yao_Cortex,
+  reduction = "umap",
+  group.by = "dummy_group",
+  cols = "lightgray",
+  pt.size = 1
+) + NoLegend()
+p_query <- DimPlot(
+  WT_Kcnc1_p14_CX_1step,
+  reduction = "ref.umap",
+  group.by = "cluster.annot",
+  pt.size = 1
+) + NoAxes() + NoLegend()
+g_ref <- p_ref[[1]]
+query_layer <- ggplot_build(p_query[[1]])$data[[1]]
+g_overlay <- g_ref +
+  geom_point(
+    data = query_layer,
+    aes(x = x, y = y),
+    color = query_layer$colour,  # already hex
+    size = 1
+  ) +
+  ggtitle("Overlay") +
+  theme_void() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Step 4: Export
+#pdf("output/seurat/UMAP_Yao_Cortex-reference_query_overlay-annotation-order2.pdf", width = 30, height = 7)
+pdf("output/seurat/UMAP_Yao_Cortex-reference_query_overlay-annotation-order2label.pdf", width = 30, height = 7)
+(p1 | p2 | g_overlay)
+dev.off()
+
+
+
+### SHOW EXPRESSION OF SOME GENES #######################
+#saveRDS(WT_Kcnc1_p14_CX_1step_20k, file = "output/seurat/WT_Kcnc1_p14_CX_1step_20k_scRNAseqProjectionversion2.rds")
+WT_Kcnc1_p14_CX_1step_20k <- readRDS("output/seurat/WT_Kcnc1_p14_CX_1step_20k_scRNAseqProjectionversion2.rds")
+# 
+pdf("output/seurat/UMAP_Yao_Cortex_20k-query-TBXT-version2-24hr.pdf", width = 7, height = 7)
+FeaturePlot(
+  WT_Kcnc1_p14_CX_1step_20k,
+  features = "TBXT",
+  reduction = "ref.umap",
+  pt.size = 1, max.cutoff = 1, cols = c("grey", "red")
+) + ggtitle("TBXT expression in human gastruloid 24hr")
+dev.off()
+
+
+############################################################
+
+
+
+
+# Exctract marker genes from Yao et al 
+
+
+## Display the top 10 marker genes of each cluster; unbiased
+### Find all markers 
+Idents(Yao_Cortex) <- "cell_type"   # or: Idents(Yao_Cortex) <- Yao_Cortex$cluster
+all_markers <- FindAllMarkers(Yao_Cortex, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(
+  all_markers,
+  file = "output/seurat/Yao_Cortex-all_markers.txt",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+##
+
+
+
+```
+
+
+
+
+
 
 ### slurm job scRNAseq projection 
 
@@ -65307,7 +65602,10 @@ Too long to run, lets generate a slurm job of the code from `### 10X_nuclei_v3_A
 ```bash
 conda activate scRNAseqV2
 
+# p14 CX
 sbatch scripts/scRNAseqProjection-10X_nuclei_v3_AIBS-order2.sh # 47776001 ok
+# p35 CX
+sbatch scripts/scRNAseqProjection-10X_nuclei_v3_AIBS-order2-p35_CX.sh # 50315809 xxx
 
 ```
 

@@ -95,28 +95,29 @@ conda activate kallisto
 
 
 ## run in sbatch
-sbatch scripts/kallisto_count_gtf.sh # 50212654 FAIL SHOULD USE STRANDED!; 50302968 xxx
+sbatch scripts/kallisto_count_gtf.sh # 50212654 FAIL SHOULD USE STRANDED!; 50302968 ok
 
 # Convert pseudoalignment to bigwig
-sbatch --dependency=afterany:50302968 scripts/TPM_bw.sh # 50306142 xxx
+conda activate deeptools
+
+sbatch scripts/TPM_bw.sh # 50314231 xxx
 ```
 
 - *NOTE: Added `--rf-stranded --genomebam` options for strandness and pseudobam alignemt generation*
 
 
 
-## Gene quantification with txImport
-
-
-XXXY HERE RUN BELOW!
+## Gene quantification with txImport and DESEQ2
 
 
 
 Follow [this](https://nbisweden.github.io/workshop-RNAseq/2011/lab_kallisto.html#2_Quantification)
 
+and [this](https://www.bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#pre-filtering) for DESEQ2 part
 
 ```bash
-# Extract all transcriptnames (1st) and genenames (4th) from  GTF and write to a file.   
+# Extract all transcriptnames (1st) and genenames (4th) from  GTF and write to a file.  
+## Keep gene version information 
 awk 'BEGIN{OFS=","; print "TXNAME,GENEID"}
      $3=="transcript"{
        match($0,/transcript_id "([^"]+)"/,t);
@@ -130,15 +131,15 @@ awk 'BEGIN{OFS=","; print "TXNAME,GENEID"}
      }' ../../Master/meta/gencode.v47.annotation.gtf \
 | sort -u > ../../Master/meta/gencode.v47.annotation.tx2gene.csv
 
+## Remove gene version information 
+echo "TXNAME,GENEID" > ../../Master/meta/gencode.v47.annotation.tx2gene.csv
 
-awk 'BEGIN{OFS=","; print "TXNAME,GENEID"}
-     $3=="transcript"{
+awk '$3=="transcript"{
        match($0,/transcript_id "([^"]+)"/,t);
        match($0,/gene_id "([^"]+)"/,g);
-       if(t[1]!="" && g[1]!="") print t[1], g[1];
-     }' ../../Master/meta/gencode.v47.annotation.gtf \
-| sort -u > ../../Master/meta/gencode.v47.annotation.tx2gene.csv
-
+       if(t[1]!="" && g[1]!="") print t[1] "," g[1];
+     }' OFS="," ../../Master/meta/gencode.v47.annotation.gtf \
+| sort -u >> ../../Master/meta/gencode.v47.annotation.tx2gene.csv
 
 
 conda activate deseq2
@@ -159,12 +160,25 @@ library("tximport") # importing kalisto transcript counts to geneLevels
 library("readr") # Fast readr of files.
 library("rhdf5") # read/convert kalisto output files.  
 
+library("EnhancedVolcano")
+library("apeglm")
+library("org.Hs.eg.db")
+library("biomaRt")
+
+library("RColorBrewer")
+library("pheatmap")
+library("AnnotationDbi")
+
+########################################
+## WT VS KO ############################
+########################################
+
 
 # Create metadata
 samples <- c(
-  "ESC_WT_R1","ESC_KO_R1","ESC_OEKO_R1",
-  "ESC_WT_R2","ESC_KO_R2","ESC_OEKO_R2",
-  "ESC_WT_R3","ESC_KO_R3","ESC_OEKO_R3"
+  "ESC_WT_R1","ESC_KO_R1",
+  "ESC_WT_R2","ESC_KO_R2",
+  "ESC_WT_R3","ESC_KO_R3"
 )
 mr <- data.frame(
   SampleID   = samples,
@@ -179,11 +193,9 @@ mr
 
 
 # List all abundance.tsv files
-files <- list.files(
-  path = "output/kallisto",
-  pattern = "abundance.tsv",
-  recursive = TRUE,
-  full.names = TRUE
+files <- setNames(
+  file.path("output/kallisto", paste0(samples, "_quant"), "abundance.tsv"),
+  samples
 )
 # Name the files with your sample names
 names(files) <- rownames(mr)
@@ -193,7 +205,321 @@ files
 
 # Convert transcript to gene ID
 tx2gene <- read_csv("../../Master/meta/gencode.v47.annotation.tx2gene.csv")
-txi.kallisto.tsv <- tximport(files, type = "kallisto", tx2gene = tx2gene, ignoreAfterBar = TRUE)
+
+txi <- tximport(
+  files,
+  type = "none",
+  tx2gene = tx2gene,
+  ignoreAfterBar = TRUE,
+  importer = function(f) readr::read_tsv(f, show_col_types = FALSE),
+  txIdCol      = "target_id",
+  countsCol    = "est_counts",
+  abundanceCol = "tpm",
+  lengthCol    = "eff_length"
+)
+
+
+
+# Remove X and Y chromosome genes
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
+                   filters = "chromosome_name",
+                   values = c("X", "Y"),
+                   mart = ensembl)
+
+# Normalize IDs (remove version suffixes in both sets)
+tx_genes      <- rownames(txi$counts)
+tx_genes_nov  <- sub("\\..*$", "", tx_genes)                  # ENSG00000123456.3 -> ENSG00000123456
+xy_genes_nov  <- sub("\\..*$", "", genes_X_Y$ensembl_gene_id) # usually no version, but safe
+
+# Build keep mask and filter all txi matrices
+keep <- !(tx_genes_nov %in% xy_genes_nov)
+
+txi$counts    <- txi$counts[keep, , drop = FALSE]
+txi$abundance <- txi$abundance[keep, , drop = FALSE]
+txi$length    <- txi$length[keep, , drop = FALSE]
+
+cat("Removed", sum(!keep), "X/Y genes; kept", sum(keep), "genes.\n")
+
+
+
+
+# DGE with DESEQ2
+dds <- DESeqDataSetFromTximport(txi, mr, ~Group)
+
+# Pre-filtering
+smallestGroupSize <- 3
+keep <- rowSums(counts(dds) >= 10) >= smallestGroupSize
+dds <- dds[keep,]
+
+# Assign ref
+dds$Group <- relevel(dds$Group, ref = "WT")
+
+# Differential expression analysis
+dds <- DESeq(dds)
+res <- results(dds)
+res
+res <- results(dds, name="Group_KO_vs_WT")
+
+# shrinkage
+resultsNames(dds)
+res <- lfcShrink(dds, coef="Group_KO_vs_WT", type="apeglm")
+res
+
+# explore output DEG
+res05 <- results(dds, alpha=0.05)
+summary(res05)
+
+
+
+
+
+
+# Identify DEGs and count them
+
+## padj 0.05 FC 0.25 ##################################
+res_df <- res %>% as.data.frame() %>% dplyr::select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE))
+n_upregulated <- sum(res_df$log2FoldChange > 0.25 & res_df$padj == TRUE, na.rm = TRUE)
+n_downregulated <- sum(res_df$log2FoldChange < -0.25 & res_df$padj == TRUE, na.rm = TRUE)
+
+## Plot-volcano
+### GeneSymbol ID
+gene_ids <- rownames(res)
+stripped_gene_ids <- sub("\\..*", "", gene_ids)
+gene_symbols <- mapIds(org.Hs.eg.db, keys = stripped_gene_ids,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+res$GeneSymbol <- gene_symbols
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.25 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.25 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.25)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.25)'
+
+pdf("output/deseq2/plotVolcano_res_q05fc025_ESC_KO_vs_ESC_WT.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = res$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, ESC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.25,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) ) +
+  annotate("text", x = 3, y = 140, 
+           label = paste(n_upregulated), hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140, 
+           label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+
+# Save as gene list for GO analysis:
+### Complete table with GeneSymbol
+write.table(res, file = "output/deseq2/res_ESC_KO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 0.25 & res$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.25 & res$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2/upregulated_q05fc025_ESC_KO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05fc025_ESC_KO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
+
+
+
+
+
+
+
+########################################
+## WT VS OEKO ############################
+########################################
+
+
+# Create metadata
+samples <- c(
+  "ESC_WT_R1","ESC_OEKO_R1",
+  "ESC_WT_R2","ESC_OEKO_R2",
+  "ESC_WT_R3","ESC_OEKO_R3"
+)
+mr <- data.frame(
+  SampleID   = samples,
+  No         = 1:length(samples),
+  Model      = "ESC",
+  Day        = "ESC",
+  Group      = sub("ESC_","", sub("_R[0-9]","", samples)),
+  Replicate  = sub(".*_R","", samples),
+  row.names  = samples         # <-- set SampleName as rownames
+)
+mr
+
+
+# List all abundance.tsv files
+files <- setNames(
+  file.path("output/kallisto", paste0(samples, "_quant"), "abundance.tsv"),
+  samples
+)
+# Name the files with your sample names
+names(files) <- rownames(mr)
+files
+
+
+
+# Convert transcript to gene ID
+tx2gene <- read_csv("../../Master/meta/gencode.v47.annotation.tx2gene.csv")
+
+txi <- tximport(
+  files,
+  type = "none",
+  tx2gene = tx2gene,
+  ignoreAfterBar = TRUE,
+  importer = function(f) readr::read_tsv(f, show_col_types = FALSE),
+  txIdCol      = "target_id",
+  countsCol    = "est_counts",
+  abundanceCol = "tpm",
+  lengthCol    = "eff_length"
+)
+
+
+
+# Remove X and Y chromosome genes
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
+                   filters = "chromosome_name",
+                   values = c("X", "Y"),
+                   mart = ensembl)
+
+# Normalize IDs (remove version suffixes in both sets)
+tx_genes      <- rownames(txi$counts)
+tx_genes_nov  <- sub("\\..*$", "", tx_genes)                  # ENSG00000123456.3 -> ENSG00000123456
+xy_genes_nov  <- sub("\\..*$", "", genes_X_Y$ensembl_gene_id) # usually no version, but safe
+
+# Build keep mask and filter all txi matrices
+keep <- !(tx_genes_nov %in% xy_genes_nov)
+
+txi$counts    <- txi$counts[keep, , drop = FALSE]
+txi$abundance <- txi$abundance[keep, , drop = FALSE]
+txi$length    <- txi$length[keep, , drop = FALSE]
+
+cat("Removed", sum(!keep), "X/Y genes; kept", sum(keep), "genes.\n")
+
+
+
+
+# DGE with DESEQ2
+dds <- DESeqDataSetFromTximport(txi, mr, ~Group)
+
+# Pre-filtering
+smallestGroupSize <- 3
+keep <- rowSums(counts(dds) >= 10) >= smallestGroupSize
+dds <- dds[keep,]
+
+# Assign ref
+dds$Group <- relevel(dds$Group, ref = "WT")
+
+# Differential expression analysis
+dds <- DESeq(dds)
+res <- results(dds)
+res
+res <- results(dds, name="Group_OEKO_vs_WT")
+
+# shrinkage
+resultsNames(dds)
+res <- lfcShrink(dds, coef="Group_OEKO_vs_WT", type="apeglm")
+res
+
+# explore output DEG
+res05 <- results(dds, alpha=0.05)
+summary(res05)
+
+
+
+
+
+
+# Identify DEGs and count them
+
+## padj 0.05 FC 0.25 ##################################
+res_df <- res %>% as.data.frame() %>% dplyr::select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE))
+n_upregulated <- sum(res_df$log2FoldChange > 0.25 & res_df$padj == TRUE, na.rm = TRUE)
+n_downregulated <- sum(res_df$log2FoldChange < -0.25 & res_df$padj == TRUE, na.rm = TRUE)
+
+## Plot-volcano
+### GeneSymbol ID
+gene_ids <- rownames(res)
+stripped_gene_ids <- sub("\\..*", "", gene_ids)
+gene_symbols <- mapIds(org.Hs.eg.db, keys = stripped_gene_ids,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+res$GeneSymbol <- gene_symbols
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.25 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.25 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.25)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.25)'
+
+pdf("output/deseq2/plotVolcano_res_q05fc025_ESC_OEKO_vs_ESC_WT.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = res$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'OEKO vs WT, ESC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.25,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) ) +
+  annotate("text", x = 3, y = 140, 
+           label = paste(n_upregulated), hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140, 
+           label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+
+# Save as gene list for GO analysis:
+### Complete table with GeneSymbol
+write.table(res, file = "output/deseq2/res_ESC_OEKO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 0.25 & res$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.25 & res$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2/upregulated_q05fc025_ESC_OEKO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05fc025_ESC_OEKO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
 
 ```
 
