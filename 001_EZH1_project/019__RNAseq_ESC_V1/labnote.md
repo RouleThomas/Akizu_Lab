@@ -169,6 +169,85 @@ library("RColorBrewer")
 library("pheatmap")
 library("AnnotationDbi")
 
+
+########################################
+## WT KO OEKO - gene level count ############################
+########################################
+
+
+# Create metadata
+samples <- c(
+  "ESC_WT_R1","ESC_KO_R1","ESC_OEKO_R1",
+  "ESC_WT_R2","ESC_KO_R2","ESC_OEKO_R2",
+  "ESC_WT_R3","ESC_KO_R3","ESC_OEKO_R3"
+)
+mr <- data.frame(
+  SampleID   = samples,
+  No         = 1:length(samples),
+  Model      = "ESC",
+  Day        = "ESC",
+  Group      = sub("ESC_","", sub("_R[0-9]","", samples)),
+  Replicate  = sub(".*_R","", samples),
+  row.names  = samples         # <-- set SampleName as rownames
+)
+mr
+
+
+# List all abundance.tsv files
+files <- setNames(
+  file.path("output/kallisto", paste0(samples, "_quant"), "abundance.tsv"),
+  samples
+)
+# Name the files with your sample names
+names(files) <- rownames(mr)
+files
+
+
+
+# Convert transcript to gene ID
+tx2gene <- read_csv("../../Master/meta/gencode.v47.annotation.tx2gene.csv")
+
+txi <- tximport(
+  files,
+  type = "none",
+  tx2gene = tx2gene,
+  ignoreAfterBar = TRUE,
+  importer = function(f) readr::read_tsv(f, show_col_types = FALSE),
+  txIdCol      = "target_id",
+  countsCol    = "est_counts",
+  abundanceCol = "tpm",
+  lengthCol    = "eff_length"
+)
+
+tpm_long <- txi$abundance %>%                 # <- matrix: genes x samples (TPM)
+  as.data.frame(check.names = FALSE) %>%
+  rownames_to_column("GeneID") %>%
+  pivot_longer(-GeneID, names_to = "sample", values_to = "TPM") %>%
+  mutate(
+    replicate    = str_extract(sample, "R\\d+"),
+    genotype_raw = str_match(sample, "_(WT|KO|OE\\w*)_")[,2],  # WT / KO / OE*
+    genotype     = case_when(
+      genotype_raw %in% c("WT","KO") ~ genotype_raw,
+      str_detect(genotype_raw, "^OE") ~ "OE",
+      TRUE ~ genotype_raw
+    )
+  ) %>%
+  dplyr::select(GeneID, genotype, replicate, TPM) %>%
+  arrange(GeneID, genotype, replicate)
+
+tpm_long
+
+
+# Save gene level count #######################################
+
+write.table(tpm_long, file = "output/deseq2/txi_Kallisto-GeneLevel-TPM.txt", sep = "\t", quote = FALSE, row.names = FALSE) # 
+
+
+
+
+################################################################
+
+
 ########################################
 ## WT VS KO ############################
 ########################################
@@ -337,6 +416,162 @@ downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2Fol
 #### Save
 write.table(upregulated$GeneSymbol, file = "output/deseq2/upregulated_q05fc025_ESC_KO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05fc025_ESC_KO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
+######################################
+# GAIN H3K27me3 from `001*/018*` ###################
+######################################
+
+## Plot-volcano
+### GeneSymbol ID
+gene_ids <- rownames(res)
+stripped_gene_ids <- sub("\\..*", "", gene_ids)
+gene_symbols <- mapIds(org.Hs.eg.db, keys = stripped_gene_ids,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+res$GeneSymbol <- gene_symbols
+
+
+
+res_Gain= read.table("../018__CutRun_DOX_V1/output/ChIPseeker/annotation_PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__Gain_annot_promoterAnd5_geneSymbol.txt", header = FALSE, sep = "\t", quote = "", stringsAsFactors = FALSE, col.names = "GeneSymbol") %>%
+  as_tibble() %>%
+  inner_join(as_tibble(res), by = "GeneSymbol") %>% unique() %>% dplyr::filter(GeneSymbol != "NA")
+
+
+res_df <- res_Gain %>% as.data.frame() %>% dplyr::select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE))
+n_upregulated <- sum(res_df$log2FoldChange > 0.25 & res_df$padj == TRUE, na.rm = TRUE)
+n_downregulated <- sum(res_df$log2FoldChange < -0.25 & res_df$padj == TRUE, na.rm = TRUE)
+
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Gain$log2FoldChange < -0.25 & res_Gain$padj < 5e-2, 'Sky Blue',
+    ifelse(res_Gain$log2FoldChange > 0.25 & res_Gain$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.25)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.25)'
+
+pdf("output/deseq2/plotVolcano_res_Gain_q05fc025_ESC_KO_vs_ESC_WT.pdf", width=4, height=5)    
+EnhancedVolcano(res_Gain,
+  lab = res_Gain$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, ESC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.25,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) ) +
+  annotate("text", x = 3, y = 75, 
+           label = paste(n_upregulated), hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 75, 
+           label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+
+# Save as gene list for GO analysis:
+### Complete table with GeneSymbol
+#write.table(res, file = "output/deseq2/res_ESC_KO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange > 0.25 & res_Gain$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange < -0.25 & res_Gain$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2/upregulated_q05fc025_ESC_KO_vs_ESC_WT-res_Gain.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05fc025_ESC_KO_vs_ESC_WT-res_Gain.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+######################################
+# LOST H3K27me3 from `001*/018*` ###################
+######################################
+
+## Plot-volcano
+### GeneSymbol ID
+gene_ids <- rownames(res)
+stripped_gene_ids <- sub("\\..*", "", gene_ids)
+gene_symbols <- mapIds(org.Hs.eg.db, keys = stripped_gene_ids,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+res$GeneSymbol <- gene_symbols
+
+
+
+res_Lost= read.table("../018__CutRun_DOX_V1/output/ChIPseeker/annotation_PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__Lost_annot_promoterAnd5_geneSymbol.txt", header = FALSE, sep = "\t", quote = "", stringsAsFactors = FALSE, col.names = "GeneSymbol") %>%
+  as_tibble() %>%
+  inner_join(as_tibble(res), by = "GeneSymbol") %>% unique() %>% dplyr::filter(GeneSymbol != "NA")
+
+
+res_df <- res_Lost %>% as.data.frame() %>% dplyr::select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE))
+n_upregulated <- sum(res_df$log2FoldChange > 0.25 & res_df$padj == TRUE, na.rm = TRUE)
+n_downregulated <- sum(res_df$log2FoldChange < -0.25 & res_df$padj == TRUE, na.rm = TRUE)
+
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_Lost$log2FoldChange < -0.25 & res_Lost$padj < 5e-2, 'Sky Blue',
+    ifelse(res_Lost$log2FoldChange > 0.25 & res_Lost$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.25)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.25)'
+
+pdf("output/deseq2/plotVolcano_res_Lost_q05fc025_ESC_KO_vs_ESC_WT.pdf", width=4, height=5)    
+EnhancedVolcano(res_Lost,
+  lab = res_Lost$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, ESC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.25,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) ) +
+  annotate("text", x = 3, y = 75, 
+           label = paste(n_upregulated), hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 75, 
+           label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+
+# Save as gene list for GO analysis:
+### Complete table with GeneSymbol
+#write.table(res, file = "output/deseq2/res_ESC_KO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange > 0.25 & res_Gain$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res_Gain[!is.na(res_Gain$log2FoldChange) & !is.na(res_Gain$padj) & res_Gain$log2FoldChange < -0.25 & res_Gain$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2/upregulated_q05fc025_ESC_KO_vs_ESC_WT-res_Gain.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05fc025_ESC_KO_vs_ESC_WT-res_Gain.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
+
+
+
 
 
 

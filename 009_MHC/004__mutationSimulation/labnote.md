@@ -181,17 +181,13 @@ python scripts/simulate_array_v2.py \
 #--> STOP gained at 301 (GOOD!)
 
 
-# Light testing with a context that should give some STOP XXX
-
-
-
 
 
 
 # Generate plot for all (script updated to use `simulate_array_v2.py`)
-sbatch scripts/run_filtered_contexts_v2.slurm #  xxx --> results_contexts/
-sbatch scripts/run_filtered_cosmic_v2.slurm #  xxx --> results/
-sbatch scripts/run_filtered_experimental_v2.slurm #  xxx --> results_experimental/
+sbatch scripts/run_filtered_contexts_v2.slurm # 50364278 xxx --> results_contexts/
+sbatch scripts/run_filtered_cosmic_v2.slurm # 50364847 xxx --> results/
+sbatch scripts/run_filtered_experimental_v2.slurm # 50365053 xxx --> results_experimental/
 ```
 
 XXX HERE!!!

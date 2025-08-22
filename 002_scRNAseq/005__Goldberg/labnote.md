@@ -65482,17 +65482,15 @@ pdf("output/seurat/UMAP_Yao_Cortex_20k-reference_query_overlay-version2-24hr.pdf
 dev.off()
 ### END OF SLURM  ######################################################
 ########################################################################
-Yao_Cortex <- readRDS(file = "output/seurat/Yao_Cortex-10X_nuclei_v3_AIBS-30dim-order2.rds") # 
-WT_Kcnc1_p14_CX_1step <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CX_1step-10X_nuclei_v3_AIBS-30dim-order2.rds") # 
+Yao_Cortex <- readRDS(file = "output/seurat/Yao_Cortex-10X_nuclei_v3_AIBS-30dim-order2-p35_CX.rds") # 
+WT_Kcnc1_p35_CX_1step <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CX_1step-10X_nuclei_v3_AIBS-30dim-order2-p35_CX.rds") # 
 
 
 
-
-
-# Step 4: Generate UMAP plots - USING OUR WT_Kcnc1_p14_CX_1step ANNOTATION
+# Step 4: Generate UMAP plots - USING OUR WT_Kcnc1_p35_CX_1step ANNOTATION
 all_clusters <- union(
   unique(Yao_Cortex$cluster_id),
-  unique(WT_Kcnc1_p14_CX_1step$predicted.id)
+  unique(WT_Kcnc1_p35_CX_1step$predicted.id)
 )
 # Step 2: Assign consistent colors
 cluster_colors <- setNames(scales::hue_pal()(length(all_clusters)), sort(all_clusters))
@@ -65505,14 +65503,14 @@ p1 <- DimPlot(
   pt.size = 1,
   cols = cluster_colors
 ) + ggtitle("Yao_Cortex")
-# Panel 2: Projected WT_Kcnc1_p14_CX
+# Panel 2: Projected WT_Kcnc1_p35_CX_1step
 p2 <- DimPlot(
-  WT_Kcnc1_p14_CX_1step,
+  WT_Kcnc1_p35_CX_1step,
   reduction = "ref.umap",
-  group.by = "cluster.annot",
+  group.by = "seurat_clusters",
   label = TRUE,
   pt.size = 1
-) + ggtitle("WT_Kcnc1_p14_CX")
+) + ggtitle("WT_Kcnc1_p35_CX")
 # Panel 3: Overlay
 # Plot reference (Yao_Cortex) in gray
 Yao_Cortex$dummy_group <- "Reference"
@@ -65524,9 +65522,9 @@ p_ref <- DimPlot(
   pt.size = 1
 ) + NoLegend()
 p_query <- DimPlot(
-  WT_Kcnc1_p14_CX_1step,
+  WT_Kcnc1_p35_CX_1step,
   reduction = "ref.umap",
-  group.by = "cluster.annot",
+  group.by = "seurat_clusters",
   pt.size = 1
 ) + NoAxes() + NoLegend()
 g_ref <- p_ref[[1]]
@@ -65543,8 +65541,8 @@ g_overlay <- g_ref +
   theme(plot.title = element_text(hjust = 0.5))
 
 # Step 4: Export
-#pdf("output/seurat/UMAP_Yao_Cortex-reference_query_overlay-annotation-order2.pdf", width = 30, height = 7)
-pdf("output/seurat/UMAP_Yao_Cortex-reference_query_overlay-annotation-order2label.pdf", width = 30, height = 7)
+#pdf("output/seurat/UMAP_Yao_Cortex-reference_query_overlay-annotation-order2-p35_CX.pdf", width = 30, height = 7)
+pdf("output/seurat/UMAP_Yao_Cortex-reference_query_overlay-annotation-order2label-p35_CX.pdf", width = 30, height = 7)
 (p1 | p2 | g_overlay)
 dev.off()
 
@@ -65605,7 +65603,7 @@ conda activate scRNAseqV2
 # p14 CX
 sbatch scripts/scRNAseqProjection-10X_nuclei_v3_AIBS-order2.sh # 47776001 ok
 # p35 CX
-sbatch scripts/scRNAseqProjection-10X_nuclei_v3_AIBS-order2-p35_CX.sh # 50315809 xxx
+sbatch scripts/scRNAseqProjection-10X_nuclei_v3_AIBS-order2-p35_CX.sh # 50315809 ok
 
 ```
 
