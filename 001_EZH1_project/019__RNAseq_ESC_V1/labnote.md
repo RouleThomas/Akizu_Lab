@@ -100,10 +100,54 @@ sbatch scripts/kallisto_count_gtf.sh # 50212654 FAIL SHOULD USE STRANDED!; 50302
 # Convert pseudoalignment to bigwig
 conda activate deeptools
 
-sbatch scripts/TPM_bw.sh # 50314231 xxx
+sbatch scripts/TPM_bw.sh # 50314231 ok
 ```
 
 - *NOTE: Added `--rf-stranded --genomebam` options for strandness and pseudobam alignemt generation*
+
+
+### deepTool bigwig QC
+
+
+### Raw bigwig
+
+
+```bash
+conda activate deeptools
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_TPM.sh # 50503924 xxx
+
+
+
+############################################
+# Plot ESC ###########
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_TPM.npz \
+    --transpose \
+    --ntop 0 \
+    --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
+    --colors black black black red red red blue blue blue \
+    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
+    -o output/bigwig/multiBigwigSummary_TPM_plotPCA.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_TPM.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_TPM_heatmap.pdf
+
+#################################
+```
+
+--> WT cluster well, KO and OEKO kind of overlap..
+
+
+
+
 
 
 
@@ -238,9 +282,158 @@ tpm_long <- txi$abundance %>%                 # <- matrix: genes x samples (TPM)
 tpm_long
 
 
-# Save gene level count #######################################
 
+# Add geneSymbol
+tpm_long <- tpm_long %>%
+  mutate(ENSG = sub("\\..*$", "", GeneID))
+
+
+# 2. Map ENSG → GeneSymbol with org.Hs.eg.db
+gene_symbols <- mapIds(
+  org.Hs.eg.db,
+  keys      = tpm_long$ENSG,
+  column    = "SYMBOL",
+  keytype   = "ENSEMBL",
+  multiVals = "first"
+)
+
+# 3. Add GeneSymbol column
+tpm_long$GeneSymbol <- gene_symbols[tpm_long$ENSG]
+
+# 4. Reorder columns (put GeneSymbol after GeneID)
+tpm_long <- tpm_long %>%
+  relocate(GeneSymbol, .after = GeneID)
+
+
+# Save gene level count #######################################
 write.table(tpm_long, file = "output/deseq2/txi_Kallisto-GeneLevel-TPM.txt", sep = "\t", quote = FALSE, row.names = FALSE) # 
+
+## Plot H3K27me3 GAIN - lost genes - HEATMAP
+genes_gain <- read.table(
+  "../018__CutRun_DOX_V1/output/ChIPseeker/annotation_PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__Gain_annot_promoterAnd5_geneSymbol.txt",
+  header = FALSE, sep = "\t", quote = "", stringsAsFactors = FALSE,
+  col.names = "GeneSymbol"
+) %>% 
+  dplyr::pull(GeneSymbol) %>% unique()
+
+## 2) Average TPM per genotype (WT/KO) for those genes
+avg_tpm <- tpm_long %>%
+  filter(GeneSymbol %in% genes_gain, genotype %in% c("WT","KO")) %>%
+  group_by(GeneSymbol, genotype) %>%
+  summarise(TPM = mean(TPM, na.rm = TRUE), .groups = "drop")
+
+mat <- avg_tpm %>%
+  tidyr::pivot_wider(names_from = genotype, values_from = TPM) %>%
+  # drop genes with missing GeneSymbol
+  filter(!is.na(GeneSymbol) & GeneSymbol != "") %>%
+  # order by WT expression (high → low)
+  arrange(desc(WT)) %>%
+  # enforce WT first, KO second
+  dplyr::select(GeneSymbol, WT, KO)
+
+# convert to matrix
+mat <- mat %>%
+  tibble::column_to_rownames("GeneSymbol") %>%
+  as.matrix()
+
+# replace any NAs with 0
+mat[is.na(mat)] <- 0
+
+## Plot heatmap (TPM color scale; I like log10+1 to compress range)
+pdf("output/deseq2/heatmap_TPM-H3K27me3-WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__Gain.pdf",
+    width = 2, height = max(4, nrow(mat) * 0.18))
+pheatmap(
+  log2(mat + 1),
+  color = colorRampPalette(c("white","orange","red"))(100),
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  main = "TPM (log2+1)",
+  border_color = NA
+)
+dev.off()
+
+
+avg_tpm$genotype <-
+  factor(avg_tpm$genotype,
+         c("WT", "KO"))
+
+pdf("output/deseq2/boxplot_TPM-H3K27me3-WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__Gain.pdf", width = 4, height =4)
+ggplot(avg_tpm, aes(x = genotype, y = log2(TPM+1), fill = genotype)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.3) +        # boxplot, light fill
+  geom_jitter(aes(color = genotype), width = 0.2, size = 2, alpha = 0.5) +  # dots
+  scale_fill_manual(values = c("WT" = "grey70", "KO" = "red")) +
+  scale_color_manual(values = c("WT" = "grey40", "KO" = "darkred")) +
+  theme_classic(base_size = 14) +
+  labs(
+    title = "H3K27me3-gain genes",
+    x = NULL, y = "TPM (log2+1)"
+  )
+dev.off()
+
+
+
+## Plot H3K27me3 LOST - lost genes - HEATMAP 
+genes_lost <- read.table(
+  "../018__CutRun_DOX_V1/output/ChIPseeker/annotation_PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__Lost_annot_promoterAnd5_geneSymbol.txt",
+  header = FALSE, sep = "\t", quote = "", stringsAsFactors = FALSE,
+  col.names = "GeneSymbol"
+) %>% 
+  dplyr::pull(GeneSymbol) %>% unique()
+
+## 2) Average TPM per genotype (WT/KO) for those genes
+avg_tpm <- tpm_long %>%
+  filter(GeneSymbol %in% genes_lost, genotype %in% c("WT","KO")) %>%
+  group_by(GeneSymbol, genotype) %>%
+  summarise(TPM = mean(TPM, na.rm = TRUE), .groups = "drop")
+
+mat <- avg_tpm %>%
+  tidyr::pivot_wider(names_from = genotype, values_from = TPM) %>%
+  # drop genes with missing GeneSymbol
+  filter(!is.na(GeneSymbol) & GeneSymbol != "") %>%
+  # order by WT expression (high → low)
+  arrange(desc(WT)) %>%
+  # enforce WT first, KO second
+  dplyr::select(GeneSymbol, WT, KO)
+
+# convert to matrix
+mat <- mat %>%
+  tibble::column_to_rownames("GeneSymbol") %>%
+  as.matrix()
+
+# replace any NAs with 0
+mat[is.na(mat)] <- 0
+
+## 4) Plot heatmap (TPM color scale; I like log10+1 to compress range)
+pdf("output/deseq2/heatmap_TPM-H3K27me3-WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__Lost.pdf",
+    width = 2, height = max(4, nrow(mat) * 0.18))
+pheatmap(
+  log2(mat + 1),
+  color = colorRampPalette(c("white","orange","red"))(100),
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  main = "TPM (log2+1)",
+  border_color = NA
+)
+dev.off()
+
+
+avg_tpm$genotype <-
+  factor(avg_tpm$genotype,
+         c("WT", "KO"))
+
+pdf("output/deseq2/boxplot_TPM-H3K27me3-WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__Lost.pdf", width = 4, height =4)
+ggplot(avg_tpm, aes(x = genotype, y = log2(TPM+1), fill = genotype)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.3) +        # boxplot, light fill
+  geom_jitter(aes(color = genotype), width = 0.2, size = 2, alpha = 0.5) +  # dots
+  scale_fill_manual(values = c("WT" = "grey70", "KO" = "red")) +
+  scale_color_manual(values = c("WT" = "grey40", "KO" = "darkred")) +
+  theme_classic(base_size = 14) +
+  labs(
+    title = "H3K27me3-gain genes",
+    x = NULL, y = "TPM (log2+1)"
+  )
+dev.off()
+
 
 
 

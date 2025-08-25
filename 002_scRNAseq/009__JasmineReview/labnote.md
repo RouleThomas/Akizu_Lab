@@ -1754,6 +1754,42 @@ dev.off()
 
 
 
+# Fine tune final plot
+
+gene_list = rev(c("EZH2", "EZH1", "EED", "SUZ12", "PHF1", "MTF2", "PHF19", "JARID2", "AEBP2", "RBBP4", "RBBP7","LCOR","LCORL","EPOP") )
+
+# ORDER cell type based on EZH2 expression high to low
+gene_to_order <- "EZH2"   # the gene to sort by
+
+# 1) Pull log-normalized expression for that gene + the celltype label
+df <- FetchData(
+  seurat_Second_trimester,
+  vars = c("Type", gene_to_order),  # uses RNA 'data' slot
+  slot = "data"
+)
+
+# 2) Mean expression per cell type
+avg_by_ct <- tapply(df[[gene_to_order]], df$Type, mean, na.rm = TRUE)
+
+# 3) Order cell types high -> low
+cell_order <- names(sort(avg_by_ct, decreasing = TRUE))
+
+# If you want the top-to-bottom order after coord_flip(), use rev(cell_order)
+seurat_Second_trimester$Type <- factor(
+  seurat_Second_trimester$Type,
+  levels = cell_order
+)
+
+
+pdf("output/seurat/DotPlot-HumanNeocortex-Second_trimester-Class-Type-scaleFALSE.pdf", width=10, height=5)
+DotPlot(seurat_Second_trimester, assay = "RNA", features = gene_list, cols = c("grey", "red"),  group.by = "Type", scale = FALSE ) + RotatedAxis() + coord_flip()
+dev.off()
+
+
+
+
+
+
 ```
 
 - *NOTE: A lot of trouble to read and convert .h5ad file... I follow [this](https://github.com/satijalab/seurat/issues/9072) suggestion by doing this: `HumanNeocortex <- read_h5ad("input/HumanNeocortex.h5ad")` and `HumanNeocortex <- CreateSeuratObject(counts = t(as.matrix(HumanNeocortex$X)), meta.data = HumanNeocortex$obs,min.features = 500, min.cells = 30)` but lead to new error*
@@ -1767,7 +1803,7 @@ dev.off()
 
 
 
-## scRNA-seq data from the larval Drosophila ventral cord provides a resource for studying motor systems function and development
+## scRNA-seq data from the larval Drosophila ventral cord provides a resource for studying motor systems function and development - GOOD
 
 scRNA-seq of Drosophila third instar larval VNC from [this](https://www.sciencedirect.com/science/article/pii/S1534580724001862#app2). --> Data available [here](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE235231) 
 
@@ -1821,6 +1857,7 @@ dev.off()
 gene_list_drosophila = c("E(z)", "esc", "escl", "Su(z)12", "Pcl", "Jarid2", "jing", "Caf1-55") 
 
 
+
 # Case-sensitive check if gene present
 present  <- intersect(gene_list_drosophila, rownames(Third_instar_larvae_VNC_Serpe))
 missing  <- setdiff(gene_list_drosophila, rownames(Third_instar_larvae_VNC_Serpe))
@@ -1831,6 +1868,41 @@ missing
 pdf("output/seurat/DotPlot-HumanNeocortex-Second_trimester-Class-Celltypes.pdf", width=7, height=4)
 DotPlot(Third_instar_larvae_VNC_Serpe, assay = "RNA", features = gene_list_drosophila, cols = c("grey", "red"),  group.by = "Celltypes"  ) + RotatedAxis()
 dev.off()
+
+
+
+# Fine tune final plot
+
+gene_list_drosophila = rev(c("E(z)", "esc", "escl", "Su(z)12", "Pcl", "Jarid2", "jing", "Caf1-55") )
+
+# ORDER cell type based on E(z) expression high to low
+gene_to_order <- "E(z)"   # the gene to sort by
+
+# 1) Pull log-normalized expression for that gene + the celltype label
+df <- FetchData(
+  Third_instar_larvae_VNC_Serpe,
+  vars = c("Celltypes", gene_to_order),  # uses RNA 'data' slot
+  slot = "data"
+)
+
+# 2) Mean expression per cell type
+avg_by_ct <- tapply(df[[gene_to_order]], df$Celltypes, mean, na.rm = TRUE)
+
+# 3) Order cell types high -> low
+cell_order <- names(sort(avg_by_ct, decreasing = TRUE))
+
+# If you want the top-to-bottom order after coord_flip(), use rev(cell_order)
+Third_instar_larvae_VNC_Serpe$Celltypes <- factor(
+  Third_instar_larvae_VNC_Serpe$Celltypes,
+  levels = cell_order
+)
+
+
+pdf("output/seurat/DotPlot-Third_instar_larvae_VNC_Serpe-Celltypes-scaleFALSE.pdf", width=7, height=4)
+DotPlot(Third_instar_larvae_VNC_Serpe, assay = "RNA", features = gene_list_drosophila, cols = c("grey", "red"),  group.by = "Celltypes", scale = FALSE ) + RotatedAxis() + coord_flip()
+dev.off()
+
+
 
 ```
 

@@ -997,6 +997,87 @@ write.table(combined_data %>%
 
 
 
+
+
+
+
+# THOR for differential binding
+## Run THOR
+
+
+
+```bash
+# Needed step to change where THOR look for libraries
+conda activate RGT
+export LD_LIBRARY_PATH=~/anaconda3/envs/RGT/lib:$LD_LIBRARY_PATH
+bigWigMerge
+
+
+# Default THOR TMM normalization - with input 
+sbatch scripts/THOR-ESC_WTvsKO_H3K27me3-TMM.sh # 50510013 xxx
+sbatch scripts/THOR-ESC_WTvsOEKO_H3K27me3-TMM.sh # 50510014 xxx
+
+# Default THOR TMM normalization - without input 
+sbatch scripts/THOR-ESC_WTvsKO_H3K27me3-TMMnoInput.sh # 50510036 xxx
+sbatch scripts/THOR-ESC_WTvsOEKO_H3K27me3-TMMnoInput.sh # 50510042 xxx
+
+
+
+# THOR genes normalization - HOX genes used - with input 
+sbatch scripts/THOR-ESC_WTvsKO_H3K27me3-housekeepHOX.sh # 50510046 xxx
+sbatch scripts/THOR-ESC_WTvsOEKO_H3K27me3-housekeepHOX.sh # 50510295 xxx
+
+# THOR genes normalization - HOX genes used - without input 
+sbatch scripts/THOR-ESC_WTvsKO_H3K27me3-housekeepHOXnoInput.sh # 50510049 xxx
+sbatch scripts/THOR-ESC_WTvsOEKO_H3K27me3-housekeepHOXnoInput.sh # 50510463 xxx
+
+
+
+
+```
+
+**Conclusion for replicate similarity**:
+- *Default THOR TMM normalization*: very bad, replicate very different (potential batch effect remaining, different signal noise ratio)
+- *Housekeeping gene normalization with HK genes*: very bad, replicate very different (fail likely because HK genes lowly H3K27me3)
+- *Housekeeping gene normalization with HOX genes*: very good, replicate cluster very well together
+- *Housekeeping gene normalization with HK + HOX genes*: bad, replicate very different (fail likely because HK genes lowly H3K27me3 again, add noises)
+- *Housekeeping gene normalization with HOX genes without input*: very good, replicate cluster very well together
+- *Housekeeping gene normalization with HK + HOX genes without input*: bad, replicate very different
+- *SpikeIn EpiCypher normalization*: very bad, replicate very different (potential over correction, SF are huge values)
+- *SpikeIn EpiCypher DiffBind TMM normalization*: perform OK, less homogeneous than HOX normalization...
+- *DiffBindTMM*: perform OK bad, less homogeneous than HOX normalization...
+- *FergusonUniqueNorm99*: very good, replicate cluster very well together (*FergusonUniqueNorm99_noInput* perform similarly), let's prefer not using IGG, to be more in agreement with Ferguson method that do not use it.
+
+
+--> *Error* `IndexError: cannot do a non-empty take from an empty axes.` on `scripts/THOR_PSC_WTvsKO_EZH1_TMM.sh`. Probably because WT vs KO, and KO EZH1 as no signal at all... Weird comparison! That is a control...
+
+--> *Housekeeping genes* has been generated in `001*/002*` at `#### THOR with housekeeping genes normalization`. Collected from the [rgt-THOR tutorial](https://reg-gen.readthedocs.io/en/latest/thor/tool_usage.html)
+    --> Let's also try **housekeeping gene normalization using the HOX genes**. Generate in `meta/`: Works great!!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # ChIPseeker peak gene assignment
 
 

@@ -52830,15 +52830,15 @@ set.seed(42)
 
 
 # Unbiased cell type marker genes
-Idents(WT_Kcnc1_p14_CB_1step.sct) <- "seurat_clusters"
+Idents(WT_Kcnc1_p35_CX_1step.sct) <- "seurat_clusters"
 ## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
-DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
-WT_Kcnc1_p14_CB_1step.sct <- NormalizeData(WT_Kcnc1_p14_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
-all.genes <- rownames(WT_Kcnc1_p14_CB_1step.sct)
-WT_Kcnc1_p14_CB_1step.sct <- ScaleData(WT_Kcnc1_p14_CB_1step.sct, features = all.genes) # zero-centres and scales it
+DefaultAssay(WT_Kcnc1_p35_CX_1step.sct) <- "RNA"
+WT_Kcnc1_p35_CX_1step.sct <- NormalizeData(WT_Kcnc1_p35_CX_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p35_CX_1step.sct)
+WT_Kcnc1_p35_CX_1step.sct <- ScaleData(WT_Kcnc1_p35_CX_1step.sct, features = all.genes) # zero-centres and scales it
 
-all_markers <- FindAllMarkers(WT_Kcnc1_p14_CB_1step.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
-write.table(all_markers, file = "output/seurat/srat_WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+all_markers <- FindAllMarkers(WT_Kcnc1_p35_CX_1step.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all_markers, file = "output/seurat/srat_WT_Kcnc1_p35_CX_1step-version2dim35kparam15res065-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 
 
