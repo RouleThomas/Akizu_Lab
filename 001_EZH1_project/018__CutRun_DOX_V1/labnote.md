@@ -637,6 +637,15 @@ conda activate BedToBigwig
 sbatch scripts/BedToBigwig_Norm99_Ferguson_unique_initialBigwig_H3K27me3.sh # 50105248 ok
 sbatch scripts/BedToBigwig_Norm99_Ferguson_unique_initialBigwig_EZH2.sh # 50105274 ok
 sbatch scripts/BedToBigwig_Norm99_Ferguson_unique_initialBigwig_EZH1.sh # 50105291 ok
+
+
+# Calculate median
+sbatch scripts/bigwigmerge_Norm99_Ferguson_unique_initialBigwig-H3K27me3.sh # 50654175 xxx
+sbatch scripts/bigwigmerge_Norm99_Ferguson_unique_initialBigwig-EZH2.sh # 50654399 xxx
+sbatch scripts/bigwigmerge_Norm99_Ferguson_unique_initialBigwig-EZH1.sh # 50654529 xxx
+
+
+
 ```
 
 
@@ -650,7 +659,7 @@ According to `001*/016*` best paramters were `bin1000space100_gt_pval05_padj001`
 -> But lets re-test several ones to confirm
 
 
-## WT vs KO - DIFFREPS - initialBigwig
+## WT vs KO - DIFFREPS - initialBigwig - H3K27me3
 
 
 ```bash
@@ -696,7 +705,7 @@ diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_H3K27me3_R1_unique_norm99_initialB
 
 
 
-### Explore diffreps results in R
+### Explore diffreps results in R  - H3K27me3
 
 
 
@@ -825,7 +834,186 @@ write.table(combined_data %>%
 
 
 
-## WT vs OEKO - DIFFREPS - initialBigwig
+
+
+## WT vs KO - DIFFREPS - initialBigwig - EZH2
+
+
+```bash
+conda activate ChIPseqSpikeInFree
+
+## PREPARE BED FILE FOR QUANTIFICATION ##
+output/bigwig_Ferguson/ESC_WT_EZH2_R1_unique_norm99_initialBigwig.bedGraph 
+output/bigwig_Ferguson/ESC_WT_EZH2_R2_unique_norm99_initialBigwig.bedGraph 
+output/bigwig_Ferguson/ESC_WT_EZH2_R3_unique_norm99_initialBigwig.bedGraph 
+
+output/bigwig_Ferguson/ESC_KO_EZH2_R1_unique_norm99_initialBigwig.bedGraph 
+output/bigwig_Ferguson/ESC_KO_EZH2_R2_unique_norm99_initialBigwig.bedGraph 
+output/bigwig_Ferguson/ESC_KO_EZH2_R3_unique_norm99_initialBigwig.bedGraph 
+
+
+# Modify our bedGraph into bed (score in the 5th column); add dummy column 4
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_WT_EZH2_R1_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/ESC_WT_EZH2_R1_unique_norm99_initialBigwig.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_WT_EZH2_R2_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/ESC_WT_EZH2_R2_unique_norm99_initialBigwig.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_WT_EZH2_R3_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/ESC_WT_EZH2_R3_unique_norm99_initialBigwig.bed
+
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_KO_EZH2_R1_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/ESC_KO_EZH2_R1_unique_norm99_initialBigwig.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_KO_EZH2_R2_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/ESC_KO_EZH2_R2_unique_norm99_initialBigwig.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_KO_EZH2_R3_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/ESC_KO_EZH2_R3_unique_norm99_initialBigwig.bed
+
+
+## RUN NDIFFREPS ##
+# 5000bp every 100bp -  G test pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_EZH2_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_KO_EZH2_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_KO_EZH2_R3_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/ESC_WT_EZH2_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_EZH2_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_EZH2_R3_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsKO_EZH2_unique_norm99_initialBigwig.bed-bin5000space100_gt_pval05-diff.nb.txt --window 5000 --step 100 --meth gt --pval 0.05
+
+# 2000bp every 100bp -  G test pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_EZH2_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_KO_EZH2_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_KO_EZH2_R3_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/ESC_WT_EZH2_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_EZH2_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_EZH2_R3_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsKO_EZH2_unique_norm99_initialBigwig.bed-bin2000space100_gt_pval05-diff.nb.txt --window 2000 --step 100 --meth gt --pval 0.05
+
+# 1000bp every 100bp -  G test pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_EZH2_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_KO_EZH2_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_KO_EZH2_R3_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/ESC_WT_EZH2_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_EZH2_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_EZH2_R3_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsKO_EZH2_unique_norm99_initialBigwig.bed-bin1000space100_gt_pval05-diff.nb.txt --window 1000 --step 100 --meth gt --pval 0.05
+
+# 500bp every 100bp -  G test pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_EZH2_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_KO_EZH2_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_KO_EZH2_R3_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/ESC_WT_EZH2_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_EZH2_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_EZH2_R3_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsKO_EZH2_unique_norm99_initialBigwig.bed-bin500space100_gt_pval05-diff.nb.txt --window 500 --step 100 --meth gt --pval 0.05
+
+# 250bp every 50bp -  G test pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_EZH2_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_KO_EZH2_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_KO_EZH2_R3_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/ESC_WT_EZH2_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_EZH2_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_EZH2_R3_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsKO_EZH2_unique_norm99_initialBigwig.bed-bin250space50_gt_pval05-diff.nb.txt --window 250 --step 50 --meth gt --pval 0.05
+```
+
+
+
+
+### Explore diffreps results in R  - EZH2
+
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+library("GenomicRanges")
+set.seed(42)
+
+# import files
+bin5000space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_EZH2_unique_norm99_initialBigwig.bed-bin5000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin2000space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_EZH2_unique_norm99_initialBigwig.bed-bin2000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin1000space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_EZH2_unique_norm99_initialBigwig.bed-bin1000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin500space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_EZH2_unique_norm99_initialBigwig.bed-bin500space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin250space50_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_EZH2_unique_norm99_initialBigwig.bed-bin250space50_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+
+
+
+# Replace Inf by min/max values
+bin5000space100_gt_pval05$log2FC[bin5000space100_gt_pval05$log2FC == Inf] <- max(bin5000space100_gt_pval05$log2FC[is.finite(bin5000space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin5000space100_gt_pval05$log2FC[bin5000space100_gt_pval05$log2FC == -Inf] <- min(bin5000space100_gt_pval05$log2FC[is.finite(bin5000space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin2000space100_gt_pval05$log2FC[bin2000space100_gt_pval05$log2FC == Inf] <- max(bin2000space100_gt_pval05$log2FC[is.finite(bin2000space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin2000space100_gt_pval05$log2FC[bin2000space100_gt_pval05$log2FC == -Inf] <- min(bin2000space100_gt_pval05$log2FC[is.finite(bin2000space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin1000space100_gt_pval05$log2FC[bin1000space100_gt_pval05$log2FC == Inf] <- max(bin1000space100_gt_pval05$log2FC[is.finite(bin1000space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin1000space100_gt_pval05$log2FC[bin1000space100_gt_pval05$log2FC == -Inf] <- min(bin1000space100_gt_pval05$log2FC[is.finite(bin1000space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin500space100_gt_pval05$log2FC[bin500space100_gt_pval05$log2FC == Inf] <- max(bin500space100_gt_pval05$log2FC[is.finite(bin500space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin500space100_gt_pval05$log2FC[bin500space100_gt_pval05$log2FC == -Inf] <- min(bin500space100_gt_pval05$log2FC[is.finite(bin500space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin250space50_gt_pval05$log2FC[bin250space50_gt_pval05$log2FC == Inf] <- max(bin250space50_gt_pval05$log2FC[is.finite(bin250space50_gt_pval05$log2FC)], na.rm = TRUE)
+bin250space50_gt_pval05$log2FC[bin250space50_gt_pval05$log2FC == -Inf] <- min(bin250space50_gt_pval05$log2FC[is.finite(bin250space50_gt_pval05$log2FC)], na.rm = TRUE)
+
+
+
+# List of dataset names
+file_names <- c("bin5000space100_gt_pval05", "bin2000space100_gt_pval05", "bin1000space100_gt_pval05", "bin500space100_gt_pval05", "bin250space50_gt_pval05")
+
+## Function to read and format each file
+read_and_process <- function(file) {
+  df <- get(file)  # Load dataset from environment
+  df$dataset <- file  # Add dataset identifier
+  return(df)
+}
+
+## Combine all datasets into one
+combined_data <- bind_rows(lapply(file_names, read_and_process)) 
+
+
+
+combined_data_counts <- combined_data %>% 
+  filter(padj < 0.001, abs(log2FC) > 1, Control.avg > 100 | Treatment.avg > 100) %>%        # keep only |log2FC| > 1
+  mutate(direction = if_else(log2FC < 0, "Negative", "Positive")) %>%
+  group_by(dataset, direction) %>%
+  summarise(count = n(), .groups = "drop")
+
+
+
+    
+  
+## plot
+pdf("output/diffreps/hist-WTvsKO-EZH2-log2FC_distribution-padj001_gt_pval05_fc1_avg100_initialBigwig.pdf", width=8, height=2)
+combined_data %>% 
+  filter(padj<0.001, abs(log2FC) > 1, Control.avg > 100 | Treatment.avg > 100) %>%   ## !!!!!!!!!! CHANGE PVAL HERE !!!!!!!!!!!!!!!!!!!!!!
+ggplot(., aes(x = log2FC)) +
+  geom_histogram(binwidth = 0.5, fill = "black", color = "black", alpha = 0.7) +
+  facet_wrap(~ dataset, scales = "free_y", nrow = 1) +  # Facet per dataset
+  labs(title = "Log2FC Distribution Across Datasets",
+       x = "Log2 Fold Change (log2FC)",
+       y = "Frequency") +
+  theme_bw() +
+  theme(strip.text = element_text(size = 4, face = "bold")) +
+  geom_text(data = combined_data_counts, 
+            aes(x = ifelse(direction == "Negative", -6, 4),  # Fixed x positions
+                y = Inf, 
+                label = paste0(count)), 
+            vjust = 1.5, 
+            hjust = ifelse(combined_data_counts$direction == "Negative", 0, 1), 
+            size = 3, fontface = "bold", color = "red")
+dev.off()
+
+
+
+## Save output
+write.table(combined_data, "output/diffreps/combined_data-WTvsKO-EZH2-initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+write.table(combined_data %>% 
+  filter(
+    padj < 0.001, 
+    (log2FC > 1 | log2FC < -1), 
+    dataset == "bin1000space100_gt_pval05",
+    Control.avg > 100 | Treatment.avg > 100   # <- NEW FILTER
+  ), "output/diffreps/combined_data-bin1000space100_gt_pval05_padj001_fc1_avg100-WTvsKO-EZH2-initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+write.table(combined_data %>% 
+  filter(
+    padj < 0.001, 
+    (log2FC > 1 | log2FC < -1), 
+    dataset == "bin2000space100_gt_pval05",
+    Control.avg > 100 | Treatment.avg > 100   # <- NEW FILTER
+  ), "output/diffreps/combined_data-bin2000space100_gt_pval05_padj001_fc1_avg100-WTvsKO-EZH2-initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+```
+
+
+--> To obtain changes that looks real on IGV I had to only keep *.avg with at least 100; so that there is peak changes and not changes from noise to noise!
+    --> Overall, this `output/diffreps/combined_data-bin1000space100_gt_pval05_padj001_fc1_avg100-WTvsKO-initialBigwig.txt` look like the best parameters
+
+
+
+
+
+
+
+## WT vs OEKO - DIFFREPS - initialBigwig - H3K27me3
 
 
 ```bash
@@ -871,7 +1059,7 @@ diffReps.pl -tr output/bigwig_Ferguson/ESC_OEKO_H3K27me3_R1_unique_norm99_initia
 
 
 
-### Explore diffreps results in R
+### Explore diffreps results in R - H3K27me3
 
 
 
@@ -999,6 +1187,180 @@ write.table(combined_data %>%
 
 
 
+## WT vs OEKO - DIFFREPS - initialBigwig - EZH2
+
+
+```bash
+conda activate ChIPseqSpikeInFree
+
+## PREPARE BED FILE FOR QUANTIFICATION ##
+output/bigwig_Ferguson/ESC_WT_EZH2_R1_unique_norm99_initialBigwig.bedGraph 
+output/bigwig_Ferguson/ESC_WT_EZH2_R2_unique_norm99_initialBigwig.bedGraph 
+output/bigwig_Ferguson/ESC_WT_EZH2_R3_unique_norm99_initialBigwig.bedGraph 
+
+output/bigwig_Ferguson/ESC_OEKO_EZH2_R1_unique_norm99_initialBigwig.bedGraph 
+output/bigwig_Ferguson/ESC_OEKO_EZH2_R2_unique_norm99_initialBigwig.bedGraph 
+output/bigwig_Ferguson/ESC_OEKO_EZH2_R3_unique_norm99_initialBigwig.bedGraph 
+
+
+# Modify our bedGraph into bed (score in the 5th column); add dummy column 4
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_WT_EZH2_R1_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/ESC_WT_EZH2_R1_unique_norm99_initialBigwig.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_WT_EZH2_R2_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/ESC_WT_EZH2_R2_unique_norm99_initialBigwig.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_WT_EZH2_R3_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/ESC_WT_EZH2_R3_unique_norm99_initialBigwig.bed
+
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_OEKO_EZH2_R1_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/ESC_OEKO_EZH2_R1_unique_norm99_initialBigwig.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_OEKO_EZH2_R2_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/ESC_OEKO_EZH2_R2_unique_norm99_initialBigwig.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_OEKO_EZH2_R3_unique_norm99_initialBigwig.bedGraph > output/bigwig_Ferguson/ESC_OEKO_EZH2_R3_unique_norm99_initialBigwig.bed
+
+
+## RUN NDIFFREPS ##
+# 5000bp every 100bp -  G test pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_OEKO_EZH2_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_OEKO_EZH2_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_OEKO_EZH2_R3_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/ESC_WT_EZH2_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_EZH2_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_EZH2_R3_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsOEKO_EZH2_unique_norm99_initialBigwig.bed-bin5000space100_gt_pval05-diff.nb.txt --window 5000 --step 100 --meth gt --pval 0.05
+
+# 2000bp every 100bp -  G test pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_OEKO_EZH2_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_OEKO_EZH2_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_OEKO_EZH2_R3_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/ESC_WT_EZH2_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_EZH2_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_EZH2_R3_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsOEKO_EZH2_unique_norm99_initialBigwig.bed-bin2000space100_gt_pval05-diff.nb.txt --window 2000 --step 100 --meth gt --pval 0.05
+
+# 1000bp every 100bp -  G test pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_OEKO_EZH2_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_OEKO_EZH2_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_OEKO_EZH2_R3_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/ESC_WT_EZH2_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_EZH2_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_EZH2_R3_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsOEKO_EZH2_unique_norm99_initialBigwig.bed-bin1000space100_gt_pval05-diff.nb.txt --window 1000 --step 100 --meth gt --pval 0.05
+
+# 500bp every 100bp -  G test pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_OEKO_EZH2_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_OEKO_EZH2_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_OEKO_EZH2_R3_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/ESC_WT_EZH2_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_EZH2_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_EZH2_R3_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsOEKO_EZH2_unique_norm99_initialBigwig.bed-bin500space100_gt_pval05-diff.nb.txt --window 500 --step 100 --meth gt --pval 0.05
+
+# 250bp every 50bp -  G test pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_OEKO_EZH2_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_OEKO_EZH2_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_OEKO_EZH2_R3_unique_norm99_initialBigwig.bed -co output/bigwig_Ferguson/ESC_WT_EZH2_R1_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_EZH2_R2_unique_norm99_initialBigwig.bed output/bigwig_Ferguson/ESC_WT_EZH2_R3_unique_norm99_initialBigwig.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsOEKO_EZH2_unique_norm99_initialBigwig.bed-bin250space50_gt_pval05-diff.nb.txt --window 250 --step 50 --meth gt --pval 0.05
+```
+
+
+
+
+### Explore diffreps results in R - EZH2
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+library("GenomicRanges")
+set.seed(42)
+
+# import files
+bin5000space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsOEKO_EZH2_unique_norm99_initialBigwig.bed-bin5000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin2000space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsOEKO_EZH2_unique_norm99_initialBigwig.bed-bin2000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin1000space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsOEKO_EZH2_unique_norm99_initialBigwig.bed-bin1000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin500space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsOEKO_EZH2_unique_norm99_initialBigwig.bed-bin500space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin250space50_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsOEKO_EZH2_unique_norm99_initialBigwig.bed-bin250space50_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+
+
+
+# Replace Inf by min/max values
+bin5000space100_gt_pval05$log2FC[bin5000space100_gt_pval05$log2FC == Inf] <- max(bin5000space100_gt_pval05$log2FC[is.finite(bin5000space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin5000space100_gt_pval05$log2FC[bin5000space100_gt_pval05$log2FC == -Inf] <- min(bin5000space100_gt_pval05$log2FC[is.finite(bin5000space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin2000space100_gt_pval05$log2FC[bin2000space100_gt_pval05$log2FC == Inf] <- max(bin2000space100_gt_pval05$log2FC[is.finite(bin2000space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin2000space100_gt_pval05$log2FC[bin2000space100_gt_pval05$log2FC == -Inf] <- min(bin2000space100_gt_pval05$log2FC[is.finite(bin2000space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin1000space100_gt_pval05$log2FC[bin1000space100_gt_pval05$log2FC == Inf] <- max(bin1000space100_gt_pval05$log2FC[is.finite(bin1000space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin1000space100_gt_pval05$log2FC[bin1000space100_gt_pval05$log2FC == -Inf] <- min(bin1000space100_gt_pval05$log2FC[is.finite(bin1000space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin500space100_gt_pval05$log2FC[bin500space100_gt_pval05$log2FC == Inf] <- max(bin500space100_gt_pval05$log2FC[is.finite(bin500space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin500space100_gt_pval05$log2FC[bin500space100_gt_pval05$log2FC == -Inf] <- min(bin500space100_gt_pval05$log2FC[is.finite(bin500space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin250space50_gt_pval05$log2FC[bin250space50_gt_pval05$log2FC == Inf] <- max(bin250space50_gt_pval05$log2FC[is.finite(bin250space50_gt_pval05$log2FC)], na.rm = TRUE)
+bin250space50_gt_pval05$log2FC[bin250space50_gt_pval05$log2FC == -Inf] <- min(bin250space50_gt_pval05$log2FC[is.finite(bin250space50_gt_pval05$log2FC)], na.rm = TRUE)
+
+
+
+# List of dataset names
+file_names <- c("bin5000space100_gt_pval05", "bin2000space100_gt_pval05", "bin1000space100_gt_pval05", "bin500space100_gt_pval05", "bin250space50_gt_pval05")
+
+## Function to read and format each file
+read_and_process <- function(file) {
+  df <- get(file)  # Load dataset from environment
+  df$dataset <- file  # Add dataset identifier
+  return(df)
+}
+
+## Combine all datasets into one
+combined_data <- bind_rows(lapply(file_names, read_and_process)) 
+
+
+
+combined_data_counts <- combined_data %>% 
+  filter(padj < 0.001, abs(log2FC) > 1, Control.avg > 100 | Treatment.avg > 100) %>%        # keep only |log2FC| > 1
+  mutate(direction = if_else(log2FC < 0, "Negative", "Positive")) %>%
+  group_by(dataset, direction) %>%
+  summarise(count = n(), .groups = "drop")
+
+
+
+    
+  
+## plot
+pdf("output/diffreps/hist-WTvsOEKO-EZH2-log2FC_distribution-padj001_gt_pval05_fc1_avg100_initialBigwig.pdf", width=8, height=2)
+combined_data %>% 
+  filter(padj<0.001, abs(log2FC) > 1, Control.avg > 100 | Treatment.avg > 100) %>%   ## !!!!!!!!!! CHANGE PVAL HERE !!!!!!!!!!!!!!!!!!!!!!
+ggplot(., aes(x = log2FC)) +
+  geom_histogram(binwidth = 0.5, fill = "black", color = "black", alpha = 0.7) +
+  facet_wrap(~ dataset, scales = "free_y", nrow = 1) +  # Facet per dataset
+  labs(title = "Log2FC Distribution Across Datasets",
+       x = "Log2 Fold Change (log2FC)",
+       y = "Frequency") +
+  theme_bw() +
+  theme(strip.text = element_text(size = 4, face = "bold")) +
+  geom_text(data = combined_data_counts, 
+            aes(x = ifelse(direction == "Negative", -6, 4),  # Fixed x positions
+                y = Inf, 
+                label = paste0(count)), 
+            vjust = 1.5, 
+            hjust = ifelse(combined_data_counts$direction == "Negative", 0, 1), 
+            size = 3, fontface = "bold", color = "red")
+dev.off()
+
+
+
+## Save output
+write.table(combined_data, "output/diffreps/combined_data-WTvsOEKO-EZH2-initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+write.table(combined_data %>% 
+  filter(
+    padj < 0.001, 
+    (log2FC > 1 | log2FC < -1), 
+    dataset == "bin1000space100_gt_pval05",
+    Control.avg > 100 | Treatment.avg > 100   # <- NEW FILTER
+  ), "output/diffreps/combined_data-bin1000space100_gt_pval05_padj001_fc1_avg100-WTvsOEKO-EZH2-initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+write.table(combined_data %>% 
+  filter(
+    padj < 0.001, 
+    (log2FC > 1 | log2FC < -1), 
+    dataset == "bin2000space100_gt_pval05",
+    Control.avg > 100 | Treatment.avg > 100   # <- NEW FILTER
+  ), "output/diffreps/combined_data-bin2000space100_gt_pval05_padj001_fc1_avg100-WTvsOEKO-EZH2-initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+```
+
+
+--> Look very similar result to what happen in KO; both show mostly decrease of H3K27me3... And on IGV, look KO and OEKO are the same...
+
+
+
+
+
+
 
 
 # THOR for differential binding
@@ -1014,22 +1376,22 @@ bigWigMerge
 
 
 # Default THOR TMM normalization - with input 
-sbatch scripts/THOR-ESC_WTvsKO_H3K27me3-TMM.sh # 50510013 xxx
-sbatch scripts/THOR-ESC_WTvsOEKO_H3K27me3-TMM.sh # 50510014 xxx
+sbatch scripts/THOR-ESC_WTvsKO_H3K27me3-TMM.sh # 50510013 ok
+sbatch scripts/THOR-ESC_WTvsOEKO_H3K27me3-TMM.sh # 50510014 ok
 
 # Default THOR TMM normalization - without input 
-sbatch scripts/THOR-ESC_WTvsKO_H3K27me3-TMMnoInput.sh # 50510036 xxx
-sbatch scripts/THOR-ESC_WTvsOEKO_H3K27me3-TMMnoInput.sh # 50510042 xxx
+sbatch scripts/THOR-ESC_WTvsKO_H3K27me3-TMMnoInput.sh # 50510036 ok
+sbatch scripts/THOR-ESC_WTvsOEKO_H3K27me3-TMMnoInput.sh # 50510042 ok
 
 
 
 # THOR genes normalization - HOX genes used - with input 
-sbatch scripts/THOR-ESC_WTvsKO_H3K27me3-housekeepHOX.sh # 50510046 xxx
-sbatch scripts/THOR-ESC_WTvsOEKO_H3K27me3-housekeepHOX.sh # 50510295 xxx
+sbatch scripts/THOR-ESC_WTvsKO_H3K27me3-housekeepHOX.sh # 50510046 ok
+sbatch scripts/THOR-ESC_WTvsOEKO_H3K27me3-housekeepHOX.sh # 50510295 ok
 
 # THOR genes normalization - HOX genes used - without input 
-sbatch scripts/THOR-ESC_WTvsKO_H3K27me3-housekeepHOXnoInput.sh # 50510049 xxx
-sbatch scripts/THOR-ESC_WTvsOEKO_H3K27me3-housekeepHOXnoInput.sh # 50510463 xxx
+sbatch scripts/THOR-ESC_WTvsKO_H3K27me3-housekeepHOXnoInput.sh # 50510049 ok
+sbatch scripts/THOR-ESC_WTvsOEKO_H3K27me3-housekeepHOXnoInput.sh # 50510463 ok
 
 
 
@@ -1037,22 +1399,167 @@ sbatch scripts/THOR-ESC_WTvsOEKO_H3K27me3-housekeepHOXnoInput.sh # 50510463 xxx
 ```
 
 **Conclusion for replicate similarity**:
-- *Default THOR TMM normalization*: very bad, replicate very different (potential batch effect remaining, different signal noise ratio)
-- *Housekeeping gene normalization with HK genes*: very bad, replicate very different (fail likely because HK genes lowly H3K27me3)
-- *Housekeeping gene normalization with HOX genes*: very good, replicate cluster very well together
-- *Housekeeping gene normalization with HK + HOX genes*: bad, replicate very different (fail likely because HK genes lowly H3K27me3 again, add noises)
-- *Housekeeping gene normalization with HOX genes without input*: very good, replicate cluster very well together
-- *Housekeeping gene normalization with HK + HOX genes without input*: bad, replicate very different
-- *SpikeIn EpiCypher normalization*: very bad, replicate very different (potential over correction, SF are huge values)
-- *SpikeIn EpiCypher DiffBind TMM normalization*: perform OK, less homogeneous than HOX normalization...
-- *DiffBindTMM*: perform OK bad, less homogeneous than HOX normalization...
-- *FergusonUniqueNorm99*: very good, replicate cluster very well together (*FergusonUniqueNorm99_noInput* perform similarly), let's prefer not using IGG, to be more in agreement with Ferguson method that do not use it.
-
-
---> *Error* `IndexError: cannot do a non-empty take from an empty axes.` on `scripts/THOR_PSC_WTvsKO_EZH1_TMM.sh`. Probably because WT vs KO, and KO EZH1 as no signal at all... Weird comparison! That is a control...
+H3K27me3:
+--> All method gave very good replicate homogeneity!
+EZH2:
+XXX
+EZH1:
+XXX
 
 --> *Housekeeping genes* has been generated in `001*/002*` at `#### THOR with housekeeping genes normalization`. Collected from the [rgt-THOR tutorial](https://reg-gen.readthedocs.io/en/latest/thor/tool_usage.html)
     --> Let's also try **housekeeping gene normalization using the HOX genes**. Generate in `meta/`: Works great!!
+
+
+
+### Filter THOR peaks (qvalue)
+
+Let's find the optimal qvalue for THOR diff peaks
+
+
+```R
+# load the file using the tidyverse
+library("readr")
+library("dplyr")
+library("ggplot2")
+library("tidyr")
+
+# H3K27me3 WTvsKO TMM ##################
+diffpeaks <- read_tsv("output/THOR/THOR_ESC_WTvsKO_H3K27me3_TMM/ESCWTvsKOH3K27me3TMM-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2", "count_WT_3"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2", "count_KO_3"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2+count_KO_3) / (count_WT_1+count_WT_2+count_WT_3))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_ESC_WTvsKO_H3K27me3_TMM/log2FC.pdf", width=5, height=5)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("ESC_WT vs KO") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_ESC_WTvsKO_H3K27me3_TMM/log2FC_qval30.pdf", width=5, height=5)
+thor_splitted %>%
+  filter(qval > 30) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("ESC_WT vs KO_qval30") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 40) %>%
+  write_tsv("output/THOR/THOR_ESC_WTvsKO_H3K27me3_TMM/THOR_qval40.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 30) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+######################################################
+
+
+
+
+
+
+
+# H3K27me3 WTvsKO TMM noInput ##################
+diffpeaks <- read_tsv("output/THOR/THOR_ESC_WTvsKO_H3K27me3_TMMnoInput/ESCWTvsKOH3K27me3TMMnoInput-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_KO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2", "count_WT_3"), sep = ":", convert = TRUE) %>%
+  separate(count_KO, into = c("count_KO_1","count_KO_2", "count_KO_3"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_KO_1+count_KO_2+count_KO_3) / (count_WT_1+count_WT_2+count_WT_3))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_ESC_WTvsKO_H3K27me3_TMMnoInput/log2FC.pdf", width=5, height=5)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("ESC_WT vs KO") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_ESC_WTvsKO_H3K27me3_TMMnoInput/log2FC_qval50.pdf", width=5, height=5)
+thor_splitted %>%
+  filter(qval > 50) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("ESC_WT vs KO_qval50") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 50) %>%
+  write_tsv("output/THOR/THOR_ESC_WTvsKO_H3K27me3_TMMnoInput/THOR_qval50.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 50) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+######################################################
+
+
+
+
+
+
+# H3K27me3 WTvsOEKO TMM ##################
+diffpeaks <- read_tsv("output/THOR/THOR_ESC_WTvsOEKO_H3K27me3_TMM/ESCWTvsOEKOH3K27me3TMM-diffpeaks.bed",
+                      col_names = FALSE, trim_ws = TRUE, col_types = cols(X1 = col_character()))
+## split the last field and calculate FC
+thor_splitted = diffpeaks %>%
+  separate(X11, into = c("count_WT", "count_OEKO", "qval"), sep = ";", convert = TRUE) %>%
+  separate(count_WT, into = c("count_WT_1","count_WT_2", "count_WT_3"), sep = ":", convert = TRUE) %>%
+  separate(count_OEKO, into = c("count_OEKO_1","count_OEKO_2", "count_OEKO_3"), sep = ":", convert = TRUE) %>%
+  mutate(FC = (count_OEKO_1+count_OEKO_2+count_OEKO_3) / (count_WT_1+count_WT_2+count_WT_3))
+## plot the histogram of the fold-change computed above, count second condition / count 1st condition
+pdf("output/THOR/THOR_ESC_WTvsOEKO_H3K27me3_TMM/log2FC.pdf", width=5, height=5)
+thor_splitted %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("ESC_WT vs OEKO") +
+  theme_bw()
+dev.off()
+pdf("output/THOR/THOR_ESC_WTvsOEKO_H3K27me3_TMM/log2FC_qval30.pdf", width=5, height=5)
+thor_splitted %>%
+  filter(qval > 30) %>%
+  ggplot(aes(x = log2(FC))) +
+  geom_histogram() +
+  scale_x_continuous(breaks = seq(-5, 3, 1)) +
+  ggtitle("ESC_WT vs OEKO_qval30") +
+  theme_bw()
+dev.off()
+## create a bed file, append chr to chromosome names and write down the file
+thor_splitted %>%
+  filter(qval > 50) %>%
+  write_tsv("output/THOR/THOR_ESC_WTvsOEKO_H3K27me3_TMM/THOR_qval50.bed", col_names = FALSE)
+## how many minus / plus
+thor_splitted %>%
+  filter(qval > 50) %>%
+  group_by(X6) %>%
+  summarise(n = n())
+######################################################
+
+
+
+```
+
+
+**Optimal qvalue**
+- THOR_ESC_WTvsKO_H3K27me3_TMM: qval30
+- THOR_ESC_WTvsKO_H3K27me3_TMMnoInput: qval50
+
+--> It seems that the localization of the diff. peaks is always messed up, like in region with minimum to very low signal!
+  --> So **I cannot trust THOR method as diff. binding always in WEIRD/ARTIFACTUAL regions...**
+
 
 
 
@@ -1236,3 +1743,30 @@ Signal changes promoter and 5'  Gain / Lost - `bin1000space100_gt_pval05_padj001
 
 
 
+
+
+# deepTools plots
+
+Lets investigate regions and genes with diff. binding
+
+```bash
+
+# Peak with DIFFREPS H3K27me3 changes bin1000space100_gt_pval05_padj001_fc1_avg100
+## GAIN LOST PEAKS
+### WT vs KO
+output/diffreps/PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__Gain.txt
+output/diffreps/PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__Lost.txt
+### WT vs OEKO
+output/diffreps/PSC_WTvsOEKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__Gain.txt
+output/diffreps/PSC_WTvsOEKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__Lost.txt
+
+
+
+# Check signal WT vs KO regions with bigwig WT,KO,OEKO from FergusonUniqueNorm99
+sbatch --dependency=afterany:50654175:50654399:50654529 scripts/matrix_PEAK_5kb-PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__GainLost-WTKOOEKO-H3K27me3EZH2EZH1.sh
+# Check signal WT vs OEKO regions with bigwig WT,KO,OEKO from FergusonUniqueNorm99
+sbatch scripts/matrix_PEAK_5kb-PSC_WTvsOEKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__GainLost-WTKOOEKO-H3K27me3EZH2EZH1.sh
+
+
+
+```
