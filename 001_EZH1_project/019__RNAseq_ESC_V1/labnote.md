@@ -945,10 +945,6 @@ downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2Fol
 write.table(upregulated$GeneSymbol, file = "output/deseq2/upregulated_q05fc025_ESC_OEKO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05fc025_ESC_OEKO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
-
-
-
-
 ```
 
 
@@ -956,6 +952,41 @@ write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05fc0
 
 
 
+
+
+# Shiny app
+
+
+generate the `tpm_all_sample.txt` file and then go into `001_EZH1*/001__RNAseq` to create shiny app V2 including these
+
+```R
+library("tidyverse")
+library("biomaRt")
+
+# Import TPM (done in Kallisto)
+long_data <- read.delim("output/deseq2/txi_Kallisto-GeneLevel-TPM.txt", 
+                 header = TRUE, 
+                 sep = "\t", 
+                 stringsAsFactors = FALSE) %>%
+              as_tibble()
+
+
+long_data_log2tpm = long_data %>%
+  mutate(log2tpm = log2(TPM + 1)) %>%
+  dplyr::rename("Genotype" = "genotype",
+                "Replicate" = "replicate",
+                "external_gene_name" = "GeneSymbol") %>%
+  add_column(Tissue = "ESC") %>%
+  dplyr::select(external_gene_name, Tissue, Genotype, Replicate, TPM, log2tpm)
+
+## Save
+write.table(long_data_log2tpm, file = c("output/deseq2/long_data_log2tpm_Akoto001019.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+
+```
+
+
+--> Next here: `001_EZH1*/001__RNAseq` (`## Shiny app V3; including Ciceri RNAseq neuron diff dataset + Akoto 001/015 RNAseq`)
 
 
 
