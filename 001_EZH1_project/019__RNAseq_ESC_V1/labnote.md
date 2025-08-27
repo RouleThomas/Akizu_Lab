@@ -308,6 +308,58 @@ tpm_long <- tpm_long %>%
 # Save gene level count #######################################
 write.table(tpm_long, file = "output/deseq2/txi_Kallisto-GeneLevel-TPM.txt", sep = "\t", quote = FALSE, row.names = FALSE) # 
 
+
+## plot single gene TPM  ################################################
+df_gene <- tpm_long %>%
+  filter(GeneSymbol == "EZH1") %>%
+  mutate(log2TPM = log2(TPM + 1),
+         genotype = factor(genotype, levels = c("WT","KO","OE")))  # adjust/order if needed
+
+# choose the pairwise comparisons you want to test
+comparisons <- list(c("WT","KO"), c("WT","OE"), c("KO","OE"))
+
+pdf("output/deseq2/barplot_TPM-WTvsKOvsOEKO-EZH1.pdf", width = 3, height =4)
+ggbarplot(
+  df_gene,
+  x = "genotype",
+  y = "log2TPM",
+  add = c("mean_se", "jitter"),     # bars = mean, error bars = SE, overlay points
+  add.params = list(size = 1, alpha = 0.7), # point styling
+  fill = "genotype",                 # color bars by group (optional)
+  palette = c("WT" = "black",
+            "KO" = "red",
+            "OE" = "blue"),
+  width = 0.7
+) +
+  labs(
+    title = "EZH1",
+    x = "Genotype",
+    y = "log2(TPM + 1)"
+  ) +
+  theme_bw(base_size = 12) +
+  theme(legend.position = "none") +
+  stat_compare_means(
+    comparisons = comparisons,
+    method = "t.test",               # or "wilcox.test" if non-parametric
+    label = "p.signif",
+    hide.ns = TRUE
+  ) 
+dev.off()
+
+
+
+##############################
+
+
+
+
+
+
+
+
+
+
+
 ## Plot H3K27me3 GAIN - lost genes - HEATMAP
 genes_gain <- read.table(
   "../018__CutRun_DOX_V1/output/ChIPseeker/annotation_PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__Gain_annot_promoterAnd5_geneSymbol.txt",
@@ -369,6 +421,9 @@ ggplot(avg_tpm, aes(x = genotype, y = log2(TPM+1), fill = genotype)) +
     x = NULL, y = "TPM (log2+1)"
   )
 dev.off()
+
+
+
 
 
 

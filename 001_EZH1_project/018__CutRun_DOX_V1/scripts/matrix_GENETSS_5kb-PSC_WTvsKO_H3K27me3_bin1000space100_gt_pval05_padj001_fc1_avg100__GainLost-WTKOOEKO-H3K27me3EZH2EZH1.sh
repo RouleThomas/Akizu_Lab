@@ -46,7 +46,7 @@ plotHeatmap -m output/deeptools/matrix_GENETSS_5kb-PSC_WTvsKO_H3K27me3_bin1000sp
     --whatToShow 'heatmap and colorbar' \
     --heatmapHeight 7 \
     --heatmapWidth 2 \
-    --zMax 3 3 3 0.5 0.5 0.5 0.5 0.5 0.5
+    --zMax 3 3 3 1 1 1 1 1 1
 
 
 
