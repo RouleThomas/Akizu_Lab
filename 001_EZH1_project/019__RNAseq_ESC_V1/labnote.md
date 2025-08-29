@@ -79,9 +79,20 @@ sbatch scripts/fastp.sh # 50212025 ok
 
 ```bash
 sbatch --dependency=afterany:50212025 scripts/STAR_mapping_fastp.sh # 50212217 ok
+
+
+# Convert alignment to bigwig
+conda activate deeptools
+
+sbatch scripts/STAR_TPM_bw.sh # 50944526 xxx
 ```
 
--->  xxx
+-->  ok
+
+
+
+
+
 
 
 # Count with Kallisto
@@ -101,6 +112,12 @@ sbatch scripts/kallisto_count_gtf.sh # 50212654 FAIL SHOULD USE STRANDED!; 50302
 conda activate deeptools
 
 sbatch scripts/TPM_bw.sh # 50314231 ok
+
+
+# Calculate median
+conda activate BedToBigwig
+
+sbatch scripts/bigwigmerge_TPM_bw.sh # 50944579 ok
 ```
 
 - *NOTE: Added `--rf-stranded --genomebam` options for strandness and pseudobam alignemt generation*
@@ -213,6 +230,7 @@ library("RColorBrewer")
 library("pheatmap")
 library("AnnotationDbi")
 
+set.seed(42)
 
 ########################################
 ## WT KO OEKO - gene level count ############################
@@ -668,6 +686,74 @@ write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05fc0
 
 
 
+
+
+## padj 0.05 log2FC 0.58 (~50% increase) ##################################
+res_df <- res %>% as.data.frame() %>% dplyr::select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE))
+n_upregulated <- sum(res_df$log2FoldChange > 0.58 & res_df$padj == TRUE, na.rm = TRUE)
+n_downregulated <- sum(res_df$log2FoldChange < -0.58 & res_df$padj == TRUE, na.rm = TRUE)
+
+## Plot-volcano
+### GeneSymbol ID
+gene_ids <- rownames(res)
+stripped_gene_ids <- sub("\\..*", "", gene_ids)
+gene_symbols <- mapIds(org.Hs.eg.db, keys = stripped_gene_ids,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+res$GeneSymbol <- gene_symbols
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.58 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.58 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.58)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.58)'
+
+pdf("output/deseq2/plotVolcano_res_q05fc058_ESC_KO_vs_ESC_WT.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = res$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, ESC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.58,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) ) +
+  annotate("text", x = 3, y = 140, 
+           label = paste(n_upregulated), hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140, 
+           label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+
+# Save as gene list for GO analysis:
+### Complete table with GeneSymbol
+write.table(res, file = "output/deseq2/res_ESC_KO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 0.58 & res$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.58 & res$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2/upregulated_q05fc058_ESC_KO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05fc058_ESC_KO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
+
+
 ######################################
 # GAIN H3K27me3 from `001*/018*` ###################
 ######################################
@@ -999,6 +1085,77 @@ downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2Fol
 #### Save
 write.table(upregulated$GeneSymbol, file = "output/deseq2/upregulated_q05fc025_ESC_OEKO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05fc025_ESC_OEKO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
+
+
+
+
+
+
+## padj 0.05 FC 0.58 ##################################
+res_df <- res %>% as.data.frame() %>% dplyr::select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE))
+n_upregulated <- sum(res_df$log2FoldChange > 0.58 & res_df$padj == TRUE, na.rm = TRUE)
+n_downregulated <- sum(res_df$log2FoldChange < -0.58 & res_df$padj == TRUE, na.rm = TRUE)
+
+## Plot-volcano
+### GeneSymbol ID
+gene_ids <- rownames(res)
+stripped_gene_ids <- sub("\\..*", "", gene_ids)
+gene_symbols <- mapIds(org.Hs.eg.db, keys = stripped_gene_ids,
+                       column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+res$GeneSymbol <- gene_symbols
+
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.58 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.58 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.58)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.58)'
+
+pdf("output/deseq2/plotVolcano_res_q05fc058_ESC_OEKO_vs_ESC_WT.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = res$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'OEKO vs WT, ESC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.58,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) ) +
+  annotate("text", x = 3, y = 140, 
+           label = paste(n_upregulated), hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140, 
+           label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+
+# Save as gene list for GO analysis:
+### Complete table with GeneSymbol
+write.table(res, file = "output/deseq2/res_ESC_OEKO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange > 0.58 & res$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2FoldChange < -0.58 & res$padj < 5e-2, ]
+#### Save
+write.table(upregulated$GeneSymbol, file = "output/deseq2/upregulated_q05fc058_ESC_OEKO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05fc058_ESC_OEKO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
 
 ```
 

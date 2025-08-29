@@ -693,9 +693,9 @@ sbatch scripts/BedToBigwig_Norm99_Ferguson_unique_initialBigwig_EZH1.sh # 501052
 
 
 # Calculate median
-sbatch scripts/bigwigmerge_Norm99_Ferguson_unique_initialBigwig-H3K27me3.sh # 50654175 xxx
-sbatch scripts/bigwigmerge_Norm99_Ferguson_unique_initialBigwig-EZH2.sh # 50654399 xxx
-sbatch scripts/bigwigmerge_Norm99_Ferguson_unique_initialBigwig-EZH1.sh # 50654529 xxx
+sbatch scripts/bigwigmerge_Norm99_Ferguson_unique_initialBigwig-H3K27me3.sh # 50654175 ok
+sbatch scripts/bigwigmerge_Norm99_Ferguson_unique_initialBigwig-EZH2.sh # 50654399 ok
+sbatch scripts/bigwigmerge_Norm99_Ferguson_unique_initialBigwig-EZH1.sh # 50654529 ok
 
 
 
