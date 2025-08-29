@@ -2280,12 +2280,24 @@ sbatch scripts/matrix_GENETSS_5kb-PSC_WTvsOEKO_EZH2_bin1000space100_gt_pval05_pa
 
 # check signal in ALL GENES
 sbatch scripts/matrix_GENETSS_5kb-ENCFF159KBI-WTKOOEKO-H3K27me3EZH2EZH1.sh # 50768671 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ENCFF159KBI-WTKOOEKO-H3K27me3.sh # 50946785 xxx
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ENCFF159KBI-WTKOOEKO-EZH2.sh # 50946787 xxx
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ENCFF159KBI-WTKOOEKO-EZH1.sh # 50946845 xxx
+
+
+
 
 # Check signal in MACS2 consensus peaks assign to genes
+## consensus H3K27me3/EZH2 all genotypes and IP
 sbatch scripts/matrix_GENETSS_5kb-ESC_WTKOOEKO_H3K27me3_qval23merge100bp-WTKOOEKO-H3K27me3EZH2EZH1.sh # 50900070 ok
 sbatch scripts/matrix_GENETSS_5kb-ESC_WTKOOEKO_EZH2_qval23merge100bp-WTKOOEKO-H3K27me3EZH2EZH1.sh # 50900120 ok
-
-
+## consensus H3K27me3/EZH2 all genotypes but IP separated
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_H3K27me3_qval23merge100bp-WTKOOEKO-H3K27me3.sh # 50947298 xxx
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_H3K27me3_qval23merge100bp-WTKOOEKO-EZH2.sh # 50947618 xxx
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_H3K27me3_qval23merge100bp-WTKOOEKO-EZH1.sh # 50947603 xxx
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH2_qval23merge100bp-WTKOOEKO-H3K27me3.sh # 50947622 xxx
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH2_qval23merge100bp-WTKOOEKO-EZH2.sh # 50947640 xxx
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH2_qval23merge100bp-WTKOOEKO-EZH1.sh # 50947650 xxx
 
 ```
 

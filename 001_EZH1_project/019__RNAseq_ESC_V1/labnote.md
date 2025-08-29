@@ -132,7 +132,7 @@ sbatch scripts/bigwigmerge_TPM_bw.sh # 50944579 ok
 ```bash
 conda activate deeptools
 # Generate compile bigwig (.npz) files
-sbatch scripts/multiBigwigSummary_TPM.sh # 50503924 xxx
+sbatch scripts/multiBigwigSummary_TPM.sh # 50503924 ok
 
 
 
@@ -158,6 +158,11 @@ plotCorrelation \
     -o output/bigwig/multiBigwigSummary_TPM_heatmap.pdf
 
 #################################
+
+
+
+
+
 ```
 
 --> WT cluster well, KO and OEKO kind of overlap..
