@@ -32,7 +32,7 @@ plotProfile -m output/deeptools/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_H3K27m
     --samplesLabel "WT_H3K27me3" "KO_H3K27me3" "OEKO_H3K27me3" \
     --colors black red blue \
     --perGroup \
-    --plotWidth 4
+    --plotWidth 8
 
 plotProfile -m output/deeptools/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_H3K27me3_qval23merge100bp-WTKOOEKO-H3K27me3.gz \
     -out output/deeptools/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_H3K27me3_qval23merge100bp-WTKOOEKO-H3K27me3_plotProfile2.pdf \

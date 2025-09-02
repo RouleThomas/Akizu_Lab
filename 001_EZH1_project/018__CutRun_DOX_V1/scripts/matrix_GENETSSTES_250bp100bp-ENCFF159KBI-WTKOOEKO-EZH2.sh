@@ -48,3 +48,9 @@ plotHeatmap -m output/deeptools/matrix_GENETSSTES_250bp100bp-ENCFF159KBI-WTKOOEK
 
 
 
+plotProfile -m output/deeptools/matrix_GENETSSTES_250bp100bp-ENCFF159KBI-WTKOOEKO-EZH2.gz \
+    -out output/deeptools/matrix_GENETSSTES_250bp100bp-ENCFF159KBI-WTKOOEKO-EZH2_plotProfile2.pdf \
+    --samplesLabel "WT_EZH2" "KO_EZH2" "OEKO_EZH2" \
+    --colors black red blue \
+    --perGroup \
+    --plotWidth 8

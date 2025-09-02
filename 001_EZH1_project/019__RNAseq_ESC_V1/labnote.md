@@ -84,11 +84,52 @@ sbatch --dependency=afterany:50212025 scripts/STAR_mapping_fastp.sh # 50212217 o
 # Convert alignment to bigwig
 conda activate deeptools
 
-sbatch scripts/STAR_TPM_bw.sh # 50944526 xxx
+sbatch scripts/STAR_TPM_bw.sh # 50944526 ok
 ```
 
 -->  ok
 
+
+
+### deepTool bigwig QC - STAR mapping
+
+
+### Raw bigwig
+
+
+```bash
+conda activate deeptools
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_STAR_TPM.sh # 51072872 xxx
+
+
+
+############################################
+# Plot ESC ###########
+## PCA
+plotPCA -in output/bigwig_STAR/multiBigwigSummary_STAR_TPM.npz \
+    --transpose \
+    --ntop 0 \
+    --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
+    --colors black black black red red red blue blue blue \
+    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
+    -o output/bigwig_STAR/multiBigwigSummary_STAR_TPM_plotPCA.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig_STAR/multiBigwigSummary_STAR_TPM.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig_STAR/multiBigwigSummary_STAR_TPM_heatmap.pdf
+
+#################################
+
+```
+
+--> **STAR plot PCA cluster the same as Kallisto one**; meaning the bad clustering is not due to the new Kallisto method used.
 
 
 
@@ -123,7 +164,7 @@ sbatch scripts/bigwigmerge_TPM_bw.sh # 50944579 ok
 - *NOTE: Added `--rf-stranded --genomebam` options for strandness and pseudobam alignemt generation*
 
 
-### deepTool bigwig QC
+### deepTool bigwig QC - Kallisto mapping
 
 
 ### Raw bigwig

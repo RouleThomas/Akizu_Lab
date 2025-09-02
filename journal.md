@@ -293,5 +293,5 @@ Salmon quantification tool.
 Count nb of unique genes in a gtf: `awk '$3 == "gene" {print $10}' your_file.gtf | sort | uniq | wc -l`
 
 
-
+To open a pdf wihtout using the GUI: `evince myFile.pdf`
 

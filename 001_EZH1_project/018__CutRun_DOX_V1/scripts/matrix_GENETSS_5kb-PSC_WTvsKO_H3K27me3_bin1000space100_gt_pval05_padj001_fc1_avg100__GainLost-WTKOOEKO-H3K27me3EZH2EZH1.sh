@@ -35,6 +35,13 @@ plotProfile -m output/deeptools/matrix_GENETSS_5kb-PSC_WTvsKO_H3K27me3_bin1000sp
     --plotWidth 4
 
 
+plotProfile -m output/deeptools/matrix_GENETSS_5kb-PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__GainLost-WTKOOEKO-H3K27me3EZH2EZH1.gz \
+    -out output/deeptools/matrix_GENETSS_5kb-PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__GainLost-WTKOOEKO-H3K27me3EZH2EZH1_plotProfile2.pdf \
+    --samplesLabel "WT_H3K27me3" "KO_H3K27me3" "OEKO_H3K27me3" "WT_EZH2" "KO_EZH2" "OEKO_EZH2" "WT_EZH1" "KO_EZH1" "OEKO_EZH1" \
+    --colors white white white black red blue white white white \
+    --perGroup \
+    --plotWidth 8
+
 
 # interactive
 

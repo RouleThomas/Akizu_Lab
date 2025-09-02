@@ -48,3 +48,9 @@ plotHeatmap -m output/deeptools/matrix_GENETSSTES_250bp100bp-ENCFF159KBI-WTKOOEK
 
 
 
+plotProfile -m output/deeptools/matrix_GENETSSTES_250bp100bp-ENCFF159KBI-WTKOOEKO-H3K27me3.gz \
+    -out output/deeptools/matrix_GENETSSTES_250bp100bp-ENCFF159KBI-WTKOOEKO-H3K27me3_plotProfile2.pdf \
+    --samplesLabel "WT_H3K27me3" "KO_H3K27me3" "OEKO_H3K27me3" \
+    --colors black red blue \
+    --perGroup \
+    --plotWidth 8
