@@ -1707,17 +1707,17 @@ conda activate deeptools
 
 ## qvalue 2.3 ##############
 #### WT
-sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R1-FergusonUniqueNorm99.sh # 51089151 xxx
-sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R2-FergusonUniqueNorm99.sh # 51089153 xxx
-sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R3-FergusonUniqueNorm99.sh # 51089157 xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R1-FergusonUniqueNorm99.sh # 51089151 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R2-FergusonUniqueNorm99.sh # 51089153 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R3-FergusonUniqueNorm99.sh # 51089157 ok
 #### KO
-sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R1-FergusonUniqueNorm99.sh # 51089158 xxx
-sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R2-FergusonUniqueNorm99.sh # 51089161 xxx
-sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R3-FergusonUniqueNorm99.sh # 51089163 xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R1-FergusonUniqueNorm99.sh # 51089158 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R2-FergusonUniqueNorm99.sh # 51089161 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R3-FergusonUniqueNorm99.sh # 51089163 ok
 #### OEKO
-sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R1-FergusonUniqueNorm99.sh # 51089164 xxx
-sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R2-FergusonUniqueNorm99.sh # 51089168 xxx
-sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R3-FergusonUniqueNorm99.sh # 51089172 xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R1-FergusonUniqueNorm99.sh # 51089164 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R2-FergusonUniqueNorm99.sh # 51089168 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R3-FergusonUniqueNorm99.sh # 51089172 ok
 
 ## qvalue 3 ##############
 #### WT
@@ -1740,17 +1740,17 @@ sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ES
 ### EZH2
 ## qvalue 2.3 ##############
 #### WT
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R1-FergusonUniqueNorm99.sh # 51089176 xxx
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R2-FergusonUniqueNorm99.sh # 51089178 xxx
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R3-FergusonUniqueNorm99.sh # 51089182 xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R1-FergusonUniqueNorm99.sh # 51089176 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R2-FergusonUniqueNorm99.sh # 51089178 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R3-FergusonUniqueNorm99.sh # 51089182 ok
 #### KO
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R1-FergusonUniqueNorm99.sh # 51089183 xxx
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R2-FergusonUniqueNorm99.sh # 51089184 xxx
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R3-FergusonUniqueNorm99.sh # 51089185 xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R1-FergusonUniqueNorm99.sh # 51089183 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R2-FergusonUniqueNorm99.sh # 51089184 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R3-FergusonUniqueNorm99.sh # 51089185 ok
 #### OEKO
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R1-FergusonUniqueNorm99.sh # 51089189 xxx
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R2-FergusonUniqueNorm99.sh # 51089190 xxx
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R3-FergusonUniqueNorm99.sh # 51089192 xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R1-FergusonUniqueNorm99.sh # 51089189 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R2-FergusonUniqueNorm99.sh # 51089190 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R3-FergusonUniqueNorm99.sh # 51089192 ok
 
 ## qvalue 3 ##############
 #### WT
@@ -1778,7 +1778,10 @@ sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OE
 ### H3K27me3 - merge100bp qval2.3 - R DESEQ2
 
 
-XXXY HERE!!!
+```bash
+conda activate deseq2
+```
+
 
 ```R
 library("tidyverse")
@@ -1790,12 +1793,14 @@ library("EnhancedVolcano")
 set.seed(42)
 
 # import bed reference to collect gene name
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot <- read.delim("output/ChIPseeker/annotation_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot.txt", header=TRUE, sep="\t", skip=0) %>% 
+ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot <- read.delim("output/ChIPseeker/annotation_ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot.txt", header=TRUE, sep="\t", skip=0) %>% 
   as_tibble() %>%
   dplyr::rename(chr = seqnames) %>%
   mutate(peakID = paste(chr, start, end, sep = "_")) %>%
   dplyr::select(chr, start, end, annotation, geneSymbol, gene, peakID)
 
+
+XXXY HERE !!!
 
 # import SCORE 
 SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_WT_H3K27me3_006R-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
@@ -2705,120 +2710,6 @@ write.table(ESC_WTKOOEKO_EZH2_qval3merge100bp_annot_promoterAnd5_geneSymbol, fil
 ```
 
 
-
-
-## From consensus peak
-
-### Consensus peak H3K27me3 and EZH2 - 100bp extension  - qvalue 2.3 and qval3
-- consensus peak H3K27me3, WT KO OEKO, qvalue2.3 100bp merge: `output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.merge.bed`
-- consensus peak H3K27me3, WT KO OEKO, qvalue3 100bp merge: `output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.merge.bed`
-- consensus peak EZH2, WT KO OEKO, qvalue2.3 100bp merge: `output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.merge.bed`
-- consensus peak EZH2, WT KO OEKO, qvalue3 100bp merge: `output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.merge.bed`
-
-
-```bash
-conda activate deseq2
-```
-
-```R
-library("ChIPseeker")
-library("tidyverse")
-library("TxDb.Hsapiens.UCSC.hg38.knownGene")
-txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
-library("clusterProfiler")
-library("meshes")
-library("ReactomePA")
-library("org.Hs.eg.db")
-library("VennDiagram")
-
-
-# Import consensus peak
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge = as_tibble(read.table('output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge.bed')) %>%
-    dplyr::rename(Chr=V1, start=V2, end=V3) 
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp = as_tibble(read.table('output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge100bp.bed')) %>%
-    dplyr::rename(Chr=V1, start=V2, end=V3) 
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp = as_tibble(read.table('output/macs2/broad/PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge500bp.bed')) %>%
-    dplyr::rename(Chr=V1, start=V2, end=V3) 
-
-# Tidy peaks 
-## H3K27me3
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_gr = makeGRangesFromDataFrame(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge,keep.extra.columns=TRUE)
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_gr = makeGRangesFromDataFrame(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp,keep.extra.columns=TRUE)
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_gr = makeGRangesFromDataFrame(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp,keep.extra.columns=TRUE)
-
-gr_list <- list(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge=PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_gr, PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp=PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_gr, PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp=PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_gr)
-
-# Export Gene peak assignemnt
-peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
-                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
-## plots
-pdf("output/ChIPseeker/plotAnnoBar_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge.pdf", width = 8, height = 3)
-plotAnnoBar(peakAnnoList)
-dev.off()
-pdf("output/ChIPseeker/plotDistToTSS_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge.pdf", width = 8, height = 3)
-plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
-dev.off()
-
-## Get annotation data frame
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot <- as.data.frame(peakAnnoList[["PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge"]]@anno)
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot <- as.data.frame(peakAnnoList[["PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp"]]@anno)
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot <- as.data.frame(peakAnnoList[["PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp"]]@anno)
-
-
-## Convert entrez gene IDs to gene symbols
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot$gene <- mapIds(org.Hs.eg.db, keys = PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot$gene <- mapIds(org.Hs.eg.db, keys = PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot$gene <- mapIds(org.Hs.eg.db, keys = PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-
-## Save output table
-write.table(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot, file="output/ChIPseeker/annotation_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot.txt", sep="\t", quote=F, row.names=F)  
-write.table(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot, file="output/ChIPseeker/annotation_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot.txt", sep="\t", quote=F, row.names=F)  
-write.table(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot, file="output/ChIPseeker/annotation_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot.txt", sep="\t", quote=F, row.names=F)  
-
-
-
-## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot_promoterAnd5 = tibble(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
-    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot_promoterAnd5 = tibble(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot) %>%
-    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot_promoterAnd5 = tibble(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot) %>%
-    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-
-
-### Save output gene lists
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot_promoterAnd5_geneSymbol = PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot_promoterAnd5 %>%
-    dplyr::select(geneSymbol) %>%
-    unique()
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot_promoterAnd5_geneSymbol = PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot_promoterAnd5 %>%
-    dplyr::select(geneSymbol) %>%
-    unique()
-PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot_promoterAnd5_geneSymbol = PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot_promoterAnd5 %>%
-    dplyr::select(geneSymbol) %>%
-    unique()
-
-
-write.table(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot_promoterAnd5_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)
-write.table(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge100bp_annot_promoterAnd5_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)
-write.table(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge500bp_annot_promoterAnd5_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)
-```
 
 
 
