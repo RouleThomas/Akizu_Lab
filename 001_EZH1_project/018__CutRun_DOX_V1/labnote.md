@@ -560,16 +560,18 @@ conda activate BedToBigwig
 ## Raw - non qvalue filtered ##############
 cat output/macs2/broad/ESC_WT_H3K27me3_pool_peaks.broadPeak output/macs2/broad/ESC_KO_H3K27me3_pool_peaks.broadPeak output/macs2/broad/ESC_OEKO_H3K27me3_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.broadPeak
 cat output/macs2/broad/ESC_WT_EZH2_pool_peaks.broadPeak output/macs2/broad/ESC_KO_EZH2_pool_peaks.broadPeak output/macs2/broad/ESC_OEKO_EZH2_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.broadPeak
+cat output/macs2/broad/ESC_WT_EZH1_pool_peaks.broadPeak output/macs2/broad/ESC_KO_EZH1_pool_peaks.broadPeak output/macs2/broad/ESC_OEKO_EZH1_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.broadPeak
 
 ## qvalue 2.3 ##############
 ### WT KO KOEF
 cat output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_H3K27me3_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_KO_H3K27me3_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_H3K27me3_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.broadPeak
 cat output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_EZH2_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_KO_EZH2_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_EZH2_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.broadPeak
+cat output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_EZH1_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_KO_EZH1_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_EZH1_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.broadPeak
 ## qvalue 3 ##############
 ### WT KO KOEF
 cat output/macs2/broad/broad_blacklist_qval3/ESC_WT_H3K27me3_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval3/ESC_KO_H3K27me3_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval3/ESC_OEKO_H3K27me3_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.broadPeak
 cat output/macs2/broad/broad_blacklist_qval3/ESC_WT_EZH2_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval3/ESC_KO_EZH2_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval3/ESC_OEKO_EZH2_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.broadPeak
-
+cat output/macs2/broad/broad_blacklist_qval3/ESC_WT_EZH1_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval3/ESC_KO_EZH1_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval3/ESC_OEKO_EZH1_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.broadPeak
 
 
 
@@ -578,23 +580,28 @@ cat output/macs2/broad/broad_blacklist_qval3/ESC_WT_EZH2_pool_peaks.broadPeak ou
 ### no merge extension
 bedtools merge -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.merge.bed
 bedtools merge -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.merge.bed
+bedtools merge -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.merge.bed
 bedtools merge -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.merge.bed
 bedtools merge -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.merge.bed
+bedtools merge -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.merge.bed
 ### with 100bp peak merging
 bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.merge100bp.bed
 bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.merge100bp.bed
+bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.merge100bp.bed
 bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.merge100bp.bed
 bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.merge100bp.bed
+bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.merge100bp.bed
 ### with 500bp peak merging
 bedtools merge -d 500 -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.merge500bp.bed
 bedtools merge -d 500 -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.merge500bp.bed
+bedtools merge -d 500 -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.merge500bp.bed
 bedtools merge -d 500 -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.merge500bp.bed
 bedtools merge -d 500 -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.merge500bp.bed
-
+bedtools merge -d 500 -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.merge500bp.bed
 
 ```
 
---> All good; consensus peak files are: `output/macs2/broad/ESC_WTKOOEKO_[H3K27me3 or EZH2]_pool_peaks.sorted.merge[SIZE].bed`
+--> All good; consensus peak files are: `output/macs2/broad/ESC_WTKOOEKO_[ANTIBODY]_pool_peaks.sorted.merge[SIZE].bed`
 
 
 
@@ -638,6 +645,9 @@ python scripts/LocalMaxima_Ferguson_unique.py
 #  calculate the 99th percentile of the signal heights (score) in the local maxima files.
 ## Unique bigwig (1bp resolution)
 python scripts/Percentile99_Ferguson_unique.py
+python scripts/Percentile99_Ferguson_unique_AUTOSOMALCHR.py
+
+
 
 # normalize AB per AB (using WT sample 1st replicate as reference)
 ## Unique bigwig (1bp resolution) APPLYING SF TO INITIAL BIGWIG
@@ -646,38 +656,47 @@ python scripts/norm_H3K27me3_Ferguson_Perc99_unique_initialBigwig.py
 python scripts/norm_EZH2_Ferguson_Perc99_unique_initialBigwig.py
 python scripts/norm_EZH1_Ferguson_Perc99_unique_initialBigwig.py
 
+python scripts/norm_H3K27me3_Ferguson_Perc99_unique_initialBigwig_AUTOSOMALCHR.py
+python scripts/norm_EZH2_Ferguson_Perc99_unique_initialBigwig_AUTOSOMALCHR.py
+python scripts/norm_EZH1_Ferguson_Perc99_unique_initialBigwig_AUTOSOMALCHR.py
+
 ```
 
-*H3K27me3*:
-- WT_R1: SF= 1.0
-- WT_R2: SF= 0.49166666666666664
-- WT_R3: SF= 0.47580645161290325
-- KO_R1: SF= 0.6082474226804123
-- KO_R2: SF= 0.5042735042735043
-- KO_R3: SF= 0.466403162055336
-- OEKO_R1: SF= 0.6082474226804123
-- OEKO_R2: SF= 0.6519337016574586
-- OEKO_R3: SF= 0.5700483091787439
+*H3K27me3*: (all CHR / autosomal chr only)
+- WT_R1: SF= 1.0 / 1.0
+- WT_R2: SF= 0.49166666666666664 / 0.48770491803278687
+- WT_R3: SF= 0.47580645161290325 / 0.47222222222222222
+- KO_R1: SF= 0.6082474226804123 / 0.6102564102564103
+- KO_R2: SF= 0.5042735042735043 / 0.5063829787234042
+- KO_R3: SF= 0.466403162055336 / 0.468503937007874
+- OEKO_R1: SF= 0.6082474226804123 / 0.6071428571428571
+- OEKO_R2: SF= 0.6519337016574586 / 0.6538461538461539
+- OEKO_R3: SF= 0.5700483091787439 / 0.5721153846153846
 *EZH2*:
-- WT_R1: SF= 1.0
-- WT_R2: SF= 0.21052631578947367
-- WT_R3: SF= 0.23529411764705882
-- KO_R1: SF= 0.8
-- KO_R2: SF= 0.3076923076923077
-- KO_R3: SF= 0.36363636363636365
-- OEKO_R1: SF= 0.0784313725490196
-- OEKO_R2: SF= 0.1038961038961039
-- OEKO_R3: SF= 0.16326530612244897
+- WT_R1: SF= 1.0 / 1.0
+- WT_R2: SF= 0.21052631578947367 / 0.21052631578947367
+- WT_R3: SF= 0.23529411764705882 / 0.23529411764705882
+- KO_R1: SF= 0.8 / 0.8
+- KO_R2: SF= 0.3076923076923077 / 0.3076923076923077
+- KO_R3: SF= 0.36363636363636365 / 0.36363636363636365
+- OEKO_R1: SF= 0.0784313725490196 / 0.07766990291262135
+- OEKO_R2: SF= 0.1038961038961039 / 0.10256410256410256
+- OEKO_R3: SF= 0.16326530612244897 / 0.16
 *EZH1*:
-- WT_R1: SF= 1.0
-- WT_R2: SF= 1.0
-- WT_R3: SF= 1.0
-- KO_R1: SF= 1.0
-- KO_R2: SF= 1.0
-- KO_R3: SF= 1.0
-- OEKO_R1: SF= 0.21052631578947367
-- OEKO_R2: SF= 1.0
-- OEKO_R3: SF= 0.8888888888888888
+- WT_R1: SF= 1.0 / 1.0 
+- WT_R2: SF= 1.0 / 1.0
+- WT_R3: SF= 1.0 / 1.0
+- KO_R1: SF= 1.0 / 1.0
+- KO_R2: SF= 1.0 / 1.0
+- KO_R3: SF= 1.0 / 1.0
+- OEKO_R1: SF= 0.21052631578947367 / 0.21052631578947367
+- OEKO_R2: SF= 1.0 / 1.0
+- OEKO_R3: SF= 0.8888888888888888 / 0.8888888888888888
+
+
+--> Using autosomal chr only does not change a lot; probably because scaling based on maximum intensity signal, so sharp peak; not the X chromsome inactivation which is basal, spread, not so high
+  --> **Let's use the version with all chr**
+
 
 
 Convert normalized bedGraph back to bigwig
@@ -1800,44 +1819,43 @@ ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot <- read.delim("output/ChIPseeker/an
   dplyr::select(chr, start, end, annotation, geneSymbol, gene, peakID)
 
 
-XXXY HERE !!!
 
 # import SCORE 
-SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_WT_H3K27me3_006R-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+SCORE_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_WT_H3K27me3_R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R1-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
   as_tibble() %>%
   dplyr::rename(score = V1) %>%
   mutate(rowNumber = row_number())
-SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_010R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_WT_H3K27me3_010R-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+SCORE_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_WT_H3K27me3_R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R2-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
   as_tibble() %>%
   dplyr::rename(score = V1) %>%
   mutate(rowNumber = row_number())
-SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_WT_H3K27me3_013R1-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
-  as_tibble() %>%
-  dplyr::rename(score = V1) %>%
-  mutate(rowNumber = row_number())
-
-SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KO_H3K27me3_006R-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
-  as_tibble() %>%
-  dplyr::rename(score = V1) %>%
-  mutate(rowNumber = row_number())
-SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KO_H3K27me3_013R1-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
-  as_tibble() %>%
-  dplyr::rename(score = V1) %>%
-  mutate(rowNumber = row_number())
-SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_014R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KO_H3K27me3_014R2-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+SCORE_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_WT_H3K27me3_R3 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R3-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
   as_tibble() %>%
   dplyr::rename(score = V1) %>%
   mutate(rowNumber = row_number())
 
-SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_005R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_H3K27me3_005R-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+SCORE_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_KO_H3K27me3_R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R1-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
   as_tibble() %>%
   dplyr::rename(score = V1) %>%
   mutate(rowNumber = row_number())
-SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_H3K27me3_006R-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+SCORE_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_KO_H3K27me3_R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R2-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
   as_tibble() %>%
   dplyr::rename(score = V1) %>%
   mutate(rowNumber = row_number())
-SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_H3K27me3_013R1-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+SCORE_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_KO_H3K27me3_R3 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R3-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+
+SCORE_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_OEKO_H3K27me3_R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R1-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_OEKO_H3K27me3_R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R2-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_OEKO_H3K27me3_R3 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R3-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
   as_tibble() %>%
   dplyr::rename(score = V1) %>%
   mutate(rowNumber = row_number())
@@ -1846,147 +1864,151 @@ SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_013R1 <- read.
 
 
 # import BED position from matrix
-BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_WT_H3K27me3_006R-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
-  as_tibble() %>%
-  dplyr::rename(chr = "X.chrom") %>%
-  dplyr::select(chr, start, end) %>%
-  mutate(rowNumber = row_number())
-BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_010R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_WT_H3K27me3_010R-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
-  as_tibble() %>%
-  dplyr::rename(chr = "X.chrom") %>%
-  dplyr::select(chr, start, end) %>%
-  mutate(rowNumber = row_number())
-BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_WT_H3K27me3_013R1-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_WT_H3K27me3_R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R1-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
   as_tibble() %>%
   dplyr::rename(chr = "X.chrom") %>%
   dplyr::select(chr, start, end) %>%
   mutate(rowNumber = row_number())
 
-BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KO_H3K27me3_006R-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_WT_H3K27me3_R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R2-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
   as_tibble() %>%
   dplyr::rename(chr = "X.chrom") %>%
   dplyr::select(chr, start, end) %>%
   mutate(rowNumber = row_number())
-BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KO_H3K27me3_013R1-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
-  as_tibble() %>%
-  dplyr::rename(chr = "X.chrom") %>%
-  dplyr::select(chr, start, end) %>%
-  mutate(rowNumber = row_number())
-BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_014R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KO_H3K27me3_014R2-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_WT_H3K27me3_R3 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R3-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
   as_tibble() %>%
   dplyr::rename(chr = "X.chrom") %>%
   dplyr::select(chr, start, end) %>%
   mutate(rowNumber = row_number())
   
-BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_005R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_H3K27me3_005R-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_KO_H3K27me3_R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R1-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
   as_tibble() %>%
   dplyr::rename(chr = "X.chrom") %>%
   dplyr::select(chr, start, end) %>%
   mutate(rowNumber = row_number())
-BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_006R <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_H3K27me3_006R-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_KO_H3K27me3_R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R2-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
   as_tibble() %>%
   dplyr::rename(chr = "X.chrom") %>%
   dplyr::select(chr, start, end) %>%
   mutate(rowNumber = row_number())
-BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_013R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOKOEF1aEZH1_H3K27me3_pool_peaks.sorted.merge-PSC_KOEF1aEZH1_H3K27me3_013R1-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_KO_H3K27me3_R3 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R3-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
   as_tibble() %>%
   dplyr::rename(chr = "X.chrom") %>%
   dplyr::select(chr, start, end) %>%
   mutate(rowNumber = row_number())
+
+BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_OEKO_H3K27me3_R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R1-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_OEKO_H3K27me3_R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R2-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_OEKO_H3K27me3_R3 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R3-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+
 
 
 # Put together, gene name, scoer per row, coordinate and row
 
 
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_006R = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_006R %>%
-  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_006R ) %>%
-  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_WT_H3K27me3_R1 = SCORE_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_WT_H3K27me3_R1 %>%
+  left_join(BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_WT_H3K27me3_R1 ) %>%
+  left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot) %>%
   dplyr::select(peakID, score) %>%
   group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
   add_column(genotype = "WT", replicate = "R1")
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_010R = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_010R %>%
-  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_010R) %>%
-  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_WT_H3K27me3_R2 = SCORE_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_WT_H3K27me3_R2 %>%
+  left_join(BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_WT_H3K27me3_R2 ) %>%
+  left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot) %>%
   dplyr::select(peakID, score) %>%
   group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
   add_column(genotype = "WT", replicate = "R2")
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_013R1 = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_013R1 %>%
-  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_013R1) %>%
-  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_WT_H3K27me3_R3 = SCORE_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_WT_H3K27me3_R3 %>%
+  left_join(BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_WT_H3K27me3_R3 ) %>%
+  left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot) %>%
   dplyr::select(peakID, score) %>%
   group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
   add_column(genotype = "WT", replicate = "R3")
 
-
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_006R = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_006R  %>%
-  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_006R) %>%
-  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_KO_H3K27me3_R1 = SCORE_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_KO_H3K27me3_R1 %>%
+  left_join(BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_KO_H3K27me3_R1 ) %>%
+  left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot) %>%
   dplyr::select(peakID, score) %>%
   group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
   add_column(genotype = "KO", replicate = "R1")
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_013R1 = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_013R1  %>%
-  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_013R1) %>%
-  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_KO_H3K27me3_R2 = SCORE_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_KO_H3K27me3_R2 %>%
+  left_join(BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_KO_H3K27me3_R2 ) %>%
+  left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot) %>%
   dplyr::select(peakID, score) %>%
   group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
   add_column(genotype = "KO", replicate = "R2")
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_014R2 = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_014R2  %>%
-  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_014R2) %>%
-  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_KO_H3K27me3_R3 = SCORE_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_KO_H3K27me3_R3 %>%
+  left_join(BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_KO_H3K27me3_R3 ) %>%
+  left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot) %>%
   dplyr::select(peakID, score) %>%
   group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
   add_column(genotype = "KO", replicate = "R3")
 
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_005R = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_005R  %>%
-  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_005R) %>%
-  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_OEKO_H3K27me3_R1 = SCORE_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_OEKO_H3K27me3_R1 %>%
+  left_join(BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_OEKO_H3K27me3_R1 ) %>%
+  left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot) %>%
   dplyr::select(peakID, score) %>%
   group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
-  add_column(genotype = "KOEF1aEZH1", replicate = "R1")
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_006R = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_006R  %>%
-  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_006R) %>%
-  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+  add_column(genotype = "OEKO", replicate = "R1")
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_OEKO_H3K27me3_R2 = SCORE_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_OEKO_H3K27me3_R2 %>%
+  left_join(BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_OEKO_H3K27me3_R2 ) %>%
+  left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot) %>%
   dplyr::select(peakID, score) %>%
   group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
-  add_column(genotype = "KOEF1aEZH1", replicate = "R2")
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_013R1 = SCORE_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_013R1  %>%
-  left_join(BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_013R1) %>%
-  left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot) %>%
+  add_column(genotype = "OEKO", replicate = "R2")
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_OEKO_H3K27me3_R3 = SCORE_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_OEKO_H3K27me3_R3 %>%
+  left_join(BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_OEKO_H3K27me3_R3 ) %>%
+  left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot) %>%
   dplyr::select(peakID, score) %>%
   group_by(peakID) %>%  # Group by gene
   summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
   unique() %>%
-  add_column(genotype = "KOEF1aEZH1", replicate = "R3")
+  add_column(genotype = "OEKO", replicate = "R3")
+
 
 
 
 # Tidy into a single tibble
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks = SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_006R %>%
-  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_010R) %>%
-  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_WT_H3K27me3_013R1) %>%
-  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_006R) %>%
-  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_013R1) %>%
-  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KO_H3K27me3_014R2) %>%
-  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_005R) %>%
-  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_006R) %>%
-  bind_rows(SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks__PSC_KOEF1aEZH1_H3K27me3_013R1)
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp = SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_WT_H3K27me3_R1 %>%
+  bind_rows(SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_WT_H3K27me3_R2) %>%
+  bind_rows(SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_WT_H3K27me3_R3) %>%
+  bind_rows(SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_KO_H3K27me3_R1) %>%
+  bind_rows(SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_KO_H3K27me3_R2) %>%
+  bind_rows(SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_KO_H3K27me3_R3) %>%
+  bind_rows(SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_OEKO_H3K27me3_R1) %>%
+  bind_rows(SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_OEKO_H3K27me3_R2) %>%
+  bind_rows(SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_OEKO_H3K27me3_R3)
 
+
+XXXY HERE!!!
 
 
 ######################################################
@@ -2714,6 +2736,116 @@ write.table(ESC_WTKOOEKO_EZH2_qval3merge100bp_annot_promoterAnd5_geneSymbol, fil
 
 
 
+
+### On EZH1 peaks; consensus and OEKO peaks - qval 2.3
+
+
+```bash
+# files - consensus peaks EZH1 qval2.3 merge100bp and OEKO peaks
+output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.merge100bp.bed
+output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_EZH1_pool_peaks.broadPeak
+```
+
+
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import diff peaks
+ESC_WTKOOEKO_EZH1_qval23merge100bp <- read.delim("output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.merge100bp.bed", sep = "\t", header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename("chr"= "V1", "start" = "V2", "end" = "V3")
+
+ESC_OEKO_EZH1_qval23 <- read.delim("output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_EZH1_pool_peaks.broadPeak", sep = "\t", header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename("chr"= "V1", "start" = "V2", "end" = "V3")
+  
+
+# Tidy peaks 
+ESC_WTKOOEKO_EZH1_qval23merge100bp_gr = makeGRangesFromDataFrame(ESC_WTKOOEKO_EZH1_qval23merge100bp,keep.extra.columns=TRUE)
+ESC_OEKO_EZH1_qval23_gr = makeGRangesFromDataFrame(ESC_OEKO_EZH1_qval23,keep.extra.columns=TRUE)
+
+gr_list <- list(ESC_WTKOOEKO_EZH1_qval23merge100bp=ESC_WTKOOEKO_EZH1_qval23merge100bp_gr, ESC_OEKO_EZH1_qval23=ESC_OEKO_EZH1_qval23_gr
+)
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## plots
+pdf("output/ChIPseeker/plotAnnoBar_ESC_WTKOOEKO_EZH1_qval23merge100bp-OEKO_EZH1_qval32.pdf", width = 16, height = 3)
+plotAnnoBar(peakAnnoList)
+dev.off()
+pdf("output/ChIPseeker/plotDistToTSS_ESC_WTKOOEKO_EZH1_qval23merge100bp-OEKO_EZH1_qval32.pdf", width = 16, height = 3)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
+
+## Get annotation data frame
+ESC_WTKOOEKO_EZH1_qval23merge100bp_annot <- as.data.frame(peakAnnoList[["ESC_WTKOOEKO_EZH1_qval23merge100bp"]]@anno)
+ESC_OEKO_EZH1_qval23_annot <- as.data.frame(peakAnnoList[["ESC_OEKO_EZH1_qval23"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+ESC_WTKOOEKO_EZH1_qval23merge100bp_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = ESC_WTKOOEKO_EZH1_qval23merge100bp_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+ESC_WTKOOEKO_EZH1_qval23merge100bp_annot$gene <- mapIds(org.Hs.eg.db, keys = ESC_WTKOOEKO_EZH1_qval23merge100bp_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+ESC_OEKO_EZH1_qval23_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = ESC_OEKO_EZH1_qval23_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+ESC_OEKO_EZH1_qval23_annot$gene <- mapIds(org.Hs.eg.db, keys = ESC_OEKO_EZH1_qval23_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+## Save output table
+write.table(ESC_WTKOOEKO_EZH1_qval23merge100bp_annot, file="output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH1_qval23merge100bp_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(ESC_OEKO_EZH1_qval23_annot, file="output/ChIPseeker/annotation_ESC_OEKO_EZH1_qval23_annot.txt", sep="\t", quote=F, row.names=F)  
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+ESC_WTKOOEKO_EZH1_qval23merge100bp_annot_promoterAnd5 = tibble(ESC_WTKOOEKO_EZH1_qval23merge100bp_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+ESC_OEKO_EZH1_qval23_annot_promoterAnd5 = tibble(ESC_OEKO_EZH1_qval23_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+### Save output gene lists
+ESC_WTKOOEKO_EZH1_qval23merge100bp_annot_promoterAnd5_geneSymbol = ESC_WTKOOEKO_EZH1_qval23merge100bp_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+ESC_OEKO_EZH1_qval23_annot_promoterAnd5_geneSymbol = ESC_OEKO_EZH1_qval23_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+write.table(ESC_WTKOOEKO_EZH1_qval23merge100bp_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH1_qval23merge100bp_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(ESC_OEKO_EZH1_qval23_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_ESC_OEKO_EZH1_qval23_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+```
+
+
+
+
+
+
+
+
+
 # deepTools plots
 
 ## PEAKS 
@@ -2764,6 +2896,12 @@ sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_EZH2poolqval23-WTKOOEKO-H3K27me3EZH
 sbatch scripts/matrix_PEAK_5kb-macs2broad_OEKO_EZH1poolqval23-WTKOOEKO-H3K27me3EZH2EZH1.sh # 50767482 ok
 ## consensus peaks
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-H3K27me3EZH2EZH1.sh # 50895445 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-H3K27me3.sh # 51132562 xxx
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-EZH2.sh # 51132659 xxx
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-EZH1.sh # 51132725 xxx
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-EZH1_keepZero.sh # 51134009 xxx
+
+
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH2poolqval23merge100bp-WTKOOEKO-H3K27me3EZH2EZH1.sh # 50895514 ok
 ```
 
@@ -2797,6 +2935,9 @@ output/deseq2/upregulated_q05fc058_ESC_KO_vs_ESC_WT.txt
 output/deseq2/downregulated_q05fc058_ESC_KO_vs_ESC_WT.txt
 output/deseq2/upregulated_q05fc058_ESC_OEKO_vs_ESC_WT.txt
 output/deseq2/downregulated_q05fc058_ESC_OEKO_vs_ESC_WT.txt
+## EZH1 peaks - consensus WTKOOEKO qval2.3 merge100bp - OEKO qval2.3 pool peaks
+output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH1_qval23merge100bp_annot_promoterAnd5_geneSymbol.txt
+output/ChIPseeker/annotation_ESC_OEKO_EZH1_qval23_annot_promoterAnd5_geneSymbol.txt
 
 
 ## put together Gain and Lost mix
@@ -2857,6 +2998,11 @@ sed 's/\r$//; s/.*/gene_name "&"/' ../019__RNAseq_ESC_V1/output/deseq2/upregulat
 sed 's/\r$//; s/.*/gene_name "&"/' ../019__RNAseq_ESC_V1/output/deseq2/downregulated_q05fc058_ESC_OEKO_vs_ESC_WT.txt > ../019__RNAseq_ESC_V1/output/deseq2/downregulated_q05fc058_ESC_OEKO_vs_ESC_WT_as_gtf_geneSymbol.txt
 
 
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH1_qval23merge100bp_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH1_qval23merge100bp_annot_promoterAnd5_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_ESC_OEKO_EZH1_qval23_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_ESC_OEKO_EZH1_qval23_annot_promoterAnd5_as_gtf_geneSymbol.txt
+
+
+
 
 ## Filter the gtf
 grep -Ff output/ChIPseeker/annotation_PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__GainLost_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__GainLost_annot_promoterAnd5.gtf
@@ -2897,6 +3043,15 @@ grep -Ff ../019__RNAseq_ESC_V1/output/deseq2/upregulated_q05fc058_ESC_KO_vs_ESC_
 grep -Ff ../019__RNAseq_ESC_V1/output/deseq2/downregulated_q05fc058_ESC_KO_vs_ESC_WT_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_ESC001019_downregulated_q05fc058_ESC_KO_vs_ESC_WT.gtf
 grep -Ff ../019__RNAseq_ESC_V1/output/deseq2/upregulated_q05fc058_ESC_OEKO_vs_ESC_WT_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_ESC001019_upregulated_q05fc058_ESC_OEKO_vs_ESC_WT.gtf
 grep -Ff ../019__RNAseq_ESC_V1/output/deseq2/downregulated_q05fc058_ESC_OEKO_vs_ESC_WT_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_ESC001019_downregulated_q05fc058_ESC_OEKO_vs_ESC_WT.gtf
+
+
+
+grep -Ff output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH1_qval23merge100bp_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_ESC_WTKOOEKO_EZH1_qval23merge100bp_annot_promoterAnd5.gtf
+grep -Ff output/ChIPseeker/annotation_ESC_OEKO_EZH1_qval23_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_ESC_OEKO_EZH1_qval23_annot_promoterAnd5.gtf
+
+
+
+
 
 
 
@@ -2953,7 +3108,7 @@ sbatch scripts/matrix_GENETSSTES_250bp100bp-ENCFF159KBI-WTKOOEKO-EZH1.sh # 50946
 
 
 
-# Check signal in MACS2 consensus peaks assign to genes
+# Check signal in MACS2 consensus peaks assign to genes - promoter and 5
 ## consensus H3K27me3/EZH2 all genotypes and IP
 sbatch scripts/matrix_GENETSS_5kb-ESC_WTKOOEKO_H3K27me3_qval23merge100bp-WTKOOEKO-H3K27me3EZH2EZH1.sh # 50900070 ok
 sbatch scripts/matrix_GENETSS_5kb-ESC_WTKOOEKO_EZH2_qval23merge100bp-WTKOOEKO-H3K27me3EZH2EZH1.sh # 50900120 ok
@@ -2978,6 +3133,17 @@ sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC001019_UpDownregulated_q05fc058_E
 sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC001019_UpDownregulated_q05fc058_ESC_OEKO_vs_ESC_WT-WTKOOEKO-H3K27me3.sh # 51082048 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC001019_UpDownregulated_q05fc058_ESC_OEKO_vs_ESC_WT-WTKOOEKO-EZH2.sh # 51082118 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC001019_UpDownregulated_q05fc058_ESC_OEKO_vs_ESC_WT-WTKOOEKO-EZH1.sh # 51082139 ok
+
+
+# Check signal in EZH1 peaks - consensus WTKOOEKO qval2.3 merge100bp - OEKO qval2.3 pool peaks - promoter and 5
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp-WTKOOEKO-H3K27me3.sh # 51129082 xxx
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp-WTKOOEKO-EZH2.sh # 51129343 xxx
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp-WTKOOEKO-EZH1.sh # 51129393 xxx
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_OEKO_EZH1_qval23-WTKOOEKO-H3K27me3.sh # 51129429 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_OEKO_EZH1_qval23-WTKOOEKO-EZH2.sh # 51129474 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_OEKO_EZH1_qval23-WTKOOEKO-EZH1.sh # 51129494 xxx
+
+
 ```
 
 --> Changes of H3K27me3 is clear; but EZH2 does not clearly follow these changes.

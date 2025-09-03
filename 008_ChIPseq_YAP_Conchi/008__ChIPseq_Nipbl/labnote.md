@@ -14,11 +14,15 @@ Pipeline (Follow `008*/003*` for all; and `008*/001*` for homer peak calling):
 - Check for overlap with `008*/001*` and `008*/003*` ChIPs
 
 
+--> Also for Grant QSER1, analysis of Ser5P-RNAPII untreated from the same GEO (see email 09/03/2025 *"The proposal will investigate the role of QSER1 in transcriptional RNAPII pausing and pause-release of developmental genes through condensate formation"*
+
+)
+
 # Data download from NCBI
 
 Seems that there is only one bio rep. Lets download IP and input:
 - [IP Nipbl](https://www.ncbi.nlm.nih.gov/sra?term=SRX833420), 1 Run= SRR1745511
-- [input](https://www.ncbi.nlm.nih.gov/sra?term=SRX1036445), 2 Runs= SRR2037028, SRR2037029; I selected both for FASTQ download at [this](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR2037028&display=download) page; the SRR2037028 should contain both SRR2037028 and SRR2037029--> XXX Yes that's correct.
+- [input](https://www.ncbi.nlm.nih.gov/sra?term=SRX1036445), 2 Runs= SRR2037028, SRR2037029; I selected both for FASTQ download at [this](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR2037028&display=download) page; the SRR2037028 should contain both SRR2037028 and SRR2037029--> Yes that's correct.
 
 
 --> ChIPs are SE. Data stored in `008*/008*/input/` and transfered to HPC cluster.
@@ -26,10 +30,11 @@ Seems that there is only one bio rep. Lets download IP and input:
 
 # Rename files
 
-`SRR1745511.fastq.gz` into `Nipbl.fq.gz`
-`SRR2037028_SRR2037029.fastq.gz` into `input.fq.gz`
+- `SRR1745511.fastq.gz` into `Nipbl.fq.gz`
+- `SRR2037028_SRR2037029.fastq.gz` into `input.fq.gz`
+- `SRR1745499.fastq.gz` into `Ser5P_RNAPII.fq.gz`
 
-
+XXXY HERE prusue pol2
 
 # Fastp cleaning
 
