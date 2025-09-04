@@ -1759,17 +1759,17 @@ sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ES
 ### EZH2
 ## qvalue 2.3 ##############
 #### WT
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R1-FergusonUniqueNorm99.sh # 51089176 ok
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R2-FergusonUniqueNorm99.sh # 51089178 ok
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R3-FergusonUniqueNorm99.sh # 51089182 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R1-FergusonUniqueNorm99.sh # 51164275 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R2-FergusonUniqueNorm99.sh # 51164331 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R3-FergusonUniqueNorm99.sh # 51164332 ok
 #### KO
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R1-FergusonUniqueNorm99.sh # 51089183 ok
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R2-FergusonUniqueNorm99.sh # 51089184 ok
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R3-FergusonUniqueNorm99.sh # 51089185 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R1-FergusonUniqueNorm99.sh # 51164336 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R2-FergusonUniqueNorm99.sh # 51164391 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R3-FergusonUniqueNorm99.sh # 51164394 ok
 #### OEKO
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R1-FergusonUniqueNorm99.sh # 51089189 ok
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R2-FergusonUniqueNorm99.sh # 51089190 ok
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R3-FergusonUniqueNorm99.sh # 51089192 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R1-FergusonUniqueNorm99.sh # 51164396 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R2-FergusonUniqueNorm99.sh # 51164401 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R3-FergusonUniqueNorm99.sh # 51164466 ok
 
 ## qvalue 3 ##############
 #### WT
@@ -1805,7 +1805,6 @@ conda activate deseq2
 ```R
 library("tidyverse")
 library("DESeq2")
-library("edgeR")
 library("EnhancedVolcano")
 
 
@@ -1915,8 +1914,7 @@ BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_OEKO_H3K27me3_R3 <- read.delim("outp
 
 
 
-# Put together, gene name, scoer per row, coordinate and row
-
+# Put together, gene name, score per row, coordinate and row
 
 SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_WT_H3K27me3_R1 = SCORE_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_WT_H3K27me3_R1 %>%
   left_join(BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_WT_H3K27me3_R1 ) %>%
@@ -2008,21 +2006,21 @@ SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp = SCORE_BED_WTKOOEKO_H3K27me3_qval2
   bind_rows(SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__ESC_OEKO_H3K27me3_R3)
 
 
-XXXY HERE!!!
 
 
 ######################################################
 ### WT vs KO ####################################
 ######################################################
 
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_WTvsKO = SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks %>%
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__WTvsKO = SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp %>%
   filter(genotype %in% c("WT", "KO"),
          peakID != "NA") %>%
-  mutate(median_score = round(median_score))
+  mutate(median_score = round(median_score)) %>%
+  filter(!startsWith(peakID, "chrX")) # 112,254 to 97200
 
 
 # Convert to wide format
-countData_WTvsKO <- SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_WTvsKO %>%
+countData_WTvsKO <- SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__WTvsKO %>%
   mutate(replicate = paste0(genotype, "_", replicate)) %>%  # Create unique column names
   select(-genotype) %>%  # Remove genotype column (since it's now part of replicate)
   pivot_wider(names_from = replicate, values_from = median_score, values_fill = 0)  
@@ -2043,7 +2041,7 @@ counts_all_matrix = make_matrix(dplyr::select(countData_WTvsKO, -peakID), pull(c
 
 
 ## Create colData file that describe all our samples
-colData_WTvsKO_raw <- SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_WTvsKO %>%
+colData_WTvsKO_raw <- SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__WTvsKO %>%
   distinct(replicate, genotype) %>%
   mutate(sample = paste(genotype, replicate, sep = "_"))
   
@@ -2061,7 +2059,7 @@ dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
 
 # DEGs
 ## Filter out gene with less than 5 reads
-keep <- rowSums(counts(dds)) >= 100 # below 2000 look like noise on IGV
+keep <- rowSums(counts(dds)) >= 100 # I TESTED 100, 250, 500: VERY COMPARABLE! So pick 100
 dds <- dds[keep,]
 
 ## Specify the control sample
@@ -2078,30 +2076,30 @@ res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm")
 ## Plot-volcano
 # FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
 keyvals <- ifelse(
-  res$log2FoldChange < -0.1 & res$padj < 5e-2, 'Sky Blue',
-    ifelse(res$log2FoldChange > 0.1 & res$padj < 5e-2, 'Orange',
+  res$log2FoldChange < -0.58 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.58 & res$padj < 5e-2, 'Orange',
       'grey'))
 
 
 
 keyvals[is.na(keyvals)] <- 'black'
-names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.58)'
 names(keyvals)[keyvals == 'grey'] <- 'Not significant'
-names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.58)'
 
 
-res_tibble <- as_tibble(res, rownames = "peakID") %>% left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot)
-# Export result
-write.table(res_tibble, file="output/edgeR/DESEQ2-WTKOKOEF1aEZH1_H3K27me3_pool_peaks-PSC_KO_vs_PSC_WT-H3K27me3.txt", sep="\t", row.names=FALSE, quote=FALSE)
+res_tibble <- as_tibble(res, rownames = "peakID") %>% left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot)
+# Export result 
+write.table(res_tibble, file="output/edgeR/DESEQ2-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-H3K27me3.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
-pdf("output/edgeR/plotVolcano_res_q05fc01-WTKOKOEF1aEZH1_H3K27me3_pool_peaks-PSC_KO_vs_PSC_WT-H3K27me3.pdf", width=3, height=4)    
+pdf("output/edgeR/plotVolcano_res_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-H3K27me3.pdf", width=3, height=4)    
 EnhancedVolcano(res_tibble,
   lab = res_tibble$geneSymbol,
   x = 'log2FoldChange',
   y = 'padj',
-  title = 'KO vs WT, PSC, H3K27me3',
+  title = 'KO vs WT, ESC, H3K27me3',
   pCutoff = 5e-2,         #
-  FCcutoff = 0.1,
+  FCcutoff = 0.58,
   pointSize = 1.0,
   labSize = 2,
   colCustom = keyvals,
@@ -2112,42 +2110,58 @@ EnhancedVolcano(res_tibble,
 dev.off()
 
 
-upregulated_genes <- sum(res_tibble$log2FoldChange > 0.1 & res_tibble$padj < 5e-2, na.rm = TRUE)
-downregulated_genes <- sum(res_tibble$log2FoldChange < -0.1 & res_tibble$padj < 5e-2, na.rm = TRUE)
+upregulated_genes <- sum(res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, na.rm = TRUE)
 
 # Save as gene list for GO analysis:
-upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.1 & res_tibble$padj < 5e-2, ]
+upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, ]
 #### Filter for down-regulated genes
-downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.1 & res_tibble$padj < 5e-2, ]
+downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, ]
 #### Save
-write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc01_WTKOKOEF1aEZH1_H3K27me3_pool_peaks-PSC_KO_vs_PSC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
-write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc01_WTKOKOEF1aEZH1_H3K27me3_pool_peaks-PSC_KO_vs_PSC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
 
 
 res_tibble %>% dplyr::select(peakID, geneSymbol, log2FoldChange, padj) %>%
-  filter(padj < 0.05, log2FoldChange > 0.1)
+  filter(padj < 0.05, log2FoldChange > 0.58)
 
 
 res_tibble %>% dplyr::select(peakID, geneSymbol, log2FoldChange, padj) %>%
-  filter(padj < 0.05, log2FoldChange < -0.1)
+  filter(padj < 0.05, log2FoldChange < -0.58)
+
+
+# Save as coordinates for bed deeptools
+
+write_tsv( upregulated %>%
+  separate(peakID, into = c("chr", "start", "end"), sep = "_", remove = TRUE) %>%
+  dplyr::select(chr, start, end), "output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-H3K27me3.bed", col_names = FALSE)
+write_tsv( downregulated %>%
+  separate(peakID, into = c("chr", "start", "end"), sep = "_", remove = TRUE) %>%
+  dplyr::select(chr, start, end), "output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-H3K27me3.bed", col_names = FALSE)
+
 
 
 
 
 
 ######################################################
-### WT vs KOEF1aEZH1 ####################################
+### WT vs OEKO ####################################
 ######################################################
 
-SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_WTvsKOEF1aEZH1 = SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks %>%
-  filter(genotype %in% c("WT", "KOEF1aEZH1"),
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__WTvsOEKO = SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp %>%
+  filter(genotype %in% c("WT", "OEKO"),
          peakID != "NA") %>%
-  mutate(median_score = round(median_score))
+  mutate(median_score = round(median_score)) %>%
+  filter(!startsWith(peakID, "chrX")) # 112,254 to 97200
+
+
+
+
 
 
 # Convert to wide format
-countData_WTvsKOEF1aEZH1 <- SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_WTvsKOEF1aEZH1 %>%
+countData_WTvsOEKO <- SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__WTvsOEKO %>%
   mutate(replicate = paste0(genotype, "_", replicate)) %>%  # Create unique column names
   select(-genotype) %>%  # Remove genotype column (since it's now part of replicate)
   pivot_wider(names_from = replicate, values_from = median_score, values_fill = 0)  
@@ -2164,17 +2178,17 @@ make_matrix <- function(df,rownames = NULL){
   my_matrix
 }
 ### execute function
-counts_all_matrix = make_matrix(dplyr::select(countData_WTvsKOEF1aEZH1, -peakID), pull(countData_WTvsKOEF1aEZH1, peakID)) 
+counts_all_matrix = make_matrix(dplyr::select(countData_WTvsOEKO, -peakID), pull(countData_WTvsOEKO, peakID)) 
 
 
 ## Create colData file that describe all our samples
-colData_WTvsKOEF1aEZH1_raw <- SCORE_BED_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_WTvsKOEF1aEZH1 %>%
+colData_WTvsOEKO_raw <- SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__WTvsOEKO %>%
   distinct(replicate, genotype) %>%
   mutate(sample = paste(genotype, replicate, sep = "_"))
   
   
 ## transform df into matrix
-coldata = make_matrix(dplyr::select(colData_WTvsKOEF1aEZH1_raw, -sample), pull(colData_WTvsKOEF1aEZH1_raw, sample))
+coldata = make_matrix(dplyr::select(colData_WTvsOEKO_raw, -sample), pull(colData_WTvsOEKO_raw, sample))
 
 ## Check that row name of both matrix (counts and description) are the same
 all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
@@ -2186,7 +2200,7 @@ dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
 
 # DEGs
 ## Filter out gene with less than 5 reads
-keep <- rowSums(counts(dds)) >= 100 # below 2000 look like noise on IGV
+keep <- rowSums(counts(dds)) >= 100 # I TESTED 100, 250, 500: VERY COMPARABLE! So pick 100
 dds <- dds[keep,]
 
 ## Specify the control sample
@@ -2197,39 +2211,36 @@ dds <- DESeq(dds)
 # res <- results(dds) # This is the classic version, but shrunk log FC is preferable
 resultsNames(dds) # Here print value into coef below
 
-res <- lfcShrink(dds, coef="genotype_KOEF1aEZH1_vs_WT", type="apeglm")
-
+res <- lfcShrink(dds, coef="genotype_OEKO_vs_WT", type="apeglm")
 
 
 ## Plot-volcano
 # FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
 keyvals <- ifelse(
-  res$log2FoldChange < -0.1 & res$padj < 5e-2, 'Sky Blue',
-    ifelse(res$log2FoldChange > 0.1 & res$padj < 5e-2, 'Orange',
+  res$log2FoldChange < -0.58 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.58 & res$padj < 5e-2, 'Orange',
       'grey'))
 
 
 
 keyvals[is.na(keyvals)] <- 'black'
-names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5)'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.58)'
 names(keyvals)[keyvals == 'grey'] <- 'Not significant'
-names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < 0.5)'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.58)'
 
 
-res_tibble <- as_tibble(res, rownames = "peakID") %>% left_join(PSC_WTKOKOEF1aEZH1_H3K27me3_pool_peaks_merge_annot)
-#export result
-write.table(res_tibble, file="output/edgeR/DESEQ2-WTKOKOEF1aEZH1_H3K27me3_pool_peaks-PSC_KOEF1aEZH1_vs_PSC_WT-H3K27me3.txt", sep="\t", row.names=FALSE, quote=FALSE)
+res_tibble <- as_tibble(res, rownames = "peakID") %>% left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot)
+# Export result 
+write.table(res_tibble, file="output/edgeR/DESEQ2-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-H3K27me3.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
-
-
-pdf("output/edgeR/plotVolcano_res_q05fc01-WTKOKOEF1aEZH1_H3K27me3_pool_peaks-PSC_KOEF1aEZH1_vs_PSC_WT-H3K27me3.pdf", width=3, height=4)    
+pdf("output/edgeR/plotVolcano_res_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-H3K27me3.pdf", width=3, height=4)    
 EnhancedVolcano(res_tibble,
   lab = res_tibble$geneSymbol,
   x = 'log2FoldChange',
   y = 'padj',
-  title = 'KOEF1aEZH1 vs WT, PSC, H3K27me3',
+  title = 'OEKO vs WT, ESC, H3K27me3',
   pCutoff = 5e-2,         #
-  FCcutoff = 0.1,
+  FCcutoff = 0.58,
   pointSize = 1.0,
   labSize = 2,
   colCustom = keyvals,
@@ -2240,26 +2251,800 @@ EnhancedVolcano(res_tibble,
 dev.off()
 
 
-upregulated_genes <- sum(res_tibble$log2FoldChange > 0.1 & res_tibble$padj < 5e-2, na.rm = TRUE)
-downregulated_genes <- sum(res_tibble$log2FoldChange < -0.1 & res_tibble$padj < 5e-2, na.rm = TRUE)
+upregulated_genes <- sum(res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, na.rm = TRUE)
 
 # Save as gene list for GO analysis:
-upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.1 & res_tibble$padj < 5e-2, ]
+upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, ]
 #### Filter for down-regulated genes
-downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.1 & res_tibble$padj < 5e-2, ]
+downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, ]
 #### Save
-write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc01_WTKOKOEF1aEZH1_H3K27me3_pool_peaks-PSC_KOEF1aEZH1_vs_PSC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
-write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc01_WTKOKOEF1aEZH1_H3K27me3_pool_peaks-PSC_KOEF1aEZH1_vs_PSC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
 
 
 res_tibble %>% dplyr::select(peakID, geneSymbol, log2FoldChange, padj) %>%
-  filter(padj < 0.05, log2FoldChange > 0.1)
+  filter(padj < 0.05, log2FoldChange > 0.58)
 
 
 res_tibble %>% dplyr::select(peakID, geneSymbol, log2FoldChange, padj) %>%
-  filter(padj < 0.05, log2FoldChange < -0.1)
+  filter(padj < 0.05, log2FoldChange < -0.58)
+
+
+
+
+# Save as coordinates for bed deeptools
+
+write_tsv( upregulated %>%
+  separate(peakID, into = c("chr", "start", "end"), sep = "_", remove = TRUE) %>%
+  dplyr::select(chr, start, end), "output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-H3K27me3.bed", col_names = FALSE)
+write_tsv( downregulated %>%
+  separate(peakID, into = c("chr", "start", "end"), sep = "_", remove = TRUE) %>%
+  dplyr::select(chr, start, end), "output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-H3K27me3.bed", col_names = FALSE)
 ```
+
+
+
+
+
+
+
+
+
+### EZH2 - merge100bp qval2.3 - R DESEQ2
+
+
+```bash
+conda activate deseq2V2
+```
+
+
+```R
+library("tidyverse")
+library("DESeq2")
+library("EnhancedVolcano")
+
+
+set.seed(42)
+
+# import bed reference to collect gene name
+ESC_WTKOOEKO_EZH2_qval23merge100bp_annot <- read.delim("output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH2_qval23merge100bp_annot.txt", header=TRUE, sep="\t", skip=0) %>% 
+  as_tibble() %>%
+  dplyr::rename(chr = seqnames) %>%
+  mutate(peakID = paste(chr, start, end, sep = "_")) %>%
+  dplyr::select(chr, start, end, annotation, geneSymbol, gene, peakID)
+
+
+
+# import SCORE 
+SCORE_WTKOOEKO_EZH2_qval23merge100bp__ESC_WT_EZH2_R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R1-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKOOEKO_EZH2_qval23merge100bp__ESC_WT_EZH2_R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R2-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKOOEKO_EZH2_qval23merge100bp__ESC_WT_EZH2_R3 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R3-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+
+SCORE_WTKOOEKO_EZH2_qval23merge100bp__ESC_KO_EZH2_R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R1-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKOOEKO_EZH2_qval23merge100bp__ESC_KO_EZH2_R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R2-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKOOEKO_EZH2_qval23merge100bp__ESC_KO_EZH2_R3 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R3-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+
+SCORE_WTKOOEKO_EZH2_qval23merge100bp__ESC_OEKO_EZH2_R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R1-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKOOEKO_EZH2_qval23merge100bp__ESC_OEKO_EZH2_R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R2-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKOOEKO_EZH2_qval23merge100bp__ESC_OEKO_EZH2_R3 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R3-FergusonUniqueNorm99.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+
+
+
+
+# import BED position from matrix
+BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_WT_EZH2_R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R1-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+
+BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_WT_EZH2_R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R2-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_WT_EZH2_R3 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R3-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+  
+BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_KO_EZH2_R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R1-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_KO_EZH2_R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R2-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_KO_EZH2_R3 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R3-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+
+BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_OEKO_EZH2_R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R1-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_OEKO_EZH2_R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R2-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_OEKO_EZH2_R3 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R3-FergusonUniqueNorm99.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+
+
+
+# Put together, gene name, score per row, coordinate and row
+
+SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_WT_EZH2_R1 = SCORE_WTKOOEKO_EZH2_qval23merge100bp__ESC_WT_EZH2_R1 %>%
+  left_join(BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_WT_EZH2_R1 ) %>%
+  left_join(ESC_WTKOOEKO_EZH2_qval23merge100bp_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R1")
+SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_WT_EZH2_R2 = SCORE_WTKOOEKO_EZH2_qval23merge100bp__ESC_WT_EZH2_R2 %>%
+  left_join(BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_WT_EZH2_R2 ) %>%
+  left_join(ESC_WTKOOEKO_EZH2_qval23merge100bp_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R2")
+SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_WT_EZH2_R3 = SCORE_WTKOOEKO_EZH2_qval23merge100bp__ESC_WT_EZH2_R3 %>%
+  left_join(BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_WT_EZH2_R3 ) %>%
+  left_join(ESC_WTKOOEKO_EZH2_qval23merge100bp_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R3")
+
+SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_KO_EZH2_R1 = SCORE_WTKOOEKO_EZH2_qval23merge100bp__ESC_KO_EZH2_R1 %>%
+  left_join(BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_KO_EZH2_R1 ) %>%
+  left_join(ESC_WTKOOEKO_EZH2_qval23merge100bp_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R1")
+SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_KO_EZH2_R2 = SCORE_WTKOOEKO_EZH2_qval23merge100bp__ESC_KO_EZH2_R2 %>%
+  left_join(BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_KO_EZH2_R2 ) %>%
+  left_join(ESC_WTKOOEKO_EZH2_qval23merge100bp_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R2")
+SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_KO_EZH2_R3 = SCORE_WTKOOEKO_EZH2_qval23merge100bp__ESC_KO_EZH2_R3 %>%
+  left_join(BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_KO_EZH2_R3 ) %>%
+  left_join(ESC_WTKOOEKO_EZH2_qval23merge100bp_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R3")
+
+SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_OEKO_EZH2_R1 = SCORE_WTKOOEKO_EZH2_qval23merge100bp__ESC_OEKO_EZH2_R1 %>%
+  left_join(BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_OEKO_EZH2_R1 ) %>%
+  left_join(ESC_WTKOOEKO_EZH2_qval23merge100bp_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "OEKO", replicate = "R1")
+SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_OEKO_EZH2_R2 = SCORE_WTKOOEKO_EZH2_qval23merge100bp__ESC_OEKO_EZH2_R2 %>%
+  left_join(BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_OEKO_EZH2_R2 ) %>%
+  left_join(ESC_WTKOOEKO_EZH2_qval23merge100bp_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "OEKO", replicate = "R2")
+SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_OEKO_EZH2_R3 = SCORE_WTKOOEKO_EZH2_qval23merge100bp__ESC_OEKO_EZH2_R3 %>%
+  left_join(BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_OEKO_EZH2_R3 ) %>%
+  left_join(ESC_WTKOOEKO_EZH2_qval23merge100bp_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "OEKO", replicate = "R3")
+
+
+
+
+# Tidy into a single tibble
+SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp = SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_WT_EZH2_R1 %>%
+  bind_rows(SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_WT_EZH2_R2) %>%
+  bind_rows(SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_WT_EZH2_R3) %>%
+  bind_rows(SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_KO_EZH2_R1) %>%
+  bind_rows(SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_KO_EZH2_R2) %>%
+  bind_rows(SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_KO_EZH2_R3) %>%
+  bind_rows(SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_OEKO_EZH2_R1) %>%
+  bind_rows(SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_OEKO_EZH2_R2) %>%
+  bind_rows(SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__ESC_OEKO_EZH2_R3)
+
+
+
+
+######################################################
+### WT vs KO ####################################
+######################################################
+
+SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__WTvsKO = SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp %>%
+  filter(genotype %in% c("WT", "KO"),
+         peakID != "NA") %>%
+  mutate(median_score = round(median_score)) %>%
+  filter(!startsWith(peakID, "chrX")) # 143,124 to 139,122
+
+
+# Convert to wide format
+countData_WTvsKO <- SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__WTvsKO %>%
+  mutate(replicate = paste0(genotype, "_", replicate)) %>%  # Create unique column names
+  select(-genotype) %>%  # Remove genotype column (since it's now part of replicate)
+  pivot_wider(names_from = replicate, values_from = median_score, values_fill = 0)  
+  
+
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(countData_WTvsKO, -peakID), pull(countData_WTvsKO, peakID)) 
+
+
+## Create colData file that describe all our samples
+colData_WTvsKO_raw <- SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__WTvsKO %>%
+  distinct(replicate, genotype) %>%
+  mutate(sample = paste(genotype, replicate, sep = "_"))
+  
+  
+## transform df into matrix
+coldata = make_matrix(dplyr::select(colData_WTvsKO_raw, -sample), pull(colData_WTvsKO_raw, sample))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design= ~ genotype)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 100 # I TESTED 100, 250, 500: VERY COMPARABLE! So pick 100
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+
+res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm")
+
+
+## Plot-volcano
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.58 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.58 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.58)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.58)'
+
+
+res_tibble <- as_tibble(res, rownames = "peakID") %>% left_join(ESC_WTKOOEKO_EZH2_qval23merge100bp_annot)
+# Export result 
+write.table(res_tibble, file="output/edgeR/DESEQ2-WTKOOEKO_EZH2_qval23merge100bp-ESC_KO_vs_ESC_WT-EZH2.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+pdf("output/edgeR/plotVolcano_res_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_KO_vs_ESC_WT-EZH2.pdf", width=3, height=4)    
+EnhancedVolcano(res_tibble,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, ESC, EZH2',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.58,
+  pointSize = 1.0,
+  labSize = 2,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+
+upregulated_genes <- sum(res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, ]
+#### Filter for down-regulated genes
+downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, ]
+#### Save
+write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_KO_vs_ESC_WT-EZH2.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_KO_vs_ESC_WT-EZH2.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+res_tibble %>% dplyr::select(peakID, geneSymbol, log2FoldChange, padj) %>%
+  filter(padj < 0.05, log2FoldChange > 0.58)
+
+
+res_tibble %>% dplyr::select(peakID, geneSymbol, log2FoldChange, padj) %>%
+  filter(padj < 0.05, log2FoldChange < -0.58)
+
+
+# Save as coordinates for bed deeptools
+
+write_tsv( upregulated %>%
+  separate(peakID, into = c("chr", "start", "end"), sep = "_", remove = TRUE) %>%
+  dplyr::select(chr, start, end), "output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_KO_vs_ESC_WT-EZH2.bed", col_names = FALSE)
+write_tsv( downregulated %>%
+  separate(peakID, into = c("chr", "start", "end"), sep = "_", remove = TRUE) %>%
+  dplyr::select(chr, start, end), "output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_KO_vs_ESC_WT-EZH2.bed", col_names = FALSE)
+
+
+
+
+
+
+######################################################
+### WT vs OEKO ####################################
+######################################################
+
+SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__WTvsOEKO = SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp %>%
+  filter(genotype %in% c("WT", "OEKO"),
+         peakID != "NA") %>%
+  mutate(median_score = round(median_score)) %>%
+  filter(!startsWith(peakID, "chrX")) # 143,124 to 139,122
+
+
+
+
+
+
+# Convert to wide format
+countData_WTvsOEKO <- SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__WTvsOEKO %>%
+  mutate(replicate = paste0(genotype, "_", replicate)) %>%  # Create unique column names
+  select(-genotype) %>%  # Remove genotype column (since it's now part of replicate)
+  pivot_wider(names_from = replicate, values_from = median_score, values_fill = 0)  
+  
+
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(countData_WTvsOEKO, -peakID), pull(countData_WTvsOEKO, peakID)) 
+
+
+## Create colData file that describe all our samples
+colData_WTvsOEKO_raw <- SCORE_BED_WTKOOEKO_EZH2_qval23merge100bp__WTvsOEKO %>%
+  distinct(replicate, genotype) %>%
+  mutate(sample = paste(genotype, replicate, sep = "_"))
+  
+  
+## transform df into matrix
+coldata = make_matrix(dplyr::select(colData_WTvsOEKO_raw, -sample), pull(colData_WTvsOEKO_raw, sample))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design= ~ genotype)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 100 # I TESTED 100, 250, 500: VERY COMPARABLE! So pick 100
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+
+res <- lfcShrink(dds, coef="genotype_OEKO_vs_WT", type="apeglm")
+
+
+## Plot-volcano
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.58 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.58 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.58)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.58)'
+
+
+res_tibble <- as_tibble(res, rownames = "peakID") %>% left_join(ESC_WTKOOEKO_EZH2_qval23merge100bp_annot)
+# Export result 
+write.table(res_tibble, file="output/edgeR/DESEQ2-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-EZH2.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+pdf("output/edgeR/plotVolcano_res_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-EZH2.pdf", width=3, height=4)    
+EnhancedVolcano(res_tibble,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'OEKO vs WT, ESC, EZH2',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.58,
+  pointSize = 1.0,
+  labSize = 2,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+
+upregulated_genes <- sum(res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, na.rm = TRUE)
+downregulated_genes <- sum(res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, na.rm = TRUE)
+
+# Save as gene list for GO analysis:
+upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, ]
+#### Filter for down-regulated genes
+downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, ]
+#### Save
+write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-EZH2.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-EZH2.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+res_tibble %>% dplyr::select(peakID, geneSymbol, log2FoldChange, padj) %>%
+  filter(padj < 0.05, log2FoldChange > 0.58)
+
+
+res_tibble %>% dplyr::select(peakID, geneSymbol, log2FoldChange, padj) %>%
+  filter(padj < 0.05, log2FoldChange < -0.58)
+
+
+
+
+# Save as coordinates for bed deeptools
+
+write_tsv( upregulated %>%
+  separate(peakID, into = c("chr", "start", "end"), sep = "_", remove = TRUE) %>%
+  dplyr::select(chr, start, end), "output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-EZH2.bed", col_names = FALSE)
+write_tsv( downregulated %>%
+  separate(peakID, into = c("chr", "start", "end"), sep = "_", remove = TRUE) %>%
+  dplyr::select(chr, start, end), "output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-EZH2.bed", col_names = FALSE)
+```
+
+--> For EZH2 I receive the error `Error in optimHess(par = init, fn = nbinomFn, gr = nbinomGr, x = x, y = y,  : non-finite value supplied by optim` when doing the `lfcShrink()`; error is discussed [here](https://www.biostars.org/p/9559740/) and is related to updated version of apeglm I need to install with `devtools::install_github("azhu513/apeglm")`
+  --> For EZH2, let's not use `deseq2` env, but instead `deseq2V2` env!
+
+
+
+
+
+
+
+## Complex heatmaps
+
+Let's generate a heatmap that put together:
+- Region gain/lost H3K27me3: only region associated with changes in a gene promoter
+  - H3K27me3 signal for WT and KO
+- RNAseq TPM value for the genes with H3K27me3 changes
+
+
+### WT vs KO - Regions with H3K27me3 changes
+
+```bash
+conda activate deseq2
+
+```
+
+```R
+# packages
+library("tidyr")
+library("ComplexHeatmap")
+library("EnrichedHeatmap")
+library("circlize")
+library("GenomicRanges")
+library("rtracklayer")
+
+
+# ---- input paths  ----
+bed_gain <- "output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-H3K27me3.bed"     # Gain H3K27me3 (KO>WT)
+bed_lost <- "output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-H3K27me3.bed"  # Lost H3K27me3 (KO<WT)
+
+bdg_WT <- "output/bigwig_Ferguson/ESC_WT_H3K27me3_unique_norm99_initialBigwig_median.sorted.bedGraph"
+bdg_KO <- "output/bigwig_Ferguson/ESC_KO_H3K27me3_unique_norm99_initialBigwig_median.sorted.bedGraph"
+
+
+
+# TPM table (GeneID, GeneSymbol, genotype, replicate, TPM, ENSG)
+tpm_file <- "../019__RNAseq_ESC_V1/output/deseq2/txi_Kallisto-GeneLevel-TPM.txt"
+
+
+
+# ---- read peak sets (BED -> GRanges) ----
+read_bed3 <- function(path) {
+  # 3-column BED (chr, start, end) without header
+  df <- read_tsv(path, col_names = c("chr","start","end"), show_col_types = FALSE)
+  GRanges(seqnames = df$chr, ranges = IRanges(start = df$start, end = df$end))
+}
+
+gr_gain <- read_bed3(bed_gain)
+gr_lost <- read_bed3(bed_lost)
+## Make one GRanges with a group label. Keep "Gain" first so it appears first in the heatmap.
+regions_all <- c(gr_gain, gr_lost)
+group <- factor(c(rep("Gain_H3K27me3", length(gr_gain)),
+                  rep("Lost_H3K27me3", length(gr_lost))),
+                levels = c("Gain_H3K27me3","Lost_H3K27me3"))
+
+   
+# ---- import bedGraphs ----
+## bedGraph -> GRanges with a "score" column
+cov_WT <- import(bdg_WT, format = "bedGraph")  # GRanges with score
+cov_KO <- import(bdg_KO, format = "bedGraph")
+
+
+
+# ---- make coverage functions for EnrichedHeatmap ----
+## EnrichedHeatmap::normalizeToMatrix works with GRanges "signal" via cov2rle or providing cov as GRanges directly.
+## We'll pass the GRanges bedGraph; EH will extract scores in windows.
+
+target_center <- function(gr) {
+  # center on peak middle (typical for histone marks)
+  start <- floor((start(gr) + end(gr)) / 2)
+  GRanges(seqnames = seqnames(gr), ranges = IRanges(start, width = 1))
+}
+
+centered_regions <- target_center(regions_all)
+
+# parameters for the profile window
+upstream   <- 2500   # bp
+downstream <- 2500   # bp
+bin_size   <- 50     # bp
+
+mat_WT <- normalizeToMatrix(
+  signal = cov_WT,
+  target = centered_regions,
+  extend = c(upstream, downstream),
+  w = bin_size,
+  mean_mode = "w0",   # window average (robust for bedGraph)
+  empty_value = 0
+)
+
+mat_KO <- normalizeToMatrix(
+  signal = cov_KO,
+  target = centered_regions,
+  extend = c(upstream, downstream),
+  w = bin_size,
+  mean_mode = "w0",
+  empty_value = 0
+)
+
+
+
+
+
+
+
+# ---- RNA: KO vs WT log2FC per peak’s gene ----
+## 1) summarize TPM per genotype (average across replicates)
+tpm <- read_tsv(tpm_file, show_col_types = FALSE)
+tpm_sum <- tpm %>%
+  filter(genotype %in% c("WT","KO")) %>%
+  group_by(GeneSymbol, genotype) %>%
+  summarize(TPM = mean(TPM, na.rm = TRUE), .groups = "drop") %>%
+  tidyr::pivot_wider(names_from = genotype, values_from = TPM, values_fill = 0)
+
+tpm_sum <- tpm_sum %>%
+  mutate(RNA_log2FC_KOvsWT = log2((KO + 1e-6) / (WT + 1e-6)),
+         WT_log2TPM = log2(WT + 1),
+         KO_log2TPM = log2(KO + 1))
+
+# 2) map peak -> geneSymbol from your DE result tibbles (upregulated / downregulated).
+res_tibble <- read.delim("output/edgeR/DESEQ2-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-H3K27me3.txt") %>%
+  as_tibble() %>%
+  mutate(peakID = as.character(peakID))
+
+upregulated <- res_tibble %>%
+  filter(!is.na(log2FoldChange), !is.na(padj),
+         log2FoldChange > 0.58, padj < 5e-2)
+downregulated <- res_tibble %>%
+  filter(!is.na(log2FoldChange), !is.na(padj),
+         log2FoldChange < -0.58, padj < 5e-2)
+
+#    We need a vector of gene symbols aligned with 'regions_all' row order.
+#    Build lookup: peakID -> geneSymbol
+get_peak_gene <- function(df) {
+  # df must have columns: peakID, geneSymbol
+  df %>%
+    select(peakID, geneSymbol) %>%
+    distinct()
+}
+
+pk_gene_gain <- get_peak_gene(upregulated)
+pk_gene_lost <- get_peak_gene(downregulated)
+
+
+## Build character vector of peakIDs for gain & lost in the same order as BEDs
+## We reconstruct peakIDs from BED 3-col by "chr_start_end" (your original convention)
+mk_peak_id <- function(gr) paste0(as.character(seqnames(gr)), "_", start(gr), "_", end(gr))
+peakID_gain <- mk_peak_id(gr_gain)
+peakID_lost <- mk_peak_id(gr_lost)
+
+# Join to fetch geneSymbol in the same order
+gene_gain <- tibble(peakID = peakID_gain) %>%
+  left_join(pk_gene_gain, by = "peakID") %>%
+  pull(geneSymbol)
+
+gene_lost <- tibble(peakID = peakID_lost) %>%
+  left_join(pk_gene_lost, by = "peakID") %>%
+  pull(geneSymbol)
+
+genes_all <- c(gene_gain, gene_lost)
+
+
+# 3) attach RNA metric to each peak row
+rna_tbl <- tpm_sum %>% select(GeneSymbol, RNA_log2FC_KOvsWT, WT_log2TPM, KO_log2TPM)
+
+rna_annot <- tibble(GeneSymbol = genes_all) %>%
+  left_join(rna_tbl, by = "GeneSymbol")
+
+RNA_log2FC <- rna_annot$RNA_log2FC_KOvsWT
+WT_expr    <- rna_annot$WT_log2TPM
+KO_expr    <- rna_annot$KO_log2TPM
+
+
+
+
+
+
+
+## ---- colors ----
+# signal color scale using actual range
+sig_range <- range(c(as.numeric(mat_WT), as.numeric(mat_KO)), na.rm = TRUE)
+
+# cap extreme max so color scale isn’t dominated by outliers
+upper <- quantile(c(as.numeric(mat_WT), as.numeric(mat_KO)), 0.99, na.rm = TRUE)
+
+sig_col <- circlize::colorRamp2(
+  c(0, upper/2, upper),
+  c("#2166AC", "#F7F7F7", "#B2182B")
+)
+
+rna_col <- colorRamp2(c(-2, 0, 2), c("#2166AC","#F7F7F7","#B2182B"))
+
+expr_col <- colorRamp2(quantile(c(WT_expr, KO_expr), c(0.05, 0.5, 0.95), na.rm = TRUE),
+                       c("#2166AC","#F7F7F7","#B2182B"))
+
+
+# ----- build robust color map from the actual matrix values -----
+# use real dynamic range (capped at 99th pct)
+sig_vals <- c(as.numeric(mat_WT), as.numeric(mat_KO))
+sig_vals <- sig_vals[is.finite(sig_vals)]
+upper <- quantile(sig_vals, 0.99, na.rm = TRUE)
+mid   <- upper/2
+
+sig_col <- colorRamp2(c(0, mid, upper),
+                      c("#2166AC", "#F7F7F7", "#B2182B"))
+legend_at <- c(0, round(mid, 1), round(upper, 1))
+
+ht_WT <- EnrichedHeatmap(
+  mat_WT,
+  name = "WT_H3K27me3",
+  col = sig_col,
+  top_annotation = HeatmapAnnotation(lines = anno_enriched(ylim = c(0, upper))),
+  heatmap_legend_param = list(at = legend_at, labels = legend_at),
+  row_split = group
+)
+
+ht_KO <- EnrichedHeatmap(
+  mat_KO,
+  name = "KO_H3K27me3",
+  col = sig_col,
+  top_annotation = HeatmapAnnotation(lines = anno_enriched(ylim = c(0, upper))),
+  heatmap_legend_param = list(at = legend_at, labels = legend_at)
+)
+
+## RNA as one or two side “heatmap columns”.
+## Option A: one column with RNA KO vs WT log2FC
+ht_RNAfc <- Heatmap(matrix(RNA_log2FC, ncol = 1),
+                    name = "RNA log2FC\n(KO/WT)",
+                    col = rna_col,
+                    show_row_names = FALSE,
+                    cluster_rows = FALSE,
+                    width = unit(5, "mm"))
+
+# Option B (uncomment to also show per-genotype expression columns)
+# ht_RNA_WT <- Heatmap(matrix(WT_expr, ncol = 1), name = "WT log2(TPM+1)",
+#                      col = expr_col, show_row_names = FALSE, cluster_rows = FALSE,
+#                      width = unit(5, "mm"))
+# ht_RNA_KO <- Heatmap(matrix(KO_expr, ncol = 1), name = "KO log2(TPM+1)",
+#                      col = expr_col, show_row_names = FALSE, cluster_rows = FALSE,
+#                      width = unit(5, "mm"))
+
+# ---- draw ----
+pdf("output/edgeR/EnrichedHeatmap-DESEQ2-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-H3K27me3-TPM.pdf", width = 8, height = 8)
+draw(ht_WT + ht_KO + ht_RNAfc,
+     heatmap_legend_side = "right",
+     annotation_legend_side = "right",
+     merge_legend = TRUE)
+dev.off()
+
+```
+
+--> BUG, it does not work...
+  --> REquire troubleshooting
+
+
+
 
 
 
@@ -2874,16 +3659,33 @@ output/diffreps/PSC_WTvsOEKO_EZH2_bin1000space100_gt_pval05_padj001_fc1_avg100__
 output/diffreps/PSC_WTvsOEKO_EZH2_bin1000space100_gt_pval05_padj001_fc1_avg100__Lost.txt
 
 
+# Peak with DESEQ2/MACS2 H3K27me3 changes
+## GAIN LOST PEAKS
+### WT vs KO
+output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-H3K27me3.bed
+output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-H3K27me3.bed
+output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_KO_vs_ESC_WT-EZH2.bed
+output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_KO_vs_ESC_WT-EZH2.bed
+### WT vs OEKO
+output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-H3K27me3.bed
+output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-H3K27me3.bed
+output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-EZH2.bed
+output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-EZH2.bed
 
 
 # Check signal WT vs KO regions with bigwig WT,KO,OEKO from FergusonUniqueNorm99
+## DIFFREPS
 sbatch scripts/matrix_PEAK_5kb-PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__GainLost-WTKOOEKO-H3K27me3EZH2EZH1.sh # 50662760 ok
 sbatch scripts/matrix_PEAK_5kb-PSC_WTvsKO_EZH2_bin1000space100_gt_pval05_padj001_fc1_avg30__GainLost-WTKOOEKO-H3K27me3EZH2EZH1.sh # 50742353 ok
-
-# Check signal WT vs OEKO regions with bigwig WT,KO,OEKO from FergusonUniqueNorm99
+### Check signal WT vs OEKO regions with bigwig WT,KO,OEKO from FergusonUniqueNorm99
 sbatch scripts/matrix_PEAK_5kb-PSC_WTvsOEKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__GainLost-WTKOOEKO-H3K27me3EZH2EZH1.sh # 50662855 ok
 sbatch scripts/matrix_PEAK_5kb-PSC_WTvsOEKO_EZH2_bin1000space100_gt_pval05_padj001_fc1_avg30__GainLost-WTKOOEKO-H3K27me3EZH2EZH1.sh # 50742354 ok
 
+## DESEQ2/MACS2
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3EZH2EZH1.sh # 51164829 xxx
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3EZH2EZH1.sh # 51164877 xxx
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3EZH2EZH1.sh # 51166444 xxx
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3EZH2EZH1.sh # 51166450 xxx
 
 
 
@@ -2903,6 +3705,13 @@ sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23me
 
 
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH2poolqval23merge100bp-WTKOOEKO-H3K27me3EZH2EZH1.sh # 50895514 ok
+
+
+
+
+
+
+
 ```
 
 

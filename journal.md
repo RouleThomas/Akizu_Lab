@@ -95,6 +95,7 @@ library("furrr") # parralel processing
 library("tximport") # importing kalisto transcript counts to geneLevels
 library("rhdf5") # read/convert kalisto output files.  
 
+library("EnrichedHeatmap")
 
 
 ### deseq2V2
