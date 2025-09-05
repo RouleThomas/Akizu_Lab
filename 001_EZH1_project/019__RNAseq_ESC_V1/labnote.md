@@ -801,7 +801,7 @@ write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05fc0
 
 
 ######################################
-# GAIN H3K27me3 from `001*/018*` ###################
+# GAIN H3K27me3 from `001*/018*` DIFFREPS ###################
 ######################################
 
 ## Plot-volcano
@@ -875,7 +875,7 @@ write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05fc0
 
 
 ######################################
-# LOST H3K27me3 from `001*/018*` ###################
+# LOST H3K27me3 from `001*/018*` DIFFREPS ###################
 ######################################
 
 ## Plot-volcano
@@ -952,9 +952,337 @@ write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05fc0
 
 
 
+######################################
+# GAIN H3K27me3 from `001*/018*` DESEQ2 MACS2 ###################
+######################################
+res <- read.table("output/deseq2/res_ESC_KO_vs_ESC_WT.txt",
+                  sep = "\t", 
+                  header = TRUE, 
+                  row.names = 1, 
+                  stringsAsFactors = FALSE) %>%
+  tibble::rownames_to_column(var = "gene") %>%
+  as_tibble()
 
 
 
+gene_Gain <- read.csv(
+  "../018__CutRun_DOX_V1/output/edgeR/DESEQ2-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-H3K27me3.txt",
+  sep = "\t",
+  header = TRUE,
+  stringsAsFactors = FALSE
+) %>%
+  # 1) keep significant peaks and assign effect direction
+  filter(padj < 0.05) %>%
+  mutate(effect_dir = case_when(
+    log2FoldChange >=  0.58 ~ "pos",
+    log2FoldChange <= -0.58 ~ "neg",
+    TRUE ~ NA_character_
+  )) %>%
+  filter(!is.na(effect_dir)) %>%
+  # 2) determine gene-level direction
+  group_by(geneSymbol) %>%
+  summarise(
+    n_pos = sum(effect_dir == "pos"),
+    n_neg = sum(effect_dir == "neg"),
+    direction = case_when(
+      n_pos > 0 & n_neg > 0 ~ "Mix",
+      n_pos > 0             ~ "Gain",
+      n_neg > 0             ~ "Lost",
+      TRUE                  ~ NA_character_
+    ),
+    .groups = "drop"
+  ) %>%
+  # 3) keep only Gain genes (exclude Mix)
+  filter(direction == "Gain") %>%
+  dplyr::select(geneSymbol) %>%
+  unique() %>%
+  dplyr::rename("GeneSymbol" = "geneSymbol")
+  
+
+
+res_Gain = res %>%
+  inner_join(gene_Gain)
+
+
+
+res_df <- res_Gain %>% as.data.frame() %>% dplyr::select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE))
+n_upregulated <- sum(res_df$log2FoldChange > 0.58 & res_df$padj == TRUE, na.rm = TRUE)
+n_downregulated <- sum(res_df$log2FoldChange < -0.58 & res_df$padj == TRUE, na.rm = TRUE)
+
+
+
+keyvals <- ifelse(
+  res_Gain$log2FoldChange < -0.58 & res_Gain$padj < 5e-2, 'Sky Blue',
+    ifelse(res_Gain$log2FoldChange > 0.58 & res_Gain$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.25)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.25)'
+
+pdf("output/deseq2/plotVolcano_res_Gain-DESEQ2-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-H3K27me3-q05fc058_ESC_KO_vs_ESC_WT.pdf", width=4, height=5)    
+EnhancedVolcano(res_Gain,
+  lab = res_Gain$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, ESC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.25,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) ) +
+  annotate("text", x = 3, y = 15, 
+           label = paste(n_upregulated), hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 15, 
+           label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+
+
+
+
+
+
+
+## WHY SOME GENES ARE MISSING between gain and RNAseq ########################
+gene_Gain <- read.csv(
+  "../018__CutRun_DOX_V1/output/edgeR/DESEQ2-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-H3K27me3.txt",
+  sep = "\t",
+  header = TRUE,
+  stringsAsFactors = FALSE
+) %>%
+  # 1) keep significant peaks and assign effect direction
+  filter(padj < 0.05) %>%
+  mutate(effect_dir = case_when(
+    log2FoldChange >=  0.58 ~ "pos",
+    log2FoldChange <= -0.58 ~ "neg",
+    TRUE ~ NA_character_
+  )) %>%
+  filter(!is.na(effect_dir)) %>%
+  # 2) determine gene-level direction
+  group_by(geneSymbol) %>%
+  summarise(
+    n_pos = sum(effect_dir == "pos"),
+    n_neg = sum(effect_dir == "neg"),
+    direction = case_when(
+      n_pos > 0 & n_neg > 0 ~ "Mix",
+      n_pos > 0             ~ "Gain",
+      n_neg > 0             ~ "Lost",
+      TRUE                  ~ NA_character_
+    ),
+    .groups = "drop"
+  ) %>%
+  # 3) keep only Gain genes (exclude Mix)
+  filter(direction == "Gain") %>%
+  dplyr::select(geneSymbol) %>%
+  unique() %>%
+  dplyr::rename("GeneSymbol" = "geneSymbol")
+
+## Seprate gene presnet and absent after fusion RNAseq and CutRun
+res_Gain_MISSED = gene_Gain %>%
+  anti_join(res, by = "GeneSymbol")
+
+res_Gain_PRESENT = gene_Gain %>%
+  inner_join(res, by = "GeneSymbol")
+
+
+## Load TPM info of each genes
+tpm_long <- read.csv(
+  "output/deseq2/txi_Kallisto-GeneLevel-TPM.txt",
+  sep = "\t",
+  header = TRUE,
+  stringsAsFactors = FALSE
+)
+
+avg_tpm <- tpm_long %>%
+  group_by(GeneSymbol, genotype) %>%
+  summarise(TPM = mean(TPM, na.rm = TRUE), .groups = "drop")
+
+
+mat <- avg_tpm %>%
+  tidyr::pivot_wider(names_from = genotype, values_from = TPM) %>%
+  filter(!is.na(GeneSymbol) & GeneSymbol != "") %>%
+  arrange(desc(WT)) %>%
+  dplyr::select(GeneSymbol, WT, KO) %>%
+  tibble::column_to_rownames("GeneSymbol") %>%
+  as.matrix()
+
+## 5) Replace any NAs with 0
+mat[is.na(mat)] <- 0
+
+## 6) Plot heatmap (log2+1 TPM)
+# 0) Inputs: tpm_long, res_Gain_MISSED (GeneSymbol), res_Gain_PRESENT (GeneSymbol)
+genes_missing <- unique(res_Gain_MISSED$GeneSymbol)
+genes_present <- unique(res_Gain_PRESENT$GeneSymbol)
+
+# 1) Helper to build WT/KO matrix for a gene list
+make_mat <- function(genes) {
+  avg_tpm <- tpm_long %>%
+    dplyr::filter(GeneSymbol %in% genes, genotype %in% c("WT", "KO")) %>%
+    group_by(GeneSymbol, genotype) %>%
+    summarise(TPM = mean(TPM, na.rm = TRUE), .groups = "drop")
+
+  mat <- avg_tpm %>%
+    pivot_wider(names_from = genotype, values_from = TPM) %>%
+    mutate(WT = coalesce(WT, 0), KO = coalesce(KO, 0)) %>%
+    filter(!is.na(GeneSymbol) & GeneSymbol != "") %>%
+    arrange(desc(WT)) %>%
+    dplyr::select(GeneSymbol, WT, KO) %>%
+    tibble::column_to_rownames("GeneSymbol") %>%
+    as.matrix()
+
+  mat[is.na(mat)] <- 0
+  mat
+}
+
+mat_missing <- make_mat(genes_missing)
+mat_present <- make_mat(genes_present)
+
+# 2) Shared color scale across both panels
+vmin  <- min(log2(c(mat_missing, mat_present) + 1), na.rm = TRUE)
+vmax  <- max(log2(c(mat_missing, mat_present) + 1), na.rm = TRUE)
+ncols <- 100
+cols  <- colorRampPalette(c("white","orange","red"))(ncols)
+brks  <- seq(vmin, vmax, length.out = ncols + 1)
+
+# 3) Draw side-by-side into one PDF
+pdf("output/deseq2/heatmap_TPM-H3K27me3-WTvsKO_missing_vs_present_Gain.pdf",
+    width = 6,
+    height = max(4, max(nrow(mat_missing), nrow(mat_present)) * 0.18))
+
+p1 <- pheatmap(
+  log2(mat_missing + 1),
+  color = cols, breaks = brks,
+  cluster_rows = FALSE, cluster_cols = FALSE,
+  main = "Missing in RNA (Gain genes)",
+  border_color = NA, silent = TRUE
+)
+
+p2 <- pheatmap(
+  log2(mat_present + 1),
+  color = cols, breaks = brks,
+  cluster_rows = FALSE, cluster_cols = FALSE,
+  main = "Present in RNA (Gain genes)",
+  border_color = NA, silent = TRUE
+)
+
+gridExtra::grid.arrange(grobs = list(p1$gtable, p2$gtable), ncol = 2)
+dev.off()
+
+
+
+
+# Helper: average TPM per gene per genotype (one dot per gene)
+avg_by_gene <- function(genes, status_label) {
+  tpm_long %>%
+    filter(GeneSymbol %in% genes, genotype %in% c("WT","KO")) %>%
+    group_by(GeneSymbol, genotype) %>%
+    summarise(TPM = mean(TPM, na.rm = TRUE), .groups = "drop") %>%
+    mutate(status = status_label)
+}
+
+df_missing  <- avg_by_gene(genes_missing, "Missing in RNA (Gain)")
+df_present  <- avg_by_gene(genes_present, "Present in RNA (Gain)")
+df_plot <- bind_rows(df_missing, df_present) %>%
+  mutate(
+    genotype = factor(genotype, levels = c("WT","KO")),
+    status   = factor(status, levels = c("Missing in RNA (Gain)", "Present in RNA (Gain)"))
+  )
+
+# Plot
+pdf("output/deseq2/boxplot_TPM-H3K27me3-WTvsKO_missing_vs_present_Gain.pdf",
+    width = 5, height = 4.5)
+
+ggplot(df_plot, aes(x = genotype, y = log2(TPM + 1), fill = genotype, color = genotype)) +
+  geom_boxplot(outlier.shape = NA, width = 0.55, alpha = 0.25) +
+  geom_point(position = position_jitter(width = 0.15, height = 0, seed = 1),
+             size = 1.6, alpha = 0.75) +
+  facet_wrap(~ status, nrow = 1, scales = "fixed") +
+  scale_fill_manual(values = c(WT = "black", KO = "red")) +
+  scale_color_manual(values = c(WT = "black", KO = "red")) +
+  labs(x = NULL, y = "TPM (log2 + 1)", title = "WT vs KO — Gain genes (Missing vs Present in RNA)") +
+  theme_bw(base_size = 11) +
+  theme(
+    legend.position = "none",
+    strip.text = element_text(face = "bold"),
+    panel.grid.minor = element_blank()
+  )
+
+dev.off()
+
+
+
+
+
+
+
+
+
+
+# --- 2) Create one jitter value PER GENE (per facet) and reuse for both WT & KO
+# Segments data (one row per gene/facet), with WT/KO y-values and shared jitter
+df_segs <- df_plot %>%
+  dplyr::select(GeneSymbol, status, genotype, y) %>%
+  pivot_wider(names_from = genotype, values_from = y) %>%
+  filter(!is.na(WT) & !is.na(KO)) %>%
+  mutate(
+    j    = rnorm(n(), mean = 0, sd = 0.12),   # shared jitter per gene
+    x_wt = 1 + j,
+    x_ko = 2 + j
+  )
+
+# Points data with same jitter
+df_pts <- df_plot %>%
+  left_join(df_segs %>% dplyr::select(GeneSymbol, status, j), by = c("GeneSymbol","status")) %>%
+  mutate(xj = as.numeric(genotype) + j)
+
+# --- 3) Plot: boxplots + paired points + arrowed segments
+pdf("output/deseq2/boxplot_TPM-H3K27me3-WTvsKO_missing_vs_present_Gain_arrows.pdf",
+    width = 5, height = 4.5)
+
+ggplot() +
+  # Boxplots (no jitter here; just the two categories)
+  geom_boxplot(
+    data = df_pts,
+    aes(x = genotype, y = y, fill = genotype, color = genotype),
+    outlier.shape = NA, width = 0.55, alpha = 0.25
+  ) +
+  # Arrows WT -> KO per gene (uses shared jitter so lines go through the points)
+  geom_segment(
+    data = df_segs,
+    aes(x = x_wt, xend = x_ko, y = WT, yend = KO),
+    inherit.aes = FALSE,
+    alpha = 0.35, linewidth = 0.3,
+    arrow = arrow(length = unit(2, "mm"), type = "closed")
+  ) +
+  # Points (one per gene per genotype)
+  geom_point(
+    data = df_pts,
+    aes(x = xj, y = y, color = genotype),
+    size = 1.6, alpha = 0.85
+  ) +
+  facet_wrap(~ status, nrow = 1, scales = "fixed") +
+  scale_fill_manual(values = c(WT = "black", KO = "red")) +
+  scale_color_manual(values = c(WT = "black", KO = "red")) +
+  labs(x = NULL, y = "TPM (log2 + 1)",
+       title = "WT vs KO — Gain genes (Missing vs Present in RNA)\nBoxplots, per-gene dots, and WT→KO arrows") +
+  theme_bw(base_size = 11) +
+  theme(
+    legend.position = "none",
+    strip.text = element_text(face = "bold"),
+    panel.grid.minor = element_blank()
+  )
+
+dev.off()
+
+########################
 
 
 
@@ -1201,6 +1529,405 @@ downregulated <- res[!is.na(res$log2FoldChange) & !is.na(res$padj) & res$log2Fol
 #### Save
 write.table(upregulated$GeneSymbol, file = "output/deseq2/upregulated_q05fc058_ESC_OEKO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 write.table(downregulated$GeneSymbol, file = "output/deseq2/downregulated_q05fc058_ESC_OEKO_vs_ESC_WT.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+######################################
+# GAIN H3K27me3 from `001*/018*` DESEQ2 MACS2 ###################
+######################################
+res <- read.table("output/deseq2/res_ESC_OEKO_vs_ESC_WT.txt",
+                  sep = "\t", 
+                  header = TRUE, 
+                  row.names = 1, 
+                  stringsAsFactors = FALSE) %>%
+  tibble::rownames_to_column(var = "gene") %>%
+  as_tibble()
+
+
+
+gene_Gain <- read.csv(
+  "../018__CutRun_DOX_V1/output/edgeR/DESEQ2-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-H3K27me3.txt",
+  sep = "\t",
+  header = TRUE,
+  stringsAsFactors = FALSE
+) %>%
+  # 1) keep significant peaks and assign effect direction
+  filter(padj < 0.05) %>%
+  mutate(effect_dir = case_when(
+    log2FoldChange >=  0.58 ~ "pos",
+    log2FoldChange <= -0.58 ~ "neg",
+    TRUE ~ NA_character_
+  )) %>%
+  filter(!is.na(effect_dir)) %>%
+  # 2) determine gene-level direction
+  group_by(geneSymbol) %>%
+  summarise(
+    n_pos = sum(effect_dir == "pos"),
+    n_neg = sum(effect_dir == "neg"),
+    direction = case_when(
+      n_pos > 0 & n_neg > 0 ~ "Mix",
+      n_pos > 0             ~ "Gain",
+      n_neg > 0             ~ "Lost",
+      TRUE                  ~ NA_character_
+    ),
+    .groups = "drop"
+  ) %>%
+  # 3) keep only Gain genes (exclude Mix)
+  filter(direction == "Gain") %>%
+  dplyr::select(geneSymbol) %>%
+  unique() %>%
+  dplyr::rename("GeneSymbol" = "geneSymbol")
+  
+
+
+res_Gain = res %>%
+  inner_join(gene_Gain)
+
+
+
+res_df <- res_Gain %>% as.data.frame() %>% dplyr::select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE))
+n_upregulated <- sum(res_df$log2FoldChange > 0.58 & res_df$padj == TRUE, na.rm = TRUE)
+n_downregulated <- sum(res_df$log2FoldChange < -0.58 & res_df$padj == TRUE, na.rm = TRUE)
+
+
+
+keyvals <- ifelse(
+  res_Gain$log2FoldChange < -0.58 & res_Gain$padj < 5e-2, 'Sky Blue',
+    ifelse(res_Gain$log2FoldChange > 0.58 & res_Gain$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.25)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.25)'
+
+pdf("output/deseq2/plotVolcano_res_Gain-DESEQ2-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-H3K27me3-q05fc058_ESC_OEKO_vs_ESC_WT.pdf", width=4, height=5)    
+EnhancedVolcano(res_Gain,
+  lab = res_Gain$GeneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'OEKO vs WT, ESC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.25,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) ) +
+  annotate("text", x = 3, y = 15, 
+           label = paste(n_upregulated), hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 15, 
+           label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+
+
+
+
+
+
+
+## WHY SOME GENES ARE MISSING between gain and RNAseq ########################
+gene_Gain <- read.csv(
+  "../018__CutRun_DOX_V1/output/edgeR/DESEQ2-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-H3K27me3.txt",
+  sep = "\t",
+  header = TRUE,
+  stringsAsFactors = FALSE
+) %>%
+  # 1) keep significant peaks and assign effect direction
+  filter(padj < 0.05) %>%
+  mutate(effect_dir = case_when(
+    log2FoldChange >=  0.58 ~ "pos",
+    log2FoldChange <= -0.58 ~ "neg",
+    TRUE ~ NA_character_
+  )) %>%
+  filter(!is.na(effect_dir)) %>%
+  # 2) determine gene-level direction
+  group_by(geneSymbol) %>%
+  summarise(
+    n_pos = sum(effect_dir == "pos"),
+    n_neg = sum(effect_dir == "neg"),
+    direction = case_when(
+      n_pos > 0 & n_neg > 0 ~ "Mix",
+      n_pos > 0             ~ "Gain",
+      n_neg > 0             ~ "Lost",
+      TRUE                  ~ NA_character_
+    ),
+    .groups = "drop"
+  ) %>%
+  # 3) keep only Gain genes (exclude Mix)
+  filter(direction == "Gain") %>%
+  dplyr::select(geneSymbol) %>%
+  unique() %>%
+  dplyr::rename("GeneSymbol" = "geneSymbol")
+
+## Seprate gene presnet and absent after fusion RNAseq and CutRun
+res_Gain_MISSED = gene_Gain %>%
+  anti_join(res, by = "GeneSymbol")
+
+res_Gain_PRESENT = gene_Gain %>%
+  inner_join(res, by = "GeneSymbol")
+
+
+## Load TPM info of each genes
+tpm_long <- read.csv(
+  "output/deseq2/txi_Kallisto-GeneLevel-TPM.txt",
+  sep = "\t",
+  header = TRUE,
+  stringsAsFactors = FALSE
+)
+
+avg_tpm <- tpm_long %>%
+  group_by(GeneSymbol, genotype) %>%
+  summarise(TPM = mean(TPM, na.rm = TRUE), .groups = "drop")
+
+
+mat <- avg_tpm %>%
+  tidyr::pivot_wider(names_from = genotype, values_from = TPM) %>%
+  filter(!is.na(GeneSymbol) & GeneSymbol != "") %>%
+  arrange(desc(WT)) %>%
+  dplyr::select(GeneSymbol, WT, OE) %>%
+  tibble::column_to_rownames("GeneSymbol") %>%
+  as.matrix()
+
+## 5) Replace any NAs with 0
+mat[is.na(mat)] <- 0
+
+## 6) Plot heatmap (log2+1 TPM)
+# 0) Inputs: tpm_long, res_Gain_MISSED (GeneSymbol), res_Gain_PRESENT (GeneSymbol)
+genes_missing <- unique(res_Gain_MISSED$GeneSymbol)
+genes_present <- unique(res_Gain_PRESENT$GeneSymbol)
+
+# 1) Helper to build WT/OE matrix for a gene list
+make_mat <- function(genes) {
+  avg_tpm <- tpm_long %>%
+    dplyr::filter(GeneSymbol %in% genes, genotype %in% c("WT", "OE")) %>%
+    group_by(GeneSymbol, genotype) %>%
+    summarise(TPM = mean(TPM, na.rm = TRUE), .groups = "drop")
+
+  mat <- avg_tpm %>%
+    pivot_wider(names_from = genotype, values_from = TPM) %>%
+    mutate(WT = coalesce(WT, 0), OE = coalesce(OE, 0)) %>%
+    filter(!is.na(GeneSymbol) & GeneSymbol != "") %>%
+    arrange(desc(WT)) %>%
+    dplyr::select(GeneSymbol, WT, OE) %>%
+    tibble::column_to_rownames("GeneSymbol") %>%
+    as.matrix()
+
+  mat[is.na(mat)] <- 0
+  mat
+}
+
+mat_missing <- make_mat(genes_missing)
+mat_present <- make_mat(genes_present)
+
+# 2) Shared color scale across both panels
+vmin  <- min(log2(c(mat_missing, mat_present) + 1), na.rm = TRUE)
+vmax  <- max(log2(c(mat_missing, mat_present) + 1), na.rm = TRUE)
+ncols <- 100
+cols  <- colorRampPalette(c("white","orange","red"))(ncols)
+brks  <- seq(vmin, vmax, length.out = ncols + 1)
+
+# 3) Draw side-by-side into one PDF
+pdf("output/deseq2/heatmap_TPM-H3K27me3-WTvsOEKO_missing_vs_present_Gain.pdf",
+    width = 6,
+    height = max(4, max(nrow(mat_missing), nrow(mat_present)) * 0.18))
+
+p1 <- pheatmap(
+  log2(mat_missing + 1),
+  color = cols, breaks = brks,
+  cluster_rows = FALSE, cluster_cols = FALSE,
+  main = "Missing in RNA (Gain genes)",
+  border_color = NA, silent = TRUE
+)
+
+p2 <- pheatmap(
+  log2(mat_present + 1),
+  color = cols, breaks = brks,
+  cluster_rows = FALSE, cluster_cols = FALSE,
+  main = "Present in RNA (Gain genes)",
+  border_color = NA, silent = TRUE
+)
+
+gridExtra::grid.arrange(grobs = list(p1$gtable, p2$gtable), ncol = 2)
+dev.off()
+
+
+
+
+# Helper: average TPM per gene per genotype (one dot per gene)
+avg_by_gene <- function(genes, status_label) {
+  tpm_long %>%
+    filter(GeneSymbol %in% genes, genotype %in% c("WT","OE")) %>%
+    group_by(GeneSymbol, genotype) %>%
+    summarise(TPM = mean(TPM, na.rm = TRUE), .groups = "drop") %>%
+    mutate(status = status_label)
+}
+
+df_missing  <- avg_by_gene(genes_missing, "Missing in RNA (Gain)")
+df_present  <- avg_by_gene(genes_present, "Present in RNA (Gain)")
+df_plot <- bind_rows(df_missing, df_present) %>%
+  mutate(
+    genotype = factor(genotype, levels = c("WT","OE")),
+    status   = factor(status, levels = c("Missing in RNA (Gain)", "Present in RNA (Gain)"))
+  )
+
+# Plot
+pdf("output/deseq2/boxplot_TPM-H3K27me3-WTvsOEKO_missing_vs_present_Gain.pdf",
+    width = 5, height = 4.5)
+
+ggplot(df_plot, aes(x = genotype, y = log2(TPM + 1), fill = genotype, color = genotype)) +
+  geom_boxplot(outlier.shape = NA, width = 0.55, alpha = 0.25) +
+  geom_point(position = position_jitter(width = 0.15, height = 0, seed = 1),
+             size = 1.6, alpha = 0.75) +
+  facet_wrap(~ status, nrow = 1, scales = "fixed") +
+  scale_fill_manual(values = c(WT = "black", OE = "blue")) +
+  scale_color_manual(values = c(WT = "black", OE = "blue")) +
+  labs(x = NULL, y = "TPM (log2 + 1)", title = "WT vs OEKO — Gain genes (Missing vs Present in RNA)") +
+  theme_bw(base_size = 11) +
+  theme(
+    legend.position = "none",
+    strip.text = element_text(face = "bold"),
+    panel.grid.minor = element_blank()
+  )
+
+dev.off()
+
+
+
+
+
+
+
+
+
+
+# --- 2) Create one jitter value PER GENE (per facet) and reuse for both WT & KO
+# Segments data (one row per gene/facet), with WT/OE y-values and shared jitter
+
+second <- "OE"          # <-- change to "OEKO" if that's your column value
+levels2 <- c("WT", second)
+
+# -- inputs assumed: tpm_long, res_Gain_MISSED (GeneSymbol), res_Gain_PRESENT (GeneSymbol)
+genes_missing <- unique(res_Gain_MISSED$GeneSymbol)
+genes_present <- unique(res_Gain_PRESENT$GeneSymbol)
+
+avg_by_gene <- function(genes, status_label) {
+  tpm_long %>%
+    filter(GeneSymbol %in% genes, genotype %in% levels2) %>%
+    group_by(GeneSymbol, genotype) %>%
+    summarise(TPM = mean(TPM, na.rm = TRUE), .groups = "drop") %>%
+    mutate(status = status_label)
+}
+
+
+df_missing <- avg_by_gene(genes_missing, "Missing in RNA (Gain)")
+df_present <- avg_by_gene(genes_present, "Present in RNA (Gain)")
+
+df_plot <- bind_rows(df_missing, df_present) %>%
+  mutate(
+    genotype = factor(genotype, levels = levels2),
+    status   = factor(status, levels = c("Missing in RNA (Gain)", "Present in RNA (Gain)")),
+    y        = log2(TPM + 1)   # <-- THIS is the 'y' column
+  )
+
+# one jitter per gene (per facet), reused for both genotypes
+df_segs <- df_plot %>%
+  dplyr::select(GeneSymbol, status, genotype, y) %>%
+  pivot_wider(names_from = genotype, values_from = y) %>%
+  dplyr::filter(!is.na(.data[[levels2[1]]]) & !is.na(.data[[levels2[2]]])) %>%
+  mutate(
+    j    = rnorm(n(), 0, 0.12),
+    x_1  = 1 + j,
+    x_2  = 2 + j
+  )
+
+df_pts <- df_plot %>%
+  left_join(df_segs %>% dplyr::select(GeneSymbol, status, j), by = c("GeneSymbol","status")) %>%
+  mutate(xj = as.numeric(genotype) + j)
+
+
+
+
+df_plot <- bind_rows(df_missing, df_present) %>%
+  mutate(
+    genotype = factor(genotype, levels = levels2),
+    status   = factor(status, levels = c("Missing in RNA (Gain)", "Present in RNA (Gain)")),
+    y        = log2(TPM + 1)   # <-- THIS is the 'y' column
+  )
+
+
+df_segs <- df_plot %>%
+  dplyr::select(GeneSymbol, status, genotype, y) %>%
+  pivot_wider(names_from = genotype, values_from = y) %>%
+  filter(!is.na(WT) & !is.na(OE)) %>%
+  mutate(
+    j    = rnorm(n(), mean = 0, sd = 0.12),   # shared jitter per gene
+    x_wt = 1 + j,
+    x_oe = 2 + j
+  )
+
+# Points data with same jitter
+df_pts <- df_plot %>%
+  left_join(df_segs %>% dplyr::select(GeneSymbol, status, j), by = c("GeneSymbol","status")) %>%
+  mutate(xj = as.numeric(genotype) + j)
+
+# --- 3) Plot: boxplots + paired points + arrowed segments
+pdf("output/deseq2/boxplot_TPM-H3K27me3-WTvsOEKO_missing_vs_present_Gain_arrows.pdf",
+    width = 5, height = 4.5)
+
+ggplot() +
+  # Boxplots (no jitter here; just the two categories)
+  geom_boxplot(
+    data = df_pts,
+    aes(x = genotype, y = y, fill = genotype, color = genotype),
+    outlier.shape = NA, width = 0.55, alpha = 0.25
+  ) +
+  # Arrows WT -> OE per gene (uses shared jitter so lines go through the points)
+  geom_segment(
+    data = df_segs,
+    aes(x = x_wt, xend = x_oe, y = WT, yend = OE),
+    inherit.aes = FALSE,
+    alpha = 0.35, linewidth = 0.3,
+    arrow = arrow(length = unit(2, "mm"), type = "closed")
+  ) +
+  # Points (one per gene per genotype)
+  geom_point(
+    data = df_pts,
+    aes(x = xj, y = y, color = genotype),
+    size = 1.6, alpha = 0.85
+  ) +
+  facet_wrap(~ status, nrow = 1, scales = "fixed") +
+  scale_fill_manual(values = c(WT = "black", OE = "blue")) +
+  scale_color_manual(values = c(WT = "black", OE = "blue")) +
+  labs(x = NULL, y = "TPM (log2 + 1)",
+       title = "WT vs OE — Gain genes (Missing vs Present in RNA)\nBoxplots, per-gene dots, and WT→KO arrows") +
+  theme_bw(base_size = 11) +
+  theme(
+    legend.position = "none",
+    strip.text = element_text(face = "bold"),
+    panel.grid.minor = element_blank()
+  )
+
+dev.off()
+
+########################
+
 
 
 ```

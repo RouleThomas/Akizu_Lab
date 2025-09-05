@@ -34,12 +34,14 @@ Seems that there is only one bio rep. Lets download IP and input:
 - `SRR2037028_SRR2037029.fastq.gz` into `input.fq.gz`
 - `SRR1745499.fastq.gz` into `Ser5P_RNAPII.fq.gz`
 
-XXXY HERE prusue pol2
 
 # Fastp cleaning
 
 ```bash
 sbatch scripts/fastp.sh # 40428506 ok
+sbatch scripts/fastp_Ser5P_RNAPII.sh # 51236328 xxx
+
+
 ```
 
 
@@ -54,6 +56,8 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 conda activate bowtie2
 
 sbatch --dependency=afterany:40428506 scripts/bowtie2.sh # 40428600 ok
+sbatch --dependency=afterany:51236328 scripts/bowtie2_Ser5P_RNAPII.sh # 51236445 xxx
+
 ```
 
 
@@ -96,6 +100,7 @@ This is prefered for THOR bam input.
 conda activate bowtie2
 
 sbatch --dependency=afterany:40428600 scripts/samtools_unique_raw.sh # 40428881 ok
+sbatch --dependency=afterany:51236445 scripts/samtools_unique_raw_Ser5P_RNAPII.sh # 51236454 xxx
 ```
 
 
@@ -112,6 +117,10 @@ Let's install it in a new conda env `deseq2V3` in R `BiocManager::install("ChIPQ
 
 Run in R; followed this [workshop](https://nbisweden.github.io/workshop-archive/workshop-ChIP-seq/2018-11-07/labs/lab-chipqc.html)
 
+
+
+
+XXXY HER E!!! DO IT FOR RNASEQPOL!!
 
 
 
