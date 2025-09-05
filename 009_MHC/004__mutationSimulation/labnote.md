@@ -185,14 +185,13 @@ python scripts/simulate_array_v2.py \
 
 
 # Generate plot for all (script updated to use `simulate_array_v2.py`)
-sbatch scripts/run_filtered_contexts_v2.slurm # 50364278 xxx --> results_contexts/
-sbatch scripts/run_filtered_cosmic_v2.slurm # 50364847 xxx --> results/
-sbatch scripts/run_filtered_experimental_v2.slurm # 50365053 xxx --> results_experimental/
+sbatch scripts/run_filtered_contexts_v2.slurm # 50364278 ok --> results_contexts/
+sbatch scripts/run_filtered_cosmic_v2.slurm # 50364847 ok --> results/
+sbatch scripts/run_filtered_experimental_v2.slurm # 50365053 ok --> results_experimental/
 ```
 
-XXX HERE!!!
 --> All good all files generated with `n_*` folders in the respectrive `results*/` folders
-
+  --> No file missing!
 
 
 
@@ -282,6 +281,7 @@ python scripts/plot_all_signatures_combined-contexts-highlight_random.py
 --> All good, all summary annottion files and plot generated
   --> ERROR! Realized there was an error with the stop count (I count all stops; even the stop->stop). BUT, not because of these scripts, but because of the `.json`...
 
+    --> Scripts re-launch in `### Version3`
 
 
 
@@ -316,6 +316,62 @@ python scripts/plot_all_signatures_combined_v2-contexts-highlight_random.py
 
 
 
+
+
+### Version3
+
+Let's generate plot with `x` = `n_mutations` and `y` = `annotation score`
+
+--> Added `*_v3` at `*_summary_all_v3.tsv` and `*_summary_plots_v3.pdf`
+--> Updated `scripts/summarize_simulation_results.py` into `scripts/summarize_simulation_results_v3.py`
+
+
+```bash
+conda activate mutsim
+
+####################################
+# CONTEXTS ##########################
+####################################
+
+# Plot and summary metric for each mutations
+bash scripts/run_summary_plot-contexts_v3.sh
+# One plot with all mutations
+python scripts/plot_all_signatures_combined-contexts_v3.py
+#--> results_contexts/combined_signature_summary_errorbars.pdf
+# One plot with all mutations - Random/Flat highlighted
+python scripts/plot_all_signatures_combined-contexts-highlight_random_v3.py
+#--> results_contexts/combined_signature_summary_plots-highlight_random.pdf
+
+####################################
+# COSMIC ###########################
+####################################
+
+# Plot and summary metric for each mutations
+bash scripts/run_summary_plot-cosmic_v3.sh
+# One plot with all mutations
+python scripts/plot_all_signatures_combined-cosmic_v3.py
+#--> results/combined_signature_summary_errorbars.pdf
+# One plot with all mutations - Random/Flat highlighted
+python scripts/plot_all_signatures_combined-cosmic-highlight_random_v3.py
+#--> results/combined_signature_summary_plots-highlight_random.pdf
+
+####################################
+# EXPERIMENTAL #####################
+####################################
+
+# Plot and summary metric for each mutations
+bash scripts/run_summary_plot-experimental_v3.sh
+# One plot with all mutations
+python scripts/plot_all_signatures_combined-experimental_v3.py
+#--> results_experimental/combined_signature_summary_errorbars.pdf
+# One plot with all mutations - Random/Flat highlighted
+python scripts/plot_all_signatures_combined-experimental-highlight_random_v3.py
+#--> results_experimental/combined_signature_summary_plots-highlight_random.pdf
+
+```
+
+--> All good, all summary annottion files and plot generated
+  --> ERROR! Realized there was an error with the stop count (I count all stops; even the stop->stop). BUT, not because of these scripts, but because of the `.json`...
 
 
 
