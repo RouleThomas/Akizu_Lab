@@ -39,7 +39,7 @@ Seems that there is only one bio rep. Lets download IP and input:
 
 ```bash
 sbatch scripts/fastp.sh # 40428506 ok
-sbatch scripts/fastp_Ser5P_RNAPII.sh # 51236328 xxx
+sbatch scripts/fastp_Ser5P_RNAPII.sh # 51236328 ok
 
 
 ```
@@ -56,7 +56,7 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 conda activate bowtie2
 
 sbatch --dependency=afterany:40428506 scripts/bowtie2.sh # 40428600 ok
-sbatch --dependency=afterany:51236328 scripts/bowtie2_Ser5P_RNAPII.sh # 51236445 xxx
+sbatch --dependency=afterany:51236328 scripts/bowtie2_Ser5P_RNAPII.sh # 51236445 ok
 
 ```
 
@@ -100,7 +100,7 @@ This is prefered for THOR bam input.
 conda activate bowtie2
 
 sbatch --dependency=afterany:40428600 scripts/samtools_unique_raw.sh # 40428881 ok
-sbatch --dependency=afterany:51236445 scripts/samtools_unique_raw_Ser5P_RNAPII.sh # 51236454 xxx
+sbatch --dependency=afterany:51236445 scripts/samtools_unique_raw_Ser5P_RNAPII.sh # 51236454 ok
 ```
 
 
@@ -120,9 +120,6 @@ Run in R; followed this [workshop](https://nbisweden.github.io/workshop-archive/
 
 
 
-XXXY HER E!!! DO IT FOR RNASEQPOL!!
-
-
 
 ```bash
 conda activate deseq2V3
@@ -133,6 +130,7 @@ library("DiffBind")
 library("ChIPQC")
 library("TxDb.Hsapiens.UCSC.hg38.knownGene")
 
+set.seed(42)
 
 #	reading in the sample information (metadata)
 samples = read.csv("meta/sampleSheet_hESC.csv", sep="\t")
@@ -156,9 +154,9 @@ ChIPQCreport(resqc)
 ```
 
 --> A `ChIPQCreport` folder is created in current wd; I moved it to `output`
-    - input FragL=179, ReadL=51; FragL-ReadL= 128
-    - Nipbl FragL=189, ReadL=51; FragL-ReadL= 138
-
+    - *input* FragL=179, ReadL=51; FragL-ReadL= 128
+    - *Nipbl* FragL=189, ReadL=51; FragL-ReadL= 138
+    - *Ser5P_RNAPII* FragL=208, ReadL=51; FragL-ReadL= 157
 
 Then generate bigwig with the corresponding fragment size for each sample:
 
@@ -175,7 +173,10 @@ conda activate deeptools
 
 # bigwig with extendReads from CHIPQC
 sbatch scripts/bamtobigwig_unique_extendReads_raw.sh # 40532753 ok
+sbatch scripts/bamtobigwig_unique_extendReads_raw_Ser5P_RNAPII.sh # 51401388 ok
+
 ```
+
 
 
 
@@ -200,18 +201,22 @@ module load SAMtools/1.16.1-GCC-11.3.0
 # Create tagDirectory to be used by homer (FAST, so run in interactive)
 makeTagDirectory output/homer/input output/bowtie2/input.unique.dupmark.sorted.bam 
 makeTagDirectory output/homer/Nipbl output/bowtie2/Nipbl.unique.dupmark.sorted.bam 
+makeTagDirectory output/homer/Ser5P_RNAPII output/bowtie2/Ser5P_RNAPII.unique.dupmark.sorted.bam 
+
 #--> By default homer run in singleend
 
 
 # PEAK CALLING
 ## Call peaks with one bio rep (simplicate)
 findPeaks output/homer/Nipbl -style factor -o auto -i output/homer/input
+findPeaks output/homer/Ser5P_RNAPII -style factor -o auto -i output/homer/input
 
 ## Convert .txt to .bed
 ### simplicate
 pos2bed.pl output/homer/Nipbl/peaks.txt > output/homer/Nipbl/peaks.bed
-```
+pos2bed.pl output/homer/Ser5P_RNAPII/peaks.txt > output/homer/Ser5P_RNAPII/peaks.bed
 
+```
 
 
 --> All good, peak and bigwig looking good
@@ -222,6 +227,7 @@ pos2bed.pl output/homer/Nipbl/peaks.txt > output/homer/Nipbl/peaks.bed
 
 # ChIPseeker - homer
 
+## Nipbl
 
 
 ```bash
@@ -351,6 +357,139 @@ write.table(Nipbl_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annot
 
 
 
+
+## Ser5P_RNAPII
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+set.seed(42)
+
+# SIMPLICATE SAMPLE #####################
+
+# Import homer peaks
+# Convert .txt to .bed
+
+Ser5P_RNAPII = as_tibble(read.table("output/homer/Ser5P_RNAPII/peaks.bed")) %>%
+    dplyr::rename(Chr=V1, start=V2, end=V3, name=V4) 
+    
+
+
+## Tidy peaks 
+Ser5P_RNAPII_gr = makeGRangesFromDataFrame(Ser5P_RNAPII,keep.extra.columns=TRUE)
+
+
+gr_list <- list(Ser5P_RNAPII=Ser5P_RNAPII_gr)
+
+## Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+
+                       
+### Barplot
+pdf("output/ChIPseeker/annotation_barplot_hESC_Ser5P_RNAPII.pdf", width=14, height=5)
+plotAnnoBar(peakAnnoList)
+dev.off()
+
+
+
+
+## Get annotation data frame
+Ser5P_RNAPII_annot <- as.data.frame(peakAnnoList[["Ser5P_RNAPII"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+Ser5P_RNAPII_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = Ser5P_RNAPII_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+Ser5P_RNAPII_annot$gene <- mapIds(org.Hs.eg.db, keys = Ser5P_RNAPII_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+
+## Save output table
+write.table(Ser5P_RNAPII_annot, file="output/ChIPseeker/annotation_homer_hESC_Ser5P_RNAPII_annot.txt", sep="\t", quote=F, row.names=F)
+
+
+
+## Keep all ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+
+Ser5P_RNAPII_annot_geneSymbol = Ser5P_RNAPII_annot %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+    
+
+
+
+write.table(Ser5P_RNAPII_annot_geneSymbol, file = "output/ChIPseeker/annotation_homer_Ser5P_RNAPII_annot_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+            
+
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+Ser5P_RNAPII_annot_geneSymbol_promoterAnd5 = tibble(Ser5P_RNAPII_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+    
+
+### Save output gene lists
+Ser5P_RNAPII_annot_geneSymbol_promoterAnd5_geneSymbol = Ser5P_RNAPII_annot_geneSymbol_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+    
+
+
+write.table(Ser5P_RNAPII_annot_geneSymbol_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_homer_Ser5P_RNAPII_annot_geneSymbol_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+            
+
+
+## Keep only signals in non intergenic region ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+Ser5P_RNAPII_annot_noIntergenic = tibble(Ser5P_RNAPII_annot) %>%
+    filter(annotation != c("Distal Intergenic"))
+    
+
+
+### Save output gene lists
+Ser5P_RNAPII_annot_noIntergenic_geneSymbol = Ser5P_RNAPII_annot_noIntergenic %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+    
+
+write.table(Ser5P_RNAPII_annot_noIntergenic_geneSymbol, file = "output/ChIPseeker/annotation_homer_Ser5P_RNAPII_annot_noIntergenic_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+            
+            
+
+
+```
+
+
+--> All good **(noIntergenic version was used for VennDiagram in the paper)**
+
+
+
+
+
 # deepTools
 
 
@@ -366,6 +505,18 @@ sbatch scripts/matrix_2kb_NIPBLYAP1QSER1_NIPBLpeaks.sh # 40544978 ok
 
 sbatch scripts/matrix_2kb_NIPBLYAP1QSER1_NIPBLpeaks-QSER1NIPBL.sh # interactive
 
+
+
+
+# Signal in QSER1 (008*/007*) peaks
+sbatch scripts/matrix_2kb-QSER1peaks-QSER1Ser5P_RNAPIIEZH2.sh # 51413181 ok
+
+
+# Signal in Ser5P_RNAPII peaks
+sbatch scripts/matrix_2kb-Ser5P_RNAPIIpeaks-QSER1Ser5P_RNAPIIEZH2.sh # 51413190 ok
+
+
+
 ```
 
 --> All good, show postive correlation/overlapping between NIPBL, YAP1, and QSER1
@@ -376,7 +527,8 @@ sbatch scripts/matrix_2kb_NIPBLYAP1QSER1_NIPBLpeaks-QSER1NIPBL.sh # interactive
 
 
 
-
+`../007__ENCODE_hESC_histone/output/annotation_homer_hESC_WT_QSER1_pool_annot.bed` =
+ `../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks.bed` (same, 008/007 got no header)
 
 output/annotation_homer_hESC_WT_QSER1_pool_annot.bed
 
@@ -440,7 +592,80 @@ bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPe
 
 Then overlap with only QSER1 intergenic peaks (ie. removing QSER1 promoter and TSS peaks)
 
-XXXY
+
+
+
+
+
+
+
+
+
+
+# Overlap between Serine5P RNAPII (paused RNAPII), QSER1, and EZH2 - QSER1 grant email 09/03/2025
+
+
+
+`../007__ENCODE_hESC_histone/output/annotation_homer_hESC_WT_QSER1_pool_annot.bed` =
+ `../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks.bed` (same, 008/007 got no header)
+
+output/annotation_homer_hESC_WT_QSER1_pool_annot.bed
+
+
+
+```bash
+conda activate BedToBigwig
+
+bedtools intersect -wa -wb -a ../007__ENCODE_hESC_histone/output/annotation_homer_hESC_WT_QSER1_pool_annot.bed -b output/homer/Ser5P_RNAPII/peaks.bed ../001__ChIPseq_V1/output/homer/hESC_WT_EZH2_outputPeaks.bed | wc -l # 4513
+
+bedtools intersect -wa -a ../007__ENCODE_hESC_histone/output/annotation_homer_hESC_WT_QSER1_pool_annot.bed -b output/homer/Ser5P_RNAPII/peaks.bed | wc -l # 4067
+
+
+```
+
+XXXY HERE BELOW NOT MOD
+
+
+Let's extend the peak size of QSER1 and NIPBL of 200bp up and down; and 500bp up and down and check overlap again.
+
+
+
+```bash
+# Extend peak size
+
+bedtools slop -i output/homer/Nipbl/peaks_noHeader.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 200 > output/homer/Nipbl/peaks_noHeader_extend200bp.bed
+bedtools slop -i output/homer/Nipbl/peaks_noHeader.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 500 > output/homer/Nipbl/peaks_noHeader_extend500bp.bed
+bedtools slop -i output/homer/Nipbl/peaks_noHeader.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 1000 > output/homer/Nipbl/peaks_noHeader_extend1kp.bed
+bedtools slop -i output/homer/Nipbl/peaks_noHeader.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 2000 > output/homer/Nipbl/peaks_noHeader_extend2kp.bed
+bedtools slop -i output/homer/Nipbl/peaks_noHeader.bed -g ../../Master/meta/GRCh38_chrom_sizes.tab -b 5000 > output/homer/Nipbl/peaks_noHeader_extend5kp.bed
+
+
+## Files extended
+../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend200bp.bed
+../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend500bp.bed
+../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend1kp.bed
+../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend2kp.bed
+../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend5kp.bed
+
+output/homer/Nipbl/peaks_noHeader_extend200bp.bed
+output/homer/Nipbl/peaks_noHeader_extend500bp.bed
+output/homer/Nipbl/peaks_noHeader_extend1kp.bed
+output/homer/Nipbl/peaks_noHeader_extend2kp.bed
+output/homer/Nipbl/peaks_noHeader_extend5kp.bed
+
+## overlap
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend200bp.bed -b output/homer/Nipbl/peaks_noHeader_extend200bp.bed | uniq | wc -l # 3733
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend500bp.bed -b output/homer/Nipbl/peaks_noHeader_extend500bp.bed | uniq | wc -l # 4219
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend1kp.bed -b output/homer/Nipbl/peaks_noHeader_extend1kp.bed | uniq | wc -l # 4496
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend2kp.bed -b output/homer/Nipbl/peaks_noHeader_extend2kp.bed | uniq | wc -l # 4838
+bedtools intersect -wa -a ../001__ChIPseq_V1/output/homer/hESC_WT_QSER1_outputPeaks_extend5kp.bed -b output/homer/Nipbl/peaks_noHeader_extend5kp.bed | uniq | wc -l # 5908
+
+```
+
+
+
+Then overlap with only QSER1 intergenic peaks (ie. removing QSER1 promoter and TSS peaks)
+
 
 
 

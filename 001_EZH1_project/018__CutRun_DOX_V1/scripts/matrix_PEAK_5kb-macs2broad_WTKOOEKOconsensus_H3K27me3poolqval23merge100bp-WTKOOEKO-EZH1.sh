@@ -92,3 +92,12 @@ plotHeatmap -m output/deeptools/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K
 
 
 
+plotProfile -m output/deeptools/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-EZH1.gz \
+    -out output/deeptools/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-EZH1_plotProfile3.pdf \
+    --samplesLabel "WT_EZH1" "KO_EZH1" "OEKO_EZH1" \
+    --colors black red blue \
+    --perGroup \
+    --plotWidth 8 \
+    --yMin 1.5
+
+
