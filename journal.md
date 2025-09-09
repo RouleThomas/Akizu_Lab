@@ -63,6 +63,20 @@ __vte_prompt_command() {
 # Transfer to new cluster RES-RHEL-RH9HPC and conda env:
 ## conda environment:
 
+### txdbmaker
+
+
+conda env with last version of R and bioconductor to use the `txdbmaker` package from [here](https://www.bioconductor.org/packages/devel/bioc/vignettes/txdbmaker/inst/doc/txdbmaker.html#using-maketxdbfromgff)
+
+This version also got **Biocmanager in devel mode**
+
+--> See `001*/018*` for conda env creation
+
+
+
+
+
+
 ### deseq2
 R/4.3.0 with **deseq2** and **ChIPseeker** notably + following libraries:
 library("DESeq2")

@@ -1225,9 +1225,61 @@ dev.off()
 
 
 
-
 # --- 2) Create one jitter value PER GENE (per facet) and reuse for both WT & KO
 # Segments data (one row per gene/facet), with WT/KO y-values and shared jitter
+
+second <- "KO"          # <-- change to "OEKO" if that's your column value
+levels2 <- c("WT", second)
+
+# -- inputs assumed: tpm_long, res_Gain_MISSED (GeneSymbol), res_Gain_PRESENT (GeneSymbol)
+genes_missing <- unique(res_Gain_MISSED$GeneSymbol)
+genes_present <- unique(res_Gain_PRESENT$GeneSymbol)
+
+avg_by_gene <- function(genes, status_label) {
+  tpm_long %>%
+    filter(GeneSymbol %in% genes, genotype %in% levels2) %>%
+    group_by(GeneSymbol, genotype) %>%
+    summarise(TPM = mean(TPM, na.rm = TRUE), .groups = "drop") %>%
+    mutate(status = status_label)
+}
+
+
+df_missing <- avg_by_gene(genes_missing, "Missing in RNA (Gain)")
+df_present <- avg_by_gene(genes_present, "Present in RNA (Gain)")
+
+df_plot <- bind_rows(df_missing, df_present) %>%
+  mutate(
+    genotype = factor(genotype, levels = levels2),
+    status   = factor(status, levels = c("Missing in RNA (Gain)", "Present in RNA (Gain)")),
+    y        = log2(TPM + 1)   # <-- THIS is the 'y' column
+  )
+
+# one jitter per gene (per facet), reused for both genotypes
+df_segs <- df_plot %>%
+  dplyr::select(GeneSymbol, status, genotype, y) %>%
+  pivot_wider(names_from = genotype, values_from = y) %>%
+  dplyr::filter(!is.na(.data[[levels2[1]]]) & !is.na(.data[[levels2[2]]])) %>%
+  mutate(
+    j    = rnorm(n(), 0, 0.12),
+    x_1  = 1 + j,
+    x_2  = 2 + j
+  )
+
+df_pts <- df_plot %>%
+  left_join(df_segs %>% dplyr::select(GeneSymbol, status, j), by = c("GeneSymbol","status")) %>%
+  mutate(xj = as.numeric(genotype) + j)
+
+
+
+
+df_plot <- bind_rows(df_missing, df_present) %>%
+  mutate(
+    genotype = factor(genotype, levels = levels2),
+    status   = factor(status, levels = c("Missing in RNA (Gain)", "Present in RNA (Gain)")),
+    y        = log2(TPM + 1)   # <-- THIS is the 'y' column
+  )
+
+
 df_segs <- df_plot %>%
   dplyr::select(GeneSymbol, status, genotype, y) %>%
   pivot_wider(names_from = genotype, values_from = y) %>%
@@ -1254,7 +1306,8 @@ ggplot() +
     aes(x = genotype, y = y, fill = genotype, color = genotype),
     outlier.shape = NA, width = 0.55, alpha = 0.25
   ) +
-  # Arrows WT -> KO per gene (uses shared jitter so lines go through the points)
+  # Arrows WT ->     aes(x = x_wt, xend = x_ko, y = WT, yend = KO),
+# per gene (uses shared jitter so lines go through the points)
   geom_segment(
     data = df_segs,
     aes(x = x_wt, xend = x_ko, y = WT, yend = KO),
@@ -1281,6 +1334,49 @@ ggplot() +
   )
 
 dev.off()
+
+
+
+
+
+pdf("output/deseq2/boxplot_TPM-H3K27me3-WTvsKO_missing_and_present_Gain_arrows.pdf",
+    width = 2, height = 3)
+
+ggplot() +
+  # Boxplots (no jitter here; just the two categories)
+  geom_boxplot(
+    data = df_pts,
+    aes(x = genotype, y = y, fill = genotype, color = genotype),
+    outlier.shape = NA, width = 0.55, alpha = 0.25
+  ) +
+  # Arrows WT ->     aes(x = x_wt, xend = x_ko, y = WT, yend = KO),
+# per gene (uses shared jitter so lines go through the points)
+  geom_segment(
+    data = df_segs,
+    aes(x = x_wt, xend = x_ko, y = WT, yend = KO),
+    inherit.aes = FALSE,
+    alpha = 0.35, linewidth = 0.2,
+    arrow = arrow(length = unit(2, "mm"), type = "closed")
+  ) +
+  # Points (one per gene per genotype)
+  geom_point(
+    data = df_pts,
+    aes(x = xj, y = y, color = genotype),
+    size = 0.5, alpha = 0.5
+  ) +
+  scale_fill_manual(values = c(WT = "black", KO = "red")) +
+  scale_color_manual(values = c(WT = "black", KO = "red")) +
+  labs(x = NULL, y = "TPM (log2 + 1)",
+       title = "WT vs KO — Gain genes (Missing vs Present in RNA)\nBoxplots, per-gene dots, and WT→KO arrows") +
+  theme_bw(base_size = 11) +
+  theme(
+    legend.position = "none",
+    strip.text = element_text(face = "bold"),
+    panel.grid.minor = element_blank()
+  )
+
+dev.off()
+
 
 ########################
 
@@ -1917,6 +2013,87 @@ ggplot() +
   scale_color_manual(values = c(WT = "black", OE = "blue")) +
   labs(x = NULL, y = "TPM (log2 + 1)",
        title = "WT vs OE — Gain genes (Missing vs Present in RNA)\nBoxplots, per-gene dots, and WT→KO arrows") +
+  theme_bw(base_size = 11) +
+  theme(
+    legend.position = "none",
+    strip.text = element_text(face = "bold"),
+    panel.grid.minor = element_blank()
+  )
+
+dev.off()
+
+
+
+pdf("output/deseq2/boxplot_TPM-H3K27me3-OEWTvsKO_missing_and_present_Gain_arrows.pdf",
+    width = 2, height = 3)
+
+ggplot() +
+  # Boxplots (no jitter here; just the two categories)
+  geom_boxplot(
+    data = df_pts,
+    aes(x = genotype, y = y, fill = genotype, color = genotype),
+    outlier.shape = NA, width = 0.55, alpha = 0.25
+  ) +
+  # Arrows WT ->     aes(x = x_wt, xend = x_oe, y = WT, yend = KO),
+# per gene (uses shared jitter so lines go through the points)
+  geom_segment(
+    data = df_segs,
+    aes(x = x_wt, xend = x_oe, y = WT, yend = OE),
+    inherit.aes = FALSE,
+    alpha = 0.35, linewidth = 0.2,
+    arrow = arrow(length = unit(2, "mm"), type = "closed")
+  ) +
+  # Points (one per gene per genotype)
+  geom_point(
+    data = df_pts,
+    aes(x = xj, y = y, color = genotype),
+    size = 0.5, alpha = 0.5
+  ) +
+  scale_fill_manual(values = c(WT = "black", OE = "blue")) +
+  scale_color_manual(values = c(WT = "black", OE = "blue")) +
+  labs(x = NULL, y = "TPM (log2 + 1)",
+       title = "WT vs OE — Gain genes (Missing vs Present in RNA)\nBoxplots, per-gene dots, and WT→OE arrows") +
+  theme_bw(base_size = 11) +
+  theme(
+    legend.position = "none",
+    strip.text = element_text(face = "bold"),
+    panel.grid.minor = element_blank()
+  )
+
+dev.off()
+
+
+
+
+pdf("output/deseq2/boxplot_TPM-H3K27me3-OEWTvsKO_missing_and_present_Gain_arrows.pdf",
+    width = 2, height = 3)
+
+ggplot() +
+  # Boxplots (no jitter here; just the two categories)
+  geom_boxplot(
+    data = df_pts,
+    aes(x = genotype, y = y, fill = genotype, color = genotype),
+    outlier.shape = NA, width = 0.55, alpha = 0.25
+  ) +
+  # Arrows WT ->     aes(x = x_wt, xend = x_oe, y = WT, yend = KO),
+# per gene (uses shared jitter so lines go through the points)
+  geom_segment(
+    data = df_segs,
+    aes(x = x_wt, xend = x_oe, y = WT, yend = OE),
+    inherit.aes = FALSE,
+    alpha = 0.35, linewidth = 0.2,
+    arrow = arrow(length = unit(2, "mm"), type = "closed")
+  ) +
+  # Points (one per gene per genotype)
+  geom_point(
+    data = df_pts,
+    aes(x = xj, y = y, color = genotype),
+    size = 0.5, alpha = 0.5
+  ) +
+  scale_fill_manual(values = c(WT = "black", OE = "blue")) +
+  scale_color_manual(values = c(WT = "black", OE = "blue")) +
+  labs(x = NULL, y = "TPM (log2 + 1)",
+       title = "WT vs OE — Gain genes (Missing vs Present in RNA)\nBoxplots, per-gene dots, and WT→OE arrows") +
   theme_bw(base_size = 11) +
   theme(
     legend.position = "none",

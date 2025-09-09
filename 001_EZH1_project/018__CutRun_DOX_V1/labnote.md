@@ -725,14 +725,30 @@ sbatch scripts/bigwig_tresh2_Norm99_Ferguson_unique_initialBigwig-EZH1.sh # 5140
 
 
 # Filter out noise from the bigwig (Consider value below 1 as 0)
+## filter on median track
 sbatch scripts/bigwig_tresh1_Norm99_Ferguson_unique_initialBigwig-H3K27me3.sh # 51409597 ok
 sbatch scripts/bigwig_tresh1_Norm99_Ferguson_unique_initialBigwig-EZH2.sh # 51409598 ok
 sbatch scripts/bigwig_tresh1_Norm99_Ferguson_unique_initialBigwig-EZH1.sh # 51409599 ok
+## filter on each bio rep
+sbatch scripts/bigwig_tresh1_Norm99_Ferguson_unique_initialBigwig-H3K27me3_R1R2R3.sh # 51498829 ok
+sbatch scripts/bigwig_tresh1_Norm99_Ferguson_unique_initialBigwig-EZH2_R1R2R3.sh # 51499020 ok
+sbatch scripts/bigwig_tresh1_Norm99_Ferguson_unique_initialBigwig-EZH1_R1R2R3.sh # 51499023 ok
+## filter on each bio rep
+sbatch scripts/bigwig_tresh2_Norm99_Ferguson_unique_initialBigwig-H3K27me3_R1R2R3.sh # 51511388 xxx
+sbatch scripts/bigwig_tresh2_Norm99_Ferguson_unique_initialBigwig-EZH2_R1R2R3.sh # 51511428 xxx
+sbatch scripts/bigwig_tresh2_Norm99_Ferguson_unique_initialBigwig-EZH1_R1R2R3.sh # 51511449 xxx
+
+
 
 ```
 
 
 --> Looks great, replicate are homogeneous
+
+--> The filtering out of the background/noise work great! The best threshold are:
+  - H3K27me3: thresh1
+  - EZH2: thresh1
+  - EZH1: thresh2
 
 
 
@@ -1924,6 +1940,7 @@ conda activate deeptools
 ## merge 100bp extension  ##############################
 ########################################################
 
+### H3K27me3
 ## qvalue 2.3 ##############
 #### WT
 sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R1-FergusonUniqueNorm99.sh # 51089151 ok
@@ -1937,6 +1954,23 @@ sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ES
 sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R1-FergusonUniqueNorm99.sh # 51089164 ok
 sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R2-FergusonUniqueNorm99.sh # 51089168 ok
 sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R3-FergusonUniqueNorm99.sh # 51089172 ok
+
+### H3K27me3 - thresh bigwigs
+## qvalue 2.3 ##############
+#### WT
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R1-FergusonUniqueNorm99_thresh1.sh # 51501542 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R2-FergusonUniqueNorm99_thresh1.sh # 51501543 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R3-FergusonUniqueNorm99_thresh1.sh # 51501544 ok
+#### KO
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R1-FergusonUniqueNorm99_thresh1.sh # 51501545 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R2-FergusonUniqueNorm99_thresh1.sh # 51501546 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R3-FergusonUniqueNorm99_thresh1.sh # 51501547 ok
+#### OEKO
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R1-FergusonUniqueNorm99_thresh1.sh # 51501550 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R2-FergusonUniqueNorm99_thresh1.sh # 51501560 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R3-FergusonUniqueNorm99_thresh1.sh # 51501562 ok
+
+
 
 ## qvalue 3 ##############
 #### WT
@@ -1956,7 +1990,7 @@ sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ES
 
 
 
-### EZH2
+### EZH2 
 ## qvalue 2.3 ##############
 #### WT
 sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R1-FergusonUniqueNorm99.sh # 51164275 ok
@@ -1970,6 +2004,24 @@ sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO
 sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R1-FergusonUniqueNorm99.sh # 51164396 ok
 sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R2-FergusonUniqueNorm99.sh # 51164401 ok
 sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R3-FergusonUniqueNorm99.sh # 51164466 ok
+
+
+### EZH2 - thresh bigwigs
+## qvalue 2.3 ##############
+#### WT
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R1-FergusonUniqueNorm99_thresh1.sh # 51504023 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R2-FergusonUniqueNorm99_thresh1.sh # 51504024 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R3-FergusonUniqueNorm99_thresh1.sh # 51504025 ok
+#### KO
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R1-FergusonUniqueNorm99_thresh1.sh # 51504026 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R2-FergusonUniqueNorm99_thresh1.sh # 51504027 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R3-FergusonUniqueNorm99_thresh1.sh # 51504028 ok
+#### OEKO
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R1-FergusonUniqueNorm99_thresh1.sh # 51504029 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R2-FergusonUniqueNorm99_thresh1.sh # 51504030 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R3-FergusonUniqueNorm99_thresh1.sh # 51504031 ok
+
+
 
 ## qvalue 3 ##############
 #### WT
@@ -3806,6 +3858,198 @@ write.table(ESC_WTKOOEKO_EZH2_qval3merge100bp_annot_promoterAnd5_geneSymbol, fil
 
 
 
+### On consensus peaks ESC_WTKOOEKO - H3K27me3 and EZH2 - GENCODEv47
+
+Let's use GENCODE v47 annotation to be in agreement with the RNAseq annotation! Let's create our own txdb as the  `library("TxDb.Hsapiens.UCSC.hg38.knownGene")` is GENCODE v41. 
+--> Follow guideline [here](https://www.bioconductor.org/packages/devel/bioc/vignettes/txdbmaker/inst/doc/txdbmaker.html) to create txdb from GTF
+
+
+
+
+
+```bash
+# create conda env  txdbmaker adn sintall last version of R, 4.5
+conda create -n txdbmaker -c conda-forge r-base=4.5
+
+conda activate txdbmaker
+conda install bioconda::bioconductor-txdbmaker 
+
+```
+Then in R
+
+```R
+# isntall package
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+# The following initializes usage of Bioc devel
+BiocManager::install(version='devel')
+BiocManager::install("txdbmaker")
+#--> FAIL; error dependency XML, restfulr not available...
+install.packages(c("XML","restfulr"))
+#--> FAIL; error libxml not found; so I did in bash `module load libxml2`
+install.packages(c("XML","restfulr"))
+#--> FAIL; same but now error with xml2 and restfulr
+install.packages(c("xml2"))
+#--> FAIL; lets try installing with anaconda  `conda install bioconda::bioconductor-txdbmaker`
+#--> XXX
+
+# load package
+library("txdbmaker")
+
+
+# Create txdb from GTF
+txdb <- makeTxDbFromGFF("../../Master/meta/gencode.v47.annotation.gtf", format = "gtf")
+
+```
+
+
+
+
+```bash
+# files - consensus peaks H3K27me3 and EZH2 qval23 and 3 with merge100bp
+output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.merge100bp.bed
+output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.merge100bp.bed
+output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.merge100bp.bed
+output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.merge100bp.bed
+```
+
+
+
+
+
+```bash
+conda activate deseq2
+```
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import diff peaks
+ESC_WTKOOEKO_H3K27me3_qval23merge100bp <- read.delim("output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.merge100bp.bed", sep = "\t", header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename("chr"= "V1", "start" = "V2", "end" = "V3")
+
+ESC_WTKOOEKO_EZH2_qval23merge100bp <- read.delim("output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.merge100bp.bed", sep = "\t", header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename("chr"= "V1", "start" = "V2", "end" = "V3")
+  
+ESC_WTKOOEKO_H3K27me3_qval3merge100bp <- read.delim("output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.merge100bp.bed", sep = "\t", header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename("chr"= "V1", "start" = "V2", "end" = "V3")
+
+ESC_WTKOOEKO_EZH2_qval3merge100bp <- read.delim("output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.merge100bp.bed", sep = "\t", header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename("chr"= "V1", "start" = "V2", "end" = "V3")
+
+
+
+# Tidy peaks 
+ESC_WTKOOEKO_H3K27me3_qval23merge100bp_gr = makeGRangesFromDataFrame(ESC_WTKOOEKO_H3K27me3_qval23merge100bp,keep.extra.columns=TRUE)
+ESC_WTKOOEKO_EZH2_qval23merge100bp_gr = makeGRangesFromDataFrame(ESC_WTKOOEKO_EZH2_qval23merge100bp,keep.extra.columns=TRUE)
+ESC_WTKOOEKO_H3K27me3_qval3merge100bp_gr = makeGRangesFromDataFrame(ESC_WTKOOEKO_H3K27me3_qval3merge100bp,keep.extra.columns=TRUE)
+ESC_WTKOOEKO_EZH2_qval3merge100bp_gr = makeGRangesFromDataFrame(ESC_WTKOOEKO_EZH2_qval3merge100bp,keep.extra.columns=TRUE)
+
+gr_list <- list(ESC_WTKOOEKO_H3K27me3_qval23merge100bp=ESC_WTKOOEKO_H3K27me3_qval23merge100bp_gr,ESC_WTKOOEKO_EZH2_qval23merge100bp=ESC_WTKOOEKO_EZH2_qval23merge100bp_gr, ESC_WTKOOEKO_H3K27me3_qval3merge100bp=ESC_WTKOOEKO_H3K27me3_qval3merge100bp_gr,ESC_WTKOOEKO_EZH2_qval3merge100bp=ESC_WTKOOEKO_EZH2_qval3merge100bp_gr
+)
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## plots
+pdf("output/ChIPseeker/plotAnnoBar_ESC_WTKOOEKO_H3K27me3EZH2_qval23qval3merge100bp.pdf", width = 16, height = 3)
+plotAnnoBar(peakAnnoList)
+dev.off()
+pdf("output/ChIPseeker/plotDistToTSS_ESC_WTKOOEKO_H3K27me3EZH2_qval23qval3merge100bp.pdf", width = 16, height = 3)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
+
+## Get annotation data frame
+ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot <- as.data.frame(peakAnnoList[["ESC_WTKOOEKO_H3K27me3_qval23merge100bp"]]@anno)
+ESC_WTKOOEKO_EZH2_qval23merge100bp_annot <- as.data.frame(peakAnnoList[["ESC_WTKOOEKO_EZH2_qval23merge100bp"]]@anno)
+ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot <- as.data.frame(peakAnnoList[["ESC_WTKOOEKO_H3K27me3_qval3merge100bp"]]@anno)
+ESC_WTKOOEKO_EZH2_qval3merge100bp_annot <- as.data.frame(peakAnnoList[["ESC_WTKOOEKO_EZH2_qval3merge100bp"]]@anno)
+
+## Convert entrez gene IDs to gene symbols
+ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot$gene <- mapIds(org.Hs.eg.db, keys = ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+ESC_WTKOOEKO_EZH2_qval23merge100bp_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = ESC_WTKOOEKO_EZH2_qval23merge100bp_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+ESC_WTKOOEKO_EZH2_qval23merge100bp_annot$gene <- mapIds(org.Hs.eg.db, keys = ESC_WTKOOEKO_EZH2_qval23merge100bp_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot$gene <- mapIds(org.Hs.eg.db, keys = ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+ESC_WTKOOEKO_EZH2_qval3merge100bp_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = ESC_WTKOOEKO_EZH2_qval3merge100bp_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+ESC_WTKOOEKO_EZH2_qval3merge100bp_annot$gene <- mapIds(org.Hs.eg.db, keys = ESC_WTKOOEKO_EZH2_qval3merge100bp_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+## Save output table
+write.table(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot, file="output/ChIPseeker/annotation_ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(ESC_WTKOOEKO_EZH2_qval23merge100bp_annot, file="output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH2_qval23merge100bp_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot, file="output/ChIPseeker/annotation_ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(ESC_WTKOOEKO_EZH2_qval3merge100bp_annot, file="output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH2_qval3merge100bp_annot.txt", sep="\t", quote=F, row.names=F)  
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot_promoterAnd5 = tibble(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+ESC_WTKOOEKO_EZH2_qval23merge100bp_annot_promoterAnd5 = tibble(ESC_WTKOOEKO_EZH2_qval23merge100bp_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot_promoterAnd5 = tibble(ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+ESC_WTKOOEKO_EZH2_qval3merge100bp_annot_promoterAnd5 = tibble(ESC_WTKOOEKO_EZH2_qval3merge100bp_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+### Save output gene lists
+ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot_promoterAnd5_geneSymbol = ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+ESC_WTKOOEKO_EZH2_qval23merge100bp_annot_promoterAnd5_geneSymbol = ESC_WTKOOEKO_EZH2_qval23merge100bp_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot_promoterAnd5_geneSymbol = ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+ESC_WTKOOEKO_EZH2_qval3merge100bp_annot_promoterAnd5_geneSymbol = ESC_WTKOOEKO_EZH2_qval3merge100bp_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+write.table(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(ESC_WTKOOEKO_EZH2_qval23merge100bp_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH2_qval23merge100bp_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(ESC_WTKOOEKO_EZH2_qval3merge100bp_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH2_qval3merge100bp_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+```
+
+
+
+
+
+
+
+
 ### On EZH1 peaks; consensus and OEKO peaks - qval 2.3
 
 
@@ -3995,6 +4239,15 @@ sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_H3K27me3poolqval23-WTKOOEKO-H3K27me3EZH2EZH1.sh # 50766577 ok
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_EZH2poolqval23-WTKOOEKO-H3K27me3EZH2EZH1.sh # 50766992 ok
 sbatch scripts/matrix_PEAK_5kb-macs2broad_OEKO_EZH1poolqval23-WTKOOEKO-H3K27me3EZH2EZH1.sh # 50767482 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_OEKO_EZH1poolqval23-WTKOOEKO-H3K27me3EZH2EZH1_thresh2.sh # 51481443 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_OEKO_EZH1poolqval23-WTKOOEKO-H3K27me3EZH2EZH1_thresh112.sh # 51487319 ok
+
+sbatch scripts/matrix_PEAK_5kb-macs2broad_OEKO_EZH1poolqval23-WTKOOEKO-H3K27me3_thresh1.sh # 51493371 xxx
+sbatch scripts/matrix_PEAK_5kb-macs2broad_OEKO_EZH1poolqval23-WTKOOEKO-EZH2_thresh1.sh # 51493715 xxx
+sbatch scripts/matrix_PEAK_5kb-macs2broad_OEKO_EZH1poolqval23-WTKOOEKO-EZH1_thresh2.sh # 51494073 xxx
+
+
+
 ## consensus peaks
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-H3K27me3EZH2EZH1.sh # 50895445 ok
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-H3K27me3.sh # 51132562 ok
@@ -4003,7 +4256,7 @@ sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23me
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-EZH1_keepZero.sh # 51134009 ok
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-EZH1_minThreshold025.sh # 51398836 FAIL
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-EZH1_thresh2.sh # 51404482 ok
-sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-EZH1_thresh1.sh # 51409782 xxx
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-EZH1_thresh1.sh # 51409782 ok
 
 
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH2poolqval23merge100bp-WTKOOEKO-H3K27me3EZH2EZH1.sh # 50895514 ok
@@ -4299,14 +4552,18 @@ sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC001019_UpDownregulated_q05fc058_E
 
 
 # Check signal in EZH1 peaks - consensus WTKOOEKO qval2.3 merge100bp - OEKO qval2.3 pool peaks - promoter and 5
-sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp-WTKOOEKO-H3K27me3.sh # 51129082 xxx
-sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp-WTKOOEKO-EZH2.sh # 51129343 xxx
-sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp-WTKOOEKO-EZH1.sh # 51129393 xxx
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp-WTKOOEKO-H3K27me3.sh # 51129082 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp-WTKOOEKO-EZH2.sh # 51129343 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp-WTKOOEKO-EZH1.sh # 51129393 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_OEKO_EZH1_qval23-WTKOOEKO-H3K27me3.sh # 51129429 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_OEKO_EZH1_qval23-WTKOOEKO-EZH2.sh # 51129474 ok
-sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_OEKO_EZH1_qval23-WTKOOEKO-EZH1.sh # 51129494 xxx
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_OEKO_EZH1_qval23-WTKOOEKO-EZH1.sh # 51129494 ok
 
-
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_OEKO_EZH1_qval23-WTKOOEKO-H3K27me3_thresh2.sh # 51481860 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_OEKO_EZH1_qval23-WTKOOEKO-H3K27me3_thresh1.sh # 51490230 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_OEKO_EZH1_qval23-WTKOOEKO-EZH2_thresh2.sh # 51482507 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_OEKO_EZH1_qval23-WTKOOEKO-EZH2_thresh1.sh # 51490433 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_OEKO_EZH1_qval23-WTKOOEKO-EZH1_thresh2.sh # 51482688 ok
 
 
 
@@ -4353,3 +4610,329 @@ sbatch scripts/matrix_GENETSSTES_250bp100bp-regulated_q05fc058-WTKOOEKO_EZH2_qva
 
 
 
+# chromHMM
+
+We do not have enough epigenetic makr to construct our chromHMM model; as we are with ESC; let's use the one made by hg38 Roadmap Epigenomics Project . Can be found [here](https://egg2.wustl.edu/roadmap/data/byFileType/chromhmmSegmentations/ChmmModels/coreMarks/jointModel/final/); correct file to use is `E003_15_coreMarks_hg38lift_mnemonics.bed.gz`. Legend of chromatin state are [here](https://egg2.wustl.edu/roadmap/web_portal/chr_state_learning.html#core_15state )
+
+
+- Download 15chr state in bed format for ESC (E003 = H1 cell line)
+- Count our signal (used bedGraph background clean (`thresh`)) in chr state bed regions
+  - Count replicate per replicate
+  - Count in the median file
+- Generate heatmap in R
+
+
+```bash
+# Download files
+cd output/chromHMM/
+
+
+wget https://egg2.wustl.edu/roadmap/data/byFileType/chromhmmSegmentations/ChmmModels/coreMarks/jointModel/final/E003_15_coreMarks_hg38lift_mnemonics.bed.gz
+wget https://egg2.wustl.edu/roadmap/data/byFileType/chromhmmSegmentations/ChmmModels/coreMarks/jointModel/final/E003_15_coreMarks_hg38lift_segments.bed.gz
+
+
+# investigate file
+head output/chromHMM/E003_15_coreMarks_hg38lift_mnemonics.bed # --> This file is better to use and include the state name
+head output/chromHMM/E003_15_coreMarks_hg38lift_segments.bed
+
+# Lets order chr state as my bedGraph (basic order chr1 10 11 12 etc...)
+cat output/chromHMM/E003_15_coreMarks_hg38lift_mnemonics.bed \
+  | sort -k1,1 -k2,2n > output/chromHMM/E003_15_coreMarks_hg38lift_mnemonics.sorted.bed
+
+## check chr order
+cut -f1 output/chromHMM/E003_15_coreMarks_hg38lift_mnemonics.sorted.bed | awk 'p!=$0{print; p=$0}' | head
+
+
+# Let's use bedtools to count signal of EZH1 EZH2 H3K27me3 in the 15 chr states
+conda activate BedToBigwig
+
+
+
+######################################
+## EZH2 and H3K27me3 (Use thresh1 ) ##
+######################################
+# Replicate per replicate
+
+# paths
+STATES=output/chromHMM/E003_15_coreMarks_hg38lift_mnemonics.sorted.bed   # from E003_15_coreMarks_hg38lift_mnemonics.bed.gz
+INBASE=output/bigwig_Ferguson
+OUTDIR=output/chromHMM
+
+
+for MARK in EZH2 H3K27me3; do
+  for GENO in WT KO OEKO; do
+    for REP in R1 R2 R3; do
+      IN="${INBASE}/ESC_${GENO}_${MARK}_${REP}_unique_norm99_initialBigwig_thresh1.bedGraph"
+      [ -s "$IN" ] || { echo "skip (missing): $IN"; continue; }
+
+      BASE="$(basename "${IN%.bedGraph}")"
+      SUMBED="${OUTDIR}/ESC_${GENO}_${MARK}_${REP}_thresh1-sum.bed"
+      TSV="${OUTDIR}/ESC_${GENO}_${MARK}_${REP}_thresh1-state_enrich.tsv"
+
+
+
+      # sum signal within each ChromHMM region
+      bedtools map -a "$STATES" -b "$IN" -c 4 -o sum > "$SUMBED"
+
+      # length-weighted avg per state + fold vs genome + log2 fold
+      awk 'BEGIN{OFS="\t"}
+           {s=$4; len=$3-$2; sum=$5+0; A[s]+=sum; L[s]+=len; GA+=sum; GL+=len}
+           END{
+             g=GA/GL;
+             for(s in A){
+               avg=A[s]/L[s]; fe=avg/g;
+               printf "%s\t%.6f\t%.6f\t%.6f\n", s, avg, fe, log(fe)/log(2)
+             }
+           }' "$SUMBED" \
+        | sort -t_ -k1,1n > "$TSV"
+
+      echo "done: $TSV"
+    done
+  done
+done
+
+
+
+
+
+
+######################################
+## EZH1 (Use thresh2 ) ##
+######################################
+# Replicate per replicate
+
+# paths
+STATES=output/chromHMM/E003_15_coreMarks_hg38lift_mnemonics.sorted.bed   # from E003_15_coreMarks_hg38lift_mnemonics.bed.gz
+INBASE=output/bigwig_Ferguson
+OUTDIR=output/chromHMM
+
+
+for MARK in EZH1; do
+  for GENO in WT KO OEKO; do
+    for REP in R1 R2 R3; do
+      IN="${INBASE}/ESC_${GENO}_${MARK}_${REP}_unique_norm99_initialBigwig_thresh2.bedGraph"
+      [ -s "$IN" ] || { echo "skip (missing): $IN"; continue; }
+
+      BASE="$(basename "${IN%.bedGraph}")"
+      SUMBED="${OUTDIR}/ESC_${GENO}_${MARK}_${REP}_thresh2-sum.bed"
+      TSV="${OUTDIR}/ESC_${GENO}_${MARK}_${REP}_thresh2-state_enrich.tsv"
+
+
+
+      # sum signal within each ChromHMM region
+      bedtools map -a "$STATES" -b "$IN" -c 4 -o sum > "$SUMBED"
+
+      # length-weighted avg per state + fold vs genome + log2 fold
+      awk 'BEGIN{OFS="\t"}
+           {s=$4; len=$3-$2; sum=$5+0; A[s]+=sum; L[s]+=len; GA+=sum; GL+=len}
+           END{
+             g=GA/GL;
+             for(s in A){
+               avg=A[s]/L[s]; fe=avg/g;
+               printf "%s\t%.6f\t%.6f\t%.6f\n", s, avg, fe, log(fe)/log(2)
+             }
+           }' "$SUMBED" \
+        | sort -t_ -k1,1n > "$TSV"
+
+      echo "done: $TSV"
+    done
+  done
+done
+
+
+
+
+
+
+```
+
+
+--> File generated are: `output/chromHMM/[Sample name].sum.bed` = sum of the bedGraph values in each chr state
+
+
+
+
+Now make plot in R
+
+```bash
+conda activate deseq2
+```
+
+```R
+
+library("tidyverse")
+
+####################
+# H3K27me3 ##########
+####################
+
+files <- list.files("output/chromHMM",
+  pattern = "H3K27me3.*-state_enrich\\.tsv$", full.names = TRUE)
+
+df <- map_dfr(files, ~read_tsv(.x, col_names = c("state","avg","fold","log2fc"),
+                               show_col_types = FALSE) %>%
+                mutate(mark = sub("_state_enrich\\.tsv$", "", .x)))
+
+# order states 1..15
+df <- df %>%
+  mutate(state_num = as.integer(str_extract(state, "^[0-9]+")),
+         state = fct_reorder(state, state_num))
+
+# sample parsing + desired label
+df <- df %>%
+  mutate(mark = str_replace(basename(mark),
+                            "^([A-Za-z0-9]+_[A-Za-z0-9]+_[A-Za-z0-9]+_R[0-9]+).*","\\1"),
+         geno = str_extract(mark, "(WT|KO|OEKO)"),
+         rep  = str_extract(mark, "R[0-9]+"),
+         geno = factor(geno, levels = c("WT","KO","OEKO")),
+         label = paste0(geno, "_", rep))
+
+# order samples: WT -> KO -> OEKO, then by replicate number
+sample_levels <- df %>%
+  mutate(repnum = as.integer(str_extract(rep, "\\d+"))) %>%
+  distinct(geno, repnum, mark) %>%
+  arrange(geno, repnum, mark) %>%
+  pull(mark)
+
+df$mark <- factor(df$mark, levels = sample_levels)
+df$state <- fct_rev(df$state)
+
+# mapping from full sample id -> short label (WT_R1, KO_R1, ...)
+lab_map <- df %>% distinct(mark, label)
+lab_vec <- setNames(lab_map$label, lab_map$mark)
+
+pdf("output/chromHMM/heatmap-H3K27me3_thresh1-state_enrich-avg.pdf", width=5, height=5)
+ggplot(df, aes(x = mark, y = state, fill = avg)) +
+  geom_tile(color = "grey92") +
+  scale_fill_gradient(name = "Average signal", low = "white", high = "#006df3ff") +
+  scale_x_discrete(labels = lab_vec) +   # <<< short labels on x-axis
+  labs(x = NULL, y = "ChromHMM 15-state (E003 hg38)", title = "H3K27me3") +
+  theme_bw(base_size = 12) +
+  theme(panel.grid = element_blank(),
+        axis.text.y = element_text(size = 9),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+dev.off()
+
+
+
+
+
+
+
+
+
+####################
+# EZH2 ##########
+####################
+
+files <- list.files("output/chromHMM",
+  pattern = "EZH2.*-state_enrich\\.tsv$", full.names = TRUE)
+
+df <- map_dfr(files, ~read_tsv(.x, col_names = c("state","avg","fold","log2fc"),
+                               show_col_types = FALSE) %>%
+                mutate(mark = sub("_state_enrich\\.tsv$", "", .x)))
+
+# order states 1..15
+df <- df %>%
+  mutate(state_num = as.integer(str_extract(state, "^[0-9]+")),
+         state = fct_reorder(state, state_num))
+
+# sample parsing + desired label
+df <- df %>%
+  mutate(mark = str_replace(basename(mark),
+                            "^([A-Za-z0-9]+_[A-Za-z0-9]+_[A-Za-z0-9]+_R[0-9]+).*","\\1"),
+         geno = str_extract(mark, "(WT|KO|OEKO)"),
+         rep  = str_extract(mark, "R[0-9]+"),
+         geno = factor(geno, levels = c("WT","KO","OEKO")),
+         label = paste0(geno, "_", rep))
+
+# order samples: WT -> KO -> OEKO, then by replicate number
+sample_levels <- df %>%
+  mutate(repnum = as.integer(str_extract(rep, "\\d+"))) %>%
+  distinct(geno, repnum, mark) %>%
+  arrange(geno, repnum, mark) %>%
+  pull(mark)
+
+df$mark <- factor(df$mark, levels = sample_levels)
+df$state <- fct_rev(df$state)
+
+# mapping from full sample id -> short label (WT_R1, KO_R1, ...)
+lab_map <- df %>% distinct(mark, label)
+lab_vec <- setNames(lab_map$label, lab_map$mark)
+
+pdf("output/chromHMM/heatmap-EZH2_thresh1-state_enrich-avg.pdf", width=5, height=5)
+ggplot(df, aes(x = mark, y = state, fill = avg)) +
+  geom_tile(color = "grey92") +
+  scale_fill_gradient(name = "Average signal", low = "white", high = "#006df3ff") +
+  scale_x_discrete(labels = lab_vec) +   # <<< short labels on x-axis
+  labs(x = NULL, y = "ChromHMM 15-state (E003 hg38)", title = "EZH2") +
+  theme_bw(base_size = 12) +
+  theme(panel.grid = element_blank(),
+        axis.text.y = element_text(size = 9),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+dev.off()
+
+
+
+
+
+
+
+
+
+
+####################
+# EZH1 ##########
+####################
+
+files <- list.files("output/chromHMM",
+  pattern = "EZH1.*-state_enrich\\.tsv$", full.names = TRUE)
+
+df <- map_dfr(files, ~read_tsv(.x, col_names = c("state","avg","fold","log2fc"),
+                               show_col_types = FALSE) %>%
+                mutate(mark = sub("_state_enrich\\.tsv$", "", .x)))
+
+# order states 1..15
+df <- df %>%
+  mutate(state_num = as.integer(str_extract(state, "^[0-9]+")),
+         state = fct_reorder(state, state_num))
+
+# sample parsing + desired label
+df <- df %>%
+  mutate(mark = str_replace(basename(mark),
+                            "^([A-Za-z0-9]+_[A-Za-z0-9]+_[A-Za-z0-9]+_R[0-9]+).*","\\1"),
+         geno = str_extract(mark, "(WT|KO|OEKO)"),
+         rep  = str_extract(mark, "R[0-9]+"),
+         geno = factor(geno, levels = c("WT","KO","OEKO")),
+         label = paste0(geno, "_", rep))
+
+# order samples: WT -> KO -> OEKO, then by replicate number
+sample_levels <- df %>%
+  mutate(repnum = as.integer(str_extract(rep, "\\d+"))) %>%
+  distinct(geno, repnum, mark) %>%
+  arrange(geno, repnum, mark) %>%
+  pull(mark)
+
+df$mark <- factor(df$mark, levels = sample_levels)
+df$state <- fct_rev(df$state)
+
+# mapping from full sample id -> short label (WT_R1, KO_R1, ...)
+lab_map <- df %>% distinct(mark, label)
+lab_vec <- setNames(lab_map$label, lab_map$mark)
+
+pdf("output/chromHMM/heatmap-EZH1_thresh2-state_enrich-avg.pdf", width=5, height=5)
+ggplot(df, aes(x = mark, y = state, fill = avg)) +
+  geom_tile(color = "grey92") +
+  scale_fill_gradient(name = "Average signal", low = "white", high = "#006df3ff") +
+  scale_x_discrete(labels = lab_vec) +   # <<< short labels on x-axis
+  labs(x = NULL, y = "ChromHMM 15-state (E003 hg38)", title = "EZH1") +
+  theme_bw(base_size = 12) +
+  theme(panel.grid = element_blank(),
+        axis.text.y = element_text(size = 9),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+dev.off()
+
+
+
+
+```
