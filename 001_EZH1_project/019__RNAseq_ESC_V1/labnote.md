@@ -2210,6 +2210,8 @@ conda activate IsoformSwitchAnalyzeRv5
 ```R
 # packages
 library("IsoformSwitchAnalyzeR")
+library("rtracklayer")
+
 
 set.seed(42)
 
@@ -2266,20 +2268,64 @@ analysSwitchList <- isoformSwitchAnalysisPart2(
 # load("output/IsoformSwitchAnalyzeR_kallisto/IsoformSwitchAnalyzeR_kallisto.RData")
 ##
 
-XXXY HERE 
 
-## Generate plot for a gene
-
-pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/switchPlot-WTKO-EZH1.pdf', onefile = FALSE, height=6, width = 9)
-switchPlot(analysSwitchList, gene= "EZH1", condition1= "WT", condition2= "KO")
+## Generate plot for a gene - All panels
+LSAMP
+### WT vs KO
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/switchPlot-WTKO-ECEL1.pdf', onefile = FALSE, height=6, width = 9)
+switchPlot(analysSwitchList, gene= "ECEL1", condition1= "WT", condition2= "KO", reverseMinus = FALSE)
+dev.off()
+### WT vs OEKO
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/switchPlot-WTOEKO-HTRA1.pdf', onefile = FALSE, height=6, width = 9)
+switchPlot(analysSwitchList, gene= "HTRA1", condition1= "WT", condition2= "OEKO", reverseMinus = FALSE)
 dev.off()
 
 
-pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/switchPlot-WTOEKO-EZH1.pdf', onefile = FALSE, height=6, width = 9)
-switchPlot(analysSwitchList, gene= "EZH1", condition1= "WT", condition2= "OEKO")
+## Only gene and isoform expression
+### WT vs KO
+pdf("output/IsoformSwitchAnalyzeR_kallisto/switchPlotGeneExp-WTKO-ECEL1.pdf", width=3, height=5)
+switchPlotGeneExp(
+  switchAnalyzeRlist = analysSwitchList,
+  gene = "ECEL1",
+  condition1 = "WT",
+  condition2 = "KO"
+)  
+dev.off()
+pdf("output/IsoformSwitchAnalyzeR_kallisto/switchPlotIsoExp-WTKO-ECEL1.pdf", width=5, height=5)
+switchPlotIsoExp(
+  switchAnalyzeRlist = analysSwitchList,
+  gene = "ECEL1",
+  condition1 = "WT",
+  condition2 = "KO"
+) +
+  scale_fill_manual(values = c("WT" = "black", "KO" = "red")) +
+  scale_color_manual(values = c("WT" = "black", "KO" = "red"))
 dev.off()
 
-XXXY HERE 
+
+### WT vs OEKO
+
+pdf("output/IsoformSwitchAnalyzeR_kallisto/switchPlotGeneExp-WTOEKO-HTRA1.pdf", width=3, height=5)
+switchPlotGeneExp(
+  switchAnalyzeRlist = analysSwitchList,
+  gene = "HTRA1",
+  condition1 = "WT",
+  condition2 = "OEKO"
+) 
+dev.off()
+pdf("output/IsoformSwitchAnalyzeR_kallisto/switchPlotIsoExp-WTOEKO-HTRA1.pdf", width=5, height=5)
+switchPlotIsoExp(
+  switchAnalyzeRlist = analysSwitchList,
+  gene = "HTRA1",
+  condition1 = "WT",
+  condition2 = "OEKO"
+) +
+  scale_fill_manual(values = c("WT" = "black", "OEKO" = "blue")) +
+  scale_color_manual(values = c("WT" = "black", "OEKO" = "blue"))
+dev.off()
+
+
+
 
 
 
@@ -2301,6 +2347,15 @@ extractConsequenceSummary(
     asFractionTotal = FALSE      # enables analysis of fraction of significant features
 )
 dev.off()
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/extractConsequenceSummary_Genes.pdf', onefile = FALSE, height=6, width = 9)
+extractConsequenceSummary(
+    analysSwitchList,
+    consequencesToAnalyze='all',
+    plotGenes = TRUE,           # enables analysis of genes (instead of isoforms)
+    asFractionTotal = FALSE      # enables analysis of fraction of significant features
+)
+dev.off()
+
 
 # Consequence Enrichment Analysis
 pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/extractConsequenceEnrichment.pdf', onefile = FALSE, height=6, width = 12)
@@ -2363,13 +2418,79 @@ significant_isoforms <- analysSwitchList$isoformFeatures %>%
 WT_vs_KO <- significant_isoforms %>%
   filter(condition_1 == "KO" & condition_2 == "WT") %>%
   nrow()
-### Count for WT vs KOEF1aEZH1
-WT_vs_KOEF1aEZH1 <- significant_isoforms %>%
-  filter(condition_1 == "KOEF1aEZH1" & condition_2 == "WT") %>%
+### Count for WT vs OEKO
+WT_vs_OEKO <- significant_isoforms %>%
+  filter(condition_1 == "OEKO" & condition_2 == "WT") %>%
   nrow()
 ### Print the counts
 cat("Number of significant isoform switches (WT vs KO):", WT_vs_KO, "\n")
-cat("Number of significant isoform switches (WT vs KOEF1aEZH1):", WT_vs_KOEF1aEZH1, "\n")
+cat("Number of significant isoform switches (WT vs OEKO):", WT_vs_OEKO, "\n")
+
+## Import GTF to have gene name chromosome 
+gtf <- import("../../Master/meta/gencode.v47.chr_patch_hapl_scaff.annotation.gtf")
+## Convert to data frame
+gtf_df <- as.data.frame(gtf)
+## Keep only gene entries
+gene_df <- gtf_df %>%
+  filter(type == "gene") %>%
+  dplyr::select(seqnames, gene_name) %>%
+  distinct() %>%
+  rename(chromosome = seqnames) %>%
+  as_tibble()
+
+# Save output list of genes
+## Signif only without X chr
+significant_isoforms__KO_geneSymbol =  significant_isoforms %>%
+  filter(condition_1 == "KO" & condition_2 == "WT") %>%
+  dplyr::select(gene_name) %>% unique() %>% left_join(gene_df) %>% as_tibble() %>% dplyr::filter(chromosome != "chrX") %>%   dplyr::select(gene_name)
+write.table(
+  significant_isoforms__KO_geneSymbol,
+  file = "output/IsoformSwitchAnalyzeR_kallisto/significant_isoforms_dIF01qval05__KO_geneSymbol.txt",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = FALSE
+)
+## Signif only without X chr AND with consequence
+significant_isoforms__KO_geneSymbol =  significant_isoforms %>%
+  filter(condition_1 == "KO" & condition_2 == "WT" & switchConsequencesGene == TRUE) %>%
+  dplyr::select(gene_name) %>% unique() %>% left_join(gene_df) %>% as_tibble() %>% dplyr::filter(chromosome != "chrX") %>%   dplyr::select(gene_name)
+write.table(
+  significant_isoforms__KO_geneSymbol,
+  file = "output/IsoformSwitchAnalyzeR_kallisto/significant_isoforms_dIF01qval05switchConsequencesGeneTRUE__KO_geneSymbol.txt",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = FALSE
+)
+
+
+## Signif only without X chr
+significant_isoforms__OEKO_geneSymbol =  significant_isoforms %>%
+  filter(condition_1 == "OEKO" & condition_2 == "WT") %>%
+  dplyr::select(gene_name) %>% unique() %>% left_join(gene_df) %>% as_tibble() %>% dplyr::filter(chromosome != "chrX")  %>%   dplyr::select(gene_name)
+write.table(
+  significant_isoforms__OEKO_geneSymbol,
+  file = "output/IsoformSwitchAnalyzeR_kallisto/significant_isoforms_dIF01qval05__OEKO_geneSymbol.txt",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = FALSE
+)
+## Signif only without X chr AND with consequence
+significant_isoforms__OEKOKO_geneSymbol =  significant_isoforms %>%
+  filter(condition_1 == "OEKO" & condition_2 == "WT" & switchConsequencesGene == TRUE) %>%
+  dplyr::select(gene_name) %>% unique() %>% left_join(gene_df) %>% as_tibble() %>% dplyr::filter(chromosome != "chrX") %>%   dplyr::select(gene_name)
+write.table(
+  significant_isoforms__OEKOKO_geneSymbol,
+  file = "output/IsoformSwitchAnalyzeR_kallisto/significant_isoforms_dIF01qval05switchConsequencesGeneTRUE__OEKO_geneSymbol.txt",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = FALSE
+)
+
+
 
 
 ### Switch vs Gene changes:
@@ -2390,12 +2511,21 @@ dev.off()
 
 
 
+
+
+
 ```
 
 
+--> There should be ways to investigate the list of isoforms more carefully but I m just gonna do a GO..
+  --> **Gene list of interest**: Gene with isforom switch and a functional consequence (loss of coding potential... etc..) `output/IsoformSwitchAnalyzeR_kallisto/significant_isoforms_dIF01qval05switchConsequencesGeneTRUE__[OEKO or KO]_geneSymbol.txt`
+
+
+--> **IsoformSwitchAnalyzeR evaluates changes within each isoform, so the X chromosome doesn’t bias the overall analysis**. I can simply exclude isoform switches detected on chrX.
 
 
 
+More info [here](https://bioconductor.org/packages/devel/bioc/vignettes/IsoformSwitchAnalyzeR/inst/doc/IsoformSwitchAnalyzeR.html)
 
 
 
