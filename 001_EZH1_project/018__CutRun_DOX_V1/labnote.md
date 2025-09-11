@@ -4312,6 +4312,10 @@ output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_KO_vs_ESC_W
 output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_KO_vs_ESC_WT-EZH2.txt
 output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-EZH2.txt
 output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-EZH2.txt
+# IsoformSwitchAnalyzeR_kallisto significant from 001/019
+../019__RNAseq_ESC_V1/output/IsoformSwitchAnalyzeR_kallisto/significant_isoforms_dIF01qval05__KO_geneSymbol.txt
+../019__RNAseq_ESC_V1/output/IsoformSwitchAnalyzeR_kallisto/significant_isoforms_dIF01qval05__OEKO_geneSymbol.txt
+
 
 
 ## put together Gain and Lost mix
@@ -4390,6 +4394,10 @@ sed 's/\r$//; s/.*/gene_name "&"/' output/edgeR/downregulated_q05fc058-WTKOOEKO_
 
 
 
+sed 's/\r$//; s/.*/gene_name "&"/' ../019__RNAseq_ESC_V1/output/IsoformSwitchAnalyzeR_kallisto/significant_isoforms_dIF01qval05__KO_geneSymbol.txt > ../019__RNAseq_ESC_V1/output/IsoformSwitchAnalyzeR_kallisto/significant_isoforms_dIF01qval05__KO_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' ../019__RNAseq_ESC_V1/output/IsoformSwitchAnalyzeR_kallisto/significant_isoforms_dIF01qval05__OEKO_geneSymbol.txt > ../019__RNAseq_ESC_V1/output/IsoformSwitchAnalyzeR_kallisto/significant_isoforms_dIF01qval05__OEKO_as_gtf_geneSymbol.txt
+
+
 
 
 
@@ -4455,7 +4463,8 @@ grep -Ff output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_
 
 
 
-
+grep -Ff ../019__RNAseq_ESC_V1/output/IsoformSwitchAnalyzeR_kallisto/significant_isoforms_dIF01qval05__KO_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_IsoformSwitchAnalyzeR_kallisto_significant_isoforms_dIF01qval05__KO.gtf
+grep -Ff ../019__RNAseq_ESC_V1/output/IsoformSwitchAnalyzeR_kallisto/significant_isoforms_dIF01qval05__OEKO_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_IsoformSwitchAnalyzeR_kallisto_significant_isoforms_dIF01qval05__OEKO.gtf
 
 
 
@@ -4600,6 +4609,17 @@ sbatch scripts/matrix_GENETSSTES_250bp100bp-regulated_q05fc058-WTKOOEKO_EZH2_qva
 sbatch scripts/matrix_GENETSSTES_250bp100bp-regulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-WTKOOEKO-H3K27me3.sh # 51180740 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-regulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-WTKOOEKO-EZH2.sh # 51180889 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-regulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-WTKOOEKO-EZH1.sh # 51180904 ok
+
+
+
+
+# IsoformSwitchAnalyzeR_kallisto 001/019
+sbatch scripts/matrix_GENETSSTES_250bp100bp-IsoformSwitchAnalyzeR_kallisto_significant_isoforms_dIF01qval05__KO-WTKOOEKO-EZH1.sh # 51670079 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-IsoformSwitchAnalyzeR_kallisto_significant_isoforms_dIF01qval05__KO-WTKOOEKO-EZH1_thresh2.sh # 51670104 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-IsoformSwitchAnalyzeR_kallisto_significant_isoforms_dIF01qval05__KO-WTKOOEKO-rawIGGR1R2R3.sh # 51670978 ok
+
+sbatch scripts/matrix_GENETSSTES_250bp100bp-IsoformSwitchAnalyzeR_kallisto_significant_isoforms_dIF01qval05__OEKO-WTKOOEKO-EZH1.sh # 51670115 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-IsoformSwitchAnalyzeR_kallisto_significant_isoforms_dIF01qval05__OEKO-WTKOOEKO-EZH1_thresh2.sh # 51670125 ok
 
 
 

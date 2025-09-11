@@ -85,6 +85,11 @@ sbatch --dependency=afterany:50212025 scripts/STAR_mapping_fastp.sh # 50212217 o
 conda activate deeptools
 
 sbatch scripts/STAR_TPM_bw.sh # 50944526 ok
+
+# Calculate median
+conda activate BedToBigwig
+
+sbatch scripts/bigwigmerge_STAR_TPM_bw.sh # 51671403 ok
 ```
 
 -->  ok
@@ -2519,6 +2524,7 @@ dev.off()
 
 --> There should be ways to investigate the list of isoforms more carefully but I m just gonna do a GO..
   --> **Gene list of interest**: Gene with isforom switch and a functional consequence (loss of coding potential... etc..) `output/IsoformSwitchAnalyzeR_kallisto/significant_isoforms_dIF01qval05switchConsequencesGeneTRUE__[OEKO or KO]_geneSymbol.txt`
+    --> Check in `001*/018*` whether these genes are bound with EZH1 (Venn overlap using consens peak does ot show high overlap)
 
 
 --> **IsoformSwitchAnalyzeR evaluates changes within each isoform, so the X chromosome doesn’t bias the overall analysis**. I can simply exclude isoform switches detected on chrX.
@@ -2731,6 +2737,66 @@ done
 
 column -t "$OUT"
 
+
+
+
+
+
+####################################################
+## 001/015 samples #################################
+####################################################
+
+# --- set your event ---
+CHR=chr17
+DEL_START=42720375     # exact start of the deletion (leftmost deleted base, 1-based)
+LEN=16                 # use 8 for your 8-bp sample
+PAD=5
+
+OUT=output/variant_calling/exon7_${LEN}D_exact-001015.tsv
+printf "sample\tspan_reads\tdel${LEN}_reads\tfraction\n" > "$OUT"
+
+for bam in ../015__RNAseq_PSC/output/STAR/fastp/*_Aligned.sortedByCoord.out.bam; do
+  s=$(basename "$bam" _Aligned.sortedByCoord.out.bam)
+  samtools view -F 0x904 -q 20 "$bam" "${CHR}:$((DEL_START-PAD))-$((DEL_START+PAD))" \
+  | awk -v S="$DEL_START" -v L="$LEN" -v sample="$s" '
+    function covers_start(cigar,pos,   re,tok,len,op){
+      re="[0-9]+[MIDNSHP=X]"
+      while (match(cigar,re)){
+        tok=substr(cigar,RSTART,RLENGTH)
+        len=substr(tok,1,length(tok)-1)+0
+        op=substr(tok,length(tok),1)
+        # count reads spanning S by M/=/X OR by a deletion that covers S
+        if ((op=="M"||op=="="||op=="X") && S>=pos && S<pos+len) return 1
+        if (op=="D" && S>=pos && S<pos+len) return 1
+        if (op=="M"||op=="="||op=="X"||op=="D"||op=="N") pos+=len
+        cigar=substr(cigar,RSTART+RLENGTH)
+      } return 0
+    }
+    function has_exact_del(cigar,pos,   re,tok,len,op){
+      re="[0-9]+[MIDNSHP=X]"
+      while (match(cigar,re)){
+        tok=substr(cigar,RSTART,RLENGTH)
+        len=substr(tok,1,length(tok)-1)+0
+        op=substr(tok,length(tok),1)
+        if (op=="D" && len==L && pos==S) return 1
+        if (op=="M"||op=="="||op=="X"||op=="D"||op=="N") pos+=len
+        cigar=substr(cigar,RSTART+RLENGTH)
+      } return 0
+    }
+    {
+      q=$1; pos=$4; cig=$6
+      if (covers_start(cig,pos)) seen[q]=1
+      if (has_exact_del(cig,pos)) del[q]=1
+    }
+    END{
+      for (q in seen) tot++
+      for (q in del)  alt++
+      frac=(tot?alt/tot:0)
+      printf "%s\t%d\t%d\t%.4f\n", sample, tot, alt, frac
+    }' >> "$OUT"
+done
+
+column -t "$OUT"
 
 
 
