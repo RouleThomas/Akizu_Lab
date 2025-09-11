@@ -2159,35 +2159,46 @@ write.table(long_data_log2tpm, file = c("output/deseq2/long_data_log2tpm_Akoto00
 # Differential alternative mRNA splicing
 
 
-## Run in webserver CPC2, PFAM, IUPRED2A, SIGNALP
+## Run IsoformSwitchAnalyzeR prerequisets Part1 - webserver CPC2, PFAM, IUPRED2A, SIGNALP
 
 After running `isoformSwitchAnalysisPart1()` from  `## IsoformSwitchAnalyzeR usage`
 
 
 **Run these in Webserver** :
 - coding potential with [CPC2](https://cpc2.gao-lab.org/), I put `output/IsoformSwitchAnalyzeR/isoformSwitchAnalyzeR_isoform_nt.fasta`;
-  - kallisto: `IsoformSwitchAnalyzeR_kallisto/result_cpc2.txt`
-- protein domain with [PFAM](https://www.ebi.ac.uk/Tools/hmmer/search/hmmscan), run in code below at `### PFAM`;
-  - kallisto: `pfam_results_kallisto.txt` --> LOOK GOOD; but need reformat (see below custom python script)
-- Prediction of Intrinsically Unstructured Proteins with [IUPred2](https://iupred2a.elte.hu/); V3 do not support multi FASTA file;
-  - kallisto: `IsoformSwitchAnalyzeR_kallisto/isoformSwitchAnalyzeR_isoform_AA_complete.result`
+  --> `IsoformSwitchAnalyzeR_kallisto/result_cpc2.txt`
+- protein domain with [PFAM](https://www.ebi.ac.uk/Tools/hmmer/search/hmmscan), manually on the cluster, see below:
+  --> OK
+- Prediction of Intrinsically Unstructured Proteins with [IUPred2](https://iupred2a.elte.hu/); V3 do not support multi FASTA file with Default: `IUPred2 long disorder (default)`;
+  --> `IsoformSwitchAnalyzeR_kallisto/isoformSwitchAnalyzeR_isoform_AA_complete.result`
 - Prediction of signal peptide with [SignalP 6.0](https://services.healthtech.dtu.dk/services/SignalP-6.0/) with option Eukarya/short output/fast; and save the *Prediction summary*
-  - kallisto: `IsoformSwitchAnalyzeR_kallisto/prediction_results_SignalIP6.txt` --> LOOK GOOD
+  - --> `IsoformSwitchAnalyzeR_kallisto/prediction_results_SignalIP6.txt` --> LOOK GOOD
 
 
 **PFAM reformatting**:
 
 ```bash
-# kallisto
-nano scripts/reformat_pfam_kallisto.py
+# Load packages and modules
+conda activate deseq2
+module load HMMER
+
+
+# Go to the software
+cd ../../Master/software
+cd pfam_scan
+
+# Run it
+./pfam_scan.py ../../../001_EZH1_Project/019__RNAseq_ESC_V1/output/IsoformSwitchAnalyzeR_kallisto/isoformSwitchAnalyzeR_isoform_AA_complete.fasta ../pfamdb/ -out ../../../001_EZH1_Project/019__RNAseq_ESC_V1/output/pfam/pfam_results_kallisto.txt
+
+
+# Re-format the output
+cd ../../../001_EZH1_Project/019__RNAseq_ESC_V1
 python3 scripts/reformat_pfam_kallisto.py
 ```
---> Works!
 
 
 
-
-
+## Run IsoformSwitchAnalyzeR Part1 and part2
 
 
 
@@ -2200,7 +2211,7 @@ conda activate IsoformSwitchAnalyzeRv5
 # packages
 library("IsoformSwitchAnalyzeR")
 
-
+set.seed(42)
 
 
 # Kallisto ####################################################
@@ -2226,11 +2237,6 @@ aSwitchList <- importRdata(
     fixStringTieAnnotationProblem = TRUE,
     showProgress = FALSE
 )
-
-XXXY HERE!!!
-
-
-
 summary(aSwitchList)
 
 
@@ -2256,17 +2262,24 @@ analysSwitchList <- isoformSwitchAnalysisPart2(
 )
 
 ## SAVE IMAGE R SESSION
-# save.image("IsoformSwitchAnalyzeR_v2_kallisto.RData")
-# load("IsoformSwitchAnalyzeR_v2_kallisto.RData")
+# save.image("output/IsoformSwitchAnalyzeR_kallisto/IsoformSwitchAnalyzeR_kallisto.RData")
+# load("output/IsoformSwitchAnalyzeR_kallisto/IsoformSwitchAnalyzeR_kallisto.RData")
 ##
 
+XXXY HERE 
 
 ## Generate plot for a gene
 
-pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/switchPlot_WTKO_CRBN.pdf', onefile = FALSE, height=6, width = 9)
-switchPlot(analysSwitchList, gene= "CRBN", condition1= "WT", condition2= "KOEF1aEZH1")
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/switchPlot-WTKO-EZH1.pdf', onefile = FALSE, height=6, width = 9)
+switchPlot(analysSwitchList, gene= "EZH1", condition1= "WT", condition2= "KO")
 dev.off()
 
+
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/switchPlot-WTOEKO-EZH1.pdf', onefile = FALSE, height=6, width = 9)
+switchPlot(analysSwitchList, gene= "EZH1", condition1= "WT", condition2= "OEKO")
+dev.off()
+
+XXXY HERE 
 
 
 
@@ -2382,6 +2395,283 @@ dev.off()
 
 
 
+
+
+
+
+# Investigate EZH1 KO deletion
+
+
+
+Let's confirm that EZH1 KO deletion 8bp in exon7 has occured.
+
+
+
+
+## Using BCF
+
+
+### bcftools installation
+
+Follow guidelines from [this](https://samtools.github.io/bcftools/howtos/install.html)
+
+```bash
+
+cd ../../Master/software
+mkdir bcftools
+
+cd bcftools
+
+# download bcf tools
+git clone --recurse-submodules https://github.com/samtools/htslib.git
+git clone https://github.com/samtools/bcftools.git
+cd bcftools
+
+make
+
+
+# Add shortcut to launch bcftools
+
+nano ~/.bashrc # add: export PATH=$PATH:/scr1/users/roulet/Akizu_Lab/Master/software/bcftools/bcftools
+# Restart terminal
+
+
+module load SAMtools
+```
+
+--> TO USE bcftools, need first to run  `module load SAMtools` asnd then type `bcftools`
+
+
+### bcftools usage
+
+
+
+```bash
+module load SAMtools
+
+
+# Quick investagion
+# (A) Do your BAMs actually have "chr17"?
+samtools idxstats output/STAR/fastp/ESC_WT_R1_Aligned.sortedByCoord.out.bam | head
+
+# (B) What’s the coverage in/near that exon?
+samtools depth -r chr17:42720200-42720520 output/STAR/fastp/ESC_WT_R1_Aligned.sortedByCoord.out.bam \
+  | awk '{sum+=$3; n++} END{print "avg_depth:", (n?sum/n:0), "positions:", n}'
+
+#--> YEs, there is enough coverage
+
+
+# (C) Do any reads show a deletion (look for D in CIGAR) ?
+samtools view output/STAR/fastp/ESC_WT_R1_Aligned.sortedByCoord.out.bam chr17:42720200-42720520 \
+  | awk '$6 ~ /[0-9]+D/ {print $3,$4,$6}' | head
+  samtools view output/STAR/fastp/ESC_WT_R2_Aligned.sortedByCoord.out.bam chr17:42720200-42720520 \
+  | awk '$6 ~ /[0-9]+D/ {print $3,$4,$6}' | head
+  samtools view output/STAR/fastp/ESC_WT_R3_Aligned.sortedByCoord.out.bam chr17:42720200-42720520 \
+  | awk '$6 ~ /[0-9]+D/ {print $3,$4,$6}' | head
+
+samtools view output/STAR/fastp/ESC_KO_R1_Aligned.sortedByCoord.out.bam chr17:42720200-42720520 \
+  | awk '$6 ~ /[0-9]+D/ {print $3,$4,$6}' | head
+samtools view output/STAR/fastp/ESC_KO_R2_Aligned.sortedByCoord.out.bam chr17:42720200-42720520 \
+  | awk '$6 ~ /[0-9]+D/ {print $3,$4,$6}' | head
+samtools view output/STAR/fastp/ESC_KO_R3_Aligned.sortedByCoord.out.bam chr17:42720200-42720520 \
+  | awk '$6 ~ /[0-9]+D/ {print $3,$4,$6}' | head
+
+#--> YES, we see 16D in the CIGAR, meaning there is 16bp deletion detected in KO samples!!!
+
+
+
+
+
+# Quantification 
+
+####################################################
+## 001/019 samples #################################
+####################################################
+
+
+REGION="chr17:42720200-42720520"   # your exon7 window
+
+printf "sample\ttotal_reads\tdel16_reads\tfraction\n" > output/variant_calling/exon7_16D_cigar_counts.tsv
+for bam in output/STAR/fastp/*_Aligned.sortedByCoord.out.bam; do
+  sample=$(basename "$bam" _Aligned.sortedByCoord.out.bam)
+
+  # total reads overlapping region (primary, properly mapped-ish; tweak filters if needed)
+  total=$(samtools view -F 0x904 -q 20 "$bam" "$REGION" | wc -l)
+
+  # reads whose CIGAR contains a 16-nt deletion anywhere within the region
+  del16=$(samtools view -F 0x904 -q 20 "$bam" "$REGION" \
+          | awk '$6 ~ /16D/ {c++} END{print c+0}')
+
+  frac=0; if [ "$total" -gt 0 ]; then frac=$(awk -v a="$del16" -v b="$total" 'BEGIN{printf "%.4f", a/b}'); fi
+  printf "%s\t%s\t%s\t%s\n" "$sample" "$total" "$del16" "$frac" >> output/variant_calling/exon7_16D_cigar_counts.tsv
+done
+column -t output/variant_calling/exon7_16D_cigar_counts.tsv
+
+#--> This show total read in the window and read with the deletion; but it include reads that does not overlap the deletion
+
+
+
+####################################################
+## 001/001 samples #################################
+####################################################
+
+
+REGION="chr17:42720200-42720520"   # your exon7 window
+
+printf "sample\ttotal_reads\tdel8_reads\tfraction\n" > output/variant_calling/exon7_8D_cigar_counts-001001.tsv
+for bam in ../001__RNAseq/output/STAR_hg38/ESC*_Aligned.sortedByCoord.out.bam; do
+  sample=$(basename "$bam" _Aligned.sortedByCoord.out.bam)
+
+  # total reads overlapping region (primary, properly mapped-ish; tweak filters if needed)
+  total=$(samtools view -F 0x904 -q 20 "$bam" "$REGION" | wc -l)
+
+  # reads whose CIGAR contains a 16-nt deletion anywhere within the region
+  del16=$(samtools view -F 0x904 -q 20 "$bam" "$REGION" \
+          | awk '$6 ~ /8D/ {c++} END{print c+0}')
+
+  frac=0; if [ "$total" -gt 0 ]; then frac=$(awk -v a="$del16" -v b="$total" 'BEGIN{printf "%.4f", a/b}'); fi
+  printf "%s\t%s\t%s\t%s\n" "$sample" "$total" "$del16" "$frac" >> output/variant_calling/exon7_8D_cigar_counts-001001.tsv
+done
+column -t output/variant_calling/exon7_8D_cigar_counts-001001.tsv
+
+
+#--> This show total read in the window and read with the deletion; but it include reads that does not overlap the deletion
+
+
+
+
+
+###################################################################################################################
+# Only include reads that overlap with the deletion ###############################################################
+###################################################################################################################
+
+####################################################
+## 001/019 samples #################################
+####################################################
+
+# --- set your event ---
+CHR=chr17
+DEL_START=42720375     # exact start of the deletion (leftmost deleted base, 1-based)
+LEN=16                 # use 8 for your 8-bp sample
+PAD=5
+
+OUT=output/variant_calling/exon7_${LEN}D_exact.tsv
+printf "sample\tspan_reads\tdel${LEN}_reads\tfraction\n" > "$OUT"
+
+for bam in output/STAR/fastp/*_Aligned.sortedByCoord.out.bam; do
+  s=$(basename "$bam" _Aligned.sortedByCoord.out.bam)
+  samtools view -F 0x904 -q 20 "$bam" "${CHR}:$((DEL_START-PAD))-$((DEL_START+PAD))" \
+  | awk -v S="$DEL_START" -v L="$LEN" -v sample="$s" '
+    function covers_start(cigar,pos,   re,tok,len,op){
+      re="[0-9]+[MIDNSHP=X]"
+      while (match(cigar,re)){
+        tok=substr(cigar,RSTART,RLENGTH)
+        len=substr(tok,1,length(tok)-1)+0
+        op=substr(tok,length(tok),1)
+        # count reads spanning S by M/=/X OR by a deletion that covers S
+        if ((op=="M"||op=="="||op=="X") && S>=pos && S<pos+len) return 1
+        if (op=="D" && S>=pos && S<pos+len) return 1
+        if (op=="M"||op=="="||op=="X"||op=="D"||op=="N") pos+=len
+        cigar=substr(cigar,RSTART+RLENGTH)
+      } return 0
+    }
+    function has_exact_del(cigar,pos,   re,tok,len,op){
+      re="[0-9]+[MIDNSHP=X]"
+      while (match(cigar,re)){
+        tok=substr(cigar,RSTART,RLENGTH)
+        len=substr(tok,1,length(tok)-1)+0
+        op=substr(tok,length(tok),1)
+        if (op=="D" && len==L && pos==S) return 1
+        if (op=="M"||op=="="||op=="X"||op=="D"||op=="N") pos+=len
+        cigar=substr(cigar,RSTART+RLENGTH)
+      } return 0
+    }
+    {
+      q=$1; pos=$4; cig=$6
+      if (covers_start(cig,pos)) seen[q]=1
+      if (has_exact_del(cig,pos)) del[q]=1
+    }
+    END{
+      for (q in seen) tot++
+      for (q in del)  alt++
+      frac=(tot?alt/tot:0)
+      printf "%s\t%d\t%d\t%.4f\n", sample, tot, alt, frac
+    }' >> "$OUT"
+done
+
+column -t "$OUT"
+
+
+
+
+
+
+####################################################
+## 001/001 samples #################################
+####################################################
+
+CHR=chr17
+DEL_START=42720376   # <-- exact start of the 16-bp deletion from IGV 42720374 42720391
+LEN=8               
+PAD=2                # tiny fetch padding
+
+
+OUT=output/variant_calling/exon7_${LEN}D_exact-001001.tsv
+printf "sample\tspan_reads\tdel${LEN}_reads\tfraction\n" > "$OUT"
+
+for bam in ../001__RNAseq/output/STAR_hg38/ESC*_Aligned.sortedByCoord.out.bam; do
+  s=$(basename "$bam" _Aligned.sortedByCoord.out.bam)
+  samtools view -F 0x904 -q 20 "$bam" "${CHR}:$((DEL_START-PAD))-$((DEL_START+PAD))" \
+  | awk -v S="$DEL_START" -v L="$LEN" -v sample="$s" '
+    function covers_start(cigar,pos,   re,tok,len,op){
+      re="[0-9]+[MIDNSHP=X]"
+      while (match(cigar,re)){
+        tok=substr(cigar,RSTART,RLENGTH)
+        len=substr(tok,1,length(tok)-1)+0
+        op=substr(tok,length(tok),1)
+        # count reads spanning S by M/=/X OR by a deletion that covers S
+        if ((op=="M"||op=="="||op=="X") && S>=pos && S<pos+len) return 1
+        if (op=="D" && S>=pos && S<pos+len) return 1
+        if (op=="M"||op=="="||op=="X"||op=="D"||op=="N") pos+=len
+        cigar=substr(cigar,RSTART+RLENGTH)
+      } return 0
+    }
+    function has_exact_del(cigar,pos,   re,tok,len,op){
+      re="[0-9]+[MIDNSHP=X]"
+      while (match(cigar,re)){
+        tok=substr(cigar,RSTART,RLENGTH)
+        len=substr(tok,1,length(tok)-1)+0
+        op=substr(tok,length(tok),1)
+        if (op=="D" && len==L && pos==S) return 1
+        if (op=="M"||op=="="||op=="X"||op=="D"||op=="N") pos+=len
+        cigar=substr(cigar,RSTART+RLENGTH)
+      } return 0
+    }
+    {
+      q=$1; pos=$4; cig=$6
+      if (covers_start(cig,pos)) seen[q]=1
+      if (has_exact_del(cig,pos)) del[q]=1
+    }
+    END{
+      for (q in seen) tot++
+      for (q in del)  alt++
+      frac=(tot?alt/tot:0)
+      printf "%s\t%d\t%d\t%.4f\n", sample, tot, alt, frac
+    }' >> "$OUT"
+done
+
+column -t "$OUT"
+
+
+
+
+
+
+
+```
+
+
+--
 
 
 

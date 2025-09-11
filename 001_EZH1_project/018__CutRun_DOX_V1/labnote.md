@@ -3873,6 +3873,11 @@ conda create -n txdbmaker -c conda-forge r-base=4.5
 
 conda activate txdbmaker
 conda install bioconda::bioconductor-txdbmaker 
+#--> fail
+conda env remove -n txdbmaker
+
+# Try create and install at same time
+conda create -n txdbmaker -c bioconda -c conda-forge bioconductor-txdbmaker
 
 ```
 Then in R
@@ -3891,7 +3896,8 @@ install.packages(c("XML","restfulr"))
 #--> FAIL; same but now error with xml2 and restfulr
 install.packages(c("xml2"))
 #--> FAIL; lets try installing with anaconda  `conda install bioconda::bioconductor-txdbmaker`
-#--> XXX
+#--> FAIL
+
 
 # load package
 library("txdbmaker")
