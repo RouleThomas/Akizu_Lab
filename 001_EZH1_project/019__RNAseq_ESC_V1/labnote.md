@@ -81,18 +81,31 @@ sbatch scripts/fastp.sh # 50212025 ok
 sbatch --dependency=afterany:50212025 scripts/STAR_mapping_fastp.sh # 50212217 ok
 
 
-# Convert alignment to bigwig
+## Convert alignment to bigwig
 conda activate deeptools
-
 sbatch scripts/STAR_TPM_bw.sh # 50944526 ok
 
-# Calculate median
+## Calculate median
 conda activate BedToBigwig
-
 sbatch scripts/bigwigmerge_STAR_TPM_bw.sh # 51671403 ok
+
+
+
+
+# Remove the X chromomsoem
+sbatch scripts/STAR_removeXchr.sh # 51676961 xxx
+
+## Convert alignment to bigwig
+sbatch --dependency=afterany:51676961 scripts/STAR_noXchr_TPM_bw.sh # 51676963 xxx
+
+
+
 ```
 
 -->  ok
+
+--> X chr removed using `samtools view`
+
 
 
 
@@ -104,8 +117,12 @@ sbatch scripts/bigwigmerge_STAR_TPM_bw.sh # 51671403 ok
 
 ```bash
 conda activate deeptools
+
+###################################
+# Include X chr #####################
+###################################
 # Generate compile bigwig (.npz) files
-sbatch scripts/multiBigwigSummary_STAR_TPM.sh # 51072872 xxx
+sbatch scripts/multiBigwigSummary_STAR_TPM.sh # 51072872 ok
 
 
 
@@ -118,7 +135,8 @@ plotPCA -in output/bigwig_STAR/multiBigwigSummary_STAR_TPM.npz \
     --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
     --colors black black black red red red blue blue blue \
     --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
-    -o output/bigwig_STAR/multiBigwigSummary_STAR_TPM_plotPCA.pdf
+    -o output/bigwig_STAR/multiBigwigSummary_STAR_TPM_plotPCA.pdf \
+    --plotWidth 7
 
 ## Heatmap
 plotCorrelation \
@@ -131,6 +149,27 @@ plotCorrelation \
     -o output/bigwig_STAR/multiBigwigSummary_STAR_TPM_heatmap.pdf
 
 #################################
+
+
+
+###################################
+# Without X chr #####################
+###################################
+
+sbatch scripts/multiBigwigSummary_STAR_TPM_noXchr.sh #  xxx
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ```
 

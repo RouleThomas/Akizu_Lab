@@ -65351,6 +65351,13 @@ set.seed(42)
 #############################################
 
 
+# check some genes on Yao dataset:
+
+pdf("output/seurat/FeaturePlot_Yao_Cortex-10X_nuclei_v3_AIBS-30dim-RelnThsd7aCntn5Ntng1.pdf", width=10, height=7)
+FeaturePlot(Yao_Cortex, features = c("Reln", "Thsd7a", "Cntn5", "Ntng1"),  cols = c("grey", "red"), max.cutoff = 1) #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+
+
 
 ##############################################################
 # The other way ##############################################

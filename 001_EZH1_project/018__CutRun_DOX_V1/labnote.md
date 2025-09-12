@@ -146,6 +146,9 @@ This is prefered for THOR bam input.
 ```bash
 conda activate bowtie2
 sbatch --dependency=afterany:49800169 scripts/samtools_unique.sh # 49800224 ok
+
+sbatch scripts/samtools_unique_noXchr.sh # 51689174 xxx
+
 ```
 
 
@@ -622,12 +625,12 @@ Summary pipeline:
 # Convert bigwig to bedgraph
 conda activate BedToBigwig
 ## Unique bigwig (1bp resolution)
-sbatch scripts/BedToBigwig_Ferguson_unique.sh # 50101629 xxx
+sbatch scripts/BedToBigwig_Ferguson_unique.sh # 50101629 ok
 
 
 # Remove blacklist regions
 ## Unique bigwig (1bp resolution)
-sbatch --dependency=afterany:50101629 scripts/BedintersectBlacklist_Ferguson_unique.sh # 50101748 xxx
+sbatch --dependency=afterany:50101629 scripts/BedintersectBlacklist_Ferguson_unique.sh # 50101748 ok
 
 
 ```
@@ -3863,53 +3866,31 @@ write.table(ESC_WTKOOEKO_EZH2_qval3merge100bp_annot_promoterAnd5_geneSymbol, fil
 Let's use GENCODE v47 annotation to be in agreement with the RNAseq annotation! Let's create our own txdb as the  `library("TxDb.Hsapiens.UCSC.hg38.knownGene")` is GENCODE v41. 
 --> Follow guideline [here](https://www.bioconductor.org/packages/devel/bioc/vignettes/txdbmaker/inst/doc/txdbmaker.html) to create txdb from GTF
 
-
+So `library(GenomicFeatures)` already include `makeTxDbFromGFF()` command, so let's simply use deseq2 conda env to create the GENCODEv47 txdb.
 
 
 
 ```bash
-# create conda env  txdbmaker adn sintall last version of R, 4.5
-conda create -n txdbmaker -c conda-forge r-base=4.5
-
-conda activate txdbmaker
-conda install bioconda::bioconductor-txdbmaker 
-#--> fail
-conda env remove -n txdbmaker
-
-# Try create and install at same time
-conda create -n txdbmaker -c bioconda -c conda-forge bioconductor-txdbmaker
-
+conda activate deseq2
 ```
 Then in R
 
 ```R
-# isntall package
-if (!require("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-# The following initializes usage of Bioc devel
-BiocManager::install(version='devel')
-BiocManager::install("txdbmaker")
-#--> FAIL; error dependency XML, restfulr not available...
-install.packages(c("XML","restfulr"))
-#--> FAIL; error libxml not found; so I did in bash `module load libxml2`
-install.packages(c("XML","restfulr"))
-#--> FAIL; same but now error with xml2 and restfulr
-install.packages(c("xml2"))
-#--> FAIL; lets try installing with anaconda  `conda install bioconda::bioconductor-txdbmaker`
-#--> FAIL
-
-
 # load package
-library("txdbmaker")
+library("GenomicFeatures")
 
 
 # Create txdb from GTF
 txdb <- makeTxDbFromGFF("../../Master/meta/gencode.v47.annotation.gtf", format = "gtf")
 
+saveDb(txdb, "../../Master/meta/gencode.v47.annotation.gtf.txdb")
+
+# We can use loadDb() to use the TxDb database
+txdb <- loadDb("../../Master/meta/gencode.v47.annotation.gtf.txdb")
 ```
 
 
-
+XXXY HERE !!!
 
 ```bash
 # files - consensus peaks H3K27me3 and EZH2 qval23 and 3 with merge100bp
