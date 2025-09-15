@@ -93,10 +93,10 @@ sbatch scripts/bigwigmerge_STAR_TPM_bw.sh # 51671403 ok
 
 
 # Remove the X chromomsoem
-sbatch scripts/STAR_removeXchr.sh # 51676961 xxx
+sbatch scripts/STAR_removeXchr.sh # 51676961 ok
 
 ## Convert alignment to bigwig
-sbatch --dependency=afterany:51676961 scripts/STAR_noXchr_TPM_bw.sh # 51676963 xxx
+sbatch --dependency=afterany:51676961 scripts/STAR_noXchr_TPM_bw.sh # 51676963 ok
 
 
 
@@ -125,7 +125,6 @@ conda activate deeptools
 sbatch scripts/multiBigwigSummary_STAR_TPM.sh # 51072872 ok
 
 
-
 ############################################
 # Plot ESC ###########
 ## PCA
@@ -152,21 +151,37 @@ plotCorrelation \
 
 
 
+
 ###################################
 # Without X chr #####################
 ###################################
 
-sbatch scripts/multiBigwigSummary_STAR_TPM_noXchr.sh #  xxx
+sbatch scripts/multiBigwigSummary_STAR_TPM_noXchr.sh # 51799981 xxx
 
 
+############################################
+# Plot ESC ###########
+## PCA
+plotPCA -in output/bigwig_STAR/multiBigwigSummary_STAR_noXchr_TPM.npz \
+    --transpose \
+    --ntop 0 \
+    --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
+    --colors black black black red red red blue blue blue \
+    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
+    -o output/bigwig_STAR/multiBigwigSummary_STAR_noXchr_TPM_plotPCA.pdf \
+    --plotWidth 7
 
+## Heatmap
+plotCorrelation \
+    -in output/bigwig_STAR/multiBigwigSummary_STAR_noXchr_TPM.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig_STAR/multiBigwigSummary_STAR_noXchr_TPM_heatmap.pdf
 
-
-
-
-
-
-
+#################################
 
 
 
@@ -175,6 +190,7 @@ sbatch scripts/multiBigwigSummary_STAR_TPM_noXchr.sh #  xxx
 
 --> **STAR plot PCA cluster the same as Kallisto one**; meaning the bad clustering is not due to the new Kallisto method used.
 
+--> With or without X chr does not change things a lot at the RNA level; PCA looks very similar
 
 
 

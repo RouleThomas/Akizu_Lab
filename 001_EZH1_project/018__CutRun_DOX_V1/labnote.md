@@ -147,7 +147,7 @@ This is prefered for THOR bam input.
 conda activate bowtie2
 sbatch --dependency=afterany:49800169 scripts/samtools_unique.sh # 49800224 ok
 
-sbatch scripts/samtools_unique_noXchr.sh # 51689174 xxx
+sbatch scripts/samtools_unique_noXchr.sh # 51689174 ok
 
 ```
 
@@ -173,6 +173,9 @@ Paramaters:
 ```bash
 conda activate deeptools
 sbatch --dependency=afterany:49800224 scripts/bamtobigwig_unique.sh # 49800244 ok
+
+sbatch scripts/bamtobigwig_unique_noXchr.sh # 51801955 xxx
+
 ```
 
 - WT
@@ -737,9 +740,9 @@ sbatch scripts/bigwig_tresh1_Norm99_Ferguson_unique_initialBigwig-H3K27me3_R1R2R
 sbatch scripts/bigwig_tresh1_Norm99_Ferguson_unique_initialBigwig-EZH2_R1R2R3.sh # 51499020 ok
 sbatch scripts/bigwig_tresh1_Norm99_Ferguson_unique_initialBigwig-EZH1_R1R2R3.sh # 51499023 ok
 ## filter on each bio rep
-sbatch scripts/bigwig_tresh2_Norm99_Ferguson_unique_initialBigwig-H3K27me3_R1R2R3.sh # 51511388 xxx
-sbatch scripts/bigwig_tresh2_Norm99_Ferguson_unique_initialBigwig-EZH2_R1R2R3.sh # 51511428 xxx
-sbatch scripts/bigwig_tresh2_Norm99_Ferguson_unique_initialBigwig-EZH1_R1R2R3.sh # 51511449 xxx
+sbatch scripts/bigwig_tresh2_Norm99_Ferguson_unique_initialBigwig-H3K27me3_R1R2R3.sh # 51511388 ok
+sbatch scripts/bigwig_tresh2_Norm99_Ferguson_unique_initialBigwig-EZH2_R1R2R3.sh # 51511428 ok
+sbatch scripts/bigwig_tresh2_Norm99_Ferguson_unique_initialBigwig-EZH1_R1R2R3.sh # 51511449 ok
 
 
 
