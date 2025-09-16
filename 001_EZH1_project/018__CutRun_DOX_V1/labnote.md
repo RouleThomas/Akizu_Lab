@@ -174,7 +174,7 @@ Paramaters:
 conda activate deeptools
 sbatch --dependency=afterany:49800224 scripts/bamtobigwig_unique.sh # 49800244 ok
 
-sbatch scripts/bamtobigwig_unique_noXchr.sh # 51801955 xxx
+sbatch scripts/bamtobigwig_unique_noXchr.sh # 51801955 ok
 
 ```
 
@@ -211,6 +211,89 @@ sbatch scripts/multiBigwigSummary_ESC.sh # 50086421 ok
 sbatch scripts/multiBigwigSummary_WT.sh # 50086442 ok
 sbatch scripts/multiBigwigSummary_KO.sh # 50086524 ok
 sbatch scripts/multiBigwigSummary_OEKO.sh # 50086534 ok
+
+
+sbatch scripts/multiBigwigSummary_H3K27me3.sh # 52147837 xxx
+sbatch scripts/multiBigwigSummary_EZH2.sh # 52147839 xxx
+sbatch scripts/multiBigwigSummary_EZH1.sh # 52147841 xxx
+
+
+############################################
+# Plot H3K27me3 ###########
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_H3K27me3.npz \
+    --transpose \
+    --ntop 0 \
+    --labels ESC_WT_H3K27me3_R1 ESC_WT_H3K27me3_R2 ESC_WT_H3K27me3_R3 ESC_KO_H3K27me3_R1 ESC_KO_H3K27me3_R2 ESC_KO_H3K27me3_R3  ESC_OEKO_H3K27me3_R1 ESC_OEKO_H3K27me3_R2 ESC_OEKO_H3K27me3_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --colors black black black red red red blue blue blue grey grey grey \
+    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
+    --plotWidth 7 \
+    --plotHeight 8 \
+    -o output/bigwig/multiBigwigSummary_H3K27me3_plotPCA.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_H3K27me3.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels ESC_WT_H3K27me3_R1 ESC_WT_H3K27me3_R2 ESC_WT_H3K27me3_R3 ESC_KO_H3K27me3_R1 ESC_KO_H3K27me3_R2 ESC_KO_H3K27me3_R3  ESC_OEKO_H3K27me3_R1 ESC_OEKO_H3K27me3_R2 ESC_OEKO_H3K27me3_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_H3K27me3_heatmap.pdf
+
+#################################
+
+############################################
+# Plot EZH2 ###########
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_EZH2.npz \
+    --transpose \
+    --ntop 0 \
+    --labels ESC_WT_EZH2_R1 ESC_WT_EZH2_R2 ESC_WT_EZH2_R3 ESC_KO_EZH2_R1 ESC_KO_EZH2_R2 ESC_KO_EZH2_R3  ESC_OEKO_EZH2_R1 ESC_OEKO_EZH2_R2 ESC_OEKO_EZH2_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --colors black black black red red red blue blue blue grey grey grey \
+    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
+    --plotWidth 7 \
+    --plotHeight 8 \
+    -o output/bigwig/multiBigwigSummary_EZH2_plotPCA.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_EZH2.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels ESC_WT_EZH2_R1 ESC_WT_EZH2_R2 ESC_WT_EZH2_R3 ESC_KO_EZH2_R1 ESC_KO_EZH2_R2 ESC_KO_EZH2_R3  ESC_OEKO_EZH2_R1 ESC_OEKO_EZH2_R2 ESC_OEKO_EZH2_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_EZH2_heatmap.pdf
+
+#################################
+
+############################################
+# Plot EZH1 ###########
+## PCA
+plotPCA -in output/bigwig/multiBigwigSummary_EZH1.npz \
+    --transpose \
+    --ntop 0 \
+    --labels ESC_WT_EZH1_R1 ESC_WT_EZH1_R2 ESC_WT_EZH1_R3 ESC_KO_EZH1_R1 ESC_KO_EZH1_R2 ESC_KO_EZH1_R3  ESC_OEKO_EZH1_R1 ESC_OEKO_EZH1_R2 ESC_OEKO_EZH1_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --colors black black black red red red blue blue blue grey grey grey \
+    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
+    --plotWidth 7 \
+    --plotHeight 8 \
+    -o output/bigwig/multiBigwigSummary_EZH1_plotPCA.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig/multiBigwigSummary_EZH1.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels ESC_WT_EZH1_R1 ESC_WT_EZH1_R2 ESC_WT_EZH1_R3 ESC_KO_EZH1_R1 ESC_KO_EZH1_R2 ESC_KO_EZH1_R3  ESC_OEKO_EZH1_R1 ESC_OEKO_EZH1_R2 ESC_OEKO_EZH1_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig/multiBigwigSummary_EZH1_heatmap.pdf
+
+#################################
+
+
 
 
 ############################################
@@ -333,6 +416,93 @@ sbatch scripts/multiBigwigSummary_KO_Ferguson.sh # 50199685 ok
 sbatch scripts/multiBigwigSummary_OEKO_Ferguson.sh # 50200174 ok
 
 
+sbatch scripts/multiBigwigSummary_H3K27me3_Ferguson.sh # 52148966 ok
+sbatch scripts/multiBigwigSummary_EZH2_Ferguson.sh # 52148995 ok
+sbatch scripts/multiBigwigSummary_EZH1_Ferguson.sh # 52149065 ok
+
+
+############################################
+# Plot H3K27me3 ###########
+## PCA
+plotPCA -in output/bigwig_Ferguson/multiBigwigSummary_H3K27me3_Ferguson.npz \
+    --transpose \
+    --ntop 0 \
+    --labels ESC_WT_H3K27me3_R1 ESC_WT_H3K27me3_R2 ESC_WT_H3K27me3_R3 ESC_KO_H3K27me3_R1 ESC_KO_H3K27me3_R2 ESC_KO_H3K27me3_R3  ESC_OEKO_H3K27me3_R1 ESC_OEKO_H3K27me3_R2 ESC_OEKO_H3K27me3_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --colors black black black red red red blue blue blue grey grey grey \
+    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
+    --plotWidth 7 \
+    --plotHeight 8 \
+    -o output/bigwig_Ferguson/multiBigwigSummary_H3K27me3_plotPCA_Ferguson.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig_Ferguson/multiBigwigSummary_H3K27me3_Ferguson.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels ESC_WT_H3K27me3_R1 ESC_WT_H3K27me3_R2 ESC_WT_H3K27me3_R3 ESC_KO_H3K27me3_R1 ESC_KO_H3K27me3_R2 ESC_KO_H3K27me3_R3  ESC_OEKO_H3K27me3_R1 ESC_OEKO_H3K27me3_R2 ESC_OEKO_H3K27me3_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig_Ferguson/multiBigwigSummary_H3K27me3_heatmap_Ferguson.pdf
+
+#################################
+
+
+############################################
+# Plot EZH2 ###########
+## PCA
+plotPCA -in output/bigwig_Ferguson/multiBigwigSummary_EZH2_Ferguson.npz \
+    --transpose \
+    --ntop 0 \
+    --labels ESC_WT_EZH2_R1 ESC_WT_EZH2_R2 ESC_WT_EZH2_R3 ESC_KO_EZH2_R1 ESC_KO_EZH2_R2 ESC_KO_EZH2_R3  ESC_OEKO_EZH2_R1 ESC_OEKO_EZH2_R2 ESC_OEKO_EZH2_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --colors black black black red red red blue blue blue grey grey grey \
+    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
+    --plotWidth 7 \
+    --plotHeight 8 \
+    -o output/bigwig_Ferguson/multiBigwigSummary_EZH2_plotPCA_Ferguson.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig_Ferguson/multiBigwigSummary_EZH2_Ferguson.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels ESC_WT_EZH2_R1 ESC_WT_EZH2_R2 ESC_WT_EZH2_R3 ESC_KO_EZH2_R1 ESC_KO_EZH2_R2 ESC_KO_EZH2_R3  ESC_OEKO_EZH2_R1 ESC_OEKO_EZH2_R2 ESC_OEKO_EZH2_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig_Ferguson/multiBigwigSummary_EZH2_heatmap_Ferguson.pdf
+
+#################################
+
+
+
+
+############################################
+# Plot EZH1 ###########
+## PCA
+plotPCA -in output/bigwig_Ferguson/multiBigwigSummary_EZH1_Ferguson.npz \
+    --transpose \
+    --ntop 0 \
+    --labels ESC_WT_EZH1_R1 ESC_WT_EZH1_R2 ESC_WT_EZH1_R3 ESC_KO_EZH1_R1 ESC_KO_EZH1_R2 ESC_KO_EZH1_R3  ESC_OEKO_EZH1_R1 ESC_OEKO_EZH1_R2 ESC_OEKO_EZH1_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --colors black black black red red red blue blue blue grey grey grey \
+    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
+    --plotWidth 7 \
+    --plotHeight 8 \
+    -o output/bigwig_Ferguson/multiBigwigSummary_EZH1_plotPCA_Ferguson.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig_Ferguson/multiBigwigSummary_EZH1_Ferguson.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels ESC_WT_EZH1_R1 ESC_WT_EZH1_R2 ESC_WT_EZH1_R3 ESC_KO_EZH1_R1 ESC_KO_EZH1_R2 ESC_KO_EZH1_R3  ESC_OEKO_EZH1_R1 ESC_OEKO_EZH1_R2 ESC_OEKO_EZH1_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig_Ferguson/multiBigwigSummary_EZH1_heatmap_Ferguson.pdf
+
+#################################
+
+
+
+
 ############################################
 # Plot ESC ###########
 ## PCA
@@ -433,11 +603,211 @@ plotCorrelation \
 
 #################################
 
+
+
+
+
+
+
 ```
 
 
 
 
+
+
+
+
+
+### Ferguson norm bigwig without X chr
+
+
+
+```bash
+conda activate deeptools
+# Generate compile bigwig (.npz) files
+
+
+sbatch scripts/multiBigwigSummary_H3K27me3_Ferguson_noXchr.sh # 52152100 ok
+sbatch scripts/multiBigwigSummary_EZH2_Ferguson_noXchr.sh # 52152128 ok
+sbatch scripts/multiBigwigSummary_EZH1_Ferguson_noXchr.sh # 52152172 ok
+
+sbatch scripts/multiBigwigSummary_H3K27me3_Ferguson_noXchr_thresh1.sh # 52153288 ok
+sbatch scripts/multiBigwigSummary_EZH2_Ferguson_noXchr_thresh1.sh # 52153312 ok
+sbatch scripts/multiBigwigSummary_EZH1_Ferguson_noXchr_thresh2.sh # 52153317 xxx
+
+
+############################################
+# Plot H3K27me3 thresh1 ###########
+## PCA
+plotPCA -in output/bigwig_Ferguson/multiBigwigSummary_H3K27me3_Ferguson_noXchr_thresh1.npz \
+    --transpose \
+    --ntop 0 \
+    --labels ESC_WT_H3K27me3_R1 ESC_WT_H3K27me3_R2 ESC_WT_H3K27me3_R3 ESC_KO_H3K27me3_R1 ESC_KO_H3K27me3_R2 ESC_KO_H3K27me3_R3  ESC_OEKO_H3K27me3_R1 ESC_OEKO_H3K27me3_R2 ESC_OEKO_H3K27me3_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --colors black black black red red red blue blue blue grey grey grey \
+    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
+    --plotWidth 7 \
+    --plotHeight 8 \
+    -o output/bigwig_Ferguson/multiBigwigSummary_H3K27me3_plotPCA_Ferguson_noXchr_thresh1.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig_Ferguson/multiBigwigSummary_H3K27me3_Ferguson_noXchr_thresh1.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels ESC_WT_H3K27me3_R1 ESC_WT_H3K27me3_R2 ESC_WT_H3K27me3_R3 ESC_KO_H3K27me3_R1 ESC_KO_H3K27me3_R2 ESC_KO_H3K27me3_R3  ESC_OEKO_H3K27me3_R1 ESC_OEKO_H3K27me3_R2 ESC_OEKO_H3K27me3_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig_Ferguson/multiBigwigSummary_H3K27me3_heatmap_Ferguson_noXchr_thresh1.pdf
+
+#################################
+
+
+
+############################################
+# Plot EZH2 thresh1 ###########
+## PCA
+plotPCA -in output/bigwig_Ferguson/multiBigwigSummary_EZH2_Ferguson_noXchr_thresh1.npz \
+    --transpose \
+    --ntop 0 \
+    --labels ESC_WT_EZH2_R1 ESC_WT_EZH2_R2 ESC_WT_EZH2_R3 ESC_KO_EZH2_R1 ESC_KO_EZH2_R2 ESC_KO_EZH2_R3  ESC_OEKO_EZH2_R1 ESC_OEKO_EZH2_R2 ESC_OEKO_EZH2_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --colors black black black red red red blue blue blue grey grey grey \
+    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
+    --plotWidth 7 \
+    --plotHeight 8 \
+    -o output/bigwig_Ferguson/multiBigwigSummary_EZH2_plotPCA_Ferguson_noXchr_thresh1.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig_Ferguson/multiBigwigSummary_EZH2_Ferguson_noXchr_thresh1.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels ESC_WT_EZH2_R1 ESC_WT_EZH2_R2 ESC_WT_EZH2_R3 ESC_KO_EZH2_R1 ESC_KO_EZH2_R2 ESC_KO_EZH2_R3  ESC_OEKO_EZH2_R1 ESC_OEKO_EZH2_R2 ESC_OEKO_EZH2_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig_Ferguson/multiBigwigSummary_EZH2_heatmap_Ferguson_noXchr_thresh1.pdf
+
+#################################
+
+
+
+
+
+############################################
+# Plot EZH1 thresh2 ###########
+## PCA
+plotPCA -in output/bigwig_Ferguson/multiBigwigSummary_EZH1_Ferguson_noXchr_thresh2.npz \
+    --transpose \
+    --ntop 0 \
+    --labels ESC_WT_EZH1_R1 ESC_WT_EZH1_R2 ESC_WT_EZH1_R3 ESC_KO_EZH1_R1 ESC_KO_EZH1_R2 ESC_KO_EZH1_R3  ESC_OEKO_EZH1_R1 ESC_OEKO_EZH1_R2 ESC_OEKO_EZH1_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --colors black black black red red red blue blue blue grey grey grey \
+    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
+    --plotWidth 7 \
+    --plotHeight 8 \
+    -o output/bigwig_Ferguson/multiBigwigSummary_EZH1_plotPCA_Ferguson_noXchr_thresh2.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig_Ferguson/multiBigwigSummary_EZH1_Ferguson_noXchr_thresh2.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels ESC_WT_EZH1_R1 ESC_WT_EZH1_R2 ESC_WT_EZH1_R3 ESC_KO_EZH1_R1 ESC_KO_EZH1_R2 ESC_KO_EZH1_R3  ESC_OEKO_EZH1_R1 ESC_OEKO_EZH1_R2 ESC_OEKO_EZH1_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig_Ferguson/multiBigwigSummary_EZH1_heatmap_Ferguson_noXchr_thresh2.pdf
+
+#################################
+
+
+
+
+
+
+############################################
+# Plot H3K27me3 ###########
+## PCA
+plotPCA -in output/bigwig_Ferguson/multiBigwigSummary_H3K27me3_Ferguson_noXchr.npz \
+    --transpose \
+    --ntop 0 \
+    --labels ESC_WT_H3K27me3_R1 ESC_WT_H3K27me3_R2 ESC_WT_H3K27me3_R3 ESC_KO_H3K27me3_R1 ESC_KO_H3K27me3_R2 ESC_KO_H3K27me3_R3  ESC_OEKO_H3K27me3_R1 ESC_OEKO_H3K27me3_R2 ESC_OEKO_H3K27me3_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --colors black black black red red red blue blue blue grey grey grey \
+    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
+    --plotWidth 7 \
+    --plotHeight 8 \
+    -o output/bigwig_Ferguson/multiBigwigSummary_H3K27me3_plotPCA_Ferguson_noXchr.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig_Ferguson/multiBigwigSummary_H3K27me3_Ferguson_noXchr.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels ESC_WT_H3K27me3_R1 ESC_WT_H3K27me3_R2 ESC_WT_H3K27me3_R3 ESC_KO_H3K27me3_R1 ESC_KO_H3K27me3_R2 ESC_KO_H3K27me3_R3  ESC_OEKO_H3K27me3_R1 ESC_OEKO_H3K27me3_R2 ESC_OEKO_H3K27me3_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig_Ferguson/multiBigwigSummary_H3K27me3_heatmap_Ferguson_noXchr.pdf
+
+#################################
+
+
+
+############################################
+# Plot EZH2 ###########
+## PCA
+plotPCA -in output/bigwig_Ferguson/multiBigwigSummary_EZH2_Ferguson_noXchr.npz \
+    --transpose \
+    --ntop 0 \
+    --labels ESC_WT_EZH2_R1 ESC_WT_EZH2_R2 ESC_WT_EZH2_R3 ESC_KO_EZH2_R1 ESC_KO_EZH2_R2 ESC_KO_EZH2_R3  ESC_OEKO_EZH2_R1 ESC_OEKO_EZH2_R2 ESC_OEKO_EZH2_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --colors black black black red red red blue blue blue grey grey grey \
+    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
+    --plotWidth 7 \
+    --plotHeight 8 \
+    -o output/bigwig_Ferguson/multiBigwigSummary_EZH2_plotPCA_Ferguson_noXchr.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig_Ferguson/multiBigwigSummary_EZH2_Ferguson_noXchr.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels ESC_WT_EZH2_R1 ESC_WT_EZH2_R2 ESC_WT_EZH2_R3 ESC_KO_EZH2_R1 ESC_KO_EZH2_R2 ESC_KO_EZH2_R3  ESC_OEKO_EZH2_R1 ESC_OEKO_EZH2_R2 ESC_OEKO_EZH2_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig_Ferguson/multiBigwigSummary_EZH2_heatmap_Ferguson_noXchr.pdf
+
+#################################
+
+
+
+############################################
+# Plot EZH1 ###########
+## PCA
+plotPCA -in output/bigwig_Ferguson/multiBigwigSummary_EZH1_Ferguson_noXchr.npz \
+    --transpose \
+    --ntop 0 \
+    --labels ESC_WT_EZH1_R1 ESC_WT_EZH1_R2 ESC_WT_EZH1_R3 ESC_KO_EZH1_R1 ESC_KO_EZH1_R2 ESC_KO_EZH1_R3  ESC_OEKO_EZH1_R1 ESC_OEKO_EZH1_R2 ESC_OEKO_EZH1_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --colors black black black red red red blue blue blue grey grey grey \
+    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
+    --plotWidth 7 \
+    --plotHeight 8 \
+    -o output/bigwig_Ferguson/multiBigwigSummary_EZH1_plotPCA_Ferguson_noXchr.pdf
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig_Ferguson/multiBigwigSummary_EZH1_Ferguson_noXchr.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels ESC_WT_EZH1_R1 ESC_WT_EZH1_R2 ESC_WT_EZH1_R3 ESC_KO_EZH1_R1 ESC_KO_EZH1_R2 ESC_KO_EZH1_R3  ESC_OEKO_EZH1_R1 ESC_OEKO_EZH1_R2 ESC_OEKO_EZH1_R3 ESC_WT_IGG_R1 ESC_WT_IGG_R2 ESC_WT_IGG_R3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig_Ferguson/multiBigwigSummary_EZH1_heatmap_Ferguson_noXchr.pdf
+
+#################################
+
+
+
+```
+
+
+--> The PCA clustering is never good looking! Without X chr, or when removing background, it s always not super great....
 
 
 
@@ -459,6 +829,11 @@ sbatch scripts/macs2_broad_noIGG.sh # 50100707 ok
 sbatch scripts/macs2_broad_pool_1.sh # 50757176 ok
 sbatch scripts/macs2_broad_pool_2.sh # 50757334 ok
 sbatch scripts/macs2_broad_pool_3.sh # 50757381 ok
+
+
+sbatch scripts/macs2_broad_pool_noXchr_1.sh # 52153540 ok
+sbatch scripts/macs2_broad_pool_noXchr_2.sh # 52153603 ok
+sbatch scripts/macs2_broad_pool_noXchr_3.sh # 52153681 ok
 
 
 # genotype per genotype
@@ -522,6 +897,7 @@ For **consensus peak** counting (ie Ferguson / local maxima method); I used the 
 conda activate bowtie2 # for bedtools
 
 sbatch scripts/macs2_raw_peak_signif_pool.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
+sbatch scripts/macs2_raw_peak_signif_pool_noXchr.sh # 1.30103/2/2.30103/3/4/5 # Run in interactive
 
 
 # quick command to print median size of peak within a bed
@@ -537,7 +913,7 @@ Then keep only the significant peaks (re-run the script to test different qvalue
 - q0.00001 = 5
 
 
-**Optimal qvalue** according to IGV:
+**Optimal qvalue** according to IGV (including for `noXchr` version):
 - WT_H3K27me3: 2.3 or 3 (maybe more 3)
 - KO_H3K27me3: 2.3 or 3 (maybe more 3)
 - OEKO_H3K27me3: 2.3 or 3 (maybe more 3)
@@ -568,18 +944,30 @@ cat output/macs2/broad/ESC_WT_H3K27me3_pool_peaks.broadPeak output/macs2/broad/E
 cat output/macs2/broad/ESC_WT_EZH2_pool_peaks.broadPeak output/macs2/broad/ESC_KO_EZH2_pool_peaks.broadPeak output/macs2/broad/ESC_OEKO_EZH2_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.broadPeak
 cat output/macs2/broad/ESC_WT_EZH1_pool_peaks.broadPeak output/macs2/broad/ESC_KO_EZH1_pool_peaks.broadPeak output/macs2/broad/ESC_OEKO_EZH1_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.broadPeak
 
+cat output/macs2/broad/ESC_WT_H3K27me3_noXchr_pool_peaks.broadPeak output/macs2/broad/ESC_KO_H3K27me3_noXchr_pool_peaks.broadPeak output/macs2/broad/ESC_OEKO_H3K27me3_noXchr_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/ESC_WTKOOEKO_H3K27me3_noXchr__pool_peaks.sorted.broadPeak
+cat output/macs2/broad/ESC_WT_EZH2_noXchr_pool_peaks.broadPeak output/macs2/broad/ESC_KO_EZH2_noXchr_pool_peaks.broadPeak output/macs2/broad/ESC_OEKO_EZH2_noXchr_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/ESC_WTKOOEKO_EZH2_noXchr__pool_peaks.sorted.broadPeak
+cat output/macs2/broad/ESC_WT_EZH1_noXchr_pool_peaks.broadPeak output/macs2/broad/ESC_KO_EZH1_noXchr_pool_peaks.broadPeak output/macs2/broad/ESC_OEKO_EZH1_noXchr_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/ESC_WTKOOEKO_EZH1_noXchr__pool_peaks.sorted.broadPeak
+
 ## qvalue 2.3 ##############
 ### WT KO KOEF
 cat output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_H3K27me3_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_KO_H3K27me3_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_H3K27me3_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.broadPeak
 cat output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_EZH2_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_KO_EZH2_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_EZH2_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.broadPeak
 cat output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_EZH1_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_KO_EZH1_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_EZH1_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.broadPeak
+
+cat output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_H3K27me3_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_KO_H3K27me3_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_H3K27me3_noXchr_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_noXchr_pool_peaks.sorted.broadPeak
+cat output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_EZH2_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_KO_EZH2_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_EZH2_noXchr_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_noXchr_pool_peaks.sorted.broadPeak
+cat output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_EZH1_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_KO_EZH1_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_EZH1_noXchr_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH1_noXchr_pool_peaks.sorted.broadPeak
+
+
 ## qvalue 3 ##############
 ### WT KO KOEF
 cat output/macs2/broad/broad_blacklist_qval3/ESC_WT_H3K27me3_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval3/ESC_KO_H3K27me3_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval3/ESC_OEKO_H3K27me3_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.broadPeak
 cat output/macs2/broad/broad_blacklist_qval3/ESC_WT_EZH2_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval3/ESC_KO_EZH2_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval3/ESC_OEKO_EZH2_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.broadPeak
 cat output/macs2/broad/broad_blacklist_qval3/ESC_WT_EZH1_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval3/ESC_KO_EZH1_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval3/ESC_OEKO_EZH1_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.broadPeak
 
-
+cat output/macs2/broad/broad_blacklist_qval3/ESC_WT_H3K27me3_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval3/ESC_KO_H3K27me3_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval3/ESC_OEKO_H3K27me3_noXchr_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_noXchr_pool_peaks.sorted.broadPeak
+cat output/macs2/broad/broad_blacklist_qval3/ESC_WT_EZH2_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval3/ESC_KO_EZH2_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval3/ESC_OEKO_EZH2_noXchr_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_noXchr_pool_peaks.sorted.broadPeak
+cat output/macs2/broad/broad_blacklist_qval3/ESC_WT_EZH1_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval3/ESC_KO_EZH1_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval3/ESC_OEKO_EZH1_noXchr_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_noXchr_pool_peaks.sorted.broadPeak
 
 # merge = consensus peak identification
 ## Raw - non qvalue filtered ##############
@@ -590,6 +978,15 @@ bedtools merge -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZ
 bedtools merge -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.merge.bed
 bedtools merge -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.merge.bed
 bedtools merge -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.merge.bed
+
+bedtools merge -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_noXchr_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_noXchr_pool_peaks.sorted.merge.bed
+bedtools merge -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_noXchr_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_noXchr_pool_peaks.sorted.merge.bed
+bedtools merge -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH1_noXchr_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH1_noXchr_pool_peaks.sorted.merge.bed
+bedtools merge -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_noXchr_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_noXchr_pool_peaks.sorted.merge.bed
+bedtools merge -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_noXchr_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_noXchr_pool_peaks.sorted.merge.bed
+bedtools merge -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_noXchr_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_noXchr_pool_peaks.sorted.merge.bed
+
+
 ### with 100bp peak merging
 bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.merge100bp.bed
 bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.merge100bp.bed
@@ -597,6 +994,15 @@ bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKO
 bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.merge100bp.bed
 bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.merge100bp.bed
 bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.merge100bp.bed
+
+bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_noXchr_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_noXchr_pool_peaks.sorted.merge100bp.bed
+bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_noXchr_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_noXchr_pool_peaks.sorted.merge100bp.bed
+bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH1_noXchr_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH1_noXchr_pool_peaks.sorted.merge100bp.bed
+bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_noXchr_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_noXchr_pool_peaks.sorted.merge100bp.bed
+bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_noXchr_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_noXchr_pool_peaks.sorted.merge100bp.bed
+bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_noXchr_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_noXchr_pool_peaks.sorted.merge100bp.bed
+
+
 ### with 500bp peak merging
 bedtools merge -d 500 -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.merge500bp.bed
 bedtools merge -d 500 -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.merge500bp.bed
@@ -605,9 +1011,19 @@ bedtools merge -d 500 -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H
 bedtools merge -d 500 -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.merge500bp.bed
 bedtools merge -d 500 -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.merge500bp.bed
 
+
+bedtools merge -d 500 -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_noXchr_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_noXchr_pool_peaks.sorted.merge500bp.bed
+bedtools merge -d 500 -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_noXchr_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_noXchr_pool_peaks.sorted.merge500bp.bed
+bedtools merge -d 500 -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH1_noXchr_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH1_noXchr_pool_peaks.sorted.merge500bp.bed
+bedtools merge -d 500 -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_noXchr_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_noXchr_pool_peaks.sorted.merge500bp.bed
+bedtools merge -d 500 -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_noXchr_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_noXchr_pool_peaks.sorted.merge500bp.bed
+bedtools merge -d 500 -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_noXchr_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_noXchr_pool_peaks.sorted.merge500bp.bed
+
 ```
 
 --> All good; consensus peak files are: `output/macs2/broad/ESC_WTKOOEKO_[ANTIBODY]_pool_peaks.sorted.merge[SIZE].bed`
+  --> Without X chr: `output/macs2/broad/ESC_WTKOOEKO_[ANTIBODY]_noXchr_pool_peaks.sorted.merge[SIZE].bed`
+
 
 
 
@@ -629,11 +1045,13 @@ Summary pipeline:
 conda activate BedToBigwig
 ## Unique bigwig (1bp resolution)
 sbatch scripts/BedToBigwig_Ferguson_unique.sh # 50101629 ok
+sbatch scripts/BedToBigwig_Ferguson_unique_noXchr.sh # interactive
 
 
 # Remove blacklist regions
 ## Unique bigwig (1bp resolution)
 sbatch --dependency=afterany:50101629 scripts/BedintersectBlacklist_Ferguson_unique.sh # 50101748 ok
+sbatch scripts/BedintersectBlacklist_Ferguson_unique_noXchr.sh # interactive
 
 
 ```
@@ -647,11 +1065,13 @@ srun --mem=250g --pty bash -l
 # Identify local maxima
 ## Unique bigwig (1bp resolution)
 python scripts/LocalMaxima_Ferguson_unique.py
+python scripts/LocalMaxima_Ferguson_unique_noXchr.py
 
 #  calculate the 99th percentile of the signal heights (score) in the local maxima files.
 ## Unique bigwig (1bp resolution)
 python scripts/Percentile99_Ferguson_unique.py
 python scripts/Percentile99_Ferguson_unique_AUTOSOMALCHR.py
+python scripts/Percentile99_Ferguson_unique_noXchr.py
 
 
 
@@ -666,42 +1086,49 @@ python scripts/norm_H3K27me3_Ferguson_Perc99_unique_initialBigwig_AUTOSOMALCHR.p
 python scripts/norm_EZH2_Ferguson_Perc99_unique_initialBigwig_AUTOSOMALCHR.py
 python scripts/norm_EZH1_Ferguson_Perc99_unique_initialBigwig_AUTOSOMALCHR.py
 
+python scripts/norm_H3K27me3_Ferguson_Perc99_unique_initialBigwig_noXchr.py
+python scripts/norm_EZH2_Ferguson_Perc99_unique_initialBigwig_noXchr.py
+python scripts/norm_EZH1_Ferguson_Perc99_unique_initialBigwig_noXchr.py
 ```
 
-*H3K27me3*: (all CHR / autosomal chr only)
-- WT_R1: SF= 1.0 / 1.0
-- WT_R2: SF= 0.49166666666666664 / 0.48770491803278687
-- WT_R3: SF= 0.47580645161290325 / 0.47222222222222222
-- KO_R1: SF= 0.6082474226804123 / 0.6102564102564103
-- KO_R2: SF= 0.5042735042735043 / 0.5063829787234042
-- KO_R3: SF= 0.466403162055336 / 0.468503937007874
-- OEKO_R1: SF= 0.6082474226804123 / 0.6071428571428571
-- OEKO_R2: SF= 0.6519337016574586 / 0.6538461538461539
-- OEKO_R3: SF= 0.5700483091787439 / 0.5721153846153846
+*H3K27me3*: (all CHR / autosomal chr only \ without X chr removed from bam)
+- WT_R1: SF= 1.0 / 1.0 \ 1.0
+- WT_R2: SF= 0.49166666666666664 / 0.48770491803278687 \ 0.48770491803278687
+- WT_R3: SF= 0.47580645161290325 / 0.47222222222222222 \ 0.47222222222222222
+- KO_R1: SF= 0.6082474226804123 / 0.6102564102564103 \ 0.6102564102564103
+- KO_R2: SF= 0.5042735042735043 / 0.5063829787234042 \ 0.5063829787234042
+- KO_R3: SF= 0.466403162055336 / 0.468503937007874 \ 0.468503937007874
+- OEKO_R1: SF= 0.6082474226804123 / 0.6071428571428571 \ 0.6071428571428571
+- OEKO_R2: SF= 0.6519337016574586 / 0.6538461538461539 \ 0.6538461538461539
+- OEKO_R3: SF= 0.5700483091787439 / 0.5721153846153846 \ 0.5721153846153846
 *EZH2*:
-- WT_R1: SF= 1.0 / 1.0
-- WT_R2: SF= 0.21052631578947367 / 0.21052631578947367
-- WT_R3: SF= 0.23529411764705882 / 0.23529411764705882
-- KO_R1: SF= 0.8 / 0.8
-- KO_R2: SF= 0.3076923076923077 / 0.3076923076923077
-- KO_R3: SF= 0.36363636363636365 / 0.36363636363636365
-- OEKO_R1: SF= 0.0784313725490196 / 0.07766990291262135
-- OEKO_R2: SF= 0.1038961038961039 / 0.10256410256410256
-- OEKO_R3: SF= 0.16326530612244897 / 0.16
+- WT_R1: SF= 1.0 / 1.0 \ 1.0
+- WT_R2: SF= 0.21052631578947367 / 0.21052631578947367 \ 0.21052631578947367
+- WT_R3: SF= 0.23529411764705882 / 0.23529411764705882 \ 0.23529411764705882
+- KO_R1: SF= 0.8 / 0.8 \ 0.8
+- KO_R2: SF= 0.3076923076923077 / 0.3076923076923077 \ 0.3076923076923077
+- KO_R3: SF= 0.36363636363636365 / 0.36363636363636365 \ 0.36363636363636365
+- OEKO_R1: SF= 0.0784313725490196 / 0.07766990291262135 \ 0.07766990291262135
+- OEKO_R2: SF= 0.1038961038961039 / 0.10256410256410256 \ 0.10256410256410256
+- OEKO_R3: SF= 0.16326530612244897 / 0.16 \ 0.16
 *EZH1*:
-- WT_R1: SF= 1.0 / 1.0 
-- WT_R2: SF= 1.0 / 1.0
-- WT_R3: SF= 1.0 / 1.0
-- KO_R1: SF= 1.0 / 1.0
-- KO_R2: SF= 1.0 / 1.0
-- KO_R3: SF= 1.0 / 1.0
-- OEKO_R1: SF= 0.21052631578947367 / 0.21052631578947367
-- OEKO_R2: SF= 1.0 / 1.0
-- OEKO_R3: SF= 0.8888888888888888 / 0.8888888888888888
+- WT_R1: SF= 1.0 / 1.0 \ 1.0
+- WT_R2: SF= 1.0 / 1.0 \ 1.0
+- WT_R3: SF= 1.0 / 1.0 \ 1.0
+- KO_R1: SF= 1.0 / 1.0 \ 1.0
+- KO_R2: SF= 1.0 / 1.0 \ 1.0
+- KO_R3: SF= 1.0 / 1.0 \ 1.0
+- OEKO_R1: SF= 0.21052631578947367 / 0.21052631578947367 \ 0.21052631578947367
+- OEKO_R2: SF= 1.0 / 1.0 \ 1.0
+- OEKO_R3: SF= 0.8888888888888888 / 0.8888888888888888 \ 0.8888888888888888
 
 
 --> Using autosomal chr only does not change a lot; probably because scaling based on maximum intensity signal, so sharp peak; not the X chromsome inactivation which is basal, spread, not so high
   --> **Let's use the version with all chr**
+
+--> Version `_AUTOSOMALCHR` and `_noXchr` are exactly the same... The `noXchr` does not include any signal in X chr. But the `_AUTOSOMALCHR` does include signal but it is not used for the SF calculation --> **Let's use the `_noXchr` as it will not trigger any issue like no signal at all will be shown for X chr...**
+
+
 
 
 
@@ -710,27 +1137,38 @@ Convert normalized bedGraph back to bigwig
 ```bash
 conda activate BedToBigwig
 
-
+# Bedgraph to Bigwig ##############
 # Unique bigwig (1bp resolution) APPLYING SF TO INITIAL BIGWIG
 sbatch scripts/BedToBigwig_Norm99_Ferguson_unique_initialBigwig_H3K27me3.sh # 50105248 ok
 sbatch scripts/BedToBigwig_Norm99_Ferguson_unique_initialBigwig_EZH2.sh # 50105274 ok
 sbatch scripts/BedToBigwig_Norm99_Ferguson_unique_initialBigwig_EZH1.sh # 50105291 ok
+# Unique bigwig (1bp resolution) APPLYING SF TO INITIAL BIGWIG - noXchr
+sbatch scripts/BedToBigwig_Norm99_Ferguson_unique_initialBigwig_noXchr_H3K27me3.sh # 52141112 ok
+sbatch scripts/BedToBigwig_Norm99_Ferguson_unique_initialBigwig_noXchr_EZH2.sh # 52141144 ok
+sbatch scripts/BedToBigwig_Norm99_Ferguson_unique_initialBigwig_noXchr_EZH1.sh # 52151216 ok
 
 
-# Calculate median
+
+# Calculate median ##############
 sbatch scripts/bigwigmerge_Norm99_Ferguson_unique_initialBigwig-H3K27me3.sh # 50654175 ok
 sbatch scripts/bigwigmerge_Norm99_Ferguson_unique_initialBigwig-EZH2.sh # 50654399 ok
 sbatch scripts/bigwigmerge_Norm99_Ferguson_unique_initialBigwig-EZH1.sh # 50654529 ok
 
+sbatch scripts/bigwigmerge_Norm99_Ferguson_unique_initialBigwig_noXchr-H3K27me3.sh # 52151967 ok
+sbatch scripts/bigwigmerge_Norm99_Ferguson_unique_initialBigwig_noXchr-EZH2.sh # 52152004 ok
+sbatch scripts/bigwigmerge_Norm99_Ferguson_unique_initialBigwig_noXchr-EZH1.sh # 52152024 ok
 
-# Filter out noise from the bigwig (Consider value below 2 as 0)
+
+
+# Filter out noise from the bigwig (Consider value below 2 as 0) ##############
 sbatch scripts/bigwig_tresh2_Norm99_Ferguson_unique_initialBigwig-H3K27me3.sh # 51404091 ok
 sbatch scripts/bigwig_tresh2_Norm99_Ferguson_unique_initialBigwig-EZH2.sh # 51404093 ok
 sbatch scripts/bigwig_tresh2_Norm99_Ferguson_unique_initialBigwig-EZH1.sh # 51404094 ok
 
 
 
-# Filter out noise from the bigwig (Consider value below 1 as 0)
+
+# Filter out noise from the bigwig (Consider value below 1 as 0) ##############
 ## filter on median track
 sbatch scripts/bigwig_tresh1_Norm99_Ferguson_unique_initialBigwig-H3K27me3.sh # 51409597 ok
 sbatch scripts/bigwig_tresh1_Norm99_Ferguson_unique_initialBigwig-EZH2.sh # 51409598 ok
@@ -739,12 +1177,25 @@ sbatch scripts/bigwig_tresh1_Norm99_Ferguson_unique_initialBigwig-EZH1.sh # 5140
 sbatch scripts/bigwig_tresh1_Norm99_Ferguson_unique_initialBigwig-H3K27me3_R1R2R3.sh # 51498829 ok
 sbatch scripts/bigwig_tresh1_Norm99_Ferguson_unique_initialBigwig-EZH2_R1R2R3.sh # 51499020 ok
 sbatch scripts/bigwig_tresh1_Norm99_Ferguson_unique_initialBigwig-EZH1_R1R2R3.sh # 51499023 ok
+sbatch scripts/bigwig_tresh1_Norm99_Ferguson_unique_initialBigwig_noXchr-H3K27me3_R1R2R3.sh # 52152397 ok
+sbatch scripts/bigwig_tresh1_Norm99_Ferguson_unique_initialBigwig_noXchr-EZH2_R1R2R3.sh # 52152405 ok
+sbatch scripts/bigwig_tresh1_Norm99_Ferguson_unique_initialBigwig_noXchr-EZH1_R1R2R3.sh # 52152410 ok
+
 ## filter on each bio rep
 sbatch scripts/bigwig_tresh2_Norm99_Ferguson_unique_initialBigwig-H3K27me3_R1R2R3.sh # 51511388 ok
 sbatch scripts/bigwig_tresh2_Norm99_Ferguson_unique_initialBigwig-EZH2_R1R2R3.sh # 51511428 ok
 sbatch scripts/bigwig_tresh2_Norm99_Ferguson_unique_initialBigwig-EZH1_R1R2R3.sh # 51511449 ok
+sbatch scripts/bigwig_tresh2_Norm99_Ferguson_unique_initialBigwig_noXchr-H3K27me3_R1R2R3.sh # 52152656 ok
+sbatch scripts/bigwig_tresh2_Norm99_Ferguson_unique_initialBigwig_noXchr-EZH2_R1R2R3.sh # 52152660 ok
+sbatch scripts/bigwig_tresh2_Norm99_Ferguson_unique_initialBigwig_noXchr-EZH1_R1R2R3.sh # 52152669 ok
 
 
+
+
+# Calculate median of thresh bigwigs ##############
+sbatch scripts/bigwigmerge_Norm99_Ferguson_unique_initialBigwig-H3K27me3_thresh1.sh # 52160681 ok
+sbatch scripts/bigwigmerge_Norm99_Ferguson_unique_initialBigwig-EZH2_thresh1.sh # 52160726 ok
+sbatch scripts/bigwigmerge_Norm99_Ferguson_unique_initialBigwig-EZH1_thresh2.sh # 52160773 ok
 
 ```
 
@@ -1511,7 +1962,9 @@ diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_H3K27me3_R1_unique_norm99_initialB
 diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_H3K27me3_R1_unique_norm99_initialBigwig.nochrX.bed output/bigwig_Ferguson/ESC_KO_H3K27me3_R2_unique_norm99_initialBigwig.nochrX.bed output/bigwig_Ferguson/ESC_KO_H3K27me3_R3_unique_norm99_initialBigwig.nochrX.bed -co output/bigwig_Ferguson/ESC_WT_H3K27me3_R1_unique_norm99_initialBigwig.nochrX.bed output/bigwig_Ferguson/ESC_WT_H3K27me3_R2_unique_norm99_initialBigwig.nochrX.bed output/bigwig_Ferguson/ESC_WT_H3K27me3_R3_unique_norm99_initialBigwig.nochrX.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.nochrX.bed-bin250space50_gt_pval05-diff.nb.txt --window 250 --step 50 --meth gt --pval 0.05
 ```
 
-XXXXY HERE
+XXX HERE below not mod; but I will rather use the next version where I also remove the background signal
+
+
 
 
 ### Explore diffreps results in R  - H3K27me3
@@ -1640,6 +2093,189 @@ write.table(combined_data %>%
     --> Overall, this `output/diffreps/combined_data-bin1000space100_gt_pval05_padj001_fc1_avg100-WTvsKO-initialBigwig.txt` look like the best parameters
 
 
+
+
+
+
+
+
+
+## WT vs KO - DIFFREPS without X chr thresh1 - initialBigwig - H3K27me3
+
+
+--> Bigwig without X chr version (X chr remove in bam file) + background clean (threshold1 for H3K27me3)
+
+
+
+
+
+```bash
+conda activate ChIPseqSpikeInFree
+
+
+## PREPARE BED FILE FOR QUANTIFICATION ##
+output/bigwig_Ferguson/ESC_WT_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph 
+output/bigwig_Ferguson/ESC_WT_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph 
+output/bigwig_Ferguson/ESC_WT_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph 
+
+output/bigwig_Ferguson/ESC_KO_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph 
+output/bigwig_Ferguson/ESC_KO_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph 
+output/bigwig_Ferguson/ESC_KO_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph 
+
+
+# Modify our bedGraph into bed (score in the 5th column); add dummy column 4
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_WT_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph > output/bigwig_Ferguson/ESC_WT_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_WT_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph > output/bigwig_Ferguson/ESC_WT_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_WT_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph > output/bigwig_Ferguson/ESC_WT_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed
+
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_KO_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph > output/bigwig_Ferguson/ESC_KO_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_KO_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph > output/bigwig_Ferguson/ESC_KO_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_KO_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph > output/bigwig_Ferguson/ESC_KO_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed
+
+
+
+
+## RUN NDIFFREPS ##
+# 5000bp every 100bp -  G test pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed -co output/bigwig_Ferguson/ESC_WT_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.noXchr_thresh1.bed-bin5000space100_gt_pval05-diff.nb.txt --window 5000 --step 100 --meth gt --pval 0.05
+
+# 2000bp every 100bp -  G test pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed -co output/bigwig_Ferguson/ESC_WT_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.noXchr_thresh1.bed-bin2000space100_gt_pval05-diff.nb.txt --window 2000 --step 100 --meth gt --pval 0.05
+
+# 1000bp every 100bp -  G test pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed -co output/bigwig_Ferguson/ESC_WT_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.noXchr_thresh1.bed-bin1000space100_gt_pval05-diff.nb.txt --window 1000 --step 100 --meth gt --pval 0.05
+
+# 500bp every 100bp -  G test pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed -co output/bigwig_Ferguson/ESC_WT_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.noXchr_thresh1.bed-bin500space100_gt_pval05-diff.nb.txt --window 500 --step 100 --meth gt --pval 0.05
+
+# 250bp every 50bp -  G test pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed -co output/bigwig_Ferguson/ESC_WT_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.noXchr_thresh1.bed-bin250space50_gt_pval05-diff.nb.txt --window 250 --step 50 --meth gt --pval 0.05
+```
+
+
+
+
+
+### Explore diffreps results in R  - H3K27me3
+
+
+XXXY HERE!!!
+
+```bash
+conda activate deseq2
+```
+
+```R
+# packages
+library("tidyverse")
+library("GenomicRanges")
+set.seed(42)
+
+# import files
+bin5000space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.bed-bin5000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin2000space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.bed-bin2000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin1000space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.bed-bin1000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin500space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.bed-bin500space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+bin250space50_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.bed-bin250space50_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+  as_tibble() %>%
+  dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
+
+
+
+# Replace Inf by min/max values
+bin5000space100_gt_pval05$log2FC[bin5000space100_gt_pval05$log2FC == Inf] <- max(bin5000space100_gt_pval05$log2FC[is.finite(bin5000space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin5000space100_gt_pval05$log2FC[bin5000space100_gt_pval05$log2FC == -Inf] <- min(bin5000space100_gt_pval05$log2FC[is.finite(bin5000space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin2000space100_gt_pval05$log2FC[bin2000space100_gt_pval05$log2FC == Inf] <- max(bin2000space100_gt_pval05$log2FC[is.finite(bin2000space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin2000space100_gt_pval05$log2FC[bin2000space100_gt_pval05$log2FC == -Inf] <- min(bin2000space100_gt_pval05$log2FC[is.finite(bin2000space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin1000space100_gt_pval05$log2FC[bin1000space100_gt_pval05$log2FC == Inf] <- max(bin1000space100_gt_pval05$log2FC[is.finite(bin1000space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin1000space100_gt_pval05$log2FC[bin1000space100_gt_pval05$log2FC == -Inf] <- min(bin1000space100_gt_pval05$log2FC[is.finite(bin1000space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin500space100_gt_pval05$log2FC[bin500space100_gt_pval05$log2FC == Inf] <- max(bin500space100_gt_pval05$log2FC[is.finite(bin500space100_gt_pval05$log2FC)], na.rm = TRUE)
+bin500space100_gt_pval05$log2FC[bin500space100_gt_pval05$log2FC == -Inf] <- min(bin500space100_gt_pval05$log2FC[is.finite(bin500space100_gt_pval05$log2FC)], na.rm = TRUE)
+
+bin250space50_gt_pval05$log2FC[bin250space50_gt_pval05$log2FC == Inf] <- max(bin250space50_gt_pval05$log2FC[is.finite(bin250space50_gt_pval05$log2FC)], na.rm = TRUE)
+bin250space50_gt_pval05$log2FC[bin250space50_gt_pval05$log2FC == -Inf] <- min(bin250space50_gt_pval05$log2FC[is.finite(bin250space50_gt_pval05$log2FC)], na.rm = TRUE)
+
+
+
+# List of dataset names
+file_names <- c("bin5000space100_gt_pval05", "bin2000space100_gt_pval05", "bin1000space100_gt_pval05", "bin500space100_gt_pval05", "bin250space50_gt_pval05")
+
+## Function to read and format each file
+read_and_process <- function(file) {
+  df <- get(file)  # Load dataset from environment
+  df$dataset <- file  # Add dataset identifier
+  return(df)
+}
+
+## Combine all datasets into one
+combined_data <- bind_rows(lapply(file_names, read_and_process)) 
+
+
+
+combined_data_counts <- combined_data %>% 
+  filter(padj < 0.001, abs(log2FC) > 1, Control.avg > 100 | Treatment.avg > 100) %>%        # keep only |log2FC| > 1
+  mutate(direction = if_else(log2FC < 0, "Negative", "Positive")) %>%
+  group_by(dataset, direction) %>%
+  summarise(count = n(), .groups = "drop")
+
+
+
+    
+  
+## plot
+pdf("output/diffreps/hist-WTvsKO-log2FC_distribution-padj001_gt_pval05_fc1_avg100_initialBigwig.pdf", width=8, height=2)
+combined_data %>% 
+  filter(padj<0.001, abs(log2FC) > 1, Control.avg > 100 | Treatment.avg > 100) %>%   ## !!!!!!!!!! CHANGE PVAL HERE !!!!!!!!!!!!!!!!!!!!!!
+ggplot(., aes(x = log2FC)) +
+  geom_histogram(binwidth = 0.5, fill = "black", color = "black", alpha = 0.7) +
+  facet_wrap(~ dataset, scales = "free_y", nrow = 1) +  # Facet per dataset
+  labs(title = "Log2FC Distribution Across Datasets",
+       x = "Log2 Fold Change (log2FC)",
+       y = "Frequency") +
+  theme_bw() +
+  theme(strip.text = element_text(size = 4, face = "bold")) +
+  geom_text(data = combined_data_counts, 
+            aes(x = ifelse(direction == "Negative", -6, 4),  # Fixed x positions
+                y = Inf, 
+                label = paste0(count)), 
+            vjust = 1.5, 
+            hjust = ifelse(combined_data_counts$direction == "Negative", 0, 1), 
+            size = 3, fontface = "bold", color = "red")
+dev.off()
+
+
+
+## Save output
+write.table(combined_data, "output/diffreps/combined_data-WTvsKO-initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+write.table(combined_data %>% 
+  filter(
+    padj < 0.001, 
+    (log2FC > 1 | log2FC < -1), 
+    dataset == "bin1000space100_gt_pval05",
+    Control.avg > 100 | Treatment.avg > 100   # <- NEW FILTER
+  ), "output/diffreps/combined_data-bin1000space100_gt_pval05_padj001_fc1_avg100-WTvsKO-initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+write.table(combined_data %>% 
+  filter(
+    padj < 0.001, 
+    (log2FC > 1 | log2FC < -1), 
+    dataset == "bin2000space100_gt_pval05",
+    Control.avg > 100 | Treatment.avg > 100   # <- NEW FILTER
+  ), "output/diffreps/combined_data-bin2000space100_gt_pval05_padj001_fc1_avg100-WTvsKO-initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+```
 
 
 
@@ -1978,6 +2614,23 @@ sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ES
 
 
 
+### H3K27me3 - thresh bigwigs no X chr (Ferguson unique norm 99)
+## qvalue 2.3 ##############
+#### WT
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R1-noXchr_thresh1.sh # 52168642 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R2-noXchr_thresh1.sh # 52168732 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R3-noXchr_thresh1.sh # 52168734 ok
+#### KO
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R1-noXchr_thresh1.sh # 52168737 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R2-noXchr_thresh1.sh # 52168781 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R3-noXchr_thresh1.sh # 52168782 ok
+#### OEKO
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R1-noXchr_thresh2.sh # 52169123 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R2-noXchr_thresh2.sh # 52169150 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R3-noXchr_thresh2.sh # 52169169 ok
+
+
+
 ## qvalue 3 ##############
 #### WT
 #sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval3merge100bp-ESC_WT_H3K27me3_R1-FergusonUniqueNorm99.sh #  xxx
@@ -2026,6 +2679,27 @@ sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO
 sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R1-FergusonUniqueNorm99_thresh1.sh # 51504029 ok
 sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R2-FergusonUniqueNorm99_thresh1.sh # 51504030 ok
 sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R3-FergusonUniqueNorm99_thresh1.sh # 51504031 ok
+
+
+
+
+
+
+### EZH2 - thresh bigwigs no X chr (Ferguson unique norm 99)
+## qvalue 2.3 ##############
+#### WT
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R1-noXchr_thresh1.sh # 52168985 xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R2-noXchr_thresh1.sh # 52168998 xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R3-noXchr_thresh1.sh # 52169039 xxx
+#### KO
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R1-noXchr_thresh1.sh # 52170168 xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R2-noXchr_thresh1.sh # 52170190 xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R3-noXchr_thresh1.sh # 52170217 xxx
+#### OEKO
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R1-noXchr_thresh2.sh # 52170399 xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R2-noXchr_thresh2.sh # 52170417 xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R3-noXchr_thresh2.sh # 52170479 xxx
+
 
 
 
@@ -3864,7 +4538,7 @@ write.table(ESC_WTKOOEKO_EZH2_qval3merge100bp_annot_promoterAnd5_geneSymbol, fil
 
 
 
-### On consensus peaks ESC_WTKOOEKO - H3K27me3 and EZH2 - GENCODEv47
+### On consensus peaks ESC_WTKOOEKO - H3K27me3 EZH2 EZH1 - no chrX - GENCODEv47
 
 Let's use GENCODE v47 annotation to be in agreement with the RNAseq annotation! Let's create our own txdb as the  `library("TxDb.Hsapiens.UCSC.hg38.knownGene")` is GENCODE v41. 
 --> Follow guideline [here](https://www.bioconductor.org/packages/devel/bioc/vignettes/txdbmaker/inst/doc/txdbmaker.html) to create txdb from GTF
@@ -3893,29 +4567,25 @@ txdb <- loadDb("../../Master/meta/gencode.v47.annotation.gtf.txdb")
 ```
 
 
-XXXY HERE !!!
 
 ```bash
-# files - consensus peaks H3K27me3 and EZH2 qval23 and 3 with merge100bp
-output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.merge100bp.bed
-output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.merge100bp.bed
-output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.merge100bp.bed
-output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.merge100bp.bed
-```
+# files - consensus peaks H3K27me3, EZH2, EZH1 qval23 with merge100bp no chrX
+
+output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_noXchr_pool_peaks.sorted.merge100bp.bed
+output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_noXchr_pool_peaks.sorted.merge100bp.bed
+output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH1_noXchr_pool_peaks.sorted.merge100bp.bed
 
 
-
-
-
-```bash
 conda activate deseq2
 ```
+
+
 
 ```R
 library("ChIPseeker")
 library("tidyverse")
 library("TxDb.Hsapiens.UCSC.hg38.knownGene")
-txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene # hg 38 annot v41
+txdb <- loadDb("../../Master/meta/gencode.v47.annotation.gtf.txdb") # Human version47 as RNAseq!! 
 library("clusterProfiler")
 library("meshes")
 library("ReactomePA")
@@ -3923,24 +4593,19 @@ library("org.Hs.eg.db")
 library("VennDiagram")
 
 
-# Import diff peaks
-ESC_WTKOOEKO_H3K27me3_qval23merge100bp <- read.delim("output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.merge100bp.bed", sep = "\t", header = FALSE) %>%
+# Import consensus peaks
+ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX <- read.delim("output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_noXchr_pool_peaks.sorted.merge100bp.bed", sep = "\t", header = FALSE) %>%
   as_tibble() %>%
   dplyr::rename("chr"= "V1", "start" = "V2", "end" = "V3")
-
-ESC_WTKOOEKO_EZH2_qval23merge100bp <- read.delim("output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.merge100bp.bed", sep = "\t", header = FALSE) %>%
+ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX <- read.delim("output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_noXchr_pool_peaks.sorted.merge100bp.bed", sep = "\t", header = FALSE) %>%
   as_tibble() %>%
   dplyr::rename("chr"= "V1", "start" = "V2", "end" = "V3")
-  
-ESC_WTKOOEKO_H3K27me3_qval3merge100bp <- read.delim("output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.merge100bp.bed", sep = "\t", header = FALSE) %>%
-  as_tibble() %>%
-  dplyr::rename("chr"= "V1", "start" = "V2", "end" = "V3")
-
-ESC_WTKOOEKO_EZH2_qval3merge100bp <- read.delim("output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.merge100bp.bed", sep = "\t", header = FALSE) %>%
+ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX <- read.delim("output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH1_noXchr_pool_peaks.sorted.merge100bp.bed", sep = "\t", header = FALSE) %>%
   as_tibble() %>%
   dplyr::rename("chr"= "V1", "start" = "V2", "end" = "V3")
 
 
+XXXXY HERE!!!
 
 # Tidy peaks 
 ESC_WTKOOEKO_H3K27me3_qval23merge100bp_gr = makeGRangesFromDataFrame(ESC_WTKOOEKO_H3K27me3_qval23merge100bp,keep.extra.columns=TRUE)
@@ -4238,7 +4903,7 @@ sbatch scripts/matrix_PEAK_5kb-macs2broad_OEKO_EZH1poolqval23-WTKOOEKO-EZH1_thre
 
 
 
-## consensus peaks
+## consensus peaks - including X chr
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-H3K27me3EZH2EZH1.sh # 50895445 ok
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-H3K27me3.sh # 51132562 ok
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-EZH2.sh # 51132659 ok
@@ -4250,7 +4915,32 @@ sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23me
 
 
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH2poolqval23merge100bp-WTKOOEKO-H3K27me3EZH2EZH1.sh # 50895514 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-IGGR1R2R3.sh # 52173085 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH2poolqval23merge100bp-WTKOOEKO-IGGR1R2R3.sh # 52173842 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH1poolqval23merge100bp-WTKOOEKO-IGGR1R2R3.sh # 52174354 xxx
 
+
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH2poolqval23merge100bp-WTKOOEKO-H3K27me3.sh # 52173856 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH2poolqval23merge100bp-WTKOOEKO-EZH2.sh # 52173857 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH2poolqval23merge100bp-WTKOOEKO-EZH1.sh # 52173887 ok
+
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH1poolqval23merge100bp-WTKOOEKO-H3K27me3.sh # 52174048 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH1poolqval23merge100bp-WTKOOEKO-EZH2.sh # 52174071 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH1poolqval23merge100bp-WTKOOEKO-EZH1.sh # 52174089 ok
+
+
+## consensus peaks - without X chr and without noise - clean bigwigs
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-H3K27me3-noXchr_thresh1.sh # 52161178 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-EZH2-noXchr_thresh1.sh # 52161543 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-EZH1-noXchr_thresh2.sh # 52161793 ok
+
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH2poolqval23merge100bp-WTKOOEKO-H3K27me3-noXchr_thresh1.sh # 52161825 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH2poolqval23merge100bp-WTKOOEKO-EZH2-noXchr_thresh1.sh # 52161832 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH2poolqval23merge100bp-WTKOOEKO-EZH1-noXchr_thresh2.sh # 52161849 ok
+
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH1poolqval23merge100bp-WTKOOEKO-H3K27me3-noXchr_thresh1.sh # 52162251 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH1poolqval23merge100bp-WTKOOEKO-EZH2-noXchr_thresh1.sh # 52162255 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH1poolqval23merge100bp-WTKOOEKO-EZH1-noXchr_thresh2.sh # 52162261 ok
 
 ```
 
