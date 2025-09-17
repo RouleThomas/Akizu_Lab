@@ -2114,42 +2114,42 @@ conda activate ChIPseqSpikeInFree
 
 
 ## PREPARE BED FILE FOR QUANTIFICATION ##
-output/bigwig_Ferguson/ESC_WT_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph 
-output/bigwig_Ferguson/ESC_WT_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph 
-output/bigwig_Ferguson/ESC_WT_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph 
+output/bigwig_Ferguson/ESC_WT_H3K27me3_R1_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph 
+output/bigwig_Ferguson/ESC_WT_H3K27me3_R2_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph 
+output/bigwig_Ferguson/ESC_WT_H3K27me3_R3_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph 
 
-output/bigwig_Ferguson/ESC_KO_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph 
-output/bigwig_Ferguson/ESC_KO_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph 
-output/bigwig_Ferguson/ESC_KO_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph 
+output/bigwig_Ferguson/ESC_KO_H3K27me3_R1_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph 
+output/bigwig_Ferguson/ESC_KO_H3K27me3_R2_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph 
+output/bigwig_Ferguson/ESC_KO_H3K27me3_R3_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph 
 
 
 # Modify our bedGraph into bed (score in the 5th column); add dummy column 4
-awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_WT_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph > output/bigwig_Ferguson/ESC_WT_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed
-awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_WT_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph > output/bigwig_Ferguson/ESC_WT_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed
-awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_WT_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph > output/bigwig_Ferguson/ESC_WT_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_WT_H3K27me3_R1_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph > output/bigwig_Ferguson/ESC_WT_H3K27me3_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_WT_H3K27me3_R2_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph > output/bigwig_Ferguson/ESC_WT_H3K27me3_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_WT_H3K27me3_R3_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph > output/bigwig_Ferguson/ESC_WT_H3K27me3_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed
 
-awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_KO_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph > output/bigwig_Ferguson/ESC_KO_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed
-awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_KO_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph > output/bigwig_Ferguson/ESC_KO_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed
-awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_KO_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph > output/bigwig_Ferguson/ESC_KO_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_KO_H3K27me3_R1_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph > output/bigwig_Ferguson/ESC_KO_H3K27me3_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_KO_H3K27me3_R2_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph > output/bigwig_Ferguson/ESC_KO_H3K27me3_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed
+awk 'BEGIN{OFS="\t"} {print $1, $2, $3, "Row" NR, $4, "*"}' output/bigwig_Ferguson/ESC_KO_H3K27me3_R3_noXchr_unique_norm99_initialBigwig_thresh1.bedGraph > output/bigwig_Ferguson/ESC_KO_H3K27me3_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed
 
 
 
 
 ## RUN NDIFFREPS ##
 # 5000bp every 100bp -  G test pval 0.05
-diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed -co output/bigwig_Ferguson/ESC_WT_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.noXchr_thresh1.bed-bin5000space100_gt_pval05-diff.nb.txt --window 5000 --step 100 --meth gt --pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_H3K27me3_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_H3K27me3_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_H3K27me3_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed -co output/bigwig_Ferguson/ESC_WT_H3K27me3_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_H3K27me3_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_H3K27me3_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.noXchr_thresh1.bed-bin5000space100_gt_pval05-diff.nb.txt --window 5000 --step 100 --meth gt --pval 0.05
 
 # 2000bp every 100bp -  G test pval 0.05
-diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed -co output/bigwig_Ferguson/ESC_WT_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.noXchr_thresh1.bed-bin2000space100_gt_pval05-diff.nb.txt --window 2000 --step 100 --meth gt --pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_H3K27me3_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_H3K27me3_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_H3K27me3_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed -co output/bigwig_Ferguson/ESC_WT_H3K27me3_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_H3K27me3_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_H3K27me3_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.noXchr_thresh1.bed-bin2000space100_gt_pval05-diff.nb.txt --window 2000 --step 100 --meth gt --pval 0.05
 
 # 1000bp every 100bp -  G test pval 0.05
-diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed -co output/bigwig_Ferguson/ESC_WT_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.noXchr_thresh1.bed-bin1000space100_gt_pval05-diff.nb.txt --window 1000 --step 100 --meth gt --pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_H3K27me3_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_H3K27me3_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_H3K27me3_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed -co output/bigwig_Ferguson/ESC_WT_H3K27me3_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_H3K27me3_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_H3K27me3_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.noXchr_thresh1.bed-bin1000space100_gt_pval05-diff.nb.txt --window 1000 --step 100 --meth gt --pval 0.05
 
 # 500bp every 100bp -  G test pval 0.05
-diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed -co output/bigwig_Ferguson/ESC_WT_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.noXchr_thresh1.bed-bin500space100_gt_pval05-diff.nb.txt --window 500 --step 100 --meth gt --pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_H3K27me3_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_H3K27me3_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_H3K27me3_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed -co output/bigwig_Ferguson/ESC_WT_H3K27me3_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_H3K27me3_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_H3K27me3_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.noXchr_thresh1.bed-bin500space100_gt_pval05-diff.nb.txt --window 500 --step 100 --meth gt --pval 0.05
 
 # 250bp every 50bp -  G test pval 0.05
-diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed -co output/bigwig_Ferguson/ESC_WT_EZH2_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_EZH2_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_EZH2_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.noXchr_thresh1.bed-bin250space50_gt_pval05-diff.nb.txt --window 250 --step 50 --meth gt --pval 0.05
+diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_H3K27me3_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_H3K27me3_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_KO_H3K27me3_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed -co output/bigwig_Ferguson/ESC_WT_H3K27me3_R1_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_H3K27me3_R2_noXchr_unique_norm99_initialBigwig_thresh1.bed output/bigwig_Ferguson/ESC_WT_H3K27me3_R3_noXchr_unique_norm99_initialBigwig_thresh1.bed --chrlen ../../Master/meta/GRCh38_chrom_sizes_MAIN.tab -re output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.noXchr_thresh1.bed-bin250space50_gt_pval05-diff.nb.txt --window 250 --step 50 --meth gt --pval 0.05
 ```
 
 
@@ -2625,6 +2625,10 @@ sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ES
 sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R2-noXchr_thresh1.sh # 52168781 ok
 sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R3-noXchr_thresh1.sh # 52168782 ok
 #### OEKO
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R1-noXchr_thresh1.sh # ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R2-noXchr_thresh1.sh # 52226508 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R3-noXchr_thresh1.sh # 52226509 ok
+
 sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R1-noXchr_thresh2.sh # 52169123 ok
 sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R2-noXchr_thresh2.sh # 52169150 ok
 sbatch scripts/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R3-noXchr_thresh2.sh # 52169169 ok
@@ -2688,17 +2692,17 @@ sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OE
 ### EZH2 - thresh bigwigs no X chr (Ferguson unique norm 99)
 ## qvalue 2.3 ##############
 #### WT
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R1-noXchr_thresh1.sh # 52168985 xxx
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R2-noXchr_thresh1.sh # 52168998 xxx
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R3-noXchr_thresh1.sh # 52169039 xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R1-noXchr_thresh1.sh # 52168985 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R2-noXchr_thresh1.sh # 52168998 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R3-noXchr_thresh1.sh # 52169039 ok
 #### KO
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R1-noXchr_thresh1.sh # 52170168 xxx
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R2-noXchr_thresh1.sh # 52170190 xxx
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R3-noXchr_thresh1.sh # 52170217 xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R1-noXchr_thresh1.sh # 52170168 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R2-noXchr_thresh1.sh # 52170190 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R3-noXchr_thresh1.sh # 52170217 ok
 #### OEKO
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R1-noXchr_thresh2.sh # 52170399 xxx
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R2-noXchr_thresh2.sh # 52170417 xxx
-sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R3-noXchr_thresh2.sh # 52170479 xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R1-noXchr_thresh2.sh # 52170399 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R2-noXchr_thresh2.sh # 52170417 ok
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R3-noXchr_thresh2.sh # 52170479 ok
 
 
 
@@ -3800,6 +3804,591 @@ write_tsv( downregulated %>%
 
 --> For EZH2 I receive the error `Error in optimHess(par = init, fn = nbinomFn, gr = nbinomGr, x = x, y = y,  : non-finite value supplied by optim` when doing the `lfcShrink()`; error is discussed [here](https://www.biostars.org/p/9559740/) and is related to updated version of apeglm I need to install with `devtools::install_github("azhu513/apeglm")`
   --> For EZH2, let's not use `deseq2` env, but instead `deseq2V2` env!
+
+
+
+
+
+
+### H3K27me3 - no X chr thresh background clean merge100bp qval2.3  - R DESEQ2
+
+
+```bash
+conda activate deseq2V2
+```
+
+
+```R
+library("tidyverse")
+library("DESeq2")
+library("EnhancedVolcano")
+
+
+set.seed(42)
+
+# import bed reference to collect gene name
+ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot <- read.delim("output/ChIPseeker/annotation_ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot.txt", header=TRUE, sep="\t", skip=0) %>% 
+  as_tibble() %>%
+  dplyr::rename(chr = seqnames) %>%
+  mutate(peakID = paste(chr, start, end, sep = "_")) %>%
+  dplyr::select(chr, start, end, annotation, geneSymbol, geneId, peakID)
+
+
+
+# import SCORE 
+
+SCORE_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_WT_H3K27me3_R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R1-noXchr_thresh1.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_WT_H3K27me3_R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R2-noXchr_thresh1.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_WT_H3K27me3_R3 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R3-noXchr_thresh1.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+
+SCORE_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_KO_H3K27me3_R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R1-noXchr_thresh1.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_KO_H3K27me3_R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R2-noXchr_thresh1.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_KO_H3K27me3_R3 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R3-noXchr_thresh1.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+
+SCORE_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_OEKO_H3K27me3_R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R1-noXchr_thresh1.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_OEKO_H3K27me3_R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R2-noXchr_thresh1.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+SCORE_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_OEKO_H3K27me3_R3 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R3-noXchr_thresh1.txt", header=FALSE, sep="\t", skip=3) %>%
+  as_tibble() %>%
+  dplyr::rename(score = V1) %>%
+  mutate(rowNumber = row_number())
+
+
+
+
+# import BED position from matrix
+
+BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_WT_H3K27me3_R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R1-noXchr_thresh1.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+
+BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_WT_H3K27me3_R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R2-noXchr_thresh1.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_WT_H3K27me3_R3 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_WT_H3K27me3_R3-noXchr_thresh1.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+  
+BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_KO_H3K27me3_R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R1-noXchr_thresh1.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_KO_H3K27me3_R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R2-noXchr_thresh1.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_KO_H3K27me3_R3 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_KO_H3K27me3_R3-noXchr_thresh1.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+
+BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_OEKO_H3K27me3_R1 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R1-noXchr_thresh1.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_OEKO_H3K27me3_R2 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R2-noXchr_thresh1.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_OEKO_H3K27me3_R3 <- read.delim("output/edgeR/LengthNormSignal_WTKOOEKO_H3K27me3_pool_peaks-qval23merge100bp-ESC_OEKO_H3K27me3_R3-noXchr_thresh1.bed", header=TRUE, sep="\t", skip=0) %>%
+  as_tibble() %>%
+  dplyr::rename(chr = "X.chrom") %>%
+  dplyr::select(chr, start, end) %>%
+  mutate(rowNumber = row_number())
+
+
+
+# Put together, gene name, score per row, coordinate and row
+
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_WT_H3K27me3_R1 = SCORE_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_WT_H3K27me3_R1 %>%
+  left_join(BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_WT_H3K27me3_R1 ) %>%
+  left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by peakID
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R1")
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_WT_H3K27me3_R2 = SCORE_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_WT_H3K27me3_R2 %>%
+  left_join(BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_WT_H3K27me3_R2 ) %>%
+  left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R2")
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_WT_H3K27me3_R3 = SCORE_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_WT_H3K27me3_R3 %>%
+  left_join(BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_WT_H3K27me3_R3 ) %>%
+  left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "WT", replicate = "R3")
+
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_KO_H3K27me3_R1 = SCORE_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_KO_H3K27me3_R1 %>%
+  left_join(BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_KO_H3K27me3_R1 ) %>%
+  left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R1")
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_KO_H3K27me3_R2 = SCORE_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_KO_H3K27me3_R2 %>%
+  left_join(BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_KO_H3K27me3_R2 ) %>%
+  left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R2")
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_KO_H3K27me3_R3 = SCORE_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_KO_H3K27me3_R3 %>%
+  left_join(BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_KO_H3K27me3_R3 ) %>%
+  left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "KO", replicate = "R3")
+
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_OEKO_H3K27me3_R1 = SCORE_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_OEKO_H3K27me3_R1 %>%
+  left_join(BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_OEKO_H3K27me3_R1 ) %>%
+  left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "OEKO", replicate = "R1")
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_OEKO_H3K27me3_R2 = SCORE_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_OEKO_H3K27me3_R2 %>%
+  left_join(BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_OEKO_H3K27me3_R2 ) %>%
+  left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "OEKO", replicate = "R2")
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_OEKO_H3K27me3_R3 = SCORE_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_OEKO_H3K27me3_R3 %>%
+  left_join(BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_OEKO_H3K27me3_R3 ) %>%
+  left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot) %>%
+  dplyr::select(peakID, score) %>%
+  group_by(peakID) %>%  # Group by gene
+  summarise(median_score = median(score, na.rm = TRUE)) %>%  # Compute median signal per gene
+  unique() %>%
+  add_column(genotype = "OEKO", replicate = "R3")
+
+
+
+
+# Tidy into a single tibble
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1 = SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_WT_H3K27me3_R1 %>%
+  bind_rows(SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_WT_H3K27me3_R2) %>%
+  bind_rows(SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_WT_H3K27me3_R3) %>%
+  bind_rows(SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_KO_H3K27me3_R1) %>%
+  bind_rows(SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_KO_H3K27me3_R2) %>%
+  bind_rows(SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_KO_H3K27me3_R3) %>%
+  bind_rows(SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_OEKO_H3K27me3_R1) %>%
+  bind_rows(SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_OEKO_H3K27me3_R2) %>%
+  bind_rows(SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__ESC_OEKO_H3K27me3_R3)
+
+
+
+
+######################################################
+### WT vs KO ####################################
+######################################################
+
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__WTvsKO = SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1 %>%
+  filter(genotype %in% c("WT", "KO"),
+         peakID != "NA") %>%
+  mutate(median_score = round(median_score)) 
+  
+
+# Convert to wide format
+countData_WTvsKO <- SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__WTvsKO %>%
+  mutate(replicate = paste0(genotype, "_", replicate)) %>%  # Create unique column names
+  select(-genotype) %>%  # Remove genotype column (since it's now part of replicate)
+  pivot_wider(names_from = replicate, values_from = median_score, values_fill = 0)  
+  
+
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(countData_WTvsKO, -peakID), pull(countData_WTvsKO, peakID)) 
+
+
+## Create colData file that describe all our samples
+colData_WTvsKO_raw <- SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__WTvsKO %>%
+  distinct(replicate, genotype) %>%
+  mutate(sample = paste(genotype, replicate, sep = "_"))
+  
+  
+## transform df into matrix
+coldata = make_matrix(dplyr::select(colData_WTvsKO_raw, -sample), pull(colData_WTvsKO_raw, sample))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design= ~ genotype)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 5 # 5 looks good! On IGV all what i check look real!
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+
+res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm")
+
+### explore data to set treshold nb of reads #######
+
+res_tibble %>% dplyr::filter(padj <0.05, log2FoldChange > 0.58) %>% dplyr::select(chr, start, end)
+res_tibble %>% dplyr::filter(padj <0.05, log2FoldChange < -0.58) %>% dplyr::select(chr, start, end)
+
+########################################################
+
+## Plot-volcano
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.58 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.58 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.58)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.58)'
+
+
+res_tibble <- as_tibble(res, rownames = "peakID") %>% left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot)
+# Export result 
+write.table(res_tibble, file="output/edgeR/DESEQ2-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+pdf("output/edgeR/plotVolcano_res_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.pdf", width=3, height=4)    
+EnhancedVolcano(res_tibble,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, ESC, H3K27me3',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.58,
+  pointSize = 1.0,
+  labSize = 2,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+
+
+
+# Identify gain lost peak and genes
+## 1) Keep only significant peaks, then keep only strong effects (|log2FC| >= threshold)
+res_sig <- res_tibble %>%
+  filter(padj < 0.05) %>%
+  mutate(effect_dir = case_when(
+    log2FoldChange >=  0.58 ~ "pos",
+    log2FoldChange <= -0.58 ~ "neg",
+    TRUE ~ NA_character_
+  )) %>%
+  filter(!is.na(effect_dir))   # drop weak effects
+## 2) Determine gene-level direction (Gain / Lost / Mix) from the remaining peaks
+gene_direction <- res_sig %>%
+  group_by(geneSymbol) %>%
+  summarise(
+    n_pos = sum(effect_dir == "pos"),
+    n_neg = sum(effect_dir == "neg"),
+    direction = case_when(
+      n_pos > 0 & n_neg > 0 ~ "Mix",
+      n_pos > 0             ~ "Gain",
+      n_neg > 0             ~ "Lost",
+      TRUE                  ~ NA_character_
+    ),
+    .groups = "drop"
+  ) %>%
+  filter(!is.na(direction))
+### Here remove the 'Mix' genes
+res_kept_peaks <- res_sig %>%
+  inner_join(gene_direction %>% select(geneSymbol, direction), by = "geneSymbol")
+
+# HERE WITHOUT MIX GENES:
+upregulated_genes <- res_kept_peaks %>%
+  dplyr::filter(direction == "Gain") %>%
+  dplyr::select(geneSymbol) %>% unique()
+downregulated_genes <- res_kept_peaks %>%
+  dplyr::filter(direction == "Lost") %>%
+  dplyr::select(geneSymbol) %>% unique()
+write.table(upregulated_genes, file = "output/edgeR/upregulatedNoMix_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated_genes, file = "output/edgeR/downregulatedNoMix_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+# HERE KEEPING MIX GENES:
+upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, ]
+#### Filter for down-regulated genes
+downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, ]
+#### Save
+write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+# Save as coordinates for bed deeptools - including Mix peaks
+write_tsv( upregulated %>%
+  separate(peakID, into = c("chr", "start", "end"), sep = "_", remove = TRUE) %>%
+  dplyr::select(chr, start, end), "output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpoXchrthresh-ESC_KO_vs_ESC_WT-H3K27me3.bed", col_names = FALSE)
+write_tsv( downregulated %>%
+  separate(peakID, into = c("chr", "start", "end"), sep = "_", remove = TRUE) %>%
+  dplyr::select(chr, start, end), "output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpoXchrthresh-ESC_KO_vs_ESC_WT-H3K27me3.bed", col_names = FALSE)
+
+
+
+
+XXXY HERE!!!!!
+
+
+
+
+######################################################
+### WT vs OEKO ####################################
+######################################################
+
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__WTvsOEKO = SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp %>%
+  filter(genotype %in% c("WT", "OEKO"),
+         peakID != "NA") %>%
+  mutate(median_score = round(median_score)) %>%
+  filter(!startsWith(peakID, "chrX")) # 112,254 to 97200
+
+
+
+
+
+
+# Convert to wide format
+countData_WTvsOEKO <- SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__WTvsOEKO %>%
+  mutate(replicate = paste0(genotype, "_", replicate)) %>%  # Create unique column names
+  select(-genotype) %>%  # Remove genotype column (since it's now part of replicate)
+  pivot_wider(names_from = replicate, values_from = median_score, values_fill = 0)  
+  
+
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(countData_WTvsOEKO, -peakID), pull(countData_WTvsOEKO, peakID)) 
+
+
+## Create colData file that describe all our samples
+colData_WTvsOEKO_raw <- SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bp__WTvsOEKO %>%
+  distinct(replicate, genotype) %>%
+  mutate(sample = paste(genotype, replicate, sep = "_"))
+  
+  
+## transform df into matrix
+coldata = make_matrix(dplyr::select(colData_WTvsOEKO_raw, -sample), pull(colData_WTvsOEKO_raw, sample))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design= ~ genotype)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 100 # I TESTED 100, 250, 500: VERY COMPARABLE! So pick 100
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+
+res <- lfcShrink(dds, coef="genotype_OEKO_vs_WT", type="apeglm")
+
+
+## Plot-volcano
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.58 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.58 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.58)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.58)'
+
+
+res_tibble <- as_tibble(res, rownames = "peakID") %>% left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot)
+# Export result 
+write.table(res_tibble, file="output/edgeR/DESEQ2-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-H3K27me3.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+pdf("output/edgeR/plotVolcano_res_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-H3K27me3.pdf", width=3, height=4)    
+EnhancedVolcano(res_tibble,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'OEKO vs WT, ESC, H3K27me3',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.58,
+  pointSize = 1.0,
+  labSize = 2,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+
+
+# Identify gain lost peak and genes
+## 1) Keep only significant peaks, then keep only strong effects (|log2FC| >= threshold)
+res_sig <- res_tibble %>%
+  filter(padj < 0.05) %>%
+  mutate(effect_dir = case_when(
+    log2FoldChange >=  0.58 ~ "pos",
+    log2FoldChange <= -0.58 ~ "neg",
+    TRUE ~ NA_character_
+  )) %>%
+  filter(!is.na(effect_dir))   # drop weak effects
+## 2) Determine gene-level direction (Gain / Lost / Mix) from the remaining peaks
+gene_direction <- res_sig %>%
+  group_by(geneSymbol) %>%
+  summarise(
+    n_pos = sum(effect_dir == "pos"),
+    n_neg = sum(effect_dir == "neg"),
+    direction = case_when(
+      n_pos > 0 & n_neg > 0 ~ "Mix",
+      n_pos > 0             ~ "Gain",
+      n_neg > 0             ~ "Lost",
+      TRUE                  ~ NA_character_
+    ),
+    .groups = "drop"
+  ) %>%
+  filter(!is.na(direction))
+### Here remove the 'Mix' genes
+res_kept_peaks <- res_sig %>%
+  inner_join(gene_direction %>% select(geneSymbol, direction), by = "geneSymbol")
+
+# HERE WITHOUT MIX GENES:
+upregulated_genes <- res_kept_peaks %>%
+  dplyr::filter(direction == "Gain") %>%
+  dplyr::select(geneSymbol) %>% unique()
+downregulated_genes <- res_kept_peaks %>%
+  dplyr::filter(direction == "Lost") %>%
+  dplyr::select(geneSymbol) %>% unique()
+write.table(upregulated_genes, file = "output/edgeR/upregulatedNoMix_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated_genes, file = "output/edgeR/downregulatedNoMix_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+# HERE KEEPING MIX GENES:
+upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, ]
+#### Filter for down-regulated genes
+downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, ]
+#### Save
+write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
+res_tibble %>% dplyr::select(peakID, geneSymbol, log2FoldChange, padj) %>%
+  filter(padj < 0.05, log2FoldChange > 0.58)
+
+
+res_tibble %>% dplyr::select(peakID, geneSymbol, log2FoldChange, padj) %>%
+  filter(padj < 0.05, log2FoldChange < -0.58)
+
+
+# Save as coordinates for bed deeptools - including Mix peaks
+
+write_tsv( upregulated %>%
+  separate(peakID, into = c("chr", "start", "end"), sep = "_", remove = TRUE) %>%
+  dplyr::select(chr, start, end), "output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-H3K27me3.bed", col_names = FALSE)
+write_tsv( downregulated %>%
+  separate(peakID, into = c("chr", "start", "end"), sep = "_", remove = TRUE) %>%
+  dplyr::select(chr, start, end), "output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-H3K27me3.bed", col_names = FALSE)
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
 
 
 
