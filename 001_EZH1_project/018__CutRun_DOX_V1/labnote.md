@@ -4591,6 +4591,19 @@ library("meshes")
 library("ReactomePA")
 library("org.Hs.eg.db")
 library("VennDiagram")
+library("rtracklayer")
+
+# import GTF for gene name
+gtf <- import("../../Master/meta/gencode.v47.annotation.gtf")
+## Extract geneId and geneSymbol
+gene_table <- mcols(gtf) %>%
+  as.data.frame() %>%
+  dplyr::select(gene_id, gene_name) %>%
+  distinct() %>%
+  as_tibble()
+## Rename columns
+colnames(gene_table) <- c("geneId", "geneSymbol")
+
 
 
 # Import consensus peaks
@@ -4605,97 +4618,78 @@ ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX <- read.delim("output/macs2/broad/broa
   dplyr::rename("chr"= "V1", "start" = "V2", "end" = "V3")
 
 
-XXXXY HERE!!!
 
 # Tidy peaks 
-ESC_WTKOOEKO_H3K27me3_qval23merge100bp_gr = makeGRangesFromDataFrame(ESC_WTKOOEKO_H3K27me3_qval23merge100bp,keep.extra.columns=TRUE)
-ESC_WTKOOEKO_EZH2_qval23merge100bp_gr = makeGRangesFromDataFrame(ESC_WTKOOEKO_EZH2_qval23merge100bp,keep.extra.columns=TRUE)
-ESC_WTKOOEKO_H3K27me3_qval3merge100bp_gr = makeGRangesFromDataFrame(ESC_WTKOOEKO_H3K27me3_qval3merge100bp,keep.extra.columns=TRUE)
-ESC_WTKOOEKO_EZH2_qval3merge100bp_gr = makeGRangesFromDataFrame(ESC_WTKOOEKO_EZH2_qval3merge100bp,keep.extra.columns=TRUE)
+ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_gr = makeGRangesFromDataFrame(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX,keep.extra.columns=TRUE)
+ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX_gr = makeGRangesFromDataFrame(ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX,keep.extra.columns=TRUE)
+ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX_gr = makeGRangesFromDataFrame(ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX,keep.extra.columns=TRUE)
 
-gr_list <- list(ESC_WTKOOEKO_H3K27me3_qval23merge100bp=ESC_WTKOOEKO_H3K27me3_qval23merge100bp_gr,ESC_WTKOOEKO_EZH2_qval23merge100bp=ESC_WTKOOEKO_EZH2_qval23merge100bp_gr, ESC_WTKOOEKO_H3K27me3_qval3merge100bp=ESC_WTKOOEKO_H3K27me3_qval3merge100bp_gr,ESC_WTKOOEKO_EZH2_qval3merge100bp=ESC_WTKOOEKO_EZH2_qval3merge100bp_gr
+gr_list <- list(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX=ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_gr,ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX=ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX_gr, ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX=ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX_gr
 )
 
 # Export Gene peak assignemnt
 peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
                        tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
 ## plots
-pdf("output/ChIPseeker/plotAnnoBar_ESC_WTKOOEKO_H3K27me3EZH2_qval23qval3merge100bp.pdf", width = 16, height = 3)
+pdf("output/ChIPseeker/plotAnnoBar_ESC_WTKOOEKO_H3K27me3EZH2EZH1_qval23merge100bpnochrX.pdf", width = 16, height = 3)
 plotAnnoBar(peakAnnoList)
 dev.off()
-pdf("output/ChIPseeker/plotDistToTSS_ESC_WTKOOEKO_H3K27me3EZH2_qval23qval3merge100bp.pdf", width = 16, height = 3)
+pdf("output/ChIPseeker/plotDistToTSS_ESC_WTKOOEKO_H3K27me3EZH2EZH1_qval23merge100bpnochrX.pdf", width = 16, height = 3)
 plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
 dev.off()
 
-## Get annotation data frame
-ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot <- as.data.frame(peakAnnoList[["ESC_WTKOOEKO_H3K27me3_qval23merge100bp"]]@anno)
-ESC_WTKOOEKO_EZH2_qval23merge100bp_annot <- as.data.frame(peakAnnoList[["ESC_WTKOOEKO_EZH2_qval23merge100bp"]]@anno)
-ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot <- as.data.frame(peakAnnoList[["ESC_WTKOOEKO_H3K27me3_qval3merge100bp"]]@anno)
-ESC_WTKOOEKO_EZH2_qval3merge100bp_annot <- as.data.frame(peakAnnoList[["ESC_WTKOOEKO_EZH2_qval3merge100bp"]]@anno)
+## Get annotation data frame AND Add geneSymbol from GTF
+ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot <- as.data.frame(peakAnnoList[["ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX"]]@anno) %>% as_tibble()  %>% left_join(gene_table)
+ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX_annot <- as.data.frame(peakAnnoList[["ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX"]]@anno) %>% as_tibble()  %>% left_join(gene_table)
+ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX_annot <- as.data.frame(peakAnnoList[["ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX"]]@anno) %>% as_tibble()  %>% left_join(gene_table)
 
-## Convert entrez gene IDs to gene symbols
-ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot$gene <- mapIds(org.Hs.eg.db, keys = ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-ESC_WTKOOEKO_EZH2_qval23merge100bp_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = ESC_WTKOOEKO_EZH2_qval23merge100bp_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-ESC_WTKOOEKO_EZH2_qval23merge100bp_annot$gene <- mapIds(org.Hs.eg.db, keys = ESC_WTKOOEKO_EZH2_qval23merge100bp_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot$gene <- mapIds(org.Hs.eg.db, keys = ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
-ESC_WTKOOEKO_EZH2_qval3merge100bp_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = ESC_WTKOOEKO_EZH2_qval3merge100bp_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
-ESC_WTKOOEKO_EZH2_qval3merge100bp_annot$gene <- mapIds(org.Hs.eg.db, keys = ESC_WTKOOEKO_EZH2_qval3merge100bp_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
 
 
 ## Save output table
-write.table(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot, file="output/ChIPseeker/annotation_ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot.txt", sep="\t", quote=F, row.names=F)  
-write.table(ESC_WTKOOEKO_EZH2_qval23merge100bp_annot, file="output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH2_qval23merge100bp_annot.txt", sep="\t", quote=F, row.names=F)  
-write.table(ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot, file="output/ChIPseeker/annotation_ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot.txt", sep="\t", quote=F, row.names=F)  
-write.table(ESC_WTKOOEKO_EZH2_qval3merge100bp_annot, file="output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH2_qval3merge100bp_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot, file="output/ChIPseeker/annotation_ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX_annot, file="output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX_annot, file="output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX_annot.txt", sep="\t", quote=F, row.names=F)  
+
 
 
 ## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
-ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot_promoterAnd5 = tibble(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot) %>%
+ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot_promoterAnd5 = tibble(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-ESC_WTKOOEKO_EZH2_qval23merge100bp_annot_promoterAnd5 = tibble(ESC_WTKOOEKO_EZH2_qval23merge100bp_annot) %>%
+ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX_annot_promoterAnd5 = tibble(ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot_promoterAnd5 = tibble(ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot) %>%
+ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX_annot_promoterAnd5 = tibble(ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX_annot) %>%
     filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
-ESC_WTKOOEKO_EZH2_qval3merge100bp_annot_promoterAnd5 = tibble(ESC_WTKOOEKO_EZH2_qval3merge100bp_annot) %>%
-    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
 
 ### Save output gene lists
-ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot_promoterAnd5_geneSymbol = ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot_promoterAnd5 %>%
+ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot_promoterAnd5_geneSymbol = ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot_promoterAnd5 %>%
     dplyr::select(geneSymbol) %>%
     unique()
-ESC_WTKOOEKO_EZH2_qval23merge100bp_annot_promoterAnd5_geneSymbol = ESC_WTKOOEKO_EZH2_qval23merge100bp_annot_promoterAnd5 %>%
+ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX_annot_promoterAnd5_geneSymbol = ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX_annot_promoterAnd5 %>%
     dplyr::select(geneSymbol) %>%
     unique()
-ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot_promoterAnd5_geneSymbol = ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot_promoterAnd5 %>%
-    dplyr::select(geneSymbol) %>%
-    unique()
-ESC_WTKOOEKO_EZH2_qval3merge100bp_annot_promoterAnd5_geneSymbol = ESC_WTKOOEKO_EZH2_qval3merge100bp_annot_promoterAnd5 %>%
+ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX_annot_promoterAnd5_geneSymbol = ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX_annot_promoterAnd5 %>%
     dplyr::select(geneSymbol) %>%
     unique()
 
 
-write.table(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_ESC_WTKOOEKO_H3K27me3_qval23merge100bp_annot_promoterAnd5_geneSymbol.txt",
+write.table(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(ESC_WTKOOEKO_EZH2_qval23merge100bp_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH2_qval23merge100bp_annot_promoterAnd5_geneSymbol.txt",
+write.table(ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX_annot_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_ESC_WTKOOEKO_H3K27me3_qval3merge100bp_annot_promoterAnd5_geneSymbol.txt",
+write.table(ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX_annot_promoterAnd5_geneSymbol.txt",
             quote = FALSE, 
             sep = "\t", 
             col.names = FALSE, 
             row.names = FALSE)
-write.table(ESC_WTKOOEKO_EZH2_qval3merge100bp_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH2_qval3merge100bp_annot_promoterAnd5_geneSymbol.txt",
-            quote = FALSE, 
-            sep = "\t", 
-            col.names = FALSE, 
-            row.names = FALSE)
+
 ```
 
 
@@ -4989,6 +4983,12 @@ output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_E
 # IsoformSwitchAnalyzeR_kallisto significant from 001/019
 ../019__RNAseq_ESC_V1/output/IsoformSwitchAnalyzeR_kallisto/significant_isoforms_dIF01qval05__KO_geneSymbol.txt
 ../019__RNAseq_ESC_V1/output/IsoformSwitchAnalyzeR_kallisto/significant_isoforms_dIF01qval05__OEKO_geneSymbol.txt
+## MACS2 consensus peaks qval2.3 merge100bp no X chr H3K27me3 EZH2 EZH1
+output/ChIPseeker/annotation_ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot_promoterAnd5_geneSymbol.txt
+output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX_annot_promoterAnd5_geneSymbol.txt
+output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX_annot_promoterAnd5_geneSymbol.txt
+
+
 
 
 
@@ -5073,6 +5073,10 @@ sed 's/\r$//; s/.*/gene_name "&"/' ../019__RNAseq_ESC_V1/output/IsoformSwitchAna
 
 
 
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot_promoterAnd5_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX_annot_promoterAnd5_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX_annot_promoterAnd5_geneSymbol.txt > output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX_annot_promoterAnd5_as_gtf_geneSymbol.txt
+
 
 
 ## Filter the gtf
@@ -5139,6 +5143,14 @@ grep -Ff output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_
 
 grep -Ff ../019__RNAseq_ESC_V1/output/IsoformSwitchAnalyzeR_kallisto/significant_isoforms_dIF01qval05__KO_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_IsoformSwitchAnalyzeR_kallisto_significant_isoforms_dIF01qval05__KO.gtf
 grep -Ff ../019__RNAseq_ESC_V1/output/IsoformSwitchAnalyzeR_kallisto/significant_isoforms_dIF01qval05__OEKO_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_IsoformSwitchAnalyzeR_kallisto_significant_isoforms_dIF01qval05__OEKO.gtf
+
+## FITLER gencode.v47.annotation.gtf
+
+
+grep -Ff output/ChIPseeker/annotation_ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot_promoterAnd5.gtf
+grep -Ff output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX_annot_promoterAnd5.gtf
+grep -Ff output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX_annot_promoterAnd5.gtf
+
 
 
 
@@ -5297,7 +5309,18 @@ sbatch scripts/matrix_GENETSSTES_250bp100bp-IsoformSwitchAnalyzeR_kallisto_signi
 
 
 
+# signal in consensus peaks H3K27me3 EZH2 EZH1 - Gencode.v47 no chrX
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX-WTKOOEKO-H3K27me3_thresh1.sh # 52179578 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX-WTKOOEKO-EZH2_thresh1.sh # 52179625 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX-WTKOOEKO-EZH1_thresh2.sh # 52179656 ok
 
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX-WTKOOEKO-H3K27me3_thresh1.sh # 52179674 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX-WTKOOEKO-EZH2_thresh1.sh # 52179701 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX-WTKOOEKO-EZH1_thresh2.sh # 52179712 ok
+
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX-WTKOOEKO-H3K27me3_thresh1.sh # 52179730 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX-WTKOOEKO-EZH2_thresh1.sh # 52179745 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX-WTKOOEKO-EZH1_thresh2.sh # 52179755 ok
 
 ```
 
