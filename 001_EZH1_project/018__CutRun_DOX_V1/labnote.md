@@ -6138,6 +6138,12 @@ sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3-noXchr_thresh1.sh # 52276153 ok
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH2-noXchr_thresh1.sh # 52276149 ok
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH1-noXchr_thresh2.sh # 52276150 ok
+### WT vs KO _ without --skipZero
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 52385362 xxx
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 5238566 xxx
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 52385528 xxx
+
+
 ### region with EZH2 changes
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3-noXchr_thresh1.sh # 52382214 ok
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH2-noXchr_thresh1.sh # 52382216 ok
@@ -6146,6 +6152,8 @@ sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_KO_vs_ESC_WT-q
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3-noXchr_thresh1.sh # 52382354 ok
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH2-noXchr_thresh1.sh # 52382357 ok
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH1-noXchr_thresh2.sh # 52382422 ok
+
+
 
 
 ```
@@ -6606,17 +6614,38 @@ sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp_n
 
 
 # signal in MACS2/DESEQ2 - no X chr backgroun clean thresh - Gencode.v47 
-sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1.sh #  xxx
-sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX-WTKOOEKO-EZH2_thresh1.sh # 52179625 ok
-sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX-WTKOOEKO-EZH1_thresh2.sh # 52179656 ok
+## GAIN LOST GENES
+### WT vs KO
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1.sh # 52384177 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH2_thresh1.sh # 52384200 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH1_thresh2.sh # 52384226 ok
+
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1.sh # 52384248 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH2_thresh1.sh # 52384527 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH1_thresh2.sh # 52384759 ok
+### WT vs OEKO
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-H3K27me3_thresh1.sh # 52384878 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-EZH2_thresh1.sh # 52384891 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-EZH1_thresh2.sh # 52384904 ok
+
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-H3K27me3_thresh1.sh # 52384913 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-EZH2_thresh1.sh # 52384928 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-EZH1_thresh2.sh # 52384947 ok
 
 
+
+
+
+### WT vs KO _ without --skipZero
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 52385335 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 52385336 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 52385338 ok
 
 
 
 ```
 
---> Changes of H3K27me3 is clear; but EZH2 does not clearly follow these changes.
+--> xxx
 
 
 
