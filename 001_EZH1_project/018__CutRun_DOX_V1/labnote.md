@@ -6033,8 +6033,10 @@ output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthre
 output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.bed
 output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.bed
 
-
-
+output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-EZH2.bed
+output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-EZH2.bed
+output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2.bed
+output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2.bed
 
 
 
@@ -6128,6 +6130,7 @@ sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH1poolqval23merge1
 
 
 ## DESEQ2/MACS2 - IP per IP - Gain/lost noXchr thresh
+### region with H3K27me3 changes
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3-noXchr_thresh1.sh # 52276922 ok
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH2-noXchr_thresh1.sh # 52277027 ok
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH1-noXchr_thresh2.sh # 52277234 ok
@@ -6135,6 +6138,16 @@ sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3-noXchr_thresh1.sh # 52276153 ok
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH2-noXchr_thresh1.sh # 52276149 ok
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH1-noXchr_thresh2.sh # 52276150 ok
+### region with EZH2 changes
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3-noXchr_thresh1.sh # 52382214 ok
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH2-noXchr_thresh1.sh # 52382216 ok
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH1-noXchr_thresh2.sh # 52382297 ok
+
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3-noXchr_thresh1.sh # 52382354 ok
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH2-noXchr_thresh1.sh # 52382357 ok
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH1-noXchr_thresh2.sh # 52382422 ok
+
+
 ```
 
 
@@ -6186,6 +6199,17 @@ output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_E
 output/ChIPseeker/annotation_ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot_promoterAnd5_geneSymbol.txt
 output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX_annot_promoterAnd5_geneSymbol.txt
 output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX_annot_promoterAnd5_geneSymbol.txt
+
+## MACS2/DESEQ2 H3K27me3 EZH2 diff binding - qval2.3 merge100bp no X chr thresh background clean
+output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.txt
+output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.txt
+output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.txt
+output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.txt
+
+output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-EZH2.txt
+output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-EZH2.txt
+output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2.txt
+output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2.txt
 
 
 
@@ -6278,6 +6302,25 @@ sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH
 
 
 
+sed 's/\r$//; s/.*/gene_name "&"/' output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.txt > output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.txt > output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.txt > output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.txt > output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3_as_gtf_geneSymbol.txt
+
+sed 's/\r$//; s/.*/gene_name "&"/' output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-EZH2.txt > output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-EZH2_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-EZH2.txt > output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-EZH2_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2.txt > output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2.txt > output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2_as_gtf_geneSymbol.txt
+
+
+
+
+
+
+
+
+
+
 ## Filter the gtf
 grep -Ff output/ChIPseeker/annotation_PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__GainLost_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__GainLost_annot_promoterAnd5.gtf
 
@@ -6352,6 +6395,22 @@ grep -Ff output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX_
 
 
 
+grep -Ff output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.gtf
+grep -Ff output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.gtf
+grep -Ff output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.gtf
+grep -Ff output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.gtf
+
+grep -Ff output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-EZH2_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-EZH2.gtf
+grep -Ff output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-EZH2_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-EZH2.gtf
+grep -Ff output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2.gtf
+grep -Ff output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2.gtf
+
+
+
+
+
+
+
 
 # DIFFREPS
 ## GAIN LOST GENES
@@ -6367,7 +6426,7 @@ meta/ENCFF159KBI_PSC_WTvsOEKO_EZH2_bin1000space100_gt_pval05_padj001_fc1_avg30__
 meta/ENCFF159KBI_PSC_WTvsOEKO_EZH2_bin1000space100_gt_pval05_padj001_fc1_avg30__Lost_annot_promoterAnd5.gtf
 
 
-# DESEQ2/MACS2
+# DESEQ2/MACS2 - with X chr no bakground clean
 ## GAIN LOST GENES
 ### WT vs KO
 meta/ENCFF159KBI_upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-H3K27me3.gtf
@@ -6379,6 +6438,26 @@ meta/ENCFF159KBI_upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEK
 meta/ENCFF159KBI_downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-H3K27me3.gtf
 meta/ENCFF159KBI_upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-EZH2.gtf
 meta/ENCFF159KBI_downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-EZH2.gtf
+
+
+# DESEQ2/MACS2 - without X chr background clean thresh GENCODE v47
+## GAIN LOST GENES
+### WT vs KO
+meta/gencode_upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.gtf
+meta/gencode_downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.gtf
+meta/gencode_upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-EZH2.gtf
+meta/gencode_downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-EZH2.gtf
+
+### WT vs OEKO
+meta/gencode_upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.gtf
+meta/gencode_downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.gtf
+meta/gencode_upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2.gtf
+meta/gencode_downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2.gtf
+
+
+
+
+
 
 
 
@@ -6520,6 +6599,20 @@ sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH2_qval23merge100bp_n
 sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX-WTKOOEKO-H3K27me3_thresh1.sh # 52179730 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX-WTKOOEKO-EZH2_thresh1.sh # 52179745 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX-WTKOOEKO-EZH1_thresh2.sh # 52179755 ok
+
+
+
+
+
+
+# signal in MACS2/DESEQ2 - no X chr backgroun clean thresh - Gencode.v47 
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1.sh #  xxx
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX-WTKOOEKO-EZH2_thresh1.sh # 52179625 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX-WTKOOEKO-EZH1_thresh2.sh # 52179656 ok
+
+
+
+
 
 ```
 
