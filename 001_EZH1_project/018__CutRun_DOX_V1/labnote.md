@@ -6127,6 +6127,18 @@ sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH1poolqval23merge1
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH1poolqval23merge100bp-WTKOOEKO-EZH2-noXchr_thresh1.sh # 52162255 ok
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH1poolqval23merge100bp-WTKOOEKO-EZH1-noXchr_thresh2.sh # 52162261 ok
 
+#### without --skipZero
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 52390896 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 52390909 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 52390925 ok
+
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH2poolqval23merge100bp-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 52391043 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH2poolqval23merge100bp-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 52391079 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH2poolqval23merge100bp-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 52391082 ok
+
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH1poolqval23merge100bp-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 52391086 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH1poolqval23merge100bp-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 52391090 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH1poolqval23merge100bp-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 52391114 ok
 
 
 ## DESEQ2/MACS2 - IP per IP - Gain/lost noXchr thresh
@@ -6138,10 +6150,15 @@ sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3-noXchr_thresh1.sh # 52276153 ok
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH2-noXchr_thresh1.sh # 52276149 ok
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH1-noXchr_thresh2.sh # 52276150 ok
-### WT vs KO _ without --skipZero
-sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 52385362 xxx
-sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 5238566 xxx
-sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 52385528 xxx
+#### without --skipZero
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 52385362 ok
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 5238566 ok
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 52385528 ok
+
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 52391517 ok
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 52391522 ok
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 52391526 ok
+
 
 
 ### region with EZH2 changes
@@ -6152,10 +6169,14 @@ sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_KO_vs_ESC_WT-q
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3-noXchr_thresh1.sh # 52382354 ok
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH2-noXchr_thresh1.sh # 52382357 ok
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH1-noXchr_thresh2.sh # 52382422 ok
+#### without --skipZero
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 52391540 ok
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 52391545 ok
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 52391559 ok
 
-
-
-
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 52391573 ok
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 52391580 ok
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 52391583 ok
 ```
 
 
@@ -6609,7 +6630,17 @@ sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp_n
 sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX-WTKOOEKO-EZH1_thresh2.sh # 52179755 ok
 
 
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 52392322 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 52392344 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 52392345 ok
 
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 52392354 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 52392360 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 52392361 ok
+
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 52392371 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 52392511 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 52392609 ok
 
 
 
@@ -6641,7 +6672,17 @@ sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_q
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 52385336 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 52385338 ok
 
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 52391805 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 52391844 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 52391855 ok
+### WT vs OEKO
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 52391870 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 52391881 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 52391883 ok
 
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 52391894 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 52391899 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 52391905 ok
 
 ```
 
