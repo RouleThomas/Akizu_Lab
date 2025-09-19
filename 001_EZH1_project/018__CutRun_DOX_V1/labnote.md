@@ -2159,7 +2159,6 @@ diffReps.pl -tr output/bigwig_Ferguson/ESC_KO_H3K27me3_R1_noXchr_unique_norm99_i
 ### Explore diffreps results in R  - H3K27me3
 
 
-XXXY HERE!!!
 
 ```bash
 conda activate deseq2
@@ -2172,19 +2171,19 @@ library("GenomicRanges")
 set.seed(42)
 
 # import files
-bin5000space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.bed-bin5000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+bin5000space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.noXchr_thresh1.bed-bin5000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
   as_tibble() %>%
   dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
-bin2000space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.bed-bin2000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+bin2000space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.noXchr_thresh1.bed-bin2000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
   as_tibble() %>%
   dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
-bin1000space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.bed-bin1000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+bin1000space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.noXchr_thresh1.bed-bin1000space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
   as_tibble() %>%
   dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
-bin500space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.bed-bin500space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+bin500space100_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.noXchr_thresh1.bed-bin500space100_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
   as_tibble() %>%
   dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
-bin250space50_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.bed-bin250space50_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
+bin250space50_gt_pval05 <- read.delim("output/diffreps/ESC_WTvsKO_H3K27me3_unique_norm99_initialBigwig.noXchr_thresh1.bed-bin250space50_gt_pval05-diff.nb.txt", sep = "\t", skip = 32, header = TRUE) %>%
   as_tibble() %>%
   dplyr::select(Chrom, Start, End, Length, Control.avg, Treatment.avg, log2FC, pval, padj) 
 
@@ -2224,17 +2223,19 @@ combined_data <- bind_rows(lapply(file_names, read_and_process))
 
 
 combined_data_counts <- combined_data %>% 
-  filter(padj < 0.001, abs(log2FC) > 1, Control.avg > 100 | Treatment.avg > 100) %>%        # keep only |log2FC| > 1
+  filter(padj < 0.001, abs(log2FC) > 1, Control.avg > 5 | Treatment.avg > 5) %>%        # keep only |log2FC| > 1
   mutate(direction = if_else(log2FC < 0, "Negative", "Positive")) %>%
   group_by(dataset, direction) %>%
   summarise(count = n(), .groups = "drop")
 
 
 
-    
+combined_data %>% 
+  filter(padj<0.001, abs(log2FC) > 1, Control.avg > 100 | Treatment.avg > 100) %>% 
+  dplyr::select(Chrom, Start, End, Control.avg, Treatment.avg)
   
 ## plot
-pdf("output/diffreps/hist-WTvsKO-log2FC_distribution-padj001_gt_pval05_fc1_avg100_initialBigwig.pdf", width=8, height=2)
+pdf("output/diffreps/hist-WTvsKO-log2FC_distribution-padj001_gt_pval05_fc100_avg5_initialBigwig-noXchr_thresh1.pdf", width=8, height=2)
 combined_data %>% 
   filter(padj<0.001, abs(log2FC) > 1, Control.avg > 100 | Treatment.avg > 100) %>%   ## !!!!!!!!!! CHANGE PVAL HERE !!!!!!!!!!!!!!!!!!!!!!
 ggplot(., aes(x = log2FC)) +
@@ -2257,26 +2258,27 @@ dev.off()
 
 
 ## Save output
-write.table(combined_data, "output/diffreps/combined_data-WTvsKO-initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(combined_data, "output/diffreps/combined_data-WTvsKO-initialBigwig-noXchr_thresh1.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 
 write.table(combined_data %>% 
   filter(
     padj < 0.001, 
-    (log2FC > 1 | log2FC < -1), 
+    (log2FC > 1), 
     dataset == "bin1000space100_gt_pval05",
     Control.avg > 100 | Treatment.avg > 100   # <- NEW FILTER
-  ), "output/diffreps/combined_data-bin1000space100_gt_pval05_padj001_fc1_avg100-WTvsKO-initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
-
+  ), "output/diffreps/combined_data-WTvsKO-initialBigwig-noXchr_thresh1-padj001fc1avg100POS.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 write.table(combined_data %>% 
   filter(
     padj < 0.001, 
-    (log2FC > 1 | log2FC < -1), 
-    dataset == "bin2000space100_gt_pval05",
+    (log2FC < -1), 
+    dataset == "bin1000space100_gt_pval05",
     Control.avg > 100 | Treatment.avg > 100   # <- NEW FILTER
-  ), "output/diffreps/combined_data-bin2000space100_gt_pval05_padj001_fc1_avg100-WTvsKO-initialBigwig.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+  ), "output/diffreps/combined_data-WTvsKO-initialBigwig-noXchr_thresh1-padj001fc1avg100NEG.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 
 ```
 
+--> DIFFREPS identify far less diff bound regions than MACS2/DESEQ2; also the regions looks not  super clear/clean... Very noisy! depsite filtering for high signal..
+  --> Overlap with MACS2/DIFFREPS is good! meaning MACS2/DESEQ2 is much better (nearly all region identify by DIFFREPS is also detected with MACS2/DESEQ2)
 
 
 

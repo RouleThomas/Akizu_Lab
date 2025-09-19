@@ -75,7 +75,7 @@ Renamed manually as only 8 samples
 sbatch scripts/fastp.sh # 50212025 ok
 ```
 
-## mapping fastp trim
+# STAR mapping fastp trim
 
 ```bash
 sbatch --dependency=afterany:50212025 scripts/STAR_mapping_fastp.sh # 50212217 ok
@@ -105,6 +105,169 @@ sbatch --dependency=afterany:51676961 scripts/STAR_noXchr_TPM_bw.sh # 51676963 o
 -->  ok
 
 --> X chr removed using `samtools view`
+
+
+
+
+
+# Count with featureCounts
+
+
+Let's **use the version that does NOT have X chr**: `*_AlignednoXchr.sortedByCoord.out.bam`
+
+
+
+```bash
+conda activate featurecounts
+
+# slight test
+## -s for stranded
+featureCounts -p -C -O -M --fraction -s 2 \
+	-a /scr1/users/roulet/Akizu_Lab/Master/meta/gencode.v47.annotation.gtf \
+	-o output/featurecounts/ESC_WT_R1.txt output/STAR/fastp/ESC_WT_R1_AlignednoXchr.sortedByCoord.out.bam
+
+
+
+# all samples:
+sbatch scripts/featurecounts_AlignednoXchr.sh # 52397154 ok
+
+
+
+```
+test with `ESC_WT_R1`
+--> Around 83% of succesfully assigned alignments with `-p -C -O -M --fraction -s 2` parameters...
+  --> all good!!
+
+--> All samples ~90% uniq aligned reads
+
+
+## Calculate TPM and RPKM
+
+
+Use custom R script `RPKM_TPM_featurecounts.R` as follow:
+```bash
+conda activate deseq2
+# Rscript scripts/RPKM_TPM_featurecounts.R INPUT OUTPUT_PREFIX
+sbatch scripts/featurecounts_TPM.sh # 52397893
+# mv all output to output/tpm or rpkm folder
+mv output/featurecounts/*tpm* output/tpm/
+mv output/featurecounts/*rpkm* output/rpkm/
+```
+
+--> All good. 
+
+
+
+
+
+# Shiny app with STAR gencode v47 version
+
+
+generate the `tpm_all_sample.txt` file and then go into `001_EZH1*/001__RNAseq` to create shiny app V2 including these
+
+```R
+library("tidyverse")
+library("biomaRt")
+
+
+library("rtracklayer")
+
+
+# import GTF for gene name
+gtf <- import("../../Master/meta/gencode.v47.annotation.gtf")
+## Extract geneId and geneSymbol
+gene_table <- mcols(gtf) %>%
+  as.data.frame() %>%
+  dplyr::select(gene_id, gene_name) %>%
+  distinct() %>%
+  as_tibble()
+## Rename columns
+colnames(gene_table) <- c("Geneid", "geneSymbol")
+
+
+# Display some genes in TPM: 
+# ---> The code below is not perfect; issue at the geneSymbol conversin; to troubleshoot later; but it work
+#### Generate TPM for ALL samples
+#### collect all samples ID
+samples <- c( "ESC_WT_R1", "ESC_KO_R1", "ESC_OEKO_R1", "ESC_WT_R2", "ESC_KO_R2", "ESC_OEKO_R2","ESC_WT_R3", "ESC_KO_R3","ESC_OEKO_R3")
+
+## Make a loop for importing all tpm data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/tpm/", sample, "_tpm.txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>%
+    dplyr::select(Geneid, starts_with("output.STAR.")) %>%
+    dplyr::rename(!!sample := starts_with("output.STAR."))
+}
+
+## Merge all dataframe into a single one
+tpm_all_sample <- purrr::reduce(sample_data, full_join, by = "Geneid")
+write.csv(tpm_all_sample, file="output/tpm/tpm_all_sample_001019.txt")
+### If need to import: tpm_all_sample <- read_csv("output/tpm/tpm_all_sample_001019.txt") %>% dplyr::select(-"...1") #To import
+
+
+
+## add geneSymbol
+
+
+
+
+
+## Convert data from wide to long keep only geneSymbol
+long_data <- tpm_all_sample %>% left_join(gene_table) %>% 
+  dplyr::select(-Geneid) %>%
+  drop_na() %>%
+  tidyr::pivot_longer(-geneSymbol, names_to = "condition", values_to = "TPM") %>% 
+  tidyr::separate(condition, into = c("Tissue", "Genotype", "Replicate"), sep = "_")
+
+long_data_log2tpm = long_data %>%
+  mutate(log2tpm = log2(TPM + 1))
+## Save
+write.table(long_data_log2tpm, file = c("output/tpm/long_data_log2tpm_001019.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+
+
+
+
+# show EZH1 with stat
+library("ggpubr")
+
+
+gene_of_interest <- "EZH1"   # change if needed
+
+df <- long_data_log2tpm %>%
+  filter(geneSymbol == gene_of_interest,
+         Genotype %in% c("WT","KO","OEKO")) %>%
+  mutate(Genotype = factor(Genotype, levels = c("WT","KO","OEKO")))
+
+my_comparisons <- list(c("WT","KO"), c("WT","OEKO"), c("KO","OEKO"))
+y_top <- max(df$log2tpm, na.rm = TRUE)
+
+pdf("output/tpm/boxplot_log2tpm_WT_KO_OEKO-EZH1.pdf", width = 3, height = 3.5)
+ggboxplot(
+  df, x = "Genotype", y = "log2tpm",
+  fill = "Genotype", width = 0.65, outlier.shape = NA,
+  add = "jitter", add.params = list(size = 2.8, alpha = 0.85)
+) +
+  scale_fill_manual(values = c(WT = "black", KO = "red", OEKO = "blue")) +
+  labs(title = paste0(gene_of_interest, " expression"),
+       x = NULL, y = "log2(TPM)") +
+  theme_bw(base_size = 14) +
+  theme(legend.position = "none") +
+  # Pairwise comparisons with BH correction
+  stat_compare_means(comparisons = my_comparisons,
+                     method = "t.test", p.adjust.method = "BH",
+                     label = "p.signif", hide.ns = TRUE)
+dev.off()
+```
+
+
+--> Next here: `001_EZH1*/001__RNAseq` (`## Shiny app V3; including Ciceri RNAseq neuron diff dataset + Akoto 001/015 RNAseq`)
+
+
+
+
+
 
 
 
@@ -191,6 +354,387 @@ plotCorrelation \
 --> **STAR plot PCA cluster the same as Kallisto one**; meaning the bad clustering is not due to the new Kallisto method used.
 
 --> With or without X chr does not change things a lot at the RNA level; PCA looks very similar
+
+
+
+
+
+# DEGs with deseq2 (featurecounts)
+
+**IMPORTANT NOTE: Here it is advisable to REMOVE all genes from chromosome X and Y BEFORE doing the DEGs analysis (X chromosome re-activation occurs in some samples, notably these with more cell passage; in our case, the HET and KO)**
+--> It is good to do this on the count matrix see [here](https://support.bioconductor.org/p/119932/)
+### 'one-by-one' comparison
+Comparison WT vs mutant:
+- ESc KO vs WT
+- ESC OEKO vs WT
+
+
+
+### PSC KO vs WT
+
+```bash
+conda activate deseq2
+```
+Go in R
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("EnhancedVolcano")
+library("apeglm")
+library("org.Hs.eg.db")
+library("biomaRt")
+
+library("RColorBrewer")
+library("pheatmap")
+library("AnnotationDbi")
+library("rtracklayer")
+
+
+# import GTF for gene name
+gtf <- import("../../Master/meta/gencode.v47.annotation.gtf")
+## Extract geneId and geneSymbol
+gene_table <- mcols(gtf) %>%
+  as.data.frame() %>%
+  dplyr::select(gene_id, gene_name) %>%
+  distinct() %>%
+  as_tibble()
+## Rename columns
+colnames(gene_table) <- c("geneId", "geneSymbol")
+
+
+
+
+
+# import featurecounts output and keep only gene ID and counts
+## collect all samples ID
+samples <- c("ESC_WT_R1", "ESC_WT_R2" ,"ESC_WT_R3" ,"ESC_KO_R1" ,"ESC_KO_R2", "ESC_KO_R3")
+
+## Make a loop for importing all featurecounts data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/featurecounts/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    dplyr::select(Geneid, starts_with("output/STAR/")) %>%
+    rename(!!sample := starts_with("output/STAR/"))
+}
+
+# Merge all dataframe into a single one
+counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+# Remove X and Y chromosome genes
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
+                   filters = "chromosome_name",
+                   values = c("X", "Y"),
+                   mart = ensembl)
+counts_all$stripped_geneid <- sub("\\..*", "", counts_all$Geneid)
+counts_all_filtered <- counts_all %>%
+  filter(!stripped_geneid %in% genes_X_Y$ensembl_gene_id)
+counts_all_filtered$stripped_geneid <- NULL
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pull(counts_all_filtered, Geneid)) 
+
+## Create colData file that describe all our samples
+### Not including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  dplyr::select(-replicate) %>%
+  bind_cols(data.frame(samples))
+### Including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  bind_cols(data.frame(samples))
+
+## transform df into matrix
+coldata = make_matrix(dplyr::select(coldata_raw, -samples), pull(coldata_raw, samples))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = round(counts_all_matrix),
+                              colData = coldata,
+                              design= ~ genotype)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 5
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm")
+
+
+# Add geneSymbol
+res_tibble = as_tibble(rownames_to_column(as.data.frame(res), var = "geneId")) %>%
+  left_join(gene_table)
+
+
+# Identify DEGs and count them
+
+## padj 0.05 FC 0.58 ##################################
+res_df <- res_tibble %>% dplyr::select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE))
+n_upregulated <- sum(res_df$log2FoldChange > 0.58 & res_df$padj == TRUE, na.rm = TRUE)
+n_downregulated <- sum(res_df$log2FoldChange < -0.58 & res_df$padj == TRUE, na.rm = TRUE)
+
+
+
+## Plot-volcano
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, 'Sky Blue',
+    ifelse(res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.58)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.58)'
+
+pdf("output/deseq2/plotVolcano_res_q05fc058_ESC_KO_vs_ESC_WT_STAR.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'KO vs WT, ESC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.58,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) ) +
+  annotate("text", x = 3, y = 140, 
+           label = paste(n_upregulated), hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140, 
+           label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+  
+
+# Save as gene list for GO analysis:
+### Complete table with geneSymbol
+write.table(res_tibble, file = "output/deseq2/res_ESC_KO_vs_ESC_WT-STAR.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, ]
+#### Save
+write.table(upregulated$geneSymbol, file = "output/deseq2/upregulated_q05fc058_ESC_KO_vs_ESC_WT-STAR.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/deseq2/downregulated_q05fc058_ESC_KO_vs_ESC_WT-STAR.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+### ESC OEKO vs WT
+
+```bash
+conda activate deseq2
+```
+Go in R
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("EnhancedVolcano")
+library("apeglm")
+library("org.Hs.eg.db")
+library("biomaRt")
+
+library("RColorBrewer")
+library("pheatmap")
+library("AnnotationDbi")
+library("rtracklayer")
+
+
+# import GTF for gene name
+gtf <- import("../../Master/meta/gencode.v47.annotation.gtf")
+## Extract geneId and geneSymbol
+gene_table <- mcols(gtf) %>%
+  as.data.frame() %>%
+  dplyr::select(gene_id, gene_name) %>%
+  distinct() %>%
+  as_tibble()
+## Rename columns
+colnames(gene_table) <- c("geneId", "geneSymbol")
+
+
+
+
+
+# import featurecounts output and keep only gene ID and counts
+## collect all samples ID
+samples <- c("ESC_WT_R1", "ESC_WT_R2" ,"ESC_WT_R3" ,"ESC_OEKO_R1" ,"ESC_OEKO_R2", "ESC_OEKO_R3")
+
+## Make a loop for importing all featurecounts data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/featurecounts/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    dplyr::select(Geneid, starts_with("output/STAR/")) %>%
+    rename(!!sample := starts_with("output/STAR/"))
+}
+
+# Merge all dataframe into a single one
+counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+# Remove X and Y chromosome genes
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
+                   filters = "chromosome_name",
+                   values = c("X", "Y"),
+                   mart = ensembl)
+counts_all$stripped_geneid <- sub("\\..*", "", counts_all$Geneid)
+counts_all_filtered <- counts_all %>%
+  filter(!stripped_geneid %in% genes_X_Y$ensembl_gene_id)
+counts_all_filtered$stripped_geneid <- NULL
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pull(counts_all_filtered, Geneid)) 
+
+## Create colData file that describe all our samples
+### Not including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  dplyr::select(-replicate) %>%
+  bind_cols(data.frame(samples))
+### Including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  bind_cols(data.frame(samples))
+
+## transform df into matrix
+coldata = make_matrix(dplyr::select(coldata_raw, -samples), pull(coldata_raw, samples))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = round(counts_all_matrix),
+                              colData = coldata,
+                              design= ~ genotype)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 5
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+res <- lfcShrink(dds, coef="genotype_OEKO_vs_WT", type="apeglm")
+
+
+# Add geneSymbol
+res_tibble = as_tibble(rownames_to_column(as.data.frame(res), var = "geneId")) %>%
+  left_join(gene_table)
+
+
+# Identify DEGs and count them
+
+## padj 0.05 FC 0.58 ##################################
+res_df <- res_tibble %>% dplyr::select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE))
+n_upregulated <- sum(res_df$log2FoldChange > 0.58 & res_df$padj == TRUE, na.rm = TRUE)
+n_downregulated <- sum(res_df$log2FoldChange < -0.58 & res_df$padj == TRUE, na.rm = TRUE)
+
+
+
+## Plot-volcano
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, 'Sky Blue',
+    ifelse(res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.58)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.58)'
+
+pdf("output/deseq2/plotVolcano_res_q05fc058_ESC_OEKO_vs_ESC_WT_STAR.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'OEKO vs WT, ESC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.58,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) ) +
+  annotate("text", x = 3, y = 140, 
+           label = paste(n_upregulated), hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140, 
+           label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+  
+
+# Save as gene list for GO analysis:
+### Complete table with geneSymbol
+write.table(res_tibble, file = "output/deseq2/res_ESC_OEKO_vs_ESC_WT-STAR.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, ]
+#### Save
+write.table(upregulated$geneSymbol, file = "output/deseq2/upregulated_q05fc058_ESC_OEKO_vs_ESC_WT-STAR.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/deseq2/downregulated_q05fc058_ESC_OEKO_vs_ESC_WT-STAR.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+```
+
 
 
 
