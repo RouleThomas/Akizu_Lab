@@ -5877,6 +5877,160 @@ write.table(ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX_annot_promoterAnd5_geneSym
 
 
 
+### On WT peaks macs2 qval2.3 - H3K27me3 EZH2 EZH1 - no chrX - GENCODEv47
+
+Let's use GENCODE v47 annotation to be in agreement with the RNAseq annotation! Let's create our own txdb as the  `library("TxDb.Hsapiens.UCSC.hg38.knownGene")` is GENCODE v41. 
+--> Follow guideline [here](https://www.bioconductor.org/packages/devel/bioc/vignettes/txdbmaker/inst/doc/txdbmaker.html) to create txdb from GTF
+
+So `library(GenomicFeatures)` already include `makeTxDbFromGFF()` command, so let's simply use deseq2 conda env to create the GENCODEv47 txdb.
+
+
+
+```bash
+conda activate deseq2
+```
+Then in R
+
+```R
+# load package
+library("GenomicFeatures")
+
+
+# Create txdb from GTF
+txdb <- makeTxDbFromGFF("../../Master/meta/gencode.v47.annotation.gtf", format = "gtf")
+
+saveDb(txdb, "../../Master/meta/gencode.v47.annotation.gtf.txdb")
+
+# We can use loadDb() to use the TxDb database
+txdb <- loadDb("../../Master/meta/gencode.v47.annotation.gtf.txdb")
+```
+
+
+
+```bash
+# files - pool peaks qval2.3 H3K27me3, EZH2, EZH1 qval23 
+output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_H3K27me3_noXchr_pool_peaks.broadPeak
+output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_EZH2_noXchr_pool_peaks.broadPeak
+output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_EZH1_noXchr_pool_peaks.broadPeak
+
+conda activate deseq2
+```
+
+
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- loadDb("../../Master/meta/gencode.v47.annotation.gtf.txdb") # Human version47 as RNAseq!! 
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+library("rtracklayer")
+
+# import GTF for gene name
+gtf <- import("../../Master/meta/gencode.v47.annotation.gtf")
+## Extract geneId and geneSymbol
+gene_table <- mcols(gtf) %>%
+  as.data.frame() %>%
+  dplyr::select(gene_id, gene_name) %>%
+  distinct() %>%
+  as_tibble()
+## Rename columns
+colnames(gene_table) <- c("geneId", "geneSymbol")
+
+
+
+# Import consensus peaks
+ESC_WT_H3K27me3_qval23nochrX <- read.delim("output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_H3K27me3_noXchr_pool_peaks.broadPeak", sep = "\t", header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename("chr"= "V1", "start" = "V2", "end" = "V3")
+ESC_WT_EZH2_qval23nochrX <- read.delim("output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_EZH2_noXchr_pool_peaks.broadPeak", sep = "\t", header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename("chr"= "V1", "start" = "V2", "end" = "V3")
+ESC_WT_EZH1_qval23nochrX <- read.delim("output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_EZH1_noXchr_pool_peaks.broadPeak", sep = "\t", header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename("chr"= "V1", "start" = "V2", "end" = "V3")
+
+
+
+# Tidy peaks 
+ESC_WT_H3K27me3_qval23nochrX_gr = makeGRangesFromDataFrame(ESC_WT_H3K27me3_qval23nochrX,keep.extra.columns=TRUE)
+ESC_WT_EZH2_qval23nochrX_gr = makeGRangesFromDataFrame(ESC_WT_EZH2_qval23nochrX,keep.extra.columns=TRUE)
+ESC_WT_EZH1_qval23nochrX_gr = makeGRangesFromDataFrame(ESC_WT_EZH1_qval23nochrX,keep.extra.columns=TRUE)
+
+gr_list <- list(ESC_WT_H3K27me3_qval23nochrX=ESC_WT_H3K27me3_qval23nochrX_gr,ESC_WT_EZH2_qval23nochrX=ESC_WT_EZH2_qval23nochrX_gr, ESC_WT_EZH1_qval23nochrX=ESC_WT_EZH1_qval23nochrX_gr
+)
+
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## plots
+pdf("output/ChIPseeker/plotAnnoBar_ESC_WT_H3K27me3EZH2EZH1_qval23nochrX.pdf", width = 16, height = 3)
+plotAnnoBar(peakAnnoList)
+dev.off()
+pdf("output/ChIPseeker/plotDistToTSS_ESC_WT_H3K27me3EZH2EZH1_qval23nochrX.pdf", width = 16, height = 3)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
+
+## Get annotation data frame AND Add geneSymbol from GTF
+ESC_WT_H3K27me3_qval23nochrX_annot <- as.data.frame(peakAnnoList[["ESC_WT_H3K27me3_qval23nochrX"]]@anno) %>% as_tibble()  %>% left_join(gene_table)
+ESC_WT_EZH2_qval23nochrX_annot <- as.data.frame(peakAnnoList[["ESC_WT_EZH2_qval23nochrX"]]@anno) %>% as_tibble()  %>% left_join(gene_table)
+ESC_WT_EZH1_qval23nochrX_annot <- as.data.frame(peakAnnoList[["ESC_WT_EZH1_qval23nochrX"]]@anno) %>% as_tibble()  %>% left_join(gene_table)
+
+
+
+
+## Save output table
+write.table(ESC_WT_H3K27me3_qval23nochrX_annot, file="output/ChIPseeker/annotation_ESC_WT_H3K27me3_qval23nochrX_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(ESC_WT_EZH2_qval23nochrX_annot, file="output/ChIPseeker/annotation_ESC_WT_EZH2_qval23nochrX_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(ESC_WT_EZH1_qval23nochrX_annot, file="output/ChIPseeker/annotation_ESC_WT_EZH1_qval23nochrX_annot.txt", sep="\t", quote=F, row.names=F)  
+
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+ESC_WT_H3K27me3_qval23nochrX_annot_promoterAnd5 = tibble(ESC_WT_H3K27me3_qval23nochrX_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+ESC_WT_EZH2_qval23nochrX_annot_promoterAnd5 = tibble(ESC_WT_EZH2_qval23nochrX_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+ESC_WT_EZH1_qval23nochrX_annot_promoterAnd5 = tibble(ESC_WT_EZH1_qval23nochrX_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+
+### Save output gene lists
+ESC_WT_H3K27me3_qval23nochrX_annot_promoterAnd5_geneSymbol = ESC_WT_H3K27me3_qval23nochrX_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+ESC_WT_EZH2_qval23nochrX_annot_promoterAnd5_geneSymbol = ESC_WT_EZH2_qval23nochrX_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+ESC_WT_EZH1_qval23nochrX_annot_promoterAnd5_geneSymbol = ESC_WT_EZH1_qval23nochrX_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+write.table(ESC_WT_H3K27me3_qval23nochrX_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_ESC_WT_H3K27me3_qval23nochrX_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(ESC_WT_EZH2_qval23nochrX_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_ESC_WT_EZH2_qval23nochrX_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(ESC_WT_EZH1_qval23nochrX_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_ESC_WT_EZH1_qval23nochrX_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+
+```
+
+
+
 
 
 
@@ -6179,6 +6333,23 @@ sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_KO_vs_ESC_WT-q
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 52391573 ok
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 52391580 ok
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 52391583 ok
+
+
+
+# WT peaks
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_H3K27me3poolqval23-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 52849929 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_H3K27me3poolqval23-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 5285059 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_H3K27me3poolqval23-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # interactive
+
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_EZH2poolqval23-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 52850236 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_EZH2poolqval23-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 52850326 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_EZH2poolqval23-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 52850547 ok
+
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_EZH1poolqval23-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 52850417 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_EZH1poolqval23-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 52850436 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_EZH1poolqval23-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 52850555 ok
+
+
 ```
 
 
@@ -6242,6 +6413,11 @@ output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-
 output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2.txt
 output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2.txt
 
+
+## MACS2 peaks in WT qval2.3 no chrX gencode v47
+output/ChIPseeker/annotation_ESC_WT_H3K27me3_qval23nochrX_annot_promoterAnd5_geneSymbol.txt
+output/ChIPseeker/annotation_ESC_WT_EZH2_qval23nochrX_annot_promoterAnd5_geneSymbol.txt
+output/ChIPseeker/annotation_ESC_WT_EZH1_qval23nochrX_annot_promoterAnd5_geneSymbol.txt
 
 
 
@@ -6345,6 +6521,9 @@ sed 's/\r$//; s/.*/gene_name "&"/' output/edgeR/downregulated_q05fc058-WTKOOEKO_
 
 
 
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_ESC_WT_H3K27me3_qval23nochrX_annot_promoterAnd5_geneSymbol.txt >  output/ChIPseeker/annotation_ESC_WT_H3K27me3_qval23nochrX_annot_promoterAnd5_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_ESC_WT_EZH2_qval23nochrX_annot_promoterAnd5_geneSymbol.txt >  output/ChIPseeker/annotation_ESC_WT_EZH2_qval23nochrX_annot_promoterAnd5_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_ESC_WT_EZH1_qval23nochrX_annot_promoterAnd5_geneSymbol.txt >  output/ChIPseeker/annotation_ESC_WT_EZH1_qval23nochrX_annot_promoterAnd5_as_gtf_geneSymbol.txt
 
 
 
@@ -6438,8 +6617,9 @@ grep -Ff output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXch
 
 
 
-
-
+grep -Ff output/ChIPseeker/annotation_ESC_WT_H3K27me3_qval23nochrX_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_ESC_WT_H3K27me3_qval23nochrX_annot_promoterAnd5.gtf
+grep -Ff output/ChIPseeker/annotation_ESC_WT_EZH2_qval23nochrX_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_ESC_WT_EZH2_qval23nochrX_annot_promoterAnd5.gtf
+grep -Ff output/ChIPseeker/annotation_ESC_WT_EZH1_qval23nochrX_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_ESC_WT_EZH1_qval23nochrX_annot_promoterAnd5.gtf
 
 
 
@@ -6487,8 +6667,10 @@ meta/gencode_downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-
 
 
 
-
-
+## MACS2 WT peaks without X chr with GENCODE v47
+meta/gencode_ESC_WT_H3K27me3_qval23nochrX_annot_promoterAnd5.gtf
+meta/gencode_ESC_WT_EZH2_qval23nochrX_annot_promoterAnd5.gtf
+meta/gencode_ESC_WT_EZH1_qval23nochrX_annot_promoterAnd5.gtf
 
 
 
@@ -6686,6 +6868,23 @@ sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval2
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 52391899 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 52391905 ok
 
+
+
+
+
+
+# WT peaks without  --skipZero
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_WT_H3K27me3_qval23nochrX_annot_promoterAnd5-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 52860831 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_WT_H3K27me3_qval23nochrX_annot_promoterAnd5-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 52861003 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_WT_H3K27me3_qval23nochrX_annot_promoterAnd5-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 52861233 ok
+
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_WT_EZH2_qval23nochrX_annot_promoterAnd5-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 52861412 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_WT_EZH2_qval23nochrX_annot_promoterAnd5-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 52861442 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_WT_EZH2_qval23nochrX_annot_promoterAnd5-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 52861621 ok
+
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_WT_EZH1_qval23nochrX_annot_promoterAnd5-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 52861652 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_WT_EZH1_qval23nochrX_annot_promoterAnd5-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 52861821 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_WT_EZH1_qval23nochrX_annot_promoterAnd5-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 52861863 ok
 ```
 
 --> xxx
