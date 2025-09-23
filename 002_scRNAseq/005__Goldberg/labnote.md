@@ -56382,7 +56382,6 @@ cellchat <- readRDS("output/CellChat/p35_CX_Kcnc1-version2dim35kparam15res065-de
 ###### CellChat genotype comparison - only neurons - V1 naming - Macro group v1 for cell types 
 
 
-XXXY HERE !!
 
 Let's follow [this](https://rdrr.io/github/sqjin/CellChat/f/tutorial/Comparison_analysis_of_multiple_datasets.Rmd) tutorial for comparing condition.
 --> Required comparable cell type composition (which is our case)
@@ -56555,14 +56554,13 @@ pos.dataset = "Kcnc1_p35"
 features.name = pos.dataset
 cellchat <- identifyOverExpressedGenes(cellchat, group.dataset = "datasets", pos.dataset = pos.dataset, features.name = features.name, only.pos = FALSE, thresh.pc = 0.1, thresh.fc = 0.1, thresh.p = 1)
 net <- netMappingDEG(cellchat, features.name = features.name)
-net.up <- subsetCommunication(cellchat, net = net, datasets = "Kcnc1_p35",ligand.logFC = 0.2, receptor.logFC = 0.2) #  --> YES SIGNIF
-gene.up <- extractGeneSubsetFromPair(net.up, cellchat) # --> NOT SIGNIF
+#net.up <- subsetCommunication(cellchat, net = net, datasets = "Kcnc1_p35",ligand.logFC = 0.2, receptor.logFC = 0.2) #  --> YES SIGNIF
+#gene.up <- extractGeneSubsetFromPair(net.up, cellchat) # --> NOT SIGNIF
 #net.down <- subsetCommunication(cellchat, net = net, datasets = "WT_p35",ligand.logFC = -0.2, receptor.logFC = -0.2)  # --> NOT SIGNIF
 #gene.down <- extractGeneSubsetFromPair(net.down, cellchat)
-#--> only up SIGNIFICANT AT 0.2 (Default value used for CB!); 
+#--> No significant DEGs (threshold 0.2) this time!
 
-
-
+XXXY BELOW not mod
 
 
 # check whether Glutamate or GABA
@@ -56574,7 +56572,7 @@ net.up[, "interaction_name", drop = F]
 #--> Too much cells and too complex; we know glutamate is up; lets make big group of all L2/L3 layers together etc... And from that represent communication maps...
 --> LETS MAKE MACRO v1
 
-XXXY BELOW not mod
+
 
 
 
@@ -58100,7 +58098,6 @@ write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version
 
 ```
 
-XXXY HERE !!!
 
 
 ###### Integration
@@ -58133,82 +58130,84 @@ set.seed(42)
 
 
 # import samples
-WT_p14_CB_Rep1 <- readRDS(file = "output/seurat/WT_p14_CB_Rep1-PurkinjeGolgiAnnotated-QCPass.rds")
-WT_p14_CB_Rep2 <- readRDS(file = "output/seurat/WT_p14_CB_Rep2-PurkinjeGolgiAnnotated-QCPass.rds")
-WT_p14_CB_Rep3 <- readRDS(file = "output/seurat/WT_p14_CB_Rep3-PurkinjeGolgiAnnotated-QCPass.rds")
-Kcnc1_p14_CB_Rep1 <- readRDS(file = "output/seurat/Kcnc1_p14_CB_Rep1-PurkinjeGolgiAnnotated-QCPass.rds")
-Kcnc1_p14_CB_Rep2 <- readRDS(file = "output/seurat/Kcnc1_p14_CB_Rep2-PurkinjeGolgiAnnotated-QCPass.rds")
-Kcnc1_p14_CB_Rep3 <- readRDS(file = "output/seurat/Kcnc1_p14_CB_Rep3-PurkinjeGolgiAnnotated-QCPass.rds")
+WT_p180_CX_Rep1 <- readRDS(file = "output/seurat/WT_p180_CX_Rep1-version2-QCPass.rds")
+WT_p180_CX_Rep2 <- readRDS(file = "output/seurat/WT_p180_CX_Rep2-version2-QCPass.rds")
+WT_p180_CX_Rep3 <- readRDS(file = "output/seurat/WT_p180_CX_Rep3-version2-QCPass.rds")
+Kcnc1_p180_CX_Rep1 <- readRDS(file = "output/seurat/Kcnc1_p180_CX_Rep1-version2-QCPass.rds")
+Kcnc1_p180_CX_Rep2 <- readRDS(file = "output/seurat/Kcnc1_p180_CX_Rep2-version2-QCPass.rds")
+Kcnc1_p180_CX_Rep3 <- readRDS(file = "output/seurat/Kcnc1_p180_CX_Rep3-version2-QCPass.rds")
 
-DefaultAssay(WT_p14_CB_Rep1) <- "RNA"
-DefaultAssay(WT_p14_CB_Rep2) <- "RNA"
-DefaultAssay(WT_p14_CB_Rep3) <- "RNA"
-DefaultAssay(Kcnc1_p14_CB_Rep1) <- "RNA"
-DefaultAssay(Kcnc1_p14_CB_Rep2) <- "RNA"
-DefaultAssay(Kcnc1_p14_CB_Rep3) <- "RNA"
+DefaultAssay(WT_p180_CX_Rep1) <- "RNA"
+DefaultAssay(WT_p180_CX_Rep2) <- "RNA"
+DefaultAssay(WT_p180_CX_Rep3) <- "RNA"
+DefaultAssay(Kcnc1_p180_CX_Rep1) <- "RNA"
+DefaultAssay(Kcnc1_p180_CX_Rep2) <- "RNA"
+DefaultAssay(Kcnc1_p180_CX_Rep3) <- "RNA"
 
 
 
 ##########################################
-## integration WT Kcnc1 p14 all replicates (1st replicate, then genotype) ######
+## integration WT Kcnc1 p180 all replicates (1st replicate, then genotype) ######
  ##########################################
 
-WT_p14_CB_Rep1$replicate <- "Rep1"
-WT_p14_CB_Rep2$replicate <- "Rep2"
-WT_p14_CB_Rep3$replicate <- "Rep3"
+WT_p180_CX_Rep1$replicate <- "Rep1"
+WT_p180_CX_Rep2$replicate <- "Rep2"
+WT_p180_CX_Rep3$replicate <- "Rep3"
 
-WT_p14_CB_Rep1$condition <- "WT"
-WT_p14_CB_Rep2$condition <- "WT"
-WT_p14_CB_Rep3$condition <- "WT"
+WT_p180_CX_Rep1$condition <- "WT"
+WT_p180_CX_Rep2$condition <- "WT"
+WT_p180_CX_Rep3$condition <- "WT"
 
-Kcnc1_p14_CB_Rep1$replicate <- "Rep1"
-Kcnc1_p14_CB_Rep2$replicate <- "Rep2"
-Kcnc1_p14_CB_Rep3$replicate <- "Rep3"
+Kcnc1_p180_CX_Rep1$replicate <- "Rep1"
+Kcnc1_p180_CX_Rep2$replicate <- "Rep2"
+Kcnc1_p180_CX_Rep3$replicate <- "Rep3"
 
-Kcnc1_p14_CB_Rep1$condition <- "Kcnc1"
-Kcnc1_p14_CB_Rep2$condition <- "Kcnc1"
-Kcnc1_p14_CB_Rep3$condition <- "Kcnc1"
+Kcnc1_p180_CX_Rep1$condition <- "Kcnc1"
+Kcnc1_p180_CX_Rep2$condition <- "Kcnc1"
+Kcnc1_p180_CX_Rep3$condition <- "Kcnc1"
 
 
 
 # Test Replicate and Genotype integration (1 step integration)
 ## WT Rep
 
-WT_p14_CB_Rep1 <- SCTransform(WT_p14_CB_Rep1, method = "glmGamPoi", ncells = 11774, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
-WT_p14_CB_Rep2 <- SCTransform(WT_p14_CB_Rep2, method = "glmGamPoi", ncells = 13020, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
-WT_p14_CB_Rep3 <- SCTransform(WT_p14_CB_Rep3, method = "glmGamPoi", ncells = 12733, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
-Kcnc1_p14_CB_Rep1 <- SCTransform(Kcnc1_p14_CB_Rep1, method = "glmGamPoi", ncells = 10125, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
-Kcnc1_p14_CB_Rep2 <- SCTransform(Kcnc1_p14_CB_Rep2, method = "glmGamPoi", ncells = 9132, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
-Kcnc1_p14_CB_Rep3 <- SCTransform(Kcnc1_p14_CB_Rep3, method = "glmGamPoi", ncells = 14121, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+WT_p180_CX_Rep1 <- SCTransform(WT_p180_CX_Rep1, method = "glmGamPoi", ncells = 13273, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+WT_p180_CX_Rep2 <- SCTransform(WT_p180_CX_Rep2, method = "glmGamPoi", ncells = 16451, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+WT_p180_CX_Rep3 <- SCTransform(WT_p180_CX_Rep3, method = "glmGamPoi", ncells = 19082, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+Kcnc1_p180_CX_Rep1 <- SCTransform(Kcnc1_p180_CX_Rep1, method = "glmGamPoi", ncells = 16275, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+Kcnc1_p180_CX_Rep2 <- SCTransform(Kcnc1_p180_CX_Rep2, method = "glmGamPoi", ncells = 16869, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+Kcnc1_p180_CX_Rep3 <- SCTransform(Kcnc1_p180_CX_Rep3, method = "glmGamPoi", ncells = 16644, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
 
 
 
 
-srat.list <- list(WT_p14_CB_Rep1 = WT_p14_CB_Rep1, WT_p14_CB_Rep2 = WT_p14_CB_Rep2, WT_p14_CB_Rep3 = WT_p14_CB_Rep3, Kcnc1_p14_CB_Rep1 = Kcnc1_p14_CB_Rep1, Kcnc1_p14_CB_Rep2 = Kcnc1_p14_CB_Rep2, Kcnc1_p14_CB_Rep3 = Kcnc1_p14_CB_Rep3)
+srat.list <- list(WT_p180_CX_Rep1 = WT_p180_CX_Rep1, WT_p180_CX_Rep2 = WT_p180_CX_Rep2, WT_p180_CX_Rep3 = WT_p180_CX_Rep3, Kcnc1_p180_CX_Rep1 = Kcnc1_p180_CX_Rep1, Kcnc1_p180_CX_Rep2 = Kcnc1_p180_CX_Rep2, Kcnc1_p180_CX_Rep3 = Kcnc1_p180_CX_Rep3)
 features <- SelectIntegrationFeatures(object.list = srat.list, nfeatures = 3000)
 srat.list <- PrepSCTIntegration(object.list = srat.list, anchor.features = features)
-WT_Kcnc1_p14_CB_1step.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
+WT_Kcnc1_p180_CX_1step.anchors <- FindIntegrationAnchors(object.list = srat.list, normalization.method = "SCT",
     anchor.features = features)
-WT_Kcnc1_p14_CB_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p14_CB_1step.anchors, normalization.method = "SCT")
+WT_Kcnc1_p180_CX_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p180_CX_1step.anchors, normalization.method = "SCT")
 
 
 #### UMAP
-DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "integrated"
+DefaultAssay(WT_Kcnc1_p180_CX_1step.sct) <- "integrated"
 
-WT_Kcnc1_p14_CB_1step.sct <- RunPCA(WT_Kcnc1_p14_CB_1step.sct, verbose = FALSE, npcs = 40)
-WT_Kcnc1_p14_CB_1step.sct <- RunUMAP(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
-WT_Kcnc1_p14_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", k.param = 30, dims = 1:40)
-WT_Kcnc1_p14_CB_1step.sct <- FindClusters(WT_Kcnc1_p14_CB_1step.sct, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+WT_Kcnc1_p180_CX_1step.sct <- RunPCA(WT_Kcnc1_p180_CX_1step.sct, verbose = FALSE, npcs = 40)
+WT_Kcnc1_p180_CX_1step.sct <- RunUMAP(WT_Kcnc1_p180_CX_1step.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
+WT_Kcnc1_p180_CX_1step.sct <- FindNeighbors(WT_Kcnc1_p180_CX_1step.sct, reduction = "pca", k.param = 30, dims = 1:40)
+WT_Kcnc1_p180_CX_1step.sct <- FindClusters(WT_Kcnc1_p180_CX_1step.sct, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
-WT_Kcnc1_p14_CB_1step.sct$condition <- factor(WT_Kcnc1_p14_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+WT_Kcnc1_p180_CX_1step.sct$condition <- factor(WT_Kcnc1_p180_CX_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version4dim40kparam30res03.pdf", width=7, height=6)
-DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE)
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CX-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version2dim40kparam30res03.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p180_CX_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
 
-DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
+XXXY HERE !!!
+
+DefaultAssay(WT_Kcnc1_p180_CX_1step.sct) <- "SCT"
 
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim40-ListdotPLot.pdf", width=30, height=60)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c(   "Gabra6","Pax6", # Granular_1

@@ -6420,6 +6420,12 @@ output/ChIPseeker/annotation_ESC_WT_EZH2_qval23nochrX_annot_promoterAnd5_geneSym
 output/ChIPseeker/annotation_ESC_WT_EZH1_qval23nochrX_annot_promoterAnd5_geneSymbol.txt
 
 
+## RNAseq 001/019 DEGs STAR/featureCounts
+../019__RNAseq_ESC_V1/output/deseq2/upregulated_q05fc058_ESC_KO_vs_ESC_WT-STAR.txt
+../019__RNAseq_ESC_V1/output/deseq2/downregulated_q05fc058_ESC_KO_vs_ESC_WT-STAR.txt
+../019__RNAseq_ESC_V1/output/deseq2/upregulated_q05fc058_ESC_OEKO_vs_ESC_WT-STAR.txt
+../019__RNAseq_ESC_V1/output/deseq2/downregulated_q05fc058_ESC_OEKO_vs_ESC_WT-STAR.txt
+
 
 
 ## put together Gain and Lost mix
@@ -6527,6 +6533,11 @@ sed 's/\r$//; s/.*/gene_name "&"/' output/ChIPseeker/annotation_ESC_WT_EZH1_qval
 
 
 
+sed 's/\r$//; s/.*/gene_name "&"/' ../019__RNAseq_ESC_V1/output/deseq2/upregulated_q05fc058_ESC_KO_vs_ESC_WT-STAR.txt > ../019__RNAseq_ESC_V1/output/deseq2/upregulated_q05fc058_ESC_KO_vs_ESC_WT-STAR_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' ../019__RNAseq_ESC_V1/output/deseq2/downregulated_q05fc058_ESC_KO_vs_ESC_WT-STAR.txt > ../019__RNAseq_ESC_V1/output/deseq2/downregulated_q05fc058_ESC_KO_vs_ESC_WT-STAR_as_gtf_geneSymbol.txt
+
+sed 's/\r$//; s/.*/gene_name "&"/' ../019__RNAseq_ESC_V1/output/deseq2/upregulated_q05fc058_ESC_OEKO_vs_ESC_WT-STAR.txt > ../019__RNAseq_ESC_V1/output/deseq2/upregulated_q05fc058_ESC_OEKO_vs_ESC_WT-STAR_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' ../019__RNAseq_ESC_V1/output/deseq2/downregulated_q05fc058_ESC_OEKO_vs_ESC_WT-STAR.txt > ../019__RNAseq_ESC_V1/output/deseq2/downregulated_q05fc058_ESC_OEKO_vs_ESC_WT-STAR_as_gtf_geneSymbol.txt
 
 
 
@@ -6620,6 +6631,14 @@ grep -Ff output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXch
 grep -Ff output/ChIPseeker/annotation_ESC_WT_H3K27me3_qval23nochrX_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_ESC_WT_H3K27me3_qval23nochrX_annot_promoterAnd5.gtf
 grep -Ff output/ChIPseeker/annotation_ESC_WT_EZH2_qval23nochrX_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_ESC_WT_EZH2_qval23nochrX_annot_promoterAnd5.gtf
 grep -Ff output/ChIPseeker/annotation_ESC_WT_EZH1_qval23nochrX_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_ESC_WT_EZH1_qval23nochrX_annot_promoterAnd5.gtf
+
+
+grep -Ff ../019__RNAseq_ESC_V1/output/deseq2/upregulated_q05fc058_ESC_KO_vs_ESC_WT-STAR_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_upregulated_q05fc058_ESC_KO_vs_ESC_WT-STAR.gtf
+grep -Ff ../019__RNAseq_ESC_V1/output/deseq2/downregulated_q05fc058_ESC_KO_vs_ESC_WT-STAR_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_downregulated_q05fc058_ESC_KO_vs_ESC_WT-STAR.gtf
+grep -Ff ../019__RNAseq_ESC_V1/output/deseq2/upregulated_q05fc058_ESC_OEKO_vs_ESC_WT-STAR_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_upregulated_q05fc058_ESC_OEKO_vs_ESC_WT-STAR.gtf
+grep -Ff ../019__RNAseq_ESC_V1/output/deseq2/downregulated_q05fc058_ESC_OEKO_vs_ESC_WT-STAR_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_downregulated_q05fc058_ESC_OEKO_vs_ESC_WT-STAR.gtf
+
+
 
 
 
@@ -6885,6 +6904,24 @@ sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_WT_EZH2_qval23nochrX_annot_p
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_WT_EZH1_qval23nochrX_annot_promoterAnd5-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 52861652 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_WT_EZH1_qval23nochrX_annot_promoterAnd5-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 52861821 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_WT_EZH1_qval23nochrX_annot_promoterAnd5-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 52861863 ok
+
+
+
+
+
+
+# DEGs STAR/featureCounts gencodev47 001/019 without --skipZero
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_regulated_q05fc058_ESC_KO_vs_ESC_WT-STAR-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 52936869 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_regulated_q05fc058_ESC_OEKO_vs_ESC_WT-STAR-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 52936871 ok
+
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_regulated_q05fc058_ESC_KO_vs_ESC_WT-STAR-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 52936958 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_regulated_q05fc058_ESC_OEKO_vs_ESC_WT-STAR-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 52936960 ok
+
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_regulated_q05fc058_ESC_KO_vs_ESC_WT-STAR-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 52937036 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_regulated_q05fc058_ESC_OEKO_vs_ESC_WT-STAR-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 52937039 ok
+
+
+
 ```
 
 --> xxx
