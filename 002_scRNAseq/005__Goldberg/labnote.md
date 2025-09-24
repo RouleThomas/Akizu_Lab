@@ -58106,7 +58106,7 @@ write.table(phase_summary_combined, file = "output/seurat/CellCyclePhase_version
 
 
 ```bash
-conda activate scRNAseqV2
+conda activate scRNAseqV3 # To be able to use Leiden algo!
 ```
 
 
@@ -58192,43 +58192,111 @@ WT_Kcnc1_p180_CX_1step.sct <- IntegrateData(anchorset = WT_Kcnc1_p180_CX_1step.a
 #### UMAP
 DefaultAssay(WT_Kcnc1_p180_CX_1step.sct) <- "integrated"
 
-WT_Kcnc1_p180_CX_1step.sct <- RunPCA(WT_Kcnc1_p180_CX_1step.sct, verbose = FALSE, npcs = 40)
-WT_Kcnc1_p180_CX_1step.sct <- RunUMAP(WT_Kcnc1_p180_CX_1step.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
-WT_Kcnc1_p180_CX_1step.sct <- FindNeighbors(WT_Kcnc1_p180_CX_1step.sct, reduction = "pca", k.param = 30, dims = 1:40)
-WT_Kcnc1_p180_CX_1step.sct <- FindClusters(WT_Kcnc1_p180_CX_1step.sct, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+WT_Kcnc1_p180_CX_1step.sct <- RunPCA(WT_Kcnc1_p180_CX_1step.sct, verbose = FALSE, npcs = 30)
+WT_Kcnc1_p180_CX_1step.sct <- RunUMAP(WT_Kcnc1_p180_CX_1step.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
+WT_Kcnc1_p180_CX_1step.sct <- FindNeighbors(WT_Kcnc1_p180_CX_1step.sct, reduction = "pca", k.param = 10, dims = 1:30)
+WT_Kcnc1_p180_CX_1step.sct <- FindClusters(WT_Kcnc1_p180_CX_1step.sct, resolution = 0.4, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
 WT_Kcnc1_p180_CX_1step.sct$condition <- factor(WT_Kcnc1_p180_CX_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p180_CX-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version2dim40kparam30res03.pdf", width=7, height=6)
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CX-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version2dim30kparam10res04.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_p180_CX_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
 
-XXXY HERE !!!
 
 DefaultAssay(WT_Kcnc1_p180_CX_1step.sct) <- "SCT"
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCou-version4dim40-ListdotPLot.pdf", width=30, height=60)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c(   "Gabra6","Pax6", # Granular_1
-  "Sorcs3", "Ptprk", # MLI1
-  "Nxph1", "Cdh22", # MLI2
-  "Klhl1", "Gfra2", "Aldh1a3", # PLI12
-  "Galntl6", "Kcnc2", # PLI23
-  "Pax2", # Golgi
-  "Eomes", # Unipolar_Brush
-  "Calb1", "Slc1a6", "Car8", # Purkinje
-  "Zeb2", # Astrocyte
-  "Aqp4", "Slc39a12", # Bergmann_Glia
-  "Mbp", "Mag", "Plp1", # Oligodendrocyte
-  "Aldoc", "Cnp", # OPC
-  "Itgam", "Cx3cr1", # Mix_Microglia_Meningeal
-  "Ptgds", "Dcn", # Endothelial
-  "Lef1", "Notum", "Apcdd1", # Endothelial_Mural
-  "Dlc1", "Pdgfrb", # Choroid_Plexus
-  "Kl",  "Ttr",
-  "Eomes", "Rgs6", "Tafa2"), max.cutoff = 1, cols = c("grey", "red"))
+
+
+# Gene list from p14 CX
+L2L3_IT_immature = Satb2, Cux1, Cux2 (Cluster25) – maybe less mature than cluster1/2
+L2_IT__Pdlim1= Pdlim1 (Cluster22)
+L2L3_IT__Otof_1= Otof (Cluster1)
+L2L3_IT__Otof_2 = Otof  (Cluster2)
+L4L5_IT__Rorb= Rorb, Rspo1, Cux2 (Cluster4)
+L5_IT__Etv1_1= Etv1 (Cluster9) cluster11 is more L5 then this one
+L5_IT__Etv1_2= Etv1 (Cluster11)
+L5_IT__Tshz2= Tshz2 (Cluster32)
+L5_PT__Pou3f1= Pou3f1, Npr3, Bcl6, Chst8 (Cluster20)
+L6_IT__Cdh9= Sulf1, Cdh9, Osr1 (Cluster8)
+L6__Car3= Car3; Oprk1, Ntng2 (Cluster29)
+L6_IT__Foxp2 = Foxp2, Col12a1 (Cluster3)
+L6B__Pou6f2= Galnt10, Nxph4, Nxph3, Pou6f2, Cplx3 (Cluster15)
+L5L6_NP__Tle4Stard5= Stard5, Cbln2, Dcc, Rell1, Pamr1, Tle4 (Cluster27)
+
+L5_IT_GABA__Adora2a= Drd2, Adora2a, Mhrt, Gng7 (Cluster6) 
+L6_GABA__Foxp2= Foxp2 (Cluster28)
+L5L6_GABA__Reln= Reln, Adamts18, (Cluster31)
+
+GABA_immature_1= Chst9, Foxp2, Dlx6os1, Unc13c, Pbx3, Robo1 (Cluster18) – express Gad1, Gad2; No Olig, Astro, or Microglia markers → confirming neuronal identity
+GABA_immature_2 =Gad1, Gad2, Dlx1, Dlx2, Arx, Dlx6os1 (Cluster26) – BUT no mature marker  Sst, Pvalb, Vip
+GABA__Vipr2= Vipr2 (Cluster7)
+GABA__SstCalb2 = Calb2, Sst (Cluster19)
+GABA__Vip= Vip, Prox1; Crh, Tac2, Htr3a, Grpr (Cluster13)
+GABA__NdnfLamp5= Lamp5, Ndnf; Pde11a, Kit, Gm16070 (Cluster23)
+GABA__Sst= Sst; Grin3a (Cluster14)
+GABA__Pvalb= Pvalb (Cluster12)
+GABA__Baiap3= Baiap3 (Cluster5)
+GABA__PvalbSt18= Pvalb, St18, Lamb1, Gpr83, Gna14, Adamts5 (Cluster34)
+GABA__NdnfKlhl1= Ndnf, Slc12a8, Ccdc192, Klhl1 (Cluster33)
+
+Microglia= Itgam, Cx3cr1; C1qb, Siglech, C1qa, Arhgap45  (Cluster10)
+Astrocyte= Aqp4, Slc39a12; Nwd1, Gli3, Slc7a10 (Cluster16)
+OPC= Pdgfra, Cspg4 (Cluster17)
+Oligodendrocyte= Mbp, Mag, Plp1; Mog (Cluster24)
+Meningeal= Ptgds, Dcn; Foxd1, Zic4, Slc6a13, Tbx18 (Cluster30)
+Endothelial= Lef1, Notum, Apcdd1, Pdgfrb; Slc38a5, Flt1, Adgrl4, Slco1a4 (Cluster21)
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CX-1stepIntegrationRegressNotRepeatedregMtRbCou-version2dim30-ListdotPLot.pdf", width=30, height=60)
+FeaturePlot(WT_Kcnc1_p180_CX_1step.sct, features = c(  
+  "Satb2", "Cux1",  # L2L3_IT_immature =
+  "Pdlim1", # L2_IT__Pdlim1
+  "Otof", # L2L3_IT__Otof_1
+  "Rorb", "Rspo1", "Cux2", # L4L5_IT__Rorb
+  "Etv1", # L5_IT__Etv1_1
+  "Tshz2",# L5_IT__Tshz2
+  "Pou3f1", "Npr3", "Bcl6", "Chst8" , # L5_PT__Pou3f1
+  "Sulf1", "Cdh9", "Osr1", # L6_IT__Cdh9
+  "Car3", "Oprk1", "Ntng2" , # L6__Car3
+  "Foxp2", "Col12a1",# L6_IT__Foxp2
+  "Galnt10", "Nxph4", "Nxph3", "Pou6f2", "Cplx3", # L6B__Pou6f2
+  "Stard5", "Cbln2", "Dcc", "Rell1", "Pamr1", "Tle4", # L5L6_NP__Tle4Stard5
+
+  "Drd2", "Adora2a", "Mhrt", "Gng7" ,  # L5_IT_GABA__Adora2a
+  "Reln", "Adamts18", # L5L6_GABA__Reln
+
+  "Chst9", "Unc13c", "Pbx3", "Robo1" , "Gad1", "Gad2", "Dlx1", "Dlx2", "Arx", "Dlx6os1", # GABA_immature_1
+  "Vipr2", # GABA__Vipr2
+  "Calb2", # GABA__SstCalb2
+  "Vip", "Prox1", "Crh", "Tac2", "Htr3a", "Grpr", # GABA__Vip
+  "Lamp5", "Ndnf", "Pde11a", "Kit", "Gm16070", # GABA__NdnfLamp5
+  "Sst", "Grin3a", # GABA__Sst
+  "Pvalb", # GABA__Pvalb
+  "Baiap3" , # GABA__Baiap3
+  "St18", "Lamb1", "Gpr83", "Gna14", "Adamts5", # GABA__PvalbSt18
+  "Slc12a8", "Ccdc192", "Klhl1", # GABA__NdnfKlhl1
+
+  "Itgam", "Cx3cr1", "C1qb", "Siglech", "C1qa", "Arhgap45", # Microglia
+  "Aqp4", "Slc39a12", "Nwd1", "Gli3", "Slc7a10" , # Astrocyte
+  "Pdgfra", "Cspg4" , # OPC
+  "Mbp", "Mag", "Plp1", "Mog" , # Oligodendrocyte
+  "Ptgds", "Dcn", "Foxd1", "Zic4", "Slc6a13", "Tbx18" , # Meningeal
+  "Lef1", "Notum", "Apcdd1", "Pdgfrb", "Slc38a5", "Flt1", "Adgrl4", "Slco1a4"  # Endothelial
+), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
+
+
+
+
+
+
+
+XXXY HERE !!!
+
+
 
 
 # genes
@@ -58358,11 +58426,10 @@ dev.off()
 
 # save ##################
 
-## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_numeric.rds") 
-#WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_numeric.rds") # 
+## saveRDS(WT_Kcnc1_p180_CX_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CX_1step-version2dim40kparam30res03.sct_V1_numeric.rds") 
+WT_Kcnc1_p180_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CX_1step-version2dim40kparam30res03.sct_V1_numeric.rds") # 
 
-## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_label.rds") 
-WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_label.rds") # 
+
 set.seed(42)
 ##########
 

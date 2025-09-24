@@ -72,3 +72,14 @@ plotHeatmap -m output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WT
     --heatmapHeight 7 \
     --heatmapWidth 2 \
     --zMax 1 1 1 
+
+
+
+plotProfile -m output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-EZH1_thresh2_noSkip0.gz \
+    -out output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-EZH1_thresh2_noSkip0_plotProfile2.pdf \
+    --samplesLabel "WT_EZH1" "KO_EZH1" "OEKO_EZH1" \
+    --colors black red blue \
+    --perGroup \
+    --plotWidth 8 \
+    --yMax 0.1 0.1
+
