@@ -34416,7 +34416,7 @@ WT_Kcnc1_p14_CB_1step.sct$cluster.annot <- Idents(WT_Kcnc1_p14_CB_1step.sct) # c
 
 
 pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB_1step_version5dim40kparam15res015_label.pdf", width=15, height=6)
-DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 6)
 dev.off()
 
 pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB_1step_version5dim40kparam15res015_noSplit_label.pdf", width=9, height=6)
@@ -38009,7 +38009,7 @@ WT_Kcnc1_p35_CB_1step.sct$cluster.annot <- Idents(WT_Kcnc1_p35_CB_1step.sct) # c
 
 
 pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB_1step_version5dim40kparam15res0245_label.pdf", width=15, height=6)
-DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+DimPlot(WT_Kcnc1_p35_CB_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 6)
 dev.off()
 
 pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB_1step_version5dim40kparam15res0245_noSplit_label.pdf", width=9, height=6)
@@ -41218,7 +41218,7 @@ WT_Kcnc1_p180_CB_1step.sct$cluster.annot <- Idents(WT_Kcnc1_p180_CB_1step.sct) #
 
 
 pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB_1step_version5dim20kparam10res0115_label.pdf", width=15, height=6)
-DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+DimPlot(WT_Kcnc1_p180_CB_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 6)
 dev.off()
 
 pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB_1step_version5dim20kparam10res0115_noSplit_label.pdf", width=9, height=6)
@@ -62899,6 +62899,30 @@ dev.off()
 
 
 
+
+pdf("output/Pathway/dotplot_BP-traj1_Granule-version4dim40kparam15res03-l2fc0_cl13_top5.pdf", width = 12, height = 6)
+# Loop through clusters 1 to 10
+for (cluster_id in sort(unique(gene_clusters_traj1_Granule$cluster))) {
+  message("Processing cluster: ", cluster_id)
+  gene_list <- gene_clusters_traj1_Granule %>%
+    filter(cluster == cluster_id) %>%
+    pull(gene)
+  ego <- enrichGO(gene = gene_list,
+                  OrgDb = org.Mm.eg.db,
+                  keyType = "SYMBOL",
+                  ont = "BP",
+                  pvalueCutoff = 0.05,
+                  pAdjustMethod = "BH",
+                  readable = TRUE)
+  if (!is.null(ego) && nrow(ego) > 0) {
+    print(dotplot(ego, showCategory = 5) + ggtitle(paste("Cluster", cluster_id)))
+  } else {
+    print(ggplot() + ggtitle(paste("Cluster", cluster_id, "- No Enrichment")) + theme_void())
+  }
+}
+dev.off()
+
+
 # KEGG
 pdf("output/Pathway/dotplot_KEGG-traj1_Granule-version4dim40kparam15res03-l2fc0_cl13.pdf", width = 12, height = 6)
 # Loop through clusters 1 to 10
@@ -62936,7 +62960,7 @@ dev.off()
 ######## Specific case ################
 
 genes_cluster <- gene_clusters_traj1_Granule %>%
-  filter(cluster == 10) %>%
+  filter(cluster == 8) %>%
   pull(gene)
 
 # Convert SYMBOLs to ENTREZ IDs
@@ -62954,12 +62978,85 @@ ekegg_cluster <- enrichKEGG(gene = entrez_cluster,
                              pAdjustMethod = "BH")
 
 # Plot
-pdf("output/Pathway/dotplot_KEGG-traj1_Granule-version4dim40kparam15res03-l2fc0_cl13_cluster10.pdf", width = 6, height = 6)
+pdf("output/Pathway/dotplot_KEGG-traj1_Granule-version4dim40kparam15res03-l2fc0_cl13_cluster8_top5.pdf", width = 6, height = 6)
 if (!is.null(ekegg_cluster) && nrow(ekegg_cluster) > 0) {
-  print(dotplot(ekegg_cluster, showCategory = 10) )
+  print(dotplot(ekegg_cluster, showCategory = 5) )
 } else {
   print(ggplot() + ggtitle("No KEGG Enrichment") + theme_void())
 }
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Multiple clusters in one Figure ########################
+gene_clusters_traj1_Granule <- read.table("output/condiments/gene_clusters-traj1_Granule-version4dim40kparam15res03-l2fc0-cl13.txt", 
+                            header = TRUE, 
+                            sep = "\t", 
+                            stringsAsFactors = FALSE)
+## pick the clusters you want stacked (order controls vertical order)
+reorder_within <- function(x, by, within, fun = mean, sep = "___", ...) {
+  new_x <- paste(x, within, sep = sep)
+  stats::reorder(new_x, by, FUN = fun, ...)
+}
+scale_y_reordered <- function(sep = "___") {
+  ggplot2::scale_y_discrete(labels = function(x) gsub(paste0(sep, ".*$"), "", x))
+}
+
+clusters_to_plot <- c(10, 8, 5, 13, 7, 9)
+show_n <- 5  # EXACT same meaning as dotplot(..., showCategory=5)
+
+res_list <- lapply(clusters_to_plot, function(clu) {
+  genes <- gene_clusters_traj1_Granule %>%
+    dplyr::filter(cluster == clu) %>% pull(gene) %>% unique()
+
+  ego <- enrichGO(genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+                  ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH",
+                  readable = TRUE)
+
+  if (is.null(ego) || nrow(ego) == 0) return(NULL)
+
+  # This applies the same selection/ranking as dotplot()
+  fortify(ego,
+          showCategory = show_n,
+          x = "GeneRatio",      # same default as dotplot.enrichResult
+          orderBy = "x") %>%    # order by x (GeneRatio), then take top N
+    mutate(cluster = clu)
+})
+
+top_df <- bind_rows(res_list)
+stopifnot(nrow(top_df) > 0)
+
+top_df$cluster <- factor(top_df$cluster, levels = clusters_to_plot)
+
+
+## stacked dot plot (one column, clusters separated)
+pdf("output/Pathway/dotplot_BP-traj1_Granule-version4dim40kparam15res03-l2fc0_cl13-cl10_8_5_13_7_9.pdf", width = 6.5, height = 8)
+ggplot(top_df,
+       aes(x = GeneRatio,
+           y = reorder_within(Description, GeneRatio, cluster))) +
+  geom_point(aes(size = Count, color = p.adjust)) +
+  facet_grid(cluster ~ ., scales = "free_y", space = "free_y") +
+  scale_y_reordered() +
+  # smaller p.adjust = red, larger = blue
+  scale_color_gradientn(colours = c("red","magenta","blue"), name = "adj. p-value") +
+  labs(x = "GeneRatio", y = NULL) +
+  theme_bw(base_size = 12) +
+  theme(panel.grid.minor = element_blank(),
+        panel.spacing.y = unit(0, "pt"),
+        strip.text.y = element_text(face = "bold", size = 12))
 dev.off()
 
 
