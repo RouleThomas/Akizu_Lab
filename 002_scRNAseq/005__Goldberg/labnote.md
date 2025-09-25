@@ -62762,6 +62762,9 @@ write.table(output_df,
             row.names = FALSE, 
             col.names = TRUE)
 
+
+
+
 # Check some genes individually - RNA
 #load("output/condiments/condiments-Part_Granule_subset_START4_END1_points100extendpc1stretch1-version4dim40kparam15res03.RData")
 set.seed(42)
@@ -62776,8 +62779,8 @@ sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
 sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
 sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
 
-pdf("output/condiments/plotSmoothers-traj1_Granule-version4dim40kparam15res03-RNA_common-Kcnc3.pdf", width=4, height=2)
-plotSmoothers(traj1, sub_counts, gene = "Kcnc3", curvesCol = c("black","red")) +
+pdf("output/condiments/plotSmoothers-traj1_Granule-version4dim40kparam15res03-RNA_common-Cacna1a.pdf", width=4, height=2)
+plotSmoothers(traj1, sub_counts, gene = "Cacna1a", curvesCols = c("black","red"), size = 0.2, lwd= 1, border = FALSE) +
 scale_color_manual(values =c("black","red"))
 dev.off()
 

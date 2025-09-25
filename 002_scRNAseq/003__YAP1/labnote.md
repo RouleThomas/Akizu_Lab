@@ -34924,6 +34924,7 @@ library("celldex")
 library("SingleR")
 library("gprofiler2") # for human mouse gene conversion for cell cycle genes
 
+set.seed(42)
 
 # import clean samples
 GASTRU_24h_UN <- readRDS(file = "output/seurat/GASTRU_24h_UN-QCPass.rds")
@@ -35164,6 +35165,22 @@ data.frame(
   pval_Bonf  = signif(padj_bonf, 3),
   pval_FDR   = signif(padj_fdr, 3)
 )
+
+
+
+# Unbiased cell type marker genes
+Idents(GASTRU_24h_merge) <- "seurat_clusters"
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+DefaultAssay(GASTRU_24h_merge) <- "RNA"
+GASTRU_24h_merge <- NormalizeData(GASTRU_24h_merge, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_24h_merge)
+GASTRU_24h_merge <- ScaleData(GASTRU_24h_merge, features = all.genes) # zero-centres and scales it
+
+all_markers <- FindAllMarkers(GASTRU_24h_merge, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all_markers, file = "output/seurat/srat_GASTRU_24h_merge-dim20kparam30res03-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+
 
 ```
 
@@ -35444,6 +35461,26 @@ data.frame(
 
 
 
+
+
+# Unbiased cell type marker genes
+Idents(GASTRU_72h_merge) <- "seurat_clusters"
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+DefaultAssay(GASTRU_72h_merge) <- "RNA"
+GASTRU_72h_merge <- NormalizeData(GASTRU_72h_merge, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_72h_merge)
+GASTRU_72h_merge <- ScaleData(GASTRU_72h_merge, features = all.genes) # zero-centres and scales it
+
+all_markers <- FindAllMarkers(GASTRU_72h_merge, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all_markers, file = "output/seurat/srat_GASTRU_72h_merge-dim20kparam30res03-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+
+
+
+pdf("output/seurat/test.pdf", width=10, height=10)
+FeaturePlot(GASTRU_72h_merge, features = "ICA1", max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
 
 
 ```

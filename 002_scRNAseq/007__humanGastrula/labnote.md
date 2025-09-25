@@ -1503,7 +1503,7 @@ Let's try to directly used the processed data from the authors
 
 
 ```bash
-conda activate scRNAseqV2
+conda activate scRNAseqV3
 ```
 
 ```R
@@ -1580,6 +1580,8 @@ humanGastrula <- FindClusters(humanGastrula, resolution = 0.3, verbose = FALSE, 
 pdf("output/seurat/UMAP_humanGastrula.pdf", width=10, height=6)
 DimPlot(humanGastrula, reduction = "umap", label=TRUE, group.by = "cluster_id")
 dev.off()
+
+
 
 
 # Check some genes
@@ -1877,6 +1879,18 @@ g_overlay <- g_ref +
 # Step 4: Export
 pdf("output/seurat/UMAP_humanGastrula-reference_query_overlay-version3-24hr.pdf", width = 30, height = 7)
 (p1 | p2 | g_overlay)
+dev.off()
+
+
+pdf("output/seurat/UMAP_humanGastrula-reference_noLabel-version3-24hr.pdf", width = 10, height = 7)
+DimPlot(
+  humanGastrula,
+  reduction = "umap",
+  group.by = "cluster_id",
+  label = FALSE,
+  pt.size = 1,
+  cols = cluster_colors
+) + ggtitle("Human gastrula")
 dev.off()
 
 
