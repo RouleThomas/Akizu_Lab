@@ -6927,6 +6927,114 @@ sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_regulated_q05fc058_ESC_OEKO_
 --> xxx
 
 
+# Pathway/GO enrichment analyses
+
+Pathway/ontology anlasys on:
+- genes that gain H3K27me3 in KO (MACS2/DESEQ2 no chrX clean tresh1): `output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.txt`
+- genes that gain H3K27me3 in OEKO (MACS2/DESEQ2 no chrX clean tresh1): `output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.txt`
+
+
+
+```bash
+conda activate deseq2
+```
+
+
+```R
+# Required packages
+library("clusterProfiler")
+library("org.Hs.eg.db")  
+library("enrichplot")
+library("tidyverse")
+library("patchwork")
+
+#gene list
+## WT vs KO - H3K27me3 / EZH2
+gene_Gain_H3K27me3_KO <- read.table("output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.txt") %>%
+  as_tibble() 
+gene_Lost_H3K27me3_KO <- read.table("output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.txt") %>%
+  as_tibble()
+gene_Gain_EZH2_KO <- read.table("output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-EZH2.txt") %>%
+  as_tibble() 
+gene_Lost_EZH2_KO <- read.table("output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-EZH2.txt") %>%
+  as_tibble()
+## WT vs OEKO - H3K27me3 / EZH2
+gene_Gain_H3K27me3_OEKO <- read.table("output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.txt") %>%
+  as_tibble()
+gene_Lost_H3K27me3_OEKO <- read.table("output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.txt") %>%
+  as_tibble()
+gene_Gain_EZH2_OEKO <- read.table("output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2.txt") %>%
+  as_tibble()
+gene_Lost_EZH2_OEKO <- read.table("output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2.txt") %>%
+  as_tibble()
+
+# enrich GO
+
+
+ego= enrichGO(gene = gene_Gain_H3K27me3_OEKO$V1,
+                  OrgDb = org.Hs.eg.db,
+                  keyType = "SYMBOL",
+                  ont = "BP",
+                  pvalueCutoff = 0.05,
+                  pAdjustMethod = "BH",
+                  readable = TRUE)
+
+
+
+pdf("output/Pathway/dotplot_GO-downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2-top10.pdf", width = 6, height = 6)
+dotplot(ego, showCategory = 10)
+dev.off()
+
+pdf("output/Pathway/dotplot_GO-downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2-top5.pdf", width = 6, height = 3)
+dotplot(ego, showCategory = 5)
+dev.off()
+
+
+# save output gene list GO categories
+
+write.table(
+  as.data.frame(ego),
+  file = "output/Pathway/dotplot_GO-upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.txt",
+  sep = "\t",
+  row.names = FALSE,
+  quote = FALSE
+)
+
+
+
+
+
+# KEGG enrichment
+
+# Convert SYMBOLs to ENTREZ IDs
+entrez_cluster <- mapIds(org.Mm.eg.db,
+                          keys = gene_Gain_H3K27me3_KO$V1,
+                          column = "ENTREZID",
+                          keytype = "SYMBOL",
+                          multiVals = "first") %>%
+  na.omit() %>% as.character()
+ekegg_cluster <- enrichKEGG(gene = entrez_cluster,
+                             organism = "mmu",
+                             pvalueCutoff = 0.05,
+                             pAdjustMethod = "BH")
+
+# Plot
+pdf("output/Pathway/dotplot_KEGG-traj1_Granule-version4dim40kparam15res03-l2fc0_cl13_cluster8_top5.pdf", width = 6, height = 6)
+if (!is.null(ekegg_cluster) && nrow(ekegg_cluster) > 0) {
+  print(dotplot(ekegg_cluster, showCategory = 5) )
+} else {
+  print(ggplot() + ggtitle("No KEGG Enrichment") + theme_void())
+}
+dev.off()
+
+
+
+
+
+```
+
+
+
 
 
 

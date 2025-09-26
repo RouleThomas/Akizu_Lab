@@ -62654,7 +62654,11 @@ traj1 <- readRDS("output/condiments/traj1_Part_Granule_subset-version4dim40kpara
 
 
 ## DEGs between condition
-traj1_l2fc0 <- conditionTest(traj1, l2fc = 0) # 
+traj1_l2fc0 <- conditionTest(traj1, l2fc =  1) #  traj1_l2fc0 <- conditionTest(traj1, l2fc = 2)
+# --> l2fc2 padj0.05 = 5 DEGs total 
+# --> l2fc1 padj0.05 = 49 DEGs total 
+# --> l2fc015 padj0.05 = 1055 DEGs total 
+# --> l2fc0.5 padj0.05 = 310 DEGs total (only genes upreg in Kcnc1)
 
 
 # Correct the pvalue with fdr
@@ -62667,8 +62671,10 @@ condRes_traj1_l2fc0 <- traj1_l2fc0[, c(ncol(traj1_l2fc0), 1:(ncol(traj1_l2fc0)-1
 
 write.table(condRes_traj1_l2fc0, file = c("output/condiments/condRes-traj1_Granule-version4dim40kparam15res03-l2fc0.txt"),sep="\t", quote=FALSE, row.names=FALSE)
 
-# Heatmap clutering DEGs per traj _ REVISED METHOD
-## import DEGs
+
+
+# Heatmap clutering DEGs per traj _ REVISED METHOD 
+## first version with l2fc0 and padj0.05  ##############################
 condRes_traj1_l2fc0 <- read.table("output/condiments/condRes-traj1_Granule-version4dim40kparam15res03-l2fc0.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) 
 
 ## Isolate significant DEGs and transform into a vector
@@ -62688,7 +62694,6 @@ hc <- hclust(dist(combinedData))
 clusters <- cutree(hc, k=13) # !!!!!!!!!!!!!!!!!! CHANGE CLUSTER NB HERE !!!!!!!!!!!!!!!!!!
 # Create an annotation data frame for the rows based on cluster assignments
 annotation_row <- data.frame(Cluster = factor(clusters))
-
 
 
 # Line plots
@@ -62746,7 +62751,6 @@ ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) 
 dev.off()
 
 
-
 ### Export gene list from each cluster
 ## Create a data frame with gene names and their respective cluster assignments
 output_df <- data.frame(
@@ -62765,10 +62769,178 @@ write.table(output_df,
 
 
 
+
+
+
+## version with l2fc015 and padj0.05  ##############################
+condRes_traj1_l2fc015 <- read.table("output/condiments/condRes-traj1_Granule-version4dim40kparam15res03-l2fc015.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) 
+
+
+
+## Isolate significant DEGs and transform into a vector
+conditionGenes_traj1_l2fc015 <- condRes_traj1_l2fc015 %>% 
+  filter(padj <= 0.05) %>%
+  pull(gene)
+
+# Predict smoothed values
+yhatSmooth <- 
+  predictSmooth(traj1, gene = conditionGenes_traj1_l2fc015, nPoints = 50, tidy = FALSE) %>%
+  log1p()
+yhatSmoothScaled <- t(apply(yhatSmooth, 1, scales::rescale))
+combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
+# Generate heatmap with clustering
+# Perform hierarchical clustering
+hc <- hclust(dist(combinedData))
+clusters <- cutree(hc, k=7) # !!!!!!!!!!!!!!!!!! CHANGE CLUSTER NB HERE !!!!!!!!!!!!!!!!!!
+# Create an annotation data frame for the rows based on cluster assignments
+annotation_row <- data.frame(Cluster = factor(clusters))
+
+
+# Line plots
+library("reshape2")
+library("stringr")
+# Assuming yhatSmoothScaled contains your smoothed gene expression data
+# Convert the yhatSmoothScaled data to a dataframe
+df <- as.data.frame(yhatSmoothScaled)
+df$Gene <- rownames(df)
+# Transform the data into a long format
+df_long <- melt(df, id.vars = "Gene", variable.name = "Pseudotime", value.name = "Expression")
+# Attach the cluster information to the data frame
+df$Cluster <- factor(clusters[df$Gene])
+df_long$Cluster <- df$Cluster[match(df_long$Gene, df$Gene)]
+
+# Extract condition column
+df_long$Condition <- ifelse(str_detect(df_long$Pseudotime, "WT"), "WT", "Kcnc1")
+
+# Extract the point value and convert it to numeric
+df_long$Updated_Pseudotime <- as.numeric(str_extract(df_long$Pseudotime, "(?<=point)\\d+"))
+
+# Define colors for the conditions
+color_map <- c("WT" = "black", "Kcnc1" = "red")
+
+gene_counts <- df_long %>%
+  group_by(Cluster) %>%
+  summarise(GeneCount = n_distinct(Gene))
+df_long <- df_long %>%
+  left_join(gene_counts, by = "Cluster") %>%
+  mutate(ClusterLabel = paste0("Cluster ", Cluster, " (", GeneCount, " genes)"))
+
+# Plot using ggplot
+pdf("output/condiments/clustered_linePlot_traj1_Granule-version4dim40kparam15res03-l2fc015-cl7.pdf", width=10, height=5)
+ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
+  geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
+  geom_line(data = subset(df_long, Condition == "Kcnc1"), aes(color = Condition), alpha = 0.5) +
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+## show only one gene ##################
+## option1 just the line
+target_gene <- "Pax6"   # <<< change here
+df_gene <- df_long %>% filter(Gene == target_gene)
+df_gene$ClusterLabel <- paste0("Cluster ", df_gene$Cluster, " (", target_gene, ")")
+pdf(paste0("output/condiments/linePlot_traj1_Granule-version4dim40kparam15res03-", target_gene, ".pdf"), width=8, height=4)
+ggplot(df_gene, aes(x = Updated_Pseudotime, y = Expression, group = Condition, color = Condition)) + 
+  geom_line(size = 1.2) +
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y") +
+  theme_bw() +
+  labs(title = paste("Expression dynamics of", target_gene),
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+## option2 line with SE
+yhat_cell <- predictCells(models = traj1, gene = target_gene)  # vector per cell
+stopifnot(length(yhat_cell) == ncol(traj1))
+
+pt <- slingPseudotime(Part_Granule_subset, na = FALSE)[, 1]   # lineage 1; change index if needed
+
+# 3) Condition per cell (adapt to your metadata column name)
+cond <- WT_Kcnc1_p14_CB_1step.sct@meta.data[colnames(traj1), "condition"]          
+cond <- factor(cond, levels = c("WT","Kcnc1"))             
+colData(traj1)$condition <- cond 
+
+
+df_cells <- data.frame(
+  Gene = target_gene,
+  Pseudotime = pt,
+  Expression = as.numeric(yhat_cell),
+  Condition = cond
+) %>% filter(is.finite(Pseudotime), is.finite(Expression))
+
+# 4) Bin pseudotime and summarize
+n_bins <- 40
+df_cells <- df_cells %>%
+  mutate(bin = cut(Pseudotime, breaks = n_bins, include.lowest = TRUE, labels = FALSE)) %>%
+  group_by(Condition, bin) %>%
+  summarise(
+    Pseudotime_mid = mean(Pseudotime, na.rm = TRUE),
+    mean_expr = mean(Expression, na.rm = TRUE),
+    sd_expr   = sd(Expression, na.rm = TRUE),
+    n = dplyr::n(),
+    se_expr = sd_expr / sqrt(pmax(n, 1)),
+    .groups = "drop"
+  )
+
+pdf(paste0("output/condiments/linePlot_traj1_Granule-version4dim40kparam15res03-", target_gene, "_withRibbon.pdf"), width=8, height=4)
+ggplot(df_cells, aes(x = Pseudotime_mid, y = mean_expr, color = Condition, fill = Condition)) +
+  geom_ribbon(aes(ymin = mean_expr - sd_expr, ymax = mean_expr + sd_expr), alpha = 0.2, color = NA) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = c(WT="black", Kcnc1="red")) +
+  scale_fill_manual(values  = c(WT="black", Kcnc1="red")) +
+  theme_bw() +
+  labs(title = paste("Expression dynamics of", target_gene),
+       x = "Pseudotime", y = "Fitted expression (mean ± SE)")
+dev.off()
+
+
+##########################################
+
+
+# Plot using ggplot
+pdf("output/condiments/smoothed_linePlot_traj1_Granule-version4dim40kparam15res03-l2fc015-cl7.pdf", width=10, height=5)
+ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
+  geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Smoothed Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+### Export gene list from each cluster
+## Create a data frame with gene names and their respective cluster assignments
+output_df <- data.frame(
+  gene = rownames(combinedData),
+  cluster = clusters
+)
+
+# Write the data frame to a .txt file
+write.table(output_df, 
+            file = "output/condiments/gene_clusters-traj1_Granule-version4dim40kparam15res03-l2fc015-cl7.txt", 
+            sep = "\t", 
+            quote = FALSE, 
+            row.names = FALSE, 
+            col.names = TRUE)
+
+
+
+
+
+
+
+
 # Check some genes individually - RNA
 #load("output/condiments/condiments-Part_Granule_subset_START4_END1_points100extendpc1stretch1-version4dim40kparam15res03.RData")
 set.seed(42)
-## FOR LINEAGE 2
+## FOR LINEAGE 1
+
 counts <- WT_Kcnc1_p14_CB_1step.sct[["RNA"]]@counts # Collect the counts from seurat
 cond <- factor(WT_Kcnc1_p14_CB_1step.sct$condition) # identify conditions
 pseudotimes <- slingPseudotime(Part_Granule_subset, na = FALSE) [,1] # HERE INDICATE TRAJ
@@ -62779,9 +62951,9 @@ sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
 sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
 sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
 
-pdf("output/condiments/plotSmoothers-traj1_Granule-version4dim40kparam15res03-RNA_common-Cacna1a.pdf", width=4, height=2)
-plotSmoothers(traj1, sub_counts, gene = "Cacna1a", curvesCols = c("black","red"), size = 0.2, lwd= 1, border = FALSE) +
-scale_color_manual(values =c("black","red"))
+pdf("output/condiments/plotSmoothers-traj1_Granule-version4dim40kparam15res03-RNA_common-Cbln1.pdf", width=4, height=2)
+plotSmoothers(traj1, sub_counts, gene = "Cbln1", curvesCols = c("black","red"), size = 0.2, lwd= 1, border = FALSE) +
+scale_color_manual(values =c("black","red")) + ggtitle("Cbln1")
 dev.off()
 
 
@@ -62829,13 +63001,13 @@ annotation_colors <- list(Cluster = cluster_colors)
 
 col_order <- order(grepl("WT", colnames(combinedData)), decreasing = TRUE)
 combinedData <- combinedData[, col_order]
-pdf("output/condiments/heatmap-traj1_Granule_version4dim40kparam15res03-l2fc0_cl13.pdf", width=5, height=5)
+pdf("output/condiments/heatmap-traj1_Granule_version4dim40kparam15res03-l2fc015_cl7.pdf", width=5, height=5)
 pheatmap(combinedData,
   cluster_cols = FALSE,
   show_rownames = FALSE,
   show_colnames = FALSE,
   legend = TRUE,
-  cutree_rows = 13,
+  cutree_rows = 7,
   annotation_row = annotation_row,
   annotation_colors = annotation_colors
 )
@@ -62875,6 +63047,10 @@ gene_clusters_traj1_Granule <- read.table("output/condiments/gene_clusters-traj1
                             sep = "\t", 
                             stringsAsFactors = FALSE)
 
+gene_clusters_traj1_Granule <- read.table("output/condiments/gene_clusters-traj1_Granule-version4dim40kparam15res03-l2fc015-cl7.txt", 
+                            header = TRUE, 
+                            sep = "\t", 
+                            stringsAsFactors = FALSE)
 
 
 # GO BP
@@ -62960,10 +63136,10 @@ dev.off()
 
 
 
-######## Specific case ################
+######## Specific case KEGG ################
 
 genes_cluster <- gene_clusters_traj1_Granule %>%
-  filter(cluster == 8) %>%
+  filter(cluster == 3) %>%
   pull(gene)
 
 # Convert SYMBOLs to ENTREZ IDs
@@ -62979,14 +63155,45 @@ ekegg_cluster <- enrichKEGG(gene = entrez_cluster,
                              organism = "mmu",
                              pvalueCutoff = 0.05,
                              pAdjustMethod = "BH")
+if (!is.null(ekegg_cluster) && nrow(ekegg_cluster) > 0) {
+  ekegg_cluster@result$Description <- gsub(" - Mus musculus.*", "", ekegg_cluster@result$Description)
+}
 
 # Plot
-pdf("output/Pathway/dotplot_KEGG-traj1_Granule-version4dim40kparam15res03-l2fc0_cl13_cluster8_top5.pdf", width = 6, height = 6)
+
+pdf("output/Pathway/dotplot_KEGG-traj1_Granule-version4dim40kparam15res03-l2fc015_cl7_cluster3_top5.pdf", width = 6, height = 3)
 if (!is.null(ekegg_cluster) && nrow(ekegg_cluster) > 0) {
   print(dotplot(ekegg_cluster, showCategory = 5) )
 } else {
   print(ggplot() + ggtitle("No KEGG Enrichment") + theme_void())
 }
+dev.off()
+
+
+
+
+
+
+######## Specific case GO BP ################
+
+genes_cluster <- gene_clusters_traj1_Granule %>%
+  filter(cluster == 6) %>%
+  pull(gene)
+
+
+# GO enrichment
+ego <- enrichGO(gene = genes_cluster,
+                OrgDb = org.Mm.eg.db,
+                keyType = "SYMBOL",
+                ont = "BP",
+                pvalueCutoff = 0.05,
+                pAdjustMethod = "BH",
+                readable = TRUE)
+
+# Plot
+
+pdf("output/Pathway/dotplot_BP-traj1_Granule-version4dim40kparam15res03-l2fc015_cl7_cluster6_top5.pdf", width = 6, height =3 )
+dotplot(ego, showCategory = 5)
 dev.off()
 
 
@@ -63002,9 +63209,7 @@ dev.off()
 
 
 
-
-
-# Multiple clusters in one Figure ########################
+# Multiple clusters in one Figure - l2fc0 padj 0.05 ########################
 gene_clusters_traj1_Granule <- read.table("output/condiments/gene_clusters-traj1_Granule-version4dim40kparam15res03-l2fc0-cl13.txt", 
                             header = TRUE, 
                             sep = "\t", 
@@ -63061,6 +63266,157 @@ ggplot(top_df,
         panel.spacing.y = unit(0, "pt"),
         strip.text.y = element_text(face = "bold", size = 12))
 dev.off()
+
+
+
+
+
+
+
+
+
+# Multiple clusters in one Figure - l2fc015 padj 0.05 - GO BP ########################
+gene_clusters_traj1_Granule <- read.table("output/condiments/gene_clusters-traj1_Granule-version4dim40kparam15res03-l2fc015-cl7.txt", 
+                            header = TRUE, 
+                            sep = "\t", 
+                            stringsAsFactors = FALSE)
+## pick the clusters you want stacked (order controls vertical order)
+reorder_within <- function(x, by, within, fun = mean, sep = "___", ...) {
+  new_x <- paste(x, within, sep = sep)
+  stats::reorder(new_x, by, FUN = fun, ...)
+}
+scale_y_reordered <- function(sep = "___") {
+  ggplot2::scale_y_discrete(labels = function(x) gsub(paste0(sep, ".*$"), "", x))
+}
+
+clusters_to_plot <- c(1,2,3,4,5,6,7)
+show_n <- 5  # EXACT same meaning as dotplot(..., showCategory=5)
+
+res_list <- lapply(clusters_to_plot, function(clu) {
+  genes <- gene_clusters_traj1_Granule %>%
+    dplyr::filter(cluster == clu) %>% pull(gene) %>% unique()
+
+  ego <- enrichGO(genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+                  ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH",
+                  readable = TRUE)
+
+  if (is.null(ego) || nrow(ego) == 0) return(NULL)
+
+  # This applies the same selection/ranking as dotplot()
+  fortify(ego,
+          showCategory = show_n,
+          x = "GeneRatio",      # same default as dotplot.enrichResult
+          orderBy = "x") %>%    # order by x (GeneRatio), then take top N
+    mutate(cluster = clu)
+})
+
+top_df <- bind_rows(res_list)
+stopifnot(nrow(top_df) > 0)
+
+top_df$cluster <- factor(top_df$cluster, levels = clusters_to_plot)
+
+
+## stacked dot plot (one column, clusters separated)
+pdf("output/Pathway/dotplot_BP-traj1_Granule-version4dim40kparam15res03-l2fc015_cl7-cl1_2_3_4_5_6_7.pdf", width = 6.5, height = 6)
+ggplot(top_df,
+       aes(x = GeneRatio,
+           y = reorder_within(Description, GeneRatio, cluster))) +
+  geom_point(aes(size = Count, color = p.adjust)) +
+  facet_grid(cluster ~ ., scales = "free_y", space = "free_y") +
+  scale_y_reordered() +
+  # smaller p.adjust = red, larger = blue
+  scale_color_gradientn(colours = c("red","magenta","blue"), name = "adj. p-value") +
+  labs(x = "GeneRatio", y = NULL) +
+  theme_bw(base_size = 12) +
+  theme(panel.grid.minor = element_blank(),
+        panel.spacing.y = unit(0, "pt"),
+        strip.text.y = element_text(face = "bold", size = 12))
+dev.off()
+
+
+
+
+
+
+
+
+
+# Multiple clusters in one Figure - l2fc015 padj 0.05 - KEGG ########################
+gene_clusters_traj1_Granule <- read.table("output/condiments/gene_clusters-traj1_Granule-version4dim40kparam15res03-l2fc015-cl7.txt", 
+                            header = TRUE, 
+                            sep = "\t", 
+                            stringsAsFactors = FALSE)
+## pick the clusters you want stacked (order controls vertical order)
+reorder_within <- function(x, by, within, fun = mean, sep = "___", ...) {
+  new_x <- paste(x, within, sep = sep)
+  stats::reorder(new_x, by, FUN = fun, ...)
+}
+scale_y_reordered <- function(sep = "___") {
+  ggplot2::scale_y_discrete(labels = function(x) gsub(paste0(sep, ".*$"), "", x))
+}
+
+clusters_to_plot <- c(1,2,3,4,5,6,7)
+show_n <- 5  # EXACT same meaning as dotplot(..., showCategory=5)
+
+res_list <- lapply(clusters_to_plot, function(clu) {
+  # symbols in this cluster
+  gene_symbols <- gene_clusters_traj1_Granule %>%
+    dplyr::filter(cluster == clu) %>%
+    pull(gene) %>%
+    unique()
+
+  # map SYMBOL -> ENTREZ (KEGG needs ENTREZ)
+  entrez_ids <- AnnotationDbi::mapIds(
+    org.Mm.eg.db,
+    keys     = gene_symbols,
+    column   = "ENTREZID",
+    keytype  = "SYMBOL",
+    multiVals = "first"
+  ) %>% na.omit() %>% as.character()
+
+  if (length(entrez_ids) == 0) return(NULL)
+
+  ekegg <- enrichKEGG(
+    gene            = entrez_ids,
+    organism        = "mmu",
+    pvalueCutoff    = 0.05,
+    pAdjustMethod   = "BH"
+  )
+
+  if (is.null(ekegg) || nrow(ekegg) == 0) return(NULL)
+
+  # (Optional) make gene IDs readable (SYMBOL) for downstream inspection
+  ekegg <- setReadable(ekegg, OrgDb = org.Mm.eg.db, keyType = "ENTREZID")
+
+  # mimic dotplot's top-N selection: order by GeneRatio and keep top N
+  fortify(ekegg, showCategory = show_n, x = "GeneRatio", orderBy = "x") %>%
+    mutate(cluster = clu)
+})
+
+
+top_df <- bind_rows(res_list)
+stopifnot(nrow(top_df) > 0)
+
+top_df$cluster <- factor(top_df$cluster, levels = clusters_to_plot)
+top_df$Description <- gsub(" - Mus musculus.*", "", top_df$Description)
+
+## stacked dot plot (one column, clusters separated)
+pdf("output/Pathway/dotplot_KEGG-traj1_Granule-version4dim40kparam15res03-l2fc015_cl7-cl1_2_3_4_5_6_7.pdf", width = 6.5, height = 4)
+ggplot(top_df,
+       aes(x = GeneRatio,
+           y = reorder_within(Description, GeneRatio, cluster))) +
+  geom_point(aes(size = Count, color = p.adjust)) +
+  facet_grid(cluster ~ ., scales = "free_y", space = "free_y") +
+  scale_y_reordered() +
+  # smaller p.adjust = red, larger = blue
+  scale_color_gradientn(colours = c("red","magenta","blue"), name = "adj. p-value") +
+  labs(x = "GeneRatio", y = NULL) +
+  theme_bw(base_size = 12) +
+  theme(panel.grid.minor = element_blank(),
+        panel.spacing.y = unit(0, "pt"),
+        strip.text.y = element_text(face = "bold", size = 12))
+dev.off()
+
 
 
 
