@@ -34555,6 +34555,16 @@ FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Apoe"), max.cutoff = 1, col
 dev.off()
 
 
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-Myt1l.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Myt1l"), max.cutoff = 1.5, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-Grin2b.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Grin2b"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-Cntn5.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Cntn5"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
 
 # Vln Plot WT vs Kcnc1
 
@@ -35779,7 +35789,6 @@ for (cell_type in cell_types) {
 dev.off()
 
 
-
 # GO BP  - NOT sep up down 
 pdf("output/Pathway/dotplot_BP-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-top20_UpandDown.pdf", width = 6, height = 6)
 for (cell_type in cell_types) {
@@ -35918,6 +35927,45 @@ for (cell_type in cell_types) {
 }
 dev.off()
 
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-top10_Down-Granule.pdf", width = 6, height = 5)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Upregulated genes only
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", 
+           keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>% as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu",
+               pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Clean descriptions (remove " - Mus musculus")
+  if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    ekegg_combined@result$Description <- gsub(" - Mus musculus.*", "", ekegg_combined@result$Description)
+  }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 10) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+# Plot
+
+
+
 
 cell_types <- c("Purkinje")
 
@@ -35959,7 +36007,7 @@ dev.off()
 cell_types <- c("Granule")
 cell_types <- c("Purkinje")
 
-pdf("output/Pathway/dotplot_BP-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-top20_UpandDown-Purkinje.pdf", width = 6, height = 5)
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-top20_UpandDown-Granule.pdf", width = 6, height = 5)
 for (cell_type in cell_types) {
   message("Processing: ", cell_type)
   file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
@@ -35967,6 +36015,32 @@ for (cell_type in cell_types) {
   # Combine up and downregulated genes
   dereg_genes <- deg_data %>%
     filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 10) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+cell_types <- c("Granule")
+
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-top10_Down-Granule.pdf", width = 6, height = 5)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
     rownames()
   # Run GO enrichment if gene list is non-empty
   ego_combined <- if (length(dereg_genes) > 0) {
@@ -37663,7 +37737,7 @@ combined_deg <- combined_deg %>%
 
 # Generate the violin plot
 ###### Define genes of interest
-genes_of_interest <- gene.down # gene.down gene.up 
+genes_of_interest <- c("Myt1l", "Grin2b", "Cntn5") # gene.down gene.up 
 ###### Extract the subset of significant DEGs
 sig_data <- combined_deg %>%
   filter(gene %in% genes_of_interest)
@@ -37686,7 +37760,7 @@ sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches c
 sig_data <- sig_data %>%
   left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
 
-pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CB_1step_subset-version5dim40kparam15res015-Kcnc1234-filterNeurons-STAT.pdf", width=5, height=3)
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CB_1step_subset-version5dim40kparam15res015-NeuronDevExamples-filterNeurons-STAT.pdf", width=5, height=3)
 
 ###### Generate separate plots per gene
 for (gene in genes_of_interest) {
@@ -37806,6 +37880,103 @@ for (gene in genes_of_interest) {
   print(p)
 }
 dev.off()
+
+
+
+
+
+
+## Subset seurat object in granule only
+
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "Granule"))
+
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "Granule"))
+
+# Check some genes
+DefaultAssay(WT_Kcnc1_p14_CB_1step_subset) <- "RNA"
+
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("Granule")
+##### Initialize empty list to store data
+deg_list <- list()
+
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.0001 ~ "***",
+    p_val_adj < 0.001  ~ "**",
+    p_val_adj < 0.05   ~ "*",
+    TRUE               ~ ""
+  ))
+
+
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- c("Myt1l", "Grin2b", "Cntn5") # gene.down gene.up 
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(WT_Kcnc1_p14_CB_1step_subset, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p14_CB_1step_subset))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CB_1step_subset-version5dim40kparam15res015-Kcnc1-GranuleNeuronDevExamples-STAT.pdf", width=3, height=3)
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(WT_Kcnc1_p14_CB_1step_subset, 
+               features = gene, 
+               pt.size = 0, 
+               split.by = "condition", cols = c("black", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.2, label = significance), 
+                     size = 6, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+
+
 
 
 
@@ -64751,9 +64922,6 @@ write.table(output_df,
 
 
 ## version with l2fc015 and padj0.05  ##############################
-
-XXXY HERE!!! Run below!
-
 condRes_traj1_l2fc015 <- read.table("output/condiments/condRes-traj1_MLI2-version5dim50kparam30res25-l2fc015.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) 
 
 
@@ -64771,7 +64939,7 @@ combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
 # Generate heatmap with clustering
 # Perform hierarchical clustering
 hc <- hclust(dist(combinedData))
-clusters <- cutree(hc, k=5) # !!!!!!!!!!!!!!!!!! CHANGE CLUSTER NB HERE !!!!!!!!!!!!!!!!!!
+clusters <- cutree(hc, k=7) # !!!!!!!!!!!!!!!!!! CHANGE CLUSTER NB HERE !!!!!!!!!!!!!!!!!!
 # Create an annotation data frame for the rows based on cluster assignments
 annotation_row <- data.frame(Cluster = factor(clusters))
 
@@ -64806,7 +64974,7 @@ df_long <- df_long %>%
   mutate(ClusterLabel = paste0("Cluster ", Cluster, " (", GeneCount, " genes)"))
 
 # Plot using ggplot
-pdf("output/condiments/clustered_linePlot_traj1_MLI2-version5dim50kparam30res25-l2fc015-cl5.pdf", width=10, height=5)
+pdf("output/condiments/clustered_linePlot_traj1_MLI2-version5dim50kparam30res25-l2fc015-cl7.pdf", width=10, height=5)
 ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
   geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
   geom_line(data = subset(df_long, Condition == "Kcnc1"), aes(color = Condition), alpha = 0.5) +
@@ -64820,18 +64988,17 @@ dev.off()
 
 ## show only one gene ##################
 ## gene expr over time with SE , , , 
-target_gene <- "Id3"   # <<< change here
-yhat_cell <- predictCells(models = traj2, gene = target_gene)  # vector per cell
-stopifnot(length(yhat_cell) == ncol(traj2))
+target_gene <- "Kcnt1"   # <<< change here
+yhat_cell <- predictCells(models = traj1, gene = target_gene)  # vector per cell
+stopifnot(length(yhat_cell) == ncol(traj1))
 
-pt_all <- slingPseudotime(Part_MLI1_subset, na = FALSE)[, 2]   # lineage 2; change index if needed
-pt <- as.numeric(pt_all[colnames(traj2)])                      # HERE only keep cell of interest!
+pt <- slingPseudotime(Part_MLI2_subset, na = FALSE)[, 1]   # lineage 1; change index if needed
 
 
 # 3) Condition per cell (adapt to your metadata column name)
-cond <- WT_Kcnc1_CB_integrateMerge.sct@meta.data[colnames(traj2), "condition"]          
+cond <- WT_Kcnc1_CB_integrateMerge.sct@meta.data[colnames(traj1), "condition"]          
 cond <- factor(cond, levels = c("WT","Kcnc1"))             
-colData(traj2)$condition <- cond 
+colData(traj1)$condition <- cond 
 
 
 df_cells <- data.frame(
@@ -64862,7 +65029,7 @@ ggplot(df_cells, aes(x = Pseudotime_mid, y = mean_expr, color = Condition, fill 
   scale_color_manual(values = c(WT="black", Kcnc1="red")) +
   scale_fill_manual(values  = c(WT="black", Kcnc1="red")) +
   theme_bw() +
-  xlim(0,10) +
+  xlim(0,6) +
   labs(title = paste(target_gene),
        x = "Pseudotime", y = "Fitted expression (mean ± SE)")
 dev.off()
@@ -64872,7 +65039,7 @@ dev.off()
 
 
 # Plot using ggplot
-pdf("output/condiments/smoothed_linePlot_traj1_MLI2-version5dim50kparam30res25-l2fc015-cl5.pdf", width=10, height=5)
+pdf("output/condiments/smoothed_linePlot_traj1_MLI2-version5dim50kparam30res25-l2fc015-cl7.pdf", width=10, height=5)
 ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
   geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
   scale_color_manual(values = color_map) + 
@@ -64892,7 +65059,7 @@ output_df <- data.frame(
 
 # Write the data frame to a .txt file
 write.table(output_df, 
-            file = "output/condiments/gene_clusters-traj1_MLI2-version5dim50kparam30res25-l2fc015-cl5.txt", 
+            file = "output/condiments/gene_clusters-traj1_MLI2-version5dim50kparam30res25-l2fc015-cl7.txt", 
             sep = "\t", 
             quote = FALSE, 
             row.names = FALSE, 
@@ -64963,13 +65130,13 @@ annotation_colors <- list(Cluster = cluster_colors)
 
 col_order <- order(grepl("WT", colnames(combinedData)), decreasing = TRUE)
 combinedData <- combinedData[, col_order]
-pdf("output/condiments/heatmap-traj1_MLI2_version5dim50kparam30res25-l2fc0_cl10.pdf", width=5, height=5)
+pdf("output/condiments/heatmap-traj1_MLI2_version5dim50kparam30res25-l2fc015_cl7.pdf", width=5, height=5)
 pheatmap(combinedData,
   cluster_cols = FALSE,
   show_rownames = FALSE,
   show_colnames = FALSE,
   legend = TRUE,
-  cutree_rows = 10,
+  cutree_rows = 7,
   annotation_row = annotation_row,
   annotation_colors = annotation_colors
 )
@@ -65008,10 +65175,13 @@ gene_clusters_traj1_MLI2 <- read.table("output/condiments/gene_clusters-traj1_ML
                             sep = "\t", 
                             stringsAsFactors = FALSE)
 
-
+gene_clusters_traj1_MLI2 <- read.table("output/condiments/gene_clusters-traj1_MLI2-version5dim50kparam30res25-l2fc015-cl7.txt", 
+                            header = TRUE, 
+                            sep = "\t", 
+                            stringsAsFactors = FALSE)
 
 # GO BP
-pdf("output/Pathway/dotplot_BP-traj1_MLI2_version5dim50kparam30res25-l2fc0_cl10.pdf", width = 12, height = 6)
+pdf("output/Pathway/dotplot_BP-traj1_MLI2_version5dim50kparam30res25-l2fc015_cl7.pdf", width = 12, height = 6)
 # Loop through clusters 1 to 10
 for (cluster_id in sort(unique(gene_clusters_traj1_MLI2$cluster))) {
   message("Processing cluster: ", cluster_id)
@@ -65036,7 +65206,7 @@ dev.off()
 
 
 # KEGG
-pdf("output/Pathway/dotplot_KEGG-traj1_MLI2_version5dim50kparam30res25-l2fc0_cl10.pdf", width = 12, height = 6)
+pdf("output/Pathway/dotplot_KEGG-traj1_MLI2_version5dim50kparam30res25-l2fc015_cl7.pdf", width = 12, height = 6)
 # Loop through clusters 1 to 10
 for (cluster_id in sort(unique(gene_clusters_traj1_MLI2$cluster))) {
   message("Processing KEGG cluster: ", cluster_id)
@@ -65072,7 +65242,7 @@ dev.off()
 ######## Specific case ################
 
 genes_cluster <- gene_clusters_traj1_MLI2 %>%
-  filter(cluster == 10) %>%
+  filter(cluster == 1) %>%
   pull(gene)
 
 # Convert SYMBOLs to ENTREZ IDs
@@ -65088,15 +65258,51 @@ ekegg_cluster <- enrichKEGG(gene = entrez_cluster,
                              organism = "mmu",
                              pvalueCutoff = 0.05,
                              pAdjustMethod = "BH")
+if (!is.null(ekegg_cluster) && nrow(ekegg_cluster) > 0) {
+  ekegg_cluster@result$Description <- gsub(" - Mus musculus.*", "", ekegg_cluster@result$Description)
+}
+
 
 # Plot
-pdf("output/Pathway/dotplot_KEGG-traj1_MLI2_version5dim50kparam30res25-l2fc0_cl10_cluster10.pdf", width = 6, height = 6)
+pdf("output/Pathway/dotplot_KEGG-traj1_MLI2_version5dim50kparam30res25-l2fc015_cl7_cluster1.pdf", width = 6, height = 4)
 if (!is.null(ekegg_cluster) && nrow(ekegg_cluster) > 0) {
   print(dotplot(ekegg_cluster, showCategory = 10) )
 } else {
   print(ggplot() + ggtitle("No KEGG Enrichment") + theme_void())
 }
 dev.off()
+
+
+
+
+
+
+
+######## Specific case GO BP ################
+
+genes_cluster <- gene_clusters_traj1_MLI2 %>%
+  filter(cluster == 4) %>%
+  pull(gene)
+
+
+# GO enrichment
+ego <- enrichGO(gene = genes_cluster,
+                OrgDb = org.Mm.eg.db,
+                keyType = "SYMBOL",
+                ont = "BP",
+                pvalueCutoff = 0.05,
+                pAdjustMethod = "BH",
+                readable = TRUE)
+
+# Plot
+
+pdf("output/Pathway/dotplot_BP-traj1_MLI2_version5dim50kparam30res25-l2fc015_cl7_cluster4_top5.pdf", width = 6, height =3 )
+dotplot(ego, showCategory = 5)
+dev.off()
+
+
+
+
 
 
 
