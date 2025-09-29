@@ -62654,7 +62654,7 @@ traj1 <- readRDS("output/condiments/traj1_Part_Granule_subset-version4dim40kpara
 
 
 ## DEGs between condition
-traj1_l2fc0 <- conditionTest(traj1, l2fc =  1) #  traj1_l2fc0 <- conditionTest(traj1, l2fc = 2)
+traj1_l2fc0 <- conditionTest(traj1, l2fc =  0.15) #  traj1_l2fc0 <- conditionTest(traj1, l2fc = 2)
 # --> l2fc2 padj0.05 = 5 DEGs total 
 # --> l2fc1 padj0.05 = 49 DEGs total 
 # --> l2fc015 padj0.05 = 1055 DEGs total 
@@ -62839,22 +62839,8 @@ ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = 
 dev.off()
 
 ## show only one gene ##################
-## option1 just the line
-target_gene <- "Pax6"   # <<< change here
-df_gene <- df_long %>% filter(Gene == target_gene)
-df_gene$ClusterLabel <- paste0("Cluster ", df_gene$Cluster, " (", target_gene, ")")
-pdf(paste0("output/condiments/linePlot_traj1_Granule-version4dim40kparam15res03-", target_gene, ".pdf"), width=8, height=4)
-ggplot(df_gene, aes(x = Updated_Pseudotime, y = Expression, group = Condition, color = Condition)) + 
-  geom_line(size = 1.2) +
-  scale_color_manual(values = color_map) + 
-  facet_wrap(~ClusterLabel, scales = "free_y") +
-  theme_bw() +
-  labs(title = paste("Expression dynamics of", target_gene),
-       x = "Pseudotime",
-       y = "Expression Level")
-dev.off()
-
-## option2 line with SE
+## gene expr over time with SE
+target_gene <- "Eomes"   # <<< change here
 yhat_cell <- predictCells(models = traj1, gene = target_gene)  # vector per cell
 stopifnot(length(yhat_cell) == ncol(traj1))
 
@@ -62887,14 +62873,14 @@ df_cells <- df_cells %>%
     .groups = "drop"
   )
 
-pdf(paste0("output/condiments/linePlot_traj1_Granule-version4dim40kparam15res03-", target_gene, "_withRibbon.pdf"), width=8, height=4)
+pdf(paste0("output/condiments/linePlot_traj1_Granule-version4dim40kparam15res03-", target_gene, "_withRibbon.pdf"), width=5, height=3.5)
 ggplot(df_cells, aes(x = Pseudotime_mid, y = mean_expr, color = Condition, fill = Condition)) +
   geom_ribbon(aes(ymin = mean_expr - sd_expr, ymax = mean_expr + sd_expr), alpha = 0.2, color = NA) +
   geom_line(size = 1.2) +
   scale_color_manual(values = c(WT="black", Kcnc1="red")) +
   scale_fill_manual(values  = c(WT="black", Kcnc1="red")) +
   theme_bw() +
-  labs(title = paste("Expression dynamics of", target_gene),
+  labs(title = paste(target_gene),
        x = "Pseudotime", y = "Fitted expression (mean ± SE)")
 dev.off()
 
@@ -63879,6 +63865,165 @@ write.table(output_df,
             row.names = FALSE, 
             col.names = TRUE)
 
+
+
+
+
+
+
+
+
+## version with l2fc015 and padj0.05  ##############################
+condRes_traj2_l2fc015 <- read.table("output/condiments/condRes-traj2_MLI1-version5dim50kparam30res25-l2fc015.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) 
+
+
+## Isolate significant DEGs and transform into a vector
+conditionGenes_traj2_l2fc015 <- condRes_traj2_l2fc015 %>% 
+  filter(padj <= 0.05) %>%
+  pull(gene)
+
+# Predict smoothed values
+yhatSmooth <- 
+  predictSmooth(traj2, gene = conditionGenes_traj2_l2fc015, nPoints = 50, tidy = FALSE) %>%
+  log1p()
+yhatSmoothScaled <- t(apply(yhatSmooth, 1, scales::rescale))
+combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
+# Generate heatmap with clustering
+# Perform hierarchical clustering
+hc <- hclust(dist(combinedData))
+clusters <- cutree(hc, k=5) # !!!!!!!!!!!!!!!!!! CHANGE CLUSTER NB HERE !!!!!!!!!!!!!!!!!!
+# Create an annotation data frame for the rows based on cluster assignments
+annotation_row <- data.frame(Cluster = factor(clusters))
+
+
+# Line plots
+library("reshape2")
+library("stringr")
+# Assuming yhatSmoothScaled contains your smoothed gene expression data
+# Convert the yhatSmoothScaled data to a dataframe
+df <- as.data.frame(yhatSmoothScaled)
+df$Gene <- rownames(df)
+# Transform the data into a long format
+df_long <- melt(df, id.vars = "Gene", variable.name = "Pseudotime", value.name = "Expression")
+# Attach the cluster information to the data frame
+df$Cluster <- factor(clusters[df$Gene])
+df_long$Cluster <- df$Cluster[match(df_long$Gene, df$Gene)]
+
+# Extract condition column
+df_long$Condition <- ifelse(str_detect(df_long$Pseudotime, "WT"), "WT", "Kcnc1")
+
+# Extract the point value and convert it to numeric
+df_long$Updated_Pseudotime <- as.numeric(str_extract(df_long$Pseudotime, "(?<=point)\\d+"))
+
+# Define colors for the conditions
+color_map <- c("WT" = "black", "Kcnc1" = "red")
+
+gene_counts <- df_long %>%
+  group_by(Cluster) %>%
+  summarise(GeneCount = n_distinct(Gene))
+df_long <- df_long %>%
+  left_join(gene_counts, by = "Cluster") %>%
+  mutate(ClusterLabel = paste0("Cluster ", Cluster, " (", GeneCount, " genes)"))
+
+# Plot using ggplot
+pdf("output/condiments/clustered_linePlot_traj2_MLI1-version5dim50kparam30res25-l2fc015-cl5.pdf", width=10, height=5)
+ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
+  geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
+  geom_line(data = subset(df_long, Condition == "Kcnc1"), aes(color = Condition), alpha = 0.5) +
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+## show only one gene ##################
+## gene expr over time with SE , , , 
+target_gene <- "Id3"   # <<< change here
+yhat_cell <- predictCells(models = traj2, gene = target_gene)  # vector per cell
+stopifnot(length(yhat_cell) == ncol(traj2))
+
+pt_all <- slingPseudotime(Part_MLI1_subset, na = FALSE)[, 2]   # lineage 2; change index if needed
+pt <- as.numeric(pt_all[colnames(traj2)])                      # HERE only keep cell of interest!
+
+
+# 3) Condition per cell (adapt to your metadata column name)
+cond <- WT_Kcnc1_CB_integrateMerge.sct@meta.data[colnames(traj2), "condition"]          
+cond <- factor(cond, levels = c("WT","Kcnc1"))             
+colData(traj2)$condition <- cond 
+
+
+df_cells <- data.frame(
+  Gene = target_gene,
+  Pseudotime = pt,
+  Expression = as.numeric(yhat_cell),
+  Condition = cond
+) %>% filter(is.finite(Pseudotime), is.finite(Expression))
+
+# 4) Bin pseudotime and summarize
+n_bins <- 40
+df_cells <- df_cells %>%
+  mutate(bin = cut(Pseudotime, breaks = n_bins, include.lowest = TRUE, labels = FALSE)) %>%
+  group_by(Condition, bin) %>%
+  summarise(
+    Pseudotime_mid = mean(Pseudotime, na.rm = TRUE),
+    mean_expr = mean(Expression, na.rm = TRUE),
+    sd_expr   = sd(Expression, na.rm = TRUE),
+    n = dplyr::n(),
+    se_expr = sd_expr / sqrt(pmax(n, 1)),
+    .groups = "drop"
+  )
+
+pdf(paste0("output/condiments/linePlot_traj2_MLI1-version5dim50kparam30res25-", target_gene, "_withRibbon.pdf"), width=5, height=3.5)
+ggplot(df_cells, aes(x = Pseudotime_mid, y = mean_expr, color = Condition, fill = Condition)) +
+  geom_ribbon(aes(ymin = mean_expr - sd_expr, ymax = mean_expr + sd_expr), alpha = 0.2, color = NA) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = c(WT="black", Kcnc1="red")) +
+  scale_fill_manual(values  = c(WT="black", Kcnc1="red")) +
+  theme_bw() +
+  xlim(0,10) +
+  labs(title = paste(target_gene),
+       x = "Pseudotime", y = "Fitted expression (mean ± SE)")
+dev.off()
+#--> HERE stop plot at pseudoimte 10!! As after 10 very few cells, outliers!
+
+##########################################
+
+
+# Plot using ggplot
+pdf("output/condiments/smoothed_linePlot_traj2_MLI1-version5dim50kparam30res25-l2fc015-cl5.pdf", width=10, height=5)
+ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
+  geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Smoothed Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+### Export gene list from each cluster
+## Create a data frame with gene names and their respective cluster assignments
+output_df <- data.frame(
+  gene = rownames(combinedData),
+  cluster = clusters
+)
+
+# Write the data frame to a .txt file
+write.table(output_df, 
+            file = "output/condiments/gene_clusters-traj2_MLI1-version5dim50kparam30res25-l2fc015-cl5.txt", 
+            sep = "\t", 
+            quote = FALSE, 
+            row.names = FALSE, 
+            col.names = TRUE)
+
+
+
+
+
+
+
 # Check some genes individually - RNA
 load("output/condiments/condiments-Part_MLI1_subset_START29_END2_points100extendpc1stretch1-version5dim50kparam30res25.RData")
 set.seed(42)
@@ -63935,13 +64080,13 @@ annotation_colors <- list(Cluster = cluster_colors)
 
 col_order <- order(grepl("WT", colnames(combinedData)), decreasing = TRUE)
 combinedData <- combinedData[, col_order]
-pdf("output/condiments/heatmap-traj2_MLI1_version5dim50kparam30res25-l2fc0_cl10.pdf", width=5, height=5)
+pdf("output/condiments/heatmap-traj2_MLI1_version5dim50kparam30res25-l2fc015_cl5.pdf", width=5, height=5)
 pheatmap(combinedData,
   cluster_cols = FALSE,
   show_rownames = FALSE,
   show_colnames = FALSE,
   legend = TRUE,
-  cutree_rows = 10,
+  cutree_rows = 5,
   annotation_row = annotation_row,
   annotation_colors = annotation_colors
 )
@@ -63987,10 +64132,13 @@ gene_clusters_traj2_MLI1 <- read.table("output/condiments/gene_clusters-traj2_ML
                             sep = "\t", 
                             stringsAsFactors = FALSE)
 
-
+gene_clusters_traj2_MLI1 <- read.table("output/condiments/gene_clusters-traj2_MLI1-version5dim50kparam30res25-l2fc015-cl5.txt", 
+                            header = TRUE, 
+                            sep = "\t", 
+                            stringsAsFactors = FALSE)
 
 # GO BP
-pdf("output/Pathway/dotplot_BP-traj2_MLI1_version5dim50kparam30res25-l2fc0_cl10.pdf", width = 12, height = 6)
+pdf("output/Pathway/dotplot_BP-traj2_MLI1_version5dim50kparam30res25-l2fc015_cl5.pdf", width = 12, height = 6)
 # Loop through clusters 1 to 10
 for (cluster_id in sort(unique(gene_clusters_traj2_MLI1$cluster))) {
   message("Processing cluster: ", cluster_id)
@@ -64015,7 +64163,7 @@ dev.off()
 
 
 # KEGG
-pdf("output/Pathway/dotplot_KEGG-traj2_MLI1_version5dim50kparam30res25-l2fc0_cl10.pdf", width = 12, height = 6)
+pdf("output/Pathway/dotplot_KEGG-traj2_MLI1_version5dim50kparam30res25-l2fc015_cl5.pdf", width = 12, height = 6)
 # Loop through clusters 1 to 10
 for (cluster_id in sort(unique(gene_clusters_traj2_MLI1$cluster))) {
   message("Processing KEGG cluster: ", cluster_id)
@@ -64044,6 +64192,75 @@ for (cluster_id in sort(unique(gene_clusters_traj2_MLI1$cluster))) {
   }
 }
 dev.off()
+
+
+
+######## Specific case KEGG ################
+
+genes_cluster <- gene_clusters_traj2_MLI1 %>%
+  filter(cluster == 4) %>%
+  pull(gene)
+
+# Convert SYMBOLs to ENTREZ IDs
+entrez_cluster <- mapIds(org.Mm.eg.db,
+                          keys = genes_cluster,
+                          column = "ENTREZID",
+                          keytype = "SYMBOL",
+                          multiVals = "first") %>%
+  na.omit() %>% as.character()
+
+# KEGG enrichment
+ekegg_cluster <- enrichKEGG(gene = entrez_cluster,
+                             organism = "mmu",
+                             pvalueCutoff = 0.05,
+                             pAdjustMethod = "BH")
+if (!is.null(ekegg_cluster) && nrow(ekegg_cluster) > 0) {
+  ekegg_cluster@result$Description <- gsub(" - Mus musculus.*", "", ekegg_cluster@result$Description)
+}
+
+# Plot
+
+pdf("output/Pathway/dotplot_KEGG-traj2_MLI1_version5dim50kparam30res25-l2fc015_cl7_cluster4_top10.pdf", width = 6, height = 4)
+if (!is.null(ekegg_cluster) && nrow(ekegg_cluster) > 0) {
+  print(dotplot(ekegg_cluster, showCategory = 10) )
+} else {
+  print(ggplot() + ggtitle("No KEGG Enrichment") + theme_void())
+}
+dev.off()
+
+
+
+
+
+
+
+
+
+
+######## Specific case GO BP ################
+
+genes_cluster <- gene_clusters_traj2_MLI1 %>%
+  filter(cluster == 2) %>%
+  pull(gene)
+
+
+# GO enrichment
+ego <- enrichGO(gene = genes_cluster,
+                OrgDb = org.Mm.eg.db,
+                keyType = "SYMBOL",
+                ont = "BP",
+                pvalueCutoff = 0.05,
+                pAdjustMethod = "BH",
+                readable = TRUE)
+
+# Plot
+
+pdf("output/Pathway/dotplot_BP-traj2_MLI1_version5dim50kparam30res25-l2fc015_cl7_cluster2_top5.pdf", width = 6, height =3 )
+dotplot(ego, showCategory = 5)
+dev.off()
+
+
+
 
 
 
@@ -64527,6 +64744,168 @@ write.table(output_df,
             quote = FALSE, 
             row.names = FALSE, 
             col.names = TRUE)
+
+
+
+
+
+
+## version with l2fc015 and padj0.05  ##############################
+
+XXXY HERE!!! Run below!
+
+condRes_traj1_l2fc015 <- read.table("output/condiments/condRes-traj1_MLI2-version5dim50kparam30res25-l2fc015.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) 
+
+
+## Isolate significant DEGs and transform into a vector
+conditionGenes_traj1_l2fc015 <- condRes_traj1_l2fc015 %>% 
+  filter(padj <= 0.05) %>%
+  pull(gene)
+
+# Predict smoothed values
+yhatSmooth <- 
+  predictSmooth(traj1, gene = conditionGenes_traj1_l2fc015, nPoints = 50, tidy = FALSE) %>%
+  log1p()
+yhatSmoothScaled <- t(apply(yhatSmooth, 1, scales::rescale))
+combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
+# Generate heatmap with clustering
+# Perform hierarchical clustering
+hc <- hclust(dist(combinedData))
+clusters <- cutree(hc, k=5) # !!!!!!!!!!!!!!!!!! CHANGE CLUSTER NB HERE !!!!!!!!!!!!!!!!!!
+# Create an annotation data frame for the rows based on cluster assignments
+annotation_row <- data.frame(Cluster = factor(clusters))
+
+
+# Line plots
+library("reshape2")
+library("stringr")
+# Assuming yhatSmoothScaled contains your smoothed gene expression data
+# Convert the yhatSmoothScaled data to a dataframe
+df <- as.data.frame(yhatSmoothScaled)
+df$Gene <- rownames(df)
+# Transform the data into a long format
+df_long <- melt(df, id.vars = "Gene", variable.name = "Pseudotime", value.name = "Expression")
+# Attach the cluster information to the data frame
+df$Cluster <- factor(clusters[df$Gene])
+df_long$Cluster <- df$Cluster[match(df_long$Gene, df$Gene)]
+
+# Extract condition column
+df_long$Condition <- ifelse(str_detect(df_long$Pseudotime, "WT"), "WT", "Kcnc1")
+
+# Extract the point value and convert it to numeric
+df_long$Updated_Pseudotime <- as.numeric(str_extract(df_long$Pseudotime, "(?<=point)\\d+"))
+
+# Define colors for the conditions
+color_map <- c("WT" = "black", "Kcnc1" = "red")
+
+gene_counts <- df_long %>%
+  group_by(Cluster) %>%
+  summarise(GeneCount = n_distinct(Gene))
+df_long <- df_long %>%
+  left_join(gene_counts, by = "Cluster") %>%
+  mutate(ClusterLabel = paste0("Cluster ", Cluster, " (", GeneCount, " genes)"))
+
+# Plot using ggplot
+pdf("output/condiments/clustered_linePlot_traj1_MLI2-version5dim50kparam30res25-l2fc015-cl5.pdf", width=10, height=5)
+ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
+  geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
+  geom_line(data = subset(df_long, Condition == "Kcnc1"), aes(color = Condition), alpha = 0.5) +
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+## show only one gene ##################
+## gene expr over time with SE , , , 
+target_gene <- "Id3"   # <<< change here
+yhat_cell <- predictCells(models = traj2, gene = target_gene)  # vector per cell
+stopifnot(length(yhat_cell) == ncol(traj2))
+
+pt_all <- slingPseudotime(Part_MLI1_subset, na = FALSE)[, 2]   # lineage 2; change index if needed
+pt <- as.numeric(pt_all[colnames(traj2)])                      # HERE only keep cell of interest!
+
+
+# 3) Condition per cell (adapt to your metadata column name)
+cond <- WT_Kcnc1_CB_integrateMerge.sct@meta.data[colnames(traj2), "condition"]          
+cond <- factor(cond, levels = c("WT","Kcnc1"))             
+colData(traj2)$condition <- cond 
+
+
+df_cells <- data.frame(
+  Gene = target_gene,
+  Pseudotime = pt,
+  Expression = as.numeric(yhat_cell),
+  Condition = cond
+) %>% filter(is.finite(Pseudotime), is.finite(Expression))
+
+# 4) Bin pseudotime and summarize
+n_bins <- 40
+df_cells <- df_cells %>%
+  mutate(bin = cut(Pseudotime, breaks = n_bins, include.lowest = TRUE, labels = FALSE)) %>%
+  group_by(Condition, bin) %>%
+  summarise(
+    Pseudotime_mid = mean(Pseudotime, na.rm = TRUE),
+    mean_expr = mean(Expression, na.rm = TRUE),
+    sd_expr   = sd(Expression, na.rm = TRUE),
+    n = dplyr::n(),
+    se_expr = sd_expr / sqrt(pmax(n, 1)),
+    .groups = "drop"
+  )
+
+pdf(paste0("output/condiments/linePlot_traj1_MLI2-version5dim50kparam30res25-", target_gene, "_withRibbon.pdf"), width=5, height=3.5)
+ggplot(df_cells, aes(x = Pseudotime_mid, y = mean_expr, color = Condition, fill = Condition)) +
+  geom_ribbon(aes(ymin = mean_expr - sd_expr, ymax = mean_expr + sd_expr), alpha = 0.2, color = NA) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = c(WT="black", Kcnc1="red")) +
+  scale_fill_manual(values  = c(WT="black", Kcnc1="red")) +
+  theme_bw() +
+  xlim(0,10) +
+  labs(title = paste(target_gene),
+       x = "Pseudotime", y = "Fitted expression (mean ± SE)")
+dev.off()
+#--> HERE stop plot at pseudoimte 10!! As after 10 very few cells, outliers!
+
+##########################################
+
+
+# Plot using ggplot
+pdf("output/condiments/smoothed_linePlot_traj1_MLI2-version5dim50kparam30res25-l2fc015-cl5.pdf", width=10, height=5)
+ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
+  geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Smoothed Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+### Export gene list from each cluster
+## Create a data frame with gene names and their respective cluster assignments
+output_df <- data.frame(
+  gene = rownames(combinedData),
+  cluster = clusters
+)
+
+# Write the data frame to a .txt file
+write.table(output_df, 
+            file = "output/condiments/gene_clusters-traj1_MLI2-version5dim50kparam30res25-l2fc015-cl5.txt", 
+            sep = "\t", 
+            quote = FALSE, 
+            row.names = FALSE, 
+            col.names = TRUE)
+
+
+
+
+
+
+
+
+
 
 # Check some genes individually - RNA
 load("output/condiments/condiments-Part_MLI2_subset_START27_END19_points100extendpc1stretch1-version5dim50kparam30res25.RData")
