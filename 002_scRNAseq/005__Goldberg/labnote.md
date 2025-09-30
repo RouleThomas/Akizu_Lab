@@ -34566,6 +34566,18 @@ FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Cntn5"), max.cutoff = 1, co
 dev.off()
 
 
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-HomeostaticMicrogliaMarkers.pdf", width=15, height=12)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("P2ry12","P2ry13","Cx3cr1","Tmem119" ), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+#--> HomeostaticMicrogliaMarkers not clearly down; poorly detecteed!
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-DAMMicrogliaMarkers.pdf", width=10, height=50)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Trem2","Apoe","Lpl","Itgax","Clec7a","Axl","Ctsd","Tyrobp","Spp1" ,"Cst7","B2m","Prdx1" ), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+#--> clear induction of DAM micrglia markers for: Apoe, Ctsd, Prdx1
+
+
+
 # Vln Plot WT vs Kcnc1
 
 DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
@@ -35202,10 +35214,26 @@ fgsea_sets <- list(
   GOBP_SYNAPTIC_TRANSMISSION_GABAERGIC = read_table(file = "output/Pathway/geneList_GOBP_SYNAPTIC_TRANSMISSION_GABAERGIC.txt")$Genes
 )
 
+### List9 - DAM microglia (from AMPD2 paper)
+fgsea_sets <- list(
+  DAM_microglia = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v2.txt",  col_names = FALSE)$X1,
+  DAM_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_top50_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_top50_v2.txt",  col_names = FALSE)$X1
+)
 
+### List10 - DAM microglia (adapted from AMPD2 paper; isolate padj 0.05(log10(1.4) and positive FC)
+fgsea_sets <- list(
+  DAM_microglia_v3_top50 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top50.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top100 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top100.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top200 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top200.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top300 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top300.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top390FCOver1 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top390FCOver1.txt",  col_names = FALSE)$X1
+)
 
 ## Rank genes based on FC
-genes <- MLI2 %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+genes <- BergmanGlia %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
   rownames_to_column(var = "gene") %>%
   arrange(desc(avg_log2FC)) %>% 
   dplyr::select(gene, avg_log2FC)
@@ -35225,11 +35253,16 @@ fgseaResTidy %>%
 
 
 ## plot GSEA
-#pdf("output/Pathway/GSEA_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST-REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION-MLI2.pdf", width=5, height=3)
-plotEnrichment(fgsea_sets[["REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION"]],
-               ranks) + labs(title="REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION-MLI2") +
+pdf("output/Pathway/GSEA_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-DAM_microglia_v3_top390FCOver1-BergmanGlia.pdf", width=3, height=2)
+plotEnrichment(fgsea_sets[["DAM_microglia_v3_top390FCOver1"]],
+               ranks) + labs(title="DAM_microglia_v3_top390FCOver1-BergmanGlia") +
                theme_bw()
 dev.off()
+## command to show leading edge genes
+fgseaResTidy %>%
+  filter(pathway == "DAM_microglia_v3_top390FCOver1") %>%
+  pull(leadingEdge) %>%
+  .[[1]]  
 
 
 # Save output table for all pathway and cluster
@@ -35960,6 +35993,47 @@ for (cell_type in cell_types) {
   print(p)
 }
 dev.off()
+
+
+cell_types <- c("BergmanGlia")
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-top10_Up-BergmanGlia.pdf", width = 6, height = 5)
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-top5_Up-BergmanGlia.pdf", width = 6, height = 3)
+
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Upregulated genes only
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", 
+           keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>% as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu",
+               pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Clean descriptions (remove " - Mus musculus")
+  if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    ekegg_combined@result$Description <- gsub(" - Mus musculus.*", "", ekegg_combined@result$Description)
+  }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 5) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
 
 
 # Plot
@@ -37887,23 +37961,16 @@ dev.off()
 
 
 ## Subset seurat object in granule only
-
 WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
                                        subset = cluster.annot %in% c( "Granule"))
-
 WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
                                        subset = cluster.annot %in% c( "Granule"))
-
 # Check some genes
 DefaultAssay(WT_Kcnc1_p14_CB_1step_subset) <- "RNA"
-
-
-
 #### import all clsuter DEGs output :
 cluster_types <- c("Granule")
 ##### Initialize empty list to store data
 deg_list <- list()
-
 ##### Read all DEG files and add cluster column
 for (i in seq_along(cluster_types)) {
   cluster <- cluster_types[i]
@@ -37915,7 +37982,6 @@ for (i in seq_along(cluster_types)) {
     deg_list[[cluster]] <- data
   }
 }
-
 ##### Combine all DEG results
 combined_deg <- bind_rows(deg_list)
 ##### Add significance stars based on adjusted p-value
@@ -37926,8 +37992,6 @@ combined_deg <- combined_deg %>%
     p_val_adj < 0.05   ~ "*",
     TRUE               ~ ""
   ))
-
-
 # Generate the violin plot
 ###### Define genes of interest
 genes_of_interest <- c("Myt1l", "Grin2b", "Cntn5") # gene.down gene.up 
@@ -37975,6 +38039,105 @@ for (gene in genes_of_interest) {
   print(p)
 }
 dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Related to DAM microglia - Subset seurat object in BergmanGlia only
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "BergmanGlia"))
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "BergmanGlia"))
+# Check some genes
+DefaultAssay(WT_Kcnc1_p14_CB_1step_subset) <- "RNA"
+#### import all clsuter DEGs output :
+cluster_types <- c("BergmanGlia")
+##### Initialize empty list to store data
+deg_list <- list()
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.0001 ~ "***",
+    p_val_adj < 0.001  ~ "**",
+    p_val_adj < 0.05   ~ "*",
+    TRUE               ~ ""
+  ))
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- c("P2ry12","P2ry13","Cx3cr1","Tmem119","Trem2","Apoe","Lpl","Itgax","Axl","Ctsd","Tyrobp","Spp1" ,"Cst7","B2m","Prdx1") # gene.down gene.up 
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(WT_Kcnc1_p14_CB_1step_subset, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p14_CB_1step_subset))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CB_1step_subset-version5dim40kparam15res015-Kcnc1-HMDAMMicroglia-STAT.pdf", width=3, height=3)
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(WT_Kcnc1_p14_CB_1step_subset, 
+               features = gene, 
+               pt.size = 0, 
+               split.by = "condition", cols = c("black", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.2, label = significance), 
+                     size = 6, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+
+
+
 
 
 
@@ -38316,6 +38479,20 @@ dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-Apoe.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Apoe"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
 dev.off()
+
+
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-HomeostaticMicrogliaMarkers.pdf", width=15, height=20)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("P2ry12","P2ry13","Cx3cr1","Tmem119" ), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+#--> HomeostaticMicrogliaMarkers down: P2ry12
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-DAMMicrogliaMarkers.pdf", width=10, height=50)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Trem2","Apoe","Lpl","Itgax","Clec7a","Axl","Ctsd","Tyrobp","Spp1" ,"Cst7","B2m","Prdx1" ), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+#--> clear induction of DAM micrglia markers for: Apoe, Ctsd
+
+
 
 
 
@@ -38990,6 +39167,24 @@ fgsea_sets <- list(
   GOBP_SYNAPTIC_TRANSMISSION_GABAERGIC = read_table(file = "output/Pathway/geneList_GOBP_SYNAPTIC_TRANSMISSION_GABAERGIC.txt")$Genes
 )
 
+### List9 - DAM microglia (from AMPD2 paper)
+fgsea_sets <- list(
+  DAM_microglia = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v2.txt",  col_names = FALSE)$X1,
+  DAM_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_top50_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_top50_v2.txt",  col_names = FALSE)$X1
+)
+
+### List10 - DAM microglia (adapted from AMPD2 paper; isolate padj 0.05(log10(1.4) and positive FC)
+fgsea_sets <- list(
+  DAM_microglia_v3_top50 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top50.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top100 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top100.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top200 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top200.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top300 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top300.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top390FCOver1 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top390FCOver1.txt",  col_names = FALSE)$X1
+)
+
 
 
 
@@ -38998,7 +39193,7 @@ fgsea_sets <- list(
 
 
 ## Rank genes based on FC
-genes <- MLI2 %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+genes <- BergmanGlia %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
   rownames_to_column(var = "gene") %>%
   arrange(desc(avg_log2FC)) %>% 
   dplyr::select(gene, avg_log2FC)
@@ -39018,11 +39213,17 @@ fgseaResTidy %>%
 
 
 ## plot GSEA
-#pdf("output/Pathway/GSEA_Kcnc1_response_p35_CB_QCV3dim30kparam50res035_allGenes_MAST-REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION-MLI2.pdf", width=5, height=3)
-plotEnrichment(fgsea_sets[["REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION"]],
-               ranks) + labs(title="REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION-MLI2") +
+pdf("output/Pathway/GSEA_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-DAM_microglia_v3_top390FCOver1-BergmanGlia.pdf", width=3, height=2)
+plotEnrichment(fgsea_sets[["DAM_microglia_v3_top390FCOver1"]],
+               ranks) + labs(title="DAM_microglia_v3_top390FCOver1-BergmanGlia") +
                theme_bw()
 dev.off()
+## command to show leading edge genes
+fgseaResTidy %>%
+  filter(pathway == "DAM_microglia_v3_top390FCOver1") %>%
+  pull(leadingEdge) %>%
+  .[[1]]  
+
 
 
 # Save output table for all pathway and cluster
@@ -39515,6 +39716,44 @@ for (cell_type in cell_types) {
   ekegg_combined <- if (length(entrez_combined) > 0) {
     enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
   } else { NULL }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 10) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+cell_types <- c("BergmanGlia")
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-top5_Up-BergmanGlia.pdf", width = 6, height = 3)
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-top10_Up-BergmanGlia.pdf", width = 6, height = 5)
+
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Clean descriptions (remove " - Mus musculus")
+  if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    ekegg_combined@result$Description <- gsub(" - Mus musculus.*", "", ekegg_combined@result$Description)
+  }
   # Plot
   p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
     dotplot(ekegg_combined, showCategory = 10) + ggtitle(paste(cell_type, "- KEGG"))
@@ -41194,8 +41433,6 @@ WT_Kcnc1_p35_CB_1step_subset <- subset(WT_Kcnc1_p35_CB_1step.sct,
 # Check some genes
 DefaultAssay(WT_Kcnc1_p35_CB_1step_subset) <- "RNA"
 
-
-
 #### import all clsuter DEGs output :
 cluster_types <- c("Granule", "MLI1", "MLI2", "Purkinje", "Golgi", "CerebellarNuclei")
 ##### Initialize empty list to store data
@@ -41225,10 +41462,6 @@ combined_deg <- combined_deg %>%
   ))
 
 
-
-
-
-
 # Generate the violin plot
 ###### Define genes of interest
 genes_of_interest <- c("Slc6a1", "Slc6a6", "Slc32a1","Gad1","Gabbr1", "Gabbr2", "Gabra1", "Gabra2", "Gabra3", "Gabra6", "Gabrb2", "Gabrb3", "Gabrg2", "Gabrd") # gene.down gene.up 
@@ -41255,6 +41488,110 @@ sig_data <- sig_data %>%
   left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
 
 pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p35_CB_1step_subset-version5dim40kparam15res0245-geneDownGABA-filterNeurons-STAT.pdf", width=5, height=3)
+
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(WT_Kcnc1_p35_CB_1step_subset, 
+               features = gene, 
+               pt.size = 0, 
+               split.by = "condition", cols = c("black", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.2, label = significance), 
+                     size = 6, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Related to DAM microglia - Subset seurat object in BergmanGlia only
+## Subset seurat object to keep cell tye of interest
+WT_Kcnc1_p35_CB_1step_subset <- subset(WT_Kcnc1_p35_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "BergmanGlia"))
+
+WT_Kcnc1_p35_CB_1step_subset <- subset(WT_Kcnc1_p35_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "BergmanGlia"))
+
+# Check some genes
+DefaultAssay(WT_Kcnc1_p35_CB_1step_subset) <- "RNA"
+
+#### import all clsuter DEGs output :
+cluster_types <- c("BergmanGlia")
+##### Initialize empty list to store data
+deg_list <- list()
+
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.0001 ~ "***",
+    p_val_adj < 0.001  ~ "**",
+    p_val_adj < 0.05   ~ "*",
+    TRUE               ~ ""
+  ))
+
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- c("P2ry12","P2ry13","Cx3cr1","Tmem119","Trem2","Apoe","Lpl","Itgax","Axl","Ctsd","Tyrobp","Spp1" ,"Cst7","B2m","Prdx1", "Pld3","Atp6v1a" ,"Cln5", "Hif1a", "Timp2" ) # gene.down gene.up 
+
+
+
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(WT_Kcnc1_p35_CB_1step_subset, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p35_CB_1step_subset))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p35_CB_1step_subset-version5dim40kparam15res0245-HMDAMMicroglia-STAT.pdf", width=3, height=3)
 
 ###### Generate separate plots per gene
 for (gene in genes_of_interest) {
@@ -41529,6 +41866,19 @@ dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-Apoe.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Apoe"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
 dev.off()
+
+
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-HomeostaticMicrogliaMarkers.pdf", width=15, height=20)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("P2ry12","P2ry13","Cx3cr1","Tmem119" ), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+#--> HomeostaticMicrogliaMarkers down: none
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-DAMMicrogliaMarkers.pdf", width=10, height=50)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Trem2","Apoe","Lpl","Itgax","Clec7a","Axl","Ctsd","Tyrobp","Spp1" ,"Cst7","B2m","Prdx1" ), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+#--> clear induction of DAM micrglia markers for: Apoe, Axl
+
 
 
 
@@ -42195,8 +42545,31 @@ fgsea_sets <- list(
 )
 
 
+
+### List9 - DAM microglia (from AMPD2 paper)
+fgsea_sets <- list(
+  DAM_microglia = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v2.txt",  col_names = FALSE)$X1,
+  DAM_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_top50_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_top50_v2.txt",  col_names = FALSE)$X1
+)
+
+### List10 - DAM microglia (adapted from AMPD2 paper; isolate padj 0.05(log10(1.4) and positive FC)
+fgsea_sets <- list(
+  DAM_microglia_v3_top50 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top50.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top100 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top100.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top200 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top200.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top300 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top300.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top390FCOver1 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top390FCOver1.txt",  col_names = FALSE)$X1
+)
+
+
+
+
+
 ## Rank genes based on FC
-genes <- MLI2 %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+genes <- BergmanGlia %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
   rownames_to_column(var = "gene") %>%
   arrange(desc(avg_log2FC)) %>% 
   dplyr::select(gene, avg_log2FC)
@@ -42216,11 +42589,18 @@ fgseaResTidy %>%
 
 
 ## plot GSEA
-#pdf("output/Pathway/GSEA_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST-REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION-MLI2.pdf", width=5, height=3)
-plotEnrichment(fgsea_sets[["REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION"]],
-               ranks) + labs(title="REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION-MLI2") +
+pdf("output/Pathway/GSEA_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-DAM_microglia_v3_top390FCOver1-BergmanGlia.pdf", width=3, height=2)
+plotEnrichment(fgsea_sets[["DAM_microglia_v3_top390FCOver1"]],
+               ranks) + labs(title="DAM_microglia_v3_top390FCOver1-BergmanGlia") +
                theme_bw()
 dev.off()
+## command to show leading edge genes
+fgseaResTidy %>%
+  filter(pathway == "DAM_microglia_v3_top390FCOver1") %>%
+  pull(leadingEdge) %>%
+  .[[1]]  
+
+
 
 
 # Save output table for all pathway and cluster
@@ -42702,6 +43082,48 @@ for (cell_type in cell_types) {
   print(p)
 }
 dev.off()
+
+
+
+
+cell_types <- c("BergmanGlia")
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-top10_Up-BergmanGlia.pdf", width = 6, height = 5)
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-top5_Up-BergmanGlia.pdf", width = 6, height = 3)
+
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Clean descriptions (remove " - Mus musculus")
+  if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    ekegg_combined@result$Description <- gsub(" - Mus musculus.*", "", ekegg_combined@result$Description)
+  }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 5) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
 
 
 
@@ -44182,6 +44604,104 @@ for (gene in genes_of_interest) {
   print(p)
 }
 dev.off()
+
+
+
+
+
+
+
+
+
+## Related to DAM microglia - Subset seurat object in BergmanGlia only
+## Subset seurat object to keep cell tye of interest
+
+WT_Kcnc1_p180_CB_1step_subset <- subset(WT_Kcnc1_p180_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "BergmanGlia"))
+
+WT_Kcnc1_p180_CB_1step_subset <- subset(WT_Kcnc1_p180_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "BergmanGlia"))
+
+# Check some genes
+DefaultAssay(WT_Kcnc1_p180_CB_1step_subset) <- "RNA"
+
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("BergmanGlia")
+##### Initialize empty list to store data
+deg_list <- list()
+
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.0001 ~ "***",
+    p_val_adj < 0.001  ~ "**",
+    p_val_adj < 0.05   ~ "*",
+    TRUE               ~ ""
+  ))
+
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- c("P2ry12","P2ry13","Cx3cr1","Tmem119","Trem2","Apoe","Lpl","Itgax","Axl","Ctsd","Tyrobp","Spp1" ,"Cst7","B2m","Prdx1", "Pld3","Atp6v1a" ,"Cln5", "Hif1a", "Timp2" ) # gene.down gene.up 
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(WT_Kcnc1_p180_CB_1step_subset, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p180_CB_1step_subset))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p180_CB_1step_subset-version5dim20kparam10res0115-HMDAMMicroglia-STAT.pdf", width=3, height=3)
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(WT_Kcnc1_p180_CB_1step_subset, 
+               features = gene, 
+               pt.size = 0, 
+               split.by = "condition", cols = c("black", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.2, label = significance), 
+                     size = 6, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+
 
 
 
