@@ -34513,6 +34513,10 @@ pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15re
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "Kcnc1", cols = c("grey", "red"), max.cutoff = 1)
 dev.off()
 
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-MicrogliaMarkers.pdf", width=6, height=7)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("P2ry12","Tmem119","Cx3cr1","Sall1","Aif1","Csf1r"), cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
+
 
 
 # save ##################
@@ -35756,6 +35760,116 @@ dev.off()
 
 
 ```
+
+
+
+
+##### DAM microglia
+
+Lets investigate whether my microglia are DAM or homeostatic:
+- Isolate microglia cluster (part of Meningeal) by increasing resolution;
+- Perform DEG on microglia cluster
+- GSEA on microglia cluster using microglia markers from AMPD2 paper
+
+
+
+```bash
+conda activate scRNAseqV3
+```
+
+
+
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+set.seed(42)
+
+
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015.sct_V1_label.rds") # 
+set.seed(42)
+
+
+
+#### UMAP
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "integrated"
+
+#WT_Kcnc1_p14_CB_1step.sct <- RunPCA(WT_Kcnc1_p14_CB_1step.sct, verbose = FALSE, npcs = 40)
+#WT_Kcnc1_p14_CB_1step.sct <- RunUMAP(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
+WT_Kcnc1_p14_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", k.param = 7, dims = 1:40)
+WT_Kcnc1_p14_CB_1step.sct <- FindClusters(WT_Kcnc1_p14_CB_1step.sct, resolution = 4.5, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+
+WT_Kcnc1_p14_CB_1step.sct$condition <- factor(WT_Kcnc1_p14_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version4dim40kparam7res45.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE)
+dev.off()
+
+
+
+
+# Unbiased cell type marker genes
+Idents(WT_Kcnc1_p14_CB_1step.sct) <- "seurat_clusters"
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
+WT_Kcnc1_p14_CB_1step.sct <- NormalizeData(WT_Kcnc1_p14_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p14_CB_1step.sct)
+WT_Kcnc1_p14_CB_1step.sct <- ScaleData(WT_Kcnc1_p14_CB_1step.sct, features = all.genes) # zero-centres and scales it
+
+all_markers <- FindAllMarkers(WT_Kcnc1_p14_CB_1step.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all_markers, file = "output/seurat/srat_WT_Kcnc1_p14_CB_1step-version4dim40kparam15res015-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-MicrogliaMarkers.pdf", width=6, height=7)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("P2ry12","Tmem119","Cx3cr1","Sall1","Aif1","Csf1r"), cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
+
+
+
+
+
+
+# WT vs Kcnc1
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
+WT_Kcnc1_p14_CB_1step.sct <- NormalizeData(WT_Kcnc1_p14_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p14_CB_1step.sct)
+WT_Kcnc1_p14_CB_1step.sct <- ScaleData(WT_Kcnc1_p14_CB_1step.sct, features = all.genes) # zero-centres and scales it
+
+
+
+
+
+
+# save ##################
+
+
+## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015.sct_V1_label.rds") 
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015.sct_V1_label.rds") # 
+set.seed(42)
+##########
+
+
+
+
+
+
+
+```
+
+
+
+
 
 ##### GO all clusters
 
@@ -38450,6 +38564,11 @@ dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-Kcnc1.pdf", width=6, height=6)
 FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = "Kcnc1", cols = c("grey", "red"), max.cutoff = 1)
 dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-MicrogliaMarkers.pdf", width=6, height=7)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("P2ry12","Tmem119","Cx3cr1","Sall1","Aif1","Csf1r"), cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
+
 
 
 
@@ -41824,6 +41943,14 @@ dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-Kcnc1.pdf", width=6, height=6)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = "Kcnc1", cols = c("grey", "red"), max.cutoff = 1)
 dev.off()
+
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-MicrogliaMarkers.pdf", width=6, height=7)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("P2ry12","Tmem119","Cx3cr1","Sall1","Aif1","Csf1r"), cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
+
+
 
 
 
