@@ -35146,7 +35146,8 @@ cluster_types <- c("ImmatureGranule",
   "Oligodendrocyte",
   "Endothelial",
   "Meningeal",
-  "ChoroidPlexus")
+  "ChoroidPlexus",
+  "Microglia") # NEW ONE isolated from the UMAP see `##### DAM microglia`
 # Loop over each cluster type to read data and assign to a variable
 for (cluster in cluster_types) {
   file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
@@ -35237,7 +35238,7 @@ fgsea_sets <- list(
 )
 
 ## Rank genes based on FC
-genes <- BergmanGlia %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+genes <- Microglia %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
   rownames_to_column(var = "gene") %>%
   arrange(desc(avg_log2FC)) %>% 
   dplyr::select(gene, avg_log2FC)
@@ -35768,13 +35769,14 @@ dev.off()
 
 Lets investigate whether my microglia are DAM or homeostatic:
 - Isolate microglia cluster (part of Meningeal) by increasing resolution;
+--> This method was not working great; cannot clearly isolate Microglia so instead: Isolate them manually based on UMAP location and expression of microglia marker genes
 - Perform DEG on microglia cluster
 - GSEA on microglia cluster using microglia markers from AMPD2 paper
 
 
 
 ```bash
-conda activate scRNAseqV3
+conda activate scRNAseqV2 # for MAST
 ```
 
 
@@ -35799,68 +35801,116 @@ set.seed(42)
 WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015.sct_V1_label.rds") # 
 set.seed(42)
 
-
-
-#### UMAP
-DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "integrated"
-
-#WT_Kcnc1_p14_CB_1step.sct <- RunPCA(WT_Kcnc1_p14_CB_1step.sct, verbose = FALSE, npcs = 40)
-#WT_Kcnc1_p14_CB_1step.sct <- RunUMAP(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", dims = 1:40, verbose = FALSE)
-WT_Kcnc1_p14_CB_1step.sct <- FindNeighbors(WT_Kcnc1_p14_CB_1step.sct, reduction = "pca", k.param = 7, dims = 1:40)
-WT_Kcnc1_p14_CB_1step.sct <- FindClusters(WT_Kcnc1_p14_CB_1step.sct, resolution = 4.5, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
-
-
-WT_Kcnc1_p14_CB_1step.sct$condition <- factor(WT_Kcnc1_p14_CB_1step.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
-
-pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version4dim40kparam7res45.pdf", width=7, height=6)
-DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", label=TRUE)
-dev.off()
-
-
-
-
-# Unbiased cell type marker genes
-Idents(WT_Kcnc1_p14_CB_1step.sct) <- "seurat_clusters"
-## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+# check microglia markers 
 DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
-WT_Kcnc1_p14_CB_1step.sct <- NormalizeData(WT_Kcnc1_p14_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
-all.genes <- rownames(WT_Kcnc1_p14_CB_1step.sct)
-WT_Kcnc1_p14_CB_1step.sct <- ScaleData(WT_Kcnc1_p14_CB_1step.sct, features = all.genes) # zero-centres and scales it
 
-all_markers <- FindAllMarkers(WT_Kcnc1_p14_CB_1step.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
-write.table(all_markers, file = "output/seurat/srat_WT_Kcnc1_p14_CB_1step-version4dim40kparam15res015-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-MicrogliaMarkers.pdf", width=48, height=33)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Itgam", "P2ry12","Tmem119","Cx3cr1","Sall1","Aif1","Csf1r", "Aldh1a2", "Adrb2", "Sphk1", "Colec12", "Ccrl2", "Ccr5", "Itgb5"), cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
+#--> Microglia located within Meningeal cluster; isolate these cells
+
+## Get UMAP coordinates
+umap <- Embeddings(WT_Kcnc1_p14_CB_1step.sct, "umap") |> as.data.frame()
+umap$cell <- rownames(umap)
+## DEFINE YOUR RECTANGLE 
+x_min <- -2.5; x_max <- 1.5
+y_min <-  6; y_max <-  9.5
+## Select cells inside the rectangle
+sel <- with(umap, UMAP_1 >= x_min & UMAP_1 <= x_max &
+                   UMAP_2 >= y_min & UMAP_2 <= y_max)
+cells_in_rect <- umap$cell[sel]
+
+#  Subset the Seurat object to ONLY those cells
+WT_Kcnc1_p14_CB_1step.zoom <- subset(WT_Kcnc1_p14_CB_1step.sct, cells = cells_in_rect)
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-MicrogliaMarkers.pdf", width=6, height=7)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("P2ry12","Tmem119","Cx3cr1","Sall1","Aif1","Csf1r"), cols = c("grey", "red"), max.cutoff = 1)
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version5dim40kparam15res015-ZoomMicroglia.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.zoom, reduction = "umap", label=TRUE)
 dev.off()
 
+# check microglia markers 
+DefaultAssay(WT_Kcnc1_p14_CB_1step.zoom) <- "RNA"
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-ZoomMicroglia-MicrogliaMarkers.pdf", width=20, height=15)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.zoom, features = c("Itgam", "P2ry12","Tmem119","Cx3cr1","Sall1","Aif1","Csf1r", "Aldh1a2", "Adrb2", "Sphk1", "Colec12", "Ccrl2", "Ccr5", "Itgb5"), cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
+#--> These one show specific expression: Itgam, P2ry12, Tmem119, Cx3cr1, Csf1r, Itgb5, Ccr5 = mg_markers
 
 
+# create marker detected list
+mg_markers <- c("Itgam","P2ry12","Tmem119","Cx3cr1","Csf1r","Itgb5","Ccr5")
+mg_markers <- intersect(mg_markers, rownames(WT_Kcnc1_p14_CB_1step.zoom))  # keep only genes present
+# Detection by raw counts
+mat <- GetAssayData(WT_Kcnc1_p14_CB_1step.zoom, assay = "RNA", slot = "counts")[mg_markers, , drop = FALSE]
+n_detected <- Matrix::colSums(mat > 0)              # how many markers per cell
+# Cells expressing at least 2 markers
+mg_cells <- names(n_detected)[n_detected >= 2]
+# Subset object to those cells
+WT_Kcnc1_p14_CB_1step.microglia <- subset(WT_Kcnc1_p14_CB_1step.zoom, cells = mg_cells)
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version5dim40kparam15res015-ZoomFilterMicroglia.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.microglia, reduction = "umap", label=TRUE)
+dev.off()
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version5dim40kparam15res015-ZoomFilterMicroglia-condition.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.microglia, reduction = "umap", label=TRUE, group.by = "condition", cols = c("black", "red"))
+dev.off()
 
 
 
 # WT vs Kcnc1
-DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
-WT_Kcnc1_p14_CB_1step.sct <- NormalizeData(WT_Kcnc1_p14_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
-all.genes <- rownames(WT_Kcnc1_p14_CB_1step.sct)
-WT_Kcnc1_p14_CB_1step.sct <- ScaleData(WT_Kcnc1_p14_CB_1step.sct, features = all.genes) # zero-centres and scales it
+DefaultAssay(WT_Kcnc1_p14_CB_1step.microglia) <- "RNA"
+WT_Kcnc1_p14_CB_1step.microglia <- NormalizeData(WT_Kcnc1_p14_CB_1step.microglia, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p14_CB_1step.microglia)
+WT_Kcnc1_p14_CB_1step.microglia <- ScaleData(WT_Kcnc1_p14_CB_1step.microglia, features = all.genes) # zero-centres and scales it
 
 
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-ZoomFilterMicroglia-DAMMicrogliaMarkers.pdf", width=10, height=50)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.microglia, features = c("Trem2","Apoe","Lpl","Itgax","Clec7a","Axl","Ctsd","Tyrobp","Spp1" ,"Cst7","B2m","Prdx1" ), max.cutoff = 2, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+
+Idents(WT_Kcnc1_p14_CB_1step.microglia) <- "condition"
+
+
+DEG_microglia <- FindMarkers(WT_Kcnc1_p14_CB_1step.microglia, 
+                         ident.1 = "Kcnc1", 
+                         ident.2 = "WT", 
+                         verbose = TRUE, 
+                         test.use = "MAST",
+                         logfc.threshold = -Inf,
+                         min.pct = -Inf,
+                         min.diff.pct = -Inf,
+                         assay = "RNA", # Specify the RNA assay (default for raw counts)
+                         slot = "data")  # Use lognorm data for MAST
+
+
+write.table(DEG_microglia, file = "output/seurat/Microglia-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+keep_genes <- c("Trem2","Apoe","Lpl","Itgax","Clec7a","Axl","Ctsd",
+                "Tyrobp","Spp1","Cst7","B2m","Prdx1") # DAM microglia markers
+keep_genes <- c("P2ry12","P2ry13","Cx3cr1","Tmem119") # HM microglia markers
+
+
+
+# rownames -> gene column, then filter and keep order of keep_genes
+DEG_microglia_tbl <- DEG_microglia %>%
+  as.data.frame() %>%
+  rownames_to_column(var = "gene") %>%
+  as_tibble()
+
+DEG_microglia_tbl %>%
+  dplyr::filter(gene %in% keep_genes) 
 
 
 
 
 # save ##################
-
-
-## saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015.sct_V1_label.rds") 
-WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015.sct_V1_label.rds") # 
+## saveRDS(WT_Kcnc1_p14_CB_1step.microglia, file = "output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-ZoomFilterMicroglia.sct_V1_label.rds") 
+WT_Kcnc1_p14_CB_1step.microglia <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-ZoomFilterMicroglia.sct_V1_label.rds") # 
 set.seed(42)
 ##########
-
-
-
 
 
 
@@ -39628,6 +39678,165 @@ dev.off()
 
 
 ```
+
+
+
+
+##### DAM microglia
+
+Lets investigate whether my microglia are DAM or homeostatic:
+- Isolate microglia cluster 
+- Perform DEG on microglia cluster
+- GSEA on microglia cluster using microglia markers from AMPD2 paper
+
+
+
+```bash
+conda activate scRNAseqV2 # for MAST
+```
+
+
+XXXY here below not mod
+
+
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+set.seed(42)
+
+
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015.sct_V1_label.rds") # 
+set.seed(42)
+
+# check microglia markers 
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-MicrogliaMarkers.pdf", width=48, height=33)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Itgam", "P2ry12","Tmem119","Cx3cr1","Sall1","Aif1","Csf1r", "Aldh1a2", "Adrb2", "Sphk1", "Colec12", "Ccrl2", "Ccr5", "Itgb5"), cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
+#--> Microglia located within Meningeal cluster; isolate these cells
+
+## Get UMAP coordinates
+umap <- Embeddings(WT_Kcnc1_p14_CB_1step.sct, "umap") |> as.data.frame()
+umap$cell <- rownames(umap)
+## DEFINE YOUR RECTANGLE 
+x_min <- -2.5; x_max <- 1.5
+y_min <-  6; y_max <-  9.5
+## Select cells inside the rectangle
+sel <- with(umap, UMAP_1 >= x_min & UMAP_1 <= x_max &
+                   UMAP_2 >= y_min & UMAP_2 <= y_max)
+cells_in_rect <- umap$cell[sel]
+
+#  Subset the Seurat object to ONLY those cells
+WT_Kcnc1_p14_CB_1step.zoom <- subset(WT_Kcnc1_p14_CB_1step.sct, cells = cells_in_rect)
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version5dim40kparam15res015-ZoomMicroglia.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.zoom, reduction = "umap", label=TRUE)
+dev.off()
+
+# check microglia markers 
+DefaultAssay(WT_Kcnc1_p14_CB_1step.zoom) <- "RNA"
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-ZoomMicroglia-MicrogliaMarkers.pdf", width=20, height=15)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.zoom, features = c("Itgam", "P2ry12","Tmem119","Cx3cr1","Sall1","Aif1","Csf1r", "Aldh1a2", "Adrb2", "Sphk1", "Colec12", "Ccrl2", "Ccr5", "Itgb5"), cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
+#--> These one show specific expression: Itgam, P2ry12, Tmem119, Cx3cr1, Csf1r, Itgb5, Ccr5 = mg_markers
+
+
+# create marker detected list
+mg_markers <- c("Itgam","P2ry12","Tmem119","Cx3cr1","Csf1r","Itgb5","Ccr5")
+mg_markers <- intersect(mg_markers, rownames(WT_Kcnc1_p14_CB_1step.zoom))  # keep only genes present
+# Detection by raw counts
+mat <- GetAssayData(WT_Kcnc1_p14_CB_1step.zoom, assay = "RNA", slot = "counts")[mg_markers, , drop = FALSE]
+n_detected <- Matrix::colSums(mat > 0)              # how many markers per cell
+# Cells expressing at least 2 markers
+mg_cells <- names(n_detected)[n_detected >= 2]
+# Subset object to those cells
+WT_Kcnc1_p14_CB_1step.microglia <- subset(WT_Kcnc1_p14_CB_1step.zoom, cells = mg_cells)
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version5dim40kparam15res015-ZoomFilterMicroglia.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.microglia, reduction = "umap", label=TRUE)
+dev.off()
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version5dim40kparam15res015-ZoomFilterMicroglia-condition.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p14_CB_1step.microglia, reduction = "umap", label=TRUE, group.by = "condition", cols = c("black", "red"))
+dev.off()
+
+
+
+# WT vs Kcnc1
+DefaultAssay(WT_Kcnc1_p14_CB_1step.microglia) <- "RNA"
+WT_Kcnc1_p14_CB_1step.microglia <- NormalizeData(WT_Kcnc1_p14_CB_1step.microglia, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p14_CB_1step.microglia)
+WT_Kcnc1_p14_CB_1step.microglia <- ScaleData(WT_Kcnc1_p14_CB_1step.microglia, features = all.genes) # zero-centres and scales it
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-ZoomFilterMicroglia-DAMMicrogliaMarkers.pdf", width=10, height=50)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.microglia, features = c("Trem2","Apoe","Lpl","Itgax","Clec7a","Axl","Ctsd","Tyrobp","Spp1" ,"Cst7","B2m","Prdx1" ), max.cutoff = 2, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+
+Idents(WT_Kcnc1_p14_CB_1step.microglia) <- "condition"
+
+
+DEG_microglia <- FindMarkers(WT_Kcnc1_p14_CB_1step.microglia, 
+                         ident.1 = "Kcnc1", 
+                         ident.2 = "WT", 
+                         verbose = TRUE, 
+                         test.use = "MAST",
+                         logfc.threshold = -Inf,
+                         min.pct = -Inf,
+                         min.diff.pct = -Inf,
+                         assay = "RNA", # Specify the RNA assay (default for raw counts)
+                         slot = "data")  # Use lognorm data for MAST
+
+
+write.table(DEG_microglia, file = "output/seurat/Microglia-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+keep_genes <- c("Trem2","Apoe","Lpl","Itgax","Clec7a","Axl","Ctsd",
+                "Tyrobp","Spp1","Cst7","B2m","Prdx1") # DAM microglia markers
+keep_genes <- c("P2ry12","P2ry13","Cx3cr1","Tmem119") # HM microglia markers
+
+
+
+# rownames -> gene column, then filter and keep order of keep_genes
+DEG_microglia_tbl <- DEG_microglia %>%
+  as.data.frame() %>%
+  rownames_to_column(var = "gene") %>%
+  as_tibble()
+
+DEG_microglia_tbl %>%
+  dplyr::filter(gene %in% keep_genes) 
+
+
+
+
+# save ##################
+## saveRDS(WT_Kcnc1_p14_CB_1step.microglia, file = "output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-ZoomFilterMicroglia.sct_V1_label.rds") 
+WT_Kcnc1_p14_CB_1step.microglia <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-ZoomFilterMicroglia.sct_V1_label.rds") # 
+set.seed(42)
+##########
+
+
+
+
+```
+
+
+
 
 
 
