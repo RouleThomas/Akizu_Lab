@@ -66747,7 +66747,7 @@ traj1 <- fitGAM(
      nknots = 6,
      sce = TRUE
    )
-
+#--> Lasted 2hrsf or 100cells !!
 
 XXXY HERE !!!
 
