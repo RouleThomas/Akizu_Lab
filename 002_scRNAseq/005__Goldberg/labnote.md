@@ -35837,7 +35837,7 @@ dev.off()
 
 
 # create marker detected list
-mg_markers <- c("Itgam","P2ry12","Tmem119","Cx3cr1","Csf1r","Itgb5","Ccr5")
+mg_markers <- c("Itgam", "P2ry12","Tmem119","Cx3cr1","Sall1","Aif1","Csf1r", "Adrb2", "Sphk1", "Ccrl2", "Ccr5", "Itgb5")
 mg_markers <- intersect(mg_markers, rownames(WT_Kcnc1_p14_CB_1step.zoom))  # keep only genes present
 # Detection by raw counts
 mat <- GetAssayData(WT_Kcnc1_p14_CB_1step.zoom, assay = "RNA", slot = "counts")[mg_markers, , drop = FALSE]
@@ -35903,6 +35903,8 @@ DEG_microglia_tbl <- DEG_microglia %>%
 DEG_microglia_tbl %>%
   dplyr::filter(gene %in% keep_genes) 
 
+# Run SCTransform needed for merging for pseudotime
+WT_Kcnc1_p14_CB_1step.microglia <- SCTransform(WT_Kcnc1_p14_CB_1step.microglia, method = "glmGamPoi", ncells = 49, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
 
 
 
@@ -39696,9 +39698,6 @@ conda activate scRNAseqV2 # for MAST
 ```
 
 
-XXXY here below not mod
-
-
 
 ```R
 # install.packages('SoupX')
@@ -39716,82 +39715,82 @@ library("gprofiler2") # for human mouse gene conversion for cell cycle genes
 set.seed(42)
 
 
-WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015.sct_V1_label.rds") # 
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245.sct_V1_label.rds") # 
 set.seed(42)
 
 # check microglia markers 
-DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
+DefaultAssay(WT_Kcnc1_p35_CB_1step.sct) <- "RNA"
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-MicrogliaMarkers.pdf", width=48, height=33)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Itgam", "P2ry12","Tmem119","Cx3cr1","Sall1","Aif1","Csf1r", "Aldh1a2", "Adrb2", "Sphk1", "Colec12", "Ccrl2", "Ccr5", "Itgb5"), cols = c("grey", "red"), max.cutoff = 1)
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-MicrogliaMarkers.pdf", width=48, height=33)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Itgam", "P2ry12","Tmem119","Cx3cr1","Sall1","Aif1","Csf1r", "Aldh1a2", "Adrb2", "Sphk1", "Colec12", "Ccrl2", "Ccr5", "Itgb5"), cols = c("grey", "red"), max.cutoff = 1)
 dev.off()
 #--> Microglia located within Meningeal cluster; isolate these cells
 
 ## Get UMAP coordinates
-umap <- Embeddings(WT_Kcnc1_p14_CB_1step.sct, "umap") |> as.data.frame()
+umap <- Embeddings(WT_Kcnc1_p35_CB_1step.sct, "umap") |> as.data.frame()
 umap$cell <- rownames(umap)
 ## DEFINE YOUR RECTANGLE 
-x_min <- -2.5; x_max <- 1.5
-y_min <-  6; y_max <-  9.5
+x_min <- -2; x_max <- 1.5
+y_min <-  4; y_max <-  9.5
 ## Select cells inside the rectangle
 sel <- with(umap, UMAP_1 >= x_min & UMAP_1 <= x_max &
                    UMAP_2 >= y_min & UMAP_2 <= y_max)
 cells_in_rect <- umap$cell[sel]
 
 #  Subset the Seurat object to ONLY those cells
-WT_Kcnc1_p14_CB_1step.zoom <- subset(WT_Kcnc1_p14_CB_1step.sct, cells = cells_in_rect)
+WT_Kcnc1_p35_CB_1step.zoom <- subset(WT_Kcnc1_p35_CB_1step.sct, cells = cells_in_rect)
 
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version5dim40kparam15res015-ZoomMicroglia.pdf", width=7, height=6)
-DimPlot(WT_Kcnc1_p14_CB_1step.zoom, reduction = "umap", label=TRUE)
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version5dim40kparam15res0245-ZoomMicroglia.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p35_CB_1step.zoom, reduction = "umap", label=TRUE)
 dev.off()
 
 # check microglia markers 
-DefaultAssay(WT_Kcnc1_p14_CB_1step.zoom) <- "RNA"
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-ZoomMicroglia-MicrogliaMarkers.pdf", width=20, height=15)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.zoom, features = c("Itgam", "P2ry12","Tmem119","Cx3cr1","Sall1","Aif1","Csf1r", "Aldh1a2", "Adrb2", "Sphk1", "Colec12", "Ccrl2", "Ccr5", "Itgb5"), cols = c("grey", "red"), max.cutoff = 1)
+DefaultAssay(WT_Kcnc1_p35_CB_1step.zoom) <- "RNA"
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-ZoomMicroglia-MicrogliaMarkers.pdf", width=20, height=15)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.zoom, features = c("Itgam", "P2ry12","Tmem119","Cx3cr1","Sall1","Aif1","Csf1r", "Aldh1a2", "Adrb2", "Sphk1", "Colec12", "Ccrl2", "Ccr5", "Itgb5"), cols = c("grey", "red"), max.cutoff = 1)
 dev.off()
 #--> These one show specific expression: Itgam, P2ry12, Tmem119, Cx3cr1, Csf1r, Itgb5, Ccr5 = mg_markers
 
 
 # create marker detected list
-mg_markers <- c("Itgam","P2ry12","Tmem119","Cx3cr1","Csf1r","Itgb5","Ccr5")
-mg_markers <- intersect(mg_markers, rownames(WT_Kcnc1_p14_CB_1step.zoom))  # keep only genes present
+mg_markers <- c("Itgam", "P2ry12","Tmem119","Cx3cr1","Sall1","Aif1","Csf1r", "Adrb2", "Sphk1", "Ccrl2", "Ccr5", "Itgb5")
+mg_markers <- intersect(mg_markers, rownames(WT_Kcnc1_p35_CB_1step.zoom))  # keep only genes present
 # Detection by raw counts
-mat <- GetAssayData(WT_Kcnc1_p14_CB_1step.zoom, assay = "RNA", slot = "counts")[mg_markers, , drop = FALSE]
+mat <- GetAssayData(WT_Kcnc1_p35_CB_1step.zoom, assay = "RNA", slot = "counts")[mg_markers, , drop = FALSE]
 n_detected <- Matrix::colSums(mat > 0)              # how many markers per cell
 # Cells expressing at least 2 markers
 mg_cells <- names(n_detected)[n_detected >= 2]
 # Subset object to those cells
-WT_Kcnc1_p14_CB_1step.microglia <- subset(WT_Kcnc1_p14_CB_1step.zoom, cells = mg_cells)
+WT_Kcnc1_p35_CB_1step.microglia <- subset(WT_Kcnc1_p35_CB_1step.zoom, cells = mg_cells)
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version5dim40kparam15res015-ZoomFilterMicroglia.pdf", width=7, height=6)
-DimPlot(WT_Kcnc1_p14_CB_1step.microglia, reduction = "umap", label=TRUE)
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version5dim40kparam15res0245-ZoomFilterMicroglia.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p35_CB_1step.microglia, reduction = "umap", label=TRUE)
 dev.off()
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version5dim40kparam15res015-ZoomFilterMicroglia-condition.pdf", width=7, height=6)
-DimPlot(WT_Kcnc1_p14_CB_1step.microglia, reduction = "umap", label=TRUE, group.by = "condition", cols = c("black", "red"))
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version5dim40kparam15res0245-ZoomFilterMicroglia-condition.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p35_CB_1step.microglia, reduction = "umap", label=TRUE, group.by = "condition", cols = c("black", "red"))
 dev.off()
 
 
 
 # WT vs Kcnc1
-DefaultAssay(WT_Kcnc1_p14_CB_1step.microglia) <- "RNA"
-WT_Kcnc1_p14_CB_1step.microglia <- NormalizeData(WT_Kcnc1_p14_CB_1step.microglia, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
-all.genes <- rownames(WT_Kcnc1_p14_CB_1step.microglia)
-WT_Kcnc1_p14_CB_1step.microglia <- ScaleData(WT_Kcnc1_p14_CB_1step.microglia, features = all.genes) # zero-centres and scales it
+DefaultAssay(WT_Kcnc1_p35_CB_1step.microglia) <- "RNA"
+WT_Kcnc1_p35_CB_1step.microglia <- NormalizeData(WT_Kcnc1_p35_CB_1step.microglia, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p35_CB_1step.microglia)
+WT_Kcnc1_p35_CB_1step.microglia <- ScaleData(WT_Kcnc1_p35_CB_1step.microglia, features = all.genes) # zero-centres and scales it
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-ZoomFilterMicroglia-DAMMicrogliaMarkers.pdf", width=10, height=50)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.microglia, features = c("Trem2","Apoe","Lpl","Itgax","Clec7a","Axl","Ctsd","Tyrobp","Spp1" ,"Cst7","B2m","Prdx1" ), max.cutoff = 2, cols = c("grey", "red"), split.by = "condition")
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-ZoomFilterMicroglia-DAMMicrogliaMarkers.pdf", width=10, height=50)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.microglia, features = c("Trem2","Apoe","Lpl","Itgax","Clec7a","Axl","Ctsd","Tyrobp","Spp1" ,"Cst7","B2m","Prdx1" ), max.cutoff = 2, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
 
 
-Idents(WT_Kcnc1_p14_CB_1step.microglia) <- "condition"
+Idents(WT_Kcnc1_p35_CB_1step.microglia) <- "condition"
 
 
-DEG_microglia <- FindMarkers(WT_Kcnc1_p14_CB_1step.microglia, 
+DEG_microglia <- FindMarkers(WT_Kcnc1_p35_CB_1step.microglia, 
                          ident.1 = "Kcnc1", 
                          ident.2 = "WT", 
                          verbose = TRUE, 
@@ -39801,9 +39800,10 @@ DEG_microglia <- FindMarkers(WT_Kcnc1_p14_CB_1step.microglia,
                          min.diff.pct = -Inf,
                          assay = "RNA", # Specify the RNA assay (default for raw counts)
                          slot = "data")  # Use lognorm data for MAST
+#--> NO DEGs!!!
 
 
-write.table(DEG_microglia, file = "output/seurat/Microglia-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+write.table(DEG_microglia, file = "output/seurat/Microglia-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 
 keep_genes <- c("Trem2","Apoe","Lpl","Itgax","Clec7a","Axl","Ctsd",
@@ -39823,13 +39823,16 @@ DEG_microglia_tbl %>%
 
 
 
+# Run SCTransform needed for merging for pseudotime
+WT_Kcnc1_p35_CB_1step.microglia <- SCTransform(WT_Kcnc1_p35_CB_1step.microglia, method = "glmGamPoi", ncells = 20, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+
+
 
 # save ##################
-## saveRDS(WT_Kcnc1_p14_CB_1step.microglia, file = "output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-ZoomFilterMicroglia.sct_V1_label.rds") 
-WT_Kcnc1_p14_CB_1step.microglia <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-ZoomFilterMicroglia.sct_V1_label.rds") # 
+## saveRDS(WT_Kcnc1_p35_CB_1step.microglia, file = "output/seurat/WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-ZoomFilterMicroglia.sct_V1_label.rds") 
+WT_Kcnc1_p35_CB_1step.microglia <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-ZoomFilterMicroglia.sct_V1_label.rds") # 
 set.seed(42)
 ##########
-
 
 
 
@@ -43203,6 +43206,164 @@ dev.off()
 
 
 ```
+
+
+
+
+
+##### DAM microglia
+
+Lets investigate whether my microglia are DAM or homeostatic:
+- Isolate microglia cluster 
+- Perform DEG on microglia cluster
+- GSEA on microglia cluster using microglia markers from AMPD2 paper
+
+
+
+```bash
+conda activate scRNAseqV2 # for MAST
+```
+
+
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+set.seed(42)
+
+
+WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115.sct_V1_label.rds") # 
+set.seed(42)
+
+# check microglia markers 
+DefaultAssay(WT_Kcnc1_p180_CB_1step.sct) <- "RNA"
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-MicrogliaMarkers.pdf", width=48, height=33)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Itgam", "P2ry12","Tmem119","Cx3cr1","Sall1","Aif1","Csf1r", "Aldh1a2", "Adrb2", "Sphk1", "Colec12", "Ccrl2", "Ccr5", "Itgb5"), cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
+#--> Microglia located within Meningeal cluster; isolate these cells
+
+## Get UMAP coordinates
+umap <- Embeddings(WT_Kcnc1_p180_CB_1step.sct, "umap") |> as.data.frame()
+umap$cell <- rownames(umap)
+## DEFINE YOUR RECTANGLE 
+x_min <- -12; x_max <- 0
+y_min <-  -11; y_max <-  -8
+## Select cells inside the rectangle
+sel <- with(umap, UMAP_1 >= x_min & UMAP_1 <= x_max &
+                   UMAP_2 >= y_min & UMAP_2 <= y_max)
+cells_in_rect <- umap$cell[sel]
+
+#  Subset the Seurat object to ONLY those cells
+WT_Kcnc1_p180_CB_1step.zoom <- subset(WT_Kcnc1_p180_CB_1step.sct, cells = cells_in_rect)
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version5dim20kparam10res0115-ZoomMicroglia.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p180_CB_1step.zoom, reduction = "umap", label=TRUE)
+dev.off()
+
+# check microglia markers 
+DefaultAssay(WT_Kcnc1_p180_CB_1step.zoom) <- "RNA"
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-ZoomMicroglia-MicrogliaMarkers.pdf", width=20, height=15)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.zoom, features = c("Itgam", "P2ry12","Tmem119","Cx3cr1","Sall1","Aif1","Csf1r", "Aldh1a2", "Adrb2", "Sphk1", "Colec12", "Ccrl2", "Ccr5", "Itgb5"), cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
+#--> These one show specific expression: Itgam, P2ry12, Tmem119, Cx3cr1, Csf1r, Itgb5, Ccr5, Colec12 = mg_markers
+
+
+# create marker detected list
+mg_markers <- c("Itgam", "P2ry12","Tmem119","Cx3cr1","Sall1","Aif1","Csf1r", "Adrb2", "Sphk1", "Ccrl2", "Ccr5", "Itgb5")
+mg_markers <- intersect(mg_markers, rownames(WT_Kcnc1_p180_CB_1step.zoom))  # keep only genes present
+# Detection by raw counts
+mat <- GetAssayData(WT_Kcnc1_p180_CB_1step.zoom, assay = "RNA", slot = "counts")[mg_markers, , drop = FALSE]
+n_detected <- Matrix::colSums(mat > 0)              # how many markers per cell
+# Cells expressing at least 2 markers
+mg_cells <- names(n_detected)[n_detected >= 2]
+# Subset object to those cells
+WT_Kcnc1_p180_CB_1step.microglia <- subset(WT_Kcnc1_p180_CB_1step.zoom, cells = mg_cells)
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version5dim20kparam10res0115-ZoomFilterMicroglia.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p180_CB_1step.microglia, reduction = "umap", label=TRUE)
+dev.off()
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB-1stepIntegrationRegressNotRepeatedregMtRbCouFea-version5dim20kparam10res0115-ZoomFilterMicroglia-condition.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p180_CB_1step.microglia, reduction = "umap", label=TRUE, group.by = "condition", cols = c("black", "red"))
+dev.off()
+
+
+
+# WT vs Kcnc1
+DefaultAssay(WT_Kcnc1_p180_CB_1step.microglia) <- "RNA"
+WT_Kcnc1_p180_CB_1step.microglia <- NormalizeData(WT_Kcnc1_p180_CB_1step.microglia, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p180_CB_1step.microglia)
+WT_Kcnc1_p180_CB_1step.microglia <- ScaleData(WT_Kcnc1_p180_CB_1step.microglia, features = all.genes) # zero-centres and scales it
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-ZoomFilterMicroglia-DAMMicrogliaMarkers.pdf", width=10, height=50)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.microglia, features = c("Trem2","Apoe","Lpl","Itgax","Clec7a","Axl","Ctsd","Tyrobp","Spp1" ,"Cst7","B2m","Prdx1" ), max.cutoff = 2, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+
+Idents(WT_Kcnc1_p180_CB_1step.microglia) <- "condition"
+
+
+DEG_microglia <- FindMarkers(WT_Kcnc1_p180_CB_1step.microglia, 
+                         ident.1 = "Kcnc1", 
+                         ident.2 = "WT", 
+                         verbose = TRUE, 
+                         test.use = "MAST",
+                         logfc.threshold = -Inf,
+                         min.pct = -Inf,
+                         min.diff.pct = -Inf,
+                         assay = "RNA", # Specify the RNA assay (default for raw counts)
+                         slot = "data")  # Use lognorm data for MAST
+
+write.table(DEG_microglia, file = "output/seurat/Microglia-Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+keep_genes <- c("Trem2","Apoe","Lpl","Itgax","Clec7a","Axl","Ctsd",
+                "Tyrobp","Spp1","Cst7","B2m","Prdx1") # DAM microglia markers
+keep_genes <- c("P2ry12","P2ry13","Cx3cr1","Tmem119") # HM microglia markers
+
+
+
+# rownames -> gene column, then filter and keep order of keep_genes
+DEG_microglia_tbl <- DEG_microglia %>%
+  as.data.frame() %>%
+  rownames_to_column(var = "gene") %>%
+  as_tibble()
+
+DEG_microglia_tbl %>%
+  dplyr::filter(gene %in% keep_genes) 
+
+
+# Run SCTransform needed for merging for pseudotime
+WT_Kcnc1_p180_CB_1step.microglia <- SCTransform(WT_Kcnc1_p180_CB_1step.microglia, method = "glmGamPoi", ncells = 31, verbose = TRUE, variable.features.n = 3000, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb", "nFeature_RNA")) 
+
+
+
+
+# save ##################
+## saveRDS(WT_Kcnc1_p180_CB_1step.microglia, file = "output/seurat/WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-ZoomFilterMicroglia.sct_V1_label.rds") 
+WT_Kcnc1_p180_CB_1step.microglia <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-ZoomFilterMicroglia.sct_V1_label.rds") # 
+set.seed(42)
+##########
+
+```
+
+
+
+
 
 
 
@@ -66169,6 +66330,792 @@ dev.off()
 
 
 
+#### Isolating cell of interest - Microglia
+
+Here I isolated microglia for each time points see `##### DAM microglia` parts; let's put samples together and see if Kcnc1 show more DAM microglia
+
+
+
+--> Follow `002*/006__Kim` `#### Run condiments RNA assay - V1 common condition`
+
+
+```bash
+conda activate scRNAseqV1 # for leiden algorithm (algo 4)
+```
+
+
+
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+library("RColorBrewer")
+
+set.seed(42)
+
+
+
+# import all microglia cells
+WT_Kcnc1_p14_CB_1step.microglia <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-ZoomFilterMicroglia.sct_V1_label.rds") # 
+WT_Kcnc1_p35_CB_1step.microglia <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-ZoomFilterMicroglia.sct_V1_label.rds") # 
+WT_Kcnc1_p180_CB_1step.microglia <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-ZoomFilterMicroglia.sct_V1_label.rds") # 
+
+
+
+
+# integrateMerge each samples
+
+
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.microglia) <- "SCT"
+DefaultAssay(WT_Kcnc1_p35_CB_1step.microglia) <- "SCT"
+DefaultAssay(WT_Kcnc1_p180_CB_1step.microglia) <- "SCT"
+
+
+
+### Merge the SCT assay
+WT_Kcnc1_CB_integrateMerge.microglia = merge(
+  x = WT_Kcnc1_p14_CB_1step.microglia,
+  y = c(WT_Kcnc1_p35_CB_1step.microglia, WT_Kcnc1_p180_CB_1step.microglia),
+  add.cell.ids = NULL,
+  merge.data = TRUE
+)
+
+# SAVE OUTPUT
+saveRDS(WT_Kcnc1_CB_integrateMerge.microglia, file = "output/seurat/WT_Kcnc1_CB_integrateMerge.microglia.rds")
+
+## Add the time information (p14, p35, p180) from orig.ident
+WT_Kcnc1_CB_integrateMerge.microglia$time <- stringr::str_extract(WT_Kcnc1_CB_integrateMerge.microglia$orig.ident, "p\\d+")
+
+VariableFeatures(WT_Kcnc1_CB_integrateMerge.microglia[["SCT"]]) <- rownames(WT_Kcnc1_CB_integrateMerge.microglia[["SCT"]]@scale.data)
+
+
+
+
+
+#### UMAP
+DefaultAssay(WT_Kcnc1_CB_integrateMerge.microglia) <- "SCT"
+
+WT_Kcnc1_CB_integrateMerge.microglia <- RunPCA(WT_Kcnc1_CB_integrateMerge.microglia, verbose = FALSE, npcs = 30)
+WT_Kcnc1_CB_integrateMerge.microglia <- RunUMAP(WT_Kcnc1_CB_integrateMerge.microglia, reduction = "pca", dims = 1:30, verbose = FALSE)
+WT_Kcnc1_CB_integrateMerge.microglia <- FindNeighbors(WT_Kcnc1_CB_integrateMerge.microglia, reduction = "pca", k.param = 3, dims = 1:30)
+WT_Kcnc1_CB_integrateMerge.microglia <- FindClusters(WT_Kcnc1_CB_integrateMerge.microglia, resolution = 0.4, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+
+WT_Kcnc1_CB_integrateMerge.microglia$condition <- factor(WT_Kcnc1_CB_integrateMerge.microglia$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
+
+WT_Kcnc1_CB_integrateMerge.microglia$time <- factor(WT_Kcnc1_CB_integrateMerge.microglia$time, levels = c("p14", "p35", "p180")) 
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB_microglia-dim30kparam3res04.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.microglia, reduction = "umap", label=TRUE)
+dev.off()
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB_microglia-dim30kparam3res04-time.pdf", width=7, height=6)
+my_cols = brewer.pal(3,"Dark2")
+DimPlot(WT_Kcnc1_CB_integrateMerge.microglia, reduction = "umap", label=TRUE, group.by = "time", pt.size = 5, cols=my_cols)
+dev.off()
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB_microglia-dim30kparam3res04-condition.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.microglia, reduction = "umap", label=TRUE, group.by = "condition", pt.size = 5, cols=c("black", "red"))
+dev.off()
+
+
+
+
+# SAVE OUTPUT
+saveRDS(WT_Kcnc1_CB_integrateMerge.microglia, file = "output/seurat/WT_Kcnc1_CB_integrateMerge-dim30kparam3res04.microglia.rds")
+
+```
+
+
+
+```bash
+conda activate condiments_V6
+```
+
+
+
+
+```R
+
+# packages
+library("condiments")
+library("Seurat")
+library("magrittr") # to use pipe
+library("dplyr") # to use bind_cols and sample_frac
+library("SingleCellExperiment") # for reducedDims
+library("ggplot2")
+library("slingshot")
+library("DelayedMatrixStats")
+library("tidyr")
+library("tradeSeq")
+library("cowplot")
+library("scales")
+library("pheatmap")
+library("readr")
+library("RColorBrewer")
+
+set.seed(42)
+
+
+# import rds 
+WT_Kcnc1_CB_integrateMerge.microglia <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-dim30kparam3res04.microglia.rds") # 
+
+
+DefaultAssay(WT_Kcnc1_CB_integrateMerge.microglia) <- "RNA" # According to condiments workflow
+
+# convert to SingleCellExperiment
+Part_Microglia <- as.SingleCellExperiment(WT_Kcnc1_CB_integrateMerge.microglia, assay = "RNA")
+
+
+
+
+########################################################
+############################ Microglia ############################
+########################################################
+
+
+# tidy
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_Microglia)$UMAP),
+  as.data.frame(colData(Part_Microglia)[, -3])
+  ) %>%
+  sample_frac(1)
+
+# PLOT
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-dim30kparam3res04-Part_Microglia.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
+  geom_point(size = .7) +
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+
+## imbalance score
+scores <- condiments::imbalance_score(
+  Object = df %>% select(UMAP_1, UMAP_2) %>% as.matrix(), 
+  conditions = df$condition,
+  k = 20, smooth = 40)
+df$scores <- scores$scaled_scores
+
+pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_CB-dim30kparam3res04-Part_Microglia.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
+  geom_point(size = 3) +
+  scale_color_viridis_c(option = "C") +
+  labs(col = "Scores") +
+  theme_classic()
+dev.off()
+
+
+
+
+
+## PLOT with Separate trajectories
+### Testing Area ############
+
+Part_Granule_subset <- slingshot(Part_Granule_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_Granule_subset)$seurat_clusters,
+                 start.clus = "4", end.clus = c("1") ,approx_points = 100, extend = 'pc1', stretch = 1)
+Part_Granule_subset <- slingshot(Part_Granule_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_Granule_subset)$seurat_clusters,
+                 start.clus = "4", end.clus = c("1") ,approx_points = 100, extend = 'y', stretch = 1) # n
+
+##########################################
+
+
+
+Part_Microglia <- slingshot(Part_Microglia, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_Microglia)$seurat_clusters,
+                 start.clus = "3", end.clus = "4", approx_points = 100, extend = 'pc1', stretch = 1) # n
+
+
+#test reduceDim PCA or subset endoderm
+topologyTest(SlingshotDataSet(Part_Microglia), Part_Microglia$condition) #  
+
+
+sdss <- slingshot_conditions(SlingshotDataSet(Part_Microglia), Part_Microglia$condition)
+curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
+                    .id = "condition")
+
+
+
+#  
+
+pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-dim30kparam3res04-Part_Microglia-START3_END4_points100extendpc1stretch1.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(condition, Lineage, Order),
+            aes(group = interaction(Lineage, condition)), size = 1.5) +
+  theme_classic()
+dev.off()
+
+
+
+
+## PLOT with separate trajectories - Individually
+### WT
+Part_Microglia_WT <- Part_Microglia[, Part_Microglia$condition == "WT"]
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(Part_Microglia_WT, "UMAP")),
+  slingPseudotime(Part_Microglia_WT) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(Part_Microglia_WT) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst))
+curves <- slingCurves(Part_Microglia_WT, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = UMAP_1, y = UMAP_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = UMAP_1, y = UMAP_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = UMAP_1, y = UMAP_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = UMAP_1, y = UMAP_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:2) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_Part_Microglia_WT-dim30kparam3res04-START3_END4_points100extendpc1stretch1_WTonly.pdf", width=6, height=6)
+gridExtra::grid.arrange(grobs = plots, ncol = 1)
+dev.off()
+
+
+### Kcnc1
+Part_Microglia_Kcnc1 <- Part_Microglia[, Part_Microglia$condition == "Kcnc1"]
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(Part_Microglia_Kcnc1, "UMAP")),
+  slingPseudotime(Part_Microglia_Kcnc1) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(Part_Microglia_Kcnc1) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst))
+curves <- slingCurves(Part_Microglia_Kcnc1, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = UMAP_1, y = UMAP_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = UMAP_1, y = UMAP_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = UMAP_1, y = UMAP_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = UMAP_1, y = UMAP_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:2) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_Part_Microglia_Kcnc1-dim30kparam3res04-START3_END4_points100extendpc1stretch1_Kcnc1only.pdf", width=6, height=6)
+gridExtra::grid.arrange(grobs = plots, ncol = 1)
+dev.off()
+
+
+
+# Differential Progression
+prog_res <- progressionTest(Part_Microglia, conditions = Part_Microglia$condition, lineages = TRUE)
+
+df_3 <-  slingPseudotime(Part_Microglia) %>% as.data.frame() 
+
+df_3$condition <- Part_Microglia$condition
+df_3 <- df_3 %>% 
+  pivot_longer(-condition, names_to = "Lineage",
+               values_to = "pst") %>%
+  filter(!is.na(pst))
+
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_Microglia-dim30kparam3res04-START3_END4_points100extendpc1stretch1.pdf", width=4, height=3)
+ggplot(df_3, aes(x = pst)) +
+  geom_density(alpha = .8, aes(fill = condition), col = "transparent") +
+  geom_density(aes(col = condition), fill = "transparent", size = 1.5) +
+  labs(x = "Pseudotime", fill = "condition") +
+  facet_wrap(~Lineage, scales = "free", nrow=2) +
+  guides(col = "none", fill = guide_legend(
+    override.aes = list(size = 1.5, col = c("black", "red"))
+  )) +
+  scale_fill_manual(values = c("black", "red")) +
+  scale_color_manual(values = c("black", "red")) +
+  theme_bw()
+dev.off()
+
+
+
+
+prog_res <- progressionTest(Part_Microglia, conditions = Part_Microglia$condition, lineages = TRUE)
+df_4 <-  slingPseudotime(Part_Microglia) %>% as.data.frame() 
+df_4$time <- Part_Microglia$time
+df_4 <- df_4 %>% 
+  pivot_longer(-time, names_to = "Lineage",
+               values_to = "pst") %>%
+  filter(!is.na(pst))
+
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_Microglia-dim30kparam3res04-START3_END4_points100extendpc1stretch1_time.pdf", width=4, height=3)
+ggplot(df_4, aes(x = pst)) +
+  geom_density(alpha = .8, aes(fill = time), col = "transparent") +
+  geom_density(aes(col = time), fill = "transparent", size = 1.5) +
+  labs(x = "Pseudotime", fill = "time") +
+  facet_wrap(~Lineage, scales = "free", nrow=2) +
+  guides(col = "none", fill = guide_legend(
+    override.aes = list(size = 1.5, col = brewer.pal(3,"Dark2"))
+  )) +
+  scale_fill_manual(values = brewer.pal(3,"Dark2")) +
+  scale_color_manual(values = brewer.pal(3,"Dark2")) +
+  theme_bw()
+dev.off()
+
+
+
+
+
+#### ->  save.image(file="output/condiments/condiments-Part_Microglia_START3_END4_points100extendpc1stretch1-dim30kparam3res04.RData")
+### load("output/condiments/condiments-Part_Microglia_START3_END4_points100extendpc1stretch1-dim30kparam3res04.RData")
+set.seed(42)
+
+
+
+#  Differential expression
+# --> Run fitGam() NOT through Slurm as vey few cells
+
+
+
+#### DEGs trajectory per trajectory
+counts <- WT_Kcnc1_CB_integrateMerge.microglia[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(WT_Kcnc1_CB_integrateMerge.microglia$condition) # identify conditions
+#### Extract the pseudotimes and cell weights for the FIRST lineage
+pseudotimes <- slingPseudotime(Part_Microglia, na = FALSE) [,1]
+cellweights <- slingCurveWeights(Part_Microglia) [,1]
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+
+traj1 <- fitGAM(
+     counts = sub_counts, 
+     pseudotime = sub_pseudotimes,
+     cellWeights = sub_weights,
+     conditions = sub_cond, 
+     nknots = 6,
+     sce = TRUE
+   )
+
+
+XXXY HERE !!!
+
+saveRDS(traj1, file = "output/condiments/traj1_Part_Microglia-dim30kparam3res04.rds")
+
+
+
+
+
+
+################### Time Course effect COMMON CONDITIONS ######################################################
+## TRAJECTORY1 - Microglia ##################
+set.seed(42)
+traj1 <- readRDS("output/condiments/traj1_Part_Microglia-dim30kparam3res04.rds")
+
+
+## DEGs between condition
+traj1_l2fc0 <- conditionTest(traj1, l2fc =  0.15) #  traj1_l2fc0 <- conditionTest(traj1, l2fc = 2)
+# --> l2fc2 padj0.05 = 5 DEGs total 
+# --> l2fc1 padj0.05 = 49 DEGs total 
+# --> l2fc015 padj0.05 = 1055 DEGs total 
+# --> l2fc0.5 padj0.05 = 310 DEGs total (only genes upreg in Kcnc1)
+
+
+# Correct the pvalue with fdr
+traj1_l2fc0$padj <- p.adjust(traj1_l2fc0$pvalue, "fdr")
+
+
+### Save output tables
+traj1_l2fc0$gene <- rownames(traj1_l2fc0) # create new column label gene; as matrix before
+condRes_traj1_l2fc0 <- traj1_l2fc0[, c(ncol(traj1_l2fc0), 1:(ncol(traj1_l2fc0)-1))] # just to put gene column 1st
+
+write.table(condRes_traj1_l2fc0, file = c("output/condiments/condRes-traj1_Granule-version4dim40kparam15res03-l2fc0.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+
+
+# Heatmap clutering DEGs per traj _ REVISED METHOD 
+## first version with l2fc0 and padj0.05  ##############################
+condRes_traj1_l2fc0 <- read.table("output/condiments/condRes-traj1_Granule-version4dim40kparam15res03-l2fc0.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) 
+
+## Isolate significant DEGs and transform into a vector
+conditionGenes_traj1_l2fc0 <- condRes_traj1_l2fc0 %>% 
+  filter(padj <= 0.05) %>%
+  pull(gene)
+
+# Predict smoothed values
+yhatSmooth <- 
+  predictSmooth(traj1, gene = conditionGenes_traj1_l2fc0, nPoints = 50, tidy = FALSE) %>%
+  log1p()
+yhatSmoothScaled <- t(apply(yhatSmooth, 1, scales::rescale))
+combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
+# Generate heatmap with clustering
+# Perform hierarchical clustering
+hc <- hclust(dist(combinedData))
+clusters <- cutree(hc, k=13) # !!!!!!!!!!!!!!!!!! CHANGE CLUSTER NB HERE !!!!!!!!!!!!!!!!!!
+# Create an annotation data frame for the rows based on cluster assignments
+annotation_row <- data.frame(Cluster = factor(clusters))
+
+
+# Line plots
+library("reshape2")
+library("stringr")
+# Assuming yhatSmoothScaled contains your smoothed gene expression data
+# Convert the yhatSmoothScaled data to a dataframe
+df <- as.data.frame(yhatSmoothScaled)
+df$Gene <- rownames(df)
+# Transform the data into a long format
+df_long <- melt(df, id.vars = "Gene", variable.name = "Pseudotime", value.name = "Expression")
+# Attach the cluster information to the data frame
+df$Cluster <- factor(clusters[df$Gene])
+df_long$Cluster <- df$Cluster[match(df_long$Gene, df$Gene)]
+
+# Extract condition column
+df_long$Condition <- ifelse(str_detect(df_long$Pseudotime, "WT"), "WT", "Kcnc1")
+
+# Extract the point value and convert it to numeric
+df_long$Updated_Pseudotime <- as.numeric(str_extract(df_long$Pseudotime, "(?<=point)\\d+"))
+
+# Define colors for the conditions
+color_map <- c("WT" = "black", "Kcnc1" = "red")
+
+gene_counts <- df_long %>%
+  group_by(Cluster) %>%
+  summarise(GeneCount = n_distinct(Gene))
+df_long <- df_long %>%
+  left_join(gene_counts, by = "Cluster") %>%
+  mutate(ClusterLabel = paste0("Cluster ", Cluster, " (", GeneCount, " genes)"))
+
+# Plot using ggplot
+pdf("output/condiments/clustered_linePlot_traj1_Granule-version4dim40kparam15res03-l2fc0-cl13.pdf", width=10, height=5)
+ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
+  geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
+  geom_line(data = subset(df_long, Condition == "Kcnc1"), aes(color = Condition), alpha = 0.5) +
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+# Plot using ggplot
+pdf("output/condiments/smoothed_linePlot_traj1_Granule-version4dim40kparam15res03-l2fc0-cl13.pdf", width=10, height=5)
+ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
+  geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Smoothed Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+
+### Export gene list from each cluster
+## Create a data frame with gene names and their respective cluster assignments
+output_df <- data.frame(
+  gene = rownames(combinedData),
+  cluster = clusters
+)
+
+# Write the data frame to a .txt file
+write.table(output_df, 
+            file = "output/condiments/gene_clusters-traj1_Granule-version4dim40kparam15res03-l2fc0-cl13.txt", 
+            sep = "\t", 
+            quote = FALSE, 
+            row.names = FALSE, 
+            col.names = TRUE)
+
+
+
+
+
+
+
+## version with l2fc015 and padj0.05  ##############################
+condRes_traj1_l2fc015 <- read.table("output/condiments/condRes-traj1_Granule-version4dim40kparam15res03-l2fc015.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) 
+
+
+
+## Isolate significant DEGs and transform into a vector
+conditionGenes_traj1_l2fc015 <- condRes_traj1_l2fc015 %>% 
+  filter(padj <= 0.05) %>%
+  pull(gene)
+
+# Predict smoothed values
+yhatSmooth <- 
+  predictSmooth(traj1, gene = conditionGenes_traj1_l2fc015, nPoints = 50, tidy = FALSE) %>%
+  log1p()
+yhatSmoothScaled <- t(apply(yhatSmooth, 1, scales::rescale))
+combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
+# Generate heatmap with clustering
+# Perform hierarchical clustering
+hc <- hclust(dist(combinedData))
+clusters <- cutree(hc, k=7) # !!!!!!!!!!!!!!!!!! CHANGE CLUSTER NB HERE !!!!!!!!!!!!!!!!!!
+# Create an annotation data frame for the rows based on cluster assignments
+annotation_row <- data.frame(Cluster = factor(clusters))
+
+
+# Line plots
+library("reshape2")
+library("stringr")
+# Assuming yhatSmoothScaled contains your smoothed gene expression data
+# Convert the yhatSmoothScaled data to a dataframe
+df <- as.data.frame(yhatSmoothScaled)
+df$Gene <- rownames(df)
+# Transform the data into a long format
+df_long <- melt(df, id.vars = "Gene", variable.name = "Pseudotime", value.name = "Expression")
+# Attach the cluster information to the data frame
+df$Cluster <- factor(clusters[df$Gene])
+df_long$Cluster <- df$Cluster[match(df_long$Gene, df$Gene)]
+
+# Extract condition column
+df_long$Condition <- ifelse(str_detect(df_long$Pseudotime, "WT"), "WT", "Kcnc1")
+
+# Extract the point value and convert it to numeric
+df_long$Updated_Pseudotime <- as.numeric(str_extract(df_long$Pseudotime, "(?<=point)\\d+"))
+
+# Define colors for the conditions
+color_map <- c("WT" = "black", "Kcnc1" = "red")
+
+gene_counts <- df_long %>%
+  group_by(Cluster) %>%
+  summarise(GeneCount = n_distinct(Gene))
+df_long <- df_long %>%
+  left_join(gene_counts, by = "Cluster") %>%
+  mutate(ClusterLabel = paste0("Cluster ", Cluster, " (", GeneCount, " genes)"))
+
+# Plot using ggplot
+pdf("output/condiments/clustered_linePlot_traj1_Granule-version4dim40kparam15res03-l2fc015-cl7.pdf", width=10, height=5)
+ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
+  geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
+  geom_line(data = subset(df_long, Condition == "Kcnc1"), aes(color = Condition), alpha = 0.5) +
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+## show only one gene ##################
+## gene expr over time with SE
+target_gene <- "Eomes"   # <<< change here
+yhat_cell <- predictCells(models = traj1, gene = target_gene)  # vector per cell
+stopifnot(length(yhat_cell) == ncol(traj1))
+
+pt <- slingPseudotime(Part_Granule_subset, na = FALSE)[, 1]   # lineage 1; change index if needed
+
+# 3) Condition per cell (adapt to your metadata column name)
+cond <- WT_Kcnc1_p14_CB_1step.sct@meta.data[colnames(traj1), "condition"]          
+cond <- factor(cond, levels = c("WT","Kcnc1"))             
+colData(traj1)$condition <- cond 
+
+
+df_cells <- data.frame(
+  Gene = target_gene,
+  Pseudotime = pt,
+  Expression = as.numeric(yhat_cell),
+  Condition = cond
+) %>% filter(is.finite(Pseudotime), is.finite(Expression))
+
+# 4) Bin pseudotime and summarize
+n_bins <- 40
+df_cells <- df_cells %>%
+  mutate(bin = cut(Pseudotime, breaks = n_bins, include.lowest = TRUE, labels = FALSE)) %>%
+  group_by(Condition, bin) %>%
+  summarise(
+    Pseudotime_mid = mean(Pseudotime, na.rm = TRUE),
+    mean_expr = mean(Expression, na.rm = TRUE),
+    sd_expr   = sd(Expression, na.rm = TRUE),
+    n = dplyr::n(),
+    se_expr = sd_expr / sqrt(pmax(n, 1)),
+    .groups = "drop"
+  )
+
+pdf(paste0("output/condiments/linePlot_traj1_Granule-version4dim40kparam15res03-", target_gene, "_withRibbon.pdf"), width=5, height=3.5)
+ggplot(df_cells, aes(x = Pseudotime_mid, y = mean_expr, color = Condition, fill = Condition)) +
+  geom_ribbon(aes(ymin = mean_expr - sd_expr, ymax = mean_expr + sd_expr), alpha = 0.2, color = NA) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = c(WT="black", Kcnc1="red")) +
+  scale_fill_manual(values  = c(WT="black", Kcnc1="red")) +
+  theme_bw() +
+  labs(title = paste(target_gene),
+       x = "Pseudotime", y = "Fitted expression (mean ± SE)")
+dev.off()
+
+
+##########################################
+
+
+# Plot using ggplot
+pdf("output/condiments/smoothed_linePlot_traj1_Granule-version4dim40kparam15res03-l2fc015-cl7.pdf", width=10, height=5)
+ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
+  geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Smoothed Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+### Export gene list from each cluster
+## Create a data frame with gene names and their respective cluster assignments
+output_df <- data.frame(
+  gene = rownames(combinedData),
+  cluster = clusters
+)
+
+# Write the data frame to a .txt file
+write.table(output_df, 
+            file = "output/condiments/gene_clusters-traj1_Granule-version4dim40kparam15res03-l2fc015-cl7.txt", 
+            sep = "\t", 
+            quote = FALSE, 
+            row.names = FALSE, 
+            col.names = TRUE)
+
+
+
+
+
+
+
+
+# Check some genes individually - RNA
+#load("output/condiments/condiments-Part_Granule_subset_START4_END1_points100extendpc1stretch1-version4dim40kparam15res03.RData")
+set.seed(42)
+## FOR LINEAGE 1
+
+counts <- WT_Kcnc1_p14_CB_1step.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(WT_Kcnc1_p14_CB_1step.sct$condition) # identify conditions
+pseudotimes <- slingPseudotime(Part_Granule_subset, na = FALSE) [,1] # HERE INDICATE TRAJ
+cellweights <- slingCurveWeights(Part_Granule_subset) [,1] # HERE INDICATE TRAJ
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+pdf("output/condiments/plotSmoothers-traj1_Granule-version4dim40kparam15res03-RNA_common-Cbln1.pdf", width=4, height=2)
+plotSmoothers(traj1, sub_counts, gene = "Cbln1", curvesCols = c("black","red"), size = 0.2, lwd= 1, border = FALSE) +
+scale_color_manual(values =c("black","red")) + ggtitle("Cbln1")
+dev.off()
+
+
+
+
+# Heatmap representation
+# Define colors for each cluster
+# 20
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "grey", "darkred", "darkblue", "gold", "darkgray", "lightblue", "lightgreen", "lightcoral", "lightpink", "lightcyan"))(20),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 13
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "grey", "darkred", "darkblue" ))(13),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 12
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "grey", "darkred" ))(12),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 10
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen" ))(10),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 8
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown" ))(8),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 7
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink" ))(7),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 6
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange"))(6),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 5
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple"))(5),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 4
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow" ))(4),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# Generate the heatmap
+
+col_order <- order(grepl("WT", colnames(combinedData)), decreasing = TRUE)
+combinedData <- combinedData[, col_order]
+pdf("output/condiments/heatmap-traj1_Granule_version4dim40kparam15res03-l2fc015_cl7.pdf", width=5, height=5)
+pheatmap(combinedData,
+  cluster_cols = FALSE,
+  show_rownames = FALSE,
+  show_colnames = FALSE,
+  legend = TRUE,
+  cutree_rows = 7,
+  annotation_row = annotation_row,
+  annotation_colors = annotation_colors
+)
+dev.off()
+
+
+
+```
+
+
+--> 
 
 
 
