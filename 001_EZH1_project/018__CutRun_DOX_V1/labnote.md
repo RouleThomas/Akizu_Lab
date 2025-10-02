@@ -954,9 +954,14 @@ cat output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_H3K27me3_pool_peaks.br
 cat output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_EZH2_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_KO_EZH2_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_EZH2_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.broadPeak
 cat output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_EZH1_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_KO_EZH1_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_EZH1_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH1_pool_peaks.sorted.broadPeak
 
+
+
 cat output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_H3K27me3_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_KO_H3K27me3_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_H3K27me3_noXchr_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_H3K27me3_noXchr_pool_peaks.sorted.broadPeak
 cat output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_EZH2_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_KO_EZH2_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_EZH2_noXchr_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2_noXchr_pool_peaks.sorted.broadPeak
 cat output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_EZH1_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_KO_EZH1_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_EZH1_noXchr_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH1_noXchr_pool_peaks.sorted.broadPeak
+
+cat output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_EZH2_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_KO_EZH2_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_EZH2_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_EZH1_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_KO_EZH1_noXchr_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_EZH1_noXchr_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2EZH1_noXchr_pool_peaks.sorted.broadPeak
+
 
 
 ## qvalue 3 ##############
@@ -1001,6 +1006,11 @@ bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKO
 bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_noXchr_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_H3K27me3_noXchr_pool_peaks.sorted.merge100bp.bed
 bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_noXchr_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH2_noXchr_pool_peaks.sorted.merge100bp.bed
 bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_noXchr_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval3/ESC_WTKOOEKO_EZH1_noXchr_pool_peaks.sorted.merge100bp.bed
+
+bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2EZH1_noXchr_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2EZH1_noXchr_pool_peaks.sorted.merge100bp.bed
+
+
+
 
 
 ### with 500bp peak merging
@@ -2726,6 +2736,40 @@ sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval23merge100bp-ESC_OE
 #sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval3merge100bp-ESC_OEKO_EZH2_R1-FergusonUniqueNorm99.sh #  xxx
 #sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval3merge100bp-ESC_OEKO_EZH2_R2-FergusonUniqueNorm99.sh #  xxx
 #sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2_pool_peaks-qval3merge100bp-ESC_OEKO_EZH2_R3-FergusonUniqueNorm99.sh #  xxx
+
+
+
+
+
+
+
+
+
+# EZH2 AND EZH1 consensus peaks - thresh bigwigs no X chr (Ferguson unique norm 99)
+
+XXXY BELOW NOT RUN; check deeptool plot first
+
+output/macs2/broad/broad_blacklist_qval2.30103/ESC_WTKOOEKO_EZH2EZH1_noXchr_pool_peaks.sorted.merge100bp.bed
+
+## qvalue 2.3 ##############
+#### WT
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2EZH1_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R1-noXchr_thresh1.sh #  xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2EZH1_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R2-noXchr_thresh1.sh #  xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2EZH1_pool_peaks-qval23merge100bp-ESC_WT_EZH2_R3-noXchr_thresh1.sh #  xxx
+#### KO
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2EZH1_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R1-noXchr_thresh1.sh #  xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2EZH1_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R2-noXchr_thresh1.sh #  xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2EZH1_pool_peaks-qval23merge100bp-ESC_KO_EZH2_R3-noXchr_thresh1.sh #  xxx
+#### OEKO
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2EZH1_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R1-noXchr_thresh1.sh #  xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2EZH1_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R2-noXchr_thresh1.sh #  xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2EZH1_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R3-noXchr_thresh1.sh #  xxx
+
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2EZH1_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R1-noXchr_thresh2.sh #  xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2EZH1_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R2-noXchr_thresh2.sh #  xxx
+sbatch scripts/LengthNormSignal_WTKOOEKO_EZH2EZH1_pool_peaks-qval23merge100bp-ESC_OEKO_EZH2_R3-noXchr_thresh2.sh #  xxx
+
+
 ```
 
 
@@ -6358,6 +6402,20 @@ sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_EZH2poolqval23-WTKOOEKO-EZH1-noXchr
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_EZH1poolqval23-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 52850417 ok
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_EZH1poolqval23-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 52850436 ok
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_EZH1poolqval23-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 52850555 ok
+
+
+
+# EZH2 AND EZH1 consensus peaks
+#### without --skipZero
+
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH2EZH1poolqval23merge100bp-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 54206981 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH2EZH1poolqval23merge100bp-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 54207174 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH2EZH1poolqval23merge100bp-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 54207186 ok
+
+
+
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH2EZH1poolqval23merge100bp-WT-EZH1EZH2-noXchr_thresh2thresh1_noSkip0.sh # interactive
+
 
 
 ```
