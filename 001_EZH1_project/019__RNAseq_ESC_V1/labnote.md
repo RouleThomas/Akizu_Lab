@@ -740,6 +740,183 @@ write.table(downregulated$geneSymbol, file = "output/deseq2/downregulated_q05fc0
 
 
 
+
+### ESC KO vs OEKO
+
+```bash
+conda activate deseq2V2 # to avoid apeglm error
+```
+Go in R
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("EnhancedVolcano")
+library("apeglm")
+library("org.Hs.eg.db")
+library("biomaRt")
+
+library("RColorBrewer")
+library("pheatmap")
+library("AnnotationDbi")
+library("rtracklayer")
+
+
+# import GTF for gene name
+gtf <- import("../../Master/meta/gencode.v47.annotation.gtf")
+## Extract geneId and geneSymbol
+gene_table <- mcols(gtf) %>%
+  as.data.frame() %>%
+  dplyr::select(gene_id, gene_name) %>%
+  distinct() %>%
+  as_tibble()
+## Rename columns
+colnames(gene_table) <- c("geneId", "geneSymbol")
+
+
+
+
+
+# import featurecounts output and keep only gene ID and counts
+## collect all samples ID
+samples <- c("ESC_KO_R1", "ESC_KO_R2" ,"ESC_KO_R3" ,"ESC_OEKO_R1" ,"ESC_OEKO_R2", "ESC_OEKO_R3")
+
+## Make a loop for importing all featurecounts data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/featurecounts/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    dplyr::select(Geneid, starts_with("output/STAR/")) %>%
+    rename(!!sample := starts_with("output/STAR/"))
+}
+
+# Merge all dataframe into a single one
+counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+# Remove X and Y chromosome genes
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
+                   filters = "chromosome_name",
+                   values = c("X", "Y"),
+                   mart = ensembl)
+counts_all$stripped_geneid <- sub("\\..*", "", counts_all$Geneid)
+counts_all_filtered <- counts_all %>%
+  filter(!stripped_geneid %in% genes_X_Y$ensembl_gene_id)
+counts_all_filtered$stripped_geneid <- NULL
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pull(counts_all_filtered, Geneid)) 
+
+## Create colData file that describe all our samples
+### Not including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  dplyr::select(-replicate) %>%
+  bind_cols(data.frame(samples))
+### Including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  bind_cols(data.frame(samples))
+
+## transform df into matrix
+coldata = make_matrix(dplyr::select(coldata_raw, -samples), pull(coldata_raw, samples))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = round(counts_all_matrix),
+                              colData = coldata,
+                              design= ~ genotype)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 5
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "KO")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+res <- lfcShrink(dds, coef="genotype_OEKO_vs_KO", type="apeglm")
+#--> This version gave a warning 'in nbinGLM(x=x...) the line search routine failed, possibly to insufficient numeric precision
+# !!!!!   INSTEAD FOR THIS SPECIFIC COMPARISON WE WILL NOT USE LFCSHRINKAGE!
+
+res <- results(dds)
+
+
+# Add geneSymbol
+res_tibble = as_tibble(rownames_to_column(as.data.frame(res), var = "geneId")) %>%
+  left_join(gene_table)
+
+
+# Identify DEGs and count them
+
+## padj 0.05 FC 0.58 ##################################
+res_df <- res_tibble %>% dplyr::select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE))
+n_upregulated <- sum(res_df$log2FoldChange > 0.58 & res_df$padj == TRUE, na.rm = TRUE)
+n_downregulated <- sum(res_df$log2FoldChange < -0.58 & res_df$padj == TRUE, na.rm = TRUE)
+
+
+
+## Plot-volcano
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, 'Sky Blue',
+    ifelse(res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.58)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.58)'
+
+pdf("output/deseq2/plotVolcano_res_q05fc058_ESC_OEKO_vs_ESC_KO_STAR.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'OEKO vs KO, ESC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.58,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) ) +
+  annotate("text", x = 3, y = 140, 
+           label = paste(n_upregulated), hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140, 
+           label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+#--> ONLY EZH1 is DEG1!!1
+```
+
+
+--> Only EZH1 is DE in KO vs OEKO... Very very very weird...... Likely X chromosome erosion is the main factor of DEGs we re seeing in WT vs the mutants......
+
+
+
+
+
+
+
 # Count with Kallisto
 
 Follow instruction [here](https://pachterlab.github.io/kallisto/download.html)

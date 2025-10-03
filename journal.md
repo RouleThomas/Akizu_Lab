@@ -114,7 +114,7 @@ library("EnrichedHeatmap")
 
 ### deseq2V2
 
-Same as deseq2 with `apeglm` R package updated (see error from `005_SNX14/001/RNAseq`)
+Same as deseq2 with `apeglm` R package updated (see error from `005_SNX14/001__RNAseq`)
 
 ### deseq2V3
 
