@@ -60063,6 +60063,8 @@ dev.off()
 ## saveRDS(WT_Kcnc1_p180_CX_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CX_1step-version2dim30kparam30res04.sct_V1_numeric.rds") 
 WT_Kcnc1_p180_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CX_1step-version2dim30kparam30res04.sct_V1_numeric.rds") # 
 
+## saveRDS(WT_Kcnc1_p180_CX_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CX_1step-version2dim30kparam30res04.sct_V1_label.rds") 
+WT_Kcnc1_p180_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CX_1step-version2dim30kparam30res04.sct_V1_label.rds") # 
 
 set.seed(42)
 ##########
@@ -60081,93 +60083,132 @@ write.table(all_markers, file = "output/seurat/srat_WT_Kcnc1_p180_CX_1step-versi
 
 
 
-XXXY BELOW NOT MOD !!!!!!!!!!!!!!!!!!!!!!!!
+
+############ V1 naming  version2dim30kparam30res04 (output/seurat/WT_Kcnc1_p180_CX_1step-version2dim30kparam30res04.sct_V1_numeric.rds )
 
 
+Cluster1= L2L3_IT__Otof= Otof 
+Cluster2= L4L5_IT__Rorb= Rorb, Rspo1 
+Cluster3= L2L3_IT__Abi3bp= Abi3bp (close to Cluster14 but does not express Reln=  L2L3_IT__Reln: Reln, Thsd7a, Cntn5, Ntng1 )
+Cluster4= L5L6_NP__Tle4Stard5= Stard5, Trpe3, Cbln2, Dcc, Rell1, Pamr1, Tle4 
+Cluster5= L5L6_IT__Osr1= Sulf1, Osr1 
+Cluster6= L5_IT_GABA__Adora2a= Drd2, Adora2a, Mhrt, Gng7
+Cluster7= GABA__Baiap3= Baiap3
+Cluster8= GABA__Vipr2= Vipr2
+Cluster9= GABA__Pvalb= Pvalb
+Cluster10= GABA_Vip= Vip
+Cluster11= GABA_Sst = Sst, Grin3a
+Cluster12= Endothelial= Lef1, Notum, Apcdd1, Pdgfrb
+Cluster13= Astrocyte= Aqp4, Slc39a12; Nwd1, Gli3, Slc7a10
+Cluster14= L2L3_IT__Reln: Reln, Thsd7a, Cntn5, Ntng1 
+Cluster15= Oligodendrocyte= Mbp, Mag, Plp1; Mog
+Cluster16= L6_GABA__Foxp2 = Foxp2, Gad1
+Cluster17= Microglia= Itgam, Cx3cr1; C1qb, Siglech, C1qa, Arhgap45
+Cluster18= L5_ET__L3mbtl4= L3mbtl4, Bcl11b, Fezf2, Gm19410
+Cluster19= GABA_Lamp5= Lamp5, 
+Cluster20= L5_IT__Tshz2: Tshz2, Neurod6, Slc17a6 
+Cluster21= L5L6_NP__Slc17a8= Slc17a8,  Mirt, Myzap, Stard5, Tle4 
+Cluster22= GABA__Calb2= Calb2
+Cluster23= OPC= Pdgfra, Cspg4  (no Gad1)
+Cluster24= Mix_IT__Tshz2_1 = Tshz2
+Cluster25= L6__Car3= Car3; Oprk1, Ntng2
+Cluster26= GABA__NdnfKlhl1= Ndnf, Slc12a8, Ccdc192, Klhl1
+Cluster27= L6_CT__Foxp2Syt6=  Syt6, Gpr149, Isl1, Drd3
+Cluster28= Mix_IT__Tshz2_2 = Tshz2
+Cluster29= Meningeal= Ptgds, Dcn
+Cluster30= GABA_Igfbpl1= Igfbpl1 
+Cluster31= L4_IT__Gabra6 = Gabra6, Fat2, Il16, Kcnd2, Dpp6
 
-############ V2 naming  version4dim40kparam30res03 (output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam30res03.sct_V1_numeric.rds )
-WT_Kcnc1_p14_CB_1step.sct$Purkinje <- NULL
-WT_Kcnc1_p14_CB_1step.sct$Golgi <- NULL
-Idents(WT_Kcnc1_p14_CB_1step.sct) <- "seurat_clusters"
-
-
-Cluster1= Granule = Gabra6, Pax6 
-Cluster2= MLI1: Sorcs3, Ptprk 
-Cluster3= PLI23: Galntl6, Kcnc2
-Cluster4= Granule = Gabra6, Pax6 
-Cluster5= Granule = Gabra6, Pax6 
-Cluster6= Granule = Gabra6, Pax6 
-Cluster7= MLI2: Nxph1, Cdh22
-Cluster8= Endothelial: Lef1, Apcdd1, Notum
-Cluster9= Bergman: Zeb2 , Slc1a3
-Cluser10= Astrocyte: Aqp4, Slc39a12
-Cluster11= PLI12: Klhl1, Gfra2, Aldh1a3
-Cluster12= Oligodendrocyte: Mbp, Mag, Plp1
-Cluster13= Meningeal: Ptgds, Dcn, 
-Cluster14= Purkinje: Calb1, Slc1a6, Car8
-Cluster15= Golgi: Pax2,, Sgcd 
-Cluster16= Unipolar Brush Rgs6, Tafa2
-Cluster17= ChoroidPlexus : Kl, Ttr, Clic6, Slc13a4
-
+Idents(WT_Kcnc1_p180_CX_1step.sct) <- WT_Kcnc1_p180_CX_1step.sct$seurat_clusters
+levels(Idents(WT_Kcnc1_p180_CX_1step.sct))  # sanity check
 
 new.cluster.ids <- c(
-  "Granule_1",
-  "MLI1",
-  "PLI23",
-  "Granule_2",
-  "Granule_3",
-  "Granule_4",
-  "MLI2",
+  "L2L3_IT__Otof",
+  "L4L5_IT__Rorb",
+  "L2L3_IT__Abi3bp",
+  "L5L6_NP__Tle4Stard5",
+  "L5L6_IT__Osr1",
+  "L5_IT_GABA__Adora2a",
+  "GABA__Baiap3",
+  "GABA__Vipr2",
+  "GABA__Pvalb",
+  "GABA__Vip",
+  "GABA__Sst",
   "Endothelial",
-  "Bergman",
   "Astrocyte",
-  "PLI12",
+  "L2L3_IT__Reln",
   "Oligodendrocyte",
+  "L6_GABA__Foxp2",
+  "Microglia",
+  "L5_ET__L3mbtl4",
+  "GABA__Lamp5",
+  "L5_IT__Tshz2",
+  "L5L6_NP__Slc17a8",
+  "GABA__Calb2",
+  "OPC",
+  "Mix_IT__Tshz2_1",
+  "L6__Car3",
+  "GABA__NdnfKlhl1",
+  "L6_CT__Foxp2Syt6",
+  "Mix_IT__Tshz2_2",
   "Meningeal",
-  "Purkinje",
-  "Golgi",
-  "UnipolarBrush",
-  "ChoroidPlexus"
+  "GABA_Igfbpl1",
+  "L4_IT__Gabra6"
 )
 
-names(new.cluster.ids) <- levels(WT_Kcnc1_p14_CB_1step.sct)
-WT_Kcnc1_p14_CB_1step.sct <- RenameIdents(WT_Kcnc1_p14_CB_1step.sct, new.cluster.ids)
-WT_Kcnc1_p14_CB_1step.sct$cluster.annot <- Idents(WT_Kcnc1_p14_CB_1step.sct) # create a new slot in my seurat object
+names(new.cluster.ids) <- levels(WT_Kcnc1_p180_CX_1step.sct)
+WT_Kcnc1_p180_CX_1step.sct <- RenameIdents(WT_Kcnc1_p180_CX_1step.sct, new.cluster.ids)
+WT_Kcnc1_p180_CX_1step.sct$cluster.annot <- Idents(WT_Kcnc1_p180_CX_1step.sct) # create a new slot in my seurat object
 
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB_1step_version4dim40kparam30res03_label.pdf", width=15, height=6)
-DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CX_1step_version2dim30kparam30res04_label.pdf", width=15, height=6)
+DimPlot(WT_Kcnc1_p180_CX_1step.sct, reduction = "umap", split.by = "condition", label = TRUE, repel = TRUE, pt.size = 0.5, label.size = 3)
 dev.off()
 
-pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB_1step_version4dim40kparam30res03_noSplit_label.pdf", width=9, height=6)
-DimPlot(WT_Kcnc1_p14_CB_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5)
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CX_1step_version2dim30kparam30res04_noSplit_label.pdf", width=9, height=6)
+DimPlot(WT_Kcnc1_p180_CX_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 3)
 dev.off()
 
-
-XXXY BELOW NOT RUN, marker and cluster name as been updated tho
 
 # All in dotplot
-DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "SCT"
+DefaultAssay(WT_Kcnc1_p180_CX_1step.sct) <- "SCT"
 
+XXXY HERE RUN BELOW STUFF
 
+Cluster1= L2L3_IT__Otof= Otof 
+Cluster3= L2L3_IT__Abi3bp= Abi3bp (close to Cluster14 but does not express Reln=  L2L3_IT__Reln: Reln, Thsd7a, Cntn5, Ntng1 )
+Cluster14= L2L3_IT__Reln: Reln, Thsd7a, Cntn5, Ntng1 
+Cluster31= L4_IT__Gabra6 = Gabra6, Fat2, Il16, Kcnd2, Dpp6
+Cluster2= L4L5_IT__Rorb= Rorb, Rspo1 
+Cluster6= L5_IT_GABA__Adora2a= Drd2, Adora2a, Mhrt, Gng7
+Cluster18= L5_ET__L3mbtl4= L3mbtl4, Bcl11b, Fezf2, Gm19410
+Cluster20= L5_IT__Tshz2: Tshz2, Neurod6, Slc17a6 
+Cluster4= L5L6_NP__Tle4Stard5= Stard5, Trpe3, Cbln2, Dcc, Rell1, Pamr1, Tle4 
+Cluster5= L5L6_IT__Osr1= Sulf1, Osr1 
+Cluster21= L5L6_NP__Slc17a8= Slc17a8,  Mirt, Myzap, Stard5, Tle4 
+Cluster25= L6__Car3= Car3; Oprk1, Ntng2
+Cluster27= L6_CT__Foxp2Syt6=  Syt6, Gpr149, Isl1, Drd3
+Cluster16= L6_GABA__Foxp2 = Foxp2, Gad1
 
-Cluster1= Granule = Gabra6, Pax6 
-Cluster4= Granule = Gabra6, Pax6 
-Cluster5= Granule = Gabra6, Pax6 
-Cluster6= Granule = Gabra6, Pax6 
-Cluster2= MLI1: Sorcs3, Ptprk 
-Cluster7= MLI2: Nxph1, Cdh22
-Cluster11= PLI12: Klhl1, Gfra2, Aldh1a3
-Cluster3= PLI23: Galntl6, Kcnc2
-Cluster14= Purkinje: Calb1, Slc1a6, Car8
-Cluster15= Golgi: Pax2,, Sgcd 
-Cluster16= Unipolar Brush Rgs6, Tafa2
-Cluster12= Oligodendrocyte: Mbp, Mag, Plp1
-Cluser10= Astrocyte: Aqp4, Slc39a12
-Cluster9= Bergman: Zeb2 , Slc1a3
-Cluster8= Endothelial: Lef1, Apcdd1, Notum
-Cluster13= Meningeal: Ptgds, Dcn, 
-Cluster17= ChoroidPlexus : Kl, Ttr, Clic6, Slc13a4
+Cluster24= Mix_IT__Tshz2_1 = Tshz2
+Cluster28= Mix_IT__Tshz2_2 = Tshz2
+
+Cluster7= GABA__Baiap3= Baiap3
+Cluster8= GABA__Vipr2= Vipr2
+Cluster9= GABA__Pvalb= Pvalb
+Cluster10= GABA_Vip= Vip
+Cluster11= GABA_Sst = Sst, Grin3a
+Cluster19= GABA_Lamp5= Lamp5, 
+Cluster22= GABA__Calb2= Calb2
+Cluster26= GABA__NdnfKlhl1= Ndnf, Slc12a8, Ccdc192, Klhl1
+Cluster30= GABA_Igfbpl1= Igfbpl1 
+
+Cluster17= Microglia= Itgam, Cx3cr1; C1qb, Siglech, C1qa, Arhgap45
+Cluster13= Astrocyte= Aqp4, Slc39a12; Nwd1, Gli3, Slc7a10
+Cluster23= OPC= Pdgfra, Cspg4  (no Gad1)
+Cluster15= Oligodendrocyte= Mbp, Mag, Plp1; Mog
+Cluster12= Endothelial= Lef1, Notum, Apcdd1, Pdgfrb
+Cluster29= Meningeal= Ptgds, Dcn
 
 
 
@@ -71106,6 +71147,30 @@ rsconnect::deployApp('shinyApp_WT_Kcnc1_p35_CX_1step_version2dim35kparam15res065
 
 
 
+# Generate Shiny app CX Version2 p180 - version2dim30kparam30res04
+## import Seurat object
+WT_Kcnc1_p180_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CX_1step-version2dim30kparam30res04.sct_V1_numeric.rds") # 
+set.seed(42)
+# differential expressed genes across conditions
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+DefaultAssay(WT_Kcnc1_p180_CX_1step.sct) <- "RNA"
+WT_Kcnc1_p180_CX_1step.sct <- NormalizeData(WT_Kcnc1_p180_CX_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p180_CX_1step.sct)
+WT_Kcnc1_p180_CX_1step.sct <- ScaleData(WT_Kcnc1_p180_CX_1step.sct, features = all.genes) # zero-centres and scales it
+WT_Kcnc1_p180_CX_1step.sct$celltype.stim <- paste(WT_Kcnc1_p180_CX_1step.sct$seurat_clusters, WT_Kcnc1_p180_CX_1step.sct$condition,
+    sep = "-")
+Idents(WT_Kcnc1_p180_CX_1step.sct) <- "celltype.stim"
+
+
+DefaultAssay(WT_Kcnc1_p180_CX_1step.sct) <- "RNA" # 
+scConf = createConfig(WT_Kcnc1_p180_CX_1step.sct)
+makeShinyApp(WT_Kcnc1_p180_CX_1step.sct, scConf, gene.mapping = TRUE,
+             shiny.title = "WT_Kcnc1_p180_CX_1step_version2dim30kparam30res04",
+             shiny.dir = "shinyApp_WT_Kcnc1_p180_CX_1step_version2dim30kparam30res04/") 
+rsconnect::deployApp('shinyApp_WT_Kcnc1_p180_CX_1step_version2dim30kparam30res04')
+
+
+
 ```
 
 **CB**
@@ -72127,11 +72192,6 @@ dev.off()
 #--> TOO LONG!!! Let's run in slurm job without downsamnpling!
 
 
-
-XXXY HERE BELOW NOT MOD!!!
-
-
-
 ### START OF SLURM  ######################################################
 ########################################################################
 # Step 1: Find anchors (you may have already done this)
@@ -72252,15 +72312,16 @@ pdf("output/seurat/UMAP_Yao_Cortex_20k-reference_query_overlay-version2-24hr.pdf
 dev.off()
 ### END OF SLURM  ######################################################
 ########################################################################
-Yao_Cortex <- readRDS(file = "output/seurat/Yao_Cortex-10X_nuclei_v3_AIBS-30dim-order2-p35_CX.rds") # 
-WT_Kcnc1_p35_CX_1step <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CX_1step-10X_nuclei_v3_AIBS-30dim-order2-p35_CX.rds") # 
+Yao_Cortex <- readRDS(file = "output/seurat/Yao_Cortex-10X_nuclei_v3_AIBS-30dim-order2-p35_CX.rds") # name is fucked up I erase p35...
+WT_Kcnc1_p180_CX_1step <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CX_1step-10X_nuclei_v3_AIBS-30dim-order2-p35_CX.rds") # name is fucked up I erase p35...
 
 
 
-# Step 4: Generate UMAP plots - USING OUR WT_Kcnc1_p35_CX_1step ANNOTATION
+
+# Step 4: Generate UMAP plots - USING OUR WT_Kcnc1_p180_CX_1step ANNOTATION
 all_clusters <- union(
   unique(Yao_Cortex$cluster_id),
-  unique(WT_Kcnc1_p35_CX_1step$predicted.id)
+  unique(WT_Kcnc1_p180_CX_1step$predicted.id)
 )
 # Step 2: Assign consistent colors
 cluster_colors <- setNames(scales::hue_pal()(length(all_clusters)), sort(all_clusters))
@@ -72273,14 +72334,14 @@ p1 <- DimPlot(
   pt.size = 1,
   cols = cluster_colors
 ) + ggtitle("Yao_Cortex")
-# Panel 2: Projected WT_Kcnc1_p35_CX_1step
+# Panel 2: Projected WT_Kcnc1_p180_CX_1step
 p2 <- DimPlot(
-  WT_Kcnc1_p35_CX_1step,
+  WT_Kcnc1_p180_CX_1step,
   reduction = "ref.umap",
   group.by = "seurat_clusters",
   label = TRUE,
   pt.size = 1
-) + ggtitle("WT_Kcnc1_p35_CX")
+) + ggtitle("WT_Kcnc1_p180_CX")
 # Panel 3: Overlay
 # Plot reference (Yao_Cortex) in gray
 Yao_Cortex$dummy_group <- "Reference"
@@ -72292,7 +72353,7 @@ p_ref <- DimPlot(
   pt.size = 1
 ) + NoLegend()
 p_query <- DimPlot(
-  WT_Kcnc1_p35_CX_1step,
+  WT_Kcnc1_p180_CX_1step,
   reduction = "ref.umap",
   group.by = "seurat_clusters",
   pt.size = 1
@@ -72311,11 +72372,12 @@ g_overlay <- g_ref +
   theme(plot.title = element_text(hjust = 0.5))
 
 # Step 4: Export
-#pdf("output/seurat/UMAP_Yao_Cortex-reference_query_overlay-annotation-order2-p35_CX.pdf", width = 30, height = 7)
-pdf("output/seurat/UMAP_Yao_Cortex-reference_query_overlay-annotation-order2label-p35_CX.pdf", width = 30, height = 7)
+pdf("output/seurat/UMAP_Yao_Cortex-reference_query_overlay-annotation-order2label-p180_CX.pdf", width = 30, height = 7)
 (p1 | p2 | g_overlay)
 dev.off()
 
+
+XXXY here below not done
 
 
 ### SHOW EXPRESSION OF SOME GENES #######################
