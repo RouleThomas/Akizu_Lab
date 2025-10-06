@@ -4435,6 +4435,203 @@ write_tsv( downregulated %>%
 
 
 
+
+
+
+
+
+
+
+######################################################
+### KO vs OEKO  (KO as WT) ####################################
+######################################################
+
+SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__KOvsOEKO = SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1 %>%
+  filter(genotype %in% c("KO", "OEKO"),
+         peakID != "NA") %>%
+  mutate(median_score = round(median_score)) %>%
+  filter(!startsWith(peakID, "chrX")) # 112,254 to 97200
+
+
+
+
+
+# Convert to wide format
+countData_KOvsOEKO <- SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__KOvsOEKO %>%
+  mutate(replicate = paste0(genotype, "_", replicate)) %>%  # Create unique column names
+  select(-genotype) %>%  # Remove genotype column (since it's now part of replicate)
+  pivot_wider(names_from = replicate, values_from = median_score, values_fill = 0)  
+  
+
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(countData_KOvsOEKO, -peakID), pull(countData_KOvsOEKO, peakID)) 
+
+
+## Create colData file that describe all our samples
+colData_KOvsOEKO_raw <- SCORE_BED_WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1__KOvsOEKO %>%
+  distinct(replicate, genotype) %>%
+  mutate(sample = paste(genotype, replicate, sep = "_"))
+  
+  
+## transform df into matrix
+coldata = make_matrix(dplyr::select(colData_KOvsOEKO_raw, -sample), pull(colData_KOvsOEKO_raw, sample))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design= ~ genotype)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 5 #  
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "KO")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+
+res <- lfcShrink(dds, coef="genotype_OEKO_vs_KO", type="apeglm")
+
+
+### explore data to set treshold nb of reads #######
+
+res_tibble %>% dplyr::filter(padj <0.05, log2FoldChange > 0.58) %>% dplyr::select(chr, start, end)
+res_tibble %>% dplyr::filter(padj <0.05, log2FoldChange < -0.58) %>% dplyr::select(chr, start, end)
+
+########################################################
+
+
+## Plot-volcano
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.58 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.58 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.58)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.58)'
+
+
+res_tibble <- as_tibble(res, rownames = "peakID") %>% left_join(ESC_WTKOOEKO_H3K27me3_qval23merge100bp_nochrX_annot)
+# Export result 
+write.table(res_tibble, file="output/edgeR/DESEQ2-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_KO-H3K27me3.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+pdf("output/edgeR/plotVolcano_res_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_KO-H3K27me3.pdf", width=3, height=4)    
+EnhancedVolcano(res_tibble,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'OEKO vs KO, ESC, H3K27me3',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.58,
+  pointSize = 1.0,
+  labSize = 2,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+
+
+
+
+# Identify gain lost peak and genes
+## 1) Keep only significant peaks, then keep only strong effects (|log2FC| >= threshold)
+res_sig <- res_tibble %>%
+  filter(padj < 0.05) %>%
+  mutate(effect_dir = case_when(
+    log2FoldChange >=  0.58 ~ "pos",
+    log2FoldChange <= -0.58 ~ "neg",
+    TRUE ~ NA_character_
+  )) %>%
+  filter(!is.na(effect_dir))   # drop weak effects
+## 2) Determine gene-level direction (Gain / Lost / Mix) from the remaining peaks
+gene_direction <- res_sig %>%
+  group_by(geneSymbol) %>%
+  summarise(
+    n_pos = sum(effect_dir == "pos"),
+    n_neg = sum(effect_dir == "neg"),
+    direction = case_when(
+      n_pos > 0 & n_neg > 0 ~ "Mix",
+      n_pos > 0             ~ "Gain",
+      n_neg > 0             ~ "Lost",
+      TRUE                  ~ NA_character_
+    ),
+    .groups = "drop"
+  ) %>%
+  filter(!is.na(direction))
+### Here remove the 'Mix' genes
+res_kept_peaks <- res_sig %>%
+  inner_join(gene_direction %>% select(geneSymbol, direction), by = "geneSymbol")
+
+# HERE WITHOUT MIX GENES:
+upregulated_genes <- res_kept_peaks %>%
+  dplyr::filter(direction == "Gain") %>%
+  dplyr::select(geneSymbol) %>% unique()
+downregulated_genes <- res_kept_peaks %>%
+  dplyr::filter(direction == "Lost") %>%
+  dplyr::select(geneSymbol) %>% unique()
+write.table(upregulated_genes, file = "output/edgeR/upregulatedNoMix_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_KO-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated_genes, file = "output/edgeR/downregulatedNoMix_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_KO-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+# HERE KEEPING MIX GENES:
+upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, ]
+#### Filter for down-regulated genes
+downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, ]
+#### Save
+write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_KO-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_KO-H3K27me3.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
+res_tibble %>% dplyr::select(peakID, geneSymbol, log2FoldChange, padj) %>%
+  filter(padj < 0.05, log2FoldChange > 0.58)
+
+
+res_tibble %>% dplyr::select(peakID, geneSymbol, log2FoldChange, padj) %>%
+  filter(padj < 0.05, log2FoldChange < -0.58)
+
+
+# Save as coordinates for bed deeptools - including Mix peaks
+
+write_tsv( upregulated %>%
+  separate(peakID, into = c("chr", "start", "end"), sep = "_", remove = TRUE) %>%
+  dplyr::select(chr, start, end), "output/edgeR/upregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_KO-H3K27me3.bed", col_names = FALSE)
+write_tsv( downregulated %>%
+  separate(peakID, into = c("chr", "start", "end"), sep = "_", remove = TRUE) %>%
+  dplyr::select(chr, start, end), "output/edgeR/downregulated_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_KO-H3K27me3.bed", col_names = FALSE)
+
+
+
+
+
+
 ```
 
 
@@ -5012,6 +5209,199 @@ write_tsv( upregulated %>%
 write_tsv( downregulated %>%
   separate(peakID, into = c("chr", "start", "end"), sep = "_", remove = TRUE) %>%
   dplyr::select(chr, start, end), "output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2.bed", col_names = FALSE)
+
+
+
+
+
+
+
+
+
+
+
+######################################################
+### KO vs OEKO ####################################
+######################################################
+
+SCORE_BED_WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1__KOvsOEKO = SCORE_BED_WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1 %>%
+  filter(genotype %in% c("KO", "OEKO"),
+         peakID != "NA") %>%
+  mutate(median_score = round(median_score)) %>%
+  filter(!startsWith(peakID, "chrX")) # 112,254 to 97200
+
+
+
+
+
+# Convert to wide format
+countData_KOvsOEKO <- SCORE_BED_WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1__KOvsOEKO %>%
+  mutate(replicate = paste0(genotype, "_", replicate)) %>%  # Create unique column names
+  select(-genotype) %>%  # Remove genotype column (since it's now part of replicate)
+  pivot_wider(names_from = replicate, values_from = median_score, values_fill = 0)  
+  
+
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(countData_KOvsOEKO, -peakID), pull(countData_KOvsOEKO, peakID)) 
+
+
+## Create colData file that describe all our samples
+colData_KOvsOEKO_raw <- SCORE_BED_WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1__KOvsOEKO %>%
+  distinct(replicate, genotype) %>%
+  mutate(sample = paste(genotype, replicate, sep = "_"))
+  
+  
+## transform df into matrix
+coldata = make_matrix(dplyr::select(colData_KOvsOEKO_raw, -sample), pull(colData_KOvsOEKO_raw, sample))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design= ~ genotype)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 5 #  
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "KO")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+
+res <- lfcShrink(dds, coef="genotype_OEKO_vs_KO", type="apeglm")
+
+
+### explore data to set treshold nb of reads #######
+
+res_tibble %>% dplyr::filter(padj <0.05, log2FoldChange > 0.58) %>% dplyr::select(chr, start, end)
+res_tibble %>% dplyr::filter(padj <0.05, log2FoldChange < -0.58) %>% dplyr::select(chr, start, end)
+
+########################################################
+
+
+## Plot-volcano
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res$log2FoldChange < -0.58 & res$padj < 5e-2, 'Sky Blue',
+    ifelse(res$log2FoldChange > 0.58 & res$padj < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.58)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.58)'
+
+
+res_tibble <- as_tibble(res, rownames = "peakID") %>% left_join(ESC_WTKOOEKO_EZH2_qval23merge100bp_nochrX_annot)
+# Export result 
+write.table(res_tibble, file="output/edgeR/DESEQ2-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_KO-EZH2.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+pdf("output/edgeR/plotVolcano_res_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_KO-EZH2.pdf", width=3, height=4)    
+EnhancedVolcano(res_tibble,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'OEKO vs KO, ESC, EZH2',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.58,
+  pointSize = 1.0,
+  labSize = 2,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none")
+dev.off()
+
+
+
+# Identify gain lost peak and genes
+## 1) Keep only significant peaks, then keep only strong effects (|log2FC| >= threshold)
+res_sig <- res_tibble %>%
+  filter(padj < 0.05) %>%
+  mutate(effect_dir = case_when(
+    log2FoldChange >=  0.58 ~ "pos",
+    log2FoldChange <= -0.58 ~ "neg",
+    TRUE ~ NA_character_
+  )) %>%
+  filter(!is.na(effect_dir))   # drop weak effects
+## 2) Determine gene-level direction (Gain / Lost / Mix) from the remaining peaks
+gene_direction <- res_sig %>%
+  group_by(geneSymbol) %>%
+  summarise(
+    n_pos = sum(effect_dir == "pos"),
+    n_neg = sum(effect_dir == "neg"),
+    direction = case_when(
+      n_pos > 0 & n_neg > 0 ~ "Mix",
+      n_pos > 0             ~ "Gain",
+      n_neg > 0             ~ "Lost",
+      TRUE                  ~ NA_character_
+    ),
+    .groups = "drop"
+  ) %>%
+  filter(!is.na(direction))
+### Here remove the 'Mix' genes
+res_kept_peaks <- res_sig %>%
+  inner_join(gene_direction %>% select(geneSymbol, direction), by = "geneSymbol")
+
+# HERE WITHOUT MIX GENES:
+upregulated_genes <- res_kept_peaks %>%
+  dplyr::filter(direction == "Gain") %>%
+  dplyr::select(geneSymbol) %>% unique()
+downregulated_genes <- res_kept_peaks %>%
+  dplyr::filter(direction == "Lost") %>%
+  dplyr::select(geneSymbol) %>% unique()
+write.table(upregulated_genes, file = "output/edgeR/upregulatedNoMix_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_KO-EZH2.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated_genes, file = "output/edgeR/downregulatedNoMix_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_KO-EZH2.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+# HERE KEEPING MIX GENES:
+upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, ]
+#### Filter for down-regulated genes
+downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, ]
+#### Save
+write.table(upregulated$geneSymbol, file = "output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_KO-EZH2.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_KO-EZH2.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
+res_tibble %>% dplyr::select(peakID, geneSymbol, log2FoldChange, padj) %>%
+  filter(padj < 0.05, log2FoldChange > 0.58)
+
+
+res_tibble %>% dplyr::select(peakID, geneSymbol, log2FoldChange, padj) %>%
+  filter(padj < 0.05, log2FoldChange < -0.58)
+
+
+# Save as coordinates for bed deeptools - including Mix peaks
+
+write_tsv( upregulated %>%
+  separate(peakID, into = c("chr", "start", "end"), sep = "_", remove = TRUE) %>%
+  dplyr::select(chr, start, end), "output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_KO-EZH2.bed", col_names = FALSE)
+write_tsv( downregulated %>%
+  separate(peakID, into = c("chr", "start", "end"), sep = "_", remove = TRUE) %>%
+  dplyr::select(chr, start, end), "output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_KO-EZH2.bed", col_names = FALSE)
 
 
 

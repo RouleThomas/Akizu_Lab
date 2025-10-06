@@ -267,6 +267,130 @@ dev.off()
 
 
 
+# Check expression of some genes TPM
+
+```bash
+conda activate deseq2
+```
+
+
+
+```R
+library("tidyverse")
+library("ggpubr")
+
+
+
+# import GTF for gene name
+long_data_log2tpm = read.delim("output/tpm/long_data_log2tpm_001019.txt",
+                                header = TRUE,
+                                stringsAsFactors = FALSE) %>%
+  as_tibble()
+                              
+
+# import gene bound with EZH1 consensus peaks
+EZH1_pro5 = read.delim("../018__CutRun_DOX_V1/output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH1_qval23merge100bp_nochrX_annot_promoterAnd5_geneSymbol.txt",
+                                header = FALSE,
+                                stringsAsFactors = FALSE) %>%
+  as_tibble()
+
+
+
+
+
+####################################################
+# show stat for a gorup of genes ###################
+####################################################
+
+genes_of_interest <- EZH1_pro5[[1]]
+
+## 2) Subset to those genes (optionally keep only a tissue if you want)
+df <- long_data_log2tpm %>%
+  filter(geneSymbol %in% genes_of_interest,
+         Genotype %in% c("WT","KO","OEKO"))
+  # If needed: %>% filter(Tissue == "ESC")
+## 3) Per-gene medians (one value per gene per genotype)
+gene_meds <- df %>%
+  group_by(geneSymbol, Genotype) %>%
+  summarise(median_log2tpm = median(log2tpm, na.rm = TRUE), .groups = "drop") %>%
+  mutate(Genotype = factor(Genotype, levels = c("WT","KO","OEKO")))
+
+
+
+
+pdf("output/tpm/boxplot_log2tpm_WT_KO_OEKO-EZH1_pro5_consensus.pdf", width = 3, height = 3.5)
+ggboxplot(
+  gene_meds %>% mutate(Genotype = factor(Genotype, levels = c("WT","KO","OEKO"))),
+  x = "Genotype", y = "median_log2tpm",
+  fill = "Genotype", width = 0.65, outlier.shape = NA
+) +
+  scale_fill_manual(values = c(WT = "black", KO = "red", OEKO = "blue")) +
+  labs(x = NULL, y = "log2(TPM)", title = "EZH1_pro5 consensus peaks") +
+  theme_classic(base_size = 12) + 
+  
+  geom_point(
+  data = gene_meds,
+  aes(x = Genotype, y = median_log2tpm),
+  position = position_jitter(width = 0.15, seed = 1),
+  size = 1.8, alpha = 0.3, inherit.aes = FALSE
+) + stat_compare_means(
+  data = gene_meds,
+  aes(x = Genotype, y = median_log2tpm),
+  comparisons = list(c("WT","KO"), c("WT","OEKO")),
+  method = "wilcox.test",
+  p.adjust.method = "BH",
+  label = "p.format"
+)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+####################################################
+# show stat for one gene with stat #################
+####################################################
+
+gene_of_interest <- "EZH1"   # change if needed
+
+df <- long_data_log2tpm %>%
+  filter(geneSymbol == gene_of_interest,
+         Genotype %in% c("WT","KO","OEKO")) %>%
+  mutate(Genotype = factor(Genotype, levels = c("WT","KO","OEKO")))
+
+my_comparisons <- list(c("WT","KO"), c("WT","OEKO"), c("KO","OEKO"))
+y_top <- max(df$log2tpm, na.rm = TRUE)
+
+pdf("output/tpm/boxplot_log2tpm_WT_KO_OEKO-EZH1.pdf", width = 3, height = 3.5)
+ggboxplot(
+  df, x = "Genotype", y = "log2tpm",
+  fill = "Genotype", width = 0.65, outlier.shape = NA,
+  add = "jitter", add.params = list(size = 2.8, alpha = 0.85)
+) +
+  scale_fill_manual(values = c(WT = "black", KO = "red", OEKO = "blue")) +
+  labs(title = paste0(gene_of_interest, " expression"),
+       x = NULL, y = "log2(TPM)") +
+  theme_bw(base_size = 14) +
+  theme(legend.position = "none") +
+  # Pairwise comparisons with BH correction
+  stat_compare_means(comparisons = my_comparisons,
+                     method = "t.test", p.adjust.method = "BH",
+                     label = "p.signif", hide.ns = TRUE)
+dev.off()
+```
+
 
 
 
