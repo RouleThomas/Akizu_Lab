@@ -63964,6 +63964,7 @@ sbatch scripts/dataIntegration_CB_2step_integrateMerge_Version3_QCversion4.sh # 
 
 # pseudotime sample integration version5 (sample renaming; after QCversion4 and purkinje/golgi saved)
 sbatch scripts/dataIntegration_CB_2step_integrateMerge_Version5.sh # 43695541 ok
+sbatch scripts/dataIntegration_CB_2step_integrateMerge_Version5_p14p35.sh # 54664015 xxxx
 
 
 
@@ -69896,14 +69897,14 @@ sbatch scripts/pseudotime_allCells_v1_MLI2.sh # 36201001 ok
  
 # version2 _v1
 sbatch scripts/pseudotime_allCells_v1_Granule-version2.sh # 37207530 ok
-sbatch scripts/pseudotime_allCells_v1_MLI1-version2.sh # 37207543 xxx
-sbatch scripts/pseudotime_allCells_v1_MLI2-version2.sh # 37207550 xxx
+sbatch scripts/pseudotime_allCells_v1_MLI1-version2.sh # 37207543 ok
+sbatch scripts/pseudotime_allCells_v1_MLI2-version2.sh # 37207550 ok
 
 
 ## Pseudotime cells separated
 # version5
 
-sbatch scripts/pseudotime_Granule-version5.sh # 43717307 xxx
+sbatch scripts/pseudotime_Granule-version5.sh # 43717307 ok
 
 
 
