@@ -60477,24 +60477,42 @@ dev.off()
 # DEGs number in dotplot
 DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
 ## List of cell types
-cell_types <- c(   "Granule", 
-  "MLI1", 
-  "MLI2", 
-  "PLI12",
-  "PLI23", 
-  "Golgi",
-  "Unipolar_Brush",
-  "Purkinje",
+cell_types <- c(     "L2L3_IT__Otof",
+  "L2L3_IT__Abi3bp",
+  "L2L3_IT__Reln",
+  "L4_IT__Gabra6",
+  "L4L5_IT__Rorb",
+  "L5_IT_GABA__Adora2a",
+  "L5_ET__L3mbtl4",
+  "L5_IT__Tshz2",
+  "Mix_IT__Tshz2_1",
+  "Mix_IT__Tshz2_2",
+  "L5L6_NP__Tle4Stard5",
+  "L5L6_IT__Osr1",
+  "L5L6_NP__Slc17a8",
+  "L6__Car3",
+  "L6_CT__Foxp2Syt6",
+  "L6_GABA__Foxp2",
+
+  "GABA__Baiap3",
+  "GABA__Vipr2",
+  "GABA__Pvalb",
+  "GABA__Vip",
+  "GABA__Sst",
+  "GABA__Lamp5",
+  "GABA__Calb2",
+  "GABA__NdnfKlhl1",
+  "GABA__Igfbpl1",
+
+  "Microglia",
   "Astrocyte",
-  "Bergman_Glia", 
-  "Endothelial",
-  "Meningeal",
-  "Choroid_Plexus",
+  "OPC",
   "Oligodendrocyte",
-  "Unknown")
+  "Endothelial",
+  "Meningeal")
 ## Loop through each cell type to count the number of significant DEGs
 for (cell_type in cell_types) {
-  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST.txt", sep = "")
+  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST.txt", sep = "")
   deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
   num_degs <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.15 | deg_data$avg_log2FC < -0.15)) ## Count the number of significant DEGs
   DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
@@ -60502,25 +60520,43 @@ for (cell_type in cell_types) {
 ## Dotplot
 DEG_count= DEG_count %>%
   mutate(Cell_Type = factor(Cell_Type, levels = c( 
-"Granule", 
-  "MLI1", 
-  "MLI2", 
-  "PLI12",
-  "PLI23", 
-  "Golgi",
-  "Unipolar_Brush",
-  "Purkinje",
+  "L2L3_IT__Otof",
+  "L2L3_IT__Abi3bp",
+  "L2L3_IT__Reln",
+  "L4_IT__Gabra6",
+  "L4L5_IT__Rorb",
+  "L5_IT_GABA__Adora2a",
+  "L5_ET__L3mbtl4",
+  "L5_IT__Tshz2",
+  "Mix_IT__Tshz2_1",
+  "Mix_IT__Tshz2_2",
+  "L5L6_NP__Tle4Stard5",
+  "L5L6_IT__Osr1",
+  "L5L6_NP__Slc17a8",
+  "L6__Car3",
+  "L6_CT__Foxp2Syt6",
+  "L6_GABA__Foxp2",
+
+  "GABA__Baiap3",
+  "GABA__Vipr2",
+  "GABA__Pvalb",
+  "GABA__Vip",
+  "GABA__Sst",
+  "GABA__Lamp5",
+  "GABA__Calb2",
+  "GABA__NdnfKlhl1",
+  "GABA__Igfbpl1",
+
+  "Microglia",
   "Astrocyte",
-  "Bergman_Glia", 
-  "Endothelial",
-  "Meningeal",
-  "Choroid_Plexus",
+  "OPC",
   "Oligodendrocyte",
-  "Unknown") ) ) 
+  "Endothelial",
+  "Meningeal") ) ) 
 DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = rev(levels(DEG_count$Cell_Type)))
 
 # Generate the dot plot
-pdf("output/seurat/Dotplot_DEG_count_WT_Kcnc1_p14_CB_1step_DEG_MAST_padj05fc015_numeric_version2.pdf", width=9, height=4)
+pdf("output/seurat/Dotplot_DEG_count_WT_Kcnc1_p180_CX_1step_DEG_MAST_padj05fc015_version2dim30kparam30res04.pdf", width=9, height=4)
 ggplot(DEG_count, aes(x = 1, y = Cell_Type, color = Cell_Type)) +
   geom_point(aes(size = Num_DEGs), alpha = 0.8) +
   scale_size(range = c(2, 10)) +
@@ -63938,7 +63974,7 @@ Let's try:
 Let's run in an R script the 1/2 step integration
 
 ```bash
-conda activate scRNAseqV2
+conda activate scRNAseqV3
 
 sbatch scripts/dataIntegration_CB_1step.sh # 29969813 fail
 sbatch scripts/dataIntegration_CB_2step.sh # 29969881 ok
@@ -63964,7 +64000,8 @@ sbatch scripts/dataIntegration_CB_2step_integrateMerge_Version3_QCversion4.sh # 
 
 # pseudotime sample integration version5 (sample renaming; after QCversion4 and purkinje/golgi saved)
 sbatch scripts/dataIntegration_CB_2step_integrateMerge_Version5.sh # 43695541 ok
-sbatch scripts/dataIntegration_CB_2step_integrateMerge_Version5_p14p35.sh # 54664015 xxxx
+
+sbatch scripts/dataIntegration_CB_2step_integrateMerge_Version5_p14p35.sh # 54664015 ok (run in interactive for leiden clsutering!)
 
 
 
@@ -66781,6 +66818,32 @@ ggplot(df_3, aes(x = pst)) +
 dev.off()
 
 
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_Granule_subset-version4dim40kparam15res03-START4_END1_points100extendpc1stretch1_smooth.pdf", width=5, height=3)
+ggplot(df_3, aes(x = pst)) +
+  geom_density(alpha = .6, aes(fill = condition),
+               col = "transparent", adjust = 3.0 , n = 1024, trim = TRUE) +
+  geom_density(aes(col = condition), size = 1.5,
+               col = "transparent", adjust = 3.0 , n = 1024, trim = TRUE) +
+  labs(x = "Pseudotime", fill = "condition") +
+  facet_wrap(~Lineage, scales = "free", nrow=2) +
+  guides(col = "none", fill = guide_legend(
+    override.aes = list(size = 1.5, col = c("blue", "red"))
+  )) +
+  scale_fill_manual(values = c("blue", "red")) +
+  scale_color_manual(values = c("blue", "red")) +
+  theme_bw()
+dev.off()
+
+df_3 %>%
+  group_by(Lineage) %>%
+  summarise(p_ks = ks.test(pst[condition=="WT"],
+                           pst[condition=="Kcnc1"])$p.value)
+#--> Statistic diff in prifle
+
+
+
+
+
 #### ->  save.image(file="output/condiments/condiments-Part_Granule_subset_START4_END1_points100extendpc1stretch1-version4dim40kparam15res03.RData")
 ### load("output/condiments/condiments-Part_Granule_subset_START4_END1_points100extendpc1stretch1-version4dim40kparam15res03.RData")
 set.seed(42)
@@ -67558,6 +67621,352 @@ dev.off()
 
 
 
+
+
+#### Isolating cell of interest - Granule p14 p35 integration
+
+Lets try to have a bit more mature cells so use p35 too (p180 sample is likely too old to be intergrated)
+
+--> In the end, not needed to be pursue, as the **cells from p14 and p35 are too different, integration/merging does not work well and create two clearly separate group of cells**...
+
+--> Follow `002*/006__Kim` `#### Run condiments RNA assay - V1 common condition`
+
+
+```bash
+conda activate condiments_V6
+```
+
+
+
+
+```R
+
+# package installation 
+## install.packages("remotes")
+## remotes::install_github("cran/spatstat.core")
+## remotes::install_version("Seurat", "4.0.3")
+## install.packages("magrittr")
+## install.packages("magrittr")
+## install.packages("dplyr")
+## BiocManager::install("DelayedMatrixStats")
+## BiocManager::install("tradeSeq")
+
+
+# packages
+library("condiments")
+library("Seurat")
+library("magrittr") # to use pipe
+library("dplyr") # to use bind_cols and sample_frac
+library("SingleCellExperiment") # for reducedDims
+library("ggplot2")
+library("slingshot")
+library("DelayedMatrixStats")
+library("tidyr")
+library("tradeSeq")
+library("cowplot")
+library("scales")
+library("pheatmap")
+library("readr")
+set.seed(42)
+
+
+
+# Data import - all samples and genotype CB
+WT_Kcnc1_CB_integrateMerge_p14p35.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge_Version5_p14p35-dim30kparam10res17.rds")
+
+XXXY HERE BELOW NOT MOD!
+
+DefaultAssay(WT_Kcnc1_CB_integrateMerge_p14p35.sct) <- "RNA" # According to condiments workflow
+
+# convert to SingleCellExperiment
+WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_CB_integrateMerge_p14p35.sct, assay = "RNA")
+
+
+
+## SEPARATE CELLS for each trajectory ############################
+
+########################################################
+############################ Granule ############################
+########################################################
+
+# First filter based on cell type
+Part_Granule <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c("26","21","16","10","5","12","14","6","1","36","13","8","15","11","3","34")]
+table(Part_Granule$seurat_clusters) # to double check
+
+
+# tidy
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_Granule)$UMAP),
+  as.data.frame(colData(Part_Granule)[, -3])
+  ) %>%
+  sample_frac(1)
+
+# PLOT
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version5dim50kparam30res25-Part_Granule.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
+  geom_point(size = .7) +
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+
+
+## Second filter based on UMAP coordinate
+umap_coords <- reducedDims(Part_Granule)$UMAP
+
+# Filter conditions based on your description:
+# Keep cells with UMAP_1 > -3 and UMAP_2 < 2.5
+
+selected_cells <- umap_coords[,1] > -8 & umap_coords[,2] > 1 &  umap_coords[,1] < 5.25
+
+# Subset your SCE object
+Part_Granule_subset <- Part_Granule[, selected_cells]
+
+# Check resulting subset
+dim(Part_Granule_subset)
+
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_Granule_subset)$UMAP),
+  as.data.frame(colData(Part_Granule_subset)[, -3])
+  ) %>%
+  sample_frac(1)
+
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version5dim50kparam30res25-Part_Granule_subset.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
+  geom_point(size = .7) +
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+library("RColorBrewer")
+pdf("output/condiments/UMAP_WT_Kcnc1_CB-version5dim50kparam30res25-Part_Granule_subset-time.pdf", width=6, height=5)
+my_cols = brewer.pal(3,"Dark2")
+cols=alpha(my_cols,0.3)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = time)) +
+  geom_point(size = .7) +
+  labs(col = "time") +
+  scale_color_manual(values = cols) +
+  theme_classic()
+dev.off()
+
+
+
+## genotype overlap
+pdf("output/condiments/UMAP_condition_WT_Kcnc1_CB-version5dim50kparam30res25-Part_Granule_subset.pdf", width=5, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7) +
+  scale_color_manual(values = c("blue", "red")) + # Specify colors here
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+## imbalance score
+scores <- condiments::imbalance_score(
+  Object = df %>% select(UMAP_1, UMAP_2) %>% as.matrix(), 
+  conditions = df$condition,
+  k = 20, smooth = 40)
+df$scores <- scores$scaled_scores
+
+pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_CB-version5dim50kparam30res25-Part_Granule_subset.pdf", width=4, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
+  geom_point(size = .7) +
+  scale_color_viridis_c(option = "C") +
+  labs(col = "Scores") +
+  theme_classic()
+dev.off()
+
+
+
+
+
+## PLOT with Separate trajectories
+### Testing Area ############
+
+
+##########################################
+
+
+Part_Granule_subset <- slingshot(Part_Granule_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_Granule_subset)$seurat_clusters,
+                 start.clus = "26", end.clus = c("11") ,approx_points = 100, extend = 'pc1', stretch = 1)
+
+
+
+
+#test reduceDim PCA or subset endoderm
+topologyTest(SlingshotDataSet(Part_Granule_subset), Part_Granule_subset$condition) #  
+
+
+sdss <- slingshot_conditions(SlingshotDataSet(Part_Granule_subset), Part_Granule_subset$condition)
+curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
+                    .id = "condition")
+
+
+
+#  
+
+pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_CB-version5dim50kparam30res25-Part_Granule_subset-START26_END11_points100extendpc1stretch1.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(condition, Lineage, Order),
+            aes(group = interaction(Lineage, condition)), size = 1.5) +
+  theme_classic()
+dev.off()
+
+
+
+#### ->  save.image(file="output/condiments/condiments-Part_Granule_subset_START26_END11_points100extendpc1stretch1-version5dim50kparam30res25.RData")
+### load("output/condiments/condiments-Part_Granule_subset_START26_END11_points100extendpc1stretch1-version5dim50kparam30res25.RData")
+set.seed(42)
+
+
+
+
+## PLOT with separate trajectories - Individually
+### WT
+Part_Granule_subset_WT <- Part_Granule_subset[, Part_Granule_subset$condition == "WT"]
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(Part_Granule_subset_WT, "UMAP")),
+  slingPseudotime(Part_Granule_subset_WT) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(Part_Granule_subset_WT) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+         Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst),
+         Lineage4_pst = if_else(is.na(Lineage4_pst), 0, Lineage4_pst),
+         Lineage5_pst = if_else(is.na(Lineage5_pst), 0, Lineage5_pst),
+         Lineage6_pst = if_else(is.na(Lineage6_pst), 0, Lineage6_pst))
+curves <- slingCurves(Part_Granule_subset_WT, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = UMAP_1, y = UMAP_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = UMAP_1, y = UMAP_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = UMAP_1, y = UMAP_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = UMAP_1, y = UMAP_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:6) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_Part_Granule_subset_WT-version5dim50kparam30res25-START26_END11_points100extendpc1stretch1_WTonly.pdf", width=10, height=6)
+gridExtra::grid.arrange(grobs = plots, ncol = 3)
+dev.off()
+
+
+### Kcnc1
+Part_Granule_subset_Kcnc1 <- Part_Granule_subset[, Part_Granule_subset$condition == "Kcnc1"]
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(Part_Granule_subset_Kcnc1, "UMAP")),
+  slingPseudotime(Part_Granule_subset_Kcnc1) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(Part_Granule_subset_Kcnc1) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+         Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst),
+         Lineage4_pst = if_else(is.na(Lineage4_pst), 0, Lineage4_pst),
+         Lineage5_pst = if_else(is.na(Lineage5_pst), 0, Lineage5_pst),
+         Lineage6_pst = if_else(is.na(Lineage6_pst), 0, Lineage6_pst))
+curves <- slingCurves(Part_Granule_subset_Kcnc1, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = UMAP_1, y = UMAP_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = UMAP_1, y = UMAP_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = UMAP_1, y = UMAP_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = UMAP_1, y = UMAP_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:6) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_Part_Granule_subset_Kcnc1-version5dim50kparam30res25-START26_END11_points100extendpc1stretch1_Kcnc1only.pdf", width=10, height=6)
+gridExtra::grid.arrange(grobs = plots, ncol = 3)
+dev.off()
+
+
+
+# Differential Progression
+prog_res <- progressionTest(Part_Granule_subset, conditions = Part_Granule_subset$condition, lineages = TRUE)
+
+df_3 <-  slingPseudotime(Part_Granule_subset) %>% as.data.frame() 
+
+df_3$condition <- Part_Granule_subset$condition
+df_3 <- df_3 %>% 
+  pivot_longer(-condition, names_to = "Lineage",
+               values_to = "pst") %>%
+  filter(!is.na(pst))
+
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_Granule_subset-version5dim50kparam30res25-START26_END11_points100extendpc1stretch1.pdf", width=10, height=3)
+ggplot(df_3, aes(x = pst)) +
+  geom_density(alpha = .8, aes(fill = condition), col = "transparent") +
+  geom_density(aes(col = condition), fill = "transparent", size = 1.5) +
+  labs(x = "Pseudotime", fill = "condition") +
+  facet_wrap(~Lineage, scales = "free", nrow=2) +
+  guides(col = "none", fill = guide_legend(
+    override.aes = list(size = 1.5, col = c("blue", "red"))
+  )) +
+  scale_fill_manual(values = c("blue", "red")) +
+  scale_color_manual(values = c("blue", "red")) +
+  theme_bw()
+dev.off()
+
+
+#### ->  save.image(file="output/condiments/condiments-Part_Granule_subset_START26_END11_points100extendpc1stretch1-version5dim50kparam30res25.RData")
+### load("output/condiments/condiments-Part_Granule_subset_START26_END11_points100extendpc1stretch1-version5dim50kparam30res25.RData")
+set.seed(42)
+
+#  Differential expression
+# --> Run fitGam() through Slurm
+
+
+XXXY 
+
+
+```
 
 
 
@@ -69865,7 +70274,7 @@ sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CX_Version2labelversion1_MAST.sh # 5186
 
 
 # p180 CX - version2dim30kparam30res04
-sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CX_Version2labelversion1_MAST.sh # 54458292 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CX_Version2labelversion1_MAST.sh # 54458292 fail not enough cells in L4_IT__Gabra6; rerun without L4_IT__Gabra6; 54738998 xxx
 
 
 ```

@@ -54,30 +54,32 @@ VariableFeatures(WT_Kcnc1_CB_integrateMerge_p14p35.sct[["SCT"]]) <- rownames(WT_
 #### UMAP
 DefaultAssay(WT_Kcnc1_CB_integrateMerge_p14p35.sct) <- "SCT"
 
-WT_Kcnc1_CB_integrateMerge_p14p35.sct <- RunPCA(WT_Kcnc1_CB_integrateMerge_p14p35.sct, verbose = FALSE, npcs = 50)
-WT_Kcnc1_CB_integrateMerge_p14p35.sct <- RunUMAP(WT_Kcnc1_CB_integrateMerge_p14p35.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
-WT_Kcnc1_CB_integrateMerge_p14p35.sct <- FindNeighbors(WT_Kcnc1_CB_integrateMerge_p14p35.sct, reduction = "pca", k.param = 20, dims = 1:50)
-WT_Kcnc1_CB_integrateMerge_p14p35.sct <- FindClusters(WT_Kcnc1_CB_integrateMerge_p14p35.sct, resolution = 0.2, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+WT_Kcnc1_CB_integrateMerge_p14p35.sct <- RunPCA(WT_Kcnc1_CB_integrateMerge_p14p35.sct, verbose = FALSE, npcs = 30)
+WT_Kcnc1_CB_integrateMerge_p14p35.sct <- RunUMAP(WT_Kcnc1_CB_integrateMerge_p14p35.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
+WT_Kcnc1_CB_integrateMerge_p14p35.sct <- FindNeighbors(WT_Kcnc1_CB_integrateMerge_p14p35.sct, reduction = "pca", k.param = 10, dims = 1:30)
+WT_Kcnc1_CB_integrateMerge_p14p35.sct <- FindClusters(WT_Kcnc1_CB_integrateMerge_p14p35.sct, resolution = 1.7, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
 
 
 WT_Kcnc1_CB_integrateMerge_p14p35.sct$condition <- factor(WT_Kcnc1_CB_integrateMerge_p14p35.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
 
-pdf("output/seurat/UMAP_WT_Kcnc1_CB_Version5_p14p35-dim50kparam20res02.pdf", width=7, height=6)
-DimPlot(WT_Kcnc1_CB_integrateMerge_p14p35.sct, reduction = "umap", label=TRUE)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB_Version5_p14p35-dim30kparam10res17.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge_p14p35.sct, reduction = "umap", label=TRUE, raster = FALSE)
 dev.off()
 
 
+## Add the time information (p14, p35, p180) from orig.ident
+WT_Kcnc1_CB_integrateMerge_p14p35.sct$time <- stringr::str_extract(WT_Kcnc1_CB_integrateMerge_p14p35.sct$orig.ident, "p\\d+")
 
-
-
-
-WT_Kcnc1_CB_integrateMerge_p14p35.sct$condition <- factor(WT_Kcnc1_CB_integrateMerge_p14p35.sct$condition, levels = c("WT", "Kcnc1")) # Reorder untreated 1st
-
-pdf("output/seurat/UMAP_WT_Kcnc1_CB-2stepIntegrateMerge_Version5_p14p35.pdf", width=7, height=6)
-DimPlot(WT_Kcnc1_CB_integrateMerge_p14p35.sct, reduction = "umap", label=TRUE)
+pdf("output/seurat/UMAP_WT_Kcnc1_CB_Version5_p14p35-dim30kparam10res17_time.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge_p14p35.sct, reduction = "umap", label=TRUE, raster = FALSE, group.by = "time")
 dev.off()
 
+pdf("output/seurat/UMAP_WT_Kcnc1_CB_Version5_p14p35-dim30kparam10res17_condition.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge_p14p35.sct, reduction = "umap", label=TRUE, raster = FALSE, group.by = "condition", cols = c("black", "red"))
+dev.off()
 
+# SAVE OUTPUT
+saveRDS(WT_Kcnc1_CB_integrateMerge_p14p35.sct, file = "output/seurat/WT_Kcnc1_CB_integrateMerge_Version5_p14p35-dim30kparam10res17.rds")
 
 
 

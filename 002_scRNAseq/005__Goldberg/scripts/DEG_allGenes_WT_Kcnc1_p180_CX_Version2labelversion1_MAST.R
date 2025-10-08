@@ -41,7 +41,7 @@ clusters <- c(
   "L2L3_IT__Otof",
   "L2L3_IT__Abi3bp",
   "L2L3_IT__Reln",
-  "L4_IT__Gabra6",
+#  "L4_IT__Gabra6",
   "L4L5_IT__Rorb",
   "L5_IT_GABA__Adora2a",
   "L5_ET__L3mbtl4",
