@@ -67047,7 +67047,7 @@ dev.off()
 
 ## show only one gene ##################
 ## gene expr over time with SE
-target_gene <- "Eomes"   # <<< change here
+target_gene <- "Gabra6"   # <<< change here
 yhat_cell <- predictCells(models = traj1, gene = target_gene)  # vector per cell
 stopifnot(length(yhat_cell) == ncol(traj1))
 
