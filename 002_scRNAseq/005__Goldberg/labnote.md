@@ -60480,7 +60480,7 @@ DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
 cell_types <- c(     "L2L3_IT__Otof",
   "L2L3_IT__Abi3bp",
   "L2L3_IT__Reln",
-  "L4_IT__Gabra6",
+ # "L4_IT__Gabra6",
   "L4L5_IT__Rorb",
   "L5_IT_GABA__Adora2a",
   "L5_ET__L3mbtl4",
@@ -60510,11 +60510,11 @@ cell_types <- c(     "L2L3_IT__Otof",
   "Oligodendrocyte",
   "Endothelial",
   "Meningeal")
-## Loop through each cell type to count the number of significant DEGs
+## Loop through each cell type to count the number of significant DEGs 
 for (cell_type in cell_types) {
   file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST.txt", sep = "")
   deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
-  num_degs <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.15 | deg_data$avg_log2FC < -0.15)) ## Count the number of significant DEGs
+  num_degs <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.25 | deg_data$avg_log2FC < -0.25)) ## Count the number of significant DEGs
   DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
 }
 ## Dotplot
@@ -60523,7 +60523,7 @@ DEG_count= DEG_count %>%
   "L2L3_IT__Otof",
   "L2L3_IT__Abi3bp",
   "L2L3_IT__Reln",
-  "L4_IT__Gabra6",
+#  "L4_IT__Gabra6",
   "L4L5_IT__Rorb",
   "L5_IT_GABA__Adora2a",
   "L5_ET__L3mbtl4",
@@ -60556,7 +60556,7 @@ DEG_count= DEG_count %>%
 DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = rev(levels(DEG_count$Cell_Type)))
 
 # Generate the dot plot
-pdf("output/seurat/Dotplot_DEG_count_WT_Kcnc1_p180_CX_1step_DEG_MAST_padj05fc015_version2dim30kparam30res04.pdf", width=9, height=4)
+pdf("output/seurat/Dotplot_DEG_count_WT_Kcnc1_p180_CX_1step_DEG_MAST_padj05fc025_version2dim30kparam30res04.pdf", width=9, height=7)
 ggplot(DEG_count, aes(x = 1, y = Cell_Type, color = Cell_Type)) +
   geom_point(aes(size = Num_DEGs), alpha = 0.8) +
   scale_size(range = c(2, 10)) +
@@ -60584,74 +60584,111 @@ dev.off()
 
 
 # DEGs number colored in a UMAP
-Idents(WT_Kcnc1_p14_CB_1step.sct) <- "cluster.annot"
+Idents(WT_Kcnc1_p180_CX_1step.sct) <- "cluster.annot"
 
 DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
 ## List of cell types
-cell_types <- c(   "Granule", 
-  "MLI1", 
-  "MLI2", 
-  "PLI12",
-  "PLI23", 
-  "Golgi",
-  "Unipolar_Brush",
-  "Purkinje",
+cell_types <- c(     "L2L3_IT__Otof",
+  "L2L3_IT__Abi3bp",
+  "L2L3_IT__Reln",
+#  "L4_IT__Gabra6",
+  "L4L5_IT__Rorb",
+  "L5_IT_GABA__Adora2a",
+  "L5_ET__L3mbtl4",
+  "L5_IT__Tshz2",
+  "Mix_IT__Tshz2_1",
+  "Mix_IT__Tshz2_2",
+  "L5L6_NP__Tle4Stard5",
+  "L5L6_IT__Osr1",
+  "L5L6_NP__Slc17a8",
+  "L6__Car3",
+  "L6_CT__Foxp2Syt6",
+  "L6_GABA__Foxp2",
+
+  "GABA__Baiap3",
+  "GABA__Vipr2",
+  "GABA__Pvalb",
+  "GABA__Vip",
+  "GABA__Sst",
+  "GABA__Lamp5",
+  "GABA__Calb2",
+  "GABA__NdnfKlhl1",
+  "GABA__Igfbpl1",
+
+  "Microglia",
   "Astrocyte",
-  "Bergman_Glia", 
-  "Endothelial",
-  "Meningeal",
-  "Choroid_Plexus",
+  "OPC",
   "Oligodendrocyte",
-  "Unknown")
+  "Endothelial",
+  "Meningeal")
 ## Loop through each cell type to count the number of significant DEGs
 for (cell_type in cell_types) {
-  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST.txt", sep = "") # CHANGE FILE HERE
+  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST.txt", sep = "") # CHANGE FILE HERE
   deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
-  num_degs <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.25 | deg_data$avg_log2FC < -0.25)) ## Count the number of significant DEGs
+  num_degs <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.15 | deg_data$avg_log2FC < -0.15)) ## Count the number of significant DEGs
   DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Num_DEGs = num_degs))  ## Append to the summary table
 }
 
-DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = c(    "Granule", 
-  "MLI1", 
-  "MLI2", 
-  "PLI12",
-  "PLI23", 
-  "Golgi",
-  "Unipolar_Brush",
-  "Purkinje",
+DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = c(    "L2L3_IT__Otof",
+  "L2L3_IT__Abi3bp",
+  "L2L3_IT__Reln",
+#  "L4_IT__Gabra6",
+  "L4L5_IT__Rorb",
+  "L5_IT_GABA__Adora2a",
+  "L5_ET__L3mbtl4",
+  "L5_IT__Tshz2",
+  "Mix_IT__Tshz2_1",
+  "Mix_IT__Tshz2_2",
+  "L5L6_NP__Tle4Stard5",
+  "L5L6_IT__Osr1",
+  "L5L6_NP__Slc17a8",
+  "L6__Car3",
+  "L6_CT__Foxp2Syt6",
+  "L6_GABA__Foxp2",
+
+  "GABA__Baiap3",
+  "GABA__Vipr2",
+  "GABA__Pvalb",
+  "GABA__Vip",
+  "GABA__Sst",
+  "GABA__Lamp5",
+  "GABA__Calb2",
+  "GABA__NdnfKlhl1",
+  "GABA__Igfbpl1",
+
+  "Microglia",
   "Astrocyte",
-  "Bergman_Glia", 
-  "Endothelial",
-  "Meningeal",
-  "Choroid_Plexus",
+  "OPC",
   "Oligodendrocyte",
-  "Unknown")) 
+  "Endothelial",
+  "Meningeal")) 
   
   
 # Add DEG information to my seurat object - DEG_count
-cell_clusters <- WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot
-names(cell_clusters) <- rownames(WT_Kcnc1_p14_CB_1step.sct@meta.data)
+cell_clusters <- WT_Kcnc1_p180_CX_1step.sct@meta.data$cluster.annot
+names(cell_clusters) <- rownames(WT_Kcnc1_p180_CX_1step.sct@meta.data)
 DEG_named_vector <- DEG_count$Num_DEGs[match(cell_clusters, DEG_count$Cell_Type)]
 names(DEG_named_vector) <- names(cell_clusters)
 # Integrate DEG values into the Seurat object
-WT_Kcnc1_p14_CB_1step.sct <- AddMetaData(WT_Kcnc1_p14_CB_1step.sct, metadata = DEG_named_vector, col.name = "DEG")
+WT_Kcnc1_p180_CX_1step.sct <- AddMetaData(WT_Kcnc1_p180_CX_1step.sct, metadata = DEG_named_vector, col.name = "DEG")
 
 # Add values on the heatmap
 ## Extract UMAP coordinates
-umap_coordinates <- as.data.frame(WT_Kcnc1_p14_CB_1step.sct@reductions$umap@cell.embeddings)
-umap_coordinates$cluster <- WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot
+umap_coordinates <- as.data.frame(WT_Kcnc1_p180_CX_1step.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- WT_Kcnc1_p180_CX_1step.sct@meta.data$cluster.annot
 ## Calculate cluster centers
 cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
   left_join(DEG_count %>% dplyr::rename( "cluster"="Cell_Type"))
 ## Create a UMAP plot colored by DEG values, with cluster DEG counts as text annotations
-pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CB_1step_DEG_MAST_padj05fc025_numeric_version2.pdf", width=6, height=6)
-FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "DEG", pt.size = 0.5, reduction = "umap") +
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p180_CX_1step_DEG_MAST_padj05fc015_numeric_version2.pdf", width=6, height=6)
+FeaturePlot(WT_Kcnc1_p180_CX_1step.sct, features = "DEG", pt.size = 0.5, reduction = "umap") +
   scale_colour_viridis(option="magma") + # option="magma"
   geom_text(data = cluster_centers, aes(x = UMAP_1, y = UMAP_2, label = Num_DEGs), 
             size = 4, color = "red", fontface = "bold") 
 dev.off()
 
 
+xxxy here below GSEA not mod
 
 
 # GSEA output colored in a UMAP
@@ -60892,24 +60929,42 @@ library("fgsea")
 
 
 #### import all clsuter DEGs output :
-cluster_types <- c("Granule", 
-  "MLI1", 
-  "MLI2", 
-  "PLI12",
-  "PLI23", 
-  "Golgi",
-  "Unipolar_Brush",
-  "Purkinje",
+cluster_types <- c(  "L2L3_IT__Otof",
+  "L2L3_IT__Abi3bp",
+  "L2L3_IT__Reln",
+#  "L4_IT__Gabra6",
+  "L4L5_IT__Rorb",
+  "L5_IT_GABA__Adora2a",
+  "L5_ET__L3mbtl4",
+  "L5_IT__Tshz2",
+  "Mix_IT__Tshz2_1",
+  "Mix_IT__Tshz2_2",
+  "L5L6_NP__Tle4Stard5",
+  "L5L6_IT__Osr1",
+  "L5L6_NP__Slc17a8",
+  "L6__Car3",
+  "L6_CT__Foxp2Syt6",
+  "L6_GABA__Foxp2",
+
+  "GABA__Baiap3",
+  "GABA__Vipr2",
+  "GABA__Pvalb",
+  "GABA__Vip",
+  "GABA__Sst",
+  "GABA__Lamp5",
+  "GABA__Calb2",
+  "GABA__NdnfKlhl1",
+  "GABA__Igfbpl1",
+
+  "Microglia",
   "Astrocyte",
-  "Bergman_Glia", 
-  "Endothelial",
-  "Meningeal",
-  "Choroid_Plexus",
+  "OPC",
   "Oligodendrocyte",
-  "Unknown")
+  "Endothelial",
+  "Meningeal")
 # Loop over each cluster type to read data and assign to a variable
 for (cluster in cluster_types) {
-  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST.txt")
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST.txt")
   data <- read.delim(file_path, header = TRUE, row.names = 1)
   assign(cluster, data)
 }
@@ -60965,7 +61020,7 @@ fgseaResTidy %>%
 
 
 ## plot GSEA
-pdf("output/Pathway/GSEA_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST-REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION-MLI2.pdf", width=5, height=3)
+pdf("output/Pathway/GSEA_Kcnc1_response_p180_CX_QCV3dim30kparam50res035_allGenes_MAST-REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION-MLI2.pdf", width=5, height=3)
 plotEnrichment(fgsea_sets[["REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION"]],
                ranks) + labs(title="REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION-MLI2") +
                theme_bw()
@@ -60974,21 +61029,39 @@ dev.off()
 
 # Save output table for all pathway and cluster
 ## Define the list of cluster types
-cluster_types <- c("Granule", 
-  "MLI1", 
-  "MLI2", 
-  "PLI12",
-  "PLI23", 
-  "Golgi",
-  "Unipolar_Brush",
-  "Purkinje",
+cluster_types <- c(  "L2L3_IT__Otof",
+  "L2L3_IT__Abi3bp",
+  "L2L3_IT__Reln",
+#  "L4_IT__Gabra6",
+  "L4L5_IT__Rorb",
+  "L5_IT_GABA__Adora2a",
+  "L5_ET__L3mbtl4",
+  "L5_IT__Tshz2",
+  "Mix_IT__Tshz2_1",
+  "Mix_IT__Tshz2_2",
+  "L5L6_NP__Tle4Stard5",
+  "L5L6_IT__Osr1",
+  "L5L6_NP__Slc17a8",
+  "L6__Car3",
+  "L6_CT__Foxp2Syt6",
+  "L6_GABA__Foxp2",
+
+  "GABA__Baiap3",
+  "GABA__Vipr2",
+  "GABA__Pvalb",
+  "GABA__Vip",
+  "GABA__Sst",
+  "GABA__Lamp5",
+  "GABA__Calb2",
+  "GABA__NdnfKlhl1",
+  "GABA__Igfbpl1",
+
+  "Microglia",
   "Astrocyte",
-  "Bergman_Glia", 
-  "Endothelial",
-  "Meningeal",
-  "Choroid_Plexus",
+  "OPC",
   "Oligodendrocyte",
-  "Unknown")
+  "Endothelial",
+  "Meningeal")
 
 ## Initialize an empty list to store the results for each cluster type
 all_results <- list()
@@ -61023,10 +61096,10 @@ for (cluster in cluster_types) {
 final_results <- bind_rows(all_results, .id = "cluster") %>%
   mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST-List4gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p180_CX_vversion2dim30kparam30res04_allGenes_MAST-List4gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST-List4.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST-List4.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -70274,7 +70347,7 @@ sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CX_Version2labelversion1_MAST.sh # 5186
 
 
 # p180 CX - version2dim30kparam30res04
-sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CX_Version2labelversion1_MAST.sh # 54458292 fail not enough cells in L4_IT__Gabra6; rerun without L4_IT__Gabra6; 54738998 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CX_Version2labelversion1_MAST.sh # 54458292 fail not enough cells in L4_IT__Gabra6; rerun without L4_IT__Gabra6; 54738998 OK
 
 
 ```
